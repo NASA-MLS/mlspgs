@@ -11,9 +11,11 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
   use EXPR_M, only: EXPR
   use FGrid, only: fGrid_T
   use HGrid, only: hGrid_T
-  use INIT_TABLES_MODULE, only: F_GEODANGLE, F_FGRID, F_HGRID, F_INCLINATION, &
+  use Intrinsic, only: T_NUMERIC
+  use INIT_TABLES_MODULE, only: F_GEODANGLE, F_FGRID, F_HGRID, &
     & F_LOGBASIS, F_MINVALUE, F_MODULE, F_MOLECULE, F_NOMIFS, F_RADIOMETER, &
-    & F_SIGNAL, F_SGRID, F_TYPE, F_UNIT, F_VGRID, F_IRREGULAR
+    & F_SIGNAL, F_SGRID, F_TYPE, F_UNIT, F_VGRID, F_IRREGULAR, &
+    & F_SOLARTIME, F_SOLARZENITH
   use INIT_TABLES_MODULE, only: &
     FIRST_LIT, LAST_LIT, L_BASELINE, L_BOUNDARYPRESSURE, &
     L_CHANNEL, L_CHISQCHAN, L_CHISQMMAF, L_CHISQMMIF, L_CHUNK, L_CLOUDICE, &
@@ -40,7 +42,7 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
     L_VMR, L_XYZ, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_EXTINCTION, &
     PHYQ_FREQUENCY, PHYQ_DOBSONUNITS, PHYQ_IceDensity, PHYQ_LENGTH, PHYQ_PCTRHI, &
     PHYQ_PRESSURE, PHYQ_TEMPERATURE, PHYQ_VELOCITY, PHYQ_VMR, &
-    PHYQ_ZETA, PHYQ_GAUSS
+    PHYQ_ZETA, PHYQ_GAUSS, PHYQ_TIME
   use L1BData, only: L1BData_T, READL1BDATA, DEALLOCATEL1BDATA, &
     & FindL1BData, AssembleL1BQtyName, PRECISIONSUFFIX
   use LEXER_CORE, only: PRINT_SOURCE
@@ -895,16 +897,24 @@ contains ! =====     Public Procedures     =============================
     integer :: INSTRUMENTMODULE         ! Database index
     integer :: KEY                      ! Tree vertex
     integer :: MAF                      ! Loop counter
+    integer :: NODE                     ! A tree node
     integer :: NOMAFS                   ! Dimension
     integer :: NOMIFS                   ! Dimension
+    integer :: PARAM                    ! Loop counter
+    integer :: SOLARTIMENODE            ! Tree vertex
+    integer :: SOLARZENITHNODE          ! Tree vertex
     integer :: SON                      ! Tree vertex
+    integer :: TYPE                     ! Type for the values
+    integer :: UNITS                    ! Units for node
 
+    real(r8), dimension(:,:), pointer :: VALUES ! An array to fill
     integer, dimension(2) :: EXPR_UNITS ! From tree
-
     real(r8), dimension(2) :: EXPR_VALUE ! From tree
-    real(r8) :: incline                 ! Orbital inclination
 
     ! Executable code
+    solarTimeNode = 0
+    solarZenithNode = 0
+    geodAngleNode = 0
     do i = 2, nsons( root )
       son = subtree(i,root)
       key = subtree(1,son)
@@ -914,46 +924,92 @@ contains ! =====     Public Procedures     =============================
         instrumentModule = decoration(decoration(subtree(2,son)))
       case ( f_geodAngle )
         geodAngleNode = son
+      case ( f_solarTime )
+        solarTimeNode = son
+      case ( f_solarZenith )
+        solarZenithNode = son
       case ( f_noMIFs )
         call expr ( subtree(2,son), expr_units, expr_value )
         noMIFs = expr_value(1)
-      case ( f_inclination )
-        call expr (subtree ( 2, son), expr_units, expr_value )
-        incline = expr_value(1)
       case default ! Can't get here if tree_checker works correctly
       end select
     end do
-    ! The tree checker will ensure we get all of these
 
-    noMAFs = nsons(geodAngleNode) - 1
+    ! Work out how many MAFs we're after
+    if ( geodAngleNode /= 0 ) noMAFs = nsons ( geodAngleNode ) - 1
+    if ( solarTimeNode /= 0 ) then
+      if ( noMAFs /= 0 ) then
+        if ( nsons ( solarTimeNode ) - 1 /= noMAFs ) &
+          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Inconsistent explicit Forge definition' )
+      else
+        noMAFs = nsons ( solarTimeNode ) - 1
+      end if
+    end if
+    if ( solarZenithNode /= 0 ) then
+      if ( noMAFs /= 0 ) then
+        if ( nsons ( solarZenithNode ) - 1 /= noMAFs ) &
+          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Inconsistent explicit Forge definition' )
+      else
+        noMAFs = nsons ( solarZenithNode ) - 1
+      end if
+    end if
 
+    ! Setup the minor frame quantity template
     call SetupNewQuantityTemplate ( mifGeolocation(instrumentModule), &
       & noInstances=noMAFs, noSurfs=noMIFs, noChans=1,&
       & coherent=.false., stacked=.false., regular=.true.,&
       & minorFrame=.true. )
 
+    ! Put zeros etc. in the appropriate places, may overwrite these later
     mifGeolocation(instrumentModule)%instrumentModule = instrumentModule
     mifGeolocation(instrumentModule)%noInstancesLowerOverlap = 0
     mifGeolocation(instrumentModule)%noInstancesUpperOverlap = 0
     mifGeolocation(instrumentModule)%verticalCoordinate = l_none
     mifGeolocation(instrumentModule)%time = 0.0
+    mifGeolocation(instrumentModule)%phi = 0.0
+    mifGeolocation(instrumentModule)%geodLat = 0.0
     mifGeolocation(instrumentModule)%solarTime = 0.0
     mifGeolocation(instrumentModule)%solarZenith = 0.0
     mifGeolocation(instrumentModule)%lon = 0.0
     mifGeolocation(instrumentModule)%losAngle = 0.0
     mifGeolocation(instrumentModule)%mafIndex = 0.0
     mifGeolocation(instrumentModule)%mafCounter = 0.0
-
     mifGeolocation(instrumentModule)%surfs = 0.0
-    do maf = 1, noMAFs
-      call expr (subtree ( maf+1, geodAngleNode), expr_units, expr_value )
-      mifGeolocation(instrumentModule)%phi(:,maf) = expr_value(1)
-      mifGeolocation(instrumentModule)%geodLat(:,maf) = &
-        & mifGeolocation(instrumentModule)%phi(:,maf) ! Sort this out later
-      mifGeolocation(instrumentModule)%mafIndex(maf) = maf + chunk%firstMAFIndex - 1
-      mifGeolocation(instrumentModule)%mafCounter(maf) = maf + chunk%firstMAFIndex - 1
-    end do
 
+    ! Loop over the parameters we might have
+    do param = 1, 3
+      select case ( param )
+      case ( 1 )
+        values => mifGeolocation(instrumentModule)%phi
+        node = geodAngleNode
+        units = phyq_angle
+      case ( 2 )
+        values => mifGeolocation(instrumentModule)%solarTime
+        node = solarTimeNode
+        units = phyq_time
+      case ( 3 )
+        values => mifGeolocation(instrumentModule)%solarZenith
+        node = solarZenithNode
+        units = phyq_angle
+      end select
+
+      do maf = 1, noMAFs
+        call expr ( subtree ( maf+1, node), expr_units, expr_value, type )
+        if ( type /= t_numeric ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Only numerics, not ranges allowed in explicit hGrid' )
+        if ( all ( expr_units(1) /= (/ phyq_dimensionless, units /) ) ) &
+          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Invalid units for explicit hGrid' )
+        values(:,maf) = expr_value(1)
+      end do
+    end do
+    ! Make the latitude the same as the geod angle
+    ! This is a bit of a hack, but it should be OK in all cases.
+    mifGeolocation(instrumentModule)%geodLat = &
+      & mifGeolocation(instrumentModule)%phi
+    
   end subroutine ForgeMinorFrames
 
   ! ----------------------------------  CopyHGridInfoIntoQuantity  -----
@@ -1019,6 +1075,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.83  2003/02/06 23:31:00  livesey
+! New approach to Forge
+!
 ! Revision 2.82  2003/01/14 00:40:29  pwagner
 ! Moved GetQuantityAttributes to L2AUXData
 !
