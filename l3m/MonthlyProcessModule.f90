@@ -7,7 +7,7 @@ MODULE MonthlyProcessModule
 !===============
 
   USE MLSL3Common, ONLY: DATE_LEN, maxWindow
-  USE L2GPData, ONLY: L2GPData_T, rgp
+  USE L2GPData, ONLY: L2GPData_T, rgp, DestroyL2GPDatabase
   USE global_data
   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Allocate, &
        & MLSMSG_Deallocate
@@ -41,7 +41,7 @@ CONTAINS
 
   !-------------------------------------------------------------------------
   SUBROUTINE MonthlyCoreProcessing(cfProd, pcf, cfDef, l2Days, l2gp, l3mm, & 
-       & mmA, mmD, mzA, mzD, dzA, dzD, mis_Days)
+       & mmA, mmD, mzA, mzD, dzA, dzD, mis_Days, mis_l2Days)
   !-------------------------------------------------------------------------
   USE L3DZData, ONLY: L3DZData_T, AllocateL3DZ, DestroyL3DZDatabase
   USE L3MMData, ONLY: L3MMData_T, AllocateL3MM
@@ -65,7 +65,7 @@ CONTAINS
     TYPE( L3MZData_T ) :: l3mz, mzA, mzD
 
     CHARACTER (LEN=480) :: msr
-    CHARACTER (LEN=DATE_LEN) :: mis_Days(maxWindow)
+    INTEGER :: mis_Days(maxWindow), mis_l2Days
 
     REAL, POINTER, DIMENSION(:, :, :) ::  & 
          & alons(:, :, :), alats(:, :, :), &
@@ -79,7 +79,7 @@ CONTAINS
     INTEGER ::  error, l2Days, nlev, pEndIndex, pStartIndex, j, iD
     
     !*** Initialize variables
- 
+
     nlev = 0
     DO j = 1, l2gp(1)%nLevels
        IF( l2gp(1)%pressures(j) >= cfProd%l3presLvl(1) .AND. &
@@ -211,6 +211,7 @@ CONTAINS
     l3mm%l3mmPrecision = 0.0
     l3mm%perMisPoints  = 0
     l3mm%misDays       = mis_Days 
+    l3mm%nMisDays      = mis_l2Days 
 
     mmA%pressure      = 0.0
     mmA%latitude      = 0.0
@@ -219,6 +220,7 @@ CONTAINS
     mmA%l3mmPrecision = 0.0
     mmA%perMisPoints  = 0
     mmA%misDays       = mis_Days 
+    mmA%nMisDays      = mis_l2Days 
 
     mmD%pressure      = 0.0
     mmD%latitude      = 0.0
@@ -227,6 +229,7 @@ CONTAINS
     mmD%l3mmPrecision = 0.0
     mmD%perMisPoints  = 0
     mmD%misDays       = mis_Days 
+    mmD%nMisDays      = mis_l2Days 
 
     !*** Sort & Prepare the Data 
 
@@ -370,6 +373,7 @@ CONTAINS
        ENDIF
     endif
 
+    CALL DestroyL2GPDatabase(l2gp)
     CALL DestroyL3DZDatabase(l3dz)
     CALL DeallocateL3MZ(l3mz)
 
