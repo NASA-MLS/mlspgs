@@ -144,11 +144,11 @@ contains ! =====     Public Procedures     =============================
 !      if ( fileName == 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
 !        & 'File name not specified in read a priori')
       
-      if (got(f_file)) then
+      if ( got(f_file) ) then
         call get_string ( FileName, fileNameString, strip=.true. )
       else
         fileNameString=''
-      endif
+      end if
         
       select case( FileType )
       case ( s_l2gp )
@@ -156,17 +156,18 @@ contains ! =====     Public Procedures     =============================
 !          & call MLSMessage(MLSMSG_Error, ModuleName, &
 !          & 'Swath/filename name not specified in read a priori')
         if ( .not. all(got((/f_swath, f_file/)))) &
-          & call announce_error(son, &
-          & 'Swath/filename name not specified in read a priori')
+          & call announce_error ( son, &
+            & 'Swath/filename name not specified in read a priori' )
         
         call get_string ( swathName, swathNameString )
-        swathNameString=swathNameString(2:LEN_TRIM(swathNameString)-1)
+        swathNameString = swathNameString(2:LEN_TRIM(swathNameString)-1)
         ! Open the l2gp file
         fileHandle = swopen(FileNameString, DFACC_READ)
-        if (fileHandle == -1) then
+        if ( fileHandle == -1 ) then
 !          msr = MLSMSG_Fileopen // FileNameString
 !          call MLSMessage ( MLSMSG_Error, ModuleName, trim(msr) )
-          call announce_error ( son, 'Failed to open swath file ' // FileNameString)
+          call announce_error ( son, &
+            & 'Failed to open swath file ' // FileNameString )
         end if
 
         ! Read the swath
@@ -174,10 +175,11 @@ contains ! =====     Public Procedures     =============================
 
         ! Close the file
         fileHandle = swclose(fileHandle)
-        if (fileHandle == -1) THEN
+        if ( fileHandle == -1 ) then
 !          msr = 'Failed to close file ' // FileNameString
 !          call MLSMessage(MLSMSG_Error, ModuleName, trim(msr))
-          call announce_error(son, 'Failed to close swath file ' // FileNameString)
+          call announce_error ( son, &
+            & 'Failed to close swath file ' // FileNameString )
         end if
 
         ! Add this l2gp to the database, decorate this key with index
@@ -190,18 +192,18 @@ contains ! =====     Public Procedures     =============================
 !          & call MLSMessage(MLSMSG_Error, ModuleName, &
 !          & 'file/sd name not specified in read a priori')
         if ( .not. all(got((/f_sdName, f_file/)))) &
-          & call announce_error(son, &
-          & 'file/sd name not specified in read a priori')
+          & call announce_error ( son, &
+            & 'file/sd name not specified in read a priori' )
         
         call get_string ( sdName, sdNameString )
-        sdNameString=sdNameString(2:LEN_TRIM(sdNameString)-1)
+        sdNameString = sdNameString(2:LEN_TRIM(sdNameString)-1)
         ! create SD interface identifier for l2aux
         sd_id = sfstart(FilenameString, DFACC_READ)
-        IF (sd_id == -1) THEN
+        if (sd_id == -1 ) then
 !          msr = MLSMSG_Fileopen // FileNameString
 !          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-          CALL announce_error(son, 'Failed to open l2aux ' // sdNameString)
-        ENDIF
+          call announce_error ( son, 'Failed to open l2aux ' // sdNameString )
+        end if
         ! ??? subtree(1,key) is l2aux or l2gp.  It doesn't have a subtree ???
         !       vectorIndex = decoration(decoration(subtree(2,subtree(1,key))))
 
@@ -222,7 +224,7 @@ contains ! =====     Public Procedures     =============================
         call decorate ( key, l2Index )
         !   call ReadL2AUXData ( ... L2AUXDataBase(l2Index) ... )
         ! Need to add this routine to L2AUXData.f90 before uncommenting this line
-        CALL ReadL2AUXData(sd_id, sdNameString, L2AUXDatabase(l2Index))
+        call ReadL2AUXData(sd_id, sdNameString, L2AUXDatabase(l2Index))
 
       case ( s_gridded )
 
@@ -240,61 +242,61 @@ contains ! =====     Public Procedures     =============================
           
           gridIndex = AddGridTemplateToDatabase( GriddedDatabase, GriddedData )
           call decorate ( key, gridIndex )
-          CALL ReadGriddedData(FileNameString, son, 'ncep', v_is_pressure, &
+          CALL ReadGriddedData ( FileNameString, son, 'ncep', v_is_pressure, &
             & GriddedDatabase(gridIndex), &
-            & 'XDim,YDim,Height,TIME', TRIM(fieldNameString))
+            & 'XDim,YDim,Height,TIME', TRIM(fieldNameString) )
           
         case ( l_dao )
           
           gridIndex = AddGridTemplateToDatabase( GriddedDatabase, GriddedData )
           call decorate ( key, gridIndex )
-          CALL ReadGriddedData(FileNameString, son, 'dao', v_is_pressure, &
-            & GriddedDatabase(gridIndex), fieldName = TRIM(fieldNameString))
+          call ReadGriddedData ( FileNameString, son, 'dao', v_is_pressure, &
+            & GriddedDatabase(gridIndex), fieldName = TRIM(fieldNameString) )
           
         case ( l_climatology )
           
           ! Identify file (maybe from PCF if no name given)
 
-          if(.NOT. got(f_file)) then
+          if ( .NOT. got(f_file) ) then
             
             do pcf=lastClimPCF+1, mlspcf_l2clim_end
               returnStatus = Pgs_pc_getReference(i, version, &
                 & fileNameString)
-              if(returnStatus == PGS_S_SUCCESS) exit
-            enddo
+              if ( returnStatus == PGS_S_SUCCESS) exit
+            end do
             
-            if(returnStatus /= PGS_S_SUCCESS) then
-              call announce_error(son, &
-                & 'PCF number not found to supply missing Climatology file name')
-            endif
-          endif
+            if ( returnStatus /= PGS_S_SUCCESS ) then
+              call announce_error ( son, &
+                & 'PCF number not found to supply missing Climatology file name' )
+            end if
+          end if
           
           ! Have we read this already?
           gotAlready = associated(GriddedDatabase)
-          if (gotAlready) then
+          if ( gotAlready ) then
             gotAlready = any(GriddedDatabase%sourceFilename==filenameString)
-          endif
-          if (.not. gotAlready) then
+          end if
+          if ( .not. gotAlready ) then
             ! No, well read it then, add its entire contents to the database
-            call read_climatology(FileNameString, son, &
-              & GriddedDatabase, mlspcf_l2clim_start, mlspcf_l2clim_end)
-          endif
+            call read_climatology ( FileNameString, son, &
+              & GriddedDatabase, mlspcf_l2clim_start, mlspcf_l2clim_end )
+          end if
        
           ! Locate requested grid by name, store index in gridIndex
           
           ! Check that field name is among those added by the source field
           gridIndex=1
           do gridIndex=1,size(griddedDatabase)
-            if (trim(fieldNameString) == &
+            if ( trim(fieldNameString) == &
               & trim(GriddedDatabase(gridIndex)%quantityName)) exit
-          enddo
+          end do
 
-          if (gridIndex <= size(griddedDatabase) ) then
+          if ( gridIndex <= size(griddedDatabase) ) then
             call decorate ( key, gridIndex )
           else
-            call announce_error(son, 'Field ' // trim(fieldNameString) // &
-              & ' not found in clim. file ' // trim(fileNameString))
-          endif
+            call announce_error ( son, 'Field ' // trim(fieldNameString) // &
+              & ' not found in clim. file ' // trim(fileNameString) )
+          end if
         case default ! Can't get here if tree_checker worked correctly
         end select
       case default
@@ -302,7 +304,7 @@ contains ! =====     Public Procedures     =============================
       
     end do                              ! Lines in l2cf loop
     
-    if (toggle(gen) ) call trace_end("read_apriori")
+    if ( toggle(gen) ) call trace_end("read_apriori")
   
   end subroutine read_apriori
 
@@ -311,58 +313,58 @@ contains ! =====     Public Procedures     =============================
   & error_number )
   
    ! Arguments
-	
-	integer, intent(in)    :: lcf_where
-	character(LEN=*), intent(in)    :: full_message
-	logical, intent(in), optional :: use_toolkit
-	integer, intent(in), optional    :: error_number
-	! Local
-!  character (len=80) :: msg, mnemonic
-!  integer :: status
-  logical :: just_print_it
-  logical, parameter :: default_output_by_toolkit = .true.
-	
-	if(present(use_toolkit)) then
-		just_print_it = use_toolkit
-	elseif(default_output_by_toolkit) then
-		just_print_it = .false.
-	else
-		just_print_it = .true.
-	endif
-	
-	if(.not. just_print_it) then
-    error = max(error,1)
-    call output ( '***** At ' )
+  
+    integer, intent(in)    :: lcf_where
+    character(LEN=*), intent(in)    :: full_message
+    logical, intent(in), optional :: use_toolkit
+    integer, intent(in), optional    :: error_number
+    ! Local
+!    character (len=80) :: msg, mnemonic
+!    integer :: status
+    logical :: just_print_it
+    logical, parameter :: default_output_by_toolkit = .true.
+ 
+    if ( present(use_toolkit) ) then
+      just_print_it = use_toolkit
+    else if ( default_output_by_toolkit ) then
+      just_print_it = .false.
+    else
+      just_print_it = .true.
+    end if
+ 
+    if ( .not. just_print_it ) then
+      error = max(error,1)
+      call output ( '***** At ' )
 
-	if(lcf_where > 0) then
-	    call print_source ( source_ref(lcf_where) )
-		else
-    call output ( '(no lcf node available)' )
-		endif
+      if ( lcf_where > 0 ) then
+          call print_source ( source_ref(lcf_where) )
+      else
+        call output ( '(no lcf node available)' )
+      end if
 
-    call output ( ': ' )
-    call output ( "The " );
-	if(lcf_where > 0) then
-    call dump_tree_node ( lcf_where, 0 )
-		else
-    call output ( '(no lcf tree available)' )
-		endif
+      call output ( ': ' )
+      call output ( "The " );
+      if ( lcf_where > 0 ) then
+        call dump_tree_node ( lcf_where, 0 )
+      else
+        call output ( '(no lcf tree available)' )
+      end if
 
-		CALL output("Caused the following error:", advance='yes', &
-		& from_where=ModuleName)
-		CALL output(trim(full_message), advance='yes', &
-		& from_where=ModuleName)
-		if(present(error_number)) then
-			CALL output('error number ', advance='no')
-			CALL output(error_number, places=9, advance='yes')
-		endif
-	else
-		print*, '***Error in module ', ModuleName
-		print*, trim(full_message)
-		if(present(error_number)) then
-			print*, 'error number ', error_number
-		endif
-	endif
+      call output ( " Caused the following error: ", advance='yes', &
+        & from_where=ModuleName )
+      call output ( trim(full_message), advance='yes', &
+        & from_where=ModuleName )
+      if ( present(error_number) ) then
+        call output ( 'error number ', advance='no' )
+        call output ( error_number, places=9, advance='yes' )
+      end if
+    else
+      print*, '***Error in module ', ModuleName
+      print*, trim(full_message)
+      if ( present(error_number) ) then
+        print*, 'error number ', error_number
+      end if
+    end if
 
 !===========================
   end subroutine announce_error
@@ -374,6 +376,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.16  2001/04/12 22:19:33  vsnyder
+! Improved an error message
+!
 ! Revision 2.15  2001/04/10 20:04:26  livesey
 ! Bug fixes etc.
 !
