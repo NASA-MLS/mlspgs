@@ -3,7 +3,8 @@
 OBJS = \
 test_sparsify.o  \
  
-test_sparsify.o : test_sparsify.f90 
+# using f90makedep.pl to calculate dependencies 
+test_sparsify.o: test_sparsify.f90
  
 #End of Makefile.dep
  

@@ -3,7 +3,8 @@
 OBJS = \
 test_multiply.o  \
  
-test_multiply.o : test_multiply.f90 
+# using f90makedep.pl to calculate dependencies 
+test_multiply.o: test_multiply.f90
  
 #End of Makefile.dep
  
