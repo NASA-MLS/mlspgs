@@ -98,10 +98,10 @@ contains
          !        w0=dcmplx(dsin(x),dcos(x))                                   
          !        a0=cdcos(mx)/cdsin(mx)                                       
 
-         ! ....   for zvi f95                                                  
+         ! ....   for f95                                                  
 	      w9=cmplx(cos(x),-sin(x))                                              
-         w0=cmplx(sin(x),cos(x))                                               
-         a0=cos(mx)/sin(mx)                                                    
+              w0=cmplx(sin(x),cos(x))                                               
+              a0=cos(mx)/sin(mx)                                                    
 
          do i=1, nab                                                           
 
@@ -150,6 +150,9 @@ contains
 end module MieTheory
 
 ! $Log$
+! Revision 2.3  2003/10/09 16:24:05  jonathan
+! some cleaning
+!
 ! Revision 2.2  2003/10/09 16:21:48  jonathan
 ! some changes
 !
