@@ -134,16 +134,11 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     type(MatrixElement_T), pointer :: JBLOCK       ! A block from the jacobian
     integer :: COLJBLOCK                ! Column index in jacobian
     integer :: ROWJBLOCK                ! Row index in jacobian
-    integer :: XINSTANCE                ! Instance in x corresponding to xStarInstance
     integer :: noInstances              ! no of instance
-    integer :: noChans                  ! Dimension
     integer :: noMIFs                   ! Number of minor frames
     integer :: noSgrid                  ! no of elements in S grid
     integer :: noSurf                   ! Number of pressure levels
-    integer :: NQ1
-    integer :: NQ2                      ! no of quantities in extraModelIn
     integer :: NOFREQS                  ! Number of frequencies
-    integer :: noNonZero                ! Number of nonzero values in Jacobian
 
     integer :: chan
     integer :: i                        ! Loop counter
@@ -172,6 +167,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
     integer, dimension(:), pointer :: closestInstances 
 
+    integer :: WHICHChannel                           ! which single channel is used
     integer :: WHICHPATTERN                           ! Index of antenna pattern
     integer :: MAXSUPERSET                            ! Max. value of superset
     integer, dimension(:), pointer :: SUPERSET        ! Result of AreSignalsSuperset
@@ -187,12 +183,15 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     real(r8), dimension(:,:), pointer :: A_MASSMEANDIAMETER
     real(r8), dimension(:,:), pointer :: A_TOTALEXTINCTION
     real(r8), dimension(:,:), pointer :: VMRARRAY     ! The VMRs
-    real(r8), dimension(:), allocatable :: Slevl
+    real(r8), dimension(:), allocatable :: Slevl      ! S grid
+    real(r8), dimension(:), allocatable :: Zt         ! tangent height
     real (r8), dimension(:), pointer :: thisRatio     ! Sideband ratio values
 
     real(r8), dimension(:), pointer :: phi_fine       ! Fine resolution for phi 
     real(r8), dimension(:), pointer :: z_fine         ! Fine resolution for z
+    real(r8), dimension(:), pointer :: s_fine        ! Fine resolution for s
     real(r8), dimension(:), pointer :: ds_fine        ! Fine resolution for ds
+    real(r8), dimension(:), pointer :: w_fine        ! weight along s_fine
     real(r8) :: ds_tot                                ! Total length of all ds
 
     real(r8), dimension(:,:,:), allocatable  :: A_TRANS
@@ -401,13 +400,13 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     ! ----------------------------
     ! Get some basic dimensions
     ! ----------------------------
-    noChans = radiance%template%noChans
     noMIFs  = radiance%template%noSurfs
     noFreqs = size (signal%frequencies) ! Note: noFreq and noChans should be the same
     noSurf  = temp%template%noSurfs     ! Number of model layers
 
-    call allocate_test ( thisRatio, noChans, 'thisRatio', ModuleName )
+    call allocate_test ( thisRatio, noFreqs, 'thisRatio', ModuleName )
     call allocate_test ( doChannel, noFreqs, 'doChannel', ModuleName )
+    allocate(zt(noMifs))
 
     doChannel = .true.
     if ( associated ( signal%channels ) ) doChannel = signal%channels
@@ -549,7 +548,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     if (prt_log) print*, 'jacobian is true'
 
     !----------------------------
-    ! get state quantity type 
+    ! get state quantity type (need both ext and los quantities for Jacobians)
     !----------------------------
        state_ext => GetVectorQuantityByType(FwdModelIn,quantityType=l_cloudExtinction)
        state_los => GetVectorQuantityByType(FwdModelIn,quantityType=l_LosTransFunc)
@@ -585,6 +584,14 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
     ENDIF
 
+! get tangent height from tangent pressure
+      call InterpolateValues ( &
+        & reshape(temp%template%surfs,(/noSurf/)), &    ! Old X
+        & reshape(gph%values(:,instance),(/noSurf/)), &            ! Old Y
+        & reshape(ptan%values(:,maf),(/noMifs/)), &   ! New X
+        & zt, &                     ! New Y
+        & 'Linear' )
+
     !------------------------------------------
     ! Now call the full CloudForwardModel code
     !------------------------------------------
@@ -604,6 +611,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & WC,                                                                  &
       & int(sizeDistribution%values(:,instance)),                            &
       & 10.0**(-ptan%values(:,maf)),                                         &
+      & zt, &
       & earthradius%values(1,maf),                                           &
       & int(surfaceType%values(1, instance)),                                &
       & forwardModelConfig%cloud_der,                                        &
@@ -671,6 +679,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     do i=1, noFreqs
     if( doChannel(i) .and. FOUNDINFIRST ) then 
       FOUNDINFIRST = .false.
+      whichChannel = i
       if(associated(cloudExtinction)) &
         & cloudExtinction%values ( :, instance )    = a_cloudExtinction(:,i)
       if(associated(totalExtinction)) &
@@ -687,21 +696,30 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     !-----------------------
     ! Start output Jacobian
     !-----------------------
-    IF ( present(jacobian) ) THEN
 
     !-------------------------------------------------------
     ! Determine which retrieval is to be used
+    !    cloud_der = 0     high tangent height
+    !    cloud_der = 1     low tangent height
     !-------------------------------------------------------
+    doHighZt = .false.
+    doLowZt = .false.
+    if(forwardModelConfig%cloud_der == 0) doHighZt = .true.
+    if(forwardModelConfig%cloud_der == 1) doLowZt = .true.
+
       noInstances = state_ext%template%noInstances
 
     !--------------------------------------------
-    ! Jacobian for high tangent height retrieval
+    ! Jacobian for high tangent height retrieval (only one frequency)
     !--------------------------------------------
-    !doHighZt = present(jacobian) .and. (l_stateQ_type == l_cloudExtinction)
 
-    doHighZt = .false.
-    if (doHighZt) then      
-
+    if (doHighZt .and. present(jacobian)) then      
+    ! do not handle multiple signals and channels  
+      if(size(forwardModelConfig%signals) > 1 .and. size(doChannel) > 1) then
+         print*,'only one frequency and one signal is allowed'
+         stop
+      end if
+      
     ! Get dimension
       noSurf = state_ext%template%noSurfs
       
@@ -711,8 +729,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
       jBlock => jacobian%block(rowJblock,colJblock)
 
-      select case ( jBlock%kind )
-      case ( M_Absent )
         call CreateBlock ( jBlock, noMIFs, noSurf*noInstances, M_Full )
         jBlock%values = 0.0_r8
 
@@ -722,16 +738,17 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       nfine=100
       allocate( phi_fine(nfine*noInstances), stat=status )
       allocate( z_fine(nfine*noInstances), stat=status )
+      allocate( s_fine(nfine*noInstances), stat=status )
+      allocate( w_fine(nfine*noInstances), stat=status )
       allocate( ds_fine(nfine*noInstances), stat=status )
       
       do i=1,noInstances*nfine
        phi_fine(i) = minval(state_ext%template%phi(1,:)) + &
          & 1._r8*(i-1)/nfine/noInstances * &
          & (maxval(state_ext%template%phi(1,:)) - minval(state_ext%template%phi(1,:)))
-      end do 
+      end do
       
-      do mif = 1, noMIFs
-        
+      do mif = 1, noMIFs      
         !----------------------------------
         ! find intervals of stateQ at maf
         !----------------------------------
@@ -741,23 +758,42 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         !------------------------------
         ! find z for given phi_fine
         !------------------------------
-        z_fine = (earthradius%values(1,maf)+ &
-         & (ptan%values(mif,maf)+3.)*16.) / &
-         & cos((phi_fine - radiance%template%phi(mif,maf))*pi/180._r8) - &
+        z_fine = (earthradius%values(1,maf)+ zt(mif)) / &
+         & cos((phi_fine - radiance%template%phi(mif,maf))*Deg2Rad) - &
          & earthradius%values(1,maf)
-        z_fine = z_fine/16._r8 - 3._r8    ! convert back to log pressure
+         ! convert back to log tangent pressure
+         call InterpolateValues ( &
+            & reshape(gph%values(:,instance),(/noSurf/)), &            ! Old X
+            & reshape(temp%template%surfs,(/noSurf/)), &    ! Old Y
+            & z_fine, &   ! New X
+            & z_fine, &                     ! New Y
+            & 'Linear' )
 
         !--------------------------------
-        ! find ds for each (z,phi) pair
+        ! find ds and weight for each (z,phi) pair
         !--------------------------------
-        ds_fine = (earthradius%values(1,maf)+ &
-         & (ptan%values(mif,maf)+3.)*16.) / &
-         & cos((phi_fine - radiance%template%phi(mif,maf))*pi/180._r8)**2
+        s_fine = (earthradius%values(1,maf)+ zt(mif)) * &
+         & sin((phi_fine - radiance%template%phi(mif,maf))*Deg2Rad)
+        ds_fine(1:nfine*noInstances-1) = s_fine(2:nfine*noInstances) - &
+         & s_fine(1:nfine*noInstances-1)
+
+         call InterpolateValues ( &
+            & sLevl, &            ! Old X
+            & reshape(a_trans(:,mif,whichChannel),(/noSgrid/)), &    ! Old Y
+            & s_fine, &   ! New X
+            & w_fine, &                     ! New Y
+            & 'Linear' )
+            
+        ! ds needs to be weighted by transmission function
+        
+        ds_fine = ds_fine*w_fine
 
         !-----------------------------------------------
         ! find the total length for this tangent height
         !-----------------------------------------------
-        ds_tot = sum(ds_fine)
+        ds_tot = 2._r8*sqrt((earthradius%values(1,maf)+ & 
+            & state_ext%template%surfs(noSurf,instance))**2 - &
+            & (earthradius%values(1,maf)+zt(mif))**2)
 
         !----------------------------------------------------------
         ! determine weights by the length inside each state domain
@@ -772,25 +808,20 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
          end do
          end do
          end do 
-      end do
+      end do         ! mif
       
       Deallocate( phi_fine, stat=status )
       Deallocate( z_fine, stat=status )
       Deallocate( ds_fine, stat=status )
+      Deallocate( w_fine, stat=status )
+      Deallocate( s_fine, stat=status )
 
-      case default
-         call MLSMessage(MLSMSG_Error, ModuleName, &
-                 & "Invalid matrix block kind in CreateBlock")              
-      end select
-    end if
+    end if     ! doHighZt
 
     !--------------------------------------------
     ! Jacobian for low tangent height retrieval
     !--------------------------------------------
-    ! doLowZt = present(jacobian) .and. (l_stateQ_type == l_LosTransFunc)
-
-    doLowZt = .true.
-    if (doLowZt) then
+    if (doLowZt .and. present(jacobian)) then
     
         colJBlock = FindBlock ( Jacobian%col, state_los%index, maf )
         rowJBlock = FindBlock ( jacobian%row, radiance%index, maf)
@@ -799,10 +830,10 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         jBlock => jacobian%block(rowJblock,colJblock)
 
       ! to save space, the jacobian is packed in a full rectangle matrix
-        call CreateBlock ( jBlock, noChans, noSgrid*noMIFs, M_Full )
+        call CreateBlock ( jBlock, noFreqs, noSgrid*noMIFs, M_Full )
         jBlock%values = 0.0_r8
 
-        do chan = 1, noChans
+        do chan = 1, noFreqs
           if ( doChannel(chan) ) then
              do mif = 1, noMIFs
              do i=1,noSgrid
@@ -812,14 +843,11 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
                   & (frequencies(chan)/200000._r8)**4
              end do
              end do
+          end if  ! doChannel
+        end do    ! chan
 
+    endif      ! doLowZt
 
-          end if
-        end do
-
-    endif
-
-    ENDIF   
     !------------------------------
     ! End of output jacobian
     !------------------------------
@@ -851,7 +879,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
                           'closestInstances',             ModuleName )
 
     call Deallocate_test ( doChannel, 'doChannel',        ModuleName )
-
+    deallocate(zt)
     !--------------------------------------------
     ! End of sideband loop 
     !--------------------------------------------
@@ -874,6 +902,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.59  2001/10/11 17:01:11  jonathan
+! for (cloud/total)extinction/output one channel per band
+!
 ! Revision 1.58  2001/10/10 18:55:17  dwu
 ! why elevOffset is not maf-dependent?
 !
