@@ -12,4 +12,14 @@ begin Fill
     temperatureQuantity=state.temperature
   ;; Also do ptan
   Fill, quantity=state.ptanGHz, method=l2aux, sourceL2AUX=l2auxCorePtanInput
+  ;; Put the apriori back in the stratospheric h2o
 end Fill
+begin Retrieve
+  Subset, quantity=state.h2o, height=[68.0mb:0.00001mb], mask=fill
+end Retrieve
+begin Fill
+  Fill, quantity=state.h2o, method=vector, sourceQuantity=apriori.h2o
+end Fill
+begin Retrieve
+  Subset, quantity=state.h2o, mask=fill, /reset
+end Retrieve
