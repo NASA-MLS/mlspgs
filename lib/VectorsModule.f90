@@ -93,7 +93,6 @@ CONTAINS
     INTEGER :: accumulatedElements,qtySubVector,subVectorLen
 
     ! Executable code
-
     vectorTemplate%name=name
     vectorTemplate%noQuantities=SIZE(quantities)
     vectorTemplate%noSubVectors=SUM(quantities%noSubVectors)
@@ -150,7 +149,6 @@ CONTAINS
           accumulatedElements=accumulatedElements+subVectorLen
        END DO
     END DO
-    
   END SUBROUTINE ConstructVectorTemplate
 
   !---------------------------------------------------------------------------
@@ -219,7 +217,7 @@ CONTAINS
 
     IF (newSize>1) tempDatabase(1:newSize-1)=database
     tempDatabase(newSize)=vectorTemplate
-    DEALLOCATE(database)
+    IF (ASSOCIATED(database))DEALLOCATE(database)
     database=>tempDatabase
   END SUBROUTINE AddVectorTemplateToDatabase
 
@@ -314,7 +312,7 @@ CONTAINS
 
     IF (newSize>1) tempDatabase(1:newSize-1)=database
     tempDatabase(newSize)=vector
-    DEALLOCATE(database)
+    IF (ASSOCIATED(database))DEALLOCATE(database)
     database=>tempDatabase
   END SUBROUTINE AddVectorToDatabase
 
@@ -471,6 +469,9 @@ END MODULE VectorsModule
 
 !
 ! $Log$
+! Revision 1.9  2000/05/12 19:46:37  lungu
+! Removed INTENT from declaration of dummy argument database in DestroyVectorDatabase.
+!
 ! Revision 1.8  2000/04/14 20:27:43  vsnyder
 ! OOPS -- Replaced unspecified INTENT with INTENT(INOUT) -- see previous rev.
 !
