@@ -264,7 +264,6 @@ contains ! ============= Public Procedures ==========================
       end if
       call NullifyQuantityTemplate ( qt ) ! To avoid treading on one in database
     end do
-    print*,'Quantities:', vectorTemplate%quantities
   end function AdoptVectorTemplate
 
   ! -----------------------------------  Close_L2PC_File  -----
@@ -1731,6 +1730,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.70  2004/01/24 01:44:36  livesey
+! Removed print statement
+!
 ! Revision 2.69  2004/01/24 01:01:22  livesey
 ! Improvements to the adoption stuff
 !
