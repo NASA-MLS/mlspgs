@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module Gemv_M
@@ -29,8 +29,51 @@ module Gemv_M
       character          TRANS
       real               A( LDA, * ), X( * ), Y( * )
     end subroutine SGEMV
+    module procedure  SDGEMV, DSGEMV
   end interface
 
+  contains
+    subroutine SDGEMV ( TRANS, M, N, ALPHA, A, LDA, X, INCX, &
+        &                BETA, Y, INCY )
+    ! Matrix-vector product of mixed type
+      real               ALPHA, BETA
+      integer            INCX, INCY, LDA, M, N
+      character          TRANS
+      real               A( LDA, * )
+      double precision   X( * ), Y( * )
+      double precision, dimension(:,:), pointer :: A_DOUBLE
+      
+      if ( m <= 0 .or. n <= 0 ) return
+      allocate(a_double(m,n))
+      a_double = a(1:m, 1:n)
+      call dgemv(TRANS, m, n, alpha*1.d0, a_double, m, x, incx, &
+        & beta*1.d0, y, incy)
+      deallocate(a_double)
+    end subroutine SDGEMV
+  
+    subroutine DSGEMV ( TRANS, M, N, ALPHA, A, LDA, X, INCX, &
+        &                BETA, Y, INCY )
+    ! Matrix-vector product of mixed type
+      double precision               ALPHA, BETA
+      integer            INCX, INCY, LDA, M, N
+      character          TRANS
+      double precision               A( LDA, * )
+      real   X( * ), Y( * )
+      double precision, dimension(:), pointer :: X_DOUBLE, Y_DOUBLE
+      
+      if ( m <= 0 .or. n <= 0 ) return
+      allocate(y_double(m), x_double(n))
+      x_double = x(1:(n-1)*abs(incx)+1:incx)
+      y_double = y(1:(m-1)*abs(incy)+1:incy)
+      call dgemv(TRANS, m, n, alpha, a, m, x_double, incx, &
+        & beta, y_double, incy)
+      y(1:(m-1)*abs(incy)+1:incy) = y_double
+      deallocate(y_double, x_double)
+    end subroutine DSGEMV
+  
 end module Gemv_M
 
 !$Log$
+!Revision 1.1  2001/11/14 00:23:28  vsnyder
+!Initial commit
+!
