@@ -22,6 +22,11 @@ module ManipulateVectorQuantities ! Various routines for manipulating vectors
     & "$RCSfile$"
   !---------------------------------------------------------------------------
 
+  private
+
+  public :: FindClosestInstances, FindOneClosestInstance, &
+    & FindInstanceWindow, DoHGridsMatch, DoVGridsMatch
+
 contains
 
   ! ------------------------------ FindClosestInstances -----------------
@@ -190,6 +195,9 @@ contains
 end module ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.14  2002/06/12 16:53:32  livesey
+! Tidied up some public/private stuff
+!
 ! Revision 2.13  2002/06/12 16:50:39  livesey
 ! Added findInstanceWindow
 !
