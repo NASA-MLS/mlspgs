@@ -174,8 +174,11 @@ MODULE get_chi_out_m
 !
 END MODULE get_chi_out_m
 ! $Log$
+! Revision 2.5  2002/06/24 21:07:13  zvi
+! Bug fixing and correcting Log entries
+!
 ! Revision 2.4  2002/06/24 21:01:28  zvi
-! *** empty log message ***
+! Adding Grids_tmp stracture and modify calling sequences
 !
 ! Revision 1.0  2002/06/24 14:59:00  bill
 ! First release ...
