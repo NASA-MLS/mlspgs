@@ -96,7 +96,7 @@ contains ! =====     Public Procedures     =============================
     logical :: TIMING                   ! Flag
     real :: T1                          ! Time we started
     real :: T2                          ! Time we finished
-
+    logical :: namedFile                ! set true if DirectWrite named file
     integer :: I
     logical :: DEEBUG
     
@@ -187,9 +187,13 @@ contains ! =====     Public Procedures     =============================
                 ! Pretend we're given permission to write to each of the files
                 do dbIndex=1, size(DirectdataBase)
                   if ( DirectDataBase(dbIndex)%autoType < 1 ) cycle
+                  if(DEEBUG)print*,'DirectWrite to ', &
+                    & trim(DirectDataBase(dbIndex)%fileNameBase)
                   call DirectWriteCommand ( son, ticket, vectors, &
                     & DirectdataBase, chunkNo, chunks, &
-                    & theFile=DirectDataBase(dbIndex)%fileNameBase )
+                    & theFile=DirectDataBase(dbIndex)%fileNameBase, &
+                    & namedFile=namedFile )
+                  if ( namedFile ) exit
                 enddo
               else
                 call DirectWriteCommand ( son, ticket, vectors, &
@@ -273,7 +277,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------------ DirectWriteCommand -----
   subroutine DirectWriteCommand ( node, ticket, vectors, DirectDataBase, &
-    & chunkNo, chunks, makeRequest, create, theFile, noExtraWrites )
+    & chunkNo, chunks, makeRequest, create, theFile, noExtraWrites, namedFile )
     ! Imports
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use DirectWrite_m, only: DirectData_T, &
@@ -324,6 +328,7 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in), optional :: CREATE       ! Set if slave is to create file.
     character(len=*), intent(in), optional :: THEFILE  ! Which file permission granted for
     integer, intent(out), optional :: NOEXTRAWRITES ! How many extras if distributing
+    logical, intent(out), optional :: namedFile ! Did it name the file?
     ! Local parameters
     integer, parameter :: MAXFILES = 1000 ! Set for an internal array
     ! Saved variable - used to work out the createFile flag in the serial case
@@ -362,7 +367,8 @@ contains ! =====     Public Procedures     =============================
     character(len=256), dimension(:), pointer :: NAMEBUFFER
     integer :: NEXTFILE
     integer :: NOSOURCES                ! No. things to output
-    integer :: NumPermitted             ! No. things to output
+    integer :: NumPermitted             ! No. things permitted to output
+    integer :: NumOutput                ! No. things actually output
     integer :: OUTPUTTYPE               ! l_l2gp, l_l2aux, l_l2fwm, l_l2dgg
     character(len=1024) :: PATH         ! path/file_base
     integer :: record_length
@@ -404,6 +410,7 @@ contains ! =====     Public Procedures     =============================
     hdfVersion = DEFAULT_HDFVERSION_WRITE
     file = 0
     filename = 'undefined'
+    if ( present(namedFile) ) namedFile = .false.
     do keyNo = 2, nsons(node)           ! Skip DirectWrite command
       son = subtree ( keyNo, node )
       if ( keyNo > 2 ) lastFieldIndex = fieldIndex
@@ -423,6 +430,7 @@ contains ! =====     Public Procedures     =============================
         hdfVersion = exprValue(1)
       case ( f_file )
         file = sub_rosa(subtree(2,son))
+        if ( present(namedFile) ) namedFile = .true.
       case ( f_type )
         outputType = decoration(subtree(2,son))
       end select
@@ -743,6 +751,7 @@ contains ! =====     Public Procedures     =============================
       endif
       ! Loop over the quantities to output
       NumPermitted = 0
+      NumOutput = 0
       do source = 1, noSources
         ! At this point we're ready to write the data
         ! Make certain that the sources match the permitted file
@@ -793,6 +802,7 @@ contains ! =====     Public Procedures     =============================
           call DirectWrite_l2GP ( handle, qty, precQty, hdfName, chunkNo, &
             & hdfVersion, filename=filename, &
             & createSwath=(.not. createThisSource(source)) )
+          NumOutput= NumOutput + 1
           if ( outputType == l_l2dgg ) then
             filetype=l_l2dgg
           else
@@ -808,6 +818,7 @@ contains ! =====     Public Procedures     =============================
           ! a real pain.  I wish I never want down that road!
           call DirectWrite_L2Aux ( handle, qty, precQty, hdfName, hdfVersion, &
             & chunkNo, chunks )
+          NumOutput = NumOutput + 1
           filetype=l_hdf
         case default
           call output('outputType: ', advance='no')
@@ -817,6 +828,10 @@ contains ! =====     Public Procedures     =============================
         end select
       end do ! End loop over swaths/sds
       
+      if ( DEEBUG ) then
+        print *, 'Num permitted to ', trim(FileName), ' ', NumPermitted
+        print *, 'Num actually output ', NumOutput
+      endif
       if ( NumPermitted < 1 ) then
         if ( parallel%slave) then
           call Announce_Error ( son, no_error_code, &
@@ -827,12 +842,14 @@ contains ! =====     Public Procedures     =============================
         else
           ! But did we claim we were created this file? If so, decrement
           if ( createFileFlag ) noCreatedFiles = noCreatedFiles - 1
-          print *, 'No sources written to ', trim(FileName)
-          print *, 'FileAccess ', FileAccess
-          print *, 'hdfVersion ', hdfVersion
-          print *, 'myFile ', myFile
-          print *, 'createFileFlag ', createFileFlag
-          print *, 'noCreatedFiles ', noCreatedFiles
+          if ( DEEBUG ) then
+            print *, 'No sources written to ', trim(FileName)
+            print *, 'FileAccess ', FileAccess
+            print *, 'hdfVersion ', hdfVersion
+            print *, 'myFile ', myFile
+            print *, 'createFileFlag ', createFileFlag
+            print *, 'noCreatedFiles ', noCreatedFiles
+          endif
         endif
         call Deallocate_test ( sourceVectors, 'sourceVectors', ModuleName )
         call Deallocate_test ( sourceQuantities, 'sourceQuantities', ModuleName )
@@ -1683,6 +1700,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.104  2004/02/10 19:28:36  pwagner
+! Prevents named DirectWrites from being looped over
+!
 ! Revision 2.103  2004/02/05 23:40:35  pwagner
 ! More bugs fixed in automatic directwrites
 !
