@@ -97,8 +97,8 @@ contains
     integer, parameter :: NotPlain = needJacobian + 1  ! Not a "plain" matrix
     integer, parameter :: PerturbationNotState = NotPlain + 1 ! Ptb. not same as state
 
-    if ( toggle(gen) ) call trace_begin ( "SIDS", root )
-    call time_now ( t1 )
+      if ( toggle(gen) ) call trace_begin ( "SIDS", root )
+      call time_now ( t1 )
 
     nullify ( configs, perturbation )
 
@@ -148,7 +148,7 @@ contains
         &         configDatabase(configs)%spect_Der, &
         &         configDatabase(configs)%temp_der/) ) ) then
         call announceError ( needJacobian )
-      endif
+      end if
     end if
 
     ! Setup some stuff for the case where we're doing numerical derivatives.
@@ -156,7 +156,7 @@ contains
       if ( perturbation%template%id /= fwdModelIn%template%id ) then
         call AnnounceError ( perturbationNotState )
         stop
-      endif
+      end if
       quantity = 1
       instance = 1
       element = 0
@@ -165,7 +165,7 @@ contains
       ! Alternatively do simple one shot run.
       loopEnd = 1
       doThisOne = .true.
-    endif
+    end if
 
     ! Now have a possible loop over state vector elements, applying corrections.
     do i = 1, loopEnd
@@ -186,7 +186,7 @@ contains
             doThisOne=.true.
           else
             doThisOne=.false.
-          endif
+          end if
         end if
       end if
 
@@ -208,13 +208,12 @@ contains
           if (configDatabase(configs(config))%skipOverlaps) then
             maf1 = maf1 + chunk%noMAFsLowerOverlap
             maf2 = maf2 - chunk%noMAFsUpperOverlap
-          endif
+          end if
             
           ! Loop over mafs
           do maf = maf1, maf2
             fmStat%maf = maf
-            call add_to_retrieval_timing( 'sids', t1 )
-            call time_now ( t1 )
+              call add_to_retrieval_timing( 'sids', t1 )
             if ( ixJacobian > 0 .and. .not. associated(perturbation)) then
               call forwardModel ( configDatabase(configs(config)), &
                 & FwdModelIn, FwdModelExtra, &
@@ -226,9 +225,7 @@ contains
             end if
           end do                        ! MAF loop
 
-!          ForwardModel itself calls add_to_retrieval_timing
-!          call add_to_retrieval_timing( 'forward_model', t1 )
-          call time_now ( t1 )
+            call add_to_retrieval_timing( 'forward_model', t1 )
 
           ! Destroy jacobian if asked to
           if (destroyJacobian .and. ixJacobian > 0 ) then
@@ -237,7 +234,7 @@ contains
               & STAT=status )
             if ( status /= 0 ) call MLSMessage (MLSMSG_Error, ModuleName, &
               & MLSMSG_Allocate//'jacobian%block' )
-          endif
+          end if
         end do                          ! Forward model config loop
 
         ! Tidy up the intermediate/status stuff from the model
@@ -274,8 +271,8 @@ contains
 
               end if                    ! Anything to place?
             end do                      ! Loop over rows
-          endif                         ! Not very first run
-        endif                           ! Doing perturbation.
+          end if                         ! Not very first run
+        end if                           ! Doing perturbation.
 
       end if                            ! Do this element
 
@@ -304,11 +301,10 @@ contains
       call DestroyVectorInfo ( deviation )
     end if
 
-    if ( toggle(gen) ) call trace_end ( "SIDS" )
+      if ( toggle(gen) ) call trace_end ( "SIDS" )
 
     call deallocate_test ( configs, 'configs', ModuleName )
-    call add_to_retrieval_timing( 'sids', t1 )
-    call time_now ( t1 )
+      call add_to_retrieval_timing( 'sids', t1 )
 
   contains
     ! --------------------------------------------  AnnounceError  -----
@@ -337,6 +333,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.40  2002/09/18 23:56:01  vsnyder
+! Call time_now at end of add_to_retrieval_timing
+!
 ! Revision 2.39  2002/01/09 00:51:05  livesey
 ! Allow fwdModelExtra to be omitted, a different way
 !
