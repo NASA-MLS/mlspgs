@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module OBTAIN_MLSCF
@@ -33,10 +33,6 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: CF_Unit
     integer, intent(out) :: return_status
 
-    character (LEN=32) :: MNEMONIC
-    character (LEN=256) :: MSG
-!    integer :: RETURN_STATUS
-
     error = 0
 !    return_Status = Pgs_io_gen_closeF ( CF_Unit )
 
@@ -56,13 +52,9 @@ contains ! =====     Public Procedures     =============================
     integer, intent(out) :: CF_Unit
     integer, intent(out) :: return_status
 
-    integer :: L2CF_VERSION
     integer :: record_length
-    character (LEN=32) :: MNEMONIC
-    character (LEN=256) :: MSG
 
     error = 0
-    L2CF_Version = 1
 !    return_Status = Pgs_io_gen_openF ( MLSPCF_Start, PGSd_IO_Gen_RSeqFrm, &
 !                                      0, CF_Unit, L2CF_Version)
 
@@ -103,20 +95,17 @@ contains ! =====     Public Procedures     =============================
  
     if ( .not. just_print_it ) then
       error = max(error,1)
-      call output ( '***** At ' )
-
       if ( lcf_where > 0 ) then
-          call print_source ( source_ref(lcf_where) )
-      else
-        call output ( '(no lcf node available)' )
-      end if
+        call output ( '***** At ' )
 
-      call output ( ': ' )
-      call output ( "The " );
-      if ( lcf_where > 0 ) then
+        call print_source ( source_ref(lcf_where) )
+
+        call output ( ': ' )
+        call output ( "The " )
         call dump_tree_node ( lcf_where, 0 )
+
       else
-        call output ( '(no lcf tree available)' )
+        call output ( 'Your choice of lcf or other events' )
       end if
 
       call output ( " Caused the following error: ", advance='yes', &
@@ -144,6 +133,9 @@ contains ! =====     Public Procedures     =============================
 end module OBTAIN_MLSCF
 
 ! $Log$
+! Revision 2.9  2002/01/09 00:00:04  pwagner
+! Replaced write or print statements with calls to output
+!
 ! Revision 2.8  2001/07/18 23:57:57  pwagner
 ! Returns error from close_mlscf
 !
