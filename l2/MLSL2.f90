@@ -84,7 +84,14 @@ program MLSL2
         case ( 'a' ); toggle(syn) = .true.
         case ( 'c' ); toggle(con) = .true.
         case ( 'd' ); do_dump = .true.
-        case ( 'e' ); toggle(emit) = .true.
+        case ( 'e' )
+          toggle(emit) = .true.
+          if ( j < len(line) ) then
+            if ( line(j+1:j+1) >= '0' .and. line(j+1:j+1) <= '9' ) then
+              j = j + 1
+              levels(emit) = ichar(line(j:j)) - ichar('0')
+            end if
+          end if
         case ( 'f' )
           toggle(emit) = .true.
           levels(emit) = 0
@@ -111,7 +118,8 @@ program MLSL2
           print *, '  -a: Dump the decorated type-checked abstract syntax tree.'
           print *, '  -c: Trace expression evaluation and tree decoration.'
           print *, '  -d: Dump the declaration table after type checking'
-          print *, '  -e: Turn on the "emit" toggle'
+          print *, '  -e[digit]: Turn on the "emit" toggle.  Bigger digit means ', &
+            &                    'more output.'
           print *, '  -f[digit]: Trace Forward model.  Bigger digit means ', &
             &                    'more output.'
           print *, '  -g[digit]: Trace "generation".  Bigger digit means ', &
@@ -241,6 +249,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.27  2001/04/28 01:44:47  vsnyder
+! Provide to set levels(emit)
+!
 ! Revision 2.26  2001/04/27 20:59:16  vsnyder
 ! Change -G option to -S
 !
