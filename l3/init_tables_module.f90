@@ -70,14 +70,13 @@ module INIT_TABLES_MODULE
   integer, public :: LIT_INDICES(first_lit:last_lit)
 ! Parameter names:
   ! In GlobalSettings section:
-  integer, public, parameter :: P_L2_VER = 1
-  integer, public, parameter :: P_LOG_TYPE = 2
-  integer, public, parameter :: P_MAX_GAP = 3
-  integer, public, parameter :: P_MIN_DAYS = 4
-  integer, public, parameter :: P_N = 5
-  integer, public, parameter :: P_OUTPUT_VERSION_STRING = 6
-  integer, public, parameter :: P_VERSION_COMMENT = 7
-  integer, public, parameter :: FIRST_PARM = P_L2_VER
+  integer, public, parameter :: P_LOG_TYPE = 1
+  integer, public, parameter :: P_MAX_GAP = 2
+  integer, public, parameter :: P_MIN_DAYS = 3
+  integer, public, parameter :: P_N = 4
+  integer, public, parameter :: P_OUTPUT_VERSION_STRING = 5
+  integer, public, parameter :: P_VERSION_COMMENT = 6
+  integer, public, parameter :: FIRST_PARM = P_LOG_TYPE
   integer, public, parameter :: LAST_PARM = P_VERSION_COMMENT
   integer, public :: PARM_INDICES(first_parm:last_parm)
 ! Section identities:
@@ -147,7 +146,6 @@ contains ! =====     Public procedures     =============================
     field_indices(f_rangwavnum) =           add_ident ( 'rangWavenumber' )
     field_indices(f_time) =                 add_ident ( 'timeD' )
     ! Put parameter names into the symbol table
-    parm_indices(p_l2_ver) =                add_ident ( 'L2Ver' )
     parm_indices(p_log_type) =              add_ident ( 'LogType' )
     parm_indices(p_max_gap) =               add_ident ( 'MaxGap' )
     parm_indices(p_min_days) =              add_ident ( 'MinDays' )
@@ -242,7 +240,6 @@ contains ! =====     Public procedures     =============================
     call make_tree ( (/ &
       begin, z+z_globalsettings, &
              begin, p+p_version_comment, t+t_string, n+n_name_def, &
-             begin, p+p_l2_ver, t+t_string, n+n_name_def, &
              begin, p+p_output_version_string, t+t_string, n+n_name_def, &
              begin, p+p_log_type, t+t_string, n+n_name_def, &
              begin, p+p_min_days, t+t_numeric, n+n_name_def, &
@@ -316,6 +313,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 1.4  2001/01/18 16:53:25  nakamura
+! Moved minDays from PCF to cf.
+!
 ! Revision 1.3  2001/01/16 17:53:03  nakamura
 ! Added a template for the log file name to GlobalSettings.
 !
