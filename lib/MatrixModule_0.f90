@@ -985,14 +985,14 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in), optional :: Clear   ! Clear below diagonal
     integer, intent(out), optional :: Status ! Index of zero diagonal, else 0
 
-  !{Let $u_{ij}$ be an element of $U$ and $t_{ij}$ be an element of $U^{-1}$.
-  ! To invert $U$, solve $\sum_{l=i}^j t_{il} u_{lj} = \delta_{ij}$ for
-  ! $t_{ij}$.  (The index of summation $l$ runs from $i$ to $j$ instead of
-  ! from $1$ to $n$ because we know that $U$ and $U^{-1}$ are triangular.) 
-  ! This gives $t_{ii} = u_{ii}^{-1}$ (for $i = j$) and  $t_{ij} = - \left (
-  ! \sum_{l=i}^{j-1} t_{il} u_{lj} \right ) u_{jj}^{-1}$ (for $i < j$).  We
-  ! compute the diagonal elements of $U^{-1}$ first, giving the following
-  ! algorithm:
+  !{Let $u_{ij}$ be an element of $\bf U$ and $t_{ij}$ be an element of
+  ! ${\bf U}^{-1}$. To invert $\bf U$, solve $\sum_{l=i}^j t_{il} u_{lj} =
+  ! \delta_{ij}$ for $t_{ij}$.  (The index of summation $l$ runs from $i$ to
+  ! $j$ instead of from $1$ to $n$ because we know that $\bf U$ and ${\bf
+  ! U}^{-1}$ are triangular.)  This gives $t_{ii} = u_{ii}^{-1}$ (for $i =
+  ! j$) and  $t_{ij} = - \left ( \sum_{l=i}^{j-1} t_{il} u_{lj} \right )
+  ! u_{jj}^{-1}$ (for $i < j$).  We compute the diagonal elements of
+  ! $U^{-1}$ first, giving the following algorithm:
   !
   ! \hspace*{0.5in}$t_{ii} := u_{ii}^{-1}~~ i = 1,~ \dots,~ n$\\
   ! \hspace*{0.5in}$\left \{ t_{ij} := -\left ( \sum_{l=i}^{j-1} t_{il} u_{lj}
@@ -2757,6 +2757,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.66  2002/02/23 02:34:10  vsnyder
+! Fix the LaTeX for InvertDenseCholesky
+!
 ! Revision 2.65  2002/02/23 02:13:16  vsnyder
 ! Check for absent blocks before checking shapes
 !
