@@ -231,6 +231,9 @@ contains ! ===================================== Public Procedures =====
         call output ( mafRange(1) )              
         call output ( ' : ' )
         call output ( mafRange(2), advance='yes' )
+        call output ( 'Method: ' )
+        call display_string ( lit_indices(config%method), &
+          &             strip=.true., advance='yes' )
       endif
     endif
 
@@ -585,6 +588,8 @@ contains ! ===================================== Public Procedures =====
       character(len=NAME_LEN) ::         MAF_start, tp_angle
       ! Executable code
 
+      if ( index ( switches, 'chu' ) /= 0 ) &
+        & call output('Entering Orbital Chunk Divide', advance='yes')
       ! Read in the data we're going to need
       call get_string ( lit_indices(config%homeModule), modNameStr, strip=.true. )
       if ( LEVEL1_HDFVERSION /= WILDCARDHDFVERSION ) then
@@ -600,11 +605,19 @@ contains ! ===================================== Public Procedures =====
       tp_angle = AssembleL1BQtyName ( trim(modNameStr)//'.tpGeodAngle', &
         & l1b_hdf_version, &
         & .false. )
+      if ( index ( switches, 'chu' ) /= 0 ) &
+        & call output('Reading Geod Angle', advance='yes')
       call ReadL1BData ( l1bInfo%l1bOAId, trim(tp_angle), &
         & tpGeodAngle, noMAFsRead, flag, hdfVersion=l1b_hdf_version , &
         & dontPad=DONTPAD )
+      if ( index ( switches, 'chu' ) /= 0 ) &
+        & call output('1st smoothing', advance='yes')
       call smoothOutDroppedMAFs(tpGeodAngle%dpField)
+      if ( index ( switches, 'chu' ) /= 0 ) &
+        & call output('2nd smoothing', advance='yes')
       call smoothOutDroppedMAFs(tpGeodAngle%dpField, monotonize=.true.)
+      if ( index ( switches, 'chu' ) /= 0 ) &
+        & call output('Reading tai Time', advance='yes')
       call ReadL1BData ( l1bInfo%l1bOAId, trim(MAF_start), &
         & taiTime, noMAFsRead, flag, hdfVersion=l1b_hdf_version , &
         & dontPad=DONTPAD )
@@ -1924,13 +1937,16 @@ contains ! ===================================== Public Procedures =====
             ! Read the tangent point altitude
             call ReadL1BData ( l1bInfo%l1boaID, trim(tp_alt), &
               & tpGeodAlt, noMAFsRead, flag, hdfVersion=l1b_hdf_version , &
+              & firstMAF=mafRange(1), lastMAF=mafRange(2), &
               & dontPad=DONTPAD )
             ! Read the out of plane distance
             call ReadL1BData ( l1bInfo%l1boaID, trim(tp_orby), &
               & tpOrbY, noMAFsRead, flag, hdfVersion=l1b_hdf_version , &
+              & firstMAF=mafRange(1), lastMAF=mafRange(2), &
               & dontPad=DONTPAD )
             call ReadL1BData ( l1bInfo%l1boaID, trim(tp_angle), &
               & tpGeodAngle, noMAFsRead, flag, hdfVersion=l1b_hdf_version , &
+              & firstMAF=mafRange(1), lastMAF=mafRange(2), &
               & dontPad=DONTPAD )
             call smoothOutDroppedMAFs(tpGeodAngle%dpField, angleWasSmoothed, &
               & monotonize=.true.)
@@ -2192,6 +2208,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.57  2004/12/14 21:43:33  pwagner
+! Repaired bug in reading mafRange rather than all mafs
+!
 ! Revision 2.56  2004/11/03 17:19:09  livesey
 ! Bug fix in case where only one chunk
 !
