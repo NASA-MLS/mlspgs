@@ -14,9 +14,9 @@ module Fill                     ! Create vectors and fill them.
     & F_GEOCALTITUDEQUANTITY, F_EARTHRADIUS, F_EXPLICITVALUES, &
     & F_EXTINCTION, F_FRACTION, F_H2OQUANTITY, F_LOSQTY,&
     & F_dontMask, F_IGNORENEGATIVE, F_IGNOREZERO, &
-    & F_INTEGRATIONTIME, F_INTERPOLATE, F_INVERT, F_INTRINSIC, F_LENGTHSCALE, &
-    & F_MATRIX, F_MAXITERATIONS, F_METHOD, &
-    & F_MEASUREMENTS, F_MODEL, F_MULTIPLIER, F_NOFINEGRID, F_PTANQUANTITY, &
+    & F_INTEGRATIONTIME, F_INTERPOLATE, F_INVERT, F_INTRINSIC, F_ISPRECISION, &
+    & F_LENGTHSCALE, F_MATRIX, F_MAXITERATIONS, F_METHOD, F_MEASUREMENTS, &
+    & F_MODEL, F_MULTIPLIER, F_NOFINEGRID, F_PRECISION,  F_PTANQUANTITY, &
     & F_QUANTITY, F_RADIANCEQUANTITY, F_RATIOQUANTITY, F_REFGPHQUANTITY, &
     & F_RESETSEED, F_Rows, F_SCECI, F_SCVEL, F_SEED, F_SOURCE, F_SOURCEGRID, &
     & F_SOURCEL2AUX, F_SOURCEL2GP, F_SOURCEQUANTITY, F_SOURCEVGRID, &
@@ -41,7 +41,8 @@ module Fill                     ! Create vectors and fill them.
   use Intrinsic, only: &
     & PHYQ_Dimensionless, PHYQ_Invalid, PHYQ_Temperature, &
     & PHYQ_Time, PHYQ_Length
-  use L1BData, only: DeallocateL1BData, FindL1BData, L1BData_T, ReadL1BData
+  use L1BData, only: DeallocateL1BData, FindL1BData, L1BData_T, ReadL1BData, &
+    & PRECISIONSUFFIX
   use L2GPData, only: L2GPData_T
   use L2AUXData, only: L2AUXData_T
   use L3ASCII, only: L3ASCII_INTERP_FIELD
@@ -75,7 +76,7 @@ module Fill                     ! Create vectors and fill them.
   use VectorsModule, only: AddVectorToDatabase, &
     & ClearUnderMask, CopyVector, CreateMask, CreateVector, &
     & DestroyVectorInfo, Dump, &
-    & GetVectorQtyByTemplateIndex, isVectorQtyMasked, &
+    & GetVectorQtyByTemplateIndex, isVectorQtyMasked, MaskVectorQty, &
     & rmVectorFromDatabase, ValidateVectorQuantity, Vector_T, &
     & VectorTemplate_T, VectorValue_T
   use VGridsDatabase, only: VGRID_T
@@ -196,6 +197,7 @@ contains ! =====     Public Procedures     =============================
     type (vectorValue_T), pointer :: QUANTITY ! Quantity to be filled
     type (vectorValue_T), pointer :: GEOCALTITUDEQUANTITY
     type (vectorValue_T), pointer :: H2OQUANTITY
+    type (vectorValue_T), pointer :: PRECISIONQUANTITY
     type (vectorValue_T), pointer :: RADIANCEQUANTITY
     type (vectorValue_T), pointer :: RATIOQUANTITY
     type (vectorValue_T), pointer :: REFGPHQUANTITY
@@ -223,6 +225,7 @@ contains ! =====     Public Procedures     =============================
     integer :: EARTHRADIUSVECTORINDEX
     integer :: Diagonal                 ! Index of diagonal vector in database
     !                                     -- for FillCovariance
+    logical :: DONTMASK                 ! Use even masked values if TRUE
     integer :: ERRORCODE                ! 0 unless error; returned by called routines
     logical :: Extinction               ! Flag for cloud extinction calculation
     integer :: FIELDINDEX               ! Entry in tree
@@ -238,7 +241,6 @@ contains ! =====     Public Procedures     =============================
     integer :: H2OVECTORINDEX           ! In the vector database
     integer :: I, J                     ! Loop indices for section, spec, expr
   !  The next three are FALSE by default
-    logical :: DONTMASK                 ! Use even masked values if TRUE
     integer :: GLOBALUNIT               ! To go into the vector
     logical :: IGNOREZERO               ! Don't sum chi^2 at values of noise = 0
     logical :: IGNORENEGATIVE           ! Don't sum chi^2 at values of noise < 0
@@ -246,6 +248,7 @@ contains ! =====     Public Procedures     =============================
     logical :: INTERPOLATE              ! Flag for l2gp etc. fill
     integer :: INSTANCE                 ! Loop counter
     logical :: INVERT                   ! "Invert the specified covariance matrix"
+    logical :: ISPRECISION              ! l1b precision, not radiances if TRUE
     integer :: KEY                      ! Definitely n_named
     integer :: L2AUXINDEX               ! Index into L2AUXDatabase
     integer :: L2GPINDEX                ! Index into L2GPDatabase
@@ -266,6 +269,8 @@ contains ! =====     Public Procedures     =============================
     integer :: PTANVECTORINDEX          !
     integer :: PTANQTYINDEX             !
     integer :: QUANTITYINDEX            ! Within the vector
+    integer :: PRECISIONQUANTITYINDEX   ! For precision quantity
+    integer :: PRECISIONVECTORINDEX     ! For precision quantity
     integer :: RADIANCEQUANTITYINDEX    ! For radiance quantity
     integer :: RADIANCEVECTORINDEX      ! For radiance quantity
     integer :: RATIOQUANTITYINDEX       ! in the quantities database
@@ -341,14 +346,15 @@ contains ! =====     Public Procedures     =============================
         key = son
         vectorName = 0
       end if
-      spread = .false.
-      interpolate = .false.
-      extinction = .false.
       dontMask = .false.
+      extinction = .false.
+      got= .false.
       ignoreZero = .false.
       ignoreNegative = .false.
-      got= .false.
+      interpolate = .false.
+      isPrecision = .false.
       resetSeed = .false.
+      spread = .false.
       switch2intrinsic = .false.
       seed = 0
       noFineGrid = 1
@@ -496,6 +502,8 @@ contains ! =====     Public Procedures     =============================
             end if
           case ( f_intrinsic )
             switch2intrinsic = get_boolean ( gson )
+          case ( f_isPrecision )
+            isPrecision = get_boolean ( gson )
           case ( f_losQty ) ! For losGrid fill
             losVectorIndex = decoration(decoration(subtree(1,gson)))
             losQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -519,6 +527,9 @@ contains ! =====     Public Procedures     =============================
             if ( all(unitAsArray(1) /= (/PHYQ_Dimensionless,PHYQ_Invalid/)) ) &
               & call Announce_error ( key, badUnitsForMaxIterations )
             noFineGrid = valueAsArray(1)
+          case ( f_precision )      ! For masking l1b radiances
+            precisionVectorIndex = decoration(decoration(subtree(1,gson)))
+            precisionQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_PtanQuantity ) ! For losGrid fill
             PtanVectorIndex = decoration(decoration(subtree(1,gson)))
             PtanQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -850,7 +861,15 @@ contains ! =====     Public Procedures     =============================
             & vectors(vectorIndex)%globalUnit )
 
         case ( l_l1b ) ! --------------------  Fill from L1B data  -----
-          call FillVectorQuantityFromL1B ( key, quantity, chunks(chunkNo), l1bInfo )
+          if ( got(f_precision) ) then
+            precisionQuantity => GetVectorQtyByTemplateIndex( &
+            & vectors(precisionVectorIndex), precisionQuantityIndex )
+            call FillVectorQuantityFromL1B ( key, quantity, chunks(chunkNo), &
+              & l1bInfo, isPrecision, precisionQuantity )
+          else
+            call FillVectorQuantityFromL1B ( key, quantity, chunks(chunkNo), &
+              & l1bInfo, isPrecision )
+          endif
 
         case default
           call Announce_error ( key, 0, 'This fill method not yet implemented' )
@@ -2388,16 +2407,20 @@ contains ! =====     Public Procedures     =============================
   end subroutine ExplicitFillVectorQuantity
 
   ! ----------------------------------------- FillVectorQuantityFromL1B ----
-  subroutine FillVectorQuantityFromL1B ( root, quantity, chunk, l1bInfo )
+  subroutine FillVectorQuantityFromL1B ( root, quantity, chunk, l1bInfo, &
+  & isPrecision, PrecisionQuantity )
     integer, intent(in) :: root
-    type (VectorValue_T), INTENT(INOUT) :: QUANTITY
-    type (MLSChunk_T), INTENT(IN) :: CHUNK
-    type (l1bInfo_T), INTENT(IN) :: L1BINFO
+    type (VectorValue_T), INTENT(INOUT) ::        QUANTITY
+    type (MLSChunk_T), INTENT(IN) ::              CHUNK
+    type (l1bInfo_T), INTENT(IN) ::               L1BINFO
+    logical, intent(in)               ::          ISPRECISION
+    type (VectorValue_T), INTENT(IN), optional :: PRECISIONQUANTITY
 
     ! Local variables
     character (len=80) :: NAMESTRING
     integer :: fileID, FLAG, NOMAFS
     type (l1bData_T) :: L1BDATA
+    integer :: ROW, COLUMN
 
     ! Executable code
 
@@ -2427,6 +2450,8 @@ contains ! =====     Public Procedures     =============================
       call Announce_Error ( root, cantFillFromL1B )
     end select
 
+   if ( isPrecision ) nameString = trim(nameString) // PRECISIONSUFFIX
+
     call ReadL1BData ( fileID , nameString, l1bData, noMAFs, flag, &
       & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
     ! We'll have to think about `bad' values here .....
@@ -2437,6 +2462,21 @@ contains ! =====     Public Procedures     =============================
     end if
     quantity%values = RESHAPE(l1bData%dpField, &
       & (/ quantity%template%instanceLen, quantity%template%noInstances /) )
+    if ( isPrecision ) then
+      do column=1, size(quantity%values(1, :))
+        do row=1, size(quantity%values(:, 1))
+          if ( quantity%values(row, column) < 0.d0 ) &
+          & call MaskVectorQty(quantity, row, column)
+        enddo
+      enddo
+    elseif ( present(precisionQuantity) ) then
+      do column=1, size(quantity%values(1, :))
+        do row=1, size(quantity%values(:, 1))
+          if ( isVectorQtyMasked(precisionQuantity, row, column) ) &
+          & call MaskVectorQty(quantity, row, column)
+        enddo
+      enddo
+    endif
     call DeallocateL1BData(l1bData)
 
     if (toggle(gen) ) call trace_end( "FillVectorQuantityFromL1B" )
@@ -2787,6 +2827,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.94  2001/10/23 16:38:09  pwagner
+! Fill from l1b can fill precision, set mask
+!
 ! Revision 2.93  2001/10/19 23:42:50  pwagner
 ! Applies multipliers to chi^2 fills, too
 !
