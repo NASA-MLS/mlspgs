@@ -967,7 +967,7 @@ contains ! ============= Public procedures ===================================
       L_DNWT_DXN, L_DNWT_DXNL, L_DNWT_FLAG, L_DNWT_FNMIN, &
       L_DNWT_FNORM, L_DNWT_GDX, L_DNWT_GFAC, &
       L_DNWT_GRADN, L_DNWT_SQ, L_DNWT_SQT,&
-      L_EARTHREFL, L_ECRTOFOV, L_EFFECTIVEOPTICALDEPTH, &
+      L_EARTHRADIUS, L_EARTHREFL, L_ECRTOFOV, L_EFFECTIVEOPTICALDEPTH, &
       L_ELEVOFFSET, L_EXTINCTION, &
       L_FIELDAZIMUTH, L_FIELDELEVATION, L_FIELDSTRENGTH, &
       L_GPH, L_HEIGHTOFFSET, &
@@ -975,13 +975,13 @@ contains ! ============= Public procedures ===================================
       L_LIMBSIDEBANDFRACTION, L_LOSTRANSFUNC, L_LOSVEL, &
       L_MASSMEANDIAMETERICE, L_MASSMEANDIAMETERWATER, L_MAGNETICFIELD, &
       L_NOISEBANDWIDTH, L_NORADSPERMIF, L_NORADSBINNED, &
-      L_NUMJ, L_OPTICALDEPTH, &
-      L_ORBITINCLINATION, L_PHITAN, L_PTAN, L_QUALITY, L_RADIANCE, L_EARTHRADIUS,&
+      L_NUMJ, L_OPTICALDEPTH, L_ORBITINCLINATION, &
+      L_PHASETIMING, L_PHITAN, L_PTAN, L_QUALITY, L_RADIANCE, &
       L_REFGPH, L_REFLTEMP, L_REFLTRANS, L_REFLREFL, L_REFLSPILL, &
       L_RHI, L_SINGLECHANNELRADIANCE, L_SIZEDISTRIBUTION, &
       L_SCANRESIDUAL, L_SCECI, L_SCVEL, L_SCVELECI, &
-      L_SCVELECR, L_SCGEOCALT, &
-      L_SPACERADIANCE, L_STATUS, L_STRAYRADIANCE, L_SURFACETYPE, L_SYSTEMTEMPERATURE, &
+      L_SCVELECR, L_SCGEOCALT, L_SPACERADIANCE, &
+      L_STATUS, L_STRAYRADIANCE, L_SURFACETYPE, L_SYSTEMTEMPERATURE, &
       L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, L_TNGTGEOCALT, &
       L_TOTALEXTINCTION, L_VMR
     use Init_Tables_Module, only: PHYQ_EXTINCTION, PHYQ_FREQUENCY,&
@@ -1110,6 +1110,8 @@ contains ! ============= Public procedures ===================================
       l_vmr, phyq_vmr, p_hGrid, p_vGrid, p_fGridOptional, p_molecule, &
              p_radiometerOptional, p_mustbezeta, next /) )
 
+    call DefineQtyTypes ( (/ & 
+      l_phaseTiming, phyq_dimensionless, p_vGrid, next/) )
     ! Do a bit of checking
     do i = first_lit, last_lit
       valid = .true.
@@ -1213,6 +1215,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.113  2004/06/29 00:09:25  pwagner
+! New phaseTiming type
+!
 ! Revision 2.112  2004/06/21 23:58:40  pwagner
 ! numJ also mad e diagnostic qty that may be written to dgm file
 !
