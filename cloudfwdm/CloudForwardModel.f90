@@ -454,8 +454,8 @@
             TAU(ILYR)=RC_TOT(3)*Z(ILYR)
             DEPTH=RC_TOT(3)*Z(ILYR)
 
-            delTAU(ILYR) = DEPTH
-            delTAUc(ILYR)= CDEPTH(1)
+            delTAU(ILYR) = abs(DEPTH)
+            delTAUc(ILYR)= abs(CDEPTH(1))
 
  1000    CONTINUE                         ! END OF MODEL LAYER LOOP
 
@@ -486,10 +486,10 @@
             DTcir(I,IFR)=TT(I,NZmodel)-TT0(I,NZmodel)  ! CLOUD-INDUCED RADIANCE
          ENDDO
 
-!         CALL SENSITIVITY (DTcir,ZZT,NT,YP,YZ,NZmodel,PRESSURE,NZ, &
-!              &            delTAU,delTAUc,TAUeff,SS,               &
-!              &            BETA, BETAc, DDm, Dm, Z, DZ,            &
-!              &            N,NF,IFR,ISWI,RE) ! COMPUTE SENSITIVITY
+         CALL SENSITIVITY (DTcir,ZZT,NT,YP,YZ,NZmodel,PRESSURE,NZ, &
+              &            delTAU,delTAUc,TAUeff,SS,               &
+              &            BETA, BETAc, DDm, Dm, Z, DZ,            &
+              &            N,NF,IFR,ISWI,RE) ! COMPUTE SENSITIVITY
 
  2000 CONTINUE                               ! END OF FREQUENCY LOOP   
 

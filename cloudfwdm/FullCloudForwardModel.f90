@@ -449,11 +449,13 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 !     print*,ForwardModelConfig%no_model_surfs
 !    print*, 10.0**(-ptan%values(:,maf))
 !    print*, gph%values(:, instance)
-     print*, temp%values(:,instance)
+!     print*, temp%values(:,instance)
 !    stop
 
     print*, ' '
     print*,'No. of Frequencies:', noFreqs 
+!    print*, frequencies/1e3_r8
+!    stop
 
     call CloudForwardModel (                                                 &
       & noFreqs,                                                             &
@@ -471,7 +473,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & int(sizeDistribution%values(:,instance)),                            &
       & 10.0**(-ptan%values(:,maf)),                                         &
       & earthradius%values(1,1),                                             &
-      & int(surfaceType%values(1, instance)),                                     &
+      & int(surfaceType%values(1, instance)),                                &
       & forwardModelConfig%cloud_der,                                        &
       & forwardModelConfig%cloud_width,                                      &
       & a_clearSkyRadiance,                                                  &
@@ -489,6 +491,9 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 !    print*, a_clearskyradiance
 !    print*, 'a_cloudinducedradiance'
 !    print*, a_cloudinducedradiance
+
+!    print*, a_totalExtinction
+
 
     print*, 'Successfully done with Full Cloud Foward Model ! '
 !    stop    !successful !
@@ -542,15 +547,15 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 !     print*, 'about to assign cloud extinction values'   
 !     stop
 
-!    cloudExtinction%values ( 1:noLayers, instance ) =                        &
-!      & reshape ( transpose(a_cloudExtinction), (/noLayers*noFreqs/) )
-!    massMeanDiameterIce%values (1:noLayers,instance)=                        &
-!      &                                  a_massMeanDiameter(1,:)
-!    massMeanDiameterWater%values(1:noLayers,instance)=                       &
-!      &                                  a_massMeanDiameter(2,:)
-!    totalExtinction%values ( 1:noLayers, instance ) =                        &
-!      & reshape ( transpose(a_totalExtinction),                              &
-!      &         (/noLayers*noFreqs/) )
+    cloudExtinction%values ( 1:noLayers, instance ) =                        &
+      & reshape ( transpose(a_cloudExtinction), (/noLayers*noFreqs/) )
+    massMeanDiameterIce%values (1:noLayers,instance)=                        &
+      &                                  a_massMeanDiameter(1,:)
+    massMeanDiameterWater%values(1:noLayers,instance)=                       &
+      &                                  a_massMeanDiameter(2,:)
+    totalExtinction%values ( 1:noLayers, instance ) =                        &
+      & reshape ( transpose(a_totalExtinction),                              &
+      &         (/noLayers*noFreqs/) )
 
 ! stop
 
@@ -587,3 +592,6 @@ end module FullCloudForwardModel
 
 !
 ! $Log$
+! Revision 1.15  2001/07/27 15:17:58  jonathan
+! First Successful f90 runs
+!
