@@ -39,10 +39,13 @@ clean:
 %.o: %.f90
 	$(F90) $(F90FLAGS) -c $I$S $I$C $I$T $<
 
+Allocate_Deallocate.o: MLSMessageModule.o
 GriddedData.o: MLSCommon.o MLSMessageModule.o MLSStrings.o
 Hdf.o: MLSCommon.o
 L1BData.o: MLSCommon.o MLSMessageModule.o
 	$(F90) $(F90FLAGS) -c $I$S $I$C $I$T $(DUSTY) $S/L1BData.f90
+MatrixModule_0.o: Allocate_Deallocate.o dump_0.o \
+          MLSCommon.o MLSMessageModule.o output_m.o
 MLSCF.o: Hdf.o MLSCommon.o MLSMessageModule.o MLSStrings.o SDPToolkit.o
 MLSMessageModule.o: SDPToolkit.o
 MLSNumerics.o: MLSCommon.o MLSMessageModule.o MLSStrings.o
@@ -62,7 +65,21 @@ heights_module.o: MLSCommon.o MLSMessageModule.o
 swapi.o: swapi_character_array.o swapi_character_scalar.o swapi_double.o \
 	swapi_integer.o swapi_real.o
 
+# ========================================================================
+# Test harnesses
+TSOBJS = dumper.o init_tables_module.o MatrixModule_0.o
+
+test_sparsify.o: $S/test_sparsify.f90 MatrixModule_0.o
+	$(FC) -c $(FOPTS) $S/test_sparsify.f90
+
+test_sparsify: test_sparsify.o $(TSOBJS)
+	$(FC) -o test_sparsify $(TSOBJS) -L$C -lCF -L$M -lmls \
+                 -L$(HOME)/mlspgs/SDPToolkit -lPGSTK \
+
 # $Log$
+# Revision 2.4  2000/10/04 18:03:06  vsnyder
+# Added a rule to make libmls.a from libmls.a
+#
 # Revision 2.3  2000/10/04 01:25:11  vsnyder
 # Added an explicit action for L1BData, to specify the DUSTY option,
 # because sfrdata is called with inconsistent argument lists.
