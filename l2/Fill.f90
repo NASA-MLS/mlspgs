@@ -153,19 +153,15 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: ChunkNo
 
     ! Local variables
-    type (VectorValue_T), pointer :: QUANTITY ! Quantity to be filled
 
     type (vectorValue_T), pointer :: GEOCALTITUDEQUANTITY
     type (vectorValue_T), pointer :: H2OQUANTITY
+    type (VectorValue_T), pointer :: QUANTITY ! Quantity to be filled
     type (vectorValue_T), pointer :: REFGPHQUANTITY
     type (vectorValue_T), pointer :: SCECIQUANTITY
     type (vectorValue_T), pointer :: SCVELQUANTITY
     type (vectorValue_T), pointer :: TEMPERATUREQUANTITY
     type (vectorValue_T), pointer :: TNGTECIQUANTITY
-
-    type (Vector_T) :: NewVector ! A vector we've created
-    character (LEN=LineLen) ::              Msr
-    real :: T1, T2              ! for timing
 
     integer :: ColVector                ! Vector defining columns of Matrix
     integer :: ERRORCODE                ! 0 unless error; returned by called routines
@@ -173,13 +169,14 @@ contains ! =====     Public Procedures     =============================
     integer :: FILLMETHOD               ! How will we fill this quantity
     integer :: GEOCALTITUDEQUANTITYINDEX    ! In the source vector
     integer :: GEOCALTITUDEVECTORINDEX      ! In the vector database
+    logical, dimension(field_first:field_last) :: GOT
     integer :: GRIDINDEX                ! Index of requested grid
     integer :: GSON                     ! Descendant of Son
     integer :: H2OQUANTITYINDEX         ! in the quantities database
     integer :: H2OVECTORINDEX           ! In the vector database
-    integer :: INSTANCE                 ! Loop counter
     integer :: I, J, K                  ! Loop indices for section, spec, expr
     integer :: IND                      ! Temoprary index
+    integer :: INSTANCE                 ! Loop counter
     integer :: KEY                      ! Definitely n_named
     integer :: L2AUXINDEX               ! Index into L2AUXDatabase
     integer :: L2GPINDEX                ! Index into L2GPDatabase
@@ -190,6 +187,9 @@ contains ! =====     Public Procedures     =============================
     type(matrix_T) :: MatrixPlain
     integer :: MatrixType               ! Type of matrix, L_... from init_tables
     integer :: MAXITERATIONS            ! For hydrostatic fill
+    character (LEN=LineLen) ::  Msr
+    type (Vector_T) :: NewVector ! A vector we've created
+!    INTEGER :: OL2FileHandle
     integer :: PREVDEFDQT               !
     integer :: QUANTITYINDEX            ! Within the vector
     integer :: REFGPHQUANTITYINDEX      ! in the quantities database
@@ -202,9 +202,12 @@ contains ! =====     Public Procedures     =============================
     integer :: SON                      ! Of root, an n_spec_args or a n_named
     integer :: SOURCEQUANTITYINDEX      ! in the quantities database
     integer :: SOURCEVECTORINDEX        ! In the vector database
+    logical :: SPREAD           ! Do we spread values accross instances in explict
+    real :: T1, T2              ! for timing
     integer :: TEMPERATUREQUANTITYINDEX ! in the quantities database
     integer :: TEMPERATUREVECTORINDEX   ! In the vector database
     integer :: TEMPLATEINDEX            ! In the template database
+    logical :: TIMING
     integer :: TNGTECIQUANTITYINDEX     ! In the quantities database
     integer :: TNGTECIVECTORINDEX       ! In the vector database
     integer, dimension(2) :: UNITASARRAY ! From expr
@@ -213,13 +216,6 @@ contains ! =====     Public Procedures     =============================
     integer :: VECTORINDEX              ! In the vector database
     integer :: VECTORNAME               ! Name of vector to create
     integer :: VGRIDINDEX               ! Index of sourceVGrid
-
-    logical :: TIMING
-    logical :: SPREAD           ! Do we spread values accross instances in explict
-
-    logical, dimension(field_first:field_last) :: got
-
-    !    INTEGER :: OL2FileHandle
 
     ! Executable code
     timing = .false.
@@ -318,167 +314,166 @@ contains ! =====     Public Procedures     =============================
           if (nsons(gson) > 1) gson = subtree(2,gson) ! Now value of said argument
           got(fieldIndex)=.TRUE.
           select case ( fieldIndex )
-          case (f_quantity)   ! What quantity are we filling quantity=vector.quantity
-            vectorIndex=decoration(decoration(subtree(1,gson)))
-            quantityIndex=decoration(decoration(decoration(subtree(2,gson))))
-          case (f_method)   ! How are we going to fill it?
-            fillMethod=decoration(gson)
-          case (f_sourceQuantity)       ! When filling from a vector, what vector/quantity
-            sourceVectorIndex=decoration(decoration(subtree(1,gson)))
-            sourceQuantityIndex=decoration(decoration(decoration(subtree(2,gson))))
-          case (f_tngtECI)              ! For special fill of losVel
-            tngtECIVectorIndex=decoration(decoration(subtree(1,gson)))
-            tngtECIQuantityIndex=decoration(decoration(decoration(subtree(2,gson))))
-          case (f_scECI)                ! For special fill of losVel
-            scECIVectorIndex=decoration(decoration(subtree(1,gson)))
-            scECIQuantityIndex=decoration(decoration(decoration(subtree(2,gson))))
-          case (f_scVel)                ! For special fill of losVel
-            scVelVectorIndex=decoration(decoration(subtree(1,gson)))
-            scVelQuantityIndex=decoration(decoration(decoration(subtree(2,gson))))
-          case (f_sourceL2AUX)          ! Which L2AUXDatabase entry to use
-            l2auxIndex=decoration(decoration(gson))
-          case (f_sourceL2GP)           ! Which L2GPDatabase entry to use
+          case ( f_quantity )   ! What quantity are we filling quantity=vector.quantity
+            vectorIndex = decoration(decoration(subtree(1,gson)))
+            quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_method )   ! How are we going to fill it?
+            fillMethod = decoration(gson)
+          case ( f_sourceQuantity )       ! When filling from a vector, what vector/quantity
+            sourceVectorIndex = decoration(decoration(subtree(1,gson)))
+            sourceQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_tngtECI )              ! For special fill of losVel
+            tngtECIVectorIndex = decoration(decoration(subtree(1,gson)))
+            tngtECIQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_scECI )                ! For special fill of losVel
+            scECIVectorIndex = decoration(decoration(subtree(1,gson)))
+            scECIQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_scVel )                ! For special fill of losVel
+            scVelVectorIndex = decoration(decoration(subtree(1,gson)))
+            scVelQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_sourceL2AUX )          ! Which L2AUXDatabase entry to use
+            l2auxIndex = decoration(decoration(gson))
+          case ( f_sourceL2GP )           ! Which L2GPDatabase entry to use
             l2gpIndex=decoration(decoration(gson))
-          case (f_temperatureQuantity) ! For hydrostatic
-            temperatureVectorIndex=decoration(decoration(subtree(1,gson)))
-            temperatureQuantityIndex=decoration(decoration(decoration(subtree(2,gson))))
-          case (f_h2oQuantity) ! For hydrostatic
-            h2oVectorIndex=decoration(decoration(subtree(1,gson)))
-            h2oQuantityIndex=decoration(decoration(decoration(subtree(2,gson))))
-          case (f_geocAltitudeQuantity) ! For hydrostatic
-            geocAltitudeVectorIndex=decoration(decoration(subtree(1,gson)))
-            geocAltitudeQuantityIndex=decoration(decoration(decoration(subtree(2,gson))))
-          case (f_refGPHQuantity) ! For hydrostatic
-            refGPHVectorIndex=decoration(decoration(subtree(1,gson)))
-            refGPHQuantityIndex=decoration(decoration(decoration(subtree(2,gson))))
-          case (f_explicitValues) ! For explicit fill
+          case ( f_temperatureQuantity ) ! For hydrostatic
+            temperatureVectorIndex = decoration(decoration(subtree(1,gson)))
+            temperatureQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_h2oQuantity ) ! For hydrostatic
+            h2oVectorIndex = decoration(decoration(subtree(1,gson)))
+            h2oQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_geocAltitudeQuantity ) ! For hydrostatic
+            geocAltitudeVectorIndex = decoration(decoration(subtree(1,gson)))
+            geocAltitudeQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_refGPHQuantity ) ! For hydrostatic
+            refGPHVectorIndex = decoration(decoration(subtree(1,gson)))
+            refGPHQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_explicitValues ) ! For explicit fill
             valuesNode=subtree(j,key)
-          case (f_sourceGrid)
+          case ( f_sourceGrid )
             gridIndex=decoration(decoration(gson))
-          case (f_sourceVGrid)
+          case ( f_sourceVGrid )
             vGridIndex=decoration(decoration(gson))
-          case (f_maxIterations)      ! For hydrostatic fill
-            call expr(subtree(2,subtree(j,key)), unitAsArray,valueAsArray)
-            if (all(unitAsArray(1) /= (/PHYQ_Dimensionless,PHYQ_Invalid/))) &
-              & call Announce_error( key, badUnitsForMaxIterations)
-            maxIterations=valueAsArray(1)
-          case (f_spread) ! For explicit fill, note that gson here is not same as others
-            if (node_id(gson) == n_set_one ) then
+          case ( f_maxIterations )      ! For hydrostatic fill
+            call expr ( subtree(2,subtree(j,key)), unitAsArray,valueAsArray )
+            if ( all(unitAsArray(1) /= (/PHYQ_Dimensionless,PHYQ_Invalid/)) ) &
+              & call Announce_error ( key, badUnitsForMaxIterations )
+            maxIterations = valueAsArray(1)
+          case ( f_spread ) ! For explicit fill, note that gson here is not same as others
+            if ( node_id(gson) == n_set_one ) then
               spread=.TRUE.
             else
-              spread=decoration(subtree(2,gson)) == l_true
+              spread = decoration(subtree(2,gson)) == l_true
             end if
           end select
         end do                  ! Loop over arguments to fill instruction
 
         ! Now call various routines to do the filling
-        quantity=>GetVectorQtyByTemplateIndex(vectors(vectorIndex),quantityIndex)
-        select case (fillMethod)
+        quantity => GetVectorQtyByTemplateIndex(vectors(vectorIndex),quantityIndex)
+        select case ( fillMethod )
 
 
-        case (l_hydrostatic) ! -------------------------- Hydrostatic fills ------
+        case ( l_hydrostatic ) ! -------------  Hydrostatic fills  -----
           ! Need a temperature and a refgph quantity
-          if (.not.all(got( (/ f_refGPHQuantity, f_temperatureQuantity /)))) &
-            call Announce_Error(key,needTempREFGPH)
+          if ( .not.all(got( (/ f_refGPHQuantity, f_temperatureQuantity /))) ) &
+            call Announce_Error ( key,needTempREFGPH )
 
           temperatureQuantity => GetVectorQtyByTemplateIndex( &
             &  vectors(temperatureVectorIndex), temperatureQuantityIndex)
-          if (temperatureQuantity%template%quantityType /= l_Temperature) &
+          if ( temperatureQuantity%template%quantityType /= l_Temperature ) &
             & call Announce_Error (key, badTemperatureQuantity)
 
           refGPHQuantity => GetVectorQtyByTemplateIndex( &
             & vectors(refGPHVectorIndex), refGPHQuantityIndex)
-          if (refGPHQuantity%template%quantityType /= l_refGPH) &
-            & call Announce_Error (key, badrefGPHQuantity)
+          if ( refGPHQuantity%template%quantityType /= l_refGPH ) &
+            & call Announce_Error ( key, badrefGPHQuantity )
 
-          if (quantity%template%quantityType==l_ptan ) then
-            if (.not. got(f_geocAltitudeQuantity)) &
+          if ( quantity%template%quantityType==l_ptan ) then
+            if ( .not. got(f_geocAltitudeQuantity) ) &
               & call Announce_Error( key, needGeocAltitude )
             geocAltitudeQuantity => GetVectorQtyByTemplateIndex( &
               & vectors(geocAltitudeVectorIndex), geocAltitudeQuantityIndex)
-            if (geocAltitudeQuantity%template%quantityType /= l_tngtgeocAlt) &
+            if ( geocAltitudeQuantity%template%quantityType /= l_tngtgeocAlt ) &
               & call Announce_Error( key, badGeocAltitudeQuantity )
-            if (.not. got(f_h2oQuantity)) &
+            if ( .not. got(f_h2oQuantity) ) &
               & call Announce_Error( key, needH2O )
             h2oQuantity => GetVectorQtyByTemplateIndex( &
               & vectors(h2oVectorIndex), h2oQuantityIndex)
-            if (.not. ValidateVectorQuantity(h2oQuantity, &
-              & quantityType=(/l_vmr/), molecule=(/l_h2o/)))&
+            if ( .not. ValidateVectorQuantity(h2oQuantity, &
+              & quantityType=(/l_vmr/), molecule=(/l_h2o/)) )&
               & call Announce_Error( key, badGeocAltitudeQuantity )
           else
-            geocAltitudeQuantity=>NULL()
-            h2oQuantity=>NULL()
+            nullify ( geocAltitudeQuantity, h2oQuantity )
           end if
-          call FillVectorQtyHydrostatically(key, quantity, temperatureQuantity, &
-            & refGPHQuantity, h2oQuantity, geocAltitudeQuantity, maxIterations)          
+          call FillVectorQtyHydrostatically ( key, quantity, temperatureQuantity, &
+            & refGPHQuantity, h2oQuantity, geocAltitudeQuantity, maxIterations )          
 
-        case (l_special) ! ------------------ Special fills for some quantities --
-          select case (quantity%template%quantityType)
-          case (l_losVel)
-            if (.not. any(got( (/f_tngtECI, f_scECI, f_scVel/) )) ) then
-              call Announce_error(key, badlosVelFill)
+        case ( l_special ) ! -  Special fills for some quantities  -----
+          select case ( quantity%template%quantityType )
+          case ( l_losVel )
+            if ( .not. any(got( (/f_tngtECI, f_scECI, f_scVel/) )) ) then
+              call Announce_error ( key, badlosVelFill )
             else
-              tngtECIQuantity=> GetVectorQtyByTemplateIndex( &
+              tngtECIQuantity => GetVectorQtyByTemplateIndex( &
                 & vectors(tngtECIVectorIndex), tngtECIQuantityIndex)
-              scECIQuantity=> GetVectorQtyByTemplateIndex( &
+              scECIQuantity => GetVectorQtyByTemplateIndex( &
                 & vectors(scECIVectorIndex), scECIQuantityIndex)
-              scVelQuantity=> GetVectorQtyByTemplateIndex( &
+              scVelQuantity => GetVectorQtyByTemplateIndex( &
                 & vectors(scVelVectorIndex), scVelQuantityIndex)
-              call FillLOSVelocity(key, quantity, tngtECIQuantity, &
-                & scECIquantity, scVelQuantity)
+              call FillLOSVelocity ( key, quantity, tngtECIQuantity, &
+                & scECIquantity, scVelQuantity )
             end if
           case default
-            call Announce_error(key, noSpecialFill)
+            call Announce_error ( key, noSpecialFill )
           end select
 
-        case (l_vGrid) ! ---------------------- Fill from vGrid ---------
+        case ( l_vGrid ) ! ---------------------  Fill from vGrid  -----
           if (.not. ValidateVectorQuantity(quantity, &
             & quantityType=(/l_ptan/), &
-            & frequencyCoordinate = (/l_none/) ) ) &
-            & call MLSMessage(MLSMSG_Error,ModuleName,&
-            &   'vGrids can only be used to fill ptan quantities')
+            & frequencyCoordinate=(/l_none/) ) ) &
+            & call MLSMessage ( MLSMSG_Error,ModuleName,&
+            &   'vGrids can only be used to fill ptan quantities' )
           if ( vGrids(vGridIndex)%verticalCoordinate /= l_zeta ) &
-            & call MLSMessage (MLSMSG_Error,ModuleName, &
-            &  'Vertical coordinate in vGrid is not zeta')
+            & call MLSMessage ( MLSMSG_Error,ModuleName, &
+            &  'Vertical coordinate in vGrid is not zeta' )
           if ( vGrids(vGridIndex)%noSurfs /= quantity%template%noSurfs )&
-            & call MLSMessage (MLSMSG_Error,ModuleName, &
-            &  'VGrid is not of the same size as the quantity')
+            & call MLSMessage ( MLSMSG_Error,ModuleName, &
+            &  'VGrid is not of the same size as the quantity' )
           do instance = 1, quantity%template%noInstances
             quantity%values(:,instance) = vGrids(vGridIndex)%surfs
           end do
           !quantity%values = spread ( vGrids(vGridIndex)%surfs, 2, &
           !  & quantity%template%noInstances )
 
-        case (l_gridded) ! --------------------- Fill from gridded data --
-          if (.not. got(f_sourceGrid)) call Announce_Error(key,noSourceGridGiven)
-          call FillVectorQuantityFromGrid(quantity,griddedData(gridIndex),errorCode)
-          if (errorCode/=0) call Announce_error(key,errorCode)
+        case ( l_gridded ) ! ------------  Fill from gridded data  -----
+          if ( .not. got(f_sourceGrid) ) &
+            & call Announce_Error ( key,noSourceGridGiven )
+          call FillVectorQuantityFromGrid &
+            & ( quantity, griddedData(gridIndex), errorCode )
+          if ( errorCode /= 0 ) call Announce_error ( key, errorCode )
 
-        case (l_l2gp) ! ---------------------- Fill from L2GP quantity ---
-          if (.NOT. got(f_sourceL2GP)) call Announce_Error(key,noSourceL2GPGiven)
-          call FillVectorQuantityFromL2GP(quantity,l2gpDatabase(l2gpIndex),errorCode)
-          if (errorCode/=0) call Announce_error(key,errorCode)
+        case ( l_l2gp ) ! --------------  Fill from L2GP quantity  -----
+          if ( .NOT. got(f_sourceL2GP) ) &
+            & call Announce_Error ( key, noSourceL2GPGiven )
+          call FillVectorQuantityFromL2GP &
+            & ( quantity, l2gpDatabase(l2gpIndex), errorCode )
+          if ( errorCode /= 0 ) call Announce_error ( key, errorCode )
 
-
-        case (l_l2aux) ! --------------------- Fill from L2AUX quantity --
-          if (.NOT. got(f_sourceL2AUX)) call Announce_Error(key,noSourceL2AUXGiven)
+        case ( l_l2aux ) ! ------------  Fill from L2AUX quantity  -----
+          if ( .NOT. got(f_sourceL2AUX) ) &
+            & call Announce_Error ( key, noSourceL2AUXGiven )
 !          call FillVectorQuantityFromL2AUX(quantity,l2auxDatabase(l2auxIndex),errorCode)
-          if (errorCode/=0) call Announce_error(key,errorCode)
+          if ( errorCode /= 0 ) call Announce_error ( key, errorCode )
 
-
-        case (l_explicit) ! -------------------- Explicity fill from l2cf -
-          if (.not. got(f_explicitValues)) call Announce_Error(key, &
-            & noExplicitValuesGiven)
+        case ( l_explicit ) ! ---------  Explicity fill from l2cf  -----
+          if ( .not. got(f_explicitValues) ) &
+            & call Announce_Error ( key, noExplicitValuesGiven )
           call ExplicitFillVectorQuantity ( quantity, valuesNode, spread )
 
-
-        case (l_l1b)                    ! Fill from L1B data
+        case ( l_l1b ) ! --------------------  Fill from L1B data  -----
           call FillVectorQuantityFromL1B ( key, quantity, chunks(chunkNo), l1bInfo )
 
-
         case default
-          call Announce_error(key,0, &
-			 & 'This fill method not yet implemented')
+          call Announce_error ( key,0, 'This fill method not yet implemented' )
         end select
         
         ! End of fill operations
@@ -491,17 +486,18 @@ contains ! =====     Public Procedures     =============================
           timing = .true.
         end if
 
-        case ( s_snoop )
-          call Snoop( key=key, vectorDatabase=vectors)
+      case ( s_snoop )
+        call Snoop ( key=key, vectorDatabase=vectors )
+
       case default ! Can't get here if tree_checker worked correctly
       end select
     end do
 
-    if (ERROR/=0 ) then
-	 	call MLSMessage(MLSMSG_Error,ModuleName,'Problem with Fill section')
+    if ( ERROR /= 0 ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, 'Problem with Fill section' )
 !      call Announce_error(key,0, &
 !			 & 'Problem with Fill section (This would be fatal)')
-	end if
+    end if
 
     if ( toggle(gen) ) then
       if ( levels(gen) > 0 ) then
@@ -815,9 +811,9 @@ contains ! =====     Public Procedures     =============================
   end subroutine FillLOSVelocity
 
   ! ------------------------------------- FillVectorHydrostatically ----
-  subroutine FillVectorQtyHydrostatically(key, quantity, &
+  subroutine FillVectorQtyHydrostatically ( key, quantity, &
     & temperatureQuantity, refGPHQuantity, h2oQuantity, &
-    & geocAltitudeQuantity, maxIterations)
+    & geocAltitudeQuantity, maxIterations )
     ! Various hydrostatic fill operations
     integer, intent(in) :: key          ! For messages
     type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
@@ -835,8 +831,8 @@ contains ! =====     Public Procedures     =============================
 
     if ( toggle(gen) ) call trace_begin ( "FillVectorQtyHydrostatically", key )
 
-    select case (quantity%template%quantityType)
-    case (l_gph)
+    select case ( quantity%template%quantityType )
+    case ( l_gph )
       if ( (temperatureQuantity%template%noSurfs /= &
         &   quantity%template%noSurfs) .or. &
         &  (refGPHQuantity%template%noInstances /= &
@@ -848,7 +844,7 @@ contains ! =====     Public Procedures     =============================
 	if ( toggle(gen) ) call trace_end ( "FillVectorQtyHydrostatically")
         return
       end if
-      if ((any(quantity%template%surfs /= temperatureQuantity%template%surfs)) .or. &
+      if ( (any(quantity%template%surfs /= temperatureQuantity%template%surfs)) .or. &
         & (any(quantity%template%phi /= temperatureQuantity%template%phi)) .or. &
         & (any(quantity%template%phi /= refGPHQuantity%template%phi)) ) then
         call Announce_Error ( key, nonConformingHydrostatic, &
@@ -856,8 +852,8 @@ contains ! =====     Public Procedures     =============================
 	if ( toggle(gen) ) call trace_end ( "FillVectorQtyHydrostatically")
         return
       end if
-      call GetBasisGPH(temperatureQuantity, refGPHQuantity, quantity%values)
-    case (l_ptan)
+      call GetBasisGPH ( temperatureQuantity, refGPHQuantity, quantity%values )
+    case ( l_ptan )
       if ( (temperatureQuantity%template%noInstances /= &
         &   refGPHquantity%template%noInstances) .or. &
         &  (temperatureQuantity%template%noInstances /= &
@@ -867,7 +863,7 @@ contains ! =====     Public Procedures     =============================
 	if ( toggle(gen) ) call trace_end ( "FillVectorQtyHydrostatically")
         return
       end if
-      if ((any(refGPHquantity%template%phi /= temperatureQuantity%template%phi)) .or. &
+      if ( (any(refGPHquantity%template%phi /= temperatureQuantity%template%phi)) .or. &
         & (any(h2oQuantity%template%phi /= temperatureQuantity%template%phi)) ) then
         call Announce_Error ( key, nonConformingHydrostatic, &
         & "case l_ptan failed second test" )
@@ -891,11 +887,10 @@ contains ! =====     Public Procedures     =============================
 	if ( toggle(gen) ) call trace_end ( "FillVectorQtyHydrostatically")
         return
       end if
-      call GetHydrostaticTangentPressure(quantity, temperatureQuantity,&
-        & refGPHQuantity, h2oQuantity, geocAltitudeQuantity, maxIterations)
+      call GetHydrostaticTangentPressure ( quantity, temperatureQuantity,&
+        & refGPHQuantity, h2oQuantity, geocAltitudeQuantity, maxIterations )
     case default
-          call Announce_error(0, 0, &
-			 & 'No such fill yet')
+      call Announce_error ( 0, 0, 'No such fill yet' )
     end select
 
     if ( toggle(gen) ) call trace_end ( "FillVectorQtyHydrostatically" )
@@ -1540,6 +1535,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.45  2001/05/03 20:30:29  vsnyder
+! Add a 'nullify' and some cosmetic changes
+!
 ! Revision 2.44  2001/04/28 01:43:21  vsnyder
 ! Improved the timing message
 !
