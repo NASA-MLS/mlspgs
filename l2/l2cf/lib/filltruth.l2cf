@@ -34,7 +34,7 @@ begin Fill
 
   ;; Get RHI from H2O
   Fill, quantity=truth.rhi, h2oQuantity=truth.h2o, $
-    temperatureQuantity=truth.temperature, method=special, /dontMask
+    temperatureQuantity=truth.temperature, method=RHIFromH2O, /dontMask
 
   ;; --------------------------------------------- Ptan
 

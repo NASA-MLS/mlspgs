@@ -61,14 +61,14 @@ begin Fill
     refGPHquantity=state.refGPH, temperatureQuantity=state.temperature
   ;; Compute rhi from h2o
   Fill, quantity=state.rhi, h2oQuantity=state.h2o, $
-    temperatureQuantity=state.temperature, method=special, /dontMask
+    temperatureQuantity=state.temperature, method=RHIFromH2O, /dontMask
 ;   Fill, quantity=outputPrecision.rhi, h2oQuantity=outputPrecision.h2o, $
 ;     temperatureQuantity=state.temperature, method=special, /dontMask
   Fill, quantity=outputPrecision.rhi, $
     h2oPrecisionQuantity=outputPrecision.h2o, $
     temperaturePrecisionQuantity=outputPrecision.temperature, $
     h2oQuantity=state.h2o, temperatureQuantity=state.temperature, $
-    method=special, /dontMask
+    method=RHIPrecisionFromH2O, /dontMask
 end Fill})
 
 ;; This macro deals with the state subsetting for quantity $1
@@ -151,6 +151,10 @@ joinedDGM_$2_precision: l2aux, source=outputPrecision.$1, sdName='$3 precision'
 !define(nbw,{!nbw$1})
 
 ; $Log$
+; Revision 1.19  2002/10/01 18:33:36  mjf
+; New Fill for RHi precision.  Need gotAK defined for AK output.
+; RetrivalArguments depends on precisionEstimates.
+;
 ; Revision 1.18  2002/08/26 20:27:07  livesey
 ; New regularization (horizontal and vetical)
 ;

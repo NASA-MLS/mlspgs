@@ -29,7 +29,7 @@ begin Fill
 
   ;; Get RHI from H2O
   Fill, quantity=apriori.rhi, h2oQuantity=apriori.h2o, $
-    temperatureQuantity=apriori.temperature, method=special, /dontMask
+    temperatureQuantity=apriori.temperature, method=RHIFromH2O, /dontMask
   })
 
 end Fill
