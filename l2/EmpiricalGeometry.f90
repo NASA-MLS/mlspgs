@@ -158,6 +158,9 @@ contains ! ========================= Public Procedures ====================
     ! Executable code
 
     hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
+    if ( hdfversion <= 0 ) &                                                
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &                      
+      & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )    
     ! Now we want to establish the value of lon0
     nullify ( testPhi, testLon, guessLon )
     l1bItemName = AssembleL1BQtyName ( "GHz.tpGeodAngle", hdfVersion, .false. )
@@ -211,6 +214,9 @@ contains ! ========================= Public Procedures ====================
 end module EmpiricalGeometry
 
 ! $Log$
+! Revision 2.8  2002/12/11 22:17:05  pwagner
+! Added error checks on hdf version
+!
 ! Revision 2.7  2002/11/13 01:05:28  pwagner
 ! Actually reads hdf5 radiances
 !
