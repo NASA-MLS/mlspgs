@@ -153,8 +153,12 @@ module INTRINSIC
   integer, parameter :: Z = 6000         ! Section index
 
   ! Tables used for type checking:
-  integer, save, pointer, dimension(:) :: DATA_TYPE_INDICES, FIELD_INDICES, &
-    & LIT_INDICES, PARM_INDICES, SECTION_INDICES, SPEC_INDICES
+  integer, save, pointer, dimension(:) :: DATA_TYPE_INDICES=>NULL()
+  integer, save, pointer, dimension(:) :: FIELD_INDICES=>NULL()
+  integer, save, pointer, dimension(:) :: LIT_INDICES=>NULL()
+  integer, save, pointer, dimension(:) :: PARM_INDICES=>NULL()
+  integer, save, pointer, dimension(:) :: SECTION_INDICES=>NULL()
+  integer, save, pointer, dimension(:) :: SPEC_INDICES=>NULL()
 
 contains ! =====     Public procedures     =============================
 ! -----------------------------------------------  INIT_INTRINSIC  -----
@@ -342,6 +346,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.23  2001/04/26 16:18:39  livesey
+! Fixed bug. All those nice integer arrays weren't initially nullified, whoops!
+!
 ! Revision 2.22  2001/04/26 02:33:03  vsnyder
 ! Moved *_indices declarations from init_tables_module to intrinsic
 !
