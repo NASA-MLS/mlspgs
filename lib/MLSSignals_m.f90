@@ -7,10 +7,10 @@ module MLSSignals_M
   use DUMP_0, only: DUMP
   use Expr_M, only: Expr
   use Init_MLSSignals_m ! Everything
-  use Intrinsic, only: L_true
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error
+  use MoreTree, only: Get_Boolean
   use Output_M, only: Output
   use String_Table, only: Display_String, Get_String
   use Toggles, only: Gen, Toggle, Levels
@@ -31,8 +31,8 @@ module MLSSignals_M
   public :: DestroySpectrometerType, DestroySpectrometerTypeDatabase, Dump
   public :: Dump_Bands, Dump_Radiometers, Dump_Signals, Dump_Spectrometertypes
   public :: GetAllModules, GetBandName, GetModuleFromRadiometer
-  public :: GetModuleFromSignal, GetModuleIndex, GetModuleName
-  public :: GetRadiometerFromSignal, GetRadiometerName, GetSignal, GetSignalName
+  public :: GetModuleFromSignal, GetModuleName, GetRadiometerFromSignal
+  public :: GetRadiometerName, GetSignal, GetSignalName
   public :: GetSpectrometerTypeName, IsModuleSpacecraft, MLSSignals
 
   ! =====     Defined Operators and Generic Identifiers     ==============
@@ -53,7 +53,7 @@ module MLSSignals_M
 
   type, public :: Radiometer_T
     real(r8) :: LO                      ! Local oscillator in MHz
-    integer :: InstrumentModule         ! Tree index
+    integer :: InstrumentModule         ! Index in Modules database
     integer :: Prefix                   ! Sub_rosa index of declaration's label
     integer :: Suffix                   ! Sub_rosa index
   end type Radiometer_T
@@ -63,8 +63,8 @@ module MLSSignals_M
   type, public :: Band_T
     real(r8) :: CenterFrequency         ! Negative if not present (wide filter)
     integer :: Prefix                   ! Sub_rosa index of declaration's label
-    integer :: Radiometer               ! Tree index
-    integer :: SpectrometerType         ! Tree index
+    integer :: Radiometer               ! Index in Radiometers database
+    integer :: SpectrometerType         ! Index in SpectrometerTypes database
     integer :: Suffix                   ! Sub_rosa index
   end type Band_T
 
@@ -87,13 +87,13 @@ module MLSSignals_M
     real(r8), pointer, dimension(:) :: Frequencies=>NULL() ! Mainly a shallow copy
     real(r8), pointer, dimension(:) :: Widths=>NULL() ! Mainly a shallow copy
 
-    integer :: Band                     ! Tree index
-    integer :: InstrumentModule         ! Tree index
+    integer :: Band                     ! Index in Bands database
+    integer :: InstrumentModule         ! Index in Modules database
     integer :: Name                     ! Sub_rosa index of declaration's label
-    integer :: Radiometer               ! Tree index
+    integer :: Radiometer               ! Index in Radiometers database
     integer :: SideBand                 ! -1:lower, +1:upper, 0:folded
     integer :: Spectrometer             ! Just a spectrometer number
-    integer :: SpectrometerType         ! Tree index
+    integer :: SpectrometerType         ! Index in SpectrometerTypes database
     integer :: Switch                   ! Just a switch number
   end type Signal_T
 
@@ -115,7 +115,7 @@ module MLSSignals_M
   character (len=*), private, parameter :: IdParm = &
     & "$Id$"
   character (len=len(idParm)) :: Id = idParm
-  character (len=*), parameter, private :: ModuleName= &
+  character (len=*), parameter, private :: ModuleName = &
     & "$RCSfile$"
   !---------------------------------------------------------------------------
 
@@ -178,7 +178,7 @@ contains
 
 
       case ( s_band ) ! ...................................  BAND  .....
-        band%prefix= sub_rosa(name)
+        band%prefix = sub_rosa(name)
         band%centerFrequency = -1.0_r8 ! "The 'frequency' field is absent"
         do j = 2, nsons(key)
           son = subtree(j,key)
@@ -192,9 +192,9 @@ contains
           case ( f_suffix )
             band%suffix = sub_rosa(gson)
           case ( f_radiometer )
-            band%radiometer = gson
+            band%radiometer = decoration(decoration(gson))
           case ( f_spectrometerType )
-            band%spectrometerType= gson
+            band%spectrometerType = decoration(decoration(gson))
           case default
             ! Shouldn't get here if the type checker worked
           end select
@@ -209,7 +209,7 @@ contains
         do j = 2,nsons(key)
           son = subtree(j,key)
           field = decoration(subtree(1,son))
-          if (nsons(son) > 1) then
+          if ( nsons(son) > 1 ) then
             gson = subtree(2,son)
           else
             gson = son
@@ -217,11 +217,7 @@ contains
           got(field) = .true.
           select case ( field )
           case (f_spaceCraft)
-            if (node_id(son) == n_set_one) then
-              thisModule%spacecraft=.true.
-            else
-              thisModule%spacecraft=decoration(gson) == l_true
-            endif
+            thisModule%spacecraft = get_boolean(son)
           case default
             ! Shouldn't get here if parser worked
           end select
@@ -230,7 +226,7 @@ contains
 
 
       case ( s_radiometer ) ! .......................  RADIOMETER  .....
-        radiometer%prefix= sub_rosa(name)
+        radiometer%prefix = sub_rosa(name)
         do j = 2, nsons(key)
           son = subtree(j,key)
           field = decoration(subtree(1,son))
@@ -242,7 +238,7 @@ contains
           case ( f_suffix )
             radiometer%suffix = sub_rosa(gson)
           case ( f_module )
-            radiometer%instrumentModule=gson
+            radiometer%instrumentModule = decoration(decoration(gson))
           case default
             ! Shouldn't get here if the type checker worked
           end select
@@ -255,10 +251,10 @@ contains
           son = subtree(j,key)
           field = decoration(subtree(1,son))
           gson = subtree(2,son)
-          got(field)=.true.
+          got(field) = .true.
           select case ( field )
           case ( f_band )
-            signal%band = gson
+            signal%band = decoration(decoration(gson))
           case ( f_spectrometer )
             call expr ( gson, units, value )
             signal%spectrometer = value(1)
@@ -266,25 +262,20 @@ contains
             call expr ( gson, units, value )
             signal%switch = value(1)
           case ( f_frequencies )
-            frequencies=son
+            frequencies = son
           case ( f_widths ) 
-            widths=son
+            widths = son
           case default
             ! Shouldn't get here if the type checker worked
           end select
         end do ! i = 2, nsons(key)
         ! Set default values for remaining parameters
-        signal%sideband=0
-        signal%radiometer=bands( &
-          & decoration(decoration(signal%band)))%radiometer
-        signal%lo=radiometers( &
-          & decoration(decoration(signal%radiometer)))%lo
-        signal%instrumentModule=radiometers( &
-          & decoration(decoration(signal%radiometer)))%instrumentModule
-        signal%spectrometerType=bands( &
-          & decoration(decoration(signal%band)))%spectrometerType
-        signal%centerFrequency=bands( &
-          & decoration(decoration(signal%band)))%centerFrequency
+        signal%sideband = 0
+        signal%radiometer = bands(signal%band)%radiometer
+        signal%lo = radiometers(signal%radiometer)%lo
+        signal%instrumentModule = radiometers(signal%radiometer)%instrumentModule
+        signal%spectrometerType = bands(signal%band)%spectrometerType
+        signal%centerFrequency = bands(signal%band)%centerFrequency
         ! For the wide filters, we specify frequency etc. here.
         if ( got(f_frequencies) .neqv. got(f_widths) ) call announceError ( &
           & allOrNone, f_frequencies, (/ f_widths /) )
@@ -304,10 +295,9 @@ contains
             end do
           end if
         else
-          signal%frequencies=> spectrometerTypes( &
-            & decoration(decoration(signal%spectrometerType)))%frequencies
-          signal%widths=> spectrometerTypes( &
-            & decoration(decoration(signal%spectrometerType)))%widths
+          signal%frequencies => spectrometerTypes(signal%spectrometerType)% &
+            & frequencies
+          signal%widths => spectrometerTypes(signal%spectrometerType)%widths
         end if
         call decorate ( key, addSignalToDatabase ( signals, signal ) )
         ! Now nullify pointers so they don't get hosed later
@@ -316,13 +306,13 @@ contains
 
 
       case ( s_spectrometerType ) ! .............  SPECTROMETERTYPE .....
-        spectrometerType%name=sub_rosa(name)
-        deferred=.false.
+        spectrometerType%name = sub_rosa(name)
+        deferred = .false.
         first = 0
         do j = 2, nsons(key)
           son = subtree(j,key)
           field = decoration(subtree(1,son))
-          if (nsons(son) > 1) then
+          if ( nsons(son) > 1 ) then
             gson = subtree(2,son)
           else
             gson = son                  ! For case of /deferred
@@ -348,11 +338,7 @@ contains
           case ( f_widths )        ! Widths have the same number of values
             widths = son
           case ( f_deferred )
-            if (node_id(son) == n_set_one) then
-              deferred=.true.
-            else
-              deferred=decoration(gson) == l_true
-            endif
+            deferred = get_boolean(son)
           case default
             ! Shouldn't get here if the type checker worked
           end select
@@ -414,14 +400,14 @@ contains
 
     end do
 
-    if ( toggle(gen) ) call trace_end ( "MLSSignals" )
-
     if ( levels(gen) > 0 ) then
-      call dump(radiometers)
-      call dump(spectrometerTypes)
-      call dump(bands)
-      call dump(signals)
+      call dump ( radiometers )
+      call dump ( spectrometerTypes )
+      call dump ( bands )
+      call dump ( signals )
     endif
+
+    if ( toggle(gen) ) call trace_end ( "MLSSignals" )
 
     contains
     ! --------------------------------------------  AnnounceError  -----
@@ -452,7 +438,7 @@ contains
           end if
           call display_string ( field_indices(moreFields(i)) )
         end do ! i
-        call output ( ' shall appear, or none of them shall.', advance='yes' )
+        call output ( ' shall appear, or none of them shall.', advance = 'yes' )
       case ( atLeastOne )
         call output ( 'At least one of the fields ' )
         call display_string ( field_indices(fieldIndex) )
@@ -641,16 +627,16 @@ contains
       call output ( ':' )
       call display_string (bands(i)%suffix, advance='yes', strip=.true. )
       call output ( '   Radiometer: ')
-      call output ( decoration(bands(i)%radiometer))
       call output ( bands(i)%radiometer )
       call output ( ' - ' )
-      call display_string ( sub_rosa(bands(i)%radiometer), advance='yes' )
+      call display_string ( radiometers(bands(i)%radiometer)%prefix, advance='yes' )
       call output ( '   SpectrometerType: ')
-      call output ( decoration(bands(i)%spectrometerType) )
+      call output ( bands(i)%spectrometerType )
       call output ( ' - ' )
-      call display_string ( sub_rosa(bands(i)%spectrometerType),advance='yes' )
+      call display_string ( spectrometerTypes(bands(i)%spectrometerType)%name, &
+        & advance='yes' )
       call output ( '   Frequency: ')
-      call output ( bands(i)%centerFrequency,advance='yes' )
+      call output ( bands(i)%centerFrequency, advance='yes' )
     end do
   end subroutine DUMP_BANDS
 
@@ -667,9 +653,9 @@ contains
       call output ( ':' )
       call display_string (radiometers(i)%suffix, advance='yes', strip=.true. )
       call output ( '   Module: ')
-      call output ( decoration(radiometers(i)%instrumentModule) )
+      call output ( radiometers(i)%instrumentModule )
       call output ( ' - ' )
-      call display_string ( sub_rosa(radiometers(i)%instrumentModule), advance='yes' ) 
+      call display_string ( modules(radiometers(i)%instrumentModule)%name, advance='yes' ) 
       call output ( '   LO: ')
       call output ( radiometers(i)%lo,advance='yes' )
     end do
@@ -685,27 +671,29 @@ contains
     do i = 1, size(signals)
       call output ( i, advance='yes' )
       call output ( '   Module: ')
-      call output ( decoration(signals(i)%instrumentModule ) )
+      call output ( signals(i)%instrumentModule )
       call output ( ' - ' )
-      call display_string ( sub_rosa(signals(i)%instrumentModule), advance='yes' )
+      call display_string ( modules(signals(i)%instrumentModule)%name, &
+        & advance='yes' )
       call output ( '   Radiometer: ')
-      call output ( decoration(decoration(signals(i)%radiometer)) )
+      call output ( signals(i)%radiometer )
       call output ( ' - ' )
-      call getRadiometerName(signals(i)%radiometer,str)
+      call getRadiometerName ( signals(i)%radiometer, str )
       call output ( TRIM(str) )
       call output ( '   First LO: ')
       call output ( signals(i)%lo, advance='yes')
       call output ( '   Band: ')
-      call output ( decoration(signals(i)%band ) )
+      call output ( signals(i)%band )
       call output (' - ')
       call getBandName ( signals(i)%band, str )
       call output ( TRIM(str) )
       call output ( '   Band center frequency: ')
       call output ( signals(i)%centerFrequency, advance='yes')
       call output ( '   SpectrometerType: ')
-      call output ( decoration( signals(i)%spectrometerType ) )
+      call output ( signals(i)%spectrometerType )
       call output ( ' - ' )
-      call display_string ( sub_rosa(signals(i)%spectrometerType),advance='yes' )
+      call display_string ( spectrometerTypes(signals(i)%spectrometerType)%name, &
+        & advance='yes' )
       call output ( '   Channels: ' )
       call output ( lbound(signals(i)%frequencies,1), 3 )
       call output ( ':' )
@@ -726,12 +714,13 @@ contains
     do i = 1, size(spectrometerTypes)
       call output ( i,1 )
       call output ( ': ')
-      call display_string (spectrometerTypes(i)%name,advance='yes')
-      if (associated(spectrometerTypes(i)%frequencies)) then
+      call display_string ( spectrometerTypes(i)%name, advance='yes' )
+      if ( associated(spectrometerTypes(i)%frequencies) ) then
         call output ( '  Channels: ' )
         call output ( lbound(spectrometerTypes(i)%frequencies,1), 3 )
         call output ( ':' )
-        call output ( ubound(spectrometerTypes(i)%frequencies,1), 3, advance='yes' )
+        call output ( ubound(spectrometerTypes(i)%frequencies,1), 3, &
+          & advance='yes' )
         call output ( '  Frequencies:', advance='yes' )
         call dump ( spectrometerTypes(i)%frequencies )
         call output ( '  Widths:', advance='yes' )
@@ -747,50 +736,17 @@ contains
     ! Return tree nodes for all modules
     integer, dimension(:), pointer :: moduleNodes
     
-    call Allocate_Test(moduleNodes, size(modules), 'ModuleNodes', ModuleName)
-    moduleNodes=modules%node
+    call Allocate_Test ( moduleNodes, size(modules), 'ModuleNodes', ModuleName )
+    moduleNodes = modules%node
   end subroutine GetAllModules
-
-  ! ------------------------------------  GetModuleFromRadiometer  -----
-  integer function GetModuleFromRadiometer(radiometer)
-    ! Returns module field from given radiometer given as tree index
-    integer, intent(in) :: radiometer
-    GetModuleFromRadiometer=radiometers(decoration(decoration(radiometer)))%instrumentModule
-  end function GetModuleFromRadiometer
-
-  ! ----------------------------------------  GetModuleFromSignal  -----
-  integer function GetModuleFromSignal(signal)
-    ! Returns module field from given signal given as tree index
-    integer, intent(in) :: signal
-    GetModuleFromSignal=signals(decoration(decoration(signal)))%instrumentModule
-  end function GetModuleFromSignal
-
-  ! ---------------------------------------------  GetModuleIndex  -----
-  integer function GetModuleIndex(thisModule)
-    ! Returns module field from given radiometer given as tree index
-    integer, intent(in) :: thisModule
-    integer :: i
-    GetModuleIndex=0
-    do i=1,size(modules)
-      if (modules(i)%node==thisModule) GetModuleIndex=i
-    end do
-  end function GetModuleIndex
-
-  ! ----------------------------------------------  GetModuleName  -----
-  subroutine GetModuleName(instrumentModule, string_text)
-    ! Returns module name in mixed case
-    integer, intent(in) :: instrumentModule
-    character (len=*), intent(out) :: string_text
-    call Get_String(modules(decoration(decoration(instrumentModule)))%name, string_text)
-  end subroutine GetModuleName
 
   ! ------------------------------------------------  GetBandName  -----
   subroutine GetBandName(band, string_text, sideband, noSuffix)
-    ! Place band name in string
-    integer, intent(in) :: BAND   ! Tree index
-    character(len=*), intent(out) :: STRING_TEXT ! Result
-    integer, intent(in), optional :: SIDEBAND ! -1, 0 or 1
-    logical, intent(in), optional :: NOSUFFIX ! Omit suffix if set
+    ! Given an index in the Bands database, place band name in string
+    integer, intent(in) :: BAND                   ! Database index
+    character(len=*), intent(out) :: STRING_TEXT  ! Result
+    integer, intent(in), optional :: SIDEBAND     ! -1, 0 or 1
+    logical, intent(in), optional :: NOSUFFIX     ! Omit suffix if present and true
 
     ! Local variables
     logical :: MY_NOSUFFIX
@@ -800,75 +756,100 @@ contains
     ! Executable code
     my_noSuffix = .false.
     my_sideband = 0
-    if (present(noSuffix)) my_noSuffix = noSuffix
-    if (present(sideband)) my_sideband = sideband
+    if ( present(noSuffix) ) my_noSuffix = noSuffix
+    if ( present(sideband) ) my_sideband = sideband
 
     select case ( my_sideband )
     case ( 0 ) ! Do nothing
     case ( 1 );  sb_char = 'U'
     case ( -1 ); sb_char = 'L'
     case default
-      call MLSMessage(MLSMSG_Error,ModuleName,'Illegal sideband')
+      call MLSMessage ( MLSMSG_Error, ModuleName, 'Illegal sideband' )
     end select
     
-    call get_string(sub_rosa(band), string_text, cap=.true.)
+    call get_string ( bands(band)%prefix, string_text, cap=.true. )
     if ( (.not. my_noSuffix) .and. &
       &  (len_trim(string_text) < len(string_text)) ) then
-      string_text=TRIM(string_text)//':'
-      call get_string(bands(decoration(decoration(band)))%suffix,&
-        & string_text(LEN_TRIM(string_text)+1:), cap=.true., strip=.true.)
-      if (my_sideband /= 0) then        ! Do surgery to add sideband
-        string_text=string_text(1:LEN_TRIM(string_text)-1)//sb_char// &
+      string_text = TRIM(string_text) // ':'
+      call get_string ( bands(band)%suffix,&
+        & string_text(LEN_TRIM(string_text)+1:), cap=.true., strip=.true. )
+      if ( my_sideband /= 0 ) then        ! Do surgery to add sideband
+        string_text = string_text(1:LEN_TRIM(string_text)-1) // sb_char // &
           & string_text(LEN_TRIM(string_text):LEN_TRIM(string_text))
       end if
     endif
 
   end subroutine GetBandName
 
+  ! ------------------------------------  GetModuleFromRadiometer  -----
+  integer function GetModuleFromRadiometer(radiometer)
+    ! Returns module field from given radiometer given as database index
+    integer, intent(in) :: radiometer
+    GetModuleFromRadiometer = radiometers(radiometer)%instrumentModule
+  end function GetModuleFromRadiometer
+
+  ! ----------------------------------------  GetModuleFromSignal  -----
+  integer function GetModuleFromSignal(signal)
+    ! Returns module field from given signal given as database index
+    integer, intent(in) :: signal
+    GetModuleFromSignal = signals(signal)%instrumentModule
+  end function GetModuleFromSignal
+
+  ! ----------------------------------------------  GetModuleName  -----
+  subroutine GetModuleName(instrumentModule, string_text)
+    ! Given the index in the module database, returns module name in mixed case
+    integer, intent(in) :: instrumentModule
+    character (len=*), intent(out) :: string_text
+    call Get_String ( modules(instrumentModule)%name, string_text )
+  end subroutine GetModuleName
+
   ! ------------------------------------  GetRadiometerFromSignal  -----
   integer function GetRadiometerFromSignal(signal)
-    ! Returns radiometer field from given signal given as tree index
+    ! Returns radiometer field from given signal given as database index
     integer, intent(in) :: signal
-    GetRadiometerFromSignal=signals(decoration(decoration(signal)))%radiometer
+    GetRadiometerFromSignal = signals(signal)%radiometer
   end function GetRadiometerFromSignal
 
   ! ------------------------------------------  GetRadiometerName  -----
   subroutine GetRadiometerName(radiometer, string_text, noSuffix)
-    ! Place radiometer name in string
-    integer, intent(in) :: RADIOMETER   ! Tree index
-    character(len=*), intent(out) :: STRING_TEXT ! Result
-    logical, intent(in), optional :: NOSUFFIX ! Omit suffix if set
+    ! Given an index in the Radiometers database, place radiometer name
+    ! in string
+    integer, intent(in) :: RADIOMETER             ! Database index
+    character(len=*), intent(out) :: STRING_TEXT  ! Result
+    logical, intent(in), optional :: NOSUFFIX     ! Omit suffix if present and true
 
     ! Local variables
     logical :: MY_NOSUFFIX
 
     ! Executable code
     my_noSuffix = .false.
-    if (present(noSuffix)) my_noSuffix = noSuffix
+    if ( present(noSuffix) ) my_noSuffix = noSuffix
 
-    call get_string(sub_rosa(radiometer), string_text, cap=.true., strip=.true.)
+    call get_string ( radiometers(radiometer)%prefix, string_text, cap=.true., &
+      & strip=.true. )
     if ( (.not. my_noSuffix) .and. &
       &  (len_trim(string_text) < len(string_text)) ) then
-      string_text=TRIM(string_text)//':'
-      call get_string(radiometers(decoration(decoration(radiometer)))%suffix,&
-        & string_text(LEN_TRIM(string_text)+1:), cap=.true., strip=.true.)
+      string_text = TRIM(string_text) // ':'
+      call get_string ( radiometers(radiometer)%suffix, &
+        & string_text(LEN_TRIM(string_text)+1:), cap=.true., strip=.true. )
     endif
 
   end subroutine GetRadiometerName
 
   ! --------------------------------------------------- GetSignal ------
   type (Signal_T) function GetSignal(signal)
-    ! This routine simply returns the signal data structure
+    ! Given the database index, this routine returns the signal data structure
     integer, intent(in) :: SIGNAL       ! Requested signal
     
-    GetSignal=signals(decoration(decoration(signal)))
+    GetSignal = signals(signal)
   end function GetSignal    
 
   ! ----------------------------------------------  GetSignalName  -----
   subroutine GetSignalName(signal, string_text, noRadiometer, noBand, &
     & noSwitch, noSpectrometer, noChannels, noSuffix)
-    ! This routine constructs a full signal name
-    integer, intent(in) :: SIGNAL
+    ! Given an index in the signals database, this routine constructs a
+    ! full signal name.
+    integer, intent(in) :: SIGNAL                 ! Database index
     character(len=*), intent(inout) :: STRING_TEXT
     logical, intent(in), optional :: NORADIOMETER
     logical, intent(in), optional :: NOBAND
@@ -884,7 +865,7 @@ contains
     character (len=8) :: word
 
     ! Executable code
-    sig => signals(decoration(decoration(signal)))
+    sig => signals(signal)
     string_text       = ''
     my_noRadiometer   = .false.
     my_noBand         = .false.
@@ -892,39 +873,39 @@ contains
     my_noSpectrometer = .false.
     my_noChannels     = .false.
 
-    if (present(noRadiometer))   my_noRadiometer =   noRadiometer
-    if (present(noBand))         my_noBand =         noBand
-    if (present(noSwitch))       my_noSwitch =       noSwitch
-    if (present(noSpectrometer)) my_noSpectrometer = noSpectrometer
-    if (present(noChannels))     my_noChannels =     noChannels
+    if ( present(noRadiometer) )   my_noRadiometer =   noRadiometer
+    if ( present(noBand) )         my_noBand =         noBand
+    if ( present(noSwitch) )       my_noSwitch =       noSwitch
+    if ( present(noSpectrometer) ) my_noSpectrometer = noSpectrometer
+    if ( present(noChannels) )     my_noChannels =     noChannels
 
-    if (.not. my_noRadiometer) &
-      & call GetRadiometerName(sig%radiometer, string_text, noSuffix=noSuffix)
+    if ( .not. my_noRadiometer ) &
+      & call GetRadiometerName ( sig%radiometer, string_text, noSuffix=noSuffix )
 
-    if (.not. my_noBand) then
+    if ( .not. my_noBand ) then
       if ( (len_trim(string_text) /= 0) .and. &
         &  (len_trim(string_text)<len(string_text)) ) &
-        &  string_text=TRIM(string_text)//'.'
-      call GetBandName(sig%band, &
-        & string_text(LEN_TRIM(string_text)+1:),noSuffix=noSuffix)
+        &  string_text = TRIM(string_text) // '.'
+      call GetBandName ( sig%band, &
+        & string_text(LEN_TRIM(string_text)+1:), noSuffix=noSuffix )
     end if
 
-    if (.not. my_noSwitch) then
+    if ( .not. my_noSwitch ) then
       if ( (len_trim(string_text) /= 0) .and. &
         &  (len_trim(string_text)+1<len(string_text)) ) &
-        &  string_text=TRIM(string_text)//'.S'
+        &  string_text = TRIM(string_text) // '.S'
       write (word,'(I8)') sig%switch
-      word=adjustl(word)
+      word = adjustl(word)
       if ( len_trim(string_text)+len_trim(word) < len(string_text) )&
-        & string_text=TRIM(string_text)//TRIM(word)
+        & string_text = TRIM(string_text) // TRIM(word)
     end if
 
-    if (.not. my_noSpectrometer) then
+    if ( .not. my_noSpectrometer ) then
       if ( (len_trim(string_text) /= 0) .and. &
         &  (len_trim(string_text)<len(string_text)) ) &
-        &  string_text=TRIM(string_text)//'.'
-      call GetSpectrometerTypeName(sig%spectrometerType, sig%spectrometer, &
-        & string_text(LEN_TRIM(string_text)+1:))
+        &  string_text = TRIM(string_text) // '.'
+      call GetSpectrometerTypeName ( sig%spectrometerType, sig%spectrometer, &
+        & string_text(LEN_TRIM(string_text)+1:) )
     end if
   end subroutine GetSignalName
 
@@ -939,12 +920,12 @@ contains
     character (len=8) :: word
 
     ! Executable code
-    call get_string(sub_rosa(spectrometerType), string_text)
-    if (len_trim(string_text) < len(string_text) ) &
+    call get_string ( spectrometerTypes(spectrometerType)%name, string_text )
+    if ( len_trim(string_text) < len(string_text) ) &
       & string_text = TRIM(string_text) // '-'
-    write(word,'(I8)') number
-    word=adjustl(word)
-    if (len_trim(string_text)+len_trim(word) < len(string_text)) &
+    write ( word,'(I8)' ) number
+    word = adjustl(word)
+    if ( len_trim(string_text)+len_trim(word) < len(string_text) ) &
       & string_text = TRIM(string_text) // TRIM(word)
   end subroutine GetSpectrometerTypeName
 
@@ -952,12 +933,15 @@ contains
   logical function IsModuleSpacecraft(thisModule)
     ! Returns true if the module is really the spacecraft
     integer, intent(in) :: thisModule
-    IsModuleSpacecraft=modules(decoration(decoration(thisModule)))%spacecraft
+    IsModuleSpacecraft = modules(thisModule)%spacecraft
   end function IsModuleSpacecraft
 
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.5  2001/03/15 21:02:07  vsnyder
+! Cross-references between databases are by database index, not tree index
+!
 ! Revision 2.4  2001/03/15 18:42:58  livesey
 ! Added GetSignal
 !
