@@ -330,6 +330,8 @@ contains ! =====     Public Procedures     =============================
   ! ((( This will have to change if we wish to convert l2aux to hdf5
   !          Maybe put another wrapper in MSLFiles
         ! create SD interface identifier for l2aux
+         if ( hdfVersion == WILDCARDHDFVERSION ) &
+           & hdfVersion = mls_hdf_version(trim(FilenameString))
          sd_id = mls_sfstart(FilenameString, DFACC_READ, hdfVersion=hdfVersion)
 !        sd_id = sfstart(FilenameString, DFACC_READ)
         if (sd_id == -1 ) then
@@ -604,6 +606,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.50  2003/05/09 23:26:45  pwagner
+! Should not bomb when l2aux hdfversion absent or wildcard
+!
 ! Revision 2.49  2003/05/06 00:16:32  pwagner
 ! Fixed passing wild card hdf version to mls_sfend for l2aux
 !
