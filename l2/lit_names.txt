@@ -53,6 +53,7 @@ dnwt_sqt
 # earthRefl -- in lib/lit_names.txt
 either
 explicit
+explicitfill
 estimatedNoise
 even
 
@@ -110,6 +111,9 @@ vGrid
 weighted
 
 # $Log$
+# Revision 2.10  2002/03/08 08:07:00  livesey
+# Added explicit fill mask
+#
 # Revision 2.9  2002/02/07 02:55:03  vsnyder
 # Add a 'mask' field to the 'setup' spec
 #
