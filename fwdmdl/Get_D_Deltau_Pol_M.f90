@@ -471,11 +471,11 @@ contains
 
       ! First combine boundary flags
       do_calc = do_calc_hyd_c(:,sv_i)
-      if ( i_stop < mid ) then
-        do_calc(2:i_stop) =   do_calc(2:i_stop) .or. do_calc(1:i_stop-1)
+      if ( i_stop < mid ) then           
+        do_calc(2:i_stop) =                   do_calc(2:i_stop) .or. do_calc(1:i_stop-1)
         h_stop = i_stop
       else
-        do_calc(2:i_stop) =   do_calc(2:i_stop) .or. do_calc(1:i_stop-1) .or. do_calc(mid)
+        do_calc(2:mid) =    do_calc(mid) .or. do_calc(2:mid)    .or. do_calc(1:mid-1)
         h_stop = mid - 1
       end if
       do_calc(1) = .false.
@@ -507,20 +507,22 @@ contains
       end if
       if ( i_stop > mid + 1 ) then ! mid+1 instead of mid so that mid+2 will be
                                    ! in bounds if i_stop == 2.
-        if ( do_calc(mid+1) ) then
-          fa = (h_path_c(mid+2) * dh_dt_path_c(mid+2,sv_i) &
-            & - h_tan * dh_dt_tan(sv_i)) / del_s(mid+1)
-          d_alpha_dT_eta(:,mid+1) = d_alpha_dT_eta(:,mid+1) + alpha_path_c(:,mid+1) * fa
-        else
-          needFA = .true.
-        end if
 
-        do_calc(mid+2:i_stop-1) = do_calc(mid+2:i_stop-1) .or. do_calc(mid+3:i_stop) .or. do_calc(mid+1)
-        if (i_stop == 2*mid) then
+        do_calc(mid+1:i_stop-1) = do_calc(mid+1:i_stop-1) .or. do_calc(mid+2:i_stop) .or. do_calc(mid+1)
+        if ( i_stop == n_path ) then
           h_stop = i_stop - 1
           do_calc(i_stop) = .false.
         else
           h_stop = i_stop
+          do_calc(i_stop) = do_calc(i_stop) .or. do_calc(mid+1)
+        end if
+
+        needFA = .not. do_calc(mid+1)
+        s_del_s = del_s(mid+1)
+        if ( do_calc(mid+1) ) then
+          fa = (h_path_c(mid+2) * dh_dt_path_c(mid+2,sv_i) &
+            & - h_tan * dh_dt_tan(sv_i)) / s_del_s
+          d_alpha_dT_eta(:,mid+1) = d_alpha_dT_eta(:,mid+1) + alpha_path_c(:,mid+1) * fa
         end if
 
         s_del_s = del_s(mid+1)
@@ -552,11 +554,11 @@ contains
         if ( do_gl(p_i) ) then
           b = a + ng
           if ( do_calc(p_i) ) then
-            f = (((2.0_rp*h_path_f(a:b-1)**2 - 3.0_rp*dh_dt_tan(sv_i)**2) &
-              &   * dh_dt_path_f(a:b-1,sv_i) +                            &
-              &   h_path_f(a:b-1) * dh_dt_tan(sv_i) * dh_dt_tan(sv_i)) /  &
-              &  (sqrt(h_path_f(a:b-1)**2 - dh_dt_tan(sv_i)**2))**3       &
-              &  + eta_zxp_f(a:b-1,sv_i) * ds_dh(gl_inds(a:b-1)) /        &
+            f = (((2.0_rp*h_path_f(a:b-1)**2 - 3.0_rp*h_tan**2)      &     
+              &   * dh_dt_path_f(a:b-1,sv_i) +                       &     
+              &   h_path_f(a:b-1) * h_tan * dh_dt_tan(sv_i)) /       &     
+              &  (sqrt(h_path_f(a:b-1)**2 - h_tan**2))**3            &     
+              &  + eta_zxp_f(a:b-1,sv_i) * ds_dh(gl_inds(a:b-1)) /   &     
               &  t_path_f(a:b-1)) * dh_dz_gw(gl_inds(a:b-1))
             do l = -1, 1
               d_alpha_dT_eta(l,p_i) = d_alpha_dT_eta(l,p_i) + &
@@ -566,6 +568,8 @@ contains
           end if
           a = b
         end if
+      end do ! p_i
+      do p_i = 1, i_stop             ! along the path
         d_alpha_dT_eta(:,p_i) = d_alpha_dT_eta(:,p_i) * ref_cor(p_i) + &
           & 0.25_rp * d_delta_dT(p_i,sv_i)
         d_alpha_dT_eta(0,p_i) = d_alpha_dT_eta(0,p_i) + &
@@ -585,7 +589,6 @@ contains
         end if
       end do ! p_i
     end do ! sv_i
-
   end subroutine Get_D_Deltau_Pol_DT
 
 !-----------------------------------------------------------------------
@@ -596,6 +599,9 @@ contains
 end module Get_D_Deltau_Pol_M
 
 ! $Log$
+! Revision 2.20  2003/12/03 00:25:32  vsnyder
+! Corrections to hydrostatic calculation
+!
 ! Revision 2.19  2003/11/24 22:08:30  vsnyder
 ! Remove an unnecessary variable
 !
