@@ -38,8 +38,8 @@ MODULE BandTbls   ! Tables for all bands
      REAL(r4) :: Ohmic, Spillover, Radiance
   END TYPE RadiometerLoss_T
 
-  TYPE (RadiometerLoss_T), PARAMETER :: RadiometerLoss(5) = (/ &
-       RadiometerLoss_T ("R1A", 0.9982**3, 0.9987, 150.0), &
+  TYPE (RadiometerLoss_T), PARAMETER :: RadiometerLoss(0:4) = (/ &
+       RadiometerLoss_T ("R1A", 0.9982**3, 0.9987, 150.0), &  ! Index '0'
        RadiometerLoss_T ("R1B", 0.9982**3, 0.9964, 150.0), &
        RadiometerLoss_T ("R2 ", 0.99736**3, 0.9992, 150.0), &
        RadiometerLoss_T ("R3 ", 0.99449**3, 0.9987, 150.0), &
@@ -272,6 +272,9 @@ CONTAINS
 END MODULE BandTbls
 
 ! $Log$
+! Revision 2.2  2004/05/14 15:59:11  perun
+! Version 1.43 commit
+!
 ! Revision 2.1  2004/01/09 17:46:22  perun
 ! Version 1.4 commit
 !

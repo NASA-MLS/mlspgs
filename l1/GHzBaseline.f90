@@ -233,7 +233,7 @@ print *, 'binning rads by lat...'
 END MODULE GHzBaseline
 !=============================================================================
 ! $Log$
-! Revision 2.1  2004/01/09 17:46:22  perun
-! Version 1.4 commit
+! Revision 2.2  2004/05/14 15:59:11  perun
+! Version 1.43 commit
 !
 !
