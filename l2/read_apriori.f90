@@ -4,7 +4,7 @@
 !=============================================================================
 module ReadAPriori
 
-  use GriddedData, only: GriddedData_T, v_is_pressure
+  use GriddedData, only: GriddedData_T, v_is_pressure, AddGriddedDataToDatabase
   use Hdf, only: DFACC_READ, SFSTART
   use Hdfeos, only: SWOPEN, SWCLOSE, SWINQSWATH
   use INIT_TABLES_MODULE, only: F_FIELD, F_FILE, F_ORIGIN, F_SDNAME, F_SWATH, &
@@ -21,8 +21,7 @@ module ReadAPriori
     &                         MLSMSG_Error, MLSMSG_FileOpen
   use MLSPCF2, only: mlspcf_l2clim_start, mlspcf_l2clim_end
   use MoreTree, only: Get_Spec_ID
-  use ncep_dao, only: AddGridTemplateToDatabase, &
-  & READ_CLIMATOLOGY, ReadGriddedData, source_file_already_read
+  use ncep_dao, only: READ_CLIMATOLOGY, ReadGriddedData, source_file_already_read
   use OUTPUT_M, only: OUTPUT
   use SDPToolkit, only: Pgs_pc_getReference, PGS_S_SUCCESS
   use String_Table, only: GET_STRING
@@ -237,7 +236,7 @@ contains ! =====     Public Procedures     =============================
         select case ( griddedOrigin )
         case ( l_ncep )
           
-          gridIndex = AddGridTemplateToDatabase( GriddedDatabase, GriddedData )
+          gridIndex = AddGriddedDataToDatabase( GriddedDatabase, GriddedData )
           call decorate ( key, gridIndex )
           call readGriddedData ( FileNameString, son, 'ncep', v_is_pressure, &
             & GriddedDatabase(gridIndex), &
@@ -245,7 +244,7 @@ contains ! =====     Public Procedures     =============================
           
         case ( l_dao )
           
-          gridIndex = AddGridTemplateToDatabase( GriddedDatabase, GriddedData )
+          gridIndex = AddGriddedDataToDatabase( GriddedDatabase, GriddedData )
           call decorate ( key, gridIndex )
           call ReadGriddedData ( FileNameString, son, 'dao', v_is_pressure, &
             & GriddedDatabase(gridIndex), fieldName = TRIM(fieldNameString) )
@@ -376,6 +375,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.21  2001/09/10 23:37:44  livesey
+! New GriddedData stuff
+!
 ! Revision 2.20  2001/05/12 00:20:00  livesey
 ! Allowed user to not supply swath name when reading l2gp
 !
