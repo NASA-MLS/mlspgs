@@ -38,7 +38,7 @@ begin Fill
   Fill, quantity=apriori.h2o, method=explicit, explicitValues=10000ppmv, /spread
 end Fill
 begin Retrieve
-  Subset, quantity=apriori.h2o, height=[1000mb:1.0e-6mb], mask=fill
+  Subset, quantity=apriori.h2o, mask=fill, /reset
 end Retrieve
 begin Fill
 
