@@ -7,7 +7,7 @@ MODULE Calibration ! Calibration data and routines
 
   USE MLSL1Common, ONLY: Chan_R_T, Chan_R8_T, FBchans, FBnum, MBchans, MBnum, &
        WFchans, WFnum, DACSchans, DACSnum, MaxMIFs, Bandwidth, deflt_zero, R8, &
-       GHzNum, BankLogical_T, BankInt_T, tau
+       GHzNum, BankLogical_T, BankInt_T, tau, BrightObjects_T
   USE L0_sci_tbls, ONLY: Sci_pkt_T
   USE EngTbls, ONLY : Eng_MAF_T
   USE Interpolation, ONLY : QuadInterpW
@@ -47,13 +47,6 @@ MODULE Calibration ! Calibration data and routines
      LOGICAL :: recomp_T = .FALSE.
   END TYPE WeightsFlags_T
 
-  !! Bright Objects type
-
-  TYPE BrightObjects_T
-     LOGICAL :: MoonInFOV(0:MaxMIFs-1) = .FALSE.
-     LOGICAL :: VenusInFOV(0:MaxMIFs-1) = .FALSE.
-  END TYPE BrightObjects_T
-
   !! Science and Engineering data for 1 MAF:
 
   TYPE MAFdata_T
@@ -66,6 +59,7 @@ MODULE Calibration ! Calibration data and routines
      TYPE (BankInt_T) :: WallMIF       ! MIF for start of wall
      TYPE (BrightObjects_T) :: LimbView, SpaceView ! Bright Objects in FOV flags
      TYPE (WeightsFlags_T) :: WeightsFlags
+     REAL :: MIFprecSign(0:(MaxMIFs-1))   ! Radiance precision sign per MIF
      INTEGER :: start_index = 0, end_index = 0  ! start/end within cal vectors
      INTEGER :: last_MIF = 0
      INTEGER :: BandSwitch(5) = 0          ! band switch positions
@@ -747,6 +741,9 @@ END MODULE Calibration
 !=============================================================================
 
 ! $Log$
+! Revision 2.12  2004/11/10 15:38:57  perun
+! Moved BrightObjects_T to this routine; added MIFprecSign flag defintion
+!
 ! Revision 2.11  2004/08/12 13:51:49  perun
 ! Version 1.44 commit
 !
