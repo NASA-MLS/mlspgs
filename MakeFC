@@ -143,6 +143,7 @@ SHELL = /bin/sh
 # f90tex         -- build and install this prog out of util directory
 # init_gen       -- build and install this prog out of util directory
 # h5subset       -- build and install this prog out of util directory
+# hl             -- build and install this prog out of util directory
 # makefile       -- allows you to summon this custom Makefile with shorter
 #                    "make" rather than "make -f $(MakeFName)" nonsense
 # update         -- replaces customized Makefiles with latest versions
@@ -426,6 +427,10 @@ h5subset: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/h5subset.c
 		;; \
 	esac 
 
+hl: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/hl.c
+	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+      -c $(MLSCONFG) -p $@ $(MLSBIN)/$@.c
+
 # allow user to forego "-f MakeFC" nonsense
 makefile:
 	@if [ $(COPY_NUMBER) -lt $(MAX_COPIES) ] ; then \
@@ -656,6 +661,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.46  2001/08/15 20:59:27  pwagner
+# util programs now installed in INSTALLDIR
+#
 # Revision 1.45  2001/08/14 23:56:40  pwagner
 # Added builds for all util/.f90 and util/.c
 #
