@@ -1376,7 +1376,7 @@ contains
       type (VectorValue_T), pointer :: Tcir        ! cloud-induced radiance
       type (VectorValue_T), pointer :: Terr        ! cloud-induced radiance SD
       type (VectorValue_T), pointer :: PTAN        ! Tgt pressure
-      type (VectorValue_T), pointer :: Re        ! Earth Radius
+!      type (VectorValue_T), pointer :: Re        ! Earth Radius
       type (VectorValue_T), pointer :: Tb0         ! model clear sky radiance (100%RH)
       type (VectorValue_T), pointer :: Slope       ! sensitivity slope to convert cloud
                                                    ! radiance to optical depth
@@ -2513,6 +2513,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.122  2001/11/28 00:01:27  jonathan
+! remove type (VectorValue_T), pointer :: Re
+!
 ! Revision 2.121  2001/11/27 23:49:48  jonathan
 ! remove Re in HighCloudRetrieval
 !
