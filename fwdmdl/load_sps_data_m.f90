@@ -179,6 +179,7 @@ contains
     use ForwardModelConfig, only: ForwardModelConfig_t
     use VectorsModule, only: VECTORVALUE_T
     use MLSNumerics, only: ESSENTIALLYEQUAL
+    use Units, only: Deg2Rad
 
     type (ForwardModelConfig_T) ,intent(in) :: FWDMODELCONF
     type (Grids_T), intent(inout) :: GRIDS_F   ! All the vmrs
@@ -228,7 +229,7 @@ contains
     failed = wf1 < 1 .or. wf2 > boundaryPressure%template%noInstances
     if ( .not. failed ) then
       failed = .not. all ( EssentiallyEqual ( &
-        & boundaryPressure%template%phi(1,wf1:wf2), grids_tmp%phi_basis ) )
+        & boundaryPressure%template%phi(1,wf1:wf2)*Deg2Rad, grids_tmp%phi_basis ) )
     end if
     if ( failed ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'When overwriting H2O, boundary pressure must share coordinates with temperature' )
@@ -481,6 +482,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.48  2003/05/06 20:35:34  livesey
+! Another bug fix
+!
 ! Revision 2.47  2003/05/06 20:23:21  livesey
 ! Bug fixes and cosmetic changes, renamed some variables etc.
 !
