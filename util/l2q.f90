@@ -1,5 +1,5 @@
-! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
 
 program L2Q
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
@@ -729,7 +729,28 @@ contains
             call PVMErrorMessage ( info, "unpacking machineName" )
           endif
           hostsID = FindFirst(  hosts%name==machineName .and. hosts%tid < 1 )
+          if ( hostsID < 1 ) then
+            call output(' mastersID ', advance='no')
+            call output(mastersID , advance='yes')
+            call output(' machineName ', advance='no')
+            call output(trim(machineName) , advance='yes')
+            call MLSMessage( MLSMSG_Error, ModuleName, &
+               & 'Master thanked us for unknown host' )
+          endif
           hosts(hostsID)%tid = tid
+          call PVMF90Unpack ( hosts(hostsID)%chunk, info )
+          if ( info /= 0 ) then
+            call PVMErrorMessage ( info, "unpacking machine%chunk" )
+          endif
+          call PVMF90Unpack ( hosts(hostsID)%master_date, info )
+          if ( info /= 0 ) then
+            call PVMErrorMessage ( info, "unpacking machine%master_date" )
+          endif
+          ! call PVMF90Unpack ( hosts(hostsID)%master_name, info )
+          ! if ( info /= 0 ) then
+          !   call PVMErrorMessage ( info, "unpacking machine%master_name" )
+          ! endif
+          hosts(hostsID)%master_name = masterNameFun(masterTID)
           if ( options%verbose ) then
             call proclaim('Master ' // trim(masterNameFun(masterTID)) // &
             & ' thanks for host', hosts(hostsID)%Name, advance='no')
@@ -813,7 +834,6 @@ contains
       endif
       ! ----------------------------------------------------- Master Task Died?
       ! Listen out for any message telling us one of our masters died
-      ! if ( options%debug ) call output('Listening for giveuptag', advance='yes')
       call PVMFNRecv ( -1, NotifyTag, bufferIDRcv )
       if ( bufferIDRcv > 0 ) then
         ! Get the TID for the dead task
@@ -851,7 +871,6 @@ contains
       endif
       ! ----------------------------------------------------- Administrative messages?
       ! Listen out for any message telling *us* to quit now
-      ! if ( options%debug ) call output('Listening for giveuptag', advance='yes')
       call PVMFNRecv ( -1, GiveUpTag, bufferIDRcv )
       if ( bufferIDRcv > 0 ) then
         if ( options%timing ) call sayTime
@@ -1203,6 +1222,9 @@ contains
     host%tid = 0
     host%master_tid = 0
     host%free = .true.
+    host%chunk = -1
+    host%master_name = ' '
+    host%master_date = ' '
     hcid = 0
     if( size(master%hosts) == 1 ) then
       call deallocate_test(master%hosts, 'master%hosts', moduleName)
@@ -1461,6 +1483,9 @@ contains
 end program L2Q
 
 ! $Log$
+! Revision 1.4  2005/01/20 00:54:25  pwagner
+! Implementing changes suggested at design review Jan 14 2005
+!
 ! Revision 1.3  2005/01/14 21:39:04  pwagner
 ! Changes bring us into line with pw presentation of 20050114
 !
