@@ -22,7 +22,7 @@ MLSPGS_LIB_PATH=.
 #	ConstructVectorTemplates.o gridded_data_module.o \
 #	dates_module.o MLSPCF.o MLSCF.o GriddedData.o HDF-EOS.o
 
-OBJS=	GriddedData.o HDF-EOS.o L1BData.o L2AUXData.o L2GPData.o  \
+OBJS=	dump_0.o GriddedData.o HDF-EOS.o L1BData.o L2AUXData.o L2GPData.o  \
         MLSCommon.o MLSMessageModule.o MLSNumerics.o MLSPCF.o \
         MLSSignalNomenclature.o MLSStrings.o SDPToolkit.o \
         swapi.o swapi_character_array.o swapi_character_scalar.o \
@@ -63,6 +63,9 @@ clean:
 # Later on we may try to adapt Hugh's script to deal with these
 #
 
+dump_0.o: $S/dump_0.f90 $C/output_m.o
+	${F90} ${F90FLAGS} ${MODULEPATHPREFIX}${MODULEPATH} -c \
+               $(INCLUDE) ${MODULEPATHPREFIX}$C $S/dump_0.f90
 ConstructQuantityTemplates.o: MLSCommon.o MLSMessageModule.o \
 	QuantityTemplates.o VGrid.o HGrid.o VerticalCoordinate.o \
 	Units.o MLSSignalNomenclature.o MLSCF.o
@@ -111,6 +114,9 @@ VGrid.dbg.o: MLSCommon.dbg.o VerticalCoordinate.dbg.o MLSStrings.dbg.o \
 	 MLSCF.dbg.o
 
 # $Log$
+# Revision 2.1  2000/09/13 20:38:23  vsnyder
+# Support to compile dump_0.
+#
 # Revision 2.0  2000/09/05 17:41:06  dcuddy
 # Change revision to 2.0
 #
