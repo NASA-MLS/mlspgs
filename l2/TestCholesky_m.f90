@@ -1,6 +1,12 @@
 ! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
+!------------------- RCS Ident Info -----------------------
+   CHARACTER(LEN=130) :: Id = &
+   "$Id$"
+    & "$RCSfile$"
+!----------------------------------------------------------
+
 module TestCholesky_M
 
   use Biggify_M, only: Biggify
@@ -58,3 +64,8 @@ contains
   end subroutine TestCholesky 
 
 end module TestCholesky_M
+
+! $Log$
+! Revision 2.4  2002/10/01 20:19:13  bwknosp
+! Added Id, RCS, and Log info
+!
