@@ -49,31 +49,39 @@ dir4 = $(clouddir)/
 vpath %.o ./
 vpath %.f90 ../ $(srclib)
 vpath %.f9h ../ $(srclib)
+vpath %.f ../
+vpath %.c ../
 
 FC = f95
 
-# Compiler options:
-#FOPTS = -g -C=all -abi=n32
-
 DUSTY = $(FOPTS) -dusty
 
-INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S -I $(libdir)\
+INC_PATHS = $(EXTRA_PATHS) -I $(PGSINC) -I $(srclib) -I $S -I $(libdir)\
 	 -I $(itmdir) -I $(fwdmdldir) -I $(clouddir)
 
 # Define some suffix rules
 
 .SUFFIXES:
-.SUFFIXES: .o .dbg.o .f90
+.SUFFIXES: .o .dbg.o .f90 .f .c
 .f90.o:
-	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER) $(FAFTER)
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
 
 .f90.dbg.o:
-	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o $(FAFTER) $(FAFTER)
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o $(FAFTER)
+
+.f.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
+
+.c.o:
+	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
 
 #Special load libraries
 l_specials = -lnsl
 
 # $Log$
+# Revision 1.6  2001/06/06 23:52:52  pwagner
+# cloud forward model now a part of l2
+#
 # Revision 1.5  2001/05/18 23:30:22  pwagner
 # Brought into harmony with latest non-tests versions
 #

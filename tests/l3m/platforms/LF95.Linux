@@ -40,30 +40,39 @@ owndir=../../../$(own_dir)/$(MLSCONFG)
 vpath %.o ./
 vpath %.f90 ../ $(srclib)
 vpath %.f9h ../ $(srclib)
+vpath %.f ../
+vpath %.c ../
 
 FC = lf95
 
-# Compiler options:
 # Currently, unknown if DUSTY needs to be different yet
-#FOPTS = -g --chk --info
 DUSTY = $(FOPTS)
 
 # All the paths to supply .mod and INCLUDE files used in compiling %.f90
 # Precede each path by "-I "
-INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S -I $(libdir)\
+INC_PATHS = $(EXTRA_PATHS) -I $(PGSINC) -I $(srclib) -I $S -I $(libdir)\
  -I $(itmdir) -I $(owndir)
 
 # Define some suffix rules
 
 .SUFFIXES:
-.SUFFIXES: .o .dbg.o .f90
+.SUFFIXES: .o .dbg.o .f90 .f .c
 .f90.o:
 	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
 
 .f90.dbg.o:
 	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o $(FAFTER)
 
+.f.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
+
+.c.o:
+	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
+
 #Special load libraries
 l_specials = 
 
 # $Log$
+# Revision 1.1  2001/07/24 20:51:58  pwagner
+# First commit
+#
