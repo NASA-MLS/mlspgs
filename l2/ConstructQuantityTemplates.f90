@@ -47,7 +47,7 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
   use QuantityTemplates, only: QuantityTemplate_T,SetupNewQuantityTemplate, &
     & QuantityTemplateCounter
   use STRING_TABLE, only: GET_STRING, DISPLAY_STRING
-  use TOGGLES, only: GEN, TOGGLE, SWITCHES
+  use TOGGLES, only: GEN, TOGGLE, SWITCHES, LEVELS
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATION, NODE_ID, NSONS, SOURCE_REF, SUB_ROSA, SUBTREE
   use TREE_TYPES, only: N_SET_ONE
@@ -144,7 +144,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Executable code
 
-    if ( toggle(gen) ) &
+    if ( toggle(gen) .and. levels(gen) > 0 ) &
       & call trace_begin ( "CreateQtyTemplateFromMLSCFInfo", root )
 
 ! ??? Do we need a GOT_FIELD check like in VGrid, e.g. ???
@@ -530,7 +530,8 @@ contains ! =====     Public Procedures     =============================
       call output ( ' instanceLen = ' )
       call output ( qty%instanceLen, advance='yes' )
     endif
-    if ( toggle(gen) ) call trace_end ( "CreateQtyTemplateFromMLSCFInfo" )
+    if ( toggle(gen) .and. levels(gen) > 0 ) &
+      & call trace_end ( "CreateQtyTemplateFromMLSCFInfo" )
     returnStatus = error
 
   end function CreateQtyTemplateFromMLSCFInfo
@@ -946,6 +947,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.72  2002/09/25 20:07:55  livesey
+! Made -g less verbose
+!
 ! Revision 2.71  2002/09/24 21:37:44  livesey
 ! Added minValue stuff
 !
