@@ -1,4 +1,8 @@
+ifdef NOCASCADE
+include ../Makefile.nodep
+else
 include ../Makefile.dep
+endif
 
 # "$Id$"
 
@@ -163,6 +167,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 2.4  2002/01/19 00:28:07  pwagner
+# made useful in he5lib by UNPREFXDPTHS
+#
 # Revision 2.3  2002/01/10 01:16:16  pwagner
 # LIB_NAME target now a variable; platforms directory reuseable therefore
 #

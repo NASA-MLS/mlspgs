@@ -8,7 +8,11 @@ else
    MLSCFILE=.configure
 endif
 
+ifdef NOCASCADE
+include ../Makefile.nodep
+else
 include ../Makefile.dep
+endif
 
 # "$Id$"
 
@@ -233,11 +237,11 @@ $(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
 #	mv temp $(S)/lit_parm.f9h
 
 init_tables_module.o: $(S)/field_parm.f9h $(S)/field_add.f9h \
-   $(S)/lit_parm.f9h $(S)/lit_add.f9h
+   $(S)/lit_parm.f9h $(S)/lit_add.f9h $(S)/init_tables_module.f90
 
 # This keeps switch_usage up-to-date with notes/switches
 # (and similarly for options)
-MLSL2.o: $(CONFDIR)/notes/switches $(CONFDIR)/notes/options
+MLSL2.o: $(CONFDIR)/notes/switches $(CONFDIR)/notes/options $(S)/MLSL2.f90
 	@rm -f MLSL2.f90 part_1 part_2 part_3 ; \
 	sed -n '1,/=== (start of automatic usage lines) ===/ p' $(S)/MLSL2.f90 > part_1 ; \
 	sed -n '/=== (end of automatic usage lines) ===/,$$ p' $(S)/MLSL2.f90 > part_3 ; \
@@ -261,6 +265,9 @@ MLSL2.o: $(CONFDIR)/notes/switches $(CONFDIR)/notes/options
 
 
 # $Log$
+# Revision 1.37  2002/04/29 17:40:40  pwagner
+# Links utctotai library
+#
 # Revision 1.36  2002/04/18 20:56:07  pwagner
 # .configure now a prerequisite for executable
 #

@@ -6,7 +6,11 @@ else
    MLSCFILE=.configure
 endif
 
+ifdef NOCASCADE
+include ../Makefile.nodep
+else
 include ../Makefile.dep
+endif
 
 # "$Id$"
 # ========================================================================
@@ -91,12 +95,15 @@ BUGGY := $(shell echo ${FOPTS} | sed 's/-O[0-9]*//')
 
 DUSTY_NO_OPT := $(shell echo ${DUSTY} | sed 's/-O[0-9]*//')
 
-ddot.o:
+ddot.o: ../ddot.f
 	$(FC) -c $(DUSTY_NO_OPT) -O $(INC_PATHS) ../ddot.f $(FAFTER)
-sdot.o:
+sdot.o: ../sdot.f
 	$(FC) -c $(DUSTY_NO_OPT) -O $(INC_PATHS) ../sdot.f $(FAFTER)
 
 # $Log$
+# Revision 1.2  2001/11/15 00:07:57  pwagner
+# Now works with new libmlspack.a and .mod files in blas
+#
 # Revision 1.1  2001/11/13 23:01:42  pwagner
 # First commit
 #

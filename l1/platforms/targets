@@ -1,4 +1,16 @@
+# This is the default name of the configure file
+# It may be overridden for multiple platforms, special options, etc.
+ifdef HOSTMLSCFILE
+   MLSCFILE=$(HOSTMLSCFILE)
+else
+   MLSCFILE=.configure
+endif
+
+ifdef NOCASCADE
+include ../Makefile.nodep
+else
 include ../Makefile.dep
+endif
 
 # where which_fftw.sh is stored
 MLSBIN=../../util
@@ -155,11 +167,14 @@ tar:
 
 #	special options for compiling some modules--override .f90 rules
 
-OutputL1B.o:
+OutputL1B.o: $(S)/OutputL1B.f90
 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B.f90 $(FAFTER)
 
 # ========================================================================
 # $Log$
+# Revision 1.16  2002/04/18 20:56:07  pwagner
+# .configure now a prerequisite for executable
+#
 # Revision 1.15  2002/03/29 21:28:16  pwagner
 # Satisfies requirement for fftw during link
 #

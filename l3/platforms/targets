@@ -1,4 +1,16 @@
+# This is the default name of the configure file
+# It may be overridden for multiple platforms, special options, etc.
+ifdef HOSTMLSCFILE
+   MLSCFILE=$(HOSTMLSCFILE)
+else
+   MLSCFILE=.configure
+endif
+
+ifdef NOCASCADE
+include ../Makefile.nodep
+else
 include ../Makefile.dep
+endif
 
 # where which_fftw.sh is stored
 MLSBIN=../../util
@@ -175,15 +187,18 @@ tar:
 
 #	special options for compiling some modules--override .f90 rules
 
-L2Interface.o:
+L2Interface.o: $(S)/L2Interface.f90
 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L2Interface.f90 $(FAFTER)
-L3DMData.o:
+L3DMData.o: $(S)/L3DMData.f90
 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DMData.f90 $(FAFTER)
-L3DMDiag.o:
+L3DMDiag.o: $(S)/L3DMDiag.f90
 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DMDiag.f90 $(FAFTER)
 
 # ========================================================================
 # $Log$
+# Revision 1.19  2002/04/18 20:56:07  pwagner
+# .configure now a prerequisite for executable
+#
 # Revision 1.18  2001/11/26 18:41:37  pwagner
 # Added custom build for L3DMDiag.f90
 #

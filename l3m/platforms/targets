@@ -1,6 +1,18 @@
 mlsl3m: MLSL3M.o
 
+# This is the default name of the configure file
+# It may be overridden for multiple platforms, special options, etc.
+ifdef HOSTMLSCFILE
+   MLSCFILE=$(HOSTMLSCFILE)
+else
+   MLSCFILE=.configure
+endif
+
+ifdef NOCASCADE
+include ../Makefile.nodep
+else
 include ../Makefile.dep
+endif
 
 # where which_fftw.sh is stored
 MLSBIN=../../util
@@ -180,27 +192,30 @@ tar:
 
 # ========================================================================
 
-L3DZData.o:
+L3DZData.o: $(S)/L3DZData.f90
 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DZData.f90 $(FAFTER)
 
-L3MZData.o:
+L3MZData.o: $(S)/L3MZData.f90
 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MZData.f90 $(FAFTER)
 
-L3MMData.o:
+L3MMData.o: $(S)/L3MMData.f90
 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MMData.f90 $(FAFTER)
 
-L3DZDiag.o:
+L3DZDiag.o: $(S)/L3DZDiag.f90
 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DZDiag.f90 $(FAFTER)
 
-L3MZDiag.o:
+L3MZDiag.o: $(S)/L3MZDiag.f90
 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MZDiag.f90 $(FAFTER)
 
-L3MMDiag.o:
+L3MMDiag.o: $(S)/L3MMDiag.f90
 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MMDiag.f90 $(FAFTER)
 
 # ========================================================================
 
 # $Log$
+# Revision 1.6  2002/04/18 20:56:07  pwagner
+# .configure now a prerequisite for executable
+#
 # Revision 1.5  2001/11/27 19:34:11  pwagner
 # Added three ..Diag.f90 custom build commands
 #

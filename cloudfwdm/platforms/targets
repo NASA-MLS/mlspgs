@@ -1,4 +1,8 @@
+ifdef NOCASCADE
+include ../Makefile.nodep
+else
 include ../Makefile.dep
+endif
 
 # "$Id$"
 
@@ -158,6 +162,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.5  2001/11/07 01:14:29  pwagner
+# lapack message refers to this case, not mlsl2
+#
 # Revision 1.4  2001/11/07 00:31:44  pwagner
 # Added lapack linker line and msg
 #

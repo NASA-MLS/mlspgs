@@ -6,7 +6,11 @@ else
    MLSCFILE=.configure
 endif
 
+ifdef NOCASCADE
+include ../Makefile.nodep
+else
 include ../Makefile.dep
+endif
 
 machines_f90 := $(shell cd $(MACH_DIR); echo *.f90)
 MACH_OBJS := $(shell echo ${machines_f90} | sed 's/f90/o/g')
@@ -184,6 +188,9 @@ ncep_dao.o:
 	$(FC) -c $(NOUNASS) $(INC_PATHS) $(S)/ncep_dao.f90 $(FAFTER)
 
 # $Log$
+# Revision 1.44  2002/02/08 18:33:50  pwagner
+# Custom build for machine.o depends on whether collecting garbage
+#
 # Revision 1.43  2002/02/06 00:42:59  pwagner
 # Where to get machine.f90 now depends on whether to collect garbage
 #
