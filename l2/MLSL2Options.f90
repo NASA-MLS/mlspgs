@@ -40,7 +40,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! Update these lines before delivery to sips     
   ! id to print out in response to "--version" command-line option       
   character(LEN=*), dimension(3), parameter :: CURRENT_VERSION_ID = (/ &    
-    & 'v1.1 swdev team                                           ', &       
+    & 'v1.2 swdev team                                           ', &       
     & 'Copyright (c) 2003, California Institute of Technology.   ', &       
     & 'U.S. Government Sponsorship under NASA Contract NAS7-1407.' /)       
      
@@ -86,29 +86,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! Whether to explicitly collect garbage at end of each chunk                
   logical            :: GARBAGE_COLLECTION_BY_CHUNK = .true.         
 
-  ! * * *                     Overly detailed section                 * * *
-  !                         (Should probably delete all this)
-  logical            :: PUNISH_FOR_INVALID_PCF = SIPS_VERSION 
-  logical, parameter :: PUNISH_FOR_NO_L1BRAD =   SIPS_VERSION
-  logical, parameter :: PUNISH_FOR_NO_L1BOA =    SIPS_VERSION
-  logical            :: PCF_FOR_INPUT =          SIPS_VERSION 
-  logical            :: PCF =                    SIPS_VERSION 
-  logical            :: CREATEMETADATA =         SIPS_VERSION 
   logical            :: TOOLKIT =                SIPS_VERSION 
-  ! PCF controls whether the input and output file names are obtained
-  ! from the PCF or the l2cf; if .false., the l2cf must supply every
-  ! file name (L1B..) plus all the global settings (start, end times, ..)
-  ! Note the following cascade of automatic negations:
-  ! TOOLKIT=.false. means                       don't use PGS_... routines
-  ! TOOLKIT=.false. =>  PCF=.false.           ! Don't use PCF
-  ! PCF=.false.     =>  PCF_FOR_INPUT=.false. ! Don't open L2CF using PCF
-  ! PCF=.false.     =>  PUNISH_FOR_INVALID_PCF=.false.
-  ! PCF=.false.     =>  CREATEMETADATA=.false.! Don't create .met files 
-  ! PCF=.false.     =>  PENALTY_FOR_NO_METADATA=0
-
-  ! Must files named in PCF have same case as short names used in l2cf?
-  logical, parameter ::                          PCFL2CFSAMECASE = SIPS_VERSION
-  ! * * *                End of Overly detailed section             * * *
   ! --------------------------------------------------------------------------
 
 !=============================================================================
@@ -122,6 +100,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.21  2003/06/09 22:49:32  pwagner
+! Reduced everything (PCF, PUNISH.., etc.) to TOOLKIT
+!
 ! Revision 2.20  2003/05/02 20:53:19  pwagner
 ! Reordered to make SIPS-dependent section clearer; default_hdfversion at read now wildcard
 !
