@@ -12,6 +12,8 @@ pro CreateSpectroscopyL2CF, $
 
 if n_elements(maxExtinctions) eq 0 then maxExtinctions = 1
 if n_elements(instrument) eq 0 then instrument='emls'
+if keyword_set(retrieval) then MyMessage, /error, $
+  'The retrieval option no longer works, use the reduced source files instead'
 
 instrumentPrefixes=['emlsSignals=[ ', 'umlsSignals=[ ', 'xptl1Signals=[ ']
 noInstruments = n_elements(instrumentPrefixes)
