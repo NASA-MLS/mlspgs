@@ -5140,7 +5140,7 @@ contains ! =====     Public Procedures     =============================
         end do
       end if
 
-      call dump ( surfs, 'surfs' )
+!      call dump ( surfs, 'surfs' )
 
       ! Work out the horizontal mapping, a function of height for unstakced quantities.
       ! Bin to the center of the profiles rather than the edges.
@@ -5168,7 +5168,7 @@ contains ! =====     Public Procedures     =============================
         insts = 1
       end if
 
-      call dump ( insts, 'insts' )
+!      call dump ( insts, 'insts' )
       
       ! Modify the surfs index to account for the channel, so now it's more
       ! of a 'values' index
@@ -5507,6 +5507,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.205  2003/04/24 22:17:02  dwu
+! remove dump statement in fill binMinMax
+!
 ! Revision 2.204  2003/04/24 00:35:14  dwu
 ! modify splitSideband to allow the splitted sideband cloud radiances being spread to other bands assuming the f**4 law
 !
