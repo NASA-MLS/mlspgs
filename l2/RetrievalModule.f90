@@ -1246,9 +1246,9 @@ contains
 
       ! Now preprocess the height stuff.  The type checker verifies the
       ! consistency of units of ranges.
+      heightUnit = phyq_dimensionless
       if ( got(f_height) ) then
         if ( ignore ) call announceError ( inconsistent, f_height, f_ignore )
-        heightUnit = phyq_dimensionless
         do j = 2, nsons(heightNode)
           call expr ( subtree(j,heightNode), units, value, type )
           do i = 1, 2
@@ -1338,6 +1338,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.65  2001/09/25 23:04:30  livesey
+! Fixed uninitialised heightUnit
+!
 ! Revision 2.64  2001/09/25 20:42:55  vsnyder
 ! Spiffify error processing for Subset
 !
