@@ -87,7 +87,7 @@ contains ! =====     Public Procedures     =============================
       & DestroyMatrix, Dump, GetActualMatrixFromDatabase, GetDiagonal, &
       & FindBlock, GetKindFromMatrixDatabase, GetFromMatrixDatabase, K_SPD, &
       & Matrix_Cholesky_T, Matrix_Database_T, Matrix_Kronecker_T, Matrix_SPD_T, &
-      & Matrix_T, UpdateDiagonal
+      & Matrix_T, NullifyMatrix, UpdateDiagonal
     ! NOTE: If you ever want to include defined assignment for matrices, please
     ! carefully check out the code around the call to snoop.
     use MLSCommon, only: L1BInfo_T, MLSChunk_T, R8
@@ -472,18 +472,22 @@ contains ! =====     Public Procedures     =============================
         if ( got(f_columns) .and. (got(f_rows) .or. matrixType == l_spd) ) then
           select case ( matrixType )
           case ( l_cholesky )
+            call NullifyMatrix ( matrixCholesky%m )
             call createEmptyMatrix ( matrixCholesky%m, vectorName, &
               & vectors(rowVector), vectors(colVector) )
             call decorate ( key, addToMatrixDatabase(matrices, matrixCholesky) )
           case ( l_kronecker )
+            call NullifyMatrix ( matrixKronecker%m )
             call createEmptyMatrix ( matrixKronecker%m, vectorName, &
               & vectors(rowVector), vectors(colVector) )
             call decorate ( key, addToMatrixDatabase(matrices, matrixKronecker) )
           case ( l_plain )
+            call NullifyMatrix ( matrixPlain )
             call createEmptyMatrix ( matrixPlain, vectorName, vectors(rowVector), &
               vectors(colVector) )
             call decorate ( key, addToMatrixDatabase(matrices, matrixPlain) )
           case ( l_spd )
+            call NullifyMatrix ( matrixSPD%m )
             call createEmptyMatrix ( matrixSPD%m, vectorName, &
               & vectors(colVector), vectors(colVector) )
             call decorate ( key, addToMatrixDatabase(matrices, matrixSPD) )
@@ -3783,6 +3787,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.144  2002/09/10 01:00:32  livesey
+! Added calls to NullifyMatrix
+!
 ! Revision 2.143  2002/09/06 00:54:13  livesey
 ! Tiny change
 !
