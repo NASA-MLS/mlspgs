@@ -1545,7 +1545,7 @@ contains
               & call dump_struct ( factored%m, &
               & 'Sparseness structure of blocks of factor:', upper=.true. )
             if ( nwt_flag == nf_getJ ) then ! taking a special iteration to get J
-              aj%chiSqNorm = aj%fnorm / max ( jacobian_rows - jacobian_cols, 1 )
+              aj%chiSqNorm = aj%fnorm / max ( jacobian_rows, 1 )
               aj%fnorm = sqrt(aj%fnorm)
                 if ( index(switches,'sca') /= 0 ) &
                   & call dump ( (/ aj%fnorm, aj%chiSqNorm /) , &
@@ -1582,8 +1582,25 @@ contains
               & 'Norm of residual is imaginary!' )
             aj%fnmin = tiny ( aj%fnmin )
           end if
-          aj%chiSqMinNorm = aj%fnmin / max ( jacobian_rows - jacobian_cols, 1 )
-          aj%chiSqNorm = aj%fnorm / max ( jacobian_rows - jacobian_cols, 1 )
+          ! Compute number of rows of Jacobian actually used.  Don't count
+          ! rows due to Levenberg-Marquardt stabilization.  Do count rows
+          ! due to a priori or regularization.  Put numbers of rows and
+          ! columns into diagnostic vector.
+          jacobian_cols = sum(normalEquations%m%col%nelts)
+          jacobian_rows = sum(normalEquations%m%row%nelts)
+          do j = 1, normalEquations%m%col%vec%template%noQuantities
+            if ( associated(normalEquations%m%col%vec%quantities(j)%mask) ) &
+              & jacobian_rows = jacobian_rows - &
+              & countBits(normalEquations%m%col%vec%quantities(j)%mask, &
+                & what=m_linAlg)
+          end do
+          if ( got(f_apriori) ) &
+            & jacobian_rows = jacobian_rows + jacobian_cols
+          if ( got(f_hRegOrders) ) &
+            & jacobian_rows = jacobian_rows + tikhonovRows
+          ! Compute the normalised chiSquared statistics etc.
+          aj%chiSqMinNorm = aj%fnmin / max ( jacobian_rows, 1 )
+          aj%chiSqNorm = aj%fnorm / max ( jacobian_rows, 1 )
           aj%fnmin = sqrt(aj%fnmin)
           aj%fnorm = sqrt(aj%fnorm)
           aj%gradn = sqrt(v(gradient) .dot. v(gradient)) ! L2Norm(gradient)
@@ -1885,22 +1902,6 @@ contains
             call output ( t3-t0, advance='yes' )
           end if
         if ( got(f_diagnostics) ) then
-          ! Compute number of rows of Jacobian actually used.  Don't count
-          ! rows due to Levenberg-Marquardt stabilization.  Do count rows
-          ! due to a priori or regularization.  Put numbers of rows and
-          ! columns into diagnostic vector.
-          jacobian_cols = sum(normalEquations%m%col%nelts)
-          jacobian_rows = sum(normalEquations%m%row%nelts)
-          do j = 1, normalEquations%m%col%nb
-            if ( associated(normalEquations%m%col%vec%quantities(j)%mask) ) &
-              & jacobian_rows = jacobian_rows - &
-              & countBits(normalEquations%m%col%vec%quantities(j)%mask, &
-                & what=m_linAlg)
-          end do
-          if ( got(f_apriori) ) &
-            & jacobian_rows = jacobian_rows + jacobian_cols
-          if ( got(f_hRegOrders) ) &
-            & jacobian_rows = jacobian_rows + tikhonovRows
           call fillDiagVec ( l_jacobian_cols, real(jacobian_cols,r8) )
           call fillDiagVec ( l_jacobian_rows, real(jacobian_rows,r8) )
             if ( index(switches,'cov') /= 0 ) then
@@ -3270,6 +3271,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.198  2002/10/23 23:27:40  livesey
+! Bug fix in jacobian_rows calculation
+!
 ! Revision 2.197  2002/10/23 01:32:31  vsnyder
 ! Add CovSansReg switch to retrieve spec
 !
