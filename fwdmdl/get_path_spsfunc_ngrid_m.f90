@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module GET_PATH_SPSFUNC_NGRID_M
   use MLSCommon, only: I4, R8
   use L2PC_FILE_PARAMETERS, only: DEG2RAD
@@ -10,64 +13,65 @@ module GET_PATH_SPSFUNC_NGRID_M
   implicit NONE
 
 !---------------------------- RCS Ident Info -------------------------------
-  CHARACTER (LEN=256) :: Id = &
-  "$Id$"
-  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
-  "$RCSfile$"
+  character (len=*), private, parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
 !---------------------------------------------------------------------------
 contains
 !---------------------------------------------------------------------
 
-SUBROUTINE get_path_spsfunc_ngrid(fwdModelIn, fwdModelExtra, molecules, &
-           ndx_path, no_tan_hts, z_path, t_path, phi_path, n_path,     &
-           spsfunc_path, Ier)
+  subroutine Get_path_spsfunc_ngrid ( fwdModelIn, fwdModelExtra, molecules, &
+    &        ndx_path, no_tan_hts, z_path, t_path, phi_path, n_path,     &
+    &        spsfunc_path, Ier )
 
-!  =================================================================
-!  Declaration of variables for sub-program: get_path_spsfunc_ngrid
-!  =================================================================
+  !  =================================================================
+  !  Declaration of variables for sub-program: get_path_spsfunc_ngrid
+  !  =================================================================
 
-type (Vector_T), intent(in) :: fwdModelIn, fwdModelExtra
-integer, dimension(:), intent(in) :: molecules
+  type (Vector_T), intent(in) :: fwdModelIn, fwdModelExtra
+  integer, dimension(:), intent(in) :: molecules
 
-!  ---------------------------
-!  Calling sequence variables:
-!  ---------------------------
-Integer(i4), INTENT(IN) :: no_tan_hts
-!
-Type(path_index) , INTENT(IN) :: ndx_path(:)
-Type(path_vector), INTENT(IN) :: z_path(:),t_path(:),phi_path(:)
+  !  ---------------------------
+  !  Calling sequence variables:
+  !  ---------------------------
+  Integer(i4), INTENT(IN) :: no_tan_hts
 
-Integer(i4), INTENT(OUT) :: ier
-Type(path_vector), INTENT(INOUT) :: n_path(:), spsfunc_path(:,:)
-!
-!  ----------------------
-!  Local variables:
-!  ----------------
+  Type(path_index) , intent(in) :: ndx_path(:)
+  Type(path_vector), intent(in) :: z_path(:),t_path(:),phi_path(:)
 
-Integer(i4) :: i, j, k, jp, jj, kk
+  Integer(i4), intent(out) :: ier
+  Type(path_vector), intent(inout) :: n_path(:), spsfunc_path(:,:)
 
-Real(r8) :: q, r, zeta, phi
+  !  ----------------------
+  !  Local variables:
+  !  ----------------
 
-type (VectorValue_T), pointer :: f, h2o
+  Integer(i4) :: i, j, k, jp, jj, kk
+
+  Real(r8) :: q, r, zeta, phi
+
+  type (VectorValue_T), pointer :: f, h2o
 
   ier = 0
-!
-! Create the specie function along the path for all species
-!
+
+  ! Create the specie function along the path for all species
+
   do j = 1, size(molecules)
     f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_vmr, molecule=molecules(j))
     jp = f%template%noInstances
     kk = f%template%noSurfs
-    DO k = 1, no_tan_hts
+    do k = 1, no_tan_hts
       jj = ndx_path(k)%total_number_of_elements
-      DEALLOCATE(spsfunc_path(j,k)%values,STAT=i)
-      ALLOCATE(spsfunc_path(j,k)%values(jj),STAT=ier)
-      IF(ier /= 0) THEN
-        PRINT *,'** Error: ALLOCATION error for spsfunc_path ..'
-        PRINT *,'   STAT =',ier
+      deallocate ( spsfunc_path(j,k)%values, STAT=i )
+      allocate ( spsfunc_path(j,k)%values(jj), STAT=ier )
+      if ( ier /= 0 ) then
+        print *,'** Error: ALLOCATION error for spsfunc_path ..'
+        print *,'   STAT =',ier
         Return
-      ENDIF
+      end if
       do i = 1, jj
         zeta = z_path(k)%values(i)
         phi = phi_path(k)%values(i)
@@ -78,35 +82,38 @@ type (VectorValue_T), pointer :: f, h2o
         else
           Call TWO_D_POLATE(f%template%surfs(:,1), f%values, &
             &      kk, Deg2Rad*f%template%phi(1,:), jp, zeta, phi, q)
-        endif
+        end if
         spsfunc_path(j,k)%values(i) = q
       end do
     end do
-  END DO
-!
-! Compute the relative refractive index minus one.
-! Get the water mixing ratio function
+  end do
+
+  ! Compute the relative refractive index minus one.
+  ! Get the water mixing ratio function
 
   h2o => GetVectorQuantityByType( fwdModelIn, fwdModelExtra, &
     & quantityType=l_vmr, molecule=l_h2o, noError=.true.)
-  if (associated(h2o)) then
+  if ( associated(h2o) ) then
     jp = h2o%template%noInstances
     kk = h2o%template%noSurfs
   else
     jp = 0
     kk = 0
-  endif
+  end if
 
-  CALL refractive_index(h2o%values,h2o%template%surfs(:,1),&
-  &    h2o%template%phi(1,:),kk,jp,ndx_path,z_path,t_path, &
-  &    phi_path,n_path,associated(h2o),no_tan_hts)
+  call refractive_index ( h2o%values, h2o%template%surfs(:,1), &
+    &  h2o%template%phi(1,:), kk, jp, ndx_path, z_path, t_path, &
+    &  phi_path, n_path, associated(h2o), no_tan_hts )
 
   Return
 
- END SUBROUTINE get_path_spsfunc_ngrid
+ end subroutine Get_path_spsfunc_ngrid
 
 end module GET_PATH_SPSFUNC_NGRID_M
 ! $Log$
+! Revision 1.4  2001/04/24 00:04:35  livesey
+! Removed ancient print statement
+!
 ! Revision 1.3  2001/04/19 06:48:14  zvi
 ! Fixing memory leaks..
 !

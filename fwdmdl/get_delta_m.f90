@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module GET_DELTA_M
   use MLSCommon, only: I4, R8
   use ELLIPSE_M, only: ELLIPSE
@@ -11,9 +14,11 @@ module GET_DELTA_M
   private
   public :: GET_DELTA
 !---------------------------- RCS Ident Info -------------------------------
-  CHARACTER (LEN=256) :: Id = &
-    "$Id$"
-  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile$"
+  character (len=*), private, parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
 !---------------------------------------------------------------------------
 contains
 !---------------------------------------------------------------------
@@ -50,19 +55,19 @@ contains
     Integer(i4) :: j, ip, iz, nco, npf
 
     Real(r8) :: Q
-    Real(r8), ALLOCATABLE, DIMENSION(:) :: Integrand
+    Real(r8), allocatable, dimension(:) :: Integrand
 
     type (VectorValue_T), pointer :: f
 !
 ! -----     Executable statements     ----------------------------------
 !
     Ier = 0
-    ALLOCATE(Integrand(no_ele), STAT=ier)
+    allocate ( Integrand(no_ele), STAT=ier )
     IF(ier /= 0) THEN
       Ier = 1
       Print *,'** Error: ALLOCATION error in GET_DELTA routine ..'
       goto 99
-    endif
+    end if
 !
 ! Start delta array computations:
 !
@@ -105,7 +110,7 @@ contains
 !
     end do
 !
- 99  DEALLOCATE(Integrand, STAT=j)
+ 99  deallocate ( Integrand, STAT=j )
 !
     Return
 !
@@ -113,6 +118,9 @@ contains
 !
 end module GET_DELTA_M
 ! $Log$
+! Revision 1.8  2001/04/09 20:52:07  zvi
+! Debugging Derivatives version
+!
 ! Revision 1.7  2001/03/31 23:40:55  zvi
 ! Eliminate l2pcdim (dimension parameters) move to allocatable ..
 !

@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module NO_CONV_AT_ALL_M
   use MLSCommon, only: I4, R4, R8
   use L2PC_PFA_STRUCTURES, only: K_MATRIX_INFO
@@ -82,13 +85,14 @@ contains
     k = no_tan_hts
     j = ptan%template%noSurfs
     if ( present(Jacobian) ) then
-      Call Cspline_der(tan_press,Ptan%values(:,maf),i_raw,i_star_all,der_all,k,j)
+      Call Cspline_der ( tan_press, Ptan%values(:,maf), i_raw, i_star_all, &
+        & der_all, k, j )
 
       row = FindBlock ( Jacobian%row, radiance%index, maf )
       col = FindBlock ( Jacobian%col, ptan%index, maf )
       rowFlags(row) = .true.
-      select case (jacobian%block(Row,col)%kind)
-      case (m_absent)
+      select case ( jacobian%block(Row,col)%kind )
+      case ( m_absent )
         call CreateBlock ( Jacobian, row, col, m_banded, &
           &    radiance%template%noSurfs*radiance%template%noChans )
         jacobian%block(row,col)%values = 0.0_r8
@@ -98,10 +102,10 @@ contains
           jacobian%block(row,col)%r2(ptg) = &
             & radiance%template%noChans*ptg
         end do
-      case (m_banded)
+      case ( m_banded )
       case default
         call MLSMessage ( MLSMSG_Error, ModuleName,&
-          & 'Wrong matrix type for ptan derivative')
+          & 'Wrong matrix type for ptan derivative' )
       end select
       do ptg = 1, j
         ind = channel + radiance%template%noChans*(ptg-1)
@@ -109,7 +113,7 @@ contains
           &   jacobian%block(row,col)%values( ind ,1 ) + sbRatio*der_all(ptg)
       end do
     else
-      Call Cspline(tan_press,Ptan%values(:,maf),i_raw,i_star_all,k,j)
+      Call Cspline ( tan_press, Ptan%values(:,maf), i_raw, i_star_all, k, j )
     end if
     do ptg = 1, j
       ind = channel + radiance%template%noChans*(ptg-1)
@@ -118,7 +122,7 @@ contains
     end do
       
 
-    if ( .not. ANY((/forwardModelConfig%temp_der,forwardModelConfig%atmos_der, &
+    if ( .not. ANY((/forwardModelConfig%temp_der, forwardModelConfig%atmos_der, &
       & forwardModelConfig%spect_der/)) ) Return
     if ( .not. present(jacobian) ) return
 
@@ -149,7 +153,7 @@ contains
 
         do sv_i = 1, no_t
           Rad(1:k) = k_temp(1:k,sv_i,nf)
-          Call Cspline(tan_press,Ptan%values(:,maf),Rad,SRad,k,j)
+          Call Cspline ( tan_press, Ptan%values(:,maf), Rad, SRad, k, j )
           do ptg = 1,j
             ind = channel+ radiance%template%noChans*(ptg-1)
             jacobian%block(row,col)%values( ind, sv_i) = &
@@ -194,7 +198,7 @@ contains
 
             do sv_i = 1, f%template%noSurfs
               Rad(1:k) = k_atmos(1:k,sv_i,nf+lk-1,is)
-              Call Lintrp(tan_press,Ptan%values(:,maf),Rad,SRad,k,j)
+              Call Lintrp ( tan_press, Ptan%values(:,maf), Rad, SRad, k, j )
               do ptg = 1, j
                 ind = channel+ radiance%template%noChans*(ptg-1)
                 jacobian%block(row,col)%values( ind, sv_i) = &
@@ -216,6 +220,9 @@ contains
 
 end module NO_CONV_AT_ALL_M
 ! $Log$
+! Revision 1.19  2001/05/02 20:49:23  zvi
+! Cleaning up code
+!
 ! Revision 1.18  2001/05/01 00:42:54  zvi
 ! Fixing phi window bug
 !
