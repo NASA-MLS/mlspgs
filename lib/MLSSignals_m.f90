@@ -1105,7 +1105,6 @@ contains
           first = .false.
           j = i
           do while ( j < ubound(signal%channels, 1) )
-            print*,j
             if ( .not. signal%channels(j+1) ) exit
           end do
           if ( j > i ) then
@@ -1393,6 +1392,9 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.50  2002/09/05 20:27:39  livesey
+! Got rid of print statement left over from long ago.
+!
 ! Revision 2.49  2002/07/17 06:00:40  livesey
 ! Added GetSidebandLoop routine
 !
