@@ -1,15 +1,15 @@
 ; This fragment of an l2cf fills stuff from previously read climatology
 
-BEGIN Fill
+begin Fill
+  
+  Fill, quantity=!x.temp, method=gridded, sourceGrid=gridTemperature
+  Fill, quantity=!x.h2o,  method=gridded, sourceGrid=gridH2O
+  Fill, quantity=!x.o3,   method=gridded, sourceGrid=gridO3
+  Fill, quantity=!x.n2o,  method=gridded, sourceGrid=gridN2O
+  Fill, quantity=!x.hno3, method=gridded, sourceGrid=gridHNO3
+  Fill, quantity=!x.hcl,  method=gridded, sourceGrid=gridHCl
+  Fill, quantity=!x.clo,  method=gridded, sourceGrid=gridClO
+  Fill, quantity=!x.ho2,  method=gridded, sourceGrid=gridHO2
+  Fill, quantity=!x.co,   method=gridded, sourceGrid=gridCO
 
-    Fill, quantity=!x.temp, method=gridded, sourceGrid=gridTemperature
-    Fill, quantity=!x.h2o,  method=gridded, sourceGrid=gridH2O
-    Fill, quantity=!x.o3,   method=gridded, sourceGrid=gridO3
-    Fill, quantity=!x.n2o,  method=gridded, sourceGrid=gridN2O
-    Fill, quantity=!x.hno3, method=gridded, sourceGrid=gridHNO3
-    Fill, quantity=!x.hcl,  method=gridded, sourceGrid=gridHCl
-    Fill, quantity=!x.clo,  method=gridded, sourceGrid=gridClO
-    Fill, quantity=!x.ho2,  method=gridded, sourceGrid=gridHO2
-    Fill, quantity=!x.co,   method=gridded, sourceGrid=gridCO
-
-END Fill
+end Fill
