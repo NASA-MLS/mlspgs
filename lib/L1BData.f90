@@ -57,6 +57,7 @@ module L1BData
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
     "$RCSfile$"
+  private not_used_here
   !---------------------------------------------------------------------------
 
   interface DUMP
@@ -660,7 +661,6 @@ contains ! ============================ MODULE PROCEDURES ======================
 
     integer :: ALLOC_ERR
     integer :: DATA_TYPE
-    integer :: DIM_SIZES(MAX_VAR_DIMS)
     integer :: I
     type(MLSAuxData_T) :: MLSAuxData
     logical :: MyNeverFail
@@ -718,7 +718,7 @@ contains ! ============================ MODULE PROCEDURES ======================
 
     ! Check input arguments, set noMAFs
 
-    numMAFs = dim_sizes(rank)
+    numMAFs = dims(rank)
 
     if ( present ( firstMAF ) ) then
       if ( (firstMAF >= numMAFs) .or. (firstMAF < 0) ) then
@@ -862,9 +862,15 @@ contains ! ============================ MODULE PROCEDURES ======================
     end if
   end subroutine announce_error
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
 end module L1BData
 
 ! $Log$
+! Revision 2.24  2002/10/07 23:21:20  pwagner
+! replaced undefined dim_sizes with dims
+!
 ! Revision 2.23  2002/10/05 00:09:16  pwagner
 ! Finished hdf5 version of readl1bdata; untested however ..
 !
