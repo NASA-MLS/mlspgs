@@ -119,7 +119,7 @@ contains
       CALL create_beta(Spectag, Catalog(i)%continuum, PB, T,                 &
         &  FF, no_of_lines, LineWidth, gl_slabs(1,i)%v0s, gl_slabs(1,i)%x1,  &
         &  gl_slabs(1,i)%y, gl_slabs(1,i)%yi, gl_slabs(1,i)%slabs1,  bb,     &
-        &  gl_slabs(1,i)%dslabs1_dv0, DBETA_DW=v0,DBETA_DN=vp,DBETA_DV=vm )
+        &  gl_slabs(1,i)%dslabs1_dv0 )
       
       IF (Spectag .EQ. 18003) THEN
         VMR = VMR_H2O
@@ -151,6 +151,9 @@ contains
 End Module Bill_GasAbsorption
 
 ! $Log$
+! Revision 1.4  2001/11/16 00:40:44  jonathan
+! add losVel
+!
 ! Revision 1.3  2001/11/15 00:55:02  jonathan
 ! fixed a bug
 !
