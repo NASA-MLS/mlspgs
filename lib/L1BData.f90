@@ -661,19 +661,9 @@ contains ! ============================ MODULE PROCEDURES ======================
     l1bData%L1BName = quantityName
     l1bData%TrueRank = rank
 
-    if ( rank < 2 ) then
-      l1bData%maxMIFs = 1
-    else if ( rank > 2 ) then
-      l1bData%maxMIFs = dim_sizes(2)
-    else
-      l1bData%maxMIFs = dim_sizes(1)
-    end if
-
-    if ( rank > 2 ) then
-      l1bData%noAuxInds = dim_sizes(1)
-    else
-      l1bData%noAuxInds = 1
-    end if
+    l1bData%noAuxInds = product(dim_sizes(1:rank-2))
+    l1bData%maxMIFs = 1
+    if ( rank > 1 ) l1bData%maxMIFs = dim_sizes(rank-1)
 
     ! Check input arguments, set noMAFs
 
@@ -907,6 +897,11 @@ contains ! ============================ MODULE PROCEDURES ======================
     if ( DEEBUG) print *, 'maxDims ', maxDims
     if ( DEEBUG) print *, 'dims ', dims
     if ( DEEBUG) print *, 'Qtype ', Qtype
+
+    l1bData%noAuxInds = product(dims(1:rank-2))
+    l1bData%maxMIFs = 1
+    if ( rank > 1 ) l1bData%maxMIFs = dims(rank-1)
+
     ! Check input arguments, set noMAFs
 
     numMAFs = dims(rank)
@@ -944,22 +939,6 @@ contains ! ============================ MODULE PROCEDURES ======================
 
     noMAFs = l1bData%noMAFs
     if ( DEEBUG)  print *, 'noMAFs ', noMAFs
-
-    if ( rank < 2 ) then
-      l1bData%maxMIFs = 1
-    else if ( rank > 2 ) then
-      l1bData%maxMIFs = dims(2)
-    else
-      l1bData%maxMIFs = dims(1)
-    end if
-    if ( DEEBUG) print *, 'l1bData%maxMIFs ', l1bData%maxMIFs
-
-    if ( rank > 2 ) then
-      l1bData%noAuxInds = dims(1)
-    else
-      l1bData%noAuxInds = 1
-    end if
-
 
     call Allocate_test ( l1bData%counterMaf, l1bData%noMAFs, &
       & 'counterMAF', ModuleName )
@@ -1278,6 +1257,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.39  2003/04/02 00:38:09  pwagner
+! Cater for L1B quantities of rank > 3
+!
 ! Revision 2.38  2003/03/10 17:27:10  pwagner
 ! Fixed same bug aslast; is it really fixed this time?
 !
