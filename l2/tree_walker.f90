@@ -15,9 +15,6 @@ module TREE_WALKER
     & Z_MERGEAPRIORI, Z_MLSSIGNALS, Z_OUTPUT, Z_READAPRIORI, Z_RETRIEVE, &
     & Z_SPECTROSCOPY
   use JOIN, only: MLSL2Join
-  !??? The next USE statement is Temporary for l2load:
-  use L2_TEST_STRUCTURES_M, only: FWD_MDL_CONFIG, FWD_MDL_INFO, &
-    & TEMPORARY_FWD_MDL_INFO
   use L2AUXData, only: DestroyL2AUXDatabase, L2AUXData_T
   use L2GPData, only: DestroyL2GPDatabase, L2GPData_T
   use MatrixModule_1, only: Matrix_Database_T
@@ -83,12 +80,6 @@ contains ! ====     Public Procedures     ==============================
     type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation => NULL()
     type (VectorTemplate_T), dimension(:), pointer :: vectorTemplates => NULL()
 
-!??? Begin temporary stuff to start up the forward model
-  type(fwd_mdl_config) :: FMC
-  type(fwd_mdl_info), dimension(:), pointer :: FMI => NULL()
-  type(temporary_fwd_mdl_info), dimension(:), pointer :: TFMI => NULL()
-!??? End of temporary stuff to start up the forward model
-
     depth = 0
     if ( toggle(gen) ) call trace_begin ( 'WALK_TREE_TO_DO_MLS_L2', &
       & subtree(first_section,root) )
@@ -100,9 +91,7 @@ contains ! ====     Public Procedures     ==============================
       son = subtree(i,root)
       select case ( decoration(subtree(1,son)) ) ! section index
       case ( z_globalsettings )
-!       call set_global_settings ( son, forwardModelConfigDatabase, vGrids ) !??? Restore when l2load isn't needed
-        call set_global_settings ( son, forwardModelConfigDatabase, vGrids, &
-          & fmc, fmi, tfmi ) !??? This line is temporary for l2load
+        call set_global_settings ( son, forwardModelConfigDatabase, vGrids )
       case ( z_mlsSignals )
         call MLSSignals ( son, field_indices )
         if ( toggle(emit) ) call test_parse_signals
@@ -131,9 +120,7 @@ subtrees: do while ( j <= howmany )
             case ( z_join )
               call MLSL2Join ( son, vectors, l2gpDatabase, l2auxDatabase, chunkNo, chunks )
             case ( z_retrieve )
-!             call retrieve ( son, vectors, matrices, forwardModelInfo ) !??? Restore when l2load isn't needed
-              call retrieve ( son, vectors, matrices, forwardModelConfigDatabase, &
-                & fmc, fmi, tfmi ) !??? This line is temporary for l2load
+              call retrieve ( son, vectors, matrices, forwardModelConfigDatabase)
             case default
           exit subtrees
             end select
@@ -168,6 +155,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.30  2001/04/10 00:02:19  vsnyder
+! Implement 'matrix' spec in Fill section
+!
 ! Revision 2.29  2001/04/07 01:50:49  vsnyder
 ! Move some of VGrid to lib/VGridsDatabase.  Move ForwardModelConfig_T and
 ! some related stuff to fwdmdl/ForwardModelConfig.

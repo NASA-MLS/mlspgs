@@ -14,18 +14,13 @@ module GLOBAL_SETTINGS
   use VGridsDatabase, only: AddVGridToDatabase, VGrid_T
   use TREE_TYPES, only: N_EQUAL, N_NAMED
 
-!??? Begin temporary stuff to start up the forward model
   use ForwardModelConfig, only: AddForwardModelConfigToDatabase, &
     & ForwardModelConfig_T
   use ForwardModelInterface, only: ConstructForwardModelConfig, &
     & ForwardModelGlobalSetup
-  use INIT_TABLES_MODULE, only: F_ZVI, S_ForwardModelGlobal, S_L2LOAD
-  use L2_Load_M, only: L2_Load
-  use L2_test_structures_m, only: FWD_MDL_CONFIG, FWD_MDL_INFO, &
-    & TEMPORARY_FWD_MDL_INFO
+  use INIT_TABLES_MODULE, only: S_ForwardModelGlobal
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
   use String_Table, only: Get_String
-!??? End of temporary stuff to start up the forward model
 
   implicit NONE
 
@@ -48,25 +43,13 @@ module GLOBAL_SETTINGS
 contains
 
   subroutine SET_GLOBAL_SETTINGS ( ROOT, ForwardModelConfigDatabase, &
-!   & VGrids ) !??? Restore when l2load isn't needed
-    & VGrids, FMC, FMI, TFMI ) !??? Remove when l2load isn't needed
+    & VGrids )
 
     integer, intent(in) :: ROOT    ! Index of N_CF node in abstract syntax tree
     type(ForwardModelConfig_T), dimension(:), pointer :: &
       & ForwardModelConfigDatabase
     type ( vGrid_T ), pointer, dimension(:) :: VGrids
-
-!??? Begin temporary stuff to start up the forward model
-  type(fwd_mdl_config) :: FMC
-  type(fwd_mdl_info), dimension(:), pointer :: FMI
-  type(temporary_fwd_mdl_info), dimension(:), pointer :: TFMI
-
-  integer :: IER
-!??? End of temporary stuff to start up the forward model
-
-    integer :: GSON                !??? Temporary for l2load
-    character(len=255) :: LINE     !??? Temporary for l2load
-
+    
     integer :: I         ! Index of son of root
     integer :: NAME      ! Sub-rosa index of name of vGrid or hGrid
     integer :: SON       ! Son of root
@@ -99,16 +82,6 @@ contains
         case ( s_forwardModel )
           call decorate (son, AddForwardModelConfigToDatabase ( &
             & forwardModelConfigDatabase, ConstructForwardModelConfig ( son, vGrids ) ) )
-        case ( s_l2load ) !??? More temporary stuff for l2load
-          ! The only allowed field is the required ZVI field
-          gson = subtree(2,son)
-          call get_string ( sub_rosa(subtree(2,gson)), line ) ! ZVI file
-          fmc%z = line(2:len_trim(line)-1)
-          call l2_load ( fmc, ier=ier )
-          allocate(tfmi(1),fmi(1))
-          call l2_load(fmc, fmi(1), tfmi(1), ier)
-
-          !??? End temporary stuff for l2load
         case ( s_vgrid )
           call decorate ( son, AddVGridToDatabase ( vGrids, &
             & CreateVGridFromMLSCFInfo ( name, son ) ) )
@@ -127,6 +100,10 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.12  2001/04/07 01:50:49  vsnyder
+! Move some of VGrid to lib/VGridsDatabase.  Move ForwardModelConfig_T and
+! some related stuff to fwdmdl/ForwardModelConfig.
+!
 ! Revision 2.11  2001/03/28 22:00:33  livesey
 ! Interim version, now handles vGrids as part of forwardModelConfig
 !
