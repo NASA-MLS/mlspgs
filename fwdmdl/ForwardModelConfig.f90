@@ -40,8 +40,11 @@ module ForwardModelConfig
     integer :: Signal     ! Signal index for the channel
     integer :: DACS       ! DACS index if any, else zero
     integer, pointer :: PFAData(:,:) => NULL()    ! Sidebands X numPFA
-                                                  ! Indices in PFADataBase%PFAData
+                          ! Indices in PFADataBase%PFAData
     integer, pointer :: PFAMolecules(:) => NULL() ! L_... from PFAData for this channel
+    integer, pointer :: PFAIndex(:) => NULL()     ! Allocated here but filled
+                          ! later; PFAIndex(i) is second subscript for
+                          ! beta_path for PFAMolecules(i).
   end type Channels_T
 
   ! Now all of the derived stuff
@@ -278,16 +281,16 @@ contains
       ! Work out PFA abstracts for each channel
       do i = 1, size(channels)
         numPFA = 0
-        nullify ( t1, channels(i)%PFAMolecules )
+        nullify ( t1, channels(i)%PFAMolecules, channels(i)%PFAIndex )
         call allocate_test ( channels(i)%PFAMolecules, 0, &
           & 'channels(i)%PFAMolecules', moduleName ) ! so we can do unions
         do j = 1, howManyPFA
           if ( channels(i)%used < lbound(PFAData(whichPFA(j))%theSignal%channels,1) .or. &
                channels(i)%used > lbound(PFAData(whichPFA(j))%theSignal%channels,1) ) cycle
           if ( .not. PFAData(whichPFA(j))%theSignal%channels(channels(i)%used) ) cycle
-          if ( .not. matchSignal ( &
+          if ( matchSignal ( &
             &  fwdModelConf%signals(channels(i)%signal:channels(i)%signal), &
-            &  PFAData(whichPFA(j))%theSignal, DSBSSB=.true. ) /= 0) cycle
+            &  PFAData(whichPFA(j))%theSignal, DSBSSB=.true. ) == 0 ) cycle
           numPFA = numPFA + 1
           t2 => intersection(fwdModelConf%molecules(fwdModelConf%firstPFA:), &
             &                PFAData(whichPFA(j))%molecules)
@@ -301,6 +304,9 @@ contains
         if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & MLSMSG_Allocate//'channels(i)%PFAData' )
         channels(i)%PFAData = 0
+        call allocate_test ( channels(i)%PFAIndex, size(channels(i)%PFAMolecules), &
+          & 'channels(i)%PFAIndex', moduleName )
+        channels(i)%PFAIndex = 0
         numPFA = 0
         do j = 1, howManyPFA
           if ( channels(i)%used < lbound(PFAData(whichPFA(j))%theSignal%channels,1) .or. &
@@ -327,7 +333,7 @@ contains
     fwdModelConf%forwardModelDerived%DACsStaging => DACsStaging
     fwdModelConf%forwardModelDerived%usedDACSSignals => usedDACSSignals
 
-    if ( index(switches,'fwmd') /= 0 ) call dump ( fwdModelConf )
+    if ( index(switches,'fwmd') /= 0 ) call dump ( fwdModelConf, 'DeriveFromForwardModelConfig' )
 
   end subroutine DeriveFromForwardModelConfig
 
@@ -374,6 +380,9 @@ contains
         call deallocate_test ( &
           & fwdModelConf%forwardModelDerived%channels(i)%PFAMolecules, &
           & 'fwdModelConf%forwardModelDerived%channels(i)%PFAMolecules', moduleName )
+        call deallocate_test ( &
+          & fwdModelConf%forwardModelDerived%channels(i)%PFAIndex, &
+          & 'fwdModelConf%forwardModelDerived%channels(i)%PFAIndex', moduleName )
       end do
       deallocate ( fwdModelConf%forwardModelDerived%channels, stat = ier )
       if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -776,7 +785,7 @@ contains
   end subroutine Dump_ForwardModelConfigDatabase
 
   ! -----------------------------------  Dump_ForwardModelConfig  -----
-  subroutine Dump_ForwardModelConfig ( Config )
+  subroutine Dump_ForwardModelConfig ( Config, Where )
 
     use Dump_0, only: DUMP
     use Intrinsic, only: Lit_indices
@@ -784,7 +793,8 @@ contains
     use Output_M, only: NewLine, Output
     use String_Table, only: Display_String
 
-    type (ForwardModelConfig_T):: Config
+    type (ForwardModelConfig_T), intent(in) :: Config
+    character(len=*), optional, intent(in) :: Where
 
     ! Local variables
     integer ::  I, J                         ! Loop counters
@@ -793,7 +803,12 @@ contains
     ! executable code
 
     call output ( '  Forward Model Config Name: ' )
-    call display_string ( Config%name, advance='yes' )
+    call display_string ( Config%name )
+    if ( present(where) ) then
+      call output ( ' from ' )
+      call output ( where )
+    end if
+    call newLine
     call output ( '  Atmos_der:' )
     call output ( Config%atmos_der, advance='yes' )
     call output ( '  Do_conv:' )
@@ -816,11 +831,16 @@ contains
     call output ( Config%temp_der, advance='yes' )
     call output ( '  Molecules: ', advance='yes' )
     if ( associated(Config%molecules) ) then
+      i = 0
       do j = 1, size(Config%molecules) - 1
         call output ( '    ' )
         if ( j == config%firstPFA ) call output ( 'PFA: ' )
         if ( Config%molecules(j) < 0 ) call output ( '-' )
         call display_string(lit_indices(abs(Config%molecules(j))))
+        if ( Config%molecules(j) > 0 ) then
+          i = i + 1
+          call output ( i, before=':' )
+        end if
         if (Config%moleculeDerivatives(j)) then
           call output (' compute derivatives', advance='yes')
         else
@@ -849,7 +869,7 @@ contains
         call output ( Config%forwardModelDerived%channels(j)%DACS, before='    DACS: ', &
           & advance='yes' )
         if ( associated(Config%forwardModelDerived%channels(j)%PFAData) ) &
-          & call dump ( Config%forwardModelDerived%channels(j)%PFAData, &
+          & call dump ( Config%forwardModelDerived%channels(j)%PFAData(-1:1:2,:), &
             & name='    PFAData' )
         if ( associated(Config%forwardModelDerived%channels(j)%PFAMolecules) ) then
           call output ( '    PFA Molecules:', advance='no' )
@@ -860,6 +880,9 @@ contains
             call display_string ( &
               & lit_indices(Config%forwardModelDerived%channels(j)%PFAMolecules(i)), &
               & advance='no' )
+            if ( Config%forwardModelDerived%channels(j)%PFAIndex(i) /= 0 ) &
+              & call output ( Config%forwardModelDerived%channels(j)%PFAIndex(i), &
+                & before=':' )
           end do
           call newLine
         end if
@@ -874,6 +897,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.57  2004/08/07 01:17:26  vsnyder
+! Forgot an advance='yes' in a dump routine
+!
 ! Revision 2.56  2004/08/05 20:57:52  vsnyder
 ! Put a sentinel at the end of %molecules
 !
