@@ -1,12 +1,11 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 ! subroutine ?_CSPLINE ( XIN, XOUT, YIN, YOUT, NIN, NOUT, YMIN, YMAX)
 
-!---------------------------- RCS Ident Info -------------------------------
-  CHARACTER (LEN=256) :: Id = &
-       "$Id$"
-  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile$"
-!---------------------------------------------------------------------------
+! $Id$
+! $RCSfile$
 
-!
 !  Given arrays XIN & YIN of lenght NIN containing a tabulated function,
 !  with XIN ordered, and given the (ordered) array: XOUT of length: NOUT,
 !  this subroutine Returns the array: YOUT which is the cubic-spline
@@ -14,7 +13,7 @@
 !
     integer, intent(in) :: NIN, NOUT
     real(rk), intent(in) :: XIN(abs(nin)), XOUT(nout), YIN(abs(nin))
-    real(rk), OPTIONAL, intent(in) :: YMIN, YMAX
+    real(rk), optional, intent(in) :: YMIN, YMAX
     real(rk), intent(out) :: YOUT(:)
 !
 !   logical, intrinsic :: ALL
@@ -29,7 +28,7 @@
 !
     jin = abs(nin)
 !
-    if (xin(jin) > xin(1)) then
+    if ( xin(jin) > xin(1) ) then
       x_in(1:jin) = xin(1:jin)
       coeff(1,1:jin) = yin(1:jin)
     else
@@ -40,15 +39,15 @@
     coeff(2,1) = 0.0
     coeff(2,jin) = 0.0
 !
-    call pcspl(x_in,coeff,jin,0,0)
+    call pcspl ( x_in, coeff, jin, 0, 0 )
 !
     klo = -1
     kpl = -2
     do i = 1, nout
 !
       x = xout(i)
-      call hunt(x,x_in,jin,klo,khi)
-      if (klo /= kpl) then
+      call hunt ( x, x_in, jin, klo, khi )
+      if ( klo /= kpl ) then
         kpl = klo
         xl = x_in(klo)
         xh = x_in(khi)
@@ -64,11 +63,11 @@
 !
       dp = 100.0 * abs(yspl-ylin) / (abs(ylin) + epsilon(ylin))
 
-      if(dp > 25.0) then
+      if ( dp > 25.0 ) then
         yspl = ylin
-      else if (PRESENT(YMIN) .AND. PRESENT(YMAX) ) then
-        if(yspl < YMIN  .OR. yspl > YMAX) yspl = ylin
-      endif
+      else if ( present(ymin) .and. present(ymax) ) then
+        if ( yspl < ymin  .or. yspl > ymax ) yspl = ylin
+      end if
 !
       yout(i) = yspl
 !
@@ -77,3 +76,6 @@
 ! end subroutine ?_CSPLINE
 
 ! $Log$
+! Revision 2.4  2002/10/02 15:49:38  bwknosp
+! Added Id and RCS info
+!
