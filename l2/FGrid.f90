@@ -6,8 +6,7 @@ module FGrid                    ! Frequency grid information
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
   use dump_0, only: dump
   use EXPR_M, only: EXPR
-  use Intrinsic, only: L_Frequency, L_IntermediateFrequency, &
-    & L_LSBFrequency, L_None, L_USBFrequency, PHYQ_DIMENSIONLESS, PHYQ_FREQUENCY, &
+  use Intrinsic, only:  L_None, PHYQ_DIMENSIONLESS, PHYQ_FREQUENCY, &
     & L_CHANNEL, LIT_INDICES
   use Init_tables_module, only: F_Coordinate, F_Values
   use MLSCommon, only: r8
@@ -203,6 +202,9 @@ contains ! ===================================== Public procedures =====
 end module FGrid
 
 ! $Log$
+! Revision 2.8  2004/12/27 23:05:14  vsnyder
+! Remove unreferenced use names
+!
 ! Revision 2.7  2004/08/26 18:51:48  pwagner
 ! Added dump methods
 !
