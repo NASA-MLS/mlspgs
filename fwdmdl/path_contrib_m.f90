@@ -151,29 +151,23 @@ contains
   end subroutine Path_Contrib_Polarized
 
   ! ------------------------------------------------  Get_GL_inds  -----
-  subroutine Get_GL_inds ( Do_GL, GL_Inds, GL_Ndx, NGL )
-  ! Create and fill the arrays that control application of GL
+  subroutine Get_GL_inds ( Do_GL, GL_Inds, NGL )
+  ! Fill the array that controls application of GL
 
-    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use GLnp, only: NG
     use MLSCommon, only: IP
 
     logical(ip), intent(inout) :: DO_GL(:)     ! Set true for indicies to do
                                                ! gl computation.  First and
                                                ! last are set false here.
-    integer, dimension(:), pointer :: GL_INDS  ! Index of GL indices
-    integer, dimension(:,:), pointer :: GL_NDX ! Packed Index array of GL intervals
+    integer, intent(out) :: GL_INDS(:)         ! Indices of where to do GL
     integer, intent(out) :: NGL                ! How much of GL_INDS to use
 
-    integer :: I, NO_GL_NDX, N_PATH
+    integer :: I, N_PATH
 
     integer, parameter :: NGP1 = NG + 1
     integer, parameter :: GLIR(ng) = (/ (i, i = 1, ng ) /)  ! for > n_path/2
     integer, parameter :: GLIL(ng) = (/ (i ,i = -ng, -1) /) ! for <= n_path/2
-
-  ! Allocate the output index arrays (and a temp array)
-
-    nullify ( gl_inds, gl_ndx )
 
     n_path = size(do_gl)
 
@@ -181,25 +175,15 @@ contains
 
     do_gl((/1,n_path/)) = .FALSE.
 
-    no_gl_ndx = count(do_gl)
-    ngl = Ng * no_gl_ndx
-
-    call allocate_test ( gl_inds, ngl, 'gl_inds', moduleName )
-    call allocate_test ( gl_ndx, no_gl_ndx, 2, 'gl_ndx', moduleName )
-
-  ! Indices where GL is needed are ones where do_gl is true.
-
-    gl_ndx(:,1) = pack((/(i,i=1,n_path)/),do_gl)
-
-  ! Compute the gl indicies
-
-    do i = 1 , no_gl_ndx
-      if ( gl_ndx(i,1) > n_path/2 ) then
-        gl_ndx(i,2) = 1 - Ng + Ngp1 * (gl_ndx(i,1) - 1)
-        gl_inds(ng*(i-1)+1:ng*i) = gl_ndx(i,2) + glir
-      else
-        gl_ndx(i,2) = 1 +      Ngp1 * (gl_ndx(i,1) - 1)
-        gl_inds(ng*(i-1)+1:ng*i) = gl_ndx(i,2) + glil
+    ngl = 0
+    do i = 2, n_path-1 ! first and last elements of do_gl are false
+      if ( do_gl(i) ) then
+        ngl = ngl + ng
+        if ( i > n_path / 2 ) then
+          gl_inds(ngl-ng+1:ngl) = 1 - Ng + Ngp1 * (i - 1) + glir
+        else
+          gl_inds(ngl-ng+1:ngl) = 1 +      Ngp1 * (i - 1) + glil
+        end if
       end if
     end do
 
@@ -213,6 +197,9 @@ contains
 end module Path_Contrib_M
 
 ! $Log$
+! Revision 2.5  2003/01/31 01:53:28  vsnyder
+! Calculate where to do GL with one less array temp
+!
 ! Revision 2.4  2003/01/30 19:31:18  vsnyder
 ! Undo change that didn't work -- tried to compute gl_inds without array temp
 !
