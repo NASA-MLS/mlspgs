@@ -11,11 +11,11 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
   use HGrid, only: hGrid_T
   use INIT_TABLES_MODULE, only: F_BAND, F_HGRID, F_MODULE, &
     F_MOLECULE, F_RADIOMETER, F_SIGNAL, F_TYPE, F_UNIT, F_VGRID, FIRST_LIT, LAST_LIT, &
-    L_BASELINE, L_EARTHREFL, L_EXTINCTION, L_GEODALTITUDE, L_GPH, L_ORBITINCLINE, &
-    L_PTAN, L_RADIANCE, L_REFGPH, L_SCGEOCALT, L_SCVEL, L_SPACERADIANCE, L_TEMPERATURE, &
-    L_TNGTGEOCALT, L_TNGTGEODALT, L_TRUE, L_VMR, PHYQ_ANGLE, &
-    PHYQ_DIMENSIONLESS, PHYQ_EXTINCTION, PHYQ_LENGTH, PHYQ_TEMPERATURE, &
-    PHYQ_VELOCITY, PHYQ_VMR, PHYQ_ZETA
+    L_BASELINE, L_EARTHREFL, L_ELEVOFFSET, L_EXTINCTION, L_GEODALTITUDE, L_GPH, &
+    L_ORBITINCLINE, L_PTAN, L_RADIANCE, L_REFGPH, L_SCGEOCALT, L_SCVEL, &
+    L_SPACERADIANCE, L_TEMPERATURE, L_TNGTGEOCALT, L_TNGTGEODALT, L_TRUE,&
+    L_VMR, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_EXTINCTION, PHYQ_LENGTH,&
+    PHYQ_TEMPERATURE, PHYQ_VELOCITY, PHYQ_VMR, PHYQ_ZETA
   use L1BData, only: L1BData_T, READL1BDATA, DEALLOCATEL1BDATA
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: L1BInfo_T, MLSChunk_T, NameLen, R8
@@ -117,6 +117,7 @@ contains ! =====     Public Procedures     =============================
 
     natural_units(l_baseline) =       PHYQ_Temperature
     natural_units(l_earthRefl) =      PHYQ_Dimensionless
+    natural_units(l_elevOffset) =     PHYQ_Angle
     natural_units(l_extinction) =     PHYQ_Extinction
     natural_units(l_gph) =            PHYQ_Length
     natural_units(l_orbitIncline) =   PHYQ_Angle
@@ -537,6 +538,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.9  2001/03/08 21:49:26  livesey
+! Added elev_offset
+!
 ! Revision 2.8  2001/03/03 00:08:09  livesey
 ! Lots of changes mostly with minor frame quantities
 !
