@@ -776,7 +776,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_skipOverlaps, t+t_boolean, n+n_field_type, &
              begin, f+f_specificQuantities, s+s_quantity, n+n_field_spec, &
              begin, f+f_cloud_der, t+t_numeric, n+n_field_type, &
-             begin, f+f_cloud_width, t+t_numeric, n+n_field_type,&
+             begin, f+f_i_saturation, t+t_numeric, n+n_field_type,&
              begin, f+f_cloud_fov, t+t_numeric, n+n_field_type, &
              begin, f+f_spect_der, t+t_boolean, n+n_field_type, &
              begin, f+f_tangentGrid, s+s_vGrid, n+n_field_spec, &
@@ -938,6 +938,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.271  2003/01/13 17:17:18  jonathan
+! change cloud_width to i_saturation
+!
 ! Revision 2.270  2003/01/11 01:23:12  livesey
 ! Another bug fix in Dong's flagCloud
 !
