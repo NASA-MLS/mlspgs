@@ -122,9 +122,6 @@ contains ! =================================== Public procedures
       real (r8) :: Z                      ! One 'height'
       real (r8) :: Z1, Z2                 ! Range of transition region
 
-      type (griddedData_T), pointer :: OPERATIONAL
-      type (griddedData_T), pointer :: CLIMATOLOGY
-
       ! Executable code
 
       call nullifyGriddedData ( newGrid ) ! for Sun's still useless compiler
@@ -195,6 +192,8 @@ contains ! =================================== Public procedures
       z1 = zTrans - scale/2.0
       z2 = zTrans + scale/2.0
 
+      
+
       ! Now we're going to fill in the rest of the field
       do day = 1, newGrid%noDates
         do sza = 1, newGrid%noSzas
@@ -220,16 +219,27 @@ contains ! =================================== Public procedures
                     & newGrid%lsts(lst), &
                     & newGrid%szas(sza), &
                     & 0.5 * ( newGrid%dateStarts(day)+newGrid%dateEnds(day) ) )
-                  ! Now work out the weighting of the two
+
+                  ! Weight them by height
                   z = scaleHeight * ( 3.0 - log10 ( newGrid%heights(surf) ) )
                   if ( scale /= 0.0 ) then
                     cliWeight = ( z - z1 ) / ( z2-z1 )
                     opWeight = 1.0 - cliWeight
                   end if
 
-                  ! Would probably think about missing data here
+                  ! Check for bad data in operational dataset
+                  if ( opVal >= nearest ( operational%missingValue, -1.0 ) .and. &
+                    &  opVal <= nearest ( operational%missingValue,  1.0 ) ) then
+                    opWeight = 0.0
+                  endif
+                  ! Check for bad data in the climatology
+                  if ( cliVal >= nearest ( climatology%missingValue, -1.0 ) .and. &
+                    &  cliVal <= nearest ( climatology%missingValue,  1.0 ) ) then
+                    cliWeight = 0.0
+                  end if
+
                   cliWeight = min ( max ( cliWeight, 0.0_r8 ), 1.0_r8 )
-                  opWeight = min ( max ( cliWeight, 0.0_r8 ), 1.0_r8 )
+                  opWeight = min ( max ( opWeight, 0.0_r8 ), 1.0_r8 )
                   totalWeight = cliWeight + opWeight
 
                   ! OK, store this value
@@ -237,8 +247,8 @@ contains ! =================================== Public procedures
                     newGrid%field ( surf, lat, lon, lst, sza, day ) = &
                       & ( cliWeight*cliVal + opWeight*opVal ) / totalWeight
                   else
-  !                   newGrid%field ( surf, lat, lon, lst, sza, day ) = &
-  !                     & newGrid%missing
+                    newGrid%field ( surf, lat, lon, lst, sza, day ) = &
+                      & newGrid%missingValue
                   end if
                 end do
               end do
@@ -257,6 +267,9 @@ contains ! =================================== Public procedures
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.8  2003/02/28 02:25:50  livesey
+! First working version.
+!
 ! Revision 2.7  2003/02/19 19:15:13  pwagner
 ! Consistent with new GriddedData_T and rgr
 !
