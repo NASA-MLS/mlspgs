@@ -40,7 +40,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! Update these lines before delivery to sips     
   ! id to print out in response to "--version" command-line option       
   character(LEN=*), dimension(3), parameter :: CURRENT_VERSION_ID = (/ &    
-    & 'v1.2 swdev team                                           ', &       
+    & 'v1.4 swdev team                                           ', &       
     & 'Copyright (c) 2003, California Institute of Technology.   ', &       
     & 'U.S. Government Sponsorship under NASA Contract NAS7-1407.' /)       
      
@@ -102,6 +102,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.23  2003/10/09 23:58:34  pwagner
+! Updated CURRENT_VERSION_ID to 1.4
+!
 ! Revision 2.22  2003/09/05 23:22:52  pwagner
 ! Has new SKIPRETRIEVAL option
 !
