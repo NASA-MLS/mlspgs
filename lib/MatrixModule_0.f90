@@ -40,8 +40,8 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   public :: MultiplyMatrixVectorNoT, MultiplyMatrixVectorNoT_0
   public :: operator(+), operator(.TX.), RowScale
   public :: RowScale_0, ScaleBlock, SolveCholesky, SolveCholeskyM_0
-  public :: SolveCholeskyV_0, Sparsify, UpdateDiagonal, UpdateDiagonal_0
-  public :: UpdateDiagonalVec_0
+  public :: SolveCholeskyV_0, Sparsify, Spill, Spill_0
+  public :: UpdateDiagonal, UpdateDiagonal_0, UpdateDiagonalVec_0
 
 ! =====     Defined Operators and Generic Identifiers     ==============
 
@@ -143,6 +143,10 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
 
   interface SolveCholesky
     module procedure SolveCholeskyM_0, SolveCholeskyV_0, SolveCholeskyA_0
+  end interface
+
+  interface Spill
+    module procedure Spill_0
   end interface
 
   interface UpdateDiagonal
@@ -359,9 +363,9 @@ contains ! =====     Public Procedures     =============================
   subroutine AssignBlock ( Z, X )
   ! Destroy Z, then copy X to it, using pointer assignment for pointer
   ! components.  Other than the "Destroy Z" part, the semantics are the
-  ! same as for intrinsic assignment.  Notice that CopyBlock does a deep
-  ! copy.  If one has Z = X in a loop, it is therefore necessary only to
-  ! destroy Z after the loop.
+  ! same as for intrinsic assignment.  If one has Z = X in a loop, it
+  ! is therefore necessary only to destroy Z after the loop.  Notice
+  ! that CopyBlock does a deep copy.
     type(MatrixElement_T), intent(inout) :: Z
     type(MatrixElement_T), intent(in) :: X
     call destroyBlock ( z )
@@ -727,6 +731,9 @@ contains ! =====     Public Procedures     =============================
       d = xin(i,i) - dot( i-1, zt(1,i), 1, zt(1,i), 1 )
 !     d = xin(i,i) - dot_product( zt(1:i-1,i), zt(1:i-1,i) )
       if ( (d <= tol .and. i < nc) .or. (d < 0.0) ) then
+print *, 'In DenseCholesky at diagonal element', i, ' D =', d
+print *, 'XIN(i,i) =', xin(i,i)
+call dump ( zt(1:i-1,i), name='zt(1:i-1,i)' )
         if ( present(status ) ) then
           status = i
           return
@@ -1262,7 +1269,7 @@ contains ! =====     Public Procedures     =============================
     end if
     
     if ( xb%kind == M_Absent .or. yb%kind == M_Absent ) then
-      if ( abs(beta) < 0.5_r8 ) call createBlock ( zb, xb%nRows, yb%nCols, M_Absent )
+      if ( abs(beta) < 0.5_r8 ) call createBlock ( zb, xb%nRows, yb%nRows, M_Absent )
       return
     end if
 
@@ -1271,7 +1278,7 @@ contains ! =====     Public Procedures     =============================
         & "XB and YB Matrix sizes incompatible in MultiplyMatrix_XY_T_0" )
 
     nullify ( z )
-    call allocate_test ( z, xb%nRows, yb%nCols, 'Z in MultiplyMatrix_XY_T_0', &
+    call allocate_test ( z, xb%nRows, yb%nRows, 'Z in MultiplyMatrix_XY_T_0', &
       & moduleName )
     if ( abs(beta) < 0.5_r8 ) then
       z = 0.0_r8
@@ -1299,7 +1306,7 @@ contains ! =====     Public Procedures     =============================
       call densify ( y, yb )
     end if
 
-    ! zb%noRows/zb%noCols undefined here, so avoid using them.
+    ! zb%nRows/zb%nCols undefined here, so don't them.
     call gemm ( 'N', 'T', xb%nRows, yb%nRows, xb%nCols, alpha, &
       & x, xb%nRows, y, yb%nRows, beta, z, xb%nRows )
 
@@ -1411,7 +1418,7 @@ contains ! =====     Public Procedures     =============================
         ! ??? better way
         call allocate_test ( z, zb%nRows, zb%nCols, &
           & "Z for banded X banded in MultiplyMatrix_XTY_0", ModuleName )
-        if ( update .and. zb%kind /= m_absent ) then
+        if ( my_upd .and. zb%kind /= m_absent ) then
           call densify ( z, zb )
         else
           z = 0.0_r8
@@ -1462,7 +1469,7 @@ contains ! =====     Public Procedures     =============================
         ! ??? better way
         call allocate_test ( z, xb%nCols, yb%nCols, &
           & "Z for banded X sparse in MultiplyMatrix_XTY_0", ModuleName )
-        if ( update .and. zb%kind /= m_absent ) then
+        if ( my_upd .and. zb%kind /= m_absent ) then
           call densify ( z, zb )
         else
           z = 0.0_r8
@@ -1545,7 +1552,7 @@ contains ! =====     Public Procedures     =============================
         ! ??? better way
         call allocate_test ( z, xb%nCols, yb%nCols, &
           & "Z for sparse X banded in MultiplyMatrix_XTY_0", ModuleName )
-        if ( update .and. zb%kind /= m_absent ) then
+        if ( my_upd .and. zb%kind /= m_absent ) then
           call densify ( z, zb )
         else
           z = 0.0_r8
@@ -1593,7 +1600,7 @@ contains ! =====     Public Procedures     =============================
         ! ??? better way
         call allocate_test ( z, xb%nCols, yb%nCols, &
           & "Z for sparse X sparse in MultiplyMatrix_XTY_0", ModuleName )
-        if ( update .and. zb%kind /= m_absent ) then
+        if ( my_upd .and. zb%kind /= m_absent ) then
           call densify ( z, zb )
         else
           z = 0.0_r8
@@ -1767,7 +1774,7 @@ contains ! =====     Public Procedures     =============================
           call gemm ( 'T', 'N', xb%nCols, yb%nCols, xb%nRows, s, &
             & xb%values, xb%nRows, yb%values, yb%nRows, 1.0_r8, &
             & zb%values, zb%nRows )
-          ! Same as the following, but could use Atlas:
+          ! Same as the following, but the above could use Atlas:
           ! zb%values = zb%values + s * matmul(transpose(xb%values),yb%values)
         end if
       end select
@@ -2296,7 +2303,7 @@ contains ! =====     Public Procedures     =============================
             &      my_b(u%r1(i)), 1) ) / d
 !         x(i) = ( my_b(i) - dot_product ( &
 !           &      u%values(u%r2(i-1)+1:u%r2(i)-1,1), &
-!           &      my_b(u%r1(i):u%r1(i)+u%r2(i)-u%r2(i-1)-1)) ) / d
+!           &      my_b(u%r1(i):i-1)) ) / d
         end do ! i = 1, n
       case ( M_Column_Sparse )
         do i = 1, n
@@ -2446,6 +2453,32 @@ contains ! =====     Public Procedures     =============================
       call deallocate_test ( z, "No variable specified", callingModule )
     end if
   end subroutine Sparsify
+
+  ! ----------------------------------------------------  Spill_0  -----
+  subroutine Spill_0 ( A, Unit )
+  ! Spill the matrix block A to Fortran Unit, which is presumed to be
+  ! open for unformatted output.  The order of output is:
+  ! An integer that is zero if the block is empty and 3 if it is not.
+  ! If this integer is zero, there is no further output.
+  ! Two integers, giving the number of rows and columns.
+  ! The values of the matrix block elements, in column major order.
+    type(MatrixElement_T), intent(in) :: A
+    integer, intent(in) :: Unit
+
+    real(r8), pointer :: D(:,:)              ! Densified block, if necessary
+
+    write ( unit ) a%kind, a%nRows, a%nCols
+    if ( a%kind == m_absent ) return
+    if ( a%kind == m_full ) then
+      write ( unit ) a%values
+      return
+    end if
+    nullify ( d )
+    call allocate_test ( d, a%nRows, a%nCols, "D in Spill_0", ModuleName )
+    call densify ( d, a )
+    write ( unit ) d
+    call deallocate_test ( d, "D in Spill_0", ModuleName )
+  end subroutine Spill_0
 
   ! -------------------------------------------  UpdateDiagonal_0  -----
   subroutine UpdateDiagonal_0 ( A, LAMBDA )
@@ -2774,6 +2807,11 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.70  2002/06/15 00:41:20  vsnyder
+! 1.  Fix some comments.  2.  Fix dimensions for result of MultiplyMatrix_XY_T_0.
+! 3.  Fix some references to optional arguments not protected by present().
+! 4.  Add Spill_0 subroutine.
+!
 ! Revision 2.69  2002/03/12 01:38:33  vsnyder
 ! Fix typo in a comment
 !
