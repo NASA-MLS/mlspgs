@@ -20,7 +20,6 @@ module RetrievalModule
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
-  private :: not_used_here 
 !---------------------------------------------------------------------------
 
 contains
@@ -515,6 +514,8 @@ contains
           ! Do the retrieval
           jacobian_Cols = 0
           jacobian_Rows = 0
+          if ( got(f_lowBound) ) call getInBounds ( v(x), lowBound, 'low' )
+          if ( got(f_highBound) ) call getInBounds ( v(x), highBound, 'high' )
           select case ( method )
           case ( l_newtonian )
             call newtonianSolver
@@ -666,33 +667,63 @@ contains
 
       if ( which == 'low' ) then
         do iq = 1, size(x%quantities)
-          do ivx = 1, size(x%quantities(iq)%values,1)
-            do ivy = 1, size(x%quantities(iq)%values,2)
-              if ( x%quantities(iq)%values(ivx,ivy) + &
-                &  mu * dx%quantities(iq)%values(ivx,ivy) < &
-                &  bound%quantities(iq)%values(ivx,ivy) ) &
-                  & mu = ( bound%quantities(iq)%values(ivx,ivy) - &
-                  &        x%quantities(iq)%values(ivx,ivy) ) &
-                  &      / dx%quantities(iq)%values(ivx,ivy)
+          if ( associated(x%quantities(iq)%mask) ) then
+            do ivy = 1, size(x%quantities(iq)%values,1)
+              do ivx = 1, size(x%quantities(iq)%values,2)
+                if ( iand(ichar(x%quantities(iq)%mask(ivx,ivy)),m_linalg) == 0 ) then
+                  if ( x%quantities(iq)%values(ivx,ivy) + &
+                    &  mu * dx%quantities(iq)%values(ivx,ivy) < &
+                    &  bound%quantities(iq)%values(ivx,ivy) ) &
+                      & mu = ( bound%quantities(iq)%values(ivx,ivy) - &
+                      &        x%quantities(iq)%values(ivx,ivy) ) &
+                      &      / dx%quantities(iq)%values(ivx,ivy)
+                end if
+              end do
             end do
-          end do
+          else
+            do ivy = 1, size(x%quantities(iq)%values,1)
+              do ivx = 1, size(x%quantities(iq)%values,2)
+                if ( x%quantities(iq)%values(ivx,ivy) + &
+                  &  mu * dx%quantities(iq)%values(ivx,ivy) < &
+                  &  bound%quantities(iq)%values(ivx,ivy) ) &
+                    & mu = ( bound%quantities(iq)%values(ivx,ivy) - &
+                    &        x%quantities(iq)%values(ivx,ivy) ) &
+                    &      / dx%quantities(iq)%values(ivx,ivy)
+              end do
+            end do
+          end if
         end do
       else if ( which == 'high' ) then
         do iq = 1, size(x%quantities)
-          do ivx = 1, size(x%quantities(iq)%values,1)
-            do ivy = 1, size(x%quantities(iq)%values,2)
-              if ( x%quantities(iq)%values(ivx,ivy) + &
-                &  mu * dx%quantities(iq)%values(ivx,ivy) > &
-                &  bound%quantities(iq)%values(ivx,ivy) ) &
-                  & mu = ( x%quantities(iq)%values(ivx,ivy) - &
-                  &        bound%quantities(iq)%values(ivx,ivy) ) &
-                  &      / dx%quantities(iq)%values(ivx,ivy)
+          if ( associated(x%quantities(iq)%mask) ) then
+            do ivy = 1, size(x%quantities(iq)%values,1)
+              do ivx = 1, size(x%quantities(iq)%values,2)
+                if ( iand(ichar(x%quantities(iq)%mask(ivx,ivy)),m_linalg) == 0 ) then
+                  if ( x%quantities(iq)%values(ivx,ivy) + &
+                    &  mu * dx%quantities(iq)%values(ivx,ivy) > &
+                    &  bound%quantities(iq)%values(ivx,ivy) ) &
+                      & mu = ( x%quantities(iq)%values(ivx,ivy) - &
+                      &        bound%quantities(iq)%values(ivx,ivy) ) &
+                      &      / dx%quantities(iq)%values(ivx,ivy)
+                end if
+              end do
             end do
-          end do
+          else
+            do ivy = 1, size(x%quantities(iq)%values,1)
+              do ivx = 1, size(x%quantities(iq)%values,2)
+                if ( x%quantities(iq)%values(ivx,ivy) + &
+                  &  mu * dx%quantities(iq)%values(ivx,ivy) > &
+                  &  bound%quantities(iq)%values(ivx,ivy) ) &
+                    & mu = ( x%quantities(iq)%values(ivx,ivy) - &
+                    &        bound%quantities(iq)%values(ivx,ivy) ) &
+                    &      / dx%quantities(iq)%values(ivx,ivy)
+              end do
+            end do
+          end if
         end do
       else
         call MLSMessage ( MLSMSG_Error, moduleName, &
-          & 'Come on! It has to be a low bound or a high bound!' )
+          & 'Come on! In BoundMove, it has to be a low bound or a high bound!' )
       end if
       if ( mu < 0.0_rv ) call MLSMessage ( MLSMSG_Error, moduleName, &
         &  'How did mu get to be negative?' )
@@ -712,7 +743,64 @@ contains
         & quantityType=QuantityIndex, noError=.true. )
       if ( associated(diag_qty) ) diag_qty%values(1,1) = value
     end subroutine FillDiagVec
-    !
+
+    ! ----------------------------------------------  GetInBounds  -----
+    subroutine GetInBounds ( X, Bound, Which )
+      ! Put X above/below Bound.  Which specifies low or high bound.
+      type(vector_t), intent(inout) :: X
+      type(vector_t), intent(in) :: Bound
+      character(len=*), intent(in) :: Which
+
+      integer :: IQ, IVX, IVY           ! Subscripts used during bounding
+
+      if ( which == 'low' ) then
+        do iq = 1, size(x%quantities)
+          if ( associated(x%quantities(iq)%mask) ) then
+            do ivy = 1, size(x%quantities(iq)%values,1)
+              do ivx = 1, size(x%quantities(iq)%values,2)
+                if ( iand(ichar(x%quantities(iq)%mask(ivx,ivy)),m_linalg) /= 0 ) &
+                  & x%quantities(iq)%values(ivx,ivy) = &
+                    & max(x%quantities(iq)%values(ivx,ivy), &
+                    &     bound%quantities(iq)%values(ivx,ivy) )
+              end do
+            end do
+          else
+            do ivy = 1, size(x%quantities(iq)%values,1)
+              do ivx = 1, size(x%quantities(iq)%values,2)
+                x%quantities(iq)%values(ivx,ivy) = &
+                  & max(x%quantities(iq)%values(ivx,ivy), &
+                  &     bound%quantities(iq)%values(ivx,ivy) )
+              end do
+            end do
+          end if
+        end do
+      else if ( which == 'high' ) then
+        do iq = 1, size(x%quantities)
+          if ( associated(x%quantities(iq)%mask) ) then
+            do ivy = 1, size(x%quantities(iq)%values,1)
+              do ivx = 1, size(x%quantities(iq)%values,2)
+                if ( iand(ichar(x%quantities(iq)%mask(ivx,ivy)),m_linalg) /= 0 ) &
+                & x%quantities(iq)%values(ivx,ivy) = &
+                    & min(x%quantities(iq)%values(ivx,ivy), &
+                    &     bound%quantities(iq)%values(ivx,ivy) )
+              end do
+            end do
+          else
+            do ivy = 1, size(x%quantities(iq)%values,1)
+              do ivx = 1, size(x%quantities(iq)%values,2)
+                x%quantities(iq)%values(ivx,ivy) = &
+                  & min(x%quantities(iq)%values(ivx,ivy), &
+                  &     bound%quantities(iq)%values(ivx,ivy) )
+              end do
+            end do
+          end if
+       end do
+      else
+        call MLSMessage ( MLSMSG_Error, moduleName, &
+          & 'Come on! In GetInBounds, it has to be a low bound or a high bound!' )
+      end if
+    end subroutine GetInBounds
+
     ! ------------------------------------------  NewtonianSolver  -----
     subroutine NewtonianSolver
 
@@ -1466,7 +1554,7 @@ contains
             call output ( 'norm(candidateDX) = ' )
             call output ( v(candidateDX) .dot. v(candidateDX), advance='yes' )
             call MLSMessage ( MLSMSG_Warning, ModuleName, &
-              & 'Norm of residual is imaginary!' )
+              & "Norm of residual not in Jacobian's column space is imaginary!" )
             aj%fnmin = tiny ( aj%fnmin )
           end if
           aj%fnmin = sqrt(aj%fnmin)
@@ -1475,11 +1563,16 @@ contains
           ! Shorten candidateDX if necessary to stay within the bounds.
           ! We aren't ready to take the move, but NWTA needs an accurate
           ! value for the norm of candidateDX.
+          call copyVector ( v(dxUnScaled), v(candidateDX) ) ! dxUnscaled = dx
+          if ( columnScaling /= l_none ) then
+            ! dxUnScaled = dxUnScaled # columnScaleVector:
+            call multiply ( v(dxUnScaled), v(columnScaleVector) )
+          end if
           mu = 1.0_rv
           if ( got(f_lowBound) ) &
-            & call boundMove ( mu, lowBound, v(x), v(candidateDx), 'low' )
+            & call boundMove ( mu, lowBound, v(x), v(dxUnScaled), 'low' )
           if ( got(f_highBound) ) &
-            & call boundMove ( mu, highBound, v(x), v(candidateDx), 'high' )
+            & call boundMove ( mu, highBound, v(x), v(dxUnScaled), 'high' )
           if ( mu < 1.0_rv ) call scaleVector ( v(candidateDX), mu )
           aj%dxn = sqrt(v(candidateDX) .dot. v(candidateDX)) ! L2Norm(dx)
           aj%gdx = v(gradient) .dot. v(candidateDX)
@@ -3066,13 +3159,16 @@ contains
     end subroutine SetupSubset
   end subroutine Retrieve
 
-  logical function not_used_here()
+  logical function NOT_USED_HERE()
     not_used_here = (id(1:1) == ModuleName(1:1))
-  end function not_used_here
+  end function NOT_USED_HERE
 
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.192  2002/10/18 22:05:42  vsnyder
+! Get in bounds before starting.  Account for scaling when bounding a move.
+!
 ! Revision 2.191  2002/10/17 23:12:51  vsnyder
 ! Apply bounds to gradient and Aitken moves
 !
