@@ -31,6 +31,7 @@ module FullCloudForwardModel
   use Molecules, only: L_H2O, L_O3
   use Output_m, only: OUTPUT
   use PointingGrid_m, only: POINTINGGRIDS
+  use SpectroscopyCatalog_m, only: CATALOG_T, LINE_T, LINES, CATALOG
   use Toggles, only: Emit, Levels, Toggle
   use Trace_M, only: Trace_begin, Trace_end
   use Units
@@ -65,8 +66,8 @@ module FullCloudForwardModel
                      & L_CLOUDICE,                                           &
                      & L_CLOUDWATER,                                         &
                      & L_LOSTRANSFUNC,                                       &
-          		      & L_SCGEOCALT,                                          &
-         		      & L_ELEVOFFSET,                                         &
+                     & L_SCGEOCALT,                                          &
+                     & L_ELEVOFFSET,                                         &
                      & L_SIDEBANDRATIO,                                      &
                      & L_CHANNEL,                                            &
                      & L_NONE
@@ -128,8 +129,12 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     type (Signal_T) :: signal                      ! A signal
     type(VectorValue_T), pointer :: STATE_ext      ! A state vector quantity
     type(VectorValue_T), pointer :: STATE_los      ! A state vector quantity
-
     type(VectorValue_T), pointer :: SIDEBANDRATIO  ! From the state vector
+
+    type (catalog_T), dimension(:), pointer :: MY_CATALOG 
+    type (catalog_T), pointer :: thisCatalogEntry
+    type (line_T),    pointer :: thisLine
+
 
     ! for jacobian
     type(MatrixElement_T), pointer :: JBLOCK       ! A block from the jacobian
@@ -222,16 +227,17 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     ! Nullify all the pointers
     !--------------------------
 
-    nullify( CLOUDICE, CLOUDWATER, CLOUDEXTINCTION, modelCLOUDRADIANCE,    &
-             CLOUDRADSENSITIVITY, EFFECTIVEOPTICALDEPTH, obsCLOUDRADIANCE,GPH, &
-             MASSMEANDIAMETERICE, MASSMEANDIAMETERWATER, PTAN,               &
-             RADIANCE, SIZEDISTRIBUTION, EARTHRADIUS, SURFACETYPE,           &
-             TEMP, TOTALEXTINCTION, VMR, VMRARRAY,closestInstances,          &
-             A_CLEARSKYRADIANCE, A_CLOUDINDUCEDRADIANCE,                     &
-             A_CLOUDEXTINCTION, A_CLOUDRADSENSITIVITY,                       &
-             A_EFFECTIVEOPTICALDEPTH, A_MASSMEANDIAMETER,                    &
-             A_TOTALEXTINCTION,FREQUENCIES,                         &
-             superset, thisRatio, JBLOCK, state_ext, state_los )
+    nullify( CLOUDICE, CLOUDWATER, CLOUDEXTINCTION, modelCLOUDRADIANCE,         &
+             CLOUDRADSENSITIVITY, EFFECTIVEOPTICALDEPTH, obsCLOUDRADIANCE, GPH, &
+             MASSMEANDIAMETERICE, MASSMEANDIAMETERWATER, PTAN,                  &
+             RADIANCE, SIZEDISTRIBUTION, EARTHRADIUS, SURFACETYPE,              &
+             TEMP, TOTALEXTINCTION, VMR, VMRARRAY,closestInstances,             &
+             A_CLEARSKYRADIANCE, A_CLOUDINDUCEDRADIANCE,                        &
+             A_CLOUDEXTINCTION, A_CLOUDRADSENSITIVITY,                          &
+             A_EFFECTIVEOPTICALDEPTH, A_MASSMEANDIAMETER,                       &
+             A_TOTALEXTINCTION,FREQUENCIES,                                     &
+             superset, thisRatio, JBLOCK, state_ext, state_los,                 &
+             MY_CATALOG, thisCatalogEntry, thisLine )
              
     nullify ( doChannel )
     
@@ -903,6 +909,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.82  2001/11/07 23:47:52  dwu
+! some minor changes
+!
 ! Revision 1.81  2001/11/07 05:22:06  dwu
 ! fixed a bug in computing dphi
 !
@@ -1098,3 +1107,6 @@ end module FullCloudForwardModel
 ! Revision 1.15  2001/07/27 15:17:58  jonathan
 ! First Successful f90 runs
 !
+
+
+
