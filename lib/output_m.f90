@@ -14,7 +14,7 @@ module OUTPUT_M
                                         ! if -1, MLSMessage if -2, both
                                         ! printer and MLSMSG if < -2.
 
-  public :: BLANKS, NEWLINE, OUTPUT, OUTPUT_DATE_AND_TIME
+  public :: BLANKS, NEWLINE, OUTPUT, OUTPUT_DATE_AND_TIME, TIMESTAMP
   interface OUTPUT
     module procedure output_char, output_char_array, output_complex
     module procedure output_dcomplex, output_double
@@ -22,9 +22,14 @@ module OUTPUT_M
     module procedure output_single, output_double_array, output_single_array
     module procedure output_string
   end interface
+  interface TIMESTAMP
+    module procedure timestamp_char, timestamp_integer
+  end interface
 
   integer, save, public :: MLSMSG_Level = MLSMSG_Info
   logical, save, public :: SKIPMLSMSGLOGGING = .false.
+  character(len=8), save, public :: TIMESTAMPSTYLE = 'post' ! 'pre' or 'post'
+  logical, save, private :: ATLINESTART = .true.  ! Used by timeStamp if notpost
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=256), private :: Id = &
@@ -155,6 +160,7 @@ contains
     else
       write ( prunit, '(a)', advance=my_adv ) chars
     end if
+    ATLINESTART = (my_adv == 'yes')
   end subroutine OUTPUT_CHAR
 
   ! ------------------------------------------  OUTPUT_CHAR_ARRAY  -----
@@ -522,6 +528,99 @@ contains
     end if
   end subroutine OUTPUT_STRING
 
+  ! ------------------------------------------------  timeStamp_char  -----
+  subroutine timeStamp_char ( CHARS, &
+    & ADVANCE, FROM_WHERE, DONT_LOG, LOG_CHARS, INSTEADOFBLANK, STYLE)
+  ! time-stamp output:
+  ! Either in style pre or post
+  ! (pre) '(HH:MM:SS) chars'
+  ! (post) 'chars (HH:MM:SS)'
+  ! Note that in pre-style, the time will be printed only if ATLINESTART true
+  ! in post-style, the time will be printed only if MY_ADV is 'yes'
+  
+    character(len=*), intent(in) :: CHARS
+    character(len=*), intent(in), optional :: ADVANCE
+    character(len=*), intent(in), optional :: FROM_WHERE
+    logical, intent(in), optional          :: DONT_LOG ! Prevent double-logging
+    character(len=*), intent(in), optional :: LOG_CHARS
+    character(len=*), intent(in), optional :: INSTEADOFBLANK ! What to output
+    character(len=8), intent(in), optional :: STYLE ! pre or post
+    logical :: my_dont_log
+    character(len=8) :: my_style
+    integer :: n_chars
+    character(len=3) :: MY_ADV
+    !
+    my_adv = Advance_is_yes_or_no(advance)
+    my_dont_log = SKIPMLSMSGLOGGING ! .false.
+    if ( present(dont_log) ) my_dont_log = dont_log
+    my_style = TIMESTAMPSTYLE
+    if ( present(style) ) my_style = lowercase(style)
+    if ( my_style == 'post' ) then
+      call output_char( CHARS, &
+        & ADVANCE='no', FROM_WHERE=FROM_WHERE, DONT_LOG=DONT_LOG, &
+        & LOG_CHARS=LOG_CHARS, INSTEADOFBLANK=INSTEADOFBLANK )
+      if ( my_adv=='yes' ) then
+        call output_char(' (', ADVANCE='no', DONT_LOG=DONT_LOG)
+        call OUTPUT_DATE_AND_TIME(date=.false., advance='no')
+        call output_char(')', ADVANCE='yes', DONT_LOG=DONT_LOG)
+      endif
+    else
+      if ( ATLINESTART ) then
+        call output_char('(', ADVANCE='no', DONT_LOG=DONT_LOG)
+        call OUTPUT_DATE_AND_TIME(date=.false., advance='no')
+        call output_char(')', ADVANCE='no', DONT_LOG=DONT_LOG)
+      endif
+      call output_char( CHARS, &
+        & ADVANCE, FROM_WHERE, DONT_LOG, &
+        & LOG_CHARS, INSTEADOFBLANK )
+    endif
+  end subroutine timeStamp_char
+
+  ! ------------------------------------------------  timeStamp_integer  -----
+  subroutine timeStamp_integer ( INT, &
+    & PLACES, ADVANCE, FILL, FORMAT, Before, After, style)
+  ! time-stamp output:
+  ! Either in style pre or post
+  ! (pre) '(HH:MM:SS) int'
+  ! (post) 'int (HH:MM:SS)'
+  ! Note that in pre-style, the time will be printed only if ATLINESTART true
+  ! in post-style, the time will be printed only if MY_ADV is 'yes'
+  
+    integer, intent(in) :: INT
+    integer, intent(in), optional :: PLACES
+    character(len=*), intent(in), optional :: ADVANCE
+    logical, intent(in), optional :: FILL
+    character(len=*), intent(in), optional :: FORMAT
+    character(len=*), intent(in), optional :: Before, After ! text to print
+    character(len=*), intent(in), optional :: style ! pre or post
+    character(len=8) :: my_style
+    integer :: n_chars
+    character(len=3) :: MY_ADV
+    !
+    my_adv = Advance_is_yes_or_no(advance)
+    my_style = TIMESTAMPSTYLE
+    if ( present(style) ) my_style = lowercase(style)
+    if ( my_style == 'post' ) then
+      call output_integer( INT, PLACES, &
+        & ADVANCE='no', FILL=FILL, FORMAT=FORMAT, BEFORE=BEFORE, AFTER=AFTER )
+      if ( my_adv=='yes' ) then
+        call output_char(' (', ADVANCE='no')
+        call OUTPUT_DATE_AND_TIME(date=.false., advance='no')
+        call output_char(')', ADVANCE='yes')
+      endif
+    else
+      if ( ATLINESTART ) then
+        call output_char('(', ADVANCE='no')
+        call OUTPUT_DATE_AND_TIME(date=.false., advance='no')
+        call output_char(')', ADVANCE='no')
+      endif
+      call output_integer( INT, PLACES, &
+        & ADVANCE, FILL, FORMAT, BEFORE, AFTER )
+    endif
+  end subroutine timeStamp_integer
+
+  ! Internal procedures
+  
   ! .............................................  nCharsinFormat  .....
   function nCharsinFormat ( Format ) result(nplusm)
     ! Utility to calculate how many characters in a format spec:         
@@ -629,6 +728,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.38  2005/01/19 01:09:49  pwagner
+! New timeStamp interface to certain output procedures
+!
 ! Revision 2.37  2005/01/07 01:26:04  pwagner
 ! Advance now an optional arg to OUTPUT_DATE_AND_TIME so it can time-stamp
 !
