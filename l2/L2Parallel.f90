@@ -11,8 +11,8 @@ module L2Parallel
   ! awaits their results in the Join section.
 
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use Chunks_m, only: DUMP, MLSChunk_T
   use Dump_0, only: DUMP
-  use Dumper, only: DUMP
   use Join, only: JOINL2GPQUANTITIES, JOINL2AUXQUANTITIES
   use PVM, only: PVMDATADEFAULT, PVMFINITSEND, PVMF90PACK, PVMFKILL, PVMFMYTID, &
     & PVMF90UNPACK, PVMERRORMESSAGE, PVMTASKHOST, PVMFSPAWN, &
@@ -20,7 +20,7 @@ module L2Parallel
     & GETMACHINENAMEFROMTID, PVMFFREEBUF
   use PVMIDL, only: PVMIDLPACK, PVMIDLUNPACK
   use QuantityPVM, only: PVMSENDQUANTITY, PVMRECEIVEQUANTITY
-  use MLSCommon, only: R8, MLSCHUNK_T, FINDFIRST
+  use MLSCommon, only: R8, FINDFIRST
   use VectorsModule, only: VECTOR_T, VECTORVALUE_T, VECTORTEMPLATE_T, &
     & CONSTRUCTVECTORTEMPLATE, &
     & CREATEVECTOR, DESTROYVECTORINFO, DESTROYVECTORTEMPLATEINFO, &
@@ -1313,6 +1313,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.63  2004/05/19 19:16:11  vsnyder
+! Move MLSChunk_t to Chunks_m
+!
 ! Revision 2.62  2004/04/16 00:47:54  livesey
 ! Now kills slaves on finishing (probably only happens when told to quit).
 !
