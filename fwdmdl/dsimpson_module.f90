@@ -2,31 +2,41 @@
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module DSIMPSON_MODULE
-  use D_CSPLINE_M, only: CSPLINE
-  use MLSCommon, only: I4, R8
+
   implicit NONE
+
   private
   public DSIMPS, SIMPS
+
   interface SIMPS; module procedure DSIMPS; end interface
-  integer, parameter :: RK = r8
+
 !---------------------------- RCS Ident Info -------------------------------
-  CHARACTER (LEN=256) :: Id = &
-       "$Id$"
-  CHARACTER (LEN=*), PARAMETER :: ModuleName = &
-       "$RCSfile$"
-  private :: not_used_here 
+  character (len=*), parameter :: IdParm = &
+    &  "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName = &
+    & "$RCSfile$"
 !---------------------------------------------------------------------------
+
 contains
-  Subroutine DSimps (F,DX,N,R)
+
+  subroutine DSimps ( F, DX, N, R )
 !  Simpson's Integration of discrete equal spacing
+    use MLSCommon, only: I4, R8
+    integer, parameter :: RK = r8
     include 'simpson.f9h'
-  End Subroutine DSimps
-  logical function not_used_here()
+  end subroutine DSimps
+
+  logical function NOT_USED_HERE()
     not_used_here = (id(1:1) == ModuleName(1:1))
-  end function not_used_here
+  end function NOT_USED_HERE
 
 end module DSIMPSON_MODULE
+
 ! $Log$
+! Revision 2.1  2002/10/08 17:08:02  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.0  2001/09/17 20:26:26  livesey
 ! New forward model
 !
