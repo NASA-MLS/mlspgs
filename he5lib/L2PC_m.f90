@@ -19,7 +19,8 @@ module L2PC_m
     & VECTORTEMPLATE_T, VECTOR_T, VECTORVALUE_T, CREATEVECTOR, ADDVECTORTODATABASE,&
     & ADDVECTORTEMPLATETODATABASE, CONSTRUCTVECTORTEMPLATE
   use MatrixModule_1, only: CREATEBLOCK, CREATEEMPTYMATRIX, &
-    & DESTROYMATRIX, MATRIX_T, DUMP, FINDBLOCK, MATRIX_DATABASE_T, GETFROMMATRIXDATABASE
+    & DESTROYMATRIX, MATRIX_T, DUMP, FINDBLOCK, MATRIX_DATABASE_T, GETFROMMATRIXDATABASE, &
+    & DUMP_STRUCT
   use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, &
     & MATRIXELEMENT_T
   use MLSHDF5, only: MakeHDF5Attribute, GetHDF5Attribute, SaveAsHDF5DS, LoadFromHDF5DS
@@ -34,7 +35,7 @@ module L2PC_m
   use String_Table, only: GET_STRING
   use Symbol_Table, only: ENTER_TERMINAL, DUMP_SYMBOL_CLASS
   use Symbol_Types, only: T_IDENTIFIER
-  use TOGGLES, only: TAB, TOGGLE
+  use TOGGLES, only: TAB, TOGGLE, SWITCHES
   use Tree, only: DECORATION, NSONS, SUBTREE
 
   implicit NONE
@@ -260,6 +261,7 @@ contains ! ============= Public Procedures ==========================
     do while (.not. eof )
       call ReadOneASCIIL2PC ( l2pc, lun, eof )
       if (.not. eof) dummy = AddL2PCToDatabase ( l2pcDatabase, l2pc )
+      if ( index ( switches, 'spa' ) /= 0 ) call Dump_struct ( l2pc, 'One l2pc bin' ) 
 
       ! Now nullify the pointers in l2pc so we don't clobber the one we've written
       nullify ( l2pc%block )
@@ -1207,6 +1209,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 1.1  2002/06/12 17:59:53  livesey
+! Work on HDF5 stuff
+!
 ! Revision 2.32  2002/05/21 01:13:24  livesey
 ! New file format includes name for reading into IDL
 !
