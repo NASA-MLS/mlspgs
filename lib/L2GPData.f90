@@ -12,7 +12,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   use Intrinsic ! "units" type literals, beginning with L_
   use MLSCommon, only: R4, R8
   use MLSFiles, only: FILENOTFOUND, &
-    & HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, &
+    & HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, WRONGHDFVERSION, &
     & MLS_HDF_VERSION, MLS_INQSWATH, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, &
     & MLS_EXISTS
   use MLSHDFEOS, only: mls_swattach, mls_swdetach
@@ -237,7 +237,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 contains ! =====     Public Procedures     =============================
 
   !------------------------------------------  SetupNewL2GPRecord  -----
-  subroutine SetupNewL2GPRecord ( l2gp, nFreqs, nLevels, nTimes, &
+  subroutine SetupNewL2GPRecord ( l2gp, nFreqs, nLevels, nTimes, nTimesTotal, &
     & FillIn)
 
     ! This routine sets up the arrays for an l2gp datatype.
@@ -247,10 +247,11 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in), optional :: nFreqs            ! Dimensions
     integer, intent(in), optional :: nLevels           ! Dimensions
     integer, intent(in), optional :: nTimes            ! Dimensions
+    integer, intent(in), optional :: nTimesTotal       ! Dimensions
     logical, intent(in), optional :: FillIn    ! Fill with MissingValue
 
     ! Local variables
-    integer :: useNFreqs, useNLevels, useNTimes
+    integer :: useNFreqs, useNLevels, useNTimes, useNTimesTotal
 
     if ( present(nFreqs) ) then
        useNFreqs=nFreqs
@@ -270,10 +271,18 @@ contains ! =====     Public Procedures     =============================
        useNTimes=0              ! Default to empty l2gp
     end if
 
+    if ( present(nTimesTotal) ) then
+       useNTimesTotal=nTimesTotal
+    else
+       useNTimesTotal=0              ! Default to empty l2gp
+    end if
+
+    ! Sanity
+    useNTimesTotal = max(useNTimesTotal, useNTimes)
     ! Store the dimensionality
 
     l2gp%nTimes = useNTimes
-    l2gp%nTimesTotal = useNTimes
+    l2gp%nTimesTotal = useNTimesTotal
     l2gp%nLevels = useNLevels
     l2gp%nFreqs = useNFreqs
 
@@ -689,6 +698,9 @@ contains ! =====     Public Procedures     =============================
     else
       nDims = HE5_SWinqdims(swid, list, dims)
     endif
+    if ( DEEBUG ) print *, 'dimlist: ', trim(list)
+    if ( DEEBUG ) print *, 'ndims: ', ndims
+    if ( DEEBUG ) print *, 'dims: ', dims
     if (nDims == -1) call MLSMessage(MLSMSG_Error, ModuleName, &
       & 'Failed to get dimension information on hdfeos5 swath ' // trim(swathname))
     if ( index(list,'nLevels') /= 0 ) lev = 1
@@ -788,12 +800,16 @@ contains ! =====     Public Procedures     =============================
 
     else
 
-       myNumProfs = nTimes - first
+       myNumProfs = l2gp%nTimes - first
 
     endif
 
     ! Allocate result
-
+    if ( DEEBUG ) then
+      print *, 'nFreqs: ', nFreqs
+      print *, 'nLevels: ', nLevels
+      print *, 'mynumProfs: ', mynumProfs
+    endif
     call SetupNewL2GPRecord (l2gp, nFreqs=nFreqs, nLevels=nLevels, &
       &  nTimes=mynumProfs, FillIn = .true.)
 
@@ -948,7 +964,7 @@ contains ! =====     Public Procedures     =============================
 
   ! --------------------------------------  OutputL2GP_createFile_hdf  -----
   subroutine OutputL2GP_createFile_hdf (l2gp, L2FileHandle, hdfVersion, &
-    & swathName, fileName, nLevels, notUnlimited)
+    & swathName, fileName, nLevels, notUnlimited, compressTimes)
 
   use HDFEOS5, only: HE5_SWdetach, &
     & HE5S_UNLIMITED_F, &
@@ -966,7 +982,8 @@ contains ! =====     Public Procedures     =============================
     character (LEN=*), optional, intent(IN) :: swathName ! Defaults to l2gp%swathName
     character (LEN=*), optional, intent(IN) :: fileName
     integer, optional, intent(in) :: nLevels
-    logical, optional, intent(in) :: notUnlimited
+    logical, optional, intent(in) :: notUnlimited   !               as nTimes
+    logical, optional, intent(in) :: compressTimes  ! don't store nTimesTotal
     ! Parameters
 
     character (len=*), parameter :: DIM_ERR = 'Failed to define dimension '
@@ -987,6 +1004,7 @@ contains ! =====     Public Procedures     =============================
 
     integer :: SWID, STATUS
     logical :: myNotUnlimited
+    logical :: mycompressTimes
     ! integer, external :: he5_swsetfill
 
     if (present(swathName)) then
@@ -996,6 +1014,8 @@ contains ! =====     Public Procedures     =============================
     endif
     myNotUnlimited = .false.
     if ( present ( notUnlimited ) ) myNotUnlimited = notUnlimited
+    mycompressTimes = .false.
+    if ( present (compressTimes ) ) mycompressTimes = compressTimes
     
     ! Work out the chunking
     if ( myNotUnlimited ) then
@@ -1052,7 +1072,14 @@ contains ! =====     Public Procedures     =============================
       print *, 'nLevels ', l2gp%nLevels
       print *, 'nFreqs ', l2gp%nFreqs
     endif
-    status = mls_swdefdim(swid, 'nTimes', max(l2gp%nTimesTotal,1), &
+    if ( mycompressTimes ) then
+      status = mls_swdefdim(swid, 'nTimes', max(l2gp%nTimes,1), &
+        & hdfVersion=hdfVersion)
+    else
+      status = mls_swdefdim(swid, 'nTimes', max(l2gp%nTimesTotal,1), &
+        & hdfVersion=hdfVersion)
+    endif
+    status = mls_swdefdim(swid, 'nTimesTotal', max(l2gp%nTimesTotal,1), &
       & hdfVersion=hdfVersion)
 
     if ( l2gp%nLevels > 0 ) then
@@ -1710,7 +1737,8 @@ contains ! =====     Public Procedures     =============================
 
   ! This subroutine is an amalgamation of the last three
   ! Should be renamed CreateAndWriteL2GPData
-  subroutine WriteL2GPData(l2gp, l2FileHandle, swathName, filename, hdfVersion)
+  subroutine WriteL2GPData(l2gp, l2FileHandle, swathName, filename, hdfVersion, &
+    & notUnlimited)
 
     ! Arguments
 
@@ -1719,6 +1747,7 @@ contains ! =====     Public Procedures     =============================
     character (LEN=*), optional, intent(IN) ::swathName!default->l2gp%swathName
     character (LEN=*), optional, intent(IN) ::fileName
     integer, optional, intent(in) :: hdfVersion
+    logical, optional, intent(in) :: notUnlimited
     ! Exectuable code
 
     ! Local
@@ -1732,13 +1761,15 @@ contains ! =====     Public Procedures     =============================
     endif
 
     call OutputL2GP_createFile_hdf (l2gp, l2FileHandle, myhdfVersion, &
-      & swathName, filename)
+      & swathName, filename, notUnlimited=notUnlimited)
     call OutputL2GP_writeGeo_hdf (l2gp, l2FileHandle, myhdfVersion, &
       & swathName)
     call OutputL2GP_writeData_hdf (l2gp, l2FileHandle, myhdfVersion, &
       & swathName)
     if (myhdfVersion == HDFVERSION_5) then
+      if ( DEEBUG ) print *, 'Outputting attributes'
       call OutputL2GP_attributes_hdf5 (l2gp, l2FileHandle, swathName)
+      if ( DEEBUG ) print *, 'Setting aliases'
       call SetL2GP_aliases (l2gp, l2FileHandle, swathName)
     endif
 
@@ -1852,8 +1883,13 @@ contains ! =====     Public Procedures     =============================
     endif
 
     if(DEEBUG) then
-      print*,"offset=",offset,"myLastProfile=",myLastProfile,&
+      if ( present(offset) ) then
+        print*,"offset=",offset,"myLastProfile=",myLastProfile,&
         "size(l2gp%l2gpValue,3)=",size(l2gp%l2gpValue,3)
+      else
+        print*,"no offset; myLastProfile=",myLastProfile,&
+        "size(l2gp%l2gpValue,3)=",size(l2gp%l2gpValue,3)
+      endif
     endif
     ! This line caused an error because TotNumProfs is optional and 
     ! is not here checked for present-ness. 
@@ -1953,7 +1989,8 @@ contains ! =====     Public Procedures     =============================
 
   ! ---------------------- cpL2GPData_fileID  ---------------------------
 
-  subroutine cpL2GPData_fileID(file1, file2, swathList, hdfVersion)
+  subroutine cpL2GPData_fileID(file1, file2, swathList, hdfVersion, &
+    & notUnlimited)
     !------------------------------------------------------------------------
 
     ! Given file names file1 and file2,
@@ -1965,6 +2002,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: file2 ! handle of file 1
     character (len=*), intent(in) :: swathList
     integer, optional, intent(in) :: hdfVersion
+    logical, optional, intent(in) :: notUnlimited
 
     ! Local variables
     logical, parameter            :: countEmpty = .true.
@@ -1983,10 +2021,21 @@ contains ! =====     Public Procedures     =============================
     do i = 1, noSwaths
       call GetStringElement (trim(swathList), swath, i, countEmpty )
       ! Allocate and fill l2gp
+      if ( DEEBUG ) print *, 'Reading swath from file: ', trim(swath)
       call ReadL2GPData ( file1, trim(swath), l2gp, &
            & hdfVersion=hdfVersion )
+      if ( DEEBUG ) then
+        print *, 'Writing swath to file: ', trim(swath)
+        print *, 'l2gp%nFreqs:  ', l2gp%nFreqs
+        print *, 'l2gp%nLevels: ', l2gp%nLevels
+        print *, 'l2gp%nTimes:  ', l2gp%nTimes
+        print *, 'shape(l2gp%l2gpvalue):  ', shape(l2gp%l2gpvalue)
+      endif
       ! Write the filled l2gp to file2
-      call WriteL2GPData(l2gp, file2, trim(swath), hdfVersion=hdfVersion)
+      call WriteL2GPData(l2gp, file2, trim(swath), hdfVersion=hdfVersion, &
+        & notUnlimited=notUnlimited)
+      ! call AppendL2GPData(l2gp, file2, trim(swath), hdfVersion=hdfVersion, &
+      !   & TotNumProfs=l2gp%nTimesTotal, createSwath=.true.)
       ! Deallocate memory used by the l2gp
       call DestroyL2GPContents ( l2gp )
     enddo
@@ -1995,7 +2044,8 @@ contains ! =====     Public Procedures     =============================
 
   ! ---------------------- cpL2GPData_fileName  ---------------------------
 
-  subroutine cpL2GPData_fileName(file1, file2, create2, hdfVersion, swathList)
+  subroutine cpL2GPData_fileName(file1, file2, create2, hdfVersion, swathList, &
+    & notUnlimited)
     !------------------------------------------------------------------------
 
     ! Given file names file1 and file2,
@@ -2010,6 +2060,7 @@ contains ! =====     Public Procedures     =============================
     logical, optional, intent(in) :: create2
     integer, optional, intent(in) :: hdfVersion
     character (len=*), optional, intent(in) :: swathList
+    logical, optional, intent(in) :: notUnlimited
 
     ! Local
     integer :: File1Handle
@@ -2040,13 +2091,19 @@ contains ! =====     Public Procedures     =============================
           & // trim(file1) )
     endif
     if ( present(swathList) ) then
+      if ( DEEBUG ) then
+        noSwaths = mls_InqSwath ( file1, mySwathList, listSize, &
+           & hdfVersion=the_hdfVersion)
+        print *, 'swathList you requested to cp: ', trim(swathList)
+        print *, 'mls_InqSwath finds: ', trim(mySwathList)
+      endif
       mySwathList = swathList
     else
       noSwaths = mls_InqSwath ( file1, mySwathList, listSize, &
            & hdfVersion=the_hdfVersion)
     endif
     File1Handle = mls_io_gen_openF('swopen', .TRUE., status, &
-       & record_length, file_access, FileName=File1, &
+       & record_length, DFACC_READ, FileName=File1, &
        & hdfVersion=the_hdfVersion, debugOption=.false. )
     if ( status /= 0 ) &
       call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -2059,7 +2116,20 @@ contains ! =====     Public Procedures     =============================
       file_access = DFACC_CREATE
     endif
     if ( present(create2) ) then
-      if ( create2 ) file_access = DFACC_CREATE
+      if ( create2 ) then
+        file_access = DFACC_CREATE
+      elseif ( .not. file_exists ) then
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+         & "L2gp file: " // trim(File2) // ' for cp-ing not yet existing')
+        file_access = DFACC_RDWR
+      else
+        file_access = DFACC_RDWR
+      endif
+    endif
+    if ( DEEBUG ) then
+      print *, 'About to open file2: ', trim(file2)
+      print *, 'file_access: ', file_access
+      print *, 'hdfVersion: ', the_hdfVersion
     endif
     File2Handle = mls_io_gen_openF('swopen', .TRUE., status, &
        & record_length, file_access, FileName=File2, &
@@ -2067,18 +2137,29 @@ contains ! =====     Public Procedures     =============================
     if ( status /= 0 ) &
       call MLSMessage ( MLSMSG_Error, ModuleName, &
        & "Unable to open L2gp file: " // trim(File2) // ' for cping')
+    if ( DEEBUG ) then
+      print *, 'About to cp from file1 to file2: ', File1Handle, File2Handle
+      print *, trim(mySwathList)
+    endif
     call cpL2GPData_fileID(File1Handle, File2Handle, &
-      & mySwathList, hdfVersion=the_hdfVersion)
+      & mySwathList, hdfVersion=the_hdfVersion, notUnlimited=notUnlimited)
+    if ( DEEBUG ) print *, 'About to close File1Handle: ', File1Handle
     status = mls_io_gen_closeF('swclose', File1Handle, FileName=File1, &
-      & hdfVersion=the_hdfVersion)
+      & hdfVersion=the_hdfVersion, debugOption=.false.)
     if ( status /= 0 ) &
       call MLSMessage ( MLSMSG_Error, ModuleName, &
        & "Unable to close L2gp file: " // trim(File1) // ' after cping')
-    status = mls_io_gen_closeF('swclose', File2Handle, FileName=File2, &
-      & hdfVersion=the_hdfVersion)
-    if ( status /= 0 ) &
+    if ( DEEBUG ) print *, 'About to close File2Handle: ', File2Handle
+    ! status = mls_io_gen_closeF('swclose', File2Handle, FileName=File2, &
+    !  & hdfVersion=the_hdfVersion, debugOption=.true.)
+    status = mls_io_gen_closeF('swclose', File2Handle, &
+      & hdfVersion=the_hdfVersion, debugOption=.false.)
+    if ( status /= 0 ) then
+      print *, 'status returned from mls_io_gen_closeF: ', status
+      print *, 'WRONGHDFVERSION: ', WRONGHDFVERSION
       call MLSMessage ( MLSMSG_Error, ModuleName, &
        & "Unable to close L2gp file: " // trim(File2) // ' after cping')
+    endif
   end subroutine cpL2GPData_fileName
 
   ! ------------------------------------------ DUMP_L2GP_DATABASE ------------
@@ -2251,6 +2332,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.88  2004/01/23 01:14:04  pwagner
+! Can cp l2gps from one file to another
+!
 ! Revision 2.87  2004/01/09 00:20:56  pwagner
 ! Added avoidUnlimitedDims to allow bypassing bug directWriting range of chunks
 !
