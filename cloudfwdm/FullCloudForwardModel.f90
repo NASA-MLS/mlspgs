@@ -196,7 +196,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     real(r8), dimension(:), pointer :: s_fine        ! Fine resolution for s
     real(r8), dimension(:), pointer :: ds_fine        ! Fine resolution for ds
     real(r8), dimension(:), pointer :: w_fine        ! weight along s_fine
-    real(r8) :: ds_tot                                ! Total length of all ds
 
     real(r8), dimension(:,:,:), allocatable  :: A_TRANS
     real(r8), dimension(:), pointer :: FREQUENCIES
@@ -249,6 +248,16 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
     maf = fmStat%maf
   
+    !-------------------------------------------------------
+    ! Determine which retrieval is to be used
+    !    cloud_der = 0     high tangent height
+    !    cloud_der = 1     low tangent height
+    !-------------------------------------------------------
+    doHighZt = .false.
+    doLowZt = .false.
+    if(forwardModelConfig%cloud_der == 0) doHighZt = .true.
+    if(forwardModelConfig%cloud_der == 1) doLowZt = .true.
+
     !------------------------------------------------------------------------
     ! Current version can only have one signal for FullCloudForwardModel
     ! This will be updated soon
@@ -572,25 +581,33 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         & 'Linear' )
 
      IF ( present(jacobian) ) THEN
-
+      ! transmission functions for retrieval are calculated using artificial
+      ! cloud profiles depending on where the measurement is taken in latitude
        if (tLat .ge. -30._r8 .and. tLat .le. 30._r8) then
           CloudType='Convective'
        else
           CloudType='Frontal'
        endif
 
-      ! find cloud top index from Tcir, threshold to be determined
+      ! find cloud top index from observed Tcir, threshold to be determined
       !     for high Zt, use Tcir(maf)
       !     for low Zt, use Tcir(maf-2)
-      if(.not. associated(effectiveOpticalDepth)) then
+      if(.not. associated(obsCloudRadiance)) then
          call MLSMessage( MLSMSG_Error, ModuleName,                             &
                       'Need cloud radiances to estimate cloud top in retrieval' )
       else
        iCloudHeight = 0
-       do i = 1, noMifs
-         if(obsCloudRadiance%values(i,maf) .ne. 0.0_r8) iCloudHeight = i
-       enddo
+       if(doHighZt) then
+         do i = 1, noMifs
+            if(obsCloudRadiance%values(i,maf) .ne. 0.0_r8) iCloudHeight = i
+         enddo
+       else
+         do i = 1, noMifs
+            if(obsCloudRadiance%values(i,maf) .ne. 0.0_r8) iCloudHeight = i
+         enddo
+       end if
 
+       ! if no cloud is found, cloud top is 18 km
        CloudHeight = 18.e3_r8     ! meters
        if(iCloudHeight .ne. 0) CloudHeight = zt(iCloudHeight)
 
@@ -645,16 +662,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
     if (prt_log) print*, 'Successfully done with Full Cloud Foward Model ! '
 
-    !------------------------------------------------------------------------
-    ! Now store results in relevant vectors
-    ! Vectors are stored (noChannels*noSurfaces, noInstances), so transpose
-    ! and reshape temporary variables to be in the right form.
-    !------------------------------------------------------------------------
-    
-    !------------------------------
-    ! First the minor frame stuff
-    !------------------------------
-
+    ! Output minor frame quantities if they are asked: check channel and type
     do i =1 , noFreqs
     if (doChannel(i)) then
     do mif=1, noMIFs
@@ -675,19 +683,19 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     enddo
 
     ! -----------------------------------------------------------------------------
-    ! For layer(noTempSurfs-1) stuff make sure all are zero to start, then do rest
+    ! output L2GP quantities
     ! -----------------------------------------------------------------------------
 
     ! To save disk space, we output one channel per band (first true doChannel)
-    ! and the last signal (band) will over write the previous signals (bands)
+    ! in the last signal (band) will over write all the previous signals (bands)
     FOUNDINFIRST = .true.
     do i=1, noFreqs
     if( doChannel(i) .and. FOUNDINFIRST ) then 
       FOUNDINFIRST = .false.
       if(associated(cloudExtinction)) &
-        & cloudExtinction%values ( :, instance )    = a_cloudExtinction(:,i)
+        & cloudExtinction%values (:, instance )    = a_cloudExtinction(:,i)
       if(associated(totalExtinction)) &
-        & totalExtinction%values ( :, instance )    = a_totalExtinction (:,i)
+        & totalExtinction%values (:, instance )    = a_totalExtinction (:,i)
     endif
     enddo
 
@@ -700,16 +708,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     !-----------------------
     ! Start output Jacobian
     !-----------------------
-
-    !-------------------------------------------------------
-    ! Determine which retrieval is to be used
-    !    cloud_der = 0     high tangent height
-    !    cloud_der = 1     low tangent height
-    !-------------------------------------------------------
-    doHighZt = .false.
-    doLowZt = .false.
-    if(forwardModelConfig%cloud_der == 0) doHighZt = .true.
-    if(forwardModelConfig%cloud_der == 1) doLowZt = .true.
 
       noInstances = state_ext%template%noInstances
 
@@ -727,14 +725,14 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         if (doChannel(i)) whichChannel=i
       end do
 
-      colJBlock = FindBlock ( Jacobian%col, state_ext%index, maf )
+      colJBlock = FindBlock ( Jacobian%col, state_ext%index, maf)
       rowJBlock = FindBlock ( jacobian%row, radiance%index, maf)
       fmStat%rows(rowJBlock) = .true.
 
       jBlock => jacobian%block(rowJblock,colJblock)
 
         call CreateBlock ( jBlock, noMIFs, noCldSurf*noInstances, M_Full )
-        jBlock%values = 0.0_r8
+        jBlock%values = 0._r8
 
       !-------------------------------------------------------------------
       ! we use 100 times better resolution to compute weighting functions
@@ -748,20 +746,21 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       allocate( ds_fine(nfine*noInstances), stat=status )
       
       do i=1,noInstances*nfine
-       phi_fine(i) = minval(state_ext%template%phi(1,:)) + &
-         & 1._r8*(i-1)/nfine/noInstances * &
+       phi_fine(i) = minval(state_ext%template%phi(1,:)) + (i-1._r8)/nfine/noInstances* &
          & (maxval(state_ext%template%phi(1,:)) - minval(state_ext%template%phi(1,:)))
       end do
 
       !----------------------------------
-      ! find intervals of stateQ at maf
+      ! find vertical and horizontal intervals of stateQ at maf
       !----------------------------------
+      ! vertical
       dz = abs(state_ext%template%surfs(2,1)-state_ext%template%surfs(1,1))
+      ! horiozontal: in case of the last instance, use the previous one
       if(instance < noInstances) &
          & dphi = abs(state_ext%template%phi(1,instance+1)-state_ext%template%phi(1,instance))
       
       do mif = 1, noMIFs
-      ! only for tangent heights less than the top level of retrieval
+      ! Jacobians at only tangent heights less than the top level of retrieval are calculated
       if(gph%values(noCldSurf,instance) > zt(mif)) then
         !------------------------------
         ! find z for given phi_fine
@@ -795,13 +794,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
             
         ! ds needs to be weighted by transmission function
         
-        ds_fine = ds_fine*w_fine
-
-        !-----------------------------------------------
-        ! find the total length for this tangent height
-        !-----------------------------------------------
-        ds_tot = 2._r8*sqrt(2._r8*earthradius%values(1,maf)* & 
-            & (gph%values(noCldSurf,instance)-zt(mif)))
+        ds_fine = ds_fine*w_fine    ! ds is in meters
 
         !----------------------------------------------------------
         ! determine weights by the length inside each state domain
@@ -865,33 +858,19 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     !------------------------------
     ! Remove temporary quantities
     !------------------------------
-    deallocate (WC, stat=status)
+    Deallocate (WC, a_trans, Slevl, Zt )
      
     call deallocate_test ( superset, 'superset',          ModuleName )
-
-    call Deallocate_test ( a_massMeanDiameter,                               &
-                          'a_massMeanDiameter',           ModuleName )
-    call Deallocate_test ( a_cloudExtinction,                                &
-                          'a_cloudExtinction',            ModuleName )
-    Deallocate ( a_trans, Slevl )
-
-    call Deallocate_test ( a_totalExtinction,                                &
-                          'a_totalExtinction',            ModuleName )
-    call Deallocate_test ( a_cloudRADSensitivity,                            &
-                          'a_cloudRADSensitivity',        ModuleName )
-    call Deallocate_test ( a_effectiveOpticalDepth,                          &
-                          'a_effectiveOpticalDepth',      ModuleName )
-    call Deallocate_test ( a_cloudInducedRadiance,                           &
-                          'a_cloudInducedRadiance',       ModuleName )
-    call Deallocate_test ( a_clearSkyRadiance,                               &
-                          'a_clearSkyRadiance',           ModuleName )
-    call Deallocate_test ( vmrArray,                                         &
-                          'vmrArray',                     ModuleName )
-    call Deallocate_test ( closestInstances,                                 &
-                          'closestInstances',             ModuleName )
-
+    call Deallocate_test ( a_massMeanDiameter,'a_massMeanDiameter',ModuleName )
+    call Deallocate_test ( a_cloudExtinction,'a_cloudExtinction',ModuleName )
+    call Deallocate_test ( a_totalExtinction,'a_totalExtinction',ModuleName )
+    call Deallocate_test ( a_cloudRADSensitivity,'a_cloudRADSensitivity',ModuleName )
+    call Deallocate_test ( a_effectiveOpticalDepth,'a_effectiveOpticalDepth',ModuleName )
+    call Deallocate_test ( a_cloudInducedRadiance,'a_cloudInducedRadiance',ModuleName )
+    call Deallocate_test ( a_clearSkyRadiance,'a_clearSkyRadiance',ModuleName )
+    call Deallocate_test ( vmrArray,'vmrArray',ModuleName )
+    call Deallocate_test ( closestInstances,'closestInstances',ModuleName )
     call Deallocate_test ( doChannel, 'doChannel',        ModuleName )
-    deallocate(zt)
     !--------------------------------------------
     ! End of sideband loop 
     !--------------------------------------------
@@ -914,6 +893,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.76  2001/11/06 00:54:11  dwu
+! add two cloud radiances: modelled and observed
+!
 ! Revision 1.75  2001/11/06 00:29:38  dwu
 ! set up cloud height estimation using DTcir
 !
