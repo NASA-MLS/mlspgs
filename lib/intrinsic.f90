@@ -61,7 +61,8 @@ module INTRINSIC
 ! Enumeration literals:
   integer, parameter :: FIRST_LIT       = first_molecule
   integer, parameter :: L_BASELINE      = last_molecule+1
-  integer, parameter :: L_DAYS          = l_baseline + 1
+  integer, parameter :: L_CHANNEL       = l_baseline + 1
+  integer, parameter :: L_DAYS          = l_channel + 1
   integer, parameter :: L_DEG           = l_days + 1
   integer, parameter :: L_DEGREES       = l_deg + 1
   integer, parameter :: L_DIMENSIONLESS = l_degrees + 1
@@ -70,14 +71,14 @@ module INTRINSIC
   integer, parameter :: L_EXTINCTION    = l_dl + 1
   integer, parameter :: L_FALSE         = l_extinction + 1
   integer, parameter :: L_GEODALTITUDE  = l_false + 1
-  integer, parameter :: L_GHZ           = l_geodaltitude + 1
+  integer, parameter :: L_GEODANGLE     = l_geodaltitude + 1
+  integer, parameter :: L_GHZ           = l_geodangle + 1
   integer, parameter :: L_GPH           = l_ghz + 1
   integer, parameter :: L_GPH_PRECISION = l_gph + 1
   integer, parameter :: L_HOURS         = l_gph_precision + 1
   integer, parameter :: L_HPA           = l_hours + 1
   integer, parameter :: L_HZ            = l_hpa + 1
-  integer, parameter :: L_INSTRUMENTCHANNEL = l_hz + 1
-  integer, parameter :: L_INTERMEDIATEFREQUENCY=l_instrumentchannel + 1
+  integer, parameter :: L_INTERMEDIATEFREQUENCY= l_hz + 1
   integer, parameter :: L_K             = l_intermediatefrequency + 1
   integer, parameter :: L_KHZ           = l_k  + 1
   integer, parameter :: L_KM            = l_khz + 1
@@ -114,7 +115,8 @@ module INTRINSIC
   integer, parameter :: L_TEMPERATURE_PREC = l_temperature + 1
   integer, parameter :: L_THETA         = l_temperature_prec + 1
   integer, parameter :: L_THZ           = l_theta + 1
-  integer, parameter :: L_TNGTGEOCALT   = l_thz + 1
+  integer, parameter :: L_TIME          = l_thz + 1
+  integer, parameter :: L_TNGTGEOCALT   = l_time + 1
   integer, parameter :: L_TNGTGEODALT   = l_tngtgeocalt + 1
   integer, parameter :: L_TRUE          = l_tngtgeodalt + 1
   integer, parameter :: L_USBFREQUENCY  = l_true + 1 !
@@ -142,6 +144,7 @@ contains ! =====     Public procedures     =============================
     data_type_indices(t_boolean) =         add_ident ( 'boolean' )
     ! Put intrinsic enumeration literals into the symbol table:
     lit_indices(l_baseline) =              add_ident ( 'baseline' )
+    lit_indices(l_channel) =               add_ident ( 'channel' )
     lit_indices(l_days) =                  add_ident ( 'days' )
     lit_indices(l_deg) =                   add_ident ( 'deg' )
     lit_indices(l_degrees) =               add_ident ( 'degrees' )
@@ -151,13 +154,13 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_extinction) =            add_ident ( 'extinction' )
     lit_indices(l_false) =                 add_ident ( 'false' )
     lit_indices(l_geodaltitude) =          add_ident ( 'geodAltitude' )
+    lit_indices(l_geodangle) =             add_ident ( 'geodAngle' )
     lit_indices(l_ghz) =                   add_ident ( 'GHz' )
     lit_indices(l_gph) =                   add_ident ( 'gph' )
     lit_indices(l_gph_precision) =         add_ident ( 'gph_precision' )
     lit_indices(l_hours) =                 add_ident ( 'hours' )
     lit_indices(l_hpa) =                   add_ident ( 'hPa' )
     lit_indices(l_hz) =                    add_ident ( 'Hz' )
-    lit_indices(l_instrumentchannel) =     add_ident ( 'instrumentchanel' )
     lit_indices(l_intermediatefrequency) = add_ident ( 'intermediatefrequency' )
     lit_indices(l_k) =                     add_ident ( 'k' )
     lit_indices(l_khz) =                   add_ident ( 'KHz' )
@@ -195,6 +198,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_temperature_prec) =      add_ident ( 'temperature_precision' )
     lit_indices(l_theta) =                 add_ident ( 'theta' )
     lit_indices(l_thz) =                   add_ident ( 'THz' )
+    lit_indices(l_time) =                  add_ident ( 'time' )
     lit_indices(l_tngtgeocalt) =           add_ident ( 'tngtgeocalt' )
     lit_indices(l_tngtgeodalt) =           add_ident ( 'tngtgeodalt' )
     lit_indices(l_true) =                  add_ident ( 'true' )
@@ -228,6 +232,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.11  2001/03/06 22:41:59  livesey
+! Minor changes
+!
 ! Revision 2.10  2001/03/02 01:32:21  livesey
 ! Added some new PHYQs
 !
