@@ -19,12 +19,12 @@ module MLSHDF5
   ! Lets break down our use, parameters first
   use HDF5, only: H5F_ACC_RDONLY_F, &
     & H5P_DATASET_CREATE_F, &
-    & H5SIS_SIMPLE_F, H5SOFFSET_SIMPLE_F, &
+    & H5SIS_SIMPLE_F, & ! H5SOFFSET_SIMPLE_F, &
     & H5S_SCALAR_F, H5S_SELECT_SET_F, H5S_UNLIMITED_F, &
     & H5T_IEEE_F32LE, H5T_IEEE_F64LE, &
     & H5T_NATIVE_DOUBLE, H5T_NATIVE_REAL, H5T_STD_I32LE, &
     & H5T_NATIVE_CHARACTER, H5T_NATIVE_INTEGER, &
-    & HID_T, HSIZE_T, HSSIZE_T
+    & HID_T, HSIZE_T ! , HSSIZE_T
   ! Now routines
   use HDF5, only: H5ACLOSE_F, H5ACREATE_F, H5AGET_TYPE_F, H5AOPEN_NAME_F, &
     & H5AREAD_F, H5AWRITE_F, H5ADELETE_F, &
@@ -48,8 +48,8 @@ module MLSHDF5
   public :: CpHDF5Attribute, CpHDF5GlAttribute, &
     & GetHDF5Attribute, GetHDF5AttributePtr, GetHDF5AttrDims, &
     & GetAllHDF5DSNames, GetHDF5DSRank, GetHDF5DSDims, GetHDF5DSQType, &
-    & IsHDF5AttributePresent, IsHDF5DSPresent, &
-    & IsHDF5DSInFile, IsHDF5AttributeInFile, &
+    & IsHDF5AttributeInFile, IsHDF5AttributePresent, IsHDF5DSInFile, &
+    & IsHDF5DSPresent, IsHDF5GroupPresent, &
     & LoadFromHDF5DS, LoadPtrFromHDF5DS, MakeHDF5Attribute, &
     & MLS_H5Open, MLS_H5Close, &
     & ReadLitIndexFromHDF5Attr, ReadStringIndexFromHDF5Attr, SaveAsHDF5DS, &
@@ -104,6 +104,7 @@ module MLSHDF5
 ! log IsHDF5AttributePresent (int setid, char name)
 ! log IsHDF5AttributePresent (int fileid, char DSname, char name)
 ! log IsHDF5DSPresent (int locID, char name)
+! log IsHDF5GroupPresent (int locID, char name)
 ! LoadFromHDF5DS (int locID, char name, value,
 !       [int start(:), int count(:), [int stride(:), int block(:)] ] )
 ! LoadPtrFromHDF5DS (int locID, char name, *value [, lowBound] )
@@ -1563,7 +1564,7 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to turn error messages back on after looking for attribute ' // trim(name) )
   end function IsHDF5AttributePresent_in_grp
 
-  ! -------------------------------------------  IsHDF5DSPresent  -----
+  ! --------------------------------------------  IsHDF5DSPresent  -----
   logical function IsHDF5DSPresent ( locID, name )
     ! This routine returns true if the given HDF5 DS is present
     integer, intent(in) :: LOCID        ! Where to look
@@ -1577,16 +1578,33 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages off before looking for DS ' // trim(name) )
     call h5dOpen_f ( locID, name, setID, status )
-    if ( status /= 0 ) then
-      IsHDF5DSPresent = .false.
-    else
-      IsHDF5DSPresent = .true.
-      call h5dClose_f ( setID, status )
-    end if
+    IsHDF5DSPresent = status == 0
+    if ( IsHDF5DSPresent ) call h5dClose_f ( setID, status )
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after looking for DS ' // trim(name) )
   end function IsHDF5DSPresent
+
+  ! -----------------------------------------  IsHDF5GroupPresent  -----
+  logical function IsHDF5GroupPresent ( locID, name )
+    ! This routine returns true if the given HDF5 DS is present
+    integer, intent(in) :: LOCID        ! Where to look
+    character (len=*), intent(in) :: NAME ! Name for the dataset
+    ! Local variables
+    integer :: SETID                    ! ID for DS if present
+    integer :: STATUS                   ! Flag
+
+    ! Executable code
+    call h5eSet_auto_f ( 0, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to turn error messages off before looking for Group ' // trim(name) )
+    call h5GOpen_f ( locID, name, setID, status )
+    IsHDF5groupPresent = status == 0
+    if ( IsHDF5groupPresent ) call h5GClose_f ( setID, status )
+    call h5eSet_auto_f ( 1, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to turn error messages back on after looking for Group ' // trim(name) )
+  end function IsHDF5GroupPresent
 
   ! --------------------------------------  SaveAsHDF5DS_charsclr  -----
   subroutine SaveAsHDF5DS_charsclr ( locID, name, value )
@@ -4099,6 +4117,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.48  2005/01/07 00:38:17  vsnyder
+! Add IsHDF5GroupPresent, simplify some stuff, delete unused stuff
+!
 ! Revision 2.47  2004/12/31 02:38:53  vsnyder
 ! Added LoadPtrFromHDF5DS, simplified a lot of stuff
 !
