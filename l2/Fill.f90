@@ -145,7 +145,7 @@ contains ! =====     Public Procedures     =============================
     use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, &
       & SOURCE_REF, SUB_ROSA, SUBTREE
     use TREE_TYPES, only: N_NAMED, N_SET_ONE
-    use UNITS, only: Deg2Rad
+    use UNITS, only: Deg2Rad, Rad2Deg
     use VectorsModule, only: AddVectorToDatabase, &
       & ClearUnderMask, CopyVector, CreateMask, CreateVector, &
       & DestroyVectorInfo, Dump, &
@@ -5241,7 +5241,7 @@ contains ! =====     Public Procedures     =============================
 
           ! get phi along path for each mif (phi is in degree)
           y_in = los%template%phi(mif,maf) &
-            & - atan(sLevel/(re%values(1,maf)*0.001_r8 + zt(mif)))*deg2rad
+            & - atan(sLevel/(re%values(1,maf)*0.001_r8 + zt(mif)))*rad2deg
           ! interpolate phi onto standard vertical grids     
           call InterpolateValues(x_in,y_in,outZeta(minZ:maxZ),phi_out(minZ:maxZ), &
             & method='Linear')
@@ -5981,6 +5981,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.237  2003/08/16 00:29:37  vsnyder
+! Correct a blunder: deg2rad should have been rad2deg
+!
 ! Revision 2.236  2003/08/15 23:58:48  vsnyder
 ! Add MagAzEl fill method
 !
