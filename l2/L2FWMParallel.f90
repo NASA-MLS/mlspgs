@@ -14,7 +14,7 @@ module L2FWMParallel
   private
 
   public :: LaunchFWMSlaves, L2FWMSlaveTask, SetupFWMSlaves, TriggerSlaveRun
-  public :: RequestSlavesOutput, ReceiveSlavesOutput
+  public :: RequestSlavesOutput, ReceiveSlavesOutput, GetNoSlaves
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -85,8 +85,6 @@ contains
       nullify ( machineNames )
       call GetMachineNames ( machineNames )
       noMachines = size(machineNames)
-      if ( noMachines < noMAFs ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Too few machines for fwmParallel mode' )
     else
       noMachines = 0
     end if
@@ -415,6 +413,11 @@ contains
     end do mainLoop
   end subroutine L2FWMSlaveTask
 
+  ! ------------------------------------------------ GetNoSlaves
+  integer function GetNoSlaves ()
+    GetNoSlaves = size ( slaveTids )
+  end function GetNoSlaves
+
   ! ------------------------------------------------ ReceiveSlavesOutput ---
   subroutine ReceiveSlavesOutput ( outVector, fmStat, jacobian )
     ! The master uses this routine to get the output from each forward model
@@ -670,6 +673,7 @@ contains
     integer :: BUFFERID                 ! From PVM
     integer :: INFO                     ! Flag from PVM
     integer :: J                        ! Loop counter
+    integer :: TASK                     ! Task index
 
     ! Executable code
     call PVMFInitSend ( PVMRaw, bufferID )
@@ -695,7 +699,8 @@ contains
     call PVMIDLPack ( maf, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, 'packing maf' )
     ! OK, send this off
-    call PVMFSend ( slaveTids ( maf ), InfoTag, info )
+    task = mod ( maf-1, size(slaveTids) ) + 1
+    call PVMFSend ( slaveTids ( task ), InfoTag, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, 'Sending trigger packet' )
   end subroutine TriggerSlaveRun
 
@@ -732,6 +737,10 @@ contains
 end module L2FWMParallel
 
 ! $Log$
+! Revision 2.10  2002/12/06 18:43:26  livesey
+! New approach to sharing out the work load.  Doesn't require there to be
+! a full complement of 'machines' one for each MAF
+!
 ! Revision 2.9  2002/12/05 02:21:29  livesey
 ! Changes to improve performance (hopefully)
 !
