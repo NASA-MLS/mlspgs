@@ -60,7 +60,7 @@ contains
     type(slabs_struct), pointer :: gl_slabs_p(:,:) ! reduced
 !                               strength data for t_path_p
     real(rp), intent(in) :: t_path_p(:) ! path temperatures for gl_slabs_p
-    logical, intent(in) :: t_der_path_flags(:)     ! indicies where temperature
+    logical, pointer :: t_der_path_flags(:)     ! indicies where temperature
 !                               derivatives are needed. Only useful for
 !                               subsetting.
 
@@ -978,6 +978,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.45  2003/07/14 22:45:09  vsnyder
+! Scale BP, BM by isotope ratio in t_power computation
+!
 ! Revision 2.44  2003/07/11 22:43:37  vsnyder
 ! Multiply the continuum-derived Beta by the isotope ratio
 !
