@@ -313,10 +313,6 @@
 
          tsource=(((1-WW0)*TEMP(K1)+WK)+((1-www0)*TEMP(K1+1)+wwk))/2.
 
-!         IF (ICON .eq. 0) THEN
-!           tsource = ( TEMP(K1)+TEMP(K1+1) )/2.
-!         ENDIF
-
          IF (ICON .eq. 3) THEN
             tsource=( TEMP(K1)+TEMP(K1+1) )/2. ! NO CLOUD AFTER TANGENT POINT
          ENDIF
@@ -376,10 +372,6 @@
 !         endif
 
          tsource=( ((1-WW0)*TEMP(K)+WK)+((1-www0)*TEMP(K+1)+wwk) )*0.5
-
-         IF (ICON .eq. 0) THEN
-           tsource = ( TEMP(K1)+TEMP(K1+1) )/2.
-         ENDIF
 
 !         UU=(UAVE(ITT,K)+UAVE(ITT,K+1))*0.5     ! the average is not true at tangent point
                                                  ! it will reduce contribution by half
