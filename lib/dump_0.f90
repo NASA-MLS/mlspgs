@@ -13,10 +13,12 @@ module DUMP_0
   public :: AfterSub, DUMP, DUMP_NAME_V_PAIRS
 
   interface DUMP        ! dump n-d arrays of homogeneous type
-    module procedure DUMP_1D_CHAR, DUMP_1D_DOUBLE
-    module procedure DUMP_1D_INTEGER, DUMP_1D_LOGICAL, DUMP_1D_REAL
-    module procedure DUMP_2D_CHAR, DUMP_2D_DOUBLE
-    module procedure DUMP_2D_INTEGER, DUMP_2D_LOGICAL, DUMP_2D_REAL
+    module procedure DUMP_1D_CHAR, DUMP_1D_COMPLEX, DUMP_1D_DCOMPLEX
+    module procedure DUMP_1D_DOUBLE, DUMP_1D_INTEGER
+    module procedure DUMP_1D_LOGICAL, DUMP_1D_REAL
+    module procedure DUMP_2D_CHAR, DUMP_2D_COMPLEX, DUMP_2D_DCOMPLEX
+    module procedure DUMP_2D_DOUBLE, DUMP_2D_INTEGER
+    module procedure DUMP_2D_LOGICAL, DUMP_2D_REAL
     module procedure DUMP_3D_CHAR, DUMP_3D_DOUBLE, DUMP_3D_INTEGER
     module procedure DUMP_3D_REAL
   end interface
@@ -122,7 +124,123 @@ contains
     end if
   end subroutine DUMP_1D_CHAR
 
-  ! ---------------------------------------------  DUMP_1D_DOUBLE  -----
+  ! --------------------------------------------  DUMP_1D_COMPLEX  -----
+  subroutine DUMP_1D_COMPLEX ( ARRAY, NAME, CLEAN, WIDTH, FORMAT )
+    integer, parameter :: RK = kind(0.0e0)
+    complex(rk), intent(in) :: ARRAY(:)
+    character(len=*), intent(in), optional :: NAME
+    logical, intent(in), optional :: CLEAN
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+
+    logical :: MyClean
+    integer :: J, K, MyWidth
+    character(len=64) :: MyFormat
+
+    myClean = .false.
+    if ( present(clean) ) myClean = clean
+    myWidth = 3
+    if ( present(width) ) myWidth = width
+    myFormat = '(1x,"(",1pg13.6,",",1pg13.6,")")'
+    if ( present(format) ) myFormat = format
+
+    if ( size(array) == 0 ) then
+      if ( present(name) ) then
+        call output ( name )
+        call output ( ' is ' )
+      end if
+      call output ( 'empty', advance='yes' )
+    else if ( size(array) == 1 ) then
+      if ( present(name) ) then
+        call output ( name )
+        if ( myClean ) then
+          call output ( ' \ 1', advance='yes' )
+        else
+          call output ( ' ' )
+        end if
+      end if
+      call output ( array(1), myFormat, advance='yes' )
+    else
+      if ( present(name) ) then 
+        call output ( name )
+        if ( myClean ) then 
+          call output ( ' \ ' )
+          call output ( size(array) )
+        end if
+        call output ( '', advance='yes' )
+      end if
+      do j = 1, size(array), myWidth
+        if (.not. myClean) then
+          call output ( j, max(myWidth-1,ilog10(size(array))+1) )
+          call output ( afterSub )
+        end if
+        do k = j, min(j+myWidth-1, size(array))
+          call output ( array(k), myFormat )
+        end do
+        call output ( '', advance='yes' )
+      end do
+    end if
+  end subroutine DUMP_1D_COMPLEX
+
+  ! -------------------------------------------  DUMP_1D_DCOMPLEX  -----
+  subroutine DUMP_1D_DCOMPLEX ( ARRAY, NAME, CLEAN, WIDTH, FORMAT )
+    integer, parameter :: RK = kind(0.0d0)
+    complex(rk), intent(in) :: ARRAY(:)
+    character(len=*), intent(in), optional :: NAME
+    logical, intent(in), optional :: CLEAN
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
+
+    logical :: MyClean
+    integer :: J, K, MyWidth
+    character(len=64) :: MyFormat
+
+    myClean = .false.
+    if ( present(clean) ) myClean = clean
+    myWidth = 3
+    if ( present(width) ) myWidth = width
+    myFormat = '(1x,"(",1pg13.6,",",1pg13.6,")")'
+    if ( present(format) ) myFormat = format
+
+    if ( size(array) == 0 ) then
+      if ( present(name) ) then
+        call output ( name )
+        call output ( ' is ' )
+      end if
+      call output ( 'empty', advance='yes' )
+    else if ( size(array) == 1 ) then
+      if ( present(name) ) then
+        call output ( name )
+        if ( myClean ) then
+          call output ( ' \ 1', advance='yes' )
+        else
+          call output ( ' ' )
+        end if
+      end if
+      call output ( array(1), myFormat, advance='yes' )
+    else
+      if ( present(name) ) then 
+        call output ( name )
+        if ( myClean ) then 
+          call output ( ' \ ' )
+          call output ( size(array) )
+        end if
+        call output ( '', advance='yes' )
+      end if
+      do j = 1, size(array), myWidth
+        if (.not. myClean) then
+          call output ( j, max(myWidth-1,ilog10(size(array))+1) )
+          call output ( afterSub )
+        end if
+        do k = j, min(j+myWidth-1, size(array))
+          call output ( array(k), myFormat )
+        end do
+        call output ( '', advance='yes' )
+      end do
+    end if
+  end subroutine DUMP_1D_DCOMPLEX
+
+ ! ---------------------------------------------  DUMP_1D_DOUBLE  -----
   subroutine DUMP_1D_DOUBLE ( ARRAY, NAME, CLEAN, WIDTH, FORMAT )
     double precision, intent(in) :: ARRAY(:)
     character(len=*), intent(in), optional :: NAME
@@ -458,6 +576,168 @@ contains
       end if
     end if
   end subroutine DUMP_2D_CHAR
+
+  ! --------------------------------------------  DUMP_2D_COMPLEX  -----
+  subroutine DUMP_2D_COMPLEX ( ARRAY, NAME, CLEAN, WIDTH, FORMAT )
+    integer, parameter :: RK = kind(0.0e0)
+    complex(rk), intent(in) :: ARRAY(:,:)
+    character(len=*), intent(in), optional :: NAME
+    logical, intent(in), optional :: CLEAN
+    integer, intent(in), optional :: WIDTH ! How many per line?
+    character(len=*), optional :: FORMAT
+
+    logical :: myClean
+    integer :: I, J, K
+    integer :: myWidth
+    character(len=64) :: MyFormat
+
+    myClean = .false.
+    if ( present(clean) ) myClean = clean
+
+    myWidth = 3
+    if ( present(width) ) myWidth = width
+
+    myFormat = '(1x,"(",1pg13.6,",",1pg13.6,")")'
+    if ( present(format) ) myFormat = format
+
+    if ( size(array) == 0 ) then
+      if ( present(name) ) then
+        call output ( name )
+        call output ( ' is ' )
+      end if
+      call output ( 'empty', advance='yes' )
+    else if ( size(array) == 1 ) then
+      if ( present(name) ) then
+        call output ( name )
+        if ( myClean ) then
+          call output ( ' \ 1', advance='yes' )
+        else
+          call output ( ' ' )
+        end if
+      end if
+      call output ( array(1,1), format=myFormat, advance='yes' )
+    else if ( size(array,2) == 1 ) then
+      call dump ( array(:,1), name, clean=clean, format=myFormat )
+    else 
+      if ( present(name) ) then 
+        call output ( name )
+        if ( myClean ) then 
+          call output ( ' \ ' )
+          call output ( size(array) )
+        end if
+      end if
+      if ( size(array,2) >= min(5,size(array,1)) .or. myClean ) then
+        call output ( '', advance='yes' )
+        do i = 1, size(array,1)
+          do j = 1, size(array,2), myWidth
+            if (.not. myClean) then
+              call output ( i, places=max(4,ilog10(size(array,1))+1) )
+              call output ( j, places=max(4,ilog10(size(array,2))+1) )
+              call output ( afterSub )
+            end if
+            do k = j, min(j+myWidth-1, size(array,2))
+              call output ( array(i,k), format=myFormat )
+            end do
+            call output ( '', advance='yes' )
+          end do
+        end do
+      else ! Dump the transpose
+        call output ( ' (transposed)', advance='yes' )
+        do j = 1, size(array,2)
+          do i = 1, size(array,1), width
+            call output ( i, places=max(4,ilog10(size(array,1))+1) )      
+            call output ( j, places=max(4,ilog10(size(array,2))+1) )      
+            call output ( afterSub )                                      
+            do k = i, min(i+width-1, size(array,1))
+              call output ( array(k,j), format=myFormat )
+            end do
+            call output ( '', advance='yes' )
+          end do
+        end do
+      end if
+    end if
+  end subroutine DUMP_2D_COMPLEX
+
+  ! --------------------------------------------  DUMP_2D_COMPLEX  -----
+  subroutine DUMP_2D_DCOMPLEX ( ARRAY, NAME, CLEAN, WIDTH, FORMAT )
+    integer, parameter :: RK = kind(0.0d0)
+    complex(rk), intent(in) :: ARRAY(:,:)
+    character(len=*), intent(in), optional :: NAME
+    logical, intent(in), optional :: CLEAN
+    integer, intent(in), optional :: WIDTH ! How many per line?
+    character(len=*), optional :: FORMAT
+
+    logical :: myClean
+    integer :: I, J, K
+    integer :: myWidth
+    character(len=64) :: MyFormat
+
+    myClean = .false.
+    if ( present(clean) ) myClean = clean
+
+    myWidth = 3
+    if ( present(width) ) myWidth = width
+
+    myFormat = '(1x,"(",1pg13.6,",",1pg13.6,")")'
+    if ( present(format) ) myFormat = format
+
+    if ( size(array) == 0 ) then
+      if ( present(name) ) then
+        call output ( name )
+        call output ( ' is ' )
+      end if
+      call output ( 'empty', advance='yes' )
+    else if ( size(array) == 1 ) then
+      if ( present(name) ) then
+        call output ( name )
+        if ( myClean ) then
+          call output ( ' \ 1', advance='yes' )
+        else
+          call output ( ' ' )
+        end if
+      end if
+      call output ( array(1,1), format=myFormat, advance='yes' )
+    else if ( size(array,2) == 1 ) then
+      call dump ( array(:,1), name, clean=clean, format=myFormat )
+    else 
+      if ( present(name) ) then 
+        call output ( name )
+        if ( myClean ) then 
+          call output ( ' \ ' )
+          call output ( size(array) )
+        end if
+      end if
+      if ( size(array,2) >= min(5,size(array,1)) .or. myClean ) then
+        call output ( '', advance='yes' )
+        do i = 1, size(array,1)
+          do j = 1, size(array,2), myWidth
+            if (.not. myClean) then
+              call output ( i, places=max(4,ilog10(size(array,1))+1) )
+              call output ( j, places=max(4,ilog10(size(array,2))+1) )
+              call output ( afterSub )
+            end if
+            do k = j, min(j+myWidth-1, size(array,2))
+              call output ( array(i,k), format=myFormat )
+            end do
+            call output ( '', advance='yes' )
+          end do
+        end do
+      else ! Dump the transpose
+        call output ( ' (transposed)', advance='yes' )
+        do j = 1, size(array,2)
+          do i = 1, size(array,1), width
+            call output ( i, places=max(4,ilog10(size(array,1))+1) )      
+            call output ( j, places=max(4,ilog10(size(array,2))+1) )      
+            call output ( afterSub )                                      
+            do k = i, min(i+width-1, size(array,1))
+              call output ( array(k,j), format=myFormat )
+            end do
+            call output ( '', advance='yes' )
+          end do
+        end do
+      end if
+    end if
+  end subroutine DUMP_2D_DCOMPLEX
 
   ! ---------------------------------------------  DUMP_2D_DOUBLE  -----
   subroutine DUMP_2D_DOUBLE ( ARRAY, NAME, FILLVALUE, CLEAN )
@@ -1499,6 +1779,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.25  2003/07/02 01:07:27  vsnyder
+! Add complex output
+!
 ! Revision 2.24  2003/05/21 19:20:40  vsnyder
 ! Start a new line after \ 1 if size==1 and clean
 !
