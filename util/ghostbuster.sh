@@ -30,7 +30,7 @@
 #must precede the extra search directories on the command line
 # 
 # --------------- End ghostbuster.sh help
-# Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+# Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 # "$Id$"
@@ -40,12 +40,15 @@
 
 UserPrompt()
 {
-    if [ "$BRAND" = "linux" ] ; then
+    if [ "$AUTO_REPLY" = 1 ] ; then
+      user_response='y'
+    elif [ "$BRAND" = "linux" ] ; then
 	/bin/echo -n "$* " > /dev/tty
+    read user_response
     else
 	echo "$* \\c" > /dev/tty
-    fi
     read user_response
+    fi
 }
 
 #---------------------------- get_unique_name
@@ -148,6 +151,10 @@ PRINT_TOO_MUCH=0
 TRY_CLEANUP=1
 #           ^  -- set this to 1 to try cleaning up from a prior faulty run
 MAY_EDIT_PERL=1
+#             ^  -- set this to 1 to permit correcting perl path
+AUTO_REPLY=1
+#          ^  -- set this to 1 to automate user responses to 'y'
+#                (in this case automate correcting perl path)
 #
 #           How to rename or hide excluded files so they !~= %.f90
 #dsuffix=".xug"
@@ -341,6 +348,9 @@ then
 fi
 exit
 # $Log$
+# Revision 1.9  2003/06/21 00:34:17  pwagner
+# Added fail-safe measures and MAY_EDIT_PERL flag
+#
 # Revision 1.8  2002/07/25 19:54:37  pwagner
 # Comments on hiding excluded files only if PRINT_TOO_MUCH
 #

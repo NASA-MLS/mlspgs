@@ -84,7 +84,7 @@
 # 
 # --------------- End makemakedep.sh help
 # Bugs and limitations
-#(1) Tested only with NAG, Lahey, Intel, Sun, and Absoft f95 compilers
+#(1) Tested only with NAG, Lahey, Intel, Sun, g95, and Absoft f95 compilers
 #(2) Still too specialized--works well only with NAG-like compilers
 # Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
@@ -99,12 +99,15 @@
 
 UserPrompt()
 {
-    if [ "$BRAND" = "linux" ] ; then
+    if [ "$AUTO_REPLY" = 1 ] ; then
+      user_response='y'
+    elif [ "$BRAND" = "linux" ] ; then
 	/bin/echo -n "$* " > /dev/tty
+    read user_response
     else
 	echo "$* \\c" > /dev/tty
-    fi
     read user_response
+    fi
 }
 
 #---------------------------- get_unique_name
@@ -218,7 +221,11 @@ EDIT_GB_PERL_PATH=1
 #                 ^  -- set this to 1 to change path to perl in ghostbuster.sh
 #
 MAY_EDIT_PERL=1
+#             ^  -- set this to 1 to permit correcting perl path
 #
+AUTO_REPLY=1
+#          ^  -- set this to 1 to automate user responses to 'y'
+#                (in this case automate correcting perl path)
 #           How to rename or hide excluded files so they !~= %.f90
 #dsuffix=".xui"
 #          ^^^----- this is the suffix stuck onto any excluded files
@@ -582,6 +589,9 @@ then
 fi
 exit
 # $Log$
+# Revision 1.24  2004/03/18 17:56:49  pwagner
+# Removed any mention of outmoded makedepf90
+#
 # Revision 1.23  2003/06/21 00:34:17  pwagner
 # Added fail-safe measures and MAY_EDIT_PERL flag
 #
