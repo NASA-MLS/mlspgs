@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -9,7 +9,7 @@ module L3ascii ! Collections of Hugh's subroutines to handle TYPE GriddedData_T
   use GriddedData, only: DestroyGriddedData, GriddedData_T, V_is_pressure, &
     & V_is_altitude, V_is_GPH, V_is_theta, RGR
   use LEXER_CORE, only: PRINT_SOURCE
-  USE MLSCommon, only: R4, R8, LineLen, NameLen
+  USE MLSCommon, only: R4, R8, LineLen, NameLen, DEFAULTUNDEFINEDVALUE
   USE MLSStrings, only: Capitalize, &
     & Count_words, ReadCompleteLineWithoutComments
   USE output_m, only: output
@@ -109,7 +109,7 @@ contains
     integer,parameter :: maxNoDates = 30
     real(kind=r8), allocatable, dimension(:,:,:,:,:,:) :: tmpfield
     logical :: noYearStart, noYearEnd
-    real(rgr), parameter :: DefaultMissingValue = -999.99
+    real(rgr), parameter :: DefaultMissingValue = DEFAULTUNDEFINEDVALUE !-999.99
 
     !---- Executable statements ----! 
 
@@ -854,6 +854,9 @@ end module L3ascii
 
 !
 ! $Log$
+! Revision 2.26  2004/08/03 17:59:34  pwagner
+! Gets DEFAULTUNDEFINEDVALUE from MLSCommon
+!
 ! Revision 2.25  2003/09/10 00:18:42  pwagner
 ! Made filename length LineLen rather than 80
 !
