@@ -151,6 +151,7 @@ module QuantityTemplates         ! Quantities within vectors
 
     integer :: instrumentModule ! Index in the Modules database in MLSSignals_m
     integer :: radiometer       ! For ptan etc., index into radiometers database
+    integer :: reflector        ! For reflector efficiency etc. terms
     integer :: molecule ! What molecule does this refer to? (One of the l_...
                         ! lits of type t_molecule in Molecules.)
 
@@ -773,6 +774,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.31  2003/01/14 21:35:53  vsnyder
+! Add EPOCH and a comment about it in 'time' component
+!
 ! Revision 2.30  2003/01/08 21:39:55  livesey
 ! Minor change in irregular quantity handling
 !
