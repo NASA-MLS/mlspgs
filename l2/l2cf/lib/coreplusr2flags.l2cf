@@ -9,6 +9,10 @@ begin Fill
   !define(flaggingBands,{2,3,4,5,6,23})
   !makeFlagsForOneProduct(product=H2O,radiometer=R2,chisqScale=100.0,minRads=6500,cloudMax=5K,cloudMin= -10K)
 
+  ;; ------------------------------------- RHI-190
+  !define(flaggingBands,{2,3,4,5,6,23})
+  !makeFlagsForOneProduct(product=RHI,radiometer=R2,chisqScale=100.0,minRads=6500,cloudMax=5K,cloudMin= -10K)
+
   ;; --------------------------------------- N2O-190
   !define(flaggingBands,{3})
   !makeFlagsForOneProduct(product=N2O,radiometer=R2,chisqScale=50.0,minRads=1000,cloudMax=5K,cloudMin= -10K)
@@ -44,6 +48,9 @@ begin Fill
 end Fill
 
 ; $Log$
+; Revision 1.8  2004/04/28 23:06:33  livesey
+; Changes to cloud flagging.
+;
 ; Revision 1.7  2004/04/28 00:31:57  livesey
 ; Bug fix
 ;
