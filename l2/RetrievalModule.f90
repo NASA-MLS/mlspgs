@@ -31,9 +31,10 @@ use Dump_0, only: Dump
     & Matrix_SPD_T
   use MatrixTools, only: DumpBlock
   use MLSCommon, only: R8
+  use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
-  use Output_M, only: Output
+  use OUTPUT_M, only: BLANKS, OUTPUT
   use SidsModule, only: SIDS
   use Toggles, only: Gen, Switches, Toggle
   use Trace_M, only: Trace_begin, Trace_end
@@ -152,7 +153,7 @@ contains
     error = 0
     nullify ( apriori, configIndices, covariance, fwdModelOut )
     nullify ( measurements, measurementSD, state, outputSD )
-    timing = .false.
+    timing = section_times
 
     if ( toggle(gen) ) call trace_begin ( "Retrieve", root )
     do i = 2, nsons(root) - 1           ! skip names at begin/end of section
@@ -1150,6 +1151,11 @@ contains
     ! --------------------------------------------------  SayTime  -----
     subroutine SayTime
       call cpu_time ( t2 )
+      if ( total_times ) then
+        call output ( "Total time = " )
+        call output ( dble(t2), advance = 'no' )
+        call blanks ( 4, advance = 'no' )
+      endif
       call output ( "Timing for Retrieve = " )
       call output ( DBLE(t2 - t1), advance = 'yes' )
       timing = .false.
@@ -1358,6 +1364,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.69  2001/09/28 17:50:30  pwagner
+! MLSL2Timings module keeps timing info
+!
 ! Revision 2.68  2001/09/27 20:14:50  vsnyder
 ! Add 'msk' switch to control printing the mask after a Subset
 !
