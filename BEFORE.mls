@@ -1,0 +1,94 @@
+#!/bin/sh
+#    BEFORE.mls        Prerequisites for building the mls software
+# Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+# "$Id$"
+# A self-reading guide to building the mls software;
+# usage: README.MakeFC
+# related documents:
+#  mlspgs.tgz        an archive containing this file and mls software sources
+#  README.MakeFC     a self-reading guide to building the software
+
+        more << EOF
+SUMMARY
+Before building the mls software you will need the following
+ (1) f95 compiler (either NAG or Lahey)
+ (2) Installed SDP Toolkit (PGSTK, HDFEOS, HDF)
+ (3) mls software (probably where you're reading this)
+ (4) perl (not needed if you plan only to build and run the software,
+       not change it)
+ (5) PVM--a library to emulate parallel virtual machines
+ (6) FFTW--a library to accomplish fast Fourier tranforms
+
+The first step is to find out if you already have (1)-(6). If you do, you may
+safely ignore the rest of this guide. Obtaining (1), (3), and (4) is not
+within the scope of this guide, although if you are reading it online, you
+probably already have (3).
+
+The rest of this guide focuses on how to obtain (2), (5), and (6).
+
+CONTENTS
+I     SUMMARY
+II    CONTENTS
+III   THE SDP TOOLKIT
+IV    PVM
+V     FFTW
+
+THE SDP TOOLKIT
+The distribution to build the libraries and ancillary files making up the SDP
+Toolkit can be found at 
+	http://edhs1.gsfc.nasa.gov/
+It comes with instructions for building it for a number of supported platforms.
+Additional information on how to build it for the linux OS can be found at
+	http://www.met.ed.ac.uk/~hcp/hdfeos_notes.txt
+
+After building this successfully, keep careful note of its location. An easy
+way to do this is to source pgs-env.csh or pgs-dev-env.csh in your login shell,
+assuming you use the csh or tcsh shells. That way automatically defines three
+environment variables that will make configuring the mls software easier:
+	HDFEOS_LIB
+	HDFLIB
+	PGSLIB
+
+PVM
+The distribution to build the libraries and ancillary files making up the PVM
+software system can be found at 
+	http://www.netlib.org/pvm3/index.html
+in particular the file: http://www.netlib.org/pvm3/pvm3.4.3.tgz
+
+It comes with instructions for building for a unix-style platforms. In brief,
+after downloading the file, say to your home directory, issue the following
+commands
+	gunzip pvm3.4.3.tgz
+	tar -xvf pvm3.4.3.tar
+	cd pvm3
+	setenv PVM_ROOT `pwd`
+	make
+
+Note carefully the value of PVM_ROOT--it will be needed when configuring the
+mls software.	
+	
+FFTW
+It is possible that workable fftw libraries already exist on your platform. For
+example, Sun computers often have it in /usr/local/lib. You can check this via
+	me:51%ls /usr/local/lib/*fftw*
+	/usr/local/lib/libfftw.a     /usr/local/lib/librfftw.a
+	/usr/local/lib/libfftw.la*   /usr/local/lib/librfftw.la*
+
+and the result, displayed beneath the ls command, indicates a positive match. In
+such a case, note that the FFTW_ROOT should take the value of "/usr/local/lib".
+
+Otherwise, the distribution to build the libraries and ancillary files making up
+the FFTW libraries can be found at 
+	http://www.fftw.org/download.html
+Follow the instructions found in INSTALL and note carefully where it places
+libfftw.a and librfftw.a.
+
+-pw
+EOF
+
+exit
+# $Log$
+
+
