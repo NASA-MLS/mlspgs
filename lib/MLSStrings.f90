@@ -435,6 +435,7 @@ CONTAINS
     integer :: i
     logical :: mystrict
     integer :: hvalue, mvalue
+    logical, parameter :: DeeBUG = .false.
     !----------Executable part----------!
 
    if(present(separator)) then
@@ -482,20 +483,32 @@ CONTAINS
    else
       ss=Reverse(trim(ss))
    endif
+
+   if(DeeBUG) then
+      print *, 'hh ', hh
+      print *, 'mm ', mm
+      print *, 'ss ', trim(ss)
+   endif
    do i=1, len_trim(ss)
       if( .not. (index(digits, ss(i:i)) > 0 .or. ss(i:i) == '.') ) return
    enddo
 
+   if(DeeBUG) then
+      print *, 'ss passed first test'
+   endif
    ! Check if mm complies
    if(len_trim(mm) <= 0) then
       if(mystrict) then
          return
       endif      
    else
-      do i=1, len_trim(ss)
-        if( .not. (index(digits, mm(i:i)) > 0 .or. mm(i:i) == '.') ) return
+      do i=1, len_trim(mm)
+        if( .not. (index(digits, mm(i:i)) > 0) ) return
       enddo
    endif      
+   if(DeeBUG) then
+      print *, 'mm passed first test'
+   endif
 
    ! Check if hh complies
    hh=Reverse(trim(hh))
@@ -520,6 +533,9 @@ CONTAINS
    else
       read(hh(1:2), time_conversion, iostat=ErrTyp) hvalue
    endif
+   if(DeeBUG) then
+      print *, 'hh value conversion error ', ErrTyp
+   endif
    
    if(ErrTyp /= 0) then
       return
@@ -534,6 +550,9 @@ CONTAINS
       read(mm, time_conversion, iostat=ErrTyp) mvalue
    endif
 
+   if(DeeBUG) then
+      print *, 'mm value conversion error ', ErrTyp
+   endif
    if(ErrTyp /= 0) then
       return
    elseif(mvalue < 0 .or. mvalue > 59) then
@@ -542,12 +561,15 @@ CONTAINS
    endif
 
    ! Convert to value
-   if(hh == ' ') then
-      hvalue=0
+   if(ss == ' ') then
+      value=0
    else
       read(ss, real_conversion, iostat=ErrTyp) value
    endif
    
+   if(DeeBUG) then
+      print *, 'ss value conversion error ', ErrTyp
+   endif
    if(ErrTyp /= 0) then
       return
    elseif(value < 0. .or. value > 60.) then
@@ -1270,6 +1292,9 @@ END MODULE MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.10  2001/05/24 23:36:17  pwagner
+! Fixed problem with hhmmss_value
+!
 ! Revision 2.9  2001/05/15 23:44:42  pwagner
 ! Added hhmmss_value
 !
