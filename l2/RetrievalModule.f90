@@ -705,6 +705,8 @@ contains
             ! of the previous iteration.  The initial bit of the
             ! right-hand side of the normal equations is $\mathbf{F^T F
             ! ( a - x_n ) = C ( a - x_n )}$.
+            call cloneVector ( v(covarianceXApriori), apriori, &
+              & vectorNameText='_covarianceXApriori' )
             if ( diagonal ) then
               call cloneVector ( v(covarianceDiag), state, &
                &  vectorNameText='_covarianceDiag' )
@@ -867,7 +869,9 @@ contains
             update = .true.
             call clearMatrix ( jacobian )           ! free the space
             aj%fnorm = aj%fnorm + ( v(reg_X_x) .dot. v(reg_X_x) )
-            call destroyVectorValue ( v(reg_X_x) )  ! free the space
+!           call destroyVectorValue ( v(reg_X_x) )  ! free the space
+            ! Don't destroy reg_X_x unless we move the 'clone' for it
+            ! inside the loop.  Also, if we destroy it, we can't snoop it.
           end if
 
           ! Add some early stabilization
@@ -1945,6 +1949,9 @@ print*,'begin cloud retrieval maf= ',fmstat%maf
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.93  2001/10/15 23:21:47  vsnyder
+! Forgot to clone AprioriMinusX after changing multiply not to clone
+!
 ! Revision 2.92  2001/10/15 22:41:11  vsnyder
 ! Put the local (non-l2cf) vectors into a private database of fixed size,
 ! for snooping.  We can't copy them in, because it's a shallow copy, and
