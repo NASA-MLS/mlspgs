@@ -235,12 +235,12 @@ contains
 
     i_tan = size(t_script) / 2
 
-    ! dTauDx is Hermitian, so We calculate the elements explicitly, saving
-    ! save eleven multiplies on each diagonal (where we know the imaginary
-    ! part is zero).  We save two more in updating D_radiance.  Although
-    ! this saves 20% of the multiplies in the inner loop, In the big scheme
-    ! of things, this doesn't save much because we don't spend much time
-    ! here, but it's all done so we might as well leave it.
+    ! dTauDx is Hermitian, so we calculate the elements explicitly, saving
+    ! eleven multiplies on each diagonal (where we know the imaginary part
+    ! is zero).  We save two more in updating D_radiance.  Although this
+    ! saves 20% of the multiplies in the inner loop, in the big scheme of
+    ! things, this doesn't save much because we don't spend much time here,
+    ! but it's all done so we might as well leave it.
 
     if ( present(d_t_script) ) then
       do i_sv = 1, size(d_radiance,3)      ! state vector elements
@@ -384,6 +384,9 @@ contains
 end module MCRT_m
 
 ! $Log$
+! Revision 2.14  2003/09/11 23:22:45  vsnyder
+! Write out MATMULs explicitly -- saves 80% of multiplies
+!
 ! Revision 2.13  2003/09/10 22:35:24  vsnyder
 ! Slight performance improvement
 !
