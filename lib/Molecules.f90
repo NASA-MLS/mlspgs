@@ -43,7 +43,8 @@ module Molecules
   integer, parameter :: L_CO =           l_clo + 1
   integer, parameter :: L_CO_18 =        l_co + 1
   integer, parameter :: L_COF2 =         l_co_18 + 1
-  integer, parameter :: L_H2C_13_O =     l_cof2 + 1
+  integer, parameter :: L_EXTINCTION =   l_cof2 + 1
+  integer, parameter :: L_H2C_13_O =     l_extinction + 1
   integer, parameter :: L_H2CO =         l_h2c_13_o + 1
   integer, parameter :: L_H2CO_18 =      l_h2co + 1
   integer, parameter :: L_H2O =          l_h2co_18 + 1
@@ -113,6 +114,7 @@ module Molecules
   data spec_tags(l_co)           / 00028001 /
   data spec_tags(l_co_18)        / 00030001 /
   data spec_tags(l_cof2)         / 00066001 /
+  data spec_tags(l_extinction)   / 00028965 /
   data spec_tags(l_h2c_13_o)     / 00031002 /
   data spec_tags(l_h2co)         / 00030004 /
   data spec_tags(l_h2co_18)      / 00032004 /
@@ -211,6 +213,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_co) =           add_ident ( 'co' )
     lit_indices(l_co_18) =        add_ident ( 'co_18' )
     lit_indices(l_cof2) =         add_ident ( 'cof2' )
+    lit_indices(l_extinction) =   add_ident ( 'extinction' )
     lit_indices(l_h2c_13_o) =     add_ident ( 'h2c_13_o' )
     lit_indices(l_h2co) =         add_ident ( 'h2co' )
     lit_indices(l_h2co_18) =      add_ident ( 'h2co_18' )
@@ -277,6 +280,9 @@ contains ! =====     Public procedures     =============================
 end module MOLECULES
 
 ! $Log$
+! Revision 2.13  2001/11/08 00:11:44  livesey
+! Added extinction as a molecule
+!
 ! Revision 2.12  2001/11/02 18:54:06  livesey
 ! Added hno3 excited states
 !
