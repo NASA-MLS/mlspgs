@@ -153,6 +153,7 @@ method
 model
 mif
 minValue
+missingValue
 moleculeDerivatives
 moleculeDerivativesPol # want derivatives w.r.t. moleculesPol
 molecules
@@ -291,6 +292,9 @@ vRegWeightVec
 writeCounterMAF
 
 # $Log$
+# Revision 2.82  2003/03/01 00:24:27  pwagner
+# Added missingValue as filed to reading Gridded data
+#
 # Revision 2.81  2003/02/27 17:45:11  bill
 # Added polarized
 #
