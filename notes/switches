@@ -1,3 +1,5 @@
+$Id$
+
 Switches (set by -S option in mlsl2's command line):
 
 ========================= mlsl2 =========================
@@ -47,6 +49,7 @@ Switches (set by -S option in mlsl2's command line):
   rad =>    Radiances in ForwardModelInterface
   reg =>    Dump regularization matrix
   sca =>    Scalars of interest to the Newton method
+  seez =>   Turn on some of Zvi's debugging output in FullForwardModel
   slv =>    Show output of slaves using pvmfcatchout
   snoop =>  Show work done by fortran end of snooper
   spa =>    Sparsity structure of fac, jac, neq
@@ -83,6 +86,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.28  2002/09/14 02:48:47  vsnyder
+ Added NDB
+
  Revision 1.27  2002/09/06 00:46:47  livesey
  Added ATb
 
