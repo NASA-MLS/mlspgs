@@ -101,18 +101,23 @@ contains
     if ( present(advance) ) &
       & my_adv = advance(1:1) /= 'n' .and. advance(1:1) /= 'N'
 
-    ! The moduleNameIn is <dollar>RCSFile: <filename>,v <dollar>
-
     if ( (.not. MLSMessageConfig%suppressDebugs).OR. &
          & (severity /= MLSMSG_Debug) ) then
        
        ! Assemble a full message line
 
        if ( line_len == 0 ) then
-         line=TRIM(SeverityNames(severity))// &
-              & " ("//moduleNameIn(11:(LEN_TRIM(moduleNameIn)-8)) &
-              &  //"): "
-         line_len = len_trim(line) + 1 ! to keep the last blank
+         line_len = len_trim(SeverityNames(severity))
+         line = SeverityNames(severity)
+         line(line_len+1:line_len+2) = ' ('
+         if ( moduleNameIn(1:1) == '$' ) then
+         ! The moduleNameIn is <dollar>RCSFile: <filename>,v <dollar>
+           line(line_len+3:) = moduleNameIn(11:(LEN_TRIM(moduleNameIn)-8))
+         else
+           line(line_len+3:) = moduleNameIn
+         end if
+         line_len = len_trim(line) + 3
+         line(line_len-2:line_len-1) = '):'
        end if
        line(line_len+1:) = message
        line_len = line_len + len(message) ! Not len-trim, so we can get
@@ -188,6 +193,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.4  2001/02/23 00:14:54  vsnyder
+! Maybe the coordination of output_m and MLSMessageModule is OK now...
+!
 ! Revision 2.3  2001/02/22 23:27:16  vsnyder
 ! Correct routing of output through MLSMessage
 !
