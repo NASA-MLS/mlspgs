@@ -1,0 +1,16 @@
+; This l2cf fragment is for defining the fGrids for baseline
+fGridBaselineR1A: fGrid, coordinate=IntermediateFrequency, $
+  values= [ 0.0 ]
+fGridBaselineR1B: fGrid, coordinate=IntermediateFrequency, $
+  values= [ 0.0 GHz]
+fGridBaselineR2:  fGrid, coordinate=IntermediateFrequency, $
+  values= [ 7 GHz, 11.5 GHz, 11.6 GHz, 13.3 GHz, 13.4 GHz, 16 GHz ]
+fGridBaselineR3:  fGrid, coordinate=IntermediateFrequency, $
+  values= [ 0.0 GHz ]
+fGridBaselineR4:  fGrid, coordinate=IntermediateFrequency, $
+  values= [ 0.0 GHz ]
+fGridBaselineR5H: fGrid, coordinate=IntermediateFrequency, $
+  values= [ 0.0 GHz ]
+fGridBaselineR5V: fGrid, coordinate=IntermediateFrequency, $
+  values= [ 0.0 GHz ]
+
