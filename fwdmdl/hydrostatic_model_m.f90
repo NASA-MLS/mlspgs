@@ -212,9 +212,11 @@ Real(r8) :: v, denom, sum
 
 Real(r8), SAVE :: gr2, c, prevlat = -500.0
 
-Real(r8) :: pm(50) = 0.0
+Real(r8), dimension(nt) :: pm
 
 ! Begin the code here
+
+  pm=0.0
 
   IF(geoc_lat /= prevlat) THEN
     prevlat = geoc_lat
@@ -373,6 +375,9 @@ END SUBROUTINE pq_ana
 
 end module HYDROSTATIC_MODEL_M
 ! $Log$
+! Revision 1.16  2001/04/23 21:43:28  zvi
+! Introducing no_phi_t etc.
+!
 ! Revision 1.15  2001/04/09 20:52:07  zvi
 ! Debugging Derivatives version
 !
