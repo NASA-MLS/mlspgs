@@ -64,7 +64,7 @@ module Fill                     ! Create vectors and fill them.
   use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
   use OUTPUT_M, only: BLANKS, OUTPUT
   use QuantityTemplates, only: QuantityTemplate_T
-  use ScanModelModule, only: GetBasisGPH, GetHydrostaticTangentPressure, OMEGA
+  use ScanModelModule, only: GetBasisGPH, GetHydrostaticTangentPressure
   use SnoopMLSL2, only: SNOOP
   use String_Table, only: Display_String
   use Time_M, only: Time_Now
@@ -73,7 +73,7 @@ module Fill                     ! Create vectors and fill them.
   use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, &
     & SOURCE_REF, SUB_ROSA, SUBTREE
   use TREE_TYPES, only: N_NAMED, N_SET_ONE
-  use UNITS
+  use UNITS, only: Omega, PI
   use VectorsModule, only: AddVectorToDatabase, &
     & ClearUnderMask, CopyVector, CreateMask, CreateVector, &
     & DestroyVectorInfo, Dump, &
@@ -2852,6 +2852,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.100  2001/12/06 23:45:07  livesey
+! Dealt with move of Omega to Units
+!
 ! Revision 2.99  2001/11/09 23:17:22  vsnyder
 ! Use Time_Now instead of CPU_TIME
 !
