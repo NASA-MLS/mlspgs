@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module MLSAuxData
@@ -16,7 +16,7 @@ module MLSAuxData
        h5acreate_f, h5awrite_f, h5aread_f, h5aclose_f, h5tcopy_f, &
        h5tset_size_f, h5aopen_name_f, h5aget_type_f, h5aget_space_f, &
        h5tequal_f, h5fis_hdf5_f, h5eset_auto_f, h5gcreate_f, h5gclose_f, &
-       h5gopen_f
+       h5gopen_f, h5pset_fill_value_f
   use MLSCommon, only: r4, r8
   use MLSStrings, only: Lowercase
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_Error, MLSMSG_deallocate, &
@@ -475,10 +475,12 @@ contains ! ============================ MODULE PROCEDURES ====================
 
  end subroutine Build_MLSAuxData_Integer
 !------------------------------------------------------------------------------
- subroutine Build_MLSAuxData_Real( file_id, dataset, real_data, lastIndex)
+ subroutine Build_MLSAuxData_Real (file_id, dataset, real_data, lastIndex, &
+      fill_value)
     type( DataProducts_T ), intent(inout) :: dataset
     real, intent(in) :: real_data
     integer, intent(in), optional :: lastIndex
+    real, intent(in), optional :: fill_value
     integer(hid_t), intent(in) :: file_id
 
     type( MLSAuxData_T ) :: MLSData
@@ -500,14 +502,14 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     if ( present(lastIndex) ) then
        if (lastIndex .eq. 1) then 
-          call Write_MLSAuxData(file_id, MLSData, error, &
-               write_attributes=.true., index=lastIndex)
+          call Write_MLSAuxData (file_id, MLSData, error, &
+               write_attributes=.true., index=lastIndex, fill_value=fill_value)
        else
-          call Write_MLSAuxData(file_id, MLSData, error, &
-               write_attributes=.false., index=lastIndex)
+          call Write_MLSAuxData (file_id, MLSData, error, &
+               write_attributes=.false., index=lastIndex, fill_value=fill_value)
        endif
     else
-       call Write_MLSAuxData(file_id, MLSData, error)
+       call Write_MLSAuxData (file_id, MLSData, error, fill_value=fill_value)
     endif
 
     if (error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
@@ -558,11 +560,12 @@ contains ! ============================ MODULE PROCEDURES ====================
  end subroutine Build_MLSAuxData_Double
 !------------------------------------------------------------------------------
  subroutine Build_MLSAuxData_Real_1d( file_id, dataset, real_data, lastIndex, &
-      dims)
+      dims, fill_value)
     type( DataProducts_T ), intent(in) :: dataset
     real, dimension(:), intent(in) :: real_data
     integer, dimension(3), intent(in), optional :: dims
     integer, intent(in), optional :: lastIndex
+    real, intent(in), optional :: fill_value
     integer(hid_t), intent(in) :: file_id
 
     type( MLSAuxData_T ) :: MLSData
@@ -602,14 +605,14 @@ contains ! ============================ MODULE PROCEDURES ====================
     if ( present(lastIndex)) then
        if (lastIndex .eq. 1) then 
           call Write_MLSAuxData(file_id, MLSData, error, index=lastIndex, &
-               write_attributes=.true.)
+               write_attributes=.true., fill_value=fill_value)
        else
           call Write_MLSAuxData(file_id, MLSData, error, index=lastIndex, &
-               write_attributes=.false.)
+               write_attributes=.false., fill_value=fill_value)
        endif
     else
        call Write_MLSAuxData(file_id, MLSData, error,&           
-            write_attributes=.true.) 
+            write_attributes=.true., fill_value=fill_value) 
     endif
 
     if (error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
@@ -738,11 +741,12 @@ contains ! ============================ MODULE PROCEDURES ====================
  end subroutine Build_MLSAuxData_Integer_1d
 !------------------------------------------------------------------------------
  subroutine Build_MLSAuxData_Real_2d( file_id, dataset, real_data, lastIndex, &
-      dims)
+      dims, fill_value)
     type( DataProducts_T ), intent(in) :: dataset
     real, dimension(:,:), intent(in) :: real_data
     integer, dimension(3), intent(in), optional :: dims
     integer, intent(in), optional :: lastIndex
+    real, intent(in), optional :: fill_value
     integer(hid_t), intent(in) :: file_id
 
     type( MLSAuxData_T ) :: MLSData
@@ -784,14 +788,14 @@ contains ! ============================ MODULE PROCEDURES ====================
     if (present (lastIndex) ) then 
        if (lastIndex .eq. 1) then 
           call Write_MLSAuxData(file_id, MLSData, error, index=lastIndex, &
-               write_attributes=.true.)
+               write_attributes=.true., fill_value=fill_value)
        else
           call Write_MLSAuxData(file_id, MLSData, error, index=lastIndex, &
-               write_attributes=.false.)
+               write_attributes=.false., fill_value=fill_value)
        endif
     else
        call Write_MLSAuxData(file_id, MLSData, error, &
-            write_attributes=.true.)
+            write_attributes=.true., fill_value=fill_value)
     endif
 
     if (error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
@@ -925,10 +929,11 @@ contains ! ============================ MODULE PROCEDURES ====================
  end subroutine Build_MLSAuxData_Integer_2d
 !------------------------------------------------------------------------------
  subroutine Build_MLSAuxData_Real_3d( file_id, dataset, real_data, &
-      dims)
+      dims, fill_value)
     type( DataProducts_T ), intent(in) :: dataset
     real, dimension(:,:,:), intent(in) :: real_data
     integer, dimension(3), intent(in), optional :: dims
+    real, intent(in), optional :: fill_value
     integer(hid_t), intent(in) :: file_id
 
     type( MLSAuxData_T ) :: MLSData
@@ -965,7 +970,8 @@ contains ! ============================ MODULE PROCEDURES ====================
     allocate(MLSData%Dimensions(3), stat=status)
     call CopyFromDataProducts (dataset, MLSData)
 
-    call Write_MLSAuxData(file_id, MLSData, error,write_attributes=.true.)
+    call Write_MLSAuxData(file_id, MLSData, error,write_attributes=.true., &
+         fill_value=fill_value)
 
     if (error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
          'Error Writing MLSAuxData for '// trim(dataset%name) ) 
@@ -2663,8 +2669,8 @@ contains ! ============================ MODULE PROCEDURES ====================
 
   end subroutine Read_MLSAuxData
 ! -------------------------------------------------  Write_MLSAuxData ----
-  subroutine Write_MLSAuxData(file_id, MLSAuxData, error, &
-       & write_attributes, string_length, index)
+  subroutine Write_MLSAuxData (file_id, MLSAuxData, error, &
+       & write_attributes, string_length, index, fill_value)
 !
 ! This routine assumes that the MLSAuxData dataset is created.
 ! This subroutine writes an entry to the HDF5 file.
@@ -2675,6 +2681,7 @@ contains ! ============================ MODULE PROCEDURES ====================
     integer, intent(in), optional  :: index ! number of major frames
     logical, intent(in), optional  :: write_attributes ! write freqCoords, etc 
     integer, intent(in), optional  :: string_length ! length of string  
+    real, intent(in), optional     :: fill_value    ! value to use for filling
 !-------------------------------------------------------------------------
 ! Internal variables.
 !
@@ -2816,11 +2823,17 @@ contains ! ============================ MODULE PROCEDURES ====================
 
        call h5pcreate_f (H5P_DATASET_CREATE_F,cparms,h5error)
        if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, &
-            H5_ERROR_PROPERTY_CREATE // trim(MLSAuxData%name) )
+            H5_ERROR_PROPERTY_CREATE // trim(MLSAuxData%name))
 
        call h5pset_chunk_f (cparms,rank,chunk_dims(1:rank),h5error)
        if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, &
             H5_ERROR_PROPERTY_CHUNK_SET // trim(MLSAuxData%name) )
+
+       IF (PRESENT (fill_value)) THEN
+          CALL H5pSet_Fill_Value_f (cparms, type_id, fill_value, h5error)
+          IF (h5error /= 0) CALL MLSMessage (MLSMSG_Error, &
+               ModuleName, "Fill value " // TRIM (MLSAuxData%name))
+       ENDIF
 
        if (trim(MLSAuxData%type_name).ne.'character') then
 
@@ -3069,6 +3082,9 @@ contains ! ============================ MODULE PROCEDURES ====================
 end module MLSAuxData
 
 ! $Log$
+! Revision 2.22  2003/09/03 19:46:30  perun
+! Add fill value for Reals
+!
 ! Revision 2.21  2003/01/02 23:14:50  pwagner
 ! Repaired misplaced ampersand on line 1812
 !
