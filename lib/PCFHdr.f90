@@ -19,6 +19,7 @@ MODULE PCFHdr
   character(len=len(idparm)), private :: Id = idParm
   character(len=*), private, parameter :: ModuleName = &
        & "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
 
 ! Contents:
@@ -193,10 +194,17 @@ CONTAINS
 !-----------------------------
 
 !================
-END MODULE PCFHdr
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
+end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.8  2002/10/08 00:09:13  pwagner
+!# Added idents to survive zealous Lahey optimizer
+!#
 !# Revision 2.7  2002/10/01 22:03:54  pwagner
 !# Fixed RCS Ident Block
 !#
