@@ -31,7 +31,7 @@ program MLSL2
   use MLSStringLists, only: catLists, GetUniqueList, &
     & RemoveElemFromList, unquote
   use OBTAIN_MLSCF, only: Close_MLSCF, Open_MLSCF
-  use OUTPUT_M, only: BLANKS, OUTPUT, PRUNIT
+  use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUT_DATE_AND_TIME, PRUNIT
   use PARSER, only: CONFIGURATION
   use PVM, only: ClearPVMArgs, FreePVMArgs
   use SDPToolkit, only: UseSDPToolkit, PGSD_IO_GEN_RSEQFRM
@@ -208,7 +208,7 @@ program MLSL2
       end if
       if ( lowercase(line(3+n:5+n)) == 'cat' ) then
         catenateSplits = switch
-      else if ( line(3+n:7+n) == 'check ' ) then
+      else if ( line(3+n:8+n) == 'check ' ) then
         checkl2cf = switch
       ! Using lowercase so either --checkPaths or --checkpaths work
       ! Perhaps we should do this for all multiletter options
@@ -540,8 +540,10 @@ program MLSL2
 
   if ( .not. toolkit .or. showDefaults ) then
      prunit = max(-1, prunit)   ! stdout or Fortran unit
-  elseif (parallel%slave .or. parallel%master) then
+  elseif (parallel%master) then
      prunit = -2          ! output both logged and sent to stdout
+  elseif (parallel%slave) then
+     prunit = -1          ! output sent only to stdout, not logged
   end if
 
   if( index(switches, 'log') /= 0 .or. .not. toolkit ) then
@@ -646,7 +648,7 @@ program MLSL2
     call dump_settings
   end if
   if ( showDefaults ) stop
-
+  call output_date_and_time(msg='starting mlsl2')
   !---------------- Task (5) ------------------
   if (error == 0) then
     ! Parse the L2CF, producing an abstract syntax tree
@@ -735,6 +737,7 @@ program MLSL2
         & "Unable to mls_close" )
      endif    
   endif    
+  call output_date_and_time(msg='ending mlsl2')
   if(error /= 0) then
      call MLSMessageExit(1)
   elseif(NORMAL_EXIT_STATUS /= 0 .and. .not. parallel%slave) then
@@ -938,6 +941,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.126  2004/10/11 16:57:03  pwagner
+! Bug fix for options; slaves output not logged; prints proc start, end date_and_time
+!
 ! Revision 2.125  2004/08/19 00:20:21  pwagner
 ! New crash-related, defaults options
 !
