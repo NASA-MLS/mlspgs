@@ -6,7 +6,7 @@ program MLSL2
   use INIT_TABLES_MODULE, only: INIT_TABLES, LIT_INDICES
   use LEXER_CORE, only: INIT_LEXER
   use MACHINE ! At least HP for command lines, and maybe GETARG, too
-  use OUTPUT_M, only: OUTPUT
+  use OUTPUT_M, only: OUTPUT, PRUNIT
 ! use Open_Init, only: CloseMLSCF, OpenMLSCF
   use PARSER, only: CONFIGURATION
   use STRING_TABLE, only: DO_LISTING
@@ -47,9 +47,16 @@ program MLSL2
       j = 1
       do while ( j < len(line) )
         j = j + 1
-        if ( line(j:j) == 'c' ) then
+        select case ( line(j:j) )
+        case ( 'A' )
+          dump_tree = .true.
+        case ( 'a' )
+          toggle(syn) = .true.
+        case ( 'c' )
           toggle(con) = .true.
-        else if ( line(j:j) == 'g' ) then
+        case ( 'd' )
+          do_dump = .true.
+        case ( 'g' )
           toggle(gen) = .true.
           if ( j < len(line) ) then
             if ( line(j+1:j+1) >= '0' .and. line(j+1:j+1) <= '9' ) then
@@ -57,21 +64,38 @@ program MLSL2
               levels(gen) = ichar(line(j:j)) - ichar('0')
             end if
           end if
-        else if ( line(j:j) == 'l' ) then
+        case ( 'h', 'H', '?' )
+          call getarg ( 0+hp, line )
+          print *, 'Usage: ', trim(line), ' [options]'
+          print *, ' Options:'
+          print *, '  -A: Dump the un-decorated abstract syntax tree'
+          print *, '  -a: Dump the decorated type-checked abstract syntax tree'
+          print *, '  -c: Trace expression evaluation and tree decoration'
+          print *, '  -d: Dump the declaration table after type checking'
+          print *, '  -g[digit]: Trace "generation".  Bigger digit means ', &
+          &                      'more output'
+          print *, '  -l: Trace lexical analysis'
+          print *, '  -M: Send output through MLSMessage'
+          print *, '  -p: Trace parsing'
+          print *, '  -t: Trace declaration table construction'
+          print *, '  -v: List the configuration file'
+          print *, '  Options a, c, g1, l, p and t can be toggled in the ', &
+          &          'configuration file by'
+          print *, '  @A, @C, @G, @L, @P and @S respectively.  @T in the ', &
+          &          'configuration file'
+          print *, '  dumps the string table at that instant.'
+          stop
+        case ( 'l' )
           toggle(lex) = .true.
-        else if ( line(j:j) == 'p' ) then
+        case ( 'M' )
+          prunit = -2
+        case ( 'p' )
           toggle(par) = .true.
-        else if ( line(j:j) == 'a' ) then
-          toggle(syn) = .true.
-        else if ( line(j:j) == 'A' ) then
-          dump_tree = .true.
-        else if ( line(j:j) == 'd' ) then
-          do_dump = .true.
-        else if ( line(j:j) == 't' ) then
+        case ( 't' )
           toggle(tab) = .true.
-        else if ( line(j:j) == 'v' ) then
+        case ( 'v' )
           do_listing = .true.
-        end if
+        end select
       end do
     else    
   exit
@@ -100,8 +124,6 @@ program MLSL2
       call output ( 'End abstract syntax tree', advance='yes' )
     end if
     if ( error == 0 .and. first_section /= 0 ) then
-      if ( do_dump ) call dump_decl
-
       ! Now do the L2 processing.
       call walk_tree_to_do_MLS_L2 ( root, error, first_section )
     end if
@@ -109,6 +131,9 @@ program MLSL2
 end program MLSL2
 
 ! $Log$
+! Revision 2.4  2001/02/22 23:05:12  vsnyder
+! Display usage if -h, -H or -? option is present.
+!
 ! Revision 2.3  2000/10/12 00:33:47  vsnyder
 ! Insert CVS variables and copyright notice
 !
