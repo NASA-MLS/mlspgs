@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 program Convert_Spectroscopy
 
 ! Convert the spectroscopy database from the "old" format to a format
@@ -5,6 +8,7 @@ program Convert_Spectroscopy
 
   use Output_M, only: Blanks, Output, PrUnit
 
+  integer, parameter :: R4 = kind(0.0e0)
   integer, parameter :: R8 = kind(0.0d0)
 
   character(len=127) :: File       ! File names (from stdin)
@@ -18,22 +22,23 @@ program Convert_Spectroscopy
   integer :: Spectag
 
   ! Line parameters:
-  Real(r8) :: DELTA
-  Real(r8) :: EL
-  Real(r8) :: GAMMA
-  Real(r8) :: N
-  Real(r8) :: N1
-  Real(r8) :: N2
-  Real(r8) :: PS
-  Real(r8) :: STR
+  Real(r4) :: DELTA
+  Real(r4) :: EL
+  Real(r4) :: GAMMA
+  Real(r4) :: N
+  Real(r4) :: N1
+  Real(r4) :: N2
+  Real(r4) :: PS
+  Real(r4) :: STR
   Real(r8) :: V0
-  Real(r8) :: W
+  Real(r4) :: W
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
-    "$Id$"
-  character(len=len(idparm)) :: Id = idParm
-  character (len=*), parameter :: ModuleName= "$RCSfile$"
+       "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile$"
 !---------------------------------------------------------------------------
 
   print *, 'Enter "old" format database filename: '
@@ -47,20 +52,20 @@ program Convert_Spectroscopy
   open ( prunit, file=File, action='write' )
 
   call output ( &
-    & '; This file was automatically produced from the JPL catalogue',&
+    & '; This file was automatically produced from the JPL catalogue;',&
     & advance='yes' )
   call output ( &
-    & '; therefore, it is not really appropriate to edit it by hand.',&
+    & '; therefore it is not really appropriate to edit it by hand.',&
     & advance='yes' )
   call output ('BEGIN Spectroscopy')
 
   do i = 1, 4 
-    read ( lun, '(a)' ) line              ! Header line
+    read ( lun, '(a)' ) line              ! Header lines
   end do
 
   do
     read ( lun, '(a)' ) line
-    print*,'Got: ',line
+    print*,'Got: ',trim(line)
     line = adjustl(line)
     if ( line(:7) == 'END_CAT' ) exit
     if ( line(1:1) == '#' ) cycle
@@ -141,6 +146,9 @@ program Convert_Spectroscopy
 end program Convert_Spectroscopy
 
 ! $Log$
+! Revision 1.4  2001/05/21 23:35:07  livesey
+! Interim version.
+!
 ! Revision 1.3  2001/04/06 20:38:24  vsnyder
 ! Fold lines earlier
 !
