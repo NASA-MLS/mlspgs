@@ -399,7 +399,7 @@ contains
 ! GRADNL   Last value of GRADN
 
 ! IFL      Internal flag (NFLAG is usually set same as IFL)
-!          See negative values of NF_... parameters above.
+!          See NF_... parameters above that have negative values.
 ! INC      Flag set to indicate some past history
 !          =-1  Starting
 !          =0   Last X == best X
@@ -490,7 +490,7 @@ contains
         &        750,      770,  770), -ifl
 
 ! Initialization
-   10 if (ifl /= nf_start) go to 222 ! retreat to best X
+   10 if (ifl /= nf_start) go to 222 ! User forcing retreat to best X
       ajn = c0
       condai = c0
       dxnl = c1
@@ -518,10 +518,10 @@ contains
 
       ifl = nf_evalj
       tp = spl*ajn*cp9
-      if (fn < fnl) then
-        if (fn >= fnb) then
+      if ( fn < fnl ) then
+        if ( fn >= fnb ) then
           if ( (max(tp,sql) <= sqmin) .and. &
-               ((fn*(fn/fnl)**2) > fnb) .and. (cdxdxl >= cp25)) go to 222
+               ((fn*(fn/fnl)**2) > fnb) .and. (cdxdxl >= cp25) ) go to 222
         end if
         go to 219
       end if
@@ -807,6 +807,7 @@ contains
 
   770 dxnl = dxn
       aj%dxnl = dxnl
+      if ( sqrt(fnmin**2 - (sq*dxn)**2) > fnb ) go to 222
       ! Come here after returning from a gradient move
   775 fnl = fn
       frzl = frz
@@ -1208,6 +1209,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.26  2002/09/10 23:52:56  vsnyder
+! Improved test for retreating to best X
+!
 ! Revision 2.25  2002/07/26 22:46:40  vsnyder
 ! More better output in DNWTDB
 !
