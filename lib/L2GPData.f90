@@ -641,12 +641,12 @@ contains ! =====     Public Procedures     =============================
 
     select case (HMOT)
     case ('H')
-      swid = swattach(L2FileHandle, 'HIRDLS')
+      swid = mls_swattach(L2FileHandle, 'HIRDLS', hdfVersion=HDFVERSION_4)
       DF_Name = TRIM(l2gp%Name)
       DF_Precision = TRIM(l2gp%Name) // 'Precision'
       l2gp%MissingValue = -999.
     case ('M')
-      swid = swattach(L2FileHandle, TRIM(l2gp%Name))
+      swid = mls_swattach(L2FileHandle, TRIM(l2gp%Name), hdfVersion=HDFVERSION_4)
       DF_Name = DATA_FIELD1
       DF_Precision = DATA_FIELD2
     case default
@@ -943,14 +943,15 @@ contains ! =====     Public Procedures     =============================
     !print*," in readl2gpdata_hdf5: first/last=",firstprof,lastprof
     l2gp%Name = swathname
     
+    print *, 'Trying to read he5_swattach to read'
     select case (HMOT)
     case ('H')
-      swid = HE5_SWattach(L2FileHandle, 'HIRDLS')
+      swid = mls_SWattach(L2FileHandle, 'HIRDLS', hdfVersion=HDFVERSION_5)
       DF_Name = TRIM(l2gp%Name)
       DF_Precision = TRIM(l2gp%Name) // 'Precision'
       l2gp%MissingValue = -999.
     case ('M')
-      swid = HE5_SWattach(L2FileHandle, l2gp%Name)
+      swid = mls_SWattach(L2FileHandle, l2gp%Name, hdfVersion=HDFVERSION_5)
       DF_Name = DATA_FIELD1
       DF_Precision = DATA_FIELD2
     case default
@@ -1199,7 +1200,8 @@ contains ! =====     Public Procedures     =============================
   !-----------------------------
 
   ! --------------------------------------  OutputL2GP_createFile_hdf4  -----
-  subroutine OutputL2GP_createFile_hdf4 (l2gp, L2FileHandle, swathName)
+  subroutine OutputL2GP_createFile_hdf4 (l2gp, L2FileHandle, &
+    & swathName, filename)
   use MLSHDFEOS, only: mls_swcreate, mls_dfldsetup, mls_gfldsetup, mls_swdefdim
 
     ! Brief description of subroutine
@@ -1210,6 +1212,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: L2FileHandle ! From swopen
     type( l2GPData_T ), intent(inout) :: l2gp
     character (len=*), optional, intent(in) :: swathName ! Defaults to l2gp%swathName
+    character (len=*), optional, intent(in) :: fileName
 
     ! Parameters
 
@@ -1239,7 +1242,10 @@ contains ! =====     Public Procedures     =============================
     endif
     ! Create the swath within the file
 
-    swid = mls_swcreate(L2FileHandle, TRIM(name), hdfVersion=HDFVERSION_4)
+    print *, 'About to sw_create ', TRIM(name)
+    if ( present(filename)) print *, 'file name ', TRIM(filename)
+    swid = mls_swcreate(L2FileHandle, TRIM(name), &
+      & filename=filename, hdfVersion=HDFVERSION_4)
     if ( swid == -1 ) then
        msr = 'Failed to create swath ' // TRIM(name) &
         & // ' (maybe has the same name as another swath in this file?)'
@@ -1409,13 +1415,20 @@ contains ! =====     Public Procedures     =============================
        name=l2gp%name
     end if
 
-    swid = swattach (l2FileHandle, name)
+    print *, 'Trying to swattach to write'
+    swid = mls_swattach (l2FileHandle, name, hdfVersion=HDFVERSION_4)
 
     ! Write data to the fields
 
     stride(1) = 1
     start(1) = myOffset
     edge(1) = l2gp%nTimes
+
+    print *, 'Writing geolocation fields'
+    print *, 'start', start
+    print *, 'stride', stride
+    print *, 'edge', edge
+    print *, 'shape(Latitude)', shape(l2gp%latitude)
 
     status = mls_swwrfld(swid, 'Latitude', start, stride, edge, &
          real(l2gp%latitude), hdfVersion=HDFVERSION_4)
@@ -1520,7 +1533,8 @@ contains ! =====     Public Procedures     =============================
     edge(1) = l2gp%nFreqs
     edge(2) = l2gp%nLevels
     edge(3) = l2gp%nTimes
-    swid = swattach (l2FileHandle, name)
+    print *, 'Trying to swattach to write data'
+    swid = mls_swattach (l2FileHandle, name, hdfVersion=HDFVERSION_4)
     if(DEEBUG) print *, 'swath name: ', trim(name)
     if(DEEBUG) print *, 'swath id: ', swid
     if(DEEBUG) print *, 'shape(L2gpValue): ', shape(l2gp%l2gpValue)
@@ -1584,7 +1598,8 @@ contains ! =====     Public Procedures     =============================
   !-------------------------------------
 
   ! --------------------------------------  OutputL2GP_createFile_hdf5  -----
-  subroutine OutputL2GP_createFile_hdf5 (l2gp, L2FileHandle, swathName,nLevels)
+  subroutine OutputL2GP_createFile_hdf5 (l2gp, L2FileHandle, &
+    & swathName, fileName, nLevels)
 
   use HDFEOS5, only: HE5_SWdetach, &
     & HE5S_UNLIMITED_F, &
@@ -1599,6 +1614,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: L2FileHandle ! From swopen
     type( L2GPData_T ), intent(inout) :: l2gp
     character (LEN=*), optional, intent(IN) :: swathName ! Defaults to l2gp%swathName
+    character (LEN=*), optional, intent(IN) :: fileName
     integer,optional::nLevels
     ! Parameters
 
@@ -1636,7 +1652,11 @@ contains ! =====     Public Procedures     =============================
     
     ! Create the swath within the file
     ! print*,"Creating swath called ",name
-    swid = mls_SWcreate(L2FileHandle, trim(name), hdfVersion=HDFVERSION_5)
+
+    print *, 'About to sw_create ', TRIM(name)
+    if ( present(filename) ) print *, 'file name ', TRIM(filename)
+    swid = mls_SWcreate(L2FileHandle, trim(name), &
+      & filename=filename, hdfVersion=HDFVERSION_5)
     !print*,"Swath ",name,"has SW id :",swid
     if ( swid == -1 ) then
        msr = 'Failed to create swath ' // TRIM(name) &
@@ -1868,13 +1888,20 @@ contains ! =====     Public Procedures     =============================
        name=l2gp%name
     endif
 
-    swid = HE5_SWattach (l2FileHandle, name)
+    print *, 'Trying to he5_swattach to write geo'
+    swid = mls_SWattach (l2FileHandle, name, hdfVersion=HDFVERSION_5)
 
     ! Write data to the fields
 
     stride = 1
     start = myOffset ! Please do not set to zero
     edge(1) = l2gp%nTimes
+    print *, 'Writing geolocation fields'
+    print *, 'start', start
+    print *, 'stride', stride
+    print *, 'edge', edge
+    print *, 'shape(Latitude)', shape(l2gp%latitude)
+
     status = mls_SWwrfld(swid, 'Latitude', start, stride, edge, &
          real(l2gp%latitude), hdfVersion=HDFVERSION_5)
 
@@ -1979,7 +2006,8 @@ contains ! =====     Public Procedures     =============================
     edge(1) = l2gp%nFreqs
     edge(2) = l2gp%nLevels
     edge(3) = l2gp%nTimes
-    swid = HE5_SWattach (l2FileHandle, name)
+    print *, 'Trying to he5_swattach to write data'
+    swid = mls_SWattach (l2FileHandle, name, hdfVersion=HDFVERSION_5)
     if ( l2gp%nFreqs > 0 ) then
        ! Value and Precision are 3-D fields
        status = mls_SWwrfld(swid, 'L2gpValue', start, stride, edge, &
@@ -2123,7 +2151,8 @@ contains ! =====     Public Procedures     =============================
     ! if(DEEBUG) print *, 'Writing global attributes'
     call he5_writeglobalattr(l2FileHandle)
 
-    swid = HE5_SWattach (l2FileHandle, name)
+    print *, 'Trying to he5_swattach to write attributes'
+    swid = mls_SWattach (l2FileHandle, name, hdfVersion=HDFVERSION_5)
     
     !   - -   S w a t h   A t t r i b u t e s   - -
     ! if(DEEBUG) print *, 'Writing swath attributes'
@@ -2283,7 +2312,8 @@ contains ! =====     Public Procedures     =============================
     else
        name=l2gp%name
     endif
-    sw_id = he5_swattach(l2FileHandle, trim(name))
+    print *, 'Trying to he5_swattach to set alias'
+    sw_id = mls_swattach(l2FileHandle, trim(name), hdfVersion=HDFVERSION_5)
     if ( sw_id < 1 ) then 
       call MLSMessage ( MLSMSG_Error, ModuleName, & 
         & "Error in attaching swath for setting alias." )
@@ -2313,13 +2343,14 @@ contains ! =====     Public Procedures     =============================
 
   ! This subroutine is an amalgamation of the last three
   ! Should be renamed CreateAndWriteL2GPData
-  subroutine WriteL2GPData(l2gp, l2FileHandle, swathName, hdfVersion)
+  subroutine WriteL2GPData(l2gp, l2FileHandle, swathName, filename, hdfVersion)
 
     ! Arguments
 
     integer, intent(IN) :: l2FileHandle ! From swopen
     type (L2GPData_T), intent(INOUT) :: l2gp
     character (LEN=*), optional, intent(IN) ::swathName!default->l2gp%swathName
+    character (LEN=*), optional, intent(IN) ::fileName
     integer, optional, intent(in) :: hdfVersion
     ! Exectuable code
 
@@ -2334,7 +2365,7 @@ contains ! =====     Public Procedures     =============================
     endif
 
     if (myhdfVersion == HDFVERSION_4) then
-      call OutputL2GP_createFile_hdf4 (l2gp, l2FileHandle, swathName)
+      call OutputL2GP_createFile_hdf4 (l2gp, l2FileHandle, swathName, filename)
       call OutputL2GP_writeGeo_hdf4 (l2gp, l2FileHandle, swathName)
       call OutputL2GP_writeData_hdf4 (l2gp, l2FileHandle, swathName)
     elseif (myhdfVersion /= HDFVERSION_5) then
@@ -2342,7 +2373,7 @@ contains ! =====     Public Procedures     =============================
       & "Unrecognized hdfVersion passed to WriteL2GPData" )
     else
       ! if(DEEBUG) print *, 'Creating hdfeos5 file'
-      call OutputL2GP_createFile_hdf5 (l2gp, l2FileHandle, swathName)
+      call OutputL2GP_createFile_hdf5 (l2gp, l2FileHandle, swathName, filename)
       ! if(DEEBUG) print *, 'Writing geolocation data'
       call OutputL2GP_writeGeo_hdf5 (l2gp, l2FileHandle, swathName)
       ! if(DEEBUG) print *, 'Writing values, precision'
@@ -2356,7 +2387,7 @@ contains ! =====     Public Procedures     =============================
   !-------------------------------------------------------------
 
   subroutine AppendL2GPData_fileID(l2gp, l2FileHandle, &
-    & swathName, offset, TotNumProfs, hdfVersion)
+    & swathName, filename, offset, TotNumProfs, hdfVersion, createSwath)
     ! sticks l2gp into the swath swathName in the file pointed at by
     ! l2FileHandle,starting at the profile number "offset" (First profile
     ! in the file has offset==0). If this runs off the end of the swath, 
@@ -2366,9 +2397,11 @@ contains ! =====     Public Procedures     =============================
     integer, intent(IN) :: l2FileHandle ! From swopen
     type (L2GPData_T), intent(INOUT) :: l2gp
     character (LEN=*), optional, intent(IN) ::swathName!default->l2gp%swathName
+    character (LEN=*), optional, intent(IN) ::fileName
     integer,intent(IN),optional::offset
     integer,intent(IN),optional::TotNumProfs
     integer, optional, intent(in) :: hdfVersion
+    logical, intent(in), optional :: createSwath
     ! Local
     integer :: actual_ntimes
     integer :: myhdfVersion
@@ -2391,13 +2424,24 @@ contains ! =====     Public Procedures     =============================
     endif
     myswathName = l2gp%name
     if ( present(swathName) ) myswathName = swathName
-
-    swathid = mls_swattach(L2FileHandle, trim(myswathName), &
-      & hdfVersion=myhdfVersion, DONTFAIL=.true.)
-    swath_exists = ( swathid > 0 )
+    
+    if ( present(createSwath) ) then
+      swath_exists = .not. createSwath
+      print *, 'createSwath: ', createSwath
+    else
+      print *, 'Uh-oh, calling mls_swattach'
+      swathid = mls_swattach(L2FileHandle, trim(myswathName), &
+        & hdfVersion=myhdfVersion, DONTFAIL=.true.)
+      swath_exists = ( swathid > 0 )
+      if ( swath_exists ) then
+        status = mls_swdetach(swathid, hdfVersion=myhdfVersion)
+        if ( status /= 0 ) &
+          & call MLSMessage ( MLSMSG_Error, ModuleName, & 
+          & 'Failed to detach from swath in AppendL2GPData_fileID')
+      endif
+    endif
     if ( swath_exists ) then
       if(DEEBUG) print *, 'OK, swath already exists'
-      status = mls_swdetach(swathid, hdfVersion=myhdfVersion)
     else
       ! Must create swath in file w/o disturbing other swaths
       if(DEEBUG) print *, 'Must create swath'
@@ -2408,10 +2452,12 @@ contains ! =====     Public Procedures     =============================
       select case (myhdfVersion)
       case (HDFVERSION_4)
         if ( present(TotNumProfs) ) l2gp%nTimes = TotNumProfs
-        call OutputL2GP_createFile_hdf4 (l2gp, L2FileHandle, myswathName)
+        call OutputL2GP_createFile_hdf4 (l2gp, L2FileHandle, myswathName, &
+          & filename)
         l2gp%nTimes = actual_ntimes
       case (HDFVERSION_5)
-        call OutputL2GP_createFile_hdf5 (l2gp, L2FileHandle, myswathName)
+        call OutputL2GP_createFile_hdf5 (l2gp, L2FileHandle, myswathName, &
+          & filename)
       case default
         call MLSMessage ( MLSMSG_Error, ModuleName, &
          & 'Illegal hdf version in AppendL2GPData_fileName')
@@ -2497,8 +2543,8 @@ contains ! =====     Public Procedures     =============================
     if ( status /= 0 ) &
       call MLSMessage ( MLSMSG_Error, ModuleName, &
        & "Unable to open L2gp file: " // trim(FileName) // ' for appending')
-    call AppendL2GPData_fileID(l2gp, L2FileHandle, swathname, offset, &
-      & hdfVersion=the_hdfVersion)
+    call AppendL2GPData_fileID(l2gp, L2FileHandle, swathname, &
+      & FileName, offset, hdfVersion=the_hdfVersion)
     status = mls_io_gen_closeF('swclose', L2FileHandle, FileName=FileName, &
       & hdfVersion=the_hdfVersion)
     if ( status /= 0 ) &
@@ -2676,6 +2722,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.70  2003/07/08 00:43:17  livesey
+! Bug fix in zero length chunk test
+!
 ! Revision 2.69  2003/07/07 21:04:55  pwagner
 ! Tries to deal sensibly with profile-less chunks
 !
