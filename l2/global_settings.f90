@@ -7,6 +7,7 @@ module GLOBAL_SETTINGS
     & LEVEL1_HDFVERSION
   use MLSStrings, only: utc_to_yyyymmdd
   use PCFHdr, only: GlobalAttributes, FillTAI93Attribute
+  use SDPToolkit, only: max_orbits
 
   implicit NONE
 
@@ -64,7 +65,8 @@ contains
       & S_FORWARDMODEL, S_ForwardModelGlobal, S_L1BOA, S_L1BRAD, &
       & S_L2PARSF, S_TIME, S_VGRID
     use L1BData, only: l1bradSetup, l1boaSetup, ReadL1BData, L1BData_T, &
-      & AssembleL1BQtyName, DeallocateL1BData, Dump, NAME_LEN, PRECISIONSUFFIX
+      & AssembleL1BQtyName, DeallocateL1BData, Dump, NAME_LEN, &
+      & PRECISIONSUFFIX, ReadL1BAttribute
     use L2GPData, only: L2GPDATA_T
     use L2ParInfo, only: parallel
     use L2PC_M, only: AddBinSelectorToDatabase, BinSelectors
@@ -127,6 +129,8 @@ contains
     character(LEN=*), parameter :: Time_conversion='(F32.0)'
     integer ::  hdfVersion
     character(len=Name_Len) :: l1bItemName
+    integer :: OrbNum(max_orbits)
+    real(r8) :: OrbPeriod(max_orbits)
 
     timing = section_times
     if ( timing ) call time_now ( t1 )
@@ -264,7 +268,7 @@ contains
           call l1bradSetup ( son, l1bInfo, F_FILE, &
             & MAXNUML1BRADIDS, ILLEGALL1BRADID, hdfVersion=the_hdf_version )
           if(index(switches, 'pro') /= 0) then  
-            sub_rosa_index = sub_rosa(subtree(2,subtree(2, son)))                         
+            sub_rosa_index = sub_rosa(subtree(2,subtree(2, son)))
             call get_string ( sub_rosa_index, FilenameString, strip=.true. )
             call proclaim(FilenameString, 'l1brad', &                   
             & hdfVersion=the_hdf_version) 
@@ -284,6 +288,22 @@ contains
             call proclaim(FilenameString, 'l1boa', &                   
             & hdfVersion=the_hdf_version) 
           end if
+          call ReadL1BAttribute (l1bInfo%l1boaID, OrbNum, 'OrbitNumber', &
+	     & l1bFlag, hdfVersion=hdfVersion)
+	  if (l1bFlag == -1) then
+             GlobalAttributes%OrbNum = -1
+	  else
+             GlobalAttributes%OrbNum = OrbNum
+	  end if
+          call ReadL1BAttribute (l1bInfo%l1boaID, OrbPeriod, 'OrbitPeriod', &
+	     & l1bFlag, hdfVersion=hdfVersion)
+	  if (l1bFlag == -1) then
+             GlobalAttributes%OrbPeriod = -1.0
+	  else
+             GlobalAttributes%OrbPeriod = OrbPeriod
+	  end if
+          call output ('finished readL1BAttribute in global_setting', &
+		& advance='yes')
           if ( TOOLKIT ) &
             & call announce_error(0, &
             & '*** l2cf overrides pcf for L1BOA file ***', &
@@ -337,6 +357,7 @@ contains
         call announce_error(son, &
           & 'L1BOA file required by global data--but not set')
       end if
+
       quantity = 'MAFStartTimeTAI'
       l1bItemName = AssembleL1BQtyName ( quantity, hdfVersion, .false. )
       call ReadL1BData ( l1bInfo%l1boaID, l1bItemName, l1bField, noMAFs, &
@@ -719,6 +740,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.73  2003/09/02 18:03:23  pwagner
+! Now can reset maxfailuresper chunk, machine from global settings
+!
 ! Revision 2.72  2003/07/15 18:18:06  livesey
 ! Change of forward model config call.
 !
