@@ -313,8 +313,7 @@ MODULE SciUtils ! L0 science utilities
 
     INTEGER :: i, pos
 
-    INTEGER, PARAMETER :: pos_no(6) = (/ &
-         z'FE', z'FD', z'FB', z'F7', z'EF', z'DF' /)
+    INTEGER :: pos_no(6) 
 
     INTEGER, PARAMETER :: sw_bands(6,5) = RESHAPE ((/ &
          25, 26,  0,  0,  0,  0, &                 ! switch #1 bands
@@ -323,6 +322,8 @@ MODULE SciUtils ! L0 science utilities
          10, 11, 14, 12, 20, 21, &                 ! switch #4 bands
          15, 16, 17, 18, 19, 20 /), &              ! switch #5 bands
           (/ 6, 5 /))                              ! final shape
+    DATA pos_no / &
+         z'FE', z'FD', z'FB', z'F7', z'EF', z'DF' /
 
     IF (sw_val == 0) THEN     ! no change from previous
        band = 0
@@ -353,6 +354,9 @@ MODULE SciUtils ! L0 science utilities
 END MODULE SciUtils
 
 ! $Log$
+! Revision 2.3  2002/10/03 17:43:53  jdone
+! moved parameter statement to data statement for LF/NAG compatitibility
+!
 ! Revision 2.2  2002/03/29 20:18:34  perun
 ! Version 1.0 commit
 !
