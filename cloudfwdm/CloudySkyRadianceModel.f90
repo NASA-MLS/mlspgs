@@ -9,25 +9,23 @@ module CloudySkyRadianceModel
       use AntennaPatterns_m,       only: AntennaPattern_T
       use ClearSkyModule,          only: CLEAR_SKY
       use CloudySkyModule,         only: CLOUDY_SKY
-!     use DCSPLINE_DER_M,          only: CSPLINE_DER
-      use FOV_CONVOLVE_M,          only: FOV_CONVOLVE_OLD, FOV_CONVOLVE
-!     use HYDROSTATIC_INTRP,       only: GET_PRESSURES
-      use MLSCommon,               only: r8, rp
+      use FOV_CONVOLVE_M,          only: FOV_CONVOLVE ! , FOV_CONVOLVE_OLD
+      use MLSCommon,               only: r8
       use MLSMessageModule,        only: MLSMessage, MLSMSG_Error
       use MLSNumerics,             only: INTERPOLATEVALUES
       use ModelInput,              only: MODEL_ATMOS
       use ModelOutput,             only: SENSITIVITY
-!     use PrtMsg,                  only: HEADER
       use RadiativeTransferModule, only: RADXFER
       use ScatteringAngle,         only: ANGLE
       use SpectroscopyCatalog_m,   only: CATALOG_T
       use Tmp,                     only: GET_TAN_PRESS
-!     use Units,                   only: DEG2RAD
-!     use Geometry,                only: EarthRadA, EarthRadB
 
       IMPLICIT NONE
       private
       public :: CloudForwardModel
+
+      ! For production, the following should be TRUE
+      logical, private, parameter :: ALWAYSSKIPSENSITIVITY = .true.
 
  !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm =                          &
@@ -44,7 +42,7 @@ contains
       SUBROUTINE CloudForwardModel (doChannel, NF, NZ, NT, NS, N,      &
              &   NZmodel,                                              &
              &   FREQUENCY, PRESSURE, HEIGHT, TEMPERATURE, VMRin,      &
-             &   WCin, IPSDin, ZT, ZZT, RE, ISURF, ISWI, ICON, IFOV,   &
+             &   WCin, IPSDin, ZZT, RE, ISURF, ISWI, ICON, IFOV,   &
              &   Bill_data,                                            &
              &   h_obs, elev_offset, AntennaPattern,                   &
              &   TB0, DTcir, Trans, BETA, BETAc, Dm, TAUeff, SS,       &
@@ -101,6 +99,7 @@ contains
 !     RE                  -> Radius of Earth (m).                            C
 !     ISURF               -> Surface Types (Default: 0).                     C
 !     ISWI                -> Switch for Sensitivity Calculation (Default:0). C
+!     ( overridden if ALWAYSSKIPSENSITIVITY )
 !     ICON                -> Cloud Control Switch (Default: 2).              C
 !     -----------------------------------------------                        C
 !                                                                            C
@@ -149,16 +148,15 @@ contains
 !---------------------------------------
 !     INPUT PARAMETERS (INPUTS FROM L2)        ! -- INTERFACE AEA -- ! 
 !---------------------------------------
-      INTEGER :: NF                            ! NUMBER OF FREQUENCIES
-      INTEGER :: NZ                            ! NUMBER OF PRESSURE LEVELS
-      INTEGER :: NT                            ! NUMBER OF TANGENT HEIGHTS
-      INTEGER :: NS                            ! NUMBER OF CHEMICAL SPECIES
-      INTEGER :: N                             ! NUMBER OF CLOUD SPECIES
-      INTEGER :: NZmodel                       ! NUMBER OF INTERNAL MODEL LEVELS
-      INTEGER :: MULTI
-      INTEGER :: noS                           ! NUMBER OF S GRID
+      INTEGER, intent(in) :: NF                ! NUMBER OF FREQUENCIES
+      INTEGER, intent(in) :: NZ                ! NUMBER OF PRESSURE LEVELS
+      INTEGER, intent(in) :: NT                ! NUMBER OF TANGENT HEIGHTS
+      INTEGER, intent(in) :: NS                ! NUMBER OF CHEMICAL SPECIES
+      INTEGER, intent(in) :: N                 ! NUMBER OF CLOUD SPECIES
+      INTEGER, intent(in) :: NZmodel           ! NUMBER OF INTERNAL MODEL LEVELS
+      INTEGER, intent(in) :: noS               ! NUMBER OF S GRID
 
-      INTEGER :: IPSDin(NZ)                    ! SIZE-DISTRIBUTION FLAG
+      INTEGER, intent(in) :: IPSDin(NZ)        ! SIZE-DISTRIBUTION FLAG
                                                ! IILL     (I=ICE, L=LIQUID)
                                                ! 1000:     I->MH, L->GAMMA 
                                                ! 1100:     I->LIU-CURRY
@@ -169,16 +167,16 @@ contains
                                                !              VARIOUS b1
                                                ! 6000:     I->PSD FOR PSC
 
-      INTEGER :: ISURF                         ! SURFACE TYPE
+      INTEGER, intent(in) :: ISURF             ! SURFACE TYPE
                                                ! 0 = SIMPLE MODEL
                                                ! 1 = LAND
                                                ! 2 = SEA 
   
-      INTEGER :: ISWI                          ! SENSITIVITY SWITCH
+      INTEGER, intent(in) :: ISWI              ! SENSITIVITY SWITCH
                                                ! 0 = OFF
                                                ! 1 = ON
 
-      INTEGER :: ICON                          ! CONTROL SWITCH 
+      INTEGER, intent(in) :: ICON              ! CONTROL SWITCH 
                                                ! (<=0 clear sky)
                                                ! -1 = 100% RHi BELOW 100hPa
                                                ! 0 = CLEAR-SKY
@@ -187,25 +185,25 @@ contains
                                                ! 2 = DEFAULT for cloudy cases
                                                ! 3 = NEAR SIDE CLOUD ONLY
 
-      INTEGER :: IFOV                          ! FIELD OF VIEW AVERAGING SWITCH
+      INTEGER, intent(in) :: IFOV              ! FIELD OF VIEW AVERAGING SWITCH
                                                ! 0 = OFF
                                                ! 1 = ON
 
-      REAL(r8) :: FREQUENCY(NF)                ! FREQUENCIES (GHz)
-      REAL(r8) :: PRESSURE(NZ)                 ! PRESSURE LEVEL
-      REAL(r8) :: HEIGHT(NZ)                   ! PRESSURE HEIGHT
-      REAL(r8) :: TEMPERATURE(NZ)              ! ATMOSPHERIC TEMPERATURE
-      REAL(r8) :: VMRin(NS,NZ)                 ! 1=H2O VOLUME MIXING RATIO
+      REAL(r8), intent(in) :: FREQUENCY(NF)    ! FREQUENCIES (GHz)
+      REAL(r8), intent(in) :: PRESSURE(NZ)     ! PRESSURE LEVEL
+      REAL(r8), intent(in) :: HEIGHT(NZ)       ! PRESSURE HEIGHT
+      REAL(r8), intent(in) :: TEMPERATURE(NZ)  ! ATMOSPHERIC TEMPERATURE
+      REAL(r8), intent(in) :: VMRin(NS,NZ)     ! 1=H2O VOLUME MIXING RATIO
                                                ! 2=O3 VOLUME MIXING RATIO
 
-      REAL(r8) :: WCin(N,NZ)                   ! CLOUD WATER CONTENT
+      REAL(r8), intent(in) :: WCin(N,NZ)       ! CLOUD WATER CONTENT
                                                ! N=1: ICE; N=2: LIQUID
-      REAL(r8) :: ZT(NT)                       ! TANGENT PRESSURE
-      REAL(r8) :: RE                           ! EARTH RADIUS
-      REAL(r8) :: Slevl(noS)                   ! Sgrid levels
-      REAL(r8) :: LosVel                       ! Line of sight velocity
+!     REAL(r8), intent(in) :: ZT(NT)           ! TANGENT PRESSURE
+      REAL(r8), intent(in) :: RE               ! EARTH RADIUS
+      REAL(r8), intent(in) :: Slevl(noS)       ! Sgrid levels
+      REAL(r8), intent(in) :: LosVel           ! Line of sight velocity
 
-      LOGICAL :: doChannel(NF)                 ! do only true channels
+      LOGICAL, intent(in) :: doChannel(NF)     ! do only true channels
 
 !--------------------------------------
 !     OUTPUT PARAMETERS (OUTPUT TO L2)        
@@ -231,6 +229,7 @@ contains
 !     INTERNAL MODEL PARAMETERS                ! -- INTERNAL AREA -- !
 !-------------------------------
 
+      INTEGER :: MULTI
       integer, parameter :: Nsub=5             !Below surface tangent grids
       
       INTEGER :: NU                            ! NO. OF SCATTERING ANGLES
@@ -371,7 +370,8 @@ contains
       REAL(r8), PARAMETER :: CONST1 = 0.0000776_r8
       REAL(r8), PARAMETER :: CONST2 = 4810.0_r8
 
-      Logical :: Bill_data 
+      Logical :: Bill_data
+      logical :: skip_sensitivity
 
       COMPLEX(r8) A(NR,NAB),B(NR,NAB)          ! MIE COEFFICIENCIES
 
@@ -381,6 +381,7 @@ contains
 !---------------<<<<<<<<<<<<< START EXCUTION >>>>>>>>>>>>-----------------
 
 !      CALL HEADER(1)
+      skip_sensitivity = ALWAYSSKIPSENSITIVITY .or. (ISWI == 0)
 
 ! initialization of TB0, DTcir, Trans, BETA, BETAc, Dm, TAUeff, SS
 
@@ -412,8 +413,8 @@ contains
 
       CALL MODEL_ATMOS(PRESSURE,HEIGHT,TEMPERATURE,VMRin,NZ,NS,N,   &
            &           WCin,IPSDin,                                 &
-           &           YP,YZ,YT,YQ,VMR,WC,NZmodel,CHK_CLD,IPSD,     &
-           &           ZT,ZZT,NT)
+           &           YP,YZ,YT,YQ,VMR,WC,NZmodel,CHK_CLD,IPSD)
+!          &           ZT,ZZT,NT)
  
 !     TAKE FIRST NT ELEMENT OF YZ AS TANGENT Z
 
@@ -482,11 +483,12 @@ contains
       NIWC  = 10
 
 !      IF (ISWI .EQ. 0) THEN                  
+       if ( skip_sensitivity ) THEN
          RATIO=1._r8
          MY_NIWC=1                ! SKIP FULL SENSITIVITY CALCULATION
-!      ELSE
-!          MY_NIWC=NIWC
-!      ENDIF
+       ELSE
+         MY_NIWC=NIWC
+       ENDIF
 
 !------------------------------------------
 !     PERFORM FULL SENSITIVITY CALCULATION
@@ -495,10 +497,11 @@ contains
     iwc_loop: do IIWC=1, MY_NIWC
 !      DO 3000 IIWC=1, MY_NIWC    ! START OF IWC LOOP
 !         IF (ISWI .EQ. 0) THEN
+         if ( skip_sensitivity ) THEN
             RATIO=1._r8
-!         ELSE
-!            RATIO = 10.*(IIWC-1)**2*0.004+1.0E-9_r8
-!         ENDIF
+         ELSE
+            RATIO = 10.*(IIWC-1)**2*0.004+1.0E-9_r8
+         ENDIF
 
 !=========================================================================
 !                   >>>>>>> CLEAR-SKY MODULE <<<<<<<<
@@ -793,6 +796,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.46  2003/01/16 18:39:41  pwagner
+! Removed some unused variables
+!
 ! Revision 1.45  2003/01/12 04:49:09  dwu
 ! change icon=4 to icon=-1 for better definition
 !

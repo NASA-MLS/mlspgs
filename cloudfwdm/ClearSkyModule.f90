@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module ClearSkyModule
@@ -10,10 +10,9 @@ module ClearSkyModule
       use Bill_GasAbsorption, only: get_beta_bill
       use GasAbsorption, only: GET_BETA
       use MLSCommon, only: r8
-      use PrtMsg, only: HEADER
       use SpectraLines, only: SETUP_SPECTRA
       use SurfaceModel, only: SURFACE
-      use SpectroscopyCatalog_m, only: CATALOG_T, LINE_T, LINES, CATALOG
+      use SpectroscopyCatalog_m, only: CATALOG_T
 
       IMPLICIT NONE
       Private
@@ -46,21 +45,26 @@ contains
 !     ATMOSPHERIC PROFILE PARAMETERS
 !-------------------------------------------------
 
-      INTEGER :: L, NU, I, J, LORS, NS, n_sps, Spectag
-
-      REAL(r8) :: RS(NU/2),T(L),TAU(L),U(NU),Z(L),TAU100(L)
-      REAL(r8) :: XZ(L+1),XP(L+1),XT(L+1),XQ(L+1)
-      REAL(r8) :: VMR(NS-1,L+1),VMR1(NS-1)
-      REAL(r8) :: DQ, P, DR, TS, S, WIND, F, LosVel
-
-!-------------------------------------------------
-!     SURFACE REFLECTIVITY
-!-------------------------------------------------
-! local variables
-
-      REAL(r8):: RH(NU)                   ! HORIZONTAL
-      REAL(r8):: RV(NU)                   ! VERTICAL
-      REAL(r8):: X(NU)                    ! SCATTERING ANGLES
+      INTEGER, intent(in) :: NS                ! NO. OF CHEMICAL SPECIES
+      INTEGER, intent(in) :: NU                ! 2 x NO. OF pts
+      INTEGER, intent(in) :: L                 ! NO. OF (levels?)
+      INTEGER, intent(in) :: LORS              ! Surface type index (land/sea)
+      REAL(r8), intent(in) :: U(NU)            ! Scattering angles
+      REAL(r8), intent(in) :: F                ! Frequency
+      REAL(r8), intent(in) :: TS               ! Surface temperature
+      REAL(r8), intent(in) :: S                ! Salinity
+      REAL(r8), intent(in) :: WIND             ! Wind speed
+      REAL(r8), intent(in) :: LosVel
+      REAL(r8), intent(in) :: XZ(L+1)
+      REAL(r8), intent(in) :: XP(L+1)
+      REAL(r8), intent(in) :: XT(L+1)
+      REAL(r8), intent(in) :: XQ(L+1)
+      REAL(r8), intent(in) :: VMR(NS-1,L+1)
+      REAL(r8), intent(out) :: RS(NU/2)        ! Surface reflectivity
+      REAL(r8), intent(out) :: TAU100(L)
+      REAL(r8), intent(out) :: TAU(L)
+      REAL(r8), intent(out) :: T(L)
+      REAL(r8), intent(out) :: Z(L)
 
 !-----------------------------------------------------
 ! Spectra Catalog 
@@ -68,9 +72,27 @@ contains
 
       Type(Catalog_T), INTENT(IN) :: Catalog(:)
 
-      Logical :: Bill_Spectra
+      Logical, INTENT(IN) :: Bill_Spectra
 
-!-------------------------Begin Execution----------------------------------------
+!-------------------------------------------------
+!     SURFACE REFLECTIVITY
+!-------------------------------------------------
+! local variables
+
+      ! Reflectivities
+      REAL(r8):: RH(NU)                   ! HORIZONTAL
+      REAL(r8):: RV(NU)                   ! VERTICAL
+      ! Other stuff
+      REAL(r8) :: P
+      REAL(r8) :: DQ
+      REAL(r8) :: DR
+      REAL(r8) :: VMR1(NS-1)
+      REAL(r8):: X(NU)                    ! SCATTERING ANGLES
+      integer :: I
+      integer :: J
+
+
+!-------------------------Begin Execution--------------------------------------
 
 !      CALL HEADER(2)
 
@@ -117,8 +139,8 @@ contains
 
          DO J=1,NS-1
             VMR1(J)=(LOG10( max(1.e-19_r8, VMR(J,I+1)) )+ &
-                   & LOG10( max(1.e-19_r8, VMR(J,I))  )  )*0.5   !vmr cannot be zero
-            VMR1(J)=10**VMR1(J)
+                   & LOG10( max(1.e-19_r8, VMR(J,I))  )  )*0.5   ! vmr cannot
+            VMR1(J)=10**VMR1(J)                                  ! be zero
          ENDDO
 
          If ( .not. Bill_Spectra ) then
@@ -126,12 +148,14 @@ contains
            ! Using default spectroscopy data
            ! --------------------------------
            CALL GET_BETA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,GAMMA,N2,  &
-                &        MOL,NMOL,NCNT,T(I),P,F,DQ,VMR1,DR,NS )   
+                &        NMOL,NCNT,T(I),P,F,DQ,VMR1,DR,NS )   
+!               &        MOL,NMOL,NCNT,T(I),P,F,DQ,VMR1,DR,NS )   
                                              ! HERE DQ IS H2O MIXING RATIO
            TAU(I)=DR*Z(I)
 
            CALL GET_BETA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,GAMMA,N2,  &
-                &        MOL,NMOL,NCNT,T(I),P,F,100._r8,VMR1,DR,NS ) 
+                &        NMOL,NCNT,T(I),P,F,100._r8,VMR1,DR,NS ) 
+!               &        MOL,NMOL,NCNT,T(I),P,F,100._r8,VMR1,DR,NS ) 
                                              ! HERE DQ IS RELATIVE HUMIDITY!
            TAU100(I)=DR*Z(I)
          
@@ -139,11 +163,13 @@ contains
            !--------------------------------
            ! Using bill's spectroscopy data
            !--------------------------------
-           call get_beta_bill (T(I), P, F, DQ, VMR1, NS, DR, Catalog, LosVel)
+           call get_beta_bill (T(I), P, F, DQ, VMR1, &
+            & NS, DR, Catalog, LosVel)
            
            TAU(I)=DR*Z(I)
 
-           call get_beta_bill (T(I), P, F, 100._r8, VMR1, NS, DR, Catalog, LosVel)
+           call get_beta_bill (T(I), P, F, 100._r8, VMR1, &
+            & NS, DR, Catalog, LosVel)
 
            TAU100(I)=DR*Z(I)
 
@@ -160,6 +186,9 @@ contains
 end module ClearSkyModule
 
 ! $Log$
+! Revision 1.19  2002/12/18 16:08:58  jonathan
+! minor changes
+!
 ! Revision 1.18  2002/10/08 17:08:07  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !

@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module GasAbsorption
@@ -22,10 +22,13 @@ module GasAbsorption
   private :: not_used_here 
  !---------------------------------------------------------------------------
       
+      REAL, private, parameter :: PI = 3.1415926
 contains
 
+! -------------------------------------------------  GET_BETA  -----
       SUBROUTINE GET_BETA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,GAMMA,N2, &
-                 &        MOL,NMOL,NCNT,T,PB,F,RH,VMR,ABSC,NS )
+                 &        NMOL,NCNT,T,PB,F,RH,VMR,ABSC,NS )
+!                &        MOL,NMOL,NCNT,T,PB,F,RH,VMR,ABSC,NS )
 
 !==============================================================
 !      CALCULATE CLEAR-SKY ABSORPTION COEFFICIENT AT F AND T
@@ -35,10 +38,10 @@ contains
       INCLUDE 'spectra.f9h' 
 
       INTEGER :: NS
-      REAL(r8) :: QTP(3)                      ! TEMPERATURE ON WHICH QLG ARE GIVEN
-      DATA QTP /300.0,225.0,150.0/
-
-      REAL(r8) :: QRAT                        ! INTERPOLATED QLG RATIO AT A GIVEN TEMP
+      REAL :: QTP(3)                          ! TEMPERATURE ON WHICH QLG 
+      DATA QTP /300.0,225.0,150.0/            ! ARE GIVEN
+                                              !                 | A GIVEN TEMP
+      REAL(r8) :: QRAT                        ! INTERPOLATED QLG RATIO AT 
       REAL(r8) :: F                           ! FREQUENCY IN GHz
       REAL(r8) :: T                           ! TEMPERATURE (K)
       REAL(r8) :: P                           ! DRY AIR PARTIAL PRESSURE (hPa)
@@ -60,8 +63,8 @@ contains
       REAL(r8) :: SD,G0                       ! DEBY CONTRIBUTION (LIEBE 1989)
       REAL(r8) :: PS, NPS                     ! PRESSURE SHIFT PARAMETERS
      
-      REAL :: PI
-      PARAMETER (PI=3.1415926)
+!      REAL :: PI
+!      PARAMETER (PI=3.1415926)
 
       REAL(r8) :: ZP,YY,TT,TWTH0,DWTH0        ! WORKING SPACE
       INTEGER :: I, J, IMOL
@@ -101,43 +104,51 @@ contains
          DO J=1,NCNT(IMOL)
             I=I+1
 
-            IF(IMOL.GE.3.AND.ABS(V0(i)-FF).GT.10000.) GOTO 100 ! SAVE CPU
+            IF(IMOL.GE.3.AND.ABS(V0(i)-FF).GT.10000.)  cycle ! GOTO 100 SAVE CPU
             
             PS  = 0.00_r8
             NPS = 0.00_r8
 
          ! Determine pressure shift parameters
-            IF(IMOL .EQ. 1) THEN                         ! O2
+!            IF(IMOL .EQ. 1) THEN                         ! O2
+            select case (IMOL)
+            case (1)
               IF ( V0(i) .eq. 118750.3410_r8 ) THEN
                 PS   = -0.140_r8
                 NPS  = 1.36_r8
               END IF
-            ELSE IF(IMOL .EQ. 2) THEN                    ! H2O
+!            ELSE IF(IMOL .EQ. 2) THEN                    ! H2O
+            case (2)
               IF ( V0(i) .eq. 183310.0910_r8) THEN 
                 PS   = -0.160_r8
                 NPS  = 1.375_r8
               ENDIF
-            ELSE IF(IMOL .EQ. 3) THEN                    ! O_18_O
+            case (3)
+!            ELSE IF(IMOL .EQ. 3) THEN                    ! O_18_O
               PS   = 0.00_r8
               NPS  = 0.00_r8
-            ELSE IF(IMOL .EQ. 4) THEN                    ! H2O_18
+            case (4)
+!            ELSE IF(IMOL .EQ. 4) THEN                    ! H2O_18
               IF ( V0(i) .eq. 203407.5200_r8 ) THEN
                 PS   = -0.160_r8
                 NPS  = 1.375_r8 
               END IF
-            ELSE IF(IMOL .EQ. 5) THEN                    ! O3
+            case (5)
+!            ELSE IF(IMOL .EQ. 5) THEN                    ! O3
               PS   = 0.00_r8
               NPS  = 0.00_r8
-            ELSE IF(IMOL .EQ. 6) THEN                    ! N2O
+            case (6)
+!            ELSE IF(IMOL .EQ. 6) THEN                    ! N2O
               PS   = 0.00_r8
               NPS  = 0.00_r8
-            END IF
-
-            v01(i) = 0.0_r8
-            V01(i) = V0(i) + PS * P * (TT**NPS) ! Include Hugh Pumphrey's Pressure Shift effects
+!            END IF
+            end select
+            v01(i) = 0.0_r8                     !      | Pressure Shift effects
+            V01(i) = V0(i) + PS * P * (TT**NPS) ! Include Hugh Pumphrey's
 
             IF(T .LE. QTP(2)) THEN
-               QRAT = (QLG(2,I)-QLG(1,I))+(QLG(3,I)-QLG(2,I))*(T-QTP(2))/(QTP(3)-QTP(2))
+               QRAT = (QLG(2,I)-QLG(1,I))+&
+                & (QLG(3,I)-QLG(2,I))*(T-QTP(2))/(QTP(3)-QTP(2))
             ELSE
                QRAT = (QLG(2,I)-QLG(1,I))*(T-QTP(1))/(QTP(2)-QTP(1))
             ENDIF
@@ -154,12 +165,26 @@ contains
 !           DOPPLER WIDTH
 !-------------------------------------
 
-            IF(IMOL.EQ.1) DWTH0 = 3.58e-7*SQRT(T/32.)*FF         ! O2
-            IF(IMOL.EQ.2) DWTH0 = 3.58e-7*SQRT(T/18.)*FF         ! H2O
-            IF(IMOL.EQ.3) DWTH0 = 3.58e-7*SQRT(T/34.)*FF         ! O_18_0
-            IF(IMOL.EQ.4) DWTH0 = 3.58e-7*SQRT(T/20.)*FF         ! H2O_18
-            IF(IMOL.EQ.5) DWTH0 = 3.58e-7*SQRT(T/48.)*FF         ! O3
-            IF(IMOL.EQ.6) DWTH0 = 3.58e-7*SQRT(T/44.)*FF         ! N2O
+! >             IF(IMOL.EQ.1) DWTH0 = 3.58e-7*SQRT(T/32.)*FF         ! O2
+! >             IF(IMOL.EQ.2) DWTH0 = 3.58e-7*SQRT(T/18.)*FF         ! H2O
+! >             IF(IMOL.EQ.3) DWTH0 = 3.58e-7*SQRT(T/34.)*FF         ! O_18_0
+! >             IF(IMOL.EQ.4) DWTH0 = 3.58e-7*SQRT(T/20.)*FF         ! H2O_18
+! >             IF(IMOL.EQ.5) DWTH0 = 3.58e-7*SQRT(T/48.)*FF         ! O3
+! >             IF(IMOL.EQ.6) DWTH0 = 3.58e-7*SQRT(T/44.)*FF         ! N2O
+            select case (IMOL)
+            case (1)
+              DWTH0 = 3.58e-7*SQRT(T/32.)*FF         ! O2
+            case (2)
+              DWTH0 = 3.58e-7*SQRT(T/18.)*FF         ! H2O
+            case (3)
+              DWTH0 = 3.58e-7*SQRT(T/34.)*FF         ! O_18_0
+            case (4)
+              DWTH0 = 3.58e-7*SQRT(T/20.)*FF         ! H2O_18
+            case (5)
+              DWTH0 = 3.58e-7*SQRT(T/48.)*FF         ! O3
+            case (6)
+              DWTH0 = 3.58e-7*SQRT(T/44.)*FF         ! N2O
+            end select
 
 !--------------------------------------------------
 !           WHITING'S APPROXIMATION FOR THE VOIGT
@@ -177,18 +202,32 @@ contains
      &		(1._r8 - EXP(-V01(i)/(20836.7_r8*T)))/           &
      &		(1._r8 - EXP(-V01(i)/(20836.7_r8*300.0_r8)))/T 
 
- 100     CONTINUE
+! 100     CONTINUE
 
          ENDDO   
 
          B=MAX(0._r8,B)                 ! AVOID NEGATIVE LINE SHAPE     
 
-         IF(IMOL .EQ. 1) ABSC = ABSC + B*VMR_O2                   ! O2      
-         IF(IMOL .EQ. 2) ABSC = ABSC + B*VMR_H2O                  ! H2O
-         IF(IMOL .EQ. 3) ABSC = ABSC + B*VMR_O2*0.00409524        ! O_18_O
-         IF(IMOL .EQ. 4) ABSC = ABSC + B*VMR_H2O*0.00204          ! H2O_18
-         IF(IMOL .EQ. 5) ABSC = ABSC + B*VMR(1)                   ! O3
-         IF(IMOL .EQ. 6) ABSC = ABSC + B*VMR(2)                   ! N2O
+!          IF(IMOL .EQ. 1) ABSC = ABSC + B*VMR_O2                   ! O2      
+!          IF(IMOL .EQ. 2) ABSC = ABSC + B*VMR_H2O                  ! H2O
+!          IF(IMOL .EQ. 3) ABSC = ABSC + B*VMR_O2*0.00409524        ! O_18_O
+!          IF(IMOL .EQ. 4) ABSC = ABSC + B*VMR_H2O*0.00204          ! H2O_18
+!          IF(IMOL .EQ. 5) ABSC = ABSC + B*VMR(1)                   ! O3
+!          IF(IMOL .EQ. 6) ABSC = ABSC + B*VMR(2)                   ! N2O
+            select case (IMOL)
+            case (1)
+              ABSC = ABSC + B*VMR_O2                   ! O2
+            case (2)
+              ABSC = ABSC + B*VMR_H2O                  ! H2O
+            case (3)
+              ABSC = ABSC + B*VMR_O2*0.00409524        ! O_18_O
+            case (4)
+              ABSC = ABSC + B*VMR_H2O*0.00204          ! H2O_18
+            case (5)
+              ABSC = ABSC + B*VMR(1)                   ! O3
+            case (6)
+              ABSC = ABSC + B*VMR(2)                   ! N2O
+            end select
 
       ENDDO  
 
@@ -199,19 +238,19 @@ contains
       B=(7.7e-10*EXP(-1.5e-3*(F/30)**2)+1.e-13*(60**2+(F/30)**2)  &
      &     *EXP(-1.e-4*(F/30)**2))*TT**1.7
 
-! from ATBD N2-N2 continuum
-       ABSC = ABSC + B*0.65*(P/1013.)**2*TT**2*(F/30)**2*1.e5/1.8     !best fit to band2 and band6
+! from ATBD N2-N2 continuum                                      band2 and band6
+       ABSC = ABSC + B*0.65*(P/1013.)**2*TT**2*(F/30)**2*1.e5/1.8 !best fit to
 !      ABSC = ABSC + B*0.65*(P/1013.)**2*TT**2*(F/30)**2*1.e5
 
-!=====================================================================================
-! from ATBD N2-N2 continuum, 0.84 is the best fit to f15 (with N2 O2) sids at 640GHz
-! The Debye term is coded differently between the two models, which
+!==============================================================================
+! from ATBD N2-N2 continuum, 0.84 is the best fit to f15 (with N2 O2) sids at
+! 640GHz. The Debye term is coded differently between the two models, which
 ! affects R2 and R3 mostly (check it later) 
 !       ABSC = ABSC + 0.84*B*0.65*(P/1013.)**2*TT**2*(F/30)**2*1.e5
 
 ! The factor 1.8 is fix to match B2U of Bill's FWM without [o2, o2]
 !      ABSC = ABSC + B*0.65*(P/1013.)**2*TT**2*(F/30)**2*1.e5/1.8  
-!======================================================================================
+!===============================================================================
 !     CONT_1=1.4e-10*(1-1.2e-5*F**1.5)     ! LIEBE 1989
 !     CONT_1 = 1.4e-12/(1+1.93e-5*F**1.5)  ! LIEBE 1993
 !
@@ -257,6 +296,7 @@ contains
 
       END SUBROUTINE GET_BETA
 
+! -------------------------------------------------  myshape  -----
 !--------------------------------------------------------------
 !     DEFINE LINE-SHAPE FUNCTIONS
 !--------------------------------------------------------------
@@ -264,11 +304,11 @@ contains
 
         real(r8) function myshape(v0,ff,yy,twth0) result (myresult)
 !        use MLSCommon, only: r8        
-	implicit none
+!	implicit none
 !        real(r8):: myresult     !J
 
-        real :: pi
-        parameter (pi=3.1415926)
+!        real :: pi
+!        parameter (pi=3.1415926)
 	real(r8) ::  voffm		! frequency difference
 	real(r8) ::  voffp		! frequency difference
 	real(r8) ::  ff		        ! frequency in MHz
@@ -310,6 +350,9 @@ contains
 end module GasAbsorption
 
 ! $Log$
+! Revision 1.14  2002/12/18 16:11:07  jonathan
+! minor changes
+!
 ! Revision 1.13  2002/11/06 19:08:08  jonathan
 ! best fit to b2 and b6
 !

@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module ModelInput
@@ -27,8 +27,8 @@ contains
 
       SUBROUTINE MODEL_ATMOS(PRESSURE,HEIGHT,TEMPERATURE,VMR,NZ,NS,  &
                  &           N, WCin, IPSDin,                        &
-                 &           YP,YZ,YT,YQ,VMR1,WC,NH,CHK_CLD,IPSD,    &
-                 &           ZT,ZZT,NT)
+                 &           YP,YZ,YT,YQ,VMR1,WC,NH,CHK_CLD,IPSD )
+!                &           ZT,ZZT,NT)
 
 !========================================================================C
 !     DESCRIPTION                                                        C
@@ -45,41 +45,42 @@ contains
 !     INPUT PARAMETERS
 !----------------------------------------------
 
-      INTEGER :: NZ                            ! NO. OF L2 ATMOSPHERIC LEVELS
-      INTEGER :: NS                            ! NO. OF CHEMICAL SPECIES
-      INTEGER :: N
-      REAL(r8) :: PRESSURE(NZ)                 ! PRESSURE LEVEL
-      REAL(r8) :: HEIGHT(NZ)                   ! PRESSURE HEIGHT
-      REAL(r8) :: TEMPERATURE(NZ)              ! ATMOSPHERIC TEMPERATURE
-      REAL(r8) :: VMR(NS,NZ)                   ! 1=H2O VOLUME MIXING RATIO
+      INTEGER, intent(in) :: NZ                ! NO. OF L2 ATMOSPHERIC LEVELS
+      INTEGER, intent(in) :: NS                ! NO. OF CHEMICAL SPECIES
+      INTEGER, intent(in) :: N
+      INTEGER, intent(in) :: NH                ! MODEL ATMOSPHERIC LEVELS
+      REAL(r8), intent(in) :: PRESSURE(NZ)     ! PRESSURE LEVEL
+      REAL(r8), intent(in) :: HEIGHT(NZ)       ! PRESSURE HEIGHT
+      REAL(r8), intent(in) :: TEMPERATURE(NZ)  ! ATMOSPHERIC TEMPERATURE
+      REAL(r8), intent(in) :: VMR(NS,NZ)       ! 1=H2O VOLUME MIXING RATIO
                                                ! 2=O3
 
-      REAL(r8) :: WCin(N,NZ)                         
-      INTEGER :: IPSDin(NZ)
-      INTEGER :: NT                            ! NO. OF TANGENT PRESSURE LEVSLS
-      REAL(r8) :: ZT(NT)                       ! TANGENT PRESSURE
+      REAL(r8), intent(in) :: WCin(N,NZ)             
+      INTEGER, intent(in) :: IPSDin(NZ)
+!     INTEGER, intent(in) :: NT                ! NO. OF TANGENT PRESSURE LEVELS
+!     REAL(r8), intent(in) :: ZT(NT)           ! TANGENT PRESSURE
       
 !----------------------------------------------
 !     OUTPUT PARAMETERS
 !----------------------------------------------
-      INTEGER :: NH                            ! MODEL ATMOSPHERIC LEVELS
 
-      REAL(r8) :: YZ(NH)                       ! PRESSURE HEIGHT (m)
-      REAL(r8) :: YP(NH)                       ! PRESSURE (hPa)
-      REAL(r8) :: YT(NH)                       ! TEMPERATURE PROFILE
-      REAL(r8) :: YQ(NH)                       ! RELATIVE HUMIDITY (%)
-      REAL(r8) :: VMR1(NS-1,NH)                  ! 1=O3 VOLUME MIXING RATIO
-      REAL(r8) :: WC(N,NH)
-      INTEGER :: IPSD(NH)
-      REAL(r8) :: CHK_CLD(NH)                  ! CLOUD CHECKER      
+      REAL(r8), intent(out) :: YZ(NH)          ! PRESSURE HEIGHT (m)
+      REAL(r8), intent(out) :: YP(NH)          ! PRESSURE (hPa)
+      REAL(r8), intent(out) :: YT(NH)          ! TEMPERATURE PROFILE
+      REAL(r8), intent(out) :: YQ(NH)          ! RELATIVE HUMIDITY (%)
+      REAL(r8), intent(out) :: VMR1(NS-1,NH)   ! 1=O3 VOLUME MIXING RATIO
+      REAL(r8), intent(out) :: WC(N,NH)
+      INTEGER, intent(out) :: IPSD(NH)
+      REAL(r8), intent(out) :: CHK_CLD(NH)     ! CLOUD CHECKER
 
-      REAL(r8) :: ZZT(NT)                      ! TANGENT HEIGHT
+!     REAL(r8), intent(out) :: ZZT(NT)         ! TANGENT HEIGHT
 
 !----------------------------------------------------------
 !     WORK SPACE
 !----------------------------------------------------------
-      REAL(r8) :: HTOP,DH,ZH(NH),ZA(NH),ZZ(NH),WK, zvmr(nh)
-      INTEGER :: I,JM,J, K
+      REAL(r8) :: HTOP,DH,ZH(NH),ZA(NH), zvmr(nh)
+      REAL(r8) :: eta                          ! Interpolating fraction;
+      INTEGER :: I,JM,J, K                     !  0 < eta < 1
 !--------------------------------------------------------------------------
 
       HTOP = 80.e3_r8    ! TOP OF THE MODEL
@@ -106,21 +107,30 @@ contains
 
             CALL LOCATE (HEIGHT,NZ,NH,ZH(J),JM)              
 
-            YP(J)=((HEIGHT(JM+1)-ZH(J))*ZA(JM)+(ZH(J)-HEIGHT(JM))*  &
-     &            ZA(JM+1))/(HEIGHT(JM+1)-HEIGHT(JM))             
+            ! Now we will interpolate things to our new heights
+            ! To do this we use the fraction eta : 0 <= eta <= 1
+            ! such that f[j] = eta f[j[m]] + (1-eta) f[j[m+1]]
+            ! This is simple linear interpolation; see also 
+            ! MLSNumerics for InterpolateValues
+            eta = (HEIGHT(JM+1)-ZH(J)) / (HEIGHT(JM+1)-HEIGHT(JM))
+!           YP(J)=((HEIGHT(JM+1)-ZH(J))*ZA(JM)+(ZH(J)-HEIGHT(JM))*  &
+!     &            ZA(JM+1))/(HEIGHT(JM+1)-HEIGHT(JM))             
+            YP(J) = eta*ZA(JM) + (1-eta)*ZA(JM+1)
 
             YP(J) = 10**(-YP(J))
 
             YZ=ZH
 
-            YT(J)=((HEIGHT(JM+1)-ZH(J))*TEMPERATURE(JM)+(ZH(J)-HEIGHT(JM))*  &
-     &            TEMPERATURE(JM+1))/(HEIGHT(JM+1)-HEIGHT(JM))             
+!           YT(J)=((HEIGHT(JM+1)-ZH(J))*TEMPERATURE(JM)+(ZH(J)-HEIGHT(JM))*  &
+!     &            TEMPERATURE(JM+1))/(HEIGHT(JM+1)-HEIGHT(JM))             
+            YT(J) = eta*TEMPERATURE(JM) + (1-eta)*TEMPERATURE(JM+1)
 
 ! ICE QUANTITIES
 
             DO K=1,2
-            WC(K,J)=((HEIGHT(JM+1)-ZH(J))*WCin(K,JM)+(ZH(J)-HEIGHT(JM))*  &
-     &            WCin(K,JM+1))/(HEIGHT(JM+1)-HEIGHT(JM))             
+!           WC(K,J)=((HEIGHT(JM+1)-ZH(J))*WCin(K,JM)+(ZH(J)-HEIGHT(JM))*  &
+!     &            WCin(K,JM+1))/(HEIGHT(JM+1)-HEIGHT(JM))             
+              WC(K,J) = eta*WCin(K,JM) + (1-eta)*WCin(K,JM+1)
             ENDDO
 
             CHK_CLD(J) = WC(1,J) + WC(2,J)
@@ -129,14 +139,16 @@ contains
             IPSD(J) = IPSDin(1)     
 
 ! VMR QUANTITIES
-            Yq(J)=((HEIGHT(JM+1)-ZH(J))*zvmr(JM)+(ZH(J)-HEIGHT(JM))*  &
-     &            zvmr(JM+1))/(HEIGHT(JM+1)-HEIGHT(JM))             
+!           Yq(J)=((HEIGHT(JM+1)-ZH(J))*zvmr(JM)+(ZH(J)-HEIGHT(JM))*  &
+!     &            zvmr(JM+1))/(HEIGHT(JM+1)-HEIGHT(JM))             
+            YQ(J) = eta*zvmr(JM) + (1-eta)*zvmr(JM+1)
 
             YQ(J) = 10**YQ(J)
 
             DO K=1,NS-1
-            VMR1(K,J)=((HEIGHT(JM+1)-ZH(J))*VMR(K+1,JM)+(ZH(J)-HEIGHT(JM))*  &
-     &            VMR(K+1,JM+1))/(HEIGHT(JM+1)-HEIGHT(JM))             
+!            VMR1(K,J)=((HEIGHT(JM+1)-ZH(J))*VMR(K+1,JM)+(ZH(J)-HEIGHT(JM))*  &
+!     &            VMR(K+1,JM+1))/(HEIGHT(JM+1)-HEIGHT(JM))             
+             VMR1(K,J) = eta*VMR(K+1,JM) + (1-eta)*VMR(K+1,JM+1)
             ENDDO
        
          ENDDO
@@ -150,6 +162,9 @@ contains
 end module ModelInput
 
 ! $Log$
+! Revision 1.10  2002/12/18 16:10:21  jonathan
+! minor changes
+!
 ! Revision 1.9  2002/12/02 17:44:15  dwu
 ! remove the bug in interpolating IPSD
 !

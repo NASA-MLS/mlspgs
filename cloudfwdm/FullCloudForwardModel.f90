@@ -741,7 +741,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & vmrArray,                                                            &
       & WC,                                                                  &
       & int(sizeDistribution%values(:,instance)),                            &
-      & 10.0**(-ptan%values(:,maf)),                                         &
       & zt,                                                                  &
       & earthradius%values(1,1),                                             &
       & int(surfaceType%values(1, instance)),                                &
@@ -1063,6 +1062,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.107  2003/01/17 07:19:33  dwu
+! properly initialize vmrArray
+!
 ! Revision 1.106  2003/01/17 01:08:11  jonathan
 ! add vmrArray=0. after allocate
 !
