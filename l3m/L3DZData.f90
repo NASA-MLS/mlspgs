@@ -5,6 +5,7 @@
 MODULE L3DZData
 !==============================================================================
 
+   USE Intrinsic, ONLY: l_hdfeos, l_swath
    USE MLSCommon, ONLY: r8, FileNameLen
    USE MLSFiles, ONLY: mls_sfstart, mls_sfend, mls_inqswath, & 
         & HDFVERSION_5, HDFVERSION_4
@@ -1513,7 +1514,8 @@ MODULE L3DZData
       CHARACTER (LEN=480) :: msr
       CHARACTER (LEN=45) :: attrName, lvid
       CHARACTER (LEN=3) :: cNum
-      CHARACTER (LEN=2) :: fileType
+      ! CHARACTER (LEN=2) :: fileType
+      integer :: fileType
 
       REAL(r8) :: dval
 
@@ -1533,7 +1535,7 @@ MODULE L3DZData
            & 'Initialization error.  See LogStatus for details.')
 
 ! Initialize the file type
-      fileType = 'sw'
+      fileType = l_swath
 
 ! For each file successfully created,
 
@@ -1762,7 +1764,7 @@ MODULE L3DZData
          
          ! result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, sval)
          result = WriteInputPointer(groups(INVENTORYMETADATA), attrName, &
-           & fileType='hdfeos')
+           & fileType=l_hdfeos)
          IF (result /= PGS_S_SUCCESS) THEN
             msr = METAWR_ERR // attrName
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -2164,6 +2166,9 @@ MODULE L3DZData
  !==================
 
 ! $Log$
+! Revision 1.10  2003/06/02 23:45:15  pwagner
+! metadata chnages: OrbitNumber now -1; equatorCrossingDate now utc start date
+!
 ! Revision 1.9  2003/05/30 23:54:07  pwagner
 ! Relies on lib/PCFHdr to WriteInputPointer
 !

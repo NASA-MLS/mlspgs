@@ -1389,6 +1389,7 @@ CONTAINS
   USE HDF, ONLY: DFACC_RDWR, DFNT_FLOAT64, DFNT_FLOAT32, DFNT_INT32, & 
        & DFACC_WRITE
   USE HDFEOS5, ONLY: HE5F_ACC_RDWR, HE5_GDCLOSE, HE5_GDOPEN
+  USE Intrinsic, ONLY: l_grid, l_hdfeos
   USE MLSFiles, ONLY: HDFVERSION_5, HDFVERSION_4, mls_sfstart, mls_sfend
   USE OpenInit, ONLY: PCFData_T
   USE PCFHdr, ONLY: WritePCF2Hdr, WriteInputPointer, he5_writeglobalattr
@@ -1429,7 +1430,8 @@ CONTAINS
       CHARACTER (LEN=480)                   :: msr
       CHARACTER (LEN=132)                   :: list
       CHARACTER (LEN=45)                    :: attrName
-      CHARACTER (LEN=2)                     :: fileType
+      ! CHARACTER (LEN=2)                     :: fileType
+      integer ::                             fileType
       CHARACTER (LEN=1)                     :: cNum
       
       REAL(r8) :: dval
@@ -1453,7 +1455,7 @@ CONTAINS
       
       ! set the file type
 
-      fileType = 'gd'
+      fileType = l_grid
 
       ! For each l3dm file successfully created,
       
@@ -1662,7 +1664,7 @@ CONTAINS
          ! result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
          !     & 'See the PCF annotation to this file.')
          result = WriteInputPointer(groups(INVENTORYMETADATA), attrName, &
-           & fileType='hdfeos')
+           & fileType=l_hdfeos)
          IF (result /= PGS_S_SUCCESS) THEN
             msr = METAWR_ERR // attrName
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -2166,6 +2168,9 @@ CONTAINS
 !==================
 
 !# $Log$
+!# Revision 1.27  2003/06/03 20:45:29  pwagner
+!# Writes global attributes
+!#
 !# Revision 1.26  2003/06/02 23:45:15  pwagner
 !# metadata chnages: OrbitNumber now -1; equatorCrossingDate now utc start date
 !#

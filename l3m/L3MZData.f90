@@ -7,6 +7,7 @@ MODULE L3MZData
 
    USE HDF, ONLY: DFACC_RDWR, DFACC_WRITE, DFNT_FLOAT32, DFNT_INT32, & 
         & DFNT_FLOAT64
+   USE Intrinsic, ONLY: l_hdfeos, l_swath
    USE MLSCommon, ONLY: r8
    USE MLSFiles, ONLY: MLS_SFSTART, MLS_SFEND, mls_inqswath, & 
         & HDFVERSION_4, HDFVERSION_5
@@ -992,7 +993,8 @@ CONTAINS
       CHARACTER (LEN=FileNameLen) :: sval
       CHARACTER (LEN=45) :: attrName, lvid
       CHARACTER (LEN=3)  :: cNum
-      CHARACTER (LEN=2)  :: fileType
+      ! CHARACTER (LEN=2)  :: fileType
+      integer :: fileType
 
       REAL(r8) :: dval
 
@@ -1007,7 +1009,7 @@ CONTAINS
 
 ! Initialize the fileType
 
-      fileType = 'sw'
+      fileType = l_swath
 
 ! Initialize the MCF
 
@@ -1243,7 +1245,7 @@ CONTAINS
       
       ! result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, inpt)
       result = WriteInputPointer(groups(INVENTORYMETADATA), attrName, &
-        & fileType='hdfeos')
+        & fileType=l_hdfeos)
       IF (result /= PGS_S_SUCCESS) THEN
          msr = METAWR_ERR // attrName
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -1595,6 +1597,9 @@ END MODULE L3MZData
 !==================
 
 ! $Log$
+! Revision 1.10  2003/06/02 23:45:15  pwagner
+! metadata chnages: OrbitNumber now -1; equatorCrossingDate now utc start date
+!
 ! Revision 1.9  2003/05/30 23:54:07  pwagner
 ! Relies on lib/PCFHdr to WriteInputPointer
 !

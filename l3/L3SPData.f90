@@ -576,6 +576,7 @@ CONTAINS
 !--------------------------------------------
 
    USE HDFEOS5, only: HE5F_ACC_TRUNC, HE5T_NATIVE_FLOAT
+   USE Intrinsic, ONLY: l_swath
    USE PCFHdr, ONLY: WritePCF2Hdr
    USE PCFModule, ONLY: ExpandFileTemplate, FindFileType
 ! Brief description of subroutine
@@ -897,7 +898,7 @@ CONTAINS
 
 ! Annotate the file with the PCF
 
-      CALL WritePCF2Hdr(spFile, anText, HDFVERSION_5, 'sw')
+      CALL WritePCF2Hdr(spFile, anText, HDFVERSION_5, filetype=l_swath)
 
 !---------------------------
    END SUBROUTINE OutputL3SP_HDF5
@@ -1053,6 +1054,9 @@ END MODULE L3SPData
 !==================
 
 ! $Log$
+! Revision 1.12  2003/05/30 23:51:59  pwagner
+! Passes actual hdf version instead of relying on default being 4
+!
 ! Revision 1.11  2003/04/30 18:15:48  pwagner
 ! Work-around for LF95 infinite compile-time bug
 !
