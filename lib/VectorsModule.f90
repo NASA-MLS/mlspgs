@@ -51,6 +51,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 ! GetVectorQuantityIndexByName Returns index to quantity by name in vector
 ! GetVectorQuantityIndexByType Returns index to quantity by type in vector
 ! isVectorQtyMasked            Is the mask for VectorQty set for address
+! MaskVectorQty                Set the mask for VectorQty for spec. address
 ! MultiplyVectors              Z = X # Y if Z present; else X = X # Y
 ! rmVectorFromDatabase         Removes a vector from a database of such vectors
 ! ScaleVector                  Y = A*X if Y is present, else X = A*X.
@@ -92,7 +93,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   public :: GetVectorQtyByTemplateIndex, GetVectorQuantityIndexByName
   public :: GetVectorQuantityIndexByType, IsVectorQtyMasked, MultiplyVectors
   public :: RmVectorFromDatabase, ScaleVector, SetMask, SubtractFromVector
-  public :: SubtractVectors, ValidateVectorQuantity
+  public :: SubtractVectors, ValidateVectorQuantity, MaskVectorQty
   ! Types
   public :: VectorTemplate_T, VectorValue_T, Vector_T
 
@@ -1266,6 +1267,24 @@ contains ! =====     Public Procedures     =============================
 
   end function IsVectorQtyMasked
 
+  ! -------------------------------  MaskVectorQty  -----
+  subroutine MaskVectorQty ( vectorQty, Row, Column )
+
+  ! Set the mask for VectorQty for address; meaning
+  ! If set, don't use vectorQty%values(Row, Column)
+  ! Otherwise, go ahead
+  
+  ! Formal args
+    type (VectorValue_T), intent(inout) :: vectorQty
+    integer, intent(in) ::              ROW
+    integer, intent(in) ::              COLUMN
+
+    if ( .not. associated(vectorQty%mask)) return
+    vectorQty%mask((row-1)/b + 1, column) = &
+      & ibset( vectorQty%mask((row-1)/b + 1, column), mod(row-1, b) )
+
+  end subroutine MaskVectorQty
+
   !---------------------------------------------  MultiplyVectors  -----
   subroutine MultiplyVectors ( X, Y, Z, Quant, Inst )
   ! If Z is present, destroy Z and clone a new one from X, then
@@ -1643,6 +1662,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.71  2001/10/18 23:49:46  livesey
+! Tidied up a floating comma in dump_vector
+!
 ! Revision 2.70  2001/10/18 23:31:56  pwagner
 ! Expanded use of details in dump_vectors; stops if try to rmVectorFromDatabase
 !
