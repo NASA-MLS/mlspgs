@@ -40,12 +40,23 @@ PLATFORMS = .
 
 SHELL = /bin/sh
 
+# where sources for libmls.a are stored
+libmls_sources=../../../lib
+
+# where objects and libmls.a are stored
+libmls_objs=$(libmls_sources)/$(MLSCONFG)
+
+libmls_f90 := $(wildcard $(libmls_sources)/*.f90)
+
 PROG=test
 
 TESTOUTPUT=out.test
 
-$(PROG): $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG)
+$(PROG): $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
+
+$(libmls_objs)/libmls.a: $(libmls_f90)
+	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
 output: $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG)
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(TESTOUTPUT)
@@ -81,6 +92,9 @@ clean:
 		rmdir $(PLATFORMS)/$(MLSCONFG) ; \
 	fi
 # $Log$
+# Revision 1.2  2000/11/06 17:24:05  pwagner
+# Shared source library
+#
 # Revision 1.1  2000/10/20 23:35:50  pwagner
 # first commit
 #
