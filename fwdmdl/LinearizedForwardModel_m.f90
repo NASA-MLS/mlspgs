@@ -53,7 +53,7 @@ contains ! =====     Public Procedures     =============================
     use ManipulateVectorQuantities, only: FINDONECLOSESTINSTANCE, &
       & DOHGRIDSMATCH, DOVGRIDSMATCH, DOFGRIDSMATCH
     use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, &
-      & MATRIXELEMENT_T, CREATEBLOCK, DENSIFY
+      & MATRIXELEMENT_T, CREATEBLOCK, DENSIFY, CHECKFORSIMPLEBANDEDLAYOUT
     use MatrixModule_1, only: MATRIX_T, MULTIPLYMATRIXVECTORNOT, DUMP, &
       & FINDBLOCK, CREATEBLOCK
     use MLSCommon, only: r8, rm
@@ -210,14 +210,17 @@ contains ! =====     Public Procedures     =============================
     if ( .not. associated ( radiance ) ) call MLSMessage ( &
       & MLSMSG_Error, ModuleName, &
       & 'Unable to find a radiance or optical depth quantity for this signal' )
-    if ( radiance%template%quantityType == l_opticalDepth .and. &
-      & present(jacobian)  ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Not appropriate to ask for derivatives for optical depth' )
-    if ( radiance%template%quantityType == l_opticalDepth .and. &
-      & fmConf%xStar /= 0 ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Not appropriate to supply x/yStar for optical depth' )
+    if ( radiance%template%quantityType == l_opticalDepth ) then
+      if ( present(jacobian)  ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Not appropriate to ask for derivatives for optical depth' )
+      if ( fmConf%xStar /= 0 ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Not appropriate to supply x/yStar for optical depth' )
+      if  ( signal%sideband /= 0 ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Not appropriate to request optical depth from unfolded signal' )
+    end if
     if ( fmConf%xStar /= 0 .and. .not. present(vectors) ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'x/yStar supplied by vectors database argument not present' )
@@ -598,6 +601,7 @@ contains ! =====     Public Procedures     =============================
             & noMIFs*noChans, bandHeight=noChans )
           jBlock%values = 0.0_rm
         case (m_banded)
+          call CheckForSimpleBandedLayout ( jBlock, noChans, 'jBlock in Linearized model' )
         case default
           call MLSMessage ( MLSMSG_Error, ModuleName,&
             & 'Wrong matrix type for ptan derivative')
@@ -1001,43 +1005,47 @@ contains ! =====     Public Procedures     =============================
                 & l2pcDatabase(bin)%col%vec, quantityType=sel%selectorType, &
                 & noError=.true. )
             end if
-            if ( .not. ValidateVectorQuantity ( l2pcQ,&
-              & verticalCoordinate = (/ l_zeta /) ) ) &
-              & call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & 'Expected zeta coordinate for quantity in binSelector' )
-            ! Find the relevant corresponding quantity in the state vector
-            call FindMatchForL2PCQ ( l2pcQ, fmConf, fwdModelIn, &
-              & fwdModelExtra, stateQ, foundInFirst )
-            ! If we've got both of them make sure they match
-            if ( associated(stateQ) .and. associated(l2pcQ) ) then
-              ! OK, identify height range
-              if ( all ( binSelectors(selector)%heightRange > 0.0 ) ) then
-                s1 = minloc ( abs ( stateQ%template%surfs(:,1) + &
-                  & log10(binSelectors(selector)%heightRange(1) ) ) )
-                s2 = minloc ( abs ( stateQ%template%surfs(:,1) + &
-                  & log10(binSelectors(selector)%heightRange(2) ) ) )
-              else
-                s1 = 1
-                s2 = stateQ%template%noSurfs
-              end if
-              ! Here we'll just compare the central profile in the
-              ! l2pc with the state profile closest to each maf.
-              l2pcInstance = l2pcQ%template%noInstances/2 + 1
-              thisCost = 0.0_r8
-              do myMaf = maf1, mafN
-                ! Only compare the closest profile to the maf
-                stateInstance = FindOneClosestInstance ( stateQ, radiance, myMaf )
-                thisCost = thisCost + sum ( &
-                  & ( stateQ%values ( s1(1):s2(1), stateInstance ) - &
-                  &   l2pcQ%values  ( s1(1):s2(1), l2pcInstance  ) ) **2 )
-              end do
-              ! If we require an exact match set the possible flag,
-              ! otherwise just report our cost.
-              if ( sel%exact ) then
-                possible ( :, bin ) = EssentiallyEqual ( thisCost, 0.0_r8 )
-              else
-                cost ( bin ) = cost ( bin ) + sqrt ( thisCost / &
-                  &  ( ( s2(1)-s1(1)+1 ) * ( mafN - maf1 + 1 ) ) ) / sel%cost
+            if ( .not. associated ( l2pcQ ) ) then
+              possible ( :, bin ) = .false.
+            else
+              if ( .not. ValidateVectorQuantity ( l2pcQ,&
+                & verticalCoordinate = (/ l_zeta /) ) ) &
+                & call MLSMessage ( MLSMSG_Error, ModuleName, &
+                & 'Expected zeta coordinate for quantity in binSelector' )
+              ! Find the relevant corresponding quantity in the state vector
+              call FindMatchForL2PCQ ( l2pcQ, fmConf, fwdModelIn, &
+                & fwdModelExtra, stateQ, foundInFirst )
+              ! If we've got both of them make sure they match
+              if ( associated(stateQ) .and. associated(l2pcQ) ) then
+                ! OK, identify height range
+                if ( all ( binSelectors(selector)%heightRange > 0.0 ) ) then
+                  s1 = minloc ( abs ( stateQ%template%surfs(:,1) + &
+                    & log10(binSelectors(selector)%heightRange(1) ) ) )
+                  s2 = minloc ( abs ( stateQ%template%surfs(:,1) + &
+                    & log10(binSelectors(selector)%heightRange(2) ) ) )
+                else
+                  s1 = 1
+                  s2 = stateQ%template%noSurfs
+                end if
+                ! Here we'll just compare the central profile in the
+                ! l2pc with the state profile closest to each maf.
+                l2pcInstance = l2pcQ%template%noInstances/2 + 1
+                thisCost = 0.0_r8
+                do myMaf = maf1, mafN
+                  ! Only compare the closest profile to the maf
+                  stateInstance = FindOneClosestInstance ( stateQ, radiance, myMaf )
+                  thisCost = thisCost + sum ( &
+                    & ( stateQ%values ( s1(1):s2(1), stateInstance ) - &
+                    &   l2pcQ%values  ( s1(1):s2(1), l2pcInstance  ) ) **2 )
+                end do
+                ! If we require an exact match set the possible flag,
+                ! otherwise just report our cost.
+                if ( sel%exact ) then
+                  possible ( :, bin ) = EssentiallyEqual ( thisCost, 0.0_r8 )
+                else
+                  cost ( bin ) = cost ( bin ) + sqrt ( thisCost / &
+                    &  ( ( s2(1)-s1(1)+1 ) * ( mafN - maf1 + 1 ) ) ) / sel%cost
+                end if
               end if
             end if
           end select                  ! Bin selector type
@@ -1117,6 +1125,10 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.47  2003/09/15 17:42:52  livesey
+! Various bug fixes associated with getting the polar linear model
+! working.
+!
 ! Revision 2.46  2003/09/11 23:10:32  livesey
 ! Added option to linearize around pre-computed state/radiances instead of
 ! those in the l2pc file.
