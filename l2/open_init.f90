@@ -28,16 +28,15 @@ module Open_Init
   private
   public :: DestroyL1BInfo, OpenAndInitialize
 
-  ! -----     Private declarations     ---------------------------------
-
-  private :: Id, ModuleName
   !------------------------------- RCS Ident Info ------------------------------
-  character(len=130) :: id = &
-    "$id: open_init.f90,v 1.11 2000/06/19 22:40:51 lungu Exp $"
-  character(len=*), parameter :: ModuleName="$RCSfile$"
+  character(len=*), private, parameter :: IdParm = &
+    "$Id$"
+  character(len=len(idParm)), private :: Id = idParm
+  character(len=*), parameter, private :: ModuleName = &
+    & "$RCSfile$"
   !-----------------------------------------------------------------------------
 
-  integer, parameter :: CCSDSLen = 27
+  integer, parameter, private :: CCSDSLen = 27
   integer, private :: ERROR
 
 contains ! =====     Public Procedures     =============================
@@ -51,7 +50,7 @@ contains ! =====     Public Procedures     =============================
        deallocate ( l1bInfo%L1BRADIDs, stat=status )
        if ( status /= 0 ) then
        ! call MLSMessage ( MLSMSG_Error, ModuleName, &
-       !     & MLSMSG_DeAllocate // "l1bInfo" )
+       !   & MLSMSG_DeAllocate // "l1bInfo" )
          call announce_error ( 0, 'Error deallocating L1BRADIDs' )
       end if
     end if
@@ -67,57 +66,62 @@ contains ! =====     Public Procedures     =============================
 
     ! Arguments
 
-    type (TAI93_Range_T) :: processingRange ! Data processing range
-    type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
-    type(PCFData_T) :: l2pcf
-    character (len=1), pointer :: anText(:)
+    !??? Specify intents for non-pointer dummy arguments ???
+    type(TAI93_Range_T) :: ProcessingRange   ! Data processing range
+    type(L1BInfo_T) :: L1bInfo               ! File handles etc. for L1B dataset
+    type(PCFData_T) :: L2pcf                 !??? What is it ???
+    character (len=1), pointer :: AnText(:)  !??? What is it ???
+
+    !??? Are there interfaces defined for these somewhere ???
+    integer, external :: PGS_pc_getConfigData
     integer, external :: Pgs_pc_getFileSize
+    integer, external :: PGS_td_utctotai
 
     !Local Variables
     logical, parameter :: DEBUG = .FALSE.
     integer, parameter :: CCSDSEndId = 10412
     integer, parameter :: CCSDSStartId = 10411
+    character(len=*), parameter :: DefaultAnText = &
+      & 'PCF file number missing from PCF--add this line'
 
-    character(len=*), parameter :: DEFAULTANTEXT = &
-	 & 'PCF file number missing from PCF--add this line'
+    !??? Specify what the variables are used for ???
     character(len=CCSDSlen) CCSDSEndTime
     character(len=CCSDSlen) CCSDSStartTime
     integer :: Ifl1
+    integer :: Indx
     integer :: L1FileHandle, L1_Version
-    character (LEN=FileNameLen) :: L1physicalFilename
+    character (len=FileNameLen) :: L1physicalFilename
+    integer :: Mlspcf_log
+    character (len=FileNameLen) :: Name
     integer :: ReturnStatus
     integer :: SD_id
-    integer :: STATUS, Size ! From allocate
-
-    character (len=FileNameLen) :: Name
-
-    integer ::  Indx, Mlspcf_log, Version
-
-    integer :: PGS_td_utctotai, PGS_pc_getconfigdata
+    integer :: Size
+    integer :: Status ! From allocate or PGS...
+    integer :: Version
 
     error = 0
     if ( toggle(gen) ) call trace_begin ( "OpenAndInitialize" )
 
-    if ( DEBUG ) call announce_error(0, &
-      & 'Read the PCF into an annotation for file headers')
+    if ( DEBUG ) call announce_error ( 0, &
+      & 'Read the PCF into an annotation for file headers' )
 
 ! Read the PCF into an annotation for file headers
 
     version = 1
-    Status = Pgs_pc_getFileSize(mlspcf_pcf_start, version, size)
+    status = Pgs_pc_getFileSize(mlspcf_pcf_start, version, size)
     if ( Status == PGS_S_SUCCESS ) then
       call createPCFAnnotation(mlspcf_pcf_start, anText)
     else
-      call announce_error ( 0, DEFAULTANTEXT )
-      size = len(DEFAULTANTEXT) + 1
+      call announce_error ( 0, defaultAnText )
+      size = len(defaultAnText) + 1
       allocate ( anText(size), STAT=Status )
-      anText(1:size-1) = DEFAULTANTEXT(1:size-1)
-      error=PENALTY_FOR_NO_METADATA
+      anText(1:size-1) = defaultAnText(1:size-1)
+      error = PENALTY_FOR_NO_METADATA
     end if
 
     ifl1 = 0
 
-    if ( DEBUG ) call announce_error(0, 'Opening L1 RAD files')
+    if ( DEBUG ) call announce_error ( 0, 'Opening L1 RAD files' )
 
     ! Open L1 RAD files
     do L1FileHandle = mlspcf_l1b_rad_start, mlspcf_l1b_rad_end
@@ -137,16 +141,16 @@ contains ! =====     Public Procedures     =============================
         allocate ( l1bInfo%L1BRADIDs(10), stat=status )
         if ( status /= 0 ) then
 !         call MLSMessage ( MLSMSG_Error, ModuleName, &
-!            & MLSMSG_Allocate // "l1bInfo" )
-          call announce_error(0, 'Allocation failed for L1BRADIDs')
+!           & MLSMSG_Allocate // "l1bInfo" )
+          call announce_error ( 0, 'Allocation failed for L1BRADIDs' )
         end if
 
         sd_id = sfstart(L1physicalFilename, DFACC_READ)
         if ( sd_id == -1 ) then
 !          call MLSMessage ( MLSMSG_Error, ModuleName, &
 !            & "Error opening L1RAD file "//L1physicalFilename )
-          call announce_error(0, &
-            & 'Error opening L1RAD file: ' //L1physicalFilename)
+          call announce_error ( 0, &
+            & 'Error opening L1RAD file: ' // L1physicalFilename )
         else
           ifl1 = ifl1 + 1
           l1bInfo%L1BRADIDs(ifl1) = sd_id
@@ -157,7 +161,7 @@ contains ! =====     Public Procedures     =============================
     !if ( ifl1 == 0) call MLSMessage ( MLSMSG_Error, ModuleName, &
     !  & "Could not find any L1BRAD files" )
 
-    if ( DEBUG ) call announce_error(0, 'Opening LOA file')
+    if ( DEBUG ) call announce_error ( 0, 'Opening LOA file' )
     ! Open L1OA File
 
     L1_Version = 1
@@ -173,7 +177,8 @@ contains ! =====     Public Procedures     =============================
 
 !        call MLSMessage ( MLSMSG_Error, ModuleName, &
 !          & "Error opening L1OA file "//L1physicalFilename )
-        call announce_error ( 0, "Error opening L1OA file "//L1physicalFilename )
+        call announce_error ( 0, &
+          & "Error opening L1OA file " // L1physicalFilename )
       else
         l1bInfo%L1BOAID = sd_id
       end if
@@ -181,7 +186,7 @@ contains ! =====     Public Procedures     =============================
     else
 
 !      call MLSMessage ( MLSMSG_Error, ModuleName, "Could not find L1BOA file" )
-      call announce_error(0, "Could not find L1BOA file" )
+      call announce_error ( 0, "Could not find L1BOA file" )
 
     end if
 
@@ -191,30 +196,30 @@ contains ! =====     Public Procedures     =============================
     if ( returnstatus /= PGS_S_SUCCESS ) then
       ! call MLSMessage ( MLSMSG_Error, &
       !   & ModuleName, "Could not get CCSDS Start Time" )
-      call announce_error(0, "Could not get CCSDS Start Time" )
+      call announce_error ( 0, "Could not get CCSDS Start Time" )
     end if
 
     returnStatus = pgs_td_utctotai (CCSDSStartTime, processingrange%starttime)
     !   ??? Is PGSTD_E_NO_LEAP_SECS an OK status ???
     if ( returnstatus /= PGS_S_SUCCESS .and. &
       &  returnstatus /= PGSTD_E_NO_LEAP_SECS ) then
-    !	call MLSMessage ( MLSMSG_Error, &
+    ! call MLSMessage ( MLSMSG_Error, &
     !   & ModuleName, "Could not convert UTC Start time to TAI" )
-      call announce_error(0, "Could not convert UTC Start time to TAI" )
+      call announce_error ( 0, "Could not convert UTC Start time to TAI" )
     end if
 
     returnStatus = pgs_pc_getconfigdata (CCSDSEndId, CCSDSEndTime)
     if ( returnstatus /= PGS_S_SUCCESS ) then
-    !	call MLSMessage ( MLSMSG_Error, &
+    ! call MLSMessage ( MLSMSG_Error, &
     !  & ModuleName, "Could not get CCSDS End Time" )
-      call announce_error(0, "Could not get CCSDS End Time" )
+      call announce_error ( 0, "Could not get CCSDS End Time" )
     end if
 
     returnStatus = pgs_td_utctotai (CCSDSEndTime, processingrange%endtime)
     !   ??? Is PGSTD_E_NO_LEAP_SECS an OK status ???
     if ( returnstatus /= PGS_S_SUCCESS .and. &
       & returnstatus /= PGSTD_E_NO_LEAP_SECS ) then
-    !	call MLSMessage ( MLSMSG_Error, &
+    ! call MLSMessage ( MLSMSG_Error, &
     !   & ModuleName, "Could not convert UTC Start time to TAI" )
       call announce_error ( 0, "Could not convert UTC End time to TAI" )
     end if
@@ -229,7 +234,7 @@ contains ! =====     Public Procedures     =============================
 !      returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_OutputVersion, &
 !                                          l2pcf%outputVersion)
     l2pcf%outputVersion = '1'
-	
+
 !   returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_Cycle, l2pcf%cycle)
     l2pcf%cycle = '1'
 
@@ -239,13 +244,14 @@ contains ! =====     Public Procedures     =============================
 ! Get the name of the log file from the PCF
 
     version = 1
-    mlspcf_log = 10101			! This seems to be hard-wired into PCF
+    !??? Invent a parameter for the number below ???
+    mlspcf_log = 10101             ! This seems to be hard-wired into PCF
 
     returnStatus = Pgs_pc_getReference(mlspcf_log, version, name)
     if ( returnStatus /= PGS_S_SUCCESS ) then
     ! call MLSMessage ( MLSMSG_Error, &
-    !                  ModuleName, 'Error retrieving log file name from PCF.' )
-      call announce_error(0, "Error retrieving log file name from PCF" )
+    !   & ModuleName, 'Error retrieving log file name from PCF.' )
+      call announce_error ( 0, "Error retrieving log file name from PCF" )
     end if
 
     indx = INDEX(name, '/', .TRUE.)
@@ -259,7 +265,7 @@ contains ! =====     Public Procedures     =============================
     if ( toggle(gen) ) then
       if ( levels(gen) > 0 .or. index(switches,'L') /= 0 ) &
         & call dump_L1B_database ( ifl1, l1binfo, l2pcf, &
-  			& CCSDSEndTime, CCSDSStartTime )
+          & CCSDSEndTime, CCSDSStartTime )
       call trace_end ( "OpenAndInit" )
     end if
     return
@@ -332,12 +338,12 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine Dump_L1B_database
 
-  ! ------------------------------------------------  announce_error  -----
+  ! ------------------------------------------------  Announce_Error  -----
   subroutine Announce_Error ( lcf_where, full_message, use_toolkit, &
     & error_number )
   
     ! Arguments
-	
+
     integer, intent(in) :: Lcf_where
     character(LEN=*), intent(in) :: Full_message
     logical, intent(in), optional :: Use_toolkit
@@ -360,8 +366,7 @@ contains ! =====     Public Procedures     =============================
         call output ( '(no lcf node available)' )
       end if
 
-      call output ( ': ' )
-      call output ( "The " );
+      call output ( ": The " );
       if ( lcf_where > 0 ) then
         call dump_tree_node ( lcf_where, 0 )
       else
@@ -373,13 +378,13 @@ contains ! =====     Public Procedures     =============================
       call output ( trim(full_message), advance='yes', &
         & from_where=ModuleName)
       if ( present(error_number) ) then
-        call output ( 'error number ', advance='no' )
+        call output ( 'Error number ', advance='no' )
         call output ( error_number, places=9, advance='yes' )
       end if
     else
       call output ( '***Error in module ' )
       call output ( ModuleName, advance='yes' )
-      call output ( trim(full_message) )
+      call output ( trim(full_message), advance='yes' )
       if ( present(error_number) ) then
         call output ( 'Error number ' )
         call output ( error_number, advance='yes' )
@@ -394,112 +399,115 @@ end module Open_Init
 
 !=============================================================================
 
-!
+
 ! $Log$
+! Revision 2.36  2001/04/11 02:00:01  vsnyder
+! Add advance='yes' to final output in Announce_Error
+!
 ! Revision 2.35  2001/04/11 00:47:25  vsnyder
 ! Comment out an error test
-!
+
 ! Revision 2.34  2001/04/11 00:33:45  vsnyder
 ! use 'output' instead of 'print'
-!
+
 ! Revision 2.33  2001/04/11 00:00:56  vsnyder
 ! Improve 'dump'
-!
+
 ! Revision 2.32  2001/04/10 23:00:29  pwagner
 ! Keeps track of whether to quit if no metadata
-!
+
 ! Revision 2.31  2001/04/06 20:20:43  vsnyder
 ! Improve an error message
-!
+
 ! Revision 2.30  2001/04/06 18:01:00  pwagner
 ! Checks on pcf number before PCFCreateAnnotation
-!
+
 ! Revision 2.29  2001/04/05 23:44:53  pwagner
 ! Fixed tiny error
-!
+
 ! Revision 2.28  2001/04/05 23:40:50  pwagner
 ! Deleted open_mlscf and close_mlscf and all MLSMessages
-!
+
 ! Revision 2.27  2001/04/04 23:46:18  pwagner
 ! Added trace_*, dump_l1b_database
-!
+
 ! Revision 2.26  2001/04/03 20:51:27  pwagner
 ! Added anText; deleted read_apriori
-!
+
 ! Revision 2.25  2001/04/02 23:39:09  pwagner
 ! Now fills components of l2pcf
-!
+
 ! Revision 2.24  2001/03/28 19:07:59  vsnyder
 ! Finish removing use of MLSSignalNomenclature
-!
+
 ! Revision 2.23  2001/03/28 19:07:08  vsnyder
 ! Remove use of MLSSignalNomenclature
-!
+
 ! Revision 2.22  2001/03/15 21:18:57  vsnyder
 ! Use Get_Spec_ID instead of decoration(subtree...
-!
+
 ! Revision 2.21  2001/03/10 07:07:58  livesey
 ! Made it not mind if no L1B radiance files.
-!
+
 ! Revision 2.20  2001/03/07 22:49:17  vsnyder
 ! Commented-out more USEd entities that NAG says actually aren't used.
-!
+
 ! Revision 2.19  2001/03/03 00:08:58  pwagner
 ! Lost read_apriori and read_mlscf to new modules
-!
+
 ! Revision 2.18  2001/02/27 01:30:46  vsnyder
 ! Commented-out several USEd entities that NAG says actually aren't used.
-!
+
 ! Revision 2.17  2001/02/23 18:17:35  livesey
 ! Added trace calls
-!
+
 ! Revision 2.16  2001/02/23 00:53:07  vsnyder
 ! Correct an error message
-!
+
 ! Revision 2.15  2001/02/16 00:48:07  livesey
 ! Added stuff to read l2gp's in
-!
+
 ! Revision 2.14  2001/02/13 22:59:36  pwagner
 ! l2 modules can only use MLSPCF2
-!
+
 ! Revision 2.13  2001/02/09 00:38:22  livesey
 ! Various updates
-!
+
 ! Revision 2.12  2001/02/08 00:58:14  vsnyder
 ! Correct calculation of "field"
-!
+
 ! Revision 2.11  2001/01/03 00:47:21  pwagner
 ! calls READL2AUXData from L2AUXData module
-!
+
 ! Revision 2.10  2000/12/04 21:47:46  pwagner
 ! Uses parser better
-!
+
 ! Revision 2.9  2000/12/02 01:11:59  pwagner
 ! Added ReadL2AUXData
-!
+
 ! Revision 2.8  2000/12/02 00:00:40  vsnyder
 ! More misc. cleanup.
-!
+
 ! Revision 2.7  2000/12/01 23:35:25  vsnyder
 ! Use abstract syntax tree more efficiently, general clean-up -- alphabetization
 ! etc.
-!
+
 ! Revision 2.6  2000/11/30 00:23:58  pwagner
 ! functions properly moved here from Fill
-!
+
 ! Revision 2.5  2000/11/29 17:35:30  pwagner
 ! Compiles now
-!
+
 ! Revision 2.4  2000/11/29 00:27:54  pwagner
 ! Began changes to open old l2gp
-!
+
 ! Revision 2.3  2000/11/16 01:02:16  vsnyder
 ! Correct an error message.
-!
+
 ! Revision 2.2  2000/09/11 19:48:01  ahanzel
 ! Removed old log entries in file.
-!
+
 ! Revision 2.1  2000/09/08 22:55:56  vsnyder
 ! Revised to use the tree output by the parser
-!
+
 
