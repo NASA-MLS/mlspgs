@@ -28,6 +28,7 @@ program MLSL2
   use TREE_CHECKER, only: CHECK_TREE
   use TREE_WALKER, only: WALK_TREE_TO_DO_MLS_L2
   use PVM, only: ClearPVMArgs, NextPVMArg, FreePVMArgs
+  use SnoopMLSL2, only: SNOOPINGACTIVE
 
   implicit NONE
 
@@ -92,6 +93,8 @@ program MLSL2
         pcf_for_input = switch
       else if ( line(3+n:6+n) == 'kit ' ) then
         MLSMessageConfig%useToolkit = switch
+      else if ( line(3+n:8+n) == 'snoop ' ) then
+        snoopingActive = .true.
       else if ( line(3+n:7+n) == 'meta ' ) then
         createMetadata = switch
       else if ( line(3+n:6+n) == 'pcf ' ) then
@@ -336,6 +339,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.53  2001/09/19 23:43:49  livesey
+! Added --snoop option
+!
 ! Revision 2.52  2001/07/19 22:00:09  pwagner
 ! Better behaved when l2cf is stdin
 !
