@@ -347,11 +347,15 @@ contains ! =====     Public Procedures     =============================
       call display_string ( l2aux%name, ierr=ierr )
       if ( ierr /= 0 ) call output ( '(not found in string table)')
       if ( myDetails < -1 ) return
-      call output ( '    instrumentmodule: ')
-      call display_string ( modules(l2aux%instrumentmodule)%name, advance='yes', ierr=ierr ) 
-      if ( ierr /= 0 ) call output ( '(not found in string table)', advance='yes')
-      call output ( '    (its index): ')
-      call output ( l2aux%instrumentmodule, advance='no')
+      if ( associated(modules) ) then
+        call output ( '    instrumentmodule: ')
+        call display_string ( modules(l2aux%instrumentmodule)%name, &
+          & advance='yes', ierr=ierr ) 
+        if ( ierr /= 0 ) call output ( '(not found in string table)', &
+          & advance='yes')
+        call output ( '    (its index): ')
+        call output ( l2aux%instrumentmodule, advance='no')
+      endif
       call output ( ' ', advance='yes')
       call output ( '  Minor Frame? (t/f): ')
       call output ( l2aux%minorframe, advance='no')
@@ -489,8 +493,8 @@ contains ! =====     Public Procedures     =============================
               call MLSMessage ( MLSMSG_Error, ModuleName, &
                 & 'Unrecognized dimension in l2aux:'//trim(dim_name) )
             else
-              dim_families(1) = l_channel
-              data_dim_sizes(1) = dim_size1
+              dim_families(dim) = l_channel
+              data_dim_sizes(dim) = dim_size1
             endif
           end select
         endif
@@ -874,6 +878,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.38  2002/12/03 18:04:02  pwagner
+! Repaired bug that caused WriteL2AUXData files to be tiny
+!
 ! Revision 2.37  2002/12/02 23:42:12  pwagner
 ! Optional param checkDimNames to ReadL2AUXData; defaults to FALSE
 !
