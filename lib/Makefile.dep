@@ -62,7 +62,7 @@ MLSNumerics.o: MLSNumerics.f90 Allocate_Deallocate.o MLSCommon.o \
 	MLSMessageModule.o MLSStrings.o MatrixModule_0.o
 MLSSignalNomenclature.o: MLSSignalNomenclature.f90 MLSCommon.o \
 	MLSMessageModule.o MLSStrings.o intrinsic.o
-MLSStrings.o: MLSStrings.f90 MLSMessageModule.o
+MLSStrings.o: MLSStrings.f90 MLSCommon.o MLSMessageModule.o
 Molecules.o: Molecules.f90 symbol_table.o symbol_types.o
 MoreTree.o: MoreTree.f90 intrinsic.o tree.o tree_types.o
 output_m.o: output_m.f90 MLSMessageModule.o
