@@ -475,7 +475,8 @@ contains ! =====     Public Procedures     =============================
   end subroutine ConstructVectorTemplate
 
   ! -------------------------------------------------  CopyVector  -----
-  subroutine CopyVector ( Z, X, CLONE, Quant, Inst, NoValues, NoMask )
+  subroutine CopyVector ( Z, X, CLONE, Quant, Inst, NoValues, NoMask, &
+    & VectorNameText )
   ! If CLONE is present and .true., Destroy Z, deep Z = X, except the
   ! name of Z is not changed.  Otherwise, copy only the values and mask
   ! of X to Z.  If NoValues or NoMask is present and true, don't copy
@@ -490,6 +491,7 @@ contains ! =====     Public Procedures     =============================
     !  is not, the entire vector is copied.
     logical, intent(in), optional :: NoValues, NoMask  ! If present and true,
     !  don't copy the values/mask
+    character(len=*), intent(in), optional :: VectorNameText
     logical :: DoMask, DoValues
     integer :: I
     logical MyClone
@@ -500,7 +502,7 @@ contains ! =====     Public Procedures     =============================
     doValues = .true.
     if ( present(noValues) ) doValues = .not. noValues
     if ( myclone ) then
-      call cloneVector ( Z, X, vectorNameText='_Z' )
+      call cloneVector ( Z, X, vectorNameText=vectorNameText )
     else
       if ( x%template%id /= z%template%id ) call MLSMessage &
         & ( MLSMSG_Error, ModuleName, 'Incompatible vectors in CopyVector' )
@@ -1507,6 +1509,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.62  2001/10/02 23:39:15  vsnyder
+! Add quantity name to error message in GetVectorQuantityIndexByType
+!
 ! Revision 2.61  2001/10/02 19:00:50  vsnyder
 ! Add ClearVector subroutine
 !
