@@ -1837,10 +1837,16 @@ contains
       ! the infinite loop in the convolution (Hunt on angles) that
       ! results otherwise).
 
+      if ( index(switches,'ptg') /= 0 ) then
+        call Dump ( ptg_angles, 'ptg_angles (before any patch)' )
+      end if
       do ptg_i = 2, no_tan_hts - 1
         ! this is a temporary fix
         if ( ptg_angles(ptg_i) < ptg_angles(ptg_i-1) )  &
-           & ptg_angles(ptg_i) = (ptg_angles(ptg_i-1) + ptg_angles(ptg_i+1))/2
+          & ptg_angles(ptg_i) = (ptg_angles(ptg_i-1) + ptg_angles(ptg_i+1))/2
+        if ( index(switches,'ptg') /= 0 ) then
+          call Dump ( ptg_angles, 'ptg_angles (after a patch)' )
+        end if
 !        if ( ptg_angles(ptg_i) < ptg_angles(ptg_i-1) )  &
 !          & call MLSMessage ( MLSMSG_Error, ModuleName, &
 !          & 'Pointing angles in wrong order, too much refraction?' )
@@ -3084,6 +3090,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.214  2004/08/03 22:07:10  vsnyder
+! Inching further toward PFA
+!
 ! Revision 2.213  2004/07/30 19:53:18  livesey
 ! Bug fix, forbid extrapolation in Estimate_tan_phi
 !
