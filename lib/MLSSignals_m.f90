@@ -37,6 +37,8 @@ module MLSSignals_M
   public :: GetRadiometerName, GetSignal, GetSignalName
   public :: GetSpectrometerTypeName, IsModuleSpacecraft, MLSSignals
 
+  integer, public, parameter :: MaxSigLen = 80 ! Maximum length of a signal name
+
   ! =====     Defined Operators and Generic Identifiers     ==============
   
   interface Dump
@@ -951,6 +953,9 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.11  2001/03/29 23:52:31  vsnyder
+! Added MaxSigLen parameter
+!
 ! Revision 2.10  2001/03/28 19:51:58  vsnyder
 ! Remove "frequencies" and "widths" fields.  Use range instead in a "channels"
 ! field.  Put in units checking for every numeric field.
