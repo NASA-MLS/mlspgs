@@ -17,6 +17,7 @@
 # $Id$
 
 a                # polarization
+adopted
 angle
 
 b                # polarization
@@ -195,6 +196,9 @@ xyz
 zeta
 
 # $Log$
+# Revision 2.31  2004/01/24 01:00:32  livesey
+# Added adopted
+#
 # Revision 2.30  2004/01/23 05:35:00  livesey
 # Added rows and columns
 #
