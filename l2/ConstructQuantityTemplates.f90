@@ -936,7 +936,7 @@ contains ! ============= Public procedures ===================================
   subroutine InitQuantityTemplates
     ! This routine initializes the quantity template properties
     ! This is the routine one needs to update when one introduces a new quantity type.
-    use Init_Tables_Module, only:  L_BASELINE, L_BOUNDARYPRESSURE, &
+    use Init_Tables_Module, only:  L_ADOPTED, L_BASELINE, L_BOUNDARYPRESSURE, &
       L_CALSIDEBANDFRACTION, &
       L_CHISQBINNED, L_CHISQCHAN, L_CHISQMMAF, L_CHISQMMIF, L_CLOUDICE, &
       L_CLOUDINDUCEDRADIANCE, L_CLOUDEXTINCTION, L_CLOUDRADSENSITIVITY, &
@@ -986,6 +986,7 @@ contains ! ============= Public procedures ===================================
     unitsTable = 0
 
     call DefineQtyTypes ( (/ &
+      l_adopted, phyq_dimensionless, none, next, &
       l_baseline, phyq_temperature, p_hGrid, p_vGrid, p_fGrid, p_radiometer, &
                   p_mustBeZeta, next, &
       l_boundaryPressure, phyq_pressure, p_hGrid, next, &
@@ -1184,6 +1185,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.106  2004/01/24 01:03:46  livesey
+! Added the adopted option etc.
+!
 ! Revision 2.105  2003/08/08 23:06:53  livesey
 ! Added the fieldStrength etc. quantities.
 !
