@@ -2950,6 +2950,7 @@ contains
       integer :: INSTANCEOR1            ! For coherent quantities
       integer :: MASK                   ! Which thing are we talking about?
       integer :: MaskBit                ! Bits corresponding to Mask
+      integer :: MAINVECTORINDEX        ! Vector index of quantity to subset
       integer :: NROWS                  ! Loop limit dumping mask
       integer :: ODCUTOFFHEIGHT         ! `First' index optically thick
       integer :: QUANTITYINDEX          ! Index
@@ -2991,15 +2992,17 @@ contains
       ignore = .false.
       reset = .false.
       maskBit = m_linalg
+      minUnit = 0
+      maxUnit = 0
       do j = 2, nsons(key) ! fields of the "subset" specification
         son = subtree(j, key)
         field = get_field_id(son)   ! tree_checker prevents duplicates
         if (nsons(son) > 1 ) gson = subtree(2,son) ! Gson is value
         select case ( field )
         case ( f_quantity )
-          vectorIndex = decoration(decoration(subtree(1,gson)))
+          mainVectorIndex = decoration(decoration(subtree(1,gson)))
           quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
-          qty => GetVectorQtyByTemplateIndex(vectors(vectorIndeX), quantityIndex)
+          qty => GetVectorQtyByTemplateIndex(vectors(mainVectorIndex), quantityIndex)
         case ( f_ptanquantity )
           vectorIndex = decoration(decoration(subtree(1,gson)))
           quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -3044,7 +3047,7 @@ contains
           call expr ( subtree (2, son), units, value, type )
           if ( type /= num_value ) call announceError ( &
             & rangeNotAppropriate, f_opticalDepthCutoff )
-          minUnit = value(1)
+          minUnit = units(1)
           minValue = value(1)
         case ( f_ignore )
           ignore = Get_Boolean ( son )
@@ -3068,15 +3071,15 @@ contains
           & call AnnounceError ( badOpticalDepthSignal, key )
       endif
       
-      if ( vectors(vectorIndex)%globalUnit /= phyq_dimensionless ) then
-        testUnit = vectors(vectorIndex)%globalUnit
+      if ( vectors(mainVectorIndex)%globalUnit /= phyq_dimensionless ) then
+        testUnit = vectors(mainVectorIndex)%globalUnit
       else
         testUnit = qty%template%unit
       end if
       if ( got ( f_minValue ) .and. ( minUnit /= testUnit ) ) &
-        & call AnnounceError ( WrongUnits, key )
+        & call AnnounceError ( WrongUnits, f_minValue, string="different" )
       if ( got ( f_maxValue ) .and. ( maxUnit /= testUnit ) ) &
-        & call AnnounceError ( WrongUnits, key )
+        & call AnnounceError ( WrongUnits, f_maxValue, string="different" )
 
       ! Process the channels field.
       if ( qty%template%frequencyCoordinate /= l_none ) then
@@ -3405,6 +3408,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.212  2003/01/11 02:14:55  livesey
+! Bug fix in max/min value subset
+!
 ! Revision 2.211  2003/01/11 01:02:50  livesey
 ! Added max and min value to subset
 !
