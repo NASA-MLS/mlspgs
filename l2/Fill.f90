@@ -4150,6 +4150,7 @@ contains ! =====     Public Procedures     =============================
       real(r8) :: scaledRad   ! scaled radiance according to the f^4 law 
       
       ! Executable code
+      nullify(freq, freqL, freqU, freq1, freqL1, freqU1, freq2, freqL2, freqU2)
 
       ! check for qualified quantity
       if (.not. ValidateVectorQuantity ( quantity, quantityType=(/l_cloudInducedRadiance/), &
@@ -5671,6 +5672,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.216  2003/05/14 23:14:00  dwu
+! nullify pointers in splitsideband
+!
 ! Revision 2.215  2003/05/12 23:53:55  dwu
 ! fix a bug in splitsideband
 !
