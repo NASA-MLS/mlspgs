@@ -12,13 +12,13 @@ module OutputAndClose ! outputs all data from the Join module to the
   use Expr_M, only: Expr
   use Hdf, only: DFACC_CREATE, DFACC_RDWR, SFN2INDEX, SFSELECT, SFCREATE, &
     & SFENDACC, DFNT_FLOAT64, SFWDATA_F90
-  use INIT_TABLES_MODULE, only: F_FILE, F_HDFVERSION, &
+  use INIT_TABLES_MODULE, only: F_ASCII, F_FILE, F_HDFVERSION, &
     & F_METANAME, F_OVERLAPS, F_PACKED, F_QUANTITIES, F_TYPE, &
     & L_L2AUX, L_L2DGG, L_L2GP, L_L2PC, S_OUTPUT, S_TIME, F_WRITECOUNTERMAF
   use Intrinsic, only: PHYQ_Dimensionless, L_None
   use L2AUXData, only: L2AUXDATA_T, WriteL2AUXData
   use L2GPData, only: L2GPData_T, WriteL2GPData, L2GPNameLen
-  use L2PC_m, only: WRITEONEL2PC
+  use L2PC_m, only: WRITEONEL2PC, OUTPUTHDF5L2PC
   use L2ParInfo, only: PARALLEL, REQUESTDIRECTWRITEPERMISSION, FINISHEDDIRECTWRITE
   use LEXER_CORE, only: PRINT_SOURCE
   use MatrixModule_1, only: MATRIX_DATABASE_T, MATRIX_T, GETFROMMATRIXDATABASE
@@ -92,6 +92,7 @@ contains ! =====     Public Procedures     =============================
 
     ! - - - Local declarations - - -
 
+    logical :: ASCII                    ! Is this l2pc ascii?
     integer :: DB_index
     logical, parameter :: DEBUG = .FALSE.
     integer :: FIELD_INDEX              ! F_... field code
@@ -472,10 +473,7 @@ contains ! =====     Public Procedures     =============================
             & "Cannot write l2pc files with multi chunk l2cf's")
           recLen = 0
           packed = .false.
-          l2pcUnit = mls_io_gen_openf ( 'open', .true., error,&
-            & recLen, PGSd_IO_Gen_WSeqFrm, trim(file_base), 0,0,0, unknown=.true. )
-          if ( error /= 0 ) call MLSMessage(MLSMSG_Error,ModuleName,&
-            & 'Failed to open l2pc file:'//trim(file_base))
+          ascii = .false.
           do field_no = 2, nsons(key) ! Skip "output" name
             gson = subtree(field_no,key)
             select case ( decoration(subtree(1,gson)) )
@@ -485,24 +483,52 @@ contains ! =====     Public Procedures     =============================
               ! ??? More work needed here
             case ( f_packed )
               packed = get_boolean ( gson )
+            case ( f_ascii )
+              ascii = get_boolean ( gson )
             end select
           end do ! field_no = 2, nsons(key)
 
-          do in_field_no = 2, nsons(quantitiesNode)
-            db_index = decoration(decoration(subtree(in_field_no, quantitiesNode )))
-            call GetFromMatrixDatabase ( matrices(db_index), tmpMatrix )
-            call writeOneL2PC ( tmpMatrix, l2pcUnit, packed )
-          end do ! in_field_no = 2, nsons(gson)
+          ! Open file
+          if ( ascii ) then
+            ! ASCII l2pc file
+            l2pcUnit = mls_io_gen_openf ( 'open', .true., error,&
+              & recLen, PGSd_IO_Gen_WSeqFrm, trim(file_base), 0,0,0, unknown=.true. )
+            if ( error /= 0 ) call MLSMessage(MLSMSG_Error,ModuleName,&
+              & 'Failed to open l2pc file:'//trim(file_base))
+            
+            do in_field_no = 2, nsons(quantitiesNode)
+              db_index = decoration(decoration(subtree(in_field_no, quantitiesNode )))
+              call GetFromMatrixDatabase ( matrices(db_index), tmpMatrix )
+              call writeOneL2PC ( tmpMatrix, l2pcUnit, packed )
+            end do ! in_field_no = 2, nsons(gson)
 
-          error = mls_io_gen_closef ( 'cl', l2pcUnit)
-          if ( error /= 0 ) then
-            call MLSMessage(MLSMSG_Error,ModuleName,&
-            & 'Failed to close l2pc file:'//trim(file_base))
-          elseif(index(switches, 'pro') /= 0) then
-               call announce_success(file_base, 'l2pc', &
-               & 0, quantityNames)
-         endif
+            error = mls_io_gen_closef ( 'cl', l2pcUnit)
+            if ( error /= 0 ) then
+              call MLSMessage(MLSMSG_Error,ModuleName,&
+                & 'Failed to close l2pc file:'//trim(file_base))
+            else if ( index(switches, 'pro') /= 0) then
+              call announce_success(file_base, 'l2pc', &
+                & 0, quantityNames)
+            endif
+          else
+            ! For the moment call a routine
+            call OutputHDF5L2PC ( trim(file_base), matrices, quantitiesNode, packed )
+            ! Later on when HDF5 is 'blessed' I want to move all this code
+            ! here instead
+!             call H5FCreate_F ( trim(file_base), H5F_ACC_TRUNC, l2pcUnit, &
+!               & returnStatus )
+!             if ( returnStatus /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+!               & 'Unable to open hdf5 l2pc file for output.' )
+!             do in_field_no = 2, nsons(quantitiesNode)
+!               db_index = decoration(decoration(subtree(in_field_no, quantitiesNode )))
+!               call GetFromMatrixDatabase ( matrices(db_index), tmpMatrix )
+!               call writeOneHDF5L2PC ( tmpMatrix, l2pcUnit, packed )
+!             end do ! in_field_no = 2, nsons(gson)
+!             call H5FClose ( l2pcUnit, returnStatus )
+!             if ( returnStatus /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,&
+!               & 'Unable to close hdf5 l2pc file.' )
 
+          end if
 
         case ( l_l2dgg ) ! --------------------- Writing l2dgg files -----
 
@@ -853,6 +879,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.54  2002/06/12 17:58:42  livesey
+! Intermediate support for HDF5 L2PCs
+!
 ! Revision 2.53  2002/05/22 16:30:31  livesey
 ! Bug fix in directWrite
 !
