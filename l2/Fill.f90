@@ -5117,6 +5117,13 @@ contains ! =====     Public Procedures     =============================
 
       ! Loop over the instances
       instanceLoop: do i = 1, temperature%template%noInstances
+        ! Check the temperatures are in a sensible range
+        if ( any ( &
+          & temperature%values(:,i) < 10.0 .or. &
+          & temperature%values(:,i) > 1000.0 ) ) then
+          tpPres%values(1,i) = 0.0
+          cycle instanceLoop
+        end if
         ! Perhaps think later about keeping track of the 'top'.
         ! Currently we're going to assert that we have data extending to
         ! pressures lower than 200mb.
@@ -5631,6 +5638,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.211  2003/05/10 22:20:12  livesey
+! Made wmo tropopause resilient to being given stupid (i.e. 0) profiles.
+!
 ! Revision 2.210  2003/05/10 01:07:58  livesey
 ! Added binTotal and noRads fills
 !
