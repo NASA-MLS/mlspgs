@@ -837,8 +837,6 @@ contains ! =====     Public Procedures     =============================
                 & vectors(h2oVectorIndex), h2oQuantityIndex)
               temperatureQuantity => GetVectorQtyByTemplateIndex( &
                 & vectors(temperatureVectorIndex), temperatureQuantityIndex)
-              !refGPHQuantity => GetVectorQtyByTemplateIndex( &
-              !  & vectors(refGPHVectorIndex), refGPHQuantityIndex)
               if ( .not. ValidateVectorQuantity(h2oQuantity, &
                 & quantityType=(/l_vmr/), molecule=(/l_h2o/)) ) then
                 call Announce_Error ( key, No_Error_code, &
@@ -847,14 +845,10 @@ contains ! =====     Public Procedures     =============================
                 & quantityType=(/l_temperature/)) ) then
                 call Announce_Error ( key, No_Error_code, &
                 & 'The temperatureQuantity is not a temperature'  )
-              !elseif ( .not. ValidateVectorQuantity(refGPHQuantity, &
-              !  & quantityType=(/l_refgph/)) ) then
-              !  call Announce_Error ( key, No_Error_code, &
-              !  & 'The refgphQuantity is not a refgph'  )
               else
                 call FillRHIFromH2O ( key, quantity, &
                 & h2oQuantity, temperatureQuantity, &
-                & dontMask, ignoreZero, ignoreNegative, interpolate )
+                & dontMask, ignoreZero, ignoreNegative, interpolate, .true. )
               endif
             endif
           case default
@@ -2266,8 +2260,9 @@ contains ! =====     Public Procedures     =============================
   ! ------------------------------------- FillRHIFromH2O ----
   subroutine FillRHIFromH2O ( key, quantity, &
    & h2oQuantity, temperatureQuantity, &
-   & dontMask, ignoreZero, ignoreNegative, interpolate )
-    ! Convert h2o vmr to %RHI
+   & dontMask, ignoreZero, ignoreNegative, interpolate, &
+   & markUndefinedValues )
+    ! Convert h2o vmr to %RHI for all instances, channels, surfaces
     ! (See Eq. 9 from "UARS Microwave Limb Sounder upper tropospheric
     !  humidity measurement: Method and validation" Read et. al. 
     !  J. Geoph. Res. Dec. 2001 (106) D23)
@@ -2290,35 +2285,45 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in)           ::    dontMask    ! Use even masked values
     logical, intent(in)           ::    ignoreZero  ! Ignore 0 values of h2o
     logical, intent(in)           ::    ignoreNegative  ! Ignore <0 values
-    logical, intent(in)           ::    interpolate ! If VGrids differ
+    logical, intent(in)           ::    interpolate ! If VGrids or HGrids differ
+    logical, intent(in)           ::    markUndefinedValues ! as UNDEFINED_VALUE
 
     ! Local variables
     integer ::                          Channel     ! Channel loop counter    
     integer ::                          Chan_h2o    ! Channel loop counter    
     integer ::                          Chan_T      ! Channel loop counter    
-    integer ::                          S           ! Surface loop counter    
+    logical, parameter ::               DEEBUG_RHI = .true.
+    integer                          :: dim
     integer ::                          I           ! Instances
-    integer ::                          I_H2O       ! Instances
-    integer ::                          I_T         ! Instances
+    integer ::                          I_H2O       ! Instance num for values
+    integer ::                          I_T         ! Instance num for values
     integer ::                          QINDEX                                
     integer ::                          N           ! Num. of summed values   
-    logical ::                          skipMe                                
     logical                          :: matched_h2o_channels
     logical                          :: matched_h2o_instances
     logical                          :: matched_sizes
     logical                          :: matched_surfs
     logical                          :: matched_T_channels
     logical                          :: matched_T_instances
-!    logical, parameter               :: interpolate = .false.
-    integer                          :: dim
+    integer ::                          S           ! Surface loop counter    
+    integer ::                          S_H2O       ! Instance num for surfs
+    integer ::                          S_RHI       ! Instance num for surfs
+    integer ::                          S_T         ! Instance num for surfs
+    logical ::                          skipMe                                
+    real (r8) ::                        T
+    logical ::                          wereAnySkipped
+    ! These automatic arrays could cause trouble later
+    ! You may consider declaring them as pointers and
+    ! calling allocate_test and deallocate_test
     real (r8), dimension(quantity%template%noSurfs) :: &
      &                                  zeta, TofZeta, H2OofZeta
     real (r8), dimension(Temperaturequantity%template%noSurfs) :: &
      &                                  zetaTemperature, oldTemperature
     real (r8), dimension(h2oquantity%template%noSurfs) :: &
      &                                  zetaH2o, oldH2o
-    real (r8) ::                        T
     ! Executable statements
+    ! Let any undefined values be so marked (but not necessarily masked)
+    if ( markUndefinedValues ) Quantity%values = UNDEFINED_VALUE
     ! Check that all is well
     matched_sizes = .true.
     do dim=1, 2
@@ -2354,13 +2359,29 @@ contains ! =====     Public Procedures     =============================
      &   (TemperatureQuantity%template%noChans == Quantity%template%noChans)
     matched_T_instances = &
      &   (TemperatureQuantity%template%noInstances == Quantity%template%noInstances)
+    wereAnySkipped = .false.
     ! Now let's do the actual conversion
     do i=1, quantity%template%noInstances
+      if ( quantity%template%coherent ) then
+        s_rhi = 1
+      else
+        s_rhi = i
+      endif
+      if ( h2oquantity%template%coherent ) then
+        s_h2o = 1
+      else
+        s_h2o = i
+      endif
+      if ( temperaturequantity%template%coherent ) then
+        s_t = 1
+      else
+        s_t = i
+      endif
       ! zeta must be in log(hPa) units
       if ( quantity%template%verticalCoordinate == l_pressure ) then 
-        zeta = -log10 ( quantity%template%surfs(:,i) )             
+        zeta = -log10 ( quantity%template%surfs(:,s_rhi) )             
       else                                                           
-        zeta = quantity%template%surfs(:,i)                        
+        zeta = quantity%template%surfs(:,s_rhi)                        
       endif
       if ( interpolate .and. .not. matched_h2o_instances ) then
         i_h2o = 1
@@ -2373,14 +2394,14 @@ contains ! =====     Public Procedures     =============================
         i_T = i
       endif
       if ( h2oquantity%template%verticalCoordinate == l_pressure ) then 
-        zetah2o = -log10 ( h2oquantity%template%surfs(:,i_h2o) )             
+        zetah2o = -log10 ( h2oquantity%template%surfs(:,s_h2o) )             
       else                                                           
-        zetah2o = h2oquantity%template%surfs(:,i_h2o)            
+        zetah2o = h2oquantity%template%surfs(:,s_h2o)            
       endif
       if ( Temperaturequantity%template%verticalCoordinate == l_pressure ) then 
-        zetaTemperature = -log10 ( Temperaturequantity%template%surfs(:,i_T) )             
+        zetaTemperature = -log10 ( Temperaturequantity%template%surfs(:,s_T) )             
       else                                                           
-        zetaTemperature = Temperaturequantity%template%surfs(:,i_T)            
+        zetaTemperature = Temperaturequantity%template%surfs(:,s_T)            
       endif
       N = 0
       do Channel=1, quantity%template%noChans
@@ -2452,9 +2473,22 @@ contains ! =====     Public Procedures     =============================
              & / &
              & exp(3.56654*log(T/273.16))
           endif
+          wereAnySkipped = wereAnySkipped .or. skipMe
         enddo
       enddo
     enddo
+    if ( DEEBUG_RHI ) then
+      call output('rhi Num. instances: ', advance='no')
+      call output(quantity%template%noInstances, advance='yes')
+      call output('  size(surfs,2) ', advance='no')
+      call output(size(quantity%template%surfs,2), advance='yes')
+      call output('Were any rhi left undefined? ', advance='no')
+      call output(wereAnySkipped, advance='yes')
+      call dump(zeta, 'zeta(log hPa)')
+      call dump(h2oQuantity%values(:,1), 'H2O(vmr)')
+      call dump(TemperatureQuantity%values(:,1), 'Temperature(K)')
+      call dump(Quantity%values(:,1), 'RHI(%)')
+    endif
     contains
     function C ( T )
       ! As found in ref.
@@ -3216,6 +3250,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.119  2002/04/16 23:27:43  pwagner
+! FillRHI testing begun; incomplete
+!
 ! Revision 2.118  2002/04/13 00:31:46  pwagner
 ! More flesh on FillrhiFromH2o; still untested
 !
