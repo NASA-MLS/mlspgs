@@ -43,6 +43,7 @@ contains ! =====     Public Procedures     =============================
     use Init_Tables_Module, only: S_L2GP, S_L2AUX, S_TIME, S_DIRECTWRITE, S_LABEL
     use L2GPData, only: L2GPDATA_T
     use L2AUXData, only: L2AUXDATA_T
+    use L2ParInfo, only: PARALLEL, WAITFORDIRECTWRITEPERMISSION
     use MLSCommon, only: MLSCHUNK_T
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
@@ -68,18 +69,22 @@ contains ! =====     Public Procedures     =============================
     ! External (C) function
     external :: Usleep
     ! Local variables
-    real :: T1                          ! Time we started
-    real :: T2                          ! Time we finished
-    integer :: PASS                     ! Loop counter
-    integer :: NODIRECTWRITES           ! Array size
+    integer :: DIRECTWRITENODEGRANTED   ! Which request was granted
     integer :: DWINDEX                  ! Direct Write index
     integer :: KEY                      ! Tree node
-    integer :: SON                      ! Tree node
     integer :: MLSCFLINE                ! Line number in l2cf
+    integer :: NODIRECTWRITES           ! Array size
+    integer :: NODIRECTWRITESCOMPLETED  ! Counter
+    integer :: PASS                     ! Loop counter
+    integer :: SON                      ! Tree node
     integer :: SPECID                   ! Type of l2cf line this is
+    integer :: TICKET                   ! Direct write permission ticket
+    logical :: CREATEFILE               ! Flag
     logical :: TIMING                   ! Flag
+    real :: T1                          ! Time we started
+    real :: T2                          ! Time we finished
 
-    logical, dimension(:), pointer :: DWCOMPLETED
+    integer :: I
     
     ! Executable code
     if ( toggle(gen) ) call trace_begin ( "MLSL2Join", root )
@@ -87,14 +92,28 @@ contains ! =====     Public Procedures     =============================
     if ( timing ) call time_now ( t1 )
 
     ! This is going to be somewhat atypical, as the code may run in 'passes'
-    ! This is to allow us to try to write the direct write files in an arbitrary
-    ! order as they become free.
+    ! In pass 1 we do all the regular join statements and count the direct writes
+    ! In pass 2 we log all our direct write requests.
+    ! In the later passes (as many as there are direct writes) we do the
+    ! direct writes we've been given permission for.
+
+    ! In the non-parallel slave mode, one pass is sufficient.
 
     error = 0
-    pass = 0
+    pass = 1
     noDirectWrites = 0
+    noDirectWritesCompleted = 0
+    ticket = 0                          ! Default value for serial case
     passLoop: do
-      dwIndex = 1
+      ! For the later passes, we wait for permission to do one of the direct writes
+      if ( pass > 2 ) then
+        call WaitForDirectWritePermission ( directWriteNodeGranted, ticket, createFile )
+        call output ( "Got permission for ticket " )
+        call output ( ticket )
+        call output ( " node " )
+        call output ( directWriteNodeGranted, advance='yes' )
+      end if
+      
       ! Simply loop over lines in the l2cf
       do mlscfLine = 2, nsons(root) - 1 ! Skip begin/end section
         son = subtree(mlscfLine,root)
@@ -107,7 +126,7 @@ contains ! =====     Public Procedures     =============================
         select case ( specId )
         case ( s_time )
           ! Only say the time the first time round
-          if ( pass == 0 ) then
+          if ( pass == 1 ) then
             if ( timing ) then
               call sayTime
             else
@@ -117,7 +136,7 @@ contains ! =====     Public Procedures     =============================
           end if
         case ( s_l2gp, s_l2aux )
           ! Only do these the first time round
-          if ( pass == 0 ) then
+          if ( pass == 1 ) then
             call JoinQuantities ( son, vectors, l2gpDatabase, l2auxDatabase, &
               & chunkNo, chunks )
           end if
@@ -126,36 +145,37 @@ contains ! =====     Public Procedures     =============================
           ! have the correct output name
           call LabelVectorQuantity ( son, vectors )
         case ( s_directWrite )
-          if ( pass == 0 ) then
+          if ( pass == 1 ) then
             ! On the first pass just count the number of direct writes
             noDirectWrites = noDirectWrites + 1
-          else
-            ! On the later passes deal with them if they are still pending.
-            if ( .not. dwCompleted(dwIndex) ) then
-              ! Have it be patient if it's the only one left, other wise
-              ! we'll try the next one.
-              call DirectWriteCommand ( son, vectors, DirectdataBase, &
-                & chunkNo, chunks, &
-                & count(.not. dwCompleted)==1, dwCompleted(dwIndex) )
+            ! Unless we're not a slave in which case just get on with it.
+            if ( .not. parallel%slave ) then
+              print*,'Calling DirectWrite, not slave'
+              call DirectWriteCommand ( son, ticket, vectors, DirectdataBase, &
+                & chunkNo, chunks )
             end if
-            dwIndex = dwIndex + 1
-            ! If we've now completed all the direct writes, it's time to move on.
-            if ( all ( dwCompleted ) ) exit passLoop
+          else if ( pass == 2 ) then
+            ! On the second pass, log all our direct write requests.
+            print*,'Calling direct write to do a setup'
+            call DirectWriteCommand ( son, ticket, vectors, DirectdataBase, &
+              & chunkNo, chunks, makeRequest=.true. )
+          else
+            ! On the later passes we do the actual direct write we've been
+            ! given permission for.
+            if ( son == directWriteNodeGranted ) then
+              print*,'Calling direct write to do the write'
+              call DirectWriteCommand ( son, ticket, vectors, DirectdataBase, &
+                & chunkNo, chunks, create=createFile )
+              noDirectWritesCompleted = noDirectWritesCompleted + 1
+              ! If that was the last one then bail out
+              if ( noDirectWritesCompleted == noDirectWrites ) exit passLoop
+            end if
           end if
         end select
       end do                            ! End loop over l2cf lines
 
-      ! On first pass setup dwCompleted, later passes, wait a moment.
-      if ( pass == 0 ) then
-        nullify ( dwCompleted )
-        call Allocate_test ( dwCompleted, noDirectWrites, 'dwCompleted', ModuleName )
-        dwCompleted = .false.
-      else
-        ! Once we've done a complete pass through the direct writes
-        ! let's wait a while, to avoid pestering the master with 
-        ! direct write requests too often
-        call usleep ( delay )
-      end if
+      ! If we're not in parallel mode then one pass is enough
+      if ( .not. parallel%slave ) exit passLoop
 
       ! Bail out of pass loop if there are no direct writes, or there was
       ! an error.
@@ -166,8 +186,6 @@ contains ! =====     Public Procedures     =============================
     ! Check for errors
     if ( error /= 0 ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, 'Error in Join section' )
-
-    call Deallocate_test ( dwCompleted, 'dwCompleted', ModuleName )
 
     if ( toggle(gen) ) call trace_end ( "MLSL2Join" )
     if ( timing ) call sayTime
@@ -189,8 +207,8 @@ contains ! =====     Public Procedures     =============================
   end subroutine MLSL2Join
 
   ! ------------------------------------------------ DirectWriteCommand -----
-  subroutine DirectWriteCommand ( node, vectors, DirectDataBase, &
-    & chunkNo, chunks, waitItOut, completed )
+  subroutine DirectWriteCommand ( node, ticket, vectors, DirectDataBase, &
+    & chunkNo, chunks, makeRequest, create )
     ! Imports
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use DirectWrite_m, only: DirectData_T, &
@@ -202,7 +220,7 @@ contains ! =====     Public Procedures     =============================
     use Init_tables_module, only: L_L2GP, L_L2AUX, L_PRESSURE, L_ZETA
     use intrinsic, only: L_NONE, L_GEODANGLE, &
       & L_MAF, PHYQ_DIMENSIONLESS
-    use L2ParInfo, only: PARALLEL, REQUESTDIRECTWRITEPERMISSION, FINISHEDDIRECTWRITE
+    use L2ParInfo, only: PARALLEL, LOGDIRECTWRITEREQUEST, FINISHEDDIRECTWRITE
     use MLSCommon, only: MLSCHUNK_T, R4, R8, RV
     use MLSFiles, only: MLS_EXISTS, split_path_name, GetPCFromRef, &
       & mls_io_gen_openF, mls_io_gen_closeF
@@ -219,16 +237,17 @@ contains ! =====     Public Procedures     =============================
     use VectorsModule, only: VECTOR_T, VECTORVALUE_T, VALIDATEVECTORQUANTITY, &
       & GETVECTORQTYBYTEMPLATEINDEX
     ! Dummy arguments
-    integer, intent(in) :: NODE    ! Of the JOIN section in the AST
+    integer, intent(in) :: NODE         ! Of the JOIN section in the AST
+    integer, intent(in) :: TICKET       ! Ticket number from master
     type (Vector_T), dimension(:), pointer :: VECTORS
     type (DirectData_T), dimension(:), pointer :: DirectDatabase
     integer, intent(in) :: CHUNKNO
     type (MLSChunk_T), dimension(:), intent(in) :: CHUNKS
-    logical, intent(in) :: WAITITOUT    ! If set, wait patiently for the ability to write
-    logical, intent(out) :: COMPLETED    ! True if we sucessfully wrote the file
+    logical, intent(in), optional :: MAKEREQUEST  ! Set on first pass through
+    logical, intent(in), optional :: CREATE       ! Set if slave is to create file.
     ! Local parameters
     integer, parameter :: MAXFILES = 1000 ! Set for an internal array
-    ! Saved variable - used to work out file information.
+    ! Saved variable - used to work out the createFile flag in the serial case
     integer, dimension(maxFiles), save :: CREATEDFILENAMES = 0
     integer, save :: NOCREATEDFILES=0   ! Number of files created
     ! Local variables
@@ -249,7 +268,8 @@ contains ! =====     Public Procedures     =============================
     integer :: SON                      ! A tree node
     integer :: SOURCE                   ! Loop counter
     integer :: RETURNSTATUS
-    logical :: CREATEFILE               ! Flag
+    logical :: CREATEFILEFLAG           ! Flag (often copy of create)
+    logical :: MYMAKEREQUEST            ! Copy of makeRequest
     integer :: record_length
     integer :: l2gp_Version
 
@@ -273,19 +293,18 @@ contains ! =====     Public Procedures     =============================
     ! Executable code
     DEEBUG = (index(switches, 'direct') /= 0)
 
+    myMakeRequest = .false.
+    if ( present ( makeRequest ) ) myMakeRequest = makeRequest
+
     ! Direct write is probably going to be come the predominant form
     ! of output in the software, as the other forms have become a
-    ! little too intensive.  The key is to make the actual writing part
-    ! as efficient as possible, so we 'hold the flag' for the minimum
-    ! time.  Otherwise we'll start to clog up the sytem with direct
-    ! writes
+    ! little too intensive.
 
-    ! The time critical section is marked in the comments below.
-    ! First, let's go through the l2cf command and work out what
-    ! we've been asked to do
-    
-    ! Take a first pass through, count the number of things we're outputing
-    ! Also pick upthe hdfVersion and the filename
+    ! This routine will be called twice for each direct write.  The first
+    ! (makeRequests=.true.) is a pass through to check the syntax etc.
+    ! If it is sucessfull a request will be made to the master.
+
+    ! The second call will be to actually do the writing.
     lastFieldIndex = 0
     noSources = 0
     hdfVersion = DEFAULT_HDFVERSION_WRITE
@@ -372,6 +391,9 @@ contains ! =====     Public Procedures     =============================
         & "Inappropriate quantity for this file type in direct write" )
     end do
     
+    ! Bail out at this stage if there is some kind of error.
+    if ( error /= 0 ) return
+
     if ( DeeBUG ) then
       call output('Direct write to file', advance='yes')
       call output('File name: ', advance='no')
@@ -382,154 +404,147 @@ contains ! =====     Public Procedures     =============================
       call output(noSources, advance='yes')
     endif
 
-    ! If we're a slave, we need to request permission from the master.
-    if ( parallel%slave ) then
-      call RequestDirectWritePermission ( file, createFile, waitItOut, completed )
-      ! If we weren't prepared to wait then return to the calling code.
-      if ( .not. completed ) return
-      ! From this point on we have exclusive access to the output file, so let's
-      ! be quick about what we do so as not to block others.
+    ! If this is the first pass through, then we just log our request
+    ! with the master
+    if ( myMakeRequest ) then
+      call LogDirectWriteRequest ( file, node )
     else
-      ! In serial mode there is no doubt that we will write file now.
-      completed = .true.
-      createFile = .not. any ( createdFilenames == file )
-      if ( createFile ) then
-        noCreatedFiles = noCreatedFiles + 1
-        if ( noCreatedFiles > maxFiles ) call MLSMessage ( &
-          & MLSMSG_Error, ModuleName, 'Too many direct write files' )
-        createdFilenames ( noCreatedFiles ) = file
-      end if
-    end if
-
-    ! Bail out at this stage if there is some kind of error.
-    if ( error /= 0 ) return
-
-    ! vvvvvvvvvv ------ Speed is of the essence in this section ----- vvvvvvvvvv
-    ! --------------------------------------------------------------------------
-
-    ! Open/create the file of interest
-    call split_path_name(filename, path, file_base)
-    if ( .not. TOOLKIT ) then
-      handle = 0
-    elseif ( outputType == l_l2gp ) then
-      Handle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
-      & mlspcf_l2gp_end, &
-      & TOOLKIT, returnStatus, l2gp_Version, DEEBUG, &
-      & exactName=Filename)
-    else
-      Handle = GetPCFromRef(file_base, mlspcf_l2dgm_start, &
-      & mlspcf_l2dgm_end, &
-      & TOOLKIT, returnStatus, l2gp_Version, DEEBUG, &
-      & exactName=Filename)
-    end if
-    ! > if ( mls_exists(trim(Filename)) == 0 ) then
-    ! >   fileaccess = DFACC_RDWR
-    ! > else
-    ! >   fileaccess = DFACC_CREATE
-    ! > endif
-    if ( createFile ) then
-      fileaccess = DFACC_CREATE
-    else
-      fileaccess = DFACC_RDWR
-    endif
-    select case ( outputType )
-    case ( l_l2gp )
-      ! Call the l2gp open/create routine.  Filename is 'filename'
-      ! file id should go into 'handle'
-      handle = mls_io_gen_openF('sw', .true., ErrorType, &
-        & record_length, FileAccess, FileName, hdfVersion=hdfVersion)
-    case ( l_l2aux )
-      ! Call the l2aux open/create routine.  Filename is 'filename'
-      ! file id should go into 'handle'
-      handle = mls_io_gen_openF('hg', .true., ErrorType, &
-        & record_length, FileAccess, FileName, hdfVersion=hdfVersion)
-    end select
-
-    if ( ErrorType /= 0 ) then
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'DirectWriteCommand unable to open ' // trim(filename) )
-    endif
-    call SetUpNewDirect(newDirect, noSources)
-    ! Add it to the database of directly writeable quantities
-    dbindex = AddDirectToDatabase ( DirectDatabase, newDirect )
-    call decorate ( node, -dbindex ) ! So we can find it later
-    thisDirect => DirectDatabase(dbindex)
-    ! Loop over the quantities to output
-    do source = 1, noSources
-      qty => GetVectorQtyByTemplateIndex ( vectors(sourceVectors(source)), &
-        & sourceQuantities(source) )
-      hdfNameIndex = qty%label
-      call get_string ( hdfNameIndex, hdfName, strip=.true. )
-      thisDirect%sdNames(source) = hdfName
-      if ( precisionVectors(source) /= 0 ) then
-        precQty => GetVectorQtyByTemplateIndex ( vectors(sourceVectors(source)), &
-          & sourceQuantities(source) )
-        ! Check that this is compatible with it's value quantitiy
-        if ( qty%template%name /= precQty%template%name ) &
-          & call Announce_Error ( son, no_error_code, &
-          & "Precision and quantity do not match" )
+      ! OK, it's time to write this bit of the file
+      if ( parallel%slave ) then
+        createFileFlag = .false.
+        if ( present ( create ) ) createFileFlag = create
       else
-        precQty => NULL()
+        createFileFlag = .not. any ( createdFilenames == file )
+        if ( createFileFlag ) then
+          noCreatedFiles = noCreatedFiles + 1
+          if ( noCreatedFiles > maxFiles ) call MLSMessage ( &
+            & MLSMSG_Error, ModuleName, 'Too many direct write files' )
+          createdFilenames ( noCreatedFiles ) = file
+        end if
       end if
-
-      if ( DeeBUG ) then
-        call output('CREATEFILE: ', advance='no')
-        call output(CREATEFILE, advance='yes')
-        call output('file access: ', advance='no')
-        call output(fileaccess, advance='yes')
-        call output('file handle: ', advance='no')
-        call output(handle, advance='yes')
-        call output('outputType: ', advance='no')
-        call output(outputType, advance='yes')
-        call output('sd name: ', advance='no')
-        call output(trim(hdfname), advance='yes')
+      
+      ! Open/create the file of interest
+      call split_path_name(filename, path, file_base)
+      if ( .not. TOOLKIT ) then
+        handle = 0
+      elseif ( outputType == l_l2gp ) then
+        Handle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
+          & mlspcf_l2gp_end, &
+          & TOOLKIT, returnStatus, l2gp_Version, DEEBUG, &
+          & exactName=Filename)
+      else
+        Handle = GetPCFromRef(file_base, mlspcf_l2dgm_start, &
+          & mlspcf_l2dgm_end, &
+          & TOOLKIT, returnStatus, l2gp_Version, DEEBUG, &
+          & exactName=Filename)
+      end if
+      ! > if ( mls_exists(trim(Filename)) == 0 ) then
+      ! >   fileaccess = DFACC_RDWR
+      ! > else
+      ! >   fileaccess = DFACC_CREATE
+      ! > endif
+      if ( createFileFlag ) then
+        fileaccess = DFACC_CREATE
+      else
+        fileaccess = DFACC_RDWR
       endif
-
       select case ( outputType )
       case ( l_l2gp )
-        ! Call the l2gp swath write routine.  This should write the 
-        ! non-overlapped portion of qty (with possibly precision in precQty)
-        ! into the l2gp swath named 'hdfName' starting at profile 
-        ! qty%template%instanceOffset + 1
-        call DirectWrite_l2GP ( handle, qty, precQty, hdfName, chunkNo, &
-          & hdfVersion )   ! May optionally supply first, last profiles
+        ! Call the l2gp open/create routine.  Filename is 'filename'
+        ! file id should go into 'handle'
+        handle = mls_io_gen_openF('sw', .true., ErrorType, &
+          & record_length, FileAccess, FileName, hdfVersion=hdfVersion)
       case ( l_l2aux )
-        ! Call the l2aux sd write routine.  This should write the 
-        ! non-overlapped portion of qty (with possibly precision in precQty)
-        ! into the l2aux sd named 'hdfName' starting at profile 
-        ! qty%template%instanceOffset ( + 1 ? )
-        ! Note sure about the +1 in this case, probably depends whether it's a
-        ! minor frame quantity or not.  This mixed zero/one indexing is beomming
-        ! a real pain.  I wish I never want down that road!
-        call DirectWrite_L2Aux ( handle, qty, precQty, hdfName, hdfVersion, &
-          & chunkNo, chunks )
+        ! Call the l2aux open/create routine.  Filename is 'filename'
+        ! file id should go into 'handle'
+        handle = mls_io_gen_openF('hg', .true., ErrorType, &
+          & record_length, FileAccess, FileName, hdfVersion=hdfVersion)
       end select
-    end do ! End loop over swaths/sds
+      
+      if ( ErrorType /= 0 ) then
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'DirectWriteCommand unable to open ' // trim(filename) )
+      endif
+      call SetUpNewDirect(newDirect, noSources)
+      ! Add it to the database of directly writeable quantities
+      dbindex = AddDirectToDatabase ( DirectDatabase, newDirect )
+      call decorate ( node, -dbindex ) ! So we can find it later
+      thisDirect => DirectDatabase(dbindex)
+      ! Loop over the quantities to output
+      do source = 1, noSources
+        qty => GetVectorQtyByTemplateIndex ( vectors(sourceVectors(source)), &
+          & sourceQuantities(source) )
+        hdfNameIndex = qty%label
+        call get_string ( hdfNameIndex, hdfName, strip=.true. )
+        thisDirect%sdNames(source) = hdfName
+        if ( precisionVectors(source) /= 0 ) then
+          precQty => GetVectorQtyByTemplateIndex ( vectors(sourceVectors(source)), &
+            & sourceQuantities(source) )
+          ! Check that this is compatible with it's value quantitiy
+          if ( qty%template%name /= precQty%template%name ) &
+            & call Announce_Error ( son, no_error_code, &
+            & "Precision and quantity do not match" )
+        else
+          precQty => NULL()
+        end if
+        
+        if ( DeeBUG ) then
+          call output('CreateFileFlag: ', advance='no')
+          call output(createFileFlag, advance='yes')
+          call output('file access: ', advance='no')
+          call output(fileaccess, advance='yes')
+          call output('file handle: ', advance='no')
+          call output(handle, advance='yes')
+          call output('outputType: ', advance='no')
+          call output(outputType, advance='yes')
+          call output('sd name: ', advance='no')
+          call output(trim(hdfname), advance='yes')
+        endif
+        
+        select case ( outputType )
+        case ( l_l2gp )
+          ! Call the l2gp swath write routine.  This should write the 
+          ! non-overlapped portion of qty (with possibly precision in precQty)
+          ! into the l2gp swath named 'hdfName' starting at profile 
+          ! qty%template%instanceOffset + 1
+          call DirectWrite_l2GP ( handle, qty, precQty, hdfName, chunkNo, &
+            & hdfVersion )   ! May optionally supply first, last profiles
+        case ( l_l2aux )
+          ! Call the l2aux sd write routine.  This should write the 
+          ! non-overlapped portion of qty (with possibly precision in precQty)
+          ! into the l2aux sd named 'hdfName' starting at profile 
+          ! qty%template%instanceOffset ( + 1 ? )
+          ! Note sure about the +1 in this case, probably depends whether it's a
+          ! minor frame quantity or not.  This mixed zero/one indexing is beomming
+          ! a real pain.  I wish I never want down that road!
+          call DirectWrite_L2Aux ( handle, qty, precQty, hdfName, hdfVersion, &
+            & chunkNo, chunks )
+        end select
+      end do ! End loop over swaths/sds
 
-    thisDirect%type = outputType
-    thisDirect%fileNameBase = file_base
-    
-    ! Close the output file of interest (does this need to be split like this?)
-    select case ( outputType )
-    case ( l_l2gp )
-      ! Call the l2gp close routine
-      errortype = mls_io_gen_closeF('sw', Handle, hdfVersion=hdfVersion)
-      ! errortype = he5_SWclose(Handle)
-      print *, 'Tried to close ', trim(FIleName)
-      print *, 'Handle ', Handle
-      print *, 'hdfVersion ', hdfVersion
-      print *, 'errortype ', errortype
-    case ( l_l2aux )
-      ! Call the l2aux close routine
-      errortype = mls_io_gen_closeF('hg', Handle, hdfVersion=hdfVersion)
-    end select
-    if ( errortype /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      thisDirect%type = outputType
+      thisDirect%fileNameBase = file_base
+
+      ! Close the output file of interest (does this need to be split like this?)
+      select case ( outputType )
+      case ( l_l2gp )
+        ! Call the l2gp close routine
+        errortype = mls_io_gen_closeF('sw', Handle, hdfVersion=hdfVersion)
+        ! errortype = he5_SWclose(Handle)
+        print *, 'Tried to close ', trim(FIleName)
+        print *, 'Handle ', Handle
+        print *, 'hdfVersion ', hdfVersion
+        print *, 'errortype ', errortype
+      case ( l_l2aux )
+        ! Call the l2aux close routine
+        errortype = mls_io_gen_closeF('hg', Handle, hdfVersion=hdfVersion)
+      end select
+      if ( errortype /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'DirectWriteCommand unable to close ' // trim(filename) )
-
-    ! Tell the master we're done
-    if ( parallel%slave ) call FinishedDirectWrite
-    ! --------------------------------------------------------------------------
-    ! ^^^^^^^^^^ ------------ End of time critical section ---------- ^^^^^^^^^^
+      
+      ! Tell the master we're done
+      if ( parallel%slave ) call FinishedDirectWrite ( ticket )
+    end if
 
     call Deallocate_test ( sourceVectors, 'sourceVectors', ModuleName )
     call Deallocate_test ( sourceQuantities, 'sourceQuantities', ModuleName )
@@ -1253,6 +1268,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.78  2003/07/07 17:31:11  livesey
+! Various things to get DirectWrite working
+!
 ! Revision 2.77  2003/07/02 00:55:27  pwagner
 ! Some improvements in DirectWrites of l2aux, l2gp
 !
