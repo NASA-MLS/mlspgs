@@ -19,7 +19,7 @@ module SnoopMLSL2               ! Interface between MLSL2 and IDL snooper via pv
 
   use VectorsModule, only: Vector_T, VectorValue_T
   use QuantityTemplates, only: QuantityTemplate_T
-  !  USE MatrixModule_1, ONLY: Matrix_T
+  use MatrixModule_1, ONLY: Matrix_T
 
   use Intrinsic, only: LIT_INDICES
   use MLSCommon, only: R4, R8, I4
@@ -435,6 +435,35 @@ contains ! ========  Public Procedures =========================================
     end if
   end subroutine Snoop
 
+  ! ----------------------------------------- Snooper requested matrix -----
+  subroutine SnooperRequestedMatrix ( SNOOPER, LINE, MATRIXDATABASE )
+    ! This routine sends a matrix (including the vectors associated
+    ! with it) to a snooping task.  It will probably take a while in many
+    ! cases.
+
+    ! Dummy arguments
+    type (SnooperInfo_T), intent(in) :: SNOOPER ! This snooper
+    character (len=*), intent(in) :: LINE ! Name of matrix to send
+    type (Matrix_T), dimension(:), pointer :: MATRIXDATABASE
+
+    ! Local variables
+    integer :: MATRIXNAME               ! String index of matrix name
+    integer :: MATRIX                   ! Index of matrix in database
+
+    ! Executable code
+
+    matrixName = enter_terminal ( line, t_identifier )
+    do matrix = 1, size(matrixDatabase)
+      if ( matrixDatabase(matrix)%name == matrixName ) exit
+    end do
+    if ( matrixDatabase(matrix)%name /= matrixName ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to find requested matrix:'//trim(line) )
+
+    !call PVMSendMatrix ( matrixDatabase(matrix), snooper%tid )
+
+  end subroutine SnooperRequestedMatrix
+
   ! ----------------------------------------- Snooper requested quantity ---
   subroutine SnooperRequestedQuantity ( SNOOPER, LINE, VECTORDATABASE )
     ! This routine sends a quantity (including its template) to 
@@ -442,7 +471,7 @@ contains ! ========  Public Procedures =========================================
 
     ! Dummy arguments
     type (SnooperInfo_T), intent(in) :: SNOOPER ! This snooper
-    character (len=*), intent(in) :: LINE ! Name of quantity to watch
+    character (len=*), intent(in) :: LINE ! Name of quantity to send
     type (Vector_T), dimension(:), pointer :: VECTORDATABASE
 
     ! Local variables
@@ -470,7 +499,7 @@ contains ! ========  Public Procedures =========================================
     end do
     if ( vectorDatabase(vector)%name /= vectorName ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to find requested vector: '//line )
+      & 'Unable to find requested vector: '//trim(line) )
 
     do quantity = 1, size(vectorDatabase(vector)%quantities)
       if ( vectorDatabase(vector)%quantities(quantity)%template%name == &
