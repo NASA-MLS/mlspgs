@@ -127,7 +127,6 @@ contains
     character(LEN=FileNameLen) :: FilenameString, LeapSecFileName
     character (len=name_len) :: QUANTITY
     character(LEN=*), parameter :: Time_conversion='(F32.0)'
-    integer ::  hdfVersion
     character(len=Name_Len) :: l1bItemName
     integer :: OrbNum(max_orbits)
     real(r8) :: OrbPeriod(max_orbits)
@@ -262,8 +261,6 @@ contains
           call decorate ( son, AddFGridToDatabase ( fGrids, &
             & CreateFGridFromMLSCFInfo ( name, son ) ) )
         case ( s_l1brad )
-  ! ((( If we convert level 1 files to hdf5, return hdfVersion  )))
-  !      as an argument from l1bradSetup
           the_hdf_version = LEVEL1_HDFVERSION
           call l1bradSetup ( son, l1bInfo, F_FILE, &
             & MAXNUML1BRADIDS, ILLEGALL1BRADID, hdfVersion=the_hdf_version )
@@ -278,8 +275,6 @@ contains
             & '*** l2cf overrides pcf for L1B Rad. file(s) ***', &
             & just_a_warning = .true.)
         case ( s_l1boa )
-  ! ((( If we convert level 1 files to hdf5, return hdfVersion  )))
-  !      as an argument from l1boaSetup
           the_hdf_version = LEVEL1_HDFVERSION
           call l1boaSetup ( son, l1bInfo, F_FILE, hdfVersion=the_hdf_version )
           if(index(switches, 'pro') /= 0) then  
@@ -289,21 +284,21 @@ contains
             & hdfVersion=the_hdf_version) 
           end if
           call ReadL1BAttribute (l1bInfo%l1boaID, OrbNum, 'OrbitNumber', &
-	     & l1bFlag, hdfVersion=hdfVersion)
-	  if (l1bFlag == -1) then
-             GlobalAttributes%OrbNum = -1
-	  else
-             GlobalAttributes%OrbNum = OrbNum
-	  end if
+	       & l1bFlag, hdfVersion=the_hdf_version)
+	       if (l1bFlag == -1) then
+                  GlobalAttributes%OrbNum = -1
+	       else
+                  GlobalAttributes%OrbNum = OrbNum
+	       end if
           call ReadL1BAttribute (l1bInfo%l1boaID, OrbPeriod, 'OrbitPeriod', &
-	     & l1bFlag, hdfVersion=hdfVersion)
-	  if (l1bFlag == -1) then
-             GlobalAttributes%OrbPeriod = -1.0
-	  else
-             GlobalAttributes%OrbPeriod = OrbPeriod
-	  end if
+	       & l1bFlag, hdfVersion=the_hdf_version)
+	       if (l1bFlag == -1) then
+                  GlobalAttributes%OrbPeriod = -1.0
+	       else
+                  GlobalAttributes%OrbPeriod = OrbPeriod
+	       end if
           call output ('finished readL1BAttribute in global_setting', &
-		& advance='yes')
+		    & advance='yes')
           if ( TOOLKIT ) &
             & call announce_error(0, &
             & '*** l2cf overrides pcf for L1BOA file ***', &
@@ -334,12 +329,13 @@ contains
       end if
     end do
 
-    hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
-    if ( hdfversion == FILENOTFOUND ) then                                          
+    the_hdf_version = &
+      & mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
+    if ( the_hdf_version == FILENOTFOUND ) then                                          
       call MLSMessage ( MLSMSG_Error, ModuleName, &                      
       & 'File not found; make sure the name and path are correct' &
       & // trim(l1bInfo%L1BOAFileName) )
-    elseif ( hdfversion <= 0 ) then                                          
+    elseif ( the_hdf_version <= 0 ) then                                          
       call MLSMessage ( MLSMSG_Error, ModuleName, &                      
       & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )    
     endif
@@ -359,9 +355,9 @@ contains
       end if
 
       quantity = 'MAFStartTimeTAI'
-      l1bItemName = AssembleL1BQtyName ( quantity, hdfVersion, .false. )
+      l1bItemName = AssembleL1BQtyName ( quantity, the_hdf_version, .false. )
       call ReadL1BData ( l1bInfo%l1boaID, l1bItemName, l1bField, noMAFs, &
-        & l1bFlag, hdfVersion=hdfVersion)
+        & l1bFlag, hdfVersion=the_hdf_version)
       if ( l1bFlag==-1) then
         call announce_error(son, &
           & 'unrecognized MAFStarttimeTAI in L1BOA file')
@@ -740,6 +736,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.74  2003/09/12 16:28:49  cvuu
+! Read OrbitNumber and OrbitPeriod attributes from L1BOA
+!
 ! Revision 2.73  2003/09/02 18:03:23  pwagner
 ! Now can reset maxfailuresper chunk, machine from global settings
 !
