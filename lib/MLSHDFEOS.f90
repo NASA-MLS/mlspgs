@@ -8,11 +8,13 @@ module MLSHDFEOS
 
   use Hdf, only: DFNT_CHAR8, DFNT_FLOAT32, DFNT_FLOAT64, &
     & DFNT_INT8, DFNT_INT16, DFNT_INT32, DFNT_INT64
-  use HDFEOS, only: swdefdfld, swdefgfld, swdefdim, swdiminfo, swinqdflds
+  use HDFEOS, only: gdattach, gdcreate, &
+    & swattach, swcreate, swdefdfld, swdefgfld, swdefdim, swdiminfo, swinqdflds
   use HDFEOS5, only: HE5T_NATIVE_FLOAT, HE5T_NATIVE_DOUBLE, HE5T_NATIVE_SCHAR, &
     & HE5T_NATIVE_INT, HE5T_NATIVE_INT8, HE5T_NATIVE_INT16, HE5T_NATIVE_INT64
-  use HDFEOS5, only: HE5_SWdefchunk, HE5_swdefdfld, HE5_SWdefgfld, &
-    & HE5_swdefdim, HE5_swdiminfo, HE5_swinqdflds
+  use HDFEOS5, only: HE5_GDattach, HE5_GDcreate, &
+    & HE5_SWattach, HE5_SWcreate, HE5_SWdefchunk, HE5_swdefdfld, &
+    & HE5_SWdefgfld, HE5_swdefdim, HE5_swdiminfo, HE5_swinqdflds
   use HE5_SWAPI, only: HE5_SWSETFILL, HE5_SWWRATTR, HE5_SWWRLATTR
   use HE5_SWAPI_CHARACTER_ARRAY, only: HE5_EHWRGLATT_CHARACTER_ARRAY
   use HE5_SWAPI_CHARACTER_SCALAR, only: HE5_EHWRGLATT_CHARACTER_SCALAR
@@ -39,7 +41,8 @@ module MLSHDFEOS
   private
 
   public :: HE5_EHWRGLATT, MLS_DFLDSETUP, MLS_GFLDSETUP, &
-    & MLS_SWDEFDIM, MLS_SWDIMINFO, MLS_SWRDFLD, MLS_SWSETFILL, MLS_SWWRFLD
+    & MLS_SWDEFDIM, MLS_SWDIMINFO, MLS_SWRDFLD, MLS_SWSETFILL, MLS_SWWRFLD, &
+    & MLS_SWCREATE, MLS_GDCREATE
   logical, parameter :: HE5_SWSETFILL_BROKEN = .true.
   character(len=*), parameter :: SETFILLTITLE = '_FillValue'
 
@@ -101,6 +104,109 @@ module MLSHDFEOS
   integer, public, parameter :: MAXDLISTLENGTH = 1024
 
 contains ! ======================= Public Procedures =========================
+
+  integer function MLS_GDCREATE ( FILEID, GRIDNAME, &
+   &  xdimsize, ydimsize, upleft, lowright, FileName, hdfVersion )
+    integer, intent(in) :: FILEID      ! ID returned by mls_swopen
+    character(len=*), intent(in) :: GRIDNAME       ! Swath name
+    integer, intent(in) :: xdimsize
+    integer, intent(in) :: ydimsize
+    double precision, dimension(2), intent(in) :: upleft
+    double precision, dimension(2), intent(in) :: lowright
+    character(len=*), optional, intent(in) :: FILENAME  ! File name
+    integer, optional, intent(in) :: hdfVersion
+    ! Internal variables
+    logical :: alreadyThere
+    integer :: myHdfVersion
+    logical :: needsFileName
+    MLS_GDCREATE = 0
+    ! All necessary input supplied?
+    needsFileName = (.not. present(hdfVersion))
+    if ( present(hdfVersion) ) &
+      & needsFileName = (hdfVersion == WILDCARDHDFVERSION)
+    if ( needsFileName .and. .not. present(FIleName)) then
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Missing needed arg FILENAME from call to MLS_GDCREATE' )
+      return
+    endif
+    if ( needsFileName ) then
+      myHdfVersion = mls_hdf_version ( trim(FileName) )
+    else
+      myHdfVersion = hdfVersion
+    endif
+    select case (myHdfVersion)
+    case (HDFVERSION_4)
+      alreadyThere = (gdattach(FileID, trim(GRIDNAME)) >= 0)
+      if ( alreadyThere ) then
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'GRIDNAME call to MLS_GDCREATE already there: ' // trim(GRIDNAME))
+      endif
+      MLS_GDCREATE = gdcreate(Fileid, GRIDNAME, &
+        & xdimsize, ydimsize, upleft, lowright)
+    case (HDFVERSION_5)
+      alreadyThere = (he5_gdattach(FileID, trim(GRIDNAME)) >= 0)
+      if ( alreadyThere ) then
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'GRIDNAME call to MLS_GDCREATE already there: ' // trim(GRIDNAME))
+      endif
+      MLS_GDCREATE = he5_gdcreate(Fileid, GRIDNAME, &
+        & xdimsize, ydimsize, upleft, lowright)
+    case default
+      MLS_GDCREATE = -1
+    end select
+    if ( MLS_GDCREATE /= -1 ) return
+    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Failed to create grid name ' // trim(GRIDNAME) )
+
+  end function MLS_GDCREATE
+
+  integer function MLS_SWCREATE ( FILEID, SWATHNAME, FileName, hdfVersion )
+    integer, intent(in) :: FILEID      ! ID returned by mls_swopen
+    character(len=*), intent(in) :: SWATHNAME       ! Swath name
+    character(len=*), optional, intent(in) :: FILENAME  ! File name
+    integer, optional, intent(in) :: hdfVersion
+    ! Internal variables
+    logical :: alreadyThere
+    integer :: myHdfVersion
+    logical :: needsFileName
+    MLS_SWCREATE = 0
+    ! All necessary input supplied?
+    needsFileName = (.not. present(hdfVersion))
+    if ( present(hdfVersion) ) &
+      & needsFileName = (hdfVersion == WILDCARDHDFVERSION)
+    if ( needsFileName .and. .not. present(FIleName)) then
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Missing needed arg FILENAME from call to MLS_SWCREATE' )
+      return
+    endif
+    if ( needsFileName ) then
+      myHdfVersion = mls_hdf_version ( trim(FileName) )
+    else
+      myHdfVersion = hdfVersion
+    endif
+    select case (myHdfVersion)
+    case (HDFVERSION_4)
+      alreadyThere = (swattach(FileID, trim(swathName)) >= 0)
+      if ( alreadyThere ) then
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Swathname call to MLS_SWCREATE already there: ' // trim(swathName))
+      endif
+      MLS_SWCREATE = swcreate(Fileid, SwathNAME)
+    case (HDFVERSION_5)
+      alreadyThere = (he5_swattach(FileID, trim(swathName)) >= 0)
+      if ( alreadyThere ) then
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Swathname call to MLS_SWCREATE already there: ' // trim(swathName))
+      endif
+      MLS_SWCREATE = he5_swcreate(Fileid, SwathNAME)
+    case default
+      MLS_SWCREATE = -1
+    end select
+    if ( MLS_SWCREATE /= -1 ) return
+    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Failed to create swath name ' // trim(swathname) )
+
+  end function MLS_SWCREATE
 
   integer function MLS_SWdefdim ( SWATHID, DIMNAME, DIMSIZE, FILENAME, &
     & hdfVersion, DONTFAIL )
@@ -1386,6 +1492,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDFEOS
 
 ! $Log$
+! Revision 2.6  2003/06/06 22:49:12  pwagner
+! Added mls_sw(gd)create
+!
 ! Revision 2.5  2003/04/21 19:32:27  pwagner
 ! Can read/write 1-d char fields
 !
