@@ -1139,6 +1139,7 @@ contains
 
       ! Executable code
       nullify ( channels, qty, ptan )
+      ignore = .false.
       do j = 2, nsons(key) ! fields of the "subset" specification
         son = subtree(j, key)
         field = get_field_id(son)   ! tree_checker prevents duplicates
@@ -1154,11 +1155,11 @@ contains
           quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
           ptan => GetVectorQtyByTemplateIndex(vectors(vectorIndeX), quantityIndex)
         case ( f_channels )
-          channelsNode = gson
+          channelsNode = son
         case ( f_height )
-          heightNode = gson
+          heightNode = son
         case ( f_opticalDepth )
-          depthNode = gson
+          depthNode = son
         case ( f_ignore )
           ignore = Get_Boolean ( son )
         case default
@@ -1172,7 +1173,7 @@ contains
           & 'channels', ModuleName )
         if ( got(f_channels) ) then     ! This subset is only for some channels
           channels = .false.
-          do j = 1, nsons(channelsNode)
+          do j = 2, nsons(channelsNode)
             call expr ( subtree(j,channelsNode), units, value, type )
             select case ( type )
             case ( num_value )
@@ -1198,11 +1199,11 @@ contains
       ! Now deal with the height stuff, at least preprocess it.
       if ( got(f_height) ) then
         heightUnit = phyq_dimensionless
-        do j = 1, nsons(heightNode)
+        do j = 2, nsons(heightNode)
           call expr ( subtree(j,heightNode), units, value, type )
           if ( type /= range ) call MLSMessage ( MLSMSG_Error, ModuleName, &
               & 'Only allow range for height' )
-          if ( units(1) /= units(2) ) &
+          if ( units(1) /= units(2) .and. .not. any(units == phyq_dimensionless) ) &
             & call MLSMessage ( MLSMSG_Error, ModuleName, &
             & 'Conflicting units for height' )
           if ( heightUnit == phyq_dimensionless ) then
@@ -1226,6 +1227,9 @@ contains
       if ( got(f_height) .and. ignore ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & "Can't set both height and ignore fields" )
+
+      ! Create the mask if it doesn't exist
+      if ( .not. associated( qty%mask ) ) call CreateMask ( qty )
 
       ! Now we loop over the instances
       do instance = 1, qty%template%noInstances
@@ -1257,12 +1261,13 @@ contains
 
         ! Now go and `unmask' the ones we want to consider
         if ( got(f_height) ) then
-          do j = 1, nsons(heightNode)
+          do j = 2, nsons(heightNode)
             call expr ( subtree(j,heightNode), units, value, type )
             ! Now maybe do something nasty to value to get in right units
-            if ( coordinate == phyq_zeta .and. units(1) == phyq_pressure ) then
+            if ( qty%template%verticalCoordinate == phyq_zeta &
+              & .and. coordinate == phyq_pressure ) then
               value = -log10(value)
-            else if ( coordinate /= units(1) ) then
+            else if ( coordinate /= qty%template%verticalCoordinate ) then
               call MLSMessage ( MLSMSG_Error, ModuleName, &
                 & 'Inappropriate units for height in subset' )
             end if
@@ -1295,6 +1300,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.48  2001/06/26 20:11:32  livesey
+! Bug fixes to subset (more to come I imagine)
+!
 ! Revision 2.47  2001/06/26 19:01:00  vsnyder
 ! Specify regularization orders according to quantities
 !
