@@ -438,7 +438,7 @@ CONTAINS
    SUBROUTINE OutputMMGrids_HE5 (physicalFilename, l3mm, creationFlag)
 !-----------------------------------------------------------------
    USE HDFEOS5, ONLY: HE5T_NATIVE_FLOAT, HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE, &
-       & HE5F_ACC_RDWR, HE5F_ACC_TRUNC, HE5T_CHARSTRING
+       & HE5F_ACC_RDWR, HE5F_ACC_TRUNC
 
 ! Brief description of subroutine
 ! This subroutine creates and writes to the grid portion of l3mm files.
@@ -970,7 +970,7 @@ CONTAINS
    SUBROUTINE OutputMMDiags_HE5(physicalFilename, mm)
 !------------------------------------------------
    USE HDFEOS5, ONLY: HE5T_NATIVE_FLOAT, HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE, &
-       & HE5F_ACC_RDWR, HE5F_ACC_TRUNC, HE5T_CHARSTRING
+       & HE5F_ACC_RDWR, HE5F_ACC_TRUNC, MLS_CHARTYPE
 
 ! Brief description of subroutine
 ! This subroutine creates and writes to the diagnostic portion of l3mm files.
@@ -1082,7 +1082,7 @@ CONTAINS
       ENDIF
 
       !status = he5_swdefdfld(swId, MIS_FIELD, DIMD_NAME, "", & 
-      !     & HE5T_CHARSTRING, HDFE_NOMERGE)
+      !     & MLS_CHARTYPE, HDFE_NOMERGE)
       status = he5_swdefdfld(swId, MIS_FIELD, DIMD_NAME, "", & 
            & HE5T_NATIVE_INT, HDFE_NOMERGE)
       IF (status /= 0) THEN
@@ -1824,6 +1824,9 @@ END MODULE L3MMData
 !==================
 
 !# $Log$
+!# Revision 1.16  2004/05/04 15:57:20  cvuu
+!# Fixed bug
+!#
 !# Revision 1.15  2004/01/08 21:21:36  cvuu
 !# version 1.4 commit
 !#

@@ -22,7 +22,8 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
   USE mon_Out, ONLY: CreateFlags_T, OutputDg, OutputStd, OutputMON
   USE MonthlyProcessModule, ONLY: MonthlyCoreProcessing
   USE PCFHdr, ONLY: GlobalAttributes
-  USE H5LIB, ONLY: h5open_f, h5close_f
+!  USE H5LIB, ONLY: h5open_f, h5close_f
+  use MLSHDF5, only: mls_h5open, mls_h5close
   IMPLICIT NONE
 
 
@@ -61,7 +62,7 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
   INTEGER :: mis_Days(maxWindow)
 
   ! Initializations
-  call h5open_f(error)
+  call mls_h5open(error)
   if (error /= 0) then
      call MLSMessage ( MLSMSG_Error, moduleName, "Unable to h5_open_f" )
   endif
@@ -207,7 +208,7 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
 
   CALL MLSMessage (MLSMSG_Info, ModuleName, &
        & 'EOS MLS Level 3 Monthly data processing successfully completed!')
-  call h5close_f(error)                            
+  call mls_h5close(error)                            
   if (error /= 0) then                             
      call MLSMessage ( MLSMSG_Error, moduleName, "Unable to h5_close_f" )
   endif
@@ -221,6 +222,9 @@ END PROGRAM MLSL3M
 !=================
 
 ! $Log$
+! Revision 1.16  2004/05/04 15:55:00  cvuu
+! Use int array instead of charstring for mis_days, move globalattributes%processLevel to mon_Open.f90
+!
 ! Revision 1.15  2004/01/08 21:21:37  cvuu
 ! version 1.4 commit
 !

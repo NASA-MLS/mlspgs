@@ -6,7 +6,8 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
 !==========================================
 
   USE Allocate_Deallocate, ONLY: DEALLOCATE_TEST
-  USE H5LIB, ONLY: h5open_f, h5close_f
+!  USE H5LIB, ONLY: h5open_f, h5close_f
+  use MLSHDF5, only: mls_h5open, mls_h5close
   USE L2GPData, ONLY: L2GPData_T, DestroyL2GPDatabase
   USE L2Interface, ONLY: ReadL2GPProd, ReadL2GPAttribute
   USE L3CF, ONLY: L3CFDef_T, L3CFProd_T  
@@ -67,7 +68,7 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
 
 ! Executable code
 
-  CALL h5open_f(error)
+  CALL mls_h5open(error)
 
   CALL MLSMessage (MLSMSG_Info, ModuleName, & 
        & 'EOS MLS Level 3 data processing started')
@@ -152,7 +153,7 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
   CALL MLSMessage (MLSMSG_Info, ModuleName, & 
        & 'EOS MLS Level 3 data processing successfully completed!')
   
-  call h5close_f(error)
+  call mls_h5close(error)
   if (error /= 0) then
      call MLSMessage ( MLSMSG_Error, moduleName, "Unable to h5_close_f" )
   endif
@@ -164,6 +165,9 @@ END PROGRAM MLSL3D
 !=================
 
 ! $Log$
+! Revision 1.17  2004/05/06 17:38:16  cvuu
+! uncomment the use h5lib
+!
 ! Revision 1.16  2004/05/04 15:33:15  cvuu
 ! v1.4.3: Use int array for Date in Data Field
 !
