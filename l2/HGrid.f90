@@ -165,8 +165,8 @@ contains ! =====     Public Procedures     =============================
       case ( f_type )
         hGridType = decoration(subtree(2,son))
       case ( f_module )
-        instrumentModule = decoration(subtree(2,son))
-        call get_string ( lit_indices(instrumentModule), instrumentModuleName )
+        instrumentModule = sub_rosa(subtree(2,son))
+        call get_string ( instrumentModule , instrumentModuleName )
       case ( f_height )
         call expr ( subtree(2,son), expr_units, expr_value )
         height = expr_value(1)
@@ -444,6 +444,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.8  2001/03/02 01:27:06  livesey
+! For new MLSSignals
+!
 ! Revision 2.7  2001/02/22 23:44:29  livesey
 ! Typo
 !
