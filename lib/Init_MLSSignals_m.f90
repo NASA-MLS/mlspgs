@@ -92,7 +92,7 @@ contains
     field_indices(f_centerFrequency) =     add_ident ( 'centerFrequency' )
     field_indices(f_channel) =             add_ident ( 'channel' )
     field_indices(f_channels) =            add_ident ( 'channels' )
-    field_indices(f_dacs) =                add_ident ( 'dacs' )
+    field_indices(f_dacs) =                add_ident ( 'DACS' )
     field_indices(f_deferred) =            add_ident ( 'deferred' )
     field_indices(f_direction) =           add_ident ( 'direction' )
     field_indices(f_first) =               add_ident ( 'first' )
@@ -200,6 +200,9 @@ contains
 end module Init_MLSSignals_m
 
 ! $Log$
+! Revision 2.21  2003/07/23 07:17:46  livesey
+! Capitalized DACS
+!
 ! Revision 2.20  2003/07/18 20:23:26  livesey
 ! Added DACS flags etc.
 !
