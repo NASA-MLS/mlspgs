@@ -762,6 +762,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_do_conv, t+t_boolean, n+n_field_type, &
              begin, f+f_do_freq_avg, t+t_boolean, n+n_field_type, &
              begin, f+f_do_1d, t+t_boolean, n+n_field_type, &
+             begin, f+f_incl_cld, t+t_boolean, n+n_field_type, &
              begin, f+f_integrationGrid, s+s_vGrid, n+n_field_spec, &
              begin, f+f_lockBins, t+t_boolean, n+n_field_type, &
              begin, f+f_module, s+s_module, n+n_field_spec, &
@@ -942,6 +943,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.276  2003/01/30 17:28:35  jonathan
+! add logical incl_cld
+!
 ! Revision 2.275  2003/01/29 01:48:29  vsnyder
 ! Add 'polarized' field to forwardModel
 !
