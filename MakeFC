@@ -51,18 +51,29 @@ LEVELS = l1 l2 l3
 #LEVELS = l2
 #----------------------------------------------------------
 
-SUBDIRS = lib $(LEVELS)
+#-----------------------
+#         All the subdirectories
+#You may build all the subdirectories
+#by entering
+# make -f MakeFC all
+SUBDIRS = lib $(LEVELS) l2pc fwdmdl
+
+all: $(SUBDIRS)
+#-----------------------
 
 subdirs: $(SUBDIRS)
 
-$(SUBDIRS):
+$(LEVELS):
 	$(MAKE) -f $(MakeFName) -C $@
 
 $(LEVELS): lib
 
+$(SUBDIRS):
+	$(MAKE) -f $(MakeFName) -C $@
+
 tar: clean
 
-.PHONY: configure depends subdirs $(SUBDIRS) clean clean_objs tar
+.PHONY: configure depends subdirs $(SUBDIRS) clean clean_objs tar all
 
 configure:
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
@@ -118,6 +129,9 @@ tar:
 	tar hcvzf srclib.tgz srclib
 
 # $Log$
+# Revision 1.7  2000/11/28 00:49:59  pwagner
+# configure now configures subdirs
+#
 # Revision 1.6  2000/11/15 18:22:10  pwagner
 # Now can make all of l1 l2 l3
 #
