@@ -25,22 +25,20 @@ module Join                     ! Join together chunk based data.
   use ManipulateVectorQuantities, only: DOHGRIDSMATCH
   use MLSCommon, only: MLSChunk_T, R8
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, &
-    & MLSMSG_Allocate, MLSMSG_Deallocate
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSSignals_M, only: GETSIGNALNAME
   use MoreTree, only: Get_Spec_ID
   use OUTPUT_M, only: BLANKS, OUTPUT
-  use QuantityTemplates, only: QuantityTemplate_T
   use String_Table, only: DISPLAY_STRING, GET_STRING
   use Symbol_Table, only: ENTER_TERMINAL
   use Symbol_Types, only: T_STRING
-  use TOGGLES, only: GEN, LEVELS, TOGGLE
+  use TOGGLES, only: GEN, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, NULL_TREE, SOURCE_REF, &
     & SUB_ROSA, SUBTREE
   use TREE_TYPES, only: N_NAMED, N_SET_ONE
-  use VectorsModule, only: GetVectorQuantity, GetVectorQtyByTemplateIndex, &
-    & ValidateVectorQuantity, Vector_T, VectorValue_T, DUMP
+  use VectorsModule, only: GetVectorQtyByTemplateIndex, &
+    & ValidateVectorQuantity, Vector_T, VectorValue_T
 
   implicit none
   private
@@ -93,7 +91,6 @@ contains ! =====     Public Procedures     =============================
     integer :: NAME                     ! Sub-rosa index of name of L2GP or L2AUX
     integer :: SON                      ! A son of ROOT
     integer :: SOURCE                   ! Index in AST
-    integer :: STATUS                   ! Flag
     integer :: VALUE                    ! Value of a field
     integer :: VECTORINDEX              ! Index for vector to join
     integer :: QUANTITYINDEX            ! ind in qty tmpl database, not vector
@@ -114,6 +111,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Executable code
     timing = section_times
+    if ( timing ) call cpu_time ( t1 )
 
     if ( toggle(gen) ) call trace_begin ( "MLSL2Join", root )
 
@@ -353,7 +351,6 @@ contains ! =====     Public Procedures     =============================
 
     ! Local variables
 
-    integer :: FreqNo, ProfNo, Status
     type (L2GPData_T) :: NewL2GP
     type (L2GPData_T), pointer :: ThisL2GP
     integer :: Index
@@ -507,7 +504,6 @@ contains ! =====     Public Procedures     =============================
     ! Local variables
     integer :: FIRSTMAF                 ! Index
     integer :: LASTMAF                  ! Index
-    integer ::                           Status, ProfNo
     integer ::                           UseFirstInstance, UseLastInstance, &
     &                                    NoOutputInstances
     type (L2AUXData_T) ::                NewL2AUX
@@ -516,10 +512,9 @@ contains ! =====     Public Procedures     =============================
     integer, dimension(3) ::             DimensionFamilies, DimensionSizes, DimensionStarts
     integer ::                           AuxFamily     ! Channel or Frequency
     integer ::                           DimensionIndex, Channel, Surf, Prof, &
-    &                                    NoMAFs,index, InstanceNo
+    &                                    NoMAFs,index
     integer ::                           FirstProfile, LastProfile
 !   real(r8), dimension(:,:), pointer :: values !??? Not used ???
-    integer ::                           IERR
 
     ! Executable code
 
@@ -707,6 +702,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.50  2001/09/28 23:59:20  pwagner
+! Fixed various timing problems
+!
 ! Revision 2.49  2001/09/28 17:50:30  pwagner
 ! MLSL2Timings module keeps timing info
 !
