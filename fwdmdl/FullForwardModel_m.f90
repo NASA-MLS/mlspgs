@@ -46,7 +46,7 @@ contains
     use Geometry, only: EarthRadA, EarthRadB, MaxRefraction
     use Get_Chi_Angles_m, only: Get_Chi_Angles
     use Get_Chi_Out_m, only: Get_Chi_Out
-    use Get_Species_Data_M, only:  Destroy_Species_Data, Get_Species_Data
+    use Get_Species_Data_M, only:  Get_Species_Data
     use GLnp, only: GW, NG
     use Intrinsic, only: L_A, L_BOUNDARYPRESSURE, L_CLEAR, L_CLOUDICE, &
       & L_CLOUDWATER, L_DN, L_DV, L_DW, L_EARTHREFL, L_ECRtoFOV, &
@@ -3181,6 +3181,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.229  2004/12/13 20:37:23  vsnyder
+! Moved stuff from get_species_data to ForwardModelConfig, some cannonball polishing
+!
 ! Revision 2.228  2004/11/05 19:38:39  vsnyder
 ! Got rid of DerivedFromForwardModel component of config
 !
