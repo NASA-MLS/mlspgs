@@ -14,7 +14,8 @@ program MLSL2
   use OUTPUT_M, only: OUTPUT, PRUNIT
   use PARSER, only: CONFIGURATION
   use STRING_TABLE, only: DO_LISTING, INUNIT
-  use TOGGLES, only: CON, GEN, LEVELS, LEX, PAR, SYN, SWITCHES, TAB, TOGGLE
+  use TOGGLES, only: CON, EMIT, GEN, LEVELS, LEX, PAR, SYN, SWITCHES, TAB, &
+    & TOGGLE
   use TREE, only: ALLOCATE_TREE, PRINT_SUBTREE
   use TREE_CHECKER, only: CHECK_TREE
   use TREE_WALKER, only: WALK_TREE_TO_DO_MLS_L2
@@ -74,6 +75,7 @@ program MLSL2
         case ( 'a' ); toggle(syn) = .true.
         case ( 'c' ); toggle(con) = .true.
         case ( 'd' ); do_dump = .true.
+        case ( 'e' ); toggle(emit) = .true.
         case ( 'g' )
           toggle(gen) = .true.
           levels(gen) = 0
@@ -95,6 +97,7 @@ program MLSL2
           print *, '  -a: Dump the decorated type-checked abstract syntax tree.'
           print *, '  -c: Trace expression evaluation and tree decoration.'
           print *, '  -d: Dump the declaration table after type checking'
+          print *, '  -e: Turn on the "emit" toggle'
           print *, '  -g[digit]: Trace "generation".  Bigger digit means ', &
             &                    'more output.'
           print *, '  -Gstring: Trace "generation".  Characters in "string" '
@@ -193,6 +196,9 @@ program MLSL2
 end program MLSL2
 
 ! $Log$
+! Revision 2.18  2001/04/06 20:11:53  vsnyder
+! Add -e option
+!
 ! Revision 2.17  2001/04/05 01:33:46  vsnyder
 ! Increase initial sizes for sevaral paraer tables
 !
