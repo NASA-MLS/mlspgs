@@ -7,7 +7,7 @@ module L2ParInfo
 
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
   use PVM, only: PVMFMYTID, PVMFINITSEND, PVMF90PACK, PVMFSEND, &
-    & PVMDATADEFAULT, PVMERRORMESSAGE, PVMF90UNPACK
+    & PVMDATADEFAULT, PVMERRORMESSAGE, PVMF90UNPACK, NEXTPVMARG
   use PVMIDL, only: PVMIDLPACK
   use VectorsModule, only: VECTORVALUE_T
   use QuantityPVM, only: PVMSENDQUANTITY
@@ -17,8 +17,9 @@ module L2ParInfo
   private
 
   public :: L2ParallelInfo_T, parallel, InitParallel, CloseParallel
-  public :: SIG_ToJoin, SIG_Finished, ChunkTag, InfoTag, SlaveJoin
-  public :: SIG_AckFinish, NotifyTag, GetNiceTidString
+  public :: SIG_ToJoin, SIG_Finished, SIG_Register, ChunkTag, InfoTag, SlaveJoin
+  public :: SIG_AckFinish, NotifyTag, GetNiceTidString, SlaveArguments
+  public :: AccumulateSlaveArguments
   
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -37,6 +38,7 @@ module L2ParInfo
   integer, parameter :: SIG_TOJOIN = 1
   integer, parameter :: SIG_FINISHED = SIG_toJoin + 1
   integer, parameter :: SIG_ACKFINISH = SIG_finished + 1
+  integer, parameter :: SIG_REGISTER = SIG_AckFinish + 1
 
   ! This datatype defines configuration for the parallel code
   type L2ParallelInfo_T
@@ -45,6 +47,8 @@ module L2ParInfo
     integer :: myTid                    ! My task ID in pvm
     integer :: masterTid                ! task ID in pvm
     character(len=132) :: slaveFilename ! Filename with list of slaves
+    character(len=132) :: executable    ! Executable filename
+    character(len=132) :: submit=""     ! Submit comand for batch queue system
     integer :: maxFailuresPerMachine = 1 ! More than this then don't use it
     integer :: maxFailuresPerChunk = 4 ! More than this then give up on getting it
   end type L2ParallelInfo_T
@@ -52,15 +56,44 @@ module L2ParInfo
   ! Shared variables
 
   type (L2ParallelInfo_T), save :: parallel
+  character ( len=2048 ), save :: slaveArguments = ""
 
 contains ! ==================================================================
 
+  ! --------------------------------------------- AccumulateSlaveArguments ------
+  subroutine AccumulateSlaveArguments ( arg )
+    ! This routine accumulates the command line arguments for the slaves
+    character (len=*), intent(in) :: arg
+    ! Executable code
+    call NextPVMArg ( arg )
+    if ( len_trim(slaveArguments) + len_trim(arg) +1 > len(slaveArguments) ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, 'Argument list for slave too long.' )
+    slaveArguments = trim(slaveArguments)//' '//trim(arg)
+  end subroutine AccumulateSlaveArguments
+    
   ! ---------------------------------------------- InitParallel -------------
-  subroutine InitParallel
+  subroutine InitParallel ( chunkNo )
     ! This routine initialises the parallel code
+    integer, intent(in) :: chunkNo      ! Chunk number asked to do.
+    ! Local variables
+    integer :: BUFFERID                 ! From PVM
+    integer :: INFO                     ! From PVM
     ! Executable code
     if ( parallel%master .or. parallel%slave ) then
       call PVMFMyTid ( parallel%myTid )
+    end if
+    if ( parallel%slave ) then
+      ! Register ourselves with the master
+      call PVMFInitSend ( PvmDataDefault, bufferID )
+      call PVMF90Pack ( SIG_Register, info )
+      if ( info /= 0 ) &
+        & call PVMErrorMessage ( info, 'packing registration' )
+      call PVMF90Pack ( chunkNo, info )
+      if ( info /= 0 ) &
+        & call PVMErrorMessage ( info, 'packing chunkNumber' )
+      call PVMFSend ( parallel%masterTid, InfoTag, info )
+      if ( info /= 0 ) &
+        & call PVMErrorMessage ( info, 'sending finish packet' )
     end if
   end subroutine InitParallel
 
@@ -145,6 +178,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.11  2002/04/24 16:53:50  livesey
+! Changes to implement submit.
+!
 ! Revision 2.10  2002/03/21 01:23:36  livesey
 ! Changed thresholds
 !
