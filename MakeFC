@@ -196,6 +196,9 @@ SHELL = /bin/sh
 # help--toolkit  -- prints how to set paths for the mandatory libraries
 # install        -- mv programs mlsl* from sub-subs to INSTALLDIR
 #                    also create shell scripts in INSTALLDIR for each program
+# install-ln     -- mv program mlsln from sub-subs to INSTALLDIR
+#                    also create shell script in INSTALLDIR for the program
+#                    where ln is one of {l1 l2 l3 l3d l3m}
 # makefile       -- allows you to summon this custom Makefile with shorter
 #                    "make" rather than laborious "make -f $(MakeFName)"
 # mostlyclean    -- deletes uniquely-named sub-sub-directories
@@ -590,6 +593,23 @@ install:
 	fi ; \
 	for dir in $(LEVELS); do \
 	case "$$dir" in \
+	"l1") \
+			if [ -f $$dir/$(MLSCONFG)/mlsl1log ] ; then \
+	         mv $$dir/$(MLSCONFG)/mlsl1log $(INSTALLDIR) ; \
+			fi ; \
+			if [ -f $$dir/$(MLSCONFG)/mlsl1t ] ; then \
+	         mv $$dir/$(MLSCONFG)/mlsl1t $(INSTALLDIR) ; \
+			fi ; \
+			if [ -f $$dir/$(MLSCONFG)/mlsl1g ] ; then \
+	         mv $$dir/$(MLSCONFG)/mlsl1g $(INSTALLDIR) ; \
+            rm -f $(INSTALLDIR)/mlsl1.sh ; \
+	         sed "s=mlsxxyyzz_1=mlsl1log=; s=mlsxxyyzz_2=mlsl1g=; \
+              s=mlsxxyyzz_3=mlsl1t=; s=mlsbbiinn=$(INSTALLDIR)=; \
+              s=mlshhoommee=$(MLSHOME)=; s=mlseexxttrraa==" \
+              $(MLSBIN)/mlsl1prog.sh > $(INSTALLDIR)/mlsl1.sh ; \
+            chmod a+x $(INSTALLDIR)/mlsl1.sh ; \
+			fi ; \
+		;; \
 	"l3") \
 			if [ -f $$dir/$(MLSCONFG)/mlsl3d ] ; then \
 	         mv $$dir/$(MLSCONFG)/mlsl3d $(INSTALLDIR) ; \
@@ -612,6 +632,22 @@ install:
 		;; \
 	esac ; \
 	done
+
+# install the mls programs from $(LEVELS) into $(INSTALLDIR)
+install-l1:
+	@$(MAKE) -f $(MakeFName) install LEVELS=l1
+
+install-l2:
+	@$(MAKE) -f $(MakeFName) install LEVELS=l2
+
+install-l3:
+	@$(MAKE) -f $(MakeFName) install LEVELS="l3 l3m"
+
+install-l3d:
+	@$(MAKE) -f $(MakeFName) install LEVELS=l3
+
+install-l3m:
+	@$(MAKE) -f $(MakeFName) install LEVELS=l3m
 
 # Build executables out of sources from mlspgs/util directory
 ifeq ($(MLSF95),LF95)
@@ -996,7 +1032,8 @@ update:
   depends distclean disttar distarz distarg disthelp doc--api doc--toc \
   firsthelp  ghostbuster help--brief help--convert help--depends help--fopts\
   help help--ghostbuster help--mlsconfigure help--Makefile help--platform\
-  help--pvm help--reecho help--scripts help--toolkit install\
+  help--pvm help--reecho help--scripts help--toolkit \
+  install install-l1 install-l2 install-l3 install-l3d install-l3m \
   internalcleanup internaldepends internalmftests internalsaymake \
   internaladd_copy internalreset_copy show_copy internalupdate levels\
   lib--hdf5 l1--hdf5 l2--hdf5 l3--hdf5 l3m--hdf5 all--hdf5 lib--hdf4\
@@ -1007,6 +1044,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.79  2002/10/11 23:01:42  pwagner
+# Added doc--api and doc--toc targets
+#
 # Revision 1.78  2002/09/24 18:12:32  pwagner
 # Uses unique names for temp files
 #
