@@ -94,7 +94,6 @@ module INTRINSIC
   integer, parameter :: L_DNWT_GFAC     = l_dnwt_gdx + 1
   integer, parameter :: L_DNWT_GRADN    = l_dnwt_gfac + 1
   integer, parameter :: L_DNWT_SQ       = l_dnwt_gradn + 1
-  integer, parameter :: L_DNWT_SQ       = l_dnwt_gradn + 1
   integer, parameter :: L_DNWT_SQT      = l_dnwt_sq + 1
   ! End of quantities to report progress of DNWT
   integer, parameter :: L_DOBSONUNITS   = l_dnwt_sqt + 1
@@ -422,6 +421,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.40  2001/10/03 17:38:11  vsnyder
+! OOPS, defined L_DNWT_SQ twice
+!
 ! Revision 2.39  2001/10/03 17:36:47  vsnyder
 ! Add lits for DNWT quantities
 !
