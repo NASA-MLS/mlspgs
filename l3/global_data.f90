@@ -26,7 +26,7 @@ Module global_data
 
 ! Parameters
 
-	Integer	:: nt, nt_a, nt_d, nwave, mtotal
+	Integer	:: nt, nt_a, nt_d, nwave, mtotal, mtotala, mtotald
 	Real    :: orbitfreq, c0, lonD0, lonA0, lonDA0, t0
 	Real    :: tau0, tD0, tA0, tDA0, dtad, dlonad, d1lonad, sina, cosa, ds
 	Real    :: sD0, sA0, rD0, rA0, sDA0, rDA0
@@ -36,7 +36,8 @@ Module global_data
         Real, Allocatable, Dimension(:) :: lonD, tD, sD, rD
         Real, Allocatable, Dimension(:) :: lonA, tA, sA, rA
         !Real, Allocatable, Dimension(:) :: Dscend, Ascend
-        Real(r8), Allocatable, Dimension(:) :: Dscend, Ascend, wn, sigma
+        Real(r8), Allocatable, Dimension(:) :: Dscend, Ascend
+        Real(r8), Allocatable, Dimension(:) :: wn, sigma, wna, sigmaa, wnd, sigmad
         double complex, Allocatable, Dimension(:) :: phikr
 
         Real, Allocatable, Dimension(:) :: lonDA, tDA, sDA, rDA
@@ -58,6 +59,9 @@ End Module global_data
 !=====================
 
 ! $Log$
+! Revision 1.2  2001/02/27 20:53:07  ybj
+! global data
+!
 ! Revision 1.1  2000/10/05 18:17:01  nakamura
 ! Module split from synoptic.f90 and modified to be more like the standard template.
 !
