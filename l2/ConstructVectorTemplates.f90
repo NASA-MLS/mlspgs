@@ -45,7 +45,7 @@ contains ! =====     Public Procedures     =============================
     ! Local variables
     integer :: I, J, K        ! Loop inductors
     integer :: nSelections    ! How many selections?
-    integer, dimension(:), pointer :: SELECTED => NULL()
+    integer, dimension(:), pointer :: SELECTED
     integer :: SON            ! Son of Root
     integer :: SOURCE         ! 256*line + column of erroneous input
 
@@ -53,6 +53,8 @@ contains ! =====     Public Procedures     =============================
 
     if ( toggle(gen) ) call &
       & trace_begin ( "ConstructVectorTemplateFromMLSCfInfo", root )
+
+    nullify ( selected )
 
     ! Compute the number of selections
     nSelections = 0
@@ -115,6 +117,11 @@ END MODULE ConstructVectorTemplates
 
 !
 ! $Log$
+! Revision 2.4  2001/04/10 22:27:47  vsnyder
+! Nullify explicitly instead of with <initialization> so as not to give
+! pointers the SAVE attribute.  <initialization> is NOT executed on each
+! entry to a procedure.
+!
 ! Revision 2.3  2001/02/22 21:58:42  livesey
 ! Nullified a pointer
 !

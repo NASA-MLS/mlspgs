@@ -23,11 +23,13 @@ module Test_Parse_Signals_m
 contains
   subroutine Test_Parse_Signals
 
-    logical, pointer, dimension(:) :: Channels => NULL()
+    logical, pointer, dimension(:) :: Channels
     integer :: I
     character(len=127) :: Line
     integer :: Sideband
-    integer, pointer, dimension(:) :: Signal_Indices => NULL()
+    integer, pointer, dimension(:) :: Signal_Indices
+
+    nullify ( channels, signal_Indices )
 
     print *, 'Enter radiometer strings: '
     do
@@ -50,6 +52,11 @@ contains
 end module Test_Parse_Signals_m
 
 ! $Log$
+! Revision 2.4  2001/04/10 22:27:47  vsnyder
+! Nullify explicitly instead of with <initialization> so as not to give
+! pointers the SAVE attribute.  <initialization> is NOT executed on each
+! entry to a procedure.
+!
 ! Revision 2.3  2001/04/10 17:58:57  vsnyder
 ! Handle possibility that 'channels' is not associated
 !
