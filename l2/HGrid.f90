@@ -1199,6 +1199,7 @@ contains ! =====     Public Procedures     =============================
     integer :: CHUNK                    ! Loop counter
     integer :: C                        ! Inner loop counter
     integer :: HGRID                    ! Loop counter
+    integer :: HowMany                  ! How many sons does Root have?
     integer :: NOHGRIDS                 ! Number of hGrids
     integer :: SON                      ! Tree node
     integer :: GSON                     ! son of son
@@ -1208,15 +1209,16 @@ contains ! =====     Public Procedures     =============================
 
     ! Executable code
     ! Slightly clever loop here, the zero run doesn't do anything except
-    ! count the number of hGrids.  The other run work out how big each HGrid
+    ! count the number of hGrids.  The other run works out how big each HGrid
     ! is going to be for each chunk.  This is stored in chunks%hGridOffsets.
     ! Finally we accumulate these to get offsets.
+    howMany = nsons(root)
     noHGrids = 0
     do chunk = 0, size(chunks)
       section = index
       hGrid = 1
       ! Loop over all the setions in the l2cf, look for construct sections
-      sectionLoop: do
+      sectionLoop: do while ( section <= howMany )
         son = subtree ( section, root )
         select case ( decoration ( subtree ( 1, son ) ) )
         case ( z_construct )
@@ -1371,6 +1373,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.53  2003/06/25 22:05:31  vsnyder
+! Don't run off the end of the tree if there's no output section
+!
 ! Revision 2.52  2003/06/24 23:30:30  livesey
 ! Got ComputeAllHGridOffsets working (on the surface at least)
 !
