@@ -68,7 +68,7 @@ contains ! =====     Public Procedures     =============================
     use MLSCommon, only: I4, findFirst, findNext
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
     use MLSFiles, only: HDFVERSION_5, &
-      & GetPCFromRef, &
+      & GetPCFromRef, mls_exists, &
       & MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, MLS_SFSTART, MLS_SFEND, &
       & SPLIT_PATH_NAME, unSplitName
     use MLSL2Options, only: CATENATESPLITS, CHECKPATHS, &
@@ -117,6 +117,7 @@ contains ! =====     Public Procedures     =============================
     integer :: L2gpFileHandle, L2gp_Version
     character (len=132) :: L2gpPhysicalFilename
     integer :: L2PCUNIT
+    logical :: madeFile
     integer, parameter:: MAXQUANTITIESPERFILE=10000
     integer :: Metadata_error
     character (len=32) :: meta_name    ! From the metaName= field
@@ -614,8 +615,10 @@ contains ! =====     Public Procedures     =============================
         endif
         if ( any(DirectDatabase%fileName == l2gpPhysicalFilename) ) then
           call MLSMessage ( MLSMSG_Error, ModuleName, &
-            &  "Must not unsplit dgg dw to " // trim(l2gpPhysicalFilename) )
+            &  "Cant not unsplit dgg dw to existing file " // &
+            &trim(l2gpPhysicalFilename) )
         endif
+        madeFile = .false.
         do DB_index = 1, size(DirectDatabase)
           if ( DirectDatabase(DB_index)%autoType /= l_l2dgg ) cycle
           if ( DEBUG ) then
@@ -625,11 +628,13 @@ contains ! =====     Public Procedures     =============================
             call output ( '   to: ', advance='no' )
             call output ( trim(l2gpPhysicalFilename) , advance='yes' )
           endif
+          if ( mls_exists(trim(DirectDatabase(DB_index)%fileName)) /= 0 ) cycle
+          madeFile = .true.
           call cpL2GPData(trim(DirectDatabase(DB_index)%fileName), &
             & trim(l2gpPhysicalFilename), create2=(DB_index==1), &
             & hdfVersion=HDFVERSION_5, notUnlimited=avoidUnlimitedDims)
         enddo
-        if ( TOOLKIT ) then
+        if ( TOOLKIT .and. madeFile ) then
           call add_metadata ( 0, trim(l2gpPhysicalFilename), 1, &
             & (/'dgg'/), HDFVERSION_5, l_l2dgg, returnStatus )
           if ( returnStatus /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -654,6 +659,7 @@ contains ! =====     Public Procedures     =============================
           call MLSMessage ( MLSMSG_Error, ModuleName, &
             &  "Must not unsplit dgg dw to " // trim(l2auxPhysicalFilename) )
         endif
+        madeFile = .false.
         do DB_index = 1, size(DirectDatabase)
           if ( DirectDatabase(DB_index)%autoType /= l_l2aux ) cycle
           call Array2List(DirectDatabase(DB_index)%sdNames, sdList)
@@ -667,11 +673,18 @@ contains ! =====     Public Procedures     =============================
             call output ( '   sdList: ', advance='no' )
             call output ( trim(sdList) , advance='yes' )
           endif
+          if ( mls_exists(trim(DirectDatabase(DB_index)%fileName)) /= 0 ) cycle
+          madeFile = .true.
           call cpL2AUXData(trim(DirectDatabase(DB_index)%fileName), &
             & trim(l2auxPhysicalFilename), create2=(DB_index==1), &
             & hdfVersion=HDFVERSION_5, sdList=trim(sdList))
         enddo
-        if ( TOOLKIT ) then
+        ! Is metadata really needed for l2aux files?
+        if ( TOOLKIT .and. madeFile ) then
+          call add_metadata ( 0, trim(l2auxPhysicalFilename), 1, &
+            & (/'dgm'/), HDFVERSION_5, l_hdf, returnStatus )
+          if ( returnStatus /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'unable to addmetadata to ' // trim(l2auxPhysicalFilename) )
         endif
       endif
     endif
@@ -941,6 +954,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.93  2004/02/19 23:57:47  pwagner
+! Hopefully will not try to write metadata if no file exists
+!
 ! Revision 2.92  2004/02/05 23:35:21  pwagner
 ! Fixed some bugs in catenating split dgg/dgm directwrites
 !
