@@ -36,17 +36,17 @@
 !define(mol9U,  { [ h2o, o3, n2 ] })
 !define(mol9,   { [ h2o, co, o3, n2 ] })
 
-!define(mol10L, { [ h2o, hocl, o3, o3_v1_3, o3_asym_o_18, n2 ] })
+!define(mol10L, { [ h2o, hocl_35, o3, o3_v1_3, o3_asym_o_18, n2 ] })
 !define(mol10U, { [ h2o, ho2, o3, o3_v1_3, o3_asym_o_18, cl_35_o, $
-                    br_79_o, br_81_o, n2 ] })
-!define(mol10,  { [ h2o, hocl, o3, o3_v1_3, o3_asym_o_18, n2, ho2, $
-                    cl_35_o, br_79_o, br_81_o ] })
+                    br_81_o, n2 ] })
+!define(mol10,  { [ h2o, hocl_35, o3, o3_v1_3, o3_asym_o_18, n2, ho2, $
+                    cl_35_o, br_81_o ] })
 
 !define(mol11L, { [ h2o, hocl, o3, o3_v1_3, o3_asym_o_18, n2 ] })
 !define(mol11U, { [ h2o, ho2, o3, o3_v1_3, o3_asym_o_18, cl_35_o, $
-                    br_79_o, br_81_o, n2 ] })
+                    br_81_o, n2 ] })
 !define(mol11,  { [ h2o, hocl, o3, o3_v1_3, o3_asym_o_18, n2, ho2, $
-                    cl_35_o, br_79_o, br_81_o ] })
+                    cl_35_o, br_81_o ] })
 
 !define(mol12L, { [ h2o, o3, o3_v1_3, n2 ] })
 !define(mol12U, { [ h2o, n2o, o3_v2, n2 ] })
