@@ -35,7 +35,7 @@ contains
   Subroutine convolve_all (ForwardModelConfig, ForwardModelIn, maf, channel, &
     windowStart, windowFinish, mafTInstance, temp, ptan, radiance, &
     tan_press,ptg_angles,tan_temp,dx_dt,d2x_dxdt, si,center_angle,i_raw, &
-    k_temp, k_atmos, sbRatio, Jacobian,AntennaPattern,Ier)
+    k_temp, k_atmos, sbRatio, Jacobian, rowFlags, AntennaPattern,Ier)
 
     ! Dummy arguments
     type (ForwardModelConfig_T), intent(in) :: FORWARDMODELCONFIG
@@ -62,6 +62,7 @@ contains
     Real(r4), intent(in) :: k_atmos(:,:,:,:)                ! (Nptg,mxco,mnp,Nsps)
 
     real(r8) :: k_star_tmp(ptan%template%noSurfs)
+    logical, dimension(:), intent(inout) :: rowFlags ! Flag to calling code
 
     integer, intent(out) :: ier         ! Flag
 
@@ -157,6 +158,7 @@ contains
     if ( .not. want_deriv ) return
     ! Derivatives wanted,find index location k_star_all and write the derivative
     row = FindBlock( Jacobian%row, radiance%index, maf )
+    rowFlags(row) = .true.
     col = FindBlock ( Jacobian%col, ptan%index, maf )
     select case (jacobian%block(Row,col)%kind)
     case (m_absent)
@@ -451,6 +453,9 @@ contains
 !
 end module CONVOLVE_ALL_M
 ! $Log$
+! Revision 1.21  2001/04/27 22:37:54  vsnyder
+! Don't compute derivatives if Jacobian isn't present
+!
 ! Revision 1.20  2001/04/27 00:13:10  zvi
 ! Fixing some more phiwindow bug
 !

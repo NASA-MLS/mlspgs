@@ -33,7 +33,7 @@ contains
 
   Subroutine no_conv_at_all ( ForwardModelConfig, ForwardModelIn, MAF, &
     & Channel, WindowStart, WindowFinish, Temp, Ptan, Radiance, &
-    & Tan_press, I_raw, K_temp, K_atmos, SbRatio, Jacobian )
+    & Tan_press, I_raw, K_temp, K_atmos, SbRatio, Jacobian, rowFlags )
 
     type (ForwardModelConfig_T) :: FORWARDMODELCONFIG
     type (Vector_T), intent(in) :: FORWARDMODELIN
@@ -52,6 +52,7 @@ contains
     Real(r4) :: k_atmos(:,:,:,:)                 ! (Nptg,mxco,mnp,Nsps)
 
     type (Matrix_T), intent(inout), optional :: Jacobian
+    logical, dimension(:), intent(inout) :: rowFlags ! Flag to calling code
 
     ! -----     Local Variables     ------------------------------------
 
@@ -88,6 +89,7 @@ contains
 
       row = FindBlock ( Jacobian%row, radiance%index, maf )
       col = FindBlock ( Jacobian%col, ptan%index, maf )
+      rowFlags(row) = .true.
       select case (jacobian%block(Row,col)%kind)
       case (m_absent)
         call CreateBlock ( Jacobian, row, col, m_banded, &
@@ -122,7 +124,6 @@ contains
     if ( .not. ANY((/forwardModelConfig%temp_der,forwardModelConfig%atmos_der, &
       & forwardModelConfig%spect_der/)) ) Return
     if ( .not. present(jacobian) ) return
-    row = FindBlock ( Jacobian%row, radiance%index, maf ) ! Tidy up conditions later !???
 
 
     ! Now transfer the other fwd_mdl derivatives to the output pointing
@@ -280,6 +281,9 @@ contains
 
 end module NO_CONV_AT_ALL_M
 ! $Log$
+! Revision 1.16  2001/04/27 22:02:13  vsnyder
+! Don't compute derivatives if Jacobian isn't present
+!
 ! Revision 1.15  2001/04/27 00:13:29  zvi
 ! Fixing some phiwindow bug
 !
