@@ -60,7 +60,7 @@ contains ! =====     Public Procedures     =============================
       & L_L2AUX, L_L2DGG, L_L2GP, L_L2PC, S_OUTPUT, S_TIME
     use Intrinsic, only: l_swath, l_grid, l_hdf, &
       & PHYQ_Dimensionless
-    use L2AUXData, only: L2AUXDATA_T, WriteL2AUXData
+    use L2AUXData, only: L2AUXDATA_T, cpL2AUXData, WriteL2AUXData
     use L2GPData, only: L2GPData_T, cpL2GPData, WriteL2GPData, L2GPNameLen
     use L2PC_m, only: WRITEONEL2PC, OUTPUTHDF5L2PC
     use MatrixModule_1, only: MATRIX_DATABASE_T, MATRIX_T, GETFROMMATRIXDATABASE
@@ -340,7 +340,6 @@ contains ! =====     Public Procedures     =============================
             if ( DEBUG ) call output ( 'Attempting sfstart', advance='yes' )
             sdfId = mls_sfstart(l2auxPhysicalFilename, DFACC_CREATE, &
               & hdfVersion=hdfVersion)
-            !        sdfId = sfstart(l2auxPhysicalFilename, DFACC_CREATE)
 
             if ( DEBUG ) call output ( "looping over quantities", advance='yes' )
             numquantitiesperfile = 0
@@ -639,9 +638,9 @@ contains ! =====     Public Procedures     =============================
         do DB_index = 1, size(DirectDatabase)
           if ( DirectDatabase(DB_index)%autoType /= l_l2aux ) cycle
           ! Not implemented yet
-          ! call cpL2aux(trim(l2auxPhysicalFilename), &
-          !   & trim(DirectDatabase(DB_index)%fileName), create2=(DB_index==1), &
-          !   & hdfVersion=HDFVERSION_5)
+          call cpL2AUXData(trim(l2auxPhysicalFilename), &
+            & trim(DirectDatabase(DB_index)%fileName), create2=(DB_index==1), &
+            & hdfVersion=HDFVERSION_5)
         enddo
         if ( TOOLKIT ) then
         endif
@@ -913,6 +912,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.91  2004/01/27 21:37:26  pwagner
+! Can catenate split l2aux files
+!
 ! Revision 2.90  2004/01/23 01:15:00  pwagner
 ! Began effort to catenate split direct write files
 !
