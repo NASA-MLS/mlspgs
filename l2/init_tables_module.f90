@@ -529,8 +529,8 @@ contains ! =====     Public procedures     =============================
       begin, t+t_quantityType, l+l_baseline, l+l_earthRefl, l+l_elevOffset, &
              l+l_extinction, l+l_gph, l+l_losVel, l+l_orbitIncline, l+l_ptan,&
              l+l_radiance, l+l_refGPH, l+l_scECI, l+l_scVel, l+l_scGeocAlt, &
-             l+l_spaceRadiance, l+l_temperature, l+l_tngtECI, l+l_tngtGeodAlt, &
-             l+l_tngtGeocAlt, l+l_vmr, n+n_dt_def, &
+             l+l_sidebandRatio, l+l_spaceRadiance, l+l_temperature,&
+             l+l_tngtECI, l+l_tngtGeodAlt, l+l_tngtGeocAlt, l+l_vmr, n+n_dt_def, &
       begin, t+t_scale, l+l_apriori, & ! l+l_covariance, & !??? Later !???
              l+l_none, l+l_norm, n+n_dt_def, &
       begin, t+t_species, l+l_gph, l+l_gph_precision, l+l_temperature, &
@@ -807,6 +807,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.74  2001/04/19 20:04:44  livesey
+! Added sideband ratio to quantityType
+!
 ! Revision 2.73  2001/04/12 21:42:39  livesey
 ! Signal field in s_quantity now string.
 !
