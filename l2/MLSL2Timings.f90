@@ -20,15 +20,16 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
 
   ! This module simply contains initial settings and accumulated values.
 
-  logical            :: SECTION_TIMES=.false.  ! Show times in each section
-  logical            :: TOTAL_TIMES=.false.    ! Show total times from start
-  logical, private   :: COUNTEMPTY=.false.     ! Any sections named ' '?
+  logical            :: SECTION_TIMES = .false.  ! Show times in each section
+  logical            :: TOTAL_TIMES = .false.    ! Show total times from start
+  logical, private   :: COUNTEMPTY = .false.     ! Any sections named ' '?
 
   character*(*), parameter           :: section_names = &
-    & 'open_init, global_settings, signals, spectroscopy, read_apriori, ' // &
-    & 'scan_divide, construct, fill, retrieve, join, output'
-  integer, parameter                 :: num_section_times = 11
-  real, dimension(num_section_times) :: section_timings = 0.
+    & 'main,open_init,global_settings,signals,spectroscopy,' // &
+    & 'read_apriori,scan_divide,construct,fill,retrieve,join,output'
+  integer, parameter                 :: num_section_times = 12
+  real, dimension(num_section_times), &
+    & save                           :: section_timings = 0.
 
 contains ! =====     Public Procedures     =============================
 
@@ -61,11 +62,13 @@ contains ! =====     Public Procedures     =============================
   ! dump accumulated elapsed timings forsection_names
 
   ! Private
-    integer                     :: elem
-    character(LEN=16)           :: section_name   ! One of the section_names
-    real                        :: final
-    real                        :: total
-    real                        :: percent
+    character(LEN=*), parameter  :: TIMEFORM = '(F10.2)'
+    character(LEN=*), parameter  :: PCTFORM='(F10.0)'
+    integer                       :: elem
+    character(LEN=16)             :: section_name   ! One of the section_names
+    real                          :: final
+    real                          :: total
+    real                          :: percent
 
   ! Executable
     call output ( '==========================================', advance='yes' )
@@ -85,17 +88,34 @@ contains ! =====     Public Procedures     =============================
       call GetStringElement(section_names, section_name, elem, countEmpty)
       percent = 100 * section_timings(elem) / final
       call output ( section_name, advance='no' )
-      call blanks ( 8, advance='no' )
-      call output ( section_timings(elem), advance='no' )
-      call blanks ( 8, advance='no' )
-      call output ( percent, advance='yes' )
+      call blanks ( 2, advance='no' )
+      call output ( section_timings(elem), FORMAT=TIMEFORM, advance='no' )
+      call blanks ( 2, advance='no' )
+      call output ( percent, FORMAT=PCTFORM, advance='yes' )
     enddo
+    call output ( '==========================================', advance='yes' )
+    percent = 100 * total / final
+    call blanks ( 4, advance='no' )
+    call output ( '(total)', advance='no' )
+    call blanks ( 7, advance='no' )
+    call output ( total, FORMAT=TIMEFORM, advance='no' )
+    call blanks ( 2, advance='no' )
+    call output ( percent, FORMAT=PCTFORM, advance='yes' )
     percent = 100 * (final-total) / final
+    call blanks ( 3, advance='no' )
     call output ( '(others)', advance='no' )
-    call blanks ( 8, advance='no' )
-    call output ( final-total, advance='no' )
-    call blanks ( 8, advance='no' )
-    call output ( percent, advance='yes' )
+    call blanks ( 7, advance='no' )
+    call output ( final-total, FORMAT=TIMEFORM, advance='no' )
+    call blanks ( 2, advance='no' )
+    call output ( percent, FORMAT=PCTFORM, advance='yes' )
+    call output ( '==========================================', advance='yes' )
+    percent = 100
+    call blanks ( 4, advance='no' )
+    call output ( '(final)', advance='no' )
+    call blanks ( 7, advance='no' )
+    call output ( final, FORMAT=TIMEFORM, advance='no' )
+    call blanks ( 2, advance='no' )
+    call output ( percent, FORMAT=PCTFORM, advance='yes' )
   end subroutine dump_section_timings
 
 !=============================================================================
@@ -104,6 +124,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.2  2001/09/28 23:59:20  pwagner
+! Fixed various timing problems
+!
 ! Revision 2.1  2001/09/28 17:50:30  pwagner
 ! MLSL2Timings module keeps timing info
 !
