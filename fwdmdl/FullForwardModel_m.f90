@@ -138,6 +138,7 @@ contains
                                         ! NLVL * (NG+1) - NG, i.e., 1 + NG
                                         ! per level, except the last, where
                                         ! there's no GL space.
+    integer :: MID                      ! NPC / 2
     integer :: MIF                      ! MIF number for tan_press(ptg_i)
     integer :: MINSUPERSET              ! Min. value of superset > 0
     integer :: NGL                      ! Total # of GL points = Size(gl_inds)
@@ -231,6 +232,7 @@ contains
     real(rp), dimension(:), pointer :: CT           ! Cos(Theta), where theta
       ! is the angle between the line of sight and magnetic field vectors.
     real(rp), dimension(:), pointer :: DEL_S        ! Integration lengths along path
+    real(rp), dimension(:), pointer :: DEL_ZETA     ! Integration lengths in Zeta coords
     real(rp), dimension(:), pointer :: DHDZ_PATH    ! dH/dZ on path
     real(rp), dimension(:), pointer :: DRAD_DN      ! dI/dN
     real(rp), dimension(:), pointer :: DRAD_DT      ! dI/dT
@@ -273,7 +275,6 @@ contains
     real(rp), dimension(:), pointer :: T_SCRIPT     ! Delta_B in some notes
     real(rp), dimension(:), pointer :: Z_GLGRID     ! Zeta on glGrid surfs
     real(rp), dimension(:), pointer :: Z_PATH       ! Zeta on path
-    real(rp), dimension(:), pointer :: Z_PATH_C     ! Z_PATH on coarse grid
 
     real(rp), dimension(:,:), pointer :: BETA_PATH_C ! Beta on path coarse
     real(rp), dimension(:,:), pointer :: BETA_PATH_PHH_C   ! Scattering phase function !JJ 
@@ -385,13 +386,13 @@ contains
     type (VectorValue_T), pointer :: ECRtoFOV      ! Rotation matrices
     type (VectorValue_T), pointer :: ELEVOFFSET    ! Elevation offset
     type (VectorValue_T), pointer :: F             ! An arbitrary species
+    type (VectorValue_T), pointer :: GPH           ! Geopotential height
     type (VectorValue_T), pointer :: LOSVEL        ! Line of sight velocity
     type (VectorValue_T), pointer :: MAGFIELD      ! Profiles
     type (VectorValue_T), pointer :: ORBINCLINE    ! Orbital inclination
     type (VectorValue_T), pointer :: PHITAN        ! Tangent geodAngle component of state vector
     type (VectorValue_T), pointer :: PTAN          ! Tangent pressure component of state vector
     type (VectorValue_T), pointer :: REFGPH        ! Reference geopotential height
-    type (VectorValue_T), pointer :: GPH           ! Geopotential height
     type (VectorValue_T), pointer :: SCGEOCALT     ! S/C geocentric altitude /m
     type (VectorValue_T), pointer :: SIDEBANDFRACTION ! The sideband fraction to use
     type (VectorValue_T), pointer :: SIZEDISTRIBUTION ! Integer really   !JJ
@@ -470,7 +471,7 @@ contains
       & d_t_scr_dt, d2x_dxdt, d2xdxdt_surface, d2xdxdt_tan, &
       & dbeta_dn_path_c, dbeta_dn_path_f, dbeta_dt_path_c, dbeta_dt_path_f, &
       & dbeta_dv_path_c, dbeta_dv_path_f, dbeta_dw_path_c, dbeta_dw_path_f, &
-      & ddhidhidtl0, de_df, de_dt, del_s, deltau_pol, &
+      & ddhidhidtl0, de_df, de_dt, del_s, del_zeta, deltau_pol, &
       & dh_dt_glgrid, dh_dt_path, dh_dt_path_f, dh_dt_path_c, &
       & dhdz_glgrid, dhdz_out, dhdz_path, dincoptdepth_pol_dt, &
       & do_calc_dn, do_calc_dn_c, do_calc_dn_F, &
@@ -485,7 +486,7 @@ contains
       & eta_zxp_dv, eta_zxp_dv_c, eta_zxp_dv_f, &
       & eta_zxp_dw, eta_zxp_dw_c, eta_zxp_dw_f, &
       & eta_zxp_t, eta_zxp_t_c, eta_zxp_t_f, frequencies, &
-      & gl_delta_polarized, gl_inds, grids, &
+      & gl_delta_polarized, gl_inds, gph, grids, &
       & h_glgrid, h_path, h_path_c, h_path_f, &
       & incoptdepth, incoptdepth_pol, incoptdepth_pol_gl, indices_c, ipsd, iwc_path, &
       & k_atmos, k_atmos_frq, k_spect_dn, k_spect_dn_frq, &
@@ -498,7 +499,7 @@ contains
       & tan_phi, tan_temp, tanh1_c, tanh1_f, tau, &
       & tau_pol, t_glgrid, t_path, t_path_c, t_path_f, t_path_m, t_path_p, &
       & t_script, t_der_path_flags, true_path_flags, &
-      & usedchannels, usedsignals, wc, z_path, z_path_c, gph )
+      & usedchannels, usedsignals, wc, z_path )
 
     ! Extra DEBUG for Nathaniel and Bill
 !   nullify ( reqs, tan_hts, tan_temps )
@@ -533,12 +534,12 @@ contains
     ! Start sorting out stuff from state vector ------------------------------
 
     ! Identify the appropriate state vector components, save vmrs for later
+    gph => GetVectorQuantityByType ( fwdModelExtra, quantityType=l_gph )
     temp => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_temperature, config=fwdModelConf )
     ptan => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_ptan, instrumentModule=firstSignal%instrumentModule, &
       & foundInFirst=ptan_der, config=fwdModelConf )
-    gph => GetVectorQuantityByType ( fwdModelExtra, quantityType=l_gph )
     phitan => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_phitan, instrumentModule=firstSignal%instrumentModule, &
       & config=fwdModelConf )
@@ -816,6 +817,7 @@ contains
     call allocate_test ( beta_path_cloud_c,   npc, 'beta_path_cloud_c', moduleName ) !JJ
     call allocate_test ( beta_path_w0_c,      npc, 'beta_path_w0_c',   moduleName ) !JJ
     call allocate_test ( del_s,               npc, 'del_s',            moduleName )
+    call allocate_test ( del_zeta,            npc, 'del_zeta',         moduleName )
     call allocate_test ( dhdz_path,       max_ele, 'dhdz_path',        moduleName )
     call allocate_test ( do_gl,               npc, 'do_gl',            moduleName )
     call allocate_test ( gl_inds,         max_ele, 'gl_inds',          moduleName )
@@ -841,7 +843,6 @@ contains
     call allocate_test ( t_path_p,        max_ele, 't_path_p',         moduleName )
     call allocate_test ( t_path,          max_ele, 't_path',           moduleName )
     call allocate_test ( t_script,            npc, 't_script',         moduleName )
-    call allocate_test ( z_path_c,            npc, 'z_path_c',         moduleName )
     call allocate_test ( z_path,          max_ele, 'z_path',           moduleName )
 
     call allocate_test ( beta_path_c,      npc, no_mol, 'beta_path_c',   moduleName )
@@ -1183,20 +1184,22 @@ contains
         ! allocate the path stuff
         brkpt = MaxVert + 1 - tan_inds(ptg_i) ! path tangent index
         no_ele = 2 * brkpt
-        npc = 2 * (brkpt + Ng) / Ngp1
+        mid = (brkpt + Ng) / Ngp1
+        npc = 2 * mid
 
         ! This is not pretty but we need some coarse grid extraction indices
-        k = Ngp1
-        j = (npc+1)/2
-        indices_c(1:npc) = (/(i*k-Ng,i=1,j),((i-1)*k-Ng+1,i=j+1,npc)/)
+        indices_c(1:npc) = (/(i*Ngp1-Ng,i=1,mid),((i-1)*Ngp1-Ng+1,i=mid+1,npc)/)
         indices_c(npc+1:) = 0
 
         ! Compute z_path & p_path
-        z_path(1:no_ele) = (/(z_glgrid(i),i=MaxVert,tan_inds(ptg_i),-1), &
-                           & (z_glgrid(i),i=tan_inds(ptg_i),MaxVert)/)
+        z_path(1:no_ele) = (/z_glgrid(MaxVert:tan_inds(ptg_i):-1), &
+                           & z_glgrid(tan_inds(ptg_i):MaxVert)/)
+        del_zeta(2:mid) = z_path(indices_c(1:mid-1)) - z_path(indices_c(2:mid))
+        del_zeta(mid+1:npc-1) = z_path(indices_c(mid+2:npc)) - z_path(indices_c(mid+1:npc-1))
+        del_zeta((/1,npc/)) = 0.0_rp
+
         p_path(1:no_ele) = (/(p_glgrid(i),i=MaxVert,tan_inds(ptg_i),-1), &
                            & (p_glgrid(i),i=tan_inds(ptg_i),MaxVert)/)
-        z_path_c(1:npc) = z_path(indices_c(1:npc))
         p_path_c(1:npc) = p_path(indices_c(1:npc))
 
         ! Compute the h_path, t_path, dhdz_path, phi_path, dhdt_path
@@ -1668,7 +1671,7 @@ contains
 
           ! Compute radiative transfer ---------------------------------------
 
-            call rad_tran ( gl_inds(1:ngl), e_rflty, z_path_c(1:npc), &
+            call rad_tran ( gl_inds(1:ngl), e_rflty, del_zeta(1:npc), &
               & alpha_path_c(1:npc), ref_corr(1:npc), do_gl(1:npc),   &
               & incoptdepth(1:npc), alpha_path_f(1:ngl),              &
               & path_dsdh, dhdz_path, t_script(1:npc), tau(1:npc),    &
@@ -1693,7 +1696,7 @@ contains
                 & 0.25 * alpha_path_f(j)
             end do
 
-            call rad_tran_pol ( gl_inds(1:ngl), e_rflty, z_path_c(1:npc),     &
+            call rad_tran_pol ( gl_inds(1:ngl), e_rflty, del_zeta(1:npc),     &
               & alpha_path_polarized(:,1:npc), ref_corr(1:npc), do_gl(1:npc), &
               & incoptdepth_pol(:,:,1:npc), deltau_pol(:,:,1:npc),            &
               & alpha_path_polarized_f(:,1:ngl), path_dsdh, dhdz_path,        &
@@ -1725,7 +1728,7 @@ contains
 
           if ( atmos_der ) then
 
-            call drad_tran_df ( indices_c(1:npc), gl_inds(1:ngl), z_path_c, Grids_f, &
+            call drad_tran_df ( indices_c(1:npc), gl_inds(1:ngl), del_zeta, Grids_f, &
               &  beta_path_c(1:npc,:), eta_fzp, sps_path, do_calc_fzp(1:no_ele,:), &
               &  beta_path_f, do_gl(1:npc), del_s(1:npc), ref_corr(1:npc), &
               &  path_dsdh, dhdz_path, t_script(1:npc), tau(1:npc), &
@@ -1737,7 +1740,7 @@ contains
               ! Compute DE / Df from D Incoptdepth_pol / Df and put
               ! into DE_DF.
               call Get_D_Deltau_Pol_DF ( ct, stcp, stsp, indices_c(1:p_stop), &
-                &  z_path_c, Grids_f, beta_path_polarized(:,1:p_stop,:),      &
+                &  del_zeta, Grids_f, beta_path_polarized(:,1:p_stop,:),      &
                 &  eta_fzp, do_calc_fzp(1:no_ele,:), sps_path, del_s(1:npc),  &
                 &  incoptdepth_pol(:,:,1:p_stop), ref_corr(1:p_stop),         &
                 &  d_delta_df(1:npc,:), de_df(:,:,1:p_stop,:) )
@@ -1778,20 +1781,17 @@ contains
               &                          dbeta_dt_path_f(1:ngl,:),DIM=2)
             ! In the polarized case, drad_tran_dt calculates d_delta_dt for
             ! use in the polarized case, but the final derivative is not used.
-            call drad_tran_dt ( z_path_c(1:npc ),                              &
-              & h_path_c(1:npc),                                               &
+            call drad_tran_dt ( del_zeta(1:npc ), h_path_c(1:npc),             &
               & t_path_c(1:npc), dh_dt_path_c(1:npc,:),                        &
-              & alpha_path_c(1:npc), &
-              & sps_beta_dbeta_c(:npc), &
+              & alpha_path_c(1:npc), sps_beta_dbeta_c(:npc),                   &
               & eta_zxp_t_c(1:npc,:), do_calc_t_c(1:npc,:),                    &
               & do_calc_hyd_c(1:npc,:), del_s(1:npc), ref_corr(1:npc),         &
               & Req + one_tan_ht(1), dh_dt_path(brkpt,:), do_gl(1:npc),        &
               & h_path_f(:ngl), t_path_f(:ngl), dh_dt_path_f(:ngl,:),          &
-              & alpha_path_f(1:ngl),                                           &
-              & sps_beta_dbeta_f(:ngl),    &
-              & eta_zxp_t_f(:ngl,:), do_calc_t_f(:ngl,:), path_dsdh(gl_inds(1:ngl)),   &
+              & alpha_path_f(1:ngl), sps_beta_dbeta_f(:ngl),                   &
+              & eta_zxp_t_f(:ngl,:), do_calc_t_f(:ngl,:), path_dsdh(gl_inds(1:ngl)), &
               & dhdz_path(gl_inds(1:ngl)), t_script(1:npc), d_t_scr_dt(1:npc,:), &
-              & tau(1:npc), i_stop, grids_tmp%deriv_flags,       &
+              & tau(1:npc), i_stop, grids_tmp%deriv_flags,                     &
               & d_delta_dt(1:npc,:), drad_dt )
 
             if ( .not. FwdModelConf%polarized ) then
@@ -1804,18 +1804,22 @@ contains
               ! Compute DE / DT from D Incoptdepth_Pol / DT and put
               ! into DE_DT.
 
-              call get_d_deltau_pol_dT ( frq, npc/2, h, ct, stcp, stsp,       &
+              call get_d_deltau_pol_dT ( frq, h, ct, stcp, stsp,       &
                 & my_catalog(thisSideband,:), beta_group, gl_slabs_m, gl_slabs_p, &
                 & t_path_c(1:p_stop), t_path_m(1:no_ele), t_path_p(1:no_ele), &
-                & beta_path_polarized(:,1:p_stop,:), sps_path,                &
-                & alpha_path_polarized(:,1:p_stop), eta_zxp_t_c(1:p_stop,:),  &
-                & del_s(1:npc), indices_c(1:p_stop),                          &
+                & t_path_f(:ngl), beta_path_polarized(:,1:p_stop,:),          &
+                & beta_path_polarized_f(:,1:ngl,:), sps_path, &
+                & alpha_path_polarized(:,1:p_stop), alpha_path_polarized_f(:,1:ngl), &
+                & eta_zxp_t_c(1:p_stop,:), eta_zxp_t_f(:ngl,:), del_s(1:npc), &
+                & indices_c(1:p_stop), gl_inds(:ngl), del_zeta(1:npc),    &
+                & do_calc_t_c(1:p_stop,:), do_calc_t_f(:ngl,:), do_gl(1:p_stop), &
+                & path_dsdh, dhdz_path,                                       &
                 & incoptdepth_pol(:,:,1:p_stop), ref_corr(1:p_stop),          &
-                & h_path_c(1:npc), dh_dt_path_c(1:p_stop,:),                  &
-                & Req + one_tan_ht(1), dh_dt_path(brkpt,:),                   &
-                & do_calc_hyd_c(1:p_stop,:), d_delta_dt(1:npc,:),             &
-                & de_dt(:,:,1:p_stop,:) )
-         
+                & h_path_c(1:npc), h_path_f(:ngl), dh_dt_path_c(1:p_stop,:),  &
+                & dh_dt_path_f(:ngl,:), Req + one_tan_ht(1), dh_dt_path(brkpt,:), &
+                & do_calc_hyd_c(1:p_stop,:), grids_tmp%deriv_flags,           &
+                & d_delta_dt(1:p_stop,:), de_dt(:,:,1:p_stop,:) )
+
               ! Compute D radiance / DT from Tau, Prod, T_Script, D_T_Scr_dT
               ! and DE / DT.
 
@@ -1841,13 +1845,13 @@ contains
 
               do_calc_dw_f(:ngl,:) = do_calc_dw(gl_inds(:ngl),:)
               eta_zxp_dw_f(:ngl,:) = eta_zxp_dw(gl_inds(:ngl),:)
-              call drad_tran_dx ( z_path_c(1:npc), Grids_dw,                    &
-                &  dbeta_dw_path_c(1:npc,:), eta_zxp_dw_c(1:npc,:),             &
-                &  sps_path(indices_c(1:npc),:), do_calc_dw_c(1:npc,:),                  &
-                &  dbeta_dw_path_f(:ngl,:), eta_zxp_dw_f(:ngl,:),  &
-                &  sps_path(gl_inds(1:ngl),:), &
-                &  do_calc_dw_f(:ngl,:), do_gl(1:npc), del_s(1:npc),            &
-                &  ref_corr(1:npc), path_dsdh(gl_inds(1:ngl)), dhdz_path(gl_inds(1:ngl)),     &
+              call drad_tran_dx ( del_zeta(1:npc), Grids_dw,             &
+                &  dbeta_dw_path_c(1:npc,:), eta_zxp_dw_c(1:npc,:),      &
+                &  sps_path(indices_c(1:npc),:), do_calc_dw_c(1:npc,:),  &
+                &  dbeta_dw_path_f(:ngl,:), eta_zxp_dw_f(:ngl,:),        &
+                &  sps_path(gl_inds(1:ngl),:), do_calc_dw_f(:ngl,:),     &
+                &  do_gl(1:npc), del_s(1:npc), ref_corr(1:npc),          &
+                &  path_dsdh(gl_inds(1:ngl)), dhdz_path(gl_inds(1:ngl)), &
                 &  t_script(1:npc), tau(1:npc), i_stop, drad_dw )
 
               k_spect_dw_frq(frq_i,1:1:f_len_dw) = drad_dw(1:1:f_len_dw)
@@ -1856,13 +1860,13 @@ contains
 
               do_calc_dn_f(:ngl,:) = do_calc_dn(gl_inds(:ngl),:)
               eta_zxp_dn_f(:ngl,:) = eta_zxp_dn(gl_inds(:ngl),:)
-              call drad_tran_dx ( z_path_c(1:npc), Grids_dn,                    &
-                &  dbeta_dn_path_c(1:npc,:), eta_zxp_dn_c(1:npc,:),             &
-                &  sps_path(indices_c(1:npc),:), do_calc_dn_c(1:npc,:),                  &
-                &  dbeta_dn_path_f(:ngl,:), eta_zxp_dn_f(:ngl,:), &
-                &  sps_path(gl_inds(1:ngl),:), &
-                &  do_calc_dn_f(:ngl,:), do_gl(1:npc), del_s(1:npc),            &
-                &  ref_corr(1:npc), path_dsdh(gl_inds(1:ngl)), dhdz_path(gl_inds(1:ngl)),     &
+              call drad_tran_dx ( del_zeta(1:npc), Grids_dn,             &
+                &  dbeta_dn_path_c(1:npc,:), eta_zxp_dn_c(1:npc,:),      &
+                &  sps_path(indices_c(1:npc),:), do_calc_dn_c(1:npc,:),  &
+                &  dbeta_dn_path_f(:ngl,:), eta_zxp_dn_f(:ngl,:),        &
+                &  sps_path(gl_inds(1:ngl),:), do_calc_dn_f(:ngl,:),     &
+                &  do_gl(1:npc), del_s(1:npc), ref_corr(1:npc),          &
+                &  path_dsdh(gl_inds(1:ngl)), dhdz_path(gl_inds(1:ngl)), &
                 &  t_script(1:npc), tau(1:npc), i_stop, drad_dn )
 
               k_spect_dn_frq(frq_i,1:f_len_dn) = drad_dn(1:f_len_dn)
@@ -1871,13 +1875,13 @@ contains
 
               do_calc_dv_f(:ngl,:) = do_calc_dv(gl_inds(:ngl),:)
               eta_zxp_dv_f(:ngl,:) = eta_zxp_dv(gl_inds(:ngl),:)
-              call drad_tran_dx ( z_path_c(1:npc), Grids_dv,                    &
-                &  dbeta_dv_path_c(1:npc,:), eta_zxp_dv_c(1:npc,:),             &
-                &  sps_path(indices_c(1:npc),:), do_calc_dv_c(1:npc,:),                  &
-                &  dbeta_dv_path_f(:ngl,:), eta_zxp_dv_f(:ngl,:), &
-                &  sps_path(gl_inds(1:ngl),:), &
-                &  do_calc_dv_f(:ngl,:), do_gl(1:npc), del_s(1:npc),            &
-                &  ref_corr(1:npc), path_dsdh(gl_inds(1:ngl)),dhdz_path(gl_inds(1:ngl)),     &
+              call drad_tran_dx ( del_zeta(1:npc), Grids_dv,             &
+                &  dbeta_dv_path_c(1:npc,:), eta_zxp_dv_c(1:npc,:),      &
+                &  sps_path(indices_c(1:npc),:), do_calc_dv_c(1:npc,:),  &
+                &  dbeta_dv_path_f(:ngl,:), eta_zxp_dv_f(:ngl,:),        &
+                &  sps_path(gl_inds(1:ngl),:), do_calc_dv_f(:ngl,:),     &
+                &  do_gl(1:npc), del_s(1:npc), ref_corr(1:npc),          &
+                &  path_dsdh(gl_inds(1:ngl)),dhdz_path(gl_inds(1:ngl)),  &
                 &  t_script(1:npc), tau(1:npc), i_stop, drad_dv )
 
               k_spect_dv_frq(frq_i,1:1:f_len_dv) = drad_dv(1:1:f_len_dv)
@@ -2039,9 +2043,9 @@ contains
       ! results otherwise).
 
       do ptg_i = 2, no_tan_hts-1
-	! this is a temporary fix
+        ! this is a temporary fix
         if ( ptg_angles(ptg_i) < ptg_angles(ptg_i-1) )  &
-	   & ptg_angles(ptg_i) = (ptg_angles(ptg_i-1) + ptg_angles(ptg_i+1))/2
+           & ptg_angles(ptg_i) = (ptg_angles(ptg_i-1) + ptg_angles(ptg_i+1))/2
 !        if ( ptg_angles(ptg_i) < ptg_angles(ptg_i-1) )  &
 !          & call MLSMessage ( MLSMSG_Error, ModuleName, &
 !          & 'Pointing angles in wrong order, too much refraction?' )
@@ -2335,7 +2339,6 @@ contains
     call deallocate_test ( t_path,      't_path',      moduleName )
     call deallocate_test ( t_path_c,    't_path_c',    moduleName )
     call deallocate_test ( z_path,      'z_path',      moduleName )
-    call deallocate_test ( z_path_c,    'z_path_c',    moduleName )
 
     call deallocate_test ( alpha_path_c,     'alpha_path_c',     moduleName )
     call deallocate_test ( alpha_path_f,     'alpha_path_f',     moduleName )
@@ -2670,10 +2673,16 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.174  2003/10/29 00:43:51  livesey
+! Added support for the forceFoldedOutput option
+!
 ! Revision 2.173  2003/10/28 22:05:53  jonathan
 ! add l_gph for use in cloud model
 !
 ! Revision 2.172  2003/10/09 19:30:18  vsnyder
+! Cosmetic changes
+!
+! Revision 2.171  2003/09/24 02:53:48  vsnyder
 ! Cosmetic changes
 !
 ! Revision 2.170  2003/09/09 00:04:27  vsnyder
