@@ -8,6 +8,13 @@ module MACHINE
   interface IO_ERROR; module procedure IO_ERROR_; end interface
   private IO_ERROR_
 
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=256), private :: Id = &
+       "$Id$"
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+!---------------------------------------------------------------------------
+
 contains
 
   subroutine IO_ERROR_ ( MESSAGE, IOSTAT, FILE )
@@ -32,3 +39,5 @@ contains
   end subroutine IO_ERROR_
 
 end module MACHINE
+
+! $Log$
