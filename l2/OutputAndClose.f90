@@ -191,9 +191,11 @@ contains ! =====     Public Procedures     =============================
 !              end if
 
             else
-              call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
-              call MLSMessage ( MLSMSG_Error, ModuleName, &
-                &  "Error finding l2gp file:  "//mnemonic//" "//msg )
+!              call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
+!              call MLSMessage ( MLSMSG_Error, ModuleName, &
+!                &  "Error finding l2gp file:  "//mnemonic//" "//msg )
+              call announce_error ( ROOT, &
+                &  "Error finding l2gp file:  "//file_base, returnStatus)
 
             end if
             
@@ -250,9 +252,11 @@ contains ! =====     Public Procedures     =============================
 !              end if
 
             else
-              call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
-              call MLSMessage ( MLSMSG_Error, ModuleName, &
-                &  "Error finding l2aux file:  "//mnemonic//" "//msg )
+!              call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
+!              call MLSMessage ( MLSMSG_Error, ModuleName, &
+!                &  "Error finding l2aux file:  "//mnemonic//" "//msg )
+              call announce_error ( ROOT, &
+                &  "Error finding l2aux file:  "//file_base, returnStatus)
             end if
             
 !          end do ! (.not. found) .and. (l2auxFileHandle <=  mlspcf_l2aux_end)
@@ -284,21 +288,38 @@ contains ! =====     Public Procedures     =============================
 ! =====     Private Procedures     =====================================
 
   ! ---------------------------------------------  ANNOUNCE_ERROR  -----
-  subroutine ANNOUNCE_ERROR ( WHERE, CODE )
+  subroutine ANNOUNCE_ERROR ( WHERE, full_message, CODE )
     integer, intent(in) :: WHERE   ! Tree node where error was noticed
-    integer, intent(in) :: CODE    ! Code for error message
+	character(LEN=*), intent(in)    :: full_message
+    integer, intent(in), optional :: CODE    ! Code for error message
 
     error = max(error,1)
     call output ( '***** At ' )
-    call print_source ( source_ref(where) )
+!    call print_source ( source_ref(where) )
+	if(where > 0) then
+	    call print_source ( source_ref(where) )
+		else
+    call output ( '(no lcf node available)' )
+		endif
     call output ( ' OutputAndClose complained: ' )
-    select case ( code )
-    end select
+
+
+		CALL output("Caused the following error:", advance='yes', &
+		& from_where=ModuleName)
+		CALL output(trim(full_message), advance='yes', &
+		& from_where=ModuleName)
+		if(present(code)) then
+			select case ( code )
+			end select
+		endif
     end subroutine ANNOUNCE_ERROR
 
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.13  2001/03/28 00:23:20  pwagner
+! Made tiny changes to use announce_error
+!
 ! Revision 2.12  2001/03/20 18:35:02  pwagner
 ! Using GetPCFromRef to get file handles
 !
