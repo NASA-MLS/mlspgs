@@ -725,12 +725,14 @@ contains ! =====     Public Procedures     =============================
         &  (temperatureQuantity%template%noInstances /= &
         &   quantity%template%noInstances) ) then
         call Announce_Error ( key, nonConformingHydrostatic )
+		    if ( toggle(gen) ) call trace_end ( "FillVectorQtyHydrostatically")
         return
       endif
       if ((any(quantity%template%surfs /= temperatureQuantity%template%surfs)) .or. &
         & (any(quantity%template%phi /= temperatureQuantity%template%phi)) .or. &
         & (any(quantity%template%phi /= refGPHQuantity%template%phi)) ) then
         call Announce_Error ( key, nonConformingHydrostatic )
+		    if ( toggle(gen) ) call trace_end ( "FillVectorQtyHydrostatically")
         return
       endif
       call GetBasisGPH(temperatureQuantity, refGPHQuantity, quantity%values)
@@ -742,11 +744,13 @@ contains ! =====     Public Procedures     =============================
         &  (quantity%template%noInstances /= &
         &   h2oQuantity%template%noInstances) ) then
         call Announce_Error ( key, nonConformingHydrostatic )
+		    if ( toggle(gen) ) call trace_end ( "FillVectorQtyHydrostatically")
         return
       endif
       if ((any(refGPHquantity%template%phi /= temperatureQuantity%template%phi)) .or. &
         & (any(h2oQuantity%template%phi /= temperatureQuantity%template%phi)) ) then
         call Announce_Error ( key, nonConformingHydrostatic )
+		    if ( toggle(gen) ) call trace_end ( "FillVectorQtyHydrostatically")
         return
       endif
       if ( (.not. ValidateVectorQuantity(quantity, minorFrame=.true.) ) .or. &
@@ -754,6 +758,7 @@ contains ! =====     Public Procedures     =============================
         &  (quantity%template%instrumentModule /= &
         &   geocAltitudeQuantity%template%instrumentModule) )  then
         call Announce_Error (key, nonConformingHydrostatic )
+		    if ( toggle(gen) ) call trace_end ( "FillVectorQtyHydrostatically")
         return
       end if
       call GetHydrostaticTangentPressure(quantity, temperatureQuantity,&
@@ -1106,6 +1111,7 @@ contains ! =====     Public Procedures     =============================
     ! We'll have to think about `bad' values here .....
     if ( flag /= 0 ) then
       call Announce_Error(errorReadingL1B, root)
+		    if ( toggle(gen) ) call trace_end ( "FillVectorQuantityFromL1B")
       return
     end if
     quantity%values = RESHAPE(l1bData%dpField, &
@@ -1391,6 +1397,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.35  2001/04/07 00:12:05  pwagner
+! Calls trace_end if needed before every return
+!
 ! Revision 2.34  2001/04/05 23:45:39  pwagner
 ! Deleted all MLSMessages
 !
