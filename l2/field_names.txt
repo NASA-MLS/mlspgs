@@ -59,6 +59,7 @@ criteria
 criticalModules
 criticalSignals
 
+DACSfilterShapes
 default_spectroscopy
 destination
 destroyJacobian
@@ -310,6 +311,9 @@ vRegWeightVec
 writeCounterMAF
 
 # $Log$
+# Revision 2.101  2003/07/16 01:06:36  vsnyder
+# Add DACS filter shapes
+#
 # Revision 2.100  2003/07/15 22:11:28  livesey
 # Added stuff for hybrid forward model
 #
