@@ -92,7 +92,7 @@ module MLSHDF5
       & MakeHDF5Attribute_dblarr1, MakeHDF5Attribute_string_arr1, &
       & MakeHDF5AttributeDSN_int, &
       & MakeHDF5AttributeDSN_string, MakeHDF5AttributeDSN_snglarr1, &
-      & MakeHDF5AttributeDSN_st_arr1
+      & MakeHDF5AttributeDSN_st_arr1, MakeHDF5AttributeDSN_dblarr1
   end interface
 
   interface GetHDF5Attribute
@@ -586,6 +586,37 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to close data '//trim(dataName) )
 
   end subroutine MakeHDF5AttributeDSN_snglarr1
+
+  ! ------------------------------------- MakeHDF5AttributeDSN_dblarr1
+  subroutine MakeHDF5AttributeDSN_dblarr1 ( fileID, &
+   & dataName, attrName, value, skip_if_already_there )
+    integer, intent(in) :: FILEID       ! FIle where to find them
+    character (len=*), intent(in) :: DATANAME ! Name of data set
+    character (len=*), intent(in) :: ATTRNAME ! Name of attribute
+    real(r8), intent(in) :: VALUE(:)     ! The attribute array itself
+    logical, intent(in), optional :: skip_if_already_there
+
+    ! Local variables
+    integer :: ATTRID                   ! ID for attribute
+    integer :: dataID                   ! ID for data
+    integer :: STATUS                   ! Flag from HDF5
+    integer, dimension(1) :: SHP        ! Shape
+    logical :: my_skip
+
+    ! Executable code
+    my_skip = .false.
+    if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
+    if ( my_skip ) then
+      if ( IsHDF5AttributePresent_in_fID( fileID, dataName, attrName ) ) return
+    endif
+    dataID = name_to_dataID( fileID, dataName)
+    call MakeHDF5Attribute_dblarr1( &
+     & dataID, attrName, value )
+    call h5dclose_f(dataID, status)
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close data '//trim(dataName) )
+
+  end subroutine MakeHDF5AttributeDSN_dblarr1
 
   ! ------------------------------------------- GetHDF5Attribute_int
   subroutine GetHDF5Attribute_int ( itemID, name, value )
@@ -2117,6 +2148,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.20  2003/02/21 23:41:02  pwagner
+! Additional MakeHDF5Attribute interface
+!
 ! Revision 2.19  2003/02/12 21:38:14  pwagner
 ! May make dbl scalar and array attributes; find if name is an attribute of a group
 !
