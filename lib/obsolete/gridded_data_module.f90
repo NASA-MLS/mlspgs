@@ -864,3 +864,6 @@ contains
 end module gridded_data_module
 
 ! $Log$
+! Revision 2.2  2000/11/15 02:22:08  vsnyder
+! Removed an incorrect comment about initializing readitem
+!
