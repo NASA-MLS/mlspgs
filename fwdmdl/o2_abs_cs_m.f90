@@ -81,7 +81,7 @@ contains
 !
 !  $W = \frac12 S \frac{\nu}{\nu_0} \left[
 !         \frac{y-y_i z}D +
-!       i \left(\frac{z + y \left( \frac{y}{x_1} - \nu y_i \right)}{D \nu_{0_s}} -
+!       i \left(\frac{z + \frac{y}{\nu_{0_s}} \left( \frac{y}{x_1} - \nu y_i \right)}{D} -
 !               \frac2{x_1 \nu_{0_s}} \right) \right]$, where
 !  $z = x_1 ( \nu + \nu_{0_s} )$ and $D = \sqrt{\pi} ( z^2 + y^2 )$
 
@@ -145,9 +145,10 @@ contains
     real(r8) :: V0                            ! zero field line center frequency
     real(rk) :: Y_nonres                      ! Nonresonant ratio
 
-    real(rk) ::  D,  I1,  I2,  I3,  I4,  R1,  R2,  S, S1,  Z
+    real(rk) ::  D,  I1,  I2,  I3,  I4,  R1,  R2,  S, S1, SIGMA, Y2, Z
     real(rk) :: dD, dI1, dI2, dI3, dI4, dR1, dR2,         dZ ! 1/p dp/dT
     real(rk) :: dv0 ! 1/v0s dv0s/dT
+    real(rk), parameter :: OneOvSqpi = 1.0_rk / sqrtPi
     complex(rk) :: Wing, dWing
 
     no_lines = size(slabs%catalog%lines)
@@ -159,6 +160,10 @@ contains
     pi = 0.0_rk
     sigma_m = 0.0_rk
     wing = 0.0_rk
+    dSigma_p_dT = 0.0_rk
+    dPi_dT = 0.0_rk
+    dSigma_m_dT = 0.0_rk
+    dWing = 0.0_rk
 
 ! Do magnetic calculation even if h = 0 for all of the Zeeman-split lines
 
@@ -179,14 +184,15 @@ contains
 !
 !  $W = \frac12 S \frac{\nu}{\nu_0} \left[
 !         \frac{y-y_i z}D +
-!       i \left(\frac{z + y \left( \frac{y}{x_1} - \nu y_i \right)}{D \nu_{0_s}} -
+!       i \left(\frac{z + \frac{y}{\nu_{0_s}} \left( \frac{y}{x_1} - \nu y_i \right)}{D} -
 !               \frac2{x_1 \nu_{0_s}} \right) \right]$, where
-!  $z = x_1 ( \nu + \nu_{0_s} )$ and $D = \sqrt{\pi} ( z^2 + y^2 )$.
+!  $z = x_1 \sigma$, $\sigma = \nu + \nu_{0_s}$ and
+!  $D = \sqrt{\pi} ( z^2 + y^2 )$.
 !
 !  Expanding the terms we have $W = R_1 - R_2 + i(I_1 + I_2 - I_3 - I_4)$
 !  where $R_1 = \frac12 S \frac{\nu}{\nu_0} \frac{y}D$,
 !        $R_2 = \frac12 S \frac{\nu}{\nu_0} \frac{y_i z}D$,
-!        $I_1 = \frac12 S \frac{\nu}{\nu_0} \frac{z}{D \nu_{0_s}}$,
+!        $I_1 = \frac12 S \frac{\nu}{\nu_0} \frac{z}{D}$,
 !        $I_2 = \frac12 S \frac{\nu}{\nu_0} \frac{y^2}{D x_1 \nu_{0_s}}$,
 !        $I_3 = \frac12 S \frac{\nu}{\nu_0} \frac{\nu y y_i}{D \nu_{0_s}}$, and
 !        $I_4 = \frac12 S \frac{\nu}{\nu_0} \frac2{x_1 \nu_{0_s}}$, from which
@@ -198,7 +204,7 @@ contains
 !      + \frac1z \frac{\partial z}{\partial T} - \frac1D \frac{\partial D}{\partial T}$,
 !  $\frac1{I_1}\frac{\partial I_1}{\partial T}
 !      = \frac1S \frac{\partial S}{\partial T} + \frac1z \frac{\partial z}{\partial T}
-!      - \frac1D \frac{\partial D}{\partial T} - \frac1{\nu_{0_s}} \frac{\partial \nu_{0_s}}{\partial T}$,
+!      - \frac1D \frac{\partial D}{\partial T}$,
 !  $\frac1{I_2}\frac{\partial I_2}{\partial T}
 !      = \frac1S \frac{\partial S}{\partial T} + 2\frac1y \frac{\partial y}{\partial T}
 !      - \frac1D \frac{\partial D}{\partial T} - \frac1{\nu_{0_s}} \frac{\partial \nu_{0_s}}{\partial T}
@@ -218,7 +224,7 @@ contains
 !          + y^2 \frac1y \frac{\partial y}{\partial T} \right)$ and
 !  $\frac1z \frac{\partial z}{\partial T}
 !    = \frac1{x_1} \frac{\partial x_1}{\partial T}
-!    + \frac1{\nu+\nu_{0_s}} \frac{\partial \nu_{0_s}}{\partial T}$.
+!    + \frac1{\sigma} \frac{\partial \nu_{0_s}}{\partial T}$.
 !  Finally, we have
 !  $\frac{\partial W}{\partial T} =
 !     R_1 \left( \frac1{R_1}\frac{\partial R_1}{\partial T} \right)
@@ -237,27 +243,29 @@ contains
 !  are gotten from the {\tt slabs} structure.
 
       s = 0.5_rk * slabs%slabs1(j) * freq / v0
-      z = slabs%x1(j) * (freq + slabs%v0s(j))
+      sigma = freq + slabs%v0s(j)
+      z = slabs%x1(j) * sigma
       r1 = slabs%y(j)
+      y2 = r1**2
       r2 = slabs%yi(j)*z
       i1 = 1.0_rk / slabs%v0s(j)
       i4 = 2.0_rk * i1 / slabs%x1(j)
-      i2 = r2 * 0.5_rk * i4
+      i2 = y2 * 0.5_rk * i4
       i3 = freq * r1 * slabs%yi(j) * i1
       dv0 = slabs%dv0s_dT(j) * i1 ! 1/v0s dv0s/dT
-      i1 = z * i1
-      d = 1.0_rk / (sqrtPi * (z*z + r1**2))
+      i1 = z
+      d = oneOvSqpi / (z*z + y2)
 
       wing = wing + s * cmplx ( d * (r1 - r2), d * (i1 + i2 - i3) - i4 )
 
-      dz = slabs%dx1_dT(j) + slabs%dv0s_dT(j) / ( freq + slabs%v0s(j) )
-      dd = z**2 * dz + r1**2 * slabs%dy_dT(j)
-      s1 = slabs%dslabs1_dT(j) - dd ! 1/S dS/dT - 1/D dD/dT
+      dz = slabs%dx1_dT(j) + slabs%dv0s_dT(j) / sigma
+      dD = (2.0_rk * sqrtPi) * ( z**2 * dz + y2 * slabs%dy_dT(j) ) * d
+      s1 = slabs%dslabs1_dT(j) - dD ! 1/S dS/dT - 1/D dD/dT
 
       dr1 = s1 + slabs%dy_dT(j)
       dr2 = s1 + slabs%dyi_dT(j) + dz
 
-      di1 = s1 - dv0 + dz
+      di1 = s1 + dz
       di2 = s1 - dv0 + 2.0_rk * slabs%dy_dT(j) - slabs%dx1_dT(j)
       di3 = s1 - dv0 + slabs%dy_dT(j) + slabs%dyi_dT(j)
       di4 = slabs%dslabs1_dT(j) - slabs%dx1_dT(j) - dv0
@@ -319,7 +327,8 @@ contains
     real(rk), parameter :: Kappa = Bohr * G_e ! ~ 2.8024
 
     real(rk) :: Del_nu, Denom1, Denom2, F_o_v0, KappaH, Nu_offst
-    real(rk) :: U, V, Z, Zr, Zi
+    real(rk) :: U, V, WW, Z, Zr, Zi
+    real(rk) :: X
 
     real(rk) :: Xi ! This is actually 0.5 \xi \frac{\nu}{\nu_0} from the
                    ! ATBD, not just \xi.
@@ -330,7 +339,9 @@ contains
 
     f_o_v0 = nu / v0
     del_nu = v0s - nu
-    kappaH = kappa * h
+    kappaH = kappa * h ! H is magnetic field in Gauss here, not Planck's constant
+    x = w / ( x1 * nu )
+    ww = w
 
     if ( n == -1 ) then
 
@@ -347,14 +358,14 @@ contains
 ! m == n == -1 => ((m+1)*(2-n)-1) == -1
 !     nu_offst = x1*(del_nu + kappa*((m+1)*(2-n)-1)*h / denom1)
       nu_offst = x1 * ( del_nu - 0.5_rk*kappaH )
-      call simple_voigt ( nu_offst, w, u, v )
+      call simple_voigt ( nu_offst, ww, u, v )
 ! m == n == -1 and denom2 == 3 => xi == 0.5
 !     xi = 3.0_rk * (n + m) * (n + m + 1) / (4.0_rk * denom2)
 !     xi = 0.5_rk
 !     z  = 0.5_rk * s * xi * f_o_v0
       z  = 0.25_rk * s * f_o_v0
       zr = z * (u - y*v)
-      zi = z * (v + u * (w/(x1*nu) + y))
+      zi = z * (v + u * (x + y))
       sigma_p = sigma_p + cmplx(zr, zi)
 
 !     m = -n
@@ -364,14 +375,14 @@ contains
 ! m == -n == 1 => ((m-1)*(2-n)+1) == +1
 !     nu_offst = x1*(del_nu + kappa*((m-1)*(2-n)+1)*h / denom1)
       nu_offst = x1 * (del_nu + 0.5_rk*kappaH )
-      call simple_voigt ( nu_offst, w, u, v )
+      call simple_voigt ( nu_offst, ww, u, v )
 ! m == -n == 1 and denom2 == 3 => xi == 0.5
 !     xi = 3.0_rk * (m - n) * (m - n - 1) / (4.0_rk * denom2)
 !     xi = 0.5_rk
 !     z  =  0.5_rk * s * xi * f_o_v0
 !     z  =  0.25_rk * s * f_o_v0
       zr = z * (u - y*v)
-      zi = z * (v + u * (w/(x1*nu) + y))
+      zi = z * (v + u * (x + y))
       sigma_m = sigma_m + cmplx(zr, zi)
 
 !     m = n + 1
@@ -381,14 +392,14 @@ contains
 ! m == n + 1 == 0 => kappa*m*(2-n)*h == 0
 !     nu_offst = x1*(del_nu + kappa*m*(2-n)*h / denom1)
       nu_offst = x1 * del_nu
-      call simple_voigt ( nu_offst, w, u, v )
+      call simple_voigt ( nu_offst, ww, u, v )
 ! m == n + 1 == 0 and denom2 == 3 => xi == 1.0
 !     xi = 3.0_rk * (n * n - m * m) / denom2
 !     z  = 0.5_rk * s * xi * f_o_v0
 !     z  = 0.5_rk * s * f_o_v0
       z = 2.0_rk * z
       zr = z * (u - y*v)
-      zi = z * (v + u * (w/(x1*nu) + y))
+      zi = z * (v + u * (x + y))
       pi = pi + cmplx(zr, zi)
 
     else if ( n > 0 ) then
@@ -403,7 +414,7 @@ contains
 ! pi transition
 
         nu_offst = x1*(del_nu + kappaH*m*(1-n) / denom1)
-        call simple_voigt ( nu_offst, w, u, v )
+        call simple_voigt ( nu_offst, ww, u, v )
 !       xi = 3.0_rk * ((n + 1) * (n + 1) - m * m) / denom2
         xi = 1.5_rk * ((n + 1) * (n + 1) - m * m) / denom2 * f_o_v0
         z  = s * xi
@@ -414,7 +425,7 @@ contains
 ! sigma_p transition
 
         nu_offst = x1*(del_nu + kappaH*(m*(1-n)-n) / denom1)
-        call simple_voigt ( nu_offst, w, u, v )
+        call simple_voigt ( nu_offst, ww, u, v )
 !       xi = 3.0_rk * (n + m + 1) * (n + m + 2) / (4.0_rk * denom2)
         xi = 0.375_rk * (n + m + 1) * (n + m + 2) / denom2 * f_o_v0
         z  = s * xi
@@ -425,12 +436,12 @@ contains
 ! sigma_m transition
 
         nu_offst = x1*(del_nu + kappaH*(m*(1-n)+n) / denom1)
-        call simple_voigt ( nu_offst, w, u, v )
+        call simple_voigt ( nu_offst, ww, u, v )
 !       xi = 3.0_rk * (n - m + 1) * (n - m + 2) / (4.0_rk * denom2)
         xi = 0.375_rk * (n - m + 1) * (n - m + 2) / denom2 * f_o_v0
         z  = s * xi
         zr = z * (u - y * v)
-        zi = z * (v + u  * (w/(x1*nu) + y))
+        zi = z * (v + u  * (x + y))
         sigma_m = sigma_m + cmplx(zr, zi)
 
       end do
@@ -447,34 +458,34 @@ contains
 ! pi transition
 
         nu_offst = x1*(del_nu + kappaH*m*(2-n) / denom1)
-        call simple_voigt ( nu_offst, w, u, v )
+        call simple_voigt ( nu_offst, ww, u, v )
 !       xi = 3.0_rk * (n * n - m * m) / denom2
         xi = 1.5_rk * (n * n - m * m) / denom2 * f_o_v0
         z  = s * xi
         zr = z * (u - y * v)
-        zi = z * (v + u  * (w/(x1*nu) + y))
+        zi = z * (v + u  * (x + y))
         pi = pi + cmplx(zr, zi)
 
 ! sigma_p transition
 
         nu_offst = x1*(del_nu + kappaH*((m+1)*(2-n)-1) / denom1)
-        call simple_voigt ( nu_offst, w, u, v )
+        call simple_voigt ( nu_offst, ww, u, v )
 !       xi = 3.0_rk * (n + m) * (n + m + 1) / (4.0_rk * denom2)
         xi = 0.375_rk * (n + m) * (n + m + 1) / denom2 * f_o_v0
         z  = s * xi
         zr = z * (u - y*v)
-        zi = z * (v + u  * (w/(x1*nu) + y))
+        zi = z * (v + u  * (x + y))
         sigma_p = sigma_p + cmplx(zr, zi)
 
 ! sigma_m transition
 
         nu_offst = x1*(del_nu + kappaH*((m-1)*(2-n)+1) / denom1)
-        call simple_voigt ( nu_offst, w, u, v )
+        call simple_voigt ( nu_offst, ww, u, v )
 !       xi = 3.0_rk * (m - n) * (m - n - 1) / (4.0_rk * denom2)
         xi = 0.375_rk * (m - n) * (m - n - 1) / denom2 * f_o_v0
         z  = s * xi
         zr = z * (u - y * v)
-        zi = z * (v + u  * (w/(x1*nu) + y))
+        zi = z * (v + u  * (x + y))
         sigma_m = sigma_m + cmplx(zr, zi)
 
       end do
@@ -487,12 +498,12 @@ contains
 ! sigma_p transition
 
       nu_offst = x1*(del_nu + kappaH*((m+1)*(2-n)-1) / denom1)
-      call simple_voigt ( nu_offst, w, u, v )
+      call simple_voigt ( nu_offst, ww, u, v )
 !     xi = 3.0_rk * (n + m) * (n + m + 1) / (4.0_rk * denom2)
       xi = 0.375_rk * (n + m) * (n + m + 1) / denom2 * f_o_v0
       z  = s * xi
       zr = z * (u - y*v)
-      zi = z * (v + u  * (w/(x1*nu) + y))
+      zi = z * (v + u  * (x + y))
       sigma_p = sigma_p + cmplx(zr, zi)
 
 ! m = n
@@ -502,12 +513,12 @@ contains
 ! sigma_m transition
 
       nu_offst = x1*(del_nu + kappaH*((m-1)*(2-n)+1) / denom1)
-      call simple_voigt ( nu_offst, w, u, v )
+      call simple_voigt ( nu_offst, ww, u, v )
 !     xi = 3.0_rk * (m - n) * (m - n - 1) / (4.0_rk * denom2)
       xi = 0.375_rk * (m - n) * (m - n - 1) / denom2 * f_o_v0
       z  = s * xi
       zr = z * (u - y*v)
-      zi = z * (v + u  * (w/(x1*nu) + y))
+      zi = z * (v + u  * (x + y))
       sigma_m = sigma_m + cmplx(zr, zi)
 
 ! m = -(n-1)
@@ -517,23 +528,23 @@ contains
 ! pi transition
 
       nu_offst = x1*(del_nu + kappaH*m*(2-n) / denom1)
-      call simple_voigt ( nu_offst, w, u, v )
+      call simple_voigt ( nu_offst, ww, u, v )
 !     xi = 3.0_rk * (n * n - m * m) / denom2
       xi = 1.5_rk * (n * n - m * m) / denom2 * f_o_v0
       z  = s * xi
       zr = z * (u - y*v)
-      zi = z * (v + u  * (w/(x1*nu) + y))
+      zi = z * (v + u  * (x + y))
       pi = pi + cmplx(zr, zi)
 
 ! sigma_p transition
 
       nu_offst = x1*(del_nu + kappaH*((m+1)*(2-n)-1) / denom1)
-      call simple_voigt ( nu_offst, w, u, v )
+      call simple_voigt ( nu_offst, ww, u, v )
 !     xi = 3.0_rk * (n + m) * (n + m + 1) / (4.0_rk * denom2)
       xi = 0.375_rk * (n + m) * (n + m + 1) / denom2 * f_o_v0
       z  = s * xi
       zr = z * (u - y*v)
-      zi = z * (v + u  * (w/(x1*nu) + y))
+      zi = z * (v + u  * (x + y))
       sigma_p = sigma_p + cmplx(zr, zi)
 
 ! m = n - 1
@@ -543,23 +554,23 @@ contains
 ! pi transition
 
       nu_offst = x1*(del_nu + kappaH*m*(2-n) / denom1)
-      call simple_voigt ( nu_offst, w, u, v )
+      call simple_voigt ( nu_offst, ww, u, v )
 !     xi = 3.0_rk * (n * n - m * m) / denom2
       xi = 1.5_rk * (n * n - m * m) / denom2 * f_o_v0
       z  = s * xi
       zr = z * (u - y*v)
-      zi = z * (v + u  * (w/(x1*nu) + y))
+      zi = z * (v + u  * (x + y))
       pi = pi + cmplx(zr, zi)
 
 ! sigma_m transition
 
       nu_offst = x1*(del_nu + kappaH*((m-1)*(2-n)+1) / denom1)
-      call simple_voigt ( nu_offst, w, u, v )
+      call simple_voigt ( nu_offst, ww, u, v )
 !     xi = 3.0_rk * (m - n) * (m - n - 1) / (4.0_rk * denom2)
       xi = 0.375_rk * (m - n) * (m - n - 1) / denom2 * f_o_v0
       z  = s * xi
       zr = z * (u - y*v)
-      zi = z * (v + u  * (w/(x1*nu) + y))
+      zi = z * (v + u  * (x + y))
       sigma_m = sigma_m + cmplx(zr, zi)
 
     end if
@@ -583,26 +594,30 @@ contains
     use Physics, only: Bohr, G_e
     use SLabs_SW_M, only: D_Simple_Voigt
 
-    integer, intent(in) :: N    ! rotational quantum number, sign indicates delta J
-    real(r8), intent(in) :: Nu  ! transmission frequency in MHz
-    real(r8), intent(in) :: V0  ! zero magnetic field line position
-    real(rk), intent(in) :: H   ! magnetic field in Gauss
-    real(r8), intent(in) :: X1  ! Doppler width factor sqrt(ln 2) / D_width
-    real(r8), intent(in) :: S   ! strength factor slabs1 from slabs routine
-    real(r8), intent(in) :: W   ! collision to doppler width ratio in the
-                                ! document corrected for temperature and pressure
-    real(r8), intent(in) :: Y   ! interference coefficient in the document
-                                ! corrected for pressure and temperature
-    real(r8), intent(in) :: V0S ! Pressure-shifted zero magnetic field line position
+    integer, intent(in) :: N     ! rotational quantum number, sign indicates delta J
+    real(r8), intent(in) :: Nu   ! transmission frequency in MHz
+    real(r8), intent(in) :: V0   ! zero magnetic field line position
+    real(rk), intent(in) :: H    ! magnetic field in Gauss
+    real(r8), intent(in) :: X1   ! Doppler width factor sqrt(ln 2) / D_width
+    real(r8), intent(in) :: S    ! strength factor slabs1 from slabs routine
+    real(r8), intent(in) :: W    ! collision to doppler width ratio in the
+                                 ! document corrected for temperature and pressure
+    real(r8), intent(in) :: Y    ! interference coefficient in the document
+                                 ! corrected for pressure and temperature
+    real(r8), intent(in) :: V0S  ! Pressure-shifted zero magnetic field line position
 
-    real(r8), intent(in) :: dx1, ds, dw, dy, dv0s
+    real(r8), intent(in) :: dx1  ! 1/x1 dx1/dT
+    real(r8), intent(in) :: ds   ! 1/S  dS/dT
+    real(r8), intent(in) :: dw   ! 1/w  dw/dT
+    real(r8), intent(in) :: dy   ! 1/y  dy/dT
+    real(r8), intent(in) :: dv0s ! dv0s/dT, not 1/dv0s dv0s/dT
 
     complex(rk), intent(inout) :: Sigma_P ! absorption coefficient at unity mixing
-                                ! ratio for Delta M = +1
+                                 ! ratio for Delta M = +1
     complex(rk), intent(inout) :: Pi ! absorption coefficient at unity mixing
-                                ! ratio for Delta M = 0
+                                 ! ratio for Delta M = 0
     complex(rk), intent(inout) :: Sigma_M ! absorption coefficient at unity mixing
-                                ! ratio for Delta M = -1
+                                 ! ratio for Delta M = -1
 
     complex(rk), intent(inout) :: dSigma_P_dT ! d sigma_p / dT
     complex(rk), intent(inout) :: dPi_dT      ! d pi      / dT
@@ -611,8 +626,9 @@ contains
 
     real(rk), parameter :: Kappa = Bohr * G_e ! ~ 2.8024
 
-    real(rk) :: Del_nu, Denom1, Denom2, F_o_v0, KappaH, Nu_offst
+    real(rk) :: Del_nu, Denom1, Denom2, F_o_v0, KappaH! , Nu_offst
     real(rk) :: dNu_offst, dDel_nu
+    real(rk) :: X, dX, WW, WdW
 
 ! Compute the absorption coefficient at unity mixing ratio for N transition
 
@@ -623,6 +639,10 @@ contains
     dDel_nu = dv0s
     dNu_offst = x1 * ( dx1 * del_nu + dDel_nu ) ! dx1 = 1/x1 d x1 / dT
     kappaH = kappa * h
+    x = w / ( x1 * nu )
+    dX = x * ( dw - dx1 ) ! dw is 1/w dw/dT, dx1 is 1/dx1 dx1/dT
+    ww = w
+    wdw = w * dw
 
     if ( n == -1 ) then
 
@@ -795,23 +815,42 @@ contains
         !                          from the ATBD, not just \xi.
       complex(rk), intent(inout) :: R, dR
 
-      real(rk) :: U, dU, v, dV, X, dX, Z, dZ, Zr, dZr, Zi, dZi
-      ! S, dS, w, dW, X1, dX1, Y, dY by host association
-      call d_simple_voigt ( nu_offst, w, dNu_offst, dw, u, v, du, dv )
-      z  = s * xi
-      dz = ds * xi
+      real(rk) :: U, dU, v, dV, Z, Zr, dZr, Zi, dZi
+      ! dNu_offst, S, dS, w, dW, X, dX, X1, dX1, Y, dY by host association
+
+!{ Compute absorption
+!  $A = S \xi \left[ ( u - y_i v) + i ( v + u ( x + y_i ) ) \right]$ where
+!  $x = \frac{y}{x_1\nu}$, $u + i v = w(\nu_o+i y)$, and $w(z)$ is the
+!  Fadeeva function, and its derivative $\frac{\partial A}{\partial T}$. 
+!  Here, $y_i$ is given by the variable {\tt y}, $y$ is given by the
+!  variable {\tt ww}, and $\nu_o$ is given by the variable {\tt nu\_offst}.
+!
+!  $\frac{\partial x}{\partial T} =
+!    x \left( \frac1y \frac{\partial y}{\partial T} -
+!             \frac1{x_1} \frac{\partial x_1}{\partial T} \right)$.
+!
+!  $\Re \frac{\partial A}{\partial T} =
+!   S \xi \left( \frac1S \frac{\partial S}{\partial T} ( u - y_i v ) +
+!                \frac{\partial u}{\partial T} - y_i \left(\frac{\partial v}{\partial T}
+!                - v \frac1{y_i} \frac{\partial y_i}{\partial T}\right) \right)$.
+!
+!  $\Im \frac{\partial A}{\partial T} =
+!   S \xi \left( \frac1S \frac{\partial S}{\partial T}
+!     (v + u (x + y_i) ) + \frac{\partial v}{\partial T} +
+!    \frac{\partial u}{\partial T} ( x + y_i ) +
+!    u \left( \frac{\partial x}{\partial T} +
+!    y_i \frac1{y_i}\frac{\partial y_i}{\partial T} \right) \right)$
+
+      call d_simple_voigt ( nu_offst, ww, dNu_offst, wdw, u, v, du, dv )
       zr = u - y*v
-      dZr = dz * zr + z * ( du - y*dv - y*dy*v )
-      zr = z * zr
-      x = w/(x1*nu)
-      dx = x * ( dw - dx1 )
-      zi = v + u * ( x + y )
-      dZi = dz * zi + z * ( dv + du * x + u * ( dx + y * dy ) )
-      zi = z * zi
+      dZr = ds * zr + du - y*(dv + dy*v)
+      z = x + y
+      zi = v + u * z
+      dZi = ds * zi + dv + du * z + u * ( dx + y * dy )
 
-      r  =  r + cmplx( zr,  zi)
-      dr = dr + cmplx(dZr, dZi)
-
+      z  = s * xi
+      r  =  r + z * cmplx( zr,  zi)
+      dr = dr + z * cmplx(dZr, dZi)
     end subroutine Absorption
 
   end subroutine d_Mag_O2_Abs_CS_dT
@@ -875,6 +914,9 @@ contains
 end module O2_Abs_CS_M
 
 ! $Log$
+! Revision 2.11  2004/04/17 00:37:00  vsnyder
+! Analytic temperature derivatives
+!
 ! Revision 2.10  2004/04/02 01:00:20  vsnyder
 ! Inching toward analytic temperature derivatives
 !
