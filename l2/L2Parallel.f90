@@ -18,7 +18,7 @@ module L2Parallel
   use L2AUXData, only: L2AUXDATA_T
   use L2GPData, only: L2GPDATA_T
   use L2ParInfo, only: L2PARALLELINFO_T, MACHINE_T, PARALLEL, &
-    & INFOTAG, CHUNKTAG, GIVEUPTAG, GRANTEDTAG, PETITIONTAG, &
+    & CHUNKTAG, GIVEUPTAG, GRANTEDTAG, PETITIONTAG, &
     & SIG_TOJOIN, SIG_FINISHED, SIG_ACKFINISH, SIG_REGISTER, NOTIFYTAG, &
     & SIG_REQUESTDIRECTWRITE, &
     & SIG_DIRECTWRITEGRANTED, SIG_DIRECTWRITEFINISHED, &
@@ -31,16 +31,17 @@ module L2Parallel
   use Machine, only: SHELL_COMMAND
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_ALLOCATE, &
-    & MLSMSG_Deallocate, MLSMSG_WARNING
+    & MLSMSG_Deallocate, MLSMSG_WARNING, PVMERRORMESSAGE
   use MLSSets, only: FINDFIRST
   use MLSStringLists, only: catLists, ExpandStringRange
   use MorePVM, only: PVMUNPACKSTRINGINDEX, PVMPACKSTRINGINDEX
   use MoreTree, only: Get_Spec_ID
   use Output_m, only: BLANKS, Output, TimeStamp
-  use PVM, only: PVMDATADEFAULT, PVMFINITSEND, PVMF90PACK, PVMFKILL, PVMFMYTID, &
-    & PVMF90UNPACK, PVMERRORMESSAGE, PVMTASKHOST, PVMFSPAWN, &
+  use PVM, only: INFOTAG, &
+    & PVMDATADEFAULT, PVMFINITSEND, PVMF90PACK, PVMFKILL, PVMFMYTID, &
+    & PVMF90UNPACK, PVMTASKHOST, PVMFSPAWN, &
     & MYPVMSPAWN, PVMFCATCHOUT, PVMFSEND, PVMFNOTIFY, PVMTASKEXIT, &
-    & GETMACHINENAMEFROMTID, PVMFFREEBUF
+    & GETMACHINENAMEFROMTID, PVMFFREEBUF, SIG_AboutToDie
   use PVMIDL, only: PVMIDLPACK, PVMIDLUNPACK
   use QuantityPVM, only: PVMSENDQUANTITY, PVMRECEIVEQUANTITY
   use QuantityTemplates, only: QUANTITYTEMPLATE_T, &
@@ -75,6 +76,7 @@ module L2Parallel
   ! Parameters
   integer, parameter :: HDFNAMELEN = 132 ! Max length of name of swath/sd
   logical, parameter :: NOTFORGOTTEN = .false. ! Note the death of forgottens
+  integer, parameter :: MAXCHUNK = 10000
 
   integer :: counterStart
   parameter ( counterStart = 2 * (huge (0) / 4 ) )
@@ -165,6 +167,7 @@ contains ! ================================ Procedures ======================
     ! Local variables
     integer :: BUFFERID                 ! ID for buffer for receive
     integer :: CHUNK                    ! Loop counter
+    character(len=16) :: CHUNKSTR
     integer :: INFO                     ! Flag from PVM
     integer :: STATUS                   ! From allocate
     integer :: NOCHUNKS                 ! Size.
@@ -186,6 +189,10 @@ contains ! ================================ Procedures ======================
       & call PVMErrorMessage ( info, 'unpacking chunkInfo header')
     noChunks = header(1)
     chunkNo = header(2)
+    write(chunkStr, *) chunkNo
+    if ( ChunkNo > MAXCHUNK ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'chunk number too great: ' // trim(chunkStr) )
     
     allocate ( chunks ( noChunks ), STAT=status)
     if ( status /= 0 ) &
@@ -236,7 +243,6 @@ contains ! ================================ Procedures ======================
     type (L2AuxData_T), dimension(:), pointer :: L2AUXDATABASE
 
     ! Local parameter
-    ! integer, parameter :: DELAY = 200000  ! For Usleep, no. microsecs
     integer, parameter :: MAXDIRECTWRITEFILES=200 ! For internal array sizing
     integer, parameter :: DATABASEINFLATION=100
 
@@ -250,7 +256,6 @@ contains ! ================================ Procedures ======================
     logical :: USINGOLDSUBMIT           ! Set if using the old submit mechanism
     logical :: USINGSUBMIT              ! Set if using the submit or l2q
     logical :: USINGL2Q                 ! Set if using the l2q queue manager
-    ! character(len=MachineNameLen), dimension(:), pointer :: MACHINENAMES
     character(len=MachineNameLen) :: THISNAME
     character(len=8) :: CHUNKNOSTR
     character(len=2048) :: COMMANDLINE
@@ -578,6 +583,15 @@ contains ! ================================ Procedures ======================
 
         select case (signal) 
 
+        case ( sig_abouttodie ) ! --------------- Slave is about to die ---------
+          call PVMF90Unpack ( commandLine, info )
+          if ( info /= 0 ) then
+            call PVMErrorMessage ( info, "unpacking last gasp message" )
+          endif
+          write ( chunkNoStr, '(i0)' ) chunk
+          commandLine = '(' // trim(chunkNoStr) // ')' // commandLine
+          parallel%failedMsgs = catLists(parallel%failedMsgs, commandLine, '\')
+
         case ( sig_register ) ! ----------------- Chunk registering ------
           call PVMF90Unpack ( chunk, info )
           if ( info /= 0 ) then
@@ -587,7 +601,10 @@ contains ! ================================ Procedures ======================
           if ( USINGOLDSUBMIT ) then
             ! We only really care about this message if we're using submit
             chunkTids(chunk) = slaveTid
-            call GetMachineNameFromTid ( slaveTid, thisName )
+            call GetMachineNameFromTid ( slaveTid, thisName, info )
+            if ( info == -1 ) & 
+              & call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'Unable to get machine name from tid' )
             call WelcomeSlave ( chunk, slaveTid )
             if ( index(switches,'mas') /= 0 ) then
               call output ( 'Welcomed task ' // &
@@ -1769,6 +1786,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.72  2005/03/15 23:55:48  pwagner
+! Saves error messages from about-to-die chunks
+!
 ! Revision 2.71  2005/02/03 19:09:15  pwagner
 ! Receives master_date, master_time data from masters for each host
 !
