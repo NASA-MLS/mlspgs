@@ -84,6 +84,43 @@ CONTAINS
 
   END SUBROUTINE CopyVGridInfoIntoQuantity
 
+  ! -------------------------------------------------------------------------
+
+  ! This function populates an array with the MIF times for each MIF in a MAF
+  ! given an array of MAF start times.
+  
+  SUBROUTINE GetMIFTimesFromMAFTimes(mafStartTimeTAI,mifTimeTAI)  
+
+    ! Dummy arguments
+    REAL(r8), DIMENSION(:), INTENT(IN) :: mafStartTimeTAI ! (MAF)
+    REAL(r8), DIMENSION(:,:), INTENT(OUT) :: mifTimeTAI   ! (MIF,MAF)
+
+    ! Parameters
+    REAL(r8), PARAMETER :: mifDuration=0.166666666666666666666666666666667
+    ! This is a real kludge. In later versions we'll need some way in the L1
+    ! file to denote the length of a MIF
+
+    ! Local variables
+    INTEGER :: noMAFs,noMIFs
+    INTEGER :: mif,maf          ! Loop counters
+
+    ! Executable code
+
+    noMAFs=SIZE(mifTimeTAI,2)
+    noMIFs=SIZE(mifTimeTAI,1)
+    
+    IF (SIZE(mafStartTimeTAI) /= noMAFs) CALL MLSMessage(&
+         & MLSMSG_Error,ModuleName,&
+         & "Argument mismatch in GetMIFTimesFrom MAFTimes")
+
+    DO maf=1,noMAFs
+       DO mif=1,noMIFs
+          mifTimeTAI(mif,maf)=mafStartTimeTAI(maf)+(mif-1)*mifDuration
+       END DO
+    END DO
+
+  END SUBROUTINE GetMIFTimesFromMAFTimes
+
   ! --------------------------------------------------------------------------
 
   ! This routine constructs a minor frame based quantity.
@@ -109,7 +146,7 @@ CONTAINS
     INTEGER, PARAMETER :: NoL1BItemsToRead=7
     CHARACTER (LEN=15), DIMENSION(NoL1BItemsToRead), &
          &   PARAMETER :: L1bItemsToRead=&
-         & (/"time           ","tpGeodLat      ","tpLon          ",&
+         & (/"MAFStartTimeTAI","tpGeodLat      ","tpLon          ",&
          &   "tpGeodAngle    ","tpSolarZenith  ","tpSolarTime    ",&
          &   "tpLosAngle     "/)
     INTEGER, PARAMETER :: TransitionToModularItems=2
@@ -214,7 +251,8 @@ CONTAINS
 
           SELECT CASE(l1bItem)
           CASE(1)
-             qty%time=l1bField%dpField(1,:,:)
+             CALL GetMIFStartTimesFromMAFTimes(l1bField%dpField(1,:,:),&
+                  & qty%time)
           CASE(2)
              qty%geodLat=l1bField%dpField(1,:,:)
           CASE(3)
@@ -422,6 +460,9 @@ END MODULE ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 1.10  2000/05/02 15:58:48  livesey
+! Fixed a typo
+!
 ! Revision 1.9  2000/01/20 22:03:13  livesey
 ! Dealt with replacement of subVectorIndex with mafCounter and mafIndex
 !

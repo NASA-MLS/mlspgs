@@ -89,7 +89,7 @@ MODULE HGrid                    ! Horizontal grid information
     INTEGER, PARAMETER :: NoL1BItemsToRead=7
     CHARACTER (LEN=15), DIMENSION(NoL1BItemsToRead), &
          &   PARAMETER :: L1bItemsToRead=&
-         & (/"time           ","tpGeodLat      ","tpLon          ",&
+         & (/"MAFStartTimeTAI","tpGeodLat      ","tpLon          ",&
          &   "tpGeodAngle    ","tpSolarZenith  ","tpSolarTime    ",&
          &   "tpLosAngle     "/)
     INTEGER, PARAMETER :: TransitionToModularItems=2
@@ -117,8 +117,9 @@ MODULE HGrid                    ! Horizontal grid information
     INTEGER :: noProfs          ! Number of profiles in output hGrid
     INTEGER :: maf,l1bItem,prof ! Loop counters
     INTEGER, DIMENSION(:), ALLOCATABLE :: defaultMIFs
-    REAL(r8), DIMENSION(:), ALLOCATABLE :: defaultField,interpolatedField
     ! MIFs it would choose in the non over/undersampled case
+    REAL(r8), DIMENSION(:), ALLOCATABLE :: defaultField,interpolatedField
+    REAL(r8), DIMENSION(:), ALLOCATABLE :: intermediateField
 
     INTEGER :: status,l1bFlag   ! Flags
 
@@ -262,9 +263,16 @@ MODULE HGrid                    ! Horizontal grid information
        IF (l1bFlag==-1) CALL MLSMessage(MLSMSG_Error,ModuleName,&
             & MLSMSG_L1BRead//l1bItemName)
 
-       DO maf=1,noMAFs
-          defaultField(maf)=l1bField%dpField(1,maf,defaultMIFs(maf))
-       END DO
+       IF (l1bItem==1) THEN     ! Do something special for time
+          DO maf=1,noMAFs
+             defaultField(maf)=l1bField%dpField(1,1,maf)+&
+                  & (defaultMIFs(maf)-1)*0.166666666666666666666667D0
+          END DO
+       ELSE                     ! Otherwise this is fairly easy.
+          DO maf=1,noMAFs
+             defaultField(maf)=l1bField%dpField(1,defaultMIFs(maf),maf)
+          END DO
+       END IF
 
        IF (interpolationFactor==1.0) THEN
           interpolatedField=defaultField
@@ -392,6 +400,10 @@ END MODULE HGrid
 
 !
 ! $Log$
+! Revision 1.6  2000/01/18 00:14:51  livesey
+! Removed profileIndices etc. No longer relevant, as Join deals with this stuff
+! for l2gp quantities.
+!
 ! Revision 1.5  2000/01/11 22:51:34  livesey
 ! Dealt with ramifications of change from read_parse_l2cf to MLSCF
 !
