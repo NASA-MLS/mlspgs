@@ -356,6 +356,7 @@ contains ! =====     Public Procedures     =============================
     real(r8), dimension(:), pointer :: interpolatedIndex
     integer ::  hdfVersion
     character (len=NameLen) :: L1BItemName
+    logical, parameter     :: DEEBUG = .FALSE.
 
     ! Executable code
 
@@ -468,6 +469,9 @@ contains ! =====     Public Procedures     =============================
         & hdfVersion=hdfVersion )
       if ( l1bFlag==-1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_L1BRead//l1bItemName )
+      if ( DEEBUG .and. index(l1bItemName, 'MAFStartTimeTAI') > 0 ) then
+        call dump(l1bField%DpField, 'MAFStartTimeTAI (before interpolating)')
+      endif
       
       if ( l1bItem==1 ) then       ! do something special for time
         do maf = 1, noMAFs
@@ -480,6 +484,9 @@ contains ! =====     Public Procedures     =============================
         end do
       end if
 
+      if ( DEEBUG .and. index(l1bItemName, 'MAFStartTimeTAI') > 0 ) then
+        call dump(defaultField, 'MAFStartTimeTAI (after something special)')
+      endif
       call DeallocateL1BData(l1bField)
       
       if ( interpolationFactor == 1.0 ) then
@@ -515,6 +522,9 @@ contains ! =====     Public Procedures     =============================
 
       end if
       
+      if ( DEEBUG .and. index(l1bItemName, 'MAFStartTimeTAI') > 0 ) then
+        call dump(InterpolatedField, 'MAFStartTimeTAI (after interpolating)')
+      endif
       select case ( l1bItem )
       case ( l1b_MAFStartTimeTAI )
         hGrid%time = interpolatedField
@@ -589,6 +599,7 @@ contains ! =====     Public Procedures     =============================
 
     integer ::  hdfVersion
     character(len=NameLen) :: l1bItemName
+    logical, parameter     :: DEEBUG = .FALSE.
 
     ! Executable code
 
@@ -608,6 +619,9 @@ contains ! =====     Public Procedures     =============================
       & l1bField, noMAFs, flag, &
       & firstMAF=chunk%firstMAFIndex, &
       & lastMAF=chunk%lastMAFIndex+1, hdfVersion=hdfVersion )
+      if ( DEEBUG ) then
+        call dump(l1bField%DpField, l1bItemName)
+      endif
     noMAFs = chunk%lastMAFIndex - chunk%firstMAFIndex + 1
     minAngle = minval ( l1bField%dpField(1,:,1) )
     maxAngleFirstMAF = maxval ( l1bField%dpField(1,:,1) )
@@ -678,7 +692,7 @@ contains ! =====     Public Procedures     =============================
       hGrid%phi(i) = first + (i-1)*spacing
     end do
 
-    if ( index ( switches, 'hgrid' ) /= 0 ) then
+    if ( index ( switches, 'hgrid' ) /= 0 .or. DEEBUG ) then
       call output ( 'Constructing regular hGrid', advance='yes' )
       call output ( 'minAngle: ' )
       call output ( minAngle, format='(F7.2)' )
@@ -701,6 +715,9 @@ contains ! =====     Public Procedures     =============================
       & l1bField, noMAFs, flag, &
       & firstMAF=chunk%firstMAFIndex, &
       & lastMAF=chunk%lastMAFIndex, hdfVersion=hdfVersion )
+      if ( DEEBUG ) then
+        call dump(l1bField%DpField, l1bItemName)
+      endif
     ! Use the average of all the first MIFs to get inclination for chunk
     incline = sum ( l1bField%dpField(1,1,:) ) / noMAFs
     call DeallocateL1BData ( l1bField )
@@ -717,6 +734,9 @@ contains ! =====     Public Procedures     =============================
       & l1bField, noMAFs, flag, &
       & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
       & hdfVersion=hdfVersion )
+    if ( DEEBUG ) then
+      call dump(l1bField%DpField, trim(l1bItemName) // ' (before interpolating)')
+    endif
     if ( chunk%firstMAFIndex /= chunk%lastMAFIndex ) then
       call InterpolateValues ( mif1GeodAngle, l1bField%dpField(1,1,:), &
         & hGrid%phi, hGrid%time, &
@@ -726,6 +746,9 @@ contains ! =====     Public Procedures     =============================
       hGrid%time = l1bField%dpField(1,1,1) + &
         & ( OrbitalPeriod/360.0 ) * ( hGrid%phi - mif1GeodAngle(1) )
     end if
+      if ( DEEBUG ) then
+        call dump(hGrid%time, trim(l1bItemName) // ' (after interpolating)')
+      endif
     call DeallocateL1BData ( l1bField )
       
     ! Solar time
@@ -745,9 +768,15 @@ contains ! =====     Public Procedures     =============================
       & l1bField, noMAFs, flag, &
       & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
       & hdfVersion=hdfVersion )
+    if ( DEEBUG ) then
+      call dump(l1bField%DpField, trim(l1bItemName) // ' (before interpolating)')
+    endif
     call InterpolateValues ( mif1GeodAngle, l1bField%dpField(1,1,:), &
       & hGrid%phi, hGrid%solarZenith, &
       & method='Spline', extrapolate='Allow' )
+    if ( DEEBUG ) then
+      call dump(hGrid%solarZenith, trim(l1bItemName) // ' (after interpolating)')
+    endif
     call DeallocateL1BData ( l1bField )
 
     ! Line of sight angle
@@ -758,9 +787,15 @@ contains ! =====     Public Procedures     =============================
       & l1bField, noMAFs, flag, &
       & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
       & hdfVersion=hdfVersion )
+    if ( DEEBUG ) then
+      call dump(l1bField%DpField, trim(l1bItemName) // ' (before interpolating)')
+    endif
     call InterpolateValues ( mif1GeodAngle, l1bField%dpField(1,1,:), &
       & hGrid%phi, hGrid%losAngle, &
       & method='Spline', extrapolate='Allow' )
+    if ( DEEBUG ) then
+      call dump(hGrid%losAngle, trim(l1bItemName) // ' (after interpolating)')
+    endif
     call DeallocateL1BData ( l1bField )
     hGrid%losAngle = modulo ( hGrid%losAngle, 360.0_r8 )
 
@@ -778,7 +813,7 @@ contains ! =====     Public Procedures     =============================
     ! So we do a subtraction to get the number in the overlap.
     hGrid%noProfsUpperOverlap = hGrid%noProfs - hGrid%noProfsUpperOverlap
 
-    if ( index ( switches, 'hgrid' ) /= 0 ) then
+    if ( index ( switches, 'hgrid' ) /= 0 .or. DEEBUG ) then
       call output ( 'Initial Hgrid size: ' )
       call output ( hGrid%noProfs ) 
       call output ( ', overlaps: ' )
@@ -796,8 +831,15 @@ contains ! =====     Public Procedures     =============================
     if ( forbidOverspill ) then
       call Hunt ( hGrid%time, processingRange%startTime, &
         & firstProfInRun, allowTopValue=.true., allowBelowValue=.true. )
+      if ( DEEBUG ) then
+        call dump( hGrid%time, 'hgrid times')
+        call output ( 'First profile in Run: ' )
+        call output ( firstProfInRun, advance='no' )
+        call output ( '    processingRange%startTime: ' )
+        call output ( processingRange%startTime, advance='yes' )
+      end if
       if ( firstProfInRun > 0 .and. forbidOverspill ) then
-        if ( index ( switches, 'hgrid' ) /= 0 ) &
+        if ( index ( switches, 'hgrid' ) /= 0  .or. DEEBUG ) &
           & call output ( 'hGrid starts before run trimming start.', &
           & advance='yes' )
         call TrimHGrid ( hGrid, -1, firstProfInRun )
@@ -805,8 +847,14 @@ contains ! =====     Public Procedures     =============================
       
       call Hunt ( hGrid%time, processingRange%endTime, &
         & lastProfInRun, allowTopValue=.true., allowBelowValue=.true. )
+      if ( DEEBUG ) then
+        call output ( 'Last profile in Run: ' )
+        call output ( lastProfInRun, advance='no' )
+        call output ( '    processingRange%endTime: ' )
+        call output ( processingRange%endTime, advance='yes' )
+      end if
       if ( lastProfInRun < hGrid%noProfs .and. forbidOverspill ) then
-        if ( index ( switches, 'hgrid' ) /= 0 ) &
+        if ( index ( switches, 'hgrid' ) /= 0  .or. DEEBUG ) &
           & call output ( 'hGrid ends after run trimming end.',&
           & advance='yes' )
         call TrimHGrid ( hGrid, 1, hGrid%noProfs-lastProfInRun )
@@ -817,7 +865,7 @@ contains ! =====     Public Procedures     =============================
     ! overlap regions around if necessary to deal with overspill.
     if ( hGrid%noProfsLowerOverlap+1 <= hGrid%noProfs ) then
       if ( hGrid%time(hGrid%noProfsLowerOverlap+1) < processingRange%startTime ) then
-        if ( index ( switches, 'hgrid' ) /= 0 ) &
+        if ( index ( switches, 'hgrid' ) /= 0  .or. DEEBUG ) &
           & call output ( &
           & 'Non overlapped part of hGrid starts before run, extending overlap.', &
           & advance='yes' )
@@ -829,7 +877,7 @@ contains ! =====     Public Procedures     =============================
     if ( hGrid%noProfs-hGrid%noProfsUpperOverlap >= 1 ) then
       if ( hGrid%time(hGrid%noProfs-hGrid%noProfsUpperOverlap) > &
         & processingRange%endTime ) then
-        if ( index ( switches, 'hgrid' ) /= 0 ) &
+        if ( index ( switches, 'hgrid' ) /= 0  .or. DEEBUG ) &
           & call output ( &
           & 'Non overlapped part of hGrid end after run, extending overlap.', &
           & advance='yes' )
@@ -840,7 +888,7 @@ contains ! =====     Public Procedures     =============================
     end if
 
     ! Finally we're done.
-    if ( index ( switches, 'hgrid' ) /= 0 ) then
+    if ( index ( switches, 'hgrid' ) /= 0  .or. DEEBUG ) then
       call output ( 'Final Hgrid size: ' )
       call output ( hGrid%noProfs )
       call output ( ', overlaps: ' )
@@ -1170,6 +1218,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.42  2002/12/06 01:07:54  pwagner
+! A lot of extra debugging output possible
+!
 ! Revision 2.41  2002/12/05 02:21:08  livesey
 ! Cosmetic changes
 !
