@@ -10,15 +10,18 @@ module Fill                     ! Create vectors and fill them.
   use INIT_TABLES_MODULE, only: F_ALTITUDEQUANTITY, F_EXPLICITVALUES, &
     & F_H2OQUANTITY, F_METHOD, F_QUANTITY, F_REFGPHQUANTITY, F_SOURCE, &
     & F_SOURCEL2AUX, F_SOURCEL2GP, F_SOURCEQUANTITY, F_SPREAD, F_TEMPERATUREQUANTITY, &
-    & FIELD_FIRST, FIELD_LAST, L_EXPLICIT, L_HYDROSTATIC, L_L2GP, L_L2AUX, L_PRESSURE, &
-    & L_TRUE, L_VECTOR, L_ZETA, S_TIME, S_VECTOR, S_FILL
+    & FIELD_FIRST, FIELD_LAST, L_EXPLICIT, L_HYDROSTATIC, L_L1B, L_L2GP, &
+    & L_L2AUX, L_PRESSURE, L_RADIANCE, L_SCGEOCALT, L_TRUE, L_VECTOR, &
+    & L_ZETA, S_TIME, S_VECTOR, S_FILL
   ! will be added
+  use L1BData, only: DeallocateL1BData, FindL1BData, L1BData_T, ReadL1BData
   use L2GPData, only: L2GPData_T
   use L2AUXData, only: L2AUXData_T, L2AUXDim_None, L2AUXDim_Channel, &
     & L2AUXDim_IntermediateFrequency, L2AUXDim_USBFrequency, L2AUXDim_LSBFrequency, &
     & L2AUXDim_MIF, L2AUXDim_MAF, L2AUXDim_GeodAngle
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: L1BInfo_T, NameLen, LineLen, MLSChunk_T, R8
+  use MLSSignals_m, only: GetSignalName, GetModuleName
   !  use MLSMessageModule, only: MLSMSG_Error, MLSMessage
   !  use MLSStrings, only: lowercase
   use OUTPUT_M, only: OUTPUT
@@ -30,7 +33,7 @@ module Fill                     ! Create vectors and fill them.
     & SOURCE_REF, SUB_ROSA, SUBTREE
   use TREE_TYPES, only: N_NAMED, N_DOT, N_SET_ONE
   use VectorsModule, only: AddVectorToDatabase, CreateVector, Dump, &
-    & ValidateVectorQuantity, Vector_T, VectorTemplate_T
+    & GetVectorQtyByTemplateIndex, ValidateVectorQuantity, Vector_T, VectorTemplate_T
   use ScanModelModule
   use Intrinsic, only: PHYQ_Dimensionless
 
@@ -51,8 +54,9 @@ module Fill                     ! Create vectors and fill them.
   integer, parameter :: vectorWontMatchL2GP = zeroGeodSpan+1
   integer, parameter :: cantFillFromL2AUX = vectorWontMatchL2GP+1
   integer, parameter :: vectorWontMatchPDef = cantFillFromL2AUX+1
+  integer, parameter :: cantFillFromL1B = vectorWontMatchPDef+1
   ! more Error codes relating to FillVector
-  integer, parameter :: numInstancesisZero = vectorWontMatchPDef+1
+  integer, parameter :: numInstancesisZero = cantFillFromL1B+1
   integer, parameter :: numSurfsisZero = numInstancesisZero+1
   integer, parameter :: numChansisZero = numSurfsisZero+1
   integer, parameter :: objIsFullRank3 = numChansisZero+1
@@ -76,6 +80,7 @@ module Fill                     ! Create vectors and fill them.
 
   ! miscellaneous
   integer, parameter :: miscellaneous_err = deallocation_err+1
+  integer, parameter :: errorReadingL1B = miscellaneous_err+1
 
   !  integer, parameter :: s_Fill = 0   ! to be replaced by entry in init_tables_module
   !---------------------------- RCS Ident Info -------------------------------
@@ -115,33 +120,34 @@ contains ! =====     Public Procedures     =============================
     character (LEN=LineLen) ::              msr
     real :: T1, T2              ! for timing
     
-    integer :: ALTITUDEQUANTITYINDEX ! In the source vector
-    integer :: ALTITUDEVECTORINDEX ! In the vector database
-    integer :: ERRORCODE        ! 0 unless error; returned by called routines
-    integer :: FIELDINDEX       ! Entry in tree
-    integer :: FILLMETHOD       ! How will we fill this quantity
-    integer :: GSON             ! Descendant of Son
-    integer :: H2OQUANTITYINDEX ! In the source vector
-    integer :: H2OVECTORINDEX ! In the vector database
-    integer :: I, J, K          ! Loop indices for section, spec, expr
-    integer :: KEY              ! Definitely n_named
-    integer :: L2AUXINDEX       ! Index into L2AUXDatabase
-    integer :: L2GPINDEX        ! Index into L2GPDatabase
-    integer :: L2INDEX          ! Where source is among l2gp or l2aux database
-    integer :: PREVDEFDQT
-    integer :: QUANTITYINDEX    ! Within the vector
-    integer :: REFGPHQUANTITYINDEX ! In the source vector
-    integer :: REFGPHVECTORINDEX ! In the vector database
-    integer :: SON              ! Of root, an n_spec_args or a n_named
-    integer :: SOURCEQUANTITYINDEX ! In the source vector
-    integer :: SOURCEVECTORINDEX ! In the vector database
+    integer :: ALTITUDEQUANTITYINDEX    ! In the source vector
+    integer :: ALTITUDEVECTORINDEX      ! In the vector database
+    integer :: ERRORCODE                ! 0 unless error; returned by called routines
+    integer :: FIELDINDEX               ! Entry in tree
+    integer :: FILLMETHOD               ! How will we fill this quantity
+    integer :: GSON                     ! Descendant of Son
+    integer :: H2OQUANTITYINDEX         ! In the source vector
+    integer :: H2OVECTORINDEX           ! In the vector database
+    integer :: I, J, K                  ! Loop indices for section, spec, expr
+    integer :: ind                      ! Temoprary index
+    integer :: KEY                      ! Definitely n_named
+    integer :: L2AUXINDEX               ! Index into L2AUXDatabase
+    integer :: L2GPINDEX                ! Index into L2GPDatabase
+    integer :: L2INDEX                  ! Where source is among l2gp or l2aux database
+    integer :: PREVDEFDQT               !
+    integer :: QUANTITYINDEX            ! Within the vector
+    integer :: REFGPHQUANTITYINDEX      ! In the source vector
+    integer :: REFGPHVECTORINDEX        ! In the vector database
+    integer :: SON                      ! Of root, an n_spec_args or a n_named
+    integer :: SOURCEQUANTITYINDEX      ! In the source vector
+    integer :: SOURCEVECTORINDEX        ! In the vector database
     integer :: TEMPERATUREQUANTITYINDEX ! In the source vector
-    integer :: TEMPERATUREVECTORINDEX ! In the vector database
-    integer :: TEMPLATEINDEX    ! In the template database
-    integer :: VALUESNODE       ! For the parser
-    integer :: VECTORINDEX      ! In the vector database
-    integer :: VECTORNAME       ! Name of vector to create
-
+    integer :: TEMPERATUREVECTORINDEX   ! In the vector database
+    integer :: TEMPLATEINDEX            ! In the template database
+    integer :: VALUESNODE               ! For the parser
+    integer :: VECTORINDEX              ! In the vector database
+    integer :: VECTORNAME               ! Name of vector to create
+                                        !
     logical :: TIMING
     logical :: SPREAD           ! Do we spread values accross instances in explict
 
@@ -240,7 +246,7 @@ contains ! =====     Public Procedures     =============================
         end do                  ! Loop over arguments to fill instruction
 
         ! Now call various routines to do the filling
-        quantity=>vectors(vectorIndex)%quantities(quantityIndex)
+        quantity=>GetVectorQtyByTemplateIndex(vectors(vectorIndex),quantityIndex)
         select case (fillMethod)
         case (l_l2gp)
           if (.NOT. got(f_sourceL2GP)) call Announce_Error(key,noSourceL2GPGiven)
@@ -253,7 +259,10 @@ contains ! =====     Public Procedures     =============================
         case (l_explicit)       ! An explicit fill
           if (.not. got(f_explicitValues)) call Announce_Error(key, &
             & noExplicitValuesGiven)
-          call ExplicitFillVectorQuantity(quantity,valuesNode,spread)
+          call ExplicitFillVectorQuantity ( quantity, valuesNode, spread )
+        case (l_l1b)                    ! Fill from L1B data
+          call FillVectorQuantityFromL1B ( key, quantity, chunks(chunkNo), l1bInfo )
+          call dump(quantity%values)
         case default
           call MLSMessage(MLSMSG_Error,ModuleName,'This fill method not yet implemented')
         end select
@@ -767,6 +776,53 @@ contains ! =====     Public Procedures     =============================
     endif
   end subroutine ExplicitFillVectorQuantity
 
+  ! ----------------------------------------- FillVectorQuantityFromL1B ----
+  subroutine FillVectorQuantityFromL1B ( root, quantity, chunk, l1bInfo )
+    integer, intent(in) :: root
+    type (VectorValue_T), INTENT(INOUT) :: QUANTITY
+    type (MLSChunk_T), INTENT(IN) :: CHUNK
+    type (l1bInfo_T), INTENT(IN) :: L1BINFO
+
+    ! Local variables
+    character (len=80) :: NAMESTRING
+    integer :: fileID, FLAG, NOMAFS
+    type (l1bData_T) :: L1BDATA
+
+    ! Executable code
+
+    if ( toggle(gen) ) call trace_begin ("FillVectorQuantityFromL1B",root)
+
+    fileID=l1bInfo%l1bOAID
+    select case ( quantity%template%quantityType )
+    case ( l_radiance )
+      call GetSignalName ( quantity%template%signal, nameString, noChannels=.TRUE. )
+      fileID = FindL1BData (l1bInfo%l1bRadIDs, nameString )
+    case ( l_tngtGeodAlt )
+      call GetModuleName( quantity%template%instrumentModule,nameString )
+      nameString=TRIM(nameString)//'.tpGeodAlt'
+    case ( l_tngtGeocAlt )
+      call GetModuleName( quantity%template%instrumentModule,nameString )
+      nameString=TRIM(nameString)//'.tpGeocAlt'
+    case ( l_scGeocAlt )
+      nameString='scGeocAlt'
+    case default
+      call Announce_Error(cantFillFromL1B, root)
+    end select
+
+    call ReadL1BData ( fileID , nameString, l1bData, noMAFs, flag, &
+      & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
+    ! We'll have to think about `bad' values here .....
+    if ( flag /= 0 ) then
+      call Announce_Error(errorReadingL1B, root)
+      return
+    end if
+    quantity%values = RESHAPE(l1bData%dpField, &
+      & (/ quantity%template%instanceLen, quantity%template%noInstances /) )
+    call DeallocateL1BData(l1bData,flag)
+
+    if (toggle(gen) ) call trace_end( "FillVectorQuantityFromL1B" )
+  end subroutine FillVectorQuantityFromL1B
+
   !=============================== nearby ==========================
   function nearby(x, y, inRelSmall, inOverallTol)
     !=============================== nearby ==========================
@@ -955,6 +1011,10 @@ contains ! =====     Public Procedures     =============================
       call output ( " command found no match of vetor and L2GP.", advance='yes' )
     case ( cantFillFromL2AUX )
       call output ( " command could not be filled from L2AUX.", advance='yes' )
+    case ( cantFillFromL1B )
+      call output ( " command could not be filled from L1B.", advance='yes' )
+    case ( errorReadingL1B )
+      call output ( " L1B file could not be read.", advance='yes' )
     case ( vectorWontMatchPDef )
       call output ( " command found new and prev. vectors unmatched.", advance='yes' )
     case ( numInstancesisZero )
@@ -1005,6 +1065,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.21  2001/03/03 00:07:40  livesey
+! Added fill from l1b
+!
 ! Revision 2.20  2001/02/27 17:39:03  livesey
 ! Tidied stuff up a bit.
 !
