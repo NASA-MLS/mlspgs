@@ -56,7 +56,6 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
   character (len=*), parameter :: lit_clim = 'clim'
   integer, parameter :: MAXLISTLENGTH=Linelen ! Max length list of grid names
   integer, parameter :: NENTRIESMAX=200 ! Max num of entries
-  real, parameter    :: UNDEFINED_VALUE = -999.99 ! Same as %template%badvalue
 
 contains
 
@@ -315,12 +314,12 @@ contains
     call nullifyGriddedData ( the_g_data ) ! for Sun's still useless compiler
     ! Setup the grid
     call SetupNewGriddedData ( the_g_data, noHeights=nlev, noLats=nlat, &
-      & noLons=nlon, noLsts=ntime, noSzas=1, noDates=1 )
+      & noLons=nlon, noLsts=ntime, noSzas=1, noDates=1, missingValue=FILLVALUE )
     if(DEEBUG) print *, '(Again) our quantity name ', the_g_data%quantityName
     if(DEEBUG) print *, 'our description ', the_g_data%description
     if(DEEBUG) print *, 'our units ', the_g_data%units
     allocate(all_the_fields(dims(1), dims(2), dims(3), dims(4)), stat=status)
-    all_the_fields = UNDEFINED_VALUE
+    all_the_fields = the_g_data%missingValue
     if ( status /= 0 ) &
         & call announce_error(lcf_where, "failed to allocate field_data")
     start = 0                                                             
@@ -354,7 +353,6 @@ contains
       call dump(the_g_data%field(:,1,1,1,1,1), 'p-slice')
       call dump(the_g_data%field(1,1,1,:,1,1), 't-slice')
     endif
-    call filter_fill_values(the_g_data%field, FILLVALUE)
     deallocate(all_the_fields)
     ! Now read the dims
     nullify(dim_field)
@@ -373,9 +371,9 @@ contains
     deallocate(dim_field)        ! Before leaving, some light housekeeping
     ! Have not yet figured out how to assign these
     ! Probably will have to read metadata
-    the_g_data%Szas = UNDEFINED_VALUE
-    the_g_data%DateStarts = UNDEFINED_VALUE
-    the_g_data%DateEnds = UNDEFINED_VALUE
+    the_g_data%Szas = the_g_data%missingValue
+    the_g_data%DateStarts = the_g_data%missingValue
+    the_g_data%DateEnds = the_g_data%missingValue
     ! Close grid
     status = gddetach(gd_id)
     if(status /= 0) &
@@ -406,7 +404,7 @@ contains
          start = 0                                                             
          stride = 1                                                             
          edge = field_size                                                       
-         values = UNDEFINED_VALUE
+         values = the_g_data%missingValue
          status = gdrdfld(gd_id, trim(field_name), start, stride, edge, &
            & values)                                                     
          if ( status /= 0 ) &
@@ -606,7 +604,7 @@ contains
       if ( status /= 0 ) &
         & call announce_error(lcf_where, "failed to allocate field_data")
       
-      field_data = UNDEFINED_VALUE
+      field_data = the_g_data%missingValue
       dimlist = trim(dimlists(1))
 
       nlon = dims(1)
@@ -678,7 +676,6 @@ contains
       call dump(the_g_data%field(1,:,1,1,1,1), 'y-slice')
       call dump(the_g_data%field(:,1,1,1,1,1), 'p-slice')
     endif
-    if ( FILLVALUE /= 0.e0 ) call filter_fill_values(the_g_data%field, FILLVALUE)
     the_g_data%heights = pressures(1:the_g_data%noHeights)
     deallocate(all_the_fields)
     deallocate(pressures)
@@ -705,10 +702,10 @@ contains
     endif
     ! Have not yet figured out how to assign these
     ! Probably will have to read metadata
-    the_g_data%lsts = UNDEFINED_VALUE
-    the_g_data%Szas = UNDEFINED_VALUE
-    the_g_data%DateStarts = UNDEFINED_VALUE
-    the_g_data%DateEnds = UNDEFINED_VALUE
+    the_g_data%lsts = the_g_data%missingValue
+    the_g_data%Szas = the_g_data%missingValue
+    the_g_data%DateStarts = the_g_data%missingValue
+    the_g_data%DateEnds = the_g_data%missingValue
 
     ! Close grid
     status = gddetach(gd_id)
@@ -740,7 +737,7 @@ contains
          start = 0                                                             
          stride = 1                                                             
          edge = field_size
-         values = UNDEFINED_VALUE
+         values = the_g_data%missingValue
          status = gdrdfld(gd_id, trim(field_name), start, stride, edge, &
            & values)                                                     
          if ( status /= 0 ) &
@@ -959,7 +956,7 @@ contains
     ! Now fill the coordinates
     grid%verticalCoordinate = v_is_pressure
     do i = 1, noHeights
-      grid%heights = 10.0**(3.0-(i-1)/6.0)
+      grid%heights(i) = 10.0**(3.0-(i-1)/6.0)
     end do
     do i = 1, noLats
       grid%lats(i) = dLat * ( i - 2.0*noLats/dLat ) - dLat/2.0
@@ -1024,9 +1021,9 @@ contains
     ! Put the if statement on the outside to avoid if's in loops
     i = headerLen + offset + 1
     if ( needSwap ) then
-      do lat = 1, noLats
+      do surf = 1, noHeights
         do lon = 1, noLons
-          do surf = 1, noHeights
+          do lat = 1, noLats
             grid%field ( surf, lat, lon, 1, 1, 1 ) = &
               & transfer ( buffer(i+3:i:-1), oneValue )
             i = i + 4
@@ -1035,9 +1032,9 @@ contains
       end do
     else
       ! No byte swapping required, just store it
-      do lat = 1, noLats
+      do surf = 1, noHeights
         do lon = 1, noLons
-          do surf = 1, noHeights
+          do lat = 1, noLats
             grid%field ( surf, lat, lon, 1, 1, 1 ) = &
               & transfer ( buffer(i:i+3), oneValue )
             i = i + 4
@@ -1045,6 +1042,11 @@ contains
         end do
       end do
     end if
+
+    ! Patch the missing data
+    where ( grid%field(:,:,:,:,:,:) > 0.95e12 )
+      grid%field(:,:,:,:,:,:) = grid%missingValue
+    end where
 
   end function ReadGloriaFile
 
@@ -1418,40 +1420,6 @@ contains
   ! ----- utility procedures ----
   
   ! ------------------------------------------------  ncepFieldNameTohPa  -----
-  subroutine filter_fill_values ( field_values, fill_value )
-  ! Replace field_values equal to fill_value with UNDEFINED_VALUE
-  ! Note that:
-  ! for robustness under f.p. conversions, we actually check that
-  ! (a) if fill_value > 0, field_values > fill_value / alpha
-  ! (b) if fill_value < 0, field_values < fill_value / alpha
-  ! (c) if fill_value = 0, |field_values| < MINVALUE
-  ! Args
-  real(r4), intent(in)                             :: fill_value
-  real(rgr), dimension(:,:,:,:,:,:), intent(inout) :: field_values
-  ! Local variables
-  integer :: fill_sign
-  real(r4), parameter :: MINVALUE = 1.e-14
-  real, parameter :: alpha = 1.005
-  ! Executable
-  if ( abs(fill_value) < MINVALUE ) then
-    fill_sign = 0
-  else
-    fill_sign = int( sign(alpha, fill_value) )
-  endif
-  select case (fill_sign)
-  case (1)
-    where ( field_values > fill_value / alpha ) field_values = UNDEFINED_VALUE
-  case (-1)
-    where ( field_values < fill_value / alpha ) field_values = UNDEFINED_VALUE
-  case (0)
-    where ( abs(field_values) < MINVALUE ) field_values = UNDEFINED_VALUE
-  case default
-    call announce_error(0, 'illegal fill_sign in filter_field_values', &
-        & 'fill_sign: ', fill_sign)
-  end select
-  end subroutine filter_fill_values
-
-  ! ------------------------------------------------  ncepFieldNameTohPa  -----
   subroutine ncepFieldNameTohPa ( field_name, pressure )
 
     ! Snip INTRO and TAIL off filed_name
@@ -1553,6 +1521,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.27  2003/02/28 02:27:12  livesey
+! Now uses missingValue stuff
+!
 ! Revision 2.26  2003/02/27 21:51:02  pwagner
 ! Commented out the last prints
 !
