@@ -936,7 +936,13 @@ contains ! =====     Public Procedures     =============================
             & manipulation, key )
 
         case ( l_magneticModel ) ! --------------------- Magnetic Model --
-          call FillQuantityUsingMagneticModel ( quantity, key )          
+          if ( .not. got ( f_gphQuantity ) ) then
+            call Announce_Error ( key, 0, 'Need gphQuantity for magnetic model' )
+          else
+            GPHQuantity => GetVectorQtyByTemplateIndex( &
+              & vectors(GPHVectorIndex), GPHQuantityIndex)
+            call FillQuantityUsingMagneticModel ( quantity, gphQuantity, key )          
+          end if
           
         case ( l_offsetRadiance ) ! ------------------- Offset radiance --
           if ( .not. got ( f_radianceQuantity ) ) &
@@ -4165,9 +4171,10 @@ contains ! =====     Public Procedures     =============================
     end subroutine FillVectorQuantityFromL2AUX
 
     ! --------------------------------------- FillQuantityUsingMagneticModel --
-    subroutine FillQuantityUsingMagneticModel ( qty, key )
+    subroutine FillQuantityUsingMagneticModel ( qty, gphQty, key )
       use IGRF_INT, only: FELDC, FELDCOF, To_Cart
       type (VectorValue_T), intent(inout) :: QTY
+      type (VectorValue_T), intent(inout) :: GPHQTY
       integer, intent(in) :: KEY
       ! Local variables
       real :: B(3)                      ! Magnetic field
@@ -4184,8 +4191,20 @@ contains ! =====     Public Procedures     =============================
           & 'Quantity does not describe magnetic field' )
         return
       end if
-      if ( qty%template%verticalCoordinate /= l_geodAltitude ) then
-        call Announce_Error ( key, needGeodAltitude )
+      if ( .not. ValidateVectorQuantity ( gphQty, quantityType=(/l_gph/), &
+        & frequencyCoordinate=(/ l_none /), verticalCoordinate=(/l_zeta/) ) ) then
+        call Announce_Error ( key, 0, &
+          & 'GPH quantity does not describe gph field' )
+        return
+      end if
+      if ( .not. DoHGridsMatch ( qty, gphQty ) ) then
+        call Announce_Error ( key, 0, &
+          & 'Quantity and GPHQuanity do not share the same horizontal basis' )
+        return
+      end if
+      if ( .not. DoVGridsMatch ( qty, gphQty ) ) then
+        call Announce_Error ( key, 0, &
+          & 'Quantity and GPHQuantity do not share the same vertical basis' )
         return
       end if
 
@@ -4193,23 +4212,6 @@ contains ! =====     Public Procedures     =============================
       ! FELDCOF is accurate enough.
 
       call feldcof ( real(qty%template%time(1,1) + epoch) )
-
-      ! Extent:
-      ! qty%template%noInstances, qty%template%noSurfs
-
-      ! Latitude, longitude, time (s since 1Jan93) etc:
-      ! qty%template%geodLat(1,<profile>)
-
-      ! Values for GPH:
-      ! gph%values(<surface>,<profile>)
-
-      ! Values for mag field
-      ! qty%values(3*<surface>, <profile>)
-
-      ! Remember, arrays start from 1, so
-      ! qty%values ( surf*3-2, prof ) = xCalculation
-      ! qty%values ( surf*3-1, prof ) = yCalculation
-      ! qty%values ( surf*3, prof ) = zCalculation
 
       do instance = 1, qty%template%noInstances
         do surf = 1, qty%template%noSurfs
@@ -4221,7 +4223,7 @@ contains ! =====     Public Procedures     =============================
           ! Convert (/ lat, lon, height /) to cartesian
           call to_cart ( real( (/ qty%template%geodLat(surfOr1,instance), &
             &                     qty%template%lon(surfOr1,instance), &
-            &                     qty%template%surfs(surfOr1,instance) /) ), xyz )
+            &                     gphQty%values(surf,instance)*1e-3 /) ), xyz )
           ! Compute the field at and w.r.t. cartesian coordinates
           call feldc ( xyz, b )
           qty%values(surf*3-2 : surf*3, surfOr1) = b
@@ -4776,6 +4778,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.175  2003/01/14 22:39:25  livesey
+! Bug fixes in magnetic stuff
+!
 ! Revision 2.174  2003/01/14 21:58:59  vsnyder
 ! OOPS, Left out 'template' in reference to verticalCoordinate
 !
