@@ -79,6 +79,7 @@ dontMask
 
 earthRadius
 ECRtoFOV
+eigenVectors
 exact
 extendedAverage
 explicitValues
@@ -325,6 +326,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.113  2004/01/29 03:32:54  livesey
+# Added eigenVectors
+#
 # Revision 2.112  2004/01/23 19:07:25  livesey
 # Tidied up the adoption stuff
 #
