@@ -74,8 +74,11 @@ SHELL = /bin/sh
 #
 
 #----------------------------------------------------------
+ifndef DONTBUILDPREQS
 libblas_f90 := $(shell ${REECHO} $(libblas_sources)/*.c $(libblas_sources)/*.f \
   $(libblas_sources)/*.f90 $(libblas_sources)/*.f9h $(srclib)/*.f90)
+BLAS_PREQS := $(libblas_f90) $(libblas_objs)
+endif
 PROG=libmls.a
 #PROG=all
 
@@ -197,12 +200,12 @@ $(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG)
 		;; \
 	esac 
 
-$(libblas_objs)/libmlspack.a: $(libblas_f90) \
-   $(libblas_objs)
+$(libblas_objs)/libmlspack.a: $(BLAS_PREQS)
 	@if [ "$(NOHUNTING)" != "" ] ; then \
 	   rm -f $(libblas_objs)/libmlspack.a ; \
 	fi ; \
-	$(MAKE) -f $(MakeFName) libmlspack.a -C $(libblas_sources)
+	$(MAKE) -f $(MakeFName) libmlspack.a -C $(libblas_sources) \
+     DONTBUILDPREQS=TRUE
 
 hdfeos5.f9h: $(HDFEOS5)/../../include/hdfeos5.inc
 	@sed 's/^C/!/' $(HDFEOS5)/../../include/hdfeos5.inc > temp ; \
@@ -300,6 +303,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.49  2003/05/20 18:39:23  pwagner
+# Uses DONTBUILDPREQS to stop some hunting
+#
 # Revision 2.48  2003/04/30 23:04:55  pwagner
 # Now lets you make update in each subdirectory
 #
