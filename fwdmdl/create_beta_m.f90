@@ -16,9 +16,10 @@ contains
 ! *****     Public Subroutine     **************************************
 ! ----------------------------------------------  Create_beta  ---------
 
-  subroutine Create_beta ( Spectag, cont, pressure, Temp, Fgr, pfaw,             &
-         &   slabs_0, beta_value, Incl_Cld, cld_beta, slabs_p, slabs_m, t_power, &
-         &   dbeta_dw, dbeta_dn, dbeta_dv )
+  subroutine Create_beta ( Spectag, cont, pressure, Temp, Fgr, pfaw,         &
+         &   slabs_0, beta_value, Incl_Cld,cld_beta,IPSD,WC,NU,NUA,NAB,NR,N, &
+         &   slabs_p, slabs_m, t_power,                     &
+         &   dbeta_dw, dbeta_dn, dbeta_dv  )
 
 !  For a given frequency and height, compute beta_value function.
 !  This routine should be called for primary and image separately.
@@ -62,7 +63,8 @@ contains
     integer(ip) :: NL ! no of lines
 
     real(rp) :: ra, dNu, tp, bp, tm, bm, bv, dw, dn, ds, dbdw, dbdn, dbdv
-    include 'constants.f9h'
+!    include 'constants.f9h'
+    INTEGER :: N, NU, NUA, NAB, NR, IPSD
     REAL(rp) :: WC(N)
     REAL(rp) :: W0(N)       ! SINGLE SCATTERING ALBEDO
     REAL(rp) :: PHH(N,NU)   ! PHASE FUNCTION
@@ -310,6 +312,9 @@ contains
 end module CREATE_BETA_M
 
 ! $Log$
+! Revision 2.18  2003/01/31 20:18:40  jonathan
+! add get_beta_cloud
+!
 ! Revision 2.17  2003/01/31 17:16:28  jonathan
 ! add Inc_Cld, and cld_ext
 !

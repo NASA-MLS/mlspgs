@@ -48,12 +48,14 @@ contains
     use Intrinsic, only: L_TEMPERATURE, L_RADIANCE, L_PHITAN, L_PTAN, &
       & L_ELEVOFFSET, LIT_INDICES, L_ISOTOPERATIO, L_VMR, &
       & L_ORBITINCLINATION, L_SPACERADIANCE, L_EARTHREFL, L_LOSVEL, &
-      & L_SCGEOCALT, L_SIDEBANDRATIO, L_NONE, L_CHANNEL, L_REFGPH
+      & L_SCGEOCALT, L_SIDEBANDRATIO, L_NONE, L_CHANNEL, L_REFGPH, &
+      & L_CLOUDICE, L_CLOUDWATER, L_SIZEDISTRIBUTION
+
     use Load_sps_data_m, ONLY: LOAD_SPS_DATA, Grids_T, destroygrids_t
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT, ALLOCATEONESLABS, &
                                 &  DESTROYCOMPLETESLABS
     use Make_Z_Grid_M, only: Make_Z_Grid
-    use ManipulateVectorQuantities, only: FindInstanceWindow
+    use ManipulateVectorQuantities, only: FindInstanceWindow, FindClosestInstances
     use MatrixModule_0, only: M_ABSENT, M_BANDED, M_FULL
     use MatrixModule_1, only: CreateBlock, FindBlock, MATRIX_T
     use Metrics_m, only: Metrics
@@ -88,6 +90,11 @@ contains
     type(forwardModelIntermediate_T), intent(inout) :: oldIfm ! Workspace
     type(forwardModelStatus_t), intent(inout) :: FmStat ! Reverse comm. stuff
     type(matrix_T), intent(inout), optional :: Jacobian
+
+    !-------------------------------------------
+    real(r8), dimension(:,:), allocatable :: WC
+    integer, dimension(:), allocatable :: IPSD
+    !-------------------------------------------
 
     ! Define local parameters
     character(len=*), parameter :: INVALIDQUANTITY = "Invalid vector quantity for "
@@ -155,6 +162,9 @@ contains
     integer :: WINDOWFINISH             ! End of temperature `window'
     integer :: WINDOWSTART              ! Start of temperature `window'
     integer :: ICON                     ! i_saturation
+    integer :: NU, NUA, NAB, NR, N      ! cloud ext parameters
+    integer :: status                   ! allocation status 
+    integer, dimension(:), pointer :: closestInstances 
 
     logical :: doThis                   ! Flag for lines
     logical :: temp_der, atmos_der, spect_der, ptan_der ! Flags for various derivatives
@@ -296,6 +306,7 @@ contains
     real(rp), dimension(:,:), pointer :: K_TEMP_FRQ ! Storage for Temp. deriv.
     real(rp), dimension(:,:), pointer :: RADIANCES  ! (Nptg,noChans)
     real(rp), dimension(:,:), pointer :: SPS_PATH   ! species on path
+    real(rp), dimension(:,:), pointer :: IWC_PATH   ! species on path
     real(rp), dimension(:,:), pointer :: TAN_DH_DT ! dH/dT at Tangent
     real(rp), dimension(:,:), pointer :: T_GLGRID ! Temp on glGrid surfs
 
@@ -353,6 +364,9 @@ contains
     type (VectorValue_T), pointer :: SPACERADIANCE ! Emission from space
     type (VectorValue_T), pointer :: TEMP ! Temperature component of state vector
     type (VectorValue_T), pointer :: THISRADIANCE ! A radiance vector quantity
+    type (VectorValue_T), pointer :: CLOUDICE                   ! Profiles
+    type (VectorValue_T), pointer :: CLOUDWATER                 ! Profiles
+    type (VectorValue_T), pointer :: SIZEDISTRIBUTION           ! Integer really
 
     type (Signal_T) :: FIRSTSIGNAL      ! The first signal we're dealing with
 
@@ -369,6 +383,7 @@ contains
     type (Grids_T) :: Grids_dw  ! All the spectroscopy(W) coordinates
     type (Grids_T) :: Grids_f   ! All the coordinates for VMR
     type (Grids_T) :: Grids_tmp ! All the coordinates for TEMP
+    type (Grids_T) :: Grids_iwc  ! All the coordinates for WC
 
     ! ZVI's dumping ground for variables he's too busy to put in the right
     ! place, and doesn't want to write comments for
@@ -433,12 +448,12 @@ contains
       & p_glgrid, p_path, p_path_c, &
       & phi_basis, phi_basis_dn, phi_basis_dv, phi_basis_dw, phi_path, &
       & ptg_angles, radiances, RadV, ref_corr, req_out, &
-      & sps_beta_dbeta_c, sps_beta_dbeta_f, sps_path, &
+      & sps_beta_dbeta_c, sps_beta_dbeta_f, sps_path, IWC_PATH, &
       & superset, tan_chi_out, tan_d2h_dhdt, tan_dh_dt, tan_inds, &
       & tan_phi, tan_press, tan_temp, tau, t_glgrid, t_path, t_path_c, t_path_f, &
       & t_script, usedchannels, usedsignals, z_all, z_basis, z_basis_dn, &
       & z_basis_dv, z_basis_dw, z_glgrid, z_path, z_path_c, z_tmp, tan_temps, &
-      & tan_hts, reqs )
+      & tan_hts, reqs, cloudIce, cloudWater, sizeDistribution )
 
     ! Work out what we've been asked to do -----------------------------------
 
@@ -486,6 +501,20 @@ contains
       & config=fwdModelConf )
     scGeocAlt => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_scGeocAlt )
+
+    cloudIce => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra,  &
+      & quantityType=l_cloudIce )    
+    cloudWater => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_cloudWater )
+    sizeDistribution=>GetVectorQuantityByType( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_sizeDistribution )
+
+          ICON = FwdModelConf%i_saturation
+          NU  = fwdModelConf%NUM_SCATTERING_ANGLES
+          NUA = fwdModelConf%NUM_AZIMUTH_ANGLES
+          NAB = fwdModelConf%NUM_AB_TERMS
+          NR  = fwdModelConf%NUM_SIZE_BINS
+          N   = fwdModelConf%no_cloud_species
 
     ! We won't seek for molecules here as we can't have an array of pointers.
     ! When we do want molecule i we would do something like
@@ -566,12 +595,30 @@ contains
                        & moduleName )
     call allocate_test ( grids_tmp%lin_log, 1, 'lin_log', moduleName )
 
+    call allocate_test ( grids_iwc%no_z, 1, 'Grids_iwc%no_z', moduleName )
+    call allocate_test ( grids_iwc%no_p, 1, 'Grids_iwc%no_p', moduleName )
+    call allocate_test ( grids_iwc%no_f, 1, 'Grids_iwc%no_f', moduleName )
+    call allocate_test ( grids_iwc%windowstart, 1, 'Grids_iwc%windowstart', &
+                       & moduleName )
+    call allocate_test ( grids_iwc%windowfinish, 1, 'Grids_iwc%windowfinish', &
+                       & moduleName )
+    call allocate_test ( grids_iwc%lin_log, 1, 'lin_log', moduleName )
+
+
     grids_tmp%no_f = 1
     grids_tmp%no_z = n_t_zeta
     grids_tmp%no_p = no_sv_p_t
     grids_tmp%lin_log = .false.
     grids_tmp%windowStart(1) = windowStart
     grids_tmp%windowFinish(1) = windowFinish
+
+
+    grids_iwc%no_f = 1
+    grids_iwc%no_z = n_t_zeta
+    grids_iwc%no_p = no_sv_p_t
+    grids_iwc%lin_log = .false.
+    grids_iwc%windowStart(1) = windowStart
+    grids_iwc%windowFinish(1) = windowFinish
 
 ! Allocate space for the zeta, phi & freq. basis componenets
 
@@ -585,11 +632,25 @@ contains
     call allocate_test ( grids_tmp%deriv_flags, k, 'Grids_tmp%deriv_flags', &
                        & moduleName )
 
+    call allocate_test ( grids_iwc%zet_basis, n_t_zeta, 'Grids_iwc%zet_basis', &
+                       & moduleName )
+    call allocate_test ( grids_iwc%phi_basis, no_sv_p_t, 'Grids_iwc%phi_basis', &
+                       & moduleName )
+    call allocate_test ( grids_iwc%frq_basis, 1, 'Grids_iwc%frq_basis', moduleName )
+    call allocate_test ( grids_iwc%values, k, 'Grids_iwc%values', moduleName )
+    call allocate_test ( grids_iwc%deriv_flags, k, 'Grids_iwc%deriv_flags', &
+                       & moduleName )
+
     grids_tmp%frq_basis = 0.0
     grids_tmp%zet_basis = temp%template%surfs(1:n_t_zeta,1)
     grids_tmp%phi_basis = temp%template%phi(1,windowStart:windowFinish)*Deg2Rad
-
     grids_tmp%values = reshape(temp%values(:,windowStart:windowFinish),(/k/))
+
+    grids_iwc%frq_basis = 0.0
+    grids_iwc%zet_basis = CloudIce%template%surfs(1:n_t_zeta,1)
+    grids_iwc%phi_basis = temp%template%phi(1,windowStart:windowFinish)*Deg2Rad
+    grids_iwc%values = reshape(CloudIce%values(:,windowStart:windowFinish),(/k/))
+
 
 ! ** Initialize to ALL derivatives flags to TRUE :
     grids_tmp%deriv_flags(1:k) = .TRUE.
@@ -1171,6 +1232,9 @@ contains
 
     no_ele = 2*maxVert     ! maximum possible
 
+    allocate ( WC(N,no_ele), STAT=status )
+    allocate ( IPSD(no_ele), STAT=status )
+
     allocate ( gl_slabs(no_ele, noSpecies), stat=ier )
     if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate//"gl_slabs" )
@@ -1242,6 +1306,7 @@ contains
     call allocate_test ( eta_fzp,       no_ele, f_len,  'eta_fzp',       moduleName )
     call allocate_test ( eta_zp,        no_ele, p_len,  'eta_zp',        moduleName )
     call allocate_test ( sps_path,      no_ele, no_mol, 'sps_path',      moduleName )
+    call allocate_test ( iwc_path,      no_ele, 1, 'iwc_path',      moduleName )
 
     if ( temp_der ) then
 
@@ -1628,6 +1693,17 @@ contains
           & do_calc_zp(1:no_ele,:), sps_path(1:no_ele,:),      &
           & do_calc_fzp(1:no_ele,:), eta_fzp(1:no_ele,:) )
 
+       ! Compute IWC_PATH
+        Frq = 0.0
+        call comp_sps_path_frq ( Grids_iwc, firstSignal%lo, thisSideband, &
+          & Frq, eta_zp(1:no_ele,:), &
+          & do_calc_zp(1:no_ele,:), iwc_path(1:no_ele,:),      &
+          & do_calc_fzp(1:no_ele,:), eta_fzp(1:no_ele,:) )
+
+        WC(1,1:no_ele)=iwc_path(1:no_ele,1)
+        WC(2,1:no_ele)=0._r8   !will change later
+        IPSD(1:no_ele)=1000    !will change later
+
         if ( h2o_ind > 0 ) then
           call refractive_index ( p_path_c(1:npc), &
             &  t_path_c(1:npc), n_path(1:npc),     &
@@ -1739,8 +1815,6 @@ contains
           ! derivative arrays are allocated.  This avoids having four
           ! paths, each with a different set of optional arguments.
 
-          ICON = FwdModelConf%i_saturation
-
           call get_beta_path ( Frq,                                   &
             &  p_path(1:no_ele), t_path(1:no_ele), z_path_c(1:npc),   &   
             &  my_Catalog, beta_group, gl_slabs, indices_c(1:npc),    &     
@@ -1749,7 +1823,8 @@ contains
             &  gl_slabs_p, t_path(1:no_ele)+del_temp,                 &     
             &  dbeta_dt_path_c, dbeta_dw_path_c,                      &     
             &  dbeta_dn_path_c, dbeta_dv_path_c, ICON,                &
-            &  fwdModelConf%Incl_Cld )                    
+            &  fwdModelConf%Incl_Cld, IPSD(1:no_ele),                 &
+            &  WC(:,1:no_ele), NU, NUA, NAB, NR, N )                    
 
           alpha_path_c(1:npc) = SUM(sps_path(indices_c(1:npc),:) *  &
                                   & beta_path_c(1:npc,:), DIM=2)
@@ -1769,8 +1844,6 @@ contains
           ! This avoids having four paths through the code, each with a
           ! different set of optional arguments.
 
-          ICON = FwdModelConf%i_saturation
-
           call get_beta_path ( Frq,                                   &
             & p_path(1:no_ele), t_path(1:no_ele), z_path_c(1:npc),    &
             & my_Catalog, beta_group, gl_slabs, gl_inds(:ngl),        &
@@ -1779,7 +1852,8 @@ contains
             & gl_slabs_p, t_path(1:no_ele)+del_temp,                  &  
             & dbeta_dt_path_f, dbeta_dw_path_f,                       &  
             & dbeta_dn_path_f, dbeta_dv_path_f, ICON,                 &
-            & fwdModelConf%Incl_Cld )
+            & fwdModelConf%Incl_Cld, IPSD(1:no_ele),                  &
+            &  WC(:,1:no_ele), NU, NUA, NAB, NR, N )
 
           alpha_path_f(1:ngl) = SUM(sps_path(gl_inds(1:ngl),:) *  &
                                   & beta_path_f(1:ngl,:), DIM=2)
@@ -2430,6 +2504,9 @@ contains
     ! Note that we don't deallocate the signals/sidebands stuff for each line
     ! as these are shallow copies of the main spectroscopy catalog stuff
 
+    Deallocate (WC, stat=ier )
+    Deallocate (IPSD, stat=ier )
+
     if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Deallocate//'my_catalog' )
 
@@ -2478,6 +2555,7 @@ contains
     call DestroyCompleteSlabs ( gl_slabs )
     call destroygrids_t ( grids_f )
     call destroygrids_t ( grids_tmp )
+    call destroygrids_t ( grids_iwc )
 
     call deallocate_test ( dhdz_path,   'dhdz_path',   moduleName )
     call deallocate_test ( h_path,      'h_path',      moduleName )
@@ -2513,6 +2591,7 @@ contains
     call deallocate_test ( eta_zp,        'eta_zp',        moduleName )
     call deallocate_test ( eta_fzp,       'eta_fzp',       moduleName )
     call deallocate_test ( sps_path,      'sps_path',      moduleName )
+    call deallocate_test ( iwc_path,      'iwc_path',      moduleName )
 
     call deallocate_test ( tan_chi_out, 'tan_chi_out',moduleName )
     call deallocate_test ( dx_dh_out, 'dx_dh_out',moduleName )
@@ -2612,6 +2691,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.118  2003/02/03 23:18:43  vsnyder
+! Squash a bug in deallocating beta_path_polarized
+!
 ! Revision 2.117  2003/02/03 22:58:17  vsnyder
 ! Plug a memory leak, delete gl_ndx, some polarized stuff
 !

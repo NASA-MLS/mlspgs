@@ -35,7 +35,7 @@ contains
         & Catalog, beta_group, gl_slabs, path_inds, beta_path,     &
         & gl_slabs_m, t_path_m, gl_slabs_p, t_path_p,              &
         & dbeta_dt_path, dbeta_dw_path, dbeta_dn_path, dbeta_dv_path, &
-        & ICON, Incl_Cld )
+        & ICON, Incl_Cld, IPSD, WC, NU, NUA, NAB, NR, NC )
 
     use MLSCommon, only: R8, RP, IP
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
@@ -63,6 +63,13 @@ contains
 !		ICON=-2 is for clear-sky radiance limit assuming 0%RHi
 !-----------------------------------------------------------------------------
     logical, intent(in) :: Incl_Cld
+
+!    include 'constants.f9h'
+    INTEGER :: NC, NU, NUA, NAB, NR
+    INTEGER, intent(in) :: IPSD(:)
+    REAL(rp), intent(in) :: WC(:,:)
+    REAL(rp) :: W0(NC)       ! SINGLE SCATTERING ALBEDO
+    REAL(rp) :: PHH(NC,NU)   ! PHASE FUNCTION
 
 ! Optional inputs.  GL_SLABS_* are pointers because the caller need not
 ! allocate them if DBETA_D*_PATH aren't allocated.  They would be
@@ -130,7 +137,8 @@ contains
           end if                                 
 
           call create_beta ( Spectag, Catalog(ib)%continuum, p_path(k), t_path(k), &
-            &  Frq, Lines(Catalog(ib)%Lines)%W, gl_slabs(k,ib), bb,  Incl_Cld, cld_ext, &
+            &  Frq, Lines(Catalog(ib)%Lines)%W, gl_slabs(k,ib), bb,                &
+            &  Incl_Cld, cld_ext, IPSD(K), WC(:,K), NU, NUA, NAB, NR, NC,          &
             &  DBETA_DW=v0, DBETA_DN=vp, DBETA_DV=vm )
           if ( .not. Incl_Cld ) then
              beta_path(j,i) = beta_path(j,i) + ratio * bb 
@@ -167,11 +175,13 @@ contains
             k = path_inds(j)
             tm = t_path_m(k)
             call create_beta ( Spectag, Catalog(ib)%continuum, p_path(k), tm, Frq, &
-            &    LineWidth, gl_slabs_m(k,ib), vm, Incl_Cld, cld_ext )
+            &    LineWidth, gl_slabs_m(k,ib), vm,                                  &
+            &    Incl_Cld, cld_ext, IPSD(k), WC(:,k), NU, NUA, NAB, NR, NC )
             betam(j) = betam(j) + ratio * vm
             tp = t_path_p(k)
             call create_beta ( Spectag, Catalog(ib)%continuum, p_path(k), tp, Frq, &
-            &    LineWidth, gl_slabs_p(k,ib), vp, Incl_Cld, cld_ext )
+            &    LineWidth, gl_slabs_p(k,ib), vp,                                  &
+            &    Incl_Cld, cld_ext, IPSD(k), WC(:,k), NU, NUA, NAB, NR, NC )
             betap(j) = betap(j) + ratio * vp
           end do
           DeAllocate ( LineWidth )
@@ -278,6 +288,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.20  2003/02/04 22:03:33  jonathan
+! ICON now equal to 0 as default
+!
 ! Revision 2.19  2003/02/04 21:46:27  jonathan
 ! add ICON options for super saturation and dry cases
 !
