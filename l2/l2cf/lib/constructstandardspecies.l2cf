@@ -280,6 +280,14 @@ begin Construct
   !define(allNoRadsPerMIF,{!makelist({noRadsPerMIF},{},!allBands)})
   !define(allNoRadsBinned,{!makelist({noRadsBinned},{},!allBands)})
 
+  ;; ----------------------------------------- Statuses for products ---
+  !define(constructStatus,{status$1: Quantity, type=status, hGrid=hGridStandard!nl})
+  !define(constructQuality,{quality$1: Quantity, type=quality, hGrid=hGridStandard!nl})
+  !forall(constructStatus,!allStandardProducts)
+  !forall(constructQuality,!allStandardProducts)
+  !define(allStatuses,{!makelist({status},{},!allStandardProducts)})
+  !define(allQualities,{!makelist({quality},{},!allStandardProducts)})
+
   ;; ----------------------------------------- Scan residuals
 
   scanResidualGHz: Quantity, type=scanResidual, module=GHz
@@ -372,7 +380,8 @@ begin Construct
     !allChisqMMAFs, !allChisqMMIFs, !allChisqChans, $
     !allNoRadsPerMIF ]
   mappedChisqTemplate: VectorTemplate, quantities = [ !allChisqBinned ]
-  otherDiagnosticsTemplate: VectorTemplate, quantities = [ !allNoRadsBinned ]
+  otherDiagnosticsTemplate: VectorTemplate, quantities = [ !allNoRadsBinned, $
+    !allStatuses, !allQualities ]
 
   cloudOutputTemplate: VectorTemplate, quantities = [ $
     !allFoldedRadiances, !allDTs, !allCloudMinMax ]
