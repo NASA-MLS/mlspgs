@@ -639,6 +639,33 @@ contains ! =====     Public Procedures     =============================
       & ( vector, quantityType, molecule, radiometer ) )
   end function GetVectorQuantityByType
 
+  ! ------------------------------- GetVectorQtyByTemplateIndex --i
+  function GetVectorQtyByTemplateIndex(vector, quantityIndex)
+    ! Given a vector and an index into the quantity templates, find quantity
+    ! with matching template within vector.
+
+    ! Dummy arguments
+    type (vector_T), intent(in) :: vector
+    integer, intent(in) :: quantityIndex
+    ! Result
+    type (VectorValue_T), pointer :: GetVectorQtyByTemplateIndex
+
+    ! Local variables
+    integer :: i, indexWithinQuantity
+
+    ! Executable code
+    indexWithinQuantity=0
+    GetVectorQtyByTemplateIndex => NULL()
+    do i=1,vector%template%noQuantities
+      if ( vector%template%quantities(i) == quantityIndex) then
+        indexWithinQuantity=i
+      end if
+    end do
+    if ( indexWithinQuantity /= 0 ) &
+      & GetVectorQtyByTemplateIndex => &
+      &   vector%quantities(indexWithinQuantity)
+  end function GetVectorQtyByTemplateIndex
+
   ! -------------------------------  GetVectorQuantityIndexByName  -----
   integer function GetVectorQuantityIndexByName ( vector, quantityName )
 
@@ -920,6 +947,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.15  2001/02/28 17:34:25  livesey
+! Added minorFrame optional argument to ValidateVectorQuantity
+!
 ! Revision 2.14  2001/02/27 17:18:53  livesey
 ! Added ValidateVectorQuantity
 !
