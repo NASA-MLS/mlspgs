@@ -10,13 +10,13 @@ module DumpCommand_M
 
   public :: DumpCommand
 
-
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
        "$Id$"
   character (len=len(idParm)), save :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
 contains
@@ -25,11 +25,6 @@ contains
     & VectorTemplates, Vectors, ForwardModelConfigs, HGrids, VGrids )
 
   ! Process a "dump" command
-
-  ! The fields can be Quantity to dump a vector quantity, Vector to dump an
-  ! entire vector, Template to dump a quantity template or vector template,
-  ! ForwardModel to dump a forward model config, or Details to specify
-  ! the level of detail for subsequent dumps.
 
     use AntennaPatterns_m, only: Dump_Antenna_Patterns_Database
     use Declaration_table, only: Num_Value
@@ -315,11 +310,20 @@ contains
 
   end subroutine DumpCommand
 
+! =====     Private Procedures     =====================================
+
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.17  2004/12/28 00:22:03  vsnyder
+! Add not_used_here
+!
 ! Revision 2.16  2004/12/13 20:13:04  vsnyder
-! Add dumps for AllLines, ALlSignals, AllSpectra, Lines, Signals, Spectroscopy,
+! Add dumps for AllLines, AllSignals, AllSpectra, Lines, Signals, Spectroscopy,
 ! and a Stop command.
 !
 ! Revision 2.15  2004/11/04 06:37:34  vsnyder
