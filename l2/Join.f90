@@ -183,7 +183,7 @@ contains ! =====     Public Procedures     =============================
             if ( .not. parallel%slave ) then
               if(DEEBUG)print*,'Calling DirectWrite, not slave'
               call time_now ( dwt2 )
-              if ( autoDirectWrite ) then
+              if ( autoDirectWrite .and. .not. explicitFile(son) ) then
                 ! Pretend we're given permission to write to each of the files
                 do dbIndex=1, size(DirectdataBase)
                   if ( DirectDataBase(dbIndex)%autoType < 1 ) cycle
@@ -698,7 +698,7 @@ contains ! =====     Public Procedures     =============================
       ! Open/create the file of interest
       isnewdirect = .true.  ! Just so it has a value even for toolkitless runs
       call split_path_name(filename, path, file_base)
-      if ( distributingSources ) then ! Was if TOOLKIT !?????? Check with PAW - NJL
+      if ( distributingSources .or. TOOLKIT ) then ! Was if TOOLKIT !?????? Check with PAW - NJL
         call ExpandDirectDB ( DirectDatabase, file_base, thisDirect, &
         & isnewdirect )
         if ( DeeBUG ) then
@@ -1758,6 +1758,31 @@ contains ! =====     Public Procedures     =============================
 
 ! =====     Private Procedures     =====================================
 
+  function explicitFile ( node ) result ( gotTheFile )
+    ! Loop overs fields in DirectWrite command to discover whether
+    ! the file is explicitly named
+    use Init_tables_module, only: F_FILE
+    use MoreTree, only: GET_FIELD_ID
+    use TREE, only: NSONS, SUBTREE
+    ! Args
+    integer, intent(in) :: node
+    logical :: gotTheFile
+    ! Private variables
+    integer :: keyNo
+    integer :: fieldIndex
+    integer :: son
+    ! Executable
+    gotTheFile = .false.
+    do keyNo = 2, nsons(node)           ! Skip DirectWrite command
+      son = subtree ( keyNo, node )
+      fieldIndex = get_field_id ( son )
+      select case ( fieldIndex )
+      case ( f_file )
+        gotTheFile = .true.
+      end select
+    end do
+  end function explicitFile
+
   ! ---------------------------------------------  Announce_Error  -----
   subroutine ANNOUNCE_ERROR ( where, CODE, ExtraMessage, FIELDINDEX, Penalty )
 
@@ -1808,6 +1833,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.110  2004/04/24 00:21:33  pwagner
+! Bombs less readily when not a slave
+!
 ! Revision 2.109  2004/04/17 07:00:54  livesey
 ! Bug fix possibly?
 !
