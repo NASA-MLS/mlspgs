@@ -14,10 +14,10 @@ HDF_LIB=/usr/local/HDF/lib/libmfhdf.a /usr/local/HDF/lib/libdf.a \
 # MLSL1.o in.
 
 OBJS= MLSL1Common.o MLSL1Rad.o OutputL1B.o open_init.o sort_qualify.o calib.o \
-	close_files.o Scan.o Orbit.o Mc.o TkL1B.o
+	close_files.o Scan.o Orbit.o TkL1B.o
 OBJS_DEBUG= MLSL1Common.o_debug MLSL1Rad.o_debug OutputL1B.o_debug \
 	open_init.o_debug sort_qualify.o_debug calib.o_debug \
-	close_files.o_debug Scan.o_debug Orbit.o Mc.o_debug TkL1B.o_debug
+	close_files.o_debug Scan.o_debug Orbit.o TkL1B.o_debug
 
 include ${MLSPGS_LIB_PATH}/make.inc
 
@@ -42,6 +42,9 @@ include ${MLSPGS_LIB_PATH}/makelibs.inc
 
 #
 # $Log$
+# Revision 1.2  2000/02/14 17:27:56  perun
+# Added modules for L1BOA records and L1B data
+#
 # Revision 1.1  2000/02/08 21:45:16  perun
 # Initial version
 #
