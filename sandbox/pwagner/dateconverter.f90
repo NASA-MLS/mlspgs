@@ -92,7 +92,7 @@ PROGRAM dateconverter
     converted_date = reFormatDate(date, &
       & fromForm=trim(fromForm), toForm=trim(toForm))
 
-    print *, trim(converted_date)
+    call print_string(trim(converted_date))
    enddo
 contains
   subroutine advance ( values, dvalues )
@@ -278,10 +278,17 @@ contains
       write (*,*) &
       & ' If no dates supplied, you will be prompted to supply one'
       write (*,*) ' Options: -o format   => output format to use (e.g. yyyymmdd)'
+      write (*,*) '                        by default output will complement input'
+      write (*,*) '                        e.g., "2004 October 01" <=> 2004-d275'
       write (*,*) '          -v          => switch on verbose mode'
       write (*,*) '          -h          => print brief help'
       stop
   end subroutine print_help
+!------------------------- print_string ---------------------
+  subroutine print_string(string)
+    character(len=*), intent(in) :: string
+    write(*,'(a)') trim(string)
+  end subroutine print_string
 
 !==================
 END PROGRAM dateconverter
