@@ -6,7 +6,7 @@ Module GET_BETA_PATH_M
   Implicit NONE
   private
   PUBLIC :: get_beta_path
- 
+
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter, private :: IdParm = &
   "$Id$"
@@ -20,8 +20,8 @@ contains
 !
  SUBROUTINE get_beta_path(frq,p_path,t_path,Catalog,gl_slabs,path_inds,      &
         &   beta_path,gl_slabs_m,t_path_m,gl_slabs_p,t_path_p,dbeta_dt_path, &
-        &   dbeta_dw_path,dbeta_dn_path,dbeta_dv_path,ext_ind,bn2_path)
- 
+        &   dbeta_dw_path,dbeta_dn_path,dbeta_dv_path)
+
 !  ===============================================================
 !  Declaration of variables for sub-program: get_coarse_beta_path
 !  ===============================================================
@@ -44,7 +44,6 @@ contains
   TYPE(slabs_struct), OPTIONAL, POINTER :: gl_slabs_p(:,:) ! reduced
 !                               strength data for t_path_p
   REAL(rp), OPTIONAL, INTENT(in) :: t_path_p(:) ! path temperatures for
-  INTEGER(ip), OPTIONAL, INTENT(in) :: ext_ind  ! EXTINCTION index among species
 !
 ! outputs
 !
@@ -56,8 +55,6 @@ contains
   REAL(rp), OPTIONAL, INTENT(out) :: dbeta_dw_path(:,:) ! line width
   REAL(rp), OPTIONAL, INTENT(out) :: dbeta_dn_path(:,:) ! line width t dep.
   REAL(rp), OPTIONAL, INTENT(out) :: dbeta_dv_path(:,:) ! line position
-
-  REAL(rp), OPTIONAL, INTENT(out) :: bn2_path(:)        ! path beta for N2
 !
 ! Local varibles..
 !
@@ -85,15 +82,11 @@ contains
       CALL create_beta(Spectag,Catalog(i)%continuum,p_path(k),t_path(k), &
         &  Frq,no_of_lines,LineWidth,gl_slabs(k,i)%v0s,gl_slabs(k,i)%x1, &
         &  gl_slabs(k,i)%y,gl_slabs(k,i)%yi,gl_slabs(k,i)%slabs1,bb,     &
-        &  gl_slabs(k,i)%dslabs1_dv0,DBETA_DW=v0,DBETA_DN=vp,DBETA_DV=vm,&
-        &  BV_N2=vn2)
+        &  gl_slabs(k,i)%dslabs1_dv0,DBETA_DW=v0,DBETA_DN=vp,DBETA_DV=vm)
       beta_path(j,i) = bb
       if(PRESENT(dbeta_dw_path)) dbeta_dw_path(j,i) = v0
       if(PRESENT(dbeta_dn_path)) dbeta_dn_path(j,i) = vp
       if(PRESENT(dbeta_dv_path)) dbeta_dv_path(j,i) = vm
-      if(PRESENT(bn2_path) .AND. PRESENT(ext_ind)) then
-        if(i == ext_ind) bn2_path(j) = vn2
-      endif
     END DO
     DEAllocate(LineWidth)
   ENDDO
@@ -150,10 +143,13 @@ contains
   ENDIF
 !
  END SUBROUTINE get_beta_path
- 
+
 !----------------------------------------------------------------------
 End module GET_BETA_PATH_M
 ! $Log$
+! Revision 2.4  2001/11/10 00:46:40  zvi
+! Adding the EXTINCTION capabilitis
+!
 ! Revision 2.3  2001/11/07 22:24:45  zvi
 ! Further modification for the t-power computations
 !
