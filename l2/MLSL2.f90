@@ -511,6 +511,7 @@ program MLSL2
     switches = tempSwitches
   endif
   call Set_garbage_collection(garbage_collection_by_dt)
+
 ! Done with command-line parameters; enforce cascading negative options
 ! (waited til here in case any were (re)set on command line)
 
@@ -548,6 +549,9 @@ program MLSL2
   if ( parallel%fwmParallel .and. parallel%master .and. singleChunk == 0 ) &
     & call MLSMessage ( MLSMSG_Error, ModuleName, &
     & 'fwmParallel mode can only be run for a single chunk' )
+  if ( parallel%fwmParallel ) &
+    & call MLSMessage ( MLSMSG_Error, ModuleName, &
+    & 'The fwmParallel option is currently inoperative, it needs significant work to fix - NJL' )
   if ( parallel%slave ) then
     if ( parallel%masterTid <= 0 ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -882,6 +886,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.111  2004/01/07 23:50:16  livesey
+! Added error message about fwmParallel being broken at the moment
+!
 ! Revision 2.110  2003/12/11 22:56:04  pwagner
 ! Transmits --idents option to slaves; unquotes switches
 !
