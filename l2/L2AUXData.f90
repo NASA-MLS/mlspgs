@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module L2AUXData                 ! Data types for storing L2AUX data internally
@@ -96,7 +96,7 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
 
   private
   public :: L2AUX_Dimension_T, L2AUXData_T, L2AUXRANK
-  public :: AddL2AUXToDatabase, DestroyL2AUXDatabase, Dump
+  public :: AddL2AUXToDatabase, cpL2AUXData, DestroyL2AUXDatabase, Dump
   public :: SetupNewL2AUXRecord, DestroyL2AUXContents, ExpandL2AUXDataInPlace
   public :: ReadL2AUXData, WriteL2AUXData
 ! public :: GetDimString, GetQuantityAttributes
@@ -157,7 +157,144 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
     character(len=24)                              :: VALUE_Units
   end type L2AUXData_T
 
+  ! How long may the list of sd names grow (~80 x max num. of sds/file)
+  integer, public, parameter :: MAXNUMSDPERFILE = 200
+  integer, public, parameter :: MAXSDNAMESBUFSIZE = 80*MAXNUMSDPERFILE
+
 contains ! =====     Public Procedures     =============================
+
+  ! ---------------------- cpL2AUXData  ---------------------------
+
+  subroutine cpL2AUXData(file1, file2, create2, hdfVersion, sdList)
+    use Hdf, only: DFACC_READ, DFACC_CREATE, DFACC_RDWR, &
+      & DFNT_CHAR8, DFNT_FLOAT32, DFNT_INT32, DFNT_FLOAT64
+    use HDF5, only: H5GCLOSE_F, H5GOPEN_F, H5DOPEN_F, H5DCLOSE_F
+    use MLSFILES, only: FILENOTFOUND, WILDCARDHDFVERSION, &
+      & mls_exists, mls_hdf_version, mls_sfstart, mls_sfend
+    use MLSHDF5, only: GetHDF5Attribute
+    !------------------------------------------------------------------------
+
+    ! Given file names file1 and file2,
+    ! This routine copies all the l2auxdata from 1 to 2
+    ! If file2 doesn't exist yet, or if create2 is TRUE, it'll create it
+
+    ! Arguments
+
+    character (len=*), intent(in) :: file1 ! Name of file 1
+    character (len=*), intent(in) :: file2 ! Name of file 2
+    logical, optional, intent(in) :: create2
+    integer, optional, intent(in) :: hdfVersion
+    character (len=*), optional, intent(in) :: sdList
+
+    ! Local
+    integer :: QuantityType
+    integer :: sdfid1
+    integer :: sdfid2
+    integer :: grpid
+    integer :: sd_id
+    integer :: status
+    integer :: the_hdfVersion
+    logical :: file_exists
+    integer :: file_access
+    integer :: listsize
+    integer :: noSds
+    character (len=MAXSDNAMESBUFSIZE) :: mySdList
+    logical, parameter            :: countEmpty = .true.
+    type (L2AUXData_T) :: l2aux
+    integer :: i
+    character (len=80) :: sdName
+    
+    ! Executable code
+    the_hdfVersion = DEFAULT_HDFVERSION_WRITE
+    if ( present(hdfVersion) ) the_hdfVersion = hdfVersion
+    file_exists = ( mls_exists(trim(File1)) == 0 )
+    if ( .not. file_exists ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'File 1 not found; make sure the name and path are correct' &
+        & // trim(file1) )
+    endif
+    if ( the_hdfVersion == WILDCARDHDFVERSION ) then
+      the_hdfVersion = mls_hdf_version(File1, hdfVersion)
+      if ( the_hdfVersion == FILENOTFOUND ) &
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'File 1 not found; make sure the name and path are correct' &
+          & // trim(file1) )
+    endif
+    if ( present(sdList) ) then
+      mysdList = sdList
+    else
+       call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'No way yet to find sdList in ' // trim(File1) )
+    endif
+
+    file_exists = ( mls_exists(trim(File2)) == 0 )
+    if ( file_exists ) then
+      file_access = DFACC_RDWR
+    else
+      file_access = DFACC_CREATE
+    endif
+    if ( present(create2) ) then
+      if ( create2 ) file_access = DFACC_CREATE
+    endif
+    sdfid1 = mls_sfstart(File1, DFACC_READ, hdfVersion=hdfVersion)
+    if (sdfid1 == -1 ) then
+      call announce_error ( 0, 'Failed to open l2aux ' // &
+      &  trim(File1) )
+    end if
+	 call h5gOpen_f (sdfid1,'/', grpID, status)
+    if ( status /= 0 ) then
+	   call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          	& 'Unable to open group to read attribute in l2aux file' )
+    endif
+    sdfId2 = mls_sfstart(trim(file2), file_access, &
+              & hdfVersion=hdfVersion)
+    if (sdfid2 == -1 ) then
+      call announce_error ( 0, 'Failed to open l2aux ' // &
+      &  trim(File2) )
+    end if
+    noSds = NumStringElements(trim(mysdList), countEmpty)
+    if ( noSds < 1 ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'No sdNames cp to file--unable to count sdNames in ' // trim(sdList) )
+    endif
+    ! Loop over sdNames in file 1
+    do i = 1, noSds
+      call GetStringElement (trim(mysdList), sdName, i, countEmpty )
+      ! Allocate and fill l2aux
+	   call h5dOpen_f (grpid,trim(sdName), sd_ID, status)
+      if ( status /= 0 ) then
+	     call MLSMessage ( MLSMSG_Warning, ModuleName, &
+              & 'Unable to open sd to read attribute in l2aux file' )
+      endif
+      ! Get QuantityType attribute
+      call GetHDF5Attribute ( sd_id, 'QuantityType', QuantityType )
+	   call h5dClose_f (sd_ID, status)
+      if ( status /= 0 ) then
+	     call MLSMessage ( MLSMSG_Warning, ModuleName, &
+              & 'Unable to close sd to read attribute in l2aux file' )
+      endif
+      call ReadL2AUXData ( sdfid1, trim(sdName), QuantityType, l2aux, &
+           & checkDimNames=.false., hdfVersion=hdfVersion )
+      ! Write the filled l2aux to file2
+      call WriteL2AUXData(l2aux, sdfid2, status, trim(sdName), &
+        & hdfVersion=hdfVersion)
+      ! Deallocate memory used by the l2aux
+      call DestroyL2AUXContents ( l2aux )
+    enddo
+	 call h5gClose_f (grpID, status)
+    if ( status /= 0 ) then
+	   call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'Unable to close group to read attribute in l2aux file' )
+    endif
+	 status = mls_sfend(sdfid1, hdfVersion=the_hdfVersion)
+    if ( status /= 0 ) &
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+       & "Unable to close L2aux file: " // trim(File1) // ' after cping')
+	 status = mls_sfend(sdfid2, hdfVersion=the_hdfVersion)
+    if ( status /= 0 ) &
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+       & "Unable to close L2aux file: " // trim(File2) // ' after cping')
+  end subroutine cpL2AUXData
 
   ! ---------------------------------------  SetupNewL2AUXRecord   -----
   !   (option 1)
@@ -1523,6 +1660,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.58  2004/01/27 21:38:09  pwagner
+! Added cpL2AUXData
+!
 ! Revision 2.57  2003/09/03 05:25:49  livesey
 ! Bug fix in hdf5 readl2auxdata.
 !
