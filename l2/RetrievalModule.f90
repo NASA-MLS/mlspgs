@@ -1673,11 +1673,13 @@ contains
       type (VectorValue_T), pointer :: Slope       ! sensitivity slope to convert cloud
                                                    ! radiance to optical depth
                                           
-      integer :: i,j,k,ich,imodel,mif,maf,isignal          ! Loop subscripts
+      integer :: i,j,k,imodel,mif,maf,isignal          ! Loop subscripts
+      integer :: ich, ich0          ! channel used
       integer :: cloudysky(size(configIndices))   ! cloudysky index from Model Configuration
       integer :: coljBlock     ! Column index for jacobian
       integer :: rowjBlock     ! Row index for jacobian
       integer :: nFreqs      ! number of frequencies in each block
+      integer :: nFreqs0      ! number of frequencies in the signal for cloud top estimation
       integer :: nSignal      ! number of signals in a band  
       integer :: nSgrid      ! number of S grids  
       integer :: nChans      ! total number of channels used in retrieval
@@ -1695,6 +1697,8 @@ contains
       real(r8) :: sensitivity                         ! sensitivity with slope and correction
       real(r8) :: teff                                ! effective optical depth
       real(r8) :: trans                                ! transmission function
+      integer :: itop                                ! cloud top tangt pressure index
+      real(r8) :: zt
       logical, dimension(:), allocatable :: doMaf      ! array for MAF flag
       real(r8), dimension(:,:), allocatable :: A      ! working array
       real(r8), dimension(:,:), allocatable :: dx       ! working array for x
@@ -1821,7 +1825,21 @@ contains
                & signal=signal%index, sideband=signal%sideband )
           
               ModelTcir%values = Tcir%values
+ 
+              nFreqs0 = size(signal%frequencies)
+               do k=1,nFreqs0
+                  if(signal%channels(k)) ich0 = k
+               end do
+               
+            ! estimate cloud top from the Tcir in previous scans
+            ! (in simulation, now use the current scan)
+              itop = 0
+              do mif = 1, nMifs
+               if(ModelTcir%values(ich0+(mif-1)*nFreqs0,maf) .ne. 0._r8) &
+                & itop = mif
+              end do
               
+            ! call full cloud model for Jacobian and Sensitivity  
              call forwardModel ( configDatabase(configIndices(imodel)), &
                 & state, fwdModelExtra, FwdModelOut1, fmw, fmStat, jacobian )
             
@@ -1933,22 +1951,34 @@ contains
          if(ich /= nChans) print*,'inconsistent channels between Jacobian and Signal'
 
            sx = 1.e8_r8         ! sx is the inversd variance of a priori
+           x = 0._r8
+           x0 = xLosVar%template%frequencies
            do mif=1,nMifs
              do i=1,nSgrid
                 !xLosVar is the inverted variance
-                sx(i,mif) = xLosVar%values(i+nSgrid*(mif-1),maf)  
+                sx(i,mif) = xLosVar%values(i+nSgrid*(mif-1),maf)  ! xLosVar has been inverted
              end do
+             if(itop .ne. 0) then
+             !constrained by the estimated cloud top
+                x = x0**2/2._r8/(re%values(1,maf)*0.001_r8 + &
+                  & (ptan%values(mif,maf)+3._r8)*16._r8)
+                x = x/16._r8 + ptan%values(mif,maf)
+                do i = 1,nSgrid
+                 if(x(i) > ptan%values(itop,maf)) sx(i,mif) = sx(i,mif)*1.e4
+                end do
+             end if
            end do
                               
          ! start inversion
-            do mif=1,nMifs
+           do mif=1,nMifs
             if (ptan%values(mif,maf) < p_lowcut) then
                ! for cloud retrieval: x_star=0, y_star=0, x0=apriori=0
 
                x0 = 0._r8        ! A priori
                x = 0._r8
                sx0=sx(:,mif)
-               do j=1,maxJacobians     ! we use maxJacobians as number of iterations (default 5)
+               
+               do j=1,maxJacobians     ! maxJacobians is number of iterations (default 5)
                
                   x0 = x        ! use  the last retrieval as A priori
                                  ! and doubt constraints to the A priori
@@ -1956,7 +1986,7 @@ contains
 
                   A = reshape(C(:,:,mif),(/nSgrid,nSgrid/))
                   do i=1,nSgrid
-                   A(i,i)=A(i,i) + sx0(i)       ! sx has already been inverted
+                   A(i,i)=A(i,i) + sx0(i)       ! sx has been inverted
                   end do
                   Call MatrixInversion(A)
                
@@ -2003,7 +2033,7 @@ contains
                end if               
                
             end if
-            end do  ! mif
+           end do  ! mif
       call clearMatrix ( jacobian )           ! free the space
       
       end do ! end of mafs
@@ -2044,7 +2074,7 @@ contains
       
     end subroutine LowCloudRetrieval
 
-  !=============================== LOS2Grid ====
+  !=============================== LOS2Grid ===================================
   subroutine LOS2Grid( Qty, vQty, vQtyApr, Los, vLos, vLosApr, Ptan, Re, Pcut)
 
     ! This is to fill a l2gp type of quantity with a los grid type of quantity.
@@ -2464,6 +2494,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.116  2001/11/12 18:25:02  dwu
+! speed up some cloud calculations
+!
 ! Revision 2.115  2001/11/09 23:17:22  vsnyder
 ! Use Time_Now instead of CPU_TIME
 !
