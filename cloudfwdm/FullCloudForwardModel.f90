@@ -665,14 +665,24 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     ! For layer(noTempSurfs-1) stuff make sure all are zero to start, then do rest
     ! -----------------------------------------------------------------------------
 
-    if(associated(cloudExtinction)) &
-      & cloudExtinction%values ( :, instance )    = a_cloudExtinction(:,1)
+    ! To save disk space, we output one channel per band (first true doChannel)
+    ! and the last signal (band) will over write the previous signals (bands)
+    FOUNDINFIRST = .true.
+    do i=1, noFreqs
+    if( doChannel(i) .and. FOUNDINFIRST ) then 
+      FOUNDINFIRST = .false.
+      if(associated(cloudExtinction)) &
+        & cloudExtinction%values ( :, instance )    = a_cloudExtinction(:,i)
+      if(associated(totalExtinction)) &
+        & totalExtinction%values ( :, instance )    = a_totalExtinction (:,i)
+    endif
+    enddo
+
     if(associated(massMeanDiameterIce)) &
       & massMeanDiameterIce%values (:,instance)   = a_massMeanDiameter(1,:)
     if(associated(massMeanDiameterWater)) &
       & massMeanDiameterWater%values(:, instance) =  a_massMeanDiameter(2,:)
-    if(associated(totalExtinction)) &
-      & totalExtinction%values ( :, instance )    = a_totalExtinction (:,1)
+
 
     !-----------------------
     ! Start output Jacobian
@@ -864,6 +874,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.58  2001/10/10 18:55:17  dwu
+! why elevOffset is not maf-dependent?
+!
 ! Revision 1.57  2001/10/10 18:33:53  dwu
 ! normalize cloud extinction weighting function to 200GHz
 !
