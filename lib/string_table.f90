@@ -7,7 +7,8 @@ module STRING_TABLE
 ! String table module for compiler
 
   use HASH, only: HASH_LOOKUP => LOOKUP_AND_INSERT, HASH_FOUND => FOUND, &
-                  INSERTED
+                  INSERTED, HASH_FULL => FULL, HASH_NOT_KEY => NOT_KEY, &
+                  HASH_BAD_LOC => BAD_LOC, HASH_EMPTY => EMPTY
   use IO_STUFF, only: GET_LUN
   use MACHINE, only: IO_ERROR
   use OUTPUT_M, only: OUTPUT
@@ -476,6 +477,25 @@ contains
                        'incorrectly.'
         write ( *, * ) 'Unfortunately, the program doesn''t know how ', &
                        'to increase the hash table size.'
+      write (*, *) 'status: ', status
+      if(status == HASH_FULL) then
+        write (*, *) '(hash full)'
+      elseif(status == HASH_NOT_KEY) then
+        write (*, *) '(hash not key)'
+      elseif(status == HASH_BAD_LOC) then
+        write (*, *) '(hash bad loc)'
+      elseif(status == HASH_EMPTY) then
+        write (*, *) '(hash empty)'
+      else
+        write (*, *) '(unrecognized hash error)'
+      endif
+      write (*, *) 'hash key: ', hash_key
+      write (*, *) 'hash table keys: ', hash_table(2,:)
+      write (*, *) 'hash table size ', size(hash_table(2,:))
+      if(status == HASH_FULL) then
+        write (*, *) 'You can probably fix this problem by increasing hash_table_size,'
+        write (*, *) 'the last arg in the call to init_lexer in your main program'
+      endif
         stop
       end if
       ! The hash key matches; check whether the string does
@@ -674,6 +694,9 @@ char_table(strings(hash_table(2,loc)-1)+1:strings(hash_table(2,loc))), &
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.10  2001/10/04 00:14:21  pwagner
+! Some more messages if lookup_and_insert fails
+!
 ! Revision 2.9  2001/06/06 17:30:15  pwagner
 ! DEBUG optional arg to lookup..
 !
