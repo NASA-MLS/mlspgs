@@ -32,7 +32,8 @@ module Init_MLSSignals_m
   integer, parameter :: F_centerFrequency   = f_band + 1
   integer, parameter :: F_channel           = f_centerFrequency + 1
   integer, parameter :: F_channels          = f_channel + 1
-  integer, parameter :: F_deferred          = f_channels + 1
+  integer, parameter :: F_dacs              = f_channels + 1
+  integer, parameter :: F_deferred          = f_dacs + 1
   integer, parameter :: F_direction         = f_deferred + 1
   integer, parameter :: F_first             = f_direction + 1
   integer, parameter :: F_frequency         = f_first + 1
@@ -91,6 +92,7 @@ contains
     field_indices(f_centerFrequency) =     add_ident ( 'centerFrequency' )
     field_indices(f_channel) =             add_ident ( 'channel' )
     field_indices(f_channels) =            add_ident ( 'channels' )
+    field_indices(f_dacs) =                add_ident ( 'dacs' )
     field_indices(f_deferred) =            add_ident ( 'deferred' )
     field_indices(f_direction) =           add_ident ( 'direction' )
     field_indices(f_first) =               add_ident ( 'first' )
@@ -163,6 +165,7 @@ contains
              nadp+n_spec_def, &
       begin, s+s_spectrometerType, &
              begin, f+f_channels, t+t_numeric_range, n+n_field_type, &
+             begin, f+f_dacs, t+t_boolean, n+n_field_type, &
              begin, f+f_deferred, t+t_boolean, n+n_field_type, &
              begin, f+f_first, t+t_numeric, n+n_field_type, &
              begin, f+f_last, t+t_numeric, n+n_field_type, &
@@ -197,6 +200,9 @@ contains
 end module Init_MLSSignals_m
 
 ! $Log$
+! Revision 2.20  2003/07/18 20:23:26  livesey
+! Added DACS flags etc.
+!
 ! Revision 2.19  2003/05/16 02:44:18  vsnyder
 ! Removed USE's for unreferenced symbols
 !
