@@ -36,12 +36,14 @@ E.g., mlsl2 -m -p --nmeta -S"glo jac"
         and the PCF.
       --ncfpcf assumed if L2CF-name is present.  
         Default: --cfpcf (SIPS) --ncfpcf (JPL)
+  --[n]ckbk: Check the block calculations against full block algebra
   --[n]kit: Output error messages [not] using the SDP Toolkit
   --[n]meta: [Do not] Create metadata files.
   --[n]pcf: [Do not] Use the PCF for file names, parameters, etc.
     (--npcf sets --nmeta and --ncfpcf.)
   --[n]tk: [Do not] Use the panoply of the PGS_toolkit
     (--ntk sets --npcf, --ncfpcf and --nmeta)
+  --[n]wall: Use wall clock instead of CPU_TIME
   --master <filename>[:a:b]: This is the master task in a PVM setup
     filename contains simply ascii list of slave host names
     can list a machine more than once (e.g. for SMP slaves)
@@ -50,7 +52,6 @@ E.g., mlsl2 -m -p --nmeta -S"glo jac"
   --slave[ ]<master-tid>: This is a slave; <master-tid>
     is the id of the master.  This option is set by a master
     task and is not recommneded for manual invocations.
-  --[n]ckbk: Check the block calculations against full block algebra
   --snoop: Activate the snooping capability (interaction with
     an IDL diagnostics process)
     
@@ -76,6 +77,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.6  2001/11/09 18:13:40  livesey
+ Added nckbk
+
  Revision 1.5  2001/11/05 23:21:48  livesey
  More stuff for --master
 
