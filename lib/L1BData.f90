@@ -1118,10 +1118,13 @@ contains ! ============================ MODULE PROCEDURES ======================
     integer, dimension(3)                :: new_shape
     integer, dimension(3)                :: new_order
     integer, dimension(3, 3), parameter  :: reorder = &
-      & reshape( source = (/ 2, 3, 1, 1, 3, 2, 3, 1, 2 /), &
-      & shape = (/ 3, 3 /) )
-    integer                              :: status
-    logical, parameter           :: DEEBUG = .TRUE.
+      & reshape( &
+      & source = (/ 2, 3, 1, 1, 3, 2, 1, 2, 3 /), &
+      & shape = (/ 3, 3 /) &
+      & )
+!     & source = (/ 2, 3, 1, 1, 3, 2, 3, 1, 2 /), &  ! This transposed desired
+    integer                              :: status   ! result (don't know why)
+    logical, parameter           :: DEEBUG = .FALSE.
     character(len=1), parameter  :: method = 'b'
     integer                      :: mord
     
@@ -1138,6 +1141,12 @@ contains ! ============================ MODULE PROCEDURES ======================
     else
       new_order = reorder(:,l1bData%TrueRank+1)
       mord = 2
+    endif
+    if ( DEEBUG ) then
+      print *, 'new_order: ', new_order
+      print *, 'mord: ', mord
+      print *, '     o l d   f o r m'
+      call DumpL1BData(l1bData)
     endif
     select case (l1bData%data_type)
     case('character')
@@ -1212,6 +1221,10 @@ contains ! ============================ MODULE PROCEDURES ======================
         & 'Sorry--reshape_for_hdf4 has encountered an unknown data type: ' &
         & // trim(l1bData%data_type))
     end select
+    if ( DEEBUG ) then
+      print *, '     n e w   f o r m'
+      call DumpL1BData(l1bData)
+    endif
   end subroutine reshape_for_hdf4
 
   ! ---------------------------------------------  announce_error  -----
@@ -1280,6 +1293,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.33  2002/12/06 01:10:08  pwagner
+! No longer transposes hdf5-formatted 2d arrays
+!
 ! Revision 2.32  2002/12/05 19:43:47  pwagner
 ! Unsuccessful at reading hdf5 so far; speeds up compiling tree-walker, however
 !
