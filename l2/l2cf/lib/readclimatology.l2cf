@@ -4,12 +4,21 @@
 begin ReadApriori
 
 ;; List the species for which we currently have climatologies  
+!ifdef(precisionEstimates,{
+!define(allClimatologicalSpecies,{BrO,CH3CN,ClO,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,N2,N2O,O2,O3,OH,refGPH,SO2,Temperature})
+},{
 !define(allClimatologicalSpecies,{Temperature,H2O,O3,N2O,HNO3,HCl,ClO,HO2,CO})
+})
 
 ;; This macro reads one entry from grid format file into the gridded
 ;; quantity grid<x>
+!ifdef(precisionEstimates,{
+!define(readGrid,{grid$1: gridded,field='$1', origin=climatology, $
+       file='!calpath/MLS-Aura_L2Cal-Climatologies_pe-feb-!phiStr_0000d000.txt'!nl})
+},{
 !define(readGrid,{grid$1: gridded,field='$1', origin=climatology, $
        file='!calpath/MLS-Aura_L2Cal-Climatologies_v1-0-0_0000d000.txt'!nl})
+})
 
 ;; Now invoke that macro for all species defined above.
 !forall(readGrid,!allClimatologicalSpecies)
