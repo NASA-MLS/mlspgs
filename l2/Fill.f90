@@ -46,7 +46,7 @@ contains ! =====     Public Procedures     =============================
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Expr_M, only: EXPR
-    use GriddedData, only: GriddedData_T
+    use GriddedData, only: GriddedData_T, WrapGriddedData
     ! We need many things from Init_Tables_Module.  First the fields:
     use INIT_TABLES_MODULE, only: F_A, F_ALLOWMISSING, &
       & F_APRIORIPRECISION, F_B, F_BOUNDARYPRESSURE, &
@@ -233,6 +233,7 @@ contains ! =====     Public Procedures     =============================
     integer, parameter :: BadEstNoiseFill = NotZetaForGrid + 1
     integer, parameter :: BadRefractFill = BadEstNoiseFill + 1
     integer, parameter :: MissingDataInGrid = BadRefractFill + 1
+    integer, parameter :: EmptyGridForFill = MissingDataInGrid + 1
 
     real, parameter ::    UNDEFINED_VALUE = -999.99 ! Same as %template%badvalue
 
@@ -1855,7 +1856,8 @@ contains ! =====     Public Procedures     =============================
     subroutine FillVectorQuantityFromGrid(quantity, grid, allowMissing, errorCode)
       ! Dummy arguments
       type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
-      type (GriddedData_T), intent(in) :: GRID ! Grid to fill it from
+      type (GriddedData_T), intent(inout) :: GRID ! Grid to fill it from
+      ! Needs to be inout because we wrap it.
       logical, intent(in) :: ALLOWMISSING ! If set missing data in grid ok
       integer, intent(out) :: ERRORCODE   ! Error code (one of constants defined above)
 
@@ -1866,6 +1868,10 @@ contains ! =====     Public Procedures     =============================
 
       ! Executable code
       errorCode = 0
+      if ( grid%empty ) then
+        errorCode=EmptyGridForFill
+        return
+      end if
 
       if (quantity%template%verticalCoordinate /= l_zeta) then
         errorCode=NotZetaForGrid
@@ -1874,6 +1880,10 @@ contains ! =====     Public Procedures     =============================
 
       instIndex=1
       surfIndex=1
+
+      ! Wrap the grid to be sure that we can interpolate it in longitude
+      ! This will skip out if it's already been done.
+      call WrapGriddedData ( grid )
 
       do instance = 1, quantity%template%noInstances
         if (.not. quantity%template%stacked) instIndex=instance
@@ -2125,9 +2135,9 @@ contains ! =====     Public Procedures     =============================
         values ( i ) = exprValue(2)
       end do
 
-      if ( myLogSpace .and. any ( values < 0.0 ) ) then
+      if ( myLogSpace .and. any ( values <= 0.0 ) ) then
         call Announce_Error ( valuesNode, 0, &
-          & 'Negative input data in log profile fill' )
+          & 'Non-positive input data in log profile fill' )
         return
       end if
       if ( myLogSpace ) values = log ( values )
@@ -4943,6 +4953,8 @@ contains ! =====     Public Procedures     =============================
         call output ( " missing information for phiTan refract fill", advance='yes' )
       case ( missingDataInGrid )
         call output ( " missing/bad data points in grid for fill", advance='yes' )
+      case ( emptyGridForFill )
+        call output ( " an empty grid for the fill", advance='yes' )
       case default
         call output ( " command caused an unrecognized programming error", advance='yes' )
       end select
@@ -4961,6 +4973,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.193  2003/04/04 00:08:06  livesey
+! Added the wrapping of the gridded data before it's used in fill.
+!
 ! Revision 2.192  2003/03/27 20:45:02  livesey
 ! Added logSpace argument to profile fill, and made it obey the dontMask
 ! flag
