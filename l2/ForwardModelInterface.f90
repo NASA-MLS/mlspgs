@@ -477,7 +477,6 @@ contains ! =====     Public Procedures     =============================
     real (r8) :: SENSE                  ! Multiplier (+/-1)
 
     integer, dimension(:), pointer :: CHANNELINDEX ! E.g. 1..25
-    integer, dimension(:), pointer :: CLOSESTINSTANCES ! To each maf
     integer, dimension(:), pointer :: SIGNALSGRID ! Used in ptg grid hunt
     integer, dimension(:), pointer :: USEDCHANNELS ! Array of indices used
 
@@ -656,7 +655,6 @@ contains ! =====     Public Procedures     =============================
     print*,'phiWindow:',phiWindow
     print*,'noSpecies:',noSpecies
     print*,'maxNoFSurfs:',maxNoFSurfs
-    fmStat%maf = 3                          ! DEBUG, Zvi
     print*,'MAF:',fmStat%maf
 
     ! Work out which channels are used
@@ -722,18 +720,16 @@ contains ! =====     Public Procedures     =============================
                         &  ModuleName )
       call allocate_test ( ifm%tan_dh_dt, nlvl, no_phi_t, &
                         & temp%template%noSurfs, 'tan_dh_dt', ModuleName )
+      call Allocate_test( ifm%closestInstances, noMAFs, 'closestInstances', ModuleName)
 
       ! Setup for hydrostatic calculation
-      ! Assert radiance%template%noInstances=temp%template%noInstances
+      call FindClosestInstances( temp, radiance, ifm%closestInstances )
 
-      if ( temp%template%noInstances /= noMAFs ) &
-        & call MLSMessage(MLSMSG_Error,ModuleName,'no temperature profiles /= no maf')
-      do maf = 1, noMAFs
-        phi_tan = Deg2Rad*temp%template%phi(1,maf)
-        ! ??? For the moment, change this soon.
-        geod_lat= Deg2Rad*temp%template%geodLat(1,maf)
-        call geoc_geod_conv ( ifm%elvar(maf), orbIncline%values(1,1), &
-          &  phi_tan, geod_lat, ifm%geoc_lat(maf), ifm%E_rad(maf) )
+      do i = 1, no_phi_t
+        phi_tan = Deg2Rad*temp%template%phi(1,i)
+        geod_lat= Deg2Rad*temp%template%geodLat(1,i)
+        call geoc_geod_conv ( ifm%elvar(i), orbIncline%values(1,1), &
+          &  phi_tan, geod_lat, ifm%geoc_lat(i), ifm%E_rad(i) )
       end do
 
       ! Now compute a hydrostatic grid given the temperature and refGPH
@@ -751,7 +747,7 @@ contains ! =====     Public Procedures     =============================
       if ( ier /= 0 ) goto 99
 
       ! Now compute stuff along the path given this hydrostatic grid.
-      call comp_path_entities ( radiance, temp, &
+      call comp_path_entities ( radiance, temp, ifm%closestInstances, &
         &  ForwardModelConfig%integrationGrid%noSurfs, &
         &  temp%template%noSurfs, ifm%gl_count, ifm%ndx_path, ifm%z_glgrid, &
         &  ifm%t_glgrid, ifm%h_glgrid, ifm%dhdz_glgrid, ifm%tan_hts,        &
@@ -912,13 +908,9 @@ contains ! =====     Public Procedures     =============================
       ! Now work out what `window' we're inside.  This will need to be changed
       ! a bit in later versions to avoid the noMAFS==noTemp/f instances
       ! assertion
-      nullify(closestInstances)
-      call Allocate_test(closestInstances, noMAFs, 'closestInstances', ModuleName)
-      call FindClosestInstances( temp, radiance, closestInstances )
-      windowStart = max(1,closestInstances(maf)-phiWindow/2)
-      windowFinish = min(closestInstances(maf)+phiWindow/2, temp%template%noInstances)
-      mafTInstance = closestInstances(maf)
-      call Deallocate_test(closestInstances, 'closestInstances', ModuleName)
+      windowStart = max(1,ifm%closestInstances(maf)-phiWindow/2)
+      windowFinish = min(ifm%closestInstances(maf)+phiWindow/2, temp%template%noInstances)
+      mafTInstance = ifm%closestInstances(maf)
 
       allocate ( k_temp(noUsedChannels, no_tan_hts, temp%template%noSurfs, &
         & windowStart:windowFinish), stat=status )
@@ -1328,7 +1320,7 @@ contains ! =====     Public Procedures     =============================
     call deallocate_test ( radv, 'rad_v', ModuleName )
     call deallocate_test ( grids, 'grids',  ModuleName )
 
-    if ( i > -22) Stop      ! DEBUG, Zvi
+!    if ( i > -22) Stop      ! DEBUG, Zvi
 
     Return
 
@@ -1381,6 +1373,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.107  2001/04/23 21:56:06  livesey
+! Pass closest instances to comp_path_entities
+!
 ! Revision 2.106  2001/04/23 21:42:46  zvi
 ! Introducing no_phi_t etc.
 !
