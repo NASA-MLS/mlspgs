@@ -78,8 +78,7 @@ MODULE INIT_TABLES_MODULE
   ! In GlobalSettings section:
 
   INTEGER, PUBLIC, PARAMETER :: P_OUTPUT_VERSION_STRING = spec_last + 1
-  INTEGER, PUBLIC, PARAMETER :: P_VERSION_COMMENT = p_output_version_string + 1
-  INTEGER, PUBLIC, PARAMETER :: P_PRODUCE_L1BOA = p_version_comment + 1
+  INTEGER, PUBLIC, PARAMETER :: P_PRODUCE_L1BOA = p_output_version_string + 1
   INTEGER, PUBLIC, PARAMETER :: P_SIMOA = p_produce_l1boa + 1
 
   ! In Calibration section:
@@ -98,10 +97,11 @@ MODULE INIT_TABLES_MODULE
   INTEGER, PUBLIC, PARAMETER :: P_THzMaxBias = p_MIFsPerMAF + 1
   INTEGER, PUBLIC, PARAMETER :: P_MoonToSpaceAngle = p_THzMaxBias + 1
   INTEGER, PUBLIC, PARAMETER :: P_MoonToLimbAngle = p_MoonToSpaceAngle + 1
+  INTEGER, PUBLIC, PARAMETER :: P_DACSWINDOW = p_MoonToLimbAngle + 1
 
   ! In Output section:
 
-  INTEGER, PUBLIC, PARAMETER :: P_REMOVEBASELINE = P_MoonToLimbAngle + 1
+  INTEGER, PUBLIC, PARAMETER :: P_REMOVEBASELINE = P_DACSWINDOW + 1
 
   INTEGER, PUBLIC, PARAMETER :: FIRST_PARM = P_OUTPUT_VERSION_STRING
   INTEGER, PUBLIC, PARAMETER :: LAST_PARM = P_REMOVEBASELINE
@@ -171,12 +171,12 @@ CONTAINS ! =====     Public procedures     =============================
     parm_indices(p_mif_dead_time)=          add_ident ( 'MIF_DeadTime' )
     parm_indices(p_mifspermaf)=             add_ident ( 'MIFsPerMAF' )
     parm_indices(p_output_version_string) = add_ident ( 'OutputVersionString' )
-    parm_indices(p_version_comment) =       add_ident ( 'VersionComment' )
     parm_indices(p_produce_l1boa)=          add_ident ( 'ProduceL1BOA' )
     parm_indices(p_simoa)=                  add_ident ( 'SimOA' )
     parm_indices(p_removebaseline)=         add_ident ( 'RemoveBaseline' )
     parm_indices(p_MoonToSpaceAngle)=       add_ident ( 'MoonToSpaceAngle' )
     parm_indices(p_MoonToLimbAngle)=        add_ident ( 'MoonToLimbAngle' )
+    parm_indices(p_dacswindow)=             add_ident ( 'DACSwindow' )
 
     ! Put section names into the symbol table
 
@@ -297,7 +297,6 @@ CONTAINS ! =====     Public procedures     =============================
 
     CALL make_tree ( (/ &
       begin, z+z_globalsettings, &
-             begin, p+p_version_comment, t+t_string, n+n_name_def, &
              begin, p+p_output_version_string, t+t_string, n+n_name_def, &
              begin, p+p_produce_l1boa, t+t_boolean, n+n_name_def, &
              begin, p+p_simoa, t+t_boolean, n+n_name_def, &
@@ -312,6 +311,7 @@ CONTAINS ! =====     Public procedures     =============================
              begin, p+p_THzMaxBias, t+t_numeric, n+n_name_def, &
              begin, p+p_MoonToSpaceAngle, t+t_numeric, n+n_name_def, &
              begin, p+p_MoonToLimbAngle, t+t_numeric, n+n_name_def, &
+             begin, p+p_dacswindow, t+t_numeric, n+n_name_def, &
              begin, p+p_mif_duration, t+t_numeric, n+n_name_def, &
              begin, p+p_mif_dead_time, t+t_numeric, n+n_name_def, &
              begin, p+p_mifspermaf, t+t_numeric, n+n_name_def, &
@@ -331,6 +331,9 @@ CONTAINS ! =====     Public procedures     =============================
 END MODULE INIT_TABLES_MODULE
   
 ! $Log$
+! Revision 2.19  2004/12/01 17:09:38  perun
+! Remove VersionComment and add DACSwindow
+!
 ! Revision 2.18  2004/11/10 15:39:37  perun
 ! Add MarkChandBad user input
 !
@@ -347,6 +350,9 @@ END MODULE INIT_TABLES_MODULE
 ! Version 1.2 commit
 !
 ! $Log$
+! Revision 2.19  2004/12/01 17:09:38  perun
+! Remove VersionComment and add DACSwindow
+!
 ! Revision 2.18  2004/11/10 15:39:37  perun
 ! Add MarkChandBad user input
 !
