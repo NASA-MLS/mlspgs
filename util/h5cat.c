@@ -1,7 +1,7 @@
 /* This file contains a program to take all the datasets in each of
  * several HDF5 files and stick them all into one HDF5 file. This
  * might be useful if you have run a FM several times in limited
- * configurations and want to use teh resulting radiances for one
+ * configurations and want to use the resulting radiances for one
  * humongous retrieval. Fancy things like links and user-defined types
  * are not handled yet.
 
@@ -49,15 +49,13 @@ int main(int argc , char *argv[] ){
 
   /*--------Local vars--------------------------*/
   char infile[80], outfile[80];
-  hid_t file_id,outfile_id,dset_id,dspace_id;
-  int error, nmembers,*idx,obj_type, stringlen, i,j,filei,nfiles;
-  char obj_name[80],rootname[80];
-  char *varstring, *dummy,*groupstring;
+  hid_t file_id,outfile_id;
+  int error,*idx,j,filei,nfiles;
+  char rootname[80];
   char *invarstring,*ingroupstring;
   
-  void *operator_data;
   opdat_t opdat; 
-  hid_t *newloc_idp,newloc_id;
+
   /* Stuff for getopt */
   char optstring[]="vd:g:a:";
   int optval;
@@ -79,6 +77,9 @@ int main(int argc , char *argv[] ){
   /* Loop through options */
   invarstring=NULL;
   ingroupstring=NULL;
+  /* Default value for global_nattrs. The only reason this is not infinite
+     is an obscure bug in HDF5 that sometimes lead to infinite loops. */
+  global_nattrs=1000;
   optval=0;
   verbose=0;
   nfiles=0;
@@ -139,9 +140,9 @@ herr_t operator(hid_t group_id, const char *member_name, void
   /* Local variables */
   H5G_stat_t statbuf, *statbufp; 
   hbool_t follow_link;
-  hid_t *newloc_idp, newloc_id;
-  int error, is_wanted,i;
-  opdat_t opdat, *opdatp, newopdat;
+  hid_t  newloc_id;
+  int error;
+  opdat_t  *opdatp, newopdat;
   /* executable */
   opdatp= (opdat_t *) operator_data;
  
@@ -158,8 +159,12 @@ herr_t operator(hid_t group_id, const char *member_name, void
   
   /* Main if block  to process each of the possible item types */
   if(statbuf.type ==  H5G_GROUP){
-    hid_t oldsubgroup_id, newsubgroup_id, *newsubgroup_idp;
+    hid_t oldsubgroup_id;
     int *idx;
+    int *aidx;
+    void *aopdata;
+    hid_t *new_dsetp;
+
     opdat_t newsubgroup;
     size_t size_hint;
     if(verbose) printf("It's a group: Looking into it\n");
@@ -170,6 +175,20 @@ herr_t operator(hid_t group_id, const char *member_name, void
     idx=NULL;
     error=H5Giterate(group_id, member_name, idx, 
 		     operator, (void *) &newsubgroup ) ;
+
+
+    
+
+    /* Process all attributes of this group.  */
+    oldsubgroup_id=H5Gopen(group_id,member_name);
+    aidx=NULL; /* Making this NULL ensures all attributes are processed */
+    new_dsetp=&(newsubgroup.newloc_id);
+    aopdata=(void *) new_dsetp;
+    global_attrcnt=0;
+    if(global_nattrs > 0)
+      error=H5Aiterate(oldsubgroup_id, aidx, attr_op, aopdata );
+    error=H5Gclose(oldsubgroup_id);
+
 
     /*error=H5Gclose(oldsubgroup_id); */
     error=H5Gclose(newsubgroup.newloc_id); 
@@ -184,7 +203,7 @@ herr_t operator(hid_t group_id, const char *member_name, void
     int *aidx;
     void *aopdata;
     hid_t *new_dsetp;
-    /* executable for this bock */
+    /* executable for this block */
     if(verbose) printf("It's a dataset: \n");
     old_dset=H5Dopen(group_id, member_name );
     /*printf("Opened dataset with id=%d\n",old_dset); */
@@ -242,7 +261,7 @@ herr_t operator(hid_t group_id, const char *member_name, void
 herr_t attr_op(hid_t loc_id, const char *attr_name, void *operator_data){
 
   hid_t attr_id, new_attr_id,new_dset_id, *new_dset_idp;
-  hid_t type_id, dspace_id,new_space,space_id,new_dspace;
+  hid_t type_id,space_id,new_dspace;
   int error,n_elements;
   void *databuf;
   new_dset_idp=(hid_t *) operator_data;
