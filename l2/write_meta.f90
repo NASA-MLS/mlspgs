@@ -1,4 +1,4 @@
-! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 ! -------------------------------------------------------
@@ -7,7 +7,7 @@ module WriteMetadata ! Populate metadata and write it out
 
   use Hdf, only: DFACC_RDWR, Sfend, Sfstart
   use LEXER_CORE, only: PRINT_SOURCE
-  use MLSCommon, only: NameLen, R8
+  use MLSCommon, only: FileNameLen, NameLen, R8
   use MLSFiles, only: Split_path_name
   use MLSL2Options, only: PENALTY_FOR_NO_METADATA, CREATEMETADATA
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
@@ -16,7 +16,7 @@ module WriteMetadata ! Populate metadata and write it out
   use MLSStrings, only: Reverse, LowerCase, GetStringHashElement
   use Output_m, only: Output, blanks
   use PCFHdr, only: WritePCF2Hdr
-  use SDPToolkit, only: FileNameLen, PGSd_MET_GROUP_NAME_L, &
+  use SDPToolkit, only: PGSd_MET_GROUP_NAME_L, &
     & PGSd_MET_NUM_OF_GROUPS, PGSd_PC_FILE_PATH_MAX, PGS_PC_GetReference, &
     & PGSPC_W_NO_REFERENCE_FOUND, PGS_S_SUCCESS, PGSMET_W_METADATA_NOT_SET, &
    & PGS_PC_getconfigdata!, &
@@ -1458,6 +1458,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.19  2002/01/09 23:54:24  pwagner
+! Now gets FileNameLen from MLSCommon, not SDPToolkit
+!
 ! Revision 2.18  2001/05/17 22:33:27  pwagner
 ! Prints info if pro switch set
 !
