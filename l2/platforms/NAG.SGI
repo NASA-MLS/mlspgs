@@ -8,6 +8,11 @@ SHELL = /bin/sh
 # Path to source files:
 S = ..
 
+# Use the lib directory, too
+libdir = ../../lib/$(MLSCONFG)
+
+dir1 = $(libdir)/
+
 # Set paths for finding source files (different from .o and .mod)
 
 vpath %.o ./
@@ -29,9 +34,6 @@ DUSTY = -g -dusty -abi=n32
 
 # Beginning of path to HDFEOS  libraries:
 #E = /van1/opt/TOOLKIT
-
-# Use the lib directory, too
-libdir = ../../lib/$(MLSCONFG)
 
 # Define some suffix rules
 
@@ -66,6 +68,9 @@ libdir = ../../lib/$(MLSCONFG)
 #GCTP =/software/SRC/TOOLKIT-5.2.5v1.00/hdfeos/lib/sgi
 
 # $Log$
+# Revision 1.1  2000/10/21 00:22:12  pwagner
+# First commit
+#
 # Revision 1.1  2000/10/18 22:08:01  pwagner
 # First commit
 #
