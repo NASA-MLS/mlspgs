@@ -766,7 +766,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_outputSD, s+s_vector, n+n_field_spec, &
              begin, f+f_regOrders, t+t_numeric, n+n_field_type, &
              begin, f+f_regQuants, t+t_quantityType, n+n_field_type, &
-             begin, f+f_regWeight, t+t_numeric, n+n_field_type, &
+             begin, f+f_regWeights, t+t_numeric, n+n_field_type, &
              begin, f+f_state, s+s_vector, nr+n_field_spec, &
              begin, f+f_toleranceA, t+t_numeric, n+n_field_type, &
              begin, f+f_toleranceF, t+t_numeric, n+n_field_type, &
@@ -892,6 +892,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.217  2002/05/07 01:01:25  vsnyder
+! Change regWeight to regWeights
+!
 ! Revision 2.216  2002/05/06 21:37:50  livesey
 ! Added forbidOverspill to hGrid
 !
