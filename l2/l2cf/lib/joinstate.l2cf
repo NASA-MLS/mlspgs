@@ -63,3 +63,31 @@ begin Join
   !flushDGGDGMFiles
 })})
 end Join
+
+;; In the future the following may be moved to a separate l2cf fragment
+;; e.g., writephasetiming.l2cf
+!ifdef(flagAvoidDirectWrite,{},{
+begin Construct
+  phaseTiming: quantity, type=phaseTiming,  $
+    vGrid=vGridPhases
+  sectionTiming: quantity, type=phaseTiming,  $
+    vGrid=vGridPhases
+  timingTemplate: VectorTemplate, quantities = [ $
+    phaseTiming, sectionTiming $
+    ]
+
+end Construct
+begin Fill
+  timing: Vector, template=timingTemplate
+  Fill, quantity=timing.phaseTiming, method=phaseTiming
+  Fill, quantity=timing.sectionTiming, method=sectionTiming
+end Fill
+begin Join
+  Label, quantity=timing.phaseTiming, label='phase timing'
+  Label, quantity=timing.sectionTiming, label='section timing'
+  !DirectWriteDGMCommand, hdfVersion=!hdfVersion, $
+  type=l2aux, $
+    source=timing.phaseTiming, source=timing.sectionTiming
+  
+end Join
+})
