@@ -55,8 +55,6 @@ contains ! =====     Public Procedures     =============================
     type(matrix_T), intent(inout), optional :: JACOBIAN
 
     ! Local parameters
-    real(r8), parameter :: PHIVALUES(3) = (/ 0.0, 45.0, 90.0 /)
-
     ! Local variables
     type(forwardModelConfig_T) :: THISCONFIG
     type(Vector_T), target :: RADIANCECONTRIBUTION
