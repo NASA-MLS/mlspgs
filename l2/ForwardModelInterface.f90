@@ -24,8 +24,8 @@ module ForwardModelInterface
     F_FREQUENCY, F_MOLECULES, F_MOLECULEDERIVATIVES, F_POINTINGGRIDS, F_SIGNALS, &
     F_SPECT_DER, F_TEMP_DER, F_TYPE
   ! Now literals
-  use Init_Tables_Module, only: L_EARTHREFL, L_ELEVOFFSET, L_FULL, L_LINEAR,&
-    & L_LOSVEL, L_ORBITINCLINE, L_PTAN, L_RADIANCE, L_REFGPH, L_SCAN,&
+  use Init_Tables_Module, only: L_CHANNEL, L_EARTHREFL, L_ELEVOFFSET, L_FULL, L_LINEAR,&
+    & L_LOSVEL, L_NONE, L_ORBITINCLINE, L_PTAN, L_RADIANCE, L_REFGPH, L_SCAN,&
     & L_SCGEOCALT, L_SPACERADIANCE, L_TEMPERATURE
   ! Now temporary stuff we hope not to have to use in the end
   use Init_Tables_Module, only: F_ZVI
@@ -45,7 +45,8 @@ module ForwardModelInterface
   use Trace_M, only: Trace_begin, Trace_end
   use Tree, only: Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, Subtree
   use Tree_Types, only: N_named
-  use VectorsModule, only: GetVectorQuantityByType, Vector_T, VectorValue_T
+  use VectorsModule, only: GetVectorQuantityByType, ValidateVectorQuantity, &
+    & Vector_T, VectorValue_T
 
   !??? The next USE statement is Temporary for l2load:
   use L2_TEST_STRUCTURES_M, only: FWD_MDL_CONFIG, FWD_MDL_INFO, &
@@ -484,16 +485,16 @@ contains
     ! we already know what their quantityType's are as that's how we found them
     !, so we don't need to check that.
     if (.not. ValidateVectorQuantity(radiance, minorFrame=.true.,&
-      & frequencyCoordinate=l_channel)) call MLSMessage(MLSMSG_Error, ModuleName, &
+      & frequencyCoordinate=(/l_channel/))) call MLSMessage(MLSMSG_Error, ModuleName, &
       & InvalidQuantity//'radiance')
     if (.not. ValidateVectorQuantity(temp, stacked=.true., coherent=.true., &
-      & noChans=1)) call MLSMessage(MLSMSG_Error, ModuleName,&
+      & frequencyCoordinate=(/l_none/))) call MLSMessage(MLSMSG_Error, ModuleName,&
       & InvalidQuantity//'temperature')
     if (.not. ValidateVectorQuantity(ptan, minorFrame=.true., &
-      & frequencyCoordinate=l_none)) call MLSMessage(MLSMSG_Error, ModuleName, &
+      & frequencyCoordinate=(/l_none/))) call MLSMessage(MLSMSG_Error, ModuleName, &
       & InvalidQuantity//'ptan')
-    if (.not. ValidateVectorQuantity(elevOffset, verticalCoordinate=l_none, &
-      & frequencyCoordinate=l_none, noInstances=1) &
+    if (.not. ValidateVectorQuantity(elevOffset, verticalCoordinate=(/l_none/), &
+      & frequencyCoordinate=(/l_none/), noInstances=(/1/))) &
       & call MLSMessage(MLSMSG_Error, ModuleName, &
       & InvalidQuantity//'elevOffset')
     ! There will be more to come here.
@@ -1026,7 +1027,7 @@ contains
     end do
 913 format(a,a1,i2.2)
 !
- 99  if(io /= 0) then
+ 99  if (io /= 0) then
        Call ErrMsg(Line,io)
     endif
 
@@ -1165,6 +1166,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.25  2001/03/19 17:10:35  livesey
+! Added more checks etc.
+!
 ! Revision 2.24  2001/03/18 00:55:50  livesey
 ! Interim version
 !
