@@ -21,6 +21,7 @@ autofill
 
 boundarypressure
 
+climatology
 cloud_der
 cloud_width
 cloud_fov
@@ -129,6 +130,7 @@ nscatteringangles
 nsizebins
 number
 
+operational
 opticalDepth
 origin
 outputCovariance
@@ -214,6 +216,9 @@ vGrid
 vmrQuantity
 
 # $Log$
+# Revision 2.23  2002/01/24 17:45:21  pwagner
+# Added climatology, operational
+#
 # Revision 2.22  2002/01/23 21:49:17  pwagner
 # Added hdfversion
 #
