@@ -19,7 +19,7 @@ module ForwardModelSupport
     & L_TEMPERATURE, L_VMR
   use Init_Tables_Module, only: F_ANTENNAPATTERNS, F_ATMOS_DER, F_CHANNELS, &
     & F_CLOUD_DER, F_COST, F_DO_BASELINE, F_DO_CONV, F_DO_FREQ_AVG, F_FILTERSHAPES, &
-    & F_FREQUENCY, F_FRQGAP, F_HEIGHT, &
+    & F_FREQUENCY, F_FRQGAP, F_HEIGHT, F_DIFFERENTIALSCAN, &
     & F_INTEGRATIONGRID, F_L2PC, F_MOLECULE, F_MOLECULES, F_MOLECULEDERIVATIVES, &
     & F_PHIWINDOW, F_POINTINGGRIDS, F_SIGNALS, F_SPECT_DER, F_TANGENTGRID, &
     & F_TEMP_DER, F_TYPE, F_MODULE, F_SKIPOVERLAPS, F_TOLERANCE, S_FORWARDMODEL, &
@@ -355,6 +355,7 @@ contains ! =====     Public Procedures     =============================
     info%atmos_der = .false.
     info%spect_der = .false.
     info%skipOverlaps = .false.
+    info%differentialScan = .false.
     info%cloud_der = 0
     info%no_cloud_species=2
     info%no_model_surfs =640
@@ -383,6 +384,8 @@ contains ! =====     Public Procedures     =============================
         info%fwmType = decoration(subtree(2,son))
       case ( f_atmos_der )
         info%atmos_der = get_boolean(son)
+      case ( f_differentialScan )
+        info%differentialScan = get_boolean(son)
       case ( f_do_conv )
         info%do_conv = get_boolean(son)
       case ( f_do_baseline )
@@ -646,6 +649,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.24  2002/02/13 00:08:50  livesey
+! Added differential scan model
+!
 ! Revision 2.23  2002/02/08 22:52:21  livesey
 ! Hooked up bin selectors
 !
