@@ -38,7 +38,7 @@ module RetrievalModule
   use Intrinsic, only: PHYQ_Dimensionless
   use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
     & DestroyMatrix, GetFromMatrixDatabase, Matrix_T, Matrix_Database_T, &
-    & Matrix_SPD_T, MultiplyMatrixVectorNoT, operator(.TX.), Dump
+    & Matrix_SPD_T, MultiplyMatrixVectorNoT, operator(.TX.), ReflectMatrix, Dump
   use MatrixTools, only: DumpBlock
   use MLSCommon, only: R8, MLSCHUNK_T
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, add_to_retrieval_timing
@@ -1612,6 +1612,8 @@ contains
       ! Compute the averaging kernel
       if ( got(f_average) ) then
         preserveMatrixName = outputAverage%name
+        ! Make sure kTk is symmetrical (outputCovariance is by virtue of its creation method 
+        Call ReflectMatrix ( kTk%m )
         outputAverage = outputCovariance%m .tx. kTk%m
         outputAverage%name = preserveMatrixName
           if ( index(switches,'cov') /= 0 ) call output ( &
@@ -2940,6 +2942,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.160  2002/08/06 02:16:09  livesey
+! Fixed averaging kernels by reflecting the kTk matrix
+!
 ! Revision 2.159  2002/08/05 19:40:11  vsnyder
 ! Undo scaling of kTk -- it's prepared unscaled
 !
