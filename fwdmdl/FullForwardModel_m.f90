@@ -1344,7 +1344,6 @@ contains
             & mag_path(1:no_ele,1:3) )
 
           rot = reshape(ECRtoFOV%values(9*mif-8:9*mif,maf), (/3,3/))
-          
 
           do j = 1, no_ele
             ! Rotate mag_path from ECR to IFOVPP (R1A) coordinates.  Use
@@ -1522,6 +1521,14 @@ contains
             call path_contrib ( incoptdepth(1:npc), e_rflty, &
               & fwdModelConf%tolerance, do_gl(1:npc) )
 
+            ! Where we don't do GL, replace the rectangle rule by the
+            ! trapezoid rule.
+            do j = 1, npc - 1
+              if ( .not. do_gl(j) ) &
+                & incoptdepth(j) = &
+                  & 0.5 * ( alpha_path_c(j) + alpha_path_c(j+1) ) * del_s(j)
+            end do
+
           else ! Not cloud model
 
             do j = 1, npc ! Don't trust compilers to fuse loops
@@ -1534,8 +1541,16 @@ contains
             if ( .not. FwdModelConf%polarized ) then
                ! Determine where to use Gauss-Legendre for scalar instead of a rectangle.
 
-               call path_contrib ( incoptdepth(1:npc), e_rflty, &
+              call path_contrib ( incoptdepth(1:npc), e_rflty, &
                     & fwdModelConf%tolerance, do_gl(1:npc) )
+
+              ! Where we don't do GL, replace the rectangle rule by the
+              ! trapezoid rule.
+              do j = 1, npc - 1
+                if ( .not. do_gl(j) ) &
+                  & incoptdepth(j) = &
+                    & 0.5 * ( alpha_path_c(j) + alpha_path_c(j+1) ) * del_s(j)
+              end do
 
             else ! extra stuff for polarized case
 
@@ -1569,7 +1584,7 @@ contains
 
 
 
-              ! Turn sigma-, pi, sigma+ into 2X2 matrix
+              ! Turn sigma-, pi, sigma+ into 2X2 matrix incoptdepth_pol
               call opacity ( ct(1:npc), stcp(1:npc), stsp(1:npc), &
                 & alpha_path_polarized(:,1:npc), incoptdepth_pol(:,:,1:npc) )
 
@@ -2469,7 +2484,7 @@ contains
       real(r4), dimension(:,:,:,:,:,:), intent(out) :: K_SPECT_DS
       integer, intent(in) :: K ! Which molecule
 
-      integer :: I, Instance, J, JF, Surface, SV_I
+      integer :: I, Instance, JF, Surface, SV_I
 
       if ( fwdModelConf%do_freq_avg ) then
         do i = 1, noUsedChannels
@@ -2603,6 +2618,12 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.164  2003/08/12 18:22:10  michael
+! Contribution of scalar molecules to polarized absorption is now added to
+! coarse grid alpha_path_polarized (1/4 1/2 1/4) instead of to diagonal of
+! incoptdepth_pol.  This make alpha_path_polarized correct for later use
+! in gl corrections.
+!
 ! Revision 2.163  2003/07/15 23:07:21  vsnyder
 ! Simplify Freq_Avg
 !
