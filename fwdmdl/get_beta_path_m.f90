@@ -49,29 +49,31 @@ contains
 
     type (beta_group_T), dimension(:) :: beta_group
 
-! Another clumsy feature of f90
-! Optional inputs:
+! Optional inputs.  GL_SLABS_* are pointers because the caller need not
+! allocate them if DBETA_D*_PATH aren't allocated.  They would be
+! INTENT(IN) if we could say so.
 
-    type(slabs_struct), optional :: gl_slabs_m(:,:) ! reduced
+    type(slabs_struct), pointer :: gl_slabs_m(:,:) ! reduced
 !                               strength data for t_path_m
-    real(rp), optional, intent(in) :: t_path_m(:) ! path temperatures for
-!                                                 gl_slabs_m
-    type(slabs_struct), optional :: gl_slabs_p(:,:) ! reduced
+    real(rp) :: t_path_m(:) ! path temperatures for gl_slabs_m
+    type(slabs_struct), pointer :: gl_slabs_p(:,:) ! reduced
 !                               strength data for t_path_p
-    real(rp), optional, intent(in) :: t_path_p(:) ! path temperatures for
+    real(rp) :: t_path_p(:) ! path temperatures for gl_slabs_p
 
 ! outputs
 
     real(rp), intent(out) :: beta_path(:,:) ! path beta for each species
 
-! Optional output:
+! Optional outputs.  We use ASSOCIATED instead of PRESENT so that the
+! caller doesn't need multiple branches.  These would be INTENT(OUT) if
+! we could say so.
 
-    real(rp), optional, intent(out) :: dbeta_dt_path(:,:) ! t dep.
-    real(rp), optional, intent(out) :: dbeta_dw_path(:,:) ! line width
-    real(rp), optional, intent(out) :: dbeta_dn_path(:,:) ! line width t dep.
-    real(rp), optional, intent(out) :: dbeta_dv_path(:,:) ! line position
+    real(rp), pointer :: dbeta_dt_path(:,:) ! t dep.
+    real(rp), pointer :: dbeta_dw_path(:,:) ! line width
+    real(rp), pointer :: dbeta_dn_path(:,:) ! line width t dep.
+    real(rp), pointer :: dbeta_dv_path(:,:) ! line position
 
-! Local varibles..
+! Local variables..
 
     integer(ip) :: i, j, k, n, ib, Spectag, no_of_lines, &
               &    no_mol, n_path
@@ -85,9 +87,9 @@ contains
     n_path = size(path_inds)
 
     beta_path = 0.0
-    if ( present(dbeta_dw_path) ) dbeta_dw_path = 0.0
-    if ( present(dbeta_dn_path) ) dbeta_dn_path = 0.0
-    if ( present(dbeta_dv_path) ) dbeta_dv_path = 0.0
+    if ( associated(dbeta_dw_path) ) dbeta_dw_path(1:n_path,:) = 0.0
+    if ( associated(dbeta_dn_path) ) dbeta_dn_path(1:n_path,:) = 0.0
+    if ( associated(dbeta_dv_path) ) dbeta_dv_path(1:n_path,:) = 0.0
 
     do i = 1, no_mol
       do n = 1, beta_group(i)%n_elements
@@ -100,19 +102,19 @@ contains
             &  Frq, Lines(Catalog(ib)%Lines)%W, gl_slabs(k,ib), bb,     &
             &  DBETA_DW=v0, DBETA_DN=vp, DBETA_DV=vm )
           beta_path(j,i) = beta_path(j,i) + ratio * bb
-          if ( present(dbeta_dw_path)) &
+          if ( associated(dbeta_dw_path)) &
             &  dbeta_dw_path(j,i) = dbeta_dw_path(j,i) + ratio * v0
-          if ( present(dbeta_dn_path)) &
+          if ( associated(dbeta_dn_path)) &
             &  dbeta_dn_path(j,i) = dbeta_dn_path(j,i) + ratio * vp
-          if ( present(dbeta_dv_path)) &
+          if ( associated(dbeta_dv_path)) &
             &  dbeta_dv_path(j,i) = dbeta_dv_path(j,i) + ratio * vm
         end do
       end do
     end do
 
-    if ( present(dbeta_dt_path) ) then
+    if ( associated(dbeta_dt_path) ) then
 
-      dbeta_dt_path = 0.0
+      dbeta_dt_path(1:n_path,:) = 0.0
 
       do i = 1, no_mol
         betam = 0.0
@@ -183,6 +185,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.10  2002/12/13 02:06:51  vsnyder
+! Use a SLABS structure for the slabs quantities
+!
 ! Revision 2.9  2002/10/08 17:08:03  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
