@@ -6,9 +6,12 @@ module WriteMetadata ! Populate metadata and write it out
 ! -------------------------------------------------------
 
   use Hdf, only: DFACC_RDWR   ! , Sfend, Sfstart
+  use HDFEOS5, only: HE5_SWATTACH, HE5_SWSETALIAS, HE5_SWDETACH, &
+    & HE5_SWCLOSE
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: FileNameLen, NameLen, R8
-  use MLSFiles, only: GetPCFromRef, mls_sfstart, mls_sfend, Split_path_name
+  use MLSFiles, only: GetPCFromRef, mls_sfstart, mls_sfend, Split_path_name, &
+   &  mls_hdf_version, HDFVERSION_5, mls_io_gen_openF
   use MLSL2Options, only: PENALTY_FOR_NO_METADATA, CREATEMETADATA, &
     & ILLEGALL1BRADID
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
@@ -251,7 +254,8 @@ contains
 
   ! -----------------------------------------  Measured_parameter  -----
 
-  subroutine Measured_parameter ( HDF_FILE, Field_name, Groups, Class_num )
+  subroutine Measured_parameter ( HDF_FILE, Field_name, Groups, Class_num, &
+    & setAlias )
 
     ! This writes the attributes corresponding to the measured parameter container:
     !
@@ -271,9 +275,10 @@ contains
 
     !Arguments
 
-    integer :: HDF_FILE
-    character(len=*) :: Field_name
-    integer, intent(in) :: Class_num
+    integer                       :: HDF_FILE
+    character(len=*)              :: Field_name
+    integer, intent(in)           :: Class_num
+    logical, optional, intent(in) :: setAlias
 
     ! the group have to be defined as 49 characters long. The C interface is 50.
     ! The cfortran.h mallocs an extra 1 byte for the null character '\0/1, 
@@ -292,14 +297,20 @@ contains
     character (len=PGSd_PC_FILE_PATH_MAX) :: Physical_filename
     integer :: ReturnStatus
     character (len=PGSd_PC_FILE_PATH_MAX) :: Sval
+    integer :: record_length, file_id, sw_id
     integer :: Version
+    logical :: mySetAlias
+    integer, parameter :: FILEACCESSTYPE = DFACC_RDWR
+    character(len=*), parameter :: TYPE2FIELDNAME = 'L2gpValue'
 
     ! Externals
 
     integer, external :: PGS_MET_setattr_d, &
       &  PGS_MET_setAttr_s, PGS_MET_SETATTR_I
-    !Executable code
 
+    !Executable code
+    mySetAlias = .false.
+    if ( present(setAlias) ) mySetAlias = setAlias
     version = 1
     returnStatus = PGS_PC_GetReference (HDF_FILE, version , physical_filename)
 
@@ -308,6 +319,44 @@ contains
       call announce_error ( 0, &
         & "Error in getting ref for PCF id in measured_parameter." )
     end if
+
+    ! A moment of misplaced priorities: we have decided to create
+    ! links between valid data field names and the name L2gpValue
+    ! Instead of doing this in a routine created for that purpose,
+    ! we have violated good design principles and stuck it here for now
+    if ( mySetAlias ) then
+      if ( mls_hdf_version(physical_filename) == HDFVERSION_5 ) then
+        file_id = mls_io_gen_openF('sw', .true., returnStatus, &
+          & record_length, FileAccessType, &
+          & physical_filename, &
+          & hdfVersion=HDFVERSION_5)
+        if ( returnStatus /= PGS_S_SUCCESS ) then 
+          call announce_error ( 0, &
+            & "Error in opening file for setting alias." )
+        end if
+        sw_id = he5_swattach(file_id, trim(field_name))
+        if ( sw_id < 1 ) then 
+          call announce_error ( 0, &
+            & "Error in attaching swath for setting alias." )
+        end if
+        returnStatus = he5_SWsetalias(sw_id, TYPE2FIELDNAME, trim(field_name))
+        if ( returnStatus /= PGS_S_SUCCESS ) then 
+          call announce_error ( 0, &
+            & "Error in setting alias from " // TYPE2FIELDNAME // &
+              & ' to ' // trim(field_name) )
+        end if
+        returnStatus = he5_SWdetach(sw_id)
+        if ( returnStatus /= PGS_S_SUCCESS ) then 
+          call announce_error ( 0, &
+            & "Error in detaching swath for setting alias." )
+        end if
+        returnStatus = he5_SWclose(file_id)
+        if ( returnStatus /= PGS_S_SUCCESS ) then 
+          call announce_error ( 0, &
+            & "Error in closing file for setting alias." )
+        end if
+      endif
+    endif
 
     ! MeasuredParameterContainer
 
@@ -706,7 +755,7 @@ contains
   ! --------------------------------------  Populate_metadata_std  -----
 
   subroutine Populate_metadata_std ( HDF_FILE, MCF_FILE, &
-    & L2pcf, Field_name, hdfVersion, Metadata_error )
+    & L2pcf, Field_name, hdfVersion, Metadata_error, setAlias )
 
     ! This is the standard way to write meta data
     ! It should work unchanged for the standard l2gp files (e.g. BrO)
@@ -721,11 +770,12 @@ contains
 
     !Arguments
 
-    integer :: HDF_FILE, MCF_FILE
-    type(PCFData_T) :: L2pcf
-    character (len=*) :: Field_name
-    integer, optional, intent(in) :: hdfVersion
+    integer                        :: HDF_FILE, MCF_FILE
+    type(PCFData_T)                :: L2pcf
+    character (len=*)              :: Field_name
+    integer, optional, intent(in)  :: hdfVersion
     integer, optional, intent(out) :: Metadata_error
+    logical, optional, intent(in)  :: setAlias
 
     !Local Variables
 
@@ -784,7 +834,7 @@ contains
     end if
 		
     call first_grouping(HDF_FILE, MCF_FILE, l2pcf, groups)
-    call measured_parameter (HDF_FILE, field_name, groups, 1)
+    call measured_parameter (HDF_FILE, field_name, groups, 1, setAlias)
     call third_grouping (HDF_FILE, hdf_sdid, l2pcf, groups, hdfVersion)
 
 !    sdid = sfstart (physical_fileName, DFACC_RDWR) 
@@ -848,7 +898,8 @@ contains
   ! --------------------------------------  Populate_metadata_oth  -----
 
   subroutine Populate_metadata_oth ( HDF_FILE, MCF_FILE, L2pcf, &
-    & NumQuantitiesPerFile, QuantityNames, hdfVersion, Metadata_error )
+    & NumQuantitiesPerFile, QuantityNames, hdfVersion, Metadata_error, &
+    & setAlias )
 
     ! This is specially to write meta data for heterogeneous files
     ! It should work unchanged for the 'OTH' l2gp files (e.g. ML2OTH.001.MCF)
@@ -863,6 +914,7 @@ contains
     character (len=*), dimension(:) :: QuantityNames
     integer, optional, intent(out) :: Metadata_error
     integer, optional, intent(in) :: hdfVersion
+    logical, optional, intent(in)  :: setAlias
 
     !Local Variables
 
@@ -924,7 +976,7 @@ contains
     do indx=1, numquantitiesperfile
 
       call measured_parameter (HDF_FILE, &
-        & QuantityNames(indx), groups, indx)
+        & QuantityNames(indx), groups, indx, setAlias)
 
     end do
 
@@ -1510,6 +1562,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.33  2002/12/11 22:21:05  pwagner
+! Makes soft link to data field name from L2gpValue field in hdf5 l2gp
+!
 ! Revision 2.32  2002/12/06 23:37:22  pwagner
 ! addingMetaData now optional arg to mls_sfstart
 !
