@@ -400,7 +400,7 @@ contains ! =====     Public procedures     =============================
              l+l_massMeanDiameterIce, l+l_massMeanDiameterWater, &
              l+l_numF, l+l_numJ, l+l_opticalDepth, &
              l+l_orbitInclination, l+l_ptan, l+l_radiance, l+l_earthradius,&
-             l+l_refGPH, l+l_sizedistribution, &
+             l+l_refGPH, l+l_rhi, l+l_sizedistribution, &
              l+l_scanResidual, l+l_scECI, l+l_scVel, l+l_scVelECI, &
              l+l_scVelECR, l+l_scGeocAlt, l+l_sidebandRatio, &
              l+l_spaceRadiance, l+l_surfacetype, l+l_temperature,&
@@ -880,6 +880,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.210  2002/04/10 17:44:50  pwagner
+! Added rhi quantity (but is this enough?)
+!
 ! Revision 2.209  2002/04/04 16:32:42  livesey
 ! Added negative error bar stuff
 !
