@@ -68,8 +68,8 @@ module INTRINSIC
   integer, parameter :: L_CLOUDICE             = l_cloudExtinction + 1
   integer, parameter :: L_CLOUDINDUCEDRADIANCE = l_cloudIce + 1
   integer, parameter :: L_CLOUDOPTICALDEPTH    = l_cloudInducedRadiance + 1
-  integer, parameter :: L_CLOUDSENSITIVITY     = l_cloudOpticalDepth + 1
-  integer, parameter :: L_CLOUDWATER    = l_cloudSensitivity + 1
+  integer, parameter :: L_CLOUDRADSENSITIVITY  = l_cloudOpticalDepth + 1
+  integer, parameter :: L_CLOUDWATER    = l_cloudRadSensitivity + 1
   integer, parameter :: L_DAYS          = l_cloudWater + 1
   integer, parameter :: L_DEG           = l_days + 1
   integer, parameter :: L_DEGREES       = l_deg + 1
@@ -123,7 +123,8 @@ module INTRINSIC
   integer, parameter :: L_RAD           = l_ptan + 1
   integer, parameter :: L_RADIANCE      = l_rad + 1
   integer, parameter :: L_RADIANS       = l_radiance + 1
-  integer, parameter :: L_REFGPH        = l_radians + 1
+  integer, parameter :: L_RADIUSOFEARTH = l_radians + 1
+  integer, parameter :: L_REFGPH        = l_radiusofearth + 1
   integer, parameter :: L_S             = l_refgph + 1
   integer, parameter :: L_SCANRESIDUAL  = l_s + 1
   integer, parameter :: L_SCECI         = l_scanresidual + 1
@@ -227,7 +228,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_cloudExtinction) =       add_ident ( 'cloudExtinction' )
     lit_indices(l_cloudIce) =              add_ident ( 'cloudIce' )
     lit_indices(l_cloudInducedRadiance) =  add_ident ( 'cloudInducedRadiance' )
-    lit_indices(l_cloudSensitivity) =      add_ident ( 'cloudSensitivity' )
+    lit_indices(l_cloudRadSensitivity) =   add_ident ( 'cloudRadSensitivity' )
     lit_indices(l_cloudWater) =            add_ident ( 'cloudWater' )
     lit_indices(l_days) =                  add_ident ( 'days' )
     lit_indices(l_deg) =                   add_ident ( 'deg' )
@@ -282,6 +283,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_rad) =                   add_ident ( 'rad' )
     lit_indices(l_radiance) =              add_ident ( 'radiance' )
     lit_indices(l_radians) =               add_ident ( 'radians' )
+    lit_indices(l_radiusofearth) =         add_ident ( 'radiusofearth' )
     lit_indices(l_refgph) =                add_ident ( 'refGPH' )
     lit_indices(l_s) =                     add_ident ( 's' )
     lit_indices(l_scanresidual) =          add_ident ( 'scanResidual' )
@@ -383,6 +385,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.29  2001/07/06 18:55:40  jonathan
+! Modified for cloud model, Paul/Jonathan
+!
 ! Revision 2.28  2001/05/31 22:07:33  livesey
 ! Updated cloud quantity types
 !
