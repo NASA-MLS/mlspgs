@@ -106,6 +106,12 @@ CONTAINS
         dzD%name = TRIM(cfProd%l3prodName) // 'Descending'
 
         DO j = 1, l2Days
+	  l3dz(j)%date = pcf%dates(j) 
+	  dzA(j)%date = pcf%dates(j) 
+	  dzD(j)%date = pcf%dates(j) 
+        ENDDO
+
+        DO j = 1, l2Days
 
            CALL AllocateL3DZ( nlev, cfDef%nNom, l3dz(j) )
            CALL AllocateL3DZ( nlev, cfDef%nNom, dzA(j) )
@@ -143,7 +149,7 @@ CONTAINS
 			alons, dlons, 				&
 			atimes, dtimes, 			&
 			afields, dfields )
-                
+
 !*** Calculate Daily Zonal Means  
 
         Call DailyZonalMeanFromL2(cfProd, cfDef, l2gp, l2Days,        	&
