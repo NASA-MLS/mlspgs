@@ -56,9 +56,9 @@ contains ! =====     Public Procedures     =============================
       & L_BOUNDARYPRESSURE, L_CHANNEL, L_CHISQCHAN, L_CHISQMMAF, &
       & L_CHISQMMIF, L_CLOUDEXTINCTION, L_CLOUDICE, L_CLOUDINDUCEDRADIANCE, &
       & L_CLOUDRADSENSITIVITY, L_COLUMNABUNDANCE, L_EARTHRADIUS, &
-      & L_EARTHREFL, L_EFFECTIVEOPTICALDEPTH, L_ELEVOFFSET, L_EXTINCTION, &
+      & L_EARTHREFL, L_ECRTOFOV, L_EFFECTIVEOPTICALDEPTH, L_ELEVOFFSET, L_EXTINCTION, &
       & L_GEODALTITUDE, L_GPH, L_HEIGHTOFFSET, L_LOSTRANSFUNC, L_LOSVEL, &
-      & L_MAGNETICFIELD, L_MASSMEANDIAMETERICE, L_NOISEBANDWIDTH, L_NONE, &
+      & L_MAGNETICFIELD, L_MASSMEANDIAMETERICE, L_MATRIX3X3, L_NOISEBANDWIDTH, L_NONE, &
       & L_OPTICALDEPTH, L_ORBITINCLINATION, L_PHITAN, L_PTAN, L_RADIANCE, &
       & L_REFGPH, L_RHI, L_SCANRESIDUAL, L_SCECI, L_SCGEOCALT, L_SCVEL, &
       & L_SCVELECI, L_SCVELECR, L_SIDEBANDRATIO, L_SPACERADIANCE, &
@@ -312,7 +312,8 @@ contains ! =====     Public Procedures     =============================
       & l_cloudInducedRadiance, l_cloudRADSensitivity, l_effectiveOpticalDepth, &
       & l_tngtECI, l_tngtGeodAlt, l_tngtGeocAlt, l_scECI, l_scGeocAlt,&
       & l_scVel, l_scVelECI, l_scVelECR, l_losVel, l_heightOffset, &
-      & l_scanResidual, l_chisqmmif, l_opticalDepth, l_orbitInclination /) )
+      & l_scanResidual, l_chisqmmif, l_opticalDepth, l_orbitInclination, &
+      & l_ECRtoFOV /) )
 
     majorFrame = any(quantityType == (/ l_chisqchan, l_chisqmmaf /) )
  
@@ -337,12 +338,17 @@ contains ! =====     Public Procedures     =============================
         frequencyCoordinate = l_channel
       end if
     
-      ! For some cases we know the quantity is an xyz vector
+      ! For some cases we know the quantity is an xyz vector, or a 3x3 xyz matrix
       if ( any(quantityType == &
        & (/ l_tngtECI, l_scECI, l_scVel, l_scVelECI, l_scVelECR /)) &
        & ) then
         noChans = 3
         frequencyCoordinate = l_xyz
+      end if
+
+      if ( quantityType == l_ECRtoFOV ) then
+        noChans = 9
+        frequencyCoordinate = l_matrix3X3
       end if
 
       ! Construct an empty quantity
@@ -1118,6 +1124,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.89  2003/05/07 01:00:03  livesey
+! More stuff got missed in the merge, was I asleep or something?
+!
 ! Revision 2.88  2003/02/13 19:05:39  vsnyder
 ! Move USEs from module to procedure scope, cosmetic changes
 !
