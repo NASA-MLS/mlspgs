@@ -10,7 +10,8 @@ module GLOBAL_SETTINGS
     & S_FORWARDMODEL, S_ForwardModelGlobal, S_TIME, S_VGRID, F_FILE, &
     & P_CYCLE, P_STARTTIME, P_ENDTIME, &
     & S_L1BRAD, S_L1BOA
-  use L1BData, only: l1bradSetup, l1boaSetup, ReadL1BData, L1BData_T, NAME_LEN
+  use L1BData, only: l1bradSetup, l1boaSetup, ReadL1BData, L1BData_T, NAME_LEN, &
+    & DeallocateL1BData
   use L2GPData, only: L2GPDATA_T
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: R8, NameLen, L1BInfo_T, TAI93_Range_T, FileNameLen
@@ -235,6 +236,7 @@ contains
            minTime = l1bField%dpField(1,1,1)
            maxTime = l1bField%dpField(1,1,noMAFs) ! This is start time of last MAF
       endif
+      call DeallocateL1BData ( l1bField, l1bFlag )
    endif
    if(got(1)) then
       processingrange%starttime = minTime + start_time_from_1stMAF
@@ -467,6 +469,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.33  2001/05/24 20:54:15  pwagner
+! Deleted p_ccs..times
+!
 ! Revision 2.32  2001/05/24 20:36:13  pwagner
 ! Warns if glob. stg. overrides pcf
 !
