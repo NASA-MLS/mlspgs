@@ -466,17 +466,17 @@ contains ! ================================ FullForwardModel routine ======
       sidebandStep = 1
     endif
 
-    ! Sort out some important dimensions
+ ! Sort out some important dimensions
     noSpecies = size ( fwdModelConf%molecules )
     no_mol = count ( fwdModelConf%molecules > 0)
     n_t_phi = temp%template%noInstances
     n_t_zeta = temp%template%noSurfs
-    no_tan_hts = fwdModelConf%tangentGrid%noSurfs
+
     MAF = fmStat%maf
     noMAFs = firstRadiance%template%noInstances
     noMIFs = firstRadiance%template%noSurfs
 
-    !  Get some dimensions that we'll use a lot
+  !  Get some dimensions that we'll use a lot
 
     ! Work out the `window' stuff for temperature.
     phiWindow = fwdModelConf%phiWindow
@@ -651,31 +651,7 @@ contains ! ================================ FullForwardModel routine ======
       end if
     end do ! Loop over species
 
-    ! Work out which frequencies we're going to need in non frequency --------
-    ! averaging case
-
     ! Now, allocate other variables we're going to need later ----------------
-
-    allocate ( k_temp(noUsedChannels, no_tan_hts, n_t_zeta, &
-      & windowStart:windowFinish), stat=ier )
-    if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
-      & MLSMSG_Allocate//'k_temp' )
-    allocate ( k_atmos(noUsedChannels, no_tan_hts, maxNoFFreqs, &
-      & maxNoFSurfs, windowStart:windowFinish, no_mol), stat=ier )
-    if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
-      & MLSMSG_Allocate//'k_atmos' )
-    allocate ( k_spect_dw(noUsedChannels, no_tan_hts, maxNoFFreqs, &
-      & maxNoFSurfs, windowStart:windowFinish, no_mol), stat=ier )
-    if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
-      & MLSMSG_Allocate//'k_spect_dw' )
-    allocate ( k_spect_dn(noUsedChannels, no_tan_hts, maxNoFFreqs, &
-      & maxNoFSurfs, windowStart:windowFinish, no_mol), stat=ier )
-    if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
-      & MLSMSG_Allocate//'k_spect_dn' )
-    allocate ( k_spect_dv(noUsedChannels, no_tan_hts, maxNoFFreqs, &
-      & maxNoFSurfs, windowStart:windowFinish, no_mol), stat=ier )
-    if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
-      & MLSMSG_Allocate//'k_spect_dv' )
 
     call Allocate_test ( skip_eta_frq, no_mol, 'skip_eta_frq', ModuleName )
 
@@ -727,17 +703,24 @@ contains ! ================================ FullForwardModel routine ======
 !
     END DO
 !
+! On top of all of these, add the original Integration Grid:
+!
+    j = SIZE(z_all) + Size(FwdModelConf%integrationGrid%surfs)
+    CALL allocate_test (z_tmp, j, 'z_tmp', ModuleName )
+    z_tmp = (/z_all,FwdModelConf%integrationGrid%surfs/)
+!
+! Move z_tmp to z_all
+!
+    CALL Deallocate_test(z_all,'z_all',ModuleName)
+    CALL Allocate_test(z_all,SIZE(z_tmp),'z_all',ModuleName)
+    z_all = z_tmp
+    CALL Deallocate_Test(z_tmp,'z_tmp',ModuleName)
+!
+! Now, create the final grid:
+!
     CALL make_z_grid(z_all,z_psig,rec_tan_inds)
     CALL Deallocate_test(z_all,'z_all',ModuleName)
 !
-! We are going to ignore data in FwdModelConf%integrationGrid%surfs
-! and replace this with z_psig
-!
-    write(6,928)
- 928 format('** Note **',/,3x,'Ignoring FwdModelConf%integrationGrid%surfs, &
-       &fwdModelConf%tangentGrid%surfs',/,3x,'and replacing it with the &
-       &output from the make_z_grid subroutine !')
-
     Nlvl = SIZE(z_psig)
     maxVert = (Nlvl-1) * Ng + Nlvl
 
@@ -792,6 +775,10 @@ contains ! ================================ FullForwardModel routine ======
       &  0.001*refGPH%values(1,:),z_glgrid,ORB_INC,   &
       &  t_glgrid, h_glgrid, dhdz_glgrid,dh_dt_glgrid )
 !
+! We are going to over-writing the user's Tangent Grid specifications ..
+! (Replacing "fwdModelConf%tangentGrid%surfs" with: "tan_press")
+
+    tan_press(j+1:no_tan_hts) = z_glgrid(tan_inds(j+1:no_tan_hts))
     j = COUNT(fwdModelConf%tangentGrid%surfs < (z_glgrid(1) - 0.0001_rp))
     no_tan_hts = Nlvl + j
     call allocate_test (tan_inds, no_tan_hts, 'tan_inds', ModuleName )
@@ -808,6 +795,28 @@ contains ! ================================ FullForwardModel routine ======
 
     elev_offset= 0.0_rp
 
+ ! Now, allocate other variables we're going to need later ----------------
+
+    allocate ( k_temp(noUsedChannels, no_tan_hts, n_t_zeta, &
+      & windowStart:windowFinish), stat=ier )
+    if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+      & MLSMSG_Allocate//'k_temp' )
+    allocate ( k_atmos(noUsedChannels, no_tan_hts, maxNoFFreqs, &
+      & maxNoFSurfs, windowStart:windowFinish, no_mol), stat=ier )
+    if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+      & MLSMSG_Allocate//'k_atmos' )
+    allocate ( k_spect_dw(noUsedChannels, no_tan_hts, maxNoFFreqs, &
+      & maxNoFSurfs, windowStart:windowFinish, no_mol), stat=ier )
+    if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+      & MLSMSG_Allocate//'k_spect_dw' )
+    allocate ( k_spect_dn(noUsedChannels, no_tan_hts, maxNoFFreqs, &
+      & maxNoFSurfs, windowStart:windowFinish, no_mol), stat=ier )
+    if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+      & MLSMSG_Allocate//'k_spect_dn' )
+    allocate ( k_spect_dv(noUsedChannels, no_tan_hts, maxNoFFreqs, &
+      & maxNoFSurfs, windowStart:windowFinish, no_mol), stat=ier )
+    if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+      & MLSMSG_Allocate//'k_spect_dv' )
     call allocate_test ( tan_temp, no_tan_hts, n_t_phi, 'tan_temp', &
       &  ModuleName )
 
@@ -992,10 +1001,9 @@ contains ! ================================ FullForwardModel routine ======
 
         ! Now we've identified the pointing grids.  Locate the tangent grid
         ! within it.
-        call allocate_test ( grids, FwdModelConf%TangentGrid%nosurfs, &
-          "Grids", ModuleName )
+        call allocate_test ( grids, no_tan_hts, "Grids", ModuleName )
         call Hunt ( PointingGrids(whichPointingGrid)%oneGrid%height, &
-          & tan_press, grids, allowTopValue=.true. )
+                 &  tan_press, grids, allowTopValue=.true. )
         ! Work out the maximum number of frequencies
         maxNoPtgFreqs = 0
         do ptg_i = 1, no_tan_hts
@@ -2080,6 +2088,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.26  2002/02/02 11:20:17  zvi
+! Code to overwrite the l2cf integration & tanget grids
+!
 ! Revision 2.25  2002/01/30 01:11:18  zvi
 ! Fix bug in user selectable coeff. code
 !
