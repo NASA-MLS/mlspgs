@@ -697,6 +697,11 @@ $(utctotai_sources): $(MLSBIN)/utctotai.shar
 	/bin/sh utctotai.shar
 
 # build and install some of the executables out of util
+compare: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/compare.f90
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
 CondenseLeakLog: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/CondenseLeakLog.f90
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -c $(MLSCONFG) -p $@ -M $(MAKE) \
@@ -1084,6 +1089,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.84  2003/08/01 19:59:46  pwagner
+# installs l2 parallel executables into (PVM_EP) if (L2PARALLEL) set
+#
 # Revision 1.83  2003/06/03 20:38:24  pwagner
 # Renamed mkdir_cascade mkpath
 #
