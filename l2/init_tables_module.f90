@@ -757,12 +757,12 @@ contains ! =====     Public procedures     =============================
              begin, f+f_cloudRadiance, s+s_vector, f+f_template, f+f_quantities, &
                     nr+n_dot, &
              begin, f+f_ptanquantity, s+s_vector, f+f_template, f+f_quantities, &
-                    n+n_dot, &
+                    nr+n_dot, &
              begin, f+f_channels, t+t_numeric, t+t_numeric_range, n+n_field_type, &
-             begin, f+f_cloudchannels, t+t_numeric, t+t_numeric_range, n+n_field_type, &
-             begin, f+f_height, t+t_numeric_range, n+n_field_type, &
+             begin, f+f_cloudchannels, t+t_numeric, nr+n_field_type, &
+             begin, f+f_height, t+t_numeric_range, nr+n_field_type, &
              begin, f+f_cloudHeight, t+t_numeric_range, n+n_field_type, &
-             begin, f+f_cloudRadianceCutoff, t+t_numeric, n+n_field_type, &
+             begin, f+f_cloudRadianceCutoff, t+t_numeric, nr+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_forwardModel, & ! Must be AFTER s_vector and s_matrix
@@ -937,7 +937,8 @@ contains ! =====     Public procedures     =============================
              s+s_snoop, s+s_time, s+s_vectortemplate, n+n_section, &
       begin, z+z_fill, s+s_dump, s+s_fill, s+s_fillCovariance, s+s_fillDiagonal, &
                        s+s_negativePrecision, s+s_matrix, s+s_destroy, &
-                       s+s_snoop, s+s_time, s+s_vector, s+s_transfer, n+n_section, &
+                       s+s_snoop, s+s_time, s+s_vector, s+s_transfer, &
+                       s+s_subset, s+s_flagcloud, n+n_section, &
       begin, z+z_retrieve, s+s_dumpBlocks, s+s_matrix, s+s_retrieve, &
                            s+s_sids, s+s_snoop, s+s_subset, s+s_flagCloud, s+s_time, &
                            n+n_section, &
@@ -958,6 +959,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.290  2003/03/06 00:46:18  livesey
+! Added subset and flagcloud to fill and minor tidyups.
+!
 ! Revision 2.289  2003/03/05 19:11:22  livesey
 ! Added allow missing to fill.
 !
