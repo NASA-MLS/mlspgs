@@ -41,7 +41,8 @@ module FullForwardModel_m
   use SpectroscopyCatalog_m, only: CATALOG_T, LINE_T, LINES, CATALOG
   use intrinsic, only: L_TEMPERATURE, L_RADIANCE, L_PTAN, L_ELEVOFFSET, &
     & L_ORBITINCLINATION, L_SPACERADIANCE, L_EARTHREFL, L_LOSVEL, &
-    & L_SCGEOCALT, L_SIDEBANDRATIO, L_NONE, L_CHANNEL, L_VMR, L_REFGPH, LIT_INDICES
+    & L_SCGEOCALT, L_SIDEBANDRATIO, L_NONE, L_CHANNEL, L_VMR, L_REFGPH, &
+    & LIT_INDICES
   use Units, only: Deg2Rad
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate,&
     & MLSMSG_Error, MLSMSG_Warning
@@ -1836,6 +1837,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.12  2001/11/08 00:11:29  livesey
+! Added extinction stuff
+!
 ! Revision 2.11  2001/11/07 21:19:01  livesey
 ! Put Zvi's change comments back
 !
@@ -2054,8 +2058,3 @@ contains ! ================================ FullForwardModel routine ======
 
 ! Revision 1.1  2001/05/29 22:53:51  livesey
 ! First version, taken from old ForwardModelInterface.f90
-
-
-
-
-

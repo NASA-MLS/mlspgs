@@ -97,13 +97,13 @@ contains
         f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
           & quantityType=l_vmr, molecule=molecules(i) )
       endif
-      if ( f%template%frequencyCoordinate /= l_none ) then
+      kz = f%template%noSurfs
+      kp = f%template%noInstances
+      if ( f%template%frequencyCoordinate == l_none ) then
         kf = 1
       else
         kf = f%template%noChans
       endif
-      kz = f%template%noSurfs
-      kp = f%template%noInstances
       Grids_f%no_z(i) = kz
       Grids_f%no_p(i) = kp
       Grids_f%no_f(i) = kf
@@ -144,16 +144,16 @@ contains
         f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
           & quantityType=l_vmr, molecule=molecules(i) )
       endif
-      if ( f%template%frequencyCoordinate /= l_none ) then
+      kz = f%template%noSurfs
+      kp = f%template%noInstances
+      if ( f%template%frequencyCoordinate == l_none ) then
         kf = 1
       else
         kf = f%template%noChans
       endif
-      kz = f%template%noSurfs
-      kp = f%template%noInstances
-      k = j + kp
       n = l + kz
       m = s + kf
+      k = j + kp
       r = f_len + kz * kp * kf
       Grids_f%zet_basis(l:n-1) = f%template%surfs(:,1)
       if ( f%template%frequencyCoordinate /= l_none ) then
@@ -161,7 +161,6 @@ contains
           & call MLSMessage ( MLSMSG_Error, ModuleName, &
           & "Inappropriate frequency coordinate for a species" )
         if ( associated(f%template%frequencies ) ) then
-          print*,'s,m-1,size(frequencies)',s,m-1,size(f%template%frequencies)
           Grids_f%frq_basis(s:m-1) = f%template%frequencies
         else
           call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -188,7 +187,7 @@ contains
     !******************* LOAD SPECTRAL SPECIES DATA ****************
 !
     !*** if (.not. associated(Spect_der) ) return
-    return
+    if(j > -10000) return
 !
     if(index(WNV,'W') > 0) then
       allocate ( Grids_dw%no_z(n_sps), stat=j )
@@ -242,7 +241,7 @@ contains
       do
         m = m + 1
         !  *** if(Spect_Der(m)%Spectag == Spectag) exit
-        exit
+        if(m > -100) exit    ! ** ZEBUG
         if(m == 3*n_sps) exit
       end do
       !  *** if(Spect_Der(m)%Spectag /= Spectag) cycle
@@ -336,7 +335,7 @@ contains
       do
         m = m + 1
         !  *** if(Spect_Der(m)%Spectag == Spectag) exit
-        exit
+        if(m > -100) exit    ! ** ZEBUG
         if(m == 3*n_sps) exit
       end do
       !  *** if(Spect_Der(m)%Spectag /= Spectag) cycle
@@ -403,6 +402,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.2  2001/11/08 00:10:13  livesey
+! Interim version for extinction
+!
 ! Revision 2.1  2001/11/02 10:48:39  zvi
 ! Implementing frequecy grid
 !
