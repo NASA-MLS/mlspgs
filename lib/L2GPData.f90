@@ -6,6 +6,7 @@ MODULE L2GPData                 ! Data types for storing L2GP data internally
 !=============================================================================
 
   USE MLSMessageModule
+  USE MLSCommon
 
   IMPLICIT NONE
 
@@ -39,13 +40,13 @@ MODULE L2GPData                 ! Data types for storing L2GP data internally
     ! Now the horizontal geolocation information. Dimensioned (noProfs)
     REAL, POINTER, DIMENSION(:) :: latitude,longitude,solarTime, &
          & solarZenith, losAngle, geodAngle
-    DOUBLE PRECISION, POINTER, DIMENSION(:) :: time
+    REAL(r8), POINTER, DIMENSION(:) :: time
     INTEGER, POINTER, DIMENSION(:) :: chunkNumber
     CHARACTER (LEN=CCSDSLen), POINTER, DIMENSION(:) :: ccsdsTime
 
     ! Now we store the `frequency' geolocation field
 
-    DOUBLE PRECISION, POINTER, DIMENSION(:) :: frequency
+    REAL(r8), POINTER, DIMENSION(:) :: frequency
     !        dimensioned (noFreqs)
 
     ! Finally we store the data fields
@@ -191,6 +192,9 @@ END MODULE L2GPData
 
 !
 ! $Log$
+! Revision 1.3  1999/12/03 22:24:50  livesey
+! Tidied up some of the INTENT stuff
+!
 ! Revision 1.2  1999/12/03 21:28:56  livesey
 ! Renamed L2GP_T to L2GPData_T
 !

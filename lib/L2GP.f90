@@ -7,6 +7,7 @@ MODULE L2GP
 !===============================================================================
 
    USE L1BData
+   USE MLSCommon
    IMPLICIT NONE
    PUBLIC
 
@@ -67,7 +68,7 @@ MODULE L2GP
 ! Now the horizontal geolocation information,
 ! dimensioned (firstProfStored:firstProfStored+noProfsStored-1)
 
-      DOUBLE PRECISION, DIMENSION(:), POINTER :: time
+      REAL(r8), DIMENSION(:), POINTER :: time
       INTEGER, DIMENSION(:), POINTER :: chunkNumber
       REAL, DIMENSION(:), POINTER :: latitude, longitude, solarTime, &
                                      solarZenith, losAngle, geodAngle
@@ -78,7 +79,7 @@ MODULE L2GP
 
 ! Now we store the "frequency" geolocation field
 
-      DOUBLE PRECISION, DIMENSION(:), POINTER :: freq
+      REAL(r8), DIMENSION(:), POINTER :: freq
 							! dimensioned (noFreqs)
 ! Finally we store the data fields
 
@@ -623,6 +624,9 @@ END MODULE L2GP
 !==============
 
 !# $Log$
+!# Revision 1.1  1999/11/18 17:52:36  nakamura
+!# Prototype module containing L2GP derived type definition and subroutines for creating an L2GP output file.
+!#
 !# Revision 1.3  1999/11/18 16:02:36  nakamura
 !# Changed name of first subroutine to L2GP_createFile; added subroutines L2GP_writeGeo and DeallocateL2GP.
 !#

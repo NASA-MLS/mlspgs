@@ -6,6 +6,7 @@ MODULE L2AUXData                 ! Data types for storing L2AUX data internally
 !=============================================================================
 
   USE MLSMessageModule
+  USE MLSCommon
 
   IMPLICIT NONE
 
@@ -38,7 +39,7 @@ MODULE L2AUXData                 ! Data types for storing L2AUX data internally
   TYPE L2AUX_Dimension_T
      INTEGER :: noValues        ! Length of this dimension
      INTEGER :: dimensionFamily ! What is this dimension
-     DOUBLE PRECISION, DIMENSION(:), POINTER :: values ! (noValues)
+     REAL(r8), DIMENSION(:), POINTER :: values ! (noValues)
   END TYPE L2AUX_Dimension_T
 
   ! This datatype describes an l2aux dimension.
@@ -51,7 +52,7 @@ MODULE L2AUXData                 ! Data types for storing L2AUX data internally
     ! The dimensions for the quantity
     TYPE (L2AUX_Dimension_T), DIMENSION(3) :: dimensions
 
-    DOUBLE PRECISION, POINTER, DIMENSION(:,:,:) :: values
+    REAL(r8), POINTER, DIMENSION(:,:,:) :: values
   END TYPE L2AUXData_T
 
 CONTAINS
@@ -180,6 +181,9 @@ END MODULE L2AUXData
 
 !
 ! $Log$
+! Revision 1.3  1999/12/03 22:25:57  livesey
+! Tidied up some of the INTENT stuff
+!
 ! Revision 1.2  1999/12/03 21:22:23  livesey
 ! Removed old log data
 !

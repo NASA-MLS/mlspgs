@@ -5,6 +5,7 @@
 MODULE VectorQuantities         ! Quantities within vectors
 !=============================================================================
 
+  USE MLSCommon
   USE MLSMessageModule
   USE MLSSignalNomenclature
 
@@ -52,8 +53,8 @@ MODULE VectorQuantities         ! Quantities within vectors
 
      ! Now some misc. information
 
-     DOUBLE PRECISION :: badValue ! Value used to flag bad/missing data
-     DOUBLE PRECISION :: scaleFactor ! Scale factor used when printing etc.
+     REAL(r8) :: badValue ! Value used to flag bad/missing data
+     REAL(r8) :: scaleFactor ! Scale factor used when printing etc.
 
      ! Now, for regular quantities the number of elements each subvector is
      ! simply noSurfs*noChans.  For irregular ones it is less, but it is
@@ -68,20 +69,20 @@ MODULE VectorQuantities         ! Quantities within vectors
 
      ! Now we give the vertical coordinates
 
-     DOUBLE PRECISION, DIMENSION(:,:), POINTER :: surfs
+     REAL(r8), DIMENSION(:,:), POINTER :: surfs
 
      ! This is dimensioned (noSurfs,1) for regular quantities and (noSurfs
      !,noSubVectors) for irregular ones.
 
      ! Now the horizontal coordinates
 
-     DOUBLE PRECISION, DIMENSION(:,:), POINTER :: phi
+     REAL(r8), DIMENSION(:,:), POINTER :: phi
 
      ! This is dimensioned (1,noSubVectors) for stacked quantities and (noSurfs
      !,noSubVectors) for unstacked ones.  These other coordinates are
      ! dimensioned in the same manner.
 
-     DOUBLE PRECISION, DIMENSION(:,:), POINTER :: geodLat,lon,time, &
+     REAL(r8), DIMENSION(:,:), POINTER :: geodLat,lon,time, &
           & solarTime,solarZenith,losAngle
 
      ! This integer array can be used to tie subVectors to say l2gp profile
@@ -98,10 +99,10 @@ MODULE VectorQuantities         ! Quantities within vectors
 
      INTEGER :: frequencyCoordinate ! An enumerated type, explains next fields
 
-     DOUBLE PRECISION, DIMENSION(:), POINTER :: frequencies 
+     REAL(r8), DIMENSION(:), POINTER :: frequencies 
      ! List of frequencies (noChans)
 
-     DOUBLE PRECISION :: lo     ! Local oscillator (optional)
+     REAL(r8) :: lo     ! Local oscillator (optional)
 
      ! Other quantities refer to a particular MLS signal designation
 
@@ -363,6 +364,9 @@ END MODULE VectorQuantities
 
 !
 ! $Log$
+! Revision 1.7  1999/12/04 00:26:33  livesey
+! Added a few comments.
+!
 ! Revision 1.6  1999/12/03 22:27:08  livesey
 ! Tidied up some of the INTENT stuff
 !

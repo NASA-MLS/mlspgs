@@ -55,7 +55,7 @@ MODULE VectorsModule            ! Vectors in the MLS PGS suite
   TYPE Vector_T
      CHARACTER (LEN=VectorNameLen) :: name ! Name for vector
      TYPE (VectorTemplate_T) :: template ! Copy from template database
-     DOUBLE PRECISION, DIMENSION(:), POINTER :: values
+     REAL(r8), DIMENSION(:), POINTER :: values
   END TYPE Vector_T
 
   ! This incrementing counter is used to set the id field for a vector template
@@ -278,4 +278,7 @@ END MODULE VectorsModule
 
 !
 ! $Log$
+! Revision 1.1  1999/12/04 00:30:18  livesey
+! First version.
+!
 !
