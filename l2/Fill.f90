@@ -62,7 +62,8 @@ contains ! =====     Public Procedures     =============================
       & F_ORBITINCLINATION, F_PHITAN, F_PRECISION, F_PRECISIONFACTOR, &
       & F_PROFILEVALUES, F_PTANQUANTITY, &
       & F_QUANTITY, F_RADIANCEQUANTITY, F_RATIOQUANTITY, &
-      & F_REFRACT, F_REFGPHQUANTITY, F_RESETSEED, F_RHIQUANTITY, F_Rows, &
+      & F_REFRACT, F_REFGPHQUANTITY, F_REFGPHPRECISIONQUANTITY, F_RESETSEED, &
+      & F_RHIQUANTITY, F_Rows, &
       & F_SCECI, F_SCVEL, F_SCVELECI, F_SCVELECR, F_SEED, F_SKIPMASK, &
       & F_SOURCE, F_SOURCEGRID, F_SOURCEL2AUX, F_SOURCEL2GP, &
       & F_SOURCEQUANTITY, F_SOURCEVGRID, F_SPREAD, F_SUPERDIAGONAL, &
@@ -73,7 +74,8 @@ contains ! =====     Public Procedures     =============================
     ! Now the literals:
     use INIT_TABLES_MODULE, only: L_ADDNOISE, L_BOUNDARYPRESSURE, L_CHISQCHAN, &
       & L_CHISQMMAF, L_CHISQMMIF, L_CHOLESKY, L_COLUMNABUNDANCE, &
-      & L_ESTIMATEDNOISE, L_EXPLICIT, L_FOLD, L_GPH, L_GRIDDED, L_H2OFROMRHI, &
+      & L_ESTIMATEDNOISE, L_EXPLICIT, L_FOLD, L_GPH, L_GPHPRECISION, &
+      & L_GRIDDED, L_H2OFROMRHI, &
       & L_HEIGHT, &
       & L_HYDROSTATIC, L_ISOTOPE, L_ISOTOPERATIO, L_KRONECKER, L_L1B, L_L2GP, &
       & L_L2AUX, L_LOSVEL, L_NEGATIVEPRECISION, L_NOISEBANDWIDTH, L_NONE, &
@@ -122,7 +124,7 @@ contains ! =====     Public Procedures     =============================
     use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID, GetIndexFlagsFromList
     use OUTPUT_M, only: BLANKS, OUTPUT
     use QuantityTemplates, only: QuantityTemplate_T
-    use ScanModelModule, only: GetBasisGPH, Get2DHydrostaticTangentPressure
+    use ScanModelModule, only: GetBasisGPH, Get2DHydrostaticTangentPressure, GetGPHPrecision
     use SnoopMLSL2, only: SNOOP
     use String_Table, only: Display_String
     use Time_M, only: Time_Now
@@ -248,6 +250,7 @@ contains ! =====     Public Procedures     =============================
     type (vectorValue_T), pointer :: RADIANCEQUANTITY
     type (vectorValue_T), pointer :: RATIOQUANTITY
     type (vectorValue_T), pointer :: REFGPHQUANTITY
+    type (vectorValue_T), pointer :: REFGPHPRECISIONQUANTITY
     type (vectorValue_T), pointer :: SCECIQUANTITY
     type (vectorValue_T), pointer :: SCVELQUANTITY
     type (vectorValue_T), pointer :: SOURCEQUANTITY
@@ -343,6 +346,8 @@ contains ! =====     Public Procedures     =============================
     logical :: REFRACT                  ! Do refraction in phiTan fill
     integer :: REFGPHQUANTITYINDEX      ! in the quantities database
     integer :: REFGPHVECTORINDEX        ! In the vector database
+    integer :: REFGPHPRECISIONQUANTITYINDEX      ! in the quantities database
+    integer :: REFGPHPRECISIONVECTORINDEX        ! In the vector database
     logical :: RESETSEED                ! Let mls_random_seed choose new seed
     integer :: ROWVECTOR                ! Vector defining rows of Matrix
     integer :: SCECIQUANTITYINDEX       ! In the quantities database
@@ -657,6 +662,9 @@ contains ! =====     Public Procedures     =============================
           case ( f_refGPHQuantity ) ! For hydrostatic or rhi
             refGPHVectorIndex = decoration(decoration(subtree(1,gson)))
             refGPHQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))    
+          case ( f_refGPHPrecisionQuantity ) ! For GPH precision
+            refGPHPrecisionVectorIndex = decoration(decoration(subtree(1,gson)))
+            refGPHPrecisionQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))    
           case ( f_resetSeed )
             resetSeed = get_boolean ( gson )
           case ( f_rhiQuantity ) ! For h2o from rhi
@@ -791,6 +799,24 @@ contains ! =====     Public Procedures     =============================
           end if
           call addGaussianNoise ( key, quantity, sourceQuantity, &
             & noiseQty, multiplier )
+
+        case ( l_gphPrecision) ! -------------  GPH precision  -----
+          ! Need a tempPrecision and a refgphPrecision quantity
+          if ( .not.all(got( (/ f_refGPHPrecisionQuantity, f_tempPrecisionQuantity /))) ) &
+            call Announce_Error ( key,needTempREFGPH )
+
+          tempPrecisionQuantity => GetVectorQtyByTemplateIndex( &
+            &  vectors(tempPrecisionVectorIndex), tempPrecisionQuantityIndex)
+          if ( tempPrecisionQuantity%template%quantityType /= l_Temperature ) &
+            & call Announce_Error ( key, badTemperatureQuantity )
+
+          refGPHPrecisionQuantity => GetVectorQtyByTemplateIndex( &
+            & vectors(refGPHPrecisionVectorIndex), refGPHPrecisionQuantityIndex)
+          if ( refGPHPrecisionQuantity%template%quantityType /= l_refGPH ) &
+            & call Announce_Error ( key, badrefGPHQuantity )
+
+          call FillGPHPrecision ( key, quantity, tempPrecisionQuantity, &
+            & refGPHPrecisionQuantity )          
 
         case ( l_hydrostatic ) ! -------------  Hydrostatic fills  -----
           ! Need a temperature and a refgph quantity
@@ -3675,6 +3701,57 @@ contains ! =====     Public Procedures     =============================
 
     end subroutine FillVectorQtyHydrostatically
 
+    ! ------------------------------------- FillVectorHydrostatically ----
+    subroutine FillGPHPrecision ( key, quantity, &
+      & tempPrecisionQuantity, refGPHPrecisionQuantity )
+      ! Fill the GPH precision from the temperature and refGPH precision,
+      ! ignoring the of diagonal elements (not available outside
+      ! RetrievalModule anyway).
+      integer, intent(in) :: key          ! For messages
+      type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
+      type (VectorValue_T), intent(in) :: TEMPPRECISIONQUANTITY
+      type (VectorValue_T), intent(in) :: REFGPHPRECISIONQUANTITY
+
+      ! Local variables
+
+      ! Executable code
+
+      if ( toggle(gen) .and. levels(gen) > 0 ) &
+        & call trace_begin ( "FillGPHPrecision", key )
+
+      select case ( quantity%template%quantityType )
+      case ( l_gph )
+        if ( (tempPrecisionQuantity%template%noSurfs /= &
+          &   quantity%template%noSurfs) .or. &
+          &  (refGPHPrecisionQuantity%template%noInstances /= &
+          &   quantity%template%noInstances) .or. &
+          &  (tempPrecisionQuantity%template%noInstances /= &
+          &   quantity%template%noInstances) ) then
+          call Announce_Error ( key, nonConformingHydrostatic, &
+            & "case l_gph failed first test" )
+	  if ( toggle(gen) .and. levels(gen) > 0 ) &
+            & call trace_end ( "FillGPHPrecision")
+          return
+        end if
+        if ( (any(quantity%template%surfs /= tempPrecisionQuantity%template%surfs)) .or. &
+          & (any(quantity%template%phi /= tempPrecisionQuantity%template%phi)) .or. &
+          & (any(quantity%template%phi /= refGPHPrecisionQuantity%template%phi)) ) then
+          call Announce_Error ( key, nonConformingHydrostatic, &
+            &  "case l_gph failed second test" )
+	  if ( toggle(gen) .and. levels(gen) > 0 ) &
+            & call trace_end ( "FillGPHPrecision")
+          return
+        end if
+        call GetGPHPrecision ( tempPrecisionQuantity, refGPHPrecisionQuantity, quantity%values )
+      case default
+        call Announce_error ( 0, 0, 'GPH precision needed for result of FillGPHPrecision' )
+      end select
+
+      if ( toggle(gen) .and. levels(gen) > 0 ) &
+        & call trace_end ( "FillGPHPrecision" )
+
+    end subroutine FillGPHPrecision
+
     ! -------------------------------------- FillVectorQtyFromIsotope -----------
 
     subroutine FillVectorQtyFromIsotope ( key, quantity, sourceQuantity, &
@@ -4422,6 +4499,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.155  2002/10/16 20:15:27  mjf
+! Added GPH precision.
+!
 ! Revision 2.154  2002/10/10 23:52:57  pwagner
 ! Added code to fill from L1bdata with hdf5; untested
 !
