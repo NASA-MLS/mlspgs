@@ -682,8 +682,12 @@ op:   do j = 2, nsons(pfaTree)
       end do ! i
     end if
 
-    ! Now the isotope ratio fields
+    ! Now the cat_index and isotope ratio fields
     do i = 1, size(info%beta_group)
+      call allocate_test ( info%beta_group(i)%cat_index, &
+        & size(info%beta_group(i)%lbl_molecules), &
+        & 'beta_group(b)%Cat_Index', moduleName )
+      info%beta_group(i)%cat_index = 0 ! in case somebody asks for a dump
       call allocate_test ( info%beta_group(i)%LBL_Ratio, &
         &                  size(info%beta_group(i)%LBL_Molecules), &
         &                  'LBL_Ratio', moduleName )
@@ -1093,6 +1097,9 @@ op:   do j = 2, nsons(pfaTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.103  2004/11/05 19:39:06  vsnyder
+! Moved some stuff here from fwdmdl/Get_Species_Data
+!
 ! Revision 2.102  2004/11/04 03:42:33  vsnyder
 ! Provide for both LBL_Ratio and PFA_Ratio in beta_group
 !
