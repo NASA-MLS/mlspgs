@@ -30,7 +30,7 @@ module Parse_Signal_M
 contains
 
   subroutine Parse_Signal ( Signal_String, Signal_Indices, Spec_indices, &
-    & Tree_Index, Sideband, Channels )
+    & Tree_Index, Sideband, Channels, OnlyCountEm )
 
   ! Parse a signal string.  Return the indices in the signal database of
   ! signals that match the signal string.
@@ -40,10 +40,10 @@ contains
   ! [C channel_number[:|+channel_number]*
 
     character(len=*), intent(in) :: Signal_String ! Input
-    integer, pointer :: Signal_Indices(:)         ! In the signals database
-    ! They are allocated here using Allocate_Test, so don't start with an
-    ! undefined pointer!  Upon return, if Signal_Indices is not associated,
-    ! an error occurred.
+    integer, pointer :: Signal_Indices(:)         ! Indices in the signals
+    ! database.  Deallocated here using Allocate_Test, so don't start with an
+    ! undefined pointer!  Upon return, if Signal_Indices is not associated
+    ! (and OnlyCountEm is not present), an error occurred.
     integer, intent(in) :: Spec_indices(spec_first:)   ! Indices in string
     !                                               table; For error messages
     integer, intent(in), optional :: Tree_Index   ! To get line and column
@@ -56,6 +56,9 @@ contains
     ! numbers mentioned after the .C part of the signal specification. They
     ! are allocated here using Allocate_Test, so don't start with an
     ! undefined pointer!
+    integer, intent(out), optional :: OnlyCountEm ! If OnlyCountEm is present,
+    ! Signal_Indices is NOT touched; instead, OnlyCountEm returns the number
+    ! of matching signals.
 
     integer :: Band_i         ! Database index
     type(decls) :: Decl       ! Declaration of an identifier
@@ -413,10 +416,11 @@ o:  do
       howMany = count ( bandMatch .and. channelMatch .and. radiometerMatch &
         & .and. spectrometerMatch .and. SpectrometerTypeMatch .and. &
         & switchMatch )
+      if ( present(onlyCountEm) ) onlyCountEm = howMany
       if ( howMany == 0 ) then
         where = 1
         call announce_error ( invalid, signal_string, tree_index )
-      else
+      else if ( .not. present(onlyCountEm) ) then
         call allocate_test ( signal_indices, howMany, moduleName, &
           & 'signal_indices' )
         howMany = 0
@@ -436,6 +440,9 @@ o:  do
 end module Parse_Signal_M
 
 ! $Log$
+! Revision 2.9  2001/04/13 20:58:48  vsnyder
+! Add 'OnlyCountEm' argument
+!
 ! Revision 2.8  2001/04/11 20:19:46  vsnyder
 ! Look for channels in signals instead of spectrometers
 !
