@@ -734,6 +734,8 @@ contains
     tau(1:Nptg) = 0.0
     kk = TFMI%ptg_press%no_lin_values
     tau(1:kk) = dble(TFMI%ptg_press%lin_val(1:kk))
+
+    klo = -1
     Call Hunt(Zeta,tau,kk,klo,j)
     IF(ABS(Zeta-tau(j)) < ABS(Zeta-tau(klo))) klo=j
 !
@@ -747,6 +749,7 @@ contains
 !
     if(.not. ANY((/FMC%temp_der,FMC%atmos_der,FMC%spect_der/))) goto 99
 !
+    m = -1
     ch = 1
     tau(1:) = 0.0
     do i = 1, k_info_count
@@ -805,6 +808,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.13  2001/03/09 02:27:20  zvi
+! *** empty log message ***
+!
 ! Revision 2.12  2001/03/09 01:49:31  zvi
 ! *** empty log message ***
 !
