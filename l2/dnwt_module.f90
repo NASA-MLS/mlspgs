@@ -187,7 +187,7 @@ module DNWT_MODULE
   !      In case you want to add some flags of your own...
   integer, parameter, public :: NF_BIGGEST_FLAG = NF_FANDJ
   integer, parameter, public :: NF_SMALLEST_FLAG = NF_DX_AITKEN
-  character(LEN=80), private :: output_line
+  character(LEN=132), private :: output_line
 
   interface NWT; module procedure DNWT; end interface
   interface NWTA; module procedure DNWTA; end interface
@@ -813,14 +813,15 @@ contains
       fnxe = cp25*fn**2+cp76*fnxe
   780 if (k1it /= 0) then
          k1it = k1it-1
-         write(output_line,3002) iter,fn,frz,fnmin,fnxe,spl,         &
-     &                 sq,dxn,gradn,cgdx,cdxdxl,ajn,diag,condai, &
+         write(output_line,3002) iter,fn,frz,fnmin,fnxe,spl,sq
+ 3002    format(' ITER=',I4,'  FN=',G10.3, '  FRZ=',G10.3, &
+     &          '  FNMIN=',G10.3,'  FNXE=', G10.3,'  SPL=',G10.3, &
+     &          '  SQ=',G10.3)
+         call output(trim(output_line), advance='yes')
+         write(output_line,3003) dxn,gradn,cgdx,cdxdxl,ajn,diag,condai, &
      &                 inc,kb
- 3002    format(' ITER=',I4,'  FN=',G10.3,  &
-     &          '  FRZ=',G10.3,'  FNMIN=',G10.3,'  FNXE=',    &
-     &          G10.3,'  SPL=',G10.3,'  SQ=',G10.3/' DXN=',   &
-     &          G10.3,'  GRADN=',G10.3,'  CGDX=',G10.3,       &
-     &          '  CDXDXL=',G10.3,'  AJN=',G10.3,'  DIAG=',   &
+ 3003    format(' DXN=', G10.3,'  GRADN=',G10.3,'  CGDX=',G10.3, &
+     &          '  CDXDXL=',G10.3,'  AJN=',G10.3,'  DIAG=',      &
      &          G10.3,'  CI=',G10.3,'  I,K=',I2,',',I2)
          call output(trim(output_line), advance='yes')
       end if
@@ -952,70 +953,37 @@ contains
 
 ! *************************************************     DNWTDB     *****
 
-  subroutine DNWTDB ( AJ )
+  subroutine DNWTDB ( AJ, WIDTH )
 
 !   Print the scalars in the module.  Print the stuff in AJ if it's
-!   present.
+!   present.  Print the integer scalars first.  Then print
+!   max(5,min(9,WIDTH)) real scalars per line if width is present, else
+!   print five per line.
 
     type (NWT_T), intent(in), optional :: AJ
+    integer, intent(in), optional :: WIDTH
 
-    namelist /DNWTDB_OUT/ AJN, AJSCAL, CAIT, CDXDXL, CONDAI, DIAG
-    namelist /DNWTDB_OUT/ DXI, DXINC, DXMAXI, DXN, DXNBIG, DXNL, DXNOIS
-    namelist /DNWTDB_OUT/ FN, FNB, FNL, FNMIN, FNXE, FRZ, FRZB
-    namelist /DNWTDB_OUT/ FRZL, GFAC, GRADN, GRADNB, GRADNL
-    namelist /DNWTDB_OUT/ IFL, INC, ITER, ITKEN
-    namelist /DNWTDB_OUT/ K1IT, K2IT, KB
-    namelist /DNWTDB_OUT/ NFL
-    namelist /DNWTDB_OUT/ RELSF, SPACT, SPB, SPFAC, SPG, SPINC, SPL, SPMINI
-    namelist /DNWTDB_OUT/ SPSTRT, SQB, SQL, SQMIN
+!   namelist /DNWTDB_OUT/ AJN, AJSCAL, CAIT, CDXDXL, CONDAI, DIAG
+!   namelist /DNWTDB_OUT/ DXI, DXINC, DXMAXI, DXN, DXNBIG, DXNL, DXNOIS
+!   namelist /DNWTDB_OUT/ FN, FNB, FNL, FNMIN, FNXE, FRZ, FRZB
+!   namelist /DNWTDB_OUT/ FRZL, GFAC, GRADN, GRADNB, GRADNL
+!   namelist /DNWTDB_OUT/ IFL, INC, ITER, ITKEN
+!   namelist /DNWTDB_OUT/ K1IT, K2IT, KB
+!   namelist /DNWTDB_OUT/ NFL
+!   namelist /DNWTDB_OUT/ RELSF, SPACT, SPB, SPFAC, SPG, SPINC, SPL, SPMINI
+!   namelist /DNWTDB_OUT/ SPSTRT, SQB, SQL, SQMIN
 
+    integer :: I ! Which one in the line is being worked
     character(len=9) :: IFLname, NFLname
+    integer :: MyWidth
+    character(132) :: Name_Line ! For names
 
-    call output ( &
-      & '-----     DNWT internal variables     --------------------------------', &
-      & advance='yes' )
-!   write (*,dnwtdb_out)
-!    write ( *, '(a)' ) &
-    call output( &
-      & '       AJN        AJSCAL         AXMAX        AXMAXB          CAIT', &
-      & advance='yes' )
-    write ( output_line, '(5es14.7)' ) AJN, AJSCAL, AXMAX, AXMAXB, CAIT
-    call output(trim(output_line), advance='yes')
+    myWidth = 5
+    if ( present(width) ) myWidth = max(5,min(9,width))
 
-!    write ( *, '(a)' ) &
-    call output( &
-      & '    CDXDXL          CGDX        CONDAI          DIAG           DXI', &
-      & advance='yes' )
-    write ( output_line, '(5es14.7)' ) CDXDXL, CGDX, CONDAI, DIAG, DXI
-    call output(trim(output_line), advance='yes')
-
-!    write ( *, '(a)' ) &
-    call output( &
-      & '     DXINC        DXMAXI           DXN        DXNBIG          DXNL', &
-      & advance='yes' )
-    write ( output_line, '(5es14.7)' ) DXINC, DXMAXI, DXN, DXNBIG, DXNL
-    call output(trim(output_line), advance='yes')
-
-!    write ( *, '(a)' ) &
-    call output( &
-      & '    DXNOIS            FN           FNB           FNL         FNMIN', &
-      & advance='yes' )
-    write ( output_line, '(5es14.7)' ) DXNOIS, FN, FNB, FNL, FNMIN
-    call output(trim(output_line), advance='yes')
-
-!    write ( *, '(a)' ) &
-    call output( &
-      & '      FNXE           FRZ          FRZB          FRZL          GFAC', &
-      & advance='yes' )
-    write ( output_line, '(5es14.7)' ) FNXE, FRZ, FRZB, FRZL, GFAC
-    call output(trim(output_line), advance='yes')
-
-!    write ( *, '(a)' ) &
-    call output( &
-      & '     GRADN        GRADNB        GRADNL', &
-      & advance='yes' )
-    write ( output_line, '(5es14.7)' ) GRADN, GRADNB, GRADNL
-    call output(trim(output_line), advance='yes')
+    output_line = '-----     DNWT internal variables     ----------------------&
+      &------------------------------------------------------------------'
+    call output ( output_line(1:14*myWidth), advance='yes' )
 
     call flagName ( ifl, iflName ); call flagName ( nfl, nflName )
 
@@ -1027,65 +995,112 @@ contains
       & K1IT, K2IT, KB, adjustr(nflName)
     call output(trim(output_line), advance='yes')
 
-!    write ( *, '(a)' ) &
-    call output( &
-      & '     RELSF            SP         SPACT           SPB         SPFAC', &
-      & advance='yes' )
-    write ( output_line, '(5es14.7)' ) RELSF, SP, SPACT, SPB, SPFAC
-    call output(trim(output_line), advance='yes')
-
-!    write ( *, '(a)' ) &
-    call output( &
-      & '       SPG         SPINC           SPL        SPMINI        SPSTRT', &
-      & advance='yes' )
-    write ( output_line, '(5es14.7)' ) SPG, SPINC, SPL, SPMINI, SPSTRT
-    call output(trim(output_line), advance='yes')
-
-!    write ( *, '(a)' ) &
-    call output( &
-      & '        SQ           SQB           SQL         SQMIN         TOLXA', &
-      & advance='yes' )
-    write ( output_line, '(5es14.7)' ) SQ, SQB, SQL, SQMIN, TOLXA
-    call output(trim(output_line), advance='yes')
-
-    call output( &
-      & '     TOLXR', &
-      & advance='yes' )
-    write ( output_line, '(5es14.7)' ) TOLXR
-    call output(trim(output_line), advance='yes')
+    i = 1
+    name_line = ''
+    output_line = ''
+    call add_to_line ( ajn,    'AJN' )
+    call add_to_line ( ajscal, 'AJSCAL' )
+    call add_to_line ( axmax,  'AXMAX' )
+    call add_to_line ( axmaxb, 'AXMAXB' )
+    call add_to_line ( cait,   'CAIT' )
+    call add_to_line ( cdxdxl, 'CDXDXL' )
+    call add_to_line ( cgdx,   'CGDX' )
+    call add_to_line ( condai, 'CONDAI' )
+    call add_to_line ( diag,   'DIAG' )
+    call add_to_line ( dxi,    'DXI' )
+    call add_to_line ( dxinc,  'DXINC' )
+    call add_to_line ( dxmaxi, 'DXMAXI' )
+    call add_to_line ( dxn,    'DXN' )
+    call add_to_line ( dxnbig, 'DXNBIG' )
+    call add_to_line ( dxnl,   'DXNL' )
+    call add_to_line ( dxnois, 'DXNOIS' )
+    call add_to_line ( fn,     'FN ')
+    call add_to_line ( fnb,    'FNB' )
+    call add_to_line ( fnl,    'FNL' )
+    call add_to_line ( fnmin,  'FNMIN' )
+    call add_to_line ( fnxe,   'FNXE' )
+    call add_to_line ( frz,    'FRZ' )
+    call add_to_line ( frzb,   'FRZB' )
+    call add_to_line ( frzl ,  'FRZL' )
+    call add_to_line ( gfac,   'GFAC' )
+    call add_to_line ( gradn,  'GRADN' )
+    call add_to_line ( gradnb, 'GRADNB' )
+    call add_to_line ( gradnl, 'GRADNL' )
+    call add_to_line ( relsf,  'RELSF' )
+    call add_to_line ( sp,     'SP ')
+    call add_to_line ( spact,  'SPACT' )
+    call add_to_line ( spb,    'SPB' )
+    call add_to_line ( spfac,  'SPFAC' )
+    call add_to_line ( spg,    'SPG' )
+    call add_to_line ( spinc,  'SPINC' )
+    call add_to_line ( spl,    'SPL' )
+    call add_to_line ( spmini, 'SPMINI' )
+    call add_to_line ( spstrt, 'SPSTRT' )
+    call add_to_line ( sq,     'SQ ')
+    call add_to_line ( sqb,    'SQB' )
+    call add_to_line ( sql,    'SQL' )
+    call add_to_line ( sqmin,  'SQMIN' )
+    call add_to_line ( tolxa,  'TOLXA' )
+    call add_to_line ( tolxr,  'TOLXR' )
+    if ( i /= 1 ) call print_lines
 
     if ( present(aj) ) then
-      call output ( &
-        & '-----     DNWT external variables     --------------------------------', &
-        & advance='yes' )
+      output_line = '-----     DNWT external variables     ----------------------&
+        &------------------------------------------------------------------'
+      call output ( output_line(1:14*myWidth), advance='yes' )
+      output_line = ''
 
-      call output( &
-        & '       AJN         AXMAX          CAIT          DIAG          DXDX', &
-        & advance='yes' )
-      write ( output_line, '(5es14.7)' ) aj%AJN, aj%AXMAX, aj%CAIT, aj%DIAG, aj%DXDX
-      call output(trim(output_line), advance='yes')
-
-      call output( &
-        & '     DXDXL           DXN          DXNL         FNMIN         FNORM', &
-        & advance='yes' )
-      write ( output_line, '(5es14.7)' ) aj%DXDXL, aj%DXN, aj%DXNL, aj%FNMIN, aj%FNORM
-      call output(trim(output_line), advance='yes')
-
-      call output( &
-        & '       GDX          GFAC         GRADN            SQ           SQT', &
-        & advance='yes' )
-      write ( output_line, '(5es14.7)' ) aj%GDX, aj%GFAC, aj%GRADN, aj%SQ, aj%SQT
-      call output(trim(output_line), advance='yes')
-
-      call output( &
-        & '       BIG      STARTING', advance='yes' )
-      write ( output_line, '(9x,l1,13x,l1)' ) aj%BIG, aj%STARTING
-      call output(trim(output_line), advance='yes') 
+      call add_to_line ( aj%ajn,   'AJN' )
+      call add_to_line ( aj%axmax, 'AXMAX' )
+      call add_to_line ( aj%cait,  'CAIT' )
+      call add_to_line ( aj%diag,  'DIAG' )
+      call add_to_line ( aj%dxdx,  'DXDX' )
+      call add_to_line ( aj%dxdxl, 'DXDXL' )
+      call add_to_line ( aj%dxn,   'DXN' )
+      call add_to_line ( aj%dxnl,  'DXNL' )
+      call add_to_line ( aj%fnmin, 'FNMIN' )
+      call add_to_line ( aj%fnorm, 'FNORM' )
+      call add_to_line ( aj%gdx,   'GDX' )
+      call add_to_line ( aj%gfac,  'GFAC' )
+      call add_to_line ( aj%gradn, 'GRADN' )
+      call add_to_line ( aj%sq,    'SQ' )
+      call add_to_line ( aj%sqt,   'SQT' )
+      call add_to_line_L ( aj%big,      'BIG' )
+      call add_to_line_L ( aj%starting, 'STARTING' )
+      if ( i /= 1 ) call print_lines
 
     end if
-    call output ( &
-      & '----------------------------------------------------------------------', &
-      & advance='yes' )
+    output_line = '------------------------------------------------------------&
+      &------------------------------------------------------------------'
+    call output ( output_line(1:14*myWidth), advance='yes' )
+
+  contains
+    subroutine Add_To_Line ( Value, Name )
+      real(rk), intent(in) :: Value
+      character(len=*), intent(in) :: Name
+      name_line(1+14*(i-1):10+14*(i-1)) = name
+      name_line(1+14*(i-1):10+14*(i-1)) = adjustr(name_line(1+14*(i-1):10+14*(i-1)))
+      write ( output_line(1+14*(i-1):14*i), '(es14.7)' ) value
+      i = i + 1
+      if ( i > myWidth ) call print_lines
+    end subroutine Add_To_Line
+    subroutine Add_To_Line_L ( Value, Name )
+      logical, intent(in) :: Value
+      character(len=*), intent(in) :: Name
+      name_line(1+14*(i-1):10+14*(i-1)) = name
+      name_line(1+14*(i-1):10+14*(i-1)) = adjustr(name_line(1+14*(i-1):10+14*(i-1)))
+      write ( output_line(1+14*(i-1):1+14*(i-1)), '(L1)' ) value
+      output_line(1+14*(i-1):10+14*(i-1)) = adjustr(output_line(1+14*(i-1):10+14*(i-1)))
+      i = i + 1
+      if ( i > myWidth ) call print_lines
+    end subroutine Add_To_Line_L
+    subroutine Print_Lines
+      call output ( trim(name_line), advance='yes' )
+      call output ( trim(output_line), advance='yes' )
+      i = 1
+      name_line = ''
+      output_line = ''
+    end subroutine Print_Lines
   end subroutine DNWTDB
 
 ! **********************************************     DNWT_GUTS     *****
@@ -1193,6 +1208,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.25  2002/07/26 22:46:40  vsnyder
+! More better output in DNWTDB
+!
 ! Revision 2.24  2002/07/26 01:19:18  vsnyder
 ! Better output in DNWTDB, changed how Levenberg_Marquardt changes, per Fred
 !
