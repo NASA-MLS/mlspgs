@@ -286,7 +286,10 @@ do
   temp_name=`$unique_name resed`
   if [ "$path" != "" ]
   then
-    temp_name="$path"/"$temp_name"
+    if [ -w "$path" ]
+    then
+      temp_name="$path"/"$temp_name"
+    fi
   fi
   if [ "$the_command" != "" ]
   then
@@ -323,10 +326,21 @@ do
     # 1st--what do we call the renamed file
     if [ "$new_name" != "" ]
     then
-      call_it="$new_name"
-      if [ "$path" != "" ]
+      new_file_name=`$the_splitter -f $new_name`
+      if [ "$new_name" != "$new_file_name" ]
       then
-        call_it="$path"/"$new_name"
+        new_path=`$the_splitter -p $new_name`
+      elif [ -w "$path" ]
+      then
+        # No path supplied for new name--assume same as old path
+        new_path="$path"
+      else
+        new_path=""
+      fi
+      call_it="$new_name"
+      if [ "$new_path" != "" ]
+      then
+        call_it="$new_path"/"$new_name"
       fi
     else
       call_it="$file${the_suffix}"
@@ -354,6 +368,9 @@ do
 done                                                       
 exit
 # $Log$
+# Revision 1.4  2003/04/01 23:14:25  pwagner
+# Added -name=xxx option as alternative to suffixing
+#
 # Revision 1.3  2003/02/28 19:14:09  pwagner
 # Many new options, helpful example added
 #
