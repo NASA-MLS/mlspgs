@@ -48,10 +48,10 @@ typedef struct opdat_t{
 int main(int argc , char *argv[] ){
 
   /*--------Local vars--------------------------*/
-  char infile[80], outfile[80];
+  char infile[1024], outfile[1024];
   hid_t file_id,outfile_id;
   int error,*idx,j,filei,nfiles;
-  char rootname[80];
+  char rootname[1024];
   char *invarstring,*ingroupstring;
   
   opdat_t opdat; 
