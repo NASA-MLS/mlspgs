@@ -507,6 +507,8 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
 ;; Bit 7 - Empty for now
 ;; Bit 8 - This profile is based on too few radiances
   !define(statusTooFewRadiances,256)
+;; Bit 9 - This level 2 run tasked with this profile crashed
+  !define(statusL2Crashed,512)
 
 ; --------------------------------------------- Cloud specific stuff
 
@@ -567,6 +569,9 @@ Fill, quantity=otherDiagnostics.status!MFproduct, method=status, status=!statusL
 
 
 ; $Log$
+; Revision 1.100  2004/10/28 22:51:29  dwu
+; add SO2 as a standard species
+;
 ; Revision 1.99  2004/09/12 22:13:25  pwagner
 ; Directwrite of fwmrads and scan residuals independent of whether l2version defined
 ;
