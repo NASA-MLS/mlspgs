@@ -2,6 +2,10 @@
 
 begin Join
 
+  ;; Join the tropopause pressure
+  joined_tpPressure: l2gp, source=state.tpPressure, swath='tpPressure wmo'
+  !storeDGG(joined_tpPressure)
+
   !define(joinStandardProduct,{joined_$1: l2gp, source=state.$1, $
     precision=outputPrecision.$1, swath='$1'!nl})
   !forall(joinStandardProduct,!allStandardProducts)
