@@ -44,9 +44,6 @@ MODULE OutputClose
 
 ! Parameters
 
-   CHARACTER (LEN=*), PARAMETER :: NOOUT_ERR = ' data expected but not found &
-                                                &for output.'
-
 ! This data type is used to store the flags indicating whether the product
 ! databases are suitable for output
 
@@ -111,8 +108,7 @@ CONTAINS
       result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), "LocalGranuleID", &
                                  pcf%logGranID)
 
-      CALL ExpandFileTemplate('$version-$cycle', sval, &
-                              version=pcf%outputVersion, cycle=pcf%cycle)
+      CALL ExpandFileTemplate('$cycle', sval, cycle=pcf%cycle)
       result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), "LocalVersionID", &
                                  sval)
 
@@ -415,6 +411,9 @@ END MODULE OutputClose
 !=====================
 
 !$Log$
+!Revision 1.8  2001/03/07 21:28:41  nakamura
+!Commented out database deallocations.
+!
 !Revision 1.7  2001/02/21 21:16:31  nakamura
 !Changed MLSPCF to MLSPCF3; added L3DZ stuff; changed log LocalGranuleID; renamed/split OutputAndClose tasks.
 !
