@@ -158,9 +158,9 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
       CALL DeallocateL3MZ(mz)
 
       IF ( INDEX(cfProd(i)%mode,'a') /= 0) THEN
-         CALL MonthlyMap (cfProd(i)%l3prodName, cfProd(i)%latGridMap, &
-                          cfProd(i)%nLats, cfProd(i)%longGrid, cfProd(i)%nLons, &
-                          l2gp, 'asc', first, last, nlev, mm)
+!        CALL MonthlyMap (cfProd(i)%l3prodName, cfProd(i)%latGridMap, &
+!                         cfProd(i)%nLats, cfProd(i)%longGrid, cfProd(i)%nLons, &
+!                         l2gp, 'asc', first, last, nlev, mm)
          CALL OutputMMGrids(pcf%msName, mm, flag%createMS)
          CALL DeallocateL3MM(mm)
       ENDIF
@@ -349,4 +349,7 @@ END PROGRAM MLSL3M
 !=================
 
 ! $Log$
+! Revision 1.1  2001/07/18 15:42:48  nakamura
+! MLS Level 3 Monthly program.
+!
 !
