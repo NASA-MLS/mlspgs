@@ -82,16 +82,18 @@ contains ! ====     Public Procedures     ==============================
   integer function GetLitIndexFromString ( line, stringIndex )
     use Declaration_Table, only: GET_DECL, DECLS, ENUM_VALUE
 
+    ! Return the lit index for a string if it's a lit, else -huge(0).
     character (len=*), intent(in) :: LINE
     integer, optional, intent(out) :: STRINGINDEX
     ! Local variable
     type (Decls) :: DECL
     integer :: SI
     ! Executable code
-    si = GetStringIndexFromString(line)
+    si = getStringIndexFromString(line)
     if ( present ( stringIndex ) ) stringIndex = si
     decl = get_decl ( si, type=enum_value )
-    GetLitIndexFromString = decl%units
+    getLitIndexFromString = decl%units
+    if ( decl%type /= enum_value )  getLitIndexFromString = -huge(0)
   end function GetLitIndexFromString
 
   ! ------------------------------------------  StartErrorMessage  -----
@@ -116,6 +118,9 @@ contains ! ====     Public Procedures     ==============================
 end module MoreTree
 
 ! $Log$
+! Revision 2.10  2004/06/16 01:45:13  vsnyder
+! Return -huge(0) from GetLitIndexFromString if the string isn't a lit
+!
 ! Revision 2.9  2004/05/28 00:57:25  vsnyder
 ! Move GetIndexFlagsFromList from MoreTree to Expr_m
 !
