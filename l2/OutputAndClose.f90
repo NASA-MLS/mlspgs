@@ -12,7 +12,7 @@ module OutputAndClose ! outputs all data from the Join module to the
   use Hdf, only: DFACC_CREATE, SFEND, SFSTART
   use HDFEOS, only: SWCLOSE, SWOPEN
   use INIT_TABLES_MODULE, only: F_FILE, F_OVERLAPS, F_QUANTITIES, F_TYPE, &
-    & L_L2AUX, L_L2GP, L_L2PC, LIT_INDICES, S_OUTPUT, S_TIME
+    & L_L2AUX, L_L2DGG, L_L2GP, L_L2PC, LIT_INDICES, S_OUTPUT, S_TIME
   use L2AUXData, only: L2AUXDATA_T, WriteL2AUXData
   use L2GPData, only: L2GPData_T, WriteL2GPData, L2GPNameLen
   use L2PC_m, only: WRITEONEL2PC, L2PCDATABASE
@@ -23,7 +23,7 @@ module OutputAndClose ! outputs all data from the Join module to the
   use MLSL2Options, only: PENALTY_FOR_NO_METADATA
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, MLSPCF_L2GP_END, &
-    & MLSPCF_L2GP_START, &
+    & MLSPCF_L2GP_START, mlspcf_l2dgg_start, mlspcf_l2dgg_end, &
     & Mlspcf_mcf_l2gp_start, Mlspcf_mcf_l2dgm_start, &
     & Mlspcf_mcf_l2dgg_start
   use MoreTree, only: Get_Spec_ID
@@ -105,7 +105,7 @@ contains ! =====     Public Procedures     =============================
     character (len=256) :: msg
     integer :: NAME                     ! string index of label on output
     integer:: numquantitiesperfile        
-    integer :: OUTPUT_TYPE              ! L_L2AUX or L_L2GP
+    integer :: OUTPUT_TYPE              ! L_L2AUX, L_L2GP, L_PC, L_L2DGG
     character(len=L2GPNameLen), dimension(MAXQUANTITIESPERFILE) :: QuantityNames  ! From "quantities" field
     integer :: RECLEN                   ! For file stuff
     integer :: returnStatus
@@ -162,6 +162,18 @@ contains ! =====     Public Procedures     =============================
           case default                  ! Everything else processed later
           end select
         end do
+
+      if ( DEBUG ) call output('l2gp type number: ', advance='no')
+      if ( DEBUG ) call output(l_l2gp, advance='yes')
+
+      if ( DEBUG ) call output('l2aux type number: ', advance='no')
+      if ( DEBUG ) call output(l_l2gp, advance='yes')
+
+      if ( DEBUG ) call output('l2dgg type number: ', advance='no')
+      if ( DEBUG ) call output(l_l2dgg, advance='yes')
+
+      if ( DEBUG ) call output('output type number: ', advance='no')
+      if ( DEBUG ) call output(output_type, advance='yes')
 
         select case ( output_type )
         case ( l_l2gp ) ! --------------------- Writing l2gp files -----
@@ -393,6 +405,89 @@ contains ! =====     Public Procedures     =============================
           error = mls_io_gen_closef ( 'cl', l2pcUnit)
           if ( error /= 0 ) call MLSMessage(MLSMSG_Error,ModuleName,&
             & 'Failed to close l2pc file:'//trim(file_base))
+
+
+        case ( l_l2dgg ) ! --------------------- Writing l2dgg files -----
+
+          if ( DEBUG ) call output('output file type l2dgg', advance='yes')
+          ! Get the l2gp file name from the PCF
+
+          l2gpFileHandle = GetPCFromRef(file_base, mlspcf_l2dgg_start, &
+            & mlspcf_l2dgg_end, &
+            & PCFL2FCSAMECASE, returnStatus, l2gp_Version, DEBUG, &
+            & exactName=l2gpPhysicalFilename)
+
+          if ( returnStatus == 0 ) then
+            if ( DEBUG ) call output(&
+              & 'file name: ' // TRIM(l2gpPhysicalFilename), advance='yes')
+            ! Open the HDF-EOS file and write swath data
+
+            if ( DEBUG ) call output('Attempting swopen', advance='yes')
+            swfid = swopen(l2gpPhysicalFilename, DFACC_CREATE)
+
+            ! Loop over the segments of the l2cf line
+
+            numquantitiesperfile = 0
+            do field_no = 2, nsons(key) ! Skip "output" name
+              gson = subtree(field_no,key)
+              select case ( decoration(subtree(1,gson)) )
+              case ( f_quantities )
+                do in_field_no = 2, nsons(gson)
+                  db_index = -decoration(decoration(subtree(in_field_no ,gson)))
+                  call writeL2GPData ( l2gpDatabase(db_index), swfid )
+                  numquantitiesperfile = numquantitiesperfile+1
+                  quantityNames(numquantitiesperfile) = l2gpDatabase(db_index)%name
+                end do ! in_field_no = 2, nsons(gson)
+              case ( f_overlaps )
+                ! ??? More work needed here
+              end select
+            end do ! field_no = 2, nsons(key)
+
+            if ( DEBUG ) call output('Attempting swclose', advance='yes')
+            returnStatus = swclose(swfid)
+            if ( returnStatus /= PGS_S_SUCCESS ) then
+              call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
+              call MLSMessage ( MLSMSG_Error, ModuleName, &
+                &  "Error closing  l2dgg file:  "//mnemonic//" "//msg )
+            end if
+
+            ! Write the metadata file
+
+            if ( numquantitiesperfile <= 0 ) then
+
+              ! Error in number of quantities
+              call announce_error ( son, &
+                & 'No quantities written for this l2dgg file')
+
+            else
+
+              ! Similar to type l2gp file 'other'
+              if ( DEBUG ) then
+                call output ( 'preparing to populate metadata_oth', advance='yes' )
+                call output ( 'l2gpFileHandle: ', advance='no' )
+                call output ( l2gpFileHandle , advance='no' )
+                call output ( '   l2dgg_mcf: ', advance='no' )
+                call output ( mlspcf_mcf_l2dgg_start , advance='no' )
+                call output ( '   swfid: ', advance='no' )
+                call output ( swfid , advance='yes' )
+              end if
+
+              call populate_metadata_oth ( &
+                & l2gpFileHandle, mlspcf_mcf_l2dgg_start, l2pcf, &
+                & numquantitiesperfile, QuantityNames, metadata_error )
+              error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
+            end if
+
+          else
+            call announce_error ( ROOT, &
+              &  "Error finding l2gp file matching:  "//file_base, returnStatus)
+          end if
+
+
+         case default
+            call announce_error ( ROOT, &
+              &  "Error--unknown output type: parser should have caught this")
+
         end select
 
       case ( s_time )
@@ -402,7 +497,13 @@ contains ! =====     Public Procedures     =============================
           call cpu_time ( t1 )
           timing = .true.
         end if
+
+      case default
+            call announce_error ( ROOT, &
+              &  "Error--unknown spec_no: parser should have caught this")
+
       end select
+
     end do  ! spec_no
     if ( timing ) call sayTime
 
@@ -472,6 +573,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.31  2001/05/01 23:57:23  pwagner
+! Added l2dgg output type
+!
 ! Revision 2.30  2001/04/28 01:30:52  livesey
 ! Stuff formerly outputting L2PCs is now outputting matrices.
 !
