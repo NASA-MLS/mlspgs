@@ -128,10 +128,11 @@ contains
       call INTERPOLATEVALUES(zh,deltau,za,beta(1:NZ-1),method='Linear')
       call INTERPOLATEVALUES(zh,deltauc,za,betac(1:NZ-1),method='Linear')
       call INTERPOLATEVALUES(zh,ddz,za,dz(1:NZ-1),method='Linear')
-      call INTERPOLATEVALUES(zh,reshape(ddm(1,:),(/nh-1/)),&
-        & za,dm(1,1:NZ-1),method='Linear')
-      call INTERPOLATEVALUES(zh,reshape(ddm(2,:),(/nh-1/)),&
-        & za,dm(2,1:NZ-1),method='Linear')
+      
+      do i=1,N
+      call INTERPOLATEVALUES(zh,reshape(ddm(i,:),(/nh-1/)),&
+        & za,dm(i,1:NZ-1),method='Linear')
+      end do 
 
 !==========================================================================
 !     RADIANCE SENSITIVITY CALCULATIONS
@@ -214,6 +215,9 @@ contains
 end module ModelOutput
 
 ! $Log$
+! Revision 1.16  2002/10/08 17:08:07  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 1.15  2002/05/08 17:00:15  jonathan
 ! fix tangent height bug
 !
