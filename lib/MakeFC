@@ -26,6 +26,12 @@ MLSBIN=../util
 # where the platforms directory is
 PLATFORMS = .
 
+# where sources (but not OBJS) shared with l3, etc. are stored
+srclib=../srclib
+
+# where sources (but not OBJS) shared with l3, etc. are stored
+blaslib=../blas
+
 # This will set our MLS platform, compiler. etc.
 # w/o complaining if it does nor exist yet
 -include $(CONFDIR)/.configure
@@ -91,11 +97,11 @@ tar:
 
 configure:
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
-          -c "$(MLSF95)" -p "$(MLSPLAT)" ; \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" 
 
 $(CONFDIR)/.configure:
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
-          -c "$(MLSF95)" -p "$(MLSPLAT)" ; \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" 
 
 $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/.configure
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
@@ -113,6 +119,9 @@ depends:
         -d test_sparsify.f90 -d PVM.f90 -d PVMIDL.f90
 endif
 
+ghostbuster:
+	$(MLSBIN)/ghostbuster.sh $(PLATFORMS)/$(MLSCONFG) ./ $(srclib) \
+           $(blaslib) ./machines/$(MLSCONFG)
 
 mostlyclean:
 	@echo "Cleaning directory $(MLSCONFG)" ; \
@@ -162,6 +171,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.21  2001/05/01 17:07:44  pwagner
+# Now runs ghostbuster when updating
+#
 # Revision 2.20  2001/04/06 19:44:27  pwagner
 # Fixed double-make problem
 #
