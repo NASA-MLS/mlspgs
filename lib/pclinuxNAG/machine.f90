@@ -33,7 +33,7 @@ contains
       if ( l /= 0 ) write (*,*) file(:l)
     end if
 !   call iostat_msg (iostat, msg)       ! Lahey intrinsic
-!   write (*,*) file(:len_trim(msg))    ! Print the error message
+!   write (*,*) msg(:len_trim(msg))    ! Print the error message
     write (*,*) 'Error status code =', iostat
     return
   end subroutine IO_ERROR_
@@ -49,6 +49,9 @@ contains
 end module MACHINE
 
 ! $Log$
+! Revision 1.1  2000/10/12 22:21:11  vsnyder
+! Change directory name from NAG to pclinuxNAG
+!
 ! Revision 1.3  2000/10/09 22:15:55  vsnyder
 ! Moved machine.f90 from l2 to lib
 !
