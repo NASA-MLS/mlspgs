@@ -94,6 +94,8 @@ contains ! =====     Public procedures     =============================
     call declare_unit ( l_extinction, 1.0d0, phyq_extinction )
 !   this is = 1Pa*1000*1sec^2/1meter^4
     call declare_unit ( l_icedensity, 1.0d1, phyq_icedensity )
+!   this is 1DU ( = 2.687e20 molecules/m^2)
+    call declare_unit ( l_DobsonUnits, 1.0d0, phyq_DobsonUnits )
 
   contains
     subroutine DECLARE_UNIT ( NAME, VALUE, PHYS_UNIT )
@@ -109,6 +111,9 @@ contains ! =====     Public procedures     =============================
 end module UNITS
 
 ! $Log$
+! Revision 2.10  2001/07/30 23:28:38  pwagner
+! Added columnAbundances scaffolding--needs fleshing out
+!
 ! Revision 2.9  2001/07/10 23:47:01  jonathan
 ! added phyq_icedensity, paul/jonathan
 !
