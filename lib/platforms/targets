@@ -58,11 +58,14 @@ tar:
 #	special options for compiling some modules--override .f90 rules
 
 L1BData.o:
-	$(FC) -c $(DUSTY) -I $(PGSINC) -I $S $(S)/L1BData.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L1BData.f90
 L2GPData.o:
-	$(FC) -c $(DUSTY) -I $(PGSINC) -I $S $(S)/L2GPData.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L2GPData.f90
 
 # $Log$
+# Revision 1.5  2000/11/09 00:00:37  pwagner
+# Account for new test sources
+#
 # Revision 1.4  2000/10/27 23:02:09  pwagner
 # getCF_m back in lib
 #

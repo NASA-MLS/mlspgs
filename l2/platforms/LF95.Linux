@@ -28,7 +28,7 @@ dir2 =
 
 vpath %.o ./
 vpath %.f90 ../ $(srclib)
-vpath %.f9h ../
+vpath %.f9h ../ $(srclib)
 
 FC = lf95
 
@@ -46,15 +46,19 @@ DUSTY = $(FOPTS)
 # Beginning of path to HDFEOS  libraries:
 #E = /van1/opt/TOOLKIT
 
+# All the paths to supply .mod and INCLUDE files used in compiling %.f90
+# Precede each path by "-I "
+INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S -I $(libdir)
+
 # Define some suffix rules
 
 .SUFFIXES:
 .SUFFIXES: .o .dbg.o .f90
 .f90.o:
-	$(FC) -c $(FOPTS) -I $(PGSINC) -I $S -I $(libdir) $<
+	$(FC) -c $(FOPTS) $(INC_PATHS) $<
 
 .f90.dbg.o:
-	$(FC) -c $(FOPTS) -I $(PGSINC) -I $S -I $(libdir) $< -o $*.dbg.o
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o
 
 #SDP =SDPToolkitSubstitute.o
 #GD=GDapi.o
@@ -79,6 +83,9 @@ DUSTY = $(FOPTS)
 #GCTP =/software/SRC/TOOLKIT-5.2.6v1.00/hdfeos/lib/linux
 
 # $Log$
+# Revision 1.4  2000/11/03 18:18:41  pwagner
+# Shares sources in srclib
+#
 # Revision 1.3  2000/11/02 23:27:37  pwagner
 # Dependencies may cross directories
 #

@@ -5,14 +5,18 @@
 
 SHELL = /bin/sh
 
-# Path to source files:
+## Path to source files:
 S = ..
+
+# include files %.f9h shared by l2, lib are in $(srclib)
+srclib = ../../srclib
+
 
 # Set paths for finding source files (different from .o and .mod)
 
 vpath %.o ./
 vpath %.f90 ../
-vpath %.f9h ../
+vpath %.f9h ../ $(srclib)
 vpath %.f $(PGSINC)
 
 FC = f95
@@ -34,19 +38,26 @@ DUSTY = -g -dusty -abi=n32
 # Use the lib directory, too
 libdir = ../../lib/$(MLSCONFG)
 
-# Define some suffix rules (after clearing the old ones)
+# All the paths to supply .mod and INCLUDE files used in compiling %.f90
+# Precede each path by "-I "
+INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S 
+
+# Define some suffix rules
 
 .SUFFIXES:
 .SUFFIXES: .o .dbg.o .f90
 .f90.o:
-	$(FC) -c $(FOPTS) -I $(PGSINC) -I $S -I $(libdir) $<
+	$(FC) -c $(FOPTS) $(INC_PATHS) $<
 
 .f90.dbg.o:
-	$(FC) -c $(FOPTS) -I $(PGSINC) -I $S -I $(libdir) $< -o $*.dbg.o
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o
 
 #SDP =SDPToolkitSubstitute.o
 #GD=GDapi.o
 # $Log$
+# Revision 1.2  2000/10/27 23:03:18  pwagner
+# Added PGSINC to vpath .f
+#
 # Revision 1.1  2000/10/21 00:16:25  pwagner
 # First commit
 #
