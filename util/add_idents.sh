@@ -34,6 +34,7 @@
 # -toc          use(2) printing toc
 # -id           with use(2), printing $id line, too
 # -rcs          with use(2), printing $rcs line, too
+# -n            with use(2), print only if there is a (api,toc) section
 # -d path       path of directory if automatic
 # -suf suffix   file name suffix if automatic; e.g. ".f90"
 # -h[elp]       print brief help message; exit
@@ -159,6 +160,7 @@ my_name=add_idents.sh
 my_use="add"
 print_id="no"
 print_rcs="no"
+skip_if_none="no"
 #
 # Get arguments from command line
 #
@@ -182,6 +184,10 @@ while [ "$more_opts" = "yes" ] ; do
 	;;
 	-toc )
 	    my_use="toc"
+	    shift
+	;;
+	-n )
+	    skip_if_none="yes"
 	    shift
 	;;
 	-id )
@@ -234,32 +240,44 @@ for the_file in $arglist
 do
   if [ "$my_use" = "add" ]
   then
-    echo Adding idents to $the_file
+    echo Adding idents to $the_file > temp
   else
-    echo "$my_use for $the_file"
+    echo '******** ' "$my_use for $the_file" ' ********' > temp
   fi
   if [ "$print_id" = "yes" ]
   then
-    grep -i '\$id' $the_file
+    grep -i '\$id' $the_file >> temp
   fi
   if [ "$print_rcs" = "yes" ]
   then
-    grep -i '\$rcs' $the_file
+    grep -i '\$rcs' $the_file >> temp
   fi
   case "$my_use" in
     add)
+      cat temp
       add_the_lines $the_file
       ;;
     api | toc)
-      print_the_lines "$my_use" $the_file
+      print_the_lines "$my_use" $the_file > temp1
+      how_many=`cat temp1 | wc -l`
+      if [ "$how_many" -gt 0 -o "$skip_if_none" = "no" ]
+      then
+        echo ""
+        cat temp temp1
+      fi
+      rm -f temp1
       ;;
     *)
       echo "Programming error in add_idents.sh"
       ;;
   esac
+  rm -f temp
 done
 exit 0
 # $Log$
+# Revision 1.2  2002/10/11 19:37:42  pwagner
+# Added use(2): print toc/api sections from source files
+#
 # Revision 1.1  2002/10/08 16:57:33  pwagner
 # First commit
 #
