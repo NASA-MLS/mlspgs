@@ -21,6 +21,18 @@ MODULE MLSPCF2
    INTEGER, PARAMETER :: mlspcf_nomen_start = 20000
    INTEGER, PARAMETER :: mlspcf_nomen_end = 20000
    !
+   INTEGER, PARAMETER :: mlspcf_antpats_start = 20001
+   INTEGER, PARAMETER :: mlspcf_antpats_end = 20001
+   !
+   INTEGER, PARAMETER :: mlspcf_filtshps_start = 20002
+   INTEGER, PARAMETER :: mlspcf_filtshps_end = 20002
+   !
+   INTEGER, PARAMETER :: mlspcf_ptggrids_start = 20003
+   INTEGER, PARAMETER :: mlspcf_ptggrids_end = 20003
+   !
+   INTEGER, PARAMETER :: mlspcf_clouds_start = 20004
+   INTEGER, PARAMETER :: mlspcf_clouds_end = 20033
+   !
    INTEGER, PARAMETER :: mlspcf_l2ncep_start = 21000
    INTEGER, PARAMETER :: mlspcf_l2ncep_end = 21019
    !
