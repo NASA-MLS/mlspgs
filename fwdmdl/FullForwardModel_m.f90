@@ -46,10 +46,10 @@ module FullForwardModel_m
                         & GetNameOfSignal
   use String_table, only: GET_STRING, DISPLAY_STRING
   use SpectroscopyCatalog_m, only: CATALOG_T, LINE_T, LINES, CATALOG
-  use intrinsic, only: L_TEMPERATURE, L_RADIANCE, L_PHITAN, L_PTAN, L_ELEVOFFSET, &
+  use INTRINSIC, only: L_TEMPERATURE, L_RADIANCE, L_PHITAN, L_PTAN, &
+    & L_ELEVOFFSET, LIT_INDICES, L_ISOTOPERATIO, L_VMR, &
     & L_ORBITINCLINATION, L_SPACERADIANCE, L_EARTHREFL, L_LOSVEL, &
-    & L_SCGEOCALT, L_SIDEBANDRATIO, L_NONE, L_CHANNEL, L_VMR, L_REFGPH, &
-    & LIT_INDICES, L_ISOTOPERATIO
+    & L_SCGEOCALT, L_SIDEBANDRATIO, L_NONE, L_CHANNEL, L_REFGPH
   use Units, only: Deg2Rad
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate,&
     & MLSMSG_Error, MLSMSG_Warning
@@ -85,7 +85,7 @@ CONTAINS
 
 ! -----------------------------------------------  ForwardModel  -----
  Subroutine FullForwardModel ( FwdModelConf, FwdModelIn, FwdModelExtra, &
-                             &  FwdModelOut, oldIfm, FmStat, Jacobian )
+                            &  FwdModelOut, oldIfm, FmStat, Jacobian )
   ! This is the full radiative transfer forward model, the workhorse
   ! code
     type(forwardModelConfig_T), intent(inout) :: fwdModelConf
@@ -152,9 +152,9 @@ CONTAINS
     integer :: WINDOWSTART              ! Start of temperature `window'
     integer :: SPECIE                   ! Loop counter
     integer :: SV_I                     ! Loop index and other uses .
-    integer :: F_DW_LEN                 ! Length of DW in vector
-    integer :: F_DN_LEN                 ! Length of DN in vector
-    integer :: F_DV_LEN                 ! Length of DV in vector
+    integer :: F_LEN_DW                 ! Length of DW in vector
+    integer :: F_LEN_DN                 ! Length of DN in vector
+    integer :: F_LEN_DV                 ! Length of DV in vector
     integer :: SV_START                 ! Temporary sv_i
     integer :: SV_T_LEN                 ! Number of t_phi*t_zeta in the window
     integer :: SURFACE                  ! Loop counter
@@ -381,8 +381,11 @@ CONTAINS
 !   Print *,'** Enter ForwardModel, MAF =',fmstat%maf   ! ** ZEBUG
 
     temp_der = FwdModelConf%temp_der
-    spect_der = FwdModelConf%spect_der
     atmos_der = FwdModelConf%atmos_der
+
+! ** Re-instate when appropriate code is done
+!   spect_der = FwdModelConf%spect_der
+    spect_der = .FALSE.    ! ** ZEBUG
 
     if ( toggle(emit) ) &
       & Call trace_begin ( 'ForwardModel, MAF=', index=fmstat%maf )
@@ -781,9 +784,16 @@ CONTAINS
 
 ! Setup our temporary `state vector' like arrays -------------------------
 
-    Call load_sps_data (FwdModelConf,  FwdModelIn, FwdModelExtra, FmStat, &
-     &   firstSignal%radiometer, mol_cat_index, p_len, f_len, h2o_ind, &
-     &   ext_ind, Grids_f, Grids_dw, Grids_dn, Grids_dv, temp, My_Catalog)
+    if(spect_der) then
+      Call load_sps_data (FwdModelConf,  FwdModelIn, FwdModelExtra, FmStat, &
+       &   firstSignal%radiometer, mol_cat_index, p_len, f_len, h2o_ind,    &
+       &   ext_ind, Grids_f, f_len_dw, Grids_dw, f_len_dn, Grids_dn,        &
+       &   f_len_dv, Grids_dv)
+    else
+      Call load_sps_data (FwdModelConf,  FwdModelIn, FwdModelExtra, FmStat, &
+       &   firstSignal%radiometer, mol_cat_index, p_len, f_len, h2o_ind,    &
+       &   ext_ind, Grids_f)
+    endif
 !
 ! set up output pointing angles------------------------------------------
 ! note we have to compute req !!!!!!!
@@ -1211,27 +1221,27 @@ CONTAINS
       Call Allocate_test ( dbeta_dv_path_c, npc, no_mol, &
         & 'dbeta_dv_path_c', ModuleName )
 
-      f_dw_len = SUM(Grids_dw%no_z(:) * Grids_dw%no_p(:) * Grids_dw%no_f(:))
-      f_dn_len = SUM(Grids_dn%no_z(:) * Grids_dn%no_p(:) * Grids_dn%no_f(:))
-      f_dv_len = SUM(Grids_dv%no_z(:) * Grids_dv%no_p(:) * Grids_dv%no_f(:))
+      f_len_dw = SUM(Grids_dw%no_z(:) * Grids_dw%no_p(:) * Grids_dw%no_f(:))
+      f_len_dn = SUM(Grids_dn%no_z(:) * Grids_dn%no_p(:) * Grids_dn%no_f(:))
+      f_len_dv = SUM(Grids_dv%no_z(:) * Grids_dv%no_p(:) * Grids_dv%no_f(:))
 
-      Call Allocate_test ( do_calc_dw, no_ele, f_dw_len, 'do_calc_dw', &
+      Call Allocate_test ( do_calc_dw, no_ele, f_len_dw, 'do_calc_dw', &
                         &  ModuleName )
-      Call Allocate_test ( do_calc_dn, no_ele, f_dn_len, 'do_calc_dn', &
+      Call Allocate_test ( do_calc_dn, no_ele, f_len_dn, 'do_calc_dn', &
                         &  ModuleName )
-      Call Allocate_test ( do_calc_dv, no_ele, f_dv_len, 'do_calc_dv', &
-                        &  ModuleName )
-
-      Call Allocate_test ( eta_zxp_dw, no_ele, f_dw_len, 'eta_zxp_dw', &
-                        &  ModuleName )
-      Call Allocate_test ( eta_zxp_dn, no_ele, f_dn_len, 'eta_zxp_dn', &
-                        &  ModuleName )
-      Call Allocate_test ( eta_zxp_dv, no_ele, f_dv_len, 'eta_zxp_dv', &
+      Call Allocate_test ( do_calc_dv, no_ele, f_len_dv, 'do_calc_dv', &
                         &  ModuleName )
 
-      Call Allocate_test ( drad_dw, f_dw_len, 'drad_dw', ModuleName )
-      Call Allocate_test ( drad_dn, f_dn_len, 'drad_dn', ModuleName )
-      Call Allocate_test ( drad_dv, f_dv_len, 'drad_dv', ModuleName )
+      Call Allocate_test ( eta_zxp_dw, no_ele, f_len_dw, 'eta_zxp_dw', &
+                        &  ModuleName )
+      Call Allocate_test ( eta_zxp_dn, no_ele, f_len_dn, 'eta_zxp_dn', &
+                        &  ModuleName )
+      Call Allocate_test ( eta_zxp_dv, no_ele, f_len_dv, 'eta_zxp_dv', &
+                        &  ModuleName )
+
+      Call Allocate_test ( drad_dw, f_len_dw, 'drad_dw', ModuleName )
+      Call Allocate_test ( drad_dn, f_len_dn, 'drad_dn', ModuleName )
+      Call Allocate_test ( drad_dv, f_len_dv, 'drad_dv', ModuleName )
 
     endif
 
@@ -1345,11 +1355,11 @@ CONTAINS
       endif
 
       if (spect_der) then
-        Call Allocate_test ( k_spect_dw_frq , maxNoPtgFreqs, f_dw_len , &
+        Call Allocate_test ( k_spect_dw_frq , maxNoPtgFreqs, f_len_dw , &
                           & 'k_spect_dw_frq', ModuleName )
-        Call Allocate_test ( k_spect_dn_frq , maxNoPtgFreqs, f_dn_len , &
+        Call Allocate_test ( k_spect_dn_frq , maxNoPtgFreqs, f_len_dn , &
                           & 'k_spect_dn_frq', ModuleName )
-        Call Allocate_test ( k_spect_dv_frq , maxNoPtgFreqs, f_dv_len , &
+        Call Allocate_test ( k_spect_dv_frq , maxNoPtgFreqs, f_len_dv , &
                           & 'k_spect_dv_frq', ModuleName )
       endif
 
@@ -1452,6 +1462,7 @@ CONTAINS
           Call eval_spect_path(Grids_dv,z_path(1:no_ele),phi_path(1:no_ele), &
             &  do_calc_dv(1:no_ele,:),eta_zxp_dv(1:no_ele,:))
         endif
+
         tan_temp(ptg_i) = one_tan_temp(1)
 
         ! Now compute the eta_zp & do_calc_zp (for Zeta & Phi only)
@@ -1744,7 +1755,7 @@ CONTAINS
               &  ref_corr(1:npc),path_dsdh(gl_inds),dhdz_path(gl_inds),&
               &  t_script(1:npc),tau(1:npc),i_stop,drad_dw,ptg_i,frq_i)
 
-            k_spect_dw_frq(frq_i,1:1:f_dw_len) = drad_dw(1:1:f_dw_len)
+            k_spect_dw_frq(frq_i,1:1:f_len_dw) = drad_dw(1:1:f_len_dw)
 
             ! Spectroscopic derivative  wrt: N
 
@@ -1756,7 +1767,7 @@ CONTAINS
               &  ref_corr(1:npc),path_dsdh(gl_inds),dhdz_path(gl_inds), &
               &  t_script(1:npc),tau(1:npc),i_stop,drad_dn,ptg_i,frq_i)
 
-            k_spect_dn_frq(frq_i,1:f_dn_len) = drad_dn(1:f_dn_len)
+            k_spect_dn_frq(frq_i,1:f_len_dn) = drad_dn(1:f_len_dn)
 
             ! Spectroscopic derivative  wrt: Nu0
 
@@ -1768,7 +1779,7 @@ CONTAINS
               &  ref_corr(1:npc),path_dsdh(gl_inds),dhdz_path(gl_inds), &
               &  t_script(1:npc),tau(1:npc),i_stop,drad_dv,ptg_i,frq_i)
 
-            k_spect_dv_frq(frq_i,1:1:f_dv_len) = drad_dv(1:1:f_dv_len)
+            k_spect_dv_frq(frq_i,1:1:f_len_dv) = drad_dv(1:1:f_len_dv)
 
           endif
 
@@ -2446,6 +2457,9 @@ CONTAINS
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.69  2002/07/05 07:52:45  zvi
+! Coor. switch (phi,z) -> (z,phi)
+!
 ! Revision 2.68  2002/06/28 21:41:36  livesey
 ! Repeat of bug fix with atmos_der being deallocated in wrong place.
 !
