@@ -44,7 +44,7 @@ contains
              &   FREQUENCY, PRESSURE, HEIGHT, TEMPERATURE, VMRin,      &
              &   WCin, IPSDin, ZT, ZZT, RE, ISURF, ISWI, ICON, IFOV,   &
              &   Bill_data,                                            &
-             &   h_obs, elev_offset, AntennaPattern,          &
+             &   h_obs, elev_offset, AntennaPattern,                   &
              &   TB0, DTcir, Trans, BETA, BETAc, Dm, TAUeff, SS,       &
              &   NU, NUA, NAB, NR, Slevl, noS, Catalog, LosVel )
 
@@ -505,8 +505,7 @@ contains
       DO 2000 IFR=1, NF
 
       IF ( doChannel(IFR) ) then
-        
-       
+               
          CALL CLEAR_SKY(NZmodel-1,NU,TS,S,LORS,SWIND,           &
               &         YZ,YP,YT,YQ,VMR,NS,                     &
               &         FREQUENCY(IFR),RS,U,TEMP,TAU0,Z,TAU100, &
@@ -525,8 +524,10 @@ contains
          ICLD_TOP = 0
          I100_TOP = 0
          
-         DO IL=1, NZmodel-1  
-            CHK_CLD(IL) =0. !test clear sky
+         DO IL=1, NZmodel-1
+            IF (ICON .eq. 0) then
+               CHK_CLD(IL) =0. !test clear sky
+            ENDIF
             IF(CHK_CLD(IL) .NE. 0.)THEN
                ICLD_TOP=IL                    ! FIND INDEX FOR CLOUD-TOP 
                TAU0(IL)=TAU100(IL)            ! 100% SATURATION INSIDE CLOUD 
@@ -570,11 +571,11 @@ contains
             CDEPTH   = 0._r8     ! cloud optical depth
 
             DEPTH  = 0._r8
-
+ 
             DO ISPI=1,N
             CWC = RATIO*WC(ISPI,ILYR)
             IF(CWC .ne. 0._r8 .and. ICON .ne. 0) then           
-            CWC = MAX(1.E-9_r8,CWC)
+            CWC = MAX(1.E-9_r8,abs(CWC))
               
 !=================================================
 !    >>>>>>>>> CLOUDY-SKY MODULE <<<<<<<<<<<
@@ -738,7 +739,7 @@ contains
 
          ENDIF
 
-!         if (iswi == 0) &
+
          CALL SENSITIVITY (DTcir(:,IFR),ZZT,NT,YP,YZ,NZmodel,PRESSURE,NZ, &
               &            delTAU,delTAUc,delTAU100,TAUeff(:,IFR),SS(:,IFR), &
               &            Trans(:,:,IFR), BETA(:,IFR), BETAc(:,IFR), DDm, Dm, Z, DZ, &
@@ -766,6 +767,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.40  2002/11/06 18:19:37  jonathan
+! some minor changes
+!
 ! Revision 1.39  2002/10/08 17:08:07  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
