@@ -711,7 +711,7 @@ contains ! ========  Public Procedures =========================================
     if ( info /= 0 ) call PVMErrorMessage ( info, 'packing "Quantity"' )
     call PVMIDLPack ( trim(line), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, 'packing quantity name' )
-    call PVMSendQuantity( q, snooper%tid, justPack=.true., noMask=.true. )
+    call PVMSendQuantity( q, snooper%tid, justPack=.true., noMask=.false. )
     call PVMFSend ( snooper%tid, SnoopTag, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, 'sending quantity' )
 
@@ -720,6 +720,9 @@ contains ! ========  Public Procedures =========================================
 end module SnoopMLSL2
 
 ! $Log$
+! Revision 2.29  2002/02/08 22:52:34  livesey
+! Defaults to send mask now
+!
 ! Revision 2.28  2001/10/31 22:00:05  livesey
 ! Added phase name stuff
 !
