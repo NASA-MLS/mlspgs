@@ -379,7 +379,7 @@ contains ! ============= Public Procedures ==========================
     call deallocate_test ( qtInds, 'qtInds', ModuleName )
     
     ! Now create a vector for this vector template
-    v = CreateVector ( 0, l2pcVTs(vtIndex), l2pcQTs )
+    v = CreateVector ( 0, l2pcVTs(vtIndex), l2pcQTs, vectorNameText='_v' )
     vector = AddVectorToDatabase ( l2pcVs, v )
     
     ! Now go through the quantities again and read the values
@@ -507,6 +507,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.17  2001/05/02 20:23:10  vsnyder
+! Specify a name for a created vector
+!
 ! Revision 2.16  2001/04/28 01:38:36  livesey
 ! Now maintains proper IDs for its own quantity and vector templates
 !
