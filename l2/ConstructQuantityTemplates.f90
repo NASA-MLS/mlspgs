@@ -11,7 +11,6 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
   use EXPR_M, only: EXPR
   use FGrid, only: fGrid_T
   use HGrid, only: hGrid_T
-  use Intrinsic, only: T_NUMERIC
   use INIT_TABLES_MODULE, only: F_GEODANGLE, F_FGRID, F_HGRID, &
     & F_LOGBASIS, F_MINVALUE, F_MODULE, F_MOLECULE, F_NOMIFS, F_RADIOMETER, &
     & F_SIGNAL, F_SGRID, F_TYPE, F_UNIT, F_VGRID, F_IRREGULAR, &
@@ -904,7 +903,6 @@ contains ! =====     Public Procedures     =============================
     integer :: SOLARTIMENODE            ! Tree vertex
     integer :: SOLARZENITHNODE          ! Tree vertex
     integer :: SON                      ! Tree vertex
-    integer :: TYPE                     ! Type for the values
     integer :: UNITS                    ! Units for node
 
     real(r8), dimension(:,:), pointer :: VALUES ! An array to fill
@@ -995,15 +993,15 @@ contains ! =====     Public Procedures     =============================
         units = phyq_angle
       end select
 
-      do maf = 1, noMAFs
-        call expr ( subtree ( maf+1, node), expr_units, expr_value, type )
-        if ( type /= t_numeric ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Only numerics, not ranges allowed in explicit hGrid' )
-        if ( all ( expr_units(1) /= (/ phyq_dimensionless, units /) ) ) &
-          & call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Invalid units for explicit hGrid' )
-        values(:,maf) = expr_value(1)
-      end do
+      if ( node /= 0 ) then
+        do maf = 1, noMAFs
+          call expr ( subtree ( maf+1, node), expr_units, expr_value )
+          if ( all ( expr_units(1) /= (/ phyq_dimensionless, units /) ) ) &
+            & call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Invalid units for explicit hGrid' )
+          values(:,maf) = expr_value(1)
+        end do
+      end if
     end do
     ! Make the latitude the same as the geod angle
     ! This is a bit of a hack, but it should be OK in all cases.
@@ -1075,6 +1073,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.84  2003/02/07 00:41:41  livesey
+! Bug fix/workaround
+!
 ! Revision 2.83  2003/02/06 23:31:00  livesey
 ! New approach to Forge
 !
