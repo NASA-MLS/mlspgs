@@ -80,10 +80,10 @@
 #-----------------
 # Test input files
 #-----------------
-22000|mls_l1b_oa_v0-03.2000-001|/duke/nakamura/L1BOA||||1
-22010|mls_l1b_rada_v0-01.2000-001|/duke/nakamura/L1BOA||||1
-22011|mls_l1b_radb_v0-01.2000-001|/duke/nakamura/L1BOA||||1
-22020|mls_l1b_eng_v0-01.2000-001|/duke/nakamura/L1BOA||||1
+20000|mls_l1b_oa_v0-01.2000-001|/duke/nakamura/L1BOA||||1
+20040|mls_l1b_radf_v0-01.2000-001|/software/mlsdev/v0.1_test/files/l1||||1
+20041|mls_l1b_radd_v0-01.2000-001|/duke/nakamura/L1BOA||||1
+20081|mls_l1b_eng_v0-01.2000-001|/duke/nakamura/L1BOA||||1
 #
 # -----------------------------------------------------------------------
 # These are actual ancillary data set files - supplied by ECS or the
@@ -217,25 +217,24 @@
 #------------------
 # Test output files
 #------------------
-22500|mls_l2gp_temp_v0-01.2000-001|/duke/nakamura/L1BOA||||1
-22501|mls_l2gp_gph_v0-01.2000-001|/duke/nakamura/L1BOA||||1
-22502|mls_l2gp_h2o_v0-01.2000-001|/duke/nakamura/L1BOA||||1
-22503|mls_l2gp_hno3_v0-01.2000-001|/duke/nakamura/L1BOA||||1
-22504|mls_l2gp_o3_v0-01.2000-001|/duke/nakamura/L1BOA||||1
-22505|mls_l2gp_hcl_v0-01.2000-001|/duke/nakamura/L1BOA||||1
-22506|mls_l2gp_clo_v0-01.2000-001|/duke/nakamura/L1BOA||||1
-22507|mls_l2gp_n2o_v0-01.2000-001|/duke/nakamura/L1BOA||||1
-22508|mls_l2gp_co_v0-01.2000-001|/duke/nakamura/L1BOA||||1
-22509|mls_l2gp_oh_v0-01.2000-001|/duke/nakamura/L1BOA||||1
-22510|mls_l2gp_rel-hum-trop_v0-01.2000-001|/duke/nakamura/L1BOA||||1
-22511|mls_l2gp_so2_v0-01.2000-001|/duke/nakamura/L1BOA||||1
-22512|mls_l2gp_ho2_v0-01.2000-001|/duke/nakamura/L1BOA||||1
-22513|mls_l2gp_bro_v0-01.2000-001|/duke/nakamura/L1BOA||||1
-22514|mls_l2gp_hocl_v0-01.2000-001|/duke/nakamura/L1BOA||||1
-22515|mls_l2gp_hcn_v0-01.2000-001|/duke/nakamura/L1BOA||||1
-22516|mls_l2gp_cirrus-ice_v0-01.2000-001|/duke/nakamura/L1BOA||||1
-22517|mls_l2gp_o3-strat-column_v0-01.2000-001|/duke/nakamura/L1BOA||||1
-22550|mls_l2gp_others_v0-01.2000-001|/duke/nakamura/L1BOA||||1
+21000|mls_l2gp_bro_v0-01.2000-001|/duke/nakamura/L1BOA||||1
+21001|mls_l2gp_clo_v0-01.2000-001|/duke/nakamura/L1BOA||||1
+21002|mls_l2gp_co_v0-01.2000-001|/duke/nakamura/L1BOA||||1
+21003|mls_l2gp_gph_v0-01.2000-001|/duke/nakamura/L1BOA||||1
+21004|mls_l2gp_h2o_v0-01.2000-001|/duke/nakamura/L1BOA||||1
+21005|mls_l2gp_hcl_v0-01.2000-001|/duke/nakamura/L1BOA||||1
+21006|mls_l2gp_hcn_v0-01.2000-001|/duke/nakamura/L1BOA||||1
+21007|mls_l2gp_hno3_v0-01.2000-001|/duke/nakamura/L1BOA||||1
+21008|mls_l2gp_ho2_v0-01.2000-001|/duke/nakamura/L1BOA||||1
+21009|mls_l2gp_hocl_v0-01.2000-001|/duke/nakamura/L1BOA||||1
+21010|mls_l2gp_ice_v0-01.2000-001|/duke/nakamura/L1BOA||||1
+21011|mls_l2gp_n2o_v0-01.2000-001|/duke/nakamura/L1BOA||||1
+21012|mls_l2gp_o3_v0-01.2000-001|/duke/nakamura/L1BOA||||1
+21013|mls_l2gp_oh_v0-01.2000-001|/duke/nakamura/L1BOA||||1
+21014|mls_l2gp_others_v0-01.2000-001|/duke/nakamura/L1BOA||||1
+21015|mls_l2gp_rhi_v0-01.2000-001|/duke/nakamura/L1BOA||||1
+21016|mls_l2gp_so2_v0-01.2000-001|/duke/nakamura/L1BOA||||1
+21017|mls_l2gp_t_v0-01.2000-001|/duke/nakamura/L1BOA||||1
 #
 #------------------------------------------------------------------------
 # This file is created when PGS_MET_Write is used with an intention
@@ -365,14 +364,12 @@
 # -----------------------------------------------------------------------
 # leap seconds (TAI-UTC) file (DO NOT REMOVE THIS ENTRY)
 # -----------------------------------------------------------------------
-#10301|leapsec.dat|~/database/common/TD||||1
-10301|leapsec.sids|/duke/nakamura/L1BOA/EPH||||1
+10301|leapsec.dat|~/database/common/TD||||1
 #
 # -----------------------------------------------------------------------
 # polar motion and UTC-UT1 file (DO NOT REMOVE THIS ENTRY)
 # -----------------------------------------------------------------------
-#10401|utcpole.dat|~/database/common/CSC||||1
-10401|utcpole.sids|/duke/nakamura/L1BOA/EPH||||1
+10401|utcpole.dat|~/database/common/CSC||||1
 #
 # -----------------------------------------------------------------------
 # earth model tags file (DO NOT REMOVE THIS ENTRY)
@@ -387,8 +384,7 @@
 # -----------------------------------------------------------------------
 # spacecraft tag definition file (DO NOT REMOVE THIS ENTRY)
 # -----------------------------------------------------------------------
-#10801|sc_tags.dat|~/database/common/EPH||||1
-10801|sc_tags.dat|/duke/nakamura/L1BOA/EPH||||1
+10801|sc_tags.dat|~/database/common/EPH||||1
 #
 # -----------------------------------------------------------------------
 # units conversion definition file (DO NOT REMOVE THIS ENTRY)
