@@ -23,18 +23,40 @@ MODULE QuantityTemplates         ! Quantities within vectors
   ! This module defines the `quantities' that make up vectors and their
   ! template information.
 
+  ! This set of integers define various families that quantities can fall into
+  ! No doubt more will be added.
+
+  INTEGER, PARAMETER :: NoQTYTypes=6
+  CHARACTER (LEN=12), PARAMETER, DIMENSION(NoQtyFamilies) :: &
+       & QTYTypeNames= (/ &
+       & "TEMPERATURE ", &
+       & "VMR         ", &
+       & "RADIANCE    ", &
+       & "PTAN        ", &
+       & "BASELINE    ", &
+       & "EXTINCTION  "/)
+
+  INTEGER, PARAMETER :: QTY_Invalid=0
+  INTEGER, PARAMETER :: QTY_Temperature=1
+  INTEGER, PARAMETER :: QTY_Vmr=2
+  INTEGER, PARAMETER :: QTY_Radiance=3
+  INTEGER, PARAMETER :: QTY_Ptan=4
+  INTEGER, PARAMETER :: QTY_Baseline=5
+  INTEGER, PARAMETER :: QTY_Extinction=6
+
   ! First we'll define some global parameters and data types.
-
-  INTEGER, PARAMETER :: QtyNameLen=20
-
-  ! This data type defines a quantity template
 
   TYPE QuantityTemplate_T
 
      ! First some administrative stuff
 
-     CHARACTER (LEN=QtyNameLen) :: name ! Simple name for quantity
+     CHARACTER (LEN=NameLen) :: name ! Simple name for quantity
      INTEGER :: id              ! Id code for quantity (for checking stuff)
+
+     ! This integer is an enumerated type describing what kind of quantity this
+     ! is. e.g. QTY_Temperature
+
+     INTEGER :: quantityType
 
      ! Now the dimensions of this quantity
 
@@ -104,10 +126,15 @@ MODULE QuantityTemplates         ! Quantities within vectors
      ! List of frequencies (noChans)
 
      REAL(r8) :: lo     ! Local oscillator (optional)
-
-     ! Other quantities refer to a particular MLS signal designation
-
+     
      TYPE (MLSSignal_T), DIMENSION(:), POINTER :: signal ! Signal (optional)
+     ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+     ! Some families of quantities require special additional information.
+     ! This is given here if needed.
+
+     INTEGER :: radiometerIndex ! Which radiometer does a ptan qty refer to?
+     CHARACTER(LEN=NameLen) :: molecule ! What molecule does this refer to?
+     
      ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
      ! Now for irregular quantities, instead of using the stride information,
@@ -373,6 +400,9 @@ END MODULE QuantityTemplates
 
 !
 ! $Log$
+! Revision 1.1  1999/12/16 18:31:43  livesey
+! First version. Renamed from VectorQuantities
+!
 !
 ! This module was previously known as VectorQuantities.  This is it's previous
 ! revision history.
