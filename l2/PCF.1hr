@@ -8,7 +8,7 @@
 # notes:
 #
 # 	This file supports the Release B version of the toolkit.
-#       It is intended for use with toolkit version "SCF B.0 TK5.2.6".
+#       It is intended for use with toolkit version "TK_VERSION_STRING".
 #
 #       The logical IDs 10000-10999 (inclusive) are reserved for internal
 #       Toolkit/ECS usage, DO NOT add logical IDs with these values.
@@ -89,7 +89,6 @@
 21600|a_llk_01.tsyn3d_mis_p.t19991006|/users/lungu||||1
 21500|GDASOZFH_Aug97.hdfeos|/users/lungu||||1
 21700|emls_clim_v0.1.dat|/users/lungu||||1
-#
 # -----------------------------------------------------------------------
 # These are actual ancillary data set files - supplied by ECS or the
 # user.  The following are supplied for purposes of tests and as a useful
@@ -189,7 +188,6 @@
 40274|MCF_hocl|/users/lungu/mlspgs/l2||||1
 40275|MCF_hcn|/users/lungu/mlspgs/l2||||1
 40276|MCF_cirrus-ice|/users/lungu/mlspgs/l2||||1
-
 #
 #
 # -----------------------------------------------------------------------
@@ -200,8 +198,8 @@
 # or attitude files.
 # -----------------------------------------------------------------------
 #
-10501|EOSCHEM_2000-01-01.eph|/duke/nakamura/L1BOA/EPH||||1
-10502|EOSCHEM_2000-01-01.att|/duke/nakamura/L1BOA/EPH||||1
+10501|INSERT_EPHEMERIS_FILES_HERE|||||1
+10502|INSERT_ATTITUDE_FILES_HERE|||||1
 #
 #------------------------------------------------------------------------
 # Datasets for PGS_DEM tools.
@@ -253,11 +251,11 @@
 21009|mls_l2gp_oh_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
 21010|mls_l2gp_rhi_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
 21011|mls_l2gp_so2_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
-21012|mls_l2gp_ho2_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
+21012|mls_l2gp_ho2_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1  
 21013|mls_l2gp_bro_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
-21014|mls_l2gp_hocl_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
+21014|mls_l2gp_hocl_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1   
 21015|mls_l2gp_hcn_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
-21016|mls_l2gp_cirrus-ice_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
+21016|mls_l2gp_cirrus-ice_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1  
 #22517|mls_l2gp_o3-strat-column_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
 #22550|mls_l2gp_others_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
 21440|mls_l2aux_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
@@ -390,14 +388,12 @@
 # -----------------------------------------------------------------------
 # leap seconds (TAI-UTC) file (DO NOT REMOVE THIS ENTRY)
 # -----------------------------------------------------------------------
-#10301|leapsec.dat|~/database/common/TD||||1
-10301|leapsec.sids|/duke/nakamura/L1BOA/EPH||||1
+10301|leapsec.dat|~/database/common/TD||||1
 #
 # -----------------------------------------------------------------------
 # polar motion and UTC-UT1 file (DO NOT REMOVE THIS ENTRY)
 # -----------------------------------------------------------------------
-#10401|utcpole.dat|~/database/common/CSC||||1
-10401|utcpole.sids|/duke/nakamura/L1BOA/EPH||||1
+10401|utcpole.dat|~/database/common/CSC||||1
 #
 # -----------------------------------------------------------------------
 # earth model tags file (DO NOT REMOVE THIS ENTRY)
@@ -412,8 +408,7 @@
 # -----------------------------------------------------------------------
 # spacecraft tag definition file (DO NOT REMOVE THIS ENTRY)
 # -----------------------------------------------------------------------
-#10801|sc_tags.dat|~/database/common/EPH||||1
-10801|sc_tags.dat|/duke/nakamura/L1BOA/EPH||||1
+10801|sc_tags.dat|~/database/common/EPH||||1
 #
 # -----------------------------------------------------------------------
 # units conversion definition file (DO NOT REMOVE THIS ENTRY)
@@ -531,7 +526,7 @@
 # use--this quantity is not referenced in TK 5.2).  This entry may be
 # safely commented out or deleted.
 # -----------------------------------------------------------------------
-#10124|NASA PB5C time Epoch date (ASCII UTC)|
+10124|NASA PB5C time Epoch date (ASCII UTC)|
 #
 # -----------------------------------------------------------------------
 # The following parameter is a "mask" for the ephemeris data quality 
@@ -574,6 +569,7 @@
 # -----------------------------------------------------------------------
 10411|Processing CCSDS Start Time|2000-01-01T00:00:00.000000Z
 10412|Processing CCSDS End Time|2000-01-01T00:59:59.000000Z
+
 ?   INTERMEDIATE INPUT
 #########################################################################
 #
