@@ -17,6 +17,13 @@ esac
 
 # Now work out what we have been asked for.
 while [ -n "$(echo $1)" ]; do
+    if [ $1 == "--dao" ]; then
+	if [ $SOUNDBARRIER == 1 ]; then
+	    echo "$HOME/v1.0.1"
+	else
+	    echo "/bigdata/livesey/v1.0.1"
+	fi
+    fi
     if [ $1 == "--output" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
 	    echo "$HOME/v1.0.1"
@@ -73,6 +80,9 @@ while [ -n "$(echo $1)" ]; do
 done
 
 # $Log$
+# Revision 1.4  2003/02/19 21:58:01  livesey
+# Moved l2pc files on soundbarrier
+#
 # Revision 1.3  2002/12/10 02:19:52  livesey
 # New soundbarrier configuration
 #
