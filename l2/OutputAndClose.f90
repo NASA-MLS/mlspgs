@@ -22,7 +22,7 @@ module OutputAndClose ! outputs all data from the Join module to the
   use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, MLSPCF_L2GP_END, &
     & MLSPCF_L2GP_START, &
 	 & mlspcf_mcf_l2gp_start, mlspcf_mcf_l2dgm_start, &
-	 & mlspcf_mcf_l2dgg_start
+	 & mlspcf_mcf_l2dgg_start, PENALTY_FOR_NO_METADATA
   use MoreTree, only: Get_Spec_ID
   use OUTPUT_M, only: OUTPUT
   use SDPToolkit, only: PGS_S_SUCCESS, Pgs_smf_getMsg
@@ -33,7 +33,7 @@ module OutputAndClose ! outputs all data from the Join module to the
     & SUBTREE, SUB_ROSA
   use TREE_TYPES, only: N_NAMED
   use WriteMetadata, only: PCFData_T, populate_metadata_std, &
-  & populate_metadata_oth, WriteMetaLog, get_l2gp_mcf
+  & populate_metadata_oth, WriteMetaLog, get_l2gp_mcf, MCFFORL2GPOPTION
 
   implicit none
   private
@@ -66,27 +66,6 @@ contains ! =====     Public Procedures     =============================
 
 	! The correspondence between MCF and l2gp files is determined by
 	! the value of        MCFFORL2GPOPTION
-	! Either
-	!                          (1)
-	! The PCF numbers for the mcf corresponding to each
-	! of the l2gp files begin with mlspcf_mcf_l2gp_start
-	! and increase 1 by 1 with each succeeding species.
-	! Then, after the last single-species l2gp, the very next pcf number
-	! is for the one called 'other' ML2OTH.001.MCF
-	! This hateful inflexibility leads to possibility
-	
-	!                          (2)
-	! Each l2gp file name, stripped of their paths, fits the pattern
-	!  *_l2gp_species_*
-	! and the corresponding MCF files fit the pattern
-	!  *SPECIES.*
-	! where species and SPECIES are case-nsensitive "species" name
-	! i.e., BrO, ClO, etc.
-	! Warning:
-	! You therefore must use exactly the same abbreviation for the l2gp and the
-	! corresponding MCF: if the MCF is ML2T.001.MCF, don't use "temp"
-	! in the l2gp name
-	! This inflexibility replaces the different kind in option (1)
 
   ! Arguments
     integer, intent(in) :: ROOT   ! Of the output section's AST
@@ -122,7 +101,8 @@ contains ! =====     Public Procedures     =============================
     integer :: l2gpFileHandle, l2gp_Version
     character (len=132) :: l2gpPhysicalFilename
     integer, parameter:: MAXQUANTITIESPERFILE=64        
-    integer, parameter :: MCFFORL2GPOPTION=1		! Either 1 or 2
+!    integer, parameter :: MCFFORL2GPOPTION=1		! Either 1 or 2
+    integer :: metadata_error
     character (len=32) :: mnemonic
     character (len=256) :: msg
     integer :: NAME                     ! string index of label on output
@@ -136,7 +116,7 @@ contains ! =====     Public Procedures     =============================
     integer :: SWFID
     REAL :: T1, T2     ! for timing
     logical :: TIMING
-    logical, parameter :: DEBUG = .TRUE.
+    logical, parameter :: DEBUG = .FALSE.
 
     ! Executable code
     timing = .false.
@@ -259,7 +239,9 @@ contains ! =====     Public Procedures     =============================
 						call output(swfid , advance='yes')
 					endif
 						call populate_metadata_std &
-						& (l2gpFileHandle, l2gp_mcf, l2pcf, QuantityNames(1), anText)
+						& (l2gpFileHandle, l2gp_mcf, l2pcf, QuantityNames(1), anText, &
+                  & metadata_error)
+                  error=max(error, PENALTY_FOR_NO_METADATA*metadata_error)
 						l2gp_mcf = l2gp_mcf + 1
 
 					else
@@ -276,8 +258,8 @@ contains ! =====     Public Procedures     =============================
 					endif
 						call populate_metadata_oth &
 						& (l2gpFileHandle, l2gp_mcf, l2pcf, &
-						& numquantitiesperfile, QuantityNames, anText)
-
+						& numquantitiesperfile, QuantityNames, anText, metadata_error)
+                  error=max(error, PENALTY_FOR_NO_METADATA*metadata_error)
 					endif
 !              else                ! Found the right file
 !                l2gpFileHandle = l2gpFileHandle + 1
@@ -386,8 +368,8 @@ contains ! =====     Public Procedures     =============================
 					endif
 						call populate_metadata_oth &
 						& (l2auxFileHandle, l2aux_mcf, l2pcf, &
-						& numquantitiesperfile, QuantityNames, anText)
-
+						& numquantitiesperfile, QuantityNames, anText, metadata_error)
+                  error=max(error, PENALTY_FOR_NO_METADATA*metadata_error)
 					endif
 !              else
 !                l2auxFileHandle =  l2auxFileHandle + 1
@@ -421,7 +403,8 @@ contains ! =====     Public Procedures     =============================
 			call output('About to write log file metadata' , advance='yes')
 		endif
 
-      CALL WriteMetaLog(l2pcf)
+      CALL WriteMetaLog(l2pcf, metadata_error)
+      error=max(error, PENALTY_FOR_NO_METADATA*metadata_error)
 
 ! Done with text of PCF file at last
 
@@ -434,6 +417,11 @@ contains ! =====     Public Procedures     =============================
 			call announce_error(0, &
 			& 'Failed to deallocate anText of PCF file')
 		endif
+
+    if (ERROR/=0 ) then
+	 	call MLSMessage(MLSMSG_Error,ModuleName, &
+      & 'Problem with Output_Close section')
+	end if
 
     if ( toggle(gen) ) call trace_end ( "Output_Close")
 
@@ -486,6 +474,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.19  2001/04/10 23:01:57  pwagner
+! Now works better; tacks if no metadata
+!
 ! Revision 2.18  2001/04/09 23:44:34  pwagner
 ! Fewer mistakes, more debug-type output
 !
