@@ -26,7 +26,7 @@ include ../Makefile.dep
 # BLAS
 # If it is desired to link the executable with external BLAS support,
 # the variable BLAS should be defined
-# e.g. in the make statement: make -f MakeFC BLAS=/my_path/to_BLAS_library
+# e.g. in the make statement: make BLAS=/my_path/to_BLAS_library
 # If this is done, i.e., BLAS is defined, then blas_objs will
 # be blank
 # Otherwise, i.e. if BLAS is left undefined, then blas_objs will
@@ -39,13 +39,18 @@ include ../Makefile.dep
 # otherwise it is blank
 
 # ========================================================================
-#          The three versions of libmls.a
+#          The different versions of libmls.a
 all: libmls.a
 #
 #libmls.a      will contain all the OBJS plus machine.o
 #                                      except for 
 #	if PGSTK non-blank                SDPToolkitSubstitute.o
 #	if PGSTK blank                
+#	if PVM_ROOT non-blank               PVMwrappers.o
+#	if PVM_ROOT blank                
+#                                    and also from the blas 
+#	if BLAS blank                      sdot.o ddot.o
+#	if BLAS non-blank                
 
 #--------------------- default name of GNU-compatible c compiler
 CC=cc
@@ -103,8 +108,8 @@ tar:
 
 # vpath %.c $(S) $(srclib)
 
-PVMwrappers.o: $(S)/PVMwrappers.c
-	$(CC) -c -I${PGSINC} -DNAGf90Fortran $(S)/PVMwrappers.c
+#PVMwrappers.o: $(S)/PVMwrappers.c
+#	$(CC) -c -I${PGSINC} -DNAGf90Fortran $(S)/PVMwrappers.c
 
 #	special options for compiling some modules--override .f90 rules
 
@@ -126,6 +131,9 @@ sdot.o:
 	$(FC) -c $(DUSTY_NO_OPT) -O $(INC_PATHS) $(blaslib)/sdot.f $(FAFTER)
 
 # $Log$
+# Revision 1.29  2001/05/30 23:56:55  livesey
+# Hdf now dusty, L1BData not
+#
 # Revision 1.28  2001/05/30 20:45:23  pwagner
 # Set delete_lib_first to no with note to think harder
 #

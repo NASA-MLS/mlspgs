@@ -27,26 +27,15 @@ vpath %.c ../
 
 FC = lf95
 
-# Compiler options:
 # Currently, unknown if DUSTY needs to be different yet
-#FOPTS = -g --chk --info
 DUSTY = $(FOPTS)
-
-# Beginning of path to libraries:
-#L = /nas/software/SRC/TOOLKIT-5.2.6v1.00
-#L = /nas/software/SRC/TOOLKIT-5.2.6v1.00.NAG
-
-#PGSINC = /software/SRC/TOOLKIT-5.2.6v1.00/include
-
-# Beginning of path to HDFEOS  libraries:
-#E = /van1/opt/TOOLKIT
 
 # Use the lib directory, too
 libdir = ../../lib/$(MLSCONFG)
 
 # All the paths to supply .mod and INCLUDE files used in compiling %.f90
 # Precede each path by "-I "
-INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S 
+INC_PATHS = $(EXTRA_PATHS) -I $(PGSINC) -I $(srclib) -I $S 
 
 # Define some suffix rules
 
@@ -71,6 +60,9 @@ MATRIX_OBJS = MatrixModule_0.o MatrixModule_1.o
 #SDP =SDPToolkitSubstitute.o
 #GD=GDapi.o
 # $Log$
+# Revision 1.10  2001/08/14 22:19:37  pwagner
+# New autobuild rules for .f and .c sources
+#
 # Revision 1.9  2001/03/12 23:57:47  pwagner
 # New FAFTER, LAFTER flags to postprocess compile & link steps
 #

@@ -29,12 +29,12 @@ dir2 =
 vpath %.o ./
 vpath %.f90 ../ $(srclib)
 vpath %.f9h ../ $(srclib)
+vpath %.f ../
+vpath %.c ../
 
 FC = f90
 
-# Compiler options:
 # Currently, unknown if DUSTY needs to be different yet
-#FOPTS = -g --chk --info
 DUSTY = $(FOPTS)
 
 # Use the libmlsl3 directory, libmlsl3dir, for more .mod files
@@ -45,7 +45,7 @@ dir3 = $(libmlsl3dir)/
 # All the paths to supply .mod and INCLUDE files used in compiling %.f90
 # Precede each path by "-I "
 
-INC_PATHS = -p $(PGSINC) -p $(srclib) -p $S -p $(libdir) \
+INC_PATHS = $(EXTRA_PATHS) -p $(PGSINC) -p $(srclib) -p $S -p $(libdir) \
      -p $(libmlsl3dir) \
      -I $(PGSINC) -I $(srclib) -I $S -I $(libdir) \
      -I $(libmlsl3dir)
@@ -53,14 +53,23 @@ INC_PATHS = -p $(PGSINC) -p $(srclib) -p $S -p $(libdir) \
 # Define some suffix rules
 
 .SUFFIXES:
-.SUFFIXES: .o .dbg.o .f90
+.SUFFIXES: .o .dbg.o .f90 .f .c
 .f90.o:
 	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
 
 .f90.dbg.o:
 	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o $(FAFTER)
 
+.f.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
+
+.c.o:
+	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
+
 #Special load libraries
 l_specials = 
 
 # $Log$
+# Revision 1.1  2001/07/19 23:59:48  pwagner
+# Fiest commit
+#

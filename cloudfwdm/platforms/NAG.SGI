@@ -38,31 +38,20 @@ vpath %.o ./
 vpath %.f90 ../ $(srclib) $(libdir)/../machines/$(MLSCONFG)
 vpath %.f9h ../ $(srclib)
 vpath %.f ../
+vpath %.c ../
 
 FC = f95
 
-# Compiler options:
-#FOPTS = -g -C=all -abi=n32
-
 DUSTY = $(FOPTS) -dusty
-
-#PGSINC = /software/SRC/TOOLKIT-5.2.6v1.00.NAG/include
-
-# Beginning of path to libraries:
-#L = /nas/software/SRC/TOOLKIT-5.2.6v1.00
-#L = /nas/software/SRC/TOOLKIT-5.2.6v1.00.NAG
-
-# Beginning of path to HDFEOS  libraries:
-#E = /van1/opt/TOOLKIT
 
 # All the paths to supply .mod and INCLUDE files used in compiling %.f90
 # Precede each path by "-I "
-INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S -I $(libdir) -I $(libfwdmdl)
+INC_PATHS = $(EXTRA_PATHS) -I $(PGSINC) -I $(srclib) -I $S -I $(libdir) -I $(libfwdmdl)
 
 # Define some suffix rules
 
 .SUFFIXES:
-.SUFFIXES: .o .dbg.o .f90 .f
+.SUFFIXES: .o .dbg.o .f90 .f .c
 .f90.o:
 	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
 
@@ -72,32 +61,16 @@ INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S -I $(libdir) -I $(libfwdmdl)
 .f.o:
 	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
 
-#SDP =SDPToolkitSubstitute.o
-#GD=GDapi.o
-
-#These are the locations of the libraries
-#
-#  Name                 Default value
-#  PGSTK                 $(PGSLIB)
-# HDFEOS                 $(HDFEOS_LIB)
-#   HDF                  $(HDFLIB)
-#  GCTP                  $(HDEOS_LIB)
-#
-#PGSTK =$(PGSLIB)
-#HDFEOS =$(HDFEOS_LIB)
-#HDF =$(HDFLIB)
-#GCTP =$(HDFEOS_LIB)
-#The following can be uncommented to override the defaults
-
-#PGSTK =/software/SRC/TOOLKIT-5.2.5v1.00/lib/sgi/
-#HDFEOS =/software/SRC/TOOLKIT-5.2.5v1.00/hdfeos/lib/sgi
-#HDF =/software/SRC/TOOLKIT-5.2.5v1.00/hdf/sgi/HDF4.1r3/lib
-#GCTP =/software/SRC/TOOLKIT-5.2.5v1.00/hdfeos/lib/sgi
+.c.o:
+	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
 
 #Special load libraries
 l_specials = -lnsl
 
 # $Log$
+# Revision 1.2  2001/05/31 22:06:28  pwagner
+# Repaired omission of .f from SUFFIXES
+#
 # Revision 1.1  2001/05/30 16:46:50  pwagner
 # First commit
 #
