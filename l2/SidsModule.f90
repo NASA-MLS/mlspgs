@@ -23,7 +23,7 @@ module SidsModule
   use VectorsModule, only: Vector_T
   use Dump_0, only: dump
   use ForwardModelIntermediate, only: ForwardModelIntermediate_T,&
-    & ForwardModelStatus_T
+    & ForwardModelStatus_T, DestroyForwardModelIntermediate
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
 
   !---------------------------- RCS Ident Info -------------------------------
@@ -124,6 +124,8 @@ contains
       end do
     end do
 
+    call DestroyForwardModelIntermediate( ifm )
+
     if ( toggle(gen) ) call trace_end ( "SIDS" )
 
     call deallocate_test ( configs, 'configs', ModuleName )
@@ -152,6 +154,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.19  2001/04/19 20:30:24  livesey
+! Added call to DestroyForwardModelIntermediate
+!
 ! Revision 2.18  2001/04/12 21:42:24  livesey
 ! Another interim version, forgot to nullify a pointer.
 !
