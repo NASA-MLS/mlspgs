@@ -86,7 +86,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_FORWARDMODEL        = f_formula + 1
   integer, parameter :: F_FRACTION            = f_forwardModel + 1
   integer, parameter :: F_FRQGAP              = f_fraction + 1
-  integer, parameter :: F_FWDMODELEXTRA       = f_frqGap + 1
+  integer, parameter :: F_FUZZ                = f_frqGap + 1   ! Secret
+  integer, parameter :: F_FWDMODELEXTRA       = f_fuzz + 1
   integer, parameter :: F_FWDMODELIN          = f_fwdModelExtra + 1
   integer, parameter :: F_FWDMODELOUT         = f_fwdModelIn + 1
   integer, parameter :: F_GEOCALTITUDEQUANTITY= f_fwdModelOut + 1
@@ -425,6 +426,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_forwardModel) =        add_ident ( 'forwardModel' )
     field_indices(f_fraction) =            add_ident ( 'fraction' )
     field_indices(f_frqGap) =              add_ident ( 'frqGap' )
+    field_indices(f_fuzz) =                add_ident ( 'fuzz' )  ! Secret
     field_indices(f_fwdModelExtra) =       add_ident ( 'fwdModelExtra' )
     field_indices(f_fwdModelIn) =          add_ident ( 'fwdModelIn' )
     field_indices(f_fwdModelOut) =         add_ident ( 'fwdModelOut' )
@@ -857,6 +859,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_diagonal, t+t_boolean, n+n_field_type, &
              begin, f+f_diagonalOut, t+t_boolean, n+n_field_type, &
              begin, f+f_forwardModel, s+s_forwardModel, nr+n_field_spec, &
+             begin, f+f_fuzz, t+t_numeric, n+n_field_type, & ! Secret
              begin, f+f_fwdModelExtra, s+s_vector, nr+n_field_spec, &
              begin, f+f_fwdModelOut, s+s_vector, n+n_field_spec, &
              begin, f+f_jacobian, s+s_matrix, n+n_field_spec, &
@@ -959,6 +962,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.106  2001/05/18 19:46:22  vsnyder
+! Add secret 'fuzz' field to 'retrieve' command -- for testing
+!
 ! Revision 2.105  2001/05/18 01:02:03  vsnyder
 ! Add Lambda, maxF, maxJ fields to Retrieve, deleted maxIterations
 !
