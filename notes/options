@@ -54,6 +54,7 @@ E.g., mlsl2 -m -p --nmeta -S"glo jac"
   --recl[ ]<number>: set the max record length size for l2cf to <number>
       (In case the default value, 20000, is too small for some l2cfs).
       This has effect only if the l2cf is not coming from standard input.
+  --[n]skipRetr[ieval]: Do [not] skip all the Retrievals; a pre-flight checkout
   --slave[ ]<master-tid>: This is a slave; <master-tid>
     is the id of the master.  This option is set by a master
     task and is not recommended for manual invocations.
@@ -97,6 +98,9 @@ by the equal-signs -- stuff outside that space, like these
 comments, will not be printed in response to mlsl2 -?)
 
  $Log$
+ Revision 1.24  2003/08/01 20:02:52  pwagner
+ Added --pge 'commandname'
+
  Revision 1.23  2003/06/13 23:55:57  vsnyder
  Futzing
 
