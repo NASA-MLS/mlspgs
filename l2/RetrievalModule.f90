@@ -34,6 +34,7 @@ contains
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use BitStuff, only: CountBits
+    use Chunks_m, only: MLSChunk_T
     use Expr_M, only: Expr
     use ForwardModelConfig, only: ForwardModelConfig_T
     use Init_Tables_Module, only: F_apriori, F_aprioriScale, F_Average, &
@@ -67,7 +68,7 @@ contains
       & Matrix_SPD_T, MultiplyMatrixVectorNoT, operator(.TX.), ReflectMatrix, &
       & Sparsify, MultiplyMatrix_XTY
     use MatrixTools, only: DumpBlocks
-    use MLSCommon, only: MLSCHUNK_T, R8, RV
+    use MLSCommon, only: R8, RV
     use MLSL2Options, only: SKIPRETRIEVAL
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, Add_To_Retrieval_Timing
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
@@ -2256,6 +2257,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.257  2004/05/19 19:16:12  vsnyder
+! Move MLSChunk_t to Chunks_m
+!
 ! Revision 2.256  2004/04/19 23:25:55  livesey
 ! Added an only to the use of ieee_arithemtic
 !
