@@ -1,6 +1,7 @@
 #!/bin/sh
 # mark_as_uptodate.sh
 # --------------- mark_as_uptodate.sh help
+#Main use:
 #mark targets as uptodate in current working directory
 #and optionally in any prerequisite directories.
 #
@@ -10,6 +11,16 @@
 #Result:
 #make will show targets uptodate with prerequisites
 #so subsequent makes should do nothing
+#
+#Special use (invoked by -t option):
+#if target exists--just touch target
+#else try "rm -f 1st_arg; $(MYMAKE) 1st_arg"
+#Example of special usage:
+#mark_as_uptodate.sh -t -T target_name alternate_target_name
+#
+#Result:
+#target_name will be touched or rebuilt if necessary, and thus brought uptodate
+#also exit status will be passed to calling routine
 #
 #    O p t i o n s
 # -h[elp]            brief summary of usage and options; then exit
@@ -21,10 +32,11 @@
 # -fno               begin with MARK_ALL_AS_UPTODATE set to "no"
 # -syes              skip going through prerequisite directories
 # -sno               don't skip going through prerequisite directories
+# -t                 special use: touch target_name 
 # -v                 verbose--note marking up to date
 #Notes:
 #(1)The options -x must appear before the prerequisite directories pdn
-#(2)All options except for -fxxx, -sxxx, -n and -h require a following arg
+#(2)All options except for -fxxx, -sxxx, -n, -t, -v and -h require an arg
 #(3)The -fxxx are mutually exclusive; if neither, or -f"", 
 #   MARK_ALL_AS_UPTODATE="" (the default)
 #(4)The -sxxx are mutually exclusive; if neither, or -s"", 
@@ -133,6 +145,7 @@ fi
 # MLSCONFG                          (as found in Makefile)
 # MLSCFILE                          (as found in Makefile)
 # MARK_ALL_AS_UPTODATE              ""
+# special_use                       no
 # verbose                           no
 # SKIP_PDS                          no
 #----------------------- Implementation -----------------------
@@ -145,8 +158,11 @@ MYMAKE=make
 MLSCONFG=""
 MLSCFILE=""
 MARK_ALL_AS_UPTODATE=""
+special_use=no
 verbose=no
 SKIP_PDS=no
+NORMAL_STATUS=0
+return_status=0
 #
 # Get arguments from command line
 #
@@ -194,6 +210,10 @@ while [ "$more_opts" = "yes" ] ; do
 	    MARK_ALL_AS_UPTODATE=
 	    shift
 	;;
+	-t )
+	    special_use=yes
+	    shift
+	;;
 	-v )
 	    verbose=yes
 	    shift
@@ -217,14 +237,58 @@ then
   echo "MLSCFILE $MLSCFILE"
   echo "MARK_ALL_AS_UPTODATE? $MARK_ALL_AS_UPTODATE"
   echo "target_name $target_name"
+  echo "special_use? $special_use"
   echo "skip prerequisite directories? $SKIP_PDS"
   echo "remaining args (prereq dirs): $@"
 fi
-if [ "$verbose" != "" ]
+if [ "$verbose" != "" -a "$special_use" = "yes" ]
+then
+  echo "Marking $target_name as up to date in `pwd`"
+elif [ "$verbose" != "" ]
 then
   echo "Marking OBJS and MODULES as up to date in `pwd`"
 fi
 
+if [ "$special_use" = "yes" ]
+then
+   if [ -f "$target_name" ]
+   then
+      if [ "$verbose" != "" -a "$special_use" = "yes" ]
+      then
+         echo "touching $target_name"
+      fi
+      touch "$target_name"
+   else
+      if [ "$verbose" != "" -a "$special_use" = "yes" ]
+      then
+         echo "rebuilding $target_name via $1"
+      fi
+      if [ -f "$1" ]
+      then
+         rm -f "$1"
+      fi
+      if [ "$MLSCONFG" != "" -a "$MLSCFILE" != "" ]
+      then
+         $MYMAKE $1 MLSCONFG="$MLSCONFG" MLSCFILE="$MLSCFILE" MARK_ALL_AS_UPTODATE=no
+      elif [ "$MLSCONFG" != "" ]
+      then
+         $MYMAKE $1 MLSCONFG="$MLSCONFG" MARK_ALL_AS_UPTODATE=no
+      elif [ "$MLSCFILE" != "" ]
+      then
+         $MYMAKE $1 MLSCFILE="$MLSCFILE" MARK_ALL_AS_UPTODATE=no
+      else
+         $MYMAKE $1 MARK_ALL_AS_UPTODATE=no
+      fi
+   fi
+   return_status=`expr $?`
+   if [ "$return_status" != "$NORMAL_STATUS" ]; then
+   #   echo "exiting with status 1"
+      exit 1
+   else
+   #   echo "exiting with status 0"
+      exit 0
+   fi
+fi
 #
 # Process and mark pdn (if any) as arguments from command line
 # (unless $SKIP_PDS is yes)
@@ -287,3 +351,6 @@ fi
 exit 0
 
 # $Log$
+# Revision 1.1  2002/06/21 00:10:13  pwagner
+# First commit
+#
