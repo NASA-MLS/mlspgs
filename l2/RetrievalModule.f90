@@ -42,7 +42,7 @@ contains
       & F_diagonal, F_forwardModel, F_fuzz, F_fwdModelExtra, F_fwdModelOut, &
       & F_height, f_highBound, f_hRegOrders, f_hRegQuants, f_hRegWeights, &
       & f_hRegWeightVec, F_ignore, F_jacobian, F_lambda, F_Level, f_lowBound, &
-      & F_mask, F_maxJ, F_measurements, F_measurementSD, F_method, &
+      & F_mask, F_maxJ, F_measurements, F_measurementSD, F_method, F_muMin, &
       & F_opticalDepth, F_opticalDepthCutoff, F_outputCovariance, F_outputSD, &
       & F_phaseName, F_ptanQuantity, F_quantity, &
       & F_regAfter, F_regApriori, F_serial, F_state, F_toleranceA, F_toleranceF, &
@@ -98,6 +98,7 @@ contains
     real(r8), parameter :: DefaultInitLambda = 0.0_r8
     integer, parameter :: DefaultMaxJ = 5
     integer, parameter :: DefaultMethod = l_newtonian
+    real(r8), parameter :: DefaultMuMin = 0.1_rv
     double precision, parameter :: DefaultToleranceA = 1.0d-6 ! for NWT
     double precision, parameter :: DefaultToleranceF = 1.0d-6 ! for NWT
     double precision, parameter :: DefaultToleranceR = 1.0d-6 ! for NWT
@@ -151,6 +152,7 @@ contains
     type(matrix_SPD_T), target :: MyCovariance    ! for OutputCovariance to point at
     type(matrix_T), target :: MyJacobian          ! for Jacobian to point at
     type(vector_T), dimension(:), pointer :: MyVectors ! database
+    real(rv) :: MuMin                   ! Smallest shrinking of dx before change direction
     type(matrix_T), pointer :: OutputAverage      ! Averaging Kernel
     type(matrix_SPD_T), pointer :: OutputCovariance    ! Covariance of the sol'n
     type(vector_T), pointer :: OutputSD ! Vector containing SD of result
@@ -293,6 +295,7 @@ contains
         initLambda = defaultInitLambda
         maxJacobians = defaultMaxJ
         method = defaultMethod
+        muMin = defaultMuMin
         toleranceA = defaultToleranceA
         toleranceF = defaultToleranceF
         toleranceR = defaultToleranceR
@@ -366,7 +369,7 @@ contains
             outputSD => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_state )
             state => vectorDatabase(decoration(decoration(subtree(2,son))))
-          case ( f_aprioriScale, f_fuzz, f_lambda, f_maxJ, &
+          case ( f_aprioriScale, f_fuzz, f_lambda, f_maxJ, f_muMin, &
             &    f_toleranceA, f_toleranceF, f_toleranceR )
             call expr ( subtree(2,son), units, value, type )
             if ( units(1) /= phyq_dimensionless ) &
@@ -380,6 +383,8 @@ contains
               initLambda = value(1)
             case ( f_maxJ )
               maxJacobians = value(1)
+            case ( f_muMin )
+              muMin = value(1)
             case ( f_toleranceA )
               toleranceA = value(1)
             case ( f_toleranceF )
@@ -648,7 +653,7 @@ contains
     end subroutine AnnounceError
 
     ! ------------------------------------------------  BoundMove  -----
-    subroutine BoundMove ( Mu, Bound, X, Dx, Which )
+    subroutine BoundMove ( Mu, Bound, X, Dx, Which, muMin )
       ! Compute a scalar multiple Mu such that X + Mu*DX does not go
       ! beyond Bound.  "Which" specifies either "low" or "high"
 
@@ -663,10 +668,15 @@ contains
       ! {\delta x_i}$.  If we check the components one at a time, each one
       ! using the most recently computed $\mu$, we don't need a divide for
       ! each check, and we don't need a {\tt min} operation.
+      ! However, if we are already at the bounds, and the next step 
+      ! wants to keep going beyond the bounds, then $\mu$ will be
+      ! really small.  In this case $\mu < \mu_{\text{min}}$ we revert
+      ! to a straight element by element modification of $d_i$.      
 
       real(rv), intent(inout) :: Mu
-      type(vector_T), intent(in) :: Bound, X, Dx
+      type(vector_T), intent(inout) :: Bound, X, Dx
       character(len=*), intent(in) :: Which
+      real(rv), intent(in) :: MuMin
 
       integer :: IQ, IVX, IVY           ! Subscripts used during MU computation
 
@@ -714,7 +724,6 @@ contains
               end do
             end do
           else
-            print*,'Doing unmasked high bound'
             do ivy = 1, size(x%quantities(iq)%values,2)
               do ivx = 1, size(x%quantities(iq)%values,1)
                 if ( x%quantities(iq)%values(ivx,ivy) + &
@@ -731,11 +740,81 @@ contains
         call MLSMessage ( MLSMSG_Error, moduleName, &
           & 'Come on! In BoundMove, it has to be a low bound or a high bound!' )
       end if
+
+      ! Now if mu has got really small, we'll change it back to one,
+      ! and do an element by element modification of dx
+      if ( mu < muMin ) then
+        mu = 1.0_rv
+        if ( which == 'low' ) then
+          do iq = 1, size(x%quantities)
+            if ( associated(x%quantities(iq)%mask) ) then
+              do ivy = 1, size(x%quantities(iq)%values,2)
+                do ivx = 1, size(x%quantities(iq)%values,1)
+                  if ( iand(ichar(x%quantities(iq)%mask(ivx,ivy)),m_linalg) == 0 ) then
+                    if ( x%quantities(iq)%values(ivx,ivy) + &
+                      &  dx%quantities(iq)%values(ivx,ivy) < &
+                      &  bound%quantities(iq)%values(ivx,ivy) ) &
+                        &  dx%quantities(iq)%values(ivx,ivy) = &
+                        &    bound%quantities(iq)%values(ivx,ivy) - &
+                        &    x%quantities(iq)%values(ivx,ivy)
+                  end if
+                end do
+              end do
+            else
+              do ivy = 1, size(x%quantities(iq)%values,2)
+                do ivx = 1, size(x%quantities(iq)%values,1)
+                  if ( x%quantities(iq)%values(ivx,ivy) + &
+                    &  dx%quantities(iq)%values(ivx,ivy) < &
+                    &  bound%quantities(iq)%values(ivx,ivy) ) &
+                      &  dx%quantities(iq)%values(ivx,ivy) = &
+                      &    bound%quantities(iq)%values(ivx,ivy) - &
+                      &    x%quantities(iq)%values(ivx,ivy)
+                end do
+              end do
+            end if
+          end do
+        else if ( which == 'high' ) then
+          do iq = 1, size(x%quantities)
+            if ( associated(x%quantities(iq)%mask) ) then
+              do ivy = 1, size(x%quantities(iq)%values,2)
+                do ivx = 1, size(x%quantities(iq)%values,1)
+                  if ( iand(ichar(x%quantities(iq)%mask(ivx,ivy)),m_linalg) == 0 ) then
+                    if ( x%quantities(iq)%values(ivx,ivy) + &
+                      &  dx%quantities(iq)%values(ivx,ivy) > &
+                      &  bound%quantities(iq)%values(ivx,ivy) ) &
+                        &  dx%quantities(iq)%values(ivx,ivy) = &
+                        &    bound%quantities(iq)%values(ivx,ivy) - &
+                        &    x%quantities(iq)%values(ivx,ivy)
+                  end if
+                end do
+              end do
+            else
+              do ivy = 1, size(x%quantities(iq)%values,2)
+                do ivx = 1, size(x%quantities(iq)%values,1)
+                  if ( x%quantities(iq)%values(ivx,ivy) + &
+                    &  dx%quantities(iq)%values(ivx,ivy) > &
+                    &  bound%quantities(iq)%values(ivx,ivy) ) &
+                      &  dx%quantities(iq)%values(ivx,ivy) = &
+                      &    bound%quantities(iq)%values(ivx,ivy) - &
+                      &    x%quantities(iq)%values(ivx,ivy)
+                end do
+              end do
+            end if
+          end do
+        end if
+      end if
+
+      ! Let's keep this check in, just in case muMin has not been set.
       if ( mu < 0.0_rv ) then
-        call output ( 'mu=' )
-        call output ( mu, advance='yes' )
-        call MLSMessage ( MLSMSG_Error, moduleName, &
-          &  'How did mu get to be negative?' )
+        ! If it's negative but tiny then just nudge it.
+        if ( mu > - sqrt ( epsilon ( 1.0_rv ) ) ) then
+          mu = abs ( mu )
+        else
+          call output ( 'mu=' )
+          call output ( mu, advance='yes' )
+          call MLSMessage ( MLSMSG_Error, moduleName, &
+            &  'How did mu get to be negative?' )
+        end if
       end if
     end subroutine BoundMove
 
@@ -1579,9 +1658,9 @@ contains
           end if
           mu = 1.0_rv
           if ( got(f_lowBound) ) &
-            & call boundMove ( mu, lowBound, v(x), v(dxUnScaled), 'low' )
+            & call boundMove ( mu, lowBound, v(x), v(dxUnScaled), 'low', muMin )
           if ( got(f_highBound) ) &
-            & call boundMove ( mu, highBound, v(x), v(dxUnScaled), 'high' )
+            & call boundMove ( mu, highBound, v(x), v(dxUnScaled), 'high', muMin )
           if ( mu < 1.0_rv ) call scaleVector ( v(candidateDX), mu )
           aj%dxn = sqrt(v(candidateDX) .dot. v(candidateDX)) ! L2Norm(dx)
           aj%gdx = v(gradient) .dot. v(candidateDX)
@@ -1627,9 +1706,9 @@ contains
           ! Shorten dxUnscaled if necessary to stay within the bounds
           mu = 1.0
           if ( got(f_lowBound) ) &
-            & call boundMove ( mu, lowBound, v(x), v(dxUnscaled), 'low' )
+            & call boundMove ( mu, lowBound, v(x), v(dxUnscaled), 'low', muMin )
           if ( got(f_highBound) ) &
-            & call boundMove ( mu, highBound, v(x), v(dxUnscaled), 'high' )
+            & call boundMove ( mu, highBound, v(x), v(dxUnscaled), 'high', muMin )
           if ( mu < 1.0_rv ) call scaleVector ( v(dxUnscaled), mu )
           call addToVector ( v(x), v(dxUnScaled) ) ! x = x + dxUnScaled
             if ( index(switches,'dvec') /= 0 ) &
@@ -3175,6 +3254,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.195  2002/10/19 23:41:04  livesey
+! Added muMin functionality
+!
 ! Revision 2.194  2002/10/19 18:49:17  livesey
 ! Various bug fixes in bounds stuff
 !
