@@ -75,8 +75,8 @@ contains
     use MLSCommon, only: R8, FileNameLen, NameLen, L1BInfo_T, TAI93_Range_T
     use MLSFiles, only: FILENOTFOUND, &
       & GetPCFromRef, mls_hdf_version, split_path_name
-    use MLSL2Options, only: ILLEGALL1BRADID, LEVEL1_HDFVERSION, MAXNUML1BRADIDS, &
-      & Toolkit
+    use MLSL2Options, only: ILLEGALL1BRADID, LEVEL1_HDFVERSION, &
+      & MAXNUML1BRADIDS, STOPAFTERGLOBAL, STOPAFTERCHUNKDIVIDE, Toolkit
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSPCF2, only: mlspcf_l2gp_start, mlspcf_l2gp_end, &
@@ -123,6 +123,8 @@ contains
     integer :: NOMAFS              ! Number of MAFs of L1B data read
     integer :: ReturnStatus        ! non-zero means trouble
     integer :: SON                 ! Son of root
+    integer :: Status              ! From CreateVGridFromMLSCFInfo
+    logical :: stopEarly
     integer :: Sub_rosa_index
     integer :: the_hdf_version     ! 4 or 5 (corresp. to hdf4 or hdf5)
     logical :: TIMING              ! For S_Time
@@ -145,6 +147,7 @@ contains
 
     timing = section_times
     if ( timing ) call time_now ( t1 )
+    stopEarly = STOPAFTERCHUNKDIVIDE .or. STOPAFTERGLOBAL
 
     error = 0
     startTimeIsAbsolute = .false.
@@ -289,10 +292,10 @@ contains
           call decorate ( son, AddFGridToDatabase ( fGrids, &
             & CreateFGridFromMLSCFInfo ( name, son ) ) )
         case ( s_forwardModelGlobal ) !??? Begin temporary stuff for l2load
-          call forwardModelGlobalSetup ( son, returnStatus )
+          if ( .not. stopEarly ) call forwardModelGlobalSetup ( son, returnStatus )
           error = max(error, returnStatus)
         case ( s_forwardModel )
-          call decorate (son, AddForwardModelConfigToDatabase ( &
+          if ( .not. stopEarly ) call decorate (son, AddForwardModelConfigToDatabase ( &
             & forwardModelConfigDatabase, &
             & ConstructForwardModelConfig ( name, son, vGrids, .true. ) ) )
         case ( s_l1boa )
@@ -478,6 +481,14 @@ contains
     if ( error /= 0 ) &
       & call MLSMessage(MLSMSG_Error,ModuleName, &
       & 'Problem with global settings section')
+
+    if ( index(switches, 'vgrid2') /= 0 ) then
+      Details = 1
+    else
+      Details = 0
+    endif
+    if ( index(switches, 'vgrid') /= 0 ) &
+      & call dump ( vgrids, details=Details )
 
     if ( toggle(gen) ) then
       call trace_end ( 'SET_GLOBAL_SETTINGS' )
@@ -847,6 +858,10 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.91  2004/12/13 20:19:48  vsnyder
+! Added MakePFA, PFAData, WritePFA.  Improved error handling.  Removed dumps
+! triggered by switches == vgrid2 or vgrid, since the dump command can do it now.
+!
 ! Revision 2.90  2004/10/13 00:52:52  vsnyder
 ! Get HHMMSS_value from MLSStrings, its new home
 !
