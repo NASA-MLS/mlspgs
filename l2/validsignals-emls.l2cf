@@ -8,13 +8,20 @@ begin MLSSignals
   THz: Module
 
   ;; Radiometers, with their nominal local oscillator frequencies:
-  R1A: radiometer, suffix= "118", module= GHz, lo = 126.8 GHz
-  R1B: radiometer, suffix= "118", module= GHz, lo = 126.8 GHz
-  R2:  radiometer, suffix= "190", module= GHz, lo = 191.9 GHz
-  R3:  radiometer, suffix= "240", module= GHz, lo = 239.66 GHz
-  R4:  radiometer, suffix= "640", module= GHz, lo = 642.87 GHz
-  R5H: radiometer, suffix= "2T5", module= THz, lo = 2522.7816 GHz
-  R5V: radiometer, suffix= "2T5", module= THz, lo = 2522.7816 GHz
+  ;; Deine these as m4 macros, because I'll want to use them again later.
+  !define(loR1,{126.8 GHz})
+  !define(loR2,{191.9 GHz})
+  !define(loR3,{239.66 GHz})
+  !define(loR4,{642.87 GHz})
+  !define(loR5,{2522.7816 GHz})
+
+  R1A: radiometer, suffix= "118", module= GHz, lo = !loR1
+  R1B: radiometer, suffix= "118", module= GHz, lo = !loR1
+  R2:  radiometer, suffix= "190", module= GHz, lo = !loR2
+  R3:  radiometer, suffix= "240", module= GHz, lo = !loR3
+  R4:  radiometer, suffix= "640", module= GHz, lo = !loR4
+  R5H: radiometer, suffix= "2T5", module= THz, lo = !loR5
+  R5V: radiometer, suffix= "2T5", module= THz, lo = !loR5
 
   ;; Spectrometer types
   ;; 25 channel filterbanks
@@ -220,7 +227,14 @@ begin MLSSignals
 end MLSSignals
 
 ; $Log$
+; Revision 2.3  2001/11/07 23:06:22  livesey
+; Added m4 macros for lo's to be used later.
+;
 ; Revision 2.2  2001/11/03 01:35:23  livesey
 ; Updated for new switch network.  Should have done this
 ; a lot earlier!
 ;
+
+
+
+
