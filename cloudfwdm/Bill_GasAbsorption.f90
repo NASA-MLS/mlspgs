@@ -31,8 +31,8 @@ contains
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT, ALLOCATEONESLABS, &
       & DESTROYCOMPLETESLABS
     use MLSCommon, only: R8, RP, IP
-    use Molecules, only: SP_H2O, SP_H2O_18, SP_HNO3, SP_N2, SP_N2O, SP_O_18_O, &
-      & SP_O2, SP_O3
+    use Molecules, only: L_H2O, L_H2O_18, L_HNO3, L_N2, L_N2O, L_O_18_O, &
+      & L_O2, L_O3
     use SLABS_SW_M, only: GET_GL_SLABS_ARRAYS
     use SpectroscopyCatalog_m, only: CATALOG_T, LINES
     use WaterVapor, only: RHtoEV
@@ -78,7 +78,7 @@ contains
 
     Integer(ip) :: n_sps, i, j, no_of_lines, n_ele
     integer(ip), parameter :: IPSD=1000, NU=16, NUA=8, NAB=50, NR=40, NC=2
-    Integer(ip) :: Spectag, status
+    Integer(ip) :: status
     REAL(rp) :: bb, del_temp, cld_ext, WC(2), tanh1
     real(r8), parameter :: Boltzmhz = 20836.74_r8
     REAL(rp), allocatable, dimension(:) :: PP, TT
@@ -145,27 +145,26 @@ contains
     tanh1 = EXP(FF / (boltzmhz * t))
     tanh1 = (1.0 - tanh1) / (1.0 + tanh1)
     DO i = 1, n_sps
-      Spectag = Catalog(i)%Spec_Tag
 
-       CALL create_beta ( Spectag, Catalog(i)%continuum, PB, T, &
+       CALL create_beta ( catalog(i)%molecule, Catalog(i)%continuum, PB, T, &
          &  FF, Lines(Catalog(i)%Lines)%W, gl_slabs(n_ele,i), tanh1, bb )
       
-      select case (Spectag)
-      case (SP_H2O)
+      select case (catalog(i)%molecule)
+      case (L_H2O)
         VMR = VMR_H2O
-      case (SP_O2)
+      case (L_O2)
         VMR = VMR_O2
-      case (SP_N2)
+      case (L_N2)
         VMR = VMR_N2
-      case (SP_O_18_O)
+      case (L_O_18_O)
         VMR = VMR_O_18_O
-      case (SP_H2O_18)
+      case (L_H2O_18)
         VMR = VMR_H2O_18
-      case (SP_O3)
+      case (L_O3)
         VMR = VMR_O3
-      case (SP_N2O)
+      case (L_N2O)
         VMR = VMR_N2O
-      case (SP_HNO3)
+      case (L_HNO3)
         VMR = VMR_HNO3
       case default
         VMR=0.0_r8
@@ -196,6 +195,9 @@ contains
 End Module Bill_GasAbsorption
 
 ! $Log$
+! Revision 1.17  2003/05/09 19:43:11  jonathan
+! delete del_temp following Van's changes
+!
 ! Revision 1.16  2003/05/06 20:45:45  jonathan
 ! some fixing after the merge
 !

@@ -16,7 +16,7 @@ contains
 ! *****     Public Subroutine     **************************************
 ! ----------------------------------------------  Create_beta  ---------
 
-  subroutine Create_beta ( Spectag, cont, pressure, Temp, Fgr, pfaw, &
+  subroutine Create_beta ( molecule, cont, pressure, Temp, Fgr, pfaw, &
          &   slabs_0, tanh1, beta_value, polarized,                  &
          &   slabs_p, tanh1_p, slabs_m, tanh1_m,                     &
          &   t_power, dbeta_dw, dbeta_dn, dbeta_dv  )
@@ -26,11 +26,11 @@ contains
 
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use MLSCommon, only: RP, IP
-    use Molecules, only: SP_Air_Cont, SP_Extinction, SP_Liq_H2O, SP_O2
+    use Molecules, only: L_N2, L_Extinction, L_O2
     use SLABS_SW_M, only: DVOIGT_SPECTRAL, VOIGT_LORENTZ, SLABSWINT, SLABS
 
 ! Inputs:
-    integer(ip), intent(in) :: SPECTAG ! molecule id tag
+    integer(ip), intent(in) :: molecule ! molecule id
     real(rp), intent(in) :: cont(:)    ! continuum parameters
     real(rp), intent(in) :: pressure   ! pressure in hPa
     real(rp), intent(in) :: temp       ! temperature in K
@@ -78,15 +78,7 @@ contains
 !  Setup absorption coefficients function
 !  Now get the beta_value:
 
-    if ( spectag == sp_liq_h2o ) then ! ..................  Liquid Water
-
-      beta_value = abs_cs_liq_h2o(Fgr,Temp)
-      if ( present(t_power) ) then
-        bm = abs_cs_liq_h2o(Fgr,tm)
-        bp = abs_cs_liq_h2o(Fgr,tp)
-      end if
-
-    else if ( spectag == sp_air_cont ) then ! .................  Dry Air
+    if ( molecule == l_n2 ) then ! .................  Dry Air
 
       beta_value = abs_cs_n2_cont(cont,Temp,Pressure,Fgr)
       if ( present(t_power) ) then
@@ -94,13 +86,13 @@ contains
         bp = abs_cs_n2_cont(cont,tp,Pressure,Fgr)
       end if
 
-    else if ( spectag == sp_extinction ) then ! ............  Extinction
+    else if ( molecule == l_extinction ) then ! ............  Extinction
 
       beta_value = 1.0_rp
       if ( present(t_power)) t_power = 0.0_rp
       return
 
-    else if ( spectag == sp_o2 ) then ! ............................  O2
+    else if ( molecule == l_o2 ) then ! ............................  O2
 
       beta_value = abs_cs_o2_cont(cont,Temp,Pressure,Fgr)
       if ( present(t_power) ) then
@@ -250,29 +242,6 @@ contains
 
     end function Abs_CS_Cont
 
-    ! -------------------------------------------  Abs_CS_Liq_H2O  -----
-
-    ! Compute the liquid water correction
-    pure real(rp) function Abs_CS_Liq_H2O ( Frequency, Temperature )
-    ! real(rp) function ABS_CS_LIQ_H2O ( Frequency, Temperature )
-
-      real(rp), intent(in) :: FREQUENCY   ! in MegaHertz
-      real(rp), intent(in) :: TEMPERATURE ! in Kelvin
-
-    ! This function when multiplied by mass density (gm/m^3) of liquid droplet
-    ! water gives absorption in Km^-1. Function comes from Liebe 1985 radio
-    ! science paper and others.
-
-      real(rp) :: TAU, EPSILON, THETA
-
-      theta = 300.0_rp / temperature
-      tau = 4.17e-8_rp * frequency * theta * exp(7.13_rp * theta)
-      epsilon = (185.0_rp - 113.0_rp/theta) / (1.0_rp + tau * tau)
-      abs_cs_liq_h2o = 1.886e-4_rp * frequency * tau * epsilon / &
-                     & ((6.9_rp + epsilon)**2 + (tau*epsilon)**2)
-
-    end function Abs_CS_Liq_H2O
-
     ! -------------------------------------------  Abs_CS_N2_Cont  -----
 
     ! Compute the N2 continuum contribution
@@ -325,6 +294,9 @@ contains
 end module CREATE_BETA_M
 
 ! $Log$
+! Revision 2.22  2003/05/16 02:46:50  vsnyder
+! Removed USE's for unreferenced symbols
+!
 ! Revision 2.21  2003/05/05 23:00:25  livesey
 ! Merged in feb03 newfwm branch
 !

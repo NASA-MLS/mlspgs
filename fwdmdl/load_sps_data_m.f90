@@ -63,7 +63,8 @@ contains
     use ForwardModelIntermediate, only: ForwardModelStatus_t
     use ForwardModelVectorTools, only: GetQuantityForForwardModel, QtyStuff_T
     use Intrinsic, only: L_Phitan
-    use Molecules, only: Spec_tags, SP_Extinction, SP_H2O
+    use ManipulateVectorQuantities, only: FindInstanceWindow
+    use Molecules, only: l_extinction, l_h2o
     use VectorsModule, only: Vector_T, VectorValue_T
 
     type(forwardModelConfig_T), intent(in) :: fwdModelConf
@@ -109,8 +110,8 @@ contains
 
       mol = mol_cat_index(ii)
       kk = FwdModelConf%molecules(mol)
-      if ( spec_tags(kk) == sp_h2o ) my_h2o_ind = ii        ! memorize h2o index
-      if ( spec_tags(kk) == sp_extinction ) my_ext_ind = ii ! memorize extiction ix
+      if ( kk == l_h2o ) my_h2o_ind = ii        ! memorize h2o index
+      if ( kk == l_extinction ) my_ext_ind = ii ! memorize extiction ix
       
       qtyStuff(ii)%qty => GetQuantityforForwardModel ( &
         & fwdModelIn, fwdModelExtra, &
@@ -481,6 +482,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.51  2003/05/16 02:47:12  vsnyder
+! Removed USE's for unreferenced symbols
+!
 ! Revision 2.50  2003/05/08 23:42:50  livesey
 ! Bug fix for requesting derivatives etc.
 !

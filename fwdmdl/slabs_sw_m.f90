@@ -953,14 +953,14 @@ contains
  end subroutine Slabs_prep_wder
 
   ! -----------------------------------------  Slabs_Prep_Arrays   -----
-  Subroutine Slabs_Prep_Arrays ( Spectag, nl, t, p, mass, Qlog, Catalog, &
+  Subroutine Slabs_Prep_Arrays ( molecule, nl, t, p, mass, Qlog, Catalog, &
                                & v0s, x1, y, yi, slabs1, dslabs1_dv0 )
 
-    use Molecules, only: L_Air_Cont, L_Extinction, L_Liq_H2O, Spec_tags
+    use Molecules, only: L_N2, L_Extinction
 
     type(catalog_T) :: Catalog
 
-    integer(ip), intent(in) :: Spectag, nl
+    integer(ip), intent(in) :: molecule, nl
 
     real(rp), intent(in) :: t, p, mass,Qlog(:)
 
@@ -969,10 +969,9 @@ contains
 
     integer :: j, k
 
-    if ( spectag==spec_tags(l_liq_h2o) .or. Spectag==spec_tags(l_air_cont) .or. &
-      &  spectag==spec_tags(l_extinction) ) return
+    if ( any ( molecule == (/ l_extinction /) ) ) return
 
-! Check for anything but liquid water, dry air or extinction:
+! Check for anything but dry air or extinction:
 
     do j = 1, nl
 
@@ -1012,9 +1011,9 @@ contains
 
     real(rp), parameter :: c = speedOfLight/1000.0_rp ! Speed of Light Km./Sec.
 
-    integer :: nl,i,j,n_sps,spectag, k
+    integer :: nl,i,j,n_sps, k
 
-    real(rp) :: mass, vel_z_correction, Qlog(3)
+    real(rp) :: vel_z_correction, Qlog(3)
 
     Logical :: Do_1D
 
@@ -1026,9 +1025,6 @@ contains
 
     do i = 1, n_sps
 
-      Spectag = Catalog(i)%spec_tag
-      mass = real(Spectag) / 1000.0_rp
-
       nl = Size(Catalog(i)%Lines)
       gl_slabs(1:no_ele,i)%no_lines = nl
 
@@ -1038,7 +1034,8 @@ contains
 
         do j = 1, no_ele
 
-          call Slabs_Prep_Arrays ( Spectag, nl, t_path(j), p_path(j), mass, Qlog, &
+          call Slabs_Prep_Arrays ( catalog(i)%molecule, nl, t_path(j),&
+            &  p_path(j), catalog(i)%mass, Qlog, &
             &  Catalog(i), gl_slabs(j,i)%v0s, gl_slabs(j,i)%x1, gl_slabs(j,i)%y, &
             &  gl_slabs(j,i)%yi,gl_slabs(j,i)%slabs1,gl_slabs(j,i)%dslabs1_dv0 )
 
@@ -1054,8 +1051,9 @@ contains
 
         do j = 1, no_ele/2
 
-          call Slabs_Prep_Arrays ( Spectag, nl, t_path(j), p_path(j), mass, Qlog, &
-            &  Catalog(i), gl_slabs(j,i)%v0s, gl_slabs(j,i)%x1, gl_slabs(j,i)%y, &
+          call Slabs_Prep_Arrays ( catalog(i)%molecule, nl, t_path(j), p_path(j), &
+            & catalog(i)%mass, Qlog, &
+            & Catalog(i), gl_slabs(j,i)%v0s, gl_slabs(j,i)%x1, gl_slabs(j,i)%y, &
             & gl_slabs(j,i)%yi,gl_slabs(j,i)%slabs1,gl_slabs(j,i)%dslabs1_dv0 )
 
           gl_slabs(j,i)%v0s = gl_slabs(j,i)%v0s * Vel_z_correction
@@ -1091,6 +1089,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.17  2003/05/09 19:25:31  vsnyder
+! Expect T+DT instead of T and DT separately in Get_GL_Slabs_Arrays
+!
 ! Revision 2.16  2003/05/05 23:00:26  livesey
 ! Merged in feb03 newfwm branch
 !
