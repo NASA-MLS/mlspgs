@@ -6,7 +6,7 @@ module GLOBAL_SETTINGS
   use MLSL2Options, only: PCF, MAXNUML1BRADIDS, ILLEGALL1BRADID, &
     & LEVEL1_HDFVERSION
   use MLSStrings, only: utc_to_yyyymmdd
-  use PCFHdr, only: GlobalAttributes
+  use PCFHdr, only: GlobalAttributes, FillTAI93Attribute
 
   implicit NONE
 
@@ -377,6 +377,7 @@ contains
       GlobalAttributes%StartUTC = l2pcf%StartUTC
       GlobalAttributes%EndUTC = l2pcf%EndUTC
       GlobalAttributes%PGEVersion = l2pcf%PGEVersion
+      if ( LeapSecFileName /= '' ) call FillTAI93Attribute ( LeapSecFileName )
       ! We don't check on returnStatus--dateless or absolute utc are ok
       call utc_to_yyyymmdd(GlobalAttributes%StartUTC, returnStatus, &
         & GlobalAttributes%GranuleYear, GlobalAttributes%GranuleMonth, &
@@ -701,6 +702,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.63  2003/02/01 00:50:14  pwagner
+! Picks up GlobalAttributes from settings
+!
 ! Revision 2.62  2002/12/11 22:17:55  pwagner
 ! Added error checks on hdf version
 !
