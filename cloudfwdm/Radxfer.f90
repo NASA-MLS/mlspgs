@@ -311,7 +311,7 @@
 !-----------------------------------------
       DO 3000 ITT=1,NT
       DO 3000 K=LMIN(ITT),L
-         UU=uave(ITT,K)
+         UU=UAVE(ITT,K)
          CALL LOCATE(U1,NU/2,NU,UU,JM)      ! INTERPOLATE TSCAT ONTO UU
          WK=0._r8
          WW0=0._r8

@@ -148,8 +148,7 @@
 
       INTEGER :: ICON                          ! CONTROL SWITCH
                                                ! 0 = CLEAR-SKY
-                                               ! 1 = CLEAR-SKY, 100% R.H. 
-                                               !     BELOW 100hPa
+                                               ! 1 = 100% R.H. BELOW CLOUD
                                                ! 2 = DEFAULT
                                                ! 3 = NEAR SIDE CLOUD ONLY
 
@@ -386,42 +385,42 @@
 !        ASSUME 100% SATURATION IN CLOUD LAYER
 !-----------------------------------------------------
 ! ==============================================================================
-! my original intention is that ICON=0 is Clear-Sky only
-!                               ICON=1 is Clear-Sky but 100RH below 100mb
-!                               ICON=2 is default for both cloudy and clear-sky
-!                                         calculations
+! My original intention is that ICON=0 is Clear-Sky only 
+!                               ICON=1 is for 100%RH inside and below Cloud
+!                               ICON=2 is default for 100%RH inside cloud ONLY
+!                               ICON=3 is for near-side cloud only 
 ! ==============================================================================
 
          ICLD_TOP = 0
          I100_TOP = 0
 
-         DO IL=1, NZmodel-1                   ! 100% SATURATION INSIDE CLOUD 
+         DO IL=1, NZmodel-1  
             IF(CHK_CLD(IL) .NE. 0.)THEN
-               ICLD_TOP=IL
-               IF(YZ(IL) .LT. 20.)THEN
-                  TAU0(IL)=TAU100(IL)
-                  I100_TOP=IL 
-               ENDIF
+               ICLD_TOP=IL                    ! FIND INDEX FOR CLOUD-TOP 
+               TAU0(IL)=TAU100(IL)            ! 100% SATURATION INSIDE CLOUD 
+            ENDIF
+            IF(YP(IL) .GE. 100._r8) THEN      ! IF BELOW 100MB                    
+               I100_TOP=IL                    ! FIND INDEX FOR 100MB
             ENDIF
          ENDDO
 
          IF (ICON .EQ. 1) THEN
-            DO IL=1,ICLD_TOP                  ! 100% SATURATION BELOW CLOUD 
-               TAU0(IL)=TAU100(IL)       
+            DO IL=1, ICLD_TOP                 
+               TAU0(IL)=TAU100(IL)            ! 100% SATURATION BELOW CLOUD
             ENDDO
          ENDIF   
 
-         DO IL=1,MAX(ICLD_TOP,I100_TOP)             ! 100% SATURATION BELOW CLOUD 
-              delTAU100(IL)=TAU100(IL)      
-         ENDDO
+         DO IL=1,MAX(ICLD_TOP,I100_TOP)       ! THIS IS FOR RETRIEVAL PURPOSE 
+              delTAU100(IL)=TAU100(IL)        ! MASK 100% SATURATION BELOW
+         ENDDO                                ! 100MB
 
-!--------------------------------------------------------
+!----------------------------------------------------------------------------------
 
-         DO 1000 ILYR=1, NZmodel-1        ! START OF MODEL LAYER LOOP:   
+         DO 1000 ILYR=1, NZmodel-1            ! START OF MODEL LAYER LOOP:   
  
-            RC0(1)=TAU0(ILYR)/Z(ILYR)     ! GAS ABSORPTION COEFFICIENT
+            RC0(1)=TAU0(ILYR)/Z(ILYR)         ! GAS ABSORPTION COEFFICIENT
             RC0(2)=0._r8
-            RC0(3)=RC0(1)                 ! CLEAR-SKY EXTINCTION COEFFICIENT
+            RC0(3)=RC0(1)                     ! CLEAR-SKY EXTINCTION COEFFICIENT
 
             DO J=1,3
                RC_TOT(J) = 0._r8
@@ -497,13 +496,13 @@
 !    >>>>>>> RADIATIVE TRANSFER MODULE <<<<<<<<<<
 !==================================================
 
-!         CALL HEADER(4)
+         CALL HEADER(4)
 
          CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,TAU0,RS,TS,&
               &     FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
               &     UI,UA,TT0,0,RE)                          !CLEAR-SKY
 
-        IF(ICON .GT. 1) THEN                               
+        IF(ICON .GE. 1) THEN                               
 
            CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PHH,MULTI,ZZT1,W0,TAU,RS,TS,&
                 &  FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,         &
