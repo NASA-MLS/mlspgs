@@ -4,21 +4,24 @@
 module FGrid                    ! Frequency grid information
 
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
+  use dump_0, only: dump
   use EXPR_M, only: EXPR
   use Intrinsic, only: L_Frequency, L_IntermediateFrequency, &
     & L_LSBFrequency, L_None, L_USBFrequency, PHYQ_DIMENSIONLESS, PHYQ_FREQUENCY, &
-    & L_CHANNEL
+    & L_CHANNEL, LIT_INDICES
   use Init_tables_module, only: F_Coordinate, F_Values
   use MLSCommon, only: r8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
     & MLSMSG_Deallocate
+  use Output_M, only: Output
+  use STRING_TABLE, only: DISPLAY_STRING
   use Tree, only: DECORATION, NSONS, SUBTREE
 
   implicit none
   private
 
   public :: FGrid_T, AddFGridToDatabase, CreateFGridFromMLSCFInfo, &
-    & DestroyFGridContents, DestroyFGridDatabase, NullifyFgrid
+    & DestroyFGridContents, DestroyFGridDatabase, NullifyFgrid, dump
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -47,6 +50,10 @@ module FGrid                    ! Frequency grid information
   ! Note - frequency coordinate is a literal, examples are:
   !        l_frequency, l_usbFrequency, l_lsbFrequency, l_intermediateFrequency
   !      - values *must* remain r8, as we're after kHz precision in THz values.
+  interface DUMP
+    module procedure DUMPFGRID
+    module procedure DUMPFGRIDS
+  end interface
 
 
 contains ! ===================================== Public procedures =====
@@ -139,6 +146,47 @@ contains ! ===================================== Public procedures =====
       & MLSMSG_Deallocate//'database' )
   end subroutine DestroyFGridDatabase
 
+  ! -------------------------------------------- DumpFGrid
+  subroutine DumpFGrid ( fGrid )
+    ! Dummy arguments
+    type (FGrid_T), intent(in) :: fGrid
+
+    ! Executable code
+    call output('FGrid name: ', advance='no')
+    call display_string ( fgrid%name, advance='yes' )
+    call output('Number channels: ', advance='no')
+    call output(fGrid%noChans, advance='yes')
+    call output('Frequency coord: ', advance='no')
+    call display_string ( lit_indices(fGrid%frequencyCoordinate), &
+        &             strip=.true., advance='yes' )
+    if ( associated(fgrid%values) ) then
+      call dump(fgrid%values, 'fgrid values')
+    else
+      call output('(values not associated)', advance='yes')
+    endif
+  end subroutine DumpFGrid
+
+  ! -------------------------------------------- DumpFGrids
+  subroutine DumpFGrids ( fGrids, destroy )
+    ! Dummy arguments
+    type (FGrid_T), dimension(:), intent(inout) :: fGrids
+    logical, optional, intent(in) :: destroy
+    integer :: I
+    logical :: myDestroy
+    myDestroy = .false.
+    if ( present(destroy) ) myDestroy = destroy
+    call output ( size(fgrids), before='FGRIDS: SIZE = ', advance='yes' )
+    do i = 1, size(fgrids)
+      call output ( i, 4, after=': ' )
+      call dump ( fgrids(i) )
+    end do
+    if ( .not. myDestroy ) return
+    do i = 1, size(fgrids)
+      call output ( i, 4, after=': ' )
+      call destroyFGridContents ( fgrids(i) )
+    end do
+  end subroutine DumpFGrids
+
   ! ----------------------------------------NullifyFGrid -----
   subroutine NullifyFGrid ( F )
     ! Given a fGrid, nullify all the pointers associated with it
@@ -155,6 +203,9 @@ contains ! ===================================== Public procedures =====
 end module FGrid
 
 ! $Log$
+! Revision 2.7  2004/08/26 18:51:48  pwagner
+! Added dump methods
+!
 ! Revision 2.6  2004/01/23 05:38:06  livesey
 ! Tidied up handling of l_channel
 !
