@@ -247,7 +247,7 @@ CONTAINS
 
     IF (newSize>1) tempDatabase(1:newSize-1)=database
     tempDatabase(newSize)=l2aux
-    DEALLOCATE(database)
+    IF (ASSOCIATED(database))DEALLOCATE(database)
     database=>tempDatabase
   END SUBROUTINE AddL2AUXToDatabase
 
@@ -278,6 +278,10 @@ END MODULE L2AUXData
 
 !
 ! $Log$
+! Revision 1.11  2000/01/20 00:26:50  livesey
+! Added some extra dimensions, took away time, just have geodetic angle
+! or MAF now.  Also added the L2AUXDimUnits array.
+!
 ! Revision 1.10  2000/01/19 23:52:15  livesey
 ! Added the noDimensionsUsed field.
 !

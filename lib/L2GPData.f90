@@ -316,7 +316,7 @@ CONTAINS
 
     IF (newSize>1) tempDatabase(1:newSize-1)=database
     tempDatabase(newSize)=l2gp
-    DEALLOCATE(database)
+    IF (ASSOCIATED(database))DEALLOCATE(database)
     database=>tempDatabase
   END SUBROUTINE AddL2GPToDatabase
 
@@ -347,6 +347,9 @@ END MODULE L2GPData
 
 !
 ! $Log$
+! Revision 1.10  2000/01/17 21:18:06  livesey
+! Added the ExpandL2GPDataInPlace routine and removed accumulated profiles
+!
 ! Revision 1.9  2000/01/12 20:28:20  livesey
 ! Modified to allow for noSurfs=0 quantitites
 !
