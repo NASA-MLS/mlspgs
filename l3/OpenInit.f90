@@ -61,10 +61,6 @@ MODULE OpenInit
      CHARACTER (LEN=8) :: l3EndDay		! last day of l3 to write
      CHARACTER (LEN=8) :: l3StartDay		! first day of l3 to write
 
-     ! # of days of input data needed to process an l3 product
-
-     INTEGER :: minDays
-
      ! granule ID of the log file (file name, without path or .dat)
 
      CHARACTER (LEN=FileNameLen) :: logGranID
@@ -96,7 +92,6 @@ CONTAINS
 
 ! Variables
 
-      CHARACTER (LEN=2) :: aDays
       CHARACTER (LEN=17) :: range 
       CHARACTER (LEN=480) :: msr
       CHARACTER (LEN=FileNameLen) :: name
@@ -133,14 +128,6 @@ CONTAINS
 
       l3pcf%l2StartDay = range(1:8)
       l3pcf%l2EndDay = range(10:17)
-
-      returnStatus = pgs_pc_getConfigData(mlspcf_l3_param_MinDays, aDays)
-      IF (returnStatus /= PGS_S_SUCCESS) THEN
-         msr = UDRP_ERR // 'MinDays'
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
-      READ(aDays, '(I2)') l3pcf%minDays
 
       returnStatus = pgs_pc_getConfigData(mlspcf_l3_param_RangDays, range)
       IF (returnStatus /= PGS_S_SUCCESS) THEN
@@ -251,22 +238,22 @@ CONTAINS
    END SUBROUTINE SetProcessingWindow
 !------------------------------------
 
-!-------------------------------------------------------------------------
-   SUBROUTINE OpenAndInitialize (l3pcf, cf, l3cf, logType, anText, avgPer)
-!-------------------------------------------------------------------------
+!-----------------------------------------------------------------------
+   SUBROUTINE OpenAndInitialize (l3pcf, cf, l3cf, cfDef, anText, avgPer)
+!-----------------------------------------------------------------------
 
 ! Brief description of subroutine
 ! This subroutine performs the Open/Init task in the MLSL3 program.
 
 ! Arguments
 
-      TYPE( PCFData_T ), INTENT(OUT) :: l3pcf
+      TYPE( L3CFDef_T ), INTENT(OUT) :: cfDef
 
       TYPE( Mlscf_T ), INTENT(OUT) :: cf
 
-      TYPE( L3CFProd_T ), POINTER :: l3cf(:)
+      TYPE( PCFData_T ), INTENT(OUT) :: l3pcf
 
-      CHARACTER (LEN=*), INTENT(OUT) :: logType
+      TYPE( L3CFProd_T ), POINTER :: l3cf(:)
 
       CHARACTER (LEN=1), POINTER :: anText(:)
 
@@ -324,7 +311,7 @@ CONTAINS
 ! Check the parser output; fill L3CFProd_T
 
       CALL FillL3CF(cf, l3pcf%inputVersion, l3pcf%outputVersion, dates, &
-                    numDays, l3cf, logType)
+                    numDays, l3cf, cfDef)
 
 !----------------------------------
    END Subroutine OpenAndInitialize
@@ -444,6 +431,9 @@ END MODULE OpenInit
 !==================
 
 ! $Log$
+! Revision 1.5  2001/01/16 17:48:09  nakamura
+! Added code for annotating and for retrieving a name template for the log in the cf.
+!
 ! Revision 1.4  2000/12/29 21:42:27  nakamura
 ! Added subroutine AvgOrbPeriod.
 !

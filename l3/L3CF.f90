@@ -27,7 +27,8 @@ MODULE L3CF
 
 ! Contents:
 
-! Definition -- L3CFProd_T
+! Definition -- L3CFDef_T
+!               L3CFProd_T
 ! Subroutines -- CalculateArray
 !                FillL3CF
 
@@ -38,7 +39,19 @@ MODULE L3CF
 
    INTEGER, PARAMETER :: maxGridPoints = 500
 
-! This data type is used to store cf input needed to process l3dm data.
+! This data type is used to store global definitions read from the l3cf.
+
+   TYPE L3CFDef_T
+
+     CHARACTER (LEN=FileNameLen) :: logType
+	! template for the log file name
+
+     INTEGER :: minDays
+	! # of days of input data needed to process an l3 product
+
+   END TYPE L3CFDef_T
+
+! This data type is used to store product-dependent cf input.
 
    TYPE L3CFProd_T
 
@@ -125,10 +138,9 @@ CONTAINS
    END SUBROUTINE CalculateArray
 !-------------------------------
 
-!------------------------------------------------------------------------
-   SUBROUTINE FillL3CF (cf, pcfL2Ver, pcfL3Ver, l3Days, l3Window, l3cf, &
-                        logType)
-!------------------------------------------------------------------------
+!-----------------------------------------------------------------------------
+   SUBROUTINE FillL3CF (cf, pcfL2Ver, pcfL3Ver, l3Days, l3Window, l3cf, cfDef)
+!-----------------------------------------------------------------------------
 ! Brief description of subroutine
 ! This subroutine checks the parser output and fills L3CFProd_T.
 
@@ -142,9 +154,9 @@ CONTAINS
 
       INTEGER, INTENT(IN) :: l3Window
 
-      TYPE( L3CFProd_T ), POINTER  :: l3cf(:)
+      TYPE( L3CFDef_T ), INTENT(OUT) :: cfDef
 
-      CHARACTER (LEN=*), INTENT(OUT) :: logType
+      TYPE( L3CFProd_T ), POINTER  :: l3cf(:)
 
 ! Parameters
 
@@ -160,7 +172,7 @@ CONTAINS
       CHARACTER (LEN=CCSDSB_LEN) :: timeB(maxWindow)
       CHARACTER (LEN=FileNameLen) :: match
 
-      INTEGER :: err, i, iGlob, iLab, iLog, iMap, iOut, iVer, indx, j
+      INTEGER :: err, i, iGlob, iLab, iMap, iOut, indx, j
       INTEGER :: mlspcf_mcf, numProds, returnStatus
 
       REAL(r8) :: start, end, delta
@@ -174,27 +186,34 @@ CONTAINS
 
 ! Check that the version numbers given in the CF will match the PCF file names
 
-      iVer = LinearSearchStringArray(cf%Sections(iGlob)%Cells%Keyword,'L2Ver')
-      IF (iVer == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'No entry in &
+      indx = LinearSearchStringArray(cf%Sections(iGlob)%Cells%Keyword,'L2Ver')
+      IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'No entry in &
                                     &the CF for L2Ver.')
-      l2Ver = cf%Sections(iGlob)%Cells(iVer)%CharValue
+      l2Ver = cf%Sections(iGlob)%Cells(indx)%CharValue
       IF (l2Ver /= pcfL2Ver) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Input &
                                       &versions in the CF and PCF differ.')
 
-      iVer = LinearSearchStringArray(cf%Sections(iGlob)%Cells%Keyword, &
+      indx = LinearSearchStringArray(cf%Sections(iGlob)%Cells%Keyword, &
                                      'OutputVersionString')
-      IF (iVer == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'No entry in &
+      IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'No entry in &
                                      &the CF for OutputVersionString.')
-      l3Ver = cf%Sections(iGlob)%Cells(iVer)%CharValue
+      l3Ver = cf%Sections(iGlob)%Cells(indx)%CharValue
       IF (l3Ver /= pcfL3Ver) CALL MLSMessage(MLSMSG_Error, ModuleName, &
                                   'Output versions in the CF and PCF differ.')
 
 ! Find/save the log type from the GlobalSettings section of the cf
 
-      iLog = LinearSearchStringArray(cf%Sections(iGlob)%Cells%Keyword,'LogType')
-      IF (iLog == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'No entry in &
+      indx = LinearSearchStringArray(cf%Sections(iGlob)%Cells%Keyword,'LogType')
+      IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'No entry in &
                                     &the CF for LogType.')
-      logType = cf%Sections(iGlob)%Cells(iLog)%CharValue
+      cfDef%logType = cf%Sections(iGlob)%Cells(indx)%CharValue
+
+! Find/save minDays from the GlobalSettings section of the cf
+
+      indx = LinearSearchStringArray(cf%Sections(iGlob)%Cells%Keyword,'MinDays')
+      IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'No entry in &
+                                    &the CF for MinDays.')
+      cfDef%minDays = cf%Sections(iGlob)%Cells(indx)%RealValue
 
 ! Find the number of products for which L3 processing was requested
 
@@ -395,6 +414,9 @@ END MODULE L3CF
 !==============
 
 ! $Log$
+! Revision 1.7  2001/01/16 17:41:49  nakamura
+! Added mcfName to L3CFProd_T; extract logType from cf.
+!
 ! Revision 1.6  2000/12/29 20:44:46  nakamura
 ! Replaced USE of L3DMData with MLSL3Common; removed bpFlag, nGrids, quantities from L3CFProd_T.
 !
