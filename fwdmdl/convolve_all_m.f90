@@ -139,7 +139,7 @@ MODULE convolve_all_m
   SRad = sbRatio * Term
   do ptg_i = 1, noPtan
     ind = channel + noChans * (ptg_i - 1)
-    Radiance%values(ind,maf) = SRad(ptg_i)
+    Radiance%values(ind,maf) = Radiance%values(ind,maf) + SRad(ptg_i)
   end do
 !
   want_deriv = PRESENT(jacobian) .AND. ANY( (/FwdMdlConfig%temp_der, &
@@ -261,7 +261,8 @@ MODULE convolve_all_m
         do ptg_i = 1, noPtan
           r = drad_dt_out(ptg_i,sv_t_len)
           ind = channel + noChans * (ptg_i-1)
-          jacobian%block(row,col)%values(ind,k) = sbRatio * r
+          jacobian%block(row,col)%values(ind,k) =  &
+          & jacobian%block(row,col)%values(ind,k) + sbRatio * r
         end do
 
       end do
@@ -335,6 +336,7 @@ MODULE convolve_all_m
         do ptg_i = 1, noPtan
           ind = channel + noChans * (ptg_i-1)
           jacobian%block(row,col)%values(ind,sv_i) = &
+                      jacobian%block(row,col)%values(ind,sv_i) + &
                           & sbRatio * drad_df_out(ptg_i,sv_f)
         end do
 !
