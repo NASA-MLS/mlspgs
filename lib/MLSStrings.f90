@@ -682,6 +682,10 @@ CONTAINS
     if ( nElems <= 1 ) then
       return
     elseif ( LongestLen > MAXSTRELEMENTLENGTH ) then
+      ! print *, 'str: ', trim(str)
+      ! print *, 'len(str): ', len(str)
+      ! print *, 'LongestLen: ', LongestLen
+      ! print *, 'nElems: ', nElems
       call MLSMessage(MLSMSG_Error, ModuleName, &
          & "Element length too long in GetUniqueList")
       return
@@ -1180,6 +1184,8 @@ CONTAINS
 	 ENDIF
 
 	! Count the number of delimiters
+   if ( present(LongestLen) ) &
+     & LongestLen =0
 	! nElements-1 = number of delimiters
 	IF(LEN_TRIM(inList) <= 0) THEN
 		nElements=0
@@ -2598,6 +2604,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.34  2003/10/15 00:34:19  pwagner
+! Fixed the real bug in NumStringElements
+!
 ! Revision 2.33  2003/10/14 18:17:02  pwagner
 ! Fixed problem with reducing switches to unique list
 !
