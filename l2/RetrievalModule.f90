@@ -2250,6 +2250,7 @@ contains
       integer :: NROWS                  ! Loop limit dumping mask
       integer :: QUANTITYINDEX          ! Index
       integer :: RANGE_LOW, RANGE_HI    ! Bounds of a range
+      integer :: RANGEID                ! nodeID of a range
       integer :: ROW                    ! Row index dumping mask
       integer :: SON                    ! Tree node
       integer :: TYPE                   ! Type of value returned by expr
@@ -2265,7 +2266,8 @@ contains
       logical :: Got(field_first:field_last)   ! "Got this field already"
       logical, dimension(:), pointer :: CHANNELS ! Are we dealing with these channels
       logical :: IGNORE                 ! Flag
-      logical :: DOTHIS                 ! Flag
+      logical :: DOTHISCHANNEL          ! Flag
+      logical :: DOTHISHEIGHT           ! Flag
       integer, parameter ::                      MAXCOLUMNS = 127
       character(len=1), dimension(MAXCOLUMNS) :: maskedMan
       character(len=5) ::                        decades
@@ -2387,9 +2389,9 @@ contains
         ! default is to ignore all
         if ( got(f_height) .or. ignore ) then
           do channel = 1, qty%template%noChans
-            doThis = .true.
-            if ( associated(channels) ) doThis = channels(channel)
-            if ( doThis ) then
+            doThisChannel = .true.
+            if ( associated(channels) ) doThisChannel = channels(channel)
+            if ( doThisChannel ) then
               do height = 1, qty%template%noSurfs
                 !??? Make sure mask bit numbers begin at 1, even when
                 !??? channel numbers don't.
@@ -2400,35 +2402,87 @@ contains
           end do                        ! Channel loop
         end if                          ! Got heights or ignore
 
-        ! Now go and `unmask' the ones we want to consider
+        ! Now go and `unmask' the ones we want to consider.  For coherent
+        ! quantities we can simply loop over the indices of each height range.
+        ! For incoherent ones we have to go through and mark each point
+        ! appropriately.
         if ( got(f_height) ) then
           do j = 2, nsons(heightNode)
-            ! Don't need to call expr again.
+            ! Get values for this ragne
+            son = subtree ( j, heightNode )
+            rangeId = node_id ( son )
+            call expr ( son, units, value, type )
             ! Now maybe do something nasty to value to get in right units.
-            if ( coordinate == l_zeta &
-              & .and. heightUnit == phyq_pressure ) then
+            if ( coordinate == l_zeta .and. heightUnit == phyq_pressure ) then
               value = -log10(value)
-!             else if ( coordinate /= qty%template%verticalCoordinate ) then
-!               call MLSMessage ( MLSMSG_Error, ModuleName, &
-!                 & 'Inappropriate units for height in subset' )
-            end if
-            if ( qty%template%verticalCoordinate == l_pressure ) then
-              s1 = minloc ( abs ( -log10(theseHeights) + log10(value(1)) ) )
-              s2 = minloc ( abs ( -log10(theseHeights) + log10(value(2)) ) )
             else
-              s1 = minloc ( abs ( theseHeights - value(1) ) )
-              s2 = minloc ( abs ( theseHeights - value(2) ) )
+              if ( coordinate /= qty%template%verticalCoordinate ) &
+                & call MLSMessage ( MLSMSG_Error, ModuleName, &
+                & 'Inappropriate units for height in subset' )
             end if
+
+            ! Do special things for coherent quantities
+            if ( qty%template%coherent ) then
+              if ( qty%template%verticalCoordinate == l_pressure ) then
+                s1 = minloc ( abs ( -log10(theseHeights) + log10(value(1)) ) )
+                s2 = minloc ( abs ( -log10(theseHeights) + log10(value(2)) ) )
+              else
+                s1 = minloc ( abs ( theseHeights - value(1) ) )
+                s2 = minloc ( abs ( theseHeights - value(2) ) )
+              end if
+
+              ! Now consider the open range issue
+              select case ( rangeId )
+              case ( n_colon_less )
+                s1 = min ( s1 + 1, qty%template%noSurfs )
+              case ( n_less_colon )
+                s2 = max ( s2 - 1, 1 )
+              case ( n_less_colon_less )
+                s1 = min ( s1 + 1, qty%template%noSurfs )
+                s2 = max ( s2 - 1, 1 )
+              end select
+            end if
+
             do channel = 1, qty%template%noChans
-              doThis = .true.
-              if ( associated(channels) ) doThis = channels(channel)
-              if ( doThis ) then
-                do height = s1(1), s2(1)
-                  !??? Make sure mask bit numbers begin at 1, even when
-                  !??? channel numbers don't.
-                  call ClearMask ( qty%mask(:,instance), &
-                    & (/ channel+qty%template%noChans*(height-1) /) )
-                end do                  ! Height loop
+              doThisChannel = .true.
+              if ( associated(channels) ) doThisChannel = channels(channel)
+              if ( doThisChannel ) then
+                if ( qty%template%coherent ) then
+                  ! For coherent quantities simply do a loop over a range.
+                  do height = s1(1), s2(1)
+                    !??? Make sure mask bit numbers begin at 1, even when
+                    !??? channel numbers don't.
+                    call ClearMask ( qty%mask(:,instance), &
+                      & (/ channel+qty%template%noChans*(height-1) /) )
+                  end do                ! Height loop
+                else
+                  ! For Incoherent quantities check each height individually
+                  ! We might as well consider open and non open ranges, but
+                  ! it's really rather unnecessary, as the chance of a ptan
+                  ! being exactly equal to the range given is remote, and the
+                  ! difference probably doesn't matter anyway.
+                  do height = 1, qty%template%noSurfs
+                    doThisHeight = .true.
+                    if ( rangeID == n_less_colon .or. rangeID == &
+                      & n_less_colon_less ) then
+                      doThisHeight = doThisHeight .and. &
+                        & qty%template%surfs(height,instance) > value(1)
+                    else
+                      doThisHeight = doThisHeight .and. &
+                        & qty%template%surfs(height,instance) >= value(1)
+                    end if
+                    if ( rangeID == n_colon_less .or. rangeID == &
+                      & n_less_colon_less ) then
+                      doThisHeight = doThisHeight .and. &
+                        & qty%template%surfs(height,instance) < value(2)
+                    else
+                      doThisHeight = doThisHeight .and. &
+                        & qty%template%surfs(height,instance) <= value(1)
+                    end if
+                    if ( doThisHeight ) call ClearMask ( qty%mask(:,instance), &
+                        & (/ channel+qty%template%noChans*(height-1) /) )
+                  end do                ! Height loop
+                end if                  ! Coherent
               end if                    ! Do this channel
             end do                      ! Channel loop
           end do                        ! Height entries in l2cf
@@ -2513,6 +2567,11 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.123  2001/11/28 18:28:50  livesey
+! Updated subset to include open ranges in height specification.
+! There is possibly a bug in Van's version I'll point out to him
+! (if not my version has the opposite bug).
+!
 ! Revision 2.122  2001/11/28 00:01:27  jonathan
 ! remove type (VectorValue_T), pointer :: Re
 !
