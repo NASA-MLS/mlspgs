@@ -11,7 +11,7 @@ module plplot_convenience_module
   public:: plfcp
 
 contains
-  subroutine plfcp(z,x,y,nlevels,clevels)
+  subroutine plfcp(z,x,y,nlevels,clevels,xtitle,ytitle,title)
     ! This subroutine gets you a filled contour plot: with a label bar !
     ! all you need to do is
     ! call plinit(), call plfcp(z,x,y), call plend. I am adding customisation
@@ -22,7 +22,9 @@ contains
     real(kind=PLFLT),intent(in),dimension(:)::x,y
     integer(kind=PLINT),optional,intent(in)::nlevels
     real(kind=PLFLT),optional,intent(in),dimension(:)::clevels
+    character(len=*),optional,intent(in)::xtitle,ytitle,title
     !---- Local vars ----!
+    character(len=40)::my_xtitle,my_ytitle,my_title
     integer(kind=PLINT)::nx,ny
     integer(kind=PLINT)::sh_cmap,min_color,min_width,max_color,max_width
     integer(kind=PLINT)::sh_width,nlevel
@@ -81,6 +83,23 @@ contains
        clevel=zmi + (/ (ic*(zma-zmi)/(nlevel-1),ic=0,nlevel-1) /)
     endif
 
+    !  text 
+    if(present(xtitle)) then
+       my_xtitle=xtitle
+    else
+       my_xtitle="X"
+    endif
+    if(present(ytitle)) then
+       my_ytitle=ytitle
+    else
+       my_ytitle="X"
+    endif
+    if(present(title)) then
+       my_title=title
+    else
+       my_title="Contour"
+    endif
+
 !    call plscmap0n(5)
     xmin=x(1)
     xmax=x(nx)
@@ -102,7 +121,7 @@ contains
 !    print*,"Setting color to 2"
     call plcol(2)
 !    print*,"Setting x coord"
-    call pllab("X Coord","Y Coord","PLFCP")
+    call pllab(trim(my_xtitle),trim(my_ytitle),trim(my_title))
 !    print*,"Setting color map 1 for contour shading"
     ! Set colour map of whatever putridity we like
     call plscmap1l(1,ncsp,cpos,red,green,blue,rev)
@@ -176,7 +195,7 @@ contains
     lineloop:do j=1,nlevel
         polyx(3:4)=(/j-1,j-1/)*1.0 / (nlevel-1)
         pos=real(j-1)/(nlevel-1)
-        write(unit=string,fmt="(f5.2)")clevel(j)
+        write(unit=string,fmt="(f6.2)")clevel(j)
 !        print*,"Drawing line no.",j
         call plline(2,polyx(3:4),polyy(3:4))
         if (modulo(j,skip)==0) then
