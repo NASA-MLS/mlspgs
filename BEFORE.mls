@@ -12,17 +12,21 @@
 
         more << EOF
 SUMMARY
-Before building the mls software you will need the following
- (1) f95 compiler (either NAG or Lahey)
- (2) Installed SDP Toolkit (PGSTK, HDFEOS, HDF)
- (3) mls software (probably where you're reading this)
- (4) perl (not needed if you plan only to build and run the software,
-       not change it)
- (5) PVM--a library to emulate parallel virtual machines
- (6) FFTW--a library to accomplish fast Fourier tranforms
+Before building the mls software you will need the following (absolutely
+mandatory items are marked with a *; the others may be in fact required for
+building certain levels of the mls software, except for BLAS)
+ *(1) f95 compiler (either NAG or Lahey)
+ (2) Installed SDP Toolkit libraries:
+    (a) PGSTK
+    *(b) HDFEOS
+    *(c) HDF
+ *(3) mls software (probably where you're reading this)
+ (4) PVM--a library to emulate parallel virtual machines
+ (5) FFTW--a library to accomplish fast Fourier tranforms
+ (6) BLAS--a library to speed up linear algebra
 
 The first step is to find out if you already have (1)-(6). If you do, you may
-safely ignore the rest of this guide. Obtaining (1), (3), and (4) is not
+safely ignore the rest of this guide. Obtaining (1), (3), and (6) is not
 within the scope of this guide, although if you are reading it online, you
 probably already have (3).
 
@@ -34,6 +38,7 @@ II    CONTENTS
 III   THE SDP TOOLKIT
 IV    PVM
 V     FFTW
+VI    BLAS
 
 THE SDP TOOLKIT
 The distribution to build the libraries and ancillary files making up the SDP
@@ -50,6 +55,9 @@ environment variables that will make configuring the mls software easier:
 	HDFEOS_LIB
 	HDFLIB
 	PGSLIB
+If you get the latest version of the toolkit, you will automatically build two
+added libraries: hdf5 and hdfeos5. These too will be needed for correctly
+building the mls software if you use the latest version.
 
 PVM
 The distribution to build the libraries and ancillary files making up the PVM
@@ -100,11 +108,31 @@ and replace it with
 
 Thanks to Robert Thurstans (JPL) for pointing this out.
 
+	
+BLAS
+It is possible that highly-optimized blas libraries exist on your platform or
+are made available through your f95 compiler or hardware vendor. If so, you
+should note their paths and names. For example, Intel supplies: libmkl32_p3.a,
+libmkl32_p4.a and libmkl64_itp.a. Or your compiler vendor or OS vendor may have
+put a copy in an easy-to-access place:
+
+me/mlspgs:186%ls /usr/lib/*blas*
+/usr/lib/libblas.a    /usr/lib/libblas.so.3@    /usr/lib/libblas.so.3.0.3*
+/usr/lib/libblas.so@  /usr/lib/libblas.so.3.0@
+
+In either case, note
+(1) Whether you have such a library; and
+(2) If so, its path and name
+
+
 -pw
 EOF
 
 exit
 # $Log$
+# Revision 1.2  2001/03/01 23:46:21  pwagner
+# Noted changes to configure.in for FFTW
+#
 # Revision 1.1  2001/02/28 18:56:01  pwagner
 # First commit
 #
