@@ -770,7 +770,6 @@ contains ! =====     Public Procedures     =============================
     call allocate_test ( radiances, no_tan_hts, noUsedChannels, &
       & 'Radiances', ModuleName )
 
-
     ! Now work out what sideband(s) we're going to be doing
     if (any ( forwardModelConfig%signals%sideband .ne. &
       & forwardModelConfig%signals(1)%sideband ) )&
@@ -842,10 +841,6 @@ contains ! =====     Public Procedures     =============================
         if ( status /= 0) call MLSMessage(MLSMSG_Error,ModuleName,&
           & MLSMSG_DeAllocate//'allSignals')
         call deallocate_test(signalsGrid, 'signalsGrid', ModuleName)
-        
-        if ( whichPointingGrid <= 0 ) &
-          call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & "There is no pointing grid for the desired signal" )
         
         ! Now we've identified the pointing grids.  Locate the tangent grid within
         ! it.
@@ -1127,7 +1122,6 @@ contains ! =====     Public Procedures     =============================
           end if                        ! Want derivatives for this
         end do                          ! Loop over species
 
-
         call deallocate_test ( dh_dt_path, 'dh_dt_path', ModuleName )
 
       end do                            ! Pointing Loop
@@ -1195,16 +1189,16 @@ contains ! =====     Public Procedures     =============================
 
       end do                            ! Channel loop
 
-      do mif = 1, radiance%template%noSurfs
-        do channel = 1, noUsedChannels
-          ! Work out factor to multiply by
-          if ( sidebandStart /= sidebandStop ) then ! We're folding
-            thisRatio = sidebandRatio%values(usedChannels(Channel),1)
-            if ( thisSideband == 1 ) thisRatio = 1.0 - thisRatio
-          else ! Otherwise, want just unfolded signal
-            thisRatio = 1.0
-          end if
+      do channel = 1, noUsedChannels
+        ! Work out factor to multiply by
+        if ( sidebandStart /= sidebandStop ) then ! We're folding
+          thisRatio = sidebandRatio%values(usedChannels(Channel),1)
+          if ( thisSideband == 1 ) thisRatio = 1.0 - thisRatio
+        else ! Otherwise, want just unfolded signal
+          thisRatio = 1.0
+        end if
 
+        do mif = 1, radiance%template%noSurfs
           ! Work out index
           k = usedChannels(channel)+(mif-1)*radiance%template%noChans
 
@@ -1432,6 +1426,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.97  2001/04/19 20:59:50  livesey
+! Reordered a loop
+!
 ! Revision 2.96  2001/04/19 20:42:34  livesey
 ! Minor bug in calls to freq_avg fixed.  Going to change agains soon
 ! anyway
