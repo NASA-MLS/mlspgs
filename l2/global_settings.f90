@@ -40,12 +40,12 @@ module GLOBAL_SETTINGS
 
 contains
 
-! subroutine SET_GLOBAL_SETTINGS ( ROOT ) !??? Restore when l2load isn't needed
-  subroutine SET_GLOBAL_SETTINGS ( ROOT, FMC, FMI, TFMI )
+! subroutine SET_GLOBAL_SETTINGS ( ROOT, FwdModelInfo ) !??? Restore when l2load isn't needed
+  subroutine SET_GLOBAL_SETTINGS ( ROOT, FwdModelInfo, FMC, FMI, TFMI )
     integer, intent(in) :: ROOT    ! Index of N_CF node in abstract syntax tree
+    type(forwardModelInfo_T), intent(inout) :: FwdModelInfo ! From ForwardModelSetup
 
 !??? Begin temporary stuff to start up the forward model
-  type(forwardModelInfo_T) :: FwdMdlInfo
   type(fwd_mdl_config) :: FMC
   type(fwd_mdl_info), dimension(:), pointer :: FMI
   type(temporary_fwd_mdl_info), dimension(:), pointer :: TFMI
@@ -61,7 +61,7 @@ contains
 
     if ( toggle(gen) ) call trace_begin ( 'SET_GLOBAL_SETTINGS', root )
 
-    fwdMdlInfo = forwardModelInfo_T(.false., .false., .false., 0.0_r8, &
+    fwdModelInfo = forwardModelInfo_T(.false., .false., .false., 0.0_r8, &
       & .false., .false.)
     do i = 2, nsons(root)-1 ! Skip names at beginning and end of section
       son = subtree(i,root)
@@ -80,13 +80,13 @@ contains
         if ( node_id(son) == n_named ) son = subtree(2,son)
         select case ( get_spec_id(son) )
         case ( s_forwardModelGlobal ) !??? Begin temporary stuff for l2load
-          call forwardModelGlobalSetup ( son, fwdMdlInfo )
-          fmc%atmos_der = fwdMdlInfo%atmos_der
-          fmc%do_conv = fwdMdlInfo%do_conv
-          fmc%do_frqavg = fwdMdlInfo%do_Freq_Avg
-          fmc%spect_Der = fwdMdlInfo%spect_Der
-          fmc%temp_Der = fwdMdlInfo%temp_Der
-          fmc%zfrq = fwdMdlInfo%the_Freq
+          call forwardModelGlobalSetup ( son, fwdModelInfo )
+          fmc%atmos_der = fwdModelInfo%atmos_der
+          fmc%do_conv = fwdModelInfo%do_conv
+          fmc%do_frqavg = fwdModelInfo%do_Freq_Avg
+          fmc%spect_Der = fwdModelInfo%spect_Der
+          fmc%temp_Der = fwdModelInfo%temp_Der
+          fmc%zfrq = fwdModelInfo%the_Freq
         case ( s_l2load ) !??? More temporary stuff for l2load
           do j = 2, nsons(son)
             gson = subtree(j,son)
@@ -127,6 +127,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.3  2001/03/07 22:46:05  vsnyder
+! Add temporary stuff for Zvi's "l2_load", which will wither away.
+!
 ! Revision 2.2  2000/11/16 01:53:40  vsnyder
 ! Take timing back out.  Don't do it in sections that are only parameter settings.
 !

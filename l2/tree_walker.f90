@@ -6,6 +6,7 @@ module TREE_WALKER
   use Construct, only: MLSL2Construct, MLSL2DeConstruct
   use DUMPER, only: DUMP
   use FILL, only: MLSL2Fill
+  use ForwardModelInterface, only: ForwardModelInfo_T
   use GLOBAL_SETTINGS, only: SET_GLOBAL_SETTINGS
   use GriddedData, only: DestroyGridTemplateDatabase, GriddedData_T
   use INIT_TABLES_MODULE, only: Z_CHUNKDIVIDE, Z_CONSTRUCT, Z_FILL, &
@@ -55,6 +56,7 @@ contains ! ====     Public Procedures     ==============================
     type (GriddedData_T), dimension(:), pointer :: aprioriData => NULL() 
     integer :: chunkNo                  ! Index of Chunks
     type (MLSChunk_T), dimension(:), pointer :: CHUNKS => NULL() ! of data
+    type(forwardModelInfo_T) :: FwdModelInfo ! From ForwardModelSetup
     integer :: HOWMANY                  ! Nsons(Root)
     integer :: I, J                     ! Loop inductors
     type (L1BInfo_T) :: L1BInfo         ! File handles etc. for L1B dataset
@@ -87,8 +89,8 @@ contains ! ====     Public Procedures     ==============================
       son = subtree(i,root)
       select case ( decoration(subtree(1,son)) ) ! section index
       case ( z_globalsettings )
-!       call set_global_settings ( son ) !??? Restore when l2load isn't needed
-        call set_global_settings ( son, fmc, fmi, tfmi ) !??? for l2load
+!       call set_global_settings ( son, fwdModelInfo ) !??? Restore when l2load isn't needed
+        call set_global_settings ( son, fwdModelInfo, fmc, fmi, tfmi ) !??? for l2load
       case ( z_mlsSignals )
         call MLSSignals ( son )
       case ( z_readapriori )
@@ -149,6 +151,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.12  2001/03/07 22:46:05  vsnyder
+! Add temporary stuff for Zvi's "l2_load", which will wither away.
+!
 ! Revision 2.11  2001/03/03 00:13:30  pwagner
 ! Gets read_apriori from ReadAPriori module
 !
