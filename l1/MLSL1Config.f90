@@ -365,7 +365,13 @@ MODULE MLSL1Config  ! Level 1 Configuration
                   CASE (f_mifs)
                      DO k = 2, nsons (son)
                         CALL Expr (subtree (k, son), expr_units, expr_value)
-                        scan%MIF(INT(expr_value(1)):INT(expr_value(2))) = 1
+                        IF (MINVAL (INT (expr_value)) < 0 .OR. &
+                             MAXVAL (INT (expr_value)) > 149) THEN
+                           CALL MLSMessage (MLSMSG_Error, ModuleName, &
+                            'Input MIF number out of range for scan type "'// &
+                            scan%Type//'"!')
+                        ENDIF
+                      scan%MIF(INT(expr_value(1)):INT(expr_value(2))) = 1
                      ENDDO
                   CASE (f_use)
                      SELECT CASE (decoration (subtree (2, son)))
@@ -501,15 +507,14 @@ MODULE MLSL1Config  ! Level 1 Configuration
 END MODULE MLSL1Config
 
 ! $Log$
+! Revision 2.5  2002/04/04 19:30:49  perun
+! Check for correct input MIFs
+!
 ! Revision 2.4  2002/03/29 20:18:34  perun
 ! Version 1.0 commit
 !
 ! Revision 2.3  2001/04/27 14:00:32  perun
 ! For the latest parser version
-!
-! $Log$
-! Revision 2.4  2002/03/29 20:18:34  perun
-! Version 1.0 commit
 !
 ! Revision 2.2  2001/03/22 16:45:06  perun
 ! Changed call to Get_string to strip "'s from globals
