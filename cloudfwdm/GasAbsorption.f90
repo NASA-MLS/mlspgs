@@ -48,7 +48,7 @@ contains
       REAL(r8) :: P                           ! DRY AIR PARTIAL PRESSURE (hPa)
       REAL(r8) :: PB                          ! TOTAL AIR PRESSURE (hPa)
       REAL(r8) :: VP                          ! VAPOR PARTIAL PRESSURE (hPa)
-      REAL(r8) :: VMR(NS-1)                   ! MINOR SPECIES 1=O3, 2=N2O
+      REAL(r8) :: VMR(NS-1)                   ! MINOR SPECIES 1=O3, 2=N2O, 3=HNO3
       REAL(r8) :: VMR_H2O                     ! H2O VOLUME MIXING RATIO
       REAL(r8) :: VMR_O2                      ! O2 VOLUME MIXING RATIO
       REAL(r8) :: B                           ! BETA (1/m/ppv)
@@ -59,6 +59,9 @@ contains
                                               ! 2-H2O
                                               ! 3-O_18_O
                                               ! 4-H2O_18
+                                              ! 5-O3
+                                              ! 6-N2O
+                                              ! 7-HNO3
 
       REAL(r8) :: CONT_1,CONT_2,CONT_3        ! CONTINUUM ABSORPTION COEFFICIENTS
       REAL(r8) :: SC_CONST
@@ -122,38 +125,22 @@ contains
             NPS = 0.00_r8
 
          ! Determine pressure shift parameters
-!            IF(IMOL .EQ. 1) THEN                         ! O2
             select case (IMOL)
-            case (1)
+            case (1)                    ! O2
               IF ( V0(i) .eq. 118750.3410_r8 ) THEN
                 PS   = -0.140_r8
                 NPS  = 1.36_r8
               END IF
-!            ELSE IF(IMOL .EQ. 2) THEN                    ! H2O
-            case (2)
+            case (2)                    ! H2O
               IF ( V0(i) .eq. 183310.0910_r8) THEN 
                 PS   = -0.160_r8
                 NPS  = 1.375_r8
               ENDIF
-            case (3)
-!            ELSE IF(IMOL .EQ. 3) THEN                    ! O_18_O
-              PS   = 0.00_r8
-              NPS  = 0.00_r8
-            case (4)
-!            ELSE IF(IMOL .EQ. 4) THEN                    ! H2O_18
+            case (4)                    ! H2O_18
               IF ( V0(i) .eq. 203407.5200_r8 ) THEN
                 PS   = -0.160_r8
                 NPS  = 1.375_r8 
               END IF
-            case (5)
-!            ELSE IF(IMOL .EQ. 5) THEN                    ! O3
-              PS   = 0.00_r8
-              NPS  = 0.00_r8
-            case (6)
-!            ELSE IF(IMOL .EQ. 6) THEN                    ! N2O
-              PS   = 0.00_r8
-              NPS  = 0.00_r8
-!            END IF
             end select
             v01(i) = 0.0_r8                     !      | Pressure Shift effects
             V01(i) = V0(i) + PS * P * (TT**NPS) ! Include Hugh Pumphrey's
@@ -176,13 +163,6 @@ contains
 !-------------------------------------
 !           DOPPLER WIDTH
 !-------------------------------------
-
-! >             IF(IMOL.EQ.1) DWTH0 = 3.58e-7*SQRT(T/32.)*FF         ! O2
-! >             IF(IMOL.EQ.2) DWTH0 = 3.58e-7*SQRT(T/18.)*FF         ! H2O
-! >             IF(IMOL.EQ.3) DWTH0 = 3.58e-7*SQRT(T/34.)*FF         ! O_18_0
-! >             IF(IMOL.EQ.4) DWTH0 = 3.58e-7*SQRT(T/20.)*FF         ! H2O_18
-! >             IF(IMOL.EQ.5) DWTH0 = 3.58e-7*SQRT(T/48.)*FF         ! O3
-! >             IF(IMOL.EQ.6) DWTH0 = 3.58e-7*SQRT(T/44.)*FF         ! N2O
             select case (IMOL)
             case (1)
               DWTH0 = 3.58e-7*SQRT(T/32.)*FF         ! O2
@@ -195,7 +175,9 @@ contains
             case (5)
               DWTH0 = 3.58e-7*SQRT(T/48.)*FF         ! O3
             case (6)
-              DWTH0 = 3.58e-7*SQRT(T/44.)*FF         ! N2O
+              DWTH0 = 3.58e-7*SQRT(T/30.)*FF         ! N2O
+            case (7)
+              DWTH0 = 3.58e-7*SQRT(T/56.)*FF         ! HNO3
             end select
 
 !--------------------------------------------------
@@ -364,6 +346,9 @@ contains
 end module GasAbsorption
 
 ! $Log$
+! Revision 1.19  2003/02/04 19:25:52  jonathan
+! Fix bug in using RHIFromH2O
+!
 ! Revision 1.18  2003/02/03 20:28:45  dwu
 ! make wet continuum dependent on radiometer frequency
 !
