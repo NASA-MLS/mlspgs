@@ -548,7 +548,7 @@ contains
             case (l_cloudy_110RH_in_cloud) 
                tau_clear = tau_fewCld
             case default
-               call MLSMessage(MLSMSG_Error, ModuleName,'invalid i_saturation')
+               tau_clear = tau_fewCld
             end select
                
          model_layer_loop: do ILYR=1, NZmodel-1
@@ -810,6 +810,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.59  2003/05/07 23:05:00  jonathan
+! some clean-up and cosmetic changes
+!
 ! Revision 1.58  2003/04/10 20:26:21  dwu
 ! make i_saturation and cloud_der as a verbal argument
 !
