@@ -90,6 +90,9 @@ contains ! ==================================================================
     end if
     if ( parallel%slave ) then
       ! Register ourselves with the master
+      ! Identify ourselves
+      call output ( 'Task ID: ' )
+      call output ( trim(GetNiceTidString ( parallel%myTid ) ) )
       call PVMFInitSend ( PvmDataDefault, bufferID )
       call PVMF90Pack ( SIG_Register, info )
       if ( info /= 0 ) &
@@ -246,6 +249,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.13  2002/07/17 19:54:52  livesey
+! Made slaves at least identify themselves
+!
 ! Revision 2.12  2002/05/22 00:48:28  livesey
 ! Added direct write stuff
 !
