@@ -34,7 +34,7 @@ module ScanModelModule          ! Scan model and associated calculations
   use MLSNumerics, only : HUNT, INTERPOLATEVALUES
   use Molecules, only: L_H2O
   use Output_M, only: OUTPUT
-  use Toggles, only: GEN, TOGGLE
+  use Toggles, only: EMIT, TOGGLE
   use Trace_M, only: TRACE_BEGIN, TRACE_END
   use VectorsModule, only : GETVECTORQUANTITYBYTYPE, VALIDATEVECTORQUANTITY, &
     & VECTOR_T, VECTORVALUE_T
@@ -264,7 +264,7 @@ contains ! =============== Subroutines and functions ==========================
 
     ! Executable code
 
-    if ( toggle(gen) ) call trace_begin ('GetHydrostaticTangentPressure' )
+    if ( toggle(emit) ) call trace_begin ('GetHydrostaticTangentPressure' )
 
     nullify ( aCoeff, basisGPH, basisLower, basisSpacing, basisUpper, &
       & bCoeff, cCoeff, closestH2OProfiles, closestTempProfiles, deltaRT, &
@@ -475,7 +475,7 @@ contains ! =============== Subroutines and functions ==========================
 
     call Deallocate_Test ( rt, "rt", ModuleName ) ! Was allocated in GetBasisGPH
 
-    if ( toggle(gen) ) call trace_end ('GetHydrostaticTangentPressure' )
+    if ( toggle(emit) ) call trace_end ('GetHydrostaticTangentPressure' )
 
   end subroutine GetHydrostaticTangentPressure
 
@@ -596,7 +596,7 @@ contains ! =============== Subroutines and functions ==========================
 
     ! Executable code -----------------------
 
-    if ( toggle ( gen ) ) call trace_begin ( 'ScanForwardModel' )
+    if ( toggle ( emit ) ) call trace_begin ( 'ScanForwardModel' )
 
     ! Identify the vector quantities from state/extra
     temp => GetVectorQuantityByType ( state, extra, &
@@ -1157,13 +1157,16 @@ contains ! =============== Subroutines and functions ==========================
     call deallocate_test ( A, 'A', ModuleName )
     call deallocate_test ( dHydrosGPHByDTemp, 'dHydrosGPHByDTemp', ModuleName )
 
-    if ( toggle ( gen ) ) call trace_end ( 'ScanForwardModel' )
+    if ( toggle ( emit ) ) call trace_end ( 'ScanForwardModel' )
 
   end subroutine ScanForwardModel
 
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.26  2001/11/03 01:33:47  livesey
+! Changed the togle from gen to emit
+!
 ! Revision 2.25  2001/10/02 16:49:56  livesey
 ! Removed fmStat%finished and change loop ordering in forward models
 !
