@@ -104,6 +104,8 @@ scanResidual
 scECI
 scGeocAlt
 scVel
+scVelECI
+scVelECR
 seconds
 sidebandRatio
 sizeDistribution
@@ -131,6 +133,9 @@ xyz
 zeta
 
 # $Log$
+# Revision 2.7  2002/03/14 00:32:15  pwagner
+# Added scVelECI and scVelECR
+#
 # Revision 2.6  2002/02/09 19:12:38  livesey
 # Added optical depth
 #
