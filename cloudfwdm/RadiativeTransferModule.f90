@@ -95,8 +95,30 @@ contains
       REAL(r8) :: tsource, wwk, wwk1,www0
 
       TB=0.0_r8
+      TB0=0.0_r8
       TT=0.0_r8
       Tscat = 0.0_r8
+      U1=0.0_r8
+      TEMP=0.0_r8
+      D1=0.0_r8
+      D2=0.0_r8
+      DY=0.0_r8
+      TGT=0.0_r8
+      uave=0.0_r8
+      ueff=0.0_r8
+      uu=0.0_r8
+      JM=0
+      WK=0.0_r8
+      WK1=0.0_r8
+      wwk=0.0_r8
+      wwk1=0.0_r8
+      www0=0.0_r8
+      x2=0.0_r8
+      RSAVG=0.0_r8
+      XTB=0.0_r8
+      WW0=0.0_r8
+      tsource=0.0_r8
+      lmin=0.0_r8
 
 !------------------------------------------------
 !     FIND BRIGHTNESS TEMPERATURE AT EACH LAYER
@@ -189,7 +211,7 @@ contains
 !------------------------------------------------
 !     COMPUTING TSCAT FOR EACH ANGLE AND LAYER
 !------------------------------------------------
-      U1 = 0.0
+     
       IF(ICON .gt. 0) then
       DO ISPI=1,N                         
          DO 1009 IP=1,NU
@@ -388,6 +410,9 @@ contains
 end module RadiativeTransferModule
 
 ! $Log$
+! Revision 1.15  2004/01/07 19:18:31  jonathan
+! initialize U1 with 0
+!
 ! Revision 1.14  2003/05/07 23:11:32  jonathan
 ! some clean-up and cosmetic changes
 !
