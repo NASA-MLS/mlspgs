@@ -11,7 +11,8 @@ module L2PC_m
 
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
   use Declaration_Table, only: DECLS, ENUM_VALUE, GET_DECL, DUMP_DECL
-  use Intrinsic, only: Lit_Indices, L_ZETA, L_NONE, L_VMR, L_RADIANCE, L_PTAN
+  use Intrinsic, only: Lit_Indices, L_CHANNEL, L_GEODALTITUDE, L_ZETA, L_NONE, L_VMR, &
+    & L_RADIANCE, L_PTAN
   use machine, only: io_error
   use MLSCommon, only: R8
   use VectorsModule, only: assignment(=), DESTROYVECTORINFO, &
@@ -38,7 +39,7 @@ module L2PC_m
   
   public :: AddL2PCToDatabase, DestroyL2PC, DestroyL2PCDatabase, WriteOneL2PC
   public :: Open_l2pc_file, read_l2pc_file, close_l2pc_file, binSelector_T
-  public :: BinSelectors, DestroyBinSelectorDatabase
+  public :: BinSelectors, DestroyBinSelectorDatabase,  AddBinSelectorToDatabase
 
   ! This is the third attempt to do this.  An l2pc is simply a Matrix_T.
   ! As this contains pointers to vector_T's and so on, I maintain a private
@@ -578,16 +579,10 @@ contains ! ============= Public Procedures ==========================
       decl = get_decl ( stringIndex, type=enum_value )
       qt%quantityType = decl%units
       qt%name = stringIndex
-      if(DEBUG) then
-          print *, 'Quantity: ', quantity
-          print *, 'literal: ', trim(line)
-          print *, 'decl%type: ', decl%type
-          print *, 'decl%units: ', decl%units
-          print *, 'decl%tree: ', decl%tree
-          print *, 'decl%prior: ', decl%prior
-          print *, 'QuantityName: ', qt%name
-          print *, 'QuantityType: ', qt%quantityType
-      endif
+
+      ! Set defaults for coordinates, radiance is the later exception
+      qt%verticalCoordinate = l_zeta
+      qt%frequencyCoordinate = l_none
 
       ! Read other info associated with type
       select case ( qt%quantityType )
@@ -614,6 +609,8 @@ contains ! ============= Public Procedures ==========================
         call Parse_Signal (line, sigInds, sideband=sideband)
         qt%signal = sigInds(1)
         qt%sideband = sideband
+        qt%frequencyCoordinate = l_channel
+        qt%verticalCoordinate = l_geodAltitude
         call deallocate_test(sigInds,'sigInds',ModuleName)
       case default
       end select
@@ -724,6 +721,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.28  2002/02/08 22:51:28  livesey
+! Minor changes and tidy up
+!
 ! Revision 2.27  2002/02/05 04:14:26  livesey
 ! Bug fix, still problems with packed write
 !
