@@ -1175,6 +1175,7 @@ contains ! =====     Public Procedures     =============================
     if ( present(update) ) my_update = update
     if ( .not. my_update ) &
       & call createEmptyMatrix ( z%m, 0, a%col%vec, a%col%vec )
+    call copyVector ( rhs_in, a%row%vec, noValues=.true.)
     call clearRows ( a, row_block, rhs_in )
     r1 = 1
     if ( present(row_block) ) r1 = row_block
@@ -1639,6 +1640,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.52  2001/09/25 17:49:24  livesey
+! Added call to copyvector for row mask in clearrows_1
+!
 ! Revision 2.51  2001/09/20 23:03:01  vsnyder
 ! Call ClearRows and ClearUnderMask from NormalEquations
 !
