@@ -1,6 +1,6 @@
 #	Makefile
 #
-# Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+# Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 #
 #special case:
@@ -48,6 +48,10 @@ endif
 # will be done in the uniquely-named sub-directories, not here--so
 .SUFFIXES:
 
+# This will filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+REECHO=$(MLSBIN)/reecho.sh
+
 # This is in case tar doesn't summon GNU tar, you may still use it via
 # something like
 #    make -f MakeFC tar_sips TAR=/usr/local/gnu/bin/tar
@@ -77,22 +81,30 @@ PROG=libmlspack.a
 #In case this is called with "make libmlspack.a"
 libmlspack.a:
 
-OMIT_SRCS := -d xerbla.f
+#OMIT_SRCS := -d xerbla.f
+OMIT_SRCS := $(OMIT) xerbla.f
 
 ifdef BLAS
-   OMIT_SRCS := $(OMIT_SRCS) -d dot_intrinsic.f90 -d sdot.f -d ddot.f
+#   OMIT_SRCS := $(OMIT_SRCS) -d dot_intrinsic.f90 -d sdot.f -d ddot.f
+   OMIT_SRCS := $(OMIT_SRCS) dot_intrinsic.f90 sdot.f ddot.f
 else
 ifeq ($(LIB_BLAS),f95)
-   OMIT_SRCS := $(OMIT_SRCS) -d dot_external_m.f90 -d sdot.f -d ddot.f
+#   OMIT_SRCS := $(OMIT_SRCS) -d dot_external_m.f90 -d sdot.f -d ddot.f
+   OMIT_SRCS := $(OMIT_SRCS) dot_external_m.f90 sdot.f ddot.f
 else
-   OMIT_SRCS := $(OMIT_SRCS) -d dot_intrinsic.f90
+#   OMIT_SRCS := $(OMIT_SRCS) -d dot_intrinsic.f90
+   OMIT_SRCS := $(OMIT_SRCS) dot_intrinsic.f90
 endif
 endif
 
 ifdef LAPACK
-   OMIT_SRCS := $(OMIT_SRCS) -d dgemm_intrinsic.f90 -d sgemm_intrinsic.f90 \
-                 -d dgemv_intrinsic.f90 -d sgemv_intrinsic.f90
+#   OMIT_SRCS := $(OMIT_SRCS) -d dgemm_intrinsic.f90 -d sgemm_intrinsic.f90 \
+#                 -d dgemv_intrinsic.f90 -d sgemv_intrinsic.f90
+   OMIT_SRCS := $(OMIT_SRCS) dgemm_intrinsic.f90 sgemm_intrinsic.f90 \
+                 dgemv_intrinsic.f90 sgemv_intrinsic.f90
 endif
+
+OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
 
 #NOCLEANING determines value of RECFG passed to mlsconfigure script
 #RECFG determines whether changing .configure triggers deleting
@@ -150,10 +162,10 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
           $(RECFG)
 
 depends:
-	$(MLSBIN)/makemakedep.sh $(OMIT_SRCS)
+	$(MLSBIN)/makemakedep.sh $(OMIT_PREFXD)
 
 ghostbuster:
-	$(MLSBIN)/ghostbuster.sh -lib $(OMIT_SRCS) \
+	$(MLSBIN)/ghostbuster.sh -lib $(OMIT_PREFXD) \
       $(PLATFORMS)/$(MLSCONFG) ./ $(srclib)
 
 mostlyclean:
@@ -192,6 +204,9 @@ targ:
 	$(TAR) hcvzf ../libmlspack.tgz * --exclude \*.o --exclude \*.mod
 
 # $Log$
+# Revision 1.2  2001/11/15 00:11:47  pwagner
+# Rename library to libmlspack.a; fixed OMIT_SRCS
+#
 # Revision 1.1  2001/11/13 23:01:42  pwagner
 # First commit
 #

@@ -1,6 +1,6 @@
 #	Makefile
 #
-# Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+# Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 #
 #special case:
@@ -105,9 +105,11 @@ else
 endif
 
 #Any sources to explicitly exclude from dependency list?
-#OMIT_SRCS := $(OMIT_SRCS)
+OMIT_SRCS := $(OMIT)
 
 PROG=mlsl3m
+
+OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
 
 #NOCLEANING determines value of RECFG passed to mlsconfigure script
 #RECFG determines whether changing .configure triggers deleting
@@ -177,10 +179,11 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
           $(RECFG)
 
 depends:
-	$(MLSBIN)/makemakedep.sh $(OMIT_SRCS) $(depends_where)
+	$(MLSBIN)/makemakedep.sh $(OMIT_PREFXD) $(depends_where)
 
 ghostbuster:
-	$(MLSBIN)/ghostbuster.sh $(PLATFORMS)/$(MLSCONFG) ./ $(srclib)
+	$(MLSBIN)/ghostbuster.sh $(OMIT_PREFXD) \
+       $(PLATFORMS)/$(MLSCONFG) ./ $(srclib)
 
 mostlyclean:
 	@echo "Cleaning directory $(MLSCONFG)" ; \
@@ -219,6 +222,9 @@ targ:
    --exclude \*.mod --exclude $(PROG)
 
 # $Log$
+# Revision 1.9  2001/11/08 00:40:51  pwagner
+# NOCLEANING avoids massive recompiles on changes to .configure
+#
 # Revision 1.8  2001/10/04 22:25:36  pwagner
 # Limit suffix-based rules to (MLSCONFG); add lib/lit_names.txt to dependency list
 #

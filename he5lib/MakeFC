@@ -91,10 +91,12 @@ else
 endif
 
 #Any sources to explicitly exclude from dependency list?
-OMIT_SRCS := $(OMIT_SRCS) -d h5_griddeddata.f90
+OMIT_SRCS := $(OMIT) h5_griddeddata.f90
 
 #PROG=l2_test
 PROG=libhe5.a
+
+OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
 
 #NOCLEANING determines value of RECFG passed to mlsconfigure script
 #RECFG determines whether changing .configure triggers deleting
@@ -141,10 +143,11 @@ $(OBJ_DIR)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
           $(RECFG)
 
 depends:
-	$(MLSBIN)/makemakedep.sh $(OMIT_SRCS) $(libmls_sources) $(srclib)
+	$(MLSBIN)/makemakedep.sh $(OMIT_PREFXD) $(libmls_sources) $(srclib)
 
 ghostbuster:
-	$(MLSBIN)/ghostbuster.sh -lib $(OBJ_DIR)/$(MLSCONFG) ./ $(srclib)
+	$(MLSBIN)/ghostbuster.sh -lib $(OMIT_PREFXD) \
+            $(OBJ_DIR)/$(MLSCONFG) ./ $(srclib)
 
 mostlyclean:
 	@echo "Cleaning directory $(MLSCONFG)" ; \
@@ -182,3 +185,6 @@ targ:
 	$(TAR) hcvzf ../fwdmdl.tgz * --exclude \*.o --exclude \*.mod --exclude l2_test
 
 # $Log$
+# Revision 1.1  2002/01/10 01:11:52  pwagner
+# First commit
+#
