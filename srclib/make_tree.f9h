@@ -1,0 +1,86 @@
+! This subroutine only works in Init_Tables_Module, where it should be
+! included by an include line.
+
+  subroutine MAKE_TREE ( IDS )
+  ! Build a tree specified by the "ids" array.  "begin" marks the
+  ! beginning of a tree.  A tree-node marks the end of the corresponding
+  ! tree.  Pseudo-terminals are decorated with their indices.
+    use TREE, only: BUILD_TREE, PUSH_PSEUDO_TERMINAL
+    implicit NONE
+
+    integer, intent(in) :: IDS(:)
+
+    integer, save :: CALLNO = 0    ! Which call to Make_Tree -- for error msg.
+    integer :: DECOR, I, ITEM, M, N_IDS, STACK(0:30), STRING, WHICH
+
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=256) :: Id = &
+       "$Id$"
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile$"
+!---------------------------------------------------------------------------
+
+    callno = callno + 1
+    n_ids = size(ids)
+    m = 0
+    stack(0) = 0 ! just so it's defined, in case it gets incremented
+                 ! after build_tree
+    if ( ids(1) >= 0 ) then
+      m = 1
+      stack(1) = 0
+    end if
+    do i = 1, n_ids
+      if ( ids(i) == begin ) then
+        m = m + 1
+        if ( m > ubound(stack,1) ) then
+          print *, ModuleName(11:len(ModuleName)-8) // &
+            & '%MAKE_TREE-E- Stack overflow!'
+          print *, 'Your tree is taller than ', ubound(stack,1), &
+            &      '.  Detected while'
+          print *, 'processing element ', i, ' of the list for call ', callno
+          stop
+        end if
+        stack(m) = 0
+      else
+        item = mod(ids(i), 1000)
+        which = mod(ids(i) / 1000, 1000)
+        decor = ids(i) / 1000000
+        select case ( which )
+        case ( f/1000 ) ! Fields
+          string = field_indices(item)
+        case ( l/1000 ) ! Enumeration literals
+          string = lit_indices(item)
+        case ( p/1000 ) ! Parameter names
+          string = parm_indices(item)
+        case ( s/1000 ) ! Specs
+          string = spec_indices(item)
+        case ( t/1000 ) ! Intrinsic data types
+          string = data_type_indices(item)
+        case ( z/1000 ) ! Sections
+          string = section_indices(item)
+        case ( n/1000 ) ! Tree nodes
+          call build_tree ( item, stack(m), decor )
+          m = m - 1
+          if ( m < lbound(stack,1) ) then
+            print *, ModuleName(11:len(ModuleName)-8) // &
+              & '%MAKE_TREE-E- Stack underflow!'
+            print *, 'You probably forgot a "begin" somewhere.  Detected while'
+            print *, 'processing element ', i, ' of the list for call ', callno
+            stop
+          end if
+          stack(m) = stack(m) + 1
+    cycle
+        end select
+        if ( string == 0 ) then
+          print *, ModuleName(11:len(ModuleName)-8) // &
+            & '%MAKE_TREE-E- The string for element ', i, ' of a list'
+          print *, 'is undefined.  Detected on call ', callno, ' to Make_Tree.'
+          stop
+        end if
+        call push_pseudo_terminal ( string, 0, decor = item )
+        stack(m) = stack(m) + 1
+      end if
+    end do
+  end subroutine MAKE_TREE
+
+! $Log$
