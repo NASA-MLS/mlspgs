@@ -5,14 +5,11 @@ module ManipulateVectorQuantities ! Various routines for manipulating vectors
 
   ! This modules contains routines needed for manipulating vectors.
 
-  use MLSMessageModule, only: MLSMessage,MLSMSG_Error,MLSMSG_Allocate,MLSMSG_Deallocate
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSCommon, only: r8, rv
   use MLSNumerics, only: Hunt
   use VectorsModule, only: VectorValue_T
-  use Dump_0, only: Dump
-  use Output_m, only: Output
-  use Intrinsic, only: L_PHITAN, L_CHANNEL, L_FREQUENCY, L_INTERMEDIATEFREQUENCY, &
-    & L_NONE
+  use Intrinsic, only: L_PHITAN, L_CHANNEL, L_NONE
 
   implicit none
 
@@ -301,6 +298,9 @@ contains
 end module ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.21  2002/11/22 01:07:13  vsnyder
+! Delete USE'd but unreferenced symbols
+!
 ! Revision 2.20  2002/10/08 00:09:11  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
