@@ -73,6 +73,9 @@ module SpectroscopyCatalog_m
   ! The spectroscopy database:
   type(catalog_T), public, save :: Catalog(first_molecule:last_molecule)
 
+  ! String index of file from which spectroscopy database is read, 0 = L2CF
+  integer, public, save :: SpectroscopyFile = 0
+
   ! Greatest number of lines in any catalog entry:
   integer, public, save :: MostLines = 0
 
@@ -322,7 +325,8 @@ contains ! =====  Public Procedures  ===================================
           call get_string ( sub_rosa(subtree(2,j)), fileType, strip=.true. )
           j = subtree(1,j)
         end if
-        call get_string ( sub_rosa(j), fileName, strip=.true. )
+        spectroscopyFile = sub_rosa(j)
+        call get_string ( spectroscopyFile, fileName, strip=.true. )
         call Read_Spectroscopy ( j, fileName, fileType )
       case ( s_spectra ) ! .............................  SPECTRA  .....
         ! Get the molecule
@@ -1345,6 +1349,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.38  2005/03/03 23:56:18  vsnyder
+! Spiff up catalog dump
+!
 ! Revision 2.37  2005/03/03 02:02:47  vsnyder
 ! Spiff up dump
 !
