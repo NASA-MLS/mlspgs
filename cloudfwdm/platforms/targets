@@ -1,0 +1,126 @@
+include ../Makefile.dep
+
+# "$Id$"
+
+# ========================================================================
+# An automatically constructed Makefile
+# This file was built by mlsconfigure
+# by catenating three files:
+# (1) .configure -- a file of mls settings: compiler, platform, etc.
+# (2) MLSCONFG   -- a file of macros specific for the compiler.platform combo
+#                   e.g., NAG.Sun
+#                   these might be compiler switches, 
+# (3) targets    -- a file of targets with instructions how to build them
+#                    (except for .f90.o rules which are still in MLSCONFG)
+
+# Other files referred to by means of "include" statements:
+#   ../Makefile.dep -- dependencies among the primary Fortran modules
+
+# Special areas:
+# PVM
+# If it is desired to link the executable with PVM support,
+# the variables PVM_PATH, PVM_ARCH should be defined
+# e.g. in .configure
+
+# BLAS
+# If it is desired to link the executable with external BLAS support,
+# the variable BLAS should be defined
+# e.g. in the make statement: make -f MakeFC BLAS=/my_path/to_BLAS_library
+
+# ========================================================================
+
+l2_test.o: ${OBJS} 
+
+# "yes" is safer--
+# in case modules have been deleted or excluded since the last build
+delete_lib_first = yes
+
+PVM_PATH = ${PVM_ROOT}/lib/${PVM_ARCH}
+
+ifdef PVM_ROOT
+   pvm_linker_line=-L${PVM_PATH} -lfpvm3 -lgpvm3 -lpvm3
+   pvm_message=Building cloud forward model with PVM support
+   PVM_OBJS=
+else
+   pvm_linker_line=
+   pvm_message=Building cloud forward model without PVM support
+   PVM_OBJS=
+endif
+
+ifdef BLAS
+   blas_linker_line=-L${BLAS} -lblas
+   blas_message=Building cloud forward model with externally-supplied BLAS
+else
+   blas_linker_line=
+   blas_message=Building cloud forward model with internally-supplied BLAS
+endif
+
+ifdef HDF5
+   hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5
+   hdf5_message=Building cloud forward model with hdf5
+else
+   hdf5_linker_line=
+   hdf5_message=Building cloud forward model without hdf5
+endif
+
+# ========================================================================
+libcloud.a: ${OBJS} 
+		@echo "$(pvm_message)"
+		@echo "$(blas_message)"
+		@echo "$(hdf5_message)"
+ifeq ($(delete_lib_first),yes)
+		rm -f $@
+endif
+	ar ru $@ $?
+
+l2_test: libcloud.a l2_test.o $(libdir)/libmls.a
+	$(FC) $(LDOPTS) -o l2_test l2_test.o \
+                      -L./ -lcloud \
+                      -L${libfwdmdl} -lfwdmdl \
+                      -L${libdir} -lmls \
+	-L${PGSTK} -lPGSTK \
+        -L${HDFEOS} -lhdfeos \
+	-L${HDF} -lmfhdf \
+        -ldf \
+        -lz \
+        -ljpeg \
+	-L${GCTP} -lGctp \
+        $(pvm_linker_line) \
+        $(blas_linker_line) \
+        $(hdf5_linker_line) \
+        $(l_specials) $(LAFTER) \
+
+# ========================================================================
+
+clean:
+	rm -f *.o *.mod l2_test
+
+tar:
+	rm -f cloud.tgz
+	tar hcvzf cloud.tgz * --exclude \*.o --exclude \*.mod --exclude l2_test
+
+# ========================================================================
+
+#	special options for compiling some modules--override .f90 rules
+
+eos_mdb.o:
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/eos_mdb.f90 $(FAFTER)
+get_delta_m.o:
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/get_delta_m.f90 $(FAFTER)
+#get_pfa_delta_m.o:
+#	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/get_pfa_delta_m.f90 $(FAFTER)
+pfa_db_delta_m.o:
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/pfa_db_delta_m.f90 $(FAFTER)
+d_delta_dt_m.o:
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/d_delta_dt_m.f90 $(FAFTER)
+#fwd_mdl_set_up_m.o:
+#	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/fwd_mdl_set_up_m.f90 $(FAFTER)
+#MLSCommon.o:
+#	$(FC) -c $(DUSTY) $(INC_PATHS) $(LIB_SRCS_DIR)/MLSCommon.f90 $(FAFTER)
+#machine.o: $(LIB_SRCS_DIR)/platforms/$(MLSCONFG).machine
+#	rm -f machine.f90
+#	cp "$(LIB_SRCS_DIR)/platforms/$(MLSCONFG).machine" machine.f90
+#	chmod u+w machine.f90
+#	$(FC) -c $(DUSTY) machine.f90 $(FAFTER)
+# ========================================================================
+# $Log$
