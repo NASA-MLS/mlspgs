@@ -1,5 +1,7 @@
 include ../Makefile.dep
 
+machines_f90 := $(shell cd ../machines/$(MLSCONFG); echo *.f90)
+MACH_OBJS := $(shell echo ${machines_f90} | sed 's/f90/o/g')
 # "$Id$"
 # ========================================================================
 # An automatically constructed Makefile
@@ -84,9 +86,11 @@ else
    tk_message=Building mlslib without toolkit; using SDPToolkitSubstitute
 endif
 
-${OBJS}: machine.o
+#${OBJS}: machine.o
+${OBJS}: ${MACH_OBJS}
 
-libmls.a: ${OBJS} machine.o ${PVM_OBJS} ${blas_objs}
+#libmls.a: ${OBJS} machine.o ${PVM_OBJS} ${blas_objs}
+libmls.a: ${OBJS} ${MACH_OBJS} ${PVM_OBJS} ${blas_objs}
 		@echo "$(pvm_message)"
 		@echo "$(blas_message)"
 		@echo "$(tk_message)"
@@ -131,6 +135,9 @@ sdot.o:
 	$(FC) -c $(DUSTY_NO_OPT) -O $(INC_PATHS) $(blaslib)/sdot.f $(FAFTER)
 
 # $Log$
+# Revision 1.30  2001/08/15 21:03:28  pwagner
+# Default rules for .f and .c; EXTRA_PATHS added to INC_PATHS
+#
 # Revision 1.29  2001/05/30 23:56:55  livesey
 # Hdf now dusty, L1BData not
 #
