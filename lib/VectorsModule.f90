@@ -274,7 +274,7 @@ CONTAINS
   SUBROUTINE DestroyVectorInfo(vector)
 
     ! Dummy arguments
-    TYPE (Vector_T), INTENT(IN) :: vector
+    TYPE (Vector_T) :: vector
 
     ! Executable code
 
@@ -471,6 +471,9 @@ END MODULE VectorsModule
 
 !
 ! $Log$
+! Revision 1.6  2000/01/20 01:29:59  livesey
+! Added GetSubVectorAs2DArray
+!
 ! Revision 1.5  2000/01/19 18:36:46  livesey
 ! Sorted out the sub vector layout stuff.  Added the layout element of
 ! the template, and wrote code to deal with it.  Also wrote
