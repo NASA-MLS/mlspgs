@@ -1133,7 +1133,7 @@ CONTAINS
       CHARACTER (LEN=GridNameLen) :: dgName
       
       INTEGER :: start(2), stride(2), edge(2)
-      INTEGER (HID_T) :: swfID, swId, status
+      INTEGER (HID_T) :: swfID, swId
       INTEGER :: status
       
       ! Functions
@@ -1265,14 +1265,11 @@ CONTAINS
       CALL MLSMessage(MLSMSG_Info, ModuleName, 'pass swclose')
                                                                                 
       swfID = he5_swopen(trim(physicalFilename), HE5F_ACC_RDWR)
-      msr = msr1 //'swopen'
-      CALL MLSMessage(MLSMSG_Info, ModuleName, msr)
                                                                                 
       IF (swfID == -1) THEN
          msr = MLSMSG_Fileopen // trim(physicalFilename) //' for writing swath'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
-      CALL MLSMessage(MLSMSG_Info, ModuleName, 'pass open here')
  
       ! Re-attach to the swath for writing
       
@@ -2192,6 +2189,9 @@ CONTAINS
 !==================
 
 !# $Log$
+!# Revision 1.30  2003/08/18 17:03:59  cvuu
+!# Add close and open in outputDiags_he5
+!#
 !# Revision 1.29  2003/08/11 23:29:09  cvuu
 !# brought closer to James Johnson want to
 !#
