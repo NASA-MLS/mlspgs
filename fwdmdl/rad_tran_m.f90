@@ -22,7 +22,7 @@ contains
 !------------------------------------------------------  Rad_tran  -----
 ! This is the radiative transfer model, radiances only !
 
-  subroutine Rad_tran ( gl_inds, e_rflty, del_zeta, &
+  subroutine Rad_tran ( gl_inds, more_inds, e_rflty, del_zeta, &
                      &  alpha_path_c, ref_cor, do_gl, incoptdepth, &
                      &  alpha_path_gl, ds_dz_gw, t_script, &
                      &  tau, rad, i_stop )
@@ -30,13 +30,14 @@ contains
     use GLNP, only: NG
     use MLSCommon, only: RP, IP
     use SCRT_DN_M, ONLY: SCRT_DN
-    use Where_M, only: Where
 
   ! inputs
 
     integer(ip), intent(in) :: gl_inds(:)    ! Gauss-Legendre grid indices
+    integer(ip), intent(in) :: more_inds(:)  ! Places in the coarse path
+  !                                            where GL is needed
     real(rp), intent(in) :: e_rflty          ! earth reflectivity value (0--1).
-    real(rp), intent(in) :: del_zeta(:)     ! path -log(P) differences on the
+    real(rp), intent(in) :: del_zeta(:)      ! path -log(P) differences on the
       !              main grid.  This is for the whole coarse path, not just
       !              the part up to the black-out
     real(rp), intent(in) :: alpha_path_c(:)  ! absorption coefficient on coarse
@@ -62,7 +63,6 @@ contains
   ! Internals
 
     integer :: A, AA, I
-    integer(ip) ::  more_inds(size(gl_inds)/ng) ! Places in the coarse path
   !                                            where GL is needed
 
   ! Begin code
@@ -70,8 +70,6 @@ contains
   ! see if anything needs to be gl-d
 
     if ( size(gl_inds) > 0 ) then
-
-      call where ( do_gl, more_inds )
 
       !{ Apply Gauss-Legendre quadrature to the panels indicated by
       !  {\tt more\_inds}.  We remove a singularity (which actually only
@@ -108,8 +106,8 @@ contains
 
 !--------------------------------------------------  Rad_Tran_Pol  -----
 
-  subroutine Rad_tran_Pol ( gl_inds, e_rflty, del_zeta, alpha_path_c, ref_cor, &
-                     &  do_gl, incoptdepth_pol, deltau_pol, alpha_path_gl, &
+  subroutine Rad_tran_Pol ( gl_inds, more_inds, e_rflty, del_zeta, alpha_path_c, &
+                     &  ref_cor, do_gl, incoptdepth_pol, deltau_pol, alpha_path_gl, &
                      &  ds_dz_gw, ct, stcp, stsp, t_script, &
                      &  prod_pol, tau_pol, rad_pol, p_stop )
 
@@ -121,13 +119,14 @@ contains
     use MCRT_M, ONLY: MCRT
     use MLSCommon, only: RP, IP
     use Opacity_m, only: Opacity
-    use Where_M, only: Where
 
   ! inputs
 
     integer(ip), intent(in) :: gl_inds(:)    ! Gauss-Legendre grid indices
+    integer(ip), intent(in) :: more_inds(:)  ! Places in the coarse path
+  !                                            where GL is needed
     real(rp), intent(in) :: e_rflty          ! earth reflectivity value (0--1).
-    real(rp), intent(in) :: del_zeta(:)     ! path -log(P) differences on the
+    real(rp), intent(in) :: del_zeta(:)      ! path -log(P) differences on the
       !              main grid.  This is for the whole coarse path, not just
       !              the part up to the black-out
     complex(rp), intent(in) :: alpha_path_c(-1:,:)  ! absorption coefficient
@@ -164,7 +163,7 @@ contains
     real(rp), save :: E_Stop  = 1.0_rp ! X for which Exp(X) is too small to worry
     complex(rp) :: gl_delta_polarized(-1:1,size(gl_inds)/ng)
     complex(rp) :: incoptdepth_pol_gl(2,2,size(gl_inds)/ng)
-    integer(ip) ::  more_inds(size(gl_inds)/ng), N_PATH
+    integer(ip) :: N_PATH
     integer :: Status ! from cs_expmat
 
   ! Begin code
@@ -176,8 +175,6 @@ contains
   ! see if anything needs to be gl-d
 
     if ( size(gl_inds) > 0 ) then
-
-      call where ( do_gl, more_inds )
 
       call polarized_path_opacity ( del_zeta,    &
                  &  alpha_path_c, alpha_path_gl, &
@@ -1006,6 +1003,9 @@ contains
 
 end module RAD_TRAN_M
 ! $Log$
+! Revision 2.30  2003/11/04 01:55:50  vsnyder
+! Add 'FA = 0.0' in case n_path <= 4, cosmetic changes
+!
 ! Revision 2.29  2003/11/01 03:04:02  vsnyder
 ! Use ds_dz_gw instead of ds_dh, dh_dz and gw; use del_zeta from FullForwardModel
 !
