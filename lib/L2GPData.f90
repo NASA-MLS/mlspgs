@@ -22,7 +22,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
     & GetStringHashElement, GetStringElement, &
     & ints2Strings, list2array, lowercase, NumStringElements, &
     & strings2Ints, StringElementNum
-  use OUTPUT_M, only: OUTPUT
+  use OUTPUT_M, only: BLANKS, OUTPUT
   use PCFHdr, only: GA_VALUE_LENGTH, GlobalAttributes_T, GlobalAttributes, &
     & he5_readglobalattr, he5_writeglobalattr
   use STRING_TABLE, only: DISPLAY_STRING
@@ -49,6 +49,12 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   interface DIFF
     module procedure DiffL2GPData
     module procedure DiffL2GPFiles
+  end interface
+
+  interface DIFFSTATS
+    module procedure DiffStatsInt
+    !module procedure DiffStatsSingle
+    !module procedure DiffStatsDouble
   end interface
 
   interface DUMP
@@ -2257,7 +2263,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine cpL2GPData_fileName
 
   ! ------------------------------------------ DiffL2GPData ------------
-  subroutine DiffL2GPData ( L2gp1, L2gp2, Details )
+  subroutine DiffL2GPData ( L2gp1, L2gp2, Details, stats )
     ! Show diff between l2gp1 and l2gp2 down to level of Details
     ! Assumes fields of each already allocated and have same shape
     ! (If not, then why are you trying to show differences?)
@@ -2269,19 +2275,21 @@ contains ! =====     Public Procedures     =============================
     !                                        ! -2 Skip all but name
     !                                        ! >0 Diff even data fields
     !                                        ! Default 1
+    logical, intent(in), optional :: STATS   ! if TRUE, just print stats
 
     ! Local variables
     integer :: ierr
     integer :: MYDETAILS
     real(r8) :: FillValue
     integer :: ChunkFillValue
-
+    logical :: myStats
     ! Executable code
     myDetails = 1
     if ( present(details) ) myDetails = details
-    
-      FillValue = real(l2gp1%MissingValue, r8)
-      ChunkFillValue = int(l2gp1%MissingValue)
+    myStats = .false.
+    if ( present(stats) ) myStats = stats    
+      !FillValue = real(l2gp1%MissingValue, r8)
+      !ChunkFillValue = int(l2gp1%MissingValue)
 
       if ( trim(l2gp1%name) /= trim(l2gp2%name) ) then
         call output('(1) name: ' // trim(l2gp1%name), advance='yes')
@@ -2314,16 +2322,28 @@ contains ! =====     Public Procedures     =============================
       endif
       if ( myDetails < 0 ) return
       if ( any(l2gp1%pressures /= l2gp2%pressures)) then
-        call dump ( l2gp1%pressures - l2gp2%pressures, &
-          & 'l2gp%pressures (diff)' )
+        if ( myStats ) then
+          !call diffStats(l2gp1%pressures, l2gp2%pressures, 'Pressures')
+        else
+          call dump ( l2gp1%pressures - l2gp2%pressures, &
+            & 'l2gp%pressures (diff)' )
+        endif
       endif
       if ( any(l2gp1%latitude /= l2gp2%latitude)) then
-        call dump ( l2gp1%latitude - l2gp2%latitude, &
-          & 'l2gp%latitude (diff)' )
+        if ( myStats ) then
+          !call diffStats(l2gp1%latitude, l2gp2%latitude, 'Latitudes')
+        else
+          call dump ( l2gp1%latitude - l2gp2%latitude, &
+            & 'l2gp%latitude (diff)' )
+        endif
       endif
       if ( any(l2gp1%longitude /= l2gp2%longitude)) then
-        call dump ( l2gp1%longitude - l2gp2%longitude, &
-          & 'l2gp%longitude (diff)' )
+        if ( myStats ) then
+          !call diffStats(l2gp1%longitudes, l2gp2%longitudes, 'Longitudes')
+        else
+          call dump ( l2gp1%longitude - l2gp2%longitude, &
+            & 'l2gp%longitude (diff)' )
+        endif
       endif
       if ( any(l2gp1%solarTime /= l2gp2%solarTime)) then
         call dump ( l2gp1%solarTime - l2gp2%solarTime, &
@@ -2360,11 +2380,12 @@ contains ! =====     Public Procedures     =============================
       if ( myDetails < 1 ) return
       if ( any(l2gp1%l2gpValue /= l2gp2%l2gpValue)) then
         call dump ( real(l2gp1%l2gpValue - l2gp2%l2gpValue, r8), &
-          & 'l2gp%l2gpValue (diff)', FillValue=FillValue )
+          & 'l2gp%l2gpValue (diff)')
+          !& 'l2gp%l2gpValue (diff)', FillValue=FillValue )
       endif
       if ( any(l2gp1%l2gpPrecision /= l2gp2%l2gpPrecision)) then
         call dump ( real(l2gp1%l2gpPrecision - l2gp2%l2gpPrecision, r8), &
-          & 'l2gp%l2gpPrecision (diff)', FillValue=FillValue )
+          & 'l2gp%l2gpPrecision (diff)' )
       endif
       
       if ( any(l2gp1%status /= l2gp2%status)) then
@@ -2414,6 +2435,7 @@ contains ! =====     Public Procedures     =============================
         & 'File 1 not found; make sure the name and path are correct' &
         & // trim(file1) )
     endif
+    the_hdfVersion1 = mls_hdf_version(File1)
     the_hdfVersion2 = mls_hdf_version(File2)
     file_exists = ( mls_exists(trim(File2)) == 0 )
     if ( .not. file_exists ) then
@@ -2439,6 +2461,8 @@ contains ! =====     Public Procedures     =============================
       call MLSMessage ( MLSMSG_Error, ModuleName, &
        & "Unable to open L2gp file: " // trim(File2) // ' for diff')
     ! Loop over swaths in file 1
+
+    print *, 'swathList1: ', trim(swathList1)
     do i = 1, noSwaths
       call GetStringElement (trim(swathList1), swath, i, countEmpty )
       status = stringElementNum(swathList2, trim(swath), countEmpty)
@@ -2447,6 +2471,7 @@ contains ! =====     Public Procedures     =============================
           & trim(File2), advance='yes')
         cycle
       endif
+      print *, 'swath name: ', trim(swath)
       call ReadL2GPData ( File1Handle, trim(swath), l2gp1, &
            & hdfVersion=the_hdfVersion1 )
       call ReadL2GPData ( File2Handle, trim(swath), l2gp2, &
@@ -2467,6 +2492,43 @@ contains ! =====     Public Procedures     =============================
        & "Unable to close L2gp file: " // trim(File2) // ' after diff')
   end subroutine DiffL2GPFiles
     
+  ! ------------------------------------------ DiffStatsInt ------------
+  subroutine DiffStatsInt ( array1, array2, arrayName )
+    ! Show diff between arrays 1 and 2: num diff num same, pctages
+    integer, dimension(:), intent(in) :: array1
+    integer, dimension(:), intent(in) :: array2
+    character(len=*), intent(in) :: arrayName
+    ! Internal variables
+    integer :: numSame
+    integer :: numDiff
+    real :: pctSame
+    real :: pctDiff
+    ! Executable
+    call output('Differences between (1) and (2) integer arrays ' &
+      & // trim(arrayName), advance='yes')
+    if ( size(array1) /= size(array2) ) then
+      call output('(arrays (1) and (2) different lengths)', advance='yes')
+      return
+    endif
+    numDiff = count(array1 /= array2)
+    numSame = size(array1) - numDiff
+    pctDiff = 100*numDiff/(0.+numDiff+numSame)
+    pctSame = 100. - pctDiff
+    call output(numSame, advance = 'no')
+    call blanks(2, advance='no')
+    call output('same', advance = 'no')
+    call blanks(4, advance='no')
+    call output(numDiff, advance = 'no')
+    call blanks(2, advance='no')
+    call output('different', advance = 'no')
+    call blanks(4, advance='no')
+    call output(pctSame, advance = 'no')
+    call output('%  same', advance = 'no')
+    call blanks(4, advance='no')
+    call output(pctDiff, advance = 'no')
+    call output('%  different', advance = 'yes')
+  end subroutine DiffStatsInt
+
   ! ------------------------------------------ DUMP_L2GP_DATABASE ------------
 
   subroutine DUMP_L2GP_DATABASE ( L2gp, Name, ColumnsOnly, Details )
@@ -2876,6 +2938,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.104  2004/05/26 23:57:29  pwagner
+! Added new diff routines
+!
 ! Revision 2.103  2004/05/26 20:31:29  pwagner
 ! Raised MAXNUMSWATHPERFILE to 250
 !
