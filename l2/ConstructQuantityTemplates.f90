@@ -287,7 +287,9 @@ contains ! =====     Public Procedures     =============================
 
        ! Construct an empty quantity
        call ConstructMinorFrameQuantity ( l1bInfo, chunk, instrumentModule, &
-        & qty, noChans=noChans, mifGeolocation=mifGeolocation )
+        & qty, noChans=noChans)
+        
+        qty%frequencies = VGrids(sGridIndex)%surfs
         
    else
 
@@ -738,6 +740,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.51  2001/08/01 00:04:29  dwu
+! add qty%frequencies = VGrids(sGridIndex)%surfs for quantity l_losTransFunc
+!
 ! Revision 2.50  2001/07/30 23:28:38  pwagner
 ! Added columnAbundances scaffolding--needs fleshing out
 !
