@@ -8,7 +8,9 @@ module ObtainNCEP !provides subroutines to access NCEP files
 ! use DATES_MODULE
   use GriddedData, only: GriddedData_T, AddGridTemplateToDatabase
   use Hdf, only: DFACC_RDONLY, FAIL, SUCCEED
-  use HDFEOS, only: HDFE_NENTDIM, HDFE_NENTDFLD
+  use HDFEOS, only: HDFE_NENTDIM, HDFE_NENTDFLD, &
+  & gdopen, gdattach, gddetach, gdclose, &
+  & gdinqgrid, gdnentries, gdinqdims, gdinqflds
   use MLSCommon, only: R8
   use MLSPCF2, only: MLSPCF_L2NCEP_END, MLSPCF_L2NCEP_START
   use MLSStrings, only: GetStringElement, NumStringElements
@@ -142,8 +144,9 @@ contains ! =====     Public Procedures     =============================
   character (len=MAXNAMELENGTH) :: gridname
   INTEGER, DIMENSION(NENTRIESMAX) :: dims, rank, numberType
   ! External functions
-  integer, external :: gdopen, gdattach, gdrdfld, gddetach, gdclose
-  integer, external :: gdinqgrid, gdnentries, gdinqdims, gdinqflds
+!  integer, external :: gdopen, gdattach, gdrdfld, gddetach, gdclose
+!  integer, external :: gdinqgrid, gdnentries, gdinqdims, gdinqflds
+  INTEGER, EXTERNAL :: GDRDFLD
   logical, parameter :: COUNTEMPTY=.TRUE.
  
   ! - - - begin - - -
@@ -275,6 +278,9 @@ contains ! =====     Public Procedures     =============================
 END MODULE ObtainNCEP
 
 ! $Log$
+! Revision 2.7  2001/03/03 00:50:07  pwagner
+! Using HDF-EOS module grid interfaces--except for gdrdfld
+!
 ! Revision 2.6  2001/03/03 00:11:29  pwagner
 ! Began transformations to act like L2GPData module for Gridded data
 !
