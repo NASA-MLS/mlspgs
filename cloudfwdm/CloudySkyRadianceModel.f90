@@ -182,6 +182,7 @@ contains
                                                ! 1 = 100% R.H. BELOW CLOUD
                                                ! 2 = DEFAULT
                                                ! 3 = NEAR SIDE CLOUD ONLY
+                                               ! 4 = 100% RHi BELOW 100hPa
 
       INTEGER :: IFOV                          ! FIELD OF VIEW AVERAGING SWITCH
                                                ! 0 = OFF
@@ -519,7 +520,8 @@ contains
 ! 	 N.B.	ICON0 is Clear-Sky only 
 !		ICON=1 is for 100%RH inside and below Cloud
 !		ICON=2 is default for 100%RH inside cloud ONLY
-!		ICON=3 is for near-side cloud only 
+!		ICON=3 is for near-side cloud only
+!		ICON=4 is for clear-sky radiance limit at 1000-100hPa assuming 100%RHi
 !-----------------------------------------------------------------------------
 
          ICLD_TOP = 0
@@ -533,13 +535,13 @@ contains
                ICLD_TOP=IL                    ! FIND INDEX FOR CLOUD-TOP 
                TAU0(IL)=TAU100(IL)            ! 100% SATURATION INSIDE CLOUD 
             ENDIF
-            IF(YP(IL) .GE. 100._r8) THEN      ! IF BELOW 100MB                    
+            IF(YP(IL) .GE. 100._r8) THEN      ! IF BELOW 100MB
                I100_TOP=IL                    ! FIND INDEX FOR 100MB
             ENDIF
          ENDDO
 
 !        delTAU100 will be used for transmission function calculation
-         delTAU100=TAU0                       ! Initialize to TAU0,                                         
+         delTAU100=TAU0                       ! Initialize to TAU0
          if (ICON .ne. 0) then                ! only for cloudy retrieval cases
            DO IL=1,MAX(ICLD_TOP,I100_TOP)        
               delTAU100(IL)=TAU100(IL)        ! MASK 100% SATURATION BELOW
@@ -549,6 +551,12 @@ contains
          IF (ICON .EQ. 1) THEN
             DO IL=1, ICLD_TOP                 
                TAU0(IL)=TAU100(IL)            ! 100% SATURATION BELOW CLOUD
+            ENDDO
+         ENDIF
+         
+         IF (ICON .EQ. 4) THEN
+            DO IL=1,I100_TOP               
+               TAU0(IL)=TAU100(IL)            ! 100% SATURATION BELOW 100hPa
             ENDDO
          ENDIF
 !----------------------------------------------------------------------------------
@@ -769,6 +777,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.43  2003/01/09 21:08:23  dwu
+! drop orbI
+!
 ! Revision 1.42  2002/12/18 16:09:57  jonathan
 ! add orbI
 !
