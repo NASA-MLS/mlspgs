@@ -1,0 +1,268 @@
+! subroutine ?FFT ( AR, AI, S )
+!>> 1997-03-28 DFFT  Krogh  KEDIM increased, removed assigned go to's.
+!>> 1994-11-11 DFFT  Krogh  Declared all vars.
+!>> 1994-10-20 DFFT  Krogh  Changes to use M77CON
+!>> 1989-08-15 DFFT  FTK -- Parameter constants given to more precision.
+!>> 1989-04-21 DFFT  FTK & CLL
+!     .  Copyright (C) 1989, California Institute of Technology.
+!     .  All rights reserved.  U. S. Government sponsorship under
+!     .  NASA contract NAS7-918 is acknowledged..
+!
+!     This subroutine computes one dimensional complex Fourier
+!     transforms using the Cooley-Tukey algorithm. It is used by a
+!     number of subroutines which compute Fourier transforms.
+!
+!     Programmed by Fred T. Krogh at the Jet Propulsion Laboratory,
+!     Pasadena, Calif.   August 1, 1969.
+!     Revised by Krogh at JPL -- January 19, 1988 -- For portability
+!
+  real(rk), intent(inout) :: AR(*), AI(*), S(*)
+!     Minimum dimensions are AR(ILAST), AI(ILAST), S(NT-1), where ILAST
+!     and NT are defined in the common block below.
+!
+! AR and AI give the arrays used to hold the real and imaginary parts of
+!     the Fourier coefficients and data.
+! S   contains the sine table required in the calculations.
+!
+!     -----------------------------------------------------------------
+!                Notes on PARAMETERs, and variables
+!
+!     PI4 = PI / 4
+!     SPI4 = SIN(PI/4) = .5 * SQRT(2)
+!     THE DIMENSION OF KE MUST BE AS LARGE AS THE MAXIMUM VALUE
+!     PERMITTED FOR MM.
+!
+!     WHERE
+!     NEEDST= .TRUE. if the sine table must be computed.
+!     MT    = base 2 log(NT)
+!     NT    = number of entries in the sine table
+!     MM    = base 2 log(number of complex fourier coefficients)
+!     KS    = distance in memory between successive points.  The i-th
+!             coefficient, a(i) is given by AR((I+1)*KS)+AI((I+1)*KS)*
+!             sqrt(-1), i=0, 1, ..., (2**MM)-1.
+!     ILAST = KS * 2**MM
+!     KE(L) = KS * 2**(MM-L), L=1, 2, ..., MM
+!     -----------------------------------------------------------------
+!--D replaces "?": ?FFT
+!     -----------------------------------------------------------------
+    integer :: I, I1, I2, I3, IJ
+    integer :: J, JDIF, JI, JI2, JJ, JR
+    integer :: K, KSI
+    integer :: L, L1, L4, LJ, LL
+    integer :: MTC
+    real(rk) :: T, T1, T1I, T2, T2I, T3, T3I, THETA
+    real(rk) :: TI, TP, TP1, TP1I, TPI
+    real(rk) :: WI1, WI2, WI3, WR1, WR2, WR3
+    logical :: SPCASE
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (LEN=256) :: Id = &
+       "$Id$"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile$"
+!---------------------------------------------------------------------------
+!     -----------------------------------------------------------------
+!
+    if (needst) then
+!                   Compute the sine table
+      needst = .false.
+      mtc = mt
+      nt = 2**mtc
+      if (mtc > 0) then
+!                        Set for L=1
+        j = nt
+        jj = j / 2
+        s(jj) = spi4
+        if (mtc > 1) then
+          theta = pi4
+          do l = 2, mtc
+            theta = half * theta
+            k = j
+            j = jj
+            jj = jj / 2
+!                 At this point J = 2**(MT-L+1) and JJ = 2**(MT-L)
+            s(jj) = sin(theta)
+            l1 = nt - jj
+            s(l1) = cos(theta)
+            ll = nt - k
+            if (ll >= j) then
+              do i = j, ll, j
+                i1 = nt - i
+                i2 = i + jj
+                s(i2) = s(i) * s(l1) + s(jj) * s(i1)
+              end do
+            end if
+          end do
+        end if
+      end if
+    else
+!                      Compute the transform
+!                           Scramble A
+!
+       ij = 1
+       ji = 1
+       l1 = ks
+       if (mm > 1) then
+ 30      ij = ij + l1
+         do i = 1, mm
+           ji = ji + ke(i)
+           ke(i) = -ke(i)
+           if (ke(i) < 0) then
+             if (ij < ji) then
+!              Interchange the IJ-TH coefficient with the JI-TH
+               t = ar(ij)
+               ar(ij) = ar(ji)
+               ar(ji) = t
+               t = ai(ij)
+               ai(ij) = ai(ji)
+               ai(ji) = t
+             end if
+             go to 30
+           end if
+         end do
+       end if
+!                          End of scrambling A
+       jdif = nt
+       if (mod(mm, 2) /= 0) then
+!        Special case -- L = 1,  MM odd  (radix 2 algorithm)
+         l1 = l1 + l1
+         do i = 1, ilast, l1
+           ksi = i + ks
+           t = ar(i)
+           ar(i) = t + ar(ksi)
+           ar(ksi) = t - ar(ksi)
+           t = ai(i)
+           ai(i) = t + ai(ksi)
+           ai(ksi) = t - ai(ksi)
+         end do
+         jdif = jdif / 2
+       end if
+!
+       do l = 2, mm, 2
+          l4 = 4 * l1
+          lj = l1 / 2
+          spcase = .true.
+          j = 0
+          ji = 0
+!
+!         Start of I loop  (radix 4 algorithm)
+ 60       ij = j + 1
+          do i = ij, ilast, l4
+            i1 = i + l1
+            i2 = i1 + l1
+            i3 = i2 + l1
+            if (spcase) then
+              if (j == 0) then! Special case -- J = 0
+                t = ar(i) + ar(i1)
+                t1 = ar(i) - ar(i1)
+                ti = ai(i) + ai(i1)
+                t1i = ai(i) - ai(i1)
+                t2 = ar(i2) + ar(i3)
+                t3 = ar(i2) - ar(i3)
+                t2i = ai(i2) + ai(i3)
+                t3i = ai(i2) - ai(i3)
+                go to 110
+              end if
+!                               Special case -- J = L1 / 2
+              t2 = spi4 * ar(i2)
+              t2i = spi4 * ai(i2)
+              t3 = spi4 * ar(i3)
+              t3i = spi4 * ai(i3)
+              tp = t2 - t2i
+              tpi = t2 + t2i
+              tp1 = -t3 - t3i
+              tp1i = t3 - t3i
+              t = ar(i) - ai(i1)
+              t1 = ar(i) + ai(i1)
+              ti = ai(i) + ar(i1)
+              t1i = ai(i) - ar(i1)
+            else
+!{
+!           Usual case -- J /= 0  AND  J /= L1 / 2 \\
+!
+!           WRK and WIK (K = 1, 2, 3) are the real and imaginary part
+!           resp. of \[\exp( i \pi  K (2^{ -L - \mod(MM, 2)}) J / KS)
+!                          = \exp(i \pi K (J / (4 L1)))\]
+!
+              t2 = wr2 * ar(i1) - wi2 * ai(i1)
+              t2i = wi2 * ar(i1) + wr2 * ai(i1)
+              t = ar(i) + t2
+              t1 = ar(i) - t2
+              ti = ai(i) + t2i
+              t1i = ai(i) - t2i
+              tp = wr1 * ar(i2) - wi1 * ai(i2)
+              tpi = wi1 * ar(i2) + wr1 * ai(i2)
+              tp1 = wr3 * ar(i3) - wi3 * ai(i3)
+              tp1i = wi3 * ar(i3) + wr3 * ai(i3)
+            end if
+            t2 = tp + tp1
+            t3 = tp - tp1
+            t2i = tpi + tp1i
+            t3i = tpi - tp1i
+  110       ar(i) = t + t2
+            ai(i) = ti + t2i
+            ar(i1) = t1 - t3i
+            ai(i1) = t1i + t3
+            ar(i2) = t - t2
+            ai(i2) = ti - t2i
+            ar(i3) = t1 + t3i
+            ai(i3) = t1i - t3
+          end do
+!         End of I loop
+!
+          if (j <= lj) then
+            if (spcase) then
+               if (j /= 0) go to 130
+               j = ks
+               spcase = .false.
+            else
+               j = l1 - j
+!              Compute WR-S and WI-S for J replaced by L1 - J
+               t = wi1
+               wi1 = wr1
+               wr1 = t
+               wr2 = -wr2
+               t = -wi3
+               wi3 = -wr3
+               wr3 = t
+               go to 60
+            end if
+          else
+             j = l1 - j + ks
+          end if
+          if (j < lj) then
+!                            Compute WR-S and WI-S
+            ji = ji + jdif
+            jr = nt - ji
+            wr1 = s(jr)
+            wi1 = s(ji)
+            ji2 = ji + ji
+            wi2 = s(ji2)
+            jr = nt - ji2
+            wr2 = s(jr)
+            ji2 = ji + ji2
+            if (ji2 <= nt) then
+              jr = nt - ji2
+              wr3 = s(jr)
+              wi3 = s(ji2)
+              go to 60
+            end if
+            jr = ji2 - nt
+            ji2 = nt - jr
+            wi3 = s(ji2)
+            wr3 = -s(jr)
+            go to 60
+         else if (j == lj) then
+           spcase = .true.
+           go to 60
+         end if
+!        End of computing WR-S and WI-S
+!
+  130    l1 = l4
+         jdif = jdif / 4
+       end do ! L
+    end if
+    return
+! end subroutine ?FFT
+! $Log$
+! Revision 1.1  2000/05/05 00:00:16  vsnyder
+! Initial conversion to Fortran 90 from Math 77 library
+!

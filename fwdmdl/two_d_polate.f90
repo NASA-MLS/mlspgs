@@ -1,0 +1,50 @@
+module TWO_D_POLATE_M
+  use MLSCommon, only: I4, R8
+  use D_GET_ONE_ETA_M, only: GET_ONE_ETA
+  implicit NONE
+  private
+  public :: TWO_D_POLATE
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (LEN=256) :: Id = &
+       "$Id$"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile$"
+!---------------------------------------------------------------------------
+contains
+!  Interpolating in 2 dimensions - Zeta & Phi
+!
+  Subroutine TWO_D_POLATE (f_basis, f_profile, no_coeffs, phi_basis, &
+ &                         no_phi, zeta, phi, V )
+!
+    integer(i4), intent(in) :: NO_COEFFS, NO_PHI
+!
+    Real(r8), intent(in) :: F_BASIS(:), PHI_BASIS(:), F_PROFILE(:,:)
+    Real(r8), intent(in) :: ZETA, PHI
+!
+    Real(r8), intent(out) :: V
+!
+! -----     Local variables     ----------------------------------------
+!
+    integer :: J, K
+    Real(r8) :: ETAP, ETAZ
+!
+! -----     Executable statements     ----------------------------------
+!
+    V = 0.0_r8
+    do k = 1, no_coeffs
+      Call get_one_eta(zeta,f_basis,no_coeffs,k,etaz)
+      if (etaz == 0.0) CYCLE
+      do j = 1, no_phi
+        Call get_one_eta(phi,phi_basis,no_phi,j,etap)
+        if (etap /= 0.0) V = V + f_profile(k,j) * etaz * etap
+      end do
+    end do
+!
+    Return
+  End Subroutine TWO_D_POLATE
+end module TWO_D_POLATE_M
+! $Log$
+! Revision 1.1  2000/06/21 21:56:18  zvi
+! First version D.P.
+!
+! Revision 1.1  2000/05/04 18:12:06  vsnyder
+! Initial conversion to Fortran 90

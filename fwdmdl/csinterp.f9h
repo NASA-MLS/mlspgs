@@ -1,0 +1,179 @@
+! This function performs a cubic spline interpolation from function given
+! by X_in, Y_in to new function X_out, Y_out. Output independent variable
+! X_out must be supplied. In addition, scratch arrays A, B, C, and D
+! must also be supplied. On output A is the second derivative evaluated
+! at X_in. The maximum length of X_in, Y_in and arrays A, B is max_len_in.
+! Its working length is len_in. The maximum, and working lengths of X_out,
+! and Y_out are max_len_out and len_out. This routine returns a zero if
+! no error, 1 if maximum array lengths are exceeded. X_in and X_out assumed
+! to be ordered. Scratch arrays C and D should be dimensioned at the larger
+! of max_len_in, and max_len_out.
+! function ?_CSINTERP ( x_in, x_out, y_in, y_out,        &
+!&                      len_in, len_out, max_len_in, max_len_out, &
+!&                      a, b, c, d) result (RESULT)
+
+    integer(i4), intent(in) :: LEN_IN           ! number of input function
+                                                ! points
+    integer(i4), intent(in) :: LEN_OUT          ! number of output function
+                                                ! points
+    integer(i4), intent(in) :: MAX_LEN_IN       ! available storage in parent
+                                                ! routine for arrays X_in,
+                                                ! Y_in, A, B, (C, D)
+    integer(i4), intent(in) :: MAX_LEN_OUT      ! available storage in parent
+                                                ! routine for arrays X_out,
+                                                ! Y_out, (C, D)
+    real(rk), intent(inout) :: X_IN(max_len_in) ! independent coordinate of
+                                                ! input function
+    real(rk), intent(inout) :: X_OUT(max_len_out) ! independent coordinates that
+                                                ! to which user wants function
+                                                ! interpolated
+    real(rk), intent(in) :: Y_IN(max_len_in)    ! dependent coordinate of input
+                                                ! function
+    real(rk), intent(out) :: Y_OUT(max_len_out) ! interpolated function
+
+    real(rk), intent(out),dimension(max(max_len_in,max_len_out)) :: &
+   &                         A, &               ! second derivative at X_in
+   &                         B, &               ! first derivative at X_in
+   &                         C, &               ! first derivative at X_out
+   &                         D                  ! second derivative at X_out
+    integer :: RESULT
+    real(rk) :: DNOM1, DNOMN
+    integer :: I, J
+    logical :: ORDER
+    real(rk), parameter :: ONESIXTH = 1.0/6.0, ONETHIRD = 1.0/3.0
+    order = .false. ! increasing
+! check ordering direction, if not increasing, make it so
+    if (x_in(1) > x_in(len_in)) then
+      order = .true.
+      do i = 1, len_in
+        x_in(i) = -x_in(i)
+      end do
+      do i = 1, len_out
+        x_out(i) = -x_out(i)
+      end do
+    end if
+! This routine assumes a zero second derivative at the end points.
+! Check array lengths
+    if (len_in <= max_len_in .and. len_out <= max_len_out) then
+      result = 0
+      a(1) = 0.0
+      b(1) = 0.0
+      c(1) = 0.0
+      d(1) = 0.0
+      dnom1 = x_in(2) - x_in(1)
+      dnomn = x_in(3) - x_in(2)
+      a(2) = 0.0
+      b(2) = onethird * (x_in(3) - x_in(1))
+      c(2) = onesixth * dnomn
+      d(2) = (y_in(3) - y_in(2)) / dnomn - (y_in(2) - y_in(1)) / dnom1
+      dnom1 = x_in(len_in - 1) - x_in(len_in - 2)
+      dnomn = x_in(len_in) - x_in(len_in - 1)
+      a(len_in - 1) = onesixth * dnom1
+      b(len_in - 1) = onethird * (x_in(len_in) - x_in(len_in - 2))
+      c(len_in - 1) = 0.0
+      d(len_in - 1) = (y_in(len_in) - y_in(len_in - 1)) / dnomn -      &
+   &                  (y_in(len_in - 1) - y_in(len_in - 2)) / dnom1
+      a(len_in) = 0.0
+      b(len_in) = 0.0
+      c(len_in) = 0.0
+      d(len_in) = 0.0
+      do i = 3, len_in - 2
+        dnom1 = x_in(i) - x_in(i - 1)
+        dnomn = x_in(i + 1) - x_in(i)
+        a(i) = onesixth * dnom1
+        b(i) = onethird * (x_in(i + 1) - x_in(i - 1))
+        c(i) = onesixth * dnomn
+        d(i) = (y_in(i+1) - y_in(i)) / dnomn - (y_in(i) - y_in(i - 1)) / dnom1
+      end do
+! Get second derivative at x_in
+      call tridiag(a(2), b(2), c(2), d(2), len_in - 2)
+! Get first derivative at x_in
+      do i = 1, len_in - 1
+        dnom1 = x_in(i + 1) - x_in(i)
+        b(i) = (y_in(i + 1) - y_in(i) - onesixth * dnom1 * dnom1 *     &
+   &           (2.0 * a(i) + a(i + 1))) / dnom1
+      end do
+      dnom1 = x_in(len_in) - x_in(len_in - 1)
+      b(len_in) = (y_in(len_in) - y_in(len_in - 1) + onesixth *        &
+   &              dnom1 * dnom1 * (2.0 * a(len_in) +                   &
+   &              a(len_in - 1)) ) / dnom1
+! Interpolate to new function
+      j = 2
+      do i = 1, len_out
+        if (x_out(i) <= x_in(1) ) then
+! Extrapolate value outside of function range
+          y_out(i) = qspline(x_out(i), x_in(1), x_in(2), y_in(1),  &
+   &                         y_in(2), a(1), a(2), c(i), d(i))
+        else if (x_out(i) >= x_in(len_in)) then
+          y_out(i) = qspline(x_out(i), x_in(len_in - 1),             &
+   &                         x_in(len_in), y_in(len_in - 1),         &
+   &                         y_in(len_in), a(len_in - 1),            &
+   &                         a(len_in), c(i), d(i))
+        else
+! Interpolate the function here
+          do while (x_in(j) < x_out(i))
+            j = j+1
+          end do
+          y_out(i) = qspline(x_out(i), x_in(j-1), x_in(j),          &
+   &                         y_in(j-1), y_in(j), a(j-1), a(j),     &
+   &                         c(i), d(i))
+        end if
+      end do
+      if (order) then
+! re-symmetrize function to match the input
+        do i = 1, len_in
+          x_in(i) = -x_in(i)
+          b(i) = -b(i)
+        end do
+        do i = 1, len_out
+          x_out(i) = -x_out(i)
+          c(i) = -c(i)
+        end do
+      end if
+    else
+    result = 1
+    end if
+    return
+  contains
+! =====     Internal procedures     ====================================
+! ------------------------------------------------     TRIDIAG     -----
+    subroutine TRIDIAG ( a, b, c, d, n )
+!   This solves a tridiagonal system of equations
+      real(rk), intent(inout) :: A(*), B(*), C(*)
+      real(rk), intent(in) :: D(*)
+      integer, intent(in) :: N
+      real(rk) :: E
+      integer :: i
+      c(n) = 0.0
+      a(1) = d(1) / b(1)
+      e = c(1) / b(1)
+      do i = 2, n
+        b(i) = b(i) - a(i) * e
+        a(i) = (d(i) - a(i) * a(i - 1)) / b(i)
+        e = c(i) / b(i)
+      end do
+      do i = n - 1, 1, -1
+        a(i) = a(i) - c(i) * a(i + 1) / b(i)
+      end do
+      return
+    end subroutine TRIDIAG
+! ------------------------------------------------     QSPLINE     -----
+! This is the interpolator
+    real function QSPLINE ( x, x0, x1, y0, y1, ypp0, ypp1, yp, ypp )
+      real(rk), intent(in) :: X, X0, X1, Y0, Y1, YPP0, YPP1
+      real(rk), intent(out) :: YP, YPP
+      real(rk) :: A, B, C, D, E
+      real(rk), parameter :: ONESIXTH = 1.0/6.0
+      e = x1 - x0
+      a = (x1 - x) / e
+      b = (x - x0) / e
+      c = onesixth * (a * a * a - a) * e * e
+      d = onesixth * (b * b * b - b) * e * e
+      qspline = a * y0 + b * y1 + c * ypp0 + d * ypp1
+      yp = (y1 - y0) / e - onesixth * (                                  &
+     &     (3.0 * a * a - 1.0) * e * ypp0 - (3.0 * b * b - 1.0) * e *    &
+     &      ypp1 )
+      ypp = a * ypp0 + b * ypp1
+      return
+    end function QSPLINE
+! end function ?_CSINTERP
