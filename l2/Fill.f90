@@ -12,7 +12,7 @@ module Fill                     ! Create vectors and fill them.
   use INIT_TABLES_MODULE, only: F_BOUNDARYPRESSURE, &
     & F_COLUMNS, F_DESTINATION, F_DIAGONAL, F_NOISE, &
     & F_GEOCALTITUDEQUANTITY, F_EARTHRADIUS, F_EXPLICITVALUES, &
-    & F_EXTINCTION, F_FRACTION, F_HEIGHT, F_H2OQUANTITY, F_LOSQTY,&
+    & F_EXTINCTION, F_FRACTION, F_H2OQUANTITY, F_LOSQTY,&
     & F_dontMask, F_IGNORENEGATIVE, F_IGNOREZERO, &
     & F_INTEGRATIONTIME, F_INTERPOLATE, F_INVERT, F_INTRINSIC, F_ISPRECISION, &
     & F_LENGTHSCALE, F_MATRIX, F_MAXITERATIONS, F_METHOD, F_MEASUREMENTS, &
@@ -26,8 +26,7 @@ module Fill                     ! Create vectors and fill them.
   ! Now the literals:
   use INIT_TABLES_MODULE, only: L_ADDNOISE, L_BOUNDARYPRESSURE, L_CHISQCHAN, &
     & L_CHISQMMAF, L_CHISQMMIF, L_CHOLESKY, &
-    & L_COLUMNABUNDANCE, L_ESTIMATEDNOISE, L_EXPLICIT, L_GEODALTITUDE, L_GPH, &
-    & L_GRIDDED, L_HEIGHT, &
+    & L_COLUMNABUNDANCE, L_ESTIMATEDNOISE, L_EXPLICIT, L_GPH, L_GRIDDED, L_HEIGHT, &
     & L_HYDROSTATIC, L_ISOTOPE, L_ISOTOPERATIO, L_KRONECKER, L_L1B, L_L2GP, L_L2AUX, &
     & L_RECTANGLEFROMLOS, L_LOSVEL, L_NONE, L_PLAIN, &
     & L_PRESSURE, L_PTAN, L_RADIANCE, &
@@ -41,7 +40,7 @@ module Fill                     ! Create vectors and fill them.
   use Intrinsic, only: Field_Indices
   use Intrinsic, only: &
     & PHYQ_Dimensionless, PHYQ_Invalid, PHYQ_Temperature, &
-    & PHYQ_Time, PHYQ_Length, PHYQ_Pressure
+    & PHYQ_Time, PHYQ_Length
   use L1BData, only: DeallocateL1BData, Dump, FindL1BData, L1BData_T, &
     & PRECISIONSUFFIX, ReadL1BData
   use L2GPData, only: L2GPData_T
@@ -73,15 +72,14 @@ module Fill                     ! Create vectors and fill them.
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, &
     & SOURCE_REF, SUB_ROSA, SUBTREE
-  use TREE_TYPES, only: N_NAMED, N_SET_ONE, N_NUMBER, N_COLON_LESS, &
-    & N_LESS_COLON, N_LESS_COLON_LESS
+  use TREE_TYPES, only: N_NAMED, N_SET_ONE
   use UNITS, only: Omega, PI
   use VectorsModule, only: AddVectorToDatabase, &
     & ClearUnderMask, CopyVector, CreateMask, CreateVector, &
     & DestroyVectorInfo, Dump, &
     & GetVectorQtyByTemplateIndex, isVectorQtyMasked, MaskVectorQty, &
     & rmVectorFromDatabase, ValidateVectorQuantity, Vector_T, &
-    & VectorTemplate_T, VectorValue_T
+    & VectorTemplate_T, VectorValue_T, M_ExplicitFill
   use VGridsDatabase, only: VGRID_T
 
   implicit none
@@ -104,14 +102,9 @@ module Fill                     ! Create vectors and fill them.
   integer, parameter :: CantFillFromL2AUX = vectorWontMatchL2GP + 1
   integer, parameter :: VectorWontMatchPDef = cantFillFromL2AUX + 1
   integer, parameter :: CantFillFromL1B = vectorWontMatchPDef + 1
-  integer, parameter :: InvalidQtyHeightForExplicit = CantFillFromL1B + 1
-  integer, parameter :: OnlyOneHeightForExplicit = &
-    & InvalidQtyHeightForExplicit + 1
-  integer, parameter :: badHeightUnitForExplicit = OnlyOneHeightForExplicit + 1
-  integer, parameter :: invalidHeightRestrExpFill = badHeightUnitForExplicit + 1
 
   ! Error codes for "Matrix" specification
-  integer, parameter :: MissingField = InvalidHeightRestrExpFill + 1
+  integer, parameter :: MissingField = cantFillFromL1B + 1
 
   ! More Error codes relating to FillVector
   integer, parameter :: NumInstancesisZero = missingField + 1
@@ -245,7 +238,6 @@ contains ! =====     Public Procedures     =============================
     logical, dimension(field_first:field_last) :: GOT
     integer :: GRIDINDEX                ! Index of requested grid
     integer :: GSON                     ! Descendant of Son
-    integer :: HEIGHTNODE               ! A node of the tree
     integer :: H2OQUANTITYINDEX         ! in the quantities database
     integer :: H2OVECTORINDEX           ! In the vector database
     integer :: I, J                     ! Loop indices for section, spec, expr
@@ -367,7 +359,6 @@ contains ! =====     Public Procedures     =============================
       switch2intrinsic = .false.
       seed = 0
       noFineGrid = 1
-      heightNode = 0
 
       ! Node_id(key) is now n_spec_args.
 
@@ -481,8 +472,6 @@ contains ! =====     Public Procedures     =============================
             noiseQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_explicitValues ) ! For explicit fill
             valuesNode=subtree(j,key)
-          case ( f_height )
-            heightNode=subtree(j,key)
           case ( f_extinction ) ! For cloud extinction fill
             if ( node_id(gson) == n_set_one ) then
               extinction=.TRUE.
@@ -894,7 +883,7 @@ contains ! =====     Public Procedures     =============================
           if ( .not. got(f_explicitValues) ) &
             & call Announce_Error ( key, noExplicitValuesGiven )
           call ExplicitFillVectorQuantity ( quantity, valuesNode, spread, &
-            & vectors(vectorIndex)%globalUnit, heightNode )
+            & vectors(vectorIndex)%globalUnit, dontmask )
 
         case ( l_l1b ) ! --------------------  Fill from L1B data  -----
           if ( got(f_precision) ) then
@@ -2417,129 +2406,74 @@ contains ! =====     Public Procedures     =============================
   end subroutine FillVectorQtyFromIsotope
   
   !=============================================== ExplicitFillVectorQuantity ==
-  subroutine ExplicitFillVectorQuantity(quantity, valuesNode, spread, &
-    & globalUnit, heightNode )
+  subroutine ExplicitFillVectorQuantity(quantity, valuesNode, spread, globalUnit, &
+    & dontmask)
+
     ! This routine is called from MLSL2Fill to fill values from an explicit
     ! fill command line
 
     ! Dummy arguments
     type (VectorValue_T), intent(inout) :: QUANTITY ! The quantity to fill
-    integer, intent(in) :: VALUESNODE ! Tree node
-    logical, intent(in) :: SPREAD ! One instance given, spread to all
+    integer, intent(in) :: VALUESNODE   ! Tree node
+    logical, intent(in) :: SPREAD       ! One instance given, spread to all
     integer, intent(in) :: GLOBALUNIT   ! From parent vector
-    integer, intent(in) :: HEIGHTNODE   ! From tree
+    logical, intent(in) :: DONTMASK     ! Don't bother with the mask
 
     ! Local variables
-    integer :: K                ! Loop counter
-    integer, DIMENSION(2) :: UNITASARRAY ! Unit for value given
-    real (r8), DIMENSION(2) :: VALUEASARRAY ! Value given
-    integer :: TESTUNIT                 ! Unit to use
-    integer, dimension(1) :: S1, S2     ! Surfaces to consider
-    integer :: CHAN                     ! Channel counter
-    integer :: HEIGHTID                 ! Node ID
-    integer :: I                        ! Array index
-    integer :: REQUIREDHEIGHTUNIT       ! For checking
+    integer :: K                        ! Loop counter
+    integer :: I,J                      ! Other indices
+    integer, DIMENSION(2) :: unitAsArray ! Unit for value given
+    real (r8), DIMENSION(2) :: valueAsArray ! Value given
+    integer :: TestUnit                 ! Unit to use
     
     ! Executable code
     testUnit = quantity%template%unit
     if ( globalUnit /= phyq_Invalid ) testUnit = globalUnit
 
-    ! Note this is a rather brain dead fill method, it is pretty restricitive
-    ! on what options you can combine (spread/heights, etc.) mainly because of
-    ! lazyness on behalf of the author, rather than any actual limit, though
-    ! there is a recognition that the 'obscure' options are not likely to be
-    ! wanted.
-
-    ! If got heights, setup the limits
-    if ( heightNode /= 0 ) then
-
-      ! Check that we're not venturing into uncharted territory
-      if ( ( .not. spread ) .or. ( quantity%template%noChans /= 1 ) .or. &
-        & ( .not. quantity%template%coherent ) .or. &
-        & ( nsons(valuesNode)-1 /= 1 ) )  &
-        & call Announce_error ( valuesNode, invalidHeightRestrExpFill )
-
-      ! Work out what height coordinate we should be expecting
-      select case ( quantity%template%verticalCoordinate ) 
-      case ( l_zeta )
-        requiredHeightUnit = phyq_pressure
-      case ( l_pressure )
-        requiredHeightUnit = phyq_pressure
-      case ( l_geodAltitude )
-        requiredHeightUnit = phyq_length
-      case default
-        call Announce_error ( heightNode, invalidQtyHeightForExplicit )
-      end select
-      if ( nsons ( heightNode ) > 2 ) &
-        & call Announce_error ( heightNode, onlyOneHeightForExplicit )
-      call expr ( subtree(k+1,heightNode), unitAsArray, valueAsArray )
-      heightID = node_id ( subtree(k+1,heightNode) )
-      ! Check units
-      if ( heightID == n_number ) then
-        ! Just a single number
-        if ( unitAsArray(1) /= requiredHeightUnit ) &
-          & call Announce_error ( heightNode, badHeightUnitForExplicit )
-        ! Make it look like a range to make the code simpler
-        valueAsArray(2) = valueAsArray(1)
-      else
-        if ( all ( unitAsArray /= requiredHeightUnit ) .or. &
-          & any ( unitAsArray /= requiredHeightUnit .and. unitAsArray /=&
-          & phyq_dimensionless ) ) &
-          & call Announce_error ( heightNode, badHeightUnitForExplicit )
-      end if
-
-      ! Now work out the surfaces in question
-      if ( quantity%template%verticalCoordinate == l_pressure ) then
-        s1 = minloc ( abs ( -log10(quantity%template%surfs(:,1)) + log10(valueAsArray(1)) ) )
-        s2 = minloc ( abs ( -log10(quantity%template%surfs(:,1)) + log10(valueAsArray(2)) ) )
-      else
-        s1 = minloc ( abs ( quantity%template%surfs(:,1) - valueAsArray(1) ) )
-        s2 = minloc ( abs ( quantity%template%surfs(:,1) - valueAsArray(2) ) )
-      end if
-      
-      ! Now consider the open range issue
-      select case ( heightID )
-      case ( n_colon_less )
-        s1 = min ( s1 + 1, quantity%template%noSurfs )
-      case ( n_less_colon )
-        s2 = max ( s2 - 1, 1 )
-      case ( n_less_colon_less )
-        s1 = min ( s1 + 1, quantity%template%noSurfs )
-        s2 = max ( s2 - 1, 1 )
-      end select
-    else
-      s1 = 1
-      s2 = quantity%template%instanceLen
-    end if
-
     if (spread) then      ! 1 instance/value given, spread to all instances
+
       ! Check we have the right number of values
       if ( ( (nsons(valuesNode)-1 /= quantity%template%instanceLen) .and. &
         &    (nsons(valuesNode)-1 /= 1) ) .or. &
         &  (.not. quantity%template%regular)) &
         & call Announce_error ( valuesNode, invalidExplicitFill )
+
       ! Loop over the values
       do k=1,nsons(valuesNode)-1
         ! Get value from tree
         call expr(subtree(k+1,valuesNode),unitAsArray,valueAsArray)
         ! Check unit OK
-       if ( (unitAsArray(1) /= testUnit) .and. &
+        if ( (unitAsArray(1) /= testUnit) .and. &
           &  (unitAsArray(1) /= PHYQ_Dimensionless) ) &
           & call Announce_error ( valuesNode, badUnitsForExplicit )
         ! Store value
-        if (nsons(valuesNode)-1 == 1) then
-          quantity%values(s1(1):s2(1),:) = valueAsArray(1)
+        if ( .not. dontMask .and. associated ( quantity%mask ) ) then
+          if ( nsons(valuesNode)-1 == 1 ) then
+            where ( iand ( ichar(quantity%mask), m_ExplicitFill ) == 0 )
+              quantity%values=valueAsArray(1)
+            end where
+          else
+            where ( iand ( ichar(quantity%mask(k,:)), m_ExplicitFill ) == 0 )
+              quantity%values(k,:)=valueAsArray(1)
+            end where
+          end if
         else
-          ! Can't get here in the 'height' case, so don't worry about s1,s2
-          quantity%values(k,:)=valueAsArray(1)
-        endif
+          ! No mask to worry about
+          if (nsons(valuesNode)-1 == 1) then
+            quantity%values=valueAsArray(1)
+          else
+            quantity%values(k,:)=valueAsArray(1)
+          endif
+        end if
       end do
-    else                                ! Not spread, fill all values
-      ! Check we have the right number of values (can't get here in the
-      ! 'height' case so don't worry about s1,s2
+     
+    else                  ! Not spread, fill all values
+
+      ! Check we have the right number of values
       if (nsons(valuesNode)-1 /= &
         & quantity%template%noInstances*quantity%template%instanceLen) &
         & call Announce_error ( valuesNode, invalidExplicitFill )
+
       ! Loop over values
       do k=1,nsons(valuesNode)-1
         ! Get value from tree
@@ -2549,9 +2483,14 @@ contains ! =====     Public Procedures     =============================
           &  (unitAsArray(1) /= PHYQ_Dimensionless) ) &
           & call Announce_error ( valuesNode, badUnitsForExplicit )
         ! Store value
-        quantity%values(mod(k-1,quantity%template%instanceLen)+1,&
-          &             (k-1)/quantity%template%instanceLen+1)=&
-          & valueAsArray(1)
+        i = mod(k-1,quantity%template%instanceLen) + 1
+        j = (k-1) / quantity%template%instanceLen + 1
+        if ( .not. dontMask .and. associated ( quantity%mask ) ) then
+          if ( iand ( ichar(quantity%mask(i,j)), m_ExplicitFill ) == 0 ) &
+            & quantity%values(i,j) = valueAsArray(1)
+        else
+          quantity%values(i,j) = valueAsArray(1)
+        end if
       end do
     end if
   end subroutine ExplicitFillVectorQuantity
@@ -2867,8 +2806,6 @@ contains ! =====     Public Procedures     =============================
       call output ( " command caused an allocation error in squeeze.", advance='yes' )
     case ( badGeocAltitudeQuantity )
       call output ( " geocAltitudeQuantity is not geocAltitude", advance='yes' )
-    case ( badHeightUnitForExplicit )
-      call output ( " incorrect units for height field", advance='yes' )
     case ( badlosGridfill )
       call output ( " incomplete/incorrect information for los Grid fill", advance='yes' )
     case ( badlosvelfill )
@@ -2901,9 +2838,7 @@ contains ! =====     Public Procedures     =============================
     case ( errorReadingL1B )
       call output ( " L1B file could not be read.", advance='yes' )
     case ( invalidExplicitFill )
-      call output ( " is an inappropriate explicit fill.", advance='yes' )
-    case ( invalidHeightRestrExpFill )
-      call output ( " is an inappropriate height restricted explicit fill.", advance='yes' )
+      call output ( " has inappropriate dimensionality for explicit fill.", advance='yes' )
     case ( m1_too_small )
       call output ( " command caused a m1 too small error in squeeze.", advance='yes' )
     case ( m2_too_small )
@@ -2958,8 +2893,6 @@ contains ! =====     Public Procedures     =============================
       call output ( " command caused an n3=0 error in squeeze.", advance='yes' )
     case ( objIsFullRank3 )
       call output ( " command array is full rank 3.", advance='yes' )
-    case ( onlyOneHEightForExplicit )
-      call output ( " can only have one height field for explicit fill.", advance='yes' )
     case ( otherErrorInFillVector )
       call output ( " command caused an error in FillVector.", advance='yes' )
     case ( source_not_in_db )
@@ -2991,14 +2924,8 @@ end module Fill
 
 !
 ! $Log$
-! Revision 2.108  2002/03/07 19:20:11  livesey
-! Hooked up the errors for height restricted explicit fills.
-!
-! Revision 2.107  2002/02/20 22:42:35  livesey
-! Embarassing bug fix
-!
-! Revision 2.106  2002/02/20 02:08:14  livesey
-! Added height restricted explicit fill (not yet tested.)
+! Revision 2.109  2002/03/08 08:07:00  livesey
+! Added explicit fill mask
 !
 ! Revision 2.105  2002/02/06 01:35:29  livesey
 ! Added ability to load ptan from l1b
