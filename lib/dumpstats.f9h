@@ -7,6 +7,12 @@
 ! $Id$
 ! $RCSfile$
 
+    myStats = .false.
+    if ( present(stats) ) myStats = stats
+    myRMS = .false.
+    if ( present(RMS) ) myRMS = RMS
+    myWholeArray = .not. (myStats .or. myRMS)
+    if ( present(wholeArray) ) myWholeArray = wholeArray
     if ( myStats ) then
       numNonFill = count(array /= myFillValue)
       numFill = size(array) - numNonFill
@@ -31,9 +37,22 @@
       call output('( ', advance='no')
       call output(pctFill, advance='no')
       call output('%)   ', advance='yes')
-      return
     endif
+    if ( myRMS ) then
+      if ( present(name) ) call output(trim(name) // ' rms ', advance='no')
+      call output(sqrt(sum(array*array)/(size(array)+0.)), advance='no')
+      call output('   mean ', advance='no')
+      call output(sum(array)/(size(array)+0.), advance='no')
+      call output('   max ', advance='no')
+      call output(maxval(array), advance='no')
+      call output('   min ', advance='no')
+      call output(minval(array), advance='yes')
+    endif
+    if ( .not. myWholeArray ) return
 ! $Log$
+! Revision 2.3  2004/07/21 19:57:21  pwagner
+! New rms, wholeArray options to some dumps
+!
 ! Revision 2.2  2004/06/11 19:05:39  pwagner
 ! defaults to dumping statsononeline
 !
