@@ -56,6 +56,8 @@ CONTAINS
     qty%solarZenith(1,:)=hGrid%solarZenith
     qty%losAngle(1,:)=hGrid%losAngle
     qty%subVectorIndex=hGrid%profileIndices
+    qty%noSubVectorsLowerOverlap=hGrid%noProfsLowerOverlap
+    qty%noSubVectorsUpperOverlap=hGrid%noProfsUpperOverlap
 
   END SUBROUTINE CopyHGridInfoIntoQuantity
     
@@ -154,6 +156,10 @@ CONTAINS
        qty%solarTime=>  MIFGeolocation(instrumentModule)%solarTime
        qty%losAngle=>   MIFGeolocation(instrumentModule)%losAngle
        qty%subVectorIndex=> MIFGeolocation(instrumentModule)%subVectorIndex
+       qty%noSubVectorsLowerOverlap=> &
+            & MIFGeolocation(instrumentModule)%noSubVectorsLowerOverlap
+       qty%noSubVectorsUpperOverlap=> &
+            & MIFGeolocation(instrumentModule)%noSubVectorsUpperOverlap
     ELSE
        ! We have no geolocation information, we have to read it ourselves
        ! from the l1boa file.
@@ -172,6 +178,9 @@ CONTAINS
             & noSurfs=l1bField%maxMIFs, noChans=noChans, coherent=.FALSE.,&
             & stacked=.FALSE.,regular=regular,subVectorLen=subVectorLen,&
             & storeByChannel=storeByChannel,minorFrame=.TRUE.)
+
+       qty%noSubVectorsLowerOverlap=chunk%noMAFsLowerOverlap
+       qty%noSubVectorsUpperOverlap=chunk%noMAFsUpperOverlap
 
        ! Now we're going to deal with a VGrid for this quantity
 
@@ -412,6 +421,10 @@ END MODULE ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 1.5  2000/01/18 00:10:29  livesey
+! Interim version transfered home.  Need to think more about subVectorIndex
+! as it applies to l2aux quantities, and is not used in l2gp.
+!
 ! Revision 1.4  2000/01/12 21:44:05  livesey
 ! Modified to include the handling of the minorFrame flag.
 !
