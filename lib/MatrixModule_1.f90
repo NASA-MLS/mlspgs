@@ -45,7 +45,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   public :: Matrix_T, Matrix_Cholesky_T, Matrix_Database_T, Matrix_Kronecker_T
   public :: Matrix_SPD_T, MaxAbsVal, MaxAbsVal_1, MaxL1
   public :: MinDiag, MinDiag_Cholesky, MinDiag_SPD
-  public :: Multiply, MultiplyMatrix_XTY_1
+  public :: Multiply, MultiplyMatrix_XTY_1, MultiplyMatrix_XTY
   public :: MultiplyMatrix_XY, MultiplyMatrix_XY_1
   public :: MultiplyMatrix_XY_T, MultiplyMatrix_XY_T_1
   public :: MultiplyMatrixVector, MultiplyMatrixVector_1
@@ -165,7 +165,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   end interface
 
   interface operator ( .TX. )      ! A^T B
-    module procedure MultiplyMatrix_XTY_1, NewMultiplyMatrixVector
+    module procedure MultiplyMatrix_XTY_1_OP, NewMultiplyMatrixVector
   end interface
 
   interface ReflectMatrix
@@ -1267,9 +1267,17 @@ contains ! =====     Public Procedures     =============================
   end function MinDiag_SPD
 
   ! ---------------------------------------  MultiplyMatrix_XTY_1  -----
-  function MultiplyMatrix_XTY_1 ( X, Y ) result ( Z ) ! Z = X^T Y
+  subroutine MultiplyMatrix_XTY_1 ( X, Y, Z, update, useMask, maskX, maskY )
+    ! Z = [ Z + ] X^T Y
     type(Matrix_T), intent(in) :: X, Y
-    type(Matrix_T) :: Z
+    type(Matrix_T), intent(inout) :: Z
+    logical, optional, intent(in) :: UPDATE
+    logical, optional, intent(in) :: USEMASK
+    logical, optional, intent(in) :: MASKX
+    logical, optional, intent(in) :: MASKY
+
+    ! Note the masking only applies to the columns of X,Y row masking is not
+    ! performed.
 
   ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
   ! It is important to invoke DestroyMatrix using the result of this
@@ -1278,25 +1286,57 @@ contains ! =====     Public Procedures     =============================
   ! !!!!! ===== END NOTE ===== !!!!! 
 
     integer :: I, J, K             ! Subscripts for [XYZ]%Block
+    logical :: MYUSEMASK
+    logical :: MYMASKX
+    logical :: MYMASKY
+    logical :: MYUPDATE
+    character, dimension(:), pointer :: MI, MJ ! Masks for columns I/J if any
 
-    call nullifyMatrix ( z ) ! for Sun's still useless compiler
+    myusemask = .false.
+    myMaskX = .false.
+    myMaskY = .false.
+    if ( present ( useMask ) ) myUseMask = .true.
+    if ( myUseMask ) then
+      myMaskX = .true.
+      myMaskY = .true.
+    end if
+    if ( present ( maskX ) ) myMaskX = maskX
+    if ( present ( maskY ) ) myMaskY = maskY
+    myUpdate = .false.
+    if ( present ( update ) ) myUpdate = update
+
     ! Check that matrices are compatible.  We don't need to check
     ! Nelts or Nb, because these are deduced from Vec.
     if ( (x%row%vec%template%id /= y%row%vec%template%id)  .or. &
       & (x%row%instFirst .neqv. y%row%instFirst) ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
           & "Incompatible arrays in MultiplyMatrix_XTY_1" )
-    call createEmptyMatrix ( z, 0, x%col%vec, y%col%vec )
+    if ( .not. myUpdate ) then
+      call nullifyMatrix ( z ) ! for Sun's still useless compiler
+      call createEmptyMatrix ( z, 0, x%col%vec, y%col%vec )
+    end if
     do j = 1, y%col%nb
+      nullify ( mj )
+      if ( associated(y%col%vec%quantities(y%col%quant(j))%mask) .and. myMaskY ) &
+        & mj => y%col%vec%quantities(y%col%quant(j))%mask(:,y%col%inst(j))
       do i = 1, x%col%nb
-        call multiply ( x%block(1,i), y%block(1,j), z%block(i,j) )
-        do k = 2, x%row%nb
+        nullify ( mi )
+        if ( associated(x%col%vec%quantities(x%col%quant(i))%mask) .and. myMaskX ) &
+          & mi => x%col%vec%quantities(x%col%quant(i))%mask(:,x%col%inst(i))
+        do k = 1, x%row%nb
           call multiply ( x%block(k,i), y%block(k,j), z%block(i,j), &
-            & update=.true. )
+            & update=myUpdate .or. k > 1, xMask=mi, yMask=mj )
         end do ! k = 2, x%row%nb
       end do ! i = 1, x%col%nb
     end do ! j = 1, y%col%nb
-  end function MultiplyMatrix_XTY_1
+  end subroutine MultiplyMatrix_XTY_1
+
+  ! ---------------------------------------  MultiplyMatrix_XTY_1_OP  -----
+  function MultiplyMatrix_XTY_1_OP ( X, Y ) result ( Z ) ! Z = X^T Y
+    type(Matrix_T), intent(in) :: X, Y
+    type(Matrix_T) :: Z
+    call MultiplyMatrix_XTY_1 ( X, Y, Z )
+  end function MultiplyMatrix_XTY_1_OP
 
   ! ----------------------------------------  MultiplyMatrix_XY_1  -----
   subroutine MultiplyMatrix_XY_1 ( X, Y, Z ) ! Z = X Y
@@ -2186,6 +2226,10 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.88  2003/02/12 02:10:52  livesey
+! New code to support extended averaging kernels.  Rewrite of
+! MultiplyMatrix_XTY_1.
+!
 ! Revision 2.87  2003/01/17 22:31:52  livesey
 ! Trivial change to the dump_struct output format.
 !
