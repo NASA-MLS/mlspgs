@@ -55,31 +55,53 @@ contains ! =====  Public procedures  ===================================
     use String_Table, only: DISPLAY_STRING
     use Toggles, only: Switches
     use Tree, only: NSONS, SUBTREE, DECORATION
+    use VectorsModule, only: GETVECTORQTYBYTEMPLATEINDEX, VECTORVALUE_T
 
     ! Dummy arguments
     integer, intent(in) :: KEY          ! L2CF node
     type (Matrix_Database_T), dimension(:), pointer :: MATRICES ! Matrix database
 
     ! Local variables
+    integer :: COL                      ! Matrix block column
     integer :: COLCHANNELSNODE          ! Tree node
+    integer :: COLINSTANCE              ! Loop counter
     integer :: COLINSTANCESNODE         ! Tree node
-    integer :: COLQUANTITYINDEX         ! Index for column quantity
+    integer :: COLQI                    ! Index of column quantity within vector
+    integer :: ColQ1, ColQN             ! First and last column quantity index
+    integer :: COLQuantityIx            ! Index in ColQIs array
     integer :: COLQuantityNode          ! Tree node
-    integer :: COLQuantitySon           ! Index for son of COLQuantityNode
     integer :: COLSURFACESNODE          ! Tree node
+    logical :: DoAny                    ! Any non-absent blocks?
     integer :: FIELDINDEX               ! Type for tree node
     integer :: MATRIXINDEX              ! Matrix database index
+    integer :: NColQ                    ! How many column quantities?
     logical :: NoAbsent                 ! Don't dump absent blocks
     integer :: NODE                     ! Loop counter
+    integer :: NRowQ                    ! How many row quantities?
+    integer :: ROW                      ! Matrix block row
     integer :: ROWCHANNELSNODE          ! Tree node
+    integer :: ROWINSTANCE              ! Loop counter
     integer :: ROWINSTANCESNODE         ! Tree node
-    integer :: ROWQUANTITYINDEX         ! Index for row quantity
+    integer :: ROWQI                    ! Index of row quantity within vector
+    integer :: RowQ1, RowQN             ! First and last row quantity index
+    integer :: ROWQuantityIx            ! Index in RowQIs array
     integer :: ROWQuantityNode          ! Tree node
-    integer :: ROWQuantitySon           ! Index for son of ROWQuantityNode
     integer :: ROWSURFACESNODE          ! Tree node
     integer :: SON                      ! Tree node
 
+    integer, dimension(:), pointer :: ColInds ! Which column instances?
+    integer, dimension(:), pointer :: ColQIs  ! Which column quantities?
+    integer, dimension(:), pointer :: RowInds ! Which row instances?
+    integer, dimension(:), pointer :: RowQIs  ! Which row quantities?
+
+    type (VectorValue_T), pointer :: COLQ ! Row quantity
+    type (VectorValue_T), pointer :: ROWQ ! Row quantity
     type (Matrix_T), pointer :: MATRIX  ! The matrix to dump
+    type (MatrixElement_T), pointer :: MB ! A block from the matrix
+
+    ! Error codes for Announce_Error
+    integer, parameter :: Duplicate = 1   ! Duplicate quantity name specified
+    integer, parameter :: OutOfRange = duplicate + 1 ! Index out of range
 
     ! Executable code
 
@@ -89,11 +111,15 @@ contains ! =====  Public procedures  ===================================
     ! Set defaults
     rowChannelsNode = 0
     colChannelsNode = 0
+    rowQuantityNode = 0
+    colQuantityNode = 0
     rowSurfacesNode = 0
     colSurfacesNode = 0
     rowInstancesNode = 0
     colInstancesNode = 0
     noAbsent = .false.
+
+    nullify ( colInds, colQIs, rowInds, rowQIs )
 
     ! First go through the parsed information.
     do node = 2, nsons(key)                ! Skip the DumpBlocks son
@@ -120,7 +146,7 @@ contains ! =====  Public procedures  ===================================
         colInstancesNode = son
       case ( f_noAbsent )
         noAbsent = get_Boolean ( son )
-      case default
+      case default ! shouldn't get here if the type checker worked
       end select
     end do
 
@@ -129,28 +155,79 @@ contains ! =====  Public procedures  ===================================
     call output ( 'Dump of ' )
     call display_string ( matrix%name, advance='yes' )
 
+    ! Get the row and column quantities
+    call allocate_test ( colQIs, matrix%col%nb, 'colQIs', moduleName )
+    call allocate_test ( rowQIs, matrix%row%nb, 'rowQIs', moduleName )
+
+    call getQuantities ( matrix%col, colQIs, nColQ, colQuantityNode, 'column' )
+    call getQuantities ( matrix%row, rowQIs, nRowQ, rowQuantityNode, 'row' )
+
     ! Dump the specified blocks
-    do rowQuantitySon = 2, nsons(rowQuantityNode)
-      rowQuantityIndex = decoration(decoration(subtree(rowQuantitySon,rowQuantityNode)))
-      do colQuantitySon = 2, nsons(colQuantityNode)
-        colQuantityIndex = decoration(decoration(subtree(colQuantitySon,colQuantityNode)))
-        call DumpOneBlock
+    do rowQuantityIx = 1, nRowQ
+      rowQI = rowQIs(rowQuantityIx)
+      rowQ => matrix%row%vec%quantities(rowQI)
+      do colQuantityIx = 1, nColQ
+        colQI = colQIs(colQuantityIx)
+        colQ => matrix%col%vec%quantities(colQI)
+
+        ! Fill some flags arrays
+        call FillIndicesArray ( rowInstancesNode, rowQ%template%noInstances, &
+          & rowInds )
+        call FillIndicesArray ( colInstancesNode, colQ%template%noInstances, &
+          & colInds )
+
+        doAny = .not. noAbsent
+        if ( noAbsent ) then
+  o:      do colInstance = 1, size(colInds)
+            do rowInstance = 1, size(rowInds)
+              row = FindBlock ( matrix%row, rowQI, rowInds(rowInstance) )
+              col = FindBlock ( matrix%col, colQI, colInds(colInstance) )
+              mb => matrix%block ( row, col )
+              doAny = mb%kind /= m_absent
+              if ( doAny ) exit o
+            end do
+          end do o
+        end if
+
+        if ( doAny ) call DumpOneBlock
+
+        call deallocate_test ( rowInds, 'rowInds', ModuleName )
+        call deallocate_test ( colInds, 'colInds', ModuleName )
+
       end do
     end do
 
+    call deallocate_test ( colQIs, 'colQIs', moduleName )
+    call deallocate_test ( rowQIs, 'rowQIs', moduleName )
+
   contains
+    ! ...........................................  Announce_Error  .....
+    subroutine Announce_Error ( What, Where, Number )
+      use LEXER_CORE, only: PRINT_SOURCE
+      use TREE, only: SOURCE_REF, SUB_ROSA
+      integer, intent(in) :: What      ! Error code
+      integer, intent(in) :: Where     ! Tree node
+      integer, intent(in) :: Number    ! Stuff to stick into message
+
+      call output ( '***** At ' )
+      call print_source ( source_ref(where) )
+      select case ( what )
+      case ( duplicate )
+        call output ( ': Duplicate quantity ' )
+        call display_string ( sub_rosa(where) )
+        call output ( ' not used.', advance='yes' )
+      case ( outOfRange )
+        call output ( number, before=': Index ', after=' is out of range.', &
+          & advance='yes' )
+      end select
+    end subroutine Announce_Error
+
     ! .............................................  DumpOneBlock  .....
     subroutine DumpOneBlock
 
-      use VectorsModule, only: GETVECTORQTYBYTEMPLATEINDEX, VECTORVALUE_T
-
       ! Local variables
       integer :: CC                       ! Loop counter
-      integer :: COL                      ! Matrix block column
-      integer :: COLINSTANCE              ! Loop counter
-      integer :: COLQI                    ! Index of column quantity within vector
       integer :: CS                       ! Loop counter
-      logical :: DoAny                    ! Any non-absent blocks?
       integer :: I                        ! Loop counter
       integer :: MAXIND                   ! Maximum dimension
       integer :: NOCOLCHANNELS            ! Number selected
@@ -158,258 +235,234 @@ contains ! =====  Public procedures  ===================================
       integer :: NOROWCHANNELS            ! Number selected
       integer :: NOROWSURFACES            ! Number selected
       integer :: RC                       ! Loop counter
-      integer :: ROW                      ! Matrix block row
-      integer :: ROWINSTANCE              ! Loop counter
-      integer :: ROWQI                    ! Index of row quantity within vector
       integer :: RS                       ! Loop counter
 
-      integer, dimension(:), pointer :: INDGEN ! 1,2,3,4...
       integer, dimension(:), pointer :: ROWCHANINDS ! Indices
       integer, dimension(:), pointer :: COLCHANINDS ! Indices
       integer, dimension(:), pointer :: ROWSURFINDS ! Indices
       integer, dimension(:), pointer :: COLSURFINDS ! Indices
 
-      logical, dimension(:), pointer :: ROWCHANNELS ! Do we want this channel?
-      logical, dimension(:), pointer :: COLCHANNELS ! Do we want this channel?
-      logical, dimension(:), pointer :: ROWSURFACES ! Do we want this surface?
-      logical, dimension(:), pointer :: COLSURFACES ! Do we want this surface?
-      logical, dimension(:), pointer :: ROWINSTANCES ! Do we want this surface?
-      logical, dimension(:), pointer :: COLINSTANCES ! Do we want this surface?
-
-      real(rm), dimension(:,:), pointer :: VAL ! The values from the block
+      real(rm), dimension(:,:), pointer :: VAL    ! The values from the block
       real(r8), dimension(:,:), pointer :: TODUMP ! The 2D matrix to dump
 
-      type (VectorValue_T), pointer :: ROWQ ! Row quantity
-      type (VectorValue_T), pointer :: COLQ ! Row quantity
-      type (MatrixElement_T), pointer :: MB ! A block from the matrix
-
-      nullify ( rowChannels, colChannels )
-      nullify ( rowSurfaces, colSurfaces )
-      nullify ( rowInstances, colInstances )
       nullify ( rowChanInds, colChanInds )
       nullify ( rowSurfInds, colSurfInds )
-      nullify ( indgen )
       nullify ( toDump )
 
-      ! Now identify the row and column quantity rowQuantityIndex and
-      ! colQuantityIndex are indices into the quantity templates database.  Now,
-      ! we need to get them as indices into the vectors describing rows and
-      ! columns.
-      rowQ => GetVectorQtyByTemplateIndex ( matrix%row%vec, &
-        & rowQuantityIndex, rowQI )
-      colQ => GetVectorQtyByTemplateIndex ( matrix%col%vec, &
-        & colQuantityIndex, colQI )
+      ! Set up the index arrays
+      call getSurfOrChanInds ( rowQ, rowQ%template%noChans, rowChannelsNode, &
+        & rowChanInds, 'Row Channels: ' )
+      call getSurfOrChanInds ( rowQ, rowQ%template%noSurfs, rowSurfacesNode, &
+        & rowSurfInds, 'Row Surfaces: ' )
+      call getSurfOrChanInds ( colQ, colQ%template%noChans, colChannelsNode, &
+        & colChanInds, 'Column Channels: ' )
+      call getSurfOrChanInds ( colQ, colQ%template%noSurfs, colSurfacesNode, &
+        & colSurfInds, 'Column Surfaces: ' )
 
-      if ( .not. associated (rowQ) ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'row quantity was not found.' )
-      if ( .not. associated (colQ) ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'col quantity was not found.' )
-
-      ! Now setup flags arrays
-      call allocate_test ( rowChannels, rowQ%template%noChans, &
-        & 'rowChannels', ModuleName )
-      call allocate_test ( colChannels, colQ%template%noChans, &
-        & 'colChannels', ModuleName )
-      call allocate_test ( rowSurfaces, rowQ%template%noSurfs, &
-        & 'rowSurfaces', ModuleName )
-      call allocate_test ( colSurfaces, colQ%template%noSurfs, &
-        & 'colSurfaces', ModuleName )
-      call allocate_test ( rowInstances, rowQ%template%noInstances, &
-        & 'rowInstances', ModuleName )
-      call allocate_test ( colInstances, colQ%template%noInstances, &
-        & 'colInstances', ModuleName )
-
-      ! Now fill flags arrays
-      call FillFlagsArray ( rowChannelsNode, rowChannels, noRowChannels )
-      call FillFlagsArray ( colChannelsNode, colChannels, noColChannels )
-      call FillFlagsArray ( rowSurfacesNode, rowSurfaces, noRowSurfaces )
-      call FillFlagsArray ( colSurfacesNode, colSurfaces, noColSurfaces )
-      call FillFlagsArray ( rowInstancesNode, rowInstances )
-      call FillFlagsArray ( colInstancesNode, colInstances )
-
-      ! Now set indices arrays
-      maxInd = max ( rowQ%template%noChans, colQ%template%noChans,&
-        & rowQ%template%noSurfs, colQ%template%noSurfs )
-      call allocate_test ( indgen, maxInd, 'indgen', ModuleName )
-      indgen = (/ ( i, i = 1, maxInd ) /)
-
-      call allocate_test ( rowChanInds, noRowChannels, &
-        & 'rowChanInds', ModuleName )
-      call allocate_test ( colChanInds, noColChannels, &
-        & 'colChanInds', ModuleName )
-      call allocate_test ( rowSurfInds, noRowSurfaces, &
-        & 'rowSurfInds', ModuleName )
-      call allocate_test ( colSurfInds, noColSurfaces, &
-        & 'colSurfInds', ModuleName )
-
-      rowChanInds = pack ( indgen(1:rowQ%template%noChans), rowChannels )
-      colChanInds = pack ( indgen(1:colQ%template%noChans), colChannels )
-      rowSurfInds = pack ( indgen(1:rowQ%template%noSurfs), rowSurfaces )
-      colSurfInds = pack ( indgen(1:colQ%template%noSurfs), colSurfaces )
-
-      doAny = .not. noAbsent
-      if ( noAbsent ) then
-o:      do colInstance = 1, colQ%template%noInstances
-          if ( colInstances(colInstance) ) then
-            do rowInstance = 1, rowQ%template%noInstances
-              if ( rowInstances(rowInstance) ) then
-                row = FindBlock ( matrix%row, rowQI, rowInstance )
-                col = FindBlock ( matrix%col, colQI, colInstance )
-                mb => matrix%block ( row, col )
-                doAny = mb%kind /= m_absent
-                if ( doAny ) exit o
-              end if
-            end do
-          end if
-        end do o
-      end if
-
-      if ( doAny ) then
-        call NewLine
-        call dumpIndex ( rowChannels, rowChanInds, 'Row channels: ' )
-        call dumpIndex ( rowSurfaces, rowSurfInds, 'Row Surfaces: ' )
-        call dumpIndex ( colChannels, colChanInds, 'Column channels: ' )
-        call dumpIndex ( colSurfaces, colSurfInds, 'Column surfaces: ' )
-      end if
+      noRowChannels = size(rowChanInds)
+      noRowSurfaces = size(rowSurfInds)
+      noColChannels = size(colChanInds)
+      noColSurfaces = size(colSurfInds)
 
       call allocate_test ( toDump, &
         & noRowChannels*noRowSurfaces, &
         & noColChannels*noColSurfaces, &
         & 'toDump', ModuleName )
 
-      ! Now loop over the row and column instances
-      do colInstance = 1, colQ%template%noInstances
-        if ( colInstances(colInstance) ) then
-          do rowInstance = 1, rowQ%template%noInstances
-            if ( rowInstances(rowInstance) ) then
+      call newLine
+      ! Loop over the row and column instances
+      do colInstance = 1, size(colInds)
+        do rowInstance = 1, size(rowInds)
 
-              row = FindBlock ( matrix%row, rowQI, rowInstance )
-              col = FindBlock ( matrix%col, colQI, colInstance )
+          row = FindBlock ( matrix%row, rowQI, rowInds(rowInstance) )
+          col = FindBlock ( matrix%col, colQI, colInds(colInstance) )
 
-              mb => matrix%block ( row, col )
-              if ( noAbsent .and. mb%kind == m_absent ) cycle
+          mb => matrix%block ( row, col )
+          if ( noAbsent .and. mb%kind == m_absent ) cycle
 
-              ! Dump a header
-              call output ( 'Block for ' )
-              call display_string ( rowQ%template%name )
-              call output ( rowInstance, before=' instance ', after=', ' )
-              call display_string ( colQ%template%name )
-              call output ( colInstance, before=' instance ' )
-              nullify ( val )
-              select case ( mb%kind )
-              case ( m_absent )
-                call output ( ' is absent,', advance='yes' )
-              case ( m_column_sparse, m_banded )
-                if ( mb%kind == m_column_sparse ) then
-                  call output ( ' is column sparse,', advance='yes' )
-                else
-                  call output ( ' is banded,', advance='yes' )
-                end if
-                call allocate_test ( val, mb%nRows, mb%nCols, &
-                  & 'val', ModuleName )
-                call densify ( val , mb )
-              case ( m_full )
-                call output ( ' is full,', advance='yes' )
-                val => mb%values
-              case default
-              end select
-              call output ( mb%nRows, before='with ' )
-              call output ( mb%nCols, before=' rows and ', after=' columns.  ' )
+          ! Dump a header
+          call display_string ( &
+            & matrix%row%vec%quantities(matrix%row%quant(row))%template%name )
+          call output ( matrix%row%inst(row), before=':', after=', ' )
+          call display_string ( &
+            & matrix%col%vec%quantities(matrix%col%quant(col))%template%name )
+          call output ( matrix%col%inst(col), before=':' )
+          nullify ( val )
+          select case ( mb%kind )
+          case ( m_absent )
+            call output ( ' is absent ' )
+          case ( m_column_sparse, m_banded )
+            if ( mb%kind == m_column_sparse ) then
+              call output ( ' is column sparse ' )
+            else
+              call output ( ' is banded ' )
+            end if
+            call allocate_test ( val, mb%nRows, mb%nCols, &
+              & 'val', ModuleName )
+            call densify ( val , mb )
+          case ( m_full )
+            call output ( ' is full ' )
+            val => mb%values
+          case default
+          end select
+          call output ( mb%nRows )
+          call output ( mb%nCols, before='x', after='.  ' )
 
-              if ( mb%kind /= m_absent ) then
-                do cs = 1, noColSurfaces
-                  do cc = 1, noColChannels
-                    do rs = 1, noRowSurfaces
-                      do rc = 1, noRowChannels
-                        todump ( rc + (rs-1)*noRowChannels, &
-                          &      cc + (cs-1)*noColChannels ) = &
-                          & val ( rowChanInds(rc) + &
-                          &      (rowSurfInds(rs)-1)*rowQ%template%noChans, &
-                          &       colChanInds(cc) + &
-                          &      (colSurfInds(cs)-1)*colQ%template%noChans )
-                      end do
-                    end do
+          if ( mb%kind /= m_absent ) then
+            do cs = 1, noColSurfaces
+              do cc = 1, noColChannels
+                do rs = 1, noRowSurfaces
+                  do rc = 1, noRowChannels
+                    todump ( rc + (rs-1)*noRowChannels, &
+                      &      cc + (cs-1)*noColChannels ) = &
+                      & val ( rowChanInds(rc) + &
+                      &      (rowSurfInds(rs)-1)*rowQ%template%noChans, &
+                      &       colChanInds(cc) + &
+                      &      (colSurfInds(cs)-1)*colQ%template%noChans )
                   end do
                 end do
-                if ( mb%kind /= m_full ) &
-                  & call deallocate_test ( val, 'val', ModuleName )
-                call dump ( toDump, name='Number of elements dumped:', clean=.true. )
-              else
-                call NewLine
-              end if
+              end do
+            end do
+            if ( mb%kind /= m_full ) &
+              & call deallocate_test ( val, 'val', ModuleName )
+            call dump ( toDump, name='Number dumped:', clean=.true. )
+          else
+            call newLine
+          end if
 
-            end if
-          end do
-        end if
+        end do
       end do
 
       call deallocate_test ( toDump,       'toDump',       ModuleName )
-      call deallocate_test ( indgen,       'indgen',       ModuleName )
       call deallocate_test ( rowChanInds,  'rowChanInds',  ModuleName )
       call deallocate_test ( colChanInds,  'colChanInds',  ModuleName )
       call deallocate_test ( rowSurfInds,  'rowSurfInds',  ModuleName )
       call deallocate_test ( colSurfInds,  'colSurfInds',  ModuleName )
-      call deallocate_test ( rowChannels,  'rowChannels',  ModuleName )
-      call deallocate_test ( colChannels,  'colChannels',  ModuleName )
-      call deallocate_test ( rowSurfaces,  'rowSurfaces',  ModuleName )
-      call deallocate_test ( colSurfaces,  'colSurfaces',  ModuleName )
-      call deallocate_test ( rowInstances, 'rowInstances', ModuleName )
-      call deallocate_test ( colInstances, 'colInstances', ModuleName )
 
     end subroutine DumpOneBlock
 
-    ! ................................................  DumpIndex  .....
-    subroutine DumpIndex ( Flags, Indices, Name )
-    ! Dump an index array as 1:n if every index is there, else as-is.
-      logical, intent(in) :: Flags(:)
-      integer, intent(in) :: Indices(:)
-      character(len=*), intent(in) :: Name
-      call output ( Name )
-      if ( .not. all(flags) ) then
-        if ( size(indices) /= 1 ) call newLine
-        call dump ( indices )
-      else
-        if ( size(flags) /= 1 ) call output ( '1:' )
-        call output ( size(flags), advance='yes' )
-      end if
-    end subroutine DumpIndex
-
-    ! ...........................................  FillFlagsArray  .....
-    subroutine FillFlagsArray ( Node, Array, NFlags )
-    ! Set Array(I) = .true. for every element that is a son of Node.
+    ! .........................................  FillIndicesArray  .....
+    subroutine FillIndicesArray ( Node, Num, Inds )
+    ! Fill Inds with sons 2..n of Node, or 1..Num if Node == 0
 
       use Declaration_Table, only: NUM_VALUE, RANGE
       use Expr_M, only: EXPR
 
-      integer, intent(in) :: Node              ! Tree node
-      logical, intent(out) :: Array(:)         ! Array to fill
-      integer, intent(out), optional :: NFlags ! Count(Array)
+      integer, intent(in) :: Node         ! Tree node
+      integer, intent(in) :: Num          ! Maximum size of Inds
+      integer, pointer :: Inds(:)         ! Sons of Node, or 1...n
 
+      logical :: Error
+      logical :: Flags(num)               ! Flags(son of Node) = .true.
+      integer :: I
       integer :: SonIx                    ! Son Index for Node
       integer :: TYPE                     ! From expr
       integer, dimension(2) :: UNITS      ! Units from expr
       real(r8), dimension(2) :: VALUE     ! Value from expr
 
+      nullify ( inds )
+      call allocate_test ( inds, num, 'Inds', moduleName )
+
       if ( node /= 0 ) then
-        array = .false.
+        error = .false.
+        flags = .false.
         do sonIx = 2, nsons(node)
           call expr (subtree(sonIx,node), units, value, type)
+          if ( nint(value(1)) < 1 .or. nint(value(1)) > num ) then
+            error = .true.
+            call announce_error ( outOfRange, subtree(sonIx,node), nint(value(1)) )
+          end if
           select case (type)
           case (num_value)
-            array(nint(value(1))) = .true.
+            if ( .not. error ) flags(nint(value(1))) = .true.
           case (range)
-            array(nint(value(1)):nint(value(2))) = .true.
+            if ( nint(value(2)) < 1 .or. nint(value(2)) > num ) then
+              error = .true.
+              call announce_error ( outOfRange, subtree(sonIx,node), nint(value(2)) )
+            end if
+            if ( .not. error ) flags(nint(value(1)):nint(value(2))) = .true.
           case default
           end select
         end do
+        if ( error ) &
+          & call MLSMessage ( MLSMSG_Error, moduleName, 'Index out of range' )
+        call allocate_test ( inds, count(flags), 'Inds', moduleName )
+        inds = pack ( (/ (i, i=1, num) /), flags )
       else
-        array = .true.
+        call allocate_test ( inds, num, 'Inds', moduleName )
+        inds = (/ (i, i=1, num) /)
       end if
-      if ( present(nFlags) ) nFlags = count(array)
 
-    end subroutine FillFlagsArray
+    end subroutine FillIndicesArray
+
+    ! ............................................  GetQuantities  .....
+    subroutine GetQuantities ( RC, QIs, NQIs, QInode, Text )
+    ! Get quantities from the tree or the matrix.
+      use MatrixModule_1, only: RC_Info
+      use TREE, only: SUBTREE
+      type(RC_Info), intent(in) :: RC  ! Row or Column info for Matrix
+      integer, intent(out) :: QIs(:)   ! Quantity indices
+      integer, intent(out) :: NQIs     ! Number of QIs actually used
+      integer, intent(in) :: QInode    ! Tree node -- zero if not specified
+      character(len=*), intent(in) :: Text  ! 'row' or 'column' for error message
+
+      integer :: I                     ! Subscript, loop inductor
+      integer :: QI                    ! A quantity index -- may go into QIs
+      type(vectorValue_t), pointer :: Q  ! A vector quantity
+
+      nQIs = 0
+      if ( QInode /= 0 ) then
+        do i = 2, nsons(QInode)
+          ! Identify the row quantity.  The decoration is an index into the
+          ! quantity templates database.  We need to get it as an index into
+          ! the vector that describes the row.
+          Q => GetVectorQtyByTemplateIndex ( rc%vec, &
+            & decoration(decoration(subtree(i,QInode))), qi ) ! qi is output too
+          if ( .not. associated (Q) ) &
+            & call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & text // ' quantity was not found.' )
+          if ( any(QIs(:nQIs) == qi ) ) then
+            call announce_error ( duplicate, subtree(i,QInode), subtree(i,QInode) )
+          else
+            nQIs = nQIs + 1
+            QIs(nQIs) = qi
+          end if
+        end do
+      else
+        do i = 1, rc%nb
+          qi = rc%quant(i)
+          if ( all(QIs(:nQIs) /= qi ) ) then
+            nQIs = nQIs + 1
+            QIs(nQIs) = qi
+          end if
+        end do
+      end if
+    end subroutine GetQuantities
+
+    ! ........................................  GetSurfOrChanInds  .....
+    subroutine GetSurfOrChanInds ( Vec, Num, Node, Inds, Text )
+      type (VectorValue_T), intent(in) :: Vec ! Row or column vector quantity    
+      integer, intent(in) :: Num              ! vec%template%no[Chans,Surfs]     
+      integer, intent(in) :: Node             ! Tree node                        
+      integer, pointer :: Inds(:)             ! Indices                          
+      character(len=*), intent(in) :: Text    ! For the dump                     
+
+      integer :: I
+
+      call fillIndicesArray ( node, num, inds )
+
+      call output ( text )
+      if ( size(inds) == 1 ) then
+        call output ( inds(1), advance='yes' )
+      else if ( any(inds(2:)-inds(1:size(inds)-1) /= 1) ) then
+        call newLine
+        call dump ( inds )
+      else
+        call output ( inds(1), after=':' )
+        call output ( inds(size(inds)), advance='yes' )
+      end if
+
+    end subroutine GetSurfOrChanInds
 
   end subroutine DumpBlocks
 
@@ -524,6 +577,9 @@ o:      do colInstance = 1, colQ%template%noInstances
 end module MatrixTools
 
 ! $Log$
+! Revision 1.12  2003/10/09 21:03:16  vsnyder
+! Don't do anything if the 'nodb' switch is set
+!
 ! Revision 1.11  2003/10/07 01:17:36  vsnyder
 ! DumpBlocks now dumps the blocks specified by the Cartesian product of the
 ! rowQuantity and colQuantity fields.  If the rowChannels, colChannels,
