@@ -902,13 +902,12 @@ contains
 
           if (ForwardModelConfig%temp_der) k_temp_frq%values=0.0_r8
           Call Rad_Tran_WD(ForwardModelConfig, FwdModelExtra, FwdModelIn, &
-            &     elvar(maf),frq_i,FMI%band,Frq,noSpecies,z_path(k,maf), &
+            &     elvar(maf),frq_i,Frq,noSpecies,z_path(k,maf), &
             &     h_path(k,maf),t_path(k,maf),phi_path(k,maf),dHdz_path(k,maf),&
             &     beta_path(:,frq_i),spsfunc_path(:,k),temp%template%surfs(:,1),&
             &     temp%template%noSurfs,ref_corr(:,k),temp%template%noInstances,&
-            &     temp%template%phi(1,:)*Deg2Rad,dh_dt_path,FMI%spect_atmos,&
-            &     FMI%spectroscopic,k_temp_frq,k_atmos_frq,k_spect_dw_frq, &
-            &     k_spect_dn_frq,k_spect_dnu_frq,brkpt,no_ele,mid,ilo,ihi, &
+            &     temp%template%phi(1,:)*Deg2Rad,dh_dt_path,&
+            &     k_temp_frq,k_atmos_frq,brkpt,no_ele,mid,ilo,ihi, &
             &     t_script,tau,max_zeta_dim,max_phi_dim,ier)
           IF(ier /= 0) goto 99
 
@@ -1077,23 +1076,23 @@ contains
             endif
           end do
         endif
-        if(ForwardModelConfig%spect_der) then
-          do m = 1, noSpecies
-            j = FMI%spect_atmos(m)
-            if(.not.  FMI%spectroscopic(j)%DER_CALC(FMI%band)) cycle
-            Spectag =  FMI%spectroscopic(j)%Spectag
-            do
-              if(FMI%spectroscopic(j)%Spectag /= Spectag) exit
-              k = FMI%spectroscopic(j)%no_phi_values
-              n = FMI%spectroscopic(j)%no_zeta_values
-              k_spect_dw(i,no_tan_hts,1:n,1:k,j)=k_spect_dw(i,no_tan_hts-1,1:n,1:k,j)
-              k_spect_dn(i,no_tan_hts,1:n,1:k,j)=k_spect_dn(i,no_tan_hts-1,1:n,1:k,j)
-              k_spect_dnu(i,no_tan_hts,1:n,1:k,j)=k_spect_dnu(i,no_tan_hts-1,1:n,1:k,j)
-              j = j + 1
-              if(j > 3 * FMI%n_sps) exit
-            end do
-          end do
-        endif
+!         if(ForwardModelConfig%spect_der) then
+!           do m = 1, noSpecies
+!             j = FMI%spect_atmos(m)
+!             if(.not.  FMI%spectroscopic(j)%DER_CALC(FMI%band)) cycle
+!             Spectag =  FMI%spectroscopic(j)%Spectag
+!             do
+!               if(FMI%spectroscopic(j)%Spectag /= Spectag) exit
+!               k = FMI%spectroscopic(j)%no_phi_values
+!               n = FMI%spectroscopic(j)%no_zeta_values
+!               k_spect_dw(i,no_tan_hts,1:n,1:k,j)=k_spect_dw(i,no_tan_hts-1,1:n,1:k,j)
+!               k_spect_dn(i,no_tan_hts,1:n,1:k,j)=k_spect_dn(i,no_tan_hts-1,1:n,1:k,j)
+!               k_spect_dnu(i,no_tan_hts,1:n,1:k,j)=k_spect_dnu(i,no_tan_hts-1,1:n,1:k,j)
+!               j = j + 1
+!               if(j > 3 * FMI%n_sps) exit
+!             end do
+!           end do
+!         endif
       end do
 
       !  Here comes the Convolution code
@@ -1110,7 +1109,7 @@ contains
             &     ptan%values(:,maf), noSpecies, &
             &     ForwardModelConfig%tangentGrid%surfs,ptg_angles,&
             &     tan_temp(:,maf),dx_dt, d2x_dxdt,si,center_angle,&
-            &     FMI%fft_pts,Radiances(:,ch),k_temp(i,:,:,:), &
+            &     Radiances(:,ch),k_temp(i,:,:,:), &
             &     k_atmos(i,:,:,:,:), &
             &     no_tan_hts,k_info_count,&
             &     i_star_all(i,:),k_star_all(i,:,:,:,:),k_star_info,&
@@ -1121,18 +1120,15 @@ contains
           if(ier /= 0) goto 99
         else
 
-          call no_conv_at_all(ptan%values(:,maf),noSpecies, &
+          call no_conv_at_all(forwardModelConfig, fwdModelIn, &
+            & ptan%values(:,maf), noSpecies,  &
             &     ForwardModelConfig%tangentGrid%surfs, &
-            &     FMI%band,ForwardModelConfig%temp_der,&
-            &     ForwardModelConfig%atmos_der,ForwardModelConfig%spect_der,&
             &     Radiances(:,ch),k_temp(i,:,:,:),  &
-            &     k_atmos(i,:,:,:,:),k_spect_dw(i,:,:,:,:),       &
-            &     k_spect_dn(i,:,:,:,:),k_spect_dnu(i,:,:,:,:),   &
-            &     FMI%spect_atmos,no_tan_hts, k_info_count,       &
+            &     k_atmos(i,:,:,:,:), &
+            &     no_tan_hts, k_info_count,       &
             &     i_star_all(i,:), k_star_all(i,:,:,:,:),k_star_info, &
             &     temp%template%noSurfs,temp%template%noInstances, &
-            &     TFMI%no_phi_f,temp%template%surfs(:,1),TFMI%atmospheric,&
-            &     FMI%spectroscopic)
+            &     temp%template%surfs(:,1))
 
         endif
 
@@ -1325,6 +1321,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.75  2001/04/10 02:24:55  livesey
+! Stable derivative code, still not sure about vmr.  About to remove FMI, TFMI!!  :-)
+!
 ! Revision 2.74  2001/04/10 01:16:10  livesey
 ! Another interim version.
 !
