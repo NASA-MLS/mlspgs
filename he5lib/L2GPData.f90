@@ -460,9 +460,15 @@ CONTAINS ! =====     Public Procedures     =============================
     edge(1) = nFreqsOr1
     edge(2) = nLevelsOr1
     edge(3) = numProfs
+    print*,char(15)
+!    print*,"Reading lats: start=",start
+!    print*,"Stride=",stride
+!    print*,"Edge=",edge
+    status = HE5_SWrdfld(swid, GEO_FIELD1, start(3:3), stride(3:3), &
+         edge(3:3), realProf)
 
-    status = HE5_SWrdfld(swid, GEO_FIELD1, start(3:3), stride(3:3), edge(3:3), &
-         realProf)
+    !print*,"Lats:",realProf( (/1,2,numProfs-1,numProfs /) )
+
     IF (status == -1) THEN
        msr = MLSMSG_L2GPRead // GEO_FIELD1
        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -1165,6 +1171,10 @@ END MODULE L2GPData
 
 !
 ! $Log$
+! Revision 1.2  2001/02/23 13:33:14  pumphrey
+! Fixed type definition for L2GPData_T so all the pointers are => NULL()
+! This error was detected by nagf95 on Solaris but not on Linux. Odd.
+!
 ! Revision 1.1  2000/12/22 15:55:53  pumphrey
 ! Initial commit of HDF-EOS5 versions of L2GP interface.
 !
