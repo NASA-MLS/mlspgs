@@ -27,7 +27,7 @@ module TREE_WALKER
   use L2GPData, only: DestroyL2GPDatabase, L2GPData_T, Dump
   use L2ParInfo, only: PARALLEL, CLOSEPARALLEL
   use L2Parallel, only: GETCHUNKINFOFROMMASTER, L2MASTERTASK
-  use L2PC_m, only: DestroyL2PCDatabase
+  use L2PC_m, only: DestroyL2PCDatabase, DestroyBinSelectorsDatabase
   use MatrixModule_1, only: DestroyMatrixDatabase, Matrix_Database_T
   use MLSCommon, only: L1BINFO_T, MLSCHUNK_T, TAI93_RANGE_T
   use MLSSignals_M, only: Bands, DestroyBandDatabase, DestroyModuleDatabase, &
@@ -286,6 +286,7 @@ subtrees:   do while ( j <= howmany )
     end do
     call CloseParallel
     call destroy_ant_patterns_database
+    call DestroyBinSelectorDatabase
     call DestroyL2PCDatabase
     call destroy_filter_shapes_database
     call DestroyFWMConfigDatabase ( forwardModelConfigDatabase )
@@ -305,6 +306,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.77  2002/01/18 18:55:37  livesey
+! Code to support the --chunk option
+!
 ! Revision 2.76  2002/01/09 22:56:17  livesey
 ! Now sends slaves all chunks as regular HGrids need them.
 !
