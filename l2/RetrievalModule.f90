@@ -935,7 +935,7 @@ contains
           call cpu_time ( t1 )
           call solveCholesky ( factored, candidateDX, atb, &
             & transpose=.true. )
-          call add_to_retrieval_timing( 'cholesky_solve', t1 )
+          call add_to_retrieval_timing( 'cholesky_solver', t1 )
           call cpu_time ( t1 )
 
           !{AJ\%FNMIN = L2 norm of residual, $||\mathbf{J \delta x + f}||$
@@ -1005,7 +1005,7 @@ contains
           call cpu_time ( t1 )
           call solveCholesky ( factored, candidateDX, atb, &
             & transpose=.true. )
-          call add_to_retrieval_timing( 'cholesky_solve', t1 )
+          call add_to_retrieval_timing( 'cholesky_solver', t1 )
           call cpu_time ( t1 )
           aj%fnmin = sqrt(aj%fnorm**2 - (candidateDX .dot. candidateDX) )
           call solveCholesky ( factored, candidateDX )
@@ -1415,6 +1415,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.75  2001/10/01 23:30:50  pwagner
+! Fixed bug in spelling cholesky_solver
+!
 ! Revision 2.74  2001/10/01 23:04:17  livesey
 ! Bug fix with channel range, and some tidying up
 !
