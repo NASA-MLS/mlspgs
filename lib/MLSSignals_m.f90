@@ -176,6 +176,7 @@ module MLSSignals_M
   character (len=len(idParm)) :: Id = idParm
   character (len=*), parameter, private :: ModuleName = &
     & "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
 
 contains
@@ -1505,9 +1506,16 @@ contains
     ! That's it
   end subroutine PVMUnpackSignal
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.53  2002/10/08 00:09:12  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.52  2002/10/05 00:40:28  livesey
 ! Added pvm packing and unpacking of signals, and deep option on destroy
 !
