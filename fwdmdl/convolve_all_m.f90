@@ -103,13 +103,6 @@ MODULE convolve_all_m
 !
   REAL(r8) :: r
 !
-  REAL(r8), POINTER :: p(:)
-  REAL(r8), POINTER :: dp(:)
-  REAL(r8), POINTER :: angles(:)
-  REAL(r8), POINTER :: rad_fft(:)
-  REAL(r8), POINTER :: rad_fft1(:)
-  REAL(r8), POINTER :: drad_dt_temp(:)
-
   REAL(r8), POINTER :: drad_dt_out(:,:)
   REAL(r8), POINTER :: drad_df_out(:,:)
 
@@ -183,8 +176,7 @@ MODULE convolve_all_m
   IF (.not. ANY( (/FwdMdlConfig%temp_der, FwdMdlConfig%atmos_der, &
                 &  FwdMdlConfig%spect_der/)) ) RETURN
 !
-  nullify (p,dp,angles,rad_fft,rad_fft1,drad_dt_temp,drad_dt_out, &
-         & drad_df_out)
+  nullify (drad_dt_out,drad_df_out)
 !
   IF (FwdMdlConfig%atmos_der .AND. .not. FwdMdlConfig%temp_der) THEN
 !
@@ -330,6 +322,9 @@ MODULE convolve_all_m
 
 END MODULE convolve_all_m
 ! $Log$
+! Revision 2.14  2002/07/05 07:52:46  zvi
+! Coor. switch (phi,z) -> (z,phi)
+!
 ! Revision 2.13  2002/06/28 11:06:47  zvi
 ! compute dI/dPtan using chain rule
 !
