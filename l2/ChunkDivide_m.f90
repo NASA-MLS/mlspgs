@@ -1338,6 +1338,7 @@ contains ! ===================================== Public Procedures =====
       logical, dimension(size(SIGNALS)) :: good_after_maxgap
       logical, dimension(size(SIGNALS)) :: good_signals_now
       logical, dimension(size(SIGNALS)) :: good_signals_last
+      logical, dimension(:,:), pointer  :: signals_buffer
       integer :: maf
       integer :: mafset
       integer :: num_goods_after_gap
@@ -1350,6 +1351,20 @@ contains ! ===================================== Public Procedures =====
       ! (2) mafs where the good data is switched from one signal to another
       ! (See Construct QuantityTemplates below line 253)
       
+      ! (Possibly) time-consuming step:
+      ! Read through the l1b radiance files for all signals,
+      ! noting which ones are good, which not
+      nullify ( signals_buffer )
+      call allocate_test( &
+        & signals_buffer, mafRange(2) - mafRange(1) + 1 , size(SIGNALS), &
+        & 'signals_buffer', ModuleName)
+      do Signal_index=1, size(SIGNALS)
+        good_signals_now(Signal_index) = &
+           & any_good_signaldata ( Signal_index, Signal%sideband, &
+            & l1bInfo, mafRange(1), mafRange(2), &
+            & signals_buffer(:,Signal_index) )
+      enddo
+
       ! Task (1a): Find mafs where there is at least one signal which
       ! changes from either nogood to good or from good to nogood
       ! compared with the last maf
@@ -1361,9 +1376,10 @@ contains ! ===================================== Public Procedures =====
       do maf = mafRange(1), mafRange(2)
         do Signal_index=1, size(SIGNALS)
           Signal = SIGNALS(Signal_index)
-          good_signals_now(Signal_index) = &
-            & any_good_signaldata ( Signal_index, Signal%sideband, &
-            & l1bInfo, maf )
+          ! good_signals_now(Signal_index) = &
+          !   & any_good_signaldata ( Signal_index, Signal%sideband, &
+          !  & l1bInfo, maf )
+          good_signals_now(Signal_index) = signals_buffer(maf+1, Signal_index)
           if ( .not. good_signals_now(Signal_index) ) &
             & howlong_nogood(Signal_index) = howlong_nogood(Signal_index) + 1
           good_after_maxgap(Signal_index) = &
@@ -1400,6 +1416,7 @@ contains ! ===================================== Public Procedures =====
         enddo
       endif
       ! OK, we have the mafs where the goodness changes, now what?
+      call deallocate_test( signals_buffer, 'signals_buffer', ModuleName )
     end subroutine notel1brad_changes
 
     ! ----------------------------------------- PruneObstructions -----
@@ -1756,12 +1773,18 @@ contains ! ===================================== Public Procedures =====
   end subroutine Dump_Obstructions
 
 ! -----------------------------------------------  ANY_GOOD_SIGNALDATA  -----
-  function ANY_GOOD_SIGNALDATA ( signal, sideband, l1bInfo, maf )  &
+  function ANY_GOOD_SIGNALDATA ( signal, sideband, l1bInfo, maf, maf2, &
+    & good_buffer )  &
     & result (answer)
+  ! Scalar use:
   ! Read precision of signal
   ! if all values < 0.0, return FALSE
   ! if no precision data in file, return FALSE
   ! otherwise return true
+  !
+  ! Array use
+  ! Return one logical value in good_buffer
+  ! for each of the_mafs between maf and maf2
   ! Arguments
 
     use Allocate_Deallocate, only: Deallocate_Test
@@ -1778,15 +1801,21 @@ contains ! ===================================== Public Procedures =====
     logical             :: answer
     integer, intent(in) :: maf
     type (l1bInfo_T), intent(in) :: L1bInfo
+    integer, optional, intent(in) :: maf2
+    logical, dimension(:), optional, intent(inout) :: good_buffer
   ! Private
     integer :: FileID, flag, noMAFs
     character(len=127)  :: namestring
     type (l1bData_T) :: MY_L1BDATA
     integer :: hdfVersion
+    integer :: mymaf2
+    integer :: the_maf
 
   ! Executable
     answer = .false.
     if ( .not. associated(l1bInfo%l1bRadIDs) ) return
+    mymaf2 = maf
+    if ( present(maf2) ) mymaf2 = maf2
     hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
     if ( hdfversion <= 0 ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1801,13 +1830,19 @@ contains ! ===================================== Public Procedures =====
       return
     end if
     call ReadL1BData ( fileID , nameString, my_l1bData, noMAFs, flag, &
-      & firstMAF=maf, lastMAF=maf, &
+      & firstMAF=maf, lastMAF=mymaf2, &
       & NeverFail= .true., hdfVersion=hdfVersion )
-    if ( flag == 0 ) then
+    if ( flag /= 0 ) then
+      answer = .false.
+    elseif ( present(good_buffer) ) then
+      answer = .true.    ! This value should be ignored by the caller
+      do the_maf = maf, mymaf2
+        good_buffer(the_maf+1) = .not. &
+          & all (my_l1bData%DpField(:,:, the_maf+1) < 0._rk)
+      enddo
+    else
       answer = .not. all (my_l1bData%DpField < 0._rk)
       call deallocate_test(my_l1bData%DpField, trim(nameString), ModuleName)
-    else
-      answer = .false.
     end if
   end function ANY_GOOD_SIGNALDATA
 
@@ -1818,6 +1853,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.33  2003/05/09 16:43:05  pwagner
+! Speedup of L1B radiance check
+!
 ! Revision 2.32  2003/05/07 23:43:05  pwagner
 ! Optionally may skipL1BCheck
 !
