@@ -95,7 +95,7 @@ program ConvertPFA
     & trim(outfile(i+len_trim(signal):)) // '", $' 
 
   write ( *, '(a)' ) '  temperatures=pfaTgrid, vGrid=pfaVgrid, signal="' // &
-    & trim(signal)
+    & trim(signal) // '"'
 
   ! The vGrid line
   read ( 10, '(a)' ) line
@@ -155,6 +155,9 @@ program ConvertPFA
 end program ConvertPFA
 
 ! $Log$
+! Revision 1.4  2004/07/08 20:59:03  vsnyder
+! Cannonball polishing
+!
 ! Revision 1.3  2004/06/17 01:04:37  vsnyder
 ! Added 'use Machine' in case it's needed for GETARG
 !
