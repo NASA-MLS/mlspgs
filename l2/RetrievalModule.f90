@@ -2324,14 +2324,17 @@ contains
       integer :: I, J                   ! Subscripts, loop inductors
       integer :: IND                    ! An array index
       integer :: INSTANCE               ! Loop counter
+      integer :: INSTANCEOR1            ! For coherent quantities
       integer :: MASK                   ! Which thing are we talking about?
       integer :: MaskBit                ! Bits corresponding to Mask
       integer :: NROWS                  ! Loop limit dumping mask
+      integer :: ODCUTOFFHEIGHT         ! `First' index optically thick
       integer :: QUANTITYINDEX          ! Index
-      integer :: RANGE_LOW, RANGE_HI    ! Bounds of a range
       integer :: RANGEID                ! nodeID of a range
+      integer :: RANGE_LOW, RANGE_HI    ! Bounds of a range
       integer :: ROW                    ! Row index dumping mask
       integer :: S1(1), S2(1)           ! Results of minloc intrinsic
+      integer :: SCANDIRECTION          ! +/-1 for up or down
       integer :: SON                    ! Tree node
       integer :: TYPE                   ! Type of value returned by expr
       integer :: UNITS(2)               ! Units returned by expr
@@ -2488,9 +2491,11 @@ contains
 
       ! Now we loop over the instances
       do instance = 1, qty%template%noInstances
+        instanceOr1 = instance
         if ( qty%template%coherent ) then
           theseHeights => qty%template%surfs(:,1)
           coordinate = qty%template%verticalCoordinate
+          instanceOr1 = 1
         else if ( qty%template%minorFrame .and. heightUnit == phyq_pressure ) then
           theseHeights => ptan%values(:,instance)
           coordinate = l_zeta
@@ -2557,11 +2562,49 @@ contains
                 s2 = max ( s2 - 1, 1 )
               end select
             end if
-
+ 
+            scanDirection = 0
             do channel = 1, qty%template%noChans
               doThisChannel = .true.
               if ( associated(channels) ) doThisChannel = channels(channel)
               if ( doThisChannel ) then
+
+                ! Think about optical depth.  We want the cutoff to apply once
+                ! and definitively, not have channels come in and out of use as
+                ! a function of tangent height.  To do this we need to work out
+                ! where we 'first' go optically thick. To do this we need to
+                ! work out whether we're scanning up or down.
+                if ( associated ( opticalDepth ) ) then
+                  ! Don't bother deducing direction if we alredy know
+                  if ( scanDirection == 0 ) then
+                    ind = qty%template%noChans + channel
+                    do height = 2, qty%template%noSurfs
+                      scanDirection = scanDirection + merge ( 1, -1, &
+                        & opticalDepth%template%surfs(height,instanceOr1) > &
+                        & opticalDepth%template%surfs(height-1,instanceOr1) )
+                    end do
+                    ! Now convert it to +/-1.
+                    if ( scanDirection == 0 ) scanDirection = 1 ! Default upscan
+                    scanDirection = scanDirection / abs(scanDirection) 
+                  end if
+                  ! Now find `first' optically thick radiance look down from top
+                  if ( scanDirection == 1 ) then ! Scanning up
+                    ind = qty%template%noChans*(qty%template%noSurfs-1) + channel
+                    do odCutoffHeight = qty%template%noSurfs, 1, - 1 
+                      if ( opticalDepth%values ( ind, instance ) > &
+                        & opticalDepthCutoff ) exit
+                      ind = ind - qty%template%noChans
+                    end do
+                  else ! else scanning down
+                    ind = qty%template%noChans + channel
+                    do odCutoffHeight = 1, qty%template%noSurfs
+                      if ( opticalDepth%values ( ind, instance ) > &
+                        & opticalDepthCutoff ) exit
+                      ind = ind + qty%template%noChans
+                    end do
+                  end if
+                end if
+
                 if ( qty%template%coherent ) then
                   ! For coherent quantities simply do a loop over a range.
                   do height = s1(1), s2(1)
@@ -2570,7 +2613,7 @@ contains
                     ind = channel + qty%template%noChans*(height-1)
                     
                     if ( associated( opticalDepth ) ) then
-                      if ( opticalDepth%values ( ind, instance ) < opticalDepthCutoff ) &
+                      if ( scanDirection * ( height - odCutoffHeight ) > 0 ) &
                         & call ClearMask ( qty%mask(:,instance), (/ind/), what=maskBit )
                     else
                       call ClearMask ( qty%mask(:,instance), (/ind/), what=maskBit )
@@ -2597,7 +2640,7 @@ contains
                     end if
                     if ( associated ( opticalDepth ) ) then
                       doThisHeight = doThisHeight .and. &
-                        & opticalDepth%values ( ind, instance ) < opticalDepthCutoff
+                        & scanDirection * ( height - odCutoffHeight ) > 0
                     end if
                     if ( doThisHeight ) call ClearMask ( qty%mask(:,instance), &
                         & (/ ind /), what=maskBit )
@@ -2687,6 +2730,11 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.136  2002/03/06 01:44:30  livesey
+! Changed manner in which optical depth cutoff applied so that
+! once a channel is too optically thick it always is (as a function of
+! height).  Note it's resistant to changes in scan direction.
+!
 ! Revision 2.135  2002/02/14 21:55:31  vsnyder
 ! Account for mask.  Get a final Jacobian using Best X.  Cosmetic changes.
 !
