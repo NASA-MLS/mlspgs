@@ -84,7 +84,7 @@ contains ! =====     Public Procedures     =============================
       & L_OFFSETRADIANCE, L_ORBITINCLINATION, L_PHITAN, &
       & L_PLAIN, L_PRESSURE, L_PROFILE, L_PTAN, &
       & L_RADIANCE, L_RECTANGLEFROMLOS, L_REFGPH, L_REFRACT, L_RHI, &
-      & L_RHIFROMH2O, L_RHIPRECISIONFROMH2O, &
+      & L_RHIFROMH2O, L_RHIPRECISIONFROMH2O, L_SCALEOVERLAPS, &
       & L_SCECI, L_SCGEOCALT, L_SCVEL, L_SCVELECI, L_SCVELECR, &
       & L_SIDEBANDRATIO, L_SPD, L_SPECIAL, L_SYSTEMTEMPERATURE, &
       & L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, &
@@ -1089,65 +1089,75 @@ contains ! =====     Public Procedures     =============================
               else
                 invert = .true.
                 call FillRHIFromH2O ( key, quantity, &
-                & sourceQuantity, temperatureQuantity, &
-                & dontMask, ignoreZero, ignoreNegative, interpolate, &
-                & .true., &   ! Mark Undefined values?
-                & invert )    ! invert rather than convert?
+                  & sourceQuantity, temperatureQuantity, &
+                  & dontMask, ignoreZero, ignoreNegative, interpolate, &
+                  & .true., &   ! Mark Undefined values?
+                  & invert )    ! invert rather than convert?
               end if
             end if
-        case ( l_RHIPrecisionfromH2O ) ! --fill RHI prec. from H2O quantity --
-                if ( .not. any(got( &
-                  & (/f_h2oquantity, f_temperatureQuantity, &
-                  & f_h2oPrecisionquantity, f_tempPrecisionQuantity/) &
-                  & )) ) then
-                  call Announce_error ( key, No_Error_code, &
-                    & 'Missing a required field to fill rhi precision'  )
-                else
-                  h2oQuantity => GetVectorQtyByTemplateIndex( &
-                    & vectors(h2oVectorIndex), h2oQuantityIndex)
-                  temperatureQuantity => GetVectorQtyByTemplateIndex( &
-                    & vectors(temperatureVectorIndex), temperatureQuantityIndex)
-                  h2oPrecisionQuantity => GetVectorQtyByTemplateIndex( &
-                    & vectors(h2oPrecisionVectorIndex), h2oPrecisionQuantityIndex)
-                  tempPrecisionQuantity => GetVectorQtyByTemplateIndex( &
-                    & vectors(tempPrecisionVectorIndex), tempPrecisionQuantityIndex)
-                  if ( .not. ValidateVectorQuantity(h2oQuantity, &
-                    & quantityType=(/l_vmr/), molecule=(/l_h2o/)) ) then
-                    call Announce_Error ( key, No_Error_code, &
-                      & 'The h2oQuantity is not a vmr for the H2O molecule'  )
-                  else if ( .not. ValidateVectorQuantity(temperatureQuantity, &
-                    & quantityType=(/l_temperature/)) ) then
-                    call Announce_Error ( key, No_Error_code, &
-                      & 'The temperatureQuantity is not a temperature'  )
-                  else if ( .not. ValidateVectorQuantity(h2oPrecisionQuantity, &
-                    & quantityType=(/l_vmr/), molecule=(/l_h2o/)) ) then
-                    call Announce_Error ( key, No_Error_code, &
-                      & 'The h2oPrecisionQuantity is not a vmr for the H2O molecule'  )
-                  else if ( .not. ValidateVectorQuantity(tempPrecisionQuantity, &
-                    & quantityType=(/l_temperature/)) ) then
-                    call Announce_Error ( key, No_Error_code, &
-                      & 'The tempPrecisionQuantity is not a temperature'  )
-                    ! This is not the right way to do an invert fill
-                    ! The first quantity named on the fill line must
-                    ! _always_ be the one getting filled according to
-                    ! the pattern '[verb] [direct-object] [modifier(s)]'
-                    ! see case l_vmr below for how to do this
-                    !else if ( invert ) then
-                    !  call FillRHIFromH2O ( key, h2oquantity, &
-                    !  & Quantity, temperatureQuantity, &
-                    !  & dontMask, ignoreZero, ignoreNegative, interpolate, &
-                    !  & .true., &   ! Mark Undefined values?
-                    !  & invert )    ! invert rather than convert?
-                  else
-                    call FillRHIPrecisionFromH2O ( key, quantity, &
-                      & h2oPrecisionQuantity, tempPrecisionQuantity, h2oQuantity, temperatureQuantity, &
-                      & dontMask, ignoreZero, ignoreNegative, interpolate, &
-                      & .true., &   ! Mark Undefined values?
-                      & invert )    ! invert rather than convert?
-                  end if
-                end if
-        case ( l_special ) ! -  Special fills for some quantities  -----
-          ! Either multiplier = [a, b] or multiplier = b are possible
+          case ( l_RHIPrecisionfromH2O ) ! --fill RHI prec. from H2O quantity --
+            if ( .not. any(got( &
+              & (/f_h2oquantity, f_temperatureQuantity, &
+              & f_h2oPrecisionquantity, f_tempPrecisionQuantity/) &
+              & )) ) then
+              call Announce_error ( key, No_Error_code, &
+                & 'Missing a required field to fill rhi precision'  )
+            else
+              h2oQuantity => GetVectorQtyByTemplateIndex( &
+                & vectors(h2oVectorIndex), h2oQuantityIndex)
+              temperatureQuantity => GetVectorQtyByTemplateIndex( &
+                & vectors(temperatureVectorIndex), temperatureQuantityIndex)
+              h2oPrecisionQuantity => GetVectorQtyByTemplateIndex( &
+                & vectors(h2oPrecisionVectorIndex), h2oPrecisionQuantityIndex)
+              tempPrecisionQuantity => GetVectorQtyByTemplateIndex( &
+                & vectors(tempPrecisionVectorIndex), tempPrecisionQuantityIndex)
+              if ( .not. ValidateVectorQuantity(h2oQuantity, &
+                & quantityType=(/l_vmr/), molecule=(/l_h2o/)) ) then
+                call Announce_Error ( key, No_Error_code, &
+                  & 'The h2oQuantity is not a vmr for the H2O molecule'  )
+              else if ( .not. ValidateVectorQuantity(temperatureQuantity, &
+                & quantityType=(/l_temperature/)) ) then
+                call Announce_Error ( key, No_Error_code, &
+                  & 'The temperatureQuantity is not a temperature'  )
+              else if ( .not. ValidateVectorQuantity(h2oPrecisionQuantity, &
+                & quantityType=(/l_vmr/), molecule=(/l_h2o/)) ) then
+                call Announce_Error ( key, No_Error_code, &
+                  & 'The h2oPrecisionQuantity is not a vmr for the H2O molecule'  )
+              else if ( .not. ValidateVectorQuantity(tempPrecisionQuantity, &
+                & quantityType=(/l_temperature/)) ) then
+                call Announce_Error ( key, No_Error_code, &
+                  & 'The tempPrecisionQuantity is not a temperature'  )
+                ! This is not the right way to do an invert fill
+                ! The first quantity named on the fill line must
+                ! _always_ be the one getting filled according to
+                ! the pattern '[verb] [direct-object] [modifier(s)]'
+                ! see case l_vmr below for how to do this
+                !else if ( invert ) then
+                !  call FillRHIFromH2O ( key, h2oquantity, &
+                  !  & Quantity, temperatureQuantity, &
+                !  & dontMask, ignoreZero, ignoreNegative, interpolate, &
+                  !  & .true., &   ! Mark Undefined values?
+                !  & invert )    ! invert rather than convert?
+              else
+                call FillRHIPrecisionFromH2O ( key, quantity, &
+                  & h2oPrecisionQuantity, tempPrecisionQuantity, h2oQuantity, &
+                  & temperatureQuantity, dontMask, ignoreZero, &
+                  & ignoreNegative, interpolate, &
+                  & .true., &   ! Mark Undefined values?
+                  & invert )    ! invert rather than convert?
+              end if
+            end if
+
+          case ( l_scaleOverlaps )
+            if ( .not. got ( f_multiplier ) ) then
+              call Announce_Error ( key, no_error_code, &
+                & 'Must supply multipler for scaleOverlaps fill' )
+            else
+              call ScaleOverlaps ( key, quantity, multiplierNode, dontMask )
+            end if
+
+          case ( l_special ) ! -  Special fills for some quantities  -----
+            ! Either multiplier = [a, b] or multiplier = b are possible
           if ( got(f_multiplier) ) then
             multiplier = UNDEFINED_VALUE
             do j=1, min(nsons(multiplierNode)-1, 2)
@@ -4689,7 +4699,57 @@ contains ! =====     Public Procedures     =============================
       end where
     end subroutine OffsetRadianceQuantity
 
-    ! ---------------------------------------------- TRANSFERVECTORS -----
+    ! ---------------------------------------------- ScaleOverlaps -------
+    subroutine ScaleOverlaps ( key, quantity, multiplierNode, dontMask )
+      integer, intent(in) :: KEY        ! Tree node for command
+      type (VectorValue_T), intent(inout) :: QUANTITY
+      integer, intent(in) :: MULTIPLIERNODE ! Tree node for factors
+      logical :: DONTMASK               ! Flag
+      ! Local variables
+      real (r8) :: exprValue(2)         ! Tree expression
+      integer :: exprUnit(2)            ! Tree units
+      integer :: i,j                    ! Loop counters / indices
+
+      ! Executable code
+      scaleLowerLoop: do i = 1, quantity%template%noInstancesLowerOverlap
+        if ( i+1 > nsons ( multiplierNode ) ) exit scaleLowerLoop
+        call expr ( subtree( i+1, multiplierNode ), exprUnit, exprValue )
+        if ( exprUnit(1) /= PHYQ_Dimensionless ) then
+          call Announce_Error ( key, no_error_code, &
+            & 'multipliers in scaleOverlaps must be dimensionless' )
+          return
+        end if
+        if ( associated ( quantity%mask ) .and. .not. dontMask ) then
+          where ( iand ( ichar(quantity%mask(:,i)), m_Fill ) == 0 )
+            quantity%values ( :, i ) = quantity%values ( :, i ) * exprValue(1)
+          end where
+        else
+          quantity%values ( :, i ) = quantity%values ( :, i ) * exprValue(1)
+        end if
+      end do scaleLowerLoop
+
+      scaleUpperLoop: do i = quantity%template%noInstances, &
+        & quantity%template%noInstances - &
+        & quantity%template%noInstancesUpperOverlap + 1, - 1
+        j = quantity%template%noInstances - i + 1
+        if ( j+1 > nsons ( multiplierNode ) ) exit scaleUpperLoop
+        call expr ( subtree( j+1, multiplierNode ), exprUnit, exprValue )
+        if ( exprUnit(1) /= PHYQ_Dimensionless ) then
+          call Announce_Error ( key, no_error_code, &
+            & 'multipliers in scaleOverlaps must be dimensionless' )
+          return
+        end if
+        if ( associated ( quantity%mask ) .and. .not. dontMask ) then
+          where ( iand ( ichar(quantity%mask(:,i)), m_Fill ) == 0 )
+            quantity%values ( :, i ) = quantity%values ( :, i ) * exprValue(1)
+          end where
+        else
+          quantity%values ( :, i ) = quantity%values ( :, i ) * exprValue(1)
+        end if
+      end do scaleUpperLoop
+    end subroutine ScaleOverlaps
+
+    ! ---------------------------------------------- TransferVectors -----
     subroutine TransferVectors ( source, dest, skipMask )
       ! Copy common items in source to those in dest
       type (Vector_T), intent(in) :: SOURCE
@@ -4879,6 +4939,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.191  2003/03/26 21:23:47  livesey
+! Added ScaleOverlaps stuff
+!
 ! Revision 2.190  2003/03/19 19:22:24  pwagner
 ! Passes chunkNo around more widely
 !
