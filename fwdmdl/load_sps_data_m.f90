@@ -13,8 +13,6 @@ module LOAD_SPS_DATA_M
   public :: Destroygrids_t, Dump, Dump_Grids
 
   type, public :: Grids_T                 ! Fit all Gridding categories
-    integer :: LastNonPFA                 ! Index in l_* of last non-pfa sps
-                                          ! Assumes all PFA come after all non-PFA
     integer,  pointer :: l_f(:) => null() ! Last entry in frq. grid per sps
     integer,  pointer :: l_z(:) => null() ! Last entry in zeta grid per sps
     integer,  pointer :: l_p(:) => null() ! Last entry in phi  grid per sps
@@ -59,12 +57,11 @@ contains
   ! ----------------------------------------------  Load_SPS_Data  -----
 
   subroutine Load_Sps_Data ( FwdModelConf, fwdModelIn, fwdModelExtra, MAF, &
-       &    radiometer, mol_cat_index, QuantityType, Grids_x,              &
-       &    Qtys, h2o_ind, ext_ind )
+       &    radiometer, QuantityType, Grids_x, h2o_ind, ext_ind )
 
-    use ForwardModelConfig, only: ForwardModelConfig_t
-    use ForwardModelVectorTools, only: GetQuantityForForwardModel, QtyStuff_T
-    use Intrinsic, only: L_Phitan
+    use ForwardModelConfig, only: ForwardModelConfig_t, QtyStuff_T
+    use ForwardModelVectorTools, only: GetQuantityForForwardModel
+    use Intrinsic, only: L_Phitan, L_VMR
     use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate, &
       & MLSMSG_Error
     use Molecules, only: l_extinction, l_h2o
@@ -75,13 +72,11 @@ contains
     integer, intent(in) :: MAF
 
     integer, intent(in) :: RADIOMETER       
-    integer, intent(in) :: MOL_CAT_INDEX(:) 
 
     integer, intent(in) :: QuantityType      ! L_vmr, L_dv, etc.
 
     type (Grids_T), intent(out) :: Grids_x   ! All the coordinates
 
-    type (qtyStuff_t), intent(in), target, optional :: Qtys(:)
     integer, intent(out), optional :: H2O_IND
     integer, intent(out), optional :: EXT_IND
 
@@ -95,12 +90,11 @@ contains
 
 ! Begin code:
 
-    no_mol = size( mol_cat_index )
+    no_mol = size( fwdModelConf%molecules )
 
-    if ( present(qtys) ) then
-      ! Assumes qtys corresponds to mol_cat_index
-      qtyStuff => qtys
-    else
+    if ( quantityType == l_vmr ) then ! fill the one in the fwdModelConf
+      qtyStuff => fwdModelConf%beta_group%qty
+    else ! Need a temp; don't clobber the one in the fwdModelConf
       allocate ( qtyStuff( no_mol ), stat = ii )
       if ( ii /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
         & MLSMSG_Allocate // 'qtyStuff' )
@@ -118,23 +112,20 @@ contains
       & quantityType=l_phitan, config=fwdModelConf, &
       & instrumentModule=FwdModelConf%signals(1)%instrumentModule )
 
-    do ii = 1, no_mol
+    do mol = 1, no_mol
 
-      mol = mol_cat_index(ii)
-      if ( mol >= fwdModelConf%firstPFA ) & ! Assumes all PFA after all non-PFA
-        & grids_x%lastNonPFA = min(grids_x%lastNonPFA, ii-1)
       kk = FwdModelConf%molecules(mol)
-      if ( kk == l_h2o ) my_h2o_ind = ii        ! memorize h2o index
-      if ( kk == l_extinction ) my_ext_ind = ii ! memorize extiction ix
+      if ( kk == l_h2o ) my_h2o_ind = mol        ! memorize h2o index
+      if ( kk == l_extinction ) my_ext_ind = mol ! memorize extiction ix
 
-      if ( .not. present(qtys) ) &
-        & qtyStuff(ii)%qty => GetQuantityforForwardModel ( &
+      if ( quantityType /= l_vmr ) &
+        & qtyStuff(mol)%qty => GetQuantityforForwardModel ( &
           & fwdModelIn, fwdModelExtra, &
           & quantityType=quantityType, molIndex=mol, &
           & radiometer=radiometer, config=fwdModelConf, &
-          & foundInFirst=qtyStuff(ii)%foundInFirst )
+          & foundInFirst=qtyStuff(mol)%foundInFirst )
 
-      call fill_grids_1 ( grids_x, ii, qtyStuff(ii)%qty, phitan, maf, &
+      call fill_grids_1 ( grids_x, mol, qtyStuff(mol)%qty, phitan, maf, &
         &                 fwdModelConf )
 
     end do
@@ -143,11 +134,11 @@ contains
 
     call create_grids_2 ( Grids_x )
 
-    do ii = 1, no_mol
+    do mol = 1, no_mol
       ! Fill the zeta, phi, freq. basis and value components.
-      call fill_grids_2 ( grids_x, ii, qtyStuff(ii)%qty, &
-        & fwdModelConf%moleculeDerivatives(mol_cat_index(ii)) .and. &
-        & qtyStuff(ii)%foundInFirst )
+      call fill_grids_2 ( grids_x, mol, qtyStuff(mol)%qty, &
+        & fwdModelConf%moleculeDerivatives(mol) .and. &
+        & qtyStuff(mol)%foundInFirst )
 
     end do
 
@@ -155,7 +146,7 @@ contains
 !  (Some code here ...)
 ! ** END ZEBUG
 
-    if ( .not. present(qtys) ) then
+    if ( quantityType /= l_vmr ) then
       deallocate ( qtyStuff, stat = ii )
       if ( ii /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
         & MLSMSG_DeAllocate // 'qtyStuff' )
@@ -343,7 +334,6 @@ contains
     type (Grids_T), intent(inout) :: Grids_X
     integer, intent(in) :: N
 
-    grids_x%lastNonPFA = n ! gets reduced later
     call allocate_test ( Grids_x%l_z, n, 'Grids_x%l_z', ModuleName, lowBound=0 )
     call allocate_test ( Grids_x%l_p, n, 'Grids_x%l_p', ModuleName, lowBound=0 )
     call allocate_test ( Grids_x%l_f, n, 'Grids_x%l_f', ModuleName, lowBound=0 )
@@ -534,7 +524,6 @@ contains
       call output ( name, advance='no' )
     end if
     call output ( the_grid%p_len, before = ', P_Len = ' )
-    call output ( the_grid%lastNonPfa, before =', Last Non-PFA = ', advance='yes' )
     call dump ( the_grid%l_f(1:), 'The_grid%l_f' )
     call dump ( the_grid%l_z(1:), 'The_grid%l_z' )
     call dump ( the_grid%l_p(1:), 'The_grid%l_p' )
@@ -561,6 +550,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.60  2004/08/03 02:24:21  vsnyder
+! Polish up dump a little bit
+!
 ! Revision 2.59  2004/07/08 21:00:23  vsnyder
 ! Inching toward PFA
 !

@@ -29,7 +29,7 @@ contains
         & beta_path, t_der_path_flags, dTanh_dT, dBeta_dt_path,     &
         & dBeta_dw_path, dBeta_dn_path, dBeta_dv_path )
 
-    use Get_Species_Data_m, only: Beta_Group_T
+    use ForwardModelConfig, only: Beta_Group_T
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use MLSCommon, only: R8, RP, IP
 
@@ -184,7 +184,7 @@ contains
   subroutine Get_Beta_Path_Polarized ( Frq, H, Beta_group, GL_slabs, &
                                      & Path_inds, Beta_path, dBeta_path_dT )
 
-    use Get_Species_Data_m, only: Beta_Group_T
+    use ForwardModelConfig, only: Beta_Group_T
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use MLSCommon, only: R8, RP, IP
     use O2_Abs_CS_m, only: O2_Abs_CS, D_O2_Abs_CS_dT
@@ -253,13 +253,10 @@ contains
   end subroutine Get_Beta_Path_Polarized
 
   ! ----------------------------------------  Get_Beta_Path_Cloud  -----
-  subroutine Get_Beta_Path_Cloud ( Frq, p_path, t_path,  tt_path,       &
-        & beta_group, path_inds, beta_path_cloud,                       &
-        & w0_path, tt_path_c,                                           & 
-        & IPSD, WC, fwdModelConf  )
+  subroutine Get_Beta_Path_Cloud ( Frq, p_path, t_path,  tt_path, path_inds, &
+        & beta_path_cloud, w0_path, tt_path_c, IPSD, WC, fwdModelConf  )
     use ForwardModelConfig, only: FORWARDMODELCONFIG_T
     use Cloud_extinction, only: get_beta_cloud
-    use Get_Species_Data_m, only: Beta_Group_T
     use MLSCommon, only: R8, RP, IP
 
 ! Inputs:
@@ -269,7 +266,6 @@ contains
     real(rp), intent(in) :: P_path(:)       ! path pressures in hPa!
     real(rp), intent(in) :: tt_path(:,:)    ! scating source func on gl grids
 
-    type (beta_group_T), intent(in), dimension(:) :: beta_group
 
     integer(ip), intent(in) :: Path_inds(:) ! indices for reading T_PATH
 
@@ -1076,6 +1072,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.66  2004/10/06 21:21:21  vsnyder
+! Change how dumps are done
+!
 ! Revision 2.65  2004/09/04 01:50:31  vsnyder
 ! get_beta_path_m.f90
 !

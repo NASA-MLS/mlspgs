@@ -65,11 +65,14 @@ module SpectroscopyCatalog_m
     & 0.0_r8, NULL(), 0.0_r8, l_none, NULL(), 0.0_r8, 0 )
 
   ! Public Variables:
-  ! The lines database:
-  type(line_T), public, pointer, dimension(:), save :: Lines => NULL()
-
   ! The spectroscopy database:
   type(catalog_T), public, pointer, dimension(:), save :: Catalog => NULL()
+
+  ! Greatest number of lines in any catalog entry:
+  integer, public, save :: MostLines = 0
+
+  ! The lines database:
+  type(line_T), public, pointer, dimension(:), save :: Lines => NULL()
 
 
   !---------------------------- RCS Ident Info -------------------------------
@@ -335,6 +338,7 @@ contains ! =====  Public Procedures  ===================================
             gotLines = .true.
             call allocate_test ( catalog(numCatalog)%lines, nsons(son)-1, &
               & "catalog(numCatalog)%Lines", moduleName )
+            mostLines = max(mostLines, size(catalog(numCatalog)%lines) )
             do k = 2, nsons(son)
               catalog(numCatalog)%lines(k-1) = decoration(decoration(subtree(k,son)))
             end do
@@ -513,6 +517,7 @@ contains ! =====  Public Procedures  ===================================
     deallocate ( catalog, stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
       MLSMSG_DeAllocate // "Catalog" )
+    mostLines = 0
   end subroutine Destroy_SpectCat_Database
 
   ! ----------------------------------------  Dump_Lines_Database  -----
@@ -645,8 +650,6 @@ contains ! =====  Public Procedures  ===================================
         if ( j < MaxContinuum ) call output ( ', ' )
       end do
       call output ( ' ]', advance='yes' )
-      if ( associated(catalog(i)%polarized) ) &
-        & call dump ( catalog(i)%polarized, '      Polarized:' )
       if ( myDetails > 0 ) then
         call blanks ( 6 )
         call output ( 'Lines:' )
@@ -663,7 +666,9 @@ contains ! =====  Public Procedures  ===================================
         else
           call output ( ' none', advance='yes' )
         end if
-      end if
+        if ( associated(catalog(i)%polarized) ) &
+          & call dump ( catalog(i)%polarized, '      Polarized:' )
+      end if ! myDetails > 0
     end do ! i
   end subroutine Dump_SpectCat_Database
 
@@ -707,6 +712,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.26  2004/09/16 18:35:02  vsnyder
+! Pass 'details' through Dump_SpectCat_Database_2d
+!
 ! Revision 2.25  2004/08/07 00:34:57  vsnyder
 ! Correct subscript error in Dump_SpectCat_Database_2d
 !
