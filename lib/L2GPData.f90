@@ -500,7 +500,7 @@ contains ! =====     Public Procedures     =============================
        & "Unable to open L2gp file: " // trim(FileName) // ' for reading')
     call ReadL2GPData_fileID(L2FileHandle, swathname, l2gp, numProfs=numProfs, &
        & firstProf=firstProf, lastProf=lastProf, hdfVersion=the_hdfVersion)
-    status = mls_io_gen_closeF('swclose', L2FileHandle, &
+    status = mls_io_gen_closeF('swclose', L2FileHandle, FileName=FileName, &
       & hdfVersion=hdfVersion)
     if ( status /= 0 ) &
       call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -554,7 +554,7 @@ contains ! =====     Public Procedures     =============================
 
     swid = swattach(L2FileHandle, TRIM(l2gp%Name))
     if ( swid == -1) call MLSMessage ( MLSMSG_Error, ModuleName, 'Failed to &
-         &attach to swath interface for reading.')
+         &attach to hdfeos2 swath interface for reading: ' // trim(swathname))
 
     ! Get dimension information
 
@@ -563,13 +563,13 @@ contains ! =====     Public Procedures     =============================
 
     nDims = swinqdims(swid, list, dims)
     if ( nDims == -1) call MLSMessage ( MLSMSG_Error, ModuleName, 'Failed to &
-         &get dimension information.')
+         &get dimension information on hdfeos2 swath ' // trim(swathname))
     if ( INDEX(list,'nLevels') /= 0 ) lev = 1
     if ( INDEX(list,'Freq') /= 0 ) freq = 1
 
     size = swdiminfo(swid, DIM_NAME1)
     if ( size == -1 ) then
-       msr = SZ_ERR // DIM_NAME1
+       msr = SZ_ERR // DIM_NAME1 // ' '  // trim(swathname)
        call MLSMessage ( MLSMSG_Error, ModuleName, msr )
     end if
     l2gp%nTimes = size
@@ -579,7 +579,7 @@ contains ! =====     Public Procedures     =============================
     else
        size = swdiminfo(swid, DIM_NAME2)
        if ( size == -1 ) then
-          msr = SZ_ERR // DIM_NAME2
+          msr = SZ_ERR // DIM_NAME2 // ' '  // trim(swathname)
           call MLSMessage ( MLSMSG_Error, ModuleName, msr )
        end if
        nLevels = size
@@ -589,7 +589,7 @@ contains ! =====     Public Procedures     =============================
     if ( freq == 1 ) then
        size = swdiminfo(swid, DIM_NAME3)
        if ( size == -1 ) then
-          msr = SZ_ERR // DIM_NAME3
+          msr = SZ_ERR // DIM_NAME3 // ' ' // trim(swathname)
           call MLSMessage ( MLSMSG_Error, ModuleName, msr )
        end if
        nFreqs = size
@@ -605,7 +605,7 @@ contains ! =====     Public Procedures     =============================
     if ( firstCheck ) then
 
        if ( (firstProf >= l2gp%nTimes) .OR. (firstProf < 0) ) then
-          msr = MLSMSG_INPUT // 'firstProf'
+          msr = MLSMSG_INPUT // 'firstProf ' // trim(swathname)
           call MLSMessage ( MLSMSG_Error, ModuleName, msr )
        else
           first = firstProf
@@ -620,7 +620,7 @@ contains ! =====     Public Procedures     =============================
     if ( lastCheck ) then
 
        if ( lastProf < first ) then
-          msr = MLSMSG_INPUT // 'lastProf'
+          msr = MLSMSG_INPUT // 'lastProf ' // trim(swathname)
           call MLSMessage ( MLSMSG_Error, ModuleName, msr )
        end if
 
@@ -665,7 +665,7 @@ contains ! =====     Public Procedures     =============================
     status = swrdfld(swid, GEO_FIELD1, start(3:3), stride(3:3), edge(3:3), &
       &    realProf)
     if ( status == -1 ) then
-       msr = MLSMSG_L2GPRead // GEO_FIELD1
+       msr = MLSMSG_L2GPRead // GEO_FIELD1 // ' ' // trim(swathname)
        call MLSMessage ( MLSMSG_Error, ModuleName, msr )
     end if
     l2gp%latitude = realProf
@@ -673,7 +673,7 @@ contains ! =====     Public Procedures     =============================
     status = swrdfld(swid, GEO_FIELD2, start(3:3), stride(3:3), edge(3:3), &
       &    realProf)
     if ( status == -1 ) then
-       msr = MLSMSG_L2GPRead // GEO_FIELD2
+       msr = MLSMSG_L2GPRead // GEO_FIELD2 // ' ' // trim(swathname)
        call MLSMessage ( MLSMSG_Error, ModuleName, msr )
     end if
     l2gp%longitude = realProf
@@ -922,7 +922,7 @@ contains ! =====     Public Procedures     =============================
     
     swid = HE5_SWattach(L2FileHandle, l2gp%Name)
     if (swid == -1) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
-         &attach to swath interface for reading.')
+         &attach to hdfeos5 swath interface for reading' // trim(swathname))
 
     ! Get dimension information
 
@@ -932,7 +932,7 @@ contains ! =====     Public Procedures     =============================
     nDims = HE5_SWinqdims(swid, list, dims)
     !print*,"just called inqdims: nDims=",ndims,"list=",list,"dims=",dims
     if (nDims == -1) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
-         &get dimension information.')
+         &get dimension information on hdfeos5 swath ' // trim(swathname))
     if ( index(list,'nLevels') /= 0 ) lev = 1
     if ( index(list,'Freq') /= 0 ) freq = 1
 !    if ( index(list,'Unlim') /= 0 ) then 
@@ -2934,6 +2934,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.56  2003/02/21 23:41:53  pwagner
+! Also writes Fill Value attribute
+!
 ! Revision 2.55  2003/02/12 21:50:33  pwagner
 ! New api for ReadL2GPData lets you supply fileName and hdfversion, which can be wildcard
 !
