@@ -21,8 +21,6 @@ contains
   ! ---------------------------------------------------  Freq_Avg  -----
   subroutine Freq_Avg ( F_grid, F_grid_fltr, Fltr_func, Rad, Avg )
 
-    use D_CSPLINE_M, only: CSPLINE
-    use DSIMPSON_MODULE, only: SIMPS
     use MLSCommon, only: R8, RP
 
     real(r8), intent(in) :: F_grid(:), F_grid_fltr(:), Fltr_func(:)
@@ -184,6 +182,9 @@ contains
 end module Freq_Avg_m
 
 ! $Log$
+! Revision 2.10  2004/10/06 21:25:45  vsnyder
+! Split Freq_Avg into 'setup' and 'do it' steps
+!
 ! Revision 2.9  2004/02/14 00:23:48  vsnyder
 ! New DACS convolution algorithm
 !

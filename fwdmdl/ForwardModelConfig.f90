@@ -1112,7 +1112,7 @@ contains
 
     use Dump_0, only: Dump
     use Intrinsic, only: Lit_indices
-    use Output_m, only: Blanks, NewLine, Output
+    use Output_m, only: NewLine, Output
     use String_Table, only: Display_String
 
     type(beta_group_t), intent(in) :: Beta_Group(:)
@@ -1281,7 +1281,6 @@ contains
   ! ---------------------------------------------  Dump_Qty_Stuff  -----
   subroutine Dump_Qty_Stuff ( Qty )
     use Output_m, only: NewLine, Output
-    use String_Table, only: Display_String
     use VectorsModule, only: Dump
     type(qtyStuff_t), intent(in) :: Qty
     call dump ( qty%qty, details=-2 )
@@ -1296,6 +1295,10 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.64  2004/12/13 20:35:22  vsnyder
+! Moved a bunch of stuff that doesn't depend on the state vector here from
+! get_species data.  Some support for PFA, too.
+!
 ! Revision 2.63  2004/11/05 19:38:11  vsnyder
 ! Moved some stuff here from Get_Species_Data, more work on PFA, some rearranging
 !
