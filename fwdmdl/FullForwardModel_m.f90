@@ -103,6 +103,7 @@ CONTAINS
     ! alphabetically
 
     integer :: BRKPT                    ! Index of midpoint of path
+    integer :: CHANIND                  ! A 1 based channel index
     integer :: CHANNEL                  ! A Loop counter
     integer :: DIRECTION                ! Direction of channel numbering
     integer :: FRQ_I                    ! Frequency loop index
@@ -2094,6 +2095,7 @@ CONTAINS
       do i = 1, noUsedChannels
 
         channel = usedChannels(i)
+        chanInd = channel + 1 - channelOrigins(i)
         sigInd = usedSignals(i)
         thisRadiance =>  &
           GetVectorQuantityByType (fwdModelOut, quantityType=l_radiance, &
@@ -2102,13 +2104,13 @@ CONTAINS
 
         if ( sidebandStart /= sidebandStop ) then   ! We're folding
           if ( associated ( sidebandRatio ) ) then
-            thisRatio = sidebandRatio%values(channel,1)
+            thisRatio = sidebandRatio%values(chanInd,1)
             if ( thisSideband == 1 ) thisRatio = 1.0 - thisRatio
           else
             if ( thisSideband == -1 ) then
-              thisRatio = lowerSidebandRatio%values(channel,1)
+              thisRatio = lowerSidebandRatio%values(chanInd,1)
             else
-              thisRatio = upperSidebandRatio%values(channel,1)
+              thisRatio = upperSidebandRatio%values(chanInd,1)
             end if
           end if
         else                  ! Otherwise, want just unfolded signal
@@ -2137,19 +2139,18 @@ CONTAINS
           whichPattern = whichPatternAsArray(1)
 
    ! Now change channel from starting at 0 or 1 to definately 1
-          channel = channel + 1 - channelOrigins(i)
 
           j = sv_t_len
           IF (.not. temp_der .AND. .not. atmos_der ) THEN
             Call convolve_all(FwdModelConf,FwdModelIn,FwdModelExtra,maf,&
-               & channel,windowStart,windowFinish,mol_cat_index,temp,ptan,  &
+               & chanInd,windowStart,windowFinish,mol_cat_index,temp,ptan,  &
                & thisRadiance,ptg_angles,Radiances(:,i),tan_chi_out,        &
                & dhdz_out,dx_dh_out,thisRatio,                              &
                & antennaPatterns(whichPattern),Grids_tmp%deriv_flags,       &
                & Grids_f,Jacobian,fmStat%rows,SURF_ANGLE=surf_angle(1) )
           ELSE IF ( temp_der .AND. .not. atmos_der ) THEN
             Call convolve_all(FwdModelConf,FwdModelIn,FwdModelExtra,maf,&
-               & channel,windowStart,windowFinish,mol_cat_index,temp,ptan,  &
+               & chanInd,windowStart,windowFinish,mol_cat_index,temp,ptan,  &
                & thisRadiance,ptg_angles,Radiances(:,i),tan_chi_out,        &
                & dhdz_out,dx_dh_out,thisRatio,                              &
                & antennaPatterns(whichPattern),Grids_tmp%deriv_flags,       &
@@ -2159,7 +2160,7 @@ CONTAINS
                & DXDT_SURFACE=dxdt_surface)
           ELSE IF ( atmos_der .AND. .not. temp_der ) THEN
             Call convolve_all(FwdModelConf,FwdModelIn,FwdModelExtra,maf,&
-               & channel,windowStart,windowFinish,mol_cat_index,temp,ptan,  &
+               & chanInd,windowStart,windowFinish,mol_cat_index,temp,ptan,  &
                & thisRadiance,ptg_angles,Radiances(:,i),tan_chi_out,        &
                & dhdz_out,dx_dh_out,thisRatio,                              &
                & antennaPatterns(whichPattern),Grids_tmp%deriv_flags,       &
@@ -2168,7 +2169,7 @@ CONTAINS
 !              & DI_DF=DBLE(RESHAPE(k_atmos(i,:,:),(/no_tan_hts,f_len/))) )
           ELSE
             Call convolve_all(FwdModelConf,FwdModelIn,FwdModelExtra,maf,&
-               & channel,windowStart,windowFinish,mol_cat_index,temp,ptan,  &
+               & chanInd,windowStart,windowFinish,mol_cat_index,temp,ptan,  &
                & thisRadiance,ptg_angles,Radiances(:,i),tan_chi_out,        &
                & dhdz_out,dx_dh_out,thisRatio,                              &
                & antennaPatterns(whichPattern),Grids_tmp%deriv_flags,       &
@@ -2184,20 +2185,20 @@ CONTAINS
 
           j = sv_t_len
           IF (.not. temp_der .AND. .not. atmos_der ) THEN
-            Call no_conv_at_all ( fwdModelConf, fwdModelIn, maf, channel, &
+            Call no_conv_at_all ( fwdModelConf, fwdModelIn, maf, chanInd, &
               &  windowStart, windowFinish, temp, ptan, thisRadiance,     &
               &  Grids_tmp%deriv_flags,ptg_angles,tan_chi_out,            &
               &  dhdz_out,dx_dh_out,Grids_f, &
               &  Radiances(:,i),thisRatio,mol_cat_index,fmStat%rows,Jacobian)
           ELSE IF ( temp_der .AND. .not. atmos_der ) THEN
-            Call no_conv_at_all ( fwdModelConf, fwdModelIn, maf, channel, &
+            Call no_conv_at_all ( fwdModelConf, fwdModelIn, maf, chanInd, &
               &  windowStart, windowFinish, temp, ptan, thisRadiance,     &
               &  Grids_tmp%deriv_flags,ptg_angles,tan_chi_out,            &
               &  dhdz_out,dx_dh_out,Grids_f, &
               &  Radiances(:,i),thisRatio,mol_cat_index,fmStat%rows,Jacobian,&
               &  DI_DT=DBLE(RESHAPE(k_temp(i,:,:,:),(/no_tan_hts,j/))) )
           ELSE IF ( atmos_der .AND. .not. temp_der ) THEN
-            Call no_conv_at_all ( fwdModelConf, fwdModelIn, maf, channel, &
+            Call no_conv_at_all ( fwdModelConf, fwdModelIn, maf, chanInd, &
               &  windowStart, windowFinish, temp, ptan, thisRadiance,     &
               &  Grids_tmp%deriv_flags,ptg_angles,tan_chi_out,            &
               &  dhdz_out,dx_dh_out,Grids_f, &
@@ -2205,7 +2206,7 @@ CONTAINS
               &  DI_DF=DBLE(k_atmos(i,:,:)) )
 !             &  DI_DF=DBLE(RESHAPE(k_atmos(i,:,:),(/no_tan_hts,f_len/))) )
           ELSE
-            Call no_conv_at_all ( fwdModelConf, fwdModelIn, maf, channel, &
+            Call no_conv_at_all ( fwdModelConf, fwdModelIn, maf, chanInd, &
               &  windowStart, windowFinish, temp, ptan, thisRadiance,     &
               &  Grids_tmp%deriv_flags,ptg_angles,tan_chi_out,            &
               &  dhdz_out,dx_dh_out,Grids_f, &
@@ -2457,6 +2458,9 @@ CONTAINS
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.70  2002/07/08 17:45:37  zvi
+! Make sure spect_der is turned off for now
+!
 ! Revision 2.69  2002/07/05 07:52:45  zvi
 ! Coor. switch (phi,z) -> (z,phi)
 !
