@@ -458,7 +458,8 @@ contains
     real(rk), parameter :: CP76 = 0.76_rk
     real(rk), parameter :: CP9 = 0.9_rk
 
-    real(rk) :: AXMAX, AXMAXB, CGDX, SP, SQ, TP, TP1
+    real(rk), save :: AXMAX, AXMAXB, CGDX, SP, SQ
+    real(rk) :: TP, TP1
 
     real(rk), parameter :: RND = 10.0_rk * epsilon(c0)
 
@@ -1065,6 +1066,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.22  2002/07/24 01:08:11  vsnyder
+! Made most local variables SAVE.  Mark Filipiak noticed this problem.
+!
 ! Revision 2.21  2002/02/14 21:53:10  vsnyder
 ! Add parameters for largest and smallest nwt_flag values
 !
