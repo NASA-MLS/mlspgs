@@ -121,7 +121,6 @@ hRegWeightVec
 ignore
 ignoreGeolocation
 ignoreNegative
-ignoreGeolocation
 ignoreZero
 inclination
 insetOverlaps
@@ -323,6 +322,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.109  2003/10/07 20:47:32  vsnyder
+# Remove redundant ignoreGeolocation
+#
 # Revision 2.108  2003/10/07 15:04:52  cvuu
 # add new logical name ignoreGeolocation
 #
