@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -63,6 +63,9 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 ! WriteL2GPData           Writes an L2GP into a swath file
 
   ! First some local parameters
+  ! (This 1st one enables some changes *not* made by paw)
+  logical, private, parameter :: MONKEYAROUND = .FALSE. ! If true, then ???
+
 
   ! Assume L2GP files w/o explicit hdfVersion field are this
   ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc. 
@@ -1547,8 +1550,10 @@ contains ! =====     Public Procedures     =============================
 
     if ( l2gp%nFreqs > 0 ) then
        edge(1) = l2gp%nFreqs
-       start(1)=0 ! needed because offset may have made this /=0
-       l2gp%frequency = 0
+       if (MONKEYAROUND) then
+         start(1)=0 ! needed because offset may have made this /=0
+         l2gp%frequency = 0
+       endif
        status = swwrfld(swid, GEO_FIELD10, start, stride, edge, &
             real(l2gp%frequency))
        if ( status == -1 ) then
@@ -1627,7 +1632,7 @@ contains ! =====     Public Procedures     =============================
        ! Value and Precision are 3-D fields
 
        status = swwrfld(swid, DATA_FIELD1, start, stride, edge, &
-            & RESHAPE(l2gp%l2gpValue, (/SIZE(l2gp%l2gpValue)/)) )
+            & RESHAPE(real(l2gp%l2gpValue), (/SIZE(l2gp%l2gpValue)/)) )
        if ( status == -1 ) then
           msr = WR_ERR // DATA_FIELD1
           call MLSMessage ( MLSMSG_Error, ModuleName, msr )
@@ -2358,7 +2363,7 @@ contains ! =====     Public Procedures     =============================
     ! sticks l2gp into the swath swathName in the file pointed at by
     ! l2FileHandle,starting at the profile number "offset" (First profile
     ! in the file has offset==0). If this runs off the end of the swath, 
-    ! it is lengthend automagically. 
+    ! it is lengthened automagically. 
     ! Arguments
 
     integer, intent(IN) :: l2FileHandle ! From swopen
@@ -2509,6 +2514,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 1.24  2003/01/09 01:02:27  pwagner
+! Moved some use statements in attempt to work around Lahey long compile time bug
+!
 ! Revision 1.23  2002/10/25 15:21:05  hcp
 ! Nasty hack for unlimited swaths removed. Local requirement for this worked
 ! around in a different way. HDF-EOS5 team admit that problem is really
