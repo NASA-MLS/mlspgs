@@ -3,8 +3,9 @@
 ; This is a new l2cf fragement that defines all the (mainly vertical)
 ; grids.
 
+!ifdef(flagSkipVGridStandard,{},{
 vGridStandard: vGrid, type=Logarithmic, coordinate=Zeta, $
-  start=1000mb, formula=[25:6,12:3]
+  start=1000mb, formula=[25:6,12:3]})
 vGridHiRes: vGrid, type=Logarithmic, coordinate=Zeta, $
   start=1000mb, formula=[21:12,14:6,12:3]
 
@@ -68,6 +69,9 @@ vGridWMO: VGrid, type=Logarithmic, coordinate=Zeta, $
   start=1000mb, formula=[97:48]
 
 ; $Log$
+; Revision 1.25  2004/11/17 00:24:56  livesey
+; Reworked the High/Low cloud grids
+;
 ; Revision 1.24  2004/10/29 23:38:45  dwu
 ; add vGridRefIWC
 ;
