@@ -234,6 +234,9 @@ CONTAINS ! =====     Public Procedures     =============================
 
     CALL SetupNewL2GPRecord( l2gp, nFreqs=l2gp%nFreqs, nLevels=l2gp%nLevels, nTimes=newNTimes)
 
+    ! Don't forget the `global' stuff
+    l2gp%pressures=templ2gp%pressures
+
     ! Now go through the parameters one by one, and copy the previous contents
     l2gp%latitude(1:templ2gp%nTimes) = templ2gp%latitude(1:templ2gp%nTimes)
     l2gp%longitude(1:templ2gp%nTimes) = templ2gp%longitude(1:templ2gp%nTimes)
@@ -958,6 +961,7 @@ CONTAINS ! =====     Public Procedures     =============================
 
     IF ( l2gp%nLevels > 0 ) THEN
        edge(1) = l2gp%nLevels
+       PRINT*,l2gp%pressures
        status = swwrfld(swid, GEO_FIELD9, start, stride, edge, &
             REAL(l2gp%pressures))
        IF ( status == -1 ) THEN
@@ -1132,6 +1136,9 @@ END MODULE L2GPData
 
 !
 ! $Log$
+! Revision 2.16  2001/02/09 18:38:04  livesey
+! Even more print statemets removed!
+!
 ! Revision 2.15  2001/02/09 17:51:01  livesey
 ! Removed some print statements.
 !
