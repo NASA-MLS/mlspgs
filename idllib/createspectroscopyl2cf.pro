@@ -18,11 +18,8 @@ Read_Spect_Dbase, molName, lineName, '', data,  $
 myID='$Id$'
 
 ; Sort out nitrogen
-n2= (where(data.name eq 'N$_{2}$') )(0)
-data(n2).q=1.0
-
-; Remove extinction
-data = data(where(data.name ne 'EXTINCTION'))
+change = (where(data.name eq 'N$_{2}$' or data.name eq 'EXTINCTION' ) )
+data(change).q=1.0
 
 ; Open the output file
 Openw, unit, outName, /get_lun
