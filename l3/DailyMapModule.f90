@@ -112,7 +112,7 @@ Contains
  	  nwave     = PI/(ds*cosa)
 
  	  dtad	    = delTad_i 
- 	  !dlonad    = PI-dtad*c0 
+
 	  if(lonD0_i < 0) then
 		lonD0_i_temp = 2.0*PI+lonD0_i
 	  else 
@@ -123,8 +123,12 @@ Contains
 	  else 	
 		lonA0_i_temp = lonA0_i
 	  end if
- 	  !dlonad    = abs( lonD0_i_temp-lonA0_i_temp )
- 	  dlonad    = abs( lonD0_i-lonA0_i)
+
+          if(lonA0_i_temp < lonD0_i_temp) then
+                dlonad  = abs( lonD0_i_temp-lonA0_i_temp )
+          else 
+                dlonad  = 2.0*PI-abs( lonD0_i_temp-lonA0_i_temp )
+          end if
 
 	  d1lonad   = dlonad + c0*dtad
 
@@ -1105,6 +1109,9 @@ End Module DailyMapModule
 !===================
 
 ! $Log$
+! Revision 1.7  2001/08/14 16:13:24  nakamura
+! Adjusted initialization of fNum in FFS routines.
+!
 ! Revision 1.6  2001/08/13 16:42:06  ybj
 ! *** empty log message ***
 !
