@@ -12,13 +12,13 @@ module L2PC_m
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
   use Declaration_Table, only: DECLS, ENUM_VALUE, GET_DECL, DUMP_DECL
   use Intrinsic, only: Lit_Indices, L_CHANNEL, L_GEODALTITUDE, L_ZETA, L_NONE, L_VMR, &
-    & L_RADIANCE, L_PTAN
+    & L_RADIANCE, L_PTAN, L_NONE
   use machine, only: io_error
   use MLSCommon, only: R8
   use VectorsModule, only: assignment(=), DESTROYVECTORINFO, &
     & VECTORTEMPLATE_T, VECTOR_T, VECTORVALUE_T, CREATEVECTOR, ADDVECTORTODATABASE,&
     & ADDVECTORTEMPLATETODATABASE, CONSTRUCTVECTORTEMPLATE
-  use MatrixModule_1, only: CREATEBLOCK, CREATEEMPTYMATRIX, &
+  use MatrixModule_1, only: CHECKINTEGRITY, CREATEBLOCK, CREATEEMPTYMATRIX, &
     & DESTROYMATRIX, MATRIX_T, DUMP, FINDBLOCK, MATRIX_DATABASE_T, GETFROMMATRIXDATABASE, &
     & DUMP_STRUCT
   use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, &
@@ -32,7 +32,8 @@ module L2PC_m
   use MLSSignals_m, only: GETSIGNALNAME
   use Output_m, only: output
   use Parse_Signal_m, only: Parse_Signal
-  use QuantityTemplates, only: ADDQUANTITYTEMPLATETODATABASE, QUANTITYTEMPLATE_T
+  use QuantityTemplates, only: ADDQUANTITYTEMPLATETODATABASE, QUANTITYTEMPLATE_T, &
+    & SETUPNEWQUANTITYTEMPLATE
   use String_Table, only: GET_STRING
   use Symbol_Table, only: ENTER_TERMINAL, DUMP_SYMBOL_CLASS
   use Symbol_Types, only: T_IDENTIFIER
@@ -707,7 +708,7 @@ contains ! ============= Public Procedures ==========================
           call CreateBlock ( l2pc, blockRow, blockCol, kind, noValues )
           m0 => l2pc%block ( blockRow, blockCol )
           call LoadFromHDF5DS ( blockId, 'r1', m0%r1 )
-          call LoadFromHDF5DS ( blockId, 'r1', m0%r2 )
+          call LoadFromHDF5DS ( blockId, 'r2', m0%r2 )
         else
           call CreateBlock ( l2pc, blockRow, blockCol, kind )
           m0 => l2pc%block ( blockRow, blockCol )
@@ -720,6 +721,11 @@ contains ! ============= Public Procedures ==========================
       end do
     end do
     if ( index ( switches, 'spa' ) /= 0 ) call dump_struct ( l2pc, 'Populated l2pc bin' )
+!     if ( .not. CheckIntegrity ( l2pc ) ) then
+!       call MLSMessage ( MLSMSG_Error, ModuleName, &
+!         & 'L2PC failed integrity test' )
+    end if
+
   end subroutine PopulateL2PCBin
 
   ! --------------------------------------- WriteL2PC ---------------
@@ -1034,6 +1040,10 @@ contains ! ============= Public Procedures ==========================
     do bin = 0, noBins-1
       call ReadOneHDF5L2PCRecord ( L2PC, fileID, bin, &
         & shallow=.true., info=Info )
+!       if ( .not. CheckIntegrity ( l2pc ) ) then
+!         call MLSMessage ( MLSMSG_Error, ModuleName, &
+!           & 'L2PC failed integrity test' )
+!       end if
       dummy = AddL2PCToDatabase ( l2pcDatabase, L2PC )
       if ( index ( switches, 'spa' ) /= 0 ) call Dump_struct ( l2pc, 'One l2pc bin' ) 
 
@@ -1173,20 +1183,33 @@ contains ! ============= Public Procedures ==========================
     integer, intent(out) :: VECTOR      ! Index of vector read in L2PCVectors
 
     ! Local variables
-    integer :: QUANTITY                 ! Loop inductor
-    integer :: NOQUANTITIES             ! Number of quantities in vector
-    integer :: VID                      ! HDF5 ID of vector group
-    integer :: QID                      ! HDF5 ID of quantity group
-    integer :: OBJTYPE                  ! Irrelevant argument to HDF5
+    integer :: FREQUENCYCOORDINATE      ! Enumeration
     integer :: INDEX                    ! Index into various arrays
+    integer :: MOLECULE                 ! Enumeration
+    integer :: NAMEINDEX                ! Quantity name
+    integer :: NOCHANS                  ! Dimension
+    integer :: NOINSTANCES              ! Dimension
+    integer :: NOINSTANCESOR1           ! Dimension
+    integer :: NOQUANTITIES             ! Number of quantities in vector
+    integer :: NOSURFS                  ! Dimension
+    integer :: NOSURFSOR1               ! Dimension
+    integer :: OBJTYPE                  ! Irrelevant argument to HDF5
+    integer :: QID                      ! HDF5 ID of quantity group
+    integer :: QUANTITY                 ! Loop inductor
+    integer :: QUANTITYTYPE             ! Enumerated
+    integer :: SIDEBAND                 ! Sideband -1,0,1
+    integer :: SIGNAL                   ! Index
     integer :: STATUS                   ! Flag from HDF
     integer :: STRINGINDEX              ! A string index
-    integer :: SIDEBAND                 ! Sideband -1,0,1
-    integer :: NOSURFSOR1               ! Dimension
-    integer :: NOINSTANCESOR1           ! Dimension
+    integer :: VERTICALCOORDINATE       ! Enumeratire
+    integer :: VID                      ! HDF5 ID of vector group
     integer :: VTINDEX                  ! Index of vector template
     character (len=64) :: THISNAME      ! Name of this quantity
     character (len=64) :: WORD          ! General string
+
+    logical :: COHERENT                 ! Flag
+    logical :: STACKED                  ! Flag
+    logical :: LOGBASIS                 ! Flag
 
     integer, dimension(:), pointer :: SIGINDS ! Index into signals database
     integer, dimension(:), pointer :: QTINDS ! Quantity indices
@@ -1228,8 +1251,6 @@ contains ! ============= Public Procedures ==========================
 
     ! Now go through quantities in order
     do quantity = 1, noQuantities
-      ! Nullify stuff so we don't clobber our databases
-      nullify ( qt%surfs, qt%phi )
 
       ! Point to this quanity
       call h5gOpen_f ( vId, trim(quantityNames(quantity)), qId, status )
@@ -1239,47 +1260,60 @@ contains ! ============= Public Procedures ==========================
 
       ! Store the name
       stringIndex = enter_terminal ( trim(quantityNames(quantity)), t_identifier ) 
-      qt%name = stringIndex
+      nameIndex = stringIndex
 
       ! Get the quantity type
       call GetHDF5Attribute ( qId, 'type', word )
       stringIndex = enter_terminal ( trim(word), t_identifier ) 
       decl = get_decl ( stringIndex, type=enum_value )
-      qt%quantityType = decl%units
+      quantityType = decl%units
 
       ! Get other info as appropriate
-      select case ( qt%quantityType )
+      signal = 0
+      sideband = 0
+      molecule = 0
+      frequencyCoordinate = l_none
+      select case ( quantityType )
       case ( l_vmr )
         call GetHDF5Attribute ( qID, 'molecule', word )
         stringIndex = enter_terminal ( trim(word), t_identifier ) 
         decl = get_decl ( stringIndex, type=enum_value )
-        qt%molecule = decl%units
+        molecule = decl%units
       case ( l_radiance )
         call GetHDF5Attribute ( qID, 'signal', word )
         call Parse_Signal ( word, sigInds, sideband=sideband)
-        qt%signal = sigInds(1)
-        qt%sideband = sideband
-        qt%frequencyCoordinate = l_channel
-        qt%verticalCoordinate = l_geodAltitude
+        signal = sigInds(1)
+        frequencyCoordinate = l_channel
+        verticalCoordinate = l_geodAltitude
         call deallocate_test(sigInds,'sigInds',ModuleName)
       case default
       end select
 
       ! Now read the dimensions for the quantity
-      call GetHDF5Attribute ( qID, 'noInstances', qt%noInstances )
-      call GetHDF5Attribute ( qID, 'noSurfs', qt%noSurfs )
-      call GetHDF5Attribute ( qID, 'noChans', qt%noChans )
+      call GetHDF5Attribute ( qID, 'noInstances', noInstances )
+      call GetHDF5Attribute ( qID, 'noSurfs', noSurfs )
+      call GetHDF5Attribute ( qID, 'noChans', noChans )
       call GetHDF5Attribute ( qId, 'verticalCoordinate', word )
       stringIndex = enter_terminal ( trim(word), t_identifier ) 
       decl = get_decl ( stringIndex, type=enum_value )
-      qt%verticalCoordinate = decl%units
-      call GetHDF5Attribute ( qId, 'logBasis', qt%logBasis )
-      call GetHDF5Attribute ( qId, 'coherent', qt%coherent )
-      call GetHDF5Attribute ( qId, 'stacked', qt%stacked )
+      verticalCoordinate = decl%units
+      call GetHDF5Attribute ( qId, 'logBasis', logBasis )
+      call GetHDF5Attribute ( qId, 'coherent', coherent )
+      call GetHDF5Attribute ( qId, 'stacked', stacked )
 
-      ! This creates a rather minimal quantity template, it seems to be, but
-      ! I'm modeling it after the ASCII version.  I wonder why I didn't use
-      ! ConstructQuantityTemplate?
+      call SetupNewQuantityTemplate ( qt, &
+        & noInstances=noInstances, noSurfs=noSurfs, noChans=noChans, &
+        & coherent=coherent, stacked=stacked )
+
+      qt%noInstancesLowerOverlap = 0
+      qt%noInstancesUpperOverlap = 0
+      qt%quantityType = quantityType
+      qt%name = nameIndex
+      qt%molecule = molecule
+      qt%signal = signal
+      qt%sideband = sideband
+      qt%verticalCoordinate = verticalCoordinate
+      qt%frequencyCoordinate = frequencyCoordinate
       qt%regular = .true.
       qt%instanceLen = qt%noChans* qt%noSurfs
       
@@ -1294,9 +1328,6 @@ contains ! ============= Public Procedures ==========================
         noSurfsOr1 = qt%noSurfs
       endif
       
-      call Allocate_test( qt%surfs, qt%noSurfs, noInstancesOr1, 'qt%surfs', ModuleName)
-      call Allocate_test( qt%phi, noSurfsOr1, qt%noInstances, 'qt%phi', ModuleName)
-
       ! Get the surfaces and phis
       call LoadFromHDF5DS ( qId, 'surfs', qt%surfs )
       call LoadFromHDF5DS ( qId, 'phi', qt%phi )
@@ -1305,6 +1336,12 @@ contains ! ============= Public Procedures ==========================
       qt%id = l2pcQTCounter
       l2pcQTCounter = l2pcQtCounter + 1
       qtInds(quantity) = AddQuantityTemplateToDatabase ( l2pcQTs, qt )
+
+      ! Now nullify the arrays in qt so we don't clobber them later
+      nullify ( qt%surfs )
+      nullify ( qt%phi, qt%geodLat, qt%lon, qt%time, qt%solarTime )
+      nullify ( qt%solarZenith, qt%losAngle, qt%mafIndex, qt%mafCounter )
+      nullify ( qt%frequencies )
 
       ! For the moment, close the quantity. We'll come back to it later to fill
       ! up the values for the vector
@@ -1417,6 +1454,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.38  2002/07/22 03:25:23  livesey
+! Bug fix and rework of loading vectors.
+!
 ! Revision 2.37  2002/07/17 06:00:21  livesey
 ! Got hdf5 l2pc reading stuff working
 !
