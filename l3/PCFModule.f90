@@ -135,8 +135,8 @@ CONTAINS
 ! Brief description of subroutine 
 ! This subroutine searches the PCF for an entry matching the input name.  If a
 ! match is found, it returns the name (including the path) & number of the file
-! file in the PCF.  If no entry is found, outName is returned with the value
-! 'NONE.'
+! file in the PCF.  If no entry is found, outName is the original name
+! concatenated with an output path & a PCF number of -1.
 
 ! Arguments
 
@@ -157,11 +157,6 @@ CONTAINS
       CHARACTER (LEN=FileNameLen) :: path, pcfName
 
       INTEGER :: i, indx, returnStatus, version
-
-! Initializations
-
-      mlspcf = -1
-      outName = 'NONE'
 
 ! Loop through all the files in this range of PCF numbers
 
@@ -190,6 +185,9 @@ CONTAINS
                mlspcf = i
                outName = pcfName
                EXIT
+            ELSE
+               mlspcf = -1
+               outName = path
             ENDIF
 
          ENDIF
@@ -205,6 +203,9 @@ END MODULE PCFModule
 !===================
 
 ! $Log$
+! Revision 1.3  2000/12/07 19:43:58  nakamura
+! Added 'level' to expandable fields in file template; extract file path names from PCF, rather than cf.
+!
 ! Revision 1.2  2000/10/24 19:45:26  nakamura
 ! Corrected subroutine name for SearchPCFNames in module Contents; changed version from a constant to a variable in getRef.
 !
