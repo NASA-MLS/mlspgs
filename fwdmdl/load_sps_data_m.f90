@@ -18,23 +18,21 @@ module LOAD_SPS_DATA_M
   Private
   Public :: load_sps_data
 
-  type, public :: Grids_T              ! Fit all Gridding categories
-    integer :: tot_no_frq             ! Total No. of entries in frequency grid
-    integer :: tot_no_zet             ! Total No. of entries in zeta grid
-    integer :: tot_no_phi             ! Total No. of entries in phi  grid
+  type, public :: Grids_T             ! Fit all Gridding categories
     integer,  pointer :: no_f(:)      ! No. of entries in frq. grid per sps
     integer,  pointer :: no_z(:)      ! No. of entries in zeta grid per sps
     integer,  pointer :: no_p(:)      ! No. of entries in phi  grid per sps
-    real(r8), pointer :: frq_basis(:) ! frq  grid entries (dim: tot_no_frq)
-    real(rp), pointer :: zet_basis(:) ! zeta grid entries (dim: tot_no_zet)
-    real(rp), pointer :: phi_basis(:) ! phi  grid entries (dim: tot_no_phi)
+    real(r8), pointer :: frq_basis(:) ! frq  grid entries for all
+    real(rp), pointer :: zet_basis(:) ! zeta grid entries for all
+    real(rp), pointer :: phi_basis(:) ! phi  grid entries for all
+    Logical,  pointer :: deriv_flags(:) ! derivatives flags
   end type Grids_T
 
 !---------------------------- RCS Ident Info -------------------------------
   character (LEN=256) :: Id = &
- "$Id$"
+   "$Id$"
   character (LEN=*), parameter :: ModuleName= &
- "$RCSfile$"
+   "$RCSfile$"
 !---------------------------------------------------------------------------
 contains
 !-------------------------------------------------------------------
@@ -84,6 +82,8 @@ contains
            &   accum_p_dv,accum_f_dw,accum_f_dn,accum_f_dv
 
     type (VectorValue_T), pointer :: F             ! An arbitrary species
+
+    Integer, allocatable :: dum_phi(:),dum_zet(:),dum_frq(:)
 
     Integer :: mp, mz, ii, jj, kk
     Real(r8) :: Tmp, Frq, P, w, v
@@ -137,15 +137,19 @@ contains
     end do
 
     call Allocate_test ( sps_values, f_len, 'sps_values', ModuleName )
+
+    allocate ( Grids_f%deriv_flags(f_len), stat=j )
+    if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate//'Grids_f%deriv_flags' )
+
+    Grids_f%deriv_flags = .true.   ! ** Initialize all values to TRUE
 !
     n_f_zet = SUM(Grids_f%no_z)
     n_f_phi = SUM(Grids_f%no_p)
     n_f_frq = SUM(Grids_f%no_f)
-
-    Grids_f%tot_no_zet = n_f_zet
-    Grids_f%tot_no_phi = n_f_phi
-    Grids_f%tot_no_frq = n_f_frq
-
+!
+! Allocate space for the zeta, phi & freq. basis componenets
+!
     allocate ( Grids_f%zet_basis(n_f_zet), stat=j )
     if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate//'Grids_f%zet_basis' )
@@ -180,9 +184,9 @@ contains
       n = l + kz
       m = s + kf
       k = j + kp
-      r = f_len + kz * kp * kf
-      Grids_f%frq_basis(s:m-1) = 0.0
       Grids_f%zet_basis(l:n-1) = f%template%surfs(:,1)
+      Grids_f%phi_basis(j:k-1) = f%template%phi(1,:) * Deg2Rad
+      Grids_f%frq_basis(s:m-1) = 0.0
       if ( f%template%frequencyCoordinate /= l_none ) then
         if ( f%template%frequencyCoordinate /= l_frequency ) &
           & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -194,7 +198,6 @@ contains
             & "Unable to deal with frequency coordinate for a species" )
         endif
       end if
-      Grids_f%phi_basis(j:k-1) = f%template%phi(1,:) * Deg2Rad
 !
 ! ** ZEBUG - Simulate f%values for EXTINCTION, using the N2 function
 !
@@ -218,6 +221,7 @@ contains
 !
 ! ** END ZEBUG
 !
+      r = f_len + kz * kp * kf
       sps_values(f_len:r-1)=RESHAPE(f%values(1:kz*kf,1:kp),(/kz*kf*kp/))
       if (f%template%logBasis) then
         lin_log(ii) = .true.
@@ -235,6 +239,97 @@ contains
 !
     f_len = f_len - 1
 
+    if(f_len > -100) return    ! ** By-pass the tempoprary code below ..
+!
+! *** ZEBUG: Temporary code to load the derivatives flags for each species
+!
+    Close(31,iostat=j)
+    Open(31,file='der_flags.dat',status='OLD',action='READ',iostat=j)
+    if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Could not open der_flags.dat file' )
+!
+    n = Maxval(Grids_f%no_p(:))
+    allocate ( dum_phi(n), stat=j )
+    if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate//'dum_phi' )
+
+    n = Maxval(Grids_f%no_z(:))
+    allocate ( dum_zet(n), stat=j )
+    if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate//'dum_zet' )
+
+    n = Maxval(Grids_f%no_f(:))
+    allocate ( dum_frq(n), stat=j )
+    if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate//'dum_frq' )
+
+    m = 0
+    do ii = 1, no_mol
+      i = mol_cat_index(ii)
+      kk = abs(molecules(i))
+      if ( kk == l_extinction ) CYCLE
+      Spectag = spec_tags(kk)
+      Rewind(31,iostat=j)
+      do
+        Read(31,*,iostat=j) n
+        if(j == 0) then
+          if(Spectag == n) EXIT
+        else if(j < 0) then
+          Print *,'** Spectag:',Spectag
+          Print *,'   Not found in in der_flags.dat file'
+          Call MLSMessage ( MLSMSG_Error, ModuleName, ' ')
+        else
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+         &                  'Error reading der_flags.dat file' )
+        endif
+      end do
+      kp = Grids_f%no_p(ii)
+      kz = Grids_f%no_z(ii)
+      kf = Grids_f%no_f(ii)
+      dum_phi = 0
+      read(31,*,iostat=j) k,dum_phi(1:k)
+      if(k /= kp) then
+        Print *,'** Spectag:',Spectag,' Inputs: phi deriv. flags ..'
+        Print *,'   Incosistent number of entries in der_flags.dat file'
+        Call MLSMessage ( MLSMSG_Error, ModuleName, ' ')
+      endif
+      dum_zet = 0
+      read(31,*,iostat=j) k,dum_zet(1:k)
+      if(k /= kz) then
+        Print *,'** Spectag:',Spectag,' Inputs: zet deriv. flags ..'
+        Print *,'   Incosistent number of entries in der_flags.dat file'
+        Call MLSMessage ( MLSMSG_Error, ModuleName, ' ')
+      endif
+      dum_frq = 0
+      read(31,*,iostat=j) k,dum_frq(1:k)
+      if(k /= kf) then
+        Print *,'** Spectag:',Spectag,' Inputs: frq deriv. flags ..'
+        Print *,'   Incosistent number of entries in der_flags.dat file'
+        Call MLSMessage ( MLSMSG_Error, ModuleName, ' ')
+      endif
+      do i = 1, kp
+        if(dum_phi(i) < 1) then
+          m = m + kz * kf
+        else
+          do j = 1, kz
+            if(dum_zet(j) > 0) then
+              Grids_f%deriv_flags(m+1:m+kf) =  (dum_frq(1:kf) > 0)
+            endif
+            m = m + kf
+          end do
+        endif
+      end do
+    end do
+
+    Close(31,iostat=j)
+    deallocate ( dum_phi, dum_zet, dum_frq, stat=j )
+!   Print *,' f_len, m = ',f_len,m
+!   Print *,' Grids_f%deriv_flags(1...m):'
+!   Print 932,Grids_f%deriv_flags(1:m)
+932 format(37(1x,l1))
+!   if (m > 0) call MLSMessage (MLSMSG_Error,ModuleName,'DEBUG Stop' )
+!
+! *** End of Temporary code
 !
     !******************* LOAD SPECTRAL SPECIES DATA ****************
 !
@@ -300,9 +395,9 @@ contains
       end do
       !  *** if(Spect_Der(m)%Spectag /= Spectag) cycle
       CA = '@' ! *** Spect_Der(m)%type
-      kz = 0   ! Spect_Der(m)%no_zeta_values
-      kp = 0   ! Spect_Der(m)%no_phi_values
-      kf = 0   ! Spect_Der(m)%no_frq_values
+      kz = 1   ! Spect_Der(m)%no_zeta_values
+      kp = 1   ! Spect_Der(m)%no_phi_values
+      kf = 1   ! Spect_Der(m)%no_frq_values
       select case ( CA )
         case ( 'W' )
           Grids_dw%no_z(ii) = kz
@@ -329,9 +424,6 @@ contains
     end do
 !
     if(index(WNV,'W') > 0) then
-      Grids_dw%tot_no_zet = accum_z_dw
-      Grids_dw%tot_no_phi = accum_p_dw
-      Grids_dw%tot_no_frq = accum_f_dw
       allocate ( Grids_dw%zet_basis(accum_z_dw), stat=j )
       if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Allocate//'Grids_dw%zet_basis' )
@@ -344,9 +436,6 @@ contains
     endif
 !
     if(index(WNV,'N') > 0) then
-      Grids_dn%tot_no_zet = accum_z_dn
-      Grids_dn%tot_no_phi = accum_p_dn
-      Grids_dn%tot_no_frq = accum_f_dn
       allocate ( Grids_dn%zet_basis(accum_z_dn), stat=j )
       if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Allocate//'Grids_dn%zet_basis' )
@@ -359,9 +448,6 @@ contains
     endif
 !
     if(index(WNV,'V') > 0) then
-      Grids_dv%tot_no_zet = accum_z_dv
-      Grids_dv%tot_no_phi = accum_p_dv
-      Grids_dv%tot_no_frq = accum_f_dv
       allocate ( Grids_dv%zet_basis(accum_z_dv), stat=j )
       if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Allocate//'Grids_dv%zet_basis' )
@@ -458,6 +544,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.8  2002/01/09 00:30:48  zvi
+! Fix a bug with skip_eta_frq
+!
 ! Revision 2.7  2002/01/08 01:02:54  livesey
 ! Made my_catalog intent(in) rather than pointer, also 'fixed'
 ! problem with frequency coordinate?

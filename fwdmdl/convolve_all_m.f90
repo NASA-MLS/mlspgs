@@ -57,8 +57,8 @@ contains
     integer, intent(IN) :: si
     real(r8), intent(IN) :: CENTER_ANGLE
     real(r8), intent(IN) :: I_RAW(:)
-    Real(r4), intent(in) :: k_temp(:,:,WindowStart:)   ! (Nptg,mxco,mnp)
-    Real(r4), intent(in) :: k_atmos(:,:,WindowStart:,:) ! (Nptg,mxco,mnp,Nsps)
+    Real(r4), intent(in) :: k_temp(:,:,WindowStart:)
+    Real(r4), intent(in) :: k_atmos(:,:,:,WindowStart:,:)
     real(r8), intent(in) :: SBRATIO
     type (Matrix_T), intent(inout), optional :: Jacobian
     logical, dimension(:), intent(inout) :: rowFlags ! Flag to calling code
@@ -71,14 +71,14 @@ contains
 
     integer :: FFT_INDEX(size(antennaPattern%aaap))
     integer :: Ind                      ! Index
-    integer :: FFT_pts, Is, J, Ktr, Nf, Ntr, Ptg_i, Sv_i
     integer :: Row, Col                 ! Matrix entries
-    integer :: No_tan_hts, Lk, Uk
+    integer :: FFT_pts, Is, J, Ktr, Nf, Ntr, Ptg_i, Sv_i
+    integer :: No_tan_hts, Lk, Uk, n_sps, jf, jz
 
     logical :: Want_Deriv
 
     real(r8) :: K_star_tmp(ptan%template%noSurfs)
-    Real(r8) :: Q
+    Real(r8) :: Q, R
     Real(r8) :: SRad(ptan%template%noSurfs), Term(ptan%template%noSurfs)
     Real(r8), dimension(size(fft_index)) :: FFT_PRESS, FFT_ANGLES, RAD
 
@@ -154,7 +154,7 @@ contains
 
     ! Find out if user wants pointing derivatives
     if ( .not. want_deriv ) return
-    ! Derivatives wanted,find index location k_star_all and write the derivative
+    ! Derivatives wanted,find index location Jacobian and write the derivative
     row = FindBlock( Jacobian%row, radiance%index, maf )
     rowFlags(row) = .true.
     col = FindBlock ( Jacobian%col, ptan%index, maf )
@@ -193,7 +193,7 @@ contains
       do nf = windowStart, windowFinish
 
         col = FindBlock ( Jacobian%col, temp%index, nf )
-        select case ( Jacobian%block(row,col)%kind ) 
+        select case ( Jacobian%block(row,col)%kind )
         case ( m_absent )
           call CreateBlock ( Jacobian, row, col, m_full )
           jacobian%block(row,col)%values = 0.0_r8
@@ -203,15 +203,15 @@ contains
             & 'Wrong type for temperature derivative matrix' )
         end select
 
-        do sv_i = 1, temp%template%noSurfs
+        do jz = 1, temp%template%noSurfs
 
           ! run through representation basis coefficients
           ! Integrand over temperature derivative plus pointing differential
 
           do ptg_i = 1, no_tan_hts
             q = 0.0
-            if ( nf == mafTInstance) q = d2x_dxdt(ptg_i,sv_i)
-            Rad(ptg_i) = i_raw(ptg_i) * q + k_temp(ptg_i,sv_i,nf)
+            if ( nf == mafTInstance) q = d2x_dxdt(ptg_i,jz)
+            Rad(ptg_i) = i_raw(ptg_i) * q + k_temp(ptg_i,jz,nf)
           end do
 
           ! Now, Convolve:
@@ -235,11 +235,11 @@ contains
           if ( nf /= mafTInstance) then
             do ptg_i = 1, j
               ind = channel + radiance%template%noChans*(ptg_i-1)
-              jacobian%block(row,col)%values( ind, sv_i ) = &
-                & jacobian%block(row,col)%values( ind, sv_i ) + &
-                &   sbRatio*k_star_tmp(ptg_i)
+              q = jacobian%block(row,col)%values( ind, jz )
+              jacobian%block(row,col)%values( ind, jz ) = &
+                                          & q + sbRatio*k_star_tmp(ptg_i)
             end do
-            cycle
+            CYCLE
           end if
 
           ! Now the convolution of radiance with the derivative antenna field
@@ -263,7 +263,7 @@ contains
 
           ! Transfer dx_dt from convolution grid onto the output grid
 
-          Call Lintrp (tan_press, Ptan%values(:,maf), dx_dt(1:,sv_i), SRad, &
+          Call Lintrp (tan_press, Ptan%values(:,maf), dx_dt(1:,jz), SRad, &
                      & no_tan_hts, j )
 
           k_star_tmp = k_star_tmp + srad*term
@@ -272,7 +272,7 @@ contains
           ! with the antenna derivative
 
           Rad(1:no_tan_hts) = &
-            dx_dt(1:no_tan_hts,sv_i) * i_raw(1:no_tan_hts)
+            dx_dt(1:no_tan_hts,jz) * i_raw(1:no_tan_hts)
 
           ! Now, convolve:
 
@@ -292,8 +292,9 @@ contains
           do ptg_i = 1, j
             q = k_star_tmp(ptg_i)
             ind = channel + radiance%template%noChans*(ptg_i-1)
-            jacobian%block(row,col)%values( ind, sv_i ) = &
-              jacobian%block(row,col)%values( ind, sv_i ) + sbRatio*(q - Term(ptg_i))
+            r = jacobian%block(row,col)%values( ind, jz)
+            jacobian%block(row,col)%values( ind, jz) = r + &
+                                             sbRatio*(q - Term(ptg_i))
           end do
 
         end do
@@ -306,25 +307,31 @@ contains
 
     if ( forwardModelConfig%atmos_der) then
 
-      lk = lbound(k_atmos,3)
-      uk = ubound(k_atmos,3)
-      do is = 1, size(ForwardModelConfig%molecules) ! What about derivatives!???NJL
+      lk = lbound(k_atmos,4)   ! The lower Phi dimension
+      uk = ubound(k_atmos,4)   ! The upper Phi dimension
+      n_sps = size(ForwardModelConfig%molecules)
+
+      do is = 1, n_sps
+
         if ( forwardModelConfig%molecules(is) == l_extinction ) then
-          f => GetVectorQuantityByType ( forwardModelIn, &
-            & quantityType=l_extinction, radiometer=radiance%template%radiometer, &
-            & noError=.true. )
+          f => GetVectorQuantityByType(forwardModelIn,quantityType=l_extinction, &
+            &  radiometer=radiance%template%radiometer, noError=.true. )
         else
-          f => GetVectorQuantityByType ( forwardModelIn, &
-            & quantityType=l_vmr, molecule=forwardModelConfig%molecules(is), noError=.true. )
+          f => GetVectorQuantityByType ( forwardModelIn, quantityType=l_vmr, &
+            &  molecule=forwardModelConfig%molecules(is), noError=.true. )
         endif
+
         if ( associated(f)) then
 
           ! Derivatives needed continue to process
 
           do nf = 1, f%template%noInstances
+
+          ! run through phi representation basis coefficients
+
             if ( nf+lk-1 > uk) EXIT
             col = FindBlock ( Jacobian%col, f%index, nf+windowStart-1 )
-            select case ( Jacobian%block(row,col)%kind ) 
+            select case ( Jacobian%block(row,col)%kind )
             case ( m_absent )
               call CreateBlock ( Jacobian, row, col, m_full )
               jacobian%block(row,col)%values = 0.0_r8
@@ -334,33 +341,42 @@ contains
                 & 'Wrong type for vmr derivative matrix' )
             end select
 
-            do sv_i = 1, f%template%noSurfs
+            sv_i = 0
+            do jz = 1, f%template%noSurfs
 
-              ! run through representation basis coefficients
+            ! run through zeta representation basis coefficients
 
-              Rad(1:no_tan_hts) = k_atmos(1:no_tan_hts,sv_i,nf+lk-1,is)
+              do jf = 1, f%template%noChans
 
-              ! Now Convolve the derivative
+                ! run through Frequencies basis coefficients
 
-              fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
-              Call fov_convolve(fft_angles,Rad,center_angle,1,no_tan_hts, &
-                &               fft_pts,AntennaPattern,Ier)
-              if ( Ier /= 0) Return
+                sv_i = sv_i + 1
+                Rad(1:no_tan_hts) = k_atmos(1:no_tan_hts,jf,jz,nf+lk-1,is)
 
-              if ( fft_index(1).gt.0) then
-                do ptg_i = 1, Ktr
-                  Rad(ptg_i) = Rad(fft_index(ptg_i))
-                end do
-              end if
+                ! Now Convolve the derivative
 
-              ! Interpolate onto the output grid, and store in k_star_all ..
+                fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
+                Call fov_convolve(fft_angles,Rad,center_angle,1,no_tan_hts, &
+                  &               fft_pts,AntennaPattern,Ier)
+                if ( Ier /= 0) Return
 
-              Call Lintrp(fft_press,Ptan%values(:,maf),Rad,SRad,Ktr,j)
-              do ptg_i = 1,j
-                ind = channel+ radiance%template%noChans*(ptg_i-1)
-                jacobian%block(row,col)%values( ind, sv_i ) = &
-                  & jacobian%block(row,col)%values( ind, sv_i ) + sbRatio*Srad(ptg_i)
-              end do                    ! Pointing
+                if ( fft_index(1).gt.0) then
+                  do ptg_i = 1, Ktr
+                    Rad(ptg_i) = Rad(fft_index(ptg_i))
+                  end do
+                end if
+
+                ! Interpolate onto the output grid, and store in Jacobian ..
+
+                Call Lintrp(fft_press,Ptan%values(:,maf),Rad,SRad,Ktr,j)
+
+                do ptg_i = 1, j
+                  ind = channel + radiance%template%noChans*(ptg_i-1)
+                  q = jacobian%block(row,col)%values( ind, sv_i )
+                  jacobian%block(row,col)%values( ind, sv_i ) = &
+                                            &    q + sbRatio*Srad(ptg_i)
+                end do                  ! Pointing
+              end do                    ! F channels (Frequencies)
             end do                      ! F surfs
           end do                        ! F instances
         end if                          ! Want derivatives for this species
@@ -375,6 +391,9 @@ contains
 !
 end module CONVOLVE_ALL_M
 ! $Log$
+! Revision 2.1  2001/11/08 00:10:36  livesey
+! Updated for extinction stuff
+!
 ! Revision 2.0  2001/09/17 20:26:26  livesey
 ! New forward model
 !

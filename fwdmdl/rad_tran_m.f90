@@ -1,4 +1,3 @@
-!
 module RAD_TRAN_M
 !
   use MLSCommon, only: R8, RP, IP
@@ -7,6 +6,7 @@ module RAD_TRAN_M
   USE D_T_SCRIPT_DTNP_M, ONLY: DT_SCRIPT_DT
   USE DO_DELTA_M, ONLY: PATH_OPACITY,HYD_OPACITY
   USE SCRT_DN_M, ONLY: SCRT_DN, GET_DSCRT_NO_T_DN, GET_DSCRT_DN
+  USE LOAD_SPS_DATA_M, ONLY: GRIDS_T
   implicit NONE
   private
   PUBLIC :: PATH_CONTRIB, RAD_TRAN, DRAD_TRAN_DF, DRAD_TRAN_DT, DRAD_TRAN_DX
@@ -176,7 +176,7 @@ END SUBROUTINE rad_tran
 !----------------------------------------------------------------------
 ! This is the radiative transfer derivative wrt mixing ratio model
 !
-SUBROUTINE drad_tran_df(z_path_c,no_z_f,no_p_f,lin_log,sps_values, &
+SUBROUTINE drad_tran_df(z_path_c,Grids_f,lin_log,sps_values,            &
                      &  beta_path_c,eta_zxp_f_c,sps_path_c,do_calc_f_c, &
                      &  beta_path_f,eta_zxp_f_f,sps_path_f,do_calc_f_f, &
                      &  do_gl,del_s,ref_cor,ds_dh_gl,dh_dz_gl,t_script,tau, &
@@ -185,8 +185,7 @@ SUBROUTINE drad_tran_df(z_path_c,no_z_f,no_p_f,lin_log,sps_values, &
 ! Inputs
 !
   REAL(rp), INTENT(in) :: z_path_c(:) ! -log(P) on main grid.
-  INTEGER(ip), INTENT(in) :: no_z_f(:) ! number zeta bases for each species.
-  INTEGER(ip), INTENT(in) :: no_p_f(:) ! number phi bases for each species.
+  Type (Grids_T) :: Grids_f           ! All the coordinates
   LOGICAL, INTENT(in) :: lin_log(:) ! kind of basis to use for each species.
   REAL(rp), INTENT(in) :: sps_values(:) ! sps basis break-point values.
   REAL(rp), INTENT(in) :: beta_path_c(:,:) ! cross section for each species
@@ -227,7 +226,7 @@ SUBROUTINE drad_tran_df(z_path_c,no_z_f,no_p_f,lin_log,sps_values, &
 ! Internals
 !
   INTEGER(ip) :: sv_i, sv_j, sps_i, n_inds, i, j, k, l, i_start, n_sps
-  INTEGER(ip) :: n_path, p_i, no_to_gl, mid
+  INTEGER(ip) :: n_path, p_i, no_to_gl, mid, n_tot
   INTEGER(ip), ALLOCATABLE :: inds(:),all_inds(:),more_inds(:)
 !
 ! use automatic allocations here
@@ -237,24 +236,27 @@ SUBROUTINE drad_tran_df(z_path_c,no_z_f,no_p_f,lin_log,sps_values, &
 !
 ! Begin code
 !
-  n_sps = SIZE(no_z_f)
+  n_sps = SIZE(Grids_f%no_z)
   n_path = SIZE(tau)
   mid = n_path / 2
 !
   ALLOCATE(d_delta_df(1:n_path))
   ALLOCATE(do_calc(1:n_path))
-!
+
   sv_i = 0
+  drad_df(:) = 0.0_rp
+!
   DO sps_i = 1 , n_sps
 !
-    DO sv_j = 1 , no_z_f(sps_i) * no_p_f(sps_i)
+    n_tot = Grids_f%no_f(sps_i)*Grids_f%no_p(sps_i)*Grids_f%no_p(sps_i)
+    DO sv_j = 1 , n_tot
 !
       sv_i = sv_i + 1
-      d_delta_df = 0.0_rp
-      drad_df(sv_i) = 0.0_rp
+      if(.NOT. Grids_f%deriv_flags(sv_i)) CYCLE
 
-      do_calc = do_calc_f_c(:,sv_i)
       i = 1
+      d_delta_df = 0.0_rp
+      do_calc = do_calc_f_c(:,sv_i)
       DO p_i = 1 , n_path
         IF(do_gl(p_i)) THEN
           IF(ANY(do_calc_f_f(i:i+ng-1,sv_i))) do_calc(p_i) = .true.
@@ -280,8 +282,8 @@ SUBROUTINE drad_tran_df(z_path_c,no_z_f,no_p_f,lin_log,sps_values, &
 !
         IF(lin_log(sps_i)) THEN
 !
-          singularity = beta_path_c(inds,sps_i)*eta_zxp_f_c(inds,sv_i)* &
-                     &  sps_path_c(inds,sps_i)
+          singularity = beta_path_c(inds,sps_i)*eta_zxp_f_c(inds,sv_i) &
+                     &  * sps_path_c(inds,sps_i)
           d_delta_df(inds) = singularity * del_s(inds)
 !
           no_to_gl = COUNT(do_gl(inds))
@@ -330,7 +332,6 @@ SUBROUTINE drad_tran_df(z_path_c,no_z_f,no_p_f,lin_log,sps_values, &
 !
           d_delta_df(inds) = ref_cor(inds)*d_delta_df(inds) &
                            / EXP(sps_values(sv_i))
-!
 !
         ELSE
 !
@@ -400,8 +401,8 @@ SUBROUTINE drad_tran_df(z_path_c,no_z_f,no_p_f,lin_log,sps_values, &
 !
   ENDDO
 !
-  DEALLOCATE(d_delta_df)
   DEALLOCATE(do_calc)
+  DEALLOCATE(d_delta_df)
 !
 END SUBROUTINE drad_tran_df
 !
@@ -409,7 +410,7 @@ END SUBROUTINE drad_tran_df
 ! This is the radiative transfer derivative wrt spectroscopy model
 !  (Here dx could be: dw, dn or dv (dNu0) )
 !
-SUBROUTINE drad_tran_dx(z_path_c,no_z_f,no_p_f,dbeta_path_c,eta_zxp_f_c, &
+SUBROUTINE drad_tran_dx(z_path_c,Grids_f,dbeta_path_c,eta_zxp_f_c, &
                      &  sps_path_c,do_calc_f_c,dbeta_path_f,eta_zxp_f_f, &
                      &  sps_path_f,do_calc_f_f,do_gl,del_s,ref_cor,      &
                      &  ds_dh_gl,dh_dz_gl,t_script,tau,i_stop,drad_dx,   &
@@ -418,8 +419,7 @@ SUBROUTINE drad_tran_dx(z_path_c,no_z_f,no_p_f,dbeta_path_c,eta_zxp_f_c, &
 ! Inputs
 !
   REAL(rp), INTENT(in) :: z_path_c(:) ! -log(P) on main grid.
-  INTEGER(ip), INTENT(in) :: no_z_f(:) ! number zeta bases for each species.
-  INTEGER(ip), INTENT(in) :: no_p_f(:) ! number phi bases for each species.
+  Type (Grids_T) :: Grids_f           ! All the coordinates
   REAL(rp), INTENT(in) :: dbeta_path_c(:,:) ! derivative of beta wrt dx
 !                                            on main grid.
   REAL(rp), INTENT(in) :: eta_zxp_f_c(:,:) ! representation basis function
@@ -467,7 +467,7 @@ SUBROUTINE drad_tran_dx(z_path_c,no_z_f,no_p_f,dbeta_path_c,eta_zxp_f_c, &
 !
 ! Begin code
 !
-  n_sps = SIZE(no_z_f)
+  n_sps = SIZE(Grids_f%no_z)
   n_path = SIZE(tau)
   mid = n_path / 2
 !
@@ -475,15 +475,17 @@ SUBROUTINE drad_tran_dx(z_path_c,no_z_f,no_p_f,dbeta_path_c,eta_zxp_f_c, &
   ALLOCATE(do_calc(1:n_path))
 !
   sv_i = 0
+  drad_dx(:) = 0.0_rp
+
   DO sps_i = 1 , n_sps
 !
-    DO sv_j = 1 , no_z_f(sps_i) * no_p_f(sps_i)
+    DO sv_j = 1 , Grids_f%no_z(sps_i) * Grids_f%no_p(sps_i)
 !
       sv_i = sv_i + 1
       d_delta_dx = 0.0_rp
-      drad_dx(sv_i) = 0.0_rp
 
       do_calc = do_calc_f_c(:,sv_i)
+
       i = 1
       DO p_i = 1 , n_path
         IF(do_gl(p_i)) THEN
@@ -672,16 +674,18 @@ SUBROUTINE drad_tran_dt(z_path_c,h_path_c,t_path_c,dh_dt_path_c, &
 !
 ! compute the opacity derivative singularity value
 !
+  drad_dt(:) = 0.0_rp
+
   DO sv_i = 1 , sv_t
 !
     i_start = 1
     d_delta_dt = 0.0_rp
-    drad_dt(sv_i) = 0.0_rp
 !
 ! do the absorption part
 ! combine non zeros flags for both the main and gl parts
 !
     do_calc = do_calc_t_c(:,sv_i)
+
     i = 1
     DO p_i = 1 , n_path
       IF(do_gl(p_i)) THEN
@@ -908,6 +912,9 @@ END SUBROUTINE drad_tran_dt
 !----------------------------------------------------------------------
 End module RAD_TRAN_M
 ! $Log$
+! Revision 2.0  2001/09/17 20:26:27  livesey
+! New forward model
+!
 ! Revision 1.11.2.3  2001/09/13 22:51:24  zvi
 ! Separating allocation stmts
 !

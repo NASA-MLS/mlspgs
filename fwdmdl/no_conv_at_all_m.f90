@@ -52,8 +52,8 @@ contains
     real(r8), intent(IN) :: I_RAW(:),TAN_PRESS(:)
     real(r8), intent(IN) :: SBRATIO
 !
-    Real(r4), intent(in) :: k_temp(:,:,WindowStart:)    ! (Nptg,mxco,mnp)
-    Real(r4), intent(in) :: k_atmos(:,:,WindowStart:,:) ! (Nptg,mxco,mnp,Nsps)
+    Real(r4), intent(in) :: k_temp(:,:,WindowStart:)
+    Real(r4), intent(in) :: k_atmos(:,:,:,WindowStart:,:)
 
     type (Matrix_T), intent(inout), optional :: Jacobian
     logical, dimension(:), intent(inout) :: rowFlags ! Flag to calling code
@@ -62,13 +62,13 @@ contains
 
     integer:: No_t, No_tan_hts, No_phi_t
     type (VectorValue_T), pointer :: F  ! vmr quantity
-    integer :: Lk, Uk
+    integer :: Lk, Uk, jf, jz, n_sps
     integer :: IS, J, K, NF, SV_I, Spectag
     integer :: Row, col                 ! Indices
     integer :: Ptg                      ! Index
     integer :: Ind                      ! Index
 
-    real(r8) :: RAD( size(tan_press))
+    real(r8) :: RAD( size(tan_press)), Q
     real(r8) :: SRad(ptan%template%noSurfs)
     real(r8) :: Der_all(ptan%template%noSurfs)
     real(r8) :: I_star_all(ptan%template%noSurfs)
@@ -116,7 +116,7 @@ contains
       radiance%values( ind, maf ) = &
         & radiance%values ( ind, maf ) + sbRatio*i_star_all(ptg)
     end do
-      
+
 
     if ( .not. ANY((/forwardModelConfig%temp_der, forwardModelConfig%atmos_der, &
       & forwardModelConfig%spect_der/)) ) Return
@@ -137,7 +137,7 @@ contains
       Rad(1:) = 0.0
       do nf = windowStart, windowFinish
         col = FindBlock ( Jacobian%col, temp%index, nf )
-        select case ( Jacobian%block(row,col)%kind ) 
+        select case ( Jacobian%block(row,col)%kind )
         case ( m_absent )
           call CreateBlock ( Jacobian, row, col, m_full )
           jacobian%block(row,col)%values = 0.0_r8
@@ -147,13 +147,13 @@ contains
             & 'Wrong type for temperature derivative matrix' )
         end select
 
-        do sv_i = 1, no_t
-          Rad(1:k) = k_temp(1:k,sv_i,nf)
+        do jz = 1, no_t
+          Rad(1:k) = k_temp(1:k,jz,nf)
           Call Cspline ( tan_press, Ptan%values(:,maf), Rad, SRad, k, j )
           do ptg = 1,j
-            ind = channel+ radiance%template%noChans*(ptg-1)
-            jacobian%block(row,col)%values( ind, sv_i) = &
-              & jacobian%block(row,col)%values( ind, sv_i) + sbRatio*Srad(ptg)
+            ind = channel + radiance%template%noChans*(ptg-1)
+            jacobian%block(row,col)%values( ind, jz) = &
+              & jacobian%block(row,col)%values( ind, jz) + sbRatio*Srad(ptg)
           end do
         end do
 
@@ -166,18 +166,20 @@ contains
 
       ! ****************** atmospheric derivatives ******************
 
-      lk = lbound(k_atmos,3)
-      uk = ubound(k_atmos,3)
-      do is = 1, size(ForwardModelConfig%molecules)
+      lk = lbound(k_atmos,4)   ! The lower Phi dimension
+      uk = ubound(k_atmos,4)   ! The upper Phi dimension
+      n_sps = size(ForwardModelConfig%molecules)
+
+      do is = 1, n_sps
 
         if ( forwardModelConfig%molecules(is) == l_extinction ) then
-          f => GetVectorQuantityByType ( forwardModelIn, &
-            & quantityType=l_extinction, radiometer=radiance%template%radiometer, &
-            & noError=.true. )
+          f => GetVectorQuantityByType(forwardModelIn, quantityType=l_extinction, &
+            &  radiometer=radiance%template%radiometer, noError=.true. )
         else
-          f => GetVectorQuantityByType ( forwardModelIn, &
-            & quantityType=l_vmr, molecule=forwardModelConfig%molecules(is), noError=.true. )
+          f => GetVectorQuantityByType ( forwardModelIn, quantityType=l_vmr, &
+            &  molecule=forwardModelConfig%molecules(is), noError=.true. )
         endif
+
         if ( associated(f) ) then
 
           Rad(1:) = 0.0
@@ -185,9 +187,13 @@ contains
           ! Derivatives needed continue to process
 
           do nf = 1, f%template%noInstances
-            if ( nf+lk-1 > uk) exit
+
+          ! run through phi representation basis coefficients
+
+            if ( nf+lk-1 > uk) EXIT
+
             col = FindBlock ( Jacobian%col, f%index, nf+windowStart-1 )
-            select case ( Jacobian%block(row,col)%kind ) 
+            select case ( Jacobian%block(row,col)%kind )
             case ( m_absent )
               call CreateBlock ( Jacobian, row, col, m_full )
               jacobian%block(row,col)%values = 0.0_r8
@@ -197,23 +203,36 @@ contains
                 & 'Wrong type for vmr derivative matrix' )
             end select
 
-            do sv_i = 1, f%template%noSurfs
-              Rad(1:k) = k_atmos(1:k,sv_i,nf+lk-1,is)
-              Call Lintrp ( tan_press, Ptan%values(:,maf), Rad, SRad, k, j )
-              do ptg = 1, j
-                ind = channel+ radiance%template%noChans*(ptg-1)
-                jacobian%block(row,col)%values( ind, sv_i) = &
-                  & jacobian%block(row,col)%values( ind, sv_i) + sbRatio*Srad(ptg)
+            sv_i = 0
+            do jz = 1, f%template%noSurfs
+
+            ! run through zeta representation basis coefficients
+
+              do jf = 1, f%template%noChans
+
+                ! run through Frequencies basis coefficients
+
+                sv_i = sv_i + 1
+                Rad(1:k) = k_atmos(1:k,jf,jz,nf+lk-1,is)
+                Call Lintrp(tan_press,Ptan%values(:,maf),Rad,SRad,k,j)
+                do ptg = 1, j
+                  ind = channel + radiance%template%noChans*(ptg-1)
+                  q = jacobian%block(row,col)%values( ind, sv_i)
+                  jacobian%block(row,col)%values( ind, sv_i) = &
+                                                       & q + sbRatio*Srad(ptg)
+                end do
+
               end do
+
             end do
 
           end do
 
-        end if
+        endif
 
       end do
 
-    end if
+    endif
 
     Return
 
@@ -221,6 +240,9 @@ contains
 
 end module NO_CONV_AT_ALL_M
 ! $Log$
+! Revision 2.1  2001/11/08 00:10:49  livesey
+! Updated to include extinction
+!
 ! Revision 2.0  2001/09/17 20:26:27  livesey
 ! New forward model
 !
@@ -289,3 +311,4 @@ end module NO_CONV_AT_ALL_M
 !
 ! Revision 1.1  2000/05/04 18:12:05  vsnyder
 ! Initial conversion to Fortran 90
+
