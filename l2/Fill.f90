@@ -4238,13 +4238,12 @@ contains ! =====     Public Procedures     =============================
       integer :: MYCHANNEL              ! Possibly offset channel
       integer :: i, mif, maf
       type (Signal_T) :: signalIn, signalOut, signalRef
-!      type (Signal_T), dimension(2) :: signals
       real(r8), dimension(:), pointer :: freq1, freqL1, freqU1
       real(r8), dimension(:), pointer :: freq2, freqL2, freqU2
       real(r8), dimension(:), pointer :: freq, freqL, freqU
       real(r8) :: ratio1, ratio2    ! signal sideband fractions
       real(r8) :: scaledRad   ! scaled radiance according to the f^4 law 
-      
+
       ! Executable code
       nullify(freq, freqL, freqU, freq1, freqL1, freqU1, freq2, freqL2, freqU2)
 
@@ -4253,11 +4252,11 @@ contains ! =====     Public Procedures     =============================
         & sideband=(/-1,1/), minorFrame=.true. )) &
         & call Announce_Error ( key, 0, 'Quantity must be cloud-induced-radiances to fill' )
       if (.not. associated(quantity%mask)) &
-         & call Announce_Error ( key, 0, 'Quantity must be a subset to fill' )
+        & call Announce_Error ( key, 0, 'Quantity must be a subset to fill' )
 
       signalIn = GetSignal ( sourceQuantity%template%signal )     ! sideband info gets lost
       signalOut = GetSignal ( Quantity%template%signal )          ! sideband info gets lost
-      
+
       myChannel = channel
 
       call allocate_test ( freq1, size(signalIn%frequencies), 'frequencies', ModuleName )
@@ -4269,45 +4268,48 @@ contains ! =====     Public Procedures     =============================
 
       ! find input signal frequencies
       freqL1 = signalIn%lo - signalIn%centerFrequency - &
-               & signalIn%direction*signalIn%frequencies    ! lower sideband freq
+        & signalIn%direction*signalIn%frequencies    ! lower sideband freq
       freqU1 = signalIn%lo + signalIn%centerFrequency + &
-               & signalIn%direction*signalIn%frequencies     ! upper sideband freq
-         if(sourceQuantity%template%sideband == -1) freq1 = freqL1
-         if(sourceQuantity%template%sideband == 1) freq1 = freqU1
+        & signalIn%direction*signalIn%frequencies     ! upper sideband freq
+      if(sourceQuantity%template%sideband == -1) freq1 = freqL1
+      if(sourceQuantity%template%sideband == 1) freq1 = freqU1
       ! find output signal frequencies
       freqL2 = signalOut%lo - signalOut%centerFrequency - &
-               & signalOut%direction*signalOut%frequencies      ! lower sideband freq
+        & signalOut%direction*signalOut%frequencies      ! lower sideband freq
       freqU2 = signalOut%lo + signalOut%centerFrequency + &
-               & signalOut%direction*signalOut%frequencies    ! upper sideband freq
-         if(quantity%template%sideband == -1) freq2 = freqL2
-         if(quantity%template%sideband == 1) freq2 = freqU2
+        & signalOut%direction*signalOut%frequencies    ! upper sideband freq
+      if(quantity%template%sideband == -1) freq2 = freqL2
+      if(quantity%template%sideband == 1) freq2 = freqU2
 
       quantity%values=0._r8
       if (spreadFlag) then
-      ! spread a cloudy radiance to other bands according to the f^4 law
-      ! The source cloudy radiance must be from a single sideband signal
-        if (.not. ValidateVectorQuantity ( sourceQuantity, quantityType=(/l_cloudInducedRadiance/), &
-        & sideband=(/-1,1/), minorFrame=.true. )) &
-        & call Announce_Error ( key, 0, 'Inappropriate sourceQuantity radiance for fill' )
+        ! spread a cloudy radiance to other bands according to the f^4 law
+        ! The source cloudy radiance must be from a single sideband signal
+        if (.not. ValidateVectorQuantity ( sourceQuantity, &
+          & quantityType=(/l_cloudInducedRadiance/), &
+          & sideband=(/-1,1/), minorFrame=.true. )) &
+          & call Announce_Error ( key, 0, 'Inappropriate sourceQuantity radiance for fill' )
         do i=1,size(signalOut%frequencies)
-           do maf=1, quantity%template%noInstances
-           do mif=1, quantity%template%noSurfs
-	          scaledRad = sourceQuantity%values(MyChannel+(mif-1)*size(signalIn%frequencies), maf) * &
-             &    freq2(i)**4/freq1(MyChannel)**4
-             if(iand(ichar(Quantity%mask(i+(mif-1)*size(signalOut%frequencies), maf)), m_cloud) == 16) &
-             & quantity%values(i+(mif-1)*size(signalOut%frequencies), maf) = scaledRad
-   	     enddo
-	        enddo
+          do maf=1, quantity%template%noInstances
+            do mif=1, quantity%template%noSurfs
+              scaledRad = sourceQuantity%values ( MyChannel + &
+                & (mif-1) * size(signalIn%frequencies), maf) * &
+                & freq2(i)**4/freq1(MyChannel)**4
+              if ( iand ( ichar ( Quantity%mask(i+(mif-1) * &
+                & size(signalOut%frequencies), maf)), m_cloud) /= 0 ) &
+                & quantity%values(i+(mif-1)*size(signalOut%frequencies), maf) = scaledRad
+            enddo
+          enddo
         enddo
-              
+
       else
-      ! split two sideband radiances according to the f^4 law
-      ! The source cloudy radiance must be from the same signal of double sideband 
+        ! split two sideband radiances according to the f^4 law
+        ! The source cloudy radiance must be from the same signal of double sideband 
 
         if (.not. ValidateVectorQuantity ( sourceQuantity, &
-        & quantityType=(/l_cloudInducedRadiance/), &
-        & sideband=(/0/), signal=(/quantity%template%signal/), minorFrame=.true. )) &
-        & call Announce_Error ( key, 0, 'Inappropriate sourceQuantity radiance for fill' )
+          & quantityType=(/l_cloudInducedRadiance/), &
+          & sideband=(/0/), signal=(/quantity%template%signal/), minorFrame=.true. )) &
+          & call Announce_Error ( key, 0, 'Inappropriate sourceQuantity radiance for fill' )
         if (.not. ValidateVectorQuantity ( lsbFraction, &
           & quantityType=(/l_limbSidebandFraction/), &
           & signal=(/quantity%template%signal/), sideband=(/-1/) ) ) &
@@ -4322,76 +4324,84 @@ contains ! =====     Public Procedures     =============================
         ! is only applied to maskbit = m_cloud.
 
         if(.not. associated(usb)) then
-        ! If both sidebands are within 20GHz and have similar penetration depths
-        ! in the attenuative atmosphere. We can neglect the attenuation and split cloudy
-        ! radiances assuming that they are fully due to scattering and obey the f^4 law.
-         do i=1,size(signalOut%frequencies)
-           do maf=1, quantity%template%noInstances
-           do mif=1, quantity%template%noSurfs
-             if(iand(ichar(Quantity%mask(i+(mif-1)*size(signalOut%frequencies), maf)), m_cloud) == 16) &
-	          & quantity%values(i+(mif-1)*size(signalOut%frequencies), maf) = &
-	          &   sourceQuantity%values(MyChannel+(mif-1)*size(signalIn%frequencies), maf) *freq2(i)**4/ &
-	          &   (lsbFraction%values(MyChannel,1) * freqL1(MyChannel)**4 + &
-	          &   usbFraction%values(MyChannel,1) * freqU1(MyChannel)**4)
-   	     enddo
-	        enddo
-         enddo
+          ! If both sidebands are within 20GHz and have similar penetration depths
+          ! in the attenuative atmosphere. We can neglect the attenuation and split cloudy
+          ! radiances assuming that they are fully due to scattering and obey the f^4 law.
+          do i=1,size(signalOut%frequencies)
+            do maf=1, quantity%template%noInstances
+              do mif=1, quantity%template%noSurfs
+                if ( iand ( ichar ( Quantity%mask( i + &
+                  & (mif-1) * size(signalOut%frequencies), maf)), m_cloud) /= 0 ) then
+                  quantity%values(i+(mif-1)*size(signalOut%frequencies), maf ) = &
+                    & sourceQuantity%values ( myChannel + &
+                    & (mif-1)*size(signalIn%frequencies), maf) *freq2(i)**4/ &
+                    & (lsbFraction%values ( myChannel, 1 ) * freqL1(MyChannel)**4 + &
+                    & usbFraction%values ( myChannel, 1 ) * freqU1(MyChannel)**4)
+                end if
+              enddo
+            enddo
+          enddo
         else
-        ! If both sidebands are within 20GHz but have very different penetration depths,
-        ! where one is optically thick and one is optically thin. We may use a reference
-        ! cloud radiance near the optically-thin sideband to split cloud radiance in the
-        ! optically-thick sideband. The reference radiance must be a single sideband 
-        ! radiance in this case, namely usb (upper sideband in most cases). The usb is 
-        ! scaled to the sourceQty upperside (thin) via the f^4 law, and the rest cloud
-        ! radiance is for the lower sideband.
-        !
-        ! In this case, channel will for the reference signal and sideband frac remains for
-        ! source signal.
-        !
-         if (.not. ValidateVectorQuantity ( usb, &
-          & quantityType=(/l_cloudInducedRadiance/), sideband=(/-1,1/), minorFrame=.true. )) &
-          & call Announce_Error ( key, 0, 'Inappropriate reference radiance for splitting' )
+          ! If both sidebands are within 20GHz but have very different penetration depths,
+          ! where one is optically thick and one is optically thin. We may use a reference
+          ! cloud radiance near the optically-thin sideband to split cloud radiance in the
+          ! optically-thick sideband. The reference radiance must be a single sideband 
+          ! radiance in this case, namely usb (upper sideband in most cases). The usb is 
+          ! scaled to the sourceQty upperside (thin) via the f^4 law, and the rest cloud
+          ! radiance is for the lower sideband.
+          !
+          ! In this case, channel will for the reference signal and sideband frac remains for
+          ! source signal.
+          !
+          if (.not. ValidateVectorQuantity ( usb, &
+            & quantityType=(/l_cloudInducedRadiance/), sideband=(/-1,1/), &
+            & minorFrame=.true. )) call Announce_Error ( key, 0, &
+            & 'Inappropriate reference radiance for splitting' )
 
-            signalRef = GetSignal ( usb%template%signal )
+          signalRef = GetSignal ( usb%template%signal )
 
-            call allocate_test ( freq, size(signalRef%frequencies), 'frequencies', ModuleName )
-            call allocate_test ( freqL, size(signalRef%frequencies), 'LSBfrequencies', ModuleName )
-            call allocate_test ( freqU, size(signalRef%frequencies), 'USBfrequencies', ModuleName )
-            freq = signalRef%centerFrequency + signalRef%direction*signalRef%frequencies 
-            freqL = signalOut%lo - freq    ! lower sideband freq
-            freqU = signalOut%lo + freq    ! upper sideband freq
-               if(usb%template%sideband == -1) freq = freqL
-               if(usb%template%sideband == 1) freq = freqU
-            do i=1,size(signalOut%frequencies)
-         
+          call allocate_test ( freq, size(signalRef%frequencies), 'frequencies', ModuleName )
+          call allocate_test ( freqL, size(signalRef%frequencies), &
+            & 'LSBfrequencies', ModuleName )
+          call allocate_test ( freqU, size(signalRef%frequencies), &
+            & 'USBfrequencies', ModuleName )
+          freq = signalRef%centerFrequency + signalRef%direction*signalRef%frequencies 
+          freqL = signalOut%lo - freq    ! lower sideband freq
+          freqU = signalOut%lo + freq    ! upper sideband freq
+          if(usb%template%sideband == -1) freq = freqL
+          if(usb%template%sideband == 1) freq = freqU
+          do i=1,size(signalOut%frequencies)
+
             ! need to scale the opposite sideband for the output signal
-               if(quantity%template%sideband == 1) then 
-                  ratio1 = lsbFraction%values(i,1)
-                  ratio2 = usbFraction%values(i,1)
-                  freq2 = freqL2
-               endif
-               if(quantity%template%sideband == -1) then
-                  ratio2 = lsbFraction%values(i,1)
-                  ratio1 = usbFraction%values(i,1)
-                  freq2 = freqU2
-               endif
+            if(quantity%template%sideband == 1) then 
+              ratio1 = lsbFraction%values(i,1)
+              ratio2 = usbFraction%values(i,1)
+              freq2 = freqL2
+            endif
+            if(quantity%template%sideband == -1) then
+              ratio2 = lsbFraction%values(i,1)
+              ratio1 = usbFraction%values(i,1)
+              freq2 = freqU2
+            endif
 
-               do maf=1, quantity%template%noInstances
-               do mif=1, quantity%template%noSurfs
-	               scaledRad = usb%values(MyChannel+(mif-1)*size(signalIn%frequencies), maf) * &
-                  &    freq2(i)**4/freq(MyChannel)**4
+            do maf=1, quantity%template%noInstances
+              do mif=1, quantity%template%noSurfs
+                scaledRad = usb%values(MyChannel+(mif-1)*size(signalIn%frequencies), maf) * &
+                  & freq2(i)**4/freq(MyChannel)**4
 
-                  if(iand(ichar(Quantity%mask(i+(mif-1)*size(signalOut%frequencies), maf)), m_cloud) == 16) &
-	               & quantity%values(i+(mif-1)*size(signalOut%frequencies), maf) = &
-	               &   (sourceQuantity%values(i+(mif-1)*size(signalIn%frequencies), maf) - &
-                  &    ratio1*scaledRad)/ratio2 
-   	         enddo
-	            enddo
-            enddo        
+                if ( iand ( ichar ( Quantity%mask( i + &
+                  & (mif-1)*size(signalOut%frequencies), maf)), m_cloud) /= 0 ) then
+                  quantity%values(i+(mif-1)*size(signalOut%frequencies), maf) = &
+                    &  (sourceQuantity%values(i+(mif-1)*size(signalIn%frequencies), maf) - &
+                    &  ratio1*scaledRad)/ratio2 
+                end if
+              enddo
+            enddo
+          enddo
 
-            call deallocate_test ( freq, 'frequencies', ModuleName )
-            call deallocate_test ( freqL,'LSBfrequencies', ModuleName )
-            call deallocate_test ( freqU,'USBfrequencies', ModuleName )
+          call deallocate_test ( freq, 'frequencies', ModuleName )
+          call deallocate_test ( freqL,'LSBfrequencies', ModuleName )
+          call deallocate_test ( freqU,'USBfrequencies', ModuleName )
         endif
       endif
 
@@ -5791,6 +5801,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.229  2003/06/05 22:08:55  livesey
+! Cosmetic and superficial changes to FillFromSplitSideband
+!
 ! Revision 2.228  2003/06/03 19:23:51  livesey
 ! Added flushL2PCBins
 !
