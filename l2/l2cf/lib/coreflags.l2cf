@@ -6,12 +6,12 @@
 begin Fill
   ;; ------------------------------------ Temperature-Core
   !define(flaggingBands,{1,22,32})
-  !makeFlagsForOneProduct(product=Temperature,radiometer=R2,chisqScale=10.0,minRads=1500,cloudMax=2K)
+  !makeFlagsForOneProduct(product=Temperature,radiometer=R2,chisqScale=10.0,minRads=1500,cloudMax=2K,cloudMin=-10K)
 
   ;; ------------------------------------ GPH-Core
   !define(flaggingBands,{1,22,32})
-  !makeFlagsForOneProduct(product=GPH,radiometer=R2,chisqScale=10.0,minRads=1500,cloudMax=2K)
+  !makeFlagsForOneProduct(product=GPH,radiometer=R2,chisqScale=10.0,minRads=1500,cloudMax=2K,cloudMin=-10K)
 
 end Fill
 
-
+; $Log$
