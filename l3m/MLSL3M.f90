@@ -19,7 +19,7 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
    USE mon_L3CF
    USE mon_Open
    USE mon_Out
-!  USE MonthlyProcessModule
+   USE MonthlyProcessModule
 
    IMPLICIT NONE
 
@@ -101,8 +101,7 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
 
 ! Core processing for Standard products
 
-!     CALL MonthlyCoreProcessing(pcf, cfDef, cfProd(i), l2gp, mz, mzA, mzD, dz, dzA, &
-!                                dzD, mm, mmA, mmD)
+     CALL MonthlyCoreProcessing(cfProd(i), pcf, l2Days, l2gp, mm, mmA, mmD, mz, mzA, mzD, dz, dzA, dzD)
 
 ! Output and Close for the product
 
@@ -215,6 +214,9 @@ END PROGRAM MLSL3M
 !=================
 
 ! $Log$
+! Revision 1.3  2001/08/01 18:28:56  nakamura
+! I/O-Core interface switched back to Daily paradigm.
+!
 ! Revision 1.2  2001/07/20 19:30:29  nakamura
 ! Commented out sample CALLs to Core routines.
 !
