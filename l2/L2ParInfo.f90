@@ -90,7 +90,10 @@ module L2ParInfo
     ! run range in comma-separated list with possible ranges
     ! e.g. '1,2-6+2,9-11,15' expands to '1,2,4,6,9,10,11,15'
     character(len=4096) :: chunkRange='' ! if blank, runs all chunks
+    ! chunks are ','-separated ints; e.g. '2,5,129'
     character(len=4096) :: failedChunks='' ! if blank, no chunks failed
+    ! Machs are string list; e.g. 'c0-1,c0-66,c0-66'
+    character(len=4096) :: failedMachs='' ! blank if usingSubmit
     integer :: maxFailuresPerMachine = 1 ! More than this then don't use it | staging
     integer :: maxFailuresPerChunk = 10 ! More than this then give up on getting it
     integer :: numFailedChunks = 0
@@ -606,6 +609,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.39  2004/09/16 23:57:32  pwagner
+! Now tracks machine names of failed chunks
+!
 ! Revision 2.38  2004/09/16 00:18:03  pwagner
 ! Keeps record of completed, failed chunks
 !
