@@ -705,14 +705,15 @@ contains
   end subroutine DestroySignal
 
   ! --------------------------------------  DestroySignalDatabase  -----
-  subroutine DestroySignalDatabase ( Signals )
+  subroutine DestroySignalDatabase ( Signals, justChannels )
     type(signal_T), dimension(:), pointer :: Signals
+    logical, intent(in), optional :: JUSTCHANNELS
     integer :: I, Status
 
     ! Executable code
     if ( associated(signals) ) then
       do i = 1, size(signals)
-        call destroySignal ( signals(i) )
+        call destroySignal ( signals(i), justChannels )
       end do
       deallocate ( signals, stat = status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
@@ -1513,6 +1514,9 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.55  2003/03/07 03:17:50  livesey
+! Add optional justchannels argument to DestroySignalDatabase
+!
 ! Revision 2.54  2002/10/08 17:42:10  livesey
 ! Bug fixes in pack/unpack
 !
