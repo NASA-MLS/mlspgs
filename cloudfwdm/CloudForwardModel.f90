@@ -5,6 +5,13 @@
              &   ZT, RE, ISURF, ISWI, ICON,                       &
              &   TB0, DTcir, Trans, BETA, BETAc, Dm, TAUeff, SS,  &
              &   NU, NUA, NAB, NR)
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm =                          &
+    "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName=                       &
+    "$RCSfile$"
+!---------------------------------------------------------------------------
 
 !============================================================================C
 !   >>>>>>>>> FULL CLOUD FORWARD MODEL FOR MICROWAVE LIMB SOUNDER >>>>>>>>   C
