@@ -12,7 +12,7 @@ module ObtainClimatology
   use MLSCommon, only: LineLen, R8
   use MLSMessagemodule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error
-  use MLSPCF, only: mlspcf_l2clim_end, mlspcf_l2clim_start
+  use MLSPCF2, only: mlspcf_l2clim_end, mlspcf_l2clim_start
   use MLSStrings, only: Capitalize, Count_Words, ReadCompleteLineWithoutComments
   use SDPToolkit, only: Pgs_io_gen_openF, PGS_S_SUCCESS, PGSd_IO_Gen_RSeqFrm
 ! use VerticalCoordinate
@@ -510,6 +510,9 @@ contains ! =====     Public Procedures     =============================
 end module ObtainClimatology
 !============================
 ! $Log$
+! Revision 2.1  2001/02/13 22:59:36  pwagner
+! l2 modules can only use MLSPCF2
+!
 ! Revision 2.0  2000/09/05 18:57:06  ahanzel
 ! Changing file revision to 2.0.
 !

@@ -8,7 +8,7 @@ USE MLSMessageModule
 USE L2GPData
 USE L2AUXData
 USE SDPToolkit
-USE MLSPCF
+USE MLSPCF2
 USE MLSCF 
 USE Hdf 
 USE HDFEOS 
@@ -211,6 +211,9 @@ END SUBROUTINE populate_metadata
 
 END MODULE WriteMetadata 
 ! $Log$
+! Revision 2.1  2001/02/13 22:59:36  pwagner
+! l2 modules can only use MLSPCF2
+!
 ! Revision 2.0  2000/09/05 18:57:07  ahanzel
 ! Changing file revision to 2.0.
 !
