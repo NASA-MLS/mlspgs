@@ -753,8 +753,12 @@ contains ! ================================ Procedures ======================
 
     do resInd = 1, size ( storedResults )
       hdfNameIndex = enter_terminal ( trim(storedResults(resInd)%hdfName), t_string )
+      if ( index(switches,'mas') /= 0 ) then
+        call output ( 'Joining ' // trim ( storedResults(resInd)%hdfName ), &
+          & advance='yes' )
+      endif
+      
       do chunk = 1, noChunks
-        
         if (.not. chunksAbandoned(chunk) ) then
           ! Setup for this quantity
           if ( parallel%stageInMemory ) then
@@ -781,13 +785,6 @@ contains ! ================================ Procedures ======================
               nullify ( precQty )
             end if
           end if
-
-          if ( index(switches,'mas') /= 0 ) then
-            call output ( 'Joining ' )
-            call display_string ( qty%template%name )
-            call output ( ' Chunk ' )
-            call output ( chunk, advance='yes' )
-          endif
 
           select case ( get_spec_id ( storedResults(resInd)%key ) )
           case ( s_l2gp )
@@ -1177,6 +1174,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.48  2003/06/05 23:53:34  livesey
+! Made the diagnostic output less verbose.
+!
 ! Revision 2.47  2003/05/22 02:23:59  livesey
 ! More informative error message
 !
