@@ -54,7 +54,7 @@ contains ! =====     Public Procedures     =============================
       if ( elem < 1 .or. elem > num_retrieval_times ) then
         call MLSMessage ( MLSMSG_Error, moduleName, &
         & 'Unable to find retrieval section name ' // section_name // &
-        & 'among list ' // retrieval_names )
+        & ' among list ' // retrieval_names )
       else
         call cpu_time ( t2 )
         section_timings(num_section_times+elem) = &
@@ -82,7 +82,7 @@ contains ! =====     Public Procedures     =============================
       if ( elem < 1 .or. elem > num_retrieval_times ) then
         call MLSMessage ( MLSMSG_Error, moduleName, &
         & 'Unable to find section name ' // section_name // &
-        & 'among list ' // section_names // ',' // retrieval_names )
+        & ' among list ' // section_names // ',' // retrieval_names )
       else
         call cpu_time ( t2 )
         section_timings(num_section_times+elem) = &
@@ -212,6 +212,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.4  2001/10/01 23:30:50  pwagner
+! Fixed bug in spelling cholesky_solver
+!
 ! Revision 2.3  2001/10/01 22:54:22  pwagner
 ! Added subsection timings for Retrieval section
 !
