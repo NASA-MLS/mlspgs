@@ -102,7 +102,7 @@ module ForwardModelInterface
 
   integer :: Error            ! Error level -- 0 = OK
 
-  real (r8), parameter :: DegToRad=1.74532925e-2
+  real (r8), parameter :: DegToRad=1.745329252e-2
 
 contains
 
@@ -327,7 +327,7 @@ contains
     use COMP_PATH_ENTITIES_M, only: COMP_PATH_ENTITIES
     use REFRACTION_M, only: REFRACTION_CORRECTION
     use PATH_ENTITIES_M, only: PATH_INDEX, PATH_VECTOR, PATH_BETA, &
-      PATH_DERIVATIVE
+      PATH_DERIVATIVE, PATH_VECTOR_2D
     use HYDROSTATIC_MODEL_M, only: HYDROSTATIC_MODEL
     use GET_CHI_ANGLES_M, only: GET_CHI_ANGLES
     use GET_BETA_PATH_M, only: GET_BETA_PATH
@@ -337,6 +337,7 @@ contains
     use FREQ_AVG_M, only: FREQ_AVG
     use CONVOLVE_ALL_M, only: CONVOLVE_ALL
     use NO_CONV_AT_ALL_M, only: NO_CONV_AT_ALL
+    use D_LINTRP_M, only: LINTRP
     use D_HUNT_M, only: HUNT
 
     !zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
@@ -407,11 +408,13 @@ contains
       dhdz_path(Nptg,mnm), spsfunc_path(Nsps,Nptg,mnm),    &
       n_path(Nptg,mnm),phi_path(Nptg,mnm)
 
-    type(path_derivative) :: dh_dt_path(Nptg,mnm)
+    Type(path_vector_2d) :: eta_phi(Nptg,mnm)
+
+    Real(r8), DIMENSION(:,:,:), ALLOCATABLE :: dh_dt_path
 
     real(r8) :: thbs(10)
     real(r8) :: t_script(N2lvl),ref_corr(N2lvl,Nptg),tau(N2lvl), &
-      tan_dh_dt(Nlvl,mnm,mxco)
+                tan_dh_dt(Nlvl,mnm,mxco)
 
     real(r8) :: dx_dt(Nptg,mxco), d2x_dxdt(Nptg,mxco)
 
@@ -450,6 +453,8 @@ contains
 
     real(r8) :: Radiances(Nptg,Nch)
     real(r8) :: e_rad, Zeta, Frq, h_tan, Rad, geoc_lat, geod_lat, r
+
+    Real(r8), DIMENSION(:), ALLOCATABLE :: dum
 !
     character (LEN=01) :: CA
     character (LEN=08) :: Name
@@ -584,14 +589,15 @@ contains
 
     ! Now compute stuff along the path given this hydrostatic grid.
     print*,'Setting up paths'
-    call comp_path_entities(fwdModelIn, fwdModelExtra, forwardModelConfig%molecules, &
-      & FMC%n_lvls,temp%template%noSurfs,&
-      & gl_count,ndx_path, &
-      &     z_glgrid,t_glgrid,h_glgrid,dhdz_glgrid,dh_dt_glgrid,       &
+    call comp_path_entities(fwdModelIn, fwdModelExtra, &
+      &  forwardModelConfig%molecules, &
+      &  FMC%n_lvls,temp%template%noSurfs,&
+      &  gl_count,ndx_path, &
+      &     z_glgrid,t_glgrid,h_glgrid,dhdz_glgrid,                    &
       &     TFMI%atmospheric,TFMI%f_zeta_basis,TFMI%mr_f,              &
       &     TFMI%no_coeffs_f,tan_hts,no_tan_hts,FMI%n_sps,             &
       &     TFMI%no_phi_f,TFMI%f_phi_basis,z_path,h_path,t_path,       &
-      &     phi_path,n_path,dhdz_path,dh_dt_path,temp%template%noInstances,        &
+      &     phi_path,n_path,dhdz_path,eta_phi,temp%template%noInstances,        &
       &     temp%template%phi(1,:)*degToRad,spsfunc_path,TFMI%is_f_log,FMC%no_mmaf,Ier)
     if(ier /= 0) goto 99
 
@@ -669,7 +675,7 @@ contains
           &   temp%template%noSurfs, temp%template%noInstances, &
           &   'k_temp_frq', ModuleName)
       end if
-
+ 
       call Allocate_Test(radV,maxNoFreqs, 'radV', ModuleName)
 
       do specie = 1, size(forwardModelConfig%molecules)
@@ -730,6 +736,28 @@ contains
           & FMI%pfa_spectrum,no_ele, z_path(ptg_i,maf),t_path(ptg_i,maf), &
           & beta_path, FMC%vel_z_mmaf(maf),ier)
         if(ier /= 0) goto 99
+!
+!  Define the dh_dt_path for this pointing and this MAF:
+!
+        if ( forwardModelConfig%temp_der ) then
+          ALLOCATE(dh_dt_path(no_ele,temp%template%noInstances, &
+                 & temp%template%noSurfs),STAT=ier)
+          if(ier == 0) ALLOCATE(dum(no_ele),STAT=ier)
+          IF(ier /= 0) then
+            Print *,'** ALLOCATE Error: dum or dh_dt_path, STAT =',ier
+            goto 99
+          else
+            do j = 1,  temp%template%noSurfs
+              do i = 1, temp%template%noInstances
+                CALL Lintrp(z_glgrid, z_path(ptg_i,maf)%values,       &
+               &            dh_dt_glgrid(:,i,j), dum, gl_count, no_ele)
+                dh_dt_path(:,i,j) = dum(:) * eta_phi(ptg_i,maf)%values(:,i)
+              end do
+            end do
+            DEALLOCATE(dum,STAT=i)
+          endif
+        end if
+!
 
         ! ------------------------------- Begin loop over frequencies ------
         print*,'    Loop over frequencies will be:', noFreqs
@@ -756,7 +784,7 @@ contains
           !        &     TFMI%mr_f,TFMI%no_t,ref_corr(:,k),TFMI%no_phi_f,       &
           !        &     TFMI%f_phi_basis,temp%template%noInstances, &
           !        &     temp%template%phi(1,:)*degToRad,  &
-          !        &     dh_dt_path(k,maf),FMI%spect_atmos,         &
+          !        &     dh_dt_path,FMI%spect_atmos,         &
           !        &     FMI%spectroscopic,k_temp_frq,k_atmos_frq,k_spect_dw_frq,   &
           !        &     k_spect_dn_frq,k_spect_dnu_frq,TFMI%is_f_log,brkpt,       &
           !        &     no_ele,mid,ilo,ihi,t_script,tau,ier)
@@ -1202,6 +1230,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.38  2001/03/26 18:01:20  zvi
+! New code to deal with dh_dt_path being computed on the fly
+!
 ! Revision 2.37  2001/03/25 00:50:31  livesey
 ! Interim version, bug with frequency averaging
 !
