@@ -29,16 +29,19 @@ program COMPARE
   character (len=len(idParm)) :: Id = IdParm
   !---------------------------------------------------------------------------
 
-  real, allocatable, dimension(:) :: AD      ! Absolute difference of R1, R2
+  integer, parameter :: RK = kind(0.0d0) ! kind for calculations
+  integer, parameter :: RS = kind(0.0e0) ! kind for * output
+  real(rk), allocatable, dimension(:) :: AD      ! Absolute difference of R1, R2
   logical :: All = .false.   ! Show nonzero differences for all quantities
-  real :: AMAX               ! Maximum absolute difference for one R1, R2 pair
-  real :: AMAXG = 0.0        ! Global maximum of all values of AMAX
-  real :: AbsAtRmaxG         ! Absolute error at maximum relative error
+  real(rk) :: AMAX               ! Maximum absolute difference for one R1, R2 pair
+  real(rk) :: AMAXG = 0.0        ! Global maximum of all values of AMAX
+  real(rk) :: AbsAtRmaxG         ! Absolute error at maximum relative error
   logical :: AnyNaN(3) = .false. ! R1, R2 or a relative difference has a NaN
-  real :: AVG(2), AVGSR(2), AVGSA(2)
+  real(rk) :: AVG(2), AVGSR(2), AVGSA(2)
   logical :: CONT = .false.  ! Continue even if control lines differ
   logical :: DoStats = .false. ! -s option specified
   logical :: END
+  real(rk), parameter :: EPS = epsilon(1.0_rs)
   character(127) :: File1, File2
   integer :: I, I1, I2, J
   integer :: LAMAX, LRMAX    ! Locations of absolute, relative max. diffs.
@@ -46,17 +49,20 @@ program COMPARE
   character(127) :: Line1, line2
   logical, allocatable, dimension(:) :: M    ! abs(r1+r2) > 0.0
   integer :: N
-  real, allocatable, dimension(:) :: R1, R2  ! Inputs
-  real, allocatable, dimension(:) :: RD      ! Relative difference of R1, R2
-  real :: RelAtAmaxG
-  real :: RMAX               ! Maximum relative difference for one R1, R2 pair
-  real :: RMAXE = -huge(0.0) ! RMAX in units of epsilon
-  real :: RMAXG = -huge(0.0) ! Global maximum of all values of RMAX
+  real(rk), allocatable, dimension(:) :: R1, R2  ! Inputs
+  real(rk), allocatable, dimension(:) :: RD      ! Relative difference of R1, R2
+  real(rk) :: RelAtAmaxG
+  real(rk) :: RMAX               ! Maximum relative difference for one R1, R2 pair
+  real(rk) :: RMAXE = -huge(0.0) ! RMAX in units of epsilon
+  real(rk) :: RMAXG = -huge(0.0) ! Global maximum of all values of RMAX
   integer :: Status
-  real :: STDEV(2), STDEVR(2), STDEVA(2)
+  real(rk) :: STDEV(2), STDEVR(2), STDEVA(2)
+  logical :: Verbose = .false.
   logical :: Zero = .false.  ! If ( all ), show zero differences, too.
 
-  read ( (/"NaN","NaN"/), * ) AbsAtRmaxG, RelAtAmaxG
+  read ( (/("NaN", i = 1, 10 ) /), * ) AbsAtRmaxG, RelAtAmaxG, avgsr, avgsa, &
+    & stdevr, stdeva
+
   i = 1
   do
     call getarg ( i, line1 )
@@ -77,6 +83,8 @@ program COMPARE
           doStats = .true.
         else if ( line1(j:j) == 'v' ) then
           print *, Id
+        else if ( line1(j:j) == 'V' ) then
+          verbose = .true.
         else if ( line1(j:j) == 'z' ) then
           zero = .true.
         else
@@ -124,6 +132,7 @@ program COMPARE
       if ( i2 /= 0 ) exit
     end do
 
+    if ( verbose ) print *, 'Read control lines from both files'
     if ( (end .neqv. status /= 0) .and. loud )  print *, 'Input file lengths unequal'
     if ( end .or. status /= 0 ) exit
 
@@ -142,6 +151,7 @@ program COMPARE
       exit
     end if
 
+    if ( verbose ) print *, 'Allocating space for blocks of ', n
     allocate ( ad(n), r1(n), r2(n), rd(n), m(n) )
 
     if ( n == 1 ) then
@@ -157,10 +167,18 @@ program COMPARE
       end if
     else
       read ( 10, *, iostat=status ) r1
-      if ( status /= 0 ) exit
+      if ( status /= 0 ) then
+        call io_error ( file1, status )
+        exit
+      end if
       read ( 11, *, iostat=status ) r2
-      if ( status /= 0 ) exit
+      if ( status /= 0 ) then
+        call io_error ( file2, status )
+        exit
+      end if
     end if
+
+    if ( verbose ) print *, 'Read blocks from both files of size', size(r1)
 
     ! DO NOT apply deMauvre's theorem.  If you write
     !    any ( r1 > 0.0 .and. r1 < 0.0 ) it won't catch NaN's
@@ -181,7 +199,7 @@ program COMPARE
         lrmax = -1
         rmax = 0.0
       end if
-      rmaxe = rmax / epsilon(rd)
+      rmaxe = rmax / eps
       if ( .not. ( rmaxe <= 0.0 .or. rmaxe >= 0.0 ) ) anyNaN(3) = .true.
       if ( all ) then
         print '(1pg14.7,i6,1pg14.7,i6,1pg15.7,1x,a)', &
@@ -217,12 +235,16 @@ program COMPARE
   end do
 
   if ( rmaxg > 0.0 .or. zero .or. anyNan(3) ) then
-    print *, 'MaxRel =', rmaxg, &
-      & 'epsilons =', rmaxg*epsilon(rmaxg),'where MaxAbs =', absAtRmaxG
-    if ( doStats ) print '(1x,2(a,1p,2g10.3))', 'Avgs =', avgsr, ' Std. Devs. =', stdevr
-    print *, 'MaxAbs =', amaxg, &
-      & 'where MaxRel =', relAtAmaxG,'epsilons =', relAtAmaxG*epsilon(relAtAmaxG)
-    if ( doStats ) print '(1x,2(a,1p,2g10.3))', 'Avgs =', avgsa, ' Std. Devs. =', stdeva
+    print *, 'MaxRel =', real(rmaxg,rs), &
+      & 'epsilons =', real(rmaxg*eps,rs), &
+      & 'where MaxAbs =', real(absAtRmaxG,rs)
+    if ( doStats ) print '(1x,2(a,1p,2g10.3))', 'Avgs =', real(avgsr,rs), &
+      & ' Std. Devs. =', real(stdevr,rs)
+    print *, 'MaxAbs =', real(amaxg,rs), &
+      & 'where MaxRel =', real(relAtAmaxG,rs), 'epsilons =', &
+      & real(relAtAmaxG*eps,rs)
+    if ( doStats ) print '(1x,2(a,1p,2g10.3))', 'Avgs =', real(avgsa,rs), &
+      & ' Std. Devs. =', real(stdeva,rs)
   end if
 
   if ( anyNaN(1) ) print *, trim(file1), ' has a NaN somewhere'
@@ -232,8 +254,8 @@ contains
 
   subroutine Stats ( A, Avg, Stdev )
   ! Compute the average and standard deviation of the nonzero elements of A.
-    real, intent(in) :: A(:)
-    real, intent(out) :: Avg, Stdev
+    real(rk), intent(in) :: A(:)
+    real(rk), intent(out) :: Avg, Stdev
     integer :: I, N
     n = 0
     avg = 0.0
@@ -271,6 +293,9 @@ contains
 end program
 
 ! $Log$
+! Revision 1.8  2003/10/24 23:51:35  vsnyder
+! Give AbsAtRmaxg and RelAtAmaxg initial NaN value
+!
 ! Revision 1.7  2003/10/07 23:19:45  vsnyder
 ! Handle one-element dumps
 !
