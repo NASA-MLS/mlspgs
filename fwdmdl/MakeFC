@@ -53,8 +53,8 @@ SHELL = /bin/sh
 #                  also (re)creates uniquely-named sub-sub-directories
 #                  with custom Makefiles where *.o, *.mod, etc. built
 # depends        -- runs makemakedep.sh to calculate dependencies
-# clean          -- deletes uniquely-named sub-sub-directories
-# clean_objs     -- deletes only *.o, *.mod from sub-subs
+# mostlyclean    -- deletes uniquely-named sub-sub-directories
+# clean          -- deletes only *.o, *.mod from sub-subs
 # tar            -- creates a directory archive suitable for distribution
 #
 
@@ -75,9 +75,9 @@ l2_test: libfwdmdl.a
 $(libmls_objs)/libmls.a: $(libmls_f90)
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
-.PHONY: configure depends clean tar clean_objs
+.PHONY: configure depends clean tar mostlyclean targ tarz
 
-tar: clean
+tar:
 
 configure:
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
@@ -95,7 +95,7 @@ depends:
 	$(MLSBIN)/makemakedep.sh -d l2_test.f90 -d l2_numder.f90 -d l2_numder_dbg.f90 \
 		   $(libmls_sources) $(srclib)
 
-clean:
+mostlyclean:
 	@echo "Cleaning directory $(MLSCONFG)" ; \
 	if [ "$(MLSCONFG)" != "" ] ; then  \
 		echo "Deleting $(MLSCONFG) files" ; \
@@ -105,19 +105,34 @@ clean:
 		echo "Deleting $(MLSCONFG) directory" ; \
 		rmdir $(PLATFORMS)/$(MLSCONFG) ; \
 	fi
+	rm -f Make.dep.*
 
-clean_objs:
+clean:
 	@echo "Cleaning objects from directory $(MLSCONFG)" ; \
 	if [ "$(MLSCONFG)" != "" ] ; then  \
 		rm -f $(PLATFORMS)/$(MLSCONFG)/*.[ao] ; \
 		rm -f $(PLATFORMS)/$(MLSCONFG)/*.mod ; \
 	fi
+	rm -f Make.dep.*
 
 tar:
+	rm -f ../fwdmdl.tar
+	@echo "tar-ing fwdmdl"; \
+	$(TAR) hcvf ../fwdmdl.tar * --exclude CVS\
+	--exclude Make.dep\* --exclude NAG.\* --exclude LF95.\*
+
+tarz: tar
+	@echo "... then gzipping it"; \
+	cd ..; rm -f fwdmdl.tgz; gzip fwdmdl.tar; mv fwdmdl.tar.gz fwdmdl.tgz
+
+targ:
 	rm -f ../fwdmdl.tgz
 	$(TAR) hcvzf ../fwdmdl.tgz * --exclude \*.o --exclude \*.mod --exclude l2_test
 
 # $Log$
+# Revision 1.7  2001/03/09 19:36:06  pwagner
+# Added TAR=... option
+#
 # Revision 1.6  2001/03/06 17:36:29  pwagner
 # libfwdmdl.a now the automatic target
 #

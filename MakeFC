@@ -44,13 +44,13 @@ SHELL = /bin/sh
 # $LEVELS        -- automatic; built when target is not specified
 # .configure     -- automatic (if not yet extant; prerequisite for everything else)
 # $OTHER_SUBDIRS -- not automatic
-# all            -- all the sub-directories
+# all            -- all the sub-directories: l1, l2, l3, lib, fwdmdl
 # subdirs        -- same as all
 # lib            -- libmls.a; a prerequisite for the others
 
 #                           (functional)
-# clean          -- deletes uniquely-named sub-sub-directories
-# clean_objs     -- deletes only *.o, *.mod from sub-subs
+# mostlyclean    -- deletes uniquely-named sub-sub-directories
+# clean          -- deletes only *.o, *.mod from sub-subs
 # configure      -- runs mlsconfigure to (re)set compiler, platform, paths
 #                   (invoked automatically if .configure not found)
 # configure_pvm  -- (re)set PVM and FFTW paths
@@ -64,19 +64,28 @@ SHELL = /bin/sh
 # depends        -- runs makemakedep.sh to calculate dependencies
 # help           -- prints some info on how to build the mls software
 # install        -- mv programs mlsl* from sub-subs to CONFDIR
+# makefile       -- allows you to summon this custom Makefile with shorter
+#                    "make" rather than "make -f $(MakeFName)"
 # update         -- replaces customized Makefiles with latest versions
+#                    also recalculates dependenencies
 #
 #    The following are useful if you stored multiple configurations
 #     besides current one
 # clean_config   -- deletes the sub-subs "name"d in MLSCONFG="name" on command-line
 #                    e.g., make -f MakeFC clean_config MLSCONFG=NAG.Sun
-# clean_all      -- deletes every configuration
+# distclean      -- deletes every configuration
 #
-# W a r n i n g :  The following automatically perform "clean_all"
-# tar            -- creates an archive of whole mlspgs suitable for distribution
-# tar_sips       -- creates archive of mlspgs suitable for SIPS
-# tar_subs       -- creates archives of sub-directories suitable for distribution
+#     The following are useful for distributing all or portions of the archive
+#    If the target is entered exactly as shown below, the
+#    resulting archive will be an uncompressed .tar file; but with:
+#    a "z" suffix, e.g. "tarz" -- use gzip to compress -> .tgz
+#    a "g" suffix, e.g. "targ" -- assume GNU tar compress -> .tgz
 #
+# disttar        -- creates an archive of whole mlspgs
+# tar            -- creates archive of mlspgs suitable for SIPS
+#                  (see EVERYTHING variable)
+# substar        -- creates separate archives of subdirs; then tar them
+#                   (also util and srclib are tarred up in this case)
 
 #----------------------------------------------------------
 # LEVELS is the list of automatic targets; i.e.
@@ -113,7 +122,7 @@ OTHER_SUBDIRS = fwdmdl
 SUBDIRS = lib $(LEVELS) $(OTHER_SUBDIRS)
 
 # This isn't really everything, just everything the SIPS might need
-# so it will be bundled up by tar_sips
+# so it will be bundled up by tar
 # Note that it does *not* include the Toolkit nor PVM nor FFTW 
 # because they are outside mlspgs
 EVERYTHING = $(SUBDIRS) util blas srclib pcf idllib sids tables\
@@ -152,6 +161,20 @@ $(CONFDIR)/.configure:
 #          -c "$(MLSF95)" -p "$(MLSPLAT)" -nc; \
 #		cd .. ; \
 #	done
+	if [ -f Makefile ] ; then \
+		rm -f Makefile.old ;\
+		mv Makefile Makefile.old ;\
+	fi ; \
+	ln -s MakeFC Makefile
+	 @for dir in $(SUBDIRS); do \
+	  cd $$dir; \
+		if [ -f Makefile ] ; then \
+			rm -f Makefile.old ;\
+			mv Makefile Makefile.old ;\
+		fi ; \
+		ln -s MakeFC Makefile ;\
+	  cd ..; \
+	done
 
 # Targets that must be named explicitly
 
@@ -171,16 +194,16 @@ lib:
 
 #              (functional)
 
-clean:
+mostlyclean:
 	@echo "Cleaning $(SUBDIRS)"; \
 	 for dir in $(SUBDIRS); do \
-	  $(MAKE) -f $(MakeFName) -C $$dir clean; \
+	  $(MAKE) -f $(MakeFName) -C $$dir mostlyclean; \
 	done
 
-clean_objs:
+clean:
 	@echo "Cleaning objects from $(SUBDIRS)"; \
 	 for dir in $(SUBDIRS); do \
-	  $(MAKE) -f $(MakeFName) -C $$dir clean_objs; \
+	  $(MAKE) -f $(MakeFName) -C $$dir clean; \
 	done
 
 configure:
@@ -239,6 +262,22 @@ install:
 	  mv $$dir/$(MLSCONFG)/mls$$dir $(CONFDIR) ; \
 	done
 
+makefile:
+	if [ -f Makefile ] ; then \
+		rm -f Makefile.old ;\
+		mv Makefile Makefile.old ;\
+	fi ; \
+	ln -s MakeFC Makefile
+	 @for dir in $(SUBDIRS); do \
+	  cd $$dir; \
+		if [ -f Makefile ] ; then \
+			rm -f Makefile.old ;\
+			mv Makefile Makefile.old ;\
+		fi ; \
+		ln -s MakeFC Makefile ;\
+	  cd ..; \
+	done
+
 update:
 	@echo "Updating the Makefile in $(SUBDIRS)"; \
 	 for dir in $(SUBDIRS); do \
@@ -254,10 +293,10 @@ clean_config:
 	@echo "Cleaning $(SUBDIRS) according to configuration $(MLSCONFG)"; \
 	 mv $(CONFDIR)/.configure $(CONFDIR)/temp.configure; \
 	 echo "MLSCONFG=$(MLSCONFG)" > $(CONFDIR)/.configure; \
-	 $(MAKE) -f $(MakeFName) clean; \
+	 $(MAKE) -f $(MakeFName) mostlyclean; \
 	 mv $(CONFDIR)/temp.configure $(CONFDIR)/.configure
 
-clean_all:
+distclean:
 	@echo "Cleaning configurations $(EVERY_MLSCONFG)"; \
 	 for dir in $(EVERY_MLSCONFG); do \
 	  $(MAKE) -f $(MakeFName) clean_config MLSCONFG=$$dir; \
@@ -265,31 +304,70 @@ clean_all:
 
 #For preparing source distributions
 
-tar:
-	@echo "tar-ing mlspgs"; \
-        rm -f ../mlspgs.tgz; \
-	$(TAR) hcvzf ../mlspgs.tgz * --exclude $(CONFDIR)/.configure
+disttar:
+	@echo "tar-ing the mlspgs distribution"; \
+        rm -f ../mlspgs.tar; \
+	$(TAR) hcvf ../mlspgs.tar * --exclude $(CONFDIR)/.configure\
+	--exclude CVS\
+	--exclude Make.dep\* --exclude [fl]\*/NAG.\* --exclude [fl]\*/LF95.\* \
+	--exclude mlsl[0-9]
 
-tar_sips:
+disttarz: disttar ../mlspgs.tar
+	@echo "... then gzipping it"; \
+	cd ..; rm -f mlspgs.tgz; gzip mlspgs.tar; mv mlspgs.tar.gz mlspgs.tgz
+
+disttarg:
+	@echo "tar-ing the mlspgs distribution with GNUtar -z option"; \
+        rm -f ../mlspgs.tgz; \
+	$(TAR) hcvzf ../mlspgs.tgz * --exclude $(CONFDIR)/.configure \
+	--exclude CVS\
+	--exclude Make.dep\* --exclude [fl]\*/NAG.\* --exclude [fl]\*/LF95.\* \
+	--exclude mlsl[0-9]
+
+tar:
+	@echo "tar-ing mlspgs for sips"; \
+        rm -f ../mlspgs_sips.tar; \
+	$(TAR) hcvf ../mlspgs_sips.tar $(EVERYTHING) --exclude CVS\
+	--exclude Make.dep\* --exclude [fl]\*/NAG.\* --exclude [fl]\*/LF95.\*
+
+tarz: tar ../mlspgs_sips.tar
+	@echo "... then gzipping it"; cd ..; rm -f mlspgs_sips.tgz; \
+	gzip mlspgs_sips.tar; mv mlspgs_sips.tar.gz mlspgs_sips.tgz
+
+targ:
 	@echo "tar-ing mlspgs for sips"; \
         rm -f ../mlspgs_sips.tgz; \
-	$(TAR) hcvzf ../mlspgs_sips.tgz $(EVERYTHING) --exclude CVS
+	$(TAR) hcvzf ../mlspgs_sips.tgz $(EVERYTHING) --exclude CVS \
+	--exclude Make.dep\* --exclude [fl]\*/NAG.\* --exclude [fl]\*/LF95.\*
 
-tar_subs:
+substars:
 	@echo "tar-ing $(SUBDIRS)"; \
 	 for dir in $(SUBDIRS); do \
 	  $(MAKE) -f $(MakeFName) -C $$dir tar; \
 	done; \
 	echo "tar-ing srclib"; \
-        rm -f srclib.tgz; \
-	$(TAR) hcvzf srclib.tgz srclib; \
+        rm -f srclib.tar; \
+	$(TAR) hcvf srclib.tar srclib --exclude CVS --exclude Make.dep\*; \
 	echo "tar-ing util"; \
-        rm -f util.tgz; \
-	$(TAR) hcvzf util.tgz util; \
-	echo "tar-ing *.tgz"; \
-	rm -f mlspgs_subs.tar; \
-	$(TAR) -cvf mlspgs_subs.tar *.tgz
+        rm -f util.tar; \
+	$(TAR) hcvf util.tar util --exclude CVS ; \
+	echo "tar-ing *.tar"; \
+	rm -f mlspgs_subs.tar
 
+substar: substars
+	@echo "... then tarring them";\
+	rm -f ../mlspgs_subs.tar ;\
+	$(TAR) -cvf ../mlspgs_subs.tar *.tar
+
+substarz: substar ../mlspgs_subs.tar
+	@echo "... then gzipping it"; cd ..; rm -f mlspgs_subs.tgz; \
+	gzip mlspgs_subs.tar; mv mlspgs_subs.tar.gz mlspgs_subs.tgz
+
+substarg: substars
+	@echo "... then GNUtarring them"; \
+	rm -f ../mlspgs_subs.tgz ;\
+	$(TAR) -cvzf ../mlspgs_subs.tgz *.tar
+	
 #----------------------- Bare target dependenciess
 
 $(LEVELS): lib
@@ -315,13 +393,17 @@ install: all
 
 update: depends
 
-.PHONY: configure depends subdirs clean clean_objs clean_config clean_all\
-  tar tar_subs tar_sips all install levels configure_subdirs update\
+.PHONY: configure depends subdirs clean mostlyclean clean_config distclean\
+  tar substar disttar tarz substarz distarz targ substarg distarg substars\
+  all install levels configure_subdirs makefile update\
   configure_pvm configure_fopts configure_full configure_help help\
   $(SUBDIRS)
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.24  2001/03/09 00:18:40  pwagner
+# CVS excluded from tar_sips
+#
 # Revision 1.23  2001/03/08 23:26:41  pwagner
 # The effect of no .configure is to configure_full
 #
