@@ -32,7 +32,7 @@ use Dump_0, only: Dump
     & Matrix_SPD_T
   use MatrixTools, only: DumpBlock
   use MLSCommon, only: R8
-  use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
+  use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, add_to_retrieval_timing
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
   use OUTPUT_M, only: BLANKS, OUTPUT
@@ -342,8 +342,11 @@ contains
           ! Do the retrieval
           select case ( method )
           case ( l_newtonian )
+        ! call add_to_retrieval_timing( 'newton_solver', t1 )
             call newtonianSolver
           case ( l_lowcloud )
+            call add_to_retrieval_timing( 'low_cloud', t1 )
+            call cpu_time ( t1 )
           ! call LowCloudRetrieval
             print*,'to be added'
           end select ! method
@@ -359,6 +362,8 @@ contains
         call deallocate_test ( configIndices, "ConfigIndices", moduleName )
         if ( toggle(gen) ) call trace_end ( "Retrieve.retrieve" )
       case ( s_sids )
+        ! call add_to_retrieval_timing( 'sids', t1 )
+        call cpu_time ( t1 )
         call sids ( key, VectorDatabase, MatrixDatabase, configDatabase)
       case ( s_time )
         if ( timing ) then
@@ -492,10 +497,12 @@ contains
       type(vector_T) :: Reg_X_X         ! Regularization * X_n
       integer :: RowBlock               ! Which block of rows is the forward
                                         ! model filling?
+      real :: T1
       character(len=10) :: TheFlagName  ! Name of NWTA's flag argument
       type(vector_T) :: Weight          ! Scaling vector for rows, 1/measurementSD
       type(vector_T) :: X               ! for NWT
 
+      call cpu_time ( t1 )
       call allocate_test ( fmStat%rows, jacobian%row%nb, 'fmStat%rows', &
         & ModuleName )
       ! Set options for NWT
@@ -567,6 +574,8 @@ contains
           call output ( initLambda, advance='yes' )
         end if
 
+      call add_to_retrieval_timing( 'newton_solver', t1 )
+      call cpu_time ( t1 )
       do ! Newtonian iteration
         if ( nwt_flag /= nf_start .and. index(switches,'ndb') /= 0 ) &
             & call nwtdb
@@ -642,6 +651,8 @@ contains
           fmStat%maf = 0
           fmStat%finished = .false.
 
+          call add_to_retrieval_timing( 'newton_solver', t1 )
+          call cpu_time ( t1 )
           ! Loop over MAFs
           do while (.not. fmStat%finished )
             !??? What if one config set finished but others still had
@@ -652,6 +663,8 @@ contains
                 & x, fwdModelExtra, f, fmw, fmStat )
             end do ! k
           end do ! MAFs
+          call add_to_retrieval_timing( 'forward_model', t1 )
+          call cpu_time ( t1 )
           call subtractFromVector ( f, measurements )
           if ( got(f_measurementSD) ) call multiply ( f, weight )
           aj%fnorm = sqrt ( aprioriNorm + ( f .dot. f ) )
@@ -794,6 +807,8 @@ contains
 
           ! Loop over MAFs
           do while ( .not. fmStat%finished )
+            call add_to_retrieval_timing( 'newton_solver', t1 )
+            call cpu_time ( t1 )
             ! What if one config set finished but others still had more
             ! to do? Ermmm, think of this next time.
             fmStat%maf = fmStat%maf + 1
@@ -802,6 +817,8 @@ contains
               call forwardModel ( configDatabase(configIndices(k)), &
                 & x, fwdModelExtra, f_rowScaled, fmw, fmStat, jacobian )
             end do ! k
+            call add_to_retrieval_timing( 'forward_model', t1 )
+            call cpu_time ( t1 )
             do rowBlock = 1, size(fmStat%rows)
               if ( fmStat%rows(rowBlock) ) then
                 call subtractFromVector ( f_rowScaled, measurements, &
@@ -893,8 +910,12 @@ contains
               & call dump_struct ( normalEquations%m, &
                 & 'Sparseness structure of Normal equations blocks:', &
                 & upper=.true. )
+          call add_to_retrieval_timing( 'newton_solver', t1 )
+          call cpu_time ( t1 )
           ! Factor the normal equations
           call choleskyFactor ( factored, normalEquations )
+          call add_to_retrieval_timing( 'cholesky_factor', t1 )
+          call cpu_time ( t1 )
             if ( index(switches,'diag') /= 0 ) then
               call getDiagonal ( factored%m, dxUnscaled )
               call dump ( dxUnscaled, &
@@ -910,8 +931,12 @@ contains
           !       smallest absolute value, after triangularization
           aj%ajn = maxL1 ( factored%m ) ! maximum L1 norm of
           !       column in upper triangle after triangularization
+          call add_to_retrieval_timing( 'newton_solver', t1 )
+          call cpu_time ( t1 )
           call solveCholesky ( factored, candidateDX, atb, &
             & transpose=.true. )
+          call add_to_retrieval_timing( 'cholesky_solve', t1 )
+          call cpu_time ( t1 )
 
           !{AJ\%FNMIN = L2 norm of residual, $||\mathbf{J \delta x + f}||$
           ! where $\mathbf{\delta x}$ is the "Candidate DX" that may not
@@ -958,7 +983,11 @@ contains
               & call dump_struct ( normalEquations%m, &
                 & 'Sparseness structure of Normal equations blocks:', &
                 & upper=.true. )
+          call add_to_retrieval_timing( 'newton_solver', t1 )
+          call cpu_time ( t1 )
           call choleskyFactor ( factored, normalEquations )
+          call add_to_retrieval_timing( 'cholesky_factor', t1 )
+          call cpu_time ( t1 )
             if ( index(switches,'fac') /= 0 ) &
               call dump_Linf ( factored%m, &
                 & 'L1 norms of blocks of factor after Marquardt:', &
@@ -972,8 +1001,12 @@ contains
           ! = $\mathbf{y}$. Meanwhile, set AJ\%FNMIN as for NWT\_FLAG =
           ! NF\_EVALJ, but taking account of Levenberg-Marquardt
           ! stabilization
+          call add_to_retrieval_timing( 'newton_solver', t1 )
+          call cpu_time ( t1 )
           call solveCholesky ( factored, candidateDX, atb, &
             & transpose=.true. )
+          call add_to_retrieval_timing( 'cholesky_solve', t1 )
+          call cpu_time ( t1 )
           aj%fnmin = sqrt(aj%fnorm**2 - (candidateDX .dot. candidateDX) )
           call solveCholesky ( factored, candidateDX )
           aj%dxn = sqrt(candidateDX .dot. candidateDX) ! L2Norm(dx)
@@ -1118,8 +1151,14 @@ contains
         ! call negate ( covariance%m )
         ! Commented out, pending deep thought.!???
         ! Re-factor normal equations
+        call add_to_retrieval_timing( 'newton_solver', t1 )
+        call cpu_time ( t1 )
         call choleskyFactor ( factored, normalEquations )
+        call add_to_retrieval_timing( 'cholesky_factor', t1 )
+        call cpu_time ( t1 )
         call invertCholesky ( factored, outputCovariance%m )
+        call add_to_retrieval_timing( 'cholesky_invert', t1 )
+        call cpu_time ( t1 )
         !??? Don't forget to scale the covariance
         if ( associated(outputSD) ) then !???
           call GetDiagonal ( outputCovariance%m, outputSD, SquareRoot = .true. )
@@ -1151,6 +1190,8 @@ contains
       call destroyMatrix ( normalEquations%m )
       call destroyMatrix ( factored%m )
       call deallocate_test ( fmStat%rows, 'FmStat%rows', moduleName )
+      call add_to_retrieval_timing( 'newton_solver', t1 )
+      call cpu_time ( t1 )
     end subroutine NewtonianSolver
 
     ! --------------------------------------------------  SayTime  -----
@@ -1373,6 +1414,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.73  2001/10/01 22:54:22  pwagner
+! Added subsection timings for Retrieval section
+!
 ! Revision 2.72  2001/10/01 20:30:48  vsnyder
 ! Insert a reminder for necessary future work
 !
