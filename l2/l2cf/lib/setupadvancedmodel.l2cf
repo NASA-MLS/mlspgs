@@ -60,7 +60,7 @@ begin Construct
     /atmos_der, /temp_der, /do_baseline, $
     phiWindow=100 profiles, /lockBins, $
     specificQuantities=[ temperature_hr, h2o_hr ], $
-    binSelectors=[hrBin, latBin], $
+    binSelectors=[hiResBin, latBin], $
     xStar=r1aX, yStar=r1aYHR})
   advancedL2PCFwm$1: ForwardModel, type=linear, signals=!signal($1), $
     molecules=!moleculeFamilies(!radiometerForBand($1)), $
