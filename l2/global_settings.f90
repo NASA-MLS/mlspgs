@@ -10,6 +10,7 @@ module GLOBAL_SETTINGS
     & P_INPUT_VERSION_STRING, P_OUTPUT_VERSION_STRING, P_VERSION_COMMENT, &
     & S_FORWARDMODEL, S_ForwardModelGlobal, S_TIME, S_VGRID
   use L2GPData, only: L2GPDATA_T
+  use L2PC_m,only: L2PC_T
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
   use MoreTree, only: GET_FIELD_ID, GET_SPEC_ID
@@ -43,13 +44,14 @@ module GLOBAL_SETTINGS
 contains
 
   subroutine SET_GLOBAL_SETTINGS ( ROOT, ForwardModelConfigDatabase, &
-    & VGrids, l2gpDatabase )
+    & VGrids, l2gpDatabase, l2pcDatabase )
 
     integer, intent(in) :: ROOT    ! Index of N_CF node in abstract syntax tree
     type(ForwardModelConfig_T), dimension(:), pointer :: &
       & ForwardModelConfigDatabase
     type ( vGrid_T ), pointer, dimension(:) :: VGrids
     type ( l2gpData_T), dimension(:), pointer :: L2GPDATABASE
+    type ( l2pc_T), dimension(:), pointer :: L2PCDATABASE
     
     integer :: I         ! Index of son of root
     integer :: NAME      ! Sub-rosa index of name of vGrid or hGrid
@@ -83,7 +85,7 @@ contains
         end if
         select case ( get_spec_id(son) )
         case ( s_forwardModelGlobal ) !??? Begin temporary stuff for l2load
-          call forwardModelGlobalSetup ( son )
+          call forwardModelGlobalSetup ( son, l2pcDatabase )
         case ( s_forwardModel )
           call decorate (son, AddForwardModelConfigToDatabase ( &
             & forwardModelConfigDatabase, ConstructForwardModelConfig ( son, vGrids ) ) )
@@ -123,6 +125,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.18  2001/04/24 00:31:42  vsnyder
+! Finish adding 'time' command
+!
 ! Revision 2.17  2001/04/23 23:48:41  vsnyder
 ! Finish adding 'time' command
 !

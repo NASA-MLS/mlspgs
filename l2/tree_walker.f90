@@ -102,7 +102,8 @@ contains ! ====     Public Procedures     ==============================
       son = subtree(i,root)
       select case ( decoration(subtree(1,son)) ) ! section index
       case ( z_globalsettings )
-        call set_global_settings ( son, forwardModelConfigDatabase, vGrids, l2gpDatabase )
+        call set_global_settings ( son, forwardModelConfigDatabase, vGrids, &
+          & l2gpDatabase, l2pcDatabase )
       case ( z_mlsSignals )
         call MLSSignals ( son, field_indices )
         if ( index(switches,'tps') /= 0 ) call test_parse_signals
@@ -193,6 +194,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.44  2001/04/25 21:54:16  livesey
+! Added canDoL2PC flag to join
+!
 ! Revision 2.43  2001/04/25 21:52:13  livesey
 ! Moved DeConstruct to after output for 1 chunk cases.
 ! This is to protect vectors and matrices stored in l2pcs.
