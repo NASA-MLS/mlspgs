@@ -85,16 +85,18 @@ begin Construct
   !define(allColumns,
     {!makelist({column_},{},!allLinearMolecules),!makelist({column_},{},!allLogMolecules)})
 
-  ;; ----------------------------------------- Cloud Input
-  IWC:  Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type = CloudIce
+  ;; ----------------------------------------- Cloud Input/Output
+  hGridFine: hGrid, type=regular, spacing=0.5 degrees, origin=0 degrees, $
+  module=GHz, /forbidOverspill, /insetOverlaps
+  
   PSD:  Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type = sizeDistribution
-  LWC:  Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type = CloudWater
   earthradius: Quantity, hGrid=hGridStandard, type = earthradius
   surfaceType: Quantity, hGrid=hGridStandard, type = surfaceType
 
-  ;; ----------------------------------------- Cloud Output
-  hGridFine: hGrid, type=height, height=0km, module=GHz, interpolationFactor=4.,$
-    origin=0 degrees, /forbidOverspill, /insetOverlaps
+  IWC:  Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type = CloudIce
+  LWC:  Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type = CloudWater
+
+  IWC_Fine:  Quantity, vGrid=vGridStandard, hGrid=hGridFine, type = CloudIce
 
   trans:   Quantity, type=  losTransFunc,   Sgrid=sGridStandard, module=GHz
   cext:    Quantity, vGrid= vGridIWC, hGrid=hGridStandard, type = cloudExtinction
@@ -330,7 +332,7 @@ begin Construct
     temperature, temperature_HR, $
     refGPH, GPH, GPH_HR, $
     tpPressure, $
-    iwc, lwc, surfaceType, psd, earthRadius, $
+    iwc, iwc_fine, lwc, surfaceType, psd, earthRadius, $
     trans, cext, cextFine, $
     massMeanDiameterIce, massMeanDiameterWater, $
     !allMolecules, tropH2O, tropH2O_HR, $
