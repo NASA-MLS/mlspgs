@@ -360,7 +360,7 @@ contains ! =====     Public procedures     =============================
              l+l_magneticModel, &
              l+l_negativePrecision, l+l_offsetRadiance, l+l_profile, l+l_vector, &
              l+l_scaleOverlaps, l+l_special, l+l_splitSideband, &
-             l+l_RHIFromH2O, l+l_RHIPrecisionFromH2O, &
+             l+l_RHIFromH2O, l+l_RHIPrecisionFromH2O, l+l_spreadChannel, &
              l+l_H2OFromRHI, l+l_fold, l+l_rectanglefromlos, l+l_vGrid, &
              l+l_wmoTropopause, n+n_dt_def, &
       begin, t+t_fwmType, l+l_linear, l+l_full, l+l_scan, l+l_scan2d, &
@@ -608,11 +608,13 @@ contains ! =====     Public procedures     =============================
                     f+f_quantities, n+n_dot, &
              begin, f+f_boundaryPressure, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
+             begin, f+f_channel, t+t_numeric, n+n_field_type, &
              begin, f+f_dontMask, t+t_boolean, n+n_field_type, &
              begin, f+f_earthRadius, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
              begin, f+f_explicitValues, t+t_numeric, n+n_field_type, &
              begin, f+f_extinction, t+t_boolean, n+n_field_type, &
+             begin, f+f_force, t+t_boolean, n+n_field_type, &
              begin, f+f_geocAltitudeQuantity, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
              begin, f+f_gphQuantity, s+s_vector, f+f_template, f+f_quantities, &
@@ -1010,6 +1012,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.301  2003/04/11 23:14:31  livesey
+! Added spreadChannel method and force option for fill.
+!
 ! Revision 2.300  2003/04/11 21:56:51  livesey
 ! Added wmo tropopause
 !
