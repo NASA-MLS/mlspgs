@@ -168,8 +168,7 @@ module INIT_TABLES_MODULE
   integer, public, parameter :: L_R5H           = l_r4 + 1
   integer, public, parameter :: L_R5V           = l_r5h + 1
   integer, public, parameter :: L_SPD           = l_r5v + 1
-  integer, public, parameter :: L_THETA         = l_spd + 1
-  integer, public, parameter :: L_WEIGHTED      = l_theta + 1
+  integer, public, parameter :: L_WEIGHTED      = l_spd + 1
   integer, public, parameter :: LAST_LIT        = l_weighted
   integer, public :: LIT_INDICES(first_lit:last_lit)
 ! Parameter names:
@@ -328,7 +327,6 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_r5h) =                   add_ident ( 'r5h' )
     lit_indices(l_r5v) =                   add_ident ( 'r5v' )
     lit_indices(l_spd) =                   add_ident ( 'spd' )
-    lit_indices(l_theta) =                 add_ident ( 'theta' )
     lit_indices(l_weighted) =              add_ident ( 'weighted' )
     ! Put field names into the symbol table
     field_indices(f_apriori) =             add_ident ( 'apriori' )
@@ -676,7 +674,7 @@ contains ! =====     Public procedures     =============================
                     n+n_dot, &
              begin, f+f_channels, t+t_numeric, n+n_field_type, &
              begin, f+f_criteria, t+t_numeric, n+n_field_type, &
-             np+n_spec_def, &
+             ndp+n_spec_def, &
       begin, s+s_forwardModel, & ! Must be AFTER s_vector and s_matrix
              np+n_spec_def, &
       begin, s+s_retrieve, & ! Must be AFTER s_vector and s_matrix
@@ -697,7 +695,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_toleranceF, t+t_numeric, n+n_field_type, &
              begin, f+f_toleranceR, t+t_numeric, n+n_field_type, &
              begin, f+f_weight, s+s_vector, n+n_field_spec, &
-             np+n_spec_def /) )
+             ndp+n_spec_def /) )
     ! Define the relations between sections and specs.  These are
     ! represented by trees of the form
     !  < n_section section_name
@@ -807,6 +805,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.15  2001/02/08 21:13:32  vsnyder
+! Move "theta" from init_tables_module to intrinsic.
+!
 ! Revision 2.14  2001/02/08 01:52:43  vsnyder
 ! Provide for noDuplicates, allFields and noPositional checking.
 ! Turn on "no duplicates" and "noPositional" checking for several specs.
