@@ -21,6 +21,17 @@ begin Fill
   ;; Also do ptan
   Fill, quantity=stateCore.ptanGHz, method=l2aux, sourceL2AUX=l2auxCorePtanInput
 
+  ;; Do a THz ptan from the GHz information
+  Fill, quantity=stateCore.ptanTHz, method=hydrostatic, $
+    h2oQuantity=stateCore.h2o, $
+    temperatureQuantity=stateCore.temperature, $
+    refGPHQuantity=stateCore.refGPH, $
+    geocAltitudeQuantity=stateCore.tngtGeocAltTHz, $
+    orbitInclination=stateCore.orbitInclination, $
+    phiTan=stateCore.phiTanTHz, $
+    maxIterations=20, $
+    phiWindow=0 degrees
+
   ;; Transfer the low resolution data into the high resolution data
   Fill, quantity=stateCore.h2o_hr, method=vector, sourceQuantity=stateCore.h2o, /interpolate
   Fill, quantity=stateCore.o3_hr, method=vector, sourceQuantity=stateCore.o3, /interpolate
