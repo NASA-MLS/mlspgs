@@ -18,7 +18,8 @@ module FilterShapes_m
 
   type, public :: FilterShape_T
     real(r8) :: LHS, RHS
-    real(r8), dimension(:), pointer :: FilterShape => NULL()
+    real(r8), dimension(:), pointer :: FilterGrid => NULL()      ! Abscissae
+    real(r8), dimension(:), pointer :: FilterShape => NULL()     ! Ordinates
     character(len=MaxSigLen) :: Signal
   end type FilterShape_T
 
@@ -67,7 +68,8 @@ contains
     integer, intent(in) :: Spec_Indices(:)   ! Needed by Parse_Signal, q.v.
 
     integer :: DataBaseSize                  ! How many filter shapes?
-    integer :: I                             ! Loop inductor, subscript
+    real(r8) :: DX                           ! To compute FilterGrid
+    integer :: I, J                          ! Loop inductors, subscripts
     integer :: NumChannels                   ! For the signal
     integer :: NumFilterPts                  ! How many points in each filter
     !                                          shape array -- all the same
@@ -110,13 +112,19 @@ contains
       end if
       do i = dataBaseSize + 1, dataBaseSize + numChannels
         filterShapes(i)%signal = sigName
+        call allocate_test ( filterShapes(i)%filterGrid, numFilterPts, &
+          & "filterShapes(i)%filterGrid", moduleName )
         call allocate_test ( filterShapes(i)%filterShape, numFilterPts, &
           & "filterShapes(i)%filterShape", moduleName )
         call read_one_filter ( filterShapes(i)%lhs, filterShapes(i)%rhs, &
           filterShapes(i)%filterShape )
         if ( status < 0 ) go to 99
         if ( status > 0 ) go to 98
-      end do
+        dx = (filterShapes(i)%rhs - filterShapes(i)%lhs) / (numFilterPts - 1)
+        do j = 1, numFilterPts
+          filterShapes(i)%filterGrid(j) = filterShapes(i)%lhs + (j-1) * dx
+        end do ! j
+      end do ! i
     end do
 
     if ( toggle(gen) ) then
@@ -184,6 +192,9 @@ contains
 end module FilterShapes_m
 
 ! $Log$
+! Revision 1.6  2001/03/30 02:10:12  vsnyder
+! Improve 'dump' routine
+!
 ! Revision 1.5  2001/03/30 01:12:29  vsnyder
 ! Correct some comments, move "use Output" to "dump_filter_shapes_database"
 !
