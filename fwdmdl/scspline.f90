@@ -25,13 +25,16 @@ contains
     integer, parameter :: RK = kind(0.0e0)
     include 'cspline_der.f9h'
   end subroutine SCSPLINE_DER
-  logical function not_useS_here()
-    not_useS_here = (id(1:1) == ModuleName(1:1))
-  end function not_useS_here
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
 
 end module SCSPLINE_DER_M
 
 ! $Log$
+! Revision 2.2  2003/11/08 02:03:05  vsnyder
+! Correct spelling of not_used_here
+!
 ! Revision 2.1  2003/11/08 02:01:01  vsnyder
 ! Initial commit -- created just for symmetry
 !
