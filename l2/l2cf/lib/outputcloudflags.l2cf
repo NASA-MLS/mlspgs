@@ -15,10 +15,6 @@ begin Join
   !define(outputCloudRad,{!directWriteCloud(cloudOutput.dtR$1,'.C!cloudChannelForR$1 DT', /prefixSignal)!nl})
   !forall(outputCloudRad,!oneToFive)
 
-  ;; Output all R2 DT's
-  !define(outputR2CloudRad,{!directWriteCloud(cloudOutput.DTband$1,' DT', /prefixSignal)!nl})
-  !forall(outputR2CloudRad,2,3,4,5,6)
-
   !define(outputPolCloudRad,{!directWriteCloud(cloudOutput.DTband$1,' DT', /prefixSignal)!nl})
   !forall(outputPolCloudRad,18,34)
 
