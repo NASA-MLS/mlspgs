@@ -2,25 +2,23 @@
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module UNITS
+
 ! Provide several units and unit conversion constants.
 ! Initialize the declaration table with the unit names and scales.
-  use DECLARATION_TABLE, only: DECLARE, UNITS_NAME
+
   use INTRINSIC ! "units" type literals, beginning with L_,
                 ! Abstract physical quantities beginning with PHYQ_
-  use MLSCommon, only: R8
-  use TREE, only: NULL_TREE
+  use MLSCommon, only: RP, R8
 
   implicit NONE
   public
 
+  real(rp), parameter :: Boltz = 660.988_rp ! = kln10/m  m^2/(K sec^2)
   real(r8), parameter :: Ln10 = 2.302585092994045684017991454684364207601
   real(r8), parameter :: Pi = 3.141592653589793238462643383279502884197
   real(r8), parameter :: Deg2Rad = Pi/180.0_r8 ! Degrees-to-Radians
   real(r8), parameter :: Rad2Deg = 180.0_r8/Pi ! Radians-to-Degrees
   real(r8), parameter :: Omega = 7.292115D-5 ! Angular velocity of earth
-
-  private :: DECLARE, NULL_TREE, UNITS_NAME ! Get them from the source
-  ! But it's OK to get PHYQ_... from here
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -104,6 +102,8 @@ contains ! =====     Public procedures     =============================
 
   contains
     subroutine DECLARE_UNIT ( NAME, VALUE, PHYS_UNIT )
+      use DECLARATION_TABLE, only: DECLARE, UNITS_NAME
+      use TREE, only: NULL_TREE
       integer, intent(in) :: NAME
       integer, intent(in) :: PHYS_UNIT
       double precision, intent(in) :: VALUE
@@ -116,6 +116,9 @@ contains ! =====     Public procedures     =============================
 end module UNITS
 
 ! $Log$
+! Revision 2.14  2002/09/27 00:18:05  vsnyder
+! Move USEs from module scope to procedure scope, add Boltzman constant
+!
 ! Revision 2.13  2002/04/10 17:42:59  pwagner
 ! Added pctrhi unit
 !
