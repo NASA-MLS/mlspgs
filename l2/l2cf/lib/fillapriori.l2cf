@@ -119,7 +119,8 @@ begin Fill
     geocAltitudeQuantity=apriori.tngtGeocAltGHz, $
     orbitInclination=apriori.orbitInclination, $
     phiTan=apriori.phiTanGHz, $
-    maxIterations=20
+    maxIterations=20, $
+    !ifdef(strict1D,{phiWindow=0 profiles},{phiWindow=4 degrees})
   Fill, quantity=apriori.ptanTHz, method=hydrostatic, $
     h2oQuantity=apriori.h2o!res, $
     temperatureQuantity=apriori.temperature!res, $
@@ -127,7 +128,8 @@ begin Fill
     geocAltitudeQuantity=apriori.tngtGeocAltTHz, $
     orbitInclination=apriori.orbitInclination, $
     phiTan=apriori.phiTanTHz, $
-    maxIterations=20
+    maxIterations=20, $
+    !ifdef(strict1D,{phiWindow=0 profiles},{phiWindow=4 degrees})
   })
 
 })

@@ -86,7 +86,8 @@ begin Fill
     geocAltitudeQuantity=truth.tngtGeocAltGHz, $
     orbitInclination=truth.orbitInclination, $
     phiTan=truth.phiTanGHz, $
-    maxIterations=20
+    maxIterations=20, $
+    !ifdef(strict1D,{phiWindow=0 profiles},{phiWindow=4 degrees})
 
   Fill, quantity=truth.ptanTHz, method=hydrostatic, $
     h2oQuantity=truth.h2o!res, $
@@ -95,7 +96,9 @@ begin Fill
     geocAltitudeQuantity=truth.tngtGeocAltTHz, $
     orbitInclination=truth.orbitInclination, $
     phiTan=truth.phiTanTHz, $
-    maxIterations=20
+    maxIterations=20, $
+    !ifdef(strict1D,{phiWindow=0 profiles},{phiWindow=4 degrees})
+
   })
 
   ;; Do the magnetic field
