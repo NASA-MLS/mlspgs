@@ -18,14 +18,16 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
 
   use INIT_TABLES_MODULE, only: L_PRESSURE, L_ZETA
   use MLSCommon, only: RV
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
+    & MLSMSG_Error, MLSMSG_Warning, MLSMSG_Debug
   use OUTPUT_M, only: blanks, OUTPUT
   use STRING_TABLE, only: GET_STRING
   use VectorsModule, only: VectorValue_T
 
   implicit none
   private
-  public :: DirectWrite_L2Aux, DirectWrite_L2GP
+  public :: DirectData_T, AddDirectToDatabase, DestroyDirectDatabase, &
+    & DirectWrite_L2Aux, DirectWrite_L2GP
 
   !------------------------------- RCS Ident Info ------------------------------
   character(len=*), parameter :: IdParm = &
@@ -46,10 +48,53 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
     module procedure DirectWrite_L2Aux_fileName
   end interface
 
+  type DirectData_T
+    integer :: type ! l_l2aux or l_l2gp
+    character(len=80) :: sdName ! should be at least L2GPNameLen
+  end type DirectData_T
   ! For Announce_Error
   integer :: ERROR
 
 contains ! ======================= Public Procedures =========================
+
+  !-------------------------------------------  AddDirectToDatabase  -----
+  integer function AddDirectToDatabase( DATABASE, ITEM )
+
+    ! This function adds a directly writeabledata type to a database
+    ! creating a new database if it doesn't exist.  The result value is
+    ! the size -- where it is put.
+
+    ! Dummy arguments
+    type (DirectData_T), dimension(:), pointer :: DATABASE
+    type (DirectData_T), intent(in) :: ITEM
+
+    ! Local variables
+    type (DirectData_T), dimension(:), pointer :: tempDatabase
+    !This include causes real trouble if you are compiling in a different 
+    !directory.
+    include "addItemToDatabase.f9h" 
+
+    AddDirectToDatabase = newSize
+  end function AddDirectToDatabase
+
+  ! --------------------------------------------------------------------------
+
+  ! This subroutine destroys a directly writeable database
+
+  subroutine DestroyDirectDatabase ( DATABASE )
+
+    ! Dummy argument
+    type (DirectData_T), dimension(:), pointer :: DATABASE
+
+    ! Local variables
+    integer :: l2gpIndex, status
+
+    if ( associated(database) ) then
+       deallocate ( database, stat=status )
+       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & MLSMSG_deallocate // "database" )
+    end if
+  end subroutine DestroyDirectDatabase
 
   ! ----------------------------------------------- DirectWrite_L2GP --------
   subroutine DirectWrite_L2GP_filename ( quantity, quantity_precision, sdName, &
@@ -727,6 +772,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.2  2003/06/23 23:55:17  pwagner
+! Added DirectData_T to keep track of data written directly
+!
 ! Revision 2.1  2003/06/20 19:43:16  pwagner
 ! First commit
 !
