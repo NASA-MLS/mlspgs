@@ -83,6 +83,7 @@ minutes
 
 none
 
+opticalDepth
 orbitInclination
 orbits
 
@@ -130,6 +131,9 @@ xyz
 zeta
 
 # $Log$
+# Revision 2.6  2002/02/09 19:12:38  livesey
+# Added optical depth
+#
 # Revision 2.5  2001/11/08 00:12:08  livesey
 # Removed extinction, it's now in molecules (not pretty, but unfortunately
 # necessary).
