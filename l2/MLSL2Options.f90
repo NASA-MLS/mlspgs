@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -53,39 +53,46 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   logical, parameter ::                          PCFL2CFSAMECASE = SIPS_VERSION
   ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-   ! Set the following to 1 before delivering to sips;
-   ! when set to 0, it allows program to run w/o creating metadata
-   integer            ::                         PENALTY_FOR_NO_METADATA = 0
+  ! Update these lines before delivery to sips                                     
+  ! id to print out in response to "--version" command-line option       
+  character(LEN=*), dimension(3), parameter :: CURRENT_VERSION_ID = (/ &    
+    & 'v0.8 swdev team                                           ', &       
+    & 'Copyright (c) 2002, California Institute of Technology.   ', &       
+    & 'U.S. Government Sponsorship under NASA Contract NAS7-1407.' /)       
+     
+  ! Set the following to 1 before delivering to sips;                       
+  ! when set to 0, it allows program to run w/o creating metadata           
+  integer            ::                         PENALTY_FOR_NO_METADATA = 0 
 
-   ! Set the following to -2 before delivering to sips;
-   ! (its possible values and their effects on normal output:
-   ! -1          sent to stdout (via print *, '...')
-   ! -2          sent to Log file (via MLSMessage)
-   ! < -2        both stdout and Log file
-   ! > -1        Fortran 'unit=OUTPUT_PRINT_UNIT')
-   integer            :: OUTPUT_PRINT_UNIT = -2
+  ! Set the following to -2 before delivering to sips;                      
+  ! (its possible values and their effects on normal output:                
+  ! -1          sent to stdout (via print *, '...')                         
+  ! -2          sent to Log file (via MLSMessage)                           
+  ! < -2        both stdout and Log file                                    
+  ! > -1        Fortran 'unit=OUTPUT_PRINT_UNIT')                           
+  integer            :: OUTPUT_PRINT_UNIT = -2                              
 
-   ! Set the following to MLSMSG_Error before delivering to sips;
-   ! when set higher, it allows program keep going despite errors
-   ! when set lower, the program would quit even on warnings
-   integer, parameter :: QUIT_ERROR_THRESHOLD = MLSMSG_Error
+  ! Set the following to MLSMSG_Error before delivering to sips;            
+  ! when set higher, it allows program keep going despite errors            
+  ! when set lower, the program would quit even on warnings                 
+  integer, parameter :: QUIT_ERROR_THRESHOLD = MLSMSG_Error                 
 
-   ! Set the following to 2 before delivering to sips;
-   ! If 0, program simply stops both upon normal termination
-   ! as well as some abnormal ones (e.g. in parser)
-   ! if 2, status will be 2 only if run complete
-   ! and without error
-   integer, parameter :: NORMAL_EXIT_STATUS = 2
+  ! Set the following to 2 before delivering to sips;                       
+  ! If 0, program simply stops both upon normal termination                 
+  ! as well as some abnormal ones (e.g. in parser)                          
+  ! if 2, status will be 2 only if run complete                             
+  ! and without error                                                       
+  integer, parameter :: NORMAL_EXIT_STATUS = 2                              
 
-   ! Assume hdf files w/o explicit hdfVersion field are this
-   ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc.
-   integer, parameter :: DEFAULT_HDFVERSION_WRITE = 4
-   ! Set to WILDCARDHDFVERSION if you wish to autodetect such files
-   ! on input
-   integer, parameter :: DEFAULT_HDFVERSION_READ = 4
+  ! Assume hdf files w/o explicit hdfVersion field are this                 
+  ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc.                   
+  integer, parameter :: DEFAULT_HDFVERSION_WRITE = 4                        
+  ! Set to WILDCARDHDFVERSION if you wish to autodetect such files          
+  ! on input                                                                
+  integer, parameter :: DEFAULT_HDFVERSION_READ = 4                         
 
-   ! Whether to manually collect garbage at end of each chunk
-   logical            :: garbage_collection_by_chunk = .true. 
+  ! Whether to manually collect garbage at end of each chunk                
+  logical            :: GARBAGE_COLLECTION_BY_CHUNK = .true.                
 
 !=============================================================================
 END MODULE MLSL2Options
@@ -93,6 +100,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.15  2002/02/12 00:25:25  pwagner
+! New current_version_id parameter
+!
 ! Revision 2.14  2002/02/05 00:44:03  pwagner
 ! Added garbage collection stuff
 !
