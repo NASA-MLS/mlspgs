@@ -594,7 +594,7 @@ CONTAINS
 
       INTEGER, EXTERNAL :: pgs_met_init, pgs_met_remove, pgs_met_setAttr_d
       INTEGER, EXTERNAL :: pgs_met_setAttr_i,pgs_met_setAttr_s, pgs_met_write
-      INTEGER, EXTERNAL :: gdinqgrid
+      INTEGER, EXTERNAL :: pgs_td_taiToUTC, gdinqgrid
 
 ! Variables
 
@@ -602,11 +602,12 @@ CONTAINS
       CHARACTER (LEN=45) :: attrName
       CHARACTER (LEN=132) :: list
       CHARACTER (LEN=480) :: msr
+      CHARACTER (LEN=CCSDS_LEN) :: timeA
       CHARACTER (LEN=FileNameLen) :: sval
       CHARACTER (LEN=GridNameLen) :: gridName
       CHARACTER (LEN=PGSd_MET_GROUP_NAME_L) :: groups(PGSd_MET_NUM_OF_GROUPS)
 
-      INTEGER :: hdfReturn, i, j, indx, len, numGrids, result, sdid
+      INTEGER :: hdfReturn, i, j, indx, len, numGrids, result, sdid, returnStatus
 
       REAL(r8) :: dval
 
@@ -900,7 +901,10 @@ CONTAINS
          ENDIF
 
          attrName = 'RangeBeginningTime'
-         sval = '12:00:00.000000'
+         returnStatus = pgs_td_taiToUTC(l3cf%timeD(1), timeA)
+         IF (returnStatus /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, &
+                                                     ModuleName, TAI2A_ERR)
+         sval = timeA(12:26)
          result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, sval)
          IF (result /= PGS_S_SUCCESS) THEN
             msr = METAWR_ERR // attrName
@@ -1158,6 +1162,9 @@ END MODULE L3DMData
 !==================
 
 !# $Log$
+!# Revision 1.12  2001/05/04 18:30:01  nakamura
+!# Removed L3DMFiles_T and used generic OutputFiles_T.
+!#
 !# Revision 1.11  2001/04/24 19:38:23  nakamura
 !# Removed references to private L2 parameters.
 !#
