@@ -206,7 +206,7 @@ Label, quantity=$1, label=$2!ifelse($#,2,{},{,!shift(!shift($*))})!dnl
 ;; First do the DGGs
 !ifdef(flagGotDirectDGGs,{!dnl
 DirectWrite, file=!DGGFilename, hdfVersion=!hdfVersion, $
-  type=l2gp, !undivert(!directDGGDivert)})
+  type=l2dgg, !undivert(!directDGGDivert)})
 ;; Now the DGMs
 !ifdef(flagGotDirectDGMs,{!dnl
 DirectWrite, file=!DGMFilename, hdfVersion=!hdfVersion, $
@@ -360,6 +360,9 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
   Fill, quantity=standardPrecision.$1, method=vector, sourceQuantity=outputPrecision.$1!nl})
 
 ; $Log$
+; Revision 1.62  2003/07/11 01:23:05  livesey
+; Made it more backwards compatible
+;
 ; Revision 1.61  2003/07/09 19:41:54  livesey
 ; Bug fix in cloud filename
 ;
