@@ -16,6 +16,7 @@ module QuantityPVM                      ! Send and receive vector quantities usi
   use Intrinsic, only: LIT_INDICES
   use MLSSignals_m, only: GETSIGNALNAME
   use QuantityTemplates, only: QUANTITYTEMPLATE_T, SETUPNEWQUANTITYTEMPLATE
+  use Dump_0, only: DUMP
 
   implicit none
   private
@@ -66,7 +67,7 @@ contains ! ================================== Module procedures ============
       & q%template%instrumentModule, q%template%radiometer, &
       & q%template%quantityType, q%template%unit, q%template%frequencyCoordinate, &
       & q%template%molecule, q%template%verticalCoordinate,&
-      & q%template%signal /), info )
+      & q%template%signal, q%template%name /), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "packing misc quantity stuff" )
 
     ! Now pack some strings
@@ -88,7 +89,6 @@ contains ! ================================== Module procedures ============
     if ( info /= 0 ) call PVMErrorMessage ( info, "packing frequencyCoordinate" )
 
     ! Pack signal as a string
-    
     if ( q%template%signal /= 0 ) then
       call GetSignalName( q%template%signal, &
         & word, sideband=q%template%sideband )
@@ -200,7 +200,7 @@ contains ! ================================== Module procedures ============
     integer :: BUFFERID                 ! From pvm
     integer :: INFO                     ! Flag
     integer :: I4(4)                    ! Unpacked stuff
-    integer :: I11(11)                  ! Unpacked stuff
+    integer :: I12(12)                  ! Unpacked stuff
     logical :: L5(5)                    ! Unpacked stuff
     logical :: FLAG(1)                  ! To unpack
     character(len=132) :: WORD          ! Result of get_string etc.
@@ -232,20 +232,21 @@ contains ! ================================== Module procedures ============
       & minorFrame   = l5(4) )
     qt%logBasis = l5(5)
 
-    call PVMIDLUnPack ( i11, info )
+    call PVMIDLUnPack ( i12, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, &
       & "unpacking misc quantity stuff" )
-    qt%noInstancesLowerOverlap = i11(1)
-    qt%noInstancesUpperOverlap = i11(2)
-    qt%sideband                = i11(3)
-    qt%instrumentModule        = i11(4)
-    qt%radiometer              = i11(5)
-    qt%quantityType            = i11(6)
-    qt%unit                    = i11(7)
-    qt%frequencyCoordinate     = i11(8)
-    qt%molecule                = i11(9)
-    qt%verticalCoordinate      = i11(10)
-    qt%signal                  = i11(11)
+    qt%noInstancesLowerOverlap = i12(1)
+    qt%noInstancesUpperOverlap = i12(2)
+    qt%sideband                = i12(3)
+    qt%instrumentModule        = i12(4)
+    qt%radiometer              = i12(5)
+    qt%quantityType            = i12(6)
+    qt%unit                    = i12(7)
+    qt%frequencyCoordinate     = i12(8)
+    qt%molecule                = i12(9)
+    qt%verticalCoordinate      = i12(10)
+    qt%signal                  = i12(11)
+    qt%name                    = i12(12)
 
     ! Now unpack some strings
     call PVMIDLUnpack ( word, info )
@@ -282,7 +283,7 @@ contains ! ================================== Module procedures ============
 
     call PVMIDLUnpack ( qt%surfs, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking surfs" )
-
+    
     call PVMIDLUnpack ( qt%phi, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking phi" )
 

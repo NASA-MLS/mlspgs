@@ -27,7 +27,7 @@ void nextpvmarg( char *str )
 
   myLen = strlen(str);
   args[noArgs] = (char*) malloc(myLen+1);
-  strncpy ( args[noArgs], str, myLen );
+  strncpy ( args[noArgs], str, myLen+1 );
   noArgs++;
 }
 
