@@ -60,8 +60,4 @@ MODULE MLSPCF2
    INTEGER, PARAMETER :: mlspcf_mcf_l2dgm_start = 4023
    INTEGER, PARAMETER :: mlspcf_mcf_l2dgm_end = 4023
    !
-
-   ! Change the following to 1 before delivering to sids;
-   ! when set to 0, it allows program to run w/o creating metadata
-   integer, parameter :: PENALTY_FOR_NO_METADATA = 0
 END MODULE MLSPCF2
