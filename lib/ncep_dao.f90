@@ -41,7 +41,7 @@ MODULE ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
 
   public::SetupNewGridTemplate, DestroyGridTemplateContents, &
 	&   AddGridTemplateToDatabase, DestroyGridTemplateDatabase, &
-	& Dump_Gridded_Database
+	& Dump_Gridded_Database, source_file_already_read
   public::OBTAIN_CLIM, READ_CLIMATOLOGY, OBTAIN_DAO, Obtain_NCEP
   public::ReadGriddedData
   private::announce_error
@@ -549,13 +549,16 @@ MODULE ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
     LOGICAL, OPTIONAL, intent(in) :: dump_data        ! dump climatology data
 	 
 	 ! Local
+	 INTEGER, PARAMETER :: version=1
+
+	! These determine how much extra to output
+	 LOGICAL, PARAMETER :: debug=.FALSE.
+	 LOGICAL, PARAMETER :: ECHO_GRIDDED_QUANTITIES=.FALSE.	! echo_data overrides
+	 LOGICAL, PARAMETER :: DUMP_GRIDDED_QUANTITIES=.FALSE.	! dump_data overrides
+
+	 LOGICAL :: end_of_file
     type (GriddedData_T)        :: gddata 
 	 INTEGER :: ErrType
-	 INTEGER, PARAMETER :: version=1
-	 LOGICAL :: end_of_file
-	 LOGICAL, PARAMETER :: debug=.FALSE.
-	 LOGICAL, PARAMETER :: ECHO_GRIDDED_QUANTITIES=.TRUE.
-	 LOGICAL, PARAMETER :: DUMP_GRIDDED_QUANTITIES=.TRUE.
 	 LOGICAL :: echo
 	 LOGICAL :: dump
     integer:: processCli, CliUnit, record_length
@@ -883,6 +886,57 @@ MODULE ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
 
   end subroutine Dump_Gridded_Data
 
+  ! --------------------------------  source_file_already_read  -----
+  function source_file_already_read(GriddedDataBase, source_file, field_name &
+  & ) result (already)
+  ! check if source file among those already read to form database
+  ! returns .TRUE. if already read, .FALSE. if not or if database is empty
+  
+  ! optionally checks that field name is also matched for that partcilar
+  ! source file
+  
+  ! Arguments
+  !   
+    type (GriddedData_T), dimension(:), pointer :: GriddedDataBase
+	 character (LEN=*), intent(in) :: source_file
+	 character (LEN=*), optional, intent(in) :: field_name
+	 logical :: already
+	 
+	 ! Local
+	 integer :: i
+	 
+	 ! Begin
+	 already = .FALSE.
+
+	 if(.NOT. associated(GriddedDataBase)) then
+	 	return
+	elseif(LEN(source_file) == 0) then
+		return
+	elseif(SIZE(GriddedDataBase) == 0) then
+		return
+	endif
+	
+	do i=1, SIZE(GriddedDataBase)
+
+		if(adjustl(source_file) == adjustl(GriddedDataBase(i)%sourceFileName)) then
+			already = .TRUE.
+			exit
+		endif
+		
+	enddo
+	
+	if(present(field_name) .AND. already) then
+		
+		if(adjustl(field_name) == adjustl(GriddedDataBase(i)%quantityName)) then
+			already = .TRUE.
+		else
+			already = .FALSE.
+		endif
+
+	endif
+
+  end function source_file_already_read
+
   ! ------------------------------------------------  announce_error  -----
   subroutine announce_error ( lcf_where, full_message, use_toolkit, &
   & error_number )
@@ -954,6 +1008,9 @@ END MODULE ncep_dao
 
 !
 ! $Log$
+! Revision 2.9  2001/03/30 00:26:19  pwagner
+! Added source_file_already_read
+!
 ! Revision 2.8  2001/03/29 00:51:03  pwagner
 ! AddGridTemplatetoDatabase now works
 !
