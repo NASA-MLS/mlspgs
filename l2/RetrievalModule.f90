@@ -1289,8 +1289,9 @@ contains
             do i = 1, merge(1,2,type==num_value)
               if ( units(i) /= phyq_dimensionless ) &
                 & call announceError ( wrongUnits, f_channels, string='no' )
-              channels ( nint(value(1)) ) = .true.
             end do
+            channels ( nint(value(1)) : &
+              & nint(value(merge(1,2,type==num_value))) ) = .true.
           end do
         else
           channels = .true.             ! Apply this to all channels
@@ -1360,10 +1361,10 @@ contains
                 !??? channel numbers don't.
                 call SetMask ( qty%mask(:,instance), &
                   & (/ channel+qty%template%noChans*(height-1) /) )
-              end do
-            end if
-          end do
-        end if
+              end do                    ! Height loop
+            end if                      ! Do this channel
+          end do                        ! Channel loop
+        end if                          ! Got heights or ignore
 
         ! Now go and `unmask' the ones we want to consider
         if ( got(f_height) ) then
@@ -1393,16 +1394,16 @@ contains
                   !??? channel numbers don't.
                   call ClearMask ( qty%mask(:,instance), &
                     & (/ channel+qty%template%noChans*(height-1) /) )
-                end do
-              end if
-            end do
-          end do
-        end if
-     end do
+                end do                  ! Height loop
+              end if                    ! Do this channel
+            end do                      ! Channel loop
+          end do                        ! Height entries in l2cf
+        end if                          ! Got a height entry
+      end do                            ! Instance loop
 
-    ! Tidy up
-    call Deallocate_test ( channels, 'channels', ModuleName )
-
+      ! Tidy up
+      call Deallocate_test ( channels, 'channels', ModuleName )
+      
       if ( index(switches,'msk') /= 0 ) then
         call output ( 'Elements per mask = ' )
         call output ( size(qty%values,1), advance='yes' )
@@ -1414,6 +1415,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.74  2001/10/01 23:04:17  livesey
+! Bug fix with channel range, and some tidying up
+!
 ! Revision 2.73  2001/10/01 22:54:22  pwagner
 ! Added subsection timings for Retrieval section
 !
