@@ -90,8 +90,8 @@ MatrixModule.o: $S/MatrixModule.f90 $S/addItemToDatabase.f9h \
 
 MLSL2.o: $S/MLSL2.f90 $M/declaration_table.o init_tables_module.o \
           $M/lexer_core.o $M/machine.o open_init.o $M/parser.o \
-          $M/string_table.o $M/toggles_core.o $M/tree.o $M/ tree_walker.o \
-          $M/units.o
+          $M/string_table.o $M/toggles_core.o $M/tree.o $M/ tree_checker.o \
+          tree_walker.o $M/units.o
 	$(F90) -c $(FOPTS) $I$M $I$S $I$M $S/MLSL2.f90
 
 obtainclimatology.o: $M/Allocate_Deallocate.o $S/obtainclimatology.f90 \
@@ -204,6 +204,9 @@ tar:
 # ========================================================================
 
 # $Log$
+# Revision 2.6  2000/10/12 00:38:52  vsnyder
+# Account for lib/cf_parser moving to lib
+#
 # Revision 2.5  2000/10/10 20:33:13  vsnyder
 # Repairs to get rid of WVS pathnames
 #
