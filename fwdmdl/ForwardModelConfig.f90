@@ -9,16 +9,9 @@ module ForwardModelConfig
 ! the command.
 
 
-  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-  use Dump_0, only: DUMP
-  use Intrinsic, only: Lit_indices
   use MLSCommon, only: R8
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate,&
-    & MLSMSG_Error
-  use MLSSignals_M, only: DestroySignal, GetSignalName, MaxSigLen, Signal_T
-  use Output_M, only: Output
-  use String_Table, only: Display_String
-  use VGridsDatabase, only: DestroyVGridContents, VGrid_T
+  use MLSSignals_M, only: Signal_T
+  use VGridsDatabase, only: VGrid_T
 
   implicit NONE
   private
@@ -82,6 +75,9 @@ contains
     ! Add a quantity template to a database, or create the database if it
     ! doesn't yet exist
 
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
+      & MLSMSG_Deallocate, MLSMSG_Error
+
     ! Dummy arguments
     type (ForwardModelConfig_T), dimension(:), pointer :: Database
     type (ForwardModelConfig_T), intent(in) :: Item
@@ -96,6 +92,11 @@ contains
 
   ! --------------------------  DestroyForwardModelConfigDatabase  -----
   subroutine DestroyFWMConfigDatabase ( Database )
+
+    use Allocate_Deallocate, only: Deallocate_Test
+    use MLSMessageModule, only: MLSMessage,  MLSMSG_Deallocate, MLSMSG_Error
+    use MLSSignals_M, only: DestroySignal
+
     ! Dummy arguments
     type (ForwardModelConfig_T), dimension(:), pointer :: Database
 
@@ -132,6 +133,13 @@ contains
   ! =====     Private Procedures     =====================================
   ! ------------------------------------  DUMP_FOWARDMODELCONFIGS  -----
   subroutine Dump_ForwardModelConfigs ( Database )
+
+    use Dump_0, only: DUMP
+    use Intrinsic, only: Lit_indices
+    use MLSSignals_M, only: GetSignalName, MaxSigLen
+    use Output_M, only: Output
+    use String_Table, only: Display_String
+
     type (ForwardModelConfig_T), pointer, dimension(:) :: Database
 
     ! Local variables
@@ -184,6 +192,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.8  2002/07/17 06:02:13  livesey
+! New config elements for hdf5 l2pcs
+!
 ! Revision 2.7  2002/06/12 17:00:49  livesey
 ! Changed phiWindow to float
 !
