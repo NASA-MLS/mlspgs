@@ -332,6 +332,8 @@ CONTAINS
 
     tp%scanAngle = 90.0 - ACOS (MAX (MIN (fov_orb(3,:), 1.0d0), -1.0d0)) * &
          Rad2Deg
+    tp%scanRate(1) = 0.0
+    tp%scanRate(2:) = ABS(tp%scanAngle(2:) - tp%scanAngle(1:)) / offsets(2)
     tp%azimAngle = ATAN2 (fov_orb(2,:), fov_orb(1,:)) * Rad2Deg
 
     ! Convert s/c vector to ECR
@@ -668,7 +670,7 @@ CONTAINS
     IF (.NOT. ASSOCIATED(tp%encoderAngle)) THEN
        ALLOCATE (tp%encoderAngle(nV), STAT=error)
        IF (error /= 0) THEN
-          msr = MLSMSG_Allocate // '  s/c encoder angle quantities.'
+          msr = MLSMSG_Allocate // '  tp encoder angle quantities.'
           CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
        ENDIF
     ENDIF
@@ -676,7 +678,7 @@ CONTAINS
     IF (.NOT. ASSOCIATED(tp%scAngle)) THEN
        ALLOCATE (tp%scAngle(nV), STAT=error)
        IF (error /= 0) THEN
-          msr = MLSMSG_Allocate // '  s/c angle quantities.'
+          msr = MLSMSG_Allocate // '  tp angle quantities.'
           CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
        ENDIF
     ENDIF
@@ -684,7 +686,7 @@ CONTAINS
     IF (.NOT. ASSOCIATED(tp%scanAngle)) THEN
        ALLOCATE (tp%scanAngle(nV), STAT=error)
        IF (error /= 0) THEN
-          msr = MLSMSG_Allocate // '  s/c scan angle quantities.'
+          msr = MLSMSG_Allocate // '  tp scan angle quantities.'
           CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
        ENDIF
     ENDIF
@@ -692,7 +694,7 @@ CONTAINS
     IF (.NOT. ASSOCIATED(tp%azimAngle)) THEN
        ALLOCATE (tp%azimAngle(nV), STAT=error)
        IF (error /= 0) THEN
-          msr = MLSMSG_Allocate // '  s/c azim angle quantities.'
+          msr = MLSMSG_Allocate // '  tp azim angle quantities.'
           CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
        ENDIF
     ENDIF
@@ -700,7 +702,7 @@ CONTAINS
     IF (.NOT. ASSOCIATED(tp%scanRate)) THEN
        ALLOCATE (tp%scanRate(nV), STAT=error)
        IF (error /= 0) THEN
-          msr = MLSMSG_Allocate // '  s/c scan rate quantities.'
+          msr = MLSMSG_Allocate // '  tp scan rate quantities.'
           CALL MLSMessage (MLSMSG_Error, ModuleName, msr)
        ENDIF
     ENDIF
@@ -1445,6 +1447,9 @@ CONTAINS
 END MODULE TkL1B
 
 ! $Log$
+! Revision 2.20  2005/01/25 18:01:06  perun
+! Calculate tangent point scan rates (deg/sec)
+!
 ! Revision 2.19  2004/11/10 15:32:05  perun
 ! Add encoder values; latest FOVs; correct YPR values order
 !
