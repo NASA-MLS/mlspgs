@@ -67,7 +67,7 @@ contains
     allocate(sc%scECI(lenCoord,numValues), sc%scECR(lenCoord,numValues), &
       sc%scGeocAlt(numValues), sc%scGeocLat(numValues), &
       sc%scGeodAlt(numValues), sc%scGeodLat(numValues), sc%scLon(numValues), &
-      sc%scGeodAngle(numValues), sc%scVel(lenCoord,numValues), &
+      sc%scGeodAngle(numValues), sc%scVelECI(lenCoord,numValues), &
       sc%ypr(lenCoord,numValues), sc%yprRate(lenCoord,numValues), STAT=error)
     if ( error /= 0 ) then
       msr = MLSMSG_Allocate // '  s/c quantities.'
@@ -479,5 +479,8 @@ contains
 end module Time
 
 ! $Log$
+! Revision 1.2  2001/10/11 23:27:23  livesey
+! Tried to change the chmod stuff
+!
 ! Revision 1.1  2000/11/30 16:31:13  nakamura
 ! Module for calculating time information for the MLS scan programs.
