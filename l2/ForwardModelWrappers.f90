@@ -32,7 +32,8 @@ contains ! ============= Public Procedures ==========================
       & FORWARDMODELSTATUS_T
     use FullCloudForwardModel, only: FULLCLOUDFORWARDMODELWRAPPER
     use FullForwardModel_m, only: FULLFORWARDMODEL
-    use Init_tables_module, only: L_LINEAR, L_SCAN, L_SCAN2D, L_FULL, L_CLOUDFULL
+    use Init_tables_module, only: L_LINEAR, L_SCAN, L_SCAN2D, L_FULL, L_CLOUDFULL, &
+      & L_SWITCHINGMIRROR
     use LinearizedForwardModel_m, only: LINEARIZEDFORWARDMODEL
     use MatrixModule_1, only: MATRIX_T
     use MLSL2Timings, only: Add_to_retrieval_timing
@@ -82,6 +83,9 @@ contains ! ============= Public Procedures ==========================
       call SwitchingMirrorModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
       call add_to_retrieval_timing( 'fullcloud_fwm' )
+    case ( l_switchingMirror )
+      call SwitchingMirrorModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
+        FwdModelOut, Ifm, fmStat, Jacobian )
     case default ! Shouldn't get here if parser etc. worked
     end select
   end subroutine ForwardModel
@@ -93,6 +97,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.17  2003/06/03 19:24:56  livesey
+! Added the ability to call the switching mirror model in isolation
+!
 ! Revision 2.16  2003/05/29 16:42:34  livesey
 ! Added calls to SwitchingMirrorModel
 !
