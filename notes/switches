@@ -61,6 +61,7 @@ Switches (set by -S option in mlsl2's command line):
   runxxx => run only the following chunks in parallel mode (depending on xxx)
              first (first)  last (last)   firstlast (first and last)
              (Warning--output files will contain fillvalues for other chunks)
+             (Anyway, the --chunkRange option is a better way)
   sca =>    Scalars of interest to the Newton method
   seez =>   Turn on some of Zvi's debugging output in FullForwardModel
   sig =>    MLS Signals
@@ -112,6 +113,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.46  2004/08/05 20:24:11  livesey
+ Added ptg to dump ptg_angles
+
  Revision 1.45  2004/08/03 23:23:56  pwagner
  Unseemly switch to allow running first last, or first and last chunks only
 

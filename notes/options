@@ -39,9 +39,12 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
   except that -S takes the rest of the option as its "string"
   --[n]cat: Do [not] cat the split dgg/dgm directwrite files after run completes
   --check: Just check l2cf and quit
-  --chunk[ ]<chunk index> Run just the <chunk index> chunk
+  --chunk <chunk index> Run just the <chunk index> chunk
     (repeat for 1st and last chunks in a range: 
       i.e., --chunk 1 --chunk 14 runs chunks 1..14)
+  --chunkRange 'range': (If parallel) Run just the range where
+     e.g., '1,3-9+2,12' means run chunks '1,3,5,7,9,12'
+     (Warning--output files will contain fillvalues for other chunks)
   --[n]ckbk: Do [not] check the block calculations against full block algebra
   --[n]clearOnAllocate: Do [not] set arrays etc. to zero on allocation.
   --[n]countChunks: Do [not] just print the number of chunks and quit
@@ -120,6 +123,9 @@ by the equal-signs -- stuff outside that space, like these
 comments, will not be printed in response to mlsl2 -?)
 
  $Log$
+ Revision 1.35  2004/04/27 23:57:01  pwagner
+ skipDirectWrites
+
  Revision 1.34  2004/04/06 23:51:07  livesey
  Added clearOnAllocate flag
 
