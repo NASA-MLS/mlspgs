@@ -43,6 +43,8 @@ PROGRAM MLSL3 ! MLS Level 3 software
    TYPE( L3SPData_T ), POINTER :: l3sp(:)
 
    CHARACTER (LEN=480) :: msr
+   CHARACTER (LEN=FileNameLen) :: logType
+   CHARACTER (LEN=1), POINTER :: anText(:)
 
    INTEGER :: count, err, i, j, k, l, l2Days, nlev, nf, nwv, numDays, numSwaths
    INTEGER :: rDays
@@ -54,7 +56,7 @@ PROGRAM MLSL3 ! MLS Level 3 software
 
 ! Fill structures with input data from the PCF and L3CF.
 
-   CALL OpenAndInitialize(pcf, cf, cfProd, avgPer)
+   CALL OpenAndInitialize(pcf, cf, cfProd, logType, anText, avgPer)
 
 ! For each product in the DailyMap section of the cf,
 
@@ -223,8 +225,8 @@ PROGRAM MLSL3 ! MLS Level 3 software
 ! Check the output data and place them into the appropriate files.  Write the
 ! l3dm metadata.  Perform any deallocations needed within the product loop.
 
-      CALL OutputAndClose(cfProd(i), l3sp, l3dm, dmA, dmD, l3r, residA, &
-                          residD, flags)
+      CALL OutputAndClose(pcf, cfProd(i), anText, l3sp, l3dm, dmA, dmD, l3r, &
+                          residA, residD, flags)
 
 ! Deallocate the l2gp database for the product
 
@@ -234,13 +236,13 @@ PROGRAM MLSL3 ! MLS Level 3 software
 
 ! Write the log file metadata
 
-   CALL WriteMetaLog(pcf)
+   CALL WriteMetaLog(pcf, logType)
 
 ! Final deallocations
  
-   DEALLOCATE(cfProd, avgPer, STAT=err)
+   DEALLOCATE(cfProd, anText, avgPer, STAT=err)
    IF ( err /= 0 ) THEN
-      msr = MLSMSG_DeAllocate // '  l3cf pointer.'
+      msr = MLSMSG_DeAllocate // '  Open/Init quantities.'
       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
    ENDIF
 
@@ -261,6 +263,9 @@ END PROGRAM MLSL3
 !================
 
 ! $Log$
+! Revision 1.6  2000/12/29 21:40:52  nakamura
+! Added avgPer, more simulated data; revised argument list for ReadL2GPProd; switched to one-product/all-days paradigm.
+!
 ! Revision 1.5  2000/11/28 17:33:06  nakamura
 ! Added code to put non-zero values in simulated L3DM output.
 !
