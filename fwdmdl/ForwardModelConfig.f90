@@ -68,6 +68,7 @@ module ForwardModelConfig
     logical :: Do_conv                ! Do convolution
     logical :: Do_freq_avg            ! Do Frequency averaging
     logical :: GlobalConfig           ! If set is shared between all chunks
+    logical :: ForceFoldedOutput      ! Output to folded sideband even if signal is other (linear only)
     logical :: ForceSidebandFraction  ! If set mult. by SBfrac even if single sideband
     logical :: Incl_cld ! Include cloud extinction calculation in Bill's forward model
     logical :: LockBins               ! Use same l2pc bin for whole chunk
@@ -226,7 +227,8 @@ contains
       & config%allLinesForRadiometer, config%atmos_der, &
       & config%default_spectroscopy, config%differentialScan,&
       & config%do_1d, config%do_baseline, config%do_conv, &
-      & config%do_freq_avg, config%forceSidebandFraction, config%globalConfig, config%incl_cld, &
+      & config%do_freq_avg, config%forceFoldedOutput, config%forceSidebandFraction, &
+      & config%globalConfig, config%incl_cld, &
       & config%lockBins, config%polarized, config%skipOverlaps, &
       & config%spect_Der, config%temp_Der /), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Packing fwmConfig logicals" )
@@ -362,6 +364,7 @@ contains
     config%do_baseline           = ls(i) ; i = i + 1
     config%do_conv               = ls(i) ; i = i + 1
     config%do_freq_avg           = ls(i) ; i = i + 1
+    config%forceFoldedOutput     = ls(i) ; i = i + 1
     config%forceSidebandFraction = ls(i) ; i = i + 1
     config%globalConfig          = ls(i) ; i = i + 1
     config%incl_cld              = ls(i) ; i = i + 1
@@ -589,6 +592,10 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.44  2003/10/18 01:15:58  livesey
+! Various changes to the pack/unpack stuff.  This currently needs more
+! attention.
+!
 ! Revision 2.43  2003/09/15 23:45:00  vsnyder
 ! Remove unused local variables and USEs
 !
