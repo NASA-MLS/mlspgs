@@ -30,12 +30,14 @@ itmdir=../../../$(init_m_dir)/$(MLSCONFG)
 
 dir2 = $(itmdir)/
 
+MACH_DIR=../machines/$(MLSCONFG)
+
 # Set paths for finding source files (different from .o and .mod)
 
 vpath %.o ./
-vpath %.f90 ../ ../../../lib/machines/$(MLSCONFG)
-vpath %.f9h ../
-vpath %.f ../
+vpath %.f90 ../ $(MACH_DIR)
+vpath %.f9h ../ $(srclib)
+vpath %.f ../ $(PGSINC)
 vpath %.c ../
 
 FC = lf95
@@ -66,6 +68,9 @@ INC_PATHS = $(EXTRA_PATHS) -I $(PGSINC) -I $S
 l_specials = -lPGSTK.sv3
 
 # $Log$
+# Revision 1.5  2001/10/23 16:59:08  pwagner
+# l_specials set as in mlspgs/l2
+#
 # Revision 1.4  2001/08/15 23:12:09  pwagner
 # Default rules for .f and .c; EXTRA_PATHS added to INC_PATHS
 #
