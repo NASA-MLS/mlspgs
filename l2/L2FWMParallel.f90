@@ -422,8 +422,7 @@ contains
       call DestroyFWMConfigDatabase ( fwmConfigs, deep=.true. )
       call DestroyVectorDatabase ( vectors )
       call DestroyVectorTemplateDatabase ( vectorTemplates )
-      call DestroyQuantityTemplateDatabase ( quantities, &
-        & ignoreMinorFrame=.true. )
+      call DestroyQuantityTemplateDatabase ( quantities )
     end subroutine ClearSetup
 
   end subroutine L2FWMSlaveTask
@@ -764,6 +763,9 @@ contains
 end module L2FWMParallel
 
 ! $Log$
+! Revision 2.16  2003/06/20 19:38:25  pwagner
+! Allows direct writing of output products
+!
 ! Revision 2.15  2003/01/13 20:59:02  livesey
 ! Added calls to PVMFFreeBuf
 !
