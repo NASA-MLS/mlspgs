@@ -280,7 +280,7 @@ $(INSTALLDIR)/libutctotai.a:
 .DELETE_ON_ERROR:
 
 .PHONY: clean configure depends depends--mod ghostbuster install \
-  internalsaymake internalupdate mostlyclean \
+  internalsaymake internalupdate  mlsl2 mostlyclean \
   tar targ tarz update
 
 
@@ -384,6 +384,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.60  2003/05/21 20:52:13  pwagner
+# Added PROG to .PHONY list as appropriate
+#
 # Revision 2.59  2003/05/20 18:39:23  pwagner
 # Uses DONTBUILDPREQS to stop some hunting
 #
