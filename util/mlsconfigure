@@ -834,7 +834,7 @@ Help()
         more << EOF_7
 To see help on specific topics:
 Topic                            Command
-mlsconfigure script              'make help--mlsconfigure'
+Makefile scripts                 'make help--scripts'
 Makefiles                        'make help--Makefile'
 Prerequisites                    'make firsthelp'
 In depth explanation             'make disthelp'
@@ -845,6 +845,39 @@ EOF_7
     exit
 }
 
+#---------------------------- lhs_eq_rhs
+#
+# Function to assign second arg to first: lhs=rhs
+# where (lhs rhs) = ($1 $2)
+# if given optional third arg "n"
+# assigns $$..$lhs = $$..$rhs
+
+lhs_eq_rhs()
+{
+
+   # Do we have write permission in ./?
+      if [ ! -w "./" ]
+      then
+         echo "Sorry--need write permission in ./ to operate"
+         exit 1
+      fi
+      
+      rm -f temp.lhs_eq_rhs
+      if [ $# -lt 3 ]
+      then
+         echo "$1=$2" > temp.lhs_eq_rhs
+         . temp.lhs_eq_rhs
+      else
+         mega_buck $3 $1
+         lhs=$mega_buck_result
+         mega_buck $3 $2
+         rhs=$mega_buck_result
+         echo "$lhs=$rhs" > temp.lhs_eq_rhs
+         . temp.lhs_eq_rhs
+      fi
+      rm -f temp.lhs_eq_rhs
+}
+      
 #------------------------------- Main Program ------------
 
 #****************************************************************
@@ -933,6 +966,19 @@ get_confg="true"
 del_exist_dir="true"
 chngd_confg="false"
 
+# These three stand out as poorly chosen--
+# They violate the pattern current_VARIABLE=$VARIABLE
+# which could itself be automated to loop over all_my_opts
+# and thus be shorter and easier to extend with something like
+#   for path in $all_my_opts
+#     lhs_eq_rhs current_${path} $path 2
+#   do
+#   done
+# We'll try this out in a future version of mlsconfigure
+# in which we make the replacements
+# current_compiler -> current_MLSF95
+# current_platform -> current_MLSPLAT
+# current_confg -> current_MLSCONFG
 current_compiler=$MLSF95
 current_platform=$MLSPLAT
 current_confg=$MLSCONFG
@@ -1308,6 +1354,9 @@ fi
 
 exit
 # $Log$
+# Revision 1.26  2001/11/09 21:49:39  pwagner
+# User-defined configuration names possible
+#
 # Revision 1.25  2001/11/08 00:39:14  pwagner
 # New help system; mention of NOCLEANING where appropriate
 #
