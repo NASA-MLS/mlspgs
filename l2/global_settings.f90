@@ -65,7 +65,7 @@ contains
       & P_VERSION_COMMENT, &
       & S_BINSELECTOR, S_DIRECTWRITEFILE, S_DUMP, S_EMPIRICALGEOMETRY, S_FGRID, &
       & S_FORWARDMODEL, S_ForwardModelGlobal, S_L1BOA, S_L1BRAD, &
-      & S_L2PARSF, S_PFADATA, S_TIME, S_VGRID
+      & S_L2PARSF, S_PFADATA, S_TGRID, S_TIME, S_VGRID
     use L1BData, only: l1bradSetup, l1boaSetup, ReadL1BData, L1BData_T, &
       & AssembleL1BQtyName, DeallocateL1BData, Dump, NAME_LEN, &
       & PRECISIONSUFFIX, ReadL1BAttribute
@@ -123,6 +123,7 @@ contains
     integer :: NOMAFS              ! Number of MAFs of L1B data read
     integer :: ReturnStatus        ! non-zero means trouble
     integer :: SON                 ! Son of root
+    integer :: Status              ! From CreateVGridFromMLSCFInfo
     integer :: Sub_rosa_index
     integer :: the_hdf_version     ! 4 or 5 (corresp. to hdf4 or hdf5)
     logical :: TIMING              ! For S_Time
@@ -263,8 +264,13 @@ contains
           call decorate (son, AddDirectToDatabase ( &
             & DirectDatabase, CreateDirectTypeFromMLSCFInfo ( son ) ) )
         case ( s_dump )
-          call dumpCommand ( son, forwardModelConfigs=forwardModelConfigDatabase, &
-            & vGrids=vGrids )
+          if ( error == 0 ) then
+            call dumpCommand ( son, forwardModelConfigs=forwardModelConfigDatabase, &
+              & vGrids=vGrids )
+          else
+            call announce_error ( subtree(1,son), &
+              & 'Preceeding errors prevent doing a dump here.' )
+          end if
         case ( s_empiricalGeometry )
           call InitEmpiricalGeometry ( son )
         case ( s_fgrid )
@@ -332,7 +338,8 @@ contains
             & '*** l2cf overrides pcf for L2 Parallel staging file ***', &
             & just_a_warning = .true.)
         case ( s_pfaData )
-          call Get_PFAdata_from_l2cf ( son, name, vGrids )
+          call Get_PFAdata_from_l2cf ( son, name, vGrids, status )
+          error = max(error,status)
         case ( s_time )
           if ( timing ) then
             call sayTime
@@ -340,9 +347,10 @@ contains
             call time_now ( t1 )
             timing = .true.
           end if
-        case ( s_vgrid )
+        case ( s_tGrid, s_vGrid )
           call decorate ( son, AddVGridToDatabase ( vGrids, &
-            & CreateVGridFromMLSCFInfo ( name, son, l2gpDatabase ) ) )
+            & CreateVGridFromMLSCFInfo ( name, son, l2gpDatabase, status ) ) )
+          error = max(error,status)
         case default
           call announce_error(son, 'unrecognized global settings spec')
         end select
@@ -825,6 +833,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.82  2004/05/29 02:50:49  vsnyder
+! Added more dumps
+!
 ! Revision 2.81  2004/05/22 02:31:40  vsnyder
 ! Hook in PFAData, dump
 !
