@@ -17,7 +17,7 @@ MODULE MLSFiles               ! Utility file routines
   & PGSd_IO_Gen_USeqFrm, PGSd_IO_Gen_USeqUnf, & 
   & PGSd_IO_Gen_UDirFrm, PGSd_IO_Gen_UDirUnf, & 
   & PGSd_IO_Gen_ASeqFrm, PGSd_IO_Gen_ASeqUnf, &
-  & PGS_IO_GEN_CloseF, PGS_IO_GEN_OpenF
+  & PGS_IO_GEN_CloseF, PGS_IO_GEN_OpenF, PGSd_PC_FILE_PATH_MAX
    IMPLICIT NONE
    PUBLIC
 
@@ -28,8 +28,8 @@ MODULE MLSFiles               ! Utility file routines
    "$Id$"
 !----------------------------------------------------------
 
-	! This needs to be twice NameLen becuase it may have a path prefixed
-	INTEGER, PARAMETER :: MAXFILENAMELENGTH=2*NameLen
+	! This isn't NameLen because it may have a path prefixed
+	INTEGER, PARAMETER :: MAXFILENAMELENGTH=PGSd_PC_FILE_PATH_MAX
 
   ! These are error codes that may be returned by GetPCFromRef
 
@@ -62,7 +62,7 @@ MODULE MLSFiles               ! Utility file routines
   ! by their PC numbers, not their names
   
   FUNCTION GetPCFromRef(FileName, PCBottom, PCTop, &
-  & caseSensitive, ErrType, versionNum) RESULT (thePC)
+  & caseSensitive, ErrType, versionNum, debug) RESULT (thePC)
 
     ! Dummy arguments
     CHARACTER (LEN=*), INTENT(IN)   :: FileName
@@ -71,6 +71,7 @@ MODULE MLSFiles               ! Utility file routines
     INTEGER(i4),  INTENT(OUT)  :: ErrType
     LOGICAL,  INTENT(IN)       :: caseSensitive
     INTEGER(i4),  OPTIONAL     :: versionNum
+    LOGICAL,  OPTIONAL, INTENT(IN)       :: debug
   
     ! Local variables
 	
@@ -78,6 +79,19 @@ MODULE MLSFiles               ! Utility file routines
 	INTEGER                       :: version, returnStatus
 		
 	!
+	if(present(debug)) then
+		call output('get pc from ref', advance='yes')
+		call output('FileName: ' // trim(FileName), advance='yes')
+		call output('lower PCF limit: ' )
+		call output(PCBottom, advance='yes')
+		call output('upper PCF limit: ' )
+		call output(PCTop, advance='yes')
+		call output('case sensitive?: ' )
+		call output(caseSensitive, advance='yes')
+		call output('version number: ' )
+		call output(versionNum, advance='yes')
+	endif
+
 	thePC = 0
 	IF(PCTop < PCBottom) THEN
 		ErrType = INVALIDPCRANGE
@@ -98,16 +112,25 @@ MODULE MLSFiles               ! Utility file routines
 
 	ErrType = NAMENOTFOUND
 
+	if(present(debug)) then
+		call output('getting ref from pc:', advance='no')
+	endif
 	DO thePC = PCBottom, PCTop
 
+!		if(present(debug)) then
+!			call output('pc: ' )
+!			call output(thePC, advance='no')
+!			call output('              version: ' )
+!			call output(version, advance='yes')
+!		endif
             returnStatus = Pgs_pc_getReference(thePC, version, &
               & TryName)
             
             if ( returnStatus == PGS_S_SUCCESS ) then
 
-		IF(.NOT. caseSensitive) THEN
-			TryName = Capitalize(TryName)
-		ENDIF
+					IF(.NOT. caseSensitive) THEN
+						TryName = Capitalize(TryName)
+					ENDIF
 
               if ( INDEX(TryName, TRIM(MatchName)) /= 0 )then
 					ErrType = 0
@@ -512,6 +535,9 @@ END MODULE MLSFiles
 
 !
 ! $Log$
+! Revision 2.8  2001/04/07 00:16:28  pwagner
+! fixed MAXFILENAMELENGTH to not core dump in toolbox
+!
 ! Revision 2.7  2001/04/03 23:52:29  pwagner
 ! Added split_path_name
 !
