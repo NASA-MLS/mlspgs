@@ -40,6 +40,7 @@ autofill
 average
 
 b
+baselineQuantity
 basisFraction
 bin
 binSelectors
@@ -248,6 +249,7 @@ profile
 profileValues
 ptanQuantity
 
+quadrature
 quality
 quantities
 quantity
@@ -367,6 +369,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.132  2004/09/27 20:10:08  livesey
+# Added baselineQuantity and quadrature
+#
 # Revision 2.131  2004/09/25 00:15:06  livesey
 # Added sourceMatrix
 #
