@@ -61,6 +61,7 @@ MODULE get_chi_out_m
   REAL(rp), POINTER :: h_tan_out(:)
   REAL(rp), POINTER :: t_tan_out(:)
   REAL(rp), POINTER :: n_tan_out(:)
+  REAL(rp), POINTER :: dzdh_tan_out(:)
   REAL(rp), POINTER :: h2o_tan_out(:)
   REAL(rp), POINTER :: temp_tan(:,:)
   REAL(rp), POINTER :: height_tan(:,:)
@@ -78,8 +79,7 @@ MODULE get_chi_out_m
   n_t_zeta = SIZE(temp_zeta_basis)
 !
   NULLIFY(temp_tan,height_tan,dhdz_tan,dhdt_tan,d2hdhdt_tan,eta_t,h_tan_out, &
-  & t_tan_out,n_tan_out,eta_p,eta_z,h2o_tan_out)
-!
+  & t_tan_out,n_tan_out,eta_p,eta_z,h2o_tan_out,dzdh_tan_out)
   CALL allocate_test(temp_tan,n_out,n_t_phi,'temp_tan',ModuleName)
   CALL allocate_test(height_tan,n_out,n_t_phi,'height_tan',ModuleName)
   CALL allocate_test(dhdz_tan,n_out,n_t_phi,'dhdz_tan',ModuleName)
@@ -145,16 +145,24 @@ MODULE get_chi_out_m
 !
     dhdt_tan = dhdt_tan  * SPREAD(eta_t,3,n_t_zeta)
     d2hdhdt_tan = d2hdhdt_tan * SPREAD(eta_t,3,n_t_zeta)
+    CALL allocate_test(eta_z, n_out, n_t_zeta, 'eta_z',ModuleName)
+    CALL allocate_test(dzdh_tan_out,n_out,'n_tan_out',ModuleName)
+    dzdh_tan_out = 1.0 / SUM(dhdz_tan * eta_t, dim=2)
+    CALL get_eta_sparse(temp_zeta_basis, zetatan, eta_z)
     DO ht_i = 1, n_out
       CALL get_chi_angles(scgeocalt(ht_i),n_tan_out(ht_i), &
           &    h_tan_out(ht_i),phitan(ht_i),Req,elev_offset, &
           &    tan_chi_out(ht_i), RESHAPE(dhdt_tan(ht_i,:,:), &
           &    (/n_t_phi,n_t_zeta/)), RESHAPE(d2hdhdt_tan(ht_i,:,:), &
-          &    (/n_t_phi,n_t_zeta/)), dxdt_tan(ht_i,:,:), &
-          &    d2xdxdt_tan(ht_i,:,:))
-     ENDDO
-!
-   ELSE
+          &    (/n_t_phi,n_t_zeta/)), t_tan_out(ht_i), dzdh_tan_out(ht_i), &
+          &    RESHAPE(SPREAD(RESHAPE(eta_t(ht_i,:),(/n_t_phi/)),2,n_t_zeta) &
+          &   *SPREAD(RESHAPE(eta_z(ht_i,:), &
+          &    (/n_t_zeta/)),1,n_t_phi),(/n_t_phi,n_t_zeta/)),  &
+          &    dxdt_tan(ht_i,:,:),d2xdxdt_tan(ht_i,:,:))
+    ENDDO
+    CALL deallocate_test(eta_z,'eta_z',ModuleName)
+    CALL deallocate_test(dzdh_tan_out,'n_tan_out',ModuleName)
+  ELSE
 !
     DO ht_i = 1, n_out
       CALL get_chi_angles(scgeocalt(ht_i),n_tan_out(ht_i), &
