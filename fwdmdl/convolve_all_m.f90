@@ -28,8 +28,7 @@ module Convolve_All_m
 
     use Allocate_Deallocate, only: allocate_test, deallocate_test
     use AntennaPatterns_m, only: AntennaPattern_T
-    use ForwardModelConfig, only: ForwardModelConfig_T
-    use ForwardModelVectorTools, only: QtyStuff_T
+    use ForwardModelConfig, only: ForwardModelConfig_T, QtyStuff_T
     use Fov_Convolve_m, only: Fov_Convolve
     use Load_sps_data_m, only: Grids_T
     use MatrixModule_0, only: M_ABSENT, M_BANDED, M_FULL, CHECKFORSIMPLEBANDEDLAYOUT
@@ -353,6 +352,9 @@ module Convolve_All_m
 end module Convolve_All_m
 
 ! $Log$
+! Revision 2.32  2004/07/07 19:42:11  vsnyder
+! Use new Init argument of CreateBlock
+!
 ! Revision 2.31  2003/10/09 22:17:30  livesey
 ! Added call to CheckForSimpleBandedLayout
 !

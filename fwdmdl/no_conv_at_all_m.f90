@@ -26,8 +26,7 @@ contains
            & t_deriv_flag, ptg_angles, chi_out, dhdz_out, dx_dh_out, Grids_f,  &
            & I_raw, sbRatio, qtys, rowFlags, Jacobian, di_dt, di_df, ptan_Der )
 
-    use ForwardModelConfig, only: ForwardModelConfig_T
-    use ForwardModelVectorTools, only: QtyStuff_T
+    use ForwardModelConfig, only: ForwardModelConfig_T, QtyStuff_T
     use Load_sps_data_m, only: Grids_T
     use MatrixModule_0, only: M_ABSENT, M_BANDED, M_FULL, CHECKFORSIMPLEBANDEDLAYOUT
     use MatrixModule_1, only: CREATEBLOCK, FINDBLOCK, MATRIX_T
@@ -285,6 +284,9 @@ contains
 
 end module NO_CONV_AT_ALL_M
 ! $Log$
+! Revision 2.24  2004/07/07 19:42:11  vsnyder
+! Use new Init argument of CreateBlock
+!
 ! Revision 2.23  2003/10/09 22:17:30  livesey
 ! Added call to CheckForSimpleBandedLayout
 !
