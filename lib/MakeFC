@@ -44,7 +44,9 @@ $(PROG): $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG)
 #	echo "target is $(PROG)"
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
 
-.PHONY: configure depends clean alltests $(testsubdirs)
+.PHONY: configure depends clean alltests $(testsubdirs) tar
+
+tar: clean
 
 configure:
 #	echo "Target: configure"
@@ -92,6 +94,10 @@ clean:
 	  $(MAKE) -f $(MakeFName) -C $$dir clean; \
 	done
 
+tar:
+	rm -f ../lib.tgz
+	tar hcvzf ../lib.tgz * --exclude \*.o --exclude \*.mod
+
 #================= For testing purposes only =============
 alltests: $(testsubdirs)
 
@@ -99,6 +105,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.2  2000/10/24 20:55:53  pwagner
+# Added tar option
+#
 # Revision 2.1  2000/10/18 21:59:19  pwagner
 # First commit
 #
