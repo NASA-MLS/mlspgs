@@ -32,8 +32,9 @@ module HASH
     ! the square root of the largest integer.
 
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=256), private :: Id = &
+  character (len=*), private, parameter :: IdParm = &
        "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
 !---------------------------------------------------------------------------
@@ -290,6 +291,8 @@ contains
             p = nextp
             call search_chain
             if ( status == found ) return
+         else
+           nprobe = 0
          end if
          if ( insert ) call insert_at_end_of_chain
       end if
@@ -354,6 +357,9 @@ contains
 end module HASH
 
 ! $Log$
+! Revision 2.2  2001/05/03 22:51:56  vsnyder
+! Make sure NPROBE always has an initial value
+!
 ! Revision 2.1  2000/10/11 17:58:47  vsnyder
 ! Move from lib/cf_parser to lib; remove unused variables; add copyright.
 !
