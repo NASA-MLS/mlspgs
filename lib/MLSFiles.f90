@@ -4,11 +4,12 @@
 !===============================================================================
 module MLSFiles               ! Utility file routines
   !===============================================================================
-  use HDFEOS, only: gdclose, gdopen, swclose, swopen
+  use HDF, only: sfstart, sfend
+  use HDFEOS, only: gdclose, gdopen, swclose, swopen, swinqswath
   use machine, only: io_error
   use MLSCommon, only: i4
   use MLSStrings, only: Capitalize, LowerCase, Reverse
-  use output_m, only: output
+  use output_m, only: blanks, output
   use SDPToolkit, only: Pgs_pc_getReference, PGS_S_SUCCESS, Pgs_smf_getMsg, &
     & PGSd_IO_Gen_RSeqFrm, PGSd_IO_Gen_RSeqUnf, & 
     & PGSd_IO_Gen_RDirFrm, PGSd_IO_Gen_RDirUnf, & 
@@ -104,7 +105,7 @@ contains
     character (LEN=MAXFILENAMELENGTH) :: MatchName, TryName, NameOnly
     character (LEN=MAXFILENAMELENGTH) :: PhysicalName, MatchPath
     integer                       ::     version, returnStatus
-   logical ::                            debug
+    logical ::                            debug
 
    if(.not. UseSDPToolkit) then
       ErrType = NOPCIFNOTOOLKIT
@@ -223,7 +224,7 @@ contains
 
   function mls_io_gen_openF(toolbox_mode, caseSensitive, ErrType, &
     & record_length, FileAccessType, &
-    & FileName, PCBottom, PCTop, versionNum, unknown, thePC) &
+    & FileName, PCBottom, PCTop, versionNum, unknown, thePC, debugOption) &
     &  result (theFileHandle)
 
     ! Dummy arguments
@@ -238,10 +239,11 @@ contains
     integer(i4), optional, intent(IN)                :: thePC
     integer(i4),  optional     :: versionNum
     logical, optional, intent(in) :: unknown
+    logical, optional, intent(in) :: debugOption
 
     ! Local variables
 
-    logical, parameter :: PRINT_EVERY_OPEN=.false.
+    logical, parameter :: DEFAULT_PRINT_EVERY_OPEN=.false.
     integer, parameter :: FH_ON_ERROR=-99
     integer, parameter :: DEFAULTRECLEN=0
     integer, parameter :: KEYWORDLEN=12			! Max length of keywords in OPEN(...)
@@ -252,9 +254,18 @@ contains
     character (LEN=KEYWORDLEN) :: access, action, form, position, status
     character (LEN=2) :: the_eff_mode
     integer                       :: unit
+    logical ::                            debug
+    logical ::                            PRINT_EVERY_OPEN
 
     ! begin
 
+    if(present(debugOption)) then
+      debug = debugOption
+   else
+      debug = .false.
+   endif
+
+   PRINT_EVERY_OPEN = DEFAULT_PRINT_EVERY_OPEN .or. debug
     ! In case of premature return
     theFileHandle = FH_ON_ERROR
     record_length = DEFAULTRECLEN
@@ -273,15 +284,32 @@ contains
       myPC = thePC
       returnStatus = Pgs_pc_getReference(thePC, your_version, &
         & myName)
+      if ( debug ) then
+          call output('Call to Pgs_pc_getReference', &
+          & advance='yes')
+          call output('returnStatus: ', advance='no')
+          call blanks(2)
+          call output(returnStatus, advance='yes')
+          call output('thePC: ', advance='no')
+          call blanks(2)
+          call output(thePC, advance='yes')
+          call output('your_version: ', advance='no')
+          call blanks(2)
+          call output(your_version, advance='yes')
+      endif
     elseif(present(FileName)) then
       myName = FileName
       if(LowerCase(toolbox_mode(1:2)) == 'pg') then
         myPC = GetPCFromRef(trim(FileName), PCBottom, PCTop, &
-          &	 caseSensitive, returnStatus, your_version)
+          &	 caseSensitive, returnStatus, your_version, &
+          & debugOption=debugOption)
       endif
 
     else
       ErrType = MUSTSUPPLYFILENAMEORPC
+      if ( debug ) & 
+       & call output('Must supply file name or pc to mls_io_gen_openF', &
+       & advance='yes')
       return
     endif
 
@@ -289,12 +317,35 @@ contains
    ! Must supply FileName, use generic Fortran open
    elseif(.not. present(FileName)) then
       ErrType = NOPCIFNOTOOLKIT
+      if ( debug ) & 
+       & call output('No toolkit: must supply file name to mls_io_gen_openF', &
+       & advance='yes')
       return
       
    else
       myName = FileName
       the_eff_mode = LowerCase(toolbox_mode(1:2))
       if(the_eff_mode == 'pg') the_eff_mode = 'op'
+   endif
+
+   if ( debug ) then
+       call output('Arguments and options in call to mls_io_gen_openF', &
+       & advance='yes')
+       call output('Mode: ', advance='no')
+       call blanks(2)
+       call output(the_eff_mode, advance='yes')
+       call output('File Name: ', advance='no')
+       call blanks(2)
+       call output(trim(myName), advance='yes')
+       call output('PCF-supplied number: ', advance='no')
+       call blanks(2)
+       call output(myPC, advance='yes')
+       call output('Case sensitive? ', advance='no')
+       call blanks(2)
+       call output(caseSensitive, advance='yes')
+       call output('File access type ', advance='no')
+       call blanks(2)
+       call output(FileAccessType, advance='yes')
    endif
 
     your_version = version
@@ -424,6 +475,8 @@ contains
 
       else
         ErrType = UNKNOWNFILEACCESSTYPE
+        if ( debug ) &
+         & call output('Unknown file access type', advance='yes')
         return
       endif
 
@@ -438,6 +491,8 @@ contains
 
       if(tiedup) then
         ErrType = NOFREEUNITS
+        if ( debug ) &
+         & call output('No free io units available', advance='yes')
         return
       endif
 
@@ -480,6 +535,18 @@ contains
 
     if(ErrType /= 0) then
       theFileHandle = FH_ON_ERROR
+    endif
+    
+    if( debug ) then
+       call output('Error Type (0 means none): ', advance='no')
+       call blanks(2)
+       call output(ErrType, advance='yes')
+       call output('record_length: ', advance='no')
+       call blanks(2)
+       call output(record_length, advance='yes')
+       call output('theFileHandle: ', advance='no')
+       call blanks(2)
+       call output(theFileHandle, advance='yes')
     endif
 
   end function mls_io_gen_openF
@@ -614,12 +681,66 @@ contains
 
   end subroutine split_path_name
 
+  ! ---------------------------------------------  mls_inqswath  -----
+
+  ! This function acts as a wrapper to allow hdf5 or hdf4 routines to be called
+
+  function mls_inqswath(FileName, swathList, strBufSize)
+
+    ! Arguments
+
+      character (len=*), intent(in) :: FILENAME
+      character (len=*), intent(out) :: SWATHLIST
+      integer, intent(out):: STRBUFSIZE
+      integer :: mls_inqswath
+
+    ! begin
+    mls_inqswath = swinqswath(FileName, swathList, strBufSize)
+
+  end function mls_inqswath
+
+  ! ---------------------------------------------  mls_sfstart  -----
+
+  ! This function acts as a wrapper to allow hdf5 or hdf4 routines to be called
+
+  function mls_sfstart(FileName, FileAccess)
+
+    ! Arguments
+
+      character (len=*), intent(in) :: FILENAME
+    integer(i4), intent(IN)       :: FileAccess
+    integer                       :: mls_sfstart
+
+    ! begin
+    mls_sfstart = sfstart(FileName, FileAccess)
+
+  end function mls_sfstart
+
+  ! ---------------------------------------------  mls_sfend  -----
+
+  ! This function acts as a wrapper to allow hdf5 or hdf4 routines to be called
+
+  function mls_sfend(sdid)
+
+    ! Arguments
+
+      integer, intent(IN)       :: sdid
+      integer :: mls_sfend
+
+    ! begin
+    mls_sfend = sfend(sdid)
+
+  end function mls_sfend
+
   !====================
 end module MLSFiles
 !====================
 
 !
 ! $Log$
+! Revision 2.24  2002/01/18 00:53:37  pwagner
+! Added inqswath, sfend, sfstart wrappers; not ready yet for hdf5
+!
 ! Revision 2.23  2002/01/11 00:44:37  pwagner
 ! Fixed bug where ErrType was left unset
 !
@@ -688,5 +809,4 @@ end module MLSFiles
 !
 ! Revision 2.1  2001/03/07 01:02:37  pwagner
 ! First commit
-!
 !
