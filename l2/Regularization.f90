@@ -361,13 +361,14 @@ contains
       integer :: II                ! Index of an instance
 
                                    ! Which blocks are instances of this quantity?
-      integer :: Insts(maxVal(a%col%vec%quantities(a%col%quant)%template%noInstances))
+      integer :: Insts(maxVal(a%col%vec%quantities%template%noInstances))
 
       integer :: IQ                ! Index of a quantity
       integer :: MyOrd             ! Temporary, ord or less
       logical :: Need(a%col%nb)    ! "Need to do the quantity in this block of A"
       integer :: NB                ! Number of column blocks of A
       integer :: NI                ! Number of instances of this quantity
+      integer :: NQ                ! The quantity index in the col vector
       integer :: Ord               ! Order for the current block
       logical :: Warn              ! Send warning message to MLSMessage
       real(r8) :: Wt               ! The weight for the current block
@@ -380,22 +381,23 @@ contains
       wt = 1.0
 
       do ib = 1, nb
+        nq = a%col%quant(ib)
         if ( need(ib) ) then
           if ( quants == 0 ) then
             need(ib) = .false.     ! Going to do it
           else
             do i = 2, nsons(quants)
               if ( decoration(decoration(subtree(i,quants))) == &
-                & a%col%vec%template%quantities(ib) ) then
+                & a%col%vec%template%quantities(nq) ) then
                 need(ib) = .false. ! Going to do it
               end if
             end do
           end if
           if ( need(ib) ) cycle    ! Not going to do it, and not coming back
-          ni = a%col%vec%quantities(a%col%quant(ib))%template%noInstances
+          ni = a%col%vec%quantities(nq)%template%noInstances
           j = 0
           do i = ib, nb            ! Enumerate the blocks for this quantity
-            if ( a%col%quant(ib) == a%col%quant(i) ) then
+            if ( a%col%quant(i) == nq ) then
               j = j + 1
               insts(j) = i
             end if
@@ -405,7 +407,7 @@ contains
         end if
 
         call getOrdAndWeight ( orders, quants, weights, &
-          & a%col%vec%template%quantities(ib), ord, wt )
+          & a%col%vec%template%quantities(nq), ord, wt )
 
         if ( ord > ni-1 ) then
           warn = .true.
@@ -519,7 +521,7 @@ o:          do while ( c2 <= ni )
         do ib = 1, nb ! Find number of columns in widest block
           do i = 2, nsons(quants)
             if ( decoration(decoration(subtree(i,quants))) == &
-              & a%col%vec%template%quantities(ib) ) then
+              & a%col%vec%template%quantities(a%col%quant(ib)) ) then
                 maxCols = max(maxCols, a%col%nelts(ib))
                 exit
             end if
@@ -530,8 +532,10 @@ o:          do while ( c2 <= ni )
       call allocate_test ( wtVec, maxCols, "Weight vector", moduleName )
 
       do ib = 1, nb             ! Loop over matrix blocks = quantities
+        ni = a%col%inst(ib)
+        nq = a%col%quant(ib)
         call getOrdAndWeight ( orders, quants, weights, &
-          & a%col%vec%template%quantities(ib), ord, wt )
+          & a%col%vec%template%quantities(nq), ord, wt )
         ncol = a%col%nelts(ib)
         nrow = a%row%nelts(ib)
         if ( ord > ncol-1 ) then
@@ -552,8 +556,6 @@ o:          do while ( c2 <= ni )
 
           rows = rows + 1
 
-          ni = a%col%inst(ib)
-          nq = a%col%quant(ib)
           if ( .not. associated(a%col%vec%quantities(nq)%mask) ) then
             c1 = 1
             c2 = ncol
@@ -608,6 +610,10 @@ o:          do while ( c2 <= a%block(ib,ib)%ncols )
 end module Regularization
 
 ! $Log$
+! Revision 2.28  2002/10/03 16:13:23  livesey
+! Fixed some blunders in my previous commit.  Mainly due to indexing
+! col%vec%quantities wrongly.
+!
 ! Revision 2.27  2002/10/02 19:24:48  livesey
 ! Changed regWeightVec to be a reciprocal, changed regQuants to choose
 ! based on quantityTemplate rather than quantityType.
