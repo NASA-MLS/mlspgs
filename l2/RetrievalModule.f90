@@ -715,7 +715,7 @@ contains
       ! Launch fwmParallel slaves
       if ( parallel%master .and. parallel%fwmParallel ) &
         & call SetupFWMSlaves ( configDatabase(configIndices), &
-        & state, fwdModelExtra, FwdModelOut )
+        & state, fwdModelExtra, FwdModelOut, jacobian )
       ! Set options for NWT
       nwt_opt(1:9) = (/  15, 1,      17, 2,      18, 3,      11, 4, 0 /)
       nwt_xopt(1:4) = (/ toleranceF, toleranceA, toleranceR, initLambda /)
@@ -1026,6 +1026,8 @@ contains
 
           ! If in fwm parallel mode, get all slaves computing the forward models
           if ( parallel%master .and. parallel%fwmParallel ) then
+            if ( index ( switches, 'mas' ) /= 0 ) &
+              & call output ( "Triggering slave forward model runs", advance='yes' )
             do t = 1, chunk%lastMAFIndex-chunk%firstMAFIndex+1
               call TriggerSlaveRun ( v(x), t )
             end do
@@ -1044,7 +1046,7 @@ contains
               call ReceiveSlavesOutput ( v(f_rowScaled), fmStat, jacobian )
               ! Set the next slave about packing up its output while we do
               ! our normal equations stuff
-              if ( fmStat%maf < chunk%lastMAFIndex-chunk%firstMAFIndex ) &
+              if ( fmStat%maf < chunk%lastMAFIndex-chunk%firstMAFIndex+1 ) &
                 & call RequestSlavesOutput ( fmStat%maf + 1 )
             else
               ! Otherwise, we call the forward model as ususal
@@ -2982,6 +2984,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.189  2002/10/08 17:41:38  livesey
+! Bug fixes in FWMParallel stuff
+!
 ! Revision 2.188  2002/10/08 17:36:22  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
