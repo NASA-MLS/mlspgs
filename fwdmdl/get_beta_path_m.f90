@@ -5,6 +5,7 @@ module GET_BETA_PATH_M
 
   implicit NONE
   private
+  public :: Create_Beta, Create_Beta_Path
   public :: Get_Beta_Path, Get_Beta_Path_Scalar, Get_Beta_Path_Polarized
   public :: Get_Beta_Path_Cloud
 
@@ -905,6 +906,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.40  2003/07/07 16:47:01  pwagner
+! Moved declaration of 3 function results inside body to appease NAG
+!
 ! Revision 2.39  2003/07/04 02:47:50  vsnyder
 ! Move Create_Beta here, add Create_Beta_Path routine
 !
