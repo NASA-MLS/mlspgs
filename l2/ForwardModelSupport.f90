@@ -319,12 +319,13 @@ contains ! =====     Public Procedures     =============================
       & F_ATMOS_DER, F_BINSELECTORS, F_CHANNELS, F_CLOUD_DER, &
       & F_DEFAULT_spectroscopy, F_DIFFERENTIALSCAN, F_DO_BASELINE, F_DO_CONV, &
       & F_DO_FREQ_AVG, F_DO_1D, F_FREQUENCY, F_I_SATURATION, F_INCL_CLD, &
-      & F_FORCESIDEBANDFRACTION, F_INTEGRATIONGRID, F_LOCKBINS, F_MODULE, F_MOLECULES, &
-      & F_MOLECULEDERIVATIVES, F_NABTERMS, &
-      & F_NAZIMUTHANGLES, F_NCLOUDSPECIES, F_NMODELSURFS, F_NSCATTERINGANGLES, &
-      & F_NSIZEBINS, F_PFAMOLECULES, F_PHIWINDOW, F_POLARIZED, F_SIGNALS, F_SKIPOVERLAPS, &
-      & F_SPECIFICQUANTITIES, F_SPECT_DER, F_SWITCHINGMIRROR, F_TANGENTGRID, F_TEMP_DER, &
-      & F_TOLERANCE, F_TYPE, F_LINEARSIDEBAND, F_XSTAR, F_YSTAR
+      & F_FORCESIDEBANDFRACTION, F_INTEGRATIONGRID, F_LINEARSIDEBAND, &
+      & F_LOCKBINS, F_LSBPFAMOLECULES, F_MODULE, F_MOLECULES, &
+      & F_MOLECULEDERIVATIVES, F_NABTERMS, F_NAZIMUTHANGLES, &
+      & F_NCLOUDSPECIES, F_NMODELSURFS, F_NSCATTERINGANGLES, &
+      & F_NSIZEBINS, F_PHIWINDOW, F_POLARIZED, F_SIGNALS, F_SKIPOVERLAPS, &
+      & F_SPECIFICQUANTITIES, F_SPECT_DER, F_SWITCHINGMIRROR, F_TANGENTGRID, &
+      & F_TEMP_DER, F_TOLERANCE, F_TYPE, F_USBPFAMOLECULES, F_XSTAR, F_YSTAR
     use Intrinsic, only: L_NONE, L_CLEAR, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, &
       & PHYQ_PROFILES, PHYQ_TEMPERATURE
     use L2PC_m, only: BINSELECTORS, DEFAULTSELECTOR_LATITUDE, CREATEDEFAULTBINSELECTORS
@@ -352,14 +353,15 @@ contains ! =====     Public Procedures     =============================
     integer :: DerivTree                ! Tree index of f_MoleculeDerivatives
     integer :: DumpFwm = -1             ! -1 = not called yet, 0 = no dumps,
                                         ! 1 = dump, 2 = dump and stop
+    integer :: Expr_Units(2)            ! Units of value returned by EXPR
     integer :: Field                    ! Field index -- f_something
     logical :: Got(field_first:field_last)   ! "Got this field already"
     integer :: GSON                     ! Son of son
     integer :: I, J, K                  ! Subscript and loop inductor.
+    integer :: LsbPFATree               ! Tree index of f_lsbPFAMolecules
     integer :: MoleculeTree             ! Tree index of f_molecules
     integer :: NELTS                    ! Number of elements of an array tree
     integer :: NumPFA, NumLBL           ! Numbers of such molecules in a beta group
-    integer :: PFATree                  ! Tree index of f_PFAMolecules
     integer :: SIDEBAND                 ! Returned from Parse_Signal
     integer, dimension(:), pointer :: SIGNALINDS ! From Parse_Signal
     character (len=80) :: SIGNALSTRING  ! E.g. R1A....
@@ -369,7 +371,7 @@ contains ! =====     Public Procedures     =============================
     integer, pointer :: TempLBL(:), TempPFA(:) ! Used to separate LBL and PFA
     integer :: THISMOLECULE             ! Tree index.
     integer :: type                     ! Type of value returned by EXPR
-    integer :: Expr_Units(2)            ! Units of value returned by EXPR
+    integer :: UsbPFATree               ! Tree index of f_lsbPFAMolecules
     real (r8) :: Value(2)               ! Value returned by EXPR
     integer :: WANTED                   ! Which signal do we want?
 
@@ -475,6 +477,9 @@ contains ! =====     Public Procedures     =============================
           & call AnnounceError ( toleranceNotK, root )
       case ( f_lockBins )
         info%lockBins = get_boolean(son)
+      case ( f_lsbPFAMolecules )
+        lsbPFATree = son
+        info%anyPFA = .true.
       case ( f_module )
         info%instrumentModule = decoration(decoration(subtree(2,son)))
       case ( f_moleculeDerivatives )
@@ -499,9 +504,6 @@ contains ! =====     Public Procedures     =============================
       case ( f_nsizebins )
         call expr ( subtree(2,son), expr_units, value, type )
         info%NUM_SIZE_BINS = nint( value(1) )
-      case ( f_pfaMolecules )
-        pfaTree = son
-        info%anyPFA = .true.
       case ( f_phiWindow )
         call expr ( subtree(2,son), expr_units, value, type )
         info%phiWindow = value(1)
@@ -567,6 +569,9 @@ contains ! =====     Public Procedures     =============================
           & call AnnounceError ( toleranceNotK, root )
       case ( f_type )
         info%fwmType = decoration(subtree(2,son))
+      case ( f_usbPFAMolecules )
+        usbPFATree = son
+        info%anyPFA = .true.
       case ( f_xStar )
         info%xStar = decoration ( decoration ( subtree ( 2, son ) ) )
       case ( f_yStar )
@@ -582,7 +587,7 @@ contains ! =====     Public Procedures     =============================
     if ( got(f_molecules) ) then
       ! Create the Beta_Group structure.  Temporarily assume all the
       ! molecules are LBL.  We'll separate them later, when processing
-      ! the pfaMolecules tree.
+      ! the PFA Molecules trees.
       allocate ( info%beta_group(nsons(moleculeTree)-1), stat = status )
       if ( status /= 0 ) call announceError( AllocateError, moleculeTree )
       do i = 1, nsons(moleculeTree) - 1
@@ -612,7 +617,7 @@ contains ! =====     Public Procedures     =============================
             & 'info%beta_group(i)%lbl_molecules', moduleName )
           info%beta_group(i)%lbl_molecules(1) = info%beta_group(i)%molecule
         end if
-        if ( got(f_pfaMolecules) ) then
+        if ( got(f_lsbPFAMolecules) .or. got(f_usbPFAmolecules) ) then
           ! Allocate PFA_Molecules temporarily for a "this is a PFA molecule" flag
           call allocate_test ( info%beta_group(i)%PFA_Molecules, &
             & size(info%beta_group(i)%lbl_molecules), 'PFA_Molecules', moduleName )
@@ -628,12 +633,27 @@ contains ! =====     Public Procedures     =============================
     end if
     info%molecules => info%beta_group%molecule
 
-    ! Now the PFAMolecules list
-    if ( got(f_pfaMolecules) ) then
+    ! Now the [LU]SBPFAMolecules lists
+    if ( got(f_lsbPFAMolecules) .or. got(f_usbPFAMolecules) ) then
       ! Verify that the PFA molecules are all listed molecules.  Mark the
       ! ones that are PFA.
-op:   do j = 2, nsons(pfaTree)
-        son = subtree( j, pfaTree )
+ol:   do j = 2, nsons(lsbPFATree)
+        son = subtree( j, lsbPFATree )
+        thisMolecule = decoration( son )
+        do i = 1, size(info%beta_group)
+          do k = 1, size(info%beta_group(i)%LBL_Molecules)
+            if ( thisMolecule == info%beta_group(i)%LBL_Molecules(k) ) then
+              if ( info%beta_group(i)%PFA_Molecules(k) /= 0 ) &
+                & call announceError ( PFATwice, son )
+              info%beta_group(i)%PFA_Molecules(k) = -1
+              cycle ol
+            end if
+          end do ! k
+        end do ! i
+        call announceError ( PFANotMolecule, son )
+      end do ol ! j
+ou:   do j = 2, nsons(usbPFATree)
+        son = subtree( j, usbPFATree )
         thisMolecule = decoration( son )
         do i = 1, size(info%beta_group)
           do k = 1, size(info%beta_group(i)%LBL_Molecules)
@@ -641,12 +661,12 @@ op:   do j = 2, nsons(pfaTree)
               if ( info%beta_group(i)%PFA_Molecules(k) /= 0 ) &
                 & call announceError ( PFATwice, son )
               info%beta_group(i)%PFA_Molecules(k) = 1
-              cycle op
+              cycle ou
             end if
           end do ! k
         end do ! i
         call announceError ( PFANotMolecule, son )
-      end do op ! j
+      end do ou ! j
       ! Divide the LBL and PFA molecules into separate lists
       do i = 1, size(info%beta_group)
         numLBL = 0
@@ -718,7 +738,7 @@ op:   do j = 2, nsons(pfaTree)
 
     select case ( info%fwmType )
     case ( l_full, l_hybrid )
-      if ( .not. ( (got(f_molecules) .or. got(f_pfamolecules)) .and. &
+      if ( .not. ( got(f_molecules) .and. &
         & all(got( (/ f_signals, f_integrationGrid, f_tangentGrid /) )) ) ) &
         & call AnnounceError ( IncompleteFullFwm, root )
 
@@ -847,9 +867,7 @@ op:   do j = 2, nsons(pfaTree)
 
     ! Local variables
     real :: mean_sqDelta, meanTimes, tmp_mean
-    integer :: i, timingSize
-
-    timingSize = size(FWModelconfig)
+    integer :: i
 
     if (which == 'fwdTiming') then
       do i =1, size(FWModelConfig)
@@ -1095,6 +1113,9 @@ op:   do j = 2, nsons(pfaTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.107  2005/01/27 21:23:13  vsnyder
+! Inching toward separate LSB and USB PFA
+!
 ! Revision 2.106  2004/12/28 00:22:34  vsnyder
 ! Remove unused declarations
 !
