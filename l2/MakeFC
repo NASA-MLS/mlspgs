@@ -108,7 +108,7 @@ $(PROG): $(PROG_prereqs)
 $(libmls_objs)/libmls.a: $(libmls_f90)
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
-$(libfwdmdl_objs)/libfwdmdl.a: $(libfwdmdl_f90)
+$(libfwdmdl_objs)/libfwdmdl.a: $(libfwdmdl_f90) $(libmls_objs)/libmls.a
 	$(MAKE) -f $(MakeFName) libfwdmdl.a -C $(libfwdmdl_sources)
 
 .PHONY: configure depends clean tar mostlyclean tarz targ mlsl2
@@ -175,6 +175,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.22  2001/04/06 19:45:17  pwagner
+# Fixed prob of lib changes not triggering rebuild fwdmdl
+#
 # Revision 2.21  2001/04/05 17:15:54  pwagner
 # Added PROG to .PHONY list
 #
