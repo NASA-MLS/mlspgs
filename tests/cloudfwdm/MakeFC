@@ -91,13 +91,15 @@ else
    $(blaslib_f)
 endif
 
+UNPREFXDPTHS=$(HDF5)/../fortran/src $(HDF5)/../include
+EXTRA_PATHS =-I $(HDF5)/../fortran/src -I $(HDF5)/../include
 PROG=test
 
 #----------------------- Build instructions
 
 $(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) \
         $(libmls_objs)/libmls.a $(libfwdmdl_objs)/libfwdmdl.a
-		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
+		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) EXTRA_PATHS="$(EXTRA_PATHS)"
 
 $(libfwdmdl_objs)/libfwdmdl.a: $(libfwdmdl_f90) $(libmls_objs)/libmls.a 
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
@@ -164,6 +166,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude test
 
 # $Log$
+# Revision 1.5  2001/10/12 00:11:36  pwagner
+# Now finds modules up in owndir
+#
 # Revision 1.4  2001/08/13 18:09:08  pwagner
 # replaced shell echo -> shell {REECHO}
 #
