@@ -8,9 +8,10 @@ module GET_BETA_PATH_M
   private
   public :: get_beta_path
 !---------------------------- RCS Ident Info -------------------------------
-  CHARACTER (LEN=256) :: Id = &
+  character (len=*), parameter, private :: IdParm = &
   "$Id$"
-  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
+  character (len=len(idParm)) :: Id = IdParm
+  character (len=*), parameter, private :: ModuleName= &
   "$RCSfile$"
 !---------------------------------------------------------------------------
 contains
@@ -64,14 +65,20 @@ Real(r8) :: v0sm(MAXLINES), x1m(MAXLINES), ym(MAXLINES), yim(MAXLINES), &
 !
 ! Allocate all the needed space for beta..
 !
+  if ( associated(beta_path) ) then
+    do i = 1, size(beta_path,1)
+      do frq_i = 1, size(beta_path,2)
+        deallocate ( beta_path(i,frq_i)%values, beta_path(i,frq_i)%t_power, &
+          & beta_path(i,frq_i)%dbeta_dw, beta_path(i,frq_i)%dbeta_dn, &
+          & beta_path(i,frq_i)%dbeta_dnu, STAT=h_i )
+      end do
+    end do
+  end if
   DEALLOCATE(beta_path,STAT=h_i)
   ALLOCATE(beta_path(no_sps,mnf),STAT=h_i)
 !
   do i = 1, no_sps
     do frq_i = 1, no_ptg_frq(ptg_i)
-      DEALLOCATE(beta_path(i,frq_i)%values,beta_path(i,frq_i)%t_power,&
-  &              beta_path(i,frq_i)%dbeta_dw,beta_path(i,frq_i)%dbeta_dn,&
-  &              beta_path(i,frq_i)%dbeta_dnu, STAT=h_i)
       ALLOCATE(beta_path(i,frq_i)%values(no_ele),    &
   &            beta_path(i,frq_i)%t_power(no_ele),   &
   &            beta_path(i,frq_i)%dbeta_dw(no_ele),  &
@@ -184,5 +191,8 @@ Real(r8) :: v0sm(MAXLINES), x1m(MAXLINES), ym(MAXLINES), yim(MAXLINES), &
  END SUBROUTINE get_beta_path
 end module GET_BETA_PATH_M
 ! $Log$
+! Revision 1.6  2001/03/05 21:37:20  zvi
+! New filter format
+!
 ! Revision 1.1 2001/02/01 00:08:13  Z.Shippony
 ! Initial conversion to Fortran 90
