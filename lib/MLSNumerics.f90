@@ -5,7 +5,7 @@
 module MLSNumerics              ! Some low level numerical stuff
   !=============================================================================
 
-  use MLSCommon, only : r8, rm
+  use MLSCommon, only : r8, rm, r4
   use MLSMessageModule, only: MLSMessage,MLSMSG_Error
   use MLSStrings, only: Capitalize
   use MatrixModule_0, only: MatrixElement_T,CreateBlock_0,M_Column_Sparse,M_Absent,Sparsify
@@ -39,13 +39,13 @@ module MLSNumerics              ! Some low level numerical stuff
 
 
   interface Hunt
-    module procedure HuntArray
-    module procedure HuntScalar
+    module procedure HuntArray_r8, HuntArray_r4
+    module procedure HuntScalar_r8, HuntScalar_r4
   end interface
 
   interface InterpolateValues
-    module procedure InterpolateArray
-    module procedure InterpolateScalar
+    module procedure InterpolateArray_r4, InterpolateArray_r8
+    module procedure InterpolateScalar_r4, InterpolateScalar_r8
   end interface
 
 contains
@@ -55,7 +55,7 @@ contains
   ! monotonically increasing or decreasing. There is no such requirements for
   ! values.
 
-  subroutine HuntArray ( list, values, indices, start, allowTopValue, allowBelowValue, &
+  subroutine HuntArray_r8 ( list, values, indices, start, allowTopValue, allowBelowValue, &
     & nearest )
 
     ! Dummy arguments
@@ -68,181 +68,32 @@ contains
     logical, optional, intent(in) :: nearest ! Choose nearest value not one below
 
     ! Local variables
-    integer :: listLen, valuesLen       ! Array sizes
-    integer :: valueIndex               ! Loop counters
-    integer :: index                    ! Temporary result
-    integer :: alternativeIndex         ! Used in 'nearest' case
-    integer :: originalIndex            ! Used in 'nearest' case
-
-    logical :: useAllowTopValue, useAllowBelowValue, useNearest
-    integer :: useStart
-    integer :: upperLimit       ! Highest value that can be returned
-    integer :: stride           ! Value to step by
-    logical :: expanding        ! Whether we're expanding or reducing our search
-    logical :: lowerBelow       ! Flag
-    logical :: upperAbove       ! Another flag
-
-    integer :: listDirection    ! +1 if list ascends, -1 descends
-    integer :: searchDirection  ! (in index space) 
-    integer :: oldSearchDirection ! Previous value of above
-
     real(r8) :: thisValue
+    include "HuntArray.f9h"
+  end subroutine HuntArray_r8
 
-    ! Executable code
+  subroutine HuntArray_r4 ( list, values, indices, start, allowTopValue, allowBelowValue, &
+    & nearest )
 
-    if ( present(allowTopValue) ) then
-      useAllowTopValue = allowTopValue
-    else
-      useAllowTopValue = .false.
-    end if
+    ! Dummy arguments
+    real(r4), dimension(:), intent(in) :: list ! List to search
+    real(r4), dimension(:), intent(in) :: values ! Values to search for
+    integer, dimension(:), intent(out) :: indices ! Result
+    integer, optional, intent(in) :: start ! Optional start index
+    logical, optional, intent(in) :: allowTopValue ! Can return N
+    logical, optional, intent(in) :: allowBelowValue ! Can return 0
+    logical, optional, intent(in) :: nearest ! Choose nearest value not one below
 
-    if ( present(allowBelowValue) ) then
-      useAllowBelowValue = allowBelowValue
-    else
-      useAllowBelowValue = .false.
-    end if
-
-    if ( present(nearest) ) then
-      useNearest = nearest
-    else
-      useNearest = .false.
-    end if
-
-    if ( present(start) ) then
-      useStart = start
-    else
-      useStart = 1
-    end if
-
-    if ( useNearest .and. useAllowBelowValue ) call MLSMessage ( MLSMSG_Error, &
-      & ModuleName, "Can't set nearest and allowBelowValue in Hunt" )
-
-    listLen = size(list)
-    valuesLen = size(values)
-    if ( size(indices) < valuesLen ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & "Result array is too small" )
-
-    ! Try to work out the direction, also skip if there's only one value
-
-    if ( size(list) == 1 ) then
-      indices = 1
-      if ( useAllowBelowValue ) then
-        where ( values < list(1) )
-          indices = 0
-        end where
-      end if
-      return
-    else
-      if ( list(size(list)) >= list(1) ) then
-        listDirection = 1
-      else
-        listDirection = -1
-      end if
-    end if
-
-    ! Some last bits of setup before we get going.
-
-    if ( useAllowTopValue ) then
-      upperLimit = listLen
-    else
-      upperLimit = listLen-1
-    end if
-
-    ! Now we're ready to hit the road, loop over all the values to hunt for
-
-    index = max(1,min(useStart,upperLimit))
-    do valueIndex = 1, valuesLen
-      thisValue = values(valueIndex)
-      expanding = .true.
-      searchDirection = 0
-      stride = 1
-      HuntLoop: do
-        lowerBelow= (thisValue-list(index))*listDirection >= 0.0
-        if ( index<listLen ) then 
-          upperAbove = (list(index+1)-thisValue)*listDirection > 0.0
-        else ! We're off the end of the list
-          upperAbove = .true.   
-        end if
-
-        ! Now we know what the state of play is, what does it mean?
-
-        ! First see if we've found the place
-        if ( lowerBelow.and.upperAbove ) exit HuntLoop
-
-        ! The other cases are a little more complex
-        oldSearchDirection = searchDirection
-
-        if ( lowerBelow.and. (.not. upperAbove) ) then
-          ! If we're at the end, get out
-          if ( index == upperLimit ) exit HuntLoop
-          ! We're too low, keep looking upwards
-          index = index+stride
-          searchDirection = 1
-        end if
-
-        if ( (.not. lowerBelow).and.upperAbove ) then
-          ! If we're at the begning, get out
-          if ( index == 1 ) exit HuntLoop
-
-          ! We're too high but not at begining, look back downwards
-          index = index-stride
-          searchDirection = -1
-        end if
-
-        ! Now the very first change of direction is the end of hte
-        ! `expanding' phase
-
-        if ( (searchDirection /= oldSearchDirection) .and. &
-          & (oldSearchDirection /= 0) .and. (expanding) ) &
-          & expanding = .false.
-
-        if ( expanding ) then
-          stride = min(stride*2,listLen/2)
-        else
-          stride = max(stride/2,1)
-        end if
-
-        ! Make sure we don't fall off an end
-
-        index = min(max(index,1),upperLimit)
-      end do HuntLoop
-
-      ! If user asked for nearest then check to see if one above is closer
-      originalIndex = index
-      if ( useNearest ) then
-        alternativeIndex = index
-        ! Look for the next higher value
-        nearestLoop: do
-          if ( alternativeIndex >= upperLimit ) exit nearestLoop
-          alternativeIndex = alternativeIndex + 1
-          if ( list(alternativeIndex) > list(index) ) exit nearestLoop
-        end do nearestLoop
-        ! If this is higher, use it
-        if ( abs ( list(alternativeIndex) - thisValue ) < &
-          &  abs ( list(index) - thisValue ) ) then
-          index = alternativeIndex
-        end if
-      end if
-
-      ! Final check for off the bottom of the list
-
-      if ( useAllowBelowValue ) then
-        if ( (thisValue-list(index))*listDirection<0.0D0) index = 0
-      end if
-
-      indices(valueIndex) = index
-
-      ! In the 'nearest' case it might make sense to check from the
-      ! originalIndex
-      index = originalIndex
-    end do
-  end subroutine HuntArray
+    ! Local variables
+    real(r4) :: thisValue
+    include "HuntArray.f9h"
+  end subroutine HuntArray_r4
 
   ! ---------------------------------------------------------------------------
 
   ! This routine is a scalar wrapper for the above one
 
-  subroutine HuntScalar (list, value, index, start, allowTopValue, &
+  subroutine HuntScalar_r8 (list, value, index, start, allowTopValue, &
     & allowBelowValue, nearest )
 
     ! Dummy arguments
@@ -260,10 +111,33 @@ contains
     integer, dimension(1) :: indices ! To pass to HuntScalar
 
     values(1) = value
-    call HuntArray ( list, values, indices, start, &
+    call HuntArray_r8 ( list, values, indices, start, &
       & allowTopValue, allowBelowValue, nearest )
     index = indices(1)
-  end subroutine HuntScalar
+  end subroutine HuntScalar_r8
+
+  subroutine HuntScalar_r4 (list, value, index, start, allowTopValue, &
+    & allowBelowValue, nearest )
+
+    ! Dummy arguments
+    real(r4), dimension(:), intent(in) :: list ! List to search
+    real(r4), intent(in) :: value ! Value to search for
+    integer, intent(out) :: index ! Resulting index
+    integer, intent(in), optional :: start ! Optional start index
+    logical, optional, intent(in) :: allowTopValue ! Can return N
+    logical, optional, intent(in) :: allowBelowValue ! Can return 0
+    logical, optional, intent(in) :: nearest ! Choose nearest value instead
+
+    ! Local variables
+
+    real(r4), dimension(1) :: values ! To pass to HuntArray
+    integer, dimension(1) :: indices ! To pass to HuntScalar
+
+    values(1) = value
+    call HuntArray_r4 ( list, values, indices, start, &
+      & allowTopValue, allowBelowValue, nearest )
+    index = indices(1)
+  end subroutine HuntScalar_r4
 
   ! ---------------------------------------------------------------------------
 
@@ -280,7 +154,7 @@ contains
   !   one can't ask for spline interpolation with missing regions.
   !   missingRegions will probably slow the code down, as will extrapolate=B
 
-  subroutine InterpolateArray ( oldX, oldY, newX, newY, method, extrapolate, &
+  subroutine InterpolateArray_r8 ( oldX, oldY, newX, newY, method, extrapolate, &
     & badValue, missingRegions, dyByDx, dNewByDOld )
 
     ! Dummy arguments
@@ -297,12 +171,6 @@ contains
     type (matrixElement_T), intent(OUT), optional :: dNewByDOld ! Derivatives
 
     ! Local variables
-    integer :: noOld, noNew, width ! Dimensions
-    logical :: spline              ! Flag
-    logical :: useMissingRegions   ! Copy of missing regions
-    integer :: ind, newInd         ! Loop counters
-    logical :: computeDNewByDOld   ! Set if dNewByDOld is present
-
     real(r8), dimension(:),   pointer :: A
     real(r8), dimension(:,:), pointer :: AA
     real(r8), dimension(:),   pointer :: B
@@ -327,268 +195,60 @@ contains
     integer, dimension(:),    pointer :: upperInds
     real(r8) :: sig       ! For second derivative guesser
     real(r8) :: dyByDxFill              ! Fill value for dyByDx
+    include "InterpolateArray.f9h"
 
-    character :: extrapolateMethod ! Tidy copy of extrapolate parameter
+end subroutine InterpolateArray_r8
 
-    ! Executable code
+  subroutine InterpolateArray_r4 ( oldX, oldY, newX, newY, method, extrapolate, &
+    & badValue, missingRegions, dyByDx, dNewByDOld )
 
-    nullify ( a, aa, b, bb, c, cc, d, dd, gap, gap2, lowerInds, maskVector, &
-      &       oldSecond, oldSecondLower, oldSecondUpper, oldYlower, oldYupper, p, &
-      &       spreadGap, temp, tempDNewByDOld, upperInds )
+    ! Dummy arguments
+    real(r4), dimension(:), intent(IN) :: oldX
+    real(r4), dimension(:,:), intent(IN) :: oldY
+    real(r4), dimension(:), intent(IN) :: newX
+    real(r4), dimension(:,:), intent(OUT) :: newY
 
-    ! Size the problem, check sanity, set up arrays etc.
+    character (len=*), intent(in) :: method ! See comments above
+    character (len=*), optional, intent(in) :: extrapolate ! See comments above
+    real(r4), optional, intent(in) :: badvalue
+    real(r4), dimension(:,:), optional, intent(out) :: dyByDx
+    logical, optional, intent(in) :: missingRegions ! Allow missing regions
+    type (matrixElement_T), intent(OUT), optional :: dNewByDOld ! Derivatives
 
-    noOld=size(oldX,1)
-    noNew=size(newX,1)
-    width=size(oldY,2)
+    ! Local variables
+    real(r4), dimension(:),   pointer :: A
+    real(r4), dimension(:,:), pointer :: AA
+    real(r4), dimension(:),   pointer :: B
+    real(r4), dimension(:,:), pointer :: BB
+    real(r4), dimension(:),   pointer :: C
+    real(r4), dimension(:,:), pointer :: CC
+    real(r4), dimension(:),   pointer :: D ! Coefficients
+    real(r4), dimension(:,:), pointer :: DD ! Spread coefs.
+    real(r4), dimension(:),   pointer :: gap
+    real(r4), dimension(:),   pointer :: gap2
+    integer, dimension(:),    pointer :: lowerInds
+    real(r4), dimension(:),   pointer :: maskVector
+    real(r4), dimension(:,:), pointer :: oldSecond
+    real(r4), dimension(:,:), pointer :: oldSecondLower
+    real(r4), dimension(:,:), pointer :: oldSecondUpper
+    real(r4), dimension(:,:), pointer :: oldYlower
+    real(r4), dimension(:,:), pointer :: oldYupper
+    real(r4), dimension(:),   pointer :: p ! For 2nd der. guess
+    real(r4), dimension(:,:), pointer :: spreadGap
+    real(r4), dimension(:,:), pointer :: temp ! For 2nd der. guess
+    real(rm), dimension(:,:), pointer :: tempDNewByDOld ! Dense version.
+    integer, dimension(:),    pointer :: upperInds
+    real(r4) :: sig       ! For second derivative guesser
+    real(r4) :: dyByDxFill              ! Fill value for dyByDx
+    include "InterpolateArray.f9h"
 
-    spline=(Capitalize(method(1:1))=="S")
-
-    extrapolateMethod="A"
-    if ( present(extrapolate)) extrapolateMethod=Capitalize(extrapolate(1:1))
-
-    useMissingRegions=.false.
-    if ( present(missingRegions)) useMissingRegions=missingRegions
-
-    computeDNewByDOld=present(dNewByDOld)
-
-    if ( useMissingRegions.and.spline ) call MLSMessage &
-      & ( MLSMSG_Error, ModuleName, "Cannot use missing regions with spline")
-
-    if ( computeDNewByDOld .and. spline ) call MLSMessage &
-      & ( MLSMSG_Error, ModuleName, "Cannot get dNewBydOld from spline")
-
-    ! Special case where only one input point
-    if ( noOld == 1 ) then
-      ! If extrapolating allowed or clamped, out values same as in
-      if ( extrapolateMethod=="A" .or. extrapolateMethod=="C" ) then
-        do ind = 1, noNew
-          newY(ind,:) =oldY(1,:)
-        end do
-        ! Note these next two aren't totally gracefull with respect to 
-        ! the missingRegions flag.
-        if ( present(dyByDx) ) dyByDx = 0.0
-      else
-        ! Else extrapolation forbidden
-        do ind = 1, noNew
-          if ( newX(ind) == oldX(1) ) then
-            newY(ind,:) = oldY(1,:)
-            if ( present(dyByDx) ) dyByDx = 0.0
-          else
-            newY(ind,:) = badValue
-            if ( present(dyByDx) ) dyByDx = badValue
-          end if
-        end do
-      end if
-      if ( computeDNewByDOld ) call CreateBlock_0 ( dNewByDOld, &
-        & noNew*width, noOld*width, M_Absent )
-      return
-    end if
-
-    call Allocate_Test ( lowerInds, noNew, "lowerInds", ModuleName )
-    call Allocate_Test ( upperInds, noNew, "upperInds", ModuleName )
-    call Allocate_Test ( gap, noNew, "gap", ModuleName )
-    call Allocate_Test ( A, noNew, "A", ModuleName )
-    call Allocate_Test ( B, noNew, "B", ModuleName )
-    call Allocate_Test ( AA, noNew, width, "AA", ModuleName )
-    call Allocate_Test ( BB, noNew, width, "BB", ModuleName )
-    call Allocate_Test ( oldYlower, noNew, width, "oldYlower", ModuleName )
-    call Allocate_Test ( oldYupper, noNew, width, "oldYupper", ModuleName )
-
-    ! Setup arrays needed if dyByDx is requested
-
-    if ( present(dyByDx)) call Allocate_Test(spreadGap,noNew,width,&
-      "spreadGap",ModuleName)
-
-    ! Setup Matrix block needed if DNewByDOld is needed.
-    if ( computeDNewByDOld ) then
-      call CreateBlock_0 ( dNewByDOld, noNew*width, noOld*width, &
-        M_Column_Sparse, NumberNonZero=2*noNew*width )
-    end if
-
-    ! Do special stuff for the case of spline, allocate arrays, find 2nd
-    ! derivatives etc.
-
-    if ( spline ) then
-      call Allocate_Test ( oldSecond, noOld, width, "oldSecond", ModuleName )
-      call Allocate_Test ( C, noNew, "C", ModuleName )
-      call Allocate_Test ( D, noNew, "D", ModuleName )
-      call Allocate_Test ( CC, noNew, width, "CC", ModuleName )
-      call Allocate_Test ( DD, noNew, width, "DD", ModuleName )
-      call Allocate_Test ( oldSecondlower, noNew, width, "oldSecondlower", ModuleName )
-      call Allocate_Test ( oldSecondupper, noNew, width, "oldSecondupper", ModuleName )
-      call Allocate_Test ( gap2, noNew, "gap2", ModuleName )
-      call Allocate_Test ( temp, noOld, width, "temp", ModuleName )
-      call Allocate_Test ( p, width, "p", ModuleName )
-
-      ! Here we have to solve the a tridiagonal equation
-      ! This is a straight copy of my idl code
-      oldSecond(1,:) = 0.0
-      temp(1,:) = 0.0
-      do ind = 2, noOld-1
-        sig = (oldX(ind)-oldX(ind-1))/(oldX(ind+1)-oldX(ind-1))
-        p = sig*oldSecond(ind-1,:)+2.0
-        oldSecond(ind,:) = (sig-1.0)/p
-        temp(ind,:) = (oldY(ind+1,:)-oldY(ind,:))/(oldX(ind+1)-oldX(ind)) - &
-          & (oldY(ind,:)-oldY(ind-1,:))/(oldX(ind)-oldX(ind-1))
-        temp(ind,:) = (6.0*temp(ind,:)/ &
-          & (oldX(ind+1)-oldX(ind-1))-sig*temp(ind-1,:))/p
-      end do
-      oldSecond(noOld,:) = 0.0
-
-      ! Now do the back substitution
-      do ind = noOld-1, 1, -1
-        oldSecond(ind,:) = oldSecond(ind,:)*oldSecond(ind+1,:)+temp(ind,:)
-      end do
-
-      call Deallocate_test ( temp, "Temp", ModuleName ) 
-      call Deallocate_test ( p, "p", ModuleName )
-    end if
-
-    ! Now we're ready to begin the real work.
-
-    ! Clear the result array(s)
-    newY = 0.0
-    if ( present(dyByDx) ) dyByDx = 0.0
-
-    ! Now hunt for the indices
-
-    call Hunt ( oldX, newX, lowerInds )
-    upperInds = lowerInds+1
-    gap = oldX(upperInds)-oldX(lowerInds)
-    if ( present(dyByDx) ) spreadGap = spread(gap,2,width)
-
-    A = (oldX(upperInds)-newX)/gap
-
-    ! If extrapolate is "C"onstant, deal with that
-    if ( extrapolateMethod=="C" ) A = max(min(A,1.0_r8),0.0_r8)
-
-    B=1.0_r8-A
-
-    ! If extrapolate mode is "B"ad, deal with that
-    if ( extrapolateMethod=="B" ) then
-      call Allocate_Test ( maskVector, noNew, "maskVector", ModuleName )
-      maskVector = 0.0
-      where ( (A<0.0) .or. (A>1.0) )
-        maskVector = badValue
-        A = 0.0
-        B = 0.0
-      end where
-      newY = spread(maskVector,2,width)
-      if ( present(dyByDx) ) dyByDx = newY
-      call Deallocate_Test ( maskVector, "maskVector", ModuleName )
-    end if
-
-    ! Now spread out the coefficients
-    AA = spread(A,2,width)
-    BB = spread(B,2,width)
-    oldYlower = oldY(lowerInds,:)
-    oldYupper = oldY(upperInds,:)
-
-    ! Now worry about the missing regions flag
-    if ( useMissingRegions ) then
-      where( (oldYlower==badValue) .or. (oldYupper==badValue))
-        newY = badValue
-        AA = 0.0
-        BB = 0.0
-      end where
-      if ( present(dyByDx) ) then
-        where( (oldYlower==badValue) .or. &
-          & (oldYupper==badValue) )
-        dyByDx = badValue
-        oldYlower = 0.0      ! Only way to guarentee bad derivative
-        oldYupper = 0.0      ! But don't need to worry about spline
-      end where
-    end if
-  end if
-
-  ! Now do the linear interpolation calculation
-  newY = newY+AA*oldYlower+BB*oldYupper
-  if ( present(dyByDx) ) dyByDx = (oldYupper-oldYlower)/spreadGap
-
-  ! Write the output derivative matrix if needed
-  if ( computeDNewByDOld ) then
-    ! While the matrix is ideally suited to row sparse, our storage method
-    ! is column sparse, so to be lazy we'll create it full and then sparsify
-    ! it.
-
-    call Allocate_Test ( tempDNewByDOld, noNew*width, noOld*width, &
-      & "tempDNewByDOld", ModuleName )
-    do newInd = 1, noNew
-      do ind = 1, width
-        tempDNewByDOld(newInd+ind*noNew,lowerInds(newInd)+ind*noOld) = A(newInd)
-        tempDNewByDOld(newInd+ind*noNew,upperInds(newInd)+ind*noOld) = B(newInd)
-      end do
-    end do
-    call Sparsify ( tempDNewByDOld, dNewbyDOld, &
-      & "tempDNewByDOld", ModuleName ) ! dNewbyDOld := tempDNewByDOld
-  end if
-
-  ! Now do the spline calculation
-  if ( spline ) then
-    gap2 = gap**2
-    C = (A**3-A)*gap2/6.0    ! Note the extrapolate bad case is covered as..
-    D = (B**3-B)*gap2/6.0    !   A=B=0.0
-
-    ! Spread out the coefficients etc.
-    CC = spread(C,2,width)
-    DD = spread(D,2,width)
-    oldSecondLower = oldSecond(lowerInds,:)
-    oldSecondUpper = oldSecond(upperInds,:)
-
-    newY = newY+CC*oldSecondLower+DD*oldSecondUpper
-    if ( present(dyByDx)) dyByDx=dyByDx+(spreadGap/6.0)*( &
-      & (3.0*BB**2-1.0)*oldSecondUpper- &
-      & (3.0*AA**2-1.0)*oldSecondLower)
-  end if
-
-  ! Now make sure the dyByDX's are correct for extrapolated regions
-  if ( present ( dyByDx ) .and. scan(extrapolateMethod(1:1),"BC") > 0) then
-    select case ( extrapolateMethod(1:1) )
-    case ( "C" )
-      dyByDxFill = 0.0
-    case ( "B" )
-      dyByDxFill = badValue
-    end select
-    do ind = 1, noNew
-      if ( ( newX(ind) >= oldX(noOld) ) .or. ( newX(ind) < oldX(1) ) ) &
-        & dyByDx ( ind, : ) = dyByDXFill
-    end do
-  end if
-
-  ! Tidy up
-  call Deallocate_Test ( lowerInds, "lowerInds", ModuleName )
-  call Deallocate_Test ( upperInds, "upperInds", ModuleName )
-  call Deallocate_Test ( gap, "gap", ModuleName )
-  call Deallocate_Test ( A, "A", ModuleName )
-  call Deallocate_Test ( B, "B", ModuleName )
-  call Deallocate_Test ( AA, "AA", ModuleName )
-  call Deallocate_Test ( BB, "BB", ModuleName )
-  call Deallocate_Test ( oldYlower, "oldYlower", ModuleName )
-  call Deallocate_Test ( oldYupper, "oldYupper", ModuleName )
-
-  if ( spline ) then
-    call Deallocate_Test( oldSecond, "oldSecond", ModuleName )
-    call Deallocate_Test( C, "C", ModuleName )
-    call Deallocate_Test( D, "D", ModuleName )
-    call Deallocate_Test( CC, "CC", ModuleName )
-    call Deallocate_Test( DD, "DD", ModuleName )
-    call Deallocate_Test( oldSecondlower, "oldSecondlower", ModuleName )
-    call Deallocate_Test( oldSecondupper, "oldSecondupper", ModuleName )
-    call Deallocate_Test( gap2, "gap2", ModuleName )
-    call Deallocate_Test( temp, "temp", ModuleName )
-    call Deallocate_Test( p, "p", ModuleName )
-  end if
-  if ( present(dyByDx) ) &
-    & call Deallocate_Test ( spreadGap, "spreadGap", ModuleName )
-
-end subroutine InterpolateArray
+end subroutine InterpolateArray_r4
 
 ! --------------------------------------------------------------------------
 
 ! This subroutine is a scalar wrapper for the first one.
 
-subroutine InterpolateScalar ( oldX, oldY, newX, newY, method, extrapolate, &
+subroutine InterpolateScalar_r8 ( oldX, oldY, newX, newY, method, extrapolate, &
   & badValue, missingRegions, dyByDx, RangeOfPeriod )
 
   ! Dummy arguments
@@ -636,14 +296,14 @@ subroutine InterpolateScalar ( oldX, oldY, newX, newY, method, extrapolate, &
     call Allocate_Test ( tempDerivative, size(newX), 1, &
       & "tempDerivative", ModuleName )
 
-    call InterpolateArray ( oldX, spread(tempY,2,1), newX, tempResult, method, &
+    call InterpolateArray_r8 ( oldX, spread(tempY,2,1), newX, tempResult, method, &
       & extrapolate=extrapolate, badValue=badValue, &
       & missingRegions=missingRegions, dyByDx=tempDerivative )
     dyByDx = tempDerivative(:,1)
 
     call Deallocate_Test ( tempDerivative, "tempDerivative", ModuleName )
   else
-    call InterpolateArray ( oldX, spread(tempY,2,1), newX, tempResult, method, &
+    call InterpolateArray_r8 ( oldX, spread(tempY,2,1), newX, tempResult, method, &
       & extrapolate=extrapolate, badValue=badValue, &
       & missingRegions=missingRegions )
   end if
@@ -657,7 +317,78 @@ subroutine InterpolateScalar ( oldX, oldY, newX, newY, method, extrapolate, &
 	  newY = newY + period
 	end where
   end if
-end subroutine InterpolateScalar
+end subroutine InterpolateScalar_r8
+
+subroutine InterpolateScalar_r4 ( oldX, oldY, newX, newY, method, extrapolate, &
+  & badValue, missingRegions, dyByDx, RangeOfPeriod )
+
+  ! Dummy arguments
+  real(r4), dimension(:), intent(in) :: oldX
+  real(r4), dimension(:), intent(in) :: oldY
+  real(r4), dimension(:), intent(in) :: newX
+  real(r4), dimension(:), intent(out) :: newY
+
+  character (len=*), intent(in) :: method ! See comments above
+  character (len=*), optional, intent(in) :: extrapolate ! See comments above
+  real(r4), optional, intent(in) :: badValue
+  real(r4), dimension(:), optional, intent(out) :: dyByDx
+  real(r4), dimension(2), optional, intent(in) :: rangeofperiod	  ! for periodic data
+  logical, optional, intent(in) :: missingRegions ! Allow missing regions
+
+! local working space
+  real(r4), dimension(:,:), pointer :: tempDerivative
+  real(r4), dimension(size(newX), 1) :: tempResult
+  real(r4), dimension(size(oldY)) :: tempY
+  real(r4) period
+  integer jump, j
+
+  ! Executable code
+
+  tempY = oldY
+
+  if ( present(rangeofperiod) ) then
+	period  = rangeofPeriod(2)-rangeofPeriod(1)
+	jump = -1
+	do j =1, size(oldY)-1
+		if(abs(tempY(j+1)-tempY(j)) > period/2. ) jump = j 
+	enddo
+	if(jump /= -1) then
+	   if(tempY(jump+1) > tempY(jump)) then
+		tempY(jump+1:) = tempY(jump+1:) - period
+	   else 
+		tempY(jump+1:) = tempY(jump+1:) + period
+	   end if
+	end if
+  end if
+
+  nullify ( tempDerivative )
+
+  if ( present(dyByDx) ) then
+    call Allocate_Test ( tempDerivative, size(newX), 1, &
+      & "tempDerivative", ModuleName )
+
+    call InterpolateArray_r4 ( oldX, spread(tempY,2,1), newX, tempResult, method, &
+      & extrapolate=extrapolate, badValue=badValue, &
+      & missingRegions=missingRegions, dyByDx=tempDerivative )
+    dyByDx = tempDerivative(:,1)
+
+    call Deallocate_Test ( tempDerivative, "tempDerivative", ModuleName )
+  else
+    call InterpolateArray_r4 ( oldX, spread(tempY,2,1), newX, tempResult, method, &
+      & extrapolate=extrapolate, badValue=badValue, &
+      & missingRegions=missingRegions )
+  end if
+  newY = tempResult(:,1)
+
+  if ( present(rangeofperiod) ) then
+	period  = rangeofPeriod(2)-rangeofPeriod(1)
+	where (newY > rangeofperiod(2)) 
+	  newY = newY - period
+	elsewhere (newY < rangeofperiod(1)) 
+	  newY = newY + period
+	end where
+  end if
+end subroutine InterpolateScalar_r4
 
 !=============================================================================
 end module MLSNumerics
@@ -665,6 +396,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.21  2002/09/13 18:08:12  pwagner
+! May change matrix precision rm from r8
+!
 ! Revision 2.20  2002/09/11 17:43:38  pwagner
 ! Began changes needed to conform with matrix%values type move to rm from r8
 !
