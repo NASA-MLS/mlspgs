@@ -19,16 +19,16 @@ module Fov_Convolve_m
 ! =================================================  Fov_Convolve  =====
 ! Add the effects of antenna smearing to the radiance.
 
-    subroutine Fov_Convolve ( AntennaPattern, chi_in, rad_in, chi_out,   &     
-             & rad_out, req, rsc, earth_frac, surf_angle, di_dt, dx_dt,  &     
-             & ddx_dxdt, dx_dt_out, di_dt_flag, drad_dt_out, di_df,      &     
-             & di_df_flag,  drad_df_out, drad_dx_out )
+  subroutine Fov_Convolve ( AntennaPattern, chi_in, rad_in, chi_out,   &     
+           & rad_out, req, rsc, earth_frac, surf_angle, di_dt, dx_dt,  &     
+           & ddx_dxdt, dx_dt_out, di_dt_flag, drad_dt_out, di_df,      &     
+           & di_df_flag,  drad_df_out, drad_dx_out )
 
     use AntennaPatterns_m, only: AntennaPattern_T
-    use D_CSPLINE_M, only: CSPLINE
     use DFFT_M, only: DRFT1
-    use MLSNumerics, only: interpolateValues, hunt
-    use MLSCommon, only: I4, r4, R8, rp
+    use MLSNumerics, only: Coefficients=>Coefficients_r8, Hunt, &
+      & InterpolateArraySetup, InterpolateArrayTeardown, InterpolateValues
+    use MLSCommon, only: I4, R8, Rp
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
 
 ! inputs
@@ -81,6 +81,10 @@ module Fov_Convolve_m
 
     real(r8) :: r_eq, r_sc, e_frac, init_angle, aaap_step, ang_step
 
+    type(coefficients) :: Coeffs_1 ! for chi_in-init_angle -> angles(ffth+zero_out+1:no_fft)
+    type(coefficients) :: Coeffs_2 ! for chi_in-init_angle -> angles(ffth:no_fft)
+    type(coefficients) :: Coeffs_3 ! for angles(ffth:no_fft)-ang_step -> chi_out-init_angle
+
 ! some clunky stuff
 
     integer, parameter :: pwr=12, no_fft=2**pwr
@@ -118,9 +122,18 @@ module Fov_Convolve_m
     angles = angles - angles(ffth+1)
     init_angle = asin((r_eq - e_frac*sqrt(r_sc**2-r_eq**2)/aaap_step)/r_sc)
 
+! set up for interpolations
+
+    call interpolateArraySetup ( chi_in-init_angle, angles(ffth+zero_out+1:no_fft), &
+      & METHOD='S', coeffs=coeffs_1, EXTRAPOLATE='C' )
+    call interpolateArraySetup ( chi_in-init_angle, angles(ffth:no_fft), &
+      & METHOD='S', coeffs=coeffs_2, EXTRAPOLATE='C' )
+    call interpolateArraySetup ( angles(ffth:no_fft)-ang_step, chi_out-init_angle, &
+      & METHOD='S', coeffs=coeffs_3, EXTRAPOLATE='C', dyByDx=.true. )
+
 ! set up the radiance array
 
-    call interpolateValues ( chi_in-init_angle, rad_in, angles(ffth:no_fft),  &
+    call interpolateValues ( coeffs_2, chi_in-init_angle, rad_in, angles(ffth:no_fft),  &
        & rad_fft(ffth:no_fft), METHOD='S', EXTRAPOLATE='C' )
 
 ! mirror reflect this
@@ -150,11 +163,11 @@ module Fov_Convolve_m
 ! interpolate to output grid
 
     if ( present(drad_dx_out) ) then
-      call interpolateValues ( angles(ffth:no_fft)-ang_step, &
+      call interpolateValues ( coeffs_3, angles(ffth:no_fft)-ang_step, &
          & rad_fft1(ffth:no_fft), chi_out-init_angle, rad_out, &
          & METHOD='S', EXTRAPOLATE='C', dyByDx=drad_dx_out )
     else
-      call interpolateValues ( angles(ffth:no_fft)-ang_step, &
+      call interpolateValues ( coeffs_3, angles(ffth:no_fft)-ang_step, &
          & rad_fft1(ffth:no_fft), chi_out-init_angle, rad_out, &
          & METHOD='S', EXTRAPOLATE='C' )
     end if
@@ -185,7 +198,7 @@ module Fov_Convolve_m
 
 ! interpolate to output grid
 
-      call interpolateValues ( angles(ffth:no_fft)-ang_step, &
+      call interpolateValues ( coeffs_3, angles(ffth:no_fft)-ang_step, &
          & rad_fft1(ffth:no_fft), chi_out-init_angle, drad_dt_temp, &
          & METHOD='S', EXTRAPOLATE='C' )
 
@@ -201,7 +214,7 @@ module Fov_Convolve_m
 
 ! do i*ddx_dxdt piece
 
-        call interpolateValues ( chi_in-init_angle, (rad_in-rad_in(k)) * &
+        call interpolateValues ( coeffs_1, chi_in-init_angle, (rad_in-rad_in(k)) * &
         &    ddx_dxdt(:,i), angles(ffth+zero_out+1:no_fft), &
         &    rad_fft(ffth+zero_out+1:no_fft), METHOD='S', EXTRAPOLATE='C' )
 
@@ -211,7 +224,7 @@ module Fov_Convolve_m
 
 ! add in di_dt part
 
-        call interpolateValues ( chi_in-init_angle, di_dt(:, i), &
+        call interpolateValues ( coeffs_2, chi_in-init_angle, di_dt(:, i), &
            & angles(ffth:no_fft), rad_fft1(ffth:no_fft), METHOD='S', &
            & EXTRAPOLATE='C' )
 
@@ -232,7 +245,7 @@ module Fov_Convolve_m
 
 ! do the rad_in * dx_dt term
 
-        call interpolateValues ( chi_in-init_angle, (rad_in-rad_in(k)) * &
+        call interpolateValues ( coeffs_1, chi_in-init_angle, (rad_in-rad_in(k)) * &
          &   dx_dt(:,i), angles(ffth+zero_out+1:no_fft), &
          &   rad_fft1(ffth+zero_out+1:no_fft), METHOD='S', EXTRAPOLATE='C' )
 
@@ -265,7 +278,7 @@ module Fov_Convolve_m
 
         call drft1_t ( rad_fft, 's' )
 
-        call interpolateValues ( angles(ffth:no_fft)-ang_step, &
+        call interpolateValues ( coeffs_3, angles(ffth:no_fft)-ang_step, &
            & rad_fft(ffth:no_fft), chi_out-init_angle, drad_dt_out(:, i), &
            & METHOD='S', EXTRAPOLATE='C' )
 
@@ -286,7 +299,7 @@ module Fov_Convolve_m
 
       do i = 1, n_coeffs
         if ( .not. di_df_flag(i) ) cycle
-        call interpolateValues ( chi_in-init_angle, di_df(:, i), &
+        call interpolateValues ( coeffs_2, chi_in-init_angle, di_df(:, i), &
         & angles(ffth:no_fft), rad_fft(ffth:no_fft), METHOD='S', &
         & EXTRAPOLATE='C' )
 
@@ -315,7 +328,7 @@ module Fov_Convolve_m
 
 ! interpolate to output grid
 
-        call interpolateValues ( angles(ffth:no_fft)-ang_step, &
+        call interpolateValues ( coeffs_3, angles(ffth:no_fft)-ang_step, &
         & rad_fft1(ffth:no_fft), chi_out-init_angle, drad_df_out(:, i), &
         & METHOD='S', EXTRAPOLATE='C' )
 
@@ -324,6 +337,10 @@ module Fov_Convolve_m
     end if
 
     init = no_fft
+
+    call interpolateArrayTeardown ( coeffs_1 )
+    call interpolateArrayTeardown ( coeffs_2 )
+    call interpolateArrayTeardown ( coeffs_3 )
 
   contains
 
@@ -516,6 +533,9 @@ module Fov_Convolve_m
 
 end module Fov_Convolve_m
 ! $Log$
+! Revision 2.11  2002/10/10 19:36:22  vsnyder
+! Add di_dt_flag
+!
 ! Revision 2.10  2002/10/08 17:08:03  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
