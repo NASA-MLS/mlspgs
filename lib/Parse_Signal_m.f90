@@ -9,14 +9,15 @@ module Parse_Signal_M
   use Intrinsic, only: Spec_Indices
   use Lexer_Core, only: Print_Source, Token
   use Lexer_m, only: Lex_Signal
-  use MLSSignals_m, only: Bands, Radiometers, Signals
+  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_ALLOCATE
+  use MLSSignals_m, only: Bands, Radiometers, Signals, Signal_T, DESTROYSIGNALDATABASE
   use MoreTree, only: Get_Spec_ID
   use Output_m, only: Output
   use String_table, only: Display_string, Get_String
   use Symbol_Table, only: Dump_Symbol_Class, Enter_Terminal
   use Symbol_Types, only: T_Colon, T_Dot, T_End_of_input, T_Identifier, &
     & T_Minus, T_Plus
-  use Tree, only: Decoration, Source_Ref
+  use Tree, only: Decoration, Source_Ref, NSONS, SUBTREE, SUB_ROSA
 
   implicit NONE
   private
@@ -31,7 +32,7 @@ module Parse_Signal_M
 ! Parse_Signal  ( char* Signal_String, *int Signal_Indices(:),
 !    [int Tree_Index], [int Sideband],[*log Channels(:)], [int OnlyCountEm] )
 ! === (end of api) ===
-  public :: Parse_Signal
+  public :: Parse_Signal, Expand_Signal_List
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter, private :: IdParm = &
@@ -43,6 +44,77 @@ module Parse_Signal_M
   !---------------------------------------------------------------------------
 
 contains
+
+  ! ----------------------------------------- Expand_signal_list ---
+  subroutine Expand_signal_list ( node, theseSignals, error )
+    ! This uses parse_signal below to convert an array of strings
+    ! at tree node 'node' into a fully described array of signals
+    ! populated with channel flags and everything
+
+    integer, intent(in) :: NODE         ! Tree node
+    type ( Signal_T ), pointer, dimension(:) :: THESESIGNALS ! Result
+    logical, intent(out) :: ERROR
+
+    ! Local variables
+    integer :: J                        ! Loop counter
+    integer :: STATUS                   ! Flag from allocate etc.
+    character (len=132) :: SIGNALSTRING ! One signal name
+    integer, dimension(:), pointer :: SIGNALINDS ! Array of signal indicies
+    logical, dimension(:), pointer :: CHANNELS ! Which channels in signal
+    integer :: SIDEBAND                 ! One sideband
+    integer :: WANTED                   ! Which of the possible matches do we want
+
+    ! Executable code
+
+    ! Make sure the result is deallocated, do some setup
+    call DestroySignalDatabase ( theseSignals, justChannels=.true. )
+    allocate ( theseSignals (nsons(node)-1), stat = status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, &
+      & ModuleName, MLSMSG_Allocate // 'theseSignals' )
+    nullify ( channels, signalInds )
+    error = .false.
+
+    ! Loop over the strings
+    do j = 1, nsons(node)-1
+      call get_string ( sub_rosa(subtree(j+1,node)), signalString, &
+        & strip=.true.)
+      call parse_Signal ( signalString, signalInds, &
+        & tree_index=node, sideband=sideband, channels=channels )
+      if ( .not. associated(signalInds) ) then ! A parse error occurred
+        error = .true.
+        ! Could tidy up, but expect to crash anyway
+        return
+      end if
+      ! parse_signal may have returned several signals (e.g. different
+      ! switch settings). Later on choose the `right' one from the match
+      ! For the moment choose the first !????
+      wanted=1
+      theseSignals(j) = signals(signalInds(wanted))
+      theseSignals(j)%sideband = sideband
+      ! Don't hose channels in database, though shouldn't be an issue
+      nullify ( theseSignals(j)%channels ) 
+      
+      call allocate_Test ( theseSignals(j)%channels, &
+        & size(theseSignals(j)%frequencies), 'signals%channels', &
+        & ModuleName )
+      if ( associated(channels) ) then
+        ! The reason that this is so messy that channels has l/u bounds
+        ! of the highest and lowest channels asked for.
+        theseSignals(j)%channels(1:lbound(channels,1)-1) = .false.
+        theseSignals(j)%channels(lbound(channels,1):ubound(channels,1)) = &
+          channels
+        theseSignals(j)%channels(ubound(channels,1)+1:) = .false.
+      else
+        theseSignals(j)%channels = .true.
+      end if
+      call deallocate_test ( channels, 'channels', ModuleName )
+      call deallocate_test ( signalInds, 'signalInds', ModuleName )
+    end do                          ! End loop over listed signals
+
+    ! Executable code
+  end subroutine Expand_signal_list
+
+  ! ------------------------------------------ Parse_signal --------
 
   subroutine Parse_Signal ( Signal_String, Signal_Indices, &
     & Tree_Index, Sideband, Channels, OnlyCountEm )
@@ -462,6 +534,9 @@ o:  do
 end module Parse_Signal_M
 
 ! $Log$
+! Revision 2.15  2003/03/07 03:17:28  livesey
+! Added Expand_Signal_List
+!
 ! Revision 2.14  2003/01/25 04:14:13  vsnyder
 ! Get rid of USEs for stuff not actually used
 !
