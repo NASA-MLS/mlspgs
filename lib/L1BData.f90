@@ -1202,7 +1202,8 @@ contains ! ============================ MODULE PROCEDURES ======================
       end if
     end if
     isScalar = ( l1bData%noMAFs < 2 ) ! There may be a better way to decide
-    if ( myDontPad .or. flag /= 0 .or. isScalar ) return
+    if ( myDontPad .or. flag /= 0 .or. isScalar .or. &
+      & (GlobalAttributes%FirstMAFCtr > GlobalAttributes%LastMAFCtr) ) return
     if ( .not. IsL1BGappy(l1bData) ) return
     ! Must pad l1bdata; so first copy to temp l1bData
     if ( associated(l1bdata%dpField) .and. DEEBug ) then
@@ -2089,6 +2090,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.48  2004/08/17 23:47:48  pwagner
+! Another guard against inappripriate padding
+!
 ! Revision 2.47  2004/08/16 17:04:23  pwagner
 ! Pads L1bData after reading gappy data
 !
