@@ -1,0 +1,187 @@
+
+; Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+; U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+;------------------- RCS Ident Info -----------------------
+;  CHARACTER(LEN=130) :: Id = &
+;  "$Id$"
+;----------------------------------------------------------
+
+; This is the Level 3 Configuration file for version 0.5 of the Daily
+; subprogram of the Level 3 software for the EOS Microwave Limb Sounder (MLS).
+;
+; The task of the Level 3 software is to construct daily and monthly synoptic
+; maps from the Level 2 data using Fourier Transform Synoptic Mapping.
+;
+; For more details on the software see:
+;    EOS MLS Level 3 Algorithm Theoretical Basis
+;      JPL D-xxxxx
+;    EOS MLS Level 3 File Description with Data Dictionary
+;      JPL D-xxxxx
+;    EOS MLS Level 3 software users' guide
+;      JPL D-xxxxx
+;    EOS MLS Level 3 Software Design
+;      JPL D-xxxxx
+;
+; In the case of version 0.5 the goal of the Level 3 software is
+; simply to test the interfaces between the SDP software and the toolkit
+; and between the software and the Level 2 software, and to produce daily maps.
+;
+; -----------------------------------------------------------------------------
+;
+; This section of the l3cf gives parameters that are global settings to the
+; software, output file comments, file versions etc.  Note that while this
+; section must occur first in the l3cf, the ordering of the options within the
+; section is not critical.
+;
+BEGIN GlobalSettings
+    ;;
+    ;; This comment string is placed in the `header' for all the
+    ;; output files.
+    ;;
+    VersionComment="L3CF Version 0-05 for version 0.5 of the MLS software"
+    ;;
+    ;; The way the SDP toolkit works, the software cannot control
+    ;; filenames; it is given them through the PCF.  This means that
+    ;; all the software can do is ensure that it is being asked to
+    ;; produce an appropriately named file.
+    ;;
+    ;; So here we state what version information we expect to see embedded in
+    ;; the filenames.  If these strings are blank then no limitation
+    ;; is applied.  Also the user can override this checking by
+    ;; setting the option "IgnoreVersion" to .TRUE. (the default is .FALSE.)
+    ;; (Note that this will generate a warning message.)
+    ;;
+    L2Ver="V0-05"    
+    OutputVersionString="V0-05"
+    ;;
+    ;; Max Size of Level 2 Data Gap Allowed --
+    ;; We can specify this in minutes, MAFs or orbits (the output of the parser
+    ;; will be in the time default of seconds).
+    ;; 
+    MaxGap=3 minutes
+    ;;
+    ;; Number for "largest differences" diagnostics
+    ;;
+    N=10
+    ;;
+END GlobalSettings
+;
+; ----------------------------------------------------------------------------
+;
+; This section of the l3cf gives input parameters for the daily maps.
+;
+; NOTE: in assigning negative numbers, maintain a space between the "=" and the
+;       "-" (the parser will see "=-" as a type of "compound operator.")
+;
+BEGIN DailyMap
+    ;;
+    ;; l3prodNameD -- daily level 3 product name
+    ;; intpMethod -- method of interpolation:
+    ;;               lin = linear
+    ;;               csp = cubic spline
+    ;; timeD -- synoptic time (HH:MM:SS)
+    ;; latGridMap -- starting & maximum values of Latitude Grid for Maps
+    ;; dLat -- increment between points of Latitude Grid
+    ;; longGrid -- starting & max values of Longitude Grid for the output data
+    ;; dLon -- increment between points of Longitude Grid
+    ;; rangFrequency -- starting:max values of Range of frequencies to be used
+    ;; dF -- increment between frequencies in range
+    ;; l3presLvl -- daily product pressure levels (min:max of L2 values to use)
+    ;; rangWavenumber -- range of wavenumbers to be used (min:max of range)
+    ;; mode -- asc = ascending
+    ;;         des = descending
+    ;;         com = combined
+    ;;         all = ascending, descending, and combined
+    ;; label -- mapping to a label of a specification in the Output section
+    ;;
+    mapSpec,l3prodNameD="ClO",timeD="12:00:00",intpMethod=lin, $
+            latGridMap= -82.0:82.0,dLat=2.0, $
+            longGrid= -180.0:176.0,dLon=4.0, $
+            rangFrequency=0.1:1.0,dF=0.25,  $
+            l3presLvl=1.0:100.0,rangWavenumber=1:15, mode=all, label="CLOL3DM"
+    mapSpec,l3prodNameD="GeopotentialHeight",timeD="12:00:00",intpMethod=lin, $
+            latGridMap= -82.0:82.0,dLat=2.0, $
+            longGrid= -180.0:176.0,dLon=4.0, $
+            rangFrequency=0.1:1.0,dF=0.25,  $
+            l3presLvl=0.01:464.0,rangWavenumber=1:15, mode=com, label="ZL3DM"
+    mapSpec,l3prodNameD="H2O",timeD="12:00:00",intpMethod=lin, $
+            latGridMap= -82.0:82.0,dLat=2.0, $
+            longGrid= -180.0:176.0,dLon=4.0, $
+            rangFrequency=0.1:1.0,dF=0.25,  $
+            l3presLvl=0.01:464.0,rangWavenumber=1:15, mode=com, label="H2OL3DM"
+    mapSpec,l3prodNameD="HCl",timeD="12:00:00",intpMethod=lin, $
+            latGridMap= -82.0:82.0,dLat=2.0, $
+            longGrid= -180.0:176.0,dLon=4.0, $
+            rangFrequency=0.1:1.0,dF=0.25,  $
+            l3presLvl=0.1:100.0,rangWavenumber=1:15, mode=com, label="HCLL3DM"
+    mapSpec,l3prodNameD="HCN",timeD="12:00:00",intpMethod=lin, $
+            latGridMap= -82.0:82.0,dLat=2.0, $
+            longGrid= -180.0:176.0,dLon=4.0, $
+            rangFrequency=0.1:1.0,dF=0.25,  $
+            l3presLvl=22.0:215.0,rangWavenumber=1:15, mode=com, label="HCNL3DM"
+    mapSpec,l3prodNameD="HNO3",timeD="12:00:00",intpMethod=lin, $
+            latGridMap= -82.0:82.0,dLat=2.0, $
+            longGrid= -180.0:176.0,dLon=4.0, $
+            rangFrequency=0.1:1.0,dF=0.25,  $
+            l3presLvl=1.0:100.0,rangWavenumber=1:15, mode=com, label="HNO3L3DM"
+    mapSpec,l3prodNameD="N2O",timeD="12:00:00",intpMethod=lin, $
+            latGridMap= -82.0:82.0,dLat=2.0, $
+            longGrid= -180.0:176.0,dLon=4.0, $
+            rangFrequency=0.1:1.0,dF=0.25,  $
+            l3presLvl=1.0:215.0,rangWavenumber=1:15, mode=com, label="N2OL3DM"
+    mapSpec,l3prodNameD="O3",timeD="12:00:00",intpMethod=lin, $
+            latGridMap= -82.0:82.0,dLat=2.0, $
+            longGrid= -180.0:176.0,dLon=4.0, $
+            rangFrequency=0.1:1.0,dF=0.25,  $
+            l3presLvl=0.01:316.0,rangWavenumber=1:15, mode=all, label="O3L3DM"
+    mapSpec,l3prodNameD="OH",timeD="12:00:00",intpMethod=lin, $
+            latGridMap= -82.0:82.0,dLat=2.0, $
+            longGrid= -180.0:176.0,dLon=4.0, $
+            rangFrequency=0.1:1.0,dF=0.25,  $
+            l3presLvl=0.1:10.0,rangWavenumber=1:15, mode=all, label="OHL3DM"
+    mapSpec,l3prodNameD="Temperature",timeD="12:00:00",intpMethod=lin, $
+            latGridMap= -82.0:82.0,dLat=2.0, $
+            longGrid= -180.0:176.0,dLon=4.0, $
+            rangFrequency=0.1:1.0,dF=0.25,  $
+            l3presLvl=0.01:464.0,rangWavenumber=1:15, mode=com, label="TL3DM"
+    ;;
+END DailyMap
+;
+; -----------------------------------------------------------------------------
+;
+; In this last section of the l3cf, we detail how the output data
+; created in the core module are sent to the various output files.
+;
+BEGIN Output
+    ;;
+    ;; Each output Level 3 file is described on a separate line, with
+    ;; a list of the output quantities to go in it, the name of the
+    ;; corresponding MCF file, a file name template, and a flag for whether or
+    ;; not this name template must expand to match an entry in the PCF.
+    ;;
+    ;; First the daily map files
+    ;;
+    CLOL3DM: output, mcf = "ML3DCLO.001.MCF", file="$level_ClO_"
+    ZL3DM: output, mcf = "ML3DZ.001.MCF", file="$level_Z_"
+    H2OL3DM: output, mcf = "ML3DH2O.001.MCF", file="$level_H2O_"
+    HCLL3DM: output, mcf = "ML3DHCL.001.MCF", file="$level_HCl_"
+    HCNL3DM: output, mcf = "ML3DHCN.001.MCF", file="$level_HCN_"
+    HNO3L3DM: output, mcf = "ML3DHNO3.001.MCF", file="$level_HNO3_"
+    N2OL3DM: output, mcf = "ML3DN2O.001.MCF", file="$level_N2O_"
+    O3L3DM: output, mcf = "ML3DO3.001.MCF", file="$level_O3_"
+    OHL3DM: output, mcf = "ML3DOH.001.MCF", file="$level_OH_"
+    TL3DM: output, mcf = "ML3DT.001.MCF", file="$level_T_"
+    ;;
+END Output
+;
+; ----------------------------------------------------------------------------
+;
+; $Log$
+; Revision 1.2  2000/12/29 19:45:27  nakamura
+; Removed quantities from Output Section.
+;
+; Revision 1.1  2000/12/28 21:01:01  nakamura
+; Initial revision
+;
+;
