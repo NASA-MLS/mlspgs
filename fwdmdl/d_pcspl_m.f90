@@ -2,27 +2,39 @@
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module D_PCSPL_M
+
   implicit NONE
+
   private
   public :: D_PCSPL, PCSPL
+
   interface PCSPL; module procedure D_PCSPL; end interface
+
 !---------------------------- RCS Ident Info -------------------------------
-  CHARACTER (LEN=256) :: Id = &
-       "$Id$"
-  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile$"
-  private :: not_used_here 
+  character (len=*), parameter :: IdParm = &
+    &  "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName = &
+    & "$RCSfile$"
 !---------------------------------------------------------------------------
-  integer, parameter :: RK = kind(0.0d0)
+
 contains
+
   subroutine D_PCSPL ( TAU, C, N, IBCBEG, IBCEND )
+    integer, parameter :: RK = kind(0.0d0)
     include 'pcspl.f9h'
   end subroutine D_PCSPL
-  logical function not_used_here()
+
+  logical function NOT_USED_HERE()
     not_used_here = (id(1:1) == ModuleName(1:1))
-  end function not_used_here
+  end function NOT_USED_HERE
 
 end module D_PCSPL_M
+
 ! $Log$
+! Revision 2.1  2002/10/08 17:08:02  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.0  2001/09/17 20:26:26  livesey
 ! New forward model
 !
