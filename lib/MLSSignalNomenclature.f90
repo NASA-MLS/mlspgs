@@ -23,6 +23,7 @@ MODULE MLSSignalNomenclature    ! Dealing with MLS rad.band etc. specifiers
   CHARACTER(LEN=130) :: id = & 
        "$Id$"
   CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
+  private :: not_used_here 
   !-----------------------------------------------------------------------------
 
   ! The same as 2.1 before being removed (see log below)
@@ -1760,11 +1761,18 @@ CONTAINS
   END SUBROUTINE GetMLSBandNames
 
 !=============================================================================
-END MODULE MLSSignalNomenclature
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
+end module MLSSignalNomenclature
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.4  2002/10/08 00:09:12  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.3  2001/03/30 19:51:49  pwagner
 ! *** empty log message ***
 !

@@ -13,6 +13,7 @@ module DFFT_M
   character(len=len(idparm)), private :: Id = idParm
   character(len=*), private, parameter :: ModuleName = &
        & "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
 
 contains
@@ -549,9 +550,16 @@ contains
       END SUBROUTINE DFFT
 
 !=====================================================================
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module DFFT_M
 
 ! $Log$
+! Revision 2.4  2002/10/08 00:09:08  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.3  2002/10/01 22:03:55  pwagner
 ! Fixed RCS Ident Block
 !

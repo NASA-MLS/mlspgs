@@ -76,6 +76,7 @@ module Expr_Eval_M
   character (len=len(idParm)) :: Id = IdParm
   character (len=*), parameter :: ModuleName= &
     & "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
 
 contains
@@ -506,9 +507,16 @@ contains
     write ( *, * ) ' Exit ', trim(name), ' with result ', result
   end subroutine Trace_End
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module Expr_Eval_M
 
 ! $Log$
+! Revision 2.4  2002/10/08 00:09:09  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.3  2001/12/18 00:35:20  vsnyder
 ! Add some comments, improve trace output
 !

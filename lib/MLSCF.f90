@@ -18,6 +18,7 @@ MODULE MLSCF                    ! MLSCF stuff excluding reading and parsing
     & "$Id$"
   character (len=*), private, parameter :: ModuleName = &
     & "$RCSfile$"
+  private :: not_used_here 
   !----------------------------------------------------------
 
   integer, parameter :: MaxKeyLen = 25
@@ -155,10 +156,17 @@ contains
     stop
   end subroutine ALLOCATE_MLSCF
 !=======================
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module MLSCF
 !=======================
 
 ! $Log$
+! Revision 2.4  2002/10/08 00:09:11  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.3  2001/02/22 01:54:41  vsnyder
 ! Periodic commit
 !
