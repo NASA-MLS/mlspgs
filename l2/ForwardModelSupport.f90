@@ -453,6 +453,9 @@ contains ! =====     Public Procedures     =============================
           wanted=1
           info%signals(j) = signals(signalInds(wanted))
           info%signals(j)%sideband = sideband
+          ! Don't hose channels in database, though shouldn't be an issue
+          nullify ( info%signals(j)%channels ) 
+
           call allocate_Test ( info%signals(j)%channels, &
             & size(info%signals(j)%frequencies), 'info%signals%channels', &
             & ModuleName )
@@ -649,6 +652,11 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.25  2002/02/14 23:02:43  livesey
+! Added a safety net to guard against deallocating channels in signals
+! database (shouldn't occur in current version, though may be relevant
+! later).
+!
 ! Revision 2.24  2002/02/13 00:08:50  livesey
 ! Added differential scan model
 !
