@@ -161,6 +161,7 @@ contains
     type (VectorValue_T), pointer :: PHITAN  ! Tangent geodAngle component of
 
     logical :: FoundInFirst                  ! Flag
+    logical :: is_h2o
     integer :: supersat_Index
     integer :: wf
     integer :: f_index
@@ -272,6 +273,8 @@ contains
     s = 1
     f_len = 1
     do ii = 1, no_mol
+      kk = FwdModelConf%molecules(mol_cat_index(ii))
+      is_h2o = ( spec_tags(kk) == sp_h2o ) 
       i = mol_cat_index(ii)
       f => GetQuantityforForwardModel ( fwdModelIn, fwdModelExtra, &
         & quantityType=quantityType, molIndex=i, radiometer=radiometer, &
@@ -321,7 +324,7 @@ contains
         grids_x%deriv_flags(f_len:r-1) = .false.
       end if
 
-      if ( my_supersat /= 0 ) then
+      if ( my_supersat /= 0 .and. is_h2o ) then
         select case ( my_supersat )
         case ( -1 )
           RHI=110.0_r8
@@ -402,6 +405,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.40  2003/02/12 23:50:49  jonathan
+! add optional to i_supersat and temp_supersat
+!
 ! Revision 2.39  2003/02/11 00:48:25  jonathan
 ! fix index bug
 !
