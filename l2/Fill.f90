@@ -4211,7 +4211,7 @@ contains ! =====     Public Procedures     =============================
       ! Assume the time is close enough to constant that one call to
       ! FELDCOF is accurate enough.
 
-      call feldcof ( real(qty%template%time(1,1) + epoch) )
+      call feldcof ( real(qty%template%time(1,1)/(365.25*86400.0) + epoch) )
 
       do instance = 1, qty%template%noInstances
         do surf = 1, qty%template%noSurfs
@@ -4226,7 +4226,7 @@ contains ! =====     Public Procedures     =============================
             &                     gphQty%values(surf,instance)*1e-3 /) ), xyz )
           ! Compute the field at and w.r.t. cartesian coordinates
           call feldc ( xyz, b )
-          qty%values(surf*3-2 : surf*3, surfOr1) = b
+          qty%values ( surf*3-2 : surf*3, instance) = b
         end do
       end do
 
@@ -4778,6 +4778,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.176  2003/01/14 23:53:10  livesey
+! Bug fix in magnetic model
+!
 ! Revision 2.175  2003/01/14 22:39:25  livesey
 ! Bug fixes in magnetic stuff
 !
