@@ -106,6 +106,7 @@ contains
     error = 0
     ixJacobian = 0
     destroyJacobian = .false.
+    fwdModelExtra => NULL()             ! Can be omitted
 
     do i = 2, nsons(root)
       son = subtree(i,root)
@@ -330,6 +331,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.38  2002/01/08 18:15:57  livesey
+! Made fwdModelExtra optional
+!
 ! Revision 2.37  2001/11/27 23:34:49  pwagner
 ! Split forward model timings into four types
 !
