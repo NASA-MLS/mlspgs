@@ -1384,8 +1384,11 @@ contains ! ============= Public Procedures ==========================
       ! Get the surfaces and phis
       call LoadFromHDF5DS ( qId, 'surfs', qt%surfs )
       call LoadFromHDF5DS ( qId, 'phi', qt%phi )
-      if ( IsHDF5DSPresent ( qId, 'solarZenith' ) ) &
-        & call LoadFromHDF5DS ( qId, 'solarZenith', qt%solarZenith )
+      if ( IsHDF5DSPresent ( qId, 'solarZenith' ) ) then
+        call LoadFromHDF5DS ( qId, 'solarZenith', qt%solarZenith )
+      else
+        qt%solarZenith = 0.0
+      endif
       ! Try to get the frequencies
       if ( IsHDF5DSPresent ( qId, 'frequencies' ) ) then
         call Allocate_test( qt%frequencies, qt%noChans, &
@@ -1535,6 +1538,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.60  2003/02/06 01:37:12  livesey
+! Set solarZenith to zero if reading from hdf5 and not present
+!
 ! Revision 2.59  2003/02/06 01:34:21  livesey
 ! Added writing of solarZenith, and reading if it is present.
 !
