@@ -11,7 +11,7 @@ module PFADataBase_m
 
   implicit NONE
   private
-  public :: PFAData_t, PFAData
+  public :: PFAData_t, PFAData, RK
   public :: AddPFADatumToDatabase
   public :: Destroy_PFADataBase, Dump_PFADataBase, Dump
   public :: Write_PFADatum, Write_PFADataBase, Read_PFADataBase
@@ -19,6 +19,8 @@ module PFADataBase_m
   interface Dump
     module procedure Dump_PFADatum
   end interface Dump
+
+  integer, parameter :: RK = r4 ! Kind of real fields in PFAData_t
 
   type PFAData_T
     integer :: Name                                ! of the pfaData spec
@@ -29,11 +31,11 @@ module PFADataBase_m
                                                    ! and sidebands added
     type(vGrid_t), pointer :: TGrid => NULL()      ! Log temperatures
     type(vGrid_t), pointer :: VGrid => NULL()      ! vertical grid
-    real(r4) :: VelLin                             ! Velocity linearization, km/s
-    real(r4), pointer :: Absorption(:,:) => NULL() ! Ln Absorption data
-    real(r4), pointer :: dAbsDwc(:,:) => NULL()    ! d Ln Absorption / d wc data
-    real(r4), pointer :: dAbsDnc(:,:) => NULL()    ! d Ln Absorption / d nc data
-    real(r4), pointer :: dAbsDnu(:,:) => NULL()    ! d Ln Absorption / d nu data
+    real(rk) :: VelLin                             ! Velocity linearization, km/s
+    real(rk), pointer :: Absorption(:,:) => NULL() ! Ln Absorption data, T x P
+    real(rk), pointer :: dAbsDwc(:,:) => NULL()    ! d Ln Absorption / d wc data
+    real(rk), pointer :: dAbsDnc(:,:) => NULL()    ! d Ln Absorption / d nc data
+    real(rk), pointer :: dAbsDnu(:,:) => NULL()    ! d Ln Absorption / d nu data
   end type PFAData_T
 
   type(PFAData_t), pointer,save :: PFAData(:) => NULL()
@@ -245,6 +247,9 @@ contains ! =====     Public Procedures     =============================
 end module PFADataBase_m
 
 ! $Log$
+! Revision 2.5  2004/09/01 00:28:54  vsnyder
+! Make kind parameters more abstract, improve some comments
+!
 ! Revision 2.4  2004/07/17 02:28:52  vsnyder
 ! Add 'details' arguments for dumps
 !
