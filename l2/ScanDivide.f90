@@ -16,14 +16,15 @@ module ScanDivide
   use L1BData, only: DEALLOCATEL1BDATA, L1BDATA_T, NAME_LEN, READL1BDATA
   use Lexer_Core, only: PRINT_SOURCE
   use MLSCommon, only: L1BINFO_T, MLSCHUNK_T, TAI93_Range_T, RP
+  use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
     & MLSMSG_ERROR, MLSMSG_WARNING, MLSMSG_L1BREAD
   use MLSNumerics, only: HUNT
   use MoreTree, only: GET_SPEC_ID
-  use Output_M, only: OUTPUT
+  use OUTPUT_M, only: BLANKS, OUTPUT
   use SDPToolkit, only: MAX_ORBITS
   use STRING_TABLE, only: DISPLAY_STRING
-  use TOGGLES, only: GEN, TOGGLE
+  use TOGGLES, only: GEN, SWITCHES, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATION, NODE_ID, NSONS, SOURCE_REF, SUBTREE
   use Tree_Types, only: N_EQUAL, N_NAMED
@@ -132,6 +133,8 @@ contains ! =====     Public Procedures     =============================
     ! Executable code
 
     if ( toggle(gen) ) call trace_begin ("ScanDivide", root )
+
+    timing = section_times
 
     ! Get MLSCF values for configuration of this bit
     call ScanDivide_mlscf ( root, config )
@@ -1167,6 +1170,11 @@ contains ! =====     Public Procedures     =============================
   subroutine SayTime
     real :: T2
     call cpu_time ( t2 )
+    if ( total_times ) then
+      call output ( "Total time = " )
+      call output ( dble(t2), advance = 'no' )
+      call blanks ( 4, advance = 'no' )
+    endif
     call output ( 'Timing for ScanDivide = ' )
     call output ( dble(t2-t1), advance='yes' )
     timing = .false.
@@ -1175,6 +1183,9 @@ contains ! =====     Public Procedures     =============================
 end module ScanDivide
 
 ! $Log$
+! Revision 2.16  2001/09/28 17:50:30  pwagner
+! MLSL2Timings module keeps timing info
+!
 ! Revision 2.15  2001/09/11 05:18:16  livesey
 ! Tidied it up a bit prior to a walk through and revisit
 !
