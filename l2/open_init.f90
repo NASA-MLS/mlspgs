@@ -12,7 +12,8 @@ module Open_Init
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: FileNameLen, L1BInfo_T, TAI93_Range_T
   use MLSL2Options, only: PUNISH_FOR_INVALID_PCF, PUNISH_FOR_NO_L1BRAD, &
-  &                        PUNISH_FOR_NO_L1BOA, PENALTY_FOR_NO_METADATA
+  &                        PUNISH_FOR_NO_L1BOA, PENALTY_FOR_NO_METADATA, &
+  &                        PCF, CREATEMETADATA
   use MLSMessageModule, only: MLSMessage, &
     &                         MLSMSG_Error!, MLSMSG_FileOpen, MLSMSG_Info
   use MLSPCF2, only: MLSPCF_L1B_OA_START, MLSPCF_L1B_RAD_END, &
@@ -134,17 +135,35 @@ contains ! =====     Public Procedures     =============================
 
 ! Read the PCF into an annotation for file headers
 
+   if ( .not.( PCF .and. CREATEMETADATA) ) then
+      Status = PGS_S_SUCCESS - 1
+   else
     version = 1
     Status = Pgs_pc_getFileSize(mlspcf_pcf_start, version, size)
+   endif
+   
     if ( Status == PGS_S_SUCCESS ) then
       call createPCFAnnotation(mlspcf_pcf_start, l2pcf%anText)
     else
-      call announce_error ( 0, DEFAULTANTEXT )
+      if ( PCF .and. CREATEMETADATA ) call announce_error ( 0, DEFAULTANTEXT )
       size = LEN(DEFAULTANTEXT) + 1
       allocate ( l2pcf%anText(size), STAT=Status )
       l2pcf%anText(1:size-1) = DEFAULTANTEXT(1:size-1)
       error = PENALTY_FOR_NO_METADATA
     end if
+
+   CCSDSStartTime = ' '
+   CCSDSEndTime = ' '
+
+   if( .not. PCF ) then
+    if ( toggle(gen) ) then
+      if ( levels(gen) > 0 .or. index(switches,'O') /= 0 ) &
+        & call dump_L1B_database ( ifl1, l1binfo, l2pcf, &
+          & CCSDSEndTime, CCSDSStartTime )
+      call trace_end ( "OpenAndInit" )
+    end if
+    return
+   endif
 
     ifl1 = 0
 
@@ -179,6 +198,7 @@ contains ! =====     Public Procedures     =============================
         else
           ifl1 = ifl1 + 1
           l1bInfo%L1BRADIDs(ifl1) = sd_id
+          l1bInfo%L1BRADFileNames(ifl1) = L1physicalFilename
         end if
       end if
     end do ! L1FileHandle = mlspcf_l1b_rad_start, mlspcf_l1b_rad_end
@@ -205,6 +225,7 @@ contains ! =====     Public Procedures     =============================
         call announce_error ( 0, "Error opening L1OA file "//L1physicalFilename )
       else
         l1bInfo%L1BOAID = sd_id
+        l1bInfo%L1BOAFileName = L1physicalFilename
       end if
 
     else if ( PUNISH_FOR_NO_L1BOA ) then
@@ -354,12 +375,12 @@ contains ! =====     Public Procedures     =============================
   
     if ( num_l1b_files > 0 ) then
       do i = 1, num_l1b_files
-        returnStatus = Pgs_pc_getReference(l1bInfo%L1BRADIDs(i), version, &
-        & physicalFilename)
+!        returnStatus = Pgs_pc_getReference(l1bInfo%L1BRADIDs(i), version, &
+!        & physicalFilename)
   	call output ( 'fileid:   ' )
 	call output ( l1bInfo%L1BRADIDs(i), advance='yes' )
   	call output ( 'name:   ' )
-  	call output ( TRIM(physicalFilename), advance='yes' )
+  	call output ( TRIM(l1bInfo%L1BRADFileNames(i)), advance='yes' )
       end do
     else
       call output ( '(empty database)', advance='yes' )
@@ -367,13 +388,13 @@ contains ! =====     Public Procedures     =============================
 
     call output ( 'L1OA file:', advance='yes' )
   
-    returnStatus = Pgs_pc_getReference(l1bInfo%L1BOAID, version, &
-      & physicalFilename)
+!    returnStatus = Pgs_pc_getReference(l1bInfo%L1BOAID, version, &
+!      & physicalFilename)
     if ( returnStatus == PGS_S_SUCCESS ) then
       call output ( 'fileid:   ' )
       call output ( l1bInfo%L1BOAID, advance='yes' )
       call output ( 'name:   ' )
-      call output ( TRIM(physicalFilename), advance='yes' )
+      call output ( TRIM(l1bInfo%L1BOAFileName), advance='yes' )
     else
       call output ( '(file unknown)', advance='yes' )
     end if
@@ -467,6 +488,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.44  2001/05/04 22:56:40  pwagner
+! Detachable from Toolkit
+!
 ! Revision 2.43  2001/05/04 17:09:03  pwagner
 ! Get MAXNUML1BRADIDS, ILLEGALL1BRADID from global_settings
 !
