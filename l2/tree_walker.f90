@@ -291,14 +291,18 @@ subtrees:   do while ( j <= howmany )
                   & mifGeolocation )
                 call add_to_section_timing ( 'construct', t1)
               case ( z_fill )
-                if ( .not. checkPaths) &
-                & call MLSL2Fill ( son, l1bInfo, griddedDataBase, &
+                !if ( .not. checkPaths) &
+                if ( .not. checkPaths) then 
+                  call MLSL2Fill ( son, l1bInfo, griddedDataBase, &
                   & vectorTemplates, vectors, qtyTemplates, matrices, vGrids, &
-                  & l2gpDatabase, l2auxDatabase, chunks, chunkNo )
+                  & l2gpDatabase, l2auxDatabase, forwardModelConfigDatabase, &
+		  & chunks, chunkNo )
+		endif
                 call add_to_section_timing ( 'fill', t1)
               case ( z_join )
                 call MLSL2Join ( son, vectors, l2gpDatabase, &
-                  & l2auxDatabase, DirectDatabase, chunkNo, chunks )
+                  & l2auxDatabase, DirectDatabase, chunkNo, chunks, &
+		  & forwardModelConfigDatabase )
                 call add_to_section_timing ( 'join', t1)
               case ( z_retrieve )
                 if ( .not. checkPaths) &
@@ -355,7 +359,7 @@ subtrees:   do while ( j <= howmany )
       case ( z_output ) ! Write out the data
         if ( .not. parallel%slave ) then
           call Output_Close ( son, l2gpDatabase, l2auxDatabase, DirectDatabase, &
-            & matrices, size(chunks)==1 .or. singleChunk /= 0 )
+	    & matrices, size(chunks)==1 .or. singleChunk /= 0 )
         end if
 
         ! For case where there was one chunk, destroy vectors etc.
@@ -459,6 +463,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.127  2004/05/19 19:16:12  vsnyder
+! Move MLSChunk_t to Chunks_m
+!
 ! Revision 2.126  2004/04/28 23:07:44  livesey
 ! Now passes more stuff to Algebra
 !
