@@ -99,32 +99,32 @@ contains
           allow_climatology_overloads = decoration(subtree(2,son)) == l_true
         case ( p_input_version_string )
           input_version_string = sub_rosa_index
-          call get_string ( input_version_string, l2pcf%inputVersion )
+          call get_string ( input_version_string, l2pcf%inputVersion, strip=.true. )
         case ( p_output_version_string )
           output_version_string = sub_rosa_index
-          call get_string ( output_version_string, l2pcf%PGEVersion )
+          call get_string ( output_version_string, l2pcf%PGEVersion, strip=.true. )
         case ( p_version_comment )
           version_comment = sub_rosa_index
         case ( p_cycle )
-          call get_string ( sub_rosa_index, l2pcf%cycle )
+          call get_string ( sub_rosa_index, l2pcf%cycle, strip=.true. )
         case ( p_ccsdsstarttime )
-          call get_string ( sub_rosa_index, l2pcf%startutc )
+          call get_string ( sub_rosa_index, l2pcf%startutc, strip=.true. )
         case ( p_ccsdsendtime )
-          call get_string ( sub_rosa_index, l2pcf%endutc )
+          call get_string ( sub_rosa_index, l2pcf%endutc, strip=.true. )
         case ( p_starttime )
-          call get_string ( sub_rosa_index, name_string )
-          print *, 'starttime'
-          print *, trim(name_string)
-          print *, trim(unquote(name_string))
-          name_string = unquote(name_string)
+          call get_string ( sub_rosa_index, name_string, strip=.true. )
+ !         print *, 'starttime'
+ !         print *, trim(name_string)
+ !         print *, trim(unquote(name_string))
+ !         name_string = unquote(name_string)
           read(name_string, time_conversion) &
           &           processingrange%starttime
         case ( p_endtime )
-          call get_string ( sub_rosa_index, name_string )
-          print *, 'endtime'
-          print *, trim(name_string)
-          print *, trim(unquote(name_string))
-          name_string = unquote(name_string)
+          call get_string ( sub_rosa_index, name_string, strip=.true. )
+ !         print *, 'endtime'
+ !         print *, trim(name_string)
+ !         print *, trim(unquote(name_string))
+ !         name_string = unquote(name_string)
           read(name_string, time_conversion) &
           &           processingrange%endtime
         case default
@@ -165,7 +165,8 @@ contains
       end if
     end do
 
-   if( ECHO_GLOBAL_STNGS ) &
+   if( ECHO_GLOBAL_STNGS .or. levels(gen) > 0 .or. &
+   & index(switches, 'glo') /= 0 ) &
    & call dump_global_settings( l2pcf, processingRange, l1bInfo )
 
     if ( error /= 0 ) &
@@ -356,6 +357,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.27  2001/05/11 01:56:17  vsnyder
+! Move the getting of sub_rosa_index
+!
 ! Revision 2.26  2001/05/11 00:09:05  pwagner
 ! Gets p_.. from init_tables; unquotes strings
 !
