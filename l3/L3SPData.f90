@@ -41,6 +41,8 @@ MODULE L3SPData
 ! Parameters
 
    CHARACTER (LEN=*), PARAMETER :: DIMW_NAME = 'nWaveNum'
+   CHARACTER (LEN=*), PARAMETER :: DIMWD_NAME = 'nLevels,nLats,nWaveNum'
+   CHARACTER (LEN=*), PARAMETER :: DIMFD_NAME = 'nLevels,nLats,nFreqs'
    CHARACTER (LEN=*), PARAMETER :: DIMSP_NAME = 'nLevels,nLats,nWaveNum,nFreqs'
 
    CHARACTER (LEN=*), PARAMETER :: GEO_FIELDWN = 'waveNumber'
@@ -75,11 +77,11 @@ MODULE L3SPData
 
      ! Now we store the waveNumber and frequency fields:
 
-     REAL(r8), DIMENSION(:,:), POINTER :: waveNumber
+     REAL(r8), DIMENSION(:,:,:), POINTER :: waveNumber
+	! dimensioned (nLevels, nLats, nWaveNum)
 
-     REAL(r8), DIMENSION(:,:), POINTER :: frequency
-
-	! dimensioned (nLevels, nLats)
+     REAL(r8), DIMENSION(:,:,:), POINTER :: frequency
+	! dimensioned (nLevels, nLats, nFreqs)
 
      ! Now the spectra fields:
 
@@ -144,13 +146,13 @@ CONTAINS
 
 ! Wavenumber & frequency
 
-      ALLOCATE(l3sp%waveNumber(l3sp%nLevels,l3sp%nLats), STAT=err)
+      ALLOCATE(l3sp%waveNumber(l3sp%nLevels,l3sp%nLats,l3sp%nWaveNum), STAT=err)
       IF ( err /= 0 ) THEN
          msr = MLSMSG_Allocate // ' L3SPData_T waveNumber pointer.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      ALLOCATE(l3sp%frequency(l3sp%nLevels,l3sp%nLats), STAT=err)
+      ALLOCATE(l3sp%frequency(l3sp%nLevels,l3sp%nLats,l3sp%nFreqs), STAT=err)
       IF ( err /= 0 ) THEN
          msr = MLSMSG_Allocate // ' L3SPData_T frequency pointer.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -297,14 +299,14 @@ CONTAINS
 
 ! Define the waveNumber & frequency fields
 
-         status = swdefgfld(swID, GEO_FIELDWN, DIMLL_NAME, DFNT_FLOAT32, &
+         status = swdefgfld(swID, GEO_FIELDWN, DIMWD_NAME, DFNT_FLOAT32, &
                             HDFE_NOMERGE)
          IF (status == -1) THEN
             msr = GEO_ERR // GEO_FIELDWN
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         status = swdefgfld(swID, GEO_FIELD10, DIMLL_NAME, DFNT_FLOAT32, &
+         status = swdefgfld(swID, GEO_FIELD10, DIMFD_NAME, DFNT_FLOAT32, &
                             HDFE_NOMERGE)
          IF (status == -1) THEN
             msr = GEO_ERR // GEO_FIELD10
@@ -385,8 +387,8 @@ CONTAINS
 
 ! Write the waveNumber data
 
-         status = swwrfld( swID, GEO_FIELDWN, start(1:2), stride(1:2), &
-                           edge(1:2), REAL(sp(i)%waveNumber) )
+         status = swwrfld( swID, GEO_FIELDWN, start(1:3), stride(1:3), &
+                           edge(1:3), REAL(sp(i)%waveNumber) )
          IF (status == -1) THEN
             msr = WR_ERR // GEO_FIELDWN
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -394,14 +396,18 @@ CONTAINS
 
 ! Write the frequency data
 
-         status = swwrfld( swID, GEO_FIELD10, start(1:2), stride(1:2), &
-                           edge(1:2), REAL(sp(i)%frequency) )
+         edge(3) = sp(i)%nFreqs
+
+         status = swwrfld( swID, GEO_FIELD10, start(1:3), stride(1:3), &
+                           edge(1:3), REAL(sp(i)%frequency) )
          IF (status == -1) THEN
             msr = WR_ERR // GEO_FIELD10
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
 ! Write the real part of the data
+
+         edge(3) = sp(i)%nWaveNum
 
          status = swwrfld( swID, DATA_FIELDRV, start, stride, edge, &
                            REAL(sp(i)%l3spRelValue) )
@@ -601,6 +607,9 @@ END MODULE L3SPData
 !==================
 
 ! $Log$
+! Revision 1.4  2001/02/09 19:17:05  nakamura
+! Changed dimensions on waveNumber & frequency.
+!
 ! Revision 1.3  2001/01/16 17:44:38  nakamura
 ! Added annotation.
 !
