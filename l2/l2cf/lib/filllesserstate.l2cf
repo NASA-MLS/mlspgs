@@ -74,9 +74,6 @@ begin Fill
 
   ;; Next the time varying ones.  We can get these from L1B or fake them
   !ifdef(flagFakeAntennaLoss,{!dnl
-  ;; Read them from L1B
-  !M4Error({Reading antenna loss terms from L1B not yet supported})
-  },{!dnl
   ;; Fake them
   !define(fillOneStrayRadiance,{!dnl
   Fill, quantity=apriori.strayRadiance$1, method=explicit, $
@@ -104,6 +101,9 @@ begin Fill
     phiZero=240.297 degrees, terms = [ $
     273.15 K + 39.3725 K, -1.39889 K, -1.73351 K, -0.625 K, $
     -0.2775 K,  -0.476113 K,  -0.108506 K ]
+  },{!dnl
+  ;; Read them from L1B
+  !M4Error({Reading antenna loss terms from L1B not yet supported})
   })
   ;; Original terms from Rick's Email
   ;; t0 = 3960s, T=5932.659
