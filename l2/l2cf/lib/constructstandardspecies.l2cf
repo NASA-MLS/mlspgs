@@ -90,18 +90,18 @@ begin Construct
   hGridFine: hGrid, type=regular, spacing=0.5 degrees, origin=0 degrees, $
   module=GHz, /forbidOverspill, /insetOverlaps
   
-  PSD:  Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type = sizeDistribution
-  earthradius: Quantity, hGrid=hGridStandard, type = earthradius
-  surfaceType: Quantity, hGrid=hGridStandard, type = surfaceType
+  PSD:  Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=sizeDistribution
+  earthradius: Quantity, hGrid=hGridStandard, type=earthradius
+  surfaceType: Quantity, hGrid=hGridStandard, type=surfaceType
 
-  IWC:  Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type = CloudIce
-  LWC:  Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type = CloudWater
+  IWC_Coarse:  Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=CloudIce
+  LWC:  Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=CloudWater
 
-  IWC_Fine:  Quantity, vGrid=vGridIWC, hGrid=hGridFine, type = CloudIce
+  IWC:  Quantity, vGrid=vGridIWC, hGrid=hGridFine, type=CloudIce
 
   trans:   Quantity, type=  losTransFunc,   Sgrid=sGridStandard, module=GHz
-  cext:    Quantity, vGrid= vGridIWC, hGrid=hGridStandard, type = cloudExtinction
-  cextFine:    Quantity, vGrid= vGridIWC, hGrid=hGridFine, type = cloudExtinction
+  cext:    Quantity, vGrid= vGridIWC, hGrid=hGridStandard, type=cloudExtinction
+  cextFine:    Quantity, vGrid= vGridIWC, hGrid=hGridFine, type=cloudExtinction
 
   ;; Folded radiance-like quantities for cloud models
   !define(constructDT,{DTband$1: Quantity, $
@@ -125,9 +125,9 @@ begin Construct
   !define(allEODS,{!makelist({EODband},{},!allBands)})
 
   massMeanDiameterIce: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, $
-    type = massMeanDiameterIce
+    type=massMeanDiameterIce
   massMeanDiameterWater: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, $
-    type = massMeanDiameterWater
+    type=massMeanDiameterWater
 
   ;; cldRad in l2gp format for quality flag uses
   !define(constructCloudMinMax,{!dnl
@@ -367,11 +367,11 @@ begin Construct
   magneticField: quantity, type=magneticField, $
     vGrid=vGridStandard, hGrid=hGridStandard
 
-  earthReflectivity: quantity, type = earthRefl
-  orbitInclination: Quantity, type = orbitInclination, module=SC
-  spaceRadiance: quantity, type = spaceRadiance
+  earthReflectivity: quantity, type=earthRefl
+  orbitInclination: Quantity, type=orbitInclination, module=SC
+  spaceRadiance: quantity, type=spaceRadiance
 
-  scGeocAlt: Quantity, type = scGeocAlt, module=SC
+  scGeocAlt: Quantity, type=scGeocAlt, module=SC
   tngtGeocAltGHz: Quantity, type=tngtGeocAlt, module=GHz
   tngtGeocAltTHz: Quantity, type=tngtGeocAlt, module=THz
 
@@ -398,7 +398,7 @@ begin Construct
     temperature, temperature_HR, $
     refGPH, GPH, GPH_HR, $
     tpPressure, $
-    iwc, iwc_fine, lwc, surfaceType, psd, earthRadius, $
+    iwc_coarse, iwc, lwc, surfaceType, psd, earthRadius, $
     trans, cext, cextFine, $
     massMeanDiameterIce, massMeanDiameterWater, $
     !allMolecules, tropH2O, tropH2O_HR, $
