@@ -21,7 +21,7 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
     L_CLOUDINDUCEDRADIANCE, L_CLOUDRADSENSITIVITY, &
     L_COLUMNABUNDANCE, L_EARTHREFL, L_EFFECTIVEOPTICALDEPTH, &
     L_EARTHRADIUS, L_ELEVOFFSET, L_EXTINCTION, L_GEODALTITUDE, L_GPH, &
-    L_HEIGHTOFFSET, L_LOSTRANSFUNC, L_LOSVEL, &
+    L_HEIGHTOFFSET, L_LOSTRANSFUNC, L_LOSVEL, L_MAGNETICFIELD, &
     L_NOISEBANDWIDTH, L_NONE, L_ORBITINCLINATION, L_OPTICALDEPTH, &
     L_PHITAN, L_PTAN, L_RADIANCE, L_RHI, &
     L_REFGPH, L_SCANRESIDUAL, L_SCECI, L_SCGEOCALT, L_SCVEL, &
@@ -32,7 +32,7 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
     L_VMR, L_XYZ, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_EXTINCTION, &
     PHYQ_FREQUENCY, PHYQ_DOBSONUNITS, PHYQ_IceDensity, PHYQ_LENGTH, PHYQ_PCTRHI, &
     PHYQ_PRESSURE, PHYQ_TEMPERATURE, PHYQ_VELOCITY, PHYQ_VMR, &
-    PHYQ_ZETA
+    PHYQ_ZETA, PHYQ_GAUSS
   use L1BData, only: L1BData_T, READL1BDATA, DEALLOCATEL1BDATA, &
     & FindL1BData, AssembleL1BQtyName, PRECISIONSUFFIX
   use LEXER_CORE, only: PRINT_SOURCE
@@ -201,6 +201,7 @@ contains ! =====     Public Procedures     =============================
     natural_units(l_tngtGeocAlt) =             PHYQ_Length
     natural_units(l_tngtGeodAlt) =             PHYQ_Length
     natural_units(l_vmr) =                     PHYQ_Vmr
+    natural_units(l_magneticField) =           PHYQ_Gauss
 
     noChans = 1
     quantitytype = 0
@@ -422,6 +423,9 @@ contains ! =====     Public Procedures     =============================
         frequencyCoordinate = l_channel
         signalInfo = GetSignal(signal)
         noChans = size ( signalInfo%frequencies ) 
+      case ( l_magneticField )
+        frequencyCoordinate = l_xyz
+        noChans = 3
       case default
       end select
 
@@ -434,7 +438,7 @@ contains ! =====     Public Procedures     =============================
         call CopyHGridInfoIntoQuantity ( hGrids(hGridIndex), qty )
       else                      ! Set `empty' values
         qty%phi = 0.0
-        qty%geodLAt = 0.0
+        qty%geodLat = 0.0
         qty%lon = 0.0
         qty%time = 0.0
         qty%solarTime = 0.0
@@ -997,6 +1001,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.79  2003/01/07 23:46:53  livesey
+! Added magnetic field stuff
+!
 ! Revision 2.78  2002/12/11 22:17:05  pwagner
 ! Added error checks on hdf version
 !
