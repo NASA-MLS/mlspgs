@@ -8,7 +8,7 @@ module Join                     ! Join together chunk based data.
   ! This module performs the 'join' task in the MLS level 2 software.
   use intrinsic, only: FIELD_INDICES, L_NONE, L_GEODANGLE, &
     & L_MAF, PHYQ_DIMENSIONLESS
-  use MLSCommon, only: MLSChunk_T, R8
+  use MLSCommon, only: MLSChunk_T, R4, R8, RV
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use OUTPUT_M, only: BLANKS, OUTPUT
   use String_Table, only: DISPLAY_STRING, GET_STRING
@@ -87,7 +87,6 @@ contains ! =====     Public Procedures     =============================
     integer :: GSON                     ! Son of Key
     integer :: HDFVERSION               ! Version of hdf for directwrite
     integer :: HDFNAMEINDEX             ! Name of swath/sd
-    logical :: IS_SWATHNAME_CASESENSITIVE
     integer :: KEY                      ! Index of an L2GP or L2AUX tree
     integer :: KEYNO                    ! Index of subtree of KEY
     integer :: MLSCFLine
@@ -136,20 +135,15 @@ contains ! =====     Public Procedures     =============================
 
       ! Node_id(key) is now n_spec_args.
 
-      is_swathname_casesensitive = .false.   ! Don't use the actual swath name
       ! ??? Does this need to do anything somewhere ???
-      select case( get_spec_id(key) )
-      case ( s_l2aux )
-      case ( s_l2gp )
-        is_swathname_casesensitive = .true.   ! Use the actual swath name
-      case ( s_time )
+      if ( get_spec_id(key) == s_time ) then
         if ( timing ) then
           call sayTime
         else
           call time_now ( t1 )
           timing = .true.
         end if
-      end select
+      end if
 
       got_field = .false.
       source = null_tree
@@ -233,11 +227,9 @@ contains ! =====     Public Procedures     =============================
           & call GetSignalName ( quantity%template%signal, hdfName, &
           &   sideband=quantity%template%sideband )
         call Get_String( hdfNameIndex, hdfName(len_trim(hdfName)+1:), strip=.true. )
-        ! Unless the name is case sensitive, look up the swath/sdName
-        ! and seize upon its first invocation as the one to use
-        !  (although the question why is a natural one to ask)
-        if ( .not. is_swathname_casesensitive) &
-          & hdfNameIndex = enter_terminal ( trim(hdfName), t_string )
+
+        ! Now get an index for this possibly new name which may include the signal
+        hdfNameIndex = enter_terminal ( trim(hdfName), t_string, caseSensitive=.true. )
 
         ! Now three possible cases, a direct write (either parallel or not), a
         ! parallel slave join, or a manual join
@@ -313,7 +305,7 @@ contains ! =====     Public Procedures     =============================
 
     use INIT_TABLES_MODULE, only: L_PRESSURE, L_ZETA
     use L2GPData, only: AddL2GPToDatabase, ExpandL2GPDataInPlace, &
-      & L2GPData_T, SetupNewL2GPRecord
+      & L2GPData_T, SetupNewL2GPRecord, RGP
     use VectorsModule, only: VectorValue_T
 
     ! Dummy arguments
@@ -328,6 +320,7 @@ contains ! =====     Public Procedures     =============================
     ! The last two are set if only part (e.g. overlap regions) of the quantity
     ! is to be stored in the l2gp data.
 
+
     ! Local variables
 
     type (L2GPData_T) :: NewL2GP
@@ -337,8 +330,10 @@ contains ! =====     Public Procedures     =============================
     integer :: NoSurfsInL2GP, NoFreqsInL2GP
     integer :: UseFirstInstance, UseLastInstance, NoOutputInstances
     logical :: L2gpDataIsNew
+    real(rv) :: HUGERGP
 !   real(r8), dimension(:,:), pointer :: Values !??? Not used ???
     
+    hugeRgp = real ( huge(0.0_rgp), rv )
     if ( toggle(gen) .and. levels(gen) > 0 ) &
       & call trace_begin ( "JoinL2GPQuantities", key )
 
@@ -450,12 +445,14 @@ contains ! =====     Public Procedures     =============================
     ! and quality will come later too (probably 0.5, but maybe 1.0)
 
     thisL2GP%l2gpValue(:,:,firstProfile:lastProfile) = &
-         reshape(quantity%values(:,useFirstInstance:useLastInstance),&
-         (/max(thisL2GP%nFreqs,1),max(thisL2GP%nLevels,1),lastProfile-firstProfile+1/))
+      & reshape ( max ( -hugeRgp, min ( hugeRgp, &
+      &   quantity%values(:,useFirstInstance:useLastInstance) ) ), &
+      &  (/max(thisL2GP%nFreqs,1),max(thisL2GP%nLevels,1),lastProfile-firstProfile+1/))
     if (associated(precision)) then
       thisL2GP%l2gpPrecision(:,:,firstProfile:lastProfile) = &
-      reshape(precision%values(:,useFirstInstance:useLastInstance),&
-         (/max(thisL2GP%nFreqs,1),max(thisL2GP%nLevels,1),lastProfile-firstProfile+1/))
+        & reshape ( max ( -hugeRgp, min ( hugeRgp, &
+        &   precision%values(:,useFirstInstance:useLastInstance) ) ), &
+        &  (/max(thisL2GP%nFreqs,1),max(thisL2GP%nLevels,1),lastProfile-firstProfile+1/))
     else
       thisL2GP%l2gpPrecision(:,:,firstProfile:lastProfile) = 0.0
     end if
@@ -504,11 +501,14 @@ contains ! =====     Public Procedures     =============================
     integer ::                           FirstProfile, LastProfile
 !   real(r8), dimension(:,:), pointer :: values !??? Not used ???
     character (LEN=32) :: quantityNameStr
+    real(r8) :: HUGER4
 
     ! Executable code
 
     if ( toggle(gen) .and. levels(gen) > 0 ) &
       & call trace_begin ( "JoinL2AUXQuantities", key )
+
+    hugeR4 = real ( huge(0.0_r4), r8 )
 
     if ( DEEBUG ) then
       call output('Joining vector quantity to L2AUX quantities', advance='yes')
@@ -769,7 +769,8 @@ contains ! =====     Public Procedures     =============================
      & call MLSMessage ( MLSMSG_Error, &
      & ModuleName, "Reshape fails: size mismatch betw. quantity and l2aux" )
     thisL2AUX%values(:,:,firstProfile:lastProfile) = &
-      & reshape(quantity%values(:,useFirstInstance:useLastInstance), &
+      & reshape ( max ( -hugeR4, min ( hugeR4, &
+      & quantity%values(:,useFirstInstance:useLastInstance) ) ), &
       &   (/ thisL2AUX%dimensions(1)%noValues, &
       &      thisL2AUX%dimensions(2)%noValues, &
       &      lastProfile-firstProfile+1/) )
@@ -820,6 +821,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.70  2003/05/12 02:06:23  livesey
+! Bug fix for prefixSignal L2GPs and also bound r8->r4 conversion
+!
 ! Revision 2.69  2003/02/08 00:31:31  pwagner
 ! Now saves quantityType in newl2gp
 !
