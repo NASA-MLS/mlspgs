@@ -33,6 +33,7 @@ module L2Parallel
   use L2ParInfo, only: L2PARALLELINFO_T, PARALLEL, INFOTAG, CHUNKTAG, GIVEUPTAG, &
     & SIG_TOJOIN, SIG_FINISHED, SIG_ACKFINISH, SIG_REGISTER, NOTIFYTAG, &
     & SIG_REQUESTDIRECTWRITE, SIG_DIRECTWRITEGRANTED, SIG_DIRECTWRITEFINISHED, &
+    & SIG_DIRECTWRITEABANDONED, SIG_DIRECTWRITEWAIT, &
     & GETNICETIDSTRING, SLAVEARGUMENTS, MACHINENAMELEN, GETMACHINENAMES, &
     & MACHINEFIXEDTAG
   use QuantityTemplates, only: QUANTITYTEMPLATE_T, &
@@ -45,6 +46,7 @@ module L2Parallel
   use String_table, only: Display_String
   use Init_Tables_Module, only: S_L2GP, S_L2AUX
   use MoreTree, only: Get_Spec_ID
+  use MorePVM, only: PVMUNPACKSTRINGINDEX
   use VectorHDF5, only: WRITEVECTORASHDF5, READVECTORFROMHDF5
   use HDF5, only: H5FCREATE_F, H5FCLOSE_F, H5FOPEN_F, H5F_ACC_RDONLY_F, H5F_ACC_TRUNC_F
 
@@ -107,9 +109,36 @@ contains ! ================================ Procedures ======================
         &    chunks(chunk)%lastMAFIndex, &
         &    chunks(chunk)%noMAFsLowerOverlap, &
         &    chunks(chunk)%noMAFsUpperOverlap, &
-        &    chunks(chunk)%accumulatedMAFs /), info )
+        &    chunks(chunk)%chunkNumber /), info )
       if ( info /= 0 ) &
-        & call PVMErrorMessage ( info, 'packing one chunk' )
+        & call PVMErrorMessage ( info, 'packing one chunk header' )
+
+      if ( associated ( chunks(chunk)%hGridOffsets ) ) then
+        call PVMF90Pack ( size ( chunks(chunk)%hGridOffsets ), info )
+        if ( info /= 0 ) &
+          & call PVMErrorMessage ( info, 'packing size(hGridOffsets)' )
+        call PVMF90Pack ( chunks(chunk)%hGridOffsets, info )
+        if ( info /= 0 ) &
+          & call PVMErrorMessage ( info, 'packing hGridOffsets chunk' )
+      else
+        call PVMF90Pack ( 0, info )
+        if ( info /= 0 ) &
+          & call PVMErrorMessage ( info, 'packing 0 for size(hGridOffsets)' )
+      end if
+
+      if ( associated ( chunks(chunk)%hGridTotals ) ) then
+        call PVMF90Pack ( size ( chunks(chunk)%hGridTotals ), info )
+        if ( info /= 0 ) &
+          & call PVMErrorMessage ( info, 'packing size(hGridTotals)' )
+        call PVMF90Pack ( chunks(chunk)%hGridTotals, info )
+        if ( info /= 0 ) &
+          & call PVMErrorMessage ( info, 'packing hGridTotals chunk' )
+      else
+        call PVMF90Pack ( 0, info )
+        if ( info /= 0 ) &
+          & call PVMErrorMessage ( info, 'packing 0 for size(hGridTotals)' )
+      end if
+
     end do
     call PVMFSend ( slaveTid, ChunkTag, info )
     if ( info /= 0 ) &
@@ -133,6 +162,7 @@ contains ! ================================ Procedures ======================
     integer :: INFO                     ! Flag from PVM
     integer :: STATUS                   ! From allocate
     integer :: NOCHUNKS                 ! Size.
+    integer :: NOHGRIDS                 ! Size of hGrid information
     integer, dimension(2) :: HEADER     ! No chunks, chunkNo
     integer, dimension(noChunkTerms) :: VALUES ! Chunk as integer array
 
@@ -160,8 +190,30 @@ contains ! ================================ Procedures ======================
       call PVMF90Unpack ( values, info )
       if ( info /= 0 ) &
         & call PVMErrorMessage ( info, 'unpacking one chunk')
-      chunks(chunk) = MLSChunk_T ( &
-        & values(1), values(2), values(3), values(4), values(5) )
+      chunks(chunk)%firstMAFIndex = values(1)
+      chunks(chunk)%lastMAFIndex = values(2)
+      chunks(chunk)%noMAFsLowerOverlap = values(3)
+      chunks(chunk)%noMAFsUpperOverlap = values(4)
+      chunks(chunk)%chunkNumber = values(5)
+
+      call PVMF90Unpack ( noHGrids, info )
+      if ( info /= 0 ) &
+        & call PVMErrorMessage ( info, 'unpacking noHGrids')
+      call Allocate_test ( chunks(chunk)%hGridOffsets, noHGrids, &
+        & 'hGridOffsets', ModuleName )
+      call PVMF90Unpack ( chunks(chunk)%hGridOffsets, info )
+      if ( info /= 0 ) &
+        & call PVMErrorMessage ( info, 'unpacking hGridOffsets')
+
+      call PVMF90Unpack ( noHGrids, info )
+      if ( info /= 0 ) &
+        & call PVMErrorMessage ( info, 'unpacking noHGrids')
+      call Allocate_test ( chunks(chunk)%hGridTotals, noHGrids, &
+        & 'hGridTotals', ModuleName )
+      call PVMF90Unpack ( chunks(chunk)%hGridTotals, info )
+      if ( info /= 0 ) &
+        & call PVMErrorMessage ( info, 'unpacking hGridTotals')
+
     end do
 
     if ( index(switches,'chu') /=0 ) call dump ( chunks )
@@ -429,7 +481,7 @@ contains ! ================================ Procedures ======================
 
         case ( sig_RequestDirectWrite ) ! ------- Direct write permission --
           ! What file did they ask for?
-          call PVMF90Unpack ( requestedFile, info )
+          call PVMUnpackStringIndex ( requestedFile, info )
           if ( info /= 0 )  call PVMErrorMessage ( info, &
             & "unpacking direct write request" )
           ! Is this a new file?
@@ -450,31 +502,33 @@ contains ! ================================ Procedures ======================
           end if
 
           if ( index ( switches, 'mas' ) /= 0 ) then
-            call output ( 'Direct write request for file ' )
-            call output ( requestedFile )
+            call output ( 'Direct write request from ' )
             call output ( ' from ' )
             if ( .not. usingSubmit ) &
               & call output ( trim(machineNames(machine)) // ' ' )
             call output ( trim(GetNiceTidString(slaveTid)) )
             call output ( ' chunk ' )
-            call output ( chunk, advance='yes')
+            call output ( chunk, advance='yes' )
+            call display_string ( requestedFile, strip=.true., advance='yes' )
           end if
           ! Is anyone else using this file?
           if ( any ( directWriteStatus == requestedFile ) ) then
             ! If so, log a request for it by setting our status to 
             ! -requestedFile, and have this chunk 'take a ticket'
             if ( index ( switches, 'mas' ) /= 0 ) then
-              call output ( 'Request pending', &
-                & advance='yes' )
+              call output ( 'Request is pending as ticket ')
+              call output ( nextTicket, advance='yes' )
             end if
             directWriteStatus(chunk) = -requestedFile
             directWriteTicket(chunk) = nextTicket
             nextTicket = nextTicket + 1
+            ! Send the slave a message that it will have to wait
+            call TellSlaveToWait ( slaveTid )
             ! At this point, create file, true or otherwise, becomes irrelevant.
           else
             ! Otherwise, go ahead
             if ( index ( switches, 'mas' ) /= 0 ) then
-              call output ( 'Request was granted' )
+              call output ( 'Request was immediately granted' )
               if ( createFile ) then
                 call output ( ' (new file)', advance='yes' )
               else
@@ -486,6 +540,24 @@ contains ! ================================ Procedures ======================
             directWriteTicket(chunk) = 0
           end if
 
+        case ( sig_DirectWriteAbandoned )
+          ! This chunk doesn't want to wait for the ticket, perhaps will 
+          ! try for another file
+          if ( index ( switches, 'mas' ) /= 0 ) then
+            call output ( 'Direct write request abandoned by ' )
+            if ( .not. usingSubmit ) &
+              & call output ( trim(machineNames(machine)) // ' ' )
+            call output ( trim(GetNiceTidString(slaveTid)) )
+            call output ( ' chunk ' )
+            call output ( chunk )
+            call output ( ' ticket ' )
+            call output ( directWriteTicket(chunk), advance='yes' )
+            call display_string ( directWriteStatus(requestedFile), strip=.true., &
+              & advance='yes' )
+          end if
+          directWriteStatus ( chunk ) = 0
+          directWriteTicket ( chunk ) = 0
+
         case ( sig_DirectWriteFinished ) ! - Finished with direct write -
           ! Record that the chunk has finished direct write
           completedFile = directWriteStatus(chunk)
@@ -495,14 +567,14 @@ contains ! ================================ Procedures ======================
           directWriteStatus(chunk) = 0
           directWriteTicket(chunk) = 0
           if ( index ( switches, 'mas' ) /= 0 ) then
-            call output ( 'Direct write finished on file ' )
-            call output ( completedFile )
+            call output ( 'Direct write finished on by ' )
             call output ( ' by ' )
             if ( .not. usingSubmit ) &
               & call output ( trim(machineNames(machine)) // ' ' )
             call output ( trim(GetNiceTidString(slaveTid)) )
             call output ( ' chunk ' )
             call output ( chunk, advance='yes')
+            call display_string ( completedFile, strip=.true., advance='yes' )
           end if
           ! OK, perhaps someone else's turn to write to this file
           call NextSlaveToWrite ( completedFile )
@@ -898,10 +970,12 @@ contains ! ================================ Procedures ======================
         location = minloc ( relevantTickets )
         chunk = location ( 1 )
         if ( index ( switches, 'mas' ) /= 0 ) then
-          call output ( 'Permission granted to ' // &
+          call output ( 'Permission now granted to ' // &
             & trim(GetNiceTidString(chunkTids(chunk))) // &
             & ' chunk ' )
-          call output ( chunk, advance='yes' )
+          call output ( chunk )
+          call output ( ' ticket ' )
+          call output ( relevantTickets(location(1)), advance='yes' )
         end if
         ! We know createFile is false here because someone else just
         ! wrote to the file sucessfully!
@@ -910,6 +984,22 @@ contains ! ================================ Procedures ======================
         directWriteTicket ( chunk ) = 0
       end if
     end subroutine NextSlaveToWrite
+
+    subroutine TellSlaveToWait ( tid )
+      ! This routine sends a simple 'please wait' message to a slave
+      ! who has asked for a direct write
+      integer, intent(in) :: TID
+      ! Local variables
+      integer :: INFO                   ! From PVM
+      integer :: BUFFERID               ! From PVM
+      call PVMFInitSend ( PvmDataDefault, bufferID ) 
+      call PVMF90Pack ( SIG_DirectWriteWait, info )
+      if ( info /= 0 ) &
+        & call PVMErrorMessage ( info, 'packing direct write wait' )
+      call PVMFSend ( tid, InfoTag, info )
+      if ( info /= 0 ) &
+        & call PVMErrorMessage ( info, 'sending direct write wait' )
+    end subroutine TellSlaveToWait
 
     subroutine WelcomeSlave ( chunk, tid )
       ! This routine welcomes a slave into the fold and tells it stuff
@@ -985,8 +1075,6 @@ contains ! ================================ Procedures ======================
     ! Local parameters
     integer, parameter :: DATABASEINFLATION = 500
     ! Local saved variables
-    integer, save      :: JOINEDQTCOUNTER = CounterStart ! To place in qt%id
-    integer, save      :: JOINEDVTCOUNTER = CounterStart ! To place in vt%id
     integer, parameter :: NINJOINPACKET   = 2 ! Num of ints in join packet
 
     ! Local variables
@@ -1051,15 +1139,11 @@ contains ! ================================ Procedures ======================
         end if
         
         ! Now add its template to our template database
-        qt%id = joinedQTCounter
-        joinedQTCounter = joinedQTCounter + 1
         joinedQuantities ( noQuantitiesAccumulated ) = qt
         
         ! Now make a vector template up for this
         call ConstructVectorTemplate ( 0, joinedQuantities, &
           & (/ noQuantitiesAccumulated /), vt )
-        vt%id = joinedVTCounter
-        joinedVTCounter = joinedVTCounter + 1
         joinedVectorTemplates ( noQuantitiesAccumulated ) = vt
         
         ! Now make a vector up for this
@@ -1174,6 +1258,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.49  2003/06/20 19:38:25  pwagner
+! Allows direct writing of output products
+!
 ! Revision 2.48  2003/06/05 23:53:34  livesey
 ! Made the diagnostic output less verbose.
 !
