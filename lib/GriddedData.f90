@@ -91,6 +91,7 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
     ! The data itself.  This is stored as
     !  [noHeights, noLats, noLons, noLsts, noSzas, noDates]
     real (rgr), pointer, dimension(:,:,:,:,:,:) :: field => NULL()
+    real (rgr) :: missingValue
 
   end type GriddedData_T
 
@@ -300,7 +301,7 @@ contains
 
   ! ----------------------------------------  SetupNewGriddedData  -----
   subroutine SetupNewGriddedData ( Qty, Source, NoHeights, NoLats, &
-    & NoLons, NoLsts, NoSzas, NoDates )
+    & NoLons, NoLsts, NoSzas, NoDates, missingValue )
   ! This first routine sets up a new quantity template according to the user
   ! input.  This may be based on a previously supplied template (with possible
   ! modifications), or created from scratch.
@@ -308,7 +309,9 @@ contains
     type (GriddedData_T) :: QTY ! Result
     type (GriddedData_T), optional, intent(in) :: SOURCE ! Template
     integer, optional, intent(in) :: NOHEIGHTS, NOLATS, NOLONS, NOLSTS, NOSZAS, NODATES
-
+    real(rgr), optional, intent(in) :: missingValue
+    ! Local parameters
+    real(rgr), parameter :: DefaultMissingValue = -999.99
     ! Local variables
     integer :: status           ! Status from allocates etc.
 
@@ -338,6 +341,8 @@ contains
     if (present(noLsts)) qty%noLsts=noLsts
     if (present(noSzas)) qty%noSzas=noSzas
     if (present(noDates)) qty%noDates=noDates
+    qty%missingValue = defaultMissingValue
+    if ( present ( missingValue ) ) qty%missingValue = missingValue
 
     ! First the vertical/horizontal coordinates
     call Allocate_test ( qty%heights, qty%noHeights, "qty%heights", ModuleName )
@@ -383,6 +388,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.23  2003/02/28 02:26:42  livesey
+! Added missingValue field
+!
 ! Revision 2.22  2003/02/27 18:38:13  pwagner
 ! Removed some intent(out); Lahey takes perverse delight in resetting such to undefined
 !

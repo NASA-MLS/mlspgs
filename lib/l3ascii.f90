@@ -7,7 +7,7 @@ module L3ascii ! Collections of Hugh's subroutines to handle TYPE GriddedData_T
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use GriddedData, only: DestroyGriddedData, GriddedData_T, V_is_pressure, &
-    & V_is_altitude, V_is_GPH, V_is_theta
+    & V_is_altitude, V_is_GPH, V_is_theta, RGR
   use LEXER_CORE, only: PRINT_SOURCE
   USE MLSCommon, only: R4, R8, LineLen, NameLen
   USE MLSStrings, only: Capitalize, &
@@ -108,6 +108,7 @@ contains
     integer,parameter :: maxNoDates = 30
     real(kind=r8), allocatable, dimension(:,:,:,:,:,:) :: tmpfield
     logical :: noYearStart, noYearEnd
+    real(rgr), parameter :: DefaultMissingValue = -999.99
 
     !---- Executable statements ----! 
 
@@ -135,6 +136,7 @@ contains
     ! unit for use in error messages.
 
     field%sourceFileName = filename
+    field%missingValue = defaultMissingValue
 
     ! Fix axis arrays: set to default values with length 1 and a sensible 
     ! value. These will be used if the file does not have variation 
@@ -850,6 +852,9 @@ end module L3ascii
 
 !
 ! $Log$
+! Revision 2.23  2003/02/28 02:27:37  livesey
+! Now using missing value stuff
+!
 ! Revision 2.22  2003/02/19 19:13:28  pwagner
 ! new GriddedData_T with reduced precision
 !
