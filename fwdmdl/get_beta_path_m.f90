@@ -5,7 +5,7 @@ module GET_BETA_PATH_M
 
   implicit NONE
   private
-  public :: Create_Beta, Create_Beta_Path
+  public :: Create_Beta, Create_Beta_Path, Create_Beta_Path_PFA
   public :: Get_Beta_Path, Get_Beta_Path_Cloud, Get_Beta_Path_PFA
   public :: Get_Beta_Path_Polarized, Get_Beta_Path_Scalar
 
@@ -688,10 +688,13 @@ contains
   subroutine Create_Beta_Path_PFA ( Frq, Path_Inds, P_Path, T_Path, Vel_Cor, &
     & PFAD, Beta_Path, T_Der_Path, dBdT, dBdw, dBdn, dBdv )
 
+    use Dump_0, only: Dump
     use D_Hunt_m, only: Hunt
     use MLSCommon, only: RP, R8
+    use Output_m, only: Output
     use PFADataBase_m, only: PFAData_t, RK
     use Physics, only: SpeedOfLight ! M/s
+    use Toggles, only: Switches
 
 ! Inputs:
     real(r8), intent(in) :: Frq         ! Channel center frequency in MHz
@@ -716,8 +719,9 @@ contains
 ! -----     Local variables     ----------------------------------------
 
     real(rk), pointer :: A(:,:)  ! Absorption from PFAD
+    real(r8), parameter :: C = speedOfLight / 1000.0_r8 ! km/s
     real(rp) :: dBdNu            ! d log Beta / d nu, for Doppler correction
-    real(rp) :: Del_T            ! Temperature step in tGrid
+    real(rp) :: Del_T            ! Log Temperature step in tGrid
     real(r8) :: Doppler          ! Doppler corrected frequency offset, MHz
     integer :: J, K
     real(rp) :: LogT             ! Log10 ( temperature )
@@ -728,7 +732,11 @@ contains
     real(rp) :: T_Fac            ! Interpolating factor for Temperature
 
     a => PFAD%absorption
-    doppler = frq * ( vel_cor - ( 1.0 - PFAD%velLin * 1000.0 / speedOfLight ) )
+
+    !{ Doppler correction = $\nu_0 \left[ \left( 1 - \frac{v}c \right) -
+    !                                     \left( 1 - \frac{v_l}c \right) \right]$
+
+    doppler = frq * ( vel_cor - PFAD%vel_cor )
 
     p_i1 = 0 ! Initialize for Hunt
     t_i1 = 0
@@ -769,15 +777,60 @@ contains
       ! Now correct beta_path(j) for Doppler
       beta_path(j) = beta_path(j) * ( 1.0 + doppler * dBdNu )
 
-      ! Interpolate to get d log Beta / d log T, then multiply by Beta / T
-      ! to get dBeta / dT
-      if ( temp_der ) &
-        & dBdT(j) = beta_path(j) / t_path(j) * ( &
+      !{ \raggedright 
+      !  $\frac{\partial \beta}{\partial T} \approx
+      !   \left. \frac{\partial \beta}{\partial T} \right|_{\nu=\nu_l} +
+      !   (\nu-\nu_l)
+      !    \left. \frac{\partial^2  \beta}{\partial T \partial \nu}
+      !    \right|_{\nu=\nu_l}$;
+      !  $\frac{\partial \beta}{\partial T} = \frac\beta{T}
+      !   \frac{\partial \log \beta}{\partial \log T}$;
+      !  $\frac{\partial^2 \beta}{\partial T \partial \nu} =
+      !   \beta \frac{\partial^2 \log \beta}{\partial T \partial \nu} =
+      !   \frac\beta{T}
+      !    \frac{\partial^2 \log \beta}{\partial \log T \partial \nu}$;
+      !  $\frac{\partial \beta}{\partial T} \approx
+      !   \beta \left[\frac1T
+      !    \left.
+      !     \frac{\partial \log \beta}{\partial \log T}
+      !    \right|_{\nu=\nu_l} +
+      !    (\nu-\nu_l)
+      !    \left.
+      !     \frac{\partial^2 \log \beta}{\partial T \partial \nu}
+      !    \right|_{\nu=\nu_l}
+      !   \right] $;
+      !  $\frac{\partial \log \beta}{\partial \log T} \approx
+      !   \frac{\nabla_T \log \beta}{\Delta \log T}$;
+      !  $\frac{\partial^2 \log \beta}{\partial T \partial \nu} \approx
+      !   \nabla_T \left(\frac{\partial \log \beta}{\partial \nu} \right)
+      !    \frac1{T \Delta \log T}$;
+      !  $\frac{\partial \beta}{\partial T} \approx
+      !   \frac\beta{T \Delta \log T} \left[
+      !    \nabla_T \log \left. \beta \right|_{\nu=\nu_l} +
+      !     (\nu-\nu_l) \nabla_T \left(
+      !      \left. \frac{\partial \log \beta}{\partial \nu}\right|_{\nu=\nu_l}
+      !      \right)
+      !   \right]$.\\
+      !  $\nabla_T$ means ``Differences in $T$ coordinate, interpolated in
+      !  $P$ coordinate.''
+
+      if ( temp_der ) then
+        ! Interpolate to get d^2 log Beta / d log T d Nu, to Doppler-correct
+        ! d log Beta d log T.
+        ! Interpolate to get d log Beta / d log T, then Doppler correct
+        ! and multiply by Beta / T to get dBeta / dT
+        dBdT(j) = beta_path(j) / (del_t * t_path(j)) * ( &
           & ( a(t_i1+1,p_i1  ) - a(t_i1,  p_i1  ) ) * (1.0-p_fac) + &
-          & ( a(t_i1+1,p_i1+1) - a(t_i1,  p_i1+1) ) * p_fac )
+          & ( a(t_i1+1,p_i1+1) - a(t_i1,  p_i1+1) ) * p_fac + &
+          & doppler * ( ( PFAD%dAbsDnu(t_i1+1,p_i1  ) - &
+          &               PFAD%dAbsDnu(t_i1,  p_i1  ) ) * (1.0-p_fac) + &
+          &             ( PFAD%dAbsDnu(t_i1+1,p_i1+1) - &
+          &               PFAD%dAbsDnu(t_i1,  p_i1+1) ) * p_fac ) )
+      end if
 
       ! Interpolate to get d log Beta / d*, then multiply by Beta to get
-      ! dBeta / d*
+      ! dBeta / d*.  We can't Doppler correct these because we don't have
+      ! the second partials with respect to d* dNu.
       if ( associated(dBdw) ) dBdw(j) = beta_path(j) * ( &
         & PFAD%dAbsDwc(t_i1  ,p_i1  ) * (1.0-t_fac) * (1.0-p_fac) + &
         & PFAD%dAbsDwc(t_i1+1,p_i1  ) * t_fac       * (1.0-p_fac) + &
@@ -793,6 +846,17 @@ contains
       if ( associated(dBdv) ) dBdv(j) = beta_path(j) * dBdNu
 
     end do ! j
+
+    if ( index(switches,'pfab') /= 0 .or. index(switches,'pfaB') /= 0 ) then
+      call output ( frq, before='PFA Betas, FRQ = ' )
+      call output ( doppler, before=', Doppler correction = ', advance='yes' )
+      call dump ( beta_path, name='Beta_Path' )
+      if ( index(switches,'pfaB') /= 0 ) then
+        call dump ( p_path(path_inds), name='Pressures' )
+        call dump ( t_path, name='Temperatures' )
+      end if
+      if ( associated(dBdT) ) call dump ( dBdT, name='dBdT' )
+    end if
 
   end subroutine Create_Beta_Path_PFA
 
@@ -976,6 +1040,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.63  2004/09/01 01:48:13  vsnyder
+! Closing in on PFA
+!
 ! Revision 2.62  2004/08/31 18:32:17  vsnyder
 ! Move initialization for temp_der into loop in create_beta_path
 !
