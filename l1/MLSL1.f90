@@ -10,7 +10,7 @@ PROGRAM MLSL1       ! MLS Level 1 software
   USE Calibration, ONLY : Calibrate
   USE Radiances, ONLY : CalcLimbRads
   USE L1BOutUtils, ONLY : OutputL1Bdata
-  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Info
+  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Info, MLSMessageExit
   USE Close_Files, ONLY: CloseFiles
 
   IMPLICIT NONE
@@ -22,6 +22,7 @@ PROGRAM MLSL1       ! MLS Level 1 software
   !-----------------------------------------------------------------------------
 
   LOGICAL :: more_data, do_calib
+  integer, parameter :: NORMAL_EXIT_STATUS = 2
 
   CALL MLSMessage (MLSMSG_Info, ModuleName, &
        & "Start EOS MLS Level 1 processing.")
@@ -51,11 +52,15 @@ PROGRAM MLSL1       ! MLS Level 1 software
   CALL MLSMessage (MLSMSG_Info, ModuleName, &
        & "EOS MLS Level 1 data processing successfully completed!")
 
+  call MLSMessageExit(NORMAL_EXIT_STATUS)
 !=============================================================================
 END PROGRAM MLSL1
 !=============================================================================
 
 ! $Log$
+! Revision 2.2  2002/04/03 21:42:00  pwagner
+! Sets status on normal exit to 2
+!
 ! Revision 2.1  2001/02/23 18:26:11  perun
 ! Version 0.5 commit
 !
