@@ -30,7 +30,7 @@ program Convert_Spectroscopy
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
-    "$id: l2_load_m.f90,v 1.19 2001/04/03 07:32:45 zvi Exp $"
+    "$Id$"
   character(len=len(idparm)) :: Id = idParm
   character (len=*), parameter :: ModuleName= "$RCSfile$"
 !---------------------------------------------------------------------------
@@ -104,3 +104,6 @@ program Convert_Spectroscopy
 end program Convert_Spectroscopy
 
 ! $Log$
+! Revision 1.1  2001/04/04 02:05:10  vsnyder
+! Initial commit
+!
