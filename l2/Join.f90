@@ -7,7 +7,8 @@ module Join                     ! Join together chunk based data.
 
   ! This module performs the 'join' task in the MLS level 2 software.
 
-  use INIT_TABLES_MODULE, only: F_COMPAREOVERLAPS, F_FILE, F_OUTPUTOVERLAPS, &
+  use INIT_TABLES_MODULE, only: F_BOUNDARYPRESSURE, F_COLUMNABUNDANCE, &
+    & F_COMPAREOVERLAPS, F_FILE, F_OUTPUTOVERLAPS, &
     & F_PRECISION, F_PREFIXSIGNAL, F_SOURCE, F_SDNAME, F_SWATH, FIELD_FIRST, &
     & FIELD_LAST
   use INIT_TABLES_MODULE, only: L_PRESSURE, &
@@ -95,6 +96,10 @@ contains ! =====     Public Procedures     =============================
     logical :: PREFIXSIGNAL             ! Prefix (i.e. make) the sd name the signal
     integer :: PRECVECTORINDEX          ! Index for precision vector
     integer :: PRECQTYINDEX             ! Index for precision qty (in database not vector)
+    integer :: COLMVECTORINDEX          ! Index for column vector
+    integer :: COLMQTYINDEX             ! Index for column qty (in database not vector)
+    integer :: BPRSVECTORINDEX          ! Index for bound. press. vector
+    integer :: BPRSQTYINDEX             ! Index for bound. press. qty (in database not vector)
     logical :: TIMING
 
     real :: T1, T2     ! for timing
@@ -103,6 +108,8 @@ contains ! =====     Public Procedures     =============================
     logical :: GOT_FIELD(field_first:field_last)
     type (VectorValue_T), pointer :: Quantity
     type (VectorValue_T), pointer :: PrecisionQuantity
+    type (VectorValue_T), pointer :: ColAbundQuantity
+    type (VectorValue_T), pointer :: BndPressQuantity
 
     ! Executable code
     timing = .false.
@@ -168,6 +175,14 @@ contains ! =====     Public Procedures     =============================
           source = subtree(2,gson) ! required to be an n_dot vertex
           precVectorIndex = decoration(decoration(subtree(1,source)))
           precQtyIndex = decoration(decoration(decoration(subtree(2,source))))
+        case ( f_columnAbundance )
+          source = subtree(2,gson) ! required to be an n_dot vertex
+          colmVectorIndex = decoration(decoration(subtree(1,source)))
+          colmQtyIndex = decoration(decoration(decoration(subtree(2,source))))
+        case ( f_boundaryPressure )
+          source = subtree(2,gson) ! required to be an n_dot vertex
+          bPrsVectorIndex = decoration(decoration(subtree(1,source)))
+          bPrsQtyIndex = decoration(decoration(decoration(subtree(2,source))))
         case ( f_prefixSignal )
           prefixSignal= value == l_true
         case ( f_compareoverlaps )
@@ -198,6 +213,21 @@ contains ! =====     Public Procedures     =============================
             & 'Quantity and precision quantity do not match')
         else
           precisionQuantity => NULL()
+        endif
+        if ( got_field ( f_columnAbundance ) ) then
+          ColAbundQuantity => &
+            & GetVectorQtyByTemplateIndex(vectors(colmVectorIndex),colmQtyIndex)
+          if ( quantity%template%id /= ColAbundQuantity%template%id ) &
+            & call MLSMessage(MLSMSG_Error,ModuleName, &
+            & 'Quantity and column abundance do not match')
+        else
+          ColAbundQuantity => NULL()
+        endif
+        if ( got_field ( f_boundaryPressure ) ) then
+          BndPressQuantity => &
+            & GetVectorQtyByTemplateIndex(vectors(bPrsVectorIndex),bPrsQtyIndex)
+        else
+          BndPressQuantity => NULL()
         endif
 
         hdfName = ''
@@ -642,6 +672,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.43  2001/07/31 23:25:32  pwagner
+! Able to accept 2 new fields for join of column; does nothing yet
+!
 ! Revision 2.42  2001/06/19 22:52:31  pwagner
 ! l_none  no longer got from init_tables_module
 !
