@@ -91,7 +91,11 @@ else
 endif
 
 ifdef HDF5
-   hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5
+ifeq ($(MLSPLAT),Sun)
+   hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 -R${HDF5}
+else
+   hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 -Xlinker -rpath=${HDF5}
+endif
    hdf5_message=Building mlsl2 with hdf5
 else
    hdf5_linker_line=
@@ -160,6 +164,9 @@ MLSL2.o: $(CONFDIR)/notes/switches $(CONFDIR)/notes/options
 
 
 # $Log$
+# Revision 1.22  2001/06/01 23:58:32  pwagner
+# Ungarbled custom MLSL2 build for Sun version of sed
+#
 # Revision 1.21  2001/05/31 23:29:39  pwagner
 # added cloud_linker_line, message
 #

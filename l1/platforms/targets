@@ -68,7 +68,11 @@ else
 endif
 
 ifdef HDF5
-   hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5
+ifeq ($(MLSPLAT),Sun)
+   hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 -R${HDF5}
+else
+   hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 -Xlinker -rpath=${HDF5}
+endif
    hdf5_message=Building mlsl1 with hdf5
 else
    hdf5_linker_line=
@@ -112,6 +116,9 @@ OutputL1B.o:
 
 # ========================================================================
 # $Log$
+# Revision 1.9  2001/05/25 22:29:10  pwagner
+# Conditionally links with hdf5
+#
 # Revision 1.8  2001/03/12 23:57:46  pwagner
 # New FAFTER, LAFTER flags to postprocess compile & link steps
 #
