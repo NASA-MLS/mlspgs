@@ -4,10 +4,10 @@
 
 module FullCloudForwardModel
 
-! -------------------------------------------------------------------------
-! THIS MODULE CONTAINS THE FULL CLOUD FORWARD MODEL  
-! Jonathan Jiang, Paul Wagner, Jul 16, 2001 
-! -------------------------------------------------------------------------
+  ! -------------------------------------------------------------------------
+  ! THIS MODULE CONTAINS THE FULL CLOUD FORWARD MODEL  
+  ! Jonathan Jiang, Paul Wagner, Jul 16, 2001 
+  ! -------------------------------------------------------------------------
 
   use Allocate_deallocate, only: Allocate_test, Deallocate_test
   use Hdf,      only: DFACC_READ, DFACC_CREATE
@@ -20,37 +20,37 @@ module FullCloudForwardModel
   use ManipulateVectorQuantities, only: FindClosestInstances
   use MLSNumerics, only: InterpolateValues
   use Molecules, only: L_H2O, L_O3
-  use VectorsModule, only: GETVECTORQUANTITYBYTYPE,                          &
-                         & VECTOR_T, VECTORVALUE_T,                          &
-                         & VALIDATEVECTORQUANTITY
-  
-! -----------------------------------------------------------------------
-! THE FOLLOWING IS MODIFICATIONS FOR THE CLOUD FORWARD MODEL PARAMETERS
-! -----------------------------------------------------------------------
+  use VectorsModule, only: GETVECTORQUANTITYBYTYPE, &
+    & VECTOR_T, VECTORVALUE_T, &
+    & VALIDATEVECTORQUANTITY
+
+  ! -----------------------------------------------------------------------
+  ! THE FOLLOWING IS MODIFICATIONS FOR THE CLOUD FORWARD MODEL PARAMETERS
+  ! -----------------------------------------------------------------------
 
   use ForwardModelConfig, only: FORWARDMODELCONFIG_T   
-  use ForwardModelIntermediate, only: FORWARDMODELINTERMEDIATE_T,            &
-                                    & FORWARDMODELSTATUS_T
+  use ForwardModelIntermediate, only: FORWARDMODELINTERMEDIATE_T, &
+    & FORWARDMODELSTATUS_T
 
-! ----------------------------------------------------------
-! DEFINE INTRINSIC CONSTANTS NEEDED BY Init_Tables_Module
-! I'm not sure anything else is needed !
-! ----------------------------------------------------------
+  ! ----------------------------------------------------------
+  ! DEFINE INTRINSIC CONSTANTS NEEDED BY Init_Tables_Module
+  ! I'm not sure anything else is needed !
+  ! ----------------------------------------------------------
 
-  use Intrinsic, only: L_TEMPERATURE,L_PTAN,L_VMR,L_GPH,L_RADIANCE,L_NONE,   &
-                     & L_CLOUDINDUCEDRADIANCE,                               &
-                     & L_EFFECTIVEOPTICALDEPTH,                              &
-                     & L_CLOUDRADSENSITIVITY,                                &
-                     & L_TOTALEXTINCTION,                                    &
-                     & L_CLOUDEXTINCTION,                                    &
-                     & L_MASSMEANDIAMETERICE,                                & 
-                     & L_MASSMEANDIAMETERWATER,                              &
-                     & L_SURFACETYPE,                                        &
-                     & L_SIZEDISTRIBUTION,                                   &
-                     & L_TNGTGEOCALT,                                        &
-                     & L_EARTHRADIUS,                                      &
-                     & L_CLOUDICE,                                           &
-                     & L_CLOUDWATER 
+  use Intrinsic, only: L_TEMPERATURE,L_PTAN,L_VMR,L_GPH,L_RADIANCE,L_NONE, &
+    & L_CLOUDINDUCEDRADIANCE, &
+    & L_EFFECTIVEOPTICALDEPTH, &
+    & L_CLOUDRADSENSITIVITY, &
+    & L_TOTALEXTINCTION, &
+    & L_CLOUDEXTINCTION, &
+    & L_MASSMEANDIAMETERICE, & 
+    & L_MASSMEANDIAMETERWATER, &
+    & L_SURFACETYPE, &
+    & L_SIZEDISTRIBUTION, &
+    & L_TNGTGEOCALT, &
+    & L_EARTHRADIUS, &
+    & L_CLOUDICE, &
+    & L_CLOUDWATER 
 
   implicit none
   private
@@ -58,10 +58,10 @@ module FullCloudForwardModel
   public :: FullCloudForwardModelWrapper
 
   !---------------------------- RCS Ident Info -------------------------------
-  character (len=*), private, parameter :: IdParm =                          &
+  character (len=*), private, parameter :: IdParm = &
     "$Id$"
   character (len=len(idParm)), private :: Id = idParm
-  character (len=*), private, parameter :: ModuleName=                       &
+  character (len=*), private, parameter :: ModuleName= &
     "$RCSfile$"
   !---------------------------------------------------------------------------
 
@@ -69,13 +69,13 @@ module FullCloudForwardModel
 
   character, parameter :: INVALIDQUANTITY = "Invalid vector quantity for "
 
-         ! ---------------------------------------------------------------------
+  ! ---------------------------------------------------------------------
 contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
-         ! CLOUD FORWARD MODEL
-         ! ---------------------------------------------------------------------
-  subroutine FullCloudForwardModelWrapper ( ForwardModelConfig, FwdModelIn,  &
-                                            FwdModelExtra, FwdModelOut, Ifm, &
-                                            fmStat, Jacobian                 )  
+  ! CLOUD FORWARD MODEL
+  ! ---------------------------------------------------------------------
+  subroutine FullCloudForwardModelWrapper ( ForwardModelConfig, FwdModelIn, &
+    FwdModelExtra, FwdModelOut, Ifm, &
+    fmStat, Jacobian                 )  
     ! Dummy arguments
     type(forwardModelConfig_T), intent(inout) :: FORWARDMODELCONFIG
     type(vector_T), intent(in) ::  FWDMODELIN, FwdModelExtra
@@ -120,7 +120,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     integer :: NOsurf                   ! Number of pressure levels
     character :: reply
     integer :: status                   ! allocation status 
-    
+
     integer :: quantity_type, L_quantity_type       ! added on Jul 13
 
     integer, dimension(:), pointer :: closestInstances 
@@ -138,143 +138,87 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
     logical :: Got(2) = .false.  
 
-    nullify( CLOUDICE, CLOUDWATER, CLOUDEXTINCTION, CLOUDINDUCEDRADIANCE,    &
-             CLOUDRADSENSITIVITY, EFFECTIVEOPTICALDEPTH, GPH,                &
-             MASSMEANDIAMETERICE, MASSMEANDIAMETERWATER, PTAN,               &
-             RADIANCE, SIZEDISTRIBUTION, EARTHRADIUS, SURFACETYPE,         &
-             TEMP, TOTALEXTINCTION, VMR, VMRARRAY,closestInstances,          &
-             A_CLEARSKYRADIANCE, A_CLOUDINDUCEDRADIANCE,                     &
-             A_CLOUDEXTINCTION, A_CLOUDRADSENSITIVITY,                       &
-             A_EFFECTIVEOPTICALDEPTH, A_MASSMEANDIAMETER,                    &
-             A_TOTALEXTINCTION, FREQUENCIES )
+    nullify( CLOUDICE, CLOUDWATER, CLOUDEXTINCTION, CLOUDINDUCEDRADIANCE, &
+      CLOUDRADSENSITIVITY, EFFECTIVEOPTICALDEPTH, GPH, &
+      MASSMEANDIAMETERICE, MASSMEANDIAMETERWATER, PTAN, &
+      RADIANCE, SIZEDISTRIBUTION, EARTHRADIUS, SURFACETYPE, &
+      TEMP, TOTALEXTINCTION, VMR, VMRARRAY,closestInstances, &
+      A_CLEARSKYRADIANCE, A_CLOUDINDUCEDRADIANCE, &
+      A_CLOUDEXTINCTION, A_CLOUDRADSENSITIVITY, &
+      A_EFFECTIVEOPTICALDEPTH, A_MASSMEANDIAMETER, &
+      A_TOTALEXTINCTION, FREQUENCIES )
 
     ! Check the model configuration 
-    if ( size ( forwardModelConfig%signals ) /= 1 )                          &
-      & call MLSMessage ( MLSMSG_Error, ModuleName,                          &
+    if ( size ( forwardModelConfig%signals ) /= 1 ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Cannot call the full cloud forward model with multiple signals' )
     signal = forwardModelConfig%signals(1)
     maf = fmStat%maf
 
     ! For the moment make it only single sideband
-    if ( signal%sideband == 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,  &
+    if ( signal%sideband == 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Only single sidebands allowed in FullForwardCloudModel for now' )
-    call Allocate_test ( frequencies, count ( signal%channels ),             &
+    call Allocate_test ( frequencies, count ( signal%channels ), &
       & 'frequencies', ModuleName )
-    frequencies = signal%lo + signal%sideband * ( signal%centerFrequency +   &
+    frequencies = signal%lo + signal%sideband * ( signal%centerFrequency + &
       & pack ( signal%frequencies, signal%channels ) )
     noFreqs = size (frequencies)
 
     ! Get the quantities we need from the vectors
+    radiance => GetVectorQuantityByType ( fwdModelOut, &
+      & quantityType=l_radiance, &
+      & signal=signal%index, sideband=signal%sideband )
+    cloudInducedRadiance => GetVectorQuantityByType ( fwdModelOut, &
+      & quantityType=l_radiance, &
+      & signal=signal%index, sideband=signal%sideband )
+    cloudExtinction => GetVectorQuantityByType ( fwdModelOut, &
+      & quantityType=l_cloudExtinction )
+    cloudRADSensitivity => GetVectorQuantityByType ( fwdModelOut, &
+      & quantityType=l_radiance, &
+      & signal=signal%index, sideband=signal%sideband )
+    totalExtinction => GetVectorQuantityByType ( fwdModelOut, &
+      & quantityType=l_totalExtinction )
+    effectiveOpticalDepth => GetVectorQuantityByType ( fwdModelOut, &
+      & quantityType=l_radiance, &
+      & signal=signal%index, sideband=signal%sideband )
+    massMeanDiameterIce => GetVectorQuantityByType ( fwdModelOut, &
+      & quantityType=l_massMeanDiameterIce )
+    massMeanDiameterWater => GetVectorQuantityByType ( fwdModelOut, &
+      & quantityType=l_massMeanDiameterWater )
 
-    ! Outputs
-    do quantity_type = 1, fwdModelOut%template%noQuantities
-      l_quantity_type = fwdModelOut%quantities(quantity_type)%template%quantityType
-!      print*,'quantity_type: ', 'outputs', quantity_type
-!      print*,'l_quantity_type: ', 'outputs', l_quantity_type
-      select case (l_quantity_type)
-        case (l_radiance) 
-          radiance => GetVectorQuantityByType ( fwdModelOut,                 &
-          & quantityType=l_radiance,                                         &
-          & signal=signal%index, sideband=signal%sideband )
-        case (l_cloudInducedRadiance)
-          cloudInducedRadiance => GetVectorQuantityByType ( fwdModelOut,     &
-          & quantityType=l_radiance,                             &
-          & signal=signal%index, sideband=signal%sideband )
-        case (l_cloudExtinction)
-          cloudExtinction => GetVectorQuantityByType ( fwdModelOut,          &
-          & quantityType=l_cloudExtinction )
-        case (l_cloudRADSensitivity)
-          cloudRADSensitivity => GetVectorQuantityByType ( fwdModelOut,      &
-          & quantityType=l_radiance,                              &
-          & signal=signal%index, sideband=signal%sideband )
-        case (l_totalExtinction)
-          totalExtinction => GetVectorQuantityByType ( fwdModelOut,          &
-          & quantityType=l_totalExtinction )
-        case (l_effectiveOpticalDepth)
-          effectiveOpticalDepth => GetVectorQuantityByType ( fwdModelOut,    &
-          & quantityType=l_radiance,                            &
-          & signal=signal%index, sideband=signal%sideband )
-        case (l_massMeanDiameterIce)
-          massMeanDiameterIce => GetVectorQuantityByType ( fwdModelOut,      &
-          & quantityType=l_massMeanDiameterIce )
-        case (l_massMeanDiameterWater)
-          massMeanDiameterWater => GetVectorQuantityByType ( fwdModelOut,    &
-          & quantityType=l_massMeanDiameterWater )
-        case default
-          print*, 'l_radiance: ', l_radiance
-          print*, 'l_cloudInducedRadiance: ', l_cloudInducedRadiance
-          print*, 'l_cloudextinction: ', l_cloudextinction
-          print*, 'l_massmeandiameterice: ', l_massmeandiameterice
-          print*, 'l_cloudRADSensitivity: ', l_cloudRADSensitivity
-          print*, 'l_totalExtinction: ', l_totalExtinction
-          print*, 'l_effectiveOpticalDepth: ', l_effectiveOpticalDepth
-          print*, 'l_massMeanDiameterWater: ', l_massMeanDiameterWater
-          print*, 'l_quantity_type: ', l_quantity_type
-
-          call MLSMessage ( MLSMSG_Error, ModuleName,                        &
-                            'Did not understand output l_quantity_types')
-      end select
-    enddo
-
-!-------------------------------------------------------------------
+    !-------------------------------------------------------------------
 
     ! Inputs
-    NQ1 = fwdModelIn%template%noQuantities
-    NQ2 = fwdModelExtra%template%noQuantities
-    do quantity_type = 1, NQ1+NQ2
-      if (quantity_type .le. NQ1) &
-      l_quantity_type = fwdModelIn%quantities(quantity_type)%template%quantityType
-      if (quantity_type .gt. NQ1) &
-      l_quantity_type = fwdModelExtra%quantities(quantity_type-NQ1)%template%quantityType
-!      print*,'quantity_type: ', 'inputs', quantity_type
-!      print*,'l_quantity_type: ', 'inputs', l_quantity_type
-
-      select case (l_quantity_type)
-        case (l_ptan)
-          ptan => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra,      &
-          & quantityType=l_ptan, instrumentModule = radiance%template%instrumentModule)
-        case (l_temperature)
-          temp => GetVectorQuantityByType ( fwdModelIn,  fwdModelExtra,      &
-          & quantityType=l_temperature )
-        case (l_gph)
-          gph => GetVectorQuantityByType ( fwdModelIn,  fwdModelExtra,       &
-          & quantityType=l_gph )
-        case (l_cloudIce)
-          cloudIce => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra,   &
-          & quantityType=l_cloudIce )
-        case (l_cloudWater)
-          cloudWater => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-          & quantityType=l_cloudWater )
-        case (l_surfaceType)
-          surfaceType => GetVectorQuantityByType ( fwdModelIn,fwdModelExtra, &
-          & quantityType=l_surfaceType )
-        case (l_sizeDistribution)
-          sizeDistribution=>GetVectorQuantityByType(fwdModelIn,fwdModelExtra, &
-          & quantityType=l_sizeDistribution )
-        case (l_earthradius)
-          earthradius=>GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-          & quantityType=l_earthradius ) 
-        case (l_vmr)
-!          need to do nothing, will be treated below.
-        case default
-          call MLSMessage ( MLSMSG_Error, ModuleName,                        &
-                            'Did not understand Input l_quantity_types')
-      end select
-    enddo
+    ptan => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_ptan, instrumentModule = radiance%template%instrumentModule)
+    temp => GetVectorQuantityByType ( fwdModelIn,  fwdModelExtra, &
+      & quantityType=l_temperature )
+    gph => GetVectorQuantityByType ( fwdModelIn,  fwdModelExtra, &
+      & quantityType=l_gph )
+    cloudIce => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_cloudIce )
+    cloudWater => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_cloudWater )
+    surfaceType => GetVectorQuantityByType ( fwdModelIn,fwdModelExtra, &
+      & quantityType=l_surfaceType )
+    sizeDistribution=>GetVectorQuantityByType(fwdModelIn,fwdModelExtra, &
+      & quantityType=l_sizeDistribution )
+    earthradius=>GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_earthradius ) 
 
     ! Make sure the quantities we have are OK
     if ( .not. ValidateVectorQuantity(temp, stacked=.true., coherent=.true., &
-      & frequencyCoordinate=(/l_none/)) ) call MLSMessage ( MLSMSG_Error,    &
+      & frequencyCoordinate=(/l_none/)) ) call MLSMessage ( MLSMSG_Error, &
       & ModuleName, InvalidQuantity//'temperature' )
-    if ( .not. ValidateVectorQuantity(gph, stacked=.true., coherent=.true.,  &
-      & frequencyCoordinate=(/l_none/)) ) call MLSMessage ( MLSMSG_Error,    &
+    if ( .not. ValidateVectorQuantity(gph, stacked=.true., coherent=.true., &
+      & frequencyCoordinate=(/l_none/)) ) call MLSMessage ( MLSMSG_Error, &
       & ModuleName, InvalidQuantity//'temperature' )
-    if ( .not. ValidateVectorQuantity(ptan, minorFrame=.true.,               &
-      & frequencyCoordinate=(/l_none/)) ) call MLSMessage ( MLSMSG_Error,    &
+    if ( .not. ValidateVectorQuantity(ptan, minorFrame=.true., &
+      & frequencyCoordinate=(/l_none/)) ) call MLSMessage ( MLSMSG_Error, &
       & ModuleName, InvalidQuantity//'ptan' )
 
     ! Set up some temporary quantities
-    call Allocate_test ( closestInstances, radiance%template%noInstances,    &
+    call Allocate_test ( closestInstances, radiance%template%noInstances, &
       & 'closestInstances', ModuleName )      
 
     ! Assemble the vmr array
@@ -282,28 +226,28 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     if ( size(forwardModelConfig%molecules) .lt. 2 ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, 'Not enough molecules' )
     endif
-    call allocate_test ( vmrArray,                                           &
-      & size(forwardModelConfig%molecules), temp%template%noSurfs,           &
+    call allocate_test ( vmrArray, &
+      & size(forwardModelConfig%molecules), temp%template%noSurfs, &
       & 'vmrArray', ModuleName )
 
     ivmr=0
     do i = 1, size(forwardModelConfig%molecules)
       select case (forwardModelConfig%molecules(i))
-        case(L_H2O)
-          ivmr=1
-        case(L_O3)
-          ivmr=2
-        case default
-          ivmr=0
+      case(L_H2O)
+        ivmr=1
+      case(L_O3)
+        ivmr=2
+      case default
+        ivmr=0
       end select
       if(ivmr==0) then
         cycle
       endif
       print*, 'i: ', i, 'about to get vmr for molecule of i'
-      vmr => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra,            &
+      vmr => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
         & quantityType=l_vmr, molecule=forwardModelConfig%molecules(i) )
       if (.not.ValidateVectorQuantity( vmr, stacked=.true., coherent=.true., &
-        & frequencyCoordinate=(/l_none/)) ) call MLSMessage ( MLSMSG_Error,  &
+        & frequencyCoordinate=(/l_none/)) ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, InvalidQuantity//'vmr' )
       print*, 'i: ', i, 'got vmr for molecule of i'
 
@@ -320,8 +264,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     end do
 
     if ( .not. got(1) .or. .not. got(2) ) then
-      call MLSMessage( MLSMSG_Error, ModuleName,                             &
-                      'Missing the required molecules' )
+      call MLSMessage( MLSMSG_Error, ModuleName, &
+        'Missing the required molecules' )
     endif
 
     ! Work out the closest instances for the other quantities
@@ -330,36 +274,36 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     noLayers = temp%template%noSurfs - 1
 
     ! Make temporary arrays for the cloud forward model
-    call Allocate_test ( a_clearSkyRadiance,                                 &
-      & radiance%template%noSurfs, noFreqs,                                  &
+    call Allocate_test ( a_clearSkyRadiance, &
+      & radiance%template%noSurfs, noFreqs, &
       & 'a_clearSkyRadiance', ModuleName )
-    call Allocate_test ( a_cloudInducedRadiance,                             &
-      & radiance%template%noSurfs, noFreqs,                                  &
+    call Allocate_test ( a_cloudInducedRadiance, &
+      & radiance%template%noSurfs, noFreqs, &
       & 'a_cloudInducedRadiance', ModuleName )
-    call Allocate_test ( a_effectiveOpticalDepth,                            &
-      & radiance%template%noSurfs, noFreqs,                                  &
+    call Allocate_test ( a_effectiveOpticalDepth, &
+      & radiance%template%noSurfs, noFreqs, &
       & 'a_effectiveOpticalDepth', ModuleName )
-    call Allocate_test ( a_cloudRADSensitivity,                              &
-      & radiance%template%noSurfs, noFreqs,                                  &
+    call Allocate_test ( a_cloudRADSensitivity, &
+      & radiance%template%noSurfs, noFreqs, &
       & 'a_cloudRADSensitivity', ModuleName )
-    call Allocate_test ( a_totalExtinction,                                  &
-      & temp%template%noSurfs, noFreqs,                                      &
+    call Allocate_test ( a_totalExtinction, &
+      & temp%template%noSurfs, noFreqs, &
       & 'a_totalExtinction', ModuleName )
-    call Allocate_test ( a_cloudExtinction,                                  &
-      & temp%template%noSurfs, noFreqs,                                      &
+    call Allocate_test ( a_cloudExtinction, &
+      & temp%template%noSurfs, noFreqs, &
       & 'a_cloudExtinction', ModuleName )
-    call Allocate_test ( a_massMeanDiameter,                                 &
-      & 2, temp%template%noSurfs,                                            &
+    call Allocate_test ( a_massMeanDiameter, &
+      & 2, temp%template%noSurfs, &
       & 'a_massMeanDiameter', ModuleName )
-    
+
     ! Now call the full CloudForwardModel code
 
     NOsurf=temp%template%noSurfs
     if (Nosurf /= GPH%template%nosurfs) then
-      call MLSMessage ( MLSMSG_Error, ModuleName,                            &
-      & 'number of levels in gph does not match no of levels in temp' )
-     else if (radiance%template%nosurfs /= ptan%template%nosurfs) then
-        call MLSMessage ( MLSMSG_Error, ModuleName,                          &
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'number of levels in gph does not match no of levels in temp' )
+    else if (radiance%template%nosurfs /= ptan%template%nosurfs) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'number of levels in radiance does not match no of levels in ptan' )
     endif
 
@@ -368,126 +312,126 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     WC (1,:) = CloudIce%values(:,instance)
     WC (2,:) = CloudWater%values(:,instance)
 
-!    print*, noFreqs, noSurf, radiance%template%noSurfs, 
-!    print*, size( ForwardModelConfig%molecules)
-!    print*, 10.0**(-temp%template%surfs)
-!    print*,int(sizeDistribution%values(1,instance))
-!     print*,ForwardModelConfig%no_model_surfs
-!    print*, real(10.0**(-ptan%values(:,maf)))
-!    print*,real(gph%values(:, instance))
-!    stop
+    !    print*, noFreqs, noSurf, radiance%template%noSurfs, 
+    !    print*, size( ForwardModelConfig%molecules)
+    !    print*, 10.0**(-temp%template%surfs)
+    !    print*,int(sizeDistribution%values(1,instance))
+    !     print*,ForwardModelConfig%no_model_surfs
+    !    print*, real(10.0**(-ptan%values(:,maf)))
+    !    print*,real(gph%values(:, instance))
+    !    stop
 
-    call CloudForwardModel (                                                 &
-      & noFreqs,                                                             &
-      & noSurf,                                                              & 
-      & radiance%template%noSurfs,                                           &
-      & size(ForwardModelConfig%molecules),                                  &
-      & ForwardModelConfig%no_cloud_species,                                 &
-      & ForwardModelConfig%no_model_surfs,                                   &
-      & frequencies/1e3_r8,                                                  &
-      & 10.0**(-temp%template%surfs),                                        &
-      & gph%values(:, instance),                                             &
-      & temp%values(:,instance),                                             &
-      & vmrArray,                                                            &
-      & WC,                                                                  &
-      & sizeDistribution%values(:,instance),                                 &
-      & 10.0**(-ptan%values(:,maf)),                                         &
-      & earthradius%values(1,1),                                             &
-      & surfaceType%values(1, instance),                                     &
-      & forwardModelConfig%cloud_der,                                        &
-      & forwardModelConfig%cloud_width,                                      &
-      & a_clearSkyRadiance,                                                  &
-      & a_cloudInducedRadiance,                                              &
-      & a_totalExtinction,                                                   &
-      & a_cloudExtinction,                                                   &
-      & a_massMeanDiameter,                                                  &
-      & a_effectiveOpticalDepth,                                             &
-      & a_cloudRADSensitivity,                                               &
-      & forwardModelConfig%NUM_SCATTERING_ANGLES,                            &  
-      & forwardModelConfig%NUM_AZIMUTH_ANGLES,                               &
-      & forwardModelConfig%NUM_AB_TERMS,                                     &
+    call CloudForwardModel ( &
+      & noFreqs, &
+      & noSurf, & 
+      & radiance%template%noSurfs, &
+      & size(ForwardModelConfig%molecules), &
+      & ForwardModelConfig%no_cloud_species, &
+      & ForwardModelConfig%no_model_surfs, &
+      & frequencies/1e3_r8, &
+      & 10.0**(-temp%template%surfs), &
+      & gph%values(:, instance), &
+      & temp%values(:,instance), &
+      & vmrArray, &
+      & WC, &
+      & sizeDistribution%values(:,instance), &
+      & 10.0**(-ptan%values(:,maf)), &
+      & earthradius%values(1,1), &
+      & surfaceType%values(1, instance), &
+      & forwardModelConfig%cloud_der, &
+      & forwardModelConfig%cloud_width, &
+      & a_clearSkyRadiance, &
+      & a_cloudInducedRadiance, &
+      & a_totalExtinction, &
+      & a_cloudExtinction, &
+      & a_massMeanDiameter, &
+      & a_effectiveOpticalDepth, &
+      & a_cloudRADSensitivity, &
+      & forwardModelConfig%NUM_SCATTERING_ANGLES, &  
+      & forwardModelConfig%NUM_AZIMUTH_ANGLES, &
+      & forwardModelConfig%NUM_AB_TERMS, &
       & forwardModelConfig%NUM_SIZE_BINS )
 
-!    stop
+    !    stop
     print*, 'done with call to cloudfwm'
-!    read *, reply
-!    if (reply(1:1) /= 'o') stop
+    !    read *, reply
+    !    if (reply(1:1) /= 'o') stop
     print*, 'about to deallocate'
 
     deallocate (WC, stat=status)
-     
+
     ! Now store results in relevant vectors
     ! Vectors are stored (noChannels*noSurfaces, noInstances), so transpose
     ! and reshape temporary variables to be in the right form.
     ! First the minor frame stuff
 
     print*, 'about to assign radiance value'
-!!    print*, 'radiance instance length: ', radiance%template%instanceLen
-    radiance%values ( :, maf) =                                              &
-      & reshape ( transpose(a_clearSkyRadiance),                             &
+    !!    print*, 'radiance instance length: ', radiance%template%instanceLen
+    radiance%values ( :, maf) = &
+      & reshape ( transpose(a_clearSkyRadiance), &
       & (/radiance%template%instanceLen/) )
-!    stop
+    !    stop
     print*, 'about to assign radiance values'
-!!    print*, 'cloudinducedradiance instance length: ', cloudInducedRadiance%template%instanceLen
-!    stop
-    cloudInducedRadiance%values ( :, maf ) =                                 &
-      & reshape ( transpose(a_cloudInducedRadiance),                         &
+    !!    print*, 'cloudinducedradiance instance length: ', cloudInducedRadiance%template%instanceLen
+    !    stop
+    cloudInducedRadiance%values ( :, maf ) = &
+      & reshape ( transpose(a_cloudInducedRadiance), &
       & (/radiance%template%instanceLen/) )
     stop
 
-    effectiveOpticalDepth%values ( :, maf ) =                                &
-      & reshape ( transpose(a_effectiveOpticalDepth),                        &
+    effectiveOpticalDepth%values ( :, maf ) = &
+      & reshape ( transpose(a_effectiveOpticalDepth), &
       & (/radiance%template%instanceLen/) )
-    cloudRADSensitivity%values ( :, maf ) =                                  &
-      & reshape ( transpose(a_cloudRADSensitivity),                          &
+    cloudRADSensitivity%values ( :, maf ) = &
+      & reshape ( transpose(a_cloudRADSensitivity), &
       & (/radiance%template%instanceLen/) )
 
-!     print*, 'about to zero cloud extinction'   
-!     stop
+    !     print*, 'about to zero cloud extinction'   
+    !     stop
 
- ! For layer(noTempSurfs-1) stuff make sure all are zero to start, then do rest
+    ! For layer(noTempSurfs-1) stuff make sure all are zero to start, then do rest
     cloudExtinction%values(:,instance) =       0.0_r8
     massMeanDiameterIce%values(:,instance) =   0.0_r8
     massMeanDiameterWater%values(:,instance) = 0.0_r8
     totalExtinction%values(:,instance) =       0.0_r8
 
-!     print*, 'about to assign cloud extinction values'   
-!     stop
+    !     print*, 'about to assign cloud extinction values'   
+    !     stop
 
-    cloudExtinction%values ( 1:noLayers, instance ) =                        &
+    cloudExtinction%values ( 1:noLayers, instance ) = &
       & reshape ( transpose(a_cloudExtinction), (/noLayers*noFreqs/) )
-    massMeanDiameterIce%values (1:noLayers,instance)=                        &
+    massMeanDiameterIce%values (1:noLayers,instance)= &
       &                                  a_massMeanDiameter(1,:)
-    massMeanDiameterWater%values(1:noLayers,instance)=                       &
+    massMeanDiameterWater%values(1:noLayers,instance)= &
       &                                  a_massMeanDiameter(2,:)
-    totalExtinction%values ( 1:noLayers, instance ) =                        &
-      & reshape ( transpose(a_totalExtinction),                              &
+    totalExtinction%values ( 1:noLayers, instance ) = &
+      & reshape ( transpose(a_totalExtinction), &
       &         (/noLayers*noFreqs/) )
 
-! stop
+    ! stop
 
     ! Remove temporary quantities
-    call Deallocate_test ( a_massMeanDiameter,                               &
-                          'a_massMeanDiameterModuleName', ModuleName )
-    call Deallocate_test ( a_cloudExtinction,                                &
-                          'a_cloudExtinction',            ModuleName )
-    call Deallocate_test ( a_totalExtinction,                                &
-                          'a_totalExtinction',            ModuleName )
-    call Deallocate_test ( a_cloudRADSensitivity,                            &
-                          'a_cloudRADSensitivity',        ModuleName )
-    call Deallocate_test ( a_effectiveOpticalDepth,                          &
-                          'a_effectiveOpticalDepth',      ModuleName )
-    call Deallocate_test ( a_cloudInducedRadiance,                           &
-                          'a_cloudInducedRadiance',       ModuleName )
-    call Deallocate_test ( a_clearSkyRadiance,                               &
-                          'a_clearSkyRadiance',           ModuleName )
-    call Deallocate_test ( vmrArray,                                         &
-                          'vmrArray',                     ModuleName )
-    call Deallocate_test ( closestInstances,                                 &
-                          'closestInstances',             ModuleName )
-   
+    call Deallocate_test ( a_massMeanDiameter, &
+      'a_massMeanDiameterModuleName', ModuleName )
+    call Deallocate_test ( a_cloudExtinction, &
+      'a_cloudExtinction',            ModuleName )
+    call Deallocate_test ( a_totalExtinction, &
+      'a_totalExtinction',            ModuleName )
+    call Deallocate_test ( a_cloudRADSensitivity, &
+      'a_cloudRADSensitivity',        ModuleName )
+    call Deallocate_test ( a_effectiveOpticalDepth, &
+      'a_effectiveOpticalDepth',      ModuleName )
+    call Deallocate_test ( a_cloudInducedRadiance, &
+      'a_cloudInducedRadiance',       ModuleName )
+    call Deallocate_test ( a_clearSkyRadiance, &
+      'a_clearSkyRadiance',           ModuleName )
+    call Deallocate_test ( vmrArray, &
+      'vmrArray',                     ModuleName )
+    call Deallocate_test ( closestInstances, &
+      'closestInstances',             ModuleName )
+
     print*, 'done with full cloud forward wapper'
-!    stop
+    !    stop
   end subroutine FullCloudForwardModelWrapper
 
 end module FullCloudForwardModel
