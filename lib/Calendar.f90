@@ -1,5 +1,5 @@
-! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
 
 module Calendar
 
@@ -10,7 +10,7 @@ module Calendar
   private
 
   public :: Caldat, Caldat_MJD_YMD, Caldat_MJD_YMDHMS, Caldat_T, Caldat_T_MJD
-  public :: Caldat_YMD, Caldat_YMDHMS, Duration
+  public :: Caldat_YMD, Caldat_YMDHMS, Duration, Duration_Formatted
   public :: Duration_Plus_Time, Duration_Plus_Time_I
   public :: Julday, MJD, T_Julday, T_MJD
   public :: Time_Minus_Duration, Time_Minus_Duration_I
@@ -19,6 +19,10 @@ module Calendar
   public :: Operator(+), Operator(-)
 
   integer, public, parameter :: TK = selected_real_kind(12) ! Kind for Julday
+
+  real(tk), public, parameter :: Day = 86400.9_tk ! seconds
+  real(tk), public, parameter :: SiderealYear = 365.2563655_tk ! days
+  real(tk), public, parameter :: TropicalYear = 365.2421898_tk ! days
 
   type Time_T
     integer :: Year, Month, Day, Hours=0, Minutes=0
@@ -299,6 +303,22 @@ contains
     duration = t_julday(time2) - t_julday(time1)
   end function DURATION
 
+  ! -----------------------------------------  DURATION_FORMATTED  -----
+  elemental &
+  type(time_t) function DURATION_FORMATTED ( DURATION ) result ( TIME )
+  ! Result is time in year, day, hour, minute, second (no month)
+    real(tk), intent(in) :: DURATION
+    real(tk) :: Temp
+    time%day = duration / day
+    temp = duration - time%day * day ! seconds after days accounted
+    time%year = time%day / tropicalYear
+    time%day = time%day - time%year * tropicalYear
+    time%hours = temp / 3600.0_tk
+    temp = temp - time%hours * 3600.0_tk
+    time%minutes = temp / 60.0_tk
+    time%seconds = temp - time%minutes * 60.0_tk
+  end function DURATION_FORMATTED
+
   ! -----------------------------------------  DURATION_PLUS_TIME  -----
   elemental &
   type(time_t) function DURATION_PLUS_TIME ( DURATION, TIME )
@@ -515,6 +535,9 @@ contains
 end module Calendar
 
 ! $Log$
+! Revision 2.3  2005/04/04 16:42:56  pwagner
+! Added DURATION_FORMATTED function
+!
 ! Revision 2.2  2004/10/19 17:30:25  pwagner
 ! removed some Octal characters NAG hated
 !
