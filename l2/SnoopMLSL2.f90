@@ -188,15 +188,18 @@ contains ! ========  Public Procedures =========================================
 
     ! Arguments
     type (SnooperInfo_T), intent(in) :: SNOOPER
-    type (Vector_T), dimension(:), optional :: VECTORDATABASE
+    type (Vector_T), dimension(:), optional, pointer :: VECTORDATABASE
 
     ! Local variables
     integer :: INFO                     ! Flag
     integer :: BUFFERID                 ! For PVM
     integer :: VECTOR, QUANTITY         ! Loop counters
     character (len=132) :: LINE         ! A line of text
-
-    if (present(vectorDatabase)) then
+    logical :: ANYVECTORS               ! Flag
+    
+    anyVectors = present(vectorDatabase)
+    if (anyVectors) anyVectors = associated(vectorDatabase)
+    if (anyVectors) then
       call PVMFInitSend(PvmDataDefault, bufferID)
 
       call PVMIDLPack("Vectors", info)
@@ -247,7 +250,7 @@ contains ! ========  Public Procedures =========================================
     character (len=*), intent(in) :: LOCATION
     character (len=*), intent(in) :: COMMENT
     type (SnooperInfo_T), intent(INOUT) :: SNOOPER
-    type (Vector_T), dimension(:), optional :: VECTORDATABASE
+    type (Vector_T), dimension(:), pointer, optional :: VECTORDATABASE
     !  TYPE (Matrix_T), DIMENSION(:), POINTER, OPTIONAL :: MATRIXDATABASE
     logical, intent(INOUT), optional :: DONESNOOPINGFORNOW
 
@@ -398,11 +401,12 @@ contains ! ========  Public Procedures =========================================
         end do
 
         ! Deal with controling snooper if any
-        if (controlingSnooper/=0) &
-          call DealWithOneSnooper(myTid, firstTime, .false., &
-          & TRIM(location), TRIM(comment), &
-          & snoopers(controlingSnooper), vectorDatabase, &
-          & doneSnoopingForNow=doneSnoopingForNow)
+        if (controlingSnooper/=0) then
+           call DealWithOneSnooper(myTid, firstTime, .false., &
+                & TRIM(location), TRIM(comment), &
+                & snoopers(controlingSnooper), vectorDatabase, &
+                & doneSnoopingForNow=doneSnoopingForNow)
+        end if
 
         ! Deal with any snoopers about to finish
         if (any(snoopers%mode==SnooperFinishing)) then 
@@ -413,7 +417,7 @@ contains ! ========  Public Procedures =========================================
           allocate(snoopers(count(snoopers%mode/=SnooperFinishing)),STAT=status)
           if (status/=0) call MLSMessage(MLSMSG_Error,ModuleName,&
             MLSMSG_Allocate//"snoopers")
-          snoopers=pack(oldSnoopers,snoopers%mode/=SnooperFinishing)
+          snoopers=pack(oldSnoopers,oldSnoopers%mode/=SnooperFinishing)
           deallocate(oldSnoopers,STAT=status)
           if (status/=0) call MLSMessage(MLSMSG_Error,ModuleName,&
             MLSMSG_DeAllocate//"oldSnoopers")
