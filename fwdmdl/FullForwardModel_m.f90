@@ -874,11 +874,13 @@ contains ! ================================ FullForwardModel routine ======
       & MLSMSG_Allocate//"gl_slabs" )
 
     do i = 1, noSpecies
-      nl = size(My_Catalog(i)%Lines)
-      gl_slabs(1:no_ele,i)%no_lines = nl
-      do j = 1, no_ele
-        call AllocateOneSlabs ( gl_slabs(j,i), nl )
-      end do
+      if ( associated ( my_catalog(i)%lines ) ) then
+        nl = size(My_Catalog(i)%Lines)
+        gl_slabs(1:no_ele,i)%no_lines = nl
+        do j = 1, no_ele
+          call AllocateOneSlabs ( gl_slabs(j,i), nl )
+        end do
+      end if
     end do
 
     if(FwdModelConf%temp_der) then
@@ -888,13 +890,15 @@ contains ! ================================ FullForwardModel routine ======
         & MLSMSG_Allocate//"gl_slabs_[pm]" )
 
       do i = 1, noSpecies
-        nl = size(My_Catalog(i)%Lines)
-        gl_slabs_m(1:no_ele,i)%no_lines = nl
-        gl_slabs_p(1:no_ele,i)%no_lines = nl
-        do j = 1, no_ele
-          call AllocateOneSlabs ( gl_slabs_p(j,i), nl )
-          call AllocateOneSlabs ( gl_slabs_m(j,i), nl )
-        end do
+        if ( associated ( my_catalog(i)%lines ) ) then
+          nl = size(My_Catalog(i)%Lines)
+          gl_slabs_m(1:no_ele,i)%no_lines = nl
+          gl_slabs_p(1:no_ele,i)%no_lines = nl
+          do j = 1, no_ele
+            call AllocateOneSlabs ( gl_slabs_p(j,i), nl )
+            call AllocateOneSlabs ( gl_slabs_m(j,i), nl )
+          end do
+        end if
       end do
     endif
 
@@ -2175,6 +2179,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.46  2002/05/22 19:44:51  zvi
+! Fix a bug in the mol. index loop
+!
 ! Revision 2.45  2002/05/17 22:13:20  livesey
 ! Bug fix for case where channels start at zero.
 !
