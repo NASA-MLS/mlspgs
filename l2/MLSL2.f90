@@ -21,8 +21,8 @@ program MLSL2
     & DEFAULT_HDFVERSION_READ, DEFAULT_HDFVERSION_WRITE, &
     & LEVEL1_HDFVERSION, NORMAL_EXIT_STATUS, OUTPUT_PRINT_UNIT, &
     & PATCH, PENALTY_FOR_NO_METADATA, QUIT_ERROR_THRESHOLD, &
-    & SKIPDIRECTWRITES, SKIPRETRIEVAL, SECTIONTIMINGUNITS, SIPS_VERSION, &
-    & TOOLKIT
+    & SECTIONTIMINGUNITS, SIPS_VERSION, SKIPDIRECTWRITES, SKIPRETRIEVAL, &
+    & STOPAFTERCHUNKDIVIDE, STOPAFTERGLOBAL, STOPWITHERROR, TOOLKIT
   use MLSL2Timings, only: RUN_START_TIME, SECTION_TIMES, TOTAL_TIMES, &
     & ADD_TO_SECTION_TIMING, DUMP_SECTION_TIMINGS
   use MLSMessageModule, only: MLSMessage, MLSMessageConfig, MLSMSG_Debug, &
@@ -32,7 +32,7 @@ program MLSL2
   use MLSStringLists, only: catLists, GetUniqueList, &
     & RemoveElemFromList, unquote
   use OBTAIN_MLSCF, only: Close_MLSCF, Open_MLSCF
-  use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUT_DATE_AND_TIME, PRUNIT
+  use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, OUTPUT_DATE_AND_TIME, PRUNIT
   use PARSER, only: CONFIGURATION
   use PVM, only: ClearPVMArgs, FreePVMArgs
   use SDPToolkit, only: UseSDPToolkit !, PGSD_IO_GEN_RSEQFRM
@@ -182,7 +182,7 @@ program MLSL2
 
 ! Clear the command line arguments we're going to accumulate to pass
 ! to slave tasks
-   call ClearPVMArgs
+  call ClearPVMArgs
 
   ! We set up a mirror command line for launching slaves
   call getarg ( hp, parallel%executable )
@@ -413,6 +413,12 @@ program MLSL2
         snoopName = line
       else if ( lowercase(line(3+n:9+n)) ==  'stgmem ' ) then
         parallel%stageInMemory = .true.
+      else if ( lowercase(line(3+n:12+n)) ==  'stopafterc' ) then
+        stopAfterChunkDivide = switch
+      else if ( lowercase(line(3+n:12+n)) ==  'stopafterg' ) then
+        stopAfterGlobal = switch
+      else if ( lowercase(line(3+n:12+n)) ==  'stopwither' ) then
+        stopWithError = switch
       else if ( lowercase(line(3+n:11+n)) == 'subblock ' ) then
         call AccumulateSlaveArguments ( line )
         i = i + 1
@@ -706,8 +712,14 @@ program MLSL2
   !---------------- Task (7) ------------------
     if ( error == 0 .and. first_section /= 0 .and. .not. checkl2cf ) then
       ! Now do the L2 processing.
+      ! stop-early flags => no writing, no retrieval
+      SKIPDIRECTWRITES = (SKIPDIRECTWRITES .or. STOPAFTERCHUNKDIVIDE .or. &
+        & STOPAFTERGLOBAL)
+      SKIPRETRIEVAL = (SKIPRETRIEVAL .or. STOPAFTERCHUNKDIVIDE .or. &
+        & STOPAFTERGLOBAL)
       call time_now ( t1 )
-      if ( timing ) call output ( "-------- Processing Begun ------ ", advance='yes' )
+      if ( timing ) &
+        & call output ( "-------- Processing Begun ------ ", advance='yes' )
       call walk_tree_to_do_MLS_L2 ( root, error, first_section, countChunks, &
         & singleChunk, lastChunk, filedatabase )
       if ( timing ) then
@@ -720,26 +732,39 @@ program MLSL2
   call time_now ( t0 )
   t1 = t0
   !---------------- Task (8) ------------------
+  print *, 'destroy_char_table'
   call destroy_char_table
+  print *, 'destroy_hash_table'
   call destroy_hash_table
+  print *, 'destroy_string_table'
   call destroy_string_table
+  print *, 'destroy_symbol_table'
   call destroy_symbol_table
+  print *, 'deallocate_decl'
   call deallocate_decl
+  print *, 'deallocate_tree'
   call deallocate_tree
+  print *, 'freepvmargs'
   call FreePVMArgs
-  call Deallocate_filedatabase(filedatabase)
-  if ( timing ) call sayTime ( 'Closing and deallocating' )
-  call add_to_section_timing( 'main', t0 )
-  if ( index(switches, 'time') /= 0 ) call dump_section_timings
-  if ( error == 0 ) then
+  if ( parallel%slave .and. &
+    & (SKIPDIRECTWRITES .or. SKIPRETRIEVAL) ) then
+    ! call mls_h5close(error)
+    ! call MLSMessageExit 
+  elseif ( error == 0 ) then
+    call Deallocate_filedatabase(filedatabase)
     call mls_h5close(error)
-     if (error /= 0) then
+    if (error /= 0) then
        call MLSMessage ( MLSMSG_Error, moduleName, &
         & "Unable to mls_close" )
-     endif    
+    endif    
   endif    
+  if ( timing ) call sayTime ( 'Closing and deallocating' )
+  print *, 'add_to_section_timing'
+  call add_to_section_timing( 'main', t0 )
+  print *, 'dump_section_timings'
+  if ( index(switches, 'time') /= 0 ) call dump_section_timings
   call output_date_and_time(msg='ending mlsl2')
-  if(error /= 0) then
+  if( error /= 0 .or. STOPWITHERROR ) then
      call MLSMessageExit(1)
   elseif(NORMAL_EXIT_STATUS /= 0 .and. .not. parallel%slave) then
      call MLSMessageExit(NORMAL_EXIT_STATUS)
@@ -855,22 +880,31 @@ contains
       call output(parallel%myTid, advance='yes')
       call output(' Command line sent to slaves:                    ', advance='no') 
       call blanks(4, advance='no')                                                   
-      call output(trim(parallel%pgeName), advance='yes')
+      call output(trim(parallel%pgeName), insteadofblank='(none)', advance='yes')
       call output(' Command to queue slave tasks:                   ', advance='no') 
       call blanks(4, advance='no')                                                   
-      call output(trim(parallel%submit), advance='yes')
+      call output(trim(parallel%submit), insteadofblank='(none)', advance='yes')
       call output(' Maximum failures per chunk:                     ', advance='no') 
-      call blanks(4, advance='no')                                                   
+      call blanks(5, advance='no')                                                   
       call output(parallel%maxFailuresPerChunk, advance='yes')
       call output(' Maximum failures per machine:                   ', advance='no') 
-      call blanks(4, advance='no')                                                   
+      call blanks(5, advance='no')                                                   
       call output(parallel%maxFailuresPerMachine, advance='yes')
       call output(' Sleep time in masterLoop (mus):                 ', advance='no') 
-      call blanks(4, advance='no')                                                   
+      call blanks(5, advance='no')                                                   
       call output(parallel%maxFailuresPerMachine, advance='yes')
       call output(' Range of chunks run in parallel:                ', advance='no') 
-      call blanks(4, advance='no')                                                   
-      call output(trim(parallel%chunkRange), advance='yes')
+      call blanks(4, advance='no')
+      if ( max(singleChunk, lastChunk) /= 0 ) then
+        call output(singleChunk, advance='no')
+        if ( lastChunk /= 0 ) then
+          call output(lastChunk, advance='yes')
+        else
+          call newLine
+        endif
+      else
+        call output(trim(parallel%chunkRange), insteadofblank='(all)', advance='yes')
+      endif
       endif                      
       call output(' Is this a slave task in pvm?:                   ', advance='no')
       call blanks(4, advance='no')
@@ -900,12 +934,12 @@ contains
       call display_string ( lit_indices(sectionTimingUnits), &
         &             strip=.true., advance='yes' )
       call output(' Number of switches set:                         ', advance='no')
-      call blanks(4, advance='no')
+      call blanks(5, advance='no')
       call output(numSwitches, advance='yes')
       if ( switches /= ' ' ) then
         call output(' (All switches)', advance='no')
         call blanks(4, advance='no')
-        call output(trim(switches), advance='yes')
+        call output(trim(switches), insteadofblank='(none)', advance='yes')
       endif
       call output(' Standard output unit:                           ', advance='no')
       call blanks(4, advance='no')
@@ -919,6 +953,15 @@ contains
       call output(' Ever crash:                                     ', advance='no')
       call blanks(4, advance='no')
       call output(.not. neverCrash, advance='yes')
+      call output(' Stop after Chunk Divide:                        ', advance='no')
+      call blanks(4, advance='no')
+      call output(StopAfterChunkDivide, advance='yes')
+      call output(' Stop after global settings:                     ', advance='no')
+      call blanks(4, advance='no')
+      call output(StopAfterGlobal, advance='yes')
+      call output(' Set error before stopping:                      ', advance='no')
+      call blanks(4, advance='no')
+      call output(StopWithError, advance='yes')
       call output(' ----------------------------------------------------------', &
         & advance='yes')
     endif
@@ -942,6 +985,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.128  2004/12/14 21:55:37  pwagner
+! May skip sections, stop early
+!
 ! Revision 2.127  2004/10/30 00:28:00  vsnyder
 ! Commented out some unused stuff to make NAG stop nagging
 !
