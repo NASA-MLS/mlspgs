@@ -7,7 +7,11 @@ else
 endif
 
 CONFDIR=../../..
+ifdef NOCASCADE
+include ../Makefile.nodep
+else
 include ../Makefile.dep
+endif
 
 # "$Id$"
 
@@ -123,11 +127,15 @@ ifdef HDFEOS5
 else
    hdfeos5_linker_line=
 endif
-   hdf5_message=Building test of mlsl1 with hdf5
+ifdef HDFVERSIONS
+   he5lib_linker_line=-L../../he5lib/$(MLSCONFG) -lhe5
+   he5lib_message=$(PROG_NAME) will support files with either hdf version
+endif
+   hdf5_message=Building $(PROG_NAME) with hdf5
 else
    hdf5_linker_line=
    hdfeos5_linker_line=
-   hdf5_message=Building test of mlsl1 without hdf5
+   hdf5_message=Building $(PROG_NAME) without hdf5
 endif
 
 fftw_linker_line = $(shell ${MLSBIN}/which_fftw.sh ${FFTW_ROOT} ${FFTW_PREC})
@@ -145,9 +153,11 @@ $(PROG_NAME): $(ALLOBJS) $(PVM_OBJS) libl1.a $(libdir)/libmls.a \
 		@echo "$(blas_message)"
 		@echo "$(lapack_message)"
 		@echo "$(hdf5_message)"
-		@cat fftw_link_message
+		@echo "$(he5lib_message)"
+		@cat fftw_link_message | sed 's/mlsl3\[dm\]/'$(PROG_NAME)'/'
 		$(FC) $(LDOPTS) -o $(PROG_NAME) $(ALLOBJS) $(PVM_OBJS)  \
                       -L./ -ll1 \
+        $(he5lib_linker_line) \
                       -L${libdir} -lmls \
 		-L${PGSTK} -lPGSTK \
         -L${HDFEOS} -lhdfeos \
@@ -183,6 +193,9 @@ Sd.o:
 
 # ========================================================================
 # $Log$
+# Revision 1.16  2002/04/18 20:55:28  pwagner
+# .configure now a prerequisite for executable
+#
 # Revision 1.15  2002/04/16 23:31:49  pwagner
 # Satisfies requirement for fftw during link
 #
