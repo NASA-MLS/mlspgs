@@ -31,6 +31,7 @@ module PFADataBase_m
     integer :: Molecule                            ! Molecule index
     character(len=maxSigLen) :: Signal             ! The signal string
     integer :: SignalIndex                         ! in Signals database
+    integer :: SpectroscopyFile = 0                ! Index in string table
     type(signal_t) :: TheSignal                    ! The signal, with channels
                                                    ! and sidebands added
     type(vGrid_t) :: TGrid ! shallow copy from VGrids database of Log temperatures
@@ -172,6 +173,9 @@ contains ! =====     Public Procedures     =============================
     if ( pfaDatum%filterFile /= 0 ) &
       & call display_string ( pfaDatum%filterFile, before=' Filter file: ', &
       & advance='yes' )
+    if ( pfaDatum%spectroscopyFile /= 0 ) &
+      & call display_string ( pfaDatum%spectroscopyFile, before=' Spectroscopy file: ', &
+      & strip=.true., advance='yes' )
 
     call output ( real(pfaDatum%vel_rel*c,rk), before=' Velocity linearization: ', &
       & after='kms', advance='yes' )
@@ -667,6 +671,9 @@ contains ! =====     Public Procedures     =============================
 end module PFADataBase_m
 
 ! $Log$
+! Revision 2.20  2005/03/17 01:32:26  vsnyder
+! Put spectroscopy file's string index in PFAData structure
+!
 ! Revision 2.19  2005/03/17 00:00:09  vsnyder
 ! Spiff up a dump
 !
