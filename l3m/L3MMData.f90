@@ -1223,11 +1223,13 @@ CONTAINS
 !------------------------------
 
 !---------------------------------------------------------------
-   SUBROUTINE WriteMetaL3MM (file, mlspcf_mcf_l3mm, pcf, anText, hdfVersion)
+   SUBROUTINE WriteMetaL3MM (file, mlspcf_mcf_l3mm, pcf, anText, nFiles, &
+	& hdfVersion)
 !---------------------------------------------------------------
    USE HDFEOS5, ONLY: HE5F_ACC_RDWR, HE5_GDCLOSE, HE5_GDOPEN
    USE MLSPCF3
    USE mon_Open, ONLY: PCFMData_T
+   USE output_m, ONLY: output
    USE PCFHdr, ONLY: WritePCF2Hdr, WriteInputPointer, he5_writeglobalattr, &
      & GlobalAttributes
    USE PCFModule, ONLY: SearchPCFDates, ExpandFileTemplate 
@@ -1251,6 +1253,8 @@ CONTAINS
       INTEGER, INTENT(IN) :: mlspcf_mcf_l3mm
 
       INTEGER, INTENT(IN) :: hdfVersion
+
+      INTEGER, INTENT(IN) :: nFiles
 
 ! Parameters
 
@@ -1276,7 +1280,16 @@ CONTAINS
       REAL(r8) :: dval
 
       INTEGER :: dg, hdfReturn, i, indx, j, len, numGrids, result, & 
-           & returnStatus, sdid, version, daysNum, l3StartDay, l3EndDay
+           & returnStatus, sdid, version
+
+       INTEGER :: daysNum = 1 
+
+! get the l3 start and end days
+
+      call output('start WriteL3MMData', advance='yes')
+      daysNum = nFiles + 1 
+      call output('daysNum = ', advance='no')
+      call output(daysNum, advance='yes')
 
 ! Initialize the fileType
       fileType = l_grid
@@ -1464,12 +1477,12 @@ CONTAINS
       attrName = 'StartOrbitNumber' // '.1'
       !result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, -1)
       !result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, 99999)
-      IF (GlobalAttributes%OrbNumDays(1,i) == -1) THEN
+      IF (GlobalAttributes%OrbNumDays(1,daysNum) == -1) THEN
            result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), &
                 & attrName, 99999)
       ELSE
            result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), &
-                & attrName, GlobalAttributes%OrbNumDays(1,i))
+                & attrName, GlobalAttributes%OrbNumDays(1,daysNum))
       ENDIF
 
       IF (result /= PGS_S_SUCCESS) THEN
@@ -1478,14 +1491,14 @@ CONTAINS
       ENDIF
 
       attrName = 'StopOrbitNumber' // '.1'
-      !result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, -1)
+      !result = pgs_met_setAtttr_i(groups(INVENTORYMETADATA), attrName, -1)
       !result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, 99999)
-      IF (maxval(GlobalAttributes%OrbNumDays(:,i)) == -1) then
+      IF (maxval(GlobalAttributes%OrbNumDays(:,daysNum)) == -1) then
            result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), &
                 & attrName, 99999)
       ELSE 
            result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), &
-                & attrName, maxval(GlobalAttributes%OrbNumDays(:,i)))
+                & attrName, maxval(GlobalAttributes%OrbNumDays(:,daysNum)))
       END IF 
 
       IF (result /= PGS_S_SUCCESS) THEN
@@ -1681,12 +1694,10 @@ CONTAINS
 
         ! Write global attributes
       if ( HDFVersion == HDFVERSION_5 ) then                        
+	print *, 'write global attributes in L3MM'
         sdid = he5_gdopen (file, HE5F_ACC_RDWR)                       
-	write (l3StartDay, '(I5)') pcf%startDay
-	write (l3EndDay, '(I5)') pcf%endDay
-        daysNum = l3EndDay - l3StartDay + 2
-        print *, 'daysNum'
-	print *, daysNum
+        print *, 'daysNum in write Global'
+        print *, daysNum
         call he5_writeglobalattr(sdid,daysNum) 
         result = he5_gdclose (sdid)                                   
       endif
@@ -1871,6 +1882,9 @@ END MODULE L3MMData
 !==================
 
 !# $Log$
+!# Revision 1.13  2003/09/15 18:27:23  cvuu
+!# Output OrbitNumber and OrbitPeriod in the global attribute
+!#
 !# Revision 1.12  2003/08/11 23:26:37  cvuu
 !# brought closer to James Johnson want to
 !#
