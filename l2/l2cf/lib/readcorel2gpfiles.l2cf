@@ -16,6 +16,7 @@ begin ReadApriori
 
   ;; Ptan we have to get from an l2aux file, this could be fun!
   l2auxCorePtanInput: l2aux, $
-    file='!inpathcore/MLS-Aura_L2AUX-DGM_!coreversion_!day.h4', sdName='GHz.ptan-Core'
+    file='!inpathcore/MLS-Aura_L2AUX-DGM_!coreversion_!day.h4', sdName='GHz.ptan-Core', $
+    quantityType=ptan
 
 end ReadApriori
