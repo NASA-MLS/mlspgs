@@ -5,7 +5,8 @@ module RAD_TRAN_M
 
   implicit NONE
   private
-  public :: RAD_TRAN, RAD_TRAN_POL, DRAD_TRAN_DF, DRAD_TRAN_DT, DRAD_TRAN_DX, rad_tran_cld
+  public :: RAD_TRAN, RAD_TRAN_POL, DRAD_TRAN_DF, DRAD_TRAN_DT, DRAD_TRAN_DX
+  public :: RAD_TRAN_CLD
   public :: Get_Do_Calc
   private ::  Get_Do_Calc_Indexed, Get_Inds
 
@@ -265,26 +266,23 @@ contains
 
     end if
 
-    do p_stop = 1, n_path
-      incoptdepth_pol(:,:,p_stop) = incoptdepth_pol(:,:,p_stop) * ref_cor(p_stop)
-    end do
-
     ! At this point, incoptdepth_pol(:,:,1:npc/2) should be nearly
     ! identical to incoptdepth_pol(:,:,1:npc/2+1) (npc/2 is the
     ! zero-thickness tangent layer).
 
     do p_stop = 0, n_path-1
+      incoptdepth_pol(:,:,p_stop+1) = incoptdepth_pol(:,:,p_stop+1) * &
+        &                             ref_cor(p_stop+1)
       ! exp(A) = exp(s) * ((sinh d)/d (A - s I) + cosh d I) where
-      ! s is the sum of A's eigenvalues, and d is their difference.
-      ! The sum of A's eigenvalues is Tr(A).  So when the trace
-      ! of Real(incoptdepth_pol) < e_stop, we can stop.
-!     if ( real(incoptdepth_pol(1,1,p_stop+1)) + &
-!       &  real(incoptdepth_pol(2,2,p_stop+1)) <= e_stop ) exit
-      if ( do_gl(p_stop+1) ) then
-        call cs_expmat ( incoptdepth_pol(:,:,p_stop+1), & ! deltau = exp(incoptdepth_pol)
-        &                  deltau_pol(:,:,p_stop+1), status )
-        if ( status /= 0 ) go to 99 ! because we can't change p_stop in the loop
-      end if
+      ! s is the sum of A's eigenvalues and d is their difference.
+      ! (sinh d)/d and cosh d can be large and positive even when
+      ! s is large and negative, so we can't stop just because s
+      ! is large and negative.  Well, we could if we knew d was small,
+      ! but once we have both eigenvalues we've almost finished the
+      ! exponential anyway.
+      call cs_expmat ( incoptdepth_pol(:,:,p_stop+1), &
+        &              deltau_pol(:,:,p_stop+1), status )  
+      if ( status /= 0 ) go to 99 ! because we can't change p_stop in the loop
     end do
 
     call mcrt ( t_script, sqrt(e_rflty), deltau_pol, &
@@ -1072,6 +1070,9 @@ contains
 
 end module RAD_TRAN_M
 ! $Log$
+! Revision 2.33  2003/12/08 17:52:47  jonathan
+! update for 2d cldfwm
+!
 ! Revision 2.32  2003/12/03 00:25:32  vsnyder
 ! Corrections to hydrostatic calculation
 !
