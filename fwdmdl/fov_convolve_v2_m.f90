@@ -65,7 +65,7 @@ MODULE fov_convolve_v2_m
   INTEGER(i4) :: i, j, k, ffth, n_coeffs, zero_out
   INTEGER(i4) :: peak_grad(1)
 !
-  REAL(r8) :: r_eq, r_sc, e_frac, init_angle, aaap_step
+  REAL(r8) :: r_eq, r_sc, e_frac, init_angle, aaap_step, ang_step
 !
   REAL(r8), POINTER :: p(:)
   REAL(r8), POINTER :: dp(:)
@@ -109,7 +109,8 @@ MODULE fov_convolve_v2_m
 !
   ffth = no_fft / 2
   CALL allocate_test(angles,no_fft,'angles',modulename)
-  angles = (/(i,i=1,no_fft)/) / (no_fft * aaap_step)
+  ang_step = 1.0_r8 / (no_fft * aaap_step)
+  angles = (/(i*ang_step,i=1,no_fft)/)
   angles = angles - angles(ffth + 1)
   init_angle = ASIN((r_eq - e_frac*SQRT(r_sc**2-r_eq**2)/aaap_step)/r_sc)
 !
@@ -154,7 +155,7 @@ MODULE fov_convolve_v2_m
 !
 ! interpolate to output grid
 !
-  CALL interpolatevalues(angles(ffth:no_fft),rad_fft1(ffth:no_fft), &
+  CALL interpolatevalues(angles(ffth:no_fft)-ang_step,rad_fft1(ffth:no_fft), &
      & chi_out-init_angle,rad_out,METHOD='S',EXTRAPOLATE='C')
 !
 ! determine if temperature derivatives are desired
@@ -189,8 +190,9 @@ MODULE fov_convolve_v2_m
 !
 ! interpolate to output grid
 !
-    CALL interpolatevalues(angles(ffth:no_fft),rad_fft1(ffth:no_fft), &
-       & chi_out-init_angle,drad_dt_temp,METHOD='S',EXTRAPOLATE='C')
+    CALL interpolatevalues(angles(ffth:no_fft) - ang_step, &
+       & rad_fft1(ffth:no_fft), chi_out-init_angle,drad_dt_temp, &
+       & METHOD='S',EXTRAPOLATE='C')
 !
     DO i = 1, n_coeffs
 !
@@ -277,8 +279,8 @@ MODULE fov_convolve_v2_m
         call MLSMessage ( MLSMSG_Error, ModuleName,"Error in drft1")
       endif
 
-      CALL interpolatevalues(angles(ffth:no_fft), &
-         & rad_fft(ffth:no_fft), chi_out-init_angle, drad_dt_out(:,i), &
+      CALL interpolatevalues(angles(ffth:no_fft)-ang_step, &
+         & rad_fft(ffth:no_fft), chi_out - init_angle, drad_dt_out(:,i), &
          & METHOD='S',EXTRAPOLATE='C')
 !
 ! compute final result
@@ -314,8 +316,8 @@ MODULE fov_convolve_v2_m
       ENDDO
       CALL drft1(rad_fft1,'s',pwr,ms,s)
 ! interpolate to output grid
-      CALL interpolatevalues(angles(no_fft/2:no_fft), &
-      & rad_fft1(no_fft/2:no_fft), chi_out-init_angle,drad_df_out(:,i), &
+      CALL interpolatevalues(angles(no_fft/2:no_fft)-ang_step, &
+      & rad_fft1(no_fft/2:no_fft), chi_out - init_angle,drad_df_out(:,i), &
       & METHOD='S',EXTRAPOLATE='C')
     ENDDO
   ENDIF
@@ -333,6 +335,9 @@ MODULE fov_convolve_v2_m
 END MODULE fov_convolve_v2_m
 
 ! $Log$
+! Revision 2.5  2002/06/14 22:51:29  bill
+! fixing bugs--wgr
+!
 ! Revision 2.4  2002/06/14 17:47:48  bill
 ! add log--wgr
 !
