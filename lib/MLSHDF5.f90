@@ -201,7 +201,8 @@ contains ! ======================= Public Procedures =========================
     if ( stringSize > len(value) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Value too long to fit in space given for attribute '//trim(name) )
     ! Now actually read the data!
-    call h5aread_f ( attrID, H5T_NATIVE_INTEGER, value, ones, status )
+    value = ''
+    call h5aread_f ( attrID, stringType, value(1:stringSize), ones, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to read attribute '//trim(name) )
     call h5aClose_f ( attrID, status )
@@ -373,7 +374,7 @@ contains ! ======================= Public Procedures =========================
     if ( rank /= 1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Inconsistant rank for dataset '//trim(name) )
     call h5sget_simple_extent_dims_f ( spaceID, dims(1:rank), maxdims(1:rank), status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+    if ( status /= rank ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to get dimension information for dataset '//trim(name) )
     if ( any ( dims(1:rank) > shape(value) ) ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -425,7 +426,7 @@ contains ! ======================= Public Procedures =========================
     if ( rank /= 1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Inconsistant rank for dataset '//trim(name) )
     call h5sget_simple_extent_dims_f ( spaceID, dims(1:rank), maxdims(1:rank), status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+    if ( status /= rank ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to get dimension information for dataset '//trim(name) )
     if ( any ( dims(1:rank) > shape(value) ) ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -477,7 +478,7 @@ contains ! ======================= Public Procedures =========================
     if ( rank /= 2 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Inconsistant rank for dataset '//trim(name) )
     call h5sget_simple_extent_dims_f ( spaceID, dims(1:rank), maxdims(1:rank), status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+    if ( status /= rank ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to get dimension information for dataset '//trim(name) )
     if ( any ( dims(1:rank) > shape(value) ) ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -496,10 +497,12 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to close dataset '//trim(name) )
   end subroutine LoadFromHDF5DS_dblarr2
 
-
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.2  2002/07/17 06:00:21  livesey
+! Got hdf5 l2pc reading stuff working
+!
 ! Revision 2.1  2002/07/11 22:18:26  pwagner
 ! First commit in this directory--welcome old friendshe5*.f90
 !
