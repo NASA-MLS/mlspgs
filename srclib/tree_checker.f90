@@ -659,24 +659,29 @@ m:              do j = 3, nsons(field)
       son2 = subtree(2,root)
       decl = get_decl(sub_rosa(subtree(2,root)), units_name)
       if ( decl%type /= units_name ) then
-        call announce_error ( son2, not_units )
-      else if ( units /= phyq_dimensionless .and. units /= decl%units ) then
-        call announce_error ( root, inconsistent_units, (/ son1, son2 /) )
+        call local_error ( son2, not_units )
+      else if ( units /= phyq_dimensionless .and. units /= decl%units .and. &
+        & decl%units /= phyq_dimensionless ) then
+        call local_error ( root, inconsistent_units, (/ son1, son2 /) )
       else
         units = decl%units
-        value = value * decl%value
+        if ( decl%value > 0 ) then
+          value = value * decl%value
+        else
+          value = value - decl%value
+        end if
       end if
     case ( n_colon, n_colon_less, n_less_colon, n_less_colon_less )
       son1 = subtree(1,root); son2 = subtree(2,root)
       call expr ( son1, type, units, value )
       call expr ( son2, type2, units2, value2 )
       if ( type /= type2 ) then
-        call announce_error ( root, inconsistent_types, (/ son1, son2 /) )
+        call local_error ( root, inconsistent_types, (/ son1, son2 /) )
       end if
 !     if ( units /= phyq_dimensionless .and. &
 !          units2 /= phyq_dimensionless .and. &
 !          units /= units2 ) then
-!       call announce_error ( root, inconsistent_units, (/ son1, son2 /) )
+!       call local_error ( root, inconsistent_units, (/ son1, son2 /) )
 !     end if
       if ( type == num_value ) type = range
     case ( n_and, n_or )
@@ -684,9 +689,9 @@ m:              do j = 3, nsons(field)
       call expr ( son1, type, units, value )
       call expr ( son2, type2, units2, value2 )
       if ( type /= str_value .and. type /= log_value ) then
-        call announce_error ( son1, not_string )
+        call local_error ( son1, not_string )
       else if ( type2 /= str_value .and. type2 /= log_value ) then
-        call announce_error ( son2, not_string )
+        call local_error ( son2, not_string )
       else
         if ( me == n_and ) then
           value = value * value2
@@ -702,7 +707,7 @@ m:              do j = 3, nsons(field)
         son2 = subtree(2,root)
         call expr ( son2, type2, units2, value2 )
         if ( units /= units2 ) then
-          call announce_error ( root, inconsistent_units, (/ son1, son2 /) )
+          call local_error ( root, inconsistent_units, (/ son1, son2 /) )
         else
           if ( me == n_plus ) then
             value = value + value2
@@ -720,7 +725,7 @@ m:              do j = 3, nsons(field)
       if ( units /= phyq_dimensionless .and. &
            units2 /= phyq_dimensionless .and. &
            units /= units2 ) then
-        call announce_error ( root, inconsistent_units, (/ son1, son2 /) )
+        call local_error ( root, inconsistent_units, (/ son1, son2 /) )
       else
         value = value * value2
         if ( units == phyq_dimensionless ) units = units2
@@ -732,7 +737,7 @@ m:              do j = 3, nsons(field)
       if ( units /= phyq_dimensionless .and. &
            units2 /= phyq_dimensionless .and. &
            units /= units2 ) then
-        call announce_error ( root, inconsistent_units, (/ son1, son2 /) )
+        call local_error ( root, inconsistent_units, (/ son1, son2 /) )
       else if ( me == n_div ) then
         value = value / value2
       else ! me == n_into
@@ -745,7 +750,7 @@ m:              do j = 3, nsons(field)
         son1 = subtree(i,root)
         call expr ( son1, type, units, value2 )
         if ( units /= phyq_dimensionless ) &
-          & call announce_error ( son1, not_unitless )
+          & call local_error ( son1, not_unitless )
         value = value2 ** value
       end do
     case ( n_func_ref )
@@ -753,27 +758,38 @@ m:              do j = 3, nsons(field)
       ! Look up the function name
       string = sub_rosa(son1)
       decl = get_decl(string,function)
-      type = empty ! in case of error
       if ( decl%type /= function ) then
-        call announce_error ( son1, not_func, fields=(/string/) )
+        call local_error ( son1, not_func, fields=(/string/) )
       else
         if ( nsons(root) /= 2 ) then
-          call announce_error ( root, wrong_num_args, fields=(/string/) )
+          call local_error ( root, wrong_num_args, fields=(/string/) )
         else
           call expr ( subtree(2,root), type, units, value )
           if ( type /= num_value ) then
-            call announce_error ( subtree(2,root), not_numeric, fields=(/string/) )
+            call local_error ( subtree(2,root), not_numeric, fields=(/string/) )
           else if ( units /= phyq_dimensionless ) then
-            call announce_error ( subtree(2,root), not_unitless, fields=(/string/) )
+            call local_error ( subtree(2,root), not_unitless, fields=(/string/) )
           end if
         end if
       end if
     case ( n_dot )
-      call announce_error ( root, no_dot )
+      call local_error ( root, no_dot )
     case default
-      call announce_error ( root, no_code_for )
+      call local_error ( root, no_code_for )
     end select
     if ( toggle(con) ) call trace_end ( 'EXPR' )
+  contains
+    subroutine LOCAL_ERROR ( WHERE, CODE, SONS, FIELDS )
+      integer, intent(in) :: WHERE   ! Tree node where error was noticed
+      integer, intent(in) :: CODE    ! Code for error message
+      integer, intent(in), optional :: SONS(:) ! Tree nodes, maybe sons of
+                                     ! "where".  If they're pseudo_terminal,
+                                     ! their declarations are dumped.
+      integer, intent(in), optional :: FIELDS(:) ! Field indices
+      call announce_error ( where, code, sons, fields )
+      type = empty
+      units = phyq_invalid
+    end subroutine LOCAL_ERROR
   end subroutine EXPR
 ! -------------------------------------------------------  ONE_CF  -----
   subroutine ONE_CF ( ROOT )
@@ -938,6 +954,9 @@ m:              do j = 3, nsons(field)
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.20  2004/05/28 23:44:28  vsnyder
+! Get units from either operand of *, second operand of \\
+!
 ! Revision 1.19  2004/05/28 23:15:15  vsnyder
 ! Add power (^) operator, functions
 !
