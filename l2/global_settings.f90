@@ -19,12 +19,13 @@ module GLOBAL_SETTINGS
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: R8, NameLen, L1BInfo_T, TAI93_Range_T, FileNameLen
   use MLSL2Options, only: PCF
+  use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
   use MLSPCF2, only: MLSPCF_L1B_RAD_END, MLSPCF_L1B_RAD_START
   use MLSStrings, only: unquote, hhmmss_value
   use MLSSignals_m, only: INSTRUMENT
   use MoreTree, only: GET_FIELD_ID, GET_SPEC_ID
-  use Output_m, only: Output
+  use OUTPUT_M, only: BLANKS, OUTPUT
   use String_Table, only: Get_String
   use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -97,7 +98,7 @@ contains
     character (len=name_len) :: QUANTITY
     character(LEN=*), parameter :: time_conversion='(F32.0)'
 
-    timing = .false.
+    timing = section_times
     
    error = 0
 
@@ -280,6 +281,11 @@ contains
     ! --------------------------------------------------  SayTime  -----
     subroutine SayTime
       call cpu_time ( t2 )
+      if ( total_times ) then
+        call output ( "Total time = " )
+        call output ( dble(t2), advance = 'no' )
+        call blanks ( 4, advance = 'no' )
+      endif
       call output ( "Timing for GlobalSettings = " )
       call output ( dble(t2 - t1), advance = 'yes' )
       timing = .false.
@@ -479,6 +485,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.41  2001/09/17 23:13:09  livesey
+! Added instrument stuff to global settings etc
+!
 ! Revision 2.40  2001/07/12 23:28:15  livesey
 ! Got rid of s_cloudForwardModel
 !

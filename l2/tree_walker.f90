@@ -31,6 +31,7 @@ module TREE_WALKER
     & DestroyRadiometerDatabase, DestroySignalDatabase, &
     & DestroySpectrometerTypeDatabase, MLSSignals, Modules, Radiometers, &
     & Signals, SpectrometerTypes
+  use MLSL2Timings, only: add_to_section_timing
   use Open_Init, only: DestroyL1BInfo, OpenAndInitialize
   use Output_m, only: Output
   use OutputAndClose, only: Output_Close
@@ -66,28 +67,31 @@ module TREE_WALKER
 contains ! ====     Public Procedures     ==============================
   ! -------------------------------------  WALK_TREE_TO_DO_MLS_L2  -----
   subroutine WALK_TREE_TO_DO_MLS_L2 ( ROOT, ERROR_FLAG, FIRST_SECTION )
-    integer, intent(in) :: ROOT         ! Root of the abstract syntax tree
-    integer, intent(out) :: ERROR_FLAG  ! Nonzero means failure
-    integer, intent(in) :: FIRST_SECTION! Index of son of root of first n_cf
+    integer, intent(in) ::     ROOT         ! Root of the abstract syntax tree
+    integer, intent(out) ::    ERROR_FLAG  ! Nonzero means failure
+    integer, intent(in) ::     FIRST_SECTION! Index of son of root of first n_cf
 
-    integer :: chunkNo                  ! Index of Chunks
+    integer ::                                  chunkNo                  ! Index of Chunks
     type (MLSChunk_T), dimension(:), pointer :: Chunks ! of data
     ! Forward model configurations:
     type (ForwardModelConfig_T), dimension(:), &
-      & pointer :: ForwardModelConfigDatabase
-    type (GriddedData_T), dimension(:), pointer :: GriddedData
-    type (HGrid_T), dimension(:), pointer :: HGrids
-    integer :: HOWMANY                  ! Nsons(Root)
-    integer :: I, J                     ! Loop inductors
-    type (L1BInfo_T) :: L1BInfo         ! File handles etc. for L1B dataset
+      & pointer ::                               ForwardModelConfigDatabase
+    type (GriddedData_T), dimension(:), &
+      & pointer ::                               GriddedData
+    type (HGrid_T), dimension(:), pointer ::     HGrids
+    integer ::                                   HOWMANY  ! Nsons(Root)
+    integer ::                                   I, J     ! Loop inductors
+    type (L1BInfo_T) ::                          L1BInfo  ! File handles etc. for L1B dataset
     type (L2AUXData_T), dimension(:), pointer :: L2AUXDatabase
     type (L2GPData_T), dimension(:), pointer  :: L2GPDatabase
-    type (PCFData_T) :: L2pcf
-    type (Matrix_Database_T), dimension(:), pointer :: Matrices
-    type (TAI93_Range_T) :: ProcessingRange  ! Data processing range
-    integer :: SON                      ! Son of Root
-    type (Vector_T), dimension(:), pointer :: Vectors
-    type (VGrid_T), dimension(:), pointer :: VGrids
+    type (PCFData_T) ::                          L2pcf
+    type (Matrix_Database_T), dimension(:), &
+      & pointer ::                               Matrices
+    type (TAI93_Range_T) ::                      ProcessingRange  ! Data processing range
+    integer ::                                   SON                      ! Son of Root
+    real    ::                                   t1
+    type (Vector_T), dimension(:), pointer ::    Vectors
+    type (VGrid_T), dimension(:), pointer ::     VGrids
 
     ! Arguments for Construct not declared above:
     type (QuantityTemplate_T), dimension(:), pointer :: MifGeolocation
@@ -101,23 +105,29 @@ contains ! ====     Public Procedures     ==============================
     depth = 0
     if ( toggle(gen) ) call trace_begin ( 'WALK_TREE_TO_DO_MLS_L2', &
       & subtree(first_section,root) )
+    call cpu_time ( t1 )
     call OpenAndInitialize ( processingRange, l1bInfo, l2pcf )
-
+    call add_to_section_timing ( 'open_init', t1)
     i = first_section
     howmany = nsons(root)
     do while ( i <= howmany )
       son = subtree(i,root)
+      call cpu_time ( t1 )
       select case ( decoration(subtree(1,son)) ) ! section index
       case ( z_globalsettings )
         call set_global_settings ( son, forwardModelConfigDatabase, vGrids, &
           & l2gpDatabase, l2pcf, processingRange, l1bInfo )
+        call add_to_section_timing ( 'global_settings', t1)
       case ( z_mlsSignals )
         call MLSSignals ( son )
         if ( index(switches,'tps') /= 0 ) call test_parse_signals
+        call add_to_section_timing ( 'signals', t1)
       case ( z_spectroscopy )
         call spectroscopy ( son )
+        call add_to_section_timing ( 'spectroscopy', t1)
       case ( z_readapriori )
-      	call read_apriori ( son , l2gpDatabase, l2auxDatabase, griddedData)
+        call read_apriori ( son , l2gpDatabase, l2auxDatabase, griddedData)
+        call add_to_section_timing ( 'read_apriori', t1)
       case ( z_mergeapriori )
         ! Merge apriori here
       case ( z_chunkdivide )
@@ -127,9 +137,20 @@ contains ! ====     Public Procedures     ==============================
           call GetChunkFromMaster ( chunks )
         endif
         if ( toggle(gen) .and. levels(gen) > 0 ) call dump ( chunks )
+        call add_to_section_timing ( 'scan_divide', t1)
       case ( z_construct, z_fill, z_join, z_retrieve )
         if ( parallel%master ) then 
           call L2MasterTask ( chunks, l2gpDatabase, l2auxDatabase )
+            select case ( decoration(subtree(1,son)) ) ! section index
+            case ( z_construct )
+              call add_to_section_timing ( 'construct', t1)
+            case ( z_fill )
+              call add_to_section_timing ( 'fill', t1)
+            case ( z_join )
+              call add_to_section_timing ( 'join', t1)
+            case ( z_retrieve )
+              call add_to_section_timing ( 'retrieve', t1)
+            end select
         else
           do chunkNo = lbound(chunks,1), ubound(chunks,1)
             if ( index(switches,'chu') /= 0 ) then
@@ -145,15 +166,19 @@ subtrees:   do while ( j <= howmany )
                 call MLSL2Construct ( son, l1bInfo, chunks(chunkNo), &
                   & qtyTemplates, vectorTemplates, vGrids, hGrids, &
                   & l2gpDatabase, mifGeolocation )
+                call add_to_section_timing ( 'construct', t1)
               case ( z_fill )
                 call MLSL2Fill ( son, l1bInfo, griddedData, vectorTemplates, &
                   & vectors, qtyTemplates, matrices, vGrids, l2gpDatabase , &
                   & l2auxDatabase, chunks, chunkNo)
+                call add_to_section_timing ( 'fill', t1)
               case ( z_join )
                 call MLSL2Join ( son, vectors, l2gpDatabase, &
                   & l2auxDatabase, chunkNo, chunks )
+                call add_to_section_timing ( 'join', t1)
               case ( z_retrieve )
                 call retrieve ( son, vectors, matrices, forwardModelConfigDatabase)
+                call add_to_section_timing ( 'retrieve', t1)
               case default
                 exit subtrees
               end select
@@ -175,9 +200,10 @@ subtrees:   do while ( j <= howmany )
           i = j - 1 ! one gets added back in at the end of the outer loop
         end if
       case ( z_output ) ! Write out the data
-        if ( .not. parallel%slave ) &
-          & call Output_Close ( son, l2gpDatabase, l2auxDatabase, matrices, l2pcf,&
-          & size(chunks)==1 )
+        if ( .not. parallel%slave ) then
+          call Output_Close ( son, l2gpDatabase, l2auxDatabase, matrices, l2pcf,&
+            & size(chunks)==1 )
+        endif
 
         ! For case where there was one chunk, destroy vectors etc.
         ! This is to guard against destroying stuff needed by l2pc writing
@@ -205,6 +231,7 @@ subtrees:   do while ( j <= howmany )
         call DestroyL2AUXDatabase ( l2auxDatabase )
         ! vectors, vectorTemplates and qtyTemplates destroyed at the
         ! end of each chunk
+        call add_to_section_timing ( 'output', t1)
 
       end select
       i = i + 1
@@ -229,6 +256,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.60  2001/09/21 17:40:57  pwagner
+! May dump diagnostic quantities chi..
+!
 ! Revision 2.59  2001/09/10 23:37:32  livesey
 ! New GriddedData etc.
 !
