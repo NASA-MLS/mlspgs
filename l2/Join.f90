@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -46,6 +46,7 @@ contains ! =====     Public Procedures     =============================
     use L2GPData, only: L2GPDATA_T
     use L2AUXData, only: L2AUXDATA_T
     use L2ParInfo, only: PARALLEL, WAITFORDIRECTWRITEPERMISSION
+    use LEXER_CORE, only: PRINT_SOURCE
     use MLSCommon, only: MLSCHUNK_T
     use MLSL2Options, only: CHECKPATHS
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, &
@@ -54,7 +55,7 @@ contains ! =====     Public Procedures     =============================
     use MoreTree, only: GET_SPEC_ID
     use Output_m, only: OUTPUT, BLANKS
     use TOGGLES, only: GEN, TOGGLE, LEVELS, SWITCHES
-    use Tree, only: SUBTREE, NSONS, NODE_ID
+    use Tree, only: SUBTREE, NSONS, NODE_ID, SOURCE_REF
     use TREE_TYPES, only: N_NAMED
     use Time_M, only: Time_Now
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -73,6 +74,8 @@ contains ! =====     Public Procedures     =============================
     ! External (C) function
     external :: Usleep
     ! Local variables
+    logical :: CREATEFILE               ! Flag
+    logical :: DIDTHEWRITE
     integer :: DIRECTWRITENODEGRANTED   ! Which request was granted
     integer :: DWINDEX                  ! Direct Write index
     real :: DWT1                        ! Time we started
@@ -81,12 +84,13 @@ contains ! =====     Public Procedures     =============================
     integer :: MLSCFLINE                ! Line number in l2cf
     integer :: NODIRECTWRITES           ! Array size
     integer :: NODIRECTWRITESCOMPLETED  ! Counter
+    integer :: NOEXTRAWRITES            ! Correction to NODIRECTWRITES
     integer :: PASS                     ! Loop counter
     integer :: SON                      ! Tree node
     integer :: SPECID                   ! Type of l2cf line this is
     integer :: TICKET                   ! Direct write permission ticket
-    integer :: THEFILE                  ! Direct write permission on file
-    logical :: CREATEFILE               ! Flag
+    ! integer :: THEFILE                  ! Direct write permission on file
+    character(len=4096) :: THEFILE  ! Which file permission granted for
     logical :: TIMING                   ! Flag
     real :: T1                          ! Time we started
     real :: T2                          ! Time we finished
@@ -113,6 +117,7 @@ contains ! =====     Public Procedures     =============================
     noDirectWrites = 0
     noDirectWritesCompleted = 0
     ticket = 0                          ! Default value for serial case
+    didthewrite = .true.
     passLoop: do
       ! For the later passes, we wait for permission to do one of the direct writes
       if ( pass > 2 ) then
@@ -122,8 +127,11 @@ contains ! =====     Public Procedures     =============================
         call output ( "Got permission for ticket " )
         call output ( ticket )
         call output ( " node " )
-        call output ( directWriteNodeGranted, advance='yes' )
+        call output ( directWriteNodeGranted, advance='no' )
+        call output ( " file " )
+        call output ( trim(theFile), advance='yes' )
         call add_to_directwrite_timing ( 'waiting', dwt2)
+        didthewrite = .false.
       end if
       
       ! Simply loop over lines in the l2cf
@@ -172,20 +180,28 @@ contains ! =====     Public Procedures     =============================
             end if
           else if ( pass == 2 ) then
             ! On the second pass, log all our direct write requests.
+            ! (and correct the count of Direct Writes if we're automatically
+            !  distributing them, instead of relying on one line/one write)
+            if(DEEBUG)call print_source ( source_ref(son) )
             if(DEEBUG)print*,'Calling direct write to do a setup'
             call DirectWriteCommand ( son, ticket, vectors, DirectdataBase, &
-              & chunkNo, chunks, makeRequest=.true. )
+              & chunkNo, chunks, makeRequest=.true., NoExtraWrites=noExtraWrites )
+            noDirectWrites = noDirectWrites + noExtraWrites
           else
             ! On the later passes we do the actual direct write we've been
             ! given permission for.
             if ( son == directWriteNodeGranted ) then
+              didTheWrite = .true.
               call time_now ( dwt2 )
+              if(DEEBUG)call print_source ( source_ref(son) )
               if(DEEBUG)print*,'Calling direct write to do the write'
               call DirectWriteCommand ( son, ticket, vectors, DirectdataBase, &
                 & chunkNo, chunks, create=createFile, theFile=theFile )
               call add_to_directwrite_timing ( 'writing', dwt2)
               noDirectWritesCompleted = noDirectWritesCompleted + 1
               ! If that was the last one then bail out
+              if(DEEBUG)print*,'noDirectWritesCompleted: ', noDirectWritesCompleted, &
+                & 'noDirectWrites: ', noDirectWrites
               if ( noDirectWritesCompleted == noDirectWrites ) exit passLoop
             end if
           end if
@@ -200,6 +216,17 @@ contains ! =====     Public Procedures     =============================
       ! an error.
       if ( noDirectWrites == 0 .or. error /= 0 ) exit passLoop
       pass = pass + 1
+      ! Did we receive permission to write to a "ghost node"
+      if ( .not. didTheWrite ) then
+        call announce_error(root, no_error_code, &
+            & 'Ghost node' ,ticket, 0 )
+        print *, 'Ticket: ', ticket
+        print *, 'ghost node: ', directWriteNodeGranted
+        print*,'noDirectWritesCompleted: ', noDirectWritesCompleted, &
+                & 'noDirectWrites: ', noDirectWrites        
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'We received permission to write, but could not find node' )
+      endif
     end do passLoop                     ! End loop over passes
 
     ! Check for errors
@@ -227,28 +254,29 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------------ DirectWriteCommand -----
   subroutine DirectWriteCommand ( node, ticket, vectors, DirectDataBase, &
-    & chunkNo, chunks, makeRequest, create, theFile )
+    & chunkNo, chunks, makeRequest, create, theFile, noExtraWrites )
     ! Imports
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use DirectWrite_m, only: DirectData_T, &
       & AddDirectToDatabase, DirectWrite_l2GP, DirectWrite_l2aux, Dump, &
-      & ExpandDirectDB, ExpandSDNames
+      & ExpandDirectDB, ExpandSDNames, FileNameToID
     use Expr_m, only: EXPR
     use Hdf, only: DFACC_CREATE, DFACC_RDONLY, DFACC_RDWR
     use Init_tables_module, only: F_SOURCE, F_PRECISION, F_HDFVERSION, F_FILE, F_TYPE
     use Init_tables_module, only: L_L2GP, L_L2AUX, L_L2DGG, L_L2FWM, &
       & L_PRESSURE, L_ZETA
     use intrinsic, only: L_NONE, L_GEODANGLE, L_HDF, L_SWATH, &
-      & L_MAF, PHYQ_DIMENSIONLESS
+      & L_MAF, lit_indices, PHYQ_DIMENSIONLESS
     use L2ParInfo, only: PARALLEL, LOGDIRECTWRITEREQUEST, FINISHEDDIRECTWRITE
-    use MLSCommon, only: MLSCHUNK_T, R4, R8, RV
+    use MLSCommon, only: FindFirst, FindNext, &
+      & MLSCHUNK_T, R4, R8, RV, FileNameLen
     use MLSFiles, only: HDFVERSION_5, NAMENOTFOUND, &
       & MLS_EXISTS, split_path_name, GetPCFromRef, &
       & mls_io_gen_openF, mls_io_gen_closeF, mls_sfstart, mls_sfend
     use MLSHDFEOS, only: mls_swath_in_file
     use MLSL2Options, only: CHECKPATHS, DEFAULT_HDFVERSION_WRITE, &
       & PATCH, TOOLKIT
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MLSPCF2, only: mlspcf_l2gp_start, mlspcf_l2gp_end, &
       & mlspcf_l2dgm_start, mlspcf_l2dgm_end, mlspcf_l2fwm_full_start, &
       & mlspcf_l2fwm_full_end, &
@@ -275,17 +303,20 @@ contains ! =====     Public Procedures     =============================
     ! later passes come with permission granted to write
     logical, intent(in), optional :: MAKEREQUEST  ! Set on first pass through
     logical, intent(in), optional :: CREATE       ! Set if slave is to create file.
-    integer, intent(in), optional :: THEFILE      ! Which file permission granted for
+    character(len=*), intent(in), optional :: THEFILE  ! Which file permission granted for
+    integer, intent(out), optional :: NOEXTRAWRITES ! How many extras if distributing
     ! Local parameters
     integer, parameter :: MAXFILES = 1000 ! Set for an internal array
     ! Saved variable - used to work out the createFile flag in the serial case
     integer, dimension(maxFiles), save :: CREATEDFILENAMES = 0
     integer, save :: NOCREATEDFILES=0   ! Number of files created
     ! Local variables
+    integer :: AFILE
     integer :: DBINDEX
     logical :: CREATEFILEFLAG           ! Flag (often copy of create)
     logical, dimension(:), pointer :: CREATETHISSOURCE
     logical :: DEEBUG
+    logical :: DISTRIBUTINGSOURCES      ! No field 'file=...' in l2cf line
     logical :: DUMMY
     integer :: ERRORTYPE
     integer :: EXPECTEDTYPE             ! l2gp/l2aux
@@ -306,10 +337,13 @@ contains ! =====     Public Procedures     =============================
     integer :: KEYNO                    ! Loop counter, field in l2cf line
     integer :: l2gp_Version
     integer :: LASTFIELDINDEX           ! Type of previous field in l2cf line
+    integer :: MYFILE              ! File permission granted for
     logical :: MYMAKEREQUEST            ! Copy of makeRequest
-    integer :: MYTHEFILE                ! File permission granted for
+    character(len=FileNameLen) :: MYTHEFILE  ! File permission granted for
     character(len=256), dimension(:), pointer :: NAMEBUFFER
+    integer :: NEXTFILE
     integer :: NOSOURCES                ! No. things to output
+    integer :: NumPermitted             ! No. things to output
     integer :: OUTPUTTYPE               ! l_l2gp, l_l2aux, l_l2fwm, l_l2dgg
     character(len=1024) :: PATH         ! path/file_base
     integer :: record_length
@@ -321,6 +355,7 @@ contains ! =====     Public Procedures     =============================
     integer, dimension(:), pointer :: SOURCEQUANTITIES ! Indices
     integer, dimension(:), pointer :: PRECISIONVECTORS ! Indices
     integer, dimension(:), pointer :: PRECISIONQUANTITIES ! Indices
+    integer, dimension(:), pointer :: DIRECTFILES ! Indices
     type(VectorValue_T), pointer :: QTY ! The quantity
     type(VectorValue_T), pointer :: PRECQTY ! The quantities precision
     type(DirectData_T) :: newDirect
@@ -333,8 +368,9 @@ contains ! =====     Public Procedures     =============================
 
     myMakeRequest = .false.
     if ( present ( makeRequest ) ) myMakeRequest = makeRequest
-    myTheFile = 0
+    myTheFile = 'undefined'   ! 0
     if ( present ( theFile ) ) myTheFile = theFile
+    if ( present(noExtraWrites) ) noExtraWrites = 0
 
     ! Direct write is probably going to be come the predominant form
     ! of output in the software, as the other forms have become a
@@ -358,7 +394,8 @@ contains ! =====     Public Procedures     =============================
       case ( f_source )
         noSources = noSources + 1
       case ( f_precision )
-        if ( lastFieldIndex /= f_source ) call Announce_Error ( son, no_error_code, &
+        if ( lastFieldIndex /= f_source ) &
+          & call Announce_Error ( son, no_error_code, &
             & 'A precision can only be given immediately following a source' )
       case ( f_hdfVersion )
         call expr ( subtree(2,son), exprUnits, exprValue )
@@ -375,18 +412,27 @@ contains ! =====     Public Procedures     =============================
 
     if ( file > 0 ) then
       call get_string ( file, filename, strip=.true. )
-    endif    
+   !  elseif ( myTheFile > 0 ) then
+   !   call get_string ( myTheFile, filename, strip=.true. )
+    elseif ( myTheFile /= 'undefined' ) then
+      filename = myTheFile
+    endif
+    myFile =  FileNameToID(trim(filename), DirectDataBase ) 
+    distributingSources = (file < 1)
     ! Now identify the quantities we're after
-    nullify ( sourceVectors, sourceQuantities, precisionVectors, precisionQuantities )
+    nullify ( sourceVectors, sourceQuantities, &
+      & precisionVectors, precisionQuantities, directFiles )
     call Allocate_test ( sourceVectors, noSources, 'sourceVectors', ModuleName )
     call Allocate_test ( sourceQuantities, noSources, 'sourceQuantities', ModuleName )
     call Allocate_test ( precisionVectors, noSources, 'precisionVectors', ModuleName )
     call Allocate_test ( precisionQuantities, noSources, 'precisionQuantities', ModuleName )
+    call Allocate_test ( directFiles, noSources, 'directFiles', ModuleName )
     ! Go round again and identify each quantity, work out what kind of file
     ! we're talking about
     precisionVectors = 0
     precisionQuantities = 0
     source = 0
+    directFiles = 0
     do keyNo = 2, nsons(node)
       l2gp_Version = 1
       son = subtree ( keyNo, node )
@@ -450,7 +496,7 @@ contains ! =====     Public Procedures     =============================
     if ( error /= 0 ) return
 
     ! Distribute sources among available DirectWrite files if filename undefined
-    if ( filename == 'undefined' ) then
+    if ( distributingSources ) then
        call DistributeSources
     endif
     if ( DeeBUG ) then
@@ -461,17 +507,67 @@ contains ! =====     Public Procedures     =============================
       call output(hdfVersion, advance='yes')
       call output('Num sources: ', advance='no')
       call output(noSources, advance='yes')
+      if ( present(theFile) ) then
+        call output('my(theFile): ', advance='no')
+        call output(trim(myTheFile), advance='yes')
+      endif
+      call output('size(DirectDB): ', advance='no')
+      call output(size(DirectDatabase), advance='yes')
     endif
 
     ! If this is the first pass through, then we just log our request
     ! with the master
     if ( myMakeRequest ) then
-      call LogDirectWriteRequest ( file, node )
+      if ( file < 1 ) then
+        ! Here's a crude idea: loop until we've wrapped
+        ! (A better idea would pick out only unique integers from an array)
+        nextFile = directFiles(1)
+        call LogDirectWriteRequest ( DirectDatabase(nextfile)%fileIndex, node )
+        if ( DEEBug ) then
+          call output('Logged directwrite rq for: ', advance='no')
+          call output(DirectDatabase(nextfile)%fileIndex, advance='no')
+          call output('   node: ', advance='no')
+          call output(node, advance='no')
+          call output('  (named): ', advance='no')
+          call display_string(DirectDatabase(nextfile)%fileIndex, advance='yes')
+        endif
+        if ( noSources > 1 ) then
+          do source = 2, noSources
+            aFile = nextFile
+            nextFile = directFiles(source)
+            if ( nextFile < aFile ) exit
+            call LogDirectWriteRequest ( DirectDatabase(nextfile)%fileIndex, node )
+            if ( present(noExtraWrites) ) noExtraWrites = noExtraWrites + 1
+            if ( DEEBug ) then
+              call output('Logged directwrite rq for: ', advance='no')
+              call output(DirectDatabase(nextfile)%fileIndex, advance='no')
+              call output('   node: ', advance='no')
+              call output(node, advance='no')
+              call output('  (named): ', advance='no')
+              call display_string(DirectDatabase(nextfile)%fileIndex, advance='yes')
+            endif
+          enddo
+        endif
+        if ( DEEBug .and. present(noExtraWrites) ) then
+          call output('noExtraWrites: ', advance='no')
+          call output(noExtraWrites, advance='no')
+        endif
+      else
+        call LogDirectWriteRequest ( file, node )
+      endif
     else
       ! OK, it's time to write this bit of the file
       if ( parallel%slave ) then
         createFileFlag = .false.
         if ( present ( create ) ) createFileFlag = create
+      elseif ( distributingSources ) then
+        createFileFlag = .not. any ( createdFilenames == myFile )
+        if ( createFileFlag ) then
+          noCreatedFiles = noCreatedFiles + 1
+          if ( noCreatedFiles > maxFiles ) call MLSMessage ( &
+            & MLSMSG_Error, ModuleName, 'Too many direct write files' )
+          createdFilenames ( noCreatedFiles ) = myFile
+        end if
       else
         createFileFlag = .not. any ( createdFilenames == file )
         if ( createFileFlag ) then
@@ -489,6 +585,10 @@ contains ! =====     Public Procedures     =============================
       if ( TOOLKIT ) then
         call ExpandDirectDB ( DirectDatabase, file_base, thisDirect, &
         & isnewdirect )
+        if ( DeeBUG ) then
+          call output('Did we need to expand DB for ' // trim(file_base), advance='yes')
+          call output(isnewdirect, advance='yes')
+        endif
         if ( .not. associated(thisDirect) ) then
           call Announce_Error ( son, NO_ERROR_CODE, &
               & 'ExpandDirectDB returned unassociated thisDirect' )
@@ -523,13 +623,23 @@ contains ! =====     Public Procedures     =============================
           & TOOLKIT, returnStatus, l2gp_Version, DEEBUG, &
           & exactName=Filename)
       end if
-      if ( returnStatus /= 0 ) call MLSMessage ( &
+      if ( returnStatus /= 0 ) then
+          call Announce_Error ( node, NO_ERROR_CODE, &
+          & 'Uh-oh' )
+         call MLSMessage ( &
          & MLSMSG_Error, ModuleName, &
          & 'Failed in GetPCFromRef for ' // trim(filename) )
-
+      endif
       if ( isnewdirect .and. TOOLKIT ) then
         thisDirect%Handle = Handle
         thisDirect%FileName = FileName
+      endif
+      if ( isnewdirect .and. distributingSources ) then
+          call Announce_Error ( node, NO_ERROR_CODE, &
+          & 'Uh-oh' )
+        call MLSMessage( MLSMSG_Error, ModuleName, &
+          & 'ExpandDirectDB thinks we need a new directFile; ' // &
+          & 'did you enter any in global settings?' )
       endif
       ! Done what we wished to do if just checking paths
       if ( checkPaths ) return
@@ -587,17 +697,27 @@ contains ! =====     Public Procedures     =============================
       ! call decorate ( node, -dbindex ) ! So we can find it later
       ! thisDirect => DirectDatabase(dbindex)
       ! Loop over the quantities to output
+      NumPermitted = 0
       do source = 1, noSources
+        ! At this point we're ready to write the data
+        ! Make certain that the sources match the permitted file
+        ! if the sources are being distributed, however
+        if ( distributingSources ) then
+          if ( DirectDataBase(directfiles(source))%filename /= myTheFile &
+            & .and. &
+            & DirectDataBase(directfiles(source))%filenameBase /= myTheFile &
+            & ) cycle
+        endif
+        NumPermitted = NumPermitted + 1
         qty => GetVectorQtyByTemplateIndex ( vectors(sourceVectors(source)), &
           & sourceQuantities(source) )
         hdfNameIndex = qty%label
         call get_string ( hdfNameIndex, hdfName, strip=.true. )
-        ! thisDirect%sdNames(source) = hdfName
         if ( TOOLKIT ) call ExpandSDNames(thisDirect, trim(hdfName))
         if ( precisionVectors(source) /= 0 ) then
           precQty => GetVectorQtyByTemplateIndex ( vectors(precisionVectors(source)), &
             & precisionQuantities(source) )
-          ! Check that this is compatible with it's value quantitiy
+          ! Check that this is compatible with its value quantitiy
           if ( qty%template%name /= precQty%template%name ) &
             & call Announce_Error ( son, no_error_code, &
             & "Precision and quantity do not match" )
@@ -644,12 +764,37 @@ contains ! =====     Public Procedures     =============================
           call DirectWrite_L2Aux ( handle, qty, precQty, hdfName, hdfVersion, &
             & chunkNo, chunks )
           filetype=l_hdf
+        case default
+          call output('outputType: ', advance='no')
+          call output(outputType, advance='yes')
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Unrecognized OutputType in ' // trim(filename) )
         end select
       end do ! End loop over swaths/sds
-
+      
+      if ( NumPermitted < 1 ) then
+        call Announce_Error ( son, no_error_code, &
+        & "NumPermitted=0", penalty=0 )
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & 'No sources permitted for writing to  ' // trim(filename) )
+        if ( parallel%slave ) call FinishedDirectWrite ( ticket )
+        call Deallocate_test ( sourceVectors, 'sourceVectors', ModuleName )
+        call Deallocate_test ( sourceQuantities, 'sourceQuantities', ModuleName )
+        call Deallocate_test ( precisionVectors, 'precisionVectors', ModuleName )
+        call Deallocate_test ( precisionQuantities, 'precisionQuantities', ModuleName )
+        call Deallocate_test ( directFiles, 'directFiles', ModuleName )
+        return
+      endif
       if ( TOOLKIT ) then
         thisDirect%type = outputType
         thisDirect%fileNameBase = file_base
+      endif
+      
+      if ( DEEBug ) then
+        call output('outputType: ', advance='no')
+        call DISPLAY_STRING(lit_indices(outputType), advance='yes')
+        call output('fileType: ', advance='no')
+        call DISPLAY_STRING(lit_indices(fileType), advance='yes')
       endif
 
       ! Close the output file of interest (does this need to be split like this?)
@@ -675,7 +820,7 @@ contains ! =====     Public Procedures     =============================
         & 'DirectWriteCommand unable to close ' // trim(filename) )
       if ( createFileFlag .and. TOOLKIT .and. .not. SKIPMETADATA .and. &
         & outputType /= l_l2fwm ) then
-        call add_metadata ( file_base, noSources, thisDirect%sdNames, &
+        call add_metadata ( node, file_base, noSources, thisDirect%sdNames, &
           & hdfVersion, filetype, errortype )
         if ( errortype /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'DirectWriteCommand unable to addmetadata to ' // trim(filename) )
@@ -689,10 +834,51 @@ contains ! =====     Public Procedures     =============================
     call Deallocate_test ( sourceQuantities, 'sourceQuantities', ModuleName )
     call Deallocate_test ( precisionVectors, 'precisionVectors', ModuleName )
     call Deallocate_test ( precisionQuantities, 'precisionQuantities', ModuleName )
+    call Deallocate_test ( directFiles, 'directFiles', ModuleName )
 
   contains
     subroutine DistributeSources
-      
+      ! Distribute noSources among the files in the directWrite db
+      ! Of course, the types must match
+      ! Local variables
+      integer :: afile
+      integer :: nextfile
+      integer :: NumSuitablesFiles   ! How many with matching types
+      integer :: source
+      ! Executable
+      if ( size(DirectDataBase) < 1 ) call MLSMessage ( &
+        & MLSMSG_Error, ModuleName, &
+        & 'No files in directDatabase to distribute sources among' )
+      NumSuitablesFiles = 0
+      do afile = 1, size(DirectDataBase)
+        if ( outputType == DirectDataBase(afile)%type ) &
+          & NumSuitablesFiles = NumSuitablesFiles + 1
+      enddo
+      if ( NumSuitablesFiles < 1 ) call MLSMessage ( &
+        & MLSMSG_Error, ModuleName, &
+        & 'No suitable files in directDatabase to distribute sources among' )
+      nextfile = FindFirst(outputType == DirectDataBase%type)
+      do source = 1, noSources
+        afile = nextFile
+        directfiles(source) = afile
+        nextFile = FindNext(outputType == DirectDataBase%type, afile, wrap=.true.)
+      enddo
+      if ( DeeBug ) then
+       call output ( "NumSources = " )
+       call output ( NoSources, advance='no' )
+       call output ( "    NumSuitablesFiles = " )
+       call output ( NumSuitablesFiles, advance='yes' )
+       do source=1, noSources
+         aFile= directfiles(source)
+         call output ( source, advance='no' )
+         call blanks ( 4, advance = 'no' )
+         call output ( aFile, advance='no' )
+         call blanks ( 4, advance = 'no' )
+         call output ( trim(DirectDatabase(aFile)%fileName), advance='no' )
+         call blanks ( 4, advance = 'no' )
+         call display_string(DirectDatabase(aFile)%fileIndex, advance='yes')
+       enddo
+      endif
     end subroutine DistributeSources
   end subroutine DirectWriteCommand
 
@@ -1370,7 +1556,7 @@ contains ! =====     Public Procedures     =============================
 ! =====     Private Procedures     =====================================
 
   ! ---------------------------------------------  Announce_Error  -----
-  subroutine ANNOUNCE_ERROR ( where, CODE, ExtraMessage, FIELDINDEX )
+  subroutine ANNOUNCE_ERROR ( where, CODE, ExtraMessage, FIELDINDEX, Penalty )
 
     use intrinsic, only: FIELD_INDICES
     use LEXER_CORE, only: PRINT_SOURCE
@@ -1384,7 +1570,13 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in), optional :: FIELDINDEX ! Extra information for msg
     character (LEN=*), intent(in), optional :: ExtraMessage
 
-    error = max(error,1)
+    integer, intent(in), optional :: Penalty
+    integer :: myPenalty
+
+    myPenalty = 1
+    if ( present(penalty) ) myPenalty = penalty
+    error = max(error,myPenalty)
+
     call output ( '***** At ' )
     if ( where > 0 ) then
       call print_source ( source_ref(where) )
@@ -1413,6 +1605,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.101  2004/01/22 00:56:35  pwagner
+! Fixed many bugs in auto-distribution of DirectWrites
+!
 ! Revision 2.100  2004/01/02 23:36:00  pwagner
 ! DirectWrites may choose files automatically from db
 !
