@@ -377,7 +377,7 @@ contains ! =====     Public Procedures     =============================
     call output ( '(no lcf tree available)' )
 		endif
 
-		CALL output("Caused the following error:", advance='yes', &
+		CALL output(" Caused the following error:", advance='yes', &
 		& from_where=ModuleName)
 		CALL output(trim(full_message), advance='yes', &
 		& from_where=ModuleName)
@@ -403,6 +403,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.31  2001/04/06 20:20:43  vsnyder
+! Improve an error message
+!
 ! Revision 2.30  2001/04/06 18:01:00  pwagner
 ! Checks on pcf number before PCFCreateAnnotation
 !
