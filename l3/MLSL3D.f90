@@ -52,8 +52,7 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
 
    REAL(r8), POINTER :: avgPer(:)
 
-   CALL MLSMessage (MLSMSG_Info, ModuleName, 'EOS MLS Level 3 data processing &
-                                             &started')
+   CALL MLSMessage (MLSMSG_Info, ModuleName, 'EOS MLS Level 3 data processing started')
 
 ! Fill structures with input data from the PCF and L3CF.
 
@@ -82,7 +81,7 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
       ENDIF
 
 ! CORE processing
- 
+
       CALL DailyCoreProcessing(cfDef, cfProd(i), pcf, l2Days, l2gp, avgPer, l3sp, &
                                l3dm, dmA, dmD, l3r, residA, residD, mis_l2Days, mis_Days, flags)
 
@@ -102,13 +101,10 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
       CALL DestroyL2GPDatabase(l3r)
       CALL DestroyL2GPDatabase(residA)
       CALL DestroyL2GPDatabase(residD)
-
       CALL DestroyL3DMDatabase(l3dm)
       CALL DestroyL3DMDatabase(dmA)
       CALL DestroyL3DMDatabase(dmD)
-
       CALL DestroyL3SPDatabase(l3sp)
-
       CALL DestroyL2GPDatabase(l2gp)
 
 
@@ -122,8 +118,7 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
 
    CALL OutputAndClose(cf, pcf, cfProd, avgPer, anText)
 
-   CALL MLSMessage (MLSMSG_Info, ModuleName, 'EOS MLS Level 3 data processing &
-                                                     &successfully completed!')
+   CALL MLSMessage (MLSMSG_Info, ModuleName, 'EOS MLS Level 3 data processing successfully completed!')
 
 
 ! Detailed description of program
