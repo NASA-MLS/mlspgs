@@ -31,7 +31,7 @@ module ForwardModelConfig
   ! and unpacking for PVM as easy as possible to maintain
   type, public :: ForwardModelConfig_T
     ! First the lit_indices
-    integer :: Name                     ! String index of config name
+    integer :: Name                   ! String index of config name
     integer :: Cloud_der              ! Compute cloud sensitivity in cloud models.
                                       ! l_iwc_low_height, l_iwc_high_height, l_iwp
                                       ! l_none
@@ -86,6 +86,7 @@ module ForwardModelConfig
     ! Now the arrays
     integer, dimension(:), pointer :: BinSelectors=>NULL() ! List of relevant bin selectors
     integer, dimension(:), pointer :: Molecules=>NULL() ! Which molecules to consider
+    integer, dimension(:), pointer :: PFAMolecules=>NULL() ! Which molecules to PFA
     integer, dimension(:), pointer :: SpecificQuantities=>NULL() ! Specific quantities to use
     logical, dimension(:), pointer :: MoleculeDerivatives=>NULL() ! Want jacobians
     ! Finally the types
@@ -269,6 +270,21 @@ contains
       if ( info /= 0 ) call PVMErrorMessage ( info, "Packing 0 molecules" )
     end if
 
+    ! PFA Molecules
+    if ( associated ( config%pfaMolecules ) ) then
+      call PVMIDLPack ( size ( config%pfaMolecules ), info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "Packing number of PFA molecules" )
+      if ( size ( config%pfaMolecules ) > 0 ) then
+        do i = 1, size(config%pfaMolecules)
+          call PVMPackLitIndex ( config%molecules(i), info )
+          if ( info /= 0 ) call PVMErrorMessage ( info, "Packing a PFA molecule" )
+        end do
+      end if
+    else
+      call PVMIDLPack ( 0, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "Packing 0 PFA molecules" )
+    end if
+
     ! Specific quantities
     if ( associated ( config%specificQuantities ) ) then
       call PVMIDLPack ( size ( config%specificQuantities ), info )
@@ -413,7 +429,18 @@ contains
       if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking moleculeDerivatives" )
     end if
 
-    ! Specific quantiites
+    ! PFA Molecules
+    call PVMIDLUnpack ( n, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking number of PFA molecules" )
+    if ( n > 0 ) then
+      call Allocate_test ( config%pfaMolecules, n, 'config%pfaMolecules', ModuleName )
+      do i = 1, n
+        call PVMUnpackLitIndex ( config%pfaMolecules(i), info )
+        if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking a PFA molecule" )
+      end do
+    end if
+
+    ! Specific quantities
     call PVMIDLUnpack ( n, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking number of specific quantities" )
     if ( n > 0 ) then
@@ -461,6 +488,7 @@ contains
     ! Executable code
     nullify ( f%molecules )
     nullify ( f%moleculeDerivatives )
+    nullify ( f%pfaMolecules )
     nullify ( f%signals )
     nullify ( f%integrationGrid )
     nullify ( f%tangentGrid )
@@ -509,13 +537,15 @@ contains
       & "config%molecules", moduleName )
     call deallocate_test ( config%moleculeDerivatives, &
       & "config%moleculeDerivatives", moduleName )
+    call deallocate_test ( config%pfaMolecules, &
+      & "config%pfaMolecules", moduleName )
     call Deallocate_test ( config%specificQuantities, &
       & "config%specificQuantities", ModuleName )
     call Deallocate_test ( config%binSelectors, &
       & "config%binSelectors", ModuleName )
   end subroutine DestroyOneForwardModelConfig
 
-  ! ------------------------------------  Dump_FowardModelConfigs  -----
+  ! ----------------------------  Dump_ForwardModelConfigDatabase  -----
   subroutine Dump_ForwardModelConfigDatabase ( Database )
 
     type (ForwardModelConfig_T), pointer, dimension(:) :: Database
@@ -531,7 +561,7 @@ contains
     end if
   end subroutine Dump_ForwardModelConfigDatabase
 
-  ! ------------------------------------  Dump_FowardModelConfig  -----
+  ! -----------------------------------  Dump_ForwardModelConfig  -----
   subroutine Dump_ForwardModelConfig ( Config )
 
     use Dump_0, only: DUMP
@@ -547,45 +577,55 @@ contains
 !   character (len=MaxSigLen) :: SignalName  ! A line of text
 
     ! executable code
-   
-        call output ( '  Atmos_der:' )
-        call output ( Config%atmos_der, advance='yes' )
-        call output ( '  Do_conv:' )
-        call output ( Config%do_conv, advance='yes' )
-        call output ( '  Do_Baseline:' )
-        call output ( Config%do_Baseline, advance='yes' )
-        call output ( '  Default_spectroscopy:' )
-        call output ( Config%Default_spectroscopy, advance='yes' )
-        call output ( '  Do_freq_avg:' )
-        call output ( Config%do_freq_avg, advance='yes' )
-        call output ( '  Do_1D:' )
-        call output ( Config%do_1d, advance='yes' )
-        call output ( '  Incl_Cld:' )
-        call output ( Config%incl_cld, advance='yes' )
-        call output ( '  SkipOverlaps:' )
-        call output ( Config%skipOverlaps, advance='yes' )
-        call output ( '  Spect_der:' )
-        call output ( Config%spect_der, advance='yes' )
-        call output ( '  Temp_der:' )
-        call output ( Config%temp_der, advance='yes' )
-        call output ( '  Molecules: ', advance='yes' )
-        do j = 1, size(Config%molecules)
-          call output ( '    ' )
-          call display_string(lit_indices(Config%molecules(j)))
-          if (Config%moleculeDerivatives(j)) then
-            call output (' compute derivatives', advance='yes')
-          else
-            call output (' no derivatives', advance='yes')
-          end if
-        end do
-        call output ( '  Signals:', advance='yes')
-        do j = 1, size(Config%signals)
-          call output ( '    ' )
-          !call GetSignalName( signal=Config%signals(j), signalName)
-          !??? Sort this out later!
-          ! call output ( signalName//' channelIncluded:', advance='yes')
-          call dump ( Config%signals(j)%channels )
-        end do
+
+    call output ( '  Forward Model Config Name: ' )
+    call display_string ( Config%name, advance='yes' )
+    call output ( '  Atmos_der:' )
+    call output ( Config%atmos_der, advance='yes' )
+    call output ( '  Do_conv:' )
+    call output ( Config%do_conv, advance='yes' )
+    call output ( '  Do_Baseline:' )
+    call output ( Config%do_Baseline, advance='yes' )
+    call output ( '  Default_spectroscopy:' )
+    call output ( Config%Default_spectroscopy, advance='yes' )
+    call output ( '  Do_freq_avg:' )
+    call output ( Config%do_freq_avg, advance='yes' )
+    call output ( '  Do_1D:' )
+    call output ( Config%do_1d, advance='yes' )
+    call output ( '  Incl_Cld:' )
+    call output ( Config%incl_cld, advance='yes' )
+    call output ( '  SkipOverlaps:' )
+    call output ( Config%skipOverlaps, advance='yes' )
+    call output ( '  Spect_der:' )
+    call output ( Config%spect_der, advance='yes' )
+    call output ( '  Temp_der:' )
+    call output ( Config%temp_der, advance='yes' )
+    call output ( '  Molecules: ', advance='yes' )
+    if ( associated(Config%molecules) ) then
+      do j = 1, size(Config%molecules)
+        call output ( '    ' )
+        call display_string(lit_indices(Config%molecules(j)))
+        if (Config%moleculeDerivatives(j)) then
+          call output (' compute derivatives', advance='yes')
+        else
+          call output (' no derivatives', advance='yes')
+        end if
+      end do
+    end if
+    if ( associated(Config%pfaMolecules) ) then
+      call output ( '  PFA Molecules: ', advance='yes' )
+      do j = 1, size(Config%pfaMolecules)
+        call output ( '    ' )
+        call display_string(lit_indices(Config%pfaMolecules(j)),advance='yes')
+      end do
+    end if
+    call output ( '  Signals:', advance='yes')
+    do j = 1, size(Config%signals)
+      !call GetSignalName( signal=Config%signals(j), signalName)
+      !??? Sort this out later!
+      ! call output ( signalName//' channelIncluded:', advance='yes')
+      call dump ( Config%signals(j)%channels )
+    end do
   end subroutine Dump_ForwardModelConfig
 
   logical function not_used_here()
@@ -595,6 +635,10 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.47  2004/03/24 13:50:56  hcp
+! Made array LS 17 elements instead of 16. 17 things are taken out of it,
+! so presumably it should be that long. NAG f95 flagged this as an error.
+!
 ! Revision 2.46  2004/03/22 18:23:20  livesey
 ! Added AllLinesInCatalog flag
 !
