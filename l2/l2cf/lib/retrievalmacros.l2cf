@@ -22,7 +22,9 @@
 ;; These macros define our standard output filenames
 !define(DGGFilename,{'!outpathl2gp/MLS-Aura_L2GP-DGG_!l2version_!day.he!hdfVersion'})
 !define(DGMFilename,{'!outpathl2aux/MLS-Aura_L2AUX-DGM_!l2version_!day.h!hdfVersion'})
-!define(CloudFilename,{'!outpathl2aux/MLS-Aura_L2AUX-Cloud_!l2version_!day.h!hdfVersion'})
+!define(CloudFilename,{!dnl
+  !ifdef(usingPCF,{!DGMFilename},!dnl
+  {'!outpathl2aux/MLS-Aura_L2AUX-Cloud_!l2version_!day.h!hdfVersion'})})
 
 ;; This macro is used in sids runs to get the band number part of a band
 ;; specifier (i.e. strip off the sideband if it is present)
@@ -351,6 +353,10 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
   Fill, quantity=standardPrecision.$1, method=vector, sourceQuantity=outputPrecision.$1!nl})
 
 ; $Log$
+; Revision 1.68  2003/08/28 23:52:59  livesey
+; Tried to bring directWriteDGG/DGM and joinDGG/DGM more in line with each
+; other.
+;
 ; Revision 1.67  2003/08/28 16:30:25  livesey
 ; More changes to join vs. directWrite to bring them closer together.
 ;
