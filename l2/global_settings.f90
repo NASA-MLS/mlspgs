@@ -65,7 +65,7 @@ contains
       & P_VERSION_COMMENT, &
       & S_BINSELECTOR, S_DIRECTWRITEFILE, S_DUMP, S_EMPIRICALGEOMETRY, S_FGRID, &
       & S_FORWARDMODEL, S_ForwardModelGlobal, S_L1BOA, S_L1BRAD, &
-      & S_L2PARSF, S_PFADATA, S_TGRID, S_TIME, S_VGRID
+      & S_L2PARSF, S_MAKEPFA, S_PFADATA, S_TGRID, S_TIME, S_VGRID, S_WRITEPFA
     use L1BData, only: L1BData_T, NAME_LEN, PRECISIONSUFFIX, &
       & AssembleL1BQtyName, DeallocateL1BData, Dump, FindMaxMAF, &
       & l1bradSetup, l1boaSetup, ReadL1BAttribute, ReadL1BData 
@@ -88,7 +88,7 @@ contains
     use MLSSignals_m, only: INSTRUMENT
     use MoreTree, only: GET_FIELD_ID, GET_SPEC_ID
     use OUTPUT_M, only: BLANKS, OUTPUT
-    use PFAData_m, only: Get_PFAdata_from_l2cf
+    use PFAData_m, only: Get_PFAdata_from_l2cf, Make_PFAData, Write_PFAData
     use PCFHdr, only: GlobalAttributes, FillTAI93Attribute
     use SDPToolkit, only: max_orbits, mls_utctotai
     use String_Table, only: Get_String
@@ -123,7 +123,6 @@ contains
     integer :: NOMAFS              ! Number of MAFs of L1B data read
     integer :: ReturnStatus        ! non-zero means trouble
     integer :: SON                 ! Son of root
-    integer :: Status              ! From CreateVGridFromMLSCFInfo
     integer :: Sub_rosa_index
     integer :: the_hdf_version     ! 4 or 5 (corresp. to hdf4 or hdf5)
     logical :: TIMING              ! For S_Time
@@ -205,7 +204,8 @@ contains
           call get_string ( sub_rosa_index, name_string, strip=.true. )
           start_time_string = name_string
           if ( index(name_string, ':') > 0 ) then
-            start_time_from_1stMAF = hhmmss_value(name_string, error)
+            start_time_from_1stMAF = hhmmss_value(name_string, returnStatus)
+            error = max(error,returnStatus)
             startTimeIsAbsolute = .false.
             l2pcf%startutc = start_time_string
           else
@@ -223,7 +223,8 @@ contains
           call get_string ( sub_rosa_index, name_string, strip=.true. )
           end_time_string = name_string
           if ( index(name_string, ':') > 0 ) then
-            end_time_from_1stMAF = hhmmss_value(name_string, error)
+            end_time_from_1stMAF = hhmmss_value(name_string, returnStatus)
+            error = max(error,returnStatus)
             stopTimeIsAbsolute = .false.
             l2pcf%endutc = end_time_string
           else
@@ -304,19 +305,19 @@ contains
             & hdfVersion=the_hdf_version) 
           end if
           call ReadL1BAttribute (l1bInfo%l1boaID, OrbNum, 'OrbitNumber', &
-	       & l1bFlag, hdfVersion=the_hdf_version)
-	       if (l1bFlag == -1) then
+               & l1bFlag, hdfVersion=the_hdf_version)
+               if (l1bFlag == -1) then
                   GlobalAttributes%OrbNum = -1
-	       else
+               else
                   GlobalAttributes%OrbNum = OrbNum
-	       end if
+               end if
           call ReadL1BAttribute (l1bInfo%l1boaID, OrbPeriod, 'OrbitPeriod', &
-	       & l1bFlag, hdfVersion=the_hdf_version)
-	       if (l1bFlag == -1) then
+               & l1bFlag, hdfVersion=the_hdf_version)
+               if (l1bFlag == -1) then
                   GlobalAttributes%OrbPeriod = -1.0
-	       else
+               else
                   GlobalAttributes%OrbPeriod = OrbPeriod
-	       end if
+               end if
           if ( details > -4 ) call output &
             & ('finished readL1BAttribute in global_setting', advance='yes')
           if ( TOOLKIT ) &
@@ -348,9 +349,15 @@ contains
             & call announce_error(0, &
             & '*** l2cf overrides pcf for L2 Parallel staging file ***', &
             & just_a_warning = .true.)
+        case ( s_makePFA )
+          call Make_PFAData ( son, vGrids, returnStatus )
+          error = max(error, returnStatus)
         case ( s_pfaData )
-          call Get_PFAdata_from_l2cf ( son, name, vGrids, status )
-          error = max(error,status)
+          call Get_PFAdata_from_l2cf ( son, name, vGrids, returnStatus )
+          error = max(error, returnStatus)
+        case ( s_writePFA )
+          call write_PFAdata ( son, returnStatus )
+          error = max(error, returnStatus)
         case ( s_time )
           if ( timing ) then
             call sayTime
@@ -360,8 +367,8 @@ contains
           end if
         case ( s_tGrid, s_vGrid )
           call decorate ( son, AddVGridToDatabase ( vGrids, &
-            & CreateVGridFromMLSCFInfo ( name, son, l2gpDatabase, status ) ) )
-          error = max(error,status)
+            & CreateVGridFromMLSCFInfo ( name, son, l2gpDatabase, returnStatus ) ) )
+          error = max(error, returnStatus)
         case default
           call announce_error(son, 'unrecognized global settings spec')
         end select
@@ -472,14 +479,6 @@ contains
       & call MLSMessage(MLSMSG_Error,ModuleName, &
       & 'Problem with global settings section')
 
-    if ( index(switches, 'vgrid2') /= 0 ) then
-      Details = 1
-    else
-      Details = 0
-    endif
-    if ( index(switches, 'vgrid') /= 0 ) &
-      & call dump ( vgrids, details=Details )
-      ! & call dump ( vgrids, details=levels(gen)-1+min(index(switches, 'V'),1) )
     if ( toggle(gen) ) then
       call trace_end ( 'SET_GLOBAL_SETTINGS' )
     end if
@@ -630,7 +629,7 @@ contains
         do i = 1, num_l1b_files
         if(l1bInfo%L1BRADIDs(i) /= ILLEGALL1BRADID) then
   	      call output ( 'fileid:   ' )
-	      call output ( l1bInfo%L1BRADIDs(i), advance='yes' )
+              call output ( l1bInfo%L1BRADIDs(i), advance='yes' )
          call output ( 'name:   ' )
     	   call output ( TRIM(l1bInfo%L1BRADFileNames(i)), advance='yes' )
          if ( myL1BDetails > -2 ) then
@@ -848,6 +847,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.90  2004/10/13 00:52:52  vsnyder
+! Get HHMMSS_value from MLSStrings, its new home
+!
 ! Revision 2.89  2004/08/17 23:49:36  pwagner
 ! Dont pad when getting MAFStartTime
 !
