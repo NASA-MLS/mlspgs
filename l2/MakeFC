@@ -61,6 +61,10 @@ endif
 # w/o complaining if it does nor exist yet
 -include $(CONFDIR)/$(MLSCFILE)
 
+# This will filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+REECHO=$(MLSBIN)/reecho.sh
+
 # This is in case tar doesn't summon GNU tar, you may still use it via
 # something like
 #    make -f MakeFC tar_sips TAR=/usr/local/gnu/bin/tar
@@ -82,10 +86,10 @@ SHELL = /bin/sh
 #
 
 #----------------------------------------------------------
-libmls_f90 := $(shell echo $(libmls_sources)/*.f90 $(libmls_sources)/*.c)
-libfwdmdl_f90 := $(shell echo $(libfwdmdl_sources)/*.f90)
-libcloud_f90 := $(shell echo $(libcloud_sources)/*.f90)
-blaslib_f := $(shell echo $(blaslib)/*.f)
+libmls_f90 := $(shell ${REECHO} $(libmls_sources)/*.f $(libmls_sources)/*.f90 $(libmls_sources)/*.c)
+libfwdmdl_f90 := $(shell ${REECHO} $(libfwdmdl_sources)/*.c $(libfwdmdl_sources)/*.f $(libfwdmdl_sources)/*.f90)
+libcloud_f90 := $(shell ${REECHO} $(libcloud_sources)/*.c $(libcloud_sources)/*.f $(libcloud_sources)/*.f90)
+blaslib_f := $(shell ${REECHO} $(blaslib)/*.c $(blaslib)/*.f $(blaslib)/*.f90)
 
 
 depends_where:=$(libmls_sources) $(srclib) \
@@ -205,6 +209,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.34  2001/08/13 18:09:08  pwagner
+# replaced shell echo -> shell {REECHO}
+#
 # Revision 2.33  2001/07/25 23:19:58  pwagner
 # Removed unnecessary lib...a from target prereqs
 #
