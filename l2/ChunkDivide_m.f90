@@ -2081,7 +2081,7 @@ contains ! ===================================== Public Procedures =====
     ! OK, we've found it.  Read the data in.
     call ReadL1BData ( fileID , nameString, my_l1bData, noMAFs, flag, &
       & firstMAF=maf, lastMAF=mymaf2, &
-      & NeverFail= .true., hdfVersion=hdfVersion )
+      & NeverFail= .true., hdfVersion=hdfVersion, dontPad = .false. )
     ! Quit if the reading failed.
     if ( flag /= 0 ) then
       answer = .false.
@@ -2110,6 +2110,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.53  2004/08/16 17:10:04  pwagner
+! Passes dontPad option to readL1BData
+!
 ! Revision 2.52  2004/08/09 21:43:10  livesey
 ! Bug fixes and added the maxOrbY argument.
 !
