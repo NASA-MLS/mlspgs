@@ -22,7 +22,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
     & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
   use OUTPUT_M, only: BLANKS, OUTPUT
   use String_Table, only: Display_String
-  use VectorsModule, only: CloneVector, Vector_T
+  use VectorsModule, only: CloneVector, CopyVector, Vector_T
 
   implicit NONE
   private
@@ -1774,6 +1774,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.48  2001/07/12 22:12:19  vsnyder
+! Forget to get CopyVector
+!
 ! Revision 2.47  2001/07/12 21:08:44  vsnyder
 ! Repair bug in SolveCholesky in the case that RHS is present
 !
