@@ -82,9 +82,9 @@ module SnoopMLSL2               ! Interface between MLSL2 and IDL snooper via pv
   end type SnooperInfo_T
 
   logical, save :: SNOOPINGACTIVE = .false.
+  character (len=132), save :: SNOOPNAME = ''
 
-  public :: SNOOPINGACTIVE
-  public :: SNOOP
+  public :: SNOOPINGACTIVE, SNOOP, SNOOPNAME
 
 contains ! ========  Public Procedures ==========================================
 
@@ -418,9 +418,9 @@ contains ! ========  Public Procedures =========================================
       keepWaiting = .true.
       call PVMfmytid ( myTid )
       if ( myTid<=0 ) call PVMErrorMessage ( myTid, "Enroling in PVM" )
-      call PVMfjoingroup ( Level2CodeGroupName, inum )
+      call PVMfjoingroup ( Level2CodeGroupName//trim(snoopName), inum )
       if ( inum<0 ) call PVMErrorMessage ( inum, "Joining group " &
-        & // Level2CodeGroupName )
+        & // Level2CodeGroupName//trim(snoopName) )
       allocate ( snoopers(0), stat=status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,&
         & MLSMSG_Allocate // "snoopers(0)" )
@@ -789,6 +789,9 @@ contains ! ========  Public Procedures =========================================
 end module SnoopMLSL2
 
 ! $Log$
+! Revision 2.34  2002/12/06 22:33:28  livesey
+! Added the snoop name stuff
+!
 ! Revision 2.33  2002/10/08 17:36:23  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
