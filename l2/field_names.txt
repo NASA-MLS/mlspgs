@@ -173,6 +173,8 @@ scanLowerLimit
 scanUpperLimit
 scECI
 scVel
+scVelECI
+scVelECR
 sdname
 seed
 sgrid
@@ -219,6 +221,9 @@ vGrid
 vmrQuantity
 
 # $Log$
+# Revision 2.29  2002/03/14 00:38:16  pwagner
+# Added scVelECI and scVelECR
+#
 # Revision 2.28  2002/03/07 17:17:15  livesey
 # Removed frqGap
 #
