@@ -41,10 +41,11 @@ module FilterShapes_m
     & FilterShapes => NULL()
 
   type, public :: DACSFilterShape_T
-    real(r8), dimension(:), pointer :: FilterGrid => NULL()      ! Abscissae
-    real(r8), dimension(:), pointer :: FilterShape => NULL()     ! Ordinates
-    real(r8), dimension(:), pointer :: LO_Apod(:) => NULL()      ! Apodization
-    real(r8), dimension(:), pointer :: CH_Norm(:) => NULL()      ! Normalization
+    integer :: LogApod, LogFilter, LogNorm
+    real(r8), dimension(:), pointer :: FilterGrid => NULL()  ! Abscissae, 2**logFilter+1
+    real(r8), dimension(:), pointer :: FilterShape => NULL() ! Ordinates, ditto
+    real(r8), dimension(:), pointer :: LO_Apod(:) => NULL()  ! Apodization, ditto
+    real(r8), dimension(:), pointer :: CH_Norm(:) => NULL()  ! Normalization, 2**logNorm+1
     type (Signal_T) :: Signal
   end type DACSFilterShape_T
 
@@ -208,12 +209,14 @@ contains
     real(r8) :: DX                      ! To compute FilterGrid
     real(r8) :: LHS, RHS                ! For computing grid
     integer :: I, N                     ! Loop inductor, subscript
-    integer :: LogChan                  ! Number_in_chan == 2 ** LogChan + 1
+    integer :: LogApod                  ! Number_apod == 2 ** LogApod + 1
+    integer :: LogFilt                  ! Number_shape == 2 ** LogSize + 1
+    integer :: LogNorm                  ! Number_norm == 2 ** LogNorm + 1
                                         ! Default 7
-    integer :: LogSize                  ! Number_in_shape == 2 ** LogSize + 1
     character(80) :: Line               ! From the file
-    integer :: Number_in_chan           ! How many channels?
-    integer :: Number_in_shape          ! How many points in each filter?
+    integer :: Number_apod              ! How many LO apodizations?
+    integer :: Number_norm              ! How many channel normalizations?
+    integer :: Number_shape             ! How many points in each filter?
     integer :: NumFilterShapes          ! How many filter shapes in file?
     integer :: Offset                   ! From start of FilterShapes -- to extend it
     integer :: Sideband                 ! From parse signal
@@ -225,7 +228,7 @@ contains
     integer, pointer, dimension(:) :: Signal_Indices   ! From Parse_Signal, q.v.
     type(DACSfilterShape_T), dimension(:), pointer :: TempFilterShapes
 
-    namelist /Filter/ lhs, rhs, logSize, logChan
+    namelist /Filter/ lhs, rhs, logApod, logFilt, logNorm
 
     if ( toggle(gen) ) call trace_begin ( "Read_DACS_Filter_Shapes_File" )
 
@@ -237,23 +240,28 @@ contains
       call read_a_line ( lun, line, status ) ! Read the signal
       if ( status < 0 ) exit
       if ( status > 0 ) go to 99
-      ! Read the lhs, rhs and number_in_shape
-      logChan = 7
-      logSize = -1
+      ! Read the lhs, rhs and number_shape
+      logApod = -1
+      logFilt = -1
+      logNorm = 7
       read ( lun, filter, iostat=status )
       if ( status /= 0 ) go to 99
-      if ( logSize < 0 ) &
-        & call MLSMessage ( MLSMSG_Error, moduleName, "LogSize < 0" )
+      if ( logFilt < 0 ) &
+        & call MLSMessage ( MLSMSG_Error, moduleName, "LogFilt < 0" )
+      if ( logFilt /= logApod .and. logNorm /= logApod ) &
+        & call MLSMessage ( MLSMSG_Error, moduleName, &
+        & "Require LogApod == LogFilt or LogApod == LogNorm" )
       ! Skip the shape, using LHS for a temp
-      number_in_shape = 2 ** logSize + 1
-      read ( lun, *, iostat=status ) (lhs, i = 1, number_in_shape)
+      number_shape = 2 ** logFilt + 1
+      read ( lun, *, iostat=status ) (lhs, i = 1, number_shape)
       if ( status /= 0 ) go to 99
-      number_in_chan = 2 ** logChan + 1
       ! Skip the LO apodization
-      read ( lun, *, iostat=status ) (lhs, i = 1, number_in_chan)
+      number_apod = 2 ** logApod + 1
+      read ( lun, *, iostat=status ) (lhs, i = 1, number_apod)
       if ( status /= 0 ) go to 99
       ! Skip the channel normalization
-      read ( lun, *, iostat=status ) (lhs, i = 1, number_in_chan)
+      number_norm = 2 ** logNorm + 1
+      read ( lun, *, iostat=status ) (lhs, i = 1, number_norm)
       if ( status /= 0 ) go to 99
       numFilterShapes = numFilterShapes + 1
     end do
@@ -271,12 +279,12 @@ contains
         & MLSMSG_DeAllocate // "TempFilterShapes")
     end if
 
-    ! Read and store the filter shapes
+    ! Read and store the filter shapes.  Don't need error checks since
+    ! if we get here we've been able to read the file once successfully
     n = offset
     do ! Loop over filter shapes
       call read_a_line ( lun, line, status ) ! Read the signal
       if ( status < 0 ) exit
-      if ( status > 0 ) go to 99
       n = n + 1
       sigName = line
       nullify ( channels, signal_indices ) 
@@ -292,34 +300,36 @@ contains
       DACSfilterShapes(n)%signal%channels => channels
       call deallocate_test ( signal_indices, "Signal_Indices", moduleName )
 
-      ! Read the lhs, rhs and number_in_shape
-      logChan = 7
-      read ( lun, filter, iostat=status )
-      if ( status /= 0 ) go to 99
-      number_in_shape = 2 ** logSize + 1
+      ! Read the lhs, rhs and number_shape
+      logNorm = 7
+      read ( lun, filter )
+      DACSfilterShapes(n)%logApod = logApod
+      DACSfilterShapes(n)%logFilter = logFilt
+      DACSfilterShapes(n)%logNorm = logNorm
+      number_shape = 2 ** logFilt + 1
 
       call allocate_test ( DACSfilterShapes(n)%filterGrid,&
-        & number_in_shape, 'DACSfilterShapes(n)%filterGrid', ModuleName )
+        & number_shape, 'DACSfilterShapes(n)%filterGrid', ModuleName )
       call allocate_test ( DACSfilterShapes(n)%filterShape,&
-        & number_in_shape, 'DACSfilterShapes(n)%filterShape', ModuleName )
+        & number_shape, 'DACSfilterShapes(n)%filterShape', ModuleName )
 
       ! Read the shape array and calculate the associated abscissae
-      dx = ( rhs - lhs ) / (number_in_shape - 1)
-      do i = 1, number_in_shape
+      dx = ( rhs - lhs ) / (number_shape - 1)
+      do i = 1, number_shape
         DACSfilterShapes(n)%filterGrid(i) = lhs + (i-1) * dx
       end do ! i
-      read ( lun, *, iostat=status ) DACSfilterShapes(n)%filterShape
-      if ( status /= 0 ) go to 99
+      read ( lun, * ) DACSfilterShapes(n)%filterShape
 
       ! Read the LO_Apod and CH_Norm arrays
-      number_in_chan = 2 ** logChan + 1
+      number_apod = 2 ** logApod + 1
       call allocate_test ( DACSfilterShapes(n)%lo_apod,&
-        & number_in_chan, 'DACSfilterShapes(n)%lo_apod', ModuleName )
+        & number_apod, 'DACSfilterShapes(n)%lo_apod', ModuleName )
       read ( lun, *, iostat=status ) DACSfilterShapes(n)%lo_apod
       if ( status /= 0 ) go to 99
 
+      number_norm = 2 ** logNorm + 1
       call allocate_test ( DACSfilterShapes(n)%ch_norm,&
-        & number_in_chan, 'DACSfilterShapes(n)%ch_norm', ModuleName )
+        & number_norm, 'DACSfilterShapes(n)%ch_norm', ModuleName )
       read ( lun, *, iostat=status ) DACSfilterShapes(n)%ch_norm
       if ( status /= 0 ) go to 99
 
@@ -498,6 +508,9 @@ contains
 end module FilterShapes_m
 
 ! $Log$
+! Revision 2.13  2004/02/09 20:20:32  vsnyder
+! Make an error message more precise and informative
+!
 ! Revision 2.12  2004/02/06 00:45:27  vsnyder
 ! Allow more general relation between sizes of filter shape and
 ! apodization arrays.

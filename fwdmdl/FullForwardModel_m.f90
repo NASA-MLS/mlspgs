@@ -655,10 +655,12 @@ contains
     sv_t_len = grids_tmp%p_len ! zeta X phi
 
     if ( FwdModelConf%incl_cld ) &
-      & call load_one_item_grid ( grids_iwc, cloudIce, phitan, maf, fwdModelConf, .false., .false. )
+      & call load_one_item_grid ( grids_iwc, cloudIce, phitan, maf, &
+        & fwdModelConf, .false., .false. )
 
     if ( FwdModelConf%polarized ) &
-      & call load_one_item_grid ( grids_mag, magfield, phitan, maf, fwdModelConf, .false. )
+      & call load_one_item_grid ( grids_mag, magfield, phitan, maf, &
+        & fwdModelConf, .false. )
 
     ! Identify which of our signals are DACS and how many unique DACS are involved
     call identifyDACS
@@ -1663,7 +1665,8 @@ contains
 
             scat_src%template = temp%template
 
-            call load_one_item_grid ( grids_tscat, scat_src, phitan, maf, fwdModelConf, .false., .true. )
+            call load_one_item_grid ( grids_tscat, scat_src, phitan, maf, &
+              & fwdModelConf, .false., .true. )
 
             call allocate_test ( do_calc_tscat, max_ele, size(grids_tscat%values),              &
                                & 'do_calc_tscat', moduleName )
@@ -1994,6 +1997,7 @@ contains
           end if
 
           if ( temp_der ) then
+
             ! get d Delta B / d T * d T / eta
             call dt_script_dt ( t_path_c(1:npc), eta_zxp_t_c(1:npc,:), frq, &
                               & d_t_scr_dt(1:npc,:) )
@@ -2143,11 +2147,7 @@ contains
           do i = 1, noUsedDACS
             shapeInd = MatchSignal ( dacsFilterShapes%signal, &
               & fwdModelConf%signals(usedDacsSignals(i)), sideband = thisSideband )
-            call Freq_Avg_DACS ( frequencies, &
-              & DACSFilterShapes(shapeInd)%filterGrid, &
-              & DACSFilterShapes(shapeInd)%filterShape, &
-              & DACSFilterShapes(shapeInd)%LO_Apod, &
-              & DACSFilterShapes(shapeInd)%CH_Norm, &
+            call Freq_Avg_DACS ( frequencies, DACSFilterShapes(shapeInd), &
               & RadV, DACsStaging(:,i) )
           end do
           ! Now go through channel by channel
@@ -2187,11 +2187,7 @@ contains
               sv_i = 1
               do instance = 1, no_sv_p_t
                 do surface = 1, n_t_zeta
-                  call Freq_Avg_DACS ( frequencies, &
-                    & DACSFilterShapes(shapeInd)%filterGrid, &
-                    & DACSFilterShapes(shapeInd)%filterShape, &
-                    & DACSFilterShapes(shapeInd)%LO_Apod, &
-                    & DACSFilterShapes(shapeInd)%CH_Norm, &
+                  call Freq_Avg_DACS ( frequencies, DACSFilterShapes(shapeInd), &
                     & k_temp_frq(:,sv_i), DACsStaging2(:,sv_i,i) )
                   sv_i = sv_i + 1
                 end do                  ! Surface loop
@@ -2240,11 +2236,7 @@ contains
                   shapeInd = MatchSignal ( dacsFilterShapes%signal, &
                     & fwdModelConf%signals(usedDacsSignals(i)), sideband = thisSideband )
                   do sv_i = grids_f%l_v(k-1)+1, grids_f%l_v(k)
-                    call Freq_Avg_DACS ( frequencies, &
-                      & DACSFilterShapes(shapeInd)%filterGrid, &
-                      & DACSFilterShapes(shapeInd)%filterShape, &
-                      & DACSFilterShapes(shapeInd)%LO_Apod, &
-                      & DACSFilterShapes(shapeInd)%CH_Norm, &
+                    call Freq_Avg_DACS ( frequencies, DACSFilterShapes(shapeInd), &
                       & k_atmos_frq(:,sv_i), DACsStaging2(:,sv_i,i) )
                   end do                  ! Surface loop X Instance loop
                 end do
@@ -2869,11 +2861,7 @@ contains
             do surface = 1, Grids_dS%l_z(k) - Grids_dS%l_z(k-1)
               do jf = 1, Grids_dS%l_f(k) - Grids_dS%l_f(k-1)
                 sv_i = sv_i + 1
-                call Freq_Avg_DACS ( frequencies, &
-                  & DACSFilterShapes(shapeInd)%filterGrid, &
-                  & DACSFilterShapes(shapeInd)%filterShape, &
-                  & DACSFilterShapes(shapeInd)%LO_Apod, &
-                  & DACSFilterShapes(shapeInd)%CH_Norm, &
+                call Freq_Avg_DACS ( frequencies, DACSFilterShapes(shapeInd), &
                   & k_spect_dS_frq(:,sv_i), DACsStaging2(:,sv_i,i) )
               end do   ! jf -- Frequencies loop
             end do     ! Surface loop
@@ -3049,6 +3037,10 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.194  2004/02/05 23:30:01  livesey
+! Finally implemented code to do correct handing of sideband fraction in
+! single sideband radiometers.
+!
 ! Revision 2.193  2004/02/03 02:48:35  vsnyder
 ! Progress (hopefully) on polarized temperature derivatives.
 ! Implement DACs frequency convolution.
