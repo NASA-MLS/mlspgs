@@ -95,6 +95,7 @@ begin Construct
   ;; ----------------------------------------- Cloud Output
   trans:   Quantity, type=  losTransFunc,   Sgrid=sGridStandard, module=GHz
   cext:    Quantity, vGrid= vGridIWC, hGrid=hGridStandard, type = cloudExtinction
+  cextFine:    Quantity, vGrid= vGridIWC, hGrid=hGridFine, type = cloudExtinction
 
   ;; Folded radiance-like quantities for cloud models
   !define(constructDT,{DTband$1: Quantity, $
@@ -327,7 +328,7 @@ begin Construct
     refGPH, GPH, GPH_HR, $
     tpPressure, $
     iwc, lwc, surfaceType, psd, earthRadius, $
-    trans, cext, $
+    trans, cext, cextFine, $
     massMeanDiameterIce, massMeanDiameterWater, $
     !allMolecules, tropH2O, tropH2O_HR, $
     !allHiResMolecules, $
