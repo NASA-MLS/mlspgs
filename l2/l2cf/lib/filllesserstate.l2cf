@@ -72,11 +72,32 @@ begin Fill
 ;   ;  O2 and N2 are in the climatology for PEs (vmr not constant in the
 ;   ;  meso/thermosphere)
 ;   },{
-    Fill, quantity=apriori.o2, method=explicit,  $
-      explicitValues=!o2vmr, /spread
     Fill, quantity=apriori.n2, method=explicit,  $
       explicitValues=!n2vmr, /spread
+  ;; --------------------------------------------- O2 
+
+  ;; Put in O2 vmr profile that drops off in the mesosphere/thermosphere
+  ;; this is what Bill used in uars
+  Fill, quantity=apriori.o2, method=profile,  profileValues = $
+    [   1.0000e+03 mb: .2095 vmr, $  
+        8.0131e-03 mb: .2095 vmr, $
+        5.8925e-03 mb: .2092 vmr, $
+        4.3241e-03 mb: .2089 vmr, $
+        3.1594e-03 mb: .2086 vmr, $
+        2.2961e-03 mb: .2083 vmr, $
+        1.6581e-03 mb: .2080 vmr, $
+        1.1874e-03 mb: .2070 vmr, $
+        8.4392e-04 mb: .2061 vmr, $
+        5.9869e-04 mb: .2051 vmr, $
+        4.2472e-04 mb: .2042 vmr, $
+        3.0332e-04 mb: .2032 vmr, $
+        2.1863e-04 mb: .1915 vmr, $
+        1.5948e-04 mb: .1798 vmr, $
+        1.1809e-04 mb: .1681 vmr, $
+        8.8552e-05 mb: .1564 vmr, $
+        6.6696e-05 mb: .1447 vmr ]
 ;   })
+
 
   ;; --------------------------------------------------- Stuff from L1BOA
 
