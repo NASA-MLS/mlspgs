@@ -7,21 +7,22 @@ module vGrid                    ! Definitions for vGrids in vector quantities
 
   use Allocate_Deallocate, only: Allocate_Test
   use EXPR_M, only: EXPR
-  use INIT_TABLES_MODULE, only: F_COORDINATE, F_FORMULA, F_NUMBER, F_START, &
-    & F_STOP, F_TYPE, F_VALUES, FIELD_FIRST, FIELD_INDICES, FIELD_LAST, &
-    & L_ANGLE, L_EXPLICIT, L_GEODALTITUDE, L_GPH, L_LINEAR, L_LOGARITHMIC, &
+  use INIT_TABLES_MODULE, only: F_COORDINATE, F_FORMULA, F_NUMBER, F_SOURCEL2GP, &
+    & F_START, F_STOP, F_TYPE, F_VALUES, FIELD_FIRST, FIELD_INDICES, FIELD_LAST, &
+    & L_ANGLE, L_EXPLICIT, L_GEODALTITUDE, L_GPH, L_L2GP, L_LINEAR, L_LOGARITHMIC, &
     & L_NONE, L_PRESSURE, L_THETA, L_ZETA, LIT_INDICES, PHYQ_Angle, &
     & PHYQ_Dimensionless, PHYQ_Length, PHYQ_Pressure, PHYQ_Temperature
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: R8       ! General constants etc.
   use MLSMessageModule, only: & ! Message logging
-    & MLSMessage, MLSMSG_Allocate, MLSMSG_Error
+    & MLSMessage, MLSMSG_Allocate, MLSMSG_Error, MLSMSG_Warning
   use OUTPUT_M, only: OUTPUT
   use STRING_TABLE, only: DISPLAY_STRING
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TOGGLES, only: GEN, TOGGLE
   use TREE, only: DECORATION, DUMP_TREE_NODE, NSONS, SOURCE_REF, SUBTREE
   use VGridsDatabase, only: AddVGridToDatabase, Dump, VGrid_T
+  use L2GPData, only: L2GPDATA_T
 
   implicit none
   private
@@ -58,7 +59,7 @@ module vGrid                    ! Definitions for vGrids in vector quantities
 contains ! =====     Public Procedures     =============================
 
   !------------------------------------  CreateVGridFromMLSCFInfo  -----
-  type(vGrid_T) function CreateVGridFromMLSCFInfo ( name, root ) &
+  type(vGrid_T) function CreateVGridFromMLSCFInfo ( name, root, l2gpDatabase ) &
     & result ( vGrid )
 
     ! This routine creates a vGrid according to user supplied information
@@ -67,6 +68,7 @@ contains ! =====     Public Procedures     =============================
     ! Dummy arguments
     integer, intent(in) :: NAME    ! String index of name
     integer, intent(in) :: ROOT    ! Root of vGrid subtree in abstract syntax
+    type (L2GPData_T), pointer, dimension(:) :: L2GPDATABASE
 
     ! Local parameters
     character (len=*), parameter :: UnitsMessage= &
@@ -79,6 +81,7 @@ contains ! =====     Public Procedures     =============================
     integer :: FORMULA             ! Index in tree of formula field
     logical :: GOT_FIELD(field_first:field_last)
     integer :: I, J, K, L, N       ! Loop counter or limit
+    integer :: L2GPINDEX           ! Index into database
     integer :: NUMBER              ! Index in tree of Number field
     integer :: PREV_UNITS          ! Units of previous element of Value field
     integer :: SON                 ! Son of Root
@@ -120,6 +123,8 @@ contains ! =====     Public Procedures     =============================
         start = son
       case ( f_stop )
         call expr ( value, stop_units, stop )
+      case ( f_sourceL2GP )
+        l2gpIndex = decoration(decoration(value))
       case ( f_type )
         coordType = decoration(value)
       case ( f_values )
@@ -140,6 +145,17 @@ contains ! =====     Public Procedures     =============================
         & ModuleName )
       if ( got_field(f_values) ) &
         & prev_units = check_units ( value_field, f_values, vgrid%surfs )
+    case ( l_l2gp )
+      if (.not. associated(l2gpDatabase) ) &
+        & call MLSMessage(MLSMSG_Error,ModuleName,&
+        & 'No l2gp database defined yet')
+      vgrid%noSurfs = l2gpDatabase(l2gpIndex)%nLevels
+      if (got_field(f_coordinate)) call MLSMessage(MLSMSG_Warning,ModuleName,&
+        & 'Redundant coordinate spec for vGrid from l2gp')
+      vgrid%verticalCoordinate = l_zeta
+      call allocate_test ( vgrid%surfs, vgrid%noSurfs, "vGrid%surfs", &
+        & ModuleName )
+      vgrid%surfs = l2gpDatabase(l2gpIndex)%pressures
     case ( l_linear )
       call check_fields ( root, l_linear, got_field, &
         & required=(/ f_number, f_start, f_stop /), &
@@ -369,6 +385,9 @@ end module vGrid
 
 !
 ! $Log$
+! Revision 2.10  2001/04/21 01:25:39  livesey
+! Can now fill from l2gp
+!
 ! Revision 2.9  2001/04/10 23:53:45  vsnyder
 ! Improve 'dump'
 !
