@@ -356,6 +356,8 @@ contains ! =====     Public Procedures     =============================
    ! Did we think we were going to read from elsewhere?
    ! Anyway, I added the mls_sfend version when I converted
    ! this module to use MLSFiles instead of Hdf
+        if ( hdfVersion == WILDCARDHDFVERSION ) &
+          & hdfVersion = mls_hdf_version(trim(FilenameString))
         fileHandle = mls_sfend(sd_id, hdfVersion=hdfVersion)
         if ( fileHandle == -1 ) then
           call announce_error ( son, &
@@ -602,6 +604,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.49  2003/05/06 00:16:32  pwagner
+! Fixed passing wild card hdf version to mls_sfend for l2aux
+!
 ! Revision 2.48  2003/05/05 23:00:34  livesey
 ! Merged in feb03 newfwm branch
 !
