@@ -6,7 +6,8 @@ module ConstructVectorTemplates ! Construct a template for a vector
 !=============================================================================
 
   use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
-  use INIT_TABLES_MODULE, only: F_QUANTITIES
+  use INIT_TABLES_MODULE, only: F_QUANTITIES, FIELD_FIRST, FIELD_LAST, &
+    & F_ADOPTROWS, F_ADOPTCOLUMNS, L_ROWS, L_COLUMNS
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use Output_M, only: Output
   use QuantityTemplates, only: QuantityTemplate_T
@@ -17,6 +18,7 @@ module ConstructVectorTemplates ! Construct a template for a vector
     & SUBTREE
   use VectorsModule, only: ConstructVectorTemplate, VectorTemplate_T, &
     & NullifyVectorTemplate
+  use L2PC_m, only: ADOPTVECTORTEMPLATE
 
   implicit none
   public
@@ -42,77 +44,102 @@ contains ! =====     Public Procedures     =============================
     ! Dummy arguments
     integer, intent(in) :: NAME         ! Sub-rosa of name, if any, or zero
     integer, intent(in) :: ROOT         ! Of AST for a vectorTemplate
-    type (QuantityTemplate_T), dimension(:) :: quantityTemplates
+    type (QuantityTemplate_T), dimension(:), pointer :: quantityTemplates
 
     ! Local variables
     integer :: I, J, K        ! Loop inductors
-    integer :: nSelections    ! How many selections?
-    integer, dimension(:), pointer :: SELECTED
+    integer :: NOQUANTITIES    ! How many selections?
+    integer, dimension(:), pointer :: QUANTITIES
     integer :: SON            ! Son of Root
-    integer :: SOURCE         ! 256*line + column of erroneous input
-
+    integer :: KEY            ! Son of son
+    logical, dimension(field_first:field_last) :: GOT ! Fields
+        
     ! Executable code
 
     if ( toggle(gen) .and. levels(gen) > 0 ) call &
       & trace_begin ( "ConstructVectorTemplateFromMLSCfInfo", root )
 
     call nullifyVectorTemplate ( vectorTemplate ) ! for Sun's still useless compiler
-    nullify ( selected )
+    nullify ( quantities )
+    got = .false.
+    noQuantities = 0
 
-    ! Compute the number of selections
-    nSelections = 0
-    do i = 2, nsons(root)
-      nSelections = nSelections + nsons(subtree(i,root)) - 1
-    end do
-
-    call allocate_test ( selected, nSelections, "selected", ModuleName )
-
-    ! Loop through the MLSCF information supplied.  Items are either
-    ! lists of quantity template labels, or lists of complete MLS signal
-    ! specification strings.
-
-    nSelections = 0
+    ! Loop over the arguments
     do i = 2, nsons(root)     ! Skip the "vectorTemplate" name
-      son = subtree(i,root)   ! An "assign" vertex of the abstract syntax tree
-      ! Currently only one field, but we'll leave the case statement in to be sure
-      select case ( decoration(subtree(1,son)) )
+      son = subtree(i,root)
+      key = subtree(1,son)
+      got ( decoration(key) ) = .true.
+      select case ( decoration(key) )
+      case ( f_adoptColumns )
+        vectorTemplate = AdoptVectorTemplate ( sub_rosa(subtree(2,son)), quantityTemplates, &
+          & source=l_columns )
+      case ( f_adoptRows )
+        vectorTemplate = AdoptVectorTemplate ( sub_rosa(subtree(2,son)), quantityTemplates, &
+          & source=l_rows )
       case ( f_quantities )
+        noQuantities = nsons(son) - 1
+        call allocate_test ( quantities, noQuantities, "quantities", ModuleName )
         do j = 2, nsons(son)  ! Skip the "quantities" name
-          nSelections = nSelections + 1
           ! Get the quantity index that was put into the AST by Construct:
-          selected(nSelections) = decoration(decoration(subtree(j,son)))
+          quantities(j-1) = decoration(decoration(subtree(j,son)))
           ! Check for duplicate quantities
-          do k = 1, nSelections - 1
-            if ( selected(k) == selected(nSelections) ) then
-              source = source_ref( subtree(j,son) )
-              call output ( 'At line '  )
-              call output ( mod(source,256) )
-              call output ( ', column ' )
-              call output ( source/256 )
-              call output ( ', the quantity ' )
-              call display_string( sub_rosa(subtree(j,son)) )
-              call output ( ' duplicates a previous one.', advance='yes' )
-              call MLSMessage ( MLSMSG_Error, ModuleName, &
-                "Duplicate quantity specified in vector template" )
-            end if
-          end do ! k = 1, nSelections - 1
+          do k = 1, j-2
+            if ( quantities(k) == quantities(j-1) ) &
+              & call Announce_Error  ( key, 'Duplicate quantities' )
+          end do ! k = 1, noQuantities - 1
         end do ! j = 2, nsons(son)
       end select
     end do
 
-    ! Now finally construct the vector template
+    if ( (  got ( f_adoptColumns ) .or. got ( f_adoptRows ) ) .and. &
+      & .not. associated ( vectorTemplate%quantities ) ) call Announce_Error ( key, &
+      & 'No such l2pc bin to adopt' )
 
-    call ConstructVectorTemplate ( name, quantityTemplates, selected, &
-         & vectorTemplate )
-
-    call deallocate_test ( selected, "selected", ModuleName )
+    if ( got ( f_quantities ) ) then
+      if ( got ( f_adoptColumns ) .or. got ( f_adoptRows ) ) &
+        & call Announce_Error ( key, 'Cannot supply both quantities and adoptRows/Columns' )
+      call ConstructVectorTemplate ( name, quantityTemplates, quantities, &
+        & vectorTemplate )
+      call deallocate_test ( quantities, "quantities", ModuleName )
+    end if
 
     if ( toggle(gen) .and. levels(gen) > 0 ) call &
       & trace_end ( "ConstructVectorTemplateFromMLSCfInfo" )
 
+    if ( got ( f_adoptColumns ) .and. got ( f_adoptRows ) ) &
+      & call Announce_Error ( key, 'Cannot supply both adoptColumns and adoptRows' )
+
   end function CreateVecTemplateFromMLSCfInfo
 
 !=============================================================================
+
+  ! -----------------------------------------------  Announce_Error  -----
+  subroutine Announce_Error ( where, message, extra )
+
+    use LEXER_CORE, only: PRINT_SOURCE
+    use OUTPUT_M, only: OUTPUT
+    use TREE, only: SOURCE_REF
+    use Intrinsic, only: LIT_INDICES
+    use String_Table, only: DISPLAY_STRING
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
+
+    integer, intent(in) :: WHERE   ! Tree node where error was noticed
+    character (LEN=*), intent(in) :: MESSAGE
+    integer, intent(in), optional :: EXTRA
+
+    call output ( '***** At ' )
+    if ( where > 0 ) then
+      call print_source ( source_ref(where) )
+    else
+      call output ( '(no lcf tree available)' )
+    end if
+    call output ( ': ' )
+    call output ( message )
+    if ( present ( extra ) ) call display_string ( lit_indices ( extra ), strip=.true. )
+    call output ( '', advance='yes' )
+    call MLSMessage ( MLSMSG_Error, ModuleName, 'Problem with vector template construction' )
+  end subroutine Announce_Error
+
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
@@ -122,6 +149,9 @@ END MODULE ConstructVectorTemplates
 
 !
 ! $Log$
+! Revision 2.9  2004/01/23 05:47:38  livesey
+! Added the adoption stuff
+!
 ! Revision 2.8  2002/11/22 12:16:44  mjf
 ! Added nullify routine(s) to get round Sun's WS6 compiler not
 ! initialising derived type function results.
