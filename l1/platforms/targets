@@ -1,5 +1,8 @@
 include ../Makefile.dep
 
+# where which_fftw.sh is stored
+MLSBIN=../../util
+
 # "$Id$"
 
 # ========================================================================
@@ -113,12 +116,14 @@ else
    hdf5_message=Building mlsl1 without hdf5
 endif
 
+fftw_linker_line = $(shell ${MLSBIN}/which_fftw.sh ${FFTW_ROOT} ${FFTW_PREC})
 # ========================================================================
 mlsl1: $(ALLOBJS) $(libdir)/libmls.a $(PVM_OBJS)
 		@echo "$(pvm_message)"
 		@echo "$(blas_message)"
 		@echo "$(lapack_message)"
 		@echo "$(hdf5_message)"
+		@cat fftw_link_message
 	$(FC) $(LDOPTS) -o mlsl1 $(ALLOBJS) $(PVM_OBJS) \
                       -L${libdir} -lmls \
 	-L${PGSTK} -lPGSTK \
@@ -133,6 +138,7 @@ mlsl1: $(ALLOBJS) $(libdir)/libmls.a $(PVM_OBJS)
         $(blas_linker_line) \
         $(lapack_linker_line) \
         $(hdf5_linker_line) \
+        $(fftw_linker_line) \
         $(l_specials) $(LAFTER) \
 
 # ========================================================================
@@ -153,6 +159,9 @@ OutputL1B.o:
 
 # ========================================================================
 # $Log$
+# Revision 1.14  2001/11/07 01:14:30  pwagner
+# lapack message refers to this case, not mlsl2
+#
 # Revision 1.13  2001/11/07 00:31:44  pwagner
 # Added lapack linker line and msg
 #
