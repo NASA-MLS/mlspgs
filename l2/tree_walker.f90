@@ -26,6 +26,7 @@ contains ! ====     Public Procedures     ==============================
   subroutine WALK_TREE_TO_DO_MLS_L2 ( ROOT, ERROR_FLAG, FIRST_SECTION, &
     & COUNTCHUNKS, SINGLECHUNK, LASTCHUNKIN, FILEDATABASE )
 
+    use Algebra_M, only: Algebra
     use AntennaPatterns_m, only: Destroy_Ant_Patterns_Database
     use ChunkDivide_m, only: ChunkDivide, DestroyChunkDatabase, &
       & ReduceChunkDatabase
@@ -226,9 +227,11 @@ contains ! ====     Public Procedures     ==============================
         if ( toggle(gen) .and. levels(gen) > 0 ) call dump ( chunks )
         call add_to_section_timing ( 'chunk_divide', t1)
 
+      case ( z_algebra )
+        call algebra ( son, vectors, matrices )
         ! --------------------------------------------------------- Chunk processing
         ! Now construct, fill, join and retrieve live inside the 'chunk loop'
-      case ( z_algebra, z_construct, z_fill, z_join, z_retrieve )
+      case ( z_construct, z_fill, z_join, z_retrieve )
         ! Do special stuff in some parallel cases, or where there are
         ! no chunks.
         if ( ( size(chunks) < 1 ) .or. &
@@ -280,6 +283,7 @@ subtrees:   do while ( j <= howmany )
               son = subtree(j,root)
               select case ( decoration(subtree(1,son)) ) ! section index
               case ( z_algebra )
+                call algebra ( son, vectors, matrices )
               case ( z_construct )
                 if ( .not. checkPaths) &
                 & call MLSL2Construct ( son, l1bInfo, processingRange, &
@@ -446,6 +450,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.123  2004/01/14 18:49:58  vsnyder
+! Stuff to support the Algebra section
+!
 ! Revision 2.122  2003/12/16 01:28:56  livesey
 ! Moved the destruction of the chunk database to after closeParallel.
 !
