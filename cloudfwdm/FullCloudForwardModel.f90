@@ -125,14 +125,13 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     type (VectorValue_T), pointer :: SCGEOCALT     ! Geocentric spacecraft altitude
     type (VectorValue_T), pointer :: ELEVOFFSET    ! Elevation offset quantity
     type (Signal_T) :: signal                      ! A signal
-    type(MatrixElement_T), pointer :: JBLOCK       ! A block from the jacobian
-    !type(VectorValue_T), pointer :: STATEQ        ! A state vector quantity
     type(VectorValue_T), pointer :: STATE_ext      ! A state vector quantity
     type(VectorValue_T), pointer :: STATE_los      ! A state vector quantity
 
     type(VectorValue_T), pointer :: SIDEBANDRATIO  ! From the state vector
 
     ! for jacobian
+    type(MatrixElement_T), pointer :: JBLOCK       ! A block from the jacobian
     integer :: COLJBLOCK                ! Column index in jacobian
     integer :: ROWJBLOCK                ! Row index in jacobian
     integer :: XINSTANCE                ! Instance in x corresponding to xStarInstance
@@ -153,7 +152,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     integer :: ivmr
     integer :: mif
     integer :: MAF                      ! major frame counter
-!    integer :: VMRINST                  ! Instance index
     integer :: INSTANCE                 ! Relevant instance for temperature
     integer :: GPHINST                  ! Relevant instance for GPH
     integer :: NOLAYERS                 ! temp.noSurfs - 1
@@ -255,15 +253,9 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
     do sigInd = 1, size(forwardModelConfig%signals)
 
-    !    if ( size ( forwardModelConfig%signals ) /= 1 )                        &
-    !       & call MLSMessage ( MLSMSG_Error, ModuleName,                       &
-    !       & 'Cannot call the full cloud forward model with multiple signals' )
-
     ! -------------------------------------
     ! Identify the signal (band)
     ! -------------------------------------
-
-    !signal = forwardModelConfig%signals(1)
       
      signal = forwardModelConfig%signals(sigInd)
 
@@ -618,8 +610,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & forwardModelConfig%cloud_width,                                      &
       & forwardModelConfig%cloud_fov,                                        &
       & phi_tan,                                                             &
-      & scGeocAlt%values(1,1),                                               &
-      & elevOffset%values(1,1),                                              &
+      & scGeocAlt%values(1,maf),                                               &
+      & elevOffset%values(1,maf),                                              &
       & antennaPatterns(whichPattern),                                       &
       & a_clearSkyRadiance,                                                  &
       & a_cloudInducedRadiance,                                              &
@@ -796,28 +788,18 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
         jBlock => jacobian%block(rowJblock,colJblock)
 
-        select case ( jBlock%kind )
-
-        case ( M_Absent )
-
-        ! ---------------------------------------------------------------
-        ! In the absent case, the jacobian is stored in a special format
-        !----------------------------------------------------------------
-
+      ! to save space, the jacobian is packed in a full rectangle matrix
         call CreateBlock ( jBlock, noChans, noSgrid*noMIFs, M_Full )
         jBlock%values = 0.0_r8
 
-         jBlock%kind = M_Absent     ! createBlock has changed jBlock%kind
-
-        !------------------------------------------
-        ! Now fill the jacobian, case ( M_Absent )
-        !------------------------------------------
         do chan = 1, noChans
           if ( doChannel(chan) ) then
              do mif = 1, noMIFs
              do i=1,noSgrid
-               jBlock%values(chan, & 
-                & i+(mif-1)*noSgrid)= a_trans(i,mif,chan)
+             ! now we normalize cloud extinction weighting functions at 200GHz 
+             ! and output the transmission functions via Jacobian
+               jBlock%values(chan,i+(mif-1)*noSgrid)= a_trans(i,mif,chan)* &
+                  & (frequencies(chan)/200000._r8)**4
              end do
              end do
 
@@ -825,11 +807,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
           end if
         end do
 
-         case default
-               call MLSMessage(MLSMSG_Error, ModuleName, &
-                 & "Invalid matrix block kind in CreateBlock")              
-         end select
-               
     endif
 
     ENDIF   
@@ -887,6 +864,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.56  2001/10/09 22:11:54  jonathan
+! *** empty log message ***
+!
 ! Revision 1.55  2001/10/09 17:50:17  jonathan
 ! *** empty log message ***
 !
