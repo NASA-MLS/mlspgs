@@ -4,8 +4,8 @@
 
 ; The first are l2cfs for an include, so unquoted
 !define(signalsL2cf,{!calpath/MLS-Aura_L2Cal-Signals_v1-5-0_0000d000.l2cf})
-!define(spectroscopyL2cf,{!calpath/MLS-Aura_L2Cal-Spectroscopy_v1-5-3_0000d000.l2cf})
-!define(spectroscopyRtvlL2cf,{!calpath/MLS-Aura_L2Cal-Spectroscopy-rtvl_v1-5-3_0000d000.l2cf})
+!define(spectroscopyL2cf,{!calpath/MLS-Aura_L2Cal-Spectroscopy_v1-5-4_0000d000.l2cf})
+!define(spectroscopyRtvlL2cf,{!calpath/MLS-Aura_L2Cal-Spectroscopy-rtvl_v1-5-4_0000d000.l2cf})
 !define(sidebandL2cf,{!calpath/MLS-Aura_L2Cal-SBFraction_v1-5-0_0000d000.l2cf})
 !define(fovdirL2cf,{!calpath/MLS-Aura_L2Cal-FOV-Directions_v1-5-0_0000d000.l2cf})
 !define(systempL2cf,{!calpath/MLS-Aura_L2Cal-Tsys_v1-5-0_0000d000.l2cf})
