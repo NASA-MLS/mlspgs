@@ -29,20 +29,19 @@ MODULE L3MMData
 
 ! Contents:
 
-! Definitions -- L3MMData_T
-!                L3MMDiag_T
+! Definition -- L3MMData_T
 ! Subroutines -- OutputMMGrids
+!                OutputMMDiags
 !                WriteMetaL3MM
 !                AllocateL3MM
 !                DeallocateL3MM
-!                DestroyL3MMDatabase
 
 ! Remarks:  This module contains the definition of the L3MMData type, as well
 !           as any routines pertaining to it.
 
 ! Parameters
 
-! This data type is used to store the l3 monthly map data.
+! This data type is used to store the l3 monthly map data and diagnostics.
 
    TYPE L3MMData_T
 
@@ -51,6 +50,7 @@ MODULE L3MMData
      INTEGER :: nLevels				! Total number of surfaces
      INTEGER :: nLats				! Total number of latitudes
      INTEGER :: nLons				! Total number of longitudes
+     INTEGER :: nMisDays			! Number of missing days in the month
 
      ! Now we store the geolocation fields.  First, the vertical one:
 
@@ -70,35 +70,15 @@ MODULE L3MMData
      REAL(r8), DIMENSION(:,:,:), POINTER :: l3mmPrecision ! Field precision
 	! dimensioned as (nLevels, nLats, nLons)
 
+     ! Now the diagnostic fields:
+
+     INTEGER, DIMENSION(:), POINTER :: perMisPoints	! Missing points (percentage)
+	! dimensioned (nLevels)
+
+     CHARACTER (LEN=DATE_LEN), DIMENSION(maxWindow) :: misDays
+	! Missing days, dimensioned (nDays)
+
    END TYPE L3MMData_T
-
-! This data type is used to store the l3 monthly map diagnostics.
-
-   TYPE L3MMDiag_T
-
-     CHARACTER (LEN=GridNameLen) :: name        ! name for the output quantity
-
-     INTEGER :: nLevels         ! Total number of surfaces
-     INTEGER :: nOrbs		! Number of missing orbits in the month
-     INTEGER :: nDays		! Number of missing days in the month
-
-     ! Now we store the vertical geolocation field, dimensioned (nLevels)
-
-     REAL(r8), DIMENSION(:), POINTER :: pressure
-
-     ! Missing points (percentage), dimensioned (nLevels)
-
-     INTEGER, DIMENSION(:), POINTER :: perMisPoints
-
-     ! Missing orbit numbers, dimensioned (nOrbs)
-
-     INTEGER, DIMENSION(:), POINTER :: misOrbNum
-
-     ! Missing days, dimensioned (nDays)
-
-     INTEGER, DIMENSION(:), POINTER :: misDayNum
-
-   END TYPE L3MMDiag_T
 
 CONTAINS
 
@@ -195,7 +175,7 @@ CONTAINS
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      status = gddefdim(gdId, DIMT_NAME, 2)
+      status = gddefdim(gdId, DIMT_NAME, MIN_MAX)
       IF (status /= 0) THEN
           msr = DIM_ERR // DIMT_NAME
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -376,6 +356,206 @@ CONTAINS
    END SUBROUTINE OutputMMGrids
 !------------------------------
 
+!------------------------------------------------
+   SUBROUTINE OutputMMDiags(physicalFilename, mm)
+!------------------------------------------------
+
+! Brief description of subroutine
+! This subroutine creates and writes to the diagnostic portion of l3mm files.
+
+! Arguments
+
+      CHARACTER (LEN=*), INTENT(IN) :: physicalFilename
+
+      TYPE (L3MMData_T), INTENT(IN) :: mm
+
+! Parameters
+
+      CHARACTER (LEN=*), PARAMETER :: DIMD_NAME = 'lDate'
+      CHARACTER (LEN=*), PARAMETER :: DIMMIS_NAME = 'nMisDays'
+      CHARACTER (LEN=*), PARAMETER :: DIMDM_NAME = 'lDate,nMisDays'
+
+      CHARACTER (LEN=*), PARAMETER :: MIS_FIELD = 'MissingDays'
+
+! Functions
+
+      INTEGER, EXTERNAL :: swattach, swclose, swcreate, swdefdfld, swdefdim, swdefgfld
+      INTEGER, EXTERNAL :: swdetach, swopen, swwrfld
+
+! Variables
+
+      CHARACTER (LEN=480) :: msr
+      CHARACTER (LEN=GridNameLen) :: dgName
+
+      INTEGER :: lsize, nsize, status, swfID, swId
+      INTEGER :: edge(2), start(2), stride(2)
+
+! Open the output file
+
+      swfID = swopen(physicalFilename, DFACC_RDWR)
+      IF (swfID == -1) THEN
+         msr = MLSMSG_Fileopen // physicalFilename
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Create the swath
+
+      dgName = TRIM(mm%name) // 'Diagnostics'
+      swId = swcreate(swfID, dgName)
+      IF (swId == -1) THEN
+          msr = 'Failed to create swath ' // dgName
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Define the dimensions
+
+      status = swdefdim(swID, DIMR_NAME, MIN_MAX)
+      IF (status == -1) THEN
+         msr = DIM_ERR // DIMR_NAME
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      IF (mm%nMisDays == 0) THEN
+         nsize =1
+         lsize = 4
+      ELSE
+         nsize = mm%nMisDays
+         lsize = DATE_LEN
+      ENDIF
+
+      status = swdefdim(swId, DIMD_NAME, lsize)
+      IF (status /= 0) THEN
+          msr = DIM_ERR // DIMD_NAME
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      status = swdefdim(swId, DIMMIS_NAME, nsize)
+      IF (status /= 0) THEN
+          msr = DIM_ERR // DIMMIS_NAME
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      status = swdefdim(swId, DIM_NAME2, mm%nLevels)
+      IF (status /= 0) THEN
+          msr = DIM_ERR // DIM_NAME2
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Define the "geolocation" fields
+
+      status = swdefgfld(swID, GEO_FIELD3, DIMR_NAME, DFNT_FLOAT64, HDFE_NOMERGE)
+      IF (status == -1) THEN
+         msr = GEO_ERR // GEO_FIELD3
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      status = swdefgfld(swId, GEO_FIELD9, DIM_NAME2, DFNT_FLOAT32, HDFE_NOMERGE)
+      IF (status /= 0) THEN
+          msr = GEO_ERR // GEO_FIELD9
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Define the "data" fields
+
+      status = swdefdfld(swId, DG_FIELD2, DIM_NAME2, DFNT_INT32, HDFE_NOMERGE)
+      IF (status /= 0) THEN
+          msr = DAT_ERR // DG_FIELD2
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      status = swdefdfld(swId, MIS_FIELD, DIMDM_NAME, DFNT_CHAR8, HDFE_NOMERGE)
+      IF (status /= 0) THEN
+          msr = DAT_ERR // MIS_FIELD
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Detach from the swath interface after definition.
+
+      status = swdetach(swId)
+      IF (status /= 0) THEN
+          msr = SW_ERR // TRIM(dgName) // ' after L3MM dg definition.'
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Re-attach to the swath for writing
+
+      swId = swattach(swfID, dgName)
+      IF (swId == -1) THEN
+          msr = 'Failed to re-attach to swath ' // TRIM(dgName) // ' for writing.'
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Write to fields
+
+      start = 0
+      stride = 1
+      edge(1) = mm%nLevels
+
+! Geolocation -- time & pressure
+
+      status = swwrfld(swID, GEO_FIELD3, start(1), stride(1), stride(1), &
+                       mm%startTime)
+      IF (status == -1) THEN
+          msr = WR_ERR // GEO_FIELD3
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      status = swwrfld(swID, GEO_FIELD3, stride(1), stride(1), stride(1), &
+                       mm%endTime)
+      IF (status == -1) THEN
+          msr = WR_ERR // GEO_FIELD3
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      status = swwrfld( swId, GEO_FIELD9, start(1), stride(1), edge(1), &
+                        REAL(mm%pressure) )
+      IF (status /= 0) THEN
+          msr = WR_ERR //  GEO_FIELD9 // ' to swath ' // dgName
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Data fields
+
+      status = swwrfld(swId, DG_FIELD2, start(1), stride(1), edge(1), &
+                       mm%perMisPoints)
+      IF (status /= 0) THEN
+          msr = WR_ERR //  DG_FIELD2 // ' to swath ' // dgName
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      edge(1) = lsize
+      edge(2) = nsize
+      status = swwrfld(swId, MIS_FIELD, start, stride, edge, mm%misDays)
+      IF (status /= 0) THEN
+          msr = WR_ERR //  MIS_FIELD // ' to swath ' // dgName
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Detach from the swath after writing
+
+      status = swdetach(swId)
+      IF (status /= 0) THEN
+          msr = SW_ERR // TRIM(dgName) // ' after writing.'
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Close the file after writing
+
+      status = swclose(swfID)
+      IF (status /= 0) THEN
+          msr = 'Failed to close file ' // TRIM(physicalFilename) // &
+                ' after writing.'
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      msr = 'Swath ' // TRIM(dgName) // ' successfully written to file ' // &
+            physicalFilename
+      CALL MLSMessage(MLSMSG_Info, ModuleName, msr)
+
+!------------------------------
+   END SUBROUTINE OutputMMDiags
+!------------------------------
+
 !---------------------------------------------------------------
    SUBROUTINE WriteMetaL3MM (file, mlspcf_mcf_l3mm, pcf, anText)
 !---------------------------------------------------------------
@@ -418,7 +598,7 @@ CONTAINS
 
       REAL(r8) :: dval
 
-! Check to see whether this is the Diagnostic files
+! Check to see whether this is a Diagnostic product
 
       dg = 0
 
@@ -827,13 +1007,13 @@ CONTAINS
 
       ALLOCATE(l3mm%latitude(l3mm%nLats), STAT=err)
       IF ( err /= 0 ) THEN
-         msr = MLSMSG_Allocate // ' L3MMData_T latitude pointer.'
+         msr = MLSMSG_Allocate // ' latitude pointer.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
       ALLOCATE(l3mm%longitude(l3mm%nLons), STAT=err)
       IF ( err /= 0 ) THEN
-         msr = MLSMSG_Allocate // ' L3MMData_T longitude pointer.'
+         msr = MLSMSG_Allocate // ' longitude pointer.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
@@ -841,7 +1021,7 @@ CONTAINS
 
       ALLOCATE(l3mm%pressure(l3mm%nLevels), STAT=err)
       IF ( err /= 0 ) THEN
-         msr = MLSMSG_Allocate // ' L3MMData_T pressure pointer.'
+         msr = MLSMSG_Allocate // ' pressure pointer.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
@@ -849,13 +1029,21 @@ CONTAINS
 
       ALLOCATE(l3mm%l3mmValue(l3mm%nLevels,l3mm%nLats,l3mm%nLons), STAT=err)
       IF ( err /= 0 ) THEN
-         msr = MLSMSG_Allocate // ' L3MMData_T value pointer.'
+         msr = MLSMSG_Allocate // ' value pointer.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
       ALLOCATE(l3mm%l3mmPrecision(l3mm%nLevels,l3mm%nLats,l3mm%nLons),STAT=err)
       IF ( err /= 0 ) THEN
-         msr = MLSMSG_Allocate // ' L3MMData_T precision pointer.'
+         msr = MLSMSG_Allocate // ' precision pointer.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Diagnostic fields
+
+      ALLOCATE(l3mm%perMisPoints(l3mm%nLevels), STAT=err)
+      IF ( err /= 0 ) THEN
+         msr = MLSMSG_Allocate // ' perMisPoints pointer.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
@@ -890,7 +1078,7 @@ CONTAINS
       IF ( ASSOCIATED(l3mm%latitude) ) THEN
          DEALLOCATE (l3mm%latitude, STAT=err)
          IF ( err /= 0 ) THEN
-            msr = MLSMSG_DeAllocate // '  l3mm latitude pointer'
+            msr = MLSMSG_DeAllocate // '  latitude pointer'
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
       ENDIF
@@ -898,7 +1086,7 @@ CONTAINS
       IF ( ASSOCIATED(l3mm%longitude) ) THEN
          DEALLOCATE (l3mm%longitude, STAT=err)
          IF ( err /= 0 ) THEN
-            msr = MLSMSG_DeAllocate // '  l3mm longitude pointer'
+            msr = MLSMSG_DeAllocate // '  longitude pointer'
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
       ENDIF
@@ -908,7 +1096,7 @@ CONTAINS
       IF ( ASSOCIATED(l3mm%pressure) ) THEN
          DEALLOCATE (l3mm%pressure, STAT=err)
          IF ( err /= 0 ) THEN
-            msr = MLSMSG_DeAllocate // '  l3mm pressure pointer'
+            msr = MLSMSG_DeAllocate // '  pressure pointer'
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
       ENDIF
@@ -931,62 +1119,28 @@ CONTAINS
          ENDIF
       ENDIF
 
+! Diagnostic fields
+
+      IF ( ASSOCIATED(l3mm%perMisPoints) ) THEN
+         DEALLOCATE (l3mm%perMisPoints, STAT=err)
+         IF ( err /= 0 ) THEN
+            msr = MLSMSG_DeAllocate // '  perMisPoints pointer'
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+      ENDIF
+
 !-------------------------------
    END SUBROUTINE DeallocateL3MM
 !-------------------------------
-
-!-----------------------------------------
-   SUBROUTINE DestroyL3MMDatabase (l3mmdb)
-!-----------------------------------------
-
-! Brief description of subroutine
-! This subroutine deallocates the internal structures of an l3mm database, and
-! then database itself
-
-
-! Arguments
-
-      TYPE (L3MMData_T), DIMENSION(:), POINTER :: l3mmdb
-
-! Parameters
-
-! Functions
-
-! Variables
-
-      CHARACTER (LEN=480) :: msr
-
-      INTEGER :: err, i
-
-! Check the status of the input pointer
-
-      IF ( ASSOCIATED(l3mmdb) ) THEN
-
-! If it's associated, then deallocate the internal structures
-
-         DO i = 1, SIZE(l3mmdb)
-            CALL DeallocateL3MM( l3mmdb(i) )
-         ENDDO
-
-! Deallocate the database itself
-
-         DEALLOCATE (l3mmdb, STAT=err)
-         IF ( err /= 0 ) THEN
-            msr = MLSMSG_DeAllocate // '  l3mm database'
-            CALL MLSMessage ( MLSMSG_Error, ModuleName, msr)
-         ENDIF
-
-      ENDIF
-
-!------------------------------------
-   END SUBROUTINE DestroyL3MMDatabase
-!------------------------------------
 
 !==================
 END MODULE L3MMData
 !==================
 
 !# $Log$
+!# Revision 1.2  2001/11/12 20:24:56  nakamura
+!# Added L3MMDiag_T.
+!#
 !# Revision 1.1  2001/07/18 15:41:57  nakamura
 !# Module for the L3MM data type.
 !#
