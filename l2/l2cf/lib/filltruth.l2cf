@@ -48,9 +48,14 @@ begin Fill
 
 
   ;; --------------------------------------------- tpPressure
-  Fill, quantity=truth.tpPressure, method=wmoTropopause, $
-    temperatureQuantity=truth.temperature, refGPHQuantity=truth.refGPH, $
-    internalVgrid=vGridWMO
+  !ifdef(tpPressure,{
+    Fill, quantity=truth.tpPressure, method=explicit, $
+      explicitValues=!tpPressure, /spread
+  }{
+    Fill, quantity=truth.tpPressure, method=wmoTropopause, $
+      temperatureQuantity=truth.temperature, refGPHQuantity=truth.refGPH, $
+      internalVgrid=vGridWMO
+  })
 
   ;; --------------------------------------------- Ptan
 
