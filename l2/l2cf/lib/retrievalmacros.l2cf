@@ -252,7 +252,7 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
     integrationGrid=vGridTangent, $
     tangentGrid=vGridTangent, $
     /do_conv, /atmos_der, /do_baseline})
-!define(makeFwm,{!dnl
+!define(makeFwm1d,{!dnl
   $1_1d: ForwardModel, type=full, $
     signals=$3, $
     phiWindow=0.0, $
@@ -287,6 +287,9 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
     /do_conv, /atmos_der, /do_baseline})
 
 ; $Log$
+; Revision 1.26  2002/10/11 19:29:29  livesey
+; Added 1D forward models.
+;
 ; Revision 1.25  2002/10/09 00:48:23  livesey
 ; Split forward models into simple and otherwise
 ;
