@@ -2,7 +2,7 @@
 #
 #  Lost? Type 'cd ../; make help -f MakeFC' from this directory
 #
-# Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+# Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 # "$Id$"
@@ -77,15 +77,18 @@ libmls_f90 := $(shell ${REECHO} $(libmls_sources)/*.f $(libmls_sources)/*.f90 \
   $(libmls_sources)/lit_names.txt)
 blaslib_f := $(shell ${REECHO} $(blaslib)/*.c $(blaslib)/*.f $(blaslib)/*.f90 \
   $(blaslib)/*.f9h $(srclib)/*.f9h)
+machinelib := $(libmls_sources)/machines/$(MLSCONFG)/
+machine_f := $(shell ${REECHO} $(machinelib)/*.c $(machinelib)/*.f \
+  $(machinelib)/*.f90)
 
 ifndef DONTBUILDPREQS
 ifdef BLAS
    LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
-   $(libmls_sources)/machines/$(MLSCONFG)/machine.f90 \
+   $(machine_f) \
    $(REECHO) $(libmls_objs)
 else
    LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
-   $(libmls_sources)/machines/$(MLSCONFG)/machine.f90 \
+   $(machine_f) \
    $(blaslib_f) $(REECHO) $(libmls_objs)
 endif
 endif
@@ -251,6 +254,9 @@ targ:
 	$(TAR) hcvzf ../fwdmdl.tgz * --exclude \*.o --exclude \*.mod --exclude l2_test
 
 # $Log$
+# Revision 2.18  2003/05/20 18:39:23  pwagner
+# Uses DONTBUILDPREQS to stop some hunting
+#
 # Revision 2.17  2003/04/30 23:04:55  pwagner
 # Now lets you make update in each subdirectory
 #
