@@ -92,7 +92,7 @@ begin Fill
   !ifdef(flagGotClimatology,{
   ;; Now fill some remaining stuff
   ;; PEs read in an apriori reference GPH from climatology
-  !ifdef(glagPrecisionEstimates,{
+  !ifdef(flagPrecisionEstimates,{
   ; PEs have read in an apriori reference GPH from climatology
   },{
     Fill, quantity=apriori.refGPH, method=explicit, $
