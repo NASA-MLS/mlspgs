@@ -432,8 +432,8 @@ CONTAINS
              tempDNewByDOld(newInd+ind*noNew,upperInds(newInd)+ind*noOld)=B(newInd)
           ENDDO
        ENDDO
-       CALL Sparsify(tempDNewByDOld,dNewbyDOld)
-       CALL Deallocate_test(tempDNewByDOld,"tempDNewByDOld",ModuleName)
+       CALL Sparsify ( tempDNewByDOld, dNewbyDOld, &
+         & "tempDNewByDOld", ModuleName ) ! dNewbyDOld := tempDNewByDOld
     ENDIF
 
     ! Now do the spline calculation
@@ -529,6 +529,9 @@ END MODULE MLSNumerics
 
 !
 ! $Log$
+! Revision 2.5  2001/04/11 22:43:19  vsnyder
+! Let sparsify do the deallocate_test
+!
 ! Revision 2.4  2001/03/06 00:35:23  livesey
 ! Missed one pointer nullification
 !
