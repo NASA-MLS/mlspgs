@@ -77,7 +77,7 @@ c========================
 
 	rn0 = 0.
 
-        IF(IPSD .EQ. 0) THEN     ! MH DISTRIBUTION
+        IF(IPSD .EQ. 1000) THEN     ! MH DISTRIBUTION
 
            iwc0 = min(CWC, 0.252*(CWC/iwc00)**0.837)
            iwc1 = CWC - iwc0
@@ -101,18 +101,18 @@ c... MH size dist has two parts separated at 100 micron
      >	      /exp(3*mu1+9./2*rao1*rao1)/diam/rao1/diam0**3
      >	      *exp(-0.5*((log(diam/diam0)-mu1)/rao1)**2)
 
-        ELSE IF(IPSD .EQ. 2) THEN   ! GAMMA DISTRIBUTION 
+        ELSE IF(IPSD .EQ. 2000) THEN   ! GAMMA DISTRIBUTION 
 
            dme = 150.
            al=1.0
            rn0 = diam**(-al)*exp(-(al+3.67)*diam/dme)
 
-        ELSE IF(IPSD .EQ. 1) THEN   ! LIU-CURRY DISTRIBUTION 
+        ELSE IF(IPSD .EQ. 1100) THEN   ! LIU-CURRY DISTRIBUTION 
 
           dmm = 750. + 10*tempc
 	  rn0 = exp(-5.*(diam-100.)/(dmm+500.)**0.75)
 
-        ELSE IF(IPSD .EQ. 3) THEN   ! KNOLLENBERG DISTRIBUTION 
+        ELSE IF(IPSD .EQ. 4000) THEN   ! KNOLLENBERG DISTRIBUTION 
           v1=-1.9
           b1=0.05
           rn0=(1.e-5+diam**v1)*exp(-b1*diam)

@@ -33,7 +33,7 @@ C===================================================================
       REAL TEMP_AIR(L)                 ! MEAN AIR TEMPERATURE AT L
       REAL YZ(L+1)                     ! PRESSURE HEIGHT (km)
       REAL ZT(NT)                      ! TANGENT HEIGHT (m)
-      REAL TT(MNT,L+1)                ! TB AT ZT, LAST INDEX IS ZENITH LOOKING
+      REAL TT(MNT+1,L+1)                ! TB AT ZT, LAST INDEX IS ZENITH LOOKING
       REAL FREQ                        ! FREQUENCY (GHz)
       REAL TSPACE                      ! COSMIC BACKGROUND RADIANCE
       REAL TS                          ! SURFACE TEMPERATURE (K)

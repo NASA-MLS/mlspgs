@@ -1,5 +1,6 @@
 
-      SUBROUTINE CLOUDY_SKY(ISPI,CWC,TEMP,F,NU,U,DU,PH,RC,IPSD,Dm)
+      SUBROUTINE CLOUDY_SKY(ISPI,CWC,TEMP,F,NU,U,DU,PH,RC,IPSD,Dm,
+     >                      PH1,NAB,P,DP,NR,R,RN,BC,A,B,NABR)
 
 C=======================================================
 C     >>>>>>>>CLOUDY-SKY RADIATION SCHEME<<<<<<<<<<
@@ -11,8 +12,6 @@ C=======================================================
       IMPLICIT NONE
       REAL PI
       PARAMETER (PI=3.1415926)
-      REAL*8 RE
-      PARAMETER (RE=6370.d3)
       REAL F                                ! FREQUENCY IN GHz
       REAL WL                               ! WAVELENGTH IN METERS
 
@@ -22,23 +21,20 @@ C---------------------------------------
 
       INTEGER ISPI                          ! CLOUD TYPE (1:ICE,2:WATER)
 
-      INTEGER IPSD                          ! SIZE-DISTRIBUTION TYPE
-                                            ! 0 = USER DEFINED
-                                            ! 1 = MH
-                                            ! 2 = GAMMA (dme=150)
-                                            ! 3 = LIU-CURRY 
-                                            ! 4 = KNOLLENGBERG (b1=0.05)
-                                            ! N.B. IF ISPD=0,2,4 USER MAY
-                                            !      DEFINE NEW DISTRIBUTION
-                                            !      OR CHANGE PARAMETERS 
-                                            !      (dme,b1) IN drp_size.f  
+      INTEGER IPSD                          ! SIZE-DISTRIBUTION FLAG
+                                            ! IILL     (I=ICE, L=LIQUID)
+                                            ! 1000:     I->MH, L->GAMMA 
+                                            ! 1100:     I->LIU-CURRY
+                                            ! 2000-3900:I->MODIFIED GAMMA
+                                            !              WITH VARIOUS De,
+                                            !              alpha
+                                            ! 4000-5900:I->KNOLLENBERG WITH 
+                                            !              VARIOUS b1
+                                            ! 6000:     I->PSD FOR PSC
       
       INTEGER NR                            ! NO OF PARTICLE SIZE BINS
       INTEGER NAB                           ! MAXIMUM NO OF A, B TERMS
       INTEGER NU                            ! DIMENSION FOR U
-      INTEGER NU0                           ! MAXIMUM DIMENSION FOR U    
-
-      PARAMETER (NR=40,NAB=50,NU0=256)
 
       INTEGER NABR(NR)                      ! TRUNCATION FOR A, B AT R
 
@@ -55,12 +51,12 @@ C---------------------------------------
       COMPLEX A(NR,NAB),B(NR,NAB)           ! MIE COEFFICIENCIES
 
       REAL PH(NU)                           ! INTERGRATED PHASE FUNCTION
-      REAL PH1(NU0)                         ! SINGLE PARTICLE PHASE FUNCTION
+      REAL PH1(NU)                         ! SINGLE PARTICLE PHASE FUNCTION
 
       COMPLEX S1,S2                         ! SINGLE PARTICLE AMPLITUDE FUNCTION
 
-      REAL P(NAB,NU0)                       ! LEGENDRE POLYNOMIALS l=1
-      REAL DP(NAB,NU0)                      ! Delt LEGENDRE POLYNOMIALS l=1
+      REAL P(NAB,NU)                       ! LEGENDRE POLYNOMIALS l=1
+      REAL DP(NAB,NU)                      ! Delt LEGENDRE POLYNOMIALS l=1
       
 
 C---------------------------------------
@@ -84,7 +80,7 @@ C-----------------------------------------------------------------------------
          RN(I)=0.
       ENDDO
 
-      CALL PFSETUP(NAB,P,DP,U,NU,NU0)       
+      CALL PFSETUP(NAB,P,DP,U,NU)       
       CALL DRP_SIZE(ISPI,R,RN,NR,CWC,TEMP,IPSD,Dm)
       CALL MIECOEFF(ISPI,F,TEMP,NR,R,A,B,NAB,NABR,BC)
 

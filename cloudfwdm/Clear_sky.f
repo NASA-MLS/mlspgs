@@ -17,7 +17,7 @@ C-------------------------------------------------
       INTEGER L,NU,NP,I
       REAL RS(NU/2),T(L),TAU(L),U(NU),Z(L),TAU100(L)
       REAL XZ(L+1),XP(L+1),XT(L+1),XQ(L+1)
-      REAL VMR(5,L+1),VMR1(5)
+      REAL VMR(2,L+1),VMR1(5)
 
 C-------------------------------------------------
 C     SURFACE REFLECTIVITY

@@ -1,12 +1,10 @@
-	subroutine pfsetup(n,p,dp,u,nu,nu0)
+	subroutine pfsetup(n,p,dp,u,nu)
 	implicit none
 	
-	integer i,j,n,nu,nu0
-c	integer nmax 	! NOTE NMAX MUST = NAB IN CLOUDY_SKY.f 
-c	parameter(nmax=50)
+	integer i,j,n,nu
 	real u(nu)
-	real p(n,nu0)
-	real dp(n,nu0)
+	real p(n,nu)
+	real dp(n,nu)
 	real w1, w2, v1, v2, us
 
 	do 100 i=1,nu

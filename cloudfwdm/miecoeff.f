@@ -70,9 +70,6 @@ c ....   for zvi f95
         p1=a1/m+i*x1
         p2=m*a1+i*x1
 
-c        a(j,i) = cmplx( (p1*dreal(w1)-dreal(w0))/(p1*w1-w0) )   !jj
-c        b(j,i) = cmplx( (p2*dreal(w1)-dreal(w0))/(p2*w1-w0) )   !jj
-
         a(j,i) = cmplx( (p1*real(w1)-real(w0))/(p1*w1-w0) )
         b(j,i) = cmplx( (p2*real(w1)-real(w0))/(p2*w1-w0) )
 

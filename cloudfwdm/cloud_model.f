@@ -1,16 +1,18 @@
 
-      SUBROUTINE CLOUD_MODEL(ITYPE,CHT,YZ,NH,IWC,LWC,WCscale)
+      SUBROUTINE CLOUD_MODEL(ITYPE,CHT,YZ,NH,IWC,LWC,WCscale,WC,N)
 
 C=========================================================================C
 C  DEFINE VERTICAL PROFILES OF CLOUD ICE-WATER-CONTENT                    C
 C  - J.JIANG (05/18/2001)                                                 C
 C=========================================================================C
 
-      INTEGER ITYPE,NH
+      INTEGER ITYPE,NH,N
 
       REAL YZ(NH)
       REAL IWC(NH)
       REAL LWC(NH)
+      REAL WC(N,NH)     ! CLOUD WATER CONTENT (g/m3)
+                        ! (1=ICE,2=WATER)
       REAL CLD_TOP
       REAL CLD_BASE
       REAL UPPER_LAG
@@ -28,12 +30,14 @@ C--------------------------------------------------------------------
          PRINT*,' '
          PRINT*,' -> CLOUD-TYPE: DEEP-CONVECTIVE SYSTEM '
 C                                ======================
-         CLD_TOP   = HT + 1000.         !CONVECTIVE CLOUD-TOP
-         CLD_BASE  = HT - 11600.        !CONVECTIVE CLOUD-BASE
+
+         CLD_TOP   = HT + 1000.         ! CONVECTIVE CLOUD-TOP
+         CLD_BASE  = HT - 11600.        ! CONVECTIVE CLOUD-BASE
          UPPER_LAG = HT - 8000.
          LOWER_LAG = HT - 10000.
 
          DO I=1,NH
+
             IF (YZ(I) .GT. CLD_TOP .OR. YZ(I) .LT. CLD_BASE) THEN
                IWC(I) = 0.0
             ELSE IF (YZ(I).LE.UPPER_LAG .AND. YZ(I).GE.LOWER_LAG) THEN
@@ -43,8 +47,14 @@ C                                ======================
             ELSE IF (YZ(I).LT.LOWER_LAG .AND. YZ(I).GE.CLD_BASE) THEN
                IWC(I) = 1.0*EXP(-(LOWER_LAG-YZ(I))/500.)
             ENDIF
-            LWC(I) = 0.0
+
+            ! LIQUID WATER CLOUD
+            
+            IF (YZ(I).GT.5000. .AND. YZ(I).LT. 10000.) THEN
+               LWC(I) = 0.1*0.
+            ENDIF
          ENDDO
+
 
       ELSE IF (ITYPE .EQ. 2) THEN
          PRINT*,' '
@@ -115,8 +125,10 @@ C                                =================
 
 
       DO I=1,NH
-            IWC(I)=WCscale*IWC(I)
-            LWC(I)=WCscale*LWC(I)
+c            IWC(I)=WCscale*IWC(I)
+c            LWC(I)=WCscale*LWC(I)
+            WC(1,I)=WCscale*IWC(I)
+            WC(2,I)=WCscale*LWC(I)
       ENDDO
 
       GOTO 200
@@ -124,6 +136,8 @@ C                                =================
  100  DO I=1,NH
             IWC(I)=0.
             LWC(I)=0.
+            WC(1,I)=0.
+            WC(2,I)=0.
       ENDDO
 
  200  CONTINUE

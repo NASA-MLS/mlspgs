@@ -1,9 +1,15 @@
 
-      SUBROUTINE CloudForwardModel ( NF, NZ, NT, NS,
+      SUBROUTINE CloudForwardModel (NF,NZ,NT,NS,N,
      1           FREQUENCY, PRESSURE, HEIGHT, TEMPERATURE, VMRin,
-     2           IWC, LWC, IPSD, 
+     2           WC, IPSD, 
      3           ZT, RE, ISURF, ISWI, ICON,
-     4           TB0, DTcir, BETA, BETAc, Dm, TAUeff, SS )  
+     4           TB0, DTcir, BETA, BETAc, Dm, TAUeff, SS,
+     + 
+     5           NU,NUA,NAB,NR,
+     6           PH0,PHH,PH1,RC,RC_TMP,CDEPTH,W0,W00,U,DU,UA,THETA,
+     6           PHI,UI,THETAI,RS,P11,YQ,VMR,ZZT,CHK_CLD,TEMP,TAU0,
+     6           TAU,TAU100,delTAU,delTAUc,TT0,TT,Z,P,DP,R,RN,BC,
+     6           NABR,A,B) 
 
 C============================================================================C
 C   >>>>>>>>> FULL CLOUD FORWARD MODEL FOR MICROWAVE LIMB SOUNDER >>>>>>>>   C
@@ -16,25 +22,35 @@ C     IN CLOUD FLAGING PROCESS. IN THE CLOUD FLAGING CASE, THIS PROGRAM      C
 C     MUST BE CALLED TWICE TO COMPUTE CLEAR-SKY RADIANCES IN BOTH DRY &      C
 C     WET (100% RELATIVE HUMIDITY) CONDITIONS.                               C
 C                                                                            C
-C     JONATHAN H. JIANG, JUNE 6, 2001                                        C
+C     JONATHAN H. JIANG                                                      C
 C                                                                            C
+C     -- MAY 18, 2001: FIRST WORKING VERSION.                                C
+C     -- JUNE 9, 2001: ELIMINATE INTERNAL GRID SO THAT THE INPUT/OUTPUT      C
+C                      GRID ARE THE SAME AS THE INTERNAL GRID. HOWEVER,      C
+C                      THE NUMBER OF MODEL PARAMETER NEEDED TO PASSE TO      C
+C                      LEVEL 2 WAS THEREFORE INCREASED.                      C
 C----------------------------------------------------------------------------C
 C                                                                            C
 C     <<< INPUT PARAMETERS >>>                                               C
-C     ------------------------                                               C
+C     ========================                                               C
 C                                                                            C
 C     0. DEMENSION:                                                          C
 C     -------------                                                          C
 C     NF:             -> Number of Frequencies.                              C
-C     NZ:             -> Number of Pressure Levels. Note the internal model  C 
-C                        grid resuires NZ=640 and top of the model layer is  C
-C                        defined at PRESSURE(640)=10^(-(40/16-3)). However,  C
-C                        the input can be any number of pressure levels and  C
-C                        this program will check the input grid and convert  C
-C                        the input grid to internal model grid, if it finds  C
-C                        the input grid not matching the internal grid.      C
+C     NZ:             -> Number of Pressure Levels.                          C
+C                        -------------------------------------------------   C
+C               NOTE:    The internal model grid resuires NZ=640, and        C
+C                        PRESSURE levels are defined as the following:       C
+C                            NZ=640                                          C
+C                            Ptop = 40./16.-3.                               C
+C                            Pbottom=-ALOG10(PRESSURE(lowest-level))         C
+C                            dP=(Ptop-Pbottom)/NZ                            C
+C                            ZH(I)=Pbottom+(I-1)*dP,      I=1,NZ             C
+C                            PRESSURE(I) = 10**(-ZH(I)) , I=1,NZ             C
+C                        -------------------------------------------------   C
 C     NT:             -> Number of Tangent Pressures.                        C
 C     NS:             -> Number of Chemical Species.                         C
+C     N:              -> Number of Cloud Species.                            C
 C                                                                            C
 C     1. ATMOSPHERIC PROFILES:                                               C
 C     ------------------------                                               C
@@ -42,13 +58,13 @@ C     FREQUENCY  (NF) -> Frequency (GHz).                                    C
 C     PRESSURE   (NZ) -> Pressure (hPa).                                     C
 C     HEIGHT     (NZ) -> Geopotential Height (hPa).                          C
 C     TEMPERATURE(NZ) -> Temperature (K).                                    C 
-C     VMRin   (NS,NZ) -> Volumn Mixing Ratios (ppm). Note: only H2O and O3   C
-C                        mixing ratios are needed for input.                 C
+C     VMRin   (NS,NZ) -> NS=1: H2O Volumn Mixing Ratios (ppm).               C
+C                        NS=2: O3 Volumn Mixing Ratio (ppm).                 C
 C                                                                            C
 C     2. CLOUD PARAMETERS:                                                   C
 C     --------------------                                                   C
-C     IWC        (NZ) -> Cloud Ice Water Content (g/m3).                     C
-C     LWC        (NZ) -> Cloud Liquid Water Content (g/m3).                  C
+C     WC       (N,NZ) -> N=1: Cloud Ice Water Content (g/m3).                C
+C                        N=2: Cloud Liquid Water Content (g/m3).             C
 C     IPSD       (NZ) -> Particle Size Distribution Flag.                    C
 C                                                                            C
 C     3. OTHER PARAMETERS:                                                   C
@@ -61,7 +77,7 @@ C     ICON            -> Cloud Control Switch (Default: 2).                  C
 C     -----------------------------------------------                        C
 C                                                                            C
 C     >>> OUTPUT PARAMETERS <<<                                              C
-C     -------------------------                                              C
+C     =========================                                              C
 C                                                                            C
 C     4. STANDARD OUTPUTS:                                                   C
 C     --------------------                                                   C
@@ -71,9 +87,30 @@ C     TAUeff  (NT,NF) -> Effective Cloud Optical Depth.                      C
 C     SS      (NT,NF) -> Cloud Radiance Sensitivity (K).                     C
 C     BETA  (NZ-1,NF) -> Total Extinction Profile (m-1).                     C
 C     BETAc (NZ-1,NF) -> Cloud Extinction Profile (m-1).                     C
-C     Dm     (2,NZ-1) -> Mass-Mean-Diameters (micron). Note:1=Ice,2=Liquid.  C
+C     Dm     (N,NZ-1) -> Mass-Mean-Diameters (micron). Note:1=Ice,2=Liquid.  C
 C                                                                            C
 C     -----------------------------------------------                        C
+C                                                                            C
+C     ((( INTERNAL MODEL PARAMETERS )))                                      C
+C     =================================                                      C
+C                                                                            C
+C     5. FIXED PARAMETERS                                                    C
+C     -------------------                                                    C
+C     NU  = 16        -> Number of scattering angles.                        C
+C     NUA = 8         -> Number of azimuth angles.                           C
+C     NAB = 50        -> Maximum number of truncation terms.                 C
+C     NR  = 40        -> Number of particle size bins.                       C
+C                                                                            C
+C     6. MODEL PARAMETERS AND WORK SPACE                                     C
+C     ----------------------------------                                     C
+C     PH0(N,NU,NZ-1),PHH(N,NU,NZ-1),PH1(NU),RC(N,3),RC_TMP(N,3),             C
+C     CDEPTH(N),W0(N,NZ-1),W00(N,NZ-1),U(NU),DU(NU),UA(NUA),THETA(NU),       C
+C     PHI(NUA),UI(NU,NU,NUA),THETAI(NU,NU,NUA),RS(NU/2),P11(NU),             C
+C     YQ(NZ),VMR(NS,NZ),ZZT(NT),CHK_CLD(NZ),TEMP(NZ-1),TAU0(NZ-1),           C
+C     TAU(NZ-1),TAU100(NZ-1),delTAU(NZ-1),delTAUc(NZ-1),TT0(NT+1),           C
+C     TT(NT+1),Z(NZ-1),P(NAB,NU),DP(NAB,NU),R(NR),RN(NR),BC(3,NR),           C
+C     NABR(NR),A(NR,NAB),B(NR,NAB)                                           C
+C     --------------------------------------------------------------         C
 C                                                                            C
 C     FREQUENCY RANGE: 1-3000GHz                                             C
 C                                                                            C
@@ -98,7 +135,9 @@ C---------------------------------------
       INTEGER NF                               ! NUMBER OF FREQUENCIES
       INTEGER NZ                               ! NUMBER OF PRESSURE LEVELS
       INTEGER NT                               ! NUMBER OF TANGENT HEIGHTS
-      INTEGER NS                               ! NUMBER OF SPECIES
+      INTEGER NS                               ! NUMBER OF CHEMICAL SPECIES
+      INTEGER N                                ! NUMBER OF CLOUD SPECIES
+
 
       INTEGER IPSD(NZ)                         ! SIZE-DISTRIBUTION FLAG
                                                ! IILL     (I=ICE, L=LIQUID)
@@ -134,9 +173,8 @@ C---------------------------------------
       REAL VMRin(NS,NZ)                        ! 1=H2O VOLUME MIXING RATIO
                                                ! 2=O3 VOLUME MIXING RATIO
 
-      REAL IWC(NZ)                             ! ICE WATER CONTENT
-      REAL LWC(NZ)                             ! LIQUID WATER CONTENT
-
+      REAL WC(N,NZ)                            ! CLOUD WATER CONTENT
+                                               ! N=1: ICE; N=2: LIQUID
       REAL ZT(NT)                              ! TANGENT PRESSURE
       REAL*8 RE                                ! EARTH RADIUS
 
@@ -154,7 +192,7 @@ C--------------------------------------
       REAL BETA(NZ-1,NF)                       ! TOTAL OPTICAL DEPTH
       REAL BETAc(NZ-1,NF)                      ! CLOUDY OPTICAL DEPTH
 
-      REAL Dm(2,NZ-1)                          ! MASS-MEAN-DIAMETER
+      REAL Dm(N,NZ-1)                          ! MASS-MEAN-DIAMETER
 
                                                ! -- END OF INTERFACE AREA -- !
 
@@ -167,22 +205,13 @@ C-------------------------------
       REAL PI
       PARAMETER (PI=3.1415926)
       
-      INTEGER L                                ! NO. OF ATMOS. LAYERS
-      INTEGER NFREQ                            ! NO. OF FREQ READ IN
       INTEGER NU                               ! NO. OF SCATTERING ANGLES
       INTEGER NUA                              ! NO. OF SCAT. AZIMUTH ANGLES
       INTEGER NIWC                             ! NO. OF ICE WATER CONTENTS
-      INTEGER N                                ! NO. OF AEROSOL SPECIES
 
-      INTEGER MAXFS                            ! MAX. NO. OF FREQUENCIES
-      INTEGER MNT                              ! MAX. NO. OF TANGENT HEIGHTS 
-
-      PARAMETER (L=639,NU=16,NUA=8,N=2,NIWC=10,
-     >           MAXFS=500,MNT=500)            ! THESE ARE THE FIXED INTERNAL 
-                                               ! PARAMETERS. WE SET THESE 
-                                               ! CONSTANTS HERE TO REDUCE THE 
-                                               ! NUMBER OF PARAMETERS PASSED 
-                                               ! THROUGH L2
+      INTEGER NAB                              ! MAX. NO. OF 
+      INTEGER NR                               ! NUMBER OF SIZE BINS
+      INTEGER NABR(NR)                         ! TRUNCATION FOR A, B
 
       INTEGER LORS                             ! SURFACE TYPE: LAND OR SEA
 
@@ -193,10 +222,10 @@ C-------------------------------
       REAL PHI(NUA)                            ! SCATTERING AZIMUTH ANGLES
       REAL UI(NU,NU,NUA)                       ! COSINE OF INCIDENT TB ANGLES
       REAL THETAI(NU,NU,NUA)                   ! ANGLES FOR INCIDENT TB
-      REAL PHH(N,NU,L)                         ! PHASE FUNCTION 
-      REAL TAU(L)                              ! TOTAL OPTICAL DEPTH
-      REAL TAU100(L)                           ! TOTAL OPTICAL DEPTH AT 100%RH
-      REAL W0(N,L)                             ! SINGLE SCATTERING ALBEDO
+      REAL PHH(N,NU,NZ-1)                      ! PHASE FUNCTION 
+      REAL TAU(NZ-1)                           ! TOTAL OPTICAL DEPTH
+      REAL TAU100(NZ-1)                        ! TOTAL OPTICAL DEPTH AT 100%RH
+      REAL W0(N,NZ-1)                          ! SINGLE SCATTERING ALBEDO
       
       REAL S                                   ! SALINITY
       REAL SWIND                               ! SEA SURFACE WIND
@@ -205,58 +234,57 @@ C-------------------------------
       REAL RC0(3)                              ! GAS ABS.SCAT.EXT COEFFS.
       REAL RC(N,3)                             ! CLOUD ABS.SCAT.EXT COEFFS.
       REAL RC_TOT(3)                           ! TOTAL ABS.SCAT.EXT COEFFS.
-      REAL Z(L)                                ! MODEL LAYER THICKNESS (m)
-      REAL TAU0(L)                             ! CLEAR-SKY OPTICAL DEPTH
-      REAL TEMP(L)                             ! MEAN LAYER TEMPERATURE (K)
+      REAL Z(NZ-1)                             ! MODEL LAYER THICKNESS (m)
+      REAL TAU0(NZ-1)                          ! CLEAR-SKY OPTICAL DEPTH
+      REAL TEMP(NZ-1)                          ! MEAN LAYER TEMPERATURE (K)
 
-      REAL TT(MNT,L+1)                         ! CLOUDY-SKY TB AT TANGENT 
+      REAL TT(NT+1,NZ)                         ! CLOUDY-SKY TB AT TANGENT 
                                                ! HEIGHT ZT (LAST INDEX FOR 
                                                ! ZENITH LOOKING)
-      REAL TT0(MNT,L+1)                        ! CLEAR-SKY TB AT TANGENT
+      REAL TT0(NT+1,NZ)                        ! CLEAR-SKY TB AT TANGENT
                                                ! HEIGHT ZT
 
-      REAL FREQ(MAXFS)                         ! FREQUENCIES (GHz)
-  
 C------------------------------------
 C     ATMOSPHERIC PROFILE PARAMETERS
 C------------------------------------
 
-      REAL YZ(L+1)                             ! PRESSURE HEIGHT (m)
-      REAL YP(L+1)                             ! PRESSURE (hPa)
-      REAL YT(L+1)                             ! TEMPERATURE PROFILE
-      REAL YQ(L+1)                             ! H2O VOLUME MIXING RATIO
-      REAL VMR(5,L+1)                          ! 1=O3 VOLUME MIXING RATIO
+      REAL YQ(NZ)                              ! H2O VOLUME MIXING RATIO
+      REAL VMR(NS,NZ)                          ! 1=O3 VOLUME MIXING RATIO
                                
 C----------------------------
 C     CLOUD MODEL PARAMETERS
 C----------------------------
 
-      INTEGER PSDF(L+1)                        ! SIDE DISTRIBUTION FLAG 
-      REAL WC(N,L+1)                           ! CLOUD WATER CONTENT (g/m3)
-                                               ! (N=1 ICE, N=2 WATER)
       REAL CWC                                 ! CLOUD WATER CONTENT (g/m3)
-
       REAL CDEPTH(N)                           ! CLOUD OPTICAL DEPTH
       REAL DEPTH                               ! TOTAL OPTICAL DEPTH
                                                ! (CLEAR+CLOUD)
-      REAL DDm(N,L)                            ! MASS-MEAN-DIAMETER
 
-      REAL delTAU(L)                           ! TOTAL EXTINCTION
-      REAL delTAUc(L)                          ! CLOUDY-SKY EXTINCTION
+      REAL delTAU(NZ-1)                        ! TOTAL EXTINCTION
+      REAL delTAUc(NZ-1)                       ! CLOUDY-SKY EXTINCTION
       
 C---------------------------
 C     WORK SPACE PARAMETERS
 C---------------------------
 
-      INTEGER I, J, K, IFR, ILYR, IL,ISPI,IIWC, ICLD_TOP,MY_NIWC
+      INTEGER I, J, K, IFR, ILYR, IL,ISPI,IIWC, ICLD_TOP,MY_NIWC,L
 
       REAL HT,DMA,RATIO
-      REAL PH0(N,NU,L),W00(N,L)  
+      REAL PH0(N,NU,NZ-1),W00(N,NZ-1)  
       REAL P11(NU), RC11(3),RC_TMP(N,3)
-      REAL CHK_CLD(L+1)                        
-      REAL ZZT(MNT)
+      REAL CHK_CLD(NZ)                        
+      REAL ZZT(NT)
+      REAL PH1(NU)                             ! SINGLE PARTICLE PHASE FUNCTION
+      REAL P(NAB,NU)                           ! LEGENDRE POLYNOMIALS l=1
+      REAL DP(NAB,NU)                          ! Delt LEGENDRE POLYNOMIALS l=1
+      
+      REAL R(NR)                               ! PARTICLE RADIUS
+      REAL RN(NR)                              ! NUMBER OF PARTICLES IN EACH BIN
+      REAL BC(3,NR)                            ! SINGLE PARTICLE ABS/SCAT/EXT 
+                                               ! COEFFS
 
-
+      COMPLEX A(NR,NAB),B(NR,NAB)              ! MIE COEFFICIENCIES
+     
 C---------------<<<<<<<<<<<<< START EXCUTION >>>>>>>>>>>>-------------------C
 
       CALL HEADER(1)
@@ -264,15 +292,12 @@ C---------------<<<<<<<<<<<<< START EXCUTION >>>>>>>>>>>>-------------------C
 C=========================================================================
 C                    >>>>>> CHECK MODEL-INPUT <<<<<<< 
 C-------------------------------------------------------------------------
-C     CHECK IF THE INPUT PROFILE MATCHS THE MODEL INTERNAL GRID; 
+C     SET INTERNAL MODEL PARAMETERS 
 C     SET TANGENT PRESSURE (hPa) TO TANGENT HEIGHT (km)
 C=========================================================================
 
-      CALL MODEL_ATMOS(PRESSURE,HEIGHT,TEMPERATURE,VMRin,NZ,NS,  
-     >                  YP,YZ,YT,YQ,VMR,L+1,ZT,ZZT,NT) 
-                                                       
-      CALL CLOUD_CHECK(PRESSURE,IWC,LWC,IPSD,NZ,
-     >                  WC,PSDF,CHK_CLD,L+1)     
+      CALL SET_PARAM(PRESSURE,HEIGHT,TEMPERATURE,VMRin,WC,
+     >                  NZ,NS,N,YQ,VMR,ZT,ZZT,NT,CHK_CLD) 
 
 C-----------------------------------------------
 C     INITIALIZE SCATTERING AND INCIDENT ANGLES 
@@ -288,6 +313,7 @@ C----------------------------------
       TS    = 288.
       S     = 35.
       SWIND = 0.
+      NIWC  = 10
 
       IF (ISWI .EQ. 0) THEN                  
          RATIO=1.
@@ -313,14 +339,11 @@ C     COMPUTE CLEAR-SKY ABSORPTION COEFFICIENTS, INCLUDING DRY, WET
 C     CONTINUMA AND LINE EMISSIONS.   
 C=========================================================================
 
-      NFREQ=NF
+       DO 2000 IFR=1, NF
 
-      DO 2000 IFR=1, NFREQ      ! START OF FREQUENCY LOOP
-
-         FREQ(IFR)=FREQUENCY(IFR)
-
-         CALL CLEAR_SKY(L,NU,TS,S,LORS,SWIND,YZ,YP,YT,YQ,VMR,
-     >                     FREQ(IFR),RS,U,TEMP,TAU0,Z,TAU100) 
+         CALL CLEAR_SKY(NZ-1,NU,TS,S,LORS,SWIND,
+     >                  HEIGHT,PRESSURE,TEMPERATURE,YQ,VMR,
+     >                  FREQUENCY(IFR),RS,U,TEMP,TAU0,Z,TAU100) 
 
          CALL HEADER(3)
 
@@ -328,10 +351,10 @@ C-----------------------------------------------------
 C        ASSUME 100% SATURATION IN CLOUD LAYER
 C-----------------------------------------------------
 
-         DO IL=1,L                        ! 100% SATURATION INSIDE CLOUD 
+         DO IL=1, NZ-1                   ! 100% SATURATION INSIDE CLOUD 
             IF(CHK_CLD(IL) .NE. 0.)THEN
                ICLD_TOP=IL
-               IF(YZ(IL) .LT. 20.)THEN
+               IF(HEIGHT(IL) .LT. 20.)THEN
                   TAU0(IL)=TAU100(IL)
                ENDIF
             ENDIF
@@ -345,7 +368,7 @@ C-----------------------------------------------------
 
 C--------------------------------------------------------
 
-         DO 1000 ILYR=1,L                 ! START OF MODEL LAYER LOOP:   
+         DO 1000 ILYR=1, NZ-1             ! START OF MODEL LAYER LOOP:   
  
             RC0(1)=TAU0(ILYR)/Z(ILYR)     ! GAS ABSORPTION COEFFICIENT
             RC0(2)=0.
@@ -383,14 +406,15 @@ C=================================================
 C    >>>>>>>>> CLOUDY-SKY MODULE <<<<<<<<<<<
 C=================================================
        
-                  CALL CLOUDY_SKY ( ISPI,CWC,TEMP(ILYR),FREQ(IFR),
-     >                            NU,U,DU,P11,RC11,PSDF(ILYR),DMA )
+                  CALL CLOUDY_SKY ( ISPI,CWC,TEMP(ILYR),FREQUENCY(IFR),
+     >                            NU,U,DU,P11,RC11,IPSD(ILYR),DMA,
+     >                            PH1,NAB,P,DP,NR,R,RN,BC,A,B,NABR)
 
                   DO K=1,NU
                      PHH(ISPI,K,ILYR)=P11(K)      ! INTERGRATED PHASE FUNCTION
                   ENDDO
                   CDEPTH(ISPI)=RC11(3)*Z(ILYR)
- 
+                  
                   DO J=1,3
                      RC_TMP(ISPI,J)=RC11(J)       ! VOLUME EXT/SCAT/ABS COEFFS
                   ENDDO
@@ -408,7 +432,7 @@ C=================================================
                   W0(ISPI,ILYR)=1.
                ENDIF
 
-               DDm(ISPI,ILYR)=DMA                     ! MASS-MEAN-DIAMETER
+               Dm(ISPI,ILYR)=DMA                     ! MASS-MEAN-DIAMETER
             ENDDO
 
             TAU(ILYR)=RC_TOT(3)*Z(ILYR)
@@ -416,6 +440,14 @@ C=================================================
 
             delTAU(ILYR) = DEPTH
             delTAUc(ILYR)= CDEPTH(1)
+
+            IF (Z(ILYR) .NE. 0) THEN 
+               BETA(ILYR,IFR)=DEPTH/Z(ILYR)
+               BETAc(ILYR,IFR)=CDEPTH(1)/Z(ILYR)
+            ELSE
+               BETA(ILYR,IFR)=0.
+               BETAc(ILYR,IFR)=0.
+            ENDIF
 
  1000    CONTINUE                         ! END OF MODEL LAYER LOOP
 
@@ -425,13 +457,15 @@ C==================================================
 
          CALL HEADER(4)
 
-         CALL RADXFER(L,NU,NUA,U,DU,PH0,NT,ZZT,W00,TAU0,RS,TS,FREQ(IFR),
-     >              YZ,TEMP,N,THETA,THETAI,PHI,UI,UA,TT0,MNT,ICON,RE) !CLEAR-SKY
+         CALL RADXFER(NZ-1,NU,NUA,U,DU,PH0,NT,ZZT,W00,TAU0,RS,TS,
+     >              FREQUENCY(IFR),HEIGHT,TEMP,N,THETA,THETAI,PHI,
+     >              UI,UA,TT0,NT,ICON,RE)                          !CLEAR-SKY
 
          IF(ICON .GT. 1) THEN                                          
 
-           CALL RADXFER(L,NU,NUA,U,DU,PHH,NT,ZZT,W0,TAU,RS,TS,FREQ(IFR),
-     >             YZ,TEMP,N,THETA,THETAI,PHI,UI,UA,TT,MNT,ICON,RE)  !CLOUDY-SKY
+           CALL RADXFER(NZ-1,NU,NUA,U,DU,PHH,NT,ZZT,W0,TAU,RS,TS,
+     >             FREQUENCY(IFR),HEIGHT,TEMP,N,THETA,THETAI,PHI,
+     >             UI,UA,TT,NT,ICON,RE)                            !CLOUDY-SKY
 
          ENDIF
 
@@ -440,13 +474,15 @@ C    >>>>>>> MODEL-OUTPUT <<<<<<<<<
 C====================================
 
          DO I=1,NT
-            TB0(I,IFR)=TT0(I,L+1)                  ! CLEAR-SKY BACKGROUND      
-            DTcir(I,IFR)=TT(I,L+1)-TT0(I,L+1)      ! CLOUD-INDUCED RADIANCE
+            TB0(I,IFR)=TT0(I,NZ)                  ! CLEAR-SKY BACKGROUND      
+            DTcir(I,IFR)=TT(I,NZ)-TT0(I,NZ)       ! CLOUD-INDUCED RADIANCE
          ENDDO
 
-         CALL SENSITIVITY (DTcir,ZZT,NT,YP,YZ,L+1,PRESSURE,NZ,
-     >                     delTAU,delTAUc,BETA,BETAc,TAUeff,SS,
-     >                     DDm,Dm,N,NF,IFR,ISWI,RE) ! COMPUTE SENSITIVITY
+C--------------------------------
+C        COMPUTE SENSITIVITY
+C--------------------------------
+         CALL SENSITIVITY (DTcir,ZZT,NT,PRESSURE,HEIGHT,NZ,PRESSURE,NZ,
+     >                     delTAU,delTAUc,TAUeff,SS,N,NF,IFR,ISWI,RE) 
 
  2000 CONTINUE                               ! END OF FREQUENCY LOOP   
 

@@ -1,7 +1,7 @@
 
       SUBROUTINE SENSITIVITY(DTcir,ZT,NT,YP,YZ,NH,PRESSURE,NZ,
-     >                       delTAU,delTAUc,DTAUt,DTAUc,TAUeff,SS,
-     >                       DDm,Dm,N,NF,IRF,ISWI,RE)
+     >                       delTAU,delTAUc,TAUeff,SS,
+     >                       N,NF,IRF,ISWI,RE)
 C----------------------------------------------------------------
 
       INTEGER NH,NZ
@@ -16,47 +16,11 @@ C----------------------------------------------------------------
 
       REAL delTAU(NH-1)                        ! CLEAR-SKY  
       REAL delTAUc(NH-1)                       ! CLOUDY-SKY EXTINCTION
-      REAL DTAUt(NZ,NF)                        ! TOTAL EXTINCTION
-      REAL DTAUc(NZ,NF)                        ! CLOUDY-SKY EXTINCTION
-
-      REAL DDm(N,NH-1)                         ! MASS-MEAN-DIAMETER
-      REAL Dm(N,NZ-1)                          ! MASS-MEAN-DIAMETER
 
       REAL*8 RE
       REAL HT,C_EXT,A_EXT,TGT,DS,DTAU,A_COL
-      REAL ZH(2000),ZA(2000)
       INTEGER I,K,J,iflag
 C-----------------------------------------------------------------------------
-
-C===============================================================
-C     INTERPOLATE PARAMETERS FROM MODEL LEVEL NH TO L2 LEVEL NZ
-C===============================================================
-
-      DO I=1,NH-1
-         ZH(I)=-ALOG10( (YP(I+1)+YP(I))/2. )
-      END DO
-
-      DO I=1,NZ-1
-         ZA(I)=-ALOG10( (PRESSURE(I+1)+PRESSURE(I))/2. )
-      END DO
-
-      DO J=1,NZ-1
-      
-         CALL LOCATE (ZH,NH,NZ,ZA(J),JM)
-         
-         DTAUt(J,IRF)=((ZH(JM+1)-ZA(J))*delTAU(JM)+(ZA(J)-ZH(JM))*
-     >                delTAU(JM+1))/(ZH(JM+1)-ZH(JM))             
-
-         DTAUc(J,IRF)=((ZH(JM+1)-ZA(J))*delTAUc(JM)+(ZA(J)-ZH(JM))*
-     >                delTAUc(JM+1))/(ZH(JM+1)-ZH(JM))             
-
-         Dm(1,J)=((ZH(JM+1)-ZA(J))*DDm(1,JM)+(ZA(J)-ZH(JM))*
-     >                DDm(1,JM+1))/(ZH(JM+1)-ZH(JM))             
-
-         Dm(2,J)=((ZH(JM+1)-ZA(J))*DDm(2,JM)+(ZA(J)-ZH(JM))*
-     >                DDm(2,JM+1))/(ZH(JM+1)-ZH(JM))             
-
-      ENDDO
 
 C==========================================================================
 C     RADIANCE SENSITIVITY CALCULATIONS
@@ -131,6 +95,12 @@ C--------------------------------------------------------------------------
       END
 
 ! $Log: sensitivity.f,v      
+
+
+
+
+
+
 
 
 

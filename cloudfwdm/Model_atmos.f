@@ -38,7 +38,7 @@ C----------------------------------------------
       REAL YP(NH)                              ! PRESSURE (hPa)
       REAL YT(NH)                              ! TEMPERATURE PROFILE
       REAL YQ(NH)                              ! RELATIVE HUMIDITY (%)
-      REAL VMR1(5,NH)                          ! 1=O3 VOLUME MIXING RATIO
+      REAL VMR1(2,NH)                          ! 1=O3 VOLUME MIXING RATIO
 
       REAL ZZT(NT)                             ! TANGENT HEIGHT
 
@@ -49,24 +49,23 @@ C----------------------------------------------------
       INTEGER I,JM,J
 C--------------------------------------------------------------------------
 
+      PTOP = 40./16.-3.            ! TOP OF THE MODEL
+      PBOTTOM=-ALOG10(PRESSURE(1)) ! BOTTOM OF THE MODEL
+      DP=(PTOP-PBOTTOM)/NH         ! LAYER THICKNESS
+
+      DO I=1,NH
+         ZH(I)=PBOTTOM+(I-1)*DP
+      END DO
+
+      DO I=1,NZ
+         ZA(I)=-ALOG10(PRESSURE(I))
+      END DO
 
       IF (NZ .NE. NH) THEN
 
 C==========================================
 C     PRODUCE MODEL ATMOSPHERIC PROFILES
 C==========================================
-
-         PTOP = 40./16.-3.      ! TOP OF THE MODEL
-         PBOTTOM=-ALOG10(PRESSURE(1)) ! BOTTOM OF THE MODEL
-         DP=(PTOP-PBOTTOM)/NH   ! LAYER THICKNESS
-
-         DO I=1,NH
-            ZH(I)=PBOTTOM+(I-1)*DP
-         END DO
-
-         DO I=1,NZ
-            ZA(I)=-ALOG10(PRESSURE(I))
-         END DO
 
          DO J=1,NH
 
@@ -92,11 +91,11 @@ C==========================================
       ELSE
          
          DO J=1,NZ
-            YP(J) = PRESSURE(J)    
-            YZ(J) = HEIGHT(J)      
-            YT(J) = TEMPERATURE(J)
-            YQ(J) = VMR(1,J)     
-            VMR1(1,J)=VMR(2,J)    
+            YP(J)     = PRESSURE(J)    
+            YZ(J)     = HEIGHT(J)      
+            YT(J)     = TEMPERATURE(J)
+            YQ(J)     = VMR(1,J)     
+            VMR1(1,J) = VMR(2,J)    
          ENDDO
 
       ENDIF
@@ -111,10 +110,8 @@ C==========================================
          ZZ(I)=-ALOG10(ZT(I))
       END DO
 
-      DO J=1,NT
-      
+      DO J=1,NT      
          CALL LOCATE (ZA,NZ,NT,ZZ(J),JM)
-
          ZZT(J)=((ZA(JM+1)-ZZ(J))*HEIGHT(JM)+(ZZ(J)-ZA(JM))*
      >                HEIGHT(JM+1))/(ZA(JM+1)-ZA(JM))             
       ENDDO
