@@ -644,6 +644,7 @@ contains ! =====     Public Procedures     =============================
   !  also note the attempt to convert l2aux%values to KIND of l1b radiances)
   use MLS_DataProducts, only: DATAPRODUCTS_T
   use MLSAuxData, only: BUILD_MLSAUXDATA
+  use MLSHDF5, only: SaveAsHDF5DS
 
     type (L2AUXData_T), intent(in) :: L2AUX
     integer, intent(in) :: L2FILEHANDLE                 ! From h5fopen
@@ -699,11 +700,12 @@ contains ! =====     Public Procedures     =============================
       dims(3) = size(l2aux%values, 3)
       ! call Dump_L2AUX(l2AUX)
       if ( myWriteCounterMAF .or. ALWAYSWRITEAS32BITS ) then
-        call Build_MLSAuxData(l2FileHandle, dataProduct, real(l2aux%values, r4), &
-        & dims )
+        ! call Build_MLSAuxData(l2FileHandle, dataProduct, real(l2aux%values, r4))
+        call SaveAsHDF5DS (l2FileHandle, trim(dataProduct%name), &
+         & real(l2aux%values, r4))
       else
-        call Build_MLSAuxData(l2FileHandle, dataProduct, l2aux%values, &
-        & dims )
+        ! call Build_MLSAuxData(l2FileHandle, dataProduct, l2aux%values)
+        ! call SaveAsHDF5DS (l2FileHandle, trim(dataProduct%name), l2aux%values)
       endif
       if ( .not. myWriteCounterMAF ) return
     
@@ -947,6 +949,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.41  2002/12/07 00:25:42  pwagner
+! Using SaveAsHDF5DS to write l2aux%values; it works
+!
 ! Revision 2.40  2002/12/06 01:06:13  pwagner
 ! Finally writes radaiance-like l2aux as hdf5 files
 !
