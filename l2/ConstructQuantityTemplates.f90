@@ -9,8 +9,9 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use EXPR_M, only: EXPR
+  use FGrid, only: fGrid_T
   use HGrid, only: hGrid_T
-  use INIT_TABLES_MODULE, only: F_GEODANGLE, F_HGRID, F_INCLINATION, &
+  use INIT_TABLES_MODULE, only: F_GEODANGLE, F_FGRID, F_HGRID, F_INCLINATION, &
     & F_LOGBASIS, F_MODULE, F_MOLECULE, F_NOMIFS, F_RADIOMETER, &
     & F_SIGNAL, F_SGRID, F_TYPE, F_UNIT, F_VGRID
   use INIT_TABLES_MODULE, only: &
@@ -78,7 +79,7 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
 contains ! =====     Public Procedures     =============================
   ! -----------------------------  CreateQtyTemplateFromMLSCFInfo  -----
   type (QuantityTemplate_T) function CreateQtyTemplateFromMLSCFInfo ( &
-    & Name, Root, HGrids, VGrids, L1bInfo, Chunk, MifGeolocation ) &
+    & Name, Root, FGrids, VGrids, HGrids, L1bInfo, Chunk, MifGeolocation ) &
     result ( QTY )
 
   ! This routine constructs a vector quantity template based on instructions
@@ -87,8 +88,9 @@ contains ! =====     Public Procedures     =============================
     ! Dummy arguments
     integer, intent(in) :: NAME              ! Sub-rosa index of name
     integer, intent(in) :: ROOT              ! Root of QuantityTemplate subtree
-    type (HGrid_T), dimension(:), pointer :: HGrids
+    type (FGrid_T), dimension(:), pointer :: FGrids
     type (VGrid_T), dimension(:), pointer :: VGrids
+    type (HGrid_T), dimension(:), pointer :: HGrids
     type (l1bInfo_T), intent(in) :: L1bInfo
     type (MLSChunk_T), intent(in) :: Chunk
     type (QuantityTemplate_T), dimension(:), intent(in), optional :: &
@@ -97,6 +99,7 @@ contains ! =====     Public Procedures     =============================
     ! Local variables
 
     integer :: Family
+    integer :: FGridIndex
     integer :: FrequencyCoordinate
     integer :: HGridIndex
     integer :: I                        ! Loop counter
@@ -179,6 +182,7 @@ contains ! =====     Public Procedures     =============================
     scaleFactor = 1.0
     sideband = 0
     signal = 0
+    fGridIndex = 0
     vGridIndex = 0
     sGridIndex = 0
     signalString = ' '
@@ -196,6 +200,8 @@ contains ! =====     Public Procedures     =============================
       end if
 
       select case ( decoration(key) )
+      case ( f_fgrid )
+        fGridIndex = decoration(value)
       case ( f_hgrid )
         hGridIndex = decoration(value) ! node_id(value) == n_spec_args
       case ( f_logBasis )
@@ -240,6 +246,15 @@ contains ! =====     Public Procedures     =============================
     ! First see that the `type' has been defined
 
     if ( quantityType == 0 ) call announce_error ( root, noQuantityType )
+ 
+    ! Set defaults for other parameters
+    if ( fGridIndex /= 0 ) then
+      frequencyCoordinate = fGrids(fGridIndex)%frequencyCoordinate
+      noChans = fGrids(fGridIndex)%noChans
+    else
+      frequencyCoordinate = L_None
+      noChans = 1
+    endif
 
     ! Now, depending on the type, check out stuff and see if it's ok to
     ! first order.
@@ -251,11 +266,7 @@ contains ! =====     Public Procedures     =============================
       & l_scVel, l_losVel, l_heightOffset, l_scanResidual, l_chisqmmif /) )
 
     majorFrame = any(quantityType == (/ l_chisqchan, l_chisqmmaf /) )
-
-    ! Set defaults for other parameters
-    frequencyCoordinate = L_None
-    noChans = 1
-
+ 
     ! Here the code splits, for minor frame quantities, we take the information
     ! from the previously constructed MIFGeolocation information.  Otherwise,
     ! we'll probably need to use any supplied vGrid/hGrid information.
@@ -276,13 +287,12 @@ contains ! =====     Public Procedures     =============================
         noChans = size(signalInfo%frequencies)
         frequencyCoordinate = l_channel
       end if
-      
+    
       ! For some cases we know the quantity is an xyz vector
       if ( any(quantityType == (/ l_tngtECI, l_scECI, l_scVel /)) ) then
         noChans = 3
         frequencyCoordinate = l_xyz
       end if
-
 
       ! Construct an empty quantity
       call ConstructMinorFrameQuantity ( l1bInfo, chunk, instrumentModule, &
@@ -292,7 +302,7 @@ contains ! =====     Public Procedures     =============================
       if ( quantityType == l_chiSqMMIF ) then
         qty%noChans = 1
         qty%instanceLen = qty%NoSurfs
-        qty%frequencyCoordinate = l_channel
+        qty%frequencyCoordinate = l_none
       endif
         
     elseif ( majorFrame ) then
@@ -345,7 +355,7 @@ contains ! =====     Public Procedures     =============================
         
    else
 
-      ! This is not a minor frame quantity, set it up from VGrids and HGrids
+      ! This is not a minor frame quantity, set it up from FGrids, VGrids and HGrids
 
       if ( hGridIndex/=0 ) then
         noInstances=hGrids(hGridIndex)%noProfs
@@ -400,6 +410,12 @@ contains ! =====     Public Procedures     =============================
       else
         qty%surfs = 0.0
         qty%verticalCoordinate = L_None
+      end if
+
+      if ( fGridIndex /= 0 ) then
+        call Allocate_test ( qty%frequencies, qty%noChans, 'qty%frequencies', &
+          & ModuleName )
+        qty%frequencies = fGrids(fGridIndex)%values
       end if
 
     end if
@@ -833,6 +849,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.58  2001/10/31 19:07:25  livesey
+! Added fGrid stuff
+!
 ! Revision 2.57  2001/10/12 23:15:05  pwagner
 ! Fixed biggest erros in diagnostic quantity templates
 !
