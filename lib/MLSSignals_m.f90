@@ -7,6 +7,8 @@ module MLSSignals_M
   use DUMP_0, only: DUMP
   use Expr_M, only: Expr
   use Init_MLSSignals_m ! Everything
+  use Intrinsic, only: PHYQ_Dimensionless, PHYQ_Frequency, PHYQ_Indices
+  use Lexer_Core, only: Print_Source
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error
@@ -130,12 +132,11 @@ contains
     integer, intent(in) :: Field_Indices(field_first:)
 
     type(band_T) :: Band                ! To be added to the database
-    integer :: MyChannels               ! subtree index of field
+    integer :: Channels                 ! subtree index of field
     logical :: Deferred                 ! Set if frequencies/widths deferred
     integer :: Error                    ! Error level seen so far
     integer :: Field                    ! Field index -- f_something
     integer :: First                    ! "first" field of "spectrometer"
-    integer :: Frequencies              ! subtree index of field
     logical :: Got(field_first:last_Signal_Field)   ! "Got this field already"
     integer :: Gson                     ! Son of Son.
     integer :: I, J, K                  ! Subscript and loop inductor.
@@ -153,14 +154,13 @@ contains
     integer :: Units(2)                 ! of an expression
     double precision :: Value(2)        ! of an expression
     real(r8) :: Width                   ! "width" field of "spectrometer"
-    integer :: Widths                   ! subtree index of field
 
     ! Error message codes
     integer, parameter :: AllOrNone = 1 ! All of a set of fields, or none
     integer, parameter :: AtLeastOne = allOrNone + 1   ! At least one
     integer, parameter :: BadMix = atLeastone + 1 ! Disallowed mixture of
     !                                     fields.
-    integer, parameter :: Sizes = badMix + 1 ! Fields don't have same sizes
+    integer, parameter :: WrongUnits = badMix + 1 ! Field has wrong units
 
     error = 0
     if ( toggle(gen) ) call trace_begin ( "MLSSignals", root )
@@ -189,7 +189,7 @@ contains
           got(field) = .true.
           select case ( field )
           case ( f_centerFrequency )
-            call expr ( gson, units, value )
+            call expr_check ( gson, units, value, field, phyq_frequency )
             band%centerFrequency = value(1)
           case ( f_suffix )
             band%suffix = sub_rosa(gson)
@@ -235,7 +235,7 @@ contains
           gson = subtree(2,son)
           select case ( field )
           case ( f_lo )
-            call expr ( gson, units, value )
+            call expr_check ( gson, units, value, field, phyq_frequency )
             radiometer%lo = value(1)
           case ( f_suffix )
             radiometer%suffix = sub_rosa(gson)
@@ -258,18 +258,16 @@ contains
           select case ( field )
           case ( f_band )
             signal%band = decoration(decoration(gson))
+          case ( f_channels )
+            channels = son
           case ( f_sideband )
             signal%sideband = decoration(gson)
           case ( f_spectrometer )
-            call expr ( gson, units, value )
+            call expr_check ( gson, units, value, field, phyq_dimensionless )
             signal%spectrometer = value(1)
           case ( f_switch )
-            call expr ( gson, units, value )
+            call expr_check ( gson, units, value, field, phyq_dimensionless )
             signal%switch = value(1)
-          case ( f_frequencies )
-            frequencies = son
-          case ( f_widths ) 
-            widths = son
           case default
             ! Shouldn't get here if the type checker worked
           end select
@@ -281,22 +279,20 @@ contains
         signal%spectrometerType = bands(signal%band)%spectrometerType
         signal%centerFrequency = bands(signal%band)%centerFrequency
         ! For the wide filters, we specify frequency etc. here.
-        if ( got(f_frequencies) .neqv. got(f_widths) ) call announceError ( &
-          & allOrNone, f_frequencies, (/ f_widths /) )
-        if ( got(f_frequencies) ) then
-          if ( nsons(frequencies) /= nsons(widths) ) &
-            call announceError ( sizes, f_frequency, (/ f_widths /) )
+        if ( got(f_channels) ) then
           if ( error == 0 ) then
-            call allocate_Test ( signal%frequencies, nsons(son)-1, &
+            call allocate_Test ( signal%frequencies, nsons(channels)-1, &
               & 'signal%frequencies', moduleName )
-            call allocate_Test ( signal%widths, nsons(son)-1, &
+            call allocate_Test ( signal%widths, nsons(channels)-1, &
               & 'signal%widths', moduleName)
-            do k = 2, nsons(frequencies)
-              call expr ( subtree(k,frequencies), units, value )
+            do k = 2, nsons(channels)
+              call expr ( subtree(k,channels), units, value )
               signal%frequencies(k-1) = value(1)
-              call expr ( subtree(k,widths), units, value )
-              signal%widths(k-1) = value(1)
+              signal%widths(k-1) = value(2)
             end do
+            if ( any(units /= phyq_frequency) ) &
+              & call announceError ( wrongUnits, f_channels, &
+                & (/ phyq_frequency /) )
           end if
         else
           signal%frequencies => spectrometerTypes(signal%spectrometerType)% &
@@ -323,13 +319,21 @@ contains
           end if
           got(field) = .true.
           select case ( field )
-          case ( f_first, f_last, f_start, f_step, f_width )
-            call expr ( gson, units, value )
+          case ( f_channels )
+            channels = son
+          case ( f_deferred )
+            deferred = get_boolean(son)
+          case ( f_first, f_last )
+            call expr_check ( gson, units, value, field, phyq_dimensionless )
             select case ( field )
             case ( f_first )
               first = value(1)
             case ( f_last )
               last = value(1)
+            end select
+          case ( f_start, f_step, f_width )
+            call expr_check ( gson, units, value, field, phyq_frequency )
+            select case ( field )
             case ( f_start )
               start = value(1)
             case ( f_step )
@@ -337,35 +341,29 @@ contains
             case ( f_width )
               width = value(1)
             end select
-          case ( f_frequencies )   ! Postpone processing until later, so that
-            frequencies = son      ! we can verify that Frequencies and
-          case ( f_widths )        ! Widths have the same number of values
-            widths = son
-          case ( f_deferred )
-            deferred = get_boolean(son)
           case default
             ! Shouldn't get here if the type checker worked
           end select
         end do ! i = 2, nsons(key)
-        if ( got(f_frequencies) .neqv. got(f_widths) ) call announceError ( &
-          & allOrNone, f_frequencies, (/ f_widths /) )
-        if ( got(f_frequencies) ) then
+        if ( got(f_channels) ) then
           if ( any(got( (/ f_last, f_start, f_step, f_width /) )) ) &
-            & call announceError ( badMix, f_frequencies, &
+            & call announceError ( badMix, f_channels, &
             & (/ f_last, f_start, f_step, f_width /) )
-          if ( nsons(frequencies) /= nsons(widths) ) &
-            call announceError ( sizes, f_frequency, (/ f_widths /) )
           if ( error == 0 ) then
-            call allocate_Test ( spectrometerType%frequencies, nsons(son)-first, &
-              & 'spectrometerType%frequencies', moduleName, lowBound = first )
-            call allocate_Test ( spectrometerType%widths, nsons(son)-first, &
-              & 'spectrometerType%widths', moduleName, lowBound = first )
-            do k = 2, nsons(frequencies)
-              call expr ( subtree(k,frequencies), units, value )
+            call allocate_Test ( spectrometerType%frequencies, &
+              & nsons(channels)-first, 'spectrometerType%frequencies', &
+              & moduleName, lowBound = first )
+            call allocate_Test ( spectrometerType%widths, &
+              & nsons(channels)-first, 'spectrometerType%widths', &
+              & moduleName, lowBound = first )
+            do k = 2, nsons(channels)
+              call expr ( subtree(k,channels), units, value )
               spectrometerType%frequencies(k-2+first) = value(1)
-              call expr ( subtree(k,widths), units, value )
-              spectrometerType%widths(k-2+first) = value(1)
+              spectrometerType%widths(k-2+first) = value(2)
             end do
+            if ( any(units /= phyq_frequency) ) &
+              & call announceError ( wrongUnits, f_channels, &
+                & (/ phyq_frequency /) )
           end if
         end if
         if ( got(f_start) ) then
@@ -389,9 +387,9 @@ contains
           nullify(spectrometerType%frequencies)
           nullify(spectrometerType%widths)
         end if
-        if ( .not. any(got( (/ f_frequencies, f_start /) )) .and. &
+        if ( .not. any(got( (/ f_channels, f_start /) )) .and. &
           & (.not. deferred) ) &
-          & call announceError ( atLeastOne, f_frequencies, (/ f_start /) )
+          & call announceError ( atLeastOne, f_channels, (/ f_start /) )
         if ( error == 0 ) call decorate ( key, addSpectrometerTypeToDatabase ( &
           & spectrometerTypes, spectrometerType ) )
 
@@ -403,6 +401,9 @@ contains
       end select
 
     end do
+
+    if ( error > 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      & "Unable to create MLSSignals database" )
 
     if ( toggle(gen) ) then
       if ( levels(gen) > 0 .or. index(switches, 'S') /= 0 ) then
@@ -426,10 +427,8 @@ contains
 
       error = max(error,1)
       source = source_ref ( son )
-      call output ( 'At line '  )
-      call output ( mod(source,256) )
-      call output ( ', column ' )
-      call output ( source/256 )
+      call output ( 'At ' )
+      call print_source ( source )
       call output ( ' MLSSignals complained: ' )
       select case ( code )
       case ( allOrNone )
@@ -466,22 +465,28 @@ contains
           else if ( i > 1 ) then
             call output ( ', ' )
           end if
-          CALL display_string ( field_indices(moreFields(i)) )
-        end do ! i
-        call output ( ' shall appear.', advance='yes' )
-      case ( sizes )
-        call output ( 'The fields ' )
-        do i = 1, size(moreFields)
-          if ( i == size(moreFields) ) then
-            call output ( ' and ' )
-          else
-            call output ( ', ' )
-          end if
           call display_string ( field_indices(moreFields(i)) )
         end do ! i
-        call output ( ' shall all have the same size.', advance='yes' )
+        call output ( ' shall appear.', advance='yes' )
+      case ( wrongUnits )
+        call output ( 'The values of the ' )
+        call display_string ( field_indices(fieldIndex) )
+        call output ( ' field have the wrong units -- ' )
+        call display_string ( phyq_indices(moreFields(1)) )
+        call output ( ' required.', advance='yes' )
       end select
     end subroutine AnnounceError
+
+    ! -----------------------------------------------  Expr_Check  -----
+    subroutine Expr_Check ( Root, Units, Value, Field, NeededUnits )
+    ! Evaluate an expression and check its units.
+      integer, intent(in) :: Root, Field, NeededUnits
+      integer, intent(out) :: Units(2)
+      real(r8), intent(out) :: Value(2)
+      call expr ( root, units, value )
+      if ( units(1) /= neededUnits ) &
+        & call announceError ( wrongUnits, field, (/ neededUnits /) )
+    end subroutine Expr_Check
 
   end subroutine MLSSignals
 
@@ -946,6 +951,10 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.10  2001/03/28 19:51:58  vsnyder
+! Remove "frequencies" and "widths" fields.  Use range instead in a "channels"
+! field.  Put in units checking for every numeric field.
+!
 ! Revision 2.9  2001/03/16 21:32:23  vsnyder
 ! Add 'Switches' test for dumping
 !
