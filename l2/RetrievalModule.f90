@@ -1230,6 +1230,268 @@ contains
       call add_to_retrieval_timing( 'newton_solver', t1 )
       call cpu_time ( t1 )
     end subroutine NewtonianSolver
+    ! ------------------------------------------  LowCloudRetrieval  -----
+    subroutine LowCloudRetrieval
+
+      use Intrinsic, only: L_PTAN, L_RADIANCE, &
+                     & L_CLOUDINDUCEDRADIANCE,                               &
+                     & L_CLOUDRADSENSITIVITY,                                &
+                     & L_LOSTRANSFUNC
+      use MatrixModule_0, only: MatrixInversion, MATRIXELEMENT_T
+      use MatrixModule_1, only: ClearMatrix, FINDBLOCK, GetDiagonal
+      use MLSSignals_m, only: SIGNAL_T
+      use ForwardModelWrappers, only: ForwardModel
+      use ForwardModelIntermediate, only: ForwardModelIntermediate_T, &
+        & ForwardModelStatus_T
+
+      ! Local Variables
+      type (ForwardModelStatus_T) :: FmStat        ! Status for forward model
+      type (ForwardModelIntermediate_T) :: Fmw     ! Work space for forward model
+      type (vector_T) :: FwdModelOut               ! Forward outputs
+      type (Signal_T) :: signal                    ! signal info in each model
+      type (VectorValue_T), pointer :: xPtr        ! pointer of l_lostransfunc quantity
+      type (VectorValue_T), pointer :: xVar        ! variance of apriori
+      type (VectorValue_T), pointer :: Tcir        ! cloud-induced radiance
+      type (VectorValue_T), pointer :: Terr        ! cloud-induced radiance SD
+      type (VectorValue_T), pointer :: PTAN        ! Tgt pressure
+      type (VectorValue_T), pointer :: Tb0         ! model clear sky radiance (100%RH)
+      type (VectorValue_T), pointer :: Slope       ! sensitivity slope to convert cloud
+                                                   ! radiance to optical depth
+                                          
+      integer :: i,j,k,ich,imodel,mif          ! Loop subscripts
+      integer :: coljBlock     ! Column index for jacobian
+      integer :: rowjBlock     ! Row index for jacobian
+      integer :: nFreqs      ! number of frequencies in each block
+      integer :: nSgrid      ! number of S grids  
+      integer :: nChans      ! total number of channels used in retrieval
+      integer :: nMifs       ! number of total mifs
+      integer :: ndoMifs       ! number of used mifs
+      real(r8) :: p_lowcut    ! ptan threshold for low tangent heights
+                                        
+      type(MatrixElement_T), pointer :: JBLOCK       ! A block from the jacobian
+      type(vector_T) :: CovarianceDiag  ! Diagonal of apriori Covariance
+      
+      ! linear retrieval work arrays
+      real(r8) :: sensitivity                         ! sensitivity with slope and correction
+      real(r8) :: teff                                ! effective optical depth
+      real(r8), dimension(:,:), allocatable :: A      ! working array
+      real(r8), dimension(:,:), allocatable :: dx       ! working array for x
+      real(r8), dimension(:,:), allocatable :: y      ! measurement array
+      real(r8), dimension(:,:), allocatable :: y_star ! model calculation from x_star
+      real(r8), dimension(:,:), allocatable :: sy     ! variance of y
+      real(r8), dimension(:), allocatable :: x        ! s grid array
+      real(r8), dimension(:), allocatable :: x_star   ! model linearization point for x
+      real(r8), dimension(:), allocatable :: x0       ! apriori of x
+      real(r8), dimension(:,:), allocatable :: sx       ! variance of x
+      real(r8), dimension(:,:,:), allocatable :: C    ! for problem y=Kx, c=K^t#Sy^-1#K
+                                                      ! last dimension is for mif
+                                                      ! first two are (chan, s)
+
+          
+      ! get diagnonal elements of covariance of apriori
+        call getDiagonal ( covariance%m, covarianceDiag )
+        
+      ! Measurements are cloud radiances and will be converted to
+      ! the effective cloud optical depth after the forward model
+      ! provides the sensitivities.
+        
+      ! Get  l_lostransfunc quantity from state vector
+      ! State vector should contains only one quantity of l_lostransfunc type 
+      ! (a los quantity),which is the increment of cloud transmission function,
+      ! and it is going to be retrieved here.
+      
+        xPtr => GetVectorQuantityByType ( state, quantityType=l_lostransfunc )
+      
+      ! Get S grid dimensions
+        nSgrid=xPtr%template%noChans    ! number of S grids                        
+        
+      ! find how many channels total in all models
+        nChans = 0
+        do imodel = 1, size(configIndices)
+          ! Check the model configuration 
+          if ( size (configDatabase(configIndices(imodel))%signals ) /= 1 )    &
+          & call MLSMessage ( MLSMSG_Error, ModuleName,      &
+          & 'Cannot call the full cloud forward model with multiple signals' )
+               
+          nChans = nChans + &
+          & count(configDatabase(configIndices(imodel))%signals(1)%channels)
+        end do ! configIndices
+
+      ! find how many mifs from the first quantity        
+         nMifs = measurements%quantities(1)%template%noSurfs
+               
+        fmStat%maf = 0
+          ! Loop over MAFs
+          do while (fmStat%maf < chunk%lastMAFIndex-chunk%firstMAFIndex+1)
+            fmStat%maf = fmStat%maf + 1
+            fmstat%rows = .false.
+                        
+            ! allocate C, y, x matrices
+            allocate(A(nSgrid,nSgrid),C(nSgrid,nSgrid,nMifs))
+            allocate(y(nChans,nMifs),y_star(nChans,nMifs),sy(nChans,nMifs))
+            allocate(dx(nSgrid,nMifs),x(nSgrid),x0(nSgrid),x_star(nSgrid))
+            allocate(sx(nSgrid,nMifs))
+
+            A = 0._r8
+            C = 0._r8
+            y = 0._r8
+            sy = 0._r8
+            dx = 0._r8
+            
+            ich = 0
+            do imodel = 1, size(configIndices)
+              call forwardModel ( configDatabase(configIndices(imodel)), &
+                & state, fwdModelExtra, FwdModelOut, fmw, fmStat, jacobian )
+            
+              ! nullify pointers (don't need here)
+              ! nullify(Tb0, ptan, slope, Tcir, Terr, xVar)
+              
+              ! get signal information for this model. Note: allow only 1 signal 
+              signal = configDatabase(configIndices(imodel))%signals(1)
+
+              ! get clear sky radiances from forward model for this signal
+              Tb0 => GetVectorQuantityByType ( fwdModelOut,                 &
+               & quantityType=l_radiance,                                      &
+               & signal=signal%index, sideband=signal%sideband )
+
+              ! get ptan.  Warning: all signals must be in the same module
+              ptan => GetVectorQuantityByType ( fwdModelExtra,      &
+               & quantityType=l_ptan, instrumentModule = &
+               & Tb0%template%instrumentModule)
+
+              ! get sensitivity from forward model for this signal
+              Slope => GetVectorQuantityByType ( fwdModelOut,      &
+               & quantityType=l_cloudRADSensitivity,                           &
+               & signal=signal%index, sideband=signal%sideband )
+          
+              ! get cloud radiance measurements for this signal
+              Tcir => GetVectorQuantityByType ( Measurements,       &
+               & quantityType=l_cloudInducedRadiance,             &
+               & signal=signal%index, sideband=signal%sideband )
+            
+              ! get cloud radiances error for this signal
+              Terr => GetVectorQuantityByType ( MeasurementSD,       &
+               & quantityType=l_cloudInducedRadiance,             &
+               & signal=signal%index, sideband=signal%sideband )
+
+              ! get x covariance for this signal
+               xVar => GetVectorQuantityByType (covarianceDiag, &
+               & quantityType=l_lostransfunc,                &
+               & signal=signal%index, sideband=signal%sideband )
+      
+              ! get rowBlock and colBlock for this model
+              rowJBlock = FindBlock (jacobian%row, Tb0%index, fmStat%maf)
+
+              colJBlock = 0
+              do while (colJBlock <= jacobian%col%nb .and. &
+                  jacobian%col%inst(colJBlock) /= fmStat%maf)
+                  colJBlock = colJBlock +1 
+              end do
+                
+              jBlock => jacobian%block(rowJblock,colJblock)
+               
+              nFreqs = size (signal%frequencies)
+               do k=1,nFreqs
+               if(signal%channels(k)) then
+               ich = ich + 1
+                  do mif=1,nMifs
+                  if(ptan%values(mif,fmStat%maf) < p_lowcut) then
+                     
+                     ! find more accurate sensitivity. we first borrow 
+                     ! x, x0 arrays to establish the Tcir-teff relation:
+                     ! x-> Tcir; x0->teff; 
+                     do j=1,nSgrid 
+                     x0(j) = 1._r8/nSgrid*(j-1)
+                     x(j) = slope%values(k+nFreqs*(mif-1),fmStat%maf)* &
+                        & (1._r8 + 0.46_r8* teff**6) ! correction term (see ATBD)
+                     end do
+                     
+                     y(ich,mif) = Tcir%values(k+nFreqs*(mif-1),fmStat%maf)
+
+                     ! interpolate to get initial guess of teff
+                     if(y(ich,mif) < x(1)) teff=0._r8
+                     if(y(ich,mif) > x(nSgrid)) teff=1._r8
+                     do j=1,nSgrid-1
+                        if(y(ich,mif) > x(j) .and. y(ich,mif) < x(j+1)) then
+                        teff=(x0(j)*(y(ich,mif)-x(j))+x0(j+1)*(x(j+1)-y(ich,mif))) &
+                          & /(x(j+1)-x(j))
+                        end if
+                     end do
+
+                     ! solve the relation one more time to refine teff and sensitivity
+                     sensitivity = slope%values(k+nFreqs*(mif-1),fmStat%maf)* &
+                           & (1._r8 + 0.46_r8* teff**6) ! correction term (see ATBD)
+                     teff = y(ich,mif)/sensitivity
+                     if(teff > 1._r8) teff = 1._r8
+                           
+                     ! convert cloud radiance to effective optical depth                     
+                     y(ich,mif) = teff
+                     y_star(ich,mif) = 0._r8
+                     sy(ich,mif) = Terr%values(k+nFreqs*(mif-1),fmStat%maf)**2 &
+                       & /sensitivity**2
+                       
+                     do i=1,nSgrid
+                        dx(i,mif) = dx(i,mif) + jBlock%values(k,i+(mif-1)*nSgrid)* &
+                           & (y(ich,mif)-y_star(ich,mif))/sy(ich,mif)
+                     do j=1,nSgrid
+                        C(i,j,mif) = C(i,j,mif) + jBlock%values(k,i+(mif-1)*nSgrid)* &
+                           & jBlock%values(k,j+(mif-1)*nSgrid)/sy(ich,mif)
+                     end do
+                     end do
+                  end if
+                  end do   ! mif
+                  
+               end if
+               end do      ! end of frequency k
+               
+               do i=1,nSgrid
+                 do mif=1,nMifs
+                  sx(i,mif) = xVar%values(i+nFreqs*(mif-1),fmStat%maf)
+                 end do
+               end do
+                              
+            end do         ! end of imodel
+
+            call clearMatrix ( jacobian )  ! free the space
+         ! check if Jacobian rows are consistent with Signal rows
+            if(ich /= nChans) print*,'inconsistent channels between Jacobian and Signal'
+
+         ! start inversion
+            do mif=1,nMifs
+            if (ptan%values(mif,fmStat%maf) < p_lowcut) then
+               ! for cloud retrieval: x_star=0, y_star=0, x0=apriori=0
+               x0 = 0._r8
+               x = 0._r8
+               x_star = 0._r8
+               A = reshape(C(:,:,mif),(/nSgrid,nSgrid/))
+                  do i=1,nSgrid
+                  A(i,i)=A(i,i)+1._r8/sx(i,mif)
+                  end do
+               Call MatrixInversion(A)
+               ! 
+               do i=1,nSgrid
+               x(i) = sum( reshape(A(i,:),(/nSgrid/))* &
+                  & ((x0-x_star)/reshape(sx(:,mif),(/nSgrid/)) &
+                  & + reshape(dx(:,mif),(/nSgrid/)) ))
+               end do
+               
+               ! give the results to state vector
+               do i=1,nSgrid
+               xPtr%values(i+(mif-1)*nSgrid,fmStat%maf) = x(i)
+               end do
+            end if
+            end do  ! mif
+
+            ! deallocate arrays and free memory
+            deallocate(A,C,y,y_star,sy,dx,x,x0,x_star,sx)
+
+          end do ! end of mafs
+
+   ! clean up
+      call destroyVectorInfo ( FwdModelOut )
+      
+    end subroutine LowCloudRetrieval
+
 
     ! --------------------------------------------------  SayTime  -----
     subroutine SayTime
@@ -1452,6 +1714,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.79  2001/10/03 21:30:16  dwu
+! add LowCloudRetrieval
+!
 ! Revision 2.78  2001/10/03 17:57:21  vsnyder
 ! Delete l_DegreesOfFreedom, add l-DNWT_...
 !
