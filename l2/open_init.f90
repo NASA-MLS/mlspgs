@@ -81,12 +81,15 @@ contains ! =====     Public Procedures     =============================
     type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
 	 type(PCFData_T) :: l2pcf
     CHARACTER (LEN=1), POINTER :: anText(:)
+	 integer, external :: Pgs_pc_getFileSize
 
     !Local Variables
     logical, parameter :: DEBUG = .FALSE.
     integer, parameter :: CCSDSEndId = 10412
     integer, parameter :: CCSDSStartId = 10411
 
+    character(len=*), parameter :: DEFAULTANTEXT= &
+	 & 'PCF file number missing from PCF--add this line'
     character(len=CCSDSlen) CCSDSEndTime
     character(len=CCSDSlen) CCSDSStartTime
     integer :: ifl1
@@ -94,7 +97,7 @@ contains ! =====     Public Procedures     =============================
     character (LEN=FileNameLen) :: L1physicalFilename
     integer :: returnStatus
     integer :: sd_id
-    integer :: STATUS ! From allocate
+    integer :: STATUS, size ! From allocate
 
       CHARACTER (LEN=FileNameLen) :: name
 
@@ -110,7 +113,17 @@ contains ! =====     Public Procedures     =============================
 
 ! Read the PCF into an annotation for file headers
 
-      CALL CreatePCFAnnotation(mlspcf_pcf_start, anText)
+      version = 1
+      Status = Pgs_pc_getFileSize(mlspcf_pcf_start, version, size)
+		if(Status == PGS_S_SUCCESS) then
+	      CALL CreatePCFAnnotation(mlspcf_pcf_start, anText)
+		else
+			call announce_error(0, &
+			& DEFAULTANTEXT)
+			size = LEN(DEFAULTANTEXT) + 1
+     		 ALLOCATE(anText(size), STAT=Status)
+			anText(1:size-1) = DEFAULTANTEXT(1:size-1)
+		endif
 
     ifl1 = 0
 
@@ -390,6 +403,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.30  2001/04/06 18:01:00  pwagner
+! Checks on pcf number before PCFCreateAnnotation
+!
 ! Revision 2.29  2001/04/05 23:44:53  pwagner
 ! Fixed tiny error
 !
