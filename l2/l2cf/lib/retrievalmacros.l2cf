@@ -59,6 +59,7 @@ begin Fill
   sdOut$1: Vector, template=x$1Template
   lb$1: Vector, template=x$1Template
   hb$1: Vector, template=x$1template
+  !ifdef(flagGotTruth,{t$1: Vector, template=x$1template})
   ;; Define measurement related vectors
   y$1: Vector, template=y$1Template
   yNoise$1: Vector, template=y$1Template
@@ -74,12 +75,14 @@ begin Fill
   Transfer, source=hReg, destination=hr$1
   Transfer, source=lowBound, destination=lb$1
   Transfer, source=highBound, destination=hb$1
+  !ifdef(flagGotTruth,{Transfer, source=truth, destination=t$1})
   ;; Construct and fill state covariance
   Sa$1: matrix, columns=a$1, type=spd
   FillCovariance, matrix=Sa$1, diagonal=sdIn$1, /invert
 
   ;; Other matrices
-  !ifdef(flagComputeAvks,{avk$1: matrix, columns=x$1, rows=x$1})
+  !ifdef(flagComputeAvks,{avk$1: matrix, rows=a$1, $
+    !ifdef(flagGotTruth,{columns=t$1},{columns=a$1})})
   !ifdef(flagComputeSout,{Sout$1: matrix, columns=x$1, type=spd})
 
   ;; Fill radiance related vectors
@@ -112,6 +115,7 @@ begin Fill
   Destroy, vector=y$1
   Destroy, vector=yNoise$1
   Destroy, vector=f$1
+  !ifdef(flagGotTruth,{Destroy, vector=t$1})
   Destroy, vector=od$1})
   ;; Compute new full GPH profile
   Fill, quantity=state.gph, method=hydrostatic, $
@@ -384,6 +388,9 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
   Fill, quantity=standardPrecision.$1, method=vector, sourceQuantity=outputPrecision.$1!nl})
 
 ; $Log$
+; Revision 1.76  2004/01/16 15:55:36  mjf
+; Some updates for precision estimates and 1D cases.
+;
 ; Revision 1.75  2003/11/15 00:23:06  livesey
 ; Now automagically defines flagDontDestroyVectors
 ;
