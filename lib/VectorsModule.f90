@@ -73,7 +73,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
     & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
   use MLSSignals_m, only: MODULES, SIGNALS, GETSIGNALNAME
   use Molecules, only: L_EXTINCTION
-  use OUTPUT_M, only: OUTPUT
+  use OUTPUT_M, only: NEWLINE, OUTPUT
   use QuantityTemplates, only: QuantityTemplate_T, CheckIntegrity, &
     & NullifyQuantityTemplate
   use STRING_TABLE, only: DISPLAY_STRING, GET_STRING, STRING_LENGTH
@@ -95,7 +95,8 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   public :: DestroyVectorTemplateInfo, DestroyVectorValue, DotVectors
   public :: DotVectorsMasked
   public :: DumpMask, DumpQuantityMask, DumpVectorMask, Dump_Vector
-  public :: Dump_Vectors, Dump_Vector_Templates, Dump_Vector_Quantity
+  public :: Dump_Vectors, Dump_Vector_Template, Dump_Vector_Templates
+  public :: Dump_Vector_Quantity
   public :: GetVectorQuantity, GetVectorQuantityByType
   public :: GetVectorQtyByTemplateIndex, GetVectorQuantityIndexByName
   public :: GetVectorQuantityIndexByType, InflateVectorDatabase
@@ -121,7 +122,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 
   interface DUMP
     module procedure DUMP_VECTOR, DUMP_VECTORS, Dump_Vector_Quantity
-    module procedure DUMP_VECTOR_TEMPLATES
+    module procedure DUMP_VECTOR_TEMPLATE, DUMP_VECTOR_TEMPLATES
   end interface
 
   interface DumpMask
@@ -1179,6 +1180,7 @@ contains ! =====     Public Procedures     =============================
       if ( present (majorFrame) ) dumpThisQty = dumpThisQty .and. &
         & (vector%quantities(j)%template%majorFrame .eqv. majorFrame)
       if ( dumpThisQty ) then
+        call newline
         call output ( j, 4 )
         call output ( "~" )
         call dump ( vector%quantities(j), details )
@@ -1359,31 +1361,54 @@ contains ! =====     Public Procedures     =============================
     end if
   end subroutine Dump_Vector_Quantity
 
+  ! ---------------------------------------  Dump_Vector_Template  -----
+  subroutine Dump_Vector_Template ( VECTOR_TEMPLATE, DETAILS, QUANTITIES )
+    use QuantityTemplates, only: Dump
+    type(VectorTemplate_T), intent(in) :: VECTOR_TEMPLATE
+    integer, intent(in), optional :: DETAILS ! <= 0 => Don't dump arrays
+                                             ! > 0  => Do dump arrays
+                                             ! Default 1
+    type(quantityTemplate_T), intent(in), optional :: QUANTITIES(:)
+                                             ! If DETAILS > 0 and QUANTITIES
+                                             ! is present, dump them.
+    integer :: I, MyDetails
+    myDetails = 1
+    if ( present(details) ) myDetails = details
+    if ( vector_template%name /= 0 ) then
+      call output ( ' Name = ' )
+      call display_string ( vector_template%name )
+    end if
+    call output ( ' NoQuantities = ' )
+    call output ( vector_template%noQuantities )
+    call output ( ' TotalInstances = ' )
+    call output ( vector_template%totalInstances )
+    call output ( ' TotalElements = ' )
+    call output ( vector_template%totalElements, advance='yes' )
+    if ( myDetails > 0 ) then
+      call dump ( vector_template%quantities, '      Quantities = ' )
+      if ( present(quantities) ) then
+        do i = 1, size(vector_template%quantities)
+          call output ( vector_template%quantities(i), 4 )
+          call output ( ':' )
+          call dump ( quantities(vector_template%quantities(i)), details )
+        end do
+      end if
+    end if
+  end subroutine Dump_Vector_Template
+
   ! --------------------------------------  Dump_Vector_Templates  -----
   subroutine Dump_Vector_Templates ( VECTOR_TEMPLATES, DETAILS )
     type(VectorTemplate_T), intent(in) :: VECTOR_TEMPLATES(:)
     integer, intent(in), optional :: DETAILS ! <= 0 => Don't dump arrays
     !                                        ! > 0  => Do dump arrays
     !                                        ! Default 1
-    integer :: I, MyDetails
-    myDetails = 1
-    if ( present(details) ) myDetails = details
+    integer :: I
     call output ( 'VECTOR_TEMPLATES: SIZE = ' )
     call output ( size(vector_templates), advance='yes' )
     do i = 1, size(vector_templates)
       call output ( i, 4 )
-      if ( vector_templates(i)%name /= 0 ) then
-        call output ( ' Name = ' )
-        call display_string ( vector_templates(i)%name )
-      end if
-      call output ( ' NoQuantities = ' )
-      call output ( vector_templates(i)%noQuantities )
-      call output ( ' TotalInstances = ' )
-      call output ( vector_templates(i)%totalInstances )
-      call output ( ' TotalElements = ' )
-      call output ( vector_templates(i)%totalElements, advance='yes' )
-      if ( myDetails > 0 ) &
-        & call dump ( vector_templates(i)%quantities, '      Quantities = ' )
+      call output ( ':' )
+      call dump_vector_template ( vector_templates(i), details=details )
     end do
   end subroutine Dump_Vector_Templates
 
@@ -2200,6 +2225,10 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.108  2004/01/30 23:27:59  livesey
+! Added ReciprocateVector, PowVector and an optional argument to
+! ClearVector
+!
 ! Revision 2.107  2004/01/24 01:03:04  livesey
 ! Added allowNameMismatch argument to CopyVector
 !

@@ -151,6 +151,10 @@ module QuantityTemplates         ! Quantities within vectors
     ! These are actually dimensioned (instanceLen, noInstances)
   end type QuantityTemplate_T
 
+  interface DUMP
+    module procedure Dump_Quantity_Template, Dump_Quantity_Templates
+  end interface
+
   ! Local procedures
   interface CheckIntegrity
     module procedure CheckIntegrity_QuantityTemplate
@@ -516,116 +520,136 @@ contains ! =====     Public Procedures     =============================
     end if
   end subroutine DestroyQuantityTemplateDatabase
 
-  ! ------------------------------------  DUMP_QUANTITY_TEMPLATES  -----
-  subroutine DUMP_QUANTITY_TEMPLATES ( QUANTITY_TEMPLATES, DETAILS, NOL2CF )
+  ! -------------------------------------  DUMP_QUANTITY_TEMPLATE  -----
+  subroutine DUMP_QUANTITY_TEMPLATE ( QUANTITY_TEMPLATE, DETAILS, NOL2CF )
 
-    use MLSSignals_m, only: signals, DUMP, GetRadiometerName, GetModuleName
+    use MLSSignals_m, only: Signals, DUMP, GetRadiometerName, GetModuleName
+    use Output_m, only: NewLine
 
-    type(QuantityTemplate_T), intent(in) :: QUANTITY_TEMPLATES(:)
+    type(QuantityTemplate_T), intent(in) :: QUANTITY_TEMPLATE
     integer, intent(in), optional :: DETAILS ! <= 0 => Don't dump arrays
     !                                        ! >0   => Do dump arrays
     !                                        ! Default 1
     logical, intent(in), optional :: NOL2CF  ! if TRUE => Don't dump l2-specific
-    integer :: I, MyDetails                   !  stuff
+                                             !  stuff
+    integer :: MyDetails
     character (len=80) :: Str
     logical :: myNoL2CF
     myDetails = 1
     if ( present(details) ) myDetails = details
     myNoL2CF = .false.
     if ( present(NoL2CF) ) myNoL2CF = NoL2CF
+    call output ( ' Name = ' )
+    call myDisplayString ( quantity_template%name )
+    if ( .not. myNoL2CF ) then
+    call output ( ' quantityType = ' )
+    call myDisplayString ( lit_indices(quantity_template%quantityType), &
+      & advance='yes' )
+    endif
+    call output ( '      NoInstances = ' )
+    call output ( quantity_template%noInstances )
+    call output ( ' NoSurfs = ' )
+    call output ( quantity_template%noSurfs )
+    call output ( ' noChans = ' )
+    call output ( quantity_template%noChans, advance='yes' )
+    call output ( '      ' )
+    if ( .not. quantity_template%coherent ) call output ( 'in' )
+    call output ( 'coherent ' )
+    if ( .not. quantity_template%stacked ) call output ( 'non' )
+    call output ( 'stacked ' )
+    if ( .not. quantity_template%regular ) call output ( 'ir' )
+    call output ( 'regular ' )
+    if ( quantity_template%logBasis ) then
+      call output ('log-')
+    else
+      call output ('linear-')
+    endif
+    call output ('basis ' )  
+    if ( .not. quantity_template%minorFrame ) call output ( 'non' )
+    call output ( 'minorFrame', advance='yes' )
+    call output ( '      NoInstancesLowerOverlap = ' )
+    call output ( quantity_template%noInstancesLowerOverlap )
+    call output ( ' NoInstancesUpperOverlap = ' )
+    call output ( quantity_template%noInstancesUpperOverlap, advance='yes' )
+    call output ( '      BadValue = ' )
+    call output ( quantity_template%badValue )
+    if ( .not. myNoL2CF ) then
+    call output ( ' Unit = ' )
+    call myDisplayString ( phyq_indices(quantity_template%unit) )
+    endif
+    call output ( ' InstanceLen = ' )
+    call output ( quantity_template%InstanceLen, advance='yes' )
+    if ( myDetails < 0 ) then
+      call dump ( quantity_template%surfs, '  Surfs = ' )
+      call dump ( quantity_template%phi, '      Phi = ' )
+      call dump ( quantity_template%geodLat, '      GeodLat = ' )
+      call dump ( quantity_template%lon, '      Lon = ' )
+      call dump ( quantity_template%time, '      Time = ' )
+      call dump ( quantity_template%solarTime, '      SolarTime = ' )
+      call dump ( quantity_template%solarZenith, '      SolarZenith = ' )
+      call dump ( quantity_template%losAngle, '      LosAngle = ' )
+      if ( associated(quantity_template%frequencies) ) then
+        call output ( '      FrequencyCoordinate = ' )
+        call output ( quantity_template%frequencyCoordinate )
+        call dump ( quantity_template%frequencies, ' Frequencies = ' )
+      end if
+    end if
+    if ( quantity_template%radiometer /= 0 .and. .not. myNoL2CF ) then
+      call output ( '      Radiometer = ' )
+      call GetRadiometerName ( quantity_template%radiometer, str )
+      call output ( trim(str), advance='yes' )
+    end if
+    if ( quantity_template%molecule + &
+      &  quantity_template%instrumentModule /= 0 .and. .not. myNoL2CF ) then
+      call output ( '     ' )
+      if ( quantity_template%molecule /= 0 ) then
+        call output ( ' Molecule = ' )
+        call myDisplayString ( lit_indices(quantity_template%molecule) )
+      end if
+      if ( quantity_template%instrumentModule /= 0 ) then
+        call output ( ' Instrument Module = ' )
+        call GetModuleName ( quantity_template%instrumentModule, str )
+        call output ( trim(str) )
+      end if
+      call newLine
+    end if
+    if ( myDetails > 0 ) then
+      if ( quantity_template%signal /= 0 ) then
+        call output ( '   Signal ' )
+        call output ( quantity_template%signal )
+        call output ( ':', advance='yes' )
+        call dump ( signals(quantity_template%signal) )
+      end if
+      if ( quantity_template%radiometer + &
+        &  quantity_template%molecule /= 0 ) call newLine
+      if ( associated(quantity_template%surfIndex) ) then
+        call dump ( quantity_template%surfIndex, '      SurfIndex = ' )
+      end if
+      if ( associated(quantity_template%chanIndex) ) then
+        call dump ( quantity_template%chanIndex, '      ChanIndex = ' )
+      end if
+    end if
+  end subroutine DUMP_QUANTITY_TEMPLATE
+
+  ! ------------------------------------  DUMP_QUANTITY_TEMPLATES  -----
+  subroutine DUMP_QUANTITY_TEMPLATES ( QUANTITY_TEMPLATES, DETAILS, NOL2CF )
+
+    type(QuantityTemplate_T), intent(in) :: QUANTITY_TEMPLATES(:)
+    integer, intent(in), optional :: DETAILS ! <= 0 => Don't dump arrays
+    !                                        ! >0   => Do dump arrays
+    !                                        ! Default 1
+    logical, intent(in), optional :: NOL2CF  ! if TRUE => Don't dump l2-specific
+
+    integer :: I
+
     call output ( 'QUANTITY_TEMPLATES: SIZE = ' )
     call output ( size(quantity_templates), advance='yes' )
     do i = 1, size(quantity_templates)
       call output ( i, 4 )
-      call output ( ': Name = ' )
-      call myDisplayString ( quantity_templates(i)%name )
-      if ( .not. myNoL2CF ) then
-      call output ( ' quantityType = ' )
-      call myDisplayString ( lit_indices(quantity_templates(i)%quantityType), &
-        & advance='yes' )
-      endif
-      call output ( '      NoInstances = ' )
-      call output ( quantity_templates(i)%noInstances )
-      call output ( ' NoSurfs = ' )
-      call output ( quantity_templates(i)%noSurfs )
-      call output ( ' noChans = ' )
-      call output ( quantity_templates(i)%noChans, advance='yes' )
-      call output ( '      ' )
-      if ( .not. quantity_templates(i)%coherent ) call output ( 'in' )
-      call output ( 'coherent ' )
-      if ( .not. quantity_templates(i)%stacked ) call output ( 'non' )
-      call output ( 'stacked ' )
-      if ( .not. quantity_templates(i)%regular ) call output ( 'ir' )
-      call output ( 'regular ' )
-      if ( quantity_templates(i)%logBasis ) then
-        call output ('log-')
-      else
-        call output ('linear-')
-      endif
-      call output ('basis ' )  
-      if ( .not. quantity_templates(i)%minorFrame ) call output ( 'non' )
-      call output ( 'minorFrame', advance='yes' )
-      call output ( '      NoInstancesLowerOverlap = ' )
-      call output ( quantity_templates(i)%noInstancesLowerOverlap )
-      call output ( ' NoInstancesUpperOverlap = ' )
-      call output ( quantity_templates(i)%noInstancesUpperOverlap, advance='yes' )
-      call output ( '      BadValue = ' )
-      call output ( quantity_templates(i)%badValue )
-      if ( .not. myNoL2CF ) then
-      call output ( ' Unit = ' )
-      call myDisplayString ( phyq_indices(quantity_templates(i)%unit) )
-      endif
-      call output ( ' InstanceLen = ' )
-      call output ( quantity_templates(i)%InstanceLen, advance='yes' )
-      if ( myDetails < 0 ) then
-        call dump ( quantity_templates(i)%surfs, '  Surfs = ' )
-        call dump ( quantity_templates(i)%phi, '      Phi = ' )
-        call dump ( quantity_templates(i)%geodLat, '      GeodLat = ' )
-        call dump ( quantity_templates(i)%lon, '      Lon = ' )
-        call dump ( quantity_templates(i)%time, '      Time = ' )
-        call dump ( quantity_templates(i)%solarTime, '      SolarTime = ' )
-        call dump ( quantity_templates(i)%solarZenith, '      SolarZenith = ' )
-        call dump ( quantity_templates(i)%losAngle, '      LosAngle = ' )
-        if ( associated(quantity_templates(i)%frequencies) ) then
-          call output ( '      FrequencyCoordinate = ' )
-          call output ( quantity_templates(i)%frequencyCoordinate )
-          call dump ( quantity_templates(i)%frequencies, ' Frequencies = ' )
-        end if
-      end if
-      if ( quantity_templates(i)%radiometer /= 0 .and. .not. myNoL2CF ) then
-        call output ( '      Radiometer = ' )
-        call GetRadiometerName ( quantity_templates(i)%radiometer, str )
-        call output ( trim(str), advance='yes' )
-      end if
-      if ( quantity_templates(i)%molecule + &
-        &  quantity_templates(i)%instrumentModule /= 0 .and. .not. myNoL2CF ) then
-        call output ( '     ' )
-        if ( quantity_templates(i)%molecule /= 0 ) then
-          call output ( ' Molecule = ' )
-          call myDisplayString ( lit_indices(quantity_templates(i)%molecule) )
-        end if
-        if ( quantity_templates(i)%instrumentModule /= 0 ) then
-          call output ( ' Instrument Module = ' )
-          call GetModuleName ( quantity_templates(i)%instrumentModule, str )
-          call output ( trim(str) )
-        end if
-        call output ( '', advance = 'yes')
-      end if
-      if ( myDetails > 0 ) then
-        if ( quantity_templates(i)%signal /= 0 ) then
-          call dump ( signals( (/ quantity_templates(i)%signal /) ) )
-        end if
-        if ( quantity_templates(i)%radiometer + &
-          &  quantity_templates(i)%molecule /= 0 ) &
-          &  call output ( '', advance='yes' )
-        if ( associated(quantity_templates(i)%surfIndex) ) then
-          call dump ( quantity_templates(i)%surfIndex, '      SurfIndex = ' )
-        end if
-        if ( associated(quantity_templates(i)%chanIndex) ) then
-          call dump ( quantity_templates(i)%chanIndex, '      ChanIndex = ' )
-        end if
-      end if
+      call output ( ':' )
+      call dump_quantity_template ( quantity_templates(i), details, nol2cf )
     end do
+
   end subroutine DUMP_QUANTITY_TEMPLATES
 
   ! ---------------------------------- InflateQuantityTemplateDatabase --
@@ -845,6 +869,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.36  2004/04/15 20:51:51  pwagner
+! Added DUMP_QUANTITY_TEMPLATES (found in l2/dumper)
+!
 ! Revision 2.35  2004/01/24 01:02:43  livesey
 ! Added CopyQuantityTemplate
 !
