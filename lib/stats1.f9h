@@ -101,7 +101,8 @@
 !     ------------------------------------------------------------------
       if(NX .lt. 1) return
       COUNT = STATS(1)
-      if(COUNT .eq. 0.E0) then
+!     if(COUNT .eq. 0.E0) then
+      if(COUNT .lt. 0.5) then   ! To rule out potential problem
         if ( present(IHIST) ) then
          do 10 I=1,NCELLS
             IHIST(I) = 0
@@ -196,6 +197,9 @@
 !      end subroutine
 !
 ! $Log$
+! Revision 2.2  2005/03/24 21:13:39  pwagner
+! Perhaps unneeded change
+!
 ! Revision 2.1  2004/09/13 20:40:37  pwagner
 ! First commit
 !
