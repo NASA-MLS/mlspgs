@@ -48,6 +48,7 @@ module MLSFiles               ! Utility file routines
     "$RCSfile$"
   !----------------------------------------------------------
 
+! === (start of toc) ===
 !     c o n t e n t s
 !     - - - - - - - -
 
@@ -55,13 +56,14 @@ module MLSFiles               ! Utility file routines
 ! get_free_lun       Gets a free logical unit number
 ! mls_hdf_version    Returns one of 'hdf4', 'hdf5', or '????'
 ! mls_inqswath       A wrapper for doing swingswath for versions 4 and 5
-! mls_io_gen_openF   Opens a generic file using either the toolbox or else a Fortran OPEN statement
-! mls_io_gen_closeF  Closes a generic file using either the toolbox or else a Fortran OPEN statement
+! mls_io_gen_openF   Opens a generic file using the toolbox or Fortran OPEN
+! mls_io_gen_closeF  Closes a generic file using the toolbox or Fortran CLOSE
 ! mls_sfstart        Opens an hdf file for writing metadata
 ! mls_sfend          Closes a file opened by mls_sfstart
-! split_path_name    splits the input full_file_name into its components path and name
+! split_path_name    splits the input path/name into path and name
 ! hdf2hdf5_fileaccess
 !                    Translates version 4 hdf access codes to version 5
+! === (end of toc) ===
 
    ! Assume hdf files w/o explicit hdfVersion field are this
    ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc.
@@ -318,7 +320,7 @@ contains
   ! or else a Fortran OPEN statement
   ! according to toolbox_mode:
   ! 'gd' for grid files opened with gdopen
-  ! 'hg' for hdf4/5 files opened with sfstart; e.g. l1brad
+  ! 'hg' for hdf4/5 files opened with sfstart/h5fopen_f; e.g. l1brad
   ! 'pg' for generic files opened with pgs_io_gen_openF
   ! 'op' for l3ascii files opened with simple fortran 'open'
   ! 'sw' for swath files opened with swopen
@@ -744,10 +746,11 @@ contains
   ! This function closes a generic file using either the toolbox
   ! or else a Fortran CLOSE statement
   ! according to toolbox_mode:
-  ! 'sw' for swath files opened with swopen
-  ! 'gd' for grid files opened with gdopen
-  ! 'pg' for generic files opened with pgs_io_gen_openF
   ! 'cl' for l3ascii files opened with simple fortran 'open'
+  ! 'gd' for grid files opened with gdopen
+  ! 'hg' for hdf4/5 files opened with sfstart/h5fopen_f; e.g. l1brad
+  ! 'pg' for generic files opened with pgs_io_gen_openF
+  ! 'sw' for swath files opened with swopen
 
   ! It returns a non-zero error status only if unsuccessful
 
@@ -816,6 +819,15 @@ contains
         ErrType = he5_gdclose(theFileHandle)
       elseif(myhdfVersion == HDFVERSION_4) then
         ErrType = gdclose(theFileHandle)
+      else
+        ErrType = NOSUCHHDFVERSION
+      endif
+
+    case('hg')
+      if(myhdfVersion == HDFVERSION_5) then
+        call h5fclose_f(theFileHandle, ErrType)
+      elseif(myhdfVersion == HDFVERSION_4) then
+        ErrType = sfend(theFileHandle)
       else
         ErrType = NOSUCHHDFVERSION
       endif
@@ -1248,6 +1260,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.37  2002/09/27 23:38:38  pwagner
+! Added hg type to mls_gen_close
+!
 ! Revision 2.36  2002/09/26 23:59:39  pwagner
 ! added 'hg' toolbox_mode to mls_io_gen_openF
 !
