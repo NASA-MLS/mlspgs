@@ -196,7 +196,8 @@ contains
         end do
       case ( f_pfaData )
         do i = 2, nsons(son)
-          call dump ( pfaData(decoration(decoration(subtree(i,son)))), details )
+          look = decoration(decoration(subtree(i,son)))
+          call dump ( pfaData(look), details, look )
         end do
       case ( f_quantity ) ! Dump vector quantities
         do i = 2, nsons(son)
@@ -319,6 +320,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.18  2005/01/12 03:18:51  vsnyder
+! Add item number to PFA dump
+!
 ! Revision 2.17  2004/12/28 00:22:03  vsnyder
 ! Add not_used_here
 !
