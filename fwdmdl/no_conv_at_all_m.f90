@@ -85,13 +85,19 @@ contains
 
     k = no_tan_hts
     j = ptan%template%noSurfs
-    if ( present(Jacobian) ) then
+    col = 0
+
+    ! Ptan derivative
+    if ( present(Jacobian) ) &
+      & col = FindBlock ( Jacobian%col, ptan%index, maf )
+    
+    if ( col > 0 ) then
       Call Cspline_der ( tan_press, Ptan%values(:,maf), i_raw, i_star_all, &
         & der_all, k, j )
-
+      
       row = FindBlock ( Jacobian%row, radiance%index, maf )
-      col = FindBlock ( Jacobian%col, ptan%index, maf )
       rowFlags(row) = .true.
+      
       select case ( jacobian%block(Row,col)%kind )
       case ( m_absent )
         call CreateBlock ( Jacobian, row, col, m_banded, &
@@ -240,6 +246,9 @@ contains
 
 end module NO_CONV_AT_ALL_M
 ! $Log$
+! Revision 2.2  2002/01/27 08:37:50  zvi
+! Adding Users selected coefficients for derivatives
+!
 ! Revision 2.1  2001/11/08 00:10:49  livesey
 ! Updated to include extinction
 !
