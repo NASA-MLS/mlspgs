@@ -703,6 +703,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_opticalDepth, t+t_numeric, n+n_field_type, ndp+n_spec_def, &
       begin, s+s_forwardModel, & ! Must be AFTER s_vector and s_matrix
              begin, f+f_atmos_der, t+t_boolean, n+n_field_type, &
+             begin, f+f_do_baseline, t+t_boolean, n+n_field_type, &
              begin, f+f_do_conv, t+t_boolean, n+n_field_type, &
              begin, f+f_do_freq_avg, t+t_boolean, n+n_field_type, &
              begin, f+f_integrationGrid, s+s_vGrid, n+n_field_spec, &
@@ -720,12 +721,14 @@ contains ! =====     Public procedures     =============================
              begin, f+f_signals, t+t_string, n+n_field_type, &
              begin, f+f_skipOverlaps, t+t_boolean, n+n_field_type, &
              begin, f+f_cloud_der, t+t_numeric, n+n_field_type, &
-             begin, f+f_cloud_width, t+t_numeric, n+n_field_type, begin, f+f_cloud_fov, t+t_numeric, n+n_field_type, &
+             begin, f+f_cloud_width, t+t_numeric, n+n_field_type,&
+             begin, f+f_cloud_fov, t+t_numeric, n+n_field_type, &
              begin, f+f_spect_der, t+t_boolean, n+n_field_type, &
              begin, f+f_tangentGrid, s+s_vGrid, n+n_field_spec, &
              begin, f+f_temp_der, t+t_boolean, n+n_field_type, &
              begin, f+f_tolerance, t+t_numeric, n+n_field_type, &
-             begin, f+f_type, t+t_fwmType, nr+n_field_type, ndp+n_spec_def, &
+             begin, f+f_type, t+t_fwmType, nr+n_field_type, ndp+n_spec_def /) )
+    call make_tree ( (/ &
       begin, s+s_forwardModelGlobal, &
              begin, f+f_antennaPatterns, t+t_string, n+n_field_type, &
              begin, f+f_l2pc, t+t_string, n+n_field_type, &
@@ -877,6 +880,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.165  2001/10/02 20:34:34  livesey
+! Added f_do_baseline
+!
 ! Revision 2.164  2001/09/28 18:21:56  dwu
 ! add l_lowcloud
 !
