@@ -25,7 +25,7 @@ contains
     &        N_lvls, No_t, Gl_count, Ndx_path, Z_glgrid, &
     &        T_glgrid, H_glgrid, Dhdz_glgrid, Tan_hts, No_tan_hts, Z_path, &
     &        H_path, T_path, Phi_path, Dhdz_path, Eta_phi, No_phi_t, &
-    &        T_phi_basis, No_mmaf, PhiWindow, Elvar, Ier )
+    &        T_phi_basis, NoMAFs, PhiWindow, Elvar, Ier )
 
   !  ===============================================================
   !  Declaration of variables for sub-program: comp_path_entities
@@ -37,7 +37,7 @@ contains
   type (VectorValue_T), intent(in) :: radiance
   type (VectorValue_T), intent(in) :: temperature
 
-  integer, intent(in) :: no_t, no_phi_t, N_lvls, gl_count, PhiWindow, No_mmaf
+  integer, intent(in) :: no_t, no_phi_t, N_lvls, gl_count, PhiWindow, NoMAFs
   !
   integer, intent(in out) :: No_tan_hts
 
@@ -61,14 +61,15 @@ contains
   !  Local variables:
   !  ----------------
 
-  Integer :: i, k, l, jj, kk, lmin, lmax, klo, khi, ngt, maf
+  Integer :: i, k, l, jj, kk, lmin, lmax, klo, khi, ngt, maf, &
+             WinSize, MidWin
 
   Real(r8) :: h, q, r, zeta, phi
 
   Real(r8), dimension(:)  , allocatable :: zpath, tpath, hpath, ppath, dhdzp
   Real(r8), dimension(:,:), allocatable :: phi_eta
 
-  integer, dimension(no_mmaf) :: closestInstance
+  integer, dimension(NoMAFs) :: closestInstance
 
   ier = 0
   ngt = 2 * (Ng+1) * (N_lvls+1)
@@ -87,10 +88,12 @@ contains
 
   call FindClosestInstances( temperature, radiance, closestInstance )
 
-  do maf = 1, no_mmaf
+  do maf = 1, NoMAFs
     l = closestInstance(maf)
     lmin = max(1,l-phiWindow/2)
     lmax = min(no_phi_t,l+phiWindow/2)
+    WinSize = lmax-lmin+1
+    MidWin = l - lmin + 1
     allocate ( phi_eta(ngt,lmin:lmax), stat=ier )
     if ( ier /= 0 ) then
       print *,'** Error Allocating phi_eta in routine: comp_path_entities..'
@@ -98,10 +101,11 @@ contains
       return
     endif
     do k = 1, no_tan_hts
-      h = tan_hts(k,maf)
-      call vert_to_path ( elvar(maf), n_lvls, Ng, ngt, gl_count, lmax-lmin+1, &
-        & no_t, h, z_glgrid, t_glgrid(1:,lmin:lmax), h_glgrid(1:,lmin:lmax), &
-        & dhdz_glgrid(1:,lmin:lmax), t_phi_basis(lmin:lmax), zpath, hpath, &
+      h = tan_hts(k,l)
+      call vert_to_path ( elvar(maf), n_lvls, Ng, ngt, gl_count, WinSize, &
+        & MidWin, no_t, h, z_glgrid, t_glgrid(1:,lmin:lmax), &
+        & h_glgrid(1:,lmin:lmax), dhdz_glgrid(1:,lmin:lmax), &
+        & t_phi_basis(lmin:lmax), zpath, hpath, &
         & tpath, ppath, dhdzp, phi_eta, klo, khi, ier )
       if(ier /= 0) return
       deallocate ( z_path(k,maf)%values, h_path(k,maf)%values,   &
@@ -127,7 +131,7 @@ contains
       eta_phi(k,maf)%values(1:khi,lmin:lmax) = phi_eta(1:khi,lmin:lmax)
     end do ! k = 1, no_tan_hts
     deallocate ( phi_eta, stat=i )
-  end do ! l = 1, no_mmaf
+  end do ! l = 1, NoMAFs
 
  99  deallocate ( zpath, hpath, tpath, ppath, dhdzp, stat=i )
 
@@ -137,6 +141,9 @@ end subroutine Comp_Path_Entities
 
 end module Comp_Path_Entities_M
 ! $Log$
+! Revision 1.27  2001/04/19 22:09:18  livesey
+! Modified to deal with no mafs /= T%noInstances
+!
 ! Revision 1.26  2001/04/19 06:48:13  zvi
 ! Fixing memory leaks..
 !

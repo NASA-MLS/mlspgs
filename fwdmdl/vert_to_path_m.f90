@@ -28,9 +28,10 @@ contains
 
 ! *** NOTE: This routine is using The Equivalent Circle concept
 
-  subroutine Vert_To_Path ( Elvar, N_lvls, Ng, Ngt, gl_count, WinSize, No_t, &
-    &  Htan, Z_glgrid, T_glgrid, H_glgrid, Dhdz_glgrid, T_phi_basis, Z_path, &
-    &  H_path, T_path, Phi_path, Dhdz_path, Phi_eta, Brkpt, Totnp, Ier )
+  subroutine Vert_To_Path ( Elvar, N_lvls, Ng, Ngt, gl_count, WinSize, &
+    &  MidWin, No_t, Htan, Z_glgrid, T_glgrid, H_glgrid, Dhdz_glgrid, &
+    &  T_phi_basis, Z_path, H_path, T_path, Phi_path, Dhdz_path, Phi_eta, &
+    &  Brkpt, Totnp, Ier )
 
     !  ===============================================================
     !  Declaration of variables for sub-program: vert_to_path
@@ -38,7 +39,7 @@ contains
     !  ---------------------------
     !  calling sequence variables:
     !  ---------------------------
-    integer, intent(in) :: N_lvls, Ng, gl_count, WinSize, No_t, Ngt
+    integer, intent(in) :: N_lvls, Ng, gl_count, WinSize, MidWin, No_t, Ngt
 
     integer, intent(out) :: Totnp, Brkpt, Ier
 
@@ -55,7 +56,7 @@ contains
     !  Local variables:
     !  ----------------
 
-    integer :: i, j, k, l, m, n, jp, n_d, npp, ibrk, Ngp1, no_iter
+    integer :: i, j, k, l, m, n, n_d, npp, ibrk, Ngp1, no_iter
 
     real(r8) :: h, s, r, dz, rs, phi, rss, dhdz, prev_h
 
@@ -120,23 +121,22 @@ contains
 
     npp = 0
     l = gl_count + 1
-    jp = (WinSize + 1) / 2
-
+ 
     do
       do n = 1, Ngp1
         l = l - 1
         npp = npp + 1
         dum_z(npp) = z_glgrid(l)
-        dum_h(npp) = h_glgrid(l,jp)
+        dum_h(npp) = h_glgrid(l,MidWin)
       end do
-      h = h_glgrid(l-1,jp)
+      h = h_glgrid(l-1,MidWin)
       if ( h <= htan  .OR. l-Ngp1 < 1) exit
     end do
 
     l = l - 1
     npp = npp + 1
     dum_z(npp) = z_glgrid(l)
-    dum_h(npp) = h_glgrid(l,jp)
+    dum_h(npp) = h_glgrid(l,MidWin)
 
     l = l - 1
     ibrk = npp + 1
@@ -146,7 +146,7 @@ contains
         l = l + 1
         npp = npp + 1
         dum_z(npp) = z_glgrid(l)
-        dum_h(npp) = h_glgrid(l,jp)
+        dum_h(npp) = h_glgrid(l,MidWin)
       end do
       if ( l+Ngp1 > gl_count) exit
     end do
@@ -154,7 +154,7 @@ contains
     l = l + 1
     npp = npp + 1
     dum_z(npp) = z_glgrid(l)
-    dum_h(npp) = h_glgrid(l,jp)
+    dum_h(npp) = h_glgrid(l,MidWin)
 
 !    Cast the h_glgrid onto the path (using liner interpolation)
 
@@ -305,6 +305,9 @@ contains
   end subroutine Vert_To_Path
 end module Vert_To_Path_M
 ! $Log$
+! Revision 1.13  2001/04/13 03:34:46  zvi
+! Correcting minor error in allocation, cleaing up comments.
+!
 ! Revision 1.12  2001/04/13 02:00:25  vsnyder
 ! Undo all of the lmin:lmax nonsense
 !

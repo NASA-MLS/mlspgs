@@ -16,7 +16,7 @@ module HYDROSTATIC_MODEL_M
 contains
 !---------------------------------------------------------------
 
-SUBROUTINE hydrostatic_model(si,no_mmaf, geoc_lat, Href, &
+SUBROUTINE hydrostatic_model(si, no_phi_t, geoc_lat, Href, &
            Zref, z_grid, t_z_basis, t_coeff, z_glgrid, h_glgrid,     &
            t_glgrid, dhdz_glgrid, dh_dt_glgrid, tan_press, tan_hts,  &
            tan_temp, tan_dh_dt, gl_count, Ier)
@@ -28,7 +28,7 @@ SUBROUTINE hydrostatic_model(si,no_mmaf, geoc_lat, Href, &
 !  Calling sequence variables:
 !  ---------------------------
 
-Integer(i4), INTENT(IN) :: si,no_mmaf
+Integer(i4), INTENT(IN) :: si, no_phi_t
 
 Integer(i4), INTENT(OUT) :: Ier, gl_count
 
@@ -102,7 +102,7 @@ Real(r8) :: h_grid(Size(z_grid)),t_grid(Size(z_grid)),dhdt(Size(t_z_basis))
 ! *** Create the Temperature on the GL grid by linear interpolation via
 !     the get_eta procedure (Bill's request)
 !
-  DO l = 1, no_mmaf
+  DO l = 1, no_phi_t
     do i = 1, gl_count
       t = 0.0
       z = z_glgrid(i)
@@ -120,7 +120,7 @@ Real(r8) :: h_grid(Size(z_grid)),t_grid(Size(z_grid)),dhdt(Size(t_z_basis))
   DO h_i = 1, gl_count
     z = z_glgrid(h_i)
     j = (h_i + Ng) / Ngp1
-    DO l = 1, no_mmaf
+    DO l = 1, no_phi_t
       CALL get_h_dhdt(t_coeff(1:,l),t_z_basis,z,Zref,Href(l), &
            geoc_lat(l),Reff,G,const,no_t,h,dhdt)
       h_glgrid(h_i,l) = h
@@ -135,7 +135,7 @@ Real(r8) :: h_grid(Size(z_grid)),t_grid(Size(z_grid)),dhdt(Size(t_z_basis))
   h_grid(1:) = 0.0
   jj = Size(z_grid)
   cnt = (gl_count + Ng) / Ngp1
-  do l = 1, no_mmaf
+  do l = 1, no_phi_t
     tan_temp(1:si-1,l) = t_glgrid(1,l)
     h_grid(1:cnt) = h_glgrid(1:gl_count:Ngp1,l)
     if(cnt < jj) h_grid(cnt+1:jj) = h_glgrid(gl_count,l)
@@ -155,7 +155,7 @@ Real(r8) :: h_grid(Size(z_grid)),t_grid(Size(z_grid)),dhdt(Size(t_z_basis))
 
   h_grid(1:) = 0.0
   t_grid(1:) = 0.0
-  do l = 1, no_mmaf
+  do l = 1, no_phi_t
     h_grid(1:cnt) = h_glgrid(1:gl_count:Ngp1,l)
     t_grid(1:cnt) = t_glgrid(1:gl_count:Ngp1,l)
     if(cnt < jj) h_grid(cnt+1:jj) = h_glgrid(gl_count,l)
@@ -165,18 +165,10 @@ Real(r8) :: h_grid(Size(z_grid)),t_grid(Size(z_grid)),dhdt(Size(t_z_basis))
     IF(ier /= 0) RETURN
   end do
 
-  k = no_mmaf / 2
-  h_grid(1:) = 0.0
-  t_grid(1:) = 0.0
-  h_grid(1:cnt) = h_glgrid(1:gl_count:Ngp1,k)
-  t_grid(1:cnt) = t_glgrid(1:gl_count:Ngp1,k)
-  if(cnt < jj) h_grid(cnt+1:jj) = h_glgrid(gl_count,k)
-  if(cnt < jj) t_grid(cnt+1:jj) = t_glgrid(gl_count,k)
-
 ! Interpolate the dh_dt into the tan_press grid:
 
   t_grid(1:cnt) = 0.0
-  DO l = 1, no_mmaf
+  DO l = 1, no_phi_t
     DO m = 1, no_t
       t_grid(1:cnt) = dh_dt_glgrid(1:gl_count:Ngp1,l,m)
       CALL lintrp(z_grid,tan_press(si:),t_grid,tan_dh_dt(si:,l,m), &
@@ -381,6 +373,9 @@ END SUBROUTINE pq_ana
 
 end module HYDROSTATIC_MODEL_M
 ! $Log$
+! Revision 1.15  2001/04/09 20:52:07  zvi
+! Debugging Derivatives version
+!
 ! Revision 1.14  2001/04/06 23:58:46  zvi
 ! Fix a bug LF95 was compalining about (tan_hts ..)
 !
