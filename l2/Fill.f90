@@ -4769,7 +4769,7 @@ contains ! =====     Public Procedures     =============================
         call Announce_Error ( root, No_Error_code, &
           & 'Wrong hdfversion declared/coded for l1b file' )
       endif
-      
+
       select case ( quantity%template%quantityType )
       case ( l_ECRtoFOV )
         call GetModuleName( quantity%template%instrumentModule, nameString )
@@ -4795,7 +4795,7 @@ contains ! =====     Public Procedures     =============================
       case ( l_LosVel )
         call GetModuleName ( quantity%template%instrumentModule, nameString )
         nameString = AssembleL1BQtyName ('LosVel', this_hdfVersion, .TRUE., &
-             & trim(nameString) )
+          & trim(nameString) )
       case ( l_tngtGeocAlt )
         call GetModuleName( quantity%template%instrumentModule,nameString )
         nameString = AssembleL1BQtyName('GeocAlt', this_hdfVersion, .TRUE., &
@@ -4820,63 +4820,73 @@ contains ! =====     Public Procedures     =============================
         call Announce_Error ( root, cantFillFromL1B )
       end select
 
-      if ( isPrecision ) nameString = trim(nameString) // PRECISIONSUFFIX
+      ! If the quantity exists (or it doesn't exist but it's not a radiance)
+      if ( fileId /= 0 .or. quantity%template%quantityType /= l_radiance ) then
+        if ( isPrecision ) nameString = trim(nameString) // PRECISIONSUFFIX
 
-      call ReadL1BData ( fileID , nameString, l1bData, noMAFs, flag, &
-        & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
-        & NeverFail= .false., hdfVersion=this_hdfVersion )
-      ! We'll have to think about `bad' values here .....
-      if ( flag /= 0 ) then
-        call Announce_Error ( root, errorReadingL1B )
-        if ( toggle(gen) .and. levels(gen) > 0 ) &
-          & call trace_end ( "FillVectorQuantityFromL1B")
-        return
-      end if
-      if ( quantity%template%noInstances /= size ( l1bData%dpField, 3 ) .or. &
-        &  quantity%template%instanceLen /= &
-        &   size ( l1bData%dpField, 1 ) * size ( l1bData%dpField, 2 ) ) then
-        call output ( 'Quantity shape:' )
-        call output ( quantity%template%instanceLen )
-        call output ( ' ( ' )
-        call output ( quantity%template%noChans )
-        call output ( ', ' )
-        call output ( quantity%template%noSurfs )
-        call output ( ' ), ' )
-        call output ( quantity%template%noInstances, advance='yes' )
-        call output ( 'L1B shape:' )
-        call output ( size ( l1bData%dpField, 1 ) )
-        call output ( ', ' )
-        call output ( size ( l1bData%dpField, 2 ) )
-        call output ( ', ' )
-        call output ( size ( l1bData%dpField, 3 ), advance='yes' )
-        call Announce_Error ( root, no_error_code, 'L1B data is wrong shape' )
-        if ( toggle(gen) .and. levels(gen) > 0 ) &
-          & call trace_end ( "FillVectorQuantityFromL1B")
-        return
-      end if
+        call ReadL1BData ( fileID , nameString, l1bData, noMAFs, flag, &
+          & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
+          & NeverFail= .false., hdfVersion=this_hdfVersion )
+        ! If it didn't exist in the not-a-radiance case, then we'll fail here.
+        if ( flag /= 0 ) then
+          call Announce_Error ( root, errorReadingL1B )
+          if ( toggle(gen) .and. levels(gen) > 0 ) &
+            & call trace_end ( "FillVectorQuantityFromL1B")
+          return
+        end if
+        if ( quantity%template%noInstances /= size ( l1bData%dpField, 3 ) .or. &
+          &  quantity%template%instanceLen /= &
+          &   size ( l1bData%dpField, 1 ) * size ( l1bData%dpField, 2 ) ) then
+          call output ( 'Quantity shape:' )
+          call output ( quantity%template%instanceLen )
+          call output ( ' ( ' )
+          call output ( quantity%template%noChans )
+          call output ( ', ' )
+          call output ( quantity%template%noSurfs )
+          call output ( ' ), ' )
+          call output ( quantity%template%noInstances, advance='yes' )
+          call output ( 'L1B shape:' )
+          call output ( size ( l1bData%dpField, 1 ) )
+          call output ( ', ' )
+          call output ( size ( l1bData%dpField, 2 ) )
+          call output ( ', ' )
+          call output ( size ( l1bData%dpField, 3 ), advance='yes' )
+          call Announce_Error ( root, no_error_code, 'L1B data is wrong shape' )
+          if ( toggle(gen) .and. levels(gen) > 0 ) &
+            & call trace_end ( "FillVectorQuantityFromL1B")
+          return
+        end if
 
-      quantity%values = RESHAPE(l1bData%dpField, &
-        & (/ quantity%template%instanceLen, quantity%template%noInstances /) )
-      if ( isPrecision ) then
-        do column=1, size(quantity%values(1, :))
-          do row=1, size(quantity%values(:, 1))
-            if ( quantity%values(row, column) < 0.d0 ) &
-              & call MaskVectorQty(quantity, row, column)
+        quantity%values = RESHAPE(l1bData%dpField, &
+          & (/ quantity%template%instanceLen, quantity%template%noInstances /) )
+        if ( isPrecision ) then
+          do column=1, size(quantity%values(1, :))
+            do row=1, size(quantity%values(:, 1))
+              if ( quantity%values(row, column) < 0.d0 ) &
+                & call MaskVectorQty(quantity, row, column)
+            end do
+          end do
+        else if ( present(precisionQuantity) ) then
+          do column=1, size(quantity%values(1, :))
+            do row=1, size(quantity%values(:, 1))
+              if ( isVectorQtyMasked(precisionQuantity, row, column) ) &
+                & call MaskVectorQty(quantity, row, column)
+            end do
+          end do
+        end if
+
+        if ( index(switches, 'l1b') /= 0 ) &
+          & call Dump( l1bData )
+        call DeallocateL1BData(l1bData)
+      else
+        ! This is the case where it's a radiance we're after and it's missing
+        quantity%values = -1.0
+        do column=1, size(quantity%values(1,:))
+          do row=1, size(quantity%values(:,1))
+            call MaskVectorQty ( quantity, row, column )
           end do
         end do
-      else if ( present(precisionQuantity) ) then
-        do column=1, size(quantity%values(1, :))
-          do row=1, size(quantity%values(:, 1))
-            if ( isVectorQtyMasked(precisionQuantity, row, column) ) &
-              & call MaskVectorQty(quantity, row, column)
-          end do
-        end do
       end if
-
-      if ( index(switches, 'l1b') /= 0 ) &
-        & call Dump( l1bData )
-      call DeallocateL1BData(l1bData)
-
       if (toggle(gen) .and. levels(gen) > 0 ) call trace_end( "FillVectorQuantityFromL1B" )
     end subroutine FillVectorQuantityFromL1B
 
@@ -6010,6 +6020,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.241  2003/09/09 22:06:38  livesey
+! Added resilency to missing radiances.
+!
 ! Revision 2.240  2003/08/28 00:44:54  livesey
 ! Made the a*b manipulation even more lenient
 !
