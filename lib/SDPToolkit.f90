@@ -105,6 +105,16 @@ MODULE SDPToolkit               ! F90 interface to SDP Toolkit.
         DOUBLE PRECISION, INTENT(out) :: dtime
       END FUNCTION pgs_td_utctotai
 
+      ! Not a toolkit routine, but one that substitutes
+      ! for pgs_td_utctotai when run w/o the pcf
+      ! (Should we make a separate module to hold
+      ! miscellaneous f90 interfaces such as this?)
+      INTEGER FUNCTION mls_utctotai(leapsec_file, time, dtime)
+        character(len = *), INTENT(IN) :: leapsec_file
+        character(len = *), INTENT(IN) :: time
+        DOUBLE PRECISION, INTENT(out) :: dtime
+      END FUNCTION mls_utctotai
+
 ! Metadata functions
 ! In the following, groups or imd_group will be
 ! character strings with length PGSd_MET_GROUP_NAME_L
@@ -116,6 +126,7 @@ MODULE SDPToolkit               ! F90 interface to SDP Toolkit.
 ! To see this value, execute "grep -i PGSd_MET_NUM_OF_GROUPS $PGSINC/*.h"
 !
 ! Unfortunately, these don't work right--don't use SDPToolkit for them
+! (Shouldn't you either fix them or remove them?)
 ! Better declare them as externals
       INTEGER FUNCTION tk_PGS_MET_Init(file_id,groups)
         INTEGER, INTENT(IN) :: file_id
@@ -183,6 +194,9 @@ END MODULE SDPToolkit
 
 !
 ! $Log$
+! Revision 2.8  2002/04/29 17:38:10  pwagner
+! Added interface for mls_utctotai
+!
 ! Revision 2.7  2002/01/09 23:52:09  pwagner
 ! Removed use of MLSCommon
 !
