@@ -807,7 +807,7 @@ contains
 
   770 dxnl = dxn
       aj%dxnl = dxnl
-      if ( fnxe > fnb ) go to 222
+      if ( fnxe > fnb**2 ) go to 222
       ! Come here after returning from a gradient move
   775 fnl = fn
       frzl = frz
@@ -1209,6 +1209,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.28  2002/09/14 00:36:13  vsnyder
+! FNXE is the square of the norm.  Compare it to FNB**2
+!
 ! Revision 2.27  2002/09/11 23:41:53  vsnyder
 ! Correct improved test for retreating to best X
 !
