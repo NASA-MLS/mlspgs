@@ -212,7 +212,7 @@ program INIT_GEN
     capName = capitalize(p_names(i))
     capName(1:1) = cap(capName(1:1))
     if ( margin /= 0 ) then
-      nspaces = margin - decl_wid - len_trim(p_names(i)) - 4
+      nspaces = margin - decl_wid - len_trim(capName) - 4
     else
       nspaces = maxwid - len_trim(capName)
     end if
@@ -236,7 +236,7 @@ program INIT_GEN
   ! Output the references to "add_ident"
   do i = 1, numNames
     if ( margin /= 0 ) then
-      nspaces = margin - index_Wid - 10 - len_trim(names(i))
+      nspaces = margin - index_Wid - 10 - len_trim(p_names(i))
     else
       nspaces = maxwid - len_trim(p_names(i))
     end if
@@ -270,6 +270,9 @@ contains
 end program INIT_GEN
 
 ! $Log$
+! Revision 1.4  2001/07/25 19:47:22  vsnyder
+! Added 'only' to 'use MACHINE'
+!
 ! Revision 1.3  2001/07/25 18:49:08  vsnyder
 ! Change default input to stdin, add an option to specify otherwise
 !
