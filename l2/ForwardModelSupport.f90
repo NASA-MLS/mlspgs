@@ -28,8 +28,7 @@ module ForwardModelSupport
   integer, parameter :: IncompleteFullFwm    = DefineMoleculesFirst + 1
   integer, parameter :: IncompleteLinearFwm  = IncompleteFullFwm + 1
   integer, parameter :: IrrelevantFwmParameter = IncompleteLinearFwm + 1
-  integer, parameter :: Pol_and_not_Pol      = IrrelevantFwmParameter + 1
-  integer, parameter :: TangentNotSubset     = Pol_and_not_Pol + 1
+  integer, parameter :: TangentNotSubset     = IrrelevantFwmParameter + 1
   integer, parameter :: ToleranceNotK        = TangentNotSubset + 1
   integer, parameter :: TooManyHeights       = ToleranceNotK + 1
   integer, parameter :: TooManyCosts         = TooManyHeights + 1
@@ -291,19 +290,19 @@ contains ! =====     Public Procedures     =============================
       & F_BINSELECTORS, F_CHANNELS, F_CLOUD_DER, &
       & F_DEFAULT_spectroscopy, F_DIFFERENTIALSCAN, F_DO_BASELINE, F_DO_CONV, &
       & F_DO_FREQ_AVG, F_DO_1D, F_FREQUENCY, F_I_SATURATION, F_INCL_CLD, &
-      & F_INTEGRATIONGRID, F_LOCKBINS, F_MODULE, F_MOLECULES, F_MOLECULESPOL, &
-      & F_MOLECULEDERIVATIVES, F_MOLECULEDERIVATIVESPOL, F_NABTERMS, &
+      & F_INTEGRATIONGRID, F_LOCKBINS, F_MODULE, F_MOLECULES, &
+      & F_MOLECULEDERIVATIVES, F_NABTERMS, &
       & F_NAZIMUTHANGLES, F_NCLOUDSPECIES, F_NMODELSURFS, F_NSCATTERINGANGLES, &
-      & F_NSIZEBINS, F_PHIWINDOW, F_SIGNALS, F_SKIPOVERLAPS, &
+      & F_NSIZEBINS, F_PHIWINDOW, F_POLARIZED, F_SIGNALS, F_SKIPOVERLAPS, &
       & F_SPECIFICQUANTITIES, F_SPECT_DER, F_TANGENTGRID, F_TEMP_DER, &
       & F_TOLERANCE, F_TYPE
-    use intrinsic, only: l_clear, l_none
+    use Intrinsic, only: L_NONE, L_CLEAR
     use MLSCommon, only: R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSNumerics, only: HUNT
     use MLSSignals_M, only: Signals
     use MoreTree, only: Get_Boolean, Get_Field_ID
-    use Parse_Signal_m, only: EXPAND_SIGNAL_LIST
+    use Parse_Signal_m, only: PARSE_SIGNAL
     use String_Table, only: Get_String
     use Toggles, only: Gen, Levels, Toggle
     use Trace_M, only: Trace_begin, Trace_end
@@ -318,6 +317,7 @@ contains ! =====     Public Procedures     =============================
     type (vGrid_T), dimension(:), target :: vGrids ! vGrid database
     logical, intent(in) :: GLOBAL       ! Goes into info%globalConfig
 
+    logical, dimension(:), pointer :: Channels   ! From Parse_Signal
     integer :: Field                    ! Field index -- f_something
     logical :: Got(field_first:field_last)   ! "Got this field already"
     integer :: I                        ! Subscript and loop inductor.
@@ -328,6 +328,9 @@ contains ! =====     Public Procedures     =============================
     integer :: Name                     ! sub_rosa of label of specification,
     ! if any, else zero.
     integer :: NELTS                    ! Number of elements of an array tree
+    integer :: SIDEBAND                 ! Returned from Parse_Signal
+    integer, dimension(:), pointer :: SIGNALINDS ! From Parse_Signal
+    character (len=80) :: SIGNALSTRING  ! E.g. R1A....
     integer :: Son                      ! Some subtree of root.
     integer :: STATUS                   ! From allocates etc.
     integer :: TANGENT                  ! Loop counter
@@ -336,13 +339,13 @@ contains ! =====     Public Procedures     =============================
     integer :: Expr_Units(2)            ! Units of value returned by EXPR
     real (r8) :: Value(2)               ! Value returned by EXPR
     integer :: WANTED                   ! Which signal do we want?
-    logical :: ERRORFLAG                ! Set if problem
 
     ! Error message codes
 
     ! Nullify some pointers so allocate_test doesn't try to deallocate them.
     ! Don't initialize them with =>NULL() because that makes them SAVEd.
 
+    nullify ( channels, signalInds )
     call NullifyForwardModelConfig ( info ) ! for Sun's rubbish compiler
 
     error = 0
@@ -358,29 +361,30 @@ contains ! =====     Public Procedures     =============================
 
     ! Set sensible defaults
     info%allLinesForRadiometer = .false.
-    info%globalConfig = global
-    info%do_conv = .false.
-    info%do_baseline = .false.
-    info%do_freq_avg = .false.
-    info%do_1d = .false.
-    info%DEFAULT_spectroscopy = .false.
-    info%incl_cld = .false.
-    info%lockBins = .false.
-    info%temp_der = .false.
     info%atmos_der = .false.
-    info%spect_der = .false.
-    info%skipOverlaps = .false.
-    info%differentialScan = .false.
     info%cloud_der = l_none
-    info%no_cloud_species=1
-    info%no_model_surfs =640
-    info%NUM_SCATTERING_ANGLES=16
-    info%NUM_AZIMUTH_ANGLES=8
-    info%NUM_AB_TERMS=50
-    info%NUM_SIZE_BINS=40
-    info%phiwindow = 5
-    info%windowUnits = phyq_profiles
+    info%DEFAULT_spectroscopy = .false.
+    info%differentialScan = .false.
+    info%do_1d = .false.
+    info%do_baseline = .false.
+    info%do_conv = .false.
+    info%do_freq_avg = .false.
+    info%globalConfig = global
+    info%incl_cld = .false.
     info%i_saturation = l_clear
+    info%lockBins = .false.
+    info%no_cloud_species = 2
+    info%no_model_surfs = 640
+    info%num_ab_terms = 50
+    info%num_azimuth_angles = 8
+    info%num_scattering_angles = 16
+    info%num_size_bins = 40
+    info%phiwindow = 5
+    info%polarized = .false.
+    info%skipOverlaps = .false.
+    info%spect_der = .false.
+    info%temp_der = .false.
+    info%windowUnits = phyq_profiles
 
     ! "Key" now indexes an n_spec_args vertex.  See "Configuration file
     ! parser users' guide" for pictures of the trees being analyzed.
@@ -392,8 +396,6 @@ contains ! =====     Public Procedures     =============================
       field = get_field_id(son)
       got(field) = .true.
       select case ( field )
-      case ( f_type )
-        info%fwmType = decoration(subtree(2,son))
       case ( f_allLinesForRadiometer )
         info%allLinesForRadiometer = get_boolean(son)
       case ( f_atmos_der )
@@ -404,29 +406,28 @@ contains ! =====     Public Procedures     =============================
         do j = 1, nsons(son) - 1
           info%binSelectors(j) = decoration ( decoration ( subtree ( j+1, son ) ) )
         end do
+      case ( f_cloud_der )
+        info%cloud_der = decoration ( subtree(2,son) )
+      case ( f_DEFAULT_spectroscopy )
+        info%DEFAULT_spectroscopy = get_boolean(son)
       case ( f_differentialScan )
         info%differentialScan = get_boolean(son)
-      case ( f_do_conv )
-        info%do_conv = get_boolean(son)
       case ( f_do_baseline )
         info%do_baseline = get_boolean(son)
+      case ( f_do_conv )
+        info%do_conv = get_boolean(son)
       case ( f_do_freq_avg )
         info%do_freq_avg = get_boolean(son)
       case ( f_do_1d )
         info%do_1d = get_boolean(son)
+      case ( f_i_saturation )
+        info%i_saturation = decoration(subtree(2,son))
       case ( f_incl_cld )
         info%incl_cld = get_boolean(son)
+      case ( f_integrationGrid )
+        info%integrationGrid => vGrids(decoration(decoration(subtree(2,son))))
       case ( f_lockBins )
         info%lockBins = get_boolean(son)
-      case ( f_DEFAULT_spectroscopy )
-        info%DEFAULT_spectroscopy = get_boolean(son)
-      case ( f_skipOverlaps )
-        info%skipOverlaps = get_boolean(son)
-      case ( f_tolerance )
-        call expr ( subtree(2,son), expr_units, value, type )
-        info%tolerance = value(1)
-        if ( expr_units(1) /= phyq_temperature ) &
-          & call AnnounceError ( toleranceNotK, key )
       case ( f_module )
         info%instrumentModule = decoration(decoration(subtree(2,son)))
       case ( f_molecules )
@@ -445,21 +446,6 @@ contains ! =====     Public Procedures     =============================
           moleculeSign = +1 ! Indicate "root of a tree of molecules"
           call fillElements ( subtree(j,son), nelts, 0, info%molecules )
         end do
-      case ( f_moleculesPol )
-        nelts = 0
-        do j = 2, nsons(son)
-          call countElements ( subtree(j,son), nelts )
-        end do
-        call allocate_test ( info%moleculesPol, nelts, "info%moleculesPol", &
-          & ModuleName )
-        call allocate_test ( info%moleculeDerivativesPol, nelts, &
-          & "info%moleculeDerivativesPol", ModuleName )
-        info%moleculeDerivativesPol = .false.
-        nelts = 0
-        do j = 2, nsons(son)
-          moleculeSign = +1 ! Indicate "root of a tree of molecules"
-          call fillElements ( subtree(j,son), nelts, 0, info%moleculesPol )
-        end do
       case ( f_moleculeDerivatives )
         if ( .not. associated(info%molecules) ) then
           call announceError( DefineMoleculesFirst, key)
@@ -473,42 +459,11 @@ contains ! =====     Public Procedures     =============================
             end where
           end do                          ! End loop over listed species
         end if
-      case ( f_moleculeDerivativesPol )
-        if ( .not. associated(info%moleculesPol) ) then
-          call announceError( DefineMoleculesFirst, key)
-        else
-          do j = 1, nsons(son)-1
-            thisMolecule = decoration( subtree( j+1, son ) )
-            if ( .not. any(info%moleculesPol == thisMolecule ) ) &
-              & call announceError( BadMolecule, key )
-            where ( info%moleculesPol == thisMolecule )
-              info%moleculeDerivativesPol = .true.
-            end where
-          end do                          ! End loop over listed species
-        end if
-      case ( f_signals )
-        call Expand_Signal_List ( son, info%signals, errorFlag )
-        if ( errorFlag ) call announceError ( 0, key )
-      case  ( f_specificQuantities )
-        call Allocate_test ( info%specificQuantities, nsons(son)-1, &
-          & 'info%specificQuantities', ModuleName )
-        do j = 1, nsons(son) - 1
-          info%specificQuantities(j) = decoration ( decoration ( subtree ( j+1, son ) ) )
-        end do
-      case ( f_phiWindow )
+      case ( f_nabterms )
         call expr ( subtree(2,son), expr_units, value, type )
-        info%phiWindow = value(1)
-        if ( all ( expr_units(1) /= (/ PHYQ_Profiles, PHYQ_Angle /) ) ) &
-          call AnnounceError ( WrongUnitsForWindow, root )
-        info%windowUnits = expr_units(1)
-      case ( f_spect_der )
-        info%spect_der = get_boolean(son)
-      case ( f_temp_der )
-        info%temp_der = get_boolean(son)
-      case ( f_integrationGrid )
-        info%integrationGrid => vGrids(decoration(decoration(subtree(2,son))))
-      case ( f_tangentGrid )
-        info%tangentGrid => vGrids(decoration(decoration(subtree(2,son))))
+        info%NUM_AB_TERMS = nint( value(1) )
+      case ( f_nazimuthangles )
+        call expr ( subtree(2,son), expr_units, value, type )
       case ( f_ncloudspecies )
         call expr ( subtree(2,son), expr_units, value, type )
         info%no_cloud_species = nint( value(1) )
@@ -518,21 +473,73 @@ contains ! =====     Public Procedures     =============================
       case ( f_nscatteringangles )
         call expr ( subtree(2,son), expr_units, value, type )
         info%NUM_SCATTERING_ANGLES = nint( value(1) )
-      case ( f_nazimuthangles )
-        call expr ( subtree(2,son), expr_units, value, type )
         info%NUM_AZIMUTH_ANGLES = nint( value(1) )
-      case ( f_nabterms )
-        call expr ( subtree(2,son), expr_units, value, type )
-        info%NUM_AB_TERMS = nint( value(1) )
       case ( f_nsizebins )
         call expr ( subtree(2,son), expr_units, value, type )
         info%NUM_SIZE_BINS = nint( value(1) )
-      case ( f_cloud_der )
+      case ( f_phiWindow )
         call expr ( subtree(2,son), expr_units, value, type )
-        info%cloud_der = nint( value(1) )
-      case ( f_i_saturation )
+        info%phiWindow = value(1)
+        if ( all ( expr_units(1) /= (/ PHYQ_Profiles, PHYQ_Angle /) ) ) &
+          call AnnounceError ( WrongUnitsForWindow, root )
+        info%windowUnits = expr_units(1)
+      case ( f_polarized )
+        info%polarized = get_boolean(son)
+      case ( f_signals )
+        allocate ( info%signals (nsons(son)-1), stat = status )
+        if ( status /= 0 ) call announceError( AllocateError, key )
+        do j = 1, nsons(son)-1
+          call get_string ( sub_rosa(subtree(j+1,son)), signalString, &
+            & strip=.true.)
+          call parse_Signal ( signalString, signalInds, &
+            & tree_index=son, sideband=sideband, channels=channels )
+          if ( .not. associated(signalInds) ) then ! A parse error occurred
+            error = max(error,1)
+            exit
+          end if
+          ! Later on choose the `right' one from the match
+          ! For the moment choose first !????
+          wanted=1
+          info%signals(j) = signals(signalInds(wanted))
+          info%signals(j)%sideband = sideband
+          ! Don't hose channels in database, though shouldn't be an issue
+          nullify ( info%signals(j)%channels ) 
+
+          call allocate_Test ( info%signals(j)%channels, &
+            & size(info%signals(j)%frequencies), 'info%signals%channels', &
+            & ModuleName )
+          if ( associated(channels) ) then
+            info%signals(j)%channels(1:lbound(channels,1)-1) = .false.
+            info%signals(j)%channels(lbound(channels,1):ubound(channels,1)) = &
+              channels
+            info%signals(j)%channels(ubound(channels,1)+1:) = .false.
+          else
+            info%signals(j)%channels = .true.
+          end if
+          call deallocate_test ( channels, 'channels', ModuleName )
+          call deallocate_test ( signalInds, 'signalInds', ModuleName )
+        end do                          ! End loop over listed signals
+      case ( f_skipOverlaps )
+        info%skipOverlaps = get_boolean(son)
+      case  ( f_specificQuantities )
+        call Allocate_test ( info%specificQuantities, nsons(son)-1, &
+          & 'info%specificQuantities', ModuleName )
+        do j = 1, nsons(son) - 1
+          info%specificQuantities(j) = decoration ( decoration ( subtree ( j+1, son ) ) )
+        end do
+      case ( f_spect_der )
+        info%spect_der = get_boolean(son)
+      case ( f_tangentGrid )
+        info%tangentGrid => vGrids(decoration(decoration(subtree(2,son))))
+      case ( f_temp_der )
+        info%temp_der = get_boolean(son)
+      case ( f_tolerance )
         call expr ( subtree(2,son), expr_units, value, type )
-        info%i_saturation = nint( value(1) )
+        info%tolerance = value(1)
+        if ( expr_units(1) /= phyq_temperature ) &
+          & call AnnounceError ( toleranceNotK, key )
+      case ( f_type )
+        info%fwmType = decoration(subtree(2,son))
       case default
         ! Shouldn't get here if the type checker worked
       end select
@@ -573,18 +580,6 @@ contains ! =====     Public Procedures     =============================
       if ( any(got( (/f_do_conv,f_do_freq_avg,f_do_1d,f_incl_cld,f_frequency /) )) ) &
         & call AnnounceError ( IrrelevantFwmParameter, root )
     end select
-
-    if ( got(f_molecules) .and. got(f_moleculesPol) ) then
-      ! Make sure no molecules are both polarized and unpolarized.  The
-      ! Derivatives will take care of themselves because f_moleculeDerivatives
-      ! have to have values from f_molecules (and similarly for ...Pol).
-      do i = 1, size(info%molecules)
-        do j = 1, size(info%moleculesPol)
-          if ( info%molecules(i) == info%moleculesPol(j) ) &
-            & call announceError ( Pol_and_not_Pol, mol, info%moleculesPol(j) )
-        end do
-      end do
-    end if
 
     if ( error /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'An error occured' )
@@ -661,10 +656,6 @@ contains ! =====     Public Procedures     =============================
     case ( IrrelevantFwmParameter )
       call output ( 'irrelevant parameter for this forward model type', &
         & advance='yes' )
-    case ( Pol_and_not_Pol )
-      call display_string ( lit_indices(fieldIndex) ) ! Actually a molecule index
-      call output ( ' cannot be both polarized and not polarized.', &
-        & advance='yes' )
     case ( TangentNotSubset )
       call output ('non subsurface tangent grid not a subset of integration&
         & grid', advance='yes' )
@@ -702,14 +693,14 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
-! Revision 2.59  2003/04/11 00:48:13  dwu
-! change default values for i_saturation=l_clear, cloud_der = l_none, no_cloud_species=1
+! Revision 2.60  2003/05/05 23:00:34  livesey
+! Merged in feb03 newfwm branch
 !
-! Revision 2.58  2003/04/02 21:49:33  jonathan
+! Revision 2.56.2.2  2003/04/08 23:40:50  jonathan
 ! remove cloud_fov
 !
-! Revision 2.57  2003/03/07 03:16:45  livesey
-! Moved some functionality into Expand_Signal_List in parse signals module
+! Revision 2.56.2.1  2003/02/22 00:47:26  vsnyder
+! Delete moleculesPol, moleculeDerivativesPol, add Polarized to ForwardModelConfig
 !
 ! Revision 2.56  2003/02/08 05:28:47  vsnyder
 ! Squash a bug (looking at type before evaluating the expression).
