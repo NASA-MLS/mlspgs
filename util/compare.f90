@@ -91,7 +91,7 @@ program COMPARE
 
   if ( all ) then
     print *, '  Absolute           Relative            Relative'
-    print *, '  Difference     At  Difference      At  Epsilons     After'
+    print *, '  Difference     At  Difference      At  Epsilons      After'
   end if
 
   do
@@ -149,7 +149,7 @@ program COMPARE
       rmax = rd(lrmax)
       rmaxe = rmax / epsilon(rd)
       if ( all ) then
-        print '(1pg15.8,i5,1pg15.8,i5,1pg15.8,a)', &
+        print '(1pg14.8,i6,1pg14.8,i6,1pg15.8,1x,a)', &
           & amax, lamax, rmax, lrmax, rmaxe, trim(line1)
 !       print *, 'After ', trim(line1), ', Maximum difference =', amax, ' at', lamax
 !       print *, 'Relative =', rmax, ' =', rmaxe, ' epsilons', ' at', lrmax
@@ -186,3 +186,6 @@ contains
 end program
 
 ! $Log$
+! Revision 1.1  2003/07/03 18:08:34  vsnyder
+! Initial commit
+!
