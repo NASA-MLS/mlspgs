@@ -168,7 +168,8 @@ ifndef WE_CAN
 endif
 endif
 #These modules require custom builds, so omit build commands from dependencies
-CUSTOM_BUILDS=MLSL2.f90 init_tables_module.f90
+#CUSTOM_BUILDS=MLSL2.f90 init_tables_module.f90
+CUSTOM_BUILDS=MLSL2.f90
 CUSTOM_PREFXD := $(shell ${REECHO} -prefix=-db $(CUSTOM_BUILDS))
 ifeq ($(MLSF95),Abs)
   UP_OR_LOW := -mod UPPER
@@ -351,6 +352,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.52  2002/07/12 20:34:54  pwagner
+# init_tables_module does not require custom build
+#
 # Revision 2.51  2002/07/11 22:12:10  pwagner
 # Changes to support hdf5/hdfeos5
 #
