@@ -191,7 +191,7 @@ contains
     axesloop:do
 
       call ReadCompleteLineWithoutComments ( unit, inline )
-      !print*,inline
+      print*,inline
       read ( unit=inline, fmt=* ) linetype, axistype
       linetype=Capitalize(linetype)
       axistype=Capitalize(axistype)
@@ -199,18 +199,18 @@ contains
         exit axesloop                 ! and is different from the others
       end if
       if ( axistype(1:6) =="LINEAR" ) then
-        !        print*,"Doing linear axis"
+                print*,"Doing linear axis"
         call make_linear_axis ( inline, tmpaxis, tmpaxis_len )
-        !        print*,"Done linear axis"
+                print*,"Done linear axis"
       else if ( axistype(1:3) =="LOG" ) then
-        !print*,"Doing log axis"
+        print*,"Doing log axis"
         call make_log_axis ( inline, tmpaxis, tmpaxis_len )
-        !print*,"Done log axis"
+        print*,"Done log axis"
       else if ( axistype(1:8) =="EXPLICIT" ) then
-        !       print*,"Doing explicit axis"
+               print*,"Doing explicit axis"
         backspace(unit=unit)
         call read_explicit_axis ( unit, tmpaxis, tmpaxis_len )
-        !         print*,"Done explicit axis"
+                 print*,"Done explicit axis"
       else
         end_of_file=.true.
         call announce_error(0,&
@@ -277,7 +277,7 @@ contains
     ! Loop to read in the data for the current date and check to see if 
     ! there is another date
     datesloop: do idate = 1, maxNoDates
-      !print*,"Datesloop: idate=",idate
+      print*,"Datesloop: idate=",idate
       word_count = count_words(inline)
       if ( word_count == 3 ) then
         read(unit=inline,fmt=*)linetype,axistype,sdstring
@@ -329,7 +329,7 @@ contains
       !print*,"Read data"
       end_of_file = .false.
       call ReadCompleteLineWithoutComments(unit,inline,eof=end_of_file)
-      ! print*,"Next date line:",inline,"EOF=",end_of_file
+      print*,"Next date line:",inline,"EOF=",end_of_file
       if ( end_of_file ) then
         ! No more dates and nothing else either
         exit datesloop
@@ -712,8 +712,11 @@ binsearch: do
 ! not sure why this doesn't always work, but it doesn't for paw
 !    axis=10.0_r8**(-axis)
 ! (possibly a compiler bug for NAG on Linux)
-! so instead we'll use the equivalent:
-    axis = exp(-log(10.)*axis)
+! so instead we'll use this equivalent. Note that it is _important_ to
+! specify the 10 as 10.0_r8 or the calculation is only done at single 
+! precision even though axis is double precision.
+
+    axis = exp(-log(10.0_r8)*axis)
 !
 
     deallocate ( n_levs_in_sec, n_levs_per_dec, axints )
@@ -966,6 +969,9 @@ END MODULE L3ascii
 
 !
 ! $Log$
+! Revision 2.18  2002/07/11 12:43:52  hcp
+! changed 10. to 10.0_r8 to make calculation be done in dble prec.
+!
 ! Revision 2.17  2002/07/11 11:30:59  mjf
 ! Nullified two pointers before using allocate_test
 !
