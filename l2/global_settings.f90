@@ -13,7 +13,8 @@ module GLOBAL_SETTINGS
 !    & S_L1BRAD, S_L1BOA
   use L1BData, only: l1bradSetup, l1boaSetup
   use L2GPData, only: L2GPDATA_T
-  use MLSCommon, only: R8, NameLen, L1BInfo_T, TAI93_Range_T
+  use MLSCommon, only: R8, NameLen, L1BInfo_T, TAI93_Range_T, FileNameLen
+  use MLSL2Options, only: ECHO_GLOBAL_STNGS
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
   use MLSPCF2, only: MLSPCF_L1B_RAD_END, MLSPCF_L1B_RAD_START
   use MoreTree, only: GET_FIELD_ID, GET_SPEC_ID
@@ -138,6 +139,9 @@ contains
       end if
     end do
 
+   if( ECHO_GLOBAL_STNGS ) &
+   & call dump_global_settings( l2pcf, processingRange, l1bInfo )
+
     if ( toggle(gen) ) then
       if (  levels(gen) > 0 .or. index(switches, 'V') /= 0 ) &
         & call dump ( vgrids, details=levels(gen)-1+min(index(switches, 'V'),1) )
@@ -157,9 +161,109 @@ contains
 
   end subroutine SET_GLOBAL_SETTINGS
 
+  ! ------------------------------------------  dump_global_settings  -----
+  subroutine dump_global_settings ( l2pcf, processingRange, l1bInfo )
+  
+    ! Dump info obtained during OpenAndInitialize and global_settings:
+    ! L1B databse
+    ! L1OA file
+    ! Start and end times
+    ! output version
+    ! cycle number
+    ! logfile name
+  
+    integer :: num_l1b_files = MAXNUML1BRADIDS
+
+    ! Arguments
+    type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
+    type(PCFData_T) :: l2pcf
+    type (TAI93_Range_T) :: processingRange ! Data processing range
+!    character(len=CCSDSlen) CCSDSEndTime
+!    character(len=CCSDSlen) CCSDSStartTime
+	
+    ! Local
+
+    character (LEN=FileNameLen) :: physicalFilename
+    integer :: i, returnStatus, version
+
+    ! Begin
+    version = 1
+
+    call output ( 'L1B database:', advance='yes' )
+  
+   if(associated(l1bInfo%L1BRADIDs)) then
+    if ( num_l1b_files > 0 ) then
+      do i = 1, num_l1b_files
+!        returnStatus = Pgs_pc_getReference(l1bInfo%L1BRADIDs(i), version, &
+!        & physicalFilename)
+      if(l1bInfo%L1BRADIDs(i) /= ILLEGALL1BRADID) then
+  	    call output ( 'fileid:   ' )
+	    call output ( l1bInfo%L1BRADIDs(i), advance='yes' )
+      	call output ( 'name:   ' )
+    	   call output ( TRIM(l1bInfo%L1BRADFileNames(i)), advance='yes' )
+      endif
+      end do
+
+    else
+      call output ( '(empty database)', advance='yes' )
+    end if
+
+   else
+    call output ( '(null database)', advance='yes' )
+
+   endif
+
+    call output ( 'L1OA file:', advance='yes' )
+  
+!    returnStatus = Pgs_pc_getReference(l1bInfo%L1BOAID, version, &
+!      & physicalFilename)
+!    if ( returnStatus == PGS_S_SUCCESS ) then
+      call output ( 'fileid:   ' )
+      call output ( l1bInfo%L1BOAID, advance='yes' )
+      call output ( 'name:   ' )
+      call output ( TRIM(l1bInfo%L1BOAFileName), advance='yes' )
+!    else
+!      call output ( '(file unknown)', advance='yes' )
+!    end if
+
+    call output ( 'Start Time:   ' )
+    call output ( l2pcf%startutc, advance='yes' )
+
+    call output ( 'End Time:   ' )
+    call output ( l2pcf%endutc, advance='yes' )
+
+    call output ( 'Start Time (tai):   ' )
+    call output ( processingrange%starttime, advance='yes' )
+
+    call output ( 'End Time:   ' )
+    call output ( processingrange%endtime, advance='yes' )
+
+    call output ( 'PGE version:   ' )
+    call output ( l2pcf%PGEVersion, advance='yes' )
+
+    call output ( 'input version:   ' )
+    call output ( l2pcf%InputVersion, advance='yes' )
+
+    call output ( 'cycle:   ' )
+    call output ( l2pcf%cycle, advance='yes' )
+
+    call output ( 'Log file name:   ' )
+    call output ( TRIM(l2pcf%logGranID), advance='yes' )
+
+    call output ( 'l2gp species name keys:   ' )
+    call output ( TRIM(l2pcf%spec_keys), advance='yes' )
+
+    call output ( 'corresponding mcf hash:   ' )
+    call output ( TRIM(l2pcf%spec_hash), advance='yes' )
+
+  end subroutine dump_global_settings
+
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.23  2001/05/04 17:15:36  pwagner
+! Many added settings, esp. L1B files, so level2 can run w/o PCF
+!
 ! Revision 2.22  2001/04/26 20:02:09  livesey
 ! Made l2pc database a saved array in L2PC_m
 !
