@@ -34,9 +34,21 @@ srclib=../srclib
 # where the platforms directory is
 PLATFORMS = .
 
+# This is the default name of the configure file
+# It may be overridden for multiple platforms, special options, etc.
+ifdef HOSTMLSCFILE
+   MLSCFILE=$(HOSTMLSCFILE)
+else
+   MLSCFILE=.configure
+endif
+
 # This will set our MLS platform, compiler. etc.
 # w/o complaining if it does nor exist yet
--include $(CONFDIR)/.configure
+-include $(CONFDIR)/$(MLSCFILE)
+
+# This will filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+REECHO=$(MLSBIN)/reecho.sh
 
 # This is in case tar doesn't summon GNU tar, you may still use it via
 # something like
@@ -59,41 +71,57 @@ SHELL = /bin/sh
 #
 
 #----------------------------------------------------------
-libmls_f90 := $(wildcard $(libmls_sources)/*.f90)
+libmls_f90 := $(shell ${REECHO} $(libmls_sources)/*.f $(libmls_sources)/*.f90 $(libmls_sources)/*.c)
+
+ifdef BLAS
+   LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
+   $(libmls_sources)/machines/$(MLSCONFG)/machine.f90 \
+   $(REECHO)
+else
+   LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
+   $(libmls_sources)/machines/$(MLSCONFG)/machine.f90 \
+   $(blaslib_f) $(REECHO)
+endif
+
+#Any sources to explicitly exclude from dependency list?
+#OMIT_SRCS := $(OMIT_SRCS) -d l2_test.f90 -d l2_numder.f90 -d l2_numder_dbg.f90 
 
 #PROG=l2_test
 PROG=libfwdmdl.a
 
 #----------------------- Build instructions
 
-$(PROG): $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
+$(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) $(LIB_prereqs)
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
 
 l2_test: libfwdmdl.a
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) l2_test
 
-$(libmls_objs)/libmls.a: $(libmls_f90)
+$(libmls_objs)/libmls.a: $(LIB_prereqs)
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
-.PHONY: configure depends clean tar mostlyclean targ tarz libfwdmdl.a l2_test
+.PHONY: configure depends clean tar mostlyclean targ tarz libfwdmdl.a \
+ l2_test ghostbuster
 
 tar:
 
 configure:
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
-          -c "$(MLSF95)" -p "$(MLSPLAT)"
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)"
 
-$(CONFDIR)/.configure:
+$(CONFDIR)/$(MLSCFILE):
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
-          -c "$(MLSF95)" -p "$(MLSPLAT)"
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)"
 
-$(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/.configure
+$(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
-          -c "$(MLSF95)" -p "$(MLSPLAT)" -nc
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" -nc
 
 depends:
-	$(MLSBIN)/makemakedep.sh -d l2_test.f90 -d l2_numder.f90 -d l2_numder_dbg.f90 \
-		   $(libmls_sources) $(srclib)
+	$(MLSBIN)/makemakedep.sh $(OMIT_SRCS) $(libmls_sources) $(srclib)
+
+ghostbuster:
+	$(MLSBIN)/ghostbuster.sh -lib $(PLATFORMS)/$(MLSCONFG) ./ $(srclib)
 
 mostlyclean:
 	@echo "Cleaning directory $(MLSCONFG)" ; \
@@ -131,6 +159,42 @@ targ:
 	$(TAR) hcvzf ../fwdmdl.tgz * --exclude \*.o --exclude \*.mod --exclude l2_test
 
 # $Log$
+# Revision 1.22  2001/08/22 22:46:13  pwagner
+# Made reecho.sh a prerequisite where appropriate
+#
+# Revision 1.21  2001/08/15 21:01:04  pwagner
+# Now excludes OMIT_SRCS from dependencies
+#
+# Revision 1.20  2001/08/13 18:09:08  pwagner
+# replaced shell echo -> shell {REECHO}
+#
+# Revision 1.19  2001/07/25 23:19:58  pwagner
+# Removed unnecessary lib...a from target prereqs
+#
+# Revision 1.18  2001/05/31 20:24:49  pwagner
+# ghostbuster called with -lib option
+#
+# Revision 1.17  2001/05/24 17:56:39  pwagner
+# Expanded LIB_prereqs
+#
+# Revision 1.16  2001/05/17 20:02:59  pwagner
+# Automatically rebuilds lib on change to machine.f90
+#
+# Revision 1.15  2001/05/14 23:58:42  pwagner
+# default .configure name now set by environment
+#
+# Revision 1.14  2001/05/14 17:37:14  pwagner
+# .configure now a variable file name
+#
+# Revision 1.13  2001/05/01 18:32:13  pwagner
+# Added .configure to prereqs for lib
+#
+# Revision 1.12  2001/05/01 17:07:43  pwagner
+# Now runs ghostbuster when updating
+#
+# Revision 1.11  2001/04/12 22:03:08  pwagner
+# Changes to lib or fwdmdl trigger rebuilds even on suns
+#
 # Revision 1.10  2001/04/05 17:15:54  pwagner
 # Added PROG to .PHONY list
 #
