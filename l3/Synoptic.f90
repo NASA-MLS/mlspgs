@@ -79,7 +79,7 @@ CONTAINS
 
         CHARACTER (LEN=480) :: msr
 
-	INTEGER ::  error, l2Days, nlev, nf, nwv, numDays, numSwaths, rDays, pEndIndex, pStartIndex
+	INTEGER ::  error, l2Days, nlev, nlev_temp, nf, nwv, numDays, numSwaths, rDays, pEndIndex, pStartIndex
 
         integer i, j, iP, kP, iD, iL
 	real tau0, l3ret
@@ -87,7 +87,6 @@ CONTAINS
 
 !*** Initilize variables
  
-	nlev = 24
         nwv = 10
         nf = 60 
 
@@ -100,6 +99,13 @@ CONTAINS
 	     pEndIndex = j 
 	   ENDIF
         ENDDO
+
+	IF (nlev == 0) THEN
+		nlev_temp = 1
+		nlev = 1
+	ELSE
+		nlev_temp = -1
+	END IF
 
 !*** Initilize POINTERS
 
@@ -221,6 +227,12 @@ CONTAINS
 	    startTime(I) = l3r(I)%time(1)
 	    endTime(I) = l3r(I)%time(l3r(I)%nTimes)
 	ENDDO 
+ 
+!!      Check if pressure levels are found 
+
+	IF (nlev_temp == 1) THEN 
+	   RETURN
+	END IF
 
 !*** Calculate average orbital period (day)
 
@@ -809,6 +821,9 @@ END MODULE Synoptic
 !===================
 
 ! $Log$
+! Revision 1.14  2001/08/13 16:42:20  ybj
+! *** empty log message ***
+!
 ! Revision 1.13  2001/04/12 16:04:41  ybj
 ! reasonable values
 !
