@@ -16,7 +16,8 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
     & F_SIGNAL, F_SGRID, F_TYPE, F_UNIT, F_VGRID
   use INIT_TABLES_MODULE, only: &
     FIRST_LIT, LAST_LIT, L_BASELINE, L_BOUNDARYPRESSURE, &
-    L_CHANNEL, L_CHISQCHAN, L_CHISQMMAF, L_CHISQMMIF, L_CLOUDICE,&
+    L_CHANNEL, L_CHISQCHAN, L_CHISQMMAF, L_CHISQMMIF, L_CLOUDICE, L_CLOUDEXTINCTION, &
+    L_TOTALEXTINCTION, L_MASSMEANDIAMETERICE, &
     L_CLOUDINDUCEDRADIANCE, L_CLOUDRADSENSITIVITY, &
     L_COLUMNABUNDANCE, L_EARTHREFL, L_EFFECTIVEOPTICALDEPTH, &
     L_EARTHRADIUS, L_ELEVOFFSET, L_EXTINCTION, L_GEODALTITUDE, L_GPH, &
@@ -155,6 +156,9 @@ contains ! =====     Public Procedures     =============================
     natural_units(l_chisqmmif) =               PHYQ_Dimensionless
     natural_units(l_columnAbundance) =         PHYQ_DobsonUnits
     natural_units(l_cloudice) =                PHYQ_IceDensity
+    natural_units(l_cloudextinction) =         PHYQ_Dimensionless
+    natural_units(l_totalextinction) =         PHYQ_Dimensionless
+    natural_units(l_massmeandiameterice) =     PHYQ_Dimensionless
     natural_units(l_earthRefl) =               PHYQ_Dimensionless
     natural_units(l_elevOffset) =              PHYQ_Angle
     natural_units(l_extinction) =              PHYQ_Extinction
@@ -865,6 +869,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.65  2002/05/22 19:06:32  jonathan
+! added units for cloudextinction(m-1), totalextinction(m-1), and massmeandiameterice(micron m) as dimentionless for now, may define more clear later
+!
 ! Revision 2.64  2002/05/14 00:27:42  livesey
 ! New code for system temperatures and noise bandwidths
 !
