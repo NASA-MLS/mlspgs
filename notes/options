@@ -43,6 +43,10 @@ E.g., mlsl2 -m -p --nmeta -S"glo jac"
   --[n]gcch: Do [not] force garbage collection after each chunk processed
   --[n]gcdt: Do [not] force garbage collection after each deallocate_test
   --[n]kit: Output error messages [not] using the SDP Toolkit
+     (in the next 3, n may be one of {4, 5, b} where b means both 4 and 5)
+  --l1b=n: Assume hdfn (n=4 or 5) when reading l1b files
+  --l2gpr=n: Assume hdfeosn (n=4 or 5) when reading l2gp files
+  --l2gpw=n: Assume hdfeosn (n=4 or 5) when writing l2gp files
   --[n]meta: [Do not] Create metadata files.
   --[n]pcf: [Do not] Use the PCF for file names, parameters, etc.
     (--npcf sets --nmeta and --ncfpcf.)
@@ -91,6 +95,9 @@ by the equal-signs--stuff outside that space, like these
 comments, will not be printed in response to mlsl2 -?)
 
  $Log$
+ Revision 1.15  2002/08/29 21:48:38  livesey
+ Added the --subblock option
+
  Revision 1.14  2002/06/12 17:57:51  livesey
  Added --submit information
 
