@@ -15,6 +15,7 @@ module INTRINSIC
 
   implicit NONE
   public
+  private :: ENTER_TERMINAL, T_IDENTIFIER
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=256), private :: Id = &
@@ -24,100 +25,100 @@ module INTRINSIC
 !---------------------------------------------------------------------------
 
 ! A "spec_def" vertex may be decorated with (sums of) the following flags:
-  integer, public, parameter :: NO_DUP = 1        ! Duplicate fields prohibited
-  integer, public, parameter :: ALL_FIELDS = 2    ! All fields required
-  integer, public, parameter :: NO_POSITIONAL = 4 ! Positional fields prohibited
+  integer, parameter :: NO_DUP = 1        ! Duplicate fields prohibited
+  integer, parameter :: ALL_FIELDS = 2    ! All fields required
+  integer, parameter :: NO_POSITIONAL = 4 ! Positional fields prohibited
 ! A "field_type", "field_spec" or "dot" vertex may be decorated with the
 ! following flag:
-  integer, public, parameter :: REQ_FLD = 1       ! Required field
+  integer, parameter :: REQ_FLD = 1       ! Required field
 ! Data types that don't have enumerated literals:
-  integer, public, parameter :: T_FIRST          = 1
-  integer, public, parameter :: T_NUMERIC        = t_first
-  integer, public, parameter :: T_NUMERIC_RANGE  = t_numeric + 1
-  integer, public, parameter :: T_STRING         = t_numeric_range + 1
+  integer, parameter :: T_FIRST          = 1
+  integer, parameter :: T_NUMERIC        = t_first
+  integer, parameter :: T_NUMERIC_RANGE  = t_numeric + 1
+  integer, parameter :: T_STRING         = t_numeric_range + 1
 ! Enumeration types:
-  integer, public, parameter :: T_BOOLEAN        = t_string + 1
-  integer, public, parameter :: T_LAST_INTRINSIC = t_boolean
+  integer, parameter :: T_BOOLEAN        = t_string + 1
+  integer, parameter :: T_LAST_INTRINSIC = t_boolean
 
 ! Abstract physical quantities:
-  integer, public, parameter :: PHYQ_INVALID = 0 ! Invalid unit given by user
-  integer, public, parameter :: PHYQ_DIMENSIONLESS = 1 ! Dimensionless quantity
-  integer, public, parameter :: PHYQ_LENGTH = 2        ! Default meters
-  integer, public, parameter :: PHYQ_TIME = 3          ! Default seconds
-  integer, public, parameter :: PHYQ_PRESSURE = 4      ! Default millibars
-  integer, public, parameter :: PHYQ_TEMPERATURE = 5   ! Default Kelvins
-  integer, public, parameter :: PHYQ_VMR = 6           ! Default parts-per-one
-  integer, public, parameter :: PHYQ_ANGLE = 7         ! Default degrees
-  integer, public, parameter :: PHYQ_MAFS = 8          ! Default MAFs
-  integer, public, parameter :: PHYQ_MIFS = 9          ! Default MIFs
-  integer, public, parameter :: PHYQ_FREQUENCY = 10    ! Default MHz
-  integer, public, parameter :: PHYQ_ZETA = 11         ! log10(pressure/hPa)
-  integer, public, parameter :: FIRST_PHYQ = phyq_invalid, LAST_PHYQ = phyq_zeta
-  integer, public :: PHYQ_INDICES(first_phyq:last_phyq)
+  integer, parameter :: PHYQ_INVALID = 0 ! Invalid unit given by user
+  integer, parameter :: PHYQ_DIMENSIONLESS = 1 ! Dimensionless quantity
+  integer, parameter :: PHYQ_LENGTH = 2        ! Default meters
+  integer, parameter :: PHYQ_TIME = 3          ! Default seconds
+  integer, parameter :: PHYQ_PRESSURE = 4      ! Default millibars
+  integer, parameter :: PHYQ_TEMPERATURE = 5   ! Default Kelvins
+  integer, parameter :: PHYQ_VMR = 6           ! Default parts-per-one
+  integer, parameter :: PHYQ_ANGLE = 7         ! Default degrees
+  integer, parameter :: PHYQ_MAFS = 8          ! Default MAFs
+  integer, parameter :: PHYQ_MIFS = 9          ! Default MIFs
+  integer, parameter :: PHYQ_FREQUENCY = 10    ! Default MHz
+  integer, parameter :: PHYQ_ZETA = 11         ! log10(pressure/hPa)
+  integer, parameter :: FIRST_PHYQ = phyq_invalid, LAST_PHYQ = phyq_zeta
+  integer :: PHYQ_INDICES(first_phyq:last_phyq)
 
 ! Enumeration literals:
-  integer, public, parameter :: FIRST_LIT       = first_molecule
-  integer, public, parameter :: L_BASELINE      = last_molecule+1
-  integer, public, parameter :: L_DAYS          = l_baseline + 1
-  integer, public, parameter :: L_DEG           = l_days + 1
-  integer, public, parameter :: L_DEGREES       = l_deg + 1
-  integer, public, parameter :: L_DIMENSIONLESS = l_degrees + 1
-  integer, public, parameter :: L_DIMLESS       = l_dimensionless + 1
-  integer, public, parameter :: L_DL            = l_dimless + 1
-  integer, public, parameter :: L_EXTINCTION    = l_dl + 1
-  integer, public, parameter :: L_FALSE         = l_extinction + 1
-  integer, public, parameter :: L_GEODALTITUDE  = l_false + 1
-  integer, public, parameter :: L_GHZ           = l_geodaltitude + 1
-  integer, public, parameter :: L_GPH           = l_ghz + 1
-  integer, public, parameter :: L_GPH_PRECISION = l_gph + 1
-  integer, public, parameter :: L_HOURS         = l_gph_precision + 1
-  integer, public, parameter :: L_HPA           = l_hours + 1
-  integer, public, parameter :: L_HZ            = l_hpa + 1
-  integer, public, parameter :: L_INSTRUMENTCHANNEL = l_hz + 1
-  integer, public, parameter :: L_INTERMEDIATEFREQUENCY=l_instrumentchannel + 1
-  integer, public, parameter :: L_K             = l_intermediatefrequency + 1
-  integer, public, parameter :: L_KHZ           = l_k  + 1
-  integer, public, parameter :: L_KM            = l_khz + 1
-  integer, public, parameter :: L_LINEWIDTH     = l_km + 1
-  integer, public, parameter :: L_LOGP          = l_linewidth + 1
-  integer, public, parameter :: L_LSBFREQUENCY  = l_logp + 1
-  integer, public, parameter :: L_M             = l_lsbfrequency + 1
-  integer, public, parameter :: L_MAF           = l_m + 1
-  integer, public, parameter :: L_MAFS          = l_maf + 1
-  integer, public, parameter :: L_MB            = l_mafs + 1
-  integer, public, parameter :: L_METERS        = l_mb + 1
-  integer, public, parameter :: L_MHZ           = l_meters  + 1
-  integer, public, parameter :: L_MIF           = l_mhz + 1
-  integer, public, parameter :: L_MIFS          = l_mif + 1
-  integer, public, parameter :: L_MINUTES       = l_mifs + 1
-  integer, public, parameter :: L_NONE          = l_minutes + 1
-  integer, public, parameter :: L_ORBITINCLINATION = l_none + 1
-  integer, public, parameter :: L_ORBITS        = l_orbitinclination + 1
-  integer, public, parameter :: L_PA            = l_orbits + 1
-  integer, public, parameter :: L_PPBV          = l_pa + 1
-  integer, public, parameter :: L_PPMV          = l_ppbv + 1
-  integer, public, parameter :: L_PPTV          = l_ppmv + 1
-  integer, public, parameter :: L_PTAN          = l_pptv + 1
-  integer, public, parameter :: L_RAD           = l_ptan + 1
-  integer, public, parameter :: L_RADIANCE      = l_rad + 1
-  integer, public, parameter :: L_RADIANS       = l_radiance + 1
-  integer, public, parameter :: L_REFGPH        = l_radians + 1
-  integer, public, parameter :: L_S             = l_refgph + 1
-  integer, public, parameter :: L_SCANRESIDUAL  = l_s + 1
-  integer, public, parameter :: L_SCVEL         = l_scanresidual + 1
-  integer, public, parameter :: L_SECONDS       = l_scvel + 1
-  integer, public, parameter :: L_SIDEBANDRATIO = l_seconds + 1
-  integer, public, parameter :: L_TEMPERATURE   = l_seconds + 1
-  integer, public, parameter :: L_TEMPERATURE_PREC = l_temperature + 1
-  integer, public, parameter :: L_THETA         = l_temperature_prec + 1
-  integer, public, parameter :: L_THZ           = l_theta + 1
-  integer, public, parameter :: L_TNGTGEOCALT   = l_thz + 1
-  integer, public, parameter :: L_TNGTGEODALT   = l_tngtgeocalt + 1
-  integer, public, parameter :: L_TRUE          = l_tngtgeodalt + 1
-  integer, public, parameter :: L_USBFREQUENCY  = l_true + 1 !
-  integer, public, parameter :: L_VMR           = l_usbfrequency + 1
-  integer, public, parameter :: L_ZETA          = l_vmr + 1
-  integer, public, parameter :: LAST_INTRINSIC_LIT = l_zeta
+  integer, parameter :: FIRST_LIT       = first_molecule
+  integer, parameter :: L_BASELINE      = last_molecule+1
+  integer, parameter :: L_DAYS          = l_baseline + 1
+  integer, parameter :: L_DEG           = l_days + 1
+  integer, parameter :: L_DEGREES       = l_deg + 1
+  integer, parameter :: L_DIMENSIONLESS = l_degrees + 1
+  integer, parameter :: L_DIMLESS       = l_dimensionless + 1
+  integer, parameter :: L_DL            = l_dimless + 1
+  integer, parameter :: L_EXTINCTION    = l_dl + 1
+  integer, parameter :: L_FALSE         = l_extinction + 1
+  integer, parameter :: L_GEODALTITUDE  = l_false + 1
+  integer, parameter :: L_GHZ           = l_geodaltitude + 1
+  integer, parameter :: L_GPH           = l_ghz + 1
+  integer, parameter :: L_GPH_PRECISION = l_gph + 1
+  integer, parameter :: L_HOURS         = l_gph_precision + 1
+  integer, parameter :: L_HPA           = l_hours + 1
+  integer, parameter :: L_HZ            = l_hpa + 1
+  integer, parameter :: L_INSTRUMENTCHANNEL = l_hz + 1
+  integer, parameter :: L_INTERMEDIATEFREQUENCY=l_instrumentchannel + 1
+  integer, parameter :: L_K             = l_intermediatefrequency + 1
+  integer, parameter :: L_KHZ           = l_k  + 1
+  integer, parameter :: L_KM            = l_khz + 1
+  integer, parameter :: L_LINEWIDTH     = l_km + 1
+  integer, parameter :: L_LOGP          = l_linewidth + 1
+  integer, parameter :: L_LSBFREQUENCY  = l_logp + 1
+  integer, parameter :: L_M             = l_lsbfrequency + 1
+  integer, parameter :: L_MAF           = l_m + 1
+  integer, parameter :: L_MAFS          = l_maf + 1
+  integer, parameter :: L_MB            = l_mafs + 1
+  integer, parameter :: L_METERS        = l_mb + 1
+  integer, parameter :: L_MHZ           = l_meters  + 1
+  integer, parameter :: L_MIF           = l_mhz + 1
+  integer, parameter :: L_MIFS          = l_mif + 1
+  integer, parameter :: L_MINUTES       = l_mifs + 1
+  integer, parameter :: L_NONE          = l_minutes + 1
+  integer, parameter :: L_ORBITINCLINATION = l_none + 1
+  integer, parameter :: L_ORBITS        = l_orbitinclination + 1
+  integer, parameter :: L_PA            = l_orbits + 1
+  integer, parameter :: L_PPBV          = l_pa + 1
+  integer, parameter :: L_PPMV          = l_ppbv + 1
+  integer, parameter :: L_PPTV          = l_ppmv + 1
+  integer, parameter :: L_PTAN          = l_pptv + 1
+  integer, parameter :: L_RAD           = l_ptan + 1
+  integer, parameter :: L_RADIANCE      = l_rad + 1
+  integer, parameter :: L_RADIANS       = l_radiance + 1
+  integer, parameter :: L_REFGPH        = l_radians + 1
+  integer, parameter :: L_S             = l_refgph + 1
+  integer, parameter :: L_SCANRESIDUAL  = l_s + 1
+  integer, parameter :: L_SCVEL         = l_scanresidual + 1
+  integer, parameter :: L_SECONDS       = l_scvel + 1
+  integer, parameter :: L_SIDEBANDRATIO = l_seconds + 1
+  integer, parameter :: L_TEMPERATURE   = l_seconds + 1
+  integer, parameter :: L_TEMPERATURE_PREC = l_temperature + 1
+  integer, parameter :: L_THETA         = l_temperature_prec + 1
+  integer, parameter :: L_THZ           = l_theta + 1
+  integer, parameter :: L_TNGTGEOCALT   = l_thz + 1
+  integer, parameter :: L_TNGTGEODALT   = l_tngtgeocalt + 1
+  integer, parameter :: L_TRUE          = l_tngtgeodalt + 1
+  integer, parameter :: L_USBFREQUENCY  = l_true + 1 !
+  integer, parameter :: L_VMR           = l_usbfrequency + 1
+  integer, parameter :: L_ZETA          = l_vmr + 1
+  integer, parameter :: LAST_INTRINSIC_LIT = l_zeta
 
 contains ! =====     Public procedures     =============================
 ! -----------------------------------------------  INIT_INTRINSIC  -----
@@ -225,6 +226,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.9  2001/02/22 23:57:38  vsnyder
+! Remove ", public" from parameters, because default accessibility is public
+!
 ! Revision 2.8  2001/02/09 18:37:37  vsnyder
 ! Add REQ_FLD flag for specification definitions
 !
