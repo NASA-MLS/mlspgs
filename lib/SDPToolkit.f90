@@ -1,10 +1,9 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !===============================================================================
 MODULE SDPToolkit               ! F90 interface to SDP Toolkit.
 !===============================================================================
-   USE MLSCommon
    IMPLICIT NONE
    PUBLIC
 
@@ -184,6 +183,9 @@ END MODULE SDPToolkit
 
 !
 ! $Log$
+! Revision 2.7  2002/01/09 23:52:09  pwagner
+! Removed use of MLSCommon
+!
 ! Revision 2.6  2001/05/09 23:26:35  pwagner
 ! Added new functions
 !
