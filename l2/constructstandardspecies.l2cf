@@ -6,6 +6,7 @@ begin Construct
   
   temp: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=temperature
   refGPH: Quantity, vGrid=vGridRefGPH, hGrid=hGridStandard, type=refGPH
+  GPH: Quantity, vGrid=vGridRefGPH, hGrid=hGridStandard, type=GPH
   
   ;; ----------------------------------------- Volume mixing ratios
 
@@ -15,6 +16,8 @@ begin Construct
     molecule=br_79_o
   br_81_o:      Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
     molecule=br_81_o
+  ch3cn:      Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+    molecule=ch3cn
   cl_35_o:          Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
     molecule=cl_35_o
   cl_37_o:          Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
@@ -72,8 +75,8 @@ begin Construct
   s_32_o2:      Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
     molecule=s_32_o2
 
-  !define(AllMolecules, {bro, br_79_o,br_81_o, clo, cl_35_o, cl_37_o, co,  $
-    h2o, h2o_18, hcl, hcl_35,  $
+  !define(AllMolecules, {bro, br_79_o,br_81_o, ch3cn, clo, cl_35_o, cl_37_o, $
+    co, h2o, h2o_18, hcl, hcl_35,  $
     hcl_37, hcn, hno3, ho2, hocl, hocl_35, hocl_37, n2,  $
     n2o, o2, o2_v1, o3, o3_asym_o_18, o3_sym_o_18, $
     o3_v1_3, o3_v2, o_18_o, oh, so2, s_32_o2 } )
