@@ -33,8 +33,8 @@ module dates_module
 
   !Here are the provided functions 
   public:: eudtf2cal,cal2eudtf,lastday,ccsdsa2b,ccsdsb2a,eudtf2daysince
-  public:: daysince2eudtf,ccsds2tai,ccsds2eudtf
-  private::isleap,days_in_year
+  public:: daysince2eudtf,ccsds2tai,ccsds2eudtf,days_in_year
+  private::isleap
   
   character(len=40),private,parameter::moduleNameIn=&
        "$RCSFile: dates_module.f90,v $"
