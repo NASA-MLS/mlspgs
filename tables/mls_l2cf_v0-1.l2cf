@@ -327,8 +327,8 @@ BEGIN Construct
     ;;
     ;; Now here are two more ones derived from the first
     ;;
-    hGridCoarse: hGrid, type=fractional,fraction=0.5,undersampled=2
-    hGridFine: hGrid, type=fractional,fraction=0.5,oversampled=3
+    hGridCoarse: hGrid, type=fractional,fraction=0.5,interpolationfactor=0.5
+    hGridFine: hGrid, type=fractional,fraction=0.5,interpolationfactor=3
     ;;
     ;; The first corresponds to every second profile of hGridStandard,
     ;; the second to an interpolation in phi, with two extra profiles
@@ -547,6 +547,11 @@ END Output
 ; ----------------------------------------------------------------------------
 ;
 ; $Log$
+; Revision 1.2  2000/05/18 00:39:42  vsnyder
+; Changed "fields" of "output" to "quantities".  Changed hGrids to use
+; hGrid specification name, and things like hGridTroposphere became
+; labels.
+;
 ; Revision 1.1  2000/05/17 20:15:18  livesey
 ; First version.
 ;
