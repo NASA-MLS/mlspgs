@@ -9,6 +9,7 @@ module CloudySkyRadianceModel
 ! -------------------------------------------------------------------------
       use AntennaPatterns_m, only: AntennaPattern_T
       use ClearSkyModule, only: CLEAR_SKY
+      use CloudySkyModule, only: CLOUDY_SKY
       use DCSPLINE_DER_M, only: CSPLINE_DER
       use FOV_CONVOLVE_M, only: FOV_CONVOLVE
       use HYDROSTATIC_INTRP, only: GET_PRESSURES
@@ -760,8 +761,4 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log: CloudySkyRadianceModel.f90,v      
-
-
-
-
 

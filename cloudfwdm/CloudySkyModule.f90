@@ -1,3 +1,26 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+module CloudySkyModule
+
+! -------------------------------------------------------------------------  
+! MLS CLOUD RADIANCE MODEL
+! -------------------------------------------------------------------------
+
+      use MLSCommon, only: r8      
+      IMPLICIT NONE
+      Private
+      Public :: CLOUDY_SKY
+
+ !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm =                          &
+    "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName=                       &
+    "$RCSfile$"
+ !---------------------------------------------------------------------------
+      
+contains
 
       SUBROUTINE CLOUDY_SKY(ISPI,CWC,TEMP,F,NU,U,DU,PH,RC,IPSD,Dm, &
                  &          PH1,NAB,P,DP,NR,R,RN,BC,A,B,NABR)
@@ -9,8 +32,6 @@
 !     LATEST UPDATE: J.JIANG, MAY 20, 2001
 !=======================================================
 
-      use MLSCommon, only: r8      
-      IMPLICIT NONE
       REAL :: PI
       PARAMETER (PI=3.1415926)
       REAL(r8) :: F                            ! FREQUENCY IN GHz
@@ -131,7 +152,9 @@
    
  200  CONTINUE   
 
-      RETURN
-      END
+      END SUBROUTINE CLOUDY_SKY
 
-! $Log: Cloudy_sky.f90,v      
+end module CloudySkyModule
+
+! $Log: CloudySkyModule.f90,v      
+
