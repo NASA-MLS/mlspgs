@@ -39,8 +39,12 @@ module dates_module
   public:: daysince2eudtf,ccsds2tai,ccsds2eudtf,days_in_year
   private::isleap
   
-  character(len=40),private,parameter::moduleNameIn=&
-       "$RCSFile: dates_module.f90,v $"
+  !------------------------------- RCS Ident Info ------------------------------
+  character(LEN=*), parameter :: IdParm = & 
+    "$Id$"
+  character(len=len(idParm)), private :: Id = idParm
+  character(LEN=*), parameter :: ModuleName="$RCSfile$"
+  !-----------------------------------------------------------------------------
   !Here are some useful definitions of the properties of months
   character(len=3),private,dimension(12),parameter::monthnames=&
        (/ "Jan","Feb","Mar","Apr","May","Jun","Jul","Aug",&
@@ -442,3 +446,4 @@ contains
   end function ccsdsb2a
 
 end module dates_module
+! $Log$
