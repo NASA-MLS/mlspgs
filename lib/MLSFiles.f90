@@ -521,8 +521,9 @@ contains
     ! Local
 
     character (len=1) :: mySlash
-    character (len=NameLEN) :: mirrored_ffn
+    character (len=MAXFILENAMELENGTH) :: mirrored_ffn
     integer :: loc
+   logical, parameter :: DEBUG = .false.
 
     ! Begin
 
@@ -540,6 +541,10 @@ contains
 
     mirrored_ffn = Reverse(full_file_name)
     loc = index(mirrored_ffn, mySlash)
+    
+    if(DEBUG) then
+      print*, trim(mirrored_ffn), ' ', loc
+   endif
 
     if(loc <= 0) then
       path = ' '
@@ -548,6 +553,10 @@ contains
       path = adjustl(full_file_name)
       name = ' '
     else
+    if(DEBUG) then
+      print*, trim(mirrored_ffn(loc:))
+      print*, trim(mirrored_ffn(:loc-1))
+   endif
       path = adjustl(Reverse(mirrored_ffn(loc:)))
       name = adjustl(Reverse(mirrored_ffn(:loc-1)))
     endif
@@ -560,6 +569,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.12  2001/04/13 23:50:55  pwagner
+! split_path_name now works properly
+!
 ! Revision 2.11  2001/04/13 00:18:10  pwagner
 ! Prints only if debug present AND .TRUE.
 !
