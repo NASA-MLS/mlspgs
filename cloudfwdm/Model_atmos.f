@@ -65,6 +65,7 @@ C--------------------------------------------------------------------------
 
       DO I=1,NZ
          ZA(I)=-ALOG10(PRESSURE(I))
+         HEIGHT(I)= MAX ( 0., HEIGHT(I) )
       END DO
 
       IF (NZ .NE. NH) THEN
