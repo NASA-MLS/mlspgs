@@ -314,27 +314,38 @@ contains
     return
   end subroutine GET_CHAR
   ! ===========================================     GET_STRING     =====
-  subroutine GET_STRING ( STRING, STRING_TEXT, CAP )
+  subroutine GET_STRING ( STRING, STRING_TEXT, CAP, STRIP )
   ! Put as much as will fit of the string indexed by STRING into STRING_TEXT.
   ! If CAP is present and .TRUE., capitalize STRING_TEXT.
     integer, intent(in) :: STRING
     character(len=*), intent(out) :: STRING_TEXT
     logical, intent(in), optional :: CAP
-    integer :: I, J
-    logical :: MY_CAP
+    logical, intent(in), optional :: STRIP
+    integer :: I, J, offset
+    logical :: MY_CAP, MY_STRIP
     my_cap = .false.
+    my_strip = .false.
+    offset = 0
     if ( present(cap) ) my_cap = cap
+    if ( present(strip) ) my_strip = strip
+    if (my_strip) then
+      if ( ( (char_table(strings(string-1)+1) == '"') .and. &
+        &    (char_table(strings(string)) == '"') ) .or.&
+        &  ( (char_table(strings(string-1)+1) == "'") .and.&
+        &    (char_table(strings(string)) == "'") ) ) &
+        & offset=1
+    endif
     call test_string ( string, 'GET_STRING' )
     string_text = ' '
     j = 0
     if ( my_cap ) then
-      do i = strings(string-1)+1, strings(string)
+      do i = strings(string-1)+1+offset, strings(string)-offset
         j = j + 1
         if ( j > len(string_text) ) exit
         string_text(j:j) = char(iacap(char_table(i)))
       end do
     else
-      do i = strings(string-1)+1, strings(string)
+      do i = strings(string-1)+1+offset, strings(string)-offset
         j = j + 1
         if ( j > len(string_text) ) exit
         string_text(j:j) = char_table(i)
@@ -595,6 +606,9 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.3  2001/03/03 00:07:24  livesey
+! Added strip argument to get_string
+!
 ! Revision 2.2  2001/03/02 01:33:40  livesey
 ! Added strip argument to display_string
 !
