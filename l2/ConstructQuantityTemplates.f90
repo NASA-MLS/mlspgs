@@ -7,7 +7,7 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
 
   ! This module has various functionality for constructing quantity templates.
 
-  use Allocate_Deallocate, only: Allocate_Test
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use HGrid, only: hGrid_T
   use INIT_TABLES_MODULE, only: F_BAND, F_HGRID, F_LOGBASIS, F_MODULE, &
     F_MOLECULE, F_RADIOMETER, F_SIGNAL, F_TYPE, F_UNIT, F_VGRID, &
@@ -17,7 +17,7 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
     L_REFGPH, L_SCECI, L_SCGEOCALT, L_SCVEL, L_SPACERADIANCE, &
     L_TEMPERATURE, L_TNGTECI, L_TNGTGEOCALT, L_TNGTGEODALT, L_TRUE,&
     L_VMR, L_XYZ, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_EXTINCTION, PHYQ_LENGTH,&
-    PHYQ_TEMPERATURE, PHYQ_VELOCITY, PHYQ_VMR, PHYQ_ZETA
+    PHYQ_TEMPERATURE, PHYQ_VELOCITY, PHYQ_VMR, PHYQ_ZETA, SPEC_INDICES
   use L1BData, only: L1BData_T, READL1BDATA, DEALLOCATEL1BDATA
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: L1BInfo_T, MLSChunk_T, NameLen, R8
@@ -27,6 +27,7 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
     & GetRadiometerName, GetRadiometerFromSignal, GetSignal, GetSignalName,&
     & Signal_T
   use OUTPUT_M, only: OUTPUT
+  use Parse_Signal_m, only: PARSE_SIGNAL
   use QuantityTemplates, only: QuantityTemplate_T,SetupNewQuantityTemplate
   use STRING_TABLE, only: GET_STRING, DISPLAY_STRING
   use TOGGLES, only: GEN, TOGGLE
@@ -89,7 +90,7 @@ contains ! =====     Public Procedures     =============================
     integer :: I                        ! Loop counter
     integer :: InstrumentModule         ! Database index
     integer :: Key            ! Field name, F_... from Init_Tables_Module
-    character(len=127) :: LIT_TEXT
+    character(len=127) :: SIGNALSTRING
     logical :: LOGBASIS                 ! To place in quantity
     integer :: Molecule
     integer :: Natural_Units(first_lit:last_lit)
@@ -100,7 +101,9 @@ contains ! =====     Public Procedures     =============================
     integer :: QuantityType
     integer :: Radiometer               ! Database index
     real(r8) :: ScaleFactor
+    integer :: sideband
     integer :: Signal                   ! Database index
+    integer, dimension(:), pointer :: signalInds=>NULL() ! From parse signal
     integer :: Son                      ! A Son of Root -- an n_assign node
     integer :: Type_Field               ! Index in subtree of "type"
     integer :: Value                    ! Node index of value of field of spec
@@ -175,12 +178,23 @@ contains ! =====     Public Procedures     =============================
       case ( f_module)
         instrumentModule = decoration(decoration(subtree(2,son)))
       case ( f_signal )
-        signal = decoration(decoration(subtree(2,son)))
+        ! For the moment it is simple, later we'll be more intelligent here
+        ! for example, letting the user choose either R1A or R1B.
+        call get_string( sub_rosa(subtree(2,son)), signalString, strip=.true. )
+        ! Here we would do intelligent stuff to work out which bands
+        ! are present, for the moment choose the first
+        call parse_Signal ( signalString, signalInds, spec_indices, &
+          & tree_index=son, sideband=sideband )
+        if ( .not. associated(signalInds) ) then ! A parse error occurred
+          call MLSMessage(MLSMSG_Error,ModuleName,&
+            & 'Unable to parse signal string')
+        end if
+        signal = signalInds(1)
+        call deallocate_test(signalInds,'signalInds',ModuleName)
         instrumentModule = GetModuleFromSignal(signal)
         radiometer = GetRadiometerFromSignal(signal)
       end select
     end do
-
 
     ! Now we know what the user asked for, try to make sense of it.
     ! First see that the `type' has been defined
@@ -280,6 +294,7 @@ contains ! =====     Public Procedures     =============================
     qty%instrumentmodule = instrumentmodule
     qty%radiometer = radiometer
     qty%signal = signal
+    qty%sideband = sideband
     qty%scaleFactor = scaleFactor
     qty%badValue = -999.99              ! Think more about this later NJL !????
 
@@ -580,6 +595,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.18  2001/04/12 21:41:42  livesey
+! Signal now a string.
+!
 ! Revision 2.17  2001/04/10 22:27:47  vsnyder
 ! Nullify explicitly instead of with <initialization> so as not to give
 ! pointers the SAVE attribute.  <initialization> is NOT executed on each

@@ -48,7 +48,7 @@ contains
     integer :: Error                    ! >= indicates an error occurred
     integer :: Field                    ! Of the "sids" specification
     integer :: config                   ! Index for config loop
-    integer, pointer, dimension(:) :: configs ! Forward model configs
+    integer, pointer, dimension(:) :: configs=>NULL() ! Forward model configs
     type(vector_T), pointer :: FwdModelIn
     type(vector_T), pointer :: FwdModelExtra
     type(vector_T), pointer :: FwdModelOut
@@ -120,6 +120,7 @@ contains
             & FwdModelIn, FwdModelExtra, &
             & FwdModelOut, ifm, fmStat )
         end if
+        print*,'Done forward model!'
       end do
     end do
 
@@ -151,6 +152,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.18  2001/04/12 21:42:24  livesey
+! Another interim version, forgot to nullify a pointer.
+!
 ! Revision 2.17  2001/04/12 18:13:28  vsnyder
 ! OOPS! Hadn't saved it from the editor!
 !
