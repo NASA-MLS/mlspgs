@@ -587,7 +587,6 @@ contains
             TAU(ILYR)=RC_TOT(3)*Z(ILYR)
             DEPTH=RC_TOT(3)*Z(ILYR)
 
-            delTAU100(ILYR) = TAU100(ILYR)
             delTAU(ILYR) = max(0._r8, DEPTH )
             delTAUc(ILYR)= max(0._r8, CDEPTH(1) )
 
@@ -810,6 +809,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.17  2001/10/11 22:20:02  dwu
+! make tangent height coming from outside
+!
 ! Revision 1.16  2001/10/11 20:02:46  jonathan
 ! *** empty log message ***
 !
