@@ -142,6 +142,7 @@ contains
     integer :: MIF                      ! MIF number for tan_press(ptg_i)
     integer :: MINSUPERSET              ! Min. value of superset > 0
     integer :: NGL                      ! Total # of GL points = Size(gl_inds)
+    integer :: NGLMAX                   ! NGL if all panels need GL
     integer :: Nlvl                     ! Size of integration grid
     integer :: NO_ELE                   ! Length of a gl path
     integer :: NOFREQS                  ! Number of frequencies for a pointing
@@ -1198,7 +1199,7 @@ contains
         c_inds(npc+1:) = 0
         ! And some fine grid extraction indices
         do_gl(:npc) = (/ .false., (.true., i=2,npc-1), .false. /)
-        call get_gl_inds ( do_gl(:npc), f_inds, ngl )
+        call get_gl_inds ( do_gl(:npc), f_inds, nglMax )
 
         ! Compute z_path & p_path
         z_path(1:no_ele) = (/z_glgrid(MaxVert:tan_inds(ptg_i):-1), &
@@ -1287,8 +1288,8 @@ contains
               &  TAN_PHI_H_GRID = one_tan_ht, TAN_PHI_T_GRID = one_tan_temp )
           end if
         end if
-if ( (npc-2)*ng /= ngl ) stop 'Unequal'
-        do i = 1, (npc-2)*ng, ng
+!       dhdz_gw_path(f_inds) = dhdz_path(f_inds) * (/ ( gw, i = 1, nglMax/ng ) /)
+        do i = 1, nglMax, ng ! Avoid a temp for (/ ( gw, i = 1, nglMax/ng ) /)
           dhdz_gw_path(f_inds(i:i+ng-1)) = dhdz_path(f_inds(i:i+ng-1)) * gw
         end do
         h_path(1:no_ele) = req + h_path(1:no_ele)
@@ -1320,7 +1321,7 @@ if ( (npc-2)*ng /= ngl ) stop 'Unequal'
         end if
 
         !??? This is never used for anything ???
-        tan_temp(ptg_i) = one_tan_temp(1)
+!       tan_temp(ptg_i) = one_tan_temp(1)
 
         ! Now compute the eta_zp & do_calc_zp (for Zeta & Phi only)
 
@@ -1429,11 +1430,10 @@ if ( (npc-2)*ng /= ngl ) stop 'Unequal'
         call comp_refcor ( h_path_c(1:npc), n_path(1:npc), &
                       &  Req+one_tan_ht(1), del_s(1:npc), ref_corr(1:npc) )
 
-        ngl = (npc-2)*ng ! temporarily
-        path_dsdh(f_inds(:ngl)) = h_path(f_inds(:ngl)) / &
-          & ( sqrt( h_path(f_inds(:ngl))**2 - (Req+one_tan_ht(1))**2 ) )
-        dsdz_gw_path(f_inds(:ngl)) = path_dsdh(f_inds(:ngl)) * &
-          & dhdz_gw_path(f_inds(:ngl))
+        path_dsdh(f_inds(:nglMax)) = h_path(f_inds(:nglMax)) / &
+          & ( sqrt( h_path(f_inds(:nglMax))**2 - (Req+one_tan_ht(1))**2 ) )
+        dsdz_gw_path(f_inds(:nglMax)) = path_dsdh(f_inds(:nglMax)) * &
+          & dhdz_gw_path(f_inds(:nglMax))
 
         ! Compute ALL the slabs_prep entities over the path's GL grid for this
         ! pointing & mmaf:
@@ -1508,7 +1508,7 @@ if ( (npc-2)*ng /= ngl ) stop 'Unequal'
 
           end if
 
-          ! Setup path quantities --------------------------------------
+          ! Set up path quantities --------------------------------------
 
           ! Compute the sps_path for this Frequency
           call comp_sps_path_frq ( Grids_f, firstSignal%lo, thisSideband, &
@@ -1544,18 +1544,10 @@ if ( (npc-2)*ng /= ngl ) stop 'Unequal'
               incoptdepth(j) = alpha_path_c(j) * del_s(j)
             end do
 
-            ! Determine where to use Gauss-Legendre instead of a rectangle.
+            ! Determine where to use Gauss-Legendre instead of a trapezoid.
 
             call path_contrib ( incoptdepth(1:npc), e_rflty, &
               & fwdModelConf%tolerance, do_gl(1:npc) )
-
-            ! Where we don't do GL, replace the rectangle rule by the
-            ! trapezoid rule.
-            do j = 1, npc - 1
-              if ( .not. do_gl(j) ) &
-                & incoptdepth(j) = &
-                  & 0.5 * ( alpha_path_c(j) + alpha_path_c(j+1) ) * del_s(j)
-            end do
 
           else ! Not cloud model
 
@@ -1567,18 +1559,10 @@ if ( (npc-2)*ng /= ngl ) stop 'Unequal'
             end do
 
             if ( .not. FwdModelConf%polarized ) then
-               ! Determine where to use Gauss-Legendre for scalar instead of a rectangle.
+              ! Determine where to use Gauss-Legendre for scalar instead of a trapezoid.
 
               call path_contrib ( incoptdepth(1:npc), e_rflty, &
                     & fwdModelConf%tolerance, do_gl(1:npc) )
-
-              ! Where we don't do GL, replace the rectangle rule by the
-              ! trapezoid rule.
-              do j = 1, npc - 1
-                if ( .not. do_gl(j) ) &
-                  & incoptdepth(j) = &
-                    & 0.5 * ( alpha_path_c(j) + alpha_path_c(j+1) ) * del_s(j)
-              end do
 
             else ! extra stuff for polarized case
 
@@ -1639,6 +1623,14 @@ if ( (npc-2)*ng /= ngl ) stop 'Unequal'
 
           end if
 
+          ! Where we don't do GL, replace the rectangle rule by the
+          ! trapezoid rule.
+          do j = 1, npc - 1
+            if ( .not. do_gl(j) ) &
+              & incoptdepth(j) = &
+                & 0.5 * ( alpha_path_c(j) + alpha_path_c(j+1) ) * del_s(j)
+          end do
+
           call get_GL_inds ( do_gl(1:npc), gl_inds, ngl )
           ! ngl is ng * count(do_gl)
 
@@ -1652,7 +1644,7 @@ if ( (npc-2)*ng /= ngl ) stop 'Unequal'
 
           call get_beta_path ( Frq,                                   &
             & p_path(1:no_ele), t_path_f(:ngl), tanh1_f(1:ngl),       &
-            & my_Catalog(thisSideband,:), beta_group, &
+            & my_Catalog(thisSideband,:), beta_group,                 &
             & FwdModelConf%polarized,                                 &
             & gl_slabs, gl_inds(:ngl), beta_path_f(:ngl,:),           &
             & gl_slabs_m, t_path_m(1:no_ele),                         &
@@ -1729,7 +1721,6 @@ if ( (npc-2)*ng /= ngl ) stop 'Unequal'
                 & 'exp(incoptdepth_pol) failed' )
             end if
 
-            ! Assume antenna is only sensitive to the first linear polarization
             if ( radiometers(firstSignal%radiometer)%polarization == l_a ) then
               RadV(frq_i) = real(rad_pol(1,1))
             else
@@ -2690,6 +2681,9 @@ if ( (npc-2)*ng /= ngl ) stop 'Unequal'
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.177  2003/11/03 23:15:16  vsnyder
+! Get rid of path_ds_dh procedure -- a one-liner used in one place
+!
 ! Revision 2.176  2003/11/01 03:02:57  vsnyder
 ! Compute del_zeta, ds_dz_gw and dh_dz_gw for [d]rad_tran*; change
 ! indices_c to c_inds for consistency with usage in rad_tran_m.
