@@ -163,44 +163,47 @@ BEGIN Output
     ;; First the daily map files
     ;;
     CLOL3DM: output, quantities="ClO" "ClOAscending" "ClODescending", $
-     mcf = "/duke/nakamura/L1BOA/META/mls_l3dm_clo.mcf", $
-     file="/duke/nakamura/L1BOA/mls_l3dm_clo_$version-$cycle_$day.dat", $
+     mcf = "/user2/nakamura/L1BOA/META/ML3DCLO.001.MCF", $
+     file="/user2/nakamura/L1BOA/mls_l3dm_clo_$version-$cycle_$day.dat", $
      /bypassPCF
     ZL3DM: output, quantities="GeopotentialHeight" $
              "GeopotentialHeightAscending" "GeopotentialHeightDescending", $
-             mcf = "/duke/nakamura/L1BOA/META/mls_l3dm_z.mcf", $
-             file="/duke/nakamura/L1BOA/mls_l3dm_z_$version-$cycle_$day.dat"
+             mcf = "/user2/nakamura/L1BOA/META/ML3DZ.001.MCF", $
+             file="/user2/nakamura/L1BOA/mls_l3dm_z_$version-$cycle_$day.dat"
     H2OL3DM: output, quantities="H2O" "H2OAscending" "H2ODescending", $
-             mcf = "/duke/nakamura/L1BOA/META/mls_l3dm_h2o.mcf", $
-             file="/duke/nakamura/L1BOA/mls_l3dm_h2o_$version-$cycle_$day.dat"
+             mcf = "/user2/nakamura/L1BOA/META/ML3DH2O.001.MCF", $
+             file="/user2/nakamura/L1BOA/mls_l3dm_h2o_$version-$cycle_$day.dat"
     HCLL3DM: output, quantities="HCl" "HClAscending" "HClDescending", $
-             mcf = "/duke/nakamura/L1BOA/META/mls_l3dm_hcl.mcf", $
-             file="/duke/nakamura/L1BOA/mls_l3dm_hcl_$version-$cycle_$day.dat"
+             mcf = "/user2/nakamura/L1BOA/META/ML3DHCL.001.MCF", $
+             file="/user2/nakamura/L1BOA/mls_l3dm_hcl_$version-$cycle_$day.dat"
     HCNL3DM: output, quantities="HCN" "HCNAscending" "HCNDescending", $
-             mcf = "/duke/nakamura/L1BOA/META/mls_l3dm_hcn.mcf", $
-             file="/duke/nakamura/L1BOA/mls_l3dm_hcn_$version-$cycle_$day.dat"
+             mcf = "/user2/nakamura/L1BOA/META/ML3DHCN.001.MCF", $
+             file="/user2/nakamura/L1BOA/mls_l3dm_hcn_$version-$cycle_$day.dat"
     HNO3L3DM: output, quantities="HNO3" "HNO3Ascending" "HNO3Descending", $
-             mcf = "/duke/nakamura/L1BOA/META/mls_l3dm_hno3.mcf", $
-             file="/duke/nakamura/L1BOA/mls_l3dm_hno3_$version-$cycle_$day.dat"
+             mcf = "/user2/nakamura/L1BOA/META/ML3DHNO3.001.MCF", $
+             file="/user2/nakamura/L1BOA/mls_l3dm_hno3_$version-$cycle_$day.dat"
     N2OL3DM: output, quantities="N2O" "N2OAscending" "N2ODescending", $
-             mcf = "/duke/nakamura/L1BOA/META/mls_l3dm_n2o.mcf", $
-             file="/duke/nakamura/L1BOA/mls_l3dm_n2o_$version-$cycle_$day.dat"
+             mcf = "/user2/nakamura/L1BOA/META/ML3DN2O.001.MCF", $
+             file="/user2/nakamura/L1BOA/mls_l3dm_n2o_$version-$cycle_$day.dat"
     O3L3DM: output, quantities="O3" "O3Ascending" "O3Descending", $
-            mcf = "/duke/nakamura/L1BOA/META/mls_l3dm_o3.mcf", $
-            file="/duke/nakamura/L1BOA/mls_l3dm_o3_$version-$cycle_$day.dat"
+            mcf = "/user2/nakamura/L1BOA/META/ML3DO3.001.MCF", $
+            file="/user2/nakamura/L1BOA/mls_l3dm_o3_$version-$cycle_$day.dat"
     OHL3DM: output, quantities="OH" "OHAscending" "OHDescending", $
-            mcf = "/duke/nakamura/L1BOA/META/mls_l3dm_oh.mcf", $
-            file="/duke/nakamura/L1BOA/mls_l3dm_oh_$version-$cycle_$day.dat"
+            mcf = "/user2/nakamura/L1BOA/META/ML3DOH.001.MCF", $
+            file="/user2/nakamura/L1BOA/mls_l3dm_oh_$version-$cycle_$day.dat"
     TL3DM: output, quantities="Temperature" "TemperatureAscending" $
                               "TemperatureDescending", $
-           mcf = "/duke/nakamura/L1BOA/META/mls_l3dm_t.mcf", $
-           file="/duke/nakamura/L1BOA/mls_l3dm_t_$version-$cycle_$day.dat"
+           mcf = "/user2/nakamura/L1BOA/META/ML3DT.001.MCF", $
+           file="/user2/nakamura/L1BOA/mls_l3dm_t_$version-$cycle_$day.dat"
     ;;
 END Output
 ;
 ; ----------------------------------------------------------------------------
 ;
 ; $Log$
+; Revision 1.2  2000/10/25 15:27:37  nakamura
+; Fixed punctuation; update MCF names.
+;
 ; Revision 1.1  2000/10/17 20:33:57  nakamura
 ; Configuration file for the L3 Daily subprogram.
 ;
