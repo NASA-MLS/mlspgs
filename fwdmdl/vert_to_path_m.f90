@@ -1,4 +1,5 @@
 module VERT_TO_PATH_M
+  use Allocate_Deallocate, only: Allocate_test, Deallocate_Test
   use MLSCommon, only: I4, R4, R8
   use D_LINTRP_M, only: LINTRP
   use I_HUNT_M, only: HUNT
@@ -32,9 +33,9 @@ SUBROUTINE vert_to_path(elvar,n_lvls,Ng,ngt,gl_count,no_phi_t,no_t,htan,     &
 !  ---------------------------
 !  Calling sequence variables:
 !  ---------------------------
-Integer(i4), INTENT(IN) :: n_lvls,Ng,gl_count,no_phi_t,no_t,ngt
+Integer, INTENT(IN) :: n_lvls,Ng,gl_count,no_phi_t,no_t,ngt
 
-Integer(i4), INTENT(OUT) :: totnp,brkpt,Ier
+Integer, INTENT(OUT) :: totnp,brkpt,Ier
 
 Type(ELLIPSE), intent(in out) :: elvar
 
@@ -49,15 +50,15 @@ Real(r8), INTENT(IN) :: h_glgrid(:,:), t_glgrid(:,:), t_phi_basis(:), &
 !  Local variables:
 !  ----------------
 
-Integer(i4) :: i, j, k, l, m, n, jp, n_d, npp, ibrk, Ngp1, no_iter
+Integer :: i, j, k, l, m, n, jp, n_d, npp, ibrk, Ngp1, no_iter
 
 Real(r8) :: h, s, r, dz, rs, phi, rss, dhdz, prev_h
 
-Integer(i4), ALLOCATABLE, DIMENSION(:) :: cndx
+Integer, pointer, dimension(:) :: cndx=>NULL()
 
-Real(r8), ALLOCATABLE, DIMENSION(:) :: dum_z, dum_h, dum_phi
+Real(r8), pointer, dimension(:) :: dum_z=>NULL(), dum_h=>NULL(), dum_phi=>NULL()
 
-Real(r8), ALLOCATABLE, DIMENSION(:,:) :: h_a
+Real(r8), pointer, dimension(:,:) :: h_a=>NULL()
 
 ! Allocate enough space for the various (temporary) arrys we are going
 ! to use...
@@ -65,22 +66,29 @@ Real(r8), ALLOCATABLE, DIMENSION(:,:) :: h_a
   Ier = 0
   Ngp1 = Ng + 1
 
-  DEALLOCATE(cndx, dum_z, dum_h, dum_phi, STAT=i)
-  ALLOCATE(cndx(ngt), dum_z(ngt), dum_h(ngt), dum_phi(ngt), &
- &         STAT = ier)
-  IF(ier /= 0) THEN
-    Ier = 1
-    Print *,'** Error: ALLOCATION error in VERT_TO_PATH routine ..'
-    GOTO 99
-  endif
+  print*,'Ngt is:',ngt
+  call Allocate_test(cndx, ngt, 'cndx', ModuleName)
+  call Allocate_test(dum_z, ngt, 'dum_z', ModuleName)
+  call Allocate_test(dum_h, ngt, 'dum_h', ModuleName)
+  call Allocate_test(dum_phi, ngt, 'dum_phi', ModuleName)
+  call Allocate_test(h_a,ngt,no_phi_t,'h_a',ModuleName)
+  print*,'no_phi_t is:',no_phi_t
 
-  DEALLOCATE(h_a, STAT=i)
-  ALLOCATE(h_a(ngt,no_phi_t),STAT=ier)
-  IF(ier /= 0) THEN
-    Ier = 1
-    Print *,'** Error: ALLOCATION error in VERT_TO_PATH routine ..'
-    GOTO 99
-  endif
+!   DEALLOCATE(cndx, dum_z, dum_h, dum_phi, STAT=i)
+!    ALLOCATE(cndx(ngt), dum_z(ngt), dum_h(ngt), dum_phi(ngt), &
+!   &         STAT = ier)
+!    IF(ier /= 0) THEN
+!      Ier = 1
+!      Print *,'** Error: ALLOCATION error in VERT_TO_PATH routine ..'
+!      GOTO 99
+!    endif
+!   DEALLOCATE(h_a, STAT=i)
+!    ALLOCATE(h_a(ngt,no_phi_t),STAT=ier)
+!    IF(ier /= 0) THEN
+!      Ier = 1
+!      Print *,'** Error: ALLOCATION error in VERT_TO_PATH routine ..'
+!      GOTO 99
+!    endif
 
 ! Initialze all arrays:
 
@@ -295,14 +303,24 @@ Real(r8), ALLOCATABLE, DIMENSION(:,:) :: h_a
   DO i = 1, npp
     dhdz_path(i) = SUM(h_a(i,:)*phi_eta(i,:))
   END DO
+  
+  print*,'Hello Im deallocating!'
+  call deallocate_test(h_a,'h_a',ModuleName)
+  call deallocate_test(dum_phi, 'dump_phi', ModuleName)
+  call deallocate_test(dum_h, 'dum_h', ModuleName)
+  call deallocate_test(dum_z, 'dum_z', ModuleName)
+  call deallocate_test(cndx, 'cndx', ModuleName)
 
- 99 DEALLOCATE(h_a, STAT=i)
-    DEALLOCATE(cndx, dum_z, dum_h, dum_phi, STAT=i)
+!  99 DEALLOCATE(h_a, STAT=i)
+!     DEALLOCATE(cndx, dum_z, dum_h, dum_phi, STAT=i)
 
   RETURN
 END SUBROUTINE vert_to_path
 end module VERT_TO_PATH_M
 ! $Log$
+! Revision 1.7  2001/03/31 23:40:56  zvi
+! Eliminate l2pcdim (dimension parameters) move to allocatable ..
+!
 ! Revision 1.6  2001/03/30 20:28:21  zvi
 ! General fix-up to get rid of COMMON BLOCK (ELLIPSE)
 !
