@@ -94,6 +94,7 @@ module MLSSignals_M
     !                                   (This is for derived signals.  Every
     !                                   element is true for "real" signals).
 
+    integer :: Index                    ! Index into master signals database
     integer :: Band                     ! Index in Bands database
     integer :: InstrumentModule         ! Index in Modules database
     integer :: Name                     ! Sub_rosa index of declaration's label
@@ -305,6 +306,7 @@ contains
           signal%widths => spectrometerTypes(signal%spectrometerType)%widths
         end if
         call decorate ( key, addSignalToDatabase ( signals, signal ) )
+        signals(size(signals))%index = size(signals)
         ! Now nullify pointers so they don't get hosed later
         nullify ( signal%frequencies )
         nullify ( signal%widths )
@@ -994,6 +996,9 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.17  2001/04/10 23:20:05  livesey
+! Added index field
+!
 ! Revision 2.16  2001/04/10 17:59:53  vsnyder
 ! Remove sideband field from signal
 !
