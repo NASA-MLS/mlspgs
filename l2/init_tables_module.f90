@@ -111,7 +111,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_DELETE             = s_concatenate + 1
   integer, parameter :: S_DESTROY            = s_delete + 1
   integer, parameter :: S_DIRECTWRITE        = s_destroy + 1
-  integer, parameter :: S_DUMP               = s_directWrite + 1
+  integer, parameter :: S_DIRECTWRITEFILE    = s_directWrite + 1
+  integer, parameter :: S_DUMP               = s_directWriteFile + 1
   integer, parameter :: S_DUMPBLOCKS         = s_dump + 1
   integer, parameter :: S_EMPIRICALGEOMETRY  = s_dumpblocks + 1
   integer, parameter :: S_FGRID              = s_empiricalGeometry + 1
@@ -295,6 +296,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_delete) =               add_ident ( 'delete' )
     spec_indices(s_destroy) =              add_ident ( 'destroy' )
     spec_indices(s_directWrite) =          add_ident ( 'directWrite' )
+    spec_indices(s_directWriteFile) =      add_ident ( 'directWriteFile' )
     spec_indices(s_dump) =                 add_ident ( 'dump' )
     spec_indices(s_dumpblocks) =           add_ident ( 'dumpblocks' )
     spec_indices(s_fGrid) =                add_ident ( 'fGrid' )
@@ -936,6 +938,9 @@ contains ! =====     Public procedures     =============================
              begin, f+f_DACSfilterShapes, t+t_string, n+n_field_type, &
              begin, f+f_pointingGrids, t+t_string, n+n_field_type, np+n_spec_def /) )
     call make_tree ( (/ &
+      begin, s+s_directWriteFile, &
+             begin, f+f_file, t+t_string, nr+n_field_type, &
+             begin, f+f_type, t+t_outputType, ndr+n_field_type, np+n_spec_def, &
       begin, s+s_l1brad, &
              begin, f+f_file, t+t_string, n+n_field_type, np+n_spec_def, &
       begin, s+s_l1boa, &
@@ -1054,7 +1059,7 @@ contains ! =====     Public procedures     =============================
              begin, p+p_endtime, t+t_string, n+n_name_def, s+s_l1brad, &
              s+s_l1boa, s+s_l2parsf, &
              s+s_empiricalGeometry, s+s_forwardModel, s+s_forwardModelGlobal, &
-             s+s_time, s+s_vgrid, s+s_binSelector, &
+             s+s_time, s+s_vgrid, s+s_binSelector, s+s_directWriteFile, &
              s+s_fGrid, s+s_l1brad, s+s_l1boa, n+n_section, &
       begin, z+z_readapriori, s+s_time, s+s_gridded, s+s_l2gp, &
              s+s_l2aux, s+s_snoop, n+n_section, &
@@ -1102,6 +1107,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.344  2003/12/11 22:59:08  pwagner
+! May fill DirectWriteDatabase in global settings
+!
 ! Revision 2.343  2003/12/04 22:19:32  livesey
 ! Added ability to fill from l2gpPrecision field
 !
