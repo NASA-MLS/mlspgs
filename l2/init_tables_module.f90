@@ -112,7 +112,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_FILL               = s_fGrid + 1
   integer, parameter :: S_FILLCOVARIANCE     = s_fill + 1
   integer, parameter :: S_FILLDIAGONAL       = s_fillcovariance + 1
-  integer, parameter :: S_FORGE              = s_filldiagonal + 1
+  integer, parameter :: S_FLAGCLOUD          = s_filldiagonal + 1
+  integer, parameter :: S_FORGE              = s_flagCloud + 1
   integer, parameter :: S_FORWARDMODEL       = s_forge + 1
   integer, parameter :: S_FORWARDMODELGLOBAL = s_forwardModel + 1
   integer, parameter :: S_GRIDDED            = s_forwardModelGlobal + 1
@@ -936,6 +937,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.269  2003/01/11 01:04:21  livesey
+! Bug fix for Dong's stuff
+!
 ! Revision 2.268  2003/01/11 01:02:27  livesey
 ! Added max and min value in subset
 !
