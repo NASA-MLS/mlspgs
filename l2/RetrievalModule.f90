@@ -756,7 +756,8 @@ contains
             !{The contribution to the norm of the residual of the
             ! right-hand side of the part of the least-squares problem
             ! that is due to apriori is $\mathbf{
-            ! ( a - x_n )^T F^T F ( a - x_n ) = ( a - x_n )^T C ( a - x_n )}$
+            ! ( a - x_n )^T F^T F ( a - x_n ) = ( a - x_n )^T \left [ 
+            ! C ( a - x_n ) \right ] }$
             aprioriNorm = v(aprioriMinusX) .dot. v(covarianceXapriori)
           else
             aprioriNorm = 0.0_r8
@@ -778,8 +779,8 @@ contains
                 & v(x), fwdModelExtra, v(f), fmw, fmStat )
             end do ! k
           end do ! MAFs
-!          ForwardModel itself calls add_to_retrieval_timing
-!          call add_to_retrieval_timing( 'forward_model', t1 )
+          ! ForwardModel itself calls add_to_retrieval_timing
+          ! call add_to_retrieval_timing( 'forward_model', t1 )
           call time_now ( t1 )
           call subtractFromVector ( v(f), measurements )
           call copyVector ( v(f_rowScaled), v(f) ) ! f_rowScaled := f
@@ -800,18 +801,21 @@ contains
                 call output ( toleranceF )
                 call output ( ')', advance='yes' )
               end if
+!??? At this point we should restore BestX, run the forward model again
+!??? to get a new Jacobian, and form normal equations -- the last two so
+!??? that the a posteriori covariance is consistent with BestX.
             exit
           end if
         case ( nf_evalj ) ! ..............................  EVALJ  .....
         !{IF ( too many Jacobian values ) EXIT \\
-        ! Compute the Jacobian matrix J if you didn't do it when NFLAG
+        ! Compute the Jacobian matrix $\bf K$ if you didn't do it when NFLAG
         ! was NF\_EVALF:\\
-        ! ${\bf J}_{k,l} = \frac{\partial {\bf f}_k}{\partial {\bf x}_l},
+        ! ${\bf K}_{k,l} = \frac{\partial {\bf f}_k}{\partial {\bf x}_l},
         ! \, k = 1 .. \text{NF},\, l = 1 .. \text{NX}$
         !
-        ! Actually, the matrix has four parts:
+        ! Actually, the matrix for the least-squares problem has four parts:
         !  \begin{xalignat*}{2}
-        !  {\bf J \delta x} & \simeq {\bf -f}  && \text{The Jacobian} \\
+        !  {\bf K \delta x} & \simeq {\bf -m}  && \text{The Jacobian} \\
         !  {\bf F x_{n+1}}  & \simeq {\bf F a} && \text{The apriori} \\
         !  {\bf R x_{n+1}}  & \simeq {\bf 0}   &&
         !                   \text{Tikhonov regularization} \\
@@ -823,18 +827,19 @@ contains
         ! \delta x}$:
         !%
         ! \begin{equation*}
+        ! {\bf J \delta x} =
         ! \begin{array}{ll}
         !  \left [
         !  \begin{array}{l}
-        !  {\bf J} \\
+        !  {\bf K} \\
         !  {\bf F} \\
         !  {\bf R} \\
         !  \lambda {\bf I}
         !  \end{array} \right ] {\bf \delta x}
-        !  \simeq
+        !  \simeq {\bf -f} =
         !  \left [
         !  \begin{array}{l}
-        !   {\bf -f} \\
+        !   {\bf -m} \\
         !   {\bf F} ( {\bf a} - {\bf x}_n) \\
         !   -{\bf R x}_n \\
         !   {\bf 0}
@@ -850,10 +855,10 @@ contains
         ! \end{array}
         ! \end{equation*}
         !%
-        ! Triangularize ${\bf J}$, and compute the (negative of the) gradient
-        ! = $-{\bf J^T f}$.  This is the RHS of the normal equations
-        ! ${\bf J^T J \delta \hat x} = -{\bf J^T f}$ where ${\bf \delta
-        !  \hat x}$ is a "Candidate DX" that might not actually get used.
+        ! Triangularize ${\bf J}$, and compute the (negative of the) gradient =
+        ! $-{\bf J^T f}$.  This is the RHS of the normal equations ${\bf J^T J
+        ! \delta \hat x} = -{\bf J^T f}$ where ${\bf \delta \hat x}$ is a
+        ! "Candidate DX" that might not actually get used.
         ! Set \begin{description}
         !   \item[AJ\%DIAG] = element on diagonal with smallest absolute
         !           value, after triangularization,
@@ -873,15 +878,22 @@ contains
                 call output ( maxJacobians )
                 call output ( ')', advance='yes' )
               end if
+!??? At this point we should restore BestX, run the forward model again
+!??? to get a new Jacobian, and form normal equations -- the last two so
+!??? that the a posteriori covariance is consistent with BestX.
             exit
           end if
           update = got(f_apriori)
           if ( update ) then ! start normal equations with apriori
-            !{ Using Apriori requires adding equations of the form
-            !  $C x_n \simeq C a$ where $C$ is the Cholesky factor of the
-            !  apriori covariance.  So that all of the parts of the problem
-            !  are solving for $\delta x$, we subtract $C x_{n-1}$ from both
-            !  sides, to get $C \delta x \simeq C (a - x_{n-1})$.
+            !{ Using Apriori requires adding equations of the form ${\bf F
+            !  x}_n \simeq {\bf F a}$ where ${\bf F}$ is the Cholesky factor
+            !  of $\bf C$, the inverse of the apriori covariance ${\bf S}_a$. 
+            !  So that all of the parts of the problem are solving for
+            !  ${\bf\delta x}$, we subtract ${\bf F x}_{n-1}$ from both sides,
+            !  to get ${\bf F \delta x} \simeq {\bf F (a - x}_{n-1})$.
+            !
+            ! Actually, we start by putting this into the normal equations,
+            ! so we form ${\bf C \delta x} = {\bf C (a - x}_{n-1})$
             if ( diagonal ) then
             ! Iterate with the diagonal of the apriori covariance, then
             ! use the full apriori covariance (one hopes only for one
@@ -900,15 +912,16 @@ contains
             call clearMatrix ( normalEquations%m ) ! start with zero
             call destroyVectorValue ( v(aTb) ) ! Clear the RHS vector
           end if
-          ! aprioriNorm was computed when nwt_flag was NF_EVALF
+          ! aprioriNorm was computed when nwt_flag was NF_EVALF.  It is the
+          ! _square_ of the norm of (apriori - measurements).
           aj%fnorm = aprioriNorm
 
           ! Add Tikhonov regularization if requested
           if ( got(f_regOrders) ) then
-            !{ Tikhonov regularization is of the form $R x_n \simeq 0$.
-            !  So that all of the parts of the problem are solving for
-            !  $\delta x$, we subtract $R x_{n-1}$ from both sides to get
-            !  $R \delta x \simeq -R x_{n-1}$.
+            !{ Tikhonov regularization is of the form ${\bf R x}_n \simeq {\bf
+            !  0}$. So that all of the parts of the problem are solving for
+            !  ${\bf\delta x}$, we subtract ${\bf R x}_{n-1}$ from both sides to
+            !  get ${\bf R \delta x} \simeq -{\bf R x}_{n-1}$.
             call regularize ( jacobian, regOrders, regQuants, regWeight )
             call multiplyMatrixVectorNoT ( jacobian, v(x), v(reg_X_x) ) ! regularization * x_n
             call scaleVector ( v(reg_X_x), -regWeight )   ! -R x_n
@@ -916,14 +929,15 @@ contains
               & v(reg_X_x), v(aTb), update=update, useMask=.false. )
             update = .true.
             call clearMatrix ( jacobian )           ! free the space
+            ! aj%fnorm is still the square of the norm of f
             aj%fnorm = aj%fnorm + ( v(reg_X_x) .dot. v(reg_X_x) )
-!           call destroyVectorValue ( v(reg_X_x) )  ! free the space
+            ! call destroyVectorValue ( v(reg_X_x) )  ! free the space
             ! Don't destroy reg_X_x unless we move the 'clone' for it
             ! inside the loop.  Also, if we destroy it, we can't snoop it.
           end if
 
           !{ Add some early stabilization.  This consists of adding equations
-          ! of the form $\lambda I \simeq 0$.
+          ! of the form $\lambda {\bf I} \simeq {\bf 0}$.
           if ( got(f_lambda) ) then
             call updateDiagonal ( normalEquations, initLambda )
             update = .true.
@@ -941,30 +955,30 @@ contains
           do while (fmStat%maf < chunk%lastMAFIndex-chunk%firstMAFIndex+1)
             call add_to_retrieval_timing( 'newton_solver', t1 )
             call time_now ( t1 )
-            ! What if one config set finished but others still had more
-            ! to do? Ermmm, think of this next time.
+            !??? What if one config set finished but others still had more
+            !??? to do? Ermmm, think of this next time.
             fmStat%maf = fmStat%maf + 1
             fmstat%rows = .false.
             do k = 1, size(configIndices)
               call forwardModel ( configDatabase(configIndices(k)), &
                 & v(x), fwdModelExtra, v(f_rowScaled), fmw, fmStat, jacobian )
             end do ! k
-!          ForwardModel itself calls add_to_retrieval_timing
-!            call add_to_retrieval_timing( 'forward_model', t1 )
+            ! ForwardModel itself calls add_to_retrieval_timing
+            ! call add_to_retrieval_timing( 'forward_model', t1 )
             call time_now ( t1 )
             do rowBlock = 1, size(fmStat%rows)
               if ( fmStat%rows(rowBlock) ) then
                 call subtractFromVector ( v(f_rowScaled), measurements, &
                   & quant=jacobian%row%quant(rowBlock), &
                   & inst=jacobian%row%inst(rowBlock) ) ! f - y
-                !{Let ${\bf J}$ be the Jacobian matrix and ${\bf f}$ be the
-                ! residual of the least-squares problem.  Let $\bf W$ be the
-                ! inverse of the measurement covariance (which in our case
-                ! is diagonal). Row scale the part of the least-squares
-                ! problem that arises from the measurements, i.e. the
-                ! least-squares problem becomes $\mathbf{W J = W f}$
-                ! (actually, we only row scale ${\bf f}$ here, and scale
-                ! ${\bf J}$ below).
+                !{Let $\bf W$ be the Cholesky factor of the inverse of the
+                ! measurement covariance ${\bf S}_m$ (which in our case is
+                ! diagonal), i.e. ${\bf W}^T {\bf W} = {\bf S}_m^{-1}$. Row
+                ! scale the part of the least-squares problem that arises
+                ! from the measurements, i.e. the least-squares problem
+                ! becomes $\mathbf{W J \delta \hat x \simeq W f}$ (actually,
+                ! we only row scale ${\bf f}$ here, and scale ${\bf J}$
+                ! below).
                 if ( got(f_measurementSD) ) then
                   call multiply ( v(f_rowScaled), v(weight), &
                     & quant=jacobian%row%quant(rowBlock), &
@@ -977,7 +991,10 @@ contains
             if ( got(f_measurementSD) ) call rowScale ( v(weight), jacobian )
 
             !{Form normal equations:
-            ! $\mathbf{J^T W^T W J \delta \hat x = J^T W^T W f}$:
+            ! ${\bf J}^T {\bf W}^T {\bf W J \delta \hat x} =
+            ! {\bf J}^T {\bf S}_m^{-1} {\bf J \delta \hat x} =
+            ! {\bf J}^T {\bf W}^T {\bf W f} =
+            ! {\bf J}^T {\bf S}_m^{-1} {\bf f}$:
             call formNormalEquations ( jacobian, normalEquations, &
               & rhs_in=v(f_rowScaled), rhs_out=v(aTb), update=update, &
               & useMask=.true. )
@@ -990,19 +1007,23 @@ contains
             call clearMatrix ( jacobian )  ! free the space
           end do ! mafs
 
+          ! aj%fnorm is still the square of the function norm
           aj%fnorm = aj%fnorm + ( v(f_rowScaled) .dot. v(f_rowScaled) )
 
-          !{Column Scale $\mathbf{J}$ (row and column scale $\mathbf{J^T
-          ! J}$).  Let $\mathbf{\Sigma}$ be a column-scaling matrix for the
-          ! Jacobian. We cater for several choices.  After row and column
-          ! scaling, the problem is $\mathbf{J^T W^T W J \Sigma \Sigma^{-1}
-          ! \delta \hat x = -J^T W^T f}$.
+          !{Column Scale $\bf J$ (row and column scale ${\bf J}^T {\bf J}$)
+          ! using the matrix $\bf\Sigma$. We cater for several choices of
+          ! $\bf\Sigma$.  After row scaling with $\bf W$ and column scaling
+          ! with $\bf\Sigma$, the least-squares problem is ${\bf W J \Sigma
+          ! \Sigma}^{-1} {\bf \delta \hat x} \simeq -{\bf W f}$.  We will
+          ! solve for ${\bf \Sigma}^{-1} {\bf \delta \hat x}$, and then for
+          ! $\bf \delta \hat x$.
           select case ( columnScaling )
-          case ( l_apriori )
+          case ( l_apriori ) ! v(columnScaleVector) := apriori
             call copyVector ( v(columnScaleVector), apriori )
           case ( l_covariance )
             !??? Can't get here until allowed by init_tables
-          case ( l_norm )
+          case ( l_norm ) ! v(columnScaleVector) := diagonal of normal
+                          !                         equations = column norms
             call getDiagonal ( normalEquations%m, v(columnScaleVector) )
           end select
           if ( columnScaling /= l_none ) then ! Compute $\Sigma$
@@ -1016,26 +1037,32 @@ contains
             end forall
               if ( index(switches,'col') /= 0 ) &
                 & call dump ( v(columnScaleVector), name='Column scale vector' )
-            !{Scale: $\mathbf{\Sigma^T J^T J \Sigma = -\Sigma^T J^T f}$
+            !{Scale in normal equations form: ${\bf \Sigma}^T {\bf  J}^T {\bf
+            ! W}^T {\bf W J \Sigma \Sigma}^{-1} {\bf \delta \hat x} = {\bf
+            ! \Sigma}^T {\bf J}^T {\bf S}_m^{-1} {\bf J \Sigma \Sigma}^{-1}
+            ! {\bf \delta \hat x} =  -{\bf \Sigma}^T {\bf J}^T {\bf W}^T {\bf
+            ! W f} = -{\bf \Sigma}^T {\bf J}^T {\bf S}_m^{-1} {\bf f}$.
             call columnScale ( normalEquations%m, v(columnScaleVector) )
             call rowScale ( v(columnScaleVector), normalEquations%m )
             call multiply ( v(aTb), v(columnScaleVector) )
   
           end if
-          !{Compute the (negative of the) gradient $= -\mathbf{J^T f}$.
-          ! This is the right-hand side of the normal equations
-          ! $\mathbf{J^T J \delta \hat x = -J^T f}$ where $\mathbf{\delta
-          ! \hat x}$ is the "Candidate $\mathbf{\delta x}$" that may or
-          ! may not get used.
+          !{The (negative of the) gradient $= -{\bf \Sigma}^T {\bf J}^T
+          ! {\bf S}_m^{-1} {\bf f}$
+          ! is the right-hand side of the normal equations.  Save it.
           call copyVector ( v(gradient), v(aTb) ) ! gradient := atb
             if ( index(switches,'gvec') /= 0 ) &
               & call dump ( v(gradient), name='gradient' )
 
-          ! Factor J^T J:
-!         factored%m%block => normalEquations%m%block ! to save space
-!         Can't do the above because we need to keep the normal
-!         equations around, in order to subtract Levenberg-Marquardt and
-!         apriori covariance, in order to compute a posteriori covariance
+          !{Compute the Cholesky factor of the LHS of the normal equations:
+          ! ${\bf U}^T {\bf U} {\bf \delta \hat x} = {\bf\Sigma}^T {\bf J}^T
+          ! {\bf S}_m^{-1} {\bf J \Sigma \Sigma}^{-1} {\bf \delta \hat x} =
+          ! -{\bf \Sigma}^T {\bf J}^T {\bf S}_m^{-1} {\bf f}$.
+
+          ! factored%m%block => normalEquations%m%block ! to save space
+          ! Can't do the above because we need to keep the normal
+          ! equations around, in order to subtract Levenberg-Marquardt and
+          ! apriori covariance, in order to compute a posteriori covariance
             if ( index(switches,'neq') /= 0 ) &
               call dump_Linf ( normalEquations%m, &
                 & 'L_infty norms of Normal Equations blocks after scaling:', &
@@ -1044,11 +1071,10 @@ contains
               & call dump_struct ( normalEquations%m, &
                 & 'Sparseness structure of Normal equations blocks:', &
                 & upper=.true. )
-          call add_to_retrieval_timing( 'newton_solver', t1 )
+          call add_to_retrieval_timing ( 'newton_solver', t1 )
           call time_now ( t1 )
-          ! Factor the normal equations
           call choleskyFactor ( factored, normalEquations )
-          call add_to_retrieval_timing( 'cholesky_factor', t1 )
+          call add_to_retrieval_timing ( 'cholesky_factor', t1 )
           call time_now ( t1 )
             if ( index(switches,'diag') /= 0 ) then
               call getDiagonal ( factored%m, v(dxUnscaled) )
@@ -1065,19 +1091,22 @@ contains
           !       smallest absolute value, after triangularization
           aj%ajn = maxL1 ( factored%m ) ! maximum L1 norm of
           !       column in upper triangle after triangularization
-          call add_to_retrieval_timing( 'newton_solver', t1 )
+          call add_to_retrieval_timing ( 'newton_solver', t1 )
           call time_now ( t1 )
           call solveCholesky ( factored, v(candidateDX), v(aTb), &
             & transpose=.true. )
-          call add_to_retrieval_timing( 'cholesky_solver', t1 )
+          call add_to_retrieval_timing ( 'cholesky_solver', t1 )
           call time_now ( t1 )
 
-          !{AJ\%FNMIN = L2 norm of residual, $||\mathbf{J \delta x + f}||$
-          ! where $\mathbf{\delta x}$ is the "Candidate DX" that may not
-          ! get used. This can be gotten without saving $\bf J$ as
-          ! $\mathbf{f^T f - y^T y}$ where $\mathbf{y = U^{-T} \delta x}$
-          ! ($\mathbf{U}$ is the Cholesky factor of $\mathbf{J^T J}$).
-          ! The variable {\tt candidateDX} is a temp here = $\bf y$.
+          !{AJ\%FNMIN = $L_2$ norm of residual, $||{\bf\Sigma}^T {\bf J}^T
+          ! {\bf S}_m^{-1} {\bf J \Sigma \Sigma}^{-1} {\bf \delta \hat x} +
+          ! {\bf \Sigma}^T {\bf J}^T {\bf S}_m^{-1} {\bf f}||$ where
+          ! $\bf\delta \hat x$ is the "Candidate DX" that may not get
+          ! used. This can be gotten without saving $\bf J$ as ${\bf \hat f}^T
+          ! {\bf \hat f} - {\bf y}^T {\bf y}$ where ${\bf\hat f} = {\bf
+          ! \Sigma}^T {\bf J}^T {\bf S}_m^{-1} {\bf f}$ and ${\bf y} = {\bf
+          ! U}^{-T} {\bf \delta \hat x}$. The variable {\tt candidateDX} is a
+          ! temp here = $\bf y$.
           aj%fnmin = aj%fnorm - (v(candidateDX) .dot. v(candidateDX))
           if ( aj%fnmin < 0.0 ) then
             call output ( 'How can aj%fnmin be negative?  aj%fnmin = ' )
@@ -1100,9 +1129,10 @@ contains
             end if
         case ( nf_solve ) ! ..............................  SOLVE  .....
         !{Apply Levenberg-Marquardt stabilization with parameter
-        ! $\lambda =$ {\bf AJ\%SQ}.  I.e. solve $\mathbf{(J^T W^T W J
-        ! \Sigma + \lambda^2 I) \Sigma^{-1} \delta \hat x = J^T W^T
-        ! f}$ for $\mathbf{\Sigma^{-1} \delta \hat x}$.  Set
+        ! $\lambda =$ {\bf AJ\%SQ}.  I.e. form $({\bf \Sigma}^T {\bf J}^T
+        ! {\bf W}^T {\bf W J \Sigma + \lambda^2 I}) {\bf \Sigma}^{-1}
+        ! {\bf \delta \hat x = \Sigma}^T {\bf J}^T {\bf W}^T {\bf f}$ for
+        ! ${\bf \Sigma}^{-1} {\bf \delta \hat x}$.  Set
         ! \begin{description}
         !   \item[AJ\%FNMIN] as for NWT\_FLAG = NF\_EVALJ, but taking
         !     account of Levenberg-Marquardt stabilization.
@@ -1110,10 +1140,10 @@ contains
         !   \item[AJ\%GDX] = (Gradient) .dot. ("candidate DX")
         ! \end{description}
           call updateDiagonal ( normalEquations, aj%sq**2 )
-!         factored%m%block => normalEquations%m%block ! to save space
-!         Can't do the above because we need to keep the normal equations
-!         around, in order to subtract Levenberg-Marquardt and apriori
-!         covariance, in order to compute a posteriori covariance
+          ! factored%m%block => normalEquations%m%block ! to save space
+          ! Can't do the above because we need to keep the normal equations
+          ! around, in order to subtract Levenberg-Marquardt and apriori
+          ! covariance, in order to compute a posteriori covariance
             if ( index(switches,'neq') /= 0 ) &
               call dump_Linf ( normalEquations%m, &
                 & 'L1 norms of Normal Equations blocks after Marquardt:', &
@@ -1134,18 +1164,19 @@ contains
             if ( index(switches,'spa') /= 0 ) &
               & call dump_struct ( factored%m, &
                 & 'Sparseness structure of blocks of factor:', upper=.true. )
-          !{Solve for "candidate DX" = $-\mathbf{(J^T J)^{-1} J^T  F =
-          ! -(U^T U)^{-1} J^T  F}$ using two back solves.  First solve
-          ! $\mathbf{U^T y = -J^T F}$, then $\mathbf{U}$ "candidate DX"
-          ! = $\mathbf{y}$. Meanwhile, set AJ\%FNMIN as for NWT\_FLAG =
-          ! NF\_EVALJ, but taking account of Levenberg-Marquardt
-          ! stabilization
+          !{Solve for "candidate DX" = ${\bf \delta \hat x} = -({\bf J}^T {\bf
+          ! J})^{-1} {\bf J}^T {\bf F} = -({\bf U}^T {\bf U})^{-1} {\bf J}^T 
+          ! {\bf F}$ using two back solves.  First solve ${\bf U}^T {\bf y} =
+          ! -{\bf J}^T {\bf F}$, then $\mathbf{U \delta \hat x}$ =
+          ! $\mathbf{y}$. Meanwhile, set AJ\%FNMIN as for NWT\_FLAG =
+          ! NF\_EVALJ, but taking account of Levenberg-Marquardt stabilization
           call add_to_retrieval_timing( 'newton_solver', t1 )
           call time_now ( t1 )
           call solveCholesky ( factored, v(candidateDX), v(aTb), &
             & transpose=.true. )
           call add_to_retrieval_timing( 'cholesky_solver', t1 )
           call time_now ( t1 )
+          ! aj%fnorm is now the norm of f, not its square.
           aj%fnmin = sqrt(aj%fnorm**2 - (v(candidateDX) .dot. v(candidateDX)) )
           call solveCholesky ( factored, v(candidateDX) )
           aj%dxn = sqrt(v(candidateDX) .dot. v(candidateDX)) ! L2Norm(dx)
@@ -2633,6 +2664,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.133  2002/02/12 22:53:21  vsnyder
+! Update a bunch of comments
+!
 ! Revision 2.132  2002/02/09 19:11:34  livesey
 ! Modified subset to add optical depth cutoffs
 !
