@@ -731,9 +731,6 @@ contains ! =====     Public Procedures     =============================
       d = xin(i,i) - dot( i-1, zt(1,i), 1, zt(1,i), 1 )
 !     d = xin(i,i) - dot_product( zt(1:i-1,i), zt(1:i-1,i) )
       if ( (d <= tol .and. i < nc) .or. (d < 0.0) ) then
-print *, 'In DenseCholesky at diagonal element', i, ' D =', d
-print *, 'XIN(i,i) =', xin(i,i)
-call dump ( zt(1:i-1,i), name='zt(1:i-1,i)' )
         if ( present(status ) ) then
           status = i
           return
@@ -1306,7 +1303,7 @@ call dump ( zt(1:i-1,i), name='zt(1:i-1,i)' )
       call densify ( y, yb )
     end if
 
-    ! zb%nRows/zb%nCols undefined here, so don't them.
+    ! zb%nRows/zb%nCols undefined here, so don't use them.
     call gemm ( 'N', 'T', xb%nRows, yb%nRows, xb%nCols, alpha, &
       & x, xb%nRows, y, yb%nRows, beta, z, xb%nRows )
 
@@ -2202,6 +2199,14 @@ call dump ( zt(1:i-1,i), name='zt(1:i-1,i)' )
           end do ! j = 1, nc
         end do ! i = 1, n
       case ( M_Full )
+        d = u%values(1,1)
+        if ( abs(d) < tol ) then
+          call dump ( u, 'Guilty party', details=2 )
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & "U matrix in SolveCholeskyM_0 is singular" )
+        end if
+        xs(1,1:nc) = xs(1,1:nc) / d
+!$OMP PARALLEL DO
         do i = 2, n
           d = u%values(i,i)
           if ( abs(d) < tol ) then
@@ -2216,6 +2221,7 @@ call dump ( zt(1:i-1,i), name='zt(1:i-1,i)' )
 !                   &   dot_product( u%values(1:i-1,i), xs(1:i-1,j)) ) / d
           end do ! j = 1, nc
         end do ! i = 2, n
+!$OMP END PARALLEL DO
       end select
     else             ! solve U X = B for X
       if ( u%kind == M_full ) then
@@ -2807,6 +2813,10 @@ call dump ( zt(1:i-1,i), name='zt(1:i-1,i)' )
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.71  2002/06/18 01:21:18  vsnyder
+! SolveCholeskyM_0 wasn't solving for the first row in the dense-block /
+! transpose=.true. case.
+!
 ! Revision 2.70  2002/06/15 00:41:20  vsnyder
 ! 1.  Fix some comments.  2.  Fix dimensions for result of MultiplyMatrix_XY_T_0.
 ! 3.  Fix some references to optional arguments not protected by present().
