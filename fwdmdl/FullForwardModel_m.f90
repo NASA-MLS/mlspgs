@@ -1099,6 +1099,36 @@ CONTAINS
            & dxdt_tan=dxdt_surface,d2xdxdt_tan=d2xdxdt_surface)
       ENDIF
       Call deallocate_test(d2xdxdt_surface,'d2xdxdt_surface',modulename)
+    ELSE
+! no temperature derivatives
+      IF (h2o_ind > 0) THEN
+        end_ind_z = SUM(grids_f%no_z(1:h2o_ind))
+        beg_ind_z = end_ind_z - grids_f%no_z(h2o_ind) + 1
+        end_ind_p = SUM(grids_f%no_p(1:h2o_ind))
+        beg_ind_p = end_ind_p - grids_f%no_p(h2o_ind) + 1
+        end_ind = SUM(grids_f%no_z(1:h2o_ind)*grids_f%no_p(1:h2o_ind) * &
+                & grids_f%no_f(1:h2o_ind))
+        beg_ind = end_ind - grids_f%no_z(h2o_ind)*grids_f%no_p(h2o_ind) * &
+                & grids_f%no_f(h2o_ind) + 1
+        Call get_chi_out(tan_press(1:1),deg2rad*tan_phi(1:1), &
+           & 0.001_rp*est_scgeocalt(1:1), Grids_tmp, &
+           & SPREAD(refGPH%template%surfs(1,1),1,no_sv_p_t), &
+           & 0.001_rp*refGPH%values(1,windowStart:windowFinish), &
+           & orbIncline%values(1,maf)*Deg2Rad,elevoffset%values(1,1)*Deg2Rad,&
+           & (/req_out(1)/),surf_angle,one_dhdz,one_dxdh, &
+           & h2o_zeta_basis=grids_f%zet_basis(beg_ind_z:end_ind_z), &
+           & h2o_phi_basis=grids_f%phi_basis(beg_ind_p:end_ind_p), &
+           & h2o_coeffs=grids_f%values(beg_ind:end_ind), &
+           & lin_log=grids_f%lin_log(h2o_ind))
+      ELSE IF (h2o_ind == 0) THEN
+        Call get_chi_out(tan_press(1:1),deg2rad*tan_phi(1:1), &
+           & 0.001_rp*est_scgeocalt(1:1), Grids_tmp, &
+           & SPREAD(refGPH%template%surfs(1,1),1,no_sv_p_t), &
+           & 0.001_rp*refGPH%values(1,windowStart:windowFinish), &
+           & orbIncline%values(1,maf)*Deg2Rad,elevoffset%values(1,1)*Deg2Rad,&
+           & (/req_out(1)/),surf_angle,one_dhdz,one_dxdh)
+      ENDIF
+      Call deallocate_test(d2xdxdt_surface,'d2xdxdt_surface',modulename)
     ENDIF
     Call deallocate_test(req_out,'req_out',modulename)
 
@@ -1611,6 +1641,10 @@ CONTAINS
               &  beta_path_c(1:npc,:))
 
           endif
+! bills debug
+!          WRITE(*,'(a)') 'beta path'
+!          WRITE(*,'(3f12.4)') p_path(no_ele/2),t_path(no_ele/2), &
+!               beta_path_c(npc/2,1)
 
           alpha_path_c(1:npc) = SUM(sps_path(indices_c(1:npc),:) *  &
                                   & beta_path_c(1:npc,:),DIM=2)
@@ -2461,6 +2495,9 @@ CONTAINS
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.72  2002/07/11 20:51:20  bill
+! fixed bug regarding req
+!
 ! Revision 2.71  2002/07/09 17:37:10  livesey
 ! Fixed more DACs problems
 !
