@@ -214,6 +214,7 @@ contains
     logical, dimension(:,:), pointer :: DO_CALC_FZP   ! 'Avoid zeros' indicator
     logical, dimension(:,:), pointer :: DO_CALC_IWC   ! 'Avoid zeros' indicator  !JJ
     logical, dimension(:,:), pointer :: DO_CALC_Tscat ! 'Avoid zeros' indicator  !JJ
+    logical, dimension(:,:), pointer :: DO_CALC_Salb  ! 'Avoid zeros' indicator  !JJ
     logical, dimension(:,:), pointer :: DO_CALC_HYD   ! 'Avoid zeros'
     logical, dimension(:,:), pointer :: DO_CALC_HYD_C ! DO_CALC_HYD on coarse grid
     logical, dimension(:,:), pointer :: DO_CALC_T     ! 'Avoid zeros'
@@ -222,6 +223,7 @@ contains
     logical, dimension(:,:), pointer :: DO_CALC_ZP    ! 'Avoid zeros' indicator
     logical, dimension(:,:), pointer :: DO_CALC_IWC_ZP! 'Avoid zeros' indicator  !JJ
     logical, dimension(:,:), pointer :: DO_CALC_Tscat_ZP! 'Avoid zeros' indicator  !JJ
+    logical, dimension(:,:), pointer :: DO_CALC_Salb_ZP! 'Avoid zeros' indicator  !JJ
     logical :: Got( FIRST_MOLECULE : LAST_MOLECULE )  !                          !JJ
     LOGICAL, DIMENSION(:), pointer :: true_path_flags ! array of trues
     LOGICAL, DIMENSION(:), pointer :: t_der_path_flags! a flag that tells the
@@ -329,6 +331,8 @@ contains
     real(rp), dimension(:,:), pointer :: ETA_Iwc_ZP   ! JJ
     real(rp), dimension(:,:), pointer :: ETA_Tscat      ! JJ
     real(rp), dimension(:,:), pointer :: ETA_Tscat_ZP   ! JJ
+    real(rp), dimension(:,:), pointer :: ETA_Salb      ! JJ
+    real(rp), dimension(:,:), pointer :: ETA_Salb_ZP   ! JJ
     real(rp), dimension(:,:), pointer :: ETA_Mag_ZP   ! Eta_z x Eta_p
     real(rp), dimension(:,:), pointer :: ETA_ZP       ! Eta_z x Eta_p
     real(rp), dimension(:,:), pointer :: ETA_ZXP_DN_C ! ETA_ZXP_DN on coarse grid
@@ -344,8 +348,9 @@ contains
     real(rp), dimension(:,:), pointer :: ETA_ZXP_T    ! Eta_t_z x Eta_t_p
     real(rp), dimension(:,:), pointer :: ETA_ZXP_T_F  ! ETA_ZXP_T on fine grid
     real(rp), dimension(:,:), pointer :: H_GLGRID     ! H on glGrid surfs
-    real(rp), dimension(:,:), pointer :: IWC_PATH     ! species on path   !JJ
-    real(rp), dimension(:,:), pointer :: Tscat_PATH     ! species on path   !JJ
+    real(rp), dimension(:,:), pointer :: IWC_PATH     ! IWC on path   !JJ
+    real(rp), dimension(:,:), pointer :: Tscat_PATH     ! TScat on path   !JJ
+    real(rp), dimension(:,:), pointer :: Salb_PATH     ! Single Scattering Albedo on path   !JJ
     real(rp), dimension(:,:), pointer :: K_ATMOS_FRQ  ! dI/dVMR, frq X vmr
     real(rp), dimension(:,:), pointer :: K_SPECT_DN_FRQ ! ****
     real(rp), dimension(:,:), pointer :: K_SPECT_DV_FRQ ! ****
@@ -442,6 +447,7 @@ contains
     type (Grids_T) :: Grids_mag ! All the coordinates for Magnetic field
     type (Grids_T) :: Grids_tmp ! All the coordinates for TEMP
     type (Grids_T) :: Grids_Tscat ! All the coordinates for scaterring source function !JJ
+    type (Grids_T) :: Grids_Salb ! All the coordinates for single scaterring albedo !JJ
 
 !   Extra DEBUG for Nathaniel and Bill
 !   real(rp), dimension(:), pointer :: REQS         ! Accumulation of REQ
@@ -469,6 +475,7 @@ contains
 
 ! scatering source function for each temperature surface
     type (VectorValue_T) :: scat_src     !JJ
+    type (VectorValue_T) :: scat_alb     !JJ
 
     ! Executable code --------------------------------------------------------
     ! ------------------------------------------------------------------------
@@ -504,11 +511,11 @@ contains
       & do_calc_dw, do_calc_dw_c, do_calc_dw_f, &
       & do_calc_fzp, do_calc_iwc, do_calc_hyd, do_calc_hyd_c, &
       & do_calc_t, do_calc_t_c, do_calc_t_f, &
-      & do_calc_tscat, do_calc_tscat_zp, &
+      & do_calc_tscat, do_calc_tscat_zp, do_calc_Salb, do_calc_Salb_zp, &
       & do_calc_zp, do_calc_iwc_zp, do_gl, &
       & drad_dn, drad_dt, drad_dv, drad_dw, dsdz_gw_path, dx_dh_out, dx_dt, &
       & dxdt_surface, dxdt_tan, eta_fzp, eta_iwc, &
-      & eta_tscat, eta_tscat_zp, &
+      & eta_tscat, eta_tscat_zp, eta_salb, eta_salb_zp,  &
       & eta_zp, eta_iwc_zp, eta_mag_zp, eta_zxp_dn, eta_zxp_dn_c, eta_zxp_dn_f, &
       & eta_zxp_dv, eta_zxp_dv_c, eta_zxp_dv_f, &
       & eta_zxp_dw, eta_zxp_dw_c, eta_zxp_dw_f, &
@@ -520,12 +527,12 @@ contains
       & k_spect_dv, k_spect_dv_frq, k_spect_dw, k_spect_dw_frq, k_temp, &
       & k_temp_frq, mag_path, mol_cat_index, n_path, path_dsdh, &
       & p_path, p_path_c, phi_path, prod_pol, ptg_angles, &
-      & radiances, RadV, ref_corr, req_out, scat_src%values, &
+      & radiances, RadV, ref_corr, req_out, scat_src%values, scat_alb%values,  &
       & sps_beta_dbeta_c, sps_beta_dbeta_f, sps_path, &
       & tan_chi_out, tan_d2h_dhdt, tan_dh_dt, &
       & tan_phi, tan_temp, tanh1_c, tanh1_f, tau, &
       & tau_pol, t_glgrid, t_path, t_path_c, t_path_f, t_path_m, t_path_p, &
-      & tscat_path, t_script, t_der_path_flags, true_path_flags, &
+      & tscat_path,  salb_path, t_script, t_der_path_flags, true_path_flags, &
       & usedchannels, usedsignals, vmr, vmrarray, wc, z_path )
 
     ! Extra DEBUG for Nathaniel and Bill
@@ -683,6 +690,8 @@ contains
 
       call allocate_test ( scat_src%values, n_t_zeta, &
       & fwdModelConf%num_scattering_angles, 'scat_src', moduleName )
+
+      call allocate_test ( scat_alb%values, n_t_zeta, 1, 'scat_alb', moduleName )
 
       if ( size(FwdModelConf%molecules) .lt. 2 ) then
          !   make sure we have enough molecules
@@ -1605,11 +1614,17 @@ contains
             & fwdModelConf%num_scattering_angles,                       &
             & fwdModelConf%num_azimuth_angles,                          &
             & fwdModelConf%num_ab_terms, fwdModelConf%num_size_bins,    &
-            & fwdModelConf%no_cloud_species, scat_src%values )
+            & fwdModelConf%no_cloud_species,                            &
+            & scat_src%values, scat_alb%values )
+
+            call Deallocate_test ( vmrArray,'vmrArray',ModuleName )
 
             scat_src%template = temp%template
-            
+            scat_alb%template = temp%template
+
             call load_one_item_grid ( grids_tscat, scat_src, phitan, maf, fwdModelConf, .false. )
+            call load_one_item_grid ( grids_salb,  scat_alb, phitan, maf, fwdModelConf, .false. )
+
 
             call allocate_test ( do_calc_tscat, max_ele, size(grids_tscat%values), 'do_calc_tscat', moduleName )
             call allocate_test ( eta_tscat,     max_ele, size(grids_tscat%values), 'eta_tscat',     moduleName )
@@ -1617,16 +1632,33 @@ contains
             call allocate_test ( tscat_path,    max_ele, fwdModelConf%num_scattering_angles, &
                                  & 'tscat_path', moduleName )            
 
+            call allocate_test ( do_calc_salb, max_ele, size(grids_salb%values), 'do_calc_salb', moduleName )
+            call allocate_test ( eta_salb,     max_ele, size(grids_salb%values), 'eta_salb',     moduleName )
+            call allocate_test ( eta_salb_zp,  max_ele, grids_salb%p_len,  'eta_salb_zp',    moduleName )
+            call allocate_test ( salb_path,    max_ele, fwdModelConf%num_scattering_angles, &
+                                 & 'salb_path', moduleName )            
+
             call comp_eta_docalc_no_frq ( Grids_Tscat, z_path(1:no_ele), &
               &  phi_path(1:no_ele), eta_tscat_zp(1:no_ele,:), &
               &  do_calc_tscat_zp(1:no_ele,:) )
 
+            Frq=0.0
             call comp_sps_path_frq ( Grids_tscat, firstSignal%lo, thisSideband, &
               & Frq, eta_zp(1:no_ele,:), &
               & do_calc_zp(1:no_ele,:), tscat_path(1:no_ele,:),      &
               & do_calc_tscat(1:no_ele,:), eta_tscat(1:no_ele,:) )
 
-            call Deallocate_test ( vmrArray,'vmrArray',ModuleName )
+!            call interp_tscat (tscat_path(1:no_ele,:), phi_path(1:no_ele), tt_path )
+
+            call comp_eta_docalc_no_frq ( Grids_salb, z_path(1:no_ele), &
+              &  phi_path(1:no_ele), eta_salb_zp(1:no_ele,:), &
+              &  do_calc_salb_zp(1:no_ele,:) )
+
+            Frq=0.0
+            call comp_sps_path_frq ( Grids_salb, firstSignal%lo, thisSideband, &
+              & Frq, eta_zp(1:no_ele,:), &
+              & do_calc_zp(1:no_ele,:), salb_path(1:no_ele,:),      &
+              & do_calc_salb(1:no_ele,:), eta_salb(1:no_ele,:) )
 
             !! Jonathan's construction zone
 !!            call get_beta_path_cloud ( Frq,                              &
@@ -2437,6 +2469,7 @@ contains
     call destroygrids_t ( grids_mag )
     call destroygrids_t ( grids_tmp )
     call destroygrids_t ( grids_tscat )        !JJ
+    call destroygrids_t ( grids_salb )        !JJ
 
     call deallocate_test ( dhdz_path,    'dhdz_path',    moduleName )
     call deallocate_test ( dhdz_gw_path, 'dhdz_gw_path', moduleName )
@@ -2480,16 +2513,21 @@ contains
     call deallocate_test ( do_calc_iwc_zp,'do_calc_iwc_zp',moduleName )
     call deallocate_test ( do_calc_tscat,   'do_calc_tscat',   moduleName ) ! JJ
     call deallocate_test ( do_calc_tscat_zp,'do_calc_tscat_zp',moduleName )
+    call deallocate_test ( do_calc_salb,   'do_calc_salb',   moduleName ) ! JJ
+    call deallocate_test ( do_calc_salb_zp,'do_calc_salb_zp',moduleName )
     call deallocate_test ( do_calc_zp,    'do_calc_zp',    moduleName )
     call deallocate_test ( eta_fzp,       'eta_fzp',       moduleName )
     call deallocate_test ( eta_iwc,       'eta_iwc',       moduleName ) 
     call deallocate_test ( eta_iwc_zp,    'eta_iwc_zp',    moduleName ) 
-    call deallocate_test ( eta_tscat,       'eta_tscat',       moduleName ) 
-    call deallocate_test ( eta_tscat_zp,    'eta_tscat_zp',    moduleName ) 
+    call deallocate_test ( eta_tscat,       'eta_tscat',       moduleName ) !JJ
+    call deallocate_test ( eta_tscat_zp,    'eta_tscat_zp',    moduleName )
+    call deallocate_test ( eta_salb,       'eta_salb',       moduleName ) 
+    call deallocate_test ( eta_salb_zp,    'eta_salb_zp',    moduleName ) 
     call deallocate_test ( eta_mag_zp,    'eta_mag_zp',    moduleName )
     call deallocate_test ( eta_zp,        'eta_zp',        moduleName )
-    call deallocate_test ( iwc_path,      'iwc_path',      moduleName )
+    call deallocate_test ( iwc_path,      'iwc_path',      moduleName )     !JJ
     call deallocate_test ( tscat_path,      'tscat_path',      moduleName )
+    call deallocate_test ( salb_path,      'salb_path',      moduleName )
     call deallocate_test ( mag_path,      'mag_path',      moduleName )
     call deallocate_test ( sps_path,      'sps_path',      moduleName )
     call deallocate_test ( true_path_flags,'true_path_flags',moduleName )
@@ -2500,6 +2538,10 @@ contains
 
     if ( FwdModelConf%incl_cld ) &
       & call deallocate_test ( scat_src%values, 'scat_src%values', &
+        &                      moduleName )
+
+    if ( FwdModelConf%incl_cld ) &
+      & call deallocate_test ( scat_alb%values, 'scat_alb%values', &
         &                      moduleName )
 
     if ( temp_der ) then
@@ -2792,6 +2834,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.187  2003/11/24 22:10:14  vsnyder
+! Multiply beta_path_polarized_f by tanh1_f if derivatives needed
+!
 ! Revision 2.186  2003/11/20 17:33:50  pwagner
 ! Nullify some things otherwise left unassociated
 !
