@@ -22,7 +22,7 @@ module FullForwardModel_m
   use SLABS_SW_M, only: GET_GL_SLABS_ARRAYS
   use FREQ_AVG_M, only: FREQ_AVG
   use CONVOLVE_ALL_M, only: CONVOLVE_ALL
-! use NO_CONV_AT_ALL_M, only: NO_CONV_AT_ALL
+  use NO_CONV_AT_ALL_M, only: NO_CONV_AT_ALL
   use D_LINTRP_M, only: LINTRP
   use D_HUNT_M, only: hunt_zvi => HUNT
 
@@ -160,7 +160,7 @@ CONTAINS
     integer :: SURFACE                  ! Loop counter
     integer :: WHICHPATTERN             ! Index of antenna pattern
 
-    logical :: DOTHIS                   ! Flag for lines
+    logical :: doThis                   ! Flag for lines
     logical :: temp_der, atmos_der, spect_der ! Flags for various derivatives
 
     character (len=32) :: molName       ! Name of a molecule
@@ -290,7 +290,8 @@ CONTAINS
     INTEGER(ip) :: no_sv_p_t ! number of phi basis for temperature
     INTEGER(ip) :: beg_ind, end_ind, beg_ind_z, end_ind_z
     INTEGER(ip) :: beg_ind_p, end_ind_p
-    REAL(rp) :: cp2, sp2, surf_angle(1)
+
+    REAL(rp) :: cp2, sp2, surf_angle(1), one_dhdz(1), one_dxdh(1)
     REAL(rp) :: earthradc ! minor axis of orbit plane projected Earth ellipse
 
     INTEGER(ip), DIMENSION(:), pointer :: rec_tan_inds ! recommended tangent
@@ -303,6 +304,8 @@ CONTAINS
 ! THIS VARIABLE REPLACES FwdModelConf%integrationGrid%surfs
 !
     REAL(rp), DIMENSION(:), POINTER :: tan_chi_out
+    REAL(rp), DIMENSION(:), POINTER :: dx_dh_out
+    REAL(rp), DIMENSION(:), POINTER :: dhdz_out
     REAL(rp), DIMENSION(:), POINTER :: tan_press
     REAL(rp), DIMENSION(:), POINTER :: tan_phi
     REAL(rp), DIMENSION(:), POINTER :: est_scgeocalt
@@ -381,17 +384,13 @@ CONTAINS
     spect_der = FwdModelConf%spect_der
     atmos_der = FwdModelConf%atmos_der
 
-! ** ZEBUG
-!    Print *,' temp_der, atmos_der, spect_der:',temp_der,atmos_der,spect_der
-! ** END ZEBUG
-
     if ( toggle(emit) ) &
       & call trace_begin ( 'ForwardModel, MAF=', index=fmstat%maf )
 
     ! Nullify all our pointers!
 
-    nullify ( grids, usedchannels, channelOrigins, usedsignals, superset, indices_c, &
-      &       tan_inds, tan_press )
+    nullify ( grids, usedchannels, channelOrigins, usedsignals, superset, &
+           &  indices_c, tan_inds, tan_press )
     nullify ( gl_ndx, gl_indgen )
     nullify ( do_gl)
     nullify ( do_calc_zp, do_calc_dn, do_calc_dv, do_calc_dw, &
@@ -414,8 +413,8 @@ CONTAINS
       & k_spect_dn_frq, k_spect_dv_frq, k_spect_dw_frq, eta_fzp, &
       & k_temp_frq, ptg_angles, radiances, sps_path, tan_dh_dt, tan_temp, &
       & t_glgrid, dh_dt_glgrid)
-    NULLIFY(tan_press, tan_phi, est_scgeocalt, tan_chi_out, &
-      & dxdt_tan, d2xdxdt_tan, ddhidhidtl0, tan_d2h_dhdt, &
+    NULLIFY(tan_press, tan_phi, est_scgeocalt, tan_chi_out,dx_dh_out, &
+      & dxdt_tan, d2xdxdt_tan, ddhidhidtl0, tan_d2h_dhdt, dhdz_out, &
       & dxdt_surface, d2xdxdt_surface)
     nullify ( lineFlag )
 
@@ -800,6 +799,10 @@ CONTAINS
         & (earthrada**2*cp2 + earthradc**2*sp2))
     CALL ALLOCATE_TEST(tan_chi_out,ptan%template%nosurfs,'tan_chi_out', &
                      & ModuleName )
+    CALL ALLOCATE_TEST(dx_dh_out,ptan%template%nosurfs,'dx_dh_out', &
+                     & ModuleName )
+    CALL ALLOCATE_TEST(dhdz_out,ptan%template%nosurfs,'dhdz_out', &
+                     & ModuleName )
     IF (h2o_ind > 0 .and. .not. temp_der) THEN
       end_ind_z = SUM(grids_f%no_z(1:h2o_ind))
       beg_ind_z = end_ind_z - grids_f%no_z(h2o_ind) + 1
@@ -813,8 +816,8 @@ CONTAINS
          & 0.001_rp*scGeocAlt%values(:,maf),Grids_tmp, &
          & SPREAD(refGPH%template%surfs(1,1),1,no_sv_p_t), &
          & 0.001_rp*refGPH%values(1,windowStart:windowFinish), &
-         & orbIncline%values(1,maf)*Deg2Rad, &
-         & elevoffset%values(1,1)*Deg2Rad,req,tan_chi_out, &
+         & orbIncline%values(1,maf)*Deg2Rad,elevoffset%values(1,1)*Deg2Rad,&
+         & req,tan_chi_out,dhdz_out,dx_dh_out,&
          & h2o_zeta_basis=grids_f%zet_basis(beg_ind_z:end_ind_z), &
          & h2o_phi_basis=grids_f%phi_basis(beg_ind_p:end_ind_p), &
          & h2o_coeffs=grids_f%values(beg_ind:end_ind), &
@@ -824,8 +827,8 @@ CONTAINS
          & 0.001_rp*scGeocAlt%values(:,maf),Grids_tmp, &
          & SPREAD(refGPH%template%surfs(1,1),1,no_sv_p_t), &
          & 0.001_rp*refGPH%values(1,windowStart:windowFinish), &
-         & orbIncline%values(1,maf)*Deg2Rad, &
-         & elevoffset%values(1,1)*Deg2Rad,req,tan_chi_out)
+         & orbIncline%values(1,maf)*Deg2Rad,elevoffset%values(1,1)*Deg2Rad,&
+         & req,tan_chi_out,dhdz_out,dx_dh_out)
     ELSE IF (h2o_ind > 0 .and.  temp_der) THEN
       CALL ALLOCATE_TEST(dxdt_tan,ptan%template%nosurfs, &
            & no_sv_p_t, temp%template%nosurfs,'dxdt_tan',ModuleName )
@@ -843,8 +846,8 @@ CONTAINS
          & 0.001_rp*scGeocAlt%values(:,maf),Grids_tmp, &
          & SPREAD(refGPH%template%surfs(1,1),1,no_sv_p_t), &
          & 0.001_rp*refGPH%values(1,windowStart:windowFinish), &
-         & orbIncline%values(1,maf)*Deg2Rad, &
-         & elevoffset%values(1,1)*Deg2Rad,req,tan_chi_out, &
+         & orbIncline%values(1,maf)*Deg2Rad,elevoffset%values(1,1)*Deg2Rad,&
+         & req,tan_chi_out,dhdz_out,dx_dh_out, &
          & h2o_zeta_basis=grids_f%zet_basis(beg_ind_z:end_ind_z), &
          & h2o_phi_basis=grids_f%phi_basis(beg_ind_p:end_ind_p), &
          & h2o_coeffs=grids_f%values(beg_ind:end_ind), &
@@ -859,8 +862,8 @@ CONTAINS
          & 0.001_rp*scGeocAlt%values(:,maf),Grids_tmp, &
          & SPREAD(refGPH%template%surfs(1,1),1,no_sv_p_t), &
          & 0.001_rp*refGPH%values(1,windowStart:windowFinish), &
-         & orbIncline%values(1,maf)*Deg2Rad, &
-         & elevoffset%values(1,1)*Deg2Rad,req,tan_chi_out, &
+         & orbIncline%values(1,maf)*Deg2Rad,elevoffset%values(1,1)*Deg2Rad,&
+         & req,tan_chi_out,dhdz_out,dx_dh_out, &
          & dxdt_tan=dxdt_tan, d2xdxdt_tan=d2xdxdt_tan)
     ENDIF
 !
@@ -1031,8 +1034,8 @@ CONTAINS
            & 0.001_rp*est_scgeocalt(1:1), Grids_tmp, &
            & SPREAD(refGPH%template%surfs(1,1),1,no_sv_p_t), &
            & 0.001_rp*refGPH%values(1,windowStart:windowFinish), &
-           & orbIncline%values(1,maf)*Deg2Rad, &
-           & elevoffset%values(1,1)*Deg2Rad,req,surf_angle, &
+           & orbIncline%values(1,maf)*Deg2Rad,elevoffset%values(1,1)*Deg2Rad,&
+           & req,surf_angle,one_dhdz,one_dxdh, &
            & h2o_zeta_basis=grids_f%zet_basis(beg_ind_z:end_ind_z), &
            & h2o_phi_basis=grids_f%phi_basis(beg_ind_p:end_ind_p), &
            & h2o_coeffs=grids_f%values(beg_ind:end_ind), &
@@ -1043,8 +1046,8 @@ CONTAINS
            & 0.001_rp*est_scgeocalt(1:1), Grids_tmp, &
            & SPREAD(refGPH%template%surfs(1,1),1,no_sv_p_t), &
            & 0.001_rp*refGPH%values(1,windowStart:windowFinish), &
-           & orbIncline%values(1,maf)*Deg2Rad, &
-           & elevoffset%values(1,1)*Deg2Rad,req,surf_angle, &
+           & orbIncline%values(1,maf)*Deg2Rad,elevoffset%values(1,1)*Deg2Rad,&
+           & req,surf_angle,one_dhdz,one_dxdh,  &
            & dxdt_tan=dxdt_surface,d2xdxdt_tan=d2xdxdt_surface)
       ENDIF
       CALL deallocate_test(d2xdxdt_surface,'d2xdxdt_surface',modulename)
@@ -1365,7 +1368,7 @@ CONTAINS
               &  h_path(1:no_ele),phi_path(1:no_ele),                        &
               &  t_path(1:no_ele),dhdz_path(1:no_ele),Req,                   &
               &  TAN_PHI_H_GRID=one_tan_ht,TAN_PHI_T_GRID=one_tan_temp,      &
-              &  NEG_H_TAN = (/neg_tan_ht/),DHTDTL0=tan_dh_dt,               &
+              &  NEG_H_TAN=(/neg_tan_ht/),DHTDTL0=tan_dh_dt,&
               &  DDHIDHIDTL0 = ddhidhidtl0 ,DDHTDHTDTL0 = tan_d2h_dhdt,      &
               &  DHIDTLM=dh_dt_glgrid,                                       &
               &  DHITDTLM=dh_dt_path(1:no_ele,:),                            &
@@ -1448,14 +1451,14 @@ CONTAINS
         endif
 
         if(temp_der) then
-          call get_chi_angles(0.001*est_scGeocAlt(ptg_i),n_path(npc/2),    &
-          &    one_tan_ht(1),tan_phi(ptg_i)*Deg2Rad,Req,0.0_rp, &
-          &    ptg_angles(ptg_i),tan_dh_dt(1,:,:),tan_d2h_dhdt(1,:,:), &
-          &    dx_dt(ptg_i,:,:),d2x_dxdt(ptg_i,:,:))
+          call get_chi_angles(0.001*est_scGeocAlt(ptg_i),n_path(npc/2),&
+             & one_tan_ht(1),tan_phi(ptg_i)*Deg2Rad,Req,0.0_rp,        &
+             & ptg_angles(ptg_i),r,1.0_rp,tan_dh_dt(1,:,:),            &
+             & tan_d2h_dhdt(1,:,:),dx_dt(ptg_i,:,:),d2x_dxdt(ptg_i,:,:))
         else
-          call get_chi_angles(0.001*est_scGeocAlt(ptg_i),n_path(npc/2), &
-          &    one_tan_ht(1),tan_phi(ptg_i)*Deg2Rad,Req,0.0_rp, &
-          &    ptg_angles(ptg_i))
+          call get_chi_angles(0.001*est_scGeocAlt(ptg_i),n_path(npc/2),&
+             & one_tan_ht(1),tan_phi(ptg_i)*Deg2Rad,Req,0.0_rp,        &
+             & ptg_angles(ptg_i),r,1.0_rp)
         endif
 
         call comp_refcor(Req+h_path(indices_c(1:npc)), 1.0_rp+n_path(1:npc), &
@@ -2102,20 +2105,23 @@ CONTAINS
           whichPatternAsArray = minloc ( superset )
           whichPattern = whichPatternAsArray(1)
 
-          ! Now change channel from starting at 0 or 1 to definately 1
+   ! Now change channel from starting at 0 or 1 to definately 1
           channel = channel + 1 - channelOrigins(i)
+
           j = sv_t_len
           IF (.not. temp_der .AND. .not. atmos_der ) THEN
             CALL convolve_all(FwdModelConf,FwdModelIn,FwdModelExtra,maf,&
                & channel,windowStart,windowFinish,mol_cat_index,temp,ptan,  &
                & thisRadiance,ptg_angles,Radiances(:,i),tan_chi_out,        &
-               & thisRatio,antennaPatterns(whichPattern),Grids_tmp%deriv_flags,&
+               & dhdz_out,dx_dh_out,thisRatio,                              &
+               & antennaPatterns(whichPattern),Grids_tmp%deriv_flags,       &
                & Grids_f,Jacobian,fmStat%rows,SURF_ANGLE=surf_angle(1) )
           ELSE IF ( temp_der .AND. .not. atmos_der ) THEN
             CALL convolve_all(FwdModelConf,FwdModelIn,FwdModelExtra,maf,&
                & channel,windowStart,windowFinish,mol_cat_index,temp,ptan,  &
                & thisRadiance,ptg_angles,Radiances(:,i),tan_chi_out,        &
-               & thisRatio,antennaPatterns(whichPattern),Grids_tmp%deriv_flags,&
+               & dhdz_out,dx_dh_out,thisRatio,                              &
+               & antennaPatterns(whichPattern),Grids_tmp%deriv_flags,       &
                & Grids_f,Jacobian,fmStat%rows,SURF_ANGLE=surf_angle(1),     &
                & DI_DT=DBLE(RESHAPE(k_temp(i,:,:,:),(/no_tan_hts,j/))),     &
                & DX_DT=dx_dt,D2X_DXDT=d2x_dxdt,DXDT_TAN=dxdt_tan,           &
@@ -2124,14 +2130,16 @@ CONTAINS
             CALL convolve_all(FwdModelConf,FwdModelIn,FwdModelExtra,maf,&
                & channel,windowStart,windowFinish,mol_cat_index,temp,ptan,  &
                & thisRadiance,ptg_angles,Radiances(:,i),tan_chi_out,        &
-               & thisRatio,antennaPatterns(whichPattern),Grids_tmp%deriv_flags,&
+               & dhdz_out,dx_dh_out,thisRatio,                              &
+               & antennaPatterns(whichPattern),Grids_tmp%deriv_flags,       &
                & Grids_f,Jacobian,fmStat%rows,SURF_ANGLE=surf_angle(1),     &
                & DI_DF=DBLE(RESHAPE(k_atmos(i,:,:),(/no_tan_hts,f_len/))) )
           ELSE
             CALL convolve_all(FwdModelConf,FwdModelIn,FwdModelExtra,maf,&
                & channel,windowStart,windowFinish,mol_cat_index,temp,ptan,  &
                & thisRadiance,ptg_angles,Radiances(:,i),tan_chi_out,        &
-               & thisRatio,antennaPatterns(whichPattern),Grids_tmp%deriv_flags,&
+               & dhdz_out,dx_dh_out,thisRatio,                              &
+               & antennaPatterns(whichPattern),Grids_tmp%deriv_flags,       &
                & Grids_f,Jacobian,fmStat%rows,SURF_ANGLE=surf_angle(1),     &
                & DI_DT=DBLE(RESHAPE(k_temp(i,:,:,:),(/no_tan_hts,j/))),     &
                & DX_DT=dx_dt,D2X_DXDT=d2x_dxdt,DXDT_TAN=dxdt_tan,           &
@@ -2141,12 +2149,36 @@ CONTAINS
 !
         ELSE          ! No convolution needed ..
 
-          WRITE(*,'(a)') 'no convolve feature is not working'
-!         call no_conv_at_all ( fwdModelConf, fwdModelIn, maf, channel, &
-!           &  windowStart, windowFinish, temp, ptan, thisRadiance,     &
-!           &  ptg_angles, tan_chi_out, Radiances(:,i), k_temp(i,:,:,:),&
-!           &  k_atmos(i,:,:,:,:,:), thisRatio, Jacobian, fmStat%rows,  &
-!           &  mol_cat_index )
+          j = sv_t_len
+          IF (.not. temp_der .AND. .not. atmos_der ) THEN
+            Call no_conv_at_all ( fwdModelConf, fwdModelIn, maf, channel, &
+              &  windowStart, windowFinish, temp, ptan, thisRadiance,     &
+              &  Grids_tmp%deriv_flags,ptg_angles,tan_chi_out,            &
+              &  dhdz_out,dx_dh_out,Grids_f, &
+              &  Radiances(:,i),thisRatio,mol_cat_index,fmStat%rows,Jacobian)
+          ELSE IF ( temp_der .AND. .not. atmos_der ) THEN
+            Call no_conv_at_all ( fwdModelConf, fwdModelIn, maf, channel, &
+              &  windowStart, windowFinish, temp, ptan, thisRadiance,     &
+              &  Grids_tmp%deriv_flags,ptg_angles,tan_chi_out,            &
+              &  dhdz_out,dx_dh_out,Grids_f, &
+              &  Radiances(:,i),thisRatio,mol_cat_index,fmStat%rows,Jacobian,&
+              &  DI_DT=DBLE(RESHAPE(k_temp(i,:,:,:),(/no_tan_hts,j/))) )
+          ELSE IF ( atmos_der .AND. .not. temp_der ) THEN
+            Call no_conv_at_all ( fwdModelConf, fwdModelIn, maf, channel, &
+              &  windowStart, windowFinish, temp, ptan, thisRadiance,     &
+              &  Grids_tmp%deriv_flags,ptg_angles,tan_chi_out,            &
+              &  dhdz_out,dx_dh_out,Grids_f, &
+              &  Radiances(:,i),thisRatio,mol_cat_index,fmStat%rows,Jacobian,&
+              &  DI_DF=DBLE(RESHAPE(k_atmos(i,:,:),(/no_tan_hts,f_len/))) )
+          ELSE
+            Call no_conv_at_all ( fwdModelConf, fwdModelIn, maf, channel, &
+              &  windowStart, windowFinish, temp, ptan, thisRadiance,     &
+              &  Grids_tmp%deriv_flags,ptg_angles,tan_chi_out,            &
+              &  dhdz_out,dx_dh_out,Grids_f, &
+              &  Radiances(:,i),thisRatio,mol_cat_index,fmStat%rows,Jacobian,&
+              &  DI_DT=DBLE(RESHAPE(k_temp(i,:,:,:),(/no_tan_hts,j/))),   &
+              &  DI_DF=DBLE(RESHAPE(k_atmos(i,:,:),(/no_tan_hts,f_len/))) )
+          ENDIF
 !
         ENDIF
 
@@ -2330,6 +2362,8 @@ CONTAINS
     call Deallocate_test ( sps_path, 'sps_path', ModuleName )
 
     CALL DEALLOCATE_TEST(tan_chi_out,'tan_chi_out',ModuleName )
+    CALL DEALLOCATE_TEST(dx_dh_out,'dx_dh_out',ModuleName )
+    CALL DEALLOCATE_TEST(dhdz_out,'dhdz_out',ModuleName )
 
     if(temp_der) then
       deallocate( k_temp, STAT=i)
@@ -2388,6 +2422,9 @@ CONTAINS
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.66  2002/06/26 19:58:48  livesey
+! Bug fix with DAC channel numbering
+!
 ! Revision 2.65  2002/06/24 21:11:24  zvi
 ! Adding Grids_tmp stracture and modifying calling sequences
 !
