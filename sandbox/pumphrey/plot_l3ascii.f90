@@ -1,10 +1,11 @@
 program test_l3ascii
 
-  use gridded_data_module
+  use l3ascii
   use plplot_module
   use MLSCommon
   character(len=80)::filename
   integer::unit
+  logical::endoffile
   type(GriddedData_T)::field
 
   real(kind=r8)::outval,mult!,pressure,lat
@@ -24,7 +25,7 @@ program test_l3ascii
   print*,"Using unit",unit  
   print*,"Reading file"
   fieldsloop:do
-     call l3ascii_read_field(unit,field)
+     call l3ascii_read_field(unit,field,endoffile)
      print*,"Quantity: ",field%quantityName
      print*,"Description: ",field%description
      print*,"Units: ",field%units
