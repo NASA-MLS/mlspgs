@@ -31,7 +31,7 @@ module Two_D_Hydrostatic_m
   use MLSCommon, only: RP, IP
   use Units, only: PI
 
-! inputs:
+! Inputs:
 
   type (Grids_T), intent(in) :: Grids_tmp   ! All Temperature's coordinates
   real(rp), intent(in) :: z_refs(:)  !reference pressures
@@ -42,7 +42,7 @@ module Two_D_Hydrostatic_m
 !                                   needed
   real(rp), intent(in) :: beta   ! spacecraft beta angle (Radians)
 
-! outputs:
+! Outputs:
 
   real(rp), intent(out):: t_grid(:,:)!computed temperatures
   real(rp), intent(out):: h_grid(:,:)!computed heights
@@ -51,83 +51,78 @@ module Two_D_Hydrostatic_m
 !                                     on outputted phi grid
   real(rp), optional, intent(out):: ddhdhdtl0(:,:,:)!second order derivative
 !                             at the tangent only---used for antenna affects
-! internal stuff
+! Internal stuff
 
-  integer(ip) :: z_coeffs, p_coeffs, i, j1, j2
+  integer(ip) :: Z_coeffs, P_coeffs, I, J1, J2
 
   real(rp) :: CSQ ! C**2
-  real(rp), dimension(size(z_grid),Grids_tmp%no_z(1)) :: ddhdhdtq, dhidtq
-  real(rp), dimension(Grids_tmp%no_p(1)) :: lats, red_phi_t
-  real(rp), dimension(size(z_grid)) :: t_prfl, h_prfl, dhidzi
-  real(rp) :: SinBeta, SinBetaSQ, SinPhi, SinPhiSQ
+  real(rp) :: Lat, Red_phi_t, SinBeta, SinBetaSQ, SinPhi, SinPhiSQ
 
   real(rp), parameter :: PId2=0.5_rp*pi, PI2=2.0_rp*pi, PI3d2=1.5_rp*pi
 
-! NOTES
-! allocate arrays
+! Begin execution
 
   z_coeffs = Grids_tmp%no_z(1)
   p_coeffs = Grids_tmp%no_p(1)
 
+!{ Compute the orbit-plane projected minor axis $c$, where
+!  $c^2 = \frac{a^2\,b^2}{a^2 \sin^2 \beta + b^2 \cos^2 \beta}$
+
   sinBeta = sin(beta)
   sinBetaSQ = sinBeta**2
   csq = (earthrada*earthradb)**2 / (earthrada**2 * sinBetaSQ + &
-      &                             earthradb**2 * (1 - sinBetaSQ) ) ! in meters
-
-! rephase the phi
-
-  red_phi_t = modulo(Grids_tmp%phi_basis,PI2)
-  where ( PiD2 < red_phi_t .AND. red_phi_t <= Pi3D2 )
-    red_phi_t = Pi - red_phi_t
-  elsewhere ( red_phi_t > Pi3D2 )
-    red_phi_t = red_phi_t - Pi2
-  end where
-
-  do i = 1, size(lats) ! so we don't calculate both sin(red_phi_t) and cos(")
-    sinPhi = sin(red_phi_t(i))
-    sinPhiSQ = sinPhi**2
-    lats(i) = asin(csq * sinPhi * sinBeta &
-       / sqrt(earthrada**4*(1-sinPhiSQ) + csq**2*sinPhiSQ))
-  end do
+      &                             earthradb**2 * (1.0_rp - sinBetaSQ) ) ! in meters
 
 ! compute the 2 d hydrostatic
 
-  if ( present(ddhdhdtl0) ) then
-    j2 = 0
-    do i = 1, p_coeffs
-      j1 = j2 + 1
-      j2 = j1 + z_coeffs - 1
-      call hydrostatic ( lats(i), Grids_tmp%zet_basis, Grids_tmp%values(j1:j2), &
-         & z_grid, z_refs(i), h_refs(i), t_prfl, h_prfl, dhidtq, dhidzi, ddhdhdtq )
-      t_grid(:,i) = t_prfl
-      h_grid(:,i) = h_prfl
-      dhidzij(:,i) = dhidzi
-      dhidtlm(:,:,i) = dhidtq
-      ddhdhdtl0(:,:,i) = ddhdhdtq
-    end do
-  else
-    j2 = 0
-    do i = 1,p_coeffs
-      j1 = j2 + 1
-      j2 = j1 + z_coeffs - 1
-      call hydrostatic ( lats(i), Grids_tmp%zet_basis, Grids_tmp%values(j1:j2), &
-         & z_grid, z_refs(i), h_refs(i), t_prfl, h_prfl, dhidtq, dhidzi )
-      t_grid(:,i) = t_prfl
-      h_grid(:,i) = h_prfl
-      dhidzij(:,i) = dhidzi
-      dhidtlm(:,:,i) = dhidtq
-    end do
-  end if
+  j2 = 0
+  do i = 1, p_coeffs
 
- end subroutine Two_D_Hydrostatic
+! rephase the phi
 
-  logical function not_used_here()
+    red_phi_t = modulo(Grids_tmp%phi_basis(i),PI2)
+    if ( PiD2 < red_phi_t .and. red_phi_t <= Pi3D2 ) then
+      red_phi_t = Pi - red_phi_t
+    else if ( red_phi_t > Pi3D2 ) then
+      red_phi_t = red_phi_t - Pi2
+    end if
+
+!{ Compute the geocentric latitude $\lambda\, = \, 
+!  \sin^{-1} ( \sin \gamma \, \sin \beta )$, where
+!  $\sin^2 \gamma = \frac{c^4 \sin^2 \phi}{a^4 \cos^2 \phi + c^4 \sin^2 \phi}$
+!  and $\gamma$ is the geocentric angle in the orbit plane ellipse between
+!  $\mathbf{R}^{\oplus}$ and the $x$ axis.
+
+    sinPhi = sin(red_phi_t)
+    sinPhiSQ = sinPhi**2
+    lat = asin(csq * sinPhi * sinBeta &
+      & / sqrt(earthrada**4*(1.0_rp-sinPhiSQ) + csq**2*sinPhiSQ))
+
+    j1 = j2 + 1
+    j2 = j1 + z_coeffs - 1
+    if ( present(ddhdhdtl0) ) then
+      call hydrostatic ( lat, Grids_tmp%zet_basis, Grids_tmp%values(j1:j2), &
+         & z_grid, z_refs(i), h_refs(i), t_grid(:,i), h_grid(:,i), &
+         & dhidtlm(:,:,i), dhidzij(:,i), ddhdhdtl0(:,:,i) )
+    else
+      call hydrostatic ( lat, Grids_tmp%zet_basis, Grids_tmp%values(j1:j2), &
+         & z_grid, z_refs(i), h_refs(i), t_grid(:,i), h_grid(:,i), &
+         & dhidtlm(:,:,i), dhidzij(:,i) )
+    end if
+  end do
+
+  end subroutine Two_D_Hydrostatic
+
+  logical function NOT_USED_HERE()
     not_used_here = (id(1:1) == ModuleName(1:1))
-  end function not_used_here
+  end function NOT_USED_HERE
 
 end module Two_D_Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.9  2002/10/08 17:08:06  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.8  2002/09/26 20:14:01  vsnyder
 ! Get PI from Units module
 !
