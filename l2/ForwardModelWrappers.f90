@@ -8,7 +8,7 @@ module ForwardModelWrappers
   
   use ForwardModelIntermediate, only: FORWARDMODELINTERMEDIATE_T, &
     & FORWARDMODELSTATUS_T
-!  use FullCloudForwardModel, only: FULLCLOUDFORWARDMODELWRAPPER
+  use FullCloudForwardModel, only: FULLCLOUDFORWARDMODELWRAPPER
   use VectorsModule, only: VECTOR_T
   use MatrixModule_1, only: MATRIX_T
   use ForwardModelConfig, only: FORWARDMODELCONFIG_T
@@ -58,8 +58,8 @@ contains ! ============= Public Procedures ==========================
       call ScanForwardModel ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
     case ( l_cloudFull )
-!      call FullCloudForwardModelWrapper ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
-!        FwdModelOut, Ifm, fmStat, Jacobian )
+      call FullCloudForwardModelWrapper ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
+        FwdModelOut, Ifm, fmStat, Jacobian )
     case default ! Shouldn't get here if parser etc. worked
     end select
   end subroutine ForwardModel
@@ -67,6 +67,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.6  2001/07/17 22:36:32  jonathan
+! add cloud_width, jonathan/paul
+!
 ! Revision 2.5  2001/05/29 23:22:20  livesey
 ! FullForwardModel moved, also added (but commented out)
 ! call to FullCloudForwardModelWrapper
