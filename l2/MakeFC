@@ -61,6 +61,10 @@ endif
 # w/o complaining if it does nor exist yet
 -include $(CONFDIR)/$(MLSCFILE)
 
+# All the implicit pattern-matching involving suffixes
+# will be done in the uniquely-named sub-directories, not here--so
+.SUFFIXES:
+
 # This will filter out globbed file expansions that fail
 # e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
 REECHO=$(MLSBIN)/reecho.sh
@@ -86,7 +90,7 @@ SHELL = /bin/sh
 #
 
 #----------------------------------------------------------
-libmls_f90 := $(shell ${REECHO} $(libmls_sources)/*.f $(libmls_sources)/*.f90 $(libmls_sources)/*.c)
+libmls_f90 := $(shell ${REECHO} $(libmls_sources)/*.f $(libmls_sources)/*.f90 $(libmls_sources)/*.c $(libmls_sources)/lit_names.txt)
 libfwdmdl_f90 := $(shell ${REECHO} $(libfwdmdl_sources)/*.c $(libfwdmdl_sources)/*.f $(libfwdmdl_sources)/*.f90)
 libcloud_f90 := $(shell ${REECHO} $(libcloud_sources)/*.c $(libcloud_sources)/*.f $(libcloud_sources)/*.f90)
 blaslib_f := $(shell ${REECHO} $(blaslib)/*.c $(blaslib)/*.f $(blaslib)/*.f90)
@@ -229,6 +233,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.39  2001/10/04 22:25:36  pwagner
+# Limit suffix-based rules to (MLSCONFG); add lib/lit_names.txt to dependency list
+#
 # Revision 2.38  2001/09/26 17:24:59  pwagner
 # Removed errors introduced with last changes; SIMPLIFYMAKE renamed NOHUNTING
 #
