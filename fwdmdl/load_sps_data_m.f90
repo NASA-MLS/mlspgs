@@ -152,7 +152,6 @@ contains
 
     use ForwardModelConfig, only: ForwardModelConfig_t
     use VectorsModule, only: VectorValue_T
-    use ForwardModelVectorTools, only: GetQuantityForForwardModel, QtyStuff_T
 
     type(grids_t), intent(out) :: Grids_X
     type(vectorValue_t), intent(in) :: Qty, Phitan
@@ -163,7 +162,6 @@ contains
 
     type(vectorValue_t) :: QtyStuff
     logical :: MyFlag
-    logical :: AbFlag
     integer :: ii, no_ang, max_ele
  
     myFlag = .false.
@@ -190,7 +188,7 @@ contains
        do ii=1, no_ang
           qtyStuff%values => qty%values(1:max_ele,ii:ii)
          call fill_grids_2 ( grids_x, ii, qtyStuff, setDerivFlags )
-       enddo
+       end do
 
     else
        
@@ -521,6 +519,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.57  2004/03/20 01:15:29  jonathan
+!  minor changes
+!
 ! Revision 2.56  2004/03/01 19:21:46  jonathan
 ! modify load_one_item for scat source function
 !
