@@ -42,7 +42,7 @@
       ENDDO
         TRANS(NH-1) = DELTAU(NH-1)
       DO I=NH-2,1,-1
-        TRANS(I)=TRANS(I-1)+DELTAU(I)
+        TRANS(I)=TRANS(I+1)+DELTAU(I)
       ENDDO
 
 ! CONVERT DELTAU TO BETA

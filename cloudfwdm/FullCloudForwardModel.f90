@@ -17,7 +17,7 @@ module FullCloudForwardModel
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSSignals_m, only: SIGNAL_T
   use MatrixModule_0, only: M_Absent, M_BANDED, MATRIXELEMENT_T, M_BANDED, &
-        & M_COLUMN_SPARSE, CREATEBLOCK, M_FULL
+                          & M_COLUMN_SPARSE, CREATEBLOCK, M_FULL
   use MatrixModule_1, only: MATRIX_T, FINDBLOCK
   use ManipulateVectorQuantities, only: FindClosestInstances
   use MLSNumerics, only: InterpolateValues
@@ -55,21 +55,20 @@ module FullCloudForwardModel
                      & L_CLOUDWATER,                                         &
                      & L_LOSTRANSFUNC
 
-
   implicit none
   private
 
   public :: FullCloudForwardModelWrapper
 
-  !---------------------------- RCS Ident Info -------------------------------
+ !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm =                          &
     "$Id$"
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName=                       &
     "$RCSfile$"
-  !---------------------------------------------------------------------------
+ !---------------------------------------------------------------------------
 
-  ! Local parameters ---------------------------------------------------------
+ ! Local parameters ---------------------------------------------------------
 
   character, parameter :: INVALIDQUANTITY = "Invalid vector quantity for "
 
@@ -148,7 +147,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     real(r8), dimension(:,:), pointer :: A_EFFECTIVEOPTICALDEPTH
     real(r8), dimension(:,:), pointer :: A_MASSMEANDIAMETER
     real(r8), dimension(:,:), pointer :: A_TOTALEXTINCTION
-    real(r8), dimension(:,:), pointer :: VMRARRAY               ! The vmr's
+    real(r8), dimension(:,:), pointer :: VMRARRAY               ! The VMRs
 
     real(r8), dimension(:,:), pointer :: A_TRANS
 
@@ -157,7 +156,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
     real(r8), dimension(:,:), allocatable :: TransOnS
     
-    logical :: DODERIVATIVES            ! Flag
+    logical :: DODERIVATIVES                    ! Flag
     logical :: Got(2) = .false.  
     logical :: QGot(8) = .false.  
     logical :: dee_bug = .true.  
@@ -166,7 +165,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     nullify( CLOUDICE, CLOUDWATER, CLOUDEXTINCTION, CLOUDINDUCEDRADIANCE,    &
              CLOUDRADSENSITIVITY, EFFECTIVEOPTICALDEPTH, GPH,                &
              MASSMEANDIAMETERICE, MASSMEANDIAMETERWATER, PTAN,               &
-             RADIANCE, SIZEDISTRIBUTION, EARTHRADIUS, SURFACETYPE,         &
+             RADIANCE, SIZEDISTRIBUTION, EARTHRADIUS, SURFACETYPE,           &
              TEMP, TOTALEXTINCTION, VMR, VMRARRAY,closestInstances,          &
              A_CLEARSKYRADIANCE, A_CLOUDINDUCEDRADIANCE,                     &
              A_CLOUDEXTINCTION, A_CLOUDRADSENSITIVITY,                       &
@@ -195,8 +194,9 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 !---------------------------------------------------------------------------
    if(dee_bug) then                    ! use jonathan's version
 !---------------------------------------------------------------------------
-    ! Outputs
-    ! -------
+    ! --------
+    ! Outputs:
+    ! --------
     do quantity_type = 1, fwdModelOut%template%noQuantities
       l_quantity_type = fwdModelOut%quantities(quantity_type)%template%quantityType
 !      print*,'quantity_type: ', 'outputs', quantity_type
@@ -253,13 +253,17 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
                             'Did not understand output l_quantity_types')
       end select
     enddo
+    ! -------
+    ! Inputs:
+    ! -------
+    l_quantity_type = fwdModelIn%quantities(1)%template%quantityType
 
-    ! Inputs
-    ! ------
-    NQ1 = fwdModelIn%template%noQuantities
+        stateQ => GetVectorQuantityByType ( FwdModelIn, FwdModelExtra,&
+                  & quantityType = l_LosTransFunc )
+!                  & foundInFirst = foundInFirst, noError=.true. )
+    
     NQ2 = fwdModelExtra%template%noQuantities
-     if (quantity_type .le. NQ1) &
-      l_quantity_type = fwdModelIn%quantities(quantity_type)%template%quantityType
+
     do quantity_type = 1, NQ2
       l_quantity_type = fwdModelExtra%quantities(quantity_type)%template%quantityType
 !      print*,'quantity_type: ', 'inputs', quantity_type
@@ -269,7 +273,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         case (l_ptan)
           ptan => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra,      &
           & quantityType=l_ptan, instrumentModule = radiance%template%instrumentModule)
-
+        
         case (l_temperature)
           temp => GetVectorQuantityByType ( fwdModelIn,  fwdModelExtra,      &
           & quantityType=l_temperature )
@@ -305,13 +309,15 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       print*, 'Tb, DTcir, Beta, SS, BetaC, TAUeff, Dmi, Dmw'
 !      stop
     endif
-
+!----------------------------
+! end of jonathan's version
+!---------------------------
 !----------------------------------------------------------------------
    else                               ! use N. Livesey's version
 !----------------------------------------------------------------------
-
-! Outputs
-! -------
+! --------
+! Outputs:
+! --------
     radiance => GetVectorQuantityByType ( fwdModelOut, &
       & quantityType=l_radiance, &
       & signal=signal%index, sideband=signal%sideband )
@@ -332,8 +338,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & quantityType=l_massMeanDiameterIce )
     massMeanDiameterWater => GetVectorQuantityByType ( fwdModelOut, &
       & quantityType=l_massMeanDiameterWater )
-
-    ! Inputs
+    ! -------
+    ! Inputs:
     ! -------
     ptan => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_ptan, instrumentModule = radiance%template%instrumentModule)
@@ -551,12 +557,10 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 !    cloudExtinction%values ( :, instance ) =                        &
 !      & reshape ( transpose(a_cloudExtinction),                     &
 !      & (/noLayers*noFreqs/) )
-
 !    massMeanDiameterIce%values (:,instance)=                        &
 !      & a_massMeanDiameter(1,:)
 !    massMeanDiameterWater%values(:, instance)=                      &
 !      & a_massMeanDiameter(2,:)
-
 !    totalExtinction%values ( :, instance ) =                        &
 !      & reshape ( transpose(a_totalExtinction),                     &
 !      &         (/noLayers*noFreqs/) )
@@ -566,8 +570,9 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     massMeanDiameterWater%values(:, instance) =  a_massMeanDiameter(2,:)
     totalExtinction%values ( :, instance )    = a_totalExtinction (:,1)
 
-!output Jacobian
-
+! ------------------
+! output Jacobian
+! ------------------
     doDerivatives = present(jacobian) .and. &
       (fwdModelIn%quantities(1)%template%quantityType == l_LosTransFunc)
 
@@ -575,44 +580,39 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
     ! Set some dimensions
 
-            stateQ => GetVectorQuantityByType ( FwdModelIn, FwdModelExtra,&
-              & quantityType = l_LosTransFunc, &
-              & foundInFirst = foundInFirst, noError=.true. )
-
-    noChans = radiance%template%noChans
-    noMIFs = radiance%template%noSurfs
-    noSgrid=stateQ%template%nosurfs
+        noChans = radiance%template%noChans
+        noMIFs = radiance%template%noSurfs
+        noSgrid=stateQ%template%nosurfs
 
         rowJBlock = FindBlock ( jacobian%row, radiance%index, maf)
-            fmStat%rows(rowJBlock) = .true.
-            colJBlock = 0
-            do while (colJBlock <= jacobian%col%nb .and. &
-              jacobian%col%inst(colJBlock) /= maf)
-              colJBlock = colJBlock +1 
-            end do
-!            colJBlock = FindBlock ( jacobian%col, stateQ%index, maf)
-            jBlock => jacobian%block(rowJblock,colJblock)
+        fmStat%rows(rowJBlock) = .true.
+        colJBlock = 0
+        do while (colJBlock <= jacobian%col%nb .and. &
+           jacobian%col%inst(colJBlock) /= maf)
+           colJBlock = colJBlock +1 
+        end do
+!       colJBlock = FindBlock ( jacobian%col, stateQ%index, maf)
+        jBlock => jacobian%block(rowJblock,colJblock)
 
-            instanceLen = noSurf*noMIFs
+        instanceLen = noSurf*noMIFs
 
-              select case ( jBlock%kind )
-              case ( M_Absent )
-                call CreateBlock ( jBlock, &
-                  & noChans*noMIFs, noSgrid*noMIFs, &
-                  & M_Full )
-                jBlock%values = 0.0_r8
+        select case ( jBlock%kind )
+        case ( M_Absent )
+        call CreateBlock ( jBlock, &
+                         & noChans*noMIFs, noSgrid*noMIFs, &
+                         & M_Full )
+        jBlock%values = 0.0_r8
 
-!               allocate(TransOnS,noSgrid,noMIFs,stat=status)     !this is wrond
+!        allocate(TransOnS,noSgrid,noMIFs,stat=status)     !this is wrond
+         allocate( TransOnS(noSgrid, noMIFs), stat=status )
 
-                allocate( TransOnS(noSgrid, noMIFs), stat=status )
-
-              ! Now fill the jacobian
+       ! Now fill the jacobian
             
-                  do chan = 1, noChans
-                    ! now, we define beta as transmission function in Sensitivity.f90
-                    ! and we interpolate it onto Sgrid
+          do chan = 1, noChans
+          ! now, we define beta as transmission function in Sensitivity.f90
+          ! and we interpolate it onto Sgrid
                     
-                    call FindTransForSgrid (                         &
+          call FindTransForSgrid (                                   &
                       &     ptan%values(:,maf),                      &
                       &     earthradius%values(1,maf),               &
                       &     noMIFs,                                  &
@@ -623,7 +623,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
                       &     stateQ%template%frequencies,             &
                       &     TRANSonS )                
 
-                    do mif = 1, noMIFs
+            do mif = 1, noMIFs
                     do i=1,noSgrid
                      jBlock%values(chan+(mif-1)*noChans,i+(mif-1)*noSgrid) &
                        & = TransOnS(i,mif)
@@ -707,6 +707,9 @@ subroutine FindTransForSgrid ( PT, Re, NT, NZ, NS, Zlevel, TRANSonZ, Slevel, TRA
 end subroutine FindTransForSgrid
 
 ! $Log$
+! Revision 1.19  2001/08/01 00:20:22  dwu
+! add Jacobian -Jonathan/Wu
+!
 ! Revision 1.17  2001/07/27 22:12:13  jonathan
 ! fixed bug in output extinction
 !
