@@ -5,7 +5,7 @@
 #
 #special case:
 #the 1st time through, before .configure exists yet,
-#execute $(MLSBIN)/configure to create .configure
+#execute $(MLSBIN)/mlsconfigure to create .configure
 
 #i.e., if you call are building this mls
 #by calling make with a different Makefile name,
@@ -81,20 +81,6 @@ $(CONFDIR)/.configure:
 $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/.configure
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
           -c "$(MLSF95)" -p "$(MLSPLAT)" -nc
-#	@case "$(PVM_ROOT)" in \
-#		"") \
-#		echo "Preparing mlsl1 without PVM support" ; \
-#		rm -f $(PLATFORMS)/PVM_OBJS.inc ; \
-#		echo "#   PVM_OBJS.inc  (included in l1 Makefile)" > $(PLATFORMS)/PVM_OBJS.inc ; \
-#		echo "PVM_OBJS=" >> $(PLATFORMS)/PVM_OBJS.inc ; \
-#		;; \
-#		*) \
-#		echo "Preparing mlsl1 with PVM support" ; \
-#		rm -f $(PLATFORMS)/PVM_OBJS.inc ; \
-#		echo "#   PVM_OBJS.inc  (included in l1 Makefile)" > $(PLATFORMS)/PVM_OBJS.inc ; \
-#		echo "PVM_OBJS=" >> $(PLATFORMS)/PVM_OBJS.inc ; \
-#		;; \
-#	esac 
 
 depends:
 	$(MLSBIN)/makemakedep.sh $(libmls_sources) $(srclib)
@@ -103,10 +89,7 @@ clean:
 	@echo "Cleaning directory $(MLSCONFG)" ; \
 	if [ "$(MLSCONFG)" != "" ] ; then  \
 		echo "Deleting $(MLSCONFG) files" ; \
-		rm -f $(PLATFORMS)/$(MLSCONFG)/*.[ao] ; \
-		rm -f $(PLATFORMS)/$(MLSCONFG)/*.mod ; \
-		rm -f $(PLATFORMS)/$(MLSCONFG)/$(PROG) ; \
-		rm -f $(PLATFORMS)/$(MLSCONFG)/Makefile ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/* ; \
 	fi ; \
 	if [ -d "$(PLATFORMS)/$(MLSCONFG)" ] ; then  \
 		echo "Deleting $(MLSCONFG) directory" ; \
@@ -125,6 +108,9 @@ tar:
 	tar hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl1
 
 # $Log$
+# Revision 2.6  2001/03/06 18:17:57  pwagner
+# clean more amitious--rms * from MLSCONFGl[13]/MakeFC
+#
 # Revision 2.5  2001/02/08 23:16:46  pwagner
 # Without PVM_OBJS.inc file
 #

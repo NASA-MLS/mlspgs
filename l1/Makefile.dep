@@ -19,8 +19,8 @@ EngUtils.o: EngUtils.f90 $(dir1)MLSCommon.o EngTbls.o L0Utils.o MLSL1Utils.o \
 	OpenInit.o
 InitPCFs.o: InitPCFs.f90 $(dir1)MLSMessageModule.o $(dir1)SDPToolkit.o
 init_tables_module.o: init_tables_module.f90 $(dir1)intrinsic.o \
-	$(dir1)symbol_table.o $(dir1)symbol_types.o $(dir1)tree.o \
-	$(dir1)tree_types.o
+	$(dir1)symbol_table.o $(dir1)symbol_types.o $(dir1)tree_types.o \
+	make_tree.f9h
 Interpolation.o: Interpolation.f90 MLSL1Common.o
 L0_sci_tbls.o: L0_sci_tbls.f90 $(dir1)MLSCommon.o MLSL1Common.o
 L0Utils.o: L0Utils.f90 $(dir1)MLSCommon.o $(dir1)MLSMessageModule.o \
@@ -53,7 +53,7 @@ Scan.o: Scan.f90 $(dir1)MLSCommon.o $(dir1)MLSMessageModule.o \
 	$(dir1)SDPToolkit.o
 SciUtils.o: SciUtils.f90 L0Utils.o L0_sci_tbls.o MLSL1Common.o MLSL1Utils.o
 SortQualify.o: SortQualify.f90 $(dir1)MLSCommon.o Calibration.o EngTbls.o \
-	EngUtils.o L0_sci_tbls.o MLSL1Common.o SciUtils.o
+	EngUtils.o L0_sci_tbls.o MLSL1Common.o MLSL1Config.o SciUtils.o
 TkL1B.o: TkL1B.f90 $(dir1)MLSCommon.o $(dir1)MLSMessageModule.o \
 	$(dir1)SDPToolkit.o MLSL1Common.o OutputL1B.o Scan.o
 WriteMetaL1.o: WriteMetaL1.f90 $(dir1)HDF-EOS.o $(dir1)Hdf.o $(dir1)MLSCF.o \
