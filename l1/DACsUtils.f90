@@ -610,7 +610,7 @@ CONTAINS
 
 ! Output Band precisions:
 
-       DACsDS%name = DACS_Name(bno)//' precision'
+       DACsDS%name = TRIM(DACS_Name(bno))//' precision'
        DO maf = 1, noMAFS
           CALL Build_MLSAuxData (sd_id, DACsDS, rad_prec(:,:,maf), &
                lastIndex=maf, disable_attrib=.TRUE.)
@@ -680,6 +680,9 @@ CONTAINS
 END MODULE DACsUtils
 
 ! $Log$
+! Revision 2.8  2005/01/25 15:19:20  perun
+! Add TRIM to remove possible extra blank in precision dataset
+!
 ! Revision 2.7  2004/12/01 17:08:56  perun
 ! Add routines to deconvolve and remove spurs
 !
