@@ -306,8 +306,8 @@ subtrees:   do while ( j <= howmany )
         ! ------------------------------------------- Output section
       case ( z_output ) ! Write out the data
         if ( .not. parallel%slave ) then
-          call Output_Close ( son, l2gpDatabase, l2auxDatabase, matrices, l2pcf,&
-            & size(chunks)==1 .or. singleChunk /= 0 )
+          call Output_Close ( son, l2gpDatabase, l2auxDatabase, DirectDatabase, &
+            & matrices, l2pcf, size(chunks)==1 .or. singleChunk /= 0 )
         end if
 
         ! For case where there was one chunk, destroy vectors etc.
@@ -403,6 +403,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.108  2003/06/24 23:00:53  livesey
+! Nullified directDatabase
+!
 ! Revision 2.107  2003/06/23 23:55:17  pwagner
 ! Added DirectData_T to keep track of data written directly
 !
