@@ -126,8 +126,7 @@ CONTAINS
         ENDDO
 
         numDays = cfProd%nDays
-        ALLOCATE( l3dm(numDays), dmA(numDays), dmD(numDays), l3r(numDays), &
-                residA(numDays), residD(numDays), STAT=error )
+        ALLOCATE( l3dm(numDays), dmA(numDays), dmD(numDays), STAT=error )
         ALLOCATE( l3dz(numDays), dzA(numDays), dzD(numDays), STAT=error )
         IF ( error /= 0 ) THEN
            msr = MLSMSG_Allocate // ' l3dm, l3r arrays.'
@@ -206,6 +205,18 @@ CONTAINS
            residD(j)%l2gpValue = 0.0
         ENDDO
  
+!!      Initialize Flags
+
+        flags%writel3sp    = .FALSE.
+        flags%writel3dmCom = .FALSE.
+        flags%writel3dmAsc = .FALSE.
+        flags%writel3dzAsc = .FALSE.
+        flags%writel3dmDes = .FALSE.
+	flags%writel3dzDes = .FALSE.
+        flags%writel3rCom  = .FALSE.
+        flags%writel3rAsc  = .FALSE.
+        flags%writel3rDes  = .FALSE.
+ 
 
 !*** Calculate average orbital period (day)
 
@@ -227,8 +238,10 @@ CONTAINS
 
 !*** Main Loop 
 
-	DO iP = 1, l2gp(1)%nLevels
-	  DO J = 1, cfProd%nLats
+	!DO iP = 1, l2gp(1)%nLevels
+	DO iP = 1, 1
+	  !DO J = 1, cfProd%nLats
+	  DO J = 10, 10 
        	     IF( anlats(J, iP) > 0 ) THEN
 	        CALL Init(cfProd%mode, 				&
 			  nt_a_i   = anlats(J, iP), 		&
@@ -697,6 +710,9 @@ END MODULE Synoptic
 !===================
 
 ! $Log$
+! Revision 1.2  2001/02/28 17:15:06  ybj
+! Fix residue structure alocation
+!
 ! Revision 1.1  2001/02/27 20:51:28  ybj
 ! Daily Map Core Processing
 !
