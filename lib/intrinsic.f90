@@ -7,8 +7,11 @@ module INTRINSIC
 
 ! Declaring the definitions is handled by the tree walker.
 
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+
   implicit NONE
   public
+  private :: Allocate_Test, Deallocate_Test ! may make .mod files smaller
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -34,6 +37,9 @@ module INTRINSIC
 ! Enumeration types:
   integer, parameter :: T_BOOLEAN           = t_string + 1
   integer, parameter :: LAST_INTRINSIC_TYPE = t_boolean
+
+! We don't define any fields here, but here's the first index:
+  integer, parameter :: Field_First = 1
 
 ! Abstract physical quantities:
   integer, parameter :: PHYQ_INVALID = 0 ! Invalid unit given by user
@@ -146,24 +152,44 @@ module INTRINSIC
   integer, parameter :: T = 5000         ! Type index
   integer, parameter :: Z = 6000         ! Section index
 
+  ! Tables used for type checking:
+  integer, save, pointer, dimension(:) :: DATA_TYPE_INDICES, FIELD_INDICES, &
+    & LIT_INDICES, PARM_INDICES, SECTION_INDICES, SPEC_INDICES
+
 contains ! =====     Public procedures     =============================
 ! -----------------------------------------------  INIT_INTRINSIC  -----
-  subroutine INIT_INTRINSIC ( DATA_TYPE_INDICES, FIELD_INDICES, LIT_INDICES, &
-    & PARM_INDICES, SECTION_INDICES, SPEC_INDICES )
+  subroutine INIT_INTRINSIC ( N_DATA_TYPE_INDICES, N_FIELD_INDICES, &
+    & N_LIT_INDICES, FIRST_PARM_INDEX, LAST_PARM_INDEX, N_SECTION_INDICES, &
+    & N_SPEC_INDICES )
 
     ! This really belongs in make_tree, but "make depends" can't see it there
     ! (because of the "include"):
     use TREE, only: BUILD_TREE, PUSH_PSEUDO_TERMINAL
     use TREE_TYPES, only: N_DT_DEF
 
-    integer, intent(inout) :: DATA_TYPE_INDICES(:)
-    integer, intent(inout) :: FIELD_INDICES(:)
-    integer, intent(inout) :: LIT_INDICES(:)
-    integer, intent(inout) :: PARM_INDICES(:)
-    integer, intent(inout) :: SECTION_INDICES(:)
-    integer, intent(inout) :: SPEC_INDICES(:)
+    integer, intent(in) :: N_DATA_TYPE_INDICES
+    integer, intent(in) :: N_FIELD_INDICES
+    integer, intent(in) :: N_LIT_INDICES
+    integer, intent(in) :: FIRST_PARM_INDEX, LAST_PARM_INDEX
+    integer, intent(in) :: N_SECTION_INDICES
+    integer, intent(in) :: N_SPEC_INDICES
 
-  ! Put intrinsic predefined identifiers into the symbol table.
+    ! Allocate the string index tables for the various categories of
+    ! names
+    call allocate_test ( data_type_indices, n_data_type_indices, &
+      & 'DATA_TYPE_INDICES', moduleName )
+    call allocate_test ( field_indices, n_field_indices, &
+      & 'FIELD_INDICES', moduleName )
+    call allocate_test ( lit_indices, n_lit_indices, &
+      & 'LIT_INDICES', moduleName )
+    call allocate_test ( parm_indices, last_parm_index, &
+      & 'PARM_INDICES', moduleName, lowBound=first_parm_index )
+    call allocate_test ( section_indices, n_section_indices, &
+      & 'SECTION_INDICES', moduleName )
+    call allocate_test ( spec_indices, n_spec_indices, &
+      & 'SPEC_INDICES', moduleName )
+
+    ! Put intrinsic predefined identifiers into the symbol table.
 
     ! Put intrinsic non-enumeration type names into symbol table
     data_type_indices(t_numeric) =         add_ident ( 'numeric' )
@@ -290,7 +316,7 @@ contains ! =====     Public procedures     =============================
       begin, t+t_boolean, l+l_true, l+l_false, n+n_dt_def /) )
 
   contains
-    ! ------------------------------------------------  MAKE_TREE  -----
+    ! ................................................  MAKE_TREE  .....
     include "make_tree.f9h"
 
   end subroutine INIT_INTRINSIC
@@ -303,9 +329,22 @@ contains ! =====     Public procedures     =============================
     add_ident = enter_terminal ( text, t_identifier )
   end function ADD_IDENT
 
+  ! -----------------------------------  DestroyTypeCheckerTables  -----
+  subroutine DestroyTypeCheckerTables
+    call deallocate_test ( data_type_indices, 'DATA_TYPE_INDICES', moduleName )
+    call deallocate_test ( field_indices,     'FIELD_INDICES',     moduleName )
+    call deallocate_test ( lit_indices,       'LIT_INDICES',       moduleName )
+    call deallocate_test ( parm_indices,      'PARM_INDICES',      moduleName )
+    call deallocate_test ( section_indices,   'SECTION_INDICES',   moduleName )
+    call deallocate_test ( spec_indices,      'SPEC_INDICES',      moduleName )
+  end subroutine
+
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.22  2001/04/26 02:33:03  vsnyder
+! Moved *_indices declarations from init_tables_module to intrinsic
+!
 ! Revision 2.21  2001/04/23 20:57:42  vsnyder
 ! Move the first spec (time) to 'intrinsic'
 !
