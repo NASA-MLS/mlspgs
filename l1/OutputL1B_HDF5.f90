@@ -234,7 +234,7 @@ CONTAINS
 !------------------------------------------------------------------------------
     do i = 1, size(rad) ! Loop on number of SDs per MAF
       call GetFullMLSSignalName(rad(i)%signal, name) ! Concatenate SD names
-      prec = TRIM(name) // ' precision'
+      prec = trim(name) // ' precision'
       ! Set parameters based on input data dimensions
       ! Based on the SD name, set dim name for channel, get Id of output file
       IF ( INDEX(name,'FB') /= 0 ) THEN
@@ -267,11 +267,11 @@ CONTAINS
         dims(2) = MIFsGHz      !! lenG
       ENDIF
 !------------------------------------------------Create/Open the value datasets
-      dataset%name = name
+      dataset%name = trim(name)
       dataset%data_type = 'real' 
       call Build_MLSAuxData(sd_id, dataset, rad(i)%value, noMAF, dims)
 !------------------------------------------- Create/Open the precision datasets
-      dataset%name = prec
+      dataset%name = trim(prec)
       dataset%data_type = 'real' 
       call Build_MLSAuxData(sd_id, dataset, rad(i)%precision, noMAF, dims)
 !-----------------------------------------------------------------------------
@@ -281,6 +281,9 @@ CONTAINS
 END MODULE OutputL1B_HDF5
 
 ! $Log$
+! Revision 2.2  2002/11/18 21:21:30  jdone
+! Used trim for names of radiance and supporting precision files.
+!
 ! Revision 2.1  2002/11/07 21:36:57  jdone
 ! File holds all HDF5 output routines for Level 1
 !
