@@ -62,10 +62,10 @@ R5V:2T5.B19F:OH.S0.FB25-19
 ;
 ; Now the digital autocorrelators (DACS)
 ;
-R1A:118.B22D:PT.S1.DACS-1
+R1A:118.B22D:PT.S0.DACS-4
 R2:190.B23D:H2O.S0.DACS-2
 R3:240.B24D:O3.S0.DACS-3
-R3:240.B25D:CO.S0.DACS-4
+R3:240.B25D:CO.S1.DACS-1
 ;
 ; Now the mid band 11 channel filter banks
 ;
@@ -249,6 +249,9 @@ END
 ; History
 ;
 ; $Log$
+; Revision 1.5  1999/12/16 23:48:56  livesey
+; Added the module information to the Radiometer Frequencies section.
+;
 ; Revision 1.4  1999/11/13 20:07:58  livesey
 ; Transfer home
 ;
