@@ -27,7 +27,7 @@ MODULE ManipulateVectorQuantities ! Interpolate in coordinate spaces
   CHARACTER (LEN=*), PARAMETER, PRIVATE :: ModuleName= &
     & "$RCSfile$"
   !---------------------------------------------------------------------------
-
+  
   CONTAINS
 
     ! This subroutine finds the instance (i.e. profile) in a stacked
@@ -103,6 +103,9 @@ MODULE ManipulateVectorQuantities ! Interpolate in coordinate spaces
   END MODULE ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.4  2001/03/02 01:31:36  livesey
+! Regular commit
+!
 ! Revision 2.3  2001/02/27 17:18:20  livesey
 ! Moved ValidateVectorQuantity into vectors module
 !
