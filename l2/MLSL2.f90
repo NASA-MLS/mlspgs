@@ -25,6 +25,7 @@ program MLSL2
   use MLSMessageModule, only: MLSMessage, MLSMessageConfig, MLSMSG_Debug, &
     & MLSMSG_Error, MLSMSG_Severity_to_quit, MLSMessageExit
   use MLSPCF2, only: MLSPCF_L2CF_START
+  use MLSStrings, only: GetUniqueList
   use OBTAIN_MLSCF, only: Close_MLSCF, Open_MLSCF
   use OUTPUT_M, only: BLANKS, OUTPUT, PRUNIT
   use PARSER, only: CONFIGURATION
@@ -91,6 +92,7 @@ program MLSL2
   ! a single master process starts up, then tries to pass messages
   ! to slave processes which may be running. Master and slaves, all,
   ! will be running mlsl2
+  ! The interprocess communication is handled by pvm
 
   implicit NONE
 
@@ -110,6 +112,7 @@ program MLSL2
   character(len=2048) :: LINE      ! Into which is read the command args
   integer :: N                     ! Offset for start of --'s text
   integer :: NUMFILES
+  integer :: NUMSWITCHES
   integer :: RECL = 20000          ! Record length for l2cf (but see --recl opt)
   integer :: RECORD_LENGTH
   integer :: ROOT                  ! of the abstract syntax tree
@@ -141,8 +144,18 @@ program MLSL2
   if (error /= 0) then
       call MLSMessage ( MLSMSG_Error, moduleName, &
         & "Unable to h5_open_f" )
-  endif    
-
+  endif
+  ! Before looking at command-line options, TOOLKIT is set to SIPS_VERSION
+  ! So here's a good place to put any SIPS-specific settings overriding defaults
+  if ( TOOLKIT ) then
+    ! SIPS_VERSION
+    parallel%maxFailuresPerMachine = 2
+    parallel%maxFailuresPerChunk = 1
+    switches=''
+  else
+    ! SCF_VERSION
+    switches='0sl'
+  endif
 ! Initialize the lexer, symbol table, and tree checker's tables:
 !  ( Under some circumstances, you may need to increase these )
   call init_lexer ( n_chars=80000, n_symbols=4000, hash_table_size=611957 )
@@ -384,14 +397,14 @@ program MLSL2
         case ( 'm' ); prunit = -1
         case ( 'p' ); toggle(par) = .true.
         case ( 'S' )
-          switches = trim(switches) // line(j+1:)
+          switches = trim(switches) // ',' // line(j+1:)
           exit ! Took the rest of the string, so there can't be more options
         case ( 'T' )
           timing = .true.
           if ( j < len(line) ) then
             if ( line(j+1:j+1) >= '0' .and. line(j+1:j+1) <= '9' ) then
               if( line(j+1:j+1) /= '0' ) &
-                & switches = trim(switches) // 'time'
+                & switches = trim(switches) // ',' // 'time'
               section_times = &
                 & ( index(switches, 'time') /= 0 .and. (line(j+1:j+1) /= '1') )
               total_times = section_times .and. (line(j+1:j+1) /= '2')
@@ -416,12 +429,16 @@ program MLSL2
   if( index(switches, '?') /= 0 .or. index(switches, 'hel') /= 0 ) then
    call switch_usage
   end if
+  call GetUniqueList(switches, switches, numSwitches, countEmpty=.true., &
+        & ignoreLeadingSpaces=.true.)
   call Set_garbage_collection(garbage_collection_by_dt)
 ! Done with command-line parameters; enforce cascading negative options
 ! (waited til here in case any were (re)set on command line)
 
   if ( .not. toolkit ) then
      prunit = max(-1, prunit)   ! stdout or Fortran unit
+  elseif (parallel%slave .or. parallel%master) then
+     prunit = -3          ! output both logged and sent to stdout
   end if
 
   if( index(switches, 'log') /= 0 .or. .not. toolkit ) then
@@ -438,11 +455,21 @@ program MLSL2
 
   ! Setup the parallel stuff.  Register our presence with the master if we're a
   ! slave.
+  if ( parallel%master .and. parallel%myTid <= 0 ) &
+    & call MLSMessage ( MLSMSG_Error, ModuleName, &
+    & 'master Tid <= 0; probably pvm trouble' )
   if ( parallel%fwmParallel .and. parallel%master .and. singleChunk == 0 ) &
     & call MLSMessage ( MLSMSG_Error, ModuleName, &
     & 'fwmParallel mode can only be run for a single chunk' )
-  if ( parallel%slave ) call InitParallel ( singleChunk, slaveMAF )
-
+  if ( parallel%slave ) then
+    if ( parallel%masterTid <= 0 ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'masterTid of this slave <= 0' )
+    call InitParallel ( singleChunk, slaveMAF )
+    if ( parallel%myTid <= 0 ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'slave Tid <= 0; probably pvm trouble' )
+  endif
   !---------------- Task (4) ------------------
   ! Open the L2CF
   status = 0
@@ -489,6 +516,9 @@ program MLSL2
   call time_now ( t1 )
 
   if( index(switches, 'opt') /= 0 ) then
+    do j=1, size(current_version_id)
+      call output(trim(current_version_id(j)), advance='yes')
+    end do
     call dump_settings
   end if
 
@@ -609,7 +639,7 @@ contains
   ! until *after* processing all the options.
   
   subroutine Switch_usage
-    print *, 'Switch usage: -S"sw1 sw2 .. swn" or -Ssw1 -Ssw2 ..'
+    print *, 'Switch usage: -S"sw1,sw2,..,swn" or -Ssw1 -Ssw2 ..'
     print *, ' where each of the swk may be one of the following'
    ! (This incorporates automatic source code replacement by
    !  a custom build command in the Makefile --
@@ -669,9 +699,6 @@ contains
       call blanks(5, advance='no')                                                   
       call output(singleChunk, advance='yes')
       endif                      
-!     call output(' Manually collect garbage after each deallocate: ', advance='no') 
-!     call blanks(4, advance='no')                                                   
-!     call output(garbage_collection_by_dt, advance='yes')                           
       call output(' Is this run in forward model parallel?:         ', advance='no')
       call blanks(4, advance='no')
       call output(parallel%fwmParallel, advance='yes')
@@ -688,6 +715,12 @@ contains
       call output(' Command to queue slave tasks:                   ', advance='no') 
       call blanks(4, advance='no')                                                   
       call output(trim(parallel%submit), advance='yes')
+      call output(' Maximum failures per chunk:                     ', advance='no') 
+      call blanks(4, advance='no')                                                   
+      call output(parallel%maxFailuresPerChunk, advance='yes')
+      call output(' Maximum failures per machine:                   ', advance='no') 
+      call blanks(4, advance='no')                                                   
+      call output(parallel%maxFailuresPerMachine, advance='yes')
       endif                      
       call output(' Is this a slave task in pvm?:                   ', advance='no')
       call blanks(4, advance='no')
@@ -709,6 +742,9 @@ contains
       call output(' Standard output unit:                           ', advance='no')
       call blanks(4, advance='no')
       call output(PrUnit, advance='yes')
+      call output(' Number of switches set:                         ', advance='no')
+      call blanks(4, advance='no')
+      call output(numSwitches, advance='yes')
       call output(' Log file unit:                                  ', advance='no')
       call blanks(4, advance='no')
       call output(MLSMessageConfig%LogFileUnit, advance='yes')
@@ -735,6 +771,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.100  2003/10/09 23:35:21  pwagner
+! Treats SIPS version special; switches ,-separated
+!
 ! Revision 2.99  2003/09/05 23:22:08  pwagner
 ! Takes in new --skipRetrieval option
 !
