@@ -866,8 +866,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_channels, t+t_numeric, t+t_numeric_range, n+n_field_type, &
              begin, f+f_height, t+t_numeric_range, n+n_field_type, &
              begin, f+f_ignore, t+t_boolean, n+n_field_type, &
-             begin, f+f_opticalDepth, t+t_numeric, n+n_field_type, &
-             ndp+n_spec_def, &
+             begin, f+f_opticalDepth, t+t_numeric, n+n_field_type, ndp+n_spec_def, &
       begin, s+s_forwardModel, & ! Must be AFTER s_vector and s_matrix
              begin, f+f_atmos_der, t+t_boolean, n+n_field_type, &
              begin, f+f_do_conv, t+t_boolean, n+n_field_type, &
@@ -1018,6 +1017,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.138  2001/07/17 22:33:51  jonathan
+! mixed a bug Too many continuation lines, paul
+!
 ! Revision 2.137  2001/07/17 21:23:36  jonathan
 ! add cloud_width, jonathan
 !
