@@ -6,7 +6,7 @@ MODULE vGrid                    ! Definitions for vGrids in vector quantities
 !=============================================================================
 
   USE MLSCommon                 ! General constants etc.
-  USE Temporary_Types           ! L2CF info etc.
+  USE ReadParseL2CF             ! L2CF info etc.
   USE VerticalCoordinate        ! The various vertical coorindate systems.
   USE MLSStrings                ! String handling routines
   USE MLSMessageModule          ! Message logging
@@ -200,6 +200,9 @@ END MODULE vGrid
 
 !
 ! $Log$
+! Revision 1.7  1999/12/17 21:40:12  livesey
+! Added check for duplicate name in database
+!
 ! Revision 1.6  1999/12/17 00:59:32  livesey
 ! Nightly checkin
 !

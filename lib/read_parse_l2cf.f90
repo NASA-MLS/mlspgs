@@ -11,6 +11,7 @@ MODULE ReadParseL2cf         ! Read and Parse the l2 Configuration File
 USE SDPToolkit
 USE Hdf
 USE MLSMessageModule
+USE MLSStrings
 
 
 IMPLICIT NONE
@@ -131,6 +132,32 @@ END TYPE l2cf
 CONTAINS
 
 
+! This function extracts a named section from the l2cf
+
+!========================================
+FUNCTION GetL2CFSection(l2cfInfo,sectionName)
+!========================================
+
+  ! Dummy arguments
+  TYPE (l2cf), INTENT(IN) :: l2cfInfo
+  CHARACTER (LEN=*), INTENT(IN) :: sectionName
+
+  ! Function result
+  TYPE (l2cfSection) :: GetL2CFSection
+
+  ! Local variables
+  INTEGER :: index
+
+  ! Executable code
+
+  index=LinearSearchStringArray(l2cfInfo%sections%l2cfSectionName,sectionName,&
+       & caseInsensitive=.TRUE.)
+  IF (index==0) CALL MLSMessage(MLSMSG_Error,ModuleName,&
+       & "No such l2cf section:"//sectionName)
+
+  GetL2CFSection=l2cfInfo%sections(index)
+END FUNCTION GetL2CFSection
+  
 !========================================
 SUBROUTINE Strip_Blanks (line, nc, ncnb)
 !========================================
@@ -529,6 +556,9 @@ END MODULE ReadParseL2cf
 !=======================
 
 ! $Log$
+! Revision 1.7  2000/01/07 19:30:04  lungu
+! Revoved returnStatus from argument list.
+!
 ! Revision 1.6  2000/01/06 23:39:00  lungu
 ! Finalized error handling.
 !

@@ -27,6 +27,15 @@ MODULE L2AUXData                 ! Data types for storing L2AUX data internally
 
   ! This is a set of possible values for dimension%dimensionFamily
 
+  INTEGER, PARAMETER :: NoL2AUXDimTypes=6
+  CHARACTER(LEN=12), DIMENSION(NoL2AUXDimTypes),PARAMETER::L2AUXDimNames= (/ &
+       & "Channel  ", &
+       & "Frequency", &
+       & "MIF      ", &
+       & "MAF      ", &
+       & "Time     ", &
+       & "GeodAngle" /)
+
   INTEGER, PARAMETER :: L2AUXDim_None=0
   INTEGER, PARAMETER :: L2AUXDim_Channel=1
   INTEGER, PARAMETER :: L2AUXDim_Frequency=2
@@ -186,6 +195,9 @@ END MODULE L2AUXData
 
 !
 ! $Log$
+! Revision 1.6  1999/12/18 01:06:28  livesey
+! Added USE of MLSStrings
+!
 ! Revision 1.5  1999/12/17 21:41:00  livesey
 ! Added check for duplicate name
 !

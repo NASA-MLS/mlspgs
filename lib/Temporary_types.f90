@@ -149,11 +149,18 @@ MODULE Temporary_types
 
 !    END TYPE L2cfCell
 
+TYPE GriddedData_T
+   INTEGER :: dummy
+END TYPE GriddedData_T
+
 !=========================
 END MODULE Temporary_types
 !=========================
 
 !# $Log$
+!# Revision 1.3  2000/01/07 23:12:21  livesey
+!# Commented out l2cf related stuff as now have read_parse_l2cf
+!#
 !# Revision 1.2  1999/12/28 21:34:22  nakamura
 !# Changed DOUBLE PRECISION to REAL(r8).
 !#

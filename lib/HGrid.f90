@@ -6,7 +6,7 @@ MODULE HGrid                    ! Horizontal grid information
 !=============================================================================
 
   USE MLSCommon
-  USE Temporary_Types
+  USE ReadParseL2CF
   USE MLSMessageModule
   USE MLSStrings
   USE L1BData
@@ -404,6 +404,9 @@ END MODULE HGrid
 
 !
 ! $Log$
+! Revision 1.3  1999/12/17 21:39:34  livesey
+! Added check for duplicate name in database.
+!
 ! Revision 1.2  1999/12/16 18:23:20  livesey
 ! First version that compiles.
 !

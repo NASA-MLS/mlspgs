@@ -44,6 +44,25 @@ MODULE QuantityTemplates         ! Quantities within vectors
   INTEGER, PARAMETER :: QTY_Baseline=5
   INTEGER, PARAMETER :: QTY_Extinction=6
 
+  ! This set of integers defines another enumerated type describing the types
+  ! of `horizontal' divisions there can be in vector quantities
+
+  INTEGER, PARAMETER :: NoHDTypes=5
+  CHARACTER (LEN=13), PARAMETER, DIMENSION(NoHDTypes) :: &
+       & HDTypeNames= (/ &
+       & "L2GP profile ", &
+       & "Major Frame  ", &
+       & "Orbital      ", &
+       & "Temporal     ", &
+       & "Constant     "/)
+  
+  INTEGER, PARAMETER :: HD_Invalid=0
+  INTEGER, PARAMETER :: HD_L2GProfile=1
+  INTEGER, PARAMETER :: HD_MAF=2
+  INTEGER, PARAMETER :: HD_Orbital=3
+  INTEGER, PARAMETER :: HD_Temporal=4
+  INTEGER, PARAMETER :: HD_Constant=5
+
   ! First we'll define some global parameters and data types.
 
   TYPE QuantityTemplate_T
@@ -113,6 +132,11 @@ MODULE QuantityTemplates         ! Quantities within vectors
      ! numbers or to MAF indices
 
      INTEGER, DIMENSION(:), POINTER :: subVectorIndex
+
+     ! This integer is an enumerated type which defines how the `horizontal'
+     ! profiles in a quantity are divided.
+
+     INTEGER :: horizontalDivision 
 
      ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
      ! For quantities containing `channels' the following information may or
@@ -397,6 +421,9 @@ END MODULE QuantityTemplates
 
 !
 ! $Log$
+! Revision 1.4  1999/12/17 21:42:16  livesey
+! Added check for duplicate name
+!
 ! Revision 1.3  1999/12/16 23:46:35  livesey
 ! Added the unit field and fixed a couple of compile glitches
 !
