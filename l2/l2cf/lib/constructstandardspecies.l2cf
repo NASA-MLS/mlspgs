@@ -292,7 +292,7 @@ begin Construct
   !define(constructRetrievalDiagnostic,{$1: Quantity, type=$1, $
     vGrid=vGridDiag, hGrid=hGridDiag!nl})
   !forall(constructRetrievalDiagnostic,!allRetrievalDiagnostics)
-  !define(outputRetrievalDiagnostics,{dnwt_chisqNorm, dnwt_chiSqMinNorm, jacobian_rows, jacobian_cols, dnwt_flag})
+  !define(outputRetrievalDiagnostics,{dnwt_chiSqNorm, dnwt_chiSqMinNorm, jacobian_rows, jacobian_cols, dnwt_flag})
 
   ;; ----------------------------------------- Other minor stuff
 
