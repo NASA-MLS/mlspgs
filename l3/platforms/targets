@@ -129,6 +129,9 @@ else
    lapack_message=Building mlsl3d with internally-supplied LAPACK
 endif
 
+utctotai_linker_line=-L${INSTALLDIR} -lutctotai
+utctotai_message=Building mlsl2 with toolkitless utc to tai conversion
+
 ifdef HDF5
 ifeq ($(MLSPLAT),Sun)
    hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 -R${HDF5}
@@ -179,11 +182,13 @@ mlsl3d: libmlsl3.a $(CONFDIR)/$(MLSCFILE) $(MODULES) $(libdir)/libmls.a
 		@echo "$(lapack_message)"
 		@echo "$(hdf5_message)"
 		@echo "$(he5lib_message)"
+		@echo "$(utctotai_message)"
 		@cat fftw_link_message
 	$(FC) $(LDOPTS) -o mlsl3d $(l3_driver) \
                       -L./ -lmlsl3 \
         $(he5lib_linker_line) \
                       -L${libdir} -lmls \
+        $(utctotai_linker_line) \
 	-L${PGSTK} -lPGSTK \
         -L${HDFEOS} -lhdfeos \
         $(hdfeos5_linker_line) \
@@ -216,6 +221,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.29  2002/10/03 23:07:45  pwagner
+# l_specials for Lahey depend on gcc_version
+#
 # Revision 1.28  2002/09/04 18:10:22  pwagner
 # LIB_BLAS may be multiple libraries (e.g., f77blas atlas)
 #
