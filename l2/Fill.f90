@@ -5,17 +5,19 @@
 module Fill                     ! Create vectors and fill them.
 !=============================================================================
 
+  USE L2GPData
   use GriddedData, only: GriddedData_T
-  use INIT_TABLES_MODULE, only: S_VECTOR
+  use INIT_TABLES_MODULE, only: S_VECTOR,F_SOURCE   ! Later, s_Fill will be added
   use LEXER_CORE, only: PRINT_SOURCE
-  use MLSCommon, only: L1BInfo_T
+  use MLSCommon, only: L1BInfo_T, NameLen
   use OUTPUT_M, only: OUTPUT
   use QuantityTemplates, only: QuantityTemplate_T
+  use string_table, only: get_string
   use TOGGLES, only: GEN, LEVELS, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATE, DECORATION, DUMP_TREE_NODE, NODE_ID, NSONS, &
     & SOURCE_REF, SUB_ROSA, SUBTREE
-  use TREE_TYPES, only: N_NAMED
+  use TREE_TYPES, only: N_NAMED, N_DOT
   use VectorsModule, only: AddVectorToDatabase, CreateVector, Dump, Vector_T, &
     & VectorTemplate_T
 
@@ -30,6 +32,7 @@ module Fill                     ! Create vectors and fill them.
   ! Error codes for "announce_error"
   integer, parameter :: WRONG_NUMBER = 1     ! of fields of a VECTOR command
 
+  integer, parameter :: s_Fill = 0   ! to be replaced by entry in init_tables_module
   !---------------------------- RCS Ident Info -------------------------------
   character (len=256) :: Id = &
        "$id: fill.f90,v 1.1 2000/01/21 21:04:06 livesey Exp $"
@@ -44,7 +47,7 @@ contains ! =====     Public Procedures     =============================
   !---------------------------------------------------  MLSL2Fill  -----
 
   subroutine MLSL2Fill ( root, l1bInfo, aprioriData, vectorTemplates, vectors, &
-    & qtyTemplates )
+    & qtyTemplates , L2GPDatabase)
 
   ! This is the main routine for the module.  It parses the relevant lines
   ! of the l2cf and works out what to do.
@@ -56,6 +59,7 @@ contains ! =====     Public Procedures     =============================
     type (VectorTemplate_T), dimension(:), pointer :: vectorTemplates
     type (Vector_T), dimension(:), pointer :: vectors
     type (QuantityTemplate_T), dimension(:), pointer :: qtyTemplates
+    TYPE (L2GPData_T), DIMENSION(:), POINTER :: L2GPDatabase
 
     ! Local variables
     integer :: I, J                ! Loop indices for section, spec
@@ -65,10 +69,30 @@ contains ! =====     Public Procedures     =============================
     integer :: templateIndex       ! In the template database
     integer :: vectorIndex         ! In the vector database
     integer :: vectorName          ! Sub-rosa index
+    integer :: quantityName        ! Sub-rosa index
+    integer :: sourceName          ! Sub-rosa index
+    INTEGER :: VectorDBSize
+    CHARACTER (LEN=NameLen) :: vectorNameString, templateNameString
+    CHARACTER (LEN=NameLen) :: sourceNameString, quantityNameString
+
+
+    ! These should be moved into open_init some day soon
+    INTEGER :: mlspcf_ol2gp_start=22000
+    INTEGER :: mlspcf_ol2gp_end=22050
+
+    INTEGER :: OL2FileHandle
+    INTEGER :: qtiesStart
 
     ! Executable code
 
     if ( toggle(gen) ) call trace_begin ( "MLSL2Fill", root )
+
+    ! Logical id of file(s) holding old L2GP data
+    OL2FileHandle = mlspcf_ol2gp_start
+
+    ! starting quantities number for *this* vector; what if we have more?
+    qtiesStart = 1
+
 
     error = 0
     templateIndex = -1
@@ -101,7 +125,55 @@ contains ! =====     Public Procedures     =============================
 
         ! That's the end of the create operation
 
-!     case ( s_fill )
+     case ( s_fill )
+          ! We can only fill vectors from an old l2gp file for now
+        !          vectorName=""
+        !          sourceName=""
+        !          quantityName=""
+
+          ! A Fill instruction, this contains just a vector name and quantity 
+          ! and a source name assuming the same quantity
+          ! e.g., Fill, state.quantity, source=oldState.quantity
+
+        if ( nsons(key) < 3 ) call announce_error ( son, wrong_number )
+        IF(node_id(subtree(2, key)) /= n_dot) then
+           ! In case dotless
+           vectorIndex = decoration(decoration(subtree(2,subtree(2,key))))
+           quantityName=0
+        ELSE
+           ! Assume form : x.y
+           J = subtree(2, subtree(2, key))
+           vectorName=sub_rosa(subtree(2, J))     ! x
+           quantityName=sub_rosa(subtree(3, J))   ! y
+           vectorIndex = decoration(subtree(2, J))
+        ENDIF
+
+        DO J=3, nsons(key)
+           SELECT CASE( decoration(subtree(1,decoration(subtree(J,key)))) )
+              CASE(f_source)
+                 ! source=vector.quantity
+                 sourceName=sub_rosa(subtree(J, subtree(2, key)))
+                 IF(quantityName==0) THEN
+                    quantityName=sub_rosa(subtree(3, subtree(J, key)))   ! y
+                 ENDIF
+!              CASE(f_method)
+!              CASE(f_other)
+              CASE DEFAULT ! Can't get here if tree_checker worked correctly
+           END SELECT
+        ENDDO
+
+        CALL get_string(vectorName, vectorNameString)
+        CALL get_string(quantityName, quantityNameString)
+        CALL get_string(sourceName, sourceNameString)
+
+!          vectorIndex=LinearSearchStringArray(vectors%name,&
+!               & vectorName,caseInsensitive=.FALSE.)
+          CALL FillOL2GPVector(OL2FileHandle, L2GPDatabase, &
+               & vectors(vectorIndex), quantityNameString, qtiesStart)
+
+          ! This is *not* going to work if you have more than one vector
+
+          qtiesStart = qtiesStart+1
 
       case default ! Can't get here if tree_checker worked correctly
       end select
@@ -117,6 +189,212 @@ contains ! =====     Public Procedures     =============================
 
 ! =====     Private Procedures     =====================================
 
+!=============================== FillVector ==========================
+SUBROUTINE FillVector(Pointer, Vector, pointerType, vectorType, NumQtys, &
+     & numInstances, numSurfs, numChans, qtiesStart)
+!=============================== FillVector ==========================
+
+! Fill the vector Vector with values taken from the array pointed to by pointer
+! in a manner that depends on their respective types:
+!
+!        pointerType        vectorType            operation
+!          l2gp              l2gp       vector(:,:,:) = pointer(:,:,:)
+
+CHARACTER (Len=*), INTENT(IN) ::        pointerType, vectorType
+REAL(r8), POINTER, DIMENSION(:,:,:) ::  Pointer
+TYPE(Vector_T), INTENT(OUT) ::          Vector
+INTEGER, INTENT(IN) ::                  NumQtys, qtiesStart
+INTEGER, INTENT(IN) ::                  numInstances, numSurfs, numChans
+
+! Private
+INTEGER ::                              qty
+
+Vector%template%NoQuantities = NumQtys
+SELECT CASE (PointerType(:4) // VectorType(:4))
+CASE ('l2gpl2gp')
+   DO qty = qtiesStart, qtiesStart - 1 + NumQtys
+     Vector%quantities(qty)%template%noChans = numChans
+     Vector%quantities(qty)%template%noSurfs = numSurfs
+     Vector%quantities(qty)%template%noInstances = numInstances    
+!     CALL put_3d_view(Pointer, &
+!        & numChans, &
+!        & numSurfs, &
+!        & numInstances, &
+!        & Vector%quantities(qty)%values)
+     Vector%quantities(qty)%values = Pointer
+   ENDDO
+CASE default
+   ! FillVector not yet written to handle these cases
+END SELECT
+
+END SUBROUTINE FillVector
+
+!=============================== FillOL2GPVector ==========================
+SUBROUTINE FillOL2GPVector( OL2FileHandle, L2GPDatabase, Output, QuantityName,&
+qtiesStart)
+!=============================== FillOL2GPVector ==========================
+
+! If the times, pressures, and geolocations match,
+! fill the vector Output with values taken from the appropriate quantity in
+! Old L2GP vector OldL2GPData
+! 
+
+INTEGER, INTENT(IN) ::                            OL2FileHandle, qtiesStart
+TYPE(L2GPData_T), DIMENSION(:), POINTER ::        L2GPDatabase
+TYPE(Vector_T), INTENT(INOUT) ::                  Output
+CHARACTER*(*), INTENT(IN) ::                      QuantityName
+
+! Local variables
+!::::::::::::::::::::::::: LOCALS :::::::::::::::::::::
+TYPE(L2GPData_T) ::                               L2GPData
+TYPE(L2GPData_T) ::                               OldL2GPData
+! INTEGER ::                                        Qty
+INTEGER ::                                        i
+INTEGER ::                                        ONTimes
+INTEGER ::                                        alloc_err
+INTEGER ::                                        noL2GPValues=1
+LOGICAL ::                                        TheyMatch
+
+!
+! Read the old L2GP file for QuantityName
+CALL ReadL2GPData(OL2FileHandle, TRIM(LowerCase(QuantityName)), &
+     & OldL2GPData, ONTimes)
+! Allocate space for current l2gpdata
+ALLOCATE(l2gpData%pressures(OldL2GPData%nLevels),&
+     & l2gpData%latitude(ONTimes), &
+     & l2gpData%longitude(ONTimes), & 
+     & l2gpData%time(ONTimes), &
+     & l2gpData%solarTime(ONTimes), &
+     & l2gpData%solarZenith(ONTimes), &
+     & l2gpData%losAngle(ONTimes), &
+     & l2gpData%geodAngle(ONTimes), &
+     & l2gpData%chunkNumber(ONTimes), &
+     & l2gpData%frequency(OldL2GPData%nFreqs), &
+     & l2gpData%l2gpValue(OldL2GPData%nFreqs, OldL2GPData%nLevels, ONTimes), &
+     & l2gpData%l2gpPrecision(OldL2GPData%nFreqs, OldL2GPData%nLevels, ONTimes), &
+     & l2gpData%status(ONTimes), l2gpData%quality(ONTimes), &
+     & STAT=alloc_err)
+IF(alloc_err /= 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+     & 'Failed to allocate temp l2gpData')
+! Check that times, etc. match
+L2GPData    = L2GPDatabase(1)
+TheyMatch = ONTimes .EQ. L2GPData%nTimes
+IF(TheyMatch) THEN
+   DO i = 1, OldL2GPData%nTimes
+      IF( &
+        &   nearBy(OldL2GPData%latitude(i), L2GPData%latitude(i)) &
+        & .AND. &
+        &   nearBy(OldL2GPData%longitude(i), L2GPData%longitude(i)) &
+        & .AND. &
+        &   nearBy(OldL2GPData%solarTime(i), L2GPData%solarTime(i)) &
+        &) THEN
+       ELSE
+          TheyMatch = .FALSE.
+          EXIT
+      ENDIF
+   END DO
+ENDIF
+IF(TheyMatch) THEN
+   DO i = 1, OldL2GPData%NLevels
+      IF( &
+        &   nearBy(OldL2GPData%latitude(i), L2GPData%latitude(i)) &
+        & ) THEN
+     ELSE
+       TheyMatch = .FALSE.
+       EXIT
+    ENDIF
+   END DO
+ENDIF
+IF(TheyMatch) THEN
+!   DO Qty=1, 
+!   CALL put_3d_view(Output, &
+!        & OldL2GPData%quantities(qty)%template%noFreqs, &
+!        & OldL2GPData%quantities(qty)%template%noSurfs, &
+!        & OldL2GPData%quantities(qty)%template%noInstances, &
+!        & OldL2GPData%quantities(qty)%values)
+   CALL FillVector(OldL2GPData%l2gpValue, Output, &
+        & 'l2gp', 'l2gp', NoL2GPValues, &
+        & OldL2GPData%nFreqs, &
+        & OldL2GPData%nLevels, &
+        & OldL2GPData%nTimes, &
+        & qtiesStart)
+ELSE
+   CALL MLSMessage(MLSMSG_Error, ModuleName, &
+        & 'Old and new L2GPData don''t match in times or geolocations')
+ENDIF
+DEALLOCATE(l2gpData%pressures, &
+     & l2gpData%latitude, l2gpData%longitude, l2gpData%time, &
+     & l2gpData%solarTime, l2gpData%solarZenith, l2gpData%losAngle, &
+     & l2gpData%geodAngle, l2gpData%chunkNumber, &
+     & l2gpData%l2gpValue, l2gpData%frequency, &
+     & l2gpData%l2gpPrecision, l2gpData%status, l2gpData%quality, &
+     & STAT=alloc_err)
+IF(alloc_err /= 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+     & 'Failed to deallocate temp l2gpData')
+!
+DEALLOCATE(OldL2GPData%pressures, &
+     & OldL2GPData%latitude, l2gpData%longitude, OldL2GPData%time, &
+     & OldL2GPData%solarTime, OldL2GPData%solarZenith, OldL2GPData%losAngle, &
+     & OldL2GPData%geodAngle, OldL2GPData%chunkNumber, &
+     & OldL2GPData%l2gpValue, OldL2GPData%frequency, &
+     & OldL2GPData%l2gpPrecision, OldL2GPData%status, OldL2GPData%quality,&
+     & STAT=alloc_err)
+IF(alloc_err /= 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+     & 'Failed to deallocate temp OldL2GPData')
+END SUBROUTINE FillOL2GPVector
+
+!=============================== nearby ==========================
+FUNCTION nearby(x, y)
+!=============================== nearby ==========================
+! This functions returns TRUE if x and y are "nearby" compared
+! with their moduli (proportionally small) and an overall tolerance
+REAL(r8), INTENT(IN) ::              x, y
+
+! result
+LOGICAL ::                           nearby
+
+! Private
+REAL(r8) ::                          small=1.D-32
+! REAL(r8) ::                          tolerance=1.D-32
+
+IF(x*y /= 0) THEN
+   nearby = ABS(x-y) .LT. small*SQRT(ABS(x))*SQRT(ABS(y))
+ELSEIF(x /= 0) THEN
+   nearby = ABS(x-y) .LT. small*ABS(x)
+ELSE
+   nearby=.TRUE.
+ENDIF
+
+END FUNCTION nearby
+
+!=============================== lowercase ==========================
+FUNCTION lowercase(str) RESULT (outstr)
+!=============================== lowercase ==========================
+    ! takes A-Z and replaces with a-z 
+    ! leaving other chars alone
+    !--------Argument--------!
+    CHARACTER (LEN=*), INTENT(IN) :: str
+    CHARACTER (LEN=LEN(str)) :: outstr
+
+    !----------Local vars----------!
+    CHARACTER(LEN=LEN(STR))::capstr
+    INTEGER::i,icode,offset
+    !----------Executable part----------!
+    capstr=str
+    offset=ICHAR("a")-ICHAR("A")
+
+    DO i=1,LEN(str)
+       icode=ICHAR(capstr(i:i))
+       IF ( icode >=ICHAR("A") .AND. icode <= ICHAR("Z")) THEN
+          capstr(i:i)=char(icode+offset)
+       ENDIF
+    ENDDO
+
+    outstr=capstr
+END FUNCTION lowercase
+
+!
+!
   ! ---------------------------------------------  ANNOUNCE_ERROR  -----
   subroutine ANNOUNCE_ERROR ( WHERE, CODE )
     integer, intent(in) :: WHERE   ! Tree node where error was noticed
@@ -140,6 +418,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.3  2000/10/06 22:18:47  pwagner
+! Fills from old l2gp data
+!
 ! Revision 2.2  2000/09/11 19:52:51  ahanzel
 ! Removed old log entries in file.
 !
