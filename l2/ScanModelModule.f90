@@ -1398,6 +1398,7 @@ contains ! =============== Subroutines and functions ==========================
   REAL(rp), PARAMETER :: deg2rad = pi / 180.0_rp ! degree to radians
   REAL(rp), PARAMETER :: boltz = 660.988_rp ! = kln10/m  m^2/(K sec^2)
   REAL(rp) :: z_surf
+  REAL(rp) :: surf_temp
   REAL(rp) :: surf_refr_indx(1)
 !
   REAL(rp), POINTER :: earthradc(:)  ! minor axis of earth ellipsoid in orbit
@@ -1426,6 +1427,7 @@ contains ! =============== Subroutines and functions ==========================
   REAL(rp), POINTER :: mass_corr(:)
   REAL(rp), POINTER :: dgphdr(:)
   REAL(rp), POINTER :: dscandz(:)
+  REAL(rp), POINTER :: temp_at_surf_phi(:)
   REAL(rp), POINTER :: eta_z(:,:)
   REAL(rp), POINTER :: eta_p_t(:,:)
   REAL(rp), POINTER :: eta_p_h2o(:,:)
@@ -1434,6 +1436,7 @@ contains ! =============== Subroutines and functions ==========================
   REAL(rp), POINTER :: eta_zxp_t(:,:)
   REAL(rp), POINTER :: eta_zxp_h2o(:,:)
   REAL(rp), POINTER :: eta_at_one_phi(:,:)
+  REAL(rp), POINTER :: eta_at_one_zeta(:,:)
 !
   LOGICAL, POINTER :: not_zero_z(:,:)
   LOGICAL, POINTER :: not_zero_p_t(:,:)
@@ -1447,7 +1450,7 @@ contains ! =============== Subroutines and functions ==========================
   NULLIFY(mass_corr, dgphdr, dscandz, eta_z, eta_p_t, eta_p_h2o, piq)
   NULLIFY(eta_zxp_t, eta_zxp_h2o, not_zero_z, not_zero_p_t, not_zero_p_h2o)
   NULLIFY(eta_piqxp, not_zero_t, not_zero_h2o, ratio2_gph, ratio4_gph) 
-  NULLIFY(eta_at_one_phi) 
+  NULLIFY(eta_at_one_phi, eta_at_one_zeta, temp_at_surf_phi) 
 ! Identify the vector quantities from state/extra
   orbIncline => GetVectorQuantityByType ( state, extra, &
     & quantityType=l_orbitInclination )
@@ -1508,8 +1511,6 @@ contains ! =============== Subroutines and functions ==========================
   geoclats = ASIN(earthradc**2 * SIN(red_phi_t) &
   & * SIN(deg2rad*orbincline%values(1:ptan%template%noSurfs,fmStat%maf)) &
   & / SQRT(earthrada**4*cosphi2 + earthradc**4*sinphi2))
-! some testing code
-!  WRITE(*,'(8f8.4)') geoclats - GeodToGeocLat(ptan%template%geodLat(:,fmStat%maf))
   sinlat2 = SIN(geoclats)**2
   coslat2 = 1.0_rp - sinlat2
   p2=0.5_rp * (3.0_rp*sinlat2 - 1.0_rp)
@@ -1636,22 +1637,45 @@ contains ! =============== Subroutines and functions ==========================
 ! compute surface pressure
   CALL ALLOCATE_TEST(eta_at_one_phi,1,windowfinish_t-windowstart_t+1, &
   & 'eta_at_one_phi',modulename)
+  CALL ALLOCATE_TEST(temp_at_surf_phi,temp%template%nosurfs, &
+  & 'temp_at_surf_phi',modulename)
   CALL get_eta_sparse(temp%template%phi(1,windowstart_t:windowfinish_t), &
   & (/phitan%values(1,fmStat%maf)/),eta_at_one_phi)
-  z_surf = z_surface(temp%template%surfs(:,1),SUM(temp%values(:, &
+  temp_at_surf_phi = SUM(temp%values(:, &
   & windowstart_t:windowfinish_t)*SPREAD( &
   & RESHAPE(eta_at_one_phi,(/windowfinish_t-windowstart_t+1/)),1, &
-  & temp%template%nosurfs),dim=2),g_ref(1), &
+  & temp%template%nosurfs),dim=2)
+  z_surf = z_surface(temp%template%surfs(:,1),temp_at_surf_phi,g_ref(1), &
   & SUM(refgph%values(1,windowstart_t:windowfinish_t) * eta_p_t(1,:)), &
   & refGPH%template%surfs(1,1),boltz)
   CALL DEALLOCATE_TEST(eta_at_one_phi,'eta_at_one_phi',modulename)
 ! compute refractive index at the surface
-! we assume that the lowermost temperature and water vapor values are
-! appropriate for this estimate.
-  CALL refractive_index(10.0_rp**(-(/z_surf/)),tan_temp(1:1),surf_refr_indx, &
-  & h2o_path = tan_h2o(1:1))
+  CALL ALLOCATE_TEST(eta_at_one_zeta,1,temp%template%nosurfs, &
+  & 'eta_at_one_zeta',modulename)
+  CALL get_eta_sparse(temp%template%surfs(:,1), (/z_surf/),eta_at_one_zeta)
+  surf_temp = SUM(RESHAPE(eta_at_one_zeta,(/temp%template%nosurfs/)) &
+  & * temp_at_surf_phi)
+  CALL DEALLOCATE_TEST(eta_at_one_zeta,'eta_at_one_zeta',modulename)
+  CALL ALLOCATE_TEST(eta_at_one_phi,1,windowfinish_h2o-windowstart_h2o+1, &
+  & 'eta_at_one_phi',modulename)
+  CALL ALLOCATE_TEST(eta_at_one_zeta,1,h2o%template%nosurfs, &
+  & 'eta_at_one_zeta',modulename)
+  CALL get_eta_sparse(h2o%template%phi(1,windowstart_h2o:windowfinish_h2o), &
+  & (/phitan%values(1,fmStat%maf)/),eta_at_one_phi)
+  CALL get_eta_sparse(h2o%template%surfs(:,1),(/z_surf/),eta_at_one_zeta)
+  CALL refractive_index(10.0_rp**(-(/z_surf/)),(/surf_temp/),surf_refr_indx, &
+  & h2o_path = (/EXP(SUM(RESHAPE(eta_at_one_zeta,(/h2o%template%nosurfs/)) &
+  & * SUM(LOG(h2o%values(:,windowstart_h2o:windowfinish_h2o)) &
+  & * SPREAD(RESHAPE(eta_at_one_phi,(/windowfinish_h2o-windowstart_h2o+1/)), &
+  & 1,temp%template%nosurfs),dim=2)))/))
+  CALL DEALLOCATE_TEST(eta_at_one_zeta,'eta_at_one_zeta',modulename)
+  CALL DEALLOCATE_TEST(eta_at_one_phi,'eta_at_one_phi',modulename)
+  CALL DEALLOCATE_TEST(temp_at_surf_phi,'temp_at_surf_phi',modulename)
 ! set all refr indicies below the surface to the surface value
-  WHERE(ptan%values(:,fmStat%maf) < z_surf) tan_refr_indx = surf_refr_indx(1)
+  WHERE(ptan%values(:,fmStat%maf) < z_surf) 
+    tan_refr_indx = surf_refr_indx(1)
+    tan_temp = surf_temp
+  END WHERE
 ! compute l1 geopotential
   CALL ALLOCATE_TEST(l1altrefr,ptan%template%nosurfs,'l1altrefr', &
   & modulename)
@@ -1669,15 +1693,13 @@ contains ! =============== Subroutines and functions ==========================
     & / (0.875_rp + 0.1_rp*ptan%values(:,fmStat%maf) &
     & - 0.02_rp*ptan%values(:,fmStat%maf)**2)
 ! forward model calculation
-  residual%values(:,fmStat%maf) = (GM / (l1altrefr*g0)) &
-  & * (1.0_rp - j2*p2*ratio2 - j4*p4*ratio4) &
-  & + ((omega*l1altrefr)**2*coslat2)/(2.0_rp*g0) - (GM / (l1refalt*g0)) &
-  & * (1.0_rp - j2*p2*ratio2_gph - j4*p4*ratio4_gph) &
-  & + ((omega*l1refalt)**2*coslat2)/(2.0_rp*g0) &
+  residual%values(:,fmStat%maf) = (GM*((1.0_rp - j2*p2*ratio2 - j4*p4*ratio4) &
+  & / l1altrefr - (1.0_rp - j2*p2*ratio2_gph - j4*p4*ratio4_gph) / l1refalt) &
+  & + 0.5_rp*omega**2*coslat2*(l1altrefr - l1refalt)*(l1altrefr + l1refalt) &
   & + mass_corr*boltz*SUM(RESHAPE(SPREAD(temp%values(:,windowstart_t: &
   & windowfinish_t),1,ptan%template%nosurfs), (/ptan%template%nosurfs, &
   & temp%template%nosurfs*(windowfinish_t-windowstart_t+1)/)) &
-  & * eta_piqxp,dim=2) / g0
+  & * eta_piqxp,dim=2)) / g0
   IF ( fmConf%differentialScan ) residual%values(:,fmStat%maf) = &
     & EOSHIFT(residual%values(:,fmStat%maf),1, &
     & residual%values(ptan%template%nosurfs,fmStat%maf)) &
@@ -1702,12 +1724,13 @@ contains ! =============== Subroutines and functions ==========================
       end if
       CALL ALLOCATE_TEST(dscandz,ptan%template%nosurfs, &
       & 'dscandz', modulename)
-      dscandz = dgphdr*l1altrefr*tan_refr_indx*ln10 &
-        & / (1.0_rp + tan_refr_indx) + boltz*mass_corr*SUM(RESHAPE( &
+      dscandz = boltz*mass_corr*SUM(RESHAPE( &
         & SPREAD(temp%values(:,windowstart_t:windowfinish_t),1, &
         & ptan%template%nosurfs), (/ptan%template%nosurfs, &
         & temp%template%nosurfs*(windowfinish_t-windowstart_t+1)/)) &
         & * eta_zxp_t,dim=2) / g0
+      WHERE(ptan%values(:,fmStat%maf) > z_surf) dscandz = dscandz &
+        & + dgphdr*l1altrefr*tan_refr_indx*ln10 / (1.0_rp + tan_refr_indx)
       if ( fmConf%differentialScan ) then
         CALL updateDiagonal ( BLOCK, EOSHIFT(dscandz,1, &
         & dscandz(ptan%template%nosurfs)) - dscandz)
@@ -1829,12 +1852,6 @@ contains ! =============== Subroutines and functions ==========================
   REAL(rp), POINTER :: piq(:,:)
 ! 
 ! begin code
-!  WRITE(*,'(a)') 'inputted g_ref,h_ref,z_ref,boltz'
-!  WRITE(*,*) g_ref, h_ref,z_ref,boltz
-!  WRITE(*,'(a)') 'inputted z_basis'
-!  WRITE(*,'(8f9.4)') z_basis
-!  WRITE(*,'(a)') 'inputted t_values'
-!  WRITE(*,'(8f8.2)') t_values
   NULLIFY(eta,piq)
   maxiter = 10
   thresh = 0.0001_rp
@@ -1862,11 +1879,7 @@ contains ! =============== Subroutines and functions ==========================
     z_new = z_surface - (h_ref*g_ref &
     & + boltz*SUM(RESHAPE(piq,(/n_coeffs/))*t_values)) &
     & / (boltz*SUM(RESHAPE(eta,(/n_coeffs/))*t_values))
-!  WRITE(*,'(a,i3)') 'iterating',iter
-!  WRITE(*,'(f9.4)') z_surface
   ENDDO
-!  WRITE(*,'(a)') 'done iterating'
-!  WRITE(*,'(f9.4)') z_surface
   z_surface = z_new
   CALL DEALLOCATE_TEST(eta,'eta',modulename)
   CALL DEALLOCATE_TEST(piq,'piq',modulename)
@@ -1874,6 +1887,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.41  2002/06/26 23:29:52  bill
+! fixed residual calculation bug--wgr
+!
 ! Revision 2.40  2002/06/26 20:59:25  livesey
 ! Fixed bug in 2d pressure guesser, was ignoring very first guess
 !
