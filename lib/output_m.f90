@@ -15,7 +15,7 @@ module OUTPUT_M
                                         ! if -1, MLSMessage if -2, both
                                         ! printer and MLSMSG if < -2.
 
-  public :: BLANKS, OUTPUT
+  public :: BLANKS, NEWLINE, OUTPUT
   interface OUTPUT
     module procedure output_char, output_char_array, output_complex
     module procedure output_dcomplex, output_double
@@ -83,7 +83,11 @@ contains
     return
   end subroutine BLANKS
 
-  subroutine OUTPUT_CHAR ( CHARS, ADVANCE, FROM_WHERE, DONT_LOG, lOG_CHARS )
+  subroutine NewLine
+    call output ( '', advance='yes' )
+  end subroutine NewLine
+
+  subroutine OUTPUT_CHAR ( CHARS, ADVANCE, FROM_WHERE, DONT_LOG, LOG_CHARS )
   ! Output CHARS to PRUNIT.
     character(len=*), intent(in) :: CHARS
     character(len=*), intent(in), optional :: ADVANCE
@@ -138,10 +142,11 @@ contains
     end if
   end subroutine OUTPUT_CHAR_ARRAY
 
-  subroutine OUTPUT_COMPLEX ( VALUE, Format, ADVANCE )
+  subroutine OUTPUT_COMPLEX ( VALUE, Format, ADVANCE, Before, After )
     complex, intent(in) :: VALUE
     character(len=*), intent(in), optional :: Format    ! How to print
     character(len=*), intent(in), optional :: ADVANCE
+    character(len=*), intent(in), optional :: Before, After ! text to print
     character(len=60) :: LINE
 
     if ( present(Format) ) then
@@ -149,14 +154,21 @@ contains
     else
       write ( line, '("(",1pg15.7,",",1pg15.7,")")' ) value
     end if
-    call output ( trim(line), advance=advance, dont_log = .true. )
+    if ( present(before) ) call output ( before, dont_log = .true. )
+    if ( present(after) ) then
+      call output ( trim(line), dont_log = .true. )
+      call output ( after, advance=advance, dont_log = .true. )
+    else
+      call output ( trim(line), advance=advance, dont_log = .true. )
+    end if
   end subroutine OUTPUT_COMPLEX
 
-  subroutine OUTPUT_DCOMPLEX ( VALUE, Format, ADVANCE )
+  subroutine OUTPUT_DCOMPLEX ( VALUE, Format, ADVANCE, Before, After )
     integer, parameter :: RK = kind(0.0d0)
     complex(rk), intent(in) :: VALUE
     character(len=*), intent(in), optional :: Format    ! How to print
     character(len=*), intent(in), optional :: ADVANCE
+    character(len=*), intent(in), optional :: Before, After ! text to print
     character(len=60) :: LINE
 
     if ( present(Format) ) then
@@ -164,16 +176,23 @@ contains
     else
       write ( line, '("(",1pg22.14,",",1pg22.14,")")' ) value
     end if
-    call output ( trim(line), advance=advance, dont_log = .true. )
+    if ( present(before) ) call output ( before, dont_log = .true. )
+    if ( present(after) ) then
+      call output ( trim(line), dont_log = .true. )
+      call output ( after, advance=advance, dont_log = .true. )
+    else
+      call output ( trim(line), advance=advance, dont_log = .true. )
+    end if
   end subroutine OUTPUT_DCOMPLEX
 
-  subroutine OUTPUT_DOUBLE ( VALUE, Format, LogFormat, ADVANCE )
+  subroutine OUTPUT_DOUBLE ( VALUE, Format, LogFormat, ADVANCE, Before, After )
   ! Output "double" to "prunit" using * format, trimmed of insignificant
   ! trailing zeroes, and trimmed of blanks at both ends.
     double precision, intent(in) :: VALUE
     character(len=*), intent(in), optional :: Format    ! How to print
     character(len=*), intent(in), optional :: LogFormat ! How to post to Log
     character(len=*), intent(in), optional :: ADVANCE
+    character(len=*), intent(in), optional :: Before, After ! text to print
     integer :: I, J, K
     character(len=30) :: LINE, LOG_CHARS
     character(len=3) :: MY_ADV
@@ -214,7 +233,13 @@ contains
     if ( present(LogFormat) ) then
       write ( log_chars, LogFormat ) value
     end if
-    call output ( line(:k), advance=my_adv, log_chars=log_chars )
+    if ( present(before) ) call output ( before )
+    if ( present(after) ) then
+      call output ( line(:k), log_chars=log_chars )
+      call output ( after, advance=advance )
+    else
+      call output ( line(:k), advance=my_adv, log_chars=log_chars )
+    end if
 
   end subroutine OUTPUT_DOUBLE
 
@@ -243,7 +268,7 @@ contains
     end if
   end subroutine OUTPUT_DOUBLE_ARRAY
 
-  subroutine OUTPUT_INTEGER ( INT, PLACES, ADVANCE, FILL, FORMAT )
+  subroutine OUTPUT_INTEGER ( INT, PLACES, ADVANCE, FILL, FORMAT, Before, After )
   ! Output INT to PRUNIT using at most PLACES (default zero) places
   ! If 'fill' is present and true, fill leading blanks with zeroes (only
   ! makes sense if 'places' is specified).
@@ -252,6 +277,7 @@ contains
     character(len=*), intent(in), optional :: ADVANCE
     logical, intent(in), optional :: FILL
     character(len=*), intent(in), optional :: FORMAT
+    character(len=*), intent(in), optional :: Before, After ! text to print
     logical :: My_Fill
     integer :: I, J
     character(len=12) :: LINE
@@ -278,7 +304,13 @@ contains
       i = max( 1, min(len(line)+1-my_places, index(line,' ',back=.true.)+1) )
       j = len(line)
     end if
-    call output ( line(i:j), advance=my_adv )
+    if ( present(before) ) call output ( before )
+    if ( present(after) ) then
+      call output ( line(i:j) )
+      call output ( after, advance=advance )
+    else
+      call output ( line(i:j), advance=my_adv )
+    end if
     return
   end subroutine OUTPUT_INTEGER
 
@@ -323,13 +355,14 @@ contains
     call output ( line, advance=my_adv )
   end subroutine OUTPUT_LOGICAL
 
-  subroutine OUTPUT_SINGLE ( VALUE, FORMAT, LogFormat, ADVANCE )
+  subroutine OUTPUT_SINGLE ( VALUE, FORMAT, LogFormat, ADVANCE, Before, After )
   ! Output "SINGLE" to "prunit" using * format, trimmed of insignificant
   ! trailing zeroes, and trimmed of blanks at both ends.
     real, intent(in) :: VALUE
     character(len=*), intent(in), optional :: Format  ! How to print
     character(len=*), intent(in), optional :: LogFormat     ! How to post to Log
     character(len=*), intent(in), optional :: ADVANCE
+    character(len=*), intent(in), optional :: Before, After ! text to print
     integer :: I, J, K
     character(len=30) :: LINE, LOG_CHARS
     character(len=3) :: MY_ADV
@@ -370,7 +403,13 @@ contains
     if ( present(LogFormat) ) then
       write ( log_chars, LogFormat ) value
     end if
-    call output ( line(:k), advance=my_adv, log_chars=log_chars )
+    if ( present(before) ) call output ( before )
+    if ( present(after) ) then
+      call output ( line(:k), log_chars=log_chars )
+      call output ( after, advance=advance )
+    else
+      call output ( line(:k), advance=my_adv, log_chars=log_chars )
+    end if
 
   end subroutine OUTPUT_SINGLE
 
@@ -443,6 +482,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.28  2003/10/07 01:12:59  vsnyder
+! Add NewLine subroutine, and Before and After text args
+!
 ! Revision 2.27  2003/09/15 23:08:44  vsnyder
 ! Remove five unused local variables
 !
