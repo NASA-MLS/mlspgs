@@ -1,4 +1,4 @@
-! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -10,11 +10,15 @@ MODULE L0Utils ! Utilities to read L0 data
   USE SDPToolkit, ONLY: PGS_S_SUCCESS, PGSIO_W_L0_END_OF_VIRTUAL_DS, &
        PGSIO_M_L0_HEADER_CHANGED, PGS_PC_GetReference
   USE OpenInit, ONLY: OpenL0File
-  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Info, MLSMSG_Warning, MLSMSG_Error
+  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Info, MLSMSG_Warning, &
+       MLSMSG_Error
 
   IMPLICIT NONE
 
-  PRIVATE :: Id, ModuleName
+  PRIVATE
+
+  PUBLIC :: ReadL0Sci, ReadL0Eng
+
   !------------------------------- RCS Ident Info ------------------------------
   CHARACTER(LEN=130) :: id = &
        "$Id$"
@@ -64,42 +68,46 @@ CONTAINS
 
   END FUNCTION ReadL0Packet
 
-  SUBROUTINE ReadL0Sci (scipkt, OK)
+  SUBROUTINE ReadL0Sci (SciPkt, OK)
 
     USE MLSL1Config, ONLY: L1Config
 
-    CHARACTER(LEN=*), DIMENSION(:) :: scipkt
+    CHARACTER(LEN=*), DIMENSION(:) :: SciPkt
     LOGICAL :: OK
 
     INTEGER :: i, returnStatus, version
-    REAL(r8) :: TAI93
-    INTEGER :: ret_len
+    REAL(r8) :: TAI93(2)
+    INTEGER :: ret_len, sindx, MIF(2)
     LOGICAL :: EOD
     CHARACTER(len=132) :: filename
 
+    INTEGER, PARAMETER :: SciLen = 1024
     INTEGER, EXTERNAL :: PGS_IO_L0_Close
 
-    DO i = 1, 2
+    MIF = -1
+    TAI93 = 0.0
+    sindx = 1
+    DO
 
-       ret_len = ReadL0Packet (L0FileInfo%sci_unit(i), LEN(scipkt(i)), &
-            scipkt(i), TAI93, EOD)
+       ret_len = ReadL0Packet (L0FileInfo%sci_unit(sindx), SciLen, &
+            SciPkt(sindx), TAI93(sindx), EOD)
 
-       IF (TAI93 > L1Config%Expanded_TAI%endTime) THEN
+       IF (TAI93(sindx) > L1Config%Expanded_TAI%endTime) THEN
           OK = .FALSE.
           RETURN
        ENDIF
 
        IF (EOD) THEN    ! May need to do this elsewhere or pass flag here
           EOD = .FALSE.       
-          returnStatus = PGS_IO_L0_Close (L0FileInfo%sci_unit(i))
+          returnStatus = PGS_IO_L0_Close (L0FileInfo%sci_unit(sindx))
 
           CALL MLSMessage (MLSMSG_Info, ModuleName, &
-               & 'Closed L0 Science file: '//L0FileInfo%SciFileName(i))
+               & 'Closed L0 Science file: '//L0FileInfo%SciFileName(sindx))
 
-          L0FileInfo%sci_pcf(i) = L0FileInfo%sci_pcf(i) + 1  ! Next entry
+          L0FileInfo%sci_pcf(sindx) = L0FileInfo%sci_pcf(sindx) + 1  ! Next entry
           version = 1
-          returnStatus = PGS_PC_getReference (L0FileInfo%sci_pcf(i), version, &
-               filename)
+          returnStatus = PGS_PC_getReference (L0FileInfo%sci_pcf(sindx), &
+               version, filename)
           IF (returnStatus /= PGS_S_SUCCESS) THEN
              CALL MLSMessage (MLSMSG_Warning, ModuleName, &
                   & 'No next L0 Sci File')
@@ -107,8 +115,18 @@ CONTAINS
              RETURN
           ENDIF
 
-          CALL OpenL0File (L0FileInfo%sci_pcf(i), L0FileInfo%sci_unit(i), &
-               L0FileInfo%SciFilename(i), "Science")
+          CALL OpenL0File (L0FileInfo%sci_pcf(sindx), L0FileInfo%sci_unit(sindx),&
+               L0FileInfo%SciFilename(sindx), "Science")
+       ENDIF
+
+       MIF(sindx) = ICHAR (SciPkt(sindx)(17:17))
+
+       IF (MIF(1) == MIF(2)) EXIT
+
+       IF (TAI93(2) < TAI93(1)) THEN
+          sindx = 2
+       ELSE
+          sindx = 1
        ENDIF
 
     ENDDO
@@ -134,10 +152,6 @@ CONTAINS
 ! For Version 3.0:
 
     INTEGER, PARAMETER :: MAF_offset(6) = (/ 61, 253, 253, 17, 19, 17 /)
-
-! For Version 2.4:
-
-    ! INTEGER, PARAMETER :: MAF_offset(6) = (/ 61, 241, 252, 19, 19, 17 /)
 
     INTEGER, EXTERNAL :: PGS_IO_L0_Close
 
@@ -201,6 +215,9 @@ END MODULE L0Utils
 !=============================================================================
 
 ! $Log$
+! Revision 2.3  2002/09/12 16:18:39  perun
+! Align science packets to same MIF and MAF
+!
 ! Revision 2.2  2002/03/29 20:18:34  perun
 ! Version 1.0 commit
 !
