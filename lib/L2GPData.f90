@@ -24,9 +24,9 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   public :: L2GPData_T
   public :: L2GPNameLen
   public :: AddL2GPToDatabase,  DestroyL2GPContents,  DestroyL2GPDatabase, &
-    & Dump, Dump_L2GP,  ExpandL2GPDataInPlace,  OutputL2GP_createFile, &
-    & OutputL2GP_writeData,  OutputL2GP_writeGeo,  ReadL2GPData, &
-    & SetupNewL2GPRecord,  WriteL2GPData
+    & Dump, ExpandL2GPDataInPlace,  &
+    & OutputL2GP_createFile, OutputL2GP_writeData,  OutputL2GP_writeGeo, &
+    & ReadL2GPData, SetupNewL2GPRecord,  WriteL2GPData
 !  INTEGER :: SWRDFLD
 !  EXTERNAL SWRDFLD !Should USE SWAPI
   !---------------------------- RCS Ident Info -------------------------------
@@ -39,6 +39,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 
   interface DUMP
     module procedure DUMP_L2GP
+    module procedure DUMP_L2GP_DataBase
   end interface
 
 
@@ -78,6 +79,9 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   ! before swapi write; also decode ints to strings after read
   ! otherwise, try swapi read, write directly with strings
   logical, parameter :: USEINTS4STRINGS = .false.  
+  
+  ! So far, the nameIndex component of the main data type is never set
+  logical, parameter :: NAMEINDEXEVERSET = .false.  
   
   ! This datatype is the main one, it simply defines one l2gp swath
   ! It is used for 
@@ -1241,18 +1245,55 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine WriteL2GPData
 
-  ! ------------------------------------------ DUMP_L2GP ------------
+  ! ------------------------------------------ DUMP_L2GP_DATABASE ------------
 
-  subroutine Dump_L2GP ( L2gp, Name, ColumnsOnly )
+  subroutine Dump_L2GP_DATABASE ( L2gp, Name, ColumnsOnly, Details )
 
     ! Dummy arguments
     type (l2gpData_T), intent(in) ::          L2GP(:)
     character(len=*), intent(in), optional :: Name
     logical, intent(in), optional ::          ColumnsOnly ! if true, dump only with columns
+    integer, intent(in), optional :: DETAILS
 
     ! Local variables
     integer :: i
+    call output ( '============ L2GP Data Base ============', advance='yes' )
+    call output ( ' ', advance='yes' )
+    if ( present(name) ) then
+      call output ( 'L2GP Database name: ', advance='no' )
+      call output ( name, advance='yes' )
+    endif
+    if ( size(l2gp) < 1 ) then
+      call output ( '**** L2GP Database empty ****', advance='yes' )
+      return
+    endif
+    do i = 1, size(l2gp)
+      call dump(l2gp(i), ColumnsOnly, Details)
+    end do
+      
+  end subroutine Dump_L2GP_DATABASE
+
+  ! ------------------------------------------ DUMP_L2GP ------------
+
+  subroutine Dump_L2GP ( L2gp, ColumnsOnly, Details )
+
+    ! Dummy arguments
+    type (l2gpData_T), intent(in) ::          L2GP
+    logical, intent(in), optional ::          ColumnsOnly ! if true, dump only with columns
+    integer, intent(in), optional :: DETAILS ! <=0 => Don't dump multidim arrays
+    !                                        ! -1 Skip even 1-d arrays
+    !                                        ! -2 Skip all but name
+    !                                        ! >0 Dump even multi-dim arrays
+    !                                        ! Default 1
+
+    ! Local variables
+    integer :: i, ierr
     logical :: myColumnsOnly
+    integer :: MYDETAILS
+
+    ! Executable code
+    myDetails = 1
+    if ( present(details) ) myDetails = details
     
     if( present(ColumnsOnly)) then
       myColumnsOnly = ColumnsOnly
@@ -1260,51 +1301,60 @@ contains ! =====     Public Procedures     =============================
       myColumnsOnly = .false.
     endif
 
-    if ( present(name) ) call output ( name, advance='yes' )
-    do i = 1, size(l2gp)
-      call output ( 'L2GP Data: ')
-      if(l2gp(i)%nameIndex > 0) then
-        call display_string ( l2gp(i)%nameIndex, advance='yes' )
+      if ( myColumnsOnly .and. l2gp%nLevels > 1 ) return
+
+      call output ( 'L2GP Data: (swath name) ')
+      call output ( trim(l2gp%name) )
+      if ( NAMEINDEXEVERSET ) then
+        call output ( ', (parser name) ')
+        if(l2gp%nameIndex > 0) then
+          call display_string ( l2gp%nameIndex, advance='yes', IERR=ierr)
+          if ( ierr /= 0 ) call output ( '(not found in string table)', &
+           & advance='yes')
+        else
+          call output ( '(the nameIndex was 0) ', advance='yes')
+        endif
       else
-        call output ( '(the nameIndex is 0) ', advance='yes')
+        call output ( ' ', advance='yes')
       endif
+      if ( myDetails < -1 ) return
       call output ( 'nTimes: ')
-      call output ( l2gp(i)%nTimes, 5)
+      call output ( l2gp%nTimes, 5)
       call output ( '  nLevels: ')
-      call output ( l2gp(i)%nLevels, 3)
+      call output ( l2gp%nLevels, 3)
       call output ( '  nFreqs: ')
-      call output ( l2gp(i)%nFreqs, 3, advance='yes')
-      if(myColumnsOnly .and. l2gp(i)%nLevels>1) CYCLE
-      call dump ( l2gp(i)%pressures, 'Pressures:' )
+      call output ( l2gp%nFreqs, 3, advance='yes')
+      if ( myDetails < 0 ) return
+      call dump ( l2gp%pressures, 'Pressures:' )
       
-      call dump ( l2gp(i)%latitude, 'Latitude:' )
+      call dump ( l2gp%latitude, 'Latitude:' )
       
-      call dump ( l2gp(i)%longitude, 'Longitude:' )
+      call dump ( l2gp%longitude, 'Longitude:' )
       
-      call dump ( l2gp(i)%solarTime, 'SolarTime:' )
+      call dump ( l2gp%solarTime, 'SolarTime:' )
       
-      call dump ( l2gp(i)%solarZenith, 'SolarZenith:' )
+      call dump ( l2gp%solarZenith, 'SolarZenith:' )
       
-      call dump ( l2gp(i)%losAngle, 'LOSAngle:' )
+      call dump ( l2gp%losAngle, 'LOSAngle:' )
       
-      call dump ( l2gp(i)%geodAngle, 'geodAngle:' )
+      call dump ( l2gp%geodAngle, 'geodAngle:' )
       
-      call dump ( l2gp(i)%time, 'Time:' )
+      call dump ( l2gp%time, 'Time:' )
       
-      call dump ( l2gp(i)%chunkNumber, 'ChunkNumber:' )
+      call dump ( l2gp%chunkNumber, 'ChunkNumber:' )
       
-      if ( associated(l2gp(i)%frequency) ) &
-        & call dump ( l2gp(i)%frequency, 'Frequencies:' )
+      if ( associated(l2gp%frequency) ) &
+        & call dump ( l2gp%frequency, 'Frequencies:' )
       
-      call dump ( l2gp(i)%l2gpValue, 'L2GPValue:' )
+      if ( myDetails < 1 ) return
+      call dump ( l2gp%l2gpValue, 'L2GPValue:' )
       
-      call dump ( l2gp(i)%l2gpPrecision, 'L2GPPrecision:' )
+      call dump ( l2gp%l2gpPrecision, 'L2GPPrecision:' )
       
-      !    call dump ( l2gp(i)%status, 'Status:' )
+      !    call dump ( l2gp%status, 'Status:' )
       
-      call dump ( l2gp(i)%quality, 'Quality:' )
+      call dump ( l2gp%quality, 'Quality:' )
       
-    end do
   end subroutine Dump_L2GP
     
   !=============================================================================
@@ -1313,6 +1363,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.37  2001/09/05 22:57:16  pwagner
+! Removed Columns from L2GPData_T
+!
 ! Revision 2.36  2001/08/16 23:17:42  vsnyder
 ! Remove continuation ampersands within two lines
 !
