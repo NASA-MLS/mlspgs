@@ -785,7 +785,7 @@ contains
                 do surface = 1, temp%template%noSurfs
                   toAverage => k_temp_frq%values( &
                     & 1:noFreqs,surface,instance)
-                  call Freq_Avg(frequencies, centerFrequency+sense*FMI%F_grid_filter(:,i), &
+                  call Freq_Avg(frequencies, centerFreq+sense*FMI%F_grid_filter(:,i), &
                     & FMI%Filter_func(:,i), real(toAverage,r8), &
                     & noFreqs,FMI%no_filt_pts,r)
                   k_temp(ch,ptg_i,surface,instance) = r
@@ -810,7 +810,7 @@ contains
                 do instance = 1, TFMI%no_phi_f(j)
                   do surface = 1, TFMI%no_coeffs_f(j)
                     toAverage => k_atmos_frq(specie)%values(1:noFreqs,surface,instance)
-                    call Freq_Avg(frequencies,centerFrequency+sense*FMI%F_grid_filter(:,i), &
+                    call Freq_Avg(frequencies,centerFreq+sense*FMI%F_grid_filter(:,i), &
                       & FMI%Filter_func(:,i), real(toAverage, r8), &
                       & noFreqs,FMI%no_filt_pts,r)
                     k_atmos(ch,ptg_i,surface,instance,specie) = r
@@ -1187,6 +1187,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.36  2001/03/24 00:33:38  livesey
+! Bug fix (Typo)
+!
 ! Revision 2.35  2001/03/24 00:32:56  livesey
 ! Modified use of FMI%f_grid_filter
 !
