@@ -14,7 +14,8 @@ program MLSL2
   use MACHINE, only: GETARG, HP, IO_ERROR, NEVERCRASH
   use MLSCOMMON, only: FILENAMELEN, MLSFile_T
   use MLSFiles, only: WILDCARDHDFVERSION, HDFVERSION_4, HDFVERSION_5, &
-    & MLS_IO_GEN_OPENF, ADDFILETODATABASE, Deallocate_filedatabase
+!   & MLS_IO_GEN_OPENF, &
+    & ADDFILETODATABASE, Deallocate_filedatabase
   use MLSHDF5, only: mls_h5open, mls_h5close
   use MLSL2Options, only: CATENATESPLITS, CHECKPATHS, CURRENT_VERSION_ID, &
     & DEFAULT_HDFVERSION_READ, DEFAULT_HDFVERSION_WRITE, &
@@ -34,7 +35,7 @@ program MLSL2
   use OUTPUT_M, only: BLANKS, OUTPUT, OUTPUT_DATE_AND_TIME, PRUNIT
   use PARSER, only: CONFIGURATION
   use PVM, only: ClearPVMArgs, FreePVMArgs
-  use SDPToolkit, only: UseSDPToolkit, PGSD_IO_GEN_RSEQFRM
+  use SDPToolkit, only: UseSDPToolkit !, PGSD_IO_GEN_RSEQFRM
   use SnoopMLSL2, only: SNOOPINGACTIVE, SNOOPNAME
   use STRING_TABLE, only: DESTROY_CHAR_TABLE, DESTROY_HASH_TABLE, &
     & DESTROY_STRING_TABLE, DISPLAY_STRING, DO_LISTING, INUNIT
@@ -119,7 +120,7 @@ program MLSL2
   integer :: NUMFILES
   integer :: NUMSWITCHES
   integer :: RECL = 20000          ! Record length for l2cf (but see --recl opt)
-  integer :: RECORD_LENGTH
+! integer :: RECORD_LENGTH
   integer :: ROOT                  ! of the abstract syntax tree
   logical :: showDefaults = .false. ! Just print default opts and quit
   integer :: SINGLECHUNK = 0       ! Just run one chunk; unless lastChunk nonzero
@@ -941,6 +942,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.127  2004/10/30 00:28:00  vsnyder
+! Commented out some unused stuff to make NAG stop nagging
+!
 ! Revision 2.126  2004/10/11 16:57:03  pwagner
 ! Bug fix for options; slaves output not logged; prints proc start, end date_and_time
 !
