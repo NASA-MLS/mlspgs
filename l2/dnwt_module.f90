@@ -136,6 +136,8 @@ module DNWT_MODULE
     real(rk) :: DXNL = 0.0 ! L2 Norm of last candidate DX -- intent(out)
     real(rk) :: FNMIN      ! L2 Norm of F not in column space of the Jacobian
     real(rk) :: FNORM      ! L2 Norm of F at current X
+    real(rk) :: CHISQMINNORM ! FNMIN^2 / no degrees of freedom
+    real(rk) :: CHISQNORM  ! FNORM^2 / no degrees of freedom
     real(rk) :: GDX        ! dot_product( Gradient, "Candidate DX" )
     real(rk) :: GFAC       ! Amount of best gradient to use for DX
     real(rk) :: GRADN      ! L2 norm of Gradient
@@ -1215,6 +1217,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.35  2002/10/23 01:15:06  livesey
+! Added chiSq stuff
+!
 ! Revision 2.34  2002/10/07 23:43:11  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
