@@ -11,29 +11,28 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
     & SFENDACC, SFRDATA_F90, SFN2INDEX, SFSELECT, SFGINFO, &
     & SFGDINFO, SFSDMNAME, SFWDATA_F90
   use INIT_TABLES_MODULE, only: &
-    FIRST_LIT, LAST_LIT, L_BASELINE, L_BOUNDARYPRESSURE, &
+    L_BASELINE, L_BOUNDARYPRESSURE, &
     L_CHANNEL, L_CHISQCHAN, L_CHISQMMAF, L_CHISQMMIF, L_CHUNK, L_CLOUDICE, &
     L_CLOUDEXTINCTION, L_CLOUDWATER, &
-    L_TOTALEXTINCTION, L_MASSMEANDIAMETERICE, &
     L_CLOUDINDUCEDRADIANCE, L_CLOUDRADSENSITIVITY, &
     L_COLUMNABUNDANCE, L_DNWT_AJN, L_DNWT_AXMAX, &
     L_DNWT_CAIT, L_DNWT_CHISQMINNORM, L_DNWT_CHISQNORM, L_DNWT_DIAG, &
     L_DNWT_DXDX, L_DNWT_DXDXL, L_DNWT_DXN, L_DNWT_DXNL, L_DNWT_FLAG, &
     L_DNWT_FNMIN, L_DNWT_FNORM, L_DNWT_GDX, L_DNWT_GFAC, L_DNWT_GRADN, &
     L_DNWT_SQ, L_DNWT_SQT, &
-    L_EARTHREFL, L_EARTHRADIUS, L_EFFECTIVEOPTICALDEPTH, &
-    L_ELEVOFFSET, L_EXTINCTION, L_FREQUENCY, L_GEODALTITUDE, L_GPH, &
-    L_HEIGHT, L_HEIGHTOFFSET, L_ITERATION, L_JACOBIAN_COLS, L_JACOBIAN_ROWS, &
-    L_LOSTRANSFUNC, L_LOSVEL, L_MAGNETICFIELD, &
+    L_EARTHREFL, L_EARTHRADIUS, L_EFFECTIVEOPTICALDEPTH, L_ELEVOFFSET, &
+    L_EXTINCTION, L_FREQUENCY, L_GEODALTITUDE, L_GEODANGLE, &
+    L_HEIGHT, L_HEIGHTOFFSET, L_INTERMEDIATEFREQUENCY, &
+    L_ITERATION, L_JACOBIAN_COLS, L_JACOBIAN_ROWS, &
+    L_LOSTRANSFUNC, L_LOSVEL, L_LSBFREQUENCY, L_MAGNETICFIELD, &
     L_MAF, L_MASSMEANDIAMETERICE, L_MASSMEANDIAMETERWATER, L_MIF, &
     L_NOISEBANDWIDTH, L_NONE, L_NUMJ, L_ORBITINCLINATION, L_OPTICALDEPTH, &
-    L_PHITAN, L_PRESSURE, L_PTAN, L_RADIANCE, L_RHI, &
-    L_REFGPH, L_SCANRESIDUAL, L_SCECI, L_SCGEOCALT, L_SCVEL, &
+    L_PHITAN, L_PRESSURE, L_PTAN, L_RADIANCE, &
+    L_SCANRESIDUAL, L_SCECI, L_SCGEOCALT, L_SCVEL, &
     L_SCVELECI, L_SCVELECR, L_SIDEBANDRATIO, L_SIZEDISTRIBUTION, &
     L_SPACERADIANCE, L_SURFACETYPE, L_SYSTEMTEMPERATURE, &
-    L_TEMPERATURE, L_TNGTECI, L_TNGTGEOCALT, L_TNGTGEODALT, &
-    L_TRUE,&
-    L_VMR, L_XYZ
+    L_TNGTECI, L_TNGTGEOCALT, L_TNGTGEODALT, &
+    L_TOTALEXTINCTION, L_USBFREQUENCY, L_VMR, L_XYZ
   use intrinsic, only: LIT_INDICES !, L_CHANNEL, &
 !    & L_MAF, L_MIF, L_NONE
   use L1BData, only: L1BDATA_T, READL1BDATA
@@ -45,6 +44,7 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
   use MLSSignals_m, only: GETMODULENAME, MODULES
   use MLSStrings, only: Array2List, GetStringElement, NumStringElements
   use Output_M, only: OUTPUT
+  use QuantityTemplates, only: QuantityTemplate_T
   use STRING_TABLE, only: GET_STRING, DISPLAY_STRING
   use Tree, only: SOURCE_REF
 
@@ -98,7 +98,7 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
   public :: AddL2AUXToDatabase, DestroyL2AUXDatabase, Dump
   public :: SetupNewL2AUXRecord, DestroyL2AUXContents, ExpandL2AUXDataInPlace
   public :: ReadL2AUXData, WriteL2AUXData
-  public :: GetDimString, GetQuantityAttributes
+! public :: GetDimString, GetQuantityAttributes
 
   interface DUMP
     module procedure Dump_L2AUX
@@ -157,41 +157,85 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
 contains ! =====     Public Procedures     =============================
 
   ! ---------------------------------------  SetupNewL2AUXRecord   -----
-  subroutine SetupNewL2AUXRecord ( dimensionFamilies, dimSizes, dimStarts, &
-   & l2aux, quantityType )
+  !   (option 1)
+  ! subroutine SetupNewL2AUXRecord ( l2aux, &
+  !  & quantityTemplate, firstMAF, noMAFs )
+  !   (option 2)
+  ! subroutine SetupNewL2AUXRecord ( l2aux, dimFamilies, dimSizes, dimStarts, &
+  !  & quantityType )
+  subroutine SetupNewL2AUXRecord ( l2aux, &
+   & quantityTemplate, firstMAF, noMAFs, &
+   & inputDimFamilies, inputDimSizes, inputDimStarts, inputQuantityType )
 
     ! This first routine sets up the arrays for an l2aux datatype.
+    ! (Option 1)
+    ! The user supplies a Quantity template, 1st MAF and number of MAFs
+    ! Then we deduce the dimension families and their sizes
+    ! (Option 2)
     ! The user supplies a set of three dimensionFamilies (e.g. l_maf)
+    ! and their sizes and starts
     ! Quantities can have upto three valid dimensions.  l_none can be used
     ! to indicate later dimensions are invalid.
 
     ! Dummy arguments
-    integer, dimension(L2AUXRank), intent(in) :: dimensionFamilies
-    integer, dimension(L2AUXRank), intent(in) :: dimSizes
-    integer, dimension(L2AUXRank), intent(in) :: dimStarts
-    type (L2AUXData_T), intent(out)           :: l2aux
-    integer, optional, intent(in)             :: quantityType
-
+    type (L2AUXData_T), intent(out)       :: l2aux
+    !    ( option 1 )
+    type (QuantityTemplate_T), intent(in), optional :: quantityTemplate
+    integer, intent(in), optional                   :: firstMAF
+    integer, intent(in), optional                   :: noMAFs
+    !    ( option 2 )
+    integer, dimension(L2AUXRank), optional, intent(in) :: &
+                                                    & inputDimFamilies
+    integer, dimension(L2AUXRank), optional, intent(in) :: inputDimSizes
+    integer, dimension(L2AUXRank), optional, intent(in) :: inputDimStarts
+    integer, optional, intent(in) :: inputQuantityType
     ! Local variables
+    ! integer, dimension(L2AUXRank) :: dimensionFamilies
+    integer, dimension(L2AUXRank) :: dimSizes
+    integer, dimension(L2AUXRank) :: dimStarts
+    integer             :: quantityType
     integer :: dimIndex
     integer :: status
     integer, dimension(L2AUXRank)   :: dimEnds
     integer, dimension(3        )   :: dim_names
     character(len=16), dimension(3) :: extra_name
     character(len=16)               :: framing
+    integer                         :: option_number   ! (1 or 2; see above)
 
-    ! Fill the dimensions data structure
-    l2aux%dimensions%dimensionFamily = dimensionFamilies
-    if ( present(quantityType) ) then
-      call GetQuantityAttributes( quantityType, &
-       & framing, l2aux%VALUE_Units, dim_names )
-      l2aux%dimensions%dimensionFamily = dim_names
+    ! Executable
+    if ( present(quantityTemplate) ) then
+      option_number = 1
+      quantityType = quantityTemplate%quantityType
+    elseif ( present(inputQuantityType) ) then
+      option_number = 1
+      quantityType = inputQuantityType
+      dimSizes = inputDimSizes
+      dimStarts = inputdimStarts
+    else
+      call MLSMessage(MLSMSG_Error, ModuleName, &
+      & 'args to SetupL2AUXData incompatible with options 1 or 2')
     endif
-    l2aux%dimensions%noValues = dimSizes
+    ! Fill the dimensions data structure
+    ! l2aux%dimensions%dimensionFamily = dimensionFamilies
+    ! if ( present(quantityType) ) then
+    call GetQuantityAttributes( quantityType, &
+       & framing, l2aux%VALUE_Units, dim_names )
+    l2aux%dimensions%dimensionFamily = dim_names
+    ! endif
+    l2aux%minorFrame = (framing == 'minor')
+    l2aux%majorFrame = (framing == 'major')
     ! Name the dimensions (e.g. 'frequency')
     do dimIndex=1, L2AUXRank
       call GetDimString( l2aux%dimensions(dimIndex)%dimensionFamily, &
         & extra_name(dimIndex) )
+      if ( present (firstMAF) ) then
+        call GetDimStart( l2aux%dimensions(dimIndex)%dimensionFamily, &
+        & quantityTemplate, firstMAF, dimStarts(dimIndex) )
+      endif
+      if ( present (noMAFs) ) then
+        call GetDimSize( l2aux%dimensions(dimIndex)%dimensionFamily, &
+        & quantityTemplate, noMAFs, dimSizes(dimIndex) )
+      endif
     enddo
     call Array2List(extra_name, l2aux%DIM_Names)
     ! Name the dimensions' units (e.g. 'K')
@@ -200,17 +244,23 @@ contains ! =====     Public Procedures     =============================
        & framing, extra_name(dimIndex), dim_names )
     enddo
     call Array2List(extra_name, l2aux%DIM_Units)
+    l2aux%dimensions%noValues = dimSizes
 
     dimEnds = dimStarts + max(1,dimSizes) - 1
 
     ! Allocate the values for each dimension
     do dimIndex = 1, L2AUXRank
-      if ( dimensionFamilies(dimIndex)/=L_None ) then
+      ! if ( dimensionFamilies(dimIndex)/=L_None ) then
+      if ( l2aux%dimensions(dimIndex)%dimensionFamily /= L_None ) then
         allocate (l2aux%dimensions(dimIndex)%values( &
           & dimStarts(dimIndex):dimEnds(dimIndex)), &
           & STAT=status)
         if ( status/=0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
           & MLSMSG_Allocate // "l2aux dimension values" )
+        if ( present (quantityTemplate) ) then
+          call GetDimValues( l2aux%dimensions(dimIndex)%dimensionFamily, &
+          & quantityTemplate, l2aux%dimensions(dimIndex)%values )
+        endif
       else
         l2aux%dimensions(dimIndex)%noValues=1
       end if
@@ -585,7 +635,9 @@ contains ! =====     Public Procedures     =============================
     enddo
 
     ! Allocate result
-    call SetupNewl2auxRecord ( dim_families, data_dim_sizes, (/1,1,1/), l2aux )
+!   call SetupNewl2auxRecord ( dim_families, data_dim_sizes, (/1,1,1/), l2aux )
+    call SetupNewl2auxRecord ( l2aux, inputDimFamilies=dim_families, &
+     & inputDimSizes=data_dim_sizes, inputDimStarts=(/1,1,1/) )
 
     ! Read the SD
     start = 0
@@ -664,7 +716,9 @@ contains ! =====     Public Procedures     =============================
     data_dim_sizes = shape(L1BDATA%DpField)          
     dim_families(2) = l_mif                          
     dim_families(3) = l_maf                          
-    call SetupNewl2auxRecord ( dim_families, data_dim_sizes, (/1,1,1/), l2aux )
+!   call SetupNewl2auxRecord ( dim_families, data_dim_sizes, (/1,1,1/), l2aux )
+    call SetupNewl2auxRecord ( l2aux, inputDimFamilies=dim_families, &
+     & inputDimSizes=data_dim_sizes, inputDimStarts=(/1,1,1/) )
     l2aux%values = L1BDATA%DpField
     deallocate(L1BDATA%DpField, stat=status)
     if ( status /= 0 ) &
@@ -991,6 +1045,64 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine WriteL2AUXData_hdf4
 
+  ! ----------------------------------  GetDimSize  -----
+  subroutine GetDimSize ( nameType, quantityTemplate, noMAFs, dim_size)
+
+  ! Given a dim name type, e.g. l_MIF,
+  ! returns corresponding dimension size, e.g. quantityTemplate%noSurfs
+
+    ! Dummy arguments
+    integer, intent(in)                :: noMAFs
+    integer, intent(in)                :: nameType
+    integer, intent(out)               :: dim_size
+    type (QuantityTemplate_T), intent(in) :: quantityTemplate
+
+    ! Executable code
+    dim_size = 1
+    select case (nameType)                                       
+    case ( l_channel )  
+      dim_size = quantityTemplate%noChans
+    case ( l_frequency )  
+      dim_size = quantityTemplate%noChans
+    case ( l_geodAngle )  
+      dim_size = quantityTemplate%noInstances
+    case ( l_height )  
+      dim_size = quantityTemplate%noSurfs
+    case ( l_MAF )  
+      dim_size = noMAFs
+    case ( l_MIF )  
+      dim_size = quantityTemplate%noSurfs
+    case ( l_pressure )  
+      dim_size = quantityTemplate%noSurfs
+    case ( l_xyz )  
+      dim_size = 3
+
+    end select                                                       
+
+  end subroutine GetDimSize
+
+  ! ----------------------------------  GetDimStart  -----
+  subroutine GetDimStart ( nameType, quantityTemplate, firstMaf, dim_start)
+
+  ! Given a dim name type, e.g. l_MAF,
+  ! returns corresponding dimension start, e.g. firstMaf
+
+    ! Dummy arguments
+    integer, intent(in)                :: firstMaf
+    integer, intent(in)                :: nameType
+    integer, intent(out)               :: dim_start
+    type (QuantityTemplate_T), intent(in) :: quantityTemplate
+
+    ! Executable code
+    dim_start = 1
+    select case (nameType)                                       
+    case ( l_MAF )  
+      dim_start = firstMaf
+
+    end select                                                       
+
+  end subroutine GetDimStart
+
   ! ----------------------------------  GetDimString  -----
   subroutine GetDimString ( nameType, dim_string)
 
@@ -1010,6 +1122,8 @@ contains ! =====     Public Procedures     =============================
       dim_string = 'chunk'
     case ( l_frequency )  
       dim_string = 'frequency'
+    case ( l_geodAngle )  
+      dim_string = 'geodAngle'
     case ( l_height )  
       dim_string = 'height'
     case ( l_iteration )  
@@ -1026,6 +1140,39 @@ contains ! =====     Public Procedures     =============================
     end select                                                       
 
   end subroutine GetDimString
+
+  ! ----------------------------------  GetDimValues  -----
+  subroutine GetDimValues ( nameType, quantityTemplate, dim_values)
+
+  ! Given a dim name type, e.g. l_channel,
+  ! fills dimension with appropriate values, e.g. channels
+  ! (Assumes dim_values already allocated)
+
+    ! Dummy arguments
+    integer, intent(in)                   :: nameType
+    real(r8), dimension(:), intent(out)   :: dim_values
+    type (QuantityTemplate_T), intent(in) :: quantityTemplate
+
+    ! Internal variables
+    integer :: i
+    ! Executable code
+    dim_values = 0._r8
+    select case (nameType)                                       
+    case ( l_channel, l_MAF, l_MIF, l_xyz )  
+      do i=1, SIZE(dim_values)
+       dim_values(i) = i
+      enddo
+    case ( l_frequency, &
+         & L_IntermediateFrequency, l_USBFrequency, L_LSBFrequency )  
+      dim_values = quantityTemplate%frequencies
+    case ( l_geodAngle )  
+      dim_values = quantityTemplate%phi(1,:)   ! If not stacked, phi(surf, :)
+    case ( l_height, l_pressure )  
+      dim_values = quantityTemplate%surfs(:,1) ! If incoherent, surfs(:, inst)
+
+    end select                                                       
+
+  end subroutine GetDimValues
 
   ! ----------------------------------  GetQuantityAttributes  -----
   subroutine GetQuantityAttributes ( quantityType, &
@@ -1097,6 +1244,10 @@ contains ! =====     Public Procedures     =============================
     case ( l_frequency )  
       framing = 'major'
       units_name = 'frequency'
+      dim_names = (/ l_none, l_none, l_none /)                  
+    case ( l_geodAngle )  
+      framing = 'neither'
+      units_name = 'degrees'
       dim_names = (/ l_none, l_none, l_none /)                  
     case ( l_heightOffset )  
       framing = 'minor'
@@ -1266,6 +1417,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.44  2003/01/17 23:11:26  pwagner
+! Moved most ops out of LoinL2AUXData to SetupL2AUXData
+!
 ! Revision 2.43  2003/01/14 00:41:43  pwagner
 ! Added GetQuantityAttributes and getDimString; new fields in L2AUXData_T
 !
