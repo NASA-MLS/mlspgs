@@ -1,6 +1,7 @@
 #	Makefile
-#	targets: configure, depends, tar, clean_objs and clean
-#	true targets: $(MLSCONFG)/Makefile and $(MLSCONFG)/libmls.a
+#
+# Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 #
 #special case:
 #the 1st time through, before .configure exists yet,
@@ -31,6 +32,25 @@ PLATFORMS = .
 
 SHELL = /bin/sh
 
+#--------------- Target definitions
+#            (code sub-directories of lib)
+# $PROG          -- automatic; built when target is not specified
+# all            -- only libmls.a; same as $PROG
+# $testdir       -- the sub-directory tests; contains programs testing lib
+# $testsubdirs   -- all the sub-directories of tests
+# alltests       -- same as $testsubdirs
+
+#                           (functional)
+# configure      -- runs mlsconfigure to (re)set compiler, platform, paths
+#                  also (re)creates uniquely-named sub-sub-directories
+#                  with custom Makefiles where *.o, *.mod, etc. built
+# depends        -- runs makemakedep.sh to calculate dependencies
+# clean          -- deletes uniquely-named sub-sub-directories
+# clean_objs     -- deletes only *.o, *.mod from sub-subs
+# tar            -- creates a directory archive suitable for distribution
+#
+
+#----------------------------------------------------------
 #PROG=libmls.a
 PROG=all
 
@@ -43,10 +63,12 @@ testdir = tests
 testsubdirs = $(testdir)/multiply $(testdir)/sparsify $(testdir)/test_cf_parser
 
 
+#----------------------- Build instructions
+
 $(PROG): $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG)
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
 
-.PHONY: configure depends clean alltests $(testsubdirs) tar clean_objs
+.PHONY: configure depends clean alltests tar clean_objs
 
 tar: clean
 
@@ -105,6 +127,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.9  2001/01/10 23:45:34  pwagner
+# General housekeeping
+#
 # Revision 2.8  2000/11/22 21:48:20  pwagner
 # Omitting MatrixModule_n from lib
 #
