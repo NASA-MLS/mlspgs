@@ -21,7 +21,7 @@ module ScanModelModule          ! Scan model and associated calculations
     & ForwardModelStatus_T
   use ForwardModelVectorTools, only: GETQUANTITYFORFORWARDMODEL
   use Geometry, only: EARTHRADA, EARTHRADB, EARTHSURFACEGPH, GEODTOGEOCLAT, &
-    & G0, GM, J2, J4, OMEGA => W
+    & G0, GM, J2, J4, OMEGA => W, MAXREFRACTION
   use Init_Tables_Module, only: L_REFGPH, L_ZETA
   use intrinsic, only: L_HEIGHTOFFSET, L_NONE, L_PTAN, L_SCANRESIDUAL, &
     & L_TEMPERATURE, L_TNGTGEOCALT, L_VMR, L_PHITAN, L_ORBITINCLINATION
@@ -64,7 +64,6 @@ module ScanModelModule          ! Scan model and associated calculations
   
   ! Some terms to do with refraction
   
-  real (r8), parameter :: MAXREFRACTION = 0.1_rp ! Don't allow stupidly large n.
   real (r8), parameter :: MAXPRESSURE = 1400.0 ! /mb Don't allow very large pressures
 
 contains ! =============== Subroutines and functions ==========================
@@ -2018,6 +2017,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.53  2003/01/16 23:13:35  livesey
+! Now gets MaxRefraction (smaller value) from Geometry
+!
 ! Revision 2.52  2002/11/22 12:22:41  mjf
 ! Use getQuantityForForwardModel instead of GetVectorQuantityByType.
 !
