@@ -15,7 +15,7 @@ module ForwardModelInterface
   use Declaration_Table, only: NUM_VALUE, RANGE
   use Expr_M, only: EXPR
   use ForwardModelConfig, only: AddForwardModelConfigToDatabase, Dump, &
-    & ForwardModelConfig_T, ForwardModelSignalInfo_T
+    & ForwardModelConfig_T
   use SpectroscopyCatalog_m, only: Catalog_T, Lines, Catalog
   use FilterShapes_m, only: Close_Filter_Shapes_File, &
     & Open_Filter_Shapes_File, Read_Filter_Shapes_File, FilterShapes
@@ -45,6 +45,7 @@ module ForwardModelInterface
   use Molecules, only: spec_tags
   use MoreTree, only: Get_Boolean, Get_Field_ID
   use Output_M, only: Output
+  use Parse_Signal_m, only: PARSE_SIGNAL
   use PointingGrid_m, only: Close_Pointing_Grid_File, &
     & Open_Pointing_Grid_File, Read_Pointing_Grid_File, PointingGrids
   use String_Table, only: Display_String, Get_String
@@ -61,7 +62,7 @@ module ForwardModelInterface
   implicit none
   private
   public :: ConstructForwardModelConfig, Dump, ForwardModel, &
-    ForwardModelGlobalSetup, ForwardModelSignalInfo_T
+    ForwardModelGlobalSetup
 
   interface Dump
     module procedure MyDump_ForwardModelConfigs
@@ -143,6 +144,7 @@ contains
     & ( ROOT, VGRIDS ) result(info)
     ! Process the forwardModel specification to produce ForwardModelConfig to add
     ! to the database
+    use MLSSignals_M, only: Signals
 
     integer, intent(in) :: ROOT         ! of the forwardModel specification.
     !                                     Indexes either a "named" or
@@ -150,7 +152,7 @@ contains
     type (vGrid_T), dimension(:), target :: vGrids ! vGrid database
 
     type (signal_T) :: thisSignal ! A signal
-    type (forwardModelSignalInfo_T), pointer :: thisFWMSignal=>NULL() ! A signal
+    integer :: COMMONSIZE               ! Dimension
     integer :: Field                    ! Field index -- f_something
     logical :: Got(field_first:field_last)   ! "Got this field already"
     integer :: I                        ! Subscript and loop inductor.
@@ -159,14 +161,19 @@ contains
     integer :: Name                     ! sub_rosa of label of specification,
     ! if any, else zero.
     integer :: NoChannelsSpecs          ! Number of channel specs we've had
+    integer :: SIDEBAND                 ! Returned from Parse_Signal
     integer :: Son                      ! Some subtree of root.
     integer :: STATUS                   ! From allocates etc.
     integer :: THISMOLECULE             ! Tree index.
     integer :: type                     ! Type of value returned by EXPR
     integer :: TANGENT                  ! Loop counter
     integer :: Units(2)                 ! Units of value returned by EXPR
+    integer :: WANTED                   ! Which signal do we want?
     real (r8) :: Value(2)               ! Value returned by EXPR
-
+    character (len=80) :: SIGNALSTRING  ! E.g. R1A....
+    logical, dimension(:), pointer :: channels=>NULL() ! From Parse_Signal
+    integer, dimension(:), pointer :: SIGNALINDS=>NULL() ! From Parse_Signal
+    
     ! Error message codes
 
     error = 0
@@ -210,27 +217,27 @@ contains
       case ( f_frequency )
         call expr ( subtree(2,son), units, value, type )
         info%the_freq = value(1)
-      case ( f_channels )
-        if ( .not. associated( info%siginfo ) ) then
-          call AnnounceError(DefineSignalsFirst, key)
-        else
-          noChannelsSpecs=noChannelsSpecs+1
-          thisFWMSignal => info%sigInfo(noChannelsSpecs)
-          ! Now default to none included
-          thisFWMSignal%channelIncluded = .false.
-          do j = 2, nsons(son)
-            call expr ( subtree(j,son), units, value, type )
-            select case (type)
-            case (num_value)
-              thisFWMSignal%channelIncluded(int(value(1))) = .true.
-            case (range)
-              thisFWMSignal%channelIncluded(int(value(1)):int(value(2))) =&
-                & .true.
-            case default
-              ! Shouldn't get here if parser worked
-            end select
-          end do
-        end if
+!       case ( f_channels )
+!         if ( .not. associated( info%signals ) ) then
+!           call AnnounceError(DefineSignalsFirst, key)
+!         else
+!           noChannelsSpecs=noChannelsSpecs+1
+!           thisSignal => info%signals(noChannelsSpecs)
+!           ! Now default to none included
+!           thisSignal%channels = .false.
+!           do j = 2, nsons(son)
+!             call expr ( subtree(j,son), units, value, type )
+!             select case (type)
+!             case (num_value)
+!               thisFWMSignal%channelIncluded(int(value(1))) = .true.
+!             case (range)
+!               thisFWMSignal%channelIncluded(int(value(1)):int(value(2))) =&
+!                 & .true.
+!             case default
+!               ! Shouldn't get here if parser worked
+!             end select
+!           end do
+!         end if
       case ( f_molecules )
         allocate ( info%molecules(nsons(son)-1), stat = status)
         if (status /= 0) call AnnounceError( AllocateError, key )
@@ -254,22 +261,27 @@ contains
           end do                          ! End loop over listed signals
         end if
       case ( f_signals )
-        allocate ( info%sigInfo (nsons(son)-1), stat = status)
+        allocate ( info%signals (nsons(son)-1), stat = status)
         if (status /= 0) call AnnounceError( AllocateError, key )
         do j = 1, nsons(son)-1
-          info%sigInfo(j)%signal = &
-            & decoration(decoration( subtree(j+1, son )))
-          ! Now allocate the channels information
-          thisSignal = GetSignal( info%sigInfo(j)%signal )
-          allocate ( info%sigInfo(j)%channelIncluded( &
-            & lbound(thisSignal%frequencies,1):ubound(thisSignal%frequencies,1)),&
-            & stat=status)
-          if (status /= 0) then
-            call AnnounceError ( AllocateError, key )
-            exit
+          call get_string(sub_rosa(subtree(j+1,son)), signalString, strip=.true.)
+          call Parse_Signal(signalString, signalInds, spec_indices, &
+            tree_index=son, sideband=sideband, channels=channels)
+          ! Later on choose the `right' one from the match
+          ! For the moment choose first !????
+          wanted=1
+          info%signals(j) = signals(signalInds(wanted))
+          info%signals(j)%sideband = sideband
+          call Allocate_Test(info%signals(j)%channels, &
+            & size(info%signals(j)%frequencies), 'info%signals%channels', ModuleName)
+          if (associated(channels)) then
+            commonSize=min(size(info%signals(j)%channels),size(channels))
+            info%signals(j)%channels(1:commonSize) = channels(1:commonSize)
+          else
+            info%signals(j)%channels = .true.
           end if
-          ! Default to include this channel
-          info%sigInfo(j)%channelIncluded = .true.
+          call deallocate_test(channels,'channels',ModuleName)
+          call deallocate_test(signalInds,'signalInds',ModuleName)
         end do                          ! End loop over listed signals
       case ( f_phiWindow )
         call expr( subtree(2,son), units, value, type )
@@ -328,8 +340,6 @@ contains
   end function ConstructForwardModelConfig
 
   ! -----------------------------------------------  ForwardModel  -----
-  ! subroutine ForwardModel ( ForwardModelConfig, FwdModelExtra, FwdModelIn, &
-  !   &                       Jacobian, RowBlock, FwdModelOut )
   subroutine ForwardModel ( ForwardModelConfig, FwdModelExtra, FwdModelIn, &
     &                       Jacobian, RowBlock, FwdModelOut)
 
@@ -393,20 +403,18 @@ contains
     real(r8) :: tan_hts(Nptg,mnm), tan_temp(Nptg,mnm)
 
 
+    ! real(r4) :: K_TEMP(totalChannels,
+    ! size(ForwardModelConfig%tangentGrid%surfs,temp%template%noSurfs,phiWindow)
+    
     real(r4) :: K_TEMP(25,Nptg,mxco,mnp)
     real(r4) :: K_ATMOS(25,Nptg,mxco,mnp,Nsps)
-    real(r4) :: K_SPECT_DW(25,Nptg,mxco,mnp,Nsps),  &
-                K_SPECT_DN(25,Nptg,mxco,mnp,Nsps),  &
-                K_SPECT_DNU(25,Nptg,mxco,mnp,Nsps)
 
     real(r8) :: I_STAR_ALL(25,Nptg)
 
     real(r4) :: K_STAR_ALL(25,20,mxco,mnp,Nptg)
     type(k_matrix_info) :: k_star_info(20)
 
-    type(path_derivative) :: k_temp_frq, k_atmos_frq(Nsps), &
-                k_spect_dw_frq(Nsps), k_spect_dn_frq(Nsps), &
-                k_spect_dnu_frq(Nsps)
+    type(path_derivative) :: k_temp_frq, k_atmos_frq(Nsps)
 
     type(path_beta), dimension(:,:), pointer :: beta_path => null()
 
@@ -495,14 +503,14 @@ contains
     ! First we identify the vector quantities we're going to need.
     ! The key is to identify the signal we'll be working with first
     ! Deal with multiple signals in later versions !??? NJL
-    if (size(forwardModelConfig%sigInfo) > 1) call MLSMessage ( &
+    if (size(forwardModelConfig%signals) > 1) call MLSMessage ( &
       & MLSMSG_Error,ModuleName, &
       & "Can't yet have multiple signals in forward model")
-    signal = GetSignal(forwardModelConfig%sigInfo(1)%signal)
+    signal = forwardModelConfig%signals(1)
 
     ! Now from that we identify the radiance quantity we'll be outputting
     radiance => GetVectorQuantityByType (fwdModelOut, quantityType=l_radiance, &
-      & signal= forwardModelConfig%sigInfo(1)%signal )
+      & signal= signal%index )
 
     ! Identify the appropriate state vector components, save vmrs for later
     temp => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
@@ -567,8 +575,8 @@ contains
 !
 ! *** DEBUG
 !
-    ForwardModelConfig%temp_der = .true.
-    ForwardModelConfig%atmos_der = .true.
+    ForwardModelConfig%temp_der = .false.
+    ForwardModelConfig%atmos_der = .false.
     do j = 1, noSpecies
       forwardModelConfig%moleculeDerivatives(j) = .true.
     end do
@@ -598,19 +606,19 @@ contains
     endif
 !
     ! Work out what signal we're after
-    signal = getSignal ( forwardModelConfig%sigInfo(1)%signal )
+    signal = forwardModelConfig%signals(1)
 
     ! Get some dimensions which we'll use a lot
     noMAFs = radiance%template%noInstances
 
     ! Work out which channels are used
     call allocate_test (channelIndex, size(signal%frequencies), 'channelIndex', ModuleName)
-    noUsedChannels = count ( forwardModelConfig%sigInfo(1)%channelIncluded)
+    noUsedChannels = count ( signal%channels )
     call allocate_test (usedChannels, noUsedChannels, 'channelIndex', ModuleName)
     do channel = 1, size( signal%frequencies)
       channelIndex(channel) = channel
     end do
-    usedChannels = pack ( channelIndex, forwardModelConfig%sigInfo(1)%channelIncluded)
+    usedChannels = pack ( channelIndex, signal%channels )
     call deallocate_test(channelIndex,'channelIndex',ModuleName)
 
 !    Nptg = forwardModelConfig%tangentGrid%noSurfs
@@ -712,8 +720,8 @@ contains
 
     ! ---------------------------- Begin main Major Frame loop --------
 
-!   do maf = 3, 3
-    do maf = 1, noMAFs
+   do maf = 3, 3
+!    do maf = 1, noMAFs
       print*,'Doing maf:',maf
 
  ! Compute the specie function (spsfunc) and the refraction along
@@ -754,10 +762,13 @@ contains
       ! allocated inside the pointing loop.
       if (.not. forwardModelConfig%do_freq_avg) then
         ! Think later about multiple signals case!???
-        noFreqs = count ( forwardModelConfig%sigInfo(1)%channelIncluded )
+        noFreqs = count ( forwardModelConfig%signals(1)%channels )
         call allocate_test(frequencies,noFreqs,"frequencies",ModuleName)
         frequencies = pack ( signal%frequencies, &
-          & forwardModelConfig%sigInfo(1)%channelIncluded )
+          & forwardModelConfig%signals(1)%channels )
+        !%%%%%%%%%%%%% DEBUG NJL
+        signal%sideband=-1
+        !%%%%%%%%%%%%%%
         select case (signal%sideband)
         case ( -1 )
           frequencies = signal%lo - (signal%centerFrequency+frequencies)
@@ -802,18 +813,6 @@ contains
             & 'k_atmos_frq(..)', ModuleName )
         end if
 
-        ! Allocate intermediate space for spectroscopy derivatives
-        if ( forwardModelConfig%spect_der ) then
-          call Allocate_Test( k_spect_dw_frq(specie)%values, &
-            & maxNoFreqs, f%template%noSurfs, f%template%noInstances, &
-            & 'k_spect_dw_frq(..)', ModuleName )
-          call Allocate_Test( k_spect_dn_frq(specie)%values, &
-            & maxNoFreqs, f%template%noSurfs, f%template%noInstances, &
-            & 'k_spect_dn_frq(..)', ModuleName )
-          call Allocate_Test( k_spect_dnu_frq(specie)%values, &
-            & maxNoFreqs, f%template%noSurfs, f%template%noInstances, &
-            & 'k_spect_dnu_frq(..)', ModuleName )
-        endif
       end do ! End loop over speices
 
       ! Now we can go ahead and loop over pointings
@@ -982,54 +981,6 @@ contains
           end if                        ! Want derivatives for this
         end do                          ! Loop over species
 
-!        if(ForwardModelConfig%spect_der) then
-! Frequency Average the spectroscopic derivatives with the appropriate
-! filter shapes
-!           do i = 1, noUsedChannels
-!             ch = usedChannels(i)
-!             do m = 1, FMI%n_sps
-!               j = FMI%spect_atmos(m)
-!               if(.not.  FMI%spectroscopic(j)%DER_CALC(FMI%band)) cycle
-!               Spectag = FMI%spectroscopic(j)%Spectag
-!               do
-!                 if(FMI%spectroscopic(j)%Spectag /= Spectag) exit
-!                 RadV(1:noFreqs) = 0.0
-!                 CA = FMI%spectroscopic(j)%type
-!                 do k = 1, FMI%spectroscopic(j)%no_phi_values
-!                   do n = 1, FMI%spectroscopic(j)%no_zeta_values
-!                     select case ( CA )
-!                     case ( 'W' )
-!                       RadV(1:noFreqs) = k_spect_dw_frq(m)%values(1:noFreqs,n,k)
-!                     case ( 'N' )
-!                       RadV(1:noFreqs) = k_spect_dn_frq(m)%values(1:noFreqs,n,k)
-!                     case ( 'V' )
-!                       RadV(1:noFreqs) = k_spect_dnu_frq(m)%values(1:noFreqs,n,k)
-!                     end select
-!                     if(ForwardModelConfig%do_freq_avg) then
-!                       call Freq_Avg(frequencies,                        &
-!                      &     centerFreq+sense*FilterShapes(i)%FilterGrid, &
-!                      &     FilterShapes(i)%FilterShape,RadV,            &
-!                      &     noFreqs,Size(FilterShapes(i)%FilterGrid),r)
-!
-!                     else
-!                       r = RadV(1)
-!                     endif
-!                     select case ( CA )
-!                     case ( 'W' )
-!                       k_spect_dw(ch,ptg_i,n,k,j) = r
-!                     case ( 'N' )
-!                       k_spect_dn(ch,ptg_i,n,k,j) = r
-!                     case ( 'V' )
-!                       k_spect_dnu(ch,ptg_i,n,k,j) = r
-!                     end select
-!                   end do
-!                 end do
-!                 j = j + 1
-!                 if(j > 3 * FMI%n_sps) exit
-!               end do
-!             end do
-!           end do
-!        endif
 
         deallocate (dh_dt_path, STAT=status)
         if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
@@ -1039,7 +990,7 @@ contains
       ! ---------------------------------- End of Pointing Loop ---------------
 
       ! Complete the radiances's last location, also  complete k_temp last
-      ! location as well as k_atmos last location and k_spect_d? last location:
+      ! location.
 
       do i = 1, noUsedChannels
         ch = usedChannels(i)
@@ -1061,23 +1012,6 @@ contains
             endif
           end do
         endif
-!         if(ForwardModelConfig%spect_der) then
-!           do m = 1, noSpecies
-!             j = FMI%spect_atmos(m)
-!             if(.not.  FMI%spectroscopic(j)%DER_CALC(FMI%band)) cycle
-!             Spectag =  FMI%spectroscopic(j)%Spectag
-!             do
-!               if(FMI%spectroscopic(j)%Spectag /= Spectag) exit
-!               k = FMI%spectroscopic(j)%no_phi_values
-!               n = FMI%spectroscopic(j)%no_zeta_values
-!               k_spect_dw(i,no_tan_hts,1:n,1:k,j)=k_spect_dw(i,no_tan_hts-1,1:n,1:k,j)
-!               k_spect_dn(i,no_tan_hts,1:n,1:k,j)=k_spect_dn(i,no_tan_hts-1,1:n,1:k,j)
-!               k_spect_dnu(i,no_tan_hts,1:n,1:k,j)=k_spect_dnu(i,no_tan_hts-1,1:n,1:k,j)
-!               j = j + 1
-!               if(j > 3 * FMI%n_sps) exit
-!             end do
-!           end do
-!         endif
       end do
 
       !  Here comes the Convolution code
@@ -1127,14 +1061,11 @@ contains
     ! ------------------------------ End of Major Frame Loop -----------
 
     if(ForwardModelConfig%temp_der) deallocate(k_temp_frq%values,STAT=i)
-    do j = 1, noSpecies
-      if(ForwardModelConfig%atmos_der) deallocate(k_atmos_frq(j)%values,STAT=i)
-      if(ForwardModelConfig%spect_der) then
-        deallocate(k_spect_dw_frq(j)%values,STAT=i)
-        deallocate(k_spect_dn_frq(j)%values,STAT=i)
-        deallocate(k_spect_dnu_frq(j)%values,STAT=i)
-      endif
-    end do
+    if(ForwardModelConfig%atmos_der) then
+      do j = 1, noSpecies
+        deallocate(k_atmos_frq(j)%values,STAT=i)
+      end do
+    endif
 
     ! *** DEBUG Print
 
@@ -1303,6 +1234,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.79  2001/04/10 22:04:16  livesey
+! Intermediate version, slight problem with signals.
+!
 ! Revision 2.78  2001/04/10 18:51:02  vsnyder
 ! Finish removing sideband stuff
 !
