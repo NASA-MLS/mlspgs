@@ -190,24 +190,51 @@ contains ! =====     Public Procedures     =============================
 ! =====     Private Procedures     =====================================
 
 !=============================== FillVector ==========================
-SUBROUTINE FillVector(Pointer, Vector, pointerType, vectorType, NumQtys, &
-     & numInstances, numSurfs, numChans, qtiesStart)
+SUBROUTINE FillVector(inPointer, Vector, pointerType, vectorType, NumQtys, &
+     & numChans, numSurfs, numInstances, qtiesStart)
 !=============================== FillVector ==========================
 
-! Fill the vector Vector with values taken from the array pointed to by pointer
+! Fill the vector Vector with values taken from the array pointed to by inPointer
 ! in a manner that depends on their respective types:
 !
 !        pointerType        vectorType            operation
 !          l2gp              l2gp       vector(:,:,:) = pointer(:,:,:)
 
+! It is assumed that the rank3 Pointer is filled from
+! Pointer(1, 1, 1) to Pointer(numChans, numSurfs, numInstances)
+!
+! With the redefinition of Vector%quantities to be a rank2 object
+! we are faced with a problem: how to fill a rank 2 object from a rank 3 one?
+! If the rank 3 object is full, then it use the following trick:
+! Vector(1:numChans*numSurfs, 1:numInstances) = 
+!                   Pointer(1:numChans, 1:numSurfs, 1:numInstances)
+
 CHARACTER (Len=*), INTENT(IN) ::        pointerType, vectorType
-REAL(r8), POINTER, DIMENSION(:,:,:) ::  Pointer
+REAL(r8), POINTER, DIMENSION(:,:,:) ::  inPointer
 TYPE(Vector_T), INTENT(OUT) ::          Vector
 INTEGER, INTENT(IN) ::                  NumQtys, qtiesStart
 INTEGER, INTENT(IN) ::                  numInstances, numSurfs, numChans
 
 ! Private
-INTEGER ::                              qty
+INTEGER ::                              qty, IERR
+! Error codes
+INTEGER ::                              numInstancesisZero=1
+INTEGER ::                              numSurfsisZero=2
+INTEGER ::                              numChansisZero=3
+INTEGER ::                              objIsFullRank3=4
+INTEGER ::                              ErrorInFillVector=-999
+
+! Sanity checks:
+IF(numChans.EQ.0) THEN
+	call announce_error ( ErrorInFillVector, numChansisZero )
+        RETURN
+ELSEIF(numSurfs.EQ.0) THEN
+	call announce_error ( ErrorInFillVector, numSurfsisZero )
+        RETURN
+ELSEIF(numInstances.EQ.0) THEN
+	call announce_error ( ErrorInFillVector, numInstancesisZero )
+        RETURN
+ENDIF
 
 Vector%template%NoQuantities = NumQtys
 SELECT CASE (PointerType(:4) // VectorType(:4))
@@ -216,12 +243,23 @@ CASE ('l2gpl2gp')
      Vector%quantities(qty)%template%noChans = numChans
      Vector%quantities(qty)%template%noSurfs = numSurfs
      Vector%quantities(qty)%template%noInstances = numInstances    
-!     CALL put_3d_view(Pointer, &
+!     CALL put_3d_view(inPointer, &
 !        & numChans, &
 !        & numSurfs, &
 !        & numInstances, &
 !        & Vector%quantities(qty)%values)
-     Vector%quantities(qty)%values = Pointer
+!     Vector%quantities(qty)%values = inPointer
+!	IF(numChans.EQ.1) THEN
+!        	Vector%quantities(qty)%values = inPointer(:, :, 1)
+!	ELSEIF(numSurfs.EQ.1) THEN
+!        	Vector%quantities(qty)%values = inPointer(:, 1, :)
+!	ELSEIF(numInstances.EQ.1) THEN
+!        	Vector%quantities(qty)%values = inPointer(1, :, :)
+!        ELSE
+!		call announce_error ( ErrorInFillVector, objIsFullRank3 )
+!       		RETURN
+!	ENDIF
+	CALL squeeze(inPointer, Vector%quantities(qty)%values, IERR)
    ENDDO
 CASE default
    ! FillVector not yet written to handle these cases
@@ -367,6 +405,66 @@ ENDIF
 
 END FUNCTION nearby
 
+!=============================== squeeze ==========================
+SUBROUTINE squeeze(source, sink, IERR)
+!=============================== squeeze ==========================
+    ! takes a rank 3 object source and returns a rank2 object sink
+    ! source(1..n1, 1..n2, 1..n3) -> sink(1..n1*n2, 1..n3)
+    ! unless it can't--then it returns iERR /= 0
+    ! One reason it may fail: shape of sink too small
+    !
+    ! Assuming that shape(source) = {n1, n2, n3}
+    !     =>          shape(sink) = {m1, m2}
+    ! then we must further assume (else set IERR)
+    ! n1*n2 <= m1
+    ! n3 <= m2
+    !
+    ! (A future improvement might take as optional arguments
+    !  integer arrays source_shape, sink_shape, 
+    !  or else shape-params n1, n2, m1)
+    !--------Argument--------!
+    REAL(r8), DIMENSION(:,:,:), INTENT(IN) :: source
+    REAL(r8), DIMENSION(:,:), INTENT(OUT)  :: sink
+    INTEGER, INTENT(OUT)                   :: IERR
+
+    !----------Local vars----------!
+    ! Error codes
+    INTEGER               :: n1_is_zero = 1
+    INTEGER               :: n2_is_zero = 2
+    INTEGER               :: n3_is_zero = 3
+    INTEGER               :: m1_too_small = 4
+    INTEGER               :: m2_too_small = 5
+    
+    INTEGER, DIMENSION(4) :: source_shape
+    INTEGER, DIMENSION(4) :: sink_shape
+    INTEGER::i,icode,offset
+    !----------Executable part----------!
+    source_shape(1:3) = shape(source)
+    sink_shape(1:2) = shape(sink)
+
+    IF (source_shape(1) == 0) THEN
+    	IERR = n1_is_zero
+        RETURN
+    ELSEIF (source_shape(2) == 0) THEN
+    	IERR = n2_is_zero
+        RETURN
+    ELSEIF (source_shape(3) == 0) THEN
+    	IERR = n3_is_zero
+        RETURN
+    ELSEIF (sink_shape(1) < source_shape(1)*source_shape(2)) THEN
+    	IERR = m1_too_small
+        RETURN
+    ELSEIF (sink_shape(2) < source_shape(3)) THEN
+    	IERR = m2_too_small
+        RETURN
+    ELSE
+    	IERR = 0
+    ENDIF
+
+    sink = reshape(source, sink_shape(1:2))
+    
+END SUBROUTINE squeeze
+
 !=============================== lowercase ==========================
 FUNCTION lowercase(str) RESULT (outstr)
 !=============================== lowercase ==========================
@@ -418,6 +516,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.4  2000/11/13 23:02:21  pwagner
+! Adapted for rank2 vectorsModule
+!
 ! Revision 2.3  2000/10/06 22:18:47  pwagner
 ! Fills from old l2gp data
 !

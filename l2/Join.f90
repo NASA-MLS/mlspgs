@@ -409,17 +409,20 @@ contains ! =====     Public Procedures     =============================
 
     ! Local variables
 
-    integer :: status, profNo
-    integer :: useFirstInstance, useLastInstance, noOutputInstances
-    type (L2AUXData_T) :: newL2AUX
-    type (L2AUXData_T), pointer :: thisL2AUX
-    logical :: l2auxDataIsNew, useUnpackOutput
-    integer, dimension(3) :: dimensionFamilies, dimensionSizes
-    integer :: auxFamily     ! Channel or Frequency
-    integer :: dimensionIndex,channel,surf,prof, noMAFs,index, InstanceNo
-    integer :: firstProfile,lastProfile
-    real(r8), dimension(:,:), pointer :: values
-    type(VectorValue_T), pointer :: vectorQuantity
+    integer ::                              status, profNo
+    integer ::                              useFirstInstance, useLastInstance, &
+    &                                          noOutputInstances
+    type (L2AUXData_T) ::                   newL2AUX
+    type (L2AUXData_T), pointer ::          thisL2AUX
+    logical ::                              l2auxDataIsNew, useUnpackOutput
+    integer, dimension(3) ::                dimensionFamilies, dimensionSizes
+    integer ::                              auxFamily     ! Channel or Frequency
+    integer ::                              dimensionIndex,channel,surf,prof, &
+    &                                         noMAFs,index, InstanceNo
+    integer ::                              firstProfile,lastProfile
+    real(r8), dimension(:,:), pointer ::    values
+    type(VectorValue_T), pointer ::         vectorQuantity
+    INTEGER                              :: IERR
 
     ! Executable code
 
@@ -619,8 +622,10 @@ contains ! =====     Public Procedures     =============================
     vectorQuantity = GetVectorQuantity ( vector, quantity%name, &
       & quantityIsName=.TRUE. )
 
-    thisL2AUX%values = &
-      & vectorQuantity%values(useFirstInstance:useLastInstance,:,:)
+!    thisL2AUX%values = &
+!      & vectorQuantity%values(useFirstInstance:useLastInstance,:,:)
+    CALL unsqueeze(vectorQuantity%values(:, useFirstInstance:useLastInstance), &
+    & thisL2AUX%values, IERR)
 
     if ( toggle(gen) ) call trace_end ( "JoinL2AUXQuantities" )
 
@@ -628,12 +633,71 @@ contains ! =====     Public Procedures     =============================
 
   ! ---------------------------------------------------------------------------
 
+!=============================== unsqueeze ==========================
+SUBROUTINE unsqueeze(source, sink, IERR)
+!=============================== unsqueeze ==========================
+    ! takes a rank2 object source and returns a rank3 object sink
+    ! source(1..n1*n2, 1..n3) -> sink(1..n1, 1..n2, 1..n3)
+    ! unless it can't--then it returns iERR /= 0
+    ! One reason it may fail: shape of sink too small
+    !
+    ! Assuming that shape(sink) = {n1, n2, n3}
+    !     =>      shape(source) = {m1, m2}
+    ! then we must further assume (else set IERR)
+    ! m1 <= n1*n2
+    ! m2 <= n3
+    !
+    ! (A future improvement might take as optional arguments
+    !  integer arrays source_shape, sink_shape, 
+    !  or else shape-params n1, n2, m1)
+    !--------Argument--------!
+    REAL(r8), DIMENSION(:,:), INTENT(IN)     :: source
+    REAL(r8), DIMENSION(:,:,:), INTENT(OUT)  :: sink
+    INTEGER, INTENT(OUT)                     :: IERR
+ 
+    !----------Local vars----------!
+    ! Error codes
+    INTEGER               :: m1_is_zero = 1
+    INTEGER               :: m2_is_zero = 2
+    INTEGER               :: m1_too_big = 4
+    INTEGER               :: m2_too_big = 5
+    
+    INTEGER, DIMENSION(4) :: source_shape
+    INTEGER, DIMENSION(4) :: sink_shape
+    INTEGER::i,icode,offset
+    !----------Executable part----------!
+    source_shape(1:2) = shape(source)
+    sink_shape(1:3) = shape(sink)
+
+    IF (source_shape(1) == 0) THEN
+    	IERR = m1_is_zero
+        RETURN
+    ELSEIF (source_shape(2) == 0) THEN
+    	IERR = m2_is_zero
+        RETURN
+    ELSEIF (sink_shape(1)*sink_shape(2) < source_shape(1)) THEN
+    	IERR = m1_too_big
+        RETURN
+    ELSEIF (sink_shape(3) < source_shape(2)) THEN
+    	IERR = m2_too_big
+        RETURN
+    ELSE
+    	IERR = 0
+    ENDIF
+
+    sink = reshape(source, sink_shape(1:3))
+    
+END SUBROUTINE unsqueeze
+
 !=============================================================================
 end module Join
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.4  2000/11/13 23:02:21  pwagner
+! Adapted for rank2 vectorsModule
+!
 ! Revision 2.3  2000/10/05 16:37:19  pwagner
 ! Now compiles with new L2GPData module
 !
