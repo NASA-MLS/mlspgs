@@ -175,10 +175,10 @@ begin Construct
   ;; ----------------------------------------- Other minor stuff
 
   earthReflectivity: quantity, type = earthRefl
-  orbitInclination: Quantity, type = orbitInclination
+  orbitInclination: Quantity, type = orbitInclination, module=SC
   spaceRadiance: quantity, type = spaceRadiance
 
-  scGeocAlt: Quantity, type = scGeocAlt, module= SC
+  scGeocAlt: Quantity, type = scGeocAlt, module=SC
   tngtGeocAltGHz: Quantity, type=tngtGeocAlt, module=GHz
   tngtGeocAltTHz: Quantity, type=tngtGeocAlt, module=THz
 
