@@ -664,10 +664,10 @@ o:      do j = 2, nsons(PFATrees(s))
         end do o ! j
         ! Divide the LBL and PFA molecules into separate lists
         do i = 1, size(info%beta_group)
-          numLBL = count(tempPFA == 0)
-          numPFA = size(tempPFA) - numLBL
           tempLBL => info%beta_group(i)%lbl(s)%molecules
           tempPFA => info%beta_group(i)%pfa(s)%molecules
+          numLBL = count(tempPFA == 0)
+          numPFA = size(tempPFA) - numLBL
           nullify ( info%beta_group(i)%lbl(s)%molecules, &
             &       info%beta_group(i)%pfa(s)%molecules )
           call allocate_test ( info%beta_group(i)%lbl(s)%molecules, numLBL, &
@@ -1095,6 +1095,9 @@ o:      do j = 2, nsons(PFATrees(s))
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.109  2005/02/17 02:34:41  vsnyder
+! Fix a blunder in PFA setup
+!
 ! Revision 2.108  2005/02/16 23:16:24  vsnyder
 ! Revise data structures for split-sideband PFA
 !
