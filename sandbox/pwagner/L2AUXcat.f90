@@ -7,7 +7,7 @@ program L2AUXcat ! catenates split L2AUX files, e.g. dgm
 
    use Dump_0, only: DUMP
    use Hdf, only: DFACC_CREATE, DFACC_RDWR, DFACC_READ
-   use HDF5, only: h5fopen_f, h5fclose_f, h5fis_hdf5_f
+   use HDF5, only: h5fis_hdf5_f
    use HDFEOS5, only: HE5T_NATIVE_CHAR
    use L2AUXData, only: L2AUXDATA_T, MAXSDNAMESBUFSIZE, &
      & cpL2AUXData, WriteL2AUXData
@@ -17,9 +17,9 @@ program L2AUXcat ! catenates split L2AUX files, e.g. dgm
    use MLSCommon, only: R8
    use MLSFiles, only: MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, &
     & HDFVERSION_4, HDFVERSION_5, MLS_INQSWATH
-   use MLSHDF5, only: GetAllHDF5DSNames
+   use MLSHDF5, only: GetAllHDF5DSNames, mls_h5open, mls_h5close
    use MLSMessageModule, only: MLSMessageConfig
-   use MLSStrings, only: GetStringElement, NumStringElements
+   use MLSStringLists, only: GetStringElement, NumStringElements
    use output_m, only: output
    use PCFHdr, only: GlobalAttributes
    use Time_M, only: Time_Now, USE_WALL_CLOCK
@@ -62,7 +62,7 @@ program L2AUXcat ! catenates split L2AUX files, e.g. dgm
   MLSMessageConfig%useToolkit = .false.
   MLSMessageConfig%logFileUnit = -1
   USE_WALL_CLOCK = .true.
-  CALL h5open_f(error)
+  CALL mls_h5open(error)
   n_filenames = 0
   do      ! Loop over filenames
      call get_filename(filename, n_filenames, outputFile, verbose, list)
@@ -99,7 +99,7 @@ program L2AUXcat ! catenates split L2AUX files, e.g. dgm
     enddo
     if ( .not. list) call sayTime('copying all files')
   endif
-  call h5close_f(error)
+  call mls_h5close(error)
 contains
 !------------------------- get_filename ---------------------
     subroutine get_filename(filename, n_filenames, outputFile, verbose, list)
@@ -188,6 +188,9 @@ end program L2AUXcat
 !==================
 
 ! $Log$
+! Revision 1.2  2004/03/03 19:10:38  pwagner
+! Knows to write error messages to stdout
+!
 ! Revision 1.1  2004/02/27 00:27:27  pwagner
 ! First commit
 !
