@@ -707,7 +707,7 @@ contains
 
     integer, parameter :: INVENTORY=2, ARCHIVE=1
     character (len=PGSd_PC_FILE_PATH_MAX) :: physical_filename
-!    character (len=132) :: attrname, errmsg
+    character (len=PGSd_PC_FILE_PATH_MAX) :: mcf_filename
     integer :: version
     character (len=*), parameter :: METAWR_ERR = &
       &  'Error writing metadata attribute '
@@ -733,7 +733,7 @@ contains
 
     version = 1
     if ( mcf_file > 0 ) then
-      returnStatus = PGS_PC_GetReference (MCF_FILE, version , physical_filename)
+      returnStatus = PGS_PC_GetReference (MCF_FILE, version , mcf_filename)
     else
       returnStatus = PGSPC_W_NO_REFERENCE_FOUND
     end if
@@ -800,7 +800,7 @@ contains
     if ( present(metadata_error)) metadata_error=module_error
 
    if(index(switches, 'pro') /= 0) then
-       call announce_success(physical_filename, 'standard')
+       call announce_success(physical_filename, mcf_filename, 'standard')
    end if
 
   end subroutine Populate_metadata_std
@@ -833,7 +833,7 @@ contains
 
     integer, parameter :: INVENTORY=2, ARCHIVE=1
     character (len=PGSd_PC_FILE_PATH_MAX) :: physical_filename
-!    character (len=132) :: attrname, errmsg
+    character (len=PGSd_PC_FILE_PATH_MAX) :: mcf_filename
     integer :: Version, Indx
     character (len=*), parameter :: METAWR_ERR = &
       & 'Error writing metadata attribute '
@@ -859,7 +859,7 @@ contains
 
     version = 1
     if ( MCF_FILE > 0 ) then
-      returnStatus = PGS_PC_GetReference (MCF_FILE, version , physical_filename)
+      returnStatus = PGS_PC_GetReference (MCF_FILE, version , mcf_filename)
     else
       returnStatus = PGSPC_W_NO_REFERENCE_FOUND
     end if
@@ -931,7 +931,7 @@ contains
     if ( present(metadata_error)) metadata_error=module_error
 
    if(index(switches, 'pro') /= 0) then
-       call announce_success(physical_filename, 'others')
+       call announce_success(physical_filename, mcf_filename, 'others')
    end if
 
   end subroutine Populate_metadata_oth
@@ -984,6 +984,8 @@ contains
     if ( DEBUG ) then
       call output('file_base: ', advance='no')
       call output(trim(file_base), advance='yes')
+      call output('meta_name: ', advance='no')
+      call output(trim(meta_name), advance='yes')
     end if
 
     if ( len(TRIM(file_base)) <= 0 ) then
@@ -1092,6 +1094,10 @@ contains
    endif
    ! Now try to find mcf file corresponding to species name   
    ! assuming, e.g. '*h2o.*'                                  
+   if ( DEBUG ) then                                       
+     call output('Trying for a pcf name matching: ', advance='no')                   
+     call output(trim(sd_name), advance='yes')     
+   end if                                                  
    mcf = GetPCFromRef(trim(sd_name), &
     & mlspcf_mcf_l2gp_start, mlspcf_mcf_l2gp_end, &
     & MCFCASESENSITIVE, returnStatus)
@@ -1133,6 +1139,7 @@ contains
     character (len=45) :: Sval
     character (len=32) :: Mnemonic
     character (len=FileNameLen) :: Physical_filename
+    character (len=PGSd_PC_FILE_PATH_MAX) :: mcf_filename
     character (len=480) :: Msg, Msr
     character (len=PGSd_MET_GROUP_NAME_L) :: Groups(PGSd_MET_NUM_OF_GROUPS)
 
@@ -1148,7 +1155,7 @@ contains
 
     version = 1
     result = PGS_PC_GetReference (mlspcf_mcf_l2log_start, version, &
-      & physical_filename)
+      & mcf_filename)
 
     if ( result /= PGS_S_SUCCESS ) then
       call announce_error ( 0, &
@@ -1241,7 +1248,7 @@ contains
     if ( present(metadata_error)) metadata_error=module_error
 
    if(index(switches, 'pro') /= 0) then
-       call announce_success(physical_filename, 'Log')
+       call announce_success(physical_filename, mcf_filename, 'Log')
    end if
 
    end subroutine WriteMetaLog
@@ -1358,8 +1365,9 @@ contains
    end subroutine ExpandFileTemplate
 
   ! ---------------------------------------------  announce_success  -----
-  subroutine announce_success ( Name, l2_type )
+  subroutine announce_success ( Name, mcf, l2_type )
     character(LEN=*), intent(in) :: Name
+    character(LEN=*), intent(in) :: mcf
     character(LEN=*), intent(in) :: l2_type
 
     call output ( 'Level 2 output product metadata type : ' )
@@ -1368,6 +1376,10 @@ contains
     call output ( 'name : ' )
     call blanks(8)
     call output ( trim(Name), advance='yes')
+    call blanks(15)
+    call output ( 'mcf name : ' )
+    call blanks(8)
+    call output ( trim(mcf), advance='yes')
 
   end subroutine announce_success
 
@@ -1429,6 +1441,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.26  2002/02/22 19:20:12  pwagner
+! Added mcf file name to announce_success
+!
 ! Revision 2.25  2002/02/22 01:18:06  pwagner
 ! get_l2gp_mcf accepts meta_name arg; now uses getPCFFromRef
 !
