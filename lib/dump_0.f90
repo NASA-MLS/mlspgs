@@ -61,45 +61,19 @@ contains
 
     numZeroRows = 0
     if ( size(array) == 0 ) then
-      if ( present(name) ) then
-        call output ( name )
-        call output ( ' is ' )
-      end if
-      call output ( 'empty', advance='yes' )
+      call empty ( name )
     else if ( size(array) == 1 ) then
-      if ( present(name) ) then
-        call output ( name )
-        if ( myClean ) then
-          call output ( ' \ 1', advance='yes' )
-        else
-          call output ( ' ' )
-        end if
-      end if
+      call name_and_size ( name, myClean, 1 )
       call output ( array(1), advance='yes' )
     else
-      if ( present(name) ) then 
-        call output ( name )
-        if ( myClean ) then 
-          call output ( ' \ ' )
-          call output ( size(array) )
-        end if
-        call output ( '', advance='yes' )
-      end if
+      call name_and_size ( name, myClean, size(array) )
+      if ( present(name) ) call output ( '', advance='yes' )
       do j = 1, size(array), 10
         if (.not. myClean) then
           if ( any(array(j:min(j+9, size(array))) /= myFillValue) ) then
-            if ( numZeroRows /= 0 ) then
-              call output ( j-1, places=max(4,ilog10(size(array))+1) )
-              call output ( afterSub )
-              call output ( ' ' )
-              call output ( numZeroRows )
-              call output ( ' rows of "', advance='no' )
-              call output ( trim(myFillValue), advance='no' )
-              call output ( '" not printed.', advance='yes' )
-              numZeroRows = 0
-            end if
-            call output ( j, places=max(4,ilog10(size(array))+1) )
-            call output ( afterSub )
+            if ( numZeroRows /= 0 ) &
+              & call say_fill_char ( (/ j-1, size(array) /), numZeroRows, myFillValue )
+            call say_subs_only ( (/ j, size(array) /) )
           else
             numZeroRows = numZeroRows + 1
           end if
@@ -111,16 +85,8 @@ contains
           call output ( '', advance='yes' )
         end if
       end do ! j
-      if ( numZeroRows /= 0 ) then
-        call output ( j-1, places=max(4,ilog10(size(array))+1) )
-        call output ( afterSub )
-        call output ( ' ' )
-        call output ( numZeroRows )
-        call output ( ' rows of "', advance='no' )           
-        call output ( trim(myFillValue), advance='no' )          
-        call output ( '" not printed.', advance='yes' )      
-        numZeroRows = 0
-      end if
+      if ( numZeroRows /= 0 ) &
+        & call say_fill_char ( (/ j-1, size(array) /), numZeroRows, myFillValue )
     end if
   end subroutine DUMP_1D_CHAR
 
@@ -145,30 +111,13 @@ contains
     if ( present(format) ) myFormat = format
 
     if ( size(array) == 0 ) then
-      if ( present(name) ) then
-        call output ( name )
-        call output ( ' is ' )
-      end if
-      call output ( 'empty', advance='yes' )
+      call empty ( name )
     else if ( size(array) == 1 ) then
-      if ( present(name) ) then
-        call output ( name )
-        if ( myClean ) then
-          call output ( ' \ 1', advance='yes' )
-        else
-          call output ( ' ' )
-        end if
-      end if
+      call name_and_size ( name, myClean, 1 )
       call output ( array(1), myFormat, advance='yes' )
     else
-      if ( present(name) ) then 
-        call output ( name )
-        if ( myClean ) then 
-          call output ( ' \ ' )
-          call output ( size(array) )
-        end if
-        call output ( '', advance='yes' )
-      end if
+      call name_and_size ( name, myClean, size(array) )
+      if ( present(name) ) call output ( '', advance='yes' )
       do j = 1, size(array), myWidth
         if (.not. myClean) then
           call output ( j, max(myWidth-1,ilog10(size(array))+1) )
@@ -203,30 +152,13 @@ contains
     if ( present(format) ) myFormat = format
 
     if ( size(array) == 0 ) then
-      if ( present(name) ) then
-        call output ( name )
-        call output ( ' is ' )
-      end if
-      call output ( 'empty', advance='yes' )
+      call empty ( name )
     else if ( size(array) == 1 ) then
-      if ( present(name) ) then
-        call output ( name )
-        if ( myClean ) then
-          call output ( ' \ 1', advance='yes' )
-        else
-          call output ( ' ' )
-        end if
-      end if
+      call name_and_size ( name, myClean, 1 )
       call output ( array(1), myFormat, advance='yes' )
     else
-      if ( present(name) ) then 
-        call output ( name )
-        if ( myClean ) then 
-          call output ( ' \ ' )
-          call output ( size(array) )
-        end if
-        call output ( '', advance='yes' )
-      end if
+      call name_and_size ( name, myClean, size(array) )
+      if ( present(name) ) call output ( '', advance='yes' )
       do j = 1, size(array), myWidth
         if (.not. myClean) then
           call output ( j, max(myWidth-1,ilog10(size(array))+1) )
@@ -260,30 +192,13 @@ contains
     if ( present(format) ) myFormat = format
 
     if ( size(array) == 0 ) then
-      if ( present(name) ) then
-        call output ( name )
-        call output ( ' is ' )
-      end if
-      call output ( 'empty', advance='yes' )
+      call empty ( name )
     else if ( size(array) == 1 ) then
-      if ( present(name) ) then
-        call output ( name )
-        if ( myClean ) then
-          call output ( ' \ 1', advance='yes' )
-        else
-          call output ( ' ' )
-        end if
-      end if
+      call name_and_size ( name, myClean, 1 )
       call output ( array(1), myFormat, advance='yes' )
     else
-      if ( present(name) ) then 
-        call output ( name )
-        if ( myClean ) then 
-          call output ( ' \ ' )
-          call output ( size(array) )
-        end if
-        call output ( '', advance='yes' )
-      end if
+      call name_and_size ( name, myClean, size(array) )
+      if ( present(name) ) call output ( '', advance='yes' )
       do j = 1, size(array), myWidth
         if (.not. myClean) then
           call output ( j, max(myWidth-1,ilog10(size(array))+1) )
@@ -317,43 +232,19 @@ contains
 
     numZeroRows = 0
     if ( size(array) == 0 ) then
-      if ( present(name) ) then
-        call output ( name )
-        call output ( ' is ' )
-      end if
-      call output ( 'empty', advance='yes' )
+      call empty ( name )
     else if ( size(array) == 1 ) then
-      if ( present(name) ) then
-        call output ( name )
-        if ( myClean ) then
-          call output ( ' \ 1', advance='yes' )
-        else
-          call output ( ' ' )
-        end if
-      end if
+      call name_and_size ( name, myClean, 1 )
       call output ( array(1), advance='yes' )
     else
-      if ( present(name) ) then 
-        call output ( name )
-        if ( myClean ) then 
-          call output ( ' \ ' )
-          call output ( size(array) )
-        end if
-        call output ( '', advance='yes' )
-      end if
+      call name_and_size ( name, myClean, size(array) )
+      if ( present(name) ) call output ( '', advance='yes' )
       do j = 1, size(array), myWidth
         if (.not. myClean) then
           if ( any(array(j:min(j+myWidth-1, size(array))) /= 0) ) then
-            if ( numZeroRows /= 0 ) then
-              call output ( j-1, places=max(4,ilog10(size(array))+1) )
-              call output ( afterSub )
-              call output ( ' ' )
-              call output ( numZeroRows )
-              call output ( ' rows of zeros not printed.', advance='yes' )
-              numZeroRows = 0
-            end if
-            call output ( j, places=max(4,ilog10(size(array))+1) )
-            call output ( afterSub )
+            if ( numZeroRows /= 0 ) &
+              & call say_fill_int ( (/ j-1, size(array) /), numZeroRows )
+            call say_subs_only ( (/ j, size(array) /) )
           else
             numZeroRows = numZeroRows + 1
           end if
@@ -369,14 +260,8 @@ contains
           call output ( '', advance='yes' )
         end if
       end do ! j
-      if ( numZeroRows /= 0 ) then
-        call output ( j-1, places=max(4,ilog10(size(array))+1) )
-        call output ( afterSub )
-        call output ( ' ' )
-        call output ( numZeroRows )
-        call output ( ' rows of zeros not printed.', advance='yes' )
-        numZeroRows = 0
-      end if
+      if ( numZeroRows /= 0 ) &
+        & call say_fill_int ( (/ j-1, size(array) /), numZeroRows )
     end if
   end subroutine DUMP_1D_INTEGER
 
@@ -393,30 +278,13 @@ contains
     if ( present(clean) ) myClean = clean
 
     if ( size(array) == 0 ) then
-      if ( present(name) ) then
-        call output ( name )
-        call output ( ' is ' )
-      end if
-      call output ( 'empty', advance='yes' )
+      call empty ( name )
     else if ( size(array) == 1 ) then
-      if ( present(name) ) then
-        call output ( name )
-        if ( myClean ) then
-          call output ( ' \ 1', advance='yes' )
-        else
-          call output ( ' ' )
-        end if
-      end if
+      call name_and_size ( name, myClean, 1 )
       call output ( array(1), advance='yes' )
     else
-      if ( present(name) ) then 
-        call output ( name )
-        if ( myClean ) then 
-          call output ( ' \ ' )
-          call output ( size(array) )
-        end if
-        call output ( '', advance='yes' )
-      end if
+      call name_and_size ( name, myClean, size(array) )
+      if ( present(name) ) call output ( '', advance='yes' )
       do j = 1, size(array), 34
         if (.not. myClean) then
           call output ( j, max(4,ilog10(size(array))+1) )
@@ -450,30 +318,13 @@ contains
     if ( present(format) ) myFormat = format
 
     if ( size(array) == 0 ) then
-      if ( present(name) ) then
-        call output ( name )
-        call output ( ' is ' )
-      end if
-      call output ( 'empty', advance='yes' )
+      call empty ( name )
     else if ( size(array) == 1 ) then
-      if ( present(name) ) then
-        call output ( name )
-        if ( myClean ) then
-          call output ( ' \ 1', advance='yes' )
-        else
-          call output ( ' ' )
-        end if
-      end if
+      call name_and_size ( name, myClean, 1 )
       call output ( array(1), myFormat, advance='yes' )
     else
-      if ( present(name) ) then 
-        call output ( name )
-        if ( myClean ) then 
-          call output ( ' \ ' )
-          call output ( size(array) )
-        end if
-        call output ( '', advance='yes' )
-      end if
+      call name_and_size ( name, myClean, size(array) )
+      if ( present(name) ) call output ( '', advance='yes' )
       do j = 1, size(array), myWidth
         if (.not. myClean) then
           call output ( j, max(myWidth-1,ilog10(size(array))+1) )
@@ -507,50 +358,23 @@ contains
 
     numZeroRows = 0
     if ( size(array) == 0 ) then
-      if ( present(name) ) then
-        call output ( name )
-        call output ( ' is ' )
-      end if
-      call output ( 'empty', advance='yes' )
+      call empty ( name )
     else if ( size(array) == 1 ) then
-      if ( present(name) ) then
-        call output ( name )
-        if ( myClean ) then
-          call output ( ' \ 1', advance='yes' )
-        else
-          call output ( ' ' )
-        end if
-      end if
+      call name_and_size ( name, myClean, 1 )
       call output ( array(1,1), advance='yes' )
     else if ( size(array,2) == 1 ) then
       call dump ( array(:,1), name, fillValue=fillValue, clean=clean )
     else
-      if ( present(name) ) then 
-        call output ( name )
-        if ( myClean ) then 
-          call output ( ' \ ' )
-          call output ( size(array) )
-        end if
-        call output ( '', advance='yes' )
-      end if
+      call name_and_size ( name, myClean, size(array) )
+      if ( present(name) ) call output ( '', advance='yes' )
       do i = 1, size(array,1)
         do j = 1, size(array,2), 10
           if (.not. myClean) then
             if ( any(array(i,j:min(j+9, size(array,2))) /= myFillValue) ) then
-              if ( numZeroRows /= 0 ) then
-                call output ( i, places=max(4,ilog10(size(array,1))+1) )
-                call output ( j-1, places=max(4,ilog10(size(array))+1) )
-                call output ( afterSub )
-                call output ( ' ' )
-                call output ( numZeroRows )
-                call output ( ' rows of "', advance='no' )
-                call output ( trim(myFillValue), advance='no' )
-                call output ( '" not printed.', advance='yes' )
-                numZeroRows = 0
-              end if
-              call output ( i, places=max(4,ilog10(size(array,1))+1) )
-              call output ( j, places=max(4,ilog10(size(array,2))+1) )
-              call output ( afterSub )
+              if ( numZeroRows /= 0 ) &
+                & call say_fill_char ( (/ i-1, size(array,1), j-1, size(array,2) /), &
+                  & numZeroRows, myFillValue )
+              call say_subs_only ( (/ i, size(array,1), j, size(array,2) /) )
             else
               numZeroRows = numZeroRows + 1
             end if
@@ -563,17 +387,9 @@ contains
           end if
         end do ! j
       end do ! i
-      if ( numZeroRows /= 0 ) then
-        call output ( i-1, places=max(4,ilog10(size(array,1))+1) )
-        call output ( j-1, places=max(4,ilog10(size(array))+1) )
-        call output ( afterSub )
-        call output ( ' ' )
-        call output ( numZeroRows )
-        call output ( ' rows of "', advance='no' )           
-        call output ( trim(myFillValue), advance='no' )          
-        call output ( '" not printed.', advance='yes' )      
-        numZeroRows = 0
-      end if
+      if ( numZeroRows /= 0 ) &
+        & call say_fill_char ( (/ i-1, size(array,1), j-1, size(array,2) /), &
+           & numZeroRows, myFillValue )
     end if
   end subroutine DUMP_2D_CHAR
 
@@ -601,33 +417,16 @@ contains
     if ( present(format) ) myFormat = format
 
     if ( size(array) == 0 ) then
-      if ( present(name) ) then
-        call output ( name )
-        call output ( ' is ' )
-      end if
-      call output ( 'empty', advance='yes' )
+      call empty ( name )
     else if ( size(array) == 1 ) then
-      if ( present(name) ) then
-        call output ( name )
-        if ( myClean ) then
-          call output ( ' \ 1', advance='yes' )
-        else
-          call output ( ' ' )
-        end if
-      end if
+      call name_and_size ( name, myClean, 1 )
       call output ( array(1,1), format=myFormat, advance='yes' )
     else if ( size(array,2) == 1 ) then
       call dump ( array(:,1), name, clean=clean, format=myFormat )
     else 
-      if ( present(name) ) then 
-        call output ( name )
-        if ( myClean ) then 
-          call output ( ' \ ' )
-          call output ( size(array) )
-        end if
-      end if
+      call name_and_size ( name, myClean, size(array) )
       if ( size(array,2) >= min(5,size(array,1)) .or. myClean ) then
-        call output ( '', advance='yes' )
+        if ( present(name) ) call output ( '', advance='yes' )
         do i = 1, size(array,1)
           do j = 1, size(array,2), myWidth
             if (.not. myClean) then
@@ -642,7 +441,8 @@ contains
           end do
         end do
       else ! Dump the transpose
-        call output ( ' (transposed)', advance='yes' )
+        if ( present(name) ) call output ( ' ' )
+        call output ( '(transposed)', advance='yes' )
         do j = 1, size(array,2)
           do i = 1, size(array,1), width
             call output ( i, places=max(4,ilog10(size(array,1))+1) )      
@@ -682,33 +482,16 @@ contains
     if ( present(format) ) myFormat = format
 
     if ( size(array) == 0 ) then
-      if ( present(name) ) then
-        call output ( name )
-        call output ( ' is ' )
-      end if
-      call output ( 'empty', advance='yes' )
+      call empty ( name )
     else if ( size(array) == 1 ) then
-      if ( present(name) ) then
-        call output ( name )
-        if ( myClean ) then
-          call output ( ' \ 1', advance='yes' )
-        else
-          call output ( ' ' )
-        end if
-      end if
+      call name_and_size ( name, myClean, 1 )
       call output ( array(1,1), format=myFormat, advance='yes' )
     else if ( size(array,2) == 1 ) then
       call dump ( array(:,1), name, clean=clean, format=myFormat )
     else 
-      if ( present(name) ) then 
-        call output ( name )
-        if ( myClean ) then 
-          call output ( ' \ ' )
-          call output ( size(array) )
-        end if
-      end if
+      call name_and_size ( name, myClean, size(array) )
       if ( size(array,2) >= min(5,size(array,1)) .or. myClean ) then
-        call output ( '', advance='yes' )
+        if ( present(name) ) call output ( '', advance='yes' )
         do i = 1, size(array,1)
           do j = 1, size(array,2), myWidth
             if (.not. myClean) then
@@ -723,7 +506,8 @@ contains
           end do
         end do
       else ! Dump the transpose
-        call output ( ' (transposed)', advance='yes' )
+        if ( present(name) ) call output ( ' ' )
+        call output ( '(transposed)', advance='yes' )
         do j = 1, size(array,2)
           do i = 1, size(array,1), width
             call output ( i, places=max(4,ilog10(size(array,1))+1) )      
@@ -759,54 +543,24 @@ contains
 
     numZeroRows = 0
     if ( size(array) == 0 ) then
-      if ( present(name) ) then
-        call output ( name )
-        call output ( ' is ' )
-      end if
-      call output ( 'empty', advance='yes' )
+      call empty ( name )
     else if ( size(array) == 1 ) then
-      if ( present(name) ) then
-        call output ( name )
-        if ( myClean ) then
-          call output ( ' \ 1', advance='yes' )
-        else
-          call output ( ' ' )
-        end if
-      end if
+      call name_and_size ( name, myClean, 1 )
       call output ( array(1,1), '(1x,1pg13.6)', advance='yes' )
     else if ( size(array,2) == 1 ) then
       call dump ( array(:,1), name, clean=clean )
     else 
-      if ( present(name) ) then 
-        call output ( name )
-        if ( myClean ) then 
-          call output ( ' \ ' )
-          call output ( size(array) )
-        end if
-      end if
+      call name_and_size ( name, myClean, size(array) )
       if ( size(array,2) >= min(5,size(array,1)) .or. myClean ) then
-        call output ( '', advance='yes' )
+        if ( present(name) ) call output ( '', advance='yes' )
         do i = 1, size(array,1)
           do j = 1, size(array,2), 5
             if (.not. myClean) then
-              !call output ( i, max(4,ilog10(size(array,1))+1) )
-              !call output ( j, max(4,ilog10(size(array,2))+1) )
-              !call output ( afterSub )
               if ( any(array(i,j:min(j+4, size(array,2))) /= myFillValue) ) then
-                if ( numZeroRows /= 0 ) then
-                  call output ( i, places=max(4,ilog10(size(array,1))+1) )
-                  call output ( j-1, places=max(4,ilog10(size(array))+1) )
-                  call output ( afterSub )
-                  call output ( ' ' )
-                  call output ( numZeroRows )
-                  call output ( ' rows of ')
-                  call output ( myFillValue , advance='no' )
-                  call output ( ' not printed.', advance='yes' )
-                  numZeroRows = 0
-                end if
-                call output ( i, places=max(4,ilog10(size(array,1))+1) )
-                call output ( j, places=max(4,ilog10(size(array,2))+1) )
-                call output ( afterSub )
+                if ( numZeroRows /= 0 ) &
+                  & call say_fill_double ( (/ i-1, size(array,1), j, size(array,2) /), &
+                    & numZeroRows, myFillValue )
+                call say_subs_only ( (/ i, size(array,1), j, size(array,2) /) )
               else
                 numZeroRows = numZeroRows + 1
               end if
@@ -819,39 +573,19 @@ contains
             end if
           end do
         end do
-        if ( numZeroRows /= 0 ) then
-          call output ( i-1, places=max(4,ilog10(size(array,1))+1) )
-          call output ( j-1, places=max(4,ilog10(size(array))+1) )
-          call output ( afterSub )
-          call output ( ' ' )
-          call output ( numZeroRows )
-          call output ( ' rows of ')                            
-          call output ( myFillValue , advance='no' )                
-          call output ( ' not printed.', advance='yes' )        
-          numZeroRows = 0
-        end if
+        if ( numZeroRows /= 0 ) &
+          & call say_fill_double ( (/ i-1, size(array,1), j-1, size(array,2) /), &
+                    & numZeroRows, myFillValue )
       else ! Dump the transpose
-        call output ( ' (transposed)', advance='yes' )
+        if ( present(name) ) call output ( ' ' )
+        call output ( '(transposed)', advance='yes' )
         do j = 1, size(array,2)
           do i = 1, size(array,1), 5
-            !call output ( i, max(4,ilog10(size(array,1))+1) )
-            !call output ( j, max(4,ilog10(size(array,2))+1) )
-            !call output ( afterSub )
             if ( any(array(i:min(i+4, size(array,1)),j) /= myFillValue) ) then  
-              if ( numZeroRows /= 0 ) then                                  
-                call output ( i, places=max(4,ilog10(size(array,1))+1) )    
-                call output ( j-1, places=max(4,ilog10(size(array))+1) )    
-                call output ( afterSub )                                    
-                call output ( ' ' )                                         
-                call output ( numZeroRows )                                 
-                call output ( ' rows of ')                                  
-                call output ( myFillValue , advance='no' )                      
-                call output ( ' not printed.', advance='yes' )              
-                numZeroRows = 0                                             
-              end if                                                        
-              call output ( i, places=max(4,ilog10(size(array,1))+1) )      
-              call output ( j, places=max(4,ilog10(size(array,2))+1) )      
-              call output ( afterSub )                                      
+              if ( numZeroRows /= 0 ) &
+                & call say_fill_double ( (/ i-1, size(array,1), j, size(array,2) /), &
+                  & numZeroRows, myFillValue )
+              call say_subs_only ( (/ i, size(array,1), j, size(array,2) /) )
             else                                                            
               numZeroRows = numZeroRows + 1                                 
             end if                                                          
@@ -864,17 +598,9 @@ contains
           end do
         end do
       end if
-      if ( numZeroRows /= 0 ) then                                  
-        call output ( i-1, places=max(4,ilog10(size(array,1))+1) )  
-        call output ( j-1, places=max(4,ilog10(size(array))+1) )    
-        call output ( afterSub )                                    
-        call output ( ' ' )                                         
-        call output ( numZeroRows )                                 
-        call output ( ' rows of ')                                  
-        call output ( myFillValue , advance='no' )                      
-        call output ( ' not printed.', advance='yes' )              
-        numZeroRows = 0                                             
-      end if                                                        
+      if ( numZeroRows /= 0 ) &
+        & call say_fill_double ( (/ i-1, size(array,1), j-1, size(array,2) /), &
+           & numZeroRows, myFillValue )
     end if
   end subroutine DUMP_2D_DOUBLE
 
@@ -898,48 +624,23 @@ contains
 
     numZeroRows = 0
     if ( size(array) == 0 ) then
-      if ( present(name) ) then
-        call output ( name )
-        call output ( ' is ' )
-      end if
-      call output ( 'empty', advance='yes' )
+      call empty ( name )
     else if ( size(array) == 1 ) then
-      if ( present(name) ) then
-        call output ( name )
-        if ( myClean ) then
-          call output ( ' \ 1', advance='yes' )
-        else
-          call output ( ' ' )
-        end if
-      end if
+      call name_and_size ( name, myClean, 1 )
       call output ( array(1,1), advance='yes' )
     else if ( size(array,2) == 1 ) then
       call dump ( array(:,1), name, clean=clean, format=format, width=width )
     else
-      if ( present(name) ) then 
-        call output ( name )
-        if ( myClean ) then 
-          call output ( ' \ ' )
-          call output ( size(array) )
-        end if
-        call output ( '', advance='yes' )
-      end if
+      call name_and_size ( name, myClean, size(array) )
+      if ( present(name) ) call output ( '', advance='yes' )
       do i = 1, size(array,1)
         do j = 1, size(array,2), myWidth
           if (.not. myClean) then
             if ( any(array(i,j:min(j+myWidth-1, size(array,2))) /= 0) ) then
-              if ( numZeroRows /= 0 ) then
-                call output ( i, places=max(4,ilog10(size(array,1))+1) )
-                call output ( j-1, places=max(4,ilog10(size(array))+1) )
-                call output ( afterSub )
-                call output ( ' ' )
-                call output ( numZeroRows )
-                call output ( ' rows of zeros not printed.', advance='yes' )
-                numZeroRows = 0
-              end if
-              call output ( i, places=max(4,ilog10(size(array,1))+1) )
-              call output ( j, places=max(4,ilog10(size(array,2))+1) )
-              call output ( afterSub )
+              if ( numZeroRows /= 0 ) &
+                & call say_fill_int ( (/ i, size(array,1), j-1, size(array,2) /), &
+                  & numZeroRows )
+              call say_subs_only ( (/ i, size(array,1), j, size(array,2) /) )
             else
               numZeroRows = numZeroRows + 1
             end if
@@ -956,15 +657,9 @@ contains
           end if
         end do ! j
       end do ! i
-      if ( numZeroRows /= 0 ) then
-        call output ( i-1, places=max(4,ilog10(size(array,1))+1) )
-        call output ( j-1, places=max(4,ilog10(size(array))+1) )
-        call output ( afterSub )
-        call output ( ' ' )
-        call output ( numZeroRows )
-        call output ( ' rows of zeros not printed.', advance='yes' )
-        numZeroRows = 0
-      end if
+      if ( numZeroRows /= 0 ) &
+        & call say_fill_int ( (/ i-1, size(array,1), j-1, size(array,2) /), &
+          & numZeroRows )
     end if
   end subroutine DUMP_2D_INTEGER
 
@@ -982,32 +677,15 @@ contains
     if ( present(clean) ) myClean = clean
 
     if ( size(array) == 0 ) then
-      if ( present(name) ) then
-        call output ( name )
-        call output ( ' is ' )
-      end if
-      call output ( 'empty', advance='yes' )
+      call empty ( name )
     else if ( size(array) == 1 ) then
-      if ( present(name) ) then
-        call output ( name )
-        if ( myClean ) then
-          call output ( ' \ 1', advance='yes' )
-        else
-          call output ( ' ' )
-        end if
-      end if
+      call name_and_size ( name, myClean, 1 )
       call output ( array(1,1), advance='yes' )
     else if ( size(array,2) == 1 ) then
       call dump ( array(:,1), name, clean=clean )
     else
-      if ( present(name) ) then 
-        call output ( name )
-        if ( myClean ) then 
-          call output ( ' \ ' )
-          call output ( size(array) )
-        end if
-        call output ( '', advance='yes' )
-      end if
+      call name_and_size ( name, myClean, size(array) )
+      if ( present(name) ) call output ( '', advance='yes' )
       do i = 1, size(array,1)
         do j = 1, size(array,2), myWidth
           if (.not. myClean) then
@@ -1034,7 +712,7 @@ contains
     logical :: myClean
     integer :: I, J, K
     integer :: NumZeroRows
-    double precision :: myFillValue
+    real :: myFillValue
 
     myFillValue = 0.e0
     if ( present(FillValue) ) myFillValue = FillValue
@@ -1044,54 +722,24 @@ contains
 
     numZeroRows = 0
     if ( size(array) == 0 ) then
-      if ( present(name) ) then
-        call output ( name )
-        call output ( ' is ' )
-      end if
-      call output ( 'empty', advance='yes' )
+      call empty ( name )
     else if ( size(array) == 1 ) then
-      if ( present(name) ) then
-        call output ( name )
-        if ( myClean ) then
-          call output ( ' \ 1', advance='yes' )
-        else
-          call output ( ' ' )
-        end if
-      end if
+      call name_and_size ( name, myClean, 1 )
       call output ( array(1,1), '(1x,1pg13.6)', advance='yes' )
     else if ( size(array,2) == 1 ) then
       call dump ( array(:,1), name, clean=clean )
     else 
-      if ( present(name) ) then 
-        call output ( name )
-        if ( myClean ) then 
-          call output ( ' \ ' )
-          call output ( size(array) )
-        end if
-      end if
+      call name_and_size ( name, myClean, size(array) )
       if ( size(array,2) >= min(5,size(array,1)) .or. myClean ) then
-        call output ( '', advance='yes' )
+        if ( present(name) ) call output ( '', advance='yes' )
         do i = 1, size(array,1)
           do j = 1, size(array,2), 5
             if (.not. myClean) then
-              !call output ( i, max(4,ilog10(size(array,1))+1) )
-              !call output ( j, max(4,ilog10(size(array,2))+1) )
-              !call output ( afterSub )
               if ( any(array(i,j:min(j+4, size(array,2))) /= myFillValue) ) then
-                if ( numZeroRows /= 0 ) then
-                  call output ( i, places=max(4,ilog10(size(array,1))+1) )
-                  call output ( j-1, places=max(4,ilog10(size(array))+1) )
-                  call output ( afterSub )
-                  call output ( ' ' )
-                  call output ( numZeroRows )
-                  call output ( ' rows of ')
-                  call output ( myFillValue , advance='no' )
-                  call output ( ' not printed.', advance='yes' )
-                  numZeroRows = 0
-                end if
-                call output ( i, places=max(4,ilog10(size(array,1))+1) )
-                call output ( j, places=max(4,ilog10(size(array,2))+1) )
-                call output ( afterSub )
+                if ( numZeroRows /= 0 ) &
+                  & call say_fill_real ( (/ i, size(array,1), j-1, size(array,2) /), &
+                    & numZeroRows, myFillValue )
+                call say_subs_only ( (/ i, size(array,1), j, size(array,2) /) )
               else
                 numZeroRows = numZeroRows + 1
               end if
@@ -1104,39 +752,19 @@ contains
             end if
           end do
         end do
-        if ( numZeroRows /= 0 ) then
-          call output ( i-1, places=max(4,ilog10(size(array,1))+1) )
-          call output ( j-1, places=max(4,ilog10(size(array))+1) )
-          call output ( afterSub )
-          call output ( ' ' )
-          call output ( numZeroRows )
-          call output ( ' rows of ')                            
-          call output ( myFillValue , advance='no' )                
-          call output ( ' not printed.', advance='yes' )        
-          numZeroRows = 0
-        end if
+        if ( numZeroRows /= 0 ) &
+          & call say_fill_real ( (/ i-1, size(array,1), j-1, size(array,2) /), &
+            & numZeroRows, myFillValue )
       else ! Dump the transpose
-        call output ( ' (transposed)', advance='yes' )
+        if ( present(name) ) call output ( ' ' )
+        call output ( '(transposed)', advance='yes' )
         do j = 1, size(array,2)
           do i = 1, size(array,1), 5
-            !call output ( i, max(4,ilog10(size(array,1))+1) )
-            !call output ( j, max(4,ilog10(size(array,2))+1) )
-            !call output ( afterSub )
             if ( any(array(i:min(i+4, size(array,1)),j) /= myFillValue) ) then  
-              if ( numZeroRows /= 0 ) then                                  
-                call output ( i, places=max(4,ilog10(size(array,1))+1) )    
-                call output ( j-1, places=max(4,ilog10(size(array))+1) )    
-                call output ( afterSub )                                    
-                call output ( ' ' )                                         
-                call output ( numZeroRows )                                 
-                call output ( ' rows of ')                                  
-                call output ( myFillValue , advance='no' )                      
-                call output ( ' not printed.', advance='yes' )              
-                numZeroRows = 0                                             
-              end if                                                        
-              call output ( i, places=max(4,ilog10(size(array,1))+1) )      
-              call output ( j, places=max(4,ilog10(size(array,2))+1) )      
-              call output ( afterSub )                                      
+              if ( numZeroRows /= 0 ) &   
+                & call say_fill_real ( (/ i-1, size(array,1), j, size(array,2) /), &
+                  & numZeroRows, myFillValue )
+              call say_subs_only ( (/ i, size(array,1), j, size(array,2) /) )
             else                                                            
               numZeroRows = numZeroRows + 1                                 
             end if                                                          
@@ -1149,17 +777,9 @@ contains
           end do
         end do
       end if
-      if ( numZeroRows /= 0 ) then                                  
-        call output ( i-1, places=max(4,ilog10(size(array,1))+1) )  
-        call output ( j-1, places=max(4,ilog10(size(array))+1) )    
-        call output ( afterSub )                                    
-        call output ( ' ' )                                         
-        call output ( numZeroRows )                                 
-        call output ( ' rows of ')                                  
-        call output ( myFillValue , advance='no' )                      
-        call output ( ' not printed.', advance='yes' )              
-        numZeroRows = 0                                             
-      end if                                                        
+      if ( numZeroRows /= 0 ) &   
+        & call say_fill_real ( (/ i-1, size(array,1), j-1, size(array,2) /), &
+          & numZeroRows, myFillValue )
     end if
   end subroutine DUMP_2D_REAL
 
@@ -1187,20 +807,9 @@ contains
 
     numZeroRows = 0
     if ( size(array) == 0 ) then
-      if ( present(name) ) then
-        call output ( name )
-        call output ( ' is ' )
-      end if
-      call output ( 'empty', advance='yes' )
+      call empty ( name )
     else if ( size(array) == 1 ) then
-      if ( present(name) ) then
-        call output ( name )
-        if ( myClean ) then
-          call output ( ' \ 1', advance='yes' )
-        else
-          call output ( ' ' )
-        end if
-      end if
+      call name_and_size ( name, myClean, 1 )
       call output ( array(1,1,1), advance='yes' )
     else if ( how_many == 2 ) then
       call dump ( reshape(array, (/ re_mainder(1) /)), name, fillValue=fillValue, &
@@ -1209,35 +818,18 @@ contains
       call dump ( reshape(array, (/ re_mainder(1), re_mainder(2) /)), &
         & name, fillValue=fillValue, clean=clean )
     else
-      if ( present(name) ) then 
-        call output ( name )
-        if ( myClean ) then 
-          call output ( ' \ ' )
-          call output ( size(array) )
-        end if
-        call output ( '', advance='yes' )
-      end if
+      call name_and_size ( name, myClean, size(array) )
+      if ( present(name) ) call output ( '', advance='yes' )
       do i = 1, size(array,1)
         do j = 1, size(array,2)
           do k = 1, size(array,3), 10
             if (.not. myClean) then
               if ( any(array(i,j,k:min(k+9, size(array,3))) /= myFillValue) ) then
-                if ( numZeroRows /= 0 ) then
-                  call output ( i, places=max(4,ilog10(size(array,1))+1) )
-                  call output ( j, places=max(4,ilog10(size(array,2))+1) )
-                  call output ( k-1, places=max(4,ilog10(size(array,3))+1) )
-                  call output ( afterSub )
-                  call output ( ' ' )
-                  call output ( numZeroRows )
-                  call output ( ' rows of "', advance='no' )
-                  call output ( trim(myFillValue), advance='no' )
-                  call output ( '" not printed.', advance='yes' )
-                  numZeroRows = 0
-                end if
-                call output ( i, max(4,ilog10(size(array,1))+1) )
-                call output ( j, max(4,ilog10(size(array,2))+1) )
-                call output ( k, max(4,ilog10(size(array,3))+1) )
-                call output ( afterSub )
+                if ( numZeroRows /= 0 ) &
+                  & call say_fill_char ( (/ i, size(array,1), j, size(array,2), &
+                    & k-1, size(array,3) /), numZeroRows, myFillValue )
+                call say_subs_only ( (/ i, size(array,1), j, size(array,2), &
+                  & k, size(array,3) /) )
               else
                 numZeroRows = numZeroRows + 1
               end if
@@ -1251,18 +843,9 @@ contains
           end do
         end do
       end do
-      if ( numZeroRows /= 0 ) then
-        call output ( i-1, places=max(4,ilog10(size(array,1))+1) )
-        call output ( j-1, places=max(4,ilog10(size(array,2))+1) )
-        call output ( k-1, places=max(4,ilog10(size(array,3))+1) )
-        call output ( afterSub )
-        call output ( ' ' )
-        call output ( numZeroRows )
-        call output ( ' rows of "', advance='no' )           
-        call output ( trim(myFillValue), advance='no' )          
-        call output ( '" not printed.', advance='yes' )      
-        numZeroRows = 0
-      end if
+      if ( numZeroRows /= 0 ) &
+        & call say_fill_char ( (/ i-1, size(array,1), j-1, size(array,2), &
+          & k-1, size(array,3) /), numZeroRows, myFillValue )
     end if
   end subroutine DUMP_3D_CHAR
 
@@ -1285,59 +868,27 @@ contains
 
     numZeroRows = 0
     if ( size(array) == 0 ) then
-      if ( present(name) ) then
-        call output ( name )
-        call output ( ' is ' )
-      end if
-      call output ( 'empty', advance='yes' )
+      call empty ( name )
     else if ( size(array) == 1 ) then
-      if ( present(name) ) then
-        call output ( name )
-        if ( myClean ) then
-          call output ( ' \ 1', advance='yes' )
-        else
-          call output ( ' ' )
-        end if
-      end if
+      call name_and_size ( name, myClean, 1 )
       call output ( array(1,1,1), '(1x,1pg13.6)', advance='yes' )
     else if ( size(array,2) == 1 .and. size(array,3) == 1 ) then
       call dump ( array(:,1,1), name, clean=clean )
     else if ( size(array,3) == 1 ) then
       call dump ( array(:,:,1), name, fillValue=fillValue, clean=clean )
     else
-      if ( present(name) ) then 
-        call output ( name )
-        if ( myClean ) then 
-          call output ( ' \ ' )
-          call output ( size(array) )
-        end if
-        call output ( '', advance='yes' )
-      end if
+      call name_and_size ( name, myClean, size(array) )
+      if ( present(name) ) call output ( '', advance='yes' )
       do i = 1, size(array,1)
         do j = 1, size(array,2)
           do k = 1, size(array,3), 5
             if (.not. myClean) then
-              !call output ( i, max(4,ilog10(size(array,1))+1) )
-              !call output ( j, max(4,ilog10(size(array,2))+1) )
-              !call output ( k, max(4,ilog10(size(array,3))+1) )
-              !call output ( afterSub )
               if ( any(array(i,j,k:min(k+4, size(array,3))) /= myFillValue) ) then
-                if ( numZeroRows /= 0 ) then
-                  call output ( i, places=max(4,ilog10(size(array,1))+1) )
-                  call output ( j, places=max(4,ilog10(size(array,2))+1) )
-                  call output ( k-1, places=max(4,ilog10(size(array,3))+1) )
-                  call output ( afterSub )
-                  call output ( ' ' )
-                  call output ( numZeroRows )
-                  call output ( ' rows of ')
-                  call output ( myFillValue , advance='no' )
-                  call output ( ' not printed.', advance='yes' )
-                  numZeroRows = 0
-                end if
-                call output ( i, max(4,ilog10(size(array,1))+1) )
-                call output ( j, max(4,ilog10(size(array,2))+1) )
-                call output ( k, max(4,ilog10(size(array,3))+1) )
-                call output ( afterSub )
+                if ( numZeroRows /= 0 ) &
+                  & call say_fill_double ( (/ i, size(array,1), j, size(array,2), &
+                    & k-1, size(array,3) /), numZeroRows, myFillValue )
+                call say_subs_only ( (/ i, size(array,1), j, size(array,2), &
+                  & k, size(array,3) /) )
               else
                 numZeroRows = numZeroRows + 1
               end if
@@ -1351,18 +902,9 @@ contains
           end do
         end do
       end do
-       if ( numZeroRows /= 0 ) then
-        call output ( i-1, places=max(4,ilog10(size(array,1))+1) )
-        call output ( j-1, places=max(4,ilog10(size(array,2))+1) )
-        call output ( k-1, places=max(4,ilog10(size(array,3))+1) )
-        call output ( afterSub )
-        call output ( ' ' )
-        call output ( numZeroRows )
-        call output ( ' rows of ')                              
-        call output ( myFillValue , advance='no' )                  
-        call output ( ' not printed.', advance='yes' )          
-        numZeroRows = 0
-      end if
+      if ( numZeroRows /= 0 ) &
+        & call say_fill_double ( (/ i-1, size(array,1), j-1, size(array,2), &
+          & k-1, size(array,3) /), numZeroRows, myFillValue )
    end if
   end subroutine DUMP_3D_DOUBLE
 
@@ -1390,20 +932,9 @@ contains
 
     numZeroRows = 0
     if ( size(array) == 0 ) then
-      if ( present(name) ) then
-        call output ( name )
-        call output ( ' is ' )
-      end if
-      call output ( 'empty', advance='yes' )
+      call empty ( name )
     else if ( size(array) == 1 ) then
-      if ( present(name) ) then
-        call output ( name )
-        if ( myClean ) then
-          call output ( ' \ 1', advance='yes' )
-        else
-          call output ( ' ' )
-        end if
-      end if
+      call name_and_size ( name, myClean, 1 )
       call output ( array(1,1,1), advance='yes' )
     else if ( how_many == 2 ) then
       call dump ( reshape(array, (/ re_mainder(1) /)), name, clean=clean, &
@@ -1412,33 +943,18 @@ contains
       call dump ( reshape(array, (/ re_mainder(1), re_mainder(2) /)), &
         & name, clean=clean, format=format )
     else
-      if ( present(name) ) then 
-        call output ( name )
-        if ( myClean ) then 
-          call output ( ' \ ' )
-          call output ( size(array) )
-        end if
-        call output ( '', advance='yes' )
-      end if
+      call name_and_size ( name, myClean, size(array) )
+      if ( present(name) ) call output ( '', advance='yes' )
       do i = 1, size(array,1)
         do j = 1, size(array,2)
           do k = 1, size(array,3), myWidth
             if (.not. myClean) then
               if ( any(array(i,j,k:min(k+myWidth-1, size(array,3))) /= 0) ) then
-                if ( numZeroRows /= 0 ) then
-                  call output ( i, places=max(4,ilog10(size(array,1))+1) )
-                  call output ( j, places=max(4,ilog10(size(array,2))+1) )
-                  call output ( k-1, places=max(4,ilog10(size(array,3))+1) )
-                  call output ( afterSub )
-                  call output ( ' ' )
-                  call output ( numZeroRows )
-                  call output ( ' rows of zeros not printed.', advance='yes' )
-                  numZeroRows = 0
-                end if
-                call output ( i, max(4,ilog10(size(array,1))+1) )
-                call output ( j, max(4,ilog10(size(array,2))+1) )
-                call output ( k, max(4,ilog10(size(array,3))+1) )
-                call output ( afterSub )
+                if ( numZeroRows /= 0 ) &
+                  & call say_fill_int ( (/ i, size(array,1), j, size(array,2), &
+                    & k-1, size(array,3) /), numZeroRows )
+                call say_subs_only ( (/ i, size(array,1), j, size(array,2), &
+                  & k, size(array,3) /) )
               else
                 numZeroRows = numZeroRows + 1
               end if
@@ -1456,16 +972,9 @@ contains
           end do
         end do
       end do
-      if ( numZeroRows /= 0 ) then
-        call output ( i-1, places=max(4,ilog10(size(array,1))+1) )
-        call output ( j-1, places=max(4,ilog10(size(array,2))+1) )
-        call output ( k-1, places=max(4,ilog10(size(array,3))+1) )
-        call output ( afterSub )
-        call output ( ' ' )
-        call output ( numZeroRows )
-        call output ( ' rows of zeros not printed.', advance='yes' )
-        numZeroRows = 0
-      end if
+      if ( numZeroRows /= 0 ) &
+        & call say_fill_int ( (/ i-1, size(array,1), j-1, size(array,2), &
+          & k-1, size(array,3) /), numZeroRows )
     end if
   end subroutine DUMP_3D_INTEGER
 
@@ -1488,59 +997,27 @@ contains
 
     numZeroRows = 0
     if ( size(array) == 0 ) then
-      if ( present(name) ) then
-        call output ( name )
-        call output ( ' is ' )
-      end if
-      call output ( 'empty', advance='yes' )
+      call empty ( name )
     else if ( size(array) == 1 ) then
-      if ( present(name) ) then
-        call output ( name )
-        if ( myClean ) then
-          call output ( ' \ 1', advance='yes' )
-        else
-          call output ( ' ' )
-        end if
-      end if
+      call name_and_size ( name, myClean, 1 )
       call output ( array(1,1,1), '(1x,1pg13.6)', advance='yes' )
     else if ( size(array,2) == 1 .and. size(array,3) == 1 ) then
       call dump ( array(:,1,1), name, clean=clean )
     else if ( size(array,3) == 1 ) then
       call dump ( array(:,:,1), name, fillValue=fillValue, clean=clean )
     else
-      if ( present(name) ) then 
-        call output ( name )
-        if ( myClean ) then 
-          call output ( ' \ ' )
-          call output ( size(array) )
-        end if
-        call output ( '', advance='yes' )
-      end if
+      call name_and_size ( name, myClean, size(array) )
+      if ( present(name) ) call output ( '', advance='yes' )
       do i = 1, size(array,1)
         do j = 1, size(array,2)
           do k = 1, size(array,3), 5
             if (.not. myClean) then
-              !call output ( i, max(4,ilog10(size(array,1))+1) )
-              !call output ( j, max(4,ilog10(size(array,2))+1) )
-              !call output ( k, max(4,ilog10(size(array,3))+1) )
-              !call output ( afterSub )
               if ( any(array(i,j,k:min(k+4, size(array,3))) /= myFillValue) ) then
-                if ( numZeroRows /= 0 ) then
-                  call output ( i, places=max(4,ilog10(size(array,1))+1) )
-                  call output ( j, places=max(4,ilog10(size(array,2))+1) )
-                  call output ( k-1, places=max(4,ilog10(size(array,3))+1) )
-                  call output ( afterSub )
-                  call output ( ' ' )
-                  call output ( numZeroRows )
-                  call output ( ' rows of ')
-                  call output ( myFillValue , advance='no' )
-                  call output ( ' not printed.', advance='yes' )
-                  numZeroRows = 0
-                end if
-                call output ( i, max(4,ilog10(size(array,1))+1) )
-                call output ( j, max(4,ilog10(size(array,2))+1) )
-                call output ( k, max(4,ilog10(size(array,3))+1) )
-                call output ( afterSub )
+                if ( numZeroRows /= 0 ) &
+                  & call say_fill_real ( (/ i, size(array,1), j, size(array,2), &
+                    & k-1, size(array,3) /), numZeroRows, myFillValue )
+                call say_subs_only ( (/ i, size(array,1), j, size(array,2), &
+                  & k, size(array,3) /) )
               else
                 numZeroRows = numZeroRows + 1
               end if
@@ -1554,18 +1031,9 @@ contains
           end do
         end do
       end do
-       if ( numZeroRows /= 0 ) then
-        call output ( i-1, places=max(4,ilog10(size(array,1))+1) )
-        call output ( j-1, places=max(4,ilog10(size(array,2))+1) )
-        call output ( k-1, places=max(4,ilog10(size(array,3))+1) )
-        call output ( afterSub )
-        call output ( ' ' )
-        call output ( numZeroRows )
-        call output ( ' rows of ')                              
-        call output ( myFillValue , advance='no' )                  
-        call output ( ' not printed.', advance='yes' )          
-        numZeroRows = 0
-      end if
+      if ( numZeroRows /= 0 ) &
+        & call say_fill_real ( (/ i-1, size(array,1), j-1, size(array,2), &
+          & k-1, size(array,3) /), numZeroRows, myFillValue )
    end if
   end subroutine DUMP_3D_REAL
 
@@ -1687,11 +1155,103 @@ contains
 
   end subroutine DUMP_NAME_V_PAIRS_REAL
 
+  ! ------------------------------------------------------  Empty  -----
+  subroutine Empty ( Name )
+    character(len=*), intent(in), optional :: Name
+
+    if ( present(name) ) then
+      call output ( name )
+      call output ( ' is ' )
+    end if
+    call output ( 'empty', advance='yes' )
+
+  end subroutine Empty
+
   ! -----------------------------------------------------  ILOG10  -----
   integer function ILOG10(int)
     integer, intent(in) :: int
     ilog10=nint(log10(real(int)))
   end function ILOG10
+
+  ! ----------------------------------------------  Name_And_Size  -----
+  subroutine Name_And_Size ( Name, Clean, Size )
+    character(len=*), intent(in), optional :: Name
+    logical, intent(in) :: Clean
+    integer, intent(in) :: Size
+
+    if ( present(name) ) then
+      call output ( name )
+      if ( clean ) then 
+        call output ( ' \' )
+        call output ( size )
+      end if
+      if ( size == 1 ) call output ( ' ' )
+    end if
+
+  end subroutine Name_And_Size
+
+  ! ----------------------------------------------  Say_Fill_Char  -----
+  subroutine Say_Fill_Char ( Subs, NumZeroRows, Fill )
+    integer, intent(in) :: Subs(:)
+    integer, intent(inout) :: NumZeroRows
+    character(len=*), intent(in) :: Fill
+    call say_subs ( subs, numZeroRows  )
+    call output ( '"', advance='no' )
+    call output ( trim(fill), advance='no' )
+    call output ( '" not printed.', advance='yes' )
+    numZeroRows = 0
+  end subroutine Say_Fill_Char
+
+  ! --------------------------------------------  Say_Fill_Double  -----
+  subroutine Say_Fill_Double ( Subs, NumZeroRows, Fill )
+    integer, intent(in) :: Subs(:)
+    integer, intent(inout) :: NumZeroRows
+    double precision, intent(in) :: Fill
+    call say_subs ( subs, numZeroRows )
+    call output ( fill, advance='no' )
+    call output ( ' not printed.', advance='yes' )
+    numZeroRows = 0
+  end subroutine Say_Fill_Double
+
+  ! -----------------------------------------------  Say_Fill_Int  -----
+  subroutine Say_Fill_Int ( Subs, NumZeroRows )
+    integer, intent(in) :: Subs(:)
+    integer, intent(inout) :: NumZeroRows
+    call say_subs ( subs, numZeroRows )
+    call output ( 'zeros not printed.', advance='yes' )
+    numZeroRows = 0
+  end subroutine Say_Fill_Int
+
+  ! ----------------------------------------------  Say_Fill_Real  -----
+  subroutine Say_Fill_Real ( Subs, NumZeroRows, Fill )
+    integer, intent(in) :: Subs(:)
+    integer, intent(inout) :: NumZeroRows
+    real, intent(in) :: Fill
+    call say_subs ( subs, numZeroRows )
+    call output ( fill, advance='no' )
+    call output ( ' not printed.', advance='yes' )
+    numZeroRows = 0
+  end subroutine Say_Fill_Real
+
+  ! ----------------------------------------------------  Say_Subs -----
+  subroutine Say_Subs ( Subs, NumZeroRows )
+    integer, intent(in) :: Subs(:)
+    integer, intent(in) :: NumZeroRows
+    call say_subs_only ( subs )
+    call output ( ' ' )
+    call output ( numZeroRows )
+    call output ( ' rows of ', advance='no' )
+  end subroutine Say_Subs
+
+  ! -----------------------------------------------  Say_Subs_Only -----
+  subroutine Say_Subs_Only ( Subs )
+    integer, intent(in) :: Subs(:)
+    integer :: I
+    do i = 1, size(subs), 2
+      call output ( subs(i), places=max(4,ilog10(subs(i+1))+1) )
+    end do
+    call output ( afterSub )
+  end subroutine Say_Subs_Only
 
   ! ------------------------------------------  WHICH_INTS_ARE_IT  -----
   ! Along with a (yet unwritten) fraternal subr. 'which_strings_are_it'
@@ -1779,6 +1339,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.26  2003/07/04 02:41:33  vsnyder
+! Substantial simplification by putting little things into subroutines
+!
 ! Revision 2.25  2003/07/02 01:07:27  vsnyder
 ! Add complex output
 !
