@@ -86,19 +86,22 @@ contains ! =====     Public Procedures     =============================
   end subroutine Destroy_PFADataBase
 
   ! -------------------------------------------  Dump_PFADataBase  -----
-  subroutine Dump_PFADataBase
+  subroutine Dump_PFADataBase ( Details )
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use Output_m, only: Output
+    integer, intent(in), optional :: Details
     integer :: I
     if ( .not. associated(pfaData) ) &
       & call MLSMessage ( MLSMSG_Error, moduleName, &
         & "Cannot dump unallocated PFA data base" )
     do i = 1, size(pfaData)
-      call dump_PFADatum ( pfaData(i) )
+      call output ( i, before='PFA database item ', after=':' )
+      call dump_PFADatum ( pfaData(i), details )
     end do
   end subroutine Dump_PFADataBase
 
   ! ----------------------------------------------  Dump_PFADatum  -----
-  subroutine Dump_PFADatum ( PFADatum )
+  subroutine Dump_PFADatum ( PFADatum, Details )
 
     use Dump_0, only: Dump
     use Intrinsic, only: Lit_Indices
@@ -107,9 +110,14 @@ contains ! =====     Public Procedures     =============================
     use Output_m, only: Blanks, NewLine, Output
 
     type(PFAData_t), intent(in) :: PFADatum
+    integer, intent(in), optional :: Details ! >0 => Dump arrays, 0 => Don't
 
     integer :: I, L, W
     character(len=*), parameter :: Molecules = ' Molecules:'
+    integer :: MyDetails
+
+    myDetails = 1
+    if ( present(details) ) myDetails = details
 
     if ( pfaDatum%name /= 0 ) then
       call output ( ' ' )
@@ -150,6 +158,8 @@ contains ! =====     Public Procedures     =============================
 
     call output ( pfaDatum%velLin, before=' Velocity Linearization: ', &
       & advance='yes' )
+
+    if ( myDetails <= 0 ) return
 
     call dump ( pfaDatum%absorption, name=' ln Absorption' )
     call dump ( pfaDatum%dAbsDwc, name=' d ln Absorption / d wc' )
@@ -235,6 +245,9 @@ contains ! =====     Public Procedures     =============================
 end module PFADataBase_m
 
 ! $Log$
+! Revision 2.4  2004/07/17 02:28:52  vsnyder
+! Add 'details' arguments for dumps
+!
 ! Revision 2.3  2004/06/17 00:18:23  vsnyder
 ! Added Write_PFADatum
 !
