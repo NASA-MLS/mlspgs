@@ -31,8 +31,8 @@ contains
                         & alpha_path_c, alpha_path_gl,  ds_dh_gl, dh_dz_gl,&
                         & gl_delta)
 
-    INTEGER(ip), intent(in) :: indicies_c(:) ! coarse grid indicies
-    INTEGER(ip), INTENT(in) :: gl_inds(:)    ! Gauss-Legendre grid indicies
+    INTEGER(ip), intent(in) :: indices_c(:) ! coarse grid indicies
+    INTEGER(ip), INTENT(in) :: gl_inds(:)    ! Gauss-Legendre grid indices
     logical, intent(in) :: do_gl(:) ! path flag indicating where to do
   !                                   gl integrations.
     real(rp), intent(in) :: z_path(:) ! path -log(P) on input grid.
@@ -53,7 +53,7 @@ contains
 
 
  
-    n_path = size(indicies_c)
+    n_path = size(indices_c)
     if ( count(do_gl) > 0 ) then
 
   ! see if anything needs to be gl-d
@@ -65,19 +65,19 @@ contains
         if ( do_gl(p_i) ) then
           more_inds(i) = p_i
           if ( p_i > n_path/2 ) then
-            del_zeta(i) = z_path(indicies_c(p_i+1)) - z_path(indicies_c(p_i))
+            del_zeta(i) = z_path(indices_c(p_i+1)) - z_path(indices_c(p_i))
           else
-            del_zeta(i) = z_path(indicies_c(p_i-1)) - z_path(indicies_c(p_i))
+            del_zeta(i) = z_path(indices_c(p_i-1)) - z_path(indices_c(p_i))
           end if
           i = i + 1
           j = j + Ng
         end if
       end do
      call path_opacity ( del_zeta,  &
-                &  alpha_path_c(:,more_inds), &
+                &  alpha_path_c(more_inds), &
                 &  alpha_path_gl, ds_dh_gl(gl_inds),  &
                 &  dh_dz_gl(gl_inds), gl_delta )
-
+     end if
   end subroutine scalar_get_gl_delta
 
 !------------------------------------------------------  polarized_get_gl_delta  -----
@@ -87,8 +87,8 @@ contains
                         & alpha_path_c, alpha_path_gl,  ds_dh_gl, dh_dz_gl,&
                         & gl_delta)
 
-    INTEGER(ip), intent(in) :: indicies_c(:) ! coarse grid indicies
-    INTEGER(ip), INTENT(in) :: gl_inds(:)    ! Gauss-Legendre grid indicies
+    INTEGER(ip), intent(in) :: indices_c(:) ! coarse grid indices
+    INTEGER(ip), INTENT(in) :: gl_inds(:)    ! Gauss-Legendre grid indices
     logical, intent(in) :: do_gl(:) ! path flag indicating where to do
   !                                   gl integrations.
     real(rp), intent(in) :: z_path(:) ! path -log(P) on input grid.
@@ -109,24 +109,21 @@ contains
 
 
  
-    n_path = size(indicies_c)
+    n_path = size(indices_c)
     if ( count(do_gl) > 0 ) then
 
   ! see if anything needs to be gl-d
 
-      allocate ( del_zeta(1:no_to_gl) )
-      allocate ( more_inds(1:no_to_gl) )
 
       i = 1
       j = 1
       do p_i = 1, n_path
         if ( do_gl(p_i) ) then
           more_inds(i) = p_i
-          all_inds(j:j+ng-1) = (/(j + k, k=0,ng-1)/)
           if ( p_i > n_path/2 ) then
-            del_zeta(i) = z_path(indicies_c(p_i+1)) - z_path(indicies_c(p_i))
+            del_zeta(i) = z_path(indices_c(p_i+1)) - z_path(indices_c(p_i))
           else
-            del_zeta(i) = z_path(indicies_c(p_i-1)) - z_path(indicies_c(p_i))
+            del_zeta(i) = z_path(indices_c(p_i-1)) - z_path(indices_c(p_i))
           end if
           i = i + 1
           j = j + Ng
@@ -136,12 +133,20 @@ contains
                 &  alpha_path_c(:,more_inds), &
                 &  alpha_path_gl, ds_dh_gl(gl_inds),  &
                 &  dh_dz_gl(gl_inds), gl_delta )
-
+     end if
   end subroutine polarized_get_gl_delta
+
+! --------------------------------------------------  not_used_here  -----
+  logical function NOT_USED_HERE()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function NOT_USED_HERE
 
 end module GET_GL_DELTA_M
 
 !$Log$
+!Revision 2.2  2003/02/07 00:22:35  michael
+!it will compile now
+!
 !Revision 2.1  2003/02/06 23:24:33  michael
 !initial commit
 !
