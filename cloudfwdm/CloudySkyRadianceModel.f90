@@ -15,6 +15,7 @@ module CloudySkyRadianceModel
       use ModelInput, only: MODEL_ATMOS
       use MLSCommon, only: r8
       use MLSNumerics, only: INTERPOLATEVALUES
+      use ScatteringAngle, only: ANGLE
 
       IMPLICIT NONE
       private
