@@ -980,7 +980,7 @@ contains
         & Dump, Multiply, operator(.DOT.), &
         & operator(.MDOT.), operator(-), ScaleVector, SubtractFromVector
       use L2FWMParallel, only: SETUPFWMSLAVES, TRIGGERSLAVERUN, &
-        & REQUESTSLAVESOUTPUT, RECEIVESLAVESOUTPUT
+        & REQUESTSLAVESOUTPUT, RECEIVESLAVESOUTPUT, GETNOSLAVES
 
       ! Local Variables
       type(nwt_T) :: AJ                 ! "About the Jacobian", see NWT.
@@ -998,6 +998,7 @@ contains
       type(matrix_SPD_T), target :: KTKSep ! The Jacobian-derived part of the
                                         ! normal equations if an averaging kernel
                                         ! is requested.
+      integer :: LATESTMAFSTARTED       ! For FWMParallel stuff
       real(rv) :: MU                    ! Move Length = scale for DX
       integer, parameter :: NF_GetJ = NF_Smallest_Flag - 1 ! Take an extra loop
                                         ! to get J.
@@ -1352,7 +1353,9 @@ contains
           if ( parallelMode ) then
             if ( index ( switches, 'mas' ) /= 0 ) &
               & call output ( "Triggering slave forward model runs", advance='yes' )
-            do t = 1, chunk%lastMAFIndex-chunk%firstMAFIndex+1
+            latestMAFStarted = min ( GetNoSlaves(), &
+              & chunk%lastMAFIndex-chunk%firstMAFIndex+1 )
+            do t = 1, latestMAFStarted
               call TriggerSlaveRun ( v(x), t )
             end do
             ! Get the first one setup to send results as soon as possible
@@ -1368,6 +1371,11 @@ contains
             fmstat%rows = .false.
             if ( parallelMode ) then
               call ReceiveSlavesOutput ( v(f_rowScaled), fmStat, jacobian )
+              ! If there is still another MAF to launch off, let's do that
+              if ( latestMAFStarted < chunk%lastMAFIndex-chunk%firstMAFIndex+1 ) then
+                latestMAFStarted = latestMAFStarted + 1
+                call TriggerSlaveRun ( v(x), latestMAFStarted )
+              end if
               ! Set the next slave about packing up its output while we do
               ! our normal equations stuff
               if ( fmStat%maf < chunk%lastMAFIndex-chunk%firstMAFIndex+1 ) &
@@ -3319,6 +3327,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.207  2002/12/06 18:41:24  livesey
+! Slightly new approach to FWMParallel mode
+!
 ! Revision 2.206  2002/11/23 00:07:13  vsnyder
 ! Delete some unused symbols
 !
