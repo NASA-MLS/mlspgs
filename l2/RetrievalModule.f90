@@ -45,7 +45,7 @@ module RetrievalModule
   use OUTPUT_M, only: BLANKS, OUTPUT
   use SidsModule, only: SIDS
   use SnoopMLSL2, only: SNOOP
-  use String_Table, only: Get_String
+  use String_Table, only: DISPLAY_STRING, Get_String
   use Toggles, only: Gen, Switches, Toggle
   use Trace_M, only: Trace_begin, Trace_end
   use Tree, only: Decorate, Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, &
@@ -53,7 +53,8 @@ module RetrievalModule
   use Tree_Types, only: N_named
   use VectorsModule, only: AddToVector, AddVectorToDatabase, ClearVector, &
     & CloneVector, CopyVector, DestroyVectorInfo, DestroyVectorDatabase, &
-    & DumpMask, GetVectorQuantityByType, Vector_T, VectorValue_T
+    & DumpMask, GetVectorQuantityByType, IsVectorQtyMasked, &
+    & Vector_T, VectorValue_T
 
   implicit NONE
   private
@@ -1780,6 +1781,8 @@ print*,'begin cloud retrieval maf= ',fmstat%maf
       logical, dimension(:), pointer :: CHANNELS ! Are we dealing with these channels
       logical :: IGNORE                 ! Flag
       logical :: DOTHIS                 ! Flag
+      integer, parameter ::                      MAXCOLUMNS = 127
+      character(len=1), dimension(MAXCOLUMNS) :: maskedMan
 
       ! Executable code
       nullify ( channels, qty, ptan )
@@ -1939,9 +1942,25 @@ print*,'begin cloud retrieval maf= ',fmstat%maf
       call Deallocate_test ( channels, 'channels', ModuleName )
       
       if ( index(switches,'msk') /= 0 ) then
+        if ( qty%template%name /= 0 ) then
+          call output ( ' Qty_Template_Name = ' )
+          call display_string ( qty%template%name )
+        end if
         call output ( 'Elements per mask = ' )
         call output ( size(qty%values,1), advance='yes' )
         call dump ( qty%mask, format='(1x,z8.8)' )
+        call output ( 'column, row look at mask', advance='yes' )
+        do i=1, size(qty%values(1,:))
+          maskedMan='0'
+          do j=1, min(size(qty%values(:,1)), MAXCOLUMNS)
+            if ( IsVectorQtyMasked(qty, j, i) ) maskedMan(j)='1'
+          enddo
+          j=min(size(qty%values(:,1)), MAXCOLUMNS)
+          call output ( 'column ', advance='no' )
+          call output ( i, advance='no' )
+          call blanks(4, advance='no')
+          call output ( MaskedMan(1:j), advance='yes' )
+        enddo
       end if
     end subroutine SetupSubset
   end subroutine Retrieve
@@ -1949,6 +1968,9 @@ print*,'begin cloud retrieval maf= ',fmstat%maf
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.94  2001/10/16 23:35:39  pwagner
+! More dumped on msk switch
+!
 ! Revision 2.93  2001/10/15 23:21:47  vsnyder
 ! Forgot to clone AprioriMinusX after changing multiply not to clone
 !
