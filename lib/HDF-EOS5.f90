@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !===========================================================================
@@ -20,7 +20,7 @@ module HDFEOS5               ! F90 interface to HDF-EOS5.
   ! as of Toolkit version 5.2.8
   include 'hdfeos5.f9h'
 
-  ! Now define f90 interfaces for some HDF-EOS.
+  ! Now define f90 interfaces for some HDF-EOS5.
   ! Warning: as you are calling C directly, make sure that your 
   ! array args are like this.
   !integer function HE5_SWGONKULATE(ARRAY)
@@ -43,6 +43,82 @@ module HDFEOS5               ! F90 interface to HDF-EOS5.
       integer, intent(in) :: ACCESS_MODE
     end function HE5_GDOPEN
 
+    integer function HE5_GDATTACH ( GDFID, GRIDNAME )
+      integer, intent(in) :: GDFID
+      character (len=*), intent(in) :: GRIDNAME
+    end function HE5_GDATTACH
+
+    integer function HE5_GDCREATE ( GDFID, GRIDNAME,&
+      & XDIMSIZE,YDIMSIZE,UPLEFT,LOWRIGHT )
+      integer, intent(in) :: GDFID
+      character (len=*), intent(in) :: GRIDNAME
+       integer,intent(in)::XDIMSIZE
+       integer,intent(in)::YDIMSIZE
+       double precision,dimension(2),intent(in)::UPLEFT
+       double precision,dimension(2),intent(in)::LOWRIGHT
+    end function HE5_GDCREATE
+
+    integer function HE5_GDDETACH ( GDID )
+      integer, intent(in) :: GDID
+    end function HE5_GDDETACH
+
+    integer function HE5_GDINQGRID (FILENAME,GRIDLIST,STRBUFSIZE)
+      character (len=*), intent(in) :: FILENAME
+      character (len=*), intent(out) :: GRIDLIST
+      integer, intent(out):: STRBUFSIZE
+    end function HE5_GDINQGRID
+
+    integer function HE5_GDINQDIMS (GRIDID,DIMNAME,DIMS)
+       integer,intent(in)::GRIDID
+       character(len=*),intent(out)::DIMNAME
+       integer,intent(out),dimension(*)::DIMS
+    
+    end function HE5_GDINQDIMS
+    
+    integer function HE5_GDDIMINFO (GRIDID,DIMNAME)
+       integer,intent(in)::GRIDID
+       character(len=*),intent(IN)::DIMNAME
+    end function HE5_GDDIMINFO
+
+    integer function HE5_GDGRIDINFO (GRIDID,XDIMSIZE,YDIMSIZE,UPLEFT,LOWRIGHT)
+       integer,intent(in)::GRIDID
+       integer,intent(out)::XDIMSIZE
+       integer,intent(out)::YDIMSIZE
+       double precision,dimension(2),intent(out)::UPLEFT
+       double precision,dimension(2),intent(out)::LOWRIGHT
+    end function HE5_GDGRIDINFO
+
+    integer function HE5_GDFLDINFO (GRIDID,FIELDNAME,&
+     & RANK,DIMS,NUMBERTYPE,DIMLIST, MAXDIMLIST)
+       integer,intent(in)::GRIDID
+       character(len=*),intent(IN)::FIELDNAME
+       integer,intent(out),dimension(*):: DIMS
+       integer,intent(out)             :: RANK, NUMBERTYPE
+       character(len=*),intent(OUT)::DIMLIST
+       character(len=*),intent(OUT)::MAXDIMLIST
+    end function HE5_GDFLDINFO
+
+    integer function HE5_GDNENTRIES (GRIDID, ENTRYCODE, STRINGBUFFERSIZE)
+       integer,intent(in)::GRIDID
+       integer,intent(in)::ENTRYCODE
+       integer,intent(out)::STRINGBUFFERSIZE
+    end function HE5_GDNENTRIES
+    
+    integer function HE5_GDPROJINFO (GRIDID,&
+      & PROJCODE,ZONECODE,SPHERECODE,PROJPARM)
+       integer,intent(in)::GRIDID
+       integer,intent(out)::PROJCODE
+       integer,intent(out)::ZONECODE
+       integer,intent(out)::SPHERECODE
+       double precision,dimension(*),intent(out)::PROJPARM
+    end function HE5_GDPROJINFO
+
+    integer function HE5_GDINQFLDS (GRIDID, FIELDLIST, RANK, NUMBERTYPE)
+       integer,intent(in)::GRIDID
+       character(len=*),intent(out)::FIELDLIST
+       integer,intent(out),dimension(*)::RANK, NUMBERTYPE
+    end function HE5_GDINQFLDS
+    
     integer function HE5_SWATTACH ( SWFID, SWATHNAME )
       integer, intent(in) :: SWFID
       character (len=*), intent(in) :: SWATHNAME
@@ -141,6 +217,9 @@ end module HDFEOS5
 !====================
 
 ! $Log$
+! Revision 2.7  2003/06/03 20:39:39  pwagner
+! Added some grid apis
+!
 ! Revision 2.6  2003/04/21 19:30:07  pwagner
 ! Added interface to HE5_SWINQDFLDS
 !
