@@ -2200,6 +2200,26 @@ contains ! =====     Public Procedures     =============================
       end if
     end subroutine ApplyBaseline
 
+    ! ------------------------------------- deallocateStuff ---
+    subroutine deallocateStuff(Zetab, Zetac, Zetai, Pb, Pc, Pi)    
+      real (r8), pointer, dimension(:) :: Zetab
+      real (r8), pointer, dimension(:) :: Zetac
+      real (r8), pointer, dimension(:) :: Zetai
+      real (r8), pointer, dimension(:) :: Pb         ! p[i] in hPa
+      real (r8), pointer, dimension(:) :: Pc         ! p[i] in hPa
+      real (r8), pointer, dimension(:) :: Pi         ! p[i] in hPa
+      ! call Deallocate_test ( pa, 'pa', ModuleName )
+      call Deallocate_test ( pb, 'pb', ModuleName )
+      call Deallocate_test ( pc, 'pc', ModuleName )
+      ! call Deallocate_test ( pd, 'pd', ModuleName )
+      call Deallocate_test ( pi, 'pi', ModuleName )
+      ! call Deallocate_test ( Zetaa, 'Zetaa', ModuleName )
+      call Deallocate_test ( Zetab, 'Zetab', ModuleName )
+      call Deallocate_test ( Zetac, 'Zetac', ModuleName )
+      ! call Deallocate_test ( Zetad, 'Zetad', ModuleName )
+      call Deallocate_test ( Zetai, 'Zetai', ModuleName )
+    end subroutine DeallocateStuff    
+
     ! ------------------------------------------- ExtractSingleChannel ---
     subroutine ExtractSingleChannel ( key, quantity, sourceQuantity, channel )
       integer, intent(in) :: KEY        ! Tree node
@@ -3372,190 +3392,8 @@ contains ! =====     Public Procedures     =============================
     end subroutine FillChiSqMMif
 
     ! ------------------------------------------- FillColAbundance ---
+    ! subroutine FillColAbundance_idl ( key, qty, bndPressQty, vmrQty, &
     subroutine FillColAbundance ( key, qty, bndPressQty, vmrQty, &
-      & firstInstance, lastInstance )
-      ! A special fill according to Appendix A of EOS MLS ATBD
-      ! JPL D-16159
-      ! EOS MLS DRL 601 (part 3)
-      ! ATBD-MLS-03
-      ! (Livesey and Wu)
-
-      ! Assumptions:
-      ! (1)This fill operation is triggered by a command
-      !    such as the following in the lcf
-      !      Fill, state.columnO3, method=special, vmrQuantity=state.o3, $
-      !      boundaryPressure=state.tpPressure
-      ! (2)the vmr is in units of PHYQ_VMR and not, say, ppmv;
-      !    it is in fact identical to the coefficients of the mls basis functions
-      ! (3)The pressure surfaces are in hPa, but not all necessarily at the
-      !    same logarithmic distance from one another
-      ! (4)The tropospheric boundary pressure is somewhere in between the surfs
-      ! (5)Unless first,last instances are args, fill all instances
-      !    (unlike join which has to worry about chunks and overlaps)
-      integer, intent(in) :: KEY
-      type (VectorValue_T), intent(inout) :: QTY
-      type (VectorValue_T), intent(in) :: BNDPRESSQTY
-      type (VectorValue_T), intent(in) :: VMRQTY
-      integer, intent(in), optional :: FIRSTINSTANCE
-      integer, intent(in), optional :: LASTINSTANCE
-      ! The last two are set if only part (e.g. overlap regions) of the quantity
-      ! is to be stored in the column data.
-      ! Parameters                               or newer idl-like one (default)
-      logical, parameter :: OLDBUGS = .false.  ! Whether to use older buggy
-      logical :: useoldbugs
-      ! Executable
-      useoldbugs = OLDBUGS
-      if ( index(switches, 'colold') /= 0 ) useoldbugs = .true.
-      if ( index(switches, 'colidl') /= 0 ) useoldbugs = .false.
-      if ( useoldbugs ) then
-        if ( index(switches, 'l2gp') /= 0 ) &
-          & call output('Filling column using buggy old method', advance='yes')
-        call  FillColAbundance_bug ( key, qty, bndPressQty, vmrQty, &
-          & firstInstance, lastInstance )
-      else
-        if ( index(switches, 'l2gp') /= 0 ) &
-          & call output('Filling column using Bills idl method', advance='yes')
-        call  FillColAbundance_idl ( key, qty, bndPressQty, vmrQty, &
-          & firstInstance, lastInstance )
-      end if
-    end subroutine FillColAbundance
-
-
-    ! ------------------------------------------- FillColAbundance_bug ---
-    subroutine FillColAbundance_bug ( key, qty, bndPressQty, vmrQty, &
-      & firstInstance, lastInstance )
-      ! A special fill according to Appendix A of EOS MLS ATBD
-      ! JPL D-16159
-      ! EOS MLS DRL 601 (part 3)
-      ! ATBD-MLS-03
-      ! (Livesey and Wu)
-
-      ! Assumptions:
-      ! (See above)
-      integer, intent(in) :: KEY
-      type (VectorValue_T), intent(inout) :: QTY
-      type (VectorValue_T), intent(in) :: BNDPRESSQTY
-      type (VectorValue_T), intent(in) :: VMRQTY
-      integer, intent(in), optional :: FIRSTINSTANCE
-      integer, intent(in), optional :: LASTINSTANCE
-      ! The last two are set if only part (e.g. overlap regions) of the quantity
-      ! is to be stored in the column data.
-
-      ! Local parameters
-      real(r8), parameter :: AOVERMG = 4.12e5 / (2.687 * 0.192)
-
-      ! Local variables
-      logical :: printMe
-      integer :: SURFACE
-      integer :: INSTANCE
-      integer :: FIRSTSURFACE
-      integer :: USEFIRSTINSTANCE
-      integer :: USELASTINSTANCE
-      integer :: NOOUTPUTINSTANCES
-      real (r8) :: THISBNDPRESS
-      real (r8) :: COLUMNSUM
-      real (r8) :: DELTA_P_PLUS    ! p[j+1] - p[j]
-      real (r8) :: DELTA_P_MINUS   ! p[j-1] - p[j]
-      real (r8) :: DELTA_LOG_PLUS  ! ln p[j+1] - ln p[j]
-      real (r8) :: DELTA_LOG_MINUS ! ln p[j-1] - ln p[j]
-
-      real (r8), pointer, dimension(:) :: P         ! p[i] in hPa
-
-      ! Executable code
-      ! First check that things are OK.
-      if ( (qty%template%quantityType /= l_columnAbundance) .or. &
-        &  (bndPressQty%template%quantityType /= l_boundaryPressure) .or. &
-        &  (vmrQty%template%quantityType /= l_vmr) ) then
-        call Announce_error ( key, No_Error_code, &
-          & 'Wrong quantity type found while filling column abundance'  )
-        return
-      else if ( qty%template%molecule /= vmrQty%template%molecule ) then
-        call Announce_error ( key, No_Error_code, &
-          & 'Attempt to fill column abundance with different molecule'  )
-        return
-      else if ( .not. ( DoHgridsMatch( qty, vmrQty ) .and. &
-        & DoHgridsMatch( qty, bndPressQty ) ) ) then
-        call Announce_error ( key, No_Error_code, &
-          & 'Attempt to fill column abundance with different HGrids'  )
-        return
-      else if ( .not. any(vmrQty%template%verticalCoordinate == &
-        & (/l_zeta/)) ) then
-        call Announce_error ( key, No_Error_code, &
-          & 'Fill column abundance, but vmr not on zeta surfs.'  )
-        return
-      end if
-
-      ! Work out what to do with the first and last Instance information
-      useFirstInstance = 1
-      useLastInstance = qty%template%noInstances
-      if ( present ( firstInstance ) ) useFirstInstance = firstInstance
-      if ( present ( lastInstance ) ) useLastInstance = lastInstance
-      noOutputInstances = useLastInstance-useFirstInstance+1
-
-      ! If we've not been asked to output anything then don't carry on
-      if ( noOutputInstances < 1 ) return
-      ! AoverMg = 4.12e25 / (2.687e20 * 0.192)
-      ! This assumes that
-      ! (1) p is in hPa
-      ! (2) f is in PHYQ_vmr (*not* ppmv)
-
-      nullify ( p )
-      call allocate_test ( p, vmrQty%template%noSurfs, 'p', ModuleName )
-      p = 10.0 ** ( - vmrQty%template%surfs(:,1) )
-
-      do instance = useFirstInstance, useLastInstance
-        printMe = (instance == useFirstInstance) .and. (index(switches, 'column') /= 0)
-        if ( printMe ) print *, 'switches: ', trim(switches)
-        if ( printMe ) print *, 'index(switches, column) ', index(switches, 'column')
-        ! Find 1st surface at or above tropopause
-        ! (i.e., at a pressure equal to or less than boundaryPressure)
-        if ( instance > size(bndPressQty%values, 2) ) then
-          call MLSMessage ( MLSMSG_Warning, ModuleName, &
-          & 'Cant fill column--instance outside b.pres. range' )
-          call deallocate_test(p, 'p', ModuleName )
-          return
-        end if
-        thisBndPress = bndPressQty%values(1,instance)
-        ! In case where WMO algorithm failed, use bottom of basis
-        if ( thisBndPress <= 0.0 ) &
-          & thisBndPress = 10.0 ** ( - vmrQty%template%surfs(1,1) )
-        call Hunt ( vmrQty%template%surfs(:,1), &
-          & -log10 ( thisBndPress ), firstSurface )
-        do surface=1, vmrQty%template%noSurfs
-          if ( p(surface) <= thisBndPress ) exit
-        end do
-
-        ! Do summation
-        ! Initialize sum, Deltas
-        columnSum = 0.0
-        Delta_p_plus = p(firstSurface+1) - p(firstSurface)
-        Delta_log_plus = log(p(firstSurface+1)) - log(p(firstSurface))
-        if ( printMe ) then
-          print *, 'thisBndPress: ', thisBndPress
-          print *, 'firstSurface: ', firstSurface
-        end if
-        ! Loop over surfaces from tropoause+1 to uppermost-1
-        do surface = firstSurface + 1, vmrQty%template%noSurfs - 1
-          Delta_p_minus = - Delta_p_plus
-          Delta_log_minus = - Delta_log_plus
-          Delta_p_plus = p(surface+1) - p(surface)
-          Delta_log_plus = log(p(surface+1)) - log(p(surface))
-          columnSum = columnSum + &
-            & vmrQty%values(surface, instance) * &
-            & ( Delta_p_minus/Delta_log_minus - &
-            &   Delta_p_plus/Delta_log_plus )          
-        if ( printMe ) then
-          print *, 'columnSum: ', columnSum
-        end if
-        end do
-        qty%values ( 1, instance ) = AoverMg * columnSum
-      end do
-
-      call Deallocate_test ( p, 'p', ModuleName )
-    end subroutine FillColAbundance_bug
-
-    ! ------------------------------------------- FillColAbundance_idl ---
-    subroutine FillColAbundance_idl ( key, qty, bndPressQty, vmrQty, &
       & firstInstance, lastInstance )
       ! A special fill according to W.R.Read's idl code
       ! Similar to his hand-written notes, but with a small correction
@@ -3789,25 +3627,7 @@ contains ! =====     Public Procedures     =============================
         qty%values ( 1, instance ) = InverMg * columnSum
       end do
       call deallocateStuff(Zetab, Zetac, Zetai, Pb, Pc, Pi)
-    end subroutine FillColAbundance_idl
-    subroutine deallocateStuff(Zetab, Zetac, Zetai, Pb, Pc, Pi)    
-      real (r8), pointer, dimension(:) :: Zetab
-      real (r8), pointer, dimension(:) :: Zetac
-      real (r8), pointer, dimension(:) :: Zetai
-      real (r8), pointer, dimension(:) :: Pb         ! p[i] in hPa
-      real (r8), pointer, dimension(:) :: Pc         ! p[i] in hPa
-      real (r8), pointer, dimension(:) :: Pi         ! p[i] in hPa
-      ! call Deallocate_test ( pa, 'pa', ModuleName )
-      call Deallocate_test ( pb, 'pb', ModuleName )
-      call Deallocate_test ( pc, 'pc', ModuleName )
-      ! call Deallocate_test ( pd, 'pd', ModuleName )
-      call Deallocate_test ( pi, 'pi', ModuleName )
-      ! call Deallocate_test ( Zetaa, 'Zetaa', ModuleName )
-      call Deallocate_test ( Zetab, 'Zetab', ModuleName )
-      call Deallocate_test ( Zetac, 'Zetac', ModuleName )
-      ! call Deallocate_test ( Zetad, 'Zetad', ModuleName )
-      call Deallocate_test ( Zetai, 'Zetai', ModuleName )
-    end subroutine DeallocateStuff    
+    end subroutine FillColAbundance
 
     ! ------------------------------------- FillFoldedRadiance ---
     subroutine FillFoldedRadiance ( radiance, lsb, usb, &
@@ -7018,6 +6838,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.299  2005/03/24 21:23:46  pwagner
+! Removed buggy, unused FillColAbundance
+!
 ! Revision 2.298  2005/03/12 00:50:27  pwagner
 ! May restart warnings counter at each phase
 !
