@@ -101,6 +101,8 @@ include $(srclib)/Makefile.dep
 # Add them to L1OBJS
 ALLOBJS = $(OBJS) $(srclib_objs)
 
+mlspack_dir=$(CONFDIR)/blas/$(MLSCONFG)
+
 PVM_PATH = ${PVM_ROOT}/lib/${PVM_ARCH}
 
 ifdef PVM_ROOT
@@ -140,6 +142,8 @@ else
    lapack_message=Building mlsl1 with internally-supplied LAPACK
 endif
 
+mlspack_linker_line=-L${mlspack_dir} -lmlspack
+mlspack_message=Building mlsl2 with mlspack
 utctotai_linker_line=-L${INSTALLDIR} -lutctotai
 utctotai_message=Building mlsl2 with toolkitless utc to tai conversion
 
@@ -184,7 +188,9 @@ endif
 
 fftw_linker_line = $(shell ${UTILDIR}/which_fftw.sh ${FFTW_ROOT} ${FFTW_PREC})
 # ========================================================================
-MLSL1log MLSL1G MLSL1T MLSL1BOA: $(ALLOBJS) $(libdir)/libmls.a $(PVM_OBJS) $(CONFDIR)/$(MLSCFILE) \
+MLSL1log MLSL1G MLSL1T MLSL1BOA: $(ALLOBJS) \
+     $(mlspack_dir)/libmlspack.a $(libdir)/libmls.a $(PVM_OBJS) \
+     $(CONFDIR)/$(MLSCFILE) \
      $(MODULES)
 		@if [ "$(MODULES)" != "" -a "$(MARK_ALL_AS_UPTODATE)" = "yes" ]; then \
 		 $(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -fyes ; \
@@ -212,6 +218,7 @@ MLSL1log MLSL1G MLSL1T MLSL1BOA: $(ALLOBJS) $(libdir)/libmls.a $(PVM_OBJS) $(CON
         $(pvm_linker_line) \
         $(blas_linker_line) \
         $(lapack_linker_line) \
+        $(mlspack_linker_line) \
         $(fftw_linker_line) \
         $(l_specials) $(LAFTER) \
 
@@ -240,6 +247,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.30  2004/03/17 19:06:57  pwagner
+# Extra static object to fix building static Lahey executables when Red Hat>8
+#
 # Revision 1.29  2003/10/24 20:59:21  pwagner
 # Added mlsl1boa utility as new target
 #
