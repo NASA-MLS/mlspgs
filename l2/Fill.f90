@@ -4148,17 +4148,10 @@ contains ! =====     Public Procedures     =============================
       integer, intent(inout) :: ERRORCODE
 
       ! Executable code
-      if ( .not. qty%template%minorFrame ) then
-        errorCode = CantFillFromL2AUX
-      else
-        if ( size(l2aux%values,3) /= 1 ) &
-          & call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Can only fill from 2D minor frame l2auxs until hdf5 comes along')
-        qty%values = reshape ( l2aux%values ( :, &
-          & qty%template%mafIndex(1)+1 : &
-          & qty%template%mafIndex(qty%template%noInstances)+1, 1 ), &
-          & (/ qty%template%instanceLen, qty%template%noInstances /) )
-      end if
+      qty%values = reshape ( l2aux%values ( :, :,  &
+        & qty%template%mafIndex(1)+1 : &
+        & qty%template%mafIndex(qty%template%noInstances)+1 ), &
+        & (/ qty%template%instanceLen, qty%template%noInstances /) )
     end subroutine FillVectorQuantityFromL2AUX
 
     ! ------------------------------------------- FillQtyFromInterpolatedQty
@@ -4693,6 +4686,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.168  2002/11/29 22:46:15  livesey
+! Tidyup on l2aux fill
+!
 ! Revision 2.167  2002/11/27 22:59:21  livesey
 ! Made the checking in FillQuantityByManipulation a little more lenient
 !
