@@ -72,7 +72,7 @@ contains ! =====     Public Procedures     =============================
 
   ! This is the `main' subroutine for this module
 
-    use ConstructQuantityTemplates, only: ConstructMinorFrameQuantity, &
+    use ConstructQuantityTemplates, only: &
       & CreateQtyTemplateFromMLSCfInfo, ForgeMinorFrames
     use ConstructVectorTemplates, only: CreateVecTemplateFromMLSCfInfo
     use DumpCommand_m, only: DumpCommand
@@ -85,21 +85,20 @@ contains ! =====     Public Procedures     =============================
     use HGrid, only: CREATEHGRIDFROMMLSCFINFO
     use INIT_TABLES_MODULE, only: S_DUMP, S_FORGE, S_FORWARDMODEL, S_HGRID, &
       & S_PHASE, S_QUANTITY, S_TIME, S_VECTORTEMPLATE
-    use Intrinsic, ONLY: L_None
     use L2GPData, only: L2GPDATA_T
     use MLSCommon, only: L1BInfo_T, MLSChunk_T, TAI93_Range_T
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, add_to_phase_timing
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
     use MoreTree, only: Get_Spec_ID
     use OUTPUT_M, only: BLANKS, OUTPUT
-    use QuantityTemplates, only: AddQuantityTemplateToDatabase, dump, &
+    ! It shouldn't be necessary to get Dump from QuantityTemplates, since
+    ! Dumper already does, but NAG f95 v5.0(322) needs it.
+    use QuantityTemplates, only: AddQuantityTemplateToDatabase, Dump, &
       & QuantityTemplate_T
     use String_Table, only: get_string
     use Time_M, only: Time_Now
     use TOGGLES, only: GEN, LEVELS, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, NULL_TREE, SUB_ROSA, &
-      & SUBTREE
+    use TREE, only: DECORATE, NODE_ID, NSONS, SUB_ROSA, SUBTREE
     use TREE_TYPES, only: N_NAMED
     use VectorsModule, only: AddVectorTemplateToDatabase, Dump, &
       & VectorTemplate_T
@@ -127,7 +126,6 @@ contains ! =====     Public Procedures     =============================
     integer :: NAME             ! Sub-rosa index of name
     character(len=80) :: PHASESTRING    ! E.g., 'Core'
     integer :: SON              ! Son or grandson of Root
-    integer :: STATUS           ! Flag
     REAL :: T1, T2              ! for timing
     logical :: TIMING
 
@@ -250,6 +248,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.45  2004/05/11 02:54:36  vsnyder
+! Remove USEs and declarations for unreferenced symbols
+!
 ! Revision 2.44  2004/05/03 16:37:11  pwagner
 ! Get dump from QuantityTemplates module
 !
