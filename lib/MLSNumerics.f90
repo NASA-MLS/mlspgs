@@ -499,7 +499,7 @@ end subroutine InterpolateArray
 ! This subroutine is a scalar wrapper for the first one.
 
 subroutine InterpolateScalar ( oldX, oldY, newX, newY, method, extrapolate, &
-  & badValue, missingRegions, dyByDx )
+  & badValue, missingRegions, dyByDx, RangeOfPeriod )
 
   ! Dummy arguments
   real(r8), dimension(:), intent(in) :: oldX
@@ -511,30 +511,62 @@ subroutine InterpolateScalar ( oldX, oldY, newX, newY, method, extrapolate, &
   character (len=*), optional, intent(in) :: extrapolate ! See comments above
   real(r8), optional, intent(in) :: badValue
   real(r8), dimension(:), optional, intent(out) :: dyByDx
+  real(r8), dimension(2), optional, intent(in) :: rangeofperiod	  ! for periodic data
   logical, optional, intent(in) :: missingRegions ! Allow missing regions
 
+! local working space
   real(r8), dimension(:,:), pointer :: tempDerivative
   real(r8), dimension(size(newX), 1) :: tempResult
+  real(r8), dimension(size(oldY)) :: tempY
+  real(r8) period
+  integer jump, j
 
   ! Executable code
 
+  tempY = oldY
+
+  if ( present(rangeofperiod) ) then
+	period  = rangeofPeriod(2)-rangeofPeriod(1)
+	jump = -1
+	do j =1, size(oldY)-1
+		if(abs(tempY(j+1)-tempY(j)) > period/2. ) jump = j 
+	enddo
+	if(jump /= -1) then
+	   if(tempY(jump+1) > tempY(jump)) then
+		tempY(jump+1:) = tempY(jump+1:) - period
+	   else 
+		tempY(jump+1:) = tempY(jump+1:) + period
+	   end if
+	end if
+  end if
+
   nullify ( tempDerivative )
+
   if ( present(dyByDx) ) then
     call Allocate_Test ( tempDerivative, size(newX), 1, &
       & "tempDerivative", ModuleName )
 
-    call InterpolateArray ( oldX, spread(oldY,2,1), newX, tempResult, method, &
+    call InterpolateArray ( oldX, spread(tempY,2,1), newX, tempResult, method, &
       & extrapolate=extrapolate, badValue=badValue, &
       & missingRegions=missingRegions, dyByDx=tempDerivative )
     dyByDx = tempDerivative(:,1)
 
     call Deallocate_Test ( tempDerivative, "tempDerivative", ModuleName )
   else
-    call InterpolateArray ( oldX, spread(oldY,2,1), newX, tempResult, method, &
+    call InterpolateArray ( oldX, spread(tempY,2,1), newX, tempResult, method, &
       & extrapolate=extrapolate, badValue=badValue, &
       & missingRegions=missingRegions )
   end if
   newY = tempResult(:,1)
+
+  if ( present(rangeofperiod) ) then
+	period  = rangeofPeriod(2)-rangeofPeriod(1)
+	where (newY > rangeofperiod(2)) 
+	  newY = newY - period
+	elsewhere (newY < rangeofperiod(1)) 
+	  newY = newY + period
+	end where
+  end if
 end subroutine InterpolateScalar
 
 !=============================================================================
@@ -543,6 +575,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.12  2001/07/06 18:44:40  dwu
+! Add a feature in InterpolateScaler to handle periodic data
+!
 ! Revision 2.11  2001/06/07 21:59:41  pwagner
 ! Added Copyright statement
 !
