@@ -503,10 +503,12 @@ contains ! ======================= Public Procedures =========================
     ! Now some attribute stuff
     if ( PHASENAMEATTRIBUTES ) then
       call h5gopen_f(fileID, '/', grp_id, returnstatus)
-      call MakeHDF5Attribute(grp_id, &
+      if ( associated ( FWModelConfig ) ) then
+        call MakeHDF5Attribute(grp_id, &
           & 'ForwardModel Names', trim(ShowFwdModelNames(FWModelConfig)), .false.)
+      end if
       call MakeHDF5Attribute(grp_id, &
-          & 'Phase Names', trim(showTimingNames('phases', .true.)), .false.)
+        & 'Phase Names', trim(showTimingNames('phases', .true.)), .false.)
       call h5gclose_f(grp_id, returnstatus)
     endif
 
@@ -924,6 +926,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.29  2004/11/29 21:52:41  livesey
+! Bug fix for handling cases where no forward models are defined.
+!
 ! Revision 2.28  2004/08/03 18:02:01  pwagner
 ! Sets fillValue for l2aux type
 !
