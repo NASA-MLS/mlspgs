@@ -582,9 +582,10 @@ contains ! =====  Public Procedures  ===================================
     end do
   end subroutine Dump_Lines_Database
   ! ----------------------------------  Dump_SpectCat_Database_2D  -----
-  subroutine Dump_SpectCat_Database_2d ( Catalog, Name )
+  subroutine Dump_SpectCat_Database_2d ( Catalog, Name, Details )
     type(catalog_T), intent(in) :: Catalog(-1:,:)
     character(len=*), intent(in), optional :: Name
+    integer, optional, intent(in) :: Details ! <= 0 => Don't dump lines, default 0
     integer :: Sideband
     ! Executable code
     do sideband = -1, 1, 2
@@ -593,7 +594,7 @@ contains ! =====  Public Procedures  ===================================
   end subroutine Dump_SpectCat_Database_2d
 
   ! -------------------------------------  Dump_SpectCat_Database  -----
-  subroutine Dump_SpectCat_Database ( Catalog, Name, Sideband )
+  subroutine Dump_SpectCat_Database ( Catalog, Name, Sideband, Details )
     use Dump_0, only: Dump
     use Intrinsic, only: Lit_indices
     use Output_m, only: Blanks, NewLine, Output
@@ -602,10 +603,14 @@ contains ! =====  Public Procedures  ===================================
     type(catalog_T), intent(in) :: Catalog(:)
     character(len=*), intent(in), optional :: Name
     integer, intent(in), optional :: Sideband
+    integer, optional, intent(in) :: Details ! <= 0 => Don't dump lines, default 0
 
     integer :: I, J                ! Subscript, loop inductor
+    integer :: MyDetails
     character(len=15) :: Print
 
+    myDetails = 0
+    if ( present(details) ) myDetails = details
     call output ( 'Spectroscopy catalog' )
     if ( present(name) ) call output ( ' '//trim(name) )
     if ( present(sideband) ) call output ( sideband, before=' for sideband ' )
@@ -642,20 +647,22 @@ contains ! =====  Public Procedures  ===================================
       call output ( ' ]', advance='yes' )
       if ( associated(catalog(i)%polarized) ) &
         & call dump ( catalog(i)%polarized, '      Polarized:' )
-      call blanks ( 6 )
-      call output ( 'Lines:' )
-      if ( associated(catalog(i)%lines) ) then
-        if ( size(catalog(i)%lines) > 0 ) then
-          call newLine
-          do j = 1, size(catalog(i)%lines)
-            call dump_lines_database ( catalog(i)%lines(j), catalog(i)%lines(j), &
-              & .false. )
-          end do
+      if ( myDetails > 0 ) then
+        call blanks ( 6 )
+        call output ( 'Lines:' )
+        if ( associated(catalog(i)%lines) ) then
+          if ( size(catalog(i)%lines) > 0 ) then
+            call newLine
+            do j = 1, size(catalog(i)%lines)
+              call dump_lines_database ( catalog(i)%lines(j), catalog(i)%lines(j), &
+                & .false. )
+            end do
+          else
+            call output ( ' none', advance='yes' )
+          end if
         else
           call output ( ' none', advance='yes' )
         end if
-      else
-        call output ( ' none', advance='yes' )
       end if
     end do ! i
   end subroutine Dump_SpectCat_Database
@@ -700,6 +707,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.23  2004/07/08 02:47:44  vsnyder
+! Fix up the dump routines
+!
 ! Revision 2.22  2004/04/02 23:58:33  vsnyder
 ! Require a MASS field in SPECTRA if a LINE field appears
 !
