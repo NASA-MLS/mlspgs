@@ -37,6 +37,7 @@ MODULE MLSL3Common
 
    CHARACTER (LEN=*), PARAMETER :: DG_FIELD = 'GRss'
    CHARACTER (LEN=*), PARAMETER :: MD_FIELD = 'MaxDiff'
+   CHARACTER (LEN=*), PARAMETER :: MDT_FIELD = 'MaxDiffTime'
    CHARACTER (LEN=*), PARAMETER :: DG_FIELD1 = 'LatRss'
    CHARACTER (LEN=*), PARAMETER :: DG_FIELD2 = 'PerMisPoints'
 
@@ -101,6 +102,9 @@ END MODULE MLSL3Common
 !=====================
 
 !# $Log$
+!# Revision 1.12  2001/12/10 18:33:42  nakamura
+!# Moved DM dg fields here.
+!#
 !# Revision 1.11  2001/11/26 19:25:51  nakamura
 !# Added some dg fields.
 !#
