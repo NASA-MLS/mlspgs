@@ -1248,7 +1248,7 @@ contains
       ! Local Variables
       type (ForwardModelStatus_T) :: FmStat        ! Status for forward model
       type (ForwardModelIntermediate_T) :: Fmw     ! Work space for forward model
-      type (vector_T) :: FwdModelOut               ! Forward outputs
+      type (vector_T) :: FwdModelOut1               ! Forward outputs
       type (Signal_T) :: signal                    ! signal info in each model
       type (VectorValue_T), pointer :: xPtr        ! pointer of l_lostransfunc quantity
       type (VectorValue_T), pointer :: xVar        ! variance of apriori
@@ -1289,8 +1289,12 @@ contains
                                                       ! first two are (chan, s)
 
 print*,'begin cloud retrieval'
+      call allocate_test ( fmStat%rows, jacobian%row%nb, 'fmStat%rows', &
+        & ModuleName )
       ! create covarianceDiag vector by cloning x
         call cloneVector ( covarianceDiag, state, vectorNameText='_covarianceDiag' )
+      ! create FwdModelOut1 vector by cloning measurements
+        call cloneVector ( FwdModelOut1, measurements, vectorNameText='_covarianceDiag' )
                
       ! get the inverted diagnonal elements of covariance of apriori
         call getDiagonal ( covariance%m, covarianceDiag )
@@ -1328,7 +1332,6 @@ print*,'begin cloud retrieval'
           ! Loop over MAFs
           do while (fmStat%maf < chunk%lastMAFIndex-chunk%firstMAFIndex+1)
             fmStat%maf = fmStat%maf + 1
-            fmstat%rows = .false.
                         
             ! allocate C, y, x matrices
             allocate(A(nSgrid,nSgrid),C(nSgrid,nSgrid,nMifs))
@@ -1345,7 +1348,7 @@ print*,'begin cloud retrieval'
             ich = 0
             do imodel = 1, size(configIndices)
               call forwardModel ( configDatabase(configIndices(imodel)), &
-                & state, fwdModelExtra, FwdModelOut, fmw, fmStat, jacobian )
+                & state, fwdModelExtra, FwdModelOut1, fmw, fmStat, jacobian )
             
               ! nullify pointers (don't need here)
               ! nullify(Tb0, ptan, slope, Tcir, Terr, xVar)
@@ -1354,7 +1357,7 @@ print*,'begin cloud retrieval'
               signal = configDatabase(configIndices(imodel))%signals(1)
 
               ! get clear sky radiances from forward model for this signal
-              Tb0 => GetVectorQuantityByType ( fwdModelOut,                 &
+              Tb0 => GetVectorQuantityByType ( fwdModelOut1,                 &
                & quantityType=l_radiance,                                      &
                & signal=signal%index, sideband=signal%sideband )
 
@@ -1364,7 +1367,7 @@ print*,'begin cloud retrieval'
                & Tb0%template%instrumentModule)
 
               ! get sensitivity from forward model for this signal
-              Slope => GetVectorQuantityByType ( fwdModelOut,      &
+              Slope => GetVectorQuantityByType ( fwdModelOut1,      &
                & quantityType=l_cloudRADSensitivity,                           &
                & signal=signal%index, sideband=signal%sideband )
           
@@ -1385,12 +1388,7 @@ print*,'begin cloud retrieval'
       
               ! get rowBlock and colBlock for this model
               rowJBlock = FindBlock (jacobian%row, Tb0%index, fmStat%maf)
-
-              colJBlock = 0
-              do while (colJBlock <= jacobian%col%nb .and. &
-                  jacobian%col%inst(colJBlock) /= fmStat%maf)
-                  colJBlock = colJBlock +1 
-              end do
+              colJBlock = FindBlock ( Jacobian%col, ptan%index, fmStat%maf )
                 
               jBlock => jacobian%block(rowJblock,colJblock)
                
@@ -1493,8 +1491,9 @@ print*,'start inversion'
           end do ! end of mafs
 
    ! clean up
-      call destroyVectorInfo ( FwdModelOut )
+      call destroyVectorInfo ( FwdModelOut1 )
       call destroyVectorInfo ( CovarianceDiag)
+      call deallocate_test ( fmStat%rows, 'FmStat%rows', moduleName )
       
     end subroutine LowCloudRetrieval
 
@@ -1720,6 +1719,9 @@ print*,'start inversion'
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.83  2001/10/04 00:30:34  dwu
+! fix coljBlock finding in Low Cloud
+!
 ! Revision 2.82  2001/10/03 23:56:30  dwu
 ! some minor fixes for Low Cloud
 !
