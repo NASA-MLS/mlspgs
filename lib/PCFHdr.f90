@@ -23,7 +23,7 @@ MODULE PCFHdr
      & PGSD_MET_GROUP_NAME_L, PGS_IO_GEN_CLOSEF, PGS_IO_GEN_OPENF, &
      & PGSD_IO_GEN_RDIRUNF, &
      & PGS_TD_ASCIITIME_ATOB, PGS_TD_ASCIITIME_BTOA, &
-     & UseSDPToolkit
+     & UseSDPToolkit, max_orbits
    IMPLICIT NONE
    PUBLIC :: GlobalAttributes_T, &
      & FillTAI93Attribute, &
@@ -70,6 +70,10 @@ MODULE PCFHdr
 
    ! May get some of these from MLSLibOptions? 
   type GlobalAttributes_T
+    integer :: OrbNum(max_orbits)
+    real(r8) :: OrbPeriod(max_orbits)
+    integer, pointer, dimension(:,:) :: OrbNumDays => Null()
+    real(r8), pointer, dimension(:,:) :: OrbPeriodDays => Null()
     character(len=GA_VALUE_LENGTH) :: InstrumentName = 'MLS Aura'
     character(len=GA_VALUE_LENGTH) :: ProcessLevel = ''
     character(len=GA_VALUE_LENGTH) :: InputVersion = ''  ! may drop eventually
@@ -219,6 +223,12 @@ CONTAINS
 ! Internal variables
       integer :: status
 ! Executable
+      !status = he5_GDwrattr(gridID, &
+      ! & 'OrbitNumber', HE5T_NATIVE_INT, max_orbits, &
+      ! &  GlobalAttributes%OrbNum)
+      !status = he5_GDwrattr(gridID, &
+      ! & 'OrbitPeriod', HE5T_NATIVE_DOUBLE, max_orbits, &
+      ! &  GlobalAttributes%OrbPeriod)
       status = he5_GDwrattr(gridID, &
        & 'InstrumentName', HE5T_NATIVE_SCHAR, 1, &
        &  GlobalAttributes%InstrumentName)
@@ -281,6 +291,10 @@ CONTAINS
       endif
       call h5gopen_f(fileID, '/', grp_id, status)
       call MakeHDF5Attribute(grp_id, &
+       & 'OrbitNumber', GlobalAttributes%OrbNum, .true.)
+      call MakeHDF5Attribute(grp_id, &
+       & 'OrbitPeriod', GlobalAttributes%OrbPeriod, .true.)
+      call MakeHDF5Attribute(grp_id, &
        & 'InstrumentName', GlobalAttributes%InstrumentName, .true.)
       call MakeHDF5Attribute(grp_id, &
        & 'ProcessLevel', GlobalAttributes%ProcessLevel, .true.)
@@ -310,10 +324,11 @@ CONTAINS
 !------------------------------------------------------------
 
 !------------------------------------------------------------
-   SUBROUTINE he5_writeglobalattr (fileID)
+   SUBROUTINE he5_writeglobalattr (fileID,dayNum)
 !------------------------------------------------------------
 
-      use HDFEOS5, only: HE5T_NATIVE_SCHAR, HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE
+      use HDFEOS5, only: HE5T_NATIVE_SCHAR, HE5T_NATIVE_INT, &
+	& HE5T_NATIVE_DOUBLE
       use MLSHDFEOS, only: he5_EHwrglatt
 ! Brief description of subroutine
 ! This subroutine writes the global attributes for an hdf-eos5 file
@@ -321,9 +336,25 @@ CONTAINS
 ! Arguments
 
       INTEGER, INTENT(IN) :: fileID
+      INTEGER, INTENT(IN), optional :: dayNum
 ! Internal variables
       integer :: status
 ! Executable
+      if (present(dayNum)) then
+         status = he5_EHwrglatt(fileID, &
+       	    & 'OrbitNumber', HE5T_NATIVE_INT, max_orbits, &
+            &  GlobalAttributes%OrbNumDays(:,dayNum))
+         status = he5_EHwrglatt(fileID, &
+            & 'OrbitPeriod', HE5T_NATIVE_DOUBLE, max_orbits, &
+            &  GlobalAttributes%OrbPeriodDays(:,dayNum))
+      else	
+         status = he5_EHwrglatt(fileID, &
+            & 'OrbitNumber', HE5T_NATIVE_INT, max_orbits, &
+            &  GlobalAttributes%OrbNum)
+         status = he5_EHwrglatt(fileID, &
+            & 'OrbitPeriod', HE5T_NATIVE_DOUBLE, max_orbits, &
+            &  GlobalAttributes%OrbPeriod)
+      end if
       status = he5_EHwrglatt(fileID, &
        & 'InstrumentName', HE5T_NATIVE_SCHAR, 1, &
        &  GlobalAttributes%InstrumentName)
@@ -468,6 +499,12 @@ CONTAINS
 ! Internal variables
       integer :: status
 ! Executable
+      status = he5_SWwrattr(swathID, &
+       & 'OrbitNumber', HE5T_NATIVE_INT, max_orbits, &
+       &  GlobalAttributes%OrbNum)
+      status = he5_SWwrattr(swathID, &
+       & 'OrbitPeriod', HE5T_NATIVE_DOUBLE, max_orbits, &
+       &  GlobalAttributes%OrbPeriod)
       status = he5_SWwrattr(swathID, &
        & 'InstrumentName', HE5T_NATIVE_SCHAR, 1, &
        &  GlobalAttributes%InstrumentName)
@@ -929,6 +966,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.25  2003/09/12 16:39:05  cvuu
+!# Add attributes OrbitNumber and OrbitPeriod in the global attributes
+!#
 !# Revision 2.24  2003/08/15 20:41:50  pwagner
 !# Wont try to write another /PCF dataset if already there
 !#
