@@ -32,8 +32,9 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   public :: DestroyBlock, DestroyBlock_1, DestroyMatrix
   public :: DestroyMatrixInDatabase, DestroyMatrixDatabase, Dump, FillExtraCol
   public :: FillExtraRow, FindBlock, GetDiagonal, GetDiagonal_1
-  public :: GetFromMatrixDatabase, GetVectorFromColumn, GetVectorFromColumn_1
-  public :: InvertCholesky
+  public :: GetFromMatrixDatabase, GetKindFromMatrixDatabase
+  public :: GetVectorFromColumn, GetVectorFromColumn_1, InvertCholesky
+  public :: K_Cholesky, K_Empty, K_Kronecker, K_Plain, K_SPD
 ! public :: LevenbergUpdateCholesky
   public :: Matrix_T, Matrix_Cholesky_T, Matrix_Database_T, Matrix_Kronecker_T
   public :: Matrix_SPD_T, MaxAbsVal, MaxAbsVal_1, MinDiag, MinDiag_Cholesky
@@ -130,12 +131,11 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
     module procedure UpdateDiagonal_1, UpdateDiagonalVec_1
   end interface
 
-  !---------------------------- RCS Ident Info -------------------------------
-  character (len=256), private :: Id = &
-    & "$Id$"
-  character (len=*), parameter, private :: ModuleName= &
-    & "$RCSfile$"
-  !---------------------------------------------------------------------------
+  integer, parameter :: K_Empty = 0                    ! Empty database element
+  integer, parameter :: K_Cholesky = k_Empty + 1
+  integer, parameter :: K_Kronecker = k_Cholesky + 1
+  integer, parameter :: K_Plain = k_Kronecker  + 1
+  integer, parameter :: K_SPD = k_Plain + 1
 
   type RC_Info
   ! Information about the row or column of a matrix
@@ -180,6 +180,13 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
     type(Matrix_Kronecker_T), pointer :: Kronecker => NULL()
     type(Matrix_SPD_T), pointer :: SPD => NULL()
   end type Matrix_Database_T
+
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=256), private :: Id = &
+    & "$Id$"
+  character (len=*), parameter, private :: ModuleName= &
+    & "$RCSfile$"
+  !---------------------------------------------------------------------------
 
 contains ! =====     Public Procedures     =============================
 
@@ -732,6 +739,20 @@ contains ! =====     Public Procedures     =============================
         & x%quantities(a%m%row%quant(i))%values(:,a%m%row%inst(i)) )
     end do
   end subroutine GetDiagonal_1
+
+  ! ----------------------------------  GetKindFromMatrixDatabase  -----
+  integer function GetKindFromMatrixDatabase ( DatabaseElement )
+  ! Return the kind of a matrix database element
+    type(matrix_Database_T), intent(in) :: DatabaseElement
+    getKindFromMatrixDatabase = k_empty
+    if ( associated(databaseElement%cholesky) ) &
+      & getKindFromMatrixDatabase = k_cholesky
+    if ( associated(databaseElement%kronecker) ) &
+      & getKindFromMatrixDatabase = k_kronecker
+    if ( associated(databaseElement%matrix) ) &
+      & getKindFromMatrixDatabase = k_plain
+    if ( associated(databaseElement%spd) ) getKindFromMatrixDatabase = k_spd
+  end function GetKindFromMatrixDatabase
 
   ! -----------------------------------  GetKroneckerFromDatabase  -----
   subroutine GetKroneckerFromDatabase ( DatabaseElement, Kronecker )
@@ -1318,6 +1339,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.12  2001/04/10 00:19:11  vsnyder
+! Add GetKindFromMatrixDatabase and necessary parameters
+!
 ! Revision 2.11  2001/04/09 23:56:17  vsnyder
 ! Change some pointer arguments to targets
 !
