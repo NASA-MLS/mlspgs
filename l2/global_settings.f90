@@ -63,9 +63,10 @@ contains
       & P_CYCLE, P_ENDTIME, P_INPUT_VERSION_STRING, P_INSTRUMENT, &
       & P_LEAPSECFILE, P_OUTPUT_VERSION_STRING, P_STARTTIME, &
       & P_VERSION_COMMENT, &
-      & S_BINSELECTOR, S_DIRECTWRITEFILE, S_DUMP, S_EMPIRICALGEOMETRY, S_FGRID, &
-      & S_FORWARDMODEL, S_ForwardModelGlobal, S_L1BOA, S_L1BRAD, S_L2PARSF, &
-      & S_MAKEPFA, S_PFADATA, S_READPFA, S_TGRID, S_TIME, S_VGRID, S_WRITEPFA
+      & S_BINSELECTOR, S_DIRECTWRITEFILE, S_DUMP, S_EMPIRICALGEOMETRY, &
+      & S_FGRID, S_FORWARDMODEL, S_ForwardModelGlobal, S_L1BOA, S_L1BRAD, &
+      & S_L2PARSF, S_MAKEPFA, S_PFADATA, S_READPFA, S_TGRID, S_TIME, S_VGRID, &
+      & S_WRITEPFA
     use L1BData, only: L1BData_T, NAME_LEN, PRECISIONSUFFIX, &
       & AssembleL1BQtyName, DeallocateL1BData, Dump, FindMaxMAF, &
       & l1bradSetup, l1boaSetup, ReadL1BAttribute, ReadL1BData 
@@ -360,7 +361,8 @@ contains
           call Get_PFAdata_from_l2cf ( son, name, vGrids, returnStatus )
           error = max(error, returnStatus)
         case ( s_readPFA )
-          call read_PFAdata ( son, vGrids )
+          call read_PFAdata ( son, name, vGrids, returnStatus )
+          error = max(error, returnStatus)
         case ( s_writePFA )
           call write_PFAdata ( son, returnStatus )
           error = max(error, returnStatus)
@@ -861,6 +863,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.94  2005/01/12 03:18:22  vsnyder
+! Read and write PFAData in HDF5
+!
 ! Revision 2.93  2004/12/31 02:43:05  vsnyder
 ! Working on read/write PFA database
 !
