@@ -124,7 +124,7 @@ contains ! =====     Public Procedures     =============================
       
       select case( get_spec_id(key) )
       case ( s_forge )
-        call ForgeMinorFrames ( key, mifGeolocation )
+        call ForgeMinorFrames ( key, chunk, mifGeolocation )
       case( s_hgrid )
         call decorate ( key, AddHGridToDatabase ( hGrids, &
           & CreateHGridFromMLSCFInfo ( name, key, l1bInfo, l2gpDatabase, chunk ) ) )
@@ -188,6 +188,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.20  2001/04/25 19:29:31  livesey
+! Fixed bug with forge, now sets mafIndex and mafCounter appropriately
+!
 ! Revision 2.19  2001/04/23 23:53:03  livesey
 ! Tidied up deallocation of minor frame quantities
 !
