@@ -17,6 +17,7 @@ antennaPatterns
 apriori
 aprioriPrecision
 aprioriScale
+ascii
 atmos_der
 autofill
 average
@@ -234,6 +235,9 @@ vmrQuantity
 writeCounterMAF
 
 # $Log$
+# Revision 2.39  2002/06/12 17:58:11  livesey
+# Added ascii
+#
 # Revision 2.38  2002/06/04 22:41:10  livesey
 # Added phiTan fill stuff
 #
