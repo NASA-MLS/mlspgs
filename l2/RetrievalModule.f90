@@ -18,12 +18,12 @@ module RetrievalModule
   use ForwardModelInterface, only: ForwardModel, ForwardModelInfo_T, &
     & ForwardModelSetup
   use Init_Tables_Module, only: f_apriori, f_aprioriScale, f_channels, &
-    & f_criteria, f_columnScale, f_covariance, f_diagonal, f_fwdModelIn, &
-    & f_fwdModelOut, f_jacobian, f_maxIterations, f_measurements, f_method, &
-    & f_outputCovariance, f_quantity, f_state, f_test, f_toleranceA, &
-    & f_toleranceF, f_toleranceR, f_weight, field_first, field_indices, &
-    & field_last, l_apriori, l_covariance, l_newtonian, l_none, l_norm, &
-    & l_true, s_forwardModel, s_matrix, s_subset, s_retrieve, &
+    & f_criteria, f_columnScale, f_covariance, f_diagonal, f_diagonalOut, &
+    & f_fwdModelIn, f_fwdModelOut, f_jacobian, f_maxIterations, &
+    & f_measurements, f_method, f_outputCovariance, f_quantity, f_state, &
+    & f_test, f_toleranceA, f_toleranceF, f_toleranceR, f_weight, field_first, &
+    & field_indices,field_last, l_apriori, l_covariance, l_newtonian, l_none, &
+    & l_norm,l_true, s_forwardModel, s_matrix, s_subset, s_retrieve, &
     & spec_indices
   use Lexer_Core, only: Print_Source
   use MatrixModule_1, only: AddToMatrixDatabase, CholeskyFactor, ClearMatrix, &
@@ -34,6 +34,7 @@ module RetrievalModule
     & MultiplyMatrixVector, RowScale, ScaleMatrix, SolveCholesky, &
     & UpdateDiagonal
   use MLSCommon, only: R8
+  use MoreTree, only: Get_Boolean
   use Output_M, only: Output
   use String_Table, only: Display_String
   use Toggles, only: Gen, Toggle
@@ -68,7 +69,8 @@ contains
   ! ---------------------------------------------------  Retrieve  -----
   subroutine Retrieve ( Root, VectorDatabase, MatrixDatabase )
   ! Process the "Retrieve" section of the L2 Configuration File.
-  ! The "Retrieve" section can have Matrix, Subset or Retrieve specifications.
+  ! The "Retrieve" section can have ForwardModel, Matrix, Subset or Retrieve
+  ! specifications.
     ! Dummy arguments:
     integer, intent(in) :: Root         ! Of the relevant subtree of the AST
                                         ! Indexes an n_cf vertex
@@ -90,11 +92,17 @@ contains
     integer :: ColumnScaling            ! one of l_apriori, l_covariance,
                                         ! l_none or l_norm
     type(matrix_SPD_T), pointer :: Covariance     ! covariance**(-1) of Apriori
+    type(vector_T) :: CovarianceDiag    ! Diagonal of apriori Covariance
     type(vector_T) :: CovarianceXApriori ! Covariance \times Apriori
     integer :: Criteria                 ! Index in tree of "criteria" field
                                         ! of subset specification, or zero
     type(vector_T) :: DX                ! for NWT
-    logical :: Diagonal                 ! "We only want the diagonal of the
+    logical :: Diagonal                 ! "Iterate with the diagonal of the
+                                        ! a priori covariance matrix until
+                                        ! convergence, then put in the whole
+                                        ! thing and iterate until it converges
+                                        ! again (hopefully only once).
+    logical :: DiagonalOut              ! "We only want the diagonal of the
                                         ! a posteriori covariance matrix"
     integer :: Error
     type(vector_T) :: F                 ! for NWT -- Model - Measurements
@@ -156,11 +164,9 @@ contains
     integer, parameter :: AprioriAndCovar = 1     ! Only one of apriori and
                                                   ! covariance supplied
     integer, parameter :: Inconsistent = AprioriAndCovar + 1 ! Inconsistent fields
-    integer, parameter :: NoField = Inconsistent + 1   ! Required field missing
-    integer, parameter :: NoFields = NoField + 1  ! No fields are allowed
+    integer, parameter :: NoFields = Inconsistent + 1  ! No fields are allowed
     integer, parameter :: NotExtra = noFields + 1 ! No "extra" row and/or column
-    integer, parameter :: NotRange = notExtra + 1 ! A field is a range
-    integer, parameter :: NotSPD = notRange + 1   ! Not symmetric pos. definite
+    integer, parameter :: NotSPD = notExtra + 1   ! Not symmetric pos. definite
 
     error = 0
     nullify ( apriori, covariance, fwdModelIn, fwdModelOut )
@@ -184,6 +190,8 @@ contains
       spec = decoration(subtree(1,decoration(subtree(1,key))))
       select case ( spec )
       case ( s_forwardModel )
+        ! ??? This a ForwardModelSetup for one chunk ???
+        ! ??? Do we need a ForwardModelGlobalSetup?  ???
         call forwardModelSetup ( key, vectorDatabase, matrixDatabase, &
           & fwdModelInfo )
       case ( s_matrix )
@@ -259,22 +267,15 @@ contains
                 & call announceError ( notExtra, field )
             end if
           case ( f_diagonal )
-            son = subtree(2,son)
-            if ( node_id(son) == n_set_one ) then
-              diagonal = .true.
-            else
-              diagonal = decoration(subtree(2,son)) == l_true
-            end if
+            diagonal = get_Boolean(son)
+          case ( f_diagonalOut )
+            diagonalOut = get_Boolean(son)
           case ( f_fwdModelIn )
             fwdModelIn => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_fwdModelOut )
             fwdModelOut => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_jacobian )
             ixJacobian = decoration(subtree(2,son)) ! jacobian: matrix vertex
-          case ( f_maxIterations )
-            call expr ( subtree(2,son), units, value, type )
-            if ( type /= num_value ) call announceError ( notRange, field )
-            maxIterations = value(1)
           case ( f_measurements )
             measurements => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_method )
@@ -283,12 +284,14 @@ contains
             ixCovariance = decoration(subtree(2,son)) ! outCov: matrix vertex
           case ( f_state )
             state => vectorDatabase(decoration(decoration(subtree(2,son))))
-          case ( f_aprioriScale, f_toleranceA, f_toleranceF, f_toleranceR )
+          case ( f_aprioriScale, f_maxIterations, f_toleranceA, f_toleranceF, &
+            &    f_toleranceR )
             call expr ( subtree(2,son), units, value, type )
-            if ( type /= num_value ) call announceError ( notRange, field )
             select case ( field )
             case ( f_aprioriScale )
               aprioriScale = value(1)
+            case ( f_maxIterations )
+              maxIterations = value(1)
             case ( f_toleranceA )
               toleranceA = value(1)
             case ( f_toleranceF )
@@ -410,7 +413,7 @@ contains
             if ( got(f_apriori) ) then
               aprioriNorm = apriori .dot. apriori ! norm**2
               call multiplyMatrixVector ( covariance, apriori, &
-                & covarianceXApriori )
+                & covarianceXApriori ) ! covarianceXApriori := covariance X apriori
             end if
             iter = 0
             do
@@ -430,7 +433,16 @@ contains
                 !   J(K,L) = Partial of F(K) / W.R.T. X(L), K = 1, NF, L = 1, NX
                 update = got(f_apriori)
                 if ( update ) then ! start normal equations with apriori
-                  call copyMatrixValue ( normalEquations%m, covariance%m )
+                  if ( diagonal ) then
+                  ! Iterate with the diagonal of the covariance, then use the
+                  ! full covariance (one hopes only for one more iteration).
+                  ! This improves sparsity during iteration.
+                    call clearMatrix ( normalEquations%m )
+                    call getDiagonal ( covariance, covarianceDiag )
+                    call updateDiagonal ( normalEquations, covarianceDiag )
+                  else
+                    call copyMatrixValue ( normalEquations%m, covariance%m )
+                  end if
                   call fillExtraCol ( normalEquations%m, covarianceXApriori )
                   call fillExtraRow ( normalEquations%m, covarianceXApriori )
                   k = normalEquations%m%row%nb
@@ -547,7 +559,8 @@ contains
                 if ( nwt_flag == nf_tolx_best ) call copyVector ( x, bestX )
                 ! Convergence to desired solution.  Do whatever you want to
                 ! with the solution.
-                exit ! unless you have a really good reason to continue
+                if ( .not. diagonal ) exit
+                diagonal = .not. diagonal
               case ( nf_fandj )
                 ! There is probably an error in the way F or J is computed.
                 ! A warning has been printed by the error processor.
@@ -558,8 +571,12 @@ contains
               iter = iter + 1
             end do ! Newton iteration
             if ( got(f_outputCovariance) ) then
-              ! ??? Compute the covariance matrix
-              if ( diagonal ) then
+              ! ??? Subtract sum of Levenberg-Marquardt updates and   ???
+              ! ??? a priori covariance matrix from normal equations, ???
+              ! ??? and re-factor them.
+              call invertCholesky ( factored, outputCovariance )
+              if ( diagonalOut ) then
+              else
               end if
             end if
             ! Clean up the temporaries, so we don't have a memory leak
@@ -610,7 +627,7 @@ contains
         call output ( 'No fields are allowed for a ' )
         call display_string ( spec_indices(fieldIndex) )
         call output ( ' specification.', advance='yes' )
-      case ( inconsistent, noField, notExtra, notRange, notSPD )
+      case ( inconsistent, notExtra, notSPD )
         call output ( 'the field ' )
         call display_string ( field_indices(fieldIndex) )
         select case ( code )
@@ -618,13 +635,9 @@ contains
           call output ( ' is not consistent with the ' )
           call display_string ( field_indices(anotherFieldIndex ) )
           call output ( ' field.', advance='yes' )
-        case ( noField )
-          call output ( ' is not specified.', advance='yes' )
         case ( notExtra )
           call output ( ' does not have an extra column for the RHS.', &
             & advance='yes' )
-        case ( notRange )
-          call output ( ' shall not be a range.', advance='yes' )
         case ( notSPD )
           call output ( ' is not a symmetric positive-definite matrix.', &
             & advance='yes' )
@@ -636,6 +649,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.5  2001/02/22 01:57:02  vsnyder
+! Periodic commit -- working on getting output covariance matrix.
+!
 ! Revision 2.4  2001/02/09 19:30:16  vsnyder
 ! Move checking for required and duplicate fields to init_tables_module
 !
