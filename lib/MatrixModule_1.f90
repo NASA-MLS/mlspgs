@@ -1023,7 +1023,7 @@ contains ! =====     Public Procedures     =============================
     my_update = .false.
     if ( present(update) ) my_update = update
     ! Copy characteristics, allocate values:
-    if ( .not. update ) call cloneVector ( z, a%row%vec )
+    if ( .not. my_update ) call cloneVector ( z, a%row%vec )
     do i = 1, a%row%nb
       m = a%row%quant(i)
       n = a%row%inst(i)
@@ -1474,6 +1474,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.26  2001/05/01 06:56:32  livesey
+! Bug fix, was using optional argument, not local copy/default.
+!
 ! Revision 2.25  2001/04/30 23:44:25  vsnyder
 ! Correct/remove some incorrect size tests in MultiplyMatrixVectorNoT
 !
