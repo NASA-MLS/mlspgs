@@ -5,6 +5,7 @@
 module vGrid                    ! Definitions for vGrids in vector quantities
 !=============================================================================
 
+  use Dump_0, only: DUMP
   use EXPR_M, only: EXPR
   use INIT_TABLES_MODULE, only: F_COORDINATE, F_NUMBER, F_PER_DECADE, F_START, &
     & F_STOP, F_TYPE, F_VALUES, FIELD_FIRST, FIELD_INDICES, FIELD_LAST, &
@@ -25,10 +26,6 @@ module vGrid                    ! Definitions for vGrids in vector quantities
   public
 
   private :: ID, ModuleName
-  !------------------------------- RCS Ident Info ---------------------------
-  character (len=130) :: Id= "$Id$"
-  character (len=*), parameter :: ModuleName="$RCSfile$"
-  !--------------------------------------------------------------------------
 
   ! Define the vGrid data type.  This is used to store all the vGrid
   ! information. Note that this is only relevant for coherent quantities. 
@@ -42,6 +39,17 @@ module vGrid                    ! Definitions for vGrids in vector quantities
     real(r8), dimension(:), pointer :: surfs => NULL()  ! Array of surfaces
                                    ! (actually dimensioned noSurfs)
   end type vGrid_T
+
+  interface DUMP
+    module procedure DUMP_VGRIDS
+  end interface DUMP
+
+  !------------------------------- RCS Ident Info ---------------------------
+  character (len=*), parameter :: IdParm = &
+    & "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName="$RCSfile$"
+  !--------------------------------------------------------------------------
 
 ! -----     Private declarations     ---------------------------------
 
@@ -330,6 +338,24 @@ contains ! =====     Public Procedures     =============================
     end if
   end subroutine DestroyVGridDatabase
 
+  ! ------------------------------------------------  DUMP_VGRIDS  -----
+  subroutine DUMP_VGRIDS ( VGRIDS )
+    type(vGrid_T), intent(in) :: VGRIDS(:)
+    integer :: I
+    call output ( 'VGRIDS: SIZE = ' )
+    call output ( size(vgrids), advance='yes' )
+    do i = 1, size(vgrids)
+      call output ( i, 4 )
+      call output ( ': Name = ' )
+      call display_string ( vgrids(i)%name )
+      call output ( ' noSurfs = ' )
+      call output ( vgrids(i)%noSurfs )
+      call output ( ' verticalCoordinate = ' )
+      call display_string ( lit_indices(vgrids(i)%verticalCoordinate) )
+      call dump ( vgrids(i)%surfs, ' Surfs = ' )
+    end do
+  end subroutine DUMP_VGRIDS
+
 ! =====     Private Procedures     =====================================
 
 ! -----------------------------------------------  ANNOUNCE_ERROR  -----
@@ -450,6 +476,9 @@ end module vGrid
 
 !
 ! $Log$
+! Revision 2.6  2001/03/28 01:25:38  vsnyder
+! Move DUMP_VGRIDS from dumper.f90 to VGrid.f90
+!
 ! Revision 2.5  2001/02/28 17:21:05  livesey
 ! Allowed user to specify zeta grids in pressure as well as log pressure space.
 !
