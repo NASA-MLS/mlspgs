@@ -141,9 +141,10 @@ contains ! =====     Public Procedures     =============================
               & chunkNo, chunks )
           end if
         case ( s_label )
-          ! Need to keep changing the label each pass so that the directWrites 
-          ! have the correct output name
-          call LabelVectorQuantity ( son, vectors )
+          ! Only do these the first time round
+          if ( pass == 1 ) then
+            call LabelVectorQuantity ( son, vectors )
+          end if
         case ( s_directWrite )
           if ( pass == 1 ) then
             ! On the first pass just count the number of direct writes
@@ -384,13 +385,18 @@ contains ! =====     Public Procedures     =============================
       ! Now check that things make sense
       if ( ValidateVectorQuantity ( qty, &
         & coherent=.true., stacked=.true., regular=.true., &
-        & verticalCoordinate = (/ l_pressure, l_zeta, l_none/) ) ) then
+        & verticalCoordinate = (/ l_pressure, l_zeta, l_none/), &
+        & minorFrame=.false., majorFrame=.false. ) ) then
         expectedType = l_l2gp
       else
         expectedType = l_l2aux
       end if
-      if ( outputType /= expectedType ) call Announce_Error ( son, no_error_code, &
-        & "Inappropriate quantity for this file type in direct write" )
+      if ( outputType /= expectedType ) then
+        call output ( "Offending quantity " )
+        call display_string ( qty%template%name, strip=.true., advance='yes' )
+        call Announce_Error ( son, no_error_code, &
+          & "Inappropriate quantity for this file type in direct write" )
+      end if
     end do
     
     ! Bail out at this stage if there is some kind of error.
@@ -1280,6 +1286,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.81  2003/07/08 00:15:51  livesey
+! Various tidy ups and reworks
+!
 ! Revision 2.80  2003/07/07 23:52:13  pwagner
 ! Slave that creates DirectWrite file may also add_metadata
 !
