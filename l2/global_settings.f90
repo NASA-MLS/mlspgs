@@ -3,7 +3,7 @@ module GLOBAL_SETTINGS
   use EXPR_M, only: EXPR   
   use ForwardModelConfig, only: AddForwardModelConfigToDatabase, &
     & ForwardModelConfig_T
-  use ForwardModelInterface, only: ConstructForwardModelConfig, &
+  use ForwardModelSupport, only: ConstructForwardModelConfig, &
     & ForwardModelGlobalSetup
   use INIT_TABLES_MODULE, only: L_TRUE, P_ALLOW_CLIMATOLOGY_OVERLOADS, &
     & P_INPUT_VERSION_STRING, P_OUTPUT_VERSION_STRING, P_VERSION_COMMENT, &
@@ -469,6 +469,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.34  2001/05/26 00:06:49  livesey
+! Added call to DealloteL1BData
+!
 ! Revision 2.33  2001/05/24 20:54:15  pwagner
 ! Deleted p_ccs..times
 !
