@@ -2134,7 +2134,7 @@ contains ! =====     Public Procedures     =============================
           n = n + size ( matrix%block(i,j)%values, 1 )
         end select
       end do ! j
-      call output ( matrix%row%nelts(i), places=5, advance='yes' )
+      call output ( matrix%row%nelts(i), places=6, advance='yes' )
     end do ! i
     call output ( 'Total matrix size: ' )
     call output ( sum(matrix%row%nelts) )
@@ -2186,6 +2186,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.87  2003/01/17 22:31:52  livesey
+! Trivial change to the dump_struct output format.
+!
 ! Revision 2.86  2003/01/08 23:51:46  livesey
 ! Added sparsify and handling of r4/r8 in dump_struct
 !
