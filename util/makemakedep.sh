@@ -16,8 +16,10 @@
 #(often because they are special-purpose, "test" programs, or some such)
 #
 #Usage:
-#makemakedep.sh [-d file1.f90 -d file2.f90] [arg1 arg2 ..]
+#makemakedep.sh [-f77] [-d file1.f90 -d file2.f90] [arg1 arg2 ..]
 #
+#Note:
+#The option, -f77, if present must be the first option on the command line
 #Result:
 #creates Makefile.dep in current working directory
 #Makefile.dep may then be inserted in a generic Makefile which
@@ -41,6 +43,11 @@
 # 
 ##End of Makefile.dep
 # 
+#Options
+# -f77   include files with .f extensions as well as .f90
+#         (otherwise only .f90 files considered)
+# -d file_name  exclude file_name
+# arg1   search directory named by arg1 as well as cwd for files
 #
 # Function to prompt for user response
 #
@@ -149,6 +156,14 @@ then
 	fi
 fi
 #
+
+if [ "$1" = "-f77" ] ; then
+   include_f77="yes"
+   shift
+else
+   include_f77="no"
+fi
+
 #                  Rename or hide excluded files so they !~= %.f90
 wrong_list=""
 while [ "$1" = "-d" ] ; do
@@ -193,7 +208,17 @@ then
 fi
 #
 echo "OBJS = \\"  >> Makefile.dep
-(ls -C *.f90 | sed 's/.f90/.o  /g; s/$/\\/') >> Makefile.dep
+
+# Note:
+# The following won't work if there are no files matching the specified
+# extensions in the directory;
+# instead the echo will just produce a bogus "*.f90" string
+if [ "$include_f77" = "yes" ] ; then
+   (echo *.f90 | sed 's/\.f90/.o  /g; s/$/\\/') >> Makefile.dep
+   (echo *.f | sed 's/\.f/.o  /g; s/$/\\/') >> Makefile.dep
+else
+   (ls -C *.f90 | sed 's/\.f90/.o  /g; s/$/\\/') >> Makefile.dep
+fi
 echo " "  >> Makefile.dep
 #
 if [ $DEPMAKER = "1" ]
@@ -307,6 +332,9 @@ then
 fi
 exit
 # $Log$
+# Revision 1.9  2001/05/01 17:04:32  pwagner
+# Also edits perl path of f90GhostFiles.pl
+#
 # Revision 1.8  2001/03/23 00:41:23  pwagner
 # Prints less
 #
