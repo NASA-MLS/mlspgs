@@ -293,6 +293,36 @@ program MLSL2
         word = '--slave'
         write ( word(len_trim(word)+1:), * ) parallel%myTid
         call AccumulateSlaveArguments(word)
+      else if ( line(3+n:21+n) == 'maxfailuresperchunk' ) then
+        call AccumulateSlaveArguments ( line )
+        if ( line(22+n:) /= ' ' ) then
+          copyArg = .false.
+          line(:21+n) = ' '
+        else
+          i = i + 1
+          call getarg ( i, line )
+          command_line = trim(command_line) // ' ' // trim(line)
+        end if
+        read ( line, *, iostat=status ) parallel%maxFailuresPerChunk
+        if ( status /= 0 ) then
+          call io_error ( "After --maxFailuresPerChunk option", status, line )
+          stop
+        end if
+      else if ( line(3+n:23+n) == 'maxfailurespermachine' ) then
+        call AccumulateSlaveArguments ( line )
+        if ( line(24+n:) /= ' ' ) then
+          copyArg = .false.
+          line(:23+n) = ' '
+        else
+          i = i + 1
+          call getarg ( i, line )
+          command_line = trim(command_line) // ' ' // trim(line)
+        end if
+        read ( line, *, iostat=status ) parallel%maxFailuresPerMachine
+        if ( status /= 0 ) then
+          call io_error ( "After --maxFailuresPerMachine option", status, line )
+          stop
+        end if
       else if ( line(3+n:5+n) == 'pge ' ) then
         i = i + 1
         call getarg ( i, line )
@@ -824,6 +854,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.107  2003/11/15 00:33:37  pwagner
+! New commandline opts: maxfailuresperchunk, maxfailurespermachine
+!
 ! Revision 2.106  2003/11/14 23:37:13  pwagner
 ! Lets user change masterLoop delay via commandline option
 !
