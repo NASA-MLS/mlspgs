@@ -81,6 +81,7 @@ interpolate
 interpolationFactor
 intrinsic
 invert
+isPrecision
 
 jacobian
 
@@ -194,6 +195,9 @@ vGrid
 vmrQuantity
 
 # $Log$
+# Revision 2.13  2001/10/23 16:38:56  pwagner
+# new isPrecision field
+#
 # Revision 2.12  2001/10/18 23:43:13  pwagner
 # Added multiplier, vector
 #
