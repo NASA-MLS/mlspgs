@@ -117,7 +117,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_DESTROY            = s_delete + 1
   integer, parameter :: S_DIRECTWRITE        = s_destroy + 1
   integer, parameter :: S_DIRECTWRITEFILE    = s_directWrite + 1
-  integer, parameter :: S_DUMP               = s_directWriteFile + 1
+  integer, parameter :: S_DISJOINTEQUATIONS  = s_directWriteFile + 1
+  integer, parameter :: S_DUMP               = s_disjointEquations + 1
   integer, parameter :: S_DUMPBLOCKS         = s_dump + 1
   integer, parameter :: S_EMPIRICALGEOMETRY  = s_dumpblocks + 1
   integer, parameter :: S_FGRID              = s_empiricalGeometry + 1
@@ -317,6 +318,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_destroy) =              add_ident ( 'destroy' )
     spec_indices(s_directWrite) =          add_ident ( 'directWrite' )
     spec_indices(s_directWriteFile) =      add_ident ( 'directWriteFile' )
+    spec_indices(s_disjointEquations) =    add_ident ( 'disjointEquations' )
     spec_indices(s_dump) =                 add_ident ( 'dump' )
     spec_indices(s_dumpblocks) =           add_ident ( 'dumpblocks' )
     spec_indices(s_fGrid) =                add_ident ( 'fGrid' )
@@ -1085,6 +1087,17 @@ contains ! =====     Public procedures     =============================
              begin, f+f_jacobian, s+s_matrix, n+n_field_spec, &
              ndp+n_spec_def /) )
     call make_tree( (/ &
+      begin, s+s_disjointEquations, & ! Must be AFTER s_matrix
+             begin, f+f_matrix, s+s_matrix, nr+n_field_spec, &
+             begin, f+f_measurementSD, s+s_vector, nr+n_field_spec, &
+             begin, f+f_retrievalExtra, s+s_vector, n+n_field_spec, &
+             begin, f+f_retrievalForwardModel, s+s_forwardModel, nr+n_field_spec, &
+             begin, f+f_retrievalIn, s+s_vector, nr+n_field_spec, &
+             begin, f+f_truthExtra, s+s_vector, n+n_field_spec, &
+             begin, f+f_truthForwardModel, s+s_forwardModel, nr+n_field_spec, &
+             begin, f+f_truthIn, s+s_vector, nr+n_field_spec, &
+             ndp+n_spec_def /) )
+    call make_tree( (/ &
       begin, s+s_normalEquations, & ! Must be AFTER s_matrix
              begin, f+f_forwardModel, s+s_forwardModel, nr+n_field_spec, &
              begin, f+f_fwdModelExtra, s+s_vector, n+n_field_spec, &
@@ -1193,7 +1206,8 @@ contains ! =====     Public procedures     =============================
                            s+s_restrictRange, s+s_updateMask, n+n_section, &
       begin, z+z_join, s+s_time, s+s_label, s+s_l2gp, s+s_l2aux, &
                        s+s_directWrite, n+n_section, &
-      begin, z+z_algebra, s+s_columnScale, s+s_cyclicJacobi, s+s_normalEquations, &
+      begin, z+z_algebra, s+s_columnScale, s+s_cyclicJacobi, s+s_disjointEquations, &
+             s+s_normalEquations, &
              s+s_reflect, s+s_regularization, s+s_rowScale, n+n_section+d*no_check_eq, &
       begin, z+z_output, s+s_time, s+s_output, n+n_section /) )
 
@@ -1211,6 +1225,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.367  2004/04/30 21:49:17  livesey
+! Added DisjointEquations command
+!
 ! Revision 2.366  2004/04/29 01:26:39  livesey
 ! More algebra stuff
 !
