@@ -65,7 +65,6 @@ module L2Parallel
   type StoredResult_T
     integer :: key                      ! Tree node for this join
     logical :: gotPrecision             ! If set have precision as well as value
-    integer :: nColumns                 ! If > 0, have column abundances
     integer, dimension(:), pointer :: valInds=>NULL() ! Array vec. dtbs. inds (noChunks)
     integer, dimension(:), pointer :: precInds=>NULL() ! Array vec. dtbs. inds (noChunks)
     character(len=HDFNameLen) :: hdfName ! Name of swath/sd
@@ -252,17 +251,8 @@ contains ! ================================ Procedures ======================
     ! Local vector database
     type (StoredResult_T), dimension(:), pointer :: storedResults
     ! Map into the above arrays
-     type (VectorValue_T), pointer :: QTY
-     type (VectorValue_T), pointer :: PRECQTY
-
-  integer, parameter :: MAXNCOLUMNS=30 ! Why would you need more tropopauses defs
-
-   ! The following probably need to be components of StoredResults
-   ! (but I don't understand how to do this properly)
-    integer, dimension(MAXNCOLUMNS) :: COLMVECTORINDEX 
-    integer, dimension(MAXNCOLUMNS) :: COLMQTYINDEX    
-    integer, dimension(MAXNCOLUMNS) :: BPRSVECTORINDEX 
-    integer, dimension(MAXNCOLUMNS) :: BPRSQTYINDEX    
+    type (VectorValue_T), pointer :: QTY
+    type (VectorValue_T), pointer :: PRECQTY
     
     ! Executable code --------------------------------
 
@@ -553,10 +543,6 @@ contains ! ================================ Procedures ======================
             nullify ( precQty )
           endif
           
-          if ( storedResults(resInd)%nColumns > 0 ) then
- ! Unknown yet how to deal with this
-          endif
-          
           if ( index(switches,'mas') /= 0 .and. chunk==1 ) then
             call output ( 'Joining ' )
             call display_string ( qty%template%name, advance='yes' )
@@ -565,10 +551,7 @@ contains ! ================================ Procedures ======================
           select case ( get_spec_id ( storedResults(resInd)%key ) )
           case ( s_l2gp )
             call JoinL2GPQuantities ( storedResults(resInd)%key, hdfNameIndex, &
-              & qty, precQty, joinedVectors, l2gpDatabase, &
-              & colmvectorindex, colmqtyindex, &
-              & bprsvectorindex, bprsqtyindex, &
-              & storedResults(resInd)%nColumns, chunk)
+              & qty, precQty, l2gpDatabase, chunk)
           case ( s_l2aux )
             call JoinL2AuxQuantities ( storedResults(resInd)%key, hdfNameIndex, &
               & qty, l2auxDatabase, chunk, chunks )
@@ -791,6 +774,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.17  2001/09/05 20:34:56  pwagner
+! Reverted to pre-columnAbundance state
+!
 ! Revision 2.16  2001/08/02 23:59:22  pwagner
 ! Compiles, but incomplete teatment of column abundance(s)
 !
