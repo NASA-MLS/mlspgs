@@ -6415,7 +6415,7 @@ contains ! =====     Public Procedures     =============================
         surface = 1
       end if
 
-      quantity%values(1,:) = 1.0 - tanh ( sourceQuantity%values(surface,1) / scale )
+      quantity%values(1,:) = 1.0 - tanh ( sourceQuantity%values(surface,:) / scale )
     end subroutine FillQualityFromChisq
 
     ! ----------------------------------------------- offsetradiancequantity ---
@@ -6754,6 +6754,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.262  2004/03/18 17:41:31  livesey
+! Bug fix in quality fill.
+!
 ! Revision 2.261  2004/03/17 17:16:11  livesey
 ! New status fill and new manipulations.
 !
