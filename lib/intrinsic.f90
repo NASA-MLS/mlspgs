@@ -263,6 +263,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_km) =                    add_ident ( 'km' )
     lit_indices(l_linewidth) =             add_ident ( 'linewidth' )
     lit_indices(l_logp) =                  add_ident ( 'logp' )
+    lit_indices(l_losTransFunc) =          add_ident ( 'LOSTransFunc' )
     lit_indices(l_losVel) =                add_ident ( 'LOSVel' )
     lit_indices(l_lsbfrequency) =          add_ident ( 'LSBFrequency' )
     lit_indices(l_m) =                     add_ident ( 'm' )
@@ -391,6 +392,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.32  2001/07/13 19:04:56  dwu
+! fix problem after adding lostransfunc
+!
 ! Revision 2.31  2001/07/13 18:20:18  dwu
 ! add quantity losTransFunc
 !
