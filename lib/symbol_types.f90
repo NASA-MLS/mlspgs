@@ -99,6 +99,7 @@ module SYMBOL_TYPES
        "$Id$"
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
 contains
@@ -175,9 +176,16 @@ contains
     end select
     return
   end subroutine INIT_TYPE
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module SYMBOL_TYPES
 
 ! $Log$
+! Revision 2.5  2002/10/08 00:09:14  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.4  2000/11/30 20:18:47  vsnyder
 ! Added <: :< and <:< operators.
 !

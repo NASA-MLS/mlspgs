@@ -90,6 +90,7 @@ module DECLARATION_TABLE
   character (len=len(idParm)) :: Id = idParm
   character (len=*), parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
 contains ! =====     Public Procedures     =============================
@@ -348,9 +349,16 @@ contains ! =====     Public Procedures     =============================
     symbol_decl(ubound(old_decl,1)+1:) = null_decl
     deallocate ( old_decl )
   end subroutine Increase_Symbol_Decl
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module DECLARATION_TABLE
 
 ! $Log$
+! Revision 2.5  2002/10/08 00:09:08  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.4  2002/07/18 22:04:06  vsnyder
 ! Improve some debugging print
 !

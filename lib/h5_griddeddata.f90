@@ -26,6 +26,7 @@ integer, public, parameter :: MAX_RANK = 7
   character(len=len(idparm)), private :: Id = idParm
   character(len=*), private, parameter :: ModuleName = &
        & "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
 
 contains
@@ -96,10 +97,17 @@ subroutine h5_write_griddeddata(loc_id,field)
 
 end subroutine h5_write_griddeddata
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module h5_griddeddata
 
 
 ! $Log$
+! Revision 2.5  2002/10/08 00:09:09  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.4  2002/10/01 22:03:55  pwagner
 ! Fixed RCS Ident Block
 !

@@ -61,6 +61,7 @@ module TREE
        "$Id$"
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
 contains
@@ -608,9 +609,16 @@ contains
     stop
   end subroutine TREE_ERROR
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module TREE
 
 ! $Log$
+! Revision 2.5  2002/10/08 00:09:15  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.4  2001/04/05 00:55:27  vsnyder
 ! Try to write 'increase tree size automatically' code -- failed -- try again later
 !

@@ -19,6 +19,7 @@ module Biggify_M
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
 contains
@@ -92,9 +93,16 @@ contains
     end do
   end subroutine Biggify_Vector
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module Biggify_M
 
 ! $Log$
+! Revision 2.5  2002/10/08 00:09:08  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.4  2002/09/11 17:47:21  pwagner
 ! Began changes needed to conform with matrix%values type move to rm from r8
 !
