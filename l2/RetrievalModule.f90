@@ -22,12 +22,13 @@ module RetrievalModule
     & ForwardModelStatus_T
   use Init_Tables_Module, only: F_apriori, F_aprioriScale, F_channels, &
     & F_criteria, F_columnScale, F_covariance, F_diagonal, F_diagonalOut, &
-    & F_forwardModel, F_fwdModelExtra, F_fwdModelOut, F_jacobian, &
-    & F_Lambda, F_maxF, F_maxJ, F_measurements, F_method, F_outputCovariance, &
+    & F_forwardModel, F_fuzz, F_fwdModelExtra, F_fwdModelOut, F_jacobian, &
+    & F_lambda, F_maxF, F_maxJ, F_measurements, F_method, F_outputCovariance, &
     & F_quantity, F_state, F_test, F_toleranceA, F_toleranceF, &
     & F_toleranceR, F_weight, field_first, field_last, &
     & L_apriori, L_covariance, L_newtonian, L_none, L_norm, &
-    & S_dumpblocks, S_forwardModel, S_sids, S_matrix, S_subset, S_retrieve, S_time
+    & S_dumpBlocks, S_forwardModel, S_sids, S_matrix, S_subset, S_retrieve, &
+    & S_time
   use Intrinsic, only: Field_indices, Spec_indices
   use Lexer_Core, only: Print_Source
   use MatrixModule_1, only: AddToMatrix, AddToMatrixDatabase, CholeskyFactor, &
@@ -125,6 +126,11 @@ contains
     integer :: Field                    ! Field index -- f_something
     type (ForwardModelStatus_T) :: FmStat ! Status for forward model
     type (ForwardModelIntermediate_T) :: Fmw ! Work space for forward model
+    real(r8) :: Fuzz                    ! For testing only.  Amount of "fuzz"
+                                        ! to add to state vector before
+                                        ! starting a retrieval.
+    type(vector_T) :: FuzzMeasurements  ! Random numbers to fuzz the measurements
+    type(vector_T) :: FuzzState         ! Random numbers to fuzz the state
     type(vector_T), pointer :: FwdModelExtra
     type(vector_T), pointer :: FwdModelOut
     logical :: Got(field_first:field_last)   ! "Got this field already"
@@ -182,8 +188,8 @@ contains
     double precision :: Value(2)        ! Value returned by EXPR
     integer :: vectorIndex              ! Index in VectorDatabase
     type(vector_T), pointer :: Weight   ! Scaling vector for rows
-    type(vector_T), pointer :: X        ! for NWT
-    type(vector_T) :: XminusApriori ! X - Apriori
+    type(vector_T) :: X                 ! for NWT
+    type(vector_T) :: XminusApriori     ! X - Apriori
 
     ! Error message codes
     integer, parameter :: AprioriAndCovar = 1     ! Only one of apriori and
@@ -195,7 +201,7 @@ contains
 
     error = 0
     nullify ( apriori, configIndices, covariance, fwdModelOut )
-    nullify ( measurements, state, weight, x )
+    nullify ( measurements, state, weight )
     timing = .false.
 
     if ( toggle(gen) ) call trace_begin ( "Retrieve", root )
@@ -316,12 +322,14 @@ contains
             ixCovariance = decoration(subtree(2,son)) ! outCov: matrix vertex
           case ( f_state )
             state => vectorDatabase(decoration(decoration(subtree(2,son))))
-          case ( f_aprioriScale, f_lambda, f_maxF, f_maxJ, f_toleranceA, &
-            &    f_toleranceF, f_toleranceR )
+          case ( f_aprioriScale, f_fuzz, f_lambda, f_maxF, f_maxJ, &
+            &    f_toleranceA, f_toleranceF, f_toleranceR )
             call expr ( subtree(2,son), units, value, type )
             select case ( field )
             case ( f_aprioriScale )
               aprioriScale = value(1)
+            case ( f_fuzz )
+              fuzz = value(1)
             case ( f_lambda )
               initLambda = value(1)
             case ( f_maxF )
@@ -431,18 +439,37 @@ contains
             call nwt ( nwt_flag, nwt_xopt, nwt_opt )
             ! Create extra vectors.  Altogether, we need F, X, "Best X", DX,
             ! "Candidate DX" Gradient and "Best Gradient".
-            x => state
+            call cloneVector ( x, state, vectorNameText='_x' )
+            call copyVector ( x, state )
             call cloneVector ( f, measurements, vectorNameText='_f' )
             call cloneVector ( bestGradient, x, vectorNameText='_bestGradient' )
             call cloneVector ( bestX, x, vectorNameText='_bestX' )
             call cloneVector ( candidateDX, x, vectorNameText='_candidateDX' )
             call cloneVector ( DX, x, vectorNameText='_DX' )
             call cloneVector ( gradient, x, vectorNameText='_gradient' )
+            if ( got(f_fuzz) ) then
+              ! Add some fuzz to the measurement and state vectors
+              call cloneVector ( fuzzMeasurements, measurements )
+              call cloneVector ( fuzzState, x )
+              do j = 1, measurements%template%noQuantities
+                call random_number(fuzzMeasurements%quantities(j)%values)
+                measurements%quantities(j)%values = &
+                  & measurements%quantities(j)%values * &
+                    & ( 1.0_r8 + fuzz * epsilon(fuzz) * &
+                      & ( fuzzMeasurements%quantities(j)%values - 0.5 ) )
+              end do
+              do j = 1, x%template%noQuantities
+                call random_number(fuzzState%quantities(j)%values)
+                x%quantities(j)%values = x%quantities(j)%values * &
+                  & ( 1.0_r8 + fuzz * epsilon(fuzz) * &
+                    & ( fuzzState%quantities(j)%values - 0.5 ) )
+              end do
+            end if
             numF = 0
             numJ = 0
             aj%axmax = 0.0
-            do k = 1, size(state%quantities)
-              aj%axmax = max(aj%axmax, maxval(abs(state%quantities(k)%values)))
+            do k = 1, size(x%quantities)
+              aj%axmax = max(aj%axmax, maxval(abs(x%quantities(k)%values)))
             end do
             do
               call nwta ( nwt_flag, aj )
@@ -733,9 +760,9 @@ contains
                 aj%gdx = gradient .dot. candidateDX
                 if ( index(switches,'vec') /= 0 ) call dump ( dx, name='DX' )
                 if ( index(switches,'sca') /= 0 ) then
-                  call dump ( (/ aj%fnmin, aj%dxn, aj%gdx, &
+                  call dump ( (/ aj%dxn, aj%fnmin, aj%gdx, &
                     & aj%gdx/(aj%dxn*aj%gradn), aj%sq /), &
-                    & '  aj%fnmin        | DX |        G . DX    ' // &
+                    & '    | DX |      aj%fnmin        G . DX    ' // &
                     & 'cos(G, DX)        lambda', clean=.true. )
                 end if
               case ( nf_newx )
@@ -833,6 +860,7 @@ contains
               else
               end if
             end if
+            call copyVector ( state, x )
             ! Clean up the temporaries, so we don't have a memory leak
             call destroyVectorInfo ( bestGradient )
             call destroyVectorInfo ( bestX )
@@ -840,6 +868,7 @@ contains
             call destroyVectorInfo ( dx )
             call destroyVectorInfo ( f )
             call destroyVectorInfo ( gradient )
+            call destroyVectorInfo ( x )
             call destroyMatrix ( normalEquations%m )
             call destroyMatrix ( factored%m )
             call deallocate_test ( fmStat%rows, 'FmStat%rows', moduleName )
@@ -924,6 +953,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.29  2001/05/18 19:46:23  vsnyder
+! Add secret 'fuzz' field to 'retrieve' command -- for testing
+!
 ! Revision 2.28  2001/05/18 01:04:08  vsnyder
 ! Periodic commit -- tons of stuff changed
 !
