@@ -78,7 +78,8 @@ module INTRINSIC
   integer, parameter :: L_GHZ           = l_geodangle + 1
   integer, parameter :: L_GPH           = l_ghz + 1
   integer, parameter :: L_GPH_PRECISION = l_gph + 1
-  integer, parameter :: L_HOURS         = l_gph_precision + 1
+  integer, parameter :: L_HEIGHTOFFSET  = l_gph_precision + 1
+  integer, parameter :: L_HOURS         = l_heightOffset + 1
   integer, parameter :: L_HPA           = l_hours + 1
   integer, parameter :: L_HZ            = l_hpa + 1
   integer, parameter :: L_INTERMEDIATEFREQUENCY= l_hz + 1
@@ -219,6 +220,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_ghz) =                   add_ident ( 'GHz' )
     lit_indices(l_gph) =                   add_ident ( 'gph' )
     lit_indices(l_gph_precision) =         add_ident ( 'gph_precision' )
+    lit_indices(l_heightOffset) =          add_ident ( 'heightOffset' )
     lit_indices(l_hours) =                 add_ident ( 'hours' )
     lit_indices(l_hpa) =                   add_ident ( 'hPa' )
     lit_indices(l_hz) =                    add_ident ( 'Hz' )
@@ -346,6 +348,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.24  2001/05/03 22:27:04  livesey
+! Added l_heightoffset
+!
 ! Revision 2.23  2001/04/26 16:18:39  livesey
 ! Fixed bug. All those nice integer arrays weren't initially nullified, whoops!
 !
