@@ -12,6 +12,7 @@ module L2ParInfo
   use VectorsModule, only: VECTORVALUE_T
   use QuantityPVM, only: PVMSENDQUANTITY
   use MLSStrings, only: LowerCase
+  use Output_M, only: Output
 
   implicit none
   private
@@ -249,6 +250,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.15  2002/07/17 20:02:17  livesey
+! Bug fix
+!
 ! Revision 2.14  2002/07/17 20:01:42  livesey
 ! Put an advance=yes in there
 !
