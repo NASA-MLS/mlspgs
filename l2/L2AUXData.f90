@@ -611,7 +611,7 @@ contains ! =====     Public Procedures     =============================
       dims(1) = size(l2aux%values, 1)
       dims(2) = size(l2aux%values, 2)
       dims(3) = size(l2aux%values, 3)
-      call Dump_L2AUX(l2AUX)
+      ! call Dump_L2AUX(l2AUX)
       call Build_MLSAuxData(l2FileHandle, dataProduct, l2aux%values, &
       & dims )
       if ( .not. myWriteCounterMAF ) return
@@ -815,7 +815,7 @@ contains ! =====     Public Procedures     =============================
       & "Error ending access to the sd  " )
     endif
     returnStatus = error
-    call Dump_L2AUX(l2AUX)
+    ! call Dump_L2AUX(l2AUX)
 
   end subroutine WriteL2AUXData_hdf4
 
@@ -856,6 +856,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.33  2002/11/26 22:16:41  jonathan
+! Comment-out dump_l2aux diagnostics
+!
 ! Revision 2.32  2002/11/25 18:04:52  pwagner
 ! Consistent with latest changes to MLSAuxData
 !
