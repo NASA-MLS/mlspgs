@@ -98,7 +98,7 @@ contains
     if ( stat == 0 ) then; return; end if
     call io_error &
       ( 'STRING_TABLE%ALLOCATE_CHAR_TABLE-E- Unable to allocate storage', &
-      stat, '' )
+      stat )
     stop
   end subroutine ALLOCATE_CHAR_TABLE
   ! ==================================     ALLOCATE_HASH_TABLE     =====
@@ -137,7 +137,7 @@ contains
     if ( stat == 0 ) then; return; end if
     call io_error &
       ( 'STRING_TABLE%ALLOCATE_HASH_TABLE-E- Unable to allocate storage', &
-      stat, '' )
+      stat )
     stop
   end subroutine ALLOCATE_HASH_TABLE
  ! =================================     ALLOCATE_STRING_TABLE     =====
@@ -158,7 +158,7 @@ contains
     if ( stat == 0 ) then; return; end if
     call io_error &
       ( 'STRING_TABLE%ALLOCATE_STRING_TABLE-E- Unable to allocate storage', &
-      stat, '' )
+      stat )
     stop
   end subroutine ALLOCATE_STRING_TABLE
   ! =========================================     CLEAR_STRING     =====
@@ -318,6 +318,8 @@ contains
   ! DO_LISTING is .true.
     character, intent(out) :: CHAR
 
+    integer :: IOSTAT
+
     if ( at_eof ) then
       char = eof
       return
@@ -333,11 +335,11 @@ contains
         ! Non-advancing input is used so that trailing blanks in
         ! the record can be distinguished from padding.
         if ( inunit >= 0 ) then
-          read ( inunit, '(a)', advance='no', eor=100, end=200 ) &
-            char_table(cur_end)
+          read ( inunit, '(a)', advance='no', eor=100, end=200, err=400, &
+            iostat=iostat ) char_table(cur_end)
         else
-          read ( *, '(a)', advance='no', eor=100, end=200 ) &
-            char_table(cur_end)
+          read ( *, '(a)', advance='no', eor=100, end=200, err=400, &
+            iostat=iostat ) char_table(cur_end)
         end if
       end do
 100   char_table(cur_end) = EOL
@@ -359,6 +361,8 @@ contains
     cur_pos = cur_pos + 1
     char = char_table(cur_pos)
     return
+400 call io_error ( 'While reading input in String_Table%Get_Char', iostat )
+    stop
   end subroutine GET_CHAR
   ! ===========================================     GET_STRING     =====
   subroutine GET_STRING ( STRING, STRING_TEXT, CAP, STRIP, NOERROR, IERR )
@@ -689,8 +693,7 @@ contains
         return
       end if
       call io_error &
-      ( 'stat_TABLE%DOUBLE_CHARS-E- Unable to allocate storage', &
-      stat, '' )
+      ( 'stat_TABLE%DOUBLE_CHARS-E- Unable to allocate storage', stat )
       stop
     end if
     old_char = char_table
@@ -702,8 +705,7 @@ contains
         return
       end if
       call io_error &
-      ( 'stat_TABLE%DOUBLE_CHARS-E- Unable to allocate storage', &
-      stat, '' )
+      ( 'stat_TABLE%DOUBLE_CHARS-E- Unable to allocate storage', stat )
       stop
     end if
     char_table(:ubound(old_char,1)) = old_char
@@ -723,8 +725,7 @@ contains
         return
       end if
       call io_error &
-      ( 'STRING_TABLE%DOUBLE_STRINGS-E- Unable to allocate storage', &
-      stat, '' )
+      ( 'STRING_TABLE%DOUBLE_STRINGS-E- Unable to allocate storage', stat )
       stop
     end if
     old_string = strings
@@ -736,8 +737,7 @@ contains
         return
       end if
       call io_error &
-      ( 'STRING_TABLE%DOUBLE_STRINGS-E- Unable to allocate storage', &
-      stat, '' )
+      ( 'STRING_TABLE%DOUBLE_STRINGS-E- Unable to allocate storage', stat )
       stop
     end if
     strings(0:ubound(old_string,1)) = old_string
@@ -783,6 +783,9 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.13  2002/05/23 20:58:33  vsnyder
+! Detect errors while reading input
+!
 ! Revision 2.12  2002/01/09 23:49:38  pwagner
 ! Each print became call output
 !
