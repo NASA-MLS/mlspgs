@@ -155,8 +155,7 @@ contains ! =====     Public Procedures     =============================
 
     hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
 
-    nullify ( hgrid%phi, hgrid%geodLat, hgrid%lon, hgrid%time, &
-      & hgrid%solarTime, hgrid%solarZenith, hgrid%losAngle ) ! for Sun's rubbish compiler
+    call nullifyHGrid ( hgrid ) ! for Sun's rubbish compiler
     
     hGrid%name = name
     if ( toggle(gen) ) call trace_begin ( "CreateHGridFromMLSCFInfo", root )
@@ -1102,6 +1101,21 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine DumpChunkHGridGeometry
  
+  ! ----------------------------------------NullifyHGrid -----
+  subroutine NullifyHGrid ( H )
+    ! Given a hGrid, nullify all the pointers associated with it
+    type ( HGrid_T ), intent(out) :: H
+
+    ! Executable code
+    nullify ( h%phi )
+    nullify ( h%geodLat )
+    nullify ( h%lon )
+    nullify ( h%time )
+    nullify ( h%solarTime )
+    nullify ( h%solarZenith )
+    nullify ( h%losAngle )
+  end subroutine NullifyHGrid
+
 ! =====     Private Procedures     =====================================
 
   ! ---------------------------------------------  ANNOUNCE_ERROR  -----
@@ -1153,6 +1167,10 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.40  2002/11/22 12:20:42  mjf
+! Added nullify routine(s) to get round Sun's WS6 compiler not
+! initialising derived type function results.
+!
 ! Revision 2.39  2002/11/13 01:07:04  pwagner
 ! Actually reads hdf5 radiances
 !
