@@ -262,7 +262,9 @@ contains
 
       got = .false.
       spec = get_spec_id(key)
+
       select case ( spec )
+      
       case ( s_dumpblocks )
         call DumpBlock ( key, matrixDatabase )
       case ( s_matrix )
@@ -297,7 +299,7 @@ contains
       case ( s_flagCloud )
         if ( toggle(gen) .and. levels(gen) > 0 ) &
           & call trace_begin ( "Retrieve.flagCloud", root )
-        call flagCloud ( key, vectorDatabase )
+        call SetupflagCloud ( key, vectorDatabase )
         if ( toggle(gen) .and. levels(gen) > 0 ) &
           & call trace_end ( "Retrieve.flagCloud" )
       case ( s_retrieve )
@@ -3432,7 +3434,7 @@ contains
     end subroutine SetupSubset
 
     ! -------------------------------------------------- FlagCloud ---
-    subroutine FlagCloud ( key, vectors )
+    subroutine SetupFlagCloud ( key, vectors )
 
       use Declaration_table, only: NUM_VALUE
       use Intrinsic, only: PHYQ_PRESSURE, PHYQ_TEMPERATURE, L_CLOUDINDUCEDRADIANCE
@@ -3452,7 +3454,7 @@ contains
       integer :: HEIGHT                 ! Loop counter
       integer :: HEIGHTNODE             ! Tree node for height values
       integer :: HEIGHTUNIT             ! Unit for heights command
-      integer :: IND,IND1,J             ! Aarray indices
+      integer :: IND,IND1,J, I          ! Aarray indices
       integer :: INSTANCE               ! Loop counter
       integer :: MaskBit                ! Bits corresponding to Mask
       integer :: QUANTITYINDEX          ! Index
@@ -3481,7 +3483,7 @@ contains
       integer, parameter ::                      MAXCOLUMNS = 127
 
       ! Executable code
-      nullify ( channels, qty, ptan, cloudRadiance )
+      nullify ( channels, cloudChannels, qty, ptan, cloudRadiance )
       got = .false.
       maskBit = m_linalg   ! default mask bit
 
@@ -3527,8 +3529,8 @@ contains
          & call AnnounceError ( cannotFlagCloud, key )
       ! Quantity must be radiance
       if ( qty%template%quantityType /= l_radiance &
-         & .or. cloudRadiance%template%quantityType /= l_cloudInducedRadiance &
-         & .or. cloudRadiance%template%quantityType /= l_radiance) &
+         & .or. (cloudRadiance%template%quantityType /= l_cloudInducedRadiance &
+         & .and. cloudRadiance%template%quantityType /= l_radiance)) &
          & call AnnounceError ( badQuantities, key )
 
       ! Process the channels field used in cloudRadiance, must have 1 channel
@@ -3594,7 +3596,7 @@ contains
               value = -log10(value)
             else
                 call MLSMessage ( MLSMSG_Error, ModuleName, &
-                & 'Inappropriate units for height in subset' )
+                & 'Inappropriate units for height in flag cloud' )
             end if
 
             do height = 1, qty%template%noSurfs
@@ -3621,8 +3623,7 @@ contains
                   if ( doThisChannel ) then
                   ind = channel + qty%template%noChans*(height-1)
                   if ( doThisHeight .and. isCloud )  &
-                  &     call SetMask ( qty%mask(:,instance), &
-                  &     (/ channel+qty%template%noChans*(height-1) /), &
+                  &     call SetMask ( qty%mask(:,instance), (/ ind /), &
                   &     what=maskBit )
                end if                   ! do this channel
                end do                   ! Channel loop
@@ -3631,10 +3632,10 @@ contains
       end do                            ! Instance loop
 
       ! Tidy up
-      call Deallocate_test ( channels, 'channels', ModuleName )
+      if(associated(channels)) call Deallocate_test ( channels, 'channels', ModuleName )
       call Deallocate_test ( cloudChannels, 'cloudChannels', ModuleName )
 
-    end subroutine FlagCloud
+    end subroutine SetupFlagCloud
 
   end subroutine Retrieve
 
@@ -3645,6 +3646,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.222  2003/01/17 22:13:46  dwu
+! fix a bug in flagCloud
+!
 ! Revision 2.221  2003/01/17 16:55:19  dwu
 ! a minor change in FlagCloud
 !
