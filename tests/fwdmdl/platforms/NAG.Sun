@@ -31,11 +31,11 @@ init_m_dir = l1
 itmdir=../../../$(init_m_dir)/$(MLSCONFG)
 
 # This is our own directory name; repeated up in mlspgs
-our_dir_name = fwdmdl
+our_dir = fwdmdl
 
 ourdir=../../../$(our_dir)/$(MLSCONFG)
 
-dir2 = $(ourdir)/
+dir2 = $(itmdir)/
 
 # Set paths for finding source files (different from .o and .mod)
 
@@ -99,6 +99,9 @@ INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S -I $(libdir) -I $(itmdir)
 l_specials = -lnsl
 
 # $Log$
+# Revision 1.5  2001/07/02 18:31:04  pwagner
+# Fixed misuse of itmdir
+#
 # Revision 1.4  2001/05/18 23:30:22  pwagner
 # Brought into harmony with latest non-tests versions
 #
