@@ -17,6 +17,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 CHARACTER(LEN=130) :: id = & 
    "$Id$"
 CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
+  private :: not_used_here 
 !-----------------------------------------------------------------------------
 
 !
@@ -1906,10 +1907,17 @@ CONTAINS
   end Function unquote
 
 !=============================================================================
-END MODULE MLSStrings
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
+end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.23  2002/10/08 00:09:12  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.22  2002/04/29 17:39:31  pwagner
 ! Comments re hhmmss_value mention mls_utctotai
 !
