@@ -1,159 +1,148 @@
-!
-! This is a new module to compute some various spectroscopy path arrays
-!
-MODULE eval_spect_path_m
-!
-  use MLSCommon, only: RP, IP, R8
-  USE get_eta_matrix_m, ONLY: get_eta_sparse
-  use Load_sps_data_m, only: Grids_T
-!
-  IMPLICIT NONE
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
-  Private
-  Public :: eval_spect_path
+module Eval_Spect_Path_m
+
+  implicit NONE
+
+  private
+  public :: Eval_Spect_Path
 
 !---------------------------- RCS Ident Info -------------------------------
-  character (LEN=256) :: Id = &
-   & "$Id$"
+  character (LEN=*), parameter :: IdParm = &
+    & "$Id$"
+  character (len=len(idParm)) :: Id = idParm
   character (LEN=*), parameter :: ModuleName= &
-   & "$RCSfile$"
+    & "$RCSfile$"
 !---------------------------------------------------------------------------
- CONTAINS
+contains
 !-----------------------------------------------------------------
-!
- SUBROUTINE eval_spect_path(Grids_x,lo,sideband, path_zeta,path_phi, &
-                        &   do_calc,eta_fzp)
+
+  subroutine Eval_Spect_Path ( Grids_x, lo, sideband,  path_zeta, path_phi,  &
+                        &      do_calc, eta_fzp )
+
+! Compute some various spectroscopy path arrays
+
+    use MLSCommon, only: RP, IP, R8
+    use Get_Eta_Matrix_m, only: Get_Eta_Sparse
+    use Load_Sps_Data_m, only: Grids_T
+
 ! Input:
-  type (Grids_T), INTENT(in) :: Grids_x  ! All the needed coordinates
-  real(r8), intent(in) :: lo            ! Local oscillator
-  integer, intent(in) :: sideband       ! -1 or 1
-  
-!
-  REAL(rp), INTENT(in) :: path_zeta(:) ! zeta values along path
-  REAL(rp), INTENT(in) :: path_phi(:)  ! phi values along path
-!
+    type (Grids_T), intent(in) :: Grids_x  ! All the needed coordinates
+    real(r8), intent(in) :: LO            ! Local oscillator
+    integer, intent(in) :: Sideband       ! -1 or 1
+
+
+    real(rp), intent(in) :: Path_zeta(:) ! zeta values along path
+    real(rp), intent(in) :: Path_phi(:)  ! phi values along path
+
 ! Output:
-!
-  LOGICAL, INTENT(out) :: do_calc(:,:) !logical indicating whether there
+
+    logical, intent(out) :: Do_calc(:,:) !logical indicating whether there
 !                         is a contribution for this state vector element
 !                         This is the same length as values.
-  REAL(rp), INTENT(out) :: eta_fzp(:,:) ! Eta_z x Eta_phi x Eta_frq for 
+    real(rp), intent(out) :: Eta_fzp(:,:) ! Eta_z x Eta_phi x Eta_frq for 
 !          each state vector element. This is the same length as values.
 ! Internal declaritions
-!
-  INTEGER(ip) :: n_f, n_p, n_z, nfzp
-  INTEGER(ip) :: sps_i,n_sps,n_path,sv_i,sv_j,sv_f,sv_z,sv_p
-  INTEGER(ip) :: p_inda,z_inda,v_inda,p_indb,z_indb,v_indb,f_inda,f_indb
 
-  REAL(rp) :: Frq      ! ** ZEBUG ** this will have to change later 
-                       ! for the actuall frequecies array coming in as input
+    integer(ip) :: N_f, N_p, N_z, Nfzp
+    integer(ip) :: Sps_i, Sv_i, Sv_j, Sv_f, Sv_z, Sv_p
+    integer(ip) :: P_inda, Z_inda, V_inda, P_indb, Z_indb, V_indb, F_inda, F_indb
 
-  REAL(rp), ALLOCATABLE :: eta_z(:,:),eta_p(:,:),eta_f(:,:)
-  LOGICAL, ALLOCATABLE :: not_zero_z(:,:),not_zero_p(:,:),not_zero_f(:,:)
-!
+    real(rp) :: Frq      ! ** ZEBUG ** this will have to change later 
+                         ! for the actuall frequecies array coming in as input
+
+!   real(rp) :: Eta_f(nfrq,maxval(grids_x%no_f))
+    real(rp) :: Eta_f(1,maxval(grids_x%no_f)) ! ** ZEBUG, use only one freq.
+    real(rp) :: Eta_p(size(path_zeta),maxval(grids_x%no_p))
+    real(rp) :: Eta_z(size(path_zeta),maxval(grids_x%no_z))
+!   logical :: Not_zero_f(nfrq,maxval(grids_x%no_f))
+    logical :: Not_zero_f(1,maxval(grids_x%no_f)) ! ** ZEBUG, use only one freq.
+    logical :: Not_zero_p(size(path_zeta),maxval(grids_x%no_p))
+    logical :: Not_zero_z(size(path_zeta),maxval(grids_x%no_z))
+
 ! Begin executable code:
-!
-  n_sps = SIZE(Grids_x%no_z)
-  n_path = SIZE(path_zeta)
-!
-  Frq = 0.0
-  eta_fzp = 0.0
-  do_calc = .FALSE.
-!
-  f_inda = 1
-  p_inda = 1
-  z_inda = 1
-  v_inda = 1
-!
-  DO sps_i = 1, n_sps
-!
-    n_f = Grids_x%no_f(sps_i)
-    n_z = Grids_x%no_z(sps_i)
-    n_p = Grids_x%no_p(sps_i)
-    nfzp = n_z * n_p * n_f
-    if(nfzp == 0) CYCLE
 
-    f_indb = f_inda + n_f
-    z_indb = z_inda + n_z
-    p_indb = p_inda + n_p
+    frq = 0.0
+    eta_fzp = 0.0
+    do_calc = .false.
 
-    v_indb = v_inda + nfzp
-!
+    f_inda = 1
+    p_inda = 1
+    z_inda = 1
+    v_inda = 1
+
+    do sps_i = 1, size(grids_x%no_z)
+
+      n_f = grids_x%no_f(sps_i)
+      n_z = grids_x%no_z(sps_i)
+      n_p = grids_x%no_p(sps_i)
+      nfzp = n_z * n_p * n_f
+      if ( nfzp == 0 ) cycle
+
+      f_indb = f_inda + n_f
+      z_indb = z_inda + n_z
+      p_indb = p_inda + n_p
+
+      v_indb = v_inda + nfzp
+
 ! There are two ways to do this (slow and easy vs quick but difficult)
 ! For ease lets do the slow and easy (and certainly more reliable)
-!
-    ALLOCATE(eta_z(1:n_path,1:n_z))
-    ALLOCATE(eta_p(1:n_path,1:n_p))
 
-    ALLOCATE(not_zero_z(1:n_path,1:n_z))
-    ALLOCATE(not_zero_p(1:n_path,1:n_p))
-
-!   ALLOCATE(eta_f(1:nfrq,1:n_f))
-    ALLOCATE(eta_f(1:1,1:n_f))         ! ** ZEBUG, use only one freq.
-
-!   ALLOCATE(not_zero_f(1:nfrq,1:n_f))
-    ALLOCATE(not_zero_f(1:1,1:n_f))    ! ** ZEBUG, use only one freq.
-!
 ! Compute etas
-!
-    CALL get_eta_sparse(lo+sideband*Grids_x%frq_basis(f_inda:f_indb-1),(/Frq/), &
-                     &  eta_f,not_zero_f)
-    CALL get_eta_sparse(Grids_x%zet_basis(z_inda:z_indb-1),path_zeta, &
-                     &  eta_z,not_zero_z)
-    CALL get_eta_sparse(Grids_x%phi_basis(p_inda:p_indb-1),path_phi, &
-                     &  eta_p,not_zero_p)
-!
-    DO sv_i = 1, nfzp
-      sv_j = v_inda + sv_i - 1
-      Call BrkMod(sv_i,n_f,n_z,n_p,sv_f,sv_z,sv_p)
-      IF(not_zero_f(1,sv_f)) THEN
-        WHERE(not_zero_z(:,sv_z) .AND. not_zero_p(:,sv_p))
-          do_calc(:,sv_j) = .TRUE.
-          eta_fzp(:,sv_j) = eta_f(1,sv_f) * eta_z(:,sv_z) * eta_p(:,sv_p)
-        ENDWHERE
-      ENDIF
-    END DO
-!
-    f_inda = f_indb
-    z_inda = z_indb
-    p_inda = p_indb
-    v_inda = v_indb
 
-    DEALLOCATE(not_zero_f)
-    DEALLOCATE(not_zero_z)
-    DEALLOCATE(not_zero_p)
+      call get_eta_sparse ( lo+sideband*grids_x%frq_basis(f_inda:f_indb-1), &
+                         &  (/frq/), eta_f, not_zero_f )
+      call get_eta_sparse ( grids_x%zet_basis(z_inda:z_indb-1),  &
+                         &  path_zeta, eta_z, not_zero_z )
+      call get_eta_sparse ( grids_x%phi_basis(p_inda:p_indb-1),  &
+                         &  path_phi, eta_p, not_zero_p )
 
-    DEALLOCATE(eta_f)
-    DEALLOCATE(eta_z)
-    DEALLOCATE(eta_p)
-!
-  END DO
-!
- END SUBROUTINE eval_spect_path
+      do sv_i = 1, nfzp
+        sv_j = v_inda + sv_i - 1
+        call brkmod ( sv_i, n_f, n_z, n_p, sv_f, sv_z, sv_p )
+        if ( not_zero_f(1,sv_f) ) then
+          where ( not_zero_z(:,sv_z) .and. not_zero_p(:,sv_p) )
+            do_calc(:,sv_j) = .true.
+            eta_fzp(:,sv_j) = eta_f(1,sv_f) * eta_z(:,sv_z) * eta_p(:,sv_p)
+          end where
+        end if
+      end do
 
-!---------------------------------------------------------------------
+      f_inda = f_indb
+      z_inda = z_indb
+      p_inda = p_indb
+      v_inda = v_indb
 
- SUBROUTINE BrkMod(m,nf,nz,np,jf,jz,jp)
+    end do
 
-  Integer, intent(in) :: m, nf, nz, np
-  Integer, intent(out) :: jf, jz, jp
+  contains
 
-  Integer :: k
+    subroutine BrkMod ( m, nf, nz, np, jf, jz, jp )
 
-   jf = 1 + MOD(m-1,nf)
-   k = (m-jf+nf-1)/nf
-   jz = 1 + MOD(k,nz)
-   k = (k-jz+nz-1)/nz
-   jp = 1 + MOD(k,np)
+     Integer, intent(in) :: m, nf, nz, np
+     Integer, intent(out) :: jf, jz, jp
 
- END SUBROUTINE BrkMod
+     Integer :: k
+
+      jf = 1 + MOD(m-1,nf)
+      k = (m-jf+nf-1)/nf
+      jz = 1 + MOD(k,nz)
+      k = (k-jz+nz-1)/nz
+      jp = 1 + MOD(k,np)
+
+    end subroutine BrkMod
+
+  end subroutine Eval_Spect_Path
 
 !---------------------------------------------------------------------
 
-!
-END MODULE eval_spect_path_m
+end module Eval_Spect_Path_m
 !
 ! $Log$
+! Revision 2.4  2002/08/22 23:13:33  livesey
+! New frq_Basis based on intermediate frequency
+!
 ! Revision 2.3  2002/07/08 17:45:39  zvi
 ! cleaner code to find indecies
 !
