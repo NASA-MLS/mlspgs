@@ -104,6 +104,8 @@ contains
     !--------------------------------------------
     real(r8), dimension(:,:), pointer :: WC
     real(r8), dimension(:), pointer :: Scat_ang
+    real(r8), dimension(:), pointer :: temp_prof
+    real(r8), dimension(:), pointer :: gph_prof
     integer, dimension(:), pointer :: IPSD
     !--------------------------------------------
 
@@ -547,7 +549,7 @@ contains
       & eta_tscat, eta_tscat_zp, eta_zp, eta_zxp_dn, eta_zxp_dn_c, &
       & eta_zxp_dn_f, eta_zxp_dv, eta_zxp_dv_c, eta_zxp_dv_f, eta_zxp_dw, &
       & eta_zxp_dw_c, eta_zxp_dw_f, eta_zxp_t, eta_zxp_t_c, eta_zxp_t_f, &
-      & f_inds, frequencies, gl_delta_polarized, gl_inds, gph, grids, &
+      & f_inds, frequencies, gph_prof, gl_delta_polarized, gl_inds, gph, grids, &
       & h_glgrid, h_path, h_path_c, h_path_f, incoptdepth, incoptdepth_pol, &
       & incoptdepth_pol_gl, ipsd, iwc_path, k_atmos, k_atmos_frq, &
       & k_spect_dn, k_spect_dn_frq, k_spect_dv, k_spect_dv_frq, k_spect_dw, &
@@ -556,7 +558,7 @@ contains
       & radiances, RadV, ref_corr, req_out, salb_path, scat_alb%values, &
       & scat_ang, scat_src%values, sps_beta_dbeta_c, sps_beta_dbeta_f, &
       & sps_path, tan_chi_out, tan_d2h_dhdt, tan_dh_dt, tanh1_c, tanh1_f, &
-      & tan_phi, tan_temp, tau, tau_pol, t_der_path_flags, t_glgrid, t_path, &
+      & tan_phi, tan_temp, tau, tau_pol, temp_prof,t_der_path_flags, t_glgrid, t_path, &
       & t_path_c, t_path_f, t_path_m, t_path_p, true_path_flags, tscat_path, &
       & t_script, tt_path, tt_path_c, &
       & usedDacsSignals, vmr, vmrarray, w0_path_c, wc, z_path )
@@ -710,18 +712,15 @@ contains
 ! Now, allocate other variables we're going to need later ----------------
 
     ! Stuff for clouds
+    do_cld = .true. !JJ !for Jonathan use Only
+!    if ( do_cld ) then !JJ
+
     if ( FwdModelConf%incl_cld ) then  ! Do this block only if incl_cld is true
 
       call Allocate_test ( closestInstances, thisRadiance%template%noInstances,    &
       & 'closestInstances', ModuleName )
       call FindClosestInstances ( temp, thisRadiance, closestInstances )
       inst = closestInstances(MAF)
-
-      call allocate_test ( scat_src%values, n_t_zeta, &
-      & fwdModelConf%num_scattering_angles, 'scat_src', moduleName )
-
-      call allocate_test ( scat_alb%values, n_t_zeta, 2, 'scat_alb', moduleName )
-      call allocate_test (  cld_ext%values, n_t_zeta, 2, 'cld_ext', moduleName )
 
       if ( size(FwdModelConf%molecules) .lt. 2 ) then
          !   make sure we have enough molecules
@@ -773,7 +772,15 @@ contains
         call MLSMessage(MLSMSG_Error, ModuleName,'Missing molecules H2O or O3 in cloud FM')
       end if
 
-    end if
+      call allocate_test ( temp_prof, n_t_zeta, 'temp_prof', moduleName )
+      call allocate_test ( gph_prof, n_t_zeta, 'gph_prof', moduleName )
+     
+      do i=1, n_t_zeta
+        temp_prof(i) = temp%values(i,inst)
+        gph_prof(i)  = GPH%values(i,inst)
+      enddo
+
+    end if ! end of cloud block
 
 ! Set up our temporary `state vector' like arrays ------------------------
 
@@ -980,14 +987,24 @@ contains
     call allocate_test ( sps_path,      max_ele, no_mol, 'sps_path',       moduleName )
     call allocate_test ( true_path_flags, max_ele, 'true_path_flags',moduleName)
     true_path_flags = .true.
-    if ( fwdModelConf%Incl_Cld ) then
+
+   if ( fwdModelConf%Incl_Cld ) then
+!    if ( do_cld ) then !JJ
       call allocate_test ( do_calc_iwc,    max_ele, size(grids_iwc%values),  'do_calc_iwc',  moduleName )
       call allocate_test ( eta_iwc,        max_ele, size(grids_iwc%values),  'eta_iwc',      moduleName )
       call allocate_test ( eta_iwc_zp,     max_ele, grids_iwc%p_len,  'eta_iwc_zp',    moduleName )
       call allocate_test ( iwc_path,       max_ele, 1, 'iwc_path',           moduleName )
       call allocate_test ( ipsd,           max_ele, 'IPSD', moduleName )
       call allocate_test ( wc,         fwdModelConf%no_cloud_species, max_ele, 'WC', moduleName )
+
+      call allocate_test ( Scat_ang, fwdModelConf%num_scattering_angles, 'Scat_ang', moduleName )
+      call allocate_test ( scat_src%values, n_t_zeta, fwdModelConf%num_scattering_angles, &
+                           &'scat_src', moduleName )
+      call allocate_test ( scat_alb%values, n_t_zeta, 2, 'scat_alb', moduleName )
+      call allocate_test (  cld_ext%values, n_t_zeta, 2, 'cld_ext', moduleName )
+
     end if
+
     if ( temp_der ) then
 
 ! Allocation for metrics routine when Temp. derivative is needed:
@@ -1659,27 +1676,25 @@ contains
             &  beta_n_path_c, dbeta_dw_path_c,                    &
             &  dbeta_dn_path_c, dbeta_dv_path_c )
 
-          do_gl = .false.
+         do_gl = .false.
 
-          do_cld = .true. !JJ !for Jonathan use Only
-
-          if ( FwdModelConf%incl_cld ) then
+         if ( FwdModelConf%incl_cld ) then
 !          if ( do_cld ) then !JJ
             ! Compute Scattering source function based on temp_prof at all
             ! angles U for each temperature layer assuming a plane parallel
             ! atmosphere.
 
-            call allocate_test ( Scat_ang, fwdModelConf%num_scattering_angles, 'Scat_ang', moduleName )
+            if (ptg_i .eq. 1) then      
 
-            call T_scat ( temp%values(:,inst), Frq, GPH%values(:,inst), &
-            & 10.0**(-temp%template%surfs), vmrArray, nspec,            &
-            & fwdModelConf%num_scattering_angles,                       &
-            & fwdModelConf%num_azimuth_angles,                          &
-            & fwdModelConf%num_ab_terms, fwdModelConf%num_size_bins,    &
-            & fwdModelConf%no_cloud_species,                            &
-            & scat_src%values, scat_alb%values, cld_ext%values, Scat_ang)
+              call T_scat ( temp_prof, Frq, gph_prof,                        & 
+                 & 10.0**(-temp%template%surfs), vmrArray, nspec,            &
+                 & fwdModelConf%num_scattering_angles,                       &
+                 & fwdModelConf%num_azimuth_angles,                          &
+                 & fwdModelConf%num_ab_terms, fwdModelConf%num_size_bins,    &
+                 & fwdModelConf%no_cloud_species,                            &
+                 & scat_src%values, scat_alb%values, cld_ext%values, Scat_ang)
 
-            call Deallocate_test ( vmrArray,'vmrArray',ModuleName )
+            endif
 
             scat_src%template = temp%template
 
@@ -1688,13 +1703,10 @@ contains
 
             call allocate_test ( do_calc_tscat, no_ele, size(grids_tscat%values),           &
                                & 'do_calc_tscat', moduleName )
-
             call allocate_test ( do_calc_tscat_zp, no_ele, grids_tscat%p_len,               &
                                & 'do_calc_tscat_zp', moduleName )
-
             call allocate_test ( eta_tscat,     no_ele, size(grids_tscat%values),           &
                                & 'eta_tscat',     moduleName )
-                        
             call allocate_test ( eta_tscat_zp,  no_ele, grids_tscat%p_len,                  &
                                & 'eta_tscat_zp',  moduleName )
             call allocate_test ( tscat_path,    no_ele, fwdModelConf%num_scattering_angles, &
@@ -1733,14 +1745,10 @@ contains
               enddo
 
               call allocate_test (do_calc_salb, no_ele, size(grids_salb%values),'do_calc_salb',moduleName)
-
               call allocate_test (do_calc_salb_zp, no_ele, grids_salb%p_len,               &
                                  & 'do_calc_salb_zp', moduleName )
-
               call allocate_test (eta_salb,    no_ele, size(grids_salb%values), 'eta_salb', moduleName)
-
               call allocate_test (eta_salb_zp, no_ele, grids_salb%p_len, 'eta_salb_zp', moduleName)
-
               call allocate_test ( salb_path,  no_ele, 1, 'salb_path', moduleName )
 
               call allocate_test (do_calc_cext,no_ele,size(grids_cext%values),'do_calc_cext',moduleName)
@@ -1769,7 +1777,7 @@ contains
                 & Frq, eta_cext_zp(1:no_ele,:), &
                 & do_calc_cext_zp(1:no_ele,:), cext_path(1:no_ele,:),      &
                 & do_calc_cext(1:no_ele,:), eta_cext(1:no_ele,:) )
-
+              
               call convert_grid ( salb_path(1:no_ele,:), cext_path(1:no_ele,:),   &
                                 & tt_path(1:no_ele,:), c_inds(1:npc),             &
                                 & beta_path_cloud_c(1:npc), w0_path_c(1:npc),     &
@@ -1784,6 +1792,25 @@ contains
                 &  IPSD(1:no_ele),  WC(:,1:no_ele), fwdModelConf )
 
             end if
+            
+              call deallocate_test ( do_calc_tscat,    'do_calc_tscat',    moduleName )
+              call deallocate_test ( do_calc_tscat_zp, 'do_calc_tscat_zp', moduleName )
+              call deallocate_test ( eta_tscat,        'eta_tscat',        moduleName )
+              call deallocate_test ( eta_tscat_zp,     'eta_tscat_zp',     moduleName )           
+              call deallocate_test ( tscat_path,       'tscat_path',       moduleName )
+              call deallocate_test ( tt_path,          'tt_path',          moduleName )
+
+              call deallocate_test ( do_calc_salb,     'do_calc_salb',     moduleName )
+              call deallocate_test ( do_calc_salb_zp,  'do_calc_salb_zp',  moduleName )
+              call deallocate_test ( eta_salb,         'eta_salb',         moduleName )
+              call deallocate_test ( eta_salb_zp,      'eta_salb_zp',      moduleName )
+              call deallocate_test ( salb_path,        'salb_path',        moduleName )
+
+              call deallocate_test ( do_calc_cext,     'do_calc_salb',     moduleName )
+              call deallocate_test ( do_calc_cext_zp,  'do_calc_salb_zp',  moduleName )
+              call deallocate_test ( eta_cext,         'eta_cext',         moduleName )
+              call deallocate_test ( eta_cext_zp,      'eta_cext_zp',      moduleName )
+              call deallocate_test ( cext_path,        'cext_path',        moduleName )
 
             do j = 1, npc
               alpha_path_c(j) = dot_product( sps_path(c_inds(j),:), &
@@ -1793,23 +1820,17 @@ contains
               incoptdepth(j) = alpha_path_c(j) * del_s(j)
             end do
 
-            ! Determine where to use Gauss-Legendre instead of a trapezoid.
-
-            call path_contrib ( incoptdepth(1:npc), e_rflty, &
-              & fwdModelConf%tolerance, do_gl(1:npc) )
-          
-          else ! Not cloud model
+         else ! Not cloud model
 
             do j = 1, npc ! Don't trust compilers to fuse loops
               alpha_path_c(j) = dot_product( sps_path(c_inds(j),:), &
                                     & beta_path_c(j,:) )
-
               incoptdepth(j) = alpha_path_c(j) * del_s(j)
-
               tt_path_c(j) =0.0
               w0_path_c(j) =0.0
-
             end do
+
+         endif ! end of check cld 
 
             if ( .not. FwdModelConf%polarized ) then
               ! Determine where to use Gauss-Legendre for scalar instead of a trapezoid.
@@ -1876,8 +1897,6 @@ contains
                  & fwdModelConf%tolerance, do_gl(1:npc) )
 
             end if
-
-          end if   ! end of check cld 
 
           ! Where we don't do GL, replace the rectangle rule by the
           ! trapezoid rule.
@@ -2643,6 +2662,7 @@ contains
     call destroygrids_t ( grids_tscat )
     call destroygrids_t ( grids_salb )
     call destroygrids_t ( grids_cext )
+    call Deallocate_test ( vmrArray,'vmrArray',ModuleName )
 
     call deallocate_test ( dhdz_path,        'dhdz_path',        moduleName )
     call deallocate_test ( dhdz_gw_path,     'dhdz_gw_path',     moduleName )
@@ -2684,29 +2704,13 @@ contains
     call deallocate_test ( do_calc_fzp,      'do_calc_fzp',      moduleName )
     call deallocate_test ( do_calc_iwc,      'do_calc_iwc',      moduleName )
     call deallocate_test ( do_calc_iwc_zp,   'do_calc_iwc_zp',   moduleName )
-    call deallocate_test ( do_calc_tscat,    'do_calc_tscat',    moduleName )
-    call deallocate_test ( do_calc_tscat_zp, 'do_calc_tscat_zp', moduleName )
-    call deallocate_test ( do_calc_salb,     'do_calc_salb',     moduleName )
-    call deallocate_test ( do_calc_salb_zp,  'do_calc_salb_zp',  moduleName )
-    call deallocate_test ( do_calc_cext,     'do_calc_salb',     moduleName )
-    call deallocate_test ( do_calc_cext_zp,  'do_calc_salb_zp',  moduleName )
     call deallocate_test ( do_calc_zp,       'do_calc_zp',       moduleName )
     call deallocate_test ( eta_fzp,          'eta_fzp',          moduleName )
     call deallocate_test ( eta_iwc,          'eta_iwc',          moduleName )
     call deallocate_test ( eta_iwc_zp,       'eta_iwc_zp',       moduleName )
-    call deallocate_test ( eta_tscat,        'eta_tscat',        moduleName )
-    call deallocate_test ( eta_tscat_zp,     'eta_tscat_zp',     moduleName )
-    call deallocate_test ( eta_salb,         'eta_salb',         moduleName )
-    call deallocate_test ( eta_salb_zp,      'eta_salb_zp',      moduleName )
-    call deallocate_test ( eta_cext,         'eta_cext',         moduleName )
-    call deallocate_test ( eta_cext_zp,      'eta_cext_zp',      moduleName )
     call deallocate_test ( eta_mag_zp,       'eta_mag_zp',       moduleName )
     call deallocate_test ( eta_zp,           'eta_zp',           moduleName )
     call deallocate_test ( iwc_path,         'iwc_path',         moduleName )
-    call deallocate_test ( tscat_path,       'tscat_path',       moduleName )
-    call deallocate_test ( tt_path,          'tt_path',          moduleName )
-    call deallocate_test ( salb_path,        'salb_path',        moduleName )
-    call deallocate_test ( cext_path,        'cext_path',        moduleName )
     call deallocate_test ( mag_path,         'mag_path',         moduleName )
     call deallocate_test ( sps_path,         'sps_path',         moduleName )
     call deallocate_test ( true_path_flags,  'true_path_flags',  moduleName )
@@ -3074,6 +3078,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.202  2004/03/30 02:26:17  livesey
+! Bug fix in Jonathan's w0 handling
+!
 ! Revision 2.201  2004/03/30 02:00:36  vsnyder
 ! Remove USE for unreferenced symbol.  Don't try to fill tpath_m and
 ! tpath_p if they're not allocated.
