@@ -1362,6 +1362,7 @@ contains
       type (VectorValue_T), pointer :: xExtPtr        ! pointer of l_cloudExtinction quantity
       type (VectorValue_T), pointer :: xExtVar        ! variance of apriori
       type (VectorValue_T), pointer :: outExtSD        ! SD of output
+      type (VectorValue_T), pointer :: ModelTcir        ! for model cloud radiance
       type (VectorValue_T), pointer :: Tcir        ! cloud-induced radiance
       type (VectorValue_T), pointer :: Terr        ! cloud-induced radiance SD
       type (VectorValue_T), pointer :: PTAN        ! Tgt pressure
@@ -1401,10 +1402,7 @@ contains
                                                       ! first two are (chan, s)
 
       ! use this for testing
-      if(.not. got(f_maxJ)) maxJacobians = 5
-      if(.not. got(f_lambda)) initlambda = 10.
-      
-      pcut = -2.5
+      pcut = -2.4
       
       if(size(configIndices) > 1 .or. &
         & size(configDatabase(configIndices(1))%signals) > 1) then
@@ -1453,6 +1451,31 @@ contains
       fmStat%maf = maf
       print*,'begin cloud retrieval maf= ',maf,' chunk size=',nMAFs
                         
+          ! get cloud radiance measurements for this signal
+          Tcir => GetVectorQuantityByType ( Measurements,       &
+               & quantityType=l_cloudInducedRadiance,             &
+               & signal=signal%index, sideband=signal%sideband )
+            
+          ! get cloud radiances error for this signal
+          Terr => GetVectorQuantityByType ( MeasurementSD,       &
+               & quantityType=l_cloudInducedRadiance,             &
+               & signal=signal%index, sideband=signal%sideband )
+
+          ! get pointers of x covariance for the retrieval
+          xExtVar => GetVectorQuantityByType (covarianceDiag, &
+               & quantityType=l_cloudextinction,noerror=.true.)
+      
+          ! get pointers of output SD for the retrieval
+          outExtSD => GetVectorQuantityByType (outputSD, &
+               & quantityType=l_cloudextinction,noerror=.true.)
+      
+          ! get cloud radiance measurements for this signal
+          ModelTcir => GetVectorQuantityByType ( fwdModelExtra,     &
+               & quantityType=l_cloudInducedRadiance,             &
+               & signal=signal%index, sideband=signal%sideband )
+          
+          ModelTcir%values = Tcir%values
+          
           fmStat%rows = .false.
           call forwardModel ( configDatabase(configIndices(1)), &
             & state, fwdModelExtra, FwdModelOut1, fmw, fmStat, jacobian )
@@ -1476,24 +1499,6 @@ contains
                & quantityType=l_cloudRADSensitivity,                           &
                & signal=signal%index, sideband=signal%sideband )
           
-          ! get cloud radiance measurements for this signal
-          Tcir => GetVectorQuantityByType ( Measurements,       &
-               & quantityType=l_cloudInducedRadiance,             &
-               & signal=signal%index, sideband=signal%sideband )
-            
-          ! get cloud radiances error for this signal
-          Terr => GetVectorQuantityByType ( MeasurementSD,       &
-               & quantityType=l_cloudInducedRadiance,             &
-               & signal=signal%index, sideband=signal%sideband )
-
-          ! get pointers of x covariance for the retrieval
-          xExtVar => GetVectorQuantityByType (covarianceDiag, &
-               & quantityType=l_cloudextinction,noerror=.true.)
-      
-          ! get pointers of output SD for the retrieval
-          outExtSD => GetVectorQuantityByType (outputSD, &
-               & quantityType=l_cloudextinction,noerror=.true.)
-      
           ! get rowBlock and colBlock for this model
           rowJBlock = FindBlock (jacobian%row, Tb0%index, maf)
           colJBlock = FindBlock ( Jacobian%col, xExtPtr%index, maf )
@@ -1545,7 +1550,7 @@ contains
                   do i1=1,nz
                    do j1=1,nInst
                    C(i+(j-1)*nz,i1+(j1-1)*nz) = C(i+(j-1)*nz,i1+(j1-1)*nz) + &
-                    & jBlock%values(ich,i+(j-1)*nz)*jBlock%values(mif,i1+(j1-1)*nz)/sy
+                    & jBlock%values(mif,i+(j-1)*nz)*jBlock%values(mif,i1+(j1-1)*nz)/sy
                    end do
                   end do
                  end do
@@ -1563,8 +1568,8 @@ contains
       A = C
       do i=1,nz
          do j=1,nInst
-         sx0(i+(j-1)*nz) = xExtVar%values(i,j)
-         A(i,i)=A(i,i) + xExtVar%values(i,j)  ! sx has already been inverted
+         sx0(i+(j-1)*nz) = xExtVar%values(i,j)   ! sx has already been inverted
+         A(i+(j-1)*nz,i+(j-1)*nz)=A(i+(j-1)*nz,i+(j-1)*nz) + xExtVar%values(i,j) 
          end do
       end do
          
@@ -1573,7 +1578,7 @@ contains
       ! output estimated SD 
       do i=1,nz
          do j=1,nInst
-            outExtSD%values(i,j) = sqrt(A(i,i))
+            outExtSD%values(i,j) = sqrt(A(i+(j-1)*nz,i+(j-1)*nz))
          end do
       end do
 
@@ -1584,12 +1589,12 @@ contains
          end do
       end do
       
-      ! deallocate arrays and free memory
-      deallocate(A,C,tmp1,tmp2,dx,x,x0,sx0)
-
       ! output retrieval results
       xExtPtr%values = reshape(x,(/nz,nInst/))
       
+      ! deallocate arrays and free memory
+      deallocate(A,C,tmp1,tmp2,dx,x,x0,sx0)
+
       ! if the input variance is NOT reduced by half, it is given negative
       where(outExtSD%values**2 > 0.5/xExtVar%values) &   ! xExtVar is inversed
             & outExtSD%values = -outExtSD%values
@@ -2406,6 +2411,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.112  2001/11/06 18:04:11  dwu
+! first working version of HighCloudRetrieval
+!
 ! Revision 2.111  2001/11/02 01:11:45  dwu
 ! a test for highcloudretrieval
 !
