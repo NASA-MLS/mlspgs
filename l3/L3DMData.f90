@@ -156,7 +156,7 @@ CONTAINS
 !-------------------------------
 
   !---------------------------------------------------
-  SUBROUTINE OutputGrids(type, l3dmData, l3dmFiles, hdfVersion)
+  SUBROUTINE OutputGrids(type, l3dmData, l3dmFiles, hdfVersion, createFile)
   !---------------------------------------------------
   USE MLSFiles, ONLY: HDFVERSION_5, HDFVERSION_4
 
@@ -173,8 +173,10 @@ CONTAINS
     
     INTEGER, INTENT(IN) :: hdfVersion
    
+    LOGICAL, INTENT(INOUT) :: createFile
+
     if (hdfVersion == HDFVERSION_5) then 
-       call OutputGrids_HE5(type, l3dmData, l3dmFiles)
+       call OutputGrids_HE5(type, l3dmData, l3dmFiles, createFile)
     else if (hdfVersion == HDFVERSION_4) then
        call OutputGrids_HE2(type, l3dmData, l3dmFiles)
     endif
@@ -322,7 +324,7 @@ CONTAINS
          
        ! Define the "geolocation" fields
          
-       status = gddeffld(gdId, GEO_FIELD3, DIMT_NAME, DFNT_FLOAT64, &
+       status = gddeffld(gdId, GEO_FIELD3, DIMT_NAME, DFNT_FLOAT32, &
             & HDFE_NOMERGE)
        IF (status /= 0) THEN
           msr = GEO_ERR // GEO_FIELD3
@@ -509,7 +511,7 @@ CONTAINS
 
  
  !---------------------------------------------------
- SUBROUTINE OutputGrids_HE5(type, l3dmData, l3dmFiles)
+ SUBROUTINE OutputGrids_HE5(type, l3dmData, l3dmFiles, createFile)
  !---------------------------------------------------
    
   USE HDF5, ONLY: HID_T
@@ -528,7 +530,9 @@ CONTAINS
    TYPE (L3DMData_T), INTENT(IN) :: l3dmData(:)
    
    TYPE (OutputFiles_T), INTENT(INOUT) :: l3dmFiles
-   
+  
+   LOGICAL, INTENT(INOUT) :: createFile 
+
    ! Parameters
    
    ! Variables
@@ -566,7 +570,7 @@ CONTAINS
       ENDIF
       
       ! Check whether the name is distinct; if so, save it in l3dmFiles
-      
+     
       IF (LinearSearchStringArray(l3dmFiles%name,physicalFilename) == 0) THEN
          l3dmFiles%nFiles = l3dmFiles%nFiles+1
          l3dmFiles%name(l3dmFiles%nFiles) = physicalFilename
@@ -574,8 +578,13 @@ CONTAINS
       ENDIF
       
       ! Open the output file
-      
-      gdfID = he5_gdopen(physicalFilename, HE5F_ACC_TRUNC)
+
+      IF (createFile) THEN  
+          gdfID = he5_gdopen(physicalFilename, HE5F_ACC_TRUNC)
+      ELSE
+          gdfID = he5_gdopen(physicalFilename, HE5F_ACC_RDWR)
+      ENDIF
+
       IF (gdfID == -1) THEN
          msr = MLSMSG_Fileopen // trim(physicalFilename) //' for writing grid.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -704,22 +713,22 @@ CONTAINS
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
       
-      status = he5_gdclose(gdfID)
-      IF (status /= 0) THEN
-         msr = 'Failed to close file ' // TRIM(physicalFilename) // &
-              & ' after definition.'
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
+!      status = he5_gdclose(gdfID)
+!      IF (status /= 0) THEN
+!         msr = 'Failed to close file ' // TRIM(physicalFilename) // &
+!              & ' after definition.'
+!         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+!      ENDIF
       
       
       ! Re-open the file for writing
       
-      gdfID = he5_gdopen(trim(physicalFilename), HE5F_ACC_RDWR)
-      IF (gdfID == -1) THEN
-         msr = MLSMSG_Fileopen // TRIM(physicalFilename) // & 
-              & ' for writing grid data.'
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
+!      gdfID = he5_gdopen(trim(physicalFilename), HE5F_ACC_RDWR)
+!      IF (gdfID == -1) THEN
+!         msr = MLSMSG_Fileopen // TRIM(physicalFilename) // & 
+!              & ' for writing grid data.'
+!         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+!      ENDIF
       
       ! Re-attach to the grid for writing
       
@@ -832,6 +841,7 @@ CONTAINS
          
       ENDDO
       
+      createFile = .false. 
     !----------------------------
     END SUBROUTINE OutputGrids_HE5
     !----------------------------
@@ -862,7 +872,7 @@ CONTAINS
       CHARACTER (LEN=GridNameLen) :: dgName
       
       INTEGER :: start(2), stride(2), edge(2)
-      INTEGER :: swfID, swId, status
+      INTEGER :: swfID, swId, status, n, m
 
       ! Functions
       
@@ -915,7 +925,7 @@ CONTAINS
       
       ! Define the "geolocation" fields using the above dimensions
       
-      status = swdefgfld(swId, GEO_FIELD3, DIMT_NAME, DFNT_FLOAT64, & 
+      status = swdefgfld(swId, GEO_FIELD3, DIMT_NAME, DFNT_FLOAT32, & 
            & HDFE_NOMERGE)
       IF (status /= 0) THEN
          msr = GEO_ERR // GEO_FIELD3
@@ -957,7 +967,7 @@ CONTAINS
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
       
-      status = swdefdfld(swId, MDT_FIELD, DIMNL_NAME, DFNT_FLOAT64, & 
+      status = swdefdfld(swId, MDT_FIELD, DIMNL_NAME, DFNT_FLOAT32, & 
            & HDFE_NOMERGE)
       IF (status /= 0) THEN
          msr = DAT_ERR // MDT_FIELD
@@ -1073,7 +1083,6 @@ CONTAINS
 
          status = swwrfld( swId, MDT_FIELD, start, stride, edge, & 
               & real(dg%maxDiffTime) )
-         
          IF (status /= 0) THEN
             msr = WR_ERR //  MDT_FIELD // ' to swath ' // trim(dgName)
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -1134,7 +1143,7 @@ CONTAINS
       
       INTEGER :: start(2), stride(2), edge(2)
       INTEGER (HID_T) :: swfID, swId
-      INTEGER :: status
+      INTEGER :: status, n, m
       
       ! Functions
 
@@ -1234,7 +1243,7 @@ CONTAINS
       ENDIF
       
       status = he5_swdefdfld(swId, MDT_FIELD, DIMNL_NAME, "", & 
-           & HE5T_NATIVE_DOUBLE, HDFE_NOMERGE)
+           & HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
       IF (status /= 0) THEN
          msr = DAT_ERR // MDT_FIELD
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -1256,20 +1265,20 @@ CONTAINS
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      status = he5_swclose(swfID)
-      IF (status /= 0) THEN
-         msr = 'Failed to close file ' // TRIM(physicalFilename) // &
-              & ' after writing.'
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-      CALL MLSMessage(MLSMSG_Info, ModuleName, 'pass swclose')
+!      status = he5_swclose(swfID)
+!      IF (status /= 0) THEN
+!         msr = 'Failed to close file ' // TRIM(physicalFilename) // &
+!              & ' after writing.'
+!         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+!      ENDIF
+!      CALL MLSMessage(MLSMSG_Info, ModuleName, 'pass swclose')
                                                                                 
-      swfID = he5_swopen(trim(physicalFilename), HE5F_ACC_RDWR)
+!      swfID = he5_swopen(trim(physicalFilename), HE5F_ACC_RDWR)
                                                                                 
-      IF (swfID == -1) THEN
-         msr = MLSMSG_Fileopen // trim(physicalFilename) //' for writing swath'
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
+!      IF (swfID == -1) THEN
+!!jj         msr = MLSMSG_Fileopen // trim(physicalFilename) //' for writing swath'
+!         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+!      ENDIF
  
       ! Re-attach to the swath for writing
       
@@ -1342,7 +1351,7 @@ CONTAINS
       ! Two-dimensional data fields
 
       if ((dg%nLevels.gt.0).and.(dg%nLats.gt.0)) then
-         
+      
          status = he5_swwrfld( swId, DG_FIELD1, start, stride, edge, & 
               & real(dg%latRss) )
          IF (status /= 0) THEN
@@ -1365,7 +1374,8 @@ CONTAINS
          ENDIF
          
          status = he5_swwrfld( swId, MDT_FIELD, start, stride, edge, & 
-              & real(dg%maxDiffTime) )
+              & dg%maxDiffTime )
+              !& real(dg%maxDiffTime) )
          
          IF (status /= 0) THEN
             msr = WR_ERR //  MDT_FIELD // ' to swath ' // trim(dgName)
@@ -1446,7 +1456,7 @@ CONTAINS
       CHARACTER (LEN=FileNameLen)           :: sval
       CHARACTER (LEN=CCSDS_LEN)             :: timeA
       CHARACTER (LEN=480)                   :: msr
-      CHARACTER (LEN=132)                   :: list
+      CHARACTER (LEN=132)                   :: list,gridlist
       CHARACTER (LEN=45)                    :: attrName
       ! CHARACTER (LEN=2)                     :: fileType
       integer ::                             fileType
@@ -1454,8 +1464,8 @@ CONTAINS
       
       REAL(r8) :: dval
 
-      INTEGER :: hdfReturn, i, j, indx, len, numGrids, result, sdid, &  
-           & returnStatus, MyHDFVersion
+      INTEGER :: hdfReturn, i, j, indx, numGrids, result, sdid, &  
+           & returnStatus, MyHDFVersion, len=0
 
       ! Initialize MyHDFVersion and use HDFEOS2 as default.
 
@@ -1533,7 +1543,7 @@ CONTAINS
          IF (MyHDFVersion==HDFVERSION_4) THEN 
             numGrids = gdinqgrid(files%name(i), list, len)
          ELSE IF (MyHDFVersion==HDFVERSION_5) THEN
-            numGrids = he5_gdinqgrid(files%name(i), list, len)
+            numGrids = he5_gdinqgrid(trim(files%name(i)), gridlist, len)
          ENDIF
 
          IF (numGrids .LE. 0) THEN
@@ -1543,7 +1553,9 @@ CONTAINS
          ENDIF
          
          ! For each grid in the file
-         
+        
+         list = gridlist(:len) 
+      
          DO j = 1, numGrids
             
             ! Extract its name
@@ -1553,9 +1565,10 @@ CONTAINS
                gridName = list(:indx-1)
                list = list(indx+1:)
             ELSE
-               gridName = list
+               !gridName = gridlist
+               gridName = trim(list)
             ENDIF
-            
+           
             ! Append a class suffix to ParameterName, 
             ! and write the grid name as its value
             
@@ -2206,6 +2219,9 @@ CONTAINS
 !==================
 
 !# $Log$
+!# Revision 1.32  2003/09/15 18:29:41  cvuu
+!# Add OrbitNumber and OrbitPeriod to global attribute
+!#
 !# Revision 1.31  2003/08/21 20:22:46  cvuu
 !# Remove testing print statements
 !#

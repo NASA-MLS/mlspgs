@@ -9,6 +9,8 @@ MODULE PCFModule
    USE MLSCommon, ONLY: FileNameLen, r8
    USE MLSL3Common, ONLY: TAI2A_ERR, CCSDS_LEN
    USE MLSMessageModule, ONLY: MLSMSG_Error, MLSMessage
+   USE Output_m, ONLY: output
+
    IMPLICIT NONE
    private
    PUBLIC :: ExpandFileTemplate, SearchPCFNames, FindFileType, &
@@ -349,7 +351,8 @@ CONTAINS
 
 ! Save only the date portion, for comparison to file names
 
-      date = timeB(1:8)
+!      date = timeB(1:8)
+      date = timeB(1:4)//'d'//timeB(6:8) !to be the same format with RangeDays
 
 ! Loop through all the files in this range of PCF numbers
 
@@ -374,7 +377,7 @@ CONTAINS
 
             match = i
             EXIT
-
+	    
          ENDIF
 
       ENDDO
@@ -430,6 +433,8 @@ CONTAINS
 
 ! Loop through all the PCF numbers for the file type
 
+      !call output(' 1 date = ', advance='no')
+      !call output(date, advance='yes')
       DO i = mlspcf_start, mlspcf_end
 
          version = 1
@@ -447,6 +452,7 @@ CONTAINS
 
             indx = INDEX(file, '.', .TRUE.)
             pDate = file(indx-8:indx-1)
+	    pDate = file(indx-8:indx-5)//'-'//file(indx-3:indx-1)
 
 ! Check that the date matches the desired input
 
@@ -479,6 +485,9 @@ END MODULE PCFModule
 !===================
 
 ! $Log$
+! Revision 1.12  2003/08/11 23:29:09  cvuu
+! brought closer to James Johnson want to
+!
 ! Revision 1.11  2003/04/30 18:15:48  pwagner
 ! Work-around for LF95 infinite compile-time bug
 !

@@ -6,7 +6,7 @@
 MODULE OutputClose
 !==============================================================================
 
-  USE L2GPData, ONLY: L2GPData_T
+  USE L2GPData, ONLY: L2GPData_T, DestroyL2GPDatabase
   USE L2Interface, ONLY: ResidualOutput
   USE L3CF, ONLY: L3CFProd_T
   USE MLSCF, ONLY: Mlscf_T
@@ -153,8 +153,9 @@ CONTAINS
   SUBROUTINE OutputProd (pcf, l3cf, anText, l3sp, l3dm, dmA, dmD, &
        & l3r, residA, residD, flags, hdfVersion)
   !-------------------------------------------------------------------
-  USE L3DMData, ONLY: L3DMData_T, OutputGrids, WriteMetaL3DM
-  USE L3SPData, ONLY: L3SPData_T, OutputL3SP
+  USE L3DMData, ONLY: L3DMData_T, OutputGrids, WriteMetaL3DM, &
+     & DestroyL3DMDatabase
+  USE L3SPData, ONLY: L3SPData_T, OutputL3SP, DestroyL3SPDatabase
   USE PCFModule, ONLY: ExpandFileTemplate
     
     ! Brief description of subroutine
@@ -177,7 +178,7 @@ CONTAINS
     CHARACTER (LEN=1), POINTER :: anText(:)
     
     INTEGER, INTENT(IN), OPTIONAL :: hdfVersion
-    
+   
     ! Parameters
     
     ! Functions
@@ -190,7 +191,8 @@ CONTAINS
     CHARACTER (LEN=FileNameLen) :: type
     
     INTEGER :: myHDFVersion
-    
+    LOGICAL :: createFile
+ 
     ! Check version of HDFEOS
    
     IF (PRESENT(hdfVersion)) THEN 
@@ -203,11 +205,12 @@ CONTAINS
     
     IF (flags%writel3sp) THEN
        CALL OutputL3SP (l3cf, anText, l3sp, myHDFVersion)
+       CALL DestroyL3SPDatabase(l3sp)
     ELSE
        msr = TRIM(l3cf%l3prodNameD) // ' L3SP' // NOOUT_ERR
        CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
     ENDIF
-    
+ 
     ! L3DM -- check that daily map data exist in some form for the product
     
     IF ( .NOT.(flags%writel3dmCom) .AND. .NOT.(flags%writel3dmAsc) .AND. &
@@ -228,21 +231,24 @@ CONTAINS
        files%nFiles = 0
        files%name   = ''
        files%date   = ''
-                     
+       createFile = .true.
+
        IF (flags%writel3dmCom) THEN
-          CALL OutputGrids(type, l3dm, files, myHDFVersion)
+          CALL OutputGrids(type, l3dm, files, myHDFVersion, createFile)
+          CALL DestroyL3DMDatabase(l3dm)
        ELSE
           IF ( (l3cf%mode == 'all') .OR. (l3cf%mode == 'com') ) THEN
              msr = TRIM(l3cf%l3prodNameD) // NOOUT_ERR
              CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
           ENDIF
        ENDIF
-       
+ 
        ! If ascending l3dm data exist, write/append them to l3dm files; 
        ! add the names of any new files created to the files array
        
        IF (flags%writel3dmAsc) THEN
-          CALL OutputGrids(type, dmA, files, myHDFVersion)
+          CALL OutputGrids(type, dmA, files, myHDFVersion, createFile)
+          CALL DestroyL3DMDatabase(dmA)
        ELSE
           IF ( (l3cf%mode == 'all') .OR. (l3cf%mode == 'asc') ) THEN
              msr = TRIM(l3cf%l3prodNameD) // 'Ascending' // NOOUT_ERR
@@ -254,7 +260,8 @@ CONTAINS
        ! adding any new names to the files array
        
        IF (flags%writel3dmDes) THEN
-          CALL OutputGrids(type, dmD, files, myHDFVersion)
+          CALL OutputGrids(type, dmD, files, myHDFVersion, createFile)
+          CALL DestroyL3DMDatabase(dmD)
        ELSE
           IF ( (l3cf%mode == 'all') .OR. (l3cf%mode == 'des') ) THEN
              msr = TRIM(l3cf%l3prodNameD) // 'Descending' // NOOUT_ERR
@@ -265,8 +272,10 @@ CONTAINS
        ! L3Residual--if any residual data exist, 
        ! append swaths to the l3dm files
        
+       createFile = .False. 
        IF (flags%writel3rCom) THEN
           CALL ResidualOutput(type, l3r)
+          CALL DestroyL2GPDatabase(l3r)
        ELSE
           IF ( (l3cf%mode == 'all') .OR. (l3cf%mode == 'com') ) THEN
              msr = TRIM(l3cf%l3prodNameD) // 'Residuals' // NOOUT_ERR
@@ -276,6 +285,7 @@ CONTAINS
        
        IF (flags%writel3rAsc) THEN
           CALL ResidualOutput(type, residA)
+          CALL DestroyL2GPDatabase(residA)
        ELSE
           IF ( (l3cf%mode == 'all') .OR. (l3cf%mode == 'asc') ) THEN
              msr = TRIM(l3cf%l3prodNameD) // 'AscendingResiduals' // NOOUT_ERR
@@ -285,6 +295,7 @@ CONTAINS
        
        IF (flags%writel3rDes) THEN
           CALL ResidualOutput(type, residD)
+          CALL DestroyL2GPDatabase(residD)
        ELSE
           IF ( (l3cf%mode == 'all') .OR. (l3cf%mode == 'des') ) THEN
              msr = TRIM(l3cf%l3prodNameD) // 'DescendingResiduals' // NOOUT_ERR
@@ -330,9 +341,11 @@ CONTAINS
 
      INTEGER :: err
 
+     LOGICAL :: writeLog = .false.
+
      ! Write the log file metadata
 
-     CALL WriteMetaLog(pcf)
+     if (writeLog) CALL WriteMetaLog(pcf)
 
      ! Final deallocations
      ! Check if the pointers are associated and then deallocate. 
@@ -386,6 +399,9 @@ CONTAINS
  !=====================
 
 !$Log$
+!Revision 1.19  2003/04/30 18:15:48  pwagner
+!Work-around for LF95 infinite compile-time bug
+!
 !Revision 1.18  2003/03/22 02:54:02  jdone
 !HDFEOS2/HDFEOS5 functionality, use only, and indentation added
 !

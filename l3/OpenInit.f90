@@ -4,7 +4,8 @@
 !==============================================================================
 MODULE OpenInit 
 !==============================================================================
-  
+
+  USE L2INTERFACE, ONLY: ReadL2GPAttribute  
   USE L3CF, ONLY: L3CFDef_T, L3CFProd_T, FillL3CF
   USE MLSCF, ONLY: Mlscf_T 
   USE MLSCommon, ONLY: r8
@@ -14,11 +15,13 @@ MODULE OpenInit
   USE MLSPCF3, ONLY: mlspcf_l3_param_OutputVersion, mlspcf_l3_param_Cycle, &
        & mlspcf_l3_param_L2DayRange, mlspcf_l3_param_RangDays, & 
        & mlspcf_pcf_start,mlspcf_l3cf_start
-  use MLSStrings, only: utc_to_yyyymmdd
+  USE MLSStrings, only: utc_to_yyyymmdd
+  USE Output_m, only: output
   USE PCFHdr, ONLY: CreatePCFAnnotation, GlobalAttributes, FillTAI93Attribute
   USE SDPToolkit, ONLY: PGS_S_SUCCESS, pgs_pc_getConfigData, & 
        & Pgs_td_utcToTAI, max_orbits, spacecraftId, PGS_IO_Gen_CloseF, &
-       & Pgs_io_gen_openF, PGSd_IO_Gen_RSeqFrm, Pgs_pc_getReference
+       & Pgs_io_gen_openF, PGSd_IO_Gen_RSeqFrm, Pgs_pc_getReference, &
+       & max_orbits
   USE GETCF_M, only: GetCF, InitGetCF
   IMPLICIT NONE
   PUBLIC
@@ -271,15 +274,17 @@ CONTAINS
     CHARACTER (LEN=480) :: msr
     CHARACTER (LEN=8) :: dates(maxWindow)
 
-    REAL(r8) :: period
+    REAL(r8) :: period, sum
 
-    INTEGER :: error, numDays, pcfId, returnStatus, err, i
+    INTEGER :: error, numDays, pcfId, returnStatus, err, i, j, count
 
          numDays = 0
              err = 0
            error = 0
            pcfId = 0
     returnStatus = 0
+             sum = 0
+           count = 0
 
     ! Read the PCF into an annotation for file headers
 
@@ -319,29 +324,42 @@ CONTAINS
     
     CALL FillL3CF(cf, l3pcf%outputVersion, dates, numDays, l3cf, cfDef)
 
+    ! Get L2GP Attributes
+
+    CALL ReadL2GPAttribute (l3pcf%l3StartDay, l3pcf%l3EndDay, &
+	& l3cf(1)%fileTemplate)
+
 ! If the average orbit period is either not in the cf file or is a number <=
 !     Then calculate the average orbit period for each day in the input window.
+! If there are orbit period in the l2gp files, use them instead of calculate or ! use from cf file 9/16/03
 
-    period = cfDef%averageOrbitalPeriod
-
-    if (( period .ge. 0.).and.(numDays .gt. 0)) then 
-
+    IF (numDays .gt. 0) THEN
        allocate(avgPer(numDays), stat=err)
-
        IF ( err /= 0 ) THEN
           msr = MLSMSG_Allocate // ' array of period averages.'
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
        ENDIF
 
-       do i = 1, numDays
+       DO i = 1, numDays
+          IF (GlobalAttributes%OrbPeriodDays(1,i) /= -1.0) THEN 
+             !call output('first orbitPeriod = ', advance='no')
+             DO j = 1, max_orbits
+               IF (GlobalAttributes%OrbPeriodDays(j,i) /= -1.0) THEN 
+		   sum = sum + GlobalAttributes%OrbPeriodDays(j,i)
+                   count = count + 1
+	       END IF	 
+             END DO
+             avgPer(i) = sum/count 
+             !call output('avgPer(i) = ', advance='no')
+             !call output(avgPer(i), advance='yes')
+          ELSE  
+             avgPer(i) = cfDef%averageOrbitalPeriod
+          END IF
+       END DO
 
-          avgPer(i) = period
-
-       enddo
-
-    else
+    ELSE
        call AvgOrbPeriod(l3pcf%l2StartDay, l3pcf%l2EndDay, avgPer)
-    endif
+    END IF
 
   !----------------------------------
   END SUBROUTINE OpenAndInitialize
@@ -482,6 +500,9 @@ END MODULE OpenInit
 !==================
 
 ! $Log$
+! Revision 1.12  2003/06/03 20:45:04  pwagner
+! Fills global attributes
+!
 ! Revision 1.11  2003/04/30 18:15:48  pwagner
 ! Work-around for LF95 infinite compile-time bug
 !

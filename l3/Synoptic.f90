@@ -98,7 +98,7 @@ CONTAINS
 
     INTEGER ::  error, l2Days, nlev, nlev_temp, nf, nwv, numDays, & 
          & numSwaths, rDays, pEndIndex, pStartIndex, &
-         & mis_l2Days_temp, i, j, iP, kP, iD, iL
+         & mis_l2Days_temp, i, j, iP, kP, iD, iL, n,m
 
      !*** Initilize variables
  
@@ -187,136 +187,347 @@ CONTAINS
      
     numDays = cfProd%nDays
      
-    if (numDays .gt. 0) then
-        
-       ALLOCATE( l3dm(numDays), STAT=error )
-       IF ( error /= 0 ) THEN
-          msr = MLSMSG_Allocate // ' l3dm array.'
-          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-       ENDIF
-        
-       ALLOCATE( dmA(numDays), STAT=error )
-       IF ( error /= 0 ) THEN
-          msr = MLSMSG_Allocate // ' dmA array.'
-          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-       ENDIF
-        
-       ALLOCATE( dmD(numDays), STAT=error )
-       IF ( error /= 0 ) THEN
-          msr = MLSMSG_Allocate // ' dmD array.'
-          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-       ENDIF
-        
-    endif
-     
     !!      Initialize Daily Map & Diagnostic
-     
-    l3dm%name = cfProd%l3prodNameD
-    dmA%name  = TRIM(cfProd%l3prodNameD) // 'Ascending'
-    dmD%name  = TRIM(cfProd%l3prodNameD) // 'Descending'
-     
-    DO j = 1, numDays
-        
-       CALL AllocateL3DM( nlev, cfProd%nLats, cfProd%nLons, cfDef%N, & 
-            & l3dm(j) )
-       CALL AllocateL3DM( nlev, cfProd%nLats, cfProd%nLons, cfDef%N, & 
-            & dmA(j) )
-       CALL AllocateL3DM( nlev, cfProd%nLats, cfProd%nLons, cfDef%N, & 
-            & dmD(j) )
-        
-       l3dm(j)%time      = cfProd%timeD(j)
-       dmA(j)%time       = cfProd%timeD(j)
-       dmD(j)%time       = cfProd%timeD(j)
-        
-       l3dm(j)%pressure  = l2gp(1)%pressures(pStartIndex:pEndIndex)
-       dmA(j)%pressure   = l2gp(1)%pressures(pStartIndex:pEndIndex)
-       dmD(j)%pressure   = l2gp(1)%pressures(pStartIndex:pEndIndex)
-        
-       l3dm(j)%latitude  = cfProd%latGridMap(:l3dm(j)%nLats)
-       dmA(j)%latitude   = cfProd%latGridMap(:dmA(j)%nLats)
-       dmD(j)%latitude   = cfProd%latGridMap(:dmD(j)%nLats)
-        
-       l3dm(j)%longitude = cfProd%longGrid(:l3dm(j)%nLons)
-       dmA(j)%longitude  = cfProd%longGrid(:dmA(j)%nLons)
-       dmD(j)%longitude  = cfProd%longGrid(:dmD(j)%nLons)
-        
-       l3dm(j)%l3dmValue = 0.0
-       dmA(j)%l3dmValue  = 0.0
-       dmD(j)%l3dmValue  = 0.0
-        
-       l3dm(j)%l3dmPrecision = 0.0
-       dmA(j)%l3dmPrecision  = 0.0
-       dmD(j)%l3dmPrecision  = 0.0
-        
-       l3dm(j)%maxDiff = 0.0 
-       dmA(j)%maxDiff  = 0.0 
-       dmD(j)%maxDiff  = 0.0 
-        
-       l3dm(j)%maxDiffTime = 0.0 
-       dmA(j)%maxDiffTime  = 0.0 
-       dmD(j)%maxDiffTime  = 0.0 
-        
-    ENDDO
-     
+
+    !print *, 'cfProd%mode', cfProd%mode
+    !print *, 'numDays', numDays 
+    !print *, 'nlev', nlev
+    !print *, 'n', cfDef%N
+
+    if (numDays .gt. 0) then
+       IF (cfProd%mode == 'com') THEN        
+          ALLOCATE( l3dm(numDays), STAT=error )
+          IF ( error /= 0 ) THEN
+             msr = MLSMSG_Allocate // ' l3dm array.'
+             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+          ENDIF
+          l3dm%name = TRIM(cfProd%l3prodNameD)
+          DO j = 1, numDays
+             CALL AllocateL3DM( nlev, cfProd%nLats, cfProd%nLons, cfDef%N, l3dm(j) )
+             l3dm(j)%time      = cfProd%timeD(j)
+             l3dm(j)%pressure  = l2gp(1)%pressures(pStartIndex:pEndIndex)
+       	     l3dm(j)%latitude  = cfProd%latGridMap(:l3dm(j)%nLats)
+             l3dm(j)%longitude = cfProd%longGrid(:l3dm(j)%nLons)
+             l3dm(j)%l3dmValue = 0.0
+             l3dm(j)%l3dmPrecision = 0.0
+             do n=1,nlev
+               do m=1,cfDef%N
+                  l3dm(j)%maxDiff(n,m) = 0.0
+                  l3dm(j)%maxDiffTime(n,m)  = 0.0
+               end do
+             end do
+          ENDDO
+
+       ELSE IF (cfProd%mode == 'asc') THEN        
+          ALLOCATE( dmA(numDays), STAT=error )
+          IF ( error /= 0 ) THEN
+             msr = MLSMSG_Allocate // ' dmA array.'
+             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+          ENDIF
+          dmA%name  = TRIM(cfProd%l3prodNameD) // 'Ascending'
+          DO j = 1, numDays
+             CALL AllocateL3DM( nlev, cfProd%nLats, cfProd%nLons, cfDef%N, dmA(j) )
+             dmA(j)%time       = cfProd%timeD(j)
+             dmA(j)%pressure   = l2gp(1)%pressures(pStartIndex:pEndIndex)
+             dmA(j)%latitude   = cfProd%latGridMap(:dmA(j)%nLats)
+             dmA(j)%longitude  = cfProd%longGrid(:dmA(j)%nLons)
+             dmA(j)%l3dmValue  = 0.0
+             dmA(j)%l3dmPrecision  = 0.0
+             do n=1,nlev
+               do m=1,cfDef%N
+                  dmA(j)%maxDiff(n,m)  = 0.0
+                  dmA(j)%maxDiffTime(n,m)  = 0.0
+               end do
+             end do
+          ENDDO
+
+       ELSE IF (cfProd%mode == 'dsc') THEN        
+          ALLOCATE( dmD(numDays), STAT=error )
+          IF ( error /= 0 ) THEN
+             msr = MLSMSG_Allocate // ' dmD array.'
+             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+          ENDIF
+          dmD%name  = TRIM(cfProd%l3prodNameD) // 'Descending'
+          DO j = 1, numDays
+             CALL AllocateL3DM( nlev, cfProd%nLats, cfProd%nLons, cfDef%N, dmD(j) )
+             dmD(j)%time       = cfProd%timeD(j)
+             dmD(j)%pressure   = l2gp(1)%pressures(pStartIndex:pEndIndex)
+             dmD(j)%latitude   = cfProd%latGridMap(:dmD(j)%nLats)
+             dmD(j)%longitude  = cfProd%longGrid(:dmD(j)%nLons)
+             dmD(j)%l3dmValue  = 0.0
+             dmD(j)%l3dmPrecision  = 0.0
+             do n=1,nlev
+               do m=1,cfDef%N
+                 dmD(j)%maxDiff(n,m)  = 0.0
+                 dmD(j)%maxDiffTime(n,m) = 0.0
+               end do
+             end do
+          ENDDO
+
+       ELSE IF (cfProd%mode == 'ado') THEN        
+          ALLOCATE( dmA(numDays), STAT=error )
+          IF ( error /= 0 ) THEN
+             msr = MLSMSG_Allocate // ' dmA array.'
+             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+          ENDIF
+          ALLOCATE( dmD(numDays), STAT=error )
+          IF ( error /= 0 ) THEN
+             msr = MLSMSG_Allocate // ' dmD array.'
+             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+          ENDIF
+          dmA%name  = TRIM(cfProd%l3prodNameD) // 'Ascending'
+          dmD%name  = TRIM(cfProd%l3prodNameD) // 'Descending'
+
+          DO j = 1, numDays
+             CALL AllocateL3DM( nlev, cfProd%nLats, cfProd%nLons, cfDef%N, dmD(j) )
+             CALL AllocateL3DM( nlev, cfProd%nLats, cfProd%nLons, cfDef%N, dmA(j) )
+             dmA(j)%time       = cfProd%timeD(j)
+             dmD(j)%time       = cfProd%timeD(j)
+             dmA(j)%pressure   = l2gp(1)%pressures(pStartIndex:pEndIndex)
+             dmD(j)%pressure   = l2gp(1)%pressures(pStartIndex:pEndIndex)
+             dmA(j)%latitude   = cfProd%latGridMap(:dmA(j)%nLats)
+             dmD(j)%latitude   = cfProd%latGridMap(:dmD(j)%nLats)
+             dmA(j)%longitude  = cfProd%longGrid(:dmA(j)%nLons)
+             dmD(j)%longitude  = cfProd%longGrid(:dmD(j)%nLons)
+             dmA(j)%l3dmValue  = 0.0
+             dmD(j)%l3dmValue  = 0.0
+             dmA(j)%l3dmPrecision  = 0.0
+             dmD(j)%l3dmPrecision  = 0.0
+             do n=1,nlev
+               do m=1,cfDef%N
+                  dmA(j)%maxDiff(n,m)  = 0.0
+                  dmD(j)%maxDiff(n,m)  = 0.0
+                  dmA(j)%maxDiffTime(n,m)  = 0.0
+                  dmD(j)%maxDiffTime(n,m)  = 0.0
+               end do
+             end do
+          ENDDO
+
+       ELSE IF (cfProd%mode == 'all') THEN        
+          ALLOCATE( l3dm(numDays), STAT=error )
+          IF ( error /= 0 ) THEN
+             msr = MLSMSG_Allocate // ' l3dm array.'
+             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+          ENDIF
+          ALLOCATE( dmA(numDays), STAT=error )
+          IF ( error /= 0 ) THEN
+             msr = MLSMSG_Allocate // ' dmA array.'
+             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+          ENDIF
+          ALLOCATE( dmD(numDays), STAT=error )
+          IF ( error /= 0 ) THEN
+             msr = MLSMSG_Allocate // ' dmD array.'
+             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+          ENDIF
+          l3dm%name = TRIM(cfProd%l3prodNameD)
+          dmA%name  = TRIM(cfProd%l3prodNameD) // 'Ascending'
+          dmD%name  = TRIM(cfProd%l3prodNameD) // 'Descending'
+          DO j = 1, numDays
+             CALL AllocateL3DM( nlev, cfProd%nLats, cfProd%nLons, cfDef%N, l3dm(j) )
+             CALL AllocateL3DM( nlev, cfProd%nLats, cfProd%nLons, cfDef%N, dmD(j) )
+             CALL AllocateL3DM( nlev, cfProd%nLats, cfProd%nLons, cfDef%N, dmA(j) )
+             l3dm(j)%time      = cfProd%timeD(j)
+             dmA(j)%time       = cfProd%timeD(j)
+             dmD(j)%time       = cfProd%timeD(j)
+             l3dm(j)%pressure  = l2gp(1)%pressures(pStartIndex:pEndIndex)
+             dmA(j)%pressure   = l2gp(1)%pressures(pStartIndex:pEndIndex)
+             dmD(j)%pressure   = l2gp(1)%pressures(pStartIndex:pEndIndex)
+       	     l3dm(j)%latitude  = cfProd%latGridMap(:l3dm(j)%nLats)
+             dmA(j)%latitude   = cfProd%latGridMap(:dmA(j)%nLats)
+             dmD(j)%latitude   = cfProd%latGridMap(:dmD(j)%nLats)
+             l3dm(j)%longitude = cfProd%longGrid(:l3dm(j)%nLons)
+             dmA(j)%longitude  = cfProd%longGrid(:dmA(j)%nLons)
+             dmD(j)%longitude  = cfProd%longGrid(:dmD(j)%nLons)
+             l3dm(j)%l3dmValue = 0.0
+             dmA(j)%l3dmValue  = 0.0
+             dmD(j)%l3dmValue  = 0.0
+             l3dm(j)%l3dmPrecision = 0.0
+             dmA(j)%l3dmPrecision  = 0.0
+             dmD(j)%l3dmPrecision  = 0.0
+             do n=1,nlev
+               do m=1,cfDef%N
+                  l3dm(j)%maxDiff(n,m)  = 0.0
+                  dmA(j)%maxDiff(n,m)  = 0.0
+                  dmD(j)%maxDiff(n,m)  = 0.0
+                  l3dm(j)%maxDiffTime(n,m)  = 0.0
+                  dmA(j)%maxDiffTime(n,m)  = 0.0
+                  dmD(j)%maxDiffTime(n,m)  = 0.0
+               end do
+             end do
+          ENDDO
+       ENDIF
+    ENDIF
+    
+    if ( numDays .gt. 0) then
+       ALLOCATE( nc(numDays), STAT=error )
+       IF ( error /= 0 ) THEN
+          msr = MLSMSG_Allocate // ' nc array.'
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+
+       ALLOCATE( nca(numDays), STAT=error )
+       IF ( error /= 0 ) THEN
+          msr = MLSMSG_Allocate // ' nca array.'
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+
+       ALLOCATE( ncd(numDays), STAT=error )
+       IF ( error /= 0 ) THEN
+          msr = MLSMSG_Allocate // ' ncd array.'
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+
+       ALLOCATE( startTime(numDays), STAT=error )
+       IF ( error /= 0 ) THEN
+          msr = MLSMSG_Allocate // ' startTime array.'
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+
+       ALLOCATE( endTime(numDays), STAT=error )
+       IF ( error /= 0 ) THEN
+          msr = MLSMSG_Allocate // ' endTime array.'
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+    endif
+ 
     !!      Initialize Daily Map Residues
      
     DO j = 1, maxWindow
        mis_Days_temp(j) = ''
     ENDDO
-     
     mis_l2Days_temp = 0
-    
-    CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, & 
-         & pcf%l3StartDay, & 
-         & pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, l3r_temp)
-    CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, & 
-         & pcf%l3StartDay, & 
-         & pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, l3r)
-     
-    DO j = 1, maxWindow
-       mis_Days_temp(j) = ''
-    ENDDO
-        
-    mis_l2Days_temp = 0
-        
-    CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, & 
-         & pcf%l3StartDay, & 
-         & pcf%l3EndDay,rDays, mis_l2Days_temp, mis_Days_temp, residA_temp)
-    CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, & 
-         & pcf%l3StartDay, & 
-         & pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, residA)
-        
-    DO j = 1, maxWindow
-       mis_Days_temp(j) = ''
-    ENDDO
+   
+    IF (cfProd%mode == 'com') THEN
+       CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, &
+	   & pcf%l3StartDay, & 
+           & pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, l3r_temp)
+       CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, &
+	   & pcf%l3StartDay, & 
+           & pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, l3r)
+       l3r%name    = TRIM(cfProd%l3prodNameD) // 'Residuals'
+       DO j = 1, rDays
+       	   l3r(j)%l2gpValue         = 0.0
+           l3r_temp(j)%l2gpValue    = 0.0
+           l3r_temp(j)%latitude     = 0.0
+           startTime(j) = l3r(j)%time(1)
+           endTime(j) = l3r(j)%time(l3r(j)%nTimes)
+       ENDDO
+ 
+    ELSE IF (cfProd%mode == 'asc') THEN
+       CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, &
+	   & pcf%l3StartDay, & 
+           & pcf%l3EndDay,rDays, mis_l2Days_temp, mis_Days_temp, residA_temp)
+       CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, &
+	   & pcf%l3StartDay, & 
+           & pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, residA)
+       residA%name = TRIM(cfProd%l3prodNameD) // 'AscendingResiduals'
+       DO j = 1, rDays
+           residA(j)%l2gpValue      = 0.0
+           residA_temp(j)%l2gpValue = 0.0
+           residA_temp(j)%latitude  = 0.0
+           residA_temp(j)%longitude = 0.0
+           startTime(j) = residA(j)%time(1)
+           endTime(j) = residA(j)%time(residA(j)%nTimes)
+       ENDDO
 
-    mis_l2Days_temp = 0
-        
-    CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, & 
-         & pcf%l3StartDay, & 
-         & pcf%l3EndDay,rDays, mis_l2Days_temp, mis_Days_temp, residD_temp)
-    CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, & 
-         & pcf%l3StartDay, & 
-         & pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, residD)
-        
-    l3r%name    = TRIM(cfProd%l3prodNameD) // 'Residuals'
-    residA%name = TRIM(cfProd%l3prodNameD) // 'AscendingResiduals'
-    residD%name = TRIM(cfProd%l3prodNameD) // 'DescendingResiduals'
-        
-    DO j = 1, rDays
-       l3r(j)%l2gpValue         = 0.0
-       l3r_temp(j)%l2gpValue    = 0.0
-       l3r_temp(j)%latitude     = 0.0
-       l3r_temp(j)%longitude    = 0.0
-       residA(j)%l2gpValue      = 0.0
-       residA_temp(j)%l2gpValue = 0.0
-       residA_temp(j)%latitude  = 0.0
-       residA_temp(j)%longitude = 0.0
-       residD(j)%l2gpValue      = 0.0
-       residD_temp(j)%l2gpValue = 0.0
-       residD_temp(j)%latitude  = 0.0
-       residD_temp(j)%longitude = 0.0
-    ENDDO
+    ELSE IF (cfProd%mode == 'dsc') THEN
+       CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, & 
+           & pcf%l3StartDay, & 
+           & pcf%l3EndDay,rDays, mis_l2Days_temp, mis_Days_temp, residD_temp)
+       CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, & 
+           & pcf%l3StartDay, & 
+           & pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, residD)
+       residD%name = TRIM(cfProd%l3prodNameD) // 'DescendingResiduals'
+       DO j = 1, rDays
+           residD(j)%l2gpValue      = 0.0
+           residD_temp(j)%l2gpValue = 0.0
+           residD_temp(j)%latitude  = 0.0
+           residD_temp(j)%longitude = 0.0
+           startTime(j) = residD(j)%time(1)
+           endTime(j) = residD(j)%time(residD(j)%nTimes)
+       ENDDO
+ 
+    ELSE IF (cfProd%mode == 'ado') THEN
+       CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, &
+	   & pcf%l3StartDay, & 
+           & pcf%l3EndDay,rDays, mis_l2Days_temp, mis_Days_temp, residA_temp)
+       CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, &
+	   & pcf%l3StartDay, & 
+           & pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, residA)
+       DO j = 1, maxWindow
+          mis_Days_temp(j) = ''
+       ENDDO
+       mis_l2Days_temp = 0
+       CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, & 
+           & pcf%l3StartDay, & 
+           & pcf%l3EndDay,rDays, mis_l2Days_temp, mis_Days_temp, residD_temp)
+       CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, & 
+           & pcf%l3StartDay, & 
+           & pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, residD)
+        residA%name = TRIM(cfProd%l3prodNameD) // 'AscendingResiduals'
+        residD%name = TRIM(cfProd%l3prodNameD) // 'DescendingResiduals'
+        !print *, 'rDays', rDays
+
+        DO j = 1, rDays
+           residA(j)%l2gpValue      = 0.0
+           residA_temp(j)%l2gpValue = 0.0
+           residA_temp(j)%latitude  = 0.0
+           residA_temp(j)%longitude = 0.0
+           residD(j)%l2gpValue      = 0.0
+           residD_temp(j)%l2gpValue = 0.0
+           residD_temp(j)%latitude  = 0.0
+           residD_temp(j)%longitude = 0.0
+           startTime(j) = residA(j)%time(1)
+           endTime(j) = residA(j)%time(residA(j)%nTimes)
+       ENDDO
+
+    ELSE IF (cfProd%mode == 'all') THEN
+       CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, &
+	   & pcf%l3StartDay, & 
+           & pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, l3r_temp)
+       CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, &
+	   & pcf%l3StartDay, & 
+           & pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, l3r)
+       DO j = 1, maxWindow
+          mis_Days_temp(j) = ''
+       ENDDO
+       mis_l2Days_temp = 0
+       CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, &
+	   & pcf%l3StartDay, & 
+           & pcf%l3EndDay,rDays, mis_l2Days_temp, mis_Days_temp, residA_temp)
+       CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, &
+	   & pcf%l3StartDay, & 
+           & pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, residA)
+       DO j = 1, maxWindow
+          mis_Days_temp(j) = ''
+       ENDDO
+       mis_l2Days_temp = 0
+       CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, & 
+           & pcf%l3StartDay, & 
+           & pcf%l3EndDay,rDays, mis_l2Days_temp, mis_Days_temp, residD_temp)
+       CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, & 
+           & pcf%l3StartDay, & 
+           & pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, residD)
+        l3r%name    = TRIM(cfProd%l3prodNameD) // 'Residuals'
+        residA%name = TRIM(cfProd%l3prodNameD) // 'AscendingResiduals'
+        residD%name = TRIM(cfProd%l3prodNameD) // 'DescendingResiduals'
+        DO j = 1, rDays
+       	   l3r(j)%l2gpValue         = 0.0
+           l3r_temp(j)%l2gpValue    = 0.0
+           l3r_temp(j)%latitude     = 0.0
+           l3r_temp(j)%longitude    = 0.0
+           residA(j)%l2gpValue      = 0.0
+           residA_temp(j)%l2gpValue = 0.0
+           residA_temp(j)%latitude  = 0.0
+           residA_temp(j)%longitude = 0.0
+           residD(j)%l2gpValue      = 0.0
+           residD_temp(j)%l2gpValue = 0.0
+           residD_temp(j)%latitude  = 0.0
+           residD_temp(j)%longitude = 0.0
+           startTime(j) = l3r(j)%time(1)
+           endTime(j) = l3r(j)%time(l3r(j)%nTimes)
+       ENDDO
+    ENDIF
         
     !!      Initialize Flags
         
@@ -327,47 +538,7 @@ CONTAINS
     flags%writel3rCom  = .FALSE.
     flags%writel3rAsc  = .FALSE.
     flags%writel3rDes  = .FALSE.
-        
-    if ( rDays .gt. 0) then 
-           
-       ALLOCATE( nc(rDays), STAT=error )
-       IF ( error /= 0 ) THEN
-          msr = MLSMSG_Allocate // ' nc array.'
-          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-       ENDIF
-           
-           
-       ALLOCATE( nca(rDays), STAT=error )
-       IF ( error /= 0 ) THEN
-          msr = MLSMSG_Allocate // ' nca array.'
-          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-       ENDIF
-           
-       ALLOCATE( ncd(rDays), STAT=error )
-       IF ( error /= 0 ) THEN
-          msr = MLSMSG_Allocate // ' ncd array.'
-          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-       ENDIF
-           
-       ALLOCATE( startTime(rDays), STAT=error )
-       IF ( error /= 0 ) THEN
-          msr = MLSMSG_Allocate // ' startTime array.'
-          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-       ENDIF
-
-       ALLOCATE( endTime(rDays), STAT=error )
-       IF ( error /= 0 ) THEN
-          msr = MLSMSG_Allocate // ' endTime array.'
-          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-       ENDIF
-           
-    endif
-        
-    DO I = 1, rDays 
-       startTime(I) = l3r(I)%time(1)
-       endTime(I) = l3r(I)%time(l3r(I)%nTimes)
-    ENDDO
-        
+       
     !!      Check if pressure levels are found 
         
     IF (nlev_temp == 1) THEN 
@@ -384,7 +555,10 @@ CONTAINS
     IF (size(avgPeriod) .ne. 0) tau0 = tau0/86400.0/float(size(avgPeriod))
         
     !*** Sort & Prepare the Data 
-        
+    
+    !print *, 'pStartIndex', pStartIndex    
+    !print *, 'pEndIndex', pEndIndex
+
     Call SortData(cfProd, l2Days, l2gp, 	&
          & pStartIndex, pEndIndex,		&
          & tau0, 				&
@@ -1150,7 +1324,8 @@ CONTAINS
           END IF
        ENDDO
 
-          !*** Sort into time ascending order according to l2gp format
+
+    !*** Sort into time ascending order according to l2gp format
        IF (cfProd%mode == 'com') THEN
           DO iD = 1, rDays
              
@@ -2153,10 +2328,9 @@ CONTAINS
                                   CALL MLSMessage(MLSMSG_Error,ModuleName, msr)
                                ENDIF
                             endif
-                            
-                    endif
+                         endif  ! nlons > 0
                     
-                 ELSE IF (cfProd%mode == 'asc') THEN
+                     ELSE IF (cfProd%mode == 'asc') THEN
                     
                     if (dmA(1)%nLons .gt. 0) then 
                        
@@ -2424,21 +2598,22 @@ CONTAINS
        endif
        
        if ( associated(alats) ) then
+          !print *,'deallocate alats'
           DeAllocate(alats, STAT=error)
           IF ( error /= 0 ) THEN
              msr = MLSMSG_DeAllocate // '  alats array.'
              CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
           ENDIF
        endif
-       
-       if ( associated(dlats) ) then 
+                                                                                           
+       if ( associated(dlats) ) then
           DeAllocate(dlats, STAT=error)
           IF ( error /= 0 ) THEN
              msr = MLSMSG_DeAllocate // '  dlats array.'
              CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
           ENDIF
        endif
-       
+                                                                                           
        if ( associated(alons)) then
           DeAllocate(alons, STAT=error)
           IF ( error /= 0 ) THEN
@@ -2446,7 +2621,7 @@ CONTAINS
              CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
           ENDIF
        endif
-       
+                                                                                           
        if ( associated(dlons)) then
           DeAllocate(dlons, STAT=error)
           IF ( error /= 0 ) THEN
@@ -2454,7 +2629,7 @@ CONTAINS
              CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
           ENDIF
        endif
-       
+                                                                                           
        if ( associated(atimes)) then
           DeAllocate(atimes, STAT=error)
           IF ( error /= 0 ) THEN
@@ -2462,7 +2637,7 @@ CONTAINS
              CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
           ENDIF
        endif
-       
+                                                                                           
        if ( associated(dtimes) ) then
           DeAllocate(dtimes, STAT=error)
           IF ( error /= 0 ) THEN
@@ -2470,7 +2645,7 @@ CONTAINS
              CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
           ENDIF
        endif
-       
+                                                                                           
        if ( associated(afields) ) then
           DeAllocate(afields, STAT=error)
           IF ( error /= 0 ) THEN
@@ -2478,7 +2653,7 @@ CONTAINS
              CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
           ENDIF
        endif
-       
+                                                                                           
        if ( associated(dfields) ) then
           DeAllocate(dfields, STAT=error)
           IF ( error /= 0 ) THEN
@@ -2486,15 +2661,14 @@ CONTAINS
              CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
           ENDIF
        endif
-       
-       if ( associated(aprec)) then 
+                                                                                           
+       if ( associated(aprec)) then
           DeAllocate(aprec, STAT=error)
           IF ( error /= 0 ) THEN
              msr = MLSMSG_DeAllocate // '  aprec array.'
              CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
           ENDIF
        endif
-       
        if ( associated(dprec)) then
           DeAllocate(dprec, STAT=error)
           IF ( error /= 0 ) THEN
@@ -2502,11 +2676,22 @@ CONTAINS
              CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
           ENDIF
        endif
-       
-       CALL DestroyL2GPDatabase(l3r_temp)
-       CALL DestroyL2GPDatabase(residA_temp)
-       CALL DestroyL2GPDatabase(residD_temp)
-       
+
+       IF (cfProd%mode == 'com') THEN
+          CALL DestroyL2GPDatabase(l3r_temp)
+       ELSE IF (cfProd%mode == 'asc') THEN
+          CALL DestroyL2GPDatabase(residA_temp)
+       ELSE IF (cfProd%mode == 'dsc') THEN
+          CALL DestroyL2GPDatabase(residD_temp)
+       ELSE IF (cfProd%mode == 'ado') THEN
+          CALL DestroyL2GPDatabase(residA_temp)
+          CALL DestroyL2GPDatabase(residD_temp)
+       ELSE IF (cfProd%mode == 'all') THEN
+          CALL DestroyL2GPDatabase(l3r_temp)
+          CALL DestroyL2GPDatabase(residA_temp)
+          CALL DestroyL2GPDatabase(residD_temp)
+       ENDIF  
+
        !-----------------------------------
      END SUBROUTINE DailyCoreProcessing
      !-----------------------------------
@@ -3064,6 +3249,9 @@ CONTAINS
 !===================
 
 ! $Log$
+! Revision 1.30  2003/04/30 18:15:48  pwagner
+! Work-around for LF95 infinite compile-time bug
+!
 ! Revision 1.29  2003/03/22 02:59:22  jdone
 ! individual allocate/deallocate, use only and indentation added
 !

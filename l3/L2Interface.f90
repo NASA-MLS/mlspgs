@@ -1,4 +1,3 @@
-
 ! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
@@ -11,7 +10,7 @@ MODULE L2Interface
   USE MLSFiles, ONLY: mls_openFile, mls_closeFile, & 
        & mls_hdf_version, mls_inqswath, mls_io_gen_openF, mls_io_gen_closeF
   USE MLSL3Common, ONLY: DATE_LEN, CCSDS_LEN, FILENAMELEN, maxWindow, & 
-       & GRIDNAMELEN
+       & GRIDNAMELEN, maxMisDays
   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Allocate, &
        & MLSMSG_WARNING, MLSMSG_INFO, MLSMSG_FILEOPEN
   USE MLSPCF3, ONLY: mlspcf_l2gp_start, mlspcf_l2gp_end, &
@@ -75,7 +74,7 @@ CONTAINS
     
     CHARACTER (LEN=FileNameLen) :: pcfNames(:)
     CHARACTER (LEN=DATE_LEN), INTENT(OUT) :: mis_Days(:)
-    
+   
     ! Parameters
     
     ! Functions
@@ -85,29 +84,39 @@ CONTAINS
     CHARACTER (LEN=FileNameLen) :: physicalFilename, type
     CHARACTER (LEN=8) :: date
     
-    INTEGER :: i, indx, returnStatus, version
-    
+    INTEGER :: i, indx, returnStatus, version, size, err
+    LOGICAL, parameter :: DEBUG = .false. 
+ 
+  
     ! Expand the level/species template
     
     CALL ExpandFileTemplate(template, type, 'L2GP')
-   
+
+    if (DEBUG) then
+       call output('type= ', advance='no')   
+       call output(trim(type), advance='yes')   
+    end if
+
     numFiles = 0
     mis_numFiles = 0
     
     ! Loop through all the PCF numbers for L2GP files
-    
+     !  call output( PGS_S_SUCCESS, advance='yes')
+   
     DO i = mlspcf_start, mlspcf_end
        
        version = 1
        returnStatus = Pgs_pc_getReference(i, version, physicalFilename)
       
-   !    call output( 'physicalFilename = ', advance='no')
-   !    call output( trim(physicalFilename), advance='yes')
-   !    call output( 'returnStatus = ', advance='no')
-   !    call output( returnStatus, advance='yes')
+       if (DEBUG) then
+         call output( 'physicalFilename = ', advance='no')
+         call output( trim(physicalFilename), advance='yes')
+         call output( 'returnStatus = ', advance='no')
+         call output( returnStatus, advance='yes')
+       end if
 
        ! If no file name was returned, go on to the next PCF number
-       
+      
        IF(returnStatus /= PGS_S_SUCCESS) THEN
           
           IF ( INDEX(physicalFilename, TRIM(type)) /= 0 ) THEN
@@ -115,7 +124,15 @@ CONTAINS
              ! Extract the date from the file name
              
              indx = INDEX(physicalFilename, '.', .TRUE.)
-             date = physicalFilename(indx-8:indx-1)
+             !date = physicalFilename(indx-8:indx-1)
+             date = physicalFilename(indx-8:indx-5)//'-'//physicalFilename(indx-3:indx-1)
+
+             if (DEBUG) then
+          	call output('date=', advance='no')
+	  	call output( date, advance='yes')
+          	print *, startDOY 
+          	print *, endDOY 
+	     end if
 
              ! Check that the date is within the desired boundaries for reading
              
@@ -139,16 +156,18 @@ CONTAINS
        IF ( INDEX(physicalFilename, TRIM(type)) /= 0 ) THEN
           
           ! Extract the date from the file name
-   !       call output('test here', advance='yes')
            
           indx = INDEX(physicalFilename, '.', .TRUE.)
-          date = physicalFilename(indx-8:indx-1)
+          !date = physicalFilename(indx-8:indx-1)
+          date = physicalFilename(indx-8:indx-5)//'-'//physicalFilename(indx-3:indx-1)
           
           ! Check that the date is within the desired boundaries for reading
-   !       call output('date=', advance='no')
-!	  call output( date, advance='yes')
-!          print *, startDOY 
-!          print *, endDOY 
+	  if (DEBUG) then
+             call output('date=', advance='no')
+	     call output( date, advance='yes')
+             print *, startDOY 
+             print *, endDOY 
+	  end if
 
           IF ( (date .GE. startDOY) .AND. (date .LE. endDOY) ) THEN
              
@@ -156,10 +175,12 @@ CONTAINS
             
              numFiles = numFiles + 1
              pcfNames(numFiles) = physicalFilename
-!   	     call output('numFiles = ', advance ='no')          
-!   	     call output(numFiles, advance ='yes')          
-!   	     call output('pcfNames = ', advance ='no')          
-!   	     call output(trim(pcfNames(numFiles)), advance ='yes')          
+	     if (DEBUG) then
+   	     	call output('numFiles = ', advance ='no')          
+   	     	call output(numFiles, advance ='yes')          
+   	     	call output('pcfNames = ', advance ='no')          
+   	     	call output(pcfNames(numFiles), advance ='yes')          
+	     end if
           ENDIF
           
        ENDIF
@@ -191,10 +212,10 @@ CONTAINS
     ! Local variables
 
     CHARACTER (LEN=FileNameLen) :: pcfNames(40)
-    CHARACTER (LEN=DATE_LEN) :: mis_Days(maxWindow)
+    CHARACTER (LEN=DATE_LEN) :: mis_Days(maxMisDays)
     INTEGER :: numDays, mis_numDay, the_hdfVersion, file_id
     INTEGER :: record_length, i, status, aID, mis_numDays
-    INTEGER :: Flag = 0
+    INTEGER :: Flag = 0, size, err=0
     INTEGER, external :: HE5_EHrdglatt
     character  (len=20) :: name
 
@@ -204,7 +225,7 @@ CONTAINS
     call GetL2GPfromPCF(mlspcf_l2gp_start,mlspcf_l2gp_end, tempfile, &
 	& l3StartDay, l3EndDay, numDays, pcfNames, mis_numDays, mis_Days)
 
-    call output('subroutine ReadL2GPAttribute', advance='yes')
+!    call output('subroutine ReadL2GPAttribute', advance='yes')
 
     if (present(L3MFlag)) numDays = numDays + 1
 
@@ -213,13 +234,15 @@ CONTAINS
     call Allocate_test (GlobalAttributes%OrbPeriodDays, max_orbits, &
 	& numDays,'GlobalAttributes%OrbPeriodDays', ModuleName)
 
-    DO i = 1, numDays-1
+    DO i = 1, numDays
 
-      the_hdfVersion = mls_hdf_version(trim(pcfNames(i)))
-      call output('the_hdfVersion= ', advance='no')
-      call output(the_hdfVersion, advance='yes')
-      call output('pcfNames= ', advance='no')
-      call output(trim(pcfNames(i)), advance='yes')
+       if (present(L3MFLag) .and. i==numDays ) exit
+
+       the_hdfVersion = mls_hdf_version(trim(pcfNames(i)))
+!      call output('the_hdfVersion= ', advance='no')
+!      call output(the_hdfVersion, advance='yes')
+!      call output('pcfNames= ', advance='no')
+!      call output(trim(pcfNames(i)), advance='yes')
 
       if (the_hdfVersion == 4) then
 	 GlobalAttributes%OrbNumDays(:,i) = -1
@@ -243,29 +266,25 @@ CONTAINS
 	       GlobalAttributes%OrbNumDays(:,i) = -1
             end if
 
-            call output('ok reading orbitNumber', advance='yes')
-            call output(status, advance='yes')
-            call output('OrbitNumber =', advance='no')
-            call output(GlobalAttributes%OrbNumDays(:,i), advance='yes')
+!            call output('ok reading orbitNumber', advance='yes')
+!            call output(status, advance='yes')
+!            call output('OrbitNumber =', advance='no')
+!            call output(GlobalAttributes%OrbNumDays(:,i), advance='yes')
 
-            status = HE5_EHrdglatt(file_id, 'OrbitNumber', & 
+            status = HE5_EHrdglatt(file_id, 'OrbitPeriod', & 
 		& GlobalAttributes%OrbPeriodDays(:,i))
             if (status /= 0) then
          	call MLSMessage ( MLSMSG_Warning, ModuleName, &
        	    	   & "Unable to read attribute OrbitPeriod for "&
 		   & //trim(pcfNames(i)))
-	  	GlobalAttributes%OrbPeriodDays(:,i) = -1
+	  	GlobalAttributes%OrbPeriodDays(:,i) = -1.0
             end if
 
-      	    call output('ok reading orbitPeriod', advance='yes')
-            call output(status, advance='yes')
-            call output('OrbitPeriod =', advance='no')
-            call output(GlobalAttributes%OrbPeriodDays(:,i), advance='yes')
-    !        call output(GlobalAttributes%OrbPeriodDays(2:2,i), advance='yes')
-
-            !status = HE5_EHrdglatt(file_id, 'InstrumentName', name)
-            !call output('name= ', advance='no')
-            !call output(name, advance='yes')
+!      	    call output('ok reading orbitPeriod', advance='yes')
+!            call output(status, advance='yes')
+!            call output('OrbitPeriod =', advance='no')
+!            call output(GlobalAttributes%OrbPeriodDays(:,i), advance='yes')
+!            call output(GlobalAttributes%OrbPeriodDays(2:2,i), advance='yes')
 
             status = mls_io_gen_closeF('swclose', file_id, pcfNames(i), & 
            	& hdfVersion=the_hdfVersion)
@@ -281,15 +300,15 @@ CONTAINS
 	      &	GlobalAttributes%OrbNumDays(1:1,1)
        GlobalAttributes%OrbNumDays(2:2,numDays) = &
 	      &	maxval(GlobalAttributes%OrbNumDays(:,numDays-1))
-       call output('OrbNum_last =', advance='no')
-       call output(GlobalAttributes%OrbNumDays(:,numDays), advance='yes')
-       GlobalAttributes%OrbPeriodDays(:,numDays) = -1
+!       call output('OrbNum_last =', advance='no')
+!       call output(GlobalAttributes%OrbNumDays(:,numDays), advance='yes')
+       GlobalAttributes%OrbPeriodDays(:,numDays) = -1.0
        GlobalAttributes%OrbPeriodDays(1:1,numDays) = &
 	      &	GlobalAttributes%OrbPeriodDays(1:1,1)
        GlobalAttributes%OrbPeriodDays(2:2,numDays) = &
 	      &	maxval(GlobalAttributes%OrbPeriodDays(:,numDays-1))
-       call output('OrbNum_last =', advance='no')
-       call output(GlobalAttributes%OrbPeriodDays(:,numDays), advance='yes')
+!       call output('OrbNum_last =', advance='no')
+!       call output(GlobalAttributes%OrbPeriodDays(:,numDays), advance='yes')
     end if
 
   !-------------------------------
@@ -309,8 +328,8 @@ CONTAINS
     CHARACTER (LEN=FileNameLen), INTENT(IN) :: L2FileName
         
     TYPE( L2GPData_T ), INTENT(OUT) :: l2gpData
-    
-    call ReadL2GPData(L2FileName, swathname, l2gpData)
+   
+    call ReadL2GPData(trim(L2FileName), swathname, l2gpData)
       
   !-------------------------
   END SUBROUTINE ReadL2GP
@@ -336,7 +355,7 @@ CONTAINS
       
     TYPE( L2GPData_T ), POINTER :: prodL2GP(:)
       
-    CHARACTER (LEN=DATE_LEN), INTENT(OUT) :: mis_Days(maxWindow)
+    CHARACTER (LEN=DATE_LEN), INTENT(OUT) :: mis_Days(:)
       
     ! Parameters
             
@@ -372,10 +391,10 @@ CONTAINS
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
        ENDIF
          
+
        DO i = 1, numDays
                         
           ! Read information from the L2GP file
-
           CALL ReadL2GP(pcfNames(i), product, prodL2GP(i) )
                         
        ENDDO
@@ -483,7 +502,7 @@ CONTAINS
    CHARACTER (LEN=FileNameLen) :: prodFiles(numFiles)
    CHARACTER (LEN=GridNameLen) :: swath
       
-   INTEGER :: err, i, j, indx, len, ns
+   INTEGER :: err, i, j, indx, len, ns, hdfversion
 
    
    ! Check for the product in the input files
@@ -492,7 +511,12 @@ CONTAINS
    
    DO i = 1, numFiles
          
-      ns = mls_inqswath( files(i), list, len )
+      ns = mls_inqswath( files(i), list, len, hdfversion=5 )
+
+      !call output('files= '//trim(files(i)), advance='yes')
+      !call output('list= '//trim(list), advance='yes')
+      !call output('ns= ', advance='no')
+      !call output(ns, advance='yes')
 
       IF (ns == -1) THEN
          msr = 'Failed to read swath list from ' // files(i)
@@ -560,6 +584,9 @@ END MODULE L2Interface
 !=====================
 
 !# $Log$
+!# Revision 1.13  2003/09/15 18:30:48  cvuu
+!# Read OrbitNumber and OrbitPeriod from L2GP files
+!#
 !# Revision 1.12  2003/04/30 18:15:48  pwagner
 !# Work-around for LF95 infinite compile-time bug
 !#

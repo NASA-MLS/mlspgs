@@ -83,6 +83,7 @@ MODULE MLSL3Common
    INTEGER, PARAMETER :: maxDgProds = 42
    INTEGER, PARAMETER :: maxGridPoints = 500
    INTEGER, PARAMETER :: maxWindow = 31
+   INTEGER, PARAMETER :: maxMisDays = 1000 ! 300
    INTEGER, PARAMETER :: MIN_MAX = 2
 
 ! This data type is used to store the names/dates of output files 
@@ -104,6 +105,9 @@ END MODULE MLSL3Common
 !=====================
 
 !# $Log$
+!# Revision 1.14  2003/03/22 02:44:16  jdone
+!# use only, indentation added
+!#
 !# Revision 1.13  2001/12/13 20:49:21  nakamura
 !# Added field name for MaxDiffTime.
 !#

@@ -286,8 +286,8 @@ CONTAINS
           cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'l3prodName')
      IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, & 
           & 'Missing keyword L3PRODNAMED in the Standard section of the l3cf.')
-     l3cf(i)%l3prodNameD = cf%Sections(iMap)%Entries(i)%Cells(indx)%CharValue
-     
+     l3cf(i)%l3prodNameD = trim(cf%Sections(iMap)%Entries(i)%Cells(indx)%CharValue)
+  
      ! Find the input synoptic time
 
      indx = LinearSearchStringArray( &
@@ -465,6 +465,9 @@ END MODULE L3CF
 !==============
 
 ! $Log$
+! Revision 1.19  2003/04/30 18:15:48  pwagner
+! Work-around for LF95 infinite compile-time bug
+!
 ! Revision 1.18  2003/03/22 02:38:29  jdone
 ! added HDF output string and average orbital period value
 !
