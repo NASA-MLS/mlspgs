@@ -105,7 +105,8 @@ MLSSignalNomenclature.o: MLSCommon.o MLSMessageModule.o MLSStrings.o
 MLSStrings.o: MLSMessageModule.o
 MatrixModule_0.o: Allocate_Deallocate.o MLSCommon.o MLSMessageModule.o \
 	dump_0.o output_m.o
-MatrixModule_1.o: MLSMessageModule.o MatrixModule_0.o VectorsModule.o
+MatrixModule_1.o: dump_0.o MatrixModule_0.o MLSCommon.o MLSMessageModule.o \
+        output_m.o string_table.o VectorsModule.o
 QuantityTemplates.o: Allocate_Deallocate.o MLSCommon.o MLSMessageModule.o \
         MLSSignalNomenclature.o addItemToDatabase.f9h
 VectorsModule.o: Allocate_Deallocate.o MLSCommon.o MLSMessageModule.o \
@@ -171,6 +172,9 @@ test_sparsify: test_sparsify.o libmls.a
 # ========================================================================
 
 # $Log$
+# Revision 2.20  2000/11/15 01:45:19  vsnyder
+# Added MatrixModule_1.*, removed test_* from "clean" target
+#
 # Revision 2.19  2000/11/15 00:43:36  vsnyder
 # Removed an extraneous blank in "$M/ tree_checker.o"
 #
