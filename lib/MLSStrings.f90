@@ -655,8 +655,8 @@ CONTAINS
   SUBROUTINE GetUniqueList(str, outStr, noUnique, countEmpty, &
     & inDelim, IgnoreLeadingSpaces)
     ! Dummy arguments
-    CHARACTER (LEN=*) :: str
-    CHARACTER (LEN=*) :: outstr
+    CHARACTER (LEN=*), intent(in) :: str
+    CHARACTER (LEN=*), intent(out) :: outstr
     INTEGER :: noUnique ! Number of unique entries
     LOGICAL, INTENT(IN)                           :: countEmpty
     CHARACTER (LEN=1), OPTIONAL, INTENT(IN)       :: inDelim
@@ -2598,6 +2598,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.33  2003/10/14 18:17:02  pwagner
+! Fixed problem with reducing switches to unique list
+!
 ! Revision 2.32  2003/10/09 23:33:11  pwagner
 ! Added GetUniqueList
 !
