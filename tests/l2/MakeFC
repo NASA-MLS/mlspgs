@@ -31,11 +31,20 @@ libmls_objs=$(libmls_sources)/$(MLSCONFG)
 # where sources (but not OBJS) shared with l3, etc. are stored
 srclib=../../srclib
 
+# where sources (but not OBJS) shared with l3, etc. are stored
+blaslib=../../blas
+
 # where sources for the forward model are stored
 libfwdmdl_sources=../../fwdmdl
 
 # where forward model objects and libfwdmdl.a are stored
 libfwdmdl_objs=$(libfwdmdl_sources)/$(MLSCONFG)
+
+# where sources for the forward model are stored
+libcloud_sources=../../cloudfwdm
+
+# where forward model objects and libfwdmdl.a are stored
+libcloud_objs=$(libcloud_sources)/$(MLSCONFG)
 
 # where the platforms directory is
 PLATFORMS = .
@@ -75,15 +84,20 @@ SHELL = /bin/sh
 #libfwdmdl_f90 := $(wildcard $(libfwdmdl_sources)/*.f90)
 libmls_f90 := $(shell echo $(libmls_sources)/*.f90 $(libmls_sources)/*.c)
 libfwdmdl_f90 := $(shell echo $(libfwdmdl_sources)/*.f90)
+libcloud_f90 := $(shell echo $(libcloud_sources)/*.f90 $(libcloud_sources)/*.f)
+blaslib_f := $(shell echo $(blaslib)/*.f)
 
 # In the long run just evict the stuff that assumes l2_NEEDS_fwdmdl is undefined
 l2_NEEDS_fwdmdl = true
 
 #Where else to look for USEd and INCLUDED files to add to dependency list
 ifdef l2_NEEDS_fwdmdl
-   depends_where=$(libmls_sources) $(srclib) $(libfwdmdl_sources)
+   depends_where:=$(libmls_sources) $(srclib) \
+   $(libfwdmdl_sources) $(libcloud_sources)
    PROG_prereqs=$(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG) \
-	  $(libmls_objs)/libmls.a $(libfwdmdl_objs)/libfwdmdl.a
+	  $(libmls_objs)/libmls.a \
+	  $(libfwdmdl_objs)/libfwdmdl.a \
+	  $(libcloud_objs)/libcloud.a     
 else
    depends_where=$(libmls_sources) $(srclib)
    PROG_prereqs=$(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG) \
@@ -112,6 +126,10 @@ $(libmls_objs)/libmls.a: $(LIB_prereqs)
 $(libfwdmdl_objs)/libfwdmdl.a: $(libfwdmdl_f90) $(libmls_objs)/libmls.a \
                $(CONFDIR)/$(MLSCFILE)
 	$(MAKE) -f $(MakeFName) libfwdmdl.a -C $(libfwdmdl_sources)
+
+$(libcloud_objs)/libcloud.a: $(libcloud_f90) $(libmls_objs)/libmls.a \
+               $(libfwdmdl_objs)/libfwdmdl.a $(CONFDIR)/$(MLSCFILE)
+	$(MAKE) -f $(MakeFName) libcloud.a -C $(libcloud_sources)
 
 .PHONY: configure depends clean tar mostlyclean tarz targ test ghostbuster
 
@@ -180,6 +198,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude test
 
 # $Log$
+# Revision 1.6  2001/05/31 20:24:49  pwagner
+# ghostbuster called with -lib option
+#
 # Revision 1.5  2001/05/24 23:23:24  pwagner
 # Fixed prob with LIB_prereqs being undefined
 #

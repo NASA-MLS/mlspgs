@@ -38,6 +38,12 @@ fwdmdldir = ../../../fwdmdl/$(MLSCONFG)
 
 dir3 = $(fwdmdldir)/
 
+# Use the cloud directory, clouddir, for more .mod files
+# dir4 is the path prepended to its .o files in dependency lists
+clouddir = ../../../cloudfwdm/$(MLSCONFG)
+
+dir4 = $(clouddir)/
+
 # Set paths for finding source files (different from .o and .mod)
 
 vpath %.o ./
@@ -51,27 +57,8 @@ FC = f95
 
 DUSTY = $(FOPTS) -dusty
 
-#PGSINC = /software/SRC/TOOLKIT-5.2.6v1.00.NAG/include
-
-# Beginning of path to libraries:
-#L = /nas/software/SRC/TOOLKIT-5.2.6v1.00
-#L = /nas/software/SRC/TOOLKIT-5.2.6v1.00.NAG
-
-# Beginning of path to HDFEOS  libraries:
-#E = /van1/opt/TOOLKIT
-
-# In the long run just evict the stuff that assumes l2_NEEDS_fwdmdl is undefined
-l2_NEEDS_fwdmdl = true
-
-# All the paths to supply .mod and INCLUDE files used in compiling %.f90
-# Precede each path by "-I "
-ifdef l2_NEEDS_fwdmdl
-	INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S -I $(libdir)\
-	 -I $(itmdir) -I $(fwdmdldir)
-else
-	INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S -I $(libdir)\
-	 -I $(itmdir)
-endif
+INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S -I $(libdir)\
+	 -I $(itmdir) -I $(fwdmdldir) -I $(clouddir)
 
 # Define some suffix rules
 
@@ -83,32 +70,13 @@ endif
 .f90.dbg.o:
 	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o $(FAFTER) $(FAFTER)
 
-#SDP =SDPToolkitSubstitute.o
-#GD=GDapi.o
-
-#These are the locations of the libraries
-#
-#  Name                 Default value
-#  PGSTK                 $(PGSLIB)
-# HDFEOS                 $(HDFEOS_LIB)
-#   HDF                  $(HDFLIB)
-#  GCTP                  $(HDEOS_LIB)
-#
-#PGSTK =$(PGSLIB)
-#HDFEOS =$(HDFEOS_LIB)
-#HDF =$(HDFLIB)
-#GCTP =$(HDFEOS_LIB)
-#The following can be uncommented to override the defaults
-
-#PGSTK =$(HOME)/TOOLKIT/NAG
-#HDFEOS =$(HOME)/TOOLKIT
-#HDF =/software/SRC/TOOLKIT-5.2.6v1.00.NAG/hdf/linux/HDF4.1r3/lib
-#GCTP =/software/SRC/TOOLKIT-5.2.6v1.00.NAG/hdfeos/lib/linux
-
 #Special load libraries
 l_specials =
 
 # $Log$
+# Revision 1.5  2001/05/18 23:30:23  pwagner
+# Brought into harmony with latest non-tests versions
+#
 # Revision 1.4  2001/03/14 00:20:58  pwagner
 # Brought up-to-date with non-test versions
 #
