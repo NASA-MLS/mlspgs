@@ -80,57 +80,57 @@ contains ! =====     Public Procedures     =============================
   
    ! Arguments
 	
-	integer, intent(in)    :: lcf_where
-	character(LEN=*), intent(in)    :: full_message
-	logical, intent(in), optional :: use_toolkit
-	integer, intent(in), optional    :: error_number
+    integer, intent(in)    :: lcf_where
+    character(LEN=*), intent(in)    :: full_message
+    logical, intent(in), optional :: use_toolkit
+    integer, intent(in), optional    :: error_number
 
-	! Local
-  logical :: just_print_it
-  logical, parameter :: default_output_by_toolkit = .true.
-	
-    error = 0
-	if(present(use_toolkit)) then
-		just_print_it = use_toolkit
-	elseif(default_output_by_toolkit) then
-		just_print_it = .false.
-	else
-		just_print_it = .true.
-	endif
-	
-	if(.not. just_print_it) then
-    error = max(error,1)
-    call output ( '***** At ' )
+    ! Local
+    logical :: just_print_it
+    logical, parameter :: default_output_by_toolkit = .true.
+ 
+      error = 0
+    if ( present(use_toolkit) ) then
+      just_print_it = use_toolkit
+    else if ( default_output_by_toolkit ) then
+      just_print_it = .false.
+    else
+      just_print_it = .true.
+    end if
+ 
+    if ( .not. just_print_it ) then
+      error = max(error,1)
+      call output ( '***** At ' )
 
-	if(lcf_where > 0) then
-	    call print_source ( source_ref(lcf_where) )
-		else
-    call output ( '(no lcf node available)' )
-		endif
+      if ( lcf_where > 0 ) then
+          call print_source ( source_ref(lcf_where) )
+      else
+        call output ( '(no lcf node available)' )
+      end if
 
-    call output ( ': ' )
-    call output ( "The " );
-	if(lcf_where > 0) then
-    call dump_tree_node ( lcf_where, 0 )
-		else
-    call output ( '(no lcf tree available)' )
-		endif
+      call output ( ': ' )
+      call output ( "The " );
+      if ( lcf_where > 0 ) then
+        call dump_tree_node ( lcf_where, 0 )
+      else
+        call output ( '(no lcf tree available)' )
+      end if
 
-		CALL output("Caused the following error:", advance='yes', &
-		& from_where=ModuleName)
-		CALL output(trim(full_message), advance='yes', &
-		& from_where=ModuleName)
-		if(present(error_number)) then
-			CALL output('error number ', advance='no')
-			CALL output(error_number, places=9, advance='yes')
-		endif
-	else
-		print*, '***Error in module ', ModuleName
-		print*, trim(full_message)
-		if(present(error_number)) then
-			print*, 'error number ', error_number
-		endif
-	endif
+      call output ( " Caused the following error: ", advance='yes', &
+        & from_where=ModuleName )
+      call output ( trim(full_message), advance='yes', &
+        & from_where=ModuleName )
+      if ( present(error_number) ) then
+        call output ( 'error number ', advance='no' )
+        call output ( error_number, places=9, advance='yes' )
+      end if
+    else
+      print*, '***Error in module ', ModuleName
+      print*, trim(full_message)
+      if ( present(error_number) ) then
+        print*, 'error number ', error_number
+      end if
+    end if
 
 !===========================
   end subroutine announce_error
@@ -139,6 +139,9 @@ contains ! =====     Public Procedures     =============================
 end module OBTAIN_MLSCF
 
 ! $Log$
+! Revision 2.4  2001/04/05 23:42:10  pwagner
+! Added announce_error, deleted all MLSMessages
+!
 ! Revision 2.3  2001/02/28 02:02:21  vsnyder
 ! Remove unused reference to MLSPCF2
 !
