@@ -152,6 +152,18 @@ Real(r8) :: h_grid(Size(z_grid)),t_grid(Size(z_grid)),dhdt(Size(t_z_basis))
 ! Interpolate the hydrostatic grid for conv. grid heights 
 ! for the values BELOW Earth surface only:
 
+  h_grid(1:) = 0.0
+  t_grid(1:) = 0.0
+  do l = 1, no_mmaf
+    h_grid(1:cnt) = h_glgrid(1:gl_count:Ngp1,l)
+    t_grid(1:cnt) = t_glgrid(1:gl_count:Ngp1,l)
+    if(cnt < jj) h_grid(cnt+1:jj) = h_glgrid(gl_count,l)
+    if(cnt < jj) t_grid(cnt+1:jj) = t_glgrid(gl_count,l)
+    CALL get_heights('h',h_grid,t_grid,z_grid,n_lvls,tan_press, &
+   &                  tan_hts(:,l),si-1,ier)
+    IF(ier /= 0) RETURN
+  end do
+
   k = no_mmaf / 2
   h_grid(1:) = 0.0
   t_grid(1:) = 0.0
@@ -159,12 +171,6 @@ Real(r8) :: h_grid(Size(z_grid)),t_grid(Size(z_grid)),dhdt(Size(t_z_basis))
   t_grid(1:cnt) = t_glgrid(1:gl_count:Ngp1,k)
   if(cnt < jj) h_grid(cnt+1:jj) = h_glgrid(gl_count,k)
   if(cnt < jj) t_grid(cnt+1:jj) = t_glgrid(gl_count,k)
-
-  do l = 1, no_mmaf
-    CALL get_heights('h',h_grid,t_grid,z_grid,n_lvls,tan_press, &
-   &                  tan_hts(:,l),si-1,ier)
-    IF(ier /= 0) RETURN
-  end do
 
 ! Interpolate the dh_dt into the tan_press grid:
 
@@ -375,6 +381,9 @@ END SUBROUTINE pq_ana
 
 end module HYDROSTATIC_MODEL_M
 ! $Log$
+! Revision 1.9  2001/03/29 01:39:42  zvi
+! Fixing an error in tan_hts computations
+!
 ! Revision 1.8  2001/03/29 01:27:15  livesey
 ! Fixed bug with wrong intent for tan_press
 !
