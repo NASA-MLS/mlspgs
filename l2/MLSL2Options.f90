@@ -41,7 +41,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! Update these lines before delivery to sips     
   ! id to print out in response to "--version" command-line option       
   character(LEN=*), dimension(3), parameter :: CURRENT_VERSION_ID = (/ &    
-    & 'v1.4 swdev team                                           ', &       
+    & 'v1.42 swdev team                                          ', &       
     & 'Copyright (c) 2004, California Institute of Technology.   ', &       
     & 'U.S. Government Sponsorship under NASA Contract NAS7-1407.' /)       
      
@@ -87,6 +87,8 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! What units to use in summarizing timings at end of run
   integer            :: SECTIONTIMINGUNITS = L_SECONDS
   logical            :: patch = .false.       ! Set if run must not create file, swath  
+  ! Whether to skip doing the direct writes--quicker when snooping
+  logical            :: SKIPDIRECTWRITES = .false.         
   ! Whether to skip doing the retrieval--a pre-flight checkout of paths, etc.
   logical            :: SKIPRETRIEVAL = .false.         
   ! Whether to do only a pre-flight checkout of paths
@@ -108,6 +110,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.28  2004/04/27 23:49:51  pwagner
+! Added SKIPDIRECTWRITES option
+!
 ! Revision 2.27  2004/03/12 00:28:56  pwagner
 ! At last hdf version at output increased to 5
 !
