@@ -21,8 +21,7 @@ module Join                     ! Join together chunk based data.
 ! use MLSL2Common
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use OUTPUT_M, only: OUTPUT
-  use QuantityTemplates, only: FG_InstrumentChannel, FG_IntermediateFrequency, &
-    & FG_LSBFrequency, FG_None, FG_USBFrequency, QuantityTemplate_T
+  use QuantityTemplates, only: QuantityTemplate_T
   use SDPToolkit, only: PGS_S_SUCCESS, PGS_TD_TAItoUTC, PGSTD_E_NO_LEAP_SECS
   use TOGGLES, only: GEN, LEVELS, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -30,6 +29,8 @@ module Join                     ! Join together chunk based data.
     & SUB_ROSA, SUBTREE
   use TREE_TYPES, only: N_NAMED, N_SET_ONE
   use VectorsModule, only: GetVectorQuantity, Vector_T, VectorValue_T
+  use Intrinsic, ONLY: L_NONE, L_INSTRUMENTCHANNEL, L_USBFREQUENCY, L_LSBFREQUENCY,&
+       L_INTERMEDIATEFREQUENCY
 
   implicit none
   private
@@ -240,7 +241,6 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: NAME    ! Of the l2gp command
     type (Vector_T), intent(in) :: VECTOR
     type (QuantityTemplate_T), intent(in) :: quantity
-!   integer, intent(in) :: quantityNo
     type (L2GPData_T), dimension(:), pointer :: L2gpDatabase
     integer, intent(in) :: chunkNo
     integer, intent(in), optional :: firstInstance, lastInstance
@@ -252,18 +252,15 @@ contains ! =====     Public Procedures     =============================
     integer :: status,profNo,freqNo
     type (L2GPData_T) :: newL2GP
     type (L2GPData_T), pointer :: thisL2GP
-!   type (QuantityTemplate_T), pointer :: quantity
     integer :: index
     integer :: firstProfile,lastProfile ! Profile range in the l2gp to output to
-    integer :: noSurfsInL2GP
+    integer :: noSurfsInL2GP,noFreqsInL2GP
     integer :: useFirstInstance,useLastInstance,noOutputInstances
     logical :: l2gpDataIsNew
     real(r8), dimension(:,:), pointer :: values
     ! Executable code
 
     if ( toggle(gen) ) call trace_begin ( "JoinL2GPQuantities", key )
-
-!   quantity => vector%template%quantities(quantityNo)
 
     ! If this is the first chunk, we have to setup the l2gp quantity from
     ! scratch.  Otherwise, we expand it and fill up our part of it.
@@ -300,10 +297,13 @@ contains ! =====     Public Procedures     =============================
         noSurfsInL2GP = 0
       end if
 
-      !Reordered args in following routine
-!      call SetupNewL2GPRecord ( noSurfsInL2GP, quantity%noChans, newL2GP )
-      call SetupNewL2GPRecord ( newL2GP, quantity%noChans, noSurfsInL2GP )
+      if ( quantity%frequencyCoordinate == l_None) then
+         noFreqsInL2GP=0
+      else
+         noFreqsInL2GP=quantity%noChans
+      endif
 
+      call SetupNewL2GPRecord ( newL2GP, noFreqsInL2GP, noSurfsInL2GP )
       ! Setup the standard stuff, only pressure as it turns out.
       if ( quantity%verticalCoordinate == l_Pressure ) &
         & newL2GP%pressures = quantity%surfs(:,1)
@@ -352,31 +352,6 @@ contains ! =====     Public Procedures     =============================
       & quantity%phi(1,useFirstInstance:useLastInstance)
     thisL2GP%time(firstProfile:lastProfile) = &
       & quantity%time(1,useFirstInstance:useLastInstance)
-    ! Convert the time to CCSDS format too.
-    ! Nope, dropped the CCSDS format from our L2GP Data type
-!    do profNo = firstProfile, lastProfile
-!<<<<<<< Join.f90
-!      status = PGS_TD_TAItoUTC ( &
-!        & quantity%time(1,useFirstInstance+profNo-firstProfile), &
-!        & thisL2GP%ccsdsTime(profNo) )
-!      if ( status /= PGS_S_SUCCESS .and. status /= PGSTD_E_NO_LEAP_SECS ) &
-!        & call MLSMessage ( MLSMSG_Error, ModuleName, &
-!        & "Unable to convert time in l2gp to CCSDS format" )
-!    end do
-
-!=======
-!      TAItime = quantity%time(1,useFirstInstance+profNo-firstProfile)
-!
-!      status = PGS_TD_TAItoUTC(TAItime, CCSDST)
-!      if ( status /= PGS_S_SUCCESS ) then
-!        if ( status /= PGSTD_E_NO_LEAP_SECS ) &
-!          call MLSMessage ( MLSMSG_Error, ModuleName, &
-!            & "Could not convert TAI time to UTC")  
-!      end if  
-!      thisL2GP%ccsdsTime(profNo) = CCSDST 
-!
-!    end do
-!>>>>>>> 1.11
     thisL2GP%chunkNumber(firstProfile:lastProfile)=chunkNo
 
     ! Now the various data quantities.
@@ -497,20 +472,20 @@ contains ! =====     Public Procedures     =============================
       ! as such.  Otherwise we output it as a geodAngle based quantity
 
       if ( (quantity%noChans/=1) .AND. &
-        & (quantity%frequencyCoordinate == FG_None) ) &
+        & (quantity%frequencyCoordinate == L_None) ) &
         & CALL MLSMessage ( MLSMSG_Error, ModuleName, &
         & "Quantity has multiple channels but no frequency coordinate" )
 
       select case (quantity%frequencyCoordinate)
-      case ( FG_InstrumentChannel )
+      case ( L_InstrumentChannel )
         auxFamily = L2AUXDim_Channel
-      case ( FG_IntermediateFrequency )
+      case ( L_IntermediateFrequency )
         auxFamily = L2AUXDim_IntermediateFrequency
-      case ( FG_USBFrequency )
+      case ( L_USBFrequency )
         auxFamily = L2AUXDim_USBFrequency
-      case ( FG_LSBFrequency )
+      case ( L_LSBFrequency )
         auxFamily = L2AUXDim_LSBFrequency
-      case ( FG_None ) ! OK to do nothing
+      case ( L_None ) ! OK to do nothing
       case default
         call MLSMessage ( MLSMSG_Error, ModuleName, &
           & "Unrecognised frequency coordinate" )
@@ -526,7 +501,7 @@ contains ! =====     Public Procedures     =============================
           noMAFs = quantity%noInstances
         end if
 
-        if ( quantity%frequencyCoordinate==FG_None ) then
+        if ( quantity%frequencyCoordinate==L_None ) then
           dimensionFamilies = (/L2AUXDim_None, L2AUXDim_MIF, L2AUXDim_MAF/)
           dimensionSizes = (/1, quantity%noSurfs, noMAFs/)
         else
@@ -550,7 +525,7 @@ contains ! =====     Public Procedures     =============================
           & "Cannot currently output L2AUX quantities with obscure "// &
           & "vertical coordinates, sorry!" )
 
-        if ( quantity%frequencyCoordinate==FG_None ) then
+        if ( quantity%frequencyCoordinate==L_None ) then
           dimensionFamilies = (/L2AUXDim_geodAngle, L2AUXDim_None, &
             & L2AUXDim_None/)
           dimensionSizes = (/quantity%noInstances, 1, 1/)
@@ -716,6 +691,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.7  2001/02/09 00:38:22  livesey
+! Various updates
+!
 ! Revision 2.6  2001/01/03 18:15:13  pwagner
 ! Changed types of t1, t2 to real
 !
