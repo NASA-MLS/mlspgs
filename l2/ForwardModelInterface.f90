@@ -805,10 +805,13 @@ contains
             centerFreq = signal%lo + signal%centerFrequency
             sense = +1.0
           case default              ! Put error message here later
+            call MLSMessage(MLSMSG_Error, ModuleName, &
+              & 'Asked for folded in wrong place')
           end select
 
           do i = 1, noUsedChannels
             ch = usedChannels(i)
+            if ( ch == 1 ) print*,(centerFreq+sense*FMI%F_grid_filter(:,i))
             call Freq_Avg(frequencies,centerFreq+sense*FMI%F_grid_filter(:,i),  &
               &     FMI%Filter_func(:,ch),RadV,noFreqs,FMI%no_filt_pts, &
               &     Radiances(ptg_i,ch))
@@ -1230,6 +1233,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.39  2001/03/26 21:13:02  livesey
+! Stableish version, frequency averaging still highly suspect.
+!
 ! Revision 2.38  2001/03/26 18:01:20  zvi
 ! New code to deal with dh_dt_path being computed on the fly
 !
