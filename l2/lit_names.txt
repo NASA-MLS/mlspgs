@@ -130,8 +130,12 @@ vector
 vGrid
 
 weighted
+wmoTropopause
 
 # $Log$
+# Revision 2.30  2003/04/11 21:57:10  livesey
+# Added wmoTropopause
+#
 # Revision 2.29  2003/04/04 23:53:48  livesey
 # Added split sideband
 #
