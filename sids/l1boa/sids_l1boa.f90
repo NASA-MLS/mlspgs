@@ -1,5 +1,6 @@
 program sids_l1boa ! Generate simulated L1BOA data for MLS
 
+  USE DUMP_0, only: DUMP
   use Hdf, only: DFACC_WRITE, SFEND, SFSTART
   use L1boa, only: L1BOA_FILL, L1BOA_NOFILL
   use MLSCommon, only: R8, TAI93_RANGE_T
@@ -25,6 +26,8 @@ program sids_l1boa ! Generate simulated L1BOA data for MLS
   ! This program creates a  SIDS L1BOA file.
 
   ! Parameters
+  logical, parameter :: DEBUG = .TRUE.
+   
   integer, parameter :: SD_OUTFILE = 333
 
   ! Variables
@@ -49,6 +52,7 @@ program sids_l1boa ! Generate simulated L1BOA data for MLS
   real(r8) :: homeAlt, homeLat, mfps, spm
   real(r8), allocatable :: mafTAI(:), offsets(:), postTAI(:), preTAI(:)
   real(r8), allocatable :: scanTAI(:,:)
+  real(r8), dimension(:), pointer :: deltaT
 
   ! Read SIDS input
   call Read_uif(altG, altT, times, endTime, homeAlt, homeLat, mifG, mifT, &
@@ -158,6 +162,9 @@ program sids_l1boa ! Generate simulated L1BOA data for MLS
     postTimes, preMAF, preTAI, preTimes, scansPerOrb, scanTAI, &
     scanTimes, mafTAI, mafTime, nV)
 
+  if ( DEBUG ) then                  
+     allocate( deltaT(lenMAF-1) )    
+  endif                              
   ! For first MAF, calculate & write L1BOA data with fill values/settings
   print *, 'Processing MAF 1 ... '
 
@@ -187,6 +194,7 @@ program sids_l1boa ! Generate simulated L1BOA data for MLS
   do i = 2, lenMAF
 
     print *, 'Processing MAF ', i, ' ... '
+    if ( DEBUG ) deltaT(i-1) = mafTAI(i) - mafTAI(i-1)
 
     index%MAFStartTimeUTC = mafTime(i)
     index%MAFStartTimeTAI = mafTAI(i)
@@ -198,6 +206,9 @@ program sids_l1boa ! Generate simulated L1BOA data for MLS
 
   enddo
 
+  if ( DEBUG ) then                  
+     call dump(deltaT, 'MAF Time intervals')   
+  endif                              
   ! Terminate access to the SD interface and close the file
   status = sfend(sd_id)
   if (status == -1) then
@@ -218,6 +229,9 @@ program sids_l1boa ! Generate simulated L1BOA data for MLS
 end program sids_l1boa
 
 ! $Log$
+! Revision 1.7  2001/12/04 00:24:32  pwagner
+! Gets hdf stuff from hdf, not Sd
+!
 ! Revision 1.6  2001/10/11 23:27:23  livesey
 ! Tried to change the chmod stuff
 !
