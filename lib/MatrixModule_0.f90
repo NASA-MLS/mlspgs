@@ -23,6 +23,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   public :: GetDiagonal, GetDiagonal_0
   public :: GetMatrixElement, GetMatrixElement_0, GetVectorFromColumn
   public :: GetVectorFromColumn_0, M_Absent, M_Banded, M_Column_Sparse, M_Full
+  public :: MatrixInversion
   public :: MatrixElement_T, MaxAbsVal, MaxAbsVal_0, MinDiag, MinDiag_0
   public :: Multiply, MultiplyMatrixBlocks, MultiplyMatrixVector
   public :: MultiplyMatrixVector_0, MultiplyMatrixVectorNoT
@@ -106,7 +107,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   end interface
 
   interface SolveCholesky
-    module procedure SolveCholeskyM_0, SolveCholeskyV_0
+    module procedure SolveCholeskyM_0, SolveCholeskyV_0, SolveCholeskyA_0
   end interface
 
   interface UpdateDiagonal
@@ -837,6 +838,44 @@ contains ! =====     Public Procedures     =============================
       maxAbsVal_0 = maxval(abs(b%values))
     end if
   end function MaxAbsVal_0
+
+!---------------------------------------------Matrix Inversion for Array --
+  subroutine MatrixInversion(Ain, Aout)
+  
+  real (r8), dimension(:,:) :: Ain
+  real (r8), dimension(:,:) :: Aout
+  real (r8), dimension(:,:), allocatable :: U
+  logical :: TRANSPOSE1
+  real (r8), dimension(:), allocatable :: b
+  real (r8), dimension(:), allocatable :: x
+  
+  integer :: i, n
+  
+  n = size(Ain,2)
+    
+  allocate(x(n))
+  allocate(b(n))
+  allocate(u(n,n))
+
+   call DenseCholesky (U, Ain)
+
+  do i=1,n
+   b = 0._r8
+   b(i)=1._r8
+   TRANSPOSE1 = .true.  
+   call SolveCholeskyA_0 ( U, x, b, TRANSPOSE1 )
+   b = x
+   TRANSPOSE1 = .false.  
+   call SolveCholeskyA_0 ( U, x, b, TRANSPOSE1 )
+   Aout(:,i) = x
+  end do
+  
+  deallocate(x)
+  deallocate(b)
+  deallocate(u)  
+  
+  end subroutine MatrixInversion
+   
 
   ! --------------------------------------------------  MinDiag_0  -----
   real(r8) function MinDiag_0 ( B )
@@ -1703,6 +1742,55 @@ contains ! =====     Public Procedures     =============================
     end if ! my_t
   end subroutine SolveCholeskyV_0
 
+  ! -------------------------------------------  SolveCholeskyA_0  -----  
+  subroutine SolveCholeskyA_0 ( U, X, B, TRANSPOSE )
+  ! Solve the system U X = B or U^T X = B for X, depending on TRANSPOSE,
+  ! where U is known to be upper-triangular Array.  X may be the same as B.
+  ! B may be absent, in which case the right-hand side is in X on input,
+  ! and the solution replaces it on output.  The arrays X and B are
+  ! one-dimensional arrays.
+
+    real (r8), dimension(:), intent(inout), target :: X
+    real (r8), dimension(:), intent(in), target, optional :: B
+    logical, intent(in), optional :: TRANSPOSE    ! Solve U^T X = B if
+    !                                               present and true.
+
+    real (r8) :: D        ! Diagonal element of U
+    integer :: I          ! Subscripts and loop inductors
+    real (r8), dimension(:), pointer :: MY_B   ! B if B is present, else X
+    logical :: MY_T      ! FALSE if TRANSPOSE is absent, else TRANSPOSE
+    integer :: N         ! Size of U matrix, which must be square
+    real (r8), parameter :: TOL = tiny(0.0)
+    real (r8), dimension(:,:), intent(in) :: U 
+
+    n = size(x)
+    
+    my_b => x
+    if ( present(b) ) my_b => b
+    my_t = .false.
+    if ( present(transpose) ) my_t = transpose
+
+    if ( my_t ) then ! solve U^T X = B for X
+        do i = 1, n
+          d = u(i,i)
+          if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & "U matrix in SolveCholeskyA_0 is singular" )
+          x(i) = ( my_b(i) - dot(i-1, u(1,i), 1, x(1), 1) ) / d
+        end do ! i = 1, n
+    else             ! solve U X = B for X
+      d = u(n,n)
+      if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & "U matrix in SolveCholeskyA_0 is singular" )
+      x(n) = my_b(n) / d
+      do i = n-1, 1, -1
+        d = u(i,i)
+        if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & "U matrix in SolveCholeskyA_0 is singular" )
+        x(i) = ( my_b(i) - dot(n-i, u(i,i+1), size(u,1), x(i+1), 1) ) / d
+      end do ! i = 1, n
+    end if ! my_t
+  end subroutine SolveCholeskyA_0
+
   ! ---------------------------------------------------  Sparsify  -----
   subroutine Sparsify ( Z, B, Why, CallingModule )
   ! Given an array Z, compute its sparse representation and store it
@@ -2056,6 +2144,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.47  2001/09/28 17:56:10  dwu
+! add MatrixInversion, SolveCholeskyA_0
+!
 ! Revision 2.46  2001/09/27 18:41:21  vsnyder
 ! Apply mask in matrix-vector multiply
 !
