@@ -96,7 +96,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   integer, public, parameter :: rgp = r4
 
   ! How long may the list of swath names grow (~80 x max num. of swaths/file)
-  integer, public, parameter :: MAXNUMSWATHPERFILE = 200
+  integer, public, parameter :: MAXNUMSWATHPERFILE = 250
   integer, public, parameter :: MAXSWATHNAMESBUFSIZE = 80*MAXNUMSWATHPERFILE
 
   ! TRUE means we can avoid using unlimited dimension and its time penalty
@@ -2660,6 +2660,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.102  2004/05/05 21:29:53  pwagner
+! May change copied swath names with optional arg swathlist2
+!
 ! Revision 2.101  2004/04/23 01:43:34  livesey
 ! Added Paul's fix for reading status
 !
