@@ -109,7 +109,6 @@ extinction
 fgrid
 field
 fieldECR
-file
 filterShapes
 forbidOverspill
 force
@@ -376,6 +375,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.137  2004/12/31 02:42:21  vsnyder
+# Add 'file' field
+#
 # Revision 2.136  2004/12/13 20:16:41  vsnyder
 # Add allLines, allSignals, allSpectra and LosVel fields
 #
