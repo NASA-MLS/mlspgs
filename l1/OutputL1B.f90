@@ -1,126 +1,128 @@
 ! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+!=============================================================================
 MODULE OutputL1B
+!=============================================================================
+
   USE MLSCommon
-  USE MLSL1Common, only: L1BFileInfo_T
-  USE MLSL1Config, only: MIFsGHz, MIFsTHz, L1Config
-  USE MLSStrings, only: lowercase
-  USE MLSL1Rad, only: Radiance_T
+  USE MLSL1Common, ONLY: L1BFileInfo_T
+  USE MLSL1Config, ONLY: MIFsGHz, MIFsTHz, L1Config
+  USE MLSFiles, ONLY: HDFVERSION_4, HDFVERSION_5  
+  USE MLSL1Rad, ONLY: Radiance_T
   USE OutputL1B_DataTypes
-  USE OutputL1B_HDF5, ONLY: OUTPUTL1B_CREATE_HDF5, OUTPUTL1B_INDEX_HDF5, OUTPUTL1B_SC_HDF5, & 
-       OUTPUTL1B_GHZ_HDF5, OUTPUTL1B_THZ_HDF5, OUTPUTL1B_RAD_HDF5
-  USE OutputL1B_HDF4, ONLY: OUTPUTL1B_CREATE_HDF4, OUTPUTL1B_INDEX_HDF4, OUTPUTL1B_SC_HDF4, & 
-       OUTPUTL1B_GHZ_HDF4, OUTPUTL1B_THZ_HDF4, OUTPUTL1B_RAD_HDF4
+  USE OutputL1B_HDF5, ONLY: OUTPUTL1B_CREATE_HDF5, OUTPUTL1B_INDEX_HDF5, &
+       OUTPUTL1B_SC_HDF5, OUTPUTL1B_GHZ_HDF5, OUTPUTL1B_THZ_HDF5, &
+       OUTPUTL1B_RAD_HDF5
+  USE OutputL1B_HDF4, ONLY: OUTPUTL1B_CREATE_HDF4, OUTPUTL1B_INDEX_HDF4, &
+       OUTPUTL1B_SC_HDF4, OUTPUTL1B_GHZ_HDF4, OUTPUTL1B_THZ_HDF4, &
+       OUTPUTL1B_RAD_HDF4
+
   IMPLICIT NONE
+
   PRIVATE
-  PUBLIC :: OUTPUTL1B_CREATE, OUTPUTL1B_INDEX, OUTPUTL1B_SC, OUTPUTL1B_GHZ, OUTPUTL1B_THZ, & 
-       OUTPUTL1B_RAD
+
+  PUBLIC :: OUTPUTL1B_CREATE, OUTPUTL1B_INDEX, OUTPUTL1B_SC, OUTPUTL1B_GHZ, &
+       OUTPUTL1B_THZ, OUTPUTL1B_RAD
+
   !------------------- RCS Ident Info -----------------------
-  CHARACTER(LEN=130) :: Id = &                                                    
+  CHARACTER(LEN=130) :: Id = &
     "$Id$"
   CHARACTER (LEN=*), PARAMETER :: ModuleName="$RCSfile$"
   !----------------------------------------------------------
 CONTAINS
   !----------------------------------- OutputL1B_Create ----
-  SUBROUTINE OutputL1B_create(sdId)
-    ! This subroutine opens/creates the SD output files, and names the arrays and
-    ! dimensions contained within them.
+  SUBROUTINE OutputL1B_create (sdId)
+    ! This subroutine opens/creates the SD output files, and names the arrays
+    ! and dimensions contained within them.
     ! Arguments
-    type( L1BFileInfo_T ), intent(IN) :: sdId
+    TYPE( L1BFileInfo_T ), INTENT(IN) :: sdId
   
-    select case (lowercase(trim(L1Config%Output%HDFVersionString))) 
-       case ('hdf4')
-          call OutputL1B_create_HDF4(sdId)
-       case ('hdf5')
-          call OutputL1B_create_HDF5(sdId)
-       case default
-          call OutputL1B_create_HDF4(sdId)
-    end select 
+    IF (L1Config%Output%HDFversion == HDFVERSION_4) THEN
+       CALL OutputL1B_create_HDF4 (sdId)
+    ELSE
+       CALL OutputL1B_create_HDF5 (sdId)
+    ENDIF
+
   END SUBROUTINE OutputL1B_create
   !------------------------------------------------- OuptutL1B_index ----
-  SUBROUTINE OutputL1B_index(noMAF, sd_id, index)
-    ! This subroutine writes the time/MIF indexing quantities to the HDF-SD file. 
+  SUBROUTINE OutputL1B_index (noMAF, sd_id, index)
+    ! This subroutine writes the time/MIF indexing quantities to the HDF-SD file
     ! Arguments
     TYPE( L1BOAindex_T), INTENT(IN) :: index
     INTEGER, INTENT(IN) :: sd_id, noMAF
 
-   select case (lowercase(trim(L1Config%Output%HDFVersionString))) 
-       case ('hdf4')
-          call OutputL1B_index_HDF4(noMAF, sd_id, index)
-       case ('hdf5')
-          call OutputL1B_index_HDF5(noMAF, sd_id, index)
-       case default
-          call OutputL1B_index_HDF4(noMAF, sd_id, index)
-    end select 
+    IF (L1Config%Output%HDFversion == HDFVERSION_4) THEN
+       CALL OutputL1B_index_HDF4 (noMAF, sd_id, index)
+    ELSE
+       CALL OutputL1B_index_HDF5 (noMAF, sd_id, index)
+    ENDIF
+
   END SUBROUTINE OutputL1B_index
   !------------------------------------------- OutputL1B_sc ------------
-  SUBROUTINE OutputL1B_sc(noMAF, sd_id, sc)
+  SUBROUTINE OutputL1B_sc (noMAF, sd_id, sc)
     ! This subroutine writes the spacecraft quantities to the HDF-SD file.
     ! Arguments
     TYPE( L1BOAsc_T ), INTENT(IN) :: sc
     INTEGER, INTENT(IN) :: noMAF, sd_id
 
-   select case (lowercase(trim(L1Config%Output%HDFVersionString))) 
-       case ('hdf4')
-          call OutputL1B_sc_HDF4(noMAF, sd_id, sc)
-       case ('hdf5')
-          call OutputL1B_sc_HDF5(noMAF, sd_id, sc)
-       case default
-          call OutputL1B_sc_HDF4(noMAF, sd_id, sc)
-    end select 
+    IF (L1Config%Output%HDFversion == HDFVERSION_4) THEN
+       CALL OutputL1B_sc_HDF4 (noMAF, sd_id, sc)
+    ELSE
+       CALL OutputL1B_sc_HDF5 (noMAF, sd_id, sc)
+    ENDIF
+
   END SUBROUTINE OutputL1B_sc
   !-------------------------------------------- OutputL1B_GHz -------
-  SUBROUTINE OutputL1B_GHz(noMAF, sd_id, tp)
-    ! This subroutine writes the GHz tangent point quantities to the HDF-SD file.
+  SUBROUTINE OutputL1B_GHz (noMAF, sd_id, tp)
+    ! This subroutine writes the GHz tangent point quantities to the HDF-SD file
     ! Arguments
     TYPE( L1BOAtp_T ), INTENT(IN) :: tp
     INTEGER, INTENT(IN) :: noMAF, sd_id
 
-   select case (lowercase(trim(L1Config%Output%HDFVersionString))) 
-       case ('hdf4')
-          call OutputL1B_GHz_HDF4(noMAF, sd_id, tp)
-       case ('hdf5')
-          call OutputL1B_GHz_HDF5(noMAF, sd_id, tp)
-       case default
-          call OutputL1B_GHz_HDF4(noMAF, sd_id, tp)
-    end select 
+    IF (L1Config%Output%HDFversion == HDFVERSION_4) THEN
+       CALL OutputL1B_GHz_HDF4 (noMAF, sd_id, tp)
+    ELSE
+       CALL OutputL1B_GHz_HDF5 (noMAF, sd_id, tp)
+    ENDIF
+
   END SUBROUTINE OutputL1B_GHz
   !-------------------------------------------- OutputL1B_THz --------------
-  SUBROUTINE OutputL1B_THz(noMAF, sd_id, tp)
-    ! This subroutine writes the THz tangent point quantities to the HDF-SD file.
+  SUBROUTINE OutputL1B_THz (noMAF, sd_id, tp)
+    ! This subroutine writes the THz tangent point quantities to the HDF-SD file
     ! Arguments
     TYPE( L1BOAtp_T ), INTENT(IN) :: tp
     INTEGER, INTENT(IN) :: noMAF, sd_id
 
-   select case (lowercase(trim(L1Config%Output%HDFVersionString))) 
-       case ('hdf4')
-          call OutputL1B_THz_HDF4(noMAF, sd_id, tp)
-       case ('hdf5')
-          call OutputL1B_THz_HDF5(noMAF, sd_id, tp)
-       case default
-          call OutputL1B_THz_HDF4(noMAF, sd_id, tp)
-    end select 
+    IF (L1Config%Output%HDFversion == HDFVERSION_4) THEN
+       CALL OutputL1B_THz_HDF4 (noMAF, sd_id, tp)
+    ELSE
+       CALL OutputL1B_THz_HDF5 (noMAF, sd_id, tp)
+    ENDIF
+
   END SUBROUTINE OutputL1B_THz
   !-------------------------------------------------------- OutputL1B_rad
-  SUBROUTINE OutputL1B_rad(noMAF, sdId, counterMAF, rad)
+  SUBROUTINE OutputL1B_rad (noMAF, sdId, counterMAF, rad)
     ! This subroutine writes an MAF's worth of data to the L1BRad D & F files
     ! Arguments
     TYPE( L1BFileInfo_T ) :: sdId
     TYPE( Radiance_T ) :: rad(:)
     INTEGER, INTENT(IN) :: counterMAF, noMAF
 
-   select case (lowercase(trim(L1Config%Output%HDFVersionString))) 
-       case ('hdf4')
-          call OutputL1B_rad_HDF4(noMAF, sdId, counterMAF, rad)
-       case ('hdf5')
-          call OutputL1B_rad_HDF5(noMAF, sdId, counterMAF, rad)
-       case default
-          call OutputL1B_rad_HDF4(noMAF, sdId, counterMAF, rad)
-    end select 
+    IF (L1Config%Output%HDFversion == HDFVERSION_4) THEN
+       CALL OutputL1B_rad_HDF4 (noMAF, sdId, counterMAF, rad)
+    ELSE
+       CALL OutputL1B_rad_HDF5 (noMAF, sdId, counterMAF, rad)
+    ENDIF
+
   END SUBROUTINE OutputL1B_rad
+!=============================================================================
 END MODULE OutputL1B
+!=============================================================================
 
 ! $Log$
+! Revision 2.8  2002/11/20 15:44:02  perun
+! Use HDFversion instead of HDFVersionString & remove "default" calls
+!
 ! Revision 2.7  2002/11/07 21:58:30  jdone
 ! Incorporated HDF4/HDF5 switch; moved HDF4 routines to OutputL1B_HDF4.f90
 !
