@@ -751,6 +751,7 @@ END SUBROUTINE measured_parameter
     INTEGER :: hdfReturn
     INTEGER :: returnStatus
     INTEGER :: sdid
+    CHARACTER (LEN=132) :: attrname, errmsg
 
     INTEGER, PARAMETER :: INVENTORY=2, ARCHIVE=1
     CHARACTER (LEN=PGSd_PC_FILE_PATH_MAX) :: physical_filename
@@ -829,12 +830,12 @@ END SUBROUTINE measured_parameter
       & "Error--some of the mandatory parameters were not set") 
 !					return
        ELSE 
-!          CALL Pgs_smf_getMsg (returnStatus, attrname, errmsg)
-!          CALL MLSMessage (MLSMSG_WARNING, ModuleName, &
-!               "Metadata write failed "//attrname//errmsg) 
-      call announce_error(0, &
-      & "Error: metadata write failed in populate_metadata_std.", &
-      & error_number=returnStatus) 
+          CALL Pgs_smf_getMsg (returnStatus, attrname, errmsg)
+          CALL MLSMessage (MLSMSG_WARNING, ModuleName, &
+               "Metadata write failed "//attrname//errmsg) 
+!      call announce_error(0, &
+!      & "Error: metadata write failed in populate_metadata_std.", &
+!      & error_number=returnStatus) 
 !					return
        ENDIF
     ENDIF
@@ -875,6 +876,7 @@ END SUBROUTINE measured_parameter
     INTEGER :: hdfReturn
     INTEGER :: returnStatus
     INTEGER :: sdid
+    CHARACTER (LEN=132) :: attrname, errmsg
 
     INTEGER, PARAMETER :: INVENTORY=2, ARCHIVE=1
     CHARACTER (LEN=PGSd_PC_FILE_PATH_MAX) :: physical_filename
@@ -959,12 +961,12 @@ END SUBROUTINE measured_parameter
       & "Error: Some of the mandatory parameters were not set in populate_metadata_oth.") 
 !					return
        ELSE 
-!          CALL Pgs_smf_getMsg (returnStatus, attrname, errmsg)
-!          CALL MLSMessage (MLSMSG_WARNING, ModuleName, &
-!               "Metadata write failed "//attrname//errmsg) 
-      call announce_error(0, &
-      & "Error: metdata write failed in populate_metadata_oth.", &
-      & error_number=returnStatus) 
+          CALL Pgs_smf_getMsg (returnStatus, attrname, errmsg)
+          CALL MLSMessage (MLSMSG_WARNING, ModuleName, &
+               "Metadata write failed "//attrname//errmsg) 
+!      call announce_error(0, &
+!      & "Error: metdata write failed in populate_metadata_oth.", &
+!      & error_number=returnStatus) 
 !					return
        ENDIF
     ENDIF
@@ -983,16 +985,17 @@ END SUBROUTINE measured_parameter
 
 !--------------------------- get_l2gp_mcf -------------------
 
-  FUNCTION get_l2gp_mcf (sdid, version) RESULT(mcf)
+  SUBROUTINE get_l2gp_mcf (file_base, mcf, l2pcf, version)
 
 ! metadata configuration file (mcf) PCF number corresponding to l2gp number sdid
 !
 ! Arguments
-	integer, intent(in) :: sdid
+	character(len=*), intent(in) ::  file_base
 	integer, intent(in), optional :: version
-	integer :: mcf
-! Local
+	integer, intent(inout) ::        mcf
+	 type(PCFData_T) :: l2pcf
 
+! Local
 	character (len=PGSd_PC_FILE_PATH_MAX) :: sd_full
 	character (len=NameLen) :: sd_path
 	character (len=NameLen) :: sd_name
@@ -1003,6 +1006,8 @@ END SUBROUTINE measured_parameter
 	character (len=NameLen) :: mcf_pattern
 	integer :: returnStatus, myVersion, i
 
+	character (len=1), parameter :: COMMA = ','
+
 	! Find species name
 	! assume sd_name is "*l2gp_species_"
 	! hence enclosed between "_" chars after an l2gp
@@ -1012,25 +1017,31 @@ END SUBROUTINE measured_parameter
 	
 ! Begin
 
-	if(sdid <= 0) then
+   if(MCFFORL2GPOPTION == 1) then
+      mcf = mcf+1
+      return
+   endif
+
+!	if(sdid <= 0) then
+	if(len(TRIM(file_base)) <= 0) then
 		mcf=0
 		return
 	endif
 
 	! Get full file name for l2gp file
 
-		if(present(version)) then
-			myVersion=version
-		else
-			myVersion = 1
-		endif
+!		if(present(version)) then
+!			myVersion=version
+!		else
+!			myVersion = 1
+!		endif
 
-	returnStatus = PGS_PC_GetReference(sdid, myVersion , sd_full)
+!	returnStatus = PGS_PC_GetReference(sdid, myVersion , sd_full)
 	
-	if (returnStatus /= PGS_S_SUCCESS) then 
-		mcf = 0
-		return
-	endif
+!	if (returnStatus /= PGS_S_SUCCESS) then 
+!		mcf = 0
+!		return
+!	endif
 
 	! Get full file name for typical MCF file
 	do i=mlspcf_mcf_l2gp_start, mlspcf_mcf_l2gp_end
@@ -1056,40 +1067,43 @@ END SUBROUTINE measured_parameter
 
 	! Split full_file_names into path+name
 	
-	call split_path_name(sd_full, sd_path, sd_name)
+!	call split_path_name(sd_full, sd_path, sd_name)
 	call split_path_name(mcf_full, mcf_path, mcf_name)
 	
-	sd_name = LowerCase(sd_name)
+	sd_full = LowerCase(file_base)
 	mcf_name = LowerCase(mcf_name)
 	
-	i=index(mcf_name, l2gp)
+!	i=index(mcf_name, l2gp)
 
-	if(i <= 0) then
-		mcf=0
-		return
-	endif
+!	if(i <= 0) then
+!		mcf=0
+!		return
+!	endif
 	
-	! Get species name assuming e.g. '*l2gp_h2o_*'
-	sd_full = adjustl(sd_name(i+len(l2gp):))
-	
-	i=index(sd_full, species_delimiter)
-
-	if(i /= 1) then
-		mcf=0
-		return
-	endif
-
-	! This gives 'o2h'
-	call split_path_name(Reverse(sd_full(2:)), sd_path, sd_name, species_delimiter)
-	
-	! so reverse it -> 'h2o'
-	sd_name = adjustl(Reverse(sd_name))
+	! Get species name assuming e.g. '*l2gp_h2o'
+	call split_path_name(sd_full, sd_path, sd_name, species_delimiter)
 	
 	if(len(trim(sd_name)) <= 0) then
 		mcf=0
 		return
 	endif
 	
+   if(MCFFORL2GPOPTION == 3) then
+
+   ! get mcfspecies name from associative array
+   ! if the species name not found in spec_keys, it will return ','
+      call GetStringHashElement(l2pcf%spec_keys, l2pcf%spec_hash, &
+      & trim(sd_name), sd_full, .TRUE.)
+
+      if(trim(sd_full) == COMMA) then
+         mcf=0
+         return
+      endif
+
+      sd_name = trim(sd_full)
+
+   endif
+
 	! Now try to find mcf file corresponding to species name
 	! assuming, e.g. '*h2o.*'
 
@@ -1110,10 +1124,13 @@ END SUBROUTINE measured_parameter
 			call split_path_name(Reverse(mcf_name), mcf_path, mcf_pattern, '.')
 			mcf_pattern = LowerCase(mcf_pattern)
 			
-			! So reverse it
+			! So reverse it to make h2o
 			mcf_pattern = adjustl(Reverse(mcf_pattern))
 			
 			! Check that pattern matches species name
+         ! Warning--this could give a false matching
+         ! if the species name matches more than one mcf_pattern
+         ! May wish to check for multiple matches later
 			if(index(mcf_pattern, sd_name) > 0) then
 				mcf = i
 				return
@@ -1124,7 +1141,7 @@ END SUBROUTINE measured_parameter
 	
 	mcf = 0
 
-  END FUNCTION get_l2gp_mcf
+  END SUBROUTINE get_l2gp_mcf
 
 ! Lori's routines
 
@@ -1156,13 +1173,13 @@ END SUBROUTINE measured_parameter
 
       CHARACTER (LEN=1) :: nullStr
       CHARACTER (LEN=45) :: sval
-!      CHARACTER (LEN=32) :: mnemonic
+      CHARACTER (LEN=32) :: mnemonic
       CHARACTER (LEN=FileNameLen) :: physical_filename
-!      CHARACTER (LEN=480) :: msg, msr
+      CHARACTER (LEN=480) :: msg, msr
       CHARACTER (LEN=PGSd_MET_GROUP_NAME_L) :: groups(PGSd_MET_NUM_OF_GROUPS)
 
       INTEGER :: result, indx, version
-		logical, parameter :: DEBUG=.TRUE.
+		logical, parameter :: DEBUG=.FALSE.
 
    ! Begin
    module_error = 0
@@ -1267,12 +1284,12 @@ END SUBROUTINE measured_parameter
       result = pgs_met_write(groups(1), nullStr, ASCII_FILE)
 
       IF (result /= PGS_S_SUCCESS) THEN
-!         call Pgs_smf_getMsg(result, mnemonic, msg)
-!         msr = mnemonic // ':  ' // msg
-!         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      call announce_error(0, &
-      & "Error: failed to write metadata in WriteMetaLog.", &
-      & error_number=result) 
+         call Pgs_smf_getMsg(result, mnemonic, msg)
+         msr = mnemonic // ':  ' // msg
+         CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
+!      call announce_error(0, &
+!      & "Error: failed to write metadata in WriteMetaLog.", &
+!      & error_number=result) 
 !			return
       ENDIF
 
@@ -1462,6 +1479,9 @@ END SUBROUTINE measured_parameter
 
 END MODULE WriteMetadata 
 ! $Log$
+! Revision 2.8  2001/04/13 00:28:03  pwagner
+! Turned get_l2gp_mcf into a subroutine
+!
 ! Revision 2.7  2001/04/12 00:22:17  pwagner
 ! Added announce_error
 !
