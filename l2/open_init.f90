@@ -51,6 +51,7 @@ module Open_Init
   ! integer, parameter :: LEVEL1_HDFVERSION = 4  ! Until we convert level 1 to hdf5
   integer, parameter :: MLSPCF_LOG = 10101 ! This seems to be hard-wired into PCF
   integer, parameter :: CCSDSLen=27
+  logical, parameter :: ALWAYSGETSWITCHESCONFIG = .false.
   integer, private ::   ERROR
   
 contains ! =====     Public Procedures     =============================
@@ -360,8 +361,8 @@ contains ! =====     Public Procedures     =============================
     GlobalAttributes%LastMAFCtr = FindMaxMAF ( (/l1bInfo%L1BOAID/), &
       & the_hdf_version, &
       & GlobalAttributes%FirstMAFCtr )
-    print *, 'GlobalAttributes%FirstMAFCtr ', GlobalAttributes%FirstMAFCtr
-    print *, 'GlobalAttributes%LastMAFCtr ', GlobalAttributes%LastMAFCtr
+    ! print *, 'GlobalAttributes%FirstMAFCtr ', GlobalAttributes%FirstMAFCtr
+    ! print *, 'GlobalAttributes%LastMAFCtr ', GlobalAttributes%LastMAFCtr
     ! Get the Start and End Times from PCF
     ! Temporarily we allow the use of older PCFids: CCSDSStartId, CCSDEndId
     ! (if TOOLKIT is FALSE)
@@ -453,10 +454,12 @@ contains ! =====     Public Procedures     =============================
    ! If using PCF, it will be difficult to set switches from command-line
    ! so the following allows us to do so inside the PCF
    ! This way we can still dump vectors, monitor iterations or activities
-    returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_switches, extra_switches)
-
-    if ( returnstatus == PGS_S_SUCCESS .and. extra_switches /= ' ') then
-      switches = catLists(trim(switches), trim(extra_switches))
+   ! But don't do this if you already set them on the command line
+    if ( ALWAYSGETSWITCHESCONFIG .or. switches == ' ' ) then
+      returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_switches, &
+        & extra_switches)
+      if ( returnstatus == PGS_S_SUCCESS .and. extra_switches /= ' ' ) &
+        & switches = catLists(trim(switches), trim(extra_switches))
     end if
 	
 ! Get the name of the log file from the PCF
@@ -780,6 +783,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.80  2004/12/15 23:35:59  pwagner
+! Should not warn about missing switches setting in PCF
+!
 ! Revision 2.79  2004/08/16 17:14:42  pwagner
 ! Obtains First,LastMAFCtr global attributes from l1boa file
 !
