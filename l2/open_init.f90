@@ -71,8 +71,6 @@ contains ! =====     Public Procedures     =============================
       enddo
       deallocate( l1bInfo%L1BRADIDs, l1bInfo%L1BRADFileNames, stat=status )
       if ( status /= 0 ) then
-        ! call MLSMessage ( MLSMSG_Error, ModuleName, &
-        !   & MLSMSG_DeAllocate // "l1bInfo" )
         call announce_error ( 0, 'Error deallocating l1bInfo' )
       end if
     end if
@@ -80,6 +78,10 @@ contains ! =====     Public Procedures     =============================
     if(l1bInfo%L1BOAID /= ILLEGALL1BRADID) then
       STATUS = sfend(l1bInfo%L1BOAID)
     endif
+
+    if ( error /= 0 ) &
+      & call MLSMessage(MLSMSG_Error,ModuleName, &
+        & 'Problem with DestroyL1BInfo')
 
     if ( toggle(gen) ) then
       call trace_end ( "DESTROYL1BInfo" )
@@ -155,7 +157,9 @@ contains ! =====     Public Procedures     =============================
 ! Initialize run parameters: unless reset, these dtermine how to run
    CCSDSStartTime = '(undefined)'
    CCSDSEndTime = '(undefined)'
-   l2pcf%cycle = '(undefined)'
+   l2pcf%startutc = '(undefined)'
+   l2pcf%endutc = '(undefined)'
+   l2pcf%cycle = ' '
    l2pcf%logGranID = '(not applicable)'      ! will not create a Log file
    l2pcf%spec_keys = '(not applicable)'      ! will not create metadata
    l2pcf%spec_hash = '(not applicable)'      ! will not create metadata
@@ -227,8 +231,6 @@ contains ! =====     Public Procedures     =============================
       sd_id = sfstart(L1physicalFilename, DFACC_READ)
       if ( sd_id == -1 ) then
 
-!        call MLSMessage ( MLSMSG_Error, ModuleName, &
-!          & "Error opening L1OA file "//L1physicalFilename )
         call announce_error ( 0, "Error opening L1OA file "//L1physicalFilename )
       else
         l1bInfo%L1BOAID = sd_id
@@ -373,20 +375,15 @@ contains ! =====     Public Procedures     =============================
 	
     ! Local
 
-    character (LEN=FileNameLen) :: physicalFilename
-    integer :: i, returnStatus, version
+    integer :: i
     character (len=*), parameter :: time_format='(1pD18.12)'
 
     ! Begin
-    version = 1
-
     call output ( 'L1B database:', advance='yes' )
   
    if(associated(l1bInfo%L1BRADIDs)) then
     if ( num_l1b_files > 0 ) then
       do i = 1, num_l1b_files
-!        returnStatus = Pgs_pc_getReference(l1bInfo%L1BRADIDs(i), version, &
-!        & physicalFilename)
       if(l1bInfo%L1BRADIDs(i) /= ILLEGALL1BRADID) then
   	    call output ( 'fileid:   ' )
 	    call output ( l1bInfo%L1BRADIDs(i), advance='yes' )
@@ -426,6 +423,9 @@ contains ! =====     Public Procedures     =============================
 
     call output ( 'End Time (tai):     ' )
     call output ( processingrange%endtime, format=time_format, advance='yes' )
+
+    call output ( 'Processing Range:     ' )
+    call output ( processingrange%endtime-processingrange%starttime, advance='yes' )
 
     call output ( 'PGE version:   ' )
     call output ( l2pcf%PGEVersion, advance='yes' )
@@ -510,6 +510,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.50  2001/05/17 00:27:55  pwagner
+! Better defaults, dumps
+!
 ! Revision 2.49  2001/05/11 23:43:35  pwagner
 ! Added some initializations
 !
