@@ -57,7 +57,7 @@ MODULE comp_sps_path_frq_m
 ! Internal declaritions
 !
   INTEGER(ip) :: n_zp, n_f, nfzp, f_len
-  INTEGER(ip) :: sps_i,n_sps,sv_i,sv_zp,sv_f,sv_j
+  INTEGER(ip) :: sps_i,no_mol,sv_i,sv_zp,sv_f,sv_j
   INTEGER(ip) :: v_inda,v_indb,f_inda,f_indb,w_inda,w_indb
 
   REAL(rp), ALLOCATABLE :: eta_f(:,:)
@@ -65,14 +65,14 @@ MODULE comp_sps_path_frq_m
 !
 ! Begin executable code:
 !
-  n_sps = SIZE(Grids_x%no_z)
+  no_mol = SIZE(Grids_x%no_z)
 !
   IF(Frq < 1.0) THEN
     eta_fzp = 0.0_rp
     sps_path = 0.0_rp
     do_calc_fzp = .FALSE.
   ELSE
-    DO sps_i = 1, n_sps
+    DO sps_i = 1, no_mol
       IF(.NOT. skip_eta_frq(sps_i)) sps_path(:,sps_i) = 0.0_rp
     END DO
   ENDIF
@@ -82,7 +82,7 @@ MODULE comp_sps_path_frq_m
   v_inda = 1
   w_inda = 1
 !
-  DO sps_i = 1, n_sps
+  DO sps_i = 1, no_mol
 !
     n_f = Grids_x%no_f(sps_i)
     n_zp = Grids_x%no_z(sps_i) * Grids_x%no_p(sps_i)
@@ -146,6 +146,9 @@ MODULE comp_sps_path_frq_m
 END MODULE comp_sps_path_frq_m
 !
 ! $Log$
+! Revision 2.7  2002/06/04 10:28:00  zvi
+! rename n_sps to: no_mol, more correctly
+!
 ! Revision 2.6  2002/02/16 06:37:34  zvi
 ! New code for derivative flags..
 !
