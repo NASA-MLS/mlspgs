@@ -10,6 +10,7 @@ module RetrievalModule
 
 ! This module and ones it calls consume most of the cycles.
 
+use VectorsModule, only: Dump
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use DNWT_Module, only: NF_EVALF, NF_EVALJ, NF_SOLVE, NF_NEWX, &
     & NF_GMOVE, NF_BEST, NF_AITKEN, NF_DX, NF_DX_AITKEN, NF_TOLX, &
@@ -417,15 +418,6 @@ contains
             call cloneVector ( candidateDX, x )
             call cloneVector ( DX, x )
             call cloneVector ( gradient, x )
-            ! Create initial guess for X.  Use Apriori if we have it, else
-            ! zero is probably as good a guess as anything.
-            if ( got(f_apriori) ) then
-              call copyVector ( x, apriori ) ! x := apriori
-            else
-              do j = 1, size(x%quantities)
-                x%quantities(j)%values = 0.0_rk
-              end do ! j
-            end if
             if ( got(f_apriori) ) then
               aprioriNorm = apriori .dot. apriori ! norm**2
               call multiplyMatrixVector ( covariance, apriori, &
@@ -451,12 +443,12 @@ contains
                   ! to do? Ermmm, think of this next time.
                   fmStat%maf = fmStat%maf + 1
                   do k = 1, size(configIndices)
-                  call forwardModel ( configDatabase(configIndices(k)), &
-                    & x, fwdModelExtra, f, fmw, fmStat )
+                    call forwardModel ( configDatabase(configIndices(k)), &
+                      & x, fwdModelExtra, f, fmw, fmStat )
                   end do ! k
                   call subtractFromVector ( f, measurements )
                   aj%fnorm = aj%fnorm + ( f .dot. f )
-                  call destroyVectorValue ( f )  ! free the space
+!                 call destroyVectorValue ( f )  ! free the space
                 end do ! mafs
                 aj%fnorm = sqrt(aj%fnorm)
                 if ( aj%fnorm < toleranceF ) exit
@@ -496,9 +488,10 @@ contains
                   ! What if one config set finished but others still had more
                   ! to do? Ermmm, think of this next time.
                   fmStat%maf = fmStat%maf + 1
+call dump ( (/ x, fwdModelExtra, f /), details=0 )
                   do k = 1, size(configIndices)
-                  call forwardModel ( configDatabase(configIndices(k)), &
-                    & x, fwdModelExtra, f, fmw, fmStat, jacobian )
+                    call forwardModel ( configDatabase(configIndices(k)), &
+                      & x, fwdModelExtra, f, fmw, fmStat, jacobian )
                   end do ! k
                   do rowBlock = 1, size(fmStat%rows)
                     if ( fmStat%rows(rowBlock) ) then
@@ -512,8 +505,8 @@ contains
                   call formNormalEquations ( jacobian, normalEquations, &
                     & update=update )
                   update = .true.
-                  call clearMatrix ( jacobian )  ! free the space
-                  call destroyVectorValue ( f )  ! free the space
+!                 call clearMatrix ( jacobian )  ! free the space
+!                 call destroyVectorValue ( f )  ! free the space
                 end do ! mafs
                 call deallocate_test ( fmStat%rows, 'FmStat%rows', moduleName )
                 ! Compute (negative of the) gradient = -(Jacobian)**T * F.
@@ -729,6 +722,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.23  2001/04/28 01:47:17  vsnyder
+! Don't try to create initial value for state
+!
 ! Revision 2.22  2001/04/26 23:43:23  vsnyder
 ! Remove forwardModelIn from retrieve spec
 !
