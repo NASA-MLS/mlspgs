@@ -1,11 +1,9 @@
 module GEOC_GEOD_CONV_M
   use MLSCommon, only: R8
   use Geometry, only: GeodToGeocLat
-  use STRINGS, only: STRLWR
-  use UNITS, only: DEG2RAD
+  use UNITS, only: DEG2RAD, RAD2DEG
   use L2PC_PFA_STRUCTURES, only: EARTH_MAJOR, EARTH_MINOR
-  use ELLIPSE, only: A2, C2, C2OA2, CPT, SPT, CPS, SPS, CPTS, SPTS, &
-                     NPHI_TAN, ROC, XOC, YOC
+  use ELLIPSE, only: A2, C2, C2OA2, CPT, SPT, NPHI_TAN, ROC, XOC, YOC
 
   implicit NONE
   private
@@ -31,51 +29,49 @@ contains
 
     real(r8), intent(out) :: RP         ! In Kilometers
 
-    real(r8) :: q, r, incl, cw, sw, b2
+    real(r8) :: CW, INCL, SW
+!   real(r8), parameter :: B2 = real(earth_minor,r8) ** 2 ! Doesn't work
+    real(r8), parameter :: B2 = (earth_minor + 0.0_r8) ** 2
 
-    q = real(earth_major,r8)
-    a2 = q * q
+! Fill in some variables in the Ellipse module
 
-    r = real(earth_minor,r8)
-    b2 = r * r
+    a2 = real(earth_major,r8) ** 2
 
     incl = (beta_inc - 90.0_r8) * deg2rad
-    q = tan(incl)
-    r = q * q
+!   r = tan(incl) ** 2
 
 ! c is the Minor axis for 2D ellipse, c2 = c * c
+! c2oa2 is c**2 / a**2
 
-    c2 = (1.0_r8+r)*a2*b2/(a2+b2*r)
+    c2oa2 = b2/(a2 * cos(incl)**2 + b2 * sin(incl)**2 )
+!   c2oa2 = (1.0_r8+r)*b2/(a2+b2*r)
 
-    c2oa2 = c2 / a2
-!
-! Get the Geocentric Lat. (geoc_lat) from the Geodetic Lat.
+    c2 = a2 * c2oa2
 
-    geoc_lat = GeodToGeocLat(geod_lat)
-!
     spt = sin(Phi_tan)
     cpt = cos(Phi_tan)
     sw = spt * spt
     cw = cpt * cpt
 
-    nphi_tan = a2 / sqrt(c2-(c2-a2)*cw)
+    nphi_tan = a2 / sqrt(c2*sw + a2*cw)
 
 !  Compute Radius of Curvature Circle (RoC) and its center coordinates:
 
-    r = c2 * cpt / a2
-    q = spt * spt + r * r
-    RoC = nphi_tan * sqrt(q)
+    RoC = nphi_tan * sqrt(sw + c2oa2**2 * cw)
     XoC = (nphi_tan - RoC) * cpt
     YoC = (c2oa2 * nphi_tan - RoC) * spt
 
+! Get the Geocentric Lat. (geoc_lat) from the Geodetic Lat.
+
+    geoc_lat = GeodToGeocLat ( geod_lat * rad2deg )
+
 !  Compute Earth Radius (Elliptical)
 
-    q = ((a2*a2)*cw+(b2*b2)*sw)/(a2*cw+b2*sw)
-    Rp = sqrt(q)
+    Rp = sqrt( ((a2*a2)*cw + (b2*b2)*sw) / (a2*cw + b2*sw) )
 
-    Return
+    return
 
-  End subroutine GEOC_GEOD_CONV
+  end subroutine GEOC_GEOD_CONV
 
 end module GEOC_GEOD_CONV_M
 
