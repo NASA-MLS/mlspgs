@@ -1,5 +1,6 @@
 mlsl3m: MLSL3M.o
 
+short_name=l3m
 # This is the default name of the configure file
 # It may be overridden for multiple platforms, special options, etc.
 ifdef HOSTMLSCFILE
@@ -232,6 +233,9 @@ tar:
 # ========================================================================
 
 # $Log$
+# Revision 1.10  2002/07/01 17:32:22  pwagner
+# No longer compiles some sources twice
+#
 # Revision 1.9  2002/06/21 00:16:43  pwagner
 # Enroute to ending cascading recompiles
 #
