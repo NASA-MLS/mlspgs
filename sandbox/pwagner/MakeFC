@@ -24,8 +24,21 @@ MAX_COPIES = 10
 ONE = 1
 
 # This keeps track of the number of times MakeFC -> Makefile
-COPY_NUMBER = 2
+USE_internal_copynum = no
+
+ifeq ($(USE_internal_copynum),yes)
+	COPY_NUMBER = 16
+else
+	COPY_NUMBER := $(shell echo Make.old* | wc -w)
+#	COPY_NUMBER := $(shell expr $(COPY_NUMBER) + 1)
+endif
+
+ifeq ($(COPY_NUMBER),"")
+	COPY_NUMBER := 0
+endif
+
 NEXT_COPY := $(shell expr $(COPY_NUMBER) + 1)
+LAST_COPY := $(shell expr $(COPY_NUMBER) - 1)
 
 
 # This determines the command by which MakeFC looks like Makefile
@@ -117,23 +130,34 @@ reset_copy:
 # For internal use
 internalmakefile:
 	@if [ -f Makefile ] ; then \
-		mv Makefile Makefile.old ;\
+		if [ $(USE_internal_copynum) = "yes" ] ; then \
+			mv Makefile Make.old.$(LAST_COPY) ;\
+		elif [ -f Make.old.1 ] ; then \
+			mv Makefile Make.old.$(NEXT_COPY) ;\
+		else  \
+			mv Makefile Make.old.1 ;\
+		fi ; \
 	fi ; \
 	$(LOOKS_LIKE_line)
 
 internalreset_copy:
-	@rm -f temp.Makefile
-	@sed 's/COPY_NUMBER = '$(COPY_NUMBER)'/COPY_NUMBER = '$(ONE)'/' \
-	 $(MakeFName) > temp.Makefile
-	@mv temp.Makefile $(MakeFName)
+	@rm -f temp.Makefile Make.old.*
+	@echo sed 's/COPY_NUMBER = '$(COPY_NUMBER)'/COPY_NUMBER = '$(NEXT_COPY)'/'
+	if [ $(USE_internal_copynum) = "yes" ] ; then \
+		sed 's/COPY_NUMBER = '$(COPY_NUMBER)'/COPY_NUMBER = '$(ONE)'/' \
+	 $(MakeFName) > temp.Makefile ; \
+		mv temp.Makefile $(MakeFName) ; \
+	fi
 
 internaladd_copy:
 	@rm -f temp.Makefile
-	@sed 's/COPY_NUMBER = '$(COPY_NUMBER)'/COPY_NUMBER = '$(NEXT_COPY)'/' \
-	 $(MakeFName) > temp.Makefile
-	@mv temp.Makefile $(MakeFName)
+	@echo sed 's/COPY_NUMBER = '$(COPY_NUMBER)'/COPY_NUMBER = '$(NEXT_COPY)'/'
+	if [ $(USE_internal_copynum) = "yes" ] ; then \
+		sed 's/COPY_NUMBER = '$(COPY_NUMBER)'/COPY_NUMBER = '$(NEXT_COPY)'/' \
+	 $(MakeFName) > temp.Makefile ; \
+		mv temp.Makefile $(MakeFName) ; \
+	fi
 
+#---------------------------------------------------------------
+# $Log$
 #
-	
- 
-

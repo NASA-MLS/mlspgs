@@ -31,7 +31,14 @@ MAX_COPIES = 10
 ONE = 1
 
 # This keeps track of the number of times MakeFC -> Makefile
-COPY_NUMBER = 4
+USE_internal_copynum = no
+
+ifeq ($(USE_internal_copynum),yes)
+	COPY_NUMBER = 1
+else
+	COPY_NUMBER := $(shell echo srclib/Make.dep.* | wc -w)
+endif
+
 NEXT_COPY := $(shell expr $(COPY_NUMBER) + 1)
 
 # ---------------------- Paths to special directories
@@ -426,6 +433,13 @@ substarg: substars
 	
 # For internal use
 
+internaladd_copy:
+#	@rm -f temp.Makefile
+#	@sed 's/COPY_NUMBER = '$(COPY_NUMBER)'/COPY_NUMBER = '$(NEXT_COPY)'/' \
+#	 $(MakeFName) > temp.Makefile
+#	@mv temp.Makefile $(MakeFName)
+	@echo "MakeFC copy number $(COPY_NUMBER) incremented by 1"
+
 # Automatically called to keep number of files Make.dep.nn under MAX_COPIES
 internalcleanup:
 	@echo "Automatic housekeeping in ./ $(SUBDIRS) srclib"; \
@@ -459,22 +473,6 @@ internaldepends:
         sed 's/OBJS =/srclib_objs =/' Makefile.dep > temp.dep; \
         mv temp.dep Makefile.dep
 
-makefilesintests:
-	@echo "Copying or linking MakeFC to Makefile in $(tests_sub_dirs)"; \
-	 for dir in $(tests_sub_dirs); do \
-	 	if [ -d $$dir ] ; then \
-	  		cd $$dir; \
-			if [ -f Makefile ] ; then \
-				rm -f Makefile.old ;\
-				mv Makefile Makefile.old ;\
-			fi ; \
-			if [ -f MakeFC ] ; then \
-				$(LOOKS_LIKE_line) ;\
-			fi ; \
-	 		cd ../..; \
-		fi; \
-	done
-
 internalmakefile:
 	@echo "Copying or linking MakeFC to Makefile in ./ $(SUBDIRS)"; \
 	if [ -f Makefile ] ; then \
@@ -507,14 +505,23 @@ internalreset_copy:
 #	@sed 's/COPY_NUMBER = '$(COPY_NUMBER)'/COPY_NUMBER = '$(ONE)'/' \
 #	 $(MakeFName) > temp.Makefile
 #	@mv temp.Makefile $(MakeFName)
-	@echo "MakeFC copy number $(COPY_NUMBER)"
+	@echo "MakeFC copy number reset from $(COPY_NUMBER) to 0"
 
-internaladd_copy:
-#	@rm -f temp.Makefile
-#	@sed 's/COPY_NUMBER = '$(COPY_NUMBER)'/COPY_NUMBER = '$(NEXT_COPY)'/' \
-#	 $(MakeFName) > temp.Makefile
-#	@mv temp.Makefile $(MakeFName)
-	@echo "MakeFC copy number $(COPY_NUMBER)"
+makefilesintests:
+	@echo "Copying or linking MakeFC to Makefile in $(tests_sub_dirs)"; \
+	 for dir in $(tests_sub_dirs); do \
+	 	if [ -d $$dir ] ; then \
+	  		cd $$dir; \
+			if [ -f Makefile ] ; then \
+				rm -f Makefile.old ;\
+				mv Makefile Makefile.old ;\
+			fi ; \
+			if [ -f MakeFC ] ; then \
+				$(LOOKS_LIKE_line) ;\
+			fi ; \
+	 		cd ../..; \
+		fi; \
+	done
 
 show_copy:
 	@echo "MakeFC copy number $(COPY_NUMBER)"
@@ -555,6 +562,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.28  2001/03/23 17:12:39  pwagner
+# Realized mistake--cvs will corrupt this version
+#
 # Revision 1.27  2001/03/23 00:39:49  pwagner
 # Added internal targets, copy number, etc.
 #
