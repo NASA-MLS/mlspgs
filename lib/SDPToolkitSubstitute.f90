@@ -12,6 +12,7 @@
 !  CHARACTER (LEN=256) :: Id = &
 !       "$Id$"
 !  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
 
 
@@ -173,6 +174,9 @@
 
 !
 ! $Log$
+! Revision 2.7  2002/10/08 00:09:13  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.6  2002/04/18 15:41:26  hcp
 ! Added two functions that have appeared in he5lib/MLSFiles.f90 . They
 ! don't work, but at least you don't get link errors.
