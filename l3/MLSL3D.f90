@@ -46,8 +46,9 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
 
    CHARACTER (LEN=480) :: msr
    CHARACTER (LEN=1), POINTER :: anText(:)
+   CHARACTER (LEN=DATE_LEN) :: mis_Days(maxWindow)
 
-   INTEGER :: i, l2Days
+   INTEGER :: i, l2Days, mis_l2Days
 
    REAL(r8), POINTER :: avgPer(:)
 
@@ -65,7 +66,7 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
 ! Read all the l2gp data which exist in the input window for that product
 
       CALL ReadL2GPProd(cfProd(i)%l3prodNameD, cfProd(i)%fileTemplate, &
-                        pcf%l2StartDay, pcf%l2EndDay, l2Days, l2gp)
+                        pcf%l2StartDay, pcf%l2EndDay, l2Days, mis_l2Days, mis_Days, l2gp)
 
 ! If no data , go on to the next product
 
@@ -83,7 +84,7 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
 ! CORE processing
  
       CALL DailyCoreProcessing(cfDef, cfProd(i), pcf, l2Days, l2gp, avgPer, l3sp, &
-                               l3dm, dmA, dmD, l3r, residA, residD, flags)
+                               l3dm, dmA, dmD, l3r, residA, residD, mis_l2Days, mis_Days, flags)
 
 ! Check the output data and place them into the appropriate files.  Write the
 ! l3dm metadata.  Perform any deallocations needed within the product loop.
