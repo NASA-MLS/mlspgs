@@ -12,7 +12,7 @@ module L2PC_m
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
   use Intrinsic, only: Lit_Indices, L_CHANNEL, L_GEODALTITUDE, L_ZETA, L_NONE, L_VMR, &
     & L_RADIANCE, L_PTAN, L_NONE, L_INTERMEDIATEFREQUENCY, L_LATITUDE, L_FIELDAZIMUTH, &
-    & L_ROWS, L_COLUMNS
+    & L_ROWS, L_COLUMNS, L_ADOPTED, L_TEMPERATURE, PHYQ_DIMENSIONLESS, PHYQ_TEMPERATURE, PHYQ_VMR
   use machine, only: io_error
   use MLSCommon, only: R8, RM, R4, FindFirst
   use VectorsModule, only: assignment(=), DESTROYVECTORINFO, COPYVECTOR, &
@@ -32,7 +32,9 @@ module L2PC_m
   use Output_m, only: output
   use Parse_Signal_m, only: Parse_Signal
   use QuantityTemplates, only: ADDQUANTITYTEMPLATETODATABASE, QUANTITYTEMPLATE_T, &
-    & SETUPNEWQUANTITYTEMPLATE, INFLATEQUANTITYTEMPLATEDATABASE
+    & SETUPNEWQUANTITYTEMPLATE, INFLATEQUANTITYTEMPLATEDATABASE, &
+    & DESTROYQUANTITYTEMPLATECONTENTS, COPYQUANTITYTEMPLATE, NULLIFYQUANTITYTEMPLATE, &
+    & COPYQUANTITYTEMPLATE
   use String_Table, only: GET_STRING
   use TOGGLES, only: TAB, TOGGLE, SWITCHES
   use Tree, only: DECORATION, NSONS, SUBTREE
@@ -193,35 +195,40 @@ contains ! ============= Public Procedures ==========================
       return
     endif
     ! Use the clone option to avoid fussyness with vector templates
-    call CopyVector ( vector, sourceVector, clone=.true. )
+    call CopyVector ( vector, sourceVector, allowNameMismatch=.true. )
   end subroutine LoadVector
 
   ! ----------------------------------- AdoptVectorTemplate --
-  type (VectorTemplate_T) function AdoptVectorTemplate ( name, quantityTemplates, source ) &
+  type (VectorTemplate_T) function AdoptVectorTemplate ( bin, name, quantityTemplates, source, message ) &
     & result ( vectorTemplate )
     ! This function is used to import a vector template from our private l2pc database
     ! into the mainstream database.  It also adopts the individual quantities into
-    ! the mainstream quantity template database.  Note that the quantities are shallow
-    ! copied, so be very careful with the chunk loop which will deallocate things in a nasty way.
-    use String_Table, only: Display_STRING
+    ! the mainstream quantity template database.
 
     ! Dummy arguments
-    integer, intent(in) :: NAME         ! Name of MATRIX (not vector tempalte!)
+    integer, intent(in) :: BIN          ! Name of MATRIX
+    integer, intent(in) :: NAME         ! Name for new vector template
     type(QuantityTemplate_T), dimension(:), pointer :: QUANTITYTEMPLATES ! Mainstream database
     type(VectorTemplate_T), dimension(:), pointer :: VECTORTEMPLATES ! Mainstream database
     integer, intent(in) :: SOURCE       ! L_COLUMNS, L_ROWS
+    character (len=*), intent(out) :: MESSAGE ! Error message
 
     ! Local variables
     integer :: I                        ! Array index
     type(VectorTemplate_T), pointer :: SOURCETEMPLATE ! Sought vector template
     type(Matrix_T), pointer :: M        ! The matrix
     integer :: QTY                      ! Loop counter
+    type(QuantityTemplate_T) :: QT      ! A template
 
     ! Executable code
+    message = ''
     call NullifyVectorTemplate ( vectorTemplate )
 
-    i = FindFirst ( l2pcDatabase%name == name )
-    if ( i == 0 ) return
+    i = FindFirst ( l2pcDatabase%name == bin )
+    if ( i == 0 ) then
+      message = 'No such l2pc bin found'
+      return
+    end if
 
     m => l2pcDatabase(i)
     if ( source == l_rows ) then
@@ -231,15 +238,33 @@ contains ! ============= Public Procedures ==========================
     end if
 
     vectorTemplate = sourceTemplate
+    vectorTemplate%name = name
     ! We need our own quantities array to point to the mainstream database
     nullify ( vectorTemplate%quantities )
     call Allocate_test ( vectorTemplate%quantities, vectorTemplate%noQuantities, &
       & 'adopted vectorTemplate%quantities', ModuleName )
     ! Copy each quantity from the l2pc database into the mainstream one
     do qty = 1, vectorTemplate%noQuantities
-      vectorTemplate%quantities(qty) = AddQuantityTemplateToDatabase ( quantityTemplates, &
-        & l2pcQTs ( sourceTemplate%quantities(qty) ) )
+      call CopyQuantityTemplate ( qt, l2pcQTs ( sourceTemplate%quantities(qty) ) )
+      i = FindFirst ( quantityTemplates%name == qt%name )
+      if ( i /= 0 ) then
+        ! Found this quantity already. Is it marked as one to be adopted
+        if ( quantityTemplates(i)%quantityType == l_adopted ) then
+          vectorTemplate%quantities(qty) = i
+          ! Shallow copy this into the database over the 'adopted' placeholder,
+          ! Destroy old placeholder first.
+          call DestroyQuantityTemplateContents ( quantityTemplates(i) )
+          quantityTemplates(i) = qt
+        else
+          call get_string ( qt%name, message, strip=.true. )
+          message = 'Quantity ' // trim(message) // ' already exist, cannot adopt'
+        end if
+      else
+        vectorTemplate%quantities(qty) = AddQuantityTemplateToDatabase ( quantityTemplates, qt )
+      end if
+      call NullifyQuantityTemplate ( qt ) ! To avoid treading on one in database
     end do
+    print*,'Quantities:', vectorTemplate%quantities
   end function AdoptVectorTemplate
 
   ! -----------------------------------  Close_L2PC_File  -----
@@ -299,7 +324,6 @@ contains ! ============= Public Procedures ==========================
     integer :: QUANTITY                 ! Loop index
     integer :: VECTOR                   ! Loop index
 
-    type (QuantityTemplate_T), pointer :: Qt ! Temporary pointer
     type (Vector_T), pointer :: V       ! Temporary pointer
 
     ! Exectuable code
@@ -311,13 +335,9 @@ contains ! ============= Public Procedures ==========================
       end if
       
       do quantity = 1, size(v%quantities)
-        qt => v%quantities(quantity)%template
-        call deallocate_test (qt%surfs, 'qt%surfs', ModuleName)
-        call deallocate_test (qt%phi, 'qt%phi', ModuleName)
-        call deallocate_test (v%quantities(quantity)%values, 'q%values',&
-          & ModuleName)
+        call DestroyQuantityTemplateContents (v%quantities(quantity)%template )
       end do
-      deallocate (v%quantities)
+      call DestroyVectorInfo ( v )
     end do
     
     ! Destory kStar
@@ -1399,6 +1419,7 @@ contains ! ============= Public Procedures ==========================
     integer :: SIGNAL                   ! Index
     integer :: STATUS                   ! Flag from HDF
     integer :: STRINGINDEX              ! A string index
+    integer :: UNIT                     ! Units for quantity
     integer :: VERTICALCOORDINATE       ! Enumeratire
     integer :: VID                      ! HDF5 ID of vector group
     integer :: VTINDEX                  ! Index of vector template
@@ -1488,6 +1509,7 @@ contains ! ============= Public Procedures ==========================
       molecule = 0
       radiometer = 0
       frequencyCoordinate = l_none
+      unit = phyq_dimensionless
       select case ( quantityType )
       case ( l_vmr )
         call GetHDF5Attribute ( qID, 'molecule', word )
@@ -1500,6 +1522,7 @@ contains ! ============= Public Procedures ==========================
         else
           frequencyCoordinate = l_none
         end if
+        unit = phyq_vmr
       case ( l_radiance )
         call GetHDF5Attribute ( qID, 'signal', word )
         call Parse_Signal ( word, sigInds, sideband=sideband)
@@ -1507,6 +1530,9 @@ contains ! ============= Public Procedures ==========================
         verticalCoordinate = l_geodAltitude
         frequencyCoordinate = l_channel
         call deallocate_test(sigInds,'sigInds',ModuleName)
+        unit = phyq_temperature
+      case ( l_temperature )
+        unit = phyq_temperature
       case default
       end select
 
@@ -1538,6 +1564,7 @@ contains ! ============= Public Procedures ==========================
       qt%sideband = sideband
       qt%verticalCoordinate = verticalCoordinate
       qt%frequencyCoordinate = frequencyCoordinate
+      qt%unit = unit
       
       if (qt%coherent) then
         noInstancesOr1 = 1
@@ -1704,6 +1731,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.69  2004/01/24 01:01:22  livesey
+! Improvements to the adoption stuff
+!
 ! Revision 2.68  2004/01/23 19:07:49  livesey
 ! More on adoption / loading
 !
