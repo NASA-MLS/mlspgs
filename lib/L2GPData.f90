@@ -94,7 +94,6 @@ MODULE L2GPData                 ! Creation, manipulation and I/O for L2GP Data
      ! dimensioned (nFreqs, nLevels, nTimes)
 
      CHARACTER (len=1), POINTER, DIMENSION(:) :: status
-     !                (status is a reserved word in F90)
      REAL (r8), POINTER, DIMENSION(:) :: quality
      ! Both the above dimensioned (nTimes)
 
@@ -1081,9 +1080,7 @@ CONTAINS ! =====     Public Procedures     =============================
     ! 1-D status & quality fields
 
     status = swwrfld(swid, DATA_FIELD3, start(3:3), stride(3:3), edge(3:3), &
-         l2gp%status) ! absoft f90 barfs here
-    !status=0 
-    print*,"Warning. Writing of status field disabled"
+         l2gp%status)
     IF ( status == -1 ) THEN
        msr = WR_ERR // DATA_FIELD3
        CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
@@ -1123,13 +1120,9 @@ CONTAINS ! =====     Public Procedures     =============================
 
     ! Exectuable code
 
-    PRINT*,'Calling create'
     CALL OutputL2GP_createFile (l2gp, l2FileHandle, swathName)
-    PRINT*,'Calling write geo'
     CALL OutputL2GP_writeGeo (l2gp, l2FileHandle, swathName)
-    PRINT*,'Calling write data'
     CALL OutputL2GP_writeData (l2gp, l2FileHandle, swathName)
-    PRINT*,'Done'
 
   END SUBROUTINE WriteL2GPData
 
@@ -1139,6 +1132,9 @@ END MODULE L2GPData
 
 !
 ! $Log$
+! Revision 2.15  2001/02/09 17:51:01  livesey
+! Removed some print statements.
+!
 ! Revision 2.14  2001/02/09 17:45:15  livesey
 ! Another fix to dimension ordering.
 !
