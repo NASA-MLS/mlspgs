@@ -398,7 +398,7 @@ contains ! =====     Public procedures     =============================
              l+l_gphPrecision, l+l_hydrostatic, l+l_addnoise, l+l_refract, &
              l+l_isotope, l+l_iwcfromextinction, l+l_l1b, l+l_l2aux, l+l_l2gp, &
              l+l_manipulate, l+l_magneticModel, l+l_magAzEl, &
-             l+l_negativePrecision, l+l_offsetRadiance, l+l_profile, &
+             l+l_negativePrecision, l+l_offsetRadiance, l+l_profile, l+l_quality, &
              l+l_reflectorTempModel, l+l_rotateField, l+l_vector, &
              l+l_scaleOverlaps, l+l_special, l+l_splitSideband, &
              l+l_resetUnusedRadiances, &
@@ -590,6 +590,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_coordinate, t+t_vGridCoord, n+n_field_type, &
              begin, f+f_formula, t+t_numeric_range, n+n_field_type, &
              begin, f+f_number, t+t_numeric, n+n_field_type, &
+             begin, f+f_resolution, t+t_numeric, n+n_field_type, &
              begin, f+f_start, t+t_numeric, n+n_field_type, &
              begin, f+f_stop, t+t_numeric, n+n_field_type, &
              begin, f+f_values, t+t_numeric, n+n_field_type, &
@@ -706,7 +707,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_h2oQuantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
              begin, f+f_h2oPrecisionQuantity, s+s_vector, f+f_template, f+f_quantities, &
-                    n+n_dot /) )
+                    n+n_dot, &
+             begin, f+f_height, t+t_numeric, n+n_field_type /) )
     call make_tree ( (/ & ! Continuing for s_fill...
              begin, f+f_ignoreGeolocation, t+t_boolean, n+n_field_type, &
              begin, f+f_ignoreNegative, t+t_boolean, n+n_field_type, &
@@ -769,6 +771,7 @@ contains ! =====     Public procedures     =============================
                     n+n_dot /), &
              continue = .true. )
     call make_tree ( (/ & ! STILL Continuing for s_fill...
+             begin, f+f_scale, t+t_numeric, n+n_field_type, &
              begin, f+f_scVel, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
              begin, f+f_scVelECI, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
              begin, f+f_scVelECR, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
@@ -1178,6 +1181,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.359  2004/03/10 22:19:43  livesey
+! Added quality fill method and resolution argument to explicit vGrids
+!
 ! Revision 2.358  2004/02/17 14:07:54  livesey
 ! Added functionality to the boxCar and binned fills
 !
