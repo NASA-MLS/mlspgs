@@ -259,10 +259,10 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
     NOsurf=temp%template%noSurfs
     if (Nosurf /= GPH%template%nosurfs) then
-      call MLSMessageModule ( MLSMSG_Error, ModuleName, &
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'number of levels in gph does not match no of levels in temp' )
      else if (radiance%template%nosurfs /= ptan%template%nosurfs) then
-        call MLSMessageModule ( MLSMSG_Error, ModuleName, &
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'number of levels in radiance does not match no of levels in ptan' )
  
    endif
