@@ -496,7 +496,7 @@ contains ! =====     Public Procedures     =============================
             qty => GetVectorQtyByTemplateIndex ( vectors(sourceVectors(source)), &
               & sourceQuantities(source) )
             hdfNameIndex = qty%label
-            call display_string ( hdfNameIndex, strip=.true., advance='yes' )
+            if(DEEBUG)call display_string ( hdfNameIndex, strip=.true., advance='yes' )
             call get_string ( hdfNameIndex, nameBuffer(source), strip=.true. )
             if(DEEBUG)print*,'Done'
           enddo
@@ -728,7 +728,7 @@ contains ! =====     Public Procedures     =============================
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSSignals_M, only: GetSignalName
     use MoreTree, only: GET_BOOLEAN, GET_FIELD_ID, GET_SPEC_ID
-    use String_Table, only: DISPLAY_STRING, GET_STRING
+    use String_Table, only: GET_STRING
     use Symbol_Table, only: ENTER_TERMINAL
     use Symbol_Types, only: T_STRING
     use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, NULL_TREE, SOURCE_REF, &
@@ -907,7 +907,7 @@ contains ! =====     Public Procedures     =============================
     use L2GPData, only: AddL2GPToDatabase, ExpandL2GPDataInPlace, &
       & L2GPData_T, SetupNewL2GPRecord, RGP
     use MLSCommon, only: R4, R8, RV
-    use String_Table, only: DISPLAY_STRING, GET_STRING
+    use String_Table, only: GET_STRING
     use TOGGLES, only: GEN, TOGGLE, LEVELS, SWITCHES
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, NULL_TREE, SOURCE_REF, &
@@ -1357,6 +1357,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.93  2003/09/12 21:45:52  pwagner
+! Only prints l2gp label during DirectWrite if DEEBUG
+!
 ! Revision 2.92  2003/09/04 22:40:04  pwagner
 ! Gets dgg file name from dgg PCFid when DirectWrite usingPCF
 !
