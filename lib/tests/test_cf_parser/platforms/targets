@@ -1,0 +1,26 @@
+include ../Makefile.dep
+
+# "$Id$"
+
+# ========================================================================
+test: $(OBJS) $(libdir)/libmls.a
+	$(FC) -o test $(OBJS) \
+                      -L$(libdir) -lmls \
+	-L$(PGSTK) -lPGSTK  \
+
+out.test: test $S/in.test
+	./test -a $S/in.test out.test
+# ========================================================================
+
+clean:
+	rm -f *.o *.mod test out.test
+
+tar:
+	rm -f test.tgz
+	tar hcvzf test.tgz * --exclude \*.o --exclude \*.mod --exclude test
+
+# ========================================================================
+# $Log$
+# Revision 1.1  2000/10/18 22:07:30  pwagner
+# First commit
+#

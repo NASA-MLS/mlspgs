@@ -1,0 +1,12 @@
+#Makefile.dep -- a file to be included by a Makefile
+#to compile a Fortran 9x program or library
+OBJS = \
+getCF_m.o    table_dumper.o    table_generator.o    test.o  \
+ 
+getCF_m.o : getCF_m.f90 table_dumper.o table_generator.o 
+table_dumper.o : table_dumper.f90 
+table_generator.o : table_generator.f90 
+test.o : test.f90 getCF_m.o 
+ 
+#End of Makefile.dep
+ 
