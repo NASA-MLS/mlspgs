@@ -5,6 +5,7 @@
 module MLSFiles               ! Utility file routines
   !===============================================================================
   use Hdf, only: DFACC_CREATE, DFACC_READ
+!  use Hdf5, only: h5fopen_f, h5fclose_f
   use HDFEOS, only: gdclose, gdopen, swclose, swopen
   use HDFEOS5, only: he5_swclose, he5_swopen, he5_swinqswath
   use machine, only: io_error
@@ -40,7 +41,12 @@ module MLSFiles               ! Utility file routines
 ! GetPCFromRef       Turns a FileName into the corresponding PC
 ! mls_io_gen_openF   Opens a generic file using either the toolbox or else a Fortran OPEN statement
 ! mls_io_gen_closeF  Closes a generic file using either the toolbox or else a Fortran OPEN statement
+! mls_inqswath       A wrapper for doing swingswath for versions 4 and 5
+! mls_sfstart        Opens an hdf file for writing metadata
+! mls_sfend          Closes a file opened by mls_sfstart
 ! split_path_name    splits the input full_file_name into its components path and name
+! hdf2hdf5_fileaccess
+!                    Translates version 4 hdf access codes to version 5
 
   ! This isn't NameLen because it may have a path prefixed
   integer, parameter :: MAXFILENAMELENGTH=PGSd_PC_FILE_PATH_MAX
@@ -58,7 +64,8 @@ module MLSFiles               ! Utility file routines
   integer, parameter :: MUSTSUPPLYFILENAMEORPC=NOFREEUNITS+1
   integer, parameter :: NOPCIFNOTOOLKIT=MUSTSUPPLYFILENAMEORPC+1
 
-  ! Now we have the legal unit numbers that files may be assigned
+  ! The only legal unit numbers that files may be assigned
+  ! for use by Fortran opens, closes, reads and writes
 
   integer, parameter :: bottom_unit_num=1
   integer, parameter :: top_unit_num=99
@@ -754,7 +761,7 @@ contains
       integer :: mls_inqswath
 
     ! begin
-    mls_inqswath = he5_swinqswath(FileName, swathList, strBufSize)
+    mls_inqswath = he5_swinqswath(trim(FileName), swathList, strBufSize)
 
   end function mls_inqswath
 
@@ -770,13 +777,21 @@ contains
     integer(i4), intent(IN)       :: FileAccess
     integer                       :: mls_sfstart
     integer                       :: returnStatus
+    integer                       :: nameLength
+    integer                       :: access_prp_default
     
+    integer, parameter :: h5p_default_f = 0
     integer, external :: PGS_MET_SFstart
 
     ! begin
 !    mls_sfstart = PGS_MET_SFstart(FileName, hdf2hdf5_fileaccess(FileAccess))
-     returnStatus = PGS_MET_SFstart(FileName, hdf2hdf5_fileaccess(FileAccess), &
-      & mls_sfstart)
+     returnStatus = PGS_MET_SFstart(trim(FileName), &
+      & hdf2hdf5_fileaccess(FileAccess), mls_sfstart)
+!     nameLength = LEN(FileName)
+!     returnStatus = h5fopen_c(FileName, nameLength, &
+!      & hdf2hdf5_fileaccess(FileAccess), access_prp_default, &
+!      & mls_sfstart)
+!     mls_sfstart he5_swopen(trim(
      if (returnStatus /= 0 ) then
        call output ('Try again--PGS_MET_SFstart still unhappy; returns ')
        call output (returnStatus, advance='yes')
@@ -799,7 +814,9 @@ contains
     integer, external :: PGS_MET_SFend
 
     ! begin
+!    mls_sfend = h5fclose_c(sdid)
     mls_sfend = PGS_MET_SFend(sdid)
+!    mls_sfend = 0
 
   end function mls_sfend
 
@@ -809,3 +826,6 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 1.1  2002/01/18 00:51:22  pwagner
+! First commit
+!
