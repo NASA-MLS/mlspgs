@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module FAST_DELTA_M
   use MLSCommon, only: I4, R8
   use ELLIPSE_M, only: ELLIPSE
@@ -82,6 +85,9 @@ contains
 !
 end module FAST_DELTA_M
 ! $Log$
+! Revision 1.5  2001/03/31 23:40:55  zvi
+! Eliminate l2pcdim (dimension parameters) move to allocatable ..
+!
 ! Revision 1.4  2001/03/30 20:28:21  zvi
 ! General fix-up to get rid of COMMON BLOCK (ELLIPSE)
 !

@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module CREATE_BETA_M
   use MLSCommon, only: I4, R8
   use ABS_CS_AIR_CONT_M, only: ABS_CS_AIR_CONT
@@ -170,6 +173,9 @@ contains
   End Subroutine Create_beta
 end module CREATE_BETA_M
 ! $Log$
+! Revision 1.11  2001/05/15 03:47:26  zvi
+! Adding derivative flag to beta calculations
+!
 ! Revision 1.10  2001/05/14 23:16:31  zvi
 ! Added Freq. Gap test..
 !

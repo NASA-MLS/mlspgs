@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module GET_CHI_ANGLES_M
   use MLSCOMMON, only: I4, R8
   use L2PC_FILE_PARAMETERS, only: DEG2RAD
@@ -110,6 +113,9 @@ Real(r8) :: r,t,dh,tanx,cse,ht,Rs_eq,ngrid,schi
 END SUBROUTINE get_chi_angles
 end module GET_CHI_ANGLES_M
 ! $Log$
+! Revision 1.9  2001/04/07 00:23:05  vsnyder
+! Make sure IER is defined
+!
 ! Revision 1.8  2001/03/31 23:40:55  zvi
 ! Eliminate l2pcdim (dimension parameters) move to allocatable ..
 !

@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module GENERIC_DELTA_INTEGRAL_M
   use MLSCOmmon, only: I4, R8
   use GL6P, only: GW, NG
@@ -253,6 +256,9 @@ contains
   End Subroutine generic_delta_integral
 End module GENERIC_DELTA_INTEGRAL_M
 ! $Log$
+! Revision 1.4  2001/03/30 20:28:21  zvi
+! General fix-up to get rid of COMMON BLOCK (ELLIPSE)
+!
 ! Revision 1.3  2001/03/29 08:51:01  zvi
 ! Changing the (*) toi (:) everywhere
 !

@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module D_DELTA_DT_M
   use ELLIPSE_M, only: ELLIPSE
   use GL6P, only: GW, NG
@@ -346,5 +349,8 @@ contains
 !
 end module D_DELTA_DT_M
 ! $Log$
+! Revision 1.8  2001/03/31 23:40:55  zvi
+! Eliminate l2pcdim (dimension parameters) move to allocatable ..
+!
 ! Revision 1.1  2000/05/04 18:12:04  vsnyder
 ! Initial conversion to Fortran 90

@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module GET_LUN
   implicit NONE
   public
@@ -26,6 +29,9 @@ module GET_LUN
 !---------------------------------------------------------------------------
 end module GET_LUN
 ! $Log$
+! Revision 1.3  2001/03/05 23:35:30  zvi
+! Recovering get_lun.f90 from Paul
+!
 ! Revision 1.1  2001/01/31 23:57:43  zvi
 ! Various changes..
 !

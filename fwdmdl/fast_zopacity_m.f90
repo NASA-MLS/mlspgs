@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module FAST_ZOPACITY_M
   use MLSCommon, only: I4, R8
   implicit NONE
@@ -74,6 +77,9 @@ contains
 !
 end module FAST_ZOPACITY_M
 ! $Log$
+! Revision 1.4  2001/03/31 23:40:55  zvi
+! Eliminate l2pcdim (dimension parameters) move to allocatable ..
+!
 ! Revision 1.3  2001/03/29 08:51:01  zvi
 ! Changing the (*) toi (:) everywhere
 !

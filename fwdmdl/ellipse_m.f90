@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module ELLIPSE_M
   use MLSCommon, only: R8
   implicit NONE
@@ -34,5 +37,8 @@ module ELLIPSE_M
   End Type ELLIPSE
 end module ELLIPSE_M
 ! $Log$
+! Revision 1.1  2001/03/30 18:38:49  zvi
+! The code replace ELLIPSE common block
+!
 ! Revision 1.1  2000/05/04 18:12:05  vsnyder
 ! Initial conversion to Fortran 90

@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module GET_DRAD_NOTDER_M
   use MLSCommon, only: I4, R8
   implicit NONE
@@ -57,5 +60,8 @@ contains
   End Subroutine GET_DRAD_NOTDER
 end module GET_DRAD_NOTDER_M
 ! $Log$
+! Revision 1.1  2001/03/31 23:18:08  zvi
+! Initial release - get_drad w/o Temp. derivatives
+!
 ! Revision 1.1  2001/03/31 18:12:05  Z.Shippony
 ! Initial conversion to Fortran 90

@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module FREQ_AVG_M
   use D_CSPLINE_M, only: CSPLINE
   use DSIMPSON_MODULE, only: SIMPS
@@ -35,6 +38,9 @@ contains
 
 end module FREQ_AVG_M
 ! $Log$
+! Revision 1.5  2001/03/29 08:51:01  zvi
+! Changing the (*) toi (:) everywhere
+!
 ! Revision 1.4  2001/03/24 01:17:36  livesey
 ! Bug fix.
 !

@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module ABS_CS_AIR_CONT_M
   implicit NONE
   private
@@ -34,6 +37,9 @@ contains
   End function abs_cs_air_cont
 end module ABS_CS_AIR_CONT_M
 ! $Log$
+! Revision 1.5  2001/04/20 23:29:45  zvi
+! Setting the correct (Lab) numbers for N2, fits for EOS for now ..
+!
 ! Revision 1.1  2000/05/04 18:12:04  vsnyder
 ! Initial conversion to Fortran 90
 !

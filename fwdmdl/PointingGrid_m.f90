@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module PointingGrid_m
 
   ! Read the pointing grid file.  Make a database of pointing grids.
@@ -284,6 +287,9 @@ outer2: do
 end module PointingGrid_m
 
 ! $Log$
+! Revision 1.16  2001/05/04 00:49:43  livesey
+! Let destroy quit if nothing to destroy
+!
 ! Revision 1.15  2001/04/26 02:36:52  vsnyder
 ! Moved *_indices declarations from init_tables_module to intrinsic
 !

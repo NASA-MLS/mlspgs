@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module GEOC_GEOD_CONV_M
   use MLSCommon, only: R8
   use Geometry, only: GeodToGeocLat
@@ -79,6 +82,9 @@ contains
 end module GEOC_GEOD_CONV_M
 
 ! $Log$
+! Revision 1.7  2001/03/30 20:28:21  zvi
+! General fix-up to get rid of COMMON BLOCK (ELLIPSE)
+!
 ! Revision 1.6  2001/03/28 19:55:26  vsnyder
 ! Revised some computations to make them more stable.
 ! Corrected units on call to GeodToGeocLat.

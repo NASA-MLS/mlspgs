@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module ABS_CS_LIQ_H2O_M
   implicit NONE
   private
@@ -35,6 +38,9 @@ contains
   End function ABS_CS_LIQ_H2O
 end module ABS_CS_LIQ_H2O_M
 ! $Log$
+! Revision 1.4  2001/01/31 01:08:48  zvi
+! New version of forward model
+!
 ! Revision 1.1  2000/05/04 18:12:04  vsnyder
 ! Initial conversion to Fortran 90
 !

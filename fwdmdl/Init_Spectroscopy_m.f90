@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module Init_Spectroscopy_m
 
   use INTRINSIC, only: Add_Ident, Begin, F, L, N, NADP, P, S, T, T_Numeric, Z
@@ -153,6 +156,9 @@ contains
 end module Init_Spectroscopy_m
 
 ! $Log$
+! Revision 1.4  2001/04/26 02:36:52  vsnyder
+! Moved *_indices declarations from init_tables_module to intrinsic
+!
 ! Revision 1.3  2001/04/04 17:59:42  vsnyder
 ! Insert "USE TREE" because "make depends" can't see the one in "make_tree"
 ! (because of the "include").

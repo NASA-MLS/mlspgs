@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module Comp_Path_Entities_M
   use MLSCommon, only: R8
   use GL6P, only: NG
@@ -133,6 +136,9 @@ end subroutine Comp_Path_Entities
 
 end module Comp_Path_Entities_M
 ! $Log$
+! Revision 1.35  2001/05/16 01:25:21  livesey
+! Removed unnecessary radiance parameter.
+!
 ! Revision 1.34  2001/04/26 22:54:41  zvi
 ! Fixing some phiwindow bug
 !

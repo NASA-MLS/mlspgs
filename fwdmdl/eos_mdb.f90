@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module EOS_MDB
   use MLSCommon, only: I4, R4, R8
   implicit NONE
@@ -47,6 +50,9 @@ module EOS_MDB
 !
 end module EOS_MDB
 ! $Log$
+! Revision 1.6  2001/01/31 01:08:48  zvi
+! New version of forward model
+!
 ! Revision 1.1  2000/05/04 18:12:05  vsnyder
 ! Initial conversion to Fortran 90
 !

@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module DO_T_SCRIPT_M
   use MLSCommon, only: I4, R8
   use PATH_ENTITIES_M, only: PATH_VECTOR
@@ -81,6 +84,9 @@ contains
   End Subroutine DO_T_SCRIPT
 end module DO_T_SCRIPT_M
 ! $Log$
+! Revision 1.6  2001/03/31 23:40:55  zvi
+! Eliminate l2pcdim (dimension parameters) move to allocatable ..
+!
 ! Revision 1.5  2001/03/29 08:51:01  zvi
 ! Changing the (*) toi (:) everywhere
 !
