@@ -4,7 +4,8 @@ OBJS = \
 test_cholesky.o  \
  
 # using f90makedep.pl to calculate dependencies 
-test_cholesky.o: test_cholesky.f90
+test_cholesky.o: test_cholesky.f90 $(dir1)MLSCommon.o $(dir1)MatrixModule_0.o \
+	$(dir1)machine.o
  
 #End of Makefile.dep
  
