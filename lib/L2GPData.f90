@@ -1793,7 +1793,7 @@ contains ! =====     Public Procedures     =============================
       ! l2gp%nTimes = actual_ntimes
     endif
 
-    if ( offset == totNumProfs ) then
+    if ( offset == totNumProfs .or. size(l2gp%l2gpValue,3) == 0 ) then
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
       & "No profiles in this chunk" )
     else
@@ -2055,6 +2055,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.79  2003/09/08 22:51:54  pwagner
+! Simplified and unified read/write of hdfVersions
+!
 ! Revision 2.78  2003/09/04 03:02:53  livesey
 ! Removed some print statements
 !
