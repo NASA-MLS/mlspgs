@@ -51,11 +51,17 @@ MODULE Hdf
       INTEGER FUNCTION sfsdmname(dim_id, dim_name)
         CHARACTER (LEN=*), INTENT (IN) :: dim_name
         INTEGER, INTENT (IN) :: dim_id
-      END FUNCTION sfsdmname   
+      END FUNCTION sfsdmname
+      INTEGER FUNCTION sfsdscale(dim_id, n_values, data_type, data)
+        INTEGER, INTENT(IN) :: dim_id
+        INTEGER, INTENT(IN) :: n_values
+        INTEGER, INTENT(IN) :: data_type
+        DOUBLE PRECISION, INTENT(IN), DIMENSION(*) :: data
+      END FUNCTION sfsdscale
       INTEGER FUNCTION sfwdata(sds_id, start, stride, edges , data)      
         INTEGER, INTENT (IN) :: sds_id
-        INTEGER, INTENT (IN), DIMENSION (:) :: start, stride, edges
-        DOUBLE PRECISION, INTENT (IN), DIMENSION (:,:,:) :: data
+        INTEGER, INTENT (IN), DIMENSION (*) :: start, stride, edges
+        DOUBLE PRECISION, INTENT (IN), DIMENSION (*) :: data
       END FUNCTION sfwdata
       INTEGER FUNCTION sfendacc(sds_id)
         INTEGER, INTENT (IN) :: sds_id
@@ -65,8 +71,8 @@ MODULE Hdf
       END FUNCTION sfend 
       INTEGER FUNCTION sfrdata(sds_id, start, stride, edges , data)      
         INTEGER, INTENT (IN) :: sds_id
-        INTEGER, INTENT (IN), DIMENSION (:) :: start, stride, edges
-        DOUBLE PRECISION, INTENT (OUT), DIMENSION (:,:,:) :: data
+        INTEGER, INTENT (IN), DIMENSION (*) :: start, stride, edges
+        DOUBLE PRECISION, INTENT (OUT), DIMENSION (*) :: data
       END FUNCTION sfrdata
       INTEGER FUNCTION sfn2index(sd_id, sds_name)      
         INTEGER, INTENT (IN) :: sd_id
@@ -81,7 +87,7 @@ MODULE Hdf
         INTEGER, INTENT (IN) :: sds_id
         INTEGER, INTENT (OUT) :: rank, data_type, num_attrs
         CHARACTER (LEN=*), INTENT (OUT) :: sds_name
-        INTEGER, INTENT (IN), DIMENSION (:) :: dimsizes
+        INTEGER, INTENT (IN), DIMENSION (*) :: dimsizes
       END FUNCTION sfginfo
       INTEGER FUNCTION sfgdinfo(dim_id, dim_name, size, data_type, &
       & num_attrs)      
@@ -493,6 +499,9 @@ END MODULE Hdf
 !===============================================================================
 
 !# $Log$
+!# Revision 2.5  2001/03/06 22:41:34  livesey
+!# Changed from assumed size to assumed shape
+!#
 !# Revision 2.4  2001/01/03 00:45:27  pwagner
 !# Changed sfgetinfo to sfginfo
 !#
