@@ -119,7 +119,7 @@ while [ -n "$(echo $1)" ]; do
 	    lightspeed )
 		echo "$HOME/$VERSION";;
 	    desktop )
-		echo "/data/emls/l1b/$L1BVERSION/$YEAR/$DOY/";;
+		echo "/data/emls/l1b/$L1BVERSION/$YEAR/$DOY";;
 	esac
     fi
     if [ $1 == "--sidsoa" ]; then
@@ -175,20 +175,23 @@ while [ -n "$(echo $1)" ]; do
 		echo "/testing/workspace/$MYUSER/$VERSION";;
 	esac
     fi
-    if [ $1 == "--sidsrad" ]; then
-	case $MACHINE in
-	    soundbarrier | scramjet)
-		echo "/data1/$MYUSER";;
-	    lightspeed )
-		echo "$HOME/$VERSION";;
-	    desktop )
-		echo "/testing/workspace/$MYUSER/$VERSION";;
-	esac
-    fi
+#     if [ $1 == "--sidsrad" ]; then
+# 	case $MACHINE in
+# 	    soundbarrier | scramjet)
+# 		echo "/data1/$MYUSER";;
+# 	    lightspeed )
+# 		echo "$HOME/$VERSION";;
+# 	    desktop )
+# 		echo "/testing/workspace/$MYUSER/$VERSION";;
+# 	esac
+#     fi
     shift
 done
 
 # $Log$
+# Revision 1.42  2004/11/11 00:32:20  livesey
+# Moved l2pcs on soundbarrier
+#
 # Revision 1.41  2004/10/09 22:54:17  livesey
 # L2PC files moved at SCF
 #
