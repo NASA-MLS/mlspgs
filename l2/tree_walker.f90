@@ -10,7 +10,7 @@ module TREE_WALKER
   use ForwardModelConfig, only: ForwardModelConfig_T, DestroyFWMConfigDatabase
   use GLOBAL_SETTINGS, only: SET_GLOBAL_SETTINGS
   use GriddedData, only: GriddedData_T
-  use INIT_TABLES_MODULE, only: Field_Indices, Lit_Indices, Spec_Indices, &
+  use INIT_TABLES_MODULE, only: Field_Indices, Lit_Indices, &
     & Z_CHUNKDIVIDE,  Z_CONSTRUCT, Z_FILL, Z_GLOBALSETTINGS, Z_JOIN, &
     & Z_MERGEAPRIORI, Z_MLSSIGNALS, Z_OUTPUT, Z_READAPRIORI, Z_RETRIEVE, &
     & Z_SPECTROSCOPY
@@ -55,7 +55,7 @@ contains ! ====     Public Procedures     ==============================
     integer, intent(out) :: ERROR_FLAG  ! Nonzero means failure
     integer, intent(in) :: FIRST_SECTION! Index of son of root of first n_cf
 
-    CHARACTER (LEN=1), POINTER :: anText(:)
+    CHARACTER (LEN=1), POINTER :: anText(:) => null()
     type (GriddedData_T), dimension(:), pointer :: GriddedData
     integer :: chunkNo                  ! Index of Chunks
     type (MLSChunk_T), dimension(:), pointer :: Chunks ! of data
@@ -159,6 +159,11 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.32  2001/04/10 22:27:47  vsnyder
+! Nullify explicitly instead of with <initialization> so as not to give
+! pointers the SAVE attribute.  <initialization> is NOT executed on each
+! entry to a procedure.
+!
 ! Revision 2.31  2001/04/10 02:46:17  livesey
 ! Working version, no more FMI/TFMI
 !
