@@ -92,7 +92,18 @@ PROG=mlsl2
 #----------------------- Build instructions
 
 $(PROG): $(PROG_prereqs)
-	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
+#	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
+	@case "$(PVM_ROOT)" in \
+	"") \
+		echo "Sorry--PVM_ROOT must be defined to build mlsl2" ; \
+		echo "Try make -f MakeFC configure_pvm" ; \
+		exit 2 ; \
+		;; \
+	*) \
+		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) ; \
+		;; \
+	esac 
+
 
 $(libmls_objs)/libmls.a: $(libmls_f90)
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
@@ -164,6 +175,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.19  2001/04/02 17:42:08  pwagner
+# Builds mlsl2 only if PVM_ROOT defined
+#
 # Revision 2.18  2001/03/14 17:19:37  pwagner
 # Omits write_meta.f90 if Lahey
 #
