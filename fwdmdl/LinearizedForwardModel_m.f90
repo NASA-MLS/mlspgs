@@ -488,7 +488,7 @@ contains ! =====     Public Procedures     =============================
         & ptan%values(:,maf), &           ! NewX
         & resultMapped, &                 ! NewY
         & 'Spline', &                     ! use spline
-        & extrapolate='Constant', &       ! dont extrapolate, clamp
+        & extrapolate='Allow', &          ! Allow extrapolation in radiance
         & dyByDx=dyByDx )
 
       if ( sidebandStart == sidebandStop ) then
@@ -583,6 +583,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.2  2001/10/07 00:23:50  livesey
+! Fixed minor bug with dyByDx
+!
 ! Revision 2.1  2001/10/02 16:51:41  livesey
 ! Removed fmStat%finished and reordered loops in forward models
 !
