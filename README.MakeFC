@@ -3,7 +3,7 @@
 #  Lost? Type 'make -f MakeFC help' from the directory where you see this file
 #
 #    README.MakeFC        Instructions about building the mls software
-# Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+# Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 # "$Id$"
@@ -306,9 +306,6 @@ mostlyclean  removes all binaries created during compilation and linking;
              then deletes the uniquely-named subdirectory containing them
 clean        removes only the .o and .mod files from the subdirectory;
              any library or program files remain
-depends      recalculates dependencies;
-             typically done only after adding/removing a module or adding a
-             "USE ..." line to an existing module; but see update below
 configure    change compiler, (less often) platform/OS, name,
              paths to Toolkit and other necessary libraries
 mark_all_as_uptodate
@@ -316,6 +313,11 @@ mark_all_as_uptodate
 install      moves the binary executable(s) to INSTALLDIR
              also puts shell script versions of each binary executable there
              with names composed of binary + '.sh'; e.g., mlsl1.sh
+update       replaces Makefiles in subdirectories with latest versions;
+             recalculates dependencies; useful after a cvs update; also deletes
+             orphaned .o and .mod files left behind after sources removed;
+             also useful after minor configuration changes to prevent 
+             unnecessary recompilation
 
 (All the following apply only at the top mlspgs level)
 all          builds all the mlslevels
@@ -351,11 +353,6 @@ help--toolkit
 makefile     makes a new symbolic link from MakeFC to Makefile
              at the top level as well as each of the subdirectories;
              useful for older archives before the link became automatic
-update       replaces Makefiles in subdirectories with latest versions;
-             recalculates dependencies; useful after a cvs update; also deletes
-             orphaned .o and .mod files left behind after sources removed;
-             also useful after minor configuration changes to prevent 
-             unnecessary recompilation
 
   If the target is entered exactly as shown below, the
   resulting archive will be an uncompressed .tar file; but with:
@@ -430,11 +427,10 @@ MLSCONFG subdirectories. It uses a more advanced but more fragile system
 designed to forestall excessive recompilation.
 
 It would be desirable to make Makefile.dep a target of prerequisites to force
-it to be updated on any change to the source files. Instead, the only ways to
-change it are by either of the explicit commands "make depends" or, at the
-mlspgs level, "make update".  Among the drawbacks to this are that an outdated
-Makefile.dep is possibly what cvs finds when checking out the archive. See the
-recommendation concerning the update target below.
+it to be updated on any change to the source files. Instead, the only way to
+change it is by the explicit command "make update".  Among the drawbacks to
+this are that an outdated Makefile.dep is possibly what cvs finds when checking
+out the archive. See the recommendation concerning the update target below.
 
 Makefile.dep is created by the shell script util/makemakedep.sh and the perl
 script f90makedep.pl. The latter assumes your perl, or a link to it, is
@@ -463,8 +459,10 @@ become problem-plagued with recent releases of hdf4 and hdf5.
 IMPERFECTIONS AND COMPLICATIONS
 The only combinations of compiler.platform/OS provided for so far are
   Unknown.None
-  NAG.(pc)Linux
+  G95.(pc)Linux
+  IFC.(pc)Linux
   LF95.(pc)Linux
+  NAG.(pc)Linux
   NAG.Sun
   NAG.SGI
   Sun.Sun
@@ -567,6 +565,11 @@ statement. One way to do this is to use the LDOPTS or LAFTER setting (see under
 Advanced Settings). E.g., Archie MacDonald was able to link only by using "make
 LDOPTS='-lsocket'". Fortunately this is now automatically added for Sun
 platforms.
+
+If you add a new module to one of the levels, make sure that neither the module
+name nor the file name duplicate names of a module already in a lineal
+directory. Two directories are lineal if one is a prerequisite of the other.
+E.g., l1 and srclib are lineal, while l3 and fwdmdl are not.
 
 ADVANCED SETTINGS
 These include features which are otherwise given default values which may prove
@@ -683,7 +686,7 @@ LEVELS             A subset of l1 l2 l3 l3m; e.g. LEVELS="l1 l2" skips l3 l3m
 MLSCFILE           Overrides the name of the .configure file
                     (see also HOSTMLSCFILE)
 OMIT               The names of any source files to be excluded; e.g.
-                     make depends OMIT="wont_compile.f90 never_would.f90"
+                     make update OMIT="wont_compile.f90 never_would.f90"
 TAR                Overrides name of tar command; e.g. path to GNU tar 
                    in case your tar won't gzip for targets *targ
 
@@ -740,10 +743,13 @@ export FFTW_ROOT
 export FOPTS
 export LDOPTS
 
--pw                           2000-Oct-24 to 2003-Mar-03
+-pw                           2000-Oct-24 to 2003-May-01
 EOF
 exit
 # $Log$
+# Revision 1.35  2003/03/03 18:39:43  pwagner
+# install now works within each mlslevel, l1 holds 3 executables, blah--hdf4/5 dropped
+#
 # Revision 1.34  2002/06/25 20:04:11  pwagner
 # Some talk about new forestalling of cascades
 #
