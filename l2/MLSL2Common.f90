@@ -15,6 +15,7 @@ MODULE MLSL2Common              ! Common data types for the MLSL2 program
   CHARACTER (LEN=256) :: Id = &
        "$Id$"
   CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
 
   ! This module simply contains data types that are common to the MLSL2
@@ -34,11 +35,19 @@ MODULE MLSL2Common              ! Common data types for the MLSL2 program
 
 !=============================================================================
 !=============================================================================
+contains 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 END MODULE MLSL2Common
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.4  2002/10/08 17:36:21  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.3  2001/09/09 03:03:59  livesey
 ! Bug fix
 !
