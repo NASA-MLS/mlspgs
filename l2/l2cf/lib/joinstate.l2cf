@@ -3,22 +3,32 @@
 begin Join
 
   ;; Join the tropopause pressure
-  joined_tpPressure: l2gp, source=state.tpPressure, swath='tpPressure wmo'
-  !storeDGG(joined_tpPressure)
+  !directWriteDGGNoPrecision(state.tpPressure,'tpPressure wmo')
 
-  !define(joinStandardProduct,{joined_$1: l2gp, source=state.$1, $
-    precision=outputPrecision.$1, swath='$1'!nl})
-  !forall(joinStandardProduct,!allStandardProducts)
+  ;; First the species with columns
+  !define(writeStandardProductWithColumn,{
+  Label, quantity=state.$1, label='$1'
+  Label, quantity=state.column_$1, label='$1 column'
+  DirectWrite, type=l2gp, file='!outpathl2gp/MLS-Aura_L2GP-$1_!l2version_!day.he4', $
+    source=state.$1, precision=outputPrecision.$1, $
+    source=state.column_$1, precision=outputPrecision.column_$1
+})
+  !forall(writeStandardProductWithColumn,!allStandardProductsWithColumns)
 
-  ;; Join the columns
-  !define(joinStandardColumn,{joined_$1_column: l2gp, source=state.column_$1, $
-    precision=outputPrecision.column_$1, swath='$1 Column wmo'!nl})
-  !forall(joinStandardColumn,!allStandardProductsWithColumns)
+  ;; Now the species without columns
+  !define(writeStandardProductWithoutColumn,{
+  Label, quantity=state.$1, label='$1'
+  DirectWrite, type=l2gp, file='!outpathl2gp/MLS-Aura_L2GP-$1_!l2version_!day.he4', $
+    source=state.$1, precision=outputPrecision.$1
+})
+  !forall(writeStandardProductWithoutColumn,!allStandardProductsWithoutColumns)
 
   ;; IWC is a special case
-  joined_iwc: l2gp, source=state.iwc, precision=outputPrecision.iwc, $
-    swath='IWC'
-  joined_iwcFine: l2gp, source=state.iwcFine, precision=outputPrecision.iwcFine, $
-    swath='IWC-fine'
+  Label, quantity=state.iwc, label='IWC'
+  Label, quantity=state.iwcFine, label='IWC-fine'
+  DirectWrite, type=l2gp, file='!outpathl2gp/MLS-Aura_L2GP-IWC_!l2version_!day.he4', $
+    source=state.iwc, precision=outputPrecision.iwc, $
+    source=state.iwcFine, precision=outputPrecision.iwcFine
 
+  !flushDGGDGMFiles
 end Join
