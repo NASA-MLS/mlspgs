@@ -184,7 +184,8 @@ contains
 !     WET CONTINUUM 
 !----------------------------------------
 !     CONT_1 = 1.28e-15 	! BILL'S VALIDATION PAPER
-      CONT_1 = 7.53e-16 
+      CONT_1 = 1.37e-15         ! UARS 203GHz  v5 
+!      CONT_1 = 7.53e-16   ! wu's version
       CONT_2 = 4.20
       CONT_3 = 0.00
       SC_CONST = CONT_1 * FF**2 * EXP(-CONT_3 * FF**2)
@@ -244,6 +245,9 @@ contains
 end module GasAbsorption
 
 ! $Log$
+! Revision 1.5  2001/11/14 00:40:26  jonathan
+! minor changes
+!
 ! Revision 1.4  2001/09/21 15:51:37  jonathan
 ! modified F95 version
 !
