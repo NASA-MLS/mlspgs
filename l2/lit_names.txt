@@ -99,6 +99,9 @@ logarithmic
 lowcloud
 
 manipulate
+max
+mean
+min
 
 ncep
 negativeprecision
@@ -146,6 +149,9 @@ weighted
 wmoTropopause
 
 # $Log$
+# Revision 2.46  2004/02/17 14:07:15  livesey
+# Added min, max and mean
+#
 # Revision 2.45  2004/02/06 01:01:29  livesey
 # Added boxcar
 #
