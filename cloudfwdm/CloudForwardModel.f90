@@ -540,7 +540,7 @@
          ENDIF
 
 
-         IF (IFOV .EQ. 1) THEN       ! BEGIN FOV AVERAGING
+         IF (IFOV .EQ. 1) THEN       ! **** BEGIN FOV AVERAGING ****
 ! ==========================================================================
 !    >>>>>> ADDS THE EFFECTS OF ANTENNA SMEARING TO THE RADIANCE <<<<<<
 ! ==========================================================================
@@ -620,7 +620,8 @@
           ! There is an error in zvi's code, in which he wrote is<Ntr. This will cause 
           ! subscript fft_press(is+1) out of range when run the program after compile 
           ! with -C, as "Subscript 1 of FFT_PRESS (value 1025) is out of range (1:1024)"
- 
+          ! UPDATE: zvi and I have fixed above error on 08/29/01
+
          Ktr = 1
          Rad0(Ktr) = Rad0(is)
          Rad(Ktr) = Rad(is)
@@ -647,7 +648,7 @@
          Call Cspline_der ( fft_press, -log10(ZT), RAD0, TB0(:,IFR), dTB0_dZT(:,IFR), Ktr, NT )
          Call Cspline_der ( fft_press, -log10(ZT), RAD-RAD0, DTcir(:,IFR), dDTcir_dZT(:,IFR), Ktr, NT )
 
-         END IF     ! END FOV AVERAGING
+         END IF     ! **** END OF FOV AVERAGING ****
 
 !====================================
 !    >>>>>>> MODEL-OUTPUT <<<<<<<<<
