@@ -16,7 +16,7 @@ module MLSAuxData
        h5sselect_hyperslab_f, h5dread_f, h5dwrite_f, h5dextend_f, &
        h5acreate_f, h5awrite_f, h5aread_f, h5aclose_f, h5tcopy_f, &
        h5tset_size_f, h5aopen_name_f, h5aget_type_f, h5aget_space_f, &
-       h5tequal_f, h5fis_hdf5_f
+       h5tequal_f, h5fis_hdf5_f, h5eset_auto_f
   use MLSCommon, only: r4, r8
   use MLSStrings, only: Lowercase
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_Error, MLSMSG_deallocate, &
@@ -34,16 +34,24 @@ module MLSAuxData
 
 !                 (subroutines and functions)
 !
-! Allocate_MLSAuxData          Allocates a MLSAuxData data structure. 
+! Allocate_MLSAuxData          Allocates a MLSAuxData data structure.
+! 
 ! Create_MLSAuxData            Creates MLSAuxData in a file. 
+!
+! CreateGroup_MLSAuxData       Creates a Group in a file. 
+!
 ! Read_MLSAuxAttributes        Reads an attribute of a MLSAuxData quantity
 !                              from a file.
+!
 ! Read_MLSAuxData              Reads all info concerning a MLSAuxData quantity
 !                              from a file.
+!
 ! Write_MLSAuxAttributes       Writes an attribute of a MLSAuxData quantity
 !                              to a file.
+!
 ! Write_MLSAuxData             Writes all info concerning a MLSAuxData quantity
 !                              to a file.
+!
 ! Deallocate_MLSAuxData        Called when an MLSAuxData is finished.
 !
 ! === (end of toc) ===
@@ -258,8 +266,8 @@ contains ! ============================ MODULE PROCEDURES ====================
     character(len=480) :: msr
     character(len=name_len) :: aname
     real, dimension(:), pointer :: attr_data
-    integer(hsize_t), dimension(3) :: chunk_dims, dims, maxdims
     integer(hsize_t), dimension(7) :: adims
+    integer(hsize_t), dimension(3) :: chunk_dims, dims, maxdims
     integer(hsize_t), dimension(1) :: adims_create
     integer(hid_t) :: cparms,dspace_id,dset_id,type_id, &
          attr_id, atype_id, aspace_id
@@ -333,7 +341,6 @@ contains ! ============================ MODULE PROCEDURES ====================
           dset_id,h5error,cparms)
     if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
        H5_ERROR_DSET_CREATE // trim(MLSAuxData%name) ) 
-
 !---------------- write the attributes -----------------------------
 
     do i = 2, 7
@@ -1061,12 +1068,17 @@ contains ! ============================ MODULE PROCEDURES ====================
 !-------------------------------------------------------------------------
 ! Internal variables.
 !
-    integer(hsize_t), dimension(7) :: dims
-    integer(hsize_t), dimension(3) :: dims_create, start
-
-    integer(hid_t) :: filespace, memspace, dset_id, type_id
-    integer :: h5error, rank, i
-
+    character(len=480) :: msr
+    character(len=name_len) :: aname
+    real, dimension(:), pointer :: attr_data
+    integer(hsize_t), dimension(7) :: adims, dims
+    integer(hsize_t), dimension(3) :: chunk_dims, dims_create, maxdims, start
+    integer(hsize_t), dimension(1) :: adims_create
+    integer(hid_t) :: cparms,dspace_id,dset_id,type_id, &
+         attr_id, atype_id, aspace_id, filespace, memspace 
+    integer :: i, rank, arank, h5error, status
+    logical :: is_hdf5
+    logical, parameter ::  ATTRIBUTE = .FALSE.
 !--------------------------------------------------------------------------
 
     logical :: myWrite_attributes
@@ -1074,15 +1086,260 @@ contains ! ============================ MODULE PROCEDURES ====================
     error = 0
     myWrite_attributes = .false.
     if ( present(write_attributes) ) myWrite_attributes=write_attributes
+
+    test_type: select case (trim(MLSAuxData%type_name))
+    case ('real')
+       if (associated(MLSAuxData%RealField)) then 
+       rank = size(shape(MLSAuxData%RealField))
+       type_id = H5T_IEEE_F32LE
+       do i=1,rank-1
+          dims(i) = size(MLSAuxData%RealField, i)
+          chunk_dims(i) = dims(i)
+          dims_create(i) = dims(i)
+          maxdims(i) = chunk_dims(i)
+       end do
+          dims(rank) = 1
+          chunk_dims(rank) = 1
+          dims_create(rank) = 1
+          maxdims(rank) = H5S_UNLIMITED_F
+       end if
+    case ('double')
+       if (associated(MLSAuxData%DpField)) then 
+       rank = size(shape(MLSAuxData%DpField))
+       type_id = H5T_NATIVE_DOUBLE
+       do i=1,rank-1
+          dims(i) = size(MLSAuxData%DpField, i)
+          chunk_dims(i) = dims(i)
+          dims_create(i) = dims(i)
+          maxdims(i) = chunk_dims(i)
+       end do
+          dims(rank) = 1
+          chunk_dims(rank) = 1
+          dims_create(rank) = 1
+          maxdims(rank) = H5S_UNLIMITED_F
+       endif
+    case ('integer')
+       if (associated(MLSAuxData%IntField)) then 
+       rank = size(shape(MLSAuxData%IntField))
+       type_id = H5T_NATIVE_INTEGER
+       do i=1,rank-1
+          dims(i) = size(MLSAuxData%IntField, i)
+          chunk_dims(i) = dims(i)
+          dims_create(i) = dims(i)
+          maxdims(i) = chunk_dims(i)
+       end do
+          dims(rank) = 1
+          chunk_dims(rank) = 1
+          dims_create(rank) = 1
+          maxdims(rank) = H5S_UNLIMITED_F
+       endif
+    case ('character')
+       if (associated(MLSAuxData%CharField)) then 
+       rank = size(shape(MLSAuxData%CharField))
+       type_id = H5T_NATIVE_CHARACTER
+       do i=1, rank-1
+          dims(i) = size(MLSAuxData%CharField, i)
+          chunk_dims(i) = dims(i)
+          dims_create(i) = dims(i)
+          maxdims(i) = chunk_dims(i)
+       end do
+          dims(rank) = 1
+          chunk_dims(rank) = 1
+          dims_create(rank) = 1
+          maxdims(rank) = H5S_UNLIMITED_F
+       endif
+    end select test_type
+
+    call h5eset_auto_f(0, h5error)
+
     call h5dopen_f(file_id, trim(MLSAuxData%name), dset_id, h5error)
+
+    if (h5error /= 0) then 
+
+    call h5eset_auto_f(1, h5error)
+
+!--------------------------------------------------------------------
+    call h5screate_simple_f(rank, dims_create(1:rank),dspace_id,h5error,& 
+         maxdims(1:rank))
     if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
-       H5_ERROR_DSET_OPEN // trim(MLSAuxData%name) )
+       H5_ERROR_DSPACE_CREATE // trim(MLSAuxData%name) )
+
+    call h5pcreate_f(H5P_DATASET_CREATE_F,cparms,h5error)
+    if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
+       H5_ERROR_PROPERTY_CREATE // trim(MLSAuxData%name) )
+
+    call h5pset_chunk_f(cparms,rank,chunk_dims(1:rank),h5error)
+    if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
+       H5_ERROR_PROPERTY_CHUNK_SET // trim(MLSAuxData%name) )
+
+    call h5dcreate_f(file_id,trim(MLSAuxData%name),type_id,dspace_id, &
+          dset_id,h5error,cparms)
+    if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
+       H5_ERROR_DSET_CREATE // trim(MLSAuxData%name) ) 
+!---------------- write the attributes -----------------------------
+
+    do i = 2, 7
+       adims(i) = 0
+    end do
+
+    if (associated(MLSAuxData%HorizontalCoordinates) .and. ATTRIBUTE) then 
+
+       arank = size(shape(MLSAuxData%HorizontalCoordinates))
+       atype_id = H5T_IEEE_F32LE
+       adims(1) = size(MLSAuxData%HorizontalCoordinates)
+       adims_create(1) = adims(1)
+
+       allocate(attr_data(adims(1)),STAT=status)
+       if ( status /= 0 ) then
+           msr = MLSMSG_Allocate// ' attr_data.'
+        call MLSMessage(MLSMSG_Error, ModuleName, msr)
+       endif
+
+       do i=1, adims(1)
+          attr_data(i) = MLSAuxData%HorizontalCoordinates(i)
+       end do
+
+       aname = "HorizontalCoordinates"  
+
+       call h5screate_simple_f(arank, adims_create, aspace_id, h5error)
+       if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
+       H5_ERROR_DSPACE_CREATE // trim(aname) // ' in ' // & 
+       trim(MLSAuxData%name) )
+
+       call h5acreate_f(dset_id, trim(aname), atype_id, aspace_id, attr_id, &
+          h5error)
+       if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
+       H5_ERROR_ATT_CREATE // trim(aname) // ' in ' // &
+       trim(MLSAuxData%name) )
+
+       call h5awrite_f(attr_id, atype_id, attr_data, adims, h5error)
+       if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
+       H5_ERROR_ATT_WRITE // trim(MLSAuxData%name)  )
+
+       call h5aclose_f(attr_id, h5error)
+       if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
+       H5_ERROR_ATT_CLOSE // trim(MLSAuxData%name) )
+
+       call h5sclose_f(aspace_id, h5error)
+       if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
+       H5_ERROR_DSPACE_CLOSE // trim(MLSAuxData%name) )
+
+       deallocate(attr_data,STAT=status)
+       if ( status /= 0 ) then
+           msr = MLSMSG_deallocate// ' attr_data.'
+        call MLSMessage(MLSMSG_Error, ModuleName, msr)
+       endif
+
+    endif
+
+    if (associated(MLSAuxData%VerticalCoordinates) .and. ATTRIBUTE) then 
+       arank = size(shape(MLSAuxData%VerticalCoordinates))
+       atype_id = H5T_IEEE_F32LE
+       adims(1) = size(MLSAuxData%VerticalCoordinates)
+       adims_create(1) = adims(1)
+
+       allocate(attr_data(adims(1)),STAT=status)
+       if ( status /= 0 ) then
+           msr = MLSMSG_allocate// ' attr_data.'
+        call MLSMessage(MLSMSG_Error, ModuleName, msr)
+       endif
+
+       do i=1,adims(1)
+          attr_data(i) = MLSAuxData%VerticalCoordinates(i)
+       end do
+
+       call h5screate_simple_f(arank, adims_create, aspace_id, h5error)
+       if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
+       H5_ERROR_DSPACE_CREATE // trim(MLSAuxData%name) )
+
+       aname = "VerticalCoordinates"   
+       call h5acreate_f(dset_id, trim(aname), atype_id, aspace_id, attr_id, &
+          h5error)
+       if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
+       H5_ERROR_ATT_CREATE // trim(MLSAuxData%name) )
+
+       call h5awrite_f(attr_id, atype_id, attr_data, adims, h5error)
+       if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
+       H5_ERROR_ATT_WRITE // trim(MLSAuxData%name) )
+
+       call h5aclose_f(attr_id, h5error)
+       if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
+       H5_ERROR_ATT_CLOSE // trim(MLSAuxData%name) )
+
+       call h5sclose_f(aspace_id, h5error)
+       if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
+       H5_ERROR_DSPACE_CLOSE // trim(MLSAuxData%name) )
+ 
+       deallocate(attr_data,STAT=status)
+       if ( status /= 0 ) then
+           msr = MLSMSG_deallocate// ' attr_data.'
+        call MLSMessage(MLSMSG_Error, ModuleName, msr)
+       endif
+
+    endif
+
+    if (associated(MLSAuxData%FrequencyCoordinates) .and. ATTRIBUTE) then 
+       arank = size(shape(MLSAuxData%FrequencyCoordinates))
+       atype_id = H5T_IEEE_F32LE
+       adims(1) = size(MLSAuxData%FrequencyCoordinates)
+       adims_create(1) = adims(1)
+
+       allocate(attr_data(adims(1)),STAT=status)
+       if ( status /= 0 ) then
+           msr = MLSMSG_allocate// ' attr_data.'
+        call MLSMessage(MLSMSG_Error, ModuleName, msr)
+       endif
+
+       do i=1,adims(1)
+          attr_data(i) = MLSAuxData%FrequencyCoordinates(i)
+       end do
+
+       call h5screate_simple_f(arank, adims_create, aspace_id, h5error)
+       if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
+       H5_ERROR_DSPACE_CREATE // trim(MLSAuxData%name) )
+
+       aname = "FrequencyCoordinates"
+       call h5acreate_f(dset_id, trim(aname), atype_id, aspace_id, attr_id, &
+          h5error)
+       if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
+       H5_ERROR_ATT_CREATE // trim(MLSAuxData%name) )
+
+       call h5awrite_f(attr_id, atype_id, attr_data, adims, h5error)
+       if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
+       H5_ERROR_ATT_WRITE // trim(MLSAuxData%name) )
+
+       call h5aclose_f(attr_id, h5error)
+       if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
+       H5_ERROR_ATT_CLOSE // trim(MLSAuxData%name) )
+
+       call h5sclose_f(aspace_id, h5error) 
+       if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
+       H5_ERROR_DSPACE_CLOSE // trim(MLSAuxData%name) )
+
+       deallocate(attr_data,STAT=status)
+       if ( status /= 0 ) then
+           msr = MLSMSG_deallocate// ' attr_data.'
+        call MLSMessage(MLSMSG_Error, ModuleName, msr)
+       endif
+
+    endif
+!---------------- close all structures----------------------------------
+    call h5sclose_f( dspace_id, h5error )
+    if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
+       H5_ERROR_DSPACE_CLOSE // trim(MLSAuxData%name) )
+
+    call h5pclose_f( cparms,    h5error )
+    if (h5error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
+       H5_ERROR_PROPERTY_CLOSE // trim(MLSAuxData%name) )
+
+    endif
 
        if (associated(MLSAuxData%RealField)) then 
        rank = size(shape(MLSAuxData%RealField))
        do i=1,rank
           dims_create(i) = size(MLSAuxData%RealField,i)
           dims(i) = dims_create(i)
+          chunk_dims(i) = dims(i)
        end do
        endif
 
@@ -1091,6 +1348,7 @@ contains ! ============================ MODULE PROCEDURES ====================
        do i=1,rank
           dims_create(i) = size(MLSAuxData%DpField,i)
           dims(i) = dims_create(i)
+          chunk_dims(i) = dims(i)
        end do
        endif
 
@@ -1099,6 +1357,7 @@ contains ! ============================ MODULE PROCEDURES ====================
        do i=1,rank
           dims_create(i) = size(MLSAuxData%CharField,i)
           dims(i) = dims_create(i)
+          chunk_dims(i) = dims(i)
        end do
        endif
     
@@ -1107,6 +1366,7 @@ contains ! ============================ MODULE PROCEDURES ====================
        do i=1,rank
           dims_create(i) = size(MLSAuxData%IntField,i)
           dims(i) = dims_create(i)
+          chunk_dims(i) = dims(i)
        end do
        endif
 
@@ -1139,7 +1399,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     if ( .NOT.( PRESENT(startMAF) ) ) then 
 
-    test_type: select case (trim(MLSAuxData%type_name))
+    test_type_name: select case (trim(MLSAuxData%type_name))
     case ('real')
      call h5dwrite_f(dset_id, type_id, MLSAuxData%RealField, dims(1:rank), &
           h5error,memspace,filespace)
@@ -1152,7 +1412,7 @@ contains ! ============================ MODULE PROCEDURES ====================
     case('character')
      call h5dwrite_f(dset_id, type_id, MLSAuxData%CharField, dims(1:rank), &
           h5error,memspace,filespace)
-    end select test_type
+    end select test_type_name
 
     else
 
@@ -1211,6 +1471,9 @@ contains ! ============================ MODULE PROCEDURES ====================
 end module MLSAuxData
 
 ! $Log$
+! Revision 2.9  2002/10/05 00:30:20  jdone
+! Write_MLSAuxData creates & writes dataset if not already created.
+!
 ! Revision 2.8  2002/10/04 22:35:31  jdone
 ! Added exception handling for h5tequal_f call
 !
