@@ -103,10 +103,17 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/.configure
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
           -c "$(MLSF95)" -p "$(MLSPLAT)" -nc
 
+#SnoopMLSL2 requires PVM
+ifdef PVM_ROOT
+depends:
+	$(MLSBIN)/makemakedep.sh \
+	$(depends_where) 
+else
 depends:
 	$(MLSBIN)/makemakedep.sh \
 	-d SnoopMLSL2.f90 \
 	$(depends_where) 
+endif
 
 clean:
 	@echo "Cleaning directory $(MLSCONFG)" ; \
@@ -131,6 +138,9 @@ tar:
 	tar hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.13  2001/03/07 23:27:24  pwagner
+# Adds SnoopMLSL2 to Makefile.dep if PVM_ROOT defined
+#
 # Revision 2.12  2001/03/06 18:17:57  pwagner
 # clean more amitious--rms * from MLSCONFGl[13]/MakeFC
 #
