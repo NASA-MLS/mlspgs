@@ -70,10 +70,10 @@ endif
 .SUFFIXES:
 .SUFFIXES: .o .dbg.o .f90
 .f90.o:
-	$(FC) -c $(FOPTS) $(INC_PATHS) $<
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
 
 .f90.dbg.o:
-	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o $(FAFTER)
 
 # Currently MatrixModule_n compile only under Lahey's LF95
 # RettrievalModule needs MatrixModule_1.o
@@ -105,6 +105,9 @@ endif
 l_specials = 
 
 # $Log$
+# Revision 1.12  2001/03/08 00:53:21  pwagner
+# l2_NEEDS_fwdmdl now set by default
+#
 # Revision 1.11  2001/03/05 21:49:28  pwagner
 # fwdmdl searched for dependencies if l2_NEEDS_fwdmdl
 #

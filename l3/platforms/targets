@@ -82,8 +82,8 @@ mlsl3: $(ALLOBJS) $(libdir)/libmls.a $(PVM_OBJS)
 	-L${GCTP} -lGctp \
         $(pvm_linker_line) \
         $(blas_linker_line) \
-        $(l_specials) \
 	-L${FFTW_ROOT} -lrfftw -lfftw \
+        $(l_specials) $(LAFTER) \
 
 # ========================================================================
 
@@ -99,14 +99,17 @@ tar:
 #	special options for compiling some modules--override .f90 rules
 
 L2Interface.o:
-	$(FC) -c $(DUSTY) -I $(PGSINC) -I $S -I $(libdir) $(S)/L2Interface.f90
+	$(FC) -c $(DUSTY) -I $(PGSINC) -I $S -I $(libdir) $(S)/L2Interface.f90 $(FAFTER)
 L3DMData.o:
-	$(FC) -c $(DUSTY) -I $(PGSINC) -I $S -I $(libdir) $(S)/L3DMData.f90
+	$(FC) -c $(DUSTY) -I $(PGSINC) -I $S -I $(libdir) $(S)/L3DMData.f90 $(FAFTER)
 L3DZData.o:
-	$(FC) -c $(DUSTY) -I $(PGSINC) -I $S -I $(libdir) $(S)/L3DZData.f90
+	$(FC) -c $(DUSTY) -I $(PGSINC) -I $S -I $(libdir) $(S)/L3DZData.f90 $(FAFTER)
 
 # ========================================================================
 # $Log$
+# Revision 1.8  2001/02/27 21:25:41  pwagner
+# Now link requires FFTW
+#
 # Revision 1.7  2001/02/22 18:08:11  pwagner
 # Includes L3DZData.f90
 #

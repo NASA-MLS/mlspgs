@@ -53,13 +53,13 @@ INC_PATHS = -p $(PGSINC) -p $(srclib) -p $S \
 .SUFFIXES:
 .SUFFIXES: .o .dbg.o .f90 .f
 .f90.o:
-	$(FC) -c $(FOPTS) $(INC_PATHS) $<
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
 
 .f90.dbg.o:
-	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o $(FAFTER)
 
 .f.o:
-	$(FC) -c $(FOPTS) $(INC_PATHS) $<
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
 
 # Modules needed by test programs
 # They currently compile only under Lahey's LF95
@@ -68,6 +68,9 @@ MATRIX_OBJS = MatrixModule_0.o MatrixModule_1.o
 #SDP =SDPToolkitSubstitute.o
 #GD=GDapi.o
 # $Log$
+# Revision 1.2  2001/03/08 01:22:57  pwagner
+# Both -p and -I set in INC_PATHS
+#
 # Revision 1.1  2001/03/06 00:15:19  pwagner
 # First commit
 #

@@ -52,13 +52,13 @@ INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S
 .SUFFIXES:
 .SUFFIXES: .o .dbg.o .f90 .f
 .f90.o:
-	$(FC) -c $(FOPTS) $(INC_PATHS) $<
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
 
 .f90.dbg.o:
-	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o $(FAFTER)
 
 .f.o:
-	$(FC) -c $(FOPTS) $(INC_PATHS) $<
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
 
 # Modules needed by test programs
 # They currently compile only under Lahey's LF95
@@ -67,6 +67,9 @@ MATRIX_OBJS =
 #SDP =SDPToolkitSubstitute.o
 #GD=GDapi.o
 # $Log$
+# Revision 1.9  2001/02/26 21:14:39  pwagner
+# Commented out FOPTS assignment; now part of .configure setting
+#
 # Revision 1.8  2001/02/08 00:31:44  pwagner
 # Conditionally links sdot and ddot unless BLAS defined
 #

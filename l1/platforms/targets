@@ -82,7 +82,7 @@ mlsl1: $(ALLOBJS) $(libdir)/libmls.a $(PVM_OBJS)
 	-L${GCTP} -lGctp \
         $(pvm_linker_line) \
         $(blas_linker_line) \
-        $(l_specials) \
+        $(l_specials) $(LAFTER) \
 
 # ========================================================================
 
@@ -98,10 +98,13 @@ tar:
 #	special options for compiling some modules--override .f90 rules
 
 OutputL1B.o:
-	$(FC) -c $(DUSTY) -I $(PGSINC) -I $S -I $(libdir) $(S)/OutputL1B.f90
+	$(FC) -c $(DUSTY) -I $(PGSINC) -I $S -I $(libdir) $(S)/OutputL1B.f90 $(FAFTER)
 
 # ========================================================================
 # $Log$
+# Revision 1.7  2001/02/23 18:53:38  pwagner
+# srclib back in play
+#
 # Revision 1.6  2001/02/22 22:39:15  pwagner
 # w/o srclib routines
 #

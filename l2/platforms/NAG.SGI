@@ -72,10 +72,10 @@ endif
 .SUFFIXES:
 .SUFFIXES: .o .dbg.o .f90
 .f90.o:
-	$(FC) -c $(FOPTS) $(INC_PATHS) $<
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
 
 .f90.dbg.o:
-	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o $(FAFTER)
 
 #SDP =SDPToolkitSubstitute.o
 #GD=GDapi.o
@@ -103,6 +103,9 @@ endif
 l_specials = -lnsl
 
 # $Log$
+# Revision 1.9  2001/03/08 00:53:21  pwagner
+# l2_NEEDS_fwdmdl now set by default
+#
 # Revision 1.8  2001/03/05 21:49:28  pwagner
 # fwdmdl searched for dependencies if l2_NEEDS_fwdmdl
 #

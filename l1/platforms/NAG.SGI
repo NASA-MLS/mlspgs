@@ -57,10 +57,10 @@ INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S -I $(libdir)
 .SUFFIXES:
 .SUFFIXES: .o .dbg.o .f90
 .f90.o:
-	$(FC) -c $(FOPTS) $(INC_PATHS) $<
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
 
 .f90.dbg.o:
-	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o $(FAFTER)
 
 #SDP =SDPToolkitSubstitute.o
 #GD=GDapi.o
@@ -88,6 +88,9 @@ INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S -I $(libdir)
 l_specials =
 
 # $Log$
+# Revision 1.5  2001/03/05 17:23:15  pwagner
+# gets .f9h from srclib
+#
 # Revision 1.4  2001/02/26 21:14:38  pwagner
 # Commented out FOPTS assignment; now part of .configure setting
 #

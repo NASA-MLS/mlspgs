@@ -134,13 +134,16 @@ PVMwrappers.o: $(S)/PVMwrappers.c
 BUGGY := $(shell echo ${FOPTS} | sed 's/-O[0-9]*//')
 
 L1BData.o:
-	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L1BData.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L1BData.f90 $(FAFTER)
 #L2GPData.o:
-#	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L2GPData.f90
+#	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L2GPData.f90 $(FAFTER)
 string_table.o:
-	$(FC) -c $(BUGGY) $(INC_PATHS) $(S)/string_table.f90
+	$(FC) -c $(BUGGY) $(INC_PATHS) $(S)/string_table.f90 $(FAFTER)
 
 # $Log$
+# Revision 1.21  2001/03/09 19:38:14  pwagner
+# Removed TEST_ONLY exceptions
+#
 # Revision 1.20  2001/03/01 21:46:18  pwagner
 # Handles -O[n] properly
 #

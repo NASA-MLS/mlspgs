@@ -56,10 +56,10 @@ INC_PATHS = -p $(PGSINC) -p $(srclib) -p $S -p $(libdir) \
 .SUFFIXES:
 .SUFFIXES: .o .dbg.o .f90
 .f90.o:
-	$(FC) -c $(FOPTS) $(INC_PATHS) $<
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
 
 .f90.dbg.o:
-	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o $(FAFTER)
 
 #SDP =SDPToolkitSubstitute.o
 #GD=GDapi.o
@@ -87,6 +87,9 @@ INC_PATHS = -p $(PGSINC) -p $(srclib) -p $S -p $(libdir) \
 l_specials = 
 
 # $Log$
+# Revision 1.2  2001/03/08 01:22:57  pwagner
+# Both -p and -I set in INC_PATHS
+#
 # Revision 1.1  2001/03/06 00:15:19  pwagner
 # First commit
 #

@@ -82,7 +82,7 @@ l2_test: libfwdmdl.a l2_test.o $(libdir)/libmls.a
 	-L${GCTP} -lGctp \
         $(pvm_linker_line) \
         $(blas_linker_line) \
-        $(l_specials) \
+        $(l_specials) $(LAFTER) \
 
 # ========================================================================
 
@@ -98,26 +98,29 @@ tar:
 #	special options for compiling some modules--override .f90 rules
 
 eos_mdb.o:
-	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/eos_mdb.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/eos_mdb.f90 $(FAFTER)
 get_delta_m.o:
-	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/get_delta_m.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/get_delta_m.f90 $(FAFTER)
 #get_pfa_delta_m.o:
-#	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/get_pfa_delta_m.f90
+#	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/get_pfa_delta_m.f90 $(FAFTER)
 pfa_db_delta_m.o:
-	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/pfa_db_delta_m.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/pfa_db_delta_m.f90 $(FAFTER)
 d_delta_dt_m.o:
-	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/d_delta_dt_m.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/d_delta_dt_m.f90 $(FAFTER)
 #fwd_mdl_set_up_m.o:
-#	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/fwd_mdl_set_up_m.f90
+#	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/fwd_mdl_set_up_m.f90 $(FAFTER)
 #MLSCommon.o:
-#	$(FC) -c $(DUSTY) $(INC_PATHS) $(LIB_SRCS_DIR)/MLSCommon.f90
+#	$(FC) -c $(DUSTY) $(INC_PATHS) $(LIB_SRCS_DIR)/MLSCommon.f90 $(FAFTER)
 #machine.o: $(LIB_SRCS_DIR)/platforms/$(MLSCONFG).machine
 #	rm -f machine.f90
 #	cp "$(LIB_SRCS_DIR)/platforms/$(MLSCONFG).machine" machine.f90
 #	chmod u+w machine.f90
-#	$(FC) -c $(DUSTY) machine.f90
+#	$(FC) -c $(DUSTY) machine.f90 $(FAFTER)
 # ========================================================================
 # $Log$
+# Revision 1.8  2001/03/06 17:37:24  pwagner
+# Messages refer to forward model, not to mlsl2
+#
 # Revision 1.7  2001/03/05 19:51:18  pwagner
 # Added def of PVM_PATH
 #

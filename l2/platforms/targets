@@ -108,7 +108,7 @@ mlsl2: $(mlsl2_prereqs)
         $(pvm_linker_line) \
         $(blas_linker_line) \
         $(fwdmdl_linker_line) \
-        $(l_specials) \
+        $(l_specials) $(LAFTER) \
 		  
 # ========================================================================
 
@@ -121,6 +121,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.13  2001/03/08 00:53:21  pwagner
+# l2_NEEDS_fwdmdl now set by default
+#
 # Revision 1.12  2001/03/07 23:27:24  pwagner
 # Adds SnoopMLSL2 to Makefile.dep if PVM_ROOT defined
 #
