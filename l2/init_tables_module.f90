@@ -213,11 +213,11 @@ module INIT_TABLES_MODULE
           OK,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,    0,  & ! globalSettings
           OK,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,    0,  & ! readApriori
           OK,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,    0,  & ! mergeGrids
-           0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,    0,  & ! chunkDivide
-           0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,    0,  & ! Construct
-           0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,    0,  & ! Fill
-           0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,    0,  & ! Retrieve
-           0,    0,    0,    0,    0,    0,    0,    0,    0,    0,   OK,  & ! Join
+           0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,  & ! chunkDivide
+           0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,  & ! Construct
+           0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,  & ! Fill
+           0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,  & ! Retrieve
+           0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,  & ! Join
            0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0/) & ! Output
 !       , shape(section_ordering) )
         , (/ section_last-section_first+1, section_last-section_first+2 /) )
@@ -922,6 +922,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.227  2002/07/05 17:47:19  livesey
+! Allow join to be within the chunk processing
+!
 ! Revision 2.226  2002/06/26 01:26:48  livesey
 ! Added 2d pressure guessing stuff
 !
