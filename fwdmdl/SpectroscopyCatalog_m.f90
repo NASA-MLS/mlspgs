@@ -22,7 +22,7 @@ module SpectroscopyCatalog_m
 
   private
   ! Public procedures:
-  public :: Spectroscopy
+  public :: Spectroscopy, SearchByQn
   public :: Destroy_Line_Database, Destroy_SpectCat_Database
   public :: Dump_Lines_Database, Dump_SpectCat_Database
 
@@ -44,6 +44,7 @@ module SpectroscopyCatalog_m
                                    ! Log(nm**2 MHz) at 300 K
     Real(r8) :: V0                 ! Line center frequency MHz
     Real(r8) :: W                  ! Collision broadening parameter
+    integer, dimension(:), pointer :: QN=>NULL()      ! Optional quantum numbers
     integer, dimension(:), pointer :: signals=>NULL() ! List of signal indices for line
     integer, dimension(:), pointer :: sidebands=>NULL() ! Sidebands for above bands (-1,0,1)
                                    ! MHz/mbar at 300 K
@@ -86,7 +87,7 @@ contains ! =====  Public Procedures  ===================================
     use Init_Spectroscopy_M, only: S_Line, S_Spectra
     ! Now the Fields:
     use Init_Spectroscopy_M, only: F_Continuum, F_Delta, F_El, F_Gamma, F_Lines, &
-      & F_Molecule, F_N, F_N1, F_N2, F_Ns, F_Ps, F_Qlog, F_Str, F_V0, F_W, &
+      & F_Molecule, F_N, F_N1, F_N2, F_Ns, F_Ps, F_Qlog, F_QN, F_Str, F_V0, F_W, &
       & F_EMLSSIGNALS, F_UMLSSIGNALS
     use Intrinsic, only: Phyq_Dimless => Phyq_Dimensionless, Phyq_Frequency, &
       & S_Time, L_EMLS, L_UMLS
@@ -104,6 +105,7 @@ contains ! =====  Public Procedures  ===================================
     integer :: I, J, K                  ! Loop inductors, Subscripts
     type(line_t) :: OneLine             ! To be added to the database
     type(catalog_t) :: OneSpecies       ! To be added to the database
+    real(r8) :: QN                      ! for call to expr_check for QN field
     integer :: Son                      ! Of root or key
     integer :: Key                      ! Index of spec_arg
     integer :: Name                     ! Index of name in string table
@@ -117,7 +119,8 @@ contains ! =====  Public Procedures  ===================================
     character ( len=80 ) :: SIGNAME     ! The signal
 
     ! Error message codes
-    integer, parameter :: TooBig = 1    ! Too many elements
+    integer, parameter :: NotInt = 1             ! QN not an integer
+    integer, parameter :: TooBig = NotInt + 1    ! Too many elements
     integer, parameter :: WrongSize = TooBig + 1 ! Wrong number of elements
     integer, parameter :: WrongUnits = wrongSize + 1 ! Wrong physical units
 
@@ -138,6 +141,7 @@ contains ! =====  Public Procedures  ===================================
       select case ( get_spec_id(key) )
       case ( s_line ) ! ...................................  LINE  .....
         oneLine%line_Name = name
+        nullify ( oneLine%qn ) ! because quantum numbers are optional
         signalsNode = 0
         do j = 2, nsons(key)
           son = subtree(j,key)
@@ -158,6 +162,14 @@ contains ! =====  Public Procedures  ===================================
             call expr_check ( subtree(2,son), oneLine%ns, phyq_dimless )
           case ( f_ps )
             call expr_check ( subtree(2,son), oneLine%ps, phyq_dimless )
+          case ( f_qn )
+            call allocate_test ( oneLine%qn, nsons(son)-1, 'qn', ModuleName )
+            do k = 2, nsons(son)
+              call expr_check ( subtree(k,son), qn, phyq_dimless )
+              oneLine%qn(k-1) = nint(qn)
+              if ( abs(qn - oneLine%qn(k-1)) > 0.1_r8 ) &
+                & call announce_error ( subtree(k,son), notInt )
+            end do
           case ( f_str )
             call expr_check ( subtree(2,son), oneLine%str, phyq_dimless )
           case ( f_v0 )
@@ -274,6 +286,9 @@ contains ! =====  Public Procedures  ===================================
       call print_source ( source_ref ( where ) )
       call output ( ' Spectroscopy complained: ' )
       select case ( code )
+      case ( notInt )
+        call output ( 'The field is too far from being an integer.', &
+          & advance='yes' )
       case ( tooBig )
         call output ( 'The field cannot have more than ' )
         call output ( more )
@@ -470,6 +485,39 @@ contains ! =====  Public Procedures  ===================================
     end do ! i
   end subroutine Dump_SpectCat_Database
 
+! ---------------------------------------------------  SearchByQn  -----
+  integer function SearchByQn ( Spec_Tag, QNs )
+  ! Find an element in the Catalog database that has Spec_Tag.
+  ! Then in its Lines database find an object that has its QN field
+  ! equal to QNs.  If found, return the index of that line in the lines
+  ! database.  Return zero if no such object can be found.
+
+    integer, intent(in) :: Spec_Tag
+    integer, intent(in) :: QNs(:)
+
+    integer :: I, J
+
+    do i = 1, size(catalog)
+      if ( catalog(i)%spec_tag == spec_tag ) then
+        if ( associated(catalog(i)%lines) ) then
+          do j = 1, size(catalog(i)%lines)
+            if ( associated(lines(catalog(i)%lines(j))%qn) ) then
+              if ( size(lines(catalog(i)%lines(j))%qn) == size(qns) ) then
+                if ( all(lines(catalog(i)%lines(j))%qn == qns) ) then
+                  searchByQn = catalog(i)%lines(j)
+                  return
+                end if
+              end if
+            end if
+          end do
+        end if
+      end if
+    end do
+    searchByQn = 0 ! not found
+
+  end function SearchByQn
+
+! ------------------------------------------------  not_used_here  -----
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
@@ -477,6 +525,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.10  2002/10/08 17:08:06  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.9  2002/01/08 01:02:03  livesey
 ! Nullify lines by default
 !
