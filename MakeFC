@@ -217,6 +217,7 @@ SHELL = /bin/sh
 # init_gen       -- build and install this prog
 # killmaster     -- build and install this prog
 # l2gpcat        -- build and install this prog
+# l2gpdiff       -- build and install this prog
 # machineok      -- build and install this prog
 # MLS_h5ls       -- build and install this prog
 # utctotai       -- build and install this lib
@@ -767,6 +768,11 @@ l2gpcat: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l2gpcat.f90
    -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
 	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
+l2gpdiff: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l2gpdiff.f90
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
 machineok: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/machineok.c
 	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
       -c $(MLSCONFG) -p $@ -M $(MAKE) \
@@ -1108,6 +1114,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.89  2004/06/03 18:28:19  pwagner
+# Avoided buggy install of parallels; print reminder to scp them
+#
 # Revision 1.88  2004/04/30 18:56:57  pwagner
 # Can build l2gpcat for knitting split dgg files
 #
