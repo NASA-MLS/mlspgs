@@ -747,7 +747,7 @@ contains ! ================================ Procedures ======================
             end where
 
             ! Does this chunk keep failing, if so, give up.
-            if ( chunkFailures(deadChunk) > &
+            if ( chunkFailures(deadChunk) >= &
               & parallel%maxFailuresPerChunk ) then
               if ( index(switches,'mas') /= 0 ) then
                 call output ( 'Chunk ' )
@@ -762,7 +762,7 @@ contains ! ================================ Procedures ======================
             ! mark it as not OK.  We can't do much about it though if
             ! we're using submit.
             if ( .not. usingSubmit ) then
-              if ( jobsMachineKilled(deadMachine) > &
+              if ( jobsMachineKilled(deadMachine) >= &
                 & parallel%maxFailuresPerMachine ) then
                 if ( index(switches,'mas') /= 0 ) &
                   & call output ('The machine ' // &
@@ -1291,6 +1291,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.59  2003/11/15 00:34:38  pwagner
+! Now stops after exactly maxNumFailures
+!
 ! Revision 2.58  2003/11/14 23:37:13  pwagner
 ! Lets user change masterLoop delay via commandline option
 !
