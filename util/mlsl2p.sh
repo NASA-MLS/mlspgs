@@ -60,7 +60,9 @@ chmod a+x $PVM_EP/mlsl2.$SLV_SUF
 NORMAL_STATUS=2
 
 # Now we launch the master task itself to set everything in motion
-$PVM_EP/mlsl2 --pge mlsl2.$SLV_SUF --tk --master $PVM_HOSTS_INFO -g -S'mas,chu,pro,log,opt1,pcf,time'
+#$PVM_EP/mlsl2 --pge mlsl2.$SLV_SUF --tk --master $PVM_HOSTS_INFO -g -S'mas,chu,pro,log,opt1,pcf,time'
+otheropts="$OTHEROPTS -g -S'mas,chu,opt1,log,pro,time'"
+$PVM_EP/mlsl2 --pge mlsl2.$SLV_SUF --tk --master $PVM_HOSTS_INFO $otheropts
 
 return_status=`expr $?`
 
@@ -72,3 +74,6 @@ else
 fi
 
 # $Log$
+# Revision 1.1  2003/08/01 16:46:31  pwagner
+# First commit
+#
