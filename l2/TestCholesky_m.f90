@@ -1,12 +1,6 @@
 ! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
-!------------------- RCS Ident Info -----------------------
-   CHARACTER(LEN=130) :: Id = &
-   "$Id$"
-    & "$RCSfile$"
-!----------------------------------------------------------
-
 module TestCholesky_M
 
   use Biggify_M, only: Biggify
@@ -14,6 +8,14 @@ module TestCholesky_M
   use MatrixModule_1, only: GetMatrixElement, Matrix_T, Matrix_Cholesky_T, &
     & Matrix_SPD_T
   use MLSCommon, only: R8, RM
+
+  !---------------------------- RCS Ident Info -------------------------------
+  character(len=*), private, parameter :: IdParm = &
+    & "$Id$"
+  character(len=len(idparm)), private :: Id = idParm
+  character(len=*), private, parameter :: ModuleName = &
+       & "$RCSfile$"
+  !---------------------------------------------------------------------------
 
 contains
 
@@ -66,6 +68,9 @@ contains
 end module TestCholesky_M
 
 ! $Log$
+! Revision 2.5  2002/10/01 22:25:16  pwagner
+! Fixed RCS Ident Block
+!
 ! Revision 2.4  2002/10/01 20:19:13  bwknosp
 ! Added Id, RCS, and Log info
 !
