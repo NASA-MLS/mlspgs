@@ -26,6 +26,7 @@ module ForwardModelSupport
     & F_NABTERMS, F_NAZIMUTHANGLES, F_NCLOUDSPECIES, F_NMODELSURFS, &
     & F_NSCATTERINGANGLES, F_NSIZEBINS, F_CLOUD_WIDTH, F_CLOUD_FOV, &
     & F_DEFAULT_spectroscopy
+  use L2ParInfo, only: PARALLEL
   use Lexer_Core, only: PRINT_SOURCE
   use L2PC_m, only: OPEN_L2PC_FILE, CLOSE_L2PC_FILE, READ_L2PC_FILE, BINSELECTOR_T
   use MLSCommon, only: R8
@@ -105,6 +106,9 @@ contains ! =====     Public Procedures     =============================
     integer :: Version
 
     ! Error message codes
+
+    ! We skip this stage if we're just a master task
+    if ( parallel%master ) return
 
     error = 0
     if ( toggle(gen) ) call trace_begin ( 'ForwardModelGlobalSetup', root )
@@ -636,6 +640,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.30  2002/03/21 16:42:34  livesey
+! Made it skip reading l2pc files etc for parallel master tasks.
+!
 ! Revision 2.29  2002/03/15 21:22:31  livesey
 ! Dealt with new BinSelector type
 !
