@@ -34,6 +34,7 @@ module Fill                     ! Create vectors and fill them.
     & Dump, Matrix_Cholesky_T, Matrix_Database_T, Matrix_Kronecker_T, &
     & Matrix_SPD_T, Matrix_T
   use MLSCommon, only: L1BInfo_T, NameLen, LineLen, MLSChunk_T, R8
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSSignals_m, only: GetSignalName, GetModuleName
   use Molecules, only: L_H2O
   use MoreTree, only: Get_Field_ID, Get_Spec_ID
@@ -450,7 +451,6 @@ contains ! =====     Public Procedures     =============================
 
 
         case default
-!          call MLSMessage(MLSMSG_Error,ModuleName,'This fill method not yet implemented')
           call Announce_error(key,0, &
 			 & 'This fill method not yet implemented')
         end select
@@ -472,9 +472,9 @@ contains ! =====     Public Procedures     =============================
     end do
 
     if (ERROR/=0 ) then
-	 !	call MLSMessage(MLSMSG_Error,ModuleName,'Problem with Fill section')
-          call Announce_error(key,0, &
-			 & 'Problem with Fill section')
+	 	call MLSMessage(MLSMSG_Error,ModuleName,'Problem with Fill section')
+!      call Announce_error(key,0, &
+!			 & 'Problem with Fill section (This would be fatal)')
 	end if
 
     if ( toggle(gen) ) then
@@ -818,14 +818,16 @@ contains ! =====     Public Procedures     =============================
         &   quantity%template%noInstances) .or. &
         &  (temperatureQuantity%template%noInstances /= &
         &   quantity%template%noInstances) ) then
-        call Announce_Error ( key, nonConformingHydrostatic )
+        call Announce_Error ( key, nonConformingHydrostatic, &
+        & "case l_gph failed first test" )
 	if ( toggle(gen) ) call trace_end ( "FillVectorQtyHydrostatically")
         return
       end if
       if ((any(quantity%template%surfs /= temperatureQuantity%template%surfs)) .or. &
         & (any(quantity%template%phi /= temperatureQuantity%template%phi)) .or. &
         & (any(quantity%template%phi /= refGPHQuantity%template%phi)) ) then
-        call Announce_Error ( key, nonConformingHydrostatic )
+        call Announce_Error ( key, nonConformingHydrostatic, &
+        &  "case l_gph failed second test")
 	if ( toggle(gen) ) call trace_end ( "FillVectorQtyHydrostatically")
         return
       end if
@@ -837,13 +839,15 @@ contains ! =====     Public Procedures     =============================
         &   refGPHquantity%template%noInstances) .or. &
         &  (quantity%template%noInstances /= &
         &   h2oQuantity%template%noInstances) ) then
-        call Announce_Error ( key, nonConformingHydrostatic )
+        call Announce_Error ( key, nonConformingHydrostatic, &
+        & "case l_ptan failed first test")
 	if ( toggle(gen) ) call trace_end ( "FillVectorQtyHydrostatically")
         return
       end if
       if ((any(refGPHquantity%template%phi /= temperatureQuantity%template%phi)) .or. &
         & (any(h2oQuantity%template%phi /= temperatureQuantity%template%phi)) ) then
-        call Announce_Error ( key, nonConformingHydrostatic )
+        call Announce_Error ( key, nonConformingHydrostatic, &
+        & "case l_ptan failed second test" )
 	if ( toggle(gen) ) call trace_end ( "FillVectorQtyHydrostatically")
         return
       end if
@@ -851,14 +855,22 @@ contains ! =====     Public Procedures     =============================
         &  (.not. ValidateVectorQuantity(geocAltitudeQuantity, minorFrame=.true.) ) .or. &
         &  (quantity%template%instrumentModule /= &
         &   geocAltitudeQuantity%template%instrumentModule) )  then
-        call Announce_Error (key, nonConformingHydrostatic )
+        call Announce_Error (key, nonConformingHydrostatic, &
+        & "case l_ptan failed third test" )
+        print *, 'ValidateVectorQuantity(quantity, minorFrame=.true.) ', &
+        &  ValidateVectorQuantity(quantity, minorFrame=.true., sayWhyNot=.true.)
+        print *, 'ValidateVectorQuantity(geocAltitudeQuantity, minorFrame=.true.) ', &
+        & ValidateVectorQuantity(geocAltitudeQuantity, minorFrame=.true., sayWhyNot=.true.)
+        print *, 'quantity%template%instrumentModule ', &
+        & quantity%template%instrumentModule
+        print *, 'geocAltitudeQuantity%template%instrumentModule ', &
+        & geocAltitudeQuantity%template%instrumentModule
 	if ( toggle(gen) ) call trace_end ( "FillVectorQtyHydrostatically")
         return
       end if
       call GetHydrostaticTangentPressure(quantity, temperatureQuantity,&
         & refGPHQuantity, h2oQuantity, geocAltitudeQuantity, maxIterations)
     case default
-!      call MLSMessage(MLSMSG_Error, ModuleName, 'No such fill yet')
           call Announce_error(0, 0, &
 			 & 'No such fill yet')
     end select
@@ -1490,7 +1502,7 @@ contains ! =====     Public Procedures     =============================
       call output ( " command caused an unrecognized programming error", advance='yes' )
     end select
     if ( present(ExtraMessage) ) then
-      call output(ExtraMessage)
+      call output(ExtraMessage, advance='yes')
     end if
   end subroutine ANNOUNCE_ERROR
 
@@ -1500,6 +1512,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.39  2001/04/19 00:09:34  pwagner
+! Longer error messages; halts if problem in fill
+!
 ! Revision 2.38  2001/04/10 23:45:17  vsnyder
 ! Construct matrix properly
 !
