@@ -18,7 +18,7 @@ module Join                     ! Join together chunk based data.
     & L2AUXData_T, L2AUXRank, SetupNewL2AUXRecord
   use L2GPData, only: AddL2GPToDatabase, ExpandL2GPDataInPlace, &
     & L2GPData_T, SetupNewL2GPRecord
-  use L2Parallel, only: PARALLEL, SLAVEJOIN
+  use L2ParInfo, only: PARALLEL, SLAVEJOIN
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: MLSChunk_T, R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, &
@@ -40,7 +40,7 @@ module Join                     ! Join together chunk based data.
 
   implicit none
   private
-  public :: MLSL2Join
+  public :: MLSL2Join, JoinL2GPQuantities, JoinL2AuxQuantities
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -642,6 +642,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.41  2001/05/23 21:59:43  livesey
+! Interim version, almost there
+!
 ! Revision 2.40  2001/05/23 01:43:19  livesey
 ! New parallel version in progress
 !
