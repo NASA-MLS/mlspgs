@@ -6,7 +6,7 @@ module WriteMetadata ! Populate metadata and write it out
 ! -------------------------------------------------------
 
   use Hdf, only: DFACC_RDWR   ! , Sfend, Sfstart
-  use HDFEOS5, only: HE5_SWATTACH, HE5_SWSETALIAS, HE5_SWDETACH, &
+  use HDFEOS5, only: HE5_SWATTACH, HE5_SWDETACH, &
     & HE5_SWCLOSE
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: FileNameLen, NameLen, R8
@@ -260,8 +260,7 @@ contains
 
   ! -----------------------------------------  Measured_parameter  -----
 
-  subroutine Measured_parameter ( HDF_FILE, Field_name, Groups, Class_num, &
-    & setAlias )
+  subroutine Measured_parameter ( HDF_FILE, Field_name, Groups, Class_num)
 
     ! This writes the attributes corresponding to the measured parameter container:
     !
@@ -284,7 +283,6 @@ contains
     integer                       :: HDF_FILE
     character(len=*)              :: Field_name
     integer, intent(in)           :: Class_num
-    logical, optional, intent(in) :: setAlias
 
     ! the group have to be defined as 49 characters long. The C interface is 50.
     ! The cfortran.h mallocs an extra 1 byte for the null character '\0/1, 
@@ -305,11 +303,7 @@ contains
     character (len=PGSd_PC_FILE_PATH_MAX) :: Sval
     integer :: record_length, file_id, sw_id
     integer :: Version
-    logical :: mySetAlias
     integer, parameter :: FILEACCESSTYPE = DFACC_RDWR
-    ! The following are for establishing soft links between field names & type2
-    character(len=*), parameter :: TYPE2FIELDNAME = 'L2gpValue'
-    character(len=*), parameter :: TYPE2PRECISIONNAME = 'L2gpPrecision'
 
     ! Externals
 
@@ -317,8 +311,6 @@ contains
       &  PGS_MET_setAttr_s, PGS_MET_SETATTR_I
 
     !Executable code
-    mySetAlias = .false.
-    if ( present(setAlias) ) mySetAlias = setAlias
     version = 1
     returnStatus = PGS_PC_GetReference (HDF_FILE, version , physical_filename)
 
@@ -332,50 +324,8 @@ contains
     ! links between valid data field names and the name L2gpValue
     ! Instead of doing this in a routine created for that purpose,
     ! we have violated good design principles and stuck it here for now
-    if ( mySetAlias ) then
-      if ( mls_hdf_version(physical_filename) == HDFVERSION_5 ) then
-        file_id = mls_io_gen_openF('sw', .true., returnStatus, &
-          & record_length, FileAccessType, &
-          & physical_filename, &
-          & hdfVersion=HDFVERSION_5)
-        if ( returnStatus /= PGS_S_SUCCESS ) then 
-          call announce_error ( 0, &
-            & "Error in opening file for setting alias." )
-        end if
-        sw_id = he5_swattach(file_id, trim(field_name))
-        if ( sw_id < 1 ) then 
-          call announce_error ( 0, &
-            & "Error in attaching swath for setting alias." )
-        end if
-        returnStatus = he5_SWsetalias(sw_id, TYPE2FIELDNAME, trim(field_name))
-        if ( returnStatus /= PGS_S_SUCCESS ) then 
-          call announce_error ( 0, &
-            & "Error in setting alias from " // TYPE2FIELDNAME // &
-              & ' to ' // trim(field_name) )
-        end if
-        returnStatus = he5_SWsetalias(sw_id, TYPE2PRECISIONNAME, &
-         & trim(field_name) // ' Precision')
-        if ( returnStatus /= PGS_S_SUCCESS ) then 
-          call announce_error ( 0, &
-            & "Error in setting alias from " // TYPE2PRECISIONNAME // &
-              & ' to ' // trim(field_name) // ' Precision' )
-        end if
-        returnStatus = he5_SWdetach(sw_id)
-        if ( returnStatus /= PGS_S_SUCCESS ) then 
-          call announce_error ( 0, &
-            & "Error in detaching swath for setting alias." )
-        end if
-        returnStatus = he5_SWclose(file_id)
-        if ( returnStatus /= PGS_S_SUCCESS ) then 
-          call announce_error ( 0, &
-            & "Error in closing file for setting alias." )
-        end if
-      endif
-    endif
-
+    !                (moved to WriteL2GPData)
     ! MeasuredParameterContainer
-
-
     if ( class_num <= 0 ) then
       class(:2) = '0 '
     else if ( class_num < 10 ) then
@@ -761,7 +711,7 @@ contains
   ! --------------------------------------  Populate_metadata_std  -----
 
   subroutine Populate_metadata_std ( HDF_FILE, MCF_FILE, &
-    & L2pcf, Field_name, hdfVersion, Metadata_error, setAlias, &
+    & L2pcf, Field_name, hdfVersion, Metadata_error, &
     & filetype )
     ! & isHDFEOS )
 
@@ -783,7 +733,6 @@ contains
     character (len=*)              :: Field_name
     integer, optional, intent(in)  :: hdfVersion
     integer, optional, intent(out) :: Metadata_error
-    logical, optional, intent(in)  :: setAlias
     character(len=*), optional, intent(in)  :: filetype
     ! logical, optional, intent(in)  :: isHDFEOS
 
@@ -844,7 +793,7 @@ contains
     end if
 		
     call first_grouping(HDF_FILE, MCF_FILE, l2pcf, groups)
-    call measured_parameter (HDF_FILE, field_name, groups, 1, setAlias)
+    call measured_parameter (HDF_FILE, field_name, groups, 1)
     call third_grouping (HDF_FILE, hdf_sdid, l2pcf, groups, hdfVersion)
 
 !    sdid = sfstart (physical_fileName, DFACC_RDWR) 
@@ -914,8 +863,7 @@ contains
 
   subroutine Populate_metadata_oth ( HDF_FILE, MCF_FILE, L2pcf, &
     & NumQuantitiesPerFile, QuantityNames, hdfVersion, Metadata_error, &
-    & setAlias, filetype )
-    ! & setAlias, isHDFEOS )
+    & filetype )
 
     ! This is specially to write meta data for heterogeneous files
     ! It should work unchanged for the 'OTH' l2gp files (e.g. ML2OTH.001.MCF)
@@ -930,8 +878,6 @@ contains
     character (len=*), dimension(:) :: QuantityNames
     integer, optional, intent(out) :: Metadata_error
     integer, optional, intent(in) :: hdfVersion
-    logical, optional, intent(in)  :: setAlias
-    ! logical, optional, intent(in)  :: isHDFEOS
     character(len=*), optional, intent(in)  :: filetype  ! 'sw' or 'hdf'
 
     !Local Variables
@@ -994,7 +940,7 @@ contains
     do indx=1, numquantitiesperfile
 
       call measured_parameter (HDF_FILE, &
-        & QuantityNames(indx), groups, indx, setAlias)
+        & QuantityNames(indx), groups, indx)
 
     end do
 
@@ -1590,6 +1536,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.42  2003/04/03 22:58:40  pwagner
+! Alias now set in lib/L2GPData instead of l2/write_meta
+!
 ! Revision 2.41  2003/03/15 00:15:52  pwagner
 ! Wont quit if pgs_met_remove returns non-zero value
 !
