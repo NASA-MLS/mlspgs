@@ -69,7 +69,8 @@ contains ! ====     Public Procedures     ==============================
     type (VectorTemplate_T), dimension(:), pointer :: vectorTemplates => NULL()
 
     depth = 0
-    if ( toggle(gen) ) call trace_begin ( 'WALK_TREE_TO_DO_MLS_L2', root )
+    if ( toggle(gen) ) call trace_begin ( 'WALK_TREE_TO_DO_MLS_L2', &
+      & subtree(first_section,root) )
     call OpenAndInitialize ( processingRange, l1bInfo )
     ! For now, the next three are simply done.  Eventually, they should be
     ! triggered by a command
@@ -144,6 +145,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.7  2001/02/08 01:40:53  vsnyder
+! Don't know what I have done, but "cvs update" said M instead of U
+!
 ! Revision 2.6  2001/01/03 17:48:43  pwagner
 ! added chunk args to call to Fill
 !
