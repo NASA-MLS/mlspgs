@@ -14,8 +14,8 @@ module SidsModule
   use ForwardModelWrappers, only: ForwardModel
   use ForwardModelIntermediate, only: ForwardModelIntermediate_T,&
     & ForwardModelStatus_T, DestroyForwardModelIntermediate
-  use Init_Tables_Module, only: f_forwardModel, f_fwdModelIn, f_fwdModelExtra, &
-    f_fwdModelOut, f_jacobian, f_perturbation
+  use Init_Tables_Module, only: f_destroyjacobian, f_forwardModel, f_fwdModelIn, &
+    f_fwdModelExtra, f_fwdModelOut, f_jacobian, f_perturbation
   use Lexer_Core, only: Print_Source
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
@@ -24,7 +24,7 @@ module SidsModule
   use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
     GetFromMatrixDatabase, Matrix_Database_T, Matrix_T, DestroyBlock, CreateBlock, &
     & FindBlock
-  use MoreTree, only: Get_Field_Id
+  use MoreTree, only: Get_Field_Id, Get_Boolean
   use Output_M, only: Output
   use Toggles, only: Gen, Toggle
   use Trace_M, only: Trace_begin, Trace_end
@@ -72,6 +72,7 @@ contains
     integer :: INSTANCE                 ! Index
     integer :: ELEMENT                  ! Index
     integer :: STATUS                   ! Flag
+    logical :: DESTROYJACOBIAN          ! Flag
     logical :: DOTHISONE                ! Flag
     integer :: LOOPEND                  ! Loop limit
     integer :: COL                      ! Column in jacobian
@@ -97,6 +98,7 @@ contains
     ! Process the fields of the "sids" specification
     error = 0
     ixJacobian = 0
+    destroyJacobian = .false.
 
     do i = 2, nsons(root)
       son = subtree(i,root)
@@ -112,6 +114,8 @@ contains
         perturbation => vectorDatabase(decoration(decoration(subtree(2,son))))
       case ( f_jacobian )
         ixJacobian = decoration(subtree(2,son)) ! jacobian: matrix vertex
+      case ( f_destroyJacobian )
+        destroyJacobian = Get_boolean(son)
       case ( f_forwardModel )
         call Allocate_Test ( configs, nsons(son)-1, 'configs', ModuleName )
         do config = 2, nsons(son)
@@ -202,6 +206,15 @@ contains
                 & FwdModelOut, ifm, fmStat )
             end if
           end do
+
+          ! Destroy jacobian if asked to
+          if (destroyJacobian .and. ixJacobian > 0 ) then
+            call DestroyBlock ( Jacobian )
+            allocate ( Jacobian%block ( jacobian%row%nb, jacobian%col%nb ), &
+              & STAT=status )
+            if ( status /= 0 ) call MLSMessage (MLSMSG_Error, ModuleName, &
+              & MLSMSG_Allocate//'jacobian%block' )
+          endif
         end do
 
         ! Tidy up the intermediate/status stuff from the model
@@ -297,6 +310,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.32  2001/05/10 01:08:11  livesey
+! Added destroyJacobian option
+!
 ! Revision 2.31  2001/05/09 01:50:31  vsnyder
 ! Make sure fmstat%rows is defined (even though it's not used)
 !
