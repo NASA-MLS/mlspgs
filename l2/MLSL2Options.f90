@@ -41,7 +41,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! Update these lines before delivery to sips     
   ! id to print out in response to "--version" command-line option       
   character(LEN=*), dimension(3), parameter :: CURRENT_VERSION_ID = (/ &    
-    & 'v1.43 swdev team                                          ', &       
+    & 'v1.50 swdev team                                          ', &       
     & 'Copyright (c) 2004, California Institute of Technology.   ', &       
     & 'U.S. Government Sponsorship under NASA Contract NAS7-1407.' /)       
      
@@ -91,6 +91,12 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   logical            :: SKIPDIRECTWRITES = .false.         
   ! Whether to skip doing the retrieval--a pre-flight checkout of paths, etc.
   logical            :: SKIPRETRIEVAL = .false.         
+  ! Whether to stop after the chunk division section
+  logical            :: STOPAFTERCHUNKDIVIDE = .false.         
+  ! Whether to stop after doing the global settings section
+  logical            :: STOPAFTERGLOBAL = .false.         
+  ! Whether to exit with status 1 no matter what
+  logical            :: STOPWITHERROR = .false.         
   ! Whether to do only a pre-flight checkout of paths
   logical            :: CHECKPATHS = .false.         
   ! Whether to catenate split autoDirectWrites
@@ -110,6 +116,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.30  2004/12/14 00:04:24  pwagner
+! New early stop options added for quicker debugging
+!
 ! Revision 2.29  2004/07/08 22:48:44  pwagner
 ! Made SIPS_VERSION public
 !
