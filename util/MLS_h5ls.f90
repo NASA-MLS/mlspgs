@@ -8,6 +8,7 @@
      PROGRAM MLS_h5ls
 
      use HDF5, only: HID_T, H5F_ACC_RDONLY_F, h5fopen_f, h5fclose_f, h5fis_hdf5_f   
+     use MACHINE, only: FILSEP, HP, IO_ERROR, GETARG
      use MLSDataInfo, only: MLSDataInfo_T, Query_MLSData
 
      IMPLICIT NONE
@@ -15,6 +16,7 @@
      type(MLSDataInfo_T) :: dataset_info
 
      CHARACTER(LEN=255) :: filename          ! filename
+     integer            :: n_filenames
      INTEGER(HID_T) :: file_id               ! File identifier
      INTEGER     ::  i, count, status, error ! Counting indices & Error flags
      INTEGER, PARAMETER ::  max_nsds = 1000  ! Maximum number of datasets in file.
@@ -27,13 +29,15 @@
   character (len=*), parameter :: ModuleName= &
        "$RCSfile$"
 !---------------------------------------------------------------------------
+     
+     ! print *, 'Your file name: ', filename
+
      CALL h5open_f(error)
-
-     write(*,21) 
- 21  format("Enter the name of the HDF5 file. Datasets in the file will be listed shortly.")
-
-     read(*,*) filename
-
+  n_filenames = 0
+  do      ! Loop over filenames
+     call get_filename(filename, n_filenames)
+     if ( filename == ' ' ) exit
+     n_filenames = n_filenames + 1
      call h5fis_hdf5_f(trim(filename), is_hdf5, error)
 
      if (is_hdf5) then 
@@ -78,9 +82,68 @@
 
      endif ! is_hdf5
 
+  enddo        ! Loop over filenames
+
      CALL h5close_f(error)
 !-------------------------------------------------------------
      STOP
-     END PROGRAM MLS_h5ls
+  contains
+
+!------------------------- get_filename ---------------------
+    subroutine get_filename(filename, n_filenames)
+    ! Added for command-line processing
+     CHARACTER(LEN=255), intent(out) :: filename          ! filename
+     integer, intent(in) ::             n_filenames
+     integer ::                         error = 0
+     integer, save ::                   i = 1
+  ! Get inputfile name, process command-line args
+  ! (which always start with -)
+!    i = 1
+!    error = 0
+    do
+      call getarg ( i+hp, filename )
+      ! print *, i, ' th Arg: ', trim(filename)
+      if ( filename(1:1) /= '-' ) exit
+      error = 1
+      if ( filename(1:3) == '-h ' ) then
+        call print_help
+      else if ( filename(1:3) == '-f ' ) then
+        call getarg ( i+1+hp, filename )
+        error = 0
+        i = i + 1
+        exit
+      else
+        call print_help
+      end if
+      i = i + 1
+    end do
+    if ( error /= 0 ) then
+      call print_help
+    endif
+    i = i + 1
+    if (trim(filename) == ' ' .and. n_filenames == 0) then
+
+    ! Last chance to enter filename
+      print *,  "Enter the name of the HDF5 file. " // &
+       &  "Datasets in the file will be listed shortly."
+      read(*,'(a)') filename
+    endif
+    
+  end subroutine get_filename
+!------------------------- print_help ---------------------
+  subroutine print_help
+  ! Print brief but helpful message
+      write (*,*) &
+      & 'Usage: MLS_h5ls [options] [filenames]'
+      write (*,*) &
+      & ' If no filenames supplied, you will be prompted to supply one'
+      write (*,*) ' Options: -f filename => use filename'
+      write (*,*) '          -h          => print brief help'
+      stop
+  end subroutine print_help
+END PROGRAM MLS_h5ls
 
 ! $Log$
+! Revision 1.1  2002/08/28 22:49:21  pwagner
+! First commit
+!
