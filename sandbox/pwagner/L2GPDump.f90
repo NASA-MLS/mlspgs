@@ -39,9 +39,15 @@ PROGRAM L2GPDump ! dumps L2GPData files
 ! Then run it
 ! LF95.Linux/test [options] [filenames]
 
+  type options_T
+     logical ::          verbose = .false.
      integer ::          details = 1
      logical ::          columnsOnly = .false.
      logical ::          attributesToo = .false.
+     character(len=255) ::  fields = ''
+  end type options_T
+
+  type ( options_T ) :: options
      CHARACTER(LEN=255) :: filename          ! filename
      integer            :: n_filenames
      INTEGER     ::  i, count, status, error ! Counting indices & Error flags
@@ -53,25 +59,24 @@ PROGRAM L2GPDump ! dumps L2GPData files
   CALL mls_h5open(error)
   n_filenames = 0
   do      ! Loop over filenames
-     call get_filename(filename, n_filenames, details, columnsOnly, attributesToo)
+     call get_filename(filename, n_filenames, options)
      if ( filename == ' ' ) exit
      n_filenames = n_filenames + 1
      call h5fis_hdf5_f(trim(filename), is_hdf5, error)
      if ( .not. is_hdf5 ) then
        print *, 'Sorry--not recognized as hdf5 file: ', trim(filename)
      endif
-     call dump_one_file(trim(filename), details, columnsOnly, attributesToo)
+     if ( options%verbose ) print *, 'Dumping swaths in ', trim(filename)
+     call dump_one_file(trim(filename), options)
   enddo
   call mls_h5close(error)
 contains
 !------------------------- get_filename ---------------------
-    subroutine get_filename(filename, n_filenames, details, columnsOnly, attributesToo)
+    subroutine get_filename(filename, n_filenames, options)
     ! Added for command-line processing
      CHARACTER(LEN=255), intent(out) :: filename          ! filename
      integer, intent(in) ::             n_filenames
-     integer, intent(inout) ::          details
-     logical, intent(inout) ::          columnsOnly
-     logical, intent(inout) ::          attributesToo
+     type ( options_T ) :: options
      integer ::                         error = 1
      integer, save ::                   i = 1
   ! Get inputfile name, process command-line args
@@ -86,15 +91,18 @@ contains
       if ( filename(1:3) == '-h ' ) then
         call print_help
       elseif ( filename(1:3) == '-0 ' ) then
-        details = 0
+        options%details = 0
       elseif ( filename(1:3) == '-1 ' ) then
-        details = -1
+        options%details = -1
       elseif ( filename(1:3) == '-2 ' ) then
-        details = -2
+        options%details = -2
       elseif ( filename(1:3) == '-a ' ) then
-        attributesToo = .true.
+        options%attributesToo = .true.
       elseif ( filename(1:3) == '-c ' ) then
-        columnsOnly = .true.
+        options%columnsOnly = .true.
+      else if ( filename(1:3) == '-l ' ) then
+        call getarg ( i+1+hp, options%fields )
+        i = i + 1
       else if ( filename(1:3) == '-f ' ) then
         call getarg ( i+1+hp, filename )
         error = 0
@@ -127,19 +135,20 @@ contains
       & ' If no filenames supplied, you will be prompted to supply one'
       write (*,*) ' Options: -f filename => use filename'
       write (*,*) '          -h          => print brief help'
+      write (*,*) '          -l list     => dump only fields named in list'
       write (*,*) '          -0          => dump only scalars, 1-d array'
       write (*,*) '          -1          => dump only scalars'
       write (*,*) '          -2          => dump only swath names'
       write (*,*) '          -c          => dump only column abundances'
       write (*,*) '          -a          => dump attributes, too'
+      write (*,*) '          -v          => verbose'
+      write (*,*) ' (by default, dumps all fields in allswaths, but not attributes)'
       stop
   end subroutine print_help
 
-   subroutine dump_one_file(filename, details, columnsOnly, attributesToo)
+   subroutine dump_one_file(filename, options)
     character(len=*), intent(in) :: filename          ! filename
-    integer, intent(inout) ::          details
-    logical, intent(inout) ::          attributesToo
-    logical, intent(inout) ::          columnsOnly
+    type ( options_T ) :: options
     character (len=MAXSWATHNAMESBUFSIZE) :: SwathList
     integer :: File1
     integer :: listsize
@@ -153,7 +162,7 @@ contains
     ! Get swath list
     noSwaths = mls_InqSwath ( filename, SwathList, listSize, &
            & hdfVersion=HDFVERSION_5)
-    print *, 'Opening: ', trim(filename)
+    ! print *, 'Opening: ', trim(filename)
     File1 = mls_io_gen_openF('swopen', .TRUE., status, &
        & record_length, DFACC_READ, FileName=trim(filename), &
        & hdfVersion=HDFVERSION_5, debugOption=.false. )
@@ -177,9 +186,9 @@ contains
       ! print *, 'l2gp%nTimes:  ', l2gp%nTimes
       ! print *, 'shape(l2gp%l2gpvalue):  ', shape(l2gp%l2gpvalue)
       ! Dump the swath- and file-level attributes
-      if ( attributesToo ) call dump(file1, l2gp)
+      if ( options%attributesToo ) call dump(file1, l2gp)
       ! Dump the actual swath
-      call dump(l2gp, columnsOnly, details)
+      call dump(l2gp, options%columnsOnly, options%details, options%fields)
       call DestroyL2GPContents ( l2gp )
     enddo
     status = mls_io_gen_closeF('swclose', File1, FileName=Filename, &
@@ -190,6 +199,9 @@ END PROGRAM L2GPDump
 !==================
 
 ! $Log$
+! Revision 1.5  2004/09/28 23:10:15  pwagner
+! Much moved to MLSStringLists
+!
 ! Revision 1.4  2004/07/20 22:42:40  pwagner
 ! Works with newer toolkit 5.2.11
 !
