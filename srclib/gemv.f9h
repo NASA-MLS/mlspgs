@@ -17,11 +17,11 @@
 !---------------------------------------------------------------------------
 
     if ( trans == 'N' .or. trans == 'n' ) then
-      y(1:(m-1)*abs(incy):incy) = beta * y(1:(m-1)*abs(incy):incy) + &
-        & alpha * matmul( a(:m,:n), x(1:(n-1)*abs(incx):incx) )
+      y(1:1+(m-1)*abs(incy):incy) = beta * y(1:1+(m-1)*abs(incy):incy) + &
+        & alpha * matmul( a(:m,:n), x(1:1+(n-1)*abs(incx):incx) )
     else if ( trans == 'T' .or. trans == 't' ) then
-      y(1:(n-1)*abs(incy):incy) = beta * y(1:(n-1)*abs(incy):incy) + &
-        & alpha * matmul( transpose(a(:m,:n)), x(1:(m-1)*abs(incx):incx) )
+      y(1:1+(n-1)*abs(incy):incy) = beta * y(1:1+(n-1)*abs(incy):incy) + &
+        & alpha * matmul( transpose(a(:m,:n)), x(1:1+(m-1)*abs(incx):incx) )
     else
       print *, 'In ', moduleName, ', TRANS is not one of [NnTn].'
       stop
@@ -29,3 +29,6 @@
 ! end subroutine *GEMV
 
 ! $Log$
+! Revision 1.1  2001/11/14 00:22:01  vsnyder
+! Initial commit
+!
