@@ -81,8 +81,7 @@ module ForwardModelInterface
 
   integer, parameter :: AllocateError        = 1
   integer, parameter :: BadMolecule          = AllocateError + 1
-  integer, parameter :: ChannelOutOfRange    = BadMolecule + 1
-  integer, parameter :: DefineSignalsFirst   = ChannelOutOfRange + 1
+  integer, parameter :: DefineSignalsFirst   = BadMolecule + 1
   integer, parameter :: DefineMoleculesFirst = DefineSignalsFirst + 1
   integer, parameter :: IncompleteFullFwm    = DefineMoleculesFirst + 1
   integer, parameter :: IncompleteLinearFwm  = IncompleteFullFwm + 1
@@ -270,6 +269,10 @@ contains
             & strip=.true.)
           call parse_Signal ( signalString, signalInds, spec_indices, &
             & tree_index=son, sideband=sideband, channels=channels )
+          if ( .not. associated(signalInds) ) then ! A parse error occurred
+            error = max(error,1)
+        exit
+          end if
           ! Later on choose the `right' one from the match
           ! For the moment choose first !????
           wanted=1
@@ -279,14 +282,10 @@ contains
             & size(info%signals(j)%frequencies), 'info%signals%channels', &
             & ModuleName )
           if ( associated(channels) ) then
-            if ( ubound(channels,1) > ubound(info%signals(j)%channels,1) ) then
-              call announceError ( channelOutOfRange, key )
-            else
-              info%signals(j)%channels(1:lbound(channels,1)-1) = .false.
-              info%signals(j)%channels(lbound(channels,1):ubound(channels,1)) = &
-                channels
-              info%signals(j)%channels(ubound(channels,1)+1:) = .false.
-            end if
+           info%signals(j)%channels(1:lbound(channels,1)-1) = .false.
+           info%signals(j)%channels(lbound(channels,1):ubound(channels,1)) = &
+             channels
+           info%signals(j)%channels(ubound(channels,1)+1:) = .false.
           else
             info%signals(j)%channels = .true.
           end if
@@ -1264,8 +1263,6 @@ contains
     case ( BadMolecule )
       call output ( 'asked for derivatives for an unlisted molecule.', &
         & advance='yes' )
-    case ( channelOutOfRange )
-      call output ( 'Channel out-of-range for signal.', advance='yes' )
     case ( DefineMoleculesFirst )
       call output ( 'molecule must be defined before moleules derivatives.', &
         & advance='yes')
@@ -1296,6 +1293,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.84  2001/04/11 02:09:46  vsnyder
+! Handle 'Parse_Signal' error
+!
 ! Revision 2.83  2001/04/11 01:18:37  vsnyder
 ! Check channel number range
 !
