@@ -980,6 +980,10 @@ contains ! =====     Public Procedures     =============================
       ! Record this in the 'locked bins' information
       if ( fmConf%lockBins ) lockedBins ( :, signal ) = l2pcBins
 
+      ! Tidy up
+      call Deallocate_test ( cost, 'cost', ModuleName )
+      deallocate ( possible )
+
     end subroutine SelectL2PCBins
 
   end subroutine LinearizedForwardModel
@@ -991,6 +995,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.37  2003/02/06 01:13:28  livesey
+! Added the dump stuff
+!
 ! Revision 2.36  2003/02/06 00:46:03  livesey
 ! New SelectL2PCBins routine.
 !
