@@ -42,6 +42,7 @@ TYPE GriddedData_T
    !
    ! Now the name, description and units information
    !
+   CHARACTER (LEN=NameLen) :: sourceFileName ! Input file name
    CHARACTER (LEN=NameLen) :: quantityName ! From input file
    CHARACTER (LEN=LineLen) :: description ! Quantity description
    CHARACTER (LEN=NameLen) :: units ! Units for quantity
@@ -88,7 +89,39 @@ END MODULE GriddedData
 
 !
 ! $Log$
+! Revision 2.10  2001/03/30 00:24:40  pwagner
+! Added sourceFileName
+!
 ! Revision 2.9  2001/03/15 21:28:08  pwagner
 ! Now only the data type
 !
+! Revision 2.8  2001/03/15 00:37:13  pwagner
+! Still not complete; missing gdrdfld
+!
+! Revision 2.7  2001/03/14 00:32:47  pwagner
+! More changes--still wrong, though
+!
+! Revision 2.6  2001/03/10 00:33:16  pwagner
+! Some corrections in ReadGriddedData
+!
+! Revision 2.5  2001/03/09 01:02:55  pwagner
+! Fixed announce_error
+!
+! Revision 2.4  2001/03/08 01:08:35  pwagner
+! Added announce_error
+!
+! Revision 2.3  2001/03/07 01:03:19  pwagner
+! ReadGriddedData added
+!
+! Revision 2.2  2001/02/21 00:36:43  pwagner
+! l3ascii_read_field now has eof as intent(out) arg
+!
+! Revision 2.1  2001/02/20 21:51:39  pwagner
+! Functions absorbed from gridded_data_module
+!
+! Revision 2.0  2000/09/05 17:41:05  dcuddy
+! Change revision to 2.0
+!
+! Revision 1.5  2000/06/20 22:19:22  lungu
+! Changed DOUBBLE PRECISION to REAL (r8).
 !
