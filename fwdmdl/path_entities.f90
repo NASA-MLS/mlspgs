@@ -26,7 +26,7 @@ module PATH_ENTITIES_M
  end type PATH_VECTOR_2D
 
  type PATH_DERIVATIVE
-   Real(r4), DIMENSION(:,:,:), POINTER :: values => NULL()   ! (Npath,mnp,mxco)
+   Real(r4), DIMENSION(:,:,:), POINTER :: values => NULL()   ! (various,mnp,mxco)
  end type PATH_DERIVATIVE
 
  type PATH_BETA
@@ -44,6 +44,9 @@ module PATH_ENTITIES_M
 
 end module PATH_ENTITIES_M
 ! $Log$
+! Revision 1.4  2001/03/26 17:56:14  zvi
+! New codes to deal with dh_dt_path issue.. now being computed on the fly
+!
 ! Revision 1.3  2001/03/09 23:57:02  vsnyder
 ! Declare pointer components to be initially nullified.
 !
