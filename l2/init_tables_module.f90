@@ -119,8 +119,14 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_MIF                 = f_method + 1
   integer, parameter :: F_MOLECULEDERIVATIVES = f_MIF + 1
   integer, parameter :: F_MOLECULES           = f_moleculeDerivatives + 1
-  integer, parameter :: F_NOMIFS              = f_molecules + 1
-  integer, parameter :: F_NUMBER              = f_nomifs + 1
+  integer, parameter :: F_NABTERMS            = f_molecules + 1
+  integer, parameter :: F_NAZIMUTHANGLES      = f_nabterms + 1
+  integer, parameter :: F_NCLOUDSPECIES       = f_nazimuthangles  + 1
+  integer, parameter :: F_NMODELSURFS         = f_ncloudspecies + 1
+  integer, parameter :: F_NOMIFS              = f_nmodelsurfs + 1
+  integer, parameter :: F_NSCATTERINGANGLES   = f_nomifs  + 1
+  integer, parameter :: F_NSIZEBINS           = f_nscatteringangles + 1
+  integer, parameter :: F_NUMBER              = f_nsizebins + 1
   integer, parameter :: F_OPTICALDEPTH        = f_number + 1
   integer, parameter :: F_ORIGIN              = f_opticalDepth + 1
   integer, parameter :: F_OUTPUTCOVARIANCE    = f_origin + 1
@@ -245,7 +251,8 @@ module INIT_TABLES_MODULE
 ! Specification indices don't overlap parameter indices, so a section can
 ! have both parameters and specifications:
   integer, parameter :: S_APRIORI            = last_Spectroscopy_Spec + 1
-  integer, parameter :: S_CREATE             = s_apriori + 1
+  integer, parameter :: S_CLOUDFORWARDMODEL  = s_apriori + 1
+  integer, parameter :: S_CREATE             = s_cloudforwardmodel + 1
   integer, parameter :: S_DUMPBLOCKS         = s_create + 1
   integer, parameter :: S_FILL               = s_dumpblocks + 1
   integer, parameter :: S_FILLCOVARIANCE     = s_fill + 1
@@ -465,8 +472,14 @@ contains ! =====     Public procedures     =============================
     field_indices(f_mif) =                 add_ident ( 'mif' )
     field_indices(f_moleculeDerivatives) = add_ident ( 'moleculeDerivatives' )
     field_indices(f_molecules) =           add_ident ( 'molecules' )
+    field_indices(f_nabterms) =            add_ident ( 'nabterms' )
+    field_indices(f_nazimuthangles) =      add_ident ( 'nazimuthangles' )
+    field_indices(f_ncloudspecies) =       add_ident ( 'ncloudspecies' )
+    field_indices(f_nmodelsurfs) =         add_ident ( 'nmodelsurfs' )
     field_indices(f_noMIFs) =              add_ident ( 'noMIFs' )
     field_indices(f_number) =              add_ident ( 'number' )
+    field_indices(f_nscatteringangles) =   add_ident ( 'nscatteringangles' )
+    field_indices(f_nsizebins) =           add_ident ( 'nsizebins' )
     field_indices(f_origin) =              add_ident ( 'origin' )
     field_indices(f_opticalDepth) =        add_ident ( 'opticalDepth' )
     field_indices(f_outputCovariance) =    add_ident ( 'outputCovariance' )
@@ -566,6 +579,7 @@ contains ! =====     Public procedures     =============================
     ! Put spec names into the symbol table.  Don't add ones that are
     ! put in by init_MLSSignals.
     spec_indices(s_apriori) =              add_ident ( 'apriori' )
+    spec_indices(s_cloudforwardModel) =    add_ident ( 'cloudforwardModel' )
     spec_indices(s_create) =               add_ident ( 'create' )
     spec_indices(s_dumpblocks) =           add_ident ( 'dumpblocks' )
     spec_indices(s_fill) =                 add_ident ( 'fill' )
@@ -861,6 +875,12 @@ contains ! =====     Public procedures     =============================
              begin, f+f_module, s+s_module, n+n_field_spec, &
              begin, f+f_moleculeDerivatives, t+t_molecule, n+n_field_type, &
              begin, f+f_molecules, t+t_molecule, n+n_field_type, &
+             begin, f+f_nabterms, t+t_numeric, n+n_field_type, &
+             begin, f+f_nazimuthangles, t+t_numeric, n+n_field_type, &
+             begin, f+f_ncloudspecies, t+t_numeric, n+n_field_type, &
+             begin, f+f_nmodelsurfs, t+t_numeric, n+n_field_type, &
+             begin, f+f_nscatteringangles, t+t_numeric, n+n_field_type, &
+             begin, f+f_nsizebins, t+t_numeric, n+n_field_type, &
              begin, f+f_phiWindow, t+t_numeric, n+n_field_type, &
              begin, f+f_frqGap, t+t_numeric, n+n_field_type, &
              begin, f+f_signals, t+t_string, n+n_field_type, &
@@ -870,14 +890,38 @@ contains ! =====     Public procedures     =============================
              begin, f+f_tangentGrid, s+s_vGrid, n+n_field_spec, &
              begin, f+f_temp_der, t+t_boolean, n+n_field_type, &
              begin, f+f_tolerance, t+t_numeric, n+n_field_type, &
-             begin, f+f_type, t+t_fwmType, nr+n_field_type, &
-            ndp+n_spec_def, &      
+             begin, f+f_type, t+t_fwmType, nr+n_field_type, ndp+n_spec_def, &
       begin, s+s_forwardModelGlobal, &
              begin, f+f_antennaPatterns, t+t_string, n+n_field_type, &
              begin, f+f_l2pc, t+t_string, n+n_field_type, &
              begin, f+f_filterShapes, t+t_string, n+n_field_type, &
-             begin, f+f_pointingGrids, t+t_string, n+n_field_type, &
-             np+n_spec_def /) )
+             begin, f+f_pointingGrids, t+t_string, n+n_field_type, np+n_spec_def /) )
+    call make_tree ( (/ &
+      begin, s+s_cloudforwardModel, &
+             begin, f+f_atmos_der, t+t_boolean, n+n_field_type, &
+             begin, f+f_do_conv, t+t_boolean, n+n_field_type, &
+             begin, f+f_do_freq_avg, t+t_boolean, n+n_field_type, &
+             begin, f+f_integrationGrid, s+s_vGrid, n+n_field_spec, &
+             begin, f+f_module, s+s_module, n+n_field_spec, &
+             begin, f+f_moleculeDerivatives, t+t_molecule, n+n_field_type, &
+             begin, f+f_molecules, t+t_molecule, n+n_field_type, &
+             begin, f+f_nabterms, t+t_numeric, n+n_field_type, &
+             begin, f+f_nazimuthangles, t+t_numeric, n+n_field_type, &
+             begin, f+f_ncloudspecies, t+t_numeric, n+n_field_type, &
+             begin, f+f_nmodelsurfs, t+t_numeric, n+n_field_type, &
+             begin, f+f_nscatteringangles, t+t_numeric, n+n_field_type, &
+             begin, f+f_nsizebins, t+t_numeric, n+n_field_type, &
+             begin, f+f_phiWindow, t+t_numeric, n+n_field_type, &
+             begin, f+f_frqGap, t+t_numeric, n+n_field_type, &
+             begin, f+f_signals, t+t_string, n+n_field_type, &
+             begin, f+f_skipOverlaps, t+t_boolean, n+n_field_type, &
+             begin, f+f_cloud_der, t+t_boolean, n+n_field_type, &
+             begin, f+f_spect_der, t+t_boolean, n+n_field_type, &
+             begin, f+f_tangentGrid, s+s_vGrid, n+n_field_spec, &
+             begin, f+f_temp_der, t+t_boolean, n+n_field_type, &
+             begin, f+f_tolerance, t+t_numeric, n+n_field_type, &
+             begin, f+f_type, t+t_fwmType, nr+n_field_type, ndp+n_spec_def &
+             /) )
     call make_tree ( (/ &
       begin, s+s_l1brad, &
              begin, f+f_file, t+t_string, n+n_field_type, np+n_spec_def, &
@@ -961,7 +1005,7 @@ contains ! =====     Public procedures     =============================
              begin, p+p_starttime, t+t_string, n+n_name_def, &
              begin, p+p_endtime, t+t_string, n+n_name_def, s+s_l1brad, s+s_l1boa, &
              s+s_forwardModel, s+s_forwardModelGlobal, s+s_time, s+s_vgrid, &
-             s+s_l1brad, s+s_l1boa, n+n_section, &
+             s+s_l1brad, s+s_l1boa, s+s_cloudforwardModel, n+n_section, &
       begin, z+z_readapriori, s+s_time, s+s_gridded, s+s_l2gp, &
              s+s_l2aux, s+s_snoop, n+n_section, &
       begin, z+z_mergeapriori, s+s_time, s+s_merge, n+n_section, &
@@ -998,6 +1042,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.128  2001/07/09 22:21:43  pwagner
+! Added some fields for s_cloudforwardmodel
+!
 ! Revision 2.127  2001/07/09 19:56:05  livesey
 ! Put back the required source field for l2aux, which is different from
 ! l2gp.  Then again, maybe it shouldn't be.  Oh well, that's an issue
