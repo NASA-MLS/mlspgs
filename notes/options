@@ -65,6 +65,8 @@ E.g., mlsl2 -m -p --nmeta -S"glo jac"
     task and is not recommended for manual invocations.
   --snoop: Activate the snooping capability (interaction with
     an IDL diagnostics process)
+  --snoopname: Distinguishing name to send to snooper (for use when
+    using the stand alone logger)2
   --submit "command": In conjunction with --master, use the command
     to submit the slave task to a batch queue system.
     
@@ -92,6 +94,9 @@ by the equal-signs--stuff outside that space, like these
 comments, will not be printed in response to mlsl2 -?)
 
  $Log$
+ Revision 1.18  2002/10/05 00:47:16  livesey
+ Added slaveMAF and fwmParallel
+
  Revision 1.17  2002/10/04 16:47:12  pwagner
  Removed notes on little-used options
 
