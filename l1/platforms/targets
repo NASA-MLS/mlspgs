@@ -31,10 +31,11 @@ include ../Makefile.dep
 # ========================================================================
 #       The objects for the shared source files (in srclib)
 # Include their dependencies
-include $(srclib)/Makefile.dep
+# include $(srclib)/Makefile.dep
 
 # Add them to L1OBJS
-ALLOBJS = $(OBJS) $(srclib_objs)
+# ALLOBJS = $(OBJS) $(srclib_objs)
+ALLOBJS = $(OBJS)
 
 #                  PVM v. non-PVM options
 # If we implement an option to allow non-PVM-dependent installations
@@ -102,6 +103,9 @@ OutputL1B.o:
 
 # ========================================================================
 # $Log$
+# Revision 1.5  2001/02/08 23:22:14  pwagner
+# variable_linker_line tied to PVM and BLAS
+#
 # Revision 1.4  2001/02/05 19:37:36  pwagner
 # LDOPTS added to load statements
 #
