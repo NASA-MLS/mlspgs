@@ -293,11 +293,11 @@ CONTAINS
 		      l3dz(iD)%l3dzValue(iP, J) = zonAvg/float(l3dm(iD)%nLons) 
 		   ENDDO
                    DO iL = 1, anlats(J, iP)
-		      CALL Diagnostics(cfProd%mode, atimes(J, iL, iP), alons(J, iL, iP), l3ret) 
+		      !CALL Diagnostics(cfProd%mode, atimes(J, iL, iP), alons(J, iL, iP), l3ret) 
 		      !print *, atimes(J, iL, iP), alons(J, iL, iP), afields(J, iL, iP)-l3ret
 		   ENDDO
                    DO iL = 1, anlats(J, iP)
-		      CALL Diagnostics(cfProd%mode, dtimes(J, iL, iP), dlons(J, iL, iP), l3ret) 
+		      !CALL Diagnostics(cfProd%mode, dtimes(J, iL, iP), dlons(J, iL, iP), l3ret) 
 		      !print *, dfields(J, iL, iP)-l3ret
 		   ENDDO
 		   DeAllocate(l3Result)
@@ -763,6 +763,9 @@ END MODULE Synoptic
 !===================
 
 ! $Log$
+! Revision 1.5  2001/03/03 00:20:07  ybj
+! with selected pressure levels
+!
 ! Revision 1.3  2001/02/28 19:27:03  ybj
 ! Fix residue allocation & flags initialization
 !
