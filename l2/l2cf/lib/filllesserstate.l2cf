@@ -6,11 +6,11 @@ begin Fill
  
   ;; This macro below fills <x>Elev for radiometer <x> with the value
   ;; given in the macro !elev<x>
-  !define(fillElevOffset,{Fill, quantity=apriori.elev$1, method=explicit, $
-    explicitValues=!elev$1!nl})
+;   !define(fillElevOffset,{Fill, quantity=apriori.elev$1, method=explicit, $
+;     explicitValues=!elev$1!nl})
 
-  ;; Call that macro for all radiometers
-  !forall(fillElevOffset,!allRadiometers)
+;   ;; Call that macro for all radiometers
+;   !forall(fillElevOffset,!allRadiometers)
 
   ;; --------------------------------------------------- Isotope ratios
 
