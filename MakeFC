@@ -42,22 +42,27 @@ SHELL = /bin/sh
 #--------------- Target definitions
 #            (code sub-directories of mlspgs excluding util, sandbox)
 # $LEVELS        -- automatic; built when target is not specified
+# .configure     -- automatic (if not yet extant; prerequisite for everything else)
 # $OTHER_SUBDIRS -- not automatic
 # all            -- all the sub-directories
 # subdirs        -- same as all
 # lib            -- libmls.a; a prerequisite for the others
 
 #                           (functional)
+# clean          -- deletes uniquely-named sub-sub-directories
+# clean_objs     -- deletes only *.o, *.mod from sub-subs
 # configure      -- runs mlsconfigure to (re)set compiler, platform, paths
+#                   (invoked automatically if .configure not found)
 # configure_pvm  -- (re)set PVM and FFTW paths
 # configure_fopts  -- (re)set default FOPTS and LDOPTS
+# configure_full  -- does same as running all of above three
+# configure_help -- prints some info on how to configure the build
 # configure_subdirs
 #                  also (re)creates uniquely-named sub-sub-directories
 #                  within mlspgs sub-directories with customized Makefiles
 #                  where *.o, *.mod, lib*.a, mlsl*, etc. built
 # depends        -- runs makemakedep.sh to calculate dependencies
-# clean          -- deletes uniquely-named sub-sub-directories
-# clean_objs     -- deletes only *.o, *.mod from sub-subs
+# help           -- prints some info on how to build the mls software
 # install        -- mv programs mlsl* from sub-subs to CONFDIR
 # update         -- replaces customized Makefiles with latest versions
 #
@@ -69,8 +74,8 @@ SHELL = /bin/sh
 #
 # W a r n i n g :  The following automatically perform "clean_all"
 # tar            -- creates an archive of whole mlspgs suitable for distribution
-# tar_subs       -- creates archives of sub-directories suitable for distribution
 # tar_sips       -- creates archive of mlspgs suitable for SIPS
+# tar_subs       -- creates archives of sub-directories suitable for distribution
 #
 
 #----------------------------------------------------------
@@ -119,71 +124,11 @@ EVERY_MLSCONFG = LF95.Linux  NAG.Linux  NAG.SGI  NAG.Sun  Unknown.None
 
 #----------------------- Build instructions
 
+# Automatic targets
+
 levels:
 	 @for dir in $(LEVELS); do \
 	  $(MAKE) -f $(MakeFName) -C $$dir; \
-	done
-
-$(LEVELS):
-	$(MAKE) -f $(MakeFName) -C $@
-
-$(LEVELS): lib
-
-$(OTHER_SUBDIRS):
-	$(MAKE) -f $(MakeFName) -C $@
-
-$(OTHER_SUBDIRS): lib
-
-all: $(SUBDIRS)
-
-subdirs: $(SUBDIRS)
-
-# This requires rm-ing uniquely-named sub-subs before archiving
-tar tar_subs tar_sips: clean_all
-
-install: all
-
-update: depends
-
-.PHONY: configure depends subdirs clean clean_objs clean_config clean_all\
-  tar tar_subs tar_sips all install levels configure_subdirs update\
-  configure_pvm configure_fopts
-
-configure:
-	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
-          -c "$(MLSF95)" -p "$(MLSPLAT)"
-#	$(MAKE) -f $(MakeFName) configure_subdirs
-#	 for dir in $(SUBDIRS); do \
-#		cd $$dir ; \
-#		../$(MLSBIN)/mlsconfigure -dc "../$(CONFDIR)" -pc "$(PLATFORMS)" \
-#          -c "$(MLSF95)" -p "$(MLSPLAT)" -nc; \
-#		cd .. ; \
-#	done
-
-configure_subdirs:
-	@echo "Configuring $(SUBDIRS)"; \
-	 for dir in $(SUBDIRS); do \
-		cd $$dir ; \
-		../$(MLSBIN)/mlsconfigure -dc "../$(CONFDIR)" -pc "$(PLATFORMS)" \
-          -c "$(MLSF95)" -p "$(MLSPLAT)" -nc; \
-		cd .. ; \
-	done
-
-configure_pvm:
-	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
-          -c "$(MLSF95)" -p "$(MLSPLAT)" -nc -pv
-
-configure_fopts:
-	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
-          -c "$(MLSF95)" -p "$(MLSPLAT)" -nc -fl
-
-update:
-	@echo "Updating the Makefile in $(SUBDIRS)"; \
-	 for dir in $(SUBDIRS); do \
-		cd $$dir ; \
-		../$(MLSBIN)/mlsconfigure -dc "../$(CONFDIR)" -pc "$(PLATFORMS)" \
-          -c "$(MLSF95)" -p "$(MLSPLAT)" -nc -nd; \
-		cd .. ; \
 	done
 
 $(CONFDIR)/.configure:
@@ -198,16 +143,23 @@ $(CONFDIR)/.configure:
 #		cd .. ; \
 #	done
 
-depends:
-	@echo "Making dependencies for $(SUBDIRS)"; \
-	 for dir in $(SUBDIRS); do \
-	  $(MAKE) -f $(MakeFName) -C $$dir depends; \
-	done; \
-	echo "Making dependencies for srclib"; \
-        cd srclib; \
-        ../$(MLSBIN)/makemakedep.sh ../lib ../l2; \
-        sed 's/OBJS =/srclib_objs =/' Makefile.dep > temp.dep; \
-        mv temp.dep Makefile.dep
+# Targets that must be named explicitly
+
+$(LEVELS):
+	$(MAKE) -f $(MakeFName) -C $@
+
+$(OTHER_SUBDIRS):
+	$(MAKE) -f $(MakeFName) -C $@
+
+all subdirs:
+	 @for dir in $(SUBDIRS); do \
+	  $(MAKE) -f $(MakeFName) -C $$dir; \
+	done
+
+lib:
+	$(MAKE) -f $(MakeFName) -C $@
+
+#              (functional)
 
 clean:
 	@echo "Cleaning $(SUBDIRS)"; \
@@ -220,6 +172,73 @@ clean_objs:
 	 for dir in $(SUBDIRS); do \
 	  $(MAKE) -f $(MakeFName) -C $$dir clean_objs; \
 	done
+
+configure:
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)"
+#	$(MAKE) -f $(MakeFName) configure_subdirs
+#	 for dir in $(SUBDIRS); do \
+#		cd $$dir ; \
+#		../$(MLSBIN)/mlsconfigure -dc "../$(CONFDIR)" -pc "$(PLATFORMS)" \
+#          -c "$(MLSF95)" -p "$(MLSPLAT)" -nc; \
+#		cd .. ; \
+#	done
+
+configure_pvm:
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -nc -pv
+
+configure_fopts:
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -nc -fl
+
+configure_full:
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -pv -fl
+
+configure_help:
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -help
+
+configure_subdirs:
+	@echo "Configuring $(SUBDIRS)"; \
+	 for dir in $(SUBDIRS); do \
+		cd $$dir ; \
+		../$(MLSBIN)/mlsconfigure -dc "../$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -nc; \
+		cd .. ; \
+	done
+
+depends:
+	@echo "Making dependencies for $(SUBDIRS)"; \
+	 for dir in $(SUBDIRS); do \
+	  $(MAKE) -f $(MakeFName) -C $$dir depends; \
+	done; \
+	echo "Making dependencies for srclib"; \
+        cd srclib; \
+        ../$(MLSBIN)/makemakedep.sh ../lib ../l2; \
+        sed 's/OBJS =/srclib_objs =/' Makefile.dep > temp.dep; \
+        mv temp.dep Makefile.dep
+
+help:
+	$(CONFDIR)/README.MakeFC
+
+install:
+	@echo "Installing programs from $(LEVELS) into $(CONFDIR)"; \
+	 for dir in $(LEVELS); do \
+	  mv $$dir/$(MLSCONFG)/mls$$dir $(CONFDIR) ; \
+	done
+
+update:
+	@echo "Updating the Makefile in $(SUBDIRS)"; \
+	 for dir in $(SUBDIRS); do \
+		cd $$dir ; \
+		../$(MLSBIN)/mlsconfigure -dc "../$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -nc -nd; \
+		cd .. ; \
+	done
+
+# Useful for cleaning multiple configurations
 
 clean_config:
 	@echo "Cleaning $(SUBDIRS) according to configuration $(MLSCONFG)"; \
@@ -234,11 +253,7 @@ clean_all:
 	  $(MAKE) -f $(MakeFName) clean_config MLSCONFG=$$dir; \
 	done
 
-install:
-	@echo "Installing programs from $(LEVELS) into $(CONFDIR)"; \
-	 for dir in $(LEVELS); do \
-	  mv $$dir/$(MLSCONFG)/mls$$dir $(CONFDIR) ; \
-	done
+#For preparing source distributions
 
 tar:
 	@echo "tar-ing mlspgs"; \
@@ -265,7 +280,32 @@ tar_subs:
 	rm -f mlspgs_subs.tar; \
 	tar -cvf mlspgs_subs.tar *.tgz
 
+#----------------------- Bare target dependenciess
+
+$(LEVELS): lib
+
+$(OTHER_SUBDIRS): lib
+
+all: $(SUBDIRS)
+
+subdirs: $(SUBDIRS)
+
+# This requires rm-ing uniquely-named sub-subs before archiving
+tar tar_subs tar_sips: clean_all
+
+install: all
+
+update: depends
+
+.PHONY: configure depends subdirs clean clean_objs clean_config clean_all\
+  tar tar_subs tar_sips all install levels configure_subdirs update\
+  configure_pvm configure_fopts configure_full configure_help help
+
+#---------------------------------------------------------------
 # $Log$
+# Revision 1.16  2001/02/26 00:28:09  pwagner
+# configure_pvm and configure_fopts targets added
+#
 # Revision 1.15  2001/02/10 00:06:47  pwagner
 # update now a target of make -f MakeFC; replaces customized Makefiles with latest versions
 #
