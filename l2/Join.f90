@@ -36,9 +36,10 @@ contains ! =====     Public Procedures     =============================
   ! through the tree and dispatches work to other routines.
 
   subroutine MLSL2Join ( root, vectors, l2gpDatabase, l2auxDatabase, &
-    & chunkNo, chunks )
+    & DirectDataBase, chunkNo, chunks )
     ! Imports
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use DirectWrite_m, only: DirectData_T
     use Init_Tables_Module, only: S_L2GP, S_L2AUX, S_TIME, S_DIRECTWRITE, S_LABEL
     use L2GPData, only: L2GPDATA_T
     use L2AUXData, only: L2AUXDATA_T
@@ -58,6 +59,7 @@ contains ! =====     Public Procedures     =============================
     type (Vector_T), dimension(:), pointer :: vectors
     type (L2GPData_T), dimension(:), pointer :: l2gpDatabase
     type (L2AUXData_T), dimension(:), pointer :: l2auxDatabase
+    type (DirectData_T), dimension(:), pointer :: DirectDatabase
     integer, intent(in) :: chunkNo
     type (MLSChunk_T), dimension(:), intent(in) :: chunks
 
@@ -132,7 +134,8 @@ contains ! =====     Public Procedures     =============================
             if ( .not. dwCompleted(dwIndex) ) then
               ! Have it be patient if it's the only one left, other wise
               ! we'll try the next one.
-              call DirectWriteCommand ( son, vectors, chunkNo, chunks, &
+              call DirectWriteCommand ( son, vectors, DirectdataBase, &
+                & chunkNo, chunks, &
                 & count(.not. dwCompleted)==1, dwCompleted(dwIndex) )
             end if
             dwIndex = dwIndex + 1
@@ -186,10 +189,12 @@ contains ! =====     Public Procedures     =============================
   end subroutine MLSL2Join
 
   ! ------------------------------------------------ DirectWriteCommand -----
-  subroutine DirectWriteCommand ( node, vectors, chunkNo, chunks, waitItOut, completed )
+  subroutine DirectWriteCommand ( node, vectors, DirectDataBase, &
+    & chunkNo, chunks, waitItOut, completed )
     ! Imports
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-    use DirectWrite_m, only: DirectWrite_l2GP, DirectWrite_l2aux
+    use DirectWrite_m, only: DirectData_T, &
+      & AddDirectToDatabase, DirectWrite_l2GP, DirectWrite_l2aux
     use Hdf, only: DFACC_CREATE, DFACC_RDWR
     use intrinsic, only: L_NONE, L_GEODANGLE, &
       & L_MAF, PHYQ_DIMENSIONLESS
@@ -214,6 +219,7 @@ contains ! =====     Public Procedures     =============================
     ! Dummy arguments
     integer, intent(in) :: NODE    ! Of the JOIN section in the AST
     type (Vector_T), dimension(:), pointer :: VECTORS
+    type (DirectData_T), dimension(:), pointer :: DirectDatabase
     integer, intent(in) :: CHUNKNO
     type (MLSChunk_T), dimension(:), intent(in) :: CHUNKS
     logical, intent(in) :: WAITITOUT    ! If set, wait patiently for the ability to write
@@ -225,6 +231,7 @@ contains ! =====     Public Procedures     =============================
     integer, save :: NOCREATEDFILES=0   ! Number of files created
     ! Local variables
     integer :: fileaccess               ! DFACC_CREATE or DFACC_RDWR
+    integer :: DBINDEX
     integer :: ERRORTYPE
     integer :: EXPECTEDTYPE             ! l2gp/l2aux
     integer :: FIELDINDEX               ! Type of field in l2cf line
@@ -256,6 +263,7 @@ contains ! =====     Public Procedures     =============================
     character(len=1024) :: HDFNAME      ! Output swath/sd name
     type(VectorValue_T), pointer :: QTY ! The quantity
     type(VectorValue_T), pointer :: PRECQTY ! The quantities precision
+    type(DirectData_T) :: newDirect
     logical :: DEEBUG
 
     ! Executable code
@@ -433,6 +441,11 @@ contains ! =====     Public Procedures     =============================
       else
         precQty => NULL()
       end if
+
+      newDirect%type = outputType
+      newDirect%sdname = hdfName
+      ! Add it to the database of directly writeable quantities
+      dbindex = AddDirectToDatabase ( DirectDatabase, newDirect )
 
       select case ( outputType )
       case ( l_l2gp )
@@ -1159,6 +1172,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.73  2003/06/23 23:55:17  pwagner
+! Added DirectData_T to keep track of data written directly
+!
 ! Revision 2.72  2003/06/20 19:38:25  pwagner
 ! Allows direct writing of output products
 !
