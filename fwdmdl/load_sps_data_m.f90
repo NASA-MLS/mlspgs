@@ -329,7 +329,6 @@ contains
         case ( -2 )
           RHI=1.0e-9_r8
         end select
-        values_index = f_len - 1 + 1 + kf*(supersat_Index-1)
 
       ! find the index for the top of saturation levels
         call Hunt (Grids_x%zet_basis(l:n-1), -log10(refPRESSURE), supersat_Index, &
@@ -410,6 +409,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.42  2003/02/13 00:42:46  dwu
+! fix bugs and add comments for i_saturation
+!
 ! Revision 2.41  2003/02/13 00:07:22  jonathan
 ! another bug fix
 !
