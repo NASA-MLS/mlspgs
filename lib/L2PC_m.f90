@@ -530,6 +530,14 @@ contains ! ============= Public Procedures ==========================
     do while (.not. eof )
       call ReadOneL2PC ( l2pc, lun, eof )
       if (.not. eof) dummy = AddL2PCToDatabase ( l2pcDatabase, l2pc )
+
+      ! Now nullify the pointers in l2pc so we don't clobber the one we've written
+      nullify ( l2pc%block )
+      nullify ( l2pc%row%nelts, l2pc%row%inst, l2pc%row%quant )
+      nullify ( l2pc%col%nelts, l2pc%col%inst, l2pc%col%quant )
+      nullify ( l2pc%row%vec%template%quantities, l2pc%col%vec%template%quantities )
+      nullify ( l2pc%row%vec%quantities, l2pc%col%vec%quantities )
+      
     end do
 
     if ( toggle (gen) ) call trace_end ( "Read_l2pc_file" )
@@ -603,6 +611,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.21  2001/06/21 22:45:43  livesey
+! Found another one of those `clobbering the latest database item' gotchas in the code.
+!
 ! Revision 2.20  2001/06/06 17:27:29  pwagner
 ! DEBUG parameter; checks on some more reads
 !
