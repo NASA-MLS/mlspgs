@@ -44,14 +44,14 @@ SUBROUTINE get_chi_angles(sc_geoc_alt,tan_index_refr,tan_ht, &
 !
 ! keywords
 !
-  REAL(rp), OPTIONAL, INTENT(IN) :: tan_dh_dt(:,:) ! derivative of tangent
-!                                                  height wrt temperature
-  REAL(rp), OPTIONAL, INTENT(IN) :: tan_d2h_dhdt(:,:) ! 2nd derivative of
-! tangent height wrt temperature & height
-  REAL(rp), OPTIONAL, INTENT(OUT) :: dx_dt(:,:) ! derivative of pointing angle
-!                                       wrt temperature
-  REAL(rp), OPTIONAL, INTENT(OUT) :: d2x_dxdt(:,:) ! second derivative of
-! tangent wrt temperature, pointing angle
+  REAL(rp), OPTIONAL, INTENT(IN) :: tan_dh_dt(:) ! derivative of tangent
+                                                 ! height wrt temperature
+  REAL(rp), OPTIONAL, INTENT(IN) :: tan_d2h_dhdt(:) ! 2nd derivative of
+                                    ! tangent height wrt temperature & height
+  REAL(rp), OPTIONAL, INTENT(OUT) :: dx_dt(:) ! derivative of pointing angle
+                                              ! wrt temperature
+  REAL(rp), OPTIONAL, INTENT(OUT) :: d2x_dxdt(:) ! second derivative of
+                                   ! tangent wrt temperature, pointing angle
 !  ----------------
 !  Local variables:
 !  ----------------
@@ -84,7 +84,7 @@ SUBROUTINE get_chi_angles(sc_geoc_alt,tan_index_refr,tan_ht, &
   IF(PRESENT(tan_dh_dt)) THEN
     tp = TAN(ptg_angle)
     dx_dt = tp * tan_dh_dt / ht
-    d2x_dxdt = tp*tp*tan_dh_dt/ht + tan_d2h_dhdt
+    d2x_dxdt = tp * tp * tan_dh_dt / ht + tan_d2h_dhdt
   ENDIF
 
   RETURN
@@ -93,6 +93,9 @@ END SUBROUTINE get_chi_angles
 
 end module GET_CHI_ANGLES_M
 ! $Log$
+! Revision 2.8  2002/06/28 11:06:50  zvi
+! computes dx_dh on output grid as well
+!
 ! Revision 2.7  2002/06/24 21:11:24  zvi
 ! Adding Grids_tmp stracture and modifying calling sequences
 !

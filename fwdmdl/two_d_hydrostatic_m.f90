@@ -91,8 +91,8 @@ MODULE two_d_hydrostatic_m
       t_grid(:,i) = t_prfl
       h_grid(:,i) = h_prfl
       dhidzij(:,i) = dhidzi
-      dhidtlm(:,i,:) = dhidtq
-      ddhdhdtl0(:,i,:) = ddhdhdtq
+      dhidtlm(:,:,i) = dhidtq
+      ddhdhdtl0(:,:,i) = ddhdhdtq
     END DO
     DEALLOCATE(ddhdhdtq)
   ELSE
@@ -105,7 +105,7 @@ MODULE two_d_hydrostatic_m
       t_grid(:,i) = t_prfl
       h_grid(:,i) = h_prfl
       dhidzij(:,i) = dhidzi
-      dhidtlm(:,i,:) = dhidtq
+      dhidtlm(:,:,i) = dhidtq
     END DO
   ENDIF
 !
@@ -121,6 +121,9 @@ MODULE two_d_hydrostatic_m
 END MODULE two_d_hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.5  2002/06/24 21:11:25  zvi
+! Adding Grids_tmp stracture and modifying calling sequences
+!
 ! Revision 2.2  2002/06/07 14:59:00  bill
 ! fixed latitude calculation--wgr
 !

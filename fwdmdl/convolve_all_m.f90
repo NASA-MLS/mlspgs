@@ -75,13 +75,13 @@ MODULE convolve_all_m
 !                                   Earth surface.
   REAL(rp), OPTIONAL, INTENT(in) :: di_dt(:,:) ! derivative of radiance wrt
 !                                   temperature on chi_in
-  REAL(rp), OPTIONAL, INTENT(in) :: dx_dt(:,:,:) ! derivative of angle wrt
+  REAL(rp), OPTIONAL, INTENT(in) :: dx_dt(:,:) ! derivative of angle wrt
 !                                   temperature on chi_in
-  REAL(rp), OPTIONAL, INTENT(in) :: d2x_dxdt(:,:,:) ! 2nd derivative wrt angle
+  REAL(rp), OPTIONAL, INTENT(in) :: d2x_dxdt(:,:) ! 2nd derivative wrt angle
 !                                   temperature on chi_in
-  REAL(rp), OPTIONAL, INTENT(in) :: dxdt_tan(:,:,:) ! derivative of angle wrt
+  REAL(rp), OPTIONAL, INTENT(in) :: dxdt_tan(:,:) ! derivative of angle wrt
 !                                   temperature on chi_in
-  REAL(rp), OPTIONAL, INTENT(in) :: dxdt_surface(:,:,:) ! derivative of angle
+  REAL(rp), OPTIONAL, INTENT(in) :: dxdt_surface(:,:) ! derivative of angle
 !                                   wrt temperature at the surface
 !
 ! stuff for atmospheric derivatives
@@ -97,12 +97,11 @@ MODULE convolve_all_m
 !
   type (VectorValue_T), pointer :: F   ! An arbitrary species
 
-  INTEGER(i4) :: j, k, Row, Col, ind, jz, sps_i, ptg_i, &
-               & no_tan_hts, noPtan, noChans, jf
+  Integer(i4) :: j,k,Row,Col,ind,jz,sps_i,ptg_i,noPtan,noChans,jf
 
   Integer :: n_t_zeta, no_sv_p_t, sv_t_len, sv_f, f_len, no_mol
 !
-  REAL(r8) :: r, q
+  REAL(r8) :: r
 !
   REAL(r8), POINTER :: p(:)
   REAL(r8), POINTER :: dp(:)
@@ -111,11 +110,10 @@ MODULE convolve_all_m
   REAL(r8), POINTER :: rad_fft1(:)
   REAL(r8), POINTER :: drad_dt_temp(:)
 
-  REAL(r8), POINTER :: test1(:,:)
-  REAL(r8), POINTER :: test2(:,:)
-  REAL(r8), POINTER :: test3(:,:)
   REAL(r8), POINTER :: drad_dt_out(:,:)
   REAL(r8), POINTER :: drad_df_out(:,:)
+
+  REAL(r8), POINTER :: temp_dxdt_tan(:,:)
 
   Real(r8) :: SRad(ptan%template%noSurfs), di_dx(ptan%template%noSurfs)
 !
@@ -123,7 +121,6 @@ MODULE convolve_all_m
   no_sv_p_t = winFinish - winStart + 1
   sv_t_len = n_t_zeta * no_sv_p_t
 
-  no_tan_hts = SIZE(chi_in)
   no_mol = SIZE(mol_cat_index)
   noChans = Radiance%template%noChans
   noPtan = ptan%template%nosurfs
@@ -175,10 +172,10 @@ MODULE convolve_all_m
 
     do ptg_i = 1, noPtan
       ind = channel + noChans * (ptg_i-1)
-      jacobian%block(row,col)%values(ind, 1) = &
-              & jacobian%block(row,col)%values(ind, 1) + SRad(ptg_i)
-      jacobian%block(row,col)%r1(ptg_i) = 1 + noChans * (ptg_i - 1)
-      jacobian%block(row,col)%r2(ptg_i) = noChans * ptg_i
+      r = jacobian%block(row,col)%values(ind,1)
+      Jacobian%block(row,col)%values(ind, 1) = r + SRad(ptg_i)
+      Jacobian%block(row,col)%r1(ptg_i) = 1 + noChans * (ptg_i - 1)
+      Jacobian%block(row,col)%r2(ptg_i) = noChans * ptg_i
     end do
 
   endif
@@ -187,7 +184,7 @@ MODULE convolve_all_m
                 &  FwdMdlConfig%spect_der/)) ) RETURN
 !
   nullify (p,dp,angles,rad_fft,rad_fft1,drad_dt_temp,drad_dt_out, &
-         & drad_df_out,test1,test2,test3) 
+         & drad_df_out)
 !
   IF (FwdMdlConfig%atmos_der .AND. .not. FwdMdlConfig%temp_der) THEN
 !
@@ -198,34 +195,26 @@ MODULE convolve_all_m
 !
   ELSE IF (FwdMdlConfig%temp_der) THEN
 !
-    CALL ALLOCATE_TEST(test1,no_tan_hts,sv_t_len,'test1',Modulename)
-    CALL ALLOCATE_TEST(test2,no_tan_hts,sv_t_len,'test2',Modulename)
-    CALL ALLOCATE_TEST(test3,noPtan,    sv_t_len,'test3',Modulename)
     CALL ALLOCATE_TEST(drad_dt_out,noPtan,sv_t_len,'drad_dt_out',ModuleName)
+
+    Call ALLOCATE_TEST(temp_dxdt_tan,noPtan,sv_t_len,'temp_dxdt_tan',&
+                    &  ModuleName )
 !
-    DO j = 1, no_sv_p_t
-      DO k = 1, n_t_zeta
-        r = dxdt_surface(1,j,k)
-        test1(:,k+n_t_zeta*(j-1)) = dx_dt(:,j,k)
-        test2(:,k+n_t_zeta*(j-1)) = d2x_dxdt(:,j,k)
-! This arithmatic makes a surface value adjustment:
-        test3(:,k+n_t_zeta*(j-1)) = dxdt_tan(:,j,k) - r
-      end do
-    end do
+    temp_dxdt_tan = dxdt_tan - SPREAD(dxdt_surface(1,:),1,noPtan)
 !
     IF (FwdMdlConfig%atmos_der) then
 !
       CALL ALLOCATE_TEST(drad_df_out,noPtan,f_len,'drad_df_out',ModuleName)
       CALL fov_convolve(antennaPattern,chi_in,Rad_in,chi_out,SRad, &
-         & SURF_ANGLE=surf_angle,DI_DT=di_dt,DX_DT=test1,DDX_DXDT=test2,&
-         & DX_DT_OUT=test3,DRAD_DT_OUT=drad_dt_out,DI_DF=di_df, &
+         & SURF_ANGLE=surf_angle,DI_DT=di_dt,DX_DT=dx_dt,DDX_DXDT=d2x_dxdt,&
+         & DX_DT_OUT=temp_dxdt_tan,DRAD_DT_OUT=drad_dt_out,DI_DF=di_df, &
          & DRAD_DF_OUT=drad_df_out)
 !
     ELSE
 !
       CALL fov_convolve(antennaPattern,chi_in,Rad_in,chi_out,SRad, &
-         & SURF_ANGLE=surf_angle,DI_DT=di_dt,DX_DT=test1, &
-         & DDX_DXDT=test2,DX_DT_OUT=test3,DRAD_DT_OUT=drad_dt_out)
+         & SURF_ANGLE=surf_angle,DI_DT=di_dt,DX_DT=dx_dt,DDX_DXDT=d2x_dxdt,&
+         & DX_DT_OUT=temp_dxdt_tan,DRAD_DT_OUT=drad_dt_out)
 !
     ENDIF
 !
@@ -269,9 +258,7 @@ MODULE convolve_all_m
     end do
 !
     CALL DEALLOCATE_TEST(drad_dt_out,'drad_dt_out',ModuleName)
-    CALL DEALLOCATE_TEST(test1,'test1',Modulename)
-    CALL DEALLOCATE_TEST(test2,'test2',Modulename)
-    CALL DEALLOCATE_TEST(test3,'test3',Modulename)
+    Call DEALLOCATE_TEST(temp_dxdt_tan,'temp_dxdt_tan',ModuleName)
 
   ENDIF
 
@@ -286,12 +273,13 @@ MODULE convolve_all_m
   do sps_i = 1, no_mol
 !
     jz = mol_cat_index(sps_i)
-    if (FwdMdlConfig%molecules(jz) == l_extinction ) then
+    k = FwdMdlConfig%molecules(jz)
+    if (k == l_extinction ) then
       f => GetVectorQuantityByType ( FwdMdlIn, FwdMdlExtra,quantityType= &
           l_extinction, radiometer=fwdMdlConfig%signals(1)%radiometer)
     else
       f => GetVectorQuantityByType ( FwdMdlIn, FwdMdlExtra, &
-         & quantityType=l_vmr, molecule=FwdMdlConfig%molecules(jz))
+         & quantityType=l_vmr, molecule=k)
     endif
 
     if(.not. associated(f) ) then
@@ -311,7 +299,7 @@ MODULE convolve_all_m
         case ( m_full )
         case default
           call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Wrong type for temperature derivative matrix' )
+          & 'Wrong type for atmospheric derivative matrix' )
       end select
 
       DO k = 1, Grids_f%no_f(sps_i) * Grids_f%no_z(sps_i)
@@ -319,7 +307,7 @@ MODULE convolve_all_m
 ! Check if derivatives are needed for this (zeta & phi) :
 
         sv_f = sv_f + 1
-        if(.NOT. Grids_f%deriv_flags(sv_f)) CYCLE
+        if(.NOT. Grids_f%deriv_flags(sv_f) ) CYCLE
 
 ! run through representation basis coefficients
 
@@ -342,6 +330,9 @@ MODULE convolve_all_m
 
 END MODULE convolve_all_m
 ! $Log$
+! Revision 2.13  2002/06/28 11:06:47  zvi
+! compute dI/dPtan using chain rule
+!
 ! Revision 2.12  2002/06/19 11:00:31  zvi
 ! Removing debug statements
 !
