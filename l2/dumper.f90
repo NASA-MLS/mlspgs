@@ -6,6 +6,7 @@ module DUMPER
 ! Dump various stuff so we can look at it.
 
   use OUTPUT_M, only: OUTPUT
+  use QuantityTemplates, only: DUMP
   implicit NONE
   private
 
@@ -36,7 +37,6 @@ module DUMPER
     module procedure DUMP_CHUNKS
     module procedure DUMP_a_HGRID
     module procedure DUMP_HGRIDS
-    module procedure DUMP_QUANTITY_TEMPLATES
   end interface
 
 contains ! =====     Private Procedures     ============================
@@ -118,113 +118,6 @@ contains ! =====     Private Procedures     ============================
     end do
   end subroutine DUMP_HGRIDS
 
-  ! ------------------------------------  DUMP_QUANTITY_TEMPLATES  -----
-  subroutine DUMP_QUANTITY_TEMPLATES ( QUANTITY_TEMPLATES, DETAILS )
-
-    use DUMP_0, only: DUMP
-    use Intrinsic, only: LIT_INDICES, PHYQ_INDICES
-    use MLSSignals_m, only: signals, DUMP, GetRadiometerName, GetModuleName
-    use QuantityTemplates, only: QuantityTemplate_T
-    use STRING_TABLE, only: DISPLAY_STRING
-
-    type(QuantityTemplate_T), intent(in) :: QUANTITY_TEMPLATES(:)
-    integer, intent(in), optional :: DETAILS ! <= 0 => Don't dump arrays
-    !                                        ! >0   => Do dump arrays
-    !                                        ! Default 1
-    integer :: I, MyDetails
-    character (len=80) :: Str
-    myDetails = 1
-    if ( present(details) ) myDetails = details
-    call output ( 'QUANTITY_TEMPLATES: SIZE = ' )
-    call output ( size(quantity_templates), advance='yes' )
-    do i = 1, size(quantity_templates)
-      call output ( i, 4 )
-      call output ( ': Name = ' )
-      call display_string ( quantity_templates(i)%name )
-      call output ( ' quantityType = ' )
-      call display_string ( lit_indices(quantity_templates(i)%quantityType), &
-        & advance='yes' )
-      call output ( '      NoInstances = ' )
-      call output ( quantity_templates(i)%noInstances )
-      call output ( ' NoSurfs = ' )
-      call output ( quantity_templates(i)%noSurfs )
-      call output ( ' noChans = ' )
-      call output ( quantity_templates(i)%noChans, advance='yes' )
-      call output ( '      ' )
-      if ( .not. quantity_templates(i)%coherent ) call output ( 'in' )
-      call output ( 'coherent ' )
-      if ( .not. quantity_templates(i)%stacked ) call output ( 'non' )
-      call output ( 'stacked ' )
-      if ( .not. quantity_templates(i)%regular ) call output ( 'ir' )
-      call output ( 'regular ' )
-      if ( quantity_templates(i)%logBasis ) then
-        call output ('log-')
-      else
-        call output ('linear-')
-      endif
-      call output ('basis ' )  
-      if ( .not. quantity_templates(i)%minorFrame ) call output ( 'non' )
-      call output ( 'minorFrame', advance='yes' )
-      call output ( '      NoInstancesLowerOverlap = ' )
-      call output ( quantity_templates(i)%noInstancesLowerOverlap )
-      call output ( ' NoInstancesUpperOverlap = ' )
-      call output ( quantity_templates(i)%noInstancesUpperOverlap, advance='yes' )
-      call output ( '      BadValue = ' )
-      call output ( quantity_templates(i)%badValue )
-      call output ( ' Unit = ' )
-      call display_string ( phyq_indices(quantity_templates(i)%unit) )
-      call output ( ' InstanceLen = ' )
-      call output ( quantity_templates(i)%InstanceLen, advance='yes' )
-      if ( myDetails < 0 ) then
-        call dump ( quantity_templates(i)%surfs, '  Surfs = ' )
-        call dump ( quantity_templates(i)%phi, '      Phi = ' )
-        call dump ( quantity_templates(i)%geodLat, '      GeodLat = ' )
-        call dump ( quantity_templates(i)%lon, '      Lon = ' )
-        call dump ( quantity_templates(i)%time, '      Time = ' )
-        call dump ( quantity_templates(i)%solarTime, '      SolarTime = ' )
-        call dump ( quantity_templates(i)%solarZenith, '      SolarZenith = ' )
-        call dump ( quantity_templates(i)%losAngle, '      LosAngle = ' )
-        if ( associated(quantity_templates(i)%frequencies) ) then
-          call output ( '      FrequencyCoordinate = ' )
-          call output ( quantity_templates(i)%frequencyCoordinate )
-          call dump ( quantity_templates(i)%frequencies, ' Frequencies = ' )
-        end if
-      end if
-      if ( quantity_templates(i)%radiometer /= 0 ) then
-        call output ( '      Radiometer = ' )
-        call GetRadiometerName ( quantity_templates(i)%radiometer, str )
-        call output ( trim(str), advance='yes' )
-      end if
-      if ( quantity_templates(i)%molecule + &
-        &  quantity_templates(i)%instrumentModule /= 0 ) then
-        call output ( '     ' )
-        if ( quantity_templates(i)%molecule /= 0 ) then
-          call output ( ' Molecule = ' )
-          call display_string ( lit_indices(quantity_templates(i)%molecule) )
-        end if
-        if ( quantity_templates(i)%instrumentModule /= 0 ) then
-          call output ( ' Instrument Module = ' )
-          call GetModuleName ( quantity_templates(i)%instrumentModule, str )
-          call output ( trim(str) )
-        end if
-        call output ( '', advance = 'yes')
-      end if
-      if ( myDetails > 0 ) then
-        if ( quantity_templates(i)%signal /= 0 ) then
-          call dump ( signals( (/ quantity_templates(i)%signal /) ) )
-        end if
-        if ( quantity_templates(i)%radiometer + &
-          &  quantity_templates(i)%molecule /= 0 ) &
-          &  call output ( '', advance='yes' )
-        if ( associated(quantity_templates(i)%surfIndex) ) then
-          call dump ( quantity_templates(i)%surfIndex, '      SurfIndex = ' )
-        end if
-        if ( associated(quantity_templates(i)%chanIndex) ) then
-          call dump ( quantity_templates(i)%chanIndex, '      ChanIndex = ' )
-        end if
-      end if
-    end do
-  end subroutine DUMP_QUANTITY_TEMPLATES
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
@@ -232,6 +125,9 @@ contains ! =====     Private Procedures     ============================
 end module DUMPER
 
 ! $Log$
+! Revision 2.19  2003/08/27 20:06:16  livesey
+! More minor changes to dumping of chunks.
+!
 ! Revision 2.18  2003/08/26 18:04:52  livesey
 ! Minor changes in dumping of chunks.
 !
