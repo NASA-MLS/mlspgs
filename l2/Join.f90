@@ -84,8 +84,9 @@ contains ! =====     Public Procedures     =============================
     logical :: COMPAREOVERLAPS
     integer :: FIELD                    ! Subtree index of "field" node
     integer :: FIELD_INDEX              ! F_..., see Init_Tables_Module
-    integer :: HDFNAMEINDEX             ! Name of swath/sd
     integer :: GSON                     ! Son of Key
+    integer :: HDFNAMEINDEX             ! Name of swath/sd
+    logical :: IS_SWATHNAME_CASESENSITIVE
     integer :: KEY                      ! Index of an L2GP or L2AUX tree
     integer :: KEYNO                    ! Index of subtree of KEY
     integer :: MLSCFLine
@@ -132,10 +133,12 @@ contains ! =====     Public Procedures     =============================
 
       ! Node_id(key) is now n_spec_args.
 
+      is_swathname_casesensitive = .false.   ! Don't use the actual swath name
       ! ??? Does this need to do anything somewhere ???
       select case( get_spec_id(key) )
       case ( s_l2aux )
       case ( s_l2gp )
+        is_swathname_casesensitive = .true.   ! Use the actual swath name
       case ( s_time )
         if ( timing ) then
           call sayTime
@@ -210,7 +213,11 @@ contains ! =====     Public Procedures     =============================
           & call GetSignalName ( quantity%template%signal, hdfName, &
           &   sideband=quantity%template%sideband )
         call Get_String( hdfNameIndex, hdfName(len_trim(hdfName)+1:), strip=.true. )
-        hdfNameIndex = enter_terminal ( trim(hdfName), t_string )
+        ! Unless the name is case sensitive, look up the swath/sdName
+        ! and seize upon its first invocation as the one to use
+        !  (although the question why is a natural one to ask)
+        if ( .not. is_swathname_casesensitive) &
+         & hdfNameIndex = enter_terminal ( trim(hdfName), t_string )
 
         ! For slave tasks in a PVM system, simply ship this vector off
         ! Otherwise, do a join.
@@ -703,6 +710,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.56  2002/04/06 00:35:21  pwagner
+! Should accept actual case of swathname for l2gp
+!
 ! Revision 2.55  2002/03/20 00:46:47  pwagner
 ! Removed 2 unused lits
 !
