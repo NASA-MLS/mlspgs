@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -18,7 +18,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
     & MultiplyMatrix_XY_T, MultiplyMatrixVectorNoT, operator(+), &
     & operator(.TX.), ReflectMatrix, RowScale, ScaleBlock, SolveCholesky, &
     & Spill, TransposeMatrix, UpdateDiagonal
-  use MLSCommon, only: R8
+  use MLSCommon, only: RM
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
     & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
   use OUTPUT_M, only: BLANKS, OUTPUT
@@ -341,7 +341,7 @@ contains ! =====     Public Procedures     =============================
   subroutine AddToMatrix ( X, Y, Scale ) ! X = X + [Scale*] Y
     type(Matrix_T), intent(inout) :: X
     type(Matrix_T), intent(in) :: Y
-    real(r8), intent(in), optional :: Scale
+    real(rm), intent(in), optional :: Scale
 
     integer :: I, J      ! Subscripts for [XYZ]%Block
 
@@ -1060,7 +1060,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine GetKroneckerFromDatabase
 
   ! -----------------------------------------  GetMatrixElement_1  -----
-  real(r8) function GetMatrixElement_1 ( Matrix, Row, Col )
+  real(rm) function GetMatrixElement_1 ( Matrix, Row, Col )
   ! Get the (row,col) element of Matrix
     type(matrix_T), intent(in) :: Matrix
     integer, intent(in) :: Row, Col
@@ -1208,15 +1208,15 @@ contains ! =====     Public Procedures     =============================
 ! ! update the Cholesky factor to incorporate Levenberg-Marquardt
 ! ! stabilization that corresponds to augmenting A with LAMBDA I.
 !   type(Matrix_T), intent(inout) :: Z
-!   real(r8), intent(in) :: LAMBDA
+!   real(rm), intent(in) :: LAMBDA
 ! end subroutine LevenbergUpdateCholesky
 
   ! ------------------------------------------------  MaxAbsVal_1  -----
-  real(r8) function MaxAbsVal_1 ( A )
+  real(rm) function MaxAbsVal_1 ( A )
   ! Return the magnitude of the element in A that has the largest magnitude.
     type(Matrix_T), intent(in) :: A
     integer :: I, J
-    maxAbsVal_1 = 0.0_r8
+    maxAbsVal_1 = 0.0_rm
     do i = 1, a%row%nb
       do j = 1, a%col%nb
         if ( a%block(i,j)%kind /= m_absent ) &
@@ -1226,15 +1226,15 @@ contains ! =====     Public Procedures     =============================
   end function MaxAbsVal_1
 
   ! ------------------------------------------------------  MaxL1  -----
-  real(r8) function MaxL1 ( A )
+  real(rm) function MaxL1 ( A )
   ! Return the L1 norm of the column in A that has the largest L1 norm.
     type(Matrix_T), intent(in) :: A
     integer :: I, J, K
-    real(r8) :: My_L1
-    maxL1 = 0.0_r8
+    real(rm) :: My_L1
+    maxL1 = 0.0_rm
     do j = 1, a%col%nb
       do k = 1, a%block(1,j)%ncols
-        my_L1 = 0.0_r8
+        my_L1 = 0.0_rm
         do i = 1, a%row%nb
           my_L1 = my_L1 + col_L1(a%block(i,j),k)
         end do
@@ -1244,7 +1244,7 @@ contains ! =====     Public Procedures     =============================
   end function MaxL1
 
   ! -------------------------------------------  MinDiag_Cholesky  -----
-  real(r8) function MinDiag_Cholesky ( A )
+  real(rm) function MinDiag_Cholesky ( A )
   ! Return the magnitude of the element on the diagonal of A that has the
   ! smallest magnitude.
     type(Matrix_Cholesky_T), intent(in) :: A
@@ -1252,7 +1252,7 @@ contains ! =====     Public Procedures     =============================
   end function MinDiag_Cholesky
 
   ! ------------------------------------------------  MinDiag_SPD  -----
-  real(r8) function MinDiag_SPD ( A )
+  real(rm) function MinDiag_SPD ( A )
   ! Return the magnitude of the element on the diagonal of A that has the
   ! smallest magnitude.
     type(Matrix_SPD_T), intent(in) :: A
@@ -1657,7 +1657,7 @@ contains ! =====     Public Procedures     =============================
   ! ------------------------------------------------  ScaleMatrix  -----
   subroutine ScaleMatrix ( Z, A )       ! Z := A * Z, where A is scalar
     type(matrix_T), intent(inout) :: Z
-    real(r8), intent(in) :: A
+    real(rm), intent(in) :: A
     integer :: I, J                     ! Subscripts and loop inductors
     do i = 1, z%row%nb
       do j = 1, z%col%nb
@@ -1749,13 +1749,13 @@ contains ! =====     Public Procedures     =============================
   subroutine UpdateDiagonal_1 ( A, LAMBDA, SQUARE, INVERT )
   ! Add LAMBDA to the diagonal of A.
     type(Matrix_SPD_T), intent(inout) :: A
-    real(r8), intent(in) :: LAMBDA
+    real(rm), intent(in) :: LAMBDA
     logical, intent(in), optional :: SQUARE ! Update with square of lambda
     logical, intent(in), optional :: INVERT ! Update with inverse of (square
     !                                         of) lambda
 
     integer :: I
-    real(r8) :: MYLAMBDA
+    real(rm) :: MYLAMBDA
 
     myLambda = lambda
     if ( present(square) ) then
@@ -1763,9 +1763,9 @@ contains ! =====     Public Procedures     =============================
     end if
     if ( present(invert) ) then
       if ( invert ) then
-        if ( abs(myLambda) < tiny(0.0_r8) ) call MLSMessage ( MLSMSG_Error, &
+        if ( abs(myLambda) < tiny(0.0_rm) ) call MLSMessage ( MLSMSG_Error, &
           & ModuleName, "Updating with inverse of near-zero in UpdateDiagonal_1" )
-        myLambda = 1.0_r8 / myLambda
+        myLambda = 1.0_rm / myLambda
       end if
     end if
     
@@ -2112,7 +2112,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine Dump_Struct
 
   ! --------------------------------------------------  MinDiag_1  -----
-  real(r8) function MinDiag_1 ( A )
+  real(rm) function MinDiag_1 ( A )
   ! Return the magnitude of the element on the diagonal of A that has the
   ! smallest magnitude.
     type(Matrix_T), intent(in) :: A
@@ -2125,6 +2125,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.81  2002/09/11 17:43:38  pwagner
+! Began changes needed to conform with matrix%values type move to rm from r8
+!
 ! Revision 2.80  2002/09/10 01:00:00  livesey
 ! Added NullifyMatrix
 !
