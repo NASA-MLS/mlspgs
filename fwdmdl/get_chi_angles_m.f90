@@ -16,7 +16,7 @@ contains
 
 SUBROUTINE get_chi_angles(sc_geoc_alt,tan_index_refr,tan_ht, &
            phi_tan,req,elev_offset,ptg_angle,tan_dh_dt,   &
-           tan_d2h_dhdt,dx_dt,d2x_dxdt)
+           tan_d2h_dhdt,tan_t,tan_dz_dh,tan_eta_zxp_t,dx_dt,d2x_dxdt)
 
 !  ===============================================================
 !  Declaration of variables for sub-program: get_chi_angles
@@ -44,6 +44,11 @@ SUBROUTINE get_chi_angles(sc_geoc_alt,tan_index_refr,tan_ht, &
   REAL(rp), OPTIONAL, INTENT(IN) :: tan_dh_dt(:,:) ! derivative of tangent
 !                                                  height wrt temperature
   REAL(rp), OPTIONAL, INTENT(IN) :: tan_d2h_dhdt(:,:) ! 2nd derivative of
+  REAL(rp), OPTIONAL, INTENT(IN) :: tan_t ! tangent temperature
+  REAL(rp), OPTIONAL, INTENT(IN) :: tan_dz_dh ! tangent pressure derivative
+!                                           wrt to height.
+  REAL(rp), OPTIONAL, INTENT(IN) :: tan_eta_zxp_t(:,:) ! tangent eta_zxp
+!                                   product for temperature.
 ! tangent height wrt temperature & height
   REAL(rp), OPTIONAL, INTENT(OUT) :: dx_dt(:,:) ! derivative of pointing angle
 !                                       wrt temperature
@@ -53,8 +58,9 @@ SUBROUTINE get_chi_angles(sc_geoc_alt,tan_index_refr,tan_ht, &
 !  Local variables:
 !  ----------------
 !
-  Real(rp), PARAMETER :: ampl = 38.9014
-  Real(rp), PARAMETER :: phas = 51.6814 * deg2rad
+  Real(rp), PARAMETER :: ampl = 38.9014_rp
+  Real(rp), PARAMETER :: phas = 51.6814_rp * deg2rad
+  REAL(rp), PARAMETER :: ln10 = 2.30258509_rp
 !
   REAL(rp) :: ht, tp, hs, x
 !
@@ -74,9 +80,14 @@ SUBROUTINE get_chi_angles(sc_geoc_alt,tan_index_refr,tan_ht, &
 !
   IF(PRESENT(tan_dh_dt)) THEN
 !    IF(tan_ht > 0.0_rp) THEN
+!      x = tan_index_refr / (1.0_rp + tan_index_refr)
       tp = TAN(ptg_angle)
       dx_dt = tp * tan_dh_dt / ht
-      d2x_dxdt = tp*tp*tan_dh_dt/ht + tan_d2h_dhdt
+      d2x_dxdt = tp*tp*tan_dh_dt/ht + tan_d2h_dhdt 
+!      dx_dt = tp * (tan_dh_dt / ht - x * tan_eta_zxp_t / tan_t)
+!      d2x_dxdt = tp*tp*tan_dh_dt/ht + tan_d2h_dhdt &
+!      & - x * tan_eta_zxp_t * (1.0/COS(ptg_angle)**2 &
+!      & - ht*ln10*tan_dz_dh/(1.0_rp + tan_index_refr)) / tan_t
 !    ELSE
 !      dx_dt = 0.0_rp
 !      d2x_dxdt = 0.0_rp
@@ -86,6 +97,9 @@ SUBROUTINE get_chi_angles(sc_geoc_alt,tan_index_refr,tan_ht, &
 END SUBROUTINE get_chi_angles
 end module GET_CHI_ANGLES_M
 ! $Log$
+! Revision 2.3  2002/06/11 22:20:45  bill
+! eliminate zero-out feature--wgr
+!
 ! Revision 2.2  2002/06/07 04:50:36  bill
 ! fixes and improvements--wgr
 !
