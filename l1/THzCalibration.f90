@@ -143,7 +143,7 @@ CONTAINS
     DEALLOCATE (VarCnts, stat=status)
     ALLOCATE (VarCnts(THzChans,THzNum,0:nMIFsM1))
     Cnts = 0.0
-    VarCnts = 1.0
+    VarCnts = -1.0
 
 ! Fill the vectors:
 
@@ -512,11 +512,14 @@ CONTAINS
 
        IF (last_fit) THEN
           DO i = kbgn, mif0
-             t = i - tmid
-             Cnts(:,:,i) = Cnts(:,:,i) - av - t * (bv + cv * t)
-             val = mfit0 + t * (mfit1 + t * (mfit2 + t * (mfit3 + t * mfit4)))
-             VarCnts(:,:,i) = VarCnts(:,:,i) + val + VarGain * Cnts(:,:,i) * &
-                  Cnts(:,:,i)
+             IF (BiasGood(i)) THEN
+                t = i - tmid
+                Cnts(:,:,i) = Cnts(:,:,i) - av - t * (bv + cv * t)
+                val = mfit0 + t * (mfit1 + t * (mfit2 + t * (mfit3 + t * &
+                     mfit4)))
+                VarCnts(:,:,i) = VarCnts(:,:,i) + val + VarGain * &
+                     Cnts(:,:,i) * Cnts(:,:,i)
+             ENDIF
           ENDDO
           kbgn = mif0 + 1
        ENDIF
@@ -561,8 +564,10 @@ CONTAINS
 
     DO nBank = 1, THzNum
        DO nChan = 1, THzChans
-          VarCnts(nChan,nBank,:) = SQRT (yavg(nChan,nBank) * &
-               VarCnts(nChan,nBank,:))
+          WHERE (VarCnts(nChan,nBank,:) >= 0.0)
+             VarCnts(nChan,nBank,:) = SQRT (yavg(nChan,nBank) * &
+                  VarCnts(nChan,nBank,:))
+          ENDWHERE
        ENDDO
     ENDDO
 
@@ -608,6 +613,9 @@ END MODULE THzCalibration
 !=============================================================================
 
 ! $Log$
+! Revision 2.6  2004/08/12 13:51:51  perun
+! Version 1.44 commit
+!
 ! Revision 2.5  2004/05/14 15:59:11  perun
 ! Version 1.43 commit
 !

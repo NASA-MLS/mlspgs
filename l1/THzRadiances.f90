@@ -6,7 +6,7 @@ MODULE THzRadiances ! Determine radiances for the THz module
 !=============================================================================
 
   USE MLSCommon, ONLY: r8
-  USE MLSL1Common, ONLY: THzNum, THzChans
+  USE MLSL1Common, ONLY: THzNum, THzChans, Deflt_chi2
   USE THzCalibration, ONLY : CalBuf, Chisq, dLlo, yTsys, nvBounds
   USE MLSL1Rad, ONLY : THzRad
 
@@ -27,12 +27,13 @@ CONTAINS
   SUBROUTINE CalcLimbRads (nMAF, ibgn)
 
     USE THzCalibration, ONLY : Kelvins => Cnts, VarK => VarCnts !Already Kelvins
-    USE MLSL1Config, ONLY: MIFsTHz
+    USE MLSL1Config, ONLY: MIFsTHz, L1Config
 
     INTEGER, INTENT (IN) :: nMAF
     INTEGER, INTENT (INOUT) :: ibgn
 
-    INTEGER :: i, iend, mindx, nBank, nChan, MIF_end
+    INTEGER :: i, iend, mindx, nBank, nChan, MIF_end, BandNo
+    LOGICAL :: do_chi2_err
 
     iend = ibgn + CalBuf%MAFdata(nMAF-CalBuf%Cal_start+1)%last_MIF
     MIF_end = ibgn + MIFsTHz - 1
@@ -41,6 +42,8 @@ CONTAINS
 
        THzRad(nBank)%value = 0.0
        THzRad(nBank)%precision  = -1.0
+       BandNo = nBank + 14  ! band no for the bank
+       do_chi2_err = L1Config%Output%EnableChi2Err(BandNo)
 
        IF (CalBuf%BankGood(nBank)) THEN   ! Have good data
 
@@ -48,9 +51,13 @@ CONTAINS
              DO nChan = 1, THzChans
                 mindx = i-ibgn+1
                 THzRad(nBank)%value(nChan,mindx) = Kelvins(nChan,nBank,i)
-                IF (THzRad(nBank)%value(nChan,mindx) > -100.0) &
-                     THzRad(nBank)%precision(nChan,mindx) = &
-                     VarK(nChan,nBank,i)
+                IF (THzRad(nBank)%value(nChan,mindx) > -100.0) THEN
+                   THzRad(nBank)%precision(nChan,mindx) = &
+                        VarK(nChan,nBank,i)
+                   IF (do_chi2_err) THzRad(nbank)%precision(nChan,mindx) = &
+                        deflt_chi2%FB(nchan,BandNo) * &
+                        THzRad(nbank)%precision(nchan,mindx)
+                ENDIF
              ENDDO
           ENDDO
 
@@ -106,6 +113,9 @@ END MODULE THzRadiances
 !=============================================================================
 
 ! $Log$
+! Revision 2.6  2004/08/12 13:51:51  perun
+! Version 1.44 commit
+!
 ! Revision 2.5  2004/05/14 15:59:11  perun
 ! Version 1.43 commit
 !
