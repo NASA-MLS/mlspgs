@@ -33,7 +33,8 @@ contains ! ====     Public Procedures     ==============================
     use FGrid, only: FGrid_T, DestroyFGridDatabase
     use Fill, only: MLSL2Fill
     use FilterShapes_m, only: Destroy_Filter_Shapes_Database
-    use ForwardModelConfig, only: ForwardModelConfig_T, DestroyFWMConfigDatabase
+    use ForwardModelConfig, only: ForwardModelConfig_T, DestroyFWMConfigDatabase, &
+      & StripForwardModelConfigDatabase
     use Global_Settings, only: Set_Global_Settings
     use GriddedData, only: GriddedData_T, DestroyGriddedDataDatabase, Dump
     use HGrid, only: HGrid_T
@@ -204,7 +205,8 @@ subtrees:   do while ( j <= howmany )
               case ( z_construct )
                 call MLSL2Construct ( son, l1bInfo, processingRange, &
                   & chunks, chunkNo, qtyTemplates, vectorTemplates, &
-                  & fGrids, vGrids, hGrids, l2gpDatabase, mifGeolocation )
+                  & fGrids, vGrids, hGrids, l2gpDatabase, forwardModelConfigDatabase, &
+                  & mifGeolocation )
                 call add_to_section_timing ( 'construct', t1)
               case ( z_fill )
                 call MLSL2Fill ( son, l1bInfo, griddedDataBase, &
@@ -258,6 +260,7 @@ subtrees:   do while ( j <= howmany )
                 & totalNGC = Say_num_gcs()
             end if
             call ForgetOptimumLon0
+            call StripForwardModelConfigDatabase ( forwardModelConfigDatabase )
           end do ! on chunkNo
           i = j - 1 ! one gets added back in at the end of the outer loop
         end if
@@ -353,6 +356,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.91  2002/09/24 22:17:50  pwagner
+! Defines t1 before call to add_to_section_timing
+!
 ! Revision 2.90  2002/09/24 18:18:47  pwagner
 ! Consistent with add_to_section_timing now calling time_now at its end
 !
