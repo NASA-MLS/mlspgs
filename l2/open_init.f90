@@ -70,7 +70,7 @@ contains ! =====     Public Procedures     =============================
 
 
   ! ------------------------------------------  OpenAndInitialize  -----
-  subroutine OpenAndInitialize ( processingRange, l1bInfo, l2pcf, anText )
+  subroutine OpenAndInitialize ( processingRange, l1bInfo, l2pcf )
 
     ! Opens L1 RAD files
     ! Opens L1OA file
@@ -82,7 +82,6 @@ contains ! =====     Public Procedures     =============================
     type (TAI93_Range_T) :: processingRange ! Data processing range
     type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
     type(PCFData_T) :: l2pcf
-    character (len=1), pointer :: AnText(:)
     integer, external :: Pgs_pc_getFileSize
 
     !Local Variables
@@ -121,12 +120,12 @@ contains ! =====     Public Procedures     =============================
     version = 1
     Status = Pgs_pc_getFileSize(mlspcf_pcf_start, version, size)
     if ( Status == PGS_S_SUCCESS ) then
-      call createPCFAnnotation(mlspcf_pcf_start, anText)
+      call createPCFAnnotation(mlspcf_pcf_start, l2pcf%anText)
     else
       call announce_error ( 0, DEFAULTANTEXT )
       size = LEN(DEFAULTANTEXT) + 1
-      allocate ( anText(size), STAT=Status )
-      anText(1:size-1) = DEFAULTANTEXT(1:size-1)
+      allocate ( l2pcf%anText(size), STAT=Status )
+      l2pcf%anText(1:size-1) = DEFAULTANTEXT(1:size-1)
       error = PENALTY_FOR_NO_METADATA
     end if
 
@@ -445,6 +444,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.41  2001/04/19 23:51:40  pwagner
+! Moved anText to become component of PCFData_T
+!
 ! Revision 2.40  2001/04/18 17:33:29  vsnyder
 ! I forgot what I REALLY did, but I also made numerous cosmetic changes
 !
