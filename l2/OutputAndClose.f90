@@ -10,7 +10,8 @@ module OutputAndClose ! outputs all data from the Join module to the
 
   use Allocate_Deallocate, only: Deallocate_Test
   use Hdf, only: DFACC_CREATE, SFEND, SFSTART
-  use INIT_TABLES_MODULE, only: F_FILE, F_OVERLAPS, F_PACKED, F_QUANTITIES, F_TYPE, &
+  use INIT_TABLES_MODULE, only: F_FILE, F_HDFVERSION, &
+    & F_OVERLAPS, F_PACKED, F_QUANTITIES, F_TYPE, &
     & L_L2AUX, L_L2DGG, L_L2GP, L_L2PC, S_OUTPUT, S_TIME
   use L2AUXData, only: L2AUXDATA_T, WriteL2AUXData
   use L2GPData, only: L2GPData_T, WriteL2GPData, L2GPNameLen
@@ -22,7 +23,7 @@ module OutputAndClose ! outputs all data from the Join module to the
   use MLSFiles, only: GetPCFromRef, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, &
     & split_path_name !, mls_sfsstart
   use MLSL2Options, only: PENALTY_FOR_NO_METADATA, CREATEMETADATA, PCF, &
-    & PCFL2CFSAMECASE
+    & PCFL2CFSAMECASE, DEFAULT_HDFVERSION
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, MLSPCF_L2GP_END, &
     & MLSPCF_L2GP_START, mlspcf_l2dgg_start, mlspcf_l2dgg_end, &
@@ -95,6 +96,7 @@ contains ! =====     Public Procedures     =============================
     integer :: FIELD_NO                 ! Index of assign vertex sons of Key
     character (len=132) :: FILE_BASE    ! From the FILE= field
     integer :: GSON                     ! Son of Son -- an assign node
+    integer :: hdfVersion               ! 4 or 5 (corresp. to hdf4 or hdf5)
     integer :: IN_FIELD_NO              ! Index of sons of assign vertex
     integer :: KEY                      ! Index of spec_args node
     integer :: L2auxFileHandle, L2aux_Version
@@ -150,6 +152,7 @@ contains ! =====     Public Procedures     =============================
 
       l2gp_Version = 1
       l2aux_Version = 1
+      hdfVersion = DEFAULT_HDFVERSION
 
       son = subtree(spec_no,root)
       if ( node_id(son) == n_named ) then ! Is spec labeled?
@@ -171,6 +174,8 @@ contains ! =====     Public Procedures     =============================
             file_base = file_base(2:LEN_TRIM(file_base)-1) ! Parser includes quotes
           case ( f_type )
             output_type = decoration(subtree(2,gson))
+          case ( f_hdfVersion )
+            hdfVersion = subtree(2,gson)
           case default                  ! Everything else processed later
           end select
         end do
@@ -212,7 +217,7 @@ contains ! =====     Public Procedures     =============================
 !            swfid = swopen(l2gpPhysicalFilename, DFACC_CREATE)
             swfid = mls_io_gen_openF('swopen', .TRUE., returnStatus, &
              & record_length, DFACC_CREATE, FileName=l2gpPhysicalFilename, &
-             & debugOption=.false. )
+             & hdfVersion=hdfVersion, debugOption=.false. )
 
             ! Loop over the segments of the l2cf line
 
@@ -224,7 +229,8 @@ contains ! =====     Public Procedures     =============================
                 do in_field_no = 2, nsons(gson)
                   db_index = -decoration(decoration(subtree(in_field_no ,gson)))
                   if ( db_index >= 1 ) then
-                    call writeL2GPData ( l2gpDatabase(db_index), swfid )
+                    call writeL2GPData ( l2gpDatabase(db_index), swfid, &
+                     & hdfVersion=hdfVersion )
                     numquantitiesperfile = numquantitiesperfile+1
                     if ( numquantitiesperfile > MAXQUANTITIESPERFILE ) then
                       call announce_error ( son, &
@@ -245,14 +251,15 @@ contains ! =====     Public Procedures     =============================
 
             if ( DEBUG ) call output('Attempting swclose', advance='yes')
 !            returnStatus = swclose(swfid)
-            returnStatus = mls_io_gen_closeF('swclose', swfid)
+            returnStatus = mls_io_gen_closeF('swclose', swfid, &
+             & hdfVersion=hdfVersion)
             if ( returnStatus /= PGS_S_SUCCESS ) then
               call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
               call MLSMessage ( MLSMSG_Error, ModuleName, &
                 &  "Error closing  l2gp file:  "//mnemonic//" "//msg )
             elseif(index(switches, 'pro') /= 0) then
                call proclaim(l2gpPhysicalFilename, 'l2gp', &
-               & numquantitiesperfile, quantityNames)
+               & numquantitiesperfile, quantityNames, hdfVersion=hdfVersion)
             end if
 
             if ( .not. CREATEMETADATA ) cycle
@@ -291,7 +298,7 @@ contains ! =====     Public Procedures     =============================
 
               call populate_metadata_std &
                 & (l2gpFileHandle, l2gp_mcf, l2pcf, QuantityNames(1), &
-                & metadata_error )
+                & hdfVersion=hdfVersion, metadata_error=metadata_error )
               error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
 
             else
@@ -309,7 +316,8 @@ contains ! =====     Public Procedures     =============================
 
               call populate_metadata_oth &
                 & ( l2gpFileHandle, l2gp_mcf, l2pcf, &
-                & numquantitiesperfile, QuantityNames, metadata_error )
+                & numquantitiesperfile, QuantityNames, &
+                & hdfVersion=hdfVersion, metadata_error=metadata_error )
               error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
             end if
 
@@ -341,7 +349,8 @@ contains ! =====     Public Procedures     =============================
             ! Create the HDF file and initialize the SD interface
             if ( DEBUG ) call output ( 'Attempting sfstart', advance='yes' )
   ! (((( This will have to be changed to incorporate hdf5 ))))
-  !         sdfId = mls_sfstart(l2auxPhysicalFilename, DFACC_CREATE)
+  !         sdfId = mls_sfstart(l2auxPhysicalFilename, DFACC_CREATE, &
+  !          & hdfVersion=hdfVersion)
             sdfId = sfstart(l2auxPhysicalFilename, DFACC_CREATE)
 
             if ( DEBUG ) call output ( "looping over quantities", advance='yes' )
@@ -381,13 +390,17 @@ contains ! =====     Public Procedures     =============================
             end do ! field_no = 2, nsons(key)
 
             ! Now close the file
+  ! ((((( This, too, will have to be changed for hdf5 )))))
+  !                  conversion
+  !         returnStatus = mls_sfend(sdfid, hdfVersion=hdfVersion)
             returnStatus = sfend(sdfid)
+            
             if ( returnStatus /= PGS_S_SUCCESS ) then
               call announce_error ( root, &
                 &  "Error closing l2aux file:  "//l2auxPhysicalFilename, returnStatus)
             elseif(index(switches, 'pro') /= 0) then
                call proclaim(l2auxPhysicalFilename, 'l2aux', &
-               & numquantitiesperfile, quantityNames)
+               & numquantitiesperfile, quantityNames, hdfVersion=hdfVersion)
             end if
 
             if ( .not. CREATEMETADATA ) cycle
@@ -418,7 +431,8 @@ contains ! =====     Public Procedures     =============================
               end if
               call populate_metadata_oth &
                 & ( l2auxFileHandle, l2aux_mcf, l2pcf, &
-                & numquantitiesperfile, QuantityNames, metadata_error )
+                & numquantitiesperfile, QuantityNames,&
+                & hdfVersion=hdfVersion, metadata_error=metadata_error )
               error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
             end if
 
@@ -491,7 +505,7 @@ contains ! =====     Public Procedures     =============================
 !            swfid = swopen(l2gpPhysicalFilename, DFACC_CREATE)
             swfid = mls_io_gen_openF('swopen', .TRUE., returnStatus, &
              & record_length, DFACC_CREATE, FileName=l2gpPhysicalFilename, &
-             & debugOption=.false. )
+             & hdfVersion=hdfVersion, debugOption=.false. )
 
             ! Loop over the segments of the l2cf line
 
@@ -502,7 +516,8 @@ contains ! =====     Public Procedures     =============================
               case ( f_quantities )
                 do in_field_no = 2, nsons(gson)
                   db_index = -decoration(decoration(subtree(in_field_no ,gson)))
-                  call writeL2GPData ( l2gpDatabase(db_index), swfid )
+                  call writeL2GPData ( l2gpDatabase(db_index), swfid, &
+                   & hdfVersion=hdfVersion )
                   numquantitiesperfile = numquantitiesperfile+1
                   if ( numquantitiesperfile > MAXQUANTITIESPERFILE ) then
                     call announce_error ( son, &
@@ -519,14 +534,15 @@ contains ! =====     Public Procedures     =============================
 
             if ( DEBUG ) call output('Attempting swclose', advance='yes')
 !            returnStatus = swclose(swfid)
-            returnStatus = mls_io_gen_closeF('swclose', swfid)
+            returnStatus = mls_io_gen_closeF('swclose', swfid, &
+             & hdfVersion=hdfVersion)
             if ( returnStatus /= PGS_S_SUCCESS ) then
               call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
               call MLSMessage ( MLSMSG_Error, ModuleName, &
                 &  "Error closing  l2dgg file:  "//mnemonic//" "//msg )
             elseif(index(switches, 'pro') /= 0) then
                call proclaim(l2gpPhysicalFilename, 'l2dgg', &
-               & numquantitiesperfile, quantityNames)
+               & numquantitiesperfile, quantityNames, hdfVersion=hdfVersion)
             end if
 
             if ( .not. CREATEMETADATA ) cycle
@@ -554,7 +570,8 @@ contains ! =====     Public Procedures     =============================
 
               call populate_metadata_oth &
                 & ( l2gpFileHandle, mlspcf_mcf_l2dgg_start, l2pcf, &
-                & numquantitiesperfile, QuantityNames, metadata_error )
+                & numquantitiesperfile, QuantityNames, &
+                & hdfVersion=hdfVersion, metadata_error=metadata_error )
               error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
             end if
 
@@ -636,15 +653,23 @@ contains ! =====     Public Procedures     =============================
 ! =====     Private Procedures     =====================================
 
   ! ---------------------------------------------  proclaim  -----
-  subroutine proclaim ( Name, l2_type, num_quants, quantities )
+  subroutine proclaim ( Name, l2_type, num_quants, quantities, hdfVersion )
     integer, intent(in) :: num_quants 
-    character(LEN=*), intent(in) :: Name
-    character(LEN=*), intent(in) :: l2_type
+    character(LEN=*), intent(in)   :: Name
+    character(LEN=*), intent(in)   :: l2_type
+    integer, optional,  intent(in) :: hdfVersion
     character(LEN=*), dimension(:), intent(in) :: quantities
     integer :: i
 
     call output ( 'Level 2 output product type : ' )
-    call output ( trim(l2_type), advance='yes')
+    call output ( trim(l2_type), advance='no')
+    if ( present(hdfVersion) ) then
+      call blanks(4)
+      call output ( 'hdf ' )
+      call output ( hdfVersion, advance='yes')
+    else
+      call output ( ' ', advance='yes')
+    endif
     call blanks(15)
     call output ( 'name : ' )
     call blanks(8)
@@ -693,6 +718,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.46  2002/01/23 21:52:15  pwagner
+! Accepts and uses hdfVersion optional field
+!
 ! Revision 2.45  2002/01/18 23:07:48  pwagner
 ! Uses MLSFiles instead of HDFEOS
 !
