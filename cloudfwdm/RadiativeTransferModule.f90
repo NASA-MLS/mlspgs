@@ -7,6 +7,7 @@ module RadiativeTransferModule
 ! PERFORM MLS LIB RADIATIVE TRANSFER CALCULATIONS
 ! -------------------------------------------------------------------------
 
+      use Blackbody, only: planck
       use MLSCommon, only: r8      
       IMPLICIT NONE
       Private
