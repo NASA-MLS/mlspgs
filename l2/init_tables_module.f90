@@ -824,8 +824,7 @@ contains ! =====     Public procedures     =============================
       begin, s+s_fill, &    ! Must be AFTER s_vector, s_matrix and s_climatology
              begin, f+f_quantity, s+s_vector, f+f_template, f+f_quantities, &
                     nr+n_dot, &
-             begin, f+f_extinction, t+t_boolean, n+n_field_type, &
-             begin, f+f_interpolate, t+t_boolean, n+n_field_type, &
+             begin, f+f_extinction, t+t_boolean, n+n_field_type, begin, f+f_interpolate, t+t_boolean, n+n_field_type, &
 !            begin, f+f_matrix, s+s_matrix, n+n_field_spec, & !??? Not in fill yet ???
              begin, f+f_method, t+t_fillmethod, nr+n_field_type, &
              begin, f+f_sourceQuantity, s+s_vector, f+f_template, f+f_quantities, &
@@ -846,15 +845,12 @@ contains ! =====     Public procedures     =============================
                     n+n_dot, &
              begin, f+f_geocAltitudeQuantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
-             begin, f+f_refGPHQuantity, s+s_vector, f+f_template, f+f_quantities, n+n_dot &
-              /) )
-    call make_tree ( (/ &
+             begin, f+f_refGPHQuantity, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
              begin, f+f_sourceL2GP, s+s_l2gp, n+n_field_spec, &
              begin, f+f_sourceL2AUX, s+s_l2aux, n+n_field_spec, &
              begin, f+f_sourceGrid, s+s_gridded, n+n_field_spec, &
              begin, f+f_sourceSGrid, s+s_vGrid, n+n_field_spec, &
-             begin, f+f_sourceVGrid, s+s_vGrid, n+n_field_spec, &
-             begin, f+f_spread, t+t_boolean, n+n_field_type, &
+             begin, f+f_sourceVGrid, s+s_vGrid, n+n_field_spec, begin, f+f_spread, t+t_boolean, n+n_field_type, &
              begin, f+f_systemTemperature, t+t_numeric, n+n_field_type, &
              begin, f+f_maxIterations, t+t_numeric, n+n_field_type, &
              begin, f+f_noFineGrid, t+t_numeric, n+n_field_type, &
@@ -863,8 +859,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_boundaryPressure, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
              begin, f+f_vmrQuantity, s+s_vector, f+f_template, f+f_quantities, &
-                    n+n_dot, &
-             ndp+n_spec_def /) )
+                    n+n_dot, ndp+n_spec_def /) )
     call make_tree( (/ &
       begin, s+s_transfer, &
              begin, f+f_source, s+s_vector, n+n_field_spec, &
@@ -1045,6 +1040,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.150  2001/07/31 22:30:51  pwagner
+! Don't try to split calls to make_tree within section
+!
 ! Revision 2.149  2001/07/30 23:28:38  pwagner
 ! Added columnAbundances scaffolding--needs fleshing out
 !
