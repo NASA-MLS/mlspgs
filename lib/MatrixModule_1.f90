@@ -1551,12 +1551,14 @@ contains ! =====     Public Procedures     =============================
     if ( present(update) ) my_update = update
     if ( .not. my_update ) &
       & call createEmptyMatrix ( z%m, 0, a%col%vec, a%col%vec )
-    call copyVector ( rhs_in, a%row%vec, noValues=.true.) ! Copy the row mask
-    call clearRows ( a, row_block, rhs_in )
-    r1 = 1
-    if ( present(row_block) ) r1 = row_block
     my_Mask = .false.
     if ( present(useMask) ) my_Mask = useMask
+    if ( my_Mask ) then
+      call copyVector ( rhs_in, a%row%vec, noValues=.true.) ! Copy the row mask
+      call clearRows ( a, row_block, rhs_in )
+    end if
+    r1 = 1
+    if ( present(row_block) ) r1 = row_block
     do j = 1, a%col%nb
       nullify ( mj )
       if ( associated(a%col%vec%quantities(a%col%quant(j))%mask) .and. my_Mask) &
@@ -2125,6 +2127,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.83  2002/09/21 00:00:51  vsnyder
+! Handle the UseMask flag in NormalEquations completely
+!
 ! Revision 2.82  2002/09/13 18:08:12  pwagner
 ! May change matrix precision rm from r8
 !
