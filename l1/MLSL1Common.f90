@@ -41,18 +41,18 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
   ! Information on the L1B data files in use
 
   TYPE L1BFileInfo_T
-    INTEGER :: OAId            ! The HDF ID (handle) for the L1BOA file
-    INTEGER :: RADDId, RADGId, RADTId  ! Ids for the L1BRAD files
-    INTEGER :: EngId           ! The HDF ID (handle) for the L1BENG file
-    INTEGER :: DiagId          ! The ID (non-HDF) (handle) for the L1BDIAG file
-    INTEGER :: LogId           ! The ID (non-HDF) (handle) for the L1BLog file
-    INTEGER :: EngMAF_unit, SciMAF_unit  ! units for EngMAF & SciMAF files
-    INTEGER :: MAF_data_unit   ! unit for Eng/Sci MAF data merged
-    CHARACTER (LEN=FileNameLen) :: OAFileName  ! L1BOA file name
-    CHARACTER (LEN=FileNameLen) :: RADDFileName, RADGFilename, RADTFileName
-    CHARACTER (LEN=FileNameLen) :: EngFileName   ! L1BENG file name
-    CHARACTER (LEN=FileNameLen) :: DiagFileName  ! L1BDIAG file name
-    CHARACTER (LEN=FileNameLen) :: LogFileName   ! L1BLOG file name
+     INTEGER :: OAId            ! The HDF ID (handle) for the L1BOA file
+     INTEGER :: RADDId, RADGId, RADTId  ! Ids for the L1BRAD files
+     INTEGER :: EngId           ! The ID (non-HDF) (handle) for the L1BENG file
+     INTEGER :: DiagId          ! The HDF ID (handle) for the L1BDIAG file
+     INTEGER :: LogId           ! The ID (non-HDF) (handle) for the L1BLog file
+     INTEGER :: EngMAF_unit, SciMAF_unit  ! units for EngMAF & SciMAF files
+     INTEGER :: MAF_data_unit   ! unit for Eng/Sci MAF data merged
+     CHARACTER (LEN=FileNameLen) :: OAFileName  ! L1BOA file name
+     CHARACTER (LEN=FileNameLen) :: RADDFileName, RADGFilename, RADTFileName
+     CHARACTER (LEN=FileNameLen) :: EngFileName   ! L1BENG file name
+     CHARACTER (LEN=FileNameLen) :: DiagFileName  ! L1BDIAG file name
+     CHARACTER (LEN=FileNameLen) :: LogFileName   ! L1BLOG file name
   END TYPE L1BFileInfo_T
   TYPE (L1BFileInfo_T) :: L1BFileInfo
 
@@ -69,6 +69,7 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
   INTEGER, PARAMETER :: WFchans = 4
   INTEGER, PARAMETER :: THzNum = 6
   INTEGER, PARAMETER :: THzChans = 25
+  INTEGER, PARAMETER :: NumBands = 34
 
   ! Maximum number of MIFs per MAF
 
@@ -83,6 +84,24 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
      INTEGER :: MIFsPerMAF   ! Number of MIFs per MAF
   END TYPE MAFinfo_T
   TYPE (MAFinfo_T) :: MAFinfo  ! Needed for L1BOA output
+
+  !! Bank Logical type
+
+  TYPE BankLogical_T
+     LOGICAL :: FB(FBnum)          ! standard filter banks
+     LOGICAL :: MB(MBnum)          ! mid-band filter banks
+     LOGICAL :: WF(WFnum)          ! wide filters
+     LOGICAL :: DACS(DACSnum)      ! DACS filters
+  END TYPE BankLogical_T
+
+  !! Bank Integer type
+
+  TYPE BankInt_T
+     INTEGER :: FB(FBnum)          ! standard filter banks
+     INTEGER :: MB(MBnum)          ! mid-band filter banks
+     INTEGER :: WF(WFnum)          ! wide filters
+     INTEGER :: DACS(DACSnum)      ! DACS filters
+  END TYPE BankInt_T
 
   ! Real types for all channels:
 
@@ -105,7 +124,6 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
   REAL, PARAMETER :: DEG24 = 360.0 * 2.0**(-24)
 
 !! Switching mirror position ranges (L, S, T1, T2)
-!! Note: these will be initialized as part of the user input parameters.
 
   TYPE SwMir_Range_T
      CHARACTER(len=1) :: pos
@@ -128,9 +146,10 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
        SwMir_Range_T ("T", 59.599-GHzTol, 59.599+GHzTol), &   ! Primary target
        SwMir_Range_T ("t", 239.599-GHzTol, 239.599+GHzTol) /) ! Secondary target
   TYPE (SwMir_Range_T), TARGET :: THz_SwMir_Range(3) = (/ &
-       SwMir_Range_T ("S", 359.39-THzTol, 359.39+THzTol), &
+!       SwMir_Range_T ("L", 359.39-THzTol, 359.39+THzTol), &
+       SwMir_Range_T ("L", 357.0, 360.0), &
        SwMir_Range_T ("T", 178.75-THzTol, 178.75+THzTol), &
-       SwMir_Range_T ("L", 356.8-THzTol, 356.8+THzTol) /)
+       SwMir_Range_T ("S", 356.8-THzTol, 356.8+THzTol) /)
   TYPE (SwMir_Range_T), TARGET :: Discard_SwMir_Range(1) = (/ &
        SwMir_Range_T ("D", 0.0, 360.0) /)            ! no good pointing
 
@@ -139,9 +158,19 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
   INTEGER :: BandSwitch(5) = (/ 0, 0, 0, 0, 0 /)
   INTEGER, PARAMETER :: SwitchBank(5) = (/ 1, 3, 8, 12, 15 /)
 
-!! Bandwidths for all channels (currently read in during initialization)
+!! Bandwidths for all channels
 
-  TYPE (Chan_R_T) :: BandWidth
+  INTEGER, PRIVATE :: i
+  REAL, PARAMETER, PRIVATE :: FB_BW(FBchans) = (/ &
+       110.0, 110.0, 110.0, 74.0, 74.0, 74.0, 55.0, 37.0, 28.0, 18.4, 14.0, &
+       9.2, 7.2, 9.2, 14.0, 18.4, 28.0, 37.0, 55.0, 74.0, 74.0, 74.0, 110.0, &
+       110.0, 110.0 /) * 1.0e06
+  TYPE (Chan_R_T), PARAMETER :: BandWidth = Chan_R_T ( &
+       RESHAPE ( (/ (FB_BW, i=1,FBnum) /), (/ FBchans, FBnum /) ), &
+       RESHAPE ( (/ (FB_BW(8:18), i=1,MBnum) /), (/ MBchans, MBnum /) ), & 
+       RESHAPE ( (/ (500.0e06, i=1,WFchans*WFnum) /), (/ WFchans, WFnum /) ), &
+       RESHAPE ( (/ (0.15e06, i=1,DACSchans*DACSnum) /), &
+       (/ DACSchans, DACSnum /) ) )
 
 !! DACS constants
 
@@ -169,6 +198,10 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
   REAL, PARAMETER :: LO1(5) = (/ 118.7530e9, 191.9000e9, 239.6600e9, &
        642.8700e9, 2.5227816e12 /)
 
+! HDF version
+
+  INTEGER, PARAMETER :: HDFversion = 5   ! from now on!
+
   ! --------------------------------------------------------------------------
 
 !=============================================================================
@@ -176,6 +209,9 @@ END MODULE MLSL1Common
 !=============================================================================
 
 ! $Log$
+! Revision 2.8  2003/09/15 17:15:53  perun
+! Version 1.3 commit
+!
 ! Revision 2.7  2003/08/15 14:25:04  perun
 ! Version 1.2 commit
 !
