@@ -975,7 +975,7 @@ contains ! ================================ FullForwardModel routine ======
           neg_tan_ht = temp%values(1,mafTInstance) * &
             &  (fwdModelConf%tangentGrid%surfs(ptg_i) - z_glgrid(1)) / 14.8_rp
           e_rflty = earthRefl%values(1,1)
-          phi_tan = firstRadiance%template%phi(1,MAF)
+          phi_tan = firstRadiance%template%phi(1,MAF)*Deg2Rad
  
           ! *** This is where we will interpolate Phi_tan
  
@@ -1953,6 +1953,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
  
 ! $Log$
+! Revision 2.20  2001/12/14 23:43:05  zvi
+! Modification for Grouping concept
+!
 ! Revision 2.19  2001/11/25 07:57:12  zvi
 ! Fixing inconsistency in k_xxx instance loops
 !
