@@ -362,7 +362,7 @@ contains ! =====     Public Procedures     =============================
         & f_signals, f_spect_der, f_temp_der /) )) ) &
         & call AnnounceError ( IrrelevantFwmParameter, root )
     case ( l_linear)
-      if ( .not. all(got( (/f_molecules, f_signals/) )) ) & ! Maybe others later
+      if ( .not. all(got( (/f_signals/) )) ) & ! Maybe others later
         & call AnnounceError ( IncompleteLinearFwm, root )
       if ( any(got( (/f_do_conv, f_do_freq_avg, f_frequency /) )) ) &
         & call AnnounceError ( IrrelevantFwmParameter, root )
@@ -421,6 +421,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.4  2001/06/04 22:42:24  livesey
+! Added belowRef to forwardModelIntermediate_T
+!
 ! Revision 2.3  2001/05/31 22:08:06  livesey
 ! Added cloud_der flag
 !
