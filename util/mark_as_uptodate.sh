@@ -37,6 +37,7 @@
 #    O p t i o n s
 # -h[elp]            brief summary of usage and options; then exit
 # -T target_name     main target_name of make
+#                      (may be repeated for multiple main targets)
 # -M MYMAKE          use MYMAKE for make command instead of make
 # -cg MLSCONFG       use arg for MLSCONFG instead of any current setting
 # -C MLSCFILE        use arg for MLSCFILE instead of .configure
@@ -343,6 +344,7 @@ fi
 #----------------------- Implementation -----------------------
 
 target_name=""
+last_target_name=""
 record_file="newAifBdiff.out"
 me="$0"
 my_name=mark_as_uptodate.sh
@@ -368,11 +370,13 @@ more_opts="yes"
 while [ "$more_opts" = "yes" ] ; do
     case "$1" in
 	-T )
-	    target_name=$2
+	    last_target_name="$2"
+	    target_name="$2 $target_name"
 	    shift
 	    shift
 	;;
 	-o )
+	    last_target_name="$2"
 	    target_name=$2
 	    special_use=yes
 	    link_use=yes
@@ -450,7 +454,8 @@ then
   echo "MLSCFILE $MLSCFILE"
   echo "MARK_ALL_AS_UPTODATE? $MARK_ALL_AS_UPTODATE"
   echo "mod file name ext $ext"
-  echo "target_name $target_name"
+  echo "target_name(s) $target_name"
+  echo "last target_name $last_target_name"
   echo "special touch use? $special_use"
   echo "special compile use? $compile_use"
   echo "skip prerequisite directories? $SKIP_PDS"
@@ -510,13 +515,13 @@ then
    exit 0
 elif [ "$special_use" = "yes" ]
 then
-   if [ -f "$target_name" ]
+   if [ -f "$last_target_name" ]
    then
       if [ "$verbose" != "" -a "$special_use" = "yes" ]
       then
          echo "touching $target_name"
       fi
-      touch "$target_name"
+      touch $target_name
    elif [ "$link_use" = "yes" ]
    then
       echo "link target $target_name not found in mark_as_uptodate.sh"
@@ -598,13 +603,13 @@ then
 fi
 mark_files
 rm -f "$record_file"                                                           
-if [ -f "$target_name" ]
+if [ -f "$last_target_name" ]
 then
    if [ "$verbose" != "" ]
    then
      echo "Marking $target_name as up to date"
    fi
-   touch "$target_name"
+   touch $target_name
 fi
 
 if [ "$verbose" != "" ]              
@@ -614,6 +619,9 @@ fi
 exit 0
 
 # $Log$
+# Revision 1.6  2002/08/07 17:03:19  pwagner
+# Fixes error when FAFTER or LAFTER redirect output
+#
 # Revision 1.5  2002/07/26 23:49:59  pwagner
 # Faster at marking files uptodate (but still slow)
 #
