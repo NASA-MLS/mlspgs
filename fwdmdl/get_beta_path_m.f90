@@ -488,7 +488,12 @@ contains
 
     end select
 
-    if ( nl < 1 ) return
+    if ( nl < 1 ) then
+      if ( present(dBeta_dw)) dBeta_dw = 0.0_rp
+      if ( present(dBeta_dn)) dBeta_dn = 0.0_rp
+      if ( present(dBeta_dv)) dBeta_dv = 0.0_rp
+      return
+    end if
 
     if ( present(dBeta_dw) .or. present(dBeta_dn) .or. present(dBeta_dv) ) then
 
@@ -670,7 +675,12 @@ contains
 
       end select
 
-      if ( nl < 1 ) cycle
+      if ( nl < 1 ) then
+        if ( associated(dBeta_dw) ) dBeta_dw(j) = 0.0_rp
+        if ( associated(dBeta_dn) ) dBeta_dn(j) = 0.0_rp
+        if ( associated(dBeta_dv) ) dBeta_dv(j) = 0.0_rp
+        cycle
+      end if
 
       if ( .not. temp_der .and. .not. spect_der ) then
 
@@ -1091,6 +1101,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.73  2005/03/25 21:04:57  vsnyder
+! Don't clobber continuum in Create_Beat if there are lines
+!
 ! Revision 2.72  2005/03/03 02:07:10  vsnyder
 ! Move dumps from Create_Beta_Path... to Get_Beta_Path...
 !
