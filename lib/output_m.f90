@@ -49,12 +49,7 @@ contains
       i = min(n,len(b))
       n = n - i
       if ( n == 0 ) adv = my_adv
-      if ( prunit == -1 .or. prunit < -2 ) &
-        & write ( *, '(a)', advance=adv ) b(:i)
-      if ( prunit < -1 ) &
-        & call MLSMessage ( MLSMSG_Level, ModuleName, b(:i), advance=adv )
-      if ( prunit >= 0 ) &
-        & write ( prunit, '(a)', advance=adv ) b(:i)
+      call output ( b(:i), advance=my_adv )
       if ( n == 0 ) exit
     end do
     return
@@ -87,20 +82,10 @@ contains
     character(len=*), intent(in), optional :: ADVANCE
     integer :: I ! loop inductor
     do i = 1, size(chars)
-      if ( prunit == -1 .or. prunit < -2 ) &
-        & write ( *, '(a)', advance='no' ) chars(i)
-      if ( prunit < -1 ) &
-        & call MLSMessage ( MLSMSG_Level, ModuleName, chars(i), advance='no' )
-      if ( prunit >= 0 ) &
-        & write ( prunit, '(a)', advance='no' ) chars(i)
+      call output ( chars(i) )
     end do
     if ( present(advance) ) then
-      if ( prunit == -1 .or. prunit < -2 ) &
-        & write ( *, '(a)', advance=advance )
-      if ( prunit < -1 ) &
-        & call MLSMessage ( MLSMSG_Level, ModuleName, '', advance=advance )
-      if ( prunit >= 0 ) &
-        & write ( prunit, '(a)', advance=advance )
+      call output ( '', advance=advance )
     end if
   end subroutine OUTPUT_CHAR_ARRAY
 
@@ -159,11 +144,7 @@ contains
         write ( prunit, Format, advance=my_adv ) value
       end if
     else
-      if ( prunit == -1 .or. prunit < -2 ) then
-        write ( *, '(a)', advance=my_adv ) line(:k)
-      else if ( prunit >= 0 ) then
-        write ( prunit, '(a)', advance=my_adv ) line(:k)
-      end if
+      call output ( line(:k), advance=my_adv )
     end if
 
     if ( prunit >= -1 ) return
@@ -189,30 +170,28 @@ contains
     logical, intent(in), optional :: FILL
     character(len=*), intent(in), optional :: FORMAT
     logical :: My_Fill
-    integer :: I
+    integer :: I, J
     character(len=12) :: LINE
-    character(len=3) :: MY_ADV
     integer :: MY_PLACES
     my_places = 0
     if ( present(places) ) then; my_places = places; end if
-    my_adv = 'no'
-    if ( present(advance) ) then; my_adv = advance; end if
     my_fill = .false.
     if ( present(places) .and. present(fill) ) my_fill = fill
     if ( present(format) ) then
+      line = ' '
       write ( line, format ) int
+      i = 1
+      j = len_trim(line)
+    else if ( my_fill ) then
+      write ( line, '(i6.6)' ) int
+      i = 1
+      j = 6
     else
       write ( line, '(i12)' ) int
+      i = max( 1, min(len(line)+1-my_places, index(line,' ',back=.true.)+1) )
+      j = len(line)
     end if
-    i = max( 1, min(len(line)+1-my_places, index(line,' ',back=.true.)+1) )
-    if ( my_fill ) write ( line, '(i6.6)' ) int
-    if ( prunit == -1 .or. prunit < -2 ) &
-      & write ( *, '(a)', advance=my_adv ) line(i:)
-    if ( prunit < -1 ) &
-        & call MLSMessage ( MLSMSG_Level, ModuleName, line(i:), &
-          & advance=my_adv )
-    if ( prunit >= 0 ) &
-      & write ( prunit, '(a)', advance=my_adv ) line(i:)
+    call output ( line(i:j), advance=advance )
     return
   end subroutine OUTPUT_INTEGER
 
@@ -241,22 +220,12 @@ contains
     logical, intent(in) :: LOG
     character(len=*), intent(in), optional :: ADVANCE
     character(len=2) :: LINE
-    character(len=3) :: MY_ADV
-    my_adv = 'no'
-    if ( present(advance) ) then; my_adv = advance; end if
     if (log) then
       line=' T'
     else
       line=' F'
     end if
-    if ( prunit == -1 .or. prunit < -2 ) &
-      & write ( *, '(a)', advance=my_adv ) line
-    if ( prunit < -1 ) &
-        & call MLSMessage ( MLSMSG_Level, ModuleName, line, &
-          & advance=my_adv )
-    if ( prunit >= 0 ) &
-      & write ( prunit, '(a)', advance=my_adv ) line
-    return
+    call output ( line, advance=advance )
   end subroutine OUTPUT_LOGICAL
 
   subroutine OUTPUT_SINGLE ( VALUE, FORMAT, LogFormat, ADVANCE )
@@ -314,11 +283,7 @@ contains
         write ( prunit, Format, advance=my_adv ) value
       end if
     else
-      if ( prunit == -1 .or. prunit < -2 ) then
-        write ( *, '(a)', advance=my_adv ) line(:k)
-      else if ( prunit >= 0 ) then
-        write ( prunit, '(a)', advance=my_adv ) line(:k)
-      end if
+      call output ( line(:k), advance=advance )
     end if
 
     if ( prunit >= -1 ) return
@@ -335,6 +300,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.14  2001/09/26 02:16:22  vsnyder
+! Simplify by using output_char internally
+!
 ! Revision 2.13  2001/05/24 22:39:07  vsnyder
 ! Make output_single work like output_double; cosmetic changes
 !
