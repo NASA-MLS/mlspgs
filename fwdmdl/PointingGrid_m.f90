@@ -216,9 +216,8 @@ outer2: do
     call deallocate_test ( howManySignals, 'HowManySignals', moduleName )
     call deallocate_test ( howManyGrids, 'HowManyGrids', moduleName )
 
+    if ( index(switches,'point') /= 0 ) call dump_pointing_grid_database
     if ( toggle(gen) ) then
-      if ( levels(gen) > 0 .or. index(switches,'P') /= 0 ) &
-        & call dump_pointing_grid_database
       call trace_end ( "Read_Pointing_Grid_File" )
     end if
 
@@ -296,6 +295,9 @@ outer2: do
 end module PointingGrid_m
 
 ! $Log$
+! Revision 2.3  2002/10/08 17:08:05  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.2  2002/09/13 22:58:22  vsnyder
 ! Cosmetic changes
 !

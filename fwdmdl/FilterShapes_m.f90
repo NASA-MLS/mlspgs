@@ -171,9 +171,8 @@ contains
 
     end do ! Loop over filter shapes
 
+    if ( index(switches,'filt') /= 0 ) call dump_filter_shapes_database
     if ( toggle(gen) ) then
-      if ( levels(gen) > 0 .or. index(switches,'filt') /= 0 ) &
-        & call dump_filter_shapes_database
       call trace_end ( "Read_Filter_Shapes_File" )
     end if
 
@@ -253,6 +252,9 @@ contains
 end module FilterShapes_m
 
 ! $Log$
+! Revision 2.6  2003/05/05 23:00:24  livesey
+! Merged in feb03 newfwm branch
+!
 ! Revision 2.5.2.1  2003/04/21 20:07:08  vsnyder
 ! Count filter shapes, then allocate the right size
 !

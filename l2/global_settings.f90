@@ -398,8 +398,7 @@ contains
     else
       Details = -2
     end if
-    if( levels(gen) > 0 .or. &
-      & index(switches, 'glo') /= 0 ) &
+    if( index(switches, 'glo') /= 0 ) &
       & call dump_global_settings( l2pcf, processingRange, l1bInfo, &
       & LeapSecFileName, details )
 
@@ -407,9 +406,9 @@ contains
       & call MLSMessage(MLSMSG_Error,ModuleName, &
       & 'Problem with global settings section')
 
+    if ( index(switches, 'vgrid') /= 0 ) &
+      & call dump ( vgrids, details=levels(gen)-1+min(index(switches, 'V'),1) )
     if ( toggle(gen) ) then
-      if (  levels(gen) > 0 .or. index(switches, 'V') /= 0 ) &
-        & call dump ( vgrids, details=levels(gen)-1+min(index(switches, 'V'),1) )
       call trace_end ( 'SET_GLOBAL_SETTINGS' )
     end if
     if ( timing ) call sayTime
@@ -707,6 +706,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.66  2003/05/07 23:58:04  pwagner
+! outputs trimmed LeapSecFileName
+!
 ! Revision 2.65  2003/04/02 23:54:53  pwagner
 ! Checks for FILENOTFOUND
 !

@@ -364,9 +364,8 @@ contains ! =====  Public Procedures  ===================================
       end select
     end do ! i
 
+    if ( index(switches,'spec') /= 0 ) call dump_SpectCat_database ( catalog )
     if ( toggle(gen) ) then
-      if ( levels(gen) > 0 .or. index(switches,'spec') /= 0 ) &
-        & call dump_SpectCat_database ( catalog )
       call trace_end ( "Spectroscopy" )
     end if
     if ( timing ) call sayTime
@@ -651,6 +650,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.14  2003/05/05 23:00:25  livesey
+! Merged in feb03 newfwm branch
+!
 ! Revision 2.13  2003/02/27 18:09:04  bill
 ! Reverted from wrongly-committed newfwm branch version
 !

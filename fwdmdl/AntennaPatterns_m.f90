@@ -215,9 +215,8 @@ outer1: do
       end do ! j
     end do ! i
 
+    if ( index(switches,'ant') /= 0 ) call dump_Antenna_Patterns_database
     if ( toggle(gen) ) then
-      if ( levels(gen) > 0 .or. index(switches,'A') /= 0 ) &
-        & call dump_Antenna_Patterns_database
       call trace_end ( "Read_Antenna_Patterns_File" )
     end if
 
@@ -291,6 +290,9 @@ outer1: do
 end module AntennaPatterns_m
 
 ! $Log$
+! Revision 2.5  2003/02/07 01:56:53  vsnyder
+! Move a USE down
+!
 ! Revision 2.4  2002/10/08 17:08:01  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
