@@ -16,6 +16,7 @@ module MorePVM                          ! Additional PVM stuff
   character(LEN=130), private :: Id = & 
        "$Id$"
   character(LEN=*), private, parameter :: ModuleName="$RCSfile$"
+  private :: not_used_here 
   !-----------------------------------------------------------------------------
 
 contains
@@ -84,9 +85,16 @@ contains
     if ( info /= 0 ) index = GetStringIndexFromString ( trim(word) )
   end subroutine PVMUnpackStringIndex
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module MorePVM
 
 ! $Log$
+! Revision 2.2  2002/10/08 00:09:12  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.1  2002/10/05 00:42:04  livesey
 ! First version
 !

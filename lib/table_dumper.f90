@@ -19,6 +19,7 @@ module TABLE_DUMPER
        "$Id$"
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
 contains
@@ -103,9 +104,16 @@ contains
     end if
     call output ( '', advance='yes' )
   end subroutine DUMP_CELL
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module TABLE_DUMPER
 
 ! $Log$
+! Revision 2.2  2002/10/08 00:09:14  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.1  2000/10/11 18:57:28  vsnyder
 ! Move from lib/cf_parser to lib; insert copyright notice
 !

@@ -22,6 +22,7 @@ module ERROR_HANDLER
        "$Id$"
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
 contains
@@ -87,9 +88,16 @@ contains
   subroutine INIT_ERROR_WALKBACK
     last_error = 0
   end subroutine INIT_ERROR_WALKBACK
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module ERROR_HANDLER
 
 ! $Log$
+! Revision 2.2  2002/10/08 00:09:09  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.1  2000/10/11 18:33:24  vsnyder
 ! Move from lib/cf_parser to lib; insert copyright notice
 !

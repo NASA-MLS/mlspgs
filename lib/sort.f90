@@ -28,6 +28,7 @@ module Sort_M
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
 contains
@@ -49,9 +50,16 @@ contains
     real :: PARTN,TEMP
     include "sort.f9h"
   end subroutine SSORT
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module Sort_M
 
 ! $Log$
+! Revision 2.2  2002/10/08 00:09:14  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.1  2002/01/30 19:36:34  vsnyder
 ! Initial commit
 !

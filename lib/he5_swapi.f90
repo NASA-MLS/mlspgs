@@ -40,7 +40,13 @@ module HE5_SWAPI
     & "$Id$"
   character(len=*), private, parameter :: ModuleName = &
     & "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
+
+contains 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
 
 end module HE5_SWAPI
 

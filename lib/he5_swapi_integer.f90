@@ -7,6 +7,7 @@ module HE5_SWAPI_INTEGER
     & "$Id$"
   character(len=*), private, parameter :: ModuleName = &
     & "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
 
 contains
@@ -100,6 +101,10 @@ contains
     HE5_SWwrfld_integer_3d =HE5_SWwrfld(swathid, fieldname, starts, strides, &
       & edges, buffer )
   end function HE5_SWWRFLD_INTEGER_3D
+
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
 
 end module HE5_SWAPI_INTEGER
 

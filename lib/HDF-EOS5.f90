@@ -12,6 +12,7 @@ module HDFEOS5               ! F90 interface to HDF-EOS5.
     & "$Id$"
   character(len=*), parameter, private :: ModuleName= &
     & "$RCSfile$"
+  private :: not_used_here 
   !----------------------------------------------------------
 
   !The following is included only because hte original file
@@ -119,10 +120,18 @@ module HDFEOS5               ! F90 interface to HDF-EOS5.
   end interface
 
 !====================
+contains 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module HDFEOS5
 !====================
 
 ! $Log$
+! Revision 2.2  2002/10/08 00:09:09  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.1  2002/07/11 22:18:26  pwagner
 ! First commit in this directory--welcome old friendshe5*.f90
 !
