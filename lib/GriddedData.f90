@@ -18,6 +18,7 @@ MODULE GriddedData ! Collections of subroutines to handle TYPE GriddedData_T
   & MLSMSG_Deallocate, MLSMSG_Warning
   USE MLSStrings, only: GetStringElement, NumStringElements, Capitalize, &
   & Count_words, ReadCompleteLineWithoutComments, GetIntHashElement
+  use OUTPUT_M, only: OUTPUT
   USE SDPToolkit, only: PGS_S_SUCCESS, PGS_PC_GETREFERENCE, &
   & PGS_IO_GEN_OPENF, PGSD_IO_GEN_RSEQFRM
 
@@ -1333,6 +1334,13 @@ END TYPE GriddedData_T
         case ( i_time )
           ntime=size
         end select
+		  
+		  the_g_data%noLats = nlat
+		  the_g_data%noLons = nlon
+		  the_g_data%noLsts = ntime
+		  the_g_data%noSzas = nlev
+		  
+		  the_g_data%quantityName = actual_field_name
 	  
 	ENDDO
 
@@ -1561,7 +1569,7 @@ END TYPE GriddedData_T
   character (len=80) :: msg, mnemonic
   integer :: status
   logical :: just_print_it
-  logical, parameter :: default_output_by_toolkit = .false.
+  logical, parameter :: default_output_by_toolkit = .true.
 	
 	if(present(use_toolkit)) then
 		just_print_it = use_toolkit
@@ -1572,9 +1580,16 @@ END TYPE GriddedData_T
 	endif
 	
 	if(.not. just_print_it) then
-    CALL Pgs_smf_getMsg(status, mnemonic, msg)
-    CALL MLSMessage (level, ModuleName, &
-              &trim(full_message)//" "//mnemonic//" "//msg)
+!    CALL Pgs_smf_getMsg(status, mnemonic, msg)
+!    CALL MLSMessage (level, ModuleName, &
+!              &trim(full_message)//" "//mnemonic//" "//msg)
+		CALL output("An error of level ", advance='no', &
+		& from_where=ModuleName)
+		CALL output(level, advance='no' )
+		CALL output(" occurred; more specifically", advance='yes', &
+		& from_where=ModuleName)
+		CALL output(trim(full_message), advance='yes', &
+		& from_where=ModuleName)
 	else
 		print*, '***Error: level ', level, ' in module ', ModuleName
 		print*, trim(full_message)
@@ -1590,6 +1605,9 @@ END MODULE GriddedData
 
 !
 ! $Log$
+! Revision 2.7  2001/03/14 00:32:47  pwagner
+! More changes--still wrong, though
+!
 ! Revision 2.6  2001/03/10 00:33:16  pwagner
 ! Some corrections in ReadGriddedData
 !
