@@ -99,8 +99,13 @@ ddot.o: ../ddot.f
 	$(FC) -c $(DUSTY_NO_OPT) -O $(INC_PATHS) ../ddot.f $(FAFTER)
 sdot.o: ../sdot.f
 	$(FC) -c $(DUSTY_NO_OPT) -O $(INC_PATHS) ../sdot.f $(FAFTER)
+sddot.o: ../sddot.f
+	$(FC) -c $(DUSTY_NO_OPT) -O $(INC_PATHS) ../sddot.f $(FAFTER)
 
 # $Log$
+# Revision 1.3  2002/05/02 22:35:16  pwagner
+# NOCASCADE setting in place; forestalls unwanted recompilations
+#
 # Revision 1.2  2001/11/15 00:07:57  pwagner
 # Now works with new libmlspack.a and .mod files in blas
 #
