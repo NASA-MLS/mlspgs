@@ -454,21 +454,22 @@ contains
 
     subroutine ERROR ( CODE )
       integer, intent(in) :: CODE
+      call output ( source_line, 5 )
       select case ( code )
       case ( double_under )
-        call output ( 'Double underscore in column ' )
+        call output ( ': Double underscore in column ' )
         call output ( source_column )
         call output ( ' ignored.', advance='yes' )
       case ( incomplete )
-        call output ( 'Incomplete string from column ' )
+        call output ( ': Incomplete string from column ' )
         call output ( column ); call output ( ' to ' )
         call output ( source_column, advance='yes' )
       case ( unrec_char )
-        call output ( 'Unrecognized character in column ' )
+        call output ( ': Unrecognized character in column ' )
         call output ( source_column )
         call output ( ' ignored.', advance='yes' )
       case ( unrec_token )
-        call output ( 'Unrecognized token ending in column ' )
+        call output ( ': Unrecognized token ending in column ' )
         call output ( source_column - 1 )
         call output ( ' ignored.', advance='yes' )
       end select
@@ -480,6 +481,9 @@ contains
 end module LEXER_M
 
 ! $Log$
+! Revision 2.2  2000/10/18 18:36:58  vsnyder
+! Add line number of input to error message.
+!
 ! Revision 2.1  2000/10/11 18:00:54  vsnyder
 ! Move from lib/cf_parser to lib; remove unused variables; add copyright
 !
