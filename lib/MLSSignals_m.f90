@@ -243,7 +243,6 @@ contains
       got = .false.
       select case ( decoration(subtree(1,decoration(subtree(1,key)))) )
 
-
       case ( s_band ) ! ...................................  BAND  .....
         band%prefix = name
         band%centerFrequency = 0.0_r8 ! "The 'frequency' field is absent"
@@ -268,7 +267,6 @@ contains
         end do ! i = 2, nsons(key)
         call decorate ( key, addBandToDatabase ( bands, band ) )
 
-
       case ( s_module ) ! ............................  MODULE  ........
         thisModule%name = name
         thisModule%spaceCraft = .false.
@@ -290,7 +288,6 @@ contains
           end select
         end do
         call decorate ( key, AddModuleToDatabase (modules, thisModule ) )
-
 
       case ( s_radiometer ) ! .......................  RADIOMETER  .....
         radiometer%polarization = l_a
@@ -317,7 +314,6 @@ contains
           end select
         end do ! i = 2, nsons(key)
         call decorate ( key, addRadiometerToDatabase ( radiometers, radiometer ) )
-
 
       case ( s_signal ) ! ..........................  VALIDSIGNAL  .....
         signal%sideband = 0
@@ -356,7 +352,7 @@ contains
           ! Didn't need to supply radiometer then.
           if ( got(f_radiometer) ) call announceError ( unneededRadiometer )
           signal%radiometer = bands(signal%band)%radiometer
-        endif
+        end if
         signal%lo = radiometers(signal%radiometer)%lo
         signal%instrumentModule = radiometers(signal%radiometer)%instrumentModule
         signal%spectrometerType = bands(signal%band)%spectrometerType
@@ -773,18 +769,18 @@ contains
     end if
   end subroutine DestroySpectrometerTypeDatabase
 
-  ! --------------------------------------------------  DumpBands  -----
+  ! -------------------------------------------------  Dump_Bands  -----
   subroutine DUMP_BANDS ( BANDS )
     type (Band_T), intent(in) :: BANDS(:)
     integer :: i
     call output ( 'BANDS: SIZE = ')
     call output ( size(bands), advance='yes' )
     do i = 1, size(bands)
-      call output ( i, 2 )
+      call output ( i )
       call output ( ': ' )
       call display_string (bands(i)%prefix)
       call output ( ':' )
-      call display_string (bands(i)%suffix, advance='yes', strip=.true. )
+      call display_string (bands(i)%suffix, strip=.true. )
       call output ( '   Radiometer: ')
       call output ( bands(i)%radiometer )
       call output ( ' - ' )
@@ -795,7 +791,7 @@ contains
       call display_string ( spectrometerTypes(bands(i)%spectrometerType)%name, &
         & advance='yes' )
       call output ( '   Frequency: ')
-      call output ( bands(i)%centerFrequency )
+      call output ( bands(i)%centerFrequency, advance='yes' )
     end do
   end subroutine DUMP_BANDS
 
@@ -824,7 +820,7 @@ contains
     end do
   end subroutine DUMP_RADIOMETERS
 
-  ! ------------------------------------------------  DumpSignals  -----
+  ! -----------------------------------------------  Dump_Signals  -----
   subroutine DUMP_SIGNALS ( SIGNALS, DETAILS )
     type (signal_T), intent(in) :: SIGNALS(:)
     logical, intent(in), optional :: Details ! false => don't dump frequencies
@@ -898,7 +894,7 @@ contains
         if ( signals(i)%deferred ) call output ( '(deferred)' )
         call output ( ':', advance='yes' )
         call dump ( signals(i)%frequencies )
-        call output ( '   Widths:' )
+        call output ( '   Widths' )
         if ( signals(i)%deferred ) call output ( '(deferred)' )
         call output ( ':', advance='yes' )
         call dump ( signals(i)%widths )
@@ -938,7 +934,9 @@ contains
       call output ( '  Widths:', advance='yes' )
       call dump ( spectrometerType%widths )
     else
-      call output ('   Frequencies and widths deferred.', advance='yes' )
+      call output ('   Frequencies and widths deferred.' )
+      call output ( '  DACS?: ' )
+      call output ( spectrometerType%dacs, advance='yes' )
     end if
 
   end subroutine DUMP_SPECTROMETERTYPE
@@ -995,7 +993,7 @@ contains
       string_text = TRIM(string_text) // ':'
       call get_string ( bands(band)%suffix,&
         & string_text(LEN_TRIM(string_text)+1:), cap=.true., strip=.true. )
-    endif
+    end if
 
   end subroutine GetBandName
 
@@ -1025,14 +1023,14 @@ contains
     if ( size(modules) < 1 ) then
       instrumentModule = 0
       return
-    endif
+    end if
     do instrumentModule=1, size(modules)
       if ( modules(instrumentModule)%name > 0 ) then
         call Get_String ( modules(instrumentModule)%name, string_test )
         if ( LowerCase(trim(string_text)) == LowerCase(trim(string_test))) &
           & return
-      endif
-    enddo
+      end if
+    end do
     instrumentModule = 0
   end subroutine GetModuleIndex
 
@@ -1057,14 +1055,14 @@ contains
     if ( size(signals) < 1 ) then
       signal_index = 0
       return
-    endif
+    end if
     do signal_index=1, size(signals)
       if ( signals(signal_index)%name > 0 ) then
         call Get_String ( signals(signal_index)%name, string_test )
         if ( LowerCase(trim(string_text)) == LowerCase(trim(string_test))) &
           & return
-      endif
-    enddo
+      end if
+    end do
     signal_index = 0
   end subroutine GetSignalIndex
 
@@ -1211,7 +1209,7 @@ contains
       string_text = TRIM(string_text) // ':'
       call get_string ( radiometers(radiometer)%suffix, &
         & string_text(LEN_TRIM(string_text)+1:), cap=.true., strip=.true. )
-    endif
+    end if
 
   end subroutine GetRadiometerName
 
@@ -1237,7 +1235,7 @@ contains
           sidebandStart = -1
           sidebandStop = 1
           sidebandStep = 2
-        endif
+        end if
       else
         sidebandStart = 0
         sidebandStop = sidebandStart
@@ -1306,7 +1304,8 @@ contains
   end function IsModuleSpacecraft
 
   ! ------------------------------------------------  MatchSignal  -----
-  integer function MatchSignal ( Signals, Probe, sideband, channel, matchFlags )
+  integer function MatchSignal ( Signals, Probe, sideband, channel, matchFlags, &
+    & NoMatchFails, FromWhere )
     ! Given an array Signals, find the one in the array that provides
     ! the smallest superset of features of the signal Probe.  The result
     ! is zero if no signals match.
@@ -1317,7 +1316,9 @@ contains
     type(signal_T), intent(in) :: Probe
     integer, intent(in), optional :: sideband     ! Use this instead of probe%sideband
     logical, dimension(size(signals)), intent(out), optional :: matchFlags
-    integer, intent(in), optional :: CHANNEL ! Just this channel
+    integer, intent(in), optional :: CHANNEL      ! Just this channel
+    logical, intent(in), optional :: NoMatchFails ! Fail if no match
+    character(len=*), intent(in), optional :: FromWhere ! For an error message
 
     integer :: BestMatch                ! The smallest number of 
     integer :: I                        ! Loop inductors, subscripts
@@ -1358,24 +1359,35 @@ contains
           end if
         else
           match = .true.
-        endif
+        end if
       else
         match = (.not. associated(probe%channels)) .or. &
           & (.not. associated(signals(i)%channels) )
         if ( .not. match ) match = all( (probe%channels .and. &
           & signals(i)%channels(lbound(probe%channels,1):ubound(probe%channels,1)) ) &
           & .eqv. probe%channels )
-      endif
+      end if
       if ( match ) then
         if ( present( matchFlags ) ) matchFlags(i) = .true.
         if ( associated(signals(i)%channels) ) then
           numChannelsMatch = count(signals(i)%channels)
         else
           numChannelsMatch = size( signals(i)%frequencies )
-        endif
+        end if
         if ( numChannelsMatch < bestMatch ) then
           matchSignal = i
           bestMatch = numChannelsMatch
+        end if
+      end if
+      if ( present(noMatchFails) ) then
+        if ( noMatchFails .and. matchSignal == 0 ) then
+          if ( present(fromWhere) ) then
+            call MLSMessage ( MLSMSG_Error, moduleName, &
+              & 'No match for requested signal from ' // trim(fromWhere) )
+          else
+            call MLSMessage ( MLSMSG_Error, moduleName, &
+              & 'No match for requested signal' )
+          end if
         end if
       end if
     end do
@@ -1559,6 +1571,9 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.64  2004/01/28 02:10:07  vsnyder
+! Polish up some dump routines, other cosmetics
+!
 ! Revision 2.63  2004/01/28 01:17:36  vsnyder
 ! Do spectrometerType%dacs = dacs BEFORE putting spectrometerType in the database
 !
