@@ -475,7 +475,7 @@ contains
       ajn = c0
       condai = c0
       dxnl = c1
-      aj%dxnl = c0
+      aj%dxnl = c1
       fnl = c0
       inc = -1
       iter = 0
@@ -690,7 +690,7 @@ contains
       cgdx = aj%gdx/(gradn*dxn) ! Cosine ( gradient, dx )
       condai = min(cgdx,gradn/(dxn*ajn**2),diag/ajn)
       fnxe = fnmin**2
-      if (sq /= c0)  fnxe = fnxe-(spl*ajn*dxn)**2
+      if (sq /= c0) fnxe = fnxe-(spl*ajn*dxn)**2
       tp = dxinc
       if (inc < 0) then
         if (dxn <= dxinc) then
@@ -941,7 +941,38 @@ contains
     namelist /DNWTDB_OUT/ RELSF, SPACT, SPB, SPFAC, SPG, SPINC, SPL, SPMINI
     namelist /DNWTDB_OUT/ SPSTRT, SQB, SQL, SQMIN
 
-    write (*,dnwtdb_out)
+    character(len=9) :: IFLname, NFLname
+
+!   write (*,dnwtdb_out)
+    write ( *, '(a)' ) &
+      & '       AJN        AJSCAL          CAIT        CDXDXL        CONDAI'
+    write ( *, '(1p5e14.7)' ) AJN, AJSCAL, CAIT, CDXDXL, CONDAI
+    write ( *, '(a)' ) &
+      & '      DIAG           DXI         DXINC        DXMAXI           DXN'
+    write ( *, '(1p5e14.7)' ) DIAG, DXI, DXINC, DXMAXI, DXN
+    write ( *, '(a)' ) &
+      & '    DXNBIG          DXNL        DXNOIS            FN           FNB'
+    write ( *, '(1p5e14.7)' ) DXNBIG, DXNL, DXNOIS, FN, FNB
+    write ( *, '(a)' ) &
+      & '       FNL         FNMIN          FNXE           FRZ          FRZB'
+    write ( *, '(1p5e14.7)' ) FNL, FNMIN, FNXE, FRZ, FRZB
+    write ( *, '(a)' ) &
+      & '      FRZL          GFAC         GRADN        GRADNB        GRADNL'
+    write ( *, '(1p5e14.7)' ) FRZL, GFAC, GRADN, GRADNB, GRADNL
+    call flagName ( ifl, iflName ); call flagName ( nfl, nflName )
+    write ( *, '(a)' ) &
+      & '       IFL        INC    ITER   ITKEN    K1IT    K2IT      KB       NFL'
+    write ( *, '(1x,a9,i11,5i8,1x,a9)' ) adjustr(iflName), INC, ITER, ITKEN, &
+      & K1IT, K2IT, KB, adjustr(nflName)
+    write ( *, '(a)' ) &
+      & '     RELSF         SPACT           SPB         SPFAC           SPG'
+    write ( *, '(1p5e14.7)' ) RELSF, SPACT, SPB, SPFAC, SPG
+    write ( *, '(a)' ) &
+      & '     SPINC           SPL        SPMINI        SPSTRT           SQB'
+    write ( *, '(1p5e14.7)' ) SPINC, SPL, SPMINI, SPSTRT, SQB
+    write ( *, '(a)' ) &
+      & '       SQL         SQMIN         TOLXA         TOLXR'
+    write ( *, '(1p5e14.7)' ) SQL, SQMIN, TOLXA, TOLXR
   end subroutine DNWTDB
 
 ! ***********************************************     FlagName     *****
@@ -969,6 +1000,8 @@ contains
       itsName = 'DX'
     case ( NF_DX_AITKEN )
       itsName = 'AITKEN'
+    case ( NF_START )
+      itsName = 'START'
     case ( NF_TOLX )
       itsName = 'TOLX'
     case ( NF_TOLX_BEST )
@@ -978,14 +1011,18 @@ contains
     case ( NF_TOO_SMALL )
       itsName = 'TOO_SMALL'
     case ( NF_FANDJ )
-      itsName = 'What???'
+      itsName = 'FANDJ'
     case default
+      itsName = 'What???'
     end select
   end subroutine FlagName
 
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.13  2001/05/24 23:28:06  vsnyder
+! Improve internal output; initial value for dxnl=1, not zero
+!
 ! Revision 2.12  2001/05/24 20:23:41  vsnyder
 ! Keep aj%dxn up to date after Gradient or Aitken moves
 !
