@@ -41,8 +41,8 @@ module Fill                     ! Create vectors and fill them.
   use Intrinsic, only: &
     & PHYQ_Dimensionless, PHYQ_Invalid, PHYQ_Temperature, &
     & PHYQ_Time, PHYQ_Length
-  use L1BData, only: DeallocateL1BData, FindL1BData, L1BData_T, ReadL1BData, &
-    & PRECISIONSUFFIX
+  use L1BData, only: DeallocateL1BData, DumpL1BData, FindL1BData, L1BData_T, &
+    & PRECISIONSUFFIX, ReadL1BData
   use L2GPData, only: L2GPData_T
   use L2AUXData, only: L2AUXData_T
   use L3ASCII, only: L3ASCII_INTERP_FIELD
@@ -67,7 +67,7 @@ module Fill                     ! Create vectors and fill them.
   use ScanModelModule, only: GetBasisGPH, GetHydrostaticTangentPressure, OMEGA
   use SnoopMLSL2, only: SNOOP
   use String_Table, only: Display_String
-  use TOGGLES, only: GEN, LEVELS, TOGGLE
+  use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, &
     & SOURCE_REF, SUB_ROSA, SUBTREE
@@ -2473,7 +2473,8 @@ contains ! =====     Public Procedures     =============================
    if ( isPrecision ) nameString = trim(nameString) // PRECISIONSUFFIX
 
     call ReadL1BData ( fileID , nameString, l1bData, noMAFs, flag, &
-      & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
+      & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
+      & NeverFail=.true. )
     ! We'll have to think about `bad' values here .....
     if ( flag /= 0 ) then
       call Announce_Error ( root, errorReadingL1B )
@@ -2497,6 +2498,9 @@ contains ! =====     Public Procedures     =============================
         enddo
       enddo
     endif
+    
+    if ( index(switches, 'l1b') /= 0 ) &
+     & call DumpL1BData( l1bData )
     call DeallocateL1BData(l1bData)
 
     if (toggle(gen) ) call trace_end( "FillVectorQuantityFromL1B" )
@@ -2847,6 +2851,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.96  2001/10/25 23:32:11  pwagner
+! Responds to l1b switch by dumping l1b quantity during Fill
+!
 ! Revision 2.95  2001/10/24 22:35:33  dwu
 ! add FillDiagonal
 !
