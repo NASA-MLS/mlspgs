@@ -61,16 +61,17 @@ contains ! =====     Public Procedures     =============================
     use Intrinsic, only: l_swath, l_grid, l_hdf, &
       & PHYQ_Dimensionless
     use L2AUXData, only: L2AUXDATA_T, WriteL2AUXData
-    use L2GPData, only: L2GPData_T, WriteL2GPData, L2GPNameLen
+    use L2GPData, only: L2GPData_T, cpL2GPData, WriteL2GPData, L2GPNameLen
     use L2PC_m, only: WRITEONEL2PC, OUTPUTHDF5L2PC
     use MatrixModule_1, only: MATRIX_DATABASE_T, MATRIX_T, GETFROMMATRIXDATABASE
-    use MLSCommon, only: I4
+    use MLSCommon, only: I4, findFirst, findNext
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
     use MLSFiles, only: HDFVERSION_5, &
-      & GetPCFromRef, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, &
-      & SPLIT_PATH_NAME, MLS_SFSTART, MLS_SFEND
-    use MLSL2Options, only: CHECKPATHS, PENALTY_FOR_NO_METADATA, TOOLKIT, &
-      & DEFAULT_HDFVERSION_WRITE
+      & GetPCFromRef, &
+      & MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, MLS_SFSTART, MLS_SFEND, &
+      & SPLIT_PATH_NAME, unSplitName
+    use MLSL2Options, only: CATENATESPLITS, CHECKPATHS, &
+      & DEFAULT_HDFVERSION_WRITE, PENALTY_FOR_NO_METADATA, TOOLKIT
     use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, MLSPCF_L2GP_END, &
       & MLSPCF_L2GP_START, mlspcf_l2dgg_start, mlspcf_l2dgg_end, &
       & Mlspcf_mcf_l2gp_start, Mlspcf_mcf_l2dgm_start, &
@@ -590,30 +591,86 @@ contains ! =====     Public Procedures     =============================
       end select
 
     end do  ! spec_no
-
-      ! Write the log file metadata
-      if ( LOGFILEGETSMETADATA .and. .not. checkPaths ) then
-        if ( DEBUG ) then
-          call output('About to write log file metadata' , advance='yes')
-        end if
-
+    
+    ! Catenate any split Direct Writes
+    ! We assume hdfVersion is 5
+    if ( CATENATESPLITS .and. associated(DirectDatabase) ) then
+      ! Any dgg eligible for being catenated
+      DB_index = findFirst( DirectDatabase%autoType == l_l2dgg )
+      if ( findNext(DirectDatabase%autoType == l_l2dgg, DB_index) > 0 ) then
         if ( TOOLKIT ) then
-          call writeMetaLog ( metadata_error )
-          error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
-        end if
+          l2gp_Version = 1
+          l2gpFileHandle = GetPCFromRef('DGG', mlspcf_l2dgg_start, &
+            & mlspcf_l2dgg_end, &
+            & TOOLKIT, returnStatus, l2gp_Version, DEBUG, &
+            & exactName=l2gpPhysicalFilename)
+        else
+          file_base = DirectDatabase(DB_index)%fileName
+          l2gpPhysicalFilename = unSplitName(file_base)
+          returnStatus = 0
+        endif
+        do DB_index = 1, size(DirectDatabase)
+          if ( DirectDatabase(DB_index)%autoType /= l_l2dgg ) cycle
+          call cpL2GPData(trim(l2gpPhysicalFilename), &
+            & trim(DirectDatabase(DB_index)%fileName), create2=(DB_index==1), &
+            & hdfVersion=HDFVERSION_5)
+        enddo
+        if ( TOOLKIT ) then
+          call add_metadata ( 0, trim(l2gpPhysicalFilename), 1, &
+            & (/'dgg'/), HDFVERSION_5, l_l2dgg, returnStatus )
+          if ( returnStatus /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'unable to addmetadata to ' // trim(l2gpPhysicalFilename) )
+        endif
+      endif
+      ! Next we would do the same for any split dgm direct write files
+      DB_index = findFirst( DirectDatabase%autoType == l_l2aux )
+      if ( findNext(DirectDatabase%autoType == l_l2aux, DB_index) > 0 ) then
+        if ( TOOLKIT ) then
+          l2gp_Version = 1
+          l2gpFileHandle = GetPCFromRef('DGM', mlspcf_l2dgm_start, &
+            & mlspcf_l2dgm_end, &
+            & TOOLKIT, returnStatus, l2gp_Version, DEBUG, &
+            & exactName=l2auxPhysicalFilename)
+        else
+          file_base = DirectDatabase(DB_index)%fileName
+          l2auxPhysicalFilename = unSplitName(file_base)
+          returnStatus = 0
+        endif
+        do DB_index = 1, size(DirectDatabase)
+          if ( DirectDatabase(DB_index)%autoType /= l_l2aux ) cycle
+          ! Not implemented yet
+          ! call cpL2aux(trim(l2auxPhysicalFilename), &
+          !   & trim(DirectDatabase(DB_index)%fileName), create2=(DB_index==1), &
+          !   & hdfVersion=HDFVERSION_5)
+        enddo
+        if ( TOOLKIT ) then
+        endif
+      endif
+    endif
+
+    ! Write the log file metadata
+    if ( LOGFILEGETSMETADATA .and. .not. checkPaths ) then
+      if ( DEBUG ) then
+        call output('About to write log file metadata' , advance='yes')
       end if
 
-      ! Done with text of PCF file at last
+      if ( TOOLKIT ) then
+        call writeMetaLog ( metadata_error )
+        error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
+      end if
+    end if
+
+    ! Done with text of PCF file at last
    
-      if ( DEBUG ) &
-        & call output ( 'About to deallocate text of PCF file' , advance='yes' )
+    if ( DEBUG ) &
+      & call output ( 'About to deallocate text of PCF file' , advance='yes' )
 
-      call deallocate_test ( l2pcf%anText, 'anText of PCF file', moduleName )
+    call deallocate_test ( l2pcf%anText, 'anText of PCF file', moduleName )
 
-      if (index(switches, 'pro') /= 0) then
-        call output ( '============ End Level 2 Products ============', advance='yes' )
-        call output ( ' ', advance='yes' )
-      end if
+    if (index(switches, 'pro') /= 0) then
+      call output ( '============ End Level 2 Products ============', advance='yes' )
+      call output ( ' ', advance='yes' )
+    end if
 
     if ( error /= 0 ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -856,6 +913,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.90  2004/01/23 01:15:00  pwagner
+! Began effort to catenate split direct write files
+!
 ! Revision 2.89  2004/01/22 00:52:19  pwagner
 ! Small changes regarding metadata
 !
