@@ -131,7 +131,7 @@ begin Construct
 
   ;; We'll do Trop. H2O as a special one here.
   tropH2O: Quantity, type=vmr, molecule=h2o, $
-    vGrid=vGridTropH2O, hGrid=hGridStandard, /logBasis
+    vGrid=vGridTropH2O, hGrid=hGridStandard, /logBasis, minValue=0.1ppmv
 
   ;; ----------------------------------------- RHI
   rhi: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=rhi, $
