@@ -12,7 +12,6 @@ MODULE MLSStrings               ! Some low level string handling stuff
   IMPLICIT NONE
   PRIVATE
 
-!  PRIVATE :: id, ModuleName
 !------------------------------- RCS Ident Info ------------------------------
 CHARACTER(LEN=130) :: id = & 
    "$Id$"
@@ -45,6 +44,7 @@ CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
 ! GetStringElement   Returns n'th element of string list
 ! GetStringHashElement   
 !                    Returns string from hash list corresponding to key string
+! GetUniqueList      Returns str list of only unique entries from input list
 ! GetUniqueStrings   Returns array of only unique entries from input array
 ! hhmmss_value       Converts 'hh:mm:ss' formatted string to a real r8
 !                    (See also PGS_TD_UTCtoTAI and mls_UTCtoTAI)
@@ -83,6 +83,8 @@ CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
 !   i4 nElement, log countEmpty, [char inDelim])
 ! GetStringHashElement (strlist keyList, strlist hashList, char* key, 
 !   char* outElement, log countEmpty, [char inDelim], [log part_match])
+! GetUniqueList (char* str, char* outstr(:), int noUnique, &
+!   & log countEmpty, [char inDelim], [log IgnoreLeadingSpaces]) 
 ! GetUniqueStrings (char* inList(:), char* outList(:), int noUnique) 
 ! r8 hhmmss_value (char* str, int ErrTyp, [char separator], [log strict])
 ! ints2Strings (int ints(:,:), char* strs(:))
@@ -122,19 +124,23 @@ CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
 ! Many of these routines take optional arguments that greatly modify
 ! their default operation
 
-! Warning: in the routines LinearSearchStringArray, Array2List, and SortArray
+! Warnings: 
+! (1) in the routines LinearSearchStringArray, Array2List, and SortArray
 ! the input arguments include an array of strings;
 ! This array is of assumed-size
 ! I.e., all elements from array(1:size(array)) are relevant
 ! Therefore in calling one of these you probably need to use the format
 !   call SortArray(myArray(1:mySize), ..
 ! to avoid operating on undefined array elements
+! (2) In operating on string lists it is sometimes assumed that no
+! element is longer than a limit: MAXSTRELEMENTLENGTH
 ! === (end of api) ===
 
   public :: Array2List, Capitalize, CompressString, count_words, &
    & depunctuate, ExtractSubString, &
    & GetIntHashElement, GetStringElement, GetStringHashElement, &
-   & GetUniqueStrings, hhmmss_value, ints2Strings, LinearSearchStringArray, &
+   & GetUniqueStrings, GetUniqueList, &
+   & hhmmss_value, ints2Strings, LinearSearchStringArray, &
    & List2Array, LowerCase, NumStringElements, &
    & ReadCompleteLineWithoutComments, readIntsFromChars, ReplaceSubString, &
    & Reverse, ReverseList, SortArray, SortList, SplitWords, strings2Ints, &
@@ -155,6 +161,9 @@ CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
   integer, public, parameter :: INVALIDUTCSTRING = 1
   ! strings2Ints
   integer, public, parameter :: LENORSIZETOOSMALL=-999
+  
+  ! A limitation among string list operations
+  integer, private, parameter :: MAXSTRELEMENTLENGTH = BareFNLen
 
 CONTAINS
 
@@ -635,6 +644,58 @@ CONTAINS
 	ENDIF
 
   END SUBROUTINE GetStringHashElement
+
+  ! ---------------------------------------------  GetUniqueList  -----
+
+  ! This subroutine takes an string list and returns another containing
+  ! only the unique entries. The resulting list is supplied by the caller
+  ! (You may safely use the same variable for str and outStr)
+  ! E.g., given 'one,two,three,one,four' returns 'one,two,three,four'
+
+  SUBROUTINE GetUniqueList(str, outStr, noUnique, countEmpty, &
+    & inDelim, IgnoreLeadingSpaces)
+    ! Dummy arguments
+    CHARACTER (LEN=*) :: str
+    CHARACTER (LEN=*) :: outstr
+    INTEGER :: noUnique ! Number of unique entries
+    LOGICAL, INTENT(IN)                           :: countEmpty
+    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)       :: inDelim
+    LOGICAL, OPTIONAL, INTENT(IN)       :: IgnoreLeadingSpaces
+
+    ! Local variables
+    CHARACTER (LEN=1)               :: Delim
+    CHARACTER (LEN=1), PARAMETER    :: COMMA = ','
+    CHARACTER (LEN=MAXSTRELEMENTLENGTH), DIMENSION(:), ALLOCATABLE    &
+      &                             :: inStringArray, outStringArray
+    integer :: nElems
+    integer :: LongestLen
+    integer :: status
+
+    ! Executable code
+    IF(PRESENT(inDelim)) THEN
+	     Delim = inDelim
+	 ELSE
+	     Delim = COMMA
+	 ENDIF
+    if ( len(str) <= 0 .or. len(outstr) <= 0 ) return
+    nElems = NumStringElements(str, countEmpty, inDelim, LongestLen)
+    if ( nElems <= 1 ) then
+      return
+    elseif ( LongestLen > MAXSTRELEMENTLENGTH ) then
+      call MLSMessage(MLSMSG_Error, ModuleName, &
+         & "Element length too long in GetUniqueList")
+      return
+    endif
+    ALLOCATE (inStringArray(nElems), outStringArray(nElems), STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"stringArray in GetUniqueList")
+    call list2Array(str, inStringArray, countEmpty, inDelim, &
+     & IgnoreLeadingSpaces)
+    call GetUniqueStrings(inStringArray, outStringArray, noUnique)
+    call Array2List(outStringArray(1:nElems), outStr, &
+     & inDelim)
+    DEALLOCATE(inStringArray, outStringArray)
+  END SUBROUTINE GetUniqueList
 
   ! ---------------------------------------------  GetUniqueStrings  -----
 
@@ -1663,7 +1724,7 @@ CONTAINS
     ! Local variables
     INTEGER(i4) :: elem, nElems
     integer, parameter                     :: MAXCHARVALUE = 256
-    integer, parameter                     :: MAXELEM = BareFNLen
+    integer, parameter                     :: MAXELEM = MAXSTRELEMENTLENGTH
 !    integer, dimension(MAXELEM)           :: chValue, cvInvBN
 !    integer, dimension(MAXELEM)           :: binNumber, invBinNumber
 !    integer, dimension(MAXELEM)           :: jsort, inTheBin
@@ -1678,9 +1739,9 @@ CONTAINS
     logical                                :: myShorterFirst
     CHARACTER (LEN=1)                      :: theChar  
     CHARACTER (LEN=1), PARAMETER           :: BLANK = ' '
-    CHARACTER (LEN=BareFNLen), DIMENSION(:), ALLOCATABLE    &
+    CHARACTER (LEN=MAXSTRELEMENTLENGTH), DIMENSION(:), ALLOCATABLE    &
       &                                    :: stringArray
-    CHARACTER (LEN=BareFNLen)              :: theString  
+    CHARACTER (LEN=MAXSTRELEMENTLENGTH)    :: theString  
     CHARACTER (LEN=1)                      :: myLeftRight
     logical, parameter                     :: DeeBUG = .false.
 
@@ -1855,7 +1916,7 @@ CONTAINS
        ! (Order N^2 sorting algorithms are inefficient)
        integer, intent(in)      :: theBin
        integer                  :: kp, k, ck, jsortie
-       CHARACTER (LEN=BareFNLen)  :: stringElement  
+       CHARACTER (LEN=MAXSTRELEMENTLENGTH)  :: stringElement  
        allTheSameInThisBin = (inTheBin(theBin) /= 1)
        stringElement = stringArray(invBinNumber(1))
        do k=1, inTheBin(theBin)
@@ -1923,12 +1984,12 @@ CONTAINS
     CHARACTER (LEN=1), OPTIONAL, INTENT(IN)       :: leftRight
 
     ! Local variables
-    integer, parameter              :: MAXELEM = BareFNLen
+    integer, parameter              :: MAXELEM = MAXSTRELEMENTLENGTH
     INTEGER(i4) :: nElems, status, LongestLen
 
     CHARACTER (LEN=1)               :: Delim
     CHARACTER (LEN=1), PARAMETER    :: COMMA = ','
-    CHARACTER (LEN=BareFNLen), DIMENSION(:), ALLOCATABLE    &
+    CHARACTER (LEN=MAXSTRELEMENTLENGTH), DIMENSION(:), ALLOCATABLE    &
       &                             :: stringArray
     CHARACTER (LEN=1)               :: myLeftRight
     logical, parameter              :: DeeBUG = .false.
@@ -1956,7 +2017,7 @@ CONTAINS
     nElems = NumStringElements(inList, countEmpty, inDelim, LongestLen)
     if ( nElems <= 0 ) then
       return
-    elseif ( LongestLen > BareFNLen ) then
+    elseif ( LongestLen > MAXSTRELEMENTLENGTH ) then
       call MLSMessage(MLSMSG_Error, ModuleName, &
          & "Element length too long in SortList")
       return
@@ -2537,6 +2598,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.32  2003/10/09 23:33:11  pwagner
+! Added GetUniqueList
+!
 ! Revision 2.31  2003/09/15 23:04:06  vsnyder
 ! Remove unused local variable
 !
