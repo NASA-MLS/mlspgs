@@ -28,13 +28,14 @@ it is mostly self-configuring. First, you will need:
 Then, from the "top" level (where you see this file, as well as the l1, l2, l3,
 lib, srclib, and util directories) simply type
   make -f MakeFC
-and you'll be asked to respond to some questions about your compiler,
-platform, and where the Toolkit is installed. Then the software will
-be built. You may quit out of this now and try it out, perhaps coming
-back later if you are curious or if something goes wrong.
+and you'll be asked to respond to some questions about your compiler, platform,
+and where the various libraries are installed. Then the software will be built.
+You may quit out of this now and try it out, perhaps coming back later if you
+are curious or if something goes wrong.
 
-For more information on obtaining and installing the SDP Toolkit, PVM, and
-the FFTW libraries, enter BEFORE.mls
+For more information on obtaining and installing the SDP Toolkit, PVM, and the
+FFTW libraries, see BEFORE.mls which should be in the same directory as this
+file.
 
 CONTENTS
 I     SUMMARY
@@ -109,6 +110,12 @@ current paths are blank, incorrect, or you simply wish to try changing
 them, be prepared to enter their full path names. Usually Gctp is
 installed alongside the HDFEOS so after setting the latter, the same
 will be offered as the default path setting for the former.
+
+The next set of questions will pertain to two speciaal libraries: PVM and FFTW.
+PVM is currently optional. FFTW is required only for building level 3.
+
+The final two questions allow to set your own default compiler and loader
+options. You can instead safely accept the default values.
 
 To set these paths as environment variables, if they are not so set
 already, a first step is to find where your copy of the Toolkit was
@@ -282,6 +289,10 @@ It would be desirable to make Makefile.dep a target of prerequisites to
 force it to be updated on any change to the source files. Instead, the
 only way to change it is by the explicit command 
 	"make -f MakeFC depends". 
+Among the drawbacks to this are that an outdated Makefile.dep is possibly
+what cvs finds when checking out the archive. See the recommendation concerning
+the update target below.
+
 To create Makefile.dep the shell script util/makemakedep.sh is launched,
 and it in turn uses one of the following:
  f90makedep.pl   the default; found in util; assumes perl or an alias
@@ -399,8 +410,8 @@ to any of these settings. One way is to assign the value on the same line where
 make is invoked; e.g.
 	make -f MakeFC target FOPTS="-gline -gc" LDOPTS="-gc"
 would compile and link for debugging and garbage collection, assuming use of
-NAG f95. Alternatively, these settings can be set by configure_fopts or via
-enviroment variables.
+NAG f95. Alternatively, all of these settings, with the exception of BLAS and
+TAR, can be set by configure_full or via enviroment variables.
 
 Setting            Use
 FOPTS              Override default compiler option; note that you must
@@ -416,11 +427,16 @@ PVM_ROOT           Path to the root of the pvm libraries; note that they
                    Warning: if PVM_ROOT is set, then so must PVM_ARCH
 PVM_ARCH           (see above)
 FFTW_ROOT          Path to the FFTW library; required for mlsl3
-
--pw                           2000-Oct-24 to 2001-Jan-12
+TAR                Path to GNU tar in case your tar won't gzip; only necessary 
+                   for targets tar and tar_sips
+                   
+-pw                           2000-Oct-24 to 2001-Mar-8
 EOF
 exit
 # $Log$
+# Revision 1.13  2001/03/07 14:28:01  pumphrey
+# Added note on dealing with corrupted MakeFC
+#
 # Revision 1.12  2001/02/27 18:41:41  pwagner
 # Mentions configure_pvm, configure_fopts
 #
