@@ -729,6 +729,7 @@ contains
 
       call add_to_retrieval_timing( 'newton_solver', t1 )
       call time_now ( t1 )
+      call copyVector ( v(bestX), v(x) ) ! bestX := x to start things off
       do ! Newtonian iteration
         if ( nwt_flag /= nf_getJ ) then ! not taking a special iteration to get J
           if ( nwt_flag /= nf_start .and. index(switches,'ndb') /= 0 ) &
@@ -2810,6 +2811,10 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.150  2002/07/08 21:05:09  vsnyder
+! Make sure "Best X" has a value even if no Newtonian iterations are done.
+! Mark Filipiak noticed this problem.
+!
 ! Revision 2.149  2002/07/04 00:34:55  vsnyder
 ! Make aprioriMinusX apriori - x instead of -x
 !
