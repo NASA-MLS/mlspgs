@@ -24,6 +24,10 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 
 ! =====     Defined Operators and Generic Identifiers     ==============
 
+  interface Assignment (=)
+    module procedure AssignVector
+  end interface
+
   interface DUMP
     module procedure DUMP_VECTORS, DUMP_VECTOR_TEMPLATES
   end interface
@@ -106,7 +110,7 @@ contains ! =====     Public Procedures     =============================
   ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
   ! It is important to invoke DestroyVectorInfo using the result of this
   ! function after it is no longer needed. Otherwise, a memory leak will
-  ! result.
+  ! result.  Also see AssignVector.
   ! !!!!! ===== END NOTE ===== !!!!! 
 
     ! Dummy arguments:
@@ -160,6 +164,21 @@ contains ! =====     Public Procedures     =============================
     AddVectorToDatabase = newSize
   end function AddVectorToDatabase
 
+  !------------------------------------------------  AssignVector  -----
+  subroutine AssignVector ( Z, X )
+  ! Destroy Z, then assign X to it, by using pointer assignment for the
+  ! components.  DO NOT DO Z = Z!  Notice that CopyVector uses deep
+  ! assignment. Notice that if we have a loop with Z = vector-expr, this
+  ! destroys Z at each iteration, so it is necessary to call DestroyVectorInfo
+  ! only after the loop, if at all.
+    type(Vector_T), intent(inout) :: Z
+    type(Vector_T), intent(in) :: X
+    call destroyVectorInfo ( z )
+    z%name = x%name
+    z%template => x%template
+    z%quantities => x%quantities
+  end subroutine AssignVector
+
   !--------------------------------------------------------  AXPY  -----
   type (Vector_T) function AXPY ( A, X, Y ) result (Z)
   ! Multiply the vector X by A and add Y to it, producing one having the
@@ -168,7 +187,7 @@ contains ! =====     Public Procedures     =============================
   ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
   ! It is important to invoke DestroyVectorInfo using the result of this
   ! function after it is no longer needed. Otherwise, a memory leak will
-  ! result.
+  ! result.  Also see AssignVector.
   ! !!!!! ===== END NOTE ===== !!!!! 
 
     ! Dummy arguments:
@@ -188,6 +207,7 @@ contains ! =====     Public Procedures     =============================
 
   !-------------------------------------------------  CloneVector  -----
   subroutine CloneVector ( Z, X )
+  ! Destroy Z, except its name.
   ! Create the characteristics of a vector to be the same template as a
   ! given one (except it has no name).  Values are allocated, but not
   ! filled.
@@ -195,16 +215,16 @@ contains ! =====     Public Procedures     =============================
   ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
   ! It is important to invoke DestroyVectorInfo using the result of this
   ! function after it is no longer needed. Otherwise, a memory leak will
-  ! result.
+  ! result.  Also see AssignVector.
   ! !!!!! ===== END NOTE ===== !!!!! 
 
     ! Dummy arguments:
-    type(Vector_T), intent(out) :: Z
+    type(Vector_T), intent(inout) :: Z
     type(Vector_T), intent(in) :: X
     ! Local variables:
     integer :: I, Status
     ! Executable statements:
-    z%name = 0
+    call destroyVectorInfo ( z )
     z%template = x%template
     allocate ( z%quantities(size(x%quantities)), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -255,6 +275,18 @@ contains ! =====     Public Procedures     =============================
     vectorTemplate%id = vectorTemplateCounter
   end subroutine ConstructVectorTemplate
 
+  ! -------------------------------------------------  CopyVector  -----
+  subroutine CopyVector ( Z, X )   ! Destroy Z, deep Z = X, except the name
+  !                                  of Z is not changed
+    type(Vector_T), intent(inout) :: Z
+    type(Vector_T), intent(in) :: X
+    integer :: I
+    call cloneVector ( Z, X )
+    do i = 1, size(x%quantities)
+      z%quantities(i)%values = x%quantities(i)%values
+    end do
+  end subroutine CopyVector
+
   ! -----------------------------------------------  CreateVector  -----
   type(Vector_T) function CreateVector &
     & ( vectorName, vectorTemplate, quantities ) result (vector )
@@ -283,7 +315,6 @@ contains ! =====     Public Procedures     =============================
     end do
     call createValues ( vector )
   end function CreateVector
-
   ! --------------------------------------  DestroyVectorDatabase  -----
   subroutine DestroyVectorDatabase ( database )
 
@@ -318,6 +349,8 @@ contains ! =====     Public Procedures     =============================
 
     ! Executable code
 
+    vector%name = 0
+    nullify ( vector%template )
     do i = 1, size(vector%quantities)
       call deallocate_test ( vector%quantities(i)%values, &
         & "vector%quantities(i)%values", ModuleName )
@@ -358,12 +391,8 @@ contains ! =====     Public Procedures     =============================
 
     ! Executable code
 
-    ! Local Variables:
-    integer :: STATUS
-
-    deallocate ( vectorTemplate%quantities, stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
-      & MLSMSG_deallocate // "vectorTemplate%quantities" )
+    call deallocate_test ( vectorTemplate%quantities, &
+      & MLSMSG_deallocate // "vectorTemplate%quantities", ModuleName )
 
     vectorTemplate%noQuantities = 0
     vectorTemplate%totalInstances = 0
@@ -498,7 +527,7 @@ contains ! =====     Public Procedures     =============================
   ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
   ! It is important to invoke DestroyVectorInfo using the result of this
   ! function after it is no longer needed. Otherwise, a memory leak will
-  ! result.
+  ! result.  Also see AssignVector.
   ! !!!!! ===== END NOTE ===== !!!!! 
 
     ! Dummy arguments:
@@ -522,7 +551,7 @@ contains ! =====     Public Procedures     =============================
   ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
   ! It is important to invoke DestroyVectorInfo using the result of this
   ! function after it is no longer needed. Otherwise, a memory leak will
-  ! result.
+  ! result.  Also see AssignVector.
   ! !!!!! ===== END NOTE ===== !!!!! 
 
     ! Dummy arguments:
@@ -545,7 +574,7 @@ contains ! =====     Public Procedures     =============================
   ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
   ! It is important to invoke DestroyVectorInfo using the result of this
   ! function after it is no longer needed. Otherwise, a memory leak will
-  ! result.
+  ! result.  Also see AssignVector.
   ! !!!!! ===== END NOTE ===== !!!!! 
 
     ! Dummy arguments:
@@ -581,6 +610,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.2  2000/11/10 00:24:24  vsnyder
+! Changed VectorValue_t%values from rank-3 to rank-2
+!
 ! Revision 2.1  2000/10/13 00:00:37  vsnyder
 ! Moved from mlspgs/l2 to mlspgs/lib
 !
