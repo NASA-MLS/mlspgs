@@ -91,14 +91,15 @@ PROG=mlsl1
 
 #----------------------- Build instructions
 
-$(PROG): $(PLATFORMS)/$(MLSCONFG)/$(PROG)
-
-$(PLATFORMS)/$(MLSCONFG)/$(PROG): $(CONFDIR)/$(MLSCFILE) \
+$(PROG):  $(CONFDIR)/$(MLSCFILE) \
    $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
 
+$(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG)
+	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
+
 $(libmls_objs)/libmls.a: $(LIB_prereqs) $(libmls_objs)
-	@if [ "$(SIMPLIFYMAKE)" != "" ] ; then \
+	@if [ "$(NOHUNTING)" != "" ] ; then \
 	   rm -f $(libmls_objs)/libmls.a ; \
 	fi ; \
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
@@ -162,6 +163,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl1
 
 # $Log$
+# Revision 2.23  2001/09/26 17:24:59  pwagner
+# Removed errors introduced with last changes; SIMPLIFYMAKE renamed NOHUNTING
+#
 # Revision 2.22  2001/09/25 20:27:15  pwagner
 # New SIMPLIFYMAKE setting; other changes
 #
