@@ -45,7 +45,7 @@ module L2ParInfo
     integer :: masterTid                ! task ID in pvm
     character(len=132) :: slaveFilename ! Filename with list of slaves
     integer :: maxFailuresPerMachine = 3 ! More than this then don't use it
-    integer :: maxFailuresPerChunk = 2 ! More than this then give up on getting it
+    integer :: maxFailuresPerChunk = 6 ! More than this then give up on getting it
   end type L2ParallelInfo_T
 
   ! Shared variables
