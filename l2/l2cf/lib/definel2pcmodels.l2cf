@@ -9,19 +9,25 @@
 
 !define(l2pcF,{
 l2pcSidsFwm$1: forwardModel, type=linear, signals=!signal($1), $
-  molecules=!moleculeFamilies($1), do_baseline=!doBaseline, phiWindow=100.0
+  molecules=!moleculeFamilies($1), do_baseline=!doBaseline, phiWindow=100.0, $
+  lockBins=true
 l2pcSidsFwm$1_1D: forwardModel, type=linear, signals=!signal($1), $
-  molecules=!moleculeFamilies($1), do_baseline=!doBaseline, phiWindow=0
+  molecules=!moleculeFamilies($1), do_baseline=!doBaseline, phiWindow=0, $
+  lockBins=true
 l2pcODFwm$1: forwardModel, type=linear, signals=!signal($1), $
-  molecules=!moleculeFamilies($1), phiWindow=100.0
+  molecules=!moleculeFamilies($1), phiWindow=100.0, $
+  lockBins=true
 l2pcODFwm$1_1D: forwardModel, type=linear, signals=!signal($1), $
-  molecules=!moleculeFamilies($1), phiWindow=0
+  molecules=!moleculeFamilies($1), phiWindow=0, $
+  lockBins=true
 l2pcRetFwm$1: forwardModel, type=linear, signals=!signal($1), $
   molecules=!moleculeFamilies($1), moleculeDerivatives=!moleculeFamilies($1), $
-  /atmos_der, /temp_der, do_baseline=!doBaseline, phiWindow=100.0
+  /atmos_der, /temp_der, do_baseline=!doBaseline, phiWindow=100.0, $
+  lockBins=true
 l2pcRetFwm$1_1D: forwardModel, type=linear, signals=!signal($1), $
   molecules=!moleculeFamilies($1), moleculeDerivatives=!moleculeFamilies($1), $
-  /atmos_der, /temp_der, do_baseline=!doBaseline, phiWindow=0})
+  /atmos_der, /temp_der, do_baseline=!doBaseline, phiWindow=0, $
+  lockBins=true})
 
 ;; Do all the 'standard' i.e. folded bands
 !forall({l2pcF},!allBands)
