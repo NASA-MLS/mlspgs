@@ -890,7 +890,7 @@ contains ! =====     Public Procedures     =============================
     type(MatrixElement_T), intent(inout) :: ZB
     logical, intent(in), optional :: UPDATE
     logical, intent(in), optional :: SUBTRACT
-    integer, optional, pointer, dimension(0:) :: XMASK, YMASK ! Intent(in)
+    integer, optional, target, intent(in), dimension(0:) :: XMASK, YMASK
     logical, intent(in), optional :: UPPER
 
   ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
@@ -2093,6 +2093,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.39  2001/06/26 23:56:04  vsnyder
+! Make [XY]MASK 'target' instead of 'pointer' so they can have lower bound
+!
 ! Revision 2.38  2001/06/26 20:40:33  vsnyder
 ! Simplify by using zero for lower bound for first dimension of mask
 !
