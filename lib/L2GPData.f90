@@ -10,7 +10,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
     & DFNT_CHAR8, DFNT_FLOAT32, DFNT_INT32, DFNT_FLOAT64
   use HDFEOS, only: SWATTACH, SWDETACH, SWINQDIMS
   use Intrinsic ! "units" type literals, beginning with L_
-  use MLSCommon, only: I4, R4, R8
+  use MLSCommon, only: I4, R4, R8, DEFAULTUNDEFINEDVALUE
   use MLSFiles, only: FILENOTFOUND, &
     & HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, WRONGHDFVERSION, &
     & MLS_HDF_VERSION, MLS_INQSWATH, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, &
@@ -114,7 +114,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   logical, public            :: AVOIDUNLIMITEDDIMS = .true.
 
   integer, parameter :: CHARATTRLEN = 255   ! was GA_VALUE_LENGTH
-  real, parameter    :: UNDEFINED_VALUE = -999.99 ! Same as %template%badvalue
+  real, parameter    :: UNDEFINED_VALUE = DEFAULTUNDEFINEDVALUE !-999.99 ! Same as %template%badvalue
   integer, parameter :: L2GPNameLen = 80
   integer, parameter :: NumGeolocFields = 10
   integer, parameter :: MAXNLEVELS = 1000
@@ -715,7 +715,7 @@ contains ! =====     Public Procedures     =============================
       swid = mls_SWattach(L2FileHandle, 'HIRDLS', hdfVersion=hdfVersion)
       DF_Name = TRIM(l2gp%Name)
       DF_Precision = TRIM(l2gp%Name) // 'Precision'
-      l2gp%MissingValue = -999.
+      l2gp%MissingValue = -999.  ! This is a HIRDLS-specific setting
     case ('M')
       swid = mls_SWattach(L2FileHandle, l2gp%Name, hdfVersion=hdfVersion)
       DF_Name = DATA_FIELD1
@@ -3009,6 +3009,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.108  2004/07/22 17:07:15  pwagner
+! Fixed set fill values
+!
 ! Revision 2.107  2004/06/11 19:07:02  pwagner
 ! Fixed small bug in diffl2gpfiles
 !
