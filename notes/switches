@@ -1,4 +1,4 @@
-Switches:
+Switches (set by -S option in mlsl2's command line):
 
   A => AntennaPatterns
   C => SpectroscopyCatalog
@@ -20,11 +20,22 @@ Switches:
   spa => Sparsity structure of fac, jac, neq
   tps => Test_Parse_Signals
 
+The general pattern is to use upper-case letters for single-letter ones,
+and lower-case letters for strings.
+
+The -S option sets the "switches" array in toggles_core.f90.
+It's tested by "if ( index(switches,'foo') /= 0 ) then ..." so
+you can put longer strings on the command line (so long as the rest
+of it doesn't contain something you DON'T want to test for!).  E.g.
+-Ssca could be -Sscalars.
 
 (Add any more that are relevant to mlsl2,
 or separate sections for mlsl1 or mlsl3)
 
  $Log$
+ Revision 1.2  2001/05/17 22:41:26  pwagner
+ Added log, pro, and glo
+
  Revision 1.1  2001/05/11 21:41:33;  author: vsnyder
  First commit
 
