@@ -1,7 +1,7 @@
 module DNWT_MODULE
 !>> 2000-12-19 W. V. Snyder Removed fwd communication and linear algebra
 !>> 2000-03-21 DNWT_MODULE W. V. Snyder Converted to Fortran 90
-!--D replaces "?": ?NWT_MODULE, ?NWT_TYPE, ?NWT,    ?NWTA, ?NWTDB, ?NWTOP
+!--D replaces "?": ?NWT_MODULE, ?NWT_TYPE, ?NWT, ?NWTA, ?NWTDB, ?NWTOP
 
 ! All versions use ERMSG.
 ! ERMSG and ERVN need ERFIN.
@@ -22,10 +22,10 @@ module DNWT_MODULE
 ! Positive values indicate that NWTA believes the computation is
 ! finished.
 
-! Assign values to X( ) and NOPT( ).
+! Assign values to XOPT( ) and NOPT( ).
 
 ! *************************************************
-! **  CALL NWT ( NFLAG, X, NOPT)                 **
+! **  CALL NWT ( NFLAG, XOPT, NOPT)                 **
 ! *************************************************
 
 !     You will need a Matrix J, and seven vectors:  F, X, "Best X", DX,
@@ -137,7 +137,7 @@ module DNWT_MODULE
     logical :: STARTING  ! NWTA is still in "starting up" phase -- intent(out)
   end type NWT_T
 
-  ! Reasons for returning to user.  See description of usage below.
+  ! Reasons for returning to user.  See description of usage above.
   ! Reasons to continue
   !      Evaluate F AJ%FNORM:
   integer, parameter, public :: NF_EVALF = -1
@@ -205,7 +205,7 @@ module DNWT_MODULE
 
 contains
 ! ***************************************************     DNWT     *****
-  subroutine DNWT ( NFLAG, X, NOPT )
+  subroutine DNWT ( NFLAG, XOPT, NOPT )
 
 !>> 2000-03-21 W. V. Snyder Converted to Fortran 90.
 !>> 1988-07-21 C. L. Lawson adapting code for the MATH77 library.
@@ -219,7 +219,7 @@ contains
 ! Variables in the calling sequence are of the following type
 
       integer, intent(out) :: NFLAG
-      real(rk), intent(in) :: X(*)
+      real(rk), intent(in) :: XOPT(*)
       integer, intent(in), optional :: NOPT(*)
 
 ! The above parameters are used as follows:
@@ -228,14 +228,14 @@ contains
 !     = 0.  NFLAG is by NWTA.  When NWTA returns control to the calling
 !     program unit, NFLAG is used as shown above.
 
-! X( ) = Array used for values needed to set options; see NOPT below.
+! XOPT( ) = Array used for values needed to set options; see NOPT below.
 
 ! NOPT( ) = Array of options.
 !           If no options are being used, omit NOPT or set NOPT(1) = 0.
 !           Otherwise set NOPT(1) /= 0; then NOPT( ) must be a vector,
 !           with dimension that depends on the options being specified.
 !           Any option below which uses NOPT(K) as a pointer to a loca-
-!           tion in X( ) requires NOPT(K) > 7 * NX.  In such a case,
+!           tion in XOPT( ) requires NOPT(K) > 7 * NX.  In such a case,
 !           IDIMX should be increased as required by the pointer and
 !           the option.
 
@@ -254,31 +254,31 @@ contains
 !    = 8    Not used.  Do not use.
 !    = 9    Reserved -- currently sets all options to their default values.
 !    = 10   Set all options to their default values.
-!    = 11   Set SPSTRT = X(NOPT(I+1)), where SPSTRT is the starting
+!    = 11   Set SPSTRT = XOPT(NOPT(I+1)), where SPSTRT is the starting
 !           value of the normalized Levenberg-Marquardt parameter.
 !           NOPT(I) = -11 gives SPSTRT = 0.1  .
-!    = 12   Set SPMINI = X(NOPT(I+1)), where SPMINI is the approximate
+!    = 12   Set SPMINI = XOPT(NOPT(I+1)), where SPMINI is the approximate
 !           relative error in computing the Jacobian. NOPT(I)= -12 gives
 !           SPMINI= 10**(1-D) where D is the number of significant
 !           digits in the floating point numbers used.
-!    = 13   Set AJSCAL = X(NOPT(I+1)), where AJSCAL is the approximate
+!    = 13   Set AJSCAL = XOPT(NOPT(I+1)), where AJSCAL is the approximate
 !           absolute error in computing the Jacobian. NOPT(I)= -13 gives
 !           AJSCAL = 0  .
-!    = 14   Set DXMAXI = X(NOPT(I+1)), where DXMAXI is the largest value
+!    = 14   Set DXMAXI = XOPT(NOPT(I+1)), where DXMAXI is the largest value
 !           permitted for DXINC at any time. NOPT(I)= -14 gives
 !           DXMAXI = 10**30  .
-!    = 15   Set RELSF = X(NOPT(I+1)), where convergence is indicated
+!    = 15   Set RELSF = XOPT(NOPT(I+1)), where convergence is indicated
 !           with NFLAG= 2 if FN - FNMIN < RELSF * FNMIN .
 !           NOPT(I) = -15 gives RELSF= 0.01  .
-!    = 16   Set DXNIOS = X(NOPT(I+1)), where DXNOIS is the smallest move
+!    = 16   Set DXNIOS = XOPT(NOPT(I+1)), where DXNOIS is the smallest move
 !           considered to be significant when the norm of f increases.
 !           The initial default is 0, but DXNOIS if updated later.
-!    = 17   Set TOLXA = X(NOPT(I+1)), where convergence is indicated
+!    = 17   Set TOLXA = XOPT(NOPT(I+1)), where convergence is indicated
 !           with NFLAG = NF_TOLX* if the (possibly scaled) norm of the
 !           difference between the current x and the solution is
 !           estimated to be .le. TOLXA.  The default value is
 !           (underflow limit) ** .75.
-!    = 18   Set TOLXR = X(NOPT(I+1)), where convergence is indicated
+!    = 18   Set TOLXR = XOPT(NOPT(I+1)), where convergence is indicated
 !           with NFLAG = NF_TOLX* if the (possibly scaled) norm of the
 !           difference between the current x and the solution is
 !           estimated to be .le. TOLXR * max (abs(X(i))).  The default
@@ -295,7 +295,7 @@ contains
 !****************** END OF INITIAL COMMENTS ****************
 
     nflag = 0
-    if ( present(nopt) ) call nwtop ( nopt, x )
+    if ( present(nopt) ) call nwtop ( nopt, xopt )
     call nwtop ( ) ! default initialization
     return
   end subroutine DNWT
@@ -926,6 +926,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.3  2001/02/16 00:19:34  vsnyder
+! Corrected some comments; changed a dummy argument name.
+!
 ! Revision 2.2  2001/02/06 23:33:54  vsnyder
 ! Initially botched putting in the CVS variables; got it right this time.
 !
