@@ -2051,8 +2051,12 @@ contains ! =====     Public Procedures     =============================
       call output ( matrix%row%nelts(i), places=5, advance='yes' )
     end do ! i
     call output ( 'Total matrix size: ' )
+    call output ( sum(matrix%row%nelts) )
+    call output ( ' rows, ' )
+    call output ( sum(matrix%col%nelts) )
+    call output ( ' columns, ' )
     ! Convert size to bytes (is there a better way to do this to automatically
-    ! deal with the case when we decice to switch to r4)
+    ! deal with the case when we decide to switch to r4?)
     n = n * 8
     ! Make a 'nice' output
     if ( n < kb ) then
@@ -2084,6 +2088,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.77  2002/08/20 19:49:26  vsnyder
+! Embellish dump_struct -- add total rows and columns
+!
 ! Revision 2.76  2002/08/19 20:51:26  vsnyder
 ! Make AddToMatrix respect it's Scale argument
 !
