@@ -62,3 +62,6 @@ INC_PATHS = $(EXTRA_PATHS) -M$(PGSINC) -M$(srclib) -M$S -M$(libdir) \
 l_specials = -lnsl
 
 # $Log$
+# Revision 1.1  2001/09/10 18:39:07  pwagner
+# First commit
+#

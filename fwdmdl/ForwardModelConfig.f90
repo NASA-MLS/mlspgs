@@ -177,6 +177,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 1.15  2001/09/04 15:59:01  jonathan
+! add cloud_fov, jonathan
+!
 ! Revision 1.14  2001/07/17 22:38:05  jonathan
 ! add cloud_width, jonathan/paul
 !

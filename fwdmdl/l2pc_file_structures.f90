@@ -103,6 +103,9 @@ module L2PC_FILE_STRUCTURES
 !**********  Size of(l2pc_keys) = 36 bytes (9 words)
 end module L2PC_FILE_STRUCTURES
 ! $Log$
+! Revision 1.5  2001/06/07 23:39:31  pwagner
+! Added Copyright statement
+!
 ! Revision 1.4  2001/01/31 01:08:48  zvi
 ! New version of forward model
 !

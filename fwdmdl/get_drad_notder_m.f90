@@ -60,6 +60,9 @@ contains
   End Subroutine GET_DRAD_NOTDER
 end module GET_DRAD_NOTDER_M
 ! $Log$
+! Revision 1.2  2001/06/07 23:30:34  pwagner
+! Added Copyright statement
+!
 ! Revision 1.1  2001/03/31 23:18:08  zvi
 ! Initial release - get_drad w/o Temp. derivatives
 !

@@ -579,6 +579,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 1.22  2001/06/04 22:43:26  livesey
+! Now works when no molecules at all
+!
 ! Revision 1.21  2001/06/01 20:35:55  livesey
 ! Now obeys the phiWindow parameter to give 1D forward models.
 !

@@ -25,8 +25,6 @@ module PointingGrid_m
 
   type, public :: OneGrid_T
     real(r8) :: Height                            ! Zeta, actually
-    real(r8) :: NearestTanPress = huge(0.0_r8)/4  ! Nearest tangent pressure
-    integer :: WhichTanPress = -1                 ! Which one is nearest
     real(r8), pointer, dimension(:) :: Frequencies => NULL()
   end type OneGrid_T
 
@@ -242,7 +240,14 @@ outer2: do
     integer :: I, J, Status
     if (.not. associated(pointingGrids) ) return
     do i = 1, size(pointingGrids)
-      call destroySignalDatabase ( pointingGrids(i)%signals )
+      ! It used to do this.
+      !  call destroySignalDatabase ( pointingGrids(i)%signals )
+      ! but that seemed to be a little overzelous, so I've replaced
+      ! it with this, until I understand the issues better.
+      do j = 1, size(pointingGrids(i)%signals)
+        call Deallocate_Test ( pointingGrids(i)%signals(j)%channels, &
+          & 'pointingGrids(?)%signals(?)%channels', ModuleName )
+      end do
       do j = 1, size(pointingGrids(i)%oneGrid)
         call deallocate_test ( pointingGrids(i)%oneGrid(j)%frequencies, &
           & "PointingGrids(?)%oneGrid(?)%frequencies", moduleName )
@@ -287,6 +292,17 @@ outer2: do
 end module PointingGrid_m
 
 ! $Log$
+! Revision 1.17.2.2  2001/09/14 20:14:49  livesey
+! Rewrote Destroy_Pointing_Grid_Database to handle the signals
+! differently.  Seemed to fix some memory stomping I didn't
+! completely understand.
+!
+! Revision 1.17.2.1  2001/09/09 03:06:08  livesey
+! Minor change
+!
+! Revision 1.17  2001/06/07 23:30:33  pwagner
+! Added Copyright statement
+!
 ! Revision 1.16  2001/05/04 00:49:43  livesey
 ! Let destroy quit if nothing to destroy
 !

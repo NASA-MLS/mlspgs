@@ -1,0 +1,124 @@
+! This subroutine computes the 2 dimensional hydrostatic stuff
+MODULE two_d_hydrostatic_m
+  use MLSCommon, only: RP, IP
+  USE Geometry, ONLY: earthRadA, earthRadB, PI
+  USE hydrostatic_m, only: hydrostatic
+  USE get_eta_m, only: get_eta
+  IMPLICIT none
+  Private
+  Public two_d_hydrostatic
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (LEN=256) :: Id = &
+ "$Id$"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
+ "$RCSfile$"
+!---------------------------------------------------------------------------
+  CONTAINS
+!---------------------------------------------------------------------------
+
+  SUBROUTINE two_d_hydrostatic(z_basis,p_basis,t_coeffs,z_refs,h_refs, &
+    &  z_grid,beta,t_grid,h_grid,dhidzij,dhidtlm,ddhdhdtl0)
+!
+! inputs:
+!
+  REAL(rp), INTENT(in) :: z_basis(:) !vertical temperature representation basis
+  REAL(rp), INTENT(in) :: p_basis(:) !horizontal temperature representation
+!                                 basis in absolute plane projected orbital
+!                                 incline angle (Radians)
+  REAL(rp), INTENT(in) :: t_coeffs(:,:) !2-D grid of temperature values
+  REAL(rp), INTENT(in) :: z_refs(:)  !reference pressures
+  REAL(rp), INTENT(in) :: h_refs(:)  !reference geopotential heights at z_refs
+!                                 the horizontal bases for these is aligned
+!                                 with p_basis.
+  REAL(rp), INTENT(in) :: z_grid(:)!pressures for which heights/temps are
+!                                   needed
+  REAL(rp), INTENT(in) :: beta   ! spacecraft beta angle (Radians)
+!
+! outputs:
+!
+  REAL(rp), INTENT(out):: t_grid(:,:)!computed temperatures
+  REAL(rp), INTENT(out):: h_grid(:,:)!computed heights
+  REAL(rp), INTENT(out):: dhidzij(:,:)!derivative of height wrt zeta
+  REAL(rp), INTENT(out):: dhidtlm(:,:,:) !derivative of height wrt temps
+!                                     on outputted phi grid
+  REAL(rp), OPTIONAL, INTENT(out):: ddhdhdtl0(:,:,:)!second order derivative
+!                             at the tangent only---used for antenna affects
+! internal stuff
+!
+  INTEGER(ip) :: n_vert,z_coeffs,p_coeffs,i
+  REAL(rp) :: c
+  REAL(rp), ALLOCATABLE, DIMENSION(:) :: lats,t_prfl,h_prfl,dhidzi,red_phi_t
+  REAL(rp), ALLOCATABLE, DIMENSION(:,:) :: ddhdhdtq,dhidtq
+  REAL(rp), PARAMETER :: Pi = 3.1415926535897932384626434_rp
+!
+! NOTES
+! allocate arrays
+!
+  n_vert = SIZE(z_grid)
+  z_coeffs = SIZE(z_basis)
+  p_coeffs = SIZE(p_basis)
+!
+! allocate arrays
+!
+  ALLOCATE(lats(1:p_coeffs))
+  ALLOCATE(t_prfl(1:n_vert))
+  ALLOCATE(h_prfl(1:n_vert))
+  ALLOCATE(dhidzi(1:n_vert))
+  ALLOCATE(red_phi_t(1:p_coeffs))
+  ALLOCATE(dhidtq(1:n_vert,1:z_coeffs))
+
+  c = earthrada*earthradb / SQRT(earthrada**2 &
+    * SIN(beta)**2 + earthradb**2*COS(beta)**2) ! in meters
+!
+! rephase the phi
+!
+  red_phi_t = MODULO(p_basis,2.0_rp*Pi)
+  WHERE(0.5_rp*Pi < red_phi_t .AND. red_phi_t <= 1.5_rp*Pi) &
+              &  red_phi_t = Pi - red_phi_t
+  WHERE(red_phi_t > 1.5_rp*Pi) red_phi_t = red_phi_t - 2.0_rp*Pi
+  lats = ASIN(c*SIN(red_phi_t)*SIN(beta) &
+       / SQRT(earthrada**2*COS(red_phi_t)**2 + &
+              c**2*SIN(red_phi_t)**2))
+!
+! compute the 2 d hydrostatic
+!
+  IF(PRESENT(ddhdhdtl0)) THEN
+    ALLOCATE(ddhdhdtq(1:n_vert,1:z_coeffs))
+    DO i = 1,p_coeffs
+      CALL hydrostatic(lats(i),z_basis,t_coeffs(:,i),z_grid,z_refs(i), &
+                h_refs(i),t_prfl,h_prfl,dhidtq,dhidzi,ddhdhdtq)
+      t_grid(:,i) = t_prfl
+      h_grid(:,i) = h_prfl
+      dhidzij(:,i) = dhidzi
+      dhidtlm(:,i,:) = dhidtq
+      ddhdhdtl0(:,i,:) = ddhdhdtq
+    END DO
+    DEALLOCATE(ddhdhdtq)
+  ELSE
+    DO i = 1,p_coeffs
+      CALL hydrostatic(lats(i),z_basis,t_coeffs(:,i),z_grid,z_refs(i), &
+                h_refs(i),t_prfl,h_prfl,dhidtq,dhidzi)
+      t_grid(:,i) = t_prfl
+      h_grid(:,i) = h_prfl
+      dhidzij(:,i) = dhidzi
+      dhidtlm(:,i,:) = dhidtq
+    END DO
+  ENDIF
+!
+  DEALLOCATE(red_phi_t)
+  DEALLOCATE(dhidzi)
+  DEALLOCATE(dhidtq)
+  DEALLOCATE(h_prfl)
+  DEALLOCATE(t_prfl)
+  DEALLOCATE(lats)
+!
+ END SUBROUTINE two_d_hydrostatic
+
+END MODULE two_d_hydrostatic_m
+!---------------------------------------------------
+! $Log$
+! Revision 1.1.2.3  2001/09/13 22:51:25  zvi
+! Separating allocation stmts
+!
+! Revision 1.1.2.2  2001/09/12 21:38:55  zvi
+! Added CVS stuff

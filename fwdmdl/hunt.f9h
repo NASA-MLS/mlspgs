@@ -63,6 +63,9 @@
 !
 ! end subroutine ?_HUNT
 ! $Log$
+! Revision 1.6  2001/06/07 23:39:31  pwagner
+! Added Copyright statement
+!
 ! Revision 1.5  2001/03/09 00:45:13  vsnyder
 ! Change Log to $Log
 !

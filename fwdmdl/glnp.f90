@@ -31,5 +31,8 @@ module GLNP
 ! end module GL3P
 end module GLNP
 ! $Log$
+! Revision 1.1  2001/06/21 13:07:09  zvi
+! Speed enhancement MAJOR update
+!
 ! Revision 1.1  2001/06/06 00:00:00  Z.Shippony
 ! Initial conversion to Fortran 90

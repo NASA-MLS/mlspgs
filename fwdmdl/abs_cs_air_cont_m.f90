@@ -37,6 +37,9 @@ contains
   End function abs_cs_air_cont
 end module ABS_CS_AIR_CONT_M
 ! $Log$
+! Revision 1.6  2001/06/07 23:30:33  pwagner
+! Added Copyright statement
+!
 ! Revision 1.5  2001/04/20 23:29:45  zvi
 ! Setting the correct (Lab) numbers for N2, fits for EOS for now ..
 !

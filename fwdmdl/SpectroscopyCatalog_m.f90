@@ -390,6 +390,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 1.8  2001/05/26 00:22:19  livesey
+! Made destroy stuff return if nothing to do.
+!
 ! Revision 1.7  2001/05/03 22:10:15  vsnyder
 ! Add copyright notice, make databases SAVE
 !

@@ -20,6 +20,9 @@ contains
   end subroutine D_LINTRP
 end module D_LINTRP_M
 ! $Log$
+! Revision 1.5  2001/06/07 23:30:34  pwagner
+! Added Copyright statement
+!
 ! Revision 1.4  2001/01/31 01:08:48  zvi
 ! New version of forward model
 !

@@ -215,6 +215,9 @@ contains
   end subroutine COMPUTE_COEFF
 end module HYDROSTATIC_INTRP
 ! $Log$
+! Revision 1.6  2001/06/07 23:39:31  pwagner
+! Added Copyright statement
+!
 ! Revision 1.5  2001/03/29 08:51:01  zvi
 ! Changing the (*) toi (:) everywhere
 !

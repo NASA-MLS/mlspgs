@@ -62,6 +62,9 @@ contains
 !---------------------------------------------------------------------------
 end module STRINGS
 ! $Log$
+! Revision 1.6  2001/06/07 23:39:32  pwagner
+! Added Copyright statement
+!
 ! Revision 1.5  2001/01/31 01:08:48  zvi
 ! New version of forward model
 !

@@ -1,13 +1,8 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
-
 module CREATE_BETA_M
-  use MLSCommon, only: I4, R8
+  use MLSCommon, only: R8, RP, IP
   use ABS_CS_AIR_CONT_M, only: ABS_CS_AIR_CONT
-  use ABS_CS_H2O_213G_CONT_M, only: ABS_CS_H2O_213G_CONT
   use ABS_CS_LIQ_H2O_M, only: ABS_CS_LIQ_H2O
-  use SpectroscopyCatalog_m, only: Catalog_T, Lines
-  use SLABS_SW_M, only: SLABSWINT, DVOIGT_SPECTRAL, LORENTZ_SPECTRAL
+  use SLABS_SW_M, only: DVOIGT_SPECTRAL, VOIGT_LORENTZ, SLABSWINT, SLABS
   implicit NONE
   private
   public :: Create_beta
@@ -21,75 +16,58 @@ contains
 ! *****     Public Subroutine     **************************************
 ! --------------------------------------     Create_beta     -----
 !
-  Subroutine Create_beta (Spectag, pressure, Temp, Fgr, nl, Catalog,     &
-         &   v0s, x1,y, yi, slabs1, dx1_dv0, dy_dv0, dslabs1_dv0, v0sp,  &
-         &   x1p, yp, yip, slabs1p, v0sm, x1m, ym,yim,slabs1m,beta_value,&
-         &   t_power, dbeta_dw, dbeta_dn, dbeta_dnu0, Frq_Gap, temp_der, &
-         &   spect_der,Ier)
+  Subroutine Create_beta (Spectag, pressure, Temp, Fgr, nl, pfaw, v0s,  &
+         &   x1,y, yi, slabs1, beta_value, dslabs1_dv0, v0sp, x1p,&
+         &   yp, yip, slabs1p, v0sm, x1m, ym, yim, slabs1m,  &
+         &   t_power, dbeta_dw, dbeta_dn, dbeta_dv)
 !
-!  For a given channel, frequency and height, compute beta_value function.
+!  For a given frequency and height, compute beta_value function.
 !  This routine should be called for primary and image seperately.
 !
-    Integer(i4), intent(in) :: SPECTAG, nl
-    Logical, intent(in) :: temp_der, spect_der
-
-    Real(r8), intent(in) :: Pressure, Temp, Fgr, Frq_Gap
-
-    Real(r8), intent(in) :: x1(:),y(:),yi(:),slabs1(:),slabs1m(:), &
-   &          dx1_dv0(:),dy_dv0(:),dslabs1_dv0(:),v0sp(:),x1p(:),  &
-   &          v0s(:),yp(:),yip(:),slabs1p(:),v0sm(:),x1m(:),ym(:), &
-   &          yim(:)
-!
-    Type(Catalog_T), INTENT(IN) :: Catalog
-
-    Integer(i4), intent(out) :: Ier
-    Real(r8), intent(out) :: BETA_VALUE, T_POWER, DBETA_DW
-    Real(r8), intent(out) :: DBETA_DN, DBETA_DNU0
-!
-! -----  Parameters Declaration ----------------------------------------
-!
-    Real(r8), parameter :: F213 = 2.15e5_r8, DF213 = 1.5e4_r8
-    Real(r8), Parameter :: TINY = epsilon(F213)
+! Inputs:
+  INTEGER(ip), INTENT(in) :: SPECTAG ! molecule id tag
+  REAL(rp), INTENT(in) :: pressure ! pressure in hPa
+  REAL(rp), INTENT(in) :: temp ! temperature in K
+  REAL(rp), INTENT(in) :: fgr ! frequency in MHz
+  INTEGER(ip), INTENT(in) :: nl ! no of lines (probably not really needed)
+  REAL(rp), INTENT(in) :: pfaw(:) ! line widths
+  REAL(r8), INTENT(in) :: v0s(:) ! pressure shifted line centers
+  REAL(rp), INTENT(in) :: x1(:) ! Doppler width
+  REAL(rp), INTENT(in) :: y(:) ! ratio Pressure to Doppler widths
+  REAL(rp), INTENT(in) :: yi(:) ! Interference coefficients
+  REAL(rp), INTENT(in) :: slabs1(:) ! strengths
+! optional inputs for spectral derivatives
+  REAL(rp), OPTIONAL, INTENT(in) :: dslabs1_dv0(:) ! strength derivative
+!                                wrt line position
+! optional inputs for temperature derivatives
+  REAL(r8), OPTIONAL, INTENT(in) :: v0sp(:) ! pressure shifted line centers
+  REAL(rp), OPTIONAL, INTENT(in) :: x1p(:)! Doppler width
+  REAL(rp), OPTIONAL, INTENT(in) :: yp(:) ! ratio Pressure to Doppler widths
+  REAL(rp), OPTIONAL, INTENT(in) :: yip(:) ! Interference coefficients
+  REAL(rp), OPTIONAL, INTENT(in) :: slabs1p(:) ! strengths
+  REAL(r8), OPTIONAL, INTENT(in) :: v0sm(:) ! pressure shifted line centers
+  REAL(rp), OPTIONAL, INTENT(in) :: x1m(:)! Doppler width
+  REAL(rp), OPTIONAL, INTENT(in) :: ym(:) ! ratio Pressure to Doppler widths
+  REAL(rp), OPTIONAL, INTENT(in) :: yim(:) ! Interference coefficients
+  REAL(rp), OPTIONAL, INTENT(in) :: slabs1m(:) ! strengths
+! outputs
+  REAL(rp), INTENT(out) :: beta_value
+! optional outputs
+  REAL(rp), OPTIONAL, INTENT(out) :: T_POWER ! for temperature derivative
+  REAL(rp), OPTIONAL, INTENT(OUT) :: DBETA_DW ! line width derivative
+  REAL(rp), OPTIONAL, INTENT(OUT) :: DBETA_DN ! temperature dependence deriv
+  REAL(rp), OPTIONAL, INTENT(OUT) :: DBETA_DV ! line position derivative
 !
 ! -----     Local variables     ----------------------------------------
 !
-    Integer(i4) :: LN_I, j
+    Integer(ip) :: LN_I
 
-    Logical do_Lorentz
-    Real(r8) :: w,s,wd,ra,dNu,tp,bp,tm,bm,bb,dw,dn,ds
-
-    Real(r8), Parameter :: sqrtln2 = 8.32554611157698e-1_r8
+    Real(rp) :: w,ra,dNu,tp,bp,tm,bm,bb,dw,dn,ds,dbdw,dbdn,dbdv
+!
+    beta_value = 0.0_rp
 !
 !  Setup absorption coefficients function
-!
-    Ier = 0
-!
-    t_power = 0.0
-    dbeta_dw = 0.0
-    dbeta_dn = 0.0
-    dbeta_dnu0 = 0.0
-    beta_value = tiny
-!
-! Check for Water with frequency in (2.0d5, 2.3d5) interval
-!
-    if ( spectag == 18003 .and. abs(Fgr-f213) < df213 ) then
-!
-!  Water with frequency in (2.0d5, 2.3d5) interval
-!
-!  NOTE:
-!   This is a problem, we do not have the H2O Mixing Ratio at this point,
-!   Thus we use the value of zero...
-!
-      s = 0.0d0
-      beta_value = abs_cs_h2o_213g_cont(Temp,Pressure,s)
-!     t_power = -3.67           ! See code ...
-      wd = Temp + 10.0d0
-      ra = abs_cs_h2o_213g_cont(wd,Pressure,s)
-      t_power = Log(ra/beta_value)/Log(wd/Temp)
-      Return
-!
-    end if
-!
+! NEED TO ADD THE PARDO WATER VAPOR CONTINUUM FOR 18003
 !  Now get the beta_value:
 !
     if (spectag == 18999) then
@@ -97,9 +75,11 @@ contains
 !  Liquid water
 !
       beta_value = abs_cs_liq_h2o(Fgr,Temp)
-      wd = Temp + 10.0d0
-      ra = abs_cs_liq_h2o(Fgr,wd)
-      t_power = Log(ra/beta_value)/Log(wd/Temp)
+      IF (PRESENT(t_power)) THEN
+        dw = Temp + 10.0_rp
+        ra = abs_cs_liq_h2o(Fgr,dw)
+        t_power = Log(ra/beta_value)/Log(dw/Temp)
+      ENDIF
       Return
 !
     else if (spectag == 28964) then
@@ -107,10 +87,11 @@ contains
 !  Dry air contribution
 !
       beta_value = abs_cs_air_cont(Temp,Pressure,Fgr)
-!     t_power = -2.79           ! See code ...
-      wd = Temp + 10.0d0
-      ra = abs_cs_air_cont(wd,Pressure,Fgr)
-      t_power = Log(ra/beta_value)/Log(wd/Temp)
+      IF (PRESENT(t_power)) THEN
+        dw = Temp + 10.0_rp
+        ra = abs_cs_air_cont(dw,Pressure,Fgr)
+        t_power = Log(ra/beta_value)/Log(dw/Temp)
+      ENDIF
       Return
 !
     else if (spectag == 28965) then
@@ -118,139 +99,115 @@ contains
 !  EXTINCTN molecule
 !
       beta_value = 1.0
-      t_power = 0.0
+      IF (PRESENT(t_power)) t_power = 0.0_rp
       Return
 !
     end if
 !
 !  Check for anything but liquid water and dry air:
 !
-    do ln_i = 1, nl
+    IF(PRESENT(DBETA_DW).OR.PRESENT(DBETA_DN).OR.PRESENT(DBETA_DV)) THEN
 !
-      j = Catalog%lines(ln_i)
-      w = Lines(j)%W
-!
-! Prepare the temperature weighted coefficients:
-!
-      dNu = Fgr - v0s(ln_i)
+      dbdw = 0.0_rp
+      dbdn = 0.0_rp
+      dbdv = 0.0_rp
 
-      if(Frq_Gap > 0.0  .and. abs(dNu) >= Frq_Gap) CYCLE
+      do ln_i = 1, nl
 !
-      s = abs(y(ln_i))/SqrtLn2                 ! Wc/Wd
-      ra = abs(x1(ln_i)*dNu)/SqrtLn2           ! abs(dNU)/Wd
-      do_Lorentz = (ra > 15.0 .or. s > 3.0)
+        dNu = Fgr - v0s(ln_i)
 !
-      if(do_Lorentz) then
-        Call Lorentz_spectral(dNu,v0s(ln_i),x1(ln_i),yi(ln_i), &
-       &     y(ln_i),w,Temp,slabs1(ln_i),dslabs1_dv0(ln_i),bb, &
-       &     spect_der,dw,dn,ds)
-      else
-        Call dvoigt_spectral(dNu,v0s(ln_i),x1(ln_i),yi(ln_i),y(ln_i), &
-       &     w,Temp,slabs1(ln_i),dx1_dv0(ln_i),dy_dv0(ln_i),          &
-       &     dslabs1_dv0(ln_i),bb,spect_der,dw,dn,ds)
-      endif
+! If too far from line center, skip it (to fit /mlspgs/ code).
+! Use criterion of 3000.0 (NOT 2000.0) so the l2_gridding program works !!
 !
-      beta_value = beta_value + bb
+        if(abs(dNu) > 3000.0_rp) CYCLE             ! To fit /mlspgs/ code
 !
-      if(spect_der) then
-        dbeta_dw = dbeta_dw + dw
-        dbeta_dn = dbeta_dn + dn
-        dbeta_dnu0 = dbeta_dnu0 + ds
-      endif
+        w = pfaw(ln_i)
+        IF(abs(y(ln_i))+0.666666_rp*abs(x1(ln_i)*dNu) > 100.0_rp) THEN
+          Call Voigt_Lorentz(dNu,v0s(ln_i),x1(ln_i),yi(ln_i), &
+            &  y(ln_i),w,Temp,slabs1(ln_i),bb,dslabs1_dv0(ln_i),dw,dn,ds)
+        ELSE
+          Call dvoigt_spectral(dNu,v0s(ln_i),x1(ln_i),yi(ln_i),y(ln_i), &
+         &     w,Temp,slabs1(ln_i),bb,dslabs1_dv0(ln_i),dw,dn,ds)
+        ENDIF
+!
+        beta_value = beta_value + bb
+        dbdw = dbdw + dw
+        dbdn = dbdn + dn
+        dbdv = dbdv + ds
+!
+      end do
 
-    end do
+      IF(PRESENT(DBETA_DW)) dbeta_dw = dbdw
+      IF(PRESENT(DBETA_DN)) dbeta_dn = dbdn
+      IF(PRESENT(DBETA_DV)) dbeta_dv = dbdv
 !
-    if(.not. temp_der) Return
+    ELSE                ! No derivatives required
 !
-!  Compute the temperature dependency power (n):
+      IF(MAXVAL(ABS(yi)) < 1.0e-06_rp) THEN
+        do ln_i = 1, nl
+          dNu = Fgr - v0s(ln_i)
+! To fit /mlspgs/ code
+          if(abs(dNu) <= 3000.0_rp) beta_value = beta_value &
+            + Slabs(dNu,v0s(ln_i),x1(ln_i),slabs1(ln_i),y(ln_i))
+        end do
+      ELSE
+        do ln_i = 1, nl
+          dNu = Fgr - v0s(ln_i)
+! To fit /mlspgs/ code
+          if(abs(dNu) <= 3000.0_rp) beta_value = beta_value &
+             + Slabswint(dNu,v0s(ln_i),x1(ln_i),slabs1(ln_i),y(ln_i),yi(ln_i))
+        enddo
+      ENDIF
 !
-    bp = 0.0
-    bm = 0.0
-    tm = temp - 10.0
-    tp = temp + 10.0
+    ENDIF
 
-    do ln_i = 1, nl
+    IF(PRESENT(t_power)) THEN
 !
-      j = Catalog%lines(ln_i)
-      w = Lines(j)%W
+!  Find the temperatue power dependency now:
 !
-! Prepare the temperature weighted coefficients:
+      bp = 0.0_rp
+      bm = 0.0_rp
+      tp  = Temp + 10.0_rp
+      tm  = Temp - 10.0_rp
 !
-      ds = Fgr - v0s(ln_i)
-      if(Frq_Gap > 0.0  .and. abs(ds) >= Frq_Gap) CYCLE
-!
-      dNu = Fgr - v0sp(ln_i)
-      s = abs(y(ln_i))/SqrtLn2              ! Wc/Wd
-      ra = abs(x1(ln_i)*dNu)/SqrtLn2        ! abs(dNU)/Wd
-      do_Lorentz = (ra > 15.0 .or. s > 3.0)
+      IF(MAXVAL(ABS(yi)) < 1.0e-06_rp) THEN
+        do ln_i = 1, nl
+          ds = Fgr - v0s(ln_i)
+          IF(abs(ds) <= 3.0e3) THEN
+            dNu = Fgr - v0sp(ln_i)
+            bp = bp + Slabs(dNu,v0sp(ln_i),x1p(ln_i),slabs1p(ln_i),yp(ln_i))
+            dNu = Fgr - v0sm(ln_i)
+            bm = bm + Slabs(dNu,v0sm(ln_i),x1m(ln_i),slabs1m(ln_i),ym(ln_i))
+          ENDIF
+        end do
+      ELSE
+        do ln_i = 1, nl
+          ds = Fgr - v0s(ln_i)
+          IF(abs(ds) <= 3.0e3) THEN
+            dNu = Fgr - v0sp(ln_i)
+            bp = bp + Slabswint(dNu,v0sp(ln_i),x1p(ln_i),slabs1p(ln_i), &
+                             &  yp(ln_i),yip(ln_i))
+            dNu = Fgr - v0sm(ln_i)
+            bm = bm + Slabswint(dNu,v0sm(ln_i),x1m(ln_i),slabs1m(ln_i), &
+                             &  ym(ln_i),yim(ln_i))
+          ENDIF
+        end do
+      ENDIF
 
-      if(do_Lorentz) then
-        Call Lorentz_spectral(dNu,v0sp(ln_i),x1p(ln_i),yip(ln_i), &
-       &     yp(ln_i),w,tp,slabs1p(ln_i),dslabs1_dv0(ln_i),bb,    &
-       &     .false.,dw,dn,ds)
-      else
-        bb = Slabswint(dNu,v0sp(ln_i),x1p(ln_i),slabs1p(ln_i), &
-       &               yp(ln_i),yip(ln_i))
-      endif
-      bp = bp + bb
+      bb = beta_value
+      ds = Log(bp/bb)/Log(tp/Temp)     ! Estimate over [temp+10,temp]
+      ra = Log(bp/bm)/Log(tp/tm)       ! Estimate over [temp+10,temp-10]
+      dw = Log(bb/bm)/Log(Temp/tm)     ! Estimate over [temp,temp-10]
 !
-      dNu = Fgr - v0sm(ln_i)
-      if(s <= 3.0) then
-        ra = abs(x1(ln_i)*dNu)/SqrtLn2      ! abs(dNU)/Wd
-        do_Lorentz = (ra > 15.0)
-      endif
-
-      if(do_Lorentz) then
-        Call Lorentz_spectral(dNu,v0sm(ln_i),x1m(ln_i),yim(ln_i), &
-       &     ym(ln_i),w,tm,slabs1m(ln_i),dslabs1_dv0(ln_i),bb,    &
-       &     .false.,dw,dn,ds)
-      else
-        bb = Slabswint(dNu,v0sm(ln_i),x1m(ln_i),slabs1m(ln_i), &
-       &               ym(ln_i),yim(ln_i))
-      endif
-      bm = bm + bb
-
-    end do
+      t_power = (ds + 2.0 * ra + dw) / 4.0  ! Weighted Average
 !
-    bb = beta_value
-    ds = Log(bp/bb)/Log(tp/temp)     ! Estimate over [temp+10,temp]
-    ra = Log(bp/bm)/Log(tp/tm)       ! Estimate over [temp+10,temp-10]
-    wd = Log(bb/bm)/Log(temp/tm)     ! Estimate over [temp,temp-10]
+    ENDIF
 !
-    t_power = t_power + (ds + 2.0*ra + wd) / 4.0  ! Weighted Average
-!
-    Return
   End Subroutine Create_beta
 end module CREATE_BETA_M
 ! $Log$
-! Revision 1.13  2001/06/21 13:07:08  zvi
-! Speed enhancement MAJOR update
-!
-! Revision 1.12  2001/06/07 23:30:33  pwagner
-! Added Copyright statement
-!
-! Revision 1.11  2001/05/15 03:47:26  zvi
-! Adding derivative flag to beta calculations
-!
-! Revision 1.10  2001/05/14 23:16:31  zvi
-! Added Freq. Gap test..
-!
-! Revision 1.9  2001/05/14 23:14:54  zvi
-! Added Freq. Gap test..
-!
-! Revision 1.8  2001/04/05 21:58:47  zvi
-! Implementing l2cf inputs for FilterShape & Spectroscopy instead of FMI
-!
-! Revision 1.7  2001/04/03 07:32:45  zvi
-! Modify the spectral structure - eliminating sps_ from the names
-!
-! Revision 1.6  2001/03/29 08:51:01  zvi
-! Changing the (*) toi (:) everywhere
-!
-! Revision 1.5  2001/02/19 22:20:40  zvi
-! Latest modification: Conv/NoConv
-!
-! Revision 1.4  2001/02/19 22:14:21  zvi
+! Revision 1.14.2.1  2001/09/10 10:02:32  zvi
+! Cleanup..comp_path_entities_m.f90
 !
 ! Revision 1.1  2001/02/01 18:12:04  vsnyder
 ! Initial conversion to Fortran 90

@@ -1,8 +1,5 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
-
 module GET_ETA_M
-  use MLSCommon, only: I4, R8
+  use MLSCommon, only: Ip, Rp
   implicit NONE
   private
   public :: GET_ETA
@@ -15,65 +12,47 @@ module GET_ETA_M
 contains
 ! This subroutine gets the eta function for temperature
 !
-  Subroutine GET_ETA ( X, PEAKS, NO_X, NO_PEAKS, ETA )
-    Real(r8), intent(in) :: X(:), PEAKS(:)
-    Integer(i4), intent(in) :: NO_X, NO_PEAKS
-    Real(r8), intent(out) :: ETA(:,:)
+  Subroutine GET_ETA ( GRID, PEAKS, NO_GRID, NO_PEAKS, ETA )
+
+    Real(rp), intent(in) :: GRID(:), PEAKS(:)
+    Integer(ip), intent(in) :: NO_GRID, NO_PEAKS
+
+    Real(rp), intent(out) :: ETA(:,:)
 !
-    Integer(i4) :: I, J
-    Real(r8) :: R
+    Integer(ip) :: I, J
+    Real(rp) :: R
 !
-! The first coefficient is one for all values of x below peaks(1)
-! until x = peaks(1),then it ramps down in the usual triangular sense
-! i is the independent variable x index and j is the coefficient index
+! The first coefficient is one for all values of grid below peaks(1)
+! until grid = peaks(1),then it ramps down in the usual triangular sense
+! i is the independent variable grid index and j is the coefficient index
 !
+    eta = 0.0_rp
     i = 1
-    do while (i <= no_x .and. peaks(1) > x(i))
-      eta(i,1) = 1.0
-      eta(i,2:no_peaks) = 0.0
-      if ( i == no_x ) exit
-      i = i + 1
-    end do
+!
+! first basis calculation
+!
+    WHERE(grid <= peaks(1)) eta(:,1) = 1.0_rp
 !
 ! Normal triangular function for j=2 to j=no_peaks-1
 !
-    j = 2
-    do while (i <= no_x .and. x(i) < peaks(no_peaks))
-      do while (peaks(j) < x(i) .and. j < no_peaks)
-        j = j + 1
-      end do
-      eta(i,1:no_peaks) = 0.0
+    DO j = 2, no_peaks
       r = peaks(j) - peaks(j-1)
-      eta(i,j-1) = (peaks(j  ) - x(i)) / r
-      eta(i,j  ) = (x(i) - peaks(j-1)) / r
-      if ( i == no_x ) exit
-      i = i + 1
-    end do
+      WHERE(peaks(j-1) < grid .AND. grid <= peaks(j))
+        eta(:,j-1) = (peaks(j  ) - grid) / r
+        eta(:,j  ) = (grid - peaks(j-1)) / r
+      ENDWHERE
+    END DO
 !
-! The no_peaks coefficient ramps up as a triangle until x = peaks(no_peaks)
-! then afterwards it is equal to one
+! last basis calculation
 !
-    do while (i <= no_x)
-      eta(i,1:no_peaks-1) = 0.0
-      eta(i,no_peaks) = 1.0
-      i = i + 1
-    end do
-!
+    WHERE(peaks(no_peaks) < grid) eta(:,no_peaks) = 1.0_rp
+
     Return
   End Subroutine GET_ETA
 end module GET_ETA_M
 ! $Log$
-! Revision 1.7  2001/03/31 23:40:55  zvi
-! Eliminate l2pcdim (dimension parameters) move to allocatable ..
-!
-! Revision 1.6  2001/03/29 08:51:01  zvi
-! Changing the (*) toi (:) everywhere
-!
-! Revision 1.5  2001/03/21 22:46:53  livesey
-! Some bugs found with range checking fixed
-!
-! Revision 1.4  2001/01/31 01:08:48  zvi
-! New version of forward model
+! Revision 1.8.2.2  2001/09/13 11:18:22  zvi
+! get the correct eta
 !
 ! Revision 1.1  2000/05/04 18:12:05  vsnyder
 ! Initial conversion to Fortran 90

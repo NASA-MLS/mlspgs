@@ -73,6 +73,7 @@ contains
     integer :: FFT_pts, Is, J, Ktr, Nf, Ntr, Ptg_i, Sv_i
     integer :: Row, Col                 ! Matrix entries
     integer :: No_tan_hts, Lk, Uk
+
     logical :: Want_Deriv
 
     real(r8) :: K_star_tmp(ptan%template%noSurfs)
@@ -189,6 +190,7 @@ contains
       ! Derivatives needed continue to process
 
       do nf = windowStart, windowFinish
+
         col = FindBlock ( Jacobian%col, temp%index, nf )
         select case ( Jacobian%block(row,col)%kind ) 
         case ( m_absent )
@@ -199,6 +201,7 @@ contains
           call MLSMessage ( MLSMSG_Error, ModuleName, &
             & 'Wrong type for temperature derivative matrix' )
         end select
+
         do sv_i = 1, temp%template%noSurfs
 
           ! run through representation basis coefficients
@@ -260,7 +263,7 @@ contains
           ! Transfer dx_dt from convolution grid onto the output grid
 
           Call Lintrp (tan_press, Ptan%values(:,maf), dx_dt(1:,sv_i), SRad, &
-            & no_tan_hts, j )
+                     & no_tan_hts, j )
 
           k_star_tmp = k_star_tmp + srad*term
 
@@ -367,6 +370,12 @@ contains
 !
 end module CONVOLVE_ALL_M
 ! $Log$
+! Revision 1.29.2.1  2001/09/13 11:18:20  zvi
+! Fix temp. derv. bug
+!
+! Revision 1.29  2001/08/24 03:42:26  jonathan
+! change Ntr to Ntr-1 in do while loop
+!
 ! Revision 1.28  2001/05/18 00:01:19  livesey
 ! Zero out some arrays to start with (mainly to make them safe to dump).
 !

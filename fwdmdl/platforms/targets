@@ -154,6 +154,9 @@ d_delta_dt_m.o:
 #	$(FC) -c $(DUSTY) machine.f90 $(FAFTER)
 # ========================================================================
 # $Log$
+# Revision 1.13  2001/07/16 18:00:21  pwagner
+# Builds correctly with hdf5 on new and older Linux
+#
 # Revision 1.12  2001/05/30 20:45:23  pwagner
 # Set delete_lib_first to no with note to think harder
 #

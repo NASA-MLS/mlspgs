@@ -1,8 +1,5 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
-
 module D_STAT_TEMP_M
-  use MLSCommon, only: R8
+  USE MLSCommon, ONLY: R8
   use PHYSICS, only: H_OVER_K
   implicit NONE
   private
@@ -25,13 +22,13 @@ module D_STAT_TEMP_M
   integer, private, parameter :: RK = r8
 contains
 ! pure function D_STAT_TEMP ( TEMP, FREQ ) result ( STAT_TEMP )
-  function D_STAT_TEMP ( TEMP, FREQ ) result ( STAT_TEMP )
+  ELEMENTAL function D_STAT_TEMP ( TEMP, FREQ ) result ( STAT_TEMP )
     include 'stat_temp.f9h'
   End function D_STAT_TEMP
 end module D_STAT_TEMP_M
 ! $Log$
-! Revision 1.4  2001/01/31 01:08:48  zvi
-! New version of forward model
+! Revision 1.5.2.1  2001/09/10 10:02:32  zvi
+! Cleanup..comp_path_entities_m.f90
 !
 ! Revision 1.1  2000/05/04 18:12:04  vsnyder
 ! Initial conversion to Fortran 90

@@ -215,6 +215,10 @@ contains
 end module FilterShapes_m
 
 ! $Log$
+! Revision 1.15  2001/05/17 01:00:22  livesey
+! Odd bug, was allowing me to call AddFilterShapeToDatabase as a
+! subroutine when it was in fact a function.
+!
 ! Revision 1.14  2001/05/16 23:04:29  livesey
 ! Bug fix.
 !

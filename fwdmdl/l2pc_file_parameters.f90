@@ -74,6 +74,9 @@ module L2PC_FILE_PARAMETERS
 !
 end module L2PC_FILE_PARAMETERS
 ! $Log$
+! Revision 1.7  2001/06/07 23:39:31  pwagner
+! Added Copyright statement
+!
 ! Revision 1.6  2001/03/31 23:40:55  zvi
 ! Eliminate l2pcdim (dimension parameters) move to allocatable ..
 !

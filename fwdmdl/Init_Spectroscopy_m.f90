@@ -156,6 +156,9 @@ contains
 end module Init_Spectroscopy_m
 
 ! $Log$
+! Revision 1.5  2001/06/07 23:30:33  pwagner
+! Added Copyright statement
+!
 ! Revision 1.4  2001/04/26 02:36:52  vsnyder
 ! Moved *_indices declarations from init_tables_module to intrinsic
 !

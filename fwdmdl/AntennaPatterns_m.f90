@@ -280,6 +280,10 @@ outer1: do
 end module AntennaPatterns_m
 
 ! $Log$
+! Revision 1.18  2001/05/18 00:00:52  livesey
+! Working version.  Still rewinds in the read, but I think
+! the file format will have to dictate that for a while.
+!
 ! Revision 1.17  2001/05/17 19:59:38  livesey
 ! Now pads the arrays to next power of two with zeros after the end
 ! of the input data.

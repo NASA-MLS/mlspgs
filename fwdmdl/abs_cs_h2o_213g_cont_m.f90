@@ -35,6 +35,9 @@ contains
   End Function ABS_CS_H2O_213G_CONT
 end module ABS_CS_H2O_213G_CONT_M
 ! $Log$
+! Revision 1.5  2001/06/07 23:30:33  pwagner
+! Added Copyright statement
+!
 ! Revision 1.4  2001/01/31 01:08:48  zvi
 ! New version of forward model
 !

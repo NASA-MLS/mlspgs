@@ -22,6 +22,9 @@ contains
   end subroutine DCSPLINE_DER
 end module DCSPLINE_DER_M
 ! $Log$
+! Revision 1.5  2001/06/07 23:30:34  pwagner
+! Added Copyright statement
+!
 ! Revision 1.4  2001/03/09 00:40:32  zvi
 ! Correcting an error in HUNT routine
 !

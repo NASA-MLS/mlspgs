@@ -29,6 +29,9 @@ module GET_LUN
 !---------------------------------------------------------------------------
 end module GET_LUN
 ! $Log$
+! Revision 1.4  2001/06/07 23:30:34  pwagner
+! Added Copyright statement
+!
 ! Revision 1.3  2001/03/05 23:35:30  zvi
 ! Recovering get_lun.f90 from Paul
 !
