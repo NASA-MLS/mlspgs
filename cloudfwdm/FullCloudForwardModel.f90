@@ -743,8 +743,13 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
         select case ( jBlock%kind )
         case ( M_Absent )
-        call CreateBlock ( jBlock, noChans*noMIFs, &
-            & noSgrid*noMIFs*noInstances, M_Full )
+! In the absent case, the jacobian is stored in a special format
+!  
+!
+!
+!
+        call CreateBlock ( jBlock, noChans, &
+            & noSgrid*noMIFs, M_Full )
         jBlock%values = 0.0_r8
 
         allocate( TransOnS(noSgrid, noMIFs), stat=status )
@@ -769,14 +774,14 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
                     do mif = 1, noMIFs
                     do i=1,noSgrid
-                     jBlock%values(chan+(mif-1)*noChans, & 
-                       & i+(mif-1)*noSgrid+(maf-1)*noInstances)= TransOnS(i,mif)
+                     jBlock%values(chan, & 
+                       & i+(mif-1)*noSgrid)= TransOnS(i,mif)
                     end do
                     end do
          end if
          end do
 
-              Deallocate(TransOnS,stat=status)
+         Deallocate(TransOnS,stat=status)
 
         case ( M_Banded )
         
@@ -904,6 +909,9 @@ subroutine FindTransForSgrid ( PT, Re, NT, NZ, NS, Zlevel, TRANSonZ, Slevel, TRA
 end subroutine FindTransForSgrid
 
 ! $Log$
+! Revision 1.32  2001/09/28 15:54:39  jonathan
+! minor
+!
 ! Revision 1.31  2001/09/26 19:17:02  dwu
 ! normalize weights for high tangent retrieval
 !
