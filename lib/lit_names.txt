@@ -41,6 +41,7 @@ cloudy_110RH_below_top
 cloudy_110RH_in_cloud
 cloudy_nearside_only
 columnabundance
+columns
 complete
 
 days
@@ -153,6 +154,7 @@ refltrans
 reflrefl
 reflspill
 rhi
+rows
 
 s
 scanResidual
@@ -193,6 +195,9 @@ xyz
 zeta
 
 # $Log$
+# Revision 2.30  2004/01/23 05:35:00  livesey
+# Added rows and columns
+#
 # Revision 2.29  2004/01/09 07:24:59  livesey
 # Added the fictitious instrument mls1
 #
