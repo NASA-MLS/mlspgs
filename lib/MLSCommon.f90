@@ -38,10 +38,10 @@ MODULE MLSCommon                ! Common definitions for the MLS software
   ! The next datatype describes the information on the L1B data files in use
 
   TYPE L1BInfo_T
-    INTEGER :: L1BOAId     ! The HDF ID (handle) for the L1BOA file
+    INTEGER :: L1BOAId=0     ! The HDF ID (handle) for the L1BOA file
     ! Id(s) for the L1BRAD file(s)
     INTEGER, DIMENSION(:), POINTER :: L1BRADIds=>NULL()
-    CHARACTER (LEN=FileNameLen) :: L1BOAFileName  ! L1BOA file name
+    CHARACTER (LEN=FileNameLen) :: L1BOAFileName=""  ! L1BOA file name
     CHARACTER (LEN=FileNameLen), DIMENSION(:), POINTER :: &
          & L1BRADFileNames=>NULL()
   END TYPE L1BInfo_T
@@ -74,6 +74,9 @@ END MODULE MLSCommon
 
 !
 ! $Log$
+! Revision 2.6  2001/04/20 23:10:53  livesey
+! Initialised parameters in L1BINFO
+!
 ! Revision 2.5  2001/03/10 18:48:17  livesey
 ! Really nullified the pointer!
 !
