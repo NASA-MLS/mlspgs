@@ -395,7 +395,7 @@ contains ! =====     Public procedures     =============================
              l+l_IntermediateFrequency, n+n_dt_def, &
       begin, t+t_fillMethod, l+l_binMax, l+l_binMean, l+l_binMin, l+l_binTotal, &
              l+l_boxcar, l+l_combineChannels, l+l_gridded, l+l_estimatedNoise, l+l_explicit, &
-             l+l_gphPrecision, l+l_hydrostatic, l+l_addnoise, l+l_refract, &
+             l+l_extractChannel, l+l_gphPrecision, l+l_hydrostatic, l+l_addnoise, l+l_refract, &
              l+l_isotope, l+l_iwcfromextinction, l+l_l1b, l+l_l2aux, l+l_l2gp, &
              l+l_manipulate, l+l_magneticModel, l+l_magAzEl, &
              l+l_negativePrecision, l+l_offsetRadiance, l+l_profile, l+l_quality, &
@@ -453,7 +453,7 @@ contains ! =====     Public procedures     =============================
              l+l_numJ, l+l_opticalDepth, &
              l+l_orbitInclination, l+l_phiTan, l+l_ptan, l+l_quality, l+l_radiance, l+l_earthradius,&
              l+l_refGPH, l+l_refltemp, l+l_refltrans, l+l_reflrefl, l+l_reflspill, &
-             l+l_rhi, l+l_sizedistribution, &
+             l+l_rhi, l+l_singleChannelRadiance, l+l_sizedistribution, &
              l+l_scanResidual, l+l_scECI, l+l_scVel, l+l_scVelECI, &
              l+l_scVelECR, l+l_scGeocAlt, &
              l+l_spaceRadiance, l+l_status, l+l_strayRadiance, l+l_surfacetype, &
@@ -1187,6 +1187,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.364  2004/04/16 00:48:40  livesey
+! Added singleChannelRadiance type and extractChannel fill method
+!
 ! Revision 2.363  2004/03/31 03:59:43  livesey
 ! Added singleMAF option
 !
