@@ -312,7 +312,7 @@ contains
 
     end do ! Loop over filter shapes
 
-    if ( index(switches,'filt') /= 0 ) call dump_DACS_filter_database
+    if ( index(switches,'dacsfil') /= 0 ) call dump_DACS_filter_database
     if ( toggle(gen) ) then
       call trace_end ( "Read_DACS_Filter_Shapes_File" )
     end if
@@ -476,6 +476,9 @@ contains
 end module FilterShapes_m
 
 ! $Log$
+! Revision 2.9  2003/07/16 01:06:50  vsnyder
+! Add DACS filter shapes
+!
 ! Revision 2.8  2003/05/19 19:58:07  vsnyder
 ! Remove USEs for unreferenced symbols, remove unused local variables
 !
