@@ -14,7 +14,7 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
     & L_MAF, L_MIF, L_NONE, L_TIME, L_USBFREQUENCY
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: R8, R4
-  use MLSL2Options, only: DEFAULT_HDFVERSION_WRITE
+  use MLSL2Options, only: DEFAULT_HDFVERSION_READ, DEFAULT_HDFVERSION_WRITE
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
     & MLSMSG_ERROR, MLSMSG_WARNING
   use MLSSignals_m, only: GETMODULENAME, MODULES
@@ -382,6 +382,40 @@ contains ! =====     Public Procedures     =============================
     
   !------------------------------------------------ ReadL2AUXData ------------
   subroutine ReadL2AUXData(sd_id, quantityname, l2aux, firstProf, lastProf, &
+    & checkDimNames, hdfVersion)
+
+  use MLSFiles, only: HDFVERSION_4, HDFVERSION_5
+
+    ! This routine reads an l2aux file, returning a filled data structure
+    ! and the number of profiles read.
+
+    ! Arguments
+
+    character (LEN=*), intent(IN) :: quantityname ! Name of L2AUX quantity = sdname in writing routine
+    integer, intent(IN) :: sd_id ! Returned by sfstart before calling us
+    integer, intent(IN), optional :: firstProf, lastProf ! Defaults to first and last
+    type( L2AUXData_T ), intent(OUT) :: l2aux ! Result
+    logical, optional, intent(in) :: checkDimNames
+    integer, intent(in), optional :: hdfVersion
+    ! Local variables
+    integer :: myhdfVersion
+    ! Executable code
+    myhdfVersion = default_hdfversion_read
+    if ( present(hdfVersion) ) myhdfVersion = hdfVersion
+    select case (myhdfVersion)
+    case (HDFVERSION_4)
+      call ReadL2AUXData_hdf4(sd_id, quantityname, l2aux, firstProf, lastProf, &
+    & checkDimNames)
+    case (HDFVERSION_5)
+      call ReadL2AUXData_hdf5(sd_id, quantityname, l2aux, firstProf, lastProf, &
+    & checkDimNames)
+    case default
+    end select
+
+  end subroutine ReadL2AUXData
+
+  !------------------------------------------------ ReadL2AUXData_hdf4 ------------
+  subroutine ReadL2AUXData_hdf4(sd_id, quantityname, l2aux, firstProf, lastProf, &
     & checkDimNames)
 
     ! This routine reads an l2aux file, returning a filled data structure and the !
@@ -535,7 +569,30 @@ contains ! =====     Public Procedures     =============================
     !     if (status == -1) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
     !          &detach from SD file after reading.')
 
-  end subroutine ReadL2AUXData
+  end subroutine ReadL2AUXData_hdf4
+
+
+  !------------------------------------------------ ReadL2AUXData_hdf5 ------------
+  subroutine ReadL2AUXData_hdf5(sd_id, quantityname, l2aux, firstProf, lastProf, &
+    & checkDimNames)
+
+    ! This routine reads an l2aux file, returning a filled data structure and the !
+    ! number of profiles read.
+
+    ! Arguments
+
+    character (LEN=*), intent(IN) :: quantityname ! Name of L2AUX quantity = sdname in writing routine
+    integer, intent(IN) :: sd_id ! Returned by sfstart before calling us
+    integer, intent(IN), optional :: firstProf, lastProf ! Defaults to first and last
+    type( L2AUXData_T ), intent(OUT) :: l2aux ! Result
+    logical, optional, intent(in) :: checkDimNames
+
+    ! Parameters
+    ! Executable
+    call MLSMessage ( MLSMSG_Error,ModuleName, &
+          & 'Sorry--unable to read hdf5-formatted l2aux files yet' )
+
+  end subroutine ReadL2AUXData_hdf5
 
   !----------------------------------------------------- WriteL2AUXData ------
 
@@ -583,7 +640,8 @@ contains ! =====     Public Procedures     =============================
   ! Write l2aux to the file with l2FileHandle
   ! Optionally, write a bogus CounterMAF sd so the
   ! resulting file can masquerade as an l1BRad
-  ! (Note that this bogus sd should only be written once for each file)
+  ! (Note that this bogus sd should only be written once for each file;
+  !  also note the attempt to convert l2aux%values to KIND of l1b radiances)
   use MLS_DataProducts, only: DATAPRODUCTS_T
   use MLSAuxData, only: BUILD_MLSAUXDATA
 
@@ -605,6 +663,7 @@ contains ! =====     Public Procedures     =============================
     logical :: myWriteCounterMAF
     logical :: myReuse_dimNames
     integer, dimension(:), pointer :: CounterMAF ! bogus array
+    logical, parameter             :: ALWAYSWRITEAS32BITS = .true.
 
     ! Executable code
     returnStatus = 0
@@ -630,13 +689,22 @@ contains ! =====     Public Procedures     =============================
       else
         call get_string ( l2aux%name, dataProduct%name, strip=.true. )
       endif
-      dataProduct%data_type = 'double'  ! Depends on type of L2AUXData_T%values
+      if ( myWriteCounterMAF .or. ALWAYSWRITEAS32BITS ) then
+        dataProduct%data_type = 'real'    ! same type as l1bradiances
+      else
+        dataProduct%data_type = 'double'  ! type of L2AUXData_T%values
+      endif
       dims(1) = size(l2aux%values, 1)
       dims(2) = size(l2aux%values, 2)
       dims(3) = size(l2aux%values, 3)
       ! call Dump_L2AUX(l2AUX)
-      call Build_MLSAuxData(l2FileHandle, dataProduct, l2aux%values, &
-      & dims )
+      if ( myWriteCounterMAF .or. ALWAYSWRITEAS32BITS ) then
+        call Build_MLSAuxData(l2FileHandle, dataProduct, real(l2aux%values, r4), &
+        & dims )
+      else
+        call Build_MLSAuxData(l2FileHandle, dataProduct, l2aux%values, &
+        & dims )
+      endif
       if ( .not. myWriteCounterMAF ) return
     
       ! Now create and write bogus counterMAF array
@@ -879,6 +947,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.40  2002/12/06 01:06:13  pwagner
+! Finally writes radaiance-like l2aux as hdf5 files
+!
 ! Revision 2.39  2002/12/05 19:46:23  pwagner
 ! Changes to speed up compiling tree-walker
 !
