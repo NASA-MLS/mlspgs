@@ -216,6 +216,7 @@ contains ! =====     Public Procedures     =============================
 
    ! Initialize run parameters: unless reset, either by pcf or l2cf,
    ! these determine how to run
+   GlobalAttributes%ProcessLevel = '2'
    CCSDSStartTime = '(undefined)'
    CCSDSEndTime = '(undefined)'
    l2pcf%startutc = '(undefined)'
@@ -747,6 +748,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.76  2003/10/29 00:07:17  pwagner
+! GlobalAttributes%ProcessLevel assigned appropriate value
+!
 ! Revision 2.75  2003/10/09 23:41:06  pwagner
 ! Ignore illegal PCFids; extra_switches ,-separated
 !
