@@ -121,8 +121,8 @@ contains
 !  Modified code to correct a sign error (introduced in last change)
 !  (Bill + Zvi, July/7/92)
 
-    Slabs = slabs1 * (1.0_rp + dNu / v0s) * tanh1 &
-              * (u + OneOvSPi*y/((x1*(2.0_rp*v0s+dNu))**2 + y*y))
+    Slabs = slabs1 * (1.0_rp + dNu / v0s) * tanh1 * &
+            & (u + OneOvSPi*y/((x1*(2.0_rp*v0s+dNu))**2 + y*y))
 
   end function Slabs
 
@@ -140,7 +140,7 @@ contains
 ! inputs: dNu , x1 , slabs1 , y, v0s, yi
 ! output: slabswint (slab with interference)
 
-    real(rp) :: x, u, q, p, z, y2, w
+    real(rp) :: x, u, p, y2
 
     x = x1 * dNu
     call real_simple_voigt(x,y,u)
@@ -150,12 +150,10 @@ contains
 !  Modified code to correct a sign error (introduced in last change)
 !  (Bill + Zvi, July/7/92)
 
-    q = (1.0_rp + dNu / v0s)
     p = x1 * (2.0_rp * v0s + dNu)
     y2 = y*y
-    z = OneOvSPi*((y - p*yi)/(p*p + y2) + yi*x/(x*x+y2))
-    w = (u + z) * q
-    Slabswint = slabs1 * tanh1 *  w
+    Slabswint = slabs1 *  (1.0_rp + dNu / v0s) * tanh1 * &
+      & (u + OneOvSPi*((y - p*yi)/(p*p + y2) + yi*x/(x*x+y2)))
 
   end function Slabswint
 
@@ -1226,6 +1224,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.23  2003/07/08 00:09:18  vsnyder
+! Inlined several functions
+!
 ! Revision 2.22  2003/07/04 02:49:03  vsnyder
 ! Simplify interface to Get_GL_Slabs_Arrays
 !
