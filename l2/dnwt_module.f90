@@ -189,7 +189,6 @@ module DNWT_MODULE
   !      In case you want to add some flags of your own...
   integer, parameter, public :: NF_BIGGEST_FLAG = NF_FANDJ
   integer, parameter, public :: NF_SMALLEST_FLAG = NF_DX_AITKEN
-  character(LEN=132), private :: output_line
 
   interface NWT; module procedure DNWT; end interface
   interface NWTA; module procedure DNWTA; end interface
@@ -808,7 +807,7 @@ contains
       fnxe = cp25*fn**2 + cp76*fnxe
   780 if ( k1it /= 0 ) then
         k1it = k1it - 1
-        call nwtdb ( width=9, level=1, why='Before new X' )
+        call nwtdb ( width=9, level=0, why='Before new X' )
       end if
 
 ! Compute new X and test for too small a correction
@@ -960,10 +959,11 @@ contains
 !   namelist /DNWTDB_OUT/ RELSF, SPACT, SPB, SPFAC, SPG, SPINC, SPL, SPMINI
 !   namelist /DNWTDB_OUT/ SPSTRT, SQB, SQL, SQMIN
 
-    integer :: I ! Which one in the line is being worked
+    integer :: I                        ! Which one in the line is being worked
     character(len=9) :: IFLname, NFLname
     integer :: MyLevel, MyWidth
-    character(132) :: Name_Line ! For names
+    character(len=132) :: Name_Line     ! For names
+    character(len=132) :: Output_Line   ! For values
 
     myLevel = 1
     if ( present(level) ) myLevel = level
@@ -1202,6 +1202,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.39  2003/01/16 21:48:37  vsnyder
+! More work on internal output
+!
 ! Revision 2.38  2003/01/16 04:06:58  vsnyder
 ! Change some output in DNWT
 !
