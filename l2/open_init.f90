@@ -264,14 +264,14 @@ contains ! =====     Public Procedures     =============================
     integer :: templateIndex       ! In the template database
     integer :: vectorIndex         ! In the vector database
 
-! Toolkit Functions
+    ! Toolkit Functions
 
-    INTEGER, EXTERNAL :: swclose, swopen
+    integer, external :: SWCLOSE, SWOPEN
 
-	! Assume specifications take the following form:
-        !   vName: fileType, file='fileName', source='fieldName'
-        ! Currently, fileType is restricted to one of
-        !   'l2gp' or 'l2aux'
+    ! Assume specifications take the following form:
+    !   vName: fileType, file='fileName', source='fieldName'
+    ! Currently, fileType is restricted to one of
+    !   'l2gp' or 'l2aux'
     do i = 2, nsons(root)-1 ! Skip the section name at begin and end
       son = subtree(i,root)
       if ( node_id(son) == n_named ) then ! Is spec labeled?
@@ -283,9 +283,6 @@ contains ! =====     Public Procedures     =============================
       end if
 
       ! Node_id(key) is now n_spec_args.
-
-      if ( nsons(key) /= 4 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-      & 'Wrong number of fields in read a priori')
 
       FileType = decoration(subtree(1,decoration(subtree(1,key))))
 
@@ -315,13 +312,14 @@ contains ! =====     Public Procedures     =============================
       fileHandle = swopen(FileNameString, DFACC_READ)
       if (fileHandle == -1) then
         msr = MLSMSG_Fileopen // FileNameString
-        call MLSMessage(MLSMSG_Error, ModuleName, msr)
+        call MLSMessage ( MLSMSG_Error, ModuleName, trim(msr) )
       end if
 
       select case( FileType )
       case ( s_l2gp )
 
-        vectorIndex = decoration(decoration(subtree(2,subtree(1,key))))
+! ??? subtree(1,key) is l2aux or l2gp.  It doesn't have a subtree ???
+!       vectorIndex = decoration(decoration(subtree(2,subtree(1,key))))
 
         ! Create the l2gp, and add it to the database.
         call SetupNewL2GPRecord ( l2gp )
@@ -330,15 +328,19 @@ contains ! =====     Public Procedures     =============================
         call decorate ( key, AddL2GPToDatabase( L2GPDatabase, l2gp ) )
 
         ! That's the end of the create operation
-        
 
+! ??? Should "vectorIndex" be "decoration(key)" ???
+! ??? If so, do something like
+! ???   l2Index = AddL2GPToDatabase( L2GPDatabase, l2gp )
+! ???   call decorate ( key, l2Index )
+! ???   call ReadL2GPData ( ... L2GPDataBase(l2Index) ... )
         call ReadL2GPData ( fileHandle, sourceNameString, &
           & L2GPDatabase(vectorIndex), numProfs )
 
-
       case ( s_l2aux )
 
-        vectorIndex = decoration(decoration(subtree(2,subtree(1,key))))
+! ??? subtree(1,key) is l2aux or l2gp.  It doesn't have a subtree ???
+!       vectorIndex = decoration(decoration(subtree(2,subtree(1,key))))
 
         ! Create the l2aux, and add it to the database.
 ! This doesn't match the interface in module L2AUXData
@@ -349,19 +351,23 @@ contains ! =====     Public Procedures     =============================
 
         ! That's the end of the create operation
         
+! ??? Should "vectorIndex" be "decoration(key)" ???
+! ??? If so, do something like
+! ???   l2Index = AddL2GPToDatabase( L2GPDatabase, l2gp )
+! ???   call decorate ( key, l2Index )
+! ???   call ReadL2AUXData ( ... L2AUXDataBase(l2Index) ... )
 ! Need to add this routine to L2AUXData.f90 before uncommenting this line
 !       CALL ReadL2AUXData ( fileHandle, sourceNameString, &
-!         & L2GPDatabase(vectorIndex), numProfs )
-
+!         & L2AUXDatabase(vectorIndex), numProfs )
 
       case default ! Can't get here if tree_checker worked correctly
       end select
 
       fileHandle = swclose(fileHandle)
-      IF (fileHandle == -1) THEN
+      if (fileHandle == -1) THEN
          msr = 'Failed to close file ' // FileNameString
-         CALL MLSMessage(MLSMSG_Error, ModuleName, trim(msr))
-      END IF
+         call MLSMessage(MLSMSG_Error, ModuleName, trim(msr))
+      end if
 
     end do
 
@@ -373,6 +379,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.8  2000/12/02 00:00:40  vsnyder
+! More misc. cleanup.
+!
 ! Revision 2.7  2000/12/01 23:35:25  vsnyder
 ! Use abstract syntax tree more efficiently, general clean-up -- alphabetization
 ! etc.
