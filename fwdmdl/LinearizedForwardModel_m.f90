@@ -196,14 +196,19 @@ contains ! =====     Public Procedures     =============================
       & 'Can only have one signal for linearized models')
 
     signal = fmConf%signals(1)
+    ! Probably access the sideband associated with the signal ...
+    sideband = signal%sideband
+    ! ... but in certain rare circumstances (when we're called by the hybrid model)
+    ! we might want to force the folded one.
+    if ( fmConf%forceFoldedOutput ) sideband = 0
     radiance => GetVectorQuantityByType (fwdModelOut, quantityType=l_radiance, &
-      & signal=signal%index, sideband=signal%sideband, noError=.true. )
+      & signal=signal%index, sideband=sideband, noError=.true. )
 
     ! Now, it's possible we're really being asked to deal with optical depth, not
     ! radiance.
     if ( .not. associated ( radiance ) ) then
       radiance => GetVectorQuantityByType (fwdModelOut, quantityType=l_opticalDepth, &
-        & signal=signal%index, sideband=signal%sideband, noError=.true. )
+        & signal=signal%index, sideband=sideband, noError=.true. )
     end if
 
     ! Now, some possible error messages
@@ -217,7 +222,7 @@ contains ! =====     Public Procedures     =============================
       if ( fmConf%xStar /= 0 ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Not appropriate to supply x/yStar for optical depth' )
-      if  ( signal%sideband /= 0 ) &
+      if  ( sideband /= 0 ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Not appropriate to request optical depth from unfolded signal' )
     end if
@@ -235,7 +240,7 @@ contains ! =====     Public Procedures     =============================
     doChannel = .true.
     if ( associated ( signal%channels ) ) doChannel = signal%channels
 
-    call SelectL2PCBins ( radiance, maf, l2pcBins, &
+    call SelectL2PCBins ( radiance, signal%sideband, maf, l2pcBins, &
       & sidebandStart, sidebandStop, sidebandStep )
 
     ! If we're doing a split calculation then get the relevant
@@ -860,7 +865,7 @@ contains ! =====     Public Procedures     =============================
     end function NormalizePhi
 
     ! --------------------------------------------- SelectL2PCBins -----
-    subroutine SelectL2PCBins ( radiance, maf, l2pcBins, &
+    subroutine SelectL2PCBins ( radiance, sideband, maf, l2pcBins, &
       & sidebandStart, sidebandStop, sidebandStep )
       use MLSSignals_m, only: signals
       use L2PC_M, only: BINSELECTORS, BINSELECTOR_T
@@ -869,11 +874,14 @@ contains ! =====     Public Procedures     =============================
       use MLSNumerics, only: ESSENTIALLYEQUAL
 
       type (VectorValue_T), intent(in) :: RADIANCE ! The radiance we're after
+      integer, intent(in) :: SIDEBAND ! Which sideband (see below)
       integer, intent(in) :: MAF                      ! MAF index
       integer, dimension(-1:1), intent(out) :: L2PCBINS ! Result
       integer, intent(out) :: SIDEBANDSTART ! Resulting loop indices
       integer, intent(out) :: SIDEBANDSTOP
       integer, intent(out) :: SIDEBANDSTEP
+      ! We supply the sideband separately because when the Linearized model is being
+      ! invoked by the hybrid model, the sideband in radiance is not the one we really want
 
       ! Local variables
       character (len=132) :: BINNAME      ! The name of the bin
@@ -886,11 +894,11 @@ contains ! =====     Public Procedures     =============================
       integer :: MYMAF                  ! A loop counter
       integer :: NOBINS                 ! Number of l2pc bins
       integer :: NOSELECTORS            ! A loop limit
-      integer :: SIDEBAND               ! This sideband
       integer :: SELECTOR               ! Bin selector index
       integer :: SIGNAL                 ! Signal index
       integer :: STATEINSTANCE          ! Instance index
       integer :: STATUS                 ! Flag
+      integer :: tmpSideband            ! Loop counter
       logical :: SPLIT                  ! Need a split calculation
       logical :: FOUNDINFIRST           ! Flag, not used
       real(r8) :: THISCOST              ! Interim cost
@@ -906,7 +914,6 @@ contains ! =====     Public Procedures     =============================
 
       ! Firstly, if we're in locked bins mode, then just return the locked bin
       signal = radiance%template%signal
-      sideband = radiance%template%sideband
       noBins = size ( l2pcDatabase )
 
       ! Now special code for dealing with the locked bins case
@@ -1093,11 +1100,11 @@ contains ! =====     Public Procedures     =============================
       do bin = 1, noBins
         ! Reuse the sideband variable here, we don't need it's old
         ! definition anymore
-        do sideband = sidebandStart, sidebandStop
-          if ( possible(sideband,bin) .and. &
-            & cost(bin) < bestCost(sideband) ) then
-            bestCost(sideband) = cost(bin)
-            l2pcBins(sideband) = bin
+        do tmpSideband = sidebandStart, sidebandStop
+          if ( possible(tmpSideband,bin) .and. &
+            & cost(bin) < bestCost(tmpSideband) ) then
+            bestCost(tmpSideband) = cost(bin)
+            l2pcBins(tmpSideband) = bin
           end if
         end do
       end do
@@ -1125,6 +1132,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.48  2003/10/09 22:17:10  livesey
+! Various bug fixes, and added the call to CheckForSimpleBandedLayout
+!
 ! Revision 2.47  2003/09/15 17:42:52  livesey
 ! Various bug fixes associated with getting the polar linear model
 ! working.
