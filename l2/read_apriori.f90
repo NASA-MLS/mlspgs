@@ -15,6 +15,7 @@ module ReadAPriori
   use L2GPData, only: L2GPData_T, AddL2GPToDatabase, ReadL2GPData
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: FileNameLen, L1BInfo_T, TAI93_Range_T
+  use MLSFiles, only: SPLIT_PATH_NAME
 !  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
 !    &                         MLSMSG_Error, MLSMSG_FileOpen!, MLSMSG_Info
 !  use OBTAINCLIMATOLOGY, only: READ_CLIMATOLOGY
@@ -70,6 +71,7 @@ contains ! =====     Public Procedures     =============================
     character(len=FileNameLen) :: FileNameString   ! actual literal file name
     integer :: FileType            ! either s_l2gp or s_l2aux
     integer :: gridIndex           ! In the griddeddata database
+    logical :: gotAlready               ! Do we need to reread this file?
     integer :: I, J                ! Loop indices for section, spec
     integer :: KEY                 ! Index of n_spec_args in the AST
     integer :: lastClimPCF
@@ -90,6 +92,8 @@ contains ! =====     Public Procedures     =============================
     character(len=FileNameLen) :: FIELDNAMESTRING ! actual literal clim. field
     character(len=FileNameLen) :: SWATHNAMESTRING ! actual literal swath name
     character(len=FileNameLen) :: SDNAMESTRING ! actual literal sdName
+    character(len=FileNameLen) :: bareFilename
+    character(len=FileNameLen) :: path
     integer :: version
 	integer :: returnStatus
 
@@ -139,12 +143,13 @@ contains ! =====     Public Procedures     =============================
 
 !      if ( fileName == 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
 !        & 'File name not specified in read a priori')
-      if ( fileName == 0 ) call announce_error(son, &
-        & 'File name not specified in read a priori')
       
-      call get_string ( FileName, fileNameString )
-      fileNameString=fileNameString(2:LEN_TRIM(fileNameString)-1)
-      
+      if (got(f_file)) then
+        call get_string ( FileName, fileNameString, strip=.true. )
+      else
+        fileNameString=''
+      endif
+        
       select case( FileType )
       case ( s_l2gp )
 !        if ( .not. all(got((/f_swath, f_file/)))) &
@@ -224,12 +229,11 @@ contains ! =====     Public Procedures     =============================
 !        if ( .not. all(got((/f_origin, f_field, f_file/)))) &
 !          & call MLSMessage(MLSMSG_Error, ModuleName, &
 !          & 'Incomplete gridded data information')
-        if ( .not. all(got((/f_origin, f_field, f_file/)))) &
+        if ( .not. all(got((/f_origin, f_field/)))) &
           & call announce_error(son, &
           & 'Incomplete gridded data information')
 
-        call get_string ( fieldName, fieldNameString )
-        fieldNameString=fieldNameString(2:LEN_TRIM(fieldNameString)-1)
+        call get_string ( fieldName, fieldNameString, strip=.true. )
         
         select case ( griddedOrigin )
         case ( l_ncep )
@@ -238,7 +242,7 @@ contains ! =====     Public Procedures     =============================
           call decorate ( key, gridIndex )
           CALL ReadGriddedData(FileNameString, son, 'ncep', v_is_pressure, &
             & GriddedDatabase(gridIndex), &
-				& 'XDim,YDim,Height,TIME', TRIM(fieldNameString))
+            & 'XDim,YDim,Height,TIME', TRIM(fieldNameString))
           
         case ( l_dao )
           
@@ -248,47 +252,49 @@ contains ! =====     Public Procedures     =============================
             & GriddedDatabase(gridIndex), fieldName = TRIM(fieldNameString))
           
         case ( l_climatology )
-         
+          
           ! Identify file (maybe from PCF if no name given)
 
-				if(.NOT. got(f_file)) then
-					
-					do pcf=lastClimPCF+1, mlspcf_l2clim_end
-           		 returnStatus = Pgs_pc_getReference(i, version, &
-              & fileNameString)
-				  	if(returnStatus == PGS_S_SUCCESS) exit
-				  
-				  enddo
-				  
-				  if(returnStatus /= PGS_S_SUCCESS) then
-						call announce_error(son, &
-						& 'PCF number not found to supply missing Climatology file name')
-              endif
-				endif
-
+          if(.NOT. got(f_file)) then
+            
+            do pcf=lastClimPCF+1, mlspcf_l2clim_end
+              returnStatus = Pgs_pc_getReference(i, version, &
+                & fileNameString)
+              if(returnStatus == PGS_S_SUCCESS) exit
+            enddo
+            
+            if(returnStatus /= PGS_S_SUCCESS) then
+              call announce_error(son, &
+                & 'PCF number not found to supply missing Climatology file name')
+            endif
+          endif
+          
           ! Have we read this already?
-				if(source_file_already_read(GriddedDatabase, trim(fileNameString), &
-				& trim(fieldNameString))) then
-				
-			! Excellent, no need to read it again--if it's already in the database
-				else
-          ! No, well read it then, add its entire contents to the database
-          CALL READ_CLIMATOLOGY(FileNameString, son, &
-            & GriddedDatabase, mlspcf_l2clim_start, mlspcf_l2clim_end)
-          
-				endif
+          gotAlready = associated(GriddedDatabase)
+          if (gotAlready) then
+            gotAlready = any(GriddedDatabase%sourceFilename==filenameString)
+          endif
+          if (.not. gotAlready) then
+            ! No, well read it then, add its entire contents to the database
+            call read_climatology(FileNameString, son, &
+              & GriddedDatabase, mlspcf_l2clim_start, mlspcf_l2clim_end)
+          endif
+       
           ! Locate requested grid by name, store index in gridIndex
-
-			! Check that field name is among those added by the source field
-				if(source_file_already_read(GriddedDatabase, trim(fileNameString), &
-				& trim(fieldNameString))) then
-		          call decorate ( key, gridIndex )
-				else
-	          CALL announce_error(son, 'Field ' // trim(fieldNameString) // &
-				 & ' not found in clim. file ' // trim(fileNameString))
-				endif
-
           
+          ! Check that field name is among those added by the source field
+          gridIndex=1
+          do gridIndex=1,size(griddedDatabase)
+            if (trim(fieldNameString) == &
+              & trim(GriddedDatabase(gridIndex)%quantityName)) exit
+          enddo
+
+          if (gridIndex <= size(griddedDatabase) ) then
+            call decorate ( key, gridIndex )
+          else
+            call announce_error(son, 'Field ' // trim(fieldNameString) // &
+              & ' not found in clim. file ' // trim(fileNameString))
+          endif
         case default ! Can't get here if tree_checker worked correctly
         end select
       case default
@@ -368,6 +374,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.15  2001/04/10 20:04:26  livesey
+! Bug fixes etc.
+!
 ! Revision 2.14  2001/03/30 00:27:38  pwagner
 ! Fleshed out njl outline for reading clim. files
 !
