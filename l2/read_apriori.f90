@@ -287,7 +287,8 @@ contains ! =====     Public Procedures     =============================
 
         l2Index = AddL2AUXToDatabase( L2AUXDatabase, l2aux )
         call decorate ( key, l2Index )
-        call ReadL2AUXData ( sd_id, sdNameString, L2AUXDatabase(l2Index) )
+        call ReadL2AUXData ( sd_id, sdNameString, L2AUXDatabase(l2Index), &
+          & hdfVersion=hdfVersion )
 
         if( index(switches, 'apr') /= 0 ) &
         & call dump( L2AUXDatabase(l2Index), details )
@@ -511,6 +512,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.37  2002/12/06 01:06:56  pwagner
+! Passes hdfVersion to readl2auxdata
+!
 ! Revision 2.36  2002/10/08 17:36:22  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
