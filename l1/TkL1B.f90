@@ -5,6 +5,7 @@ module TkL1B
 
 !!!!!! THIS LINE DOESN'T SEEM TO WORK!!!!!  use MLSNumerics, only: Hunt
   use Dump_0, only: DUMP
+  use Geometry, only: Omega => W
   use MLSCommon, only: R8
   use MLSL1Common
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_Error
@@ -13,7 +14,7 @@ module TkL1B
     OUTPUTL1B_THZ, OUTPUTL1B_SC, OUTPUTL1B_INDEX, OUTPUTL1B_GHZ, LENG, LENT
   use Scan
   use SDPToolkit
-  use units, only: Omega
+
   implicit none
   private
 
@@ -22,8 +23,9 @@ module TkL1B
   real, parameter ::    UNDEFINED_VALUE = -999.99
 
   !------------------- RCS Ident Info -----------------------
-  character(LEN=130) :: Id = &
-    "$Id$"
+  character(len=*), parameter :: IdParm = &
+    & "$Id$"
+  character(len=len(idParm)) :: Id = idParm
   character (LEN=*), parameter :: ModuleName="$RCSfile$"
   !----------------------------------------------------------
 
@@ -868,6 +870,9 @@ contains
 end module TkL1B
 
 ! $Log$
+! Revision 2.10  2002/09/26 20:52:26  vsnyder
+! Get Omega from Geometry instead of Units
+!
 ! Revision 2.9  2002/03/29 20:18:34  perun
 ! Version 1.0 commit
 !
