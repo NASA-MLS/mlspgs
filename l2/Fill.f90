@@ -56,7 +56,7 @@ module Fill                     ! Create vectors and fill them.
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSNumerics, only: InterpolateValues
-  use MLSRandomNumber, only: drang, mls_random_seed
+  use MLSRandomNumber, only: drang, mls_random_seed, MATH77_RAN_PACK
   use MLSSignals_m, only: GetSignalName, GetModuleName
   use Molecules, only: L_H2O
   use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
@@ -325,8 +325,6 @@ contains ! =====     Public Procedures     =============================
     extinction = .false.
     maxIterations = 4
     noFineGrid = 1
-    resetSeed = .false.
-    switch2intrinsic = .false.
 
     ! Loop over the lines in the configuration file
 
@@ -340,6 +338,9 @@ contains ! =====     Public Procedures     =============================
         vectorName = 0
       end if
       got= .false.
+      resetSeed = .false.
+      switch2intrinsic = .false.
+      seed = 0
 
       ! Node_id(key) is now n_spec_args.
 
@@ -565,7 +566,7 @@ contains ! =====     Public Procedures     =============================
             & vectors(sourceVectorIndex), sourceQuantityIndex )
           noiseQty => GetVectorQtyByTemplateIndex( &
             & vectors(noiseVectorIndex), noiseQtyIndex)
-          if ( switch2intrinsic ) call mls_random_seed(MATH77_ranpack=.false.)
+          math77_ran_pack = .not. switch2intrinsic
           if (DEEBUG) then
             call output('Switch to intrinsic? ', advance='no')
             call output(switch2intrinsic, advance='yes')
@@ -577,7 +578,6 @@ contains ! =====     Public Procedures     =============================
               call output(seed, advance='yes')
             endif
           elseif ( got(f_seed) ) then
-            seed = 0
             do j=1, nsons(valuesNode)-1
               call expr(subtree(j+1,valuesNode),unitAsArray,valueAsArray)
               seed(j) = int(valueAsArray(1))
@@ -594,6 +594,12 @@ contains ! =====     Public Procedures     =============================
                 call output('Letting mls choose new seed ', advance='no')
                 call output(seed, advance='yes')
               endif
+            endif
+          else
+            call mls_random_seed(gget=seed(1:))
+            if (DEEBUG) then
+              call output('Reusing current seed ', advance='no')
+              call output(seed, advance='yes')
             endif
           endif
           call addGaussianNoise ( key, quantity, sourceQuantity, &
@@ -2534,6 +2540,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.84  2001/10/17 23:40:08  pwagner
+! Exploits visibility of MATH77_ran_pack
+!
 ! Revision 2.83  2001/10/16 23:34:05  pwagner
 ! intrinsic, resetseed, seed fields added to addnoise method
 !
