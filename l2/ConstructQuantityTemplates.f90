@@ -23,7 +23,7 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
     L_EARTHRADIUS, L_ELEVOFFSET, L_EXTINCTION, L_GEODALTITUDE, L_GPH, &
     L_HEIGHTOFFSET, L_LOSTRANSFUNC, L_LOSVEL, &
     L_NOISEBANDWIDTH, L_NONE, L_ORBITINCLINATION, L_OPTICALDEPTH, &
-    L_PTAN, L_RADIANCE, L_RHI, &
+    L_PHITAN, L_PTAN, L_RADIANCE, L_RHI, &
     L_REFGPH, L_SCANRESIDUAL, L_SCECI, L_SCGEOCALT, L_SCVEL, &
     L_SCVELECI, L_SCVELECR, L_SIDEBANDRATIO, &
     L_SPACERADIANCE, L_SYSTEMTEMPERATURE, &
@@ -168,6 +168,7 @@ contains ! =====     Public Procedures     =============================
     natural_units(l_losVel) =                  PHYQ_Velocity
     natural_units(l_orbitInclination) =        PHYQ_Angle
     natural_units(l_noiseBandwidth) =          PHYQ_Frequency
+    natural_units(l_phitan) =                  PHYQ_Angle
     natural_units(l_ptan) =                    PHYQ_Zeta
     natural_units(l_radiance) =                PHYQ_Temperature
     natural_units(l_cloudinducedradiance) =    PHYQ_Temperature
@@ -274,7 +275,7 @@ contains ! =====     Public Procedures     =============================
     ! first order.
 
     if ( family == 0 ) family = natural_units(quantityType)
-    minorFrame = any(quantityType == (/ l_Ptan, l_Radiance, &
+    minorFrame = any(quantityType == (/ l_phiTan, l_Ptan, l_Radiance, &
       & l_cloudInducedRadiance, l_cloudRADSensitivity, l_effectiveOpticalDepth, &
       & l_tngtECI, l_tngtGeodAlt, l_tngtGeocAlt, l_scECI, l_scGeocAlt,&
       & l_scVel, l_scVelECI, l_scVelECR, l_losVel, l_heightOffset, &
@@ -869,6 +870,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.66  2002/06/04 22:07:35  livesey
+! Added phiTan as a state vector element
+!
 ! Revision 2.65  2002/05/22 19:06:32  jonathan
 ! added units for cloudextinction(m-1), totalextinction(m-1), and massmeandiameterice(micron m) as dimentionless for now, may define more clear later
 !
