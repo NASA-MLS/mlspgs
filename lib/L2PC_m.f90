@@ -840,7 +840,6 @@ contains ! ============= Public Procedures ==========================
 
     ! Go back and set to true any we know we want to keep
     if ( associated ( dontPack ) ) then
-      print*,'Doing the dont pack stuff'
       do colQ = 1, m%col%vec%template%noQuantities
         if ( any ( dontPack == m%col%vec%template%quantities(colQ) ) ) &
           & colPack ( colQ ) = .true.
@@ -1730,6 +1729,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.72  2004/02/11 01:08:44  livesey
+! Removed print statement.
+!
 ! Revision 2.71  2004/01/30 23:27:32  livesey
 ! Capitalized the names of the bins on output
 !
