@@ -1502,7 +1502,6 @@ contains ! =====     Public Procedures     =============================
     if ( myIndexInVector /= 0 ) &
       & GetVectorQtyByTemplateIndex => &
       &   vector%quantities(myIndexInVector)
-    end if
     if ( present ( indexInVector ) ) indexInVector = myIndexInVector
   end function GetVectorQtyByTemplateIndex
 
@@ -2175,6 +2174,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.100  2003/06/03 19:23:03  livesey
+! Added check to see that vector has not been destroyed
+!
 ! Revision 2.99  2003/05/29 16:36:29  livesey
 ! New reflector argument to some of the GetVectorQuantity....
 !
