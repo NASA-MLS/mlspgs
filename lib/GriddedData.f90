@@ -305,6 +305,11 @@ contains
       myDetails = 1
       fieldvaluesdetails = max(fieldvaluesdetails, AUTOMATICDETAILS)
     endif
+    if ( GriddedData%empty ) then
+      call output('This Gridded quantity was empty (perhaps the file name' &
+        & // ' was wrong)', advance='yes')
+      return
+    endif
     call output('Gridded quantity name ' // GriddedData%quantityName, advance='yes')
       if ( myDetails < -1 ) return
     call output('description ' // GriddedData%description, advance='yes')
@@ -606,6 +611,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.27  2003/04/04 23:01:26  pwagner
+! Short-curcuits dump for empty GriddedDatas
+!
 ! Revision 2.26  2003/04/04 19:10:58  livesey
 ! Bug fix
 !
