@@ -21,17 +21,18 @@ module TOGGLES
                                    ! activity, inverted by @S
 
   ! Toggles:
-  logical :: TOGGLE(con:tab) = .false.
+  logical, save :: TOGGLE(con:tab) = .false.
 
   ! In case you want to have levels of output (not used in the parser):
-  integer :: LEVELS(con:tab) = 0
+  integer, save :: LEVELS(con:tab) = 0
 
   ! Some switches that anybody can look at (not used in the parser):
-  character(len=80) :: Switches = ' '
+  character(len=80), save :: Switches = ' '
 
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=256), private :: Id = &
+  character (len=*), private, parameter :: IdParm = &
        "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
 !---------------------------------------------------------------------------
@@ -39,6 +40,7 @@ module TOGGLES
 contains
 
   subroutine INIT_TOGGLE
+    levels = 0
     toggle = .false.
     switches = ' '
   end subroutine INIT_TOGGLE
@@ -46,6 +48,9 @@ contains
 end module TOGGLES
 
 ! $Log$
+! Revision 2.3  2001/04/24 22:35:01  vsnyder
+! Make module variables SAVE, initialize 'levels'
+!
 ! Revision 2.2  2001/03/16 21:25:39  vsnyder
 ! Add character switches
 !
