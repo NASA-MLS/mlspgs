@@ -482,7 +482,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine Dump_L2AUX
     
   !------------------------------------------------ ReadL2AUXData ------------
-  subroutine ReadL2AUXData(sd_id, quantityname, l2aux, firstProf, lastProf, &
+  subroutine ReadL2AUXData(sd_id, quantityname, quantityType, l2aux, firstProf, lastProf, &
     & checkDimNames, hdfVersion)
 
   use MLSFiles, only: HDFVERSION_4, HDFVERSION_5
@@ -494,6 +494,7 @@ contains ! =====     Public Procedures     =============================
 
     character (LEN=*), intent(IN) :: quantityname ! Name of L2AUX quantity = sdname in writing routine
     integer, intent(IN) :: sd_id ! Returned by sfstart before calling us
+    integer, intent(in) :: QuantityType ! Lit index
     integer, intent(IN), optional :: firstProf, lastProf ! Defaults to first and last
     type( L2AUXData_T ), intent(OUT) :: l2aux ! Result
     logical, optional, intent(in) :: checkDimNames
@@ -505,10 +506,10 @@ contains ! =====     Public Procedures     =============================
     if ( present(hdfVersion) ) myhdfVersion = hdfVersion
     select case (myhdfVersion)
     case (HDFVERSION_4)
-      call ReadL2AUXData_hdf4(sd_id, quantityname, l2aux, firstProf, lastProf, &
+      call ReadL2AUXData_hdf4(sd_id, quantityname, quantityType, l2aux, firstProf, lastProf, &
     & checkDimNames)
     case (HDFVERSION_5)
-      call ReadL2AUXData_hdf5(sd_id, quantityname, l2aux, firstProf, lastProf, &
+      call ReadL2AUXData_hdf5(sd_id, quantityname, quantityType, l2aux, firstProf, lastProf, &
     & checkDimNames)
     case default
     end select
@@ -516,8 +517,8 @@ contains ! =====     Public Procedures     =============================
   end subroutine ReadL2AUXData
 
   !------------------------------------------------ ReadL2AUXData_hdf4 ------------
-  subroutine ReadL2AUXData_hdf4(sd_id, quantityname, l2aux, firstProf, lastProf, &
-    & checkDimNames)
+  subroutine ReadL2AUXData_hdf4(sd_id, quantityname, quantityType, l2aux, firstProf, lastProf, &
+    & checkDimNames )
 
     ! This routine reads an l2aux file, returning a filled data structure and the !
     ! number of profiles read.
@@ -526,6 +527,7 @@ contains ! =====     Public Procedures     =============================
 
     character (LEN=*), intent(IN) :: quantityname ! Name of L2AUX quantity = sdname in writing routine
     integer, intent(IN) :: sd_id ! Returned by sfstart before calling us
+    integer, intent(in) :: QuantityType
     integer, intent(IN), optional :: firstProf, lastProf ! Defaults to first and last
     type( L2AUXData_T ), intent(OUT) :: l2aux ! Result
     logical, optional, intent(in) :: checkDimNames
@@ -637,7 +639,7 @@ contains ! =====     Public Procedures     =============================
     ! Allocate result
 !   call SetupNewl2auxRecord ( dim_families, data_dim_sizes, (/1,1,1/), l2aux )
     call SetupNewl2auxRecord ( l2aux, inputDimFamilies=dim_families, &
-     & inputDimSizes=data_dim_sizes, inputDimStarts=(/1,1,1/) )
+      & inputDimSizes=data_dim_sizes, inputDimStarts=(/1,1,1/), inputQuantityType=quantityType )
 
     ! Read the SD
     start = 0
@@ -676,7 +678,7 @@ contains ! =====     Public Procedures     =============================
 
 
   !------------------------------------------------ ReadL2AUXData_hdf5 ------------
-  subroutine ReadL2AUXData_hdf5(sd_id, quantityname, l2aux, firstProf, lastProf, &
+  subroutine ReadL2AUXData_hdf5(sd_id, quantityname, quantityType, l2aux, firstProf, lastProf, &
     & checkDimNames)
 
     ! This routine reads an l2aux file, returning a filled data structure and the !
@@ -691,6 +693,7 @@ contains ! =====     Public Procedures     =============================
 
     character (LEN=*), intent(IN) :: quantityname ! Name of L2AUX quantity = sdname in writing routine
     integer, intent(IN) :: sd_id ! Returned by sfstart before calling us
+    integer, intent(in) :: QUANTITYTYPE ! Lit index
     integer, intent(IN), optional :: firstProf, lastProf ! Defaults to first and last
     type( L2AUXData_T ), intent(OUT) :: l2aux ! Result
     logical, optional, intent(in) :: checkDimNames
@@ -718,7 +721,7 @@ contains ! =====     Public Procedures     =============================
     dim_families(3) = l_maf                          
 !   call SetupNewl2auxRecord ( dim_families, data_dim_sizes, (/1,1,1/), l2aux )
     call SetupNewl2auxRecord ( l2aux, inputDimFamilies=dim_families, &
-     & inputDimSizes=data_dim_sizes, inputDimStarts=(/1,1,1/) )
+     & inputDimSizes=data_dim_sizes, inputDimStarts=(/1,1,1/), inputQuantityType=quantityType )
     l2aux%values = L1BDATA%DpField
     deallocate(L1BDATA%DpField, stat=status)
     if ( status /= 0 ) &
@@ -1417,6 +1420,10 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.45  2003/01/18 02:37:03  livesey
+! Made the readl2aux data stuff work from the l2cf by adding the
+! quantityType argument.
+!
 ! Revision 2.44  2003/01/17 23:11:26  pwagner
 ! Moved most ops out of LoinL2AUXData to SetupL2AUXData
 !
