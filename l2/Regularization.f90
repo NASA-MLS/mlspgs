@@ -37,8 +37,7 @@ module Regularization
   integer, parameter :: FieldSizes = 1   ! size(regOrders) /= size(regQuants)
   integer, parameter :: OrderTooBig = FieldSizes + 1
   integer, parameter :: RegQuantsReq = OrderTooBig + 1 ! RegQuants required
-  integer, parameter :: TooFewCols = RegQuantsReq + 1  ! Won't fit
-  integer, parameter :: TooFewRows = TooFewCols + 1    ! Won't fit
+  integer, parameter :: TooFewRows = RegQuantsReq + 1  ! Won't fit
   integer, parameter :: Unitless = TooFewRows + 1      ! Orders must be unitless
 
   integer :: Error       ! non-zero if an error occurs
@@ -139,7 +138,7 @@ contains
         ncol = a%col%nelts(ib)
         if ( rows + ncol - ord - 1 > a%row%nelts(1) ) &
           & call announceError ( tooFewRows, orders )
-        if ( ncol < ord+1 ) call announceError ( tooFewCols, orders )
+        if ( ncol < ord+1 ) cycle
         if ( ord > maxRegOrd ) call announceError ( orderTooBig, orders )
         if ( ord == 0 .or. wt <= 0.0_r8 .or. error /= 0 ) then
           call createBlock ( a%block(1,ib), nrow, ncol,  m_absent )
@@ -221,9 +220,6 @@ contains
     case ( regQuantsReq )     ! RegQuants required if size(regOrders) /= 1
       call output ( "The regQuants field is required if more than one order " )
       call output ( "is specified.", advance="yes" )
-    case ( tooFewCols )
-      call output ( "Not enough columns for specified regularization order.", &
-        & advance="yes" )
     case ( tooFewRows )
       call output ( "Not enough rows in the matrix to do regularization.", &
         & advance="yes" )
@@ -236,6 +232,9 @@ contains
 end module Regularization
 
 ! $Log$
+! Revision 2.13  2002/07/02 01:45:56  vsnyder
+! Regularization.f90
+!
 ! Revision 2.12  2002/05/22 19:15:06  vsnyder
 ! Output the number of rows used for regularization conditions
 !
