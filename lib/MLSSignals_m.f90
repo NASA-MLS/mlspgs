@@ -33,8 +33,8 @@ module MLSSignals_M
   public :: DestroySpectrometerType, DestroySpectrometerTypeDatabase, Dump
   public :: Dump_Bands, Dump_Radiometers, Dump_Signals, Dump_Spectrometertypes
   public :: GetAllModules, GetBandName, GetModuleFromRadiometer
-  public :: GetModuleFromSignal, GetModuleName, GetRadiometerFromSignal
-  public :: GetRadiometerName, GetSignal, GetSignalName
+  public :: GetModuleFromSignal, GetModuleName, GetNameOfSignal
+  public :: GetRadiometerFromSignal, GetRadiometerName, GetSignal, GetSignalName
   public :: GetSpectrometerTypeName, IsModuleSpacecraft, MatchSignal, MLSSignals
 
   integer, public, parameter :: MaxSigLen = 80 ! Maximum length of a signal name
@@ -66,7 +66,6 @@ module MLSSignals_M
 
   type, public :: Band_T
     real(r8) :: CenterFrequency         ! Negative if not present (wide filter)
-    integer :: PointingGrid = 0         ! Database index -- see PointingGrid_m
     integer :: Prefix                   ! Sub_rosa index of declaration's label
     integer :: Radiometer               ! Index in Radiometers database
     integer :: SpectrometerType         ! Index in SpectrometerTypes database
@@ -100,7 +99,6 @@ module MLSSignals_M
     integer :: Index                    ! Index into master signals database
     integer :: InstrumentModule         ! Index in Modules database
     integer :: Name                     ! Sub_rosa index of declaration's label
-    integer :: PointingGrid = 0         ! Database index -- see PointingGrid_m
     integer :: Radiometer               ! Index in Radiometers database
     integer :: SideBand                 ! -1=lower, +1=upper, 0=folded
     integer :: Spectrometer             ! Just a spectrometer number
@@ -603,13 +601,26 @@ contains
     end if
   end subroutine DestroyRadiometerDatabase
 
+  ! ----------------------------------------------  DestroySignal  -----
+  subroutine DestroySignal ( Signal )
+    ! Destroy one signal in the signals database (or elsewhere)
+    type(signal_T), intent(inout) :: Signal
+
+    call deallocate_test ( signal%channels, 'Signal', moduleName )
+    ! Don't destroy Frequencies or Widths.  Those fields are shallow
+    ! copies here.  They're destroyed in DestroySpectrometerType.
+  end subroutine DestroySignal
+
   ! --------------------------------------  DestroySignalDatabase  -----
   subroutine DestroySignalDatabase ( Signals )
     type(signal_T), dimension(:), pointer :: Signals
-    integer :: Status
+    integer :: I, Status
 
     ! Executable code
     if ( associated(signals) ) then
+      do i = 1, size(signals)
+        call destroySignal ( signals(i) )
+      end do
       deallocate ( signals, stat = status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
         & MLSMSG_DeAllocate // 'Signal database' )
@@ -618,7 +629,8 @@ contains
 
   ! ------------------------------------  DestroySpectrometerType  -----
   subroutine DestroySpectrometerType ( SpectrometerType )
-    type(spectrometerType_T) :: SpectrometerType
+    ! Destroy one SpectrometerType object.
+    type(spectrometerType_T), intent(inout) :: SpectrometerType
     call deallocate_Test ( spectrometerType%frequencies, &
       & 'Spectrometer%frequencies', moduleName )
     call deallocate_Test ( spectrometerType%widths, 'Spectrometer%widths', &
@@ -662,8 +674,6 @@ contains
         & advance='yes' )
       call output ( '   Frequency: ')
       call output ( bands(i)%centerFrequency )
-      call output ( '   PointingGrid: ' )
-      call output ( bands(i)%pointingGrid, advance='yes' )
     end do
   end subroutine DUMP_BANDS
 
@@ -724,8 +734,6 @@ contains
       call output ( lbound(signals(i)%frequencies,1), 3 )
       call output ( ':' )
       call output ( ubound(signals(i)%frequencies,1), 3 )
-      call output ( '   PointingGrid: ' )
-      call output ( signals(i)%pointingGrid, advance='yes' )
       call output ( '   Frequencies:', advance='yes' )
       call dump ( signals(i)%frequencies )
       call output ( '   Widths:', advance='yes' )
@@ -826,6 +834,113 @@ contains
     call Get_String ( modules(instrumentModule)%name, string_text )
   end subroutine GetModuleName
 
+  ! --------------------------------------------  GetNameOfSignal  -----
+  subroutine GetNameOfSignal ( Signal, String_text, NoRadiometer, NoBand, &
+    & NoSwitch, NoSpectrometer, NoChannels, NoSuffix )
+    ! Given a signal object, this routine constructs a full signal name.
+    type(signal_T), intent(in) :: SIGNAL
+    character(len=*), intent(inout) :: STRING_TEXT
+    logical, intent(in), optional :: NORADIOMETER
+    logical, intent(in), optional :: NOBAND
+    logical, intent(in), optional :: NOSWITCH
+    logical, intent(in), optional :: NOSPECTROMETER
+    logical, intent(in), optional :: NOCHANNELS
+    logical, intent(in), optional :: NOSUFFIX
+
+    ! Local variables
+    logical :: First     ! First channel in signal text
+    integer :: I, J, L
+    logical :: MY_NORADIOMETER, MY_NOBAND, MY_NOSWITCH
+    logical :: MY_NOSPECTROMETER, MY_NOCHANNELS
+    character (len=8) :: word
+
+    ! Executable code
+    string_text       = ''
+    my_noRadiometer   = .false.
+    my_noBand         = .false.
+    my_noSwitch       = .false.
+    my_noSpectrometer = .false.
+    my_noChannels     = .false.
+
+    if ( present(noRadiometer) )   my_noRadiometer =   noRadiometer
+    if ( present(noBand) )         my_noBand =         noBand
+    if ( present(noSwitch) )       my_noSwitch =       noSwitch
+    if ( present(noSpectrometer) ) my_noSpectrometer = noSpectrometer
+    if ( present(noChannels) )     my_noChannels =     noChannels
+
+    if ( .not. my_noRadiometer ) call GetRadiometerName ( signal%radiometer, &
+      & string_text, noSuffix=noSuffix )
+
+    if ( .not. my_noBand ) then
+      if ( (len_trim(string_text) /= 0) .and. &
+        &  (len_trim(string_text)<len(string_text)) ) &
+        &  string_text = TRIM(string_text) // '.'
+      call GetBandName ( signal%band, &
+        & string_text(LEN_TRIM(string_text)+1:), sideband=signal%sideband, &
+        & noSuffix=noSuffix )
+    end if
+
+    if ( .not. my_noSwitch ) then
+      if ( (len_trim(string_text) /= 0) .and. &
+        &  (len_trim(string_text)+1<len(string_text)) ) &
+        &  string_text = TRIM(string_text) // '.S'
+      write (word,'(I8)') signal%switch
+      word = adjustl(word)
+      if ( len_trim(string_text)+len_trim(word) < len(string_text) )&
+        & string_text = TRIM(string_text) // TRIM(word)
+    end if
+
+    if ( .not. my_noSpectrometer ) then
+      if ( (len_trim(string_text) /= 0) .and. &
+        &  (len_trim(string_text)<len(string_text)) ) &
+        &  string_text = TRIM(string_text) // '.'
+      call GetSpectrometerTypeName ( signal%spectrometerType, &
+        & signal%spectrometer, string_text(LEN_TRIM(string_text)+1:) )
+    end if
+
+    if ( .not. my_noChannels .and. associated(signal%channels) ) then
+      l = len_trim(string_text)
+      call addToSignalString ( '.C' )
+      i = lbound(signal%channels, 1)
+      first = .true.
+oc:   do
+        do
+          if ( i > ubound(signal%channels, 1) ) exit oc
+          if ( signal%channels(i) ) exit
+          i = i + 1
+        end do
+        if ( .not. first ) call addToSignalString ( '+' )
+        first = .false.
+        j = i
+        do while ( j < ubound(signal%channels, 1) )
+          if ( .not. signal%channels(j+1) ) exit
+        end do
+        if ( j > i ) then
+          write ( word, * ) i
+          call addToSignalString ( word )
+          call addToSignalString ( ':' )
+          write ( word, * ) j
+          call addToSignalString ( word )
+        else
+          write ( word, * ) i
+          call addToSignalString ( word )
+        end if
+        i = j + 1
+      end do oc
+    end if
+
+  contains
+    subroutine AddToSignalString ( Text )
+      ! Assumes L = len_trim(string_text) on entry, preserves it
+      character(len=*), intent(in) :: Text
+      integer :: Lt
+      lt = len_trim(adjustl(text))
+      if ( l+lt <= len(string_text) ) &
+        & string_text(l+1:l+lt) = trim(adjustl(text))
+      l = l + lt
+    end subroutine AddToSignalString
+  end subroutine GetNameOfSignal
+
   ! ------------------------------------  GetRadiometerFromSignal  -----
   integer function GetRadiometerFromSignal(signal)
     ! Returns radiometer field from given signal given as database index
@@ -868,8 +983,8 @@ contains
   end function GetSignal    
 
   ! ----------------------------------------------  GetSignalName  -----
-  subroutine GetSignalName(signal, string_text, noRadiometer, noBand, &
-    & noSwitch, noSpectrometer, noChannels, noSuffix)
+  subroutine GetSignalName ( Signal, String_text, NoRadiometer, NoBand, &
+    & NoSwitch, NoSpectrometer, NoChannels, NoSuffix )
     ! Given an index in the signals database, this routine constructs a
     ! full signal name.
     integer, intent(in) :: SIGNAL                 ! Database index
@@ -881,57 +996,9 @@ contains
     logical, intent(in), optional :: NOCHANNELS
     logical, intent(in), optional :: NOSUFFIX
 
-    ! Local variables
-    logical :: MY_NORADIOMETER, MY_NOBAND, MY_NOSWITCH
-    logical :: MY_NOSPECTROMETER, MY_NOCHANNELS
-    type (signal_T), pointer :: sig
-    character (len=8) :: word
-
-    ! Executable code
-    sig => signals(signal)
-    string_text       = ''
-    my_noRadiometer   = .false.
-    my_noBand         = .false.
-    my_noSwitch       = .false.
-    my_noSpectrometer = .false.
-    my_noChannels     = .false.
-
-    if ( present(noRadiometer) )   my_noRadiometer =   noRadiometer
-    if ( present(noBand) )         my_noBand =         noBand
-    if ( present(noSwitch) )       my_noSwitch =       noSwitch
-    if ( present(noSpectrometer) ) my_noSpectrometer = noSpectrometer
-    if ( present(noChannels) )     my_noChannels =     noChannels
-
-    if ( .not. my_noRadiometer ) &
-      & call GetRadiometerName ( sig%radiometer, string_text, noSuffix=noSuffix )
-
-    if ( .not. my_noBand ) then
-      if ( (len_trim(string_text) /= 0) .and. &
-        &  (len_trim(string_text)<len(string_text)) ) &
-        &  string_text = TRIM(string_text) // '.'
-      call GetBandName ( sig%band, &
-        & string_text(LEN_TRIM(string_text)+1:), sideband=sig%sideband, &
-        & noSuffix=noSuffix )
-    end if
-
-    if ( .not. my_noSwitch ) then
-      if ( (len_trim(string_text) /= 0) .and. &
-        &  (len_trim(string_text)+1<len(string_text)) ) &
-        &  string_text = TRIM(string_text) // '.S'
-      write (word,'(I8)') sig%switch
-      word = adjustl(word)
-      if ( len_trim(string_text)+len_trim(word) < len(string_text) )&
-        & string_text = TRIM(string_text) // TRIM(word)
-    end if
-
-    if ( .not. my_noSpectrometer ) then
-      if ( (len_trim(string_text) /= 0) .and. &
-        &  (len_trim(string_text)<len(string_text)) ) &
-        &  string_text = TRIM(string_text) // '.'
-      call GetSpectrometerTypeName ( sig%spectrometerType, sig%spectrometer, &
-        & string_text(LEN_TRIM(string_text)+1:) )
-    end if
-  end subroutine GetSignalName
+    call getNameOfSignal ( signals(signal), string_text, noRadiometer, noBand, &
+      & noSwitch, noSpectrometer, noChannels, noSuffix )
+  end subroutine GetSignalName 
 
   ! ----------------------------------------  GetSpectrometerName  -----
   subroutine GetSpectrometerTypeName(spectrometerType, number, string_text)
@@ -962,7 +1029,7 @@ contains
 
   ! ------------------------------------------------  MatchSignal  -----
   integer function MatchSignal ( Signals, Probe )
-    ! Givan an array Signals, find the one in the array that privides
+    ! Given an array Signals, find the one in the array that provides
     ! the smallest superset of features of the signal Probe.  The result
     ! is zero if no signals match.
 
@@ -1004,6 +1071,11 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.23  2001/04/13 20:40:23  vsnyder
+! Create GetNameOfSignal that returns the name of a Signal_T object (the
+! already-present subroutine GetSignalName takes a signals-database index).
+! Add DestroySignal to destroy one Signal_T object.
+!
 ! Revision 2.22  2001/04/12 18:14:19  vsnyder
 ! Get the right vertex for 'deferred'
 !
