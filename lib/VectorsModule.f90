@@ -903,7 +903,7 @@ contains ! =====     Public Procedures     =============================
         call output ( 'x')
         call output ( size(vector%quantities(j)%values(1,:)), advance='yes')
         if ( myDetails > 0 ) then
-          call dump ( vector%quantities(j)%values, ', Elements = ' )
+          call dump ( vector%quantities(j)%values, '  Elements = ' )
           if ( associated(vector%quantities(j)%mask) ) then
             call dump ( vector%quantities(j)%mask, format='(z8)' )
           else
@@ -1643,6 +1643,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.70  2001/10/18 23:31:56  pwagner
+! Expanded use of details in dump_vectors; stops if try to rmVectorFromDatabase
+!
 ! Revision 2.69  2001/10/15 22:11:54  livesey
 ! Added globalUnit stuff
 !
