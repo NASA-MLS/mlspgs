@@ -141,10 +141,10 @@ contains ! =====     Public Procedures     =============================
         & required=(/ f_values /), &
         & extra=(/ f_formula, f_start, f_stop /) )
       vgrid%noSurfs = nsons(value_field)-1
-      call allocate_test ( vgrid%surfs, vgrid%noSurfs, "vGrid%surfs", &
+      call allocate_test ( vgrid%surfs, vgrid%noSurfs, 1, "vGrid%surfs", &
         & ModuleName )
       if ( got_field(f_values) ) &
-        & prev_units = check_units ( value_field, f_values, vgrid%surfs )
+        & prev_units = check_units ( value_field, f_values, vgrid%surfs(:,1) )
     case ( l_l2gp )
       if (.not. associated(l2gpDatabase) ) &
         & call MLSMessage(MLSMSG_Error,ModuleName,&
@@ -153,9 +153,9 @@ contains ! =====     Public Procedures     =============================
       if (got_field(f_coordinate)) call MLSMessage(MLSMSG_Warning,ModuleName,&
         & 'Redundant coordinate spec for vGrid from l2gp')
       vgrid%verticalCoordinate = l_zeta
-      call allocate_test ( vgrid%surfs, vgrid%noSurfs, "vGrid%surfs", &
+      call allocate_test ( vgrid%surfs, vgrid%noSurfs, 1, "vGrid%surfs", &
         & ModuleName )
-      vgrid%surfs = l2gpDatabase(l2gpIndex)%pressures
+      vgrid%surfs(:,1) = l2gpDatabase(l2gpIndex)%pressures
     case ( l_linear )
       call check_fields ( root, l_linear, got_field, &
         & required=(/ f_number, f_start, f_stop /), &
@@ -166,21 +166,21 @@ contains ! =====     Public Procedures     =============================
           & call announce_error ( subtree(1,number), unitless )
         vgrid%noSurfs = nint(values(1))
         if ( vgrid%noSurfs < 2 ) call announce_error ( root, tooFew )
-        call allocate_test ( vgrid%surfs, vgrid%noSurfs, "vGrid%surfs", &
+        call allocate_test ( vgrid%surfs, vgrid%noSurfs, 1, "vGrid%surfs", &
           & ModuleName )
       end if
       if ( got_field(f_start) ) then
         call expr ( subtree(2,start), units, values )
         prev_units = units(1)
-        vgrid%surfs(1) = values(1)
+        vgrid%surfs(1,1) = values(1)
         if ( prev_units /= stop_units(1) ) &
           & call announce_error ( root, startStopUnits )
       end if
-      if ( got_field(f_stop) ) vgrid%surfs(vgrid%noSurfs) = stop(1)
+      if ( got_field(f_stop) ) vgrid%surfs(vgrid%noSurfs,1) = stop(1)
       if ( error == 0 ) then
         step = ( stop(1) - values(1) ) / ( number-1 )
         do i = 2, number-1
-          vgrid%surfs(i) = vgrid%surfs(1) + (i-1) * step
+          vgrid%surfs(i,1) = vgrid%surfs(1,1) + (i-1) * step
         end do
       end if
     case ( l_logarithmic )
@@ -200,12 +200,12 @@ contains ! =====     Public Procedures     =============================
         if ( got_field(f_start) ) prev_units = check_units ( start, f_start )
       end if
       if ( error == 0 ) then
-        call allocate_test ( vgrid%surfs, vgrid%noSurfs, "vGrid%surfs", &
+        call allocate_test ( vgrid%surfs, vgrid%noSurfs, 1, "vGrid%surfs", &
           & ModuleName )
         k = 1
         n = 1 ! One less surface the first time, since we have one at the start.
         call expr ( subtree(2,start), units, values )
-        vgrid%surfs(1) = values(1)
+        vgrid%surfs(1,1) = values(1)
         do i = 2, j
           call expr ( subtree(i,formula), units, values )
           if ( values(2) <= 0.0d0 ) then
@@ -215,7 +215,7 @@ contains ! =====     Public Procedures     =============================
           step = 10.0 ** (-1.0d0/values(2))
           do l = 1, nint(values(1)) - n
             k = k + 1
-            vgrid%surfs(k) = vgrid%surfs(k-1) * step
+            vgrid%surfs(k,1) = vgrid%surfs(k-1,1) * step
           end do
           n = 0 ! Do all of the surfaces after the first time.
         end do
@@ -382,6 +382,9 @@ end module vGrid
 
 !
 ! $Log$
+! Revision 2.15  2003/06/20 19:37:06  pwagner
+! Quanities now share grids stored separately in databses
+!
 ! Revision 2.14  2002/11/22 12:23:24  mjf
 ! Added nullify routine(s) to get round Sun's WS6 compiler not
 ! initialising derived type function results.
