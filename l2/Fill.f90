@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -3222,17 +3222,7 @@ contains ! =====     Public Procedures     =============================
       ! (Livesey and Wu)
 
       ! Assumptions:
-      ! (1)This fill operation is triggered by a command
-      !    such as the following in the lcf
-      !      Fill, state.columnO3, method=special, vmrQuantity=state.o3, $
-      !      boundaryPressure=state.tpPressure
-      ! (2)the vmr is in units of PHYQ_VMR and not, say, ppmv;
-      !    it is in fact identical to the coefficients of the mls basis functions
-      ! (3)The pressure surfaces are in hPa, but not all necessarily at the
-      !    same logarithmic distance from one another
-      ! (4)The tropospheric boundary pressure is somewhere in between the surfs
-      ! (5)Unless first,last instances are args, fill all instances
-      !    (unlike join which has to worry about chunks and overlaps)
+      ! (See above)
       integer, intent(in) :: KEY
       type (VectorValue_T), intent(inout) :: QTY
       type (VectorValue_T), intent(in) :: BNDPRESSQTY
@@ -3359,19 +3349,10 @@ contains ! =====     Public Procedures     =============================
     subroutine FillColAbundance_idl ( key, qty, bndPressQty, vmrQty, &
       & firstInstance, lastInstance )
       ! A special fill according to W.R.Read's idl code
+      ! Similar to his hand-written notes, but with a small correction
 
       ! Assumptions:
-      ! (1)This fill operation is triggered by a command
-      !    such as the following in the lcf
-      !      Fill, state.columnO3, method=special, vmrQuantity=state.o3, $
-      !      boundaryPressure=state.tpPressure
-      ! (2)the vmr is in units of PHYQ_VMR and not, say, ppmv;
-      !    it is in fact identical to the coefficients of the mls basis functions
-      ! (3)The pressure surfaces are in hPa, but not all necessarily at the
-      !    same logarithmic distance from one another
-      ! (4)The tropospheric boundary pressure is somewhere in between the surfs
-      ! (5)Unless first,last instances are args, fill all instances
-      !    (unlike join which has to worry about chunks and overlaps)
+      ! (See above)
       integer, intent(in) :: KEY
       type (VectorValue_T), intent(inout) :: QTY
       type (VectorValue_T), intent(in) :: BNDPRESSQTY
@@ -3436,6 +3417,10 @@ contains ! =====     Public Procedures     =============================
         & (/l_zeta/)) ) then
         call Announce_error ( key, No_Error_code, &
           & 'Fill column abundance, but vmr not on zeta surfs.'  )
+        return
+      else if ( vmrQty%template%noSurfs < 2 ) then
+        call Announce_error ( key, No_Error_code, &
+          & 'Fill column abundance, but too few vmr surfaces'  )
         return
       end if
 
@@ -3521,7 +3506,7 @@ contains ! =====     Public Procedures     =============================
         firstSurfaceAbove = FindFirst (Pi < thisBndPress)
         if ( firstSurfaceAbove < 1 ) then
           call MLSMessage ( MLSMSG_Warning, ModuleName, &
-          & 'Filling column, but tropopause below 1st surface' )
+          & 'Filling column, but tropopause outside pres. surfaces' )
           firstSurfaceBelow = 1
         elseif ( firstSurfaceAbove == 1 ) then
           ! Nothing special
@@ -6578,6 +6563,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.257  2004/02/20 00:43:27  pwagner
+! Clarified warning message when tropopause too big/little
+!
 ! Revision 2.256  2004/02/19 23:59:00  pwagner
 ! Integrates column abundances using WReads method
 !
