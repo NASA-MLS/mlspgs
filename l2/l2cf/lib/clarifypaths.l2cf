@@ -41,4 +41,4 @@
 !define(climatologyFile,{'!inpathcli/MLS-Aura_L2Cal-Climatologies_v1-2-0_0000d000.txt'})
 !define(filterFile,{'!calpath/MLS-Aura_L2Cal-Filters_v1-2-0_0000d000.txt'})
 !define(pfgFile,{'!calpath/MLS-Aura_L2Cal-PFG_v1-2-1_0000d000.txt'})
-!define(pfgRtvlFile,{'!calpath/MLS-Aura_L2Cal-PFG-rtvl_v1-2-0_0000d000.txt'})
+!define(pfgRtvlFile,{'!calpath/MLS-Aura_L2Cal-PFG-rtvl_v1-2-1_0000d000.txt'})
