@@ -385,6 +385,7 @@ contains ! =====     Public Procedures     =============================
     info%do_baseline = .false.
     info%do_conv = .false.
     info%do_freq_avg = .false.
+    info%forceFoldedOutput = .false.
     info%forceSidebandFraction = .false.
     info%globalConfig = global
     info%incl_cld = .false.
@@ -865,6 +866,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.87  2003/10/28 23:44:43  livesey
+! Added initialization of forceFoldedOutput
+!
 ! Revision 2.86  2003/10/15 16:59:25  pwagner
 ! Should allow null filenames if TOOLKIT
 !
