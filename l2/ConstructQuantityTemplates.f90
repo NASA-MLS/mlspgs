@@ -424,7 +424,7 @@ contains ! =====     Public Procedures     =============================
       
       ! Some special cases for certain quantities
       select case (quantityType)
-      case ( l_SidebandRatio, l_NoiseBandwidth, l_SystemTemperature )
+      case ( l_SidebandRatio, l_NoiseBandwidth, l_SystemTemperature, l_elevOffset )
         frequencyCoordinate = l_channel
         signalInfo = GetSignal(signal)
         noChans = size ( signalInfo%frequencies ) 
@@ -1124,6 +1124,10 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.91  2003/05/22 04:04:07  livesey
+! elevOffset is now a channel dependent rather than radiometer dependent
+! quantity.
+!
 ! Revision 2.90  2003/05/10 23:39:25  livesey
 ! Fixed problems with chisqs and noRads
 !
