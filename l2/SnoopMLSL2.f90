@@ -1,5 +1,5 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
 
 module SnoopMLSL2               ! Interface between MLSL2 and IDL snooper via pvm3.
 
@@ -24,12 +24,12 @@ module SnoopMLSL2               ! Interface between MLSL2 and IDL snooper via pv
   use MatrixModule_1, ONLY: Matrix_T, RC_Info
   use MLSCommon, only: R4, R8, I4, RM
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning, &
-    MLSMSG_Info, MLSMSG_Allocate, MLSMSG_DeAllocate
+    & MLSMSG_Info, MLSMSG_Allocate, MLSMSG_DeAllocate, PVMErrorMessage
   use MLSSets, only: FINDFIRST
   use MLSSignals_M, only: GETSIGNALNAME
   use MoreTree, only: Get_Field_Id
   use PVM, only: PVMDataDefault, PVMFinitsend, PVMFmyTid, PVMFgSize, &
-    & PVMErrorMessage, PVMF90Unpack, PVMTaskExit, PVMFNotify, PVMFSend
+    & PVMF90Unpack, PVMTaskExit, PVMFNotify, PVMFSend
   use PVMIDL, only:  IDLMsgTag, PVMIDLPack, PVMIDLReceive, PVMIDLSend, PVMIDLUnpack
   use QuantityPVM, only: PVMSENDQUANTITY
   use QuantityTemplates, only: QuantityTemplate_T
@@ -1004,6 +1004,9 @@ contains ! ========  Public Procedures =========================================
 end module SnoopMLSL2
 
 ! $Log$
+! Revision 2.38  2005/03/15 23:50:52  pwagner
+! PVMERRORMESSAGE now part of MLSMessageModule
+!
 ! Revision 2.37  2004/06/10 00:58:45  vsnyder
 ! Move FindFirst, FindNext from MLSCommon to MLSSets
 !
