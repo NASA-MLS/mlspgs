@@ -228,7 +228,7 @@ contains ! =====     Public Procedures     =============================
         end do
         call allocate_test ( zb%values, zb%r2(size(x%r1)), 1, "zb%values", &
           & ModuleName )
-        zb%values = 0.0_r8 ! ??? Improve this in level 1.0 by only filling
+        zb%values = 0.0_r8 ! ??? Improve this by only filling
         !                    ??? values that don't get set below
         do k = 1, size(x%r1)
           i = 1; j = 1; l = 1
@@ -399,7 +399,7 @@ contains ! =====     Public Procedures     =============================
 !           & dot_product(zt(r1(i):i-1,i),zt(r1(i):i-1,i))
         g = x%values(ii+x%r2(i-1)+1,1) - &
             & dot( i-r1(i), zt(r1(i),i), 1, zt(r1(i),i), 1 )
-        if ( g <= tol ) then
+        if ( g <= tol .and. i < nc ) then
           call MLSMessage ( MLSMSG_Error, ModuleName, &
             & "Matrix in CholeskyFactor is not positive-definite." )
         end if
@@ -644,7 +644,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine CreateBlock_0
 
   ! ----------------------------------------------  DenseCholesky  -----
-  subroutine DenseCholesky ( zt, xin, status )
+  subroutine DenseCholesky ( ZT, XIN, Status )
   ! Do the Cholesky decomposition of XIN giving ZT.
     real(r8), intent(inout) :: ZT(:,:) ! Inout in case it's associated with XIN
     real(r8), intent(inout) :: XIN(:,:) ! Inout in case it's associated with Z
@@ -660,13 +660,13 @@ contains ! =====     Public Procedures     =============================
       zt(i+1:nc,i) = 0.0_r8 ! Clear below the diagonal (helps Sparsify!)
 !     d = xin(i,i) - dot_product(zt(1:i-1,i),zt(1:i-1,i))
       d = xin(i,i) - dot( i-1, zt(1,i), 1, zt(1,i), 1 )
-      if ( d <= tol ) then
+      if ( d <= tol .and. i < nc ) then
         if ( present(status ) ) then
           status = i
           return
         end if
         call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & "Matrix in CholeskyFactor is not positive-definite." )
+          & "Matrix in DenseCholesky is not positive-definite." )
       end if
       d = sqrt(d)
       zt(i,i) = d
@@ -1060,6 +1060,7 @@ contains ! =====     Public Procedures     =============================
           m = xb%r1(i)        ! Index of first row of XB with nonzero value
           k = xb%r2(i-1) + 1
           l = xb%r2(i)
+          if ( l < k ) cycle  ! Empty column in XB
           mz = 1
           if ( my_upper ) mz = i
           do j = mz, yb%ncols  ! Columns of ZB
@@ -1404,9 +1405,9 @@ contains ! =====     Public Procedures     =============================
     integer :: V1                  ! Subscripts and loop inductors
 
     if ( b%ncols /= size(v) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & "Matrix block and vector not compatible in MultiplyMatrixVector_0" )
+      & "Matrix block and vector not compatible in MultiplyMatrixVectorNoT_0" )
     if ( b%nrows /= size(p) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & "Matrix block and result not compatible in MultiplyMatrixVector_0" )
+      & "Matrix block and result not compatible in MultiplyMatrixVectorNoT_0" )
     my_update = .false.
     if ( present(update) ) my_update = update
     my_diag = .true.
@@ -2093,6 +2094,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.41  2001/06/28 01:05:59  vsnyder
+! Allow last diagonal element in Cholesky factor to be tiny
+!
 ! Revision 2.40  2001/06/27 01:15:10  vsnyder
 ! XMASK and YMASK arguments of MultiplyMatrixBlocks need to be pointers
 ! because they might not be associated in the caller.  Therefore they
