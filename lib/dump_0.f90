@@ -316,20 +316,24 @@ contains
   end subroutine DUMP_1D_INTEGER
 
   ! ----------------------------------------------  DUMP_1D_LOGICAL ----
-  subroutine DUMP_1D_LOGICAL ( ARRAY, NAME, CLEAN )
+  subroutine DUMP_1D_LOGICAL ( ARRAY, NAME, CLEAN, LBOUND )
     logical, intent(in) :: ARRAY(:)
     character(len=*), intent(in), optional :: NAME
     logical, intent(in), optional :: CLEAN
+    integer, intent(in), optional :: LBOUND ! Low bound of Array
 
+    integer :: Base, J, K
     logical :: myClean
-    integer :: J, K
+
+    base = 0
+    if ( present(lbound) ) base = lbound - 1
 
     myClean = .false.
     if ( present(clean) ) myClean = clean
 
     if ( size(array) == 0 ) then
       call empty ( name )
-    else if ( size(array) == 1 ) then
+    else if ( size(array) == 1 .and. base == 0 ) then
       call name_and_size ( name, myClean, 1 )
       call output ( array(1), advance='yes' )
     else
@@ -337,7 +341,7 @@ contains
       if ( present(name) ) call output ( '', advance='yes' )
       do j = 1, size(array), 34
         if (.not. myClean) then
-          call output ( j, max(4,ilog10(size(array))+1) )
+          call output ( j+base, max(4,ilog10(size(array))+1) )
           call output ( afterSub )
         end if
         do k = j, min(j+33, size(array))
@@ -1437,6 +1441,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.39  2004/07/23 18:34:59  vsnyder
+! Add LBOUND argument to Dump_1d_logical
+!
 ! Revision 2.38  2004/07/21 19:57:21  pwagner
 ! New rms, wholeArray options to some dumps
 !
