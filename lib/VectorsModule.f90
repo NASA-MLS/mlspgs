@@ -101,7 +101,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   ! Types
   public :: VectorTemplate_T, VectorValue_T, Vector_T
   ! Parameters
-  public :: M_Fill, M_FullDerivatives, M_LinAlg
+  public :: M_Fill, M_FullDerivatives, M_LinAlg, M_Tikhonov
 
 ! =====     Defined Operators and Generic Identifiers     ==============
 
@@ -194,6 +194,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   integer, parameter :: M_Fill = 2**2
   integer, parameter :: M_FullDerivatives = 2**1
   integer, parameter :: M_LinAlg = 2**0
+  integer, parameter :: M_Tikhonov = 2**3    ! Where to do Tikhonov regularization
 
   ! This type describes a vector.
 
@@ -2023,6 +2024,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.86  2002/08/04 15:55:56  mjf
+! Added some nullify statements for Sun's rubbish compiler.
+!
 ! Revision 2.85  2002/07/22 03:26:15  livesey
 ! Added CheckIntegrity
 !
