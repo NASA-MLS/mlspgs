@@ -965,7 +965,7 @@ contains
             end if
           else
             call clearMatrix ( normalEquations%m ) ! start with zero
-            call destroyVectorValue ( v(aTb) ) ! Clear the RHS vector
+            call clearVector ( v(aTb) ) ! Clear the RHS vector
           end if
           ! aprioriNorm was computed when nwt_flag was NF_EVALF.  It is the
           ! _square_ of the norm of (apriori - measurements).
@@ -2799,6 +2799,10 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.146  2002/06/25 20:45:31  vsnyder
+! DestroyVectorValue should have been ClearVector in the case that there is
+! no apriori covariance.
+!
 ! Revision 2.145  2002/06/18 01:19:52  vsnyder
 ! Cosmetic changes
 !
