@@ -882,7 +882,7 @@ contains
     call allocate_test ( eta_fzp,       no_ele, size(grids_f%values),  'eta_fzp', moduleName )
     call allocate_test ( eta_zp,        no_ele, grids_f%p_len,  'eta_zp', moduleName )
     call allocate_test ( sps_path,      no_ele, no_mol, 'sps_path',       moduleName )
-    CALL allocate_test(true_path_flags,no_ele,'true_path_flags',moduleName)
+    CALL allocate_test ( true_path_flags, no_ele, 'true_path_flags',moduleName)
     true_path_flags = .true.
     if ( fwdModelConf%Incl_Cld ) then !JJ
       call allocate_test ( do_calc_iwc,    no_ele, size(grids_iwc%values),  'do_calc_iwc',  moduleName )
@@ -943,7 +943,7 @@ contains
                                                               & moduleName )
       call allocate_test ( tan_dh_dt,    1, sv_t_len, 'tan_dh_dt',    moduleName )
       call allocate_test ( tan_d2h_dhdt, 1, sv_t_len, 'tan_d2h_dhdt', moduleName )
-      CALL allocate_test( t_der_path_flags,no_ele,    't_der_path_flags', &
+      CALL allocate_test ( t_der_path_flags, no_ele,          't_der_path_flags', &
                                                               & moduleName )
 
     end if ! temp_der
@@ -2033,6 +2033,7 @@ alpha_path_f = 0.0
           ! Here it is Van - NJL !????
           ! Change to this if statement at some later stage
           ! if ( firstSignal%sideband == 0 ) then
+          sidebandFraction => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
             & quantityType=l_limbSidebandFraction, &
             & signal=fwdModelConf%signals(sigInd)%index, &
             & sideband=thisSideband, config=fwdModelConf )
@@ -2610,6 +2611,9 @@ alpha_path_f = 0.0
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.157  2003/07/09 20:14:19  livesey
+! Anticipative bug fix commented out.
+!
 ! Revision 2.156  2003/07/04 03:40:13  vsnyder
 ! Simplify dump in case exp(incoptdepth_pol) fails
 !
