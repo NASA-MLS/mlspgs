@@ -2030,7 +2030,9 @@ alpha_path_f = 0.0
           & sideband=fwdModelConf%signals(sigInd)%sideband )
         ! Get the sideband fraction if we need to
         if ( fwdModelConf%sidebandStart /= fwdModelConf%sidebandStop ) then   ! We're folding
-          sidebandFraction => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+          ! Here it is Van - NJL !????
+          ! Change to this if statement at some later stage
+          ! if ( firstSignal%sideband == 0 ) then
             & quantityType=l_limbSidebandFraction, &
             & signal=fwdModelConf%signals(sigInd)%index, &
             & sideband=thisSideband, config=fwdModelConf )
@@ -2608,6 +2610,9 @@ alpha_path_f = 0.0
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.156  2003/07/04 03:40:13  vsnyder
+! Simplify dump in case exp(incoptdepth_pol) fails
+!
 ! Revision 2.155  2003/07/04 02:50:15  vsnyder
 ! Simplify interface to Get_GL_Slabs_Arrays, correct a blunder introduced around July 17
 !
