@@ -24,7 +24,8 @@ module ScanModelModule          ! Scan model and associated calculations
     & G0, GM, J2, J4, OMEGA => W, MAXREFRACTION
   use Init_Tables_Module, only: L_REFGPH, L_ZETA
   use intrinsic, only: L_HEIGHTOFFSET, L_NONE, L_PTAN, L_SCANRESIDUAL, &
-    & L_TEMPERATURE, L_TNGTGEOCALT, L_VMR, L_PHITAN, L_ORBITINCLINATION
+    & L_TEMPERATURE, L_TNGTGEOCALT, L_VMR, L_PHITAN, L_ORBITINCLINATION, &
+    & PHYQ_Length, PHYQ_Profiles
   use ManipulateVectorQuantities, ONLY: FINDCLOSESTINSTANCES, &
     & FindInstanceWindow
   use MatrixModule_0, only: DESTROYBLOCK, MATRIXELEMENT_T, M_ABSENT, M_BANDED, &
@@ -42,7 +43,7 @@ module ScanModelModule          ! Scan model and associated calculations
   use VectorsModule, ONLY : GETVECTORQUANTITYBYTYPE, VALIDATEVECTORQUANTITY, &
     & VECTOR_T, VECTORTEMPLATE_T, VECTORVALUE_T, CREATEVECTOR, &
     & CONSTRUCTVECTORTEMPLATE, DESTROYVECTORINFO
-  USE Units, ONLY: Deg2Rad, LN10, PHYQ_Length, PI, PHYQ_Profiles
+  USE Units, ONLY: Deg2Rad, LN10, PI
 
   implicit NONE
 
@@ -2126,6 +2127,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.60  2003/08/15 23:58:20  vsnyder
+! Get PHYQ_... directly from Intrinsic instead of indirectly via Units
+!
 ! Revision 2.59  2003/03/19 19:24:10  pwagner
 ! Prints timing info when necessary; speedup of TwoDScanForwardModel despite terrible NAG memory management
 !
