@@ -30,7 +30,7 @@ CONTAINS
 !=============================================================================
 
     USE MLSL1Config, ONLY: L1Config, GetL1Config
-    USE MLSFiles, Only: HDFVERSION_4, HDFVERSION_5
+    USE MLSFiles, ONLY: HDFVERSION_4, HDFVERSION_5
     USE InitPCFs, ONLY: L1PCF, GetPCFParameters
     USE MLSPCF1, ONLY: mlspcf_engtbl_start, mlspcf_bwtbl_start, &
          mlspcf_nomen_start, mlspcf_pcf_start, mlspcf_l1cf_start, &
@@ -50,22 +50,14 @@ CONTAINS
 
     TYPE (TAI93_Range_T) :: procRange
     CHARACTER (LEN=132) :: PhysicalFilename
-    INTEGER :: bw_tbl_unit, eng_tbl_unit, gains_tbl_unit, nomen_unit, zeros_tbl_unit, &
-         errno, ios, lenarg, lenval, returnStatus, version, error, hdfVersion
+    INTEGER :: bw_tbl_unit, eng_tbl_unit, gains_tbl_unit, nomen_unit, &
+         zeros_tbl_unit, errno, ios, lenarg, lenval, returnStatus, version, &
+         error, hdfVersion
     INTEGER, EXTERNAL :: PGS_TD_UTCtoTAI
 
 !! Get user parameters from the PCF file
 
     CALL GetPCFParameters
-
-!! Get annotation from PCF and CF files
-!
-!   CreatePCFAnnotation is commented for now due to the 
-!   fact that lib/PCFHdr.f90 is HDF4 only.
-!
-!    CALL CreatePCFAnnotation (mlspcf_pcf_start, anTextPCF)
-!
-!    CALL CreatePCFAnnotation (mlspcf_l1cf_start, anTextCF)
 
 !! Get the Level 1 configuration from the L1CF file
 
@@ -74,19 +66,31 @@ CONTAINS
 !! Open the HDF Fortran Interface
 
     error = 0
-    select case (lowercase(trim(L1Config%Output%HDFVersionString))) 
-       case ('hdf4')
+    SELECT CASE (lowercase(TRIM(L1Config%Output%HDFVersionString))) 
+       CASE ('hdf4')
           hdfVersion = HDFVERSION_4
-       case ('hdf5')
-          call h5open_f(error)
+       CASE ('hdf5')
+          CALL h5open_f(error)
           hdfVersion = HDFVERSION_5
-       case default
+       CASE default
           hdfVersion = HDFVERSION_4
-    end select 
+    END SELECT 
 
-    if (error /= 0) then 
-       call MLSMessage (MLSMSG_Error, ModuleName, "Fortran API error on opening.")
-    endif
+    IF (error /= 0) THEN 
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            "Fortran API error on opening.")
+    ENDIF
+
+!! Get annotation from PCF and CF files  (ONLY HDF 4!)
+
+
+    IF (hdfVersion == HDFVERSION_4) THEN
+
+       CALL CreatePCFAnnotation (mlspcf_pcf_start, anTextPCF)
+
+       CALL CreatePCFAnnotation (mlspcf_l1cf_start, anTextCF)
+
+    ENDIF
 
 !! Check output versions from CF and PCF
 
@@ -294,7 +298,7 @@ CONTAINS
           
 !! Define the SD structures in the output files
 
-    CALL OutputL1B_create(L1BFileInfo)
+    CALL OutputL1B_create (L1BFileInfo)
 
   END SUBROUTINE OpenAndInitialize
 
@@ -319,7 +323,7 @@ CONTAINS
 
     IF (returnStatus /= PGS_S_SUCCESS) THEN
 
-       write (msg, "('Error opening ', a, ' file for PCF: ', i5)") filetype, pcf
+       WRITE (msg, "('Error opening ', a, ' file for PCF: ', i5)") filetype, pcf
        CALL MLSMessage (MLSMSG_Error, ModuleName, msg)
 
     ENDIF
@@ -474,21 +478,21 @@ CONTAINS
     USE MLSL1Common, ONLY: L1BFileInfo
     USE EngTbls, ONLY: Eng_tbl, maxtlm
     USE Hdf, ONLY: DFACC_CREATE, sfstart
-    USE MLSFiles, only: mls_openFile, HDFVERSION_5, HDFVERSION_4
+    USE MLSFiles, ONLY: mls_openFile, HDFVERSION_5, HDFVERSION_4
     USE MLSL1Config, ONLY: L1Config
     USE MLSStrings, ONLY: lowercase
 
     CHARACTER (LEN=132) :: PhysicalFilename
     INTEGER :: returnStatus, sd_id, version, hdfVersion
 
-    select case (lowercase(trim(L1Config%Output%HDFVersionString))) 
-       case ('hdf4')
+    SELECT CASE (lowercase(TRIM(L1Config%Output%HDFVersionString))) 
+       CASE ('hdf4')
           hdfVersion = HDFVERSION_4
-       case ('hdf5')
+       CASE ('hdf5')
           hdfVersion = HDFVERSION_5
-       case default
+       CASE default
           hdfVersion = HDFVERSION_4
-    end select 
+    END SELECT 
 
     ! Open L1BRADD File
 
@@ -498,12 +502,14 @@ CONTAINS
 
     IF (returnStatus == PGS_S_SUCCESS) THEN
        ! Open the HDF file and initialize the SD interface
-          call  mls_openFile(trim(PhysicalFilename),'create',sd_id, hdfVersion)
+          CALL  mls_openFile(TRIM(PhysicalFilename),'create',sd_id, hdfVersion)
           L1BFileInfo%RADDID = sd_id
-          L1BFileInfo%RADDFileName = trim(PhysicalFilename)
-          CALL MLSMessage (MLSMSG_Info, ModuleName, "Opened L1BRADD file: "//trim(PhysicalFilename))
+          L1BFileInfo%RADDFileName = TRIM(PhysicalFilename)
+          CALL MLSMessage (MLSMSG_Info, ModuleName, &
+               "Opened L1BRADD file: "//TRIM(PhysicalFilename))
     ELSE
-       CALL MLSMessage (MLSMSG_Error, ModuleName,"Could not find L1BRADD file entry")
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            "Could not find L1BRADD file entry")
     ENDIF
 
     ! Open L1BRADF File
@@ -516,11 +522,12 @@ CONTAINS
 
        ! Open the HDF file and initialize the SD interface
 
-          call  mls_openFile(PhysicalFilename,'create',sd_id, hdfVersion)
+          CALL  mls_openFile(PhysicalFilename,'create',sd_id, hdfVersion)
 
           L1BFileInfo%RADFID = sd_id
           L1BFileInfo%RADFFileName = PhysicalFilename
-          CALL MLSMessage (MLSMSG_Info, ModuleName, "Opened L1BRADF file: "//PhysicalFilename)
+          CALL MLSMessage (MLSMSG_Info, ModuleName, &
+               "Opened L1BRADF file: "//PhysicalFilename)
 
     ELSE
 
@@ -539,12 +546,13 @@ CONTAINS
 
        ! Open the HDF file and initialize the SD interface
 
-       call  mls_openFile(PhysicalFilename,'create',sd_id, hdfVersion)
+       CALL  mls_openFile(PhysicalFilename,'create',sd_id, hdfVersion)
 
           L1BFileInfo%OAID = sd_id
           L1BFileInfo%OAFileName = PhysicalFilename
 
-          CALL MLSMessage (MLSMSG_Info, ModuleName, "Opened L1BOA file: "//PhysicalFilename)
+          CALL MLSMessage (MLSMSG_Info, ModuleName, &
+               "Opened L1BOA file: "//PhysicalFilename)
 
     ELSE
 
@@ -700,7 +708,7 @@ CONTAINS
 
        DO
           READ (unit, '(A)', IOSTAT=ios) line
-          IF (line(1:1) == "#" .or. ios /= 0) EXIT
+          IF (line(1:1) == "#" .OR. ios /= 0) EXIT
        ENDDO
 
        IF (ios /= 0) EXIT
@@ -736,6 +744,9 @@ END MODULE OpenInit
 !=============================================================================
 
 ! $Log$
+! Revision 2.7  2002/11/14 21:46:04  perun
+! Restored PCF annotations for HDF 4
+!
 ! Revision 2.6  2002/11/07 21:54:20  jdone
 ! Added HDF4/HDF5 switch.
 !
