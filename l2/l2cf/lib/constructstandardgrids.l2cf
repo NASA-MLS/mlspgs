@@ -26,6 +26,24 @@ vGridTangentSids: vGrid, type=Logarithmic, coordinate=Zeta, $
 vGridDiag: vGrid, type=Logarithmic, coordinate=Zeta, $
   start=1000mb, formula=[10:1]
 
+;; These ones are specifically for diagnostic quantities.
+vGridGlobal: vGrid, type=Explicit, coordinate=Zeta, values=1000mb
+
+vGridLowCloudR1A:  vGrid, type=Explicit, coordinate=Zeta, values=[1000mb,146mb], resolution=6
+vGridHighCloudR1A: vGrid, type=Explicit, coordinate=Zeta, values=[146mb, 46mb], resolution=6
+vGridLowCloudR1B:  vGrid, type=Explicit, coordinate=Zeta, values=[1000mb,146mb], resolution=6
+vGridHighCloudR1B: vGrid, type=Explicit, coordinate=Zeta, values=[146mb, 46mb], resolution=6
+vGridLowCloudR2:   vGrid, type=Explicit, coordinate=Zeta, values=[1000mb,215mb], resolution=6
+vGridHighCloudR2:  vGrid, type=Explicit, coordinate=Zeta, values=[215mb, 46mb], resolution=6
+vGridLowCloudR3:   vGrid, type=Explicit, coordinate=Zeta, values=[1000mb,215mb], resolution=6
+vGridHighCloudR3:  vGrid, type=Explicit, coordinate=Zeta, values=[215mb, 46mb], resolution=6
+vGridLowCloudR4:   vGrid, type=Explicit, coordinate=Zeta, values=[1000mb,146mb], resolution=6
+vGridHighCloudR4:  vGrid, type=Explicit, coordinate=Zeta, values=[146mb, 46mb], resolution=6
+vGridLowCloudR5H:  vGrid, type=Explicit, coordinate=Zeta, values=[1000mb,68mb], resolution=6
+vGridHighCloudR5H: vGrid, type=Explicit, coordinate=Zeta, values=[68mb,46mb], resolution=6
+vGridLowCloudR5V:  vGrid, type=Explicit, coordinate=Zeta, values=[1000mb,68mb], resolution=6
+vGridHighCloudR5V: vGrid, type=Explicit, coordinate=Zeta, values=[68mb,46mb], resolution=6
+
 sGridStandard:  vGrid, type=Explicit,   $
        values=[20,40,60,80,100,120,140,160,180,200,$
                220,240,260,280,300,320,340,360,380,400,420,440,460,480,500,$
@@ -37,6 +55,9 @@ vGridWMO: VGrid, type=Logarithmic, coordinate=Zeta, $
   start=1000mb, formula=[97:48]
 
 ; $Log$
+; Revision 1.16  2004/02/07 00:46:50  livesey
+; Tidied up extinction.
+;
 ; Revision 1.15  2003/10/15 11:00:15  mjf
 ; Higher resolution vGridTangents for PEs (does FM fix this up anyway?).
 ;
