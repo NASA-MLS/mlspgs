@@ -88,7 +88,8 @@ module INIT_TABLES_MODULE
 !---------------------------------------------------------------------------
 
 ! Enumeration types:
-  integer, parameter :: T_CHUNKDIVIDEMETHOD = Last_spectroscopy_type+1
+  integer, parameter :: T_BINSELECTORTYPE = Last_spectroscopy_type+1
+  integer, parameter :: T_CHUNKDIVIDEMETHOD = t_binSelectorType+1
   integer, parameter :: T_CRITICALMODULE = t_chunkDivideMethod+1
   integer, parameter :: T_FGRIDCOORD     = t_criticalmodule+1
   integer, parameter :: T_FILLMETHOD     = t_fGridCoord+1
@@ -235,6 +236,7 @@ contains ! =====     Public procedures     =============================
 
   ! Put nonintrinsic predefined identifiers into the symbol table.
     ! Put enumeration type names into the symbol table
+    data_type_indices(t_binSelectorType) = add_ident ( 'binSelectorType' )
     data_type_indices(t_chunkDivideMethod) = add_ident ( 'chunkDivideMethod' )
     data_type_indices(t_criticalmodule) =  add_ident ( 'criticalModule' )
     data_type_indices(t_fillmethod) =      add_ident ( 'fillMethod' )
@@ -358,6 +360,8 @@ contains ! =====     Public procedures     =============================
     ! The intrinsic data types are defined in the intrinsic module
     ! Define the nonintrinsic enumerated types
     call make_tree ( (/ &
+      begin, t+t_binSelectorType, l+l_vmr, l+l_temperature, l+l_latitude, &
+             n+n_dt_def, &
       begin, t+t_griddedOrigin, l+l_climatology, l+l_dao, l+l_ncep, &
              l+l_gloria, n+n_dt_def, &
       begin, t+t_chunkDivideMethod, l+l_fixed, l+l_even, l+l_orbital, n+n_dt_def, &
@@ -462,7 +466,7 @@ contains ! =====     Public procedures     =============================
     call make_tree ( (/ &
       begin, s+s_binSelector, &
              begin, f+f_signals, t+t_string, n+n_field_type, &
-             begin, f+f_type, t+t_quantityType, nr+n_field_type, &
+             begin, f+f_type, t+t_binSelectorType, nr+n_field_type, &
              begin, f+f_molecule, t+t_molecule, n+n_field_type, &
              begin, f+f_height, t+t_numeric_range, n+n_field_type, &
              begin, f+f_cost, t+t_numeric, nr+n_field_type, &
@@ -872,6 +876,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.208  2002/03/15 21:22:20  livesey
+! Introduced new binselector type
+!
 ! Revision 2.207  2002/03/14 00:39:20  pwagner
 ! Can fill scVelECI and scVelECR from l1b now
 !
