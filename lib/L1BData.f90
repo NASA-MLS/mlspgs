@@ -20,6 +20,7 @@ module L1BData
   use TREE, only: NSONS, SUB_ROSA, SUBTREE, DUMP_TREE_NODE, SOURCE_REF
 
   implicit none
+
   private
 
   public :: L1BData_T, L1BRadSetup, L1BOASetup, ReadL1BData, DeallocateL1BData, &
@@ -56,6 +57,21 @@ module L1BData
   end type L1BData_T
 
   integer :: Error            ! Error level -- 0 = OK
+  
+  ! Error flags returned from ReadL1BData when NeverFail=TRUE
+  integer, public, parameter :: NOERROR =            0
+  integer, public, parameter :: NOCOUNTERMAFINDX =   NOERROR + 1
+  integer, public, parameter :: NOCOUNTERMAFID =     NOCOUNTERMAFINDX + 1
+  integer, public, parameter :: NOQUANTITYINDEX =    NOCOUNTERMAFID + 1
+  integer, public, parameter :: NODATASETID =        NOQUANTITYINDEX + 1
+  integer, public, parameter :: NODATASETRANK =      NODATASETID + 1
+  integer, public, parameter :: FIRSTMAFNOTFOUND =   NODATASETRANK + 1
+  integer, public, parameter :: LASTMAFNOTFOUND =    FIRSTMAFNOTFOUND + 1
+  integer, public, parameter :: CANTREADCOUNTERMAF = LASTMAFNOTFOUND + 1
+  integer, public, parameter :: CANTALLOCATECHARS =  CANTREADCOUNTERMAF + 1
+  integer, public, parameter :: CANTREAD3DFIELD =    CANTALLOCATECHARS + 1
+  integer, public, parameter :: CANTENDCOUNTERMAF =  CANTREAD3DFIELD + 1
+  integer, public, parameter :: CANTENDQUANTITY =    CANTENDCOUNTERMAF + 1
 
 contains ! ============================ MODULE PROCEDURES =======================
 
@@ -157,13 +173,14 @@ contains ! ============================ MODULE PROCEDURES ======================
 
   !---------------------------------------------------- ReadL1BData -------------
   subroutine ReadL1BData ( L1FileHandle, QuantityName, L1bData, NoMAFs, Flag, &
-    & FirstMAF, LastMAF )
+    & FirstMAF, LastMAF, NEVERFAIL )
     
     ! Dummy arguments
     character(len=*), intent(in)   :: QUANTITYNAME ! Name of SD to read
     integer, intent(in)            :: L1FILEHANDLE ! From HDF
     integer, intent(in), optional  :: FIRSTMAF ! First to read (default 0)
     integer, intent(in), optional  :: LASTMAF ! Last to read (default last in file)
+    logical, intent(in), optional  :: NEVERFAIL ! Don't call MLSMessage if TRUE
     type(l1bdata_t), intent(out)   :: L1BDATA ! Result
     integer, intent(out) :: FLAG        ! Error flag
     integer, intent(out) :: NOMAFS      ! Number actually read
@@ -180,6 +197,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     integer :: DATA_TYPE
     integer :: DIM_SIZES(MAX_VAR_DIMS)
     integer :: I
+    logical :: MyNeverFail
     integer :: N_ATTRS
     integer :: NUMMAFS
     integer :: RANK
@@ -197,34 +215,54 @@ contains ! ============================ MODULE PROCEDURES ======================
     ! Executable code
     nullify ( edge, start, stride, tmpR4Field )
     flag = 0
+    MyNeverFail = .false.
+    if ( present(NeverFail) ) MyNeverFail = NeverFail
 
     ! Find data sets for counterMAF & quantity by name
 
     sds_index = sfn2index(L1FileHandle, 'counterMAF')
-    if ( sds_index == -1) call MLSMessage ( MLSMSG_Error, ModuleName, &
+    if ( sds_index == -1) then
+      flag = NOCOUNTERMAFINDX
+      if ( MyNeverFail ) return
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Failed to find index of counterMAF data set.')
+    endif
 
     sds1_id = sfselect(L1FileHandle, sds_index)
-    if ( sds1_id == -1) call MLSMessage ( MLSMSG_Error, ModuleName, &
+    if ( sds1_id == -1) then
+      flag = NOCOUNTERMAFID
+      if ( MyNeverFail ) return
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Failed to find identifier of counterMAF data set.')
+    endif
 
     sds_index = sfn2index(L1FileHandle, quantityName)
     if ( sds_index == -1) then
+      flag = NOQUANTITYINDEX
+      if ( MyNeverFail ) return
       dummy = 'Failed to find index of quantity "' // trim(quantityName) // &
         & '" data set.'
       call MLSMessage ( MLSMSG_Error, ModuleName, dummy )
     end if
 
     sds2_id = sfselect(L1FileHandle, sds_index)
-    if ( sds2_id == -1) call MLSMessage ( MLSMSG_Error, ModuleName, &
+    if ( sds2_id == -1) then
+      flag = NODATASETID
+      if ( MyNeverFail ) return
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Failed to find identifier of data set matching the index.')
+    endif
 
     ! Find rank (# of dimensions), dimension sizes of quantity data set
     status = sfginfo ( sds2_id, dummy, rank, dim_sizes, data_type, &
       n_attrs )
 
-    if ( status == -1) call MLSMessage ( MLSMSG_Error, ModuleName,&
+    if ( status == -1) then
+      flag = NODATASETRANK
+      if ( MyNeverFail ) return
+      call MLSMessage ( MLSMSG_Error, ModuleName,&
       & 'Failed to find rank of data set.')
+    endif
 
     ! allocate, based on above SD, dim info
     call allocate_test ( edge,   rank, 'edge',   ModuleName )
@@ -259,18 +297,24 @@ contains ! ============================ MODULE PROCEDURES ======================
     numMAFs = dim_sizes(rank)
 
     if ( present ( firstMAF ) ) then
-      if ( (firstMAF >= numMAFs) .or. (firstMAF < 0) ) &
-        & call MLSMEssage ( MLSMSG_Error, ModuleName, &
+      if ( (firstMAF >= numMAFs) .or. (firstMAF < 0) ) then
+        flag = FIRSTMAFNOTFOUND
+        if ( MyNeverFail ) return
+        call MLSMEssage ( MLSMSG_Error, ModuleName, &
         & input_err // 'firstMAF' )
+      endif
       l1bData%firstMAF = firstMAF
     else
       l1bData%firstMAF = 0
     end if
 
     if ( present (lastMAF) ) then
-      if ( lastMAF < l1bData%firstMAF )  &
-        & call MLSMEssage ( MLSMSG_Error, ModuleName, &
+      if ( lastMAF < l1bData%firstMAF ) then
+        flag = LASTMAFNOTFOUND
+        if ( MyNeverFail ) return
+        call MLSMEssage ( MLSMSG_Error, ModuleName, &
         & input_err // 'last' )
+      endif
       if ( lastMAF >= numMAFs ) then
         l1bData%noMAFs = numMAFs - l1bData%firstMAF
       else
@@ -289,8 +333,12 @@ contains ! ============================ MODULE PROCEDURES ======================
       & 'counterMAF', ModuleName )
     status = sfrdata_f90(sds1_id,  (/ l1bData%firstMAF /) , (/1/), &
       & (/l1bData%noMAFs/), l1bData%counterMAF )
-    if ( status == -1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+    if ( status == -1 ) then
+      flag = CANTREADCOUNTERMAF
+      if ( MyNeverFail ) return
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_L1BRead // 'counterMAF.' )
+    endif
 
     ! allocate, read according to field type; nullify unused pointers
     select case ( data_type )
@@ -298,9 +346,12 @@ contains ! ============================ MODULE PROCEDURES ======================
     case ( DFNT_CHAR8 ) ! ----------------------- character
       allocate ( l1bData%charField(l1bData%noAuxInds,l1bData%maxMIFs, &
         & l1bData%noMAFs), STAT=alloc_err )
-      if ( alloc_err /= 0 ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      if ( alloc_err /= 0 ) then
+        flag = CANTALLOCATECHARS
+        if ( MyNeverFail ) return
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_allocate // ' charField pointer.' )
+      endif
       nullify (l1bData%intField, l1bData%dpField)
       status = sfrcdata ( sds2_id, start, stride, edge, &
         & l1bData%charField )
@@ -338,12 +389,18 @@ contains ! ============================ MODULE PROCEDURES ======================
 
     end select ! ----------------------------------------------------
 
-    if ( status == -1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+    if ( status == -1 ) then
+      flag = CANTREAD3DFIELD
+      if ( MyNeverFail ) return
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_L1BRead // quantityName )
+    endif
 
     ! Terminate access to the data sets
     status = sfendacc(sds1_id)
     if ( status == -1 ) then
+      flag = CANTENDCOUNTERMAF
+      if ( MyNeverFail ) return
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & 'Failed to terminate access to data sets.' )
       flag = -1
@@ -351,6 +408,8 @@ contains ! ============================ MODULE PROCEDURES ======================
 
     status = sfendacc(sds2_id)
     if ( status == -1 ) then
+      flag = CANTENDQUANTITY
+      if ( MyNeverFail ) return
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & 'Failed to terminate access to data sets.' )
       flag = -1
@@ -532,6 +591,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.13  2001/10/25 23:31:28  pwagner
+! Fixed dump; readl1bData takes neverfail option
+!
 ! Revision 2.12  2001/10/23 22:44:15  pwagner
 ! Added DumpL1BData
 !

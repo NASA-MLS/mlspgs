@@ -441,17 +441,24 @@ contains
   end subroutine DUMP_1D_LOGICAL
 
   ! ---------------------------------------------  DUMP_2D_DOUBLE  -----
-  subroutine DUMP_2D_DOUBLE ( ARRAY, NAME, CLEAN )
+  subroutine DUMP_2D_DOUBLE ( ARRAY, NAME, BLASE, CLEAN )
     double precision, intent(in) :: ARRAY(:,:)
     character(len=*), intent(in), optional :: NAME
+    double precision, intent(in), optional :: BLASE
     logical, intent(in), optional :: CLEAN
 
     logical :: myClean
     integer :: I, J, K
+    integer :: NumZeroRows
+    double precision :: myBlase
+
+    myBlase = 0.d0
+    if ( present(Blase) ) myBlase = Blase
 
     myClean = .false.
     if ( present(clean) ) myClean = clean
 
+    numZeroRows = 0
     if ( size(array) == 0 ) then
       if ( present(name) ) then
         call output ( name )
@@ -481,30 +488,92 @@ contains
         do i = 1, size(array,1)
           do j = 1, size(array,2), 5
             if (.not. myClean) then
-              call output ( i, max(4,ilog10(size(array,1))+1) )
-              call output ( j, max(4,ilog10(size(array,2))+1) )
-              call output ( afterSub )
+              !call output ( i, max(4,ilog10(size(array,1))+1) )
+              !call output ( j, max(4,ilog10(size(array,2))+1) )
+              !call output ( afterSub )
+              if ( any(array(i,j:min(j+4, size(array,2))) /= myBlase) ) then
+                if ( numZeroRows /= 0 ) then
+                  call output ( i, places=max(4,ilog10(size(array,1))+1) )
+                  call output ( j-1, places=max(4,ilog10(size(array))+1) )
+                  call output ( afterSub )
+                  call output ( ' ' )
+                  call output ( numZeroRows )
+                  call output ( ' rows of ')
+                  call output ( myBlase , advance='no' )
+                  call output ( ' not printed.', advance='yes' )
+                  numZeroRows = 0
+                end if
+                call output ( i, places=max(4,ilog10(size(array,1))+1) )
+                call output ( j, places=max(4,ilog10(size(array,2))+1) )
+                call output ( afterSub )
+              else
+                numZeroRows = numZeroRows + 1
+              end if
             end if
-            do k = j, min(j+4, size(array,2))
-              call output ( array(i,k), '(1x,1pg13.6)' )
-            end do
-            call output ( '', advance='yes' )
+            if ( myClean .or. any(array(i,j:min(j+4, size(array,2))) /= myBlase) ) then
+              do k = j, min(j+4, size(array,2))
+                call output ( array(i,k), '(1x,1pg13.6)' )
+              end do
+              call output ( '', advance='yes' )
+            endif
           end do
         end do
+        if ( numZeroRows /= 0 ) then
+          call output ( i-1, places=max(4,ilog10(size(array,1))+1) )
+          call output ( j-1, places=max(4,ilog10(size(array))+1) )
+          call output ( afterSub )
+          call output ( ' ' )
+          call output ( numZeroRows )
+          call output ( ' rows of ')                            
+          call output ( myBlase , advance='no' )                
+          call output ( ' not printed.', advance='yes' )        
+          numZeroRows = 0
+        end if
       else ! Dump the transpose
         call output ( ', transposed', advance='yes' )
         do j = 1, size(array,2)
           do i = 1, size(array,1), 5
-            call output ( i, max(4,ilog10(size(array,1))+1) )
-            call output ( j, max(4,ilog10(size(array,2))+1) )
-            call output ( afterSub )
-            do k = i, min(i+4, size(array,1))
-              call output ( array(k,j), '(1x,1pg13.6)' )
-            end do
-            call output ( '', advance='yes' )
+            !call output ( i, max(4,ilog10(size(array,1))+1) )
+            !call output ( j, max(4,ilog10(size(array,2))+1) )
+            !call output ( afterSub )
+            if ( any(array(i:min(i+4, size(array,1)),j) /= myBlase) ) then  
+              if ( numZeroRows /= 0 ) then                                  
+                call output ( i, places=max(4,ilog10(size(array,1))+1) )    
+                call output ( j-1, places=max(4,ilog10(size(array))+1) )    
+                call output ( afterSub )                                    
+                call output ( ' ' )                                         
+                call output ( numZeroRows )                                 
+                call output ( ' rows of ')                                  
+                call output ( myBlase , advance='no' )                      
+                call output ( ' not printed.', advance='yes' )              
+                numZeroRows = 0                                             
+              end if                                                        
+              call output ( i, places=max(4,ilog10(size(array,1))+1) )      
+              call output ( j, places=max(4,ilog10(size(array,2))+1) )      
+              call output ( afterSub )                                      
+            else                                                            
+              numZeroRows = numZeroRows + 1                                 
+            end if                                                          
+            if ( myClean .or. any(array(i:min(i+4, size(array,1)),j) /= myBlase) ) then
+              do k = i, min(i+4, size(array,1))
+                call output ( array(k,j), '(1x,1pg13.6)' )
+              end do
+              call output ( '', advance='yes' )
+            end if                                                          
           end do
         end do
       end if
+      if ( numZeroRows /= 0 ) then                                  
+        call output ( i-1, places=max(4,ilog10(size(array,1))+1) )  
+        call output ( j-1, places=max(4,ilog10(size(array))+1) )    
+        call output ( afterSub )                                    
+        call output ( ' ' )                                         
+        call output ( numZeroRows )                                 
+        call output ( ' rows of ')                                  
+        call output ( myBlase , advance='no' )                      
+        call output ( ' not printed.', advance='yes' )              
+        numZeroRows = 0                                             
+      end if                                                        
     end if
   end subroutine DUMP_2D_DOUBLE
 
@@ -592,17 +661,23 @@ contains
   end subroutine DUMP_2D_INTEGER
 
   ! ---------------------------------------------  DUMP_3D_DOUBLE  -----
-  subroutine DUMP_3D_DOUBLE ( ARRAY, NAME, CLEAN )
+  subroutine DUMP_3D_DOUBLE ( ARRAY, NAME, BLASE, CLEAN )
     double precision, intent(in) :: ARRAY(:,:,:)
     character(len=*), intent(in), optional :: NAME
+    double precision, intent(in), optional :: BLASE
     logical, intent(in), optional :: CLEAN
 
     logical :: myClean
     integer :: I, J, K, L
+    integer :: NumZeroRows
+    double precision :: myBlase
 
+    myBlase = 0.d0
+    if ( present(Blase) ) myBlase = Blase
     myClean = .false.
     if ( present(clean) ) myClean = clean
 
+    numZeroRows = 0
     if ( size(array) == 0 ) then
       if ( present(name) ) then
         call output ( name )
@@ -633,19 +708,53 @@ contains
         do j = 1, size(array,2)
           do k = 1, size(array,3), 5
             if (.not. myClean) then
-              call output ( i, max(4,ilog10(size(array,1))+1) )
-              call output ( j, max(4,ilog10(size(array,2))+1) )
-              call output ( k, max(4,ilog10(size(array,3))+1) )
-              call output ( afterSub )
+              !call output ( i, max(4,ilog10(size(array,1))+1) )
+              !call output ( j, max(4,ilog10(size(array,2))+1) )
+              !call output ( k, max(4,ilog10(size(array,3))+1) )
+              !call output ( afterSub )
+              if ( any(array(i,j,k:min(k+4, size(array,3))) /= myBlase) ) then
+                if ( numZeroRows /= 0 ) then
+                  call output ( i, places=max(4,ilog10(size(array,1))+1) )
+                  call output ( j, places=max(4,ilog10(size(array,2))+1) )
+                  call output ( k-1, places=max(4,ilog10(size(array,3))+1) )
+                  call output ( afterSub )
+                  call output ( ' ' )
+                  call output ( numZeroRows )
+                  call output ( ' rows of ')
+                  call output ( myBlase , advance='no' )
+                  call output ( ' not printed.', advance='yes' )
+                  numZeroRows = 0
+                end if
+                call output ( i, max(4,ilog10(size(array,1))+1) )
+                call output ( j, max(4,ilog10(size(array,2))+1) )
+                call output ( k, max(4,ilog10(size(array,3))+1) )
+                call output ( afterSub )
+              else
+                numZeroRows = numZeroRows + 1
+              end if
             end if
-            do l = k, min(k+4, size(array,3))
-              call output ( array(i,j,l), '(1x,1pg13.6)' )
-            end do
-            call output ( '', advance='yes' )
+            if ( myClean .or. any(array(i,j,k:min(k+4, size(array,3))) /= myBlase) ) then
+              do l = k, min(k+4, size(array,3))
+                call output ( array(i,j,l), '(1x,1pg13.6)' )
+              end do
+              call output ( '', advance='yes' )
+            endif
           end do
         end do
       end do
-    end if
+       if ( numZeroRows /= 0 ) then
+        call output ( i-1, places=max(4,ilog10(size(array,1))+1) )
+        call output ( j-1, places=max(4,ilog10(size(array,2))+1) )
+        call output ( k-1, places=max(4,ilog10(size(array,3))+1) )
+        call output ( afterSub )
+        call output ( ' ' )
+        call output ( numZeroRows )
+        call output ( ' rows of ')                              
+        call output ( myBlase , advance='no' )                  
+        call output ( ' not printed.', advance='yes' )          
+        numZeroRows = 0
+      end if
+   end if
   end subroutine DUMP_3D_DOUBLE
 
   ! ---------------------------------------------  DUMP_3D_INTEGER  -----
@@ -698,7 +807,7 @@ contains
         do j = 1, size(array,2)
           do k = 1, size(array,3), 10
             if (.not. myClean) then
-              if ( any(array(i,j,k:min(k+9, size(array,k))) /= 0) ) then
+              if ( any(array(i,j,k:min(k+9, size(array,3))) /= 0) ) then
                 if ( numZeroRows /= 0 ) then
                   call output ( i, places=max(4,ilog10(size(array,1))+1) )
                   call output ( j, places=max(4,ilog10(size(array,2))+1) )
@@ -830,6 +939,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.13  2001/10/25 23:30:39  pwagner
+! Improved dump_nd_double to skip rows (e.g., of zeros)
+!
 ! Revision 2.12  2001/10/24 18:11:14  pwagner
 ! which_ints_are_it now works properly
 !
