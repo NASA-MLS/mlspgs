@@ -61,19 +61,17 @@ begin Fill
     refGPHQuantity=apriori.refGPH, $
     geocAltitudeQuantity=apriori.tngtGeocAltTHz, $
     maxIterations=10
+  })
 
   ;; Compute refracted phitans for apriori
-;   Fill, quantity=apriori.phiTanGHz, method=refract, $
-;     ptanQuantity=apriori.ptanGHz, $
-;     h2oQuantity=apriori.h2o, $
-;     temperatureQuantity=apriori.temperature, $
-;     refract=false
-;   Fill, quantity=apriori.phiTanTHz, method=refract, $
-;     ptanQuantity=apriori.ptanTHz, $
-;     h2oQuantity=apriori.h2o, $
-;     temperatureQuantity=apriori.temperature, $
-;     refract=false
-  })
+  Fill, quantity=apriori.phiTanGHz, method=refract, $
+    ptanQuantity=apriori.ptanGHz, $
+    h2oQuantity=apriori.h2o, $
+    temperatureQuantity=apriori.temperature, refract=false
+  Fill, quantity=apriori.phiTanTHz, method=refract, $
+    ptanQuantity=apriori.ptanTHz, $
+    h2oQuantity=apriori.h2o, $
+    temperatureQuantity=apriori.temperature, refract=false
 })
 
 end Fill
