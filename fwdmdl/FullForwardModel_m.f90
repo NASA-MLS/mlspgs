@@ -753,8 +753,8 @@ contains
     if ( toggle(emit) .and. levels(emit) > 0 ) &
       & call Trace_Begin ( 'ForwardModel.Hydrostatic' )
 
-    ! Temperature's windowStart:windowFinish are correct here.  There is an
-    ! assumption that refGPH and temperature have the same horizontal basis.
+    ! Temperature's windowStart:windowFinish are correct here.
+    ! RefGPH and temperature have the same horizontal basis.
     call two_d_hydrostatic ( Grids_tmp, &
       &  (/ (refGPH%template%surfs(1,1), j=1,no_sv_p_t) /), &
       &  0.001*refGPH%values(1,windowStart:windowFinish), z_glgrid, &
@@ -783,6 +783,11 @@ contains
     call deallocate_test ( req_out, 'req_out', moduleName )
 
  ! Now, allocate other variables we're going to need later ----------------
+
+    if ( toggle(emit) .and. levels(emit) > 0 ) then
+      call Trace_End ( 'ForwardModel.Hydrostatic' )
+      call Trace_Begin ( 'ForwardModel.Allocate' )
+    end if
 
     if ( spect_der ) then
       !??? Temperature's windowStart:windowFinish are probably not correct here ???
@@ -943,7 +948,7 @@ contains
                                                               & moduleName )
       call allocate_test ( tan_dh_dt,    1, sv_t_len, 'tan_dh_dt',    moduleName )
       call allocate_test ( tan_d2h_dhdt, 1, sv_t_len, 'tan_d2h_dhdt', moduleName )
-      CALL allocate_test ( t_der_path_flags, no_ele,          't_der_path_flags', &
+      call allocate_test ( t_der_path_flags, no_ele,          't_der_path_flags', &
                                                               & moduleName )
 
     end if ! temp_der
@@ -1068,11 +1073,10 @@ contains
     call allocate_test ( dx_dt, no_tan_hts,sv_t_len, 'dx_dt',moduleName )
     call allocate_test ( d2x_dxdt,no_tan_hts,sv_t_len, 'd2x_dxdt',moduleName )
 
-    if ( toggle(emit) .and. levels(emit) > 0 ) &
-                  & call Trace_End ( 'ForwardModel.Hydrostatic' )
-
-    if ( toggle(emit) .and. levels(emit) > 0 ) &
-                  & call Trace_Begin ( 'ForwardModel.SidebandLoop' )
+    if ( toggle(emit) .and. levels(emit) > 0 ) then
+      call Trace_End ( 'ForwardModel.Allocate' )
+      call Trace_Begin ( 'ForwardModel.SidebandLoop' )
+    end if
 
     ! Loop over sidebands ----------------------------------------------------
     do thisSideband = fwdModelConf%sidebandStart, fwdModelConf%sidebandStop, 2
@@ -2176,7 +2180,7 @@ alpha_path_f = 0.0
       end if
 
       if ( toggle(emit) .and. levels(emit) > 1 ) &
-        & call trace_end ( 'ForwardModel.sideband ',index=thisSideband )
+        & call trace_end ( 'ForwardModel.Sideband ',index=thisSideband )
 
     end do            ! End of loop over sidebands -------------------------
 
@@ -2611,6 +2615,9 @@ alpha_path_f = 0.0
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.158  2003/07/09 20:23:50  vsnyder
+! Futzing
+!
 ! Revision 2.157  2003/07/09 20:14:19  livesey
 ! Anticipative bug fix commented out.
 !
