@@ -1,9 +1,9 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module GriddedData ! Contains the derived TYPE GriddedData_T
 
-  use MLSCommon, only: R8, LINELEN, NAMELEN, RP
+  use MLSCommon, only: R4, R8, LINELEN, NAMELEN, RP
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR, &
     & MLSMSG_DEALLOCATE
   use Toggles, only: TOGGLE, GEN
@@ -26,12 +26,16 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
     & DestroyGriddedDataDatabase, GriddedData_T, SetupNewGriddedData, &
     & NullifyGriddedData
 
-  logical, private, parameter :: MAYDUMPFIELDVALUES = .false.
+  logical, private, parameter :: MAYDUMPFIELDVALUES = .true.
 
   interface DUMP
     module procedure DumpGriddedData
     module procedure DumpGriddedDatabase
   end interface
+
+  ! r4 corresponds to sing. prec. :: same as stored in files
+  ! (except for dao dimensions)
+  integer, public, parameter :: rgr = r4
 
   ! These are 'enumerated types' consistent with hph's
   ! work in l3ascii_read_field
@@ -41,6 +45,9 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
   integer, parameter :: V_is_altitude = v_is_pressure+1
   integer, parameter :: V_is_GPH = v_is_altitude+1
   integer, parameter :: V_is_theta = v_is_gph+1
+  
+  ! If dumping gridded dataa, always give full details of any matching these
+  character(len=*), parameter :: ALWAYSDUMPTHESE = 'dao,ncep'
 
   ! This type reflects the format of the Level 3 ASCII files, though note that
   ! these files can store multiple quantities such as these.
@@ -59,29 +66,29 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
     ! Now define the various coordinate systems, first vertical
     integer :: verticalCoordinate ! An 'enumerated' type
     integer :: noHeights         ! Number of surfaces
-    real (rp), pointer, dimension(:) :: heights  => NULL()
+    real (rgr), pointer, dimension(:) :: heights  => NULL()
     ! Surfaces (e.g. pressures etc.) [noHeights]
 
     ! Now the latitudinal coordinate
     logical :: equivalentLatitude       ! If set, coordinate is equivalent latitude
     logical :: noYear                   ! If set, field is for any year
     integer :: noLats                   ! Number of latitudes
-    real (rp), pointer, dimension(:) :: Lats => NULL() ! Latitudes [noLats]
+    real (rgr), pointer, dimension(:) :: Lats => NULL() ! Latitudes [noLats]
     integer :: noLons                   ! Number of longitudes
-    real (rp), pointer, dimension(:) :: Lons => NULL() ! Longitudes [noLons]
+    real (rgr), pointer, dimension(:) :: Lons => NULL() ! Longitudes [noLons]
     integer noLsts                      ! Number of local times
-    real (rp), pointer, dimension(:) :: Lsts => NULL() ! Local times [noLsts]
+    real (rgr), pointer, dimension(:) :: Lsts => NULL() ! Local times [noLsts]
     integer noSzas                      ! Number of solar zenith angles
-    real (rp), pointer, dimension(:) :: Szas => NULL() ! Zenith angles [noSzas]
+    real (rgr), pointer, dimension(:) :: Szas => NULL() ! Zenith angles [noSzas]
     integer noDates                     ! Number of dates in data
-    real (rp), pointer, dimension(:) :: DateStarts => NULL()
+    real (r8), pointer, dimension(:) :: DateStarts => NULL()
     ! Starting dates in SDP toolkit format
-    real (rp), pointer, dimension(:) :: DateEnds => NULL()
+    real (r8), pointer, dimension(:) :: DateEnds => NULL()
     ! Ending dates in SDP toolkit format
 
     ! The data itself.  This is stored as
     !  [noHeights, noLats, noLons, noLsts, noSzas, noDates]
-    real (rp), pointer, dimension(:,:,:,:,:,:) :: field => NULL()
+    real (rgr), pointer, dimension(:,:,:,:,:,:) :: field => NULL()
 
   end type GriddedData_T
 
@@ -213,6 +220,8 @@ contains
     ! Executable code
     myDetails = 1
     if ( present(details) ) myDetails = details
+    if ( index(ALWAYSDUMPTHESE, trim(GriddedData%description)) > 0 ) &
+      & myDetails = 1
 
     call output('Gridded quantity name ' // GriddedData%quantityName, advance='yes')
       if ( myDetails < -1 ) return
@@ -259,11 +268,18 @@ contains
 
     if ( MAYDUMPFIELDVALUES .and. myDetails > 0 ) then
       call output ( ' ************ tabulated field values ********** ' ,advance='yes')
-
-      ! No dump for 6-dimensional double arrays yet, anyway
-      !     call dump ( GriddedData%field, &
-      !      & '    gridded field values =' )
-      call output ( ' *(Sorry, dump_6d_double not yet coded)* ' ,advance='yes')
+     ! May dump a 3-d slice of 6-d array
+      if ( GriddedData%noDates == 1 .and. GriddedData%noSzas == 1 &
+        & .and. GriddedData%noLsts == 1 ) then
+        call dump ( GriddedData%field(:,:,:,1,1,1), &
+          & '    gridded field values =' )
+      else
+        ! No dump for 6-dimensional double arrays yet, anyway
+        !     call dump ( GriddedData%field, &
+        !      & '    gridded field values =' )
+        call output ( ' *(Sorry, dump_6d_... not yet coded)* ' , &
+          & advance='yes')
+      endif
     endif
 
   end subroutine DumpGriddedData
@@ -353,6 +369,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.19  2003/02/19 19:13:28  pwagner
+! new GriddedData_T with reduced precision
+!
 ! Revision 2.18  2002/11/22 12:46:26  mjf
 ! Added nullify routine(s) to get round Sun's WS6 compiler not
 ! initialising derived type function results.
