@@ -283,9 +283,9 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------  Write_PFADatabase  -----
   subroutine Write_PFADatabase ( FileName, FileType )
-    use HDF5, only: H5FCREATE_F, H5FClose_F, H5F_ACC_TRUNC_F
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSStrings, only: Capitalize
+    use HDF5, only: H5FCREATE_F, H5FClose_F, H5F_ACC_TRUNC_F
     character(len=*), intent(in) :: FileName, FileType
     integer :: FileID
     integer :: I, IOSTAT
@@ -319,8 +319,6 @@ contains ! =====     Public Procedures     =============================
     ! signal, the embedded part consists of the (first) molecule name,
     ! followed by an underscore, followed by the signal.
 
-    use HDF5, only: H5FCREATE_F, H5FClose_F, H5F_ACC_TRUNC_F, &
-      & H5GCLOSE_F, H5GCREATE_F
     use Intrinsic, only: Lit_Indices
     use IO_Stuff, only: Get_Lun
     use Machine, only: IO_Error
@@ -331,6 +329,8 @@ contains ! =====     Public Procedures     =============================
     use Physics, only: SpeedOfLight
     use String_Table, only: Get_String, String_Length
     use Toggles, only: Switches
+    use HDF5, only: H5FCREATE_F, H5FClose_F, H5F_ACC_TRUNC_F, &
+      & H5GCLOSE_F, H5GCREATE_F
 
     type(PFAData_t), intent(in) :: PFADatum
     character(len=*), intent(in) :: FileName, FileType
@@ -478,6 +478,9 @@ contains ! =====     Public Procedures     =============================
 end module PFADataBase_m
 
 ! $Log$
+! Revision 2.11  2004/12/13 23:59:37  pwagner
+! Re-ordered use hdf5 statements to avoid familiar Lahey internal compiler error
+!
 ! Revision 2.10  2004/12/13 20:41:40  vsnyder
 ! Filled in Write_PFADatabase.  Handle HDF5 in Write_PFADatum.  Some cannonball
 ! polishing.
