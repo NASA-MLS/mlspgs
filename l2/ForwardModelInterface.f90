@@ -34,8 +34,6 @@ module ForwardModelInterface
     & L_LINEAR, L_LOSVEL, L_LOWER, L_NONE, L_ORBITINCLINE, L_PTAN, L_RADIANCE,&
     & L_REFGPH, L_SCAN, L_SCGEOCALT, L_SPACERADIANCE, L_TEMPERATURE, L_UPPER,&
     & L_VMR
-  ! Now temporary stuff we hope not to have to use in the end
-  use Init_Tables_Module, only: F_ZVI
   ! That's it for Init_Tables_Module
   use Lexer_Core, only: Print_Source
   use MatrixModule_1, only: Matrix_Database_T, Matrix_T
@@ -59,10 +57,6 @@ module ForwardModelInterface
     & Vector_T, VectorValue_T
   use VGridsDatabase, only: VGrid_T
   use dump_0, only: Dump
-
-  !??? The next USE statement is Temporary for l2load:
-  use L2_TEST_STRUCTURES_M, only: FWD_MDL_CONFIG, FWD_MDL_INFO, &
-    & TEMPORARY_FWD_MDL_INFO
 
   implicit none
   private
@@ -337,11 +331,10 @@ contains
   ! subroutine ForwardModel ( ForwardModelConfig, FwdModelExtra, FwdModelIn, &
   !   &                       Jacobian, RowBlock, FwdModelOut )
   subroutine ForwardModel ( ForwardModelConfig, FwdModelExtra, FwdModelIn, &
-    &                       Jacobian, RowBlock, FwdModelOut, FMI, TFMI)
+    &                       Jacobian, RowBlock, FwdModelOut)
 
     use GL6P, only: NG
     use MLSCommon, only: I4, R4, R8
-    use L2_TEST_STRUCTURES_M
     use L2PC_FILE_PARAMETERS, only: mxco => MAX_NO_ELMNTS_PER_SV_COMPONENT
     use L2PC_PFA_STRUCTURES, only: K_MATRIX_INFO
     use L2PCdim, only: Nlvl, N2lvl, NSPS, Nptg, MNP => max_no_phi, &
@@ -375,13 +368,6 @@ contains
     integer, intent(in), optional :: RowBlock          ! With which block of
     ! rows of F and Jacobian are we computing? All of them if absent.
     type(vector_T), intent(inout), optional :: FwdModelOut  ! Radiances, etc.
-
-    !??? Begin temporary stuff to start up the forward model
-    !   type(fwd_mdl_info), dimension(:), pointer, optional :: FMI
-    type(fwd_mdl_info),                        optional :: FMI
-    !   type(temporary_fwd_mdl_info), dimension(:), pointer, optional :: TFMI
-    type(temporary_fwd_mdl_info),                        optional :: TFMI
-    !??? End of temporary stuff to start up the forward model
 
     ! Local parameters ---------------------------------------------------------
 
@@ -1321,6 +1307,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.76  2001/04/10 02:46:16  livesey
+! Working version, no more FMI/TFMI
+!
 ! Revision 2.75  2001/04/10 02:24:55  livesey
 ! Stable derivative code, still not sure about vmr.  About to remove FMI, TFMI!!  :-)
 !
