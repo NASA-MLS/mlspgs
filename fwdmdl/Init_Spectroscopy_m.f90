@@ -44,7 +44,8 @@ module Init_Spectroscopy_m
   integer, parameter :: F_ns         = f_n2 + 1
   integer, parameter :: F_ps         = f_ns + 1
   integer, parameter :: F_qlog       = f_ps + 1
-  integer, parameter :: F_str        = f_qlog + 1
+  integer, parameter :: F_qn         = f_qlog + 1
+  integer, parameter :: F_str        = f_qn + 1
   integer, parameter :: F_v0         = f_str + 1
   integer, parameter :: F_w          = f_v0 + 1
   integer, parameter :: F_emlsSignals  = f_w + 1
@@ -93,6 +94,7 @@ contains
     field_indices(f_ns)         = add_ident ( 'ns' )
     field_indices(f_ps)         = add_ident ( 'ps' )
     field_indices(f_qlog)       = add_ident ( 'qlog' )
+    field_indices(f_qn)         = add_ident ( 'qn' )
     field_indices(f_str)        = add_ident ( 'str' )
     field_indices(f_v0)         = add_ident ( 'v0' )
     field_indices(f_w)          = add_ident ( 'w' )
@@ -149,6 +151,7 @@ contains
              begin, f+f_n2, t+t_numeric, nr+n_field_type, &
              begin, f+f_ns, t+t_numeric, nr+n_field_type, &
              begin, f+f_ps, t+t_numeric, nr+n_field_type, &
+             begin, f+f_qn, t+t_numeric, n+n_field_type, &
              begin, f+f_str, t+t_numeric, nr+n_field_type, &
              begin, f+f_v0, t+t_numeric, nr+n_field_type, &
              begin, f+f_w, t+t_numeric, nr+n_field_type, &
@@ -174,6 +177,9 @@ contains
 end module Init_Spectroscopy_m
 
 ! $Log$
+! Revision 2.5  2002/10/08 17:08:04  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.4  2001/10/15 18:10:51  livesey
 ! Added continuum
 !
