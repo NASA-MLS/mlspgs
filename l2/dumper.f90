@@ -17,17 +17,16 @@ module DUMPER
   public :: DUMP
 
 !---------------------------- RCS Ident Info ---------------------------
-  character (len=256) :: Id = &
-       "$Id$"
-  character (len=*), parameter :: ModuleName= &
-       "$RCSfile$"
+  character (len=*), parameter :: IdParm = &
+    & "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= "$RCSfile$"
 !-----------------------------------------------------------------------
 
   interface DUMP
     module procedure DUMP_CHUNKS
     module procedure DUMP_HGRIDS
     module procedure DUMP_QUANTITY_TEMPLATES
-    module procedure DUMP_VGRIDS
   end interface
 
 contains ! =====     Private Procedures     ============================
@@ -181,24 +180,6 @@ contains ! =====     Private Procedures     ============================
       end if
     end do
   end subroutine DUMP_QUANTITY_TEMPLATES
-
-  ! ------------------------------------------------  DUMP_VGRIDS  -----
-  subroutine DUMP_VGRIDS ( VGRIDS )
-    type(vGrid_T), intent(in) :: VGRIDS(:)
-    integer :: I
-    call output ( 'VGRIDS: SIZE = ' )
-    call output ( size(vgrids), advance='yes' )
-    do i = 1, size(vgrids)
-      call output ( i, 4 )
-      call output ( ': Name = ' )
-      call display_string ( vgrids(i)%name )
-      call output ( ' noSurfs = ' )
-      call output ( vgrids(i)%noSurfs )
-      call output ( ' verticalCoordinate = ' )
-      call display_string ( lit_indices(vgrids(i)%verticalCoordinate) )
-      call dump ( vgrids(i)%surfs, ' Surfs = ' )
-    end do
-  end subroutine DUMP_VGRIDS
 end module DUMPER
 
-! $Log,v $
+! $Log$
