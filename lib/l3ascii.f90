@@ -73,10 +73,11 @@ MODULE l3ascii ! Collections of Hugh's subroutines to handle TYPE GriddedData_T
     !    print*,headerline
   end subroutine l3ascii_open
 
-  subroutine l3ascii_read_field(unit, field, end_of_file)
+  subroutine l3ascii_read_field(unit, field, end_of_file, ErrType)
     use dates_module    ! Shoud use SDP Toolkit eventually. 
     ! ----Arguments ----!
     integer, intent(in) :: unit
+    integer, intent(out), optional :: ErrType
     type(GriddedData_T), intent(inout) :: field
     logical , intent(out) :: end_of_file
     !-------Local Variables --------!
@@ -85,13 +86,21 @@ MODULE l3ascii ! Collections of Hugh's subroutines to handle TYPE GriddedData_T
     character(len=LineLen) :: inline
     character(len=30) :: linetype, axistype, sdstring, edstring
     character(len=80) :: filename, unitstring
-    real(kind=r8), pointer, dimension(:) :: tmpaxis, dateStarts, dateEnds
+    real(kind=r8), pointer, dimension(:) :: tmpaxis => null()
+    real(kind=r8), pointer, dimension(:) :: dateStarts => null()
+    real(kind=r8), pointer, dimension(:) :: dateEnds => null()
     integer :: tmpaxis_len, idate, word_count
     integer,parameter :: maxNoDates = 30
     real(kind=r8), allocatable, dimension(:,:,:,:,:,:) :: tmpfield
     !---- Executable statements ----! 
     error = 0
-    nullify(tmpaxis)
+	 
+! Abrupt termination--as with an error--means use field at own risk
+	if(present(ErrType)) then
+	 ErrType = 1
+	endif
+
+!    nullify(tmpaxis)
 	 end_of_file = .TRUE.	! Terminate loops based around this on error
 
     write(unit=unitstring,fmt="(i3)") unit ! For use in error reporting
@@ -377,6 +386,10 @@ MODULE l3ascii ! Collections of Hugh's subroutines to handle TYPE GriddedData_T
     field%field=tmpfield(:,:,:,:,:,1:field%noDates)
     deallocate(tmpfield,dateStarts,dateEnds)
 
+! Normal termination--assume field is valid maybe even correct
+	if(present(ErrType)) then
+	 ErrType = 0
+	endif
   end subroutine l3ascii_read_field
 
   subroutine l3ascii_interp_field(field,outval,pressure,lat,lon,lst,sza,date)
@@ -678,6 +691,12 @@ MODULE l3ascii ! Collections of Hugh's subroutines to handle TYPE GriddedData_T
        deallocate(axis)
     endif
 
+	if(len(inline) <= 1) then
+		call announce_error(0, &
+	& "in make_log_axis: inline, <"//&
+         trim(inline)//">, too short")
+	endif
+	
     !Count words in inline. 
     nwords=1
     do j=2,len(inline)
@@ -688,6 +707,12 @@ MODULE l3ascii ! Collections of Hugh's subroutines to handle TYPE GriddedData_T
     nsections=(nwords-3)/2
 !    print*,"Inline=",inline
 !    print*,"Nwords=",nwords
+
+	if(nsections < 1) then
+		call announce_error(0, &
+	& "in make_log_axis: nsections < 1")
+	endif
+	
     allocate(n_levs_in_sec(1:nsections),n_levs_per_dec(1:nsections),&
          axints(1:nsections*2))
     read(unit=inline,fmt=*)linetype,axistype,basepressure,axints
@@ -698,6 +723,11 @@ MODULE l3ascii ! Collections of Hugh's subroutines to handle TYPE GriddedData_T
 
     axis_len=sum(n_levs_in_sec)
 
+	if(axis_len < 1) then
+		call announce_error(0, &
+	& "in make_log_axis: axis_len < 1")
+	endif
+	
     allocate(axis(1:axis_len))
     axis(1)=-log10(basepressure)
     stind=0
@@ -967,6 +997,9 @@ END MODULE l3ascii
 
 !
 ! $Log$
+! Revision 2.4  2001/03/28 00:24:38  pwagner
+! Some error controls, ErrType added
+!
 ! Revision 2.3  2001/03/27 17:33:30  pwagner
 ! announce_error replaces MLSMessage
 !
