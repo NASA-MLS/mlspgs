@@ -153,6 +153,7 @@ contains
     integer :: WHICHPOINTINGGRID        ! Index into the pointing grids
     integer :: WINDOWFINISH             ! End of temperature `window'
     integer :: WINDOWSTART              ! Start of temperature `window'
+    integer :: ICON                     ! i_saturation
 
     logical :: doThis                   ! Flag for lines
     logical :: temp_der, atmos_der, spect_der, ptan_der ! Flags for various derivatives
@@ -1588,13 +1589,15 @@ contains
           ! derivative arrays are allocated.  This avoids having four
           ! paths, each with a different set of optional arguments.
 
+          ICON = FwdModelConf%i_saturation
+
           call get_beta_path ( Frq, p_path(1:no_ele), t_path(1:no_ele), &   
             &  my_Catalog, beta_group, gl_slabs, indices_c(1:npc),      &   
             &  beta_path_c(1:npc,:),                                    &   
             &  gl_slabs_m, t_path(1:no_ele)-del_temp,                   &   
             &  gl_slabs_p, t_path(1:no_ele)+del_temp,                   &   
             &  dbeta_dt_path_c, dbeta_dw_path_c,                        &   
-            &  dbeta_dn_path_c, dbeta_dv_path_c )                    
+            &  dbeta_dn_path_c, dbeta_dv_path_c, ICON )                    
 
           alpha_path_c(1:npc) = SUM(sps_path(indices_c(1:npc),:) *  &
                                   & beta_path_c(1:npc,:),DIM=2)
@@ -1630,12 +1633,14 @@ contains
           ! This avoids having four paths through the code, each with a
           ! different set of optional arguments.
 
+          ICON = FwdModelConf%i_saturation
+
           call get_beta_path ( Frq, p_path(1:no_ele), t_path(1:no_ele), &
             & my_Catalog, beta_group, gl_slabs, gl_inds, beta_path_f,   &
             & gl_slabs_m, t_path(1:no_ele)-del_temp,                    &
             & gl_slabs_p, t_path(1:no_ele)+del_temp,                    &
             & dbeta_dt_path_f, dbeta_dw_path_f,                         &
-            & dbeta_dn_path_f, dbeta_dv_path_f )
+            & dbeta_dn_path_f, dbeta_dv_path_f, ICON )
 
           ! Compute radiative transfer ---------------------------------------
 
@@ -2406,6 +2411,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.103  2003/01/10 21:55:26  vsnyder
+! Move SpeedOfLight from Geometry ot Units
+!
 ! Revision 2.102  2003/01/08 00:16:39  vsnyder
 ! Use "associated" instead of "present" to control optional computations.
 ! Cosmetic changes, too.
