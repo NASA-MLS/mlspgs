@@ -5,9 +5,6 @@ module RAD_TRAN_M
 
   use MLSCommon, only: R8, RP, IP
   use GLNP, ONLY: Ng
-  use DO_DELTA_M, ONLY: PATH_OPACITY, HYD_OPACITY
-  use SCRT_DN_M, ONLY: SCRT_DN, GET_DSCRT_NO_T_DN, GET_DSCRT_DN
-  use LOAD_SPS_DATA_M, ONLY: GRIDS_T
 
   implicit NONE
   private
@@ -26,12 +23,14 @@ contains
 !------------------------------------------------------  Rad_tran  -----
 ! This is the radiative transfer model, radiances only !
 
-  SUBROUTINE Rad_tran ( indicies_c, gl_inds, frq, s_temp, e_rflty, z_path, &
+  subroutine Rad_tran ( indicies_c, gl_inds, frq, s_temp, e_rflty, z_path, &
                      &  t_path, alpha_path_c, ref_cor, do_gl, incoptdepth, &
                      &  alpha_path_gl, ds_dh_gl, dh_dz_gl, t_script, tau, &
                      &  rad, i_stop )
 
+    use DO_DELTA_M, ONLY: PATH_OPACITY
     use DO_T_SCRIPT_M, ONLY: TWO_D_T_SCRIPT
+    use SCRT_DN_M, ONLY: SCRT_DN
 
   ! inputs
 
@@ -67,31 +66,24 @@ contains
 
   ! Internals
 
-    integer(ip) :: i, j, k, p_i, no_to_gl, n_path
-    real(rp), allocatable :: gl_delta(:), del_zeta(:)
-    integer(ip), allocatable :: all_inds(:), more_inds(:)
+    integer(ip) :: i, j, k, p_i, n_path
+    real(rp) :: gl_delta(size(gl_inds)/ng), del_zeta(size(gl_inds)/ng)
+    integer(ip) ::  more_inds(size(gl_inds)/ng)
 
   ! Begin code
 
     call two_d_t_script ( t_path(indicies_c), s_temp, frq, t_script )
 
     n_path = size(indicies_c)
-    no_to_gl = count(do_gl)
-    if ( no_to_gl > 0 ) then
+    if ( count(do_gl) > 0 ) then
 
   ! see if anything needs to be gl-d
-
-      allocate ( all_inds(1:ng*no_to_gl) )
-      allocate ( gl_delta(1:no_to_gl) )
-      allocate ( del_zeta(1:no_to_gl) )
-      allocate ( more_inds(1:no_to_gl) )
 
       i = 1
       j = 1
       do p_i = 1, n_path
         if ( do_gl(p_i) ) then
           more_inds(i) = p_i
-          all_inds(j:j+ng-1) = (/(j + k, k=0,ng-1)/)
           if ( p_i > n_path/2 ) then
             del_zeta(i) = z_path(indicies_c(p_i+1)) - z_path(indicies_c(p_i))
           else
@@ -104,14 +96,9 @@ contains
 
       call path_opacity ( del_zeta, &
                 &  alpha_path_c(more_inds), &
-                &  alpha_path_gl(all_inds), ds_dh_gl(gl_inds(all_inds)),  &
-                &  dh_dz_gl(gl_inds(all_inds)), gl_delta )
+                &  alpha_path_gl, ds_dh_gl(gl_inds),  &
+                &  dh_dz_gl(gl_inds), gl_delta )
       incoptdepth(more_inds) = incoptdepth(more_inds) + gl_delta
-
-      deallocate ( more_inds )
-      deallocate ( del_zeta )
-      deallocate ( gl_delta )
-      deallocate ( all_inds )
 
     end if
 
@@ -119,20 +106,25 @@ contains
 
     call scrt_dn ( t_script, e_rflty, incoptdepth, tau, rad, i_stop )
 
-  end subroutine rad_tran
+  end subroutine Rad_tran
 
 !--------------------------------------------------  drad_tran_df  -----
 ! This is the radiative transfer derivative wrt mixing ratio model
 
-  SUBROUTINE drad_tran_df ( indicies_c, gl_inds, z_path, Grids_f, &
+  subroutine DRad_tran_df ( indicies_c, gl_inds, z_path, Grids_f, &
                          &  beta_path_c, eta_zxp_f, sps_path, do_calc_f, &
                          &  beta_path_f, do_gl, del_s, ref_cor, ds_dh_gl, &
                          &  dh_dz_gl, t_script, tau, i_stop, drad_df, ptg_i, &
                          &  frq_i)
 
+    use DO_DELTA_M, ONLY: PATH_OPACITY
+    use LOAD_SPS_DATA_M, ONLY: GRIDS_T
+    use SCRT_DN_M, ONLY: GET_DSCRT_NO_T_DN
+
 ! Inputs
-    INTEGER(ip), intent(in) :: indicies_c(:) ! coarse grid indicies
-    INTEGER(ip), INTENT(in) :: gl_inds(:)    ! Gauss-Legendre grid indicies
+
+    integer(ip), intent(in) :: indicies_c(:) ! coarse grid indicies
+    integer(ip), intent(in) :: gl_inds(:)    ! Gauss-Legendre grid indicies
     real(rp), intent(in) :: z_path(:) ! -log(P) on main grid.
     type (Grids_T), intent(in) :: Grids_f ! All the coordinates
     real(rp), intent(in) :: beta_path_c(:,:) ! cross section for each species
@@ -350,11 +342,14 @@ contains
 ! This is the radiative transfer derivative wrt spectroscopy model
 !  (Here dx could be: dw, dn or dv (dNu0) )
 
-  subroutine drad_tran_dx ( z_path_c, Grids_f, dbeta_path_c, eta_zxp_f_c, &
+  subroutine DRad_tran_dx ( z_path_c, Grids_f, dbeta_path_c, eta_zxp_f_c, &
                          &  sps_path_c, do_calc_f_c, dbeta_path_f, eta_zxp_f_f, &
                          &  sps_path_f, do_calc_f_f, do_gl, del_s, ref_cor,     &
                          &  ds_dh_gl, dh_dz_gl, t_script, tau, i_stop, drad_dx, &
                          &  ptg_i, frq_i )
+
+    use LOAD_SPS_DATA_M, ONLY: GRIDS_T
+    use SCRT_DN_M, ONLY: GET_DSCRT_NO_T_DN
 
 ! Inputs
 
@@ -511,11 +506,11 @@ contains
 
     end do
 
-  end subroutine drad_tran_dx
+  end subroutine DRad_tran_dx
 !--------------------------------------------------  drad_tran_dt  -----
 ! This is the radiative transfer derivative wrt temperature model
 
-  subroutine drad_tran_dt ( z_path_c, h_path_c, t_path_c, dh_dt_path_c, &
+  subroutine DRad_tran_dt ( z_path_c, h_path_c, t_path_c, dh_dt_path_c, &
                          &  alpha_path_c, alphaxn_path_c, eta_zxp_c, do_calc_t_c, &
                          &  do_calc_hyd_c, del_s, ref_cor, h_tan, dh_dt_tan, &
                          &  freq, do_gl, h_path_f, t_path_f, dh_dt_path_f, &
@@ -523,7 +518,9 @@ contains
                          &  ds_dh_gl, dh_dz_gl, t_script, tau, i_stop, drad_dt,  &
                          &  ptg_i, frq_i )
 
-  use D_T_SCRIPT_DTNP_M, only: DT_SCRIPT_DT
+    use DO_DELTA_M, ONLY: PATH_OPACITY, HYD_OPACITY
+    use D_T_SCRIPT_DTNP_M, only: DT_SCRIPT_DT
+    use SCRT_DN_M, ONLY: GET_DSCRT_DN
 
 ! Inputs
 
@@ -824,7 +821,7 @@ contains
 
     end do
 
-  end subroutine drad_tran_dt
+  end subroutine DRad_tran_dt
 
 !----------------------------------------------------------------------
   logical function not_used_here()
@@ -833,6 +830,9 @@ contains
 
 end module RAD_TRAN_M
 ! $Log$
+! Revision 2.10  2003/02/03 19:00:52  bill
+! changed interface to rad tran to speed up program
+!
 ! Revision 2.9  2003/01/08 00:15:42  vsnyder
 ! Moved path_contrib to its own module
 !
