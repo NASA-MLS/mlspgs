@@ -536,7 +536,7 @@ contains ! =====     Public Procedures     =============================
 
           call allocate_Test ( info%signals(j)%channels, &
             & size(info%signals(j)%frequencies), 'info%signals%channels', &
-            & ModuleName )
+            & ModuleName ) ! , lowBound=lbound(info%signals(j)%frequencies,1) )
           if ( associated(channels) ) then
             info%signals(j)%channels(1:lbound(channels,1)-1) = .false.
             info%signals(j)%channels(lbound(channels,1):ubound(channels,1)) = &
@@ -869,6 +869,10 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.89  2004/03/05 18:32:55  livesey
+! Bug fix, but commented out for the moment, as I need to get a test
+! going.
+!
 ! Revision 2.88  2003/10/29 00:44:33  livesey
 ! Made sure that default bin selectors also applied to hybrid model.
 !
