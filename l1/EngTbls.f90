@@ -268,7 +268,7 @@ CONTAINS
     INTEGER :: TerReflecIndx = 0
     INTEGER :: riu_chan, riu_no, old_riu
 
-    REAL :: scale
+    REAL :: scale = 1.0
 
 !! Read Survival table
 
@@ -362,6 +362,9 @@ CONTAINS
 END MODULE EngTbls
 
 ! $Log$
+! Revision 2.9  2004/08/12 13:51:49  perun
+! Version 1.44 commit
+!
 ! Revision 2.8  2004/01/09 17:46:22  perun
 ! Version 1.4 commit
 !

@@ -120,21 +120,21 @@ MODULE SciUtils ! L0 science utilities
     DN = sci_cptr(tindex)%THz_sw
     IF (DN(1:1) /= sw_good) DN = DN(4:)   ! shift and try
     IF (DN(1:1) == sw_good) THEN
-       Sci_pkt%TSSA_pos(1)  = deg24 * BigEndianStr (DN(3:5))
-       Sci_pkt%TSSA_pos(2)  = deg24 * BigEndianStr (DN(6:8))
+       Sci_pkt%TSSM_pos(1)  = deg24 * BigEndianStr (DN(3:5))
+       Sci_pkt%TSSM_pos(2)  = deg24 * BigEndianStr (DN(6:8))
     ELSE
-       Sci_pkt%TSSA_pos(:) = QNan()
+       Sci_pkt%TSSM_pos(:) = QNan()
     ENDIF
-    Sci_pkt%THz_sw_pos = SwMirPos ("T", Sci_pkt%TSSA_pos)
+!    Sci_pkt%THz_sw_pos = SwMirPos ("T", Sci_pkt%TSSM_pos)
 
     DN = sci_cptr(tindex)%GHz_sw
     IF (DN(1:1) == sw_good) THEN
-       Sci_pkt%GSA_pos(1)  = deg24 * BigEndianStr (DN(3:5))
-       Sci_pkt%GSA_pos(2)  = deg24 * BigEndianStr (DN(6:8))
+       Sci_pkt%GSM_pos(1)  = deg24 * BigEndianStr (DN(3:5))
+       Sci_pkt%GSM_pos(2)  = deg24 * BigEndianStr (DN(6:8))
     ELSE
-       Sci_pkt%GSA_pos(:) = QNan()
+       Sci_pkt%GSM_pos(:) = QNan()
     ENDIF
-    Sci_pkt%GHz_sw_pos = SwMirPos ("G", Sci_pkt%GSA_pos)
+!    Sci_pkt%GHz_sw_pos = SwMirPos ("G", Sci_pkt%GSM_pos)
 
 !! Get GHz scanning angles
 
@@ -284,9 +284,13 @@ MODULE SciUtils ! L0 science utilities
 
     INTEGER, PARAMETER :: no_data = -1   ! no data is available
     INTEGER, SAVE :: prev_MAF = no_data
-    INTEGER :: last_MIF, i
-    REAL :: pos1(2)
+    INTEGER :: i, last_MIF, MIFno, m
+    REAL :: pos1, pos2, dif
     CHARACTER(len=1) :: mir_pos
+    REAL :: APE_pos(0:(MaxMIFs-1),2), ASA_pos(0:(MaxMIFs-1),2)
+    REAL :: GSM_pos(0:(MaxMIFs-1),2), TSSM_pos(0:(MaxMIFs-1),2)
+    REAL :: APE_theta(0:(MaxMIFs-1)), GSM_theta(0:(MaxMIFs-1)), &
+         TSSM_theta(0:(MaxMIFs-1))
 
     more_data = .TRUE.
 
@@ -294,8 +298,9 @@ MODULE SciUtils ! L0 science utilities
 
     SciMAF%MAFno = no_data
     SciMAF%MIFno = no_data
-    last_MIF = L1Config%Calib%MIFsPerMAF -1
+    last_MIF = L1Config%Calib%MIFsPerMAF - 1
     DO i = 0, (MaxMIFs - 1); DACS_MAF(i)%D = 0; ENDDO
+    APE_pos = QNan(); ASA_pos = QNan(); GSM_pos = QNan(); TSSM_pos = QNan()
 
     !! Initialize CRC flags to good
 
@@ -315,6 +320,7 @@ MODULE SciUtils ! L0 science utilities
 
        IF (GetSciPkt()) THEN
 
+          MIFno = Sci_pkt%MIFno
           IF ((prev_MAF /= no_data) .AND. (Sci_pkt%MAFno /= prev_MAF)) THEN
              prev_MAF = Sci_pkt%MAFno
              IF (SciMAF(0)%MIFno /= no_data .AND. &
@@ -326,50 +332,18 @@ MODULE SciUtils ! L0 science utilities
              ENDIF
           ENDIF
 
-          SciMAF(Sci_pkt%MIFno) = Sci_pkt  ! save current packet
-          DACS_MAF(Sci_pkt%MIFno) = DACS_pkt  ! save DACS data
+          SciMAF(MIFno) = Sci_pkt  ! save current packet
+          DACS_MAF(MIFno) = DACS_pkt  ! save DACS data
 
           IF (L1ProgType == THzType) &
-           CALL Save_THz_pkt (SciMAF(Sci_pkt%MIFno), THzSciMAF(Sci_pkt%MIFno))
+           CALL Save_THz_pkt (SciMAF(MIFno), THzSciMAF(MIFno))
 
-! Shift mechanism encoder readings to corresponding MIF
+! Save mechanism positions for further processing:
 
-          IF (Sci_pkt%MIFno > 0) THEN
-             SciMAF(Sci_pkt%MIFno-1)%GSA_pos = &
-                  SciMAF(Sci_pkt%MIFno)%GSA_pos
-             SciMAF(Sci_pkt%MIFno)%GSA_pos = QNan()
-             SciMAF(Sci_pkt%MIFno-1)%APE_pos(2) = &
-                  SciMAF(Sci_pkt%MIFno)%APE_pos(2)
-             SciMAF(Sci_pkt%MIFno)%APE_pos(2) = QNan()
-             SciMAF(Sci_pkt%MIFno-1)%ASA_pos(2) = &
-                  SciMAF(Sci_pkt%MIFno)%ASA_pos(2)
-             SciMAF(Sci_pkt%MIFno)%ASA_pos(2) = QNan()
-             SciMAF(Sci_pkt%MIFno-1)%GHz_sw_pos = &
-                  SciMAF(Sci_pkt%MIFno)%GHz_sw_pos
-             SciMAF(Sci_pkt%MIFno)%GHz_sw_pos = "D"
-             SciMAF(Sci_pkt%MIFno-1)%TSSA_pos = &
-                  SciMAF(Sci_pkt%MIFno)%TSSA_pos
-             SciMAF(Sci_pkt%MIFno)%TSSA_pos = QNan()
-
-             IF (L1ProgType == THzType) THEN            ! THz if needed
-                THzSciMAF(Sci_pkt%MIFno-1)%TSSA_pos = &
-                     THzSciMAF(Sci_pkt%MIFno)%TSSA_pos
-                THzSciMAF(Sci_pkt%MIFno)%TSSA_pos = QNan()
-                THzSciMAF(Sci_pkt%MIFno-1)%SwMirPos = &
-                     THzSciMAF(Sci_pkt%MIFno)%SwMirPos
-                THzSciMAF(Sci_pkt%MIFno)%SwMirPos = "D"
-             ENDIF
-
-          ENDIF
-
-          IF (Sci_pkt%MIFno > 1) THEN
-             SciMAF(Sci_pkt%MIFno-2)%APE_pos(1) = &
-                  SciMAF(Sci_pkt%MIFno)%APE_pos(1)
-             SciMAF(Sci_pkt%MIFno)%APE_pos(1) = QNan()
-             SciMAF(Sci_pkt%MIFno-2)%ASA_pos(1) = &
-                  SciMAF(Sci_pkt%MIFno)%ASA_pos(1)
-             SciMAF(Sci_pkt%MIFno)%ASA_pos(1) = QNan()
-           ENDIF
+          APE_pos(MIFno,:) = SciMAF(MIFno)%APE_pos
+          ASA_pos(MIFno,:) = SciMAF(MIFno)%ASA_pos
+          GSM_pos(MIFno,:) = SciMAF(MIFno)%GSM_pos
+          TSSM_pos(MIFno,:) = SciMAF(MIFno)%TSSM_pos
 
           prev_MAF = Sci_pkt%MAFno
 
@@ -383,21 +357,62 @@ MODULE SciUtils ! L0 science utilities
 
     ENDDO
 
-! Compare previous pos1 against current MIF pos1/2:
+! Determine pointing mechanisms angles:
 
-    IF (L1ProgType == THzType) THEN
-       DO i = 1, (MaxMIFs - 1)
-          IF (THzSciMAF(i)%SwMirPos /= "D") THEN
-             pos1(1) = THzSciMAF(i-1)%TSSA_pos(1)  ! previous pos1
-             pos1(2) = pos1(1)   ! need 2 angles to figure sw mir pos
-             IF (Finite (pos1(1))) THEN
-                mir_pos = SwMirPos ("T", pos1)
-                IF (mir_pos /= THzSciMAF(i)%SwMirPos) &
-                     THzSciMAF(i)%SwMirPos = "D"
-             ENDIF
+    APE_theta = QNan()
+    GSM_theta = QNan()
+    TSSM_theta = QNan()
+
+    DO m = 0, (MaxMIFs - 2)
+
+       IF (m < (MaxMIFs - 3)) THEN   ! APE pos
+          pos1 = APE_pos(m+2,1)
+          pos2 = APE_pos(m+1,2)
+          IF (.NOT. Finite (pos1)) THEN
+             APE_theta(m) = pos2
+          ELSE IF (.NOT. Finite (pos2)) THEN
+             APE_theta(m) = pos1
+          ELSE
+             dif = MOD ((pos1 + APE_pos(m+1,1) - 2.0 * pos2 + 900.0), 360.0)
+             APE_theta(m) = pos2 + 0.25 * (dif - 180.0)
           ENDIF
-       ENDDO
-    ENDIF
+       ENDIF
+       pos1 = TSSM_pos(m,1)
+       pos2 = TSSM_pos(m+1,2)
+       IF (.NOT. Finite (pos1)) THEN
+          TSSM_theta(m) = pos2
+       ELSE IF (.NOT. Finite (pos2)) THEN
+          TSSM_theta(m) = pos1
+       ELSE
+          dif = MOD ((pos1 + TSSM_pos(m+1,1) - 2.0 * pos2 + 900.0), 360.0)
+          TSSM_theta(m) = pos2 + 0.25 * (dif - 180.0)
+       ENDIF
+       pos1 = GSM_pos(m,1)
+       pos2 = GSM_pos(m+1,2)
+       IF (.NOT. Finite (pos1)) THEN
+          GSM_theta(m) = pos2
+       ELSE IF (.NOT. Finite (pos2)) THEN
+          GSM_theta(m) = pos1
+       ELSE
+          dif = MOD ((pos1 + GSM_pos(m+1,1) - 2.0 * pos2 + 900.0), 360.0)
+          GSM_theta(m) = pos2 + 0.25 * (dif - 180.0)
+       ENDIF
+
+    ENDDO
+    APE_theta(MaxMIFs-2) = APE_pos(MaxMIFs-1,2)
+    APE_theta(MaxMIFs-1) = APE_pos(MaxMIFs-1,1)
+    TSSM_theta(MaxMIFs-1) = TSSM_pos(MaxMIFs-1,1)
+    GSM_theta(MaxMIFs-1) = GSM_pos(MaxMIFs-1,1)
+
+    DO m = 0, (MaxMIFs - 1)
+       SciMAF(m)%APE_theta = APE_theta(m)
+       SciMAF(m)%GSM_theta = GSM_theta(m)
+       SciMAF(m)%GHz_sw_pos = SwMirPos ("G", GSM_theta(m))
+       SciMAF(m)%THz_sw_pos = SwMirPos ("T", TSSM_theta(m))
+       SciMAF(m)%TSSM_theta = TSSM_theta(m)
+       THzSciMAF(m)%TSSM_theta = TSSM_theta(m)
+       THzSciMAF(m)%SwMirPos = SwMirPos ("T", TSSM_theta(m))
+    ENDDO
 
 ! Process DACS data for the current MAF
 
@@ -418,14 +433,15 @@ MODULE SciUtils ! L0 science utilities
     USE EngTbls, ONLY: EngMAF
 
     CHARACTER(len=1), INTENT(IN) :: sw_module
-    REAL, INTENT(IN) :: angle(2)
+    REAL, INTENT(IN) :: angle
     CHARACTER(len=1) :: sw_pos
 
     INTEGER :: n
     TYPE (SwMir_Range_T), DIMENSION(:), POINTER :: SwMir_Range
 
     sw_pos = "D"                 ! Initialize to "Discard"
-    IF (.NOT. Finite (angle(1)) .OR. .NOT. Finite (angle(2))) RETURN
+
+    IF (.NOT. Finite (angle)) RETURN
 
     IF (sw_module == "G") THEN   ! GigaHertz Module
        IF (EngMAF%GSM_Side == "A") THEN
@@ -440,10 +456,8 @@ MODULE SciUtils ! L0 science utilities
     ENDIF
 
     DO n = 1, SIZE (SwMir_Range)
-       IF (angle(1) > SwMir_Range(n)%low_angle .AND. &
-            angle(1) < SwMir_Range(n)%high_angle .AND. &
-            angle(2) >  SwMir_Range(n)%low_angle .AND. &
-            angle(2) <  SwMir_Range(n)%high_angle) THEN
+       IF (angle > SwMir_Range(n)%low_angle .AND. &
+            angle < SwMir_Range(n)%high_angle) THEN
           sw_pos = SwMir_Range(n)%pos
           EXIT
        ENDIF
@@ -455,32 +469,32 @@ MODULE SciUtils ! L0 science utilities
   SUBROUTINE GetScAngles
 !=============================================================================
 
-    USE L0_sci_tbls, ONLY: APE2_dflt, TSE2_dflt
+    USE L0_sci_tbls, ONLY: APE_theta_dflt, TSSM_theta_dflt
     USE MLSL1Config, ONLY: L1Config
     USE EngTbls, ONLY: EngMAF
 
     INTEGER :: i
-    REAL :: APE, TSE
+    REAL :: APE, TSSM
     REAL, PARAMETER :: APE_eps = 27.7340
     REAL, PARAMETER :: APE_B_A = 0.734
-    REAL, PARAMETER :: TSE_eps = 26.301
+    REAL, PARAMETER :: TSSM_eps = 26.301
 
     DO i = 0, (MaxMIFs - 1)
        IF (L1Config%Globals%SimOA) THEN
-          APE = APE2_dflt(i)
-          TSE = TSE2_dflt(i)
+          APE = APE_theta_dflt(i)
+          TSSM = TSSM_theta_dflt(i)
        ELSE
-          APE = SciMAF(i)%APE_pos(2)
+          APE = SciMAF(i)%APE_theta
           IF (EngMAF%ASE_Side == "B") APE = APE - APE_B_A  ! Adjust for "B" side
-          TSE = SciMAF(i)%TSSA_pos(2)
+          TSSM = SciMAF(i)%TSSM_theta
        ENDIF
        IF (APE >= 0.0) THEN
           SciMAF(i)%scAngleG = MOD ((APE + APE_eps), 360.0)
        ELSE
           SciMAF(i)%scAngleG = -999.9
        ENDIF
-       IF (TSE >= 0.0) THEN
-          SciMAF(i)%scAngleT = MOD ((TSE + TSE_eps), 360.0)
+       IF (TSSM >= 0.0) THEN
+          SciMAF(i)%scAngleT = MOD ((TSSM + TSSM_eps), 360.0)
        ELSE
           SciMAF(i)%scAngleT = -999.9
        ENDIF
@@ -778,7 +792,8 @@ MODULE SciUtils ! L0 science utilities
     THz_Sci_pkt%MaxAtten(1:5) = Sci_pkt%MaxAtten%FB(15:19)
     THz_Sci_pkt%MaxAtten(6) = Sci_pkt%MaxAtten%FB(12)
     THz_Sci_pkt%AttenMaxed = (ANY (THz_Sci_pkt%MaxAtten))
-    THz_Sci_pkt%TSSA_pos = Sci_pkt%TSSA_pos
+    THz_Sci_pkt%TSSM_pos = Sci_pkt%TSSM_pos
+    THz_Sci_pkt%TSSM_theta = Sci_pkt%TSSM_theta
     THz_Sci_pkt%SwMirPos = Sci_pkt%THz_sw_pos
     THz_Sci_pkt%LLO_bias = LLO_Bias (Sci_pkt%LLO_DN, Sci_pkt%MIFno)
     THz_Sci_pkt%BandSwitch = Sci_pkt%BandSwitch(4:5)  !Only need sw #4 & #5
@@ -789,6 +804,9 @@ MODULE SciUtils ! L0 science utilities
 END MODULE SciUtils
 
 ! $Log$
+! Revision 2.9  2004/08/12 13:51:51  perun
+! Version 1.44 commit
+!
 ! Revision 2.8  2004/05/14 15:59:11  perun
 ! Version 1.43 commit
 !
@@ -808,6 +826,9 @@ END MODULE SciUtils
 ! moved parameter statement to data statement for LF/NAG compatitibility
 !
 ! $Log$
+! Revision 2.9  2004/08/12 13:51:51  perun
+! Version 1.44 commit
+!
 ! Revision 2.8  2004/05/14 15:59:11  perun
 ! Version 1.43 commit
 !

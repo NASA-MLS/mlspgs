@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !===============================================================================
@@ -94,16 +94,9 @@ CONTAINS
 
 ! Get orbit metadata
 
-    print *, 'spacecraftId: ', spacecraftId
-    print *, 'num_points: ', num_points
-    print *, 'startTime: ', startTime
-    print *, 'offsets: ', offsets
     returnStatus = Pgs_eph_getEphMet (spacecraftId, num_points, startTime, &
          offsets, numOrbits, orbitNumber, orbitAscendTime, &
          orbitDescendTime, orbitDownLongitude)
-
-    print *,'return status: ', returnStatus
-!    print *, 'orbitNumber: ', orbitNumber
 
     IF (returnStatus /= PGS_S_SUCCESS) THEN
        CALL Pgs_smf_getMsg (msg_stat, mnemonic, msg)
@@ -205,6 +198,9 @@ END MODULE Orbit
 !===============
 
 ! $Log$
+! Revision 2.9  2004/08/12 13:51:50  perun
+! Version 1.44 commit
+!
 ! Revision 2.8  2004/08/03 16:59:08  cvuu
 ! Fix the problem of getting OrbitNumbers
 !

@@ -145,22 +145,23 @@ CONTAINS
   END SUBROUTINE CalcNonLimbRad
 
 !=============================================================================
- SUBROUTINE CalcLimbRads
+  SUBROUTINE CalcLimbRads
 !=============================================================================
 
     USE MLSL1Config, ONLY: MIFsGHz, L1Config
-    USE MLSL1Common, ONLY: L1BFileInfo
-use MLSL1Utils, ONLY: Finite
+    USE MLSL1Common, ONLY: L1BFileInfo, Deflt_chi2
+    USE MLSL1Utils, ONLY: Finite
+
     TYPE (Eng_MAF_T) :: EMAF
 
     CHARACTER(LEN=1) :: GHz_Cal_Type
-    INTEGER :: bank, chan, MIF_index, MIF_index_MAX, radNum, i
+    INTEGER :: bank, chan, MIF_index, MIF_index_MAX, radNum, bandNo, i
     INTEGER :: time_index, start_index, end_index, windex, CalWin_end
     REAL :: GHz_T1, GHz_T2, space_T, target_T, GHz_target_T, gain
     REAL :: ReflecAvg, NonLimbRad, Scf, Tcf
     REAL :: space_P, target_P, baffle_P ! Power per unit bandwidth
     REAL(r8) :: C_zero
-    LOGICAL :: use_deflt_gains
+    LOGICAL :: use_deflt_gains, do_chi2_err
     INTEGER, PARAMETER :: DACS_FB(4) = (/ 9, 2, 7, 1 /)
 
     use_deflt_gains = L1Config%Calib%UseDefaultGains
@@ -183,23 +184,23 @@ use MLSL1Utils, ONLY: Finite
 
     GHz_T1 = GetIndexedAvg (EMAF%eng%value, CalTgtIndx%GHzAmb) - absZero_C
 
-!    if (finite (GHz_T1)) print *, "GHzAmb avg: ", GHz_T1
+    !    if (finite (GHz_T1)) print *, "GHzAmb avg: ", GHz_T1
     GHz_T2 = GetIndexedAvg (EMAF%eng%value, CalTgtIndx%GHzCntl) - absZero_C
-!    if (finite (GHZ_T2)) print *, "GHzCntl avg: ", GHz_T2
+    !    if (finite (GHZ_T2)) print *, "GHzCntl avg: ", GHz_T2
 
-!  Temperature combinations for S and T from cf file:
+    !  Temperature combinations for S and T from cf file:
 !
-!    Note: no input T is same as "-"  and all final temps will be absolutes.
+    !    Note: no input T is same as "-"  and all final temps will be absolutes.
 !
-!   Scf   Tcf   S   T
-!--------------------
-!    +     -    S   A
-!    +     0    S   C
-!    +     +    S   T
-!    -     -    A   S
-!    -     0    C   S
-!    0     0    A   C
-!    0     -    C   A
+    !   Scf   Tcf   S   T
+    !--------------------
+    !    +     -    S   A
+    !    +     0    S   C
+    !    +     +    S   T
+    !    -     -    A   S
+    !    -     0    C   S
+    !    0     0    A   C
+    !    0     -    C   A
 
     Scf = L1Config%Calib%GHzSpaceTemp
     Tcf = L1Config%Calib%GHzTargetTemp
@@ -227,7 +228,7 @@ use MLSL1Utils, ONLY: Finite
        GHz_target_T = GHz_T1
     ENDIF
 
-! Check if Temperatures are good
+    ! Check if Temperatures are good
 
     IF (.NOT. Finite (space_T) .OR. .NOT. Finite (GHz_target_T) ) THEN
        DO bank = 1, GHzNum
@@ -248,7 +249,7 @@ use MLSL1Utils, ONLY: Finite
        ENDDO
        RETURN
     ENDIF
-PRINT *, 'S/T temp: ', space_T, GHz_target_T
+    PRINT *, 'S/T temp: ', space_T, GHz_target_T
     Tsys%FB = 0.0
     Tsys%MB = 0.0
     Tsys%WF = 0.0
@@ -257,7 +258,7 @@ PRINT *, 'S/T temp: ', space_T, GHz_target_T
     Cgain%WF = 0.0
     MIF_index_MAX = MIFsGHz - 1
 
-! Reflector temperatures:
+    ! Reflector temperatures:
 
     Reflec%Pri = GetIndexedAvg (EMAF%eng%value, ReflecIndx%Pri) - absZero_C
     Reflec%Sec = GetIndexedAvg (EMAF%eng%value, ReflecIndx%Sec) - absZero_C
@@ -270,16 +271,17 @@ PRINT *, 'S/T temp: ', space_T, GHz_target_T
 
        DO bank = 1, GHzNum
 
-! Determine which Target temp to use!!
+          ! Determine which Target temp to use!!
 
           target_T =  GHz_target_T
-
+          BandNo = FBrad(bank)%bandno
           radNum = FBrad(bank)%signal%radiometerNumber
           IF (FBrad(bank)%signal%radiometerModifier == "A" .AND. &
                radNum == 1) radNum = 0   ! R1A
           space_P = radPwr (LO1(radNum), space_T)
           target_P = radPwr (LO1(radNum), target_T)
           baffle_P = radPwr (LO1(radNum), GHz_T1)
+          do_chi2_err = L1Config%Output%EnableChi2Err(BandNo)
 
           IF (MIF_index <= MIF_index_MAX .AND. radNum < 5) THEN
              DO chan = 1, FBchans
@@ -295,10 +297,14 @@ PRINT *, 'S/T temp: ', space_T, GHz_target_T
                      deflt_gain%FB(chan,bank), use_deflt_gains, &
                      Tsys%FB(chan,bank), gain)
 
-                CALL CalcNonLimbRad (FBrad(bank)%BandNo, chan, radNum, &
-                     ReflecAvg, NonLimbRad)
+                CALL CalcNonLimbRad (BandNo, chan, radNum, ReflecAvg, &
+                     NonLimbRad)
                 FBrad(bank)%value(chan,MIF_index+1) = &
                      FBrad(bank)%value(chan,MIF_index+1) - NonLimbRad
+
+                IF (do_chi2_err) FBrad(bank)%precision(chan,MIF_index+1) = &
+                     deflt_chi2%FB(chan,BandNo) * &
+                     FBrad(bank)%precision(chan,MIF_index+1)
 
                 IF (Cgain%FB(chan,bank) == 0.0 .AND. Tsys%FB(chan,bank) > 0.0) &
                      Cgain%FB(chan,bank) = gain
@@ -311,10 +317,12 @@ PRINT *, 'S/T temp: ', space_T, GHz_target_T
        IF (MIF_index <= MIF_index_MAX) THEN
           DO bank = 1, MBnum
 
+             bandNo = MBrad(bank)%bandno
              radNum = MBrad(bank)%signal%radiometerNumber
              space_P = radPwr (LO1(radNum), space_T)
              target_P = radPwr (LO1(radNum), target_T)
              baffle_P = radPwr (LO1(radNum), GHz_T1)
+             do_chi2_err = L1Config%Output%EnableChi2Err(BandNo)
 
              DO chan = 1, MBchans
                 C_zero = deflt_zero%MB(chan,bank)
@@ -329,25 +337,31 @@ PRINT *, 'S/T temp: ', space_T, GHz_target_T
                      deflt_gain%MB(chan,bank), use_deflt_gains, &
                      Tsys%MB(chan,bank), gain)
 
-                CALL CalcNonLimbRad (MBrad(bank)%BandNo, chan, radNum, &
-                     ReflecAvg, NonLimbRad)
+                CALL CalcNonLimbRad (BandNo, chan, radNum, ReflecAvg, &
+                     NonLimbRad)
                 MBrad(bank)%value(chan,MIF_index+1) = &
                      MBrad(bank)%value(chan,MIF_index+1) - NonLimbRad
 
+                IF (do_chi2_err) MBrad(bank)%precision(chan,MIF_index+1) = &
+                     deflt_chi2%MB(chan,bank) * &
+                     MBrad(bank)%precision(chan,MIF_index+1)
+
                 IF (Cgain%MB(chan,bank) == 0.0 .AND. Tsys%MB(chan,bank) > 0.0) &
                      Cgain%MB(chan,bank) = gain
-                
+
              ENDDO
           ENDDO
 
           DO bank = 1, WFnum
 
+             bandNo = WFrad(bank)%bandno
              radNum = WFrad(bank)%signal%radiometerNumber
              IF (WFrad(bank)%signal%radiometerModifier == "A" .AND. &
                   radNum == 1) radNum = 0   ! R1A
              space_P = radPwr (LO1(radNum), space_T)
              target_P = radPwr (LO1(radNum), target_T)
              baffle_P = radPwr (LO1(radNum), GHz_T1)
+             do_chi2_err = L1Config%Output%EnableChi2Err(BandNo)
 
              DO chan = 1, WFchans
                 C_zero = deflt_zero%WF(chan,bank)
@@ -362,14 +376,18 @@ PRINT *, 'S/T temp: ', space_T, GHz_target_T
                      deflt_gain%WF(chan,bank), use_deflt_gains, &
                      Tsys%WF(chan,bank), gain)
 
-                CALL CalcNonLimbRad (WFrad(bank)%BandNo, chan, radNum, &
-                     ReflecAvg, NonLimbRad)
+                CALL CalcNonLimbRad (BandNo, chan, radNum, ReflecAvg, &
+                     NonLimbRad)
                 WFrad(bank)%value(chan,MIF_index+1) = &
                      WFrad(bank)%value(chan,MIF_index+1) - NonLimbRad
 
+                IF (do_chi2_err) WFrad(bank)%precision(chan,MIF_index+1) = &
+                     deflt_chi2%WF(chan,bank) * &
+                     WFrad(bank)%precision(chan,MIF_index+1)
+
                 IF (Cgain%WF(chan,bank) == 0.0 .AND. Tsys%WF(chan,bank) > 0.0) &
                      Cgain%WF(chan,bank) = gain
-                
+
              ENDDO
           ENDDO
 
@@ -377,6 +395,7 @@ PRINT *, 'S/T temp: ', space_T, GHz_target_T
 
              DO bank = 1, DACSnum
 
+                bandNo = DACSrad(bank)%bandno
                 radNum = DACSrad(bank)%signal%radiometerNumber
                 IF (DACSrad(bank)%signal%radiometerModifier == "A" .AND. &
                      radNum == 1) radNum = 0   ! R1A
@@ -384,7 +403,7 @@ PRINT *, 'S/T temp: ', space_T, GHz_target_T
                 target_P = radPwr (LO1(radNum), target_T)
                 baffle_P = radPwr (LO1(radNum), GHz_T1)
 
-! Tsys from the appropiate FB:
+                ! Tsys from the appropiate FB:
 
                 IF (bank == 1 .AND. radNum == 1) THEN ! DACS 1 has been switched
                    Tsys%DACS(:,bank) = Tsys%FB(13,1)  ! Use FB 1's Tsys
@@ -406,8 +425,8 @@ PRINT *, 'S/T temp: ', space_T, GHz_target_T
                         deflt_gain%DACS(chan,bank), use_deflt_gains, &
                         Tsys%DACS(chan,bank), gain, dacs=1)
 
-                   CALL CalcNonLimbRad (DACSrad(bank)%BandNo, chan, radNum, &
-                        ReflecAvg, NonLimbRad)
+                   CALL CalcNonLimbRad (BandNo, chan, radNum, ReflecAvg, &
+                        NonLimbRad)
                    DACSrad(bank)%value(chan,MIF_index+1) = &
                         DACSrad(bank)%value(chan,MIF_index+1) - NonLimbRad
 
@@ -426,6 +445,9 @@ END MODULE Radiances
 !=============================================================================
 
 ! $Log$
+! Revision 2.9  2004/08/12 13:51:51  perun
+! Version 1.44 commit
+!
 ! Revision 2.8  2004/05/14 15:59:11  perun
 ! Version 1.43 commit
 !

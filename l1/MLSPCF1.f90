@@ -75,14 +75,17 @@ MODULE MLSPCF1
   INTEGER, PARAMETER :: mlspcf_spilloverloss_start = 909
   INTEGER, PARAMETER :: mlspcf_spilloverloss_end = 909
 !
-  INTEGER, PARAMETER :: mlspcf_sciMAF_start = 910
-  INTEGER, PARAMETER :: mlspcf_sciMAF_end = 910
+  INTEGER, PARAMETER :: mlspcf_defltchi2_start = 910
+  INTEGER, PARAMETER :: mlspcf_defltchi2_end = 910
 !
-  INTEGER, PARAMETER :: mlspcf_engMAF_start = 911
-  INTEGER, PARAMETER :: mlspcf_engMAF_end = 911
+  INTEGER, PARAMETER :: mlspcf_sciMAF_start = 920
+  INTEGER, PARAMETER :: mlspcf_sciMAF_end = 920
 !
-  INTEGER, PARAMETER :: mlspcf_MAF_data_start = 912
-  INTEGER, PARAMETER :: mlspcf_MAF_data_end = 912
+  INTEGER, PARAMETER :: mlspcf_engMAF_start = 921
+  INTEGER, PARAMETER :: mlspcf_engMAF_end = 921
+!
+  INTEGER, PARAMETER :: mlspcf_MAF_data_start = 922
+  INTEGER, PARAMETER :: mlspcf_MAF_data_end = 922
 !
   INTEGER, PARAMETER :: mlspcf_l1b_radf_start = 30000
   INTEGER, PARAMETER :: mlspcf_l1b_radf_end = 30000
@@ -126,6 +129,9 @@ MODULE MLSPCF1
 END MODULE MLSPCF1
 
 ! $Log$
+! Revision 2.9  2004/08/12 13:51:50  perun
+! Version 1.44 commit
+!
 ! Revision 2.8  2004/05/14 15:59:11  perun
 ! Version 1.43 commit
 !
