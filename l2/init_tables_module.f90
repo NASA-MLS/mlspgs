@@ -12,16 +12,18 @@ module INIT_TABLES_MODULE
   use Init_MLSSignals_m ! Everything. Init_MLSSignals, Field_First,
     ! Last_Signal_Field, Spec_First, Last_Signal_Spec, Numerous S_....
   use INTRINSIC ! Everything. ADD_IDENT, BEGIN, D, F, FIRST_LIT,
-    ! FIRST_MOLECULE,  INIT_INTRINSIC, L, L_<several>, LAST_INTRINSIC_LIT,
-    ! LAST_MOLECULE, MAKE_TREE, N, NADP, ND, NDP, NP, NR, P, S, T,
+    ! INIT_INTRINSIC, L, L_<several>, LAST_INTRINSIC_LIT,
+    ! N, NADP, ND, NDP, NP, NR, P, S, T,
     ! T_BOOLEAN, T_FIRST, T_LAST_INTRINSIC, T_NUMERIC, T_NUMERIC_RANGE,
     ! T_STRING and Z are used here, but everything is included so that it
     ! can be gotten by USE INIT_TABLES_MODULE.
+  use MOLECULES ! Everything.
+  use Init_Spectroscopy_m ! Everything.
 
   implicit NONE
   public ! This would be a MUCH LONGER list than the list of private
   !        names below.
-  private :: ADD_IDENT, INIT_INTRINSIC, MAKE_TREE
+  private :: ADD_IDENT, INIT_INTRINSIC, INIT_MOLECULES, INIT_SPECTROSCOPY
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -32,7 +34,7 @@ module INIT_TABLES_MODULE
 !---------------------------------------------------------------------------
 
 ! Enumeration types:
-  integer, parameter :: T_CRITICALMODULE = t_last_signal+1
+  integer, parameter :: T_CRITICALMODULE = Last_spectroscopy_type+1
   integer, parameter :: T_FILLMETHOD     = t_criticalmodule+1
   integer, parameter :: T_FWMTYPE        = t_fillmethod+1
   integer, parameter :: T_GRIDDEDORIGIN  = t_fwmType+1
@@ -42,8 +44,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: T_METHOD         = t_mergemethod+1
   integer, parameter :: T_MERGESOURCE    = t_method+1
   integer, parameter :: T_MODULE         = t_mergesource+1
-  integer, parameter :: T_MOLECULE       = t_module+1
-  integer, parameter :: T_OUTPUTTYPE     = t_molecule+1
+  integer, parameter :: T_OUTPUTTYPE     = t_module+1
   integer, parameter :: T_QUANTITYTYPE   = t_outputtype+1
   integer, parameter :: T_SCALE          = t_quantitytype+1
   integer, parameter :: T_SPECIES        = t_scale+1
@@ -53,7 +54,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: T_LAST           = t_vgridtype
   integer :: DATA_TYPE_INDICES(t_first:t_last)
 ! Field indices:
-  integer, parameter :: F_ANTENNAPATTERNS     = last_Signal_Field + 1
+  integer, parameter :: F_ANTENNAPATTERNS     = last_Spectroscopy_Field + 1
   integer, parameter :: F_APRIORI             = f_antennaPatterns + 1
   integer, parameter :: F_APRIORISCALE        = f_apriori + 1
   integer, parameter :: F_ATMOS_DER           = f_aprioriScale + 1
@@ -95,8 +96,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_MEASUREMENTS        = f_matrix + 1
   integer, parameter :: F_METHOD              = f_measurements + 1
   integer, parameter :: F_MIF                 = f_method + 1
-  integer, parameter :: F_MOLECULE            = f_MIF + 1 
-  integer, parameter :: F_MOLECULEDERIVATIVES = f_molecule + 1
+  integer, parameter :: F_MOLECULEDERIVATIVES = f_MIF + 1
   integer, parameter :: F_MOLECULES           = f_moleculeDerivatives + 1
   integer, parameter :: F_NUMBER              = f_molecules + 1
   integer, parameter :: F_ORIGIN              = f_number + 1
@@ -149,7 +149,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: FIELD_LAST = f_zvi
   integer :: FIELD_INDICES(field_first:field_last)
 ! Enumeration literals (there are more in INTRINSIC and MOLECULES):
-  integer, parameter :: L_ANGLE         = last_signal_lit + 1
+  integer, parameter :: L_ANGLE         = last_Spectroscopy_Lit + 1
   integer, parameter :: L_APRIORI       = l_angle + 1
   integer, parameter :: L_BOTH 	        = l_apriori + 1
   integer, parameter :: L_CHOLESKY      = l_both + 1
@@ -192,22 +192,23 @@ module INIT_TABLES_MODULE
 ! Section identities.  Indices are in the order the sections are allowed to
 ! appear.  They're also used to index SECTION_ORDERING, so BE CAREFUL if
 ! you change them!
-  integer, parameter :: Z_CHUNKDIVIDE    = 5
-  integer, parameter :: Z_CONSTRUCT      = 6
-  integer, parameter :: Z_FILL           = 7
-  integer, parameter :: Z_GLOBALSETTINGS = 2
-  integer, parameter :: Z_JOIN           = 9
-  integer, parameter :: Z_MERGEAPRIORI   = 4
+  integer, parameter :: Z_CHUNKDIVIDE    = 6
+  integer, parameter :: Z_CONSTRUCT      = 7
+  integer, parameter :: Z_FILL           = 8
+  integer, parameter :: Z_GLOBALSETTINGS = 3
+  integer, parameter :: Z_JOIN           = 10
+  integer, parameter :: Z_MERGEAPRIORI   = 5
   integer, parameter :: Z_MLSSIGNALS     = 1
-  integer, parameter :: Z_OUTPUT         = 10
-  integer, parameter :: Z_READAPRIORI    = 3
-  integer, parameter :: Z_RETRIEVE       = 8
+  integer, parameter :: Z_OUTPUT         = 11
+  integer, parameter :: Z_READAPRIORI    = 4
+  integer, parameter :: Z_RETRIEVE       = 9
+  integer, parameter :: Z_SPECTROSCOPY   = 2
   integer, parameter :: SECTION_FIRST = z_mlsSignals, &
                                 SECTION_LAST = z_Output
   integer :: SECTION_INDICES(section_first:section_last)
 ! Specification indices don't overlap parameter indices, so a section can
 ! have both parameters and specifications:
-  integer, parameter :: S_APRIORI            = last_Signal_Spec + 1
+  integer, parameter :: S_APRIORI            = last_Spectroscopy_Spec + 1
   integer, parameter :: S_CREATE             = s_apriori + 1
   integer, parameter :: S_FILL               = s_create + 1
   integer, parameter :: S_FORWARDMODEL       = s_fill + 1
@@ -258,21 +259,22 @@ module INIT_TABLES_MODULE
   integer, parameter :: OK = 1, & ! NO = 0
     SECTION_ORDERING(section_first:section_last, &
                      section_first-1:section_last) = reshape( &
-! To: |       globalSettings    chunkDivide       retrieve             |
-!     |             readApriori       construct          join          |
-!     | mlsSignals        mergeApriori       fill             output   |
-! ====|================================================================|== From: ==
-        (/OK,   OK,    0,    0,    0,    0,    0,    0,    0,    0,  & ! Start
-           0,   OK,    0,    0,    0,    0,    0,    0,    0,    0,  & ! mlsSignals
-           0,    0,   OK,    0,    0,    0,    0,    0,    0,    0,  & ! globalSettings
-           0,    0,    0,   OK,    0,    0,    0,    0,    0,    0,  & ! readApriori
-           0,    0,    0,    0,   OK,    0,    0,    0,    0,    0,  & ! mergeApriori
-           0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,  & ! chunkDivide
-           0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,  & ! Construct
-           0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,  & ! Fill
-           0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,  & ! Retrieve
-           0,    0,    0,    0,    0,    0,    0,    0,    0,   OK,  & ! Join
-           0,    0,    0,    0,    0,    0,    0,    0,    0,    0/) & ! Output
+! To: |             globalSettings    chunkDivide       retrieve             |
+!     | mlsSignals        readApriori       construct          join          |
+!     |       spectroscopy      mergeApriori       fill             output   |
+! ====|======================================================================|== From: ==
+        (/OK,   OK,   OK,    0,    0,    0,    0,    0,    0,    0,    0,  & ! Start
+           0,   OK,   OK,    0,    0,    0,    0,    0,    0,    0,    0,  & ! mlsSignals
+           0,   OK,   OK,    0,    0,    0,    0,    0,    0,    0,    0,  & ! spectroscopy
+           0,    0,    0,   OK,    0,    0,    0,    0,    0,    0,    0,  & ! globalSettings
+           0,    0,    0,    0,   OK,    0,    0,    0,    0,    0,    0,  & ! readApriori
+           0,    0,    0,    0,    0,   OK,    0,    0,    0,    0,    0,  & ! mergeApriori
+           0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,  & ! chunkDivide
+           0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,  & ! Construct
+           0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,  & ! Fill
+           0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,  & ! Retrieve
+           0,    0,    0,    0,    0,    0,    0,    0,    0,    0,   OK,  & ! Join
+           0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0/) & ! Output
 !       , shape(section_ordering) )
         , (/ section_last-section_first+1, section_last-section_first+2 /) )
 
@@ -281,16 +283,14 @@ contains ! =====     Public procedures     =============================
   subroutine INIT_TABLES
     use TREE_TYPES, only: N_DOT, N_DT_DEF, N_FIELD_SPEC, N_FIELD_TYPE, &
                           N_NAME_DEF, N_SECTION, N_SPEC_DEF
-    integer :: I ! used only in an array constructor as a DO index
 
   ! Put intrinsic predefined identifiers into the symbol table.
-    call init_intrinsic ( data_type_indices, lit_indices )
-    call init_MLSSignals ( data_type_indices, field_indices, lit_indices, &
-      & spec_indices )
+    call init_MLSSignals ( Data_Type_Indices, Field_Indices, Lit_Indices, &
+    & Parm_Indices, Section_Indices, Spec_Indices )
 
   ! Put nonintrinsic predefined identifiers into the symbol table.
     ! Put enumeration type names into the symbol table
-    data_type_indices(t_criticalmodule) =  add_ident ( 'criticalModule' )
+!   data_type_indices(t_criticalmodule) =  add_ident ( 'criticalModule' )
     data_type_indices(t_fillmethod) =      add_ident ( 'fillMethod' )
     data_type_indices(t_fwmType) =         add_ident ( 'fwmType' )
     data_type_indices(t_griddedOrigin) =   add_ident ( 'griddedOrigin' )
@@ -300,7 +300,6 @@ contains ! =====     Public procedures     =============================
     data_type_indices(t_method) =          add_ident ( 'method' )
     data_type_indices(t_mergesource) =     add_ident ( 'mergeSource' )
     data_type_indices(t_module) =          add_ident ( 'module' )
-    data_type_indices(t_molecule) =        add_ident ( 'molecule' )
     data_type_indices(t_outputtype) =      add_ident ( 'outputType' )
     data_type_indices(t_quantitytype) =    add_ident ( 'quantityType' )
     data_type_indices(t_scale) =           add_ident ( 'scale' )
@@ -386,13 +385,13 @@ contains ! =====     Public procedures     =============================
     field_indices(f_interpolationFactor) = add_ident ( 'interpolationFactor' )
     field_indices(f_jacobian) =            add_ident ( 'jacobian' )
     field_indices(f_length) =              add_ident ( 'length' )
+    field_indices(f_lines) =               add_ident ( 'lines' )
     field_indices(f_logBasis) =            add_ident ( 'logBasis' )
     field_indices(f_matrix) =              add_ident ( 'matrix' )
     field_indices(f_maxIterations) =       add_ident ( 'maxIterations' )
     field_indices(f_measurements) =        add_ident ( 'measurements' )
     field_indices(f_method) =              add_ident ( 'method' )
     field_indices(f_mif) =                 add_ident ( 'mif' )
-    field_indices(f_molecule) =            add_ident ( 'molecule' )
     field_indices(f_moleculeDerivatives) = add_ident ( 'moleculeDerivatives' )
     field_indices(f_molecules) =           add_ident ( 'molecules' )
     field_indices(f_number) =              add_ident ( 'number' )
@@ -468,6 +467,7 @@ contains ! =====     Public procedures     =============================
     section_indices(z_output) =            add_ident ( 'output' )
     section_indices(z_readApriori) =       add_ident ( 'readApriori' )
     section_indices(z_retrieve) =          add_ident ( 'retrieve' )
+    section_indices(z_spectroscopy) =      add_ident ( 'spectroscopy' )
     ! Put spec names into the symbol table.  Don't add ones that are
     ! put in by init_MLSSignals.
     spec_indices(s_apriori) =              add_ident ( 'apriori' )
@@ -527,8 +527,6 @@ contains ! =====     Public procedures     =============================
       begin, t+t_mergeMethod, l+l_direct, l+l_weighted, n+n_dt_def, &
       begin, t+t_mergeSource, l+l_dao, l+l_ncep, n+n_dt_def, &
       begin, t+t_module, l+l_ghz, l+l_thz, n+n_dt_def, &
-      begin, t+t_molecule, l+(/ (i,i=first_molecule, last_molecule) /), &
-             n+n_dt_def, &
       begin, t+t_outputType, l+l_l2aux, l+l_l2gp, n+n_dt_def /) )
     call make_tree ( (/ &
       begin, t+t_quantityType, l+l_baseline, l+l_earthRefl, l+l_elevOffset, &
@@ -806,14 +804,22 @@ contains ! =====     Public procedures     =============================
              s+s_subset, s+s_sids, s+s_time, n+n_section, &
       begin, z+z_join, s+s_time, s+s_l2gp, s+s_l2aux, n+n_section, &
       begin, z+z_output, s+s_time, s+s_output, n+n_section /) )
-  end subroutine INIT_TABLES
 
-  ! --------------------------------------------------  MAKE_TREE  -----
-  include "make_tree.f9h"
+  contains
+
+    ! ------------------------------------------------  MAKE_TREE  -----
+    include "make_tree.f9h"
+
+  end subroutine INIT_TABLES
 
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.63  2001/04/03 19:11:28  vsnyder
+! Account for the changed order of initialization (intrinsic, Molecule,
+! MLSSignals) and the new make_tree.f9h.  Change the call to initialize
+! the next-lower-level one to account for requirements of new make_tree.
+!
 ! Revision 2.62  2001/03/30 03:05:49  vsnyder
 ! Add 'antennaPatterns' field to 'forwardModelGlobal'
 !
