@@ -327,7 +327,7 @@ CONTAINS
 
 ! Expand any fields in the given output file name
 
-         CALL ExpandFileTemplate(l3cf(i)%fileTemplate, l3File, &
+         CALL ExpandFileTemplate(l3cf(i)%fileTemplate, l3File, 'l3dm', &
                                  pcf%outputVersion, pcf%cycle, procDay)
 
 ! If the bypass flag is set, issue a message to that effect, giving the file
@@ -345,7 +345,7 @@ CONTAINS
 
             CALL SearchPCFNames(l3File, mlspcf_l3dm_start, mlspcf_l3dm_end, &
                                 mlspcf_l3dm, match)
-            IF (match == 0) THEN
+            IF (TRIM(match) == 'NONE') THEN
                msr = 'No match in the PCF for file ' // l3File
                CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
             ENDIF
@@ -354,11 +354,11 @@ CONTAINS
 
 ! Create & write to structures in the file
 
-         CALL OutputGrids(l3File, numGrids, indx, l3dm)
+         CALL OutputGrids(match, numGrids, indx, l3dm)
 
 ! Write the L3DM metadata
 
-         CALL WriteMetaL3DM(l3File, l3cf(i)%mcf, numGrids, indx, l3dm, dataDT)
+         CALL WriteMetaL3DM(match, l3cf(i)%mcf, numGrids, indx, l3dm, dataDT)
 
       ENDDO
 
@@ -391,6 +391,9 @@ END MODULE OutputClose
 !=====================
 
 !$Log$
+!Revision 1.2  2000/10/24 19:36:56  nakamura
+!Updated WriteMetaLog for new MCF; moved search for PCF number of MCF to L3CF module.
+!
 !Revision 1.1  2000/10/17 20:27:49  nakamura
 !Module for the Output/Close task.
 !
