@@ -74,7 +74,8 @@ contains ! =====     Public Procedures     =============================
       & SPLIT_PATH_NAME, unSplitName
     use MLSHDF5, only: CpHDF5GlAttribute, MakeHDF5Attribute
     use MLSL2Options, only: CATENATESPLITS, CHECKPATHS, &
-      & DEFAULT_HDFVERSION_WRITE, PENALTY_FOR_NO_METADATA, TOOLKIT
+      & DEFAULT_HDFVERSION_WRITE, &
+      & PENALTY_FOR_NO_METADATA, SKIPDIRECTWRITES, TOOLKIT
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
     use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, MLSPCF_L2GP_END, &
       & MLSPCF_L2GP_START, mlspcf_l2dgg_start, mlspcf_l2dgg_end, &
@@ -176,6 +177,7 @@ contains ! =====     Public Procedures     =============================
     l2aux_mcf = mlspcf_mcf_l2dgm_start
     l2dgg_mcf = mlspcf_mcf_l2dgg_start
 
+    L2auxPhysicalFilename = ' '
     ! Loop over the lines in the l2cf
 
     do spec_no = 2, nsons(root)-1 ! Skip name at begin and end of section
@@ -606,7 +608,8 @@ contains ! =====     Public Procedures     =============================
     
     ! Catenate any split Direct Writes
     ! We assume hdfVersion is 5
-    if ( CATENATESPLITS .and. associated(DirectDatabase) ) then
+    if ( CATENATESPLITS .and. associated(DirectDatabase) &
+      & .and. .not. SKIPDIRECTWRITES ) then
     !! if ( .true. .and. associated(DirectDatabase) ) then
       ! Any dgg eligible for being catenated
       DB_index = findFirst( DirectDatabase%autoType, l_l2dgg )
@@ -714,7 +717,9 @@ contains ! =====     Public Procedures     =============================
         
         ! Now we can write any last-minute attributes or datasets to the l2aux
         ! E.g., parallel stuff
-        if ( parallel%master .or. index(switches, 'chu') /= 0 ) then
+        if ( (parallel%master .or. index(switches, 'chu') /= 0) &
+          & .and. .not. (checkPaths .or. SKIPDIRECTWRITES) .and. &
+          & madeFile .and. l2auxPhysicalFilename /= ' ' ) then
           sdfId = mls_sfstart(l2auxPhysicalFilename, DFACC_RDWR, &
               & hdfVersion=HDFVERSION_5)
           call h5gopen_f(sdfId, '/', grp_id, returnStatus)
@@ -1009,6 +1014,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.104  2004/12/14 21:45:01  pwagner
+! Avoid catenating non-existent split files
+!
 ! Revision 2.103  2004/09/23 23:02:46  pwagner
 ! DGG gets apriori attrs; master task copies Phase Names from slave DGM
 !
