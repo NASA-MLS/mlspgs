@@ -8,7 +8,7 @@ module FilterShapes_m
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error
-  use MLSSignals_m, only: Signals
+  use MLSSignals_m, only: MaxSigLen, Signals
   use Output_m, only: Output
 
   ! More USEs below in each procedure, if they're only used therein.
@@ -22,7 +22,7 @@ module FilterShapes_m
   type, public :: FilterShape_T
     real(r8) :: LHS, RHS
     real(r8), dimension(:), pointer :: FilterShape => NULL()
-    character(len=80) :: Signal
+    character(len=MaxSigLen) :: Signal
   end type FilterShape_T
 
   ! The filter shape database:
@@ -75,14 +75,14 @@ contains
     integer :: NumFilterPts                  ! How many points in each filter
     !                                          shape array -- all the same
     !                                          for each signal.
-    character(len=80) :: SigName             ! Signal Name
+    character(len=MaxSigLen) :: SigName      ! Signal Name
     integer :: Status                        ! From read or allocate
     integer, pointer, dimension(:) :: Signal_Indices   ! From Parse_Signal, q.v.
     type(filterShape_T), dimension(:), pointer :: TempFilterShapes => NULL()
 
     if ( toggle(gen) ) call trace_begin ( "Read_Filter_Shapes_File" )
 
-    if ( associated(filterShapes) ) call destroy_pointing_grid_database
+    if ( associated(filterShapes) ) call destroy_filter_shapes_database
 
     do
       read ( lun, *, iostat=status ) numFilterPts, sigName
@@ -112,6 +112,7 @@ contains
           & MLSMSG_DeAllocate // 'TempFilterShapes' )
       end if
       do i = dataBaseSize + 1, dataBaseSize + numChannels
+        filterShapes(i)%signal = sigName
         call allocate_test ( filterShapes(i)%filterShape, numFilterPts, &
           & "filterShapes(i)%filterShape", moduleName )
         call read_one_filter ( filterShapes(i)%lhs, filterShapes(i)%rhs, &
@@ -136,9 +137,10 @@ contains
     ! ..........................................  Read_One_Filter  .....
     subroutine Read_One_Filter ( LHS, RHS, ArgFilterShape )
       real(r8), intent(out) :: LHS, RHS, ArgFilterShape(:)
+      integer :: Channel           ! Only for its documentary value in the file
       real(r8) :: FilterShape(255)
       integer :: N
-      namelist / Filter / LHS, RHS, FilterShape
+      namelist / Filter / Channel, FilterShape, LHS, RHS
       n = size(argFilterShape)
       read ( lun, filter, iostat=status )
       argFilterShape(:n) = filterShape(:n)
@@ -171,7 +173,7 @@ contains
     call output ( size(filterShapes), advance='yes' )
     do i = 1, size(filterShapes)
       call output ( i, 4 )
-      call output ( ':    Signal =', advance='yes' )
+      call output ( ':    Signal =' )
       call output ( trim(filterShapes(i)%signal), advance='yes' )
       call output ( ' LHS = ' )
       call output ( filterShapes(i)%lhs )
@@ -184,6 +186,9 @@ contains
 end module FilterShapes_m
 
 ! $Log$
+! Revision 1.2  2001/03/29 21:57:31  vsnyder
+! NAG actually compiles this one
+!
 ! Revision 1.1  2001/03/29 21:42:41  vsnyder
 ! Changed name to FilterShapes_m
 !
