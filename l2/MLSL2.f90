@@ -157,11 +157,7 @@ program MLSL2
         parallel%master = .true.
         i = i + 1
         call getarg ( i, line )
-        read ( line, *, iostat=status ) parallel%slaveFilename
-        if ( status /= 0 ) then
-          call io_error ( "After --master option", status, line )
-          stop
-        end if
+        parallel%slaveFilename = trim ( line )
         call InitParallel
         word = '--slave'
         write ( word(len_trim(word)+1:), * ) parallel%myTid
@@ -448,6 +444,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.64  2002/01/09 22:56:46  livesey
+! Tidied up parsing of master option.
+!
 ! Revision 2.63  2002/01/09 00:00:48  pwagner
 ! Fixed small comment; added others explaining unavoidable use of print
 !
