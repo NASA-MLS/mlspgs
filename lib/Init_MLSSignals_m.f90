@@ -34,8 +34,7 @@ module Init_MLSSignals_m
   integer, parameter :: F_lo                = f_last + 1
   integer, parameter :: F_module            = f_lo + 1
   integer, parameter :: F_radiometer        = f_module + 1
-  integer, parameter :: F_sideband          = f_radiometer + 1
-  integer, parameter :: F_spacecraft        = f_sideband + 1
+  integer, parameter :: F_spacecraft        = f_radiometer + 1
   integer, parameter :: F_spectrometer      = f_spacecraft + 1
   integer, parameter :: F_spectrometerType  = f_spectrometer + 1
   integer, parameter :: F_start             = f_spectrometerType + 1
@@ -97,7 +96,6 @@ contains
     field_indices(f_lo) =                  add_ident ( 'lo' )
     field_indices(f_module) =              add_ident ( 'module' )
     field_indices(f_radiometer) =          add_ident ( 'radiometer' )
-    field_indices(f_sideband) =            add_ident ( 'sideband' )
     field_indices(f_spacecraft) =          add_ident ( 'spacecraft' )
     field_indices(f_spectrometer) =        add_ident ( 'spectrometer' )
     field_indices(f_spectrometerType) =    add_ident ( 'spectrometerType' )
@@ -188,7 +186,6 @@ contains
       begin, s+s_signal, &              ! Must be after band
              begin, f+f_band, s+s_band, nr+n_field_spec, &
              begin, f+f_channels, t+t_numeric_range, n+n_field_type, &
-             begin, f+f_sideband, t+t_sideband, n+n_field_type, &
              begin, f+f_spectrometer, t+t_numeric, nr+n_field_type, &
              begin, f+f_switch, t+t_numeric, nr+n_field_type, &
              ndp+n_spec_def /) )
@@ -202,6 +199,9 @@ contains
 end module Init_MLSSignals_m
 
 ! $Log$
+! Revision 2.9  2001/04/10 17:59:53  vsnyder
+! Remove sideband field from signal
+!
 ! Revision 2.8  2001/04/04 17:56:42  vsnyder
 ! Insert "USE TREE" because "make depends" can't see the one in "make_tree"
 ! (because of the "include").
