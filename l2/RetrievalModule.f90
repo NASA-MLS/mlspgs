@@ -846,7 +846,7 @@ contains
         else
           if ( .not. associated ( diag_qty%mask ) ) then
             call CreateMask ( diag_qty )
-            diag_qty%mask = char (m_linalg )
+            diag_qty%mask = char ( m_linalg )
           end if
           ! Multiple surfaces here, find the 'latest'
           latest = count ( iand(ichar(diag_qty%mask(:,1)),m_linalg) == 0 )
@@ -855,7 +855,7 @@ contains
               & (/ diag_qty%values ( 2:latest, 1 ), value /)
           else
             diag_qty%values ( latest+1, 1 ) = value
-            call ClearMask ( diag_qty%mask(:,1), (/ latest /), m_linalg )
+            call ClearMask ( diag_qty%mask(:,1), (/ latest+1 /), m_linalg )
           end if
         end if
       end if
@@ -3313,6 +3313,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.201  2002/10/25 23:56:04  livesey
+! Bug fix in the diagnostics
+!
 ! Revision 2.200  2002/10/25 22:24:42  livesey
 ! Changed the diagnostic vector handling.
 !
