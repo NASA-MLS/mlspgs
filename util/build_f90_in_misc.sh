@@ -427,7 +427,7 @@ then
    fi
    exit 0
 fi
-cif [ $DEEBUG = "on" ]
+if [ $DEEBUG = "on" ]
 then
    echo "Installing $prog_name in $prog_path"
 fi
@@ -447,6 +447,9 @@ fi
 exit 0
 
 # $Log$
+# Revision 1.11  2002/04/26 23:41:14  pwagner
+# New options -T -O -ni; can build libutcttai.a now
+#
 # Revision 1.10  2002/01/22 21:42:59  pwagner
 # Turned debugging off
 #
