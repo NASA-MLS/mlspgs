@@ -1,0 +1,99 @@
+
+; Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+; U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+;
+;------------------- RCS Ident Info -----------------------
+; $Id$
+;----------------------------------------------------------
+
+; This is the Configuration file for version 0.5 of the MLSL1
+; program of the Level 1 software for the EOS Microwave Limb Sounder (MLS).
+;
+; -----------------------------------------------------------------------------
+;
+; This section of the l1cf gives parameters that are global settings to the
+; software, output file comments, file versions etc.  Note that while this
+; section must occur first in the l1cf, the ordering of the options within the
+; section is not critical.
+;
+BEGIN GlobalSettings
+    ;;
+    ;; Will check this version against the OutputVersion in the PCF
+    ;;
+    OutputVersionString="V1-0"
+    ;;
+    ;;
+    ;; This string is probably not needed
+    ;;
+    VersionComment="L1CF Version 1-0 for version 1.0 of the MLS software"
+    ;;
+    ;; Whether on not to read ephemeris data and produce L1BOA data
+    ;;
+    ProduceL1BOA = true
+    ;;
+END GlobalSettings
+;
+; ----------------------------------------------------------------------------
+;
+; This section of the l1cf gives calibration parameters
+;
+;
+BEGIN Calibration
+    ;;
+    ;; Calibration window length in MAFs:
+    ;;
+    CalWindow = 6 MAFs
+    ;;
+    ;; Space temperature in degrees K:
+    ;;
+    SpaceTemp = 300 K
+    ;;
+    TargetTemp = 80 K
+    ;;
+    ;; MIF duration in seconds:
+    ;;
+    MIF_Duration = 0.1669623 s
+    ;;
+    ;; MIF dead time in seconds:
+    ;;
+    MIF_DeadTime = 5.000e-3 s
+    ;;
+    ;; MIFs per MAF:
+    ;;
+    MIFsPerMAF = 148 MIFs
+    ;;
+    ;; Default gains flag:
+    ;;
+    UseDefaultGains = true
+    ;;
+    ;; Calib DACS flag:
+    ;;
+    CalibDACS = false
+    ;;
+    ;; Band switches:
+    ;;
+    switch,S=1,bandno=25
+    switch,S=2,bandno=3
+    switch,S=3,bandno=8
+    switch,S=4,bandno=12
+    switch,S=5,bandno=15
+    ;;
+    ;; GHz MIF definitions:
+    ;;
+    limbMIFs, MIFs=[0:119], use=override, module=GHz
+    ;;
+    spaceMIFs, MIFs=[131:147], use=override, module=GHz
+    ;;
+    discardMIFs, MIFs=[120:130,148:150], use=override, module=GHz
+    ;;
+    ;; THz MIF definitions:
+    ;;
+    limbMIFs, MIFs=[0:119], use=override, module=THz
+    ;;
+    spaceMIFs, MIFs=[131:147], use=override, module=THz
+    ;;
+    discardMIFs, MIFs=[120:130,148:150], use=override, module=THz
+    ;;
+END Calibration
+;
+; ----------------------------------------------------------------------------
