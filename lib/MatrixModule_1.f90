@@ -1311,11 +1311,14 @@ contains ! =====     Public Procedures     =============================
   end subroutine MultiplyMatrix_XY_1
 
   ! --------------------------------------  MultiplyMatrix_XY_T_1  -----
-  subroutine MultiplyMatrix_XY_T_1 ( X, Y, Z ) ! Z = X Y^T
+  subroutine MultiplyMatrix_XY_T_1 ( X, Y, Z, diagonalOnly ) ! Z = X Y^T
     type(Matrix_T), intent(in) :: X, Y
     type(Matrix_T), intent(inout) :: Z
+    logical, intent(in), optional :: DIAGONALONLY
 
-    integer :: I, J, K             ! Subscripts for [XYZ]%Block
+    integer :: I, J, K                  ! Subscripts for [XYZ]%Block
+    integer :: I0, I1                   ! Loop limits
+    logical :: MYDIAGONALONLY           ! Copy of diagonal only
 
     ! Check that matrices are compatible.  We don't need to check
     ! Nelts or Nb, because these are deduced from Vec.
@@ -1323,9 +1326,19 @@ contains ! =====     Public Procedures     =============================
       & (x%col%instFirst .neqv. y%col%instFirst) ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
           & "Incompatible arrays in MultiplyMatrix_XY_T_1" )
+    myDiagonalOnly = .false.
+    if ( present ( diagonalOnly ) ) myDiagonalOnly = diagonalOnly
+
     call createEmptyMatrix ( z, 0, x%row%vec, y%row%vec )
     do j = 1, y%row%nb
-      do i = 1, x%row%nb
+      if ( myDiagonalOnly ) then
+        i0 = j
+        i1 = j
+      else
+        i0 =  1
+        i1 = x%row%nb
+      end if
+      do i = i0, i1
         call multiplyMatrix_XY_T ( x%block(i,1), y%block(j,1), z%block(i,j) )
         do k = 2, x%col%nb
           call multiplyMatrix_XY_T ( x%block(i,k), y%block(j,k), z%block(i,j), &
@@ -2093,6 +2106,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.79  2002/08/29 04:45:27  livesey
+! Added diagonalOnly option to MultiplyMatrix_XY_T
+!
 ! Revision 2.78  2002/08/21 20:38:24  vsnyder
 ! Add 'text' argument to CreateEmptyMatrix
 !
