@@ -31,6 +31,10 @@ begin Fill
   ;; We'll also do the same for refgph, which is a special case
   Fill, quantity=truth.refGPH, method=l2gp, sourceL2GP=l2gpGPHInput, /interpolate
 
+  ;; Put H2O in trop h2o
+  Fill, quantity=truth.tropH2O, sourceQuantity=truth.h2o, $
+    method=vector, /interpolate
+
   ;; --------------------------------------------- RHi
 
   ;; Get RHI from H2O

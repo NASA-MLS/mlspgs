@@ -34,6 +34,10 @@ begin Fill
     temperatureQuantity=apriori.temperature, method=RHIFromH2O, /dontMask
   })
 
+  ;; Put H2O in trop h2o
+  Fill, quantity=apriori.tropH2O, sourceQuantity=apriori.h2o, $
+    method=vector, /interpolate
+
 end Fill
 
 ;; ----------------------------------- Lesser state
