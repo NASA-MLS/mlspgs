@@ -3,7 +3,7 @@
 ; First some m4 directives.
 include(m4defs.l2cf)
 
-!ifdef(band, ,!define(band,{1L}))
+!ifdef(band, ,!define(band,{5}))
 !define(outpath,/nas/bigdata/livesey/misc/)
 !define(ver,!test1)
 !define(signal,!sigBand$1)
