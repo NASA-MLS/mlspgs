@@ -37,7 +37,7 @@ module ALGEBRA_M
 contains
 
   ! ----------------------------------------------------  Algebra  -----
-  subroutine Algebra ( ROOT, VectorDatabase, MatrixDatabase )
+  subroutine Algebra ( ROOT, VectorDatabase, MatrixDatabase, chunk, ForwardModelConfigDatabase )
     ! The root of the Algebra section's subtree is ROOT.  All of the
     ! input and output "variables" are found in the symbol table.
     ! Anything defined here by a statement of the form A = <expr> is
@@ -48,16 +48,17 @@ contains
 
     use DECLARATION_TABLE, only: DECLARE, DECLS, EMPTY, EXPRN, EXPRN_M, &
       & EXPRN_V, GET_DECL, LABEL, NUM_VALUE, REDECLARE
+    use ForwardModelConfig, only: FORWARDMODELCONFIG_T
     use Init_Tables_Module, only: S_Matrix, S_Vector
     use MatrixModule_1, only: AddToMatrix, AddToMatrixDatabase, AssignMatrix, &
-      & CreateEmptyMatrix, CopyMatrix, &
+      & CholeskyFactor, CreateEmptyMatrix, CopyMatrix, &
       & CopyMatrixValue, DestroyMatrix, Dump, GetActualMatrixFromDatabase, &
       & GetDiagonal, GetFromMatrixDatabase, GetKindFromMatrixDatabase, &
       & K_Cholesky, K_Empty, K_Kronecker, K_Plain, K_SPD, Matrix_Cholesky_T, &
       & Matrix_Database_T, Matrix_Kronecker_T, Matrix_SPD_T, Matrix_T, &
       & MultiplyMatrixVectorNoT, multiplyMatrixVectorSPD_1, &
       & MultiplyMatrix_XY, ReflectMatrix, ScaleMatrix, Dump_Struct, TransposeMatrix
-    use MLSCommon, only: R8, RV
+    use MLSCommon, only: R8, RV, MLSChunk_T
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use Output_M, only: Output
     use String_Table, only: Display_String
@@ -72,6 +73,8 @@ contains
     integer, intent(in) :: ROOT
     type(vector_T), dimension(:), pointer :: VectorDatabase
     type(matrix_Database_T), dimension(:), pointer :: MatrixDatabase
+    type(MLSChunk_T), intent(in) :: CHUNK
+    type(ForwardModelConfig_T), intent(inout), dimension(:) :: FORWARDMODELCONFIGDATABASE
 
     type(decls) :: DECL            ! Declaration of the LHS name
     real(r8) :: DVALUE             ! Value of expr if it's a number
@@ -99,8 +102,9 @@ contains
     integer, parameter :: Ambiguous = 1                ! LHS is ambiguous
     integer, parameter :: CantInvertVector = ambiguous + 1    ! Can't invert vector
     integer, parameter :: Incompatible = cantInvertVector + 1 ! incompatible operands
-    integer, parameter :: NotPlain = incompatible + 1 ! undefined operand
-    integer, parameter :: Undefined = notPlain + 1 ! undefined operand
+    integer, parameter :: NotPlain = incompatible + 1 ! Wrong kind of matrix
+    integer, parameter :: NotSupported = notPlain + 1 ! Wrong kind of matrix
+    integer, parameter :: Undefined = notSupported + 1 ! undefined operand
     integer, parameter :: UnknownFunc = undefined + 1  ! unknown function
     integer, parameter :: UnknownOp = UnknownFunc + 1  ! unknown operator
     integer, parameter :: WrongNumArgs = UnknownOp + 1 ! wrong number of args
@@ -112,7 +116,7 @@ contains
       son = subtree(i_sons,root)
       if ( toggle(gen) ) call trace_begin ( 'Algebra loop', son )
       if ( node_id(son) /= n_equal ) then
-        call AlgebraCommands ( son, VectorDatabase, MatrixDatabase )
+        call AlgebraCommands ( son, VectorDatabase, MatrixDatabase, chunk, forwardModelConfigDatabase )
       else
         ! Evaluate the RHS
         rhs = subtree(2,son)
@@ -216,16 +220,13 @@ contains
               end select
             else
               ! OK the LHS and RHS matrices are of different type.
-              ! We'll allow 'promotion' to plain but not any other conversion.
+              ! We'll allow 'promotion' from some to plain but not any other conversion.
               if ( whatsLHS == w_matrix ) then
                 select case ( what )
                 case ( w_matrix_c )
                   call copyMatrixValue ( LHSmatrix, matrix_c%m )
                 case ( w_matrix_s )
                   call copyMatrixValue ( LHSmatrix, matrix_s%m )
-                  call ReflectMatrix ( LHSMatrix )
-                case ( w_matrix_k )
-                  call copyMatrixValue ( LHSmatrix, matrix_k%m )
                   call ReflectMatrix ( LHSMatrix )
                 case default
                   call announce_error ( son, incompatible )
@@ -264,31 +265,51 @@ contains
   contains
 
     ! ...........................................  AlgebraCommands .....
-    subroutine AlgebraCommands ( root, VectorDatabase, MatrixDatabase )
+    subroutine AlgebraCommands ( root, VectorDatabase, MatrixDatabase, &
+      & chunk, forwardModelConfigDatabase )
       use MatrixModule_1, only: COLUMNSCALE, CYCLICJACOBI, REFLECTMATRIX, ROWSCALE
-      use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST, F_MATRIX, F_EIGENVECTORS, F_SCALE
+      use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST, F_MATRIX, F_EIGENVECTORS, F_SCALE, &
+        & F_RHSOUT, F_FORWARDMODEL, F_FWDMODELIN, F_FWDMODELOUT, F_FWDMODELEXTRA, &
+        & F_MEASUREMENTS, F_MEASUREMENTSD
       use Init_Tables_Module, only: L_TRUE
-      use Init_Tables_Module, only: S_COLUMNSCALE, S_CYCLICJACOBI, S_REFLECT, S_ROWSCALE
+      use Init_Tables_Module, only: S_COLUMNSCALE, S_CYCLICJACOBI, S_REFLECT, &
+        & S_ROWSCALE, S_NORMALEQUATIONS
       use MoreTree, only: GET_SPEC_ID
         
       ! Dummy arguments
       integer, intent(in) :: ROOT
       type(vector_T), dimension(:), pointer :: VectorDatabase
       type(matrix_Database_T), dimension(:), pointer :: MatrixDatabase
+      type(MLSChunk_T), intent(in) :: CHUNK
+      type(ForwardModelConfig_T), intent(inout), dimension(:) :: FORWARDMODELCONFIGDATABASE
 
       ! Local variables
       logical, dimension(field_first:field_last) :: GOT ! Fields
       integer :: FIELDID                ! ID for a field (duh!)
+      integer :: FORWARDMODELNODE       ! Tree node
       integer :: I                      ! Loop counter
       integer :: KEY                    ! Tree node
       integer :: SON                    ! Tree node
       integer :: VALUE                  ! Value node
       integer :: MATRIXIND              ! Index into matrix database
-      type(Matrix_T), pointer :: MATRIX ! The matrix to work on
+      integer :: MATRIXKIND             ! Kind of matrix
       type(Matrix_T), pointer :: EIGENVECTORS ! Eigen vector matrix
-      type(Vector_T), pointer :: SCALEVECTOR ! The scaling vector
+      type(Matrix_T), pointer :: MATRIX ! The matrix to work on
+      type(Matrix_SPD_T), pointer :: MATRIX_S ! SPD version of matrix
+      type(Matrix_Cholesky_T), pointer :: MATRIX_C ! SPD version of matrix
+      type(Vector_T), pointer :: FWDMODELEXTRA ! Input for forward models
+      type(Vector_T), pointer :: FWDMODELIN ! Input for forward models
+      type(Vector_T), pointer :: FWDMODELOUT ! Output of forward models
+      type(Vector_T), pointer :: MEASUREMENTS ! Measurement vector
+      type(Vector_T), pointer :: MEASUREMENTSD ! Measurement noise vector
+      type(Vector_T), pointer :: RHSOUT ! Vector for normal equations
+      type(Vector_T), pointer :: SCALE ! The scaling vector
 
       ! Executable code
+      nullify ( matrix, eigenvectors )
+      nullify ( fwdModelExtra, fwdModelIn, fwdModelOut, rhsOut, &
+        & measurements, measurementSD, scale )
+
       do i = 2, nsons(root)
         son = subtree ( i, root )
         key = subtree ( 1, son )
@@ -305,25 +326,72 @@ contains
           if ( GetKindFromMatrixDatabase ( matrixDatabase(matrixInd) ) /= k_plain ) &
             & call Announce_Error ( key, notPlain )
           call GetFromMatrixDatabase ( matrixDatabase(matrixInd), eigenVectors )
+        case ( f_forwardModel )
+          forwardModelNode = son
+        case ( f_fwdModelExtra )
+          fwdModelExtra => vectorDatabase ( decoration ( value ) )
+        case ( f_fwdModelIn )
+          fwdModelIn => vectorDatabase ( decoration ( value ) )
+        case ( f_fwdModelOut )
+          fwdModelOut => vectorDatabase ( decoration ( value ) )
+        case ( f_measurements )
+          measurements => vectorDatabase ( decoration ( value ) )
+        case ( f_measurementSD )
+          measurementSD => vectorDatabase ( decoration ( value ) )
+        case ( f_scale )
+          scale => vectorDatabase ( decoration ( value ) )
         case ( f_matrix )
           matrixInd = decoration ( value )
-          if ( GetKindFromMatrixDatabase ( matrixDatabase(matrixInd) ) /= k_plain ) &
-            & call Announce_Error ( key, notPlain )
-          call GetFromMatrixDatabase ( matrixDatabase(matrixInd), matrix )
-        case ( f_scale )
-          scaleVector => vectorDatabase ( decoration ( value ) )
+          matrixKind = GetKindFromMatrixDatabase ( matrixDatabase(matrixInd) )
+          select case ( matrixKind )
+          case ( k_plain )
+            call GetFromMatrixDatabase ( matrixDatabase(matrixInd), matrix )
+          case ( k_cholesky )
+            call GetFromMatrixDatabase ( matrixDatabase(matrixInd), matrix_c )
+          case ( k_spd )
+            call GetFromMatrixDatabase ( matrixDatabase(matrixInd), matrix_s )
+          case default
+            call Announce_Error ( key, notSupported )
+          end select
+        case ( f_rhsOut )
+          rhsOut => vectorDatabase ( decoration ( value ) )
         end select
       end do
 
       select case ( get_spec_id ( root ) )
       case ( s_columnScale )
-        call ColumnScale ( matrix, scaleVector )
+        select case ( matrixKind )
+        case ( k_plain )
+          call ColumnScale ( matrix, scale )
+        case ( k_cholesky )
+          call ColumnScale ( matrix_c%m, scale )
+        case ( k_spd )
+          call ColumnScale ( matrix_s%m, scale )
+        case default
+          call Announce_Error ( key, notSupported )
+        end select
       case ( s_cyclicJacobi ) 
+        if ( matrixKind /= k_plain ) call Announce_Error ( key, notSupported )
         call CyclicJacobi ( matrix, eigenVectors )
       case ( s_reflect )
+        if ( matrixKind /= k_plain ) call Announce_Error ( key, notSupported )
         call ReflectMatrix ( matrix )
       case ( s_rowScale )
-        call RowScale ( scaleVector, matrix )
+        select case ( matrixKind )
+        case ( k_plain )
+          call RowScale ( scale, matrix )
+        case ( k_cholesky )
+          call RowScale ( scale, matrix_c%m )
+        case ( k_spd )
+          call RowScale ( scale, matrix_s%m )
+        case default
+          call Announce_Error ( key, notSupported )
+        end select
+      case ( s_normalEquations )
+        if ( matrixKind /= k_spd ) call Announce_Error ( key, notSupported )
+        call NormalEquationsCommand ( matrix_s, rhsOut, forwardModelNode, &
+          & fwdModelIn, fwdModelExtra, fwdModelOut, chunk, measurements, measurementSD, &
+          & forwardModelConfigDatabase )
       end select
 
     end subroutine AlgebraCommands
@@ -351,6 +419,8 @@ contains
         call output ( 'Operands are incompatible.', advance='yes' )
       case ( notPlain )
         call output ( 'Matrix is not a plain matrix.', advance='yes' )
+      case ( notSupported )
+        call output ( 'Operation not (yet?) supported for this kind(s) of matrix.', advance='yes' )
       case ( undefined )
         call output ( 'Name in expression is undefined.', advance='yes' )
       case ( unknownFunc )
@@ -490,19 +560,36 @@ contains
             if ( what2 /= w_matrix_s ) then
               call announce_error ( son2, incompatible )
             else
+              ! Create result matrix
+              call CreateEmptyMatrix ( matrix_c%m, 0, &
+                & matrix_s2%m%row%vec, matrix_s2%m%col%vec, &
+                & .not. matrix_s2%m%row%instFirst, .not. matrix_s2%m%col%instFirst )
+              ! Fill it
+              call CholeskyFactor ( matrix_c, matrix_s2 )
+              what = w_matrix_c
             end if
           end if
         case ( f_getDiagonal )
           if ( nsons(root) /= 2 ) then
             call announce_error ( son1, wrongNumArgs )
           else
-            if ( what2 /= w_matrix ) then
-              call announce_error ( son2, incompatible )
-            else
+            select case ( what2 )
+            case ( w_matrix )
               call CloneVector ( vector, matrix2%row%vec )
               call GetDiagonal ( matrix2, vector )
               what = w_vector
-            end if
+            case ( w_matrix_s )
+              call CloneVector ( vector, matrix_s2%m%row%vec )
+              call GetDiagonal ( matrix_s2%m, vector )
+              what = w_vector
+            case ( w_matrix_c )
+              call CloneVector ( vector, matrix_c2%m%row%vec )
+              call GetDiagonal ( matrix_c2%m, vector )
+              what = w_vector
+            case default
+              call announce_error ( son2, incompatible )
+              what = w_nothing
+            end select
           end if
         case ( f_sqrt )
           if ( nsons(root) /= 2 ) then
@@ -523,21 +610,32 @@ contains
           if ( nsons(root) /= 2 ) then
             call announce_error ( son1, wrongNumArgs )
           else
-            if ( what2 /= w_matrix ) then
-              call announce_error ( son2, incompatible )
-            else
+            ! Optimization?  Instead of actually doing the transpose here,
+            ! consider returning a flag that the result needs transposing.
+            ! Then one could use multiply routines that are aware of the
+            ! transpose, at the expense of needing to remember that the
+            ! transpose needs to be done in other situations, e.g in "Add".
+            select case ( what2 )
+            case ( w_matrix )
               ! Create result matrix as transpose
               call CreateEmptyMatrix ( matrix, 0, &
                 & matrix2%col%vec, matrix2%row%vec, &
                 & .not. matrix2%col%instFirst, .not. matrix2%row%instFirst )
               call TransposeMatrix ( matrix, matrix2 )
               what = w_matrix
-              ! Optimization?  Instead of actually doing the transpose here,
-              ! consider returning a flag that the result needs transposing.
-              ! Then one could use multiply routines that are aware of the
-              ! transpose, at the expense of needing to remember that the
-              ! transpose needs to be done in other situations, e.g in "Add".
-            end if
+            case ( w_matrix_c )
+              ! Create result matrix as transpose
+              call CreateEmptyMatrix ( matrix, 0, &
+                & matrix_c2%m%col%vec, matrix_c2%m%row%vec, &
+                & .not. matrix_c2%m%col%instFirst, .not. matrix_c2%m%row%instFirst )
+              call TransposeMatrix ( matrix, matrix_c2%m )
+              what = w_matrix
+            case ( w_matrix_s )
+              call CopyMatrix ( matrix_s%m, matrix_s2%m )
+              what = w_matrix_s
+            case default
+              call announce_error ( son2, incompatible )
+            end select
           end if
         end select
       case default
@@ -635,10 +733,15 @@ contains
             case ( w_number ) ! ........................ Vector * Number
               call scaleVector ( vector, dValue2 )
             case ( w_vector ) ! ........................ Vector * Vector
+              call Announce_Error ( root, notSupported )
             case ( w_matrix ) ! ........................ Vector * Matrix
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_c ) ! .................... Vector * Matrix_C
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_k ) ! .................... Vector * Matrix_K
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_s ) ! .................... Vector * Matrix_S
+              call Announce_Error ( root, notSupported )
             end select
           case ( w_matrix )
             select case ( what2 )
@@ -652,28 +755,43 @@ contains
               call multiplyMatrix_XY ( matrix, matrix2, matrix3 )
               call assignMatrix ( matrix, matrix3 ) ! Destroys Matrix first
             case ( w_matrix_c ) ! .................... Matrix * Matrix_C
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_k ) ! .................... Matrix * Matrix_K
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_s ) ! .................... Matrix * Matrix_S
+              call Announce_Error ( root, notSupported )
             end select
           case ( w_matrix_c )
             select case ( what2 )
             case ( w_number ) ! ...................... Matrix_C * Number
               call scaleMatrix ( matrix_c%m, dValue2 )
             case ( w_vector ) ! ...................... Matrix_C * Vector
+              call Announce_Error ( root, notSupported )
             case ( w_matrix ) ! ...................... Matrix_C * Matrix
+              call multiplyMatrix_XY ( matrix_c%m, matrix2, matrix3 )
+              call assignMatrix ( matrix, matrix3 ) ! Destroys matrix first
+              what = w_matrix
             case ( w_matrix_c ) ! .................. Matrix_C * Matrix_C
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_k ) ! .................. Matrix_C * Matrix_K
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_s ) ! .................. Matrix_C * Matrix_S
+              call Announce_Error ( root, notSupported )
             end select
           case ( w_matrix_k )
             select case ( what2 )
             case ( w_number ) ! ...................... Matrix_K * Number
               call scaleMatrix ( matrix_k%m, dValue2 )
             case ( w_vector ) ! ...................... Matrix_K * Vector
+              call Announce_Error ( root, notSupported )
             case ( w_matrix ) ! ...................... Matrix_K * Matrix
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_c ) ! .................. Matrix_K * Matrix_C
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_k ) ! .................. Matrix_K * Matrix_K
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_s ) ! .................. Matrix_K * Matrix_S
+              call Announce_Error ( root, notSupported )
             end select
           case ( w_matrix_s )
             select case ( what2 )
@@ -682,9 +800,13 @@ contains
             case ( w_vector ) ! ...................... Matrix_S * Vector
               call multiplyMatrixVectorSPD_1 ( matrix_s, vector2, vector )
             case ( w_matrix ) ! ...................... Matrix_S * Matrix
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_c ) ! .................. Matrix_S * Matrix_C
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_k ) ! .................. Matrix_S * Matrix_K
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_s ) ! .................. Matrix_S * Matrix_S
+              call Announce_Error ( root, notSupported )
             end select
           end select
         case ( n_div )  ! value = value / value2 ------------------ Divide By
@@ -698,9 +820,13 @@ contains
               call ReciprocateVector ( vector, dValue )
               what = w_vector
             case ( w_matrix ) ! ........................ Number / Matrix
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_c ) ! .................... Number / Matrix_C
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_k ) ! .................... Number / Matrix_K
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_s ) ! .................... Number / Matrix_S
+              call Announce_Error ( root, notSupported )
             end select
           case ( w_vector )
             select case ( what2 )
@@ -709,9 +835,13 @@ contains
             case ( w_vector ) ! ........................ Vector / Vector
               call announce_error ( son2, cantInvertVector )
             case ( w_matrix ) ! ........................ Vector / Matrix
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_c ) ! .................... Vector / Matrix_C
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_k ) ! .................... Vector / Matrix_K
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_s ) ! .................... Vector / Matrix_S
+              call Announce_Error ( root, notSupported )
             end select
           case ( w_matrix )
             select case ( what2 )
@@ -720,9 +850,13 @@ contains
             case ( w_vector ) ! ........................ Matrix / Vector
               call announce_error ( son2, cantInvertVector )
             case ( w_matrix ) ! ........................ Matrix / Matrix
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_c ) ! .................... Matrix / Matrix_C
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_k ) ! .................... Matrix / Matrix_K
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_s ) ! .................... Matrix / Matrix_S
+              call Announce_Error ( root, notSupported )
             end select
           case ( w_matrix_c )
             select case ( what2 )
@@ -731,9 +865,13 @@ contains
             case ( w_vector ) ! ...................... Matrix_C / Vector
               call announce_error ( son2, cantInvertVector )
             case ( w_matrix ) ! ...................... Matrix_C / Matrix
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_c ) ! .................. Matrix_C / Matrix_C
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_k ) ! .................. Matrix_C / Matrix_K
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_s ) ! .................. Matrix_C / Matrix_S
+              call Announce_Error ( root, notSupported )
             end select
           case ( w_matrix_k )
             select case ( what2 )
@@ -742,9 +880,13 @@ contains
             case ( w_vector ) ! ...................... Matrix_K / Vector
               call announce_error ( son2, cantInvertVector )
             case ( w_matrix ) ! ...................... Matrix_K / Matrix
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_c ) ! .................. Matrix_K / Matrix_C
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_k ) ! .................. Matrix_K / Matrix_K
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_s ) ! .................. Matrix_K / Matrix_S
+              call Announce_Error ( root, notSupported )
             end select
           case ( w_matrix_s )
             select case ( what2 )
@@ -753,9 +895,13 @@ contains
             case ( w_vector ) ! ...................... Matrix_S / Vector
               call announce_error ( son2, cantInvertVector )
             case ( w_matrix ) ! ...................... Matrix_S / Matrix
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_c ) ! .................. Matrix_S / Matrix_C
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_k ) ! .................. Matrix_S / Matrix_K
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_s ) ! .................. Matrix_S / Matrix_S
+              call Announce_Error ( root, notSupported )
             end select
           end select
         case ( n_into ) ! value = value \ value2 ---------------- Divide Into
@@ -767,47 +913,75 @@ contains
             case ( w_vector ) ! ........................ Number \ Vector
               call scaleVector ( vector2, 1.0_r8/dValue, vector )
             case ( w_matrix ) ! ........................ Number \ Matrix
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_c ) ! .................... Number \ Matrix_C
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_k ) ! .................... Number \ Matrix_K
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_s ) ! .................... Number \ Matrix_S
+              call Announce_Error ( root, notSupported )
             end select
           case ( w_vector )
             call announce_error ( son1, cantInvertVector )
           case ( w_matrix )
             select case ( what2 )
             case ( w_number ) ! ........................ Matrix \ Number
+              call Announce_Error ( root, notSupported )
             case ( w_vector ) ! ........................ Matrix \ Vector
+              call Announce_Error ( root, notSupported )
             case ( w_matrix ) ! ........................ Matrix \ Matrix
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_c ) ! .................... Matrix \ Matrix_C
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_k ) ! .................... Matrix \ Matrix_K
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_s ) ! .................... Matrix \ Matrix_S
+              call Announce_Error ( root, notSupported )
             end select
           case ( w_matrix_c )
             select case ( what2 )
             case ( w_number ) ! ...................... Matrix_C \ Number
+              call Announce_Error ( root, notSupported )
             case ( w_vector ) ! ...................... Matrix_C \ Vector
+              call Announce_Error ( root, notSupported )
             case ( w_matrix ) ! ...................... Matrix_C \ Matrix
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_c ) ! .................. Matrix_C \ Matrix_C
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_k ) ! .................. Matrix_C \ Matrix_K
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_s ) ! .................. Matrix_C \ Matrix_S
+              call Announce_Error ( root, notSupported )
             end select
           case ( w_matrix_k )
             select case ( what2 )
             case ( w_number ) ! ...................... Matrix_K \ Number
+              call Announce_Error ( root, notSupported )
             case ( w_vector ) ! ...................... Matrix_K \ Vector
+              call Announce_Error ( root, notSupported )
             case ( w_matrix ) ! ...................... Matrix_K \ Matrix
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_c ) ! .................. Matrix_K \ Matrix_C
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_k ) ! .................. Matrix_K \ Matrix_K
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_s ) ! .................. Matrix_K \ Matrix_S
+              call Announce_Error ( root, notSupported )
             end select
           case ( w_matrix_s )
             select case ( what2 )
             case ( w_number ) ! ...................... Matrix_S \ Number
+              call Announce_Error ( root, notSupported )
             case ( w_vector ) ! ...................... Matrix_S \ Vector
+              call Announce_Error ( root, notSupported )
             case ( w_matrix ) ! ...................... Matrix_S \ Matrix
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_c ) ! .................. Matrix_S \ Matrix_C
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_k ) ! .................. Matrix_S \ Matrix_K
+              call Announce_Error ( root, notSupported )
             case ( w_matrix_s ) ! .................. Matrix_S \ Matrix_S
+              call Announce_Error ( root, notSupported )
             end select
           end select
         case default
@@ -875,6 +1049,112 @@ contains
       get_spec = decoration ( subtree ( 1, get_spec ) )
     end function Get_Spec
 
+    ! ...........................................  NormalEquationsCommand .....
+    subroutine NormalEquationsCommand ( matrix, rhsOut, forwardModelNode, &
+      & fwdModelIn, fwdModelExtra, fwdModelOut, chunk, &
+      & measurements, measurementSD, configDatabase )
+      ! Imports
+      use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+      use ForwardModelWrappers, only: FORWARDMODEL
+      use MatrixModule_1, only: NORMALEQUATIONS, CLEARMATRIX, DUMP_STRUCT, ROWSCALE
+      use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T, FORWARDMODELINTERMEDIATE_T
+      use VectorsModule, only: COPYVECTOR, SUBTRACTFROMVECTOR, CLONEVECTOR, MULTIPLY
+      ! Dummy arguments
+      type (Matrix_SPD_T), intent(inout) :: MATRIX ! Normal equation matrix
+      type (Vector_T), intent(inout) :: RHSOUT ! Right hand side in state space
+      integer, intent(in) :: FORWARDMODELNODE ! List of forward models.
+      type (Vector_T), intent(in), target :: FWDMODELIN ! Forward model state vector
+      type (Vector_T), pointer :: FWDMODELEXTRA ! Extra forward model vector
+      type (Vector_T), intent(inout) :: FWDMODELOUT ! Forward model results
+      type (MLSChunk_T), intent(in) :: CHUNK ! The chunk we're processing
+      type (Vector_T), intent(in) :: MEASUREMENTS ! Measurement vector
+      type (Vector_T), pointer :: MEASUREMENTSD ! Measurement noise (row scale)
+      type (ForwardModelConfig_T), intent(inout), dimension(:) :: CONFIGDATABASE
+
+      ! Local variables
+      integer :: NOMAFS                 ! Number of major frames
+      integer :: MAF                    ! Major frame number
+      type (ForwardModelStatus_T) :: FMSTAT ! Mainly maf counter
+      type (ForwardModelIntermediate_T) :: IFM ! Forward model workspace
+      type (Matrix_T) :: jacobian       ! Jacobian matrix
+      integer, dimension(:), pointer :: CONFIGS ! Indices of forward model configs
+      integer :: CONFIG                 ! Index into configs
+      integer :: NOCONFIGS              ! Number of forward models
+      integer :: ROWBLOCK               ! Loop counter
+      integer :: J                      ! Loop counter
+      type (Vector_T) :: DELTA          ! y-f
+      type (Vector_T) :: WEIGHT         ! 1/measurementSD
+
+      ! Executable code
+      if ( .not. associated ( fwdModelExtra ) ) fwdModelExtra => fwdModelIn
+      noMAFs = chunk%lastMAFIndex - chunk%firstMAFIndex + 1
+
+      ! Get the forward model configs
+      nullify ( configs )
+      noConfigs = nsons ( forwardModelNode ) - 1
+      call Allocate_Test ( configs, noConfigs, 'configs', ModuleName )
+      do config = 2, noConfigs+1
+        configs(config-1) = decoration(decoration(subtree(config,forwardModelNode)))
+      end do
+
+      ! Sort out the jacobian matrix
+      call CreateEmptyMatrix ( jacobian, 0, fwdModelOut, fwdModelIn, text='jacobian' )
+      call Allocate_test ( fmStat%rows, jacobian%row%nb, 'fmStat%rows', ModuleName )
+
+      ! Sort out the weight vector
+      if ( associated ( measurementSD) ) then
+        call cloneVector ( weight, measurementSD, vectorNameText='weight' )
+        do j = 1, measurementSD%template%noQuantities
+          where ( measurementSD%quantities(j)%values <= 0.0 )
+            weight%quantities(j)%values = 1.0
+          elsewhere
+            weight%quantities(j)%values = 1.0 / &
+              & measurementSD%quantities(j)%values
+          end where
+        end do
+      end if
+
+      ! Loop over MAFs
+      do maf = 1, noMAFs
+        fmStat%maf = maf
+        do config = 1, noConfigs
+          call ForwardModel ( configDatabase(configs(config)), &
+            & fwdModelIn, fwdModelExtra, fwdModelOut, ifm, fmStat, jacobian )
+        end do
+        ! Compute difference
+        call cloneVector ( delta, fwdModelOut )
+        do rowBlock = 1, size(fmStat%rows)
+          if ( fmStat%rows(rowBlock) ) then
+            call copyVector ( delta, fwdModelOut, & ! delta = f
+              & quant=jacobian%row%quant(rowBlock), &
+              & inst=jacobian%row%inst(rowBlock) )
+            call subtractFromVector ( delta, measurements, &
+              & quant=jacobian%row%quant(rowBlock), &
+              & inst=jacobian%row%inst(rowBlock) ) ! f - y
+            ! Do any row scaling
+            if ( associated ( measurementSD ) ) then
+              call multiply ( delta, weight, &
+                & quant=jacobian%row%quant(rowBlock), &
+                & inst=jacobian%row%inst(rowBlock) )
+            end if
+          end if
+        end do
+        call scaleVector ( delta, -1.0_r8 ) ! y - f
+        ! Do any row scaling for the jacobian
+        if ( associated ( measurementSD ) ) call rowScale ( weight, jacobian )
+        ! Now add these terms to the normal equations
+        call NormalEquations ( jacobian, matrix, rhs_in=delta, rhs_out=rhsOut, &
+          & update=.true., useMask=.true. )
+        call dump_struct ( matrix%m, 'Normal equations', upper=.true. )
+        ! Now clear the jacobian matrix
+        call ClearMatrix ( jacobian )
+      enddo
+
+      call deallocate_test ( fmStat%rows, 'FmStat%rows', moduleName )
+      call deallocate_test ( configs, 'configs', ModuleName )
+      
+    end subroutine NormalEquationsCommand
+
   end subroutine Algebra
 
   logical function not_used_here()
@@ -884,6 +1164,9 @@ contains
 end module ALGEBRA_M
 
 ! $Log$
+! Revision 2.10  2004/04/28 23:07:56  livesey
+! Many additions.
+!
 ! Revision 2.9  2004/01/30 23:28:45  livesey
 ! More additions and fixes.
 !
