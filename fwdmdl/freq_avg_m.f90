@@ -72,7 +72,6 @@ contains
     use D_HUNT_M, only: HUNT
     use DFFT_M, only: DTCST
     use MLSCommon, only: I4, R8, RP
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
 
     real(r8), intent(in) :: F_grid(:), F_grid_fltr(:), Fltr_func(:)
     real(r8), intent(in) :: LO_Apod(:), CH_Norm(:)
@@ -81,11 +80,14 @@ contains
     real(rp), intent(out)   :: Avg(:) ! Radiances for all channels
 
     ! Saved stuff for DTCST
-    integer, save :: L_Long, L_Short                 ! Log_2 of lengths
-    integer, save :: MS_Long = 0, MS_Short = 0       ! Sine table lengths
-    real(r8), save, pointer :: S_Long(:), S_Short(:) ! Sine tables
+    integer, save :: L_Long, L_Short  ! Log_2 of lengths
+    integer, save :: N_Sine = 0       ! Sine table flag/size
+    real(r8), save, pointer :: Sines(:) => NULL() ! Sine table.  We can use the
+                                      ! same sine table for both transforms,
+                                      ! because the small one is a prefix of
+                                      ! the large one.
 
-    integer(i4) :: I, Khi, Klo, N, Nfp, Nshort
+    integer(i4) :: I, Khi, Klo, N, Nfp, Nshort, NSines
     real(r8) :: Fmax, Fmin, Rmax, Rmin, Tmpary(size(f_grid_fltr))
 
     n = size(f_grid)
@@ -93,38 +95,17 @@ contains
     nShort = size(lo_apod)
     i = nfp / 2
 
-    ! Allocate sine tables
-    if ( ms_long == 0 ) then
-      nullify ( s_long )
-    else if ( ms_long /= size(s_long) ) then
-      call deallocate_test ( s_long, 'S_Long', moduleName )
-      ms_long = 0
+    ! Allocate sine table
+    nSines = max(nfp,nshort) / 2 - 1
+    if ( associated(sines) ) then
+      if ( size(sines) /= nSines ) &
+        & call deallocate_test ( sines, 'Sines', moduleName )
     end if
-    if ( ms_long == 0 ) then
-      call allocate_test ( s_long, nfp, 'S_Long', moduleName )
-      l_long = 0
-      do
-        l_long = l_long + 1
-        if ( 2**l_long + 1 == nfp ) exit
-        if ( 2**l_long > nfp ) call MLSMessage ( MLSMSG_Error, moduleName, &
-          & 'Size(F_Grid_Fltr) /= 2**k + 1' )
-      end do
-    end if
-    if ( ms_short == 0 ) then
-      nullify ( s_short )
-    else if ( ms_short /= size(lo_apod) ) then
-      call deallocate_test ( s_short, 'S_short', moduleName )
-      ms_short = 0
-    end if
-    if ( ms_short == 0 ) then
-      call allocate_test ( s_short, nShort, 'S_short', moduleName )
-      l_short = 0
-      do
-        l_short = l_short + 1
-        if ( 2**l_short + 1 == nShort ) exit
-        if ( 2**l_short > nShort ) call MLSMessage ( MLSMSG_Error, moduleName, &
-          & 'Size(LO_Apod) /= 2**k + 1' )
-      end do
+    if ( .not. associated(sines) ) then
+      call allocate_test ( sines, nSines, 'Sines', moduleName )
+      n_sine = 0
+      call check_size ( nfp, l_long, 'F_Grid_Fltr' )
+      call check_size ( nShort, l_short, 'LO_Apod' )
     end if
 
     if ( F_grid_fltr(i+1) > F_grid_fltr(i) ) then
@@ -142,15 +123,33 @@ contains
     rmin = minval(Rad(klo:khi))
     rmax = maxval(Rad(klo:khi))
 
+    ! Interpolate from (x=F_grid, y=Rad) to (x=F_grid_fltr, y=tmpary)
     call Cspline ( F_grid, F_grid_fltr, Rad, tmpary, n, nfp, Rmin, Rmax )
 
     tmpary = tmpary * Fltr_func(1:nfp)
-    call dtcst ( tmpary, 'C', 'A', (/ l_long /), 1, ms_long, s_long )
+    call dtcst ( tmpary, 'C', 'A', (/ l_long /), 1, n_sine, sines )
     tmpary(:nShort) = tmpary(:nShort) * lo_apod
-    call dtcst ( tmpary(:nShort), 'C', 'S', (/ l_short /), 1, ms_short, s_short )
-    avg = tmpary(:nShort) / ch_norm
+    call dtcst ( tmpary(:nShort), 'C', 'S', (/ l_short /), 1, n_sine, sines )
+    ! The factor of real(nfp-1)/(nshort-1) accounts for different normalization
+    ! for forward and inverse transforms of different lengths.
+    avg = real(nfp-1)/(nshort-1) * tmpary(:nShort) / ch_norm
 
-    return
+  contains
+
+    subroutine Check_Size ( ArrSize, LogSize, Name )
+      ! Make sure ArrSize is 2**k+1 for some k.  Return that k in LogSize
+      use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+      integer, intent(in) :: ArrSize     ! Must be 2**k+1 for some k
+      integer, intent(out) :: LogSize    ! Base-2 logarithm ( ArrSize ) = K.
+      character(len=*), intent(in) :: Name
+      logSize = 0
+      do
+        logSize = logSize + 1
+        if ( 2**logSize + 1 == arrSize ) exit
+        if ( 2**logSize > arrSize ) call MLSMessage ( MLSMSG_Error, moduleName, &
+          & 'Size(' // name // ') /= 2**k + 1' )
+      end do
+    end subroutine Check_Size
 
   end subroutine Freq_Avg_DACS
 
@@ -161,6 +160,9 @@ contains
 end module Freq_Avg_m
 
 ! $Log$
+! Revision 2.6  2003/07/15 23:07:05  vsnyder
+! Simplify Freq_Avg, implement Freq_Avg_DACS
+!
 ! Revision 2.5  2002/10/08 17:08:03  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
