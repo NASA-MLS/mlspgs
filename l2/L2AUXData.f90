@@ -384,7 +384,7 @@ contains ! =====     Public Procedures     =============================
     if (present(sdName)) then
       nameString=sdName
     else
-      call get_string ( l2aux%name, nameString )
+      call get_string ( l2aux%name, nameString, strip=.true. )
     endif
 
     goodDim=l2aux%dimensions%dimensionFamily /= L_None
@@ -445,6 +445,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.7  2001/03/08 02:20:12  livesey
+! Added strip argument to a call to get_string
+!
 ! Revision 2.6  2001/03/06 22:40:47  livesey
 ! Working version
 !
