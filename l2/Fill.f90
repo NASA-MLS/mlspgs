@@ -4061,15 +4061,15 @@ contains ! =====     Public Procedures     =============================
       quantity%values=0._r8
       do i=1,noFreqs
        if (doChannel(i)) then
-        do maf=1, size(quantity%values(1,:))
-        do mif=1, quantity%template%noSurfs
-      	if(iand(ichar(sourceQuantity%mask(i+(mif-1)*noFreqs, maf)), m_cloud) == 1) &
-	& quantity%values(i+(mif-1)*noFreqs, maf) = &
-	&   sourceQuantity%values(i+(mif-1)*noFreqs, maf) *freq(i)**4/ &
-	&   (lsbFraction%values(i,1) * freqL(i)**4 + &
-	&   usbFraction%values(i,1) * freqU(i)**4)
-	enddo
-	enddo
+         do maf=1, size(quantity%values(1,:))
+         do mif=1, quantity%template%noSurfs
+      	if(iand(ichar(sourceQuantity%mask(i+(mif-1)*noFreqs, maf)), m_cloud) == 0) &
+	      & quantity%values(i+(mif-1)*noFreqs, maf) = &
+	      &   sourceQuantity%values(i+(mif-1)*noFreqs, maf) *freq(i)**4/ &
+	      &   (lsbFraction%values(i,1) * freqL(i)**4 + &
+	      &   usbFraction%values(i,1) * freqU(i)**4)
+   	   enddo
+	      enddo
        endif
       enddo
 
@@ -5080,6 +5080,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.199  2003/04/08 23:13:01  dwu
+! an update on splitsideband
+!
 ! Revision 2.198  2003/04/07 06:37:42  dwu
 ! implement splitsideband for cloud radiance
 !
