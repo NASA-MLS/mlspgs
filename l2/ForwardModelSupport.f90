@@ -239,6 +239,7 @@ contains ! =====     Public Procedures     =============================
     ! parser users' guide" for pictures of the trees being analyzed.
 
     got = .false.
+    info%tolerance = 0.2 ! Kelvins, in case the tolerance field is absent
     do i = 2, nsons(key)
       son = subtree(i,key)
       field = get_field_id(son)
@@ -429,6 +430,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.7  2001/06/21 20:06:42  vsnyder
+! Make the tolerance field of the ForwardModel spec optional
+!
 ! Revision 2.6  2001/06/21 15:05:20  livesey
 ! Added tolerance field to config
 !
