@@ -526,7 +526,7 @@ contains ! ============= Public Procedures ==========================
     end if
 
     ! First create the group for this.
-    call get_string ( l2pc%name, name, strip=.true. )
+    call get_string ( l2pc%name, name, strip=.true., cap=.true. )
     call h5gCreate_f ( fileID, trim(name), matrixID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to create group for l2pc matrix' )
@@ -1730,6 +1730,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.71  2004/01/30 23:27:32  livesey
+! Capitalized the names of the bins on output
+!
 ! Revision 2.70  2004/01/24 01:44:36  livesey
 ! Removed print statement
 !
