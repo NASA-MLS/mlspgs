@@ -84,7 +84,8 @@ contains ! ================================== Module procedures ============
 
     call PVMIDLPack ( (/ q%template%noInstancesLowerOverlap, &
       & q%template%noInstancesUpperOverlap, q%template%sideband, &
-      & q%template%instrumentModule, q%template%radiometer /), info )
+      & q%template%instrumentModule, q%template%radiometer, &
+      & q%template%instanceOffset, q%template%grandTotalInstances /), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "packing misc quantity stuff" )
 
     ! Now pack some strings
@@ -95,6 +96,8 @@ contains ! ================================== Module procedures ============
     if ( info /= 0 ) call PVMErrorMessage ( info, "packing verticalCoordinate" )
     call PVMPackLitIndex ( q%template%frequencyCoordinate, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "packing frequencyCoordinate" )
+    call PVMPackLitIndex ( q%template%reflector, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing reflector" )
     call PVMPackLitIndex ( q%template%unit, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "packing unit" )
     call PVMPackLitIndex ( q%template%molecule, info )
@@ -220,7 +223,7 @@ contains ! ================================== Module procedures ============
     integer :: BUFFERID                 ! From pvm
     integer :: INFO                     ! Flag
     integer :: I4(4)                    ! Unpacked stuff
-    integer :: I5(5)                    ! Unpacked stuff
+    integer :: I7(7)                    ! Unpacked stuff
     logical :: L2(2)                    ! Unpacked stuff
     logical :: L6(6)                    ! Unpacked stuff
     logical :: FLAG(1)                  ! To unpack
@@ -262,14 +265,17 @@ contains ! ================================== Module procedures ============
       & majorFrame   = l6(5) )
     qt%logBasis = l6(6)
 
-    call PVMIDLUnPack ( i5, info )
+    call PVMIDLUnPack ( i7, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, &
       & "unpacking misc quantity stuff" )
-    qt%noInstancesLowerOverlap = i5(1)
-    qt%noInstancesUpperOverlap = i5(2)
-    qt%sideband                = i5(3)
-    qt%instrumentModule        = i5(4)
-    qt%radiometer              = i5(5)
+    qt%noInstancesLowerOverlap = i7(1)
+    qt%noInstancesUpperOverlap = i7(2)
+    qt%sideband                = i7(3)
+    qt%instrumentModule        = i7(4)
+    qt%radiometer              = i7(5)
+    qt%instanceOffset          = i7(6)
+    qt%grandTotalInstances     = i7(7)
+    print*,'Got instance offset as:', qt%instanceOffset
 
     ! Now unpack literals etc.
     call PVMUnpackLitIndex ( qt%quantityType, info )
@@ -280,6 +286,8 @@ contains ! ================================== Module procedures ============
     if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking frequencyCoordiante" )
     call PVMUnpackLitIndex ( qt%unit, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking unit" )
+    call PVMUnpackLitIndex ( qt%reflector, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking reflector" )
     call PVMUnpackLitIndex ( qt%molecule, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking molecule" )
     call PVMUnpackStringIndex ( qt%name, info )
@@ -416,6 +424,9 @@ contains ! ================================== Module procedures ============
 end module QuantityPVM
 
 ! $Log$
+! Revision 2.17  2003/07/07 20:22:00  livesey
+! Transfers additional stuff from quantity template
+!
 ! Revision 2.16  2003/06/20 19:31:39  pwagner
 ! Changes to allow direct writing of products
 !
