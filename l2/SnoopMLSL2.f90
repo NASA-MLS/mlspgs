@@ -415,7 +415,6 @@ contains ! ========  Public Procedures =========================================
           & call PVMErrorMessage ( info, "calling PVMFBufInfo" )
         snooper = FindFirst ( snoopers%tid == snooperTid )
         call PVMIDLUnpack ( line, info )
-        print*,'I got: ', trim(line)
         select case ( trim(line) )
 
         case ( 'Continue' )
@@ -620,7 +619,6 @@ contains ! ========  Public Procedures =========================================
     if ( matrixDatabase(matrix)%name /= matrixName ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to find requested matrix:'//trim(line) )
-
     call PVMIDLUnpack ( rc, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking row/col index' )
     
@@ -711,6 +709,9 @@ contains ! ========  Public Procedures =========================================
 end module SnoopMLSL2
 
 ! $Log$
+! Revision 2.27  2001/10/27 00:14:48  livesey
+! Removed a print statement
+!
 ! Revision 2.26  2001/10/24 00:25:50  livesey
 ! Got l2 side of matrix snooping working.
 !
