@@ -9,8 +9,11 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use HGrid, only: hGrid_T
-  use INIT_TABLES_MODULE, only: F_BAND, F_HGRID, F_LOGBASIS, F_MODULE, &
-    F_MOLECULE, F_RADIOMETER, F_SIGNAL, F_TYPE, F_UNIT, F_VGRID, &
+  use EXPR_M, only: EXPR
+  use INIT_TABLES_MODULE, only: F_BAND, F_GEODANGLE, F_HGRID, F_INCLINATION, &
+    & F_LOGBASIS, F_MODULE, F_MOLECULE, F_NOMIFS, F_RADIOMETER, &
+    & F_SIGNAL, F_TYPE, F_UNIT, F_VGRID
+  use INIT_TABLES_MODULE, only: FIELD_FIRST, FIELD_LAST, &
     FIRST_LIT, LAST_LIT, L_BASELINE, L_CHANNEL, L_EARTHREFL, &
     L_ELEVOFFSET, L_EXTINCTION, L_GEODALTITUDE, L_GPH, &
     L_LOSVEL, L_NONE, L_ORBITINCLINE, L_PTAN, L_RADIANCE, &
@@ -36,10 +39,12 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
   use TREE_TYPES, only: N_SET_ONE
   use VGridsDatabase, only: VGrid_T
   use Init_tables_module, ONLY: LIT_INDICES
+  use Units, only: DEG2RAD
 
   implicit none
   private
   public :: ConstructMinorFrameQuantity, CreateQtyTemplateFromMLSCFInfo
+  public :: ForgeMinorFrames
 
 ! -----     Private declarations     -----------------------------------
 
@@ -549,6 +554,81 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine ConstructMinorFrameQuantity
 
+  ! ------------------------------------ ForgeMinorFrames --------------
+  subroutine ForgeMinorFrames ( root, mifGeolocation )
+    ! This routine is used when we're in the mode of creating l2pc files
+    ! and we want to invent a set of minor frame quantities with no
+    ! reference to the l1 files
+    
+    ! Dummy arguments
+    integer, intent(in) :: ROOT          ! Tree vertex
+    type (QuantityTemplate_T), dimension(:), intent(inout) :: MIFGEOLOCATION
+
+    ! Local variables
+    integer :: GEODANGLENODE            ! Tree vertex
+    integer :: I                        ! Loop counter
+    integer :: INSTRUMENTMODULE         ! Database index
+    integer :: KEY                      ! Tree vertex
+    integer :: MAF                      ! Loop counter
+    integer :: NOMAFS                   ! Dimension
+    integer :: NOMIFS                   ! Dimension
+    integer :: SON                      ! Tree vertex
+
+    integer, dimension(2) :: EXPR_UNITS ! From tree
+
+    real(r8), dimension(2) :: EXPR_VALUE ! From tree
+    real(r8) :: incline                 ! Orbital inclination
+
+    ! Executable code
+    do i = 2, nsons( root )
+      son = subtree(i,root)
+      key = subtree(1,son)
+
+      select case ( decoration(key) )
+      case ( f_module )
+        instrumentModule = decoration(decoration(subtree(2,son)))
+      case ( f_geodAngle )
+        geodAngleNode = son
+      case ( f_noMIFs )
+        call expr ( subtree(2,son), expr_units, expr_value )
+        noMIFs = expr_value(1)
+      case ( f_inclination )
+        call expr (subtree ( 2, son), expr_units, expr_value )
+        incline = expr_value(1)
+      case default ! Can't get here if tree_checker works correctly
+      end select
+    end do
+    ! The tree checker will ensure we get all of these
+
+    noMAFs = nsons(geodAngleNode) - 1
+
+    call SetupNewQuantityTemplate ( mifGeolocation(instrumentModule), &
+      & noInstances=noMAFs, noSurfs=noMIFs, noChans=1,&
+      & coherent=.false., stacked=.false., regular=.true.,&
+      & minorFrame=.true. )
+
+    mifGeolocation(instrumentModule)%instrumentModule = instrumentModule
+    mifGeolocation(instrumentModule)%noInstancesLowerOverlap = 0
+    mifGeolocation(instrumentModule)%noInstancesUpperOverlap = 0
+    mifGeolocation(instrumentModule)%verticalCoordinate = l_none
+    mifGeolocation(instrumentModule)%time = 0.0
+    mifGeolocation(instrumentModule)%solarTime = 0.0
+    mifGeolocation(instrumentModule)%solarZenith = 0.0
+    mifGeolocation(instrumentModule)%lon = 0.0
+    mifGeolocation(instrumentModule)%losAngle = 0.0
+    mifGeolocation(instrumentModule)%mafIndex = 0.0
+    mifGeolocation(instrumentModule)%mafCounter = 0.0
+
+    do maf = 1, noMAFs
+      call expr (subtree ( maf+1, geodAngleNode), expr_units, expr_value )
+      mifGeolocation(instrumentModule)%phi(maf,:) = expr_value(1)
+      mifGeolocation(instrumentModule)%geodLat(maf,:) = &
+        &  asin( sin(deg2rad*mifGeolocation(instrumentModule)%phi(maf,1)) * &
+        &        sin(deg2rad*incline) )/deg2rad
+    end do
+
+  end subroutine ForgeMinorFrames
+
   ! ----------------------------------  CopyHGridInfoIntoQuantity  -----
   subroutine CopyHGridInfoIntoQuantity ( hGrid, qty )
 
@@ -608,6 +688,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.21  2001/04/20 23:11:39  livesey
+! Added forge stuff for minor frames
+!
 ! Revision 2.20  2001/04/19 20:30:06  livesey
 ! Added specific stuff for sideband ratio
 !
