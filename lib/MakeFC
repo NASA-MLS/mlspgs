@@ -99,6 +99,10 @@ testsubdirs = $(testdir)/multiply $(testdir)/sparsify $(testdir)/test_cf_parser
 #OMIT_SRCS := $(OMIT_SRCS) -d sbinom.f
 OMIT_SRCS := $(OMIT) sbinom.f
 
+ifdef HDFVERSIONS
+   OMIT_SRCS := $(OMIT_SRCS) L2GPData.f90 MLSFiles.f90
+endif
+
 #PVM and PVMIDL require PVM_ROOT
 ifdef PVM_ROOT
 else
@@ -241,6 +245,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.36  2002/01/29 00:46:47  pwagner
+# Builds he5lib when HDFVERSIONS defined
+#
 # Revision 2.35  2002/01/15 00:40:18  pwagner
 # Now uses user-settable OMIT and internal OMIT_SRCS and OMIT_PREFIXD variables
 #
