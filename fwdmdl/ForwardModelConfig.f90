@@ -42,6 +42,7 @@ module ForwardModelConfig
     logical, dimension(:), pointer :: moleculeDerivatives=>NULL() ! Want jacobians
     type (Signal_T), dimension(:), pointer :: signals=>NULL()
     integer :: instrumentModule         ! Module for scan model
+    logical :: differentialScan         ! Differential scan model
     logical :: Spect_Der      ! Do spectroscopy derivatives
     logical :: Temp_Der       ! Do temperature derivatives
     logical :: skipOverlaps   ! Don't calculate for MAFs in overlap regions
@@ -183,6 +184,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.3  2001/11/15 23:50:11  jonathan
+! rename DF_spectroscopy to default_spectroscopy
+!
 ! Revision 2.2  2001/11/15 20:56:38  jonathan
 ! add df_spectroscopy
 !
