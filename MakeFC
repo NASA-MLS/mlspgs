@@ -136,8 +136,15 @@ SHELL = /bin/sh
 # disthelp       -- prints README.MakeFC--a long file
 # install        -- mv programs mlsl* from sub-subs to INSTALLDIR
 #                    also create shell scripts in INSTALLDIR for each program
+# CondenseLeakLog-- build and install this prog out of util directory
+# convert_spectroscopy
+#                -- build and install this prog out of util directory
+# end_stmts      -- build and install this prog out of util directory
+# f90tex         -- build and install this prog out of util directory
+# init_gen       -- build and install this prog out of util directory
+# h5subset       -- build and install this prog out of util directory
 # makefile       -- allows you to summon this custom Makefile with shorter
-#                    "make" rather than "make -f $(MakeFName)"
+#                    "make" rather than "make -f $(MakeFName)" nonsense
 # update         -- replaces customized Makefiles with latest versions
 #                    also recalculates dependenencies, removes orphaned .o, .mod
 #
@@ -384,7 +391,15 @@ install:
 	done
 
 # build and install some of the executables out of util
-init_gen: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/init_gen.f90
+CondenseLeakLog: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/CondenseLeakLog.f90
+	$(MLSBIN)/build_f90_in_misc.sh -d ./bin/$(MLSCONFG)/ -t ./tests \
+   -c $(MLSCONFG) -p $@ $(MLSBIN)/$@.f90
+
+convert_spectroscopy: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/convert_spectroscopy.f90
+	$(MLSBIN)/build_f90_in_misc.sh -d ./bin/$(MLSCONFG)/ -t ./tests \
+   -m lib -c $(MLSCONFG) -p $@ $(MLSBIN)/$@.f90
+
+end_stmts: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/end_stmts.f90
 	$(MLSBIN)/build_f90_in_misc.sh -d ./bin/$(MLSCONFG)/ -t ./tests \
    -c $(MLSCONFG) -p $@ $(MLSBIN)/$@.f90
 
@@ -392,6 +407,17 @@ f90tex: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/f90tex.f90
 	$(MLSBIN)/build_f90_in_misc.sh -d ./bin/$(MLSCONFG)/ -t ./tests \
    -c $(MLSCONFG) -p $@ $(MLSBIN)/$@.f90
 
+init_gen: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/init_gen.f90
+	$(MLSBIN)/build_f90_in_misc.sh -d ./bin/$(MLSCONFG)/ -t ./tests \
+   -c $(MLSCONFG) -p $@ $(MLSBIN)/$@.f90
+
+h5subset: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/h5subset.c
+	$(MLSBIN)/build_f90_in_misc.sh -d ./bin/$(MLSCONFG)/ -t ./tests \
+   -c $(MLSCONFG) -p $@ \
+   -i "-I $(HDF5)/../include" \
+   $(MLSBIN)/$@.c
+
+# allow user to forego "-f MakeFC" nonsense
 makefile:
 	@if [ $(COPY_NUMBER) -lt $(MAX_COPIES) ] ; then \
 		$(MAKE) -f $(MakeFName) internaladd_copy ; \
@@ -621,6 +647,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.44  2001/08/14 22:39:59  pwagner
+# There was no mkdir_cascade
+#
 # Revision 1.43  2001/08/11 00:10:33  pwagner
 # More housekeeping
 #
