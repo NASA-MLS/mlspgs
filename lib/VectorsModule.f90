@@ -1034,7 +1034,7 @@ contains ! =====     Public Procedures     =============================
   ! matches our requirements
   
   function ValidateVectorQuantity(quantity, coherent, stacked, regular,&
-    & minorFrame, verticalCoordinate, frequencyCoordinate, &
+    & minorFrame, majorFrame, verticalCoordinate, frequencyCoordinate, &
     & noInstances, noSurfs, quantityType, molecule, sayWhyNot)
 
     ! Dummy arguments
@@ -1043,6 +1043,7 @@ contains ! =====     Public Procedures     =============================
     logical, optional, intent(IN) :: STACKED  ! .TRUE.,.FALSE. or not present
     logical, optional, intent(IN) :: REGULAR ! .TRUE.,.FALSE. or not present
     logical, optional, intent(IN) :: MINORFRAME ! .TRUE.,.FALSE. or not present
+    logical, optional, intent(IN) :: MAJORFRAME ! .TRUE.,.FALSE. or not present
 
     integer, optional, dimension(:), intent(IN) :: VERTICALCOORDINATE
     integer, optional, dimension(:), intent(IN) :: FREQUENCYCOORDINATE
@@ -1105,11 +1106,25 @@ contains ! =====     Public Procedures     =============================
       if (quantity%template%minorFrame .neqv. minorFrame) then
         ValidateVectorQuantity=.FALSE.
         if(present(sayWhyNot)) then
-          call output('Minor fram quantity checked with not', advance='yes')
+          call output('Minor frame quantity checked with not', advance='yes')
           call output('quantity minor frame? ', advance='no')
           call output(quantity%template%minorFrame, advance='yes')
           call output('check minorFrame? ', advance='no')
           call output(minorFrame, advance='yes')
+        end if
+        return
+      end if
+    end if
+
+    if (present(majorFrame)) then
+      if (quantity%template%majorFrame .neqv. majorFrame) then
+        ValidateVectorQuantity=.FALSE.
+        if(present(sayWhyNot)) then
+          call output('Major frame quantity checked with not', advance='yes')
+          call output('quantity major frame? ', advance='no')
+          call output(quantity%template%majorFrame, advance='yes')
+          call output('check majorFrame? ', advance='no')
+          call output(majorFrame, advance='yes')
         end if
         return
       end if
@@ -1209,6 +1224,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.49  2001/07/19 17:57:15  vsnyder
+! Added 'Quant' and 'Inst' arguments to CopyVector and MultiplyVectors
+!
 ! Revision 2.48  2001/07/17 17:33:21  livesey
 ! Added CreateMaskArray
 !
