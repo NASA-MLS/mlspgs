@@ -29,7 +29,8 @@ module Join                     ! Join together chunk based data.
   use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, NULL_TREE, SOURCE_REF, &
     & SUB_ROSA, SUBTREE
   use TREE_TYPES, only: N_NAMED, N_SET_ONE
-  use VectorsModule, only: GetVectorQuantity, Vector_T, VectorValue_T
+  use VectorsModule, only: GetVectorQuantity, ValidateVectorQuantity, Vector_T, &
+    & VectorValue_T
   use Intrinsic, ONLY: L_NONE, L_INSTRUMENTCHANNEL, L_USBFREQUENCY, L_LSBFREQUENCY,&
        L_INTERMEDIATEFREQUENCY
 
@@ -57,16 +58,13 @@ contains ! =====     Public Procedures     =============================
   ! routine has to create the l2gp and l2aux structures with the correct size
   ! in order to be able to store all the chunks.
 
-  subroutine MLSL2Join ( root, vectors, l2gpDatabase, l2auxDatabase, &
-    & qtyTemplates, chunks, chunkNo )
+  subroutine MLSL2Join ( root, vectors, l2gpDatabase, l2auxDatabase, chunkNo )
 
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Of the JOIN section in the AST
     type (Vector_T), dimension(:), intent(in) :: vectors
     type (L2GPData_T), dimension(:), pointer :: l2gpDatabase
     type (L2AUXData_T), dimension(:), pointer :: l2auxDatabase
-    type (QuantityTemplate_T), dimension(:), target, intent(in) :: qtyTemplates
-    type (MLSChunk_T), dimension(:), intent(in) :: chunks
     integer, intent(in) :: chunkNo
 
     ! Local variables
@@ -82,7 +80,7 @@ contains ! =====     Public Procedures     =============================
     integer :: SOURCE              ! Index in AST
     integer :: VALUE               ! Value of a field
     integer :: vectorIndex, quantityIndex
-    type (QuantityTemplate_T), pointer :: quantity
+    type (VectorValue_T), pointer :: quantity
     logical :: compareOverlaps, outputOverlaps, unpackOutput
     REAL :: T1, T2     ! for timing
     logical :: TIMING
@@ -161,29 +159,20 @@ contains ! =====     Public Procedures     =============================
 
       if ( error > 0 ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, "Errors in configuration prevent proceeding" )
-      quantity => qtyTemplates(quantityIndex)
-!     quantity => vectors(vectorIndex)%template%quantities(quantityIndex)
+      quantity => vectors(vectorIndex)%quantities(quantityIndex)
 
       ! Now, depending on the properties of the source we deal with the
       ! vector quantity appropriately.
 
-      if ( .NOT. quantity%regular ) call MLSMessage ( MLSMSG_Error, &
-        & ModuleName, "Irregular quantities cannot be output"// &
-        & "they must be regularised first" )
- 
-      if ( quantity%coherent .AND. &
-        &  quantity%stacked .AND. &
-        & ( (quantity%verticalCoordinate == l_Pressure) &
-        &  .OR. (quantity%verticalCoordinate == l_None) &
-        &  .OR. (quantity%verticalCoordinate == l_Zeta) ) ) then
+      if (ValidateVectorQuantity(quantity,coherent=.TRUE.,stacked=.TRUE.,regular=.TRUE.,&
+        & verticalCoordinate=(/L_Pressure,L_Zeta,L_None/))) then
         ! Coherent, stacked, regular quantities on pressure surfaces, or
         ! with no vertical coordinate system go in l2gp files.
-        call JoinL2GPQuantities ( key, name, vectors(vectorIndex), quantityIndex, &
-          & l2gpDatabase, chunkNo )
+        call JoinL2GPQuantities ( key, name, quantity, l2gpDatabase, chunkNo )
       else
         ! All others go in l2aux files.
-        call JoinL2AUXQuantities ( key, name, vectors(vectorIndex), quantity, &
-          & l2auxDatabase, chunkNo, unpackOutput=unpackOutput )
+        call JoinL2AUXQuantities ( key, name, quantity, l2auxDatabase, chunkNo, &
+          & unpackOutput=unpackOutput )
       endif
     end do
 
@@ -233,17 +222,16 @@ contains ! =====     Public Procedures     =============================
   ! the instances that we wish to store in the l2gp quantity.  Otherwise, it
   ! defaults to the non overlapped region.
 
-  subroutine JoinL2GPQuantities ( key, name, vector, quantityNo, l2gpDatabase, &
+  subroutine JoinL2GPQuantities ( key, name, quantity, l2gpDatabase, &
     & chunkNo, firstInstance, lastInstance )
 
     ! Dummy arguments
     integer, intent(in) :: KEY     ! spec_args to Decorate with the L2GP index
     integer, intent(in) :: NAME    ! Of the l2gp command
-    type (Vector_T), intent(in) :: VECTOR
-    integer, intent(in) :: QUANTITYNO ! Index into the vector
-    type (L2GPData_T), dimension(:), pointer :: L2gpDatabase
-    integer, intent(in) :: chunkNo
-    integer, intent(in), optional :: firstInstance, lastInstance
+    type (VectorValue_T), intent(in) :: QUANTITY
+    type (L2GPData_T), dimension(:), pointer :: L2GPDATABASE
+    integer, intent(in) :: CHUNKNO
+    integer, intent(in), optional :: FIRSTINSTANCE, LASTINSTANCE
     ! The last two are set if only part (e.g. overlap regions) of the quantity
     ! is to be stored in the l2gp data.
 
@@ -259,12 +247,7 @@ contains ! =====     Public Procedures     =============================
     logical :: l2gpDataIsNew
     real(r8), dimension(:,:), pointer :: values
     
-    type (QuantityTemplate_T), pointer :: quantity
-    ! Executable code
-
     if ( toggle(gen) ) call trace_begin ( "JoinL2GPQuantities", key )
-
-    quantity=>vector%quantities(quantityNo)%template
 
     ! If this is the first chunk, we have to setup the l2gp quantity from
     ! scratch.  Otherwise, we expand it and fill up our part of it.
@@ -279,13 +262,14 @@ contains ! =====     Public Procedures     =============================
     if ( PRESENT(firstInstance) ) then
       useFirstInstance = firstInstance
     else
-      useFirstInstance = quantity%noInstancesLowerOverlap+1
+      useFirstInstance = quantity%template%noInstancesLowerOverlap+1
     end if
 
     if ( PRESENT(lastInstance) ) then
       useLastInstance = lastInstance
     else
-      useLastInstance = quantity%noInstances-quantity%noInstancesUpperOverlap
+      useLastInstance = quantity%template%noInstances- &
+        & quantity%template%noInstancesUpperOverlap
     end if
 
     noOutputInstances = useLastInstance-useFirstInstance+1
@@ -295,24 +279,24 @@ contains ! =====     Public Procedures     =============================
     if ( l2gpDataIsNew ) then
       ! Now create an empty L2GP record with this dimension
 
-      if ( quantity%verticalCoordinate == l_Pressure ) then
-        noSurfsInL2GP = quantity%noSurfs
+      if ( quantity%template%verticalCoordinate == l_Pressure ) then
+        noSurfsInL2GP = quantity%template%noSurfs
       else
         noSurfsInL2GP = 0
       end if
 
-      if ( quantity%frequencyCoordinate == l_None) then
+      if ( quantity%template%frequencyCoordinate == l_None) then
          noFreqsInL2GP=0
       else
-         noFreqsInL2GP=quantity%noChans
+         noFreqsInL2GP=quantity%template%noChans
       endif
 
       call SetupNewL2GPRecord ( newL2GP, noFreqsInL2GP, noSurfsInL2GP )
       ! Setup the standard stuff, only pressure as it turns out.
-      if ( quantity%verticalCoordinate == l_Pressure ) &
-        & newL2GP%pressures = quantity%surfs(:,1)
-      if ( quantity%verticalCoordinate == l_Zeta ) &
-        & newL2GP%pressures = 10.0**(-quantity%surfs(:,1))
+      if ( quantity%template%verticalCoordinate == l_Pressure ) &
+        & newL2GP%pressures = quantity%template%surfs(:,1)
+      if ( quantity%template%verticalCoordinate == l_Zeta ) &
+        & newL2GP%pressures = 10.0**(-quantity%template%surfs(:,1))
 
       ! ??? In later versions we'll need to think about frequency stuff (NJL)
 
@@ -322,10 +306,6 @@ contains ! =====     Public Procedures     =============================
       call decorate ( key, -index ) ! Remember where it is
       thisL2GP => l2gpDatabase(index)
 
-      ! Finally destroy the interim, non databased l2gp quantity
-!     call DestroyL2GPContents ( newL2GP )
-      ! No! Don't do this! It deallocates all the pointers we just
-      ! copied into the database!
     else
       ! Setup the index and pointer
       thisL2GP => l2gpDatabase(-index)
@@ -338,26 +318,25 @@ contains ! =====     Public Procedures     =============================
     ! Now copy the information from the quantity to the l2gpData
 
     ! name is an integer, but L2GP%name is Character data
-!    thisL2GP%name = name
     thisL2GP%nameIndex = name
     lastProfile=thisL2GP%nTimes
     firstProfile=lastProfile-noOutputInstances+1
 
     ! Now fill the data, first the geolocation
     thisL2GP%latitude(firstProfile:lastProfile) = &
-      & quantity%geodLat(1,useFirstInstance:useLastInstance)
+      & quantity%template%geodLat(1,useFirstInstance:useLastInstance)
     thisL2GP%longitude(firstProfile:lastProfile) = &
-      & quantity%lon(1,useFirstInstance:useLastInstance)
+      & quantity%template%lon(1,useFirstInstance:useLastInstance)
     thisL2GP%solarTime(firstProfile:lastProfile) = &
-      & quantity%solarTime(1,useFirstInstance:useLastInstance)
+      & quantity%template%solarTime(1,useFirstInstance:useLastInstance)
     thisL2GP%solarZenith(firstProfile:lastProfile) = &
-      & quantity%solarZenith(1,useFirstInstance:useLastInstance)
+      & quantity%template%solarZenith(1,useFirstInstance:useLastInstance)
     thisL2GP%losAngle(firstProfile:lastProfile) = &
-      & quantity%losAngle(1,useFirstInstance:useLastInstance)
+      & quantity%template%losAngle(1,useFirstInstance:useLastInstance)
     thisL2GP%geodAngle(firstProfile:lastProfile) = &
-      & quantity%phi(1,useFirstInstance:useLastInstance)
+      & quantity%template%phi(1,useFirstInstance:useLastInstance)
     thisL2GP%time(firstProfile:lastProfile) = &
-      & quantity%time(1,useFirstInstance:useLastInstance)
+      & quantity%template%time(1,useFirstInstance:useLastInstance)
     thisL2GP%chunkNumber(firstProfile:lastProfile)=chunkNo
 
     ! Now the various data quantities.
@@ -367,9 +346,9 @@ contains ! =====     Public Procedures     =============================
     ! and quality will come later too (probably 0.5, but maybe 1.0)
 
     thisL2GP%l2gpValue(:,:,firstProfile:lastProfile)=&
-         RESHAPE(vector%quantities(quantityNo)%values(:,useFirstInstance:useLastInstance),&
+         RESHAPE(quantity%values(:,useFirstInstance:useLastInstance),&
          (/MAX(thisL2GP%nFreqs,1),MAX(thisL2GP%nLevels,1),lastProfile-firstProfile+1/))
-    thisL2GP%l2gpPrecision(:,:,firstProfile:lastProfile) = 0.0
+    thisL2GP%l2gpPrecision(:,:,firstProfile:lastProfile) = 0.0 ! Later put something here
     thisL2GP%status(firstProfile:lastProfile)='G'
     thisL2GP%quality(firstProfile:lastProfile)=0.0
 
@@ -385,14 +364,13 @@ contains ! =====     Public Procedures     =============================
   ! then the data is output with no gaps in the arrays.  If it is true, then
   ! the last dimension if it's MAF is used as an index into the arrays.
 
-  subroutine JoinL2AUXQuantities ( key, name, vector, quantity, l2auxDatabase, &
+  subroutine JoinL2AUXQuantities ( key, name, quantity, l2auxDatabase, &
     & chunkNo, firstInstance, lastInstance, unpackOutput)
 
     ! Dummy arguments
     integer, intent(in) :: KEY     ! spec_args to decorate with the L2AUX index
     integer, intent(in) :: NAME    ! of the l2aux command
-    type (Vector_T), intent(in) :: vector
-    type (QuantityTemplate_T), intent(in) :: quantity
+    type (VectorValue_T), intent(in) :: quantity
 !   integer, intent(in) :: quantityNo
     type (L2AUXData_T), dimension(:), pointer :: l2auxDatabase
     integer, intent(in) :: chunkNo
@@ -415,14 +393,11 @@ contains ! =====     Public Procedures     =============================
     &                                         noMAFs,index, InstanceNo
     integer ::                              firstProfile,lastProfile
     real(r8), dimension(:,:), pointer ::    values
-    type(VectorValue_T), pointer ::         vectorQuantity
     INTEGER                              :: IERR
 
     ! Executable code
 
     if ( toggle(gen) ) call trace_begin ( "JoinL2AUXQuantities", key )
-
-!   quantity => vector%template%quantities(quantityNo)
 
     ! If this is the first chunk, we have to setup the l2aux quantity from
     ! scratch.  Otherwise, we expand it and fill up our part of it.
@@ -438,13 +413,14 @@ contains ! =====     Public Procedures     =============================
     if ( PRESENT(firstInstance) ) then
       useFirstInstance = firstInstance
     else
-      useFirstInstance = quantity%noInstancesLowerOverlap+1
+      useFirstInstance = quantity%template%noInstancesLowerOverlap+1
     end if
 
     if ( PRESENT(lastInstance) ) then
       useLastInstance = lastInstance
     else
-      useLastInstance = quantity%noInstances-quantity%noInstancesUpperOverlap
+      useLastInstance = quantity%template%noInstances- &
+        & quantity%template%noInstancesUpperOverlap
     end if
 
     noOutputInstances = useLastInstance-useFirstInstance+1
@@ -459,7 +435,7 @@ contains ! =====     Public Procedures     =============================
       useUnpackOutput = .FALSE.
     end if
 
-    if ( useUnpackOutput.AND.(.NOT.quantity%minorFrame) ) call MLSMessage ( &
+    if ( useUnpackOutput.AND.(.NOT.quantity%template%minorFrame) ) call MLSMessage ( &
       & MLSMSG_Error ,ModuleName, "Can only use the unpack output flag"// &
       & " for minor frame quantities")
 
@@ -471,12 +447,12 @@ contains ! =====     Public Procedures     =============================
       ! If the quantity is a minor frame quantity, then we deal with it 
       ! as such.  Otherwise we output it as a geodAngle based quantity
 
-      if ( (quantity%noChans/=1) .AND. &
-        & (quantity%frequencyCoordinate == L_None) ) &
+      if ( (quantity%template%noChans/=1) .AND. &
+        & (quantity%template%frequencyCoordinate == L_None) ) &
         & CALL MLSMessage ( MLSMSG_Error, ModuleName, &
         & "Quantity has multiple channels but no frequency coordinate" )
 
-      select case (quantity%frequencyCoordinate)
+      select case (quantity%template%frequencyCoordinate)
       case ( L_InstrumentChannel )
         auxFamily = L2AUXDim_Channel
       case ( L_IntermediateFrequency )
@@ -491,22 +467,22 @@ contains ! =====     Public Procedures     =============================
           & "Unrecognised frequency coordinate" )
       end select
 
-      if ( quantity%minorFrame ) then
+      if ( quantity%template%minorFrame ) then
         ! For minor frame quantities, the dimensions are:
         ! ([frequency or channel],MIF,MAF)
         !
         if ( useUnpackOutput ) then
-          noMAFs = quantity%mafIndex(quantity%noInstances)
+          noMAFs = quantity%template%mafIndex(quantity%template%noInstances)
         else
-          noMAFs = quantity%noInstances
+          noMAFs = quantity%template%noInstances
         end if
 
-        if ( quantity%frequencyCoordinate==L_None ) then
+        if ( quantity%template%frequencyCoordinate==L_None ) then
           dimensionFamilies = (/L2AUXDim_None, L2AUXDim_MIF, L2AUXDim_MAF/)
-          dimensionSizes = (/1, quantity%noSurfs, noMAFs/)
+          dimensionSizes = (/1, quantity%template%noSurfs, noMAFs/)
         else
           dimensionFamilies = (/auxFamily, L2AUXDim_MIF, L2AUXDim_MAF/)
-          dimensionSizes = (/quantity%noChans, quantity%noSurfs, &
+          dimensionSizes = (/quantity%template%noChans, quantity%template%noSurfs, &
             & noMAFs/)
         end if
       else
@@ -520,19 +496,19 @@ contains ! =====     Public Procedures     =============================
         ! paramters etc., to parallel those from type t_verticalCoordinate
         ! in Init_Tables_Module.
 
-        if ( quantity%verticalCoordinate /= l_None ) &
+        if ( quantity%template%verticalCoordinate /= l_None ) &
           & CALL MLSMessage ( MLSMSG_Error, ModuleName, &
           & "Cannot currently output L2AUX quantities with obscure "// &
           & "vertical coordinates, sorry!" )
 
-        if ( quantity%frequencyCoordinate==L_None ) then
+        if ( quantity%template%frequencyCoordinate==L_None ) then
           dimensionFamilies = (/L2AUXDim_geodAngle, L2AUXDim_None, &
             & L2AUXDim_None/)
-          dimensionSizes = (/quantity%noInstances, 1, 1/)
+          dimensionSizes = (/quantity%template%noInstances, 1, 1/)
         else
           dimensionFamilies = (/auxFamily, L2AUXDim_geodAngle, &
             & L2AUXDim_None/)
-          dimensionSizes = (/quantity%noChans, quantity%noInstances, 1/)
+          dimensionSizes = (/quantity%template%noChans, quantity%template%noInstances, 1/)
         end if
       end if
 
@@ -547,17 +523,17 @@ contains ! =====     Public Procedures     =============================
         case ( L2AUXDim_None )
           newL2AUX%dimensions(dimensionIndex)%values = 1
         case ( L2AUXDim_Channel )
-          do channel = 1,quantity%noChans
+          do channel = 1,quantity%template%noChans
             newL2AUX%dimensions(dimensionIndex)%values(channel) = channel
           end do
         case ( L2AUXDim_IntermediateFrequency )
-          newL2AUX%dimensions(dimensionIndex)%values = quantity%frequencies
+          newL2AUX%dimensions(dimensionIndex)%values = quantity%template%frequencies
         case ( L2AUXDim_USBFrequency )
-          newL2AUX%dimensions(dimensionIndex)%values = quantity%frequencies
+          newL2AUX%dimensions(dimensionIndex)%values = quantity%template%frequencies
         case ( L2AUXDim_LSBFrequency )
-          newL2AUX%dimensions(dimensionIndex)%values = quantity%frequencies
+          newL2AUX%dimensions(dimensionIndex)%values = quantity%template%frequencies
         case ( L2AUXDim_MIF )
-          do surf = 1, quantity%noSurfs
+          do surf = 1, quantity%template%noSurfs
             newL2AUX%dimensions(dimensionIndex)%values(surf) = surf
           end do
         case default
@@ -590,9 +566,9 @@ contains ! =====     Public Procedures     =============================
       ! ??? The noMAFs computation isn't consistent with the initial case ???
       if ( useUnpackOutput ) then
         noMAFs = thisL2AUX%dimensions(thisL2AUX%noDimensionsUsed)%noValues+&
-          & quantity%noInstances
+          & quantity%template%noInstances
       else
-        noMAFs = quantity%mafCounter(quantity%noInstances)
+        noMAFs = quantity%template%mafCounter(quantity%template%noInstances)
       end if
 
       ! ??? WVS would like to make this work as in the L2GP case:  The
@@ -613,14 +589,12 @@ contains ! =====     Public Procedures     =============================
 !     firstProfile = lastProfile-noOutputInstances+1
     end if
 
-!    vectorQuantity = GetVectorQuantity ( vector, quantity%name, &
+!    vectorQuantity = GetVectorQuantity ( vector, quantity%template%name, &
 !      & quantityIsName=.TRUE. )
-
-    vectorQuantity = GetVectorQuantity ( vector, quantity%name)
 
 !    thisL2AUX%values = &
 !      & vectorQuantity%values(useFirstInstance:useLastInstance,:,:)
-    CALL unsqueeze(vectorQuantity%values(:, useFirstInstance:useLastInstance), &
+    CALL unsqueeze(quantity%values(:, useFirstInstance:useLastInstance), &
     & thisL2AUX%values, IERR)
 
     if ( toggle(gen) ) call trace_end ( "JoinL2AUXQuantities" )
@@ -691,6 +665,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.12  2001/02/27 17:38:21  livesey
+! Tidied things up, removed unnecessary arguments
+!
 ! Revision 2.11  2001/02/27 00:50:31  livesey
 ! Added ability to Join verticalCoordinate=l_zeta quantities into l2gp entities.
 !
