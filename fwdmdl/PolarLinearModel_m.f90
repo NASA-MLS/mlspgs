@@ -98,7 +98,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Get stuff from various vectors
     radiance => GetVectorQuantityByType (fwdModelOut, quantityType=l_radiance, &
-      & signal=fmConf%signals(1)%index, sideband=fmConf%signals(1)%sideband, noError=.true. )
+      & signal=fmConf%signals(1)%index, sideband=fmConf%signals(1)%sideband )
     phi => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_fieldAzimuth, config=fmConf )
     instance = FindOneClosestInstance ( phi, radiance, maf )
