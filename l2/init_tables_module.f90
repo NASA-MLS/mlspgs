@@ -805,9 +805,9 @@ contains ! =====     Public procedures     =============================
              begin, f+f_comment, t+t_string, n+n_field_type, &
              nd+n_spec_def, &
       begin, s+s_dumpblock, &
-             begin, f+f_matrix, s+s_matrix, n+n_field_spec, &
-             begin, f+f_rowQuantity, s+s_quantity, n+n_field_spec, &
-             begin, f+f_colQuantity, s+s_quantity, n+n_field_spec, &
+             begin, f+f_matrix, s+s_matrix, nr+n_field_spec, &
+             begin, f+f_rowQuantity, s+s_quantity, nr+n_field_spec, &
+             begin, f+f_colQuantity, s+s_quantity, nr+n_field_spec, &
              begin, f+f_rowSurfaces, t+t_numeric, t+t_numeric_range, &
                     n+n_field_type, &
              begin, f+f_colSurfaces, t+t_numeric, t+t_numeric_range, &
@@ -816,7 +816,7 @@ contains ! =====     Public procedures     =============================
                     n+n_field_type, &
              begin, f+f_colChannels, t+t_numeric, t+t_numeric_range, &
                     n+n_field_type, &
-             nadp+n_spec_def /) )
+             ndp+n_spec_def /) )
     ! Define the relations between sections and specs.  These are
     ! represented by trees of the form
     !  < n_section section_name
@@ -874,6 +874,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.89  2001/05/02 03:02:34  livesey
+! Fixed options for dumpblock
+!
 ! Revision 2.88  2001/05/02 02:35:42  livesey
 ! Added the DumpBlock items to retrieve, and associated f_ fields.
 !
