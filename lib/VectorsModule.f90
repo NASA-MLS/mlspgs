@@ -240,14 +240,14 @@ contains ! =====     Public Procedures     =============================
   subroutine ClearMask ( MASK, TO_CLEAR )
   ! Clear bits of MASK indexed by elements of TO_CLEAR.  If TO_CLEAR is
   ! absent, clear all of the bits of MASK.
-    integer, intent(inout), dimension(:) :: MASK
+    integer, intent(inout), dimension(0:) :: MASK
     integer, intent(in), dimension(:), optional :: TO_CLEAR
     integer :: I, W, P
     if ( present(to_clear) ) then
       do i = 1, size(to_clear)
         w = to_clear(i) / b
         p = mod(to_clear(i), b)
-        mask(w+1) = ibclr(mask(w+1),p)
+        mask(w) = ibclr(mask(w),p)
       end do
     else
       mask = 0
@@ -914,14 +914,14 @@ contains ! =====     Public Procedures     =============================
   subroutine SetMask ( MASK, TO_SET )
   ! Set bits of MASK indexed by elements of TO_SET.  If TO_SET is absent,
   ! set all of the bits of MASK.
-    integer, intent(inout), dimension(:) :: MASK
+    integer, intent(inout), dimension(0:) :: MASK
     integer, intent(in), dimension(:), optional :: TO_SET
     integer :: I, W, P
     if ( present(to_set) ) then
       do i = 1, size(to_set)
         w = to_set(i) / b
         p = mod(to_set(i), b)
-        mask(w+1) = ibset(mask(w+1),p)
+        mask(w) = ibset(mask(w),p)
       end do
     else
       mask = not(0)
@@ -1166,6 +1166,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.45  2001/06/01 01:04:22  vsnyder
+! Add 'Multiply' generic
+!
 ! Revision 2.44  2001/05/25 22:33:07  livesey
 ! Changed a comment
 !
