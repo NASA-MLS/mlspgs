@@ -105,10 +105,15 @@ contains
   end subroutine DestroyVGridDatabase
 
   ! ------------------------------------------------  Dump_VGrids  -----
-  subroutine Dump_VGrids ( VGrids, Lit_Indices )
+  subroutine Dump_VGrids ( VGrids, Lit_Indices, Details )
     type(vGrid_T), intent(in) :: VGrids(:)             ! The database
     integer, intent(in), dimension(:) :: Lit_Indices   ! From init_tables
-    integer :: I
+    integer, intent(in), optional :: Details ! <= 0 => Don't dump arrays
+    !                                        ! >0   => Do dump arrays
+    !                                        ! Default 1
+    integer :: I, MyDetails
+    myDetails = 1
+    if ( present(details) ) myDetails = details
     call output ( 'VGRIDS: SIZE = ' )
     call output ( size(vgrids), advance='yes' )
     do i = 1, size(vgrids)
@@ -119,13 +124,16 @@ contains
       call output ( vgrids(i)%noSurfs )
       call output ( ' verticalCoordinate = ' )
       call display_string ( lit_indices(vgrids(i)%verticalCoordinate) )
-      call dump ( vgrids(i)%surfs, ' Surfs = ' )
+      if ( details > 0 ) call dump ( vgrids(i)%surfs, ' Surfs = ' )
     end do
   end subroutine Dump_VGrids
 
 end module VGridsDatabase
 
 ! $Log$
+! Revision 2.2  2001/04/11 00:03:52  vsnyder
+! Improve 'dump'
+!
 ! Revision 2.1  2001/04/07 01:54:08  vsnyder
 ! Initial Commit
 !
