@@ -74,7 +74,8 @@ contains ! =====     Public Procedures     =============================
       & F_TYPE, F_USB, F_USBFRACTION, F_VECTOR, F_VMRQUANTITY, &
       & FIELD_FIRST, FIELD_LAST
     ! Now the literals:
-    use INIT_TABLES_MODULE, only: L_ADDNOISE, L_BOUNDARYPRESSURE, L_CHISQCHAN, &
+    use INIT_TABLES_MODULE, only: L_ADDNOISE, L_BINMAX, L_BINMIN, &
+      & L_BOUNDARYPRESSURE, L_CHISQCHAN, &
       & L_CHISQMMAF, L_CHISQMMIF, L_CHOLESKY, L_COLUMNABUNDANCE, &
       & L_ESTIMATEDNOISE, L_EXPLICIT, L_FOLD, L_GEODALTITUDE, &
       & L_GPH, L_GPHPRECISION, L_GRIDDED, L_H2OFROMRHI, &
@@ -123,7 +124,7 @@ contains ! =====     Public Procedures     =============================
     use MLSL2Options, only: LEVEL1_HDFVERSION
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate, MLSMSG_Deallocate
-    use MLSNumerics, only: InterpolateValues
+    use MLSNumerics, only: InterpolateValues, Hunt
     use MLSRandomNumber, only: drang, mls_random_seed, MATH77_RAN_PACK
     use MLSSignals_m, only: GetSignalName, GetModuleName, IsModuleSpacecraft, &
       & GetSignal, Signal_T
@@ -905,6 +906,35 @@ contains ! =====     Public Procedures     =============================
           end if
           call addGaussianNoise ( key, quantity, sourceQuantity, &
             & noiseQty, multiplier )
+
+        case ( l_binMax, l_binMin )
+          if ( .not. got ( f_sourceQuantity ) ) &
+            & call Announce_Error ( key, 0, &
+            & 'Need source quantity for bin max/min fill' )
+          sourceQuantity => GetVectorQtyByTemplateIndex( &
+            & vectors(sourceVectorIndex), sourceQuantityIndex )
+          if ( got ( f_ptanQuantity ) ) then
+            ptanQuantity => GetVectorQtyByTemplateIndex( &
+              & vectors(ptanVectorIndex), ptanQuantityIndex)
+          else
+            nullify ( ptanQuantity )
+          end if
+
+          if ( sourceQuantity%template%verticalCoordinate /= &
+            & quantity%template%verticalCoordinate ) then
+            if ( .not. sourceQuantity%template%minorFrame .or. &
+              &  .not. got ( f_ptanQuantity ) .or. &
+              &  quantity%template%verticalCoordinate /= l_zeta ) &
+              & call Announce_Error ( key, 0, &
+              & 'Vertical coordinate mismatch, perhaps supply tangent pressure?' )
+            if ( ptanQuantity%template%instrumentModule .ne. &
+              & sourceQuantity%template%instrumentModule ) &
+              & call Announce_Error ( key, 0, &
+              & 'Instrument module mismatch between ptan and source quantity' )
+          end if
+
+          call FillWithBinMinMax ( key, quantity, sourceQuantity, ptanQuantity, &
+            & channel, fillMethod == l_binMax )
 
         case ( l_gphPrecision) ! -------------  GPH precision  -----
           ! Need a tempPrecision and a refgphPrecision quantity
@@ -5023,6 +5053,133 @@ contains ! =====     Public Procedures     =============================
       end do instanceLoop
     end subroutine FillQtyWithWMOTropopause
 
+    ! -------------------------------------------- FillWithBinMinMax -----
+    subroutine FillWithBinMinMax ( key, quantity, sourceQuantity, ptanQuantity, &
+      & channel, fillMax )
+      ! This fills a coherent quantity with the max/min binned value of 
+      ! a typically incoherent one.  The bins are centered horizontally
+      ! on the profiles in quantity, but vertically the bins run between one
+      ! surface and the next one up.
+      integer, intent(in) :: KEY        ! Tree node
+      type (VectorValue_T), intent(inout) :: QUANTITY
+      type (VectorValue_T), intent(in) :: SOURCEQUANTITY
+      type (VectorValue_T), pointer :: PTANQUANTITY
+      integer, intent(in) :: CHANNEL
+      logical, intent(in) :: FILLMAX
+
+      ! Local variables
+      real(r8), dimension(:,:), pointer :: SOURCEHEIGHTS ! might be ptan.
+      real(r8), dimension(:), pointer :: PHIBOUNDARIES
+      integer, dimension(:,:), pointer :: SURFS ! Surface mapping source->quantity
+      integer, dimension(:,:), pointer :: INSTS ! Instance mapping source->quantity
+      integer :: QS, QI, SS, SI                   ! Loop counters
+
+      ! Executable code
+
+      ! Check the output quantity
+      if ( .not. ValidateVectorQuantity ( quantity, &
+        & coherent=.true., stacked=.true., frequencyCoordinate=(/l_none/) ) ) &
+        & call Announce_Error ( key, 0, &
+        & 'Illegal quantity for bin max/min fill' )
+
+      ! Also should have the condition:
+      !  quantityType = (/ sourceQuantity%template%quantityType /)
+      ! However, the code does not yet really support the ability to do that.
+
+      ! Work out source vertical coordinate
+      if ( associated ( ptanQuantity ) .and. sourceQuantity%template%minorFrame ) then
+        nullify ( sourceHeights )
+        call Allocate_test ( sourceHeights, sourceQuantity%template%nosurfs, &
+          & sourceQuantity%template%noinstances, 'sourceHeights', ModuleName )
+        sourceHeights = ptanQuantity%values
+      else
+        sourceHeights => sourceQuantity%template%surfs
+      end if
+
+      ! Setup index arrays
+      nullify ( surfs, insts )
+      call Allocate_test ( surfs, sourceQuantity%template%nosurfs, &
+        & sourceQuantity%template%noinstances, 'surfs', ModuleName )
+      call Allocate_test ( insts, sourceQuantity%template%nosurfs, &
+        & sourceQuantity%template%noinstances, 'insts', ModuleName )
+
+      ! Work out the vertical mapping, a function of instance for 
+      ! incoherent quantities
+      if ( sourceQuantity%template%coherent ) then
+        call Hunt ( quantity%template%surfs(:,1), sourceHeights(:,1), surfs(:,1), &
+          & allowTopValue=.true. )
+        surfs = spread ( surfs(:,1), 2, sourceQuantity%template%noInstances )
+      else
+        do si = 1, sourceQuantity%template%noInstances
+          call Hunt ( quantity%template%surfs(:,1), sourceHeights(:,si), surfs(:,si), &
+            & allowTopValue=.true. )
+        end do
+      end if
+
+      call dump ( surfs, 'surfs' )
+
+      ! Work out the horizontal mapping, a function of height for unstakced quantities.
+      ! Bin to the center of the profiles rather than the edges.
+      if ( quantity%template%noInstances > 1 ) then
+        ! Setup and work out the phiBoundaries
+        nullify ( phiBoundaries )
+        call Allocate_test ( phiBoundaries, quantity%template%noInstances-1, &
+          & 'phiBoundaries', ModuleName )
+        phiBoundaries = 0.5 * ( &
+          & quantity%template%phi(1,1:quantity%template%noInstances-1) + &
+          & quantity%template%phi(1,2:quantity%template%noInstances) )
+        if ( sourceQuantity%template%stacked ) then
+          call Hunt ( phiBoundaries, sourceQuantity%template%phi(1,:), &
+            & insts(1,:), allowTopValue=.true., allowBelowValue=.true. )
+          insts = spread ( surfs(1,:), 1, sourceQuantity%template%noSurfs ) + 1
+        else
+          do ss = 1, sourceQuantity%template%noSurfs
+            call Hunt ( phiBoundaries, sourceQuantity%template%phi(ss,:), &
+              & insts(ss,:), allowTopValue=.true., allowBelowValue=.true. )
+          end do
+          insts = insts + 1
+        end if
+        call Deallocate_test ( phiBoundaries, 'phiBoundaries', ModuleName )
+      else
+        insts = 1
+      end if
+
+      call dump ( insts, 'insts' )
+      
+      ! Modify the surfs index to account for the channel, so now it's more
+      ! of a 'values' index
+      if ( sourceQuantity%template%frequencyCoordinate /= l_none .and. &
+        & channel == 0 ) call Announce_Error ( key, 0, &
+        & 'Must supply channel for this bin max/min fill' )
+     
+      ! Now loop over the output quantity points and work out the information
+      do qi = 1, quantity%template%noInstances
+        do qs = 1, quantity%template%noSurfs
+          if ( count ( surfs == qs .and. insts == qi ) > 0 ) then
+            if ( fillMax ) then
+              quantity%values(qs,qi) = maxval ( pack ( sourceQuantity%values ( &
+                & channel : sourceQuantity%template%instanceLen : &
+                &   sourceQuantity%template%noChans, : ), &
+                & surfs == qs .and. insts == qi ) )
+            else
+              quantity%values(qs,qi) = minval ( pack ( sourceQuantity%values ( &
+                & channel : sourceQuantity%template%instanceLen : &
+                &   sourceQuantity%template%noChans, : ), &
+                & surfs == qs .and. insts == qi ) )
+            end if
+          else
+            quantity%values(qs,qi) = 0.0
+          end if
+        end do
+      end do
+
+      ! Now tidy up
+      call Deallocate_test ( surfs, 'surfs', ModuleName )
+      call Deallocate_test ( insts, 'insts', ModuleName )
+      if ( associated ( ptanQuantity ) .and. sourceQuantity%template%minorFrame ) &
+        & call Deallocate_test ( sourceHeights, 'sourceHeights', ModuleName )
+    end subroutine FillWithBinMinMax
+
     ! ----------------------------------------------- OffsetRadianceQuantity ---
     subroutine OffsetRadianceQuantity ( quantity, radianceQuantity, amount )
       type (VectorValue_T), intent(inout) :: QUANTITY
@@ -5326,6 +5483,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.202  2003/04/23 17:06:36  livesey
+! Added binmax binmin fills
+!
 ! Revision 2.201  2003/04/11 23:15:09  livesey
 ! Added force option to vector fill, and spreadChannel fill method.
 !
