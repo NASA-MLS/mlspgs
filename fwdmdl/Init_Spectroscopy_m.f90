@@ -4,6 +4,8 @@ module Init_Spectroscopy_m
   use Init_MLSSignals_m, only: Field_First, Init_MLSSignals, &
     & Last_Signal_Field, Last_Signal_Lit, Last_Signal_Spec, Last_Signal_Type, &
     & Spec_First
+  use INTRINSIC, only: DATA_TYPE_INDICES, FIELD_INDICES, &
+    & LIT_INDICES, PARM_INDICES, SECTION_INDICES, SPEC_INDICES
   use Molecules, only: T_Molecule
 
   implicit NONE
@@ -50,23 +52,24 @@ module Init_Spectroscopy_m
 
 contains
   ! ------------------------------------------  Init_Spectroscopy  -----
-  subroutine Init_Spectroscopy ( Data_Type_Indices, Field_Indices, Lit_Indices, &
-    & Parm_Indices, Section_Indices, Spec_Indices )
+  subroutine Init_Spectroscopy ( N_DATA_TYPE_INDICES, N_FIELD_INDICES, &
+    & N_LIT_INDICES, FIRST_PARM_INDEX, LAST_PARM_INDEX, N_SECTION_INDICES, &
+    & N_SPEC_INDICES )
 
     ! This really belongs in make_tree, but "make depends" can't see it there
     ! (because of the "include"):
     use TREE, only: BUILD_TREE, PUSH_PSEUDO_TERMINAL
     use TREE_TYPES, only: N_DT_DEF, N_FIELD_SPEC, N_FIELD_TYPE, N_SPEC_DEF
 
-    integer, intent(inout) :: Data_Type_Indices(:)
-    integer, intent(inout) :: Lit_Indices(:)
-    integer, intent(inout) :: Field_Indices(field_First:last_Spectroscopy_Field)
-    integer, intent(inout) :: Parm_Indices(:)
-    integer, intent(inout) :: Section_Indices(:)
-    integer, intent(inout) :: Spec_Indices(spec_First:last_Spectroscopy_Spec)
+    integer, intent(in) :: N_DATA_TYPE_INDICES
+    integer, intent(in) :: N_FIELD_INDICES
+    integer, intent(in) :: N_LIT_INDICES
+    integer, intent(in) :: FIRST_PARM_INDEX, LAST_PARM_INDEX
+    integer, intent(in) :: N_SECTION_INDICES
+    integer, intent(in) :: N_SPEC_INDICES
 
-    call init_MLSSignals ( data_type_indices, field_indices, lit_indices, &
-      & parm_indices, section_indices, spec_indices )
+    call init_MLSSignals ( n_data_type_indices, n_field_indices, n_lit_indices, &
+      & first_parm_index, last_parm_index, n_section_indices, n_spec_indices )
 
     ! Put field names into the symbol table
     field_indices(f_delta)    = add_ident ( 'delta' )
@@ -150,6 +153,10 @@ contains
 end module Init_Spectroscopy_m
 
 ! $Log$
+! Revision 1.3  2001/04/04 17:59:42  vsnyder
+! Insert "USE TREE" because "make depends" can't see the one in "make_tree"
+! (because of the "include").
+!
 ! Revision 1.2  2001/04/04 02:10:06  vsnyder
 ! Repair a literal name
 !

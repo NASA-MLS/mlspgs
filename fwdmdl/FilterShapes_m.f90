@@ -58,14 +58,13 @@ contains
   end subroutine Open_Filter_Shapes_File
 
   ! ------------------------------------  Read_Filter_Shapes_File  -----
-  subroutine Read_Filter_Shapes_File ( Lun, Spec_Indices )
+  subroutine Read_Filter_Shapes_File ( Lun )
     use Machine, only: IO_Error
     use Parse_Signal_m, only: Parse_Signal
     use Toggles, only: Gen, Levels, Switches, Toggle
     use Trace_M, only: Trace_begin, Trace_end
 
     integer, intent(in) :: Lun               ! Logical unit number to read it
-    integer, intent(in) :: Spec_Indices(:)   ! Needed by Parse_Signal, q.v.
 
     integer :: DataBaseSize                  ! How many filter shapes?
     real(r8) :: DX                           ! To compute FilterGrid
@@ -87,7 +86,7 @@ contains
       read ( lun, *, iostat=status ) numFilterPts, sigName
       if ( status > 0 ) go to 99
       if ( status < 0 ) exit
-      call parse_signal ( sigName, signal_indices, spec_indices )
+      call parse_signal ( sigName, signal_indices )
       if ( .not. associated(signal_indices) ) &
         call MLSMessage ( MLSMSG_Error, moduleName, &
           & trim(sigName) // " is not a valid signal." )
@@ -196,6 +195,9 @@ contains
 end module FilterShapes_m
 
 ! $Log$
+! Revision 1.9  2001/04/21 01:21:11  vsnyder
+! Fix a memory leak
+!
 ! Revision 1.8  2001/04/20 17:19:05  vsnyder
 ! Deallocate FilterGrid component in Destroy...
 !

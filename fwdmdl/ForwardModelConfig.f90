@@ -11,6 +11,7 @@ module ForwardModelConfig
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use Dump_0, only: DUMP
+  use Intrinsic, only: Lit_indices
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate,&
     & MLSMSG_Error
@@ -112,9 +113,8 @@ contains
 
   ! =====     Private Procedures     =====================================
   ! ------------------------------------  DUMP_FOWARDMODELCONFIGS  -----
-  subroutine Dump_ForwardModelConfigs ( Database, Lit_Indices )
+  subroutine Dump_ForwardModelConfigs ( Database )
     type (ForwardModelConfig_T), pointer, dimension(:) :: Database
-    integer, intent(in), dimension(:) :: Lit_Indices
 
     ! Local variables
     integer :: I, J                          ! Loop counters
@@ -162,6 +162,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 1.4  2001/04/21 01:08:57  vsnyder
+! Deallocate Molecules and MoleculeDerivatives in DestroyFWMConfigDatabase
+!
 ! Revision 1.3  2001/04/12 17:00:08  vsnyder
 ! Comment out a line with an undefined variable on it
 !

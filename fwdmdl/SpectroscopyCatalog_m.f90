@@ -64,7 +64,7 @@ module SpectroscopyCatalog_m
 contains ! =====  Public Procedures  ===================================
 
   ! -----------------------------------------------  Spectroscopy  -----
-  subroutine Spectroscopy ( Root, Lit_Indices )
+  subroutine Spectroscopy ( Root )
   ! Process the spectroscopy section.
     ! We need a lot of names from Init_Spectroscopy_Module.  First, the spec
     ! ID's:
@@ -81,8 +81,6 @@ contains ! =====  Public Procedures  ===================================
 
     ! Dummy argument
     integer, intent(in) :: Root         ! Of the AST for the section
-    integer, intent(in), dimension(:) :: Lit_Indices ! because init_tables_module
-    !                                                  is not available.
 
     ! Local Variables
     integer :: Error                    ! /= 0 => An error occured
@@ -182,7 +180,7 @@ contains ! =====  Public Procedures  ===================================
 
     if ( toggle(gen) ) then
       if ( levels(gen) > 0 .or. index(switches,'C') /= 0 ) &
-        & call dump_SpectCat_database ( lit_indices )
+        & call dump_SpectCat_database
       call trace_end ( "Spectroscopy" )
     end if
     if ( timing ) call sayTime
@@ -350,10 +348,9 @@ contains ! =====  Public Procedures  ===================================
     end do
   end subroutine Dump_Lines_Database
   ! -------------------------------------  Dump_SpectCat_Database  -----
-  subroutine Dump_SpectCat_Database ( Lit_Indices )
+  subroutine Dump_SpectCat_Database
     use Dump_0, only: Dump
-    integer, intent(in), dimension(:) :: Lit_Indices ! because init_tables_module
-    !                                                  is not available.
+    use Intrinsic, only: Lit_indices
 
     integer :: I, J                ! Subscript, loop inductor
 
@@ -388,6 +385,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 1.5  2001/04/23 23:16:16  vsnyder
+! Add 'time' command
+!
 ! Revision 1.4  2001/04/20 17:26:31  vsnyder
 ! Remove arguments from Destroy..., publish ...Lines...
 !

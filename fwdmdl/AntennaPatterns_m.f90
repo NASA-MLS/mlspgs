@@ -61,7 +61,7 @@ contains
   end subroutine Open_Antenna_Patterns_File
 
   ! ------------------------------------  Read_Antenna_Patterns_File  -----
-  subroutine Read_Antenna_Patterns_File ( Lun, Spec_Indices )
+  subroutine Read_Antenna_Patterns_File ( Lun )
     use Machine, only: IO_Error
     use Parse_Signal_m, only: Parse_Signal
     use Toggles, only: Gen, Levels, Switches, Toggle
@@ -69,7 +69,6 @@ contains
     use Units, only: Pi
 
     integer, intent(in) :: Lun               ! Logical unit number to read it
-    integer, intent(in) :: Spec_Indices(:)   ! Needed by Parse_Signal, q.v.
 
     real(r8), parameter :: Pi2 = 2.0_r8 * Pi
 
@@ -103,7 +102,7 @@ outer1: do
       do ! Count how many signals there are
         sigName = adjustl(sigName)
         if ( verify(sigName(1:1), '0123456789.+-') == 0 ) exit ! a number
-        call parse_signal ( sigName, signal_indices, spec_indices, &
+        call parse_signal ( sigName, signal_indices, &
           & onlyCountEm=signalCount )
         if ( signalCount == 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
             & trim(sigName) // " is not a valid signal." )
@@ -223,6 +222,9 @@ outer1: do
 end module AntennaPatterns_m
 
 ! $Log$
+! Revision 1.12  2001/04/25 23:52:59  livesey
+! Added implicit none
+!
 ! Revision 1.11  2001/04/21 01:21:11  vsnyder
 ! Fix a memory leak
 !

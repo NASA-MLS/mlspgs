@@ -70,7 +70,7 @@ contains
   end subroutine Open_Pointing_Grid_File
 
   ! ------------------------------------  Read_Pointing_Grid_File  -----
-  subroutine Read_Pointing_Grid_File ( Lun, Spec_Indices )
+  subroutine Read_Pointing_Grid_File ( Lun )
     use Machine, only: IO_Error
     use Parse_Signal_m, only: Parse_Signal
     use String_Table, only: Display_String
@@ -78,7 +78,6 @@ contains
     use Trace_M, only: Trace_begin, Trace_end
 
     integer, intent(in) :: Lun               ! Logical unit number to read it
-    integer, intent(in) :: Spec_Indices(:)   ! Needed by Parse_Signal, q.v.
 
     logical, pointer, dimension(:) :: Channels ! Specified in a signal
     real(r8) :: Frequency                    ! Center frequency for the grid.
@@ -130,8 +129,7 @@ outer1: do
       nullify(signal_indices)
       do
         line = adjustl(line)
-        call parse_signal ( line, signal_indices, spec_indices, &
-          & onlyCountEm = signalCount )
+        call parse_signal ( line, signal_indices, onlyCountEm = signalCount )
         if ( signalCount == 0 ) call MLSMessage ( MLSMSG_Error, &
           & moduleName, "Improper signal specification: " // trim(line) )
         howManySignals(howManyRadiometers) = &
@@ -170,7 +168,7 @@ outer2: do
       nullify ( signal_indices )
       nullify ( channels )
       do
-        call parse_signal ( line, signal_indices, spec_indices, &
+        call parse_signal ( line, signal_indices, &
           & sideband=sideband, channels=channels )
         ! Errors were checked during the "counting" phase above
         do i = 1, size(signal_indices)
@@ -285,6 +283,9 @@ outer2: do
 end module PointingGrid_m
 
 ! $Log$
+! Revision 1.14  2001/04/20 02:55:56  zvi
+! Get rid of the 1/48 griiding assumption in the file reader
+!
 ! Revision 1.13  2001/04/19 06:48:14  zvi
 ! Fixing memory leaks..
 !
