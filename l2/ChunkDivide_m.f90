@@ -218,6 +218,13 @@ contains ! ===================================== Public Procedures =====
     ! And that all overlaps are >= 0
     if ( config%method /= l_fixed ) &
       & call share_non_ovmf ( chunks, mafRange )
+    if ( .not. associated(chunks) ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &  
+        & 'ChunkDivide failed to associate the chunks pointer with a target' )     
+    else if ( size(chunks) < 1 ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &  
+        & 'ChunkDivide failed to produce any chunks' )     
+    endif
 
     if ( toggle(gen) ) call trace_end ( "ChunkDivide" )
 
@@ -500,6 +507,7 @@ contains ! ===================================== Public Procedures =====
       integer :: Nonovlp_1st_MAF          ! Non-overlapped 1st MAF
       integer :: OVERLAPS                 ! Overlaps as integer (MAFs)
       integer :: MAXLENGTH                ! Max length as integer (MAFs)
+      integer :: two                      ! Min(2, NoChunks)
 
       integer, dimension(:), pointer :: NEWFIRSTMAFS ! For thinking about overlaps
       integer, dimension(:), pointer :: NEWLASTMAFS ! For thinking about overlaps
@@ -667,6 +675,7 @@ contains ! ===================================== Public Procedures =====
         else
           noChunks = config%noChunks
         end if
+        two = min(2, noChunks)
 
         ! Allocate the chunks
         allocate ( chunks(noChunks), stat=status )
@@ -703,7 +712,9 @@ contains ! ===================================== Public Procedures =====
       end if
 
       ! Now deduce the chunk starts from the ends of their predecessors
-      chunks(2:noChunks)%firstMAFIndex = chunks(1:noChunks-1)%lastMAFIndex + 1
+      if ( noChunks > 1 ) &
+       & chunks(2:noChunks)%firstMAFIndex = &
+       & chunks(1:noChunks-1)%lastMAFIndex + 1
       ! chunks(1)%firstMAFIndex = 1
       chunks(1)%firstMAFIndex = mafRange(1)
       if ( index(switches, 'chu') /= 0 ) then                      
@@ -730,9 +741,9 @@ contains ! ===================================== Public Procedures =====
             call output ( 'config%overlap  ' )
             call output ( config%overlap , advance='yes')
             call output ( 'new 1st MAF  ' )
-            call output ( chunks(1:2)%firstMAFIndex - nint(config%overlap) )
+            call output ( chunks(1:two)%firstMAFIndex - nint(config%overlap) )
             call output ( '   new last MAF  ' )
-            call output ( chunks(1:2)%lastMAFIndex + nint(config%overlap) , advance='yes')
+            call output ( chunks(1:two)%lastMAFIndex + nint(config%overlap) , advance='yes')
         endif
       else
         ! For angle and time, they are similar enough we'll just do some stuff
@@ -1488,6 +1499,11 @@ contains ! ===================================== Public Procedures =====
       ! Read time from the L1BOA file
       call ReadL1BData ( l1bInfo%l1boaId, trim(MAF_start), taiTime, &
         & noMAFsRead, flag, hdfVersion=l1b_hdf_version )
+      if ( index(switches, 'chu') /= 0 ) then
+          call output ( ' shape(MAFStartTimeTAI)  ', advance='no' ) 
+          call output ( shape(taiTime%dpField) , advance='yes' ) 
+          call dump ( taiTime%dpField(1,1,:) , 'MAFStartTimeTAI' )
+      end if
 
       ! Deduce the first and last MAFs to consider
       call Hunt ( taiTime%dpField(1,1,:), &
@@ -1501,7 +1517,13 @@ contains ! ===================================== Public Procedures =====
           & 'L1B data ends before requested processing range' )
       mafRange = min ( noMAFsRead, max ( 0, mafRange - 1 ) )          ! Index from zero
       noMAFS = mafRange(2) - mafRange(1) + 1
-
+      if ( mafRange(2) < mafRange(1) ) then
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'mafRange(2) < mafRange(1)' )
+      elseif ( mafRange(2) < 1 ) then
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'mafRange(2) < 1' )
+      endif
       ! At this point we'd look through the L1B data for data gaps.
       ! I want to defer this for now until I've reached agreement with VSP, RFJ
       ! and RRL on how L1 would report these. NJL
@@ -1603,6 +1625,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.27  2002/12/06 01:08:33  pwagner
+! Less likely to bomb on single chunks
+!
 ! Revision 2.26  2002/11/13 01:03:11  pwagner
 ! Actually reads hdf5 radiances
 !
