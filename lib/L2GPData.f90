@@ -798,7 +798,6 @@ CONTAINS ! =====     Public Procedures     =============================
 
     ELSE IF ( l2gp%nLevels > 0 ) THEN
 
-       PRINT*,'2d'
        status = swdefdfld(swid, DATA_FIELD1, DIM_NAME12, DFNT_FLOAT32, &
             HDFE_NOMERGE)
 
@@ -1022,7 +1021,6 @@ CONTAINS ! =====     Public Procedures     =============================
     ELSE
        name=l2gp%name
     ENDIF
-    print*,"OutputL2GP_writeData -- name=",name
     ! Write data to the fields
 
     start = 0
@@ -1031,15 +1029,12 @@ CONTAINS ! =====     Public Procedures     =============================
     edge(2) = l2gp%nLevels
     edge(3) = l2gp%nTimes
     swid = swattach (l2FileHandle, name)
-    print*," attached swath with swid=",swid," filehandle=",l2FileHandle
     IF ( l2gp%nFreqs > 0 ) THEN
-       print*,"Writing 3D field"
        ! Value and Precision are 3-D fields
 
        status = swwrfld(swid, DATA_FIELD1, start, stride, edge, &
             & RESHAPE(l2gp%l2gpValue, (/SIZE(l2gp%l2gpValue)/)) )
        IF ( status == -1 ) THEN
-          PRINT*,'Status is:',status
           msr = WR_ERR // DATA_FIELD1
           CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
        END IF
@@ -1051,18 +1046,11 @@ CONTAINS ! =====     Public Procedures     =============================
        END IF
 
     ELSE IF ( l2gp%nLevels > 0 ) THEN
-       Print*,"Writing 2-d field"
        ! Value and Precision are 2-D fields
 
-       PRINT*,'swid=',swid
        status = swwrfld( swid, DATA_FIELD1, start(2:3), stride(2:3), &
             edge(2:3), REAL(l2gp%l2gpValue(1,:,:)) )
-       PRINT*,'Start:',start(2:3)
-       PRINT*,'Stride:',stride(2:3)
-       PRINT*,'Edge:',edge(2:3)
-       PRINT*,'Raw shape:',SHAPE(l2gp%l2gpValue)
-       PRINT*,'Shape:',SHAPE(l2gp%l2gpValue(1,:,:))
-       print*,"Status of write was ",status
+
        IF ( status == -1 ) THEN
           msr = WR_ERR // DATA_FIELD1
           CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
@@ -1076,7 +1064,6 @@ CONTAINS ! =====     Public Procedures     =============================
     ELSE
 
        ! Value and Precision are 1-D fields
-       Print*,"Writing 1-D field"
        status = swwrfld( swid, DATA_FIELD1, start(3:3), stride(3:3), edge(3:3), &
             REAL(l2gp%l2gpValue(1,1,:) ))
        IF ( status == -1 ) THEN
@@ -1152,6 +1139,9 @@ END MODULE L2GPData
 
 !
 ! $Log$
+! Revision 2.14  2001/02/09 17:45:15  livesey
+! Another fix to dimension ordering.
+!
 ! Revision 2.13  2001/02/08 01:06:08  livesey
 ! Bug fix in ExpandL2GPDataInPlace
 !
