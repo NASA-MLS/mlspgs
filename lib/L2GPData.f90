@@ -199,7 +199,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 
      character (LEN=L2GPNameLen) :: name ! Typically the swath name.
      integer :: nameIndex       ! Used by the parser to keep track of the data
-     integer :: QUANTITYTYPE = 0         ! E.g., l_temperature
+     integer :: QUANTITYTYPE = 0   ! E.g., l_temperature; (Where is this used?)
 
      ! Now the dimensions of the data
 
@@ -248,7 +248,9 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
      ! character(len=CHARATTRLEN)        :: DIM_Names = '' ! ','-separated
      ! character(len=CHARATTRLEN)        :: DIM_Units = '' ! ','-separated
      ! character(len=CHARATTRLEN)        :: VALUE_Units = '' 
+     ! These are the fill/missing values for all arrays except status
      real (rgp)                        :: MissingValue = UNDEFINED_VALUE
+     integer(i4)                       :: MissingStatus = 513 ! 512 + 1
   end type L2GPData_T
 
   ! Print debugging stuff?
@@ -364,7 +366,7 @@ contains ! =====     Public Procedures     =============================
     l2gp%chunkNumber = l2gp%MissingValue
     l2gp%l2gpValue = l2gp%MissingValue
     l2gp%l2gpPrecision = l2gp%MissingValue
-    l2gp%status = l2gp%MissingValue
+    l2gp%status = l2gp%MissingStatus ! l2gp%MissingValue
     ! l2gp%status = ' '
     l2gp%quality = l2gp%MissingValue
 
@@ -966,7 +968,7 @@ contains ! =====     Public Procedures     =============================
     
     ! Read the data fields that are 1-dimensional
 
-    l2gp%status = l2gp%MissingValue ! So it has a value.
+    l2gp%status = l2gp%MissingStatus ! l2gp%MissingValue ! So it has a value.
     ! l2gp%status = ' ' ! So it has a value.
     if ( ReadingStatus) &
       & status = mls_swrdfld( swid, 'Status',start(3:3),stride(3:3),edge(3:3),&
@@ -1232,7 +1234,8 @@ contains ! =====     Public Procedures     =============================
     status = mls_dfldsetup(swid, 'Status', 'nTimes', &
     & MYDIM1, &
     & DFNT_INT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
-    & hdfVersion=hdfVersion, iFill=int(l2gp%MissingValue))
+    & hdfVersion=hdfVersion, iFill=l2gp%MissingStatus)
+    ! & hdfVersion=hdfVersion, iFill=int(l2gp%MissingValue))
     ! & DFNT_CHAR8, HDFE_NOMERGE, chunk_rank, chunk_dims, &
 
     chunk_rank=1
@@ -1659,7 +1662,9 @@ contains ! =====     Public Procedures     =============================
     status = mls_swwrlattr(swid, 'Status', 'Units', &
       & MLS_CHARTYPE, 1, 'NoUnits')
     status = he5_swwrlattr(swid, 'Status', 'MissingValue', &
-      & HE5T_NATIVE_INT, 1, (/ int(l2gp%MissingValue) /) )
+      & HE5T_NATIVE_INT, 1, (/ l2gp%MissingStatus /) )
+      ! & HE5T_NATIVE_INT, 1, (/ int(l2gp%MissingValue) /) )
+
     ! status = mls_swwrlattr(swid, 'Status', 'MissingValue', &
     !   & MLS_CHARTYPE, 1, ' ' )
     status = mls_swwrlattr(swid, 'Status', &
@@ -2604,13 +2609,14 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------ DUMP_L2GP_DATABASE ------------
 
-  subroutine DUMP_L2GP_DATABASE ( L2gp, Name, ColumnsOnly, Details )
+  subroutine DUMP_L2GP_DATABASE ( L2gp, Name, ColumnsOnly, Details, Fields )
 
     ! Dummy arguments
     type (l2gpData_T), intent(in) ::          L2GP(:)
     character(len=*), intent(in), optional :: Name
     logical, intent(in), optional ::          ColumnsOnly ! if true, dump only with columns
     integer, intent(in), optional :: DETAILS
+    character(len=*), intent(in), optional :: fields ! ,-separated list of names
 
     ! Local variables
     integer :: i
@@ -2625,7 +2631,7 @@ contains ! =====     Public Procedures     =============================
       return
     endif
     do i = 1, size(l2gp)
-      call dump(l2gp(i), ColumnsOnly, Details)
+      call dump(l2gp(i), ColumnsOnly, Details, Fields)
     end do
       
   end subroutine DUMP_L2GP_DATABASE
@@ -2633,8 +2639,11 @@ contains ! =====     Public Procedures     =============================
   ! ------------------------------------------ DUMP_L2GP ------------
 
 
-  subroutine Dump_L2GP ( L2gp, ColumnsOnly, Details )
-
+  subroutine Dump_L2GP ( L2gp, ColumnsOnly, Details, Fields )
+    ! Dump an l2gp
+    ! Either according to level of detail set by Details
+    ! or else just those fields named in Fields
+    ! Note: 'solarTime' among Fields will also provoke dumping 'time'
     ! Dummy arguments
     type (l2gpData_T), intent(in) ::          L2GP
     logical, intent(in), optional ::          ColumnsOnly ! if true, dump only with columns
@@ -2643,6 +2652,7 @@ contains ! =====     Public Procedures     =============================
     !                                        ! -2 Skip all but name
     !                                        ! >0 Dump even multi-dim arrays
     !                                        ! Default 1
+    character(len=*), intent(in), optional :: fields ! ,-separated list of names
 
     ! Local variables
     integer :: ierr
@@ -2650,10 +2660,17 @@ contains ! =====     Public Procedures     =============================
     integer :: MYDETAILS
     real(r8) :: FillValue
     integer :: ChunkFillValue
+    character(len=Len(DATA_FIELDS)+Len(GEO_FIELDS)) :: myFields
+    logical :: show
 
     ! Executable code
     myDetails = 1
     if ( present(details) ) myDetails = details
+    myFields = ' '
+    if ( present(fields) ) then
+      myFields = fields
+      myDetails = 2
+    endif
     
     if( present(ColumnsOnly)) then
       myColumnsOnly = ColumnsOnly
@@ -2661,11 +2678,11 @@ contains ! =====     Public Procedures     =============================
       myColumnsOnly = .false.
     endif
 
-      if ( myColumnsOnly .and. l2gp%nLevels > 1 ) return
-      
-      FillValue = real(l2gp%MissingValue, r8)
-      ChunkFillValue = int(l2gp%MissingValue)
-
+    if ( myColumnsOnly .and. l2gp%nLevels > 1 ) return
+    
+    FillValue = real(l2gp%MissingValue, r8)
+    ChunkFillValue = int(l2gp%MissingValue)
+    if ( showMe(.true., myFields, 'swathname') ) then
       call output ( 'L2GP Data: (swath name) ')
       call output ( trim(l2gp%name) )
       if ( NAMEINDEXEVERSET ) then
@@ -2680,46 +2697,91 @@ contains ! =====     Public Procedures     =============================
       else
         call output ( ' ', advance='yes')
       endif
-      if ( myDetails < -1 ) return
+    endif
+    if ( showMe(.true., myFields, 'quantitytype') ) then
+      call output ( 'Quantity type: ')
+      if ( l2gp%QuantityType > 0 ) then
+        call display_string ( lit_indices(l2gp%QuantityType), &
+          &             strip=.true., advance='yes' )
+      else
+        call output ( '(the QType Index was 0) ', advance='yes')
+      endif
+    endif
+    !  if ( myDetails < -1 ) return
+    if ( showMe(myDetails > -2, myFields, 'ntimes') ) then
       call output ( 'nTimes: ')
       call output ( l2gp%nTimes, 5)
       call output ( '  nLevels: ')
       call output ( l2gp%nLevels, 3)
       call output ( '  nFreqs: ')
       call output ( l2gp%nFreqs, 3, advance='yes')
-      if ( myDetails < 0 ) return
-      call dump ( l2gp%pressures, 'Pressures:' )
+      call output ( 'Fill/Missing Values: ')
+      call output ( l2gp%MissingValue, advance='yes')
+      call output ( 'Fill/Missing Status Field: ')
+      call output ( l2gp%MissingStatus, advance='yes')
+     endif
+    
+     ! if ( myDetails < 0 ) return
+    if ( showMe(myDetails > -1, myFields, 'pressure') ) &
+      & call dump ( l2gp%pressures, 'Pressures:' )
       
-      call dump ( l2gp%latitude, 'Latitude:' )
+    if ( showMe(myDetails > -1, myFields, 'latitude') ) &
+      & call dump ( l2gp%latitude, 'Latitude:' )
       
-      call dump ( l2gp%longitude, 'Longitude:' )
+    if ( showMe(myDetails > -1, myFields, 'longitude') ) &
+      & call dump ( l2gp%longitude, 'Longitude:' )
       
-      call dump ( l2gp%solarTime, 'SolarTime:' )
+    if ( showMe(myDetails > -1, myFields, 'solartime') ) &
+      & call dump ( l2gp%solarTime, 'SolarTime:' )
       
-      call dump ( l2gp%solarZenith, 'SolarZenith:' )
+    if ( showMe(myDetails > -1, myFields, 'solarzenith') ) &
+      & call dump ( l2gp%solarZenith, 'SolarZenith:' )
       
-      call dump ( l2gp%losAngle, 'LOSAngle:' )
+    if ( showMe(myDetails > -1, myFields, 'LOSAngle') ) &
+      & call dump ( l2gp%losAngle, 'LOSAngle:' )
       
-      call dump ( l2gp%geodAngle, 'geodAngle:' )
+    if ( showMe(myDetails > -1, myFields, 'geodAngle') ) &
+      & call dump ( l2gp%geodAngle, 'geodAngle:' )
       
-      call dump ( l2gp%time, 'Time:' )
+    if ( showMe(myDetails > -1, myFields, 'time') ) &
+      & call dump ( l2gp%time, 'Time:' )
       
-      call dump ( l2gp%chunkNumber, 'ChunkNumber:' )
+    if ( showMe(myDetails > -1, myFields, 'chunkNumber') ) &
+      & call dump ( l2gp%chunkNumber, 'ChunkNumber:' )
       
-      if ( associated(l2gp%frequency) ) &
+      if ( showMe(myDetails > -1, myFields, 'pressure') .and. &
+        & associated(l2gp%frequency) ) &
         & call dump ( l2gp%frequency, 'Frequencies:' )
       
-      if ( myDetails < 1 ) return
-      call dump ( real(l2gp%l2gpValue, r8), 'L2GPValue:', &
+      ! if ( myDetails < 1 ) return
+    if ( showMe(myDetails > 0, myFields, 'l2gpvalue') ) &
+      & call dump ( real(l2gp%l2gpValue, r8), 'L2GPValue:', &
         & FillValue=FillValue )
       
-      call dump ( real(l2gp%l2gpPrecision, r8), 'L2GPPrecision:', &
+    if ( showMe(myDetails > 0, myFields, 'l2gpprecision') ) &
+      & call dump ( real(l2gp%l2gpPrecision, r8), 'L2GPPrecision:', &
         & FillValue=FillValue )
       
-      call dump ( l2gp%status, 'Status:' )
+    if ( showMe(myDetails > 0, myFields, 'status') ) &
+      & call dump ( l2gp%status, 'Status:' )
       
-      call dump ( l2gp%quality, 'Quality:' )
+    if ( showMe(myDetails > 0, myFields, 'quality') ) &
+      & call dump ( l2gp%quality, 'Quality:' )
       
+  contains
+    logical function showMe(detailsOK, fields, field)
+      ! Determine whether this field should be dumped or not
+      ! depending on whether you're going by details or by picking fields
+      logical, intent(in) :: detailsOK
+      character(len=*), intent(in) :: fields
+      character(len=*), intent(in) :: field
+      !
+      if ( len_trim(fields) < 1 ) then
+        showMe = detailsOK
+      else
+        showMe = ( index(LowerCase(fields), LowerCase(trim(field))) > 0 )
+      endif
+    end function showMe
   end subroutine Dump_L2GP
     
   !----------------------------------------  DumpL2GP_attributes_hdf5  -----
@@ -3011,6 +3073,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.110  2004/08/04 23:19:01  pwagner
+! Much moved from MLSStrings to MLSStringLists
+!
 ! Revision 2.109  2004/08/03 17:59:35  pwagner
 ! Gets DEFAULTUNDEFINEDVALUE from MLSCommon
 !
