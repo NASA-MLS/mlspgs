@@ -53,6 +53,9 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   character (len=*), parameter :: DATA_FIELD2 = 'L2gpPrecision'
   character (len=*), parameter :: DATA_FIELD3 = 'Status'
   character (len=*), parameter :: DATA_FIELD4 = 'Quality'
+  character (len=*), parameter :: DATA_FIELD5 = 'ColumnTypes'
+  character (len=*), parameter :: DATA_FIELD6 = 'ColumnValues'
+  character (len=*), parameter :: DATA_FIELD7 = 'PressureBoundary'
 
   character (len=*), parameter :: GEO_FIELD1 = 'Latitude'
   character (len=*), parameter :: GEO_FIELD2 = 'Longitude'
@@ -64,12 +67,18 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   character (len=*), parameter :: GEO_FIELD8 = 'ChunkNumber'
   character (len=*), parameter :: GEO_FIELD9 = 'Pressure'
   character (len=*), parameter :: GEO_FIELD10= 'Frequency'
+!  character (len=*), parameter :: GEO_FIELD11= 'PressureBoundary'
 
   character (len=*), parameter :: DIM_NAME1 = 'nTimes'
   character (len=*), parameter :: DIM_NAME2 = 'nLevels'
   character (len=*), parameter :: DIM_NAME3 = 'nFreqs'
+
+   ! More precisely, the following is num. of press. boundaries
+  character (len=*), parameter :: DIM_NAME4 = 'nColumns'
+
   character (len=*), parameter :: DIM_NAME12 = 'nLevels,nTimes' ! In Fortran order?!!
   character (len=*), parameter :: DIM_NAME123 = 'nFreqs,nLevels,nTimes' ! as above
+  character (len=*), parameter :: DIM_NAME34 = 'nTimes,nColumns' ! In Fortran order?!!
 
   integer, parameter :: HDFE_AUTOMERGE = 1     ! MERGE FIELDS WITH SHARE DIM
   integer, parameter :: HDFE_NOMERGE = 0       ! don't merge
@@ -117,6 +126,12 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
      character (len=1), pointer, dimension(:) :: status => NULL()
      real (r8), pointer, dimension(:) :: quality => NULL()
      ! Both the above dimensioned (nTimes)
+
+     character (len=L2GPNameLen), pointer, &
+     &                     dimension(:) :: columnTypes => NULL()
+     real (r8), pointer, dimension(:,:) :: columnValues => NULL()
+     real (r8), pointer, dimension(:,:) :: boundaryPressures => NULL()
+     ! The above dimensioned ([nTimes],nColumns)
 
   end type L2GPData_T
 
@@ -195,6 +210,10 @@ contains ! =====     Public Procedures     =============================
     call allocate_test(l2gp%status, useNTimes,"l2gp%status", ModuleName)
     call allocate_test(l2gp%quality,useNTimes,"l2gp%quality",ModuleName)
 
+   ! Leave column* unallocated until they are called for by Join command
+   ! When they will be allocated during ExpandL2GPDataInPlace
+   ! or else during ReadL2GPData
+
   end subroutine SetupNewL2GPRecord
 
   !-----------------------------------------  DestroyL2GPContents  -----
@@ -210,43 +229,68 @@ contains ! =====     Public Procedures     =============================
 
     ! Executable code
 
-    call deallocate_test ( l2gp%pressures,    "l2gp%pressures",    ModuleName )
-    call deallocate_test ( l2gp%latitude,     "l2gp%latitude",     ModuleName )
-    call deallocate_test ( l2gp%longitude,    "l2gp%longitude",    ModuleName )
-    call deallocate_test ( l2gp%solarTime,    "l2gp%solarTime",    ModuleName )
-    call deallocate_test ( l2gp%solarZenith,  "l2gp%solarZenith",  ModuleName )
-    call deallocate_test ( l2gp%losAngle,     "l2gp%losAngle",     ModuleName )
-    call deallocate_test ( l2gp%geodAngle,    "l2gp%geodAngle",    ModuleName )
-    call deallocate_test ( l2gp%chunkNumber,  "l2gp%chunkNumber",  ModuleName )
-    call deallocate_test ( l2gp%time,         "l2gp%time",         ModuleName )
-    call deallocate_test ( l2gp%frequency,    "l2gp%frequency",    ModuleName )
-    call deallocate_test ( l2gp%l2gpValue,    "l2gp%l2gpValue",    ModuleName )
-    call deallocate_test ( l2gp%l2gpPrecision,"l2gp%l2gpPrecision",ModuleName )
-    call deallocate_test ( l2gp%status,       "l2gp%status",       ModuleName )
-    call deallocate_test ( l2gp%quality,      "l2gp%quality",      ModuleName )
+    call deallocate_test ( l2gp%pressures,         "l2gp%pressures",         ModuleName )
+    call deallocate_test ( l2gp%latitude,          "l2gp%latitude",          ModuleName )
+    call deallocate_test ( l2gp%longitude,         "l2gp%longitude",         ModuleName )
+    call deallocate_test ( l2gp%solarTime,         "l2gp%solarTime",         ModuleName )
+    call deallocate_test ( l2gp%solarZenith,       "l2gp%solarZenith",       ModuleName )
+    call deallocate_test ( l2gp%losAngle,          "l2gp%losAngle",          ModuleName )
+    call deallocate_test ( l2gp%geodAngle,         "l2gp%geodAngle",         ModuleName )
+    call deallocate_test ( l2gp%chunkNumber,       "l2gp%chunkNumber",       ModuleName )
+    call deallocate_test ( l2gp%time,              "l2gp%time",              ModuleName )
+    call deallocate_test ( l2gp%frequency,         "l2gp%frequency",         ModuleName )
+    call deallocate_test ( l2gp%l2gpValue,         "l2gp%l2gpValue",         ModuleName )
+    call deallocate_test ( l2gp%l2gpPrecision,     "l2gp%l2gpPrecision",     ModuleName )
+    call deallocate_test ( l2gp%status,            "l2gp%status",            ModuleName )
+    call deallocate_test ( l2gp%quality,           "l2gp%quality",           ModuleName )
     l2gp%nTimes = 0
     l2gp%nLevels = 0
     l2gp%nFreqs = 0
+
+    if(associated(l2gp%columnTypes)) then
+    call deallocate_test ( l2gp%columnTypes,       "l2gp%columnTypes",       ModuleName )
+    call deallocate_test ( l2gp%columnValues,      "l2gp%columnValues",      ModuleName )
+    call deallocate_test ( l2gp%boundaryPressures, "l2gp%boundaryPressures", ModuleName )
+    endif
   end subroutine DestroyL2GPContents
 
   !---------------------------------------  ExpandL2GPDataInPlace  -----
-  subroutine ExpandL2GPDataInPlace ( l2gp, newNTimes )
+  subroutine ExpandL2GPDataInPlace ( l2gp, newNTimes, newColumn )
 
-    ! This subroutine expands an L2GPData_T in place allowing the user to add
-    ! more profiles to it.
+    ! This subroutine expands an L2GPData_T in place allowing the user to 
+    ! (1) add more profiles to it; or
+    ! (2) add another column (or a 1st one)
+    ! 
 
     ! Dummy arguments
     type (L2GPData_T), intent(inout) :: l2gp
-    integer, intent(in) :: newNTimes
+    integer, optional, intent(in)    :: newNTimes
+    logical, optional, intent(in)    :: newColumn
 
     ! Local variables
     integer :: status                   ! From ALLOCATE
     type (L2GPData_T) :: tempL2gp       ! For copying data around
+    integer :: NumColumns, myNTimes, myNColms
+    logical :: myNewColumn
 
     ! Executable code
+
+   if(present(newNTimes)) then
+      myNTimes = newNTimes
+   else
+      myNTimes = l2gp%nTimes
+   endif
+
+   if(present(newColumn)) then
+      myNewColumn = newColumn
+   else
+      myNewColumn = .false.
+   endif
+
     ! First do a sanity check
 
-    if ( newNTimes<l2gp%nTimes ) &
+
+    if ( myNTimes<l2gp%nTimes ) &
          & call MLSMessage ( MLSMSG_Error, ModuleName, &
          & "The number of profiles requested is fewer than those already present" )
 
@@ -259,9 +303,10 @@ contains ! =====     Public Procedures     =============================
     nullify ( l2gp%pressures, l2gp%latitude, l2gp%longitude, l2gp%solarTime, &
       & l2gp%solarZenith, l2gp%losAngle, l2gp%losAngle, l2gp%geodAngle, &
       & l2gp%chunkNumber, l2gp%time, l2gp%frequency, l2gp%l2gpValue, &
-      & l2gp%l2gpPrecision, l2gp%status, l2gp%quality )
+      & l2gp%l2gpPrecision, l2gp%status, l2gp%quality, &
+      & l2gp%columnTypes, l2gp%columnValues, l2gp%boundaryPressures )
     call SetupNewL2GPRecord( l2gp, nFreqs=l2gp%nFreqs, nLevels=l2gp%nLevels, &
-      & nTimes=newNTimes)
+      & nTimes=myNTimes)
 
     ! Don't forget the `global' stuff
     l2gp%pressures=templ2gp%pressures
@@ -282,6 +327,35 @@ contains ! =====     Public Procedures     =============================
     
     l2gp%status(1:templ2gp%nTimes) = templ2gp%status(1:templ2gp%nTimes)
     l2gp%quality(1:templ2gp%nTimes) = templ2gp%quality(1:templ2gp%nTimes)
+    
+    if(associated(templ2gp%columnTypes)) then
+      numColumns = size(templ2gp%columnTypes)
+    else
+      numColumns = 0
+    endif
+    
+    if(myNewColumn) then
+      myNColms = numColumns+1
+    else
+      myNColms = numColumns
+    endif
+    
+    if(myNColms > 0) then
+       call allocate_test ( l2gp%columnTypes, myNColms, &
+       & "l2gp%columnTypes", & ModuleName )
+       call allocate_test ( l2gp%columnValues, myNTimes, myNColms, &
+       & "l2gp%columnValues", ModuleName )
+       call allocate_test ( l2gp%boundaryPressures, myNTimes, myNColms, &
+       & "l2gp%boundaryPressures", ModuleName )
+    endif
+
+    if(associated(templ2gp%columnTypes)) then
+      l2gp%columnTypes(1:numColumns) = templ2gp%columnTypes(1:numColumns)
+      l2gp%columnValues(1:templ2gp%nTimes, 1:numColumns) = &
+      &              templ2gp%columnValues(1:templ2gp%nTimes, 1:numColumns)
+      l2gp%boundaryPressures(1:templ2gp%nTimes, 1:numColumns) = &
+      &              templ2gp%boundaryPressures(1:templ2gp%nTimes, 1:numColumns)
+    endif
 
     ! Deallocate the old arrays
     call DestroyL2GPContents(templ2gp)
@@ -361,6 +435,8 @@ contains ! =====     Public Procedures     =============================
     integer :: alloc_err, first, freq, lev, nDims, size, swid, status
     integer :: start(3), stride(3), edge(3), dims(3)
     integer :: nFreqs, nLevels, nTimes, nFreqsOr1, nLevelsOr1, myNumProfs
+    integer :: nColumns
+    integer :: col_start(2), col_stride(2), col_edge(2)
 
     logical :: firstCheck, lastCheck
 
@@ -454,6 +530,15 @@ contains ! =====     Public Procedures     =============================
        myNumProfs = nTimes - first
 
     end if
+
+   ! Column data
+    size = swdiminfo(swid, DIM_NAME4)
+    if ( size == -1 ) then
+   ! Don't die--you may just have an older l2gp file--pre column-bian
+       size = 0
+    end if
+!    l2gp%nColumns = size
+    nColumns=size
 
     ! Allocate result
 
@@ -659,7 +744,6 @@ contains ! =====     Public Procedures     =============================
     end if
     l2gp%quality = realProf
 
-
     ! Deallocate local variables
 
     deallocate ( realFreq, realSurf, realProf, real3, STAT=alloc_err )
@@ -669,6 +753,55 @@ contains ! =====     Public Procedures     =============================
     deallocate ( the_status_buffer, STAT=alloc_err )
     if ( alloc_err /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
          'Failed deallocation of status buffer.' )
+
+   ! Column data
+   if(nColumns > 0) then
+    allocate ( the_status_buffer(nColumns), &
+      &   real3(myNumProfs,nColumns,1), STAT=alloc_err )
+    if ( alloc_err /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate//' column-related things in ReadL2GPData' )
+
+       call allocate_test ( l2gp%columnTypes, nColumns, &
+       & "l2gp%columnTypes", & ModuleName )
+       call allocate_test ( l2gp%columnValues, myNumProfs, nColumns, &
+       & "l2gp%columnValues", ModuleName )
+       call allocate_test ( l2gp%boundaryPressures, myNumProfs, nColumns, &
+       & "l2gp%boundaryPressures", ModuleName )
+
+      ! These are good only for column data
+       col_start(1) = first
+       col_start(2) = 0
+       stride = 1
+       col_edge(1) = myNumProfs
+       col_edge(2) = nColumns
+!       status = swrdfld(swid, DATA_FIELD5, &
+!       & col_start(2:2),col_stride(2:2),col_edge(2:2), the_status_buffer)
+!    if ( status == -1 ) then
+!      msr = MLSMSG_L2GPRead // DATA_FIELD5
+!      call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+!    end if
+!    l2gp%columnTypes = the_status_buffer(:)
+      status = swrdfld( swid, DATA_FIELD6, col_start, col_stride, &
+        &   col_edge, real3(:,:,1) )
+      if ( status == -1 ) then
+        msr = MLSMSG_L2GPRead // DATA_FIELD6
+        call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+      end if
+      l2gp%columnValues = real3(:,:,1)
+      
+       status = swrdfld( swid, DATA_FIELD7, &
+       & col_start, col_stride, col_edge, real3(:,:,1) )
+       if ( status == -1 ) then
+          msr = MLSMSG_L2GPRead // DATA_FIELD1
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+       l2gp%boundaryPressures = real3(:,:,1)
+
+    deallocate ( the_status_buffer, real3, STAT=alloc_err )
+    if ( alloc_err /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+         'Failed deallocation of local column-related variables.' )
+
+   endif
 
     !  After reading, detach from swath interface
 
@@ -743,6 +876,14 @@ contains ! =====     Public Procedures     =============================
        status = swdefdim(swid, DIM_NAME3, l2gp%nFreqs)
        if ( status == -1 ) then
           msr = DIM_ERR // DIM_NAME3
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+    end if
+
+    if ( associated(l2gp%columnTypes) ) then
+       status = swdefdim(swid, DIM_NAME4, size(l2gp%columnTypes))
+       if ( status == -1 ) then
+          msr = DIM_ERR // DIM_NAME4
           call MLSMessage ( MLSMSG_Error, ModuleName, msr )
        end if
     end if
@@ -894,6 +1035,27 @@ contains ! =====     Public Procedures     =============================
          HDFE_NOMERGE)
     if ( status == -1 ) then
        msr = DAT_ERR // DATA_FIELD4
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    status = swdefdfld(swid, DATA_FIELD5, DIM_NAME4, DFNT_CHAR8, &
+         HDFE_NOMERGE)
+    if ( status == -1 ) then
+       msr = DAT_ERR // DATA_FIELD5
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    status = swdefdfld(swid, DATA_FIELD6, DIM_NAME34, DFNT_FLOAT32, &
+         HDFE_NOMERGE)
+    if ( status == -1 ) then
+       msr = DAT_ERR // DATA_FIELD6
+       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    end if
+
+    status = swdefdfld(swid, DATA_FIELD7, DIM_NAME34, DFNT_FLOAT32, &
+         HDFE_NOMERGE)
+    if ( status == -1 ) then
+       msr = DAT_ERR // DATA_FIELD7
        call MLSMessage ( MLSMSG_Error, ModuleName, msr )
     end if
 
@@ -1061,6 +1223,8 @@ contains ! =====     Public Procedures     =============================
     character (len=480) :: msr
     character (len=132) :: name     ! Either swathName or l2gp%name
 
+    integer :: col_start(2), col_stride(2), col_edge(2)
+    integer :: nColumns
     integer :: status
     integer :: start(3), stride(3), edge(3)
     integer :: swid
@@ -1142,6 +1306,39 @@ contains ! =====     Public Procedures     =============================
        msr = WR_ERR // DATA_FIELD4
        call MLSMessage ( MLSMSG_Error, ModuleName, msr )
     end if
+
+   ! Column data
+   if(associated(l2gp%columnTypes)) then
+      ! These are good only for column data
+       nColumns = size(l2gp%columnTypes)
+       col_start(1) = 0
+       col_start(2) = 0
+       stride = 1
+       col_edge(1) = l2gp%nTimes
+       col_edge(2) = nColumns
+       
+       status = swwrfld(swid, DATA_FIELD5, &
+       & col_start(2:2), col_stride(2:2), col_edge(2:2), l2gp%columnTypes)
+       if ( status == -1 ) then
+          msr = WR_ERR // DATA_FIELD5
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+       
+       status = swwrfld(swid, DATA_FIELD6, &
+       & col_start, col_stride, col_edge, l2gp%columnValues)
+       if ( status == -1 ) then
+          msr = WR_ERR // DATA_FIELD6
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+       
+       status = swwrfld(swid, DATA_FIELD7, &
+       & col_start, col_stride, col_edge, l2gp%boundaryPressures)
+       if ( status == -1 ) then
+          msr = WR_ERR // DATA_FIELD7
+          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+       
+   endif
 
     !     Detach from the swath interface.
 
@@ -1237,6 +1434,10 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.31  2001/06/13 20:36:15  vsnyder
+! Commented out reading l2gp%status.  It appears that reading characters from
+! HDF can't be made to work, due to fundamental design flaws in HDF.
+!
 ! Revision 2.30  2001/06/06 17:28:13  pwagner
 ! the_status_buffer allows reading l2gp%status
 !
