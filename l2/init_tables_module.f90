@@ -36,206 +36,207 @@ module INIT_TABLES_MODULE
 !---------------------------------------------------------------------------
 
 ! Enumeration types:
-  integer, public, parameter :: T_APRIORISOURCE  = t_last_intrinsic+1
-  integer, public, parameter :: T_APRIORITYPE    = t_apriorisource+1
-  integer, public, parameter :: T_CRITICALMODULE = t_aprioritype+1
-  integer, public, parameter :: T_HGRIDTYPE      = t_criticalmodule+1
-  integer, public, parameter :: T_MATRIX         = t_hgridtype+1
-  integer, public, parameter :: T_MERGEMETHOD    = t_matrix+1
-  integer, public, parameter :: T_METHOD         = t_mergemethod+1
-  integer, public, parameter :: T_MERGESOURCE    = t_method+1
-  integer, public, parameter :: T_MODULE         = t_mergesource+1
-  integer, public, parameter :: T_MOLECULE       = t_module+1
-  integer, public, parameter :: T_OUTPUTTYPE     = t_molecule+1
-  integer, public, parameter :: T_QUANTITYTYPE   = t_outputtype+1
-  integer, public, parameter :: T_RADIOMETER     = t_quantitytype+1
-  integer, public, parameter :: T_SCALE          = t_radiometer+1
-  integer, public, parameter :: T_SPECIES        = t_scale+1
-  integer, public, parameter :: T_UNITS          = t_species+1
-  integer, public, parameter :: T_VGRIDCOORD     = t_units+1
-  integer, public, parameter :: T_VGRIDTYPE      = t_vgridcoord+1
-  integer, public, parameter :: T_LAST           = t_vgridtype
-  integer, public :: DATA_TYPE_INDICES(t_first:t_last)
+  integer, parameter :: T_APRIORISOURCE  = t_last_intrinsic+1
+  integer, parameter :: T_APRIORITYPE    = t_apriorisource+1
+  integer, parameter :: T_CRITICALMODULE = t_aprioritype+1
+  integer, parameter :: T_HGRIDTYPE      = t_criticalmodule+1
+  integer, parameter :: T_MATRIX         = t_hgridtype+1
+  integer, parameter :: T_MERGEMETHOD    = t_matrix+1
+  integer, parameter :: T_METHOD         = t_mergemethod+1
+  integer, parameter :: T_MERGESOURCE    = t_method+1
+  integer, parameter :: T_MODULE         = t_mergesource+1
+  integer, parameter :: T_MOLECULE       = t_module+1
+  integer, parameter :: T_OUTPUTTYPE     = t_molecule+1
+  integer, parameter :: T_QUANTITYTYPE   = t_outputtype+1
+  integer, parameter :: T_RADIOMETER     = t_quantitytype+1
+  integer, parameter :: T_SCALE          = t_radiometer+1
+  integer, parameter :: T_SPECIES        = t_scale+1
+  integer, parameter :: T_UNITS          = t_species+1
+  integer, parameter :: T_VGRIDCOORD     = t_units+1
+  integer, parameter :: T_VGRIDTYPE      = t_vgridcoord+1
+  integer, parameter :: T_LAST           = t_vgridtype
+  integer :: DATA_TYPE_INDICES(t_first:t_last)
 ! Field indices:
-  integer, public, parameter :: F_APRIORI             = 1
-  integer, public, parameter :: F_APRIORISCALE        = f_apriori + 1
-  integer, public, parameter :: F_AUTOFILL            = f_aprioriScale + 1
-  integer, public, parameter :: F_BAND                = f_autofill + 1
-  integer, public, parameter :: F_CHANNEL             = f_band + 1
-  integer, public, parameter :: F_CHANNELS            = f_channel + 1
-  integer, public, parameter :: F_COLUMNS             = f_channels + 1
-  integer, public, parameter :: F_COLUMNSCALE         = f_columns + 1
-  integer, public, parameter :: F_COMPAREOVERLAPS     = f_columnscale + 1
-  integer, public, parameter :: F_COORDINATE          = f_compareOverlaps + 1
-  integer, public, parameter :: F_COPY                = f_coordinate + 1
-  integer, public, parameter :: F_COVARIANCE          = f_copy + 1
-  integer, public, parameter :: F_CRITERIA            = f_covariance + 1
-  integer, public, parameter :: F_DIAGONAL            = f_criteria + 1
-  integer, public, parameter :: F_FILE                = f_diagonal + 1
-  integer, public, parameter :: F_FIRST               = f_file + 1
-  integer, public, parameter :: F_FIRSTINDEXCHANNEL   = f_first + 1
-  integer, public, parameter :: F_FRACTION            = f_firstIndexChannel + 1
-  integer, public, parameter :: F_FREQUENCIES         = f_fraction + 1
-  integer, public, parameter :: F_FREQUENCY           = f_frequencies + 1
-  integer, public, parameter :: F_FWDMODELIN          = f_frequency + 1
-  integer, public, parameter :: F_FWDMODELOUT         = f_fwdModelIn + 1
-  integer, public, parameter :: F_GPH                 = f_fwdModelOut + 1
-  integer, public, parameter :: F_HDFNAME             = f_GPH + 1
-  integer, public, parameter :: F_HEIGHT              = f_hdfname + 1
-  integer, public, parameter :: F_HGRID               = f_height + 1
-  integer, public, parameter :: F_INSTRUMENTMODULE    = f_hgrid +1
-  integer, public, parameter :: F_INTERPOLATIONFACTOR = f_instrumentmodule + 1
-  integer, public, parameter :: F_JACOBIAN            = f_interpolationFactor + 1
-  integer, public, parameter :: F_LAST                = f_jacobian + 1
-  integer, public, parameter :: F_LENGTH              = f_last + 1
-  integer, public, parameter :: F_LO                  = f_length + 1
-  integer, public, parameter :: F_MAXITERATIONS       = f_lo + 1
-  integer, public, parameter :: F_MATRIX              = f_maxIterations + 1
-  integer, public, parameter :: F_MEASUREMENTS        = f_matrix + 1
-  integer, public, parameter :: F_METHOD              = f_measurements + 1
-  integer, public, parameter :: F_MIF                 = f_method + 1
-  integer, public, parameter :: F_MODULE              = f_MIF + 1
-  integer, public, parameter :: F_MOLECULE            = f_module + 1 
-  integer, public, parameter :: F_NUMBER              = f_molecule + 1
-  integer, public, parameter :: F_OUTPUTCOVARIANCE    = f_number + 1
-  integer, public, parameter :: F_OUTPUTOVERLAPS      = f_outputCovariance + 1
-  integer, public, parameter :: F_OVERLAPS            = f_outputOverlaps + 1
-  integer, public, parameter :: F_PER_DECADE          = f_overlaps + 1
-  integer, public, parameter :: F_QUANTITIES          = f_per_decade + 1
-  integer, public, parameter :: F_QUANTITY            = f_quantities + 1
-  integer, public, parameter :: F_RADIOMETER          = f_quantity + 1
-  integer, public, parameter :: F_RANGE               = f_radiometer + 1
-  integer, public, parameter :: F_ROWS                = f_range + 1
-  integer, public, parameter :: F_SCALE               = f_rows + 1
-  integer, public, parameter :: F_SIGNALS             = f_scale + 1
-  integer, public, parameter :: F_SOURCE              = f_signals + 1
-  integer, public, parameter :: F_SPECIES             = f_source + 1
-  integer, public, parameter :: F_SPECTROMETER        = f_species + 1
-  integer, public, parameter :: F_START               = f_spectrometer + 1
-  integer, public, parameter :: F_STATE               = f_start + 1
-  integer, public, parameter :: F_STEP                = f_state + 1
-  integer, public, parameter :: F_STOP                = f_step + 1
-  integer, public, parameter :: F_SUFFIX              = f_stop + 1
-  integer, public, parameter :: F_SWITCH              = f_suffix + 1
-  integer, public, parameter :: F_TEMPERATURE         = f_switch+1
-  integer, public, parameter :: F_TOLERANCEA          = f_temperature + 1
-  integer, public, parameter :: F_TOLERANCEF          = f_tolerancea + 1
-  integer, public, parameter :: F_TOLERANCER          = f_tolerancef + 1
-  integer, public, parameter :: F_VERSIONRANGE        = f_tolerancer + 1
-  integer, public, parameter :: F_TEMPLATE            = f_versionRange + 1
-  integer, public, parameter :: F_TEST                = f_template + 1
-  integer, public, parameter :: F_TYPE                = f_test + 1
-  integer, public, parameter :: F_UNIT                = f_type + 1
-  integer, public, parameter :: F_UNPACKOUTPUT        = f_unit + 1
-  integer, public, parameter :: F_VALUES              = f_unpackOutput + 1
-  integer, public, parameter :: F_VGRID               = f_values + 1
-  integer, public, parameter :: F_WEIGHT              = f_vGrid + 1
-  integer, public, parameter :: F_WIDTH               = f_weight + 1
-  integer, public, parameter :: F_WIDTHS              = f_width + 1
-  integer, public, parameter :: FIELD_FIRST = f_Apriori, FIELD_LAST = f_widths
-  integer, public :: FIELD_INDICES(field_first:field_last)
+  integer, parameter :: F_APRIORI             = 1
+  integer, parameter :: F_APRIORISCALE        = f_apriori + 1
+  integer, parameter :: F_AUTOFILL            = f_aprioriScale + 1
+  integer, parameter :: F_BAND                = f_autofill + 1
+  integer, parameter :: F_CHANNEL             = f_band + 1
+  integer, parameter :: F_CHANNELS            = f_channel + 1
+  integer, parameter :: F_COLUMNS             = f_channels + 1
+  integer, parameter :: F_COLUMNSCALE         = f_columns + 1
+  integer, parameter :: F_COMPAREOVERLAPS     = f_columnscale + 1
+  integer, parameter :: F_COORDINATE          = f_compareOverlaps + 1
+  integer, parameter :: F_COPY                = f_coordinate + 1
+  integer, parameter :: F_COVARIANCE          = f_copy + 1
+  integer, parameter :: F_CRITERIA            = f_covariance + 1
+  integer, parameter :: F_DIAGONAL            = f_criteria + 1
+  integer, parameter :: F_FILE                = f_diagonal + 1
+  integer, parameter :: F_FIRST               = f_file + 1
+  integer, parameter :: F_FIRSTINDEXCHANNEL   = f_first + 1
+  integer, parameter :: F_FRACTION            = f_firstIndexChannel + 1
+  integer, parameter :: F_FREQUENCIES         = f_fraction + 1
+  integer, parameter :: F_FREQUENCY           = f_frequencies + 1
+  integer, parameter :: F_FWDMODELIN          = f_frequency + 1
+  integer, parameter :: F_FWDMODELOUT         = f_fwdModelIn + 1
+  integer, parameter :: F_GPH                 = f_fwdModelOut + 1
+  integer, parameter :: F_HDFNAME             = f_GPH + 1
+  integer, parameter :: F_HEIGHT              = f_hdfname + 1
+  integer, parameter :: F_HGRID               = f_height + 1
+  integer, parameter :: F_INSTRUMENTMODULE    = f_hgrid +1
+  integer, parameter :: F_INTERPOLATIONFACTOR = f_instrumentmodule + 1
+  integer, parameter :: F_JACOBIAN            = f_interpolationFactor + 1
+  integer, parameter :: F_LAST                = f_jacobian + 1
+  integer, parameter :: F_LENGTH              = f_last + 1
+  integer, parameter :: F_LO                  = f_length + 1
+  integer, parameter :: F_MAXITERATIONS       = f_lo + 1
+  integer, parameter :: F_MATRIX              = f_maxIterations + 1
+  integer, parameter :: F_MEASUREMENTS        = f_matrix + 1
+  integer, parameter :: F_METHOD              = f_measurements + 1
+  integer, parameter :: F_MIF                 = f_method + 1
+  integer, parameter :: F_MODULE              = f_MIF + 1
+  integer, parameter :: F_MOLECULE            = f_module + 1 
+  integer, parameter :: F_NUMBER              = f_molecule + 1
+  integer, parameter :: F_OUTPUTCOVARIANCE    = f_number + 1
+  integer, parameter :: F_OUTPUTOVERLAPS      = f_outputCovariance + 1
+  integer, parameter :: F_OVERLAPS            = f_outputOverlaps + 1
+  integer, parameter :: F_PER_DECADE          = f_overlaps + 1
+  integer, parameter :: F_QUANTITIES          = f_per_decade + 1
+  integer, parameter :: F_QUANTITY            = f_quantities + 1
+  integer, parameter :: F_RADIOMETER          = f_quantity + 1
+  integer, parameter :: F_RANGE               = f_radiometer + 1
+  integer, parameter :: F_ROWS                = f_range + 1
+  integer, parameter :: F_SCALE               = f_rows + 1
+  integer, parameter :: F_SIGNALS             = f_scale + 1
+  integer, parameter :: F_SOURCE              = f_signals + 1
+  integer, parameter :: F_SPECIES             = f_source + 1
+  integer, parameter :: F_SPECTROMETER        = f_species + 1
+  integer, parameter :: F_START               = f_spectrometer + 1
+  integer, parameter :: F_STATE               = f_start + 1
+  integer, parameter :: F_STEP                = f_state + 1
+  integer, parameter :: F_STOP                = f_step + 1
+  integer, parameter :: F_SUFFIX              = f_stop + 1
+  integer, parameter :: F_SWITCH              = f_suffix + 1
+  integer, parameter :: F_TEMPERATURE         = f_switch+1
+  integer, parameter :: F_TOLERANCEA          = f_temperature + 1
+  integer, parameter :: F_TOLERANCEF          = f_tolerancea + 1
+  integer, parameter :: F_TOLERANCER          = f_tolerancef + 1
+  integer, parameter :: F_VERSIONRANGE        = f_tolerancer + 1
+  integer, parameter :: F_TEMPLATE            = f_versionRange + 1
+  integer, parameter :: F_TEST                = f_template + 1
+  integer, parameter :: F_TYPE                = f_test + 1
+  integer, parameter :: F_UNIT                = f_type + 1
+  integer, parameter :: F_UNPACKOUTPUT        = f_unit + 1
+  integer, parameter :: F_VALUES              = f_unpackOutput + 1
+  integer, parameter :: F_VGRID               = f_values + 1
+  integer, parameter :: F_WEIGHT              = f_vGrid + 1
+  integer, parameter :: F_WIDTH               = f_weight + 1
+  integer, parameter :: F_WIDTHS              = f_width + 1
+  integer, parameter :: FIELD_FIRST = f_Apriori, FIELD_LAST = f_widths
+  integer :: FIELD_INDICES(field_first:field_last)
 ! Enumeration literals:
 
-  integer, public, parameter :: L_ANGLE         = last_intrinsic_lit + 1
-  integer, public, parameter :: L_APRIORI       = l_angle + 1
-  integer, public, parameter :: L_BOTH 	        = l_apriori + 1
-  integer, public, parameter :: L_CHOLESKY      = l_both + 1
-  integer, public, parameter :: L_CLIMATOLOGY   = l_cholesky+1
-  integer, public, parameter :: L_COVARIANCE    = l_climatology + 1
-  integer, public, parameter :: L_DAO 	        = l_covariance + 1
-  integer, public, parameter :: L_DIRECT        = l_dao + 1
-  integer, public, parameter :: L_EITHER        = l_direct + 1
-  integer, public, parameter :: L_EXPLICIT      = l_either + 1
-  integer, public, parameter :: L_FIXED         = l_explicit + 1
-  integer, public, parameter :: L_FRACTIONAL    = l_fixed + 1
-  integer, public, parameter :: L_HEIGHT        = l_fractional + 1
-  integer, public, parameter :: L_KRONECKER     = l_height + 1
-  integer, public, parameter :: L_L2AUX         = l_kronecker + 1
-  integer, public, parameter :: L_L2GP 	        = l_l2aux + 1
-  integer, public, parameter :: L_LINEAR        = l_l2gp + 1
-  integer, public, parameter :: L_LOGARITHMIC   = l_linear + 1
-  integer, public, parameter :: L_NCEP 	        = l_logarithmic + 1
-  integer, public, parameter :: L_NEITHER       = l_ncep + 1
-  integer, public, parameter :: L_NEWTONIAN     = l_neither + 1
-  integer, public, parameter :: L_NORM          = l_newtonian + 1
-  integer, public, parameter :: L_PLAIN         = l_norm + 1
-  integer, public, parameter :: L_PRESSURE      = l_plain + 1
-  integer, public, parameter :: L_R1A           = l_pressure + 1
-  integer, public, parameter :: L_R1B           = l_r1a + 1
-  integer, public, parameter :: L_R2            = l_r1b + 1
-  integer, public, parameter :: L_R3            = l_r2 + 1
-  integer, public, parameter :: L_R4            = l_r3 + 1
-  integer, public, parameter :: L_R5H           = l_r4 + 1
-  integer, public, parameter :: L_R5V           = l_r5h + 1
-  integer, public, parameter :: L_SPD           = l_r5v + 1
-  integer, public, parameter :: L_WEIGHTED      = l_spd + 1
-  integer, public, parameter :: LAST_LIT        = l_weighted
-  integer, public :: LIT_INDICES(first_lit:last_lit)
+  integer, parameter :: L_ANGLE         = last_intrinsic_lit + 1
+  integer, parameter :: L_APRIORI       = l_angle + 1
+  integer, parameter :: L_BOTH 	        = l_apriori + 1
+  integer, parameter :: L_CHOLESKY      = l_both + 1
+  integer, parameter :: L_CLIMATOLOGY   = l_cholesky+1
+  integer, parameter :: L_COVARIANCE    = l_climatology + 1
+  integer, parameter :: L_DAO 	        = l_covariance + 1
+  integer, parameter :: L_DIRECT        = l_dao + 1
+  integer, parameter :: L_EITHER        = l_direct + 1
+  integer, parameter :: L_EXPLICIT      = l_either + 1
+  integer, parameter :: L_FIXED         = l_explicit + 1
+  integer, parameter :: L_FRACTIONAL    = l_fixed + 1
+  integer, parameter :: L_HEIGHT        = l_fractional + 1
+  integer, parameter :: L_KRONECKER     = l_height + 1
+  integer, parameter :: L_L2AUX         = l_kronecker + 1
+  integer, parameter :: L_L2GP 	        = l_l2aux + 1
+  integer, parameter :: L_LINEAR        = l_l2gp + 1
+  integer, parameter :: L_LOGARITHMIC   = l_linear + 1
+  integer, parameter :: L_NCEP 	        = l_logarithmic + 1
+  integer, parameter :: L_NEITHER       = l_ncep + 1
+  integer, parameter :: L_NEWTONIAN     = l_neither + 1
+  integer, parameter :: L_NORM          = l_newtonian + 1
+  integer, parameter :: L_PLAIN         = l_norm + 1
+  integer, parameter :: L_PRESSURE      = l_plain + 1
+  integer, parameter :: L_R1A           = l_pressure + 1
+  integer, parameter :: L_R1B           = l_r1a + 1
+  integer, parameter :: L_R2            = l_r1b + 1
+  integer, parameter :: L_R3            = l_r2 + 1
+  integer, parameter :: L_R4            = l_r3 + 1
+  integer, parameter :: L_R5H           = l_r4 + 1
+  integer, parameter :: L_R5V           = l_r5h + 1
+  integer, parameter :: L_SPD           = l_r5v + 1
+  integer, parameter :: L_WEIGHTED      = l_spd + 1
+  integer, parameter :: LAST_LIT        = l_weighted
+  integer :: LIT_INDICES(first_lit:last_lit)
 ! Parameter names:
   ! In GlobalSettings section:
-  integer, public, parameter :: P_ALLOW_CLIMATOLOGY_OVERLOADS = 1
-  integer, public, parameter :: P_INPUT_VERSION_STRING        = 2
-  integer, public, parameter :: P_OUTPUT_VERSION_STRING       = 3
-  integer, public, parameter :: P_VERSION_COMMENT             = 4
+  integer, parameter :: P_ALLOW_CLIMATOLOGY_OVERLOADS = 1
+  integer, parameter :: P_INPUT_VERSION_STRING        = 2
+  integer, parameter :: P_OUTPUT_VERSION_STRING       = 3
+  integer, parameter :: P_VERSION_COMMENT             = 4
   ! In ChunkDivide section:
-  integer, public, parameter :: P_CRITICAL_BANDS              = 5
-  integer, public, parameter :: P_CRITICAL_SCANNING_MODULES   = 6
-  integer, public, parameter :: P_HOME_GEOD_ANGLE             = 7
-  integer, public, parameter :: P_HOME_MODULE                 = 8
-  integer, public, parameter :: P_IDEAL_LENGTH                = 9
-  integer, public, parameter :: P_MAX_GAP                     = 10
-  integer, public, parameter :: P_OVERLAP                     = 11
-  integer, public, parameter :: P_SCAN_LOWER_LIMIT            = 12
-  integer, public, parameter :: P_SCAN_UPPER_LIMIT            = 13
-  integer, public, parameter :: FIRST_PARM = P_ALLOW_CLIMATOLOGY_OVERLOADS
-  integer, public, parameter :: LAST_PARM = P_SCAN_UPPER_LIMIT
-  integer, public :: PARM_INDICES(first_parm:last_parm)
-! Section identities (indices are in the order the sections are allowed to
-! appear):
-  integer, public, parameter :: Z_CHUNKDIVIDE    = 5
-  integer, public, parameter :: Z_CONSTRUCT      = 6
-  integer, public, parameter :: Z_FILL           = 7
-  integer, public, parameter :: Z_GLOBALSETTINGS = 2
-  integer, public, parameter :: Z_JOIN           = 9
-  integer, public, parameter :: Z_MERGEAPRIORI   = 4
-  integer, public, parameter :: Z_MLSSIGNALS     = 1
-  integer, public, parameter :: Z_OUTPUT         = 10
-  integer, public, parameter :: Z_READAPRIORI    = 3
-  integer, public, parameter :: Z_RETRIEVE       = 8
-  integer, public, parameter :: SECTION_FIRST = z_mlsSignals, &
+  integer, parameter :: P_CRITICAL_BANDS              = 5
+  integer, parameter :: P_CRITICAL_SCANNING_MODULES   = 6
+  integer, parameter :: P_HOME_GEOD_ANGLE             = 7
+  integer, parameter :: P_HOME_MODULE                 = 8
+  integer, parameter :: P_IDEAL_LENGTH                = 9
+  integer, parameter :: P_MAX_GAP                     = 10
+  integer, parameter :: P_OVERLAP                     = 11
+  integer, parameter :: P_SCAN_LOWER_LIMIT            = 12
+  integer, parameter :: P_SCAN_UPPER_LIMIT            = 13
+  integer, parameter :: FIRST_PARM = P_ALLOW_CLIMATOLOGY_OVERLOADS
+  integer, parameter :: LAST_PARM = P_SCAN_UPPER_LIMIT
+  integer :: PARM_INDICES(first_parm:last_parm)
+! Section identities.  Indices are in the order the sections are allowed to
+! appear.  They're also used to index SECTION_ORDERING, so BE CAREFUL if
+! you change them!
+  integer, parameter :: Z_CHUNKDIVIDE    = 5
+  integer, parameter :: Z_CONSTRUCT      = 6
+  integer, parameter :: Z_FILL           = 7
+  integer, parameter :: Z_GLOBALSETTINGS = 2
+  integer, parameter :: Z_JOIN           = 9
+  integer, parameter :: Z_MERGEAPRIORI   = 4
+  integer, parameter :: Z_MLSSIGNALS     = 1
+  integer, parameter :: Z_OUTPUT         = 10
+  integer, parameter :: Z_READAPRIORI    = 3
+  integer, parameter :: Z_RETRIEVE       = 8
+  integer, parameter :: SECTION_FIRST = z_mlsSignals, &
                                 SECTION_LAST = z_Output
-  integer, public :: SECTION_INDICES(section_first:section_last)
+  integer :: SECTION_INDICES(section_first:section_last)
 ! Specification indices don't overlap parameter indices, so a section can
 ! have both parameters and specifications:
-  integer, public, parameter :: S_BAND           = last_parm + 1
-  integer, public, parameter :: S_CHANNEL        = s_band + 1
-  integer, public, parameter :: S_CLIMATOLOGY    = s_channel + 1
-  integer, public, parameter :: S_CREATE         = s_climatology + 1
-  integer, public, parameter :: S_FILL           = s_create + 1
-  integer, public, parameter :: S_FORWARDMODEL   = s_fill + 1
-  integer, public, parameter :: S_HGRID          = s_forwardModel + 1
-  integer, public, parameter :: S_L2GP           = s_hgrid + 1
-  integer, public, parameter :: S_L2AUX          = s_l2gp + 1
-  integer, public, parameter :: S_MATRIX         = s_l2aux + 1
-  integer, public, parameter :: S_MERGE          = s_matrix + 1
-  integer, public, parameter :: S_OUTPUT         = s_merge + 1
-  integer, public, parameter :: S_QUANTITY       = s_output + 1
-  integer, public, parameter :: S_RADIOMETER     = s_quantity + 1
-  integer, public, parameter :: S_RETRIEVE       = s_radiometer + 1
-  integer, public, parameter :: S_SIGNAL         = s_retrieve + 1
-  integer, public, parameter :: S_SUBSET         = s_signal + 1
-  integer, public, parameter :: S_SPECTROMETER   = s_subset + 1
-  integer, public, parameter :: S_TEMPLATE       = s_spectrometer + 1
-  integer, public, parameter :: S_TIME           = s_template + 1
-  integer, public, parameter :: S_TPFILL         = s_time + 1
-  integer, public, parameter :: S_VECTOR         = s_tpfill + 1
-  integer, public, parameter :: S_VECTORTEMPLATE = s_vector + 1
-  integer, public, parameter :: S_VGRID          = s_vectortemplate + 1
-  integer, public, parameter :: SPEC_FIRST = s_band, SPEC_LAST = s_vGrid
-  integer, public :: SPEC_INDICES(spec_first:spec_last)
+  integer, parameter :: S_BAND           = last_parm + 1
+  integer, parameter :: S_CHANNEL        = s_band + 1
+  integer, parameter :: S_CLIMATOLOGY    = s_channel + 1
+  integer, parameter :: S_CREATE         = s_climatology + 1
+  integer, parameter :: S_FILL           = s_create + 1
+  integer, parameter :: S_FORWARDMODEL   = s_fill + 1
+  integer, parameter :: S_HGRID          = s_forwardModel + 1
+  integer, parameter :: S_L2GP           = s_hgrid + 1
+  integer, parameter :: S_L2AUX          = s_l2gp + 1
+  integer, parameter :: S_MATRIX         = s_l2aux + 1
+  integer, parameter :: S_MERGE          = s_matrix + 1
+  integer, parameter :: S_OUTPUT         = s_merge + 1
+  integer, parameter :: S_QUANTITY       = s_output + 1
+  integer, parameter :: S_RADIOMETER     = s_quantity + 1
+  integer, parameter :: S_RETRIEVE       = s_radiometer + 1
+  integer, parameter :: S_SIGNAL         = s_retrieve + 1
+  integer, parameter :: S_SUBSET         = s_signal + 1
+  integer, parameter :: S_SPECTROMETER   = s_subset + 1
+  integer, parameter :: S_TEMPLATE       = s_spectrometer + 1
+  integer, parameter :: S_TIME           = s_template + 1
+  integer, parameter :: S_TPFILL         = s_time + 1
+  integer, parameter :: S_VECTOR         = s_tpfill + 1
+  integer, parameter :: S_VECTORTEMPLATE = s_vector + 1
+  integer, parameter :: S_VGRID          = s_vectortemplate + 1
+  integer, parameter :: SPEC_FIRST = last_parm + 1, SPEC_LAST = s_vGrid
+  integer :: SPEC_INDICES(spec_first:spec_last)
 
 ! Table for section ordering:
-  integer, public, parameter :: OK = 1, & ! NO = 0
+  integer, parameter :: OK = 1, & ! NO = 0
     SECTION_ORDERING(section_first:section_last, &
                      section_first-1:section_last) = reshape( &
 ! To: |       globalSettings    chunkDivide       retrieve             |
@@ -461,6 +462,10 @@ contains ! =====     Public procedures     =============================
   ! for the trees is < root first_son ... last_son >.  This is sometimes
   ! called "Cambridge Polish Notation."  It was developed to represent
   ! LISP by McCarthy et. al. at MIT (in Cambridge, MA).
+
+  ! Notice that in the argument for make_tree, the tree node id is at
+  ! the END of the subtree, while in Cambridge Polish Notation it is at
+  ! the BEGINNING of the subtree!
 
   ! Put the definition trees into the tree space before the parser runs.
   ! After the parsing is done, they're automatically "glued in" to the
@@ -806,6 +811,10 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.19  2001/02/13 19:50:07  vsnyder
+! Specify individually required fields, not just "all fields required"
+! Remove individual "public" specifiers, because there's a global "public"
+!
 ! Revision 2.18  2001/02/09 19:29:03  vsnyder
 ! Turn on checking for duplicate and required fields for hgrid, l2aux,
 ! l2gp, output, subset, retrieve and vgrid specifications.
