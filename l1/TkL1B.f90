@@ -1373,13 +1373,14 @@ CONTAINS
   END SUBROUTINE TkL1B_mc
 
 !=============================================================================
-  SUBROUTINE Flag_Bright_Objects (TAI, ScAngle, LimbView, SpaceView)
+  SUBROUTINE Flag_Bright_Objects (TAI, ScAngle, MoonLimbTol, LimbView, &
+       SpaceView)
 !=============================================================================
 
     USE MLSL1Config, ONLY: L1Config
 
     REAL(r8) :: TAI(:)
-    REAL :: ScAngle(0:)
+    REAL :: ScAngle(0:), MoonLimbTol
     TYPE (LOG_ARR1_PTR_T) :: LimbView(:)
     TYPE (LOG_ARR1_PTR_T), OPTIONAL :: SpaceView(:)
 
@@ -1406,7 +1407,8 @@ CONTAINS
 ! Get Moon tolerances from CF inputs:
 
     space_tol(1) = L1Config%Calib%MoonToSpaceAngle
-    limb_tol(1) = L1Config%Calib%MoonToLimbAngle
+!    limb_tol(1) = L1Config%Calib%MoonToLimbAngle
+    limb_tol(1) = MoonLimbTol
 
     returnStatus = PGS_TD_taiToUTC (TAI(1), asciiUTC)
     offset = TAI - TAI(1)   ! offset (secs) from start TAI
@@ -1447,6 +1449,9 @@ CONTAINS
 END MODULE TkL1B
 
 ! $Log$
+! Revision 2.21  2005/01/28 17:04:05  perun
+! Pass in MoonToLimb tolerance instead of getting it from L1Config
+!
 ! Revision 2.20  2005/01/25 18:01:06  perun
 ! Calculate tangent point scan rates (deg/sec)
 !
