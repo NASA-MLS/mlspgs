@@ -770,7 +770,9 @@ contains ! =====     Public Procedures     =============================
 
     integer :: I
 
-    call cloneVector ( x, a%row%vec, vectorNameText='_x' )
+    if ( x%template%name /= a%row%vec%template%name ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Vector supplied to GetDiagonal_1 does not have same template as matrix rows')
     do i = 1, min(a%row%nb,a%col%nb)
       call getDiagonal ( a%block(i,i), &
         & x%quantities(a%row%quant(i))%values(:,a%row%inst(i)), squareRoot )
@@ -1660,6 +1662,10 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.56  2001/10/01 23:57:51  livesey
+! Removed clone vector call in GetDiagonal_1 to avoid problems with
+! snooping.
+!
 ! Revision 2.55  2001/09/28 23:34:20  vsnyder
 ! Correct looking at row%inst to get column mask in NormalEquations
 !
