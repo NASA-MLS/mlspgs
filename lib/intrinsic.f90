@@ -59,7 +59,8 @@ module INTRINSIC
   integer, parameter :: PHYQ_EXTINCTION =      phyq_velocity+1    ! Default 1/meters
   integer, parameter :: PHYQ_ICEDENSITY =      phyq_extinction+1  ! Default g/meters^3
   integer, parameter :: PHYQ_DOBSONUNITS =     phyq_icedensity+1  ! 1 DU = 2.687e20 molecules/m^2
-  integer, parameter :: FIRST_PHYQ = phyq_invalid, LAST_PHYQ = PHYQ_DobsonUnits
+  integer, parameter :: PHYQ_PCTRHI =          phyq_dobsonunits+1 ! default %RHI
+  integer, parameter :: FIRST_PHYQ = phyq_invalid, LAST_PHYQ = phyq_pctrhi
   integer :: PHYQ_INDICES(first_phyq:last_phyq)
 
 ! Enumeration literals:
@@ -164,6 +165,7 @@ contains ! =====     Public procedures     =============================
     phyq_indices(phyq_extinction) =        add_ident ( 'extinction' )
     phyq_indices(phyq_icedensity) =        add_ident ( 'icedensity' )
     phyq_indices(phyq_dobsonunits) =       add_ident ( 'dobsonunits' )
+    phyq_indices(phyq_pctrhi) =            add_ident ( 'pctrhi' )
 
   ! Definitions are represented by trees.  The notation in the comments
   ! for the trees is < root first_son ... last_son >.  This is sometimes
@@ -224,6 +226,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.43  2002/04/10 17:42:59  pwagner
+! Added pctrhi unit
+!
 ! Revision 2.42  2001/10/04 22:12:57  pwagner
 ! Now includes files lit_add.f9h and lit_parm.f9h
 !
