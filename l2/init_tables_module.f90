@@ -69,7 +69,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: T_OUTPUTTYPE     = t_module+1
   integer, parameter :: T_QUANTITYTYPE   = t_outputtype+1
   integer, parameter :: T_REFLECTOR      = t_quantitytype+1
-  integer, parameter :: T_SCALE          = t_reflector+1
+  integer, parameter :: T_ROWSORCOLUMNS  = t_reflector+1
+  integer, parameter :: T_SCALE          = t_rowsOrColumns+1
   integer, parameter :: T_SPECIES        = t_scale+1
   integer, parameter :: T_UNITS          = t_species+1
   integer, parameter :: T_VGRIDCOORD     = t_units+1
@@ -105,8 +106,7 @@ module INIT_TABLES_MODULE
 !  W a r n i n g   W a r n i n g   W a r n i n g   W a r n i n g   
 ! Beware of adding spec indices
 ! The NAG compiler will generate code that has memory problems
-  integer, parameter :: S_ADOPT              = last_Spectroscopy_Spec + 1
-  integer, parameter :: S_APRIORI            = s_adopt + 1
+  integer, parameter :: S_APRIORI            = last_Spectroscopy_Spec + 1
   integer, parameter :: S_BINSELECTOR        = s_apriori + 1
   integer, parameter :: S_CHUNKDIVIDE        = s_binselector + 1
   integer, parameter :: S_CONCATENATE        = s_chunkDivide + 1
@@ -135,7 +135,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_L2GP               = s_l2aux + 1
   integer, parameter :: S_L2PARSF            = s_l2gp + 1
   integer, parameter :: S_LABEL              = s_l2parsf + 1
-  integer, parameter :: S_MATRIX             = s_label + 1
+  integer, parameter :: S_LOAD               = s_label + 1
+  integer, parameter :: S_MATRIX             = s_load + 1
   integer, parameter :: S_MERGE              = s_matrix + 1
   integer, parameter :: S_NEGATIVEPRECISION  = s_merge + 1
   integer, parameter :: S_OUTPUT             = s_negativePrecision + 1
@@ -242,6 +243,7 @@ contains ! =====     Public procedures     =============================
     data_type_indices(t_outputtype) =      add_ident ( 'outputType' )
     data_type_indices(t_quantitytype) =    add_ident ( 'quantityType' )
     data_type_indices(t_reflector) =       add_ident ( 'reflector' )
+    data_type_indices(t_rowsOrColumns) =   add_ident ( 'rowsOrColumns' )
     data_type_indices(t_scale) =           add_ident ( 'scale' )
     data_type_indices(t_species) =         add_ident ( 'species' )
     data_type_indices(t_units) =           add_ident ( 'units' )
@@ -296,7 +298,6 @@ contains ! =====     Public procedures     =============================
     section_indices(z_spectroscopy) =      add_ident ( 'spectroscopy' )
     ! Put spec names into the symbol table.  Don't add ones that are
     ! put in by init_MLSSignals.
-    spec_indices(s_adopt) =                add_ident ( 'adopt' )
     spec_indices(s_apriori) =              add_ident ( 'apriori' )
     spec_indices(s_binSelector) =          add_ident ( 'binSelector' )
     spec_indices(s_chunkDivide) =          add_ident ( 'chunkDivide' )
@@ -326,6 +327,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_l2gp) =                 add_ident ( 'l2gp' )
     spec_indices(s_l2parsf) =              add_ident ( 'l2parsf' )
     spec_indices(s_label) =                add_ident ( 'label' )
+    spec_indices(s_load) =                 add_ident ( 'load' )
     spec_indices(s_matrix) =               add_ident ( 'matrix' )
     spec_indices(s_merge) =                add_ident ( 'merge' )
     spec_indices(s_negativePrecision ) =   add_ident ( 'negativePrecision' )
@@ -412,6 +414,7 @@ contains ! =====     Public procedures     =============================
              n+n_dt_def, &
       begin, t+t_method, l+l_highcloud,l+l_lowcloud, l+l_newtonian, n+n_dt_def, &
       begin, t+t_module, l+l_ghz, l+l_thz, n+n_dt_def, &
+      begin, t+t_rowsOrColumns, l+l_rows, l+l_columns, n+n_dt_def, &
       begin, t+t_reflector, l+l_primary, l+l_secondary, l+l_tertiary, &
              l+l_complete, n+n_dt_def, &
       begin, t+t_outputType, l+l_l2aux, l+l_l2gp, l+l_l2dgg, l+l_l2fwm, l+l_l2pc, &
@@ -610,8 +613,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_minValue, t+t_numeric, n+n_field_type, &
              np+n_spec_def, &
       begin, s+s_vectorTemplate, & ! Must be AFTER s_quantity
-             begin, f+f_adoptColumns, t+t_string, n+n_field_type, &
-             begin, f+f_adoptRows, t+t_string, n+n_field_type, &
+             begin, f+f_adopt, t+t_string, n+n_field_type, &
+             begin, f+f_source, t+t_rowsOrColumns, n+n_field_type, &
              begin, f+f_quantities, s+s_quantity, n+n_field_spec, &
              ndp+n_spec_def, &
       begin, s+s_vector, & ! Must be AFTER s_vectorTemplate
@@ -790,10 +793,12 @@ contains ! =====     Public procedures     =============================
              nadp+n_spec_def /) )
 
     call make_tree( (/ &
-      begin, s+s_adopt, &
+      begin, s+s_load, &
+             begin, f+f_bin, t+t_string, nr+n_field_type, &
              begin, f+f_matrix, s+s_matrix, n+n_field_spec, &
-             begin, f+f_bin, t+t_string, n+n_field_type, &
-             nadp+n_spec_def /) )
+             begin, f+f_vector, s+s_vector, n+n_field_spec, &
+             begin, f+f_source, t+t_rowsOrColumns, n+n_field_type, &
+             ndp+n_spec_def /) )
 
     call make_tree( (/ &
       begin, s+s_label, &
@@ -1106,8 +1111,8 @@ contains ! =====     Public procedures     =============================
       begin, z+z_construct, s+s_hgrid, s+s_forge, s+s_forwardModel, s+s_quantity, &
              s+s_snoop, s+s_time, s+s_vectortemplate, s+s_phase, n+n_section, &
       begin, z+z_fill, &
-             s+s_adopt, s+s_destroy, s+s_dump, s+s_fill, s+s_fillCovariance, &
-             s+s_fillDiagonal, s+s_flagcloud, s+s_flushL2PCBins, s+s_matrix, &
+             s+s_destroy, s+s_dump, s+s_fill, s+s_fillCovariance, &
+             s+s_fillDiagonal, s+s_flagcloud, s+s_flushL2PCBins, s+s_load, s+s_matrix, &
              s+s_negativePrecision, s+s_phase, s+s_populateL2PCBin, s+s_restrictRange, &
              s+s_snoop, s+s_subset, s+s_time, s+s_transfer, s+s_updateMask, &
              s+s_vector, n+n_section, &
@@ -1133,6 +1138,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.350  2004/01/23 19:09:00  livesey
+! More work on adoption / loading
+!
 ! Revision 2.349  2004/01/23 05:47:38  livesey
 ! Added the adoption stuff
 !
