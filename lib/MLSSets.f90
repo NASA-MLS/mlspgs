@@ -7,7 +7,8 @@ module MLSSets
 
   implicit NONE
   private
-  public :: FindAll, FindFirst, FindNext, Intersect, Intersection, Union
+  public :: FindAll, FindFirst, FindNext, Intersect, Intersection, Union, &
+    & UnionSize
 
   interface FindFirst
     module procedure FindFirstInteger, FindFirstLogical!, FindFirstCharacter
@@ -34,6 +35,7 @@ module MLSSets
 !               a common element
 ! Intersection  Compute intersection of two sets, represented as arrays of integers
 ! Union         Compute union of two sets, represented as arrays of integers
+! UnionSize     Compute the size a union of two sets would have.
 ! === (end of toc) ===                                                   
 
 ! === (start of api) ===
@@ -44,6 +46,7 @@ module MLSSets
 ! logical Intersect ( int a(:), int b(:) )
 ! int *Intersection ( int a(:), int b(:) )
 ! int *Union ( int a(:), int b(:) )
+! int UnionSize ( int a(:), int b(:) )
 ! === (end of api) ===
 
 !---------------------------- RCS Ident Info -------------------------------
@@ -373,6 +376,38 @@ contains ! =====     Public Procedures     =============================
 
   end function Union
 
+  ! --------------------------------------------------  UnionSize  -----
+  integer function UnionSize ( A, B )
+  ! Compute the size of the union of the sets A and B, each represented by
+  ! arrays of integers.
+
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
+    use Sort_M, only: Sort
+
+    integer, intent(in) :: A(:), B(:)
+    integer, pointer :: C(:) ! Intent(out) -- nullified and then allocated here
+
+    integer :: I, J, Stat, T(size(a)+size(b))
+
+    t(1:size(a)) = a
+    t(size(a)+1:size(t)) = b
+    call sort ( t, 1, size(t) )
+
+    ! remove duplicates
+    i = 0; j = 0
+    do while ( i < size(t) .and. j < size(t) )
+      i = i + 1; j = j + 1
+      t(i) = t(j)
+      do while ( j < size(t) )
+        if ( t(j+1) /= t(i) ) exit
+        j = j + 1
+      end do
+    end do
+
+    unionSize = i
+
+  end function UnionSize
+
 ! =====     Private Procedures     =====================================
 
   logical function not_used_here()
@@ -382,6 +417,9 @@ contains ! =====     Public Procedures     =============================
 end module MLSSets
 
 ! $Log$
+! Revision 2.6  2004/06/16 01:24:38  vsnyder
+! Add UnionSize
+!
 ! Revision 2.5  2004/06/11 20:03:01  vsnyder
 ! Cannonball polishing
 !
