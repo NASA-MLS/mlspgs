@@ -171,9 +171,10 @@ contains
 
       beta_path(:,sv_i) = 0.0_rp
 
-      call create_beta_path_pfa ( frq, path_inds, p_path, t_path, vel_rel, &
-        & PFAData(PFAInds(i)), beta_path(:,sv_i), t_der_path_flags, &
-        & dBdT, dBdw, dBdn, dBdv )
+      if ( PFAInds(i) /= 0 ) &
+        & call create_beta_path_pfa ( frq, path_inds, p_path, t_path, vel_rel, &
+          & PFAData(PFAInds(i)), beta_path(:,sv_i), t_der_path_flags, &
+          & dBdT, dBdw, dBdn, dBdv )
 
     end do
 
@@ -364,7 +365,7 @@ contains
 
     real(rp), intent(in) :: tanh1      ! tanh(frq*expa/2)
 
-    ! ! "Don't do line(L) if slabs%catalog%polarized(L)"
+    ! "Don't do line(L) if slabs%catalog%polarized(L)"
     logical, intent(in) :: NoPolarized
 
 ! Optional inputs for temperature derivatives
@@ -504,16 +505,19 @@ contains
 !  should be called for primary and image separately. Compute dBeta_dT if it's
 !  associated.  Compute dBeta_dw, dBeta_dn, dBeta_dv if they're associated. 
 
+    use Dump_0, only: Dump
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use MLSCommon, only: RP, R8
     use Molecules, only: L_N2, L_Extinction, L_O2
+    use Output_m, only: Output
     use SLABS_SW_M, only: DVOIGT_SPECTRAL, VOIGT_LORENTZ, &
       & SLABS_LINES, SLABS_LINES_DT, SLABSWINT_LINES, SLABSWINT_LINES_DT
     use SpectroscopyCatalog_m, only: LINES
+    use Toggles, only: Switches
 
 ! Inputs:
     integer, intent(in) :: Path_inds(:)! Which Pressures to use
-    real(rp), intent(in) :: Pressure(:)! pressure in hPa on the find path grid
+    real(rp), intent(in) :: Pressure(:)! pressure in hPa on the fine path grid
     real(rp), intent(in) :: Temp(:)    ! temperature in K along the path
     real(r8), intent(in) :: Fgr        ! frequency in MHz
     real(rp), intent(in) :: Ratio      ! Isotope ratio
@@ -548,6 +552,8 @@ contains
 ! -----     Local variables     ----------------------------------------
 
     real(rp), pointer :: Cont(:) ! continuum parameters
+    logical, save :: DumpAll, DumpBeta, DumpStop
+    logical, save :: First = .true. ! Fist-time flag
     integer :: J, K              ! Subscript, loop inductor
     integer :: LN_I              ! Line index
     integer :: NL                ! no of lines
@@ -557,6 +563,13 @@ contains
     real(rp) :: dNu, bv, dw, dn, dv, dbdT, dbdw, dbdn, dbdv
 
 !----------------------------------------------------------------------------
+
+    if ( first ) then
+      first = .false.
+      dumpStop = index(switches,'LBLB') > 0
+      dumpAll = dumpStop .or. index(switches,'lblB') > 0
+      dumpBeta = dumpAll .or. ( index(switches,'lblb') > 0 )
+    end if
 
     nl = size(slabs_0(1)%catalog%lines) ! All of the slabs have the same catalog
     spect_der = associated(dBeta_dw) .or. associated(dBeta_dn) .or. &
@@ -682,6 +695,17 @@ contains
 
     end do ! j = 1, size(path_inds)
 
+    if ( dumpBeta ) then
+      call output ( fgr, before='LBL Betas, FRQ = ', advance='yes' )
+      call dump ( beta_value, name='Beta_Value' )
+      if ( dumpAll ) then
+        call dump ( pressure(path_inds), name='Pressures' )
+        call dump ( temp, name='Temperatures' )
+      end if
+      if ( temp_der ) call dump ( dBeta_dT, name='dBdT' )
+      if ( dumpStop ) stop
+    end if
+
   end Subroutine Create_beta_path
 
   ! ---------------------------------------  Create_Beta_Path_PFA  -----
@@ -699,7 +723,8 @@ contains
 ! Inputs:
     real(r8), intent(in) :: Frq         ! Channel center frequency in MHz
     integer, intent(in) :: Path_inds(:) ! Which Pressures to use
-    real(rp), intent(in) :: P_Path(:)   ! Pressure in hPa on the fine path grid
+    real(rp), intent(in) :: P_Path(:)   ! Log10 ( Pressure in hPa _)
+                                        ! on the fine path grid
     real(rp), intent(in) :: T_Path(:)   ! Temperature in K along the path
     real(rp), intent(in) :: Vel_Rel     ! LOS vel/c
     type(PFAData_t), intent(in) :: PFAD ! PFA datum from PFA Database
@@ -723,18 +748,28 @@ contains
     real(rp) :: dBdNu            ! d log Beta / d nu, for Doppler correction
     real(rp) :: Del_T            ! Log Temperature step in tGrid
     real(r8) :: Doppler          ! Doppler corrected frequency offset, MHz
+    logical, save :: DumpAll, DumpBeta, DumpStop
+    logical, save :: First = .true. ! First-time flag
     integer :: J, K
-    real(rp) :: LogT             ! Log10 ( temperature )
+    real(rp) :: LogT             ! Ln ( temperature )
     integer :: P_I1, P_I2        ! Indices in PFAData%vGrid%surfs
     real(rp) :: P_Fac            ! Interpolating factor for Pressure
     logical :: Temp_Der          ! Temperature derivatives required
     integer :: T_I1, T_I2        ! Indices in PFAData%tGrid%surfs
     real(rp) :: T_Fac            ! Interpolating factor for Temperature
 
+    if ( first ) then
+      first = .false.
+      dumpStop = index(switches,'PFAB') > 0
+      dumpAll = dumpStop .or. index(switches,'pfaB') > 0
+      dumpBeta = dumpAll .or. ( index(switches,'pfab') > 0 )
+    end if
+
     a => PFAD%absorption
 
     !{ Doppler correction = $\nu_0 \left[ \left( 1 - \frac{v}c \right) -
-    !                                     \left( 1 - \frac{v_l}c \right) \right]$
+    !                                     \left( 1 - \frac{v_l}c \right) \right] =
+    !                        \nu_0 \left[ \frac{v_l}c - \frac{v}c \right] $
 
     doppler = frq * ( PFAD%vel_rel - vel_rel )
 
@@ -847,15 +882,16 @@ contains
 
     end do ! j
 
-    if ( index(switches,'pfab') /= 0 .or. index(switches,'pfaB') /= 0 ) then
+    if ( dumpBeta ) then
       call output ( frq, before='PFA Betas, FRQ = ' )
       call output ( doppler, before=', Doppler correction = ', advance='yes' )
       call dump ( beta_path, name='Beta_Path' )
-      if ( index(switches,'pfaB') /= 0 ) then
+      if ( dumpAll ) then
         call dump ( p_path(path_inds), name='Pressures' )
         call dump ( t_path, name='Temperatures' )
       end if
       if ( associated(dBdT) ) call dump ( dBdT, name='dBdT' )
+      if ( dumpStop ) stop
     end if
 
   end subroutine Create_Beta_Path_PFA
@@ -1040,6 +1076,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.65  2004/09/04 01:50:31  vsnyder
+! get_beta_path_m.f90
+!
 ! Revision 2.64  2004/09/02 18:14:29  vsnyder
 ! Doppler correct temperature derivative in PFA
 !
