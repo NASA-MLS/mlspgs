@@ -9,9 +9,9 @@ module AntennaPatterns_m
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error
-  use MLSSignals_m, only: MaxSigLen, Signals, signal_T, GetNameOfSignal
+  use MLSSignals_m, only: MaxSigLen, Signals, Signal_T, GetNameOfSignal
 
-  implicit none
+  implicit NONE
 
   ! More USEs below in each procedure, if they're only used therein.
 
@@ -151,7 +151,7 @@ outer1: do
         power2 = int(log2)+1
       else
         power2 = nint(log2)
-      endif
+      end if
       power2 = 2**power2
 ! billsdebug
       power2 = 2**11
@@ -241,7 +241,7 @@ outer1: do
         if (associated(AntennaPatterns(i)%signals(j)%channels)) then
           call deallocate_test ( AntennaPatterns(i)%signals(j)%channels, &
             & "AntennaPatterns(?)%signals(?)%channels", ModuleName )
-        endif
+        end if
       end do
       deallocate ( AntennaPatterns(i)%signals, STAT=status )
       if ( status /= 0 ) call MLSMessage( MLSMSG_Error, ModuleName, &
@@ -285,6 +285,9 @@ outer1: do
 end module AntennaPatterns_m
 
 ! $Log$
+! Revision 2.2  2002/02/22 00:50:08  bill
+! forced ntr=4096--wgr
+!
 ! Revision 2.1  2002/02/14 18:39:03  livesey
 ! Fixed bug with single channel antenna patterns
 !
