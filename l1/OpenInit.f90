@@ -16,7 +16,7 @@ MODULE OpenInit ! Opens input L0 files and output L1 files
   INTEGER :: eng_unit = 102
   INTEGER :: eng_recno = 1   ! start with first record
 
-  CHARACTER (LEN=1), POINTER :: anText(:)
+  CHARACTER (LEN=1), POINTER :: anTextPCF(:), anTextCF(:)
 
   PRIVATE :: Id, ModuleName
   !------------------------------- RCS Ident Info ------------------------------
@@ -34,7 +34,7 @@ CONTAINS
     USE MLSL1Config, ONLY: L1Config, GetL1Config
     USE InitPCFs, ONLY: L1PCF, GetPCFParameters
     USE MLSPCF1, ONLY: mlspcf_engtbl_start, mlspcf_bwtbl_start, &
-         mlspcf_nomen_start, mlspcf_pcf_start
+         mlspcf_nomen_start, mlspcf_pcf_start, mlspcf_l1cf_start
     USE PCFHdr, ONLY: CreatePCFAnnotation
     USE L0_sci_tbls, ONLY: InitSciPointers
     USE MLSL1Common, ONLY: L1BFileInfo
@@ -64,9 +64,11 @@ CONTAINS
 
     CALL GetPCFParameters
 
-!! Get annotation from PCF file
+!! Get annotation from PCF and CF files
 
-    CALL CreatePCFAnnotation (mlspcf_pcf_start, anText)
+    CALL CreatePCFAnnotation (mlspcf_pcf_start, anTextPCF)
+
+    CALL CreatePCFAnnotation (mlspcf_l1cf_start, anTextCF)
 
 !! Get the Level 1 configuration from the L1CF file
 
@@ -513,8 +515,8 @@ END MODULE OpenInit
 !=============================================================================
 
 ! $Log$
-! Revision 2.2  2001/03/12 15:59:13  perun
-! Add reading PCF file
+! Revision 2.3  2001/03/12 19:36:00  perun
+! Read and save CF file as annotation
 !
 ! Revision 2.1  2001/02/23 20:54:11  perun
 ! Version 0.5 commit
