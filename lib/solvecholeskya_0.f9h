@@ -15,31 +15,64 @@
 
     if ( my_t ) then ! solve U^T X = B for X
       d = u(1,1)                                                           
-      if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &    
-          & "U matrix in SolveCholeskyA_0 is singular" )                   
+      if ( abs(d) < tol ) then
+        if ( present ( status ) ) then
+          status = 1
+          return
+        else
+          call MLSMessage ( MLSMSG_Error, ModuleName, &    
+            & "U matrix in SolveCholeskyA_0 is singular" )                   
+        end if
+      end if
       x(1) = my_b(1) / d                                                   
       do i = 2, n                                                          
         d = u(i,i)                                                         
-        if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &  
-            & "U matrix in SolveCholeskyA_0 is singular" )                 
+        if ( abs(d) < tol ) then
+          if ( present ( status ) ) then
+            status = i
+            return
+          else
+            call MLSMessage ( MLSMSG_Error, ModuleName, &  
+              & "U matrix in SolveCholeskyA_0 is singular" )                 
+          end if
+        end if
         x(i) = ( my_b(i) - dot(i-1, u(1,i), 1, x(1), 1) ) / d              
 !       x(i) = ( my_b(i) - dot_product( u(:i-1,i), x(:i-1)) ) / d          
       end do ! i = 2, n                                                    
     else             ! solve U X = B for X
       d = u(n,n)
-      if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & "U matrix in SolveCholeskyA_0 is singular" )
+      if ( abs(d) < tol ) then
+        if ( present ( status ) ) then
+          status = n
+          return
+        else
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & "U matrix in SolveCholeskyA_0 is singular" )
+        end if
+      end if
       x(n) = my_b(n) / d
       do i = n-1, 1, -1
         d = u(i,i)
-        if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        if ( abs(d) < tol ) then
+          if ( present ( status ) ) then
+            status = i
+            return
+          else
+            call MLSMessage ( MLSMSG_Error, ModuleName, &
               & "U matrix in SolveCholeskyA_0 is singular" )
+          end if
+        end if
         x(i) = ( my_b(i) - dot(n-i, u(i,i+1), size(u,1), x(i+1), 1) ) / d
 !       x(i) = ( my_b(i) - dot_product(u(i,i+1:n), x(i+1:n)) ) / d
       end do ! i = n-1, 1, -1
     end if ! my_t
 
+    if ( present ( status ) ) status = 0
+
 ! $Log$
+! Revision 2.2  2003/06/03 19:21:51  livesey
+! Added status field
+!
 ! Revision 2.1  2003/01/08 21:29:27  livesey
 ! First version, extracted from MatrixModule_0
 !
