@@ -131,6 +131,7 @@ spd
 special
 splitSideband
 spreadChannel
+switchingMirror
 
 tikhonov
 
@@ -141,6 +142,9 @@ weighted
 wmoTropopause
 
 # $Log$
+# Revision 2.38  2003/06/03 19:25:14  livesey
+# Added switchingMirror
+#
 # Revision 2.37  2003/05/29 20:01:39  livesey
 # Added reflectorTempModel
 #
