@@ -12,7 +12,7 @@ module WriteMetadata ! Populate metadata and write it out
   use MLSCommon, only: FileNameLen, NameLen, R8
   use MLSFiles, only: GetPCFromRef, mls_sfstart, mls_sfend, Split_path_name, &
    &  mls_hdf_version, HDFVERSION_5, mls_io_gen_openF
-  use MLSL2Options, only: PENALTY_FOR_NO_METADATA, CREATEMETADATA, &
+  use MLSL2Options, only: PENALTY_FOR_NO_METADATA, TOOLKIT, &
     & ILLEGALL1BRADID
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use MLSPCF2, only: Mlspcf_mcf_l2gp_end, Mlspcf_mcf_l2gp_start, &
@@ -766,7 +766,7 @@ contains
 
     module_error = 0
     if ( present(metadata_error)) metadata_error=1
-    if(.NOT. CREATEMETADATA) return
+    if(.NOT. TOOLKIT) return
 
     version = 1
     if ( mcf_file > 0 ) then
@@ -889,7 +889,7 @@ contains
 
     module_error = 0
     if ( present(metadata_error)) metadata_error=1
-    if(.NOT. CREATEMETADATA) return
+    if(.NOT. TOOLKIT) return
 
     version = 1
     if ( MCF_FILE > 0 ) then
@@ -1021,7 +1021,7 @@ contains
 	
     ! Begin
 
-    if(.NOT. CREATEMETADATA) then
+    if(.NOT. TOOLKIT) then
       mcf=0
       return
    endif
@@ -1199,7 +1199,7 @@ contains
     ! Begin
     module_error = 0
     if ( present(metadata_error)) metadata_error=1
-    if(.NOT. CREATEMETADATA) return
+    if(.NOT. TOOLKIT) return
 
     nullStr = ''
 
@@ -1515,6 +1515,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.44  2003/06/09 22:49:35  pwagner
+! Reduced everything (PCF, PUNISH.., etc.) to TOOLKIT
+!
 ! Revision 2.43  2003/05/30 23:50:32  pwagner
 ! Relies on lib/PCFHdr to know what mesg goes in InputPointer
 !
