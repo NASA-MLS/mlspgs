@@ -467,8 +467,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         ! Get s dimension
         noSgrid=state_los%template%noChans
         
-          Allocate( a_Trans(noSgrid, noMIFs, noFreqs))
-          
+          Allocate( a_Trans(noSgrid, noMIFs, noFreqs))          
           Allocate( Slevl(noSgrid))
 
           Slevl = state_los%template%frequencies
@@ -490,7 +489,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     call allocate_test ( vmrArray,                                           &
       & size(forwardModelConfig%molecules), noSurf,                          &
       & 'vmrArray', ModuleName )
-
+    vmrarray = 0._r8
     !---------------------------------------------------------
     ! Work out the closest instances from temperature
     !---------------------------------------------------------
@@ -501,7 +500,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     got = .false.
     do i = 1, size(forwardModelConfig%molecules)
       select case (forwardModelConfig%molecules(i))
-        case ( L_H2O, L_O3, L_N2O, L_HNO3, L_N2, L_O2)
+        case ( L_H2O, L_O3, L_N2O, L_HNO3, L_N2, L_O2 )
           got(forwardModelConfig%molecules(i)) = .true.
         case default
           cycle
@@ -527,11 +526,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       call MLSMessage(MLSMSG_Error, ModuleName,'Missing the required molecules')
     endif
      
-    if (.not. got(L_N2O) )  vmrArray(i,:) = 0._r8
-    if (.not. got(L_HNO3))  vmrArray(i,:) = 0._r8
-    if (.not. got(L_N2)  )  vmrArray(i,:) = 0._r8
-    if (.not. got(L_O2)  )  vmrArray(i,:) = 0._r8
-
     call allocate_test ( doChannel, noFreqs, 'doChannel', ModuleName )
     
     allocate ( zt(noMifs) )
@@ -1063,6 +1057,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.105  2003/01/17 00:52:05  jonathan
+! if specices missing, set VMR=0 accordingly
+!
 ! Revision 1.104  2003/01/16 18:39:41  pwagner
 ! Removed some unused variables
 !
