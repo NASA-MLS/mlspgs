@@ -106,6 +106,7 @@ contains
     integer :: ColumnScaling            ! one of l_apriori, l_covariance,
                                         ! l_none or l_norm
     integer, pointer, dimension(:) :: ConfigIndices    ! In ConfigDatabase
+    real(r8) :: Cosine                  ! Of an angle between two vectors
     type(matrix_SPD_T), pointer :: Covariance     ! covariance**(-1) of Apriori
     type(vector_T) :: CovarianceDiag    ! Diagonal of apriori Covariance
     type(vector_T) :: CovarianceXApriori ! Covariance \times Apriori
@@ -842,14 +843,18 @@ contains
                   if ( index(switches,'dvec') /= 0 ) &
                     & call dump ( candidateDX, name='CandidateDX' )
                   if ( index(switches,'sca') /= 0 ) then
-                    call dump ( (/ aj%dxn, aj%fnmin, &
-                      & aj%gdx/(aj%dxn*aj%gradn), aj%sq /), &
+                    cosine = -2.0_r8
+                    if ( aj%dxn > 0.0_r8 .and. aj%gradn > 0.0_r8 ) &
+                      cosine = aj%gdx/(aj%dxn*aj%gradn)
+                    call dump ( (/ aj%dxn, aj%fnmin, cosine, aj%sq /), &
                       & '    | DX |      aj%fnmin    ' // &
                       & 'cos(G, DX)        lambda', clean=.true. )
                     if ( .not. aj%starting ) then
                       call output ( ' cos(DX, DXL) = ' )
-                      call output ( aj%dxdxl / (aj%dxn*aj%dxnl), format='(1pe14.7)', &
-                        & advance='yes' )
+                      cosine = -2.0_r8
+                      if ( aj%dxdxl > 0.0_r8 .and. aj%dxnl > 0.0_r8 ) &
+                        cosine = aj%dxdxl / (aj%dxn*aj%dxnl)
+                      call output ( cosine, format='(1pe14.7)', advance='yes' )
                     ! call output ( ',  DX . DXL = ' )
                     ! call output ( aj%dxdxl, format='(1pe14.7)', advance='yes' )
                     end if
@@ -884,7 +889,10 @@ contains
                     call output ( aj%axmax, format='(1pe14.7)' )
                     if ( .not. aj%starting ) then
                       call output ( ' cos(DX, DXL) = ' )
-                      call output ( aj%dxdxl / (aj%dxn*aj%dxnl), format='(1pe14.7)' )
+                      cosine = -2.0_r8
+                      if ( aj%dxdxl > 0.0_r8 .and. aj%dxnl > 0.0_r8 ) &
+                        cosine = aj%dxdxl / (aj%dxn*aj%dxnl)
+                      call output ( cosine, format='(1pe14.7)' )
                     ! call output ( ', DX . DXL = ' )
                     ! call output ( aj%dxdxl, format='(1pe14.7)', advance='yes' )
                     end if
@@ -921,8 +929,10 @@ contains
                     call output ( ' aj%dxdx = ' )
                     call output ( aj%dxdx, format='(1pe14.7)' )
                     call output ( ', cos(DX, DXL) = ' )
-                    call output ( aj%dxdxl / (aj%dxn*aj%dxnl), &
-                      & format='(1pe14.7)', advance='yes' )
+                    cosine = -2.0_r8
+                    if ( aj%dxdxl > 0.0_r8 .and. aj%dxnl > 0.0_r8 ) &
+                      cosine = aj%dxdxl / (aj%dxn*aj%dxnl)
+                    call output ( cosine, format='(1pe14.7)', advance='yes' )
                   end if
               case ( nf_dx ) ! ..............................  DX  .....
                 call copyVector ( dx, candidateDX ) ! dx = candidateDX
@@ -1078,6 +1088,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.41  2001/06/20 21:44:33  vsnyder
+! Don't compute cosines between zero-length vectors
+!
 ! Revision 2.40  2001/06/01 22:26:03  vsnyder
 ! Got the row scaling backwards in the NF_EVALF
 !
