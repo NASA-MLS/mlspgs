@@ -1258,12 +1258,16 @@ contains ! =====     Public Procedures     =============================
         &  extra_Row = a%col%extra, extra_Col=a%col%extra )
     do j = 1, a%col%nb
       nullify ( mj )
-      if ( associated(a%col%vec%quantities(a%col%quant(j))%mask) ) &
-        mj => a%col%vec%quantities(a%col%quant(j))%mask(:,a%col%inst(j))
+      if ( .not. ( j == a%col%nb .and. a%col%extra ) ) then
+        if ( associated(a%col%vec%quantities(a%col%quant(j))%mask) ) &
+          mj => a%col%vec%quantities(a%col%quant(j))%mask(:,a%col%inst(j))
+      end if
       do i = 1, j
         nullify ( mi )
-        if ( associated(a%col%vec%quantities(a%col%quant(i))%mask) ) &
-          mi => a%col%vec%quantities(a%row%quant(i))%mask(:,a%row%inst(i))
+        if ( .not. ( i == a%col%nb .and. a%col%extra ) ) then
+          if ( associated(a%col%vec%quantities(a%col%quant(i))%mask) ) &
+            mi => a%col%vec%quantities(a%col%quant(i))%mask(:,a%row%inst(i))
+        end if
         do_update = my_update
         do k = 1, a%row%nb
           call multiplyMatrixBlocks ( &
@@ -1712,6 +1716,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.37  2001/05/18 22:28:11  vsnyder
+! Don't look for a mask in the extra column during NormalEquations
+!
 ! Revision 2.36  2001/05/17 20:19:20  vsnyder
 ! Implement GetMatrixElement.  Change handling of mask in NormalEquations.
 ! Don't scale the extra column/row if column/row scaling, but do scale
