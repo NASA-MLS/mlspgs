@@ -6,8 +6,7 @@ module LOAD_SPS_DATA_M
   use Units, only: Deg2Rad
   use ForwardModelConfig, only: FORWARDMODELCONFIG_T
   use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
-  USE INTRINSIC, ONLY: L_VMR, L_FREQUENCY, L_NONE, L_PHITAN
-! USE INTRINSIC, ONLY: L_VMR, L_FREQUENCY, L_NONE, L_PHITAN, L_DW, L_DN, L_DV
+  use intrinsic, only: L_VMR, L_NONE, L_PHITAN, L_INTERMEDIATEFREQUENCY
   use VectorsModule, only: Vector_T, VectorValue_T, GetVectorQuantityByType, &
                         &  M_FullDerivatives
   use Molecules, only: spec_tags, L_EXTINCTION
@@ -249,6 +248,9 @@ CONTAINS
       Grids_x%zet_basis(l:n-1) = f%template%surfs(1:kz,1)
       Grids_x%phi_basis(j:k-1) = f%template%phi(1,wf1:wf2)*Deg2Rad
       if ( associated ( f%template%frequencies ) ) then
+        if ( f%template%frequencyCoordinate /= l_intermediateFrequency ) &
+          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Unexpected frequency coordinate for quantity' )
         Grids_x%frq_basis(s:m-1) = f%template%frequencies
       else
         Grids_x%frq_basis(s:m-1) = 0.0
@@ -308,6 +310,9 @@ CONTAINS
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.22  2002/08/20 22:37:34  livesey
+! Minor change in handling of frequency coordinate
+!
 ! Revision 2.21  2002/07/08 17:45:41  zvi
 ! Updated spectroscopy handling
 !
