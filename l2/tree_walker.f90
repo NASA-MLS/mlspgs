@@ -126,8 +126,8 @@ subtrees: do while ( j <= howmany )
                 & qtyTemplates, vectorTemplates, vGrids, mifGeolocation )
             case ( z_fill )
               call MLSL2Fill ( son, l1bInfo, griddedData, vectorTemplates, &
-                & vectors, qtyTemplates, l2gpDatabase , l2auxDatabase, &
-                & chunks, chunkNo)
+                & vectors, qtyTemplates, matrices, l2gpDatabase , &
+                & l2auxDatabase, chunks, chunkNo)
             case ( z_join )
               call MLSL2Join ( son, vectors, l2gpDatabase, l2auxDatabase, chunkNo, chunks )
             case ( z_retrieve )
@@ -168,6 +168,10 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.29  2001/04/07 01:50:49  vsnyder
+! Move some of VGrid to lib/VGridsDatabase.  Move ForwardModelConfig_T and
+! some related stuff to fwdmdl/ForwardModelConfig.
+!
 ! Revision 2.28  2001/04/06 20:12:59  vsnyder
 ! Make 'call test_parse_signal' depend on 'emit' toggle
 !
