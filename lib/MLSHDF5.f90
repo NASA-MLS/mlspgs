@@ -39,6 +39,7 @@ module MLSHDF5
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
 
 ! === (start of toc) ===
@@ -1068,9 +1069,16 @@ contains ! ======================= Public Procedures =========================
     call h5tEqual_f(type1, type2, AreThe2TypesEqual, status)
     if (status /= 0 ) AreThe2TypesEqual = .false.
   end function AreThe2TypesEqual
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.10  2002/10/08 00:09:11  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.9  2002/10/04 22:22:52  pwagner
 ! Fixed bug in GetHDF5DSQType; can retrieve rank3 datasets
 !
