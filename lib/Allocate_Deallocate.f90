@@ -81,7 +81,7 @@ contains ! =====     Private Procedures     ============================
     if ( present(lowBound) ) my_low = lowBound
     allocate ( To_Allocate(my_low:dim1), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // Its_Name )
+      & MLSMSG_Allocate // Its_Name // bounds(1,dim1) )
   end subroutine Allocate_Test_Character_1d
   ! ---------------------------------  Allocate_Test_Character_2d  -----
   subroutine Allocate_Test_Character_2d ( To_Allocate, Dim1, Dim2, Its_Name, &
@@ -94,7 +94,7 @@ contains ! =====     Private Procedures     ============================
     call deallocate_Test ( To_Allocate, Its_Name, ModuleName )
     allocate ( To_Allocate(dim1,dim2), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // Its_Name )
+      & MLSMSG_Allocate // Its_Name // bounds(1,dim1,1,dim2) )
   end subroutine Allocate_Test_Character_2d
   ! ---------------------------------  Allocate_Test_Character_3d  -----
   subroutine Allocate_Test_Character_3d ( To_Allocate, Dim1, Dim2, Dim3, &
@@ -108,7 +108,7 @@ contains ! =====     Private Procedures     ============================
     call deallocate_Test ( To_Allocate, Its_Name, ModuleName )
     allocate ( To_Allocate(dim1,dim2,dim3), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // Its_Name )
+      & MLSMSG_Allocate // Its_Name // bounds(1,dim1,1,dim2,1,dim3) )
   end subroutine Allocate_Test_Character_3d
   ! ------------------------------------  Allocate_Test_RealR8_1d  -----
   subroutine Allocate_Test_RealR8_1d ( To_Allocate, Dim1, Its_Name, &
@@ -123,34 +123,45 @@ contains ! =====     Private Procedures     ============================
     if ( present(lowBound) ) my_low = lowBound
     allocate ( To_Allocate(my_low:dim1), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // Its_Name )
+      & MLSMSG_Allocate // Its_Name // bounds(my_low,dim1) )
   end subroutine Allocate_Test_RealR8_1d
   ! ------------------------------------  Allocate_Test_RealR8_2d  -----
   subroutine Allocate_Test_RealR8_2d ( To_Allocate, Dim1, Dim2, Its_Name, &
-    & ModuleName )
+    & ModuleName, Low1, Low2 )
     real (r8), pointer, dimension(:,:) :: To_Allocate
     integer, intent(in) :: Dim1    ! First dimension of To_Allocate
     integer, intent(in) :: Dim2    ! Second dimension of To_Allocate
     character(len=*), intent(in) :: Its_Name, ModuleName
+    integer, intent(in), optional :: Low1, Low2 ! Low bounds for dimensions
+    integer :: MyLow1, MyLow2
     integer :: STATUS
     call deallocate_Test ( To_Allocate, Its_Name, ModuleName )
-    allocate ( To_Allocate(dim1,dim2), stat=status )
+    myLow1 = 1; myLow2 = 1
+    if ( present(low1) ) myLow1 = low1
+    if ( present(low2) ) myLow2 = low2
+    allocate ( To_Allocate(myLow1:dim1,myLow2:dim2), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // Its_Name )
+      & MLSMSG_Allocate // Its_Name // bounds(myLow1,dim1,myLow2,dim2) )
   end subroutine Allocate_Test_RealR8_2d
   ! ------------------------------------  Allocate_Test_RealR8_3d  -----
   subroutine Allocate_Test_RealR8_3d ( To_Allocate, Dim1, Dim2, Dim3, &
-    & Its_Name, ModuleName )
+    & Its_Name, ModuleName, Low1, Low2, Low3 )
     real (r8), pointer, dimension(:,:,:) :: To_Allocate
     integer, intent(in) :: Dim1    ! First dimension of To_Allocate
     integer, intent(in) :: Dim2    ! Second dimension of To_Allocate
     integer, intent(in) :: Dim3    ! Third dimension of To_Allocate
     character(len=*), intent(in) :: Its_Name, ModuleName
+    integer, intent(in), optional :: Low1, Low2, Low3 ! Low bounds for dimensions
+    integer :: MyLow1, MyLow2, MyLow3
     integer :: STATUS
     call deallocate_Test ( To_Allocate, Its_Name, ModuleName )
-    allocate ( To_Allocate(dim1,dim2,dim3), stat=status )
+    myLow1 = 1; myLow2 = 1; myLow3 = 1
+    if ( present(low1) ) myLow1 = low1
+    if ( present(low2) ) myLow2 = low2
+    if ( present(low3) ) myLow3 = low3
+    allocate ( To_Allocate(myLow1:dim1,myLow2:dim2,myLow3:dim3), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // Its_Name )
+      & MLSMSG_Allocate // Its_Name // bounds(myLow1,dim1,myLow2,dim2,myLow3,dim3) )
   end subroutine Allocate_Test_RealR8_3d
   ! -----------------------------------  Allocate_Test_Integer_1d  -----
   subroutine Allocate_Test_Integer_1d ( To_Allocate, Dim1, Its_Name, &
@@ -165,7 +176,7 @@ contains ! =====     Private Procedures     ============================
     if ( present(lowBound) ) my_low = lowBound
     allocate ( To_Allocate(my_low:dim1), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // Its_Name )
+      & MLSMSG_Allocate // Its_Name // bounds(lowBound,dim1) )
   end subroutine Allocate_Test_Integer_1d
   ! -----------------------------------  Allocate_Test_Integer_2d  -----
   subroutine Allocate_Test_Integer_2d ( To_Allocate, Dim1, Dim2, Its_Name, &
@@ -178,7 +189,7 @@ contains ! =====     Private Procedures     ============================
     call deallocate_Test ( To_Allocate, Its_Name, ModuleName )
     allocate ( To_Allocate(dim1,dim2), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // Its_Name )
+      & MLSMSG_Allocate // Its_Name // bounds(1,dim1,1,dim2) )
   end subroutine Allocate_Test_Integer_2d
   ! -----------------------------------  Allocate_Test_Integer_3d  -----
   subroutine Allocate_Test_Integer_3d ( To_Allocate, Dim1, Dim2, Dim3, Its_Name, &
@@ -192,7 +203,7 @@ contains ! =====     Private Procedures     ============================
     call deallocate_Test ( To_Allocate, Its_Name, ModuleName )
     allocate ( To_Allocate(dim1,dim2,dim3), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // Its_Name )
+      & MLSMSG_Allocate // Its_Name // bounds(1,dim1,1,dim2,1,dim3) )
   end subroutine Allocate_Test_Integer_3d
   ! -----------------------------------  Allocate_Test_Logical_1d  -----
   subroutine Allocate_Test_Logical_1d ( To_Allocate, Dim1, Its_Name, &
@@ -207,20 +218,25 @@ contains ! =====     Private Procedures     ============================
     if ( present(lowBound) ) my_low = lowBound
     allocate ( To_Allocate(my_low:dim1), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // Its_Name )
+      & MLSMSG_Allocate // Its_Name // bounds(lowBound,dim1) )
   end subroutine Allocate_Test_Logical_1d
-  ! --------------------------------------  Allocate_Test_RealR4_2d  -----
+  ! -------------------------------------  Allocate_Test_Logical_2d  -----
   subroutine Allocate_Test_Logical_2d ( To_Allocate, Dim1, Dim2, Its_Name, &
-    & ModuleName )
+    & ModuleName, Low1, Low2 )
     logical, pointer, dimension(:,:) :: To_Allocate
     integer, intent(in) :: Dim1    ! First dimension of To_Allocate
     integer, intent(in) :: Dim2    ! Second dimension of To_Allocate
     character(len=*), intent(in) :: Its_Name, ModuleName
+    integer, intent(in), optional :: Low1, Low2 ! Low bounds for dimensions
+    integer :: MyLow1, MyLow2
     integer :: STATUS
     call deallocate_Test ( To_Allocate, Its_Name, ModuleName )
-    allocate ( To_Allocate(dim1,dim2), stat=status )
+    myLow1 = 1; myLow2 = 1
+    if ( present(low1) ) myLow1 = low1
+    if ( present(low2) ) myLow2 = low2
+    allocate ( To_Allocate(myLow1:dim1,myLow2:dim2), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // Its_Name )
+      & MLSMSG_Allocate // Its_Name // bounds(myLow1,dim1,myLow2,dim2) )
   end subroutine Allocate_Test_Logical_2d
   ! --------------------------------------  Allocate_Test_RealR4_1d  -----
   subroutine Allocate_Test_RealR4_1d ( To_Allocate, Dim1, Its_Name, ModuleName, &
@@ -235,34 +251,45 @@ contains ! =====     Private Procedures     ============================
     if ( present(lowBound) ) my_low = lowBound
     allocate ( To_Allocate(my_low:dim1), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // Its_Name )
+      & MLSMSG_Allocate // Its_Name // bounds(lowBound,dim1) )
   end subroutine Allocate_Test_RealR4_1d
   ! --------------------------------------  Allocate_Test_RealR4_2d  -----
   subroutine Allocate_Test_RealR4_2d ( To_Allocate, Dim1, Dim2, Its_Name, &
-    & ModuleName )
+    & ModuleName, Low1, Low2 )
     real (r4), pointer, dimension(:,:) :: To_Allocate
     integer, intent(in) :: Dim1    ! First dimension of To_Allocate
     integer, intent(in) :: Dim2    ! Second dimension of To_Allocate
     character(len=*), intent(in) :: Its_Name, ModuleName
+    integer, intent(in), optional :: Low1, Low2 ! Low bounds for dimensions
+    integer :: MyLow1, MyLow2
     integer :: STATUS
     call deallocate_Test ( To_Allocate, Its_Name, ModuleName )
-    allocate ( To_Allocate(dim1,dim2), stat=status )
+    myLow1 = 1; myLow2 = 1
+    if ( present(low1) ) myLow1 = low1
+    if ( present(low2) ) myLow2 = low2
+    allocate ( To_Allocate(myLow1:dim1,myLow2:dim2), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // Its_Name )
+      & MLSMSG_Allocate // Its_Name // bounds(myLow1,dim1,myLow2,dim2) )
   end subroutine Allocate_Test_RealR4_2d
   ! ------------------------------------  Allocate_Test_RealR4_3d  -----
   subroutine Allocate_Test_RealR4_3d ( To_Allocate, Dim1, Dim2, Dim3, &
-    & Its_Name, ModuleName )
+    & Its_Name, ModuleName, Low1, Low2, Low3 )
     real (r4), pointer, dimension(:,:,:) :: To_Allocate
     integer, intent(in) :: Dim1    ! First dimension of To_Allocate
     integer, intent(in) :: Dim2    ! Second dimension of To_Allocate
     integer, intent(in) :: Dim3    ! Third dimension of To_Allocate
     character(len=*), intent(in) :: Its_Name, ModuleName
+    integer, intent(in), optional :: Low1, Low2, Low3 ! Low bounds for dimensions
+    integer :: MyLow1, MyLow2, MyLow3
     integer :: STATUS
     call deallocate_Test ( To_Allocate, Its_Name, ModuleName )
-    allocate ( To_Allocate(dim1,dim2,dim3), stat=status )
+    myLow1 = 1; myLow2 = 1; myLow3 = 1
+    if ( present(low1) ) myLow1 = low1
+    if ( present(low2) ) myLow2 = low2
+    if ( present(low3) ) myLow3 = low3
+    allocate ( To_Allocate(myLow1:dim1,myLow2:dim2,myLow3:dim3), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // Its_Name )
+      & MLSMSG_Allocate // Its_Name // bounds(myLow1,dim1,myLow2,dim2,myLow3,dim3) )
   end subroutine Allocate_Test_RealR4_3d
   ! -------------------------------  Deallocate_Test_Character_1d  -----
   subroutine Deallocate_Test_Character_1d ( To_Deallocate, Its_Name, ModuleName )
@@ -503,12 +530,31 @@ contains ! =====     Private Procedures     ============================
     end if
   end subroutine Deallocate_Test_RealR4_3d
 
-  ! ----------------------------------  Set_garbage_collection  -----
+  ! ---------------------------------------  Set_garbage_collection  -----
   subroutine Set_garbage_collection ( setting )
     logical :: setting
     collect_garbage_each_time = setting
   end subroutine Set_garbage_collection
 
+  ! =====  Private Procedures  ===========================================
+  ! -------------------------------------------------------  Bounds  -----
+  character(127) function Bounds ( Low1, High1, Low2, High2, Low3, High3 )
+    integer, intent(in) :: Low1, High1
+    integer, intent(in), optional :: Low2, High2, Low3, High3
+    character(127) :: Temp
+    write ( bounds, '("(",i0,":",i0)' ) low1, high1
+    if ( present(low2) ) then
+      write ( temp, '(",",i0,":",i0)' ) low2, high2
+      bounds = trim(bounds) // temp
+    end if
+    if ( present(low3) ) then
+      write ( temp, '(",",i0,":",i0)' ) low3, high3
+      bounds = trim(bounds) // temp
+    end if
+    bounds = trim(bounds) // ')'
+  end function Bounds
+
+  ! ------------------------------------------------  Not_Used_Here  -----
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
@@ -516,6 +562,9 @@ contains ! =====     Private Procedures     ============================
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.13  2004/01/30 21:20:35  vsnyder
+! Add bounds to 'allocation failed' message
+!
 ! Revision 2.12  2004/01/24 01:01:05  livesey
 ! Nullify all pointers after deallocating.
 !
