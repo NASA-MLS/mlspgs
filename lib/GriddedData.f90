@@ -537,7 +537,7 @@ contains
     integer :: YEARNUMBER
 
     ! Indices and loop counters
-    integer :: I, C
+    integer :: C
     integer :: HEIGHT, LAT, LON, LST, SZA, DATE
     integer :: HEIGHTFAC, LATFAC, LONFAC, LSTFAC, SZAFAC, DATEFAC
     ! Indices of corner stuff
@@ -930,6 +930,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.32  2004/05/19 18:54:44  vsnyder
+! Remove declaration for unused variable
+!
 ! Revision 2.31  2003/12/16 01:13:47  livesey
 ! Changed name in trace call
 !
