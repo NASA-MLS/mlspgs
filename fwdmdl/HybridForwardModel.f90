@@ -131,6 +131,8 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine HybridForwardModel
 
+  ! ----------------------------------------------------------------------------
+
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
@@ -138,6 +140,9 @@ contains ! =====     Public Procedures     =============================
 end module HybridForwardModel_m
 
 ! $Log$
+! Revision 2.2  2003/08/13 00:47:49  livesey
+! Cosmetic change
+!
 ! Revision 2.1  2003/07/15 22:10:15  livesey
 ! First version
 !
