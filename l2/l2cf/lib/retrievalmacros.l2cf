@@ -154,34 +154,41 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
 !define(makeFwm,{!dnl
   $1: ForwardModel, type=full, $
     signals=$3, $
-    molecules = !molecules($2), $
-    moleculeDerivatives = !moleculeFamilies($2), $
+    phiWindow=4.0, $
+    molecules = !simplerMolecules($2), $
+    moleculeDerivatives = !simplerMoleculeFamilies($2), $
     integrationGrid=vGridTangent, $
     tangentGrid=vGridTangent, $
     /do_conv, /do_freq_avg, /atmos_der, /temp_der, /do_baseline
   $1_mono: ForwardModel, type=full, $
     signals=$3, $
-    molecules = !molecules($2), $
-    moleculeDerivatives = !moleculeFamilies($2), $
+    phiWindow=4.0, $
+    molecules = !simplerMolecules($2), $
+    moleculeDerivatives = !simplerMoleculeFamilies($2), $
     integrationGrid=vGridTangent, $
     tangentGrid=vGridTangent, $
     /do_conv, /atmos_der, /temp_der, /do_baseline
   $1_notd: ForwardModel, type=full, $
     signals=$3, $
-    molecules = !molecules($2), $
-    moleculeDerivatives = !moleculeFamilies($2), $
+    phiWindow=4.0, $
+    molecules = !simplerMolecules($2), $
+    moleculeDerivatives = !simplerMoleculeFamilies($2), $
     integrationGrid=vGridTangent, $
     tangentGrid=vGridTangent, $
     /do_conv, /do_freq_avg, /atmos_der, /do_baseline
   $1_mono_notd: ForwardModel, type=full, $
     signals=$3, $
-    molecules = !molecules($2), $
-    moleculeDerivatives = !moleculeFamilies($2), $
+    phiWindow=4.0, $
+    molecules = !simplerMolecules($2), $
+    moleculeDerivatives = !simplerMoleculeFamilies($2), $
     integrationGrid=vGridTangent, $
     tangentGrid=vGridTangent, $
     /do_conv, /atmos_der, /do_baseline})
 
 ; $Log$
+; Revision 1.23  2002/10/03 16:18:24  livesey
+; Changed temperaturePrecisionQuantity to tempPrecisionQuantity for Mark
+;
 ; Revision 1.22  2002/10/03 05:41:41  livesey
 ; Added baseline to forward models
 ;
