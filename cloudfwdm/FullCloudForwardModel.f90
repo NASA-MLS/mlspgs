@@ -549,6 +549,22 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 !     print*, 'about to assign cloud extinction values'   
 !     stop
 
+
+    cloudExtinction%values ( :, instance ) =                        &
+      & reshape ( transpose(a_cloudExtinction),                     &
+      & (/noLayers*noFreqs/) )
+
+    massMeanDiameterIce%values (:,instance)=                        &
+      &                                  a_massMeanDiameter(1,:)
+    massMeanDiameterWater%values(:, instance)=                      &
+      &                                  a_massMeanDiameter(2,:)
+
+    totalExtinction%values ( :, instance ) =                        &
+      & reshape ( transpose(a_totalExtinction),                     &
+      &         (/noLayers*noFreqs/) )
+
+
+
 !    cloudExtinction%values ( :, instance ) =                        &
 !      & reshape ( transpose(a_cloudExtinction),                     &
 !      & (/noLayers*noFreqs/) )
@@ -603,6 +619,9 @@ end module FullCloudForwardModel
 
 !
 ! $Log$
+! Revision 1.17  2001/07/27 22:12:13  jonathan
+! fixed bug in output extinction
+!
 ! Revision 1.16  2001/07/27 20:26:24  jonathan
 ! jonathan
 !
