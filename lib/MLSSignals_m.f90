@@ -80,6 +80,7 @@ module MLSSignals_M
   type, public :: SpectrometerType_T
     real(r8), pointer, dimension(:) :: Frequencies => NULL(), Widths => NULL()
     integer :: Name                     ! Sub_rosa index of declaration's label
+    integer :: Deferred                 ! size(Frequencies) if deferred
   end type SpectrometerType_T
 
   ! This is the key type; it describes a complete signal (one band, or a
@@ -94,8 +95,9 @@ module MLSSignals_M
     !                                   (This is for derived signals.  Every
     !                                   element is true for "real" signals).
 
-    integer :: Index                    ! Index into master signals database
     integer :: Band                     ! Index in Bands database
+    integer :: Deferred                 ! size(Frequencies) if deferred
+    integer :: Index                    ! Index into master signals database
     integer :: InstrumentModule         ! Index in Modules database
     integer :: Name                     ! Sub_rosa index of declaration's label
     integer :: PointingGrid = 0         ! Database index -- see PointingGrid_m
@@ -282,6 +284,7 @@ contains
         signal%instrumentModule = radiometers(signal%radiometer)%instrumentModule
         signal%spectrometerType = bands(signal%band)%spectrometerType
         signal%centerFrequency = bands(signal%band)%centerFrequency
+        signal%deferred = spectrometerTypes(signal%spectrometerType)%deferred
         ! For the wide filters, we specify frequency etc. here.
         if ( got(f_channels) ) then
           if ( error == 0 ) then
@@ -1010,6 +1013,9 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.20  2001/04/11 19:57:55  vsnyder
+! OOPS! More work on 'deferred' spectrometers
+!
 ! Revision 2.19  2001/04/11 19:54:00  vsnyder
 ! More work on 'deferred' spectrometers
 !
