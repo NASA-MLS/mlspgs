@@ -18,7 +18,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error, MLSMSG_Warning, MLSMSG_Debug
   use MLSStrings, only: Capitalize, ExtractSubString, GetStringHashElement, &
-    & ints2Strings, list2array, lowercase, strings2Ints
+    & ints2Strings, list2array, lowercase, strings2Ints, StringElementNum
   use OUTPUT_M, only: OUTPUT
   use PCFHdr, only: GA_VALUE_LENGTH
   use STRING_TABLE, only: DISPLAY_STRING
@@ -886,7 +886,7 @@ contains ! =====     Public Procedures     =============================
 
   subroutine ReadL2GPData_hdf5(L2FileHandle, swathname, l2gp, HMOT, &
     & numProfs, firstProf, lastProf, ReadStatus)
-  use HDFEOS5, only: HE5_swattach, HE5_swdetach, HE5_SWINQDIMS
+  use HDFEOS5, only: HE5_swattach, HE5_swdetach, HE5_SWINQDIMS, HE5_swfldinfo
   use MLSHDFEOS, only: mls_swdiminfo, mls_swrdfld
     !------------------------------------------------------------------------
 
@@ -920,6 +920,12 @@ contains ! =====     Public Procedures     =============================
     character (len=80) :: DF_Name
     character (len=80) :: DF_Precision
     character (LEN=80) :: list
+    character (LEN=80) :: dimlist
+    character (LEN=80) :: maxdimlist
+    character (LEN=8)  :: maxdimName
+    integer :: rank
+    integer, dimension(7) :: numberType
+    integer, dimension(7) :: flddims
     character (LEN=480) :: msr
 
     integer :: alloc_err, first, freq, lev, nDims, size, swid, status
@@ -943,7 +949,7 @@ contains ! =====     Public Procedures     =============================
     ReadingStatus = .false.
     if ( present(ReadStatus) ) ReadingStatus = ReadStatus
     ! Attach to the swath for reading
-    !print*," in readl2gpdata_hdf5: first/last=",firstprof,lastprof
+    ! print*," in readl2gpdata_hdf5: first/last=",firstprof,lastprof
     l2gp%Name = swathname
     
     ! print *, 'Trying to read he5_swattach to read'
@@ -968,7 +974,7 @@ contains ! =====     Public Procedures     =============================
     freq = 0
 
     nDims = HE5_SWinqdims(swid, list, dims)
-    !print*,"just called inqdims: nDims=",ndims,"list=",list,"dims=",dims
+    print*,"just called inqdims: nDims=",ndims,"list=",list,"dims=",dims
     if (nDims == -1) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
          &get dimension information on hdfeos5 swath ' // trim(swathname))
     if ( index(list,'nLevels') /= 0 ) lev = 1
@@ -982,9 +988,26 @@ contains ! =====     Public Procedures     =============================
     size = mls_swdiminfo(swid, 'nTimes', hdfVersion=HDFVERSION_5)
     ! This will be wrong if timeIsUnlim .eq. .TRUE. . 
     ! HE5_SWdiminfo returns 1 instead of the right answer.
-      
+    ! print *,"just called mls_swdiminfo(nTimes) : ", size
+    status = HE5_swfldinfo(swid, trim(DF_Name), rank, flddims, &
+      & numberType, dimlist, maxdimlist)
+   ! print *, 'rank: ', rank
+   ! print *, 'flddims: ', flddims(1:rank)
+   ! print *, 'numberType: ', numberType(1:rank)
+   ! print *, 'dimlist: ', dimlist
+   ! print *, 'maxdimlist: ', maxdimlist
+    call GetStringHashElement (dimlist, &
+     & maxdimlist, 'nTimes', &
+     & maxDimName, .false.)
+   ! print *, 'maxdimName: ', maxdimName
+    if ( maxDimName == 'Unlim' ) then
+      status = StringElementNum(dimlist, 'nTimes', .false.)
+     ! print *, 'elem num: ', status
+      if ( status > 0 .and. status <= rank ) size = max(size, flddims(status))
+    endif
     l2gp%nTimes = size
     nTimes=size
+    print*,"Now nTimes : ", size
 
     if (lev == 0) then
        nLevels = 0
@@ -2736,6 +2759,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.76  2003/08/28 23:51:03  livesey
+! Various bug fixes to the AppendL2GP stuff
+!
 ! Revision 2.75  2003/08/27 20:06:26  livesey
 ! Removed some print statements
 !
