@@ -50,13 +50,13 @@ contains
 
     real(rk), intent(in) :: T_script(:)          ! Called Delta B in some notes
     real(rk), intent(in) :: Sqrt_earth_ref
-    complex(rk), intent(in) :: Del_tau(:,:,:)    ! 2 x 2 x : = exp(del_opcty).
+    complex(rk), intent(in) :: Del_tau(:,:,:)    ! 2 x 2 x path = exp(del_opcty).
                                                  ! Called P in some notes and
-                                                 ! E in other notes.
-    complex(rk), intent(out) :: Prod(:,:,:)      ! 2 x 2 x :.  Called P in some
+                                                 ! E in other notes.  It's E here.
+    complex(rk), intent(out) :: Prod(:,:,:)      ! 2 x 2 x path.  Called P in some
                                                  ! notes.  Prod(:,:,I) is the
                                                  ! product of del_tau(:,:,:I).
-    complex(rk), intent(out) :: Tau(:,:,:)       ! 2 x 2 x :.  
+    complex(rk), intent(out) :: Tau(:,:,:)       ! 2 x 2 x path.  
                                                  ! Matmul(Prod,conjg(Prod)).
     complex(rk), intent(out) :: Radiance(2,2)    ! Sum(Delta B_i * matmul (
                                                  !  Prod(:,:,i), conjg(
@@ -80,25 +80,29 @@ contains
 
 ! Proceed with first segment integration
 
+! We use 1:2 instead of : for the first two dimensions of the arrays of
+! 2x2 matrices, in the hope that some compiler someday may be able to
+! use the information for optimization.
+
     i_tan = n_path / 2
     do i = 2, i_tan
-      prod(:,:,i) = matmul ( prod(:,:,i-1), del_tau(:,:,i) )
-      call updaterad ( radiance, t_script(i), prod(:,:,i), tau(:,:,i) )
+      prod(1:2,1:2,i) = matmul ( prod(1:2,1:2,i-1), del_tau(1:2,1:2,i) )
+      call updaterad ( radiance, t_script(i), prod(1:2,1:2,i), tau(1:2,1:2,i) )
     end do
 
 ! Tangent point (or Earth intersecting) layer.  If it's not
 ! an Earth intersecting layer, sqrt_earth_ref will be 1.0.
 
-    prod(:,:,i_tan+1) = sqrt_earth_ref * prod(:,:,i_tan)
+    prod(1:2,1:2,i_tan+1) = sqrt_earth_ref * prod(1:2,1:2,i_tan)
     call updaterad ( &
-      & radiance, t_script(i_tan+1), prod(:,:,i_tan+1), tau(:,:,i_tan+1) )
+      & radiance, t_script(i_tan+1), prod(1:2,1:2,i_tan+1), tau(1:2,1:2,i_tan+1) )
 
 ! Proceed with third segment integration, which includes the
 ! space radiance contribution.
 
     do i = i_tan+2, n_path
-      prod(:,:,i) = matmul ( prod(:,:,i-1) , del_tau(:,:,i-1) )
-      call updaterad ( radiance, t_script(i), prod(:,:,i), tau(:,:,i) )  
+      prod(1:2,1:2,i) = matmul ( prod(1:2,1:2,i-1) , del_tau(1:2,1:2,i-1) )
+      call updaterad ( radiance, t_script(i), prod(1:2,1:2,i), tau(1:2,1:2,i) )  
     end do                                                       
 
   contains
@@ -213,32 +217,48 @@ contains
     complex(rk), intent(out) :: D_Radiance(:,:,:) ! 2,2,sve
 
     integer :: i_p, i_sv, k
-    complex(rk) :: PINV(2,2)                ! P_{k+1}^{-1}
+    complex(rk) :: PDET                     ! Det(P_{k+1})
+    complex(rk) :: PINV(2,2,size(t_script)) ! P_{k+1}^{-1}
+    real(rk), parameter :: PTOL = (radix(0.0_rk)+0.0_rk) ** minexponent(0.0_rk)
+      ! PTOL = sqrt(tiny(0.0_rk))
     complex(rk) :: Q(2,2)
     complex(rk) :: Q_Tau(2,2)               ! Q x Tau
+    integer :: NP                           ! How many terms do we need in W?
     complex(rk) :: W(2,2)
+
+    ! Compute the P_{k+1}^{-1} matrices, but only up to where det(P_{k+1})
+    ! becomes small.  We can get away with this for two reasons.  First, we
+    ! use P_{k+1}^{-1} \tau_i to get \prod{j=k+1}^{i-1} E_j.  Second,
+    ! because |P| <= 1.0, a product of P's is smaller than any of them.
+
+    do np = 2, size(t_script)
+      pdet = prod(1,1,np)*prod(2,2,np) - prod(1,2,np)*prod(2,1,np)
+      if ( abs(pdet) <= ptol ) & ! getting too small
+    exit
+      pinv(:,:,np) = reshape( (/ prod(2,2,k+1), -prod(2,1,k+1), &
+                &               -prod(1,2,k+1), prod(1,1,k+1) /), (/2,2/) ) / &
+                &    pdet
+    end do
 
     d_radiance = 0.0_rk
     do i_sv = 1, size(d_radiance,3)      ! state vector elements
       do i_p = 1, size(t_script)         ! path elements
-        if ( do_calc(i_p,i_sv) ) then
+        if ( do_calc(i_p,i_sv) ) then    ! non-zero derivative D_E
           w = 0.0_rk
-          if ( do_calc(i_p,i_sv) ) then     ! non-zero derivative D_E
-            do k = 1, i_p-1
+          if ( any(tau(1:2,1:2,i_p) /= 0.0) ) then
+            do k = 1, min(np,i_p)-1
               ! w = w + P_k DE_k P_{k+1}^{-1}
-              pinv = reshape( (/ prod(2,2,k+1), -prod(2,1,k+1), &
-                &             -prod(1,2,k+1), prod(1,1,k+1) /), (/2,2/) ) / &
-                &   ( prod(1,1,k+1)*prod(2,2,k+1) - prod(1,2,k+1)*prod(2,1,k+1) )
-              w = w + matmul ( matmul ( prod(1:2,1:2,k), d_e(1:2,1:2,k,i_p) ), pinv )
-            end do
-            q(1,1) = 0.5 * d_t_script(k,i_p) + t_script(k) * w(1,1)
-            q(1,2) =                           t_script(k) * w(1,2)
-            q(2,1) =                           t_script(k) * w(2,2)
-            q(2,2) = 0.5 * d_t_script(k,i_p) + t_script(k) * w(2,2)
-            q_tau = matmul(q,tau(1:2,1:2,i_p))
-            d_radiance(1:2,1:2,i_sv) = d_radiance(1:2,1:2,i_sv) + &
-                                     &  q_tau + conjg(transpose(q_tau))
+              w = w + matmul ( matmul ( prod(1:2,1:2,k), d_e(1:2,1:2,k,i_sv) ), &
+                &              pinv(:,:,k+1) )
+            end do ! k = 1, i_p-1
           end if
+          q(1,1) = 0.5 * d_t_script(i_p,i_sv) + t_script(i_p) * w(1,1)
+          q(1,2) =                              t_script(i_p) * w(1,2)
+          q(2,1) =                              t_script(i_p) * w(2,2)
+          q(2,2) = 0.5 * d_t_script(i_p,i_sv) + t_script(i_p) * w(2,2)
+          q_tau = matmul(q,tau(1:2,1:2,i_p))
+          d_radiance(1:2,1:2,i_sv) = d_radiance(1:2,1:2,i_sv) + &
+                                   &   q_tau + conjg(transpose(q_tau))
         end if
       end do ! i_p
     end do ! i_sv
@@ -252,6 +272,9 @@ contains
 end module MCRT_m
 
 ! $Log$
+! Revision 2.4  2003/05/15 03:29:44  vsnyder
+! Implement polarized model's temperature derivatives
+!
 ! Revision 2.3  2003/05/10 01:05:07  livesey
 ! Typo!
 !
