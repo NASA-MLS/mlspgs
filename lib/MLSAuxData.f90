@@ -57,7 +57,8 @@ module MLSAuxData
   private
   public :: name_len, MLSAuxData_T, Create_MLSAuxData, Read_MLSAuxData, & 
    & Deallocate_MLSAuxData, Write_MLSAuxData, Read_MLSAuxAttributes, &
-   & Write_MLSAuxAttributes, CreateGroup_MLSAuxData, Allocate_MLSAuxData
+   & Write_MLSAuxAttributes, CreateGroup_MLSAuxData, Allocate_MLSAuxData, &
+   & Build_MLSAuxData, DataProducts_T
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
     "$Id$"
@@ -165,7 +166,22 @@ module MLSAuxData
     H5_ERROR_PROPERTY_CHUNK_GET  = 'HDF5 Error Getting Chunk Property '
   CHARACTER(len=*), PUBLIC, PARAMETER :: & 
     H5_ERROR_PROPERTY_CLOSE  = 'HDF5 Error Closing Property List '
-  
+
+  TYPE DataProducts_T
+     CHARACTER(len=18) :: name, data_type
+  END TYPE DataProducts_T
+
+interface Build_MLSAuxData
+  module procedure Build_MLSAuxData_Character
+  module procedure Build_MLSAuxData_Double, &
+       Build_MLSAuxData_Double_1d, Build_MLSAuxData_Double_2d, &
+       Build_MLSAuxData_Double_3d
+  module procedure Build_MLSAuxData_Real, Build_MLSAuxData_Real_1d, & 
+       Build_MLSAuxData_Real_2d, Build_MLSAuxData_Real_3d
+  module procedure Build_MLSAuxData_Integer, Build_MLSAuxData_Integer_1d, & 
+       Build_MLSAuxData_Integer_2d, Build_MLSAuxData_Integer_3d
+end interface
+
 contains ! ============================ MODULE PROCEDURES ====================
   !------------------------------------------------------- Allocate_MLSAuxData
  subroutine Allocate_MLSAuxData( name, data_type, dims, MLSData  )
@@ -291,7 +307,471 @@ contains ! ============================ MODULE PROCEDURES ====================
     endif
 
  end subroutine Deallocate_MLSAuxData
-!-----------------------------------------------------------
+  !------------------------------------------------------- Build_MLSAuxData
+ subroutine Build_MLSAuxData_Character( file_id, dataset, char_data, & 
+      noMAF, char_length)
+    type( DataProducts_T ), intent(in) :: dataset
+    character (len=*), intent(in) :: char_data
+    integer, intent(in) :: char_length, noMAF
+    integer(hid_t), intent(in) :: file_id
+
+    type( MLSAuxData_T ) :: MLSData
+    integer, dimension(3) :: dims
+    integer :: error
+
+    dims(1) = 1
+    dims(2) = 1
+    dims(3) = 1
+
+     call deallocate_mlsauxdata(MLSData)
+     call Allocate_MLSAuxData(trim(dataset%name),&
+          trim(dataset%data_type),dims,MLSData)
+      MLSData%CharField(1,1,1) = char_data
+     call Write_MLSAuxData(file_id, MLSData, error, noMAF, .false., & 
+          char_length)
+    if (error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
+       'Error Writing MLSAuxData for '// trim(dataset%name) ) 
+     call deallocate_mlsauxdata(MLSData)
+ end subroutine Build_MLSAuxData_Character
+!----------------------------------------------------------------------
+ subroutine Build_MLSAuxData_Integer( file_id, dataset, int_data, & 
+      noMAF)
+    type( DataProducts_T ), intent(in) :: dataset
+    integer, intent(in) :: int_data
+
+    integer, intent(in) :: noMAF
+    integer(hid_t), intent(in) :: file_id
+
+    type( MLSAuxData_T ) :: MLSData
+    integer, dimension(3) :: dims
+    integer :: error
+
+    dims(1) = 1
+    dims(2) = 1
+    dims(3) = 1
+
+     call deallocate_mlsauxdata(MLSData)
+     call Allocate_MLSAuxData(trim(dataset%name),& 
+          trim(dataset%data_type),dims,MLSData)
+     MLSData%IntField(1,1,1) = int_data
+     call Write_MLSAuxData(file_id, MLSData, error, noMAF)
+    if (error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
+       'Error Writing MLSAuxData for '// trim(dataset%name) ) 
+     call deallocate_mlsauxdata(MLSData)
+ end subroutine Build_MLSAuxData_Integer
+!-----------------------------------------------------------------------
+ subroutine Build_MLSAuxData_Real( file_id, dataset, real_data, noMAF)
+    type( DataProducts_T ), intent(inout) :: dataset
+    real, intent(in) :: real_data
+    integer, intent(in) :: noMAF
+    integer(hid_t), intent(in) :: file_id
+
+    type( MLSAuxData_T ) :: MLSData
+    integer, dimension(3) :: dims
+    integer :: error
+
+    dims(1) = 1
+    dims(2) = 1
+    dims(3) = 1
+
+     call deallocate_mlsauxdata(MLSData)
+     call Allocate_MLSAuxData(trim(dataset%name),& 
+          trim(dataset%data_type),dims,MLSData)
+     MLSData%RealField(1,1,1) = real_data
+     call Write_MLSAuxData(file_id, MLSData, error, noMAF)
+    if (error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
+       'Error Writing MLSAuxData for '// trim(dataset%name) ) 
+     call deallocate_mlsauxdata(MLSData)
+ end subroutine Build_MLSAuxData_Real
+!-----------------------------------------------------------------------
+ subroutine Build_MLSAuxData_Double( file_id, dataset, double_data, noMAF)
+    type( DataProducts_T ), intent(in) :: dataset
+    real(r8), intent(in) :: double_data
+    integer, intent(in) :: noMAF
+    integer(hid_t), intent(in) :: file_id
+
+    type( MLSAuxData_T ) :: MLSData
+    integer, dimension(3) :: dims
+    integer :: error
+
+    dims(1) = 1
+    dims(2) = 1
+    dims(3) = 1
+
+     call deallocate_mlsauxdata(MLSData)
+     call Allocate_MLSAuxData(trim(dataset%name),& 
+          trim(dataset%data_type),dims,MLSData)
+     MLSData%DpField(1,1,1) = double_data
+     call Write_MLSAuxData(file_id, MLSData, error, noMAF)
+    if (error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
+       'Error Writing MLSAuxData for '// trim(dataset%name) ) 
+     call deallocate_mlsauxdata(MLSData)
+ end subroutine Build_MLSAuxData_Double
+!-----------------------------------------------------------------------
+ subroutine Build_MLSAuxData_Real_1d( file_id, dataset, real_data, noMAF, &
+      dims)
+    type( DataProducts_T ), intent(in) :: dataset
+    real, dimension(:), intent(in) :: real_data
+    integer, dimension(3), intent(in), optional :: dims
+    integer, intent(in) :: noMAF
+    integer(hid_t), intent(in) :: file_id
+
+    type( MLSAuxData_T ) :: MLSData
+    integer, dimension(3) :: dim_array
+    integer :: i,error
+
+     if (present(dims) ) then        
+          do i=1,3
+             dim_array(i) = dims(i)
+          enddo
+     else
+          do i=1,3
+             dim_array(i) = 1
+          enddo
+        do i=1,size(shape(real_data))
+         dim_array(i) = size(real_data,i)
+        enddo
+     endif
+
+     call deallocate_mlsauxdata(MLSData)
+     call Allocate_MLSAuxData(trim(dataset%name),& 
+          trim(dataset%data_type),dim_array,MLSData)
+
+        do i = 1, dim_array(1)
+          MLSData%RealField(i,1,1) = real_data(i) 
+       enddo
+
+     call Write_MLSAuxData(file_id, MLSData, error, noMAF)
+    if (error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
+       'Error Writing MLSAuxData for '// trim(dataset%name) ) 
+     call deallocate_mlsauxdata(MLSData)
+ end subroutine Build_MLSAuxData_Real_1d
+!-----------------------------------------------------------------------
+ subroutine Build_MLSAuxData_Double_1d( file_id, dataset, double_data, noMAF, &
+      dims)
+    type( DataProducts_T ), intent(in) :: dataset
+    real(r8), dimension(:), intent(in) :: double_data
+    integer, dimension(3), intent(in), optional :: dims
+    integer, intent(in) :: noMAF
+    integer(hid_t), intent(in) :: file_id
+
+    type( MLSAuxData_T ) :: MLSData
+    integer, dimension(3) :: dim_array
+    integer :: i,error
+
+     if (present(dims) ) then        
+          do i=1,3
+             dim_array(i) = dims(i)
+          enddo
+     else
+          do i=1,3
+             dim_array(i) = 1
+          enddo
+        do i=1,size(shape(double_data))
+         dim_array(i) = size(double_data,i)
+        enddo
+     endif
+
+     call deallocate_mlsauxdata(MLSData)
+     call Allocate_MLSAuxData(trim(dataset%name),& 
+          trim(dataset%data_type),dim_array,MLSData)
+
+        do i = 1, dim_array(1)
+          MLSData%DpField(i,1,1) = double_data(i) 
+       enddo
+
+     call Write_MLSAuxData(file_id, MLSData, error, noMAF)
+    if (error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
+       'Error Writing MLSAuxData for '// trim(dataset%name) ) 
+     call deallocate_mlsauxdata(MLSData)
+ end subroutine Build_MLSAuxData_Double_1d
+!-----------------------------------------------------------------------
+ subroutine Build_MLSAuxData_Integer_1d( file_id, dataset, integer_data, &
+      noMAF, dims)
+    type( DataProducts_T ), intent(in) :: dataset
+    integer, dimension(:), intent(in) :: integer_data
+    integer, dimension(3), intent(in), optional :: dims
+    integer, intent(in) :: noMAF
+    integer(hid_t), intent(in) :: file_id
+
+    type( MLSAuxData_T ) :: MLSData
+    integer, dimension(3) :: dim_array
+    integer :: i,j,error
+
+     if (present(dims) ) then        
+          do i=1,3
+             dim_array(i) = dims(i)
+          enddo
+     else
+          do i=1,3
+             dim_array(i) = 1
+          enddo
+        do i=1,size(shape(integer_data))
+         dim_array(i) = size(integer_data,i)
+        enddo
+     endif
+
+     call deallocate_mlsauxdata(MLSData)
+     call Allocate_MLSAuxData(trim(dataset%name),& 
+          trim(dataset%data_type),dim_array,MLSData)
+
+        do i = 1, dim_array(1)
+          MLSData%IntField(i,1,1) = integer_data(i) 
+       enddo
+
+     call Write_MLSAuxData(file_id, MLSData, error, noMAF)
+    if (error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
+       'Error Writing MLSAuxData for '// trim(dataset%name) ) 
+     call deallocate_mlsauxdata(MLSData)
+ end subroutine Build_MLSAuxData_Integer_1d
+!-----------------------------------------------------------------------
+ subroutine Build_MLSAuxData_Real_2d( file_id, dataset, real_data, noMAF, &
+      dims)
+    type( DataProducts_T ), intent(in) :: dataset
+    real, dimension(:,:), intent(in) :: real_data
+    integer, dimension(3), intent(in), optional :: dims
+    integer, intent(in) :: noMAF
+    integer(hid_t), intent(in) :: file_id
+
+    type( MLSAuxData_T ) :: MLSData
+    integer, dimension(3) :: dim_array
+    integer :: i,j,k,error
+
+     if (present(dims) ) then        
+          do i=1,3
+             dim_array(i) = dims(i)
+          enddo
+     else
+          do i=1,3
+             dim_array(i) = 1
+          enddo
+        do i=1,size(shape(real_data))
+         dim_array(i) = size(real_data,i)
+        enddo
+     endif
+
+     call deallocate_mlsauxdata(MLSData)
+     call Allocate_MLSAuxData(trim(dataset%name),& 
+          trim(dataset%data_type),dim_array,MLSData)
+
+     do j = 1, dim_array(2)
+        do i = 1, dim_array(1)
+          MLSData%RealField(i,j,1) = real_data(i,j) 
+       enddo
+     enddo
+
+     call Write_MLSAuxData(file_id, MLSData, error, noMAF)
+    if (error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
+       'Error Writing MLSAuxData for '// trim(dataset%name) ) 
+     call deallocate_mlsauxdata(MLSData)
+ end subroutine Build_MLSAuxData_Real_2d
+!-----------------------------------------------------------------------
+ subroutine Build_MLSAuxData_Double_2d( file_id, dataset, double_data, noMAF, &
+      dims)
+    type( DataProducts_T ), intent(in) :: dataset
+    real(r8), dimension(:,:), intent(in) :: double_data
+    integer, dimension(3), intent(in), optional :: dims
+    integer, intent(in) :: noMAF
+    integer(hid_t), intent(in) :: file_id
+
+    type( MLSAuxData_T ) :: MLSData
+    integer, dimension(3) :: dim_array
+    integer :: i,j,error
+
+     if (present(dims) ) then 
+          do i=1,3
+             dim_array(i) = dims(i)
+          enddo
+     else
+          do i=1,3
+             dim_array(i) = 1
+          enddo
+        do i=1,size(shape(double_data))
+         dim_array(i) = size(double_data,i)
+        enddo
+     endif
+
+     call deallocate_mlsauxdata(MLSData)
+     call Allocate_MLSAuxData(trim(dataset%name),& 
+          trim(dataset%data_type),dim_array,MLSData)
+
+     do j = 1, dim_array(2)
+        do i = 1, dim_array(1)
+          MLSData%DpField(i,j,1) = double_data(i,j) 
+       enddo
+     enddo
+
+     call Write_MLSAuxData(file_id, MLSData, error, noMAF)
+    if (error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
+       'Error Writing MLSAuxData for '// trim(dataset%name) ) 
+     call deallocate_mlsauxdata(MLSData)
+ end subroutine Build_MLSAuxData_Double_2d
+!-----------------------------------------------------------------------
+ subroutine Build_MLSAuxData_Integer_2d( file_id, dataset, integer_data, &
+      noMAF, dims)
+    type( DataProducts_T ), intent(in) :: dataset
+    integer, dimension(:,:), intent(in) :: integer_data
+    integer, dimension(3), intent(in), optional :: dims
+    integer, intent(in) :: noMAF
+    integer(hid_t), intent(in) :: file_id
+
+    type( MLSAuxData_T ) :: MLSData
+    integer, dimension(3) :: dim_array
+    integer :: i,j,error
+
+     if (present(dims) ) then 
+          do i=1,3
+             dim_array(i) = dims(i)
+          enddo
+     else
+          do i=1,3
+             dim_array(i) = 1
+          enddo
+        do i=1,size(shape(integer_data))
+         dim_array(i) = size(integer_data,i)
+        enddo
+     endif
+
+     call deallocate_mlsauxdata(MLSData)
+     call Allocate_MLSAuxData(trim(dataset%name),& 
+          trim(dataset%data_type),dim_array,MLSData)
+
+      do j = 1, dim_array(2)
+        do i = 1, dim_array(1)
+          MLSData%IntField(i,j,1) = integer_data(i,j) 
+       enddo
+      enddo
+
+     call Write_MLSAuxData(file_id, MLSData, error)
+    if (error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
+       'Error Writing MLSAuxData for '// trim(dataset%name) ) 
+     call deallocate_mlsauxdata(MLSData)
+ end subroutine Build_MLSAuxData_Integer_2d
+!-----------------------------------------------------------------------
+ subroutine Build_MLSAuxData_Real_3d( file_id, dataset, real_data, &
+      dims)
+    type( DataProducts_T ), intent(in) :: dataset
+    real, dimension(:,:,:), intent(in) :: real_data
+    integer, dimension(3), intent(in), optional :: dims
+    integer(hid_t), intent(in) :: file_id
+
+    type( MLSAuxData_T ) :: MLSData
+    integer, dimension(3) :: dim_array
+    integer :: i,j,k,error
+
+     if (present(dims) ) then 
+          do i=1,3
+             dim_array(i) = dims(i)
+          enddo
+     else
+          do i=1,3
+             dim_array(i) = 1
+          enddo
+        do i=1,size(shape(real_data))
+         dim_array(i) = size(real_data,i)
+        enddo
+     endif
+
+     call deallocate_mlsauxdata(MLSData)
+     call Allocate_MLSAuxData(trim(dataset%name),& 
+          trim(dataset%data_type),dim_array,MLSData)
+
+     do k = 1, dim_array(3)
+      do j = 1, dim_array(2)
+        do i = 1, dim_array(1)
+          MLSData%RealField(i,j,k) = real_data(i,j,k) 
+       enddo
+      enddo
+     enddo
+
+     call Write_MLSAuxData(file_id, MLSData, error)
+    if (error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
+       'Error Writing MLSAuxData for '// trim(dataset%name) ) 
+     call deallocate_mlsauxdata(MLSData)
+ end subroutine Build_MLSAuxData_Real_3d
+!-----------------------------------------------------------------------
+ subroutine Build_MLSAuxData_Double_3d( file_id, dataset, double_data, &
+      dims)
+    type( DataProducts_T ), intent(in) :: dataset
+    real(r8), dimension(:,:,:), intent(in) :: double_data
+    integer, dimension(3), intent(in), optional :: dims
+    integer(hid_t), intent(in) :: file_id
+
+    type( MLSAuxData_T ) :: MLSData
+    integer, dimension(3) :: dim_array
+    integer :: i,j,k,error
+
+     if (present(dims) ) then 
+          do i=1,3
+             dim_array(i) = dims(i)
+          enddo
+     else
+          do i=1,3
+             dim_array(i) = 1
+          enddo
+        do i=1,size(shape(double_data))
+         dim_array(i) = size(double_data,i)
+        enddo
+     endif
+
+     call deallocate_mlsauxdata(MLSData)
+     call Allocate_MLSAuxData(trim(dataset%name),& 
+          trim(dataset%data_type),dim_array,MLSData)
+     do k = 1, dim_array(3)
+      do j = 1, dim_array(2)
+        do i = 1, dim_array(1)
+          MLSData%DpField(i,j,k) = double_data(i,j,k) 
+       enddo
+      enddo 
+     enddo
+
+     call Write_MLSAuxData(file_id, MLSData, error)
+    if (error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
+       'Error Writing MLSAuxData.' ) 
+     call deallocate_mlsauxdata(MLSData)
+ end subroutine Build_MLSAuxData_Double_3d
+!-----------------------------------------------------------------------
+ subroutine Build_MLSAuxData_Integer_3d(file_id,dataset,integer_data,dims)
+    type( DataProducts_T ), intent(in) :: dataset
+    integer, dimension(:,:,:), intent(in) :: integer_data
+    integer, dimension(3), intent(in), optional :: dims
+    integer(hid_t), intent(in) :: file_id
+
+    type( MLSAuxData_T ) :: MLSData
+    integer, dimension(3) :: dim_array
+    integer :: i,j,k,error
+
+     if (present(dims) ) then 
+          do i=1,3
+             dim_array(i) = dims(i)
+          enddo
+     else
+          do i=1,3
+             dim_array(i) = 1
+          enddo
+        do i=1,size(shape(integer_data))
+         dim_array(i) = size(integer_data,i)
+        enddo
+     endif
+
+     call deallocate_mlsauxdata(MLSData)
+     call Allocate_MLSAuxData(trim(dataset%name),& 
+          trim(dataset%data_type),dim_array,MLSData)
+
+     do k = 1, dim_array(3)
+      do j = 1, dim_array(2)
+        do i = 1, dim_array(1)
+          MLSData%IntField(i,j,k) = integer_data(i,j,k) 
+       enddo
+      enddo
+     enddo
+
+     call Write_MLSAuxData(file_id, MLSData, error)
+    if (error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
+       'Error Writing MLSAuxData.' ) 
+     call deallocate_mlsauxdata(MLSData)
+ end subroutine Build_MLSAuxData_Integer_3d
+!-----------------------------------------------------------------------
   subroutine CreateGroup_MLSAuxData(loc_id, group_name, subgroup_name)
 !
 ! External variables
@@ -1649,6 +2129,9 @@ contains ! ============================ MODULE PROCEDURES ====================
 end module MLSAuxData
 
 ! $Log$
+! Revision 2.15  2002/10/31 22:12:49  jdone
+! Added Build_MLSAuxData.
+!
 ! Revision 2.14  2002/10/24 03:19:00  jdone
 ! subroutine Allocate_MLSAuxData added.
 !
