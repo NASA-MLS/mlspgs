@@ -99,7 +99,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_INCLINATION         = f_hgrid + 1
   integer, parameter :: F_INTEGRATIONGRID     = f_inclination + 1
   integer, parameter :: F_INTEGRATIONTIME     = f_integrationGrid + 1
-  integer, parameter :: F_INTERPOLATIONFACTOR = f_integrationTime + 1
+  integer, parameter :: F_INTERPOLATE         = f_integrationTime + 1
+  integer, parameter :: F_INTERPOLATIONFACTOR = f_interpolate + 1
   integer, parameter :: F_JACOBIAN            = f_interpolationFactor + 1
   integer, parameter :: F_LAMBDA              = f_jacobian + 1
   integer, parameter :: F_LENGTH              = f_lambda + 1
@@ -439,6 +440,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_inclination) =         add_ident ( 'inclination' )
     field_indices(f_integrationGrid) =     add_ident ( 'integrationGrid' )
     field_indices(f_integrationTime) =     add_ident ( 'integrationTime' )
+    field_indices(f_interpolate) =         add_ident ( 'interpolate' )
     field_indices(f_interpolationFactor) = add_ident ( 'interpolationFactor' )
     field_indices(f_jacobian) =            add_ident ( 'jacobian' )
     field_indices(f_lambda) =              add_ident ( 'lambda' )
@@ -767,6 +769,7 @@ contains ! =====     Public procedures     =============================
       begin, s+s_fill, &    ! Must be AFTER s_vector, s_matrix and s_climatology
              begin, f+f_quantity, s+s_vector, f+f_template, f+f_quantities, &
                     nr+n_dot, &
+             begin, f+f_interpolate, t+t_boolean, n+n_field_type, &
 !            begin, f+f_matrix, s+s_matrix, n+n_field_spec, & !??? Not in fill yet ???
              begin, f+f_method, t+t_fillmethod, nr+n_field_type, &
              begin, f+f_sourceQuantity, s+s_vector, f+f_template, f+f_quantities, &
@@ -962,6 +965,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.107  2001/05/18 19:51:09  livesey
+! Added interpolate option for l2gp fills
+!
 ! Revision 2.106  2001/05/18 19:46:22  vsnyder
 ! Add secret 'fuzz' field to 'retrieve' command -- for testing
 !
