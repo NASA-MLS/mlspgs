@@ -10,9 +10,10 @@ program MLSL2
   use LEXER_M, only: CapIdentifiers
   use MACHINE ! At least HP for command lines, and maybe GETARG, too
   use MLSL2Options, only: PCF_FOR_INPUT, PCF, OUTPUT_PRINT_UNIT, &
-    & QUIT_ERROR_THRESHOLD, TOOLKIT, CREATEMETADATA, &
+    & QUIT_ERROR_THRESHOLD, TOOLKIT, CREATEMETADATA, CURRENT_VERSION_ID, &
     & PENALTY_FOR_NO_METADATA, PUNISH_FOR_INVALID_PCF, NORMAL_EXIT_STATUS, &
-    & GARBAGE_COLLECTION_BY_CHUNK
+    & GARBAGE_COLLECTION_BY_CHUNK, &
+    & DEFAULT_HDFVERSION_READ, DEFAULT_HDFVERSION_WRITE
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, &
     & ADD_TO_SECTION_TIMING, DUMP_SECTION_TIMINGS
   use MLSMessageModule, only: MLSMessage, MLSMessageConfig, MLSMSG_Debug, &
@@ -33,7 +34,7 @@ program MLSL2
   use TREE, only: ALLOCATE_TREE, DEALLOCATE_TREE, PRINT_SUBTREE
   use TREE_CHECKER, only: CHECK_TREE
   use TREE_WALKER, only: WALK_TREE_TO_DO_MLS_L2
-  use MATRIXMODULE_0, only :CHECKBLOCKS
+  use MATRIXMODULE_0, only: CHECKBLOCKS
 
   ! Main program for level 2 processing
   ! (It is assumed that mlsl1 has already been run successfully)
@@ -80,6 +81,7 @@ program MLSL2
 
   integer, parameter :: L2CF_UNIT = 20  ! Unit # if L2CF is opened by Fortran
 
+  character(len=255) :: command_line ! All the opts
   logical :: COPYARG               ! Copy this argument to parallel command line
   logical :: COUNTCHUNKS = .false. ! Just count the chunks and quit
   logical :: DO_DUMP = .false.     ! Dump declaration table
@@ -130,9 +132,11 @@ program MLSL2
   i = 1+hp
 
   !---------------- Task (3) ------------------
+  command_line = ' '
   do ! Process the command line options to set toggles
     copyArg = .true.
     call getarg ( i, line )
+    command_line = trim(command_line) // ' ' // trim(line)
     if ( line(1:4) == '-Wl,' ) then     ! skip Lahey/Fujitsu run-time options
       i = i + 1
       call NextPVMArg(trim(line)//' ')
@@ -203,6 +207,11 @@ program MLSL2
         snoopingActive = .true.
       else if ( line(3+n:5+n) == 'tk ' ) then
         toolkit = switch
+      else if ( line(3+n:10+n) == 'version ' ) then
+        do j=1, size(current_version_id)
+          print*, current_version_id(j)
+        enddo
+        stop
       else if ( line(3+n:7+n) == 'wall ' ) then
         use_wall_clock = switch
       else if ( line(3:) == ' ' ) then  ! "--" means "no more options"
@@ -212,7 +221,7 @@ program MLSL2
         exit
       else
         print *, 'unrecognized option ', trim(line), ' ignored.'
-        call usage
+        call option_usage
       end if
     else if ( line(1:1) == '-' ) then   ! "letter" options
       j = 1
@@ -244,7 +253,7 @@ program MLSL2
             end if
           end if
         case ( 'h', 'H', '?' )     ! Describe command line usage
-          call usage
+          call option_usage
         case ( 'K' ); capIdentifiers = .true.
         case ( 'k' ); capIdentifiers = .false.
         case ( 'l' ); toggle(lex) = .true.
@@ -270,7 +279,7 @@ program MLSL2
         case ( 'v' ); do_listing = .true.
         case default
           print *, 'Unrecognized option -', line(j:j), ' ignored.'
-          call usage
+          call option_usage
         end select
       end do
     else    
@@ -308,6 +317,9 @@ program MLSL2
       penalty_for_no_metadata = 0
    end if
 
+  if( index(switches, 'opt') /= 0 ) then
+    call dump_settings
+  endif
 ! Parse the L2CF, producing an abstract syntax tree
 
   !---------------- Task (4) ------------------
@@ -450,7 +462,7 @@ contains
     stop
   end subroutine switch_usage
 
-  subroutine Usage
+  subroutine option_usage
     call getarg ( 0+hp, line )
     print *, 'Usage: ', trim(line), ' [options] [--] [L2CF-name]'
     print *, ' Options:'
@@ -461,10 +473,78 @@ contains
     print *, '  -A: Dump the un-decorated abstract syntax tree.'
    ! === (end of automatic option lines) ===
     stop
-  end subroutine Usage
+  end subroutine option_usage
+
+  subroutine dump_settings
+  ! Show current run-time settings resulting from
+  ! command-line, MLSL2Options, etc.
+    call output(' mlsl2 called with command line options: ', advance='no')
+    call output(trim(command_line), advance='yes')
+    if( index(switches, 'opt1') /= 0 ) then                                 
+      call output(' -------------- Summary of run time options'      , advance='no')
+      call output(' -------------- ', advance='yes')
+      call output(' Use toolkit panoply:                            ', advance='no')
+      call blanks(4, advance='no')
+      call output(toolkit, advance='yes')
+      call output(' Use PCF file:                                   ', advance='no')
+      call blanks(4, advance='no')
+      call output(pcf, advance='yes')
+      call output(' Get l2cf from pcf:                              ', advance='no')
+      call blanks(4, advance='no')
+      call output(pcf_for_input, advance='yes')
+      call output(' Punish for errors in pcf:                       ', advance='no')
+      call blanks(4, advance='no')
+      call output(punish_for_invalid_pcf, advance='yes')
+      call output(' Create metadata for each output file:           ', advance='no')
+      call blanks(4, advance='no')
+      call output(createMetadata, advance='yes')
+      call output(' Punish for metadata creation errors:            ', advance='no')
+      call blanks(5, advance='no')
+      call output(penalty_for_no_metadata, advance='yes')
+      call output(' Error threshold before halting:                 ', advance='no')
+      call blanks(5, advance='no')
+      call output(quit_error_threshold, advance='yes')
+      call output(' Status on normal exit:                          ', advance='no')
+      call blanks(5, advance='no')
+      call output(normal_exit_status, advance='yes')
+      call output(' Default hdf version on reads:                   ', advance='no')
+      call blanks(5, advance='no')
+      call output(default_hdfversion_read, advance='yes')
+      call output(' Default hdf version on writes:                  ', advance='no')
+      call blanks(5, advance='no')
+      call output(default_hdfversion_write, advance='yes')
+      call output(' Manually collect garbage after each chunk:      ', advance='no')
+      call blanks(4, advance='no')
+      call output(garbage_collection_by_chunk, advance='yes')
+      call output(' Manually collect garbage after each deallocate: ', advance='no')
+      call blanks(4, advance='no')
+      call output(garbage_collection_by_dt, advance='yes')
+      call output(' Is this the master task in pvm?:                ', advance='no')
+      call blanks(4, advance='no')
+      call output(parallel%master, advance='yes')
+      call output(' Is this a slave task in pvm?:                   ', advance='no')
+      call blanks(4, advance='no')
+      call output(parallel%slave, advance='yes')
+      call output(' Using wall clock instead of cpu time?:          ', advance='no')
+      call blanks(4, advance='no')
+      call output(use_wall_clock, advance='yes')
+      call output(' Standard output unit:                           ', advance='no')
+      call blanks(4, advance='no')
+      call output(PrUnit, advance='yes')
+      call output(' Log file unit:                                  ', advance='no')
+      call blanks(4, advance='no')
+      call output(MLSMessageConfig%LogFileUnit, advance='yes')
+      call output(' ----------------------------------------------------------', &
+        & advance='yes')
+    endif
+  end subroutine dump_settings
+
 end program MLSL2
 
 ! $Log$
+! Revision 2.67  2002/02/12 00:25:00  pwagner
+! New switch -opt[n] and new --version option
+!
 ! Revision 2.66  2002/02/05 00:44:03  pwagner
 ! Added garbage collection stuff
 !
