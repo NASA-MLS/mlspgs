@@ -297,7 +297,7 @@ begin Fill
   Fill, quantity=hReg.ho2,   method=profile, profileValues=[ 100mb:10ppbv ]
   Fill, quantity=hReg.hocl,  method=profile, profileValues=[ 100mb:0.3ppbv ]
   Fill, quantity=hReg.n2o,   method=profile, profileValues=[ 100mb:10ppbv ]
-  Fill, quantity=hReg.o3,    method=profile, profileValues=[ 100mb:0.3ppmv ]
+  Fill, quantity=hReg.o3,    method=profile, profileValues=[ 146mb:30ppbv, 100mb:0.3ppmv ]
   Fill, quantity=hReg.oh,    method=profile, profileValues=[ 10mb:30pptv, 1mb:300pptv ]
 
   Fill, quantity=hReg.extinctionShapedR1A, method=profile, $
