@@ -991,7 +991,7 @@ contains
 
   ! ----------------------------------------  Get_GL_Slabs_Arrays  -----
   subroutine Get_GL_Slabs_Arrays ( Catalog,p_path,t_path,vel_z,gl_slabs, &
-                             &     no_ele,dt )
+                             &     no_ele, dt, Do_1D )
 
     use Units, only: SpeedOfLight
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
@@ -1016,6 +1016,8 @@ contains
     integer :: nl,i,j,n_sps,spectag
 
     real(rp) :: mass, vel_z_correction, Qlog(3)
+
+    Logical :: Do_1D
 
 ! Begin code:
 
@@ -1059,6 +1061,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.11  2003/01/10 21:55:26  vsnyder
+! Move SpeedOfLight from Geometry ot Units
+!
 ! Revision 2.10  2002/12/20 20:22:59  vsnyder
 ! Cosmetic changes
 !

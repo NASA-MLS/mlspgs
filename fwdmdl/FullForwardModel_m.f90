@@ -1527,16 +1527,16 @@ contains
         del_temp = 0.0_rp
         call get_gl_slabs_arrays ( my_Catalog, p_path(1:no_ele), &
           &  t_path(1:no_ele), 0.001*losVel%values(1,maf), gl_slabs, &
-          &  no_ele, del_temp )
+          &  no_ele, del_temp, fwdModelConf%Do_1D )
 
         if ( temp_der ) then
           del_temp = 10.0_rp
           call get_gl_slabs_arrays ( my_Catalog, p_path(1:no_ele), &
             &  t_path(1:no_ele), 0.001*losVel%values(1,maf), gl_slabs_p, &
-            &  no_ele, del_temp )
+            &  no_ele, del_temp, fwdModelConf%Do_1D )
           call get_gl_slabs_arrays ( my_Catalog, p_path(1:no_ele), &
             &  t_path(1:no_ele), 0.001*losVel%values(1,maf), gl_slabs_m, &
-            &  no_ele, -del_temp )
+            &  no_ele, -del_temp, fwdModelConf%Do_1D )
         end if
 
         ! Work out what frequencies we're using for --------------------------
@@ -2411,6 +2411,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.104  2003/01/14 21:48:58  jonathan
+! add i_saturation
+!
 ! Revision 2.103  2003/01/10 21:55:26  vsnyder
 ! Move SpeedOfLight from Geometry ot Units
 !
