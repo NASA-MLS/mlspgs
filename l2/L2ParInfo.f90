@@ -11,7 +11,7 @@ module L2ParInfo
   use PVMIDL, only: PVMIDLPACK
   use VectorsModule, only: VECTORVALUE_T
   use QuantityPVM, only: PVMSENDQUANTITY
-  use MLSStrings, only: DOWNCASE
+  use MLSStrings, only: LowerCase
 
   implicit none
   private
@@ -137,7 +137,7 @@ contains ! ==================================================================
 
     ! Executable code
     write ( GetNiceTidString, '(z0)' ) tid
-    GetNiceTidString = '[t'//trim(downcase ( GetNiceTidString ))//']'
+    GetNiceTidString = '[t'//trim(LowerCase ( GetNiceTidString ))//']'
   end function GetNiceTidString
 
 end module L2ParInfo
