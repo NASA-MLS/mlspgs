@@ -4,7 +4,7 @@
 module MatrixTools                      ! Various tools for matrices
 
   ! This module provides some tools for dealing matrices not already present in
-  ! MatrixModule_0 and MatrixModule_1.  In particular the DumpBlock subroutine.
+  ! MatrixModule_0 and MatrixModule_1.  In particular the DumpBlocks subroutine.
 
   use PVM, only: PVMDATADEFAULT, PVMFINITSEND, PVMFSEND, PVMERRORMESSAGE
   use PVMIDL, only: PVMIDLPACK
@@ -53,6 +53,7 @@ contains ! =====  Public procedures  ===================================
     use MoreTree, only: GET_BOOLEAN, GET_FIELD_ID
     use Output_M, only: NewLine, OUTPUT
     use String_Table, only: DISPLAY_STRING
+    use Toggles, only: Switches
     use Tree, only: NSONS, SUBTREE, DECORATION
 
     ! Dummy arguments
@@ -81,6 +82,9 @@ contains ! =====  Public procedures  ===================================
     type (Matrix_T), pointer :: MATRIX  ! The matrix to dump
 
     ! Executable code
+
+    ! Don't do it if the "nodb" switch is set.
+    if ( index(switches, 'nodb') /= 0 ) return
 
     ! Set defaults
     rowChannelsNode = 0
@@ -520,6 +524,14 @@ o:      do colInstance = 1, colQ%template%noInstances
 end module MatrixTools
 
 ! $Log$
+! Revision 1.11  2003/10/07 01:17:36  vsnyder
+! DumpBlocks now dumps the blocks specified by the Cartesian product of the
+! rowQuantity and colQuantity fields.  If the rowChannels, colChannels,
+! rowSurfaces, colSurfaces, rowInstances or colInstances fields are specified,
+! they are used for all blocks.  If this is not what is desired, use a separate
+! DumpBlocks command for each block.  If the noAbsent field is set, it does
+! not dump absent blocks.
+!
 ! Revision 1.10  2003/08/15 20:28:05  vsnyder
 ! Put a new line after 'with Y rows and X columns' for absent blocks
 !
