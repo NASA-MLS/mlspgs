@@ -72,6 +72,7 @@ contains ! =====     Public Procedures     =============================
     type (MLSChunk_T), dimension(:), intent(in) :: chunks
 
     ! Local variables
+    logical :: CompareOverlaps
     integer :: FIELD                    ! Subtree index of "field" node
     integer :: FIELD_INDEX              ! F_..., see Init_Tables_Module
     logical :: GOT_FIELD(field_first:field_last)
@@ -79,20 +80,20 @@ contains ! =====     Public Procedures     =============================
     integer :: KEY                      ! Index of an L2GP or L2AUX tree
     integer :: KEYNO                    ! Index of subtree of KEY
     integer :: KSTARINDEX               ! Matrix index
-    integer :: mlscfLine
+    integer :: MLSCFLine
+    logical :: OutputOverlaps
+    type (VectorValue_T), pointer :: Quantity
     integer :: NAME                     ! Sub-rosa index of name of L2GP or L2AUX
-    integer :: SWATHNAME                ! Name index
     integer :: SDNAME                   ! Name index
     integer :: SON                      ! A son of ROOT
     integer :: SOURCE                   ! Index in AST
     integer :: STATUS                   ! Flag
+    integer :: SWATHNAME                ! Name index
     integer :: VALUE                    ! Value of a field
     integer :: VECTORINDEX, QUANTITYINDEX
     integer :: XSTARINDEX               ! Vector index
     integer :: YSTARINDEX               ! Vector index
-    type (VectorValue_T), pointer :: quantity
-    logical :: compareOverlaps, outputOverlaps
-    REAL :: T1, T2     ! for timing
+    real :: T1, T2     ! for timing
     logical :: TIMING
 
     ! Executable code
@@ -262,15 +263,15 @@ contains ! =====     Public Procedures     =============================
 
     ! Local variables
 
-    integer :: status,profNo,freqNo
-    type (L2GPData_T) :: newL2GP
-    type (L2GPData_T), pointer :: thisL2GP
-    integer :: index
-    integer :: firstProfile,lastProfile ! Profile range in the l2gp to output to
-    integer :: noSurfsInL2GP,noFreqsInL2GP
-    integer :: useFirstInstance,useLastInstance,noOutputInstances
-    logical :: l2gpDataIsNew
-    real(r8), dimension(:,:), pointer :: values
+    integer :: FreqNo, ProfNo, Status
+    type (L2GPData_T) :: NewL2GP
+    type (L2GPData_T), pointer :: ThisL2GP
+    integer :: Index
+    integer :: FirstProfile, LastProfile ! Profile range in the l2gp to output to
+    integer :: NoSurfsInL2GP, NoFreqsInL2GP
+    integer :: UseFirstInstance, UseLastInstance, NoOutputInstances
+    logical :: L2gpDataIsNew
+!   real(r8), dimension(:,:), pointer :: Values !??? Not used ???
     
     if ( toggle(gen) ) call trace_begin ( "JoinL2GPQuantities", key )
 
@@ -403,19 +404,19 @@ contains ! =====     Public Procedures     =============================
 
     ! Local variables
 
-    integer ::                              status, profNo
-    integer ::                              useFirstInstance, useLastInstance, &
-    &                                          noOutputInstances
-    type (L2AUXData_T) ::                   newL2AUX
-    type (L2AUXData_T), pointer ::          thisL2AUX
-    logical ::                              l2auxDataIsNew
-    integer, dimension(3) ::                dimensionFamilies, dimensionSizes
-    integer ::                              auxFamily     ! Channel or Frequency
-    integer ::                              dimensionIndex,channel,surf,prof, &
-    &                                         noMAFs,index, InstanceNo
-    integer ::                              firstProfile,lastProfile
-    real(r8), dimension(:,:), pointer ::    values
-    INTEGER                              :: IERR
+    integer ::                           Status, ProfNo
+    integer ::                           UseFirstInstance, UseLastInstance, &
+    &                                    NoOutputInstances
+    type (L2AUXData_T) ::                NewL2AUX
+    type (L2AUXData_T), pointer ::       ThisL2AUX
+    logical ::                           L2auxDataIsNew
+    integer, dimension(3) ::             DimensionFamilies, DimensionSizes
+    integer ::                           AuxFamily     ! Channel or Frequency
+    integer ::                           DimensionIndex, Channel, Surf, Prof, &
+    &                                    NoMAFs,index, InstanceNo
+    integer ::                           FirstProfile, LastProfile
+!   real(r8), dimension(:,:), pointer :: values !??? Not used ???
+    integer ::                           IERR
 
     ! Executable code
 
@@ -597,6 +598,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.33  2001/05/03 20:32:19  vsnyder
+! Cosmetic changes
+!
 ! Revision 2.32  2001/05/02 22:22:43  pwagner
 ! Removed SDPToolkit use
 !
