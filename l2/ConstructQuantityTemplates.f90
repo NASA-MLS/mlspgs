@@ -1073,6 +1073,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.85  2003/02/07 03:38:05  vsnyder
+! Cosmetic change
+!
 ! Revision 2.84  2003/02/07 00:41:41  livesey
 ! Bug fix/workaround
 !
@@ -1132,7 +1135,9 @@ end module ConstructQuantityTemplates
 ! Added phiTan as a state vector element
 !
 ! Revision 2.65  2002/05/22 19:06:32  jonathan
-! added units for cloudextinction(m-1), totalextinction(m-1), and massmeandiameterice(micron m) as dimentionless for now, may define more clear later
+! added units for cloudextinction(m-1), totalextinction(m-1), and
+! massmeandiameterice(micron m) as dimentionless for now, may define
+! more clear later
 !
 ! Revision 2.64  2002/05/14 00:27:42  livesey
 ! New code for system temperatures and noise bandwidths
