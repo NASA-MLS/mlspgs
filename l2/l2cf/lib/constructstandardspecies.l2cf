@@ -78,6 +78,7 @@ begin Construct
   
   ;; ----------------------------------------- Columns
   tpPressure: Quantity, type=boundaryPressure, hGrid=hGridStandard
+  oneHundredHPa: Quantity, type=boundaryPressure, hGrid=hGridStandard
   !define(constructColumn,{column_$1: Quantity, type=columnAbundance, $
     molecule=$1, hGrid=hGridStandard!nl})
 
@@ -230,6 +231,7 @@ begin Construct
 
   ;; ----------------------------------------- System temperatures
 
+  !ifdef(flagSIDS,{!dnl
   !define(constructSystemTemperature, {systemTemperature$1: Quantity, $
     type=systemTemperature, signal=!signal($1)!nl})
   
@@ -243,9 +245,11 @@ begin Construct
   !define(allLSBSystemTemperatures, {!makelist({systemTemperature},{},!allBandLSBs)})
   !define(allUSBSystemTemperatures, {!makelist({systemTemperature},{},!allBandUSBs)})
   !define(allUnfoldedSystemTemperatures, {!allLSBSystemTemperatures, !allUSBSystemTemperatures})
+  })
 
   ;; ----------------------------------------- Noise bandwidths
 
+  !ifdef(flagSIDS,{!dnl
   !define(constructNoiseBandwidth, {noiseBandwidth$1: Quantity, $
     type=noiseBandwidth, signal=!signal($1)!nl})
   
@@ -259,6 +263,7 @@ begin Construct
   !define(allLSBNoiseBandwidths, {!makelist({noiseBandwidth},{},!allBandLSBs)})
   !define(allUSBNoiseBandwidths, {!makelist({noiseBandwidth},{},!allBandUSBs)})
   !define(allUnfoldedNoiseBandwidths, {!allLSBNoiseBandwidths, !allUSBNoiseBandwidths})
+  })
 
   ;; ----------------------------------------- ChiSquares
 
@@ -397,7 +402,7 @@ begin Construct
     ptanGHZ, ptanTHz, phitanGHz, phitanTHz, $
     temperature, temperature_HR, $
     refGPH, GPH, GPH_HR, $
-    tpPressure, $
+    tpPressure, oneHundredHPa, $
     iwc, iwcFine, lwc, surfaceType, psd, earthRadius, $
     trans, cext, cextFine, $
     massMeanDiameterIce, massMeanDiameterWater, $
@@ -409,11 +414,9 @@ begin Construct
     !allExtinctions, $
     !allIsotopeRatios, $
     !allSidebandFractions, $
-    !allFoldedSystemTemperatures, $
-    !allUnfoldedSystemTemperatures, $
-    !allFoldedNoiseBandwidths, $
-    !allUnfoldedNoiseBandwidths, $
-    !allElevs, !ifdef(flagSkipLossTerms,{},{!allAntennaLossTerms, }) $
+    !ifdef(flagSIDS,{!allFoldedSystemTemperatures, !allUnfoldedSystemTemperatures, $
+    !allFoldedNoiseBandwidths, !allUnfoldedNoiseBandwidths,}) !allElevs, $
+    !ifdef(flagSkipLossTerms,{},{!allAntennaLossTerms, }) $
     !lesserState ]
 
   measurementTemplate: VectorTemplate, quantities = [ $
