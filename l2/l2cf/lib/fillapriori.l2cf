@@ -228,6 +228,12 @@ begin Fill
       215mb : 20K, 147mb : 10K, 100mb : 5.0K ] !nl})
   !forall({fillBaselineApriori},!allRadiometers)
 
+  !define(fillBaselineFineApriori,{
+  Fill, quantity=aprioriPrecision.baselineFine$1, method=profile, profileValues = $
+    [ 1000mb: 80K, 464mb : 50K, 316mb : 30K, $
+      215mb : 20K, 147mb : 10K, 100mb : 5.0K ] !nl})
+  !forall({fillBaselineFineApriori},!allRadiometers)
+
   ;; --------------------------------------- Bounds for species
 
   Fill, quantity=lowBound.temperature, method=explicit, explicitValues=50K, /spread
@@ -254,6 +260,14 @@ begin Fill
   Fill, quantity=vReg.baselineR4,  method=profile, profileValues=[146mb:0K, 100mb:5K ]
   Fill, quantity=vReg.baselineR5H, method=profile, profileValues=[146mb:0K, 100mb:5K ]
   Fill, quantity=vReg.baselineR5V, method=profile, profileValues=[146mb:0K, 100mb:5K ]
+
+  Fill, quantity=vReg.baselineFineR1A, method=profile, profileValues=[146mb:0K, 100mb:5K ]
+  Fill, quantity=vReg.baselineFineR1B, method=profile, profileValues=[146mb:0K, 100mb:5K ]
+  Fill, quantity=vReg.baselineFineR2,  method=profile, profileValues=[146mb:0K, 100mb:5K ]
+  Fill, quantity=vReg.baselineFineR3,  method=profile, profileValues=[146mb:0K, 100mb:5K ]
+  Fill, quantity=vReg.baselineFineR4,  method=profile, profileValues=[146mb:0K, 100mb:5K ]
+  Fill, quantity=vReg.baselineFineR5H, method=profile, profileValues=[146mb:0K, 100mb:5K ]
+  Fill, quantity=vReg.baselineFineR5V, method=profile, profileValues=[146mb:0K, 100mb:5K ]
 
   Fill, quantity=vReg.bro, method=profile, $
     profileValues= [ 1mb:0.1ppbv, 0.68mb:0ppbv ]
@@ -305,6 +319,14 @@ begin Fill
   Fill, quantity=hReg.baselineR4,  method=profile, profileValues=[146mb:0K, 100mb:5K ]
   Fill, quantity=hReg.baselineR5H, method=profile, profileValues=[146mb:0K, 100mb:5K ]
   Fill, quantity=hReg.baselineR5V, method=profile, profileValues=[146mb:0K, 100mb:5K ]
+
+  Fill, quantity=hReg.baselineFineR1A, method=profile, profileValues=[146mb:0K, 100mb:5K ]
+  Fill, quantity=hReg.baselineFineR1B, method=profile, profileValues=[146mb:0K, 100mb:5K ]
+  Fill, quantity=hReg.baselineFineR2,  method=profile, profileValues=[146mb:0K, 100mb:5K ]
+  Fill, quantity=hReg.baselineFineR3,  method=profile, profileValues=[146mb:0K, 100mb:5K ]
+  Fill, quantity=hReg.baselineFineR4,  method=profile, profileValues=[146mb:0K, 100mb:5K ]
+  Fill, quantity=hReg.baselineFineR5H, method=profile, profileValues=[146mb:0K, 100mb:5K ]
+  Fill, quantity=hReg.baselineFineR5V, method=profile, profileValues=[146mb:0K, 100mb:5K ]
 
   Fill, quantity=hReg.bro, method=profile, $
     profileValues= [  1mb:0.3ppbv, 0.68mb:0ppbv ]
