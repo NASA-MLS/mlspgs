@@ -5204,9 +5204,36 @@ contains ! =====     Public Procedures     =============================
 
     ! ----------------------------------- FillQuantityFromASCIIFile --------
     subroutine FillQuantityFromAsciiFile ( key, quantity, filename )
+      use IO_stuff, only: GET_LUN
+      use Machine, only: IO_Error
       integer, intent(in) :: KEY        ! Tree node
       type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
       integer, intent(in) :: FILENAME   ! ASCII filename to read from
+      ! Local variables
+      integer :: LUN                    ! Unit number
+      integer :: STATUS                 ! Flag from open/close/read etc.
+      character(len=1024) :: FILENAMESTR
+      ! Executable code
+      call get_lun ( lun, msg=.false. )
+      if ( lun < 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & "No logical unit numbers available" )
+      call Get_String ( filename, filenameStr, strip=.true. )
+      open ( unit=lun, file=filenameStr, status='old', form='formatted', &
+        & access='sequential', iostat=status )
+      if ( status /= 0 ) then
+        call io_Error ( "Unable to open ASCII input file ", status, filenameStr )
+        call MLSMessage( MLSMSG_Error, ModuleName, 'Error opening ASCII file' )
+      end if
+      read ( unit=lun, fmt=*, iostat=status ) quantity%values
+      if ( status /= 0 ) then 
+        call io_Error ( "Unable to read ASCII input file ", status, filenameStr )
+        call MLSMessage( MLSMSG_Error, ModuleName, 'Error reading ASCII file' )
+      end if
+      close ( unit=lun, iostat=status )
+      if ( status /= 0 ) then 
+        call io_Error ( "Unable to close ASCII input file ", status, filenameStr )
+        call MLSMessage( MLSMSG_Error, ModuleName, 'Error closing ASCII file' )
+      end if
     end subroutine FillQuantityFromAsciiFile
 
     ! --------------------------------------------- RotateMagneticField ----
@@ -6934,6 +6961,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.292  2004/10/21 19:32:55  livesey
+! Got the Fill from ASCII file working.
+!
 ! Revision 2.291  2004/10/16 17:26:08  livesey
 ! Added stub of fill from ascii file
 !
