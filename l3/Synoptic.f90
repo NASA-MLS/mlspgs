@@ -72,7 +72,6 @@ CONTAINS
 	Real (r8), POINTER, DIMENSION(:, :, :) ::  atimes(:, :, :), dtimes(:, :, :)
 	Real (r8), POINTER, DIMENSION(:, :, :) ::  afields(:, :, :), dfields(:, :, :)
 
-	Real (r8), POINTER, DIMENSION(:) :: l2gpValue_1Day
         REAL(r8), POINTER :: avgPeriod(:)
 
 	INTEGER, DIMENSION(cfProd%nLats, l2gp(1)%nLevels) :: anlats, dnlats 
@@ -86,8 +85,7 @@ CONTAINS
 
 	INTEGER ::  error, l2Days, nlev, nf, nwv, numDays, numSwaths, rDays, pEndIndex, pStartIndex
 
-        integer i, j, k, ctype, iP, kP, iD, iL
-        real(r8), Dimension(nlons) :: xlon, result
+        integer i, j, iP, kP, iD, iL
 	real zonAvg, tau0, l3ret
 
 !*** Initilize variables
@@ -256,7 +254,7 @@ CONTAINS
  
 !*** Sort & Prepare the Data 
 
-	Call SortData(cfProd, pcf, l2Days, l2gp, 		&
+	Call SortData(cfProd, l2Days, l2gp, 		&
 			pStartIndex, pEndIndex,			&
 			tau0, 					&
 			anlats, dnlats, 			&
@@ -538,34 +536,17 @@ CONTAINS
 !-----------------------------------
 
 
-!-------------------------------------------------------------------------
-   SUBROUTINE ParameterCalc(cfProd, pcf, l2Days, l2gp)
-!-------------------------------------------------------------------------
-
-        integer error, i, j, k, iT, iD, iP, ctype, nterms, nstart, nr, lindex, lindex_prev
-	INTEGER ::  l2Days, nloop, aindex, aindex_prev, dindex, dindex_prev
-
-        TYPE( PCFData_T ) :: pcf
-        TYPE( L3CFProd_T ) :: cfProd
-        TYPE( L2GPData_T ), POINTER :: l2gp(:)
-
-
-!-----------------------------------
-   END SUBROUTINE ParameterCalc
-!-----------------------------------
-
 
 !-------------------------------------------------------------------------
-   SUBROUTINE SortData(cfProd, pcf, l2Days, l2gp, pStartIndex, pEndIndex, tau0, anlats, dnlats, 	&
+   SUBROUTINE SortData(cfProd, l2Days, l2gp, pStartIndex, pEndIndex, tau0, anlats, dnlats, 	&
 		alats_interp, dlats_interp, alons_interp, dlons_interp, 	&
 		atimes_interp, dtimes_interp, afields_interp, dfields_interp,	&
 		delTad)
 !-------------------------------------------------------------------------
 
-        integer error, i, j, k, iT, iD, iP, kP, ctype, nterms, nstart, nr, lindex, lindex_prev
+        integer error, i, j, iT, iD, iP, kP, nterms, nstart, nr, lindex, lindex_prev
 	INTEGER ::  l2Days, nloop, aindex, aindex_prev, dindex, dindex_prev
 
-        TYPE( PCFData_T ) :: pcf
         TYPE( L3CFProd_T ) :: cfProd
         TYPE( L2GPData_T ), POINTER :: l2gp(:)
 
@@ -827,59 +808,13 @@ CONTAINS
 
 !*** Deallocate intermidiate arrays 
 
+        DEALLOCATE(l2Lons_new, l2Lons_Rev, l2Times_Rev, l2Lats_Rev, l2Values_Rev)
+
 
 !-----------------------------------
    END SUBROUTINE SortData
 !-----------------------------------
 
-
-!-------------------------------------------------------------------------
-   SUBROUTINE TransformCord(cfProd, pcf, l2Days, alats, dlats, alons, dlons, atimes, dtimes, afields, dfields)
-!-------------------------------------------------------------------------
-
-        integer error, i, j, k, iT, iD, iP, ctype, nterms, nstart, nr, lindex, lindex_prev
-	INTEGER ::  l2Days, nloop, aindex, aindex_prev, dindex, dindex_prev
-
-        TYPE( PCFData_T ) :: pcf
-        TYPE( L3CFProd_T ) :: cfProd
-
-	Real (r8), POINTER, DIMENSION(:, :) ::  l2Times(:, :), l2Times_Rev(:, :), &
-						l2Lons_new(:, :), l2Lons(:, :), l2Lons_Rev(:, :), &
-						l2Lats(:, :), l2Lats_Rev(:, :), &
-						l2Values(:, :), l2Values_Rev(:, :)
-
-	Real (r8), POINTER, DIMENSION(:, :, :) ::  alons(:, :, :), alats(:, :, :)
-	Real (r8), POINTER, DIMENSION(:, :, :) ::  dlons(:, :, :), dlats(:, :, :)
-	Real (r8), POINTER, DIMENSION(:, :, :) ::  atimes(:, :, :), dtimes(:, :, :)
-	Real (r8), POINTER, DIMENSION(:, :, :) ::  afields(:, :, :), dfields(:, :, :)
-
-
- 
-! Read the l2gp data for ClO, the first product listed in the cf (and the only
-! one for which simulated input files currently exist)
-
-
-
-!-----------------------------------
-   END SUBROUTINE TransformCord
-!-----------------------------------
-
-
-
-!-------------------------------------------------------------------------
-   INTEGER FUNCTION FindL2LongitudeIndex(lons, alons)
-!-------------------------------------------------------------------------
-
-        integer error, i, j, k, iT, iD, iP, ctype, nterms, nstart, nr
-
-        Real (r8) alons
-
-	Real (r8), POINTER, DIMENSION(:, :) ::  lons(:, :)
-
- 	FindL2LongitudeIndex = 1	
-!-----------------------------------
-   END FUNCTION FindL2LongitudeIndex
-!-----------------------------------
 
 
 
@@ -888,6 +823,9 @@ END MODULE Synoptic
 !===================
 
 ! $Log$
+! Revision 1.9  2001/03/07 23:12:15  ybj
+! *** empty log message ***
+!
 ! Revision 1.8  2001/03/05 19:58:59  ybj
 ! with selected pressure levels
 !
