@@ -40,6 +40,7 @@ autofill
 average
 
 b
+badRange
 baselineQuantity
 basisFraction
 bin
@@ -371,6 +372,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.135  2004/11/08 21:56:35  livesey
+# Added badRange
+#
 # Revision 2.134  2004/10/30 00:26:47  vsnyder
 # Add 'spectroscopy' field to DumpCommand
 #
