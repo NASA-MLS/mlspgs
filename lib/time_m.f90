@@ -42,6 +42,7 @@ module TIME_M
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
 contains
@@ -152,9 +153,16 @@ contains
     retry = TRY_AGAIN
   end function RETRY
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module TIME_M
 
 !$Log$
+!Revision 2.3  2002/10/08 00:09:15  pwagner
+!Added idents to survive zealous Lahey optimizer
+!
 !Revision 2.2  2002/08/27 23:05:25  pwagner
 !Added wait and retry
 !

@@ -28,6 +28,7 @@
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
     "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
 
   ! Parameters
@@ -107,9 +108,16 @@
     endif ! h5error
 
   end subroutine Query_MLSData
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module MLSDataInfo
 
 ! $Log$
+! Revision 2.3  2002/10/08 00:09:11  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.2  2002/08/25 19:21:09  mjf
 ! Added a couple of continuation characters.
 !

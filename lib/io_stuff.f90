@@ -16,6 +16,7 @@ module IO_STUFF
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
 contains
@@ -34,9 +35,16 @@ contains
     lun = -1
     return
   end subroutine GET_LUN
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module IO_STUFF
 
 ! $Log$
+! Revision 2.3  2002/10/08 00:09:10  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.2  2001/04/26 02:39:11  vsnyder
 ! Fix up CVS stuff
 !
