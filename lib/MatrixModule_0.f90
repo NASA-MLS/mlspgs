@@ -1210,7 +1210,7 @@ contains ! =====     Public Procedures     =============================
     select case ( b%kind )
     case ( M_Absent )
     case ( M_Banded )
-      do j = 1, size(p)            ! columns
+      do j = 1, size(v)            ! columns
         v1 = b%r2(j-1)             ! (starting position in B%VALUES) - 1
         n = b%r2(j) - v1           ! how many values
         m = b%r1(j)                ! starting row subscript in B%VALUES
@@ -1238,13 +1238,16 @@ contains ! =====     Public Procedures     =============================
     case ( M_Full )
       if ( my_diag ) then          ! do the whole matrix
         do i = 1, size(p)
-          p(i) = p(i) + dot(size(v), b%values(i,1), size(b%values,1), v(1), 1)
+!           p(i) = p(i) + dot(size(v), b%values(i,1), size(b%values,1), v(1), 1)
+          p(i) = p(i) + dot_product ( b%values(i,:), v )
         end do ! i
       else                         ! skip the diagonal
         do i = 1, size(p)
-          p(i) = p(i) + dot(i-1, b%values(i,1), size(b%values,1), v(1), 1)
-          p(i) = p(i) + &
-            & dot(size(v)-i, b%values(i,i+1), size(b%values,1), v(i+1), 1)
+!           p(i) = p(i) + dot(i-1, b%values(i,1), size(b%values,1), v(1), 1)
+!           p(i) = p(i) + &
+!             & dot(size(v)-i, b%values(i,i+1), size(b%values,1), v(i+1), 1)
+          p(i) = p(i) + dot_product ( b%values(i, 1:i-1), v(1:i-1) ) + &
+            & dot_product ( b%values( i, i+1:), v(i+1:) )
         end do ! i
       end if
     end select
@@ -1828,6 +1831,10 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.17  2001/04/28 05:04:16  livesey
+! Temporarily changed dot to dot_product in MultiplyMatrixVectorNoT, to
+! avoid run time error I don't understand.
+!
 ! Revision 2.16  2001/04/28 04:40:17  livesey
 ! Some tidying up, removing unnecessary(?) tests for square matrices
 ! in multiplyMatrixVector and its relatives.  Also changing allocation
