@@ -2,11 +2,13 @@
 ! -------------------------------------------------------
 MODULE WriteMetadata ! Populate metadata and write it out
 ! -------------------------------------------------------
-USE MLSCommon
+USE MLSCommon, only: NameLen
+USE MLSFiles, only: split_path_name
 USE MLSStrings 
 USE MLSMessageModule
 USE L2GPData
 USE L2AUXData
+USE PCFHdr, only: WritePCF2Hdr
 USE SDPToolkit
 USE MLSPCF2
 USE MLSCF 
@@ -236,17 +238,20 @@ hdfReturn = sfend(sdid)
 returnStatus=pgs_met_remove() 
 END SUBROUTINE populate_metadata
 
-!--------------------------- populate_metadata_std -------------------
+!--------------------------- first_grouping -------------------
 
-  SUBROUTINE populate_metadata_std (HDF_FILE, MCF_FILE, l2pcf, field_name)
+  SUBROUTINE first_grouping (HDF_FILE, MCF_FILE, l2pcf, groups)
 
-! This is the standard way to write meta data
-! It should work unchanged for the standard l2gp files (e.g. BrO)
-! and, with minor changes, for the l2gp file marked "other"
-!
-! the l2aux files, also called dgm
-! and the dgg files will probably require special treatment
-! the log file should be able to use the one stolen from level 3
+! This writes the metadata for the following attributes:
+! (attributes marked automatic are not explicitly written, however)
+
+! SizeMBECSDataGranule (automatic)
+! ReProcessingPlanned
+! ReProcessingActual
+! LocalGranuleID
+! DayNightFlag
+! ProductionDateTime (automatic)
+! LocalVersionID
 !
 
 !    USE InitPCFs, ONLY: L2PCF
@@ -255,7 +260,6 @@ END SUBROUTINE populate_metadata
 
     INTEGER :: HDF_FILE, MCF_FILE
 	 type(PCFData_T) :: l2pcf
-	 character (LEN=*) :: field_name
 
     !Local Variables
  
@@ -343,6 +347,67 @@ END SUBROUTINE populate_metadata
        CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
     ENDIF
 
+END SUBROUTINE first_grouping
+
+!--------------------------- measured_parameter -------------------
+
+  SUBROUTINE measured_parameter (HDF_FILE, MCF_FILE, l2pcf, field_name, groups)
+
+! This writes the attributes corresponding to the measured parameter container:
+!
+! ParameterName
+! AutomaticQualityFlag
+! AutomaticQualityFlagExplanation
+! OperationalQualityFlag
+! OperationalQualityFlagExplanation
+! ScienceQualityFlag
+! ScienceQualityFlagExplanation
+! QAPercentInterpolatedData
+! QAPercentMissingData
+! QAPercentOutOfBoundsData
+!
+
+!    USE InitPCFs, ONLY: L2PCF
+
+    !Arguments
+
+    INTEGER :: HDF_FILE, MCF_FILE
+	 type(PCFData_T) :: l2pcf
+	 character (LEN=*) :: field_name
+
+    !Local Variables
+ 
+    INTEGER :: hdfReturn
+    INTEGER :: returnStatus
+    INTEGER :: sdid
+
+    REAL(r8) dval
+    INTEGER, PARAMETER :: INVENTORY=2, ARCHIVE=1
+    CHARACTER (LEN=PGSd_PC_FILE_PATH_MAX) :: physical_filename
+    CHARACTER (LEN=PGSd_PC_FILE_PATH_MAX) :: sval
+    CHARACTER (LEN=132) :: attrname, errmsg
+    INTEGER :: version, ival, indx
+    CHARACTER (LEN=*), PARAMETER :: METAWR_ERR = &
+         'Error writing metadata attribute '
+
+    ! the group have to be defined as 49 characters long. The C interface is 50.
+    ! The cfortran.h mallocs an extra 1 byte for the null character '\0/1, 
+    ! therefore making the actual length of a 
+    ! string pass of 50.
+
+    CHARACTER (LEN = PGSd_MET_GROUP_NAME_L) :: groups(PGSd_MET_NUM_OF_GROUPS)
+
+    ! Externals
+
+    INTEGER, EXTERNAL :: pgs_met_init, pgs_met_setattr_d, &
+         pgs_met_setAttr_s, pgs_met_getsetattr_d, PGS_MET_SETATTR_I, &
+         pgs_met_write, pgs_met_remove
+
+    !Executable code
+
+    version = 1
+    returnStatus = PGS_PC_GetReference (HDF_FILE, version , physical_filename)
+
     ! MeasuredParameterContainer
 
 !    IF (hdf_file == mlspcf_l1b_radf_start) THEN
@@ -423,6 +488,78 @@ END SUBROUTINE populate_metadata
        errmsg = METAWR_ERR // attrName
        CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
     ENDIF
+
+END SUBROUTINE measured_parameter
+
+!--------------------------- third_grouping -------------------
+
+  SUBROUTINE third_grouping (HDF_FILE, MCF_FILE, l2pcf, groups)
+
+! This writes the following metadata attributes:
+
+! OrbitNumber
+! StartOrbitNumber
+! StopOrbitNumber
+! EquatorCrossingLongitude
+! EquatorCrossingTime
+! EquatorCrossingDate
+! ShortName
+! VersionID
+! InputPointer
+! LocalityValue
+! VerticalSpatialDomainType
+! VerticalSpatialDomainValue
+! ZOneIdentifier
+! WestBoundingCoordinate
+! NortBoundingCoordinate
+! EastBoundingCoordinate
+! SouthBoundingCoordinate
+! RangeBeginningDate
+! RangeBeginningTime
+! RangeEndingDate
+! RangeEndingTime
+! PGEVersion
+!
+
+!    USE InitPCFs, ONLY: L2PCF
+
+    !Arguments
+
+    INTEGER :: HDF_FILE, MCF_FILE
+	 type(PCFData_T) :: l2pcf
+
+    !Local Variables
+ 
+    INTEGER :: hdfReturn
+    INTEGER :: returnStatus
+    INTEGER :: sdid
+
+    REAL(r8) dval
+    INTEGER, PARAMETER :: INVENTORY=2, ARCHIVE=1
+    CHARACTER (LEN=PGSd_PC_FILE_PATH_MAX) :: physical_filename
+    CHARACTER (LEN=PGSd_PC_FILE_PATH_MAX) :: sval
+    CHARACTER (LEN=132) :: attrname, errmsg
+    INTEGER :: version, ival, indx
+    CHARACTER (LEN=*), PARAMETER :: METAWR_ERR = &
+         'Error writing metadata attribute '
+
+    ! the group have to be defined as 49 characters long. The C interface is 50.
+    ! The cfortran.h mallocs an extra 1 byte for the null character '\0/1, 
+    ! therefore making the actual length of a 
+    ! string pass of 50.
+
+    CHARACTER (LEN = PGSd_MET_GROUP_NAME_L) :: groups(PGSd_MET_NUM_OF_GROUPS)
+
+    ! Externals
+
+    INTEGER, EXTERNAL :: pgs_met_init, pgs_met_setattr_d, &
+         pgs_met_setAttr_s, pgs_met_getsetattr_d, PGS_MET_SETATTR_I, &
+         pgs_met_write, pgs_met_remove
+
+    !Executable code
+
+    version = 1
+    returnStatus = PGS_PC_GetReference (HDF_FILE, version , physical_filename)
 
     ! Orbit Calculated Spatial Domain Container
 
@@ -624,12 +761,104 @@ END SUBROUTINE populate_metadata
 
     returnStatus = pgs_met_remove() 
 
+  END SUBROUTINE third_grouping
+
+!--------------------------- populate_metadata_std -------------------
+
+  SUBROUTINE populate_metadata_std (HDF_FILE, MCF_FILE, &
+  & l2pcf, field_name, anText)
+
+! This is the standard way to write meta data
+! It should work unchanged for the standard l2gp files (e.g. BrO)
+! and, with minor changes, for the l2gp file marked "other"
+!
+! the l2aux files, also called dgm
+! and the dgg files will probably require special treatment
+! the log file should be able to use the one stolen from level 3
+!
+
+!    USE InitPCFs, ONLY: L2PCF
+
+    !Arguments
+
+    INTEGER :: HDF_FILE, MCF_FILE
+	 type(PCFData_T) :: l2pcf
+	 character (LEN=*) :: field_name
+      CHARACTER (LEN=1), POINTER :: anText(:)
+
+
+    !Local Variables
+ 
+    INTEGER :: hdfReturn
+    INTEGER :: returnStatus
+    INTEGER :: sdid
+
+    REAL(r8) dval
+    INTEGER, PARAMETER :: INVENTORY=2, ARCHIVE=1
+    CHARACTER (LEN=PGSd_PC_FILE_PATH_MAX) :: physical_filename
+    CHARACTER (LEN=PGSd_PC_FILE_PATH_MAX) :: sval
+    CHARACTER (LEN=132) :: attrname, errmsg
+    INTEGER :: version, ival, indx
+    CHARACTER (LEN=*), PARAMETER :: METAWR_ERR = &
+         'Error writing metadata attribute '
+
+    ! the group have to be defined as 49 characters long. The C interface is 50.
+    ! The cfortran.h mallocs an extra 1 byte for the null character '\0/1, 
+    ! therefore making the actual length of a 
+    ! string pass of 50.
+
+    CHARACTER (LEN = PGSd_MET_GROUP_NAME_L) :: groups(PGSd_MET_NUM_OF_GROUPS)
+
+    ! Externals
+
+    INTEGER, EXTERNAL :: pgs_met_init, pgs_met_setattr_d, &
+         pgs_met_setAttr_s, pgs_met_getsetattr_d, PGS_MET_SETATTR_I, &
+         pgs_met_write, pgs_met_remove
+
+    !Executable code
+
+    version = 1
+    returnStatus = PGS_PC_GetReference (HDF_FILE, version , physical_filename)
+
+	call first_grouping(HDF_FILE, MCF_FILE, l2pcf, groups)
+	call measured_parameter (HDF_FILE, MCF_FILE, l2pcf, field_name, groups)
+	call third_grouping (HDF_FILE, MCF_FILE, l2pcf, groups)
+
+    sdid = sfstart (physical_fileName, DFACC_RDWR) 
+
+    IF (sdid == -1) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            "Failed to open the hdf file "//physical_fileName ) 
+    ENDIF
+
+    returnStatus = pgs_met_write (groups(INVENTORY), "coremetadata.0", sdid)
+
+    IF (returnStatus /= PGS_S_SUCCESS .AND. &
+         returnStatus /= PGSMET_W_METADATA_NOT_SET) THEN 
+       IF (returnStatus == PGSMET_W_METADATA_NOT_SET) THEN 
+          CALL MLSMessage (MLSMSG_WARNING, ModuleName, &
+               "Some of the mandatory parameters were not set" )
+       ELSE 
+          CALL Pgs_smf_getMsg (returnStatus, attrname, errmsg)
+          CALL MLSMessage (MLSMSG_WARNING, ModuleName, &
+               "Metadata write failed "//attrname//errmsg) 
+       ENDIF
+    ENDIF
+
+    hdfReturn = sfend(sdid)
+
+! Annotate the file with the PCF
+
+         CALL WritePCF2Hdr(physical_filename, anText)
+
+    returnStatus = pgs_met_remove() 
+
   END SUBROUTINE populate_metadata_std
 
 !--------------------------- populate_metadata_oth -------------------
 
   SUBROUTINE populate_metadata_oth (HDF_FILE, MCF_FILE, l2pcf, &
-  & numquantitiesperfile, QuantityNames)
+  & numquantitiesperfile, QuantityNames, anText)
 
 ! This is specially to write meta data for heterogeneous files
 ! It should work unchanged for the 'OTH' l2gp files (e.g. ML2OTH.001.MCF)
@@ -642,14 +871,215 @@ END SUBROUTINE populate_metadata
     INTEGER :: HDF_FILE, MCF_FILE, numquantitiesperfile
 	 type(PCFData_T) :: l2pcf
 	 character (LEN=*), dimension(:) :: QuantityNames
+      CHARACTER (LEN=1), POINTER :: anText(:)
 
 
-	! Not fleshed out yet, unfortunately--just want to compile successfully
-	! before going home
+    !Local Variables
+ 
+    INTEGER :: hdfReturn
+    INTEGER :: returnStatus
+    INTEGER :: sdid
 
-	call populate_metadata_std(HDF_FILE, MCF_FILE, l2pcf, &
-  & QuantityNames(1))
+    REAL(r8) dval
+    INTEGER, PARAMETER :: INVENTORY=2, ARCHIVE=1
+    CHARACTER (LEN=PGSd_PC_FILE_PATH_MAX) :: physical_filename
+    CHARACTER (LEN=PGSd_PC_FILE_PATH_MAX) :: sval
+    CHARACTER (LEN=132) :: attrname, errmsg
+    INTEGER :: version, ival, indx
+    CHARACTER (LEN=*), PARAMETER :: METAWR_ERR = &
+         'Error writing metadata attribute '
+
+    ! the group have to be defined as 49 characters long. The C interface is 50.
+    ! The cfortran.h mallocs an extra 1 byte for the null character '\0/1, 
+    ! therefore making the actual length of a 
+    ! string pass of 50.
+
+    CHARACTER (LEN = PGSd_MET_GROUP_NAME_L) :: groups(PGSd_MET_NUM_OF_GROUPS)
+
+    ! Externals
+
+    INTEGER, EXTERNAL :: pgs_met_init, pgs_met_setattr_d, &
+         pgs_met_setAttr_s, pgs_met_getsetattr_d, PGS_MET_SETATTR_I, &
+         pgs_met_write, pgs_met_remove
+
+    !Executable code
+
+    version = 1
+    returnStatus = PGS_PC_GetReference (HDF_FILE, version , physical_filename)
+
+	call first_grouping(HDF_FILE, MCF_FILE, l2pcf, groups)
+
+	do indx=1, numquantitiesperfile
+
+		call measured_parameter (HDF_FILE, MCF_FILE, &
+		& l2pcf, QuantityNames(indx), groups)
+
+	enddo
+
+	call third_grouping (HDF_FILE, MCF_FILE, l2pcf, groups)
+
+    sdid = sfstart (physical_fileName, DFACC_RDWR) 
+
+    IF (sdid == -1) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            "Failed to open the hdf file "//physical_fileName ) 
+    ENDIF
+
+    returnStatus = pgs_met_write (groups(INVENTORY), "coremetadata.0", sdid)
+
+    IF (returnStatus /= PGS_S_SUCCESS .AND. &
+         returnStatus /= PGSMET_W_METADATA_NOT_SET) THEN 
+       IF (returnStatus == PGSMET_W_METADATA_NOT_SET) THEN 
+          CALL MLSMessage (MLSMSG_WARNING, ModuleName, &
+               "Some of the mandatory parameters were not set" )
+       ELSE 
+          CALL Pgs_smf_getMsg (returnStatus, attrname, errmsg)
+          CALL MLSMessage (MLSMSG_WARNING, ModuleName, &
+               "Metadata write failed "//attrname//errmsg) 
+       ENDIF
+    ENDIF
+
+    hdfReturn = sfend(sdid)
+
+! Annotate the file with the PCF
+
+         CALL WritePCF2Hdr(physical_filename, anText)
+
+    returnStatus = pgs_met_remove() 
+
   END SUBROUTINE populate_metadata_oth
+
+!--------------------------- get_l2gp_mcf -------------------
+
+  FUNCTION get_l2gp_mcf (sdid, version) RESULT(mcf)
+
+! metadata configuration file (mcf) PCF number corresponding to l2gp number sdid
+!
+! Arguments
+	integer, intent(in) :: sdid
+	integer, intent(in), optional :: version
+	integer :: mcf
+! Local
+
+	character (len=PGSd_PC_FILE_PATH_MAX) :: sd_full
+	character (len=NameLen) :: sd_path
+	character (len=NameLen) :: sd_name
+
+	character (len=PGSd_PC_FILE_PATH_MAX) :: mcf_full
+	character (len=NameLen) :: mcf_path
+	character (len=NameLen) :: mcf_name
+	character (len=NameLen) :: mcf_pattern
+	integer :: returnStatus, myVersion, i
+
+	! Find species name
+	! assume sd_name is "*l2gp_species_"
+	! hence enclosed between "_" chars after an l2gp
+
+	character (len=1), parameter :: species_delimiter = '_'
+	character (len=4), parameter :: l2gp = 'l2gp'
+	
+! Begin
+
+	if(sdid <= 0) then
+		mcf=0
+		return
+	endif
+
+	if(present(version)) then
+		myVersion=version
+	else
+		myVersion = 1
+	endif
+
+	! Get full file name for l2gp file
+	returnStatus = PGS_PC_GetReference(sdid, myVersion , sd_full)
+	
+	if (returnStatus /= PGS_S_SUCCESS) then 
+		mcf = 0
+		return
+	endif
+
+	! Get full file name for typical MCF file
+	do i=mlspcf_mcf_l2gp_start, mlspcf_mcf_l2gp_end
+	
+		returnStatus = PGS_PC_GetReference(i, myVersion , mcf_full)
+	
+		if (returnStatus == PGS_S_SUCCESS) then 
+			exit
+		endif
+		
+	enddo
+
+	if (returnStatus /= PGS_S_SUCCESS) then 
+		mcf = 0
+		return
+	endif
+
+	! Split full_file_names into path+name
+	
+	call split_path_name(sd_full, sd_path, sd_name)
+	call split_path_name(mcf_full, mcf_path, mcf_name)
+	
+	sd_name = LowerCase(sd_name)
+	mcf_name = LowerCase(mcf_name)
+	
+	i=index(mcf_name, l2gp)
+
+	if(i <= 0) then
+		mcf=0
+		return
+	endif
+	
+	! Get species name assuming e.g. '*l2gp_h2o_*'
+	sd_full = adjustl(sd_name(i+len(l2gp):))
+	
+	i=index(sd_full, species_delimiter)
+
+	if(i /= 1) then
+		mcf=0
+		return
+	endif
+
+	! This gives 'o2h'
+	call split_path_name(Reverse(sd_full(2:)), sd_path, sd_name, species_delimiter)
+	
+	! so reverse it -> 'h2o'
+	sd_name = adjustl(Reverse(sd_name))
+	
+	if(len(trim(sd_name)) <= 0) then
+		mcf=0
+		return
+	endif
+	
+	! Now try to find mcf file corresponding to species name
+	! assuming, e.g. '*h2o.*'
+
+	do i=mlspcf_mcf_l2gp_start, mlspcf_mcf_l2gp_end
+	
+		returnStatus = PGS_PC_GetReference(i, myVersion, mcf_full)
+	
+		if (returnStatus == PGS_S_SUCCESS) then 
+			call split_path_name(mcf_full, mcf_path, mcf_name)
+			
+			! This gives 'o2h*'
+			call split_path_name(Reverse(mcf_name), mcf_path, mcf_pattern, '.')
+			mcf_pattern = LowerCase(mcf_pattern)
+			
+			! So reverse it
+			mcf_pattern = adjustl(Reverse(mcf_pattern))
+			
+			! Check that pattern matches species name
+			if(index(mcf_pattern, sd_name) > 0) then
+				mcf = i
+				return
+			endif
+		endif
+		
+	enddo
+	
+	mcf = 0
+
+  END FUNCTION get_l2gp_mcf
 
 ! Lori's routines
 
@@ -853,6 +1283,9 @@ END SUBROUTINE populate_metadata
 
 END MODULE WriteMetadata 
 ! $Log$
+! Revision 2.3  2001/04/03 23:51:28  pwagner
+! Many changes; some may be right
+!
 ! Revision 2.2  2001/04/02 23:42:18  pwagner
 ! Added populate_metadata_oth
 !
