@@ -152,13 +152,14 @@ print *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
 
 !! Check for Bright Objects in FOVs
 
-    Space_BO_flag(1)%ptr => CurMAFdata%SpaceView%MoonInFOV
-    Space_BO_flag(2)%ptr => CurMAFdata%SpaceView%VenusInFOV
-    Limb_BO_flag(1)%ptr => CurMAFdata%LimbView%MoonInFOV
-    Limb_BO_flag(2)%ptr => CurMAFdata%LimbView%VenusInFOV
+    Space_BO_flag(1)%ptr => CurMAFdata%SpaceView%MoonInFOV(:,1)
+    Space_BO_flag(2)%ptr => CurMAFdata%SpaceView%VenusInFOV(:,1)
+    Limb_BO_flag(1)%ptr => CurMAFdata%LimbView%MoonInFOV(:,1)
+    Limb_BO_flag(2)%ptr => CurMAFdata%LimbView%VenusInFOV(:,1)
 
     CALL Flag_Bright_Objects (CurMAFdata%SciPkt%secTAI, &
-         CurMAFdata%SciPkt%scAngleG, Limb_BO_flag, Space_BO_flag)
+         CurMAFdata%SciPkt%scAngleG, L1Config%Calib%MoonToLimbAngle_GHz, &
+         Limb_BO_flag, Space_BO_flag)
 
 !! Update MAFinfo from central MAF
 
@@ -361,9 +362,9 @@ print *, 'Sort:', CurMAFdata%ChanType(0:149)%FB(1,1)
 !! Check for bright objects in Space FOV
 !! Will decide later how to handle Space Temperature
 
-    VenusInSpaceView = ANY (CurMAFdata%SpaceView%VenusInFOV)
+    VenusInSpaceView = ANY (CurMAFdata%SpaceView%VenusInFOV(:,1))
     IF (VenusInSpaceView) msg = 'Venus in Space View'
-    MoonInSpaceView = ANY (CurMAFdata%SpaceView%MoonInFOV)
+    MoonInSpaceView = ANY (CurMAFdata%SpaceView%MoonInFOV(:,1))
     IF (MoonInSpaceView) msg = 'Moon in Space View'
     IF (MoonInSpaceView .OR. VenusInSpaceView) THEN
        n = PGS_TD_TAItoUTC (CurMAFdata%SciPkt(0)%secTAI, asciiUTC)
@@ -379,9 +380,9 @@ print *, 'Sort:', CurMAFdata%ChanType(0:149)%FB(1,1)
 
 !! Check for bright objects in Limb FOV and mark as "D"iscards
 
-    VenusInLimbView = ANY (CurMAFdata%LimbView%VenusInFOV)
+    VenusInLimbView = ANY (CurMAFdata%LimbView%VenusInFOV(:,1))
     IF (VenusInLimbView) msg = 'Venus in Limb View' 
-    MoonInLimbView = ANY (CurMAFdata%LimbView%MoonInFOV)
+    MoonInLimbView = ANY (CurMAFdata%LimbView%MoonInFOV(:,1))
     IF (MoonInLimbView) msg = 'Moon in Limb View'
     IF (MoonInLimbView .OR. VenusInLimbView) THEN   ! Discard
        n = PGS_TD_TAItoUTC (CurMAFdata%SciPkt(0)%secTAI, asciiUTC)
@@ -389,8 +390,8 @@ print *, 'Sort:', CurMAFdata%ChanType(0:149)%FB(1,1)
        WRITE (L1BFileInfo%LogId, *) ''
        WRITE (L1BFileInfo%LogId, *) TRIM(msg)//' at MAF UTC '//asciiUTC
        DO i = 0, (lenG - 1)
-          IF (CurMAFdata%LimbView%MoonInFOV(i) .OR. &
-               CurMAFdata%LimbView%VenusInFOV(i)) THEN
+          IF (CurMAFdata%LimbView%MoonInFOV(i,1) .OR. &
+               CurMAFdata%LimbView%VenusInFOV(i,1)) THEN
              CurMAFdata%MIFprecSign(i) = -1.0   ! Change sign of precision
           ENDIF
        ENDDO
@@ -654,6 +655,9 @@ END MODULE SortQualify
 !=============================================================================
 
 ! $Log$
+! Revision 2.14  2005/01/28 17:06:18  perun
+! Get GHz FOV bright object flags
+!
 ! Revision 2.13  2004/11/10 15:43:51  perun
 ! Add MIFprecSign to deal with Bright Objects; save GHz Alt, Lat for use in
 ! baseline; save OA_counterMAF
