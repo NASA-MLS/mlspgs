@@ -3,7 +3,11 @@
 
 module HE5_SWAPI_REAL
 
-  public
+  public :: HE5_SWRDFLD_REAL, HE5_SWRDFLD_REAL_2D, HE5_SWRDFLD_REAL_3D, &
+    & HE5_SWWRFLD_REAL, HE5_SWWRFLD_REAL_2D, HE5_SWWRFLD_REAL_3D, &
+    & HE5_EHWRGLATT_REAL, HE5_SWWRATTR_REAL, HE5_SWWRLATTR_REAL
+  public :: HE5_SWSETFILL_REAL
+  private
 
   !------------------------------- RCS Ident Info ----------------------------
   character(len=256), private :: Id = &
@@ -14,6 +18,31 @@ module HE5_SWAPI_REAL
   !---------------------------------------------------------------------------
 
 contains
+
+  integer function HE5_EHWRGLATT_REAL ( FILEID, &
+    & ATTRNAME, DATATYPE, COUNT, BUFFER )
+    integer, intent(in) :: FILEID      ! File ID
+    character(len=*), intent(in) :: ATTRNAME     ! Field name
+    integer, intent(in) :: DATATYPE
+    integer, intent(in) :: COUNT   ! Stride array
+    real, intent(in) :: BUFFER(:)       ! Buffer for write
+
+    integer, external :: HE5_EHWRGLATT
+
+    he5_ehwrglatt_REAL = he5_ehwrglatt(fileID, &
+         & attrname, datatype, count, buffer )
+  end function HE5_EHWRGLATT_REAL
+
+  integer function HE5_SWSETFILL_REAL (SWATHID, FIELDNAME, NUMBERTYPE, &
+    & FILLVALUE)
+    integer,intent(in)::SWATHID
+    character(len=*),intent(IN)::FIELDNAME
+    integer, intent(in) :: NUMBERTYPE
+    real, intent(in) :: FILLVALUE
+    integer, external :: HE5_SWSETFILL
+    HE5_SWSETFILL_REAL = &
+      & HE5_SWSETFILL (SWATHID, FIELDNAME, NUMBERTYPE, FILLVALUE)
+  end function HE5_SWSETFILL_REAL
 
   integer function HE5_SWRDFLD_REAL ( SWATHID, FIELDNAME, &
     & STARTS, STRIDES, EDGES, BUFFER )
@@ -105,25 +134,11 @@ contains
       & edges, buffer )
   end function HE5_SWWRFLD_REAL_3D
 
-  integer function HE5_EHWRGLATT_REAL ( FILEID, &
-    & ATTRNAME, DATATYPE, COUNT, BUFFER )
-    integer, intent(in) :: FILEID      ! File ID
-    character(len=*), intent(in) :: ATTRNAME     ! Field name
-    integer, intent(in) :: DATATYPE    ! Start array
-    integer, intent(in) :: COUNT   ! Stride array
-    real, intent(in) :: BUFFER(:)       ! Buffer for write
-
-    integer, external :: HE5_EHWRGLATT
-
-    he5_ehwrglatt_REAL = he5_ehwrglatt(fileID, &
-         & attrname, datatype, count, buffer )
-  end function HE5_EHWRGLATT_REAL
-
   integer function HE5_SWWRATTR_REAL ( SWATHID, &
     & ATTRNAME, DATATYPE, COUNT, BUFFER )
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: ATTRNAME     ! Field name
-    integer, intent(in) :: DATATYPE    ! Start array
+    integer, intent(in) :: DATATYPE
     integer, intent(in) :: COUNT   ! Stride array
     real, intent(in) :: BUFFER(:)       ! Buffer for write
 
@@ -138,7 +153,7 @@ contains
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: FIELDNAME     ! Field name
     character(len=*), intent(in) :: ATTRNAME     ! Field name
-    integer, intent(in) :: DATATYPE    ! Start array
+    integer, intent(in) :: DATATYPE
     integer, intent(in) :: COUNT   ! Stride array
     real, intent(in) :: BUFFER(:)       ! Buffer for write
 
@@ -155,6 +170,9 @@ contains
 end module HE5_SWAPI_REAL
 
 ! $Log$
+! Revision 2.4  2003/04/11 23:32:23  pwagner
+! Moved he5_swsetfill he5_ehwrglatt interfaces
+!
 ! Revision 2.3  2003/02/08 00:32:54  pwagner
 ! New attribute-related interfaces
 !

@@ -15,6 +15,20 @@ module HE5_SWAPI_CHARACTER_SCALAR
 
 contains
 
+  integer function HE5_EHWRGLATT_CHARACTER_SCALAR ( FILEID, &
+    & ATTRNAME, DATATYPE, COUNT, BUFFER )
+    integer, intent(in) :: FILEID      ! File ID
+    character(len=*), intent(in) :: ATTRNAME     ! Field name
+    integer, intent(in) :: DATATYPE    ! Start array
+    integer, intent(in) :: COUNT   ! Stride array
+    character(len=*), intent(in) :: BUFFER  ! Buffer for write
+
+    integer, external :: HE5_EHWRGLATT
+
+    he5_ehwrglatt_character_scalar = he5_ehwrglatt(fileID, &
+         & attrname, datatype, count, buffer )
+  end function HE5_EHWRGLATT_CHARACTER_SCALAR
+
   integer function HE5_SWRDFLD_CHARACTER_SCALAR ( SWATHID, FIELDNAME, &
     & STARTS, STRIDES, EDGES, BUFFER )
     integer, intent(in) :: SWATHID      ! Swath structure ID
@@ -44,20 +58,6 @@ contains
     HE5_SWwrfld_character_scalar = HE5_SWwrfld(swathid, fieldname, starts, &
          strides,edges, buffer )
   end function HE5_SWWRFLD_CHARACTER_SCALAR
-
-  integer function HE5_EHWRGLATT_CHARACTER_SCALAR ( FILEID, &
-    & ATTRNAME, DATATYPE, COUNT, BUFFER )
-    integer, intent(in) :: FILEID      ! File ID
-    character(len=*), intent(in) :: ATTRNAME     ! Field name
-    integer, intent(in) :: DATATYPE    ! Start array
-    integer, intent(in) :: COUNT   ! Stride array
-    character(len=*), intent(in) :: BUFFER  ! Buffer for write
-
-    integer, external :: HE5_EHWRGLATT
-
-    he5_ehwrglatt_character_scalar = he5_ehwrglatt(fileID, &
-         & attrname, datatype, count, buffer )
-  end function HE5_EHWRGLATT_CHARACTER_SCALAR
 
   integer function HE5_SWWRATTR_CHARACTER_SCALAR ( SWATHID, &
     & ATTRNAME, DATATYPE, COUNT, BUFFER )
@@ -95,6 +95,9 @@ contains
 end module HE5_SWAPI_CHARACTER_SCALAR
 
 ! $Log$
+! Revision 2.4  2003/04/11 23:32:23  pwagner
+! Moved he5_swsetfill he5_ehwrglatt interfaces
+!
 ! Revision 2.3  2003/02/08 00:32:54  pwagner
 ! New attribute-related interfaces
 !

@@ -1,3 +1,6 @@
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module HE5_SWAPI_CHARACTER_ARRAY
 
   public
@@ -11,6 +14,20 @@ module HE5_SWAPI_CHARACTER_ARRAY
   !---------------------------------------------------------------------------
 
 contains
+
+  integer function HE5_EHWRGLATT_CHARACTER_ARRAY ( FILEID, &
+    & ATTRNAME, DATATYPE, COUNT, BUFFER )
+    integer, intent(in) :: FILEID      ! File ID
+    character(len=*), intent(in) :: ATTRNAME     ! Attribute name
+    integer, intent(in) :: DATATYPE    ! E.g., HE5T_NATIVE_SCHAR
+    integer, intent(in) :: COUNT   ! How many to write
+    character(len=*), intent(in) :: BUFFER(:)  ! Buffer for write
+
+    integer, external :: HE5_EHWRGLATT
+
+    he5_ehwrglatt_character_ARRAY = he5_ehwrglatt(fileID, &
+         & attrname, datatype, count, buffer )
+  end function HE5_EHWRGLATT_CHARACTER_ARRAY
 
   integer function HE5_SWRDFLD_CHARACTER_ARRAY ( SWATHID, FIELDNAME, &
     & STARTS, STRIDES, EDGES, BUFFER )
@@ -41,20 +58,6 @@ contains
     HE5_SWwrfld_character_array=HE5_SWwrfld(swathid, fieldname, starts, &
          strides, edges, buffer )
   end function HE5_SWWRFLD_CHARACTER_ARRAY
-
-  integer function HE5_EHWRGLATT_CHARACTER_ARRAY ( FILEID, &
-    & ATTRNAME, DATATYPE, COUNT, BUFFER )
-    integer, intent(in) :: FILEID      ! File ID
-    character(len=*), intent(in) :: ATTRNAME     ! Attribute name
-    integer, intent(in) :: DATATYPE    ! E.g., HE5T_NATIVE_SCHAR
-    integer, intent(in) :: COUNT   ! How many to write
-    character(len=*), intent(in) :: BUFFER(:)  ! Buffer for write
-
-    integer, external :: HE5_EHWRGLATT
-
-    he5_ehwrglatt_character_ARRAY = he5_ehwrglatt(fileID, &
-         & attrname, datatype, count, buffer )
-  end function HE5_EHWRGLATT_CHARACTER_ARRAY
 
   integer function HE5_SWWRATTR_CHARACTER_ARRAY ( SWATHID, &
     & ATTRNAME, DATATYPE, COUNT, BUFFER )
