@@ -661,7 +661,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_opticalDepth, t+t_numeric, n+n_field_type, ndp+n_spec_def, &
       begin, s+s_forwardModel, & ! Must be AFTER s_vector and s_matrix
              begin, f+f_atmos_der, t+t_boolean, n+n_field_type, &
-             begin, f+f_df_spectroscopy, t+t_boolean, n+n_field_type, &
+             begin, f+f_default_spectroscopy, t+t_boolean, n+n_field_type, &
              begin, f+f_do_baseline, t+t_boolean, n+n_field_type, &
              begin, f+f_do_conv, t+t_boolean, n+n_field_type, &
              begin, f+f_do_freq_avg, t+t_boolean, n+n_field_type, &
@@ -844,6 +844,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.188  2001/11/15 23:49:49  jonathan
+! rename DF_spectroscopy to default_spectroscopy
+!
 ! Revision 2.187  2001/11/15 23:33:53  jonathan
 ! add df_spectroscopy
 !
