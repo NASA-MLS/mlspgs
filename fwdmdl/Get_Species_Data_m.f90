@@ -65,7 +65,7 @@ contains
   ! Local variables
 
     real(rp) :: Beta_Ratio
-    logical :: doThis                   ! Flag for lines
+    logical :: DoThis                   ! Flag for lines in catalog item
     type (VectorValue_T), pointer :: F  ! An arbitrary species
     integer :: I, IER, J, K, L
     integer, dimension(:), pointer :: LINEFLAG ! /= 0 => Use this line
@@ -188,20 +188,28 @@ contains
                 do i = 1, size(thisLine%signals)
                   ! Tried to make GetRadiometerFromSignal elemental, but compile time
                   ! in LF95 (optimized) for Construct.f90 went nuts! :-(
-                  doThis = doThis .or. GetRadiometerFromSignal ( thisLine%signals(i) ) == &
-                    & fwdModelConf%signals(sigInd)%radiometer
-                  if ( doThis ) then
+                  if ( GetRadiometerFromSignal ( thisLine%signals(i) ) == &
+                    & fwdModelConf%signals(sigInd)%radiometer ) then
+                    doThis = .true.
+                    if ( .not. fwdModelConf%polarized ) &
+                exit   ! loop over signals for line -- no need to check for
+                       ! polarized lines
                     if ( associated(thisLine%polarized) ) then
-                      if ( thisLine%polarized(i) ) polarized = -1
+                      if ( thisLine%polarized(i) ) then
+                        polarized = -1 ! polarized
+                exit   ! loop over signals for line -- one signal that sees a
+                       ! polarized line is enough to turn on the polarized
+                       ! method
+                      end if
                     end if
-                exit ! loop over signals
                   end if
-                end do
+                end do ! End loop over signals for line
               else
                 doThis = any ( thisLine%signals == &
                   & fwdModelConf%signals(sigInd)%index )
-                if ( doThis .and. associated(thisLine%polarized) ) then
-                  if ( any(thisLine%polarized) ) polarized = -1
+                if ( fwdModelConf%polarized .and. doThis .and. &
+                  & associated(thisLine%polarized) ) then
+                  if ( any(thisLine%polarized) ) polarized = -1 ! polarized
                 end if
               end if
 
@@ -211,13 +219,14 @@ contains
                 & ( thisLine%sidebands == 0 ) )
               if ( doThis ) then
                 lineFlag(k) = polarized
+                if ( polarized < 0 .or. .not. fwdModelConf%polarized ) &
             exit   ! loop over signals requested in fwm
               end if
             end do ! End loop over signals requested in fwm
           end if
         end do     ! End loop over lines
 
-! Check we have at least one line for this
+! Check we have at least one line for this species
 
         nLines = count(lineFlag /= 0)
         if ( nLines == 0 .and. all ( my_catalog(j)%continuum == 0.0 ) ) then
@@ -235,7 +244,7 @@ contains
 
       else
 
-        ! No lines for this species.  However, it's continuum is still valid 
+        ! No lines for this species.  However, its continuum is still valid 
         ! so don't set it to empty.
         ! Won't bother checking that continuum /= 0 as if it was then
         ! presumably having no continuum and no lines it wouldn't be in the catalog!
@@ -336,6 +345,9 @@ contains
 end module  Get_Species_Data_M
 
 ! $Log$
+! Revision 2.4  2003/05/21 22:15:36  vsnyder
+! Dump my_catalog and beta_group if the 'bgrp' switch is set
+!
 ! Revision 2.3  2003/05/17 01:19:32  vsnyder
 ! Remove unreferenced USE name, futzing
 !
