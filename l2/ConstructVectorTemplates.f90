@@ -25,6 +25,7 @@ module ConstructVectorTemplates ! Construct a template for a vector
   character (LEN=256) :: Id = &
        "$Id$"
   character (len=*), parameter :: ModuleName= "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
 
   ! This module performs the vector template aspects of the construct task
@@ -110,11 +111,18 @@ contains ! =====     Public Procedures     =============================
   end function CreateVecTemplateFromMLSCfInfo
 
 !=============================================================================
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 END MODULE ConstructVectorTemplates
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.7  2002/10/08 17:36:20  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.6  2002/09/25 20:08:05  livesey
 ! Made -g less verbose
 !
