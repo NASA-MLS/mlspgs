@@ -896,6 +896,7 @@ contains ! =====     Public Procedures     =============================
   if ( present ( upper) ) myUpper = upper
   n = size(A,2)
 
+  nullify ( x, b, u )
   call allocate_Test ( x, n, "X", moduleName//"%MatrixInversion" )
   call allocate_Test ( b, n, "B", moduleName//"%MatrixInversion" )
   call allocate_Test ( u, n, n, "U", moduleName//"%MatrixInversion" )
@@ -2415,6 +2416,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.62  2002/02/09 21:27:12  livesey
+! Added nullification in MatrixInversion
+!
 ! Revision 2.61  2002/02/05 02:39:59  vsnyder
 ! Change mask from 1-bit per to 8-bits per (using character)
 !
