@@ -42,9 +42,10 @@ module MLSHDFEOS
   implicit NONE
   private
 
-  public :: HE5_EHWRGLATT, MLS_DFLDSETUP, MLS_GFLDSETUP, &
+  public :: HE5_EHWRGLATT, MLS_EHWRGLATT, MLS_DFLDSETUP, MLS_GFLDSETUP, &
     & MLS_SWDEFDIM, MLS_SWDIMINFO, MLS_SWRDFLD, MLS_SWSETFILL, MLS_SWWRFLD, &
     & MLS_SWATTACH, MLS_SWCREATE, MLS_SWDETACH, MLS_GDCREATE, &
+    & MLS_SWWRATTR, MLS_SWWRLATTR, &
     & mls_swath_in_file
   logical, parameter :: HE5_SWSETFILL_BROKEN = .true.
   character(len=*), parameter :: SETFILLTITLE = '_FillValue'
@@ -115,6 +116,18 @@ module MLSHDFEOS
   logical, parameter :: DEEBUG = .false.  
 
 contains ! ======================= Public Procedures =========================
+
+  integer function MLS_EHWRGLATT ( FILEID, &
+    & ATTRNAME, DATATYPE, COUNT, BUFFER )
+    integer, intent(in) :: FILEID      ! File ID
+    character(len=*), intent(in) :: ATTRNAME     ! Attribute name
+    integer, intent(in) :: DATATYPE    ! E.g., HE5T_NATIVE_SCHAR
+    integer, intent(in) :: COUNT   ! How many
+    character(len=*), intent(in) :: BUFFER  ! Buffer for write
+    MLS_EHWRGLATT = he5_ehwrglatt_character_scalar( FILEID, &
+    & ATTRNAME, DATATYPE, max(COUNT, len_trim(BUFFER)), BUFFER )
+
+  end function MLS_EHWRGLATT
 
   integer function MLS_GDCREATE ( FILEID, GRIDNAME, &
    &  xdimsize, ydimsize, upleft, lowright, FileName, hdfVersion )
@@ -1104,6 +1117,31 @@ contains ! ======================= Public Procedures =========================
 
   end function MLS_SWRDFLD_REAL_3d
 
+  integer function mls_swwrattr ( SWATHID, &
+    & ATTRNAME, DATATYPE, COUNT, BUFFER )
+    integer, intent(in) :: SWATHID      ! Swath ID
+    character(len=*), intent(in) :: ATTRNAME     ! Attribute name
+    integer, intent(in) :: DATATYPE    ! E.g., HE5T_NATIVE_SCHAR
+    integer, intent(in) :: COUNT   ! How many
+    character(len=*), intent(in) :: BUFFER  ! Buffer for write
+    mls_swwrattr = HE5_SWWRATTR( SWATHID, &
+    & ATTRNAME, DATATYPE, max(COUNT, len_trim(BUFFER)), BUFFER )
+
+  end function mls_swwrattr
+
+  integer function mls_swwrlattr ( SWATHID, &
+    & FIELDNAME, ATTRNAME, DATATYPE, COUNT, BUFFER )
+    integer, intent(in) :: SWATHID      ! Swath ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    character(len=*), intent(in) :: ATTRNAME     ! Attribute name
+    integer, intent(in) :: DATATYPE    ! E.g., HE5T_NATIVE_SCHAR
+    integer, intent(in) :: COUNT   ! How many
+    character(len=*), intent(in) :: BUFFER  ! Buffer for write
+    mls_swwrlattr = HE5_SWWRLATTR( SWATHID, FIELDNAME, &
+    & ATTRNAME, DATATYPE, max(COUNT, len_trim(BUFFER)), BUFFER )
+
+  end function mls_swwrlattr
+
   integer function MLS_SWWRFLD_CHAR_1D ( SWATHID, FIELDNAME, &
     & START, STRIDE, EDGE, VALUES, FILENAME, hdfVersion, DONTFAIL )
     integer, parameter :: RANK = 1
@@ -1724,6 +1762,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDFEOS
 
 ! $Log$
+! Revision 2.14  2003/10/28 00:28:53  pwagner
+! Added MLS_EHWRGLATT,MLS_SWWRATTR,MLS_SWWRLATTR
+!
 ! Revision 2.13  2003/07/15 23:36:28  pwagner
 ! Disabled most printing; trims args to (HE5_)SWdefgfld
 !
