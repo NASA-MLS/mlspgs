@@ -454,8 +454,8 @@
             TAU(ILYR)=RC_TOT(3)*Z(ILYR)
             DEPTH=RC_TOT(3)*Z(ILYR)
 
-            delTAU(ILYR) = abs(DEPTH)
-            delTAUc(ILYR)= abs(CDEPTH(1))
+            delTAU(ILYR) = max(0._r8, DEPTH )
+            delTAUc(ILYR)= max(0._r8, CDEPTH(1) )
 
  1000    CONTINUE                         ! END OF MODEL LAYER LOOP
 
