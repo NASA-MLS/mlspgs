@@ -194,7 +194,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_MERGE              = s_matrix + 1
   integer, parameter :: S_OUTPUT             = s_merge + 1
   integer, parameter :: S_QUANTITY           = s_output + 1
-  integer, parameter :: S_RETRIEVE           = s_quantity + 1
+  integer, parameter :: S_REMOVE             = s_quantity + 1
+  integer, parameter :: S_RETRIEVE           = s_remove + 1
   integer, parameter :: S_SIDS               = s_retrieve + 1
   integer, parameter :: S_SNOOP              = s_sids + 1
   integer, parameter :: S_SUBSET             = s_snoop + 1
@@ -398,6 +399,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_merge) =                add_ident ( 'merge' )
     spec_indices(s_output) =               add_ident ( 'output' )
     spec_indices(s_quantity) =             add_ident ( 'quantity' )
+    spec_indices(s_remove) =               add_ident ( 'remove' )
     spec_indices(s_retrieve) =             add_ident ( 'retrieve' )
     spec_indices(s_snoop) =                add_ident ( 'snoop' )
     spec_indices(s_subset) =               add_ident ( 'subset' )
@@ -622,6 +624,9 @@ contains ! =====     Public procedures     =============================
             f+f_quantities, n+n_dot/))
      call acorn((/begin, f+f_h2oQuantity, s+s_vector, f+f_template, f+f_quantities, &
             n+n_dot/))
+     call acorn((/begin, f+f_ignoreMask, t+t_boolean, n+n_field_type/))
+     call acorn((/begin, f+f_ignoreNegative, t+t_boolean, n+n_field_type/))
+     call acorn((/begin, f+f_ignoreZero, t+t_boolean, n+n_field_type/))
      call acorn((/begin, f+f_integrationTime, t+t_numeric, n+n_field_type/))
      call acorn((/begin, f+f_interpolate, t+t_boolean, n+n_field_type/))
      call acorn((/begin, f+f_losQty, s+s_vector, f+f_template, f+f_quantities, n+n_dot/))
@@ -654,13 +659,16 @@ contains ! =====     Public procedures     =============================
      call acorn((/begin, f+f_sourceGrid, s+s_gridded, n+n_field_spec/))
      call acorn((/begin, f+f_sourceSGrid, s+s_vGrid, n+n_field_spec/))
      call acorn((/begin, f+f_sourceVGrid, s+s_vGrid, n+n_field_spec/))
-     call acorn((/begin, f+f_spread, &
-            t+t_boolean, n+n_field_type/))
+     call acorn((/begin, f+f_spread, t+t_boolean, n+n_field_type/))
      call acorn((/begin, f+f_systemTemperature, t+t_numeric, n+n_field_type/))
      call acorn((/begin, f+f_vmrQuantity, s+s_vector, f+f_template, f+f_quantities, &
             n+n_dot, ndp+n_spec_def /) )
      call make_tree ( id_cum(1:id_last) )
 
+    call make_tree( (/ &
+      begin, s+s_remove, &
+             begin, f+f_source, s+s_vector, n+n_field_spec, &
+             nadp+n_spec_def /) )
     call make_tree( (/ &
       begin, s+s_transfer, &
              begin, f+f_source, s+s_vector, n+n_field_spec, &
@@ -825,7 +833,7 @@ contains ! =====     Public procedures     =============================
       begin, z+z_construct, s+s_hgrid, s+s_forge, s+s_quantity, &
              s+s_snoop, s+s_time, s+s_vectortemplate, n+n_section, &
       begin, z+z_fill, s+s_create, s+s_fill, s+s_fillCovariance, s+s_matrix, &
-                       s+s_snoop, s+s_time, s+s_vector, &
+                       s+s_remove, s+s_snoop, s+s_time, s+s_vector, &
                        s+s_transfer, n+n_section, &
       begin, z+z_retrieve, s+s_dumpBlocks, s+s_matrix, s+s_retrieve, &
              s+s_subset, s+s_sids, s+s_time, n+n_section, &
@@ -867,6 +875,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.162  2001/09/19 23:38:05  pwagner
+! Permits Remove command in fill section
+!
 ! Revision 2.161  2001/09/18 23:53:08  pwagner
 ! Replaced error field name with noise; began addNoise Fill method
 !
