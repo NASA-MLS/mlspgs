@@ -19,11 +19,15 @@ open (MAPPING, $mappingName) || die "Can't open input mapping file";
 open (MODULE, ">$moduleName") || die "Can't open output module file";
 
 print MODULE
+    "! Copyright (c) 1999, California Institute of Technology. ".
+    " ALL RIGHTS RESERVED.\n" .
+    "! U.S. Government Sponsorship under NASA Contract " .
+    "NAS7-1407 is acknowledged.\n" .
     "! NOTE: This module is automatically created by the " . 
     "makemlspcfdatamodule\n".
     "!       perl script.  Do *NOT* attempt to modify this by hand.\n".
     "!\n".
-    "MODULE MLSPCFData\n";
+    "MODULE MLSPCF\n";
 
 # Now go through the input file and read it line by line
 
@@ -116,7 +120,7 @@ while ($line=<MAPPING>) {
     }
 }
 
-print MODULE "END MODULE MLSPCFData\n";
+print MODULE "END MODULE MLSPCF\n";
 
 close (MAPPING);
 close (MODULE);

@@ -8,13 +8,16 @@ MLSPGS_LIB_PATH=.
 OBJS=	MLSStrings.o MLSSignalNomenclature.o VerticalCoordinate.o \
 	QuantityTemplates.o MLSNumerics.o MLSMessageModule.o \
 	SDPToolkit.o L2GPData.o L2AUXData.o VectorsModule.o Units.o \
-	VGrid.o HGrid.o L1BData.o ConstructQuantityTemplates.o
+	VGrid.o HGrid.o L1BData.o ConstructQuantityTemplates.o\
+	Temporary_types.o ConstructVectorTemplates.o
+
 OBJS_DEBUG= 	MLSStrings.o_debug MLSSignalNomenclature.o_debug \
 		VerticalCoordinate.o_debug QuantityTemplates.o_debug \
 		MLSNumerics.o_debug MLSMessageModule.o_debug \
 		SDPToolkit.o_debug L2GPData.o_debug L2AUXData.o_debug \
 		VectorsModule.o_debug Units.o_debug VGrid.o_debug \
-		HGrid.o_debug L1BData.o ConstructQuantityTemplates.o_debug
+		HGrid.o_debug L1BData.o ConstructQuantityTemplates.o_debug \
+		Temporary_types.o_debug ConstructVectorTemplates.o_debug
 
 LIBPATH=.
 MODULEPATH=.
@@ -39,34 +42,28 @@ clean:
 # Here we list manually dependencies present through USE statements.
 # Later on we may try to adapt Hugh's script to deal with these
 #
+
 MLSMessageModule.o: SDPToolkit.o
 MLSStrings.o: MLSMessageModule.o
-MLSSignalNomenclature.o: MLSStrings.o MLSMessageModule.o
-QuantityTemplates.o: MLSSignalNomenclature.o MLSStrings.o MLSMessageModule.o
+MLSSignalNomenclature.o: MLSStrings.o MLSMessageModule.o MLSCommon.o
+QuantityTemplates.o: MLSSignalNomenclature.o MLSStrings.o MLSMessageModule.o \
+	VGrid.o Temporary_types.o
 MLSNumerics.o: MLSMessageModule.o
 L1BData.o: Hdf.o SDPToolkit.o MLSCommon.o
 HGrid.o: MLSCommon.o MLSMessageModule.o MLSStrings.o L1BData.o MLSNumerics.o
-VGrid.o: MLSCommon.o VerticalCoordinate.o MLSStrings.o
+VGrid.o: MLSCommon.o VerticalCoordinate.o MLSStrings.o Temporary_types.o
 ConstructQuantityTemplates.o: MLSCommon.o MLSMessageModule.o \
 	QuantityTemplates.o VGrid.o HGrid.o VerticalCoordinate.o \
 	Units.o MLSSignalNomenclature.o
-
-MLSMessageModule.o_debug: SDPToolkit.o_debug
-MLSStrings.o_debug: MLSMessageModule.o_debug
-MLSSignalNomenclature.o_debug: MLSStrings.o_debug MLSMessageModule.o_debug
-QuantityTemplates.o_debug: MLSSignalNomenclature.o_debug MLSStrings.o_debug \
-		MLSMessageModule.o_debug
-MLSNumerics.o_debug: MLSMessageModule.o_debug
-L1BData.o_debug: Hdf.o_debug SDPToolkit.o_debug MLSCommon.o_debug
-HGrid.o_debug: MLSCommon.o_debug MLSMessageModule.o_debug MLSStrings.o_debug \
-	L1BData.o_debug MLSNumerics.o_debug
-VGrid.o_debug: MLSCommon.o_debug VerticalCoordinate.o_debug MLSStrings.o_debug
-ConstructQuantityTemplates.o_debug: MLSCommon.o_debug MLSMessageModule.o_debug \
-	QuantityTemplates.o_debug VGrid.o_debug HGrid.o_debug \
-	VerticalCoordinate.o_debug Units.o_debug MLSSignalNomenclature.o_debug
+VerticalCoordinate.o: MLSCommon.o MLSStrings.o Units.o
+ConstructVectorTemplates.o: MLSCommon.o MLSMessageModule.o VectorsModule.o \
+	QuantityTemplates.o Temporary_types.o
 
 #
 # $Log$
+# Revision 1.19  1999/12/17 00:59:32  livesey
+# Nightly checkin
+#
 # Revision 1.18  1999/12/16 23:45:15  livesey
 # Regular commit
 #
