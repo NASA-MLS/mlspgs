@@ -108,7 +108,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_BINSELECTOR        = s_apriori + 1
   integer, parameter :: S_CHUNKDIVIDE        = s_binselector + 1
   integer, parameter :: S_CONCATENATE        = s_chunkDivide + 1
-  integer, parameter :: S_DESTROY            = s_concatenate + 1
+  integer, parameter :: S_DELETE             = s_concatenate + 1
+  integer, parameter :: S_DESTROY            = s_delete + 1
   integer, parameter :: S_DIRECTWRITE        = s_destroy + 1
   integer, parameter :: S_DUMP               = s_directWrite + 1
   integer, parameter :: S_DUMPBLOCKS         = s_dump + 1
@@ -288,6 +289,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_chunkDivide) =          add_ident ( 'chunkDivide' )
     spec_indices(s_concatenate) =          add_ident ( 'concatenate' )
     spec_indices(s_empiricalGeometry) =    add_ident ( 'EmpiricalGeometry' )
+    spec_indices(s_delete) =               add_ident ( 'delete' )
     spec_indices(s_destroy) =              add_ident ( 'destroy' )
     spec_indices(s_directWrite) =          add_ident ( 'directWrite' )
     spec_indices(s_dump) =                 add_ident ( 'dump' )
@@ -511,6 +513,10 @@ contains ! =====     Public procedures     =============================
              begin, f+f_climatology, s+s_gridded, s+s_concatenate, n+n_field_spec, &
              begin, f+f_height, t+t_numeric, n+n_field_type, &
              begin, f+f_scale, t+t_numeric, n+n_field_type, &
+             nadp+n_spec_def /) )
+    call make_tree ( (/ &
+      begin, s+s_delete, &
+             begin, f+f_grid, s+s_gridded, s+s_concatenate, s+s_merge, n+n_field_spec, &
              nadp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_chunkDivide, &
@@ -1003,7 +1009,8 @@ contains ! =====     Public procedures     =============================
              s+s_fGrid, s+s_l1brad, s+s_l1boa, n+n_section, &
       begin, z+z_readapriori, s+s_time, s+s_gridded, s+s_l2gp, &
              s+s_l2aux, s+s_snoop, n+n_section, &
-      begin, z+z_mergegrids, s+s_time, s+s_merge, s+s_concatenate, n+n_section /) )
+      begin, z+z_mergegrids, s+s_time, s+s_merge, s+s_concatenate, s+s_delete, &
+             n+n_section /) )
     call make_tree ( (/ &
       begin, z+z_chunkdivide, &
              begin, p+p_critical_bands, t+t_string, n+n_name_def, &
@@ -1045,6 +1052,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.319  2003/06/06 01:06:44  livesey
+! Added delete option for grids
+!
 ! Revision 2.318  2003/06/05 22:13:35  pwagner
 ! Added criticalSignals to ChunkDivide Orbital
 !
