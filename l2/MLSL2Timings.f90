@@ -45,7 +45,7 @@ contains ! =====     Public Procedures     =============================
 
   ! Formal arguments
     character(LEN=*), intent(in):: section_name   ! One of the retrieval section_names
-    real, optional, intent(in)  :: t1             ! Prior time_now 
+    real, optional, intent(inout)  :: t1          ! Prior time_now, then current
 
   ! Private
     integer                     :: elem
@@ -66,6 +66,7 @@ contains ! =====     Public Procedures     =============================
           & section_timings(num_section_times+elem) + t2 - myLastTime
       endif
       myLastTime = t2
+      call time_now ( t1 )
   end subroutine add_to_retrieval_timing
 
   ! -----------------------------------------------  add_to_section_timing  -----
@@ -218,6 +219,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.9  2002/09/18 23:56:01  vsnyder
+! Call time_now at end of add_to_retrieval_timing
+!
 ! Revision 2.8  2002/07/23 00:06:05  pwagner
 ! No upper-case allowed in section names
 !
