@@ -5,10 +5,9 @@ module OBTAIN_MLSCF
 
 ! Open and close the MLSCF
   use LEXER_CORE, only: PRINT_SOURCE
-!  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+  use MLSFiles, only: MLS_io_gen_openf, MLS_io_gen_closef
   USE output_m, only: output
-  use SDPToolkit, only: Pgs_io_gen_closeF, Pgs_io_gen_openF, PGS_S_SUCCESS, &
-    & PGSd_IO_Gen_RSeqFrm
+  use SDPToolkit, only: PGS_S_SUCCESS, PGSd_IO_Gen_RSeqFrm
   use TREE, only: DUMP_TREE_NODE, SOURCE_REF
 
   implicit NONE
@@ -38,12 +37,11 @@ contains ! =====     Public Procedures     =============================
     integer :: RETURN_STATUS
 
     error = 0
-    return_Status = Pgs_io_gen_closeF ( CF_Unit )
+!    return_Status = Pgs_io_gen_closeF ( CF_Unit )
+
+    return_Status = Mls_io_gen_closeF ( 'pg', CF_Unit )
 
     if ( return_Status /= PGS_S_SUCCESS ) then
-!      call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
-!      call MLSMessage ( MLSMSG_Error, ModuleName, &
-!        & 'Error closing L2CF:  '//mnemonic//' '//msg)
 		call announce_error(0, 'Error closing L2CF')
     end if
 
@@ -57,18 +55,20 @@ contains ! =====     Public Procedures     =============================
     integer, intent(out) :: return_status
 
     integer :: L2CF_VERSION
+    integer :: record_length
     character (LEN=32) :: MNEMONIC
     character (LEN=256) :: MSG
 
     error = 0
     L2CF_Version = 1
-    return_Status = Pgs_io_gen_openF ( MLSPCF_Start, PGSd_IO_Gen_RSeqFrm, &
-                                      0, CF_Unit, L2CF_Version)
+!    return_Status = Pgs_io_gen_openF ( MLSPCF_Start, PGSd_IO_Gen_RSeqFrm, &
+!                                      0, CF_Unit, L2CF_Version)
+
+    CF_Unit = Mls_io_gen_openF ( 'pg', .true., return_Status, record_length, &
+      & PGSd_IO_Gen_RSeqFrm, &
+      & thePC=MLSPCF_Start)
 
     if ( return_Status /= PGS_S_SUCCESS ) then
-!      call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
-!      call MLSMessage ( MLSMSG_Error, ModuleName, &
-!        & "Error opening MLSCF:  "//mnemonic//"  "//msg)
 		call announce_error(0, "Error opening MLSCF")
     end if
 
@@ -139,6 +139,9 @@ contains ! =====     Public Procedures     =============================
 end module OBTAIN_MLSCF
 
 ! $Log$
+! Revision 2.6  2001/04/16 23:43:17  pwagner
+! Returns returnStatus
+!
 ! Revision 2.5  2001/04/12 22:19:33  vsnyder
 ! Improved an error message
 !
