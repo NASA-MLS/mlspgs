@@ -61,6 +61,7 @@ destroyJacobian
 diagnostics
 diagonal
 differentialScan
+dimList
 do_baseline
 do_conv
 do_freq_avg
@@ -289,6 +290,9 @@ vRegWeightVec
 writeCounterMAF
 
 # $Log$
+# Revision 2.80  2003/02/20 21:26:21  pwagner
+# Lets you read field dimList=x,y,.. w/ griddeddata
+#
 # Revision 2.79  2003/02/14 01:56:36  livesey
 # Added the 'additional' capability in subset
 #
