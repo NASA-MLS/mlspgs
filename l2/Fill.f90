@@ -11,7 +11,7 @@ module Fill                     ! Create vectors and fill them.
     & F_H2OQUANTITY, F_METHOD, F_QUANTITY, F_REFGPHQUANTITY, F_SOURCE, &
     & F_SOURCEL2AUX, F_SOURCEL2GP, F_SOURCEQUANTITY, F_SPREAD, F_TEMPERATUREQUANTITY, &
     & FIELD_FIRST, FIELD_LAST, L_EXPLICIT, L_HYDROSTATIC, L_L2GP, L_L2AUX, L_PRESSURE, &
-    & L_TRUE, L_VECTOR, S_TIME, S_VECTOR, S_FILL
+    & L_TRUE, L_VECTOR, L_ZETA, S_TIME, S_VECTOR, S_FILL
   ! will be added
   use L2GPData, only: L2GPData_T
   use L2AUXData, only: L2AUXData_T, L2AUXDim_None, L2AUXDim_Channel, &
@@ -415,7 +415,8 @@ contains ! =====     Public Procedures     =============================
     ! Make sure this quantity is appropriate
     if ( (.NOT. quantity%template%coherent) .or. &
       &  (.NOT. quantity%template%stacked) .or. &
-      &  (quantity%template%verticalCoordinate /= l_pressure) ) then
+      &  ( (quantity%template%verticalCoordinate /= l_pressure) .or. &
+      &    (quantity%template%verticalCoordinate /= l_zeta) ) ) then
       errorCode=vectorWontMatchL2GP
       return
     end if
@@ -431,10 +432,18 @@ contains ! =====     Public Procedures     =============================
       return
     end if
 
-    if ( any(ABS(-LOG10(quantity%template%surfs(:,1))+ &
-      & LOG10(l2gp%pressures)) > TOLERANCE)) then
-      errorCode=vectorWontMatchL2GP
-      return
+    if ( quantity%template%verticalCoordinate == l_pressure) then
+      if ( any(ABS(-LOG10(quantity%template%surfs(:,1))+ &
+        & LOG10(l2gp%pressures)) > TOLERANCE)) then
+        errorCode=vectorWontMatchL2GP
+        return
+      end if
+    else                                ! Must be l_zeta
+      if ( any(ABS(quantity%template%surfs(:,1)+ &
+        & LOG10(l2gp%pressures)) > TOLERANCE)) then
+        errorCode=vectorWontMatchL2GP
+        return
+      end if
     end if
 
     ! Attempt to match up the first location
@@ -998,6 +1007,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.18  2001/02/27 00:50:53  livesey
+! Made sure verticalCoordinate=l_zeta worked for filling from L2GP
+!
 ! Revision 2.17  2001/02/23 18:16:26  livesey
 ! Regular commit
 !
