@@ -57,8 +57,8 @@ module RetrievalModule
   use Tree, only: Decorate, Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, &
     & Subtree
   use Tree_Types, only: N_named
-  use VectorsModule, only: AddToVector, CloneVector, CopyVector, CreateMask, &
-    & DestroyVectorInfo, DestroyVectorMask, DestroyVectorValue, Dump, &
+  use VectorsModule, only: AddToVector, ClearMask, CloneVector, CopyVector, &
+    & CreateMask, DestroyVectorInfo, DestroyVectorMask, DestroyVectorValue, Dump, &
     & GetVectorQtyByTemplateIndex, GetVectorQuantityIndexByName, &
     & Multiply, operator(.DOT.), &
     & operator(-), ScaleVector, SetMask, SubtractFromVector, Vector_T, VectorValue_T
@@ -1258,6 +1258,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.45  2001/06/26 17:57:46  livesey
+! Whoops, added another use clause
+!
 ! Revision 2.44  2001/06/26 16:26:32  livesey
 ! It at least compiles, but subset certainly doesn't work yet.
 !
