@@ -63,7 +63,7 @@ contains ! ====     Public Procedures     ==============================
     use MergeGridsModule, only: MergeGrids
     use MLSCommon, only: L1BINFO_T, MLSCHUNK_T, TAI93_RANGE_T, MLSFile_T
     ! use MLSFiles, only: MLSFile_T
-    use MLSL2Options, only: GARBAGE_COLLECTION_BY_CHUNK, CHECKPATHS
+    use MLSL2Options, only: CHECKPATHS
     use MLSMessageModule, only: MLSMessage, MLSMSG_Info, MLSMSG_Error
     use MLSSignals_M, only: Bands, DestroyBandDatabase, DestroyModuleDatabase, &
       & DestroyRadiometerDatabase, DestroySignalDatabase, &
@@ -322,9 +322,9 @@ subtrees:   do while ( j <= howmany )
                 & mifGeolocation, hGrids )
               call DestroyVectorDatabase ( vectors )
               call DestroyMatrixDatabase ( matrices )
-              if (garbage_collection_by_chunk) call mls_gc_now
-              if ( index(switches,'ngc') /= 0 ) &
-                & totalNGC = Say_num_gcs()
+              ! if (garbage_collection_by_chunk) call mls_gc_now
+              ! if ( index(switches,'ngc') /= 0 ) &
+              !  & totalNGC = Say_num_gcs()
             end if
             call ForgetOptimumLon0
             ! print the timing for FullForwardModel
@@ -443,6 +443,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.119  2003/11/07 00:46:51  pwagner
+! New quicker preflight option: --checkPaths
+!
 ! Revision 2.118  2003/11/05 21:27:54  pwagner
 ! Can enter range of chunks to be processed instead of single
 !
