@@ -40,7 +40,7 @@ MODULE MLSStringLists               ! Module to treat string lists
 !     (subroutines and functions)
 ! Array2List         Converts an array of strings to a single string list
 ! catLists           cats 2 string lists, taking care if either one is blank
-! ExpandStringRange  Turns '1,2-5,7' into '1,2,3,4,5,7'
+! ExpandStringRange  Turns '1,2-5,7' into '1,2,3,4,5,7' or ints or logicals
 ! ExtractSubString   Extracts portion of string sandwiched between sub1 and sub2
 ! GetIntHashElement  Returns int from hash array corresponding to key string
 ! GetStringElement   Returns n'th element of string list
@@ -127,6 +127,11 @@ MODULE MLSStringLists               ! Module to treat string lists
    & SortArray, SortList, StringElementNum, &
    & unquote, utc_to_yyyymmdd, yyyymmdd_to_dai
 
+  interface ExpandStringRange
+    module procedure ExpandStringRange_str, ExpandStringRange_ints, &
+      & ExpandStringRange_log
+  end interface
+
   interface switch
     module procedure switch_ints
   end interface
@@ -151,6 +156,7 @@ MODULE MLSStringLists               ! Module to treat string lists
   integer, public, parameter :: LENORSIZETOOSMALL=-999
   
   ! A limitation among string list operations
+  integer, private, parameter :: MAXSTRLISTLENGTH = 4096
   integer, private, parameter :: MAXSTRELEMENTLENGTH = BareFNLen
 
   integer, parameter :: YEARMAX = 4999  ! Conversion invalid after 4999 AD
@@ -265,8 +271,84 @@ CONTAINS
     endif
   end function catLists
 
-  ! --------------------------------------------------  ExpandStringRange  -----
-  subroutine ExpandStringRange (instr, outstr)
+  ! ----------------------------------------  ExpandStringRange_ints  -----
+  subroutine ExpandStringRange_ints (instr, ints, length)
+    ! Takes a range and returns an array of integers
+    ! E.g., given '1,2-5,7' returns (/1,2,3,4,5,7/)
+    !--------Argument--------!
+    character (len=*), intent(in) :: instr
+    integer, dimension(:), intent(out) :: ints
+    integer, optional, intent(out) :: length  ! number of ints returned
+    ! Internal variables
+    integer :: elem
+    integer :: ErrTyp
+    integer :: nelem
+    character(len=MAXSTRLISTLENGTH) :: expandedstr
+    character(len=8) :: iChar
+    logical, parameter :: countEmpty=.true.
+    ! Executable
+    ints = 0
+    if ( present(length) ) length = 0
+    if ( min(len_trim(instr), size(ints)) < 1 ) return
+    call ExpandStringRange_str (instr, expandedstr)
+    nelem = NumStringElements(trim(expandedstr), countEmpty)
+    if ( nelem < 1 ) return
+    do elem = 1, min(nelem, size(ints))
+      call GetStringElement (trim(expandedstr), iChar, elem, countEmpty)
+      read(iChar, *, iostat=ErrTyp) ints(elem)
+    enddo
+    if ( present(length) ) length = min(nelem, size(ints))
+  end subroutine ExpandStringRange_ints
+
+  ! ----------------------------------------  ExpandStringRange_log  -----
+  subroutine ExpandStringRange_log (instr, logs, fits, highfit, sense)
+    ! Takes a range and returns an array of logicals true for indices
+    ! fitting the range (unless sense is false)
+    ! E.g., given '1,2-5,7' returns (/T,T,T,T,T,F,T/) (because '6' is outside)
+    !--------Argument--------!
+    character (len=*), intent(in) :: instr
+    logical, dimension(:), intent(out) :: logs
+    integer, optional, intent(out) :: fits  ! number of fits in range (trues)
+    integer, optional, intent(out) :: highfit  ! index of highest fit
+    logical, optional, intent(in) :: sense   ! if false, return F for fits
+    ! Internal variables
+    integer :: elem
+    integer :: ErrTyp
+    integer :: indx
+    integer :: nelem
+    integer :: nfits
+    integer :: hfit
+    character(len=MAXSTRLISTLENGTH) :: expandedstr
+    character(len=8) :: iChar
+    logical, parameter :: countEmpty=.true.
+    logical :: mySense
+    ! Executable
+    mySense = .true.
+    if ( present(sense) ) mySense = sense
+    logs = .not. mySense ! .false.
+    if ( present(fits) ) fits = 0
+    if ( present(highfit) ) highfit = 0
+    if ( min(len_trim(instr), size(logs)) < 1 ) return
+    call ExpandStringRange_str (instr, expandedstr)
+    nelem = NumStringElements(trim(expandedstr), countEmpty)
+    if ( nelem < 1 ) return
+    nfits = 0
+    hfit = 0
+    do elem = 1, min(nelem, size(logs))
+      call GetStringElement (trim(expandedstr), iChar, elem, countEmpty)
+      read(iChar, *, iostat=ErrTyp) indx
+      if ( indx > 0 .and. indx <= size(logs) ) then
+        if ( logs(indx) .neqv. mySense ) nfits = nfits + 1
+        logs(indx) = mySense ! .true.
+        hfit = max(hfit, indx)
+      endif
+    enddo
+    if ( present(fits) ) fits = nfits
+    if ( present(highfit) ) highfit = hfit
+  end subroutine ExpandStringRange_log
+
+  ! --------------------------------------------------  ExpandStringRange_str  -----
+  subroutine ExpandStringRange_str (instr, outstr)
     ! Takes a string list and expands any ranges found within:
     ! Ranges are marked by patterns
     ! (simple) 'n-m' integers from n to m inclusive, where m > n
@@ -347,7 +429,7 @@ CONTAINS
       endif
       outstr = catLists(trim(outstr), adjustl(tempstr))
     enddo
-  end subroutine ExpandStringRange
+  end subroutine ExpandStringRange_str
 
   ! --------------------------------------------------  ExtractSubString  -----
   SUBROUTINE ExtractSubString (instr, outstr, sub1, sub2, how, no_trim)
@@ -2470,7 +2552,6 @@ CONTAINS
     integer, intent(in) :: year, month, day
     integer, intent(out) :: doy
     !----------Local vars----------!
-    integer :: ErrTyp
     integer :: m
     integer, dimension(-1:12) :: DAYMAX
     !----------Executable part----------!
@@ -2529,6 +2610,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.2  2004/08/05 22:47:02  pwagner
+! New interfaces to ExpandStringList for ints and logicals
+!
 ! Revision 2.1  2004/08/04 23:17:30  pwagner
 ! First commit
 !
