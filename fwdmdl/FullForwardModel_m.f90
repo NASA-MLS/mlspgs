@@ -1695,8 +1695,21 @@ contains
 
       IF ( fwdModelConf%Incl_Cld ) THEN
 
+        call comp_eta_docalc_no_frq ( Grids_f,z_path(1:no_ele), &
+          &  phi_path(1:no_ele), do_calc_zp(1:no_ele,:), eta_zp(1:no_ele,:) )
+
         call comp_eta_docalc_no_frq ( Grids_Iwc,z_path(1:no_ele), &
           &  phi_path(1:no_ele), do_calc_iwc_zp(1:no_ele,:), eta_iwc_zp(1:no_ele,:) )
+
+       ! Now compute sps_path with a FAKE frequency, mainly to get the
+       ! WATER (H2O) contribution for refraction calculations, but also
+       ! to compute sps_path for all those with no frequency component
+
+        Frq = 0.0
+        call comp_sps_path_frq ( Grids_f, firstSignal%lo, thisSideband, &
+          & Frq, eta_zp(1:no_ele,:), &
+          & do_calc_zp(1:no_ele,:), sps_path(1:no_ele,:),      &
+          & do_calc_fzp(1:no_ele,:), eta_fzp(1:no_ele,:) )
 
        ! Compute IWC_PATH
         Frq = 0.0
@@ -2724,6 +2737,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.121  2003/02/06 19:06:49  jonathan
+! add eta_iwc, eta_iwc_zp, do_calc_iwc, do_cala_iwc_zp and also not passing through comp_eta_docalc and comp_sps_path_frq if fwdModelConf%Incl_Cld is false
+!
 ! Revision 2.120  2003/02/06 05:55:47  livesey
 ! Fix to sort of fix Jonathan's cloud ice stuff.
 !
