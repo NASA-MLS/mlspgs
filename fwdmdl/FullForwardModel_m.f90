@@ -1835,7 +1835,7 @@ contains
       do ptg_i = 2, no_tan_hts - 1
         ! this is a temporary fix
         if ( ptg_angles(ptg_i) < ptg_angles(ptg_i-1) ) then
-          & ptg_angles(ptg_i) = (ptg_angles(ptg_i-1) + ptg_angles(ptg_i+1))/2
+          ptg_angles(ptg_i) = (ptg_angles(ptg_i-1) + ptg_angles(ptg_i+1))/2
           if ( index(switches,'ptg') /= 0 ) &
             & call Dump ( ptg_angles, 'ptg_angles (after a patch)' )
         end if
@@ -3082,6 +3082,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.217  2004/08/06 01:24:22  livesey
+! Minor bug fix in ptg_angles dump
+!
 ! Revision 2.216  2004/08/05 20:53:50  vsnyder
 ! More PFA preparations, some cannonball polishing
 !
