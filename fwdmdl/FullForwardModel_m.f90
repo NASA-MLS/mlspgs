@@ -75,7 +75,7 @@ contains
     use REFRACTION_M, only: REFRACTIVE_INDEX, COMP_REFCOR
     use SLABS_SW_M, only: GET_GL_SLABS_ARRAYS
 ! use testfield_m
-    use Tau_M, only: Get_Tau, Tau_T
+    use Tau_M, only: Destroy_Tau, Dump, Get_Tau, Tau_T
     use Toggles, only: Emit, Levels, Switches, Toggle
     use Trace_M, only: Trace_begin, Trace_end
     use TWO_D_HYDROSTATIC_M, only: Two_D_Hydrostatic
@@ -1147,7 +1147,8 @@ contains
       sx = ( thisSideband + 3 ) / 2 ! [-1,+1] => [1,2]
 
       ! Now, allocate gl_slabs arrays
-      call allocateSlabs ( gl_slabs, max_ele, fwdModelConf%catalog(thisSideband,:), &
+      call allocateSlabs ( gl_slabs, max_ele, &
+        & fwdModelConf%catalog(thisSideband,:fwdModelConf%cat_size(sx)), &
         & moduleName, temp_der )
 
       call frequency_setup_1
@@ -1309,17 +1310,11 @@ contains
         ! to compute sps_path for all those with no frequency component
 
       ! Frq = 0.0_r8
-        if ( .not. FwdModelConf%anyPFA ) &
-          & call comp_sps_path_frq ( Grids_f, firstSignal%lo, thisSideband, &
-            & 0.0_r8, eta_zp(1:no_ele,:), &
-            & do_calc_zp(1:no_ele,:), sps_path(1:no_ele,:),      &
-            & do_calc_fzp(1:no_ele,:), eta_fzp(1:no_ele,:), DoPFA=.false. )
-
-        if ( FwdModelConf%anyPFA ) &
-          & call comp_sps_path_frq ( Grids_f, firstSignal%lo, thisSideband, &
-            & 0.0_r8, eta_zp(1:no_ele,:), &
-            & do_calc_zp(1:no_ele,:), sps_path(1:no_ele,:),      &
-            & do_calc_fzp(1:no_ele,:), eta_fzp(1:no_ele,:), DoPFA=.true. )
+        call comp_sps_path_frq ( Grids_f, firstSignal%lo, thisSideband, &
+          & 0.0_r8, eta_zp(1:no_ele,:),                   &
+          & do_calc_zp(1:no_ele,:), sps_path(1:no_ele,:), &
+          & do_calc_fzp(1:no_ele,:), eta_fzp(1:no_ele,:), &
+          & DoPFA=FwdModelConf%anyPFA(sx) )
 
         ! Special path quantities for cloud model
         if ( fwdModelConf%Incl_Cld ) then
@@ -1440,7 +1435,7 @@ contains
         if ( toggle(emit) .and. levels(emit) > 4 ) &
           & call Trace_End ( 'ForwardModel.MetricsEtc' )
 
-!       if ( FwdModelConf%firstPFA > 1 ) then
+        if ( FwdModelConf%anyLBL(sx) ) then
           call frequency_loop ( alpha_path_c(:npc), beta_path_c(:npc,:),          &
             & c_inds(:npc), del_s(:npc), del_zeta(:npc),                          &
             & do_calc_fzp(:no_ele,:), do_calc_zp(:no_ele,:), do_GL(:npc),         &
@@ -1448,9 +1443,13 @@ contains
             & incoptdepth(:npc), p_path(:no_ele), pfaFalse, ref_corr(:npc),       &
             & sps_path(:no_ele,:), tau_lbl, t_path_c(:npc), t_script_lbl(:npc,:), &
             & tanh1_c(:npc), tt_path_c(:npc), w0_path_c(:npc), z_path(:no_ele) )
-!       else
-!         tau_lbl%i_stop(:noFreqs) = 0
-!       end if
+          if ( index(switches,'taul') /= 0 ) then
+            call output ( thisSideband, before='Sideband ' )
+            call output ( ptg_i, before=' Pointing ' )
+            call dump ( tau_lbl, noFreqs, ' Tau_LBL:' )
+            call dump ( t_script_lbl(:npc,:noFreqs), 'T_Script_LBL' )
+          end if
+        end if
 
         if ( FwdModelConf%do_freq_avg ) then
           call get_channel_centers ( channelCenters )
@@ -1459,8 +1458,7 @@ contains
         end if
 
         ! Handle PFA molecules
-        if ( FwdModelConf%anyPFA ) then
-
+        if ( FwdModelConf%anyPFA(sx) ) then
           call frequency_loop ( alpha_path_c(:npc), beta_path_c(:npc,:),          &
             & c_inds(:npc), del_s(:npc), del_zeta(:npc),                          &
             & do_calc_fzp(:no_ele,:), do_calc_zp(:no_ele,:), do_GL(:npc),         &
@@ -1468,7 +1466,12 @@ contains
             & incoptdepth(:npc), p_path(:no_ele), pfaTrue, ref_corr(:npc),        &
             & sps_path(:no_ele,:), tau_pfa, t_path_c(:npc), t_script_pfa(:npc,:), &
             & tanh1_c(:npc), tt_path_c(:npc), w0_path_c(:npc), z_path(:no_ele) )
-
+          if ( index(switches,'taup') /= 0 ) then
+            call output ( thisSideband, before='Sideband ' )
+            call output ( ptg_i, before=' Pointing ' )
+            call dump ( tau_pfa, size(channelCenters), ' Tau_PFA:' )
+            call dump ( t_script_pfa(:npc,:size(channelCenters)), 'T_Script_PFA' )
+          end if
         end if
 
         call frequency_average ! or not
@@ -1493,14 +1496,14 @@ contains
       call convolution ! or interpolation to ptan
 
       ! Deallocate maxNoPtgFreqs-sized stuff
-      call deallocate_test ( Radv, 'RadV', moduleName )
-      call deallocate_test ( T_Script_LBL, 'T_Script_LBL', moduleName )
-      call deallocate_test ( tau_LBL%tau, 'Tau_LBL%Tau', moduleName )
-      call deallocate_test ( tau_LBL%i_stop, 'Tau_LBL%I_Stop', moduleName )
-      if ( FwdModelConf%anyPFA ) then
-        call deallocate_test ( T_Script_PFA, 'T_Script_PFA', moduleName )
-        call deallocate_test ( tau_PFA%tau, 'Tau_PFA%Tau', moduleName )
-        call deallocate_test ( tau_PFA%i_stop, 'Tau_PFA%I_Stop', moduleName )
+      call deallocate_test ( radv, 'RadV', moduleName )
+      if ( FwdModelConf%anyLBL(sx) ) then
+        call deallocate_test ( t_script_LBL, 'T_Script_LBL', moduleName )
+        call destroy_tau ( tau_LBL, "Tau_LBL", moduleName )
+      end if
+      if ( FwdModelConf%anyPFA(sx) ) then
+        call deallocate_test ( t_script_PFA, 'T_Script_PFA', moduleName )
+        call destroy_tau ( tau_PFA, "Tau_PFA", moduleName )
         if ( temp_der ) then
           call deallocate_test ( sum_ddel_LBL, 'Sum_dDel_LBL', moduleName )
           call deallocate_test ( sum_ddel_PFA, 'Sum_dDel_PFA', moduleName )
@@ -2145,13 +2148,13 @@ contains
       if ( toggle(emit) .and. levels(emit) > 4 ) &
         & call trace_begin ( 'ForwardModel.FrequencyAvg' )
 
-      if ( fwdModelConf%do_freq_avg ) then
+      if ( FwdModelConf%anyLBL(sx) .and. fwdModelConf%do_freq_avg ) then
         ! Do DACs stuff for all DACs channels first
         do i = 1, noUsedDACS
           shapeInd = MatchSignal ( dacsFilterShapes%signal, &
             & fwdModelConf%signals(usedDacsSignals(i)), sideband = thisSideband )
           call Freq_Avg_DACS ( frequencies, DACSFilterShapes(shapeInd), &
-            & RadV, DACsStaging(:,i) )
+            & RadV(:noFreqs), DACsStaging(:,i) )
         end do
         ! Now go through channel by channel
         do i = 1, noUsedChannels
@@ -2166,25 +2169,25 @@ contains
               &    "No matching channel shape information" )
             call freq_avg_setup ( frequencies, &
               &   FilterShapes(shapeInd)%FilterGrid, klo, khi, dF )
-            if ( fwdModelConf%anyPFA) then
-            ! Combine LBL and PFA Tau's to get radiances
-              call rad_tran_PFA ( klo, khi, i, &
-                & tau_LBL, tau_PFA, t_script_lbl, t_script_pfa, radV )
+            if ( fwdModelConf%anyPFA(sx) ) then
+            ! Combine LBL and PFA Tau's to get radiances.  We have to do
+            ! Rad_Tran_PFA for _all_ of RadV(:noFreqs), not just for
+            ! RadV(klo:khi), so as not to screw up the spline in Freq_Avg_Avg.
+              call rad_tran_PFA (i, tau_LBL, tau_PFA, t_script_pfa, radV(:noFreqs) )
             end if
-            call Freq_Avg_Avg ( frequencies, &
+            call freq_Avg_Avg ( frequencies, &
               &   filterShapes(shapeInd)%filterGrid,  &
               &   filterShapes(shapeInd)%filterShape, &
-              &   radV, klo, khi, dF, radiances(ptg_i,i) )
+              &   radV(:noFreqs), klo, khi, dF, radiances(ptg_i,i) )
           else
             radiances(ptg_i,i) = DACsStaging(channel,channels(i)%dacs)
           end if
         end do
-      else if ( FwdModelConf%anyPFA ) then
+      else if ( FwdModelConf%anyPFA(sx) ) then
+        ! Get radiances from PFA Tau's alone
         do i = 1, noUsedChannels
-          ! Combine LBL and PFA Tau's to get radiances
-          call rad_tran_PFA ( i, i, i, &
-            & tau_LBL, tau_PFA, t_script_lbl, t_script_pfa, &
-            & radiances(ptg_i,1:noUsedChannels) )
+          radiances(ptg_i,i) = dot_product(tau_pfa%tau(:tau_pfa%i_stop(i),i), &
+            &                              t_script_pfa(:tau_pfa%i_stop(i),i))
         end do
       else
         radiances(ptg_i,1:noUsedChannels) = radV(1:)
@@ -2405,7 +2408,7 @@ contains
             & beta_group%PFA(sx), vel_rel, beta_path_c, t_der_path_flags, &
             & dbeta_dT_path_c, dbeta_dw_path_c, dbeta_dn_path_c, dbeta_dv_path_c )
         else
-          frqhk = 0.5_r8 * frq * h_over_k ! h nu / 2 k
+          frqhk = 0.5_r8 * frq * h_over_k    ! h nu / 2 k
           tanh1_c = tanh( frqhk / t_path_c ) ! tanh ( h nu / 2 k T )
           ! dTanh_dT = -h nu / (2 k T**2) 1/tanh1 d(tanh1)/dT
           if ( temp_der ) dTanh_dT_c(:npc) = &
@@ -2625,8 +2628,8 @@ contains
 
         end if
 
-        ! Where we don't do GL (everywhere if pfa), replace the rectangle
-        ! rule by the trapezoid rule.
+        ! Where we don't do GL, replace the rectangle rule by the trapezoid
+        ! rule.
         do j = 1, npc - 1
           if ( .not. do_gl(j) ) &
             & incoptdepth(j) = &
@@ -2639,7 +2642,7 @@ contains
 
         if ( pfa ) then
 
-          call get_beta_path_PFA ( frq, frq_i, z_path, gl_inds, t_path_f(:ngl),  &
+          call get_beta_path_PFA ( frq, frq_i, z_path, gl_inds(:ngl), t_path_f(:ngl),  &
             & beta_group%PFA(sx), vel_rel, beta_path_f(:ngl,:), t_der_path_flags, &
             & dbeta_dT_path_f, dbeta_dw_path_f, dbeta_dn_path_f, dbeta_dv_path_f )
 
@@ -2675,7 +2678,7 @@ contains
 
         ! Compute SCALAR radiative transfer --------------------------------
 
-        if ( FwdModelConf%anyPFA ) then
+        if ( FwdModelConf%anyPFA(sx) ) then
           ! Doing PFA, or doing LBL but will be doing PFA
           call get_tau ( frq_i, gl_inds(1:ngl), cg_inds(1:ncg), e_rflty, &
             & del_zeta, alpha_path_c, ref_corr, incoptdepth, alpha_path_f(1:ngl), &
@@ -3002,13 +3005,16 @@ contains
       end if
 
       call allocate_test ( RadV, maxNoPtgFreqs, 'RadV', moduleName )
-      call allocate_test ( T_Script_LBL, npcmax, maxNoPtgFreqs, 'T_Script_LBL', moduleName )
-      call allocate_test ( tau_LBL%tau, npcmax, maxNoPtgFreqs, 'Tau_LBL%Tau', &
-        & moduleName )
-      call allocate_test ( tau_LBL%i_stop, maxNoPtgFreqs, 'Tau_LBL%I_Stop', &
-        & moduleName )
 
-      if ( FwdModelConf%anyPFA ) then
+      if ( FwdModelConf%anyLBL(sx) ) then
+        call allocate_test ( T_Script_LBL, npcmax, maxNoPtgFreqs, 'T_Script_LBL', moduleName )
+        call allocate_test ( tau_LBL%tau, npcmax, maxNoPtgFreqs, 'Tau_LBL%Tau', &
+          & moduleName )
+        call allocate_test ( tau_LBL%i_stop, maxNoPtgFreqs, 'Tau_LBL%I_Stop', &
+          & moduleName )
+      end if
+
+      if ( FwdModelConf%anyPFA(sx) ) then
         call allocate_test ( T_Script_PFA, npcmax, noUsedChannels, 'T_Script_PFA', moduleName )
         call allocate_test ( tau_PFA%tau, npcmax, noUsedChannels, 'Tau_PFA%Tau', &
           & moduleName )
@@ -3210,6 +3216,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.233  2005/03/10 00:28:09  pwagner
+! Better patching of ptg_angles avoids list-out-of-order in Hunt
+!
 ! Revision 2.232  2005/02/17 02:35:29  vsnyder
 ! Do PFA on fine path if necessary
 !

@@ -95,6 +95,8 @@ module ForwardModelConfig
   type, public :: ForwardModelConfig_T
     ! First the lit_indices
     integer :: Name                   ! String index of config name
+    integer :: Where                  ! Tree node index of config (for messages)
+    integer :: Cat_Size(2)            ! Catalog size, by sideband, 1 = LSB, 2 = USB
     integer :: Cloud_der              ! Compute cloud sensitivity in cloud models.
                                       ! l_iwc_low_height, l_iwc_high_height, l_iwp
                                       ! l_none
@@ -124,7 +126,8 @@ module ForwardModelConfig
     ! Now the logicals
     logical :: AllLinesForRadiometer  ! As opposed to just using lines designated for band.
     logical :: AllLinesInCatalog      ! Use all the lines
-    logical :: AnyPFA                 ! Set if there are any PFA molecules
+    logical :: AnyLBL(2)              ! "there are LBL molecules in the sideband"
+    logical :: AnyPFA(2)              ! "there are PFA molecules in the sideband"
     logical :: Atmos_der              ! Do atmospheric derivatives
     logical :: Default_spectroscopy   ! Using Bill's spectroscopy data
     logical :: DifferentialScan       ! Differential scan model
@@ -208,14 +211,14 @@ contains
   ! -------------------------------  DeriveFromForwardModelConfig  -----
   subroutine DeriveFromForwardModelConfig ( FwdModelConf )
 
-    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-    use MLSMessageModule, only: MLSMessage,  MLSMSG_Allocate, MLSMSG_Error, &
-      & MLSMSG_Warning
+    use Allocate_Deallocate, only: Allocate_Test
+    use MLSMessageModule, only: MLSMessage,  MLSMSG_Allocate, MLSMSG_Error
     use MLSSets, only: FindFirst
     use MLSSignals_m, only: MatchSignal
 !   use Output_m, only: Output
     use PFADataBase_m, only: Dump, PFAData, PFA_By_Molecule, SortPFAData, &
       & Sort_PFADataBase
+    use SpectroscopyCatalog_m, only: Dump
     use Toggles, only: Switches
 
     type (ForwardModelConfig_T), intent(inout) :: FwdModelConf
@@ -252,6 +255,7 @@ contains
 
     if ( dumpFwm > 0 .or. error ) then
       call dump ( fwdModelConf, 'DeriveFromForwardModelConfig' )
+      call dump ( fwdModelConf%catalog )
       if ( dumpFwm > 1 .and. .not. error ) stop ! error message will stop later
     end if
 
@@ -351,6 +355,12 @@ contains
     ! ................................................  PFA_Stuff  .....
     subroutine PFA_Stuff
 
+      use Intrinsic, only: Lit_Indices
+      use MoreTree, only: StartErrorMessage
+      use Output_M, only: Output
+      use String_Table, only: Display_String
+      use Tree, only: Source_Ref
+
       integer :: B                    ! Index for beta groups
       integer :: Channel              ! Index in fwdModelConf%channels
       integer :: I                    ! Index for sorted PFA data
@@ -358,18 +368,20 @@ contains
       integer :: SB                   ! Sideband index, -1 .. +1
       integer :: SX                   ! Sideband index, 1 .. 2
 
+      character(len=3), parameter :: SBN(2) = (/ 'Low', 'Upp' /)
+
       ! Fill fwdModelConf%beta_group%pfa%indices
 
       if ( associated(pfaData) ) then
         call sort_PFADatabase ! Only does anything once
-        do sb = s1, s2
+        do sb = s1, s2, 2
           sx = ( sb + 3 ) / 2
           do b = 1, size(fwdModelConf%beta_group)
             call allocate_test ( fwdModelConf%beta_group(b)%pfa(sx)%indices, &
               & size(fwdModelConf%channels), &
               & size(fwdModelConf%beta_group(b)%pfa(sx)%molecules), &
               & 'Beta_group(b)%PFA(sx)%indices', moduleName )
-            fwdModelConf%beta_group(b)%pfa(sx)%indices = 0 ! OK if some missing, but no junk
+            fwdModelConf%beta_group(b)%pfa(sx)%indices = 0 ! not junk, to detect missing ones
             do p = 1, size(fwdModelConf%beta_group(b)%pfa(sx)%molecules)
               do i = PFA_by_molecule(fwdModelConf%beta_group(b)%pfa(sx)%molecules(p)-1)+1, &
                 &    PFA_by_molecule(fwdModelConf%beta_group(b)%pfa(sx)%molecules(p))
@@ -382,6 +394,14 @@ contains
                 end do ! channel
               end do ! i (molecules)
             end do ! p
+            if ( any(fwdModelConf%beta_group(b)%pfa(sx)%indices == 0) ) then
+              call startErrorMessage ( source_ref ( fwdModelConf%where ) )
+              call output ( ' PFA tables not found for ' )
+              call display_string ( &
+                & lit_indices(fwdModelConf%beta_group(b)%molecule) )
+              call output ( ' in ' // sbn(sx) // 'er sideband.', advance='yes' )
+              error = .true.
+            end if
           end do ! b
         end do ! sb
       end if ! associated(pfaData)
@@ -422,11 +442,12 @@ contains
 
       ! Allocate the spectroscopy catalog extract
       c = 0
-      do sx = 1, 2
+      do sx = (s1+3)/2,(s2+3)/2
         m = 0
         do b = 1, size(fwdModelConf%beta_group) ! Get total catalog size
           m = m + size(fwdModelConf%beta_group(b)%lbl(sx)%molecules)
         end do ! b
+        fwdModelConf%cat_size(sx) = m
         c = max(c,m)
       end do ! sx
 
@@ -583,7 +604,7 @@ contains
 
     type ( ForwardModelConfig_T ), intent(inout) :: FwdModelConf
 
-    integer :: C, B, I, Ier, S
+    integer :: C, B, Ier, S
 
     do s = 1, 2
       if ( associated(fwdModelConf%channels) ) then
@@ -667,13 +688,14 @@ contains
 
     ! Now the logical scalars
     call PVMIDLPack ( (/ &
-      & config%allLinesForRadiometer, config%allLinesInCatalog, config%anyPFA, &
-      & config%atmos_der, config%default_spectroscopy, config%differentialScan,&
-      & config%do_1d, config%do_baseline, config%do_conv, config%do_freq_avg, &
-      & config%forceFoldedOutput, config%forceSidebandFraction, &
-      & config%globalConfig, config%incl_cld, config%lockBins, config%polarized, &
-      & config%skipOverlaps, config%spect_Der, config%switchingMirror, &
-      & config%temp_Der /), msg = "Packing fwmConfig logicals" )
+      & config%allLinesForRadiometer, config%allLinesInCatalog, config%anyLBL, &
+      & config%anyPFA,  config%atmos_der, config%default_spectroscopy, &
+      & config%differentialScan, config%do_1d, config%do_baseline, &
+      & config%do_conv, config%do_freq_avg,  config%forceFoldedOutput, &
+      & config%forceSidebandFraction,  config%globalConfig, config%incl_cld, &
+      & config%lockBins, config%polarized,  config%skipOverlaps, &
+      & config%spect_Der, config%switchingMirror,  config%temp_Der /), &
+      & msg ="Packing fwmConfig logicals" )
 
     ! Now pack the reals
     call PVMIDLPack ( (/ config%phiWindow, config%tolerance /), &
@@ -745,7 +767,7 @@ contains
     ! Local variables
     integer :: INFO                     ! Flag from PVM
     logical :: FLAG                     ! A flag from the sender
-    logical, dimension(20) :: LS        ! Temporary array, for logical scalars
+    logical, dimension(23) :: LS        ! Temporary array, for logical scalars
     integer, dimension(10) :: IS        ! Temporary array, for integer scalars
     real(r8), dimension(2) :: RS        ! Temporary array, for real scalars
     integer :: I                        ! Loop counter
@@ -782,7 +804,8 @@ contains
     i = 1
     config%allLinesForRadiometer = ls(i) ; i = i + 1
     config%allLinesInCatalog     = ls(i) ; i = i + 1
-    config%anyPFA                = ls(i) ; i = i + 1
+    config%anyLBL                = ls(i:i+1) ; i = i + 2
+    config%anyPFA                = ls(i:i+1) ; i = i + 2
     config%atmos_der             = ls(i) ; i = i + 1
     config%default_spectroscopy  = ls(i) ; i = i + 1
     config%differentialScan      = ls(i) ; i = i + 1
@@ -938,7 +961,7 @@ contains
     end do
     deallocate ( config%beta_group, stat=b )
     if ( b /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-      & MLSMSG_Deallocate // 'Config%Beta_group' )
+      & MLSMSG_Deallocate // 'config%Beta_group' )
     if ( associated(config%signals) ) &
       & call DestroySignalDatabase ( config%signals, justChannels=.not. myDeep )
     if ( myDeep ) then
@@ -965,7 +988,7 @@ contains
   end subroutine DestroyOneForwardModelConfig
 
   ! --------------------------------------------  Dump_Beta_Group  -----
-  subroutine Dump_Beta_Group ( Beta_Group, Name )
+  subroutine Dump_Beta_Group ( Beta_Group, Name, Sidebands )
 
     use Dump_0, only: Dump
     use Intrinsic, only: Lit_indices
@@ -974,10 +997,16 @@ contains
 
     type(beta_group_t), intent(in) :: Beta_Group(:)
     character(len=*), intent(in), optional :: Name
+    integer, intent(in), optional :: Sidebands(2)
 
-    integer :: I, S
+    integer :: I, S, S1, S2
     character(3), parameter :: SB(2) = (/ 'Low', 'Upp' /)
 
+    s1 = 1; s2 = 2
+    if ( present(sidebands) ) then
+      s1 = (sidebands(1)+3)/2
+      s2 = (sidebands(2)+3)/2
+    end if
     call output ( '  Beta groups' )
     if ( present(name) ) call output ( ' ' // trim(name) )
     call output ( size(beta_group), before=', SIZE = ', advance='yes' )
@@ -985,21 +1014,25 @@ contains
       call output ( i, before='  Beta group ', after=': ' )
       call display_string ( lit_indices(beta_group(i)%molecule) )
       if ( beta_group(i)%derivatives ) call output ( ' with derivative' )
-      do s = 1, 2
-        call output ( sb(s) // 'er sideband:', advance='yes' )
-        if ( size(beta_group(i)%lbl(s)%molecules) > 0 ) call display_string ( &
-            & lit_indices(beta_group(i)%lbl(s)%molecules), before=', LBL:' )
-        if ( size(beta_group(i)%pfa(s)%molecules) > 0 ) call display_string ( &
-            & lit_indices(beta_group(i)%pfa(s)%molecules), before=', PFA:' )
-        call newLine
+      call newLine
+      do s = s1, s2
+        call output ( '  ' // sb(s) // 'er sideband:', advance='yes' )
         if ( size(beta_group(i)%lbl(s)%molecules) > 0 ) then
-          call dump ( beta_group(i)%lbl(s)%ratio, name='   LBL Ratio' )
-          call dump ( beta_group(i)%lbl(s)%cat_index, name='   Cat_Index' )
+          call display_string ( &
+            & lit_indices(beta_group(i)%lbl(s)%molecules), before='   LBL:', &
+            & advance='yes' )
+          call dump ( beta_group(i)%lbl(s)%ratio, name='    Isotope ratio' )
+          call dump ( beta_group(i)%lbl(s)%cat_index, &
+            & name='    Spectroscopy catalog extract index' )
         end if
         if ( size(beta_group(i)%pfa(s)%molecules) > 0 ) then
-          call dump ( beta_group(i)%pfa(s)%ratio, name='   PFA Ratio' )
+          call display_string ( &
+            & lit_indices(beta_group(i)%pfa(s)%molecules), before='   PFA:', &
+            & advance='yes' )
+          call dump ( beta_group(i)%pfa(s)%ratio, name='    Isotope ratio' )
           if ( associated(beta_group(i)%pfa(s)%indices) ) &
-            & call dump ( beta_group(i)%pfa(s)%indices(:,:), name='   PFA Indices ' )
+            & call dump ( beta_group(i)%pfa(s)%indices(:,:), &
+            & name='    PFA Database indices ' )
         end if
       end do ! s
       if ( associated ( beta_group(i)%qty%qty ) ) call dump ( beta_group(i)%qty )
@@ -1042,52 +1075,45 @@ contains
     character(len=*), optional, intent(in) :: Where
 
     ! Local variables
-    integer ::  I, J, S                      ! Loop counters
+    integer ::  J                            ! Loop counter
     character(3), parameter :: SB(2) = (/ 'Low', 'Upp' /)    
     character (len=MaxSigLen) :: SignalName  ! A line of text
 
     ! executable code
 
     call output ( '  Forward Model Config Name: ' )
-    call display_string ( Config%name )
+    call display_string ( config%name )
     if ( present(where) ) then
       call output ( ' from ' )
       call output ( where )
     end if
     call newLine
-    call output ( '  Atmos_der:' )
-    call output ( Config%atmos_der, advance='yes' )
-    call output ( '  Do_conv:' )
-    call output ( Config%do_conv, advance='yes' )
-    call output ( '  Do_Baseline:' )
-    call output ( Config%do_Baseline, advance='yes' )
-    call output ( '  Default_spectroscopy:' )
-    call output ( Config%Default_spectroscopy, advance='yes' )
-    call output ( '  Do_freq_avg:' )
-    call output ( Config%do_freq_avg, advance='yes' )
-    call output ( '  Do_1D:' )
-    call output ( Config%do_1d, advance='yes' )
-    call output ( '  Incl_Cld:' )
-    call output ( Config%incl_cld, advance='yes' )
-    call output ( '  SkipOverlaps:' )
-    call output ( Config%skipOverlaps, advance='yes' )
-    call output ( '  Spect_der:' )
-    call output ( Config%spect_der, advance='yes' )
-    call output ( '  Temp_der:' )
-    call output ( Config%temp_der, advance='yes' )
-    if ( associated(Config%Beta_group) ) call dump ( Config%Beta_group )
+    call output ( config%atmos_der, before='  Atmos_der:', advance='yes' )
+    call output ( config%do_conv, before='  Do_conv:', advance='yes' )
+    call output ( config%do_Baseline, before='  Do_Baseline:', advance='yes' )
+    call output ( config%Default_spectroscopy, before='  Default_spectroscopy:', advance='yes' )
+    call output ( config%do_freq_avg, before='  Do_freq_avg:', advance='yes' )
+    call output ( config%do_1d, before='  Do_1D:', advance='yes' )
+    call output ( config%incl_cld, before='  Incl_Cld:', advance='yes' )
+    call output ( config%sidebandStart, before='  Sidebands: ' )
+    call output ( config%sidebandStop, before=' ', advance='yes' )
+    call output ( config%skipOverlaps, before='  SkipOverlaps:',advance='yes' )
+    call output ( config%spect_der, before='  Spect_der:', advance='yes' )
+    call output ( config%temp_der, before='  Temp_der:', advance='yes' )
+    call output ( config%anyLBL(1), before='  AnyLBL:' )
+    call output ( config%anyLBL(2) )
+    call output ( config%anyPFA(1), before='  AnyPFA:' )
+    call output ( config%anyPFA(2), advance='yes' )
+    if ( associated(config%Beta_group) ) &
+      & call dump ( config%Beta_group, &
+        & sidebands=(/config%sidebandStart,config%sidebandStop/) )
     call output ( '  Molecules: ', advance='yes' )
-    if ( associated(Config%molecules) ) then
-      i = 0
-      do j = 1, size(Config%molecules) - 1
+    if ( associated(config%molecules) ) then
+      do j = 1, size(config%molecules)
         call output ( '    ' )
-        if ( Config%molecules(j) < 0 ) call output ( '-' )
-        call display_string(lit_indices(abs(Config%molecules(j))))
-        if ( Config%molecules(j) > 0 ) then
-          i = i + 1
-          call output ( i, before=':' )
-        end if
-        if (Config%moleculeDerivatives(j)) then
+        call display_string(lit_indices(config%molecules(j)))
+        call output ( j, before=':' )
+        if (config%moleculeDerivatives(j)) then
           call output (' compute derivatives', advance='yes')
         else
           call output (' no derivatives', advance='yes')
@@ -1095,25 +1121,29 @@ contains
       end do
     end if
     call output ( '  Signals:', advance='yes')
-    do j = 1, size(Config%signals)
-      call getNameOfSignal ( Config%signals(j), signalName)
-      call output ( '  ' )
-      call output ( trim(signalName)//' channelIncluded:', advance='yes')
-      call dump ( Config%signals(j)%channels )
+    do j = 1, size(config%signals)
+      call getNameOfSignal ( config%signals(j), signalName)
+      call output ( '  '//trim(signalName)//' channels Included:' )
+      if ( associated(config%signals(j)%channels) ) then
+        call newLine
+        call dump ( config%signals(j)%channels )
+      else
+        call output ( ' None', advance='yes' )
+      end if
     end do
     ! Dump ForwardModelDerived
     call output ( '  ForwardModelDerived:', advance='yes' )
-    if ( associated(Config%usedDACSSignals) ) &
-      call dump  ( Config%usedDACSSignals, name='   Used DACS Signals' )
-    if ( associated(Config%channels) ) then
+    if ( associated(config%usedDACSSignals) ) &
+      call dump  ( config%usedDACSSignals, name='   Used DACS Signals' )
+    if ( associated(config%channels) ) then
       call output ( '   Channel info:', advance='yes' )
-      do j = 1, size(Config%channels)
-        call output ( Config%channels(j)%used, before='    Used: ' )
-        call output ( Config%channels(j)%origin, before='    Origin: ' )
-        call output ( Config%channels(j)%signal, before='    Signal: ' )
-        call output ( Config%channels(j)%DACS, before='    DACS: ', &
+      do j = 1, size(config%channels)
+        call output ( config%channels(j)%used, before='    Used: ' )
+        call output ( config%channels(j)%origin, before='    Origin: ' )
+        call output ( config%channels(j)%signal, before='    Signal: ' )
+        call output ( config%channels(j)%DACS, before='    DACS: ', &
           & advance='yes' )
-      end do ! j = 1, size(Config%channels)
+      end do ! j = 1, size(config%channels)
     end if
   end subroutine Dump_ForwardModelConfig
 
@@ -1140,6 +1170,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.67  2005/02/17 02:35:13  vsnyder
+! Remove PFA stuff from Channels part of config
+!
 ! Revision 2.66  2005/02/16 23:16:49  vsnyder
 ! Revise data structures for split-sideband PFA
 !
