@@ -1266,11 +1266,11 @@ contains ! ============= Public Procedures ==========================
         & 'Unable to close quantity '//trim(thisName)//' in vector '//trim(name) )
     end do
 
-    QTINDEXOFFSET = InflateQuantityTemplateDatabase ( l2pcQTs, noQuantities )
+    qtIndexOffset = InflateQuantityTemplateDatabase ( l2pcQTs, noQuantities )
 
     ! Now go through quantities in order
     do quantity = 1, noQuantities
-      qt => l2pcQTs ( QTINDEXOFFSET + quantity - 1 )
+      qt => l2pcQTs ( qtIndexOffset + quantity - 1 )
       if ( index ( switches, 'l2pc' ) /= 0 ) then
         call output ( 'Reading quantity ' )
         call output ( quantity )
@@ -1374,7 +1374,7 @@ contains ! ============= Public Procedures ==========================
       end if
 
       ! Now record the index for this quantity template
-      qt%id = QTINDEXOFFSET + quantity - 1
+      qt%id = qtIndexOffset + quantity - 1
       qtInds ( quantity ) = qt%id
 
       ! For the moment, close the quantity. We'll come back to it later to fill
@@ -1500,6 +1500,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.47  2002/08/28 21:43:38  livesey
+! Cosmetic changes
+!
 ! Revision 2.46  2002/08/28 20:42:39  livesey
 ! Now uses inflateQuantityTemplateDatabase, much much faster on reading
 ! l2pcs.
