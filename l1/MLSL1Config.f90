@@ -1,4 +1,4 @@
-! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -7,36 +7,47 @@ MODULE MLSL1Config  ! Level 1 Configuration
 
   USE MLSCommon, ONLY: TAI93_Range_T
   USE MLSL1Common, ONLY: MaxMIFs, BandSwitch
-  USE MLSMessageModule, ONLY:MLSMessage,MLSMSG_Error,MLSMSG_Info,MLSMSG_Warning
+  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Info, &
+       MLSMSG_Warning
 
   IMPLICIT NONE
+
+  PRIVATE
+
+  PUBLIC :: L1Config_T, L1Config, Globals_T, Calib_T, Output_T, GHz_seq, &
+       GHz_seq_use, THz_seq, THz_seq_use, MIFsGHz, MIFsTHz
+  PUBLIC :: GetL1Config
 
   INTEGER :: MIFsGHz   ! Length (MIFs) of GHz module data
   INTEGER :: MIFsTHz   ! Length (MIFs) of THz module data
 
-  PRIVATE :: Id, ModuleName
   !------------------------------- RCS Ident Info ------------------------------
   CHARACTER(LEN=130) :: id = &
        "$Id$"
   CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
   !-----------------------------------------------------------------------------
+
   TYPE Globals_T
-     CHARACTER(LEN=80) :: OutputVersionString, VersionComment
+     CHARACTER(LEN=80) :: OutputVersionString
+     CHARACTER(LEN=80) :: VersionComment
      LOGICAL :: ProduceL1BOA = .TRUE.
   END TYPE Globals_T
 
-  TYPE Output_T
-     CHARACTER(LEN=80) :: HDFVersionString = 'hdf4'
-  END TYPE Output_T
-
   TYPE Calib_T
-     INTEGER :: CalWindow, MIFsPerMAF
-     REAL :: SpaceTemp, TargetTemp, MIF_duration, MIF_DeadTime
+     INTEGER :: CalWindow
+     INTEGER :: MIFsPerMAF
+     REAL :: GHzSpaceTemp, GHzTargetTemp
+     REAL :: THzSpaceTemp, THzTargetTemp
+     REAL :: MIF_duration, MIF_DeadTime
      LOGICAL :: UseDefaultGains = .FALSE.
      LOGICAL :: CalibDACS = .TRUE.
      CHARACTER(LEN=1) :: GHz_seq(0:MaxMIFs-1), THz_seq(0:MaxMIFs-1)
      CHARACTER(LEN=1) :: GHz_seq_use, THz_seq_use
   END TYPE Calib_T
+
+  TYPE Output_T
+     CHARACTER(LEN=80) :: HDFVersionString = 'hdf4'
+  END TYPE Output_T
 
   TYPE L1Config_T
      TYPE (TAI93_Range_T) :: Input_TAI, Expanded_TAI
@@ -52,7 +63,9 @@ MODULE MLSL1Config  ! Level 1 Configuration
 
   CONTAINS
 
+!=============================================================================
     SUBROUTINE GetL1Config
+!=============================================================================
 
       USE Declaration_Table, ONLY: Allocate_Decl
       USE Init_tables_module, ONLY: Init_tables, lit_indices, &
@@ -82,6 +95,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
            & physicalFilename)
 
       version = 1
+
       returnStatus = PGS_IO_Gen_openF (mlspcf_l1cf_start, PGSd_IO_Gen_RSeqFrm, &
            0, l1cf_unit, version)
       IF (returnstatus /= PGS_S_SUCCESS) THEN
@@ -168,16 +182,20 @@ MODULE MLSL1Config  ! Level 1 Configuration
 
     END SUBROUTINE GetL1Config
 
+!=============================================================================
     SUBROUTINE Set_globalsettings (root)
+!=============================================================================
 
-      USE INIT_TABLES_MODULE, ONLY: p_output_version_string, p_version_comment, &
-           p_produce_l1boa
+      USE INIT_TABLES_MODULE, ONLY: p_output_version_string, &
+           p_version_comment, p_produce_l1boa
       USE STRING_TABLE, ONLY: Get_string
       USE TREE, ONLY: Decoration, Nsons, Subtree, Sub_rosa
       USE MoreTree, ONLY: Get_Boolean
 
+      INTEGER :: root
+
       CHARACTER(LEN=80) :: line
-      INTEGER :: root, i, son
+      INTEGER :: i, son
 
       DO i = 2, Nsons (root) - 1
 
@@ -205,7 +223,9 @@ MODULE MLSL1Config  ! Level 1 Configuration
 
     END SUBROUTINE Set_globalsettings
 
-    SUBROUTINE Set_output (root)
+!=============================================================================
+   SUBROUTINE Set_output (root)
+!=============================================================================
 
       USE INIT_TABLES_MODULE, ONLY: p_hdf_version_string
       USE STRING_TABLE, ONLY: Get_string
@@ -231,20 +251,32 @@ MODULE MLSL1Config  ! Level 1 Configuration
 
     END SUBROUTINE Set_output
 
+!=============================================================================
     SUBROUTINE Set_calibration (root)
+!=============================================================================
 
       USE EXPR_M, ONLY: Expr
       USE INIT_TABLES_MODULE, ONLY: p_calwindow, s_spaceMIFs, s_targetMIFs, &
            s_limbMIFs, s_discardMIFs, f_mifs, f_use, l_match, l_override, &
-           f_module, f_secondary, p_usedefaultgains, p_spacetemp, p_targettemp, &
-           p_mif_duration, p_mif_dead_time, p_mifspermaf, p_calibDACS, s_switch, &
-           f_s, f_bandno
+           f_module, f_secondary, p_usedefaultgains, p_GHzSpaceTemp, &
+           p_GHzTargetTemp, p_THzSpaceTemp, p_THzTargetTemp, p_mif_duration, &
+           p_mif_dead_time, p_mifspermaf, p_calibDACS, s_switch, f_s, f_bandno
       USE Intrinsic, ONLY: l_ghz, l_thz, phyq_mafs, phyq_temperature, &
            phyq_mifs, phyq_time
       USE TREE, ONLY: Decoration, Nsons, Subtree, Sub_rosa, Node_id
       USE TREE_TYPES
       USE MoreTree, ONLY: Get_Boolean
       USE STRING_TABLE, ONLY: Get_string
+
+      INTEGER :: root
+
+      CHARACTER(LEN=1), POINTER, DIMENSION(:) :: scan_seq
+      CHARACTER(LEN=1), POINTER :: scan_use
+      CHARACTER(LEN=80) :: identifier
+      INTEGER :: i, j, k, son, key, spec, swno, bandno
+      INTEGER :: expr_units(2)
+      DOUBLE PRECISION :: expr_value(2)
+      LOGICAL :: GHz_mod, sec_tgt
 
       TYPE Scan_T
          CHARACTER(LEN=1) :: Use    ! M or O
@@ -255,12 +287,6 @@ MODULE MLSL1Config  ! Level 1 Configuration
       TYPE (Scan_T) :: scan
 
       CHARACTER(LEN=1), PARAMETER :: ignore = "I", unknown = "U", overlap = "O"
-      CHARACTER(LEN=1), POINTER, DIMENSION(:) :: scan_seq
-      CHARACTER(LEN=1), POINTER :: scan_use
-      CHARACTER(LEN=80) :: identifier
-      DOUBLE PRECISION :: expr_value(2)
-      INTEGER :: i, j, k, son, key, spec, swno, bandno, expr_units(2), root
-      LOGICAL :: GHz_mod, sec_tgt
 
 ! Initialize desired scan sequences
 
@@ -272,7 +298,8 @@ MODULE MLSL1Config  ! Level 1 Configuration
 
 ! Initialize Target Temp to not input
 
-      L1Config%Calib%TargetTemp = -1.0
+      L1Config%Calib%GHzTargetTemp = -1.0
+      L1Config%Calib%THzTargetTemp = -1.0
 
       DO i = 2, Nsons (root) - 1
 
@@ -304,27 +331,47 @@ MODULE MLSL1Config  ! Level 1 Configuration
                        TRIM (identifier)//' is not input as MIFs')
                ENDIF
 
-            CASE (p_spacetemp)
+            CASE (p_GHzSpaceTemp)
 
                CALL Expr (subtree (2, son), expr_units, expr_value)
-               L1Config%Calib%SpaceTemp = expr_value(1)
+               L1Config%Calib%GHzSpaceTemp = expr_value(1)
                IF (expr_units(1) /= phyq_temperature) THEN
                   CALL Get_string (Sub_rosa (Subtree(1,son)), identifier)
                   CALL MLSMessage (MLSMSG_Error, ModuleName, &
                        TRIM (identifier)//' is not input as K')
                ENDIF
 
-            CASE (p_targettemp)
+            CASE (p_GHzTargetTemp)
 
                CALL Expr (subtree (2, son), expr_units, expr_value)
-               L1Config%Calib%TargetTemp = expr_value(1)
+               L1Config%Calib%GHzTargetTemp = expr_value(1)
                IF (expr_units(1) /= phyq_temperature) THEN
                   CALL Get_string (Sub_rosa (Subtree(1,son)), identifier)
                   CALL MLSMessage (MLSMSG_Error, ModuleName, &
                        TRIM (identifier)//' is not input as K')
                ENDIF
 
-            CASE (p_mif_duration)
+            CASE (p_THzSpaceTemp)
+
+               CALL Expr (subtree (2, son), expr_units, expr_value)
+               L1Config%Calib%THzSpaceTemp = expr_value(1)
+               IF (expr_units(1) /= phyq_temperature) THEN
+                  CALL Get_string (Sub_rosa (Subtree(1,son)), identifier)
+                  CALL MLSMessage (MLSMSG_Error, ModuleName, &
+                       TRIM (identifier)//' is not input as K')
+               ENDIF
+
+              CASE (p_THzTargetTemp)
+
+               CALL Expr (subtree (2, son), expr_units, expr_value)
+               L1Config%Calib%THzTargetTemp = expr_value(1)
+               IF (expr_units(1) /= phyq_temperature) THEN
+                  CALL Get_string (Sub_rosa (Subtree(1,son)), identifier)
+                  CALL MLSMessage (MLSMSG_Error, ModuleName, &
+                       TRIM (identifier)//' is not input as K')
+               ENDIF
+
+          CASE (p_mif_duration)
 
                CALL Expr (subtree (2, son), expr_units, expr_value)
                L1Config%Calib%MIF_duration = expr_value(1)
@@ -496,6 +543,13 @@ MODULE MLSL1Config  ! Level 1 Configuration
 
       ENDDO
 
+! Save pointers for sort/qualify:
+
+      GHz_seq_use => L1Config%Calib%GHz_seq_use
+      GHz_seq => L1Config%Calib%GHz_seq
+      THz_seq_use => L1Config%Calib%THz_seq_use
+      THz_seq => L1Config%Calib%THz_seq
+
       IF (ANY (L1Config%Calib%GHz_seq == unknown)) THEN
          CALL MLSMessage (MLSMSG_Error, ModuleName, &
               'Undefined MIF(s) for GHz module in L1CF Calib section!')
@@ -517,18 +571,14 @@ MODULE MLSL1Config  ! Level 1 Configuration
          ENDIF
       ENDDO
 
-! Save pointers for sort/qualify:
-
-      GHz_seq_use => L1Config%Calib%GHz_seq_use
-      GHz_seq => L1Config%Calib%GHz_seq
-      THz_seq_use => L1Config%Calib%THz_seq_use
-      THz_seq => L1Config%Calib%THz_seq
-
     END SUBROUTINE Set_calibration
 
 END MODULE MLSL1Config
 
 ! $Log$
+! Revision 2.7  2002/11/14 16:51:13  perun
+! Split space & target temps between GHz & THz
+!
 ! Revision 2.6  2002/11/07 21:35:03  jdone
 ! Added HDF4/HDF5 switch.
 !
