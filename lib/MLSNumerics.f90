@@ -5,11 +5,12 @@
 module MLSNumerics              ! Some low level numerical stuff
   !=============================================================================
 
+  use Allocate_Deallocate, only : Allocate_test, Deallocate_test
+  use MatrixModule_0, only: CreateBlock, M_Absent, M_Column_Sparse, &
+    & MatrixElement_T, Sparsify
   use MLSCommon, only : r8, rm, r4
   use MLSMessageModule, only: MLSMessage,MLSMSG_Error
   use MLSStrings, only: Capitalize
-  use MatrixModule_0, only: MatrixElement_T,CreateBlock_0,M_Column_Sparse,M_Absent,Sparsify
-  use Allocate_Deallocate, only : Allocate_test, Deallocate_test
 
   implicit none
 
@@ -55,66 +56,41 @@ contains
   ! monotonically increasing or decreasing. There is no such requirements for
   ! values.
 
-  subroutine HuntArray_r8 ( list, values, indices, start, allowTopValue, allowBelowValue, &
-    & nearest )
-
-    ! Dummy arguments
-    real(r8), dimension(:), intent(in) :: list ! List to search
-    real(r8), dimension(:), intent(in) :: values ! Values to search for
-    integer, dimension(:), intent(out) :: indices ! Result
-    integer, optional, intent(in) :: start ! Optional start index
-    logical, optional, intent(in) :: allowTopValue ! Can return N
-    logical, optional, intent(in) :: allowBelowValue ! Can return 0
-    logical, optional, intent(in) :: nearest ! Choose nearest value not one below
-
-    ! Local variables
-    real(r8) :: thisValue
-    include "HuntArray.f9h"
-  end subroutine HuntArray_r8
-
   subroutine HuntArray_r4 ( list, values, indices, start, allowTopValue, allowBelowValue, &
     & nearest )
+    integer, parameter :: RK = R4
 
     ! Dummy arguments
-    real(r4), dimension(:), intent(in) :: list ! List to search
-    real(r4), dimension(:), intent(in) :: values ! Values to search for
+    real(rk), dimension(:), intent(in) :: list ! List to search
+    real(rk), dimension(:), intent(in) :: values ! Values to search for
     integer, dimension(:), intent(out) :: indices ! Result
     integer, optional, intent(in) :: start ! Optional start index
     logical, optional, intent(in) :: allowTopValue ! Can return N
     logical, optional, intent(in) :: allowBelowValue ! Can return 0
     logical, optional, intent(in) :: nearest ! Choose nearest value not one below
 
-    ! Local variables
-    real(r4) :: thisValue
     include "HuntArray.f9h"
   end subroutine HuntArray_r4
+
+  subroutine HuntArray_r8 ( list, values, indices, start, allowTopValue, allowBelowValue, &
+    & nearest )
+    integer, parameter :: RK = R8
+
+    ! Dummy arguments
+    real(rk), dimension(:), intent(in) :: list ! List to search
+    real(rk), dimension(:), intent(in) :: values ! Values to search for
+    integer, dimension(:), intent(out) :: indices ! Result
+    integer, optional, intent(in) :: start ! Optional start index
+    logical, optional, intent(in) :: allowTopValue ! Can return N
+    logical, optional, intent(in) :: allowBelowValue ! Can return 0
+    logical, optional, intent(in) :: nearest ! Choose nearest value not one below
+
+    include "HuntArray.f9h"
+  end subroutine HuntArray_r8
 
   ! ---------------------------------------------------------------------------
 
   ! This routine is a scalar wrapper for the above one
-
-  subroutine HuntScalar_r8 (list, value, index, start, allowTopValue, &
-    & allowBelowValue, nearest )
-
-    ! Dummy arguments
-    real(r8), dimension(:), intent(in) :: list ! List to search
-    real(r8), intent(in) :: value ! Value to search for
-    integer, intent(out) :: index ! Resulting index
-    integer, intent(in), optional :: start ! Optional start index
-    logical, optional, intent(in) :: allowTopValue ! Can return N
-    logical, optional, intent(in) :: allowBelowValue ! Can return 0
-    logical, optional, intent(in) :: nearest ! Choose nearest value instead
-
-    ! Local variables
-
-    real(r8), dimension(1) :: values ! To pass to HuntArray
-    integer, dimension(1) :: indices ! To pass to HuntScalar
-
-    values(1) = value
-    call HuntArray_r8 ( list, values, indices, start, &
-      & allowTopValue, allowBelowValue, nearest )
-    index = indices(1)
-  end subroutine HuntScalar_r8
 
   subroutine HuntScalar_r4 (list, value, index, start, allowTopValue, &
     & allowBelowValue, nearest )
@@ -134,10 +110,33 @@ contains
     integer, dimension(1) :: indices ! To pass to HuntScalar
 
     values(1) = value
-    call HuntArray_r4 ( list, values, indices, start, &
+    call Hunt ( list, values, indices, start, &
       & allowTopValue, allowBelowValue, nearest )
     index = indices(1)
   end subroutine HuntScalar_r4
+
+  subroutine HuntScalar_r8 (list, value, index, start, allowTopValue, &
+    & allowBelowValue, nearest )
+
+    ! Dummy arguments
+    real(r8), dimension(:), intent(in) :: list ! List to search
+    real(r8), intent(in) :: value ! Value to search for
+    integer, intent(out) :: index ! Resulting index
+    integer, intent(in), optional :: start ! Optional start index
+    logical, optional, intent(in) :: allowTopValue ! Can return N
+    logical, optional, intent(in) :: allowBelowValue ! Can return 0
+    logical, optional, intent(in) :: nearest ! Choose nearest value instead
+
+    ! Local variables
+
+    real(r8), dimension(1) :: values ! To pass to HuntArray
+    integer, dimension(1) :: indices ! To pass to HuntScalar
+
+    values(1) = value
+    call Hunt ( list, values, indices, start, &
+      & allowTopValue, allowBelowValue, nearest )
+    index = indices(1)
+  end subroutine HuntScalar_r8
 
   ! ---------------------------------------------------------------------------
 
@@ -154,241 +153,90 @@ contains
   !   one can't ask for spline interpolation with missing regions.
   !   missingRegions will probably slow the code down, as will extrapolate=B
 
-  subroutine InterpolateArray_r8 ( oldX, oldY, newX, newY, method, extrapolate, &
-    & badValue, missingRegions, dyByDx, dNewByDOld )
-
-    ! Dummy arguments
-    real(r8), dimension(:), intent(IN) :: oldX
-    real(r8), dimension(:,:), intent(IN) :: oldY
-    real(r8), dimension(:), intent(IN) :: newX
-    real(r8), dimension(:,:), intent(OUT) :: newY
-
-    character (len=*), intent(in) :: method ! See comments above
-    character (len=*), optional, intent(in) :: extrapolate ! See comments above
-    real(r8), optional, intent(in) :: badvalue
-    real(r8), dimension(:,:), optional, intent(out) :: dyByDx
-    logical, optional, intent(in) :: missingRegions ! Allow missing regions
-    type (matrixElement_T), intent(OUT), optional :: dNewByDOld ! Derivatives
-
-    ! Local variables
-    real(r8), dimension(:),   pointer :: A
-    real(r8), dimension(:,:), pointer :: AA
-    real(r8), dimension(:),   pointer :: B
-    real(r8), dimension(:,:), pointer :: BB
-    real(r8), dimension(:),   pointer :: C
-    real(r8), dimension(:,:), pointer :: CC
-    real(r8), dimension(:),   pointer :: D ! Coefficients
-    real(r8), dimension(:,:), pointer :: DD ! Spread coefs.
-    real(r8), dimension(:),   pointer :: gap
-    real(r8), dimension(:),   pointer :: gap2
-    integer, dimension(:),    pointer :: lowerInds
-    real(r8), dimension(:),   pointer :: maskVector
-    real(r8), dimension(:,:), pointer :: oldSecond
-    real(r8), dimension(:,:), pointer :: oldSecondLower
-    real(r8), dimension(:,:), pointer :: oldSecondUpper
-    real(r8), dimension(:,:), pointer :: oldYlower
-    real(r8), dimension(:,:), pointer :: oldYupper
-    real(r8), dimension(:),   pointer :: p ! For 2nd der. guess
-    real(r8), dimension(:,:), pointer :: spreadGap
-    real(r8), dimension(:,:), pointer :: temp ! For 2nd der. guess
-    real(rm), dimension(:,:), pointer :: tempDNewByDOld ! Dense version.
-    integer, dimension(:),    pointer :: upperInds
-    real(r8) :: sig       ! For second derivative guesser
-    real(r8) :: dyByDxFill              ! Fill value for dyByDx
-    include "InterpolateArray.f9h"
-
-end subroutine InterpolateArray_r8
-
   subroutine InterpolateArray_r4 ( oldX, oldY, newX, newY, method, extrapolate, &
     & badValue, missingRegions, dyByDx, dNewByDOld )
+    integer, parameter :: RK = R4
 
     ! Dummy arguments
-    real(r4), dimension(:), intent(IN) :: oldX
-    real(r4), dimension(:,:), intent(IN) :: oldY
-    real(r4), dimension(:), intent(IN) :: newX
-    real(r4), dimension(:,:), intent(OUT) :: newY
+    real(rk), dimension(:), intent(IN) :: oldX
+    real(rk), dimension(:,:), intent(IN) :: oldY
+    real(rk), dimension(:), intent(IN) :: newX
+    real(rk), dimension(:,:), intent(OUT) :: newY
 
     character (len=*), intent(in) :: method ! See comments above
     character (len=*), optional, intent(in) :: extrapolate ! See comments above
-    real(r4), optional, intent(in) :: badvalue
-    real(r4), dimension(:,:), optional, intent(out) :: dyByDx
+    real(rk), optional, intent(in) :: badvalue
     logical, optional, intent(in) :: missingRegions ! Allow missing regions
-    type (matrixElement_T), intent(OUT), optional :: dNewByDOld ! Derivatives
-
-    ! Local variables
-    real(r4), dimension(:),   pointer :: A
-    real(r4), dimension(:,:), pointer :: AA
-    real(r4), dimension(:),   pointer :: B
-    real(r4), dimension(:,:), pointer :: BB
-    real(r4), dimension(:),   pointer :: C
-    real(r4), dimension(:,:), pointer :: CC
-    real(r4), dimension(:),   pointer :: D ! Coefficients
-    real(r4), dimension(:,:), pointer :: DD ! Spread coefs.
-    real(r4), dimension(:),   pointer :: gap
-    real(r4), dimension(:),   pointer :: gap2
-    integer, dimension(:),    pointer :: lowerInds
-    real(r4), dimension(:),   pointer :: maskVector
-    real(r4), dimension(:,:), pointer :: oldSecond
-    real(r4), dimension(:,:), pointer :: oldSecondLower
-    real(r4), dimension(:,:), pointer :: oldSecondUpper
-    real(r4), dimension(:,:), pointer :: oldYlower
-    real(r4), dimension(:,:), pointer :: oldYupper
-    real(r4), dimension(:),   pointer :: p ! For 2nd der. guess
-    real(r4), dimension(:,:), pointer :: spreadGap
-    real(r4), dimension(:,:), pointer :: temp ! For 2nd der. guess
-    real(rm), dimension(:,:), pointer :: tempDNewByDOld ! Dense version.
-    integer, dimension(:),    pointer :: upperInds
-    real(r4) :: sig       ! For second derivative guesser
-    real(r4) :: dyByDxFill              ! Fill value for dyByDx
+    real(rk), dimension(:,:), optional, intent(out) :: dyByDx
+    type (matrixElement_T), intent(out), optional :: dNewByDOld ! Derivatives
     include "InterpolateArray.f9h"
 
-end subroutine InterpolateArray_r4
+  end subroutine InterpolateArray_r4
+
+  subroutine InterpolateArray_r8 ( oldX, oldY, newX, newY, method, extrapolate, &
+    & badValue, missingRegions, dyByDx, dNewByDOld )
+    integer, parameter :: RK = R8
+
+    ! Dummy arguments
+    real(rk), dimension(:), intent(IN) :: oldX
+    real(rk), dimension(:,:), intent(IN) :: oldY
+    real(rk), dimension(:), intent(IN) :: newX
+    real(rk), dimension(:,:), intent(OUT) :: newY
+
+    character (len=*), intent(in) :: method ! See comments above
+    character (len=*), optional, intent(in) :: extrapolate ! See comments above
+    real(rk), optional, intent(in) :: badvalue
+    logical, optional, intent(in) :: missingRegions ! Allow missing regions
+    real(rk), dimension(:,:), optional, intent(out) :: dyByDx
+    type (matrixElement_T), intent(OUT), optional :: dNewByDOld ! Derivatives
+
+    include "InterpolateArray.f9h"
+
+  end subroutine InterpolateArray_r8
 
 ! --------------------------------------------------------------------------
 
-! This subroutine is a scalar wrapper for the first one.
+! This subroutine is a scalar wrapper for the array one.
 
-subroutine InterpolateScalar_r8 ( oldX, oldY, newX, newY, method, extrapolate, &
-  & badValue, missingRegions, dyByDx, RangeOfPeriod )
+  subroutine InterpolateScalar_r4 ( oldX, oldY, newX, newY, method, extrapolate, &
+    & badValue, missingRegions, dyByDx, RangeOfPeriod )
+    integer, parameter :: RK = R4
 
-  ! Dummy arguments
-  real(r8), dimension(:), intent(in) :: oldX
-  real(r8), dimension(:), intent(in) :: oldY
-  real(r8), dimension(:), intent(in) :: newX
-  real(r8), dimension(:), intent(out) :: newY
+    ! Dummy arguments
+    real(rk), dimension(:), intent(in) :: oldX
+    real(rk), dimension(:), intent(in) :: oldY
+    real(rk), dimension(:), intent(in) :: newX
+    real(rk), dimension(:), intent(out) :: newY
 
-  character (len=*), intent(in) :: method ! See comments above
-  character (len=*), optional, intent(in) :: extrapolate ! See comments above
-  real(r8), optional, intent(in) :: badValue
-  real(r8), dimension(:), optional, intent(out) :: dyByDx
-  real(r8), dimension(2), optional, intent(in) :: rangeofperiod	  ! for periodic data
-  logical, optional, intent(in) :: missingRegions ! Allow missing regions
+    character (len=*), intent(in) :: method ! See comments above
+    character (len=*), optional, intent(in) :: extrapolate ! See comments above
+    real(rk), optional, intent(in) :: badValue
+    real(rk), dimension(:), optional, intent(out) :: dyByDx
+    real(rk), dimension(2), optional, intent(in) :: rangeofperiod	  ! for periodic data
+    logical, optional, intent(in) :: missingRegions ! Allow missing regions
 
-! local working space
-  real(r8), dimension(:,:), pointer :: tempDerivative
-  real(r8), dimension(size(newX), 1) :: tempResult
-  real(r8), dimension(size(oldY)) :: tempY
-  real(r8) period
-  integer jump, j
+    include "InterpolateScalar.f9h
+  end subroutine InterpolateScalar_r4
 
-  ! Executable code
+  subroutine InterpolateScalar_r8 ( oldX, oldY, newX, newY, method, extrapolate, &
+    & badValue, missingRegions, dyByDx, RangeOfPeriod )
+    integer, parameter :: RK = R8
 
-  tempY = oldY
+    ! Dummy arguments
+    real(rk), dimension(:), intent(in) :: oldX
+    real(rk), dimension(:), intent(in) :: oldY
+    real(rk), dimension(:), intent(in) :: newX
+    real(rk), dimension(:), intent(out) :: newY
 
-  if ( present(rangeofperiod) ) then
-	period  = rangeofPeriod(2)-rangeofPeriod(1)
-	jump = -1
-	do j =1, size(oldY)-1
-		if(abs(tempY(j+1)-tempY(j)) > period/2. ) jump = j 
-	enddo
-	if(jump /= -1) then
-	   if(tempY(jump+1) > tempY(jump)) then
-		tempY(jump+1:) = tempY(jump+1:) - period
-	   else 
-		tempY(jump+1:) = tempY(jump+1:) + period
-	   end if
-	end if
-  end if
+    character (len=*), intent(in) :: method ! See comments above
+    character (len=*), optional, intent(in) :: extrapolate ! See comments above
+    real(rk), optional, intent(in) :: badValue
+    logical, optional, intent(in) :: missingRegions ! Allow missing regions
+    real(rk), dimension(:), optional, intent(out) :: dyByDx
+    real(rk), dimension(2), optional, intent(in) :: rangeofperiod	  ! for periodic data
 
-  nullify ( tempDerivative )
-
-  if ( present(dyByDx) ) then
-    call Allocate_Test ( tempDerivative, size(newX), 1, &
-      & "tempDerivative", ModuleName )
-
-    call InterpolateArray_r8 ( oldX, spread(tempY,2,1), newX, tempResult, method, &
-      & extrapolate=extrapolate, badValue=badValue, &
-      & missingRegions=missingRegions, dyByDx=tempDerivative )
-    dyByDx = tempDerivative(:,1)
-
-    call Deallocate_Test ( tempDerivative, "tempDerivative", ModuleName )
-  else
-    call InterpolateArray_r8 ( oldX, spread(tempY,2,1), newX, tempResult, method, &
-      & extrapolate=extrapolate, badValue=badValue, &
-      & missingRegions=missingRegions )
-  end if
-  newY = tempResult(:,1)
-
-  if ( present(rangeofperiod) ) then
-	period  = rangeofPeriod(2)-rangeofPeriod(1)
-	where (newY > rangeofperiod(2)) 
-	  newY = newY - period
-	elsewhere (newY < rangeofperiod(1)) 
-	  newY = newY + period
-	end where
-  end if
-end subroutine InterpolateScalar_r8
-
-subroutine InterpolateScalar_r4 ( oldX, oldY, newX, newY, method, extrapolate, &
-  & badValue, missingRegions, dyByDx, RangeOfPeriod )
-
-  ! Dummy arguments
-  real(r4), dimension(:), intent(in) :: oldX
-  real(r4), dimension(:), intent(in) :: oldY
-  real(r4), dimension(:), intent(in) :: newX
-  real(r4), dimension(:), intent(out) :: newY
-
-  character (len=*), intent(in) :: method ! See comments above
-  character (len=*), optional, intent(in) :: extrapolate ! See comments above
-  real(r4), optional, intent(in) :: badValue
-  real(r4), dimension(:), optional, intent(out) :: dyByDx
-  real(r4), dimension(2), optional, intent(in) :: rangeofperiod	  ! for periodic data
-  logical, optional, intent(in) :: missingRegions ! Allow missing regions
-
-! local working space
-  real(r4), dimension(:,:), pointer :: tempDerivative
-  real(r4), dimension(size(newX), 1) :: tempResult
-  real(r4), dimension(size(oldY)) :: tempY
-  real(r4) period
-  integer jump, j
-
-  ! Executable code
-
-  tempY = oldY
-
-  if ( present(rangeofperiod) ) then
-	period  = rangeofPeriod(2)-rangeofPeriod(1)
-	jump = -1
-	do j =1, size(oldY)-1
-		if(abs(tempY(j+1)-tempY(j)) > period/2. ) jump = j 
-	enddo
-	if(jump /= -1) then
-	   if(tempY(jump+1) > tempY(jump)) then
-		tempY(jump+1:) = tempY(jump+1:) - period
-	   else 
-		tempY(jump+1:) = tempY(jump+1:) + period
-	   end if
-	end if
-  end if
-
-  nullify ( tempDerivative )
-
-  if ( present(dyByDx) ) then
-    call Allocate_Test ( tempDerivative, size(newX), 1, &
-      & "tempDerivative", ModuleName )
-
-    call InterpolateArray_r4 ( oldX, spread(tempY,2,1), newX, tempResult, method, &
-      & extrapolate=extrapolate, badValue=badValue, &
-      & missingRegions=missingRegions, dyByDx=tempDerivative )
-    dyByDx = tempDerivative(:,1)
-
-    call Deallocate_Test ( tempDerivative, "tempDerivative", ModuleName )
-  else
-    call InterpolateArray_r4 ( oldX, spread(tempY,2,1), newX, tempResult, method, &
-      & extrapolate=extrapolate, badValue=badValue, &
-      & missingRegions=missingRegions )
-  end if
-  newY = tempResult(:,1)
-
-  if ( present(rangeofperiod) ) then
-	period  = rangeofPeriod(2)-rangeofPeriod(1)
-	where (newY > rangeofperiod(2)) 
-	  newY = newY - period
-	elsewhere (newY < rangeofperiod(1)) 
-	  newY = newY + period
-	end where
-  end if
-end subroutine InterpolateScalar_r4
+    include "InterpolateScalar.f9h
+  end subroutine InterpolateScalar_r8
 
 !=============================================================================
 end module MLSNumerics
@@ -396,6 +244,11 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.22  2002/10/04 00:48:05  vsnyder
+! Move declarations of local variables to includes.  Use generic
+! InterpolateValues in InterpolateScalar routines.  Move guts of
+! InterpolateScalar routines to an include file.
+!
 ! Revision 2.21  2002/09/13 18:08:12  pwagner
 ! May change matrix precision rm from r8
 !
