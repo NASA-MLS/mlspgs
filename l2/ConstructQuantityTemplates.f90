@@ -1020,37 +1020,40 @@ contains ! ============= Public procedures ===================================
     unitsTable = 0
 
     call DefineQtyTypes ( (/ &
-      l_baseline, phyq_temperature, p_hGrid, p_vGrid, p_fGrid, p_radiometer, next, &
+      l_baseline, phyq_temperature, p_hGrid, p_vGrid, p_fGrid, p_radiometer, &
+                  p_mustBeZeta, next, &
       l_boundaryPressure, phyq_pressure, p_hGrid, next, &
       l_chisqBinned, phyq_dimensionless, p_hGrid, p_vGrid, &
-                     p_signal, p_suppressChannels, next, &
+                     p_signal, p_suppressChannels, p_mustBeZeta, next, &
       l_chisqChan, phyq_dimensionless, p_majorFrame, p_signal, next, &
-      l_chisqMMAF, phyq_dimensionless, p_majorFrame, p_signal, p_suppressChannels, next, &
-      l_chisqMMIF, phyq_dimensionless, p_minorFrame, p_signal, p_suppressChannels, next, &
-      l_cloudExtinction, phyq_dimensionless, p_hGrid, p_vGrid, next, &
-      l_cloudIce, phyq_IceDensity, p_hGrid, p_vGrid, next, &
+      l_chisqMMAF, phyq_dimensionless, p_majorFrame, p_signal, &
+                   p_suppressChannels, next, &
+      l_chisqMMIF, phyq_dimensionless, p_minorFrame, p_signal, &
+                   p_suppressChannels, next, &
+      l_cloudExtinction, phyq_dimensionless, p_hGrid, p_vGrid, p_mustBeZeta, next, &
+      l_cloudIce, phyq_IceDensity, p_hGrid, p_vGrid, p_mustBeZeta, next, &
       l_cloudInducedRadiance, phyq_temperature, p_minorFrame, p_signal, next, &
       l_cloudRadSensitivity, phyq_temperature, p_minorFrame, p_signal, next, &
-      l_cloudWater, phyq_dimensionless, p_hGrid, p_vGrid, next, &
+      l_cloudWater, phyq_dimensionless, p_hGrid, p_vGrid, p_mustBeZeta, next, &
       l_columnAbundance, phyq_dobsonunits, p_hGrid, p_molecule, next, &
-      l_dnwt_ajn, phyq_dimensionless, p_vGrid, p_hGrid, next, &
-      l_dnwt_axmax, phyq_dimensionless, p_vGrid, p_hGrid, next, &
-      l_dnwt_cait, phyq_dimensionless, p_vGrid, p_hGrid, next, &
-      l_dnwt_chisqminnorm, phyq_dimensionless, p_vGrid, p_hGrid, next, &
-      l_dnwt_chisqnorm, phyq_dimensionless, p_vGrid, p_hGrid, next, &
-      l_dnwt_diag, phyq_dimensionless, p_vGrid, p_hGrid, next, &
-      l_dnwt_dxdx, phyq_dimensionless, p_vGrid, p_hGrid, next, &
-      l_dnwt_dxdxl, phyq_dimensionless, p_vGrid, p_hGrid, next, &
-      l_dnwt_dxn, phyq_dimensionless, p_vGrid, p_hGrid, next, &
-      l_dnwt_dxnl, phyq_dimensionless, p_vGrid, p_hGrid, next, &
-      l_dnwt_flag, phyq_dimensionless, p_vGrid, p_hGrid, next, &
-      l_dnwt_fnmin, phyq_dimensionless, p_vGrid, p_hGrid, next, &
-      l_dnwt_fnorm, phyq_dimensionless, p_vGrid, p_hGrid, next, &
-      l_dnwt_gdx, phyq_dimensionless, p_vGrid, p_hGrid, next, &
-      l_dnwt_gfac, phyq_dimensionless, p_vGrid, p_hGrid, next, &
-      l_dnwt_gradn, phyq_dimensionless, p_vGrid, p_hGrid, next, &
-      l_dnwt_sq, phyq_dimensionless, p_vGrid, p_hGrid, next, &
-      l_dnwt_sqt, phyq_dimensionless, p_vGrid, p_hGrid, next, &
+      l_dnwt_ajn, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
+      l_dnwt_axmax, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
+      l_dnwt_cait, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
+      l_dnwt_chisqminnorm, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
+      l_dnwt_chisqnorm, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
+      l_dnwt_diag, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
+      l_dnwt_dxdx, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
+      l_dnwt_dxdxl, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
+      l_dnwt_dxn, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
+      l_dnwt_dxnl, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
+      l_dnwt_flag, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
+      l_dnwt_fnmin, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
+      l_dnwt_fnorm, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
+      l_dnwt_gdx, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
+      l_dnwt_gfac, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
+      l_dnwt_gradn, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
+      l_dnwt_sq, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
+      l_dnwt_sqt, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
       l_earthRadius, phyq_length, p_hGrid, next, &
       l_earthRefl, phyq_dimensionless, none /) )
 
@@ -1058,23 +1061,24 @@ contains ! ============= Public procedures ===================================
       l_ecrToFOV, phyq_dimensionless, p_minorFrame, p_module, p_matrix3x3, next, &
       l_effectiveOpticalDepth, phyq_dimensionless, p_minorFrame, p_signal, next, &
       l_elevOffset, phyq_angle, p_signal, next, &
-      l_extinction, phyq_extinction, p_hGrid, p_vGrid, p_fGrid, p_radiometer, next, &
-      l_gph, phyq_length, p_hGrid, p_vGrid, next, &
+      l_extinction, phyq_extinction, p_hGrid, p_vGrid, p_fGrid, p_radiometer, &
+                    p_mustBeZeta, next, &
+      l_gph, phyq_length, p_hGrid, p_vGrid, p_mustBeZeta, next, &
       l_heightOffset, phyq_length, p_hGrid, p_vGrid, next, &
       l_isotopeRatio, phyq_dimensionless, p_molecule, next, &
-      l_jacobian_cols, phyq_dimensionless, p_vGrid, p_hGrid, next, &
-      l_jacobian_rows, phyq_dimensionless, p_vGrid, p_hGrid, next, &
+      l_jacobian_cols, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
+      l_jacobian_rows, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
       l_losTransFunc, phyq_dimensionless, p_minorFrame, p_sGrid, p_module, next, &
       l_losVel, phyq_dimensionless, p_minorFrame, p_module, next, &
-      l_magneticField, phyq_gauss, p_vGrid, p_hGrid, p_xyz, next, &
-      l_massMeanDiameterIce, phyq_dimensionless, p_vGrid, p_hGrid, next, &
-      l_massMeanDiameterWater, phyq_dimensionless, p_vGrid, p_hGrid, next, &
+      l_magneticField, phyq_gauss, p_vGrid, p_hGrid, p_xyz, p_mustBeZeta, next, &
+      l_massMeanDiameterIce, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
+      l_massMeanDiameterWater, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
       l_noRadsBinned, phyq_dimensionless, p_vGrid, p_hGrid, &
-                      p_signal, p_suppressChannels, next, &
+                      p_signal, p_suppressChannels, p_mustBeZeta, next, &
       l_noRadsPerMIF, phyq_dimensionless, p_minorFrame, p_signal, &
                       p_suppressChannels, next, &
       l_noiseBandwidth, phyq_frequency, p_signal, next, &
-      l_numJ, phyq_dimensionless, p_vGrid, p_hGrid, next, &
+      l_numJ, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
       l_opticalDepth, phyq_dimensionless, p_minorFrame, p_signal, next, &
       l_orbitInclination, phyq_angle, p_minorFrame, p_scModule, next, &
       l_phiTan, phyq_angle, p_minorFrame, p_module, next, & 
@@ -1082,8 +1086,8 @@ contains ! ============= Public procedures ===================================
 
     call DefineQtyTypes ( (/ &
       l_radiance, phyq_temperature, p_minorFrame, p_signal, next, & 
-      l_refGPH, phyq_length, p_hGrid, p_vGrid, next, &
-      l_rhi, phyq_dimensionless, p_hGrid, p_vGrid, p_molecule, next, &
+      l_refGPH, phyq_length, p_hGrid, p_vGrid, p_mustBeZeta, next, &
+      l_rhi, phyq_dimensionless, p_hGrid, p_vGrid, p_molecule, p_mustBeZeta, next, &
       l_scECI, phyq_length, p_minorFrame, p_scModule, p_xyz, next, &
       l_scGeocAlt, phyq_length, p_minorFrame, p_scModule, next, &
       l_scVel, phyq_velocity, p_minorFrame, p_scModule, p_xyz, next, &
@@ -1091,16 +1095,16 @@ contains ! ============= Public procedures ===================================
       l_scVelECR, phyq_velocity, p_minorFrame, p_scModule, p_xyz, next, &
       l_scanResidual, phyq_length, p_minorFrame, p_module, next, &
       l_sidebandratio, phyq_dimensionless, p_signal, next, & 
-      l_sizeDistribution, phyq_dimensionless, p_hGrid, p_vGrid, next, & 
+      l_sizeDistribution, phyq_dimensionless, p_hGrid, p_vGrid, p_mustBeZeta, next, & 
       l_spaceRadiance, phyq_temperature, none, next, &
       l_surfaceType, phyq_dimensionless, p_hGrid, next, & 
       l_systemTemperature, phyq_temperature, p_signal, next, &
-      l_temperature, phyq_temperature, p_hGrid, p_vGrid, next, &
+      l_temperature, phyq_temperature, p_hGrid, p_vGrid, p_mustbezeta, next, &
       l_tngtECI, phyq_length, p_minorFrame, p_module, p_xyz, next, &
       l_tngtGeocAlt, phyq_length, p_minorFrame, p_module, next, &
       l_tngtGeodAlt, phyq_length, p_minorFrame, p_module, next, &
       l_vmr, phyq_vmr, p_hGrid, p_vGrid, p_fGridOptional, p_molecule, &
-             p_radiometerOptional, next /) )
+             p_radiometerOptional, p_mustbezeta, next /) )
 
     ! Do a bit of checking
     do i = first_lit, last_lit
@@ -1118,6 +1122,11 @@ contains ! ============= Public procedures ===================================
         & (/ p_radiometer, p_module, p_scModule, p_signal /), i ) ) ) then
         valid = .false.
         message = "Badly defined major/minor frame quantity"
+      end if
+      ! Check that mustBeZeta quantities have a vGrid
+      if ( propertyTable ( p_mustBeZeta, i ) .and. .not. propertyTable ( p_vGrid, i ) ) then
+        valid = .false.
+        message = "Quantity must have vGrid if it must be on log-pressure"
       end if
       ! Print out any message
       if ( .not. valid ) then
