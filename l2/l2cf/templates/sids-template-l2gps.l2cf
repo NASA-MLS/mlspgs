@@ -26,7 +26,7 @@ begin GlobalSettings
   l1Boa, file='!inpathl1boa/MLS-Aura_L1BOA-Full_s5--t_!day.h4'
   startTime = "!year(!day)-!doy(!day)T00:00:00.000"
   endTime =   "!year(!day)-!doy(!day)T23:59:59.9999"
-  leapsecfile = '/software/SRC/TOOLKIT-5.2.7.4v1.00/database/common/TD/leapsec.dat'
+  leapsecfile = '/software/SRC/HDF-EOS/TOOLKIT-5.2.8v2.00/database/common/TD/leapsec.dat'
 
   vGridStandard: vGrid, type=Logarithmic, coordinate=Zeta, $
     start=1000mb, formula=[73:12]
@@ -68,6 +68,9 @@ begin Output
 end Output
 
 ; $Log$
+; Revision 1.2  2002/10/05 00:46:10  livesey
+; Various minor changes
+;
 ; Revision 1.1  2002/05/07 22:08:37  livesey
 ; First version
 ;

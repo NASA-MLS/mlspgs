@@ -53,7 +53,7 @@ begin GlobalSettings
   l1boa, file='!inpathl1boa/MLS-Aura_L1BOA-Full_s5--t_!day.h4'
 ;   startTime = '!year(!day)-!doy(!day)T00:00:00.0000'
 ;   endTime = '!year(!day)-!doy(!day)T23:59:59.9999'
-;   leapsecfile = '/software/SRC/TOOLKIT-5.2.7.4v1.00/database/common/TD/leapsec.dat'
+;   leapsecfile = '/software/SRC/HDF-EOS/TOOLKIT-5.2.8v2.00/database/common/TD/leapsec.dat'
 
   ;; Setup our vertical grids
   vGridStandard: vGrid, type=Logarithmic, coordinate=Zeta, $
