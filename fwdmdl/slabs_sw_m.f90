@@ -88,7 +88,7 @@ contains
     dz_dv0 = (-yi*db_dv0-z*dg_dv0)/g
     dr_dv0 = dz_dv0*OneOvSPi+yi*dv_dv0
     dvvw_dv0 = (du_dv0+dr_dv0)*q2 + 2.0_rp*q*dq_dv0*(u+r)
-    dSwI_dNu0 = dslabs1_dNu0*vvw + slabs1*dvvw_dv0
+    if ( present(dslabs1_dNu0) ) dSwI_dNu0 = dslabs1_dNu0*vvw + slabs1*dvvw_dv0
 
     return
   end subroutine dVoigt_spectral
@@ -342,7 +342,7 @@ contains
     end if
 
     u = REAL(uv,KIND=rp)
-    v = SIGN(AIMAG(uv),x)
+    if ( present(v) ) v = SIGN(AIMAG(uv),x)
 
   end subroutine Simple_Voigt
 
@@ -1066,6 +1066,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.8  2002/10/08 17:08:06  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.7  2002/10/02 21:06:03  vsnyder
 ! Get SpeedOfLight from Geometry module
 !
