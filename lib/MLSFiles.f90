@@ -240,7 +240,7 @@ contains
 
     ! Local variables
 
-    logical, parameter :: PRINT_EVERY_OPEN=.true.
+    logical, parameter :: PRINT_EVERY_OPEN=.false.
     integer, parameter :: FH_ON_ERROR=-99
     integer, parameter :: KEYWORDLEN=12			! Max length of keywords in OPEN(...)
     character (LEN=MAXFILENAMELENGTH) :: myName
@@ -618,6 +618,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.18  2001/05/08 21:36:38  livesey
+! Changed PRINT_EVERY_OPEN to .false.
+!
 ! Revision 2.17  2001/05/07 23:25:02  pwagner
 ! Detachable from toolkit
 !
