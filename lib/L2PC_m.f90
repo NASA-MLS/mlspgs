@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -6,19 +6,19 @@ module L2PC_m
   !=============================================================================
 
   ! This module contains data types etc. for dealing with the new EMLS L2PC
-  ! files.  The first version will deal with ascii files, but later versions
-  ! will probably be HDF.
+  ! files.  The first version dealt with ascii files, but later versions
+  ! must be HDF5.
 
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
   use Declaration_Table, only: DECLS, ENUM_VALUE, GET_DECL, DUMP_DECL
   use Intrinsic, only: Lit_Indices, L_CHANNEL, L_GEODALTITUDE, L_ZETA, L_NONE, L_VMR, &
     & L_RADIANCE, L_PTAN, L_NONE
   use machine, only: io_error
-  use MLSCommon, only: R8
+  use MLSCommon, only: R8, RM
   use VectorsModule, only: assignment(=), DESTROYVECTORINFO, &
     & VECTORTEMPLATE_T, VECTOR_T, VECTORVALUE_T, CREATEVECTOR, ADDVECTORTODATABASE,&
     & ADDVECTORTEMPLATETODATABASE, CONSTRUCTVECTORTEMPLATE
-  use MatrixModule_1, only: CHECKINTEGRITY, CREATEBLOCK, CREATEEMPTYMATRIX, &
+  use MatrixModule_1, only: CREATEBLOCK, CREATEEMPTYMATRIX, &
     & DESTROYMATRIX, MATRIX_T, DUMP, FINDBLOCK, MATRIX_DATABASE_T, GETFROMMATRIXDATABASE, &
     & DUMP_STRUCT
   use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, &
@@ -1500,6 +1500,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.48  2002/09/11 17:43:38  pwagner
+! Began changes needed to conform with matrix%values type move to rm from r8
+!
 ! Revision 2.47  2002/08/28 21:43:38  livesey
 ! Cosmetic changes
 !
