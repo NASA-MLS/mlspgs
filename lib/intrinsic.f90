@@ -7,11 +7,8 @@ module INTRINSIC
 
 ! Declaring the definitions is handled by the tree walker.
 
-  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-
   implicit NONE
   public
-  private :: Allocate_Test, Deallocate_Test ! may make .mod files smaller
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -72,8 +69,8 @@ module INTRINSIC
 
 ! Enumeration literals:
   integer, parameter :: FIRST_LIT       = 1
-! Don't edit the following file directly--it is generated automatically
-! based on the file lit_names.txt
+! Don't edit the following file directly -- it is generated automatically
+! based on the file lit_names.txt (which is the file you ought to edit).
   include 'lit_parm.f9h'
 
   ! Specifications
@@ -85,7 +82,8 @@ module INTRINSIC
   integer, parameter :: BEGIN = -1       ! Start of a tree
   integer, parameter :: D = 1000000      ! Decoration
   integer, parameter :: F = 1000         ! Field index
-  integer, parameter :: L = 2000         ! Lit index
+  integer, parameter :: G = 2000         ! Function index
+  integer, parameter :: L = 3000         ! Lit index
   integer, parameter :: N = 0            ! Tree index
   integer, parameter :: NADP = n+d*(all_fields+no_dup+no_positional)
   integer, parameter :: ND = n+d*no_dup
@@ -93,14 +91,15 @@ module INTRINSIC
   integer, parameter :: NDR = n+d*(no_dup+req_fld)
   integer, parameter :: NP = n+d*no_positional
   integer, parameter :: NR = n+d*req_fld
-  integer, parameter :: P = 3000         ! Parameter index
-  integer, parameter :: S = 4000         ! Spec index
-  integer, parameter :: T = 5000         ! Type index
-  integer, parameter :: Z = 6000         ! Section index
+  integer, parameter :: P = 4000         ! Parameter index
+  integer, parameter :: S = 5000         ! Spec index
+  integer, parameter :: T = 6000         ! Type index
+  integer, parameter :: Z = 7000         ! Section index
 
   ! Tables used for type checking:
   integer, save, pointer, dimension(:) :: DATA_TYPE_INDICES=>NULL()
   integer, save, pointer, dimension(:) :: FIELD_INDICES=>NULL()
+  integer, save, pointer, dimension(:) :: FUNC_INDICES=>NULL()
   integer, save, pointer, dimension(:) :: LIT_INDICES=>NULL()
   integer, save, pointer, dimension(:) :: PARM_INDICES=>NULL()
   integer, save, pointer, dimension(:) :: SECTION_INDICES=>NULL()
@@ -110,10 +109,12 @@ contains ! =====     Public procedures     =============================
 ! -----------------------------------------------  INIT_INTRINSIC  -----
   subroutine INIT_INTRINSIC ( N_DATA_TYPE_INDICES, N_FIELD_INDICES, &
     & N_LIT_INDICES, FIRST_PARM_INDEX, LAST_PARM_INDEX, N_SECTION_INDICES, &
-    & N_SPEC_INDICES )
+    & N_SPEC_INDICES, N_FUNC_INDICES )
 
     ! This really belongs in make_tree, but "make depends" can't see it there
     ! (because of the "include"):
+
+    use Allocate_Deallocate, only: Allocate_Test
     use TREE, only: BUILD_TREE, PUSH_PSEUDO_TERMINAL
     use TREE_TYPES, only: N_DT_DEF
 
@@ -123,6 +124,7 @@ contains ! =====     Public procedures     =============================
     integer, intent(in) :: FIRST_PARM_INDEX, LAST_PARM_INDEX
     integer, intent(in) :: N_SECTION_INDICES
     integer, intent(in) :: N_SPEC_INDICES
+    integer, intent(in) :: N_FUNC_INDICES
 
     ! Allocate the string index tables for the various categories of
     ! names
@@ -138,6 +140,8 @@ contains ! =====     Public procedures     =============================
       & 'SECTION_INDICES', moduleName )
     call allocate_test ( spec_indices, n_spec_indices, &
       & 'SPEC_INDICES', moduleName )
+    call allocate_test ( func_indices, n_func_indices, &
+      & 'FUNC_INDICES', moduleName )
 
     ! Put intrinsic predefined identifiers into the symbol table.
 
@@ -225,6 +229,7 @@ contains ! =====     Public procedures     =============================
 
   ! -----------------------------------  DestroyTypeCheckerTables  -----
   subroutine DestroyTypeCheckerTables
+    use Allocate_Deallocate, only: Deallocate_Test
     call deallocate_test ( data_type_indices, 'DATA_TYPE_INDICES', moduleName )
     call deallocate_test ( field_indices,     'FIELD_INDICES',     moduleName )
     call deallocate_test ( lit_indices,       'LIT_INDICES',       moduleName )
@@ -240,6 +245,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.54  2004/05/29 02:42:59  vsnyder
+! Rearrange function definition stuff
+!
 ! Revision 2.53  2004/01/14 18:50:25  vsnyder
 ! Stuff to support the Algebra section
 !
