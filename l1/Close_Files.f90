@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -32,7 +32,7 @@ CONTAINS
     USE MLSFiles, ONLY: MLS_closeFile
     USE L1BOutUtils, ONLY: WriteHdrAnnots
     USE HDF5, ONLY: H5gClose_f, H5gOpen_f
-    USE MLSHDF5, ONLY: MakeHDF5Attribute
+    USE MLSHDF5, ONLY: MakeHDF5Attribute, mls_h5close
     USE Orbit, ONLY: OrbitNumber, OrbPeriod
 !    USE H5LIB
 
@@ -155,7 +155,7 @@ CONTAINS
 
 !! Close the HDF 5 Fortran Interface
 
-    CALL h5close_f (error)
+    CALL mls_h5close (error)
     IF (error /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName, &
          "Fortran HDF 5 API error on closing.")
     
@@ -165,6 +165,9 @@ CONTAINS
 END MODULE Close_files
 !=============================================================================
 ! $Log$
+! Revision 2.14  2004/05/06 21:59:23  pwagner
+! Uses mls_h5open/close
+!
 ! Revision 2.13  2004/01/09 17:46:22  perun
 ! Version 1.4 commit
 !
