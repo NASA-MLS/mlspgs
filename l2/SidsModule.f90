@@ -24,6 +24,7 @@ module SidsModule
   use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
     GetFromMatrixDatabase, Matrix_Database_T, Matrix_T, DestroyBlock, CreateBlock, &
     & FindBlock
+  use MLSL2Timings, only: add_to_retrieval_timing
   use MoreTree, only: Get_Field_Id, Get_Boolean
   use Output_M, only: Output
   use Toggles, only: Gen, Toggle
@@ -79,6 +80,7 @@ contains
     integer :: ROW                      ! Row in jacobian
     integer :: ROWINSTANCE              ! From jacobian
     integer :: ROWQUANTITY              ! From jacobian
+    real ::    T1
     type (MatrixElement_T), pointer :: M0 ! A block from the jacobian
 
     type (ForwardModelIntermediate_T) :: ifm ! Work space for forward model
@@ -92,6 +94,7 @@ contains
     integer, parameter :: PerturbationNotState = NotPlain + 1 ! Ptb. not same as state
 
     if ( toggle(gen) ) call trace_begin ( "SIDS", root )
+    call cpu_time ( t1 )
 
     nullify ( configs, perturbation )
 
@@ -195,6 +198,8 @@ contains
           ! Ermmm, think of this next time.
           fmStat%maf = fmStat%maf + 1
           fmstat%rows = .false. ! Just so it's not undefined
+          call add_to_retrieval_timing( 'sids', t1 )
+          call cpu_time ( t1 )
           do config = 1, size(configs)
             if ( ixJacobian > 0 .and. .not. associated(perturbation)) then
               call forwardModel ( configDatabase(configs(config)), &
@@ -206,6 +211,9 @@ contains
                 & FwdModelOut, ifm, fmStat )
             end if
           end do
+
+          call add_to_retrieval_timing( 'forward_model', t1 )
+          call cpu_time ( t1 )
 
           ! Destroy jacobian if asked to
           if (destroyJacobian .and. ixJacobian > 0 ) then
@@ -284,6 +292,8 @@ contains
     if ( toggle(gen) ) call trace_end ( "SIDS" )
 
     call deallocate_test ( configs, 'configs', ModuleName )
+    call add_to_retrieval_timing( 'sids', t1 )
+    call cpu_time ( t1 )
 
   contains
     ! --------------------------------------------  AnnounceError  -----
@@ -312,6 +322,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.34  2001/10/01 22:54:22  pwagner
+! Added subsection timings for Retrieval section
+!
 ! Revision 2.33  2001/05/26 00:21:38  livesey
 ! Added zeroing of jacobian blocks in numerical derivative case.
 !
