@@ -34,7 +34,8 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
     & Signal_T
   use OUTPUT_M, only: OUTPUT
   use Parse_Signal_m, only: PARSE_SIGNAL
-  use QuantityTemplates, only: QuantityTemplate_T,SetupNewQuantityTemplate
+  use QuantityTemplates, only: QuantityTemplate_T,SetupNewQuantityTemplate, &
+    & QuantityTemplateCounter
   use STRING_TABLE, only: GET_STRING, DISPLAY_STRING
   use TOGGLES, only: GEN, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -272,7 +273,6 @@ contains ! =====     Public Procedures     =============================
       else
         noSurfs=1
       end if
-
       
       ! Some special cases for certain quantities
       select case (quantityType)
@@ -406,6 +406,11 @@ contains ! =====     Public Procedures     =============================
       ! -------------------------------------- Got mifGeolocation ------------
       ! We have geolocation information, setup the quantity as a clone of that.
       qty = mifGeolocation(instrumentModule)
+      qty%noChans = noChans
+      qty%instanceLen = qty%noChans*qty%noSurfs
+      ! Increment the id counter and set the id field
+      quantityTemplateCounter = quantityTemplateCounter + 1
+      qty%id = quantityTemplateCounter
 
     else
       ! -------------------------------------- Not Got mifGeolocation ------------
@@ -682,6 +687,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.40  2001/07/11 21:40:00  livesey
+! More bug fixes
+!
 ! Revision 2.39  2001/07/10 23:45:16  jonathan
 ! added cloudicedensity and template for cloudsfwm, paul/jonathan
 !
