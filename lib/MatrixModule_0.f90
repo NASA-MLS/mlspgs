@@ -2217,7 +2217,9 @@ contains ! =====     Public Procedures     =============================
   subroutine DUMP_MATRIX_BLOCK ( MATRIX_BLOCK, NAME, DETAILS, BOUNDS )
     type(MatrixElement_T), intent(in) :: MATRIX_BLOCK
     character(len=*), intent(in), optional :: NAME
-    integer, intent(in), optional :: DETAILS   ! Print details, default true
+    integer, intent(in), optional :: DETAILS   ! Print details, 0 => minimal,
+                                               !  1 => structure, 2 => values
+                                               !  default 1.
     integer, intent(in), optional :: BOUNDS(4) ! Dump only Bounds(1):Bounds(2)
                                                !        X  Bounds(3):Bounds(4)
     integer :: MY_DETAILS
@@ -2307,6 +2309,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.53  2001/10/16 19:28:31  vsnyder
+! Repair comment about 'details' argument of 'Dump_Matrix_Block'
+!
 ! Revision 2.52  2001/10/04 23:49:57  livesey
 ! Added checking code, and temporarily suppressed sparse
 !
