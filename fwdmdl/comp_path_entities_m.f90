@@ -98,7 +98,6 @@ contains
       print *,'   STAT =',ier
       return
     endif
-    print*,'Elvar:',elvar(l)%phi_tan,elvar(maf)%rr
     do k = 1, no_tan_hts
       h = tan_hts(k,l)
       call vert_to_path ( elvar(l), n_lvls, Ng, ngt, gl_count, WinSize, &
@@ -137,6 +136,9 @@ end subroutine Comp_Path_Entities
 
 end module Comp_Path_Entities_M
 ! $Log$
+! Revision 1.32  2001/04/25 00:40:07  livesey
+! Removed unnecessary deallocate
+!
 ! Revision 1.31  2001/04/25 00:38:48  zvi
 ! Fix bug in elvar..
 !
