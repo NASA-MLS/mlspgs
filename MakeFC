@@ -359,7 +359,7 @@ help:
 disthelp:
 	$(CONFDIR)/README.MakeFC
 
-# install the mls software
+# install the mls programs from $(LEVELS) into $(INSTALLDIR)
 install:
 	@echo "Installing programs from $(LEVELS) into $(INSTALLDIR)"; \
 	if [ ! -d $(INSTALLDIR) ] ; then \
@@ -392,30 +392,39 @@ install:
 
 # build and install some of the executables out of util
 CondenseLeakLog: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/CondenseLeakLog.f90
-	$(MLSBIN)/build_f90_in_misc.sh -d ./bin/$(MLSCONFG)/ -t ./tests \
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -c $(MLSCONFG) -p $@ $(MLSBIN)/$@.f90
 
 convert_spectroscopy: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/convert_spectroscopy.f90
-	$(MLSBIN)/build_f90_in_misc.sh -d ./bin/$(MLSCONFG)/ -t ./tests \
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -m lib -c $(MLSCONFG) -p $@ $(MLSBIN)/$@.f90
 
 end_stmts: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/end_stmts.f90
-	$(MLSBIN)/build_f90_in_misc.sh -d ./bin/$(MLSCONFG)/ -t ./tests \
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -c $(MLSCONFG) -p $@ $(MLSBIN)/$@.f90
 
 f90tex: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/f90tex.f90
-	$(MLSBIN)/build_f90_in_misc.sh -d ./bin/$(MLSCONFG)/ -t ./tests \
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -c $(MLSCONFG) -p $@ $(MLSBIN)/$@.f90
 
 init_gen: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/init_gen.f90
-	$(MLSBIN)/build_f90_in_misc.sh -d ./bin/$(MLSCONFG)/ -t ./tests \
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -c $(MLSCONFG) -p $@ $(MLSBIN)/$@.f90
 
 h5subset: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/h5subset.c
-	$(MLSBIN)/build_f90_in_misc.sh -d ./bin/$(MLSCONFG)/ -t ./tests \
-   -c $(MLSCONFG) -p $@ \
-   -i "-I $(HDF5)/../include" \
-   $(MLSBIN)/$@.c
+	@case "$(HDF5)" in \
+	"") \
+		echo "Sorry--need to define HDF5 before building h5subset" ; \
+		echo "Try make configure" ; \
+		exit 2 ; \
+		;; \
+	*) \
+	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+      -c $(MLSCONFG) -p $@ \
+      -i "-I $(HDF5)/../include" \
+      $(MLSBIN)/$@.c
+		;; \
+	esac 
 
 # allow user to forego "-f MakeFC" nonsense
 makefile:
@@ -598,7 +607,7 @@ internalreset_copy:
 
 internalmftests:
 	@echo "Copying or linking MakeFC to Makefile in $(tests_sub_dirs)"; \
-	echo "(and updating the Makefile in each $(MLSCONFG)"; \
+	echo "(and updating the Makefile in each $(MLSCONFG) )"; \
 	 for dir in $(tests_sub_dirs); do \
 	 	if [ -d $$dir ] ; then \
 	  		cd $$dir; \
@@ -647,6 +656,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.45  2001/08/14 23:56:40  pwagner
+# Added builds for all util/.f90 and util/.c
+#
 # Revision 1.44  2001/08/14 22:39:59  pwagner
 # There was no mkdir_cascade
 #
