@@ -1130,25 +1130,31 @@ contains ! =====     Public Procedures     =============================
   end subroutine DestroyBlock_0
 
   ! ----------------------------------------------  GetDiagonal_0_r4  -----
-  subroutine GetDiagonal_0_r4 ( B, X, SquareRoot )
+  subroutine GetDiagonal_0_r4 ( B, X, SquareRoot, Invert, ZeroOK )
   ! Get the diagonal elements of B into X.  Return the square root of the
   ! diagonal elements if SquareRoot is present and true.
     type(MatrixElement_T), intent(in) :: B
     real(r4), dimension(:), intent(out) :: X
     logical, intent(in), optional :: SquareRoot
+    logical, intent(in), optional :: Invert
+    logical, intent(in), optional :: ZeroOK
     integer :: I, J, N
+    logical :: MyZeroOK
  
     include "getdiagonal_0.f9h"
   end subroutine GetDiagonal_0_r4
 
   ! ----------------------------------------------  GetDiagonal_0_r8  -----
-  subroutine GetDiagonal_0_r8 ( B, X, SquareRoot )
+  subroutine GetDiagonal_0_r8 ( B, X, SquareRoot, Invert, ZeroOK )
   ! Get the diagonal elements of B into X.  Return the square root of the
   ! diagonal elements if SquareRoot is present and true.
     type(MatrixElement_T), intent(in) :: B
     real(r8), dimension(:), intent(out) :: X
     logical, intent(in), optional :: SquareRoot
+    logical, intent(in), optional :: Invert
+    logical, intent(in), optional :: ZeroOK
     integer :: I, J, N
+    logical :: MyZeroOK
 
     include "getdiagonal_0.f9h"
   end subroutine GetDiagonal_0_r8
@@ -2356,7 +2362,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine ScaleBlock
 
   ! -------------------------------------------  SolveCholeskyA_0_r4  -----  
-  subroutine SolveCholeskyA_0_r4 ( U, X, B, TRANSPOSE )
+  subroutine SolveCholeskyA_0_r4 ( U, X, B, TRANSPOSE, STATUS )
   ! Solve the system U X = B or U^T X = B for X, depending on TRANSPOSE,
   ! where U is known to be upper-triangular Array.  X may be the same as B.
   ! B may be absent, in which case the right-hand side is in X on input,
@@ -2367,6 +2373,7 @@ contains ! =====     Public Procedures     =============================
     real (r4), dimension(:), intent(in), target, optional :: B
     logical, intent(in), optional :: TRANSPOSE    ! Solve U^T X = B if
     !                                               present and true.
+    integer, intent(out), optional :: STATUS ! Optional status flag
 
     real (rm) :: D        ! Diagonal element of U
     integer :: I          ! Subscripts and loop inductors
@@ -2380,7 +2387,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine SolveCholeskyA_0_r4
 
   ! -------------------------------------------  SolveCholeskyA_0_r8  -----  
-  subroutine SolveCholeskyA_0_r8 ( U, X, B, TRANSPOSE )
+  subroutine SolveCholeskyA_0_r8 ( U, X, B, TRANSPOSE, STATUS )
   ! Solve the system U X = B or U^T X = B for X, depending on TRANSPOSE,
   ! where U is known to be upper-triangular Array.  X may be the same as B.
   ! B may be absent, in which case the right-hand side is in X on input,
@@ -2391,6 +2398,7 @@ contains ! =====     Public Procedures     =============================
     real (r8), dimension(:), intent(in), target, optional :: B
     logical, intent(in), optional :: TRANSPOSE    ! Solve U^T X = B if
     !                                               present and true.
+    integer, intent(out), optional :: STATUS ! Optional status flag
 
     real (rm) :: D        ! Diagonal element of U
     integer :: I          ! Subscripts and loop inductors
@@ -2404,7 +2412,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine SolveCholeskyA_0_r8
 
   ! -------------------------------------------  SolveCholeskyM_0  -----
-  subroutine SolveCholeskyM_0 ( U, X, B, TRANSPOSE )
+  subroutine SolveCholeskyM_0 ( U, X, B, TRANSPOSE, STATUS )
   ! Solve the system U X = B or U^T X = B for X, depending on TRANSPOSE,
   ! where U is known to be upper-triangular.  X may be the same as B.
   ! B may be absent, in which case the right-hand side is in X on input,
@@ -2414,6 +2422,7 @@ contains ! =====     Public Procedures     =============================
     type(MatrixElement_T), intent(in), target, optional :: B
     logical, intent(in), optional :: TRANSPOSE    ! Solve U^T X = B if
     !                                               present and true.
+    integer, intent(out), optional :: STATUS
 
     real(rm) :: D        ! Diagonal element of U
     integer :: I, J, K   ! Subscripts and loop inductors
@@ -2452,9 +2461,14 @@ contains ! =====     Public Procedures     =============================
               & "U matrix in SolveCholeskyM_0 is not triangular" )
           d = u%values(u%r2(i),1)
           if ( abs(d) < tol ) then
-            call dump ( u, 'Guilty party', details=2 )
-            call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & "U matrix in SolveCholeskyM_0 is singular" )
+            if ( present ( status ) ) then
+              status = i
+              return
+            else
+              call dump ( u, 'Guilty party', details=2 )
+              call MLSMessage ( MLSMSG_Error, ModuleName, &
+                & "U matrix in SolveCholeskyM_0 is singular" )
+            end if
           end if
 !$OMP PARALLEL DO
           do j = 1, nc
@@ -2474,9 +2488,14 @@ contains ! =====     Public Procedures     =============================
               & "U matrix in SolveCholeskyM_0 is not triangular" )
           d = u%values(u%r1(i),1)
           if ( abs(d) < tol ) then
-            call dump ( u, 'Guilty party', details=2 )
-            call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & "U matrix in SolveCholeskyM_0 is singular" )
+            if ( present ( status ) ) then
+              status = i
+              return
+            else
+              call dump ( u, 'Guilty party', details=2 )
+              call MLSMessage ( MLSMSG_Error, ModuleName, &
+                & "U matrix in SolveCholeskyM_0 is singular" )
+            end if
           end if
           do j = 1, nc
             do k = u%r1(i-1)+1, u%r1(i)-1
@@ -2488,17 +2507,27 @@ contains ! =====     Public Procedures     =============================
       case ( M_Full )
         d = u%values(1,1)
         if ( abs(d) < tol ) then
-          call dump ( u, 'Guilty party', details=2 )
-          call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & "U matrix in SolveCholeskyM_0 is singular" )
+          if ( present ( status ) ) then
+            status = 1
+            return
+          else
+            call dump ( u, 'Guilty party', details=2 )
+            call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & "U matrix in SolveCholeskyM_0 is singular" )
+          end if
         end if
         xs(1,1:nc) = xs(1,1:nc) / d
         do i = 2, n
           d = u%values(i,i)
           if ( abs(d) < tol ) then
-            call dump ( u, 'Guilty party', details=2 )
-            call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & "U matrix in SolveCholeskyM_0 is singular" )
+            if ( present ( status ) ) then
+              status = i
+              return
+            else
+              call dump ( u, 'Guilty party', details=2 )
+              call MLSMessage ( MLSMSG_Error, ModuleName, &
+                & "U matrix in SolveCholeskyM_0 is singular" )
+            end if
           end if
 !$OMP PARALLEL DO
           do j = 1, nc
@@ -2519,17 +2548,27 @@ contains ! =====     Public Procedures     =============================
       end if
       d = ud(n,n)
       if ( abs(d) < tol ) then
-        call dump ( u, 'Guilty party', details=2 )
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & "U matrix in SolveCholeskyM_0 is singular" )
+        if ( present ( status ) ) then
+          status = n
+          return
+        else
+          call dump ( u, 'Guilty party', details=2 )
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & "U matrix in SolveCholeskyM_0 is singular" )
+        end if
       end if
       xs(n,1:nc) = xs(n,1:nc) / d
       do i = n-1, 1, -1
         d = ud(i,i)
         if ( abs(d) < tol ) then
-          call dump ( u, 'Guilty party', details=2 )
-          call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & "U matrix in SolveCholeskyM_0 is singular" )
+          if ( present ( status ) ) then
+            status = i
+            return
+          else
+            call dump ( u, 'Guilty party', details=2 )
+            call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & "U matrix in SolveCholeskyM_0 is singular" )
+          end if
         end if
 !$OMP PARALLEL DO
         do j = 1, nc
@@ -2543,10 +2582,11 @@ contains ! =====     Public Procedures     =============================
         & call deallocate_test ( ud, "UD in SolveCholeskyM_0", ModuleName )
     end if ! my_t
     call sparsify ( xs, x, "XS in SolveCholeskyM_0", ModuleName ) ! X := Xs
+    if ( present ( status ) ) status = 0
   end subroutine SolveCholeskyM_0
 
   ! -------------------------------------------  SolveCholeskyV_0_r4  -----
-  subroutine SolveCholeskyV_0_r4 ( U, X, B, TRANSPOSE )
+  subroutine SolveCholeskyV_0_r4 ( U, X, B, TRANSPOSE, STATUS )
   ! Solve the system U X = B or U^T X = B for X, depending on TRANSPOSE,
   ! where U is known to be upper-triangular.  X may be the same as B.
   ! B may be absent, in which case the right-hand side is in X on input,
@@ -2559,6 +2599,7 @@ contains ! =====     Public Procedures     =============================
     real(r4), dimension(:), intent(in), target, optional :: B
     logical, intent(in), optional :: TRANSPOSE    ! Solve U^T X = B if
     !                                               present and true.
+    integer, intent(out), optional :: STATUS ! Optional status flag
 
     real(rm) :: D        ! Diagonal element of U
     integer :: H, I      ! Subscripts and loop inductors
@@ -2572,7 +2613,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine SolveCholeskyV_0_r4
 
   ! -------------------------------------------  SolveCholeskyV_0_r8  -----
-  subroutine SolveCholeskyV_0_r8 ( U, X, B, TRANSPOSE )
+  subroutine SolveCholeskyV_0_r8 ( U, X, B, TRANSPOSE, STATUS )
   ! Solve the system U X = B or U^T X = B for X, depending on TRANSPOSE,
   ! where U is known to be upper-triangular.  X may be the same as B.
   ! B may be absent, in which case the right-hand side is in X on input,
@@ -2585,6 +2626,7 @@ contains ! =====     Public Procedures     =============================
     real(r8), dimension(:), intent(in), target, optional :: B
     logical, intent(in), optional :: TRANSPOSE    ! Solve U^T X = B if
     !                                               present and true.
+    integer, intent(out), optional :: STATUS ! Optional status flag
 
     real(rm) :: D        ! Diagonal element of U
     integer :: H, I      ! Subscripts and loop inductors
@@ -3058,6 +3100,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.94  2003/06/03 19:21:08  livesey
+! Added status options to SolveCholesky, and invert option to GetDiagonal
+!
 ! Revision 2.93  2003/02/22 00:41:54  livesey
 ! Fixed inconsequential bug in Sparse/Banded and Banded/Sparse multiplies
 !
