@@ -12,7 +12,7 @@ include(m4defs.l2cf)
 !ifdef(band,{},{!define(band,{1})})
 !ifdef(phi,{},{!define(phi,0)})
 !ifdef(l1boaversion,{},{!define(l1boaversion,{s5--t})})
-!ifdef(l2pcversion,{},{!define(l1pcversion,{v0-9-0})})
+!ifdef(l2pcversion,{},{!define(l2pcversion,{v0-9-0})})
 
 ; Now define our directories
 !define(inpathl1boa,{/data/emls/l1boa/!l1boaversion/!year(!day)/})
@@ -70,8 +70,8 @@ begin GlobalSettings
   ;; Load our forward model databases
   ForwardModelGlobal, $
     antennaPatterns='!calpath/MLS-Aura_L2Cal-AAAP_v1-0-0_0000d000.txt', $
-    filterShapes='!calpath/MLS-Aura_L2Cal-Filters_v1-0-0_0000d000.txt', $
-    pointingGrids='!calpath/MLS-Aura_L2Cal-PFG_v1-0-0_0000d000.txt'
+    filterShapes='!calpath/MLS-Aura_L2Cal-Filters_v1-0-1_0000d000.txt', $
+    pointingGrids='!calpath/MLS-Aura_L2Cal-PFG_v1-0-1_0000d000.txt'
 
   ;; Setup the particular forward model we're going to want
   l2pcFwm: forwardModel, type=full,  $
@@ -152,7 +152,8 @@ end Join
 
 begin Output
   output, file= $
-    '!outpathl2pc/MLS-Aura_L12Cal-L2PC-band!band-bin!phiStr_!l2pcversion_0000-000.txt', $
+    '!outpathl2pc/MLS-Aura_L2Cal-L2PC-band!band-bin!phiStr_!l2pcversion_0000-000.txt', $
     quantities=K, type=l2pc
 end Output
+
 
