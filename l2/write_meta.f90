@@ -5,7 +5,7 @@ MODULE WriteMetadata ! Populate metadata and write it out
 USE MLSCommon, only: NameLen
 USE MLSFiles, only: split_path_name
 USE MLSStrings 
-USE MLSMessageModule
+USE MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
 USE L2GPData
 USE L2AUXData
 USE PCFHdr, only: WritePCF2Hdr
@@ -26,6 +26,12 @@ CHARACTER(LEN=130) :: id = &
 CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
 !-----------------------------------------------------------------------------
 
+	public :: populate_metadata_std, populate_metadata_oth, &
+	& get_l2gp_mcf, WriteMetaLog
+	
+	private :: first_grouping, measured_parameter, third_grouping, &
+	& ExpandFileTemplate
+
 ! This data type is used to store User-defined Runtime Parameters and other
 ! information taken from the PCF.
 
@@ -35,12 +41,58 @@ CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
 
      CHARACTER (LEN=4) :: cycle
 
+     ! version string in PCF input file names
+
+     CHARACTER (LEN=15) :: inputVersion	! input files (but which?)
+
      ! version string in PCF output file names
 
      CHARACTER (LEN=15) :: outputVersion	! output files
 
       CHARACTER(LEN=27) :: StartUTC
       CHARACTER(LEN=27) :: EndUTC
+
+	! The correspondence between MCF and l2gp files is determined by
+	! the value of        MCFFORL2GPOPTION
+	! Either
+	!                          (1)
+	! The PCF numbers for the mcf corresponding to each
+	! of the l2gp files begin with mlspcf_mcf_l2gp_start
+	! and increase 1 by 1 with each succeeding species.
+	! Then, after the last single-species l2gp, the very next pcf number
+	! is for the one called 'other' ML2OTH.001.MCF
+	! This hateful inflexibility leads to possibility
+	
+	!                          (2)
+	! Each l2gp file name, stripped of their paths, fits the pattern like
+	!  *_l2gp_species_*
+	! and the corresponding MCF files fit the pattern
+	!  *SPECIES.*
+	! where species and SPECIES are case-insensitive "species" name
+	! i.e., BrO, ClO, etc.
+	! Warning:
+	! You therefore must use exactly the same abbreviation for the l2gp and the
+	! corresponding MCF: if the MCF is ML2T.001.MCF, don't use "temp"
+	! in the l2gp name
+	! This inflexibility replaces the different kind in option (1)
+
+	!                          (3)
+	! Similar to (2), but now the SPECIES of the corresponding
+	! MCF file names are chosen from an associative array structure
+	! or hash table, where the keys are the possible species and
+	! the hash
+     ! how to associate l2gp species names with mcf files
+
+	  ! if an associative array, then l2gp file names contain the "keys"
+	  ! the following is a comma-delimited list of possible species
+	  ! names that may be such keys
+
+     CHARACTER (LEN=FileNameLen) :: spec_keys
+
+	  ! the following is a comma-delimited list of possible 	
+	  ! mcf file name parts that may be the corresponding hash
+
+     CHARACTER (LEN=FileNameLen) :: spec_hash
 
      ! name of the log file (without the path)
 
@@ -49,6 +101,8 @@ CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
    END TYPE PCFData_T
 
 	INTEGER, PARAMETER :: INVENTORYMETADATA=2
+
+    integer, parameter :: MCFFORL2GPOPTION=1		! Either 1 or 2
 
 CONTAINS
 
@@ -192,7 +246,6 @@ END SUBROUTINE first_grouping
  
     INTEGER :: returnStatus
 
-    REAL(r8) dval
     INTEGER, PARAMETER :: INVENTORY=2, ARCHIVE=1
     CHARACTER (LEN=PGSd_PC_FILE_PATH_MAX) :: physical_filename
     CHARACTER (LEN=PGSd_PC_FILE_PATH_MAX) :: sval
@@ -588,7 +641,7 @@ END SUBROUTINE measured_parameter
 !--------------------------- populate_metadata_std -------------------
 
   SUBROUTINE populate_metadata_std (HDF_FILE, MCF_FILE, &
-  & l2pcf, field_name, anText)
+  & l2pcf, field_name, anText, metadata_error)
 
 ! This is the standard way to write meta data
 ! It should work unchanged for the standard l2gp files (e.g. BrO)
@@ -607,7 +660,7 @@ END SUBROUTINE measured_parameter
 	 type(PCFData_T) :: l2pcf
 	 character (LEN=*) :: field_name
       CHARACTER (LEN=1), POINTER :: anText(:)
-
+		integer, optional, intent(out) :: metadata_error
 
     !Local Variables
  
@@ -637,11 +690,26 @@ END SUBROUTINE measured_parameter
 
     !Executable code
 
+	if(present(metadata_error)) metadata_error=1
+
+    version = 1
+	 IF(MCF_FILE > 0) then
+	    returnStatus = PGS_PC_GetReference (MCF_FILE, version , physical_filename)
+	else
+		returnStatus = PGSPC_W_NO_REFERENCE_FOUND
+	endif
+
+	if(returnStatus /= PGS_S_SUCCESS) then
+       CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+            "Failed to find the PCF reference for MCF_FILE in populate_metadata_std" ) 
+			return
+    ENDIF
+		
     version = 1
     returnStatus = PGS_PC_GetReference (HDF_FILE, version , physical_filename)
 
 	if(returnStatus /= PGS_S_SUCCESS) then
-       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+       CALL MLSMessage (MLSMSG_Warning, ModuleName, &
             "Failed to find the PCF reference for HDF_FILE in populate_metadata_std" ) 
 			return
     ENDIF
@@ -655,6 +723,7 @@ END SUBROUTINE measured_parameter
     IF (sdid == -1) THEN
        CALL MLSMessage (MLSMSG_Error, ModuleName, &
             "Failed to open the hdf file "//physical_fileName ) 
+				return
     ENDIF
 
     returnStatus = pgs_met_write (groups(INVENTORY), "coremetadata.0", sdid)
@@ -664,10 +733,12 @@ END SUBROUTINE measured_parameter
        IF (returnStatus == PGSMET_W_METADATA_NOT_SET) THEN 
           CALL MLSMessage (MLSMSG_WARNING, ModuleName, &
                "Some of the mandatory parameters were not set" )
+					return
        ELSE 
           CALL Pgs_smf_getMsg (returnStatus, attrname, errmsg)
           CALL MLSMessage (MLSMSG_WARNING, ModuleName, &
                "Metadata write failed "//attrname//errmsg) 
+					return
        ENDIF
     ENDIF
 
@@ -679,12 +750,14 @@ END SUBROUTINE measured_parameter
 
     returnStatus = pgs_met_remove() 
 
+	if(present(metadata_error)) metadata_error=0
+
   END SUBROUTINE populate_metadata_std
 
 !--------------------------- populate_metadata_oth -------------------
 
   SUBROUTINE populate_metadata_oth (HDF_FILE, MCF_FILE, l2pcf, &
-  & numquantitiesperfile, QuantityNames, anText)
+  & numquantitiesperfile, QuantityNames, anText, metadata_error)
 
 ! This is specially to write meta data for heterogeneous files
 ! It should work unchanged for the 'OTH' l2gp files (e.g. ML2OTH.001.MCF)
@@ -698,7 +771,7 @@ END SUBROUTINE measured_parameter
 	 type(PCFData_T) :: l2pcf
 	 character (LEN=*), dimension(:) :: QuantityNames
       CHARACTER (LEN=1), POINTER :: anText(:)
-
+		integer, optional, intent(out) :: metadata_error
 
     !Local Variables
  
@@ -728,11 +801,26 @@ END SUBROUTINE measured_parameter
 
     !Executable code
 
+	if(present(metadata_error)) metadata_error=1
+
+    version = 1
+	 IF(MCF_FILE > 0) then
+	    returnStatus = PGS_PC_GetReference (MCF_FILE, version , physical_filename)
+	else
+		returnStatus = PGSPC_W_NO_REFERENCE_FOUND
+	endif
+	
+	if(returnStatus /= PGS_S_SUCCESS) then
+       CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+            "Failed to find the PCF reference for MCF_FILE in populate_metadata_oth" ) 
+			return
+    ENDIF
+
     version = 1
     returnStatus = PGS_PC_GetReference (HDF_FILE, version , physical_filename)
 
 	if(returnStatus /= PGS_S_SUCCESS) then
-       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+       CALL MLSMessage (MLSMSG_Warning, ModuleName, &
             "Failed to find the PCF reference for HDF_FILE in populate_metadata_oth" ) 
 			return
     ENDIF
@@ -753,6 +841,7 @@ END SUBROUTINE measured_parameter
     IF (sdid == -1) THEN
        CALL MLSMessage (MLSMSG_Error, ModuleName, &
             "Failed to open the hdf file "//physical_fileName ) 
+				return
     ENDIF
 
     returnStatus = pgs_met_write (groups(INVENTORY), "coremetadata.0", sdid)
@@ -762,10 +851,12 @@ END SUBROUTINE measured_parameter
        IF (returnStatus == PGSMET_W_METADATA_NOT_SET) THEN 
           CALL MLSMessage (MLSMSG_WARNING, ModuleName, &
                "Some of the mandatory parameters were not set" )
+					return
        ELSE 
           CALL Pgs_smf_getMsg (returnStatus, attrname, errmsg)
           CALL MLSMessage (MLSMSG_WARNING, ModuleName, &
                "Metadata write failed "//attrname//errmsg) 
+					return
        ENDIF
     ENDIF
 
@@ -776,6 +867,8 @@ END SUBROUTINE measured_parameter
          CALL WritePCF2Hdr(physical_filename, anText)
 
     returnStatus = pgs_met_remove() 
+
+	if(present(metadata_error)) metadata_error=0
 
   END SUBROUTINE populate_metadata_oth
 
@@ -927,7 +1020,7 @@ END SUBROUTINE measured_parameter
 ! Lori's routines
 
 !-------------------------------
-   SUBROUTINE WriteMetaLog (pcf)
+   SUBROUTINE WriteMetaLog (pcf, metadata_error)
 !-------------------------------
 
 ! Brief description of subroutine
@@ -936,6 +1029,7 @@ END SUBROUTINE measured_parameter
 ! Arguments
 
       TYPE( PCFData_T ), INTENT(IN) :: pcf
+		integer, optional, intent(out) :: metadata_error
 
 ! Parameters
 
@@ -946,19 +1040,47 @@ END SUBROUTINE measured_parameter
       INTEGER, EXTERNAL :: pgs_met_init, pgs_met_remove, pgs_met_setAttr_d
       INTEGER, EXTERNAL :: pgs_met_setAttr_s, pgs_met_write
 
-! Variables
+! Internal
 
       CHARACTER (LEN=1) :: nullStr
       CHARACTER (LEN=45) :: sval
       CHARACTER (LEN=32) :: mnemonic
+      CHARACTER (LEN=FileNameLen) :: physical_filename
       CHARACTER (LEN=480) :: msg, msr
       CHARACTER (LEN=PGSd_MET_GROUP_NAME_L) :: groups(PGSd_MET_NUM_OF_GROUPS)
 
-      INTEGER :: result, indx
+      INTEGER :: result, indx, version
+		logical, parameter :: DEBUG=.TRUE.
+
+   ! Begin
+	if(present(metadata_error)) metadata_error=1
 
       nullStr = ''
 
+    version = 1
+    result = PGS_PC_GetReference (mlspcf_mcf_l2log_start, version , physical_filename)
+
+	if(result /= PGS_S_SUCCESS) then
+       CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+            "Failed to find the PCF reference for the Log mcf in WriteMetaLog" ) 
+			return
+    ENDIF
+
+    version = 1
+    result = PGS_PC_GetReference (ASCII_FILE, version , physical_filename)
+
+	if(result /= PGS_S_SUCCESS) then
+       CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+            "Failed to find the PCF reference for the Log in WriteMetaLog" ) 
+			return
+    ENDIF
+
 ! Initialize the MCF file
+
+	if(DEBUG) then
+		call output('Initialize the MCF file', &
+		&  advance='yes')
+	endif
 
       result = pgs_met_init(mlspcf_mcf_l2log_start, groups)
       IF (result /= PGS_S_SUCCESS) then
@@ -996,9 +1118,15 @@ END SUBROUTINE measured_parameter
          call Pgs_smf_getMsg(result, mnemonic, msg)
          msr = mnemonic // ':  ' // msg
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+			return
       ENDIF
 
 ! Write the metadata and their values to an ASCII file
+
+	if(DEBUG) then
+		call output('Write the metadata and their values to an ASCII file', &
+		&  advance='yes')
+	endif
 
       result = pgs_met_write(groups(1), nullStr, ASCII_FILE)
 
@@ -1006,9 +1134,12 @@ END SUBROUTINE measured_parameter
          call Pgs_smf_getMsg(result, mnemonic, msg)
          msr = mnemonic // ':  ' // msg
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+			return
       ENDIF
 
       result = pgs_met_remove()
+
+	if(present(metadata_error)) metadata_error=0
 
 !-----------------------------
    END SUBROUTINE WriteMetaLog
@@ -1129,6 +1260,9 @@ END SUBROUTINE measured_parameter
 
 END MODULE WriteMetadata 
 ! $Log$
+! Revision 2.5  2001/04/10 23:03:57  pwagner
+! Finally seems to work
+!
 ! Revision 2.4  2001/04/09 23:45:47  pwagner
 ! Deleted unused old populate_metadata; some fixes
 !
