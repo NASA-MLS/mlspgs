@@ -3084,7 +3084,7 @@ contains ! =====     Public Procedures     =============================
 
       nullify ( p )
       call allocate_test ( p, vmrQty%template%noSurfs, 'p', ModuleName )
-      p = 10.0 ** ( - vmrQty%template%surfs(:,instance) )
+      p = 10.0 ** ( - vmrQty%template%surfs(:,1) )
 
       do instance = useFirstInstance, useLastInstance
         ! Find 1st surface at or above tropopause
@@ -5824,6 +5824,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.232  2003/07/08 00:17:46  livesey
+! Bug fix in column filling
+!
 ! Revision 2.231  2003/06/24 19:59:42  livesey
 ! Fixed something in OffsetRadianceQuantity that might have become a bug
 ! one day (assumed m_linAlg=1).
