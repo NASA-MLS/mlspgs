@@ -105,7 +105,6 @@ contains
 
     ! Define local parameters
     real(rp), parameter :: DEL_TEMP = 10.0_rp ! Temp. step size for derivatives
-    character(len=*), parameter :: INVALIDQUANTITY = "Invalid vector quantity for "
     integer, parameter :: Ngp1 = Ng+1     ! NG + 1
 
     ! Now define local variables, group by type and then
@@ -503,6 +502,11 @@ contains
     ! The key is to identify the signal we'll be working with first
     firstSignal => fwdModelConf%signals(1) ! Config has verified that signals
       ! are all for same radiometer, module and sideband
+
+    ! Check that RefGPH and Temp have the same hGrid.  This is not checked in
+    ! Construct or when the config is created.
+    if ( .not. doHGridsMatch ( refGPH, temp ) ) call MLSMessage ( MLSMSG_Error, &
+      & ModuleName, 'Different horizontal grids for refGPH and temperature' )
 
     ! Create the data structures for the species
 
@@ -2602,6 +2606,9 @@ alpha_path_f = 0.0
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.148  2003/06/18 17:23:16  bill
+! fixed NAG associated bug
+!
 ! Revision 2.147  2003/06/18 14:54:04  bill
 ! added subsetting feature for T-ders
 !
