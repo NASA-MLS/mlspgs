@@ -891,9 +891,15 @@ contains ! ========= Public Procedures ============================
           doThisCloudHeight = doThisCloudHeight .and. &
             & theseHeights(height1) < Cheightvalue(2)
           ind1 = useThisChannel + cloudRadiance%template%noChans*(height1-1)
-          if ( doThisCloudHeight .and. &
-            & cloudRadiance%values ( ind1, instance ) > cloudRadianceCutoff) &
-            & isCloud = .true.
+          if (cloudRadianceCutoff > 0._r8) then
+             if ( doThisCloudHeight .and. &
+               & cloudRadiance%values ( ind1, instance ) > cloudRadianceCutoff) &
+               & isCloud = .true.
+          else
+             if ( doThisCloudHeight .and. &
+               & cloudRadiance%values ( ind1, instance ) < cloudRadianceCutoff) &
+               & isCloud = .true.
+          endif
         enddo
       endif
       do height = 1, qty%template%noSurfs
@@ -909,8 +915,13 @@ contains ! ========= Public Procedures ============================
           ! use the same mif radiance to find cloud flag
           isCloud = .false.
           ind1 = useThisChannel + cloudRadiance%template%noChans*(height-1)
-          if ( cloudRadiance%values ( ind1, instance ) > cloudRadianceCutoff) &
+          if (cloudRadianceCutoff > 0._r8) then
+            if ( cloudRadiance%values ( ind1, instance ) > cloudRadianceCutoff) &
             & isCloud = .true.
+          else
+            if ( cloudRadiance%values ( ind1, instance ) < cloudRadianceCutoff) &
+            & isCloud = .true.
+          endif
         endif
 
         ! assign cloud flag
@@ -1138,6 +1149,9 @@ contains ! ========= Public Procedures ============================
 end module SubsetModule
  
 ! $Log$
+! Revision 2.8  2003/04/14 22:21:26  dwu
+! make cloudradiancecutoff sign dependent: it is 'greater than' if positive; 'less than' if negative
+!
 ! Revision 2.7  2003/04/10 18:30:57  dwu
 ! make m_cloud as default in FlagCloud
 !
