@@ -16,7 +16,35 @@ CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
 !-----------------------------------------------------------------------------
 
 !
-! This module contains some low level string handling stuff
+! This module contains some low level string handling stuff for mls
+
+!     c o n t e n t s
+!     - - - - - - - -
+
+! Capitalize         tr[a-z] -> [A-Z]
+! CompressString     Removes all leading and embedded blanks
+! count_words        Counts the number of words in a string
+! depunctuate        Replaces punctuation with blanks
+! GetIntHashElement  Returns int from array of hashes corresponding to key string
+! GetStringElement   Returns n'th element of string list
+! GetStringHashElement   Returns string from hash list corresponding to key string
+! GetUniqueStrings   Returns array of only unique entries from input array
+! hhmmss_value       Converts 'hh:mm:ss' formatted string to a real r8
+! LinearSearchStringArray     Finds string index of substring in array of strings
+! LowerCase          tr[A-Z] -> [a-z]
+! NumStringElements  Returns number of elements in list of strings
+! ReadCompleteLineWithoutComments     Knits continuations, snips comments
+! Reverse            turns 'a string' -> 'gnirts a'
+! ReverseList        turns 'abc, def, ghi' -> 'ghi, def, abc'
+! SplitWords         Splits 'first, the, rest, last' -> 'first', 'the, rest', 'last'
+! StringElementNum   Returns element number of test string in string list
+! unquote            Removes surrounding [quotes]
+
+! in the above, a list is a string of usu. comma-delimited words
+! an array is a Fortran array of strings or integers
+! a hash is a list of key strings and either
+! (1) a list of associated strings
+! (2) an array of associated integers
 !
 
 CONTAINS
@@ -43,29 +71,6 @@ CONTAINS
     END DO
 
   END FUNCTION Capitalize
-
-  ! -------------------------------------------------  CAPITALIZE  -----
-  FUNCTION Downcase (str) RESULT (outstr)
-    ! takes a-z and replaces with A-Z 
-    ! leaving other chars alone
-    !--------Argument--------!
-    CHARACTER (LEN=*), INTENT(IN) :: str
-    CHARACTER (LEN=LEN(str)) :: outstr
-
-    !----------Local vars----------!
-    INTEGER :: i, icode, offset
-    !----------Executable part----------!
-    outstr=str
-    offset=ICHAR("A")-ICHAR("a")
-
-    DO i=1, LEN(str)
-       icode=ICHAR(outstr(i:i))
-       IF ( icode >=ICHAR("A") .AND. icode <= ICHAR("Z")) THEN
-          outstr(i:i)=char(icode-offset)
-       END IF
-    END DO
-
-  END FUNCTION Downcase
 
   ! ---------------------------------------------  CompressString  -----
   FUNCTION CompressString (str) RESULT (outstr)
@@ -1315,6 +1320,9 @@ END MODULE MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.12  2001/05/29 21:17:03  pwagner
+! Removed Downcase; added table of contents
+!
 ! Revision 2.11  2001/05/26 00:21:59  livesey
 ! Added downcase
 !
