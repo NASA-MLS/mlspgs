@@ -633,7 +633,7 @@ contains
 
       if ( LeapSecFileName /= '' ) then
         call output ( 'Leap Seconds File:   ' )
-        call output ( LeapSecFileName, advance='yes' )
+        call output ( trim(LeapSecFileName), advance='yes' )
       end if
 
       call output ( 'PGE version:   ' )
@@ -707,6 +707,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.65  2003/04/02 23:54:53  pwagner
+! Checks for FILENOTFOUND
+!
 ! Revision 2.64  2003/02/27 21:55:14  pwagner
 ! Calls FillTAI93Attribute
 !
