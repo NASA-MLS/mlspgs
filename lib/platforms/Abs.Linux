@@ -1,0 +1,93 @@
+#Makefile.mac -- a file full of macros to be included by a Makefile
+#to compile a Fortran 9x program or library
+
+# "$Id$"
+
+SHELL = /bin/sh
+
+## Path to source files:
+S = ..
+
+# include files %.f9h shared by l2, lib are in $(srclib)
+srclib = ../../srclib
+
+
+# Set paths for finding source files (different from .o and .mod)
+
+# include files %.fneeded by lib are in $(blaslib)
+blaslib = ../../blas
+
+# Set paths for finding source files (different from .o and .mod)
+
+vpath %.o ./
+vpath %.f90 ../ ../machines/$(MLSCONFG)
+vpath %.f9h ../ $(srclib)
+vpath %.f $(PGSINC) $(blaslib)
+
+FC = f90
+
+# Compiler options:
+# Currently, unknown if DUSTY needs to be different yet
+#FOPTS = -g --chk --info
+DUSTY = $(FOPTS)
+
+# Beginning of path to libraries:
+#L = /nas/software/SRC/TOOLKIT-5.2.6v1.00
+#L = /nas/software/SRC/TOOLKIT-5.2.6v1.00.NAG
+
+#PGSINC = /software/SRC/TOOLKIT-5.2.6v1.00/include
+
+# Beginning of path to HDFEOS  libraries:
+#E = /van1/opt/TOOLKIT
+
+# Use the lib directory, too
+libdir = ../../lib/$(MLSCONFG)
+
+# All the paths to supply .mod and INCLUDE files used in compiling %.f90
+# Precede each path by "-I "
+INC_PATHS = -p $(PGSINC) -p $(srclib) -p $S 
+
+# Define some suffix rules
+
+.SUFFIXES:
+.SUFFIXES: .o .dbg.o .f90 .f
+.f90.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $<
+
+.f90.dbg.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o
+
+.f.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $<
+
+# Modules needed by test programs
+# They currently compile only under Lahey's LF95
+MATRIX_OBJS = MatrixModule_0.o MatrixModule_1.o 
+
+#SDP =SDPToolkitSubstitute.o
+#GD=GDapi.o
+# $Log$
+# Revision 1.8  2001/02/26 21:14:39  pwagner
+# Commented out FOPTS assignment; now part of .configure setting
+#
+# Revision 1.7  2001/02/08 00:31:44  pwagner
+# Conditionally links sdot and ddot unless BLAS defined
+#
+# Revision 1.6  2001/01/13 00:24:42  pwagner
+# uses lib/machines/MLSCONFG/machine.f90
+#
+# Revision 1.5  2000/11/27 18:17:06  pwagner
+# MatrixModules part of lib only for LF95
+#
+# Revision 1.4  2000/11/16 22:57:02  pwagner
+# Looks for %.f9h in srclib
+#
+# Revision 1.3  2000/10/27 23:03:18  pwagner
+# Added PGSINC to vpath .f
+#
+# Revision 1.2  2000/10/21 00:15:39  pwagner
+# Removed hardwired PGSINC
+#
+# Revision 1.1  2000/10/18 22:11:28  pwagner
+# First commit
+#
