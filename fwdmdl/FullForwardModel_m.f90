@@ -2178,7 +2178,8 @@ CONTAINS
                & thisRadiance,ptg_angles,Radiances(:,i),tan_chi_out,        &
                & dhdz_out,dx_dh_out,thisRatio,                              &
                & antennaPatterns(whichPattern),Grids_tmp%deriv_flags,       &
-               & Grids_f,Jacobian,fmStat%rows,SURF_ANGLE=surf_angle(1), PTAN_DER=ptan_der )
+               & Grids_f,Jacobian,fmStat%rows,SURF_ANGLE=surf_angle(1),     &
+               & PTAN_DER=ptan_der )
           ELSE IF ( temp_der .AND. .not. atmos_der ) THEN
             Call convolve_all(FwdModelConf,FwdModelIn,FwdModelExtra,maf,&
                & chanInd,windowStart,windowFinish,mol_cat_index,temp,ptan,  &
@@ -2491,6 +2492,9 @@ CONTAINS
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.79  2002/07/31 23:27:54  bill
+! added feature to user supply grid points to the psig and tangent grids
+!
 ! Revision 2.78  2002/07/31 00:03:45  livesey
 ! Embarassing bug fix, was seeking wrong vector quantity.
 !

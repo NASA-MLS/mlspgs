@@ -75,6 +75,7 @@ MODULE fov_convolve_m
   REAL(r8), SAVE :: S(no_fft)
 
   REAL(r8), DIMENSION(no_fft) :: p, dp, angles, rad_fft, rad_fft1
+  
 
   REAL(r8) :: drad_dt_temp(SIZE(chi_out))
 !
@@ -1032,6 +1033,9 @@ MODULE fov_convolve_m
 !
 END MODULE fov_convolve_m
 ! $Log$
+! Revision 2.5  2002/07/08 17:45:40  zvi
+! Replace local pointers by automatic arrays
+!
 ! Revision 2.4  2002/06/28 11:06:48  zvi
 ! Add computing of dI/d(Chi) on output grid
 !
