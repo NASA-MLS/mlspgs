@@ -90,7 +90,6 @@ ncep
 negativeprecision
 newtonian
 norm
-numF # Number of function values used by the Newtonian solver
 numJ # Number of Jacobian values used by the Newtonian solver
 
 offsetRadiance
@@ -118,6 +117,9 @@ vGrid
 weighted
 
 # $Log$
+# Revision 2.21  2002/09/23 22:14:49  vsnyder
+# Delete numF literal name
+#
 # Revision 2.20  2002/08/28 01:14:15  livesey
 # Added offsetRadiance
 #
