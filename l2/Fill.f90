@@ -35,7 +35,7 @@ module Fill                     ! Create vectors and fill them.
     & L_TNGTGEOCALT, L_TRUE, L_VGRID, L_VMR, L_ZETA
   ! Now the specifications:
   use INIT_TABLES_MODULE, only: S_DESTROY, S_DUMP, S_FILL, S_FILLCOVARIANCE, &
-    & S_MATRIX,  S_SNOOP, S_TIME, S_TRANSFER, S_VECTOR
+    & S_FILLDIAGONAL, S_MATRIX,  S_SNOOP, S_TIME, S_TRANSFER, S_VECTOR
   ! Now some arrays
   use Intrinsic, only: Field_Indices
   use Intrinsic, only: &
@@ -50,7 +50,7 @@ module Fill                     ! Create vectors and fill them.
   use ManipulateVectorQuantities, only: DOHGRIDSMATCH, DOVGRIDSMATCH
   use MatrixModule_0, only: Sparsify, MatrixInversion
   use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
-    & DestroyMatrix, Dump, &
+    & DestroyMatrix, Dump, GetDiagonal, &
     & FindBlock, GetKindFromMatrixDatabase, GetFromMatrixDatabase, K_SPD, &
     & Matrix_Cholesky_T, Matrix_Database_T, Matrix_Kronecker_T, Matrix_SPD_T, &
     & Matrix_T, UpdateDiagonal
@@ -908,6 +908,26 @@ contains ! =====     Public Procedures     =============================
         call getFromMatrixDatabase ( matrices(matrixToFill), covariance )
         call FillCovariance ( covariance, vectors, diagonal, lengthScale, fraction, &
           & invert )
+
+      case ( s_FillDiagonal ) ! ===============  FillDiagonal  =====
+        do j = 2, nsons(key)
+          gson = subtree(j,key) ! The argument
+          fieldIndex = get_field_id(gson)
+          if (nsons(gson) > 1) &
+            & gson = decoration(decoration(subtree(2,gson))) ! Now value of said argument
+          got(fieldIndex)=.true.
+          select case ( fieldIndex )
+          case ( f_matrix )
+            matrixToFill = gson
+            if ( getKindFromMatrixDatabase(matrices(matrixToFill)) /= k_spd ) &
+              call announce_error ( key, notSPD )
+          case ( f_diagonal )
+            diagonal = gson
+          end select
+        end do
+
+        call getFromMatrixDatabase ( matrices(matrixToFill), covariance )
+        call getDiagonal( covariance%m, vectors(diagonal))
 
       ! End of fill operations
 
@@ -2827,6 +2847,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.95  2001/10/24 22:35:33  dwu
+! add FillDiagonal
+!
 ! Revision 2.94  2001/10/23 16:38:09  pwagner
 ! Fill from l1b can fill precision, set mask
 !
