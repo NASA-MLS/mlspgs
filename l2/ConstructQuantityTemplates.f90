@@ -16,7 +16,8 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
     & F_SIGNAL, F_SGRID, F_TYPE, F_UNIT, F_VGRID
   use INIT_TABLES_MODULE, only: FIELD_FIRST, FIELD_LAST, &
     FIRST_LIT, LAST_LIT, L_BASELINE, L_CHANNEL, L_CloudIce,  L_CLOUDWATER,&
-    L_CLOUDEXTINCTION, L_EARTHREFL, &
+    L_CLOUDEXTINCTION, L_CLOUDINDUCEDRADIANCE, L_CLOUDRADSENSITIVITY, &
+    L_EARTHREFL, L_EFFECTIVEOPTICALDEPTH, &
     L_EARTHRADIUS, L_ELEVOFFSET, L_EXTINCTION, L_GEODALTITUDE, L_GPH, &
     L_HEIGHTOFFSET, L_LOSTRANSFUNC, L_LOSVEL, L_MASSMEANDIAMETERICE, &
     L_MASSMEANDIAMETERWATER, L_NONE, L_ORBITINCLINATION, &
@@ -152,7 +153,10 @@ contains ! =====     Public Procedures     =============================
     natural_units(l_orbitInclination) =   PHYQ_Angle
     natural_units(l_ptan) =           PHYQ_Zeta
     natural_units(l_radiance) =       PHYQ_Temperature
-    natural_units(l_earthradius) =  PHYQ_Length
+    natural_units(l_cloudinducedradiance) =       PHYQ_Temperature
+    natural_units(l_cloudradsensitivity) =       PHYQ_Temperature
+    natural_units(l_effectiveopticaldepth) =       PHYQ_Dimensionless
+    natural_units(l_earthradius) =    PHYQ_Length
     natural_units(l_refGPH) =         PHYQ_Length
     natural_units(l_scGeocAlt ) =     PHYQ_Length
     natural_units(l_scVel) =          PHYQ_Velocity
@@ -231,6 +235,7 @@ contains ! =====     Public Procedures     =============================
 
     if ( family == 0 ) family = natural_units(quantityType)
     minorFrame = any(quantityType == (/ l_Baseline, l_Ptan, l_Radiance, &
+      & l_cloudInducedRadiance, l_cloudRADSensitivity, l_effectiveOpticalDepth, &
       & l_tngtECI, l_tngtGeodAlt, l_tngtGeocAlt, l_scECI, l_scGeocAlt,&
       & l_scVel, l_losVel, l_heightOffset, l_scanResidual/) )
 
@@ -709,6 +714,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.49  2001/07/26 17:34:25  jonathan
+! add DTcir, etc, jonathan
+!
 ! Revision 2.48  2001/07/19 22:17:44  jonathan
 ! add cloud stuff , jonathan/dwu
 !
