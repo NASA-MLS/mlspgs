@@ -596,6 +596,7 @@ contains
          CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,TAU0,RS,TS,&
               &     FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
               &     UI,UA,TT0,0,RE)                          !CLEAR-SKY
+	 TT = TT0	! so that dTcir=0
 
          IF(ICON .GE. 1) THEN                               
 
@@ -790,6 +791,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.25  2001/10/26 00:01:45  jonathan
+! fixed a bug, change from w0*0._r8 etc to w00, ph0
+!
 ! Revision 1.24  2001/10/25 16:10:37  dwu
 ! fix a bug
 !
