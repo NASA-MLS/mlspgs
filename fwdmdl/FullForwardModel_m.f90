@@ -74,6 +74,7 @@ contains
     use Molecules, only: L_Extinction ! Used in include dump_print_code.f9h
     use NO_CONV_AT_ALL_M, only: NO_CONV_AT_ALL
     use Opacity_m, only: Opacity
+    use Output_m, only: Output
     use Path_Contrib_M, only: Get_GL_Inds, Path_Contrib
     use Physics, only: H_OVER_K
     use PointingGrid_m, only: POINTINGGRIDS
@@ -341,7 +342,7 @@ contains
     complex(rp), dimension(:,:,:), pointer :: DELTAU_POL ! E in Michael's notes
     complex(rp), dimension(:,:,:), pointer :: DINCOPTDEPTH_POL_DT ! D Incoptdepth_Pol / DT
     complex(rp), dimension(:,:),   pointer :: GL_DELTA_POLARIZED
-    complex(rp), dimension(:,:,:), pointer :: INCOPTDEPTH_POL
+    complex(rp), dimension(:,:,:), pointer :: INCOPTDEPTH_POL ! 2 x 2 x path
     complex(rp), dimension(:,:,:), pointer :: INCOPTDEPTH_POL_GL ! Corrections to INCOPTDEPTH_POL
     complex(rp), dimension(:,:,:), pointer :: PROD_POL ! P in Michael's notes
     complex(rp), dimension(:,:,:), pointer :: TAU_POL  ! Tau in Michael's notes
@@ -812,10 +813,8 @@ contains
       & MLSMSG_Allocate//"gl_slabs" )
 
     do i = 1, noSpecies
-      nl = size(My_Catalog(i)%Lines)
-      gl_slabs(:,i)%no_lines = nl
       do j = 1, no_ele
-        call AllocateOneSlabs ( gl_slabs(j,i), nl )
+        call AllocateOneSlabs ( gl_slabs(j,i), size(My_Catalog(i)%Lines) )
       end do
     end do
 
@@ -827,8 +826,6 @@ contains
 
       do i = 1, noSpecies
         nl = size(My_Catalog(i)%Lines)
-        gl_slabs_m(:,i)%no_lines = nl
-        gl_slabs_p(:,i)%no_lines = nl
         do j = 1, no_ele
           call AllocateOneSlabs ( gl_slabs_p(j,i), nl )
           call AllocateOneSlabs ( gl_slabs_m(j,i), nl )
@@ -1683,6 +1680,30 @@ alpha_path_f = 0.0
               & incoptdepth_pol(:,:,1:npc), alpha_path_polarized_f(:,1:ngl),  &
               & path_dsdh, dhdz_path, ct, stcp, stsp, t_script(1:npc),        &
               & prod_pol(:,:,1:npc), tau_pol(:,:,1:npc), rad_pol, p_stop )
+
+            if ( p_stop < 0 ) then ! exp(incoptdepth_pol(:,:,-p_stop)) failed
+              call output ( 'Exp(incoptdepth_pol(:,:,' )
+              call output ( -p_stop )
+              call output ( ') failed.  Value is', advance='yes' )
+              call output ( real(incoptdepth_pol(1,1,-p_stop)), &
+                & format='("(",1pg15.7,",")' )
+              call output ( aimag(incoptdepth_pol(1,1,-p_stop)), &
+                & format='(1pg15.7,")")   ' )
+              call output ( real(incoptdepth_pol(1,2,-p_stop)), &
+                & format='("(",1pg15.7,",")' )
+              call output ( aimag(incoptdepth_pol(1,2,-p_stop)), &
+                & format='(1pg15.7,")")', advance='yes' )
+              call output ( real(incoptdepth_pol(2,1,-p_stop)), &
+                & format='("(",1pg15.7,",")' )
+              call output ( aimag(incoptdepth_pol(2,1,-p_stop)), &
+                & format='(1pg15.7,")")   ' )
+              call output ( real(incoptdepth_pol(2,2,-p_stop)), &
+                & format='("(",1pg15.7,",")' )
+              call output ( aimag(incoptdepth_pol(2,2,-p_stop)), &
+                & format='(1pg15.7,")")', advance='yes' )
+              call MLSMessage ( MLSMSG_Error, moduleName, &
+                & 'exp(incoptdepth_pol) failed' )
+            end if
 
             ! Assume antenna is only sensitive to the first linear polarization
             if ( index(switches,'crosspol') == 0 ) then
@@ -2599,6 +2620,9 @@ alpha_path_f = 0.0
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.152  2003/06/27 00:59:53  vsnyder
+! Simplify interface to Get_Species_Data
+!
 ! Revision 2.151  2003/06/25 02:41:37  vsnyder
 ! Futzing
 !
