@@ -376,7 +376,7 @@ contains ! =====     Public procedures     =============================
              l+l_RHIFromH2O, l+l_RHIPrecisionFromH2O, l+l_spreadChannel, &
              l+l_H2OFromRHI, l+l_fold, l+l_rectanglefromlos, l+l_vGrid, &
              l+l_wmoTropopause, n+n_dt_def, &
-      begin, t+t_fwmType, l+l_linear, l+l_full, l+l_scan, l+l_scan2d, &
+      begin, t+t_fwmType, l+l_baseline, l+l_linear, l+l_full, l+l_scan, l+l_scan2d, &
              l+l_cloudFull, l+l_hybrid, l+l_switchingMirror, &
              l+l_polarLinear, n+n_dt_def, &
       begin, t+t_i_saturation, l+l_clear, l+l_clear_110rh_below_top, &
@@ -1079,6 +1079,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.331  2003/08/16 01:18:55  livesey
+! Added baseline forward model in its own right.
+!
 ! Revision 2.330  2003/08/16 00:30:25  vsnyder
 ! Add magAzEl to fill method type
 !
