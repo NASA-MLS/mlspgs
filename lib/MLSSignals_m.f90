@@ -397,6 +397,7 @@ contains
             & call announceError ( badMix, f_channels, &
             & (/ f_last, f_start, f_step, f_width /) )
           if ( error == 0 ) then
+            spectrometerType%deferred = deferred
             call allocate_test ( spectrometerType%frequencies, deferred, &
               & 'spectrometerType%frequencies', moduleName )
             call allocate_test ( spectrometerType%widths, deferred, &
@@ -1009,6 +1010,9 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.19  2001/04/11 19:54:00  vsnyder
+! More work on 'deferred' spectrometers
+!
 ! Revision 2.18  2001/04/11 18:31:04  vsnyder
 ! Change 'deferred' from boolean to numeric
 !
