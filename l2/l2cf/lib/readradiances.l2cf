@@ -7,32 +7,19 @@ begin Fill
   cleanMeasurement: Vector, template=measurementTemplate
   fwm: Vector, template=measurementTemplate
 
-  ;; The macro relevantBands lists the bands to be read in from the
-  ;; file.
+  ;; Define a macro to read one bands worth of radiances
   !define(readRadiances,{!dnl
   Fill, quantity=measurementNoise.band$1, method=l1b, /isPrecision
   Fill, quantity=measurement.band$1, method=l1b, precision=measurementNoise.band$1!nl})
-
-  !define(readCleanRadiances,{!dnl
-  Fill, quantity=measurementNoise.band$1, method=l1b, /isPrecision
-  Fill, quantity=cleanMeasurement.band$1, method=l1b, precision=measurementNoise.band$1!nl})
-
-  !define(addNoiseToRadiances,{!dnl
-  Fill, quantity=measurement.band$1, method=addNoise, $
-  sourceQuantity=cleanMeasurement.band$1, $
-    noise=measurementNoise.band$1, seed=[$1{}00,{10}$1{00}]!nl})
-
-  !ifdef(addNoise,{
-    !forall( {readCleanRadiances}, !relevantBands)
-    !forall( {addNoiseToRadiances}, !relevantBands)}, {
-    !forall( {readRadiances}, !relevantBands)})
+  ;; Read all the relevant bands
+  !forall( {readRadiances}, !relevantBands)
 
   ;; Now set the scan model precision, and possibly add noise to the values.
   Fill, quantity=measurementNoise.scanResidualGHz, method=explicit, $
     explicitValues = !scanModelPrecision, /spread
   Fill, quantity=measurementNoise.scanResidualTHz, method=explicit, $
     explicitValues = !scanModelPrecision, /spread
-  !ifdef(addNoise,{
+  !ifelse(!cleannoisy,noisy,{
      Fill, quantity=measurement.scanResidualGHz, method=addNoise, $
        sourceQuantity=cleanMeasurement.scanResidualGHz, $
        noise=measurementNoise.scanResidualGHz, seed = [ 0, 10000 ]
@@ -43,3 +30,6 @@ begin Fill
 end Fill
 
 ; $Log$
+; Revision 1.1  2002/07/19 20:37:48  livesey
+; First version
+;
