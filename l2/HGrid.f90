@@ -8,6 +8,9 @@ module HGrid                    ! Horizontal grid information
   use MLSCommon, only: RK => R8
 
   implicit none
+  private
+  public :: CreateHGridFromMLSCFInfo, ComputeNextChunksHGridOffsets, &
+    & ComputeAllHGridOffsets
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -17,28 +20,6 @@ module HGrid                    ! Horizontal grid information
        "$RCSfile$"
   private :: not_used_here 
 !---------------------------------------------------------------------------
-
-  ! This module contains datatypes and routines for handling HGrid information
-  ! HGrids are the horizontal gridding information that get into vector
-  ! quantities.
-
-  ! This is the main datatype, an HGrid.
-
-  type HGrid_T
-    integer :: NAME                 ! String index of name.
-    integer :: noProfs              ! Number of profiles in this grid
-    integer :: noProfsLowerOverlap  ! Number of profiles in the lower overlap
-    integer :: noProfsUpperOverlap  ! Number of profiles in the upper overlap
-
-    ! Now the various coordinates in the HGrid, all dimensioned (noProfs)
-    real(rk), dimension(:), pointer :: phi => NULL()
-    real(rk), dimension(:), pointer :: geodLat => NULL()
-    real(rk), dimension(:), pointer :: lon => NULL()
-    real(rk), dimension(:), pointer :: time => NULL()
-    real(rk), dimension(:), pointer :: solarTime => NULL()
-    real(rk), dimension(:), pointer :: solarZenith => NULL()
-    real(rk), dimension(:), pointer :: losAngle => NULL()
-  end type HGrid_T
 
 ! -----     Private declarations     ---------------------------------
 
@@ -56,29 +37,13 @@ module HGrid                    ! Horizontal grid information
 
 contains ! =====     Public Procedures     =============================
 
-  ! -----------------------------------------  AddHGridToDatabase  -----
-  integer function AddHGridToDatabase ( database, item )
-
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
-      & MLSMSG_DeAllocate, MLSMSG_Error
-
-    ! Dummy arguments
-    type (HGrid_T), dimension(:), pointer :: database
-    type (HGrid_T), intent(in) :: item
-
-    ! Local variables
-    type (HGrid_T), dimension(:), pointer :: tempDatabase
-
-    include "addItemToDatabase.f9h"
-
-    AddHGridToDatabase = newSize
-  end function AddHGridToDatabase
-
   ! -----------------------------------  CreateHGridFromMLSCFInfo  -----
   type(hGrid_T) function CreateHGridFromMLSCFInfo &
-    & ( name, root, l1bInfo, l2gpDatabase, processingRange, chunks, chunkNo ) result ( hGrid )
+    & ( name, root, l1bInfo, l2gpDatabase, processingRange, chunk ) result ( hGrid )
 
     use EXPR_M, only: EXPR
+    use HGridsDatabase, only: HGRID_T, CREATEEMPTYHGRID, NULLIFYHGRID, &
+      & ADDHGRIDTODATABASE
     use INIT_TABLES_MODULE, only: F_FORBIDOVERSPILL, F_FRACTION, F_GEODANGLE, &
       & F_HEIGHT, FIELD_FIRST, FIELD_LAST, F_INCLINATION, F_INSETOVERLAPS, &
       & F_INTERPOLATIONFACTOR, F_MAXLOWEROVERLAP, F_MAXUPPEROVERLAP, F_MIF, &
@@ -107,8 +72,7 @@ contains ! =====     Public Procedures     =============================
     type (L1BInfo_T), intent(in) :: L1BINFO   ! File handles for l1b data
     type (L2GPData_T), pointer, dimension(:) :: L2GPDATABASE
     type (TAI93_Range_T), intent(in) :: PROCESSINGRANGE
-    type (MLSChunk_T), intent(in), dimension(:) :: CHUNKS ! The chunks
-    integer, intent(in) :: CHUNKNO
+    type (MLSChunk_T), intent(in) :: CHUNK ! The chunk
 
     ! Local variables
     integer :: EXPR_UNITS(2)            ! Output from Expr subroutine
@@ -255,7 +219,7 @@ contains ! =====     Public Procedures     =============================
       if (.not. got_field(f_module) ) then
         call announce_error ( root, NoModule )
       else
-        call CreateMIFBasedHGrids ( l1bInfo, hGridType, chunks(chunkNo), &
+        call CreateMIFBasedHGrids ( l1bInfo, hGridType, chunk, &
           & got_field, root, height, fraction, interpolationFactor, &
           & instrumentModuleName, mif, maxLowerOverlap, maxUpperOverlap, hGrid )
       end if
@@ -270,7 +234,7 @@ contains ! =====     Public Procedures     =============================
       else if ( .not. all(got_field((/f_spacing, f_origin/)))) then
         call announce_error ( root, NoSpacingOrigin )
       else
-        call CreateRegularHGrid ( l1bInfo, processingRange, chunks, chunkNo, &
+        call CreateRegularHGrid ( l1bInfo, processingRange, chunk, &
           & spacing, origin, trim(instrumentModuleName), forbidOverspill, &
           & maxLowerOverlap, maxUpperOverlap, insetOverlaps, hGrid )
       end if
@@ -280,9 +244,8 @@ contains ! =====     Public Procedures     =============================
       ! Get the time from the l1b file
       l1bItemName = AssembleL1BQtyName ( "MAFStartTimeTAI", hdfVersion, .false. )
       call ReadL1BData ( l1bInfo%l1boaID, l1bItemName, l1bField, noMAFs, &
-        & l1bFlag, &
-        & firstMAF=chunks(chunkNo)%firstMAFIndex, &
-        & lastMAF=chunks(chunkNo)%lastMAFIndex, hdfVersion=hdfVersion)
+        & l1bFlag, firstMAF=chunk%firstMAFIndex, &
+        & lastMAF=chunk%lastMAFIndex, hdfVersion=hdfVersion)
       if ( l1bFlag==-1) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_L1BRead//"MAFStartTimeTAI" )
       
@@ -296,13 +259,13 @@ contains ! =====     Public Procedures     =============================
       b = profRange(2)
       hGrid%noProfs = b - a + 1
       call CreateEmptyHGrid(hGrid)
-      hGrid%phi =         l2gp%geodAngle(a:b)
-      hGrid%geodLat =     l2gp%latitude(a:b)
-      hGrid%lon =         l2gp%longitude(a:b) 
-      hGrid%time =        l2gp%time(a:b)
-      hGrid%solarTime =   l2gp%solarTime(a:b)
-      hGrid%solarZenith = l2gp%solarZenith(a:b)
-      hGrid%losAngle =    l2gp%losAngle(a:b)
+      hGrid%phi(1,:) =         l2gp%geodAngle(a:b)
+      hGrid%geodLat(1,:) =     l2gp%latitude(a:b)
+      hGrid%lon(1,:) =         l2gp%longitude(a:b) 
+      hGrid%time(1,:) =        l2gp%time(a:b)
+      hGrid%solarTime(1,:) =   l2gp%solarTime(a:b)
+      hGrid%solarZenith(1,:) = l2gp%solarZenith(a:b)
+      hGrid%losAngle(1,:) =    l2gp%losAngle(a:b)
 
       call deallocateL1BData ( l1bField ) ! Avoid memory leaks
     end select
@@ -310,7 +273,7 @@ contains ! =====     Public Procedures     =============================
     if ( toggle(gen) ) call trace_end ( "CreateHGridFromMLSCFInfo" )
 
     if ( index ( switches, 'geom' ) /= 0 ) &
-      & call DumpChunkHGridGeometry ( hGrid, chunks(chunkNo), &
+      & call DumpChunkHGridGeometry ( hGrid, chunk, &
       & trim(instrumentModuleName), l1bInfo )
 
   end function CreateHGridFromMLSCFInfo
@@ -320,6 +283,7 @@ contains ! =====     Public Procedures     =============================
     & solarZenithNode, time, hGrid )
 
     use EXPR_M, only: EXPR
+    use HGridsDatabase, only: CREATEEMPTYHGRID, HGRID_T
     use INIT_TABLES_MODULE, only: PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_TIME
     use MLSCommon, only: RK => R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
@@ -337,7 +301,7 @@ contains ! =====     Public Procedures     =============================
     integer :: PARAM                    ! Loop counter
     integer :: NODE                     ! A tree node
     integer :: UNITS                    ! Units
-    real(rk), dimension(:), pointer :: VALUES
+    real(rk), dimension(:,:), pointer :: VALUES
     integer :: EXPR_UNITS(2)            ! Output from Expr subroutine
     real(rk) :: EXPR_VALUE(2)   ! Output from Expr subroutine
 
@@ -402,7 +366,7 @@ contains ! =====     Public Procedures     =============================
           if ( all ( expr_units(1) /= (/ phyq_dimensionless, units /) ) ) &
             & call MLSMessage ( MLSMSG_Error, ModuleName, &
             & 'Invalid units for explicit hGrid' )
-          values(prof) = expr_value(1)
+          values(1,prof) = expr_value(1)
         end do
       end if
     end do
@@ -420,6 +384,7 @@ contains ! =====     Public Procedures     =============================
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Dump_0, only: DUMP
+    use HGridsDatabase, only: CREATEEMPTYHGRID, HGRID_T, NULLIFYHGRID, TRIMHGRID
     use INIT_TABLES_MODULE, only: F_FRACTION, F_HEIGHT, &
       & F_MIF, L_FIXED, L_FRACTIONAL, L_HEIGHT, L_MIF
     use L1BData, only: DeallocateL1BData, L1BData_T, ReadL1BData, &
@@ -651,19 +616,19 @@ contains ! =====     Public Procedures     =============================
       end if
       select case ( l1bItem )
       case ( l1b_MAFStartTimeTAI )
-        hGrid%time = interpolatedField
+        hGrid%time(1,:) = interpolatedField
       case ( l1b_tpGeodLat )
-        hGrid%geodLat = interpolatedField
+        hGrid%geodLat(1,:) = interpolatedField
       case ( l1b_tpLon )
-        hGrid%lon = interpolatedField
+        hGrid%lon(1,:) = interpolatedField
       case ( l1b_tpGeodAngle )
-        hGrid%phi = interpolatedField
+        hGrid%phi(1,:) = interpolatedField
       case ( l1b_tpSolarZenith )
-        hGrid%solarZenith = interpolatedField
+        hGrid%solarZenith(1,:) = interpolatedField
       case ( l1b_tpSolarTime )
-        hGrid%solarTime = interpolatedField
+        hGrid%solarTime(1,:) = interpolatedField
       case ( l1b_tpLosAngle )
-        hGrid%losAngle = interpolatedField
+        hGrid%losAngle(1,:) = interpolatedField
       end select
     end do
     
@@ -690,13 +655,14 @@ contains ! =====     Public Procedures     =============================
   end subroutine CreateMIFBasedHGrids
 
   ! -----------------------------------------  CreateRegularHGrid  -----
-  subroutine CreateRegularHGrid ( l1bInfo, processingRange, chunks, chunkNo, &
+  subroutine CreateRegularHGrid ( l1bInfo, processingRange, chunk, &
     & spacing, origin, instrumentModuleName, forbidOverspill, &
     & maxLowerOverlap, maxUpperOverlap, insetOverlaps, hGrid )
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Dump_0, only: DUMP
     use EmpiricalGeometry, only: EmpiricalLongitude, ChooseOptimumLon0
+    use HGridsDatabase, only: CREATEEMPTYHGRID, HGRID_T, NULLIFYHGRID, TRIMHGRID
     use L1BData, only: DeallocateL1BData, L1BData_T, ReadL1BData, &
       & AssembleL1BQtyName
     use MLSCommon, only: L1BInfo_T, MLSChunk_T, NameLen, RK => R8, TAI93_RANGE_T
@@ -711,8 +677,7 @@ contains ! =====     Public Procedures     =============================
 
     type (L1BInfo_T), intent(in) :: L1BINFO
     type (TAI93_Range_T), intent(in) :: PROCESSINGRANGE
-    type (MLSChunk_T), intent(in), dimension(:) :: CHUNKS
-    integer, intent(in) :: CHUNKNO
+    type (MLSChunk_T), intent(in) :: CHUNK
     real(rk), intent(in) :: SPACING
     real(rk), intent(in) :: ORIGIN
     character (len=*), intent(in) :: INSTRUMENTMODULENAME
@@ -746,7 +711,6 @@ contains ! =====     Public Procedures     =============================
     real(rk) :: NEXTANGLE               ! First non ovl. MAF for next chunk
 
     type (L1BData_T) :: L1BFIELD        ! A field read from L1 file
-    type (MLSChunk_T) :: CHUNK
 
     integer ::  hdfVersion
     character(len=NameLen) :: l1bItemName
@@ -759,7 +723,6 @@ contains ! =====     Public Procedures     =============================
     if ( hdfversion <= 0 ) &                                            
       & call MLSMessage ( MLSMSG_Error, ModuleName, &                      
       & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )    
-    chunk = chunks ( chunkNo )
 
     ! Setup the empircal geometry estimate of lon0
     ! (it makes sure it's not done twice
@@ -837,7 +800,7 @@ contains ! =====     Public Procedures     =============================
     hGrid%noProfs = nint( (last-first) / spacing ) + 1
     call CreateEmptyHGrid ( hGrid )
     do i = 1, hGrid%noProfs
-      hGrid%phi(i) = first + (i-1)*spacing
+      hGrid%phi(1,i) = first + (i-1)*spacing
     end do
 
     if ( index ( switches, 'hgrid' ) /= 0 .or. deebug ) then
@@ -879,7 +842,7 @@ contains ! =====     Public Procedures     =============================
       & sin ( deg2Rad*incline ) )
 
     ! Now longitude
-    call EmpiricalLongitude ( hGrid%phi, hGrid%lon )
+    call EmpiricalLongitude ( hGrid%phi(1,:), hGrid%lon(1,:) )
 
     ! Now time, because this is important to get right, I'm going to put in
     ! special code for the case where the chunk is of length one.
@@ -893,7 +856,7 @@ contains ! =====     Public Procedures     =============================
     end if
     if ( chunk%firstMAFIndex /= chunk%lastMAFIndex ) then
       call InterpolateValues ( mif1GeodAngle, l1bField%dpField(1,1,:), &
-        & hGrid%phi, hGrid%time, &
+        & hGrid%phi(1,:), hGrid%time(1,:), &
         & method='Spline', extrapolate='Allow' )
     else
       ! Case where only single MAF per chunk, treat it specially
@@ -901,7 +864,7 @@ contains ! =====     Public Procedures     =============================
         & ( OrbitalPeriod/360.0 ) * ( hGrid%phi - mif1GeodAngle(1) )
     end if
       if ( deebug ) then
-        call dump(hGrid%time, trim(l1bItemName) // ' (after interpolating)')
+        call dump(hGrid%time(1,:), trim(l1bItemName) // ' (after interpolating)')
       end if
     call DeallocateL1BData ( l1bField )
       
@@ -926,10 +889,10 @@ contains ! =====     Public Procedures     =============================
       call dump(l1bField%DpField(1,1,:), trim(l1bItemName) // ' (before interpolating)')
     end if
     call InterpolateValues ( mif1GeodAngle, l1bField%dpField(1,1,:), &
-      & hGrid%phi, hGrid%solarZenith, &
+      & hGrid%phi(1,:), hGrid%solarZenith(1,:), &
       & method='Spline', extrapolate='Allow' )
     if ( deebug ) then
-      call dump(hGrid%solarZenith, trim(l1bItemName) // ' (after interpolating)')
+      call dump(hGrid%solarZenith(1,:), trim(l1bItemName) // ' (after interpolating)')
     end if
     call DeallocateL1BData ( l1bField )
 
@@ -945,10 +908,10 @@ contains ! =====     Public Procedures     =============================
       call dump(l1bField%DpField(1,1,:), trim(l1bItemName) // ' (before interpolating)')
     end if
     call InterpolateValues ( mif1GeodAngle, l1bField%dpField(1,1,:), &
-      & hGrid%phi, hGrid%losAngle, &
+      & hGrid%phi(1,:), hGrid%losAngle(1,:), &
       & method='Spline', extrapolate='Allow' )
     if ( deebug ) then
-      call dump(hGrid%losAngle, trim(l1bItemName) // ' (after interpolating)')
+      call dump(hGrid%losAngle(1,:), trim(l1bItemName) // ' (after interpolating)')
     end if
     call DeallocateL1BData ( l1bField )
     hGrid%losAngle = modulo ( hGrid%losAngle, 360.0_rk )
@@ -956,12 +919,12 @@ contains ! =====     Public Procedures     =============================
     ! Now work out how much of this HGrid is overlap
     ! The deal will be the first legitimate profile is the first one who's phi
     ! is above the first non overlapped MAF.
-    call Hunt ( hGrid%phi, mif1GeodAngle(chunk%noMAFsLowerOverlap+1), &
+    call Hunt ( hGrid%phi(1,:), mif1GeodAngle(chunk%noMAFsLowerOverlap+1), &
       & hGrid%noProfsLowerOverlap, allowTopValue=.true., allowBelowValue=.true. )
     ! So the hunt returns the index of the last overlapped, which is
     ! the number we want to be in the overlap.
 
-    call Hunt ( hGrid%phi, nextAngle, &
+    call Hunt ( hGrid%phi(1,:), nextAngle, &
       & hGrid%noProfsUpperOverlap, allowTopValue=.true., allowBelowValue=.true. )
     ! Here the hunt returns the index of the last non overlapped profile
     ! So we do a subtraction to get the number in the overlap.
@@ -983,10 +946,10 @@ contains ! =====     Public Procedures     =============================
     ! crash Fill otherwise).  However, it's not important for other runs, so is
     ! optional.
     if ( forbidOverspill ) then
-      call Hunt ( hGrid%time, processingRange%startTime, &
+      call Hunt ( hGrid%time(1,:), processingRange%startTime, &
         & firstProfInRun, allowTopValue=.true., allowBelowValue=.true. )
       if ( deebug ) then
-        call dump( hGrid%time, 'Hgrid times')
+        call dump( hGrid%time(1,:), 'Hgrid times')
         call output ( 'First profile in Run: ' )
         call output ( firstProfInRun, advance='no' )
         call output ( '    processingRange%startTime: ' )
@@ -999,7 +962,7 @@ contains ! =====     Public Procedures     =============================
         call TrimHGrid ( hGrid, -1, firstProfInRun )
       end if
       
-      call Hunt ( hGrid%time, processingRange%endTime, &
+      call Hunt ( hGrid%time(1,:), processingRange%endTime, &
         & lastProfInRun, allowTopValue=.true., allowBelowValue=.true. )
       if ( deebug ) then
         call output ( 'Last profile in Run: ' )
@@ -1018,24 +981,24 @@ contains ! =====     Public Procedures     =============================
     ! Now a 'softer' limit that applies to all cases, this just moves the
     ! overlap regions around if necessary to deal with overspill.
     if ( hGrid%noProfsLowerOverlap+1 <= hGrid%noProfs ) then
-      if ( hGrid%time(hGrid%noProfsLowerOverlap+1) < processingRange%startTime ) then
+      if ( hGrid%time(1,hGrid%noProfsLowerOverlap+1) < processingRange%startTime ) then
         if ( index ( switches, 'hgrid' ) /= 0  .or. deebug ) &
           & call output ( &
           & 'Non overlapped part of hGrid starts before run, extending overlap.', &
           & advance='yes' )
-        call Hunt ( hGrid%time, processingRange%startTime, &
+        call Hunt ( hGrid%time(1,:), processingRange%startTime, &
           &   hGrid%noProfsLowerOverlap, allowTopValue=.true., allowBelowValue=.true. )
       end if
     end if
 
     if ( hGrid%noProfs-hGrid%noProfsUpperOverlap >= 1 ) then
-      if ( hGrid%time(hGrid%noProfs-hGrid%noProfsUpperOverlap) > &
+      if ( hGrid%time(1,hGrid%noProfs-hGrid%noProfsUpperOverlap) > &
         & processingRange%endTime ) then
         if ( index ( switches, 'hgrid' ) /= 0  .or. deebug ) &
           & call output ( &
           & 'Non overlapped part of hGrid end after run, extending overlap.', &
           & advance='yes' )
-        call Hunt ( hGrid%time, processingRange%endTime, &
+        call Hunt ( hGrid%time(1,:), processingRange%endTime, &
           & hGrid%noProfsUpperOverlap, allowTopValue=.true., allowBelowValue=.true. )
         hGrid%noProfsUpperOverlap = hGrid%noProfs - hGrid%noProfsUpperOverlap
       end if
@@ -1064,140 +1027,14 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine CreateRegularHGrid
 
-  ! -------------------------------------------  CreateEmptyHGrid  -----
-  subroutine CreateEmptyHGrid ( hGrid )
-    ! Just does allocates etc.
-
-    use Allocate_Deallocate, only: Allocate_Test
-
-    type (HGrid_T), intent(inout) :: HGRID
-
-    ! Executable code
-    call Allocate_Test ( hGrid%phi, hGrid%noProfs, 'hGrid%phi', ModuleName)
-    call Allocate_Test ( hGrid%geodLat, hGrid%noProfs, 'hGrid%geodLat', ModuleName)
-    call Allocate_Test ( hGrid%lon, hGrid%noProfs, 'hGrid%lon', ModuleName)
-    call Allocate_Test ( hGrid%time, hGrid%noProfs, 'hGrid%time', ModuleName)
-    call Allocate_Test ( hGrid%solarTime, hGrid%noProfs, 'hGrid%solarTime', ModuleName)
-    call Allocate_Test ( hGrid%solarZenith, hGrid%noProfs, 'hGrid%solarZenith', ModuleName)
-    call Allocate_Test ( hGrid%losAngle, hGrid%noProfs, 'hGrid%losAngle', ModuleName)
-
-  end subroutine CreateEmptyHGrid
-
-  ! -------------------------------------------------  TrimHGrid  ------
-  subroutine TrimHGrid ( hGrid, side, NOTODELETE )
-
-    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-    use MLSCommon, only: RK => R8
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-
-    type (HGrid_T), intent(inout) :: HGrid
-    integer, intent(in) :: SIDE         ! -1 = lower, 1 = upper
-    integer, intent(in) :: NOTODELETE ! How many to delete, default all
-    ! Local variables
-    integer :: newNoProfs
-    real(rk), dimension(:), pointer :: temp
-    integer :: first, last
-
-    ! Executable code
-    select case ( side )
-    case ( -1 )
-      newNoProfs = hGrid%noProfs - noToDelete
-      first = noToDelete + 1
-      last = hGrid%noProfs
-      hGrid%noProfsLowerOverlap = max ( hGrid%noProfsLowerOverlap - noToDelete, 0 )
-    case ( 1 )
-      newNoProfs = hGrid%noProfs - noToDelete
-      first = 1
-      last = newNoProfs
-      hGrid%noProfsUpperOverlap = max ( hGrid%noProfsUpperOverlap - noToDelete, 0 )
-    case default
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Invalid side argument to TrimHGrid' )
-    end select
-    if ( newNoProfs <= 0 ) call MLSMessage ( &
-        & MLSMSG_Error, ModuleName, 'Too many profiles to delete' )
-
-    nullify ( temp )
-    call allocate_test ( temp, hGrid%noProfs, 'temp', ModuleName )
-    hGrid%noProfs = newNoProfs
-
-    ! Now allocate each entry and trim it
-    temp = hGrid%phi                    ! ------------------------- Phi
-    call Allocate_Test ( hGrid%phi, newNoProfs, 'hGrid%phi', ModuleName)
-    hGrid%phi = temp ( first : last )
-    temp = hGrid%geodLat                ! ------------------------- GeodLat
-    call Allocate_Test ( hGrid%geodLat, newNoProfs, 'hGrid%geodLat', ModuleName)
-    hGrid%geodLat = temp ( first : last )
-    temp = hGrid%lon                    ! ------------------------- Lon
-    call Allocate_Test ( hGrid%lon, newNoProfs, 'hGrid%lon', ModuleName)
-    hGrid%lon = temp ( first : last )
-    temp = hGrid%time                   ! ------------------------- Time
-    call Allocate_Test ( hGrid%time, newNoProfs, 'hGrid%time', ModuleName)
-    hGrid%time = temp ( first : last )
-    temp = hGrid%solarTime              ! ------------------------- SolarTime
-    call Allocate_Test ( hGrid%solarTime, newNoProfs, 'hGrid%solarTime', ModuleName)
-    hGrid%solarTime = temp ( first : last )
-    temp = hGrid%solarZenith            ! ------------------------- SolarZenith
-    call Allocate_Test ( hGrid%solarZenith, newNoProfs, 'hGrid%solarZenith', ModuleName)
-    hGrid%solarZenith = temp ( first : last )
-    temp = hGrid%losAngle               ! ------------------------- LosAngle
-    call Allocate_Test ( hGrid%losAngle, newNoProfs, 'hGrid%losAngle', ModuleName)
-    hGrid%losAngle = temp ( first : last )
-
-    call Deallocate_test ( temp, 'temp', ModuleName )
-  end subroutine TrimHGrid
-    
-  ! ---------------------------------------  DestroyHGridContents  -----
-  subroutine DestroyHGridContents ( hGrid )
-
-    use Allocate_Deallocate, only: Deallocate_Test
-
-  ! This routine destroys the information associated with an hGrid
-
-    ! Dummy arguments
-    type (HGrid_T), intent(inout) :: hGrid
-
-    ! Executable code
-    
-    call deallocate_test ( hGrid%phi, 'hGrid%phi', ModuleName )
-    call deallocate_test ( hGrid%geodLat, 'hGrid%geodLat', ModuleName )
-    call deallocate_test ( hGrid%lon, 'hGrid%lon', ModuleName )
-    call deallocate_test ( hGrid%time, 'hGrid%time', ModuleName )
-    call deallocate_test ( hGrid%solarTime, 'hGrid%solarTime', ModuleName )
-    call deallocate_test ( hGrid%solarZenith, 'hGrid%solarZenith', ModuleName )
-    call deallocate_test ( hGrid%losAngle, 'hGrid%losAngle', ModuleName )
-    hGrid%noProfs = 0
-  end subroutine DestroyHGridContents
-
-  ! ---------------------------------------  DestroyHGridDatabase  -----
-  subroutine DestroyHGridDatabase ( database )
-
-    use MLSMessageModule, only: MLSMessage, MLSMSG_DeAllocate, MLSMSG_Error
-
-  ! This subroutine destroys a quantity template database
-
-    ! Dummy argument
-    type (HGrid_T), dimension(:), pointer :: database
-
-    ! Local variables
-    integer :: hGridIndex, status
-    if ( associated(database) ) then
-      do hGridIndex=1,SIZE(database)
-        call DestroyHGridContents ( database(hGridIndex) )
-      end do
-      deallocate ( database, stat=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_DeAllocate // "database" )
-    end if
-  end subroutine DestroyHGridDatabase
-
   ! -------------------------------------  DumpChunkHGridGeometry  -----
   subroutine DumpChunkHGridGeometry ( hGrid, chunk, &
     & instrumentModuleName, l1bInfo )
 
+    use HGridsDatabase, only: HGRID_T, NULLIFYHGRID, CREATEEMPTYHGRID
     use L1BData, only: DeallocateL1BData, L1BData_T, ReadL1BData, &
       & AssembleL1BQtyName
-    use MLSCommon, only: L1BInfo_T, MLSChunk_T, NameLen, RK => R8
+    use MLSCommon, only: L1BInfo_T, MLSChunk_T, NameLen, R8
     use MLSFiles, only: MLS_HDF_Version       
     use MLSL2Options, only: LEVEL1_HDFVERSION  
     use MLSMessageModule, only: MLSMessage, MLSMSG_allocate, &
@@ -1210,7 +1047,7 @@ contains ! =====     Public Procedures     =============================
     type (MLSChunk_T), intent(in) :: CHUNK
 
     ! Local parameters
-    real (rk), parameter :: BINSIZE=0.05 ! Width of one character in degrees
+    real (r8), parameter :: BINSIZE=0.05 ! Width of one character in degrees
     integer, parameter :: NOLINES=8     ! Number of lines that make up a scan
     integer, parameter :: WIDTH=75      ! Number of columns to print at a time
 
@@ -1233,11 +1070,11 @@ contains ! =====     Public Procedures     =============================
     integer :: START                    ! Index
     integer :: WINDOW                   ! Loop counter
     integer :: WINDOWSIZE               ! Number of characters in this window
-    real (rk) :: PHIMAX                 ! Maximum value to consider
-    real (rk) :: PHIMIN                 ! Minimum value to consider
-    real (rk) :: THISPHIMAX             ! Max phi in a line for a maf
-    real (rk) :: THISPHIMIN             ! Min phi in a line for a maf
-    real (rk), dimension(:,:), pointer :: MIFPHI ! Tangent phis
+    real (r8) :: PHIMAX                 ! Maximum value to consider
+    real (r8) :: PHIMIN                 ! Minimum value to consider
+    real (r8) :: THISPHIMAX             ! Max phi in a line for a maf
+    real (r8) :: THISPHIMIN             ! Min phi in a line for a maf
+    real (r8), dimension(:,:), pointer :: MIFPHI ! Tangent phis
     type (L1BData_T) :: L1BFIELD
 
     integer ::  hdfVersion
@@ -1260,8 +1097,8 @@ contains ! =====     Public Procedures     =============================
 
     phiMin = minval ( mifPhi )
     phiMax = maxval ( mifPhi )
-    phiMin = min ( phiMin, hGrid%phi(1) )
-    phiMax = max ( phiMax, hGrid%phi(hGrid%noProfs) )
+    phiMin = min ( phiMin, hGrid%phi(1,1) )
+    phiMax = max ( phiMax, hGrid%phi(1,hGrid%noProfs) )
 
     ! Now setup the text to print
     noBins = ( phiMax - phiMin ) / binSize
@@ -1298,7 +1135,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Now loop over the profiles and place them
     do prof = 1, hGrid%noProfs
-      charMin = ( hGrid%phi(prof) - phiMin ) / binSize + 1
+      charMin = ( hGrid%phi(1,prof) - phiMin ) / binSize + 1
       charMin = min ( max ( charMin, 1 ), noBins )
       if ( ( prof < hGrid%noProfsLowerOverlap+1 ) .or. &
         &  ( prof > hGrid%noProfs-hGrid%noProfsUpperOverlap) ) then
@@ -1335,22 +1172,147 @@ contains ! =====     Public Procedures     =============================
     call DeallocateL1BData ( l1bField )
 
   end subroutine DumpChunkHGridGeometry
- 
-  ! ----------------------------------------NullifyHGrid -----
-  subroutine NullifyHGrid ( H )
-    ! Given a hGrid, nullify all the pointers associated with it
-    type ( HGrid_T ), intent(out) :: H
+
+  ! ------------------------------------------------ ComputeAllHGridOffsets ---
+  subroutine ComputeAllHGridOffsets ( root, index, chunks, l1bInfo, &
+    & l2gpDatabase, processingRange )
+    ! This routine goes through the L1 file and works out how big each HGrid is going to be
+    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use MLSCommon, only: MLSCHUNK_T, L1BINFO_T, TAI93_RANGE_T
+    use L2GPData, only: L2GPDATA_T
+    use Tree, only: SUBTREE, NSONS, NODE_ID, DECORATION
+    use MoreTree, only: GET_SPEC_ID
+    use TREE_TYPES, only: N_NAMED
+    use Init_Tables_Module, only: Z_CONSTRUCT, S_HGRID, Z_OUTPUT
+    use HGridsDatabase, only: HGRID_T, DESTROYHGRIDCONTENTS
+    use MLSMessageModule, only: MLSMessage, MLSMSG_ERROR
+    ! Dummy arguments
+    integer, intent(in) :: ROOT         ! Tree node for whole l2cf
+    integer, intent(in) :: INDEX        ! Where in the tree are we
+    type(MLSChunk_T), dimension(:), intent(inout) :: CHUNKS
+    type(L1BInfo_T), intent(in) :: L1BINFO
+    type(L2GPData_T), dimension(:), pointer :: L2GPDatabase
+    type(TAI93_Range_T), intent(in) :: PROCESSINGRANGE
+    ! Local variables
+    integer :: SECTION                  ! Index of section
+    integer :: LINE                     ! Line in l2cf
+    integer :: CHUNK                    ! Loop counter
+    integer :: C                        ! Inner loop counter
+    integer :: HGRID                    ! Loop counter
+    integer :: NOHGRIDS                 ! Number of hGrids
+    integer :: SON                      ! Tree node
+    integer :: GSON                     ! son of son
+    integer :: KEY                      ! Tree node
+    integer :: NAME                     ! Dummy string index
+    type(HGrid_T) :: DUMMYHGRID         ! A temporary hGrid
 
     ! Executable code
-    nullify ( h%phi )
-    nullify ( h%geodLat )
-    nullify ( h%lon )
-    nullify ( h%time )
-    nullify ( h%solarTime )
-    nullify ( h%solarZenith )
-    nullify ( h%losAngle )
-  end subroutine NullifyHGrid
+    ! Slightly clever loop here, the zero run doesn't do anything except
+    ! count the number of hGrids.  The other run work out how big each HGrid
+    ! is going to be for each chunk.  This is stored in chunks%hGridOffsets.
+    ! Finally we accumulate these to get offsets.
+    noHGrids = 0
+    do chunk = 0, size(chunks)
+      section = index
+      hGrid = 0
+      ! Loop over all the setions in the l2cf, look for construct sections
+      sectionLoop: do
+        print*,'Location:', chunk, section
+        son = subtree ( section, root )
+        select case ( decoration ( subtree ( 1, son ) ) )
+        case ( z_construct )
+          ! Now loop through the construct section and identify the hGrids
+          do line = 2, nsons ( son - 1 ) ! Skip begin and end
+            gson = subtree(line,son)
+            if ( node_id(gson) == n_named ) then ! Is spec labeled?
+              key = subtree(2,gson)
+            else ! Son is n_spec_args
+              key = son
+            end if
+            if ( get_spec_id(key) == s_hGrid ) then
+              ! Now the intelligent bit
+              if ( chunk == 0 ) then
+                noHGrids = noHGrids + 1
+              else
+                dummyHGrid = CreateHGridFromMLSCFInfo ( name, key, l1bInfo, l2gpDatabase, &
+                  & processingRange, chunks(chunk) )
+                chunks(chunk)%hGridOffsets(hGrid) = dummyHGrid%noProfs - &
+                  & dummyHGrid%noProfsLowerOverlap - dummyHGrid%noProfsUpperOverlap
+                call DestroyHGridContents ( dummyHGrid )
+                hGrid = hGrid + 1
+              end if
+            end if
+          end do
+        case ( z_output )
+          exit sectionLoop
+        end select
+      end do sectionLoop
 
+      ! If this is the first time round, we now know how many hGrids there
+      ! are, setup our arrays
+      if ( chunk == 0 ) then
+        do c = 1, size ( chunks )
+          call Allocate_Test ( chunks(chunk)%hGridOffsets, noHGrids, &
+            & 'chunks(?)%hGridOffsets', ModuleName )
+          call Allocate_Test ( chunks(chunk)%hGridTotals, noHGrids, &
+            & 'chunks(?)%hGridTotals', ModuleName )
+        end do
+      else
+        ! Otherwise, at least check we got the same number of hGrids each chunk
+        if ( hGrid /= noHGrids ) &
+          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Got a different number of hGrids, new l2cf conditional stuff?' )
+      end if
+    end do                              ! Chunk loop
+    
+    ! Now accumulate hGridOffsets which currently contains the number
+    ! of profiles each chunk/hGrid.  After this it will contain
+    ! the accumulated number.  This is equivalent to storing the
+    ! index of the last profile in each chunk.
+    do chunk = 2, size ( chunks )
+      chunks(chunk)%hGridOffsets = chunks(chunk)%hGridOffsets + &
+        & chunks(chunk-1)%hGridOffsets
+    end do
+    ! Now fill (i.e. spread) the hGridTotals array
+    do chunk = 1, size ( chunks ) - 1
+      chunks(chunk)%hGridTotals = chunks(size(chunks))%hGridOffsets
+    end do
+    ! Now move hGridOffsets back one to get the offsets we want.
+    ! Each hGridOffsets will now contain the last profile index in the preceeding
+    ! chunk, which is the offeset we desire.
+    do chunk = size ( chunks ), 2, -1
+      chunks(chunk)%hGridOffsets = chunks(chunk-1)%hGridOffsets
+    end do
+    chunks(1)%hGridOffsets = 0
+    
+  end subroutine ComputeAllHGridOffsets
+
+  ! ------------------------------------- ComputeNextChunksHGridOffsets --
+  ! This routine is CURRENTLY NOT USED!
+  subroutine ComputeNextChunksHGridOffsets ( chunks, chunkNo, hGrids )
+    use Allocate_Deallocate, only :ALLOCATE_TEST
+    use MLSCommon, only: MLSCHUNK_T
+    use HGridsDatabase, only: HGRID_T
+    ! Dummy arguments
+    type(MLSChunk_T), dimension(:), intent(inout) :: CHUNKS
+    integer, intent(in) :: CHUNKNO
+    type(HGrid_T), dimension(:), intent(in) :: HGRIDS
+    ! Executable code
+    ! Do nothing if this is the last chunk
+    if ( chunkNo == size(chunks) ) return
+    ! Allocate the array
+    call Allocate_Test ( chunks(chunkNo+1)%hGridOffsets, size(hGrids), &
+      & 'chunks(?)%hGridOffsets', ModuleName )
+    ! Compute our number of output instances
+    chunks(chunkNo+1)%hGridOffsets = hGrids%noProfs - &
+      & hGrids%noProfsLowerOverlap - &
+      & hGrids%noProfsUpperOverlap
+    ! For later chunks, add on the accumulated previous stuff
+    if ( chunkNo > 1 ) &
+      & chunks(chunkNo+1)%hGridOffsets = chunks(chunkNo+1)%hGridOffsets + &
+      & chunks(chunkNo)%hGridOffsets + 1
+  end subroutine ComputeNextChunksHGridOffsets
+  
 ! =====     Private Procedures     =====================================
 
   ! ---------------------------------------------  ANNOUNCE_ERROR  -----
@@ -1407,6 +1369,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.51  2003/06/20 19:37:06  pwagner
+! Quanities now share grids stored separately in databses
+!
 ! Revision 2.50  2003/05/11 01:43:17  livesey
 ! Made the hgrid switch a little less voluable
 !

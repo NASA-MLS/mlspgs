@@ -41,7 +41,7 @@ module MLSFiles               ! Utility file routines
   & mls_io_gen_closeF, split_path_name, RmFileFromDataBase, &
   & mls_hdf_version, mls_inqswath, mls_sfstart, mls_sfend, &
   & mls_openFile, mls_closeFile, MLSFile_T, Deallocate_filedatabase, &
-  & open_MLSFile, close_MLSFile, Dump
+  & open_MLSFile, close_MLSFile, Dump, mls_exists
 
   !------------------- RCS Ident Info -----------------------
   character(LEN=130) :: Id = &
@@ -1877,9 +1877,6 @@ contains
     endif
 
   end subroutine mls_closeFile
-!-----------------------------------------------
-!       Private routines
-!------------------------
 !----------------------- mls_exists
   integer function mls_exists(filename)
   ! returns 0 if file exists, FILENOTFOUND if not
@@ -1895,6 +1892,9 @@ contains
   endif
   end function mls_exists
 
+!-----------------------------------------------
+!       Private routines
+!------------------------
 !====================
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
@@ -1905,6 +1905,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.51  2003/06/20 19:32:32  pwagner
+! mls_exists now public
+!
 ! Revision 2.50  2003/04/02 23:53:18  pwagner
 ! Added mls_exists; Checks for FILENOTFOUND
 !
