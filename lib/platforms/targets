@@ -33,55 +33,24 @@ include ../Makefile.dep
 # be set to the compiled objects based on the routines in blaslib
 # currently sdot and ddot, which will be built and added to libmls.a
 
-# MATRIX_OBJS
-# This variable is defined only if MLSCONFG=LF95.Linux
+# PGSTK
+# This variable is defined only if you will use the toolkit
+# to build the library and all the other software
 # otherwise it is blank
-# This is because of MatrixModule_0 which the NAG f95 v4.0
-# compiler cannot handle
 
 # ========================================================================
 #          The three versions of libmls.a
-all: libmlsSub.a libmls.a libmlsSDPTK.a
+all: libmls.a
 #
-#libmls.a      will contain all the OBJS plus machine.o except for 
-#	                SDPToolkit.o  and  SDPToolkitSubstitute.o
-#libmlsSDPTK.a will contain libmls.a plus SDPToolkit.o
-#libmlsSub.a   will contain libmls.a plus SDPToolkitSubstitute.o
-#
-#An arithmetic analogy for adding and subtracting objects from archives:
-#
-#libTemp = lib + SDP.o + Sub.o
-#libSub  = libTemp - SDP.o
-#lib     = libSub  - Sub.o
-#libSDP  = lib     + SDP.o
-#
-#The following just a temporary archive holding every *.o
-#libmlsTemp.a: ${OBJS}
-#	ar ru $@ $?
-#
-#libmlsSub.a: libmlsTemp.a
-#	mv libmlsTemp.a $@
-#
-#If any of the routines from tests come back to OBJS
-#we still don't want them compiled into libmls.a
-#(I deleted them before creating Makefile.dep, but a new make depends
-#may resurrect them)
-#Therefore they will be deleted explicitly
-
-#TEST_ONLY=test_multiply.o test_sparsify.o \
-#	test_cholesky.o test_multiply_vector.o
-
-#Dependency rules for MATRIX_OBJS (if we need them)
-#MatrixModule_0.o: MatrixModule_0.f90 ${OBJS}
-#MatrixModule_1.o: MatrixModule_1.f90 ${OBJS}
+#libmls.a      will contain all the OBJS plus machine.o
+#                                      except for 
+#	if PGSTK non-blank                SDPToolkitSubstitute.o
+#	if PGSTK blank                
 
 #--------------------- default name of GNU-compatible c compiler
 CC=cc
 
 #--------------------- dependency rules for PVM_OBJS
-
-#PVM.o: PVM.f90 ${OBJS}
-#PVMIDL.o: PVMIDL.f90 ${OBJS} PVM.o
 
 ifdef PVM_ROOT
    pvm_message=Building mlslib with PVM support
@@ -99,22 +68,19 @@ else
    blas_objs = sdot.o ddot.o
 endif
 
+ifdef PGSTK
+   tk_message=Building mlslib with toolkit
+else
+   tk_message=Building mlslib without toolkit; using SDPToolkitSubstitute
+endif
+
 ${OBJS}: machine.o
 
-#libmlsSub.a: ${OBJS} ${MATRIX_OBJS} machine.o ${PVM_OBJS} ${blas_objs}
-libmlsSub.a: ${OBJS} machine.o ${PVM_OBJS} ${blas_objs}
+libmls.a: ${OBJS} machine.o ${PVM_OBJS} ${blas_objs}
 		@echo "$(pvm_message)"
 		@echo "$(blas_message)"
+		@echo "$(tk_message)"
 	ar ru $@ $?
-#	ar d $@ SDPToolkit.o $(TEST_ONLY)
-
-libmls.a: libmlsSub.a
-	cp libmlsSub.a $@
-	ar d $@ SDPToolkitSubstitute.o
-
-libmlsSDPTK.a: libmls.a
-	cp libmls.a $@
-	ar ru $@ SDPToolkit.o
 
 # ========================================================================
 
@@ -144,6 +110,9 @@ string_table.o:
 	$(FC) -c $(BUGGY) $(INC_PATHS) $(S)/string_table.f90 $(FAFTER)
 
 # $Log$
+# Revision 1.24  2001/04/02 17:39:57  pwagner
+# PVM and PVMIDL no longer treated as clumsily
+#
 # Revision 1.23  2001/03/16 19:31:21  pwagner
 # (\gcc) instead of cc in build command for PVMWrapper.c
 #
