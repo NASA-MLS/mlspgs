@@ -1586,8 +1586,8 @@ contains
           ! rows due to Levenberg-Marquardt stabilization.  Do count rows
           ! due to a priori or regularization.  Put numbers of rows and
           ! columns into diagnostic vector.
-          jacobian_cols = sum(normalEquations%m%col%nelts)
-          jacobian_rows = sum(normalEquations%m%row%nelts)
+          jacobian_cols = sum(jacobian%col%nelts)
+          jacobian_rows = sum(jacobian%row%nelts)
           do j = 1, normalEquations%m%col%vec%template%noQuantities
             if ( associated(normalEquations%m%col%vec%quantities(j)%mask) ) &
               & jacobian_rows = jacobian_rows - &
@@ -3271,6 +3271,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.199  2002/10/25 01:13:46  livesey
+! Jacobian rows/cols etc. now actually describe the jacobian.
+!
 ! Revision 2.198  2002/10/23 23:27:40  livesey
 ! Bug fix in jacobian_rows calculation
 !
