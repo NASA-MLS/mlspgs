@@ -47,6 +47,8 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
       default is 200000; 0 means no sleeping
   --fwmParallel: Run in forward model parallel mode.  Send each MAF of forward
     model calculations out to a slave.
+  --idents <filename>: idents of the master task in a PVM setup that may be
+      compared with the slave's for verifying they run the same version
   --[n]kit: Output error messages [not] using the SDP Toolkit
      (in the next 3, n may be one of {4, 5, b} where b means both 4 and 5)
   --l1b=n:   Assume hdfn when reading l1b files
@@ -111,6 +113,9 @@ by the equal-signs -- stuff outside that space, like these
 comments, will not be printed in response to mlsl2 -?)
 
  $Log$
+ Revision 1.30  2003/12/05 00:56:38  pwagner
+ Note T[digit][letter] elaboration; also --patch
+
  Revision 1.29  2003/11/15 00:33:37  pwagner
  New commandline opts: maxfailuresperchunk, maxfailurespermachine
 
