@@ -406,7 +406,7 @@ contains ! =====     Public procedures     =============================
              l+l_losTransFunc, l+l_losVel, &
              l+l_massMeanDiameterIce, l+l_massMeanDiameterWater, &
              l+l_noiseBandwidth, l+l_numF, l+l_numJ, l+l_opticalDepth, &
-             l+l_orbitInclination, l+l_ptan, l+l_radiance, l+l_earthradius,&
+             l+l_orbitInclination, l+l_phiTan, l+l_ptan, l+l_radiance, l+l_earthradius,&
              l+l_refGPH, l+l_rhi, l+l_sizedistribution, &
              l+l_scanResidual, l+l_scECI, l+l_scVel, l+l_scVelECI, &
              l+l_scVelECR, l+l_scGeocAlt, l+l_sidebandRatio, &
@@ -915,6 +915,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.222  2002/06/04 22:06:36  livesey
+! Added phitan as a state vector element
+!
 ! Revision 2.221  2002/05/22 00:48:10  livesey
 ! Added direct write
 !
