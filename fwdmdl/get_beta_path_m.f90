@@ -99,7 +99,7 @@ contains
         dBdT = 0.0_rp
       end if
 
-      do n = 1, beta_group(i)%n_elements
+      do n = 1, size(beta_group(i)%cat_index)
         ib = beta_group(i)%cat_index(n)
         call create_beta_path ( path_inds, p_path, t_path, frq,             &
           & beta_group(i)%ratio(n), gl_slabs(:,ib), tanh_path, noPolarized, &
@@ -215,7 +215,7 @@ contains
     if ( associated(dBeta_path_dT) ) dBeta_path_dT = 0.0
 
     do i = 1, size(beta_group)
-      do n = 1, beta_group(i)%n_elements
+      do n = 1, size(beta_group(i)%cat_index)
         ratio = beta_group(i)%ratio(n)
         ib = beta_group(i)%cat_index(n)
 
@@ -854,6 +854,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.60  2004/08/03 22:06:45  vsnyder
+! Inching further toward PFA
+!
 ! Revision 2.59  2004/07/08 21:00:23  vsnyder
 ! Inching toward PFA
 !
