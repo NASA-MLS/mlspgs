@@ -5,6 +5,7 @@
 MODULE MLSFiles               ! Utility file routines
 !===============================================================================
    USE HDFEOS, only: gdopen, swopen
+   USE machine, only: io_error
    USE MLSCommon, only: i4, NameLen
    USE MLSStrings, only: Capitalize, LowerCase
   use SDPToolkit, only: Pgs_pc_getReference, PGS_S_SUCCESS, Pgs_smf_getMsg, &
@@ -338,13 +339,15 @@ MODULE MLSFiles               ! Utility file routines
 
 		if(access /= 'direct') then
 			open(unit=unit, access=access, action=action, form=form, &
-			& position=position, status=status, iostat=ErrType)
+			& position=position, status=status, file=myName, iostat=ErrType)
 		else
 			open(unit=unit, access=access, action=action, form=form, &
-			& status=status, iostat=ErrType)
+			& status=status, file=myName, iostat=ErrType)
 		endif
 		
 		print*, 'iostat ', ErrType
+		call io_error('io error in MLSFiles: mls_io_gen_openF' // &
+		& ' Fortran open', ErrType, myName)
 
 		theFileHandle = unit
 			
@@ -365,6 +368,9 @@ END MODULE MLSFiles
 
 !
 ! $Log$
+! Revision 2.4  2001/03/22 01:09:31  pwagner
+! Added file name to Fortran open statement
+!
 ! Revision 2.3  2001/03/21 00:48:43  pwagner
 ! Corrected mls_io_gen_openF
 !
