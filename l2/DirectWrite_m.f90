@@ -330,7 +330,7 @@ contains ! ======================= Public Procedures =========================
       call announce_error (0,&
         & "Error writing SDS data " // trim(sdName) // " to l2aux file:  " )
     end if
-    if ( DEEBU4 ) then
+    if ( DEEBUG ) then
       call output('noDims: ', advance='no')
       call output(noDims, advance='yes')
       call output('start: ', advance='no')
@@ -839,6 +839,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.16  2004/01/22 06:38:26  livesey
+! Typo fix
+!
 ! Revision 2.15  2004/01/22 00:56:35  pwagner
 ! Fixed many bugs in auto-distribution of DirectWrites
 !
