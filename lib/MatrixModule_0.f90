@@ -23,10 +23,11 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
     & GetVectorFromColumn, GetVectorFromColumn_0,  M_Absent, M_Banded, &
     & M_Column_Sparse, M_Full, MatrixElement_T, MaxAbsVal, MaxAbsVal_0, &
     & MinDiag, MinDiag_0, MultiplyMatrixBlocks, MultiplyMatrixVector, &
-    & MultiplyMatrixVectorNoT, MultiplyMatrixVector_0, operator(+), &
-    & operator(.TX.), RowScale, RowScale_0, ScaleBlock, SolveCholesky, &
-    & SolveCholeskyM_0, SolveCholeskyV_0, Sparsify, UpdateDiagonal, &
-    & UpdateDiagonal_0, UpdateDiagonalVec_0
+    & MultiplyMatrixVector_0, MultiplyMatrixVectorNoT, &
+    & MultiplyMatrixVectorNoT_0, operator(+), operator(.TX.), RowScale, &
+    & RowScale_0, ScaleBlock, SolveCholesky, SolveCholeskyM_0, &
+    & SolveCholeskyV_0, Sparsify, UpdateDiagonal, UpdateDiagonal_0, &
+    & UpdateDiagonalVec_0
 
 ! =====     Defined Operators and Generic Identifiers     ==============
 
@@ -74,8 +75,12 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
     module procedure MinDiag_0
   end interface
 
-  interface MultiplyMatrixVector
+  interface MultiplyMatrixVector ! A^T V
     module procedure MultiplyMatrixVector_0
+  end interface
+
+  interface MultiplyMatrixVectorNoT ! A V
+    module procedure MultiplyMatrixVectorNoT_0
   end interface
 
   interface operator (+)
@@ -1171,8 +1176,8 @@ contains ! =====     Public Procedures     =============================
     end select
   end subroutine MultiplyMatrixVector_0
 
-  ! ------------------------------------  MultiplyMatrixVectorNoT  -----
-  subroutine MultiplyMatrixVectorNoT ( B, V, P, UPDATE, DoDiag )
+  ! ----------------------------------  MultiplyMatrixVectorNoT_0  -----
+  subroutine MultiplyMatrixVectorNoT_0 ( B, V, P, UPDATE, DoDiag )
   ! P = B V if UPDATE is absent or false.
   ! P = P + B V if UPDATE is present and true.
   ! Don't multiply by the diagonal element if doDiag (default true) is
@@ -1238,7 +1243,7 @@ contains ! =====     Public Procedures     =============================
         end do ! i
       end if
     end select
-  end subroutine MultiplyMatrixVectorNoT
+  end subroutine MultiplyMatrixVectorNoT_0
 
   ! -------------------------------------  NewMultiplyMatrixBlocks  ----
   function NewMultiplyMatrixBlocks ( X, Y ) result ( Z ) ! Z = X^T Y
@@ -1818,6 +1823,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.14  2001/04/25 00:50:09  vsnyder
+! Make MultiplyMatrixNoT generic
+!
 ! Revision 2.13  2001/04/11 22:43:54  vsnyder
 ! Fold Deallocate_test into sparsify
 !
