@@ -5,11 +5,13 @@
 MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
 !=============================================================================
 
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use INTRINSIC, only: L_HOURS, L_MINUTES, L_SECONDS
   use L2PARINFO, only: PARALLEL
   USE MLSL2Options, only: SECTIONTIMINGUNITS
   USE MLSMessageModule, only: MLSMessage, MLSMSG_Error
-  USE MLSStrings, only: GetStringElement, LowerCase, StringElementNum
+  USE MLSStrings, only: catLists, GetStringElement, LowerCase, &
+    & NumStringElements, StringElementNum 
   use OUTPUT_M, only: BLANKS, OUTPUT, PRUNIT
   use Time_M, only: Time_Now, Use_Wall_Clock
   use TOGGLES, only: SWITCHES
@@ -20,6 +22,8 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
     & add_to_directwrite_timing, add_to_phase_timing, &
     & add_to_retrieval_timing, add_to_section_timing, &
     & dump_section_timings, run_start_time
+  public :: finishTimings, fillTimings, restartTimings
+  public :: showTimingNames
   private
 
   !---------------------------- RCS Ident Info -------------------------------
@@ -29,23 +33,38 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
   private :: not_used_here 
   !---------------------------------------------------------------------------
 
+  interface filltimings
+    module procedure filltimings_single
+    module procedure filltimings_double
+  end interface
+  
   ! This module simply contains initial settings and accumulated values.
 
   ! The following public settings are stored here; they may be set by MLSL2
   logical          :: SECTION_TIMES = .false.  ! Show times in each section
   logical          :: TOTAL_TIMES = .false.    ! Show total times from start
+  logical, save    :: FINISHEDPHASETIMES = .false.  ! times in each phase done
+  logical, save    :: FINISHEDSECTIONTIMES = .false.  ! times in each section done
 
   logical, private   :: COUNTEMPTY = .false.     ! Any sections named ' '?
   logical, private   :: ALLOWUNKNOWNNAMES = .false.  ! Any unknown section names
-  integer, parameter :: PHASENAMESLEN = 400
+  ! dimension of the following is big enough to allow adding unknown
+  ! section names and unknown retrieval names
+  integer, parameter :: MAXNUMSECTIONTIMES = 60
+  integer, parameter :: SECTIONNAMELEN = 32
   integer, parameter :: MAXNUMPHASES = 40
+  integer, parameter :: PHASENAMESLEN = MAXNUMPHASES*SECTIONNAMELEN
+  ! The next two are no longer parameters, instead calculated whenever needed
+  ! (someday Fortran may allow me to call procedures during initializing)
+  integer :: num_section_times ! = NumStringElements(section_names, countEmpty)
+  integer :: num_retrieval_times ! = NumStringElements(retrieval_names, countEmpty)
 
   character*(*), parameter           :: section_names = &
     & 'main,open_init,global_settings,signals,spectroscopy,' // &
     & 'read_apriori,chunk_divide,construct,fill,retrieve,join,' // &
     & 'directwrite,algebra,output'
   ! This should be the number of elements in the above ---------------
-  integer, parameter                 :: num_section_times = 14    ! <--|
+  ! integer, parameter                 :: num_section_times = 14    ! <--|
 
   character*(*), parameter           :: retrieval_names = &
     & 'newton_solver,cholesky_factor,cholesky_solver,cholesky_invert,' // &
@@ -53,23 +72,19 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
     & 'full_fwm,fullcloud_fwm,scan_fwm,twod_scan_fwm,linear_fwm,' // &
     & 'low_cloud,high_cloud,sids,form_normeq,tikh_reg'
   ! This should be the number of elements in the above -----------------
-  integer, parameter                 :: num_retrieval_times = 18  ! <--|
+  ! integer, parameter                 :: num_retrieval_times = 18  ! <--|
 
   character*(*), parameter           :: directwrite_names = &
     & 'writing,waiting'
   ! This should be the number of elements in the above ----------------
   integer, parameter                 :: num_directwrite_times = 2  ! <--|
-  ! dimension of the following is +2 to allow possible unknown
-  ! section names and unknown retrieval names
-  real, dimension(num_section_times+num_retrieval_times+num_directwrite_times+2), &
+  real, dimension(MAXNUMSECTIONTIMES), &
     & save                           :: section_timings = 0.
-  ! integer, parameter                 :: unknown_section = &
-  !   &                               num_section_times+num_retrieval_times + 1
-  ! integer, parameter                 :: unknown_retrieval = unknown_section + 1
   character(len=PHASENAMESLEN), save :: phaseNames = ' '
   integer, save :: num_phases = 0
   real, dimension(MAXNUMPHASES), save :: phase_timings = 0.
   real, save :: run_start_time = 0.
+  integer, parameter :: MAXNAMESLENGTH = PHASENAMESLEN+LEN(section_names)
 
 contains ! =====     Public Procedures     =============================
 
@@ -88,7 +103,13 @@ contains ! =====     Public Procedures     =============================
     real, save                  :: myLastTime = 0.
 
   ! Executable
+      if ( trim(lowercase(section_name)) == 'restart' ) then
+        call time_now ( myLastTime )
+        return
+      endif
       if ( present(t1) ) myLastTime = t1
+      num_section_times = NumStringElements(section_names, countEmpty)
+      num_retrieval_times = NumStringElements(retrieval_names, countEmpty)
       elem_offset = num_section_times + num_retrieval_times
 
       elem = StringElementNum(directwrite_names, LowerCase(section_name), countEmpty)
@@ -109,6 +130,11 @@ contains ! =====     Public Procedures     =============================
   subroutine add_to_phase_timing( phase_name, t1 )
   ! Add current elapsed phase time to total so far for last phase
 
+  ! Method:
+  ! (1) If phase is not one we've seen before (among stored phaseNames)
+  !     let it augment phaseNames
+  ! (2) Compute elapsed time (using either arg t1 or stored lastTime)
+  ! (3) Add elapsed time to amount for last phase name (unless 1st phase ever)
   ! Formal arguments
     character(LEN=*), intent(in):: phase_name   ! One of the phases, e.g. 'core'
     real, optional, intent(inout)  :: t1        ! Prior time_now, then current
@@ -120,6 +146,11 @@ contains ! =====     Public Procedures     =============================
     real, save                  :: myLastTime = 0.
 
     ! Executable
+      if ( trim(lowercase(phase_name)) == 'restart' ) then
+        call time_now ( myLastTime )
+        myLastElem=0
+        return
+      endif
       if ( present(t1) ) myLastTime = t1
       elem = StringElementNum(LowerCase(trim(phaseNames)), &
         & LowerCase(phase_name), countEmpty)
@@ -129,7 +160,7 @@ contains ! =====     Public Procedures     =============================
           & call MLSMessage ( MLSMSG_Error, moduleName, &
           & 'Too many phases--unable add to phase name ' // phase_name // &
           & ' to list ' // trim(phaseNames) )
-        phaseNames = trim(phaseNames) // ',' // trim(phase_name)
+        phaseNames = catLists(trim(phaseNames), trim(phase_name))
         elem = num_phases
       endif
       call time_now ( t2 )
@@ -157,8 +188,14 @@ contains ! =====     Public Procedures     =============================
     real, save                  :: myLastTime = 0.
 
   ! Executable
+      if ( trim(lowercase(section_name)) == 'restart' ) then
+        call time_now ( myLastTime )
+        return
+      endif
       if ( present(t1) ) myLastTime = t1
 
+      num_section_times = NumStringElements(section_names, countEmpty)
+      num_retrieval_times = NumStringElements(retrieval_names, countEmpty)
       elem = StringElementNum(retrieval_names, LowerCase(section_name), countEmpty)
       if ( elem < 1 .or. elem > num_retrieval_times ) then
           call MLSMessage ( MLSMSG_Error, moduleName, &
@@ -188,7 +225,13 @@ contains ! =====     Public Procedures     =============================
     real, save                  :: myLastTime = 0.
 
   ! Executable
+      if ( trim(lowercase(section_name)) == 'restart' ) then
+        call time_now ( myLastTime )
+        return
+      endif
     if ( present(t1) ) myLastTime = t1
+    num_section_times = NumStringElements(section_names, countEmpty)
+    num_retrieval_times = NumStringElements(retrieval_names, countEmpty)
     elem = StringElementNum(section_names, LowerCase(section_name), countEmpty)
     if ( elem < 1 .or. elem > num_section_times ) then
       call MLSMessage ( MLSMSG_Error, moduleName, &
@@ -232,6 +275,8 @@ contains ! =====     Public Procedures     =============================
     integer                         :: timeDivisor
 
   ! Executable
+    num_section_times = NumStringElements(section_names, countEmpty)
+    num_retrieval_times = NumStringElements(retrieval_names, countEmpty)
     select case ( sectionTimingUnits )
     case ( l_seconds )
       timeDivisor = 1
@@ -258,23 +303,9 @@ contains ! =====     Public Procedures     =============================
     call blanks ( 8, advance='no' )
     call output ( 'percent ', advance='yes' )
 
-    ! A trick:
-    ! Adjust Join section timing to exclude directwrite timings
-    ! (otherwise they would be counted twice)
-    joinElem = StringElementNum(section_names, 'join', countEmpty)
-    dwElem = StringElementNum(section_names, 'directwrite', countEmpty)
-    if ( joinElem > 0 .and. dwElem > 0 ) section_timings(joinElem) = &
-      &         section_timings(joinElem) - section_timings(dwElem)
-
+    call finishTimings('sections')
     total = sum(section_timings(1:num_section_times)) ! + &
-     ! & section_timings(unknown_section)
 
-    ! Another trick:
-    ! The DirectWrite section doesn't automatically include the waiting time
-    ! (due to lazy coding in Join) so add it in now
-    elem = StringElementNum(directwrite_names, 'waiting', countEmpty)
-    section_timings(dwElem) = section_timings(dwElem) + &
-      & section_timings(num_section_times+num_retrieval_times+elem)
     call time_now ( final )
     final = max(final-run_start_time, total)
     if ( final/timeDivisor <= 0.0 ) final = 1.0       ! Just so we don't divide by 0
@@ -283,19 +314,9 @@ contains ! =====     Public Procedures     =============================
     else
       TIMEFORM = TIMEFORMSMALL
     endif
-    ! if ( Unknown_nonzero ) then
-    !  num_elems = num_section_times + 1
-    ! else
-    !  num_elems = num_section_times
-    ! endif
     do elem = 1, num_section_times
-      ! if ( elem > num_section_times ) then
-      !  elem_time = section_timings(unknown_section)
-      !  section_name = 'unknown name'
-      ! else
         elem_time = section_timings(elem)
         call GetStringElement(section_names, section_name, elem, countEmpty)
-      ! endif
       percent = 100 * elem_time / final
       call output ( section_name, advance='no' )
       call blanks ( 2, advance='no' )
@@ -355,21 +376,10 @@ contains ! =====     Public Procedures     =============================
       call blanks ( 2, advance='no' )
       call output ( 'percent of total retrieval time', advance='yes' )
       retrTotal = sum(section_timings(1+num_section_times:num_section_times+num_retrieval_times)) ! - &
-        ! & section_timings(unknown_section)
       Unknown_nonzero = .false.  ! (section_timings(unknown_retrieval) > 0.)
-      ! if ( Unknown_nonzero ) then
-      !  num_elems = num_retrieval_times + 1
-      !  else
-      ! num_elems = num_retrieval_times
-      ! endif
       do elem = 1, num_retrieval_times  ! num_elems
-        ! if ( elem > num_retrieval_times ) then
-        !  elem_time = section_timings(unknown_retrieval)
-        !  section_name = 'unknown name'
-        !else
           elem_time = section_timings(num_section_times+elem)
           call GetStringElement(retrieval_names, section_name, elem, countEmpty)
-        !endif
         percent = 100 * elem_time / retrFinal
         call output ( section_name, advance='no' )
         call blanks ( 2, advance='no' )
@@ -439,8 +449,7 @@ contains ! =====     Public Procedures     =============================
       call output ( '(No phase timings breakdown) ', advance='yes' )
       return
     endif
-    ! A trick! Add final elapsed time to last phase
-    call add_to_phase_timing(' ')
+    call finishTimings('phases')
     call output ( '==========================================', advance='yes' )
     call blanks ( 8, advance='no' )
     call output ( 'Phase timings : ', advance='yes' )
@@ -489,6 +498,225 @@ contains ! =====     Public Procedures     =============================
     end subroutine printTaskType
   end subroutine dump_section_timings
 
+  ! -----------------------------------------  finishTimings  -----
+  subroutine finishTimings( which, returnStatus )
+  ! Finish accumulating timings
+  ! Args
+  character(len=*), intent(in) :: which ! phases, sections, or all
+  integer, intent(out), optional :: returnStatus ! 0 unless already finished
+  ! Internal variables
+  logical :: sections, phases
+  integer :: dwElem
+  integer :: Elem
+  integer :: joinElem
+  integer :: status
+  character(len=32) :: section_name
+  ! Executable
+  status = 0
+  num_section_times = NumStringElements(section_names, countEmpty)
+  num_retrieval_times = NumStringElements(retrieval_names, countEmpty)
+  ! Do sections, phases, both?
+  sections = (StringElementNum('all,both,sections', trim(LowerCase(which)), &
+    & countEmpty) > 0)
+  phases = (StringElementNum('all,both,phases', trim(LowerCase(which)), &
+    & countEmpty) > 0)
+  if ( sections .and. .not. FINISHEDSECTIONTIMES ) then
+    ! A trick:
+    ! Adjust Join section timing to exclude directwrite timings
+    ! (otherwise they would be counted twice)
+    joinElem = StringElementNum(section_names, 'join', countEmpty)
+    dwElem = StringElementNum(section_names, 'directwrite', countEmpty)
+    if ( joinElem > 0 .and. dwElem > 0 ) section_timings(joinElem) = &
+      &         section_timings(joinElem) - section_timings(dwElem)
+
+    ! Another trick:
+    ! The DirectWrite section doesn't automatically include the waiting time
+    ! (due to lazy coding in Join) so add it in now
+    elem = StringElementNum(directwrite_names, 'waiting', countEmpty)
+    section_timings(dwElem) = section_timings(dwElem) + &
+      & section_timings(num_section_times+num_retrieval_times+elem)
+    FINISHEDSECTIONTIMES = .true.
+    sections = .false.
+  endif
+  if ( sections ) status = max(status, 1)
+
+  if ( phases .and. .not. FINISHEDPHASETIMES ) then
+    ! A trick! Add final elapsed time to last phase
+    call add_to_phase_timing(' ')
+    FINISHEDPHASETIMES = .true.
+    print *, 'num_phases: ', num_phases
+    do elem = 1, num_phases
+      call GetStringElement(trim(phaseNames), section_name, elem, countEmpty)
+      print *, trim(section_name), phase_timings(elem)
+    enddo
+    phases = .false.
+  endif
+  if ( phases ) status = max(status, 1)
+  if ( present(returnStatus) ) returnStatus = status
+  end  subroutine finishTimings
+
+  ! -----------------------------------------  filltimings_double  -----
+  subroutine filltimings_double( timings, which, names, othersToo )
+  ! Return accumulated timings in array
+  ! Args
+  double precision, dimension(:), intent(out) :: timings
+  character(len=*), intent(in) :: which      ! 'phase' or 'section'
+  character(len=*), intent(in) :: names      ! phase or section names, or 'all'
+  logical, intent(in), optional :: othersToo
+  ! Internal variables
+  real, dimension(:), pointer :: singleTimings
+  integer :: timingSize
+  ! Executable
+  timingSize = size(timings)
+  if ( timingSize < 1 ) return
+  nullify(singleTimings)
+  call Allocate_test ( singleTimings, timingSize, 'singleTimings', ModuleName )
+  call filltimings_single( singleTimings, which, names, othersToo )
+  timings = singleTimings
+  call Deallocate_test ( singleTimings, 'singleTimings', ModuleName )
+  end subroutine filltimings_double
+
+  ! -----------------------------------------  filltimings_single  -----
+  subroutine filltimings_single( timings, which, names, othersToo )
+  ! Return accumulated timings in array
+  ! Args
+  real, dimension(:), intent(out) :: timings
+  character(len=*), intent(in) :: which      ! 'phase' or 'section'
+  character(len=*), intent(in) :: names      ! phase or section names, or 'all'
+  logical, intent(in), optional :: othersToo
+  ! Internal variables
+  real :: final, total
+  logical :: sections, phases
+  integer :: k
+  integer :: elem
+  integer :: iName
+  integer :: numNames
+  character(len=MAXNAMESLENGTH) :: myNames
+  character(len=SECTIONNAMELEN) :: name      ! will be lower case
+  logical :: myOthersToo
+  ! Executable
+  myOthersToo = .false.
+  if ( present( othersToo) ) myOthersToo = othersToo
+  num_section_times = NumStringElements(section_names, countEmpty)
+  num_retrieval_times = NumStringElements(retrieval_names, countEmpty)
+  call time_now ( final )
+  final = final - run_start_time
+  ! Do sections, phases, both?
+  sections = (StringElementNum('all,both,sections', LowerCase(which), &
+    & countEmpty) > 0)
+  phases = (StringElementNum('all,both,phases', LowerCase(which), &
+    & countEmpty) > 0)
+  timings = 0.
+  k = 0
+  if ( sections ) then
+    total = 0.
+    if ( trim(lowercase(names)) == 'all' ) then
+      myNames=section_names
+    else
+      myNames=names
+    endif
+    numNames = NumStringElements(trim(myNames), countEmpty)
+    do iName=1, numNames
+      call GetStringElement(trim(LowerCase(myNames)), name, iName, countEmpty)
+      elem = StringElementNum(LowerCase(section_names), trim(name), countEmpty)
+      if ( elem > 0 ) then
+        k = min(k+1, size(timings))
+        timings(k) = section_timings(elem)
+        total = total + timings(k)
+      endif     
+    enddo
+    if ( myOthersToo ) then
+      k = min(k+1, size(timings))
+      timings(k) = max(final, total) - total
+    endif
+  endif
+  if ( phases ) then
+    total = 0.
+    if ( trim(lowercase(names)) == 'all' ) then
+      myNames=trim(phaseNames)
+    else
+      myNames=names
+    endif
+    numNames = NumStringElements(trim(myNames), countEmpty)
+    do iName=1, numNames
+      call GetStringElement(trim(LowerCase(myNames)), name, iName, countEmpty)
+      elem = StringElementNum(trim(LowerCase(phaseNames)), &
+        & trim(name), countEmpty)
+      if ( elem > 0 ) then
+        k = min(k+1, size(timings))
+        timings(k) = phase_timings(elem)
+      endif     
+    enddo
+    if ( myOthersToo ) then
+      k = min(k+1, size(timings))
+      timings(k) = max(final, total) - total
+    endif
+  endif
+    
+  end subroutine filltimings_single
+
+  ! -----------------------------------------  restart  -----
+  subroutine restartTimings( which )
+  ! Zero out accumulating timings
+  ! re-initialize some specific flags and parameters
+  ! Args
+  character(len=*), intent(in) :: which ! phases, sections, or all
+  ! Internal variables
+  logical :: sections, phases
+  integer :: dwElem
+  integer :: Elem
+  integer :: joinElem
+  ! Executable
+    num_section_times = NumStringElements(section_names, countEmpty)
+    num_retrieval_times = NumStringElements(retrieval_names, countEmpty)
+  ! Do sections, phases, both?
+  sections = (StringElementNum('all,both,sections', LowerCase(which), &
+    & countEmpty) > 0)
+  phases = (StringElementNum('all,both,phases', LowerCase(which), &
+    & countEmpty) > 0)
+
+  if ( sections ) then
+    section_timings = 0.
+    call add_to_section_timing('restart')
+    call add_to_retrieval_timing('restart')
+    call add_to_directwrite_timing('restart')
+    call time_now(run_start_time)
+    FINISHEDSECTIONTIMES = .false.
+  endif
+  if ( phases ) then
+    phase_timings = 0.
+    call add_to_phase_timing('restart')
+    FINISHEDPHASETIMES = .false.
+  endif
+  end subroutine restartTimings
+  
+  function showTimingNames(which, othersToo)  result (names)
+  ! Args
+  character(len=*), intent(in) :: which ! phases, sections, or all
+  character(len=MAXNAMESLENGTH) :: names
+  logical, intent(in), optional :: othersToo
+  ! Internal variables
+  logical :: sections, phases, myOthersToo
+  ! Executable
+  myOthersToo = .false.
+  if ( present(othersToo) ) myOthersToo = othersToo
+  ! Do sections, phases, both?
+  sections = (StringElementNum('all,both,sections', LowerCase(which), &
+    & countEmpty) > 0)
+  phases = (StringElementNum('all,both,phases', LowerCase(which), &
+    & countEmpty) > 0)
+  names = ' '
+  if ( sections ) then
+    names = trim(section_names)
+  else
+    names = ' '
+  endif
+  if ( phases ) then
+    names = catLists(trim(names), trim(phaseNames))
+  endif
+  if ( myOthersToo ) names = catLists(trim(names), '(others)')
+  end function showTimingNames
+
 !=============================================================================
   subroutine announce_phase(phase_name)
     character(len=*), intent(in) :: phase_name
@@ -513,6 +741,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.23  2004/06/29 00:08:41  pwagner
+! Now can fill timings
+!
 ! Revision 2.22  2004/05/06 20:42:24  pwagner
 ! Announces beginning of each phase if phase switch set
 !
