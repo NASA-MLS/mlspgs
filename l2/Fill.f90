@@ -127,7 +127,7 @@ contains ! =====     Public Procedures     =============================
     use MLSNumerics, only: InterpolateValues, Hunt
     use MLSRandomNumber, only: drang, mls_random_seed, MATH77_RAN_PACK
     use MLSSignals_m, only: GetSignalName, GetModuleName, IsModuleSpacecraft, &
-      & GetSignal, Signal_T
+      & GetSignal, Signal_T, Dump_signals
     use Molecules, only: L_H2O
     use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID, GetIndexFlagsFromList
     use OUTPUT_M, only: BLANKS, OUTPUT
@@ -4143,6 +4143,7 @@ contains ! =====     Public Procedures     =============================
       integer :: MYCHANNEL              ! Possibly offset channel
       integer :: i, mif, maf
       type (Signal_T) :: signalIn, signalOut, signalRef
+!      type (Signal_T), dimension(2) :: signals
       real(r8), dimension(:), pointer :: freq1, freqL1, freqU1
       real(r8), dimension(:), pointer :: freq2, freqL2, freqU2
       real(r8), dimension(:), pointer :: freq, freqL, freqU
@@ -4159,10 +4160,10 @@ contains ! =====     Public Procedures     =============================
       if (.not. associated(quantity%mask)) &
          & call Announce_Error ( key, 0, 'Quantity must be a subset to fill' )
 
-      signalIn = GetSignal ( sourceQuantity%template%signal )
-      signalOut = GetSignal ( Quantity%template%signal )
+      signalIn = GetSignal ( sourceQuantity%template%signal )     ! sideband info gets lost
+      signalOut = GetSignal ( Quantity%template%signal )          ! sideband info gets lost
       
-      myChannel = channel - lbound ( signalIn%frequencies, 1 ) + 1
+      myChannel = channel
 
       call allocate_test ( freq1, size(signalIn%frequencies), 'frequencies', ModuleName )
       call allocate_test ( freqL1, size(signalIn%frequencies), 'LSBfrequencies', ModuleName )
@@ -4172,17 +4173,19 @@ contains ! =====     Public Procedures     =============================
       call allocate_test ( freqU2, size(signalOut%frequencies), 'USBfrequencies', ModuleName )
 
       ! find input signal frequencies
-      freq1 = signalIn%centerFrequency + signalIn%direction*signalIn%frequencies 
-      freqL1 = signalIn%lo - freq1    ! lower sideband freq
-      freqU1 = signalIn%lo + freq1    ! upper sideband freq
-         if(signalIn%sideband == -1) freq1 = freqL1
-         if(signalIn%sideband == 1) freq1 = freqU1
+      freqL1 = signalIn%lo - signalIn%centerFrequency - &
+               & signalIn%direction*signalIn%frequencies    ! lower sideband freq
+      freqU1 = signalIn%lo + signalIn%centerFrequency + &
+               & signalIn%direction*signalIn%frequencies     ! upper sideband freq
+         if(sourceQuantity%template%sideband == -1) freq1 = freqL1
+         if(sourceQuantity%template%sideband == 1) freq1 = freqU1
       ! find output signal frequencies
-      freq2 = signalOut%centerFrequency + signalOut%direction*signalOut%frequencies 
-      freqL2 = signalOut%lo - freq2    ! lower sideband freq
-      freqU2 = signalOut%lo + freq2    ! upper sideband freq
-         if(signalOut%sideband == -1) freq2 = freqL2
-         if(signalOut%sideband == 1) freq2 = freqU2
+      freqL2 = signalOut%lo - signalOut%centerFrequency - &
+               & signalOut%direction*signalOut%frequencies      ! lower sideband freq
+      freqU2 = signalOut%lo + signalOut%centerFrequency + &
+               & signalOut%direction*signalOut%frequencies    ! upper sideband freq
+         if(quantity%template%sideband == -1) freq2 = freqL2
+         if(quantity%template%sideband == 1) freq2 = freqU2
 
       quantity%values=0._r8
       if (spreadFlag) then
@@ -4196,7 +4199,7 @@ contains ! =====     Public Procedures     =============================
            do mif=1, quantity%template%noSurfs
 	          scaledRad = sourceQuantity%values(MyChannel+(mif-1)*size(signalIn%frequencies), maf) * &
              &    freq2(i)**4/freq1(MyChannel)**4
-             if(iand(ichar(Quantity%mask(i+(mif-1)*size(signalOut%frequencies), maf)), m_cloud) == 1) &
+             if(iand(ichar(Quantity%mask(i+(mif-1)*size(signalOut%frequencies), maf)), m_cloud) == 16) &
              & quantity%values(i+(mif-1)*size(signalOut%frequencies), maf) = scaledRad
    	     enddo
 	        enddo
@@ -4228,14 +4231,14 @@ contains ! =====     Public Procedures     =============================
          do i=1,size(signalOut%frequencies)
            do maf=1, quantity%template%noInstances
            do mif=1, quantity%template%noSurfs
-             if(iand(ichar(Quantity%mask(i+(mif-1)*size(signalOut%frequencies), maf)), m_cloud) == 1) &
+             if(iand(ichar(Quantity%mask(i+(mif-1)*size(signalOut%frequencies), maf)), m_cloud) == 16) &
 	          & quantity%values(i+(mif-1)*size(signalOut%frequencies), maf) = &
 	          &   sourceQuantity%values(MyChannel+(mif-1)*size(signalIn%frequencies), maf) *freq2(i)**4/ &
 	          &   (lsbFraction%values(MyChannel,1) * freqL1(MyChannel)**4 + &
 	          &   usbFraction%values(MyChannel,1) * freqU1(MyChannel)**4)
    	     enddo
 	        enddo
-         enddo        
+         enddo
         else
         ! If both sidebands are within 20GHz but have very different penetration depths,
         ! where one is optically thick and one is optically thin. We may use a reference
@@ -4260,17 +4263,17 @@ contains ! =====     Public Procedures     =============================
             freq = signalRef%centerFrequency + signalRef%direction*signalRef%frequencies 
             freqL = signalOut%lo - freq    ! lower sideband freq
             freqU = signalOut%lo + freq    ! upper sideband freq
-               if(signalRef%sideband == -1) freq = freqL
-               if(signalRef%sideband == 1) freq = freqU
+               if(usb%template%sideband == -1) freq = freqL
+               if(usb%template%sideband == 1) freq = freqU
             do i=1,size(signalOut%frequencies)
          
             ! need to scale the opposite sideband for the output signal
-               if(signalOut%sideband == 1) then 
+               if(quantity%template%sideband == 1) then 
                   ratio1 = lsbFraction%values(i,1)
                   ratio2 = usbFraction%values(i,1)
                   freq2 = freqL2
                endif
-               if(signalOut%sideband == -1) then
+               if(quantity%template%sideband == -1) then
                   ratio2 = lsbFraction%values(i,1)
                   ratio1 = usbFraction%values(i,1)
                   freq2 = freqU2
@@ -4281,7 +4284,7 @@ contains ! =====     Public Procedures     =============================
 	               scaledRad = usb%values(MyChannel+(mif-1)*size(signalIn%frequencies), maf) * &
                   &    freq2(i)**4/freq(MyChannel)**4
 
-                  if(iand(ichar(Quantity%mask(i+(mif-1)*size(signalOut%frequencies), maf)), m_cloud) == 1) &
+                  if(iand(ichar(Quantity%mask(i+(mif-1)*size(signalOut%frequencies), maf)), m_cloud) == 16) &
 	               & quantity%values(i+(mif-1)*size(signalOut%frequencies), maf) = &
 	               &   (sourceQuantity%values(i+(mif-1)*size(signalIn%frequencies), maf) - &
                   &    ratio1*scaledRad)/ratio2 
@@ -5672,6 +5675,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.217  2003/05/15 19:09:17  dwu
+! changes in splitsideband
+!
 ! Revision 2.216  2003/05/14 23:14:00  dwu
 ! nullify pointers in splitsideband
 !
