@@ -1039,8 +1039,15 @@ contains ! =============== Subroutines and functions ==========================
     ! First calculate residual. Also calculate the derivatives.
     ! -----------------------------------------------------------------------
 
-    ! Compute residual
-    residual%values(:,maf) = l1GPH - hydrosGPH
+    ! Compute residual (or differential residual)
+    if ( fmConf%differentialScan ) then
+      residual%values ( 1 : noMIFs-1, maf ) = &
+        & ( l1GPH(2:noMIFs) - l1GPH(1:noMIFs-1) ) -&
+        & ( hydrosGPH(2:noMIFs) - hydrosGPH(1:noMIFs-1) )
+      residual%values( noMIFs, maf ) = 0.0
+    else
+      residual%values(:,maf) = l1GPH - hydrosGPH
+    end if
 
     ! Find row in jacobian
     if ( present ( jacobian ) ) then
@@ -1056,20 +1063,31 @@ contains ! =============== Subroutines and functions ==========================
             & 'Found a prexisting d(residual)/d(ptan), removing' )
           call DestroyBlock ( block )
         end if
-        call updateDiagonal ( block, dL1GPHByDPtan-dHydrosGPHByDPtan )
+        if ( fmConf%differentialScan ) then
+          call updateDiagonal ( block, (/ &
+            & ( dL1GPHByDPtan(2:noMIFs) - dL1GPHByDPtan(1:noMIFs-1) ) - &
+            & ( dHydrosGPHByDPtan(2:noMIFs) - dHydrosGPHByDPtan(1:noMIFs-1) ) - &
+            & 0.0 /) )
+        else
+          call updateDiagonal ( block, dL1GPHByDPtan-dHydrosGPHByDPtan )
+        end if
       end if
 
       ! Store refGPH derivatives
       if ( refGPHInState ) then
         col = FindBlock ( jacobian%col, refGPH%index, maf )
         block => jacobian%block(row,col)
-        if ( block%kind /= M_Absent ) then
-          call MLSMessage ( MLSMSG_Warning, ModuleName, &
-            & 'Found a prexisting d(residual)/d(refGPH), removing' )
+        if ( fmConf%differentialScan ) then
           call DestroyBlock ( block )
+        else
+          if ( block%kind /= M_Absent ) then
+            call MLSMessage ( MLSMSG_Warning, ModuleName, &
+              & 'Found a prexisting d(residual)/d(refGPH), removing' )
+            call DestroyBlock ( block )
+          end if
+          call CreateBlock ( jacobian, row, col, M_Full )
+          block%values = -1.0
         end if
-        call CreateBlock ( jacobian, row, col, M_Full )
-        block%values = -1.0
       end if
         
       ! Store heightOffset derivatives if any
@@ -1082,7 +1100,13 @@ contains ! =============== Subroutines and functions ==========================
           call DestroyBlock ( block )
         end if
         call CreateBlock ( jacobian, row, col, M_Full )
-        block%values(:,1) = dL1GPHByDHeightOffset
+        if  ( fmConf%differentialScan ) then
+          block%values(:,1) = (/ &
+            & dL1GPHByDHeightOffset(2:noMIFs) - dL1GPHByDHeightOffset(1:noMIFs-1), &
+            & 0.0_r8 /)
+        else
+          block%values(:,1) = dL1GPHByDHeightOffset
+        end if
       end if
 
       ! Now the temperature derivatives
@@ -1095,13 +1119,33 @@ contains ! =============== Subroutines and functions ==========================
           call DestroyBlock ( block )
         end if
         call CreateBlock ( jacobian, row, col, M_Full )
-        block%values = - dHydrosGPHByDTemp
-        do i = 1, noMIFs
-          block%values(i,pointTempLayer(i)) = &
-            & block%values(i,pointTempLayer(i)) + dL1GPHByDTempLower(i)
-          block%values(i,pointTempLayer(i)+1) = &
-            & block%values(i,pointTempLayer(i)+1) + dL1GPHByDTempUpper(i)
-        end do
+        if ( fmConf%differentialScan ) then
+          ! ------------- Diffential model
+          block%values(noMIFs,:) = 0.0
+          block%values(1:noMIFs-1,:) = - ( dHydrosGPHByDTemp(2:noMIFs,:) - &
+            & dHydrosGPHByDTemp(1:noMIFs-1,:) )
+          do i = 2, noMIFs
+            block%values(i-1,pointTempLayer(i)) = &
+              & block%values(i-1,pointTempLayer(i)) + dL1GPHByDTempLower(i)
+            block%values(i-1,pointTempLayer(i)+1) = &
+              & block%values(i-1,pointTempLayer(i)+1) + dL1GPHByDTempUpper(i)
+          end do
+          do i = 1, noMIFs-1
+            block%values(i,pointTempLayer(i)) = &
+              & block%values(i,pointTempLayer(i)) - dL1GPHByDTempLower(i)
+            block%values(i,pointTempLayer(i)+1) = &
+              & block%values(i,pointTempLayer(i)+1) - dL1GPHByDTempUpper(i)
+          end do
+        else
+          ! ------------- Non differential model
+          block%values = - dHydrosGPHByDTemp
+          do i = 1, noMIFs
+            block%values(i,pointTempLayer(i)) = &
+              & block%values(i,pointTempLayer(i)) + dL1GPHByDTempLower(i)
+            block%values(i,pointTempLayer(i)+1) = &
+              & block%values(i,pointTempLayer(i)+1) + dL1GPHByDTempUpper(i)
+          end do
+        end if
       end if
       
     end if
@@ -1164,6 +1208,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.28  2002/02/13 00:08:58  livesey
+! Added differential scan model
+!
 ! Revision 2.27  2001/12/06 23:44:57  livesey
 ! Moved Omega into units so L1BOASim can use it.
 !
