@@ -259,7 +259,8 @@ END MergeApriori
 BEGIN ChunkDivide
     ;; Just a pretty typical setup, except no overlaps to avoid bug
 
-    IdealLength =             0.25 orbits
+ ;; IdealLength =             0.00416666667  orbits
+    IdealLength =             0.25  orbits
     Overlap =                 0 MAFs
 
     HomeGeodAngle =           0 degrees
@@ -392,6 +393,9 @@ END Output
 ; ==========================================================================
 
 ; $Log$
+; Revision 2.5  2001/03/13 00:23:42  zvi
+; Correction to no_tan_hts for hydrostatic_model repeating calls
+;
 ; Revision 2.4  2001/03/09 01:49:31  zvi
 ; *** empty log message ***
 ;
