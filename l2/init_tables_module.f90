@@ -648,7 +648,7 @@ contains ! =====     Public procedures     =============================
       begin, s+s_transfer, &
              begin, f+f_source, s+s_vector, nr+n_field_spec, &
              begin, f+f_destination, s+s_vector, nr+n_field_spec, &
-             begin, f+f_skipMask, t+t_boolean, n+n_field_spec, &
+             begin, f+f_skipMask, t+t_boolean, n+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree( (/ &
       begin, s+s_fillCovariance, & ! Must be AFTER s_vector and s_matrix
@@ -872,6 +872,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.239  2002/09/05 20:58:20  livesey
+! Another fix to Transfer!
+!
 ! Revision 2.238  2002/09/05 20:50:24  livesey
 ! Fixed requirements for transfer
 !
