@@ -32,7 +32,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   public :: CopyMatrix, CopyMatrixValue, CreateBlock, CreateBlock_1, CreateEmptyMatrix
   public :: DestroyBlock, DestroyBlock_1, DestroyMatrix
   public :: DestroyMatrixInDatabase, DestroyMatrixDatabase, Dump, Dump_Linf
-  public :: Dump_Struct, FillExtraCol, FillExtraRow, FindBlock, GetDiagonal
+  public :: Dump_Struct, FindBlock, GetDiagonal
   public :: GetDiagonal_1, GetFromMatrixDatabase, GetKindFromMatrixDatabase
   public :: GetMatrixElement, GetMatrixElement_1, GetVectorFromColumn
   public :: GetVectorFromColumn_1, InvertCholesky
@@ -256,12 +256,9 @@ contains ! =====     Public Procedures     =============================
 
     integer :: I, J      ! Subscripts for [XYZ]%Block
 
-    ! Check that the matrices are compatible.  We also need to check
-    ! Nb, because the matrices may have been created with an extra
-    ! row or column.
+    ! Check that the matrices are compatible.
     if ( x%col%vec%template%id /= y%col%vec%template%id &
       & .or. x%row%vec%template%id /= y%row%vec%template%id &
-      & .or. x%col%nb /= y%col%nb .or. x%row%nb /= y%row%nb &
       & .or. (x%col%instFirst .neqv. y%col%instFirst) &
       & .or. (x%row%instFirst .neqv. y%row%instFirst) ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -313,12 +310,9 @@ contains ! =====     Public Procedures     =============================
 
     integer :: I, J      ! Subscripts for [XYZ]%Block
 
-    ! Check that the matrices are compatible.  We need to check
-    ! Nb, because the matrices may have been created with an extra
-    ! row or column.
+    ! Check that the matrices are compatible.
     if ( x%col%vec%template%id /= y%col%vec%template%id &
       & .or. x%row%vec%template%id /= y%row%vec%template%id &
-      & .or. x%col%nb /= y%col%nb .or. x%row%nb /= y%row%nb &
       & .or. (x%col%instFirst .neqv. y%col%instFirst) &
       & .or. (x%row%instFirst .neqv. y%row%instFirst) ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -345,21 +339,14 @@ contains ! =====     Public Procedures     =============================
   end subroutine AssignMatrix
 
   ! -------------------------------------------  CholeskyFactor_1  -----
-  subroutine CholeskyFactor_1 ( Z, X, NoExtra )
+  subroutine CholeskyFactor_1 ( Z, X )
   ! Compute the Cholesky factor Z of the matrix X.  Z%M%Block can be
   ! associated with X%M%Block to save space.
-  ! Don't factor the extra column if NoExtra is present and true.
     type(Matrix_Cholesky_T), intent(inout) :: Z   ! Factored matrix.
     type(Matrix_SPD_T), intent(in) :: X ! Matrix to factor.
-    logical, intent(in), optional :: NoExtra
 
     integer :: I, J, K                  ! Subscripts and loop inductors
-    logical :: MyNoExtra
-    integer :: N                        ! Columns(blocks)
     type(MatrixElement_T) :: S          ! Sum, to accumulate "inner product"
-
-    myNoExtra = .false.
-    if ( present(noExtra) ) myNoExtra = noExtra
 
     ! Check that the matrices are compatible.  We don't need to check
     ! Nelts or Nb, because these are deduced from Vec.
@@ -395,17 +382,15 @@ contains ! =====     Public Procedures     =============================
 !  \hspace*{0.25in} {\bf end do} ! j\\
 !  {\bf end do} ! i
 
-    n = x%m%row%nb
-    if ( myNoExtra .and. x%m%row%extra ) n = n - 1
     ! Handle the first row specially, to avoid a copy followed by no-dot-product
     !{ $Z_{11}^T Z_{11} = X_{11}$
     call choleskyFactor ( z%m%block(1,1), x%m%block(1,1) )
-    do j = 2, n
+    do j = 2, x%m%row%nb
       !{ Solve $Z_{11}^T Z_{1j} = X_{1j}$ for $Z_{1j}$
       call solveCholesky ( z%m%block(1,1), z%m%block(1,j), x%m%block(1,j), &
         & transpose=.true. )
     end do
-    do i = 2, n
+    do i = 2, x%m%row%nb
       call copyBlock ( s, x%m%block(i,i) )        ! Destroy s, then s := z...
       do k = 1, i-1
         !{ $S = X_{ii} - \sum_{k=1}^{i-1} Z_{ki}^T Z_{ki}$
@@ -414,7 +399,7 @@ contains ! =====     Public Procedures     =============================
       end do ! k = 1, i-1
       !{ $Z_{ii}^T Z_{ii} = S$
       call choleskyFactor ( z%m%block(i,i), s )   ! z%m%block(i,i) = factor of s
-      do j = i+1, n
+      do j = i+1, x%m%row%nb
         if ( i == 1 ) then                        ! Avoid a copy
         else
           call copyBlock ( s, x%m%block(i,j) )    ! Destroy s, then s := x...
@@ -427,7 +412,7 @@ contains ! =====     Public Procedures     =============================
           call solveCholesky ( z%m%block(i,i), z%m%block(i,j), s, &
             & transpose=.true. )
         end if
-      end do ! j = 1, n
+      end do ! j = i+1, x%m%row%nb
       call destroyBlock( s )                      ! Avoid a memory leak
     end do ! i = 1, n
   end subroutine CholeskyFactor_1
@@ -468,35 +453,29 @@ contains ! =====     Public Procedures     =============================
   subroutine ColumnScale_1 ( X, V, NEWX ) ! Z = X V where V is a diagonal
   !                                matrix represented by a vector and Z is X
   !                                or NEWX.
-  !                                Any "extra" column is not scaled (but an
-  !                                extra row is).
     type (Matrix_T), intent(inout), target :: X
     type (Vector_T), intent(in) :: V
     type (Matrix_T), intent(out), target, optional :: NEWX 
 
     integer :: I, J      ! Subscripts for [XZ]%Block
-    integer :: NC, NR    ! Number of columns and rows
 
-    nc = x%col%nb
-    if ( x%col%extra ) nc = nc - 1
-    nr = x%row%nb
     if ( present(newx) ) then
       call createEmptyMatrix ( newx, 0, x%row%vec, x%col%vec, &
         & x%row%instFirst, x%col%instFirst )
-      do j = 1, nc
-        do i = 1, nr
+      do j = 1, x%col%nb
+        do i = 1, x%row%nb
           call ColumnScale ( x%block(i,j), &
             & v%quantities(x%row%quant(j))%values(:,x%row%inst(j)), &
             & newx%block(i,j) )
-        end do ! i = nr
-      end do ! j = nc
+        end do ! i = x%row%nb
+      end do ! j = x%col%nb
     else
-      do j = 1, nc
-        do i = 1, nr
+      do j = 1, x%col%nb
+        do i = 1, x%row%nb
           call ColumnScale ( x%block(i,j), &
             & v%quantities(x%row%quant(j))%values(:,x%row%inst(j)) )
-        end do ! i = nr
-      end do ! j = nc
+        end do ! i = x%row%nb
+      end do ! j = x%col%nb
     end if
   end subroutine ColumnScale_1
 
@@ -523,9 +502,7 @@ contains ! =====     Public Procedures     =============================
 
   ! --------------------------------------------  CopyMatrixValue  -----
   subroutine CopyMatrixValue ( Z, X )   ! Copy the elements of X to Z.
-  ! Z and X must have the same template, but it's OK if they don't both
-  ! have row%extra or col%extra.  If Z has extra and X does not, Z's
-  ! extra is deleted.
+  ! Z and X must have the same template.
     type(matrix_T), intent(inout) :: Z
     type(matrix_T), intent(in) :: X
     integer :: I, J ! Subscripts and loop inductors
@@ -540,16 +517,6 @@ contains ! =====     Public Procedures     =============================
         call copyBlock ( z%block(i,j), x%block(i,j) )
       end do ! j
     end do ! i
-    if ( z%col%nb > x%col%nb ) then
-      do i = 1, z%row%nb
-        call destroyBlock ( z%block(i, z%col%nb) )
-      end do ! i
-    end if
-    if ( z%row%nb > x%row%nb ) then
-      do j = 1, z%col%nb
-        call destroyBlock ( z%block(z%row%nb, j) )
-      end do ! j
-    end if
   end subroutine CopyMatrixValue
 
   ! ----------------------------------------------  CreateBlock_1  -----
@@ -573,8 +540,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------  CreateEmptyMatrix  -----
   subroutine CreateEmptyMatrix ( Z, Name, Row, Col &
-    &,                           Row_Quan_First, Col_Quan_First &
-    &,                           Extra_Row, Extra_Col )
+    &,                           Row_Quan_First, Col_Quan_First )
     type(Matrix_T), intent(out) :: Z    ! The matrix to create
     integer, intent(in) :: Name         ! Sub-rosa index of its name, or zero
     type(Vector_T), intent(in) :: Row       ! Vector used to define the row
@@ -587,17 +553,13 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in), optional :: Col_Quan_First    ! True (default false)
       ! means the quantity is the major order of the columns of blocks and the
       ! instance is the minor order.
-    logical, intent(in), optional :: Extra_Row         ! Allocate one extra
-      ! row, beyond what's specified by Col, if Extra_Row is present and true.
-    logical, intent(in), optional :: Extra_Col         ! Allocate one extra
-      ! column, beyond what's specified by Row, if Extra_Col is present and true.
 
     integer :: I, J      ! Subscripts, loop inductors
     integer :: STATUS    ! From ALLOCATE
 
     z%name = name
-    call defineInfo ( z%row, row, row_Quan_First, extra_Row )
-    call defineInfo ( z%col, col, col_Quan_First, extra_Col )
+    call defineInfo ( z%row, row, row_Quan_First )
+    call defineInfo ( z%col, col, col_Quan_First )
     allocate ( z%block(z%row%nb,z%col%nb), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate // "Z%Block in CreateEmptyMatrix" )
@@ -608,22 +570,18 @@ contains ! =====     Public Procedures     =============================
     end do
 
   contains
-    subroutine DefineInfo ( RC, Vec, QuanFirst, extra )
+    subroutine DefineInfo ( RC, Vec, QuanFirst )
       type(RC_Info), intent(out) :: RC
       type(Vector_T), intent(in) :: Vec
       logical, intent(in), optional :: QuanFirst
-      logical, intent(in), optional :: Extra
 
       integer :: I, J, N      ! Subscripts or loop inductors
       logical :: NEW          ! Was an instance seen?
 
-      rc%extra = .false.
-      if ( present(extra) ) rc%extra = extra
       rc%vec = vec
       rc%instFirst = .true.
       if ( present(quanFirst) ) rc%instFirst = .not. quanFirst
       rc%nb = vec%template%totalInstances
-      if ( rc%extra ) rc%nb = rc%nb + 1
       call allocate_test ( rc%nelts, rc%nb, &
         & "rc%nelts in CreateEmptyMatrix", ModuleName )
       call allocate_test ( rc%inst, rc%nb, "rc%inst in CreateEmptyMatrix", &
@@ -659,11 +617,6 @@ contains ! =====     Public Procedures     =============================
             rc%quant(n) = i
           end do ! j
         end do ! i
-      end if
-      if ( rc%extra ) then
-        rc%nelts(rc%nb) = 1
-        rc%inst(rc%nb) = 0
-        rc%quant(rc%nb) = 0
       end if
     end subroutine DefineInfo
   end subroutine CreateEmptyMatrix
@@ -764,70 +717,6 @@ contains ! =====     Public Procedures     =============================
     end subroutine DeallocateMatrix
   end subroutine DestroyMatrixDatabase
 
-  ! -----------------------------------------------  FillExtraCol  -----
-  subroutine FillExtraCol ( A, X, ROW )
-  ! Fill the "extra" column of A (see type RC_Info) from the vector X.
-  ! Assume it is full -- i.e. don't bother to sparsify it.  If ROW is
-  ! specified, it refers to a block-row, and only that row of the extra
-  ! column is filled.
-    type(Matrix_T), intent(inout) :: A
-    type(Vector_T), intent(in) :: X
-    integer, intent(in), optional :: ROW
-
-    integer :: I
-
-    ! Check compatibility of X with the row template for A
-    if ( a%row%vec%template%id /= x%template%id ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & "Vector incompatible with matrix in FillExtraCol" )
-    if ( .not. a%col%extra ) call MLSMessage ( MLSMSG_Error, moduleName, &
-      & "No extra column to fill in FillExtraCol" )
-    if ( present(row) ) then
-      if ( row < 1 .or. row > a%row%nb ) call MLSMessage ( MLSMSG_Error, &
-        & moduleName, "Row number out-of-range in FillExtraCol" )
-      if ( a%block(row,a%col%nb)%kind /= m_full ) &
-        & call destroyBlock ( a%block(row,a%col%nb) )
-      if ( .not. associated(a%block(row,a%col%nb)%values) ) &
-        & call createBlock ( a%block(row,a%col%nb), a%row%nelts(row), 1, m_full )
-      a%block(row,a%col%nb)%values(:,1) = &
-          & x%quantities(a%row%quant(row))%values(:,a%row%inst(row))
-    else
-      do i = 1, a%row%nb
-        call destroyBlock ( a%block(i,a%col%nb) )
-        call createBlock ( a%block(i,a%col%nb), a%row%nelts(i), 1, m_full )
-        if ( a%row%quant(i) /= 0 ) &
-          & a%block(i,a%col%nb)%values(:,1) = &
-            & x%quantities(a%row%quant(i))%values(:,a%row%inst(i))
-      end do ! i
-    end if
-  end subroutine FillExtraCol
-
-  ! -----------------------------------------------  FillExtraRow  -----
-  subroutine FillExtraRow ( A, X )
-  ! Fill the "extra" row of A (see type RC_Info) from the vector X.
-  ! The extra column in the extra row is not filled.
-    type(Matrix_T), intent(inout) :: A
-    type(Vector_T), intent(in) :: X
-
-    integer :: J, NB
-
-    ! Check compatibility of X with the column template for A
-    if ( a%col%vec%template%id /= x%template%id ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & "Vector incompatible with matrix in FillExtraRow" )
-    if ( .not. a%row%extra ) call MLSMessage ( MLSMSG_Error, moduleName, &
-      & "No extra row to fill in FillExtraRow" )
-    nb = a%col%nb
-    if ( a%col%extra ) nb = nb - 1
-    do j = 1, nb
-      call destroyBlock ( a%block(a%row%nb,j) )
-      call createBlock ( a%block(a%row%nb,j), 1, a%col%nelts(j), m_full )
-      if ( a%col%quant(j) /= 0 ) &
-        & a%block(a%row%nb,j)%values(1,:) = &
-          & x%quantities(a%col%quant(j))%values(:,a%col%inst(j))
-    end do ! i
-  end subroutine FillExtraRow
-
   ! --------------------------------------------------  FindBlock  -----
   integer function FindBlock ( RC, Quantity, Instance )
   ! Given quantity and instance numbers, find a block index.
@@ -858,7 +747,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ----------------------------------------------  GetDiagonal_1  -----
   subroutine GetDiagonal_1 ( A, X, SquareRoot )
-  ! Get X from the diagonal of A.  Don't get the extra row or column.
+  ! Get X from the diagonal of A.
   ! Destroy X and re-create it by cloning the row-defining vector of A.
   ! Return the square roots of the diagonal elements if SquareRoot is
   ! present and true.
@@ -866,12 +755,10 @@ contains ! =====     Public Procedures     =============================
     type(vector_T), intent(inout) :: X
     logical, intent(in), optional :: SquareRoot
 
-    integer :: I, N
+    integer :: I
 
     call cloneVector ( x, a%row%vec, vectorNameText='_x' )
-    n = max(a%row%nb,a%col%nb)
-    if ( a%row%extra .or. a%col%extra ) n = n - 1
-    do i = 1, n
+    do i = 1, min(a%row%nb,a%col%nb)
       call getDiagonal ( a%block(i,i), &
         & x%quantities(a%row%quant(i))%values(:,a%row%inst(i)), squareRoot )
     end do
@@ -977,11 +864,9 @@ contains ! =====     Public Procedures     =============================
       if ( ncols + matrix%col%nelts(block) >= column ) then
         colInBlock = column - ncols
         do row = 1, matrix%row%nb
-          if ( row <= vector%template%totalinstances ) & ! Don't get the extra
-            ! row if the vector doesn't have a place for it.
-            & call getVectorFromColumn ( matrix%block(row,block), colInBlock, &
-              & vector%quantities(matrix%row%quant(row))% &
-              & values(:,matrix%row%inst(row)) )
+          call getVectorFromColumn ( matrix%block(row,block), colInBlock, &
+            & vector%quantities(matrix%row%quant(row))% &
+            & values(:,matrix%row%inst(row)) )
         end do ! row = 1, matrix%row%nb
         return
       end if
@@ -1036,16 +921,11 @@ contains ! =====     Public Procedures     =============================
   ! ------------------------------------------------  MaxAbsVal_1  -----
   real(r8) function MaxAbsVal_1 ( A )
   ! Return the magnitude of the element in A that has the largest magnitude.
-  ! Don't include the extra row or column.
     type(Matrix_T), intent(in) :: A
-    integer :: I, J, M, N
+    integer :: I, J
     maxAbsVal_1 = 0.0_r8
-    m = a%row%nb
-    if ( a%row%extra ) m = m - 1
-    n = a%col%nb
-    if ( a%col%extra ) n = n - 1
-    do i = 1, m
-      do j = 1, n
+    do i = 1, a%row%nb
+      do j = 1, a%col%nb
         if ( a%block(i,j)%kind /= m_absent ) &
           & maxAbsVal_1 = max(maxAbsVal_1,maxAbsVal(a%block(i,j)))
       end do
@@ -1055,19 +935,14 @@ contains ! =====     Public Procedures     =============================
   ! ------------------------------------------------------  MaxL1  -----
   real(r8) function MaxL1 ( A )
   ! Return the L1 norm of the column in A that has the largest L1 norm.
-  ! Don't include the extra row or column.
     type(Matrix_T), intent(in) :: A
-    integer :: I, J, K, M, N
+    integer :: I, J, K
     real(r8) :: My_L1
     maxL1 = 0.0_r8
-    m = a%row%nb
-    if ( a%row%extra ) m = m - 1
-    n = a%col%nb
-    if ( a%col%extra ) n = n - 1
-    do j = 1, n
+    do j = 1, a%col%nb
       do k = 1, a%block(1,j)%ncols
         my_L1 = 0.0_r8
-        do i = 1, m
+        do i = 1, a%row%nb
           my_L1 = my_L1 + col_L1(a%block(i,j),k)
         end do
         maxL1 = max(maxL1, my_L1)
@@ -1078,7 +953,7 @@ contains ! =====     Public Procedures     =============================
   ! -------------------------------------------  MinDiag_Cholesky  -----
   real(r8) function MinDiag_Cholesky ( A )
   ! Return the magnitude of the element on the diagonal of A that has the
-  ! smallest magnitude.  If A has an extra column, ignore it.
+  ! smallest magnitude.
     type(Matrix_Cholesky_T), intent(in) :: A
     minDiag_Cholesky = minDiag_1 ( a%m )
   end function MinDiag_Cholesky
@@ -1086,7 +961,7 @@ contains ! =====     Public Procedures     =============================
   ! ------------------------------------------------  MinDiag_SPD  -----
   real(r8) function MinDiag_SPD ( A )
   ! Return the magnitude of the element on the diagonal of A that has the
-  ! smallest magnitude.  If A has an extra column, ignore it.
+  ! smallest magnitude.
     type(Matrix_SPD_T), intent(in) :: A
     minDiag_SPD = minDiag_1 ( a%m )
   end function MinDiag_SPD
@@ -1117,16 +992,15 @@ contains ! =====     Public Procedures     =============================
         do k = 2, x%row%nb
           call multiply ( x%block(k,i), y%block(k,j), z%block(i,j), &
             & update=.true. )
-        end do ! k = 2, x%nr
-      end do ! i = 1, x%nc
-    end do ! j = 1, y%nc
+        end do ! k = 2, x%row%nb
+      end do ! i = 1, x%col%nb
+    end do ! j = 1, y%col%nb
   end function MultiplyMatrices
 
   ! -------------------------------------  MultiplyMatrixVector_1  -----
   subroutine MultiplyMatrixVector_1 ( A, V, Z, UPDATE )
   ! Z = A^T V if UPDATE is absent or false.  Z is first cloned from V.
   ! Z = Z + A^T V is UPDATE is present and true.
-  ! The extra row and column are not multiplied, even if present.
     type(Matrix_T), intent(in) :: A
     type(Vector_T), intent(in) :: V
     type(Vector_T), intent(inout) :: Z
@@ -1136,7 +1010,6 @@ contains ! =====     Public Procedures     =============================
     !                           whether to clear an element of Z, or add to it
     integer :: I, J           ! Subscripts and loop inductors
     integer :: K, L, M, N     ! Subscripts
-    integer :: MB, NB         ! Loop limits
     logical :: MY_UPDATE      ! My copy of UPDATE or false if it's absent
 
     if ( a%row%vec%template%id /= v%template%id ) &
@@ -1149,15 +1022,11 @@ contains ! =====     Public Procedures     =============================
         & "Matrix and result not compatible in MultiplyMatrixVector_1" )
     ! Copy characteristics, allocate values:
     if ( .not. my_update ) call cloneVector ( z, v, vectorNameText='_z' )
-    mb = a%row%nb
-    if ( a%row%extra ) mb = mb - 1
-    nb = a%col%nb
-    if ( a%col%extra ) nb = nb - 1
-    do j = 1, nb
+    do j = 1, a%col%nb
       k = a%col%quant(j)
       l = a%col%inst(j)
       do_update = my_update
-      do i = 1, mb
+      do i = 1, a%row%nb
         m = a%row%quant(i)
         n = a%row%inst(i)
         call multiply ( a%block(i,j), v%quantities(m)%values(:,n), &
@@ -1214,7 +1083,6 @@ contains ! =====     Public Procedures     =============================
   ! Z = Z + A V is UPDATE is present and true.
   ! Remember that for SPD, only the upper triangle is stored, so we need
   ! Z = A^T V + A V except don't do the diagonal twice.
-  ! The extra row and column are not multiplied, even if present.
     type(Matrix_SPD_T), intent(in) :: A
     type(Vector_T), intent(in) :: V
     type(Vector_T), intent(inout) :: Z
@@ -1222,12 +1090,9 @@ contains ! =====     Public Procedures     =============================
 
     integer :: I, J           ! Subscripts and loop inductors
     integer :: K, L, M, N     ! Subscripts
-    integer :: NB             ! Loop bound
 
     call multiply ( a%m, v, z, update ) ! A^T V
-    nb = a%m%col%nb
-    if ( a%m%col%extra ) nb = nb - 1
-    do j = 1, nb
+    do j = 1, a%m%col%nb
       k = a%m%col%quant(j)
       l = a%m%col%inst(j)
       do i = 1, j
@@ -1236,7 +1101,7 @@ contains ! =====     Public Procedures     =============================
         call multiplyMatrixVectorNoT ( a%m%block(i,j), &
           & v%quantities(k)%values(:,l), z%quantities(m)%values(:,n), &
           & update=.true., doDiag = i /= j )
-      end do ! i = 1, a%m%row%nb
+      end do ! i = 1, j
     end do ! j = 1, a%m%col%nb
   end subroutine MultiplyMatrixVectorSPD_1
 
@@ -1294,31 +1159,26 @@ contains ! =====     Public Procedures     =============================
     my_update = .false.
     if ( present(update) ) my_update = update
     if ( .not. my_update ) &
-      & call createEmptyMatrix ( z%m, 0, a%col%vec, a%col%vec, &
-        &  extra_Row = a%col%extra, extra_Col=a%col%extra )
+      & call createEmptyMatrix ( z%m, 0, a%col%vec, a%col%vec )
     r1 = 1
     if ( present(row_block) ) r1 = row_block
     do j = 1, a%col%nb
       nullify ( mj )
-      if ( .not. ( j == a%col%nb .and. a%col%extra ) ) then
-        if ( associated(a%col%vec%quantities(a%col%quant(j))%mask) ) &
-          mj => a%col%vec%quantities(a%col%quant(j))%mask(:,a%col%inst(j))
-      end if
+      if ( associated(a%col%vec%quantities(a%col%quant(j))%mask) ) &
+        mj => a%col%vec%quantities(a%col%quant(j))%mask(:,a%col%inst(j))
       r2 = j
       if ( present(row_block) ) r2 = min(j,row_block)
       do i = r1, r2
         nullify ( mi )
-        if ( .not. ( i == a%col%nb .and. a%col%extra ) ) then
-          if ( associated(a%col%vec%quantities(a%col%quant(i))%mask) ) &
-            mi => a%col%vec%quantities(a%col%quant(i))%mask(:,a%row%inst(i))
-        end if
+        if ( associated(a%col%vec%quantities(a%col%quant(i))%mask) ) &
+          mi => a%col%vec%quantities(a%col%quant(i))%mask(:,a%row%inst(i))
         do_update = my_update
         do k = 1, a%row%nb
           call multiply ( a%block(k,i), a%block(k,j), z%m%block(i,j), &
             & update=do_update, xmask=mi, ymask=mj, upper = i == j )
           do_update = .true.
-        end do ! k = 2, a%row%nb
-      end do ! i = 1, a%col%nb
+        end do ! k = 1, a%row%nb
+      end do ! i = r1, r2
     end do ! j = 1, a%col%nb
 
     if ( present(rhs_in) .and. present(rhs_out) ) &
@@ -1328,8 +1188,7 @@ contains ! =====     Public Procedures     =============================
   ! -------------------------------------------------  RowScale_1  -----
   subroutine RowScale_1 ( V, X, NEWX, RowBlock )
   ! Z = V X where V is a diagonal matrix represented by a vector and Z
-  !   is X or NEWX. An "extra" row is not scaled (but an extra column
-  !   is).
+  !   is X or NEWX.
   ! If RowBlock is present, only that block of rows is scaled.
 
     type (Vector_T), intent(in) :: V
@@ -1338,37 +1197,33 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in), optional :: RowBlock
 
     integer :: I, J      ! Subscripts for [XZ]%Block
-    integer :: NC, NR    ! Numbers of columns and rows.
     integer :: R1, R2    ! First and last rows to scale
 
-    nc = x%col%nb
-    nr = x%row%nb
-    if ( x%row%extra ) nr = nr - 1
     if ( present(rowBlock) ) then
       r1 = rowBlock
       r2 = rowBlock
     else
       r1 = 1
-      r2 = nr
+      r2 = x%row%nb
     end if
     if ( present(newx) ) then
       call createEmptyMatrix ( newx, 0, x%row%vec, x%col%vec, &
         & x%row%instFirst, x%col%instFirst )
-      do j = 1, nc
+      do j = 1, x%col%nb
         do i = r1, r2
           call RowScale ( &
             & v%quantities(x%row%quant(i))%values(:,x%row%inst(i)), &
             & x%block(i,j), newx%block(i,j) )
-        end do ! i = nr
-      end do ! j = nc
+        end do ! i = r1, r2
+      end do ! j = x%col%nb
     else
-      do j = 1, nc
+      do j = 1, x%col%nb
         do i = r1, r2
           call RowScale ( &
             & v%quantities(x%row%quant(i))%values(:,x%row%inst(i)), &
             & x%block(i,j) )
-        end do ! i = nr
-      end do ! j = nc
+        end do ! i = r1, r2
+      end do ! j = x%col%nb
     end if
   end subroutine RowScale_1
 
@@ -1392,14 +1247,12 @@ contains ! =====     Public Procedures     =============================
   ! RHS may be the same as X.  RHS may be absent, in which case X is
   ! assumed to contain the right-hand side on input, and the solution
   ! replaces it on output.
-  ! If Z has an extra column, extract it into a vector bu using
-  ! GetVectorFromColumn, and pass it in as X.
     type(Matrix_Cholesky_T), intent(in) :: Z
     type(Vector_T), intent(inout), target :: X
     type(Vector_T), intent(in), target, optional :: RHS
     logical, optional, intent(in) :: TRANSPOSE
 
-    integer :: I, J, N             ! Subscripts and loop inductors
+    integer :: I, J                ! Subscripts and loop inductors
     integer :: IC, IR, QC, QR      ! Instance and quantity indices
     logical My_transpose           ! TRANSPOSE if present, else .false.
 
@@ -1410,10 +1263,8 @@ contains ! =====     Public Procedures     =============================
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & "Z and RHS not compatible in SolveCholesky_1" )
 
-    n = z%m%col%nb
-    if ( z%m%col%extra ) n = n - 1
     if ( my_transpose ) then       ! Solve Z^T X = RHS for X
-      do i = 1, n
+      do i = 1, z%m%col%nb
         ic = z%m%col%inst(i)
         qc = z%m%col%quant(i)
         do j = 1, i-1
@@ -1425,35 +1276,35 @@ contains ! =====     Public Procedures     =============================
         end do ! j = 1, i-1
         call solveCholesky ( z%m%block(i,i), x%quantities(qc)%values(:,ic), &
           & transpose=.true. )
-      end do ! i = 1, n
+      end do ! i = 1, z%m%col%nb
     else                           ! Solve Z X = RHS for X
-      do i = n, 1, -1
+      do i = z%m%col%nb, 1, -1
         ic = z%m%row%inst(i)
         qc = z%m%row%quant(i)
-        do j = i+1, n
+        do j = i+1, z%m%col%nb
           ir = z%m%col%inst(j)
           qr = z%m%col%quant(j)
           ! x := x - block * x
           call multiplyMatrixVectorNoT ( z%m%block(i,j), &
             & x%quantities(qr)%values(:,ir), x%quantities(qc)%values(:,ic), &
             & update=.true., subtract=.true. )
-        end do ! j = 1, i-1
+        end do ! j = i+1, z%m%col%nb
         call solveCholesky ( z%m%block(i,i), x%quantities(qc)%values(:,ic), &
           & transpose=.false. )
-      end do ! i = n, 1, -1
+      end do ! i = z%m%col%nb, 1, -1
     end if
   end subroutine SolveCholesky_1
 
   ! -------------------------------------------  UpdateDiagonal_1  -----
   subroutine UpdateDiagonal_1 ( A, LAMBDA, SQUARE, INVERT )
-  ! Add LAMBDA to the diagonal of A.  Don't update the extra row or column.
+  ! Add LAMBDA to the diagonal of A.
     type(Matrix_SPD_T), intent(inout) :: A
     real(r8), intent(in) :: LAMBDA
     logical, intent(in), optional :: SQUARE ! Update with square of lambda
     logical, intent(in), optional :: INVERT ! Update with inverse of (square
     !                                         of) lambda
 
-    integer :: I, N
+    integer :: I
     real(r8) :: MYLAMBDA
 
     myLambda = lambda
@@ -1467,11 +1318,8 @@ contains ! =====     Public Procedures     =============================
         myLambda = 1.0_r8 / myLambda
       end if
     end if
-
-    n = max(a%m%row%nb,a%m%col%nb)
-    if ( a%m%row%extra .or. a%m%col%extra ) n = n - 1
     
-    do i = 1, n
+    do i = 1, min(a%m%row%nb,a%m%col%nb)
       call updateDiagonal ( a%m%block(i,i), myLambda )
     end do
 
@@ -1479,7 +1327,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ----------------------------------------  UpdateDiagonalVec_1  -----
   subroutine UpdateDiagonalVec_1 ( A, X, SUBTRACT, SQUARE, INVERT )
-  ! Add X to the diagonal of A.  Don't update the extra row or column.
+  ! Add X to the diagonal of A.
   ! If SUBTRACT is present and true, subtract X from the diagonal.
     type(matrix_SPD_T), intent(inout) :: A
     type(vector_T), intent(in) :: X
@@ -1488,7 +1336,7 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in), optional :: INVERT ! Update with inverse of (square
     !                                         of) X
 
-    integer :: I, N
+    integer :: I
     logical :: MYSQUARE
 
     mySquare = .false.
@@ -1497,16 +1345,14 @@ contains ! =====     Public Procedures     =============================
     if ( a%m%col%vec%template%id /= x%template%id ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & "A and X not compatible in UpdateDiagonalVec_1" )
-    n = max(a%m%row%nb,a%m%col%nb)
-    if ( a%m%row%extra .or. a%m%col%extra ) n = n - 1
     if ( mySquare ) then
-      do i = 1, n
+      do i = 1, min(a%m%row%nb,a%m%col%nb)
         call updateDiagonal ( a%m%block(i,i), &
           & (x%quantities(a%m%row%quant(i))%values(:,a%m%row%inst(i)))**2, &
           & subtract, invert )
       end do
     else
-      do i = 1, n
+      do i = 1, min(a%m%row%nb,a%m%col%nb)
         call updateDiagonal ( a%m%block(i,i), &
           & x%quantities(a%m%row%quant(i))%values(:,a%m%row%inst(i)), &
           & subtract, invert )
@@ -1540,7 +1386,6 @@ contains ! =====     Public Procedures     =============================
     call destroyRCInfo ( a )
     a%vec = b%vec
     a%nb = b%nb
-    a%extra = b%extra
     a%instFirst = b%instFirst
     call allocate_test ( a%nelts, size(b%nelts), "a%nelts in CopyRCInfo", &
       & moduleName )
@@ -1638,21 +1483,13 @@ contains ! =====     Public Procedures     =============================
         call output ( ' and column ' )
         call output ( j )
         call output ( ' ( ' )
-        if ( matrix%row%extra .and. i == matrix%row%nb ) then
-          call output ( '_extra_' )
-        else
-          call display_string ( &
-            & matrix%row%vec%quantities(matrix%row%quant(i))%template%name )
-        end if
+        call display_string ( &
+          & matrix%row%vec%quantities(matrix%row%quant(i))%template%name )
         call output ( ':' )
         call output ( matrix%row%Inst(i) )
         call output (' , ')
-        if ( matrix%col%extra .and. j == matrix%col%nb ) then
-          call output ( '_extra_' )
-        else
-          call display_string ( &
-            & matrix%col%vec%quantities(matrix%col%quant(j))%template%name )
-        end if
+        call display_string ( &
+          & matrix%col%vec%quantities(matrix%col%quant(j))%template%name )
         call output ( ':' )
         call output ( matrix%col%Inst(j) )
         call output ( ' )' )
@@ -1719,19 +1556,16 @@ contains ! =====     Public Procedures     =============================
       call output ( 'Numbers of ' )
       call output ( r_or_c )
       call output ( 's in each block' )
-      if ( rc%extra ) call output ( ' (including extra)' )
       call output ( ':', advance='yes' )
       call dump ( rc%nelts )
       call output ( 'Instance indices for blocks in the ' )
       call output ( r_or_c )
       call output ( 's' )
-      if ( rc%extra ) call output ( ' (including extra)' )
       call output ( ':', advance='yes' )
       call dump ( rc%inst )
       call output ( 'Quantity indices for blocks in the ' )
       call output ( r_or_c )
       call output ( 's' )
-      if ( rc%extra ) call output ( ' (including extra)' )
       call output ( ':', advance='yes' )
       call dump ( rc%quant )
     end if
@@ -1778,19 +1612,20 @@ contains ! =====     Public Procedures     =============================
   ! --------------------------------------------------  MinDiag_1  -----
   real(r8) function MinDiag_1 ( A )
   ! Return the magnitude of the element on the diagonal of A that has the
-  ! smallest magnitude.  If A has an extra column, ignore it.
+  ! smallest magnitude.
     type(Matrix_T), intent(in) :: A
-    integer :: I, N
-    n = a%col%nb
-    if ( a%col%extra ) n = n - 1
+    integer :: I
     minDiag_1 = minDiag(a%block(1,1))
-    do i = 2, n
+    do i = 2, a%col%nb
       minDiag_1 = min(minDiag_1,minDiag(a%block(i,i)))
     end do
   end function MinDiag_1
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.50  2001/07/26 20:34:04  vsnyder
+! Eliminate the 'extra' field
+!
 ! Revision 2.49  2001/07/19 17:50:42  vsnyder
 ! Add 'row_block' optional argument to RowScale and NormalEquations
 !
