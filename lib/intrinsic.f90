@@ -7,6 +7,9 @@ module INTRINSIC
 
 ! Declaring the definitions is handled by the tree walker.
 
+  use MOLECULES ! everything, in particular FIRST_MOLECULE, INIT_MOLECULES,
+  !               and LAST_MOLECULE.  There is no "only" clause so as to
+  !               make all of the literals, e.g. l_h2o, available here, too.
   use SYMBOL_TABLE, only: ENTER_TERMINAL
   use SYMBOL_TYPES, only: T_IDENTIFIER
 
@@ -46,8 +49,8 @@ module INTRINSIC
   integer, public :: PHYQ_INDICES(first_phyq:last_phyq)
 
 ! Enumeration literals:
-  integer, public, parameter :: FIRST_LIT       = 1
-  integer, public, parameter :: L_BASELINE      = first_lit
+  integer, public, parameter :: FIRST_LIT       = first_molecule
+  integer, public, parameter :: L_BASELINE      = last_molecule+1
   integer, public, parameter :: L_DAYS          = l_baseline + 1
   integer, public, parameter :: L_DEG           = l_days + 1
   integer, public, parameter :: L_DEGREES       = l_deg + 1
@@ -107,6 +110,10 @@ contains ! =====     Public procedures     =============================
   subroutine INIT_INTRINSIC ( DATA_TYPE_INDICES, LIT_INDICES )
     integer, intent(inout) :: DATA_TYPE_INDICES(:)
     integer, intent(inout) :: LIT_INDICES(:)
+
+  ! Put molecules into the symbol table.
+
+    call init_molecules ( lit_indices )
 
   ! Put intrinsic predefined identifiers into the symbol table.
 
@@ -197,6 +204,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.3  2001/02/01 01:23:18  vsnyder
+! Account for the Molecules module
+!
 ! Revision 2.2  2001/01/31 23:32:31  vsnyder
 ! Moved l_temperature l_temperature_prec l_ptan l_tangentheight l_sidebandratio
 ! l_scvel l_orbitinclination l_geodaltitude l_radiance l_scanresidual l_gph
