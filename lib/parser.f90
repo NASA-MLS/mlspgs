@@ -309,6 +309,7 @@ o:  do
     do
       select case ( next%class )
       case ( t_end_of_stmt )  ! spec_rest -> \lambda
+        call build_tree ( n_spec_args, 1 )
 !       call get_token
     exit
       case ( t_equal )        ! spec_rest -> '=' expr +
@@ -377,6 +378,9 @@ o:  do
 end module PARSER
 
 ! $Log$
+! Revision 2.3  2000/11/15 22:01:18  vsnyder
+! Allow specification with no arguments.
+!
 ! Revision 2.2  2000/11/15 21:15:27  vsnyder
 ! Corrected a loop on a bad primary; correct processing of spec with no fields
 !
