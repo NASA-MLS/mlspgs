@@ -11,7 +11,7 @@
 
 ; These macros define the MLS standard products
 !define(allStandardProductsWithColumns,{BrO,CH3CN,ClO,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,N2O,O3,OH})
-!define(allStandardProductsWithoutColumns,{Temperature,GPH,RHI})
+!define(allStandardProductsWithoutColumns,{Temperature,GPH,RHI,IWC})
 !define(allStandardProducts,{!allStandardProductsWithColumns,!allStandardProductsWithoutColumns})
 
 ;; This macro is used in sids runs to get the band number part of a band
@@ -28,7 +28,6 @@ begin Fill
   ;; Define state related vectors
   x$1: Vector, template=x$1Template
   a$1: Vector, template=x$1Template
-  t$1: Vector, template=x$1Template
   vr$1: Vector, template=x$1Template
   hr$1: Vector, template=x$1Template
   sdIn$1: Vector, template=x$1Template
@@ -86,8 +85,20 @@ begin Fill
 
   ;; FM output will be turned on again, sometime, for the PEs
   !ifdef(flagPrecisionEstimates,{},{Transfer, source=f$1, destination=fwm})
-  ;; Clean up
+  ;; Clean up dead vectors and matrices
   Destroy, matrix=myCovariance$1
+  Destroy, vector=x$1
+  Destroy, vector=a$1
+  Destroy, vector=vr$1
+  Destroy, vector=hr$1
+  Destroy, vector=sdIn$1
+  Destroy, vector=sdOut$1
+  Destroy, vector=lb$1
+  Destroy, vector=hb$1
+  Destroy, vector=y$1
+  Destroy, vector=yNoise$1
+  Destroy, vector=f$1
+  !ifdef(flagPrecisionEstimates,{},{Destroy, vector=od$1})
   ;; Compute new full GPH profile
   Fill, quantity=state.gph, method=hydrostatic, $
     refGPHquantity=state.refGPH, temperatureQuantity=state.temperature
@@ -112,6 +123,9 @@ end Fill
   begin Join
     !forall(joinOneDiagDGG,!outputRetrievalDiagnostics)
   end Join})
+  begin Fill
+    Destroy, vector=diag$1
+  end Fill
 })
 
 ;; This macro initialises the _HR species with interpolations of their
@@ -166,10 +180,10 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
      measurements=y!phase.band$1
    Fill, quantity=radianceDiagnostics.chisqBinned$1, method=binmax, $
      sourceQuantity=radianceDiagnostics.chisqMMIF$1, $
-     ptanQuantity=state.ptanGHz
+     ptanQuantity=state.ptan!moduleForBand($1)
    Fill, quantity=radianceDiagnostics.noRadsBinned$1, method=binTotal, $
      sourceQuantity=radianceDiagnostics.noRadsPerMIF$1, $
-     ptanQuantity=state.ptanGHz!nl})
+     ptanQuantity=state.ptan!moduleForBand($1)!nl})
 
 ;; This macro joins the above filled quantities
 !define(joinRadianceDiagnostics,{!dnl
@@ -216,7 +230,7 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
 ;; in $2
 !define(directWriteFwmRad,{
   !ifdef(l2version,{directWrite, source=fwm.band$1, /prefixSignal, $
-  sdName=' model $2', file='!outpathl2fwm/MLS-Aura_L2FWM-Full_!l2version_!day.h4'})})
+  sdName=' model $2', file='!outpathl2fwm/MLS-Aura_L2FWM-$3_!l2version_!day.h4'})})
 
 ;; This macro uses the joinDGG (for the moment, will use DGM when we
 ;; got to hdf5) to join the diagnostics stuff
@@ -242,7 +256,16 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
   vRegWeightVec=vr$1, hRegWeightVec=hr$1, $
   lowBound=lb$1, highBound=hb$1, diagnostics=diag$1})})
 
+;; This macro is used to transfer a product into the 'standard products'
+;; vector
+!define(makeStandardProduct,{!dnl
+  Fill, quantity=standardProducts.$1, method=vector, sourceQuantity=state.$1
+  Fill, quantity=standardPrecision.$1, method=vector, sourceQuantity=outputPrecision.$1!nl})
+
 ; $Log$
+; Revision 1.54  2003/05/29 16:41:17  livesey
+; Made allBandUSBs skip the upper sidebands in R1A/R1B
+;
 ; Revision 1.53  2003/05/12 02:07:56  livesey
 ; Output subset of retrieval diagnostics, and drop precisions.
 ;
