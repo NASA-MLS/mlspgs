@@ -773,7 +773,7 @@ op:   do j = 2, nsons(pfaTree)
     end if
 
     if ( dumpFwm > 0 .or. error /= 0 ) then
-      call dump ( info, 'DeriveFromForwardModelConfig' )
+      call dump ( info, 'ConstructForwardModelConfig' )
       if ( dumpFwm > 1 .and. error == 0 ) stop ! error message will stop later
     end if
 
@@ -1097,6 +1097,9 @@ op:   do j = 2, nsons(pfaTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.104  2004/11/16 02:56:01  vsnyder
+! Dump imputed to wrong requestor
+!
 ! Revision 2.103  2004/11/05 19:39:06  vsnyder
 ! Moved some stuff here from fwdmdl/Get_Species_Data
 !
