@@ -33,7 +33,7 @@ begin Fill
 
   ;; ----------------------------------------- CH3CN
   !define(flaggingBands,{2,3,4,5})
-  !makeFlagsForOneProduct(product=HCN,radiometer=R2,chisqScale=500.0,minRads=5000,cloudMax=5K)
+  !makeFlagsForOneProduct(product=CH3CN,radiometer=R2,chisqScale=500.0,minRads=5000,cloudMax=5K)
 
 end Fill
 
