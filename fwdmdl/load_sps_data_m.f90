@@ -3,7 +3,7 @@
 
 module LOAD_SPS_DATA_M
 
-  use MLSCommon, only: R8, RP, IP
+  use MLSCommon, only: R8, RP
 
   implicit NONE
 
@@ -34,9 +34,9 @@ module LOAD_SPS_DATA_M
   character (len=*), parameter :: IdParm = &
     & "$Id$"
   character (len=len(idParm)) :: Id = idParm
-  character (LEN=*), parameter :: ModuleName= &
+  character (len=*), parameter :: ModuleName= &
     & "$RCSfile$"
-  private :: not_used_here 
+  private :: NOT_USED_HERE 
 !---------------------------------------------------------------------------
 contains
 !-------------------------------------------------------------------
@@ -314,12 +314,15 @@ contains
 
   end subroutine Destroygrids_t
 
-  logical function not_used_here()
+  logical function NOT_USED_HERE()
     not_used_here = (id(1:1) == ModuleName(1:1))
-  end function not_used_here
+  end function NOT_USED_HERE
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.29  2002/10/08 17:08:05  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.28  2002/10/03 05:37:53  livesey
 ! Minor efficiency improvement in derivative selection
 !
