@@ -76,7 +76,8 @@ module INTRINSIC
   integer, parameter :: L_DAYS          = l_cloudWater + 1
   integer, parameter :: L_DEG           = l_days + 1
   integer, parameter :: L_DEGREES       = l_deg + 1
-  integer, parameter :: L_DIMENSIONLESS = l_degrees + 1
+  integer, parameter :: L_DEGREESOFFREEDOM = l_degrees + 1
+  integer, parameter :: L_DIMENSIONLESS = l_degreesOfFreedom + 1
   integer, parameter :: L_DIMLESS       = l_dimensionless + 1
   integer, parameter :: L_DL            = l_dimless + 1
   integer, parameter :: L_DOBSONUNITS   = l_dl + 1
@@ -241,6 +242,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_days) =                  add_ident ( 'days' )
     lit_indices(l_deg) =                   add_ident ( 'deg' )
     lit_indices(l_degrees) =               add_ident ( 'degrees' )
+    lit_indices(l_degreesOfFreedom) =      add_ident ( 'degreesOfFreedom' )
     lit_indices(l_dimensionless) =         add_ident ( 'dimensionless' )
     lit_indices(l_dimless) =               add_ident ( 'dimless' )
     lit_indices(l_dl) =                    add_ident ( 'dl' )
@@ -402,6 +404,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.38  2001/10/02 23:39:39  vsnyder
+! Add L_DegreesOfFreedom
+!
 ! Revision 2.37  2001/09/17 23:14:14  livesey
 ! Bug fix, added name for t_instrument
 !
