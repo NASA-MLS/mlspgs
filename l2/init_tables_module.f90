@@ -773,6 +773,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_outputCovariance, s+s_matrix, n+n_field_spec, &
              begin, f+f_outputSD, s+s_vector, n+n_field_spec, &
              begin, f+f_regAfter, t+t_boolean, n+n_field_type, &
+             begin, f+f_regApriori, t+t_boolean, n+n_field_type, &
              begin, f+f_state, s+s_vector, nr+n_field_spec, &
              begin, f+f_toleranceA, t+t_numeric, n+n_field_type, &
              begin, f+f_toleranceF, t+t_numeric, n+n_field_type, &
@@ -877,6 +878,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.244  2002/10/02 02:43:07  livesey
+! Added regApriori
+!
 ! Revision 2.243  2002/10/01 18:29:40  mjf
 ! Added new quantitites for new Fill for RHi precision including T
 ! error.
