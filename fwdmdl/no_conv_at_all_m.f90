@@ -8,6 +8,7 @@ module NO_CONV_AT_ALL_M
   use ForwardModelConfig, only: ForwardModelConfig_T
   use Intrinsic, only: L_VMR
   use String_Table, only: GET_STRING
+  use MatrixModule_1, only: Matrix_T
   implicit NONE
   private
   public :: NO_CONV_AT_ALL
@@ -23,40 +24,47 @@ contains
 ! convolution grid to the users specified points. This module uses
 ! cubic spline interpolation to do the job.
 !
-  Subroutine no_conv_at_all (forwardModelConfig, forwardModelIn, Ptan, &
-         n_sps,tan_press,i_raw,k_temp,k_atmos,no_tan_hts,k_info_count, &
-         i_star_all, k_star_all, k_star_info,no_t,no_phi_t,t_z_basis)
+  Subroutine no_conv_at_all (forwardModelConfig, forwardModelIn, maf, &
+    & windowStart, windowFinish, temp, ptan, radiance, &
+    & tan_press,i_raw,k_temp,k_atmos, i_star_all, Jacobian )
 !
     type (ForwardModelConfig_T) :: FORWARDMODELCONFIG
     type (Vector_T), intent(in) :: FORWARDMODELIN
-    real(r8), intent(in), dimension(:) :: Ptan
-!
-    integer(i4), intent(IN) :: no_t,n_sps,no_tan_hts,no_phi_t
-!
-    real(r8), intent(IN) :: I_RAW(:),TAN_PRESS(:),T_Z_BASIS(:)
+    integer, intent(in) :: MAF
+    integer, intent(in) :: WINDOWSTART
+    integer, intent(in) :: WINDOWFINISH
+    type (VectorValue_T), intent(in) :: TEMP
+    type (VectorValue_T), intent(in) :: PTAN
+    type (VectorValue_T), intent(in) :: RADIANCE
+
+    real(r8), intent(IN) :: I_RAW(:),TAN_PRESS(:)
 
     Real(r4) :: k_temp(:,:,:)                    ! (Nptg,mxco,mnp)
     Real(r4) :: k_atmos(:,:,:,:)                 ! (Nptg,mxco,mnp,Nsps)
+
+    type (Matrix_T), intent(inout), optional :: Jacobian
 !
 ! -----     Output Variables   ----------------------------------------
 !
-    integer(i4), intent(out) :: K_INFO_COUNT
 !
     real(r8), intent(OUT) :: I_STAR_ALL(:)
-    real(r4), intent(OUT) :: K_STAR_ALL(:,:,:,:)
-    type(k_matrix_info), intent(OUT) :: k_star_info(:)
 !
 ! -----     Local Variables     ----------------------------------------
 !
+    integer(i4):: no_t,no_tan_hts,no_phi_t
     type (VectorValue_T), pointer :: F  ! vmr quantity
     integer(i4) :: nz
     integer(i4) :: N, I, IS, J, K, NF, SV_I, Spectag, ki, kc
 !
-    real(r8) :: RAD(size(Ptan)), SRad(size(Ptan))
+    real(r8) :: RAD(ptan%template%noSurfs), SRad(ptan%template%noSurfs)
 !
     Character(LEN=01) :: CA
 !
 ! -----  Begin the code  -----------------------------------------
+!
+    no_t = temp%template%noSurfs
+    no_phi_t = temp%template%noInstances
+    no_tan_hts = size(tan_press)
 !
 ! Compute the ratio of the strengths
 !
@@ -64,11 +72,10 @@ contains
 !
     ki = 0
     kc = 0
-    K_INFO_COUNT = 0
 !
     k = no_tan_hts
-    j = size(Ptan)
-    Call Cspline(tan_press,Ptan,i_raw,i_star_all,k,j)
+    j = ptan%template%noSurfs
+    Call Cspline(tan_press,Ptan%values(:,maf),i_raw,i_star_all,k,j)
 !
     if(.not. ANY((/forwardModelConfig%temp_der,forwardModelConfig%atmos_der,&
       & forwardModelConfig%spect_der/))) Return
@@ -86,11 +93,11 @@ contains
 !
       ki = ki + 1
       kc = kc + 1
-      k_star_info(kc)%name = 'TEMP'
-      k_star_info(kc)%first_dim_index = ki
-      k_star_info(kc)%no_zeta_basis = no_t
-      k_star_info(kc)%no_phi_basis = no_phi_t
-      k_star_info(kc)%zeta_basis(1:no_t) = t_z_basis(1:no_t)
+!       k_star_info(kc)%name = 'TEMP'
+!       k_star_info(kc)%first_dim_index = ki
+!       k_star_info(kc)%no_zeta_basis = no_t
+!       k_star_info(kc)%no_phi_basis = no_phi_t
+!       k_star_info(kc)%zeta_basis(1:no_t) = t_z_basis(1:no_t)
 !
       Rad(1:) = 0.0
       do nf = 1, no_phi_t
@@ -98,8 +105,8 @@ contains
         do sv_i = 1, no_t
 !
           Rad(1:k) = k_temp(1:k,sv_i,nf)
-          Call Cspline(tan_press,Ptan,Rad,SRad,k,j)
-          k_star_all(ki,sv_i,nf,1:j) = SRad(1:j)
+          Call Cspline(tan_press,Ptan%values(:,maf),Rad,SRad,k,j)
+!          k_star_all(ki,sv_i,nf,1:j) = SRad(1:j)
 !
         end do
 !
@@ -111,7 +118,7 @@ contains
 !
 ! ****************** atmospheric derivatives ******************
 !
-      do is = 1, n_sps
+      do is = 1, size(ForwardModelConfig%molecules)
 !
          f => GetVectorQuantityByType ( forwardModelIn, quantityType=l_vmr, &
           & molecule=forwardModelConfig%molecules(is), noError=.true. )
@@ -121,11 +128,11 @@ contains
           ki = ki + 1
           kc = kc + 1
           nz = f%template%noSurfs
-          call get_string(f%template%name,k_star_info(kc)%name)
-          k_star_info(kc)%first_dim_index = ki
-          k_star_info(kc)%no_phi_basis = f%template%noInstances
-          k_star_info(kc)%no_zeta_basis = nz
-          k_star_info(kc)%zeta_basis(1:nz) = f%template%surfs(1:nz,1)
+!           call get_string(f%template%name,k_star_info(kc)%name)
+!           k_star_info(kc)%first_dim_index = ki
+!           k_star_info(kc)%no_phi_basis = f%template%noInstances
+!           k_star_info(kc)%no_zeta_basis = nz
+!           k_star_info(kc)%zeta_basis(1:nz) = f%template%surfs(1:nz,1)
           Rad(1:) = 0.0
 !
           ! Derivatives needed continue to process
@@ -137,8 +144,8 @@ contains
 ! Derivatives needed continue to process
 !
               Rad(1:k) = k_atmos(1:k,sv_i,nf,is)
-              Call Lintrp(tan_press,Ptan,Rad,SRad,k,j)
-              k_star_all(ki,sv_i,nf,1:j) = SRad(1:j)
+              Call Lintrp(tan_press,Ptan%values(:,maf),Rad,SRad,k,j)
+!              k_star_all(ki,sv_i,nf,1:j) = SRad(1:j)
 !
             end do
 !
@@ -209,7 +216,6 @@ contains
 ! !
 !     endif
 !
-    K_INFO_COUNT = kc
 
     Return
 !
@@ -217,6 +223,9 @@ contains
 !
 end module NO_CONV_AT_ALL_M
 ! $Log$
+! Revision 1.9  2001/04/10 10:14:16  zvi
+! Fixing bug in convolve routines
+!
 ! Revision 1.8  2001/04/10 02:25:14  livesey
 ! Tidied up some code
 !

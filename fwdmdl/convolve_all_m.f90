@@ -12,6 +12,7 @@ module CONVOLVE_ALL_M
   use MLSCommon, only: I4, R4, R8
   use Intrinsic, only: L_VMR
   use String_table, only: GET_STRING
+  use MatrixModule_1, only: FINDBLOCK, Matrix_T
 
   implicit NONE
   private
@@ -28,53 +29,56 @@ contains
   ! convolution grid to the users specified points. This module uses
   ! cubic spline interpolation to do the job.
 
-  Subroutine convolve_all (ForwardModelConfig, ForwardModelIn,&
-    Ptan,n_sps, &
+  Subroutine convolve_all (ForwardModelConfig, ForwardModelIn, maf, &
+    windowStart, windowFinish, temp, ptan, radiance, &
     tan_press,ptg_angles,tan_temp,dx_dt,d2x_dxdt,  &
     si,center_angle,i_raw, k_temp, k_atmos, &
-    no_tan_hts,k_info_count,  &
-    i_star_all,k_star_all,k_star_info,no_t,no_phi_t,     &
-    t_z_basis,AntennaPattern,Ier)
+    i_star_all, Jacobian,AntennaPattern,Ier)
 
     ! Dummy arguments
     type (ForwardModelConfig_T), intent(in) :: FORWARDMODELCONFIG
     type (Vector_t), intent(in) :: FORWARDMODELIN
-    real(r8), dimension(:), intent(IN) :: Ptan
+    integer, intent(in) :: MAF
+    integer, intent(in) :: WINDOWSTART
+    integer, intent(out) :: WINDOWFINISH
+    type (VectorValue_T), intent(in) :: TEMP
+    type (VectorValue_T), intent(in) :: PTAN
+    type (VectorValue_T), intent(inout) :: RADIANCE
+    type (Matrix_T), intent(inout), optional :: Jacobian
 
-    integer(i4), intent(IN) :: no_t, n_sps, no_tan_hts, si,&
-      &                           no_phi_t
-
+    integer, intent(IN) :: si
     real(r8), intent(IN) :: CENTER_ANGLE
-    real(r8), intent(IN) :: I_RAW(:), T_Z_BASIS(:)
+    real(r8), intent(IN) :: I_RAW(:)
     real(r8), intent(IN) :: TAN_PRESS(:), PTG_ANGLES(:), TAN_TEMP(:)
     real(r8), intent(IN) :: DX_DT(:,:), D2X_DXDT(:,:)
+    real(r8), intent(OUT) :: i_star_all(:) 
     type(antennaPattern_T), intent(in) :: AntennaPattern
 
     Real(r4) :: k_temp(:,:,:)                   ! (Nptg,mxco,mnp)
     Real(r4) :: k_atmos(:,:,:,:)                ! (Nptg,mxco,mnp,Nsps)
-!
-    ! -----     Output Variables   ----------------------------------------
-!
-    integer(i4), intent(out) :: IER, K_INFO_COUNT
-!
-    real(r8), intent(OUT) :: I_STAR_ALL(:)
-    real(r4), intent(OUT) :: K_STAR_ALL(:,:,:,:)
-    type(k_matrix_info), intent(OUT) :: k_star_info(:)
-!
+
+    integer, intent(out) :: ier         ! Flag
+
     ! -----     Local Variables     ----------------------------------------
+
 
     type (VectorValue_t), pointer :: f
 !
-    integer(i4) :: FFT_INDEX(size(antennaPattern%aaap)), nz
-    integer(i4) :: n,i,j,is,Ktr,nf,Ntr,ptg_i,sv_i,Spectag,ki,kc,jp, fft_pts
+    integer :: FFT_INDEX(size(antennaPattern%aaap)), nz
+    integer :: n,i,j,is,Ktr,nf,Ntr,ptg_i,sv_i,Spectag,ki,kc,jp, fft_pts
+    integer :: row,col                  ! Matrix entries
+    integer :: no_t, no_tan_hts, no_phi_t
 !
     Real(r8) :: Q, R
-    Real(r8) :: SRad(size(Ptan)), Term(size(Ptan))
+    Real(r8) :: SRad(ptan%template%noSurfs), Term(ptan%template%noSurfs)
     Real(r8), dimension(size(fft_index)) :: FFT_PRESS, FFT_ANGLES, RAD
 !
     Character(LEN=01) :: CA
 !
     ! -----  Begin the code  -----------------------------------------
+    no_t = temp%template%noSurfs
+    no_phi_t = temp%template%noInstances
+    no_tan_hts = size(tan_press)
 !
     ! Compute the ratio of the strengths
 !
@@ -82,19 +86,19 @@ contains
 !
     Ier = 0
     ntr = size(antennaPattern%aaap)
-    K_INFO_COUNT = 0
+!    K_INFO_COUNT = 0
     jp = (no_phi_t+1)/2
 !
     Rad(1:no_tan_hts) = i_raw(1:no_tan_hts)
 !
     kc = 0
     ki = 0
-    j = size(Ptan)
+    j = ptan%template%noSurfs
 !
     ! Compute the convolution of the mixed radiances
 !
     fft_pts = nint(log(real(size(AntennaPattern%aaap)))/log(2.0))
-    fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
+    fft_angles(1:size(tan_press)) = ptg_angles(1:size(tan_press))
     Call fov_convolve(fft_angles,Rad,center_angle,1,no_tan_hts, &
       &               fft_pts,AntennaPattern,Ier)
     if (Ier /= 0) Return
@@ -130,28 +134,31 @@ contains
     ! Interpolate the output values
     ! (Store the radiances derivative with respect to pointing pressures in: Term)
 !
-    Call Cspline_der(fft_press,Ptan,Rad,SRad,Term,Ktr,j)
+    Call Cspline_der(fft_press,Ptan%values(:,maf),Rad,SRad,Term,Ktr,j)
     i_star_all(1:j) = SRad(1:j)
 !
     ! Find out if user wants pointing derivatives
 !
-    if (.true.) then                    ! Add a condition later !??? NJL
+    if (present(Jacobian) ) then                    ! Add a condition later !??? NJL
 !
       ! Derivatives wanted,find index location k_star_all and write the derivative
+      row = FindBlock( Jacobian%row, ptan%index, maf )
+!      col = 
+
 !
       ki = ki + 1
       kc = kc + 1
-      k_star_info(kc)%name = 'PTAN'
-      k_star_info(kc)%first_dim_index = ki
-      k_star_info(kc)%no_phi_basis = 1
-      k_star_all(ki,1,1,1:j) = Term(1:j)
+!       k_star_info(kc)%name = 'PTAN'
+!       k_star_info(kc)%first_dim_index = ki
+!       k_star_info(kc)%no_phi_basis = 1
+!       k_star_all(ki,1,1,1:j) = Term(1:j)
 !
     endif
 
     if(.not. ANY((/forwardModelConfig%temp_der, &
       & forwardModelConfig%atmos_der,&
       & forwardModelConfig%spect_der/))) then
-      K_INFO_COUNT = kc
+!      K_INFO_COUNT = kc
       Return
     endif
 !
@@ -168,11 +175,11 @@ contains
 !
       ki = ki + 1
       kc = kc + 1
-      k_star_info(kc)%name = 'TEMP'
-      k_star_info(kc)%first_dim_index = ki
-      k_star_info(kc)%no_zeta_basis = no_t
-      k_star_info(kc)%no_phi_basis = no_phi_t
-      k_star_info(kc)%zeta_basis(1:no_t) = t_z_basis(1:no_t)
+!       k_star_info(kc)%name = 'TEMP'
+!       k_star_info(kc)%first_dim_index = ki
+!       k_star_info(kc)%no_zeta_basis = no_t
+!       k_star_info(kc)%no_phi_basis = no_phi_t
+!       k_star_info(kc)%zeta_basis(1:no_t) = t_z_basis(1:no_t)
 !
       do nf = 1, no_phi_t
 !
@@ -201,8 +208,8 @@ contains
             end do
           endif
 !
-          Call Cspline(fft_press,Ptan,Rad,SRad,Ktr,j)
-          k_star_all(ki,sv_i,nf,1:j) = SRad(1:j)
+          Call Cspline(fft_press,Ptan%values(:,maf),Rad,SRad,Ktr,j)
+!          k_star_all(ki,sv_i,nf,1:j) = SRad(1:j)
 !
           !  For any index off center Phi, skip the rest of the phi loop ...
 !
@@ -225,16 +232,16 @@ contains
             end do
           endif
 !
-          Call Cspline(fft_press,Ptan,Rad,Term,Ktr,j)
+          Call Cspline(fft_press,Ptan%values(:,maf),Rad,Term,Ktr,j)
 !
           ! Transfer dx_dt from convolution grid onto the output grid
 !
-          Call Lintrp(tan_press,Ptan,dx_dt(1:,sv_i),SRad,no_tan_hts,j)
+          Call Lintrp(tan_press,Ptan%values(:,maf),dx_dt(1:,sv_i),SRad,no_tan_hts,j)
 !
           do ptg_i = 1, j
             r = SRad(ptg_i) * Term(ptg_i)
-            q = k_star_all(ki,sv_i,nf,ptg_i)
-            k_star_all(ki,sv_i,nf,ptg_i) = q + r
+!???ZVI            q = k_star_all(ki,sv_i,nf,ptg_i)
+!???ZVI            k_star_all(ki,sv_i,nf,ptg_i) = q + r
           end do
 !
           ! the convolution of the radiance weighted hydrostatic derivative
@@ -256,11 +263,11 @@ contains
             end do
           endif
 !
-          Call Cspline(fft_press,Ptan,Rad,Term,Ktr,j)
+          Call Cspline(fft_press,Ptan%values(:,maf),Rad,Term,Ktr,j)
 !
           do ptg_i = 1, j
-            q = k_star_all(ki,sv_i,nf,ptg_i)
-            k_star_all(ki,sv_i,nf,ptg_i) = q - Term(ptg_i)
+!????ZVI            q = k_star_all(ki,sv_i,nf,ptg_i)
+!????ZVI            k_star_all(ki,sv_i,nf,ptg_i) = q - Term(ptg_i)
           end do
 !
         end do
@@ -273,7 +280,7 @@ contains
 !
     if(forwardModelConfig%atmos_der) then
 !
-      do is = 1, n_sps
+      do is = 1, size(ForwardModelConfig%molecules) ! What about derivatives!???NJL
 !
         f => GetVectorQuantityByType ( forwardModelIn, quantityType=l_vmr, &
           & molecule=forwardModelConfig%molecules(is), noError=.true. )
@@ -283,11 +290,11 @@ contains
           ki = ki + 1
           kc = kc + 1
           nz = f%template%noSurfs
-          call get_string(f%template%name,k_star_info(kc)%name)
-          k_star_info(kc)%first_dim_index = ki
-          k_star_info(kc)%no_phi_basis = f%template%noInstances
-          k_star_info(kc)%no_zeta_basis = nz
-          k_star_info(kc)%zeta_basis(1:nz) = f%template%surfs(1:nz,1)
+!           call get_string(f%template%name,k_star_info(kc)%name)
+!           k_star_info(kc)%first_dim_index = ki
+!           k_star_info(kc)%no_phi_basis = f%template%noInstances
+!           k_star_info(kc)%no_zeta_basis = nz
+!           k_star_info(kc)%zeta_basis(1:nz) = f%template%surfs(1:nz,1)
 !
           ! Derivatives needed continue to process
 !
@@ -314,8 +321,8 @@ contains
 !
               ! Interpolate onto the output grid, and store in k_star_all ..
 !
-              Call Lintrp(fft_press,Ptan,Rad,SRad,Ktr,j)
-              k_star_all(ki,sv_i,nf,1:j) = SRad(1:j)
+              Call Lintrp(fft_press,Ptan%values(:,maf),Rad,SRad,Ktr,j)
+!              k_star_all(ki,sv_i,nf,1:j) = SRad(1:j)
 !
             end do
 !
@@ -404,13 +411,16 @@ contains
 ! !
 !     endif
 !
-10  K_INFO_COUNT = kc
+10  CONTINUE ! K_INFO_COUNT = kc
     Return
 !
   End Subroutine CONVOLVE_ALL
 !
 end module CONVOLVE_ALL_M
 ! $Log$
+! Revision 1.15  2001/04/10 10:14:16  zvi
+! Fixing bug in convolve routines
+!
 ! Revision 1.14  2001/04/10 02:25:14  livesey
 ! Tidied up some code
 !
