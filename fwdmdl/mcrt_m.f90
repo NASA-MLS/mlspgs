@@ -164,8 +164,9 @@ contains
 
 !       Magnetic    Condensed    Radiative    Transfer    Derivative
 
-! Compute the derivative of Radiance given T_script (aka Delta_B),
-! D_T_script (aka D_Delta_B), D_E, Prod (product of E's), and Tau (P * P^*).
+! Compute d(Radiance)/d(Whatever) given T_script (aka Delta_B),
+! D_T_script (aka D_Delta_B), D_E (d(Deltau)/d(Whatever)), Prod
+! (product of E's), and Tau (P * P^*).
 
   !{\begin{equation*}
   ! \begin{split}
@@ -210,13 +211,14 @@ contains
     use MLSCommon, only: Rk => Rp
 
     ! SVE == state_vector_elements
-    real(rk), intent(in) :: T_script(:)     ! Called Delta B above
+    real(rk), intent(in) :: T_script(:)     ! sve.  Called Delta B above
     real(rk), intent(in) :: D_T_script(:,:) ! path x sve. D Delta B
-    complex(rk), intent(in) :: D_E(:,:,:,:) ! 2 x 2 x path x sve.  D (deltau) / dT
+    complex(rk), intent(in) :: D_E(:,:,:,:) ! 2 x 2 x path x sve.
+                                            ! D (deltau) / D (Whatever)
     complex(rk), intent(in) :: Prod(:,:,:)  ! 2 x 2 x path.  Called P above.
     complex(rk), intent(in) :: Tau(:,:,:)   ! 2 x 2 x path. Matmul(Prod,conjg(Prod)).
     integer, intent(in) :: P_Stop           ! Where to stop on the path
-    complex(rk), intent(out) :: D_Radiance(:,:,:) ! 2,2,sve
+    complex(rk), intent(out) :: D_Radiance(:,:,:) ! 2 x 2 x sve
 
     integer :: I_P, I_pp, I_Sv              ! Path, State vector indices
     integer :: I_Tan                        ! Tangent point
@@ -224,10 +226,10 @@ contains
     complex(rk) :: PINV(2,2,size(t_script)) ! P_{k+1}^{-1}
 !   real(rk), parameter :: PTOL = (radix(0.0_rk)+0.0_rk) ** minexponent(0.0_rk)
       ! PTOL = sqrt(tiny(0.0_rk))
-    real(rk), parameter :: PTOL = epsilon(0.0_rk)
+    real(rk), parameter :: PTOL = epsilon(0.0_rk) ! defines "PDET is too small"
     complex(rk) :: Q(2,2)
     complex(rk) :: Q_Tau(2,2)               ! Q x Tau
-    integer :: NP                           ! The first PINV not computed
+    integer :: NP                           ! Index of first PINV not computed
     complex(rk) :: W(2,2)
 
     i_tan = size(t_script) / 2
@@ -282,6 +284,9 @@ contains
 end module MCRT_m
 
 ! $Log$
+! Revision 2.8  2003/06/09 20:52:37  vsnyder
+! More work on polarized derivatives
+!
 ! Revision 2.7  2003/05/28 01:25:02  vsnyder
 ! Hopefully squashed some more bugs in polarized derivatives
 !
