@@ -234,7 +234,7 @@ contains
     ! Local variables
     integer :: qtyIndex, status
 
-    if ( toggle(gen) ) call trace_begin ( "DestroyGridTemplateDatabase" )
+    if ( toggle(gen) ) call trace_begin ( "DestroyGriddedDataDatabase" )
 
     if (associated(database)) then
       do qtyIndex=1,size(database)
@@ -245,7 +245,7 @@ contains
         & MLSMSG_DeAllocate//"database")
     endif
     if ( toggle(gen) ) then
-      call trace_end ( "DestroyGridTemplateDatabase" )
+      call trace_end ( "DestroyGriddedDataDatabase" )
     end if
   end subroutine DestroyGriddedDataDatabase
 
@@ -930,6 +930,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.31  2003/12/16 01:13:47  livesey
+! Changed name in trace call
+!
 ! Revision 2.30  2003/05/19 19:37:41  vsnyder
 ! Remove USE's for unreferenced names
 !
