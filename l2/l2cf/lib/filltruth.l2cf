@@ -13,6 +13,7 @@ begin Fill
   ;; Get the contents from apriori
   Transfer, source=apriori, destination=truth
 
+  ; for PEs, a priori is truth
   !ifdef(precisionEstimates,{},{
   ;; Now, the rest of the l2cf fragment is replacing parts of this
   ;; with truth data.

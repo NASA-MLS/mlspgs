@@ -4,6 +4,7 @@
 begin ReadApriori
 
 ;; List the species for which we currently have climatologies  
+; PEs have all the species, plus O2 and N2 which vary in the meso/thermosphere
 !ifdef(precisionEstimates,{
 !define(allClimatologicalSpecies,{BrO,CH3CN,ClO,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,N2,N2O,O2,O3,OH,refGPH,SO2,Temperature})
 },{
