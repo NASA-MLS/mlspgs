@@ -85,7 +85,7 @@ contains
 
       DO ISPI=1,N
 
-         CWC = 0*.WC(ISPI) !0 for now
+         CWC = 0.*WC(ISPI) !0 for now
          IF (CWC .ne. 0._r8 ) then           
             CWC = MAX(1.E-9_r8, abs(CWC))
 
@@ -119,6 +119,9 @@ end Subroutine get_beta_cloud
 end module Cloud_Extinction
 
 ! $Log$
+! Revision 2.3  2003/01/31 20:21:01  jonathan
+! fix bug
+!
 ! Revision 2.2  2003/01/31 20:18:06  jonathan
 ! add ScatteringAngle module
 !
