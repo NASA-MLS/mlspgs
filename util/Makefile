@@ -24,4 +24,12 @@ f90tex: f90tex.f90
           -I $(HOME)/mlspgs/lib/$(PLATFORM) \
           -L $(HOME)/mlspgs/lib/$(PLATFORM) -lmls
 
+init_gen: init_gen.f90
+	$(FC) $(FOPTS) -o init_gen init_gen.f90 \
+        -I $(HOME)/mlspgs/lib/$(PLATFORM) \
+          -L $(HOME)/mlspgs/lib/$(PLATFORM) -lmls
+
 # $Log$
+# Revision 1.1  2001/06/01 21:52:45  vsnyder
+# Initial commit
+#
