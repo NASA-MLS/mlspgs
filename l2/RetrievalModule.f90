@@ -540,6 +540,7 @@ contains
           ! Create the averaging kernel matrix
           if ( got(f_average) ) then
             k = decoration(ixAverage)
+            print*,'AVERAGE:', k
             if ( k == 0 ) then
               call createEmptyMatrix ( myAverage, &
                 & sub_rosa(subtree(1,ixAverage)), state, state )
@@ -2190,18 +2191,18 @@ contains
 
       ! Compute the averaging kernel
       if ( foundBetterState .and. got(f_average) ) then
-        preserveMatrixName = outputAverage%name
         if ( extendedAverage ) then
-          outputAverage = outputCovariance%m .tx. kTkStar
+          call ClearMatrix ( outputAverage )
+          call MultiplyMatrix_XTY ( outputCovariance%m, ktkStar, outputAverage, update=.true. )
         else
           ! Make sure kTk is symmetrical 
           !  (outputCovariance is by virtue of its creation method as U^T U)
           Call ReflectMatrix ( kTk%m )
-          outputAverage = outputCovariance%m .tx. kTk%m
+          call ClearMatrix ( outputAverage )
+          call MultiplyMatrix_XTY ( outputCovariance%m, ktk%m, outputAverage, update=.true. )
         end if
-        outputAverage%name = preserveMatrixName
-          if ( index(switches,'cov') /= 0 ) call output ( &
-            & 'Computed the Averaging Kernel from the Covariance', advance='yes' )
+        if ( index(switches,'cov') /= 0 ) call output ( &
+          & 'Computed the Averaging Kernel from the Covariance', advance='yes' )
       end if
 
       call copyVector ( state, v(x) )
@@ -2241,6 +2242,10 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.253  2004/01/24 03:22:49  livesey
+! Changed logistics of computing averaging kernel to preserve vectors that
+! describe edges.
+!
 ! Revision 2.252  2003/10/07 01:17:52  vsnyder
 ! Change spelling of dumpBlock to dumpBlocks
 !
