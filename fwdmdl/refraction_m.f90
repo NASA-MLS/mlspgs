@@ -228,8 +228,6 @@ jl:   do j = j1+1, j2
       ys = -0.5_rp
     end do ! m
 
-    return
-
   contains
   !------------------------------------------------------------------
   ! Solve the equation h*(1.0+N(h)) = N*H, where N(h) is an exponential:
@@ -288,7 +286,10 @@ jl:   do j = j1+1, j2
 
          if ( abs(f2) < tiny .or. abs(v2-v1) < tiny ) exit
 
-         if ( iter >= max_iter ) exit
+         if ( iter >= max_iter ) then
+           call MLSMessage ( MLSMSG_Warning, ModuleName, Msg2 )
+           exit
+         end if
 
          if ( f2 < 0.0_rp ) then
            hneg = v2
@@ -300,9 +301,6 @@ jl:   do j = j1+1, j2
          df = 1.0_rp + e * ( 1.0_rp + eps * v2 )
 
        end do
-
-       if ( abs(f2) >= tiny .and. abs(v2-v1) >= tiny ) &
-           & call MLSMessage ( MLSMSG_Warning, ModuleName, Msg2 )
 
        H = v2
        N = 1.0_rp + e
@@ -320,6 +318,9 @@ jl:   do j = j1+1, j2
 
 END module REFRACTION_M
 ! $Log$
+! Revision 2.18  2003/11/03 23:15:15  vsnyder
+! Get rid of path_ds_dh procedure -- a one-liner used in one place
+!
 ! Revision 2.17  2003/09/26 18:23:34  vsnyder
 ! Reinstate a lost CVS comment
 !
