@@ -47,7 +47,7 @@ contains ! =====     Public Procedures     =============================
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use Intrinsic, only: LIT_INDICES
     use Intrinsic, only: L_NONE, L_RADIANCE, L_TEMPERATURE, L_PTAN, L_VMR, &
-      & L_SIDEBANDRATIO, L_ZETA, L_OPTICALDEPTH, L_LATITUDE
+      & L_LIMBSIDEBANDFRACTION, L_ZETA, L_OPTICALDEPTH, L_LATITUDE
     use L2PC_m, only: L2PCDATABASE, BINSELECTORS, POPULATEL2PCBIN
     use ManipulateVectorQuantities, only: FINDONECLOSESTINSTANCE, &
       & DOHGRIDSMATCH, DOVGRIDSMATCH, DOFGRIDSMATCH
@@ -133,7 +133,7 @@ contains ! =====     Public Procedures     =============================
     real (r8), dimension(:), pointer :: lowerWeight ! For interpolation
     real (r8), dimension(:), pointer :: upperWeight ! For interpolation
     real (r8), dimension(:), pointer :: tangentTemperature ! For optical depth
-    real (r8), dimension(:), pointer :: thisRatio ! Sideband ratio values
+    real (r8), dimension(:), pointer :: thisFraction ! Sideband fraction values
 
     real (r8), dimension(:,:), pointer :: yPmapped ! Remapped values of yP
     real (r8), dimension(:,:), pointer :: resultMapped ! Remapped values of result
@@ -157,9 +157,9 @@ contains ! =====     Public Procedures     =============================
     type(VectorValue_T), pointer :: TEMP ! Temperature quantity
     type(VectorValue_T), pointer :: XSTARPTAN ! Tangent pressure in l2pc
     type(VectorValue_T), pointer :: L2PCQ ! A quantity in the l2pc
-    type(VectorValue_T), pointer :: SIDEBANDRATIO ! From the state vector
-    type(VectorValue_T), pointer :: LOWERSIDEBANDRATIO ! From the state vector
-    type(VectorValue_T), pointer :: UPPERSIDEBANDRATIO ! From the state vector
+    type(VectorValue_T), pointer :: SIDEBANDFRACTION ! From the state vector
+    type(VectorValue_T), pointer :: LOWERSIDEBANDFRACTION ! From the state vector
+    type(VectorValue_T), pointer :: UPPERSIDEBANDFRACTION ! From the state vector
 
     ! Executable code
     if ( toggle(emit) ) call trace_begin ( 'LinearizedForwardModel' )
@@ -167,7 +167,7 @@ contains ! =====     Public Procedures     =============================
     nullify ( yPmapped, resultMapped, dyByDX )
     nullify ( dense, mifPointingsLower, mifPointingsUpper )
     nullify ( lowerWeight, upperWeight )
-    nullify ( thisRatio, doChannel )
+    nullify ( thisFraction, doChannel )
     nullify ( tangentTemperature )
 
     ! Identify the band/maf we're looking for
@@ -206,7 +206,7 @@ contains ! =====     Public Procedures     =============================
     noChans = radiance%template%noChans
     noMIFs = radiance%template%noSurfs
 
-    call allocate_test ( thisRatio, noChans, 'thisRatio', ModuleName )
+    call allocate_test ( thisFraction, noChans, 'thisFraction', ModuleName )
     call allocate_test ( doChannel, noChans, 'doChannel', ModuleName )
 
     doChannel = .true.
@@ -218,18 +218,18 @@ contains ! =====     Public Procedures     =============================
     ! If we're doing a split calculation then get the relevant
     ! sideband information
     if ( sidebandStart /= sidebandStop ) then 
-      sidebandRatio => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-        & quantityType = l_sidebandRatio, signal=signal%index, noError=.true. )
-      lowerSidebandRatio => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-        & quantityType = l_sidebandRatio, signal=signal%index, &
+      sidebandFraction => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+        & quantityType = l_limbSidebandFraction, signal=signal%index, noError=.true. )
+      lowerSidebandFraction => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+        & quantityType = l_limbSidebandFraction, signal=signal%index, &
         & sideband=-1, noError=.true. )
-      upperSidebandRatio => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-        & quantityType = l_sidebandRatio, signal=signal%index, &
+      upperSidebandFraction => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+        & quantityType = l_limbSidebandFraction, signal=signal%index, &
         & sideband=1, noError=.true. )
-      if (.not. associated (sidebandRatio) .and. .not. &
-        & ( associated ( lowerSidebandRatio) .and. associated ( upperSidebandRatio ) ) ) &
+      if (.not. associated (sidebandFraction) .and. .not. &
+        & ( associated ( lowerSidebandFraction) .and. associated ( upperSidebandFraction ) ) ) &
         & call MLSMessage(MLSMSG_Error,ModuleName, &
-        & "No sideband ratio supplied")
+        & "No sideband fraction supplied")
     end if
 
     ! Now, if we need any derivatives, we need to setup some arrays
@@ -249,20 +249,20 @@ contains ! =====     Public Procedures     =============================
       ! Load this bin if necessary
       call PopulateL2PCBin ( l2pcBins(sideband) )
 
-      ! Setup a sideband ratio array
+      ! Setup a sideband fraction array
       if ( sidebandStart /= sidebandStop ) then   ! We're folding
-        if ( associated ( sidebandRatio ) ) then
-          thisRatio = sidebandRatio%values(:,1)
-          if ( sideband == 1 ) thisRatio = 1.0 - thisRatio
+        if ( associated ( sidebandFraction ) ) then
+          thisFraction = sidebandFraction%values(:,1)
+          if ( sideband == 1 ) thisFraction = 1.0 - thisFraction
         else
           if ( sideband == -1 ) then
-            thisRatio = lowerSidebandRatio%values(:,1)
+            thisFraction = lowerSidebandFraction%values(:,1)
           else
-            thisRatio = upperSidebandRatio%values(:,1)
+            thisFraction = upperSidebandFraction%values(:,1)
           end if
         end if
       else                  ! Otherwise, want just unfolded signal
-        thisRatio = 1.0
+        thisFraction = 1.0
       end if
 
       ! Work out which l2pc bin we want
@@ -458,7 +458,7 @@ contains ! =====     Public Procedures     =============================
                   if ( doElement ) then
                     jBlock%values ( i , : ) = &
                       & jBlock%values ( i , : ) + &
-                      &   thisRatio(chan) * ( &
+                      &   thisFraction(chan) * ( &
                       &     lowerWeight(mif) * kBit( lower, : ) + &
                       &     upperWeight(mif) * kBit( upper, : ) )
                   end if
@@ -533,7 +533,7 @@ contains ! =====     Public Procedures     =============================
             if ( doChannel ( chan ) ) then
               do mif = 1, noMIFs
                 radiance%values( chan + (mif-1)*noChans, maf ) = &
-                  & thisRatio(chan)*resultMapped ( mif, chan )
+                  & thisFraction(chan)*resultMapped ( mif, chan )
               end do
             end if
           end do
@@ -543,7 +543,7 @@ contains ! =====     Public Procedures     =============================
               do mif = 1, noMIFs
                 radiance%values( chan + (mif-1)*noChans, maf ) = &
                   & radiance%values( chan + (mif-1)*noChans, maf ) + &
-                  &   thisRatio(chan)*resultMapped ( mif, chan )
+                  &   thisFraction(chan)*resultMapped ( mif, chan )
               end do
             end if
           end do
@@ -581,7 +581,7 @@ contains ! =====     Public Procedures     =============================
               if ( doChannel ( chan ) ) then
                 do mif = 1, noMIFs
                   jBlock%values( chan + (mif-1)*noChans, 1 ) = &
-                    & thisRatio(chan) * dyByDx ( mif, chan )
+                    & thisFraction(chan) * dyByDx ( mif, chan )
                 end do                  ! Minor frames
               end if                     ! Doing this channel
             end do                       ! Channels
@@ -591,7 +591,7 @@ contains ! =====     Public Procedures     =============================
                 do mif = 1, noMIFs
                   jBlock%values( chan + (mif-1)*noChans, : ) = &
                     & jBlock%values ( chan + (mif-1)*noChans, : ) + &
-                    &   thisRatio(chan) * dyByDx ( mif, chan )
+                    &   thisFraction(chan) * dyByDx ( mif, chan )
                 end do                  ! Minor frames
               end if                     ! Doing this channel
             end do                       ! Channel
@@ -997,6 +997,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.39  2003/02/22 00:40:22  livesey
+! Now can use OpenMP
+!
 ! Revision 2.38  2003/02/17 00:33:41  livesey
 ! Added deallocation of possible/cost to fix memory leak.
 !

@@ -55,7 +55,7 @@ contains
     use Intrinsic, only: L_CHANNEL, L_CLOUDICE, L_CLOUDWATER, &      ! JJ
       & L_DN, L_DV, L_DW, L_EARTHREFL, L_ECRtoFOV, &
       & L_ELEVOFFSET, L_LOSVEL, L_MAGNETICFIELD, L_NONE, L_ORBITINCLINATION,  &
-      & L_PHITAN, L_PTAN, L_RADIANCE, L_REFGPH, L_SCGEOCALT, L_SIDEBANDRATIO, &
+      & L_PHITAN, L_PTAN, L_RADIANCE, L_REFGPH, L_SCGEOCALT, L_LIMBSIDEBANDFRACTION, &
       & L_SIZEDISTRIBUTION, L_SPACERADIANCE, L_TEMPERATURE, L_VMR, &
       & L_CLEAR, L_BOUNDARYPRESSURE
     use Load_Sps_Data_m, only: DestroyGrids_t, Grids_T, Load_One_Item_Grid, &
@@ -218,7 +218,7 @@ contains
     real(rp) :: RAD           ! Radiance
     real(rp) :: REQ           ! Equivalent Earth Radius
     real(rp) :: ROT(3,3)      ! ECR-to-FOV rotation matrix
-    real(rp) :: THISRATIO     ! A sideband ratio
+    real(rp) :: THISFRACTION     ! A sideband fraction
     real(rp) :: THISELEV      ! An elevation offset
     real(rp) :: Vel_Cor       ! Velocity correction due to Vel_z
 
@@ -388,7 +388,7 @@ contains
     type (VectorValue_T), pointer :: PTAN          ! Tangent pressure component of state vector
     type (VectorValue_T), pointer :: REFGPH        ! Reference geopotential height
     type (VectorValue_T), pointer :: SCGEOCALT     ! S/C geocentric altitude /m
-    type (VectorValue_T), pointer :: SIDEBANDRATIO ! The sideband ratio to use
+    type (VectorValue_T), pointer :: SIDEBANDFRACTION ! The sideband fraction to use
     type (VectorValue_T), pointer :: SIZEDISTRIBUTION ! Integer really   !JJ
     type (VectorValue_T), pointer :: SPACERADIANCE ! Emission from space
     type (VectorValue_T), pointer :: TEMP          ! Temperature component of state vector
@@ -2039,12 +2039,13 @@ alpha_path_f = 0.0
           & sideband=fwdModelConf%signals(sigInd)%sideband )
         ! Get the sideband fraction if we need to
         if ( sidebandStart /= sidebandStop ) then   ! We're folding
-          sidebandRatio => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-            & quantityType=l_sidebandRatio, signal=fwdModelConf%signals(sigInd)%index, &
+          sidebandFraction => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+            & quantityType=l_limbSidebandFraction, &
+            & signal=fwdModelConf%signals(sigInd)%index, &
             & sideband=thisSideband, config=fwdModelConf )
-          thisRatio = sidebandRatio%values(chanInd,1)
+          thisFraction = sidebandFraction%values(chanInd,1)
         else                  ! Otherwise, want just unfolded signal
-          thisRatio = 1.0
+          thisFraction = 1.0
         end if
         ! Get the elevation offset
         elevOffset => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
@@ -2080,7 +2081,7 @@ alpha_path_f = 0.0
                & chanInd, windowStart, windowFinish, qtys, temp,ptan, &
                & thisRadiance, update, ptg_angles, Radiances(:,i), &
                & tan_chi_out-thisElev, &
-               & dhdz_out, dx_dh_out, thisRatio,                               &
+               & dhdz_out, dx_dh_out, thisFraction,                               &
                & antennaPatterns(whichPattern), Grids_tmp%deriv_flags,         &
                & Grids_f, Jacobian, fmStat%rows, SURF_ANGLE=surf_angle(1),     &
                & PTAN_DER=ptan_der )
@@ -2089,7 +2090,7 @@ alpha_path_f = 0.0
                & chanInd, windowStart, windowFinish, qtys, temp, ptan,&
                & thisRadiance, update, ptg_angles, Radiances(:,i), &
                & tan_chi_out-thisElev, &
-               & dhdz_out, dx_dh_out, thisRatio,                               &
+               & dhdz_out, dx_dh_out, thisFraction,                               &
                & antennaPatterns(whichPattern), Grids_tmp%deriv_flags,         &
                & Grids_f, Jacobian, fmStat%rows, SURF_ANGLE=surf_angle(1),     &
                & DI_DT=DBLE(RESHAPE(k_temp(i,:,:,:),(/no_tan_hts,j/))),        &
@@ -2100,7 +2101,7 @@ alpha_path_f = 0.0
                & chanInd, windowStart, windowFinish, qtys, temp, ptan,&
                & thisRadiance, update, ptg_angles, Radiances(:,i), &
                & tan_chi_out-thisElev, &
-               & dhdz_out, dx_dh_out, thisRatio,                               &
+               & dhdz_out, dx_dh_out, thisFraction,                               &
                & antennaPatterns(whichPattern), Grids_tmp%deriv_flags,         &
                & Grids_f, Jacobian, fmStat%rows, SURF_ANGLE=surf_angle(1),     &
                & DI_DF=DBLE(k_atmos(i,:,:)), PTAN_DER=ptan_der )
@@ -2110,7 +2111,7 @@ alpha_path_f = 0.0
                & chanInd, windowStart, windowFinish, qtys, temp, ptan,&
                & thisRadiance, update, ptg_angles, Radiances(:,i), &
                & tan_chi_out-thisElev, &
-               & dhdz_out, dx_dh_out, thisRatio,                               &
+               & dhdz_out, dx_dh_out, thisFraction,                               &
                & antennaPatterns(whichPattern), Grids_tmp%deriv_flags,         &
                & Grids_f, Jacobian, fmStat%rows, SURF_ANGLE=surf_angle(1),     &
                & DI_DT=DBLE(RESHAPE(k_temp(i,:,:,:),(/no_tan_hts,j/))),        &
@@ -2129,14 +2130,14 @@ alpha_path_f = 0.0
               &  windowStart, windowFinish, temp, ptan, thisRadiance, update, &
               &  Grids_tmp%deriv_flags, ptg_angles, tan_chi_out-thisElev, &
               &  dhdz_out, dx_dh_out, Grids_f,                            &
-              &  Radiances(:,i), thisRatio, qtys, fmStat%rows, Jacobian,  &
+              &  Radiances(:,i), thisFraction, qtys, fmStat%rows, Jacobian,  &
               &  PTAN_DER=ptan_der)
           else if ( temp_der .AND. .not. atmos_der ) then
             call no_conv_at_all ( fwdModelConf, fwdModelIn, fwdModelExtra, maf, chanInd, &
               &  windowStart, windowFinish, temp, ptan, thisRadiance, update, &
               &  Grids_tmp%deriv_flags, ptg_angles, tan_chi_out-thisElev, &
               &  dhdz_out, dx_dh_out, Grids_f,                            &
-              &  Radiances(:,i), thisRatio, qtys, fmStat%rows, Jacobian,  &
+              &  Radiances(:,i), thisFraction, qtys, fmStat%rows, Jacobian,  &
               &  DI_DT=DBLE(RESHAPE(k_temp(i,:,:,:),(/no_tan_hts,j/))),   &
               &  PTAN_DER=ptan_der )
           else if ( atmos_der .AND. .not. temp_der ) then
@@ -2144,7 +2145,7 @@ alpha_path_f = 0.0
               &  windowStart, windowFinish, temp, ptan, thisRadiance, update, &
               &  Grids_tmp%deriv_flags, ptg_angles, tan_chi_out-thisElev, &
               &  dhdz_out, dx_dh_out, Grids_f,                            &
-              &  Radiances(:,i), thisRatio, qtys, fmStat%rows, Jacobian,  &
+              &  Radiances(:,i), thisFraction, qtys, fmStat%rows, Jacobian,  &
               &  DI_DF=DBLE(k_atmos(i,:,:)), PTAN_DER=ptan_der )
 !             &  DI_DF=DBLE(RESHAPE(k_atmos(i,:,:),(/no_tan_hts,size(grids_f%values)/))) )
           else
@@ -2152,7 +2153,7 @@ alpha_path_f = 0.0
               &  windowStart, windowFinish, temp, ptan, thisRadiance, update, &
               &  Grids_tmp%deriv_flags, ptg_angles, tan_chi_out-thisElev, &
               &  dhdz_out, dx_dh_out, Grids_f,                            &
-              &  Radiances(:,i), thisRatio, qtys, fmStat%rows, Jacobian,  &
+              &  Radiances(:,i), thisFraction, qtys, fmStat%rows, Jacobian,  &
               &  DI_DT=DBLE(RESHAPE(k_temp(i,:,:,:),(/no_tan_hts,j/))),   &
               &  DI_DF=DBLE(k_atmos(i,:,:)), PTAN_DER=ptan_der )
 !             &  DI_DF=DBLE(RESHAPE(k_atmos(i,:,:),(/no_tan_hts,size(grids_f%values)/))) )
@@ -2612,6 +2613,14 @@ alpha_path_f = 0.0
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.140  2003/05/26 01:42:50  michael
+! Two temporary fixes only relevant to the polarized model.
+! Added a bug-fix removing scalar contribution to magnetic GL.
+! I don't know why this works but it makes agreement with scalar model
+! much better.  I also added an undocumented switch -Scrosspol to allow
+! the use of the (2,2) element of the radiance tensor rather than the (1,1).
+! This code should be removed when we set up the l2cf to do this properly.
+!
 ! Revision 2.139  2003/05/22 20:01:17  vsnyder
 ! Cosmetic changes
 !

@@ -88,7 +88,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
                        & L_PTAN,                                               &
                        & L_RADIANCE,                                           &
                        & L_SCGEOCALT,                                          &
-                       & L_SIDEBANDRATIO,                                      &
+                       & L_LIMBSIDEBANDFRACTION,                               &
                        & L_SIZEDISTRIBUTION,                                   &
                        & L_SURFACETYPE,                                        &
                        & L_TEMPERATURE,                                        &
@@ -136,9 +136,9 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     type (Signal_T)               :: signal                     ! A signal
     type(VectorValue_T),  pointer :: STATE_ext                  ! A state vector quantity
     type(VectorValue_T),  pointer :: STATE_los                  ! A state vector quantity
-    type(VectorValue_T),  pointer :: SIDEBANDRATIO              ! The sideband ratio to use
-    type(VectorValue_T),  pointer :: LOWERSIDEBANDRATIO         ! From the state vector
-    type(VectorValue_T),  pointer :: UPPERSIDEBANDRATIO         ! From the state vector
+    type(VectorValue_T),  pointer :: SIDEBANDFRACTION              ! The sideband ratio to use
+    type(VectorValue_T),  pointer :: LOWERSIDEBANDFRACTION         ! From the state vector
+    type(VectorValue_T),  pointer :: UPPERSIDEBANDFRACTION         ! From the state vector
 
     type (catalog_T), dimension(:), pointer :: MY_CATALOG 
     type (catalog_T), pointer :: thisCatalogEntry
@@ -197,7 +197,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     real(r8), dimension(:,:), pointer :: VMRARRAY  ! The VMRs
     real(r8), dimension(:), allocatable :: Slevl   ! S grid
     real(r8), dimension(:), allocatable :: Zt      ! tangent height
-    real (r8), dimension(:), pointer :: thisRatio ! Sideband ratio values
+    real (r8), dimension(:), pointer :: thisFraction ! Sideband ratio values
     real(rp) :: Vel_Cor                 ! Velocity correction due to Vel_z
 
     real(r8), dimension(:), pointer :: phi_fine    ! Fine resolution for phi 
@@ -244,7 +244,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
              lineFlag, losvel, massMeandiameterice, massMeandiameterwater,   &
              modelCloudradiance, my_catalog, constrainCldRad, ptan,         &
              radiance, sizeDistribution, state_ext, state_los, superset,     &
-             surfaceType, temp, thisCatalogentry, thisLine, thisRatio,       &
+             surfaceType, temp, thisCatalogentry, thisLine, thisFraction,       &
              totalExtinction, vmr, vmrarray )
  
     ! ------------------------------------
@@ -642,19 +642,19 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     ! Loop over sidebands 
     !--------------------------------------------
 
-    call allocate_test ( thisRatio, noFreqs, 'thisRatio', ModuleName )
+    call allocate_test ( thisFraction, noFreqs, 'thisFraction', ModuleName )
 
     if ( sidebandStart /= sidebandStop ) then 
-      sidebandRatio => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-        & quantityType = l_sidebandRatio, signal=signal%index, noError=.true. )
-      lowerSidebandRatio => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-        & quantityType = l_sidebandRatio, signal=signal%index, &
+      sidebandFraction => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+        & quantityType = l_limbSidebandFraction, signal=signal%index, noError=.true. )
+      lowerSidebandFraction => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+        & quantityType = l_limbSidebandFraction, signal=signal%index, &
         & sideband=-1, noError=.true. )
-      upperSidebandRatio => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-        & quantityType = l_sidebandRatio, signal=signal%index, &
+      upperSidebandFraction => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+        & quantityType = l_limbSidebandFraction, signal=signal%index, &
         & sideband=1, noError=.true. )
-      if (.not. associated (sidebandRatio) .and. .not. &
-        & ( associated ( lowerSidebandRatio) .and. associated ( upperSidebandRatio ) ) ) &
+      if (.not. associated (sidebandFraction) .and. .not. &
+        & ( associated ( lowerSidebandFraction) .and. associated ( upperSidebandFraction ) ) ) &
         & call MLSMessage(MLSMSG_Error,ModuleName, &
         & "No sideband ratio supplied")
     end if
@@ -667,12 +667,12 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
       if ( sidebandStart /= sidebandStop ) then   ! We're folding
           if ( thisSideband == -1 ) then
-            thisRatio = lowerSidebandRatio%values(:,1)
+            thisFraction = lowerSidebandFraction%values(:,1)
           else
-            thisRatio = upperSidebandRatio%values(:,1)
+            thisFraction = upperSidebandFraction%values(:,1)
           end if
       else                  ! Otherwise, want just unfolded signal
-        thisRatio = 1.0
+        thisFraction = 1.0
       end if
 
     direction = signal%direction
@@ -787,24 +787,24 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
            radiance%values (i+(mif-1)*noFreqs, maf) =                         &
              &               radiance%values (i+(mif-1)*noFreqs, maf)         &
-             &             + thisRatio(i)*a_clearSkyRadiance(mif,i) 
+             &             + thisFraction(i)*a_clearSkyRadiance(mif,i) 
 
            modelCloudRadiance%values (i+(mif-1)*noFreqs, maf ) =              &
              &        modelCloudRadiance%values (i+(mif-1)*noFreqs, maf )     &
-             &      + thisRatio(i)*a_cloudInducedRadiance(mif,i)
+             &      + thisFraction(i)*a_cloudInducedRadiance(mif,i)
 
            if(associated(effectiveOpticalDepth))                              &
              & effectiveOpticalDepth%values (i+(mif-1)*noFreqs, maf ) =       &
              &        effectiveOpticalDepth%values (i+(mif-1)*noFreqs, maf )  &
-             &      + thisRatio(i)*a_effectiveOpticalDepth(mif,i)
+             &      + thisFraction(i)*a_effectiveOpticalDepth(mif,i)
 
            if(associated(cloudRADSensitivity))                                &
              & cloudRADSensitivity%values (i+(mif-1)*noFreqs, maf ) =         &
              &        cloudRADSensitivity%values (i+(mif-1)*noFreqs, maf )    &  
-             &      + thisRatio(i)*a_cloudRADSensitivity(mif,i)
+             &      + thisFraction(i)*a_cloudRADSensitivity(mif,i)
 
          enddo
-!   print*,maf,thissideband,i,thisRatio(i),a_cloudRADSensitivity(1,i),a_clearSkyRadiance(1,i)
+!   print*,maf,thissideband,i,thisFraction(i),a_cloudRADSensitivity(1,i),a_clearSkyRadiance(1,i)
        endif
      enddo
 ! print*,maf,thissideband,a_clearSkyRadiance(:,25)
@@ -1016,7 +1016,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     call Deallocate_test ( vmrArray,'vmrArray',ModuleName )
     call Deallocate_test ( closestInstances,'closestInstances',ModuleName )
     call Deallocate_test ( doChannel, 'doChannel',        ModuleName )
-    call Deallocate_test ( thisRatio, 'thisRatio',        ModuleName )
+    call Deallocate_test ( thisFraction, 'thisFraction',        ModuleName )
     call Deallocate_test (frequencies,'frequencies',ModuleName )
     Deallocate (a_trans, Slevl, Zt )
 
@@ -1055,6 +1055,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.118  2003/05/16 23:53:56  livesey
+! Removed reference to spectags
+!
 ! Revision 1.117  2003/05/15 22:48:28  dwu
 ! changes
 !
