@@ -120,22 +120,33 @@ tar:
 # Custom build commands for some modules
 
 # This is to keep switch_usage up-to-date with notes/switches
-MLSL2.o: $(CONFDIR)/notes/switches
-	@rm -f swMLSL2.f90 MLSL2.f90 part_1 part_2 part_3 ; \
+MLSL2.o: $(CONFDIR)/notes/switches $(CONFDIR)/notes/options
+	@rm -f MLSL2.f90 part_1 part_2 part_3 ; \
 	sed -n '1,/=== (start of automatic usage lines) ===/ p' $(S)/MLSL2.f90 > part_1 ; \
 	sed -n '/=== (end of automatic usage lines) ===/,$$ p' $(S)/MLSL2.f90 > part_3 ; \
 	sed -n '/mlsl2 =========/, /mlsl2 ========/p' $(CONFDIR)/notes/switches > part_2 ; \
-	sed '1 d; $$ d' part_2 > swMLSL2.f90 ; \
-	mv swMLSL2.f90 part_2 ; \
-	sed -n -f $(CONFDIR)/notes/switch_usage.sed part_2 > swMLSL2.f90 ; \
-	mv swMLSL2.f90 part_2 ; \
-	cat part_1 part_2 part_3 > swMLSL2.f90 ; \
-	mv swMLSL2.f90 MLSL2.f90
+	sed '1 d; $$ d' part_2 > MLSL2.f90 ; \
+	mv MLSL2.f90 part_2 ; \
+	sed -n -f $(CONFDIR)/notes/switch_usage.sed part_2 > MLSL2.f90 ; \
+	mv MLSL2.f90 part_2 ; \
+	cat part_1 part_2 part_3 > MLSL2.f90 ; \
+	rm -f part_1 part_2 part_3 ; \
+	sed -n '1,/=== (start of automatic option lines) ===/ p' MLSL2.f90 > part_1 ; \
+	sed -n '/=== (end of automatic option lines) ===/,$$ p' MLSL2.f90 > part_3 ; \
+	sed -n '/mlsl2 =========/, /mlsl2 ========/p' $(CONFDIR)/notes/options > part_2 ; \
+	sed '1 d; $$ d' part_2 > MLSL2.f90 ; \
+	mv MLSL2.f90 part_2 ; \
+	sed -n -f $(CONFDIR)/notes/switch_usage.sed part_2 > MLSL2.f90 ; \
+	mv MLSL2.f90 part_2 ; \
+	cat part_1 part_2 part_3 > MLSL2.f90
 	$(FC) -c $(FOPTS) $(INC_PATHS) MLSL2.f90 $(FAFTER)
 	rm -f MLSL2.f90 part_1 part_2 part_3
 
 
 # $Log$
+# Revision 1.18  2001/05/23 22:32:48  pwagner
+# Automatically updates MLSL2 based on notes/switches
+#
 # Revision 1.17  2001/05/09 23:37:02  pwagner
 # Optionally builds level 2 w/o toolkit support
 #
