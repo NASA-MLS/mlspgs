@@ -134,7 +134,9 @@ contains
     complex(rp), intent(out) :: prod_pol(:,:,:) ! product of E matrices. 2x2xPath
     complex(rp), intent(out) :: tau_pol(:,:,:)  ! transmission function. 2x2xPath
     complex(rp), intent(out) :: rad_pol(:,:)    ! radiance (K). 2x2.
-    integer(ip), intent(out) :: p_stop       ! path stop index
+    integer(ip), intent(out) :: p_stop       ! path stop index if >= 0, else
+      !                                        -index in incoptdepth_pol where
+      !                                        cs_expmat failed.
 
   ! Internals
 
@@ -144,6 +146,7 @@ contains
     complex(rp) :: gl_delta_polarized(-1:1,size(gl_inds)/ng)
     complex(rp) :: incoptdepth_pol_gl(2,2,size(gl_inds)/ng)
     integer(ip) ::  more_inds(size(gl_inds)/ng)
+    integer :: Status ! from cs_expmat
 
   ! Begin code
 
@@ -186,12 +189,18 @@ contains
       ! of Real(incoptdepth_pol) < e_stop, we can stop.
       if ( real(incoptdepth_pol(1,1,p_stop+1)) + &
         &  real(incoptdepth_pol(2,2,p_stop+1)) <= e_stop ) exit
-      call cs_expmat ( incoptdepth_pol(:,:,p_stop+1), &
-        &              deltau_pol(:,:,p_stop+1) ) ! deltau = exp(incoptdepth_pol)
+      call cs_expmat ( incoptdepth_pol(:,:,p_stop+1), & ! deltau = exp(incoptdepth_pol)
+        &              deltau_pol(:,:,p_stop+1), status )
+      if ( status /= 0 ) go to 99 ! because we can't change p_stop in the loop
     end do
 
     call mcrt ( t_script, sqrt(e_rflty), deltau_pol, &
       & p_stop, prod_pol, tau_pol, rad_pol )
+
+    return
+
+  ! Error exit if cs_expmat detected an overflow
+  99 p_stop = - p_stop - 1
 
   end subroutine Rad_tran_Pol
 !--------------------------------------------------  drad_tran_df  -----
@@ -884,6 +893,9 @@ contains
 
 end module RAD_TRAN_M
 ! $Log$
+! Revision 2.17  2003/06/18 17:24:05  bill
+! added temperature derivative subsetting
+!
 ! Revision 2.16  2003/06/09 20:52:37  vsnyder
 ! More work on polarized derivatives
 !
