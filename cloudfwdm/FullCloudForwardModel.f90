@@ -189,7 +189,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     real(r8), dimension(:,:), pointer :: A_MASSMEANDIAMETER
     real(r8), dimension(:,:), pointer :: A_TOTALEXTINCTION
     real(r8), dimension(:,:), pointer :: VMRARRAY     ! The VMRs
-
+    real(r8), dimension(:), allocatable :: Slevl
     real (r8), dimension(:), pointer :: thisRatio     ! Sideband ratio values
 
     real(r8), dimension(:), pointer :: phi_fine       ! Fine resolution for phi 
@@ -197,10 +197,10 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     real(r8), dimension(:), pointer :: ds_fine        ! Fine resolution for ds
     real(r8) :: ds_tot                                ! Total length of all ds
 
-    real(r8), dimension(:,:), pointer :: A_TRANS
+    real(r8), dimension(:,:,:), allocatable  :: A_TRANS
     real(r8), dimension(:), pointer :: FREQUENCIES
     real(r8), dimension(:,:), allocatable :: WC
-    real(r8), dimension(:,:), allocatable :: TransOnS
+
     real(r8) :: phi_tan
     real(r8) :: dz                                    ! thickness of state quantity
     real(r8) :: dphi                                  ! phi interval of state quantity
@@ -236,7 +236,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
              A_CLEARSKYRADIANCE, A_CLOUDINDUCEDRADIANCE,                     &
              A_CLOUDEXTINCTION, A_CLOUDRADSENSITIVITY,                       &
              A_EFFECTIVEOPTICALDEPTH, A_MASSMEANDIAMETER,                    &
-             A_TOTALEXTINCTION, A_TRANS,FREQUENCIES,                         &
+             A_TOTALEXTINCTION,FREQUENCIES,                         &
              superset, usedchannels, usedsignals, thisRatio,                 &
              JBLOCK, state_ext, state_los )
              
@@ -484,9 +484,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     call Allocate_test ( a_massMeanDiameter,                                 &
       & 2, temp%template%noSurfs,                                            &
       & 'a_massMeanDiameter', ModuleName )
-    call Allocate_test ( a_Trans,                                            &
-      & temp%template%noSurfs, noFreqs,                                      &
-      & 'a_trans', ModuleName )
+
     
     if (noSurf /= GPH%template%nosurfs) then
       call MLSMessage ( MLSMSG_Error, ModuleName,                            &
@@ -555,7 +553,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
     tLat = temp%template%geodLat(1,instance)
 
-    IF ( present(jacobian) ) THEN
 
     if (prt_log) print*, 'jacobian is true'
 
@@ -564,6 +561,16 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     !----------------------------
        state_ext => GetVectorQuantityByType(FwdModelIn,quantityType=l_cloudExtinction)
        state_los => GetVectorQuantityByType(FwdModelIn,quantityType=l_LosTransFunc)
+
+        ! Get s dimension
+        noSgrid=state_los%template%noChans
+        
+        Allocate( a_Trans(noSgrid, noMIFs, noFreqs))
+        Allocate( Slevl(noSgrid))
+
+        Slevl = state_los%template%frequencies
+
+     IF ( present(jacobian) ) THEN
 
        if (tLat .ge. -30._r8 .and. tLat .le. 30._r8) then
           CloudType='Convective'
@@ -625,7 +632,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & forwardModelConfig%NUM_SCATTERING_ANGLES,                            &  
       & forwardModelConfig%NUM_AZIMUTH_ANGLES,                               &
       & forwardModelConfig%NUM_AB_TERMS,                                     &
-      & forwardModelConfig%NUM_SIZE_BINS )
+      & forwardModelConfig%NUM_SIZE_BINS,                                    &
+      & Slevl*1000._r8, noSgrid )
 
     if (prt_log) print*, 'Successfully done with Full Cloud Foward Model ! '
 
@@ -782,9 +790,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     doLowZt = .true.
     if (doLowZt) then
     
-        ! Get dimension
-        noSgrid=state_los%template%noChans
-
         colJBlock = FindBlock ( Jacobian%col, state_los%index, maf )
         rowJBlock = FindBlock ( jacobian%row, radiance%index, maf)
         fmStat%rows(rowJBlock) = .true.
@@ -803,85 +808,23 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         jBlock%values = 0.0_r8
 
          jBlock%kind = M_Absent     ! createBlock has changed jBlock%kind
-        allocate( TransOnS(noSgrid, noMIFs), stat=status )
 
         !------------------------------------------
         ! Now fill the jacobian, case ( M_Absent )
         !------------------------------------------
         do chan = 1, noChans
           if ( doChannel(chan) ) then
-          !-----------------------------------------------------------------
-          ! now, we define beta as transmission function in Sensitivity.f90
-          ! and we interpolate it onto Sgrid
-          !-----------------------------------------------------------------
-          call FindTransForSgrid (                                   &
-                      &     ptan%values(:,maf),                      &
-                      &     earthradius%values(1,maf)*1.e-3_r8,      &
-                      &     noMIFs,                                  &
-                      &     temp%template%noSurfs,                   &
-                      &     noSgrid,                                 &
-                      &     gph%template%Surfs,                      &
-                      &     a_trans(:,chan),               &
-                      &     state_los%template%frequencies,             &
-                      &     TRANSonS )                
+             do mif = 1, noMIFs
+             do i=1,noSgrid
+               jBlock%values(chan, & 
+                & i+(mif-1)*noSgrid)= a_trans(i,mif,chan)
+             end do
+             end do
 
-                    do mif = 1, noMIFs
-                    do i=1,noSgrid
-                     jBlock%values(chan, & 
-                       & i+(mif-1)*noSgrid)= TransOnS(i,mif)
-                    end do
-                    end do
+
           end if
         end do
 
-        Deallocate(TransOnS,stat=status)
-
-        case ( M_Banded )     
-        
-        noNonZero = noSgrid*noMIFs*noInstances
-        
-        call CreateBlock ( jBlock, noChans*noMIFs, &
-                         & noSgrid*noMIFs*noInstances, &
-                         & M_Banded, noNonZero )
-
-        allocate( TransOnS(noSgrid, noMIFs), stat=status )
-
-       !------------------------------------------
-       ! Now fill the jacobian, case ( M_Banded )
-       !------------------------------------------
-        do chan = 1, noChans
-          if ( doChannel(chan) ) then
-          !-----------------------------------------------------------------
-          ! now, we define beta as transmission function in Sensitivity.f90
-          ! and we interpolate it onto Sgrid
-          !-----------------------------------------------------------------
-          call FindTransForSgrid (                                   &
-                      &     ptan%values(:,maf),                      &
-                      &     earthradius%values(1,maf)*1.e-3_r8,      &
-                      &     noMIFs,                                  &
-                      &     temp%template%noSurfs,                   &
-                      &     noSgrid,                                 &
-                      &     gph%template%Surfs,                      &
-                      &     a_trans(:,chan),                         &
-                      &     state_los%template%frequencies,             &
-                      &     TRANSonS )                
-
-            jBlock%values = 0.0_r8
-            jBlock%r2(0) = 0
-            
-            do i=1,noSgrid
-            do mif=1,noMIFs
-            jBlock%r1(i+(mif-1)*noSgrid) = noChans*(mif-1)
-            jBlock%r2(i+(mif-1)*noSgrid) = noChans* & 
-               & (i+(mif-1)*noSgrid+(maf-1)*noInstances)
-            jBlock%values(i+(mif-1)*noSgrid,1) = TransOnS(i,mif)
-            enddo
-            enddo
-
-         end if
-         end do
-
-              Deallocate(TransOnS,stat=status)
          case default
                call MLSMessage(MLSMSG_Error, ModuleName, &
                  & "Invalid matrix block kind in CreateBlock")              
@@ -903,8 +846,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
                           'a_massMeanDiameter',           ModuleName )
     call Deallocate_test ( a_cloudExtinction,                                &
                           'a_cloudExtinction',            ModuleName )
-    call Deallocate_test ( a_trans,                                          &
-                          'a_trans',                      ModuleName )
+    Deallocate ( a_trans, Slevl )
+
     call Deallocate_test ( a_totalExtinction,                                &
                           'a_totalExtinction',            ModuleName )
     call Deallocate_test ( a_cloudRADSensitivity,                            &
@@ -943,40 +886,10 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 end module FullCloudForwardModel
 
 
-subroutine FindTransForSgrid ( PT, Re, NT, NZ, NS, Zlevel, TRANSonZ, Slevel, TRANSonS)
-
-  use MLSCommon,only: r8
-  use MLSNumerics, only: INTERPOLATEVALUES
- 
-  integer :: NT                 ! No. of tangent pressures
-  integer :: NZ                 ! No. of pressure levels
-  integer :: NS                 ! No. of S levels
-  integer :: mif
-  
-  real(r8) :: PT(NT)            ! this -log10 pressure
-  real(r8) :: Re                ! in km
-  real(r8) :: Zlevel(NZ)
-  real(r8) :: Slevel(NS)
-  real(r8) :: TRANSonZ(NZ)
-  real(r8) :: TRANSonS(NS,NT)
-
-  real(r8) :: zt(nt),x_out(ns)
-    TransOns = 0._r8
-    zt = (pt+3.)*16.                      ! converted to height in km
-    do mif=1,nt
-
-      ! find altitude of each s grid
-      x_out = Slevel**2/2./(re + zt(mif))
-      ! converted to zeta
-      x_out = x_out/16. + pt(mif)
-
-      CALL INTERPOLATEVALUES(Zlevel,TransOnZ,x_out,TransOnS(:,mif),method='Linear')
-
-     enddo
-
-end subroutine FindTransForSgrid
-
 ! $Log$
+! Revision 1.55  2001/10/09 17:50:17  jonathan
+! *** empty log message ***
+!
 ! Revision 1.54  2001/10/09 17:47:33  jonathan
 ! some changes
 !

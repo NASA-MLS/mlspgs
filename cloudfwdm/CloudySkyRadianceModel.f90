@@ -43,7 +43,7 @@ contains
              &   WCin, IPSDin, ZT, RE, ISURF, ISWI, ICON, IFOV,   &
              &   phi_tan, h_obs, elev_offset, AntennaPattern,     &
              &   TB0, DTcir, Trans, BETA, BETAc, Dm, TAUeff, SS,  &
-             &   NU, NUA, NAB, NR)
+             &   NU, NUA, NAB, NR, Slevl, noS)
 
 !============================================================================C
 !   >>>>>>>>> FULL CLOUD FORWARD MODEL FOR MICROWAVE LIMB SOUNDER >>>>>>>>   C
@@ -119,7 +119,7 @@ contains
 !     SS      (NT,NF) -> Cloud Radiance Sensitivity (K).                     C
 !     BETA  (NZ-1,NF) -> Total Extinction Profile (m-1).                     C
 !     BETAc (NZ-1,NF) -> Cloud Extinction Profile (m-1).                     C
-!     Trans(NZ-1,NF)  -> Clear Sky Transmittance Function                    C
+!     Trans (noS,NT,NF) -> Clear Sky Transmittance Function                    C
 !     Dm     (N,NZ-1) -> Mass-Mean-Diameters (micron).                       C 
 !                        Note:1=Ice,2=Liquid.                                C 
 !                                                                            C
@@ -161,6 +161,7 @@ contains
       INTEGER :: N                             ! NUMBER OF CLOUD SPECIES
       INTEGER :: NZmodel                       ! NUMBER OF INTERNAL MODEL LEVELS
       INTEGER :: MULTI
+      INTEGER :: noS                           ! NUMBER OF S GRID
 
       INTEGER :: IPSDin(NZ)                    ! SIZE-DISTRIBUTION FLAG
                                                ! IILL     (I=ICE, L=LIQUID)
@@ -203,6 +204,7 @@ contains
                                                ! N=1: ICE; N=2: LIQUID
       REAL(r8) :: ZT(NT)                       ! TANGENT PRESSURE
       REAL(r8) :: RE                           ! EARTH RADIUS
+      REAL(r8) :: Slevl(noS)                   ! Sgrid levels
 
 !--------------------------------------
 !     OUTPUT PARAMETERS (OUTPUT TO L2)        
@@ -214,7 +216,7 @@ contains
       REAL(r8) :: SS(NT,NF)                    ! CLOUD RADIANCE SENSITIVITY
                                                ! (NT+1) FOR ZENITH LOOKING) 
 
-      REAL(r8) :: Trans(NZ-1,NF)               ! Clear Trans Func
+      REAL(r8) :: Trans(noS,NT,NF)               ! Clear Trans Func
       REAL(r8) :: BETA(NZ-1,NF)                ! TOTAL OPTICAL DEPTH
       REAL(r8) :: BETAc(NZ-1,NF)               ! CLOUDY OPTICAL DEPTH
 
@@ -371,7 +373,7 @@ contains
 !-------------------------------------------------------------------------
 
 
-!---------------<<<<<<<<<<<<< START EXCUTION >>>>>>>>>>>>-------------------C
+!---------------<<<<<<<<<<<<< START EXCUTION >>>>>>>>>>>>-----------------
 
 !      CALL HEADER(1)
 
@@ -506,6 +508,8 @@ contains
                TAU0(IL)=TAU100(IL)            ! 100% SATURATION BELOW CLOUD
             ENDDO
          ENDIF   
+
+         delTAU100=TAU0                       !Initialize to TAU0
 
          DO IL=1,MAX(ICLD_TOP,I100_TOP)       ! THIS IS FOR RETRIEVAL PURPOSE 
               delTAU100(IL)=TAU100(IL)        ! MASK 100% SATURATION BELOW
@@ -772,8 +776,8 @@ contains
            
          CALL SENSITIVITY (DTcir(:,IFR),ZZT,NT,YP,YZ,NZmodel,PRESSURE,NZ, &
               &            delTAU,delTAUc,delTAU100,TAUeff(:,IFR),SS(:,IFR), &
-              &            Trans(:,IFR), BETA(:,IFR), BETAc(:,IFR), DDm, Dm, Z, DZ, &
-              &            N,ISWI,RE) ! COMPUTE SENSITIVITY
+              &            Trans(:,:,IFR), BETA(:,IFR), BETAc(:,IFR), DDm, Dm, Z, DZ, &
+              &            N,ISWI,RE, noS, Slevl) ! COMPUTE SENSITIVITY
 
 
       ELSE IF ( .NOT. doChannel(IFR) ) then
@@ -806,6 +810,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.14  2001/10/04 23:35:05  dwu
+! *** empty log message ***
+!
 ! Revision 1.13  2001/09/27 15:52:06  jonathan
 ! minor changes
 !
