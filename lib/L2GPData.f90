@@ -354,7 +354,7 @@ contains ! =====     Public Procedures     =============================
     
     if(myNColms > 0) then
        call allocate_test ( l2gp%columnTypes, myNColms, &
-       & "l2gp%columnTypes", & ModuleName )
+       & "l2gp%columnTypes", ModuleName )
        call allocate_test ( l2gp%columnValues, myNTimes, myNColms, &
        & "l2gp%columnValues", ModuleName )
        call allocate_test ( l2gp%boundaryPressures, myNTimes, myNColms, &
@@ -792,7 +792,7 @@ contains ! =====     Public Procedures     =============================
       & MLSMSG_Allocate//' column-related things in ReadL2GPData' )
 
        call allocate_test ( l2gp%columnTypes, nColumns, &
-       & "l2gp%columnTypes", & ModuleName )
+       & "l2gp%columnTypes", ModuleName )
        call allocate_test ( l2gp%columnValues, myNumProfs, nColumns, &
        & "l2gp%columnValues", ModuleName )
        call allocate_test ( l2gp%boundaryPressures, myNumProfs, nColumns, &
@@ -1536,6 +1536,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.35  2001/08/06 18:39:03  pwagner
+! Now dumps column-related components, too
+!
 ! Revision 2.34  2001/08/03 23:13:52  pwagner
 ! Began testing; at least now exits normally again
 !
