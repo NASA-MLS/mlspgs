@@ -34,12 +34,14 @@ module ForwardModelInterface
   use Lexer_Core, only: Print_Source
   use MatrixModule_1, only: Matrix_Database_T, Matrix_T
   use MLSCommon, only: R8
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate, MLSMSG_Error
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate,&
+    & MLSMSG_Error
+  use MLSNumerics, only: Hunt
   use MLSSignals_m, only: GetSignal, Signal_T, GetSignalName
   use MoreTree, only: Get_Boolean, Get_Field_ID
   use Output_M, only: Output
   use PointingGrid_m, only: Close_Pointing_Grid_File, &
-    & Dump_Pointing_Grid_Database, Get_Grids_Near_Tan_Pressures, &
+    & Dump_Pointing_Grid_Database, &
     & Open_Pointing_Grid_File, Read_Pointing_Grid_File, PointingGrids
   use String_Table, only: Display_String, Get_String
   use Toggles, only: Gen, Toggle
@@ -323,7 +325,6 @@ contains
       MNM => max_no_mmaf
     use ELLIPSE, only: PHI_TAN, ROC
     use L2_LOAD_M, only: L2_LOAD
-    use PTG_FRQ_LOAD_M, only: PTG_FRQ_LOAD
     use COMP_PATH_ENTITIES_M, only: COMP_PATH_ENTITIES
     use REFRACTION_M, only: REFRACTION_CORRECTION
     use PATH_ENTITIES_M, only: PATH_INDEX, PATH_VECTOR, PATH_BETA, &
@@ -338,7 +339,7 @@ contains
     use CONVOLVE_ALL_M, only: CONVOLVE_ALL
     use NO_CONV_AT_ALL_M, only: NO_CONV_AT_ALL
     use D_LINTRP_M, only: LINTRP
-    use D_HUNT_M, only: HUNT
+    use D_HUNT_M, only: hunt_zvi => HUNT
 
     !zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
 
@@ -473,6 +474,8 @@ contains
 
     !zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
 
+    call Dump_Pointing_grid_database
+
     print*,'Entering forwardModel'
 
     ! First we identify the vector quantities we're going to need.  The key is to
@@ -540,13 +543,6 @@ contains
     call deallocate_test(channelIndex,'channelIndex',ModuleName)
 
     signal = getSignal ( forwardModelConfig%sigInfo(1)%signal )
-    whichPointingGrid = signal%pointingGrid
-    if ( whichPointingGrid <= 0 ) &
-      call MLSMessage ( MLSMSG_Error, moduleName, &
-      & "There is no pointing grid for the desired signal" )
-    call allocate_test ( grids, size(FMI%tan_press), "Grids", moduleName )
-    call get_grids_near_tan_pressures ( whichPointingGrid, FMI%tan_press, &
-      & tol, grids )
 
     ! This stuff fills FMC, which is a temporary structure we hope to be
     ! removing in the end.
@@ -586,6 +582,29 @@ contains
       dhdz_glgrid,dh_dt_glgrid,FMI%tan_press,tan_hts,tan_temp,tan_dh_dt, &
       gl_count, Ier)
     if(ier /= 0) goto 99
+
+    ! Now we have the full information about the number of tangent heights,
+    ! including the subsrufaces ones.
+
+    whichPointingGrid = signal%pointingGrid
+    if ( whichPointingGrid <= 0 ) &
+      call MLSMessage ( MLSMSG_Error, moduleName, &
+      & "There is no pointing grid for the desired signal" )
+    call allocate_test ( grids, no_tan_hts, "Grids", moduleName )
+    call Hunt(PointingGrids(whichPointingGrid)%oneGrid%height, &
+      & FMI%tan_press(1:no_tan_hts), grids, allowTopValue=.true.)
+    
+!    call get_grids_near_tan_pressures ( whichPointingGrid, FMI%tan_press(1:no_tan_hts), &
+!      & tol, grids)
+
+    call output('Tangent pressures:',advance='yes')
+    call dump(FMI%tan_press(1:no_tan_hts))
+    call output('Pointing grid zetas:',advance='yes')
+    call dump(PointingGrids(whichPointingGrid)%oneGrid%height)
+    call output('Grids near zetas:',advance='yes')
+    call dump(grids)
+    call output('Pressures of said grids:',advance='yes')
+    call dump(PointingGrids(whichPointingGrid)%oneGrid(grids)%height)
 
     ! Now compute stuff along the path given this hydrostatic grid.
     print*,'Setting up paths'
@@ -641,7 +660,6 @@ contains
         call allocate_test(frequencies,noFreqs,"frequencies",ModuleName)
         frequencies = pack ( signal%frequencies, &
           & forwardModelConfig%sigInfo(1)%channelIncluded )
-        print*,'Interim frequencies:',frequencies
         select case (signal%sideband)
         case ( l_lower )
           frequencies = signal%lo - (signal%centerFrequency+frequencies)
@@ -655,9 +673,8 @@ contains
             & 'Bad value of signal%sideband')
         end select
         noFreqs = size(frequencies)
-        print*,'Center frequency:', signal%centerFrequency
-        print*,'LO:', signal%lo
-        print*,'Using frequency: ',frequencies
+        print*,'Using frequencies:'
+        call dump(frequencies)
       endif
 
       ! First we have a mini loop over pointings to work out an upper limit
@@ -718,15 +735,15 @@ contains
         ! If we're doing frequency averaging, get the frequencies we need for
         ! this pointing.
         if (FMC%do_frqavg) then
-          call Allocate_Test(frequencies, &
-            & size(PointingGrids(whichPointingGrid)%&
-            &      oneGrid(grids(ptg_i))%frequencies),&
-            &      'frequencies', ModuleName)
-          ! Note that this deallocates the ones from the previous go round
+!           call Allocate_Test(frequencies, &
+!             & size(PointingGrids(whichPointingGrid)%&
+!             &      oneGrid(grids(ptg_i))%frequencies),&
+!             &      'frequencies', ModuleName)
+!          Note that this deallocates the ones from the previous go round
 !          print*,'Center frequency is:',PointingGrids(whichPointingGrid)%CenterFrequency
 !          print*,'Offsets:'
 !          call dump(PointingGrids(whichPointingGrid)%oneGrid(grids(ptg_i))%frequencies )
-          frequencies =>PointingGrids(whichPointingGrid)%oneGrid(grids(ptg_i))%frequencies 
+          frequencies => PointingGrids(whichPointingGrid)%oneGrid(grids(ptg_i))%frequencies 
           noFreqs = size(frequencies)
           print*,'     Using:'
           call dump(frequencies)
@@ -811,7 +828,10 @@ contains
 
           do i = 1, noUsedChannels
             ch = usedChannels(i)
-            if ( ch == 1 ) print*,(centerFreq+sense*FMI%F_grid_filter(:,i))
+            if ( ch == 1 ) then
+              call output ('Frequency terms for channel 1',advance='yes')
+              call dump(centerFreq+sense*FMI%F_grid_filter(:,i))
+            endif
             call Freq_Avg(frequencies,centerFreq+sense*FMI%F_grid_filter(:,i),  &
               &     FMI%Filter_func(:,ch),RadV,noFreqs,FMI%no_filt_pts, &
               &     Radiances(ptg_i,ch))
@@ -1044,7 +1064,7 @@ contains
 
     klo = -1
     Zeta = -1.666667
-    call Hunt(Zeta,tau,ptan%template%noSurfs,klo,j)
+    call Hunt_zvi(Zeta,tau,ptan%template%noSurfs,klo,j)
     if(abs(Zeta-tau(j)) < abs(Zeta-tau(klo))) klo=j
 
     do i = 1, noUsedChannels
@@ -1087,7 +1107,7 @@ contains
         endif
         tau = 0.0
         tau(1:mnz) = k_star_info(i)%zeta_basis(1:mnz)
-        call Hunt(Zeta,tau,mnz,m,j)
+        call Hunt_zvi(Zeta,tau,mnz,m,j)
         if(abs(Zeta-tau(j)) < abs(Zeta-tau(m))) m=j
         print *,(k_star_all(ch,kz,m,ptan%template%noSurfs,klo),k=1,ht_i)
       endif
@@ -1233,6 +1253,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.40  2001/03/27 00:21:18  livesey
+! Got frequency averaging working.
+!
 ! Revision 2.39  2001/03/26 21:13:02  livesey
 ! Stableish version, frequency averaging still highly suspect.
 !
