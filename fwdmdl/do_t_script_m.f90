@@ -81,16 +81,14 @@ contains
 
     n_path = size(t_grid)
 
-    do i=1, n_path-1
-       t_tmp(i) = (1.0_rp-w0(i))*t_grid(i) + w0(i)*t_scat(i)
-!        print*, t_tmp(i), t_grid(i), grid(i), w0(i), t_scat(i)
-!       t_grid(i) = t_tmp(i)  !will be added in later soon
-    enddo
-!    stop
+    t_tmp = (1.0_rp-w0) * t_grid + w0 * t_scat
 
-    V1 = stat_temp(t_grid,nu)
-    b = -stat_temp(t_grid(1),nu)
-    a = 2.0_rp * stat_temp(t_space,nu)-stat_temp(t_grid(n_path),nu)
+!    V1 = stat_temp(t_grid,nu)
+!    b = -stat_temp(t_grid(1),nu)
+!    a = 2.0_rp * stat_temp(t_space,nu)-stat_temp(t_grid(n_path),nu)
+    V1 = stat_temp(t_tmp,nu)
+    b = -stat_temp(t_tmp(1),nu)
+    a = 2.0_rp * stat_temp(t_space,nu)-stat_temp(t_tmp(n_path),nu)
 
     t_scr = 0.5_rp * (eoshift(V1,1,a) - eoshift(V1,-1,b))
 
@@ -103,6 +101,9 @@ contains
 end module DO_T_SCRIPT_M
 
 ! $Log$
+! Revision 2.6  2004/03/20 01:25:06  jonathan
+! minor changes
+!
 ! Revision 2.5  2004/03/20 01:15:10  jonathan
 ! add in scattering correction term in two t_script
 !
