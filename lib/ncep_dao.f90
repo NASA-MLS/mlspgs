@@ -307,7 +307,8 @@ contains
     the_g_data%noLons = nlon
     the_g_data%noLats = nlat
     the_g_data%noHeights = nlev
-    the_g_data%noLsts = ntime
+    ! the_g_data%noLsts = ntime
+    the_g_data%noDates = ntime
     the_g_data%units = 'K'
     if(DEEBUG) print *, 'our quantity name ', the_g_data%quantityName
     if(DEEBUG) print *, 'our description ', the_g_data%description
@@ -316,7 +317,8 @@ contains
     call nullifyGriddedData ( the_g_data ) ! for Sun's still useless compiler
     ! Setup the grid
     call SetupNewGriddedData ( the_g_data, noHeights=nlev, noLats=nlat, &
-      & noLons=nlon, noLsts=ntime, noSzas=1, noDates=1, missingValue=FILLVALUE )
+      & noLons=nlon, noLsts=1, noSzas=1, noDates=ntime, missingValue=FILLVALUE )
+      ! & noLons=nlon, noLsts=ntime, noSzas=1, noDates=1, missingValue=FILLVALUE )
     if(DEEBUG) print *, '(Again) our quantity name ', the_g_data%quantityName
     if(DEEBUG) print *, 'our description ', the_g_data%description
     if(DEEBUG) print *, 'our units ', the_g_data%units
@@ -345,7 +347,8 @@ contains
       call dump(all_the_fields(1,1,:,1), 'p-slice')
       call dump(all_the_fields(1,1,1,:), 't-slice')
     endif
-    the_g_data%field(:,:,:,:,1,1) = reshape( all_the_fields, &
+    ! the_g_data%field(:,:,:,:,1,1) = reshape( all_the_fields, &
+    the_g_data%field(:,:,:,1,1,:) = reshape( all_the_fields, &
       & shape=(/nLev, nlat, nlon, ntime/), order=(/3,2,1,4/) &
       & )
     if ( DEEBUG ) then
@@ -369,13 +372,16 @@ contains
     the_g_data%Heights = dim_field
     ! call read_the_dim(gd_id, 'Time', dims(4), dim_field)
     call read_the_dim(gd_id, trim(dimNames(4)), dims(4), dim_field)
-    the_g_data%lsts = dim_field
+    ! the_g_data%lsts = dim_field
+    the_g_data%dateStarts = dim_field
+    the_g_data%dateEnds = dim_field
     deallocate(dim_field)        ! Before leaving, some light housekeeping
     ! Have not yet figured out how to assign these
     ! Probably will have to read metadata
     the_g_data%Szas = the_g_data%missingValue
-    the_g_data%DateStarts = the_g_data%missingValue
-    the_g_data%DateEnds = the_g_data%missingValue
+    ! the_g_data%DateStarts = the_g_data%missingValue
+    ! the_g_data%DateEnds = the_g_data%missingValue
+    the_g_data%lsts = the_g_data%missingValue
     ! Close grid
     status = gddetach(gd_id)
     if(status /= 0) &
@@ -1530,6 +1536,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.29  2003/04/02 00:14:25  pwagner
+! The 4th index is now noDates instead of ntime
+!
 ! Revision 2.28  2003/03/01 00:23:27  pwagner
 ! missingValue an optional arg to reading GriddedData and climatology
 !
