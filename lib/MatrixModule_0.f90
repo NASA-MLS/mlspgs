@@ -20,9 +20,9 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
     & ColumnScale, ColumnScale_0, CopyBlock, CreateBlock, CreateBlock_0, &
     & Densify, DestroyBlock, Dump, M_Absent, M_Banded, M_Column_Sparse, &
     & M_Full, MatrixElement_T, Multiply_Matrix_Blocks, MultiplyMatrixVector, &
-    & MultiplyMatrixVector_0, operator(+), operator(.TX.), RowScale, &
-    & RowScale_0, SolveCholesky, SolveCholeskyM_0, SolveCholeskyV_0, &
-    & Sparsify, UpdateDiagonal, UpdateDiagonal_0
+    & MultiplyMatrixVectorNoT, MultiplyMatrixVector_0, operator(+), &
+    & operator(.TX.), RowScale, RowScale_0, SolveCholesky, SolveCholeskyM_0, &
+    & SolveCholeskyV_0, Sparsify, UpdateDiagonal, UpdateDiagonal_0
 
 ! =====     Defined Operators and Generic Identifiers     ==============
 
@@ -817,6 +817,75 @@ contains ! =====     Public Procedures     =============================
     end select
   end subroutine MultiplyMatrixVector_0
 
+  ! ------------------------------------  MultiplyMatrixVectorNoT  -----
+  subroutine MultiplyMatrixVectorNoT ( B, V, P, UPDATE, DoDiag )
+  ! P = B V if UPDATE is absent or false.
+  ! P = P + B V if UPDATE is present and true.
+  ! Don't multiply by the diagonal element if doDiag (default true) is
+  ! present and false.
+    type(MatrixElement_T), intent(in) :: B
+    real(r8), dimension(:), intent(in) :: V
+    real(r8), dimension(:), intent(inout) :: P
+    logical, optional, intent(in) :: UPDATE, DoDiag
+
+    integer :: I, J, M, N          ! Subscripts and loop inductors
+    logical :: My_diag, My_update
+    integer :: V1                  ! Subscripts and loop inductors
+
+    if ( b%nrows /= size(v) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "Matrix block and vector not compatible in MultiplyMatrixVector_0" )
+    if ( b%ncols /= size(p) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "Matrix block and result not compatible in MultiplyMatrixVector_0" )
+    if ( any(shape(v) /= shape(p)) ) call MLSMessage ( MLSMSG_Error, &
+      & ModuleName, "Vectors not compatible in MultiplyMatrixVector_0" )
+    my_update = .false.
+    if ( present(update) ) my_update = update
+    my_diag = .true.
+    if ( present(doDiag) ) my_diag = doDiag
+    if ( .not. my_update ) p = 0.0_r8
+    select case ( b%kind )
+    case ( M_Absent )
+    case ( M_Banded )
+      do j = 1, size(p)            ! columns
+        v1 = b%r2(j-1)             ! (starting position in B%VALUES) - 1
+        n = b%r2(j) - v1           ! how many values
+        m = b%r1(j)                ! starting row subscript in B%VALUES
+        if ( my_diag ) then        ! do the whome matrix
+          do i = m, m+n-1          ! rows
+            p(i) = p(i) + b%values(v1+i-m+1,1) * v(j)
+          end do ! i = 1, n
+        else                       ! skip the diagonal
+          do i = m, min(m+n-1,j-1) ! rows
+            p(i) = p(i) + b%values(v1+i-m+1,1) * v(j)
+          end do ! i = m, min(m+n-1,j-1)
+          do i = max(m,j+1), m+n-1 ! rows
+            p(i) = p(i) + b%values(v1+i-m+1,1) * v(j)
+          end do ! i = m, min(m,n-1,j-1)
+        end if
+      end do ! j
+     case ( M_Column_Sparse )
+      do j = 1, size(p)            ! columns
+        do n = b%r1(j-1)+1, b%r1(j)! rows
+          i = b%r2(n)              ! row number
+          if ( i/=j .or. my_diag ) &
+            & p(i) = p(i) + b%values(n,1) * v(j)
+        end do ! n
+      end do ! j
+    case ( M_Full )
+      if ( my_diag ) then          ! do the whole matrix
+        do i = 1, size(p)
+          p(i) = p(i) + dot(size(v), b%values(i,1), size(b%values,1), v(1), 1)
+        end do ! i
+      else                         ! skip the diagonal
+        do i = 1, size(p)
+          p(i) = p(i) + dot(i-1, b%values(i,1), size(b%values,1), v(1), 1)
+          p(i) = p(i) + &
+            & dot(size(v)-i, b%values(i,i+1), size(b%values,1), v(i+1), 1)
+        end do ! i
+      end if
+    end select
+  end subroutine MultiplyMatrixVectorNoT
+
   ! -----------------------------------  NewMultiplyMatrixVector_0  ----
   function NewMultiplyMatrixVector_0 ( B, V ) result ( P ) ! P = B^T V
     type(MatrixElement_T), intent(in) :: B
@@ -1288,6 +1357,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.6  2000/11/10 00:28:13  vsnyder
+! Added multiply untransposed matrix * vector
+!
 ! Revision 2.5  2000/11/09 01:22:43  vsnyder
 ! Periodic commit -- still under construction
 !
