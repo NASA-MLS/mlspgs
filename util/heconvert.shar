@@ -1,0 +1,4086 @@
+#!/bin/sh
+#A shell archive combining convert.c and HE5_HdfEosDef.h
+#The reason for including the latter is to avoid a compile-time error
+#due to uintn being typedefined 
+#in both $(HDF)hdfi.h and $(HDFEOS5)HE5_HdfEosDef.h
+echo HE5_HdfEosDef.h 1>&2
+sed 's/^X//' << 'SHAR_EOF' > 'HE5_HdfEosDef.h' &&
+/*-------------------------------------------------------------------------------|
+|                                                                                |
+|        Copyright (C) 1999  Emergent IT Inc.  and Raytheon Systems Company      |
+|                                                                                |
+|  Permission to use, modify, and distribute this software and its documentation |
+|  for any purpose without fee is hereby granted, provided that the above        |
+|  copyright notice appear in all copies and that both that copyright notice and | 
+|  this permission notice appear in supporting documentation.                    |
+|                                                                                |
+|--------------------------------------------------------------------------------|
+|                                                                                |
+| This is the main header file to be distributed with the HDF-EOS library.       |
+|                                                                                |
+| Last date updated: January 2001                                                |
+--------------------------------------------------------------------------------*/
+
+#ifndef HE5_HDFEOSDEF_H_
+#define HE5_HDFEOSDEF_H_
+
+#include <hdf5.h>
+#include <H5public.h>
+
+#define HE5_HDFEOSVERSION  "0"
+
+/* 
+ --------------------------------------------
+ |   ANSI-C header files  (see H5config.h)  |
+ --------------------------------------------
+ */
+#ifdef STDC_HEADERS
+#   include <assert.h>
+#   include <ctype.h>
+#   include <errno.h>
+#   include <fcntl.h>
+#   include <float.h>
+#   include <limits.h>
+#   include <math.h>
+#   include <signal.h>
+#   include <stdarg.h>
+#   include <stdio.h>
+#   include <stdlib.h>
+#   include <string.h>
+#endif
+
+#ifndef FALSE
+#   define FALSE 0
+#endif
+#ifndef TRUE
+#   define TRUE (!FALSE)
+#endif
+
+#define SUCCEED           0
+#define FAIL            (-1)
+
+
+/* typedef unsigned uintn; */
+
+#define  HDstrcmp(X,Y)		strcmp(X,Y)   /* for test drivers */
+#define  MAX(X,Y)           ((X)>(Y)?(X):(Y))
+#define  MIN(X,Y)           ((X)<(Y)?(X):(Y))
+
+/*
+ ----------------------------------------------
+ |          HDF-EOS Defined Sizes             |
+ ----------------------------------------------
+ */
+
+#define HE5_DTSETRANKMAX         8
+#define HE5_FLDNUMBERMAX       500
+#define HE5_OBJNAMELENMAX      256
+#define HE5_BLKSIZE          32000
+#define HE5_CHUNKSIZE         1000
+
+#define HE5_HDFE_TYPESTRSIZE    80
+#define HE5_HDFE_DIMBUFSIZE    256
+#define HE5_HDFE_NAMBUFSIZE    256
+#define HE5_HDFE_ERRBUFSIZE    256
+#define HE5_HDFE_UTLBUFSIZE   1024
+
+
+/*
+ ----------------------------------------------
+ |     HDF-EOS Global Data Structures         |
+ ----------------------------------------------
+ */
+
+typedef struct
+{
+  hid_t  ID;     /* Field-associated dataset ID    */
+  char   *name;  /*      HDF-EOS field name        */
+}HE5_DTSinfo;    /* Field-associated dataset Info  */
+
+
+/* 
+ ----------------------------------------------
+ |     Compound Dataset Information Data      |
+ |               Structure                    |
+ ----------------------------------------------
+ */
+
+typedef struct
+{
+  int                     nfields;                 /* Number of data fields    */
+  int                     rank[HE5_FLDNUMBERMAX];  /* Fields rank array        */
+  char                    *fieldname[HE5_FLDNUMBERMAX];/* Array of field names */
+                                                   /* Array of dimension sizes */ 
+  size_t                  dims[HE5_FLDNUMBERMAX][HE5_DTSETRANKMAX];
+  size_t                  datasize;                /* Size of data (bytes)     */
+  off_t                   offset[HE5_FLDNUMBERMAX];/* Array of field offsets   */
+  hid_t                   dtype[HE5_FLDNUMBERMAX]; /* Array of field type IDs  */
+  H5T_class_t             dclass[HE5_FLDNUMBERMAX];/* Array of field class IDs */
+}HE5_CmpDTSinfo;
+
+typedef  struct 
+{
+  long        count;     /* Object counter */
+  long        strsize;   /* Operator data  */
+  char        *name;     /* Object name    */ 
+}HE5_OBJINFO;
+
+
+/* Data Type Flags for FORTRAN  */
+/* ---------------------------- */
+#define HE5_HDFE_NATIVE_INT     0
+#define HE5_HDFE_NATIVE_FLOAT   1
+#define HE5_HDFE_NATIVE_DOUBLE  2
+#define HE5_HDFE_INT8           3
+#define HE5_HDFE_INT16          4
+#define HE5_HDFE_NATIVE_CHAR    5
+#define HE5_HDFE_NATIVE_LONG    6
+
+
+/* Field Merge Flags   */
+/* ------------------- */
+#define HE5_HDFE_NOMERGE   0
+#define HE5_HDFE_AUTOMERGE 1
+
+
+/* XXentries Codes     */
+/* ------------------- */
+#define HE5_HDFE_NENTDIM   0
+#define HE5_HDFE_NENTMAP   1
+#define HE5_HDFE_NENTIMAP  2
+#define HE5_HDFE_NENTGFLD  3
+#define HE5_HDFE_NENTDFLD  4
+
+/* Angle Conversion Codes */
+/* ---------------------- */
+#define HE5_HDFE_RAD_DEG      0
+#define HE5_HDFE_DEG_RAD      1
+#define HE5_HDFE_DMS_DEG      2
+#define HE5_HDFE_DEG_DMS      3
+#define HE5_HDFE_RAD_DMS      4
+#define HE5_HDFE_DMS_RAD      5
+
+
+/* Swath Subset Modes       */
+/* ------------------------ */
+#define HE5_HDFE_MIDPOINT       0
+#define HE5_HDFE_ENDPOINT       1
+#define HE5_HDFE_ANYPOINT       2
+#define HE5_HDFE_INTERNAL       0
+#define HE5_HDFE_EXTERNAL       1
+#define HE5_HDFE_NOPREVSUB     -1
+
+
+/* Grid Origin Codes       */
+/* ----------------------- */
+#define HE5_HDFE_GD_UL         0
+#define HE5_HDFE_GD_UR         1
+#define HE5_HDFE_GD_LL         2
+#define HE5_HDFE_GD_LR         3
+
+
+/* Pixel Registration Codes */
+/* ------------------------ */
+#define HE5_HDFE_CENTER         0
+#define HE5_HDFE_CORNER         1
+
+
+/* GCTP Projection Codes */
+/* --------------------- */
+#define HE5_GCTP_GEO         0
+#define HE5_GCTP_UTM         1
+#define HE5_GCTP_SPCS        2
+#define HE5_GCTP_ALBERS      3
+#define HE5_GCTP_LAMCC       4
+#define HE5_GCTP_MERCAT      5
+#define HE5_GCTP_PS          6
+#define HE5_GCTP_POLYC       7
+#define HE5_GCTP_EQUIDC      8
+#define HE5_GCTP_TM          9
+#define HE5_GCTP_STEREO     10
+#define HE5_GCTP_LAMAZ      11
+#define HE5_GCTP_AZMEQD     12
+#define HE5_GCTP_GNOMON     13
+#define HE5_GCTP_ORTHO      14
+#define HE5_GCTP_GVNSP      15
+#define HE5_GCTP_SNSOID     16
+#define HE5_GCTP_EQRECT     17
+#define HE5_GCTP_MILLER     18
+#define HE5_GCTP_VGRINT     19
+#define HE5_GCTP_HOM        20
+#define HE5_GCTP_ROBIN      21
+#define HE5_GCTP_SOM        22
+#define HE5_GCTP_ALASKA     23
+#define HE5_GCTP_GOOD       24
+#define HE5_GCTP_MOLL       25
+#define HE5_GCTP_IMOLL      26
+#define HE5_GCTP_HAMMER     27
+#define HE5_GCTP_WAGIV      28
+#define HE5_GCTP_WAGVII     29
+#define HE5_GCTP_OBLEQA     30
+#define HE5_GCTP_ISINUS     99
+
+
+/* Tiling Codes            */
+/* ----------------------- */
+#define HE5_HDFE_NOTILE        0
+#define HE5_HDFE_TILE          1
+
+
+/* Compression Methods       */
+/* ------------------------- */
+#define HE5_HDFE_COMP_NONE     0
+#define HE5_HDFE_COMP_RLE      1
+#define HE5_HDFE_COMP_NBIT     2
+#define HE5_HDFE_COMP_SKPHUFF  3
+#define HE5_HDFE_COMP_DEFLATE  4
+
+
+/* HDFEOS Group Codes              */
+/* ------------------------------- */
+#define HE5_HDFE_GEOGROUP           0
+#define HE5_HDFE_DATAGROUP          1
+#define HE5_HDFE_ATTRGROUP          2
+#define HE5_HDFE_GRPATTRGROUP       3
+#define HE5_HDFE_LOCATTRGROUP       4
+#define HE5_HDFE_PROFGROUP          5
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+
+
+/*
+ **********************************************************************
+ *         E R R O R   H A N D L I N G    I N T E R F A C E           *
+ **********************************************************************
+ */
+
+
+/* File access/info routines */
+
+hid_t    HE5_EHcreate(const char *filename, unsigned flags, hid_t create_id, hid_t access_id);
+hid_t    HE5_EHopen(const char *filename, unsigned flags,  hid_t access_id);
+herr_t   HE5_EHclose(hid_t fid);
+herr_t   HE5_EHgetversion(hid_t fid, char *version);
+herr_t   HE5_EHchkfid(hid_t fid, const char *name, hid_t *HDFfid, hid_t *grpID, uintn *access);
+herr_t   HE5_EHidinfo(hid_t fid, hid_t *HDFfid, hid_t *gid);
+long     HE5_EHattrcat(hid_t fid,   char *grpname, char *objectlist, long *strbufsize);
+long     HE5_EHinquire(const char *filename, char *grpname, char *objectlist, long *strbufsize);
+
+
+/* Metadata access/info routines */
+
+char     *HE5_EHmetagroup(hid_t fid , char *structname, char *structcode, char *groupname, char *metaptrs[]);
+herr_t   HE5_EHgetmetavalue(char *metaptrs[], char *parameter, char *retstr);
+herr_t   HE5_EHinsertmeta(hid_t fid, const char *structname, char *structcode, long metacode, char *metastr, hsize_t metadata[]) ;
+herr_t   HE5_EHmetalist(char *instring, char *outstring);
+
+
+/* Object info routines */
+
+long     HE5_EHcntOBJECT(char *metabuf[]);
+long     HE5_EHcntGROUP(char *metabuf[]);
+herr_t   HE5_EHattr( hid_t attgrpID, const char *attrname, hid_t ntype, hsize_t count[], char *wrcode, void *datbuf);
+herr_t   HE5_EHattrinfo( hid_t attgrpID, const char *attrname, H5T_class_t *ntype, hsize_t *count);
+long     HE5_EHdatasetcat(hid_t fid,  char *grpname, char *objectlist, long  *strbufsize);
+int      HE5_EHobj_info(hid_t loc_id, const char *name, void *opdata);
+
+
+/* Utility routines */
+
+long     HE5_EHparsestr(const char *instring, char delim, char *pntr[], size_t len[]);
+long     HE5_EHstrwithin(char *target, char *search, char delim);
+herr_t   HE5_EHloadliststr(char *ptr[], long nentries, char *liststr, char delim);
+double   HE5_EHconvAng(double inAngle, int code);
+herr_t   HE5_EHrevflds(char *dimlist, char *revdimlist);
+herr_t   HE5_EHbisect(double(*func) (double[]), double funcParms[], long nParms, double limLft, double limRgt, double convCrit, double *root);
+hid_t    HE5_EHdtype2mtype(hid_t dtypeID);
+hid_t    HE5_EHconvdatatype(int fortdatatype);
+
+/* Data type conversion wrappers */    
+                      
+long                 HE5_EHhid2long(hid_t invalue);
+long                 HE5_EHint2long(int invalue);
+int                  HE5_EHhid2int(hid_t invalue);
+hid_t                HE5_EHint2hid(int invalue);
+hid_t                HE5_EHlong2hid(long invalue);
+int                  HE5_EHlong2int(long invalue);
+
+hsize_t              HE5_EHhid2hsize(hid_t invalue);
+hsize_t              HE5_EHint2hsize(int invalue);
+hsize_t              HE5_EHlong2hsize(long invalue);
+hid_t                HE5_EHhsize2hid(hsize_t invalue);
+long                 HE5_EHhsize2long(hsize_t invalue);
+int                  HE5_EHhsize2int(hsize_t invalue);
+hssize_t             HE5_EHhsize2hssize(hsize_t invalue);
+
+hssize_t             HE5_EHhid2hssize(hid_t invalue);
+hssize_t             HE5_EHint2hssize(int invalue);
+hssize_t             HE5_EHlong2hssize(long invalue);
+hid_t                HE5_EHhssize2hid(hssize_t invalue);
+long                 HE5_EHhssize2long(hssize_t invalue);
+int                  HE5_EHhssize2int(hssize_t invalue);
+hsize_t              HE5_EHhssize2hsize(hssize_t invalue);
+
+unsigned long long   HE5_EHint2ullong(int invalue);
+long                 HE5_EHullong2long(unsigned long long invalue);
+
+
+
+
+/*
+ **********************************************************************
+ *                    S W A T H    I N T E R F A C E                  *
+ **********************************************************************
+ */
+  
+
+
+/* File/Swath access routines */
+
+hid_t   HE5_SWopen(const char *filename, uintn flags);
+hid_t   HE5_SWcreate(hid_t fid, const char *swathname);
+hid_t   HE5_SWattach(hid_t fid, const char *swathname);
+herr_t  HE5_SWdetach(hid_t swathID);
+herr_t  HE5_SWclose(hid_t fid);
+
+
+/* Definition routines */
+
+herr_t  HE5_SWdefdim(hid_t swathID,  char *dimname, hsize_t dim);
+herr_t  HE5_SWdefdimmap(hid_t swathID, char *geodim, char *datadim, hsize_t offset, hsize_t increment);
+herr_t  HE5_SWdefidxmap(hid_t swathID, char *geodim, char *datadim, long index[]);
+herr_t  HE5_SWdefgeofield(hid_t swathID, const char *fieldname, char *dimlist, char *maxdimlist, hid_t ntype , int merge);
+herr_t  HE5_SWdefdatafield(hid_t swathID, const char *fieldname, char *dimlist, char *maxdimlist, hid_t ntype, int merge);
+herr_t  HE5_SWdefchunk(hid_t swathID, int ndims, const hsize_t *dim);
+herr_t  HE5_SWdefcomp(hid_t swathID, int compcode, int *compparm);
+herr_t  HE5_SWdefcomchunk(hid_t swathID, int compcode, int *compparm, int ndims, const hsize_t *dim);
+herr_t  HE5_SWsetfillvalue(hid_t swathID, char *fieldname, hid_t ntype, void *fillval);
+herr_t  HE5_SWsetalias(hid_t swathID, char *fieldname, const char *aliaslist);
+herr_t  HE5_SWdropalias(hid_t swathID, int fldgroup, const char *aliasname);
+herr_t  HE5_SWfldrename(hid_t swathID, char *oldfieldname, const char *newfieldname);
+
+
+/* I/O routines */
+
+herr_t  HE5_SWwritedatameta(hid_t swathID, const char *fieldname, char *dimlist, int mvalue);
+herr_t  HE5_SWwriteattr(hid_t swathID, const char *attrname, hid_t ntype, hsize_t count[], void *datbuf);
+herr_t  HE5_SWwritegrpattr(hid_t swathID, const char *attrname, hid_t ntype, hsize_t count[], void *datbuf);
+herr_t  HE5_SWwritelocattr(hid_t swathID, const char *fieldname, char *attrname, hid_t ntype, hsize_t count[], void *datbuf);
+herr_t  HE5_SWreadattr(hid_t swathID, const char *attrname, void *datbuf);
+herr_t  HE5_SWreadgrpattr(hid_t swathID, const char *attrname, void *datbuf);
+herr_t  HE5_SWreadlocattr(hid_t swathID, const char *fieldname, const char *attrname, void *datbuf);
+herr_t  HE5_SWwritefield(hid_t swathID, char *fieldname, const hssize_t start[], const hsize_t stride[], const hsize_t edge[],  void *data);
+herr_t  HE5_SWreadfield(hid_t swathID, char *fieldname, const hssize_t start[], const hsize_t stride[], const hsize_t edge[],  void *data);
+herr_t  HE5_SWwritegeometa(hid_t swathID, const char *fieldname, char *dimlist, int mvalue);
+
+
+/* Inquiry routines */
+
+hsize_t HE5_SWdiminfo(hid_t swathID, char *dimname);
+herr_t  HE5_SWmapinfo(hid_t swathID, char *geodim, char *datadim, long *offset, long *increment);
+hsize_t HE5_SWidxmapinfo(hid_t swathID, char *geodim, char *datadim, long index[]);
+int     HE5_SWfldsrch(hid_t swathID, char *fieldname, hid_t *fieldID, int *rank,  hsize_t dims[], hid_t *typeID);
+herr_t  HE5_SWfieldinfo(hid_t swathID, char *fieldname, int *rank, hsize_t dims[], H5T_class_t ntype[], char *dimlist, char *maxdimlist);
+herr_t  HE5_SWcompinfo(hid_t swathID, char *fieldname, int *compcode, int compparm[]);
+herr_t  HE5_SWattrinfo(hid_t swathID, const char *attrname, H5T_class_t *ntype, hsize_t *count);
+herr_t  HE5_SWgrpattrinfo(hid_t swathID, const char *attrname, H5T_class_t *ntype, hsize_t *count);
+herr_t  HE5_SWlocattrinfo(hid_t swathID, const char *fieldname, const char *attrname, H5T_class_t *ntype, hsize_t *count);
+herr_t  HE5_SWinqdatatype(hid_t swathID, const char *fieldname, const char *attrname, int group, hid_t *dtype, H5T_class_t *classid, H5T_order_t *order, size_t *size);
+long    HE5_SWinqdims(hid_t swathID, char *dimnames, hsize_t dims[]);
+long    HE5_SWinqmaps(hid_t swathID, char *dimmaps, long offset[], long increment[]);
+long    HE5_SWinqidxmaps(hid_t swathID, char *idxmaps, hsize_t idxsizes[]);
+long    HE5_SWinqgeofields(hid_t swathID, char *fieldlist, int rank[], H5T_class_t ntype[]);
+long    HE5_SWinqdatafields(hid_t swathID, char *fieldlist, int rank[], H5T_class_t ntype[]);
+long    HE5_SWinqattrs(hid_t swathID, char *attrnames, long *strbufsize);
+long    HE5_SWinqgrpattrs(hid_t swathID, char *attrnames, long *strbufsize);
+long    HE5_SWinqlocattrs(hid_t swathID, const char *fieldname, char *attrnames, long *strbufsize);
+long    HE5_SWnentries(hid_t swathID, int entrycode, long *strbufsize);
+long    HE5_SWinqswath(const char *filename, char *swathlist, long *strbufsize);
+herr_t  HE5_SWregioninfo(hid_t swathID, hid_t regionID, char *fieldname, H5T_class_t *ntype, int *rank, hsize_t dims[], size_t *size);
+herr_t  HE5_SWperiodinfo(hid_t swathID, hid_t periodID, char *fieldname, H5T_class_t *ntype, int *rank, hsize_t dims[], size_t *size);
+herr_t  HE5_SWgeomapinfo(hid_t swathID, char *geodim);
+herr_t  HE5_SWgetfillvalue(hid_t swathID, char *fieldname, void *fillval);
+herr_t  HE5_SWaliasinfo(hid_t swathID, int fldgroup, const char *aliasname, int *length, char *buffer);
+
+
+/* Subsetting/Retrieving routines */
+
+hid_t   HE5_SWdefboxregion(hid_t swathID, double cornerlon[], double cornerlat[], int mode);
+hid_t   HE5_SWdefvrtregion(hid_t swathID, hid_t regionID, char *vertObj, double range[]);
+hid_t   HE5_SWregionindex(hid_t swathID, double cornerlon[], double cornerlat[], int mode, char *geodim, hsize_t idxrange[]);
+hid_t   HE5_SWdupregion(hid_t oldregionID);
+hid_t   HE5_SWdeftimeperiod(hid_t swathID, double starttime, double stoptime, int mode);
+herr_t  HE5_SWextractregion(hid_t swathID, hid_t regionID, char *fieldname, int externalflag, void *buffer);
+herr_t  HE5_SWextractperiod(hid_t swathID, hid_t periodID, char *fieldname, int externalflag, void *buffer);
+long    HE5_SWupdateidxmap(hid_t swathID, hid_t regionID, long indexin[], long indexout[], long indicies[]);
+herr_t  HE5_SWupdatescene(hid_t swathID, hid_t regionID);
+
+/*
+ ********************************
+ *     PROFILE INTERFACE        *
+ ********************************
+ */ 
+
+herr_t  HE5_PRdefine(hid_t swathID, const char *profilename, char *dimlist, char *maxdimlist, hid_t datatype_id);
+herr_t  HE5_PRwrite(hid_t swathID, const char *profilename, const hssize_t start[], const hsize_t stride[], const hsize_t edge[], size_t size, void *buffer);
+herr_t  HE5_PRread(hid_t swathID, const char *profilename, const hssize_t start[], const hsize_t stride[], const hsize_t edge[], void *buffer);
+herr_t  HE5_PRreclaimspace(hid_t swathID, const char *profilename, void *buffer);
+long    HE5_PRinquire(hid_t swathID, char *profnames, int *rank, H5T_class_t *classID);
+herr_t  HE5_PRinfo(hid_t swathID, const char *profname, int *rank, hsize_t dims[], hsize_t maxdims[], H5T_class_t *ntype, char *dimlist, char *maxdimlist);
+
+
+/*
+ *******************************
+ *  MOUNTING EXTERNAL FILES    *
+ *******************************
+ */
+  
+hid_t   HE5_SWmountexternal(hid_t swathID, int fldgroup, const char *extfilename);
+herr_t  HE5_SWunmount(hid_t swathID, int fldgroup, hid_t fileID);
+herr_t  HE5_SWreadexternal(hid_t swathID, int fldgroup, const char *fieldname, void *buffer);
+
+
+/*
+ **********************************************************************
+ *                      G R I D    I N T E R F A C E                  *
+ **********************************************************************
+ */
+
+
+/* File/Grid access routines */
+
+hid_t    HE5_GDopen(const char *filename, uintn flags);
+hid_t    HE5_GDcreate(hid_t fid, const char *gridname, long xdimsize, long ydimsize, double upleftpt[], double lowrightpt[]);
+hid_t    HE5_GDattach(hid_t fid, const char *gridname);
+herr_t   HE5_GDdetach(hid_t gridID);
+herr_t   HE5_GDclose(hid_t fid);
+
+
+/* Definition routines */
+
+herr_t   HE5_GDdefdim(hid_t gridID,  char *dimname, hsize_t dim);
+herr_t   HE5_GDdefproj(hid_t gridID, int projcode, int zonecode, int spherecode, double projparm[]);
+herr_t   HE5_GDdefcomp(hid_t gridID, int compcode, int compparm[]);
+herr_t   HE5_GDdeftile(hid_t gridID, int tilecode, int tilerank, const hsize_t *tiledims);
+herr_t   HE5_GDdefcomtile(hid_t gridID, int compcode, int compparm[], int tilerank, const hsize_t *tiledims);
+herr_t   HE5_GDdeforigin(hid_t gridID, int origincode);
+herr_t   HE5_GDdefpixreg(hid_t gridID, int pixregcode);
+herr_t   HE5_GDdeffield(hid_t gridID, const char *fieldname, char *dimlist, char *maxdimlist, hid_t ntype, int merge);
+herr_t   HE5_GDsetfillvalue(hid_t gridID, const char *fieldname, hid_t ntype, void *fillval);
+
+
+/* I/O routines */
+
+herr_t   HE5_GDwritefieldmeta(hid_t gridID, const char *fieldname, char *dimlist, int ntype);
+herr_t   HE5_GDwritefield(hid_t gridID, const char *fieldname, const hssize_t start[], const hsize_t stride[], const hsize_t edge[], void *data);
+herr_t   HE5_GDreadfield(hid_t gridID, const char *fieldname, const hssize_t start[], const hsize_t stride[], const hsize_t edge[], void * buffer);
+herr_t   HE5_GDwriteattr(hid_t gridID, const char *attrname, hid_t ntype, hsize_t  count[], void *datbuf);
+herr_t   HE5_GDwritegrpattr(hid_t gridID, const char *attrname, hid_t ntype, hsize_t count[], void *datbuf);
+herr_t   HE5_GDwritelocattr(hid_t gridID, const char *fieldname, const char *attrname, hid_t ntype, hsize_t  count[], void *datbuf);
+herr_t   HE5_GDreadattr(hid_t gridID, const char *attrname, void *datbuf);
+herr_t   HE5_GDreadgrpattr(hid_t gridID, const char *attrname, void *datbuf);
+herr_t   HE5_GDreadlocattr(hid_t gridID, const char *fieldname, const char *attrname, void *datbuf);
+herr_t   HE5_GDblkSOMoffset(hid_t gridID, long offset[], hsize_t count[], char *code);
+
+
+/* Inquiry routines */
+
+long     HE5_GDinqgrid(const char *filename, char *gridlist, long *strbufsize);
+hsize_t  HE5_GDdiminfo(hid_t gridID, char *dimname);
+herr_t   HE5_GDgridinfo(hid_t gridID, long *xdimsize, long *ydimsize, double upleftpt[], double lowrightpt[]);
+herr_t   HE5_GDprojinfo(hid_t gridID, int *projcode, int *zonecode, int *spherecode, double projparm[]);
+herr_t   HE5_GDorigininfo(hid_t gridID, int *origincode);
+herr_t   HE5_GDpixreginfo(hid_t gridID, int *pixregcode);
+herr_t   HE5_GDcompinfo(hid_t gridID, const char *fieldname, char *compcode, int compparm[]);
+herr_t   HE5_GDfieldinfo(hid_t gridID, const char *fieldname, int *rank, hsize_t dims[], H5T_class_t ntype[], char *dimlist, char *maxdimlist);
+herr_t   HE5_GDregioninfo(hid_t gridID, hid_t regionID, const char *fieldname, H5T_class_t *ntype, int *rank, hsize_t dims[], long *size, double upleftpt[], double lowrightpt[]);
+long     HE5_GDnentries(hid_t gridID, int entrycode, long *strbufsize);
+int      HE5_GDinqdims(hid_t gridID, char *dimnames, hsize_t  dims[]);
+herr_t   HE5_GDattrinfo(hid_t gridID, const char *attrname, H5T_class_t *ntype, hsize_t *count);
+herr_t   HE5_GDgrpattrinfo(hid_t gridID, const char *attrname, H5T_class_t *ntype, hsize_t *count);
+herr_t   HE5_GDlocattrinfo(hid_t gridID, const char *fieldname, const char *attrname, H5T_class_t *ntype, hsize_t *count);
+long     HE5_GDinqattrs(hid_t gridID, char *attrnames, long *strbufsize);
+long     HE5_GDinqgrpattrs(hid_t gridID, char *attrnames, long *strbufsize);
+long     HE5_GDinqlocattrs(hid_t gridID, const char *fieldname, char *attrnames, long *strbufsize);
+int      HE5_GDinqfields(hid_t gridID, char *fieldlist, int rank[], H5T_class_t ntype[]);
+herr_t   HE5_GDinqdatatype(hid_t gridID, const char *fieldname, const char *attrname, int fieldgroup, hid_t *dtype, H5T_class_t *classid, H5T_order_t *order, size_t *size);
+herr_t   HE5_GDgetfillvalue(hid_t gridID, const char *fieldname, void *fillval);
+
+
+/* Subsetting/Retrieving routines */
+
+hid_t    HE5_GDdefboxregion(hid_t gridID, double cornerlon[], double cornerlat[]);
+hid_t    HE5_GDdefvrtregion(hid_t gridID, hid_t regionID, char *vertObj, double range[]);
+herr_t   HE5_GDdeftimeperiod(hid_t gridID, hid_t periodID, double starttime, double stoptime);
+herr_t   HE5_GDextractregion(hid_t gridID, hid_t regionID, const char *fieldname, void *buffer);
+hid_t    HE5_GDdupregion(hid_t oldregionID);
+herr_t   HE5_GDgetpixels(hid_t gridID, long nLonLat, double lonVal[], double latVal[], long pixRow[], long pixCol[]);
+long     HE5_GDgetpixvalues(hid_t gridID, long nPixels, long pixRow[], long pixCol[], const char *fieldname, void * buffer);
+long     HE5_GDinterpolate(hid_t gridID, long nValues, double lonVal[], double latVal[], const char *fieldname, double interpVal[]);
+
+
+
+/*
+ **********************************************************************
+ *                    P O I N T    I N T E R F A C E                  *
+ **********************************************************************
+ */
+
+
+/* File/Point access routine */
+
+hid_t    HE5_PTopen(const char *filename, uintn flags);
+hid_t    HE5_PTcreate(hid_t fid, const char *pointname);
+hid_t    HE5_PTattach(hid_t fid, const char *pointname);
+herr_t   HE5_PTdetach(hid_t pointID);
+herr_t   HE5_PTclose(hid_t fid);
+
+
+/* Definition routines */
+
+herr_t   HE5_PTdeflevel(hid_t pointID, const char *levelname, HE5_CmpDTSinfo *levelinfo);
+herr_t   HE5_PTdeflinkage(hid_t pointID, char *parent, char *child, char *linkfield);
+
+
+/* I/O routines */
+
+herr_t   HE5_PTwritelevel(hid_t pointID, int level, hsize_t count[], size_t *size, void *data);
+herr_t   HE5_PTupdatelevel(hid_t pointID, int level, char *fieldlist, hsize_t nrec, hssize_t recs[], void *data);
+herr_t   HE5_PTreadlevel(hid_t pointID, int level, HE5_CmpDTSinfo *inStruct, size_t *size, void *datbuf);
+herr_t   HE5_PTwriteattr(hid_t pointID, const char *attrname, hid_t ntype, hsize_t count[], void * datbuf);
+herr_t   HE5_PTwritegrpattr(hid_t pointID, const char *attrname, hid_t ntype, hsize_t count[], void * datbuf);
+herr_t   HE5_PTwritelocattr(hid_t pointID, const char *levelname, const char *attrname, hid_t ntype, hsize_t count[], void * datbuf);
+herr_t   HE5_PTreadattr(hid_t pointID, const char *attrname, void * datbuf);
+herr_t   HE5_PTreadgrpattr(hid_t pointID, const char *attrname, void * datbuf);
+herr_t   HE5_PTreadlocattr(hid_t pointID, const char *levelname, const char *attrname, void *datbuf);
+
+/* Inquiry routines */
+
+hsize_t  HE5_PTnrecs(hid_t pointID, int level);
+int      HE5_PTnlevels(hid_t pointID);
+int      HE5_PTnfields(hid_t pointID, int level, char *fieldlist, long *strbufsize);
+int      HE5_PTlevelindx(hid_t pointID, const char *levelname);
+herr_t   HE5_PTgetlevelname(hid_t pointID, int level, char *levelname, long *strbufsize);
+herr_t   HE5_PTbcklinkinfo(hid_t pointID, int level, char *linkfield);
+herr_t   HE5_PTfwdlinkinfo(hid_t pointID, int level, char *linkfield);
+herr_t   HE5_PTlevelinfo(hid_t pointID, int level, HE5_CmpDTSinfo *info);
+herr_t   HE5_PTinqdatatype(hid_t pointID, const char *levelname, const char *attrname, int fieldgroup, hid_t *dtype, H5T_class_t *classid, H5T_order_t *order, size_t *size);
+int      HE5_PTinqpoint(const char *filename, char *pointlist, long *strbufsize);
+herr_t   HE5_PTgetrecnums(hid_t pointID, int inlevel, int outlevel, hsize_t inNrec, hssize_t inRecs[], hsize_t * outNrec, hssize_t outRecs[]);
+herr_t   HE5_PTattrinfo(hid_t pointID, const char *attrname, H5T_class_t *ntype, hsize_t *count);
+herr_t   HE5_PTgrpattrinfo(hid_t pointID, const char *attrname, H5T_class_t *ntype, hsize_t *count);
+herr_t   HE5_PTlocattrinfo(hid_t pointID, const char *levelname, const char *attrname, H5T_class_t *ntype, hsize_t *count);
+long     HE5_PTinqattrs(hid_t pointID, char *attrnames, long *strbufsize);
+long     HE5_PTinqgrpattrs(hid_t pointID, char *attrnames, long *strbufsize);
+long     HE5_PTinqlocattrs(hid_t pointID, const char *levelname, char *attrnames, long *strbufsize);
+
+#ifdef __cplusplus
+}
+#endif
+
+
+#endif  /* #ifndef HE5_HDFEOSDEF_H_ */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SHAR_EOF
+echo convert.c 1>&2
+sed 's/^X//' << 'SHAR_EOF' > 'convert.c' &&
+/***************************************************************************
+BEGIN_FILE_PROLOG:
+
+        COPYRIGHT @ 2000, Raytheon Systems Company, its vendors,
+        and suppliers, ALL RIGHTS RESERVED.
+
+FILENAME:
+        convert.c
+
+DESCRIPTION:
+        This file contains the functions that make up the command-
+	line utility to convert HDF-EOS objects from HDF4 to HDF5.
+
+AUTHOR:
+        Ray Milburn / Emergent Information Technologies, Inc.
+
+HISTORY:
+        15-Jun-00 RM    Initial version
+
+END_FILE_PROLOG:
+***************************************************************************/
+#include <stdio.h>
+#include <math.h>
+
+#include "hdf.h"
+#include "HdfEosDef.h"
+
+#include "hdf5.h"
+#include "HE5_HdfEosDef.h"
+
+/***************************************************************************
+  Defines and data structure needed for the utiltity.
+***************************************************************************/
+#define CONVERT_VERSION "Version 5.1, 29-Jun-01"
+
+#define CONVERT_FALSE 0
+#define CONVERT_TRUE 1
+
+#define CONVERT_SWATH 10
+#define CONVERT_GRID 20
+#define CONVERT_POINT 30
+
+#define CONVERT_SUCCESS 0
+#define CONVERT_FAIL -1
+#define CONVERT_PROBLEM -2
+
+#define CONVERT_SWATH_DIMS 100
+#define CONVERT_GRID_DIMS 200
+#define CONVERT_SWATH_GEOFIELD 300
+#define CONVERT_SWATH_DATAFIELD 400
+#define CONVERT_GRID_DATAFIELD 500
+#define CONVERT_SWATH_ATTRIBUTE 600
+#define CONVERT_GRID_ATTRIBUTE 700
+#define CONVERT_POINT_ATTRIBUTE 800
+
+#define CONVERT_NO_TILE -99
+
+#define CONVERT_VERBOSE_HEAD "CONVERT"
+
+typedef struct
+{
+    int total;
+    char **name;
+} HdfInfo;
+
+
+/***************************************************************************
+  Global variables
+***************************************************************************/
+char inNameGlobal[1025];     /* input file */
+char outNameGlobal[1025];    /* output file */
+int verboseModeGlobal;       /* verbose mode flag */
+int compressModeGlobal;      /* compression mode flag */
+int numTilesGlobal;          /* number of tiles (for compression) */
+int fileCreatedGlobal;	     /* already created output file */
+
+/***************************************************************************
+  Function prototypes (all contained in this file)
+***************************************************************************/
+int GetInput(int argc, char *argv[]);
+void DisplayHelpAndExit(char *progName);
+void DisplayVersionAndExit(char *progName);
+int GetNumberObjects(HdfInfo *infoPtr,int objType);
+int DoSwathConversion(HdfInfo swathInfo);
+int DoGridConversion(HdfInfo swathInfo);
+int DoPointConversion(HdfInfo swathInfo);
+int ConvertSWorGDDims(int32 inFile,int outFile,int typeFlag);
+int ConvertSwathDimMap(int32 inFile,int outFile);
+int ConvertSwathIndexMap(int32 inFile,int outFile);
+int ConvertSWorGDFieldInfo(int32 inFile,int outFile,int typeFlag);
+int ConvertHDFEOSAttribute(int32 inFile,int outFile,int typeFlag);
+int GetHDF5TypeFromHDF4Type(int32 hdf4Type);
+int ConvertGridProjInfo(int32 inFile,int outFile);
+void CalculateNumberOfChunks(int numDims,hsize_t *realDims,
+                             hsize_t *chunkDims);
+
+
+/***************************************************************************
+BEGIN_PROLOG:
+
+FUNCTION:
+        main()
+
+DESCRIPTION:
+	Main driver or start up function for conversion utility.
+
+INPUTS:
+        Name            Description                     Units   Min     Max
+
+        argc		number of command line arguments
+	argv		array of command line arguments
+
+OUTPUTS:
+        Name            Description                     Units   Min     Max
+
+        NONE
+
+FUNCTIONS_CALLED:
+
+        GetInput		- Parse command line arguments
+	DisplayHelpAndExit	- Display usage message
+	GetNumberObjects	- Count number of specified type of 	
+				HDF-EOS objects in file
+	DoSwathConversion	- Convert swath objects from HDF4 to HDF5
+	DoGridConversion	- Convert grid objects from HDF4 to HDF5
+	DoPointConversion	- Convert point objects from HDF4 to HDF5
+
+RETURNS:
+        Program exit code
+
+HISTORY:
+
+        Date            Programmer              Description
+        ---------       ------------------      -------------------------
+        Jun 00          Ray Milburn             Original Programmer
+
+END_PROLOG:
+***************************************************************************/
+int main (int argc, char *argv[])
+{
+    int numObjects;            /* number of HDF-EOS objects */
+    int status;                /* return status */
+    HdfInfo hdf4Info;          /* input file HDF-EOS object info */
+
+/***************************************************************************
+  Parse command line - set up globals, if a problem show usage
+  message to user and exit.
+***************************************************************************/
+    status = GetInput(argc,argv);
+    if (status == CONVERT_FAIL)
+    {
+        DisplayHelpAndExit(argv[0]);
+    }
+
+/***************************************************************************
+  Verbose message.
+***************************************************************************/
+    if (verboseModeGlobal == CONVERT_TRUE)
+    {
+        printf("\n%s - copying HDF-EOS objects:\n",CONVERT_VERBOSE_HEAD);
+        printf("    Input file:  %s\n",inNameGlobal);
+        printf("    Output file:  %s\n",outNameGlobal);
+    }
+
+/***************************************************************************
+  Get number of Swath objects - do conversion if necessary.
+***************************************************************************/
+    numObjects = GetNumberObjects(&hdf4Info,CONVERT_SWATH);
+    if (numObjects > 0)
+    {
+        if (verboseModeGlobal == CONVERT_TRUE)
+        {
+            printf("\n%s - Converting %d Swath objects\n",
+                   CONVERT_VERBOSE_HEAD,numObjects);
+        }
+        status = DoSwathConversion(hdf4Info);
+    }
+    else if (numObjects == CONVERT_FAIL)
+    {
+    }
+    else
+    {
+        puts("Message:  No Swath objects in input file.");
+    }
+
+/***************************************************************************
+  Get number of Grid objects - do conversion if necessary.
+***************************************************************************/
+    numObjects = GetNumberObjects(&hdf4Info,CONVERT_GRID);
+    if (numObjects > 0)
+    {
+        if (verboseModeGlobal == CONVERT_TRUE)
+        {
+            printf("\n%s - Converting %d Grid objects\n",
+                   CONVERT_VERBOSE_HEAD,numObjects);
+        }
+        status = DoGridConversion(hdf4Info);
+    }
+    else if (numObjects == CONVERT_FAIL)
+    {
+    }
+    else
+    {
+        puts("Message:  No Grid objects in input file.");
+    }
+
+/***************************************************************************
+  Get number of Point objects - do nothing.....yet (this will change)
+***************************************************************************/
+    numObjects = GetNumberObjects(&hdf4Info,CONVERT_POINT);
+    if (numObjects > 0)
+    {
+        if (verboseModeGlobal == CONVERT_TRUE)
+        {
+            printf("\n%s - Converting %d Point objects\n",
+                   CONVERT_VERBOSE_HEAD,numObjects);
+        }
+        status = DoPointConversion(hdf4Info);
+    }
+    else if (numObjects == CONVERT_FAIL)
+    {
+    }
+    else
+    {
+        puts("Message:  No Point objects in input file.");
+    }
+
+/***************************************************************************
+  All's well that ends well.
+***************************************************************************/
+    return 0;
+}
+
+
+
+/***************************************************************************
+BEGIN_PROLOG:
+
+FUNCTION:
+	GetInput()
+
+DESCRIPTION:
+	Parse command line inputs, set global flags based on inputs, 
+	and load global variables.
+
+INPUTS:
+        Name            Description                     Units   Min     Max
+
+        argc		number of command line arguments
+	argv		array of command line arguments
+
+OUTPUTS:
+        Name            Description                     Units   Min     Max
+
+        NONE
+
+FUNCTIONS_CALLED:
+
+	DisplayHelpAndExit	- Display usage message
+
+RETURNS:
+        CONVERT_SUCCESS		- everything is ready to go
+	CONVERT_FAIL		- can not continue
+
+HISTORY:
+
+        Date            Programmer              Description
+        ---------       ------------------      -------------------------
+        Jun 00          Ray Milburn             Original Programmer
+
+END_PROLOG:
+***************************************************************************/
+int GetInput(int argc, char *argv[])
+{
+    int retVal;                      /* return value */
+    int loopCount;                   /* for loop counter */
+    int inFileLoc;                   /* index of -i flag */
+    int outFileLoc;                  /* index of -o flag */
+    int helpFlag;                    /* flag if user needs usage help */
+    int compValueLoc;                /* index of -c flag */
+    FILE *inFile = (FILE *) NULL;    /* in file - file pointer */
+    FILE *outFile = (FILE *) NULL;   /* out file - file pointer */
+
+/***************************************************************************
+  Initializations
+***************************************************************************/
+    inFileLoc = 0;
+    outFileLoc = 0;
+    compValueLoc = 0;
+    verboseModeGlobal = CONVERT_FALSE;
+    compressModeGlobal = CONVERT_FALSE;
+    numTilesGlobal = CONVERT_NO_TILE;
+    fileCreatedGlobal = CONVERT_FALSE;
+    helpFlag = CONVERT_FALSE;
+    retVal = CONVERT_SUCCESS;
+
+/***************************************************************************
+  If only the program name is entered then we need to help the user.
+***************************************************************************/
+    if (argc == 1)
+    {
+        helpFlag = CONVERT_TRUE;
+    }
+
+/***************************************************************************
+  Loop over arguments after program name.
+***************************************************************************/
+    for (loopCount = 1; loopCount < argc; loopCount++)
+    {
+
+/***************************************************************************
+  Found the -i flag, next argument should be the input file name.
+***************************************************************************/
+        if (strcmp(argv[loopCount],"-i") == 0)
+        {
+            inFileLoc = loopCount + 1;
+        }
+
+/***************************************************************************
+  Found the -o flag, next argument should be the output file name.
+***************************************************************************/
+        if (strcmp(argv[loopCount],"-o") == 0)
+        {
+            outFileLoc = loopCount + 1;
+        }
+
+/***************************************************************************
+  Found the -h flag, set helpFlag to true.
+***************************************************************************/
+        if (strcmp(argv[loopCount],"-h") == 0)
+        {
+            helpFlag = CONVERT_TRUE;
+        }
+
+/***************************************************************************
+  Found the -v flag, set verbose flag to true.
+***************************************************************************/
+        if (strcmp(argv[loopCount],"-v") == 0)
+        {
+            verboseModeGlobal = CONVERT_TRUE;
+        }
+
+/***************************************************************************
+  Found the -version flag, set version flag to true.
+***************************************************************************/
+        if (strcmp(argv[loopCount],"-version") == 0)
+        {
+            DisplayVersionAndExit(argv[0]);
+        }
+
+/***************************************************************************
+  Found the -c flag, do compression.
+***************************************************************************/
+        if (strcmp(argv[loopCount],"-c") == 0)
+        {
+            compressModeGlobal = CONVERT_TRUE;
+            compValueLoc = loopCount + 1;
+        }
+    }  /* end for */
+
+/***************************************************************************
+  See if the user entered "-i -o" with no file names....
+***************************************************************************/
+    if (abs(inFileLoc - outFileLoc) < 2)
+    {
+        helpFlag = CONVERT_TRUE;
+    }
+
+/***************************************************************************
+  The user either wanted or needed help.  Do it now.
+***************************************************************************/
+    if (helpFlag == CONVERT_TRUE)
+    {
+        DisplayHelpAndExit(argv[0]);
+    }
+
+/***************************************************************************
+  Check to see if input file exists, has read permission and is a
+  valid HDF4 file.
+***************************************************************************/
+    if (inFileLoc > 0)
+    {
+        inFile = fopen(argv[inFileLoc],"r");
+        if ((Hishdf(argv[inFileLoc]) == 0) || (inFile == (FILE *) NULL))
+        {
+            printf("ERROR:   input file (%s) must exist and be HDF4 file.\n",argv[inFileLoc]);
+            retVal = CONVERT_FAIL;
+        }
+    }
+    else
+    {
+        puts("ERROR:   input file needed!");
+        retVal = CONVERT_FAIL;
+    }
+
+/***************************************************************************
+  Check to see if output file does not exist.
+***************************************************************************/
+    if (outFileLoc > 0)
+    {
+        outFile = fopen(argv[outFileLoc],"r");
+        if (outFile != (FILE *) NULL)
+        {
+            printf("ERROR:  out file (%s) exists, file name must be new file.\n",
+                   argv[outFileLoc]);
+            retVal = CONVERT_FAIL;
+        }
+    }
+    else
+    {
+        puts("ERROR:   output file needed!");
+        retVal = CONVERT_FAIL;
+    }
+
+/***************************************************************************
+  Close files (we opened them for checking purposes).
+***************************************************************************/
+    if (inFile != (FILE *) NULL)
+    {
+        fclose(inFile);
+    }
+
+    if (outFile != (FILE *) NULL)
+    {
+        fclose(outFile);
+    }
+
+/***************************************************************************
+  If all is well, load global file names with what the user input.
+***************************************************************************/
+    if (retVal == CONVERT_SUCCESS)
+    {
+        strcpy(inNameGlobal,argv[inFileLoc]);
+        strcpy(outNameGlobal,argv[outFileLoc]);
+    }
+
+    if ((compValueLoc > 0) && (compValueLoc < argc))
+    {
+        char temString[30];
+        int len;
+        int count;
+        int testVal;
+
+        strcpy(temString,argv[compValueLoc]);
+        len = (int) strlen(temString); 
+
+        for (count = 0; count < len; count++)
+        {
+            testVal = isdigit(temString[count]);
+            if (testVal == 0)
+            {
+                break;
+            }
+        }
+
+        if (testVal != 0)
+        {
+            numTilesGlobal = atoi(temString);
+        }
+    }
+
+    return retVal;
+}
+
+
+
+/***************************************************************************
+BEGIN_PROLOG:
+
+FUNCTION:
+	GetNumberObjects()
+
+DESCRIPTION:
+	Determine the number of specified HDF4 HDF-EOS objects
+	are in the file.
+
+INPUTS:
+        Name            Description                     Units   Min     Max
+
+	objType		type of object to look for (SWATH/POINT/GRID)
+
+OUTPUTS:
+        Name            Description                     Units   Min     Max
+
+        infoPtr		information about found objects
+
+FUNCTIONS_CALLED:
+
+	CallocErrorMsg		- display uniform message on calloc failure
+
+RETURNS:
+	Number of specified HDF-EOS objects or CONVERT_FAIL on failure.
+
+HISTORY:
+
+        Date            Programmer              Description
+        ---------       ------------------      -------------------------
+        Jun 00          Ray Milburn             Original Programmer
+
+END_PROLOG:
+***************************************************************************/
+int GetNumberObjects(HdfInfo *infoPtr,int objType)
+{
+    char *nameList;                /* list of object names */
+    int numObjs = 0;               /* number of objects found */
+    int32 strBufSize;              /* length of object name list */
+    int32 objects;                 /* number of objects */
+
+/***************************************************************************
+  Determine how many swath objects there are and get the list of 
+  swath names.
+***************************************************************************/
+    switch (objType)
+    {
+        case CONVERT_SWATH:
+        {
+            objects = SWinqswath(inNameGlobal,NULL,&strBufSize);
+            if (objects > 0)
+            {
+                nameList = (char *) calloc(1,(int) strBufSize + 1);
+                if (nameList == NULL)
+                {
+                    objects = CallocErrorMsg(__LINE__);
+                }
+                else
+                {
+                    objects = SWinqswath(inNameGlobal,nameList,&strBufSize);
+                }
+            }
+        }
+        break;
+
+/***************************************************************************
+  Determine how many grid objects there are and get the list of 
+  grid names.
+***************************************************************************/
+        case CONVERT_GRID:
+        {
+            objects = GDinqgrid(inNameGlobal,NULL,&strBufSize);
+            if (objects > 0)
+            {
+                nameList = (char *) calloc(1,(int) strBufSize + 1);
+                if (nameList == NULL)
+                {
+                    objects = CallocErrorMsg(__LINE__);
+                }
+                else
+                {
+                    objects = GDinqgrid(inNameGlobal,nameList,&strBufSize);
+                }
+            }
+        }
+        break;
+
+/***************************************************************************
+  Determine how many point objects there are and get the list of 
+  point names.
+***************************************************************************/
+        case CONVERT_POINT:
+        {
+            objects = PTinqpoint(inNameGlobal,NULL,&strBufSize);
+            if (objects > 0)
+            {
+                nameList = (char *) calloc(1,(int) strBufSize + 1);
+                if (nameList == NULL)
+                {
+                    objects = CallocErrorMsg(__LINE__);
+                }
+                else
+                {
+                    objects = PTinqpoint(inNameGlobal,nameList,&strBufSize);
+                }
+            }
+        }
+        break;
+
+    }  /* end switch */  
+
+/***************************************************************************
+  Set up structure to contain an array of object names.
+***************************************************************************/
+    infoPtr->total = numObjs = (int) objects;
+    if (numObjs > 0)
+    {
+        char **ptr = NULL;
+        char objName[500];
+        int loopCount;
+        long count;
+        size_t *slen = NULL;
+
+        infoPtr->name = (char **) calloc(numObjs,sizeof(char *));
+        if (infoPtr->name == NULL)
+        {
+            return (CallocErrorMsg(__LINE__));
+        }
+
+/***************************************************************************
+  See how many names are in the list.
+***************************************************************************/
+        count = HE5_EHparsestr(nameList,',',NULL,NULL);
+        ptr = (char **) calloc(count,sizeof(char *));
+        slen = (size_t *) calloc(count,sizeof(long));
+        if ((ptr == NULL) || (slen == NULL))
+        {
+            return (CallocErrorMsg(__LINE__));
+        }
+        count = HE5_EHparsestr(nameList,',',ptr,slen);
+
+/***************************************************************************
+  Loop over the names and place them in the structure.
+***************************************************************************/
+        for (loopCount = 0; loopCount < infoPtr->total; loopCount++)
+        {
+            memmove(objName,ptr[loopCount],(int) slen[loopCount]);
+            objName[slen[loopCount]] = '\0';
+
+            infoPtr->name[loopCount] = (char *) calloc(1,strlen(objName) + 1);
+            if (infoPtr->name[loopCount] == NULL)
+            {
+                numObjs = CallocErrorMsg(__LINE__);
+                break;
+            }
+            strcpy(infoPtr->name[loopCount],objName);
+        }
+        free(ptr);
+        free(slen);
+    }
+ 
+    return numObjs;
+}
+
+
+/***************************************************************************
+BEGIN_PROLOG:
+
+FUNCTION:
+	DoSwathConversion()
+
+DESCRIPTION:
+	Convert Swaths from HDF4 to HDF5.
+
+INPUTS:
+        Name            Description                     Units   Min     Max
+
+	swathInfo	information about the swath
+
+OUTPUTS:
+        Name            Description                     Units   Min     Max
+
+	NONE
+
+FUNCTIONS_CALLED:
+
+	CallocErrorMsg		- display uniform message on calloc failure
+	ConvertSWorGDDims	- convert swath or grid dimensions
+	ConvertSwathDimMap	- convert swath geolocation mappings
+	ConvertSwathIndexMap	- convert swath indexed mappings
+	ConvertSWorGDFieldInfo	- convert swath or grid field data 
+				(geolocation or data field)
+	ConvertHDFEOSAttribute	- convert swath, point, or grid attribute 
+				information
+
+RETURNS:
+	CONVERT_SUCCESS		- all went well
+	CONVERT_FAIL		- problem
+
+HISTORY:
+
+        Date            Programmer              Description
+        ---------       ------------------      -------------------------
+        Jun 00          Ray Milburn             Original Programmer
+
+END_PROLOG:
+***************************************************************************/
+int DoSwathConversion(HdfInfo swathInfo)
+{
+    int retVal = CONVERT_SUCCESS;           /* return value */
+    int loopCount;                          /* for loop counter */
+    int32 inSWFid;                          /* input file HDF4 file id */
+    int outSWFid;                           /* output file HDF5 file id */
+
+/***************************************************************************
+  Open input file for Swath access.
+***************************************************************************/
+    inSWFid = SWopen(inNameGlobal,DFACC_READ);
+    if (inSWFid == CONVERT_FAIL) 
+    {
+        retVal = CONVERT_FAIL; 
+        printf("ERROR: Unable to open swath %s\n",inNameGlobal);
+        return retVal;
+    }
+
+/***************************************************************************
+  Open output file for Swath creating.
+***************************************************************************/
+    if (fileCreatedGlobal == CONVERT_FALSE)
+    {
+        outSWFid = HE5_SWopen(outNameGlobal,H5F_ACC_TRUNC);
+        fileCreatedGlobal = CONVERT_TRUE;
+    }
+    else
+    {
+        outSWFid = HE5_SWopen(outNameGlobal,H5F_ACC_RDWR);
+    }
+
+    if (outSWFid == CONVERT_FAIL) 
+    {
+        SWclose(inSWFid);
+        retVal = CONVERT_FAIL; 
+        printf("ERROR: Unable to open swath %s\n",outNameGlobal);
+        return retVal;
+    }
+
+/***************************************************************************
+  Loop over total number of swaths.
+***************************************************************************/
+    for (loopCount = 0; loopCount < swathInfo.total; loopCount++)
+    {
+        char *swathName;              /* name of swath */
+        int status;                   /* return status */
+        int32 inSWid;                 /* HDF4 swath id (input) */
+        int outSWid;                  /* HDF5 swath id (output) */
+
+/***************************************************************************
+  Load name of swath into local variable.
+***************************************************************************/
+        swathName = (char *) calloc(1,strlen(swathInfo.name[loopCount]) + 1);
+        if (swathName == NULL)
+        {
+            retVal = CallocErrorMsg(__LINE__);
+            break;
+        }
+        strcpy(swathName,swathInfo.name[loopCount]);
+
+        if (verboseModeGlobal == CONVERT_TRUE)
+        {
+            printf("Begin - convert Swath - %s\n",swathName);
+        }
+
+/***************************************************************************
+  Attach to input file swath.
+***************************************************************************/
+        inSWid = SWattach(inSWFid,swathName);
+        if (inSWid == CONVERT_FAIL)
+        {
+            retVal = CONVERT_FAIL;
+            free(swathName);
+            puts("ERROR:  SWattach fail.");
+            break;
+        }
+
+/***************************************************************************
+  Create a swath in the output file.
+***************************************************************************/
+        outSWid = HE5_SWcreate(outSWFid,swathName);
+        if (outSWid == CONVERT_FAIL)
+        {
+            retVal = CONVERT_FAIL;
+            free(swathName);
+            puts("ERROR:  HE5_SWcreate fail.");
+            break;
+        }
+
+/***************************************************************************
+  Now, convert the swath.
+***************************************************************************/
+        status = ConvertSWorGDDims(inSWid,outSWid,CONVERT_SWATH_DIMS);
+        if (verboseModeGlobal == CONVERT_TRUE)
+        {
+             printf("Done - Swath Dimensions - %s\n",swathName);
+        }
+
+        status = ConvertSwathDimMap(inSWid,outSWid);
+        if (verboseModeGlobal == CONVERT_TRUE)
+        {
+             printf("Done - Swath Dimension Mappings - %s\n",swathName);
+        }
+
+        status = ConvertSwathIndexMap(inSWid,outSWid);
+        if (verboseModeGlobal == CONVERT_TRUE)
+        {
+             printf("Done - Swath Indexed Mappings - %s\n",swathName);
+        }
+
+        status = ConvertSWorGDFieldInfo(inSWid,outSWid,CONVERT_SWATH_GEOFIELD);
+        if (verboseModeGlobal == CONVERT_TRUE)
+        {
+             printf("Done - Swath Geolocation Fields - %s\n",swathName);
+        }
+
+        status = ConvertSWorGDFieldInfo(inSWid,outSWid,CONVERT_SWATH_DATAFIELD);
+        if (verboseModeGlobal == CONVERT_TRUE)
+        {
+             printf("Done - Swath Data Fields - %s\n",swathName);
+        }
+
+        status = ConvertHDFEOSAttribute(inSWid,outSWid,CONVERT_SWATH_ATTRIBUTE);
+        if (verboseModeGlobal == CONVERT_TRUE)
+        {
+            printf("Done - Swath Attributes - %s\n",swathName);
+            printf("End - convert Swath - %s\n",swathName);
+        }
+
+/***************************************************************************
+  Free the name and detach.
+***************************************************************************/
+        free(swathName);
+        SWdetach(inSWid);
+        HE5_SWdetach(outSWid);
+    }
+
+/***************************************************************************
+  Close the file - done swath conversion
+***************************************************************************/
+    SWclose(inSWFid);
+    HE5_SWclose(outSWFid);
+    
+    return retVal;
+}
+
+
+
+/***************************************************************************
+BEGIN_PROLOG:
+
+FUNCTION:
+	DoGridConversion()
+
+DESCRIPTION:
+	Convert Grids from HDF4 to HDF5.
+
+INPUTS:
+        Name            Description                     Units   Min     Max
+
+	gridInfo	information about the grid
+
+OUTPUTS:
+        Name            Description                     Units   Min     Max
+
+	NONE
+
+FUNCTIONS_CALLED:
+
+	CallocErrorMsg		- display uniform message on calloc failure
+	ConvertGridProjInfo	- convert grid projection information
+	ConvertSWorGDDims	- convert swath or grid dimensions
+	ConvertSWorGDFieldInfo	- convert swath or grid field data 
+				(geolocation or data field)
+	ConvertHDFEOSAttribute	- convert swath, point, or grid attribute 
+				information
+
+RETURNS:
+	CONVERT_SUCCESS		- all went well
+	CONVERT_FAIL		- problem
+
+HISTORY:
+
+        Date            Programmer              Description
+        ---------       ------------------      -------------------------
+        Jun 00          Ray Milburn             Original Programmer
+
+END_PROLOG:
+***************************************************************************/
+int DoGridConversion(HdfInfo gridInfo)
+{
+    int retVal = CONVERT_SUCCESS;           /* return value */
+    int loopCount;                          /* for loop counter */
+    int32 inGDFid;                          /* input file HDF4 file id */
+    int outGDFid;                           /* output file HDF5 file id */
+
+/***************************************************************************
+  Open input file for Grid access.
+***************************************************************************/
+    inGDFid = GDopen(inNameGlobal,DFACC_READ);
+    if (inGDFid == CONVERT_FAIL) 
+    {
+        printf("ERROR:  Unable to open Grid %s\n",inNameGlobal);
+        return CONVERT_FAIL;
+    }
+
+/***************************************************************************
+  Open output file for Grid creating.
+***************************************************************************/
+    if (fileCreatedGlobal == CONVERT_FALSE)
+    {
+        outGDFid = HE5_GDopen(outNameGlobal,H5F_ACC_TRUNC);
+        fileCreatedGlobal = CONVERT_TRUE;
+    }
+    else
+    {
+        outGDFid = HE5_GDopen(outNameGlobal,H5F_ACC_RDWR);
+    }
+
+    if (outGDFid == CONVERT_FAIL) 
+    {
+        GDclose(inGDFid);
+        printf("ERROR:  Unable to open Grid %s\n",outNameGlobal);
+        return CONVERT_FAIL;
+    }
+
+/***************************************************************************
+  Loop over total number of grids.
+***************************************************************************/
+    for (loopCount = 0; loopCount < gridInfo.total; loopCount++)
+    {
+        char *gridName;                   /* grid name */
+        double outUpLeft[2];              /* upper left point (HDF5) */
+        double outLowRight[2];            /* lower right point (HDF5) */
+        int status;                       /* return status */
+        int inLoop;                       /* for inner for loop counter */
+        int32 inGDid;                     /* input grid id (HDF4) */
+        int32 inXDim;                     /* input X dimension (HDF4) */
+        int32 inYDim;                     /* input Y dimension (HDF4) */
+        float64 inUpLeft[2];              /* upper left point (HDF4) */
+        float64 inLowRight[2];            /* upper left point (HDF4) */
+        long outXDim;                     /* output X dimension (HDF5) */
+        long outYDim;                     /* output X dimension (HDF5) */
+        int outGDid;                      /* output grid id (HDF5) */
+
+/***************************************************************************
+  Load name of grid into local variable.
+***************************************************************************/
+        gridName = (char *) calloc(1,strlen(*(gridInfo.name+loopCount)) + 1);
+        if (gridName == NULL)
+        {
+            return (CallocErrorMsg(__LINE__));
+        }
+        strcpy(gridName,*(gridInfo.name+loopCount));
+
+        if (verboseModeGlobal == CONVERT_TRUE)
+        {
+            printf("Begin - convert Grid - %s\n",gridName);
+        }
+
+/***************************************************************************
+  Attach to input file grid.
+***************************************************************************/
+        inGDid = GDattach(inGDFid,gridName);
+        if (inGDid == CONVERT_FAIL)
+        {
+            retVal = CONVERT_FAIL;
+            puts("ERROR:  HDF4 GDattach failure.");
+            free(gridName);
+            break;
+        }
+
+/***************************************************************************
+  Get grid information.
+***************************************************************************/
+        status = GDgridinfo(inGDid,&inXDim,&inYDim,inUpLeft,inLowRight);
+        if (inGDid == CONVERT_FAIL)
+        {
+            retVal = CONVERT_FAIL;
+            puts("ERROR:  HDF4 GDgridinfo failure.");
+            free(gridName);
+            break;
+        }
+
+/***************************************************************************
+  Convert grid information to HDF5 input data types (which are
+  native data types).
+***************************************************************************/
+        outXDim = (long) inXDim;
+        outYDim = (long) inYDim;
+        for (inLoop = 0; inLoop < 2; inLoop++)
+        {
+            outUpLeft[inLoop] = (double) inUpLeft[inLoop];
+            outLowRight[inLoop] = (double) inLowRight[inLoop];
+        }
+
+/***************************************************************************
+  Create a grid in the output file.
+***************************************************************************/
+        outGDid = HE5_GDcreate(outGDFid,gridName,outXDim,outYDim,outUpLeft,
+                               outLowRight);
+        if (outGDid == CONVERT_FAIL)
+        {
+            retVal = CONVERT_FAIL;
+            puts("ERROR:  HE5_GDcreate failure.");
+            free(gridName);
+            break;
+        }
+        else
+        {
+            if (verboseModeGlobal == CONVERT_TRUE)
+            {
+                 printf("Done - Grid Information - %s\n",gridName);
+            }
+        }
+
+/***************************************************************************
+  Now, convert the grid.
+***************************************************************************/
+        status = ConvertGridProjInfo(inGDid,outGDid);
+        if (verboseModeGlobal == CONVERT_TRUE)
+        {
+             printf("Done - Grid Projection Information - %s\n",gridName);
+        }
+
+        status = ConvertSWorGDDims(inGDid,outGDid,CONVERT_GRID_DIMS);
+        if (verboseModeGlobal == CONVERT_TRUE)
+        {
+             printf("Done - Grid Dimensions - %s\n",gridName);
+        }
+
+        status = ConvertSWorGDFieldInfo(inGDid,outGDid,CONVERT_GRID_DATAFIELD);
+        if (verboseModeGlobal == CONVERT_TRUE)
+        {
+             printf("Done - Grid Data Fields - %s\n",gridName);
+        }
+
+        status = ConvertHDFEOSAttribute(inGDid,outGDid,CONVERT_GRID_ATTRIBUTE);
+        if (verboseModeGlobal == CONVERT_TRUE)
+        {
+            printf("Done - Grid Attributes - %s\n",gridName);
+            printf("End - convert Grid - %s\n",gridName);
+        }
+
+/***************************************************************************
+  Free the name and detach.
+***************************************************************************/
+        free(gridName);
+        GDdetach(inGDid);
+        HE5_GDdetach(outGDid);
+    }
+
+/***************************************************************************
+  Close the file - done grid conversion
+***************************************************************************/
+    GDclose(inGDFid);
+    HE5_GDclose(outGDFid);
+    
+    return retVal;
+}
+
+
+
+/***************************************************************************
+BEGIN_PROLOG:
+
+FUNCTION:
+	DoPointConversion()
+
+DESCRIPTION:
+	Convert Point from HDF4 to HDF5.
+
+INPUTS:
+        Name            Description                     Units   Min     Max
+
+	pointInfo	information about the grid
+
+OUTPUTS:
+        Name            Description                     Units   Min     Max
+
+	NONE
+
+FUNCTIONS_CALLED:
+
+
+RETURNS:
+	CONVERT_SUCCESS		- all went well
+	CONVERT_FAIL		- problem
+
+HISTORY:
+
+        Date            Programmer              Description
+        ---------       ------------------      -------------------------
+        Dec 00          Ray Milburn             Original Programmer
+
+END_PROLOG:
+***************************************************************************/
+int DoPointConversion(HdfInfo pointInfo)
+{
+    int retVal = CONVERT_SUCCESS;           /* return value */
+    int loopCount;                          /* for loop counter */
+    int32 inPTFid;                          /* input file HDF4 file id */
+    int outPTFid;                           /* output file HDF5 file id */
+
+/***************************************************************************
+  Open input file for Point access.
+***************************************************************************/
+    inPTFid = PTopen(inNameGlobal,DFACC_READ);
+    if (inPTFid == CONVERT_FAIL) 
+    {
+        printf("ERROR:  Unable to open Point %s\n",inNameGlobal);
+        return CONVERT_FAIL;
+    }
+
+/***************************************************************************
+  Open output file for Point creating.
+***************************************************************************/
+    if (fileCreatedGlobal == CONVERT_FALSE)
+    {
+        outPTFid = HE5_PTopen(outNameGlobal,H5F_ACC_TRUNC);
+        fileCreatedGlobal = CONVERT_TRUE;
+    }
+    else
+    {
+        outPTFid = HE5_PTopen(outNameGlobal,H5F_ACC_RDWR);
+    }
+
+    if (outPTFid == CONVERT_FAIL) 
+    {
+        PTclose(inPTFid);
+        printf("ERROR:  Unable to open Point %s\n",outNameGlobal);
+        return CONVERT_FAIL;
+    }
+
+/***************************************************************************
+  Loop over total number of points.
+***************************************************************************/
+    for (loopCount = 0; loopCount < pointInfo.total; loopCount++)
+    {
+        char *pointName;
+        int outPTid;
+        int status;                       /* return status */
+        int32 inPTid;
+
+/***************************************************************************
+  Load name of point into local variable.
+***************************************************************************/
+        pointName = (char *) calloc(1,strlen(*(pointInfo.name+loopCount)) + 1);
+        if (pointName == NULL)
+        {
+            return (CallocErrorMsg(__LINE__));
+        }
+        strcpy(pointName,*(pointInfo.name+loopCount));
+
+        if (verboseModeGlobal == CONVERT_TRUE)
+        {
+            printf("Begin - convert Point - %s\n",pointName);
+        }
+
+/***************************************************************************
+  Attach to input file point.
+***************************************************************************/
+        inPTid = PTattach(inPTFid,pointName);
+        if (inPTid == CONVERT_FAIL)
+        {
+            retVal = CONVERT_FAIL;
+            puts("ERROR:  HDF4 PTattach failure.");
+            free(pointName);
+            break;
+        }
+
+/***************************************************************************
+  Create a point in the output file.
+***************************************************************************/
+        outPTid = HE5_PTcreate(outPTFid,pointName);
+        if (outPTid == CONVERT_FAIL)
+        {
+            retVal = CONVERT_FAIL;
+            free(pointName);
+            puts("ERROR:  HE5_PTcreate fail.");
+            break;
+        }
+
+/***************************************************************************
+  Now, convert the point.
+***************************************************************************/
+        status = ConvertPointLevelData(inPTid,outPTid);
+        if (verboseModeGlobal == CONVERT_TRUE)
+        {
+             printf("Done - Point Level Data - %s\n",pointName);
+        }
+
+        status = ConvertHDFEOSAttribute(inPTid,outPTid,CONVERT_POINT_ATTRIBUTE);
+        if (verboseModeGlobal == CONVERT_TRUE)
+        {
+            printf("Done - Point Attributes - %s\n",pointName);
+            printf("End - convert Point - %s\n",pointName);
+        }
+
+/***************************************************************************
+  Free the name and detach.
+***************************************************************************/
+        free(pointName);
+        PTdetach(inPTid);
+        HE5_PTdetach(outPTid);
+    }
+
+    return retVal;
+}
+
+
+/***************************************************************************
+BEGIN_PROLOG:
+
+FUNCTION:
+	ConvertSWorGDDims()
+
+DESCRIPTION:
+	Convert Swath or Grid dimensions from HDF4 to HDF5.
+
+INPUTS:
+        Name            Description                     Units   Min     Max
+
+        inFile		input file id (HDF4 file)
+	outFile		output file id (HDF5 file)
+        typeFlag	Swath dimensions or Grid dimensions flag
+
+OUTPUTS:
+        Name            Description                     Units   Min     Max
+
+	NONE
+
+FUNCTIONS_CALLED:
+
+	CallocErrorMsg		- display uniform message on calloc failure
+
+RETURNS:
+	CONVERT_SUCCESS		- all went well
+	CONVERT_FAIL		- problem
+
+HISTORY:
+
+        Date            Programmer              Description
+        ---------       ------------------      -------------------------
+        Jun 00          Ray Milburn             Original Programmer
+
+END_PROLOG:
+***************************************************************************/
+int ConvertSWorGDDims(int32 inFile,int outFile,int typeFlag)
+{
+    char typeString[10];
+    int retVal = CONVERT_SUCCESS;       /* return value */
+    int32 numDims;                      /* number of dimensions */
+    int32 bufSize;                      /* string buffer size */
+
+    if (verboseModeGlobal == CONVERT_TRUE)
+    {
+        if (typeFlag == CONVERT_SWATH_DIMS)
+        {
+            strcpy(typeString,"Swath");
+        }
+        else 
+        {
+            strcpy(typeString,"Grid");
+        }
+    }
+
+/***************************************************************************
+  Get number of dimensions grid or swath.
+***************************************************************************/
+    if (typeFlag == CONVERT_SWATH_DIMS)
+    {
+        numDims = SWnentries(inFile,HDFE_NENTDIM,&bufSize);
+    }
+    else
+    {
+        numDims = GDnentries(inFile,HDFE_NENTDIM,&bufSize);
+    }
+
+    if (verboseModeGlobal == CONVERT_TRUE)
+    {
+        printf("Working - Number of %s dimensions = %d\n",typeString,
+              (int) numDims);
+    }
+
+/***************************************************************************
+  If there are dimensions.....convert.
+***************************************************************************/
+    if (numDims > 0)
+    {
+        char *dimName;              /* name of dimension */
+        char **ptr = NULL;          /* ptr to dimension name(s) */
+        char oneDimName[500];       /* temporary buffer */
+        int loop;                   /* for loop counter */
+        int status;                 /* return status */
+        int32 *dims;                /* array of dimensions */
+        long count;                 /* number of dimensions */
+        size_t *slen = NULL;        /* array of name lengths */
+
+/***************************************************************************
+  Allocate space to inquire dimensions.
+***************************************************************************/
+        dims = (int32 *) calloc(numDims,(int) sizeof(int32));
+        dimName = (char *) calloc(1,(int) (bufSize+1));
+        if ((dims == NULL) || (dimName == NULL))
+        {
+            return (CallocErrorMsg(__LINE__));
+        }
+
+        if (typeFlag == CONVERT_SWATH_DIMS)
+        {
+            numDims = SWinqdims(inFile,dimName,dims);
+        }
+        else
+        {
+            numDims = GDinqdims(inFile,dimName,dims);
+        }
+
+/***************************************************************************
+  Double check - make sure there are dimensions.
+***************************************************************************/
+        if (numDims > 0)
+        {
+
+/***************************************************************************
+  Get information about the dimension names.
+***************************************************************************/
+            count = HE5_EHparsestr(dimName,',',NULL,NULL);
+            ptr = (char **) calloc(count,sizeof(char *));
+            slen = (size_t *) calloc(count,sizeof(long));
+            if ((ptr == NULL) || (slen == NULL))
+            {
+                return (CallocErrorMsg(__LINE__));
+            }
+            count = HE5_EHparsestr(dimName,',',ptr,slen);
+   
+/***************************************************************************
+  Loop over number of dimensions.
+***************************************************************************/
+            for (loop = 0; loop < count; loop++)
+            {
+                hsize_t dimSize;         /* dimension size */
+
+/***************************************************************************
+  Get dimension name in local variable.
+***************************************************************************/
+                memmove(oneDimName,ptr[loop],(int) slen[loop]);
+                oneDimName[slen[loop]] = '\0';
+
+/***************************************************************************
+  Set up dimSize to HDF5 type.
+***************************************************************************/
+                if (dims[loop] == 0)
+                {
+                    dimSize = (hsize_t) H5S_UNLIMITED;
+                }
+                else
+                {
+                    dimSize = (hsize_t) dims[loop];
+                }
+
+                if (verboseModeGlobal == CONVERT_TRUE)
+                {
+                    printf("Working - Defining %s Dimension %s\n",
+                            typeString,oneDimName);
+                }
+
+/***************************************************************************
+  Write dimensions to output file.
+***************************************************************************/
+                if (typeFlag == CONVERT_SWATH_DIMS)
+                {
+                    status = HE5_SWdefdim(outFile,oneDimName,dimSize);
+                }
+                else
+                {
+                    status = HE5_GDdefdim(outFile,oneDimName,dimSize);
+                }
+
+                if (status == CONVERT_FAIL)
+                {
+                    retVal = CONVERT_FAIL;
+                    break;
+                }
+            }
+            free(ptr);
+            free(slen);
+        }
+        free(dims);
+        free(dimName);
+    }
+
+    return retVal;
+}
+
+
+
+/***************************************************************************
+BEGIN_PROLOG:
+
+FUNCTION:
+	ConvertSwathDimMap()
+
+DESCRIPTION:
+	Convert Swath dimension mappings from HDF4 to HDF5.
+
+INPUTS:
+        Name            Description                     Units   Min     Max
+
+        inFile		input file id (HDF4 file)
+	outFile		output file id (HDF5 file)
+
+OUTPUTS:
+        Name            Description                     Units   Min     Max
+
+	NONE
+
+FUNCTIONS_CALLED:
+
+	CallocErrorMsg		- display uniform message on calloc failure
+
+RETURNS:
+	CONVERT_SUCCESS		- all went well
+	CONVERT_FAIL		- problem
+
+HISTORY:
+
+        Date            Programmer              Description
+        ---------       ------------------      -------------------------
+        Jun 00          Ray Milburn             Original Programmer
+
+END_PROLOG:
+***************************************************************************/
+int ConvertSwathDimMap(int32 inFile,int outFile)
+{
+    char *dimMap;                   /* dimension mappings */
+    int retVal = CONVERT_SUCCESS;   /* return value */
+    int32 numMap;                   /* number of dimension mappings */
+    int32 bufSize;                  /* string buffer size */
+    int32 *offSet;                  /* mapping offsets */
+    int32 *increment;               /* mapping increments */
+
+/***************************************************************************
+  Get number of mapping entries.
+***************************************************************************/
+    numMap = SWnentries(inFile,HDFE_NENTMAP,&bufSize);
+
+    if (verboseModeGlobal == CONVERT_TRUE)
+    {
+        printf("Working - Number of Swath dimension mappings = %d\n",
+                  (int) numMap);
+    }
+
+/***************************************************************************
+  Allocate information to inquire about the geolocation mappings.
+***************************************************************************/
+    offSet = (int32 *) calloc(numMap,sizeof(int32));
+    increment = (int32 *) calloc(numMap,sizeof(int32));
+    dimMap = (char *) calloc(1,(int) (bufSize+1));
+    if ((offSet == NULL) || (increment == NULL) || (dimMap == NULL))
+    {
+        return (CallocErrorMsg(__LINE__));
+    } 
+
+/***************************************************************************
+  Inquire geolocation mappings.
+***************************************************************************/
+    numMap = SWinqmaps(inFile,dimMap,offSet,increment);
+
+    if (numMap > 0)
+    {
+        char **ptr;            /* array of pointers for mappings */
+        char temBuf[500];      /* temporary buffer */
+        int loop;              /* for looop counter */
+        long count;            /* number of dimension mappings */
+        size_t *slen;          /* array of lengths */
+
+/***************************************************************************
+  Setup pointers to allow parsing of dimension names.
+***************************************************************************/
+        count = HE5_EHparsestr(dimMap,',',NULL,NULL);
+        ptr = (char **) calloc(count,sizeof(char *));
+        slen = (size_t *) calloc(count,sizeof(long));
+        if ((ptr == NULL) || (slen == NULL))
+        {
+            return (CallocErrorMsg(__LINE__));
+        }
+        count = HE5_EHparsestr(dimMap,',',ptr,slen);
+
+/***************************************************************************
+  Loop over number of dimension mappings.
+***************************************************************************/
+        for (loop = 0; loop < count; loop++)
+        {
+            char *ptrN[2];          /* array of pointers for mappings */
+            char geoDim[500];       /* geolocation mapping dimensions */
+            char dataDim[500];      /* data mapping dimensions */
+            size_t slenN[2];        /* string lengths */
+            long countN;            /* number of mappings */
+            hsize_t h5Offset;       /* HDF5 offset */
+            hsize_t h5Increment;    /* HDF5 increment */
+            int status;             /* HDF5 offset */
+
+/***************************************************************************
+  Copy mapping into temp buffer.
+***************************************************************************/
+            memmove(temBuf,ptr[loop],(int) slen[loop]);
+            temBuf[slen[loop]] = '\0';
+
+/***************************************************************************
+  Parse geo and data dim info.
+***************************************************************************/
+            countN = HE5_EHparsestr(temBuf,'/',ptrN,slenN);
+            if (countN != 2)
+            {
+                printf("ERROR:  Parsing data/geo dimensions - %s\n",temBuf);
+                retVal = CONVERT_FAIL;
+                break;
+            }
+            memmove(geoDim,ptrN[0],(int) slenN[0]);
+            geoDim[slenN[0]] = '\0';
+            memmove(dataDim,ptrN[1],(int) slenN[1]);
+            dataDim[slenN[1]] = '\0';
+
+/***************************************************************************
+  Place offset and increment into HDF5 datatype variables.
+***************************************************************************/
+            h5Offset = (hsize_t) offSet[loop];
+            h5Increment = (hsize_t) increment[loop];
+
+            if (verboseModeGlobal == CONVERT_TRUE)
+            {
+                printf("Working - Defining Swath dimension mapping\n Geolocation Dim:  %s\nData Dimension:  %s\n",geoDim,dataDim);
+            }
+
+/***************************************************************************
+  Define dimension mappings in output file.
+***************************************************************************/
+            status = HE5_SWdefdimmap(outFile,geoDim,dataDim,h5Offset,h5Increment);
+            if (status == CONVERT_FAIL)
+            {
+                puts("ERROR:  HE5_SWdefdimmap failure.");
+                break;
+            }
+        }
+        free(ptr);
+        free(slen);
+    }
+    free(offSet);
+    free(increment);
+    free(dimMap);
+
+    return retVal;
+}
+
+
+
+/***************************************************************************
+BEGIN_PROLOG:
+
+FUNCTION:
+	ConvertSwathIndexMap()
+
+DESCRIPTION:
+	Convert Swath indexed mappings from HDF4 to HDF5.
+
+INPUTS:
+        Name            Description                     Units   Min     Max
+
+        inFile		input file id (HDF4 file)
+	outFile		output file id (HDF5 file)
+
+OUTPUTS:
+        Name            Description                     Units   Min     Max
+
+	NONE
+
+FUNCTIONS_CALLED:
+
+	CallocErrorMsg		- display uniform message on calloc failure
+
+RETURNS:
+	CONVERT_SUCCESS		- all went well
+	CONVERT_FAIL		- problem
+
+HISTORY:
+
+        Date            Programmer              Description
+        ---------       ------------------      -------------------------
+        Jun 00          Ray Milburn             Original Programmer
+
+END_PROLOG:
+***************************************************************************/
+int ConvertSwathIndexMap(int32 inFile,int outFile)
+{
+    int retVal = CONVERT_SUCCESS;    /* return value */
+    int32 numMap;                    /* number of indexed mappings */
+    int32 bufSize;                   /* buffer size */
+
+/***************************************************************************
+  Get number of indexed mapping entries.
+***************************************************************************/
+    numMap = SWnentries(inFile,HDFE_NENTIMAP,&bufSize);
+
+    if (verboseModeGlobal == CONVERT_TRUE)
+    {
+        printf("Working - Number of Swath indexed mappings = %d\n",
+                  (int) numMap);
+    }
+
+/***************************************************************************
+  If there are any......convert.
+***************************************************************************/
+    if (numMap > 0)
+    {
+        char *dimMap;           /* dimension mapping */
+        char **ptr;             /* array of mapping pointers */
+        char indexMap[500];     /* temporary buffer */
+        int loop;               /* for loop counter */
+        long count;             /* number of mappings */
+        size_t *slen;           /* array of lengths */
+ 
+/***************************************************************************
+  Create space for and get the indexed mapping names.
+***************************************************************************/
+        dimMap = (char *) calloc(1,(int) (bufSize + 1));
+        if (dimMap == NULL)
+        {
+            return (CallocErrorMsg(__LINE__));
+        }
+        numMap = SWinqidxmaps(inFile,dimMap,NULL);
+
+/***************************************************************************
+  Parse information about indexed mapping names.
+***************************************************************************/
+        count = HE5_EHparsestr(dimMap,',',NULL,NULL);
+        ptr = (char **) calloc(count,sizeof(char *));
+        slen = (size_t *) calloc(count,sizeof(long));
+        if ((ptr == NULL) || (slen == NULL))
+        {
+            return (CallocErrorMsg(__LINE__));
+        }
+        count = HE5_EHparsestr(dimMap,',',ptr,slen);
+
+/***************************************************************************
+  Loop over number of indexed mappings.
+***************************************************************************/
+        for (loop = 0; loop < count; loop++)
+        {
+            char *ptrN[2];          /* array of mapping pointers */
+            char geoDim[500];       /* geolocation dim */
+            char dataDim[500];      /* data dim */
+            int inLoop;             /* for loop counter */
+            int32 dimSize;          /* dimension size (HDF4) */
+            int32 *index;           /* dimension index (HDF4) */
+            int32 numIdx;           /* number indices (HDF4) */
+            long countN;            /* number of dimensions */
+            size_t slenN[2];        /* array of lengths */
+            long *newIndex;         /* indices (HDF5) */
+            int status;             /* return status */
+
+/***************************************************************************
+  Load name into buffer.
+***************************************************************************/
+            memmove(indexMap,ptr[loop],(int) slen[loop]);
+            indexMap[slen[loop]] = '\0';
+
+/***************************************************************************
+  Get info regarding data and geo dimension.
+***************************************************************************/
+            countN = HE5_EHparsestr(indexMap,'/',ptrN,slenN);
+            memmove(geoDim,ptrN[0],(int) slenN[0]);
+            geoDim[slenN[0]] = '\0';
+            memmove(dataDim,ptrN[1],(int) slenN[1]);
+            dataDim[slenN[1]] = '\0';
+
+/***************************************************************************
+  Get dim size.
+***************************************************************************/
+            dimSize = SWdiminfo(inFile,geoDim);
+            index = (int32 *) calloc(dimSize,sizeof(int32));
+            if (dimSize == NULL)
+            {
+                retVal = CallocErrorMsg(__LINE__);
+                break;
+            }
+
+/***************************************************************************
+  Get indexed mapping information.
+***************************************************************************/
+            numIdx = SWidxmapinfo(inFile,geoDim,dataDim,index);
+            newIndex = (long *) calloc(numIdx,sizeof(long));
+            if (newIndex == NULL)
+            {
+                retVal = CallocErrorMsg(__LINE__);
+                break;
+            }
+
+/***************************************************************************
+  Copy indices into HDF5 array.
+***************************************************************************/
+            for (inLoop = 0; inLoop < numIdx; inLoop++)
+            {
+                newIndex[inLoop] = (long) index[inLoop];
+            }
+
+            if (verboseModeGlobal == CONVERT_TRUE)
+            {
+                printf("Working - Defining Swath indexed mapping\n Geolocation Dim:  %s\nData Dimension:  %s\n",geoDim,dataDim);
+            }
+
+
+/***************************************************************************
+  Write indexed mapping info into HDF5 file.
+***************************************************************************/
+            status = HE5_SWdefidxmap(outFile,geoDim,dataDim,newIndex);
+            if (status == CONVERT_FAIL)
+            {
+                retVal = CONVERT_FAIL;
+                puts("ERROR:  HE5_SWdefidxmap failure.");
+                break;
+            }
+
+            free(index);
+            free(newIndex);
+        }
+        free(ptr);
+        free(slen);
+    }
+
+    return retVal;
+}
+
+
+
+/***************************************************************************
+BEGIN_PROLOG:
+
+FUNCTION:
+	ConvertSWorGDFieldInfo()
+
+DESCRIPTION:
+	Convert Swath or Grid geolocation/data field information 
+	from HDF4 to HDF5.
+
+INPUTS:
+        Name            Description                     Units   Min     Max
+
+        inFile		input file id (HDF4 file)
+	outFile		output file id (HDF5 file)
+	typeFlag	what to convert 
+
+OUTPUTS:
+        Name            Description                     Units   Min     Max
+
+	NONE
+
+FUNCTIONS_CALLED:
+
+	CallocErrorMsg		- display uniform message on calloc failure
+	GetHDF5TypeFromHDF4Type - match HDF4 data type with HDF5 equivalent
+
+RETURNS:
+	CONVERT_SUCCESS		- all went well
+	CONVERT_FAIL		- problem
+
+HISTORY:
+
+        Date            Programmer              Description
+        ---------       ------------------      -------------------------
+        Jun 00          Ray Milburn             Original Programmer
+
+END_PROLOG:
+***************************************************************************/
+int ConvertSWorGDFieldInfo(int32 inFile,int outFile,int typeFlag)
+{
+    char typeString[30];
+    int retVal = CONVERT_SUCCESS;    /* return value */
+    int32 nFields;                   /* number of fields */
+    int32 bufSize;                   /* buffer length */
+
+    if (verboseModeGlobal == CONVERT_TRUE)
+    {
+        if (typeFlag == CONVERT_SWATH_GEOFIELD)
+        {
+            strcpy(typeString,"Swath Geolocation Fields");
+        }
+        else if (typeFlag == CONVERT_SWATH_DATAFIELD)
+        {
+            strcpy(typeString,"Swath Data Fields");
+        }
+        else
+        {
+            strcpy(typeString,"Grid Data Fields");
+        }
+    }
+
+/***************************************************************************
+  Get number of fields, based on type flag.
+***************************************************************************/
+    if (typeFlag == CONVERT_SWATH_GEOFIELD)
+    {
+        nFields = SWnentries(inFile,HDFE_NENTGFLD,&bufSize);
+    }
+    else if (typeFlag == CONVERT_SWATH_DATAFIELD)
+    {
+        nFields = SWnentries(inFile,HDFE_NENTDFLD,&bufSize);
+    }
+    else
+    {
+        nFields = GDnentries(inFile,HDFE_NENTDFLD,&bufSize);
+    }
+
+    if (verboseModeGlobal == CONVERT_TRUE)
+    {
+        printf("Working - Number of %s = %d\n",typeString,(int) nFields);
+    }
+
+/***************************************************************************
+  If there are fields......convert.
+***************************************************************************/
+    if (nFields > 0)
+    {
+        char *fieldList;           /* field name list */
+        int32 *nType;              /* data type (HDF4) */
+
+/***************************************************************************
+  Set up to get field name list.
+***************************************************************************/
+        fieldList = (char *) calloc(1,(int) bufSize+1);
+        nType = (int32 *) calloc(nFields,sizeof(int32));
+        if ((fieldList == NULL) || (nType == NULL))
+        {
+            return (CallocErrorMsg(__LINE__));
+        }
+
+/***************************************************************************
+  Get infomation regarding field.
+***************************************************************************/
+        if (typeFlag == CONVERT_SWATH_GEOFIELD)
+        {
+            nFields = SWinqgeofields(inFile,fieldList,NULL,nType);
+        }
+        else if (typeFlag == CONVERT_SWATH_DATAFIELD)
+        {
+            nFields = SWinqdatafields(inFile,fieldList,NULL,nType);
+        }
+        else
+        {
+            nFields = GDinqfields(inFile,fieldList,NULL,nType);
+        }
+
+/***************************************************************************
+  Double check, do we have any fields.
+***************************************************************************/
+        if (nFields > 0)
+        {
+            char **ptr;          /* array of field pointers */
+            char fieldName[500]; /* temporary buffer */
+            int loop;            /* for loop counter */
+            long count;          /* number of fields */
+            size_t *slen;        /* array of field string lengths */
+
+/***************************************************************************
+  Double check, do we have any fields.
+***************************************************************************/
+            count = HE5_EHparsestr(fieldList,',',NULL,NULL);
+            ptr = (char **) calloc(count,sizeof(char *));
+            slen = (size_t *) calloc(count,sizeof(size_t));
+            if ((ptr == NULL) || (slen == NULL))
+            {
+                return (CallocErrorMsg(__LINE__));
+            }
+            count = HE5_EHparsestr(fieldList,',',ptr,slen);
+
+/***************************************************************************
+  Loop over number of fields.
+***************************************************************************/
+            for (loop = 0; loop < nFields; loop++)
+            {
+                char dimList[80];        /* list of dimensions */
+                int hdf5Ret;             /* HDF5 function return value */
+                int hdf5Type;            /* data type (HDF5) */
+                hssize_t hdf5Start[16];  /* start array (HDF5) */
+                hsize_t hdf5Edge[16];    /* edge array (HDF5) */
+                hsize_t chunkDims[16];   /* chunking dimensions */
+                int newLoop;             /* for loop counter */
+                int totalSize;           /* size of data in bytes */
+                int totalNum;            /* total numbers read */
+                int doCompression;       /* compress this field */ 
+                int compParm[5] = {0,0,0,0,0};
+                                         /* compression parameters */
+                intn status;             /* HDF4 function return */
+                int32 compCode;          /* compression code */
+                int32 rank;              /* number rank (HDF4) */
+                int32 dim[16];           /* edge array (HDF4) */
+                int32 nt;                /* data type (HDF4) */
+                int32 start[16];         /* start array (HDF4) */
+                void *inData;            /* field data */
+                void *fillValue;         /* fill value */
+
+/***************************************************************************
+  Load field into buffer. 
+***************************************************************************/
+                memmove(fieldName,ptr[loop],(int) slen[loop]);
+                fieldName[slen[loop]] = '\0';
+
+/***************************************************************************
+  Determine if we need to do compression.  Currently (10-Jan-01) HDF5 
+  only supports the DEFLATE compression method.  So, what we do is if
+  the input file has compression we compress using DEFLATE.  As HDF5 
+  is upgraded and allows more compression methods we can use the 
+  compCode and compParm variables in HE5_SWdefcomchunk() and 
+  HE5_GDdefcomchunk().
+***************************************************************************/
+                doCompression = CONVERT_FALSE;
+                if ((compressModeGlobal == CONVERT_TRUE) && 
+                                ((typeFlag == CONVERT_SWATH_DATAFIELD) ||
+                                 (typeFlag == CONVERT_GRID_DATAFIELD)))
+                {
+                    if (typeFlag == CONVERT_SWATH_DATAFIELD)
+                    {
+                        status = SWcompinfo(inFile,fieldName,&compCode,
+                                               compParm);
+                    }
+                    if (typeFlag == CONVERT_GRID_DATAFIELD)
+                    {
+                        status = GDcompinfo(inFile,fieldName,&compCode,
+                                               compParm);
+                    }
+
+                    if ((status != FAIL) && 
+                        (compCode != HDFE_COMP_NONE))
+                    {
+                        doCompression = CONVERT_TRUE;
+       
+                        if (compCode != HDFE_COMP_DEFLATE)
+                        {
+                            compParm[0] = 5;
+                        }
+                    }
+                }
+
+/***************************************************************************
+  Get field information (data type, rank, dimension list).
+***************************************************************************/
+                if ((typeFlag == CONVERT_SWATH_GEOFIELD) || 
+                    (typeFlag == CONVERT_SWATH_DATAFIELD))
+                {
+                    status = SWfieldinfo(inFile,fieldName,&rank,dim,
+                                            &nt,dimList);
+                }
+                else
+                {
+                    status = GDfieldinfo(inFile,fieldName,&rank,dim,
+                                            &nt,dimList);
+                }
+
+                if (status == CONVERT_FAIL)
+                {
+                    retVal = CONVERT_FAIL;
+                    puts("ERROR:  XXfieldinfo failure.");
+                    break;
+                }
+
+                if (verboseModeGlobal == CONVERT_TRUE)
+                {
+                    printf("Working - Got %s information for name %s\n",
+                              typeString,fieldName);
+                }
+
+/***************************************************************************
+  Load field information (data type, rank, dimension list) into
+  HDF5 data variables.
+***************************************************************************/
+                for (newLoop = 0, totalNum = 1; newLoop < rank; newLoop++)
+                {
+                    totalNum *= dim[newLoop];
+                    start[newLoop] = 0;
+                    hdf5Start[newLoop] = (hssize_t) 0;
+                    hdf5Edge[newLoop] = (hsize_t) dim[newLoop];
+                }
+
+/***************************************************************************
+  Get space to read in field data.
+***************************************************************************/
+                totalSize = totalNum * DFKNTsize(nt);
+                inData = (void *) calloc(1,totalSize);
+                if (inData == NULL)
+                {
+                    retVal = CallocErrorMsg(__LINE__);
+                    break;
+                }
+
+/***************************************************************************
+  Read in the actual data.
+***************************************************************************/
+                if ((typeFlag == CONVERT_SWATH_GEOFIELD) || 
+                    (typeFlag == CONVERT_SWATH_DATAFIELD))
+                {
+                    status = SWreadfield(inFile,fieldName,start,NULL,
+                                            dim,inData);
+                }
+                else
+                {
+                    status = GDreadfield(inFile,fieldName,start,NULL,
+                                            dim,inData);
+                }
+
+                if (status == CONVERT_FAIL)
+                {
+                    retVal = CONVERT_FAIL;
+                    puts("ERROR:  XXreadfield failure.");
+                    break;
+                }
+
+                if (verboseModeGlobal == CONVERT_TRUE)
+                {
+                    printf("Working - Got %s data for name %s\n",
+                              typeString,fieldName);
+                }
+
+/***************************************************************************
+  Determine HDF5 data type based on HDF4 data type.
+***************************************************************************/
+                hdf5Type = GetHDF5TypeFromHDF4Type(nt);
+                if (hdf5Type == CONVERT_FAIL)
+                {
+                    retVal = CONVERT_FAIL;
+                    puts("ERROR:  GetHDF5TypeFromHDF4Type failure.");
+                    break;
+                }
+
+/***************************************************************************
+  Define and write Swath Geolocation field data.
+***************************************************************************/
+                if (typeFlag == CONVERT_SWATH_GEOFIELD)
+                {
+                    hdf5Ret = HE5_SWdefgeofield(outFile,fieldName,dimList,
+                                            NULL,hdf5Type,HE5_HDFE_AUTOMERGE);
+                    hdf5Ret = HE5_SWwritefield(outFile,fieldName,hdf5Start,
+                                            NULL,hdf5Edge,inData);
+                }
+
+/***************************************************************************
+  Define and write Swath Data field data.  Swath data fields can
+  have a possible fill value, this needs checked and written into
+  the HDF5 file.
+***************************************************************************/
+                else if (typeFlag == CONVERT_SWATH_DATAFIELD)
+                {
+                    if (doCompression == CONVERT_TRUE)
+                    {
+                        CalculateNumberOfChunks((int) rank,hdf5Edge,chunkDims);
+                        hdf5Ret = HE5_SWdefcomchunk(outFile,HE5_HDFE_COMP_DEFLATE,
+                                                compParm,(int) rank,chunkDims);
+                    }
+
+                    hdf5Ret = HE5_SWdefdatafield(outFile,fieldName,dimList,
+                                            NULL,hdf5Type,HE5_HDFE_AUTOMERGE);
+                    fillValue = (void *) calloc(1,DFKNTsize(nt));
+                    if (fillValue == NULL)
+                    {
+                        retVal = CallocErrorMsg(__LINE__);
+                        break;
+                    }
+                    status = SWgetfillvalue(inFile,fieldName,fillValue);
+                    if (status != CONVERT_FAIL)
+                    {
+                        HE5_SWsetfillvalue(outFile,fieldName,hdf5Type,fillValue);
+                    }
+                    hdf5Ret = HE5_SWwritefield(outFile,fieldName,hdf5Start,
+                                            NULL,hdf5Edge,inData);
+
+                    if (doCompression == CONVERT_TRUE)
+                    {
+                        hdf5Ret = HE5_SWdefcomp(outFile,HE5_HDFE_COMP_NONE,
+                                            compParm);
+                    }
+
+                    free(fillValue);
+                }
+
+/***************************************************************************
+  Define and write Grid Data field data.  Grid data fields can
+  have a possible fill value, this needs checked and written into
+  the HDF5 file.
+***************************************************************************/
+                else
+                {
+                    if (doCompression == CONVERT_TRUE)
+                    {
+                        CalculateNumberOfChunks((int) rank,hdf5Edge,chunkDims);
+                        hdf5Ret = HE5_GDdefcomtile(outFile,HE5_HDFE_COMP_DEFLATE,
+                                               compParm,(int) rank,chunkDims);
+                        hdf5Ret = HE5_GDdefcomp(outFile,HE5_HDFE_COMP_DEFLATE,
+                                            compParm);
+                    }
+
+                    hdf5Ret = HE5_GDdeffield(outFile,fieldName,dimList,
+                                            NULL,hdf5Type,HE5_HDFE_AUTOMERGE);
+                    fillValue = (void *) calloc(1,DFKNTsize(nt));
+                    if (fillValue == NULL)
+                    {
+                        retVal = CallocErrorMsg(__LINE__);
+                        break;
+                    }
+                    status = GDgetfillvalue(inFile,fieldName,fillValue);
+                    if (status != CONVERT_FAIL)
+                    {
+                        HE5_GDsetfillvalue(outFile,fieldName,hdf5Type,fillValue);
+                    }
+                    hdf5Ret = HE5_GDwritefield(outFile,fieldName,hdf5Start,
+                                            NULL,hdf5Edge,inData);
+
+                    if (doCompression == CONVERT_TRUE)
+                    {
+                        hdf5Ret = HE5_SWdefcomp(outFile,HE5_HDFE_COMP_NONE,
+                                            compParm);
+                    }
+
+                    free(fillValue);
+                }
+
+                if (verboseModeGlobal == CONVERT_TRUE)
+                {
+                    printf("Working - Defined and wrote %s data for name %s\n",
+                              typeString,fieldName);
+                }
+
+                free(inData);
+            }
+            free(ptr);
+            free(slen);
+        }
+        free(fieldList);
+        free(nType);
+    }
+
+    return retVal;
+}
+
+
+
+/***************************************************************************
+BEGIN_PROLOG:
+
+FUNCTION:
+	ConvertHDFEOSAttribute()
+
+DESCRIPTION:
+	Convert Swath, Point, or Grid attribute informaion from HDF4
+	to HDF5.
+
+INPUTS:
+        Name            Description                     Units   Min     Max
+
+        inFile		input file id (HDF4 file)
+	outFile		output file id (HDF5 file)
+	typeFlag	what to convert 
+
+OUTPUTS:
+        Name            Description                     Units   Min     Max
+
+	NONE
+
+FUNCTIONS_CALLED:
+
+	CallocErrorMsg		- display uniform message on calloc failure
+	GetHDF5TypeFromHDF4Type - match HDF4 data type with HDF5 equivalent
+
+RETURNS:
+	CONVERT_SUCCESS		- all went well
+	CONVERT_FAIL		- problem
+
+HISTORY:
+
+        Date            Programmer              Description
+        ---------       ------------------      -------------------------
+        Jun 00          Ray Milburn             Original Programmer
+
+END_PROLOG:
+***************************************************************************/
+int ConvertHDFEOSAttribute(int32 inFile,int outFile,int typeFlag)
+{
+    char typeString[10];
+    char *attrNames = NULL;         /* attribute names */
+    int retVal = CONVERT_SUCCESS;   /* return value */
+    int32 numAttrs;                 /* number of attributes */
+    int32 strBufSize;               /* string buffer size */
+
+    if (verboseModeGlobal == CONVERT_TRUE)
+    {
+        if (typeFlag == CONVERT_SWATH_ATTRIBUTE)
+        {
+            strcpy(typeString,"Swath");
+        }
+        else if (typeFlag == CONVERT_GRID_ATTRIBUTE)
+        {
+            strcpy(typeString,"Grid");
+        }
+        else
+        {
+            strcpy(typeString,"Point");
+        }
+    }
+
+/***************************************************************************
+  Inquire attributes based on typeFlag.
+***************************************************************************/
+    switch (typeFlag)
+    {
+        case CONVERT_SWATH_ATTRIBUTE:
+        {
+            numAttrs = SWinqattrs(inFile,NULL,&strBufSize);
+            attrNames = (char *) calloc(1,(int) (strBufSize + 1));
+            if (attrNames == NULL)
+            {
+                return (CallocErrorMsg(__LINE__));
+            }
+            numAttrs = SWinqattrs(inFile,attrNames,&strBufSize);
+        }
+        break;
+
+        case CONVERT_GRID_ATTRIBUTE:
+        {
+            numAttrs = GDinqattrs(inFile,NULL,&strBufSize);
+            attrNames = (char *) calloc(1,(int) (strBufSize + 1));
+            if (attrNames == NULL)
+            {
+                return (CallocErrorMsg(__LINE__));
+            }
+            numAttrs = GDinqattrs(inFile,attrNames,&strBufSize);
+        }
+        break;
+
+        case CONVERT_POINT_ATTRIBUTE:
+        {
+            numAttrs = PTinqattrs(inFile,NULL,&strBufSize);
+            attrNames = (char *) calloc(1,(int) (strBufSize + 1));
+            if (attrNames == NULL)
+            {
+                return (CallocErrorMsg(__LINE__));
+            }
+            numAttrs = PTinqattrs(inFile,attrNames,&strBufSize);
+        }
+        break;
+    }
+
+    if (verboseModeGlobal == CONVERT_TRUE)
+    {
+        printf("Working - Number of %s attributes = %d\n",typeString,
+                numAttrs);
+    }
+
+/***************************************************************************
+  If there are attributes......convert.
+***************************************************************************/
+    if (numAttrs > 0)
+    {
+        char oneAttrName[500];    /* temporary buffer */
+        char **ptr = NULL;        /* array of pointers */
+        int loop;                 /* for loop counter */
+        long count;               /* number of attributes */
+        size_t *slen = NULL;      /* array of lengths */
+
+/***************************************************************************
+  Parse information on names of attributes.
+***************************************************************************/
+        count = HE5_EHparsestr(attrNames,',',NULL,NULL);
+        ptr = (char **) calloc(count,sizeof(char *));
+        slen = (size_t *) calloc(count,sizeof(long));
+        if ((ptr == NULL) || (slen == NULL))
+        {
+            return (CallocErrorMsg(__LINE__));
+        }
+        count = HE5_EHparsestr(attrNames,',',ptr,slen);
+   
+/***************************************************************************
+  Loop over number of attributes.
+***************************************************************************/
+        for (loop = 0; loop < count; loop++)
+        {
+            char *valueString;          /* attribute value */
+            int size;                   /* attribute size (HDF4) */
+            int realCount;              /* number of values in attribute */
+            int hdf5Type;               /* attribute data type (HDF5) */
+            int hdf5Ret;                /* function return (HDF5) */
+            int32 nType;                /* attribute data type (HDF4) */
+            int32 attrCount;            /* number of attributes */
+            int32 status;               /* function return (HDF4) */
+            hsize_t hdf5Size[1];        /* attribute size (HDF5) */
+
+/***************************************************************************
+  Loop over number of attributes.
+***************************************************************************/
+            memmove(oneAttrName,ptr[loop],(int) slen[loop]);
+            oneAttrName[slen[loop]] = '\0';
+
+/***************************************************************************
+  Switch based on type of HDF-EOS object.
+***************************************************************************/
+            switch (typeFlag)
+            {
+                case CONVERT_SWATH_ATTRIBUTE:
+                {
+
+/***************************************************************************
+  Get attribute information (data type and count).
+***************************************************************************/
+                    status = SWattrinfo(inFile,oneAttrName,&nType,
+                                           &attrCount);
+                    valueString = (char *) calloc(1,attrCount);
+                    if (valueString == NULL)
+                    {
+                        retVal = CallocErrorMsg(__LINE__);
+                        break;
+                    }
+
+/***************************************************************************
+  Read attribute (in valueString).
+***************************************************************************/
+                    status = SWreadattr(inFile,oneAttrName,valueString);
+
+/***************************************************************************
+  Determine number of values in attribute.
+***************************************************************************/
+                    size = DFKNTsize(nType);
+                    realCount = (int) (attrCount/size);
+
+/***************************************************************************
+  Set up HDF5 data type and count.
+***************************************************************************/
+                    hdf5Type = GetHDF5TypeFromHDF4Type(nType);
+                    hdf5Size[0] = (hsize_t) realCount;
+
+/***************************************************************************
+  Write swath attribute.
+***************************************************************************/
+                    hdf5Ret = HE5_SWwriteattr(outFile,oneAttrName,hdf5Type,
+                                          hdf5Size,(void *) valueString);
+                    if ((status == CONVERT_FAIL) || (hdf5Ret== CONVERT_FAIL))
+                    {
+                        puts("ERROR:  failure during Swath attribute read/write");
+                        break;
+                    }
+                }
+                break;
+
+                case CONVERT_GRID_ATTRIBUTE:
+                {
+
+/***************************************************************************
+  Get attribute information (data type and count).
+***************************************************************************/
+                    status = GDattrinfo(inFile,oneAttrName,&nType,
+                                           &attrCount);
+                    valueString = (char *) calloc(1,attrCount);
+                    if (valueString == NULL)
+                    {
+                        retVal = CallocErrorMsg(__LINE__);
+                        break;
+                    }
+
+/***************************************************************************
+  Read attribute (in valueString).
+***************************************************************************/
+                    status = GDreadattr(inFile,oneAttrName,valueString);
+
+/***************************************************************************
+  Determine number of values in attribute.
+***************************************************************************/
+                    size = DFKNTsize(nType);
+                    realCount = (int) (attrCount/size);
+
+/***************************************************************************
+  Set up HDF5 data type and count.
+***************************************************************************/
+                    hdf5Type = GetHDF5TypeFromHDF4Type(nType);
+                    hdf5Size[0] = (hsize_t) realCount;
+
+/***************************************************************************
+  Write grid attribute.
+***************************************************************************/
+                    hdf5Ret = HE5_GDwriteattr(outFile,oneAttrName,hdf5Type,
+                                          hdf5Size,(void *) valueString);
+                    if ((status == CONVERT_FAIL) || (hdf5Ret== CONVERT_FAIL))
+                    {
+                        puts("ERROR:  failure during Grid attribute read/write");
+                        break;
+                    }
+                }
+                break;
+
+                case CONVERT_POINT_ATTRIBUTE:
+                {
+
+/***************************************************************************
+  Get attribute information (data type and count).
+***************************************************************************/
+                    status = PTattrinfo(inFile,oneAttrName,&nType,
+                                           &attrCount);
+                    valueString = (char *) calloc(1,attrCount);
+                    if (valueString == NULL)
+                    {
+                        retVal = CallocErrorMsg(__LINE__);
+                        break;
+                    }
+
+/***************************************************************************
+  Read attribute (in valueString).
+***************************************************************************/
+                    status = PTreadattr(inFile,oneAttrName,valueString);
+
+/***************************************************************************
+  Determine number of values in attribute.
+***************************************************************************/
+                    size = DFKNTsize(nType);
+                    realCount = (int) (attrCount/size);
+
+/***************************************************************************
+  Set up HDF5 data type and count.
+***************************************************************************/
+                    hdf5Type = GetHDF5TypeFromHDF4Type(nType);
+                    hdf5Size[0] = (hsize_t) realCount;
+
+/***************************************************************************
+  Write point attribute.
+***************************************************************************/
+                    hdf5Ret = HE5_PTwriteattr(outFile,oneAttrName,hdf5Type,
+                                          hdf5Size,(void *) valueString);
+                    if ((status == CONVERT_FAIL) || (hdf5Ret== CONVERT_FAIL))
+                    {
+                        puts("ERROR:  failure during Grid attribute read/write");
+                        break;
+                    }
+                }
+                break;
+            }  /* end switch */
+            free(valueString);
+
+            if (verboseModeGlobal == CONVERT_TRUE)
+            {
+                printf("Working - Wrote %s attribute named %s\n",typeString,
+                        oneAttrName);
+            }
+
+        }  /* end for */
+        free(ptr);
+        free(slen);
+    }  /* end if (nummAttrs > 0) */
+
+
+    return retVal;
+}
+
+
+
+/***************************************************************************
+BEGIN_PROLOG:
+
+FUNCTION:
+	ConvertGridProjInfo()
+
+DESCRIPTION:
+	Convert Grid projection information from HDF4 to HDF5.
+
+INPUTS:
+        Name            Description                     Units   Min     Max
+
+        inFile		input file id (HDF4 file)
+	outFile		output file id (HDF5 file)
+
+OUTPUTS:
+        Name            Description                     Units   Min     Max
+
+	NONE
+
+FUNCTIONS_CALLED:
+	N/A
+
+RETURNS:
+	CONVERT_SUCCESS		- all went well
+	CONVERT_FAIL		- problem
+
+HISTORY:
+
+        Date            Programmer              Description
+        ---------       ------------------      -------------------------
+        Jun 00          Ray Milburn             Original Programmer
+
+END_PROLOG:
+***************************************************************************/
+int ConvertGridProjInfo(int32 inFile,int outFile)
+{
+    int retVal = CONVERT_SUCCESS;    /* return value */
+    int status;                      /* functio return (HDF4) */
+    double outParm[16];              /* parameter array (HDF5) */
+    float64 inParm[16];              /* parameter array (HDF4) */
+    int loop;                        /* for loop counter */
+    int outProj;                     /* projection code (HDF5) */
+    int outZone;                     /* zone code (HDF5) */
+    int outSphere;                   /* sphere code (HDF5) */
+    int32 inProj;                    /* projection code (HDF4) */
+    int32 inZone;                    /* zone code (HDF4) */
+    int32 inSphere;                  /* sphere code (HDF4) */
+    int32 pixCode;                   /* pixel registration code */
+    int32 origCode;                  /* origin information code */
+
+/***************************************************************************
+  Get projection information from input file (projection, zone, sphere 
+  codes, parameter array).
+***************************************************************************/
+    status = GDprojinfo(inFile,&inProj,&inZone,&inSphere,inParm);
+    if (status != CONVERT_SUCCESS)
+    {
+        puts("ERROR:  GDprojinfo failure.");
+        return CONVERT_FAIL;
+    }
+
+    if (verboseModeGlobal == CONVERT_TRUE)
+    {
+        puts("Working - successfully received Grid Projction Information");
+    }
+
+/***************************************************************************
+  Convert codes and parameter array to HDF5 data types
+***************************************************************************/
+    outProj = (int) inProj;
+    outZone = (int) inZone;
+    outSphere = (int) inSphere;
+    for (loop = 0; loop < 16; loop++)
+    {
+        outParm[loop] = (double) inParm[loop];
+    }
+
+/***************************************************************************
+  Write (define) grid projection.
+***************************************************************************/
+    status = HE5_GDdefproj(outFile,outProj,outZone,outSphere,outParm);
+    if (status != CONVERT_SUCCESS)
+    {
+        puts("ERROR:  HE5_GDdefproj failure.");
+        retVal = CONVERT_FAIL;
+    }
+
+    if (verboseModeGlobal == CONVERT_TRUE)
+    {
+        puts("Working - successfully wrote Grid Projction Information");
+    }
+
+/***************************************************************************
+  Get pixel registration from input file and write it out to the
+  output file.
+***************************************************************************/
+    status = GDpixreginfo(inFile,&pixCode);
+    if (status != CONVERT_SUCCESS)
+    {
+        puts("ERROR:  GDpixreginfo failure.");
+        retVal = CONVERT_FAIL;
+    }
+    else
+    {
+        status = HE5_GDdefpixreg(outFile,(int) pixCode); 
+        if (status != CONVERT_SUCCESS)
+        {
+            puts("ERROR:  HE5_GDdefpixreg failure.");
+            retVal = CONVERT_FAIL;
+        }
+        else 
+        {
+            if (verboseModeGlobal == CONVERT_TRUE)
+            {
+                puts("Working - successfully wrote Grid pixel registration");
+            }
+        }
+    }
+
+/***************************************************************************
+  Get origin from input file and write it out to the output file.
+***************************************************************************/
+    status = GDorigininfo(inFile,&origCode);
+    if (status != CONVERT_SUCCESS)
+    {
+        puts("ERROR:  GDorigininfo failure.");
+        retVal = CONVERT_FAIL;
+    }
+    else
+    {
+        status = HE5_GDdeforigin(outFile,(int) origCode); 
+        if (status != CONVERT_SUCCESS)
+        {
+            puts("ERROR:  HE5_GDdeforigin failure.");
+            retVal = CONVERT_FAIL;
+        }
+        else 
+        {
+            if (verboseModeGlobal == CONVERT_TRUE)
+            {
+                puts("Working - successfully wrote Grid origin information");
+            }
+        }
+    }
+
+    return retVal;
+}
+
+
+
+/***************************************************************************
+BEGIN_PROLOG:
+
+FUNCTION:
+	ConvertPointLevelData()
+
+DESCRIPTION:
+	Convert Point leve daa from HDF4 to HDF5.
+
+INPUTS:
+        Name            Description                     Units   Min     Max
+
+        inFile		input file id (HDF4 file)
+	outFile		output file id (HDF5 file)
+
+OUTPUTS:
+        Name            Description                     Units   Min     Max
+
+	NONE
+
+FUNCTIONS_CALLED:
+
+
+RETURNS:
+	CONVERT_SUCCESS		- all went well
+	CONVERT_FAIL		- problem
+
+HISTORY:
+
+        Date            Programmer              Description
+        ---------       ------------------      -------------------------
+        Dec 00          Ray Milburn             Original Programmer
+
+END_PROLOG:
+***************************************************************************/
+int ConvertPointLevelData(int32 inFile,int outFile)
+{
+    char *prevLevelName = NULL;         /* prev level (for links) */
+    int retVal = CONVERT_SUCCESS;       /* return value */
+    int loopCount;                      /* level for loop */
+    int32 numLevels;                    /* number of levels */
+
+/***************************************************************************
+  Get the number of levels in the point.
+***************************************************************************/
+    numLevels = PTnlevels(inFile);
+    if (numLevels <= 0)
+    {
+        puts("ERROR:  Point has no levels");
+        retVal = CONVERT_FAIL;
+    }
+    else
+    {
+        if (verboseModeGlobal == CONVERT_TRUE)
+        {
+            printf("Working - Converting %d levels.\n",numLevels);
+        }
+    }
+
+/***************************************************************************
+  Loop over the number of levels.
+***************************************************************************/
+    for (loopCount = 0; loopCount < numLevels; loopCount++)
+    {
+        char **ptr = NULL;        /* array of pointers */
+        char *fieldList;          /* list of field names */
+        char *levelName;          /* name of current level */
+        int status;               /* return status (HDF4) */
+        int fieldCount;           /* field loop counter */
+        int recLoop;              /* record loop counter */
+        int32 numFields;          /* number of fields */
+        int32 strBufSize;         /* buffer size */
+        int32 *fieldType;         /* field data type */
+        int32 *fieldOrder;        /* field order */
+        int32 *fieldLevel;        /* field level */
+        int32 *recs;              /* records array */
+        int32 recSize;            /* record size */
+        int32 nRecs;              /* number of records */
+        herr_t hdf5Ret;           /* return status (HDF5) */
+        hsize_t rCount[1];        /* number of records to write */
+        long count;               /* parsestr() return count */
+        HE5_CmpDTSinfo newPoint;  /* HDF5 point structure */
+        off_t offSet;             /* offset of data from start */
+        size_t *slen = NULL;      /* array of lengths */
+        size_t rSize;             /* size of record to write */
+        void *dataBuffer;         /* actual point data */
+
+/***************************************************************************
+  Get the number of fields and allocate space.
+***************************************************************************/
+        numFields = PTnfields(inFile,(int32) loopCount,&strBufSize);
+
+        fieldType = (int32 *) calloc((int) numFields,sizeof(int32));
+        fieldOrder = (int32 *) calloc((int) numFields,sizeof(int32));
+        fieldList = (char *) calloc(1,(int) (strBufSize + 1));
+        if ((fieldType == NULL) || (fieldOrder == NULL) || (fieldList == NULL))
+        {
+            return (CallocErrorMsg(__LINE__));
+        }
+ 
+/***************************************************************************
+  Get the level information.
+***************************************************************************/
+        numFields = PTlevelinfo(inFile,(int32) loopCount,fieldList,
+                                fieldType,fieldOrder);
+        if (numFields == CONVERT_FAIL)
+        {
+            puts("ERROR:  PTlevelinfo failure.");
+            retVal = numFields;
+            free(fieldType);
+            free(fieldOrder);
+            free(fieldList);
+            break;
+        }
+
+        if (verboseModeGlobal == CONVERT_TRUE)
+        {
+            printf("Working - Level %d contains %d fields.\n",loopCount,numFields);
+        }
+
+/***************************************************************************
+  Get the level name.
+***************************************************************************/
+        status = PTgetlevelname(inFile,(int32) loopCount,NULL,&strBufSize);
+        levelName = (char *) calloc(1,(int) (strBufSize + 1));
+        if (levelName == NULL)
+        {
+            free(fieldType);
+            free(fieldOrder);
+            free(fieldList);
+            return (CallocErrorMsg(__LINE__));
+        }
+        status = PTgetlevelname(inFile,(int32) loopCount,levelName,&strBufSize);
+        if (status == CONVERT_FAIL)
+        {
+            puts("ERROR:  PTlevelinfo failure.");
+            retVal = status;
+            free(fieldType);
+            free(fieldOrder);
+            free(fieldList);
+            free(levelName);
+            break;
+        }
+
+        if (verboseModeGlobal == CONVERT_TRUE)
+        {
+            printf("Working - Level %d named - %s\n",loopCount,levelName);
+        }
+
+/***************************************************************************
+  Get space for field level info and then get the size of the 
+  record and number of records.
+***************************************************************************/
+        fieldLevel = (int32 *) calloc((int) numFields,sizeof(int32));
+        if (fieldLevel == NULL)
+        {
+            free(fieldType);
+            free(fieldOrder);
+            free(fieldList);
+            free(levelName);
+            return (CallocErrorMsg(__LINE__));
+        }
+        recSize = PTsizeof(inFile,fieldList,fieldLevel);
+        nRecs = PTnrecs(inFile,loopCount);
+
+        if (verboseModeGlobal == CONVERT_TRUE)
+        {
+            printf("Working - Level %d contains %d records of size %d bytes\n",loopCount,
+                   (int) nRecs,(int) recSize);
+        }
+
+/***************************************************************************
+  Now we can start to populate our HDF5 point structure.  Take care
+  of numFields and recSize here.  Then break up a field names variable.
+***************************************************************************/
+        newPoint.nfields = (int) numFields;
+        newPoint.datasize = (size_t) recSize;
+
+        count = HE5_EHparsestr(fieldList,',',NULL,NULL);
+        ptr = (char **) calloc(count,sizeof(char *));
+        slen = (size_t *) calloc(count,sizeof(long));
+        if ((ptr == NULL) || (slen == NULL))
+        {
+            free(fieldType);
+            free(fieldOrder);
+            free(fieldList);
+            free(levelName);
+            free(fieldLevel);
+            return (CallocErrorMsg(__LINE__));
+        }
+        count = HE5_EHparsestr(fieldList,',',ptr,slen);
+
+/***************************************************************************
+  Initialize the offset and loop over the number of fields.
+***************************************************************************/
+        offSet = (off_t) 0;
+        for (fieldCount = 0; fieldCount < newPoint.nfields; fieldCount++)
+        {
+            char *temString;      /* temporary string */
+
+/***************************************************************************
+  Set rank.
+***************************************************************************/
+            newPoint.rank[fieldCount] = 1;
+
+/***************************************************************************
+  Get field name into a string and move that value into our array
+  of character pointers (which we need to allocate space for).
+***************************************************************************/
+            temString = (char *) calloc(1,(int) (slen[fieldCount] + 1));
+            newPoint.fieldname[fieldCount] = (char *) calloc(1,(int) (slen[fieldCount] + 1));
+            if ((newPoint.fieldname[fieldCount] == NULL) || (temString == NULL))
+            {
+                free(fieldType);
+                free(fieldOrder);
+                free(fieldList);
+                free(levelName);
+                free(fieldLevel);
+                return (CallocErrorMsg(__LINE__));
+            }
+            memmove(temString,ptr[fieldCount],(int) slen[fieldCount]);
+            temString[slen[fieldCount]] = '\0';
+            strcpy(newPoint.fieldname[fieldCount],temString);
+            free(temString);
+
+/***************************************************************************
+  Set dims.
+***************************************************************************/
+            newPoint.dims[fieldCount][0] = (size_t) fieldOrder[fieldCount];
+
+/***************************************************************************
+  Need to calculate the offsets of each variable in the record.  Place
+  offset in HDF5 point structure.
+***************************************************************************/
+            if (fieldCount > 0)
+            {
+                offSet += (off_t) (DFKNTsize(fieldType[fieldCount-1]) * 
+                                                    fieldOrder[fieldCount-1]);;
+            }
+            newPoint.offset[fieldCount] = offSet;
+
+/***************************************************************************
+  Set type and class.
+***************************************************************************/
+            newPoint.dtype[fieldCount] = (hid_t) GetHDF5TypeFromHDF4Type(
+                                                          fieldType[fieldCount]);
+            newPoint.dclass[fieldCount] = (H5T_class_t) GetHDF5ClassFromHDF4Type(
+                                                          fieldType[fieldCount]);
+        }
+        free(ptr);
+        free(slen);
+
+        if (verboseModeGlobal == CONVERT_TRUE)
+        {
+            puts("Working - HDF5 Point Structure populated");
+        }
+
+/***************************************************************************
+  Since we finally have the structure loaded we can now define a
+  new level in the output file.
+***************************************************************************/
+        hdf5Ret = HE5_PTdeflevel(outFile,levelName,&newPoint);
+        if (hdf5Ret == CONVERT_FAIL)
+        {
+            printf("ERROR:  creating level - name:   %s\n",levelName);
+            free(fieldType);
+            free(fieldOrder);
+            free(fieldList);
+            free(levelName);
+            free(fieldLevel);
+            break;
+        }
+
+        if (verboseModeGlobal == CONVERT_TRUE)
+        {
+            printf("Working - Level %s successfully defined in output file\n",
+                   levelName);
+        }
+
+/***************************************************************************
+  We need to see if there is a link here.  I am going to make this
+  easy and only check for backward links.  Therefore, if the counter
+  is greater than zero (0) we will see if there is a link.  If so,
+  define a linkage in our output file.
+***************************************************************************/
+        if (loopCount > 0)
+        {
+            char linkField[500];
+
+            status = PTbcklinkinfo(inFile,(int32) loopCount,linkField);
+            if (status == CONVERT_SUCCESS)
+            {
+
+/***************************************************************************
+  There is a link, so we need to define one in our output file.
+***************************************************************************/
+                hdf5Ret = HE5_PTdeflinkage(outFile,prevLevelName,levelName,linkField);
+                if (hdf5Ret == CONVERT_FAIL)
+                {
+                    printf("ERROR:  creating link with field %s\n",linkField);
+                }
+                else
+                {
+                    if (verboseModeGlobal == CONVERT_TRUE)
+                    {
+                        printf("Working - Defined link with field %s\n",linkField);
+                    }
+                }
+            }
+        }
+
+/***************************************************************************
+  Save the level name in case we need it for defining links.
+***************************************************************************/
+        if (prevLevelName != NULL)
+        {
+            free(prevLevelName);
+            prevLevelName = (char *) NULL;
+        }
+        prevLevelName = (char *) calloc(1,(int) strlen(levelName));
+        strcpy(prevLevelName,levelName);
+
+/***************************************************************************
+  Set up the records array to read all records.
+***************************************************************************/
+        recs = (int32 *) calloc((int) nRecs,sizeof(int32));
+        for (recLoop = 0; recLoop < nRecs; recLoop++)
+        {
+            recs[recLoop] = recLoop;
+        }
+
+/***************************************************************************
+  Create space for the actual level data.
+***************************************************************************/
+        dataBuffer = (void *) calloc(1,(int) nRecs * recSize);
+        if (dataBuffer == NULL)
+        {
+            free(fieldType);
+            free(fieldOrder);
+            free(fieldList);
+            free(levelName);
+            free(fieldLevel);
+            return (CallocErrorMsg(__LINE__));
+        }
+
+        if (verboseModeGlobal == CONVERT_TRUE)
+        {
+            puts("Working - Allocated space for level data.");
+        }
+
+/***************************************************************************
+  Read the level data.
+***************************************************************************/
+        status = PTreadlevel(inFile,loopCount,fieldList,nRecs,recs,dataBuffer);
+        if (status == CONVERT_FAIL)
+        {
+            printf("ERROR:  reading level %s\n",levelName);
+            retVal = status;
+            free(recs);
+            free(dataBuffer);
+            free(fieldType);
+            free(fieldOrder);
+            free(fieldList);
+            free(levelName);
+            free(fieldLevel);
+            break;
+        }
+
+        if (verboseModeGlobal == CONVERT_TRUE)
+        {
+            printf("Working - Successfully read %s level data.\n",levelName);
+        }
+
+/***************************************************************************
+  Set up size and record count variables.
+***************************************************************************/
+        rCount[0] = (hsize_t) nRecs;
+        rSize = (size_t) recSize;
+
+/***************************************************************************
+  Write the level data.
+***************************************************************************/
+        hdf5Ret = HE5_PTwritelevel(outFile,loopCount,rCount,&rSize,dataBuffer);
+        if (hdf5Ret == CONVERT_FAIL)
+        {
+            printf("ERROR:  writing level data - level name:  %s\n",levelName);
+        }
+        else
+        {
+            if (verboseModeGlobal == CONVERT_TRUE)
+            {
+                printf("Working - Successfully wrote %s level data.\n",levelName);
+            }
+        }
+
+        free(recs);
+        free(dataBuffer);
+        free(fieldType);
+        free(fieldOrder);
+        free(fieldList);
+        free(levelName);
+        free(fieldLevel);
+    }
+
+    if (prevLevelName != NULL)
+    {
+        free(prevLevelName);
+    }
+
+    return retVal;
+}
+
+
+
+/***************************************************************************
+BEGIN_PROLOG:
+
+FUNCTION:
+	GetHDF5TypeFromHDF4Type()
+
+DESCRIPTION:
+	Get HDF5 data type from HDF4 equivalent.
+
+INPUTS:
+        Name            Description                     Units   Min     Max
+
+        hdf4Type	HDF4 data type
+
+OUTPUTS:
+        Name            Description                     Units   Min     Max
+
+	NONE
+
+FUNCTIONS_CALLED:
+	N/A
+
+RETURNS:
+        CONVERT_FAIL		- something went wrong
+	H5T_NATIVE_FLOAT
+	H5T_NATIVE_DOUBLE
+	H5T_NATIVE_LDOUBLE
+	H5T_NATIVE_CHAR
+	H5T_NATIVE_SHORT
+	H5T_NATIVE_INT
+	H5T_NATIVE_LONG
+	H5T_NATIVE_LLONG
+	H5T_NATIVE_USHORT
+	H5T_NATIVE_UINT
+	H5T_NATIVE_ULONG
+	H5T_NATIVE_ULLONG
+
+HISTORY:
+
+        Date            Programmer              Description
+        ---------       ------------------      -------------------------
+        Jun 00          Ray Milburn             Original Programmer
+
+END_PROLOG:
+***************************************************************************/
+int GetHDF5TypeFromHDF4Type(int32 hdf4Type)
+{
+    int hdf5Type = CONVERT_FAIL;
+    int sizeToMatch;
+
+/***************************************************************************
+  Determine size (in bytes) of HDF4 data type.
+***************************************************************************/
+    sizeToMatch = DFKNTsize(hdf4Type);
+
+/***************************************************************************
+  Switch on HDF4 data type.  This is real straight forward, once we
+  have switched on the type of data we just want to know what size 
+  (in bytes) of HDF5 data matches what was used with HDF4.
+***************************************************************************/
+    switch ((int) hdf4Type)
+    {
+
+/***************************************************************************
+  Float data.
+***************************************************************************/
+        case DFNT_FLOAT32:
+        case DFNT_FLOAT64:
+        {
+            if (sizeToMatch == (int) H5Tget_size(H5T_NATIVE_FLOAT))
+            { 
+                hdf5Type = H5T_NATIVE_FLOAT;
+            } 
+            else if (sizeToMatch == (int) H5Tget_size(H5T_NATIVE_DOUBLE))
+            { 
+                hdf5Type = H5T_NATIVE_DOUBLE;
+            } 
+            else
+            { 
+                hdf5Type = H5T_NATIVE_LDOUBLE;
+            } 
+        }
+        break;
+
+/***************************************************************************
+  Signed integer data.
+***************************************************************************/
+        case DFNT_INT8:
+        case DFNT_INT16:
+        case DFNT_INT32:
+        {
+            if (sizeToMatch == (int) H5Tget_size(H5T_NATIVE_CHAR))
+            {
+                hdf5Type = H5T_NATIVE_CHAR;
+            } 
+            else if (sizeToMatch == (int) H5Tget_size(H5T_NATIVE_SHORT))
+            {
+                hdf5Type = H5T_NATIVE_SHORT;
+            } 
+            else if (sizeToMatch == (int) H5Tget_size(H5T_NATIVE_INT))
+            { 
+                hdf5Type = H5T_NATIVE_INT;
+            } 
+            else if (sizeToMatch == (int) H5Tget_size(H5T_NATIVE_LONG))
+            { 
+                hdf5Type = H5T_NATIVE_LONG;
+            } 
+            else
+            { 
+                hdf5Type = H5T_NATIVE_LLONG;
+            } 
+        }
+        break;
+
+/***************************************************************************
+  Unsigned integer data.
+***************************************************************************/
+        case DFNT_UINT8:
+        case DFNT_UINT16:
+        case DFNT_UINT32:
+        {
+            if (sizeToMatch == (int) H5Tget_size(H5T_NATIVE_USHORT))
+            {
+                hdf5Type = H5T_NATIVE_USHORT;
+            } 
+            else if (sizeToMatch == (int) H5Tget_size(H5T_NATIVE_UINT))
+            { 
+                hdf5Type = H5T_NATIVE_UINT;
+            } 
+            else if (sizeToMatch == (int) H5Tget_size(H5T_NATIVE_ULONG))
+            { 
+                hdf5Type = H5T_NATIVE_ULONG;
+            } 
+            else
+            { 
+                hdf5Type = H5T_NATIVE_ULLONG;
+            } 
+        }
+        break;
+
+/***************************************************************************
+  Character data.
+***************************************************************************/
+        case DFNT_CHAR:
+        case DFNT_UCHAR:
+        {
+            if (sizeToMatch == (int) H5Tget_size(H5T_NATIVE_CHAR))
+            {
+                hdf5Type = H5T_NATIVE_CHAR;
+            } 
+            else if (sizeToMatch == (int) H5Tget_size(H5T_NATIVE_SCHAR))
+            { 
+                hdf5Type = H5T_NATIVE_SCHAR;
+            } 
+            else
+            { 
+                hdf5Type = H5T_NATIVE_UCHAR;
+            } 
+        }
+        break;
+    }  /* end switch */
+ 
+    return hdf5Type;
+}
+
+
+
+/***************************************************************************
+BEGIN_PROLOG:
+
+FUNCTION:
+	GetHDF5ClassFromHDF4Type()
+
+DESCRIPTION:
+	Get HDF5 data class from HDF4 data type.
+
+INPUTS:
+        Name            Description                     Units   Min     Max
+
+        hdf4Type	HDF4 data type
+
+OUTPUTS:
+        Name            Description                     Units   Min     Max
+
+	NONE
+
+FUNCTIONS_CALLED:
+	N/A
+
+RETURNS:
+        H5T_NO_CLASS		- something went wrong
+	H5T_INTEGER
+	H5T_FLOAT
+	H5T_STRING
+
+HISTORY:
+
+        Date            Programmer              Description
+        ---------       ------------------      -------------------------
+        Jun 00          Ray Milburn             Original Programmer
+
+END_PROLOG:
+***************************************************************************/
+int GetHDF5ClassFromHDF4Type(int32 hdf4Type)
+{
+    int hdf5Type;
+    H5T_class_t hdf5Class;
+
+    hdf5Type = GetHDF5TypeFromHDF4Type(hdf4Type);
+
+    if ((hdf5Type == H5T_NATIVE_FLOAT) || 
+        (hdf5Type == H5T_NATIVE_DOUBLE) || 
+        (hdf5Type == H5T_NATIVE_LDOUBLE))
+    {
+        hdf5Class = H5T_FLOAT;
+    }
+
+    else if (hdf5Type == H5T_NATIVE_CHAR)
+    {
+        hdf5Class = H5T_STRING;
+    }
+
+    else if ((hdf5Type == H5T_NATIVE_SHORT) || 
+             (hdf5Type == H5T_NATIVE_INT) || 
+             (hdf5Type == H5T_NATIVE_LONG) || 
+             (hdf5Type == H5T_NATIVE_LLONG) || 
+             (hdf5Type == H5T_NATIVE_USHORT) || 
+             (hdf5Type == H5T_NATIVE_UINT) || 
+             (hdf5Type == H5T_NATIVE_ULONG) || 
+             (hdf5Type == H5T_NATIVE_ULLONG))
+    {
+        hdf5Class = H5T_INTEGER;
+    }
+
+    else
+    {
+        hdf5Class = H5T_NO_CLASS;
+    }
+
+    return (int) hdf5Class;
+}
+
+
+
+/***************************************************************************
+BEGIN_PROLOG:
+
+FUNCTION:
+	DisplayHelpAndExit()
+
+DESCRIPTION:
+	Display usage message and exit program with normal exit code (0).
+
+INPUTS:
+        Name            Description                     Units   Min     Max
+
+        progName	name of program
+
+OUTPUTS:
+        Name            Description                     Units   Min     Max
+
+	NONE
+
+FUNCTIONS_CALLED:
+	N/A
+
+RETURNS:
+	N/A
+
+HISTORY:
+
+        Date            Programmer              Description
+        ---------       ------------------      -------------------------
+        Jun 00          Ray Milburn             Original Programmer
+
+END_PROLOG:
+***************************************************************************/
+void DisplayHelpAndExit(char *progName)
+{
+    puts("*************");
+    printf("%s converts HDF-EOS Version 2 objects to HDF-EOS Version 5\n",progName);
+    puts("*************");
+    puts("Usage:");
+    printf("%s -i <input file> -o <output file> [-v][-h][-c <chunks>]\n",progName);
+    printf("%s -version\n",progName);
+    puts("    -i - input file name (-i flag must be used)");
+    puts("    -o - output file name (-o flag must be used, file name must be a new file)");
+    puts("    -v - verbose mode");
+    puts("    -c <chunks> - if HDF4 file is compressed, compress (DEFLATE) HDF5 file - chunk number is optional");
+    puts("    -version - utility version");
+    puts("    -h - help");
+
+    exit(0);
+}
+
+
+
+/***************************************************************************
+BEGIN_PROLOG:
+
+FUNCTION:
+	DisplayVersionAndExit()
+
+DESCRIPTION:
+	Display version of this tool and exit program with 
+	normal exit code (0).
+
+INPUTS:
+        Name            Description                     Units   Min     Max
+
+        progName	name of program
+
+OUTPUTS:
+        Name            Description                     Units   Min     Max
+
+	NONE
+
+FUNCTIONS_CALLED:
+	N/A
+
+RETURNS:
+	N/A
+
+HISTORY:
+
+        Date            Programmer              Description
+        ---------       ------------------      -------------------------
+        Jun 00          Ray Milburn             Original Programmer
+
+END_PROLOG:
+***************************************************************************/
+void DisplayVersionAndExit(char *progName)
+{
+    printf("%s - %s\n",progName,CONVERT_VERSION);
+
+    exit(0);
+}
+
+
+/***************************************************************************
+BEGIN_PROLOG:
+
+FUNCTION:
+	CallocErrorMsg()
+
+DESCRIPTION:
+	Display a generic calloc error message.
+
+INPUTS:
+        Name            Description                     Units   Min     Max
+
+        lineNum		line number that error occurred
+
+OUTPUTS:
+        Name            Description                     Units   Min     Max
+
+	NONE
+
+FUNCTIONS_CALLED:
+	N/A
+
+RETURNS:
+	CONVERT_FAIL
+
+HISTORY:
+
+        Date            Programmer              Description
+        ---------       ------------------      -------------------------
+        Jun 00          Ray Milburn             Original Programmer
+
+END_PROLOG:
+***************************************************************************/
+int CallocErrorMsg(int lineNum)
+{
+    printf("ERROR:  calloc failure at line %d\n",lineNum);
+
+    return CONVERT_FAIL;
+}
+
+
+
+/***************************************************************************
+BEGIN_PROLOG:
+
+FUNCTION:
+	CalculateNumberOfChunks()
+
+DESCRIPTION:
+	Calculate the number of chunks to use during compression.
+
+	Algorithm:  If the user supplied a chunk size, use it.  If the 
+	user did not supply a chunk size do the following:
+
+	value = sqrt(dimension size)
+
+	if (value is less than or equal to ten (10)) set chunking to one (1).
+
+	Otherwise, modulo value into dimension size and keep subtracting 
+	one until the modulo returns zero.  In other words the first value
+	less than or equal to the square root of the dimension size that will 
+	divide evenly into dimension size is our chunking size.
+
+INPUTS:
+        Name            Description                     Units   Min     Max
+
+        numDims		number of dimensions to calculate
+
+	realDims	dimension sizes
+
+OUTPUTS:
+        Name            Description                     Units   Min     Max
+
+	chunkDims	chunk sizes corresponding to dim sizes
+
+FUNCTIONS_CALLED:
+	N/A
+
+RETURNS:
+	N/A
+
+HISTORY:
+
+        Date            Programmer              Description
+        ---------       ------------------      -------------------------
+        Sep 00          Ray Milburn             Original Programmer
+
+END_PROLOG:
+***************************************************************************/
+void CalculateNumberOfChunks(int numDims,hsize_t *realDims,
+                             hsize_t *chunkDims)
+{
+    int loop;
+    int startPoint;
+    int calcLoop;
+
+/***************************************************************************
+  Loop over the number of dimensions.
+***************************************************************************/
+    for (loop = 0; loop < numDims; loop++)
+    {
+
+/***************************************************************************
+  Set our starting point.  If the user entered a chunk number use that,
+  if not then do a square root on the dimension size.
+***************************************************************************/
+        if (numTilesGlobal != CONVERT_NO_TILE)
+        {
+            startPoint = realDims[loop] > numTilesGlobal ? 
+                                          numTilesGlobal : 
+                                          (int) (realDims[loop]/2);
+        }
+        else
+        {
+            startPoint = (int) sqrt((double) realDims[loop]);
+        }
+
+/***************************************************************************
+  If the dimension size is 10 or less, just set the chunk size to 1.
+***************************************************************************/
+        if ((int) realDims[loop] <= 10)
+        {
+            chunkDims[loop] = 1;
+        }
+        else
+        {
+
+/***************************************************************************
+  Loop in reverse from the starting point until something divides evenly
+  into the dimension size.  That is our chunk size.
+***************************************************************************/
+            for (calcLoop = startPoint; calcLoop > 0; calcLoop--)
+            {
+                if (((int) realDims[loop] % calcLoop) == 0)
+                {
+                    break;
+                }
+            }
+            chunkDims[loop] = (hsize_t) calcLoop;
+        }
+    }
+}
+SHAR_EOF
+exit 0
+# $Log$
