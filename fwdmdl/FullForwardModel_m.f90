@@ -1588,11 +1588,11 @@ contains
 
         if ( temp_der ) then
           call get_gl_slabs_arrays ( p_path(1:no_ele), t_path(1:no_ele), &
-            &  losVel%values(1,maf), gl_slabs, fwdModelConf%Do_1D, &
+            &  losVel%values(1,maf), gl_slabs(1:no_ele,:), fwdModelConf%Do_1D, &
             &  t_der_path_flags(1:no_ele) )
         else
           call get_gl_slabs_arrays ( p_path(1:no_ele), t_path(1:no_ele), &
-            &  losVel%values(1,maf), gl_slabs, fwdModelConf%Do_1D )
+            &  losVel%values(1,maf), gl_slabs(1:no_ele,:), fwdModelConf%Do_1D )
         end if
 
         ! Work out what frequencies we're using for --------------------------
@@ -1631,6 +1631,7 @@ contains
           & call Trace_Begin ( 'ForwardModel.FrequencyLoop' )
 
         do frq_i = 1, noFreqs
+
           if ( toggle(emit) .and. levels(emit) > 5 ) &
             & call Trace_Begin ('ForwardModel.Frequency ',index=frq_i)
 
@@ -3055,6 +3056,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.206  2004/04/17 00:37:00  vsnyder
+! Analytic temperature derivatives
+!
 ! Revision 2.205  2004/04/05 21:08:42  jonathan
 ! delet temp_prof
 !
