@@ -3,11 +3,6 @@
 
 module GLOBAL_SETTINGS
 
-  use MLSL2Options, only: TOOLKIT, MAXNUML1BRADIDS, ILLEGALL1BRADID, &
-    & LEVEL1_HDFVERSION
-  use MLSStrings, only: utc_to_yyyymmdd
-  use PCFHdr, only: GlobalAttributes, FillTAI93Attribute
-  use SDPToolkit, only: max_orbits
   use MLSCommon, only: FILENAMELEN
 
   implicit NONE
@@ -54,22 +49,23 @@ contains
 
     use DirectWrite_m, only: DirectData_T, &
       & AddDirectToDatabase, Dump, SetupNewDirect
+    use DumpCommand_m, only: DumpCommand
     use EmpiricalGeometry, only: INITEMPIRICALGEOMETRY
-    use EXPR_M, only: EXPR
+!   use EXPR_M, only: EXPR
     use FGrid, only: AddFGridToDatabase, CreateFGridFromMLSCFInfo, FGrid_T
     use ForwardModelConfig, only: AddForwardModelConfigToDatabase, &
       & ForwardModelConfig_T
     use ForwardModelSupport, only: ConstructForwardModelConfig, &
       & ForwardModelGlobalSetup, CreateBinSelectorFromMLSCFInfo
     use INIT_TABLES_MODULE, only: F_FILE, F_TYPE, &
-      & L_TRUE, L_L2GP, L_L2AUX, L_L2DGG, L_L2FWM, &
+      & L_TRUE, L_L2GP, L_L2DGG, L_L2FWM, &
       & P_ALLOW_CLIMATOLOGY_OVERLOADS, &
       & P_CYCLE, P_ENDTIME, P_INPUT_VERSION_STRING, P_INSTRUMENT, &
       & P_LEAPSECFILE, P_OUTPUT_VERSION_STRING, P_STARTTIME, &
       & P_VERSION_COMMENT, &
-      & S_BINSELECTOR, S_DIRECTWRITEFILE, S_EMPIRICALGEOMETRY, S_FGRID, &
+      & S_BINSELECTOR, S_DIRECTWRITEFILE, S_DUMP, S_EMPIRICALGEOMETRY, S_FGRID, &
       & S_FORWARDMODEL, S_ForwardModelGlobal, S_L1BOA, S_L1BRAD, &
-      & S_L2PARSF, S_TIME, S_VGRID
+      & S_L2PARSF, S_PFADATA, S_TIME, S_VGRID
     use L1BData, only: l1bradSetup, l1boaSetup, ReadL1BData, L1BData_T, &
       & AssembleL1BQtyName, DeallocateL1BData, Dump, NAME_LEN, &
       & PRECISIONSUFFIX, ReadL1BAttribute
@@ -79,18 +75,22 @@ contains
     use MLSCommon, only: R8, FileNameLen, NameLen, L1BInfo_T, TAI93_Range_T
     use MLSFiles, only: FILENOTFOUND, &
       & GetPCFromRef, mls_hdf_version, split_path_name
-    use MLSL2Options, only: LEVEL1_HDFVERSION
+    use MLSL2Options, only: ILLEGALL1BRADID, LEVEL1_HDFVERSION, MAXNUML1BRADIDS, &
+      & Toolkit
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSPCF2, only: mlspcf_l2gp_start, mlspcf_l2gp_end, &
       & mlspcf_l2dgm_start, mlspcf_l2dgm_end, mlspcf_l2fwm_full_start, &
       & mlspcf_l2fwm_full_end, &
       & mlspcf_l2dgg_start, mlspcf_l2dgg_end
-    use MLSStrings, only: hhmmss_value
+    use MLSStrings, only: hhmmss_value, utc_to_yyyymmdd
+    use MLSStrings, only: 
     use MLSSignals_m, only: INSTRUMENT
     use MoreTree, only: GET_FIELD_ID, GET_SPEC_ID
     use OUTPUT_M, only: BLANKS, OUTPUT
-    use SDPTOOLKIT, only: mls_utctotai
+    use PFAData_m, only: Get_PFAdata_from_l2cf
+    use PCFHdr, only: GlobalAttributes, FillTAI93Attribute
+    use SDPToolkit, only: max_orbits, mls_utctotai
     use String_Table, only: Get_String
     use Time_M, only: Time_Now
     use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
@@ -128,8 +128,8 @@ contains
     logical :: TIMING              ! For S_Time
     logical :: StartTimeIsAbsolute, stopTimeIsAbsolute
     real :: T1, T2                 ! For S_Time
-    integer :: UNITS(2)            ! Output from Expr
-    double precision :: VALUE(2)  ! Output from Expr
+!   integer :: UNITS(2)            ! Output from Expr
+!   double precision :: VALUE(2)  ! Output from Expr
     real(r8) :: Start_time_from_1stMAF, End_time_from_1stMAF
     logical ::  ItExists
 
@@ -262,6 +262,13 @@ contains
         case ( s_directWriteFile )
           call decorate (son, AddDirectToDatabase ( &
             & DirectDatabase, CreateDirectTypeFromMLSCFInfo ( son ) ) )
+        case ( s_dump )
+          call dumpCommand ( son, vGrids=vGrids )
+        case ( s_empiricalGeometry )
+          call InitEmpiricalGeometry ( son )
+        case ( s_fgrid )
+          call decorate ( son, AddFGridToDatabase ( fGrids, &
+            & CreateFGridFromMLSCFInfo ( name, son ) ) )
         case ( s_forwardModelGlobal ) !??? Begin temporary stuff for l2load
           call forwardModelGlobalSetup ( son, returnStatus )
           error = max(error, returnStatus)
@@ -269,26 +276,6 @@ contains
           call decorate (son, AddForwardModelConfigToDatabase ( &
             & forwardModelConfigDatabase, &
             & ConstructForwardModelConfig ( name, son, vGrids, .true. ) ) )
-        case ( s_vgrid )
-          call decorate ( son, AddVGridToDatabase ( vGrids, &
-            & CreateVGridFromMLSCFInfo ( name, son, l2gpDatabase ) ) )
-        case ( s_fgrid )
-          call decorate ( son, AddFGridToDatabase ( fGrids, &
-            & CreateFGridFromMLSCFInfo ( name, son ) ) )
-        case ( s_l1brad )
-          the_hdf_version = LEVEL1_HDFVERSION
-          call l1bradSetup ( son, l1bInfo, F_FILE, &
-            & MAXNUML1BRADIDS, ILLEGALL1BRADID, hdfVersion=the_hdf_version )
-          if(index(switches, 'pro') /= 0) then  
-            sub_rosa_index = sub_rosa(subtree(2,subtree(2, son)))
-            call get_string ( sub_rosa_index, FilenameString, strip=.true. )
-            call proclaim(FilenameString, 'l1brad', &                   
-            & hdfVersion=the_hdf_version) 
-          end if
-          if ( TOOLKIT ) &
-            & call announce_error(0, &
-            & '*** l2cf overrides pcf for L1B Rad. file(s) ***', &
-            & just_a_warning = .true.)
         case ( s_l1boa )
           the_hdf_version = LEVEL1_HDFVERSION
           call l1boaSetup ( son, l1bInfo, F_FILE, hdfVersion=the_hdf_version )
@@ -318,6 +305,20 @@ contains
             & call announce_error(0, &
             & '*** l2cf overrides pcf for L1BOA file ***', &
             & just_a_warning = .true.)
+        case ( s_l1brad )
+          the_hdf_version = LEVEL1_HDFVERSION
+          call l1bradSetup ( son, l1bInfo, F_FILE, &
+            & MAXNUML1BRADIDS, ILLEGALL1BRADID, hdfVersion=the_hdf_version )
+          if(index(switches, 'pro') /= 0) then  
+            sub_rosa_index = sub_rosa(subtree(2,subtree(2, son)))
+            call get_string ( sub_rosa_index, FilenameString, strip=.true. )
+            call proclaim(FilenameString, 'l1brad', &                   
+            & hdfVersion=the_hdf_version) 
+          end if
+          if ( TOOLKIT ) &
+            & call announce_error(0, &
+            & '*** l2cf overrides pcf for L1B Rad. file(s) ***', &
+            & just_a_warning = .true.)
         case ( s_l2parsf )
           sub_rosa_index = sub_rosa(subtree(2,subtree(2, son)))
           call get_string ( sub_rosa_index, FilenameString, strip=.true. )
@@ -329,8 +330,8 @@ contains
             & call announce_error(0, &
             & '*** l2cf overrides pcf for L2 Parallel staging file ***', &
             & just_a_warning = .true.)
-        case ( s_empiricalGeometry )
-          call InitEmpiricalGeometry ( son )
+        case ( s_pfaData )
+          call Get_PFAdata_from_l2cf ( son, vGrids )
         case ( s_time )
           if ( timing ) then
             call sayTime
@@ -338,6 +339,9 @@ contains
             call time_now ( t1 )
             timing = .true.
           end if
+        case ( s_vgrid )
+          call decorate ( son, AddVGridToDatabase ( vGrids, &
+            & CreateVGridFromMLSCFInfo ( name, son, l2gpDatabase ) ) )
         case default
           call announce_error(son, 'unrecognized global settings spec')
         end select
@@ -820,6 +824,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.80  2004/03/24 01:02:55  livesey
+! Make LeapSecFile public
+!
 ! Revision 2.79  2004/01/23 01:09:48  pwagner
 ! Only directwrite files entered in global settings eligible to be auto-sourced
 !
