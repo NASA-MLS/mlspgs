@@ -9,7 +9,7 @@ module HGridsDatabase                   ! Horizontal grid information
   private
 
   public :: HGrid_T, AddHGridToDatabase, CreateEmptyHGrid, TrimHGrid, &
-    & DestroyHGridContents, DestroyHGridDatabase, NullifyHGrid
+    & DestroyHGridContents, DestroyHGridDatabase, NullifyHGrid, FindClosestMatch
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -121,7 +121,7 @@ contains ! =========== Public procedures ===================================
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Invalid side argument to TrimHGrid' )
     end select
-    if ( newNoProfs <= 0 ) call MLSMessage ( &
+    if ( newNoProfs < 0 ) call MLSMessage ( &
         & MLSMSG_Error, ModuleName, 'Too many profiles to delete' )
 
     nullify ( temp )
@@ -198,7 +198,44 @@ contains ! =========== Public procedures ===================================
     end if
   end subroutine DestroyHGridDatabase
 
-  ! ----------------------------------------NullifyHGrid -----
+  ! ---------------------------------------- FindClosestMatch ---
+  integer function FindClosestMatch ( reference, sought, instance )
+    use MLSNumerics, only: HUNT
+    ! This routine is best explained in context.  Given a 'sought' quantity
+    ! e.g. ptan, radiance, the profile in reference (e.g. temperature) is found
+    ! that is closest to profile 'instance' in reference
+    real(r8), dimension(:), intent(in) :: REFERENCE ! e.g. temperature
+    real(r8), dimension(:,:), intent(in) :: SOUGHT ! e.g. ptan, radiance
+    integer, intent(in) :: INSTANCE
+    ! Local variables
+    integer :: BESTGUESS                ! A guessed index
+    integer :: FIRSTGUESS               ! A guessed index
+    integer :: HIGHGUESS                ! A guessed index
+    integer :: LOWGUESS                 ! A guessed index
+    real(r8) :: BESTCOST                ! A cost for a guess
+    real(r8) :: COST                    ! A cost for a guess
+
+    ! Executable code
+    call Hunt ( reference, sought(1,instance), firstGuess, &
+      & start=max(min(instance,size(reference)),1), &
+      & allowTopValue=.true., nearest=.true. )
+
+    ! Now check the ones either side
+    lowGuess = max ( firstGuess-1, 1 )
+    highGuess = min ( firstGuess+1, size(reference) )
+    bestCost = 0.0
+    do firstGuess = lowGuess, highGuess
+      cost = sum ( abs ( reference(firstGuess) - sought(:,instance) ) )
+      if ( ( firstGuess == lowGuess ) .or. ( cost < bestCost ) ) then
+        bestGuess = firstGuess
+        bestCost = cost
+      end if
+    end do
+
+    FindClosestMatch = bestGuess
+  end function FindClosestMatch
+
+  ! ---------------------------------------- NullifyHGrid -----
   subroutine NullifyHGrid ( H )
     ! Given a hGrid, nullify all the pointers associated with it
     type ( HGrid_T ), intent(out) :: H
@@ -220,6 +257,9 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.2  2003/07/07 20:20:28  livesey
+! New FindClosestMatch routine
+!
 ! Revision 2.1  2003/06/20 19:34:45  pwagner
 ! Quanities now share grids stored separately in databses
 !
