@@ -280,6 +280,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_fill) =                 add_ident ( 'fill' )
     spec_indices(s_fillCovariance) =       add_ident ( 'fillCovariance' )
     spec_indices(s_fillDiagonal)   =       add_ident ( 'fillDiagonal' )
+    spec_indices(s_flagCloud) =            add_ident ( 'flagCloud' )
     spec_indices(s_forge) =                add_ident ( 'forge' )
     spec_indices(s_forwardModel) =         add_ident ( 'forwardModel' )
     spec_indices(s_forwardModelGlobal) =   add_ident ( 'forwardModelGlobal' )
@@ -735,6 +736,17 @@ contains ! =====     Public procedures     =============================
              begin, f+f_opticalDepthCutoff, t+t_numeric, n+n_field_type, &
              begin, f+f_reset, t+t_boolean, n+n_field_type, ndp+n_spec_def /) )
     call make_tree ( (/ &
+      begin, s+s_flagcloud, &  ! Must be AFTER s_vector
+             begin, f+f_quantity, s+s_vector, f+f_template, f+f_quantities, &
+                    nr+n_dot, &
+             begin, f+f_cloudRadiance, s+s_vector, f+f_template, f+f_quantities, &
+                    nr+n_dot, &
+             begin, f+f_ptanquantity, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
+             begin, f+f_channels, t+t_numeric, t+t_numeric_range, n+n_field_type, &
+             begin, f+f_height, t+t_numeric_range, n+n_field_type, &
+             begin, f+f_cloudRadianceCutoff, t+t_numeric, n+n_field_type /) )
+    call make_tree ( (/ &
       begin, s+s_forwardModel, & ! Must be AFTER s_vector and s_matrix
              begin, f+f_allLinesForRadiometer, t+t_boolean, n+n_field_type, &
              begin, f+f_atmos_der, t+t_boolean, n+n_field_type, &
@@ -922,6 +934,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.267  2003/01/11 00:01:19  dwu
+! add flagCloud
+!
 ! Revision 2.266  2003/01/08 23:52:01  livesey
 ! Added irregular and sparseQuantities
 !
