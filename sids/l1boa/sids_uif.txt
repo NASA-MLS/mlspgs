@@ -1,0 +1,45 @@
+FILE START DATE/TIME
+1996-12-01 00:00:00.000000
+FILE STOP DATE/TIME
+1996-12-01 23:59:59.999999
+MINOR FRAME RATE (# of MIFs/sec)
+6
+NUMBER OF SCANS PER ORBIT
+240
+MAJOR FRAME OFFSET (# of first MAF in file)
+0
+HOME LATITUDE (degrees)
+0.0
+HOME ALTITUDE (km)
+2.5
+SCAN PROGRAM
+GHz INFORMATION
+Starting Tan Pt Geod Alt (km)
+2.5
+Number of Scan Phases
+3
+Phase 1 Scan Rate (deg/sec)
+0.0
+Phase 1 Duration (# of MIFs)
+1
+Phase 2 Scan Rate
+0.0279213
+Phase 2 Duration
+62
+Phase 3 Scan Rate
+0.0976263
+Phase 3 Duration
+57
+THz INFORMATION
+Starting Tan Pt Geod Alt
+15.0
+Number of Scan Phases
+2
+Phase 1 Scan Rate
+0.030344496
+Phase 1 Duration
+54
+Phase 2 Scan Rate
+0.058600044
+Phase 2 Duration
+60
