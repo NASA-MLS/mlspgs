@@ -15,7 +15,7 @@ program L2Q
   use MLSL2Options, only: CURRENT_VERSION_ID
   use MLSMessageModule, only: MLSMessage, MLSMessageConfig, MLSMessageExit, &
     & MLSMSG_Allocate, MLSMSG_DeAllocate, MLSMSG_Debug, MLSMSG_Error, &
-    & MLSMSG_Info, MLSMSG_Warning
+    & MLSMSG_Info, MLSMSG_Warning, PVMERRORMESSAGE
   use MLSSETS, only: FINDFIRST, FINDALL
   use MLSSTRINGLISTS, only: CATLISTS, STRINGELEMENTNUM
   use MLSSTRINGS, only: LOWERCASE
@@ -24,7 +24,7 @@ program L2Q
   use PVM, only: PVMOK, &
     & ClearPVMArgs, FreePVMArgs, GETMACHINENAMEFROMTID, &
     & PVMDATADEFAULT, PVMFINITSEND, PVMF90PACK, PVMFKILL, PVMFMYTID, &
-    & PVMF90UNPACK, PVMERRORMESSAGE, PVMFPSTAT, &
+    & PVMF90UNPACK, PVMFPSTAT, &
     & PVMFCATCHOUT, PVMFSEND, PVMFNOTIFY, PVMTASKEXIT, &
     & PVMFFREEBUF
   use Sort_M, only: SORT
@@ -606,6 +606,7 @@ contains
     integer :: numMasters
     integer :: oldPrUnit
     integer :: SIGNAL                   ! From a master
+    character(len=16) :: SIGNALSTRING
     logical :: SIGNIFICANTEVENT
     logical :: SKIPDELAY            ! Don't wait before doing the next go round
     character(len=FileNameLen)  :: tempfile
@@ -645,7 +646,10 @@ contains
             call PVMErrorMessage ( info, "unpacking number of chunks" )
           endif
           aMaster%tid = masterTid
-          call GetMachineNameFromTid ( masterTid, aMaster%Name )
+          call GetMachineNameFromTid ( masterTid, aMaster%Name, info )
+          if ( info == -1 ) & 
+            & call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Unable to get machine name from tid' )
           aMaster%NumHosts = 0
           aMaster%needs_Host = .false.
           aMaster%owes_thanks = .false.
@@ -820,6 +824,7 @@ contains
             call timestamp(' total)', advance='yes')
           endif
         case default
+          write(SIGNALSTRING, *) signal
           if ( options%debug ) &
             & call proclaim( 'Unrecognized signal from Master ' // &
             & masterNameFun(masterTid) )
@@ -1483,6 +1488,9 @@ contains
 end program L2Q
 
 ! $Log$
+! Revision 1.5  2005/02/03 19:10:11  pwagner
+! Receives master_date, master_time data from masters for each host
+!
 ! Revision 1.4  2005/01/20 00:54:25  pwagner
 ! Implementing changes suggested at design review Jan 14 2005
 !
