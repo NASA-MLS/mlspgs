@@ -81,9 +81,12 @@ DUSTY = -g -dusty
 #GCTP =/software/SRC/TOOLKIT-5.2.6v1.00.NAG/hdfeos/lib/linux
 
 #Special load libraries
-l_specials =
+l_specials =
 
 # $Log$
+# Revision 1.2  2000/11/18 00:06:17  pwagner
+# Now links on sun (pencil)
+#
 # Revision 1.1  2000/11/15 00:12:41  pwagner
 # First commit
 #
