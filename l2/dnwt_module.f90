@@ -305,6 +305,7 @@ contains
 !****************** END OF INITIAL COMMENTS ****************
 
     nflag = nf_start
+    ifl = 0
     if ( present(nopt) ) call nwtop ( nopt, xopt )
     call nwtop ( ) ! default initialization
     return
@@ -1022,6 +1023,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.18  2001/06/13 23:50:57  vsnyder
+! Correct not-restarting-correctly in DNWT
+!
 ! Revision 2.17  2001/06/01 23:04:11  vsnyder
 ! Corrected two bugs having to do with Aitken acceleration
 !
