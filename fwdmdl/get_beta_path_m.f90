@@ -55,8 +55,8 @@ contains
 
     type (beta_group_T), dimension(:) :: beta_group
 
-!    integer, intent(in)  :: ICON
-    integer :: ICON                 ! this will be changed with intent(in) option
+    integer, intent(in)  :: ICON
+
 !-----------------------------------------------------------------------------
 ! ICON indicates different clear and cloudy sky combinations:
 !		ICON=-1 is for clear-sky radiance limit assuming 110%RHi
@@ -99,8 +99,6 @@ contains
     real(rp) :: P, Vapor_P
 
 ! begin the code
-
-    ICON=0  ! this will be removed later
 
     no_mol = size(beta_group)
     n_path = size(path_inds)
@@ -280,6 +278,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.19  2003/02/04 21:46:27  jonathan
+! add ICON options for super saturation and dry cases
+!
 ! Revision 2.18  2003/02/03 22:56:58  vsnyder
 ! Add Get_bata_path_polarized
 !
