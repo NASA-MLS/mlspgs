@@ -409,7 +409,22 @@ contains ! =====     Public Procedures     =============================
         
         qty%noInstancesLowerOverlap = chunk%noMAFsLowerOverlap
         qty%noInstancesUpperOverlap = chunk%noMAFsUpperOverlap
-        ! Later we'll put something here for lat/lon etc.
+
+        ! Later we'll put something here for lat/lon etc, for the moment
+        ! just zero it out.
+        qty%surfs = 0.0
+        qty%phi = 0.0
+        qty%geodLat = 0.0
+        qty%lon = 0.0
+        qty%time = 0.0
+        qty%solarTime = 0.0
+        qty%solarZenith = 0.0
+        qty%losAngle = 0.0
+
+        qty%mafCounter = l1bField%counterMAF
+        do mafIndex = chunk%firstMAFIndex, chunk%lastMAFIndex
+          qty%mafIndex(mafIndex-chunk%firstMAFIndex+1) = mafIndex
+        end do
 
         call DeallocateL1BData(l1bfield, l1bFlag)
         
@@ -469,12 +484,12 @@ contains ! =====     Public Procedures     =============================
           select case(l1bItem)
           case(1)
             ! For time we have to do something a little more complicated.
-            ! ******* This is a real kludge, and we have to find a way
+            ! This is a real kludge, and we have to find a way
             ! to do it better in 0.5. Probably simply have time as a minor
-            ! frame quantity in L1, or MIF duration.
-!
+            ! frame quantity in L1, or MIF duration. !????
+            ! Also note that it fills in times even for non existant MIFs
             do mafIndex = 1, noMAFs
-              do mifIndex = 1, l1bField%maxMIFs
+              do mifIndex = 1, qty%noSurfs 
                 qty%time(mifIndex,mafIndex) = &
                   & l1bField%dpField(1,1,mafIndex) + &
                   & (mifIndex-1) * sixth
@@ -565,6 +580,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.15  2001/03/28 23:48:13  livesey
+! Bug fixes zero out some stuff.
+!
 ! Revision 2.14  2001/03/28 18:33:19  livesey
 ! Fixed bug with logBasis (wasn't initialised!)
 !
