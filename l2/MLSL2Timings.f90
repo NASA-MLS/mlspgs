@@ -12,6 +12,7 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
   USE MLSStrings, only: GetStringElement, LowerCase, StringElementNum
   use OUTPUT_M, only: BLANKS, OUTPUT, PRUNIT
   use Time_M, only: Time_Now, Use_Wall_Clock
+  use TOGGLES, only: SWITCHES
 
   IMPLICIT NONE
 
@@ -139,6 +140,7 @@ contains ! =====     Public Procedures     =============================
       myLastTime = t2
       myLastElem = elem
       if ( present(t1) ) call time_now ( t1 )
+      if ( index(switches, 'phase') /= 0 ) call announce_phase(trim(phase_name))
   end subroutine add_to_phase_timing
 
   ! -----------------------------------------  add_to_retrieval_timing  -----
@@ -488,6 +490,20 @@ contains ! =====     Public Procedures     =============================
   end subroutine dump_section_timings
 
 !=============================================================================
+  subroutine announce_phase(phase_name)
+    character(len=*), intent(in) :: phase_name
+    character(len=*), parameter :: BLAZON=' '
+    if ( phase_name == ' ' ) return
+    if ( BLAZON /= ' ' ) call output ( BLAZON // '  ' , advance='no' )
+    call output ( 'Beginning phase ', advance='no' )
+    call output ( phase_name , advance='no' )
+    if ( BLAZON /= ' ' ) then
+      call output ( '  '  // BLAZON  , advance='no' )
+    else
+      call output ( ' ', advance='yes' )
+    endif
+  end subroutine announce_phase
+
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
@@ -497,6 +513,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.22  2004/05/06 20:42:24  pwagner
+! Announces beginning of each phase if phase switch set
+!
 ! Revision 2.21  2004/02/10 19:26:23  pwagner
 ! Fixed bug in phase names
 !
