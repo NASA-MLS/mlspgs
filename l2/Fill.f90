@@ -16,7 +16,8 @@ module Fill                     ! Create vectors and fill them.
     & F_dontMask, F_IGNORENEGATIVE, F_IGNOREZERO, &
     & F_INTEGRATIONTIME, F_INTERPOLATE, F_INVERT, F_INTRINSIC, F_ISPRECISION, &
     & F_LENGTHSCALE, F_MATRIX, F_MAXITERATIONS, F_METHOD, F_MEASUREMENTS, &
-    & F_MODEL, F_MULTIPLIER, F_NOFINEGRID, F_PRECISION,  F_PRECISIONFACTOR, &
+    & F_MODEL, F_MULTIPLIER, F_NOFINEGRID, F_NOISEBANDWIDTH, F_PRECISION,  &
+    & F_PRECISIONFACTOR, &
     & F_PTANQUANTITY, F_QUANTITY, F_RADIANCEQUANTITY, F_RATIOQUANTITY, &
     & F_REFGPHQUANTITY, F_RESETSEED, F_RHIQUANTITY, F_Rows, &
     & F_SCECI, F_SCVEL, F_SCVELECI, F_SCVELECR, F_SEED, &
@@ -30,10 +31,10 @@ module Fill                     ! Create vectors and fill them.
     & L_CHISQMMAF, L_CHISQMMIF, L_CHOLESKY, &
     & L_COLUMNABUNDANCE, L_ESTIMATEDNOISE, L_EXPLICIT, L_GPH, L_GRIDDED, L_HEIGHT, &
     & L_HYDROSTATIC, L_ISOTOPE, L_ISOTOPERATIO, L_KRONECKER, L_L1B, L_L2GP, L_L2AUX, &
-    & L_RECTANGLEFROMLOS, L_NEGATIVEPRECISION, L_LOSVEL, L_NONE, L_PLAIN, &
+    & L_RECTANGLEFROMLOS, L_NEGATIVEPRECISION, L_NOISEBANDWIDTH, L_LOSVEL, L_NONE, L_PLAIN, &
     & L_PRESSURE, L_PTAN, L_RADIANCE, L_RHI, &
     & L_REFGPH, L_SCECI, L_SCGEOCALT, L_SCVEL, L_SCVELECI, L_SCVELECR, &
-    & L_SPD, L_SPECIAL, L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, &
+    & L_SPD, L_SPECIAL, L_SYSTEMTEMPERATURE, L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, &
     & L_TNGTGEOCALT, L_TRUE, L_VECTOR, L_VGRID, L_VMR, L_ZETA
   ! Now the specifications:
   use INIT_TABLES_MODULE, only: S_DESTROY, S_DUMP, S_FILL, S_FILLCOVARIANCE, &
@@ -155,6 +156,7 @@ module Fill                     ! Create vectors and fill them.
   integer, parameter :: NoSpecialFill = badUnitsForMaxIterations + 1
   integer, parameter :: BadlosVelFill = noSpecialFill + 1
   integer, parameter :: NotZetaForGrid = BadLosVelFill + 1
+  integer, parameter :: BadEstNoiseFill = NotZetaForGrid + 1
   
   real, parameter ::    UNDEFINED_VALUE = -999.99 ! Same as %template%badvalue
 
@@ -205,17 +207,19 @@ contains ! =====     Public Procedures     =============================
     type (vectorValue_T), pointer :: SCECIQUANTITY
     type (vectorValue_T), pointer :: SCVELQUANTITY
     type (vectorValue_T), pointer :: SOURCEQUANTITY
+    type (vectorValue_T), pointer :: SYSTEMPQUANTITY
     type (vectorValue_T), pointer :: TEMPERATUREQUANTITY
     type (vectorValue_T), pointer :: TNGTECIQUANTITY
     type (vectorValue_T), pointer :: TNGTPRESQUANTITY
-    type (vectorValue_T), pointer :: earthRadiusQty
-    type (vectorValue_T), pointer :: losQty
-    type (vectorValue_T), pointer :: bndPressQty
-    type (vectorValue_T), pointer :: vmrQty
-    type (vectorValue_T), pointer :: measQty
-    type (vectorValue_T), pointer :: modelQty
-    type (vectorValue_T), pointer :: noiseQty
-    type (vectorValue_T), pointer :: aprioriPrecision
+    type (vectorValue_T), pointer :: EARTHRADIUSQTY
+    type (vectorValue_T), pointer :: LOSQTY
+    type (vectorValue_T), pointer :: BNDPRESSQTY
+    type (vectorValue_T), pointer :: VMRQTY
+    type (vectorValue_T), pointer :: MEASQTY
+    type (vectorValue_T), pointer :: MODELQTY
+    type (vectorValue_T), pointer :: NBWQUANTITY
+    type (vectorValue_T), pointer :: NOISEQTY
+    type (vectorValue_T), pointer :: APRIORIPRECISION
 
     integer :: aprPrecVctrIndex         ! Index of apriori precision vector
     integer :: aprPrecQtyIndex          ! Index of apriori precision quantity    
@@ -268,6 +272,8 @@ contains ! =====     Public Procedures     =============================
     integer :: MAXITERATIONS            ! For hydrostatic fill
     real, dimension(2) :: MULTIPLIER   ! To scale source,noise part of addNoise
     integer :: MULTIPLIERNODE           ! For the parser
+    integer :: NBWVECTORINDEX           ! In vector database
+    integer :: NBWQUANTITYINDEX         ! In vector database
     integer :: NoFineGrid               ! no of fine grids for cloud extinction calculation
     integer :: PTANVECTORINDEX          !
     integer :: PTANQTYINDEX             !
@@ -296,8 +302,9 @@ contains ! =====     Public Procedures     =============================
     integer :: SUPERDIAGONAL            ! Index of superdiagonal matrix in database
     logical :: Switch2intrinsic         ! Have mls_random_seed call intrinsic
     !                                     -- for FillCovariance
-    real :: T1, T2                      ! for timing
-    integer :: SYSTEMPNODE              ! Tree node
+    real :: T1, T2                      ! for timing 
+    integer :: SYSTEMPQUANTITYINDEX     ! in the quantities database
+    integer :: SYSTEMPVECTORINDEX       ! in the vector database
     integer :: TEMPERATUREQUANTITYINDEX ! in the quantities database
     integer :: TEMPERATUREVECTORINDEX   ! In the vector database
     integer :: TEMPLATEINDEX            ! In the template database
@@ -531,6 +538,9 @@ contains ! =====     Public Procedures     =============================
             if ( all(unitAsArray(1) /= (/PHYQ_Dimensionless,PHYQ_Invalid/)) ) &
               & call Announce_error ( key, badUnitsForMaxIterations )
             noFineGrid = valueAsArray(1)
+          case ( f_noiseBandwidth )
+            nbwVectorIndex = decoration(decoration(subtree(1,gson)))
+            nbwQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_precision )      ! For masking l1b radiances
             precisionVectorIndex = decoration(decoration(subtree(1,gson)))
             precisionQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -592,7 +602,8 @@ contains ! =====     Public Procedures     =============================
               spread = decoration(subtree(2,gson)) == l_true
             end if
           case ( f_systemTemperature )
-            sysTempNode = subtree(j,key)
+            sysTempVectorIndex = decoration(decoration(subtree(1,gson)))
+            sysTempQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_tngtECI )              ! For special fill of losVel
             tngtECIVectorIndex = decoration(decoration(subtree(1,gson)))
             tngtECIQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -980,10 +991,22 @@ contains ! =====     Public Procedures     =============================
           end if
 
         case ( l_estimatedNoise ) ! ----------- Fill with estimated noise ---
+          if (.not. all(got( (/ f_radianceQuantity, &
+            & f_systemTemperature, f_integrationTime /)))) &
+            & call Announce_Error ( key, badEstNoiseFill )
           radianceQuantity => GetVectorQtyByTemplateIndex( &
             & vectors(radianceVectorIndex), radianceQuantityIndex )
+          sysTempQuantity => GetVectorQtyByTemplateIndex( &
+            & vectors(sysTempVectorIndex), sysTempQuantityIndex )
+          if ( got ( f_noiseBandwidth ) ) then
+            nbwQuantity => GetVectorQtyByTemplateIndex( &
+              & vectors(nbwVectorIndex), nbwQuantityIndex )
+          else
+            nbwQuantity => NULL()
+          end if
           call FillVectorQtyWithEstNoise ( &
-            & quantity, radianceQuantity, sysTempNode, integrationTime )
+            & quantity, radianceQuantity, sysTempQuantity, nbwQuantity, &
+            & integrationTime )
 
         case ( l_explicit ) ! ---------  Explicity fill from l2cf  -----
           if ( .not. got(f_explicitValues) ) &
@@ -1496,12 +1519,12 @@ contains ! =====     Public Procedures     =============================
     if (any(abs(l2gp%geodAngle(firstProfile:lastProfile)-&
       &         quantity%template%phi(1,:)) > tolerance) ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Quantity has profiles that mismatch in geodetic angle' )
+      & 'Quantity has profiles that mismatch l2gp in geodetic angle' )
 
     if (any(abs(l2gp%time(firstProfile:lastProfile)- &
       &         quantity%template%time(1,:)) > timeTol) ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Quantity has profiles that mismatch in time' )
+      & 'Quantity has profiles that mismatch l2gp in time' )
 
     if (interpolate .and. quantity%template%noChans /= 1) then
       errorCode=cantInterpolate3D
@@ -1557,7 +1580,7 @@ contains ! =====     Public Procedures     =============================
       &  (scECI%template%quantityType /= l_scECI) .or. &
       & .not. any( &
       &  (scVel%template%quantityType == &
-      & (/ l_scVel, l_scVelECI, l_scVelECR /))) ) then
+      & (/ l_scVelECI /))) ) then
       call Announce_Error ( key, badLOSVelFill )
       return
     end if
@@ -2597,14 +2620,15 @@ contains ! =====     Public Procedures     =============================
 
   ! ---------------------------------- FillVectorQuantityWithEsimatedNoise ---
   subroutine FillVectorQtyWithEstNoise ( quantity, radiance, &
-    & sysTempNode, integrationTime )
+    & sysTemp, nbw, integrationTime )
 
     use MLSSignals_m, only: signals
 
     ! Dummy arguments
     type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
     type (VectorValue_T), intent(in) :: RADIANCE ! Radiances to use in calculation
-    integer, intent(in) :: SYSTEMPNODE ! Node describing system temperature
+    type (VectorValue_T), intent(in) :: SYSTEMP ! System temperature
+    type (VectorValue_T), pointer :: NBW ! Noise bandwidth
     real(r8), intent(in) :: INTEGRATIONTIME ! Integration time in seconds
 
     ! Local variables
@@ -2629,39 +2653,45 @@ contains ! =====     Public Procedures     =============================
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
       & "Invalid quantity for estimated noise fill.")
 
-    if ( radiance%template%signal /= quantity%template%signal ) &
+    if ( ( radiance%template%signal /= quantity%template%signal ) .or. &
+      &  ( radiance%template%sideband /= quantity%template%sideband ) ) &
       & call MLSMEssage ( MLSMSG_Error, ModuleName, &
       & "Quantity and radiances not same signal for estimated noise fill.")
 
-    if ( DEEBUG .and. .not. associated(quantity%values) ) &
-      & call announce_error( 0, No_Error_code, &
-      & 'quantity values unassociated in FillVectorQtyWithEstNoise')
+    if ( ( systemp%template%signal /= quantity%template%signal ) .or. &
+      &  ( systemp%template%sideband /= quantity%template%sideband ) ) &
+      & call MLSMEssage ( MLSMSG_Error, ModuleName, &
+      & "Quantity and system temperature not same signal for estimated noise fill." )
 
-    width => signals(radiance%template%signal)%widths
+    if (.not. ValidateVectorQuantity ( &
+      & sysTemp, &
+      & quantityType=(/l_systemTemperature/), &
+      & verticalCoordinate=(/l_none/), &
+      & noInstances=(/1/) ) ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "Invalid system temperature quantity for estimated noise fill.")
 
-    if ( nsons(sysTempNode) > 2 ) then
-      if ( nsons(sysTempNode) /= 1+quantity%template%noChans ) &
+    if ( associated ( nbw ) ) then 
+      if (.not. ValidateVectorQuantity ( &
+        & nbw, &
+        & quantityType=(/l_noiseBandwidth/), &
+        & verticalCoordinate=(/l_none/), &
+        & noInstances=(/1/) ) ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Inappropriate number of values for system temperature' )
-      do c = 1, quantity%template%noChans
-        call expr ( subtree ( c+1, sysTempNode ) , unitAsArray, valueAsArray )
-        if ( all (unitAsArray /= (/PHYQ_Temperature, PHYQ_Invalid/) ) ) &
-          call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Bad units for system temperature' )
-        systemTemperature(c) = valueAsArray(1)
-      end do
+        & "Invalid noise bandwidth quantity for estimated noise fill.")
+      if ( ( nbw%template%signal /= quantity%template%signal ) .or. &
+        &    ( nbw%template%sideband /= quantity%template%sideband ) ) &
+        & call MLSMEssage ( MLSMSG_Error, ModuleName, &
+        & "Quantity and noise bandwidth not same signal for estimated noise fill." )
+      width => nbw%values(:,1)
     else
-      call expr ( subtree ( 2, sysTempNode ) , unitAsArray, valueAsArray )
-      if ( all (unitAsArray /= (/PHYQ_Temperature, PHYQ_Invalid/) ) ) &
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Bad units for system temperature' )
-      systemTemperature(:) = valueAsArray(1)
+      width => signals(radiance%template%signal)%widths(:)
     end if
 
     i = 1
     do s = 1, quantity%template%noSurfs
       do c = 1, quantity%template%noChans
-        quantity%values(i,:) = ( radiance%values(i,:) + systemTemperature(c) ) / &
+        quantity%values(i,:) = ( radiance%values(i,:) + sysTemp%values(c,1) ) / &
           & sqrt ( integrationTime * 1e6 * width(c) )
         i = i + 1
       end do
@@ -3240,6 +3270,8 @@ contains ! =====     Public Procedures     =============================
     select case ( code )
     case ( allocation_err )
       call output ( " command caused an allocation error in squeeze.", advance='yes' )
+    case ( badEstNoiseFill )
+      call output ( " missing information for estimated noise fill", advance='yes' )
     case ( badGeocAltitudeQuantity )
       call output ( " geocAltitudeQuantity is not geocAltitude", advance='yes' )
     case ( badlosGridfill )
@@ -3357,6 +3389,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.123  2002/05/14 00:26:25  livesey
+! New code for system temperatures etc.
+!
 ! Revision 2.122  2002/05/06 22:30:51  livesey
 ! Tidied up l2gp fill.
 !
