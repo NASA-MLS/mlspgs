@@ -243,8 +243,9 @@ serial
 sgrid
 signal
 signals
-skipOverlaps
+skipL1BCheck
 skipMask
+skipOverlaps
 solarTime
 solarZenith
 source
@@ -300,6 +301,9 @@ vRegWeightVec
 writeCounterMAF
 
 # $Log$
+# Revision 2.93  2003/05/07 22:50:29  pwagner
+# Optionally may skipL1BCheck in ChunkDivide
+#
 # Revision 2.92  2003/05/05 23:00:34  livesey
 # Merged in feb03 newfwm branch
 #
