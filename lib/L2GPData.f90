@@ -271,8 +271,9 @@ CONTAINS ! =====     Public Procedures     =============================
 
     ! Local variables
     TYPE (L2GPData_T), DIMENSION(:), POINTER :: tempDatabase
-
-    INCLUDE "../mlspgs/lib/addItemToDatabase.f9h" !remove path before commit
+    !This include causes real trouble if you are compiling in a different 
+    !directory.
+    INCLUDE "addItemToDatabase.f9h" 
 
     database(newSize) = item
     AddL2GPToDatabase = newSize
@@ -377,7 +378,7 @@ CONTAINS ! =====     Public Procedures     =============================
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
        ENDIF
        nLevels = size
-       print*,"nLevels =", size
+
     ENDIF
 
     IF (freq == 1) THEN
@@ -438,7 +439,6 @@ CONTAINS ! =====     Public Procedures     =============================
 
     nFreqsOr1=MAX(nFreqs,1)
     nLevelsOr1=MAX(nLevels, 1)
-    print*,"l2gp%nLevels=",l2gp%nLevels
     ALLOCATE(realProf(numProfs), realSurf(l2gp%nLevels), &
          realFreq(l2gp%nFreqs), &
          real3(nFreqsOr1,nLevelsOr1,numProfs), STAT=alloc_err)
@@ -452,9 +452,7 @@ CONTAINS ! =====     Public Procedures     =============================
     edge(1) = nFreqsOr1
     edge(2) = nLevelsOr1
     edge(3) = numProfs
-    print*,"Start=",start
-    print*,"Edge=",edge
-    print*,"stride=",stride
+
     status = swrdfld(swid, GEO_FIELD1, start(3:3), stride(3:3), edge(3:3), &
          realProf)
     IF (status == -1) THEN
@@ -527,15 +525,8 @@ CONTAINS ! =====     Public Procedures     =============================
           msr = MLSMSG_L2GPRead // GEO_FIELD9
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
        ENDIF
-       print*,"realSurf=",realsurf
-       print*,"Status=",status
-       print*,"Start=",start
-       print*,"Edge=",edge
-       print*,"stride=",stride
 
-       print*,"L2GP%PRssures=",l2gp%pressures
        l2gp%pressures = DBLE(realSurf)
-       print*,"L2GP%PRssures=",l2gp%pressures
 
     ENDIF
 
