@@ -90,7 +90,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   ! First some local parameters
   ! Assume L2GP files w/o explicit hdfVersion field are this
   ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc. 
-  integer, parameter :: L2GPDEFAULT_HDFVERSION = HDFVERSION_4
+  integer, parameter :: L2GPDEFAULT_HDFVERSION = HDFVERSION_5
 
   ! r4 corresponds to sing. prec. :: same as stored in files
   integer, public, parameter :: rgp = r4
@@ -2015,8 +2015,8 @@ contains ! =====     Public Procedures     =============================
 
   ! ---------------------- cpL2GPData_fileID  ---------------------------
 
-  subroutine cpL2GPData_fileID(file1, file2, swathList, hdfVersion, &
-    & notUnlimited)
+  subroutine cpL2GPData_fileID(file1, file2, swathList, &
+    & hdfVersion1, hdfVersion2, notUnlimited)
     !------------------------------------------------------------------------
 
     ! Given file names file1 and file2,
@@ -2027,7 +2027,8 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: file1 ! handle of file 1
     integer, intent(in) :: file2 ! handle of file 1
     character (len=*), intent(in) :: swathList
-    integer, optional, intent(in) :: hdfVersion
+    integer, intent(in) :: hdfVersion1
+    integer, intent(in) :: hdfVersion2
     logical, optional, intent(in) :: notUnlimited
 
     ! Local variables
@@ -2049,7 +2050,7 @@ contains ! =====     Public Procedures     =============================
       ! Allocate and fill l2gp
       if ( DEEBUG ) print *, 'Reading swath from file: ', trim(swath)
       call ReadL2GPData ( file1, trim(swath), l2gp, &
-           & hdfVersion=hdfVersion )
+           & hdfVersion=hdfVersion1 )
       if ( DEEBUG ) then
         print *, 'Writing swath to file: ', trim(swath)
         print *, 'l2gp%nFreqs:  ', l2gp%nFreqs
@@ -2058,7 +2059,7 @@ contains ! =====     Public Procedures     =============================
         print *, 'shape(l2gp%l2gpvalue):  ', shape(l2gp%l2gpvalue)
       endif
       ! Write the filled l2gp to file2
-      call WriteL2GPData(l2gp, file2, trim(swath), hdfVersion=hdfVersion, &
+      call WriteL2GPData(l2gp, file2, trim(swath), hdfVersion=hdfVersion2, &
         & notUnlimited=notUnlimited)
       call DestroyL2GPContents ( l2gp )
     enddo
@@ -2067,7 +2068,8 @@ contains ! =====     Public Procedures     =============================
 
   ! ---------------------- cpL2GPData_fileName  ---------------------------
 
-  subroutine cpL2GPData_fileName(file1, file2, create2, hdfVersion, swathList, &
+  subroutine cpL2GPData_fileName(file1, file2, &
+    & create2, hdfVersion1,  hdfVersion2, swathList, &
     & notUnlimited, andGlAttributes)
     !------------------------------------------------------------------------
 
@@ -2082,7 +2084,8 @@ contains ! =====     Public Procedures     =============================
     character (len=*), intent(in) :: file2 ! Name of file 2
     logical, optional, intent(in) :: create2
     logical, optional, intent(in) :: andGlAttributes
-    integer, optional, intent(in) :: hdfVersion
+    integer, optional, intent(in) :: hdfVersion1
+    integer, optional, intent(in) :: hdfVersion2
     character (len=*), optional, intent(in) :: swathList
     logical, optional, intent(in) :: notUnlimited
 
@@ -2091,7 +2094,8 @@ contains ! =====     Public Procedures     =============================
     integer :: File2Handle
     integer :: record_length
     integer :: status
-    integer :: the_hdfVersion
+    integer :: the_hdfVersion1
+    integer :: the_hdfVersion2
     logical :: file_exists
     integer :: file_access
     integer :: listsize
@@ -2105,36 +2109,38 @@ contains ! =====     Public Procedures     =============================
     logical                  :: myandGlAttributes
     
     ! Executable code
-    the_hdfVersion = L2GPDEFAULT_HDFVERSION
-    if ( present(hdfVersion) ) the_hdfVersion = hdfVersion
+    the_hdfVersion1 = L2GPDEFAULT_HDFVERSION
+    if ( present(hdfVersion1) ) the_hdfVersion1 = hdfVersion1
     file_exists = ( mls_exists(trim(File1)) == 0 )
     if ( .not. file_exists ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'File 1 not found; make sure the name and path are correct' &
         & // trim(file1) )
     endif
-    if ( the_hdfVersion == WILDCARDHDFVERSION ) then
-      the_hdfVersion = mls_hdf_version(File1, hdfVersion)
-      if ( the_hdfVersion == FILENOTFOUND ) &
+    if ( the_hdfVersion1 == WILDCARDHDFVERSION ) then
+      the_hdfVersion1 = mls_hdf_version(File1, the_hdfVersion1)
+      if ( the_hdfVersion1 == FILENOTFOUND ) &
         call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'File 1 not found; make sure the name and path are correct' &
           & // trim(file1) )
     endif
+    the_hdfVersion2 = the_hdfVersion1  ! Defaults to same hdf version as file 1
+    if ( present(hdfVersion2) ) the_hdfVersion2 = hdfVersion2
     if ( present(swathList) ) then
       if ( DEEBUG ) then
         noSwaths = mls_InqSwath ( file1, mySwathList, listSize, &
-           & hdfVersion=the_hdfVersion)
+           & hdfVersion=the_hdfVersion1)
         print *, 'swathList you requested to cp: ', trim(swathList)
         print *, 'mls_InqSwath finds: ', trim(mySwathList)
       endif
       mySwathList = swathList
     else
       noSwaths = mls_InqSwath ( file1, mySwathList, listSize, &
-           & hdfVersion=the_hdfVersion)
+           & hdfVersion=the_hdfVersion1)
     endif
     File1Handle = mls_io_gen_openF('swopen', .TRUE., status, &
        & record_length, DFACC_READ, FileName=File1, &
-       & hdfVersion=the_hdfVersion, debugOption=.false. )
+       & hdfVersion=the_hdfVersion1, debugOption=.false. )
     if ( status /= 0 ) &
       call MLSMessage ( MLSMSG_Error, ModuleName, &
        & "Unable to open L2gp file: " // trim(File1) // ' for cp-ing')
@@ -2159,14 +2165,16 @@ contains ! =====     Public Procedures     =============================
     if ( DEEBUG ) then
       print *, 'About to open file2: ', trim(file2)
       print *, 'file_access: ', file_access
-      print *, 'hdfVersion: ', the_hdfVersion
+      print *, 'hdfVersion: ', the_hdfVersion2
     endif
     myandGlAttributes = (file_access == DFACC_CREATE)
     if ( present(andGlAttributes) ) &
       & myandGlAttributes = myandGlAttributes .and. andGlAttributes
+    myandGlAttributes = myandGlAttributes .and. &
+      & (the_hdfVersion1 == HDFVERSION_5) .and. (the_hdfVersion2 == HDFVERSION_5)
     File2Handle = mls_io_gen_openF('swopen', .TRUE., status, &
        & record_length, file_access, FileName=File2, &
-       & hdfVersion=the_hdfVersion, debugOption=.false. )
+       & hdfVersion=the_hdfVersion2, debugOption=.false. )
     if ( status /= 0 ) &
       call MLSMessage ( MLSMSG_Error, ModuleName, &
        & "Unable to open L2gp file: " // trim(File2) // ' for cping')
@@ -2189,10 +2197,11 @@ contains ! =====     Public Procedures     =============================
       endif
     endif
     call cpL2GPData_fileID(File1Handle, File2Handle, &
-      & mySwathList, hdfVersion=the_hdfVersion, notUnlimited=notUnlimited)
+      & mySwathList, the_hdfVersion1, the_hdfVersion2, &
+      & notUnlimited=notUnlimited)
     if ( DEEBUG ) print *, 'About to close File1Handle: ', File1Handle
     status = mls_io_gen_closeF('swclose', File1Handle, FileName=File1, &
-      & hdfVersion=the_hdfVersion, debugOption=.false.)
+      & hdfVersion=the_hdfVersion1, debugOption=.false.)
     if ( status /= 0 ) &
       call MLSMessage ( MLSMSG_Error, ModuleName, &
        & "Unable to close L2gp file: " // trim(File1) // ' after cping')
@@ -2200,7 +2209,7 @@ contains ! =====     Public Procedures     =============================
     ! status = mls_io_gen_closeF('swclose', File2Handle, FileName=File2, &
     !  & hdfVersion=the_hdfVersion, debugOption=.true.)
     status = mls_io_gen_closeF('swclose', File2Handle, &
-      & hdfVersion=the_hdfVersion, debugOption=.false.)
+      & hdfVersion=the_hdfVersion2, debugOption=.false.)
     if ( status /= 0 ) then
       print *, 'status returned from mls_io_gen_closeF: ', status
       print *, 'WRONGHDFVERSION: ', WRONGHDFVERSION
@@ -2620,6 +2629,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.96  2004/02/26 22:02:36  pwagner
+! Acts more gracefully if l2gp file lacks global attributes
+!
 ! Revision 2.95  2004/02/13 00:18:58  pwagner
 ! Added DumpL2GP_attributes_hdf5 which doesnt work yet
 !
