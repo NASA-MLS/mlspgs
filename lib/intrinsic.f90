@@ -101,7 +101,8 @@ module INTRINSIC
   integer, parameter :: L_KM            = l_khz + 1
   integer, parameter :: L_LINEWIDTH     = l_km + 1
   integer, parameter :: L_LOGP          = l_linewidth + 1
-  integer, parameter :: L_LOSVEL        = l_logp + 1
+  integer, parameter :: L_LOSTRANSFUNC  = l_logp + 1
+  integer, parameter :: L_LOSVEL        = l_lostransfunc + 1
   integer, parameter :: L_LSBFREQUENCY  = l_losvel + 1
   integer, parameter :: L_M             = l_lsbfrequency + 1
   integer, parameter :: L_MAF           = l_m + 1
@@ -390,6 +391,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.31  2001/07/13 18:20:18  dwu
+! add quantity losTransFunc
+!
 ! Revision 2.30  2001/07/10 23:46:35  jonathan
 ! added l_icedensity, paul/jonathan
 !
