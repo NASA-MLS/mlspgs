@@ -160,9 +160,9 @@ CONTAINS
       CHARACTER (LEN=10) :: l2Ver, l3Ver, label
       CHARACTER (LEN=480) :: msr
       CHARACTER (LEN=CCSDSB_LEN) :: timeB(maxWindow)
-      CHARACTER (LEN=FileNameLen) :: mcfName
+      CHARACTER (LEN=FileNameLen) :: match, mcfName
 
-      INTEGER :: err, i, ig, iq, iGlob, iLab, iMap, iOut, iVer, indx, j, match
+      INTEGER :: err, i, ig, iq, iGlob, iLab, iMap, iOut, iVer, indx, j
       INTEGER :: mlspcf_mcf, numProds, returnStatus
 
       REAL(r8) :: start, end, delta
@@ -361,7 +361,7 @@ CONTAINS
 
        CALL SearchPCFNames(mcfName, mlspcf_mcf_l3dm_start, &
                            mlspcf_mcf_l3dm_end, mlspcf_mcf, match)
-       IF (match == 0) THEN
+       IF (TRIM(match) == 'NONE') THEN
           msr = 'No match in the PCF for file ' // mcfName
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
        ENDIF
@@ -412,6 +412,9 @@ END MODULE L3CF
 !==============
 
 ! $Log$
+! Revision 1.3  2000/11/15 21:05:55  nakamura
+! Moved parameter GridNameLen to module L3DMData; changed name of mlspcf_mcf start & end numbers.
+!
 ! Revision 1.2  2000/10/24 19:18:03  nakamura
 ! Removed temporary subroutine ReadParseMLSCF; added PCF number for MCF to L3CFProd_T.
 !
