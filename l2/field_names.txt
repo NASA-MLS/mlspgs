@@ -18,8 +18,14 @@ a
 absorption
 additional
 adopt
+allForwardModels
+allHGrids
 allLinesForRadiometer
 allLinesInCatalog
+allQuantityTemplates
+allVectors
+allVectorTemplates
+allVGrids
 allowMissing
 antennaPatterns
 apriori
@@ -355,6 +361,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.126  2004/05/29 02:47:57  vsnyder
+# Add some fields to the dump command
+#
 # Revision 2.125  2004/05/22 02:29:02  vsnyder
 # Add fields for PFAData
 #
