@@ -4,7 +4,6 @@ module Comp_Path_Entities_M
   use ELLIPSE_M, only: ELLIPSE
   use PATH_ENTITIES_M, only: PATH_INDEX, PATH_VECTOR, PATH_VECTOR_2D
   use VERT_TO_PATH_M, only: VERT_TO_PATH
-  use ManipulateVectorQuantities, only: FINDCLOSESTINSTANCES
   use VectorsModule, only: VectorValue_T
 
   implicit NONE
@@ -21,7 +20,7 @@ module Comp_Path_Entities_M
 contains
 !---------------------------------------------------------------------
 
-  subroutine Comp_Path_Entities ( radiance, temperature, &
+  subroutine Comp_Path_Entities ( radiance, temperature, closestInstances, &
     &        N_lvls, No_t, Gl_count, Ndx_path, Z_glgrid, &
     &        T_glgrid, H_glgrid, Dhdz_glgrid, Tan_hts, No_tan_hts, Z_path, &
     &        H_path, T_path, Phi_path, Dhdz_path, Eta_phi, No_phi_t, &
@@ -36,6 +35,7 @@ contains
   !  ---------------------------
   type (VectorValue_T), intent(in) :: radiance
   type (VectorValue_T), intent(in) :: temperature
+  integer, dimension(:), intent(in) :: closestInstances
 
   integer, intent(in) :: no_t, no_phi_t, N_lvls, gl_count, PhiWindow, NoMAFs
   !
@@ -86,10 +86,8 @@ contains
     Return
   end if
 
-  call FindClosestInstances( temperature, radiance, closestInstance )
-
   do maf = 1, NoMAFs
-    l = closestInstance(maf)
+    l = closestInstances(maf)
     lmin = max(1,l-phiWindow/2)
     lmax = min(no_phi_t,l+phiWindow/2)
     WinSize = lmax-lmin+1
@@ -141,6 +139,9 @@ end subroutine Comp_Path_Entities
 
 end module Comp_Path_Entities_M
 ! $Log$
+! Revision 1.28  2001/04/23 21:43:28  zvi
+! Introducing no_phi_t etc.
+!
 ! Revision 1.27  2001/04/19 22:09:18  livesey
 ! Modified to deal with no mafs /= T%noInstances
 !
