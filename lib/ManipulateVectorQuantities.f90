@@ -11,7 +11,8 @@ module ManipulateVectorQuantities ! Various routines for manipulating vectors
   use VectorsModule, only: VectorValue_T
   use Dump_0, only: Dump
   use Output_m, only: Output
-  use Intrinsic, only: L_PHITAN
+  use Intrinsic, only: L_PHITAN, L_CHANNEL, L_FREQUENCY, L_INTERMEDIATEFREQUENCY, &
+    & L_NONE
 
   implicit none
 
@@ -25,7 +26,7 @@ module ManipulateVectorQuantities ! Various routines for manipulating vectors
   private
 
   public :: FindClosestInstances, FindOneClosestInstance, &
-    & FindInstanceWindow, DoHGridsMatch, DoVGridsMatch
+    & FindInstanceWindow, DoHGridsMatch, DoVGridsMatch, DoFGridsMatch
 
 contains
 
@@ -196,7 +197,7 @@ contains
 
   ! --------------------------------------- DoVGridsMatch --------------
   logical function DoVGridsMatch ( a, b )
-    ! Returns true if quantities have same hGrid information
+    ! Returns true if quantities have same vGrid information
     type (VectorValue_T), intent(in) :: A ! First quantity
     type (VectorValue_T), intent(in) :: B ! Second quantity
 
@@ -222,9 +223,41 @@ contains
     DoVGridsMatch = .true.
   end function DoVGridsMatch
 
+  ! --------------------------------------- DoVGridsMatch --------------
+  logical function DoFGridsMatch ( a, b )
+    ! Returns true if the quantities have the same fGrid information
+    type ( VectorValue_T ), intent(in) :: A ! First quantity
+    type ( VectorValue_T ), intent(in) :: B ! Second quantity
+
+    ! Local paramterts
+    real (r8), parameter :: FTOL = 1.0e-3 ! 1 kHz
+
+    ! Executable code
+    DoFGridsMatch = .false.
+    if ( a%template%frequencyCoordinate /= b%template%frequencyCoordinate ) return
+    if ( a%template%noChans /= b%template%noChans ) return
+    select case ( a%template%frequencyCoordinate )
+    case ( l_none )
+    case ( l_channel )
+      if ( a%template%signal /= b%template%signal ) return
+      if ( a%template%sideband /= b%template%sideband ) return
+    case default
+      if ( .not. associated ( a%template%frequencies ) .or. &
+        & .not. associated ( b%template%frequencies ) ) return
+      if ( any ( shape(a%template%frequencies) /= &
+        & shape(b%template%frequencies) ) ) return
+      if ( any ( abs ( a%template%frequencies - &
+        & b%template%frequencies ) > fTol ) ) return
+    end select
+    DoFGridsMatch = .true.
+  end function DoFGridsMatch
+
 end module ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.17  2002/08/23 01:24:18  livesey
+! Added DoFGridsMatch
+!
 ! Revision 2.16  2002/07/25 08:43:19  mjf
 ! Initialised DoHGridsMatch to .false. at start of function.
 !
