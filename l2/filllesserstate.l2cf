@@ -30,10 +30,11 @@ BEGIN Fill
 ;   explicitValues= 0.98652
     Fill, quantity=!b.hcl_35_ratio,       method=explicit, explicitValues= 0.75519
     Fill, quantity=!b.hcl_37_ratio,       method=explicit, explicitValues= 0.24466
+    Fill, quantity=!b.s_32_o2_ratio,      method=explicit, explicitValues= 0.94548
 
     ;; Now the more minor stuff
     Fill, quantity = !b.earthReflectivity, $
-      method = explicit, explicitValues = 0.05 ; CHECK THIS NUMBER !!!!!
+      method = explicit, explicitValues = 0.05
     Fill, quantity = !b.orbitInclination, $
       method = explicit, explicitValues = 98.145 degrees
     Fill, quantity = !b.spaceRadiance, $
@@ -59,4 +60,19 @@ BEGIN Fill
       explicitValues = 0.805 vmr , /spread
 
 END Fill
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
