@@ -10,7 +10,7 @@ USE MLSCommon, only: NameLen
 USE MLSFiles, only: split_path_name
 USE MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
 USE MLSPCF2
-USE MLSStrings 
+USE MLSStrings, only: Reverse, LowerCase, GetStringHashElement
 USE output_m, only: output
 USE PCFHdr, only: WritePCF2Hdr
 USE SDPToolkit
@@ -57,14 +57,14 @@ CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
 
 	! The correspondence between MCF and l2gp files is determined by
 	! the value of        MCFFORL2GPOPTION
-	! Either
+	! One of three possible options:
 	!                          (1)
 	! The PCF numbers for the mcf corresponding to each
 	! of the l2gp files begin with mlspcf_mcf_l2gp_start
 	! and increase 1 by 1 with each succeeding species.
 	! Then, after the last single-species l2gp, the very next pcf number
 	! is for the one called 'other' ML2OTH.001.MCF
-	! This hateful inflexibility leads to possibility
+	! This inconvenient inflexibility is relieved in option (2) or (3)
 	
 	!                          (2)
 	! Each l2gp file name, stripped of their paths, fits the pattern like
@@ -90,6 +90,9 @@ CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
 	  ! the following is a comma-delimited list of possible species
 	  ! names that may be such keys
 
+   ! Note that the text matching in options (2) and (3)
+   ! will not be case sensitive unless you set MCFCASESENSITIVE
+
      CHARACTER (LEN=FileNameLen) :: spec_keys
 
 	  ! the following is a comma-delimited list of possible 	
@@ -106,6 +109,8 @@ CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
 	INTEGER, PARAMETER :: INVENTORYMETADATA=2
 
     integer, parameter :: MCFFORL2GPOPTION=3		! 1, 2 or 3
+    
+    logical, parameter :: MCFCASESENSITIVE=.FALSE.
 
 CONTAINS
 
@@ -1093,9 +1098,12 @@ END SUBROUTINE measured_parameter
 !	call split_path_name(sd_full, sd_path, sd_name)
 	call split_path_name(mcf_full, mcf_path, mcf_name)
 	
-	sd_full = LowerCase(file_base)
-	mcf_name = LowerCase(mcf_name)
-	
+! If text matching not case sensitive, shift to lower case
+   if(.NOT. MCFCASESENSITIVE) then
+   	sd_full = LowerCase(file_base)
+	   mcf_name = LowerCase(mcf_name)
+   endif
+   
    if(DEBUG) then
       call output('mcf_full: ', advance='no')
       call output(trim(mcf_full), advance='yes')
@@ -1176,8 +1184,10 @@ END SUBROUTINE measured_parameter
 			
 			! This gives 'o2h*'
 			call split_path_name(Reverse(mcf_name), mcf_path, mcf_pattern, '.')
-			mcf_pattern = LowerCase(mcf_pattern)
-			
+         if(.NOT. MCFCASESENSITIVE) then
+		   	mcf_pattern = LowerCase(mcf_pattern)
+         endif
+
 			! So reverse it to make h2o
 			mcf_pattern = adjustl(Reverse(mcf_pattern))
 			
@@ -1537,6 +1547,9 @@ END SUBROUTINE measured_parameter
 
 END MODULE WriteMetadata 
 ! $Log$
+! Revision 2.10  2001/04/16 17:43:35  pwagner
+! mcf text matching case sensitive if MCFCASESENSITIVE
+!
 ! Revision 2.9  2001/04/13 23:47:26  pwagner
 ! Writes multiple measuredcontainers properly
 !
