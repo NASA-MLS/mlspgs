@@ -103,27 +103,27 @@ CONTAINS
 
 ! Retrieve values set in PCF & assign them to variables.
 
-      returnStatus = pgs_pc_getConfigData(mlspcf_l3cf_InputVersion, &
+      returnStatus = pgs_pc_getConfigData(mlspcf_l3_param_InputVersion, &
                                           l3pcf%inputVersion)
       IF (returnStatus /= PGS_S_SUCCESS) THEN
          msr = UDRP_ERR // 'InputVersion'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      returnStatus = pgs_pc_getConfigData(mlspcf_l3cf_OutputVersion, &
+      returnStatus = pgs_pc_getConfigData(mlspcf_l3_param_OutputVersion, &
                                           l3pcf%outputVersion)
       IF (returnStatus /= PGS_S_SUCCESS) THEN
          msr = UDRP_ERR // 'OutputVersion'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      returnStatus = pgs_pc_getConfigData(mlspcf_l3cf_Cycle, l3pcf%cycle)
+      returnStatus = pgs_pc_getConfigData(mlspcf_l3_param_Cycle, l3pcf%cycle)
       IF (returnStatus /= PGS_S_SUCCESS) THEN
          msr = UDRP_ERR // 'Cycle'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      returnStatus = pgs_pc_getConfigData(mlspcf_l3cf_L2DayRange, range)
+      returnStatus = pgs_pc_getConfigData(mlspcf_l3_param_L2DayRange, range)
       IF (returnStatus /= PGS_S_SUCCESS) THEN
          msr = UDRP_ERR // 'L2DayRange'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -132,7 +132,7 @@ CONTAINS
       l3pcf%l2StartDay = range(1:8)
       l3pcf%l2EndDay = range(10:17)
 
-      returnStatus = pgs_pc_getConfigData(mlspcf_l3cf_MinDays, aDays)
+      returnStatus = pgs_pc_getConfigData(mlspcf_l3_param_MinDays, aDays)
       IF (returnStatus /= PGS_S_SUCCESS) THEN
          msr = UDRP_ERR // 'MinDays'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -140,7 +140,7 @@ CONTAINS
 
       READ(aDays, '(I2)') l3pcf%minDays
 
-      returnStatus = pgs_pc_getConfigData(mlspcf_l3cf_RangDays, range)
+      returnStatus = pgs_pc_getConfigData(mlspcf_l3_param_RangDays, range)
       IF (returnStatus /= PGS_S_SUCCESS) THEN
          msr = UDRP_ERR // 'RangDays'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -323,6 +323,9 @@ END MODULE OpenInit
 !==================
 
 ! $Log$
+! Revision 1.2  2000/10/24 19:31:48  nakamura
+! Added logGranID to PCFData_T; replaced ReadParseMLSCF stub with calls to actual parser.
+!
 ! Revision 1.1  2000/10/17 20:26:16  nakamura
 ! Module for the Open/Init task.
 !
