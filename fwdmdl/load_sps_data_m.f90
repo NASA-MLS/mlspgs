@@ -4,7 +4,9 @@
 module LOAD_SPS_DATA_M
   use MLSCommon, only: R8, RP, IP
   use Units, only: Deg2Rad
-  use Intrinsic, only: L_VMR, L_FREQUENCY, L_NONE
+  use ForwardModelConfig, only: FORWARDMODELCONFIG_T
+  use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
+  USE INTRINSIC, ONLY: L_VMR, L_FREQUENCY, L_NONE, L_PHITAN
   use VectorsModule, only: Vector_T, VectorValue_T, GetVectorQuantityByType, &
                         &  M_FullDerivatives
   use Molecules, only: spec_tags, L_EXTINCTION
@@ -12,21 +14,30 @@ module LOAD_SPS_DATA_M
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
 
   use SpectroscopyCatalog_m, only: CATALOG_T
-  use ABS_CS_N2_CONT_M, only: ABS_CS_N2_CONT
+  USE manipulatevectorquantities, only: findinstancewindow
 
   implicit none
 
   Private
-  Public :: load_sps_data
+  PUBLIC :: load_sps_data, destroygrids_t
 
   type, public :: Grids_T             ! Fit all Gridding categories
-    integer,  pointer :: no_f(:)      ! No. of entries in frq. grid per sps
-    integer,  pointer :: no_z(:)      ! No. of entries in zeta grid per sps
-    integer,  pointer :: no_p(:)      ! No. of entries in phi  grid per sps
-    real(r8), pointer :: frq_basis(:) ! frq  grid entries for all
-    real(rp), pointer :: zet_basis(:) ! zeta grid entries for all
-    real(rp), pointer :: phi_basis(:) ! phi  grid entries for all
-    Logical,  pointer :: deriv_flags(:) ! derivatives flags
+    integer,  pointer :: no_f(:) => null()! No. of entries in frq. grid per sps
+    integer,  pointer :: no_z(:) => null()! No. of entries in zeta grid per sps
+    integer,  pointer :: no_p(:) => null()! No. of entries in phi  grid per sps
+    INTEGER,  pointer :: windowstart(:) => null()! horizontal starting index
+!                                                  from l2gp
+    INTEGER,  pointer :: windowfinish(:) => null()! horizontal ending index
+!                                                   from l2gp
+    LOGICAL,  pointer :: lin_log(:) => null()   ! type of representation basis
+    real(r8), pointer :: frq_basis(:) => null() ! frq grid entries for all
+!                                                 molecules
+    real(rp), pointer :: zet_basis(:) => null() ! zeta grid entries for all
+!                                                 molecules
+    real(rp), pointer :: phi_basis(:) => null() ! phi  grid entries for all
+!                                                 molecules
+    REAL(rp), pointer :: values(:) => null() ! species values (ie vmr) in lvf
+    LOGICAL,  pointer :: deriv_flags(:) => null() ! do derivatives flags in lvf
   end type Grids_T
 
 !---------------------------- RCS Ident Info -------------------------------
@@ -38,14 +49,14 @@ module LOAD_SPS_DATA_M
 contains
 !-------------------------------------------------------------------
 
- subroutine load_sps_data(fwdModelIn, fwdModelExtra, molecules, radiometer, &
-       &    mol_cat_index, p_len, f_len, h2o_ind, ext_ind, lin_log, &
-       &    sps_values, Grids_f, Grids_dw, Grids_dn, Grids_dv, temp, &
-       &    MyCatalog,skip_eta_frq)
+ SUBROUTINE load_sps_data(FwdModelConf, fwdModelIn, fwdModelExtra, FmStat, &
+       &    radiometer, mol_cat_index, p_len, f_len, h2o_ind, ext_ind, &
+       &    Grids_f, Grids_dw, Grids_dn, Grids_dv, temp, MyCatalog)
 
+    type(forwardModelConfig_T), intent(in) :: fwdModelConf
     type(vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
+    type(forwardModelStatus_t), intent(in) :: FmStat ! Reverse comm. stuff
 
-    integer, intent(in)  :: MOLECULES(:)
     integer, intent(in)  :: RADIOMETER
     integer, intent(in)  :: MOL_CAT_INDEX(:)
 
@@ -54,18 +65,15 @@ contains
     integer, intent(out) :: H2O_IND
     integer, intent(out) :: EXT_IND
 
-    logical, intent(out) :: SKIP_ETA_FRQ(:)
+    type (Grids_T), intent(out) :: Grids_f   ! All the coordinates
+    type (Grids_T), intent(out) :: Grids_dw  ! All the spectroscopy(W) 
+!                                              coordinates
+    type (Grids_T), intent(out) :: Grids_dn  ! All the spectroscopy(N) 
+!                                              coordinates
+    type (Grids_T), intent(out) :: Grids_dv  ! All the spectroscopy(V) 
+!                                              coordinates
 
-    type (Grids_T) :: Grids_f   ! All the coordinates
-    type (Grids_T) :: Grids_dw  ! All the spectroscopy(W) coordinates
-    type (Grids_T) :: Grids_dn  ! All the spectroscopy(N) coordinates
-    type (Grids_T) :: Grids_dv  ! All the spectroscopy(V) coordinates
-
-    logical, pointer :: lin_log(:)
-
-    real(rp), pointer :: sps_values(:)
-
-    type (VectorValue_T), pointer :: temp
+    TYPE (VectorValue_T), POINTER :: temp
     type (CATALOG_T), dimension(:), intent(in) :: MyCatalog
 
     character(LEN=3), parameter :: WNV='+++'
@@ -81,11 +89,11 @@ contains
 
     integer :: accum_z_dw,accum_p_dw,accum_z_dn,accum_p_dn,accum_z_dv, &
            &   accum_p_dv,accum_f_dw,accum_f_dn,accum_f_dv
+    integer :: MAF                      ! MAF under consideration
 
     type (VectorValue_T), pointer :: F             ! An arbitrary species
-
+    type (VectorValue_T), pointer :: PHITAN ! Tangent geodAngle component of
     Logical :: mask
-    Logical, allocatable :: deriv_flag(:)
 
     Integer :: mp, mz, ii, jj, kk
     Real(r8) :: Tmp, Frq, P, w, v
@@ -94,30 +102,30 @@ contains
 
     no_mol = size( mol_cat_index )
 
-    allocate ( Grids_f%no_z(no_mol), stat=j )
-    if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate//'Grids_f%no_z' )
-    allocate ( Grids_f%no_p(no_mol), stat=j )
-    if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate//'Grids_f%no_p' )
-    allocate ( Grids_f%no_f(no_mol), stat=j )
-    if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate//'Grids_f%no_f' )
+    CALL allocate_test ( Grids_f%no_z,no_mol,'Grids_f%no_z',modulename )
+    CALL allocate_test ( Grids_f%no_p,no_mol,'Grids_f%no_p',modulename )
+    CALL allocate_test ( Grids_f%no_f,no_mol,'Grids_f%no_f',modulename )
+    CALL allocate_test ( Grids_f%windowstart,no_mol,'Grids_f%windowstart', &
+    & modulename )
+    CALL allocate_test ( Grids_f%windowfinish,no_mol,'Grids_f%windowfinish',&
+    & modulename )
+    call Allocate_test ( grids_f%lin_log, no_mol, 'lin_log', ModuleName )
 
     Grids_f%no_z = 0
     Grids_f%no_p = 0
     Grids_f%no_f = 0
 
-    call Allocate_test ( lin_log, no_mol, 'lin_log', ModuleName )
 
     f_len = 0
     p_len = 0
     h2o_ind = 0
     ext_ind = 0
-    skip_eta_frq = .FALSE.
+    phitan => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_phitan, &
+      & instrumentModule=fwdModelConf%signals(1)%instrumentModule )
 
     do ii = 1, no_mol
-      kk = molecules(mol_cat_index(ii))
+      kk = fwdmodelconf%molecules(mol_cat_index(ii))
       if(spec_tags(kk) == 18003) h2o_ind = ii
       if ( kk == l_extinction ) then
         ext_ind = ii
@@ -128,25 +136,26 @@ contains
           & quantityType=l_vmr, molecule=kk)
       endif
       kz = f%template%noSurfs
-      kp = f%template%noInstances
       if ( f%template%frequencyCoordinate == l_none ) then
         kf = 1
-        skip_eta_frq(ii) = .TRUE.
       else
         kf = f%template%noChans
       endif
+      CALL findinstancewindow(f,phitan,fmStat%maf,fwdModelConf%phiWindow, &
+      & grids_f%windowStart(ii), grids_f%windowFinish(ii))
+      kp = grids_f%windowFinish(ii) - grids_f%windowStart(ii) + 1
       Grids_f%no_f(ii) = kf
       Grids_f%no_z(ii) = kz
       Grids_f%no_p(ii) = kp
       p_len = p_len + kz * kp
       f_len = f_len + kz * kp * kf
-    end do
+      if (f%template%logBasis) then
+        grids_f%lin_log(ii) = .TRUE.
+      else
+        grids_f%lin_log(ii) = .FALSE.
+      endif
+   end do
 
-    call Allocate_test ( sps_values, f_len, 'sps_values', ModuleName )
-
-    allocate ( Grids_f%deriv_flags(f_len), stat=j )
-    if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate//'Grids_f%deriv_flags' )
 !
     n_f_zet = SUM(Grids_f%no_z)
     n_f_phi = SUM(Grids_f%no_p)
@@ -154,15 +163,16 @@ contains
 !
 ! Allocate space for the zeta, phi & freq. basis componenets
 !
-    allocate ( Grids_f%zet_basis(n_f_zet), stat=j )
-    if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate//'Grids_f%zet_basis' )
-    allocate ( Grids_f%phi_basis(n_f_phi), stat=j )
-    if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate//'Grids_f%phi_basis' )
-    allocate ( Grids_f%frq_basis(n_f_frq), stat=j )
-    if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate//'Grids_f%frq_basis' )
+    CALL allocate_test ( Grids_f%zet_basis,n_f_zet,'Grids_f%zet_basis', &
+    & ModuleName)
+    CALL allocate_test ( Grids_f%phi_basis,n_f_phi,'Grids_f%phi_basis', &
+    & ModuleName)
+    CALL allocate_test ( Grids_f%frq_basis,n_f_frq,'Grids_f%frq_basis', &
+    & ModuleName)
+    CALL allocate_test ( Grids_f%values,f_len,'Grids_f%values', &
+    & ModuleName)
+    CALL allocate_test ( Grids_f%deriv_flags,f_len,'Grids_f%deriv_flags', &
+    & ModuleName)
 !
     j = 1
     l = 1
@@ -170,7 +180,7 @@ contains
     f_len = 1
     do ii = 1, no_mol
       i = mol_cat_index(ii)
-      kk = molecules(i)
+      kk = fwdmodelconf%molecules(i)
       if ( kk == l_extinction ) then
         f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
           & quantityType=l_extinction, radiometer=radiometer )
@@ -178,61 +188,51 @@ contains
         f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
           & quantityType=l_vmr, molecule=kk )
       endif
-      kz = f%template%noSurfs
-      kp = f%template%noInstances
-      if ( f%template%frequencyCoordinate == l_none ) then
-        kf = 1
-      else
-        kf = f%template%noChans
-      endif
+      kz = grids_f%no_z(ii)
+      kp = grids_f%no_p(ii)
+      kf = grids_f%no_f(ii)
       n = l + kz
       m = s + kf
       k = j + kp
       Grids_f%zet_basis(l:n-1) = f%template%surfs(:,1)
       Grids_f%phi_basis(j:k-1) = f%template%phi(1,:) * Deg2Rad
-      Grids_f%frq_basis(s:m-1) = 0.0
-      if ( f%template%frequencyCoordinate /= l_none ) then
-        if ( f%template%frequencyCoordinate /= l_frequency ) &
-          & call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & "Inappropriate frequency coordinate for a species" )
-        if ( associated(f%template%frequencies ) ) then
-          Grids_f%frq_basis(s:m-1) = f%template%frequencies
-        else
-          call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & "Unable to deal with frequency coordinate for a species" )
-        endif
-      end if
+      IF (grids_f%no_f(ii) > 1) THEN
+        grids_f%frq_basis(s:m-1) = f%template%frequencies
+      ELSE
+        Grids_f%frq_basis(s:m-1) = 0.0
+      ENDIF
+!      if ( f%template%frequencyCoordinate /= l_none ) then
+!        if ( f%template%frequencyCoordinate /= l_frequency ) &
+!          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+!          & "Inappropriate frequency coordinate for a species" )
+!        if ( associated(f%template%frequencies ) ) then
+!          Grids_f%frq_basis(s:m-1) = f%template%frequencies
+!        else
+!          call MLSMessage ( MLSMSG_Error, ModuleName, &
+!            & "Unable to deal with frequency coordinate for a species" )
+!        endif
+!      end if
 !
 ! ** ZEBUG - Simulate f%values for EXTINCTION, using the N2 function
 !
-      if(ext_ind == ii) then
-        do mp = 1, kp
-          jj = 0
-          do mz = 1, kz
-            P = 10.0_rp**(-f%template%surfs(mz,1))
-            Tmp = temp%values(mz,mp)
-            do mf = 1, kf
-              jj = jj + 1
-              Frq = f%template%frequencies(mf)
-              v = 0.8061 * abs_cs_n2_cont(MyCatalog(i)%continuum,Tmp,P,Frq)
-              w = 1.0
-!             w = 1.0+0.1*(2*mf-3)
-              f%values(jj,mp) = w * v
-            end do
-          end do
-        end do
-      endif
 !
 ! ** END ZEBUG
 !
-      r = f_len + kz * kp * kf
-      sps_values(f_len:r-1)=RESHAPE(f%values(1:kz*kf,1:kp),(/kz*kf*kp/))
-      if (f%template%logBasis) then
-        lin_log(ii) = .TRUE.
-        sps_values(f_len:r-1) = LOG(max(1.0e-16_rp,sps_values(f_len:r-1)))
-      else
-        lin_log(ii) = .FALSE.
+      r = f_len + kf * kz * kp
+      grids_f%values(f_len:r-1)=RESHAPE(f%values(1:kf*kz, &
+      & grids_f%windowstart(ii):grids_f%windowfinish(ii)),(/kf*kz*kp/))
+      if (grids_f%lin_log(ii)) then
+        WHERE (grids_f%values(f_len:r-1) <= 1.0e-16_rp) &
+        & grids_f%values(f_len:r-1) = 1.0e-16_rp
+        grids_f%values(f_len:r-1) = LOG(grids_f%values(f_len:r-1))
       endif
+! set do derivative flags
+      IF (ASSOCIATED(f%mask)) THEN
+        grids_f%deriv_flags(f_len:r-1) = RESHAPE((iand(M_FullDerivatives, &
+        & ICHAR(f%mask)) == 0),(/kf*kz*kp/))
+      ELSE
+        grids_f%deriv_flags(f_len:r-1) = .true.
+      ENDIF
 !
       j = k
       l = n
@@ -243,47 +243,12 @@ contains
 !
     f_len = f_len - 1
 
-! *** Load the derivatives flags for each species according to L2CF
-!
-    allocate (deriv_flag(f_len), stat=j )
-    if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-                                  & MLSMSG_Allocate//'deriv_flag array' )
-    m = 0
-    do ii = 1, no_mol
-      kk = molecules(mol_cat_index(ii))
-      if ( kk == l_extinction ) then
-        f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-          & quantityType=l_extinction, radiometer=radiometer )
-      else
-        f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-          & quantityType=l_vmr, molecule=kk )
-      endif
-      kp = Grids_f%no_p(ii)
-      kz = Grids_f%no_z(ii)
-      kf = Grids_f%no_f(ii)
-      j = kp * kz * kf
-      deriv_flag(1:j) = .TRUE.     ! ** Initialize to ALL derivatives
-      IF(associated(f%mask)) THEN
-        j = 0
-        do mp = 1, kp
-          do mz = 1, kz
-            mask = (iand(M_FullDerivatives,ichar(f%mask(mz,mp))) == 0)
-            deriv_flag(j+1:j+kf) = mask
-            j = j + kf
-          end do
-        end do
-      ENDIF
-      Grids_f%deriv_flags(m+1:m+j) = deriv_flag(1:j)
-      m = m + j
-    end do
-
-    deallocate (deriv_flag, stat=j )
 
 !*** ZEBUG
 !   Print *,' f_len, m = ',f_len,m
 !   Print *,' Grids_f%deriv_flags(1...m):'
 !   Print 932,Grids_f%deriv_flags(1:m)
-932 format(37(1x,l1))
+!932 format(37(1x,l1))
 !   if (m > 0) call MLSMessage (MLSMSG_Error,ModuleName,'DEBUG Stop' )
 !*** END ZEBUG
 
@@ -341,7 +306,7 @@ contains
 !
     do ii = 1, no_mol
       m = 0
-      kk = molecules(mol_cat_index(ii))
+      kk = fwdmodelconf%molecules(mol_cat_index(ii))
       Spectag = spec_tags(kk)
       do
         m = m + 1
@@ -427,7 +392,7 @@ contains
 !
     do ii = 1, no_mol
       m = 0
-      kk = molecules(mol_cat_index(ii))
+      kk = fwdmodelconf%molecules(mol_cat_index(ii))
       Spectag = spec_tags(kk)
       do
         m = m + 1
@@ -496,9 +461,25 @@ contains
     end do
 !
  end subroutine load_sps_data
-
+  subroutine DestroyGrids_t( grids_x )
+  TYPE(Grids_T), intent(inout) :: Grids_x
+  CALL deallocate_test(grids_x%no_f,'grids_x%no_f',modulename)
+  CALL deallocate_test(grids_x%no_z,'grids_x%no_z',modulename)
+  CALL deallocate_test(grids_x%no_p,'grids_x%no_p',modulename)
+  CALL deallocate_test(grids_x%windowstart,'grids_x%windowstart',modulename)
+  CALL deallocate_test(grids_x%windowfinish,'grids_x%windowfinish',modulename)
+  CALL deallocate_test(grids_x%lin_log,'grids_x%lin_log',modulename)
+  CALL deallocate_test(grids_x%frq_basis,'grids_x%frq_basis',modulename)
+  CALL deallocate_test(grids_x%zet_basis,'grids_x%zet_basis',modulename)
+  CALL deallocate_test(grids_x%phi_basis,'grids_x%phi_basis',modulename)
+  CALL deallocate_test(grids_x%values,'grids_x%values',modulename)
+  CALL deallocate_test(grids_x%deriv_flags,'grids_x%deriv_flags',modulename)
+  end subroutine destroygrids_t
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.16  2002/06/04 10:28:03  zvi
+! Adding comments, fixing a bug with species ruuning index
+!
 ! Revision 2.15  2002/02/20 22:19:46  zvi
 ! Reversing the subset logic ..
 !
