@@ -263,6 +263,23 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_dimensionless) =         add_ident ( 'dimensionless' )
     lit_indices(l_dimless) =               add_ident ( 'dimless' )
     lit_indices(l_dl) =                    add_ident ( 'dl' )
+    ! Quantities to report on progress of DNWT.  See NWT_T in dnwt_module
+    lit_indices(l_dnwt_ajn) =               add_ident ('dnwt_ajn' )
+    lit_indices(l_dnwt_axmax) =             add_ident ('dnwt_axmax' )
+    lit_indices(l_dnwt_cait) =              add_ident ('dnwt_cait' )
+    lit_indices(l_dnwt_diag) =              add_ident ('dnwt_diag' )
+    lit_indices(l_dnwt_dxdx) =              add_ident ('dnwt_dxdx' )
+    lit_indices(l_dnwt_dxdxl) =             add_ident ('dnwt_dxdxl' )
+    lit_indices(l_dnwt_dxn) =               add_ident ('dnwt_dxn' )
+    lit_indices(l_dnwt_dxnl) =              add_ident ('dnwt_dxnl' )
+    lit_indices(l_dnwt_fnmin) =             add_ident ('dnwt_fnmin' )
+    lit_indices(l_dnwt_fnorm) =             add_ident ('dnwt_fnorm' )
+    lit_indices(l_dnwt_gdx) =               add_ident ('dnwt_gdx' )
+    lit_indices(l_dnwt_gfac) =              add_ident ('dnwt_gfac' )
+    lit_indices(l_dnwt_gradn) =             add_ident ('dnwt_gradn' )
+    lit_indices(l_dnwt_sq) =                add_ident ('dnwt_sq' )
+    lit_indices(l_dnwt_sqt) =               add_ident ('dnwt_sqt' )
+    ! End of quantities to report progress of DNWT
     lit_indices(l_dobsonunits) =           add_ident ( 'dobsonunits' )
     lit_indices(l_earthRefl) =             add_ident ( 'earthRefl' )
     lit_indices(l_elevOffset) =            add_ident ( 'elevOffset' )
@@ -283,6 +300,8 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_icedensity) =            add_ident ( 'IceDensity' )
     lit_indices(l_intermediatefrequency) = add_ident ( 'intermediatefrequency' )
     lit_indices(l_isotopeRatio) =          add_ident ( 'isotopeRatio' )
+    lit_indices(l_jacobian_cols) =         add_ident ( 'jacobian_cols' )
+    lit_indices(l_jacobian_rows) =         add_ident ( 'jacobian_rows' )
     lit_indices(l_k) =                     add_ident ( 'K' )
     lit_indices(l_khz) =                   add_ident ( 'KHz' )
     lit_indices(l_km) =                    add_ident ( 'km' )
@@ -421,6 +440,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.41  2001/10/03 18:32:44  vsnyder
+! OOPS, forgot some lit_indices(...) = add_ident(...)
+!
 ! Revision 2.40  2001/10/03 17:38:11  vsnyder
 ! OOPS, defined L_DNWT_SQ twice
 !
