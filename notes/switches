@@ -23,7 +23,7 @@ Switches (set by -S option in mlsl2's command line):
   fvec =>   'F' vector during Newton iteration
   geom =>   Show geometry of chunks/hGrids
   glo[n] => Global settings, info on l1b files [higher the n, more the info]
-  grid =>   Gridded data quantities
+  gridd =>  Gridded data quantities
   gvec =>   Gradient vector during Newton iteration
   hgrid =>  Information on HGrid construction (at least for regular)
   jac =>    Jacobian during retriever iterations
@@ -78,11 +78,18 @@ of it doesn't contain something you DON'T want to test for!).
 but beware: literally setting -Sscalars may also turn on an unwanted switch,
 "lars", causing mlsl2 to begin outputting all text in "Swedish Chef" mode
 BORK! BORK! BORK!
+(The above joke has fallen flat--
+it is deprecated and may be removed in a future revision)
 
 Let us clarify the requirement for adding new switches above:
 if an existing switch is 'abc' don't add a new switch that contains
 'abc' as a substring. Why? Because turning on your switch will
 automatically turn on the existing 'abc' switch, too.
+
+As of Oct 9 2003, we recommend separating switches with a comma rather
+than catenating them. Thus to turn on both 'abc' and 'def', either use
+-Sabc -Sdef or -S"abc,def". Among other good things, this prevents
+accidentally turning on an unwanted 'cde' switch.
 
 (Add any more that are relevant to mlsl2,
 or separate sections for mlsl1 or mlsl3)
@@ -93,6 +100,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.37  2003/10/09 21:03:40  vsnyder
+ Add the 'nodb' (no dump blocks) switch
+
  Revision 1.36  2003/06/30 22:56:16  cvuu
  Print mean, std dev for fullForwardModel timing
 
