@@ -155,7 +155,7 @@ contains
             &  tanh1_p(j), vp, polarized .and. catalog(ib)%polarized )
             betap(j) = betap(j) + ratio * vp
           end do
-          DeAllocate ( LineWidth )
+          deallocate ( LineWidth )
         end do
         do j = 1 , n_path
           k = path_inds(j)
@@ -333,6 +333,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.29  2003/05/05 23:00:25  livesey
+! Merged in feb03 newfwm branch
+!
 ! Revision 2.25.2.9  2003/03/24 21:50:44  jonathan
 ! remove unused 'pressure' in call to cloud_extinction
 !
