@@ -231,6 +231,12 @@ begin Fill
 
   ;; --------------------------------------- Bounds for species
 
+  Fill, quantity=lowBound.ptanGHz, method=explicit, explicitValues= 20, /spread
+  Fill, quantity=highBound.ptanGHz, method=explicit, explicitValues= -20, /spread
+
+  Fill, quantity=lowBound.ptanTHz, method=explicit, explicitValues= 20, /spread
+  Fill, quantity=highBound.ptanTHz, method=explicit, explicitValues= -20, /spread
+
   Fill, quantity=lowBound.temperature, method=explicit, explicitValues=50K, /spread
   Fill, quantity=highBound.temperature, method=explicit, explicitValues=550K, /spread
 
