@@ -70,6 +70,7 @@ module QuantityTemplates         ! Quantities within vectors
 
     ! This one indicates whether log or linear interpolation should be used
     logical :: logBasis                 ! If set use log
+    real(r8) :: minValue                ! Minimum value to consider if using log
 
     ! This information describes how much of the data is in the overlap
     ! regions if any.
@@ -740,6 +741,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.25  2002/08/28 20:42:11  livesey
+! Added InflateQuantityTemplateDatabase
+!
 ! Revision 2.24  2002/07/22 03:26:05  livesey
 ! Added checkIntegrity
 !
