@@ -64,7 +64,12 @@ libdir = $(CONFDIR)/lib/$(MLSCONFG)
 
 # All the paths to supply .mod and INCLUDE files used in compiling %.f90
 # Precede each path by "-I "
-INC_PATHS = $(EXTRA_PATHS) -p $(PGSINC) -p $(srclib) -p $S -p $(blaslib) \
+#INC_PATHS = $(EXTRA_PATHS) -p $(PGSINC) -p $(srclib) -p $S -p $(blaslib) \
+# -I$(PGSINC) -I$(srclib) -I$S -I$(blaslib)
+PATHS_PREFXD := $(shell ${REECHO} -d -prefixn=-I $(UNPREFXDPTHS)) \
+                $(shell ${REECHO} -d -prefix=-p $(UNPREFXDPTHS))
+INC_PATHS = $(EXTRA_PATHS) $(PATHS_PREFXD) \
+   -p $(PGSINC) -p $(srclib) -p $S -p $(blaslib) \
  -I$(PGSINC) -I$(srclib) -I$S -I$(blaslib)
 
 # Define some suffix rules
@@ -84,6 +89,9 @@ INC_PATHS = $(EXTRA_PATHS) -p $(PGSINC) -p $(srclib) -p $S -p $(blaslib) \
 	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
 
 # $Log$
+# Revision 1.13  2002/07/01 17:32:22  pwagner
+# No longer compiles some sources twice
+#
 # Revision 1.12  2002/06/21 00:16:44  pwagner
 # Enroute to ending cascading recompiles
 #
