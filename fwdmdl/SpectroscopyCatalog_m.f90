@@ -279,6 +279,7 @@ contains ! =====  Public Procedures  ===================================
   ! --------------------------------------  Destroy_Line_Database  -----
   subroutine Destroy_Line_Database
     integer :: Status                   ! From deallocate
+    if ( .not. associated(lines) ) return
     deallocate ( lines, stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
       & MLSMSG_DeAllocate // "Lines" )
@@ -287,6 +288,7 @@ contains ! =====  Public Procedures  ===================================
   ! ----------------------------------  Destroy_SpectCat_Database  -----
   subroutine Destroy_SpectCat_Database
     integer :: I, Status
+    if ( .not. associated(catalog) ) return
     do i = 1, size(catalog)
       call deallocate_test ( catalog(i)%lines, moduleName, "Catalog(i)%lines" )
     end do ! i
@@ -388,6 +390,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 1.7  2001/05/03 22:10:15  vsnyder
+! Add copyright notice, make databases SAVE
+!
 ! Revision 1.6  2001/04/26 02:36:52  vsnyder
 ! Moved *_indices declarations from init_tables_module to intrinsic
 !
