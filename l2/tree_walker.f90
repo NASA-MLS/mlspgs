@@ -10,6 +10,7 @@ module TREE_WALKER
   use Construct, only: MLSL2Construct, MLSL2DeConstruct
   use Dumper, only: Dump
   use Fill, only: MLSL2Fill
+  use FGrid, only: FGrid_T, DestroyFGridDatabase
   use FilterShapes_m, only: Destroy_Filter_Shapes_Database
   use ForwardModelConfig, only: ForwardModelConfig_T, DestroyFWMConfigDatabase
   use Global_Settings, only: Set_Global_Settings
@@ -74,6 +75,7 @@ contains ! ====     Public Procedures     ==============================
 
     integer ::                                  chunkNo                  ! Index of Chunks
     type (MLSChunk_T), dimension(:), pointer :: Chunks ! of data
+    type (FGrid_T), dimension(:), pointer ::     FGrids
     ! Forward model configurations:
     type (ForwardModelConfig_T), dimension(:), &
       & pointer ::                               ForwardModelConfigDatabase
@@ -270,12 +272,16 @@ subtrees:   do while ( j <= howmany )
     call DestroySpectrometerTypeDatabase ( SpectrometerTypes )
     call DestroySignalDatabase ( Signals )
     call destroyVGridDatabase ( vGrids )
+    call destroyFGridDatabase ( fGrids )
     error_flag = 0
     if ( toggle(gen) ) call trace_end ( 'WALK_TREE_TO_DO_MLS_L2' )
   end subroutine WALK_TREE_TO_DO_MLS_L2
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.66  2001/10/26 23:16:15  pwagner
+! Similar dump interfaces for l2gp, l2aux, Griddeddata databases
+!
 ! Revision 2.65  2001/10/12 23:14:22  pwagner
 ! Debugging when dumping diagnostics; may remove later
 !

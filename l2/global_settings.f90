@@ -4,13 +4,14 @@
 module GLOBAL_SETTINGS
 
   use EXPR_M, only: EXPR   
+  use FGrid, only: AddFGridToDatabase, CreateFGridFromMLSCFInfo, FGrid_T
   use ForwardModelConfig, only: AddForwardModelConfigToDatabase, &
     & ForwardModelConfig_T
   use ForwardModelSupport, only: ConstructForwardModelConfig, &
     & ForwardModelGlobalSetup
   use INIT_TABLES_MODULE, only: L_TRUE, P_ALLOW_CLIMATOLOGY_OVERLOADS, &
     & P_INPUT_VERSION_STRING, P_OUTPUT_VERSION_STRING, P_VERSION_COMMENT, &
-    & S_FORWARDMODEL, S_ForwardModelGlobal, S_TIME, S_VGRID, F_FILE, &
+    & S_FGRID, S_FORWARDMODEL, S_ForwardModelGlobal, S_TIME, S_VGRID, F_FILE, &
     & P_CYCLE, P_STARTTIME, P_ENDTIME, &
     & S_L1BRAD, S_L1BOA, P_INSTRUMENT
   use L1BData, only: l1bradSetup, l1boaSetup, ReadL1BData, L1BData_T, &
@@ -64,11 +65,12 @@ module GLOBAL_SETTINGS
 contains
 
   subroutine SET_GLOBAL_SETTINGS ( ROOT, ForwardModelConfigDatabase, &
-    & VGrids, l2gpDatabase, l2pcf, processingRange, l1bInfo )
+    & FGrids, VGrids, l2gpDatabase, l2pcf, processingRange, l1bInfo )
 
     integer, intent(in) :: ROOT    ! Index of N_CF node in abstract syntax tree
     type(ForwardModelConfig_T), dimension(:), pointer :: &
       & ForwardModelConfigDatabase
+    type ( fGrid_T ), pointer, dimension(:) :: FGrids
     type ( vGrid_T ), pointer, dimension(:) :: VGrids
     type ( l2gpData_T), dimension(:), pointer :: L2GPDATABASE
     type (TAI93_Range_T) :: processingRange ! Data processing range
@@ -184,6 +186,9 @@ contains
         case ( s_vgrid )
           call decorate ( son, AddVGridToDatabase ( vGrids, &
             & CreateVGridFromMLSCFInfo ( name, son, l2gpDatabase ) ) )
+        case ( s_fgrid )
+          call decorate ( son, AddFGridToDatabase ( fGrids, &
+            & CreateFGridFromMLSCFInfo ( name, son ) ) )
         case ( s_l1brad )
           call l1bradSetup ( son, l1bInfo, F_FILE, &
           & MAXNUML1BRADIDS, ILLEGALL1BRADID )
@@ -523,6 +528,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.46  2001/10/30 00:37:09  pwagner
+! Now can dump more l1b data
+!
 ! Revision 2.45  2001/10/26 23:18:35  pwagner
 ! Complies with l1b data dump
 !
