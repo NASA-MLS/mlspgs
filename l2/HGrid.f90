@@ -298,7 +298,6 @@ contains ! =====     Public Procedures     =============================
     use MLSCommon, only: RK => R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use TREE, only: NSONS, SUBTREE
-    use Output_m, only: OUTPUT
     use String_table, only: GET_STRING
     use Global_Settings, only: LEAPSECFILENAME
 
@@ -356,9 +355,7 @@ contains ! =====     Public Procedures     =============================
     hGrid%losAngle = 0.0_rk
     if ( date /= 0 ) then
       call get_string ( date, dateString, strip=.true. )
-      call output ( ' Date: ' // trim ( dateString ), advance='yes' )
       returnStatus = mls_utctotai ( trim(LeapSecFileName), trim(dateString), hGrid%time(1,1) )
-      call output ( hGrid%time(1,1), advance='yes' )
       if ( returnStatus /= 0 ) call announce_error( key, badTime )
       hGrid%time = hGrid%time(1,1)
     else
@@ -1440,6 +1437,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.60  2004/03/24 17:55:19  livesey
+! Just tidying up after myself
+!
 ! Revision 2.59  2004/03/24 01:30:16  livesey
 ! Bug fix in hGrid%time
 !
