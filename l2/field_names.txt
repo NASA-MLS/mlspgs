@@ -268,6 +268,7 @@ sgrid
 signal
 signals
 single
+singleMAF
 skipL1BCheck
 skipMask
 skipOverlaps
@@ -332,6 +333,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.119  2004/03/31 03:59:43  livesey
+# Added singleMAF option
+#
 # Revision 2.118  2004/03/24 01:02:43  livesey
 # Added date
 #
