@@ -1,0 +1,18 @@
+Switches:
+
+  A => AntennaPatterns
+  C => SpectroscopyCatalog
+  F => FilterShapes
+  O => Open_init
+  P => PointingGrids
+  S => MLSSignals
+  V => VGrids (in globalSettings)
+
+  fac => Factors of normal equations during retriever iterations
+  jac => Jacobian during retriever iterations
+  neq => Normal equations during retriever iterations
+  nwt => Action flag at each return from Newton solver
+  rad => Radiances in ForwardModelInterface
+  sca => Scalars of interest to the Newton method
+  spa => Sparsity structure of fac, jac, neq
+  tps => Test_Parse_Signals
