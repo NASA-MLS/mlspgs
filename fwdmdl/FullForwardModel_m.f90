@@ -364,19 +364,6 @@ contains ! ================================ FullForwardModel routine ======
     firstRadiance => GetVectorQuantityByType (fwdModelOut, quantityType=l_radiance, &
       & signal=firstSignal%index, sideband=firstSignal%sideband )
 
-    if ( fwdModelConf%signals(1)%sideband == 0 ) then
-      if (.not. associated (sidebandRatio) ) &
-        & call MLSMessage(MLSMSG_Error,ModuleName, &
-        & "No sideband ratio supplied")
-      sidebandStart = -1
-      sidebandStop = 1
-      sidebandStep = 2
-    else
-      sidebandStart = fwdModelConf%signals(1)%sideband
-      sidebandStop = sideBandStart
-      sidebandStep = 1
-    endif
-
     ! Start sorting out stuff from state vector ------------------------------
 
     ! Identify the appropriate state vector components, save vmrs for later
@@ -420,6 +407,20 @@ contains ! ================================ FullForwardModel routine ======
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
       & InvalidQuantity//'elevOffset' )
     ! There will be more to come here.
+
+    ! Think about sidebands
+    if ( fwdModelConf%signals(1)%sideband == 0 ) then
+      if (.not. associated (sidebandRatio) ) &
+        & call MLSMessage(MLSMSG_Error,ModuleName, &
+        & "No sideband ratio supplied")
+      sidebandStart = -1
+      sidebandStop = 1
+      sidebandStep = 2
+    else
+      sidebandStart = fwdModelConf%signals(1)%sideband
+      sidebandStop = sideBandStart
+      sidebandStep = 1
+    endif
 
     ! Sort out some important dimensions
     noSpecies = size ( fwdModelConf%molecules )
@@ -1807,6 +1808,10 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
  
 ! $Log$
+! Revision 2.5  2001/10/09 22:39:08  livesey
+! Allow for molecules with zero lines.  This may need attention
+! from Bill/Zvi later on.
+!
 ! Revision 2.4  2001/10/02 16:51:41  livesey
 ! Removed fmStat%finished and reordered loops in forward models
 !
