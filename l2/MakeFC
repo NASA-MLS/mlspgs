@@ -49,6 +49,12 @@ libcloud_sources=../cloudfwdm
 # where forward model objects and libfwdmdl.a are stored
 libcloud_objs=$(libcloud_sources)/$(MLSCONFG)
 
+# where sources (but not OBJS) used for hdf5 file versions are stored
+he5lib=../he5lib
+
+# where he5 objects and libhe5.a are stored
+he5lib_objs=$(he5lib)/$(MLSCONFG)
+
 # where the platforms directory is
 PLATFORMS = .
 
@@ -97,14 +103,19 @@ libmls_f90 := $(shell ${REECHO} $(libmls_sources)/*.f $(libmls_sources)/*.f90 $(
 libfwdmdl_f90 := $(shell ${REECHO} $(libfwdmdl_sources)/*.c $(libfwdmdl_sources)/*.f $(libfwdmdl_sources)/*.f90)
 libcloud_f90 := $(shell ${REECHO} $(libcloud_sources)/*.c $(libcloud_sources)/*.f $(libcloud_sources)/*.f90)
 blaslib_f := $(shell ${REECHO} $(blaslib)/*.c $(blaslib)/*.f $(blaslib)/*.f90)
+he5lib_f := $(shell ${REECHO} $(he5lib)/*.c $(he5lib)/*.f $(he5lib)/*.f90)
 
 
 depends_where:=$(libmls_sources) $(srclib) \
    $(libfwdmdl_sources) $(libcloud_sources)
-PROG_prereqs=$(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) \
+PROG_prereqs := $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) \
 	  $(libmls_objs)/libmls.a \
 	  $(libfwdmdl_objs)/libfwdmdl.a \
 	  $(libcloud_objs)/libcloud.a $(REECHO)
+
+ifdef HDFVERSIONS
+   PROG_prereqs := $(PROG_prereqs) $(he5lib_objs)/libhe5.a
+endif
 
 #ifdef BLAS
 #   LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
@@ -125,11 +136,11 @@ PROG_prereqs=$(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) \
 
 #Any sources to explicitly exclude from dependency list?
 #SnoopMLSL2 requires PVM
-ifdef PVM_ROOT
+#ifdef PVM_ROOT
    OMIT_SRCS := $(OMIT) 
-else
-   OMIT_SRCS := $(OMIT) SnoopMLSL2.f90
-endif
+#else
+#   OMIT_SRCS := $(OMIT) SnoopMLSL2.f90
+#endif
 
 PROG=mlsl2
 
@@ -197,6 +208,12 @@ $(libcloud_objs)/libcloud.a: $(libcloud_f90) $(libfwdmdl_f90) \
 	fi ; \
 	$(MAKE) -f $(MakeFName) libcloud.a -C $(libcloud_sources)
 
+$(he5lib_objs)/libhe5.a: $(libmls_objs)/libmls.a $(he5lib_f)
+	@if [ "$(NOHUNTING)" != "" ] ; then \
+	   rm -f $(he5lib_objs)/libhe5.a ; \
+	fi ; \
+	$(MAKE) -f $(MakeFName) libhe5.a -C $(he5lib)
+
 .PHONY: configure depends clean tar mostlyclean tarz targ mlsl2 ghostbuster
 
 tar:
@@ -259,6 +276,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.43  2002/01/29 00:46:47  pwagner
+# Builds he5lib when HDFVERSIONS defined
+#
 # Revision 2.42  2002/01/15 00:40:18  pwagner
 # Now uses user-settable OMIT and internal OMIT_SRCS and OMIT_PREFIXD variables
 #
