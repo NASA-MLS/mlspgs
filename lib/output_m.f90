@@ -59,27 +59,38 @@ contains
     return
   end function Advance_is_yes_or_no
 
-  subroutine BLANKS ( N_BLANKS, ADVANCE )
+  subroutine BLANKS ( N_BLANKS, FILLCHAR, ADVANCE )
   ! Output N_BLANKS blanks to PRUNIT.
+  ! (or optionally that many copies of fillChar)
     integer, intent(in) :: N_BLANKS
     character(len=*), intent(in), optional :: ADVANCE
+    character(len=1), intent(in), optional :: FILLCHAR  ! default is ' '
     character(len=3) :: ADV
-    character(len=*), parameter :: B = &
+    character(len=*), parameter :: BLANKSPACE = &
     '                                                                    '
+    character(len=len(BlankSpace)) :: b
     integer :: I    ! Blanks to write in next WRITE statement
     integer :: N    ! Blanks remaining to write
     character(len=3) :: MY_ADV
+    ! Executable
     my_adv = 'no'
     if ( present(advance) ) then; my_adv = advance; end if
     my_adv = Advance_is_yes_or_no(my_adv)
     n = max(n_blanks, 1)
+    if ( present(fillChar) ) then
+      do i=1, min(n, len(BlankSpace))
+        b(i:i) = fillChar
+      enddo
+    else
+      b = BLANKSPACE
+    endif
     adv = 'no'
     do
       i = min(n,len(b))
       n = n - i
       if ( n == 0 ) adv = my_adv
       call output ( b(:i), advance=adv )
-      if ( n == 0 ) exit
+      if ( n < 1 ) exit   ! was if n == 0, but this should be safer
     end do
     return
   end subroutine BLANKS
@@ -504,6 +515,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.30  2004/06/10 23:59:29  pwagner
+! blanks may take optional fillchar
+!
 ! Revision 2.29  2004/02/26 21:51:15  pwagner
 ! Added output_string--although it is almost useless
 !
