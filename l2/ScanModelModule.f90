@@ -19,8 +19,9 @@ MODULE ScanModelModule          ! Scan model and associated calculations
 
   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate, &
        MLSMSG_Error
-  USE VectorsModule, ONLY : Vector_T, VectorValue_T, GetVectorQuantityByType
-  USE Init_Tables_Module, ONLY: L_Temperature, L_RefGPH
+  USE VectorsModule, ONLY : Vector_T, VectorValue_T, GetVectorQuantityByType, &
+    &  ValidateVectorQuantity
+  USE Init_Tables_Module, ONLY: L_Zeta, L_Temperature, L_RefGPH
   USE ManipulateVectorQuantities, ONLY: FindClosestInstances
   USE MLSNumerics, ONLY : Hunt, InterpolateValues
   USE Intrinsic, ONLY: L_H2O, L_TEMPERATURE, L_VMR, L_PTAN, L_TNGTGEODALT, L_TNGTGEOCALT
@@ -131,6 +132,20 @@ CONTAINS ! --------------- Subroutines and functions --------------------------
     temp=>GetVectorQuantityByType(state, l_temperature)
     refGPH=>GetVectorQuantityByType(state, l_refGPH)
 
+    ! Check that we get the right kinds of quantities
+    if ( ( .not. ValidateVectorQuantity( temp,&
+      &            coherent=.true., &
+      &            stacked=.true., &
+      &            regular=.true., &
+      &            verticalCoordinate=(/l_Zeta/)) ) .or. &
+      &  ( .not. ValidateVectorQuantity( refGPH,&
+      &            coherent=.true., &
+      &            stacked=.true., &
+      &            regular=.true., &
+      &            verticalCoordinate=(/l_Zeta/)) ) ) &
+      & call MLSMessage(MLSMSG_Error,ModuleName,&
+        & 'Inappropriate temp/refGPH quantity' )
+
     ! Now allocate a result array
     IF (ASSOCIATED(gph)) CALL Deallocate_test(gph,"GPH in GetBasisGPH",ModuleName)
     CALL Allocate_Test(gph,temp%template%noSurfs,temp%template%noInstances,&
@@ -170,7 +185,7 @@ CONTAINS ! --------------- Subroutines and functions --------------------------
     ! basis point.
 
     ! To do this we get a gas constant for all the temperature basis points
-    logP= -LOG10(temp%template%surfs(:,1))
+    logP= temp%template%surfs(:,1)
 
     basisCutoff=-gasM1/(2*gasM2) ! Set a threshold value
     modifiedBasis=MAX(logP,basisCutoff) ! Either logP or this threshold
@@ -296,8 +311,30 @@ CONTAINS ! --------------- Subroutines and functions --------------------------
     ptan=> GetVectorQuantityByType(state, l_ptan, radiometer= &
          radiometer)
 
-    ! Note, we're making an assumption that ptan and geod/geocAlt conform
-    ! completely.
+    ! Check that we get the right kinds of quantities
+    if ( ( .not. ValidateVectorQuantity( temp,&
+      &            coherent=.true., &
+      &            stacked=.true., &
+      &            regular=.true., &
+      &            verticalCoordinate=(/l_Zeta/)) ) .or. &
+      &  ( .not. ValidateVectorQuantity( refGPH,&
+      &            coherent=.true., &
+      &            stacked=.true., &
+      &            regular=.true., &
+      &            verticalCoordinate=(/l_Zeta/)) ) .or. &
+      &  ( .not. ValidateVectorQuantity( h2o,&
+      &            coherent=.true., &
+      &            stacked=.true., &
+      &            regular=.true., &
+      &            verticalCoordinate=(/l_Zeta/)) ) ) &
+      & call MLSMessage(MLSMSG_Error,ModuleName, &
+      &   'Inappropriate temp/refGPH/h2o quantity' )
+
+    if ( ( .not. ValidateVectorQuantity( geodAlt, minorFrame=.true.) ) .or. &
+      &  ( .not. ValidateVectorQuantity( geocAlt, minorFrame=.true.) ) .or. &
+      &  ( .not. ValidateVectorQuantity( ptan,    minorFrame=.true.) ) ) &
+      & call MLSMessage(MLSMSG_Error,ModuleName, &
+      &   'Inapporpriate geodAlt/geocAlt/ptan quantity' )
 
     ! Allocate temporary arrays
     CALL Allocate_Test(artLower,ptan%template%noSurfs,"artLower",ModuleName)
@@ -355,13 +392,13 @@ CONTAINS ! --------------- Subroutines and functions --------------------------
           
           ! Note here an assumption that temp and h2o are coherent.
           CALL InterpolateValues( &
-               -LOG10(temp%template%surfs(:,1)), &
+               temp%template%surfs(:,1), &
                temp%values(:,closestTempProfiles(maf)), &
                ptan%values(:,maf), &
                pointingTemp,&
                "Linear")
           CALL InterpolateValues( &
-               -LOG10(h2o%template%surfs(:,1)), &
+               h2o%template%surfs(:,1), &
                h2o%values(:,closestH2OProfiles(maf)), &
                ptan%values(:,maf), &
                pointingH2O,&
@@ -388,10 +425,10 @@ CONTAINS ! --------------- Subroutines and functions --------------------------
           ! Now, we're effectively going to compare this with a hydrostatic
           ! calculation.
 
-          CALL Hunt(-LOG10(temp%template%surfs(:,1)), &
+          CALL Hunt(temp%template%surfs(:,1), &
                ptan%values(:,maf),lower)
-          basisSpacing= -LOG10(temp%template%surfs(lower,1)/ &
-               temp%template%surfs(lower+1,1))
+          basisSpacing= temp%template%surfs(lower+1,1)- &
+               temp%template%surfs(lower,1)
           deltaArt=art(closestTempProfiles(maf),lower+1)-&
                art(closestTempProfiles(maf),lower)
           artLower=art(closestTempProfiles(maf),lower)
@@ -400,7 +437,7 @@ CONTAINS ! --------------- Subroutines and functions --------------------------
              cCoeff=2*(geometricGeopotential-&
                   basisGPH(closestTempProfiles(maf),lower)) &
                   /basisSpacing
-             ptan%values(:,maf)=-LOG10(temp%template%surfs(lower,1))+ &
+             ptan%values(:,maf)=temp%template%surfs(lower,1)+ &
                   basisSpacing*cCoeff/ &
                   (artLower*SQRT(ABS(artLower**2+deltaArt*cCoeff)))
           ELSEWHERE
