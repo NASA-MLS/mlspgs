@@ -20,7 +20,7 @@ module FullCloudForwardModel
   use Hdf, only: DFACC_READ, DFACC_CREATE
   use HDFEOS, only: SWOPEN,     SWCLOSE
   use L2GPData, only: L2GPData_T, ReadL2GPData, WriteL2GPData
-  use MLSCommon,only: NameLen,    FileNameLen, r8
+  use MLSCommon,only: NameLen, FileNameLen, r8,  FINDFIRST
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSSignals_m, only: SIGNAL_T, ARESIGNALSSUPERSET
   use MatrixModule_0, only: M_Absent, M_BANDED, MATRIXELEMENT_T, M_BANDED,   &
@@ -28,7 +28,7 @@ module FullCloudForwardModel
   use MatrixModule_1, only: MATRIX_T, FINDBLOCK
   use ManipulateVectorQuantities, only: FindClosestInstances
   use MLSNumerics, only: InterpolateValues
-  use Molecules, only: L_H2O, L_O3
+  use Molecules, only: L_H2O, L_O3, spec_tags
   use Output_m, only: OUTPUT
   use PointingGrid_m, only: POINTINGGRIDS
   use SpectroscopyCatalog_m, only: CATALOG_T, LINE_T, LINES, CATALOG
@@ -152,6 +152,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     integer :: i                        ! Loop counter
     integer :: j                        ! Loop counter
     integer :: k                        ! Loop counter
+    integer :: IER                      ! Status flag from allocates
     integer :: ivmr
     integer :: mif
     integer :: MAF                      ! major frame counter
@@ -167,6 +168,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     integer :: SIDEBANDSTOP             ! For sideband loop
     integer :: THISSIDEBAND             ! Loop counter for sidebands
     integer :: SIGIND                   ! Signal index, loop counter
+    integer :: SPECTAG                  ! A single spectag
 
     integer :: iCloudHeight                          ! Index for Cloud Top Height
 
@@ -620,6 +622,17 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       
     ENDIF
 
+    ! Work out which spectroscopy we're going to need ------------------------
+    allocate ( My_Catalog(size(forwardModelConfig%molecules)), stat=ier )
+    if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, 'my_catalog' )
+
+    do j = 1, size(forwardModelConfig%molecules)
+      Spectag = spec_tags(forwardModelConfig%molecules(j))
+!      print*, Spectag
+      thisCatalogEntry => Catalog(FindFirst(catalog%spec_tag == spectag ) )
+      My_Catalog(j) = thisCatalogEntry
+    enddo
+
     !------------------------------------------
     ! Now call the full CloudForwardModel code
     !------------------------------------------
@@ -661,7 +674,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & forwardModelConfig%NUM_AZIMUTH_ANGLES,                               &
       & forwardModelConfig%NUM_AB_TERMS,                                     &
       & forwardModelConfig%NUM_SIZE_BINS,                                    &
-      & Slevl*1000._r8, noSgrid )
+      & Slevl*1000._r8, noSgrid,                                             &
+      & My_Catalog )                                                         
 
     if (prt_log) print*, 'Successfully done with Full Cloud Foward Model ! '
 
@@ -909,6 +923,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.83  2001/11/08 21:36:13  jonathan
+! add SpectroscopyCatalog
+!
 ! Revision 1.82  2001/11/07 23:47:52  dwu
 ! some minor changes
 !
