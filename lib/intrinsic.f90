@@ -10,16 +10,15 @@ module INTRINSIC
   use MOLECULES ! everything, in particular FIRST_MOLECULE, INIT_MOLECULES,
   !               and LAST_MOLECULE.  There is no "only" clause so as to
   !               make all of the literals, e.g. l_h2o, available here, too.
-  use SYMBOL_TABLE, only: ENTER_TERMINAL
-  use SYMBOL_TYPES, only: T_IDENTIFIER
 
   implicit NONE
   public
   private :: ENTER_TERMINAL, T_IDENTIFIER
 
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=256), private :: Id = &
+  character (len=*), private, parameter :: IdParm = &
        "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
 !---------------------------------------------------------------------------
@@ -31,6 +30,7 @@ module INTRINSIC
 ! A "field_type", "field_spec" or "dot" vertex may be decorated with the
 ! following flag:
   integer, parameter :: REQ_FLD = 1       ! Required field
+
 ! Data types that don't have enumerated literals:
   integer, parameter :: T_FIRST          = 1
   integer, parameter :: T_NUMERIC        = t_first
@@ -124,9 +124,27 @@ module INTRINSIC
   integer, parameter :: L_ZETA          = l_vmr + 1
   integer, parameter :: LAST_INTRINSIC_LIT = l_zeta
 
+  ! The following parameters are for building trees:
+  integer, parameter :: BEGIN = -1       ! Start of a tree
+  integer, parameter :: D = 1000000      ! Decoration
+  integer, parameter :: F = 1000         ! Field index
+  integer, parameter :: L = 2000         ! Lit index
+  integer, parameter :: N = 0            ! Tree index
+  integer, parameter :: NADP = n+d*(all_fields+no_dup+no_positional)
+  integer, parameter :: ND = n+d*no_dup
+  integer, parameter :: NDP = n+d*(no_dup+no_positional)
+  integer, parameter :: NP = n+d*no_positional
+  integer, parameter :: NR = n+d*req_fld
+  integer, parameter :: P = 3000         ! Parameter index
+  integer, parameter :: S = 4000         ! Spec index
+  integer, parameter :: T = 5000         ! Type index
+  integer, parameter :: Z = 6000         ! Section index
+
 contains ! =====     Public procedures     =============================
 ! -----------------------------------------------  INIT_INTRINSIC  -----
   subroutine INIT_INTRINSIC ( DATA_TYPE_INDICES, LIT_INDICES )
+    use TREE_TYPES, only: N_DT_DEF
+
     integer, intent(inout) :: DATA_TYPE_INDICES(:)
     integer, intent(inout) :: LIT_INDICES(:)
 
@@ -220,18 +238,120 @@ contains ! =====     Public procedures     =============================
     phyq_indices(phyq_frequency) =         add_ident ( 'frequency' )
     phyq_indices(phyq_zeta) =              add_ident ( 'zeta' )
 
-  contains
+  ! Definitions are represented by trees.  The notation in the comments
+  ! for the trees is < root first_son ... last_son >.  This is sometimes
+  ! called "Cambridge Polish Notation."  It was developed to represent
+  ! LISP by McCarthy et. al. at MIT (in Cambridge, MA).
 
-    integer function ADD_IDENT ( TEXT )
-      character(len=*), intent(in) :: TEXT
-      add_ident = enter_terminal ( text, t_identifier )
-    end function ADD_IDENT
+  ! Notice that in the argument for make_tree, the tree node id is at
+  ! the END of the subtree, while in Cambridge Polish Notation it is at
+  ! the BEGINNING of the subtree!
+
+  ! Put the definition trees into the tree space before the parser runs.
+  ! After the parsing is done, they're automatically "glued in" to the
+  ! "left" of the trees that represent the input.  The tree-walker
+  ! stumbles upon them in its normal course of operation, never really
+  ! realizing they're special (because by then they're not).
+
+  ! Start with the definitions of types. These are represented by trees of
+  ! the form  < n_dt_def t_type_name l_lit ... l_lit >
+
+  ! Start with the definitions of types. These are represented by trees of
+  ! the form  < n_dt_def t_type_name l_lit ... l_lit >
+
+    ! Define the intrinsic data types
+    call make_tree ( (/ &
+      begin, t+t_numeric, n+n_dt_def, &
+      begin, t+t_numeric_range, n+n_dt_def, &
+      begin, t+t_string, n+n_dt_def /) )
+    ! Define the enumerated types
+    call make_tree ( (/ &
+      begin, t+t_boolean, l+l_true, l+l_false, n+n_dt_def /) )
+
+  contains
+    ! ------------------------------------------------  MAKE_TREE  -----
+
+    subroutine MAKE_TREE ( IDS )
+    ! Build a tree specified by the "ids" array.  "begin" marks the
+    ! beginning of a tree.  A tree-node marks the end of the corresponding
+    ! tree.  Pseudo-terminals are decorated with their indices.
+      use TREE, only: BUILD_TREE, PUSH_PSEUDO_TERMINAL
+      implicit NONE
+
+      integer, intent(in) :: IDS(:)
+
+      integer, save :: CALLNO = 0    ! Which call to Make_Tree -- for error msg.
+      integer :: DECOR, I, ITEM, M, N_IDS, STACK(0:30), STRING, WHICH
+
+      callno = callno + 1
+      n_ids = size(ids)
+      m = 0
+      stack(0) = 0 ! just so it's defined, in case it gets incremented
+                   ! after build_tree
+      if ( ids(1) >= 0 ) then
+        m = 1
+        stack(1) = 0
+      end if
+      do i = 1, n_ids
+        if ( ids(i) == begin ) then
+          m = m + 1
+          if ( m > ubound(stack,1) ) then
+            print *, 'INTRINSIC%MAKE_TREE-E- Stack overflow!'
+            print *, 'Your tree is taller than ', ubound(stack,1), &
+              &      '.  Detected while'
+            print *, 'processing element ', i, ' of the list for call ', callno
+            stop
+          end if
+          stack(m) = 0
+        else
+          item = mod(ids(i), 1000)
+          which = mod(ids(i) / 1000, 1000)
+          decor = ids(i) / 1000000
+          select case ( which )
+          case ( l/1000 ) ! Enumeration literals
+            string = lit_indices(item)
+          case ( t/1000 ) ! Intrinsic data types
+            string = data_type_indices(item)
+          case ( n/1000 ) ! Tree nodes
+            call build_tree ( item, stack(m), decor )
+            m = m - 1
+            if ( m < lbound(stack,1) ) then
+              print *, 'INTRINSIC%MAKE_TREE-E- Stack underflow!'
+              print *, 'You probably forgot a "begin" somewhere.  Detected while'
+              print *, 'processing element ', i, ' of the list for call ', callno
+              stop
+            end if
+            stack(m) = stack(m) + 1
+      cycle
+          end select
+          if ( string == 0 ) then
+            print *, 'INTRINSIC%MAKE_TREE-E- The string for element ', &
+              & i, ' of a list'
+            print *, 'is undefined.  Detected on call ', callno, ' to Make_Tree.'
+            stop
+          end if
+          call push_pseudo_terminal ( string, 0, decor = item )
+          stack(m) = stack(m) + 1
+        end if
+      end do
+    end subroutine MAKE_TREE
 
   end subroutine INIT_INTRINSIC
+
+  ! --------------------------------------------------  Add_Ident  -----
+  integer function ADD_IDENT ( TEXT )
+    use SYMBOL_TABLE, only: ENTER_TERMINAL
+    use SYMBOL_TYPES, only: T_IDENTIFIER
+    character(len=*), intent(in) :: TEXT
+    add_ident = enter_terminal ( text, t_identifier )
+  end function ADD_IDENT
 
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.12  2001/03/14 02:05:52  vsnyder
+! Moved MLSSignals_m to mlspgs/lib.
+!
 ! Revision 2.11  2001/03/06 22:41:59  livesey
 ! Minor changes
 !
