@@ -124,7 +124,7 @@ contains ! ===================================== Public procedures =====
     integer :: STATUS                   ! From deallocate
 
     ! Executable code
-
+    if (.not. associated(database) ) return
     do i = 1, size ( database )
       call DestroyFGridContents ( database(i) )
     end do
@@ -137,6 +137,9 @@ contains ! ===================================== Public procedures =====
 end module FGrid
 
 ! $Log$
+! Revision 2.2  2001/11/01 00:23:14  livesey
+! Add check in DestroyFGridDatabase to not do anything if it's empty
+!
 ! Revision 2.1  2001/10/31 18:36:19  livesey
 ! First version
 !
