@@ -10,7 +10,7 @@ OBJS=	MLSStrings.o MLSSignalNomenclature.o VerticalCoordinate.o \
 	SDPToolkit.o L2GPData.o L2AUXData.o VectorsModule.o Units.o \
 	VGrid.o HGrid.o L1BData.o ConstructQuantityTemplates.o\
 	Temporary_types.o ConstructVectorTemplates.o gridded_data_module.o \
-	dates_module.o MLSPCF.o MLSCF.o
+	dates_module.o MLSPCF.o MLSCF.o GriddedData.o
 
 OBJS_DEBUG= 	MLSStrings.o_debug MLSSignalNomenclature.o_debug \
 		VerticalCoordinate.o_debug QuantityTemplates.o_debug \
@@ -20,9 +20,9 @@ OBJS_DEBUG= 	MLSStrings.o_debug MLSSignalNomenclature.o_debug \
 		HGrid.o_debug L1BData.o ConstructQuantityTemplates.o_debug \
 		Temporary_types.o_debug ConstructVectorTemplates.o_debug \
 		gridded_data_module.o_debug dates_module.o_debug \
-		MLSPCF.o_debug MLSCF.o_debug
+		MLSPCF.o_debug MLSCF.o_debug GriddedData.o_debug
 
-LIBPATH=.
+Libpath=.
 MODULEPATH=.
 
 all:	mlslib.a SDPToolkitSubstitute.a
@@ -88,6 +88,9 @@ ConstructVectorTemplates.o_debug: MLSCommon.o_debug MLSMessageModule.o_debug Vec
 	QuantityTemplates.o_debug Temporary_types.o_debug
 
 # $Log$
+# Revision 1.23  2000/01/11 22:51:34  livesey
+# Dealt with ramifications of change from read_parse_l2cf to MLSCF
+#
 # Revision 1.22  2000/01/07 23:53:35  livesey
 # Nearly integrated, just a few tweaks.
 #
