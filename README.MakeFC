@@ -134,10 +134,11 @@ them, be prepared to enter their full path names. Usually Gctp is
 installed alongside the HDFEOS so after setting the latter, the same
 will be offered as the default path setting for the former.
 
-Note whether you have the latest version of the toolkit (currently
-5.2.7.4v1.00) or an earlier one. The latest version includes version 5 of both
-the HDF and HDFEOS libraries, and so their paths need to be set. For earlier
-versions, leave their paths blank.
+Note whether you have the latest version of the toolkit (currently 5.2.8v1.00)
+or an earlier one. The latest version includes version 5 of both the HDF and
+HDFEOS libraries, and so their paths need to be set. For earlier versions,
+leave their paths blank. Note that a future release of the mlspgs software will
+require 5.2.8 or above and versions 5 of the HDF/HDFEOS libraries.
 
 The next set of questions will pertain to four special libraries: BLAS, LAPACK,
 PVM and FFTW. BLAS and LAPACK are completely optional, with the understanding
@@ -310,6 +311,8 @@ depends      recalculates dependencies;
              "USE ..." line to an existing module; but see update below
 configure    change compiler, (less often) platform/OS, name,
              paths to Toolkit and other necessary libraries
+mark_all_as_uptodate
+             mark all targets in the current directory as up to date
 
 (All the following apply only at the top mlspgs level)
 all          builds all the mlslevels
@@ -420,11 +423,15 @@ bottom center is (assuming a typical location for the archive)
 
 MLSCONFG/Makefile has the command near its start
  include 'Makefile.dep'
-that copies in the dependencies stored in the file Makefile.dep. This is
-how make learns which sources to compile to create the binaries, called OBJS. A
+that copies in the dependencies stored in the file Makefile.dep. This is how
+make learns which sources to compile to create the binaries, called OBJS. A
 dependency is a line containing a target and a list of prerequisites needed to
-build that target. Makefile.dep contains only the dependencies, no explicit
-build commands.
+build that target. Makefile has to choose between two locations from which to
+read Makefile.dep. One is stored in each of the mlslevels. This one contains
+dependencies based on object files alone, is foolproof, but can cause excess
+compilation that slows building the mlspgs software. The other is down in the
+MLSCONFG subdirectories. It uses a more advanced but more fragile system
+designed to forestall excessive recompilation.
 
 It would be desirable to make Makefile.dep a target of prerequisites to force
 it to be updated on any change to the source files. Instead, the only ways to
@@ -492,24 +499,44 @@ to fix the problem by deleting MakeFC and doing a CVS update to fetch a new
 copy.
 
 Another cause of a hotly complaining make is using a make that is not gnu
-compliant.
+compliant. If your gnu make is not the default make on your system, then please
+invoke gnu make by giving its full path.
 
 Compiling one changed module may have the effect of triggering recompilation of
 many other unchanged modules due to dependencies. This is the "cascade effect".
 Sometimes it may be obvious that some or all of the cascade is unnecessary. A
-deeper and more searching scrutiny, perhaps checking that the new .mod file
-created by a recompile (in the case of a compiler like NAG) is actually
-identical with the existing one, could pare the cascade down, but at the cost
-of requiring an even more complex system of Makefiles than this one.
+deeper and more searching scrutiny, checking for the possibility that the new
+.mod file created by a recompile (in the case of a compiler like NAG) is
+actually identical with the existing one, can pare the cascade down, but at the
+cost of requiring a more complex system of Makefiles. This is how our system
+works by default. 
 
-In place of the more complex system is one that requires more care on the
-user's part. If you put the NOCASCADE setting to "yes", or in fact to anything
-other than its blank default, only the source files that actually changed will
-be recompiled. This dispensation applies each time it is used, but is good for
-that time only; i.e., if the next make is issued without the setting, the
-recompilations that were forestalled on the previous make will likely be
-triggered. And it should be mentioned that changes to the "public" parts of the
-sources usually require the cascade of recompilations to build properly.
+At the end of each make command, if any of the targets was older than its
+prerequisites and therefore rebuilt, the Makefiles attempt to mark all targets
+as up to date. This has some unpleasant consequences, however. If you cd to lib
+and make there, then cd over to l2, suddenly make will notice that all the
+prerequisites in lib are newer than their targets in l2, so this will trigger
+that very cascade that we strove so hard to avoid. So don't do that. If you
+know you want to build mlsl2, cd directly to l2 and build there. In a pinch,
+there is a setting MARK_ALL_AS_UPTODATE available in order to forestall this
+marking. If set to "no", then make shouldn't touch any of the targets it
+doesn't actually rebuild.
+
+To revert to the simpler, sturdier Makefiles of bygone days put the CASCADE
+setting to "yes", or in fact to anything other than its blank default. This
+throwback applies each time it is used, but is good for that time only; i.e.,
+if the next make is issued without the setting, make will resume checking for
+differences in the .mod files.
+
+Also available but not recommended is a third system that requires more care on
+the user's part. If in addition to the CASCADE setting, you put the NOCASCADE
+setting to "yes", or in fact to anything other than its blank default, only the
+source files that actually changed will be recompiled. This dispensation
+applies each time it is used, but is good for that time only; i.e., if the next
+make is issued without these settings, the recompilations that were forestalled
+on the previous make will likely be triggered. And it should be mentioned that
+changes to the "public" parts of the sources usually require the cascade of
+recompilations to build properly.
 
 Another way to trigger massive recompilation is to modify the .configure file.
 Sometimes this may be appropriate, but not always. If you're certain that it is
@@ -596,8 +623,12 @@ FC                 Overrides the name by which the Fortran compiler is called
 LAFTER             Appears at the end of the very long link statement
                    e.g., for additional libraries required to link successfully
                    or else to highlight errors as in FAFTER
+CASCADE            Revert to simpler Makefile dependencies (.o only)
+MARK_ALL_AS_UPTODATE
+                   If yes, forcibly mark all targets as up to date
+                   If no, don't do any extra marking
 NOCASCADE          Don't rebuild anything besides changed sources
-                    if non-blank
+                    if non-blank (and CASCADE also set)
 NOCLEANING         Don't rebuild everything on any change to .configure
                     if non-blank
 NOHUNTING          Stop make from hunting if non-blank
@@ -710,10 +741,13 @@ export FFTW_ROOT
 export FOPTS
 export LDOPTS
 
--pw                           2000-Oct-24 to 2002-Apr-18
+-pw                           2000-Oct-24 to 2002-Jun-25
 EOF
 exit
 # $Log$
+# Revision 1.33  2002/05/13 17:59:45  pwagner
+# lib--hdf4 restores to lib stuff lost to l2--hdf5
+#
 # Revision 1.32  2002/05/02 00:16:55  pwagner
 # Mentions NOCASCADE setting
 #
