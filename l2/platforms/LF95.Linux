@@ -20,13 +20,13 @@ FOPTS = -g --chk --info
 DUSTY = $(FOPTS)
 
 # Beginning of path to libraries:
-L = /nas/software/SRC/TOOLKIT-5.2.6v1.00
+#L = /nas/software/SRC/TOOLKIT-5.2.6v1.00
 #L = /nas/software/SRC/TOOLKIT-5.2.6v1.00.NAG
 
-PGSINC = /software/SRC/TOOLKIT-5.2.6v1.00/include
+#PGSINC = /software/SRC/TOOLKIT-5.2.6v1.00/include
 
 # Beginning of path to HDFEOS  libraries:
-E = /van1/opt/TOOLKIT
+#E = /van1/opt/TOOLKIT
 
 # Use the lib directory, too
 libdir = ../../lib/$(MLSCONFG)
@@ -56,11 +56,14 @@ libdir = ../../lib/$(MLSCONFG)
 #HDFEOS =$(HDFEOS_LIB)
 #HDF =$(HDFLIB)
 #GCTP =$(HDFEOS_LIB)
-#The following can override the defaults
+#The following can be uncommented to override the defaults
 
-PGSTK =$(HOME)/TOOLKIT/LF95
-HDFEOS =$(HOME)/TOOLKIT
-HDF =/software/SRC/TOOLKIT-5.2.6v1.00/hdf/linux/HDF4.1r3/lib
-GCTP =/software/SRC/TOOLKIT-5.2.6v1.00/hdfeos/lib/linux
+#PGSTK =$(HOME)/TOOLKIT/LF95
+#HDFEOS =$(HOME)/TOOLKIT
+#HDF =/software/SRC/TOOLKIT-5.2.6v1.00/hdf/linux/HDF4.1r3/lib
+#GCTP =/software/SRC/TOOLKIT-5.2.6v1.00/hdfeos/lib/linux
 
 # $Log$
+# Revision 1.1  2000/10/18 22:08:28  pwagner
+# First commit
+#
