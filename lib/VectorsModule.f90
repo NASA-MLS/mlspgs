@@ -104,7 +104,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   ! Types
   public :: VectorTemplate_T, VectorValue_T, Vector_T
   ! Parameters
-  public :: M_Fill, M_FullDerivatives, M_LinAlg, M_Tikhonov
+  public :: M_Cloud, M_Fill, M_FullDerivatives, M_LinAlg, M_Spare, M_Tikhonov
 
 ! =====     Defined Operators and Generic Identifiers     ==============
 
@@ -195,9 +195,11 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   end type VectorValue_T
 
   ! Bit of MASK field of VectorValue_T
+  integer, parameter :: M_Cloud = 2**4
   integer, parameter :: M_Fill = 2**2
   integer, parameter :: M_FullDerivatives = 2**1
   integer, parameter :: M_LinAlg = 2**0
+  integer, parameter :: M_Spare = 2**5
   integer, parameter :: M_Tikhonov = 2**3    ! Where to do Tikhonov regularization
 
   ! This type describes a vector.
@@ -2089,6 +2091,10 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.94  2002/11/22 12:57:09  mjf
+! Added nullify routine(s) to get round Sun's WS6 compiler not
+! initialising derived type function results.
+!
 ! Revision 2.93  2002/10/19 18:53:26  livesey
 ! Changed from huge to our own value (temporarily?)
 !
