@@ -461,6 +461,12 @@ contains ! ============================ MODULE PROCEDURES ====================
                end do 
             end do
          end do
+
+    if (associated(real_buffer)) then 
+        nullify(real_buffer)
+        deallocate(real_buffer, stat=status)
+    endif
+
     case ('double')    
 
     allocate( double_buffer(dims(1),dims(2),dims(3)),stat=status)
@@ -473,6 +479,12 @@ contains ! ============================ MODULE PROCEDURES ====================
                end do 
             end do
          end do    
+
+    if (associated(double_buffer)) then 
+        nullify(double_buffer)
+        deallocate(double_buffer, stat=status)
+    endif
+
     case ('integer')  
     allocate( integer_buffer(dims(1),dims(2),dims(3)),stat=status)
     call h5dread_f(dset_id,type_id,& 
@@ -484,6 +496,12 @@ contains ! ============================ MODULE PROCEDURES ====================
                end do 
             end do
          end do
+
+    if (associated(integer_buffer)) then 
+        nullify(integer_buffer)
+        deallocate(integer_buffer, stat=status)
+    endif
+
     case ('character') 
     allocate( character_buffer(dims(1),dims(2),dims(3)),stat=status)
     call h5dread_f(dset_id,type_id,& 
@@ -495,6 +513,12 @@ contains ! ============================ MODULE PROCEDURES ====================
                end do 
             end do
          end do
+
+    if (associated(character_buffer)) then 
+        nullify(character_buffer)
+        deallocate(character_buffer, stat=status)
+    endif
+
     end select test_type_dims
 
     endif
@@ -671,6 +695,6 @@ contains ! ============================ MODULE PROCEDURES ====================
 end module MLSAuxData
 
 ! $Log$
-! Revision 2.2  2002/09/09 05:26:15  jdone
-! Now reads portion of dataset
+! Revision 2.3  2002/09/09 05:43:39  jdone
+! deallocate statements added for read buffers.
 !
