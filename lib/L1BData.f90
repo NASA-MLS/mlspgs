@@ -898,10 +898,6 @@ contains ! ============================ MODULE PROCEDURES ======================
     l1bData%maxMIFs = 1
     if ( rank > 1 ) l1bData%maxMIFs = dims(rank-1)
 
-    l1bData%noAuxInds = product(dims(1:rank-2))
-    l1bData%maxMIFs = 1
-    if ( rank > 1 ) l1bData%maxMIFs = dims(rank-1)
-
     ! Check input arguments, set noMAFs
 
     numMAFs = dims(rank)
@@ -1257,6 +1253,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.42  2003/05/07 01:05:57  vsnyder
+! Remove three duplicated lines
+!
 ! Revision 2.41  2003/05/05 23:00:04  livesey
 ! Merged in feb03 newfwm branch
 !
