@@ -13,8 +13,8 @@ module GLOBAL_SETTINGS
     & S_FORWARDMODEL, S_ForwardModelGlobal, S_TIME, S_VGRID, F_FILE, &
     & P_CYCLE, P_STARTTIME, P_ENDTIME, &
     & S_L1BRAD, S_L1BOA, P_INSTRUMENT
-  use L1BData, only: l1bradSetup, l1boaSetup, ReadL1BData, L1BData_T, NAME_LEN, &
-    & DeallocateL1BData, DumpL1BData
+  use L1BData, only: l1bradSetup, l1boaSetup, ReadL1BData, L1BData_T, &
+    & DeallocateL1BData, Dump, NAME_LEN
   use L2GPData, only: L2GPDATA_T
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: R8, NameLen, L1BInfo_T, TAI93_Range_T
@@ -76,7 +76,7 @@ contains
     type (L1BData_T) :: l1bField ! L1B data
     type(PCFData_T) :: l2pcf
     
-    integer :: Details
+    integer :: Details   ! How much info about l1b files to dump
     logical :: GOT(2) = .false.
     integer :: I         ! Index of son of root
     integer :: L1BFLAG
@@ -260,8 +260,12 @@ contains
       processingrange%endtime = maxTime + 1.0
    endif
 
-   if ( index(switches, 'global') /= 0 ) then
+   if ( index(switches, 'glo3') /= 0 ) then
      Details = 1
+   elseif ( index(switches, 'glo2') /= 0 ) then
+     Details = 0
+   elseif ( index(switches, 'glo1') /= 0 ) then
+     Details = -1
    else
      Details = -2
    endif
@@ -356,7 +360,7 @@ contains
          call ReadL1BData ( l1bInfo%L1BRADIDs(i), l1b_quant_name, L1bData, &
           & NoMAFs, IERR, NeverFail=.true. )
          if ( IERR == 0 ) then
-           call DumpL1BData(l1bData, myL1BDetails )
+           call Dump(l1bData, myL1BDetails )
            call DeallocateL1BData ( l1bData )
          else
            call output ( 'Error number  ' )
@@ -515,6 +519,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.44  2001/10/25 23:35:52  pwagner
+! Responds to global switch with bigger dump than glo switch
+!
 ! Revision 2.43  2001/09/28 23:59:20  pwagner
 ! Fixed various timing problems
 !
