@@ -7,34 +7,39 @@ begin Output
 !define(outputStandardProductWithColumn, {Output, $
   quantities=[joined_$1,joined_$1_column], type=l2gp, $
   hdfVersion=!hdfVersion, $
-  file='!outpathl2gp/MLS-Aura_L2GP-$1_!l2version_!day.he!hdfVersion'!nl})
+  file='!l2gpFileName($1)'!nl})
+;;;  file='!outpathl2gp/MLS-Aura_L2GP-$1_!l2version_!day.he!hdfVersion'!nl})
 !forall(outputStandardProductWithColumn,!allStandardProductsWithColumns)
 
 ;; Now those without columns
 !define(outputStandardProductWithoutColumn, {Output, $
   quantities=[joined_$1], type=l2gp, $
   hdfVersion=!hdfVersion, $
-  file='!outpathl2gp/MLS-Aura_L2GP-$1_!l2version_!day.he!hdfVersion'!nl})
+  file='!l2gpFileName($1)'!nl})
+;;;  file='!outpathl2gp/MLS-Aura_L2GP-$1_!l2version_!day.he!hdfVersion'!nl})
 !forall(outputStandardProductWithoutColumn,!allStandardProductsWithoutColumns)
 
 ;; --------------------------------- Other files ---
 ;; The IWC file is a somewhat special case
 Output, quantities=[joined_iwc, joined_iwcFine], type=l2gp, $
   hdfVersion=!hdfVersion, $
-  file='!outpathl2gp/MLS-Aura_L2GP-IWC_!l2version_!day.he!hdfVersion'
+  file='!l2gpFileName(IWC)'
+;;;  file='!outpathl2gp/MLS-Aura_L2GP-IWC_!l2version_!day.he!hdfVersion'
 }) 
 
 ;; Now output the joined DGG file.
 !ifdef(flagGotJoinedDGGs,{
 Output, quantities=[ !undivert(!joinedDGGDivert) ], type=l2dgg, $
   hdfVersion=!hdfVersion, $
-  file='!outpathl2gp/MLS-Aura_L2GP-DGG_!l2version_!day.he!hdfVersion'})
+  file='!DGGFileName'})
+;;;  file='!outpathl2gp/MLS-Aura_L2GP-DGG_!l2version_!day.he!hdfVersion'})
 
 ;; Now output the joined DGM file
 !ifdef(flagGotJoinedDGMs,{
 Output, quantities=[ !undivert(!joinedDGMDivert) ], type=l2aux, $
   hdfVersion=!hdfVersion, $
-  file='!outpathl2aux/MLS-Aura_L2AUX-DGM_!l2version_!day.h!hdfVersion'})
+  file='!DGMFileName'})
+;;;  file='!outpathl2aux/MLS-Aura_L2AUX-DGM_!l2version_!day.h!hdfVersion'})
 
 ;; These days pretty well everything is written with directWrite
 ;; statements

@@ -30,8 +30,10 @@ begin Join
   !define(writeStandardProductWithColumn,{
   Label, quantity=state.$1, label='$1'
   Label, quantity=state.column_$1, label='$1 column'
+;;;  DirectWrite, type=l2gp, hdfVersion=!hdfVersion, $
+;;;    file='!outpathl2gp/MLS-Aura_L2GP-$1_!l2version_!day.he!hdfVersion', $
   DirectWrite, type=l2gp, hdfVersion=!hdfVersion, $
-    file='!outpathl2gp/MLS-Aura_L2GP-$1_!l2version_!day.he!hdfVersion', $
+    file='!l2gpFileName($1)', $
     source=state.$1, precision=outputPrecision.$1, $
     source=state.column_$1, precision=outputPrecision.column_$1!nl})
   !forall(writeStandardProductWithColumn,!allStandardProductsWithColumns)
@@ -39,16 +41,20 @@ begin Join
   ;; Now the species without columns
   !define(writeStandardProductWithoutColumn,{
   Label, quantity=state.$1, label='$1'
+;;;  DirectWrite, type=l2gp, hdfVersion=!hdfVersion, $
+;;;    file='!outpathl2gp/MLS-Aura_L2GP-$1_!l2version_!day.he!hdfVersion', $
   DirectWrite, type=l2gp, hdfVersion=!hdfVersion, $
-    file='!outpathl2gp/MLS-Aura_L2GP-$1_!l2version_!day.he!hdfVersion', $
+    file='!l2gpFileName($1)', $
     source=state.$1, precision=outputPrecision.$1!nl})
   !forall(writeStandardProductWithoutColumn,!allStandardProductsWithoutColumns)
 
   ;; IWC is a special case
   Label, quantity=state.iwc, label='IWC'
   Label, quantity=state.iwcFine, label='IWC-fine'
+;;;  DirectWrite, type=l2gp, hdfVersion=!hdfVersion, $
+;;;    file='!outpathl2gp/MLS-Aura_L2GP-IWC_!l2version_!day.he!hdfVersion', $
   DirectWrite, type=l2gp, hdfVersion=!hdfVersion, $
-    file='!outpathl2gp/MLS-Aura_L2GP-IWC_!l2version_!day.he!hdfVersion', $
+    file='!l2gpFileName(IWC)', $
     source=state.iwc, precision=outputPrecision.iwc, $
     source=state.iwcFine, precision=outputPrecision.iwcFine
 
