@@ -14,16 +14,16 @@ module RetrievalModule
     & NF_GMOVE, NF_BEST, NF_AITKEN, NF_DX, NF_DX_AITKEN, NF_TOLX, &
     & NF_TOLX_BEST, NF_TOLF, NF_TOO_SMALL, NF_FANDJ, NWT, NWT_T, NWTA, RK
   use Expr_M, only: Expr
-  use Declaration_Table, only: Num_Value
   use ForwardModelInterface, only: ForwardModel, ForwardModelInfo_T, &
     & ForwardModelSetup
   use Init_Tables_Module, only: f_apriori, f_aprioriScale, f_channels, &
     & f_criteria, f_columnScale, f_covariance, f_diagonal, f_diagonalOut, &
-    & f_fwdModelIn, f_fwdModelOut, f_jacobian, f_maxIterations, &
-    & f_measurements, f_method, f_outputCovariance, f_quantity, f_state, &
-    & f_test, f_toleranceA, f_toleranceF, f_toleranceR, f_weight, field_first, &
-    & field_indices,field_last, l_apriori, l_covariance, l_newtonian, l_none, &
-    & l_norm, s_forwardModel, s_matrix, s_subset, s_retrieve, &
+    & f_fwdModelIn, f_fwdModelExtra, f_fwdModelOut, f_jacobian, &
+    & f_maxIterations, f_measurements, f_method, f_outputCovariance, &
+    & f_quantity, f_state, f_test, f_toleranceA, f_toleranceF, &
+    & f_toleranceR, f_weight, field_first, field_indices,field_last, &
+    & l_apriori, l_covariance, l_newtonian, l_none, l_norm, &
+    & s_forwardModel, s_sids, s_matrix, s_subset, s_retrieve, s_time, &
     & spec_indices
   use Lexer_Core, only: Print_Source
   use MatrixModule_1, only: AddToMatrixDatabase, CholeskyFactor, ClearMatrix, &
@@ -38,15 +38,20 @@ module RetrievalModule
   use MoreTree, only: Get_Boolean
   use Output_M, only: Output
   use String_Table, only: Display_String
+  use SidsModule, only: SIDS
   use Toggles, only: Gen, Toggle
   use Trace_M, only: Trace_begin, Trace_end
   use Tree, only: Decorate, Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, &
     & Subtree
-  use Tree_Types, only: N_named, N_set_one
+  use Tree_Types, only: N_named
   use VectorsModule, only: AddToVector, CloneVector, CopyVector, CreateMask, &
     & DestroyVectorInfo, DestroyVectorMask, DestroyVectorValue, &
     & GetVectorQuantityIndexByName, MultiplyVectors, operator(.DOT.), &
     & ScaleVector, SetMask, SubtractFromVector, Vector_T
+
+  !??? The next USE statement is Temporary for l2load:
+  use L2_TEST_STRUCTURES_M, only: FWD_MDL_CONFIG, FWD_MDL_INFO, &
+    & TEMPORARY_FWD_MDL_INFO
 
   implicit NONE
   private
@@ -68,15 +73,23 @@ module RetrievalModule
 contains
 
   ! ---------------------------------------------------  Retrieve  -----
-  subroutine Retrieve ( Root, VectorDatabase, MatrixDatabase )
+! subroutine Retrieve ( Root, VectorDatabase, MatrixDatabase )
+  subroutine Retrieve ( Root, VectorDatabase, MatrixDatabase, fmc, fmi, tfmi )
   ! Process the "Retrieve" section of the L2 Configuration File.
-  ! The "Retrieve" section can have ForwardModel, Matrix, Subset or Retrieve
-  ! specifications.
+  ! The "Retrieve" section can have ForwardModel, Matrix, Sids, Subset or
+  ! Retrieve specifications.
+
     ! Dummy arguments:
     integer, intent(in) :: Root         ! Of the relevant subtree of the AST
                                         ! Indexes an n_cf vertex
     type(vector_T), dimension(:), intent(inout), target :: VectorDatabase
     type(matrix_Database_T), dimension(:), pointer :: MatrixDatabase
+
+!??? Begin temporary stuff to start up the forward model
+  type(fwd_mdl_config) :: FMC
+  type(fwd_mdl_info), dimension(:), pointer :: FMI
+  type(temporary_fwd_mdl_info), dimension(:), pointer :: TFMI
+!??? End of temporary stuff to start up the forward model
 
     ! Local variables:
     type(nwt_T) :: AJ                   ! "About the Jacobian", see NWT.
@@ -109,6 +122,7 @@ contains
     type(vector_T) :: F                 ! for NWT -- Model - Measurements
     type(matrix_Cholesky_T) :: Factored ! Cholesky-factored normal equations
     integer :: Field                    ! Field index -- f_something
+    type(vector_T), pointer :: FwdModelExtra
     type(vector_T), pointer :: FwdModelIn
     type(forwardModelInfo_T) :: FwdModelInfo
     type(vector_T), pointer :: FwdModelOut
@@ -145,8 +159,10 @@ contains
     integer :: Son                      ! Of Root or Key
     integer :: Spec                     ! s_matrix, s_subset or s_retrieve
     type(vector_T), pointer :: State    ! The state vector
+    real :: T1, T2                      ! for timing
     integer :: Test                     ! Index in tree of "test" field
                                         ! of subset specification, or zero
+    logical :: Timing
     double precision :: ToleranceA      ! convergence tolerance for NWT,
                                         ! norm of move
     double precision :: ToleranceF      ! convergence tolerance for NWT,
@@ -172,6 +188,7 @@ contains
     error = 0
     nullify ( apriori, covariance, fwdModelIn, fwdModelOut )
     nullify ( measurements, state, weight, x )
+    timing = .false.
 
     if ( toggle(gen) ) call trace_begin ( "Retrieve", root )
     do i = 2, nsons(root) - 1           ! skip names at begin/end of section
@@ -273,6 +290,8 @@ contains
             diagonalOut = get_Boolean(son)
           case ( f_fwdModelIn )
             fwdModelIn => vectorDatabase(decoration(decoration(subtree(2,son))))
+          case ( f_fwdModelExtra )
+            fwdModelExtra => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_fwdModelOut )
             fwdModelOut => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_jacobian )
@@ -423,7 +442,8 @@ contains
               case ( nf_evalf )
                 if ( iter > maxIterations ) exit
                 ! Compute f(x)
-                call forwardModel ( fwdModelInfo, fwdModelIn, f=f )
+                call forwardModel ( fwdModelInfo, fwdModelExtra, fwdModelIn, &
+                  fwdModelOut=fwdModelOut )
                 call subtractFromVector ( f, measurements )
                 aj%fnorm = sqrt(f .dot. f)
                 call destroyVectorValue ( f )  ! free the space
@@ -454,8 +474,8 @@ contains
                   call clearMatrix ( normalEquations%m ) ! start with zero
                 end if
                 do rowBlock = 1, jacobian%row%nb
-                  call forwardModel ( fwdModelInfo, fwdModelIn, jacobian, f, &
-                    & rowBlock, fwdModelOut )
+                  call forwardModel ( fwdModelInfo, fwdModelExtra, &
+                    & fwdModelIn, jacobian, rowBlock, fwdModelOut )
                   call subtractFromVector ( f, measurements, &
                     & jacobian%row%quant(rowBlock), &
                     & jacobian%row%inst(rowBlock) )
@@ -602,10 +622,20 @@ contains
           call destroyVectorMask ( vectorDatabase(i) )
         end do
         if ( toggle(gen) ) call trace_end ( "Retrieve.retrieve" )
+      case ( s_sids )
+        call sids ( key, VectorDatabase, MatrixDatabase, fmc, fmi, tfmi )
+      case ( s_time )
+        if ( timing ) then
+          call sayTime
+        else
+          call cpu_time ( t1 )
+          timing = .true.
+        end if
       end select
 
     end do ! i = 2, nsons(root) - 1
     if ( toggle(gen) ) call trace_end ( "Retrieve" )
+    if ( timing ) call sayTime
 
   contains
     ! --------------------------------------------  AnnounceError  -----
@@ -645,11 +675,22 @@ contains
         end select
       end select
     end subroutine AnnounceError
+
+    ! --------------------------------------------------  SayTime  -----
+    subroutine SayTime
+      call cpu_time ( t2 )
+      call output ( "Timing for MLSL2Join =" )
+      call output ( DBLE(t2 - t1), advance = 'yes' )
+      timing = .false.
+    end subroutine SayTime
   end subroutine Retrieve
 
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.7  2001/03/07 23:59:52  vsnyder
+! Add stuff for SIDS.
+!
 ! Revision 2.6  2001/02/22 18:54:05  vsnyder
 ! Periodic commit.  Still working on the output covariance.
 !
