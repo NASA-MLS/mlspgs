@@ -4,7 +4,7 @@
 CVN = lf95
 
 FC= lf95
-FOPTS= -g --chk --info
+FOPTS= -g --chk --info --version
 PLATFORM= LF95.Linux.slow
 PGSLIB= /van1/vsnyder/mlspgs/SDPToolkit/LF95
 CC=cc
@@ -42,10 +42,8 @@ Filter_Fit: Filter_Fit.f90
           -L/van1/vsnyder/math77/fortran/LF95/opt/ -lmath77 \
           -L/van1/vsnyder/math77/fortran/blas/LF95/opt/ -lblas
 
-f90tex: f90tex.f90
-	$(FC) $(FOPTS) -o f90tex f90tex.f90 \
-          -I $(HOME)/mlspgs/lib/$(PLATFORM) \
-          -L $(HOME)/mlspgs/lib/$(PLATFORM) -lmls -static
+f90tex: f90tex.f90 machine.mod machine_$(CVN).o
+	$(FC) $(FOPTS) -o f90tex f90tex.f90 machine_$(CVN).o -static
 
 init_gen: init_gen.f90
 	$(FC) $(FOPTS) -o init_gen init_gen.f90 \
@@ -57,6 +55,9 @@ h5cat: h5cat.c
           -L $(HDF5LIB) -lz -lm -lhdf5
 
 # $Log$
+# Revision 1.5  2004/06/17 01:05:26  vsnyder
+# Account for ConvertPFA, DumpPFAData
+#
 # Revision 1.4  2003/08/13 18:16:45  livesey
 # Typo
 #
