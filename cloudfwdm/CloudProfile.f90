@@ -48,40 +48,42 @@ contains
 !--------------------------------------------------------------------
 
       IF (CHT .EQ. 0._r8) THEN
-         HT = 16000. + CHT*1000.
+         HT = 16000._r8 + CHT*1000._r8
       ELSE
          HT=CHT
       ENDIF
 
-      WCscale=0.1
+      WCscale=0.1_r8
 
       IF(ITYPE .EQ. 'C') THEN
 
 !         PRINT*,' '
 !         PRINT*,' -> CLOUD-TYPE: DEEP-CONVECTIVE SYSTEM '
 
-         CLD_TOP   = HT + 1000.         ! CONVECTIVE CLOUD-TOP
-         CLD_BASE  = HT - 11600.        ! CONVECTIVE CLOUD-BASE
-         UPPER_LAG = HT - 8000.
-         LOWER_LAG = HT - 10000.
+         CLD_TOP   = HT + 1000._r8         ! CONVECTIVE CLOUD-TOP
+         CLD_BASE  = HT - 11600._r8        ! CONVECTIVE CLOUD-BASE
+         UPPER_LAG = HT - 8000._r8
+         LOWER_LAG = HT - 10000._r8
 
          DO I=1,NH
 
             IF (YZ(I) .GT. CLD_TOP .OR. YZ(I) .LT. CLD_BASE) THEN
-               WC(1,I) = 0.0
+               WC(1,I) = 0.0_r8
             ELSE IF (YZ(I).LE.UPPER_LAG .AND. YZ(I).GE.LOWER_LAG) THEN
-               WC(1,I) = 1.0
+               WC(1,I) = 1.0_r8
             ELSE IF (YZ(I).GT.UPPER_LAG .AND. YZ(I).LE.CLD_TOP) THEN
                WC(1,I) = 1.0*EXP(-(YZ(I)-UPPER_LAG)/5000.)
             ELSE IF (YZ(I).LT.LOWER_LAG .AND. YZ(I).GE.CLD_BASE) THEN
                WC(1,I) = 1.0*EXP(-(LOWER_LAG-YZ(I))/500.)
+            else
+              WC(1,I) =0.0_r8
             ENDIF
 
             ! LIQUID WATER CLOUD
             
-            IF (YZ(I).GT.5000. .AND. YZ(I).LT. 10000.) THEN
-               WC(2,I) = 0.1*0.
-            ENDIF
+!            IF (YZ(I).GT.5000. .AND. YZ(I).LT. 10000.) THEN
+               WC(2,I) = 0.1*0._r8
+!            ENDIF
          ENDDO
 
 
@@ -90,22 +92,25 @@ contains
 !         PRINT*,' '
 !         PRINT*,' -> CLOUD-TYPE: FRONTAL SYSTEM '
 
-         CLD_TOP   = HT - 5000.         ! FRONTAL CLOUD-TOP
-         CLD_BASE  = HT - 11000.        ! FRONTAL CLOUD-BASE
-         UPPER_LAG = HT - 7000.
-         LOWER_LAG = HT - 9000.
+         CLD_TOP   = HT - 5000._r8         ! FRONTAL CLOUD-TOP
+         CLD_BASE  = HT - 11000._r8        ! FRONTAL CLOUD-BASE
+         UPPER_LAG = HT - 7000._r8
+         LOWER_LAG = HT - 9000._r8
 
          DO I=1,NH
             IF (YZ(I) .GT. CLD_TOP .OR. YZ(I) .LT. CLD_BASE) THEN
-               WC(1,I) = 0.0
+               WC(1,I) = 0.0_r8
             ELSE IF (YZ(I).LE.UPPER_LAG .AND. YZ(I).GE.LOWER_LAG) THEN
-               WC(1,I) = 1.0
+               WC(1,I) = 1.0_r8
             ELSE IF (YZ(I).GT.UPPER_LAG .AND. YZ(I).LE.CLD_TOP) THEN
                WC(1,I) = 1.0*EXP(-(YZ(I)-UPPER_LAG)/500.)
             ELSE IF (YZ(I).LT.LOWER_LAG .AND. YZ(I).GE.CLD_BASE) THEN
                WC(1,I) = 1.0*EXP(-(LOWER_LAG-YZ(I))/500.)
+
+            else
+               WC(1,I) = 0._r8
             ENDIF
-            WC(2,I) = 0.0
+            WC(2,I) = 0.0_r8
          ENDDO
 
       ELSE IF (ITYPE .EQ. 'A') THEN
@@ -113,22 +118,22 @@ contains
 !         PRINT*,' '
 !         PRINT*,' -> CLOUD-TYPE: ANVILS'
 
-         CLD_TOP   = HT - 4000.         !ANVIL CLOUD-TOP
-         CLD_BASE  = HT - 11000.        !ANVIL CLOUD-BASE
-         UPPER_LAG = HT - 5000.
-         LOWER_LAG = HT - 6000.
+         CLD_TOP   = HT - 4000._r8         !ANVIL CLOUD-TOP
+         CLD_BASE  = HT - 11000._r8        !ANVIL CLOUD-BASE
+         UPPER_LAG = HT - 5000._r8
+         LOWER_LAG = HT - 6000._r8
 
          DO I=1,NH
             IF (YZ(I) .GT. CLD_TOP .OR. YZ(I) .LT. CLD_BASE) THEN
-               WC(1,I) = 0.0
+               WC(1,I) = 0.0_r8
             ELSE IF (YZ(I).LE.UPPER_LAG .AND. YZ(I).GE.LOWER_LAG) THEN
-               WC(1,I) = 1.0
+               WC(1,I) = 1.0_r8
             ELSE IF (YZ(I).GT.UPPER_LAG .AND. YZ(I).LE.CLD_TOP) THEN
                WC(1,I) = 1.0*EXP(-(YZ(I)-UPPER_LAG)/500.)
             ELSE IF (YZ(I).LT.LOWER_LAG .AND. YZ(I).GE.CLD_BASE) THEN
                WC(1,I) = 1.0*EXP(-(LOWER_LAG-YZ(I))/600.)
             ENDIF
-            WC(2,I) = 0.0
+            WC(2,I) = 0.0_r8
          ENDDO
 
       ELSE IF (ITYPE .EQ. 'T') THEN
@@ -178,7 +183,10 @@ contains
 
 end module CloudProfile
 
-! $Log$     
+! $Log$
+! Revision 1.1  2001/10/07 23:41:40  jonathan
+! cloud ice-water-content profile
+!     
 
 
 
