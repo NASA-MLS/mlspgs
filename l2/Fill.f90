@@ -59,7 +59,7 @@ contains ! =====     Public Procedures     =============================
       & F_LENGTHSCALE, F_LOSQTY, F_LOWBOUND, F_LSB, F_LSBFRACTION, &
       & F_MATRIX, F_MAXITERATIONS, F_MEASUREMENTS, F_METHOD, &
       & F_MODEL, F_MULTIPLIER, F_NOFINEGRID, F_NOISE, F_NOISEBANDWIDTH, &
-      & F_OFFSET_AMOUNT, &
+      & F_OFFSETAMOUNT, &
       & F_ORBITINCLINATION, F_PHITAN, F_PRECISION, F_PRECISIONFACTOR, &
       & F_PROFILEVALUES, F_PTANQUANTITY, &
       & F_QUANTITY, F_RADIANCEQUANTITY, F_RATIOQUANTITY, &
@@ -4517,6 +4517,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.160  2002/10/26 00:02:51  livesey
+! Another typo! Going too fast!
+!
 ! Revision 2.159  2002/10/26 00:00:07  livesey
 ! Typo
 !
