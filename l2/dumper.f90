@@ -77,44 +77,39 @@ contains ! =====     Private Procedures     ============================
   ! ------------------------------------------------  DUMP_A_HGRID  -----
   subroutine DUMP_a_HGRID ( aHGRID )
     use HGridsDatabase, only: HGRID_T
+    use STRING_TABLE, only: DISPLAY_STRING
     type(hGrid_T), intent(in) :: aHGRID
     integer :: J
-      do j = 1, ahgrid%noProfs
-        call output ( ahgrid%phi(1,j), '(1x,1pg13.6)' )
-        call output ( ahgrid%geodLat(1,j), '(1x,1pg13.6)' )
-        call output ( ahgrid%lon(1,j), '(1x,1pg13.6)' )
-        call output ( ahgrid%time(1,j), '(1x,1pg13.6)' )
-        call output ( ahgrid%solarTime(1,j), '(1x,1pg13.6)' )
-        call output ( ahgrid%solarZenith(1,j), '(1x,1pg13.6)' )
-        call output ( ahgrid%losAngle(1,j), '(1x,1pg13.6)', advance='yes' )
+      call output ( 'Name = ' )
+      call display_string ( aHgrid%name )
+      call output ( aHgrid%noProfs, before=' noProfs = ' )
+      call output ( aHgrid%noProfsLowerOverlap, before=' lowerOverlap = ' )
+      call output ( aHgrid%noProfsUpperOverlap, before=' upperOverlap = ', advance='yes' )
+      call output ( ' prof       phi       geodLat           lon' )
+      call output ( '          time     solarTime   solarZenith' )
+      call output ( '      losAngle', advance='yes' )
+      do j = 1, aHgrid%noProfs
+        call output ( j, places=5 )
+        call output ( aHgrid%phi(1,j), '(1x,1pg13.6)' )
+        call output ( aHgrid%geodLat(1,j), '(1x,1pg13.6)' )
+        call output ( aHgrid%lon(1,j), '(1x,1pg13.6)' )
+        call output ( aHgrid%time(1,j), '(1x,1pg13.6)' )
+        call output ( aHgrid%solarTime(1,j), '(1x,1pg13.6)' )
+        call output ( aHgrid%solarZenith(1,j), '(1x,1pg13.6)' )
+        call output ( aHgrid%losAngle(1,j), '(1x,1pg13.6)', advance='yes' )
       end do
   end subroutine DUMP_a_HGRID
 
   ! ------------------------------------------------  DUMP_HGRIDS  -----
   subroutine DUMP_HGRIDS ( HGRIDS )
     use HGridsDatabase, only: HGRID_T
-    use STRING_TABLE, only: DISPLAY_STRING
     type(hGrid_T), intent(in) :: HGRIDS(:)
-    integer :: I, J
+    integer :: I
     call output ( 'HGRIDS: SIZE = ' )
     call output ( size(hgrids), advance='yes' )
     do i = 1, size(hgrids)
-      call output ( i, 4 )
-      call output ( ': Name = ' )
-      call display_string ( hgrids(i)%name )
-      call output ( ' noProfs = ' )
-      call output ( hgrids(i)%noProfs, advance='yes' )
-      call output ( '      noProfsLowerOverlap = ' )
-      call output ( hgrids(i)%noProfsLowerOverlap )
-      call output ( ' noProfsUpperOverlap = ' )
-      call output ( hgrids(i)%noProfsUpperOverlap, advance='yes' )
-      call output ( ' prof          phi       geodLat           lon' )
-      call output ( '          time     solarTime   solarZenith' )
-      call output ( '      losAngle', advance='yes' )
-      do j = 1, hgrids(i)%noProfs
-        call output ( j, 4 )
-        call dump ( hgrids(i) )
-      end do
+      call output ( i, 4, after=': ' )
+      call dump ( hgrids(i) )
     end do
   end subroutine DUMP_HGRIDS
 
@@ -125,6 +120,9 @@ contains ! =====     Private Procedures     ============================
 end module DUMPER
 
 ! $Log$
+! Revision 2.20  2004/05/01 04:03:47  vsnyder
+! Get Dump_Quantity_Templates from QuantityTemplates instead of duplicating it
+!
 ! Revision 2.19  2003/08/27 20:06:16  livesey
 ! More minor changes to dumping of chunks.
 !
