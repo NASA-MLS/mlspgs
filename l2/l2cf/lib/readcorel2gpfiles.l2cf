@@ -8,14 +8,14 @@ begin ReadApriori
 
   ;; These are the species for which we want to read Core data (no
   ;; continuations allowed).
-  !define(coreL2GPSpecies,{Temperature,H2O,RHI,refGPH,O3})
+  !ifdef(coreL2GPSpecies,{},{!define(coreL2GPSpecies,{Temperature,H2O,RHI,refGPH,O3})})
 
   ;; The user might have requested specific versions for specific
   ;; products
   !define(initCoreSource,{!dnl
   !ifelse(!defn(coreversion$1),{},{!define(coreversion$1,!coreversion)})
   !ifelse(!defn(inpathcore$1),{},{!define(inpathcore$1,!inpathcore)})
-  !ifelse(!defn(corephase$1),{},{!define(corephase$1,{Core})})
+  !ifelse(!defn(corephase$1),{},{!define(corephase$1,{!corephase})})
   })
   !forall(initCoreSource,!coreL2GPSpecies,ptan)
 
@@ -28,7 +28,7 @@ begin ReadApriori
 
   ;; Ptan we have to get from an l2aux file, this could be fun!
   l2auxCorePtanInput: l2aux, $
-    file='!inpathcoreptan/MLS-Aura_L2AUX-DGM_!coreversion_!day.h!coreHDFVersion', $
-    sdName='GHz.ptan-Core', quantityType=ptan, hdfVersion=!coreHDFVersion
+    file='!inpathcoreptan/MLS-Aura_L2AUX-DGM_!coreversionptan_!day.h!coreHDFVersion', $
+    sdName='GHz.ptan-!corephaseptan', quantityType=ptan, hdfVersion=!coreHDFVersion
 
 end ReadApriori
