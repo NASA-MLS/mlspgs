@@ -26,7 +26,9 @@ vGridDiag: vGrid, type=Logarithmic, coordinate=Zeta, $
   start=1000mb, formula=[10:1]
 
 sGridStandard:  vGrid, type=Explicit,   $
-  values=[50,100,150,200,250,300,350,400,450,500,550] ;km
+       values=[20,40,60,80,100,120,140,160,180,200,$
+               220,240,260,280,300,320,340,360,380,400,420,440,460,480,500,$
+               520,540,560,580,600,620,640,660,680,700,720,740,760,780,800]
 vGridIWC: vGrid, type=Logarithmic, coordinate=Zeta, $
   start= 464.158872744048438mb, formula=[7:6]
 
@@ -34,6 +36,9 @@ vGridWMO: VGrid, type=Logarithmic, coordinate=Zeta, $
   start=1000mb, formula=[97:48]
 
 ; $Log$
+; Revision 1.8  2003/05/16 19:55:09  dwu
+; del hGridFine
+;
 ; Revision 1.7  2003/05/16 19:48:31  dwu
 ; add hGridFine
 ;
