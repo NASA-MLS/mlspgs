@@ -178,7 +178,7 @@ contains ! =====     Public Procedures     =============================
     type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
 
     call destroyVectorTemplateDatabase ( vectorTemplates )
-    call destroyQuantityTemplateDatabase ( quantityTemplates )
+    call destroyQuantityTemplateDatabase ( quantityTemplates, ignoreMinorFrame=.true. )
     call destroyQuantityTemplateDatabase ( mifGeolocation )
   end subroutine MLSL2DeConstruct
 
@@ -188,6 +188,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.19  2001/04/23 23:53:03  livesey
+! Tidied up deallocation of minor frame quantities
+!
 ! Revision 2.18  2001/04/23 23:24:55  livesey
 ! Changed l2gpDatabase to pointer
 !
