@@ -1,9 +1,11 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 1999, California Institute of Technology / 
+! University of Edinburgh. ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module dates_module
 
-  ! Converts dates between various formats. 
+  ! Converts dates between various formats. The resolution of everything 
+  ! in here is one day, there is nothing to handle hours, minutes and seconds.
   ! Cal is calendar date as in "25 Jan 1998" or "25 1 1998"
   ! Separators can be any non-alphanumerc character. Leading 0s no problem
   ! If you want the three items in an order that is not day/month/year then
@@ -11,10 +13,10 @@ module dates_module
   ! integer array with elements 1,2,3 in any order
   ! EUDTF is Extended UDTF -- Y2K compliant variant of UDTF
   ! EUDTF is an integer of form yyyyddd with yyyy==year and ddd==day of year
-  ! (I invented this, it isn;t a standard)
+  ! (I (HCP) invented this, it isn;t a standard)
 
-  ! Since starting this, I discover that the standard text format for EOS
-  ! will be CCSDS format. This comes in two sorts: 
+  ! Since starting this, I (HCP again) discover that the standard text 
+  ! format for EOS will be CCSDS format. This comes in two sorts: 
   ! Form A:  yyyy-mm-dd   where mm= month, dd=day in month
   ! Form B:  yyyy-DDD     where DDD=day of year. No spaces. 
   ! These are clearly special cases of calendar format, and eudtf format
@@ -23,9 +25,12 @@ module dates_module
   ! The SDP Toolkit has some sort of date format that fits in a double
   ! precision number. It is called the TAI93 format and is the number 
   ! of seconds since midnight, 1 Jan 1993. We provide a format called
-  ! TAIDATE , which is the integer number of days since a particular 
+  ! daysince , which is the integer number of days since a particular 
   ! midnight. This can be used to get UARS day or TAI93 time to an accuracy
-  ! of 1 Day.
+  ! of 1 Day. 
+
+  ! Be warned that the format we call TAI here is in DAYS
+  ! while genuine TAI93 is in SECONDS. 
 
 
   use MLSStrings
@@ -80,6 +85,8 @@ contains
     eudtf=year*1000+day
   end function ccsds2eudtf
 
+  ! Converts CCSDS date to TAI Date. This is DAYS since the TAI93=0
+  ! time _not_ genuine TAI93 which is in seconds. 
   function ccsds2tai(ccsds) result (tai)
     character(len=*),intent(in)::ccsds
     !---function--result---!
@@ -102,6 +109,7 @@ contains
        day=nonleap_days_in_month(imonth)
     endif
   end function lastday
+
   ! Private function to test whether a year is a leap year or not.
   function isleap(year) result(leap)
     integer,intent(in)::year
@@ -135,7 +143,9 @@ contains
   function eudtf2daysince(eudtf,eudtf0) result(daysince)
     ! converts eudtf to days since a fixed day ( also given as EUDTF format)
     ! set eudtf0 to 11 Sept 1991 to get UARS days
-    ! Set eudtf0 to 1 Jan 1993 for TAI day
+    ! Set eudtf0 to 1 Jan 1993 for TAI day 
+    ! Note that this gives you DAYS since TAI93=0, not TAI93 itself, (which
+    ! is _seconds_ since TAI93=0)
     !-----args------------!
     integer,intent(in) :: eudtf,eudtf0
     !----result-----------!
@@ -416,6 +426,7 @@ contains
 
   end function cal2eudtf
 
+  ! Converts CCSDS dates from A format (yyyy-mm-dd) to B format (yyyy-DDD)
   function ccsdsa2b(a) result(b)
     !-----Arg--------!
     character(len=*),intent(in)::a
@@ -429,6 +440,7 @@ contains
     b(5:5)="-"
   end function ccsdsa2b
 
+  ! Converts CCSDS dates from  B format (yyyy-DDD) to A format (yyyy-mm-dd) 
   function ccsdsb2a(b) result(a)
     !-----Arg--------!
     character(len=*),intent(in)::b
@@ -452,6 +464,9 @@ contains
 
 end module dates_module
 ! $Log$
+! Revision 2.6  2002/10/08 00:09:08  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.5  2002/10/01 22:04:19  pwagner
 ! Renamed moduleNameIn to ModuleName
 !
