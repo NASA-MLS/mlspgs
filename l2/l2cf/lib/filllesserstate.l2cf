@@ -39,6 +39,7 @@ begin Fill
 
   ;; ----------------------------------------- System temperatures
 
+  !ifdef(flagSIDS,{
   ;; This macro fills one system temperature for one band
   !define(fillSystemTemperature,{Fill, quantity=apriori.systemTemperature$1, $
     method=explicit, explicitValues=!systemp(!getBandNumber($1))!nl})
@@ -47,10 +48,12 @@ begin Fill
   !forall(fillSystemTemperature,!allBands)
   !forall(fillSystemTemperature,!allBandLSBs)
   !forall(fillSystemTemperature,!allBandUSBs)
+  })
 
   ;; ----------------------------------------- Noise bandwidths
 
   ;; This macro fills one noise bandwidth for one band
+  !ifdef(flagSIDS,{
   !define(fillNoiseBandwidth,{Fill, quantity=apriori.noiseBandwidth$1, $
     method=explicit, explicitValues=!nbw(!getBandNumber($1))!nl})
 
@@ -58,6 +61,7 @@ begin Fill
   !forall(fillNoiseBandwidth,!allBands)
   !forall(fillNoiseBandwidth,!allBandLSBs)
   !forall(fillNoiseBandwidth,!allBandUSBs)
+  })
 
   ;; --------------------------------------------------- Antenna loss
 
