@@ -268,14 +268,14 @@ contains ! =====     Public Procedures     =============================
     use Create_PFAData_m, only: Create_PFAData
     use Expr_m, only: Expr
     use FilterShapes_m, only: FilterShapes
-    use Init_Tables_Module, only: F_LOSVEL, F_Molecules, F_Signals, &
-      & F_Temperatures, F_VGrid, L_Zeta
+    use Init_Tables_Module, only: F_AllLinesForRadiometer, F_AllLinesInCatalog, &
+      & F_LOSVEL, F_Molecules, F_Signals, F_Temperatures, F_VGrid, L_Zeta
     use Intrinsic, only: PHYQ_Velocity
     use MLSCommon, only: RP
     use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
       & MLSMSG_Error
     use MLSSignals_m, only: Signal_T, Signals
-    use MoreTree, only: Get_Field_ID
+    use MoreTree, only: Get_Boolean, Get_Field_ID
     use Parse_Signal_m, only: Parse_Signal
     use String_Table, only: Get_String
     use Tree, only: Decorate, Decoration, Node_Id, NSons, Sub_Rosa, Subtree
@@ -288,6 +288,8 @@ contains ! =====     Public Procedures     =============================
 
     logical, pointer :: Channels(:)
     integer :: Field, I, J, K, Son
+    integer :: Lines ! 0 => Lines for channel, 1 => Lines for radiometer,
+                     ! 2 => All lines in catalog
     real(rp) :: LosVel
     integer, pointer :: Molecules(:)
     type(signal_t), pointer :: MySignals(:), SignalsTemp(:)
@@ -309,6 +311,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Gather the data from the command
     error = 0
+    lines = 0
     nullify ( signalIndices )
     allocate ( mySignals(0), stat=stat )
     if ( stat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
@@ -317,6 +320,10 @@ contains ! =====     Public Procedures     =============================
       son = subtree(i,root)
       field = get_field_id(son)
       select case ( field )
+      case ( f_allLinesForRadiometer )
+        if ( get_boolean(son) ) lines = 1
+      case ( f_allLinesInCatalog )
+        if ( get_boolean(son) ) lines = 2
       case ( f_losvel )
         call expr ( subtree(2,son), units, values ) ! can't be a range
         if ( units(1) /= phyq_velocity ) call announce_error ( son, notVelocity )
@@ -382,7 +389,7 @@ contains ! =====     Public Procedures     =============================
 
     call decorate ( root, &
       & create_PFAData ( molecules, mySignals, vGrids(tGrid), vGrids(vGrid), &
-      & losVel, root ) )
+      & losVel, lines, root ) )
 
   contains
 
@@ -597,6 +604,9 @@ contains ! =====     Public Procedures     =============================
 end module PFAData_m
 
 ! $Log$
+! Revision 2.17  2005/03/16 23:59:42  vsnyder
+! Add allLinesForRadiometer and allLinesInCatalog to makePFA
+!
 ! Revision 2.16  2005/03/03 21:12:48  vsnyder
 ! Remove UseMolecule from WritePFAData, remove unreferenced symbols
 !
