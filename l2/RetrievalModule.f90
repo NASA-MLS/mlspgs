@@ -778,7 +778,7 @@ contains
             ! Destroy (i.e. clean up) the previous contents of
             ! AprioriMinusX (if any), so as not to have a memory
             ! leak.  Then make it look like apriori.
-            call cloneVector ( v(aprioriMinusX), apriori, &
+            call copyVector ( v(aprioriMinusX), apriori, clone=.true., &
               & vectorNameText='_aprioriMinusX' )
 !           v(aprioriMinusX) = apriori - v(x)
             call subtractFromVector ( v(aprioriMinusX), v(x) )
@@ -2810,6 +2810,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.149  2002/07/04 00:34:55  vsnyder
+! Make aprioriMinusX apriori - x instead of -x
+!
 ! Revision 2.148  2002/07/02 01:38:06  vsnyder
 ! Quit if a a retrieve can't be done due to L2CF errors
 !
