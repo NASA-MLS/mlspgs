@@ -35,6 +35,9 @@ MODULE MLSL3Common
    CHARACTER (LEN=*), PARAMETER :: GEO_FIELD11 = 'Date'
    CHARACTER (LEN=*), PARAMETER :: GEO_FIELD12 = 'LocalSolarZenithAngle'
 
+   CHARACTER (LEN=*), PARAMETER :: DG_FIELD1 = 'LatRss'
+   CHARACTER (LEN=*), PARAMETER :: DG_FIELD2 = 'PerMisPoints'
+
    CHARACTER (LEN=*), PARAMETER :: DIM_NAME1 = 'nTimes'
    CHARACTER (LEN=*), PARAMETER :: DIM_NAME2 = 'nLevels'
    CHARACTER (LEN=*), PARAMETER :: DIM_NAME3 = 'nFreqs'
@@ -94,6 +97,9 @@ END MODULE MLSL3Common
 !=====================
 
 !# $Log$
+!# Revision 1.10  2001/10/04 18:23:31  nakamura
+!# Removed lev as dim for local solar fields.
+!#
 !# Revision 1.9  2001/09/27 17:47:08  nakamura
 !# Added stuff for local solar ancillary fields.
 !#
