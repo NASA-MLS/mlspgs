@@ -11,11 +11,12 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use DUMP_0, only: DUMP
   use MatrixModule_0, only: Add_Matrix_Blocks, Assignment(=), CheckIntegrity, & 
-    & CholeskyFactor, ClearRows, ColumnScale, Col_L1, CopyBlock, CreateBlock, & 
-    & DestroyBlock, Dump, GetDiagonal, GetMatrixElement, GetVectorFromColumn, & 
+    & CholeskyFactor, ClearRows, ColumnScale, Col_L1, CopyBlock, CreateBlock, CyclicJacobi, & 
+    & DenseCyclicJacobi, Densify, &
+    & DestroyBlock, Dump, FrobeniusNorm, GetDiagonal, GetMatrixElement, GetVectorFromColumn, & 
     & InvertCholesky, M_Absent, M_Column_Sparse, M_Banded, M_Full, &            
-    & MatrixElement_T, MaxAbsVal, MinDiag, Multiply, MultiplyMatrix_XY, &       
-    & MultiplyMatrix_XY_T, MultiplyMatrixVectorNoT, operator(+), &              
+    & MatrixElement_T, MaxAbsVal, MinDiag, Multiply, MultiplyMatrix_XTY, MultiplyMatrix_XY, &       
+    & MultiplyMatrix_XY_T, MultiplyMatrixVectorNoT, NullifyMatrix, operator(+), &              
     & operator(.TX.), ReflectMatrix, RowScale, ScaleBlock, SolveCholesky, &     
     & Sparsify, Spill, TransposeMatrix, UpdateDiagonal                                    
   use MLSCommon, only: RM, RV, R8, R4
@@ -34,9 +35,9 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   public :: Assignment(=), CheckIntegrity, CholeskyFactor, CholeskyFactor_1
   public :: ClearMatrix, ClearRows, ClearRows_1, ColumnScale, ColumnScale_1
   public :: CopyMatrix, CopyMatrixValue, CreateBlock, CreateBlock_1, CreateEmptyMatrix
-  public :: DestroyBlock, DestroyBlock_1, DestroyMatrix
+  public :: CyclicJacobi, DestroyBlock, DestroyBlock_1, DestroyMatrix
   public :: DestroyMatrixInDatabase, DestroyMatrixDatabase, Dump, Dump_Linf
-  public :: Dump_Struct, FindBlock, GetActualMatrixFromDatabase, GetDiagonal
+  public :: Dump_Struct, FindBlock, FrobeniusNorm, GetActualMatrixFromDatabase, GetDiagonal
   public :: GetDiagonal_1, GetFromMatrixDatabase, GetKindFromMatrixDatabase
   public :: GetMatrixElement, GetMatrixElement_1, GetVectorFromColumn
   public :: GetVectorFromColumn_1, InvertCholesky, InvertCholesky_1
@@ -57,7 +58,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   public :: operator(+), ReflectMatrix, RC_Info, RowScale, RowScale_1, ScaleMatrix
   public :: SolveCholesky, SolveCholesky_1, Spill, Spill_1
   public :: Sparsify_1, Sparsify, TransposeMatrix
-  public :: UpdateDiagonal, UpdateDiagonal_1, UpdateDiagonalVec_1
+  public :: UpdateDiagonal, UpdateDiagonal_1, UpdateDiagonalSPD_1, UpdateDiagonalVec_1
 
 ! =====     Defined Operators and Generic Identifiers     ==============
 
@@ -90,6 +91,10 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
     module procedure CreateBlock_1
   end interface
 
+  interface CyclicJacobi
+    module procedure CyclicJacobi_1
+  end interface
+
   interface DestroyBlock
     module procedure DestroyBlock_1
   end interface
@@ -101,6 +106,10 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 
   interface Dump
     module procedure Dump_Matrix, Dump_Matrix_Database, Dump_Matrix_in_Database
+  end interface
+
+  interface FrobeniusNorm
+    module procedure FrobeniusNorm_1
   end interface
 
   interface GetDiagonal
@@ -193,7 +202,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   end interface
 
   interface UpdateDiagonal
-    module procedure UpdateDiagonal_1, UpdateDiagonalVec_1
+    module procedure UpdateDiagonal_1, UpdateDiagonalSPD_1, UpdateDiagonalVec_1
   end interface
 
   integer, parameter :: K_Empty = 0                    ! Empty database element
@@ -892,6 +901,168 @@ contains ! =====     Public Procedures     =============================
     end subroutine DefineInfo
   end subroutine CreateEmptyMatrix
 
+  ! ----------------------------------------------- CyclicJacobi_1 --------
+  subroutine CyclicJacobi_1 ( A, V, eps, tol )
+    ! Implements the blockwise cyclic Jacobi algoritm (Golub and VanLoan 3rd ed.
+    ! Section 8.4.8).  Note that while the matrix is expected to be
+    ! symmetric, we do need to have both halves stored.
+    type(Matrix_T), intent(inout) :: A ! Matrix to diagonalize, 
+              ! returned with eigen values on diagonal, ~0 off diagonal.
+    type(Matrix_T), intent(inout) :: V ! Eigen vector matrix output, assumed created
+              ! appropriately
+    real(rm), optional, intent(in) :: EPS ! Smallest value to go for
+    real(rm), optional, intent(in) :: TOL ! Or as fraction of norm
+    ! Local variables
+    integer :: N                        ! Size of matrix
+    integer :: P, Q, J                  ! Loop indices
+    integer :: SWEEP                    ! Seep counter
+    real(rm) :: MYEPS, MYTOL            ! Potential copies of eps and tol
+    real(rm) :: NORM                    ! Norm of matrix
+    real(rm), dimension(:,:), pointer :: VBIT ! Part of V matrix returned by CyclicJacobi_1
+    type(MatrixElement_T) :: VPP, VQP, VPQ, VQQ ! Bits of V
+    type(MatrixElement_T) :: TAU1, TAU2, RESULT1, RESULT2 ! Temporary blocks
+    ! Executable code
+    ! Do some setup
+    if ( present ( eps ) ) then
+      myEps = eps
+    else
+      myTol = sqrt ( tiny ( 0.0_rm ) )
+      if ( present ( tol ) ) myTol = tol
+      myEps = myTol * FrobeniusNorm ( A )
+    endif
+    n = A%row%nb
+    ! Set V to the identity
+    call ClearMatrix ( V )
+    call UpdateDiagonal ( V, 1.0_rv )
+    ! For 1 block matrices, we just call the low level routine
+    if ( n == 1 ) then
+      call Densify ( A%block(1,1) )
+      call Densify ( V%block(1,1) )
+      call DenseCyclicJacobi ( A%block(1,1)%values, V%block(1,1)%values, eps=eps, tol=tol )
+      return
+    end if
+    ! Now loop through the `sweeps'
+    sweep = 0
+    do
+      sweep = sweep + 1
+      if ( sweep > 10 ) exit
+      norm = FrobeniusNorm ( A, lowerOff=.true. )
+      call output ( 'Sweep: ' )
+      call output ( norm )
+      call output ( ' / ' )
+      call output ( myEps, advance='yes' )
+      ! Get out if sufficiently diagonal
+      if ( norm <= myEps ) exit
+      ! Otherwise, walk through matrix
+      do p = 1, n-1
+        do q = p+1, n
+!           call output ( 'Combination: ' )
+!           call output ( p )
+!           call output ( ', ' )
+!           call output ( q, advance='yes' )
+          ! Construct a notional J matrix which is the identity
+          ! except that it has
+          !  Vpp Vpq
+          !  Vqp Vqq
+          ! embeded in it at block rows/cols p and p
+          ! We then rotate A to A = J^T A J, also change V to VJ
+          ! Note that this only affects block rows and columns p and q of A and V
+          ! So code specially to take advantage of that.
+          call CyclicJacobi ( &
+            & A%block(p,p), A%block(q,p), A%block(p,q), A%block(q,q), &
+            & Vpp, Vqp, Vpq, Vqq, Vbit, tol=1e-9 )
+          ! This next bit is sort of taken from section 5.1.9 of Golub and Van Loan
+          ! (3rd edition), but expanded to be blockwise
+          ! Update A with J^T A J
+          ! First do A -> J^T A
+          do j = 1, n
+            ! tau1 => Mpj
+            ! tau2 => Mqj
+            tau1 = A%block(p,j)         ! *NOTE* Defined assignment
+            tau2 = A%block(q,j)         ! *NOTE* Defined assignement
+            ! We're trying to do:
+            !  Mpj = Vpp^T * tau1 + Vqp^T * tau2
+            !  Mqj = Vpq^T * tau1 + Vqq^T * tau2
+            call MultiplyMatrix_XTY ( Vpp, tau1, result1 )
+            call MultiplyMatrix_XTY ( Vqp, tau2, result1, update=.true. )
+            
+            call MultiplyMatrix_XTY ( Vpq, tau1, result2 )
+            call MultiplyMatrix_XTY ( Vqq, tau2, result2, update=.true. )
+            ! Assign result.  This uses defined assignment, which destroys the LHS
+            ! which in turn destroys tau1 and tau2
+            A%block(p,j) = result1      ! *NOTE* Defined assignment
+            A%block(q,j) = result2      ! *NOTE* Defined assignment
+            ! Nullify result so next operation doesn't destroy it
+            call NullifyMatrix ( result1 )
+            call NullifyMatrix ( result2 )
+            ! Also nullify tau1 and tau2, just to be sure
+            call NullifyMatrix ( tau1 )
+            call NullifyMatrix ( tau2 )
+          end do
+          ! Now do A -> A J
+          do j = 1, n
+            ! tau1 => Ajp
+            ! tau2 => Ajq
+            tau1 = A%block(j,p)         ! *NOTE* Defined assignment
+            tau2 = A%block(j,q)         ! *NOTE* Defined assignment
+            ! We're trying to do
+            !  Ajp = tau1 * Vpp + tau2 * Vqp
+            !  Ajq = tau1 * Vpq + tau2 * Vqq
+            call MultiplyMatrix_XY ( tau1, Vpp, result1 )
+            call MultiplyMatrix_XY ( tau2, Vqp, result1, update=.true. )
+
+            call MultiplyMatrix_XY ( tau1, Vpq, result2 )
+            call MultiplyMatrix_XY ( tau2, Vqq, result2, update=.true. )
+
+            ! Assign result.  This uses defined assignment, which destroys the LHS
+            ! which in turn destroys tau1 and tau2
+            A%block(j,p) = result1      ! *NOTE* Defined assignment
+            A%block(j,q) = result2      ! *NOTE* Defined assignment
+            ! Nullify result so next operation doesn't destroy it
+            call NullifyMatrix ( result1 )
+            call NullifyMatrix ( result2 )
+            ! Also nullify tau1 and tau2, just to be sure
+            call NullifyMatrix ( tau1 )
+            call NullifyMatrix ( tau2 )
+          end do
+          ! Now update V -> V J
+          do j = 1, n
+            ! tau1 => Vjp
+            ! tau2 => Vjq
+            tau1 = V%block(j,p)         ! *NOTE* Defined assignment
+            tau2 = V%block(j,q)         ! *NOTE* Defined assignment
+            ! We're trying to do (note the somewhat double meaning of V in this comment)
+            !  Vjp = tau1 * Vpp + tau2 * Vqp
+            !  Vjq = tau1 * Vpq + tau2 * Vqq
+            call MultiplyMatrix_XY ( tau1, Vpp, result1 )
+            call MultiplyMatrix_XY ( tau2, Vqp, result1, update=.true. )
+
+            call MultiplyMatrix_XY ( tau1, Vpq, result2 )
+            call MultiplyMatrix_XY ( tau2, Vqq, result2, update=.true. )
+
+            ! Assign result.  This uses defined assignment, which destroys the LHS
+            ! which in turn destroys tau1 and tau2
+            V%block(j,p) = result1      ! *NOTE* Defined assignment
+            V%block(j,q) = result2      ! *NOTE* Defined assignment
+            ! Nullify result so next operation doesn't destroy it
+            call NullifyMatrix ( result1 )
+            call NullifyMatrix ( result2 )
+            ! Also nullify tau1 and tau2, just to be sure
+            call NullifyMatrix ( tau1 )
+            call NullifyMatrix ( tau2 )
+          end do
+          ! Get rid of Vbit, which destroys all the Vxxs
+          call Deallocate_test ( Vbit, 'Vbit in CyclicJacobi_1', ModuleName )
+          ! Let's nullify them anyway to be sure
+          call NullifyMatrix ( Vpp )
+          call NullifyMatrix ( Vqp )
+          call NullifyMatrix ( Vpq )
+          call NullifyMatrix ( Vqq )
+        end do ! End loop over q
+      end do ! End loop over p
+    end do ! End sweep loop
+  end subroutine CyclicJacobi_1
+          
   ! ---------------------------------------------  DestroyBlock_1  -----
   subroutine DestroyBlock_1 ( A )
   ! Destroy the "block" component of a matrix.  This leaves its structure
@@ -1007,6 +1178,31 @@ contains ! =====     Public Procedures     =============================
     end do
     findBlock = 0
   end function FindBlock
+
+  ! --------------------------------------------------  FrobeniusNorm_1 ---
+  real(rm) function FrobeniusNorm_1 ( M, lowerOff )
+    ! Compute the Frobenius norm of the matrix (sum of square of all 
+    ! elements).  Possibly only those below diagonal
+    type ( matrix_t ), intent(in) :: M
+    logical, optional, intent(in) :: LOWEROFF
+    ! Local variables
+    logical :: MYLOWEROFF
+    integer :: R, C, R1              ! Indicies
+    ! Executable code
+    myLowerOff = .false.
+    if ( present ( lowerOff ) ) myLowerOff = lowerOff
+    FrobeniusNorm_1 = 0.0
+    r1 = 1
+    do c = 1, m%col%nb
+      if ( myLowerOff ) then
+        FrobeniusNorm_1 = FrobeniusNorm_1 + FrobeniusNorm ( m%block(c,c), lowerOff=.true. )
+        r1 = c+1
+      end if
+      do r = r1, m%row%nb
+        FrobeniusNorm_1 = FrobeniusNorm_1 + FrobeniusNorm ( m%block(c,c) )
+      end do
+    end do
+  end function FrobeniusNorm_1
 
   ! ------------------------------------  GetActualMatrixFromDatabse ---
   subroutine GetActualMatrixFromDatabase ( DatabaseElement, m )
@@ -1943,7 +2139,7 @@ contains ! =====     Public Procedures     =============================
   ! -------------------------------------------  UpdateDiagonal_1  -----
   subroutine UpdateDiagonal_1 ( A, LAMBDA, SQUARE, INVERT )
   ! Add LAMBDA to the diagonal of A.
-    type(Matrix_SPD_T), intent(inout) :: A
+    type(Matrix_T), intent(inout) :: A
     real(rv), intent(in) :: LAMBDA
     logical, intent(in), optional :: SQUARE ! Update with square of lambda
     logical, intent(in), optional :: INVERT ! Update with inverse of (square
@@ -1964,11 +2160,21 @@ contains ! =====     Public Procedures     =============================
       end if
     end if
     
-    do i = 1, min(a%m%row%nb,a%m%col%nb)
-      call updateDiagonal ( a%m%block(i,i), myLambda )
+    do i = 1, min(a%row%nb,a%col%nb)
+      call updateDiagonal ( a%block(i,i), myLambda )
     end do
 
   end subroutine UpdateDiagonal_1
+
+  ! ---------------------------------------- UpdateDiagonal_SPD --------
+  subroutine UpdateDiagonalSPD_1 ( A, LAMBDA, SQUARE, INVERT )
+    ! Add LAMBDA to the diagonal of A.
+    type(Matrix_SPD_T), intent(inout) :: A
+    real(rv), intent(in) :: LAMBDA
+    logical, intent(in), optional :: SQUARE ! Update with square of lambda
+    logical, intent(in), optional :: INVERT ! Update with inverse of (square
+    call UpdateDiagonal_1 ( A%m, LAMBDA, SQUARE, INVERT )
+  end subroutine UpdateDiagonalSPD_1
 
   ! ----------------------------------------  UpdateDiagonalVec_1  -----
   subroutine UpdateDiagonalVec_1 ( A, X, SUBTRACT, SQUARE, INVERT )
@@ -2332,6 +2538,10 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.98  2004/01/29 03:31:58  livesey
+! Added CyclicJacobi stuff.  Also version of UpdateDiagonal that doesn't
+! insist on SPD matrices
+!
 ! Revision 2.97  2004/01/24 03:22:20  livesey
 ! More checking in multiply
 !
