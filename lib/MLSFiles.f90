@@ -11,15 +11,14 @@ module MLSFiles               ! Utility file routines
     & he5_gdopen, he5_gdclose, &
     & HE5F_ACC_TRUNC, HE5F_ACC_RDONLY, HE5F_ACC_RDWR
   use machine, only: io_error
-  use MLSCommon, only: i4, BareFNLen, FileNameLen, MLSFile_T
+  use MLSCommon, only: i4, BareFNLen, MLSFile_T
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
-    & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
+    & MLSMSG_DeAllocate, MLSMSG_Error
   use MLSStrings, only: Capitalize, LowerCase
   use MLSStringLists, only: ExtractSubString, &
     & ReplaceSubString, SortArray
   use output_m, only: blanks, output
   use SDPToolkit, only: &
-    & HDF5_ACC_CREATE, HDF5_ACC_RDONLY, HDF5_ACC_RDWR,  &
     & Pgs_pc_getReference, PGS_S_SUCCESS, &
     & PGSd_IO_Gen_RSeqFrm, PGSd_IO_Gen_RSeqUnf, & 
     & PGSd_IO_Gen_RDirFrm, PGSd_IO_Gen_RDirUnf, & 
@@ -897,7 +896,6 @@ contains
     integer, parameter :: FH_ON_ERROR=-99
     integer, parameter :: DEFAULTRECLEN=0
     integer, parameter :: KEYWORDLEN=12			! Max length of keywords in OPEN(...)
-    integer(i4) :: myPC
     integer                       :: version, returnStatus
     logical       :: tiedup
     character (LEN=KEYWORDLEN) :: access, action, form, position, status
@@ -1348,7 +1346,7 @@ contains
     character(len=*), intent(in), optional :: Name
 
     ! Local variables
-    integer :: i, dim
+    integer :: i
     
     call output ( '============ MLS File Data Base ============', advance='yes' )
     call output ( ' ', advance='yes' )
@@ -1495,7 +1493,7 @@ contains
   function hdf2hdf5_fileaccess(FileAccesshdf4) result (FileAccesshdf5)
 
     use HDF5, only: &
-     & H5F_ACC_RDONLY_F, H5F_ACC_RDWR_F, H5F_ACC_TRUNC_F, H5F_ACC_EXCL_F
+     & H5F_ACC_RDONLY_F, H5F_ACC_RDWR_F, H5F_ACC_EXCL_F
     ! Arguments
 
     integer(i4), intent(IN)       :: FileAccesshdf4
@@ -1575,7 +1573,7 @@ contains
   function mls_sfstart(FileName, FileAccess, hdfVersion, addingmetadata)
     use HDF5, only: h5fopen_f, h5fcreate_f
     use HDF5, only: &
-     & H5F_ACC_RDONLY_F, H5F_ACC_RDWR_F, H5F_ACC_TRUNC_F, H5F_ACC_EXCL_F
+     & H5F_ACC_RDONLY_F, H5F_ACC_RDWR_F, H5F_ACC_TRUNC_F
     ! Arguments
 
     character (len=*), intent(in) :: FILENAME
@@ -1838,7 +1836,7 @@ contains
 ! which version to open the filename under
    use HDF5, only: h5fopen_f, h5fcreate_f, h5fis_hdf5_f
    use HDF5, only: &
-     & H5F_ACC_RDONLY_F, H5F_ACC_RDWR_F, H5F_ACC_TRUNC_F, H5F_ACC_EXCL_F
+     & H5F_ACC_RDONLY_F, H5F_ACC_RDWR_F, H5F_ACC_EXCL_F
 !
 ! External Variables
 !
@@ -2045,6 +2043,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.62  2005/01/07 00:36:51  vsnyder
+! Remove unused declarations
+!
 ! Revision 2.61  2004/10/13 00:50:32  vsnyder
 ! Remove USE for Reverse, which isn't used
 !
