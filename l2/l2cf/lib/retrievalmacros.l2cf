@@ -52,7 +52,7 @@
 ;;;!define(DGGFilename,{'!outpathl2gp/MLS-Aura_L2GP-DGG_!l2version_!day.he!hdfVersion'})
 ;;;!define(DGMFilename,{'!outpathl2aux/MLS-Aura_L2AUX-DGM_!l2version_!day.h!hdfVersion'})
 !define(CloudFilename, !dnl
-{!ifdef(flagUsingPCF,{L2AUX-DGM},!dnl
+{!ifdef(flagUsingPCF,{L2AUX-Cloud},!dnl
 {!outpathl2aux/MLS-Aura_L2AUX-Cloud_!l2version_!day.h!hdfVersion})})
 
 ;; DGG/DGM DirectWrite command may or may not include file name
@@ -542,6 +542,9 @@ Fill, quantity=otherDiagnostics.status!MFproduct, method=status, status=!statusH
 
 
 ; $Log$
+; Revision 1.88  2004/04/08 22:42:23  livesey
+; More agile flagging for R5 case.
+;
 ; Revision 1.87  2004/04/06 01:18:07  livesey
 ; Bug fix in status no-radiance flag.
 ;
