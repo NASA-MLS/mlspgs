@@ -6,12 +6,15 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 !=============================================================================
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
   use DUMP_0, only: DUMP
-  use Hdf, only: DFACC_READ, DFNT_CHAR8, DFNT_FLOAT32, DFNT_INT32, DFNT_FLOAT64
+  use Hdf, only: DFACC_READ, DFACC_CREATE, DFACC_RDWR, &
+    & DFNT_CHAR8, DFNT_FLOAT32, DFNT_INT32, DFNT_FLOAT64
   use HDFEOS, only: SWATTACH, SWDETACH, SWINQDIMS
   use Intrinsic ! "units" type literals, beginning with L_
   use MLSCommon, only: R4, R8
-  use MLSFiles, only: FILENOTFOUND, HDFVERSION_4, HDFVERSION_5, &
-    & MLS_HDF_VERSION, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
+  use MLSFiles, only: FILENOTFOUND, &
+    & HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, &
+    & MLS_HDF_VERSION, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, MLS_EXISTS
+  use MLSHDFEOS, only: mls_swattach, mls_swdetach
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error, MLSMSG_Warning, MLSMSG_Debug
   use MLSStrings, only: Capitalize, ExtractSubString, GetStringHashElement, &
@@ -46,6 +49,11 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   interface ReadL2GPData
     module procedure ReadL2GPData_fileID
     module procedure ReadL2GPData_fileName
+  end interface
+
+  interface AppendL2GPData
+    module procedure AppendL2GPData_fileID
+    module procedure AppendL2GPData_fileName
   end interface
 
 ! interface my_swwrattr 
@@ -1397,7 +1405,7 @@ contains ! =====     Public Procedures     =============================
     ! Write data to the fields
 
     stride(1) = 1
-    start(1) = 0     ! myOffset
+    start(1) = myOffset
     edge(1) = l2gp%nTimes
 
     status = mls_swwrfld(swid, 'Latitude', start, stride, edge, &
@@ -1426,14 +1434,14 @@ contains ! =====     Public Procedures     =============================
 
     if ( l2gp%nLevels > 0 ) then
        edge(1) = l2gp%nLevels
-       ! start(1)=0 ! needed because offset may have made this /=0
+       start(1)=0 ! needed because offset may have made this /=0
        status = mls_swwrfld(swid, 'Pressure', start, stride, edge, &
             real(l2gp%pressures), hdfVersion=HDFVERSION_4)
     end if
 
     if ( l2gp%nFreqs > 0 ) then
        edge(1) = l2gp%nFreqs
-       ! start(1)=0 ! needed because offset may have made this /=0
+       start(1)=0 ! needed because offset may have made this /=0
        status = mls_swwrfld(swid, 'Frequency', start, stride, edge, &
             real(l2gp%frequency), hdfVersion=HDFVERSION_4)
     end if
@@ -1499,7 +1507,7 @@ contains ! =====     Public Procedures     =============================
 
     start = 0
     stride = 1
-    ! start(3)= myOffset
+    start(3)= myOffset
     edge(1) = l2gp%nFreqs
     edge(2) = l2gp%nLevels
     edge(3) = l2gp%nTimes
@@ -1547,7 +1555,7 @@ contains ! =====     Public Procedures     =============================
             & 'Failed to detach  from swath interface' )
     end if
 
-    !-------------------------------------
+  !-------------------------------------
   end subroutine OutputL2GP_writeData_hdf4
   !-------------------------------------
 
@@ -1990,7 +1998,7 @@ contains ! =====     Public Procedures     =============================
     end if
 
 
-    !-------------------------------------
+  !-------------------------------------
   end subroutine OutputL2GP_writeData_hdf5
   !-------------------------------------
 
@@ -2320,8 +2328,8 @@ contains ! =====     Public Procedures     =============================
   end subroutine WriteL2GPData
   !-------------------------------------------------------------
 
-
-  subroutine AppendL2GPData(l2gp,l2FileHandle,swathName,offset, hdfVersion)
+  subroutine AppendL2GPData_fileID(l2gp, l2FileHandle, &
+    & swathName, offset, TotNumProfs, hdfVersion)
     ! sticks l2gp into the swath swathName in the file pointed at by
     ! l2FileHandle,starting at the profile number "offset" (First profile
     ! in the file has offset==0). If this runs off the end of the swath, 
@@ -2332,9 +2340,15 @@ contains ! =====     Public Procedures     =============================
     type (L2GPData_T), intent(INOUT) :: l2gp
     character (LEN=*), optional, intent(IN) ::swathName!default->l2gp%swathName
     integer,intent(IN),optional::offset
+    integer,intent(IN),optional::TotNumProfs
     integer, optional, intent(in) :: hdfVersion
     ! Local
+    integer :: actual_ntimes
     integer :: myhdfVersion
+    integer :: status
+    logical :: swath_exists
+    integer :: swathid
+    character (len=L2GPNameLen) :: myswathName
 
     ! Executable code
     if (present(hdfVersion)) then
@@ -2342,19 +2356,111 @@ contains ! =====     Public Procedures     =============================
     else
       myhdfVersion = L2GPDEFAULT_HDFVERSION
     endif
+    myswathName = l2gp%name
+    if ( present(swathName) ) myswathName = swathName
+
+    swathid = mls_swattach(L2FileHandle, trim(myswathName), &
+      & hdfVersion=myhdfVersion)
+    swath_exists = ( swathid > 0 )
+    if ( swath_exists ) then
+      status = mls_swdetach(swathid)
+    else
+      ! Must create swath in file w/o disturbing other swaths
+      actual_ntimes = l2gp%nTimes
+      if ( present(TotNumProfs) ) l2gp%nTimes = TotNumProfs
+      select case (myhdfVersion)
+      case (HDFVERSION_4)
+        call OutputL2GP_createFile_hdf4 (l2gp, L2FileHandle, myswathName)
+      case (HDFVERSION_5)
+        call OutputL2GP_createFile_hdf5 (l2gp, L2FileHandle, myswathName)
+      case default
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+         & 'Illegal hdf version in AppendL2GPData_fileName')
+      end select
+      l2gp%nTimes = actual_ntimes
+    endif
 
     if (myhdfVersion == HDFVERSION_4) then
-      call OutputL2GP_writeGeo_hdf4 (l2gp, l2FileHandle, swathName, offset)
-      call OutputL2GP_writeData_hdf4 (l2gp, l2FileHandle, swathName, offset)
+      call OutputL2GP_writeGeo_hdf4 (l2gp, l2FileHandle, myswathName, offset)
+      call OutputL2GP_writeData_hdf4 (l2gp, l2FileHandle, myswathName, offset)
     elseif (myhdfVersion /= HDFVERSION_5) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &
       & "Unrecognized hdfVersion passed to AppendL2GPData" )
     else
-      call OutputL2GP_writeGeo_hdf5 (l2gp, l2FileHandle, swathName, offset)
-      call OutputL2GP_writeData_hdf5 (l2gp, l2FileHandle, swathName, offset)
+      call OutputL2GP_writeGeo_hdf5 (l2gp, l2FileHandle, myswathName, offset)
+      call OutputL2GP_writeData_hdf5 (l2gp, l2FileHandle, myswathName, offset)
     endif
 
-  end subroutine AppendL2GPData
+  end subroutine AppendL2GPData_fileID
+
+  ! ---------------------- AppendL2GPData_fileName  -----------------------------
+
+  subroutine AppendL2GPData_fileName(l2gp, fileName, &
+    & swathname, offset, TotNumProfs, hdfVersion)
+    !------------------------------------------------------------------------
+
+    ! Given a file name,
+    ! This routine does an append operation (see AppendL2GPData_fileID)
+    ! If the file doesn't exist yet, hopefully, it'll create it
+
+    ! Arguments
+
+    character (len=*), intent(in) :: fileName ! Name of swath
+    type( l2GPData_T ), intent(inout) :: l2gp ! Result
+    character (LEN=*), optional, intent(IN) ::swathName!default->l2gp%swathName
+    integer,intent(IN),optional :: offset
+    integer,intent(IN),optional :: TotNumProfs
+    integer, optional, intent(in) :: hdfVersion
+    ! logical, optional, intent(in) :: clean   ! Not implemented yet
+
+    ! Local
+    integer :: L2FileHandle
+    integer :: record_length
+    integer :: status
+    integer :: the_hdfVersion
+    logical :: myClean
+    logical :: file_exists
+    integer :: file_access
+    integer :: actual_ntimes
+    
+    ! Executable code
+    myClean = .false.
+    ! if ( present(clean) ) myClean = clean
+    file_exists = ( mls_exists(trim(FileName)) == 0 )
+    the_hdfVersion = L2GPDEFAULT_HDFVERSION
+    if ( present(hdfVersion) ) the_hdfVersion = hdfVersion
+    if ( the_hdfVersion == WILDCARDHDFVERSION ) then
+      ! Does the file exist, yet?
+      if ( .not. file_exists ) then
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'File not found; make sure the name and path are correct' &
+          & // trim(fileName) )
+      endif
+      the_hdfVersion = mls_hdf_version(FileName, hdfVersion)
+      if ( the_hdfVersion == FILENOTFOUND ) &
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'File not found; make sure the name and path are correct' &
+          & // trim(fileName) )
+    endif
+    if ( file_exists ) then
+      file_access = DFACC_RDWR
+    else
+      file_access = DFACC_CREATE
+    endif
+    L2FileHandle = mls_io_gen_openF('swopen', .TRUE., status, &
+       & record_length, file_access, FileName=FileName, &
+       & hdfVersion=the_hdfVersion, debugOption=.false. )
+    if ( status /= 0 ) &
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+       & "Unable to open L2gp file: " // trim(FileName) // ' for appending')
+    call AppendL2GPData_fileID(l2gp, L2FileHandle, swathname, offset, &
+      & hdfVersion=the_hdfVersion)
+    status = mls_io_gen_closeF('swclose', L2FileHandle, FileName=FileName, &
+      & hdfVersion=the_hdfVersion)
+    if ( status /= 0 ) &
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+       & "Unable to close L2gp file: " // trim(FileName) // ' after appending')
+  end subroutine AppendL2GPData_fileName
 
   ! ------------------------------------------ DUMP_L2GP_DATABASE ------------
 
@@ -2526,6 +2632,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.65  2003/06/09 22:44:09  pwagner
+! Uses mls_swcreate
+!
 ! Revision 2.64  2003/04/21 19:34:59  pwagner
 ! Restored reading/writing char-valued Status datafield
 !
