@@ -183,6 +183,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private not_used_here
 !---------------------------------------------------------------------------
 
   ! Parameters for the KIND component of objects of type(MatrixElement_T):
@@ -3919,9 +3920,15 @@ contains ! =====     Public Procedures     =============================
     call deallocate_test ( bm, 'bm', ModuleName )
   end subroutine TestBlock
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.85  2002/10/07 23:24:43  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.84  2002/09/23 23:18:59  vsnyder
 ! Comment out declarations used by commented-out broken code in Add_Matrix_Blocks
 !
