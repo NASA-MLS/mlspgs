@@ -37,7 +37,7 @@
 ; ------------------------------------------------------- File IO information
 
 ;; These macros define the format of our output files
-!ifdef(hdfVersion,{},{!define(hdfVersion,4)})
+!ifdef(hdfVersion,{},{!define(hdfVersion,5)})
 
 ;; These macros define our standard output filenames
 !define(l2gpFileName, !dnl
@@ -450,6 +450,9 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
 })
 
 ; $Log$
+; Revision 1.82  2004/03/10 23:00:29  pwagner
+; Exclude file field from dgg/dgm directwrites if flagAutoSplitSources
+;
 ; Revision 1.81  2004/02/13 21:12:23  livesey
 ; Added allHiResProducts
 ;
