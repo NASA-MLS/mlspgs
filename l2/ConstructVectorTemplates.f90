@@ -6,7 +6,7 @@ module ConstructVectorTemplates ! Construct a template for a vector
 !=============================================================================
 
   use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
-  use INIT_TABLES_MODULE, only: F_QUANTITIES, F_SIGNALS
+  use INIT_TABLES_MODULE, only: F_QUANTITIES
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use Output_M, only: Output
   use QuantityTemplates, only: QuantityTemplate_T
@@ -71,6 +71,7 @@ contains ! =====     Public Procedures     =============================
     nSelections = 0
     do i = 2, nsons(root)     ! Skip the "vectorTemplate" name
       son = subtree(i,root)   ! An "assign" vertex of the abstract syntax tree
+      ! Currently only one field, but we'll leave the case statement in to be sure
       select case ( decoration(subtree(1,son)) )
       case ( f_quantities )
         do j = 2, nsons(son)  ! Skip the "quantities" name
@@ -93,9 +94,6 @@ contains ! =====     Public Procedures     =============================
             end if
           end do ! k = 1, nSelections - 1
         end do ! j = 2, nsons(son)
-      case ( f_signals ) ! ??? Needs work here ???
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-          "This version can't handle the SIGNALS field of a vector template" )
       end select
     end do
 
@@ -117,6 +115,9 @@ END MODULE ConstructVectorTemplates
 
 !
 ! $Log$
+! Revision 2.5  2001/10/15 22:05:20  livesey
+! Got rid of the signals stuff which was never implemented
+!
 ! Revision 2.4  2001/04/10 22:27:47  vsnyder
 ! Nullify explicitly instead of with <initialization> so as not to give
 ! pointers the SAVE attribute.  <initialization> is NOT executed on each
