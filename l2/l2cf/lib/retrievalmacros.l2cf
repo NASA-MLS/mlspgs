@@ -151,6 +151,7 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
 
 ;; This macro defines a set of full forward models under a given name
 ;; $1, for band $2, signal $3.
+;; -------------------------- 2D forward models
 !define(makeSimpleFwm,{!dnl
   $1: ForwardModel, type=full, $
     signals=$3, $
@@ -217,8 +218,78 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
     integrationGrid=vGridTangent, $
     tangentGrid=vGridTangent, $
     /do_conv, /atmos_der, /do_baseline})
+; ------------------ 1D forward models
+!define(makeSimpleFwm1d,{!dnl
+  $1_1d: ForwardModel, type=full, $
+    signals=$3, $
+    phiWindow=0.0, $
+    molecules = !simplerMolecules($2), $
+    moleculeDerivatives = !simplerMoleculeFamilies($2), $
+    integrationGrid=vGridTangent, $
+    tangentGrid=vGridTangent, $
+    /do_conv, /do_freq_avg, /atmos_der, /temp_der, /do_baseline
+  $1_mono_1d: ForwardModel, type=full, $
+    signals=$3, $
+    phiWindow=0.0, $
+    molecules = !simplerMolecules($2), $
+    moleculeDerivatives = !simplerMoleculeFamilies($2), $
+    integrationGrid=vGridTangent, $
+    tangentGrid=vGridTangent, $
+    /do_conv, /atmos_der, /temp_der, /do_baseline
+  $1_notd_1d: ForwardModel, type=full, $
+    signals=$3, $
+    phiWindow=0.0, $
+    molecules = !simplerMolecules($2), $
+    moleculeDerivatives = !simplerMoleculeFamilies($2), $
+    integrationGrid=vGridTangent, $
+    tangentGrid=vGridTangent, $
+    /do_conv, /do_freq_avg, /atmos_der, /do_baseline
+  $1_mono_notd_1d: ForwardModel, type=full, $
+    signals=$3, $
+    phiWindow=0.0, $
+    molecules = !simplerMolecules($2), $
+    moleculeDerivatives = !simplerMoleculeFamilies($2), $
+    integrationGrid=vGridTangent, $
+    tangentGrid=vGridTangent, $
+    /do_conv, /atmos_der, /do_baseline})
+!define(makeFwm,{!dnl
+  $1_1d: ForwardModel, type=full, $
+    signals=$3, $
+    phiWindow=0.0, $
+    molecules = !molecules($2), $
+    moleculeDerivatives = !moleculeFamilies($2), $
+    integrationGrid=vGridTangent, $
+    tangentGrid=vGridTangent, $
+    /do_conv, /do_freq_avg, /atmos_der, /temp_der, /do_baseline
+  $1_mono_1d: ForwardModel, type=full, $
+    signals=$3, $
+    phiWindow=0.0, $
+    molecules = !molecules($2), $
+    moleculeDerivatives = !moleculeFamilies($2), $
+    integrationGrid=vGridTangent, $
+    tangentGrid=vGridTangent, $
+    /do_conv, /atmos_der, /temp_der, /do_baseline
+  $1_notd_1d: ForwardModel, type=full, $
+    signals=$3, $
+    phiWindow=0.0, $
+    molecules = !molecules($2), $
+    moleculeDerivatives = !moleculeFamilies($2), $
+    integrationGrid=vGridTangent, $
+    tangentGrid=vGridTangent, $
+    /do_conv, /do_freq_avg, /atmos_der, /do_baseline
+  $1_mono_notd_1d: ForwardModel, type=full, $
+    signals=$3, $
+    phiWindow=0.0, $
+    molecules = !molecules($2), $
+    moleculeDerivatives = !moleculeFamilies($2), $
+    integrationGrid=vGridTangent, $
+    tangentGrid=vGridTangent, $
+    /do_conv, /atmos_der, /do_baseline})
 
 ; $Log$
+; Revision 1.25  2002/10/09 00:48:23  livesey
+; Split forward models into simple and otherwise
+;
 ; Revision 1.24  2002/10/03 21:36:00  livesey
 ; Changed forward models to use simplerMolecules lists
 ;
