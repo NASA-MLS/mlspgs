@@ -722,7 +722,11 @@ contains ! =====     Public Procedures     =============================
     ! are too big to keep all chunks stored in memory
     ! so instead write them out chunk-by-chunk
     use MLSCommon, only: MLSCHUNK_T
-    use MLSFiles, only: HDFVERSION_4, HDFVERSION_5
+    use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, &
+      & GetPCFromRef, split_path_name
+    use MLSL2Options, only: PENALTY_FOR_NO_METADATA, CREATEMETADATA, PCF, &
+      & PCFL2CFSAMECASE, DEFAULT_HDFVERSION_WRITE
+    use MLSPCF2, only: mlspcf_l2fwm_full_start, mlspcf_l2fwm_full_end
     use VectorsModule, only: VectorValue_T
 
     type (VectorValue_T), intent(in) :: QUANTITY
@@ -731,26 +735,49 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: HDFVERSION   ! Version of HDF file to write out
     integer, intent(in) :: CHUNKNO      ! Index into chunks
     type (MLSChunk_T), dimension(:), intent(in) :: CHUNKS
-
     ! Local parameters
+    logical, parameter :: DEBUG = .FALSE.
+    character (len=132) :: FILE_BASE    ! From the FILE location in string table
+    character (len=1024) :: FILENAME    ! The actual filename
+    integer :: L2fwmFileHandle, L2fwm_Version
     integer, parameter :: MAXFILES = 100             ! Set for an internal array
-
-    ! Saved variable - used to work out file information.
-    integer, dimension(maxFiles), save :: CREATEDFILENAMES = 0
     integer, save :: NOCREATEDFILES=0   ! Number of files created
 
-    ! Local variables
+    character (len=132) :: path
+    integer :: ReturnStatus
+    ! Saved variable - used to work out file information.
+    integer, dimension(maxFiles), save :: CREATEDFILENAMES = 0
     ! executable code
 
+    ! Setup information, sanity checks etc.
+    call get_string ( file, file_base, strip=.true. )
+    l2fwm_Version = 1
+    if ( PCF ) then
+      call split_path_name(file_base, path, file_base)
+      if ( DEBUG ) call output('file_base after split: ', advance='no')
+      if ( DEBUG ) call output(trim(file_base), advance='yes')
+
+      L2fwmFileHandle = GetPCFromRef(file_base, mlspcf_l2fwm_full_start, &
+      & mlspcf_l2fwm_full_end, &
+      & PCFL2CFSAMECASE, returnStatus, L2fwm_Version, DEBUG, &
+      & exactName=Filename)
+    else
+      Filename = file_base
+      returnStatus = 0
+    end if
+    if ( returnStatus /= 0 ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+         &  "Error finding l2gp file matching:  "// trim(file_base))
+    endif
     ! Setup information, sanity checks etc.
     !if ( hdfVersion /= 4 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
     !  & 'Unsupported hdfVersion for directWrite' )
     select case (hdfversion)
     case (HDFVERSION_4)
-      call DirectWrite_hdf4 ( quantity, sdName, file, &
+      call DirectWrite_hdf4 ( quantity, sdName, file, fileName, &
         & chunkNo, chunks )
     case (HDFVERSION_5)
-      call DirectWrite_hdf5 ( quantity, sdName, file, &
+      call DirectWrite_hdf5 ( quantity, sdName, file, fileName, &
         & chunkNo, chunks )
     case default
       call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -759,7 +786,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine DirectWrite
 
   ! ----------------------------------------------- DirectWrite_hdf4 --------
-  subroutine DirectWrite_hdf4 ( quantity, sdName, file, &
+  subroutine DirectWrite_hdf4 ( quantity, sdName, file, filename, &
     & chunkNo, chunks )
 
     use Intrinsic, only: L_None
@@ -771,7 +798,8 @@ contains ! =====     Public Procedures     =============================
 
     type (VectorValue_T), intent(in) :: QUANTITY
     integer, intent(in) :: SDNAME       ! Name of sd in output file
-    integer, intent(in) :: FILE         ! Name of output file
+    integer, intent(in) :: FILE       ! Name of output file
+    character(len=*), intent(in) ::     FILENAME   ! Name of output file
     integer, intent(in) :: CHUNKNO      ! Index into chunks
     type (MLSChunk_T), dimension(:), intent(in) :: CHUNKS
 
@@ -784,7 +812,7 @@ contains ! =====     Public Procedures     =============================
     integer, save :: NOCREATEDFILES=0   ! Number of files created
 
     ! Local variables
-    character (len=1024) :: FILENAME    ! The actual filename
+    ! character (len=1024) :: FILENAME    ! The actual filename
     character (len=1024) :: SDNAMESTR   ! SDName as a string
     logical :: CREATEFILE               ! Set if file needs to be created
     integer :: FILEID                   ! File handle
@@ -800,7 +828,7 @@ contains ! =====     Public Procedures     =============================
     ! executable code
 
     ! Setup information, sanity checks etc.
-    call get_string ( file, filename, strip=.true. )
+    ! call get_string ( file, filename, strip=.true. )
     call get_string ( sdName, sdNameStr, strip=.true. )
     if ( quantity%template%frequencyCoordinate == L_None ) then
       noDims = 2
@@ -881,7 +909,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine DirectWrite_hdf4
 
   ! ----------------------------------------------- DirectWrite_hdf5 --------
-  subroutine DirectWrite_hdf5 ( quantity, sdName, file, &
+  subroutine DirectWrite_hdf5 ( quantity, sdName, file, fileName, &
     & chunkNo, chunks )
 
     use HDF5, only: h5dopen_f
@@ -897,6 +925,7 @@ contains ! =====     Public Procedures     =============================
     type (VectorValue_T), intent(in) :: QUANTITY
     integer, intent(in) :: SDNAME       ! Name of sd in output file
     integer, intent(in) :: FILE         ! Name of output file
+    character(len=*), intent(in) :: FILENAME  ! Name of output file
     integer, intent(in) :: CHUNKNO      ! Index into chunks
     type (MLSChunk_T), dimension(:), intent(in) :: CHUNKS
 
@@ -909,24 +938,30 @@ contains ! =====     Public Procedures     =============================
     integer, save :: NOCREATEDFILES=0   ! Number of files created
 
     ! Local variables
-    character (len=1024) :: FILENAME    ! The actual filename
-    character (len=1024) :: SDNAMESTR   ! SDName as a string
+    ! character (len=1024) :: FILENAME    ! The actual filename
+    logical :: already_there
     logical :: CREATEFILE               ! Set if file needs to be created
+    logical, parameter :: DEEBUG = .false.
     integer :: FILEID                   ! File handle
-    integer :: SDINDEX                  ! Index of sd
+    integer :: first_maf
+    integer :: last_maf
+    type ( MLSChunk_T ) :: LASTCHUNK    ! The last chunk in the file
+    integer :: NODIMS                   ! Also index of maf dimension
+    integer :: Num_qty_values
     integer :: SDID                     ! Handle for sd
+    integer :: SDINDEX                  ! Index of sd
+    character (len=1024) :: SDNAMESTR   ! SDName as a string
+    integer :: SIZES(3)                 ! HDF array sizes
     integer :: STATUS                   ! Status flag
     integer :: START(3)                 ! HDF array starting position
     integer :: STRIDE(3)                ! HDF array stride
-    integer :: SIZES(3)                 ! HDF array sizes
-    integer :: NODIMS                   ! Also index of maf dimension
-    type ( MLSChunk_T ) :: LASTCHUNK    ! The last chunk in the file
-    logical :: already_there
+    integer :: total_DS_size
 
     ! executable code
+    Num_qty_values = size(quantity%values, 1)*size(quantity%values, 2)
 
     ! Setup information, sanity checks etc.
-    call get_string ( file, filename, strip=.true. )
+    ! call get_string ( file, filename, strip=.true. )
     call get_string ( sdName, sdNameStr, strip=.true. )
     if ( quantity%template%frequencyCoordinate == L_None ) then
       noDims = 2
@@ -956,21 +991,13 @@ contains ! =====     Public Procedures     =============================
     end if
 
     ! Create or access the SD
-    ! sdIndex = sfn2index ( fileID, trim(sdNameStr) )
     already_there = IsHDF5DSPresent(fileID, trim(sdNameStr))
     if ( .not. already_there ) then
       lastChunk = chunks(size(chunks))
       sizes(noDims) = lastChunk%lastMAFIndex - lastChunk%noMAFSUpperOverlap + 1
       sizes(noDims-1) = quantity%template%noSurfs
       if ( noDims == 3 ) sizes(1) = quantity%template%noChans
-      ! call h5sCreate_simple_f ( 3, int(shp, hSize_T), spaceID, status )
-      !sdId  = sfCreate ( fileID, trim(sdNameStr), DFNT_FLOAT32, &
-      !  & noDims, sizes )
-    ! else
-     ! call h5dopen_f ( fileID, trim(sdNameStr), sdIndex, status )
     end if
-    ! if ( sdId == -1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-    !  & 'Error accessing SD '//trim(sdNameStr) // ' (hdf5)' )
 
     ! What exactly will be our contribution
     stride = 1
@@ -982,15 +1009,55 @@ contains ! =====     Public Procedures     =============================
     if ( noDims == 3 ) sizes(1) = quantity%template%noChans
     start(noDims) = quantity%template%mafIndex ( &
       & 1+quantity%template%noInstancesLowerOverlap )
+    first_maf = 1+quantity%template%noInstancesLowerOverlap
+    last_maf = quantity%template%noInstances &
+      &       - quantity%template%noInstancesUpperOverlap
 
-    call SaveAsHDF5DS( fileID, trim(sdNameStr), real(quantity%values), &
-      & start, sizes, may_add_to=.true., adding_to=already_there)
+    if ( DEEBUG ) then
+      print *, 'sdname ', trim(sdNameStr)
+      print *, 'already_there ', already_there
+      print *, 'noDims ', noDims
+      print *, 'start ', start
+      print *, 'sizes ', sizes
+      print *, 'shape(quantity%values) ', shape(quantity%values)
+      print *, 'first_maf ', first_maf
+      print *, 'last_maf ', last_maf
+    endif
+    ! Make certain things will fit
+    if ( noDims == 3 ) then
+      total_DS_size = sizes(1)*sizes(2)*sizes(3)
+      if ( DEEBUG ) then
+        print *, 'total_DS_size ', total_DS_size
+        print *, 'Num_qty_values ', Num_qty_values
+      endif
+      if ( total_DS_size > Num_qty_values ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Number of 3d array elements to write > number stored in qty values' )
+      call SaveAsHDF5DS( fileID, trim(sdNameStr), &
+        & real( &
+        &   reshape(quantity%values(:,first_maf:last_maf), sizes(1:3)) &
+        & ), start, sizes, may_add_to=.true., adding_to=already_there)
+    else
+      total_DS_size = sizes(1)*sizes(2)
+      if ( DEEBUG ) then
+        print *, 'total_DS_size ', total_DS_size
+        print *, 'Num_qty_values ', Num_qty_values
+      endif
+      if ( total_DS_size > Num_qty_values ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Number of 2d array elements to write > number stored in qty values' )
+      call SaveAsHDF5DS( fileID, trim(sdNameStr), &
+        & real(quantity%values(:,first_maf:last_maf)), &
+        & start, sizes, may_add_to=.true., adding_to=already_there)
+    endif
 
     ! Now some attribute stuff
     ! This first call to write dataset-specific stuff needs work
     ! basically repeat the steps you go through in SetupNewl2auxRecord;
     ! see e.g. Join
     ! call WriteL2AUXAttributes(fileID, l2aux, trim(dataProduct%name))
+    ! However I'm too lazy--these files won't be archived at DAAC
+    ! so the attribute writing can wait
     call h5_writeglobalattr(fileID, skip_if_already_there=.true.)
     status = mls_sfend( fileID, hdfVersion=hdfVersion)
     if ( status == -1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1077,6 +1144,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.69  2003/03/20 19:22:56  pwagner
+! Fixed bug in DirectWrite_hdf5; seems to work
+!
 ! Revision 2.68  2003/03/11 00:21:36  pwagner
 ! Interfaces fit new WritePCF2Hdr flixibility
 !
