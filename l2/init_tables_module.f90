@@ -138,7 +138,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_DUMPBLOCKS         = s_dump + 1
   integer, parameter :: S_FILL               = s_dumpblocks + 1
   integer, parameter :: S_FILLCOVARIANCE     = s_fill + 1
-  integer, parameter :: S_FORGE              = s_fillCovariance + 1
+  integer, parameter :: S_FILLDIAGONAL       = s_fillcovariance + 1
+  integer, parameter :: S_FORGE              = s_filldiagonal + 1
   integer, parameter :: S_FORWARDMODEL       = s_forge + 1
   integer, parameter :: S_FORWARDMODELGLOBAL = s_forwardModel + 1
   integer, parameter :: S_GRIDDED            = s_forwardModelGlobal + 1
@@ -298,6 +299,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_dumpblocks) =           add_ident ( 'dumpblocks' )
     spec_indices(s_fill) =                 add_ident ( 'fill' )
     spec_indices(s_fillCovariance) =       add_ident ( 'fillCovariance' )
+    spec_indices(s_fillDiagonal)   =       add_ident ( 'fillDiagonal' )
     spec_indices(s_forge) =                add_ident ( 'forge' )
     spec_indices(s_forwardModel) =         add_ident ( 'forwardModel' )
     spec_indices(s_forwardModelGlobal) =   add_ident ( 'forwardModelGlobal' )
@@ -609,6 +611,11 @@ contains ! =====     Public procedures     =============================
              begin, f+f_invert, t+t_boolean, n+n_field_type, &
              begin, f+f_superDiagonal, s+s_vector, n+n_field_spec, &
              ndp+n_spec_def /) )
+    call make_tree( (/ &
+      begin, s+s_fillDiagonal, & ! Must be AFTER s_vector and s_matrix
+             begin, f+f_matrix, s+s_matrix, nr+n_field_spec, &
+             begin, f+f_diagonal, s+s_vector, nr+n_field_spec, &
+             ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_output, &  ! Must be AFTER s_l2aux and s_l2gp
              begin, f+f_type, t+t_outputType, nr+n_field_type, &
@@ -765,8 +772,8 @@ contains ! =====     Public procedures     =============================
              s+s_time, n+n_section, &
       begin, z+z_construct, s+s_hgrid, s+s_forge, s+s_quantity, &
              s+s_snoop, s+s_time, s+s_vectortemplate, n+n_section, &
-      begin, z+z_fill, s+s_dump, s+s_fill, s+s_fillCovariance, s+s_matrix, &
-                       s+s_destroy, s+s_snoop, s+s_time, s+s_vector, &
+      begin, z+z_fill, s+s_dump, s+s_fill, s+s_fillCovariance, s+s_fillDiagonal, &
+                       s+s_matrix, s+s_destroy, s+s_snoop, s+s_time, s+s_vector, &
                        s+s_transfer, n+n_section, &
       begin, z+z_retrieve, s+s_dumpBlocks, s+s_matrix, s+s_retrieve, &
                            s+s_sids, s+s_snoop, s+s_subset, s+s_time, &
@@ -809,6 +816,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.180  2001/10/24 22:35:47  dwu
+! add FillDiagonal
+!
 ! Revision 2.179  2001/10/23 16:37:30  pwagner
 ! isPrecision, precision new fields in Fill command
 !
