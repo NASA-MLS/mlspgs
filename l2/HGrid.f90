@@ -34,7 +34,6 @@ module HGrid                    ! Horizontal grid information
   use TREE, only: DECORATION, DUMP_TREE_NODE, NSONS, NULL_TREE, SOURCE_REF, &
                   SUB_ROSA, SUBTREE
   use UNITS, only: DEG2RAD, RAD2DEG
-  use Intrinsic, only: T_NUMERIC
 
   implicit none
 
@@ -307,7 +306,7 @@ contains ! =====     Public Procedures     =============================
       call CreateEmptyHGrid(hGrid)
       hGrid%phi =         l2gp%geodAngle(a:b)
       hGrid%geodLat =     l2gp%latitude(a:b)
-      hGrid%lon =         l2gp%longitude(a:b)
+      hGrid%lon =         l2gp%longitude(a:b) 
       hGrid%time =        l2gp%time(a:b)
       hGrid%solarTime =   l2gp%solarTime(a:b)
       hGrid%solarZenith = l2gp%solarZenith(a:b)
@@ -339,7 +338,6 @@ contains ! =====     Public Procedures     =============================
     integer :: PARAM                    ! Loop counter
     integer :: NODE                     ! A tree node
     integer :: UNITS                    ! Units
-    integer :: TYPE                     ! Type of a tree node
     real(r8), dimension(:), pointer :: VALUES
     integer :: EXPR_UNITS(2)            ! Output from Expr subroutine
     real(r8) :: EXPR_VALUE(2)   ! Output from Expr subroutine
@@ -399,16 +397,15 @@ contains ! =====     Public Procedures     =============================
         node = solarZenithNode
         units = phyq_angle
       end select
-
-      do prof = 1, hGrid%noProfs
-        call expr ( subtree ( prof+1, node), expr_units, expr_value, type )
-        if ( type /= t_numeric ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Only numerics, not ranges allowed in explicit hGrid' )
-        if ( all ( expr_units(1) /= (/ phyq_dimensionless, units /) ) ) &
-          & call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Invalid units for explicit hGrid' )
-        values(prof) = expr_value(1)
-      end do
+      if ( node /= 0 ) then
+        do prof = 1, hGrid%noProfs
+          call expr ( subtree ( prof+1, node), expr_units, expr_value )
+          if ( all ( expr_units(1) /= (/ phyq_dimensionless, units /) ) ) &
+            & call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Invalid units for explicit hGrid' )
+          values(prof) = expr_value(1)
+        end do
+      end if
     end do
     ! Make the latitude the same as the geod angle
     ! This is a bit of a hack, but it should be OK in all cases.
@@ -1356,6 +1353,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.46  2003/02/07 00:41:32  livesey
+! Bug fix (or at least workaround)
+!
 ! Revision 2.45  2003/02/06 23:30:50  livesey
 ! New approach for explicit hGrids
 !
