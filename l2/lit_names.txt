@@ -116,6 +116,7 @@ plain
 profile
 
 rectanglefromlos
+reflectorTempModel
 refract
 regular
 RHIFromH2O
@@ -140,6 +141,9 @@ weighted
 wmoTropopause
 
 # $Log$
+# Revision 2.37  2003/05/29 20:01:39  livesey
+# Added reflectorTempModel
+#
 # Revision 2.36  2003/05/20 20:19:28  dwu
 # add IWCfromExtinction
 #
