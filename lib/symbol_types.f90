@@ -58,7 +58,9 @@ module SYMBOL_TYPES
 ! Indicates which terminals use caseless lookup
   logical, parameter :: CASELESS_LOOK(t_null:t_last_terminal) = &
     (/ ( .false., i = t_null, min_pseudo-1 ), &
-       ( .true., i = min_pseudo, max_pseudo ), &
+       ( .true., i = min_pseudo, t_string-1 ), &
+       .false., & ! t_string is case sensitive
+       ( .true., i = t_string+1, max_pseudo ), &
        ( .false., i = max_pseudo+1, t_last_terminal ) /)
 
 ! Terminal symbol types.  These are used for debug printing.
@@ -185,6 +187,9 @@ contains
 end module SYMBOL_TYPES
 
 ! $Log$
+! Revision 2.7  2004/04/26 21:55:29  vsnyder
+! Make strings case sensitive
+!
 ! Revision 2.6  2004/01/14 18:32:58  vsnyder
 ! Stuff for Algebra module
 !
