@@ -43,6 +43,11 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
     module procedure DUMP_L2GP_DataBase
   end interface
 
+! interface my_swwrattr 
+!   module procedure my_swwrattr_snglarray
+!   module procedure my_swwrattr_char
+! end interface
+
   ! This module defines datatypes and gives basic routines for storing and
   ! manipulating L2GP data.
   ! It is prepared to handle io for both file versions: hdfeos2 and hdfeos5
@@ -1775,9 +1780,10 @@ contains ! =====     Public Procedures     =============================
     chunktimes=1
     chunkfreqs=1 ! better as nFreqs, but I have yet to see a case with nfreqs>1
     if(present(nLevels))then
-       chunklevels=nLevels
+       chunklevels = nLevels
     else
-       chunklevels=5
+       chunklevels = min(l2gp%nLevels, 5)
+       chunklevels = max(chunklevels, 1)
     endif
     
     ! Create the swath within the file
@@ -1792,10 +1798,10 @@ contains ! =====     Public Procedures     =============================
     ! Define dimensions
 
     ! Defining special "unlimited dimension called UNLIM
-    !print*,"Defined Unlim with size", HE5S_UNLIMITED
+    print*,"Defined Unlim with size", HE5S_UNLIMITED_f
     status = HE5_SWdefdim(swid, UNLIM, HE5S_UNLIMITED_F)
 
-    !print*,"Defining dimension ", DIM_NAME1," with size",l2gp%nTimes
+    print*,"Defining dimension ", DIM_NAME1," with size",l2gp%nTimes
     status = HE5_SWdefdim(swid, DIM_NAME1, l2gp%nTimes)
     if ( status == -1 ) then
        msr = DIM_ERR // DIM_NAME1
@@ -1803,7 +1809,7 @@ contains ! =====     Public Procedures     =============================
     end if
 
     if ( l2gp%nLevels > 0 ) then
-      !print*,"Defining dimension ", DIM_NAME2," with size",l2gp%nLevels
+      print*,"Defining dimension ", DIM_NAME2," with size",l2gp%nLevels
        status = HE5_SWdefdim(swid, DIM_NAME2, l2gp%nLevels)
        if ( status == -1 ) then
           msr = DIM_ERR // DIM_NAME2
@@ -1812,7 +1818,7 @@ contains ! =====     Public Procedures     =============================
     end if
 
     if ( l2gp%nFreqs > 0 ) then
-       !print*,"Defining dimension ", DIM_NAME3," with size",l2gp%nFreqs
+       print*,"Defining dimension ", DIM_NAME3," with size",l2gp%nFreqs
        status = HE5_SWdefdim(swid, DIM_NAME3, l2gp%nFreqs)
        if ( status == -1 ) then
           msr = DIM_ERR // DIM_NAME3
@@ -1945,15 +1951,15 @@ contains ! =====     Public Procedures     =============================
        chunk_rank=2
        chunk_dims(1:7)=(/ CHUNKLEVELS,CHUNKTIMES,37,38,39,47,49/)
        status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
-       !print*,"Set chunking with status=",status
-       !print*,"chunking=",chunk_dims
-       !print*,"About to define 2-D extendible field"
+       print*,"Set chunking with status=",status
+       print*,"chunking=",chunk_dims
+       print*,"About to define 2-D extendible field"
 
-       !print*,"Calling SWdefdfld with args ",swid, DATA_FIELD1, &
-       !      DIM_NAME12, MAX_DIML12, HE5T_NATIVE_FLOAT, HDFE_NOMERGE
+       print*,"Calling SWdefdfld with args ",swid, DATA_FIELD1, &
+             DIM_NAME12, MAX_DIML12, HE5T_NATIVE_FLOAT, HDFE_NOMERGE
        status = HE5_SWdefdfld(swid, DATA_FIELD1, DIM_NAME12, MAX_DIML12, &
             HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
-       !print*,"Defined 2-D extendible field"
+       print*,"Defined 2-D extendible field"
 
        if ( status == -1 ) then
           msr = DAT_ERR // DATA_FIELD1 //  ' for 2D quantity.'
@@ -2074,7 +2080,7 @@ contains ! =====     Public Procedures     =============================
     ! Write data to the fields
 
     stride = 1
-    start = 0  ! myOffset
+    start = myOffset ! Please do not set to zero
     edge(1) = l2gp%nTimes
     !print*,"writeGeo Attached swath ",name," with SW ID=",swid
     !print*,"About to write latitude with offset=",myoffset
@@ -2141,7 +2147,7 @@ contains ! =====     Public Procedures     =============================
 
     if ( l2gp%nLevels > 0 ) then
        edge(1) = l2gp%nLevels
-       ! start(1)=0 ! needed because offset may have made this /=0
+       start(1)=0 ! needed because offset may have made this /=0
        status = HE5_SWwrfld(swid, GEO_FIELD9, start, stride, edge, &
             real(l2gp%pressures))
        if ( status == -1 ) then
@@ -2152,7 +2158,7 @@ contains ! =====     Public Procedures     =============================
 
     if ( l2gp%nFreqs > 0 ) then
        edge(1) = l2gp%nFreqs
-       ! start(1)=0 ! needed because offset may have made this /=0
+       start(1)=0 ! needed because offset may have made this /=0
        if (MONKEYAROUND) l2gp%frequency = 0
        status = HE5_SWwrfld(swid, GEO_FIELD10, start, stride, edge, &
             real(l2gp%frequency))
@@ -2228,7 +2234,7 @@ contains ! =====     Public Procedures     =============================
 
     start = 0
     stride = 1
-    ! start(3)= 0 ! myOffset
+    start(3)= myOffset ! Please do not set to zero
     edge(1) = l2gp%nFreqs
     edge(2) = l2gp%nLevels
     edge(3) = l2gp%nTimes
@@ -2340,6 +2346,7 @@ contains ! =====     Public Procedures     =============================
 
   use HDFEOS5, only: HE5T_NATIVE_REAL, HE5T_NATIVE_DOUBLE, HE5T_NATIVE_SCHAR, &
     & HE5_SWattach, HE5_SWdetach
+  use he5_swapi, only: he5_swwrattr, he5_swwrlattr
   use PCFHdr, only:  he5_writeglobalattr
     ! Brief description of subroutine
     ! This subroutine writes the attributes for an l2gp
@@ -2402,37 +2409,49 @@ contains ! =====     Public Procedures     =============================
     !        & 'Failed to write swath attribute' )
     !     Detach from the swath interface.
     ! call sw_writeglobalattr(swid)
-    print *, 'Writing global attributes'
+    ! print *, 'Writing global attributes'
     call he5_writeglobalattr(l2FileHandle)
 
     swid = HE5_SWattach (l2FileHandle, name)
     
     !   - -   S w a t h   A t t r i b u t e s   - -
-    print *, 'Writing swath attributes'
-    call he5_swwrattr(swid, 'Pressure', rgp_type, size(l2gp%pressures), &
+    ! print *, 'Writing swath attributes'
+    status = he5_swwrattr(swid, 'Pressure', rgp_type, size(l2gp%pressures), &
       & l2gp%pressures)
+        field_name = 'Pressure'
+    status = he5_swwrattr(swid, 'Vertical Coordinate', HE5T_NATIVE_SCHAR, 1, &
+      & field_name)
     
     !   - -   G e o l o c a t i o n   A t t r i b u t e s   - -
-    print *, 'Writing geolocation attributes'
+    ! print *, 'Writing geolocation attributes'
     do field=1, NumGeolocFields
-      print *, 'field ', field
-      print *, 'title ', trim(theTitles(field))
-      print *, 'units ', trim(theUnits(field))
-      call he5_swwrlattr(swid, trim(theTitles(field)), 'Title', &
-        & HE5T_NATIVE_SCHAR, 1, theTitles(field))
-      call he5_swwrlattr(swid, trim(theTitles(field)), 'Units', &
-        & HE5T_NATIVE_SCHAR, 1, theUnits(field))
+      ! Take care not to write attributes to "missing fields"
+      if ( trim(theTitles(field)) == 'Frequency' &
+        & .and. l2gp%nFreqs < 1 ) then
+        field_name = ''
+      elseif ( trim(theTitles(field)) == 'Pressure' &
+        & .and. l2gp%nLevels < 1 ) then
+        field_name = ''
+      else
+        ! print *, 'field ', field
+        ! print *, 'title ', trim(theTitles(field))
+        ! print *, 'units ', trim(theUnits(field))
+        status = he5_swwrlattr(swid, trim(theTitles(field)), 'Title', &
+          & HE5T_NATIVE_SCHAR, 1, theTitles(field))
+        status = he5_swwrlattr(swid, trim(theTitles(field)), 'Units', &
+          & HE5T_NATIVE_SCHAR, 1, theUnits(field))
+      endif
     enddo
     !   - -   D a t a   A t t r i b u t e s   - -
     call GetQuantityAttributes ( l2gp%quantityType, &
       & units_name)
-    field_name = swathName
-    print *, 'Writing data attributes'
-    print *, 'title ', trim(swathName)
-    print *, 'units ', trim(units_name)
-    call he5_swwrlattr(swid, DATA_FIELD1, 'Title', &
+    field_name = Name
+    ! print *, 'Writing data attributes'
+    ! print *, 'title ', trim(field_name)
+    ! print *, 'units ', trim(units_name)
+    status = he5_swwrlattr(swid, DATA_FIELD1, 'Title', &
       & HE5T_NATIVE_SCHAR, 1, field_name)
-    call he5_swwrlattr(swid, DATA_FIELD1, 'Units', &
+    status = he5_swwrlattr(swid, DATA_FIELD1, 'Units', &
       & HE5T_NATIVE_SCHAR, 1, units_name)
     status = HE5_SWdetach(swid)
     if ( status == -1 ) then
@@ -2449,7 +2468,7 @@ contains ! =====     Public Procedures     =============================
 
   ! This subroutine is an amalgamation of the last three
   ! Should be renamed CreateAndWriteL2GPData
-  subroutine WriteL2GPData(l2gp,l2FileHandle,swathName, hdfVersion)
+  subroutine WriteL2GPData(l2gp, l2FileHandle, swathName, hdfVersion)
 
     ! Arguments
 
@@ -2477,9 +2496,13 @@ contains ! =====     Public Procedures     =============================
       call MLSMessage ( MLSMSG_Error, ModuleName, &
       & "Unrecognized hdfVersion passed to WriteL2GPData" )
     else
+      ! print *, 'Creating hdfeos5 file'
       call OutputL2GP_createFile_hdf5 (l2gp, l2FileHandle, swathName)
+      ! print *, 'Writing geolocation data'
       call OutputL2GP_writeGeo_hdf5 (l2gp, l2FileHandle, swathName)
+      ! print *, 'Writing values, precision'
       call OutputL2GP_writeData_hdf5 (l2gp, l2FileHandle, swathName)
+      ! print *, 'Writing attributes'
       call OutputL2GP_attributes_hdf5 (l2gp, l2FileHandle, swathName)
     endif
 
@@ -2814,6 +2837,34 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine GetQuantityAttributes
 
+!> >   subroutine my_swwrattr_snglarray(swid, attr_name, attr_type, attr_size, &
+!> >       & value)
+!> >   ! Arguments
+!> >   integer, intent(in)                            :: swid
+!> >   character(len=*)                               :: attr_name
+!> >   integer, intent(in)                            :: attr_type
+!> >   integer, intent(in)                            :: attr_size
+!> >   real(r4), dimension(*), intent(in)             :: value
+!> >   
+!> >   external :: he5_swwrattr
+!> >   call he5_swwrattr(swid, attr_name, attr_type, attr_size, &
+!> >       & value)
+!> >   end subroutine my_swwrattr_snglarray
+!> > 
+!> >   subroutine my_swwrattr_char(swid, attr_name, attr_type, attr_size, &
+!> >       & value)
+!> >   ! Arguments
+!> >   integer, intent(in)                            :: swid
+!> >   character(len=*)                               :: attr_name
+!> >   integer, intent(in)                            :: attr_type
+!> >   integer, intent(in)                            :: attr_size
+!> >   character(len=*), intent(in)                   :: value
+!> >   
+!> >   external :: he5_swwrattr
+!> >   call he5_swwrattr(swid, attr_name, attr_type, attr_size, &
+!> >       & value)
+!> >   end subroutine my_swwrattr_char
+
 !=============================================================================
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
@@ -2825,7 +2876,10 @@ end module L2GPData
 
 !
 ! $Log$
-! Revision 2.51  2003/02/06 00:24:48  pwagner
+! Revision 2.52  2003/02/07 01:05:12  pwagner
+! rgp now public
+!
+! Revision 2.512003/02/06 00:24:48  pwagner
 ! Squashed a (last?) bug in hdfeos2 stuff
 !
 ! Revision 2.50  2003/02/04 22:43:29  pwagner
