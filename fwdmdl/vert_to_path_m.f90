@@ -47,7 +47,9 @@ contains
     type(ellipse), intent(in out) :: Elvar
 
     real(r8), intent(out) :: h_path(:), z_path(:), t_path(:), phi_path(:), &
-                             dhdz_path(:), phi_eta(:,:)
+                             dhdz_path(:)
+
+    real(r8), pointer :: phi_eta(:,:) ! Pointer, so we get bounds as well as shape
 
     real(r8), intent(in) :: htan, z_glgrid(:)
     real(r8), intent(in) :: h_glgrid(:,:), t_glgrid(:,:), t_phi_basis(:), &
@@ -330,6 +332,9 @@ contains
   end subroutine Vert_To_Path
 end module Vert_To_Path_M
 ! $Log$
+! Revision 1.10  2001/04/13 01:13:59  vsnyder
+! Use lmin:lmax for more dimensions
+!
 ! Revision 1.9  2001/04/13 00:27:35  vsnyder
 ! Comment out some of Nathaniel's debugging print
 !

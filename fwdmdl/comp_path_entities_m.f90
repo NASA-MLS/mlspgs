@@ -55,13 +55,14 @@ contains
   !  Local variables:
   !  ----------------
 
-  Integer :: i, j, k, l, jj, kk, lmin, lmax, klo, khi, ngt
+  Integer :: i, k, l, jj, kk, lmin, lmax, klo, khi, ngt, stat
 
   Real(r8) :: h, q, r, zeta, phi
 
   Real(r8), dimension(:)  , allocatable :: zpath, tpath, hpath, ppath, dhdzp
-  Real(r8), dimension(:,:), allocatable :: phi_eta
+  Real(r8), dimension(:,:), pointer :: phi_eta
 
+  nullify ( phi_eta )
   ier = 0
   ngt = 2 * (Ng+1) * (N_lvls+1)
 
@@ -72,7 +73,7 @@ contains
 !??? Allocatable entities spring into existence unallocated.
 ! deallocate ( zpath, hpath, tpath, ppath, dhdzp, phi_eta, stat=i )
   allocate ( zpath(ngt), hpath(ngt), tpath(ngt), ppath(ngt), dhdzp(ngt), &
- &         phi_eta(ngt,no_phi_t), stat=ier )
+    & stat=ier )
   if(ier /= 0) then
     print *,'** Allocation Error in comp_path_entities: ?path ...'
     print *,'** Error: ALLOCATION error in MAIN ..'
@@ -83,6 +84,7 @@ contains
   do l = 1, no_mmaf
     lmin = max(1,l-phiWindow/2)
     lmax = min(l+phiWindow/2,no_mmaf)
+    allocate ( phi_eta(ngt,lmin:lmax), stat=ier )
     print*,'Window:', lmin, lmax
     do k = 1, no_tan_hts
       h = tan_hts(k,l)
@@ -95,7 +97,7 @@ contains
       call vert_to_path ( elvar(l), n_lvls, Ng, ngt, gl_count, lmax-lmin+1, &
         & no_t, h, z_glgrid, t_glgrid(1:,lmin:lmax), h_glgrid(1:,lmin:lmax), &
         & dhdz_glgrid(1:,lmin:lmax), t_phi_basis(lmin:lmax), zpath, hpath, &
-        & tpath, ppath, dhdzp, phi_eta(:,lmin:lmax), klo, khi, ier )
+        & tpath, ppath, dhdzp, phi_eta, klo, khi, ier )
 ! OK, what I'm not sure about Zvi is why phi_eta is dimensioned noTanHts,noMAFs
 ! and yet needs the lmin:lmax for the second dimension 
 ! (it crashes on line 224 of vert_to_path if it doesn't have the
@@ -106,10 +108,10 @@ contains
         &          dhdz_path(k,l)%values, eta_phi(k,l)%values, stat=i )
       allocate ( z_path(k,l)%values(khi), h_path(k,l)%values(khi),   &
         &        t_path(k,l)%values(khi), phi_path(k,l)%values(khi), &
-        &        dhdz_path(k,l)%values(khi), stat=j )
-      if ( j == 0 ) allocate ( eta_phi(k,l)%values(khi,no_phi_t), stat=j )
-      if ( j /= 0 ) then
-        ier = j
+        &        dhdz_path(k,l)%values(khi), stat=stat )
+      if ( stat == 0 ) allocate ( eta_phi(k,l)%values(khi,no_phi_t), stat=stat )
+      if ( stat /= 0 ) then
+        ier = stat
         print *,'** Error: ALLOCATION error in routine: comp_path_entities ..'
         print *,'   STAT =',ier
         return
@@ -127,10 +129,11 @@ contains
 !     eta_phi(k,l)%values(1:khi,1:no_phi_t) = phi_eta(1:khi,1:no_phi_t)
 !??? Van's attempt to repair:
       eta_phi(k,l)%values(1:khi,lmin:lmax) = phi_eta(1:khi,lmin:lmax)
-    end do
-  end do
+    end do ! k = 1, no_tan_hts
+    deallocate ( phi_eta, stat=stat )
+  end do ! l = 1, no_mmaf
 
- 99  deallocate ( zpath, hpath, tpath, ppath, dhdzp, phi_eta, stat=i )
+ 99  deallocate ( zpath, hpath, tpath, ppath, dhdzp, stat=i )
 
   return
 
@@ -138,6 +141,9 @@ end subroutine Comp_Path_Entities
 
 end module Comp_Path_Entities_M
 ! $Log$
+! Revision 1.21  2001/04/13 00:27:20  vsnyder
+! Limit amount of phi_eta assigned
+!
 ! Revision 1.20  2001/04/12 21:43:50  livesey
 ! Some attempts to fix array bounds in vert_to_path call
 !
