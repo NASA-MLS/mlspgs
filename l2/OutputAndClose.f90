@@ -55,8 +55,9 @@ contains ! =====     Public Procedures     =============================
     use Allocate_Deallocate, only: Deallocate_Test
     use Expr_M, only: Expr
     use INIT_TABLES_MODULE, only: F_ASCII, F_FILE, F_HDFVERSION, &
-      & F_METANAME, F_OVERLAPS, F_PACKED, F_QUANTITIES, F_TYPE, &
-      & L_L2AUX, L_L2DGG, L_L2GP, L_L2PC, S_OUTPUT, S_TIME, F_WRITECOUNTERMAF
+      & F_METANAME, F_METADATAONLY, F_OVERLAPS, F_PACKED, F_QUANTITIES, &
+      & F_TYPE, F_WRITECOUNTERMAF, &
+      & L_L2AUX, L_L2DGG, L_L2GP, L_L2PC, S_OUTPUT, S_TIME
     use Intrinsic, only: PHYQ_Dimensionless
     use L2AUXData, only: L2AUXDATA_T, WriteL2AUXData
     use L2GPData, only: L2GPData_T, WriteL2GPData, L2GPNameLen
@@ -135,6 +136,7 @@ contains ! =====     Public Procedures     =============================
     type (Matrix_T), pointer :: TMPMATRIX ! A pointer to a matrix to write into l2pc
     logical :: TIMING
     logical :: WriteCounterMAF          ! Add the counter MAF field
+    logical :: WriteMetaDataOnly        ! Because it was a directWrite
 
     ! Executable code
     timing = section_times
@@ -164,6 +166,7 @@ contains ! =====     Public Procedures     =============================
       hdfVersion = DEFAULT_HDFVERSION_WRITE
       meta_name = ''
       writeCounterMAF = .false.
+      writeMetaDataOnly = .false.
 
       son = subtree(spec_no,root)
       if ( node_id(son) == n_named ) then ! Is spec labeled?
@@ -195,6 +198,8 @@ contains ! =====     Public Procedures     =============================
             output_type = decoration(subtree(2,gson))
           case ( f_writeCounterMAF )
             writeCounterMAF = get_boolean ( fieldValue )
+          case ( f_MetaDataOnly )
+            writeMetaDataOnly = get_boolean ( fieldValue )
           case ( f_hdfVersion )
             call expr ( subtree(2,gson), units, value, type )
             if ( units(1) /= phyq_dimensionless ) &
@@ -220,6 +225,167 @@ contains ! =====     Public Procedures     =============================
       if ( DEBUG ) call output('file_base: ', advance='no')
       if ( DEBUG ) call output(trim(file_base), advance='yes')
 
+      if ( WriteMetaDataOnly ) then
+        if ( .not. TOOLKIT ) cycle
+      ! Skip regular data
+        select case ( output_type )
+        case ( l_l2gp ) ! --------------------- Writing l2gp files -----
+          if ( DEBUG ) call output('output file type l2gp', advance='yes')
+          ! Get the l2gp file name from the PCF
+
+          if ( TOOLKIT ) then
+            call split_path_name(file_base, path, file_base)
+           if ( DEBUG ) call output('file_base after split: ', advance='no')
+           if ( DEBUG ) call output(trim(file_base), advance='yes')
+
+            l2gpFileHandle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
+            & mlspcf_l2gp_end, &
+            & TOOLKIT, returnStatus, l2gp_Version, DEBUG, &
+            & exactName=l2gpPhysicalFilename)
+          else
+            l2gpPhysicalFilename = file_base
+            returnStatus = 0
+          end if
+          ! Write the metadata file
+
+          call get_l2gp_mcf ( file_base, meta_name, l2gp_mcf, l2pcf  )
+
+          if ( l2gp_mcf <= 0 ) then
+
+            ! Error in finding mcf number
+            call announce_error ( son, &
+              & 'No mcf numbers correspond to this l2gp file', l2gp_mcf, &
+              & PENALTY_FOR_NO_METADATA )
+
+          else if ( numquantitiesperfile <= 0 ) then
+
+            ! Error in number of quantities
+            call announce_error ( son, &
+              & 'No quantities written for this l2gp file')
+
+          else if ( QuantityNames(numquantitiesperfile) &
+            & == QuantityNames(1) ) then
+
+            ! Typical homogeneous l2gp file: 
+            ! e.g., associated with BrO is ML2BRO.001.MCF
+            if ( DEBUG ) then
+              call output('preparing to populate metadata_std', advance='yes')
+              call output('l2gpFileHandle: ', advance='no')
+              call output(l2gpFileHandle , advance='no')
+              call output('   l2gp_mcf: ', advance='no')
+              call output(l2gp_mcf , advance='no')
+              call output('   swfid: ', advance='no')
+              call output(swfid , advance='yes')
+            end if
+
+            call populate_metadata_std &
+              & (l2gpFileHandle, l2gp_mcf, l2pcf, QuantityNames(1), &
+              & hdfVersion=hdfVersion, metadata_error=metadata_error, &
+              & filetype='sw' )
+            error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
+
+          else
+
+            ! Type l2gp file 'other'
+            if ( DEBUG ) then
+              call output ( 'preparing to populate metadata_oth', advance='yes' )
+              call output ( 'l2gpFileHandle: ', advance='no' )
+              call output ( l2gpFileHandle , advance='no' )
+              call output ( '   l2gp_mcf: ', advance='no' )
+              call output ( l2gp_mcf , advance='no' )
+              call output ( '   swfid: ', advance='no' )
+              call output ( swfid , advance='yes' )
+            end if
+
+            call populate_metadata_oth &
+              & ( l2gpFileHandle, l2gp_mcf, l2pcf, &
+              & numquantitiesperfile, QuantityNames, &
+              & hdfVersion=hdfVersion, metadata_error=metadata_error, &
+              & filetype='sw'  )
+            error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
+          end if
+        case ( l_l2aux ) ! ------------------------------ Writing l2aux files ---
+
+          if ( DEBUG ) call output ( 'output file type l2aux', advance='yes' )
+          ! Get the l2aux file name from the PCF
+
+          if ( TOOLKIT ) then
+            call split_path_name(file_base, path, file_base)
+            l2auxFileHandle = GetPCFromRef(file_base, mlspcf_l2dgm_start, &
+            & mlspcf_l2dgm_end, &
+            & TOOLKIT, returnStatus, l2aux_Version, DEBUG, &
+            & exactName=l2auxPhysicalFilename)
+          else
+            l2auxPhysicalFilename = file_base
+            returnStatus = 0
+          end if
+          if ( DEBUG ) then
+            call output ( 'preparing to populate metadata_oth', advance='yes' )
+            call output ( 'l2auxFileHandle: ', advance='no' )
+            call output ( l2auxFileHandle , advance='no' )
+            call output ( '   l2aux_mcf: ', advance='no' )
+            call output ( l2aux_mcf , advance='no' )
+            call output ( '   sdfId: ', advance='no' )
+            call output ( sdfId , advance='yes' )
+            call output ( '   number of quantities: ', advance='no' )
+            call output ( numquantitiesperfile , advance='yes' )
+            do field_no=1, numquantitiesperfile
+              call output ( field_no , advance='no' )
+              call output ( '       ', advance='no' )
+              call output ( trim(QuantityNames(field_no)) , advance='yes' )
+            end do
+          end if
+          call populate_metadata_oth &
+            & ( l2auxFileHandle, l2aux_mcf, l2pcf, &
+            & numquantitiesperfile, QuantityNames,&
+            & hdfVersion=hdfVersion, metadata_error=metadata_error, &
+            & filetype='hdf'  )
+          error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
+        case ( l_l2pc ) ! ------------------------------ Writing l2pc files --
+          ! I intend to completely ignore the PCF file in this case,
+          ! it's not worth the effort!
+          call MLSMessage(MLSMSG_Error,ModuleName,&
+            & "Cannot write metadata to l2pc files ")
+        case ( l_l2dgg ) ! --------------------- Writing l2dgg files -----
+
+          if ( DEBUG ) call output('output file type l2dgg', advance='yes')
+          ! Get the l2gp file name from the PCF
+
+          if ( TOOLKIT ) then
+            call split_path_name(file_base, path, file_base)
+            l2gpFileHandle = GetPCFromRef(file_base, mlspcf_l2dgg_start, &
+            & mlspcf_l2dgg_end, &
+            & TOOLKIT, returnStatus, l2gp_Version, DEBUG, &
+            & exactName=l2gpPhysicalFilename)
+          else
+            l2gpPhysicalFilename = file_base
+            returnStatus = 0
+          end if
+          if ( DEBUG ) then
+            call output ( 'preparing to populate metadata_oth', advance='yes' )
+            call output ( 'l2gpFileHandle: ', advance='no' )
+            call output ( l2gpFileHandle , advance='no' )
+            call output ( '   l2dgg_mcf: ', advance='no' )
+            call output ( mlspcf_mcf_l2dgg_start , advance='no' )
+            call output ( '   swfid: ', advance='no' )
+            call output ( swfid , advance='yes' )
+          end if
+
+          call populate_metadata_oth &
+            & ( l2gpFileHandle, mlspcf_mcf_l2dgg_start, l2pcf, &
+            & numquantitiesperfile, QuantityNames, &
+            & hdfVersion=hdfVersion, metadata_error=metadata_error, &
+            & filetype='sw'  )
+          error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
+        case default
+          call announce_error ( ROOT, &
+            &  "Error--unknown output type: parser should have caught this")
+
+        end select
+        cycle        ! Skip to next Output command
+      end if
+        
+      ! Otherwise--normal output commands
         select case ( output_type )
         case ( l_l2gp ) ! --------------------- Writing l2gp files -----
           if ( DEBUG ) call output('output file type l2gp', advance='yes')
@@ -789,6 +955,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.74  2003/06/23 18:06:33  pwagner
+! Should allow us to write metadata after DirectWrite
+!
 ! Revision 2.73  2003/06/20 19:38:26  pwagner
 ! Allows direct writing of output products
 !
