@@ -297,6 +297,18 @@ contains
                         advance=advance )
     return
   end subroutine DISPLAY_STRING
+  ! ====================================     DUMP_STRING_TABLE     =====
+  subroutine DUMP_STRING_TABLE
+  ! Dump the entire string table
+    character(len=7) :: FMT ! '(I..: )'
+    integer :: I
+    i = log10(real(max(nstring,1))) + 1
+    write ( fmt, "('(I',i2.2,': ')" ) i
+    do i = 1, nstring
+      call output ( i, format=fmt, advance='no' )
+      call display_string ( i, advance='yes' )
+    end do
+  end subroutine DUMP_STRING_TABLE
   ! =========================================     ENTER_STRING     =====
   integer function ENTER_STRING ()
   ! Commit the string being constructed, and return its index.
@@ -684,7 +696,7 @@ contains
   end function STRING_LENGTH
   ! ====================================     STRING_TABLE_SIZE     =====
   integer function STRING_TABLE_SIZE ()
-  ! Return the allocate size of the string table.
+  ! Return the allocated size of the string table.
     string_table_size = ubound(strings, 1)
     return
   end function STRING_TABLE_SIZE
@@ -803,6 +815,9 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.16  2003/05/14 01:39:30  vsnyder
+! Add Dump_String_Table
+!
 ! Revision 2.15  2002/10/08 00:09:14  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
