@@ -1,12 +1,11 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module MACHINE
-  use F90_UNIX_ENV, only: IARGC, NAG_GETARG => GETARG
-  use F90_UNIX_PROC, only: SYSTEM
   use F90_IOSTAT				! everything; see iostat_msg_NAG
+  use F90_UNIX_ENV, only: IARGC, NAG_GETARG => GETARG
   ! Exit and return an integer status to the invoking process
-  use F90_UNIX_PROC, only: EXIT_WITH_STATUS => EXIT
+  use F90_UNIX_PROC, only: EXIT_WITH_STATUS => EXIT, SYSTEM
   implicit none
 
   character(LEN=2) :: END_LINE = ' ' // char(10)
@@ -15,6 +14,7 @@ module MACHINE
 
   interface IO_ERROR; module procedure IO_ERROR_; end interface
   private IO_ERROR_
+  public :: SHELL_COMMAND
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -357,6 +357,9 @@ contains
 end module MACHINE
 
 ! $Log$
+! Revision 1.6  2002/01/31 00:47:47  pwagner
+! Removed interface in shell_command
+!
 ! Revision 1.5  2002/01/30 19:50:30  vsnyder
 ! Added Shell_Command subroutine
 !

@@ -1,5 +1,11 @@
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module MACHINE
+  use F90_IOSTAT				! everything; see iostat_msg_NAG
   use F90_UNIX_ENV, only: IARGC, NAG_GETARG => GETARG
+  ! Exit and return an integer status to the invoking process
+  use F90_UNIX_PROC, only: EXIT_WITH_STATUS => EXIT, SYSTEM
   implicit none
 
   character(LEN=2) :: END_LINE = ' ' // char(10)
@@ -8,6 +14,7 @@ module MACHINE
 
   interface IO_ERROR; module procedure IO_ERROR_; end interface
   private IO_ERROR_
+  public :: SHELL_COMMAND
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=256), private :: Id = &
@@ -46,24 +53,25 @@ contains
     if ( status /= 0 ) argval = ' '
   end subroutine GETARG
 
+  subroutine SHELL_COMMAND ( Command, Status, Error )
+  ! Submit a character variable to the system as a shell command.
+
+    character(len=*), intent(in) :: Command  ! The command
+    integer, intent(out), optional :: Status ! Its status, if the system
+                                        !  has such a concept, else zero
+    integer, intent(out), optional :: Error  ! Status of the routine to submit
+                                        ! the command, if the system has
+                                        ! such a concept, else zero
+
+    integer :: MyError, MyStatus
+
+    call system ( command, myStatus, myError)
+    if ( present(error) ) error = myError
+    if ( present(status) ) status = myStatus
+  end subroutine SHELL_COMMAND
+
 end module MACHINE
 
 ! $Log$
-! Revision 1.1  2000/10/21 00:16:25  pwagner
-! First commit
-!
-! Revision 1.1  2000/10/19 17:40:52  pwagner
-! first commit
-!
-! Revision 1.2  2000/10/12 22:54:12  vsnyder
-! Correct a commented-out line that may get commented-in for another
-! computer/os/compiler combination
-!
-! Revision 1.1  2000/10/12 22:21:11  vsnyder
-! Change directory name from NAG to pclinuxNAG
-!
-! Revision 1.3  2000/10/09 22:15:55  vsnyder
-! Moved machine.f90 from l2 to lib
-!
-! Revision 2.0  2000/09/05 18:58:04  ahanzel
-! Changing file revision to 2.0.
+! Revision 1.1  2001/01/13 00:29:44  pwagner
+! moved to lib/machines/MLSCONFG/machine.f90

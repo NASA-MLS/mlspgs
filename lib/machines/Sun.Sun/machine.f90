@@ -1,3 +1,6 @@
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module MACHINE
 
   ! This file added by Hugh Pumphrey in order to get something or 
@@ -24,6 +27,7 @@ module MACHINE
 
   interface IO_ERROR; module procedure IO_ERROR_; end interface
   private IO_ERROR_
+  public :: SHELL_COMMAND
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=256), private :: Id = &
@@ -60,8 +64,37 @@ contains
     call exit(istatus)
   end subroutine exit_with_status
 
+  subroutine SHELL_COMMAND ( Command, Status, Error )
+  ! Submit a character variable to the system as a shell command.
+  ! Based on Sun's own documentation :: 806-7985.pdf
+  ! Fortran Library Reference July 2001 Revision A
+  ! (Based on past adversities, that's no guarantee)
+
+    character(len=*), intent(in) :: Command  ! The command
+    integer, intent(out), optional :: Status ! Its status, if the system
+                                        !  has such a concept, else zero
+    integer, intent(out), optional :: Error  ! Status of the routine to submit
+                                        ! the command, if the system has
+                                        ! such a concept, else zero
+
+    integer :: MyStatus
+
+    interface
+      integer function system ( CH )
+        character(len=*), intent(in) :: CH
+      end function system
+    end interface
+
+    myStatus = system(command)
+    if ( present(error) ) error = 0
+    if ( present(status) ) status = myStatus
+  end subroutine SHELL_COMMAND
+
 end module MACHINE
 
 ! $Log$
+! Revision 1.2  2001/09/13 19:15:24  pwagner
+! Added getarg interface (but does it work?)
+!
 ! Revision 1.1  2001/06/28 15:12:45  pumphrey
 ! Machine.f90 for Sun's f95 compiler added. It is not complete yet. (HCP)
