@@ -16,6 +16,7 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
     ! or simply take too much time doing i/o
     ! so instead write them out chunk-by-chunk
 
+  use Allocate_Deallocate, only: Allocate_test, Deallocate_test
   use INIT_TABLES_MODULE, only: L_PRESSURE, L_ZETA
   use MLSCommon, only: RV
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
@@ -27,7 +28,7 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
   implicit none
   private
   public :: DirectData_T, AddDirectToDatabase, DestroyDirectDatabase, &
-    & DirectWrite_L2Aux, DirectWrite_L2GP
+    & DirectWrite_L2Aux, DirectWrite_L2GP, SetupNewDirect
 
   !------------------------------- RCS Ident Info ------------------------------
   character(len=*), parameter :: IdParm = &
@@ -49,8 +50,9 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
   end interface
 
   type DirectData_T
-    integer :: type ! l_l2aux or l_l2gp
-    character(len=80) :: sdName ! should be at least L2GPNameLen
+    integer :: type ! l_l2aux or l_l2gp  ! should be at least L2GPNameLen
+    character(len=80), dimension(:), pointer :: sdNames => null()
+    character(len=1024) :: fileNameBase ! E.g., 'H2O'
   end type DirectData_T
   ! For Announce_Error
   integer :: ERROR
@@ -87,9 +89,16 @@ contains ! ======================= Public Procedures =========================
     type (DirectData_T), dimension(:), pointer :: DATABASE
 
     ! Local variables
-    integer :: l2gpIndex, status
+    integer :: directIndex, status
 
     if ( associated(database) ) then
+      do directIndex=1, size(DATABASE)
+        status = 0
+        if ( associated(database(directIndex)%sdNames) ) &
+          & deallocate ( database(directIndex)%sdNames, stat=status )
+        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & MLSMSG_deallocate // "sdNames" )
+      enddo
        deallocate ( database, stat=status )
        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
             & MLSMSG_deallocate // "database" )
@@ -113,7 +122,7 @@ contains ! ======================= Public Procedures =========================
     use MLSPCF2, only: mlspcf_l2gp_start, mlspcf_l2gp_end
 
     type (VectorValue_T), intent(in) :: QUANTITY
-    type (VectorValue_T), intent(in) :: QUANTITY_PRECISION
+    type (VectorValue_T), pointer :: QUANTITY_PRECISION
     ! integer, intent(in) :: SDNAME       ! Name of sd in output file
     character(len=*), intent(in) :: SDNAME       ! Name of sd in output file
     integer, intent(in) :: FILE         ! Name of output file
@@ -193,7 +202,7 @@ contains ! ======================= Public Procedures =========================
 
     integer, intent(in) :: L2gpFileHandle
     type (VectorValue_T), intent(in) :: QUANTITY
-    type (VectorValue_T), intent(in) :: QUANTITY_PRECISION
+    type (VectorValue_T), pointer :: QUANTITY_PRECISION
     ! integer, intent(in) :: SDNAME       ! Name of sd in output file
     character(len=*), intent(in) :: SDNAME       ! Name of sd in output file
     integer, intent(in) :: HDFVERSION   ! Version of HDF file to write out
@@ -260,7 +269,7 @@ contains ! ======================= Public Procedures =========================
     use VectorsModule, only: VectorValue_T
 
     type (VectorValue_T), intent(in) :: QUANTITY
-    type (VectorValue_T), intent(in) :: PRECISION
+    type (VectorValue_T), pointer :: PRECISION
     ! integer, intent(in) :: SDNAME       ! Name of sd in output file
     character(len=*), intent(in) :: SDNAME       ! Name of sd in output file
     integer, intent(in) :: FILE         ! Name of output file
@@ -353,7 +362,7 @@ contains ! ======================= Public Procedures =========================
     use VectorsModule, only: VectorValue_T
 
     type (VectorValue_T), intent(in) :: QUANTITY
-    type (VectorValue_T), intent(in) :: PRECISION
+    type (VectorValue_T), pointer :: PRECISION
     ! integer, intent(in) :: SDNAME       ! Name of sd in output file
     character(len=*), intent(in) :: SDNAME       ! Name of sd in output file
     integer, intent(in) :: FILEID       ! ID of output file
@@ -378,13 +387,13 @@ contains ! ======================= Public Procedures =========================
     case (HDFVERSION_4)
       call DirectWrite_L2Aux_hdf4 ( quantity, sdName, fileID, &
         & chunkNo, chunks )
-      if ( associated(precision%values) ) & 
+      if ( associated(precision) ) & 
         & call DirectWrite_L2Aux_hdf4 ( precision, &
         & trim(sdName) // 'precision', fileID, chunkNo, chunks )
     case (HDFVERSION_5)
       call DirectWrite_L2Aux_hdf5 ( quantity, sdName, fileID, &
         & chunkNo, chunks )
-      if ( associated(precision%values) ) & 
+      if ( associated(precision) ) & 
         & call DirectWrite_L2Aux_hdf5 ( precision, &
         & trim(sdName) // 'precision', fileID, chunkNo, chunks )
     case default
@@ -614,6 +623,22 @@ contains ! ======================= Public Procedures =========================
 
   end subroutine DirectWrite_L2Aux_hdf5
 
+  !------------------------------------------  SetupNewDirect  -----
+  subroutine SetupNewDirect ( directData, NsdNames )
+
+    ! This routine sets up the arrays for an l2gp datatype.
+
+    ! Dummy arguments
+    type (DirectData_T), intent(inout)  :: directData
+    integer, intent(in) :: NsdNames            ! Dimensions
+
+    ! Local variables
+    ! Allocate the sdNames
+
+    call allocate_test ( directData%sdNames, NsdNames, "directData%sdNames", &
+         & ModuleName )
+  end subroutine SetupNewDirect
+
 ! =====     Private Procedures     =====================================
   ! ---------------------------------------------  vectorValue_to_l2gp  -----
   subroutine vectorValue_to_l2gp (QUANTITY, Quantity_precision, l2gp, &
@@ -624,7 +649,7 @@ contains ! ======================= Public Procedures =========================
       & AppendL2GPData, DestroyL2GPContents, SetupNewl2gpRecord, &
       & ExpandL2GPDataInPlace
     type (VectorValue_T), intent(in) :: QUANTITY
-    type (VectorValue_T), intent(in) :: QUANTITY_PRECISION
+    type (VectorValue_T), pointer :: QUANTITY_PRECISION
     type (L2GPData_T)                :: l2gp
     character(len=*), intent(in)     :: name
     ! integer, intent(in)            :: nameIndex
@@ -721,7 +746,7 @@ contains ! ======================= Public Procedures =========================
       & reshape ( max ( -hugeRgp, min ( hugeRgp, &
       &   quantity%values(:,useFirstInstance:useLastInstance) ) ), &
       &  (/max(l2gp%nFreqs,1),max(l2gp%nLevels,1),lastProfile-firstProfile+1/))
-    if (associated(quantity_precision%values)) then
+    if (associated(quantity_precision)) then
       l2gp%l2gpPrecision(:,:,firstProfile:lastProfile) = &
         & reshape ( max ( -hugeRgp, min ( hugeRgp, &
         &   quantity_precision%values(:,useFirstInstance:useLastInstance) ) ), &
@@ -772,6 +797,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.3  2003/06/24 23:53:27  pwagner
+! Allows unassociated precisions as args to direct write
+!
 ! Revision 2.2  2003/06/23 23:55:17  pwagner
 ! Added DirectData_T to keep track of data written directly
 !
