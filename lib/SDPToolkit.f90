@@ -12,6 +12,7 @@ MODULE SDPToolkit               ! F90 interface to SDP Toolkit.
 !------------------- RCS Ident Info -----------------------
    CHARACTER(LEN=130) :: Id = &
    "$Id$"
+    & "$RCSfile$"
 !----------------------------------------------------------
 
 ! Contents:
@@ -194,6 +195,9 @@ END MODULE SDPToolkit
 
 !
 ! $Log$
+! Revision 2.9  2002/10/01 20:08:48  bwknosp
+! Added Id and RCS info
+!
 ! Revision 2.8  2002/04/29 17:38:10  pwagner
 ! Added interface for mls_utctotai
 !
