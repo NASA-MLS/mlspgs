@@ -3,12 +3,12 @@
 
 module Init_MLSSignals_m
 
-  use INTRINSIC, only: Add_Ident, Begin, D, F, Field_First, L, &
+  use INTRINSIC, only: Add_Ident, Begin, D, F, Field_First, G, L, &
     & Last_Intrinsic_Lit, Last_Intrinsic_Spec, N, NADP, NDP, NP, NR, P, S, &
     & Spec_First, T, T_Boolean, T_Numeric, T_Numeric_Range, T_Polarization, &
     & T_String, Z
 
-  use INTRINSIC, only: DATA_TYPE_INDICES, FIELD_INDICES, &
+  use INTRINSIC, only: DATA_TYPE_INDICES, FIELD_INDICES, FUNC_INDICES, &
     & LIT_INDICES, PARM_INDICES, SECTION_INDICES, SPEC_INDICES
 
   use MOLECULES, only: Init_Molecules, Last_Molecule, Last_Molecule_Type
@@ -205,6 +205,9 @@ contains
 end module Init_MLSSignals_m
 
 ! $Log$
+! Revision 2.25  2004/05/29 02:42:59  vsnyder
+! Rearrange function definition stuff
+!
 ! Revision 2.24  2004/01/16 21:37:23  livesey
 ! Added the ability to defer the connection between bands and radiometers
 ! until you define the signal.  This is to support some SMLS related
