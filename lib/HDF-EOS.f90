@@ -15,6 +15,7 @@ module HDFEOS               ! F90 interface to HDF-EOS.
   character(len=len(idparm)), private :: Id = idParm
   character(len=*), private, parameter :: ModuleName = &
        & "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
 
   ! Now define f90 interfaces for some HDF-EOS.
@@ -166,11 +167,19 @@ module HDFEOS               ! F90 interface to HDF-EOS.
    INTEGER, PARAMETER :: HDFE_NENTDFLD           =     4
 
 !====================
+contains 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module HDFEOS
 !====================
 
 !
 ! $Log$
+! Revision 2.14  2002/10/08 00:09:09  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.13  2002/10/01 22:03:54  pwagner
 ! Fixed RCS Ident Block
 !

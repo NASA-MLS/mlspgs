@@ -16,6 +16,7 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
   ! This module provides low level messaging for the MLSPGS suite.  The main
@@ -261,11 +262,18 @@ contains
   end subroutine MLSMessageExit
 
 !=======================================================================
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module MLSMessageModule
 !=======================================================================
 
 !
 ! $Log$
+! Revision 2.14  2002/10/08 00:09:12  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.13  2001/08/08 23:50:35  pwagner
 ! Added farewell optional arg to MLSMessageExit
 !
