@@ -353,7 +353,7 @@ contains
 999 error = .true.
     p = -huge(p)
     go to 99
- end function Primary
+  end function Primary
 
   subroutine Lexer ( The_Token, The_Expr, C, L )
     type(token), intent(out) :: The_Token
@@ -398,6 +398,9 @@ contains
     case ( ',' )
       the_token%class = comma
     case ( '.', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' )
+      ! We don't worry much about the syntax of numbers.  All we want
+      ! to do is not read '3+4' as meaning '3e+4'.  The rest of the
+      ! syntax checking is done by the 'read' statement.
       the_token%class = number
       c1 = c
       do
@@ -453,12 +456,14 @@ contains
       do i = 1, depth
         write ( *, '(a)', advance='no' ) '.'
       end do
-      if ( the_token%class == name ) then
+      select case ( the_token%class )
+      case ( name )
         write ( *, * ) 'The_Token%name = ', trim(the_token%name)
-      else
-        write ( *, * ) 'The_Token%value =', the_token%value, &
-          & ', %class = ', trim(tokenName(the_token%class))
-      end if
+      case ( number )
+        write ( *, * ) 'The_Token%value =', the_token%value
+      case default
+        write ( *, * ) 'The_Token%class = ', trim(tokenName(the_token%class))
+      end select
     end if
   end subroutine Lexer
 
@@ -482,10 +487,11 @@ contains
     depth = depth + 1
     if ( present(inputName) ) then
       write ( *, * ) ' Enter ', trim(name), ' with ', trim(the_expr(myL)), &
-        & ' and ', trim(inputName), ' = ', inputValue, ' at ', myC
+        & ' and ', trim(inputName), ' = ', inputValue, &
+        & ' at ', myC, ' on line ', myL
     else
       write ( *, * ) ' Enter ', trim(name), ' with ', trim(the_expr(myL)), &
-        & ' at ', myC
+        & ' at ', myC, ' on line ', myL
     end if
   end subroutine Trace_Begin
 
@@ -503,6 +509,9 @@ contains
 end module Expr_Eval_M
 
 ! $Log$
+! Revision 2.3  2001/12/18 00:35:20  vsnyder
+! Add some comments, improve trace output
+!
 ! Revision 2.2  2001/12/17 23:55:11  vsnyder
 ! Added 'help' subroutine
 !
