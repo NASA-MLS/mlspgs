@@ -155,7 +155,8 @@ tar:
 # up-to-date prereqs for init_tables_module
 $(INSTALLDIR)/init_gen: $(UTILDIR)/init_gen.f90
 	$(UTILDIR)/build_f90_in_misc.sh -p init_gen \
-	-d $(INSTALLDIR) -t $(TESTSDIR) $(UTILDIR)/init_gen.f90
+	-d $(INSTALLDIR) -t $(TESTSDIR) -M $(MAKE) \
+   $(UTILDIR)/init_gen.f90
 
 $(S)/field_parm.f9h $(S)/field_add.f9h: $(S)/field_names.txt $(INSTALLDIR)/init_gen
 	sort -f $(S)/field_names.txt | $(INSTALLDIR)/init_gen \
@@ -190,6 +191,9 @@ MLSL2.o: $(CONFDIR)/notes/switches $(CONFDIR)/notes/options
 
 
 # $Log$
+# Revision 1.27  2001/08/23 16:25:01  pwagner
+# Implemented init_gen build of init_tables_module.f90
+#
 # Revision 1.26  2001/07/27 23:02:51  pwagner
 # Almost implemented init_gen build of init_tables_module.f90--only a comment away
 #
