@@ -21,7 +21,8 @@
 
 ;; These macros define our standard output filenames
 !define(DGGFilename,{'!outpathl2gp/MLS-Aura_L2GP-DGG_!l2version_!day.he!hdfVersion'})
-!define(DGMFilename,{'!outpathl2gp/MLS-Aura_L2AUX-DGM_!l2version_!day.h!hdfVersion'})
+!define(DGMFilename,{'!outpathl2aux/MLS-Aura_L2AUX-DGM_!l2version_!day.h!hdfVersion'})
+!define(CloudFilename,{'!outpathl2aux/MLS-Aura_L2AUX_Cloud_!l2version_!day.h!hdfVersion'})
 
 ;; This macro is used in sids runs to get the band number part of a band
 ;; specifier (i.e. strip off the sideband if it is present)
@@ -150,7 +151,8 @@ end Fill})
 ;; These macros define the various diverts we're going to get going
 !define(directDGGDivert,1)
 !define(directDGMDivert,2)
-!define(AVKDivert,3)
+!define(directCloudDivert,3)
+!define(AVKDivert,4)
 
 ;; This macro is used to note an averaging kernel to be output later
 !define(storeAVK,{!ifdef(flagGotAVKs,{!divert(!AVKDivert),!divert})!dnl
@@ -163,6 +165,9 @@ end Fill})
 
 !define(noteDirectDGM,{!ifdef(flagGotDirectDGMs,{!divert(!directDGMDivert),!divert})!dnl
 !define(flagGotDirectDGMs,{Yes})!divert(!directDGMDivert)$1!divert})
+
+!define(noteDirectCloud,{!ifdef(flagGotDirectClouds,{!divert(!directCloudDivert),!divert})!dnl
+!define(flagGotDirectClouds,{Yes})!divert(!directCloudDivert)$1!divert})
 
 ;; This macro is used to write one DGG species complete with precision
 ;; The quantity is in state/outputPrecision.$1 and the label is in $2
@@ -183,6 +188,12 @@ Label, quantity=$1, label=$2!ifelse($#,2,{},{,!shift(!shift($*))})!dnl
 Label, quantity=$1, label=$2!ifelse($#,2,{},{,!shift(!shift($*))})!dnl
 !noteDirectDGM({source=$1})})
 
+;; This macro is used to write one Cloud species.  The quantity is in $1
+;; (including the vector), and the label is in $2
+!define(directWriteCloud,{!dnl
+Label, quantity=$1, label=$2!ifelse($#,2,{},{,!shift(!shift($*))})!dnl
+!noteDirectCloud({source=$1})})
+
 ;; This macro is used to spit out all the accumulated DGM/DGGs
 !define(flushDGGDGMFiles,{!dnl
 ;; First do the DGGs
@@ -193,8 +204,12 @@ DirectWrite, file=!DGGFilename, hdfVersion=!hdfVersion, $
 !ifdef(flagGotDirectDGMs,{!dnl
 DirectWrite, file=!DGMFilename, hdfVersion=!hdfVersion, $
   type=l2aux, !undivert(!directDGMDivert)})
+;; Now the cloud stuff
+!ifdef(flagGotDirectClouds,{!dnl
+DirectWrite, file=!CloudFilename, hdfVersion=!hdfVersion, $
+  type=l2aux, !undivert(!directCloudDivert)})
 ;; Clear our macros
-!undefine(flagGotDirectDGGs)!undefine(flagGotDirectDGMs)})
+!undefine(flagGotDirectDGGs)!undefine(flagGotDirectDGMs)!undefine(flagGotDirectClouds)})
 
 ;; These macros are associated with the direct write code.  It writes a
 ;; set of radiances $2... into the L2FWM-$1 file.
@@ -284,6 +299,9 @@ DirectWrite, file=!DGMFilename, hdfVersion=!hdfVersion, $
   Fill, quantity=standardPrecision.$1, method=vector, sourceQuantity=outputPrecision.$1!nl})
 
 ; $Log$
+; Revision 1.59  2003/07/08 20:03:56  livesey
+; New handling of hdf version stuff
+;
 ; Revision 1.58  2003/07/08 00:50:43  livesey
 ; Better handling of l2fwm files
 ;
