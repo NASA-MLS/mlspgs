@@ -65,12 +65,12 @@ $(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
           -j lit_names.txt \
           $(S)/lit_parm.f9h $(S)/lit_add.f9h lit_indices
 
-init_tables_module.mod: $(S)/field_parm.f9h $(S)/field_add.f9h \
-   $(S)/lit_parm.f9h $(S)/lit_add.f9h $(S)/init_tables_module.f90
-	$(UTILDIR)/newAifBdiff.sh -a init_tables_module.mod $(FC) -c $(FOPTS) $(INC_PATHS) $(S)/init_tables_module.f90 $(FAFTER)
-init_tables_module.o: init_tables_module.mod
-	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
-   -T init_tables_module.o init_tables_module.mod 
+# > init_tables_module.mod: $(S)/field_parm.f9h $(S)/field_add.f9h \
+# >    $(S)/lit_parm.f9h $(S)/lit_add.f9h $(S)/init_tables_module.f90
+# > 	$(UTILDIR)/newAifBdiff.sh -a init_tables_module.mod $(FC) -c $(FOPTS) $(INC_PATHS) $(S)/init_tables_module.f90 $(FAFTER)
+# > init_tables_module.o: init_tables_module.mod
+# > 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+# >    -T init_tables_module.o init_tables_module.mod 
 
 endif
 #	l3
@@ -214,8 +214,8 @@ $(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
           -j lit_names.txt \
           $(S)/lit_parm.f9h $(S)/lit_add.f9h lit_indices
 
-init_tables_module.o: $(S)/field_parm.f9h $(S)/field_add.f9h \
-   $(S)/lit_parm.f9h $(S)/lit_add.f9h $(S)/init_tables_module.f90
+# > init_tables_module.o: $(S)/field_parm.f9h $(S)/field_add.f9h \
+# >    $(S)/lit_parm.f9h $(S)/lit_add.f9h $(S)/init_tables_module.f90
 
 endif
 #	l3
@@ -291,6 +291,9 @@ ncep_dao.o:
 
 endif
 # $Log$
+# Revision 1.3  2002/07/03 00:22:39  pwagner
+# Added line to build l2/init_tables_module.mod
+#
 # Revision 1.2  2002/07/01 20:50:30  pwagner
 # Rebuilds object file when deleted
 #
