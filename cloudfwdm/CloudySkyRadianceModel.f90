@@ -12,6 +12,7 @@ module CloudySkyRadianceModel
       use FOV_CONVOLVE_M, only: FOV_CONVOLVE
       use HYDROSTATIC_INTRP, only: GET_PRESSURES
       use L2PC_FILE_PARAMETERS, only: DEG2RAD
+      use ModelInput, only: MODEL_ATMOS
       use MLSCommon, only: r8
       use MLSNumerics, only: INTERPOLATEVALUES
 
@@ -54,6 +55,8 @@ contains
 !                      GRID ARE THE SAME AS THE INTERNAL GRID. HOWEVER,      C
 !                      THE NUMBER OF MODEL PARAMETER NEEDED TO PASSE TO      C
 !                      LEVEL 2 WAS THEREFORE INCREASED.                      C
+!     -- AUG 6,  2001: ADDED TRANS FUNCTION FOR CLOUD RETRIEVAL              C
+!     -- AUG 18, 2001: ADDED FIELD OF VIEW AVERAGING                         C
 !----------------------------------------------------------------------------C
 !                                                                            C
 !     <<< INPUT PARAMETERS >>>                                               C
@@ -139,7 +142,6 @@ contains
 !     PHONE: (818) 354-7135                                                  C
 !     FAX:   (818) 393-5065                                                  C
 !============================================================================C
-
 
 !---------------------------------------
 !     INPUT PARAMETERS (INPUTS FROM L2)        ! -- INTERFACE AEA -- ! 
@@ -341,8 +343,6 @@ contains
       Real(r8) :: dTB0_dZT(NT,NF), dDTcir_dZT(NT,NF)
 
       Real(r8), dimension(size(fft_index)) :: FFT_ANGLES, FFT_PRESS, RAD0, RAD
-
-!      REAL(r8) :: TMP(NZmodel/8-1)                 
 
       REAL(r8) :: PH1(NU)                      ! SINGLE PARTICLE PHASE FUNCTION
       REAL(r8) :: P(NAB,NU)                    ! LEGENDRE POLYNOMIALS l=1
