@@ -958,7 +958,7 @@ contains ! ============= Public procedures ===================================
       L_NUMJ, L_OPTICALDEPTH, &
       L_ORBITINCLINATION, L_PHITAN, L_PTAN, L_QUALITY, L_RADIANCE, L_EARTHRADIUS,&
       L_REFGPH, L_REFLTEMP, L_REFLTRANS, L_REFLREFL, L_REFLSPILL, &
-      L_RHI, L_SIZEDISTRIBUTION, &
+      L_RHI, L_SINGLECHANNELRADIANCE, L_SIZEDISTRIBUTION, &
       L_SCANRESIDUAL, L_SCECI, L_SCVEL, L_SCVELECI, &
       L_SCVELECR, L_SCGEOCALT, &
       L_SPACERADIANCE, L_STATUS, L_STRAYRADIANCE, L_SURFACETYPE, L_SYSTEMTEMPERATURE, &
@@ -1001,14 +1001,17 @@ contains ! ============= Public procedures ===================================
       l_cloudExtinction, phyq_dimensionless, p_hGrid, p_vGrid, p_mustBeZeta, next, &
       l_cloudIce, phyq_IceDensity, p_hGrid, p_vGrid, p_mustBeZeta, next, &
       l_cloudInducedRadiance, phyq_temperature, p_minorFrame, p_signal, next, &
-      l_cloudMinMax, phyq_temperature, p_hGrid, p_vGrid, p_mustbezeta, next, &
+      l_cloudMinMax, phyq_temperature, p_hGrid, p_vGrid, p_mustbezeta, &
+                     p_signal, p_suppressChannels, next, &
       l_cloudRadSensitivity, phyq_temperature, p_minorFrame, p_signal, next, &
       l_cloudWater, phyq_dimensionless, p_hGrid, p_vGrid, p_mustBeZeta, next, &
       l_columnAbundance, phyq_dobsonunits, p_hGrid, p_molecule, next, &
       l_dnwt_ajn, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
       l_dnwt_axmax, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
       l_dnwt_cait, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
-      l_dnwt_chisqminnorm, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
+      l_dnwt_chisqminnorm, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta /) )
+
+    call DefineQtyTypes ( (/ &
       l_dnwt_chisqnorm, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
       l_dnwt_diag, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
       l_dnwt_dxdx, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
@@ -1072,6 +1075,8 @@ contains ! ============= Public procedures ===================================
       l_scVelECI, phyq_velocity, p_minorFrame, p_scModule, p_xyz, next, &
       l_scVelECR, phyq_velocity, p_minorFrame, p_scModule, p_xyz, next, &
       l_scanResidual, phyq_length, p_minorFrame, p_module, next, &
+      l_singleChannelRadiance, phyq_temperature, p_minorFrame, p_signal, &
+                               p_suppressChannels, next, &
       l_sizeDistribution, phyq_dimensionless, p_hGrid, p_vGrid, p_mustBeZeta, next, & 
       l_spaceRadiance, phyq_temperature, none, next, &
       l_status, phyq_dimensionless, p_hGrid, next, &
@@ -1188,6 +1193,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.109  2004/04/16 00:48:52  livesey
+! Added singleChannelRadiance type
+!
 ! Revision 2.108  2004/03/17 17:16:25  livesey
 ! New cloudMinMax type.
 !
