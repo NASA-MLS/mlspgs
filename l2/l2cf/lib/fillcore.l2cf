@@ -26,4 +26,9 @@ begin Fill
   Fill, quantity=stateCore.h2o, method=vector, sourceQuantity=apriori.h2o
   Subset, quantity=stateCore.h2o, mask=fill, /reset
 
+  ;; Transfer the low resolution data into the high resolution data
+  Fill, quantity=stateCore.h2o_hr, method=vector, sourceQuantity=stateCore.h2o, /interpolate
+  Fill, quantity=stateCore.o3_hr, method=vector, sourceQuantity=stateCore.o3, /interpolate
+  Fill, quantity=stateCore.temperature_hr, method=vector, sourceQuantity=stateCore.temperature, /interpolate
+
 end Fill
