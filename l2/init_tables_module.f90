@@ -420,7 +420,7 @@ contains ! =====     Public procedures     =============================
       begin, t+t_outputType, l+l_l2aux, l+l_l2gp, l+l_l2dgg, l+l_l2fwm, l+l_l2pc, &
              n+n_dt_def /) )
     call make_tree ( (/ &
-      begin, t+t_quantityType, l+l_baseline, l+l_boundarypressure, l+l_calSidebandFraction, &
+      begin, t+t_quantityType, l+l_adopted, l+l_baseline, l+l_boundarypressure, l+l_calSidebandFraction, &
              l+l_chisqbinned, l+l_chisqchan, l+l_chisqmmaf, l+l_chisqmmif, l+l_cloudIce, &
              l+l_cloudInducedRadiance, l+l_cloudExtinction, l+l_cloudRadSensitivity, &
              l+l_cloudWater, l+l_columnabundance, &
@@ -1138,6 +1138,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.351  2004/01/24 01:04:38  livesey
+! Added the adopted quantity type.
+!
 ! Revision 2.350  2004/01/23 19:09:00  livesey
 ! More work on adoption / loading
 !
