@@ -803,7 +803,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
          do j = 1,noCldSurf                  ! loop over surface
          do k = 1, nfine*noInstances      ! sum up all the lengths
            if(abs(zp_fine(k) - state_ext%template%surfs(j,i)) < dz/2. &
-           & .AND. abs(phi_fine(k) - state_ext%template%phi(j,i)) < dphi/2.) &
+           & .AND. abs(phi_fine(k) - state_ext%template%phi(1,i)) < dphi/2.) &
            & jBlock%values(mif,j+(i-1)*noCldSurf) = &
            & jBlock%values(mif,j+(i-1)*noCldSurf) + ds_fine(k)/ds_tot
          end do
@@ -906,6 +906,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.71  2001/11/02 01:00:13  jonathan
+! add IWC1
+!
 ! Revision 1.70  2001/11/02 00:47:34  dwu
 ! correction in high cloud Jacobian
 !
