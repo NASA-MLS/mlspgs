@@ -363,10 +363,7 @@ contains ! =====     Public Procedures     =============================
 
     use GL6P, only: NG
     use MLSCommon, only: I4, R4, R8
-!    use L2PC_FILE_PARAMETERS, only: mxco => MAX_NO_ELMNTS_PER_SV_COMPONENT
     use L2PC_PFA_STRUCTURES, only: K_MATRIX_INFO
-!    use L2PCdim, only: NSPS, Nptg, MNP => max_no_phi, &
-!      MNM => max_no_mmaf
     use ELLIPSE_M, only: ELLIPSE
     use COMP_PATH_ENTITIES_M, only: COMP_PATH_ENTITIES
     use GET_PATH_SPSFUNC_NGRID_M, only: GET_PATH_SPSFUNC_NGRID
@@ -408,7 +405,7 @@ contains ! =====     Public Procedures     =============================
       max_phi_dim, max_zeta_dim
 
 !    real(r4) :: K_STAR_ALL(25,20,mxco,mnp,Nptg)
-    type(k_matrix_info) :: K_star_info(20)
+!    type(k_matrix_info) :: K_star_info(20)
 
 
     type(path_derivative) :: K_temp_frq
@@ -446,6 +443,7 @@ contains ! =====     Public Procedures     =============================
     integer :: WHICHPOINTINGGRID        ! Index of poiting grid
     integer :: MIF                      ! Loop counter
     integer :: CHANNEL                  ! Loop counter
+    integer :: MAFTINSTANCE             ! Temperature instance closest to this MAF
     integer :: MAXNOFREQS               ! Used for sizing arrays
     integer :: MAXNOFSURFS              ! Max. no. surfaces for any molecule
     integer :: MAXPATH                  ! Number of points on longest path
@@ -629,9 +627,10 @@ contains ! =====     Public Procedures     =============================
     end if
 
     ! Deal with fmStat%rows
-    if ( present(Jacobian) .and. ( .not. associated (fmStat%rows) ) ) &
+    if ( present(Jacobian) .and. ( .not. associated (fmStat%rows) ) ) then
       & call Allocate_test ( fmStat%rows, Jacobian%row%nb, 'fmStat%rows', &
-      & ModuleName)
+        & ModuleName)
+      fmStat%rows = .false.
 
     ! Work out what signal we're after
     signal = forwardModelConfig%signals(1)
@@ -895,6 +894,7 @@ contains ! =====     Public Procedures     =============================
       call FindClosestInstances( temp, radiance, closestInstances )
       windowStart = max(1,closestInstances(maf)-phiWindow/2)
       windowFinish = min(closestInstances(maf)+phiWindow/2, temp%template%noInstances)
+      mafTInstance = closestInstances(maf)
       call Deallocate_test(closestInstances, 'closestInstances', ModuleName)
 
       allocate ( k_temp(noUsedChannels, no_tan_hts, temp%template%noSurfs, &
@@ -1180,8 +1180,9 @@ contains ! =====     Public Procedures     =============================
           ! Note I am replacing the i's in the k's with 1's (enclosed in
           ! brackets to make it clear.)  We're not wanting derivatives anyway
           ! so it shouldn't matter
-          call convolve_all ( forwardModelConfig, fwdModelIn, maf, &
-            &     windowStart, windowFinish, temp, ptan, radiance, &
+          call convolve_all ( forwardModelConfig, fwdModelIn, maf, ch, &
+            &     windowStart, windowFinish, mafTInstance-windowStart+1, &
+            &     temp, ptan, radiance, &
             &     ForwardModelConfig%tangentGrid%surfs, ptg_angles, &
             &     ifm%tan_temp(:,maf), dx_dt, d2x_dxdt,si, center_angle, &
             &     Radiances(:,ch), k_temp(i,:,:,:), k_atmos(i,:,:,:,:), &
@@ -1191,7 +1192,7 @@ contains ! =====     Public Procedures     =============================
           if ( ier /= 0 ) goto 99
         else
 
-          call no_conv_at_all ( forwardModelConfig, fwdModelIn, maf, &
+          call no_conv_at_all ( forwardModelConfig, fwdModelIn, maf, ch,  &
             &     windowStart, windowFinish, temp, ptan, radiance, &
             &     ForwardModelConfig%tangentGrid%surfs, &
             &     Radiances(:,ch), k_temp(i,:,:,:), k_atmos(i,:,:,:,:), &
@@ -1282,53 +1283,53 @@ contains ! =====     Public Procedures     =============================
 
     call Deallocate_test ( usedChannels, 'usedChannels', ModuleName )
 
-    ! ** DEBUG, Zvi
-    !   if ( i > -22) Stop
-    ! ** END DEBUG
+!     ! ** DEBUG, Zvi
+!     !   if ( i > -22) Stop
+!     ! ** END DEBUG
 
-    if ( .not. any((/ForwardModelConfig%temp_der,&
-      & ForwardModelConfig%atmos_der,ForwardModelConfig%spect_der/)) ) goto 99
+!     if ( .not. any((/ForwardModelConfig%temp_der,&
+!       & ForwardModelConfig%atmos_der,ForwardModelConfig%spect_der/)) ) goto 99
 
-    m = ptan%template%noSurfs
-    tau(1:m) = ptan%values(1:m,3)
-    tau(m+1:) = 0.0
+!     m = ptan%template%noSurfs
+!     tau(1:m) = ptan%values(1:m,3)
+!     tau(m+1:) = 0.0
 
-    klo = -1
-    Zeta = -1.666667
-    call Hunt_zvi ( Zeta, tau, m, klo, j )
-    if ( abs(Zeta-tau(j)) < abs(Zeta-tau(klo))) klo=j
+!     klo = -1
+!     Zeta = -1.666667
+!     call Hunt_zvi ( Zeta, tau, m, klo, j )
+!     if ( abs(Zeta-tau(j)) < abs(Zeta-tau(klo))) klo=j
 
-    m = -1
-    ch = 1
-    tau = 0.0
-    do i = 1, k_info_count
-      print *
-      Name = ' '
-      Name = k_star_info(i)%name
-      if ( Name == 'PTAN') cycle
-      kz = k_star_info(i)%first_dim_index
-      mnz = k_star_info(i)%no_zeta_basis
-      ht_i = k_star_info(i)%no_phi_basis
-      nameLen = len_trim(Name)
-      if ( Name(nameLen-1:nameLen) == '_W' .or.  &
-        &   Name(nameLen-1:nameLen) == '_N' .or.  &
-        &   Name(nameLen-1:nameLen) == '_V' ) then
-        print *,Name
-!        r = sum(k_star_all(ch,kz,1:mnz,1:ht_i,klo))
-        print *,'  Sum over all zeta & phi coeff:',sngl(r)
-      else
-        if ( Name == 'TEMP' ) then
-          write(6,913) 'dI_dT',char(92),ht_i
-        else
-          write(6,913) 'dI_d'//Name(1:nameLen),char(92),ht_i
-        end if
-        tau = 0.0
-        tau(1:mnz) = k_star_info(i)%zeta_basis(1:mnz)
-        call Hunt_zvi ( Zeta, tau, mnz, m, j )
-        if ( abs(Zeta-tau(j)) < abs(Zeta-tau(m))) m=j
-!        print *,(k_star_all(ch,kz,m,j,klo),j=1,ht_i)
-      end if
-    end do
+!     m = -1
+!     ch = 1
+!     tau = 0.0
+!     do i = 1, k_info_count
+!       print *
+!       Name = ' '
+!       Name = k_star_info(i)%name
+!       if ( Name == 'PTAN') cycle
+!       kz = k_star_info(i)%first_dim_index
+!       mnz = k_star_info(i)%no_zeta_basis
+!       ht_i = k_star_info(i)%no_phi_basis
+!       nameLen = len_trim(Name)
+!       if ( Name(nameLen-1:nameLen) == '_W' .or.  &
+!         &   Name(nameLen-1:nameLen) == '_N' .or.  &
+!         &   Name(nameLen-1:nameLen) == '_V' ) then
+!         print *,Name
+! !        r = sum(k_star_all(ch,kz,1:mnz,1:ht_i,klo))
+!         print *,'  Sum over all zeta & phi coeff:',sngl(r)
+!       else
+!         if ( Name == 'TEMP' ) then
+!           write(6,913) 'dI_dT',char(92),ht_i
+!         else
+!           write(6,913) 'dI_d'//Name(1:nameLen),char(92),ht_i
+!         end if
+!         tau = 0.0
+!         tau(1:mnz) = k_star_info(i)%zeta_basis(1:mnz)
+!         call Hunt_zvi ( Zeta, tau, mnz, m, j )
+!         if ( abs(Zeta-tau(j)) < abs(Zeta-tau(m))) m=j
+! !        print *,(k_star_all(ch,kz,m,j,klo),j=1,ht_i)
+!       end if
+!     end do
 
 99  continue
 
@@ -1439,6 +1440,10 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.101  2001/04/20 02:55:19  livesey
+! Now writes back derivatives in Jacobian!!! Not folded yet though,
+! but that will be easy!
+!
 ! Revision 2.100  2001/04/19 23:55:04  livesey
 ! Interim version, new convolve etc. but no derivatives
 !
