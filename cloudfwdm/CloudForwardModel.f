@@ -3,13 +3,8 @@
      1           FREQUENCY, PRESSURE, HEIGHT, TEMPERATURE, VMRin,
      2           WC, IPSD, 
      3           ZT, RE, ISURF, ISWI, ICON,
-     4           TB0, DTcir, BETA, BETAc, Dm, TAUeff, SS,
-     + 
-     5           NU,NUA,NAB,NR,
-     6           PH0,PHH,PH1,RC,RC_TMP,CDEPTH,W0,W00,U,DU,UA,THETA,
-     6           PHI,UI,THETAI,RS,P11,YQ,VMR,ZZT,CHK_CLD,TEMP,TAU0,
-     6           TAU,TAU100,delTAU,delTAUc,TT0,TT,Z,P,DP,R,RN,BC,
-     6           NABR,A,B) 
+     4           TB0, DTcir, BETA, BETAc, Dm, TAUeff, SS, 
+     5           NU,NUA,NAB,NR)
 
 C============================================================================C
 C   >>>>>>>>> FULL CLOUD FORWARD MODEL FOR MICROWAVE LIMB SOUNDER >>>>>>>>   C
@@ -23,7 +18,6 @@ C     MUST BE CALLED TWICE TO COMPUTE CLEAR-SKY RADIANCES IN BOTH DRY &      C
 C     WET (100% RELATIVE HUMIDITY) CONDITIONS.                               C
 C                                                                            C
 C     JONATHAN H. JIANG                                                      C
-C                                                                            C
 C     -- MAY 18, 2001: FIRST WORKING VERSION.                                C
 C     -- JUNE 9, 2001: ELIMINATE INTERNAL GRID SO THAT THE INPUT/OUTPUT      C
 C                      GRID ARE THE SAME AS THE INTERNAL GRID. HOWEVER,      C
@@ -32,7 +26,7 @@ C                      LEVEL 2 WAS THEREFORE INCREASED.                      C
 C----------------------------------------------------------------------------C
 C                                                                            C
 C     <<< INPUT PARAMETERS >>>                                               C
-C     ========================                                               C
+C     ------------------------                                               C
 C                                                                            C
 C     0. DEMENSION:                                                          C
 C     -------------                                                          C
@@ -77,7 +71,7 @@ C     ICON            -> Cloud Control Switch (Default: 2).                  C
 C     -----------------------------------------------                        C
 C                                                                            C
 C     >>> OUTPUT PARAMETERS <<<                                              C
-C     =========================                                              C
+C     -------------------------                                              C
 C                                                                            C
 C     4. STANDARD OUTPUTS:                                                   C
 C     --------------------                                                   C
@@ -92,24 +86,13 @@ C                                                                            C
 C     -----------------------------------------------                        C
 C                                                                            C
 C     ((( INTERNAL MODEL PARAMETERS )))                                      C
-C     =================================                                      C
 C                                                                            C
-C     5. FIXED PARAMETERS                                                    C
-C     -------------------                                                    C
+C     5. INTERNAL MODEL PARAMETERS                                                    C
+C     ----------------------------                                                    C
 C     NU  = 16        -> Number of scattering angles.                        C
 C     NUA = 8         -> Number of azimuth angles.                           C
 C     NAB = 50        -> Maximum number of truncation terms.                 C
-C     NR  = 40        -> Number of particle size bins.                       C
-C                                                                            C
-C     6. MODEL PARAMETERS AND WORK SPACE                                     C
-C     ----------------------------------                                     C
-C     PH0(N,NU,NZ-1),PHH(N,NU,NZ-1),PH1(NU),RC(N,3),RC_TMP(N,3),             C
-C     CDEPTH(N),W0(N,NZ-1),W00(N,NZ-1),U(NU),DU(NU),UA(NUA),THETA(NU),       C
-C     PHI(NUA),UI(NU,NU,NUA),THETAI(NU,NU,NUA),RS(NU/2),P11(NU),             C
-C     YQ(NZ),VMR(NS,NZ),ZZT(NT),CHK_CLD(NZ),TEMP(NZ-1),TAU0(NZ-1),           C
-C     TAU(NZ-1),TAU100(NZ-1),delTAU(NZ-1),delTAUc(NZ-1),TT0(NT+1),           C
-C     TT(NT+1),Z(NZ-1),P(NAB,NU),DP(NAB,NU),R(NR),RN(NR),BC(3,NR),           C
-C     NABR(NR),A(NR,NAB),B(NR,NAB)                                           C
+C     NR  = 40        -> Number of particle size bins.                       C             
 C     --------------------------------------------------------------         C
 C                                                                            C
 C     FREQUENCY RANGE: 1-3000GHz                                             C
@@ -284,7 +267,7 @@ C---------------------------
                                                ! COEFFS
 
       COMPLEX A(NR,NAB),B(NR,NAB)              ! MIE COEFFICIENCIES
-     
+
 C---------------<<<<<<<<<<<<< START EXCUTION >>>>>>>>>>>>-------------------C
 
       CALL HEADER(1)
@@ -292,13 +275,13 @@ C---------------<<<<<<<<<<<<< START EXCUTION >>>>>>>>>>>>-------------------C
 C=========================================================================
 C                    >>>>>> CHECK MODEL-INPUT <<<<<<< 
 C-------------------------------------------------------------------------
-C     SET INTERNAL MODEL PARAMETERS 
+C     CHECK IF THE INPUT PROFILE MATCHS THE MODEL INTERNAL GRID; 
 C     SET TANGENT PRESSURE (hPa) TO TANGENT HEIGHT (km)
 C=========================================================================
 
       CALL SET_PARAM(PRESSURE,HEIGHT,TEMPERATURE,VMRin,WC,
      >                  NZ,NS,N,YQ,VMR,ZT,ZZT,NT,CHK_CLD) 
-
+                                                       
 C-----------------------------------------------
 C     INITIALIZE SCATTERING AND INCIDENT ANGLES 
 C-----------------------------------------------
@@ -475,14 +458,12 @@ C====================================
 
          DO I=1,NT
             TB0(I,IFR)=TT0(I,NZ)                  ! CLEAR-SKY BACKGROUND      
-            DTcir(I,IFR)=TT(I,NZ)-TT0(I,NZ)       ! CLOUD-INDUCED RADIANCE
+            DTcir(I,IFR)=TT(I,NZ)-TT0(I,NZ)      ! CLOUD-INDUCED RADIANCE
          ENDDO
 
-C--------------------------------
-C        COMPUTE SENSITIVITY
-C--------------------------------
          CALL SENSITIVITY (DTcir,ZZT,NT,PRESSURE,HEIGHT,NZ,PRESSURE,NZ,
-     >                     delTAU,delTAUc,TAUeff,SS,N,NF,IFR,ISWI,RE) 
+     >                     delTAU,delTAUc,TAUeff,SS,
+     >                     N,NF,IFR,ISWI,RE) ! COMPUTE SENSITIVITY
 
  2000 CONTINUE                               ! END OF FREQUENCY LOOP   
 
