@@ -20,6 +20,10 @@ module HDFEOS5               ! F90 interface to HDF-EOS5.
   ! as of Toolkit version 5.2.8
   include 'hdfeos5.f9h'
 
+  ! To switch to/from hdfeos5.1.6(+) swap comments between next 2 lines
+  integer, parameter         :: MLS_CHARTYPE = HE5T_NATIVE_SCHAR
+  ! integer, parameter         :: MLS_CHARTYPE = HE5T_CHARSTRING
+
   ! Now define f90 interfaces for some HDF-EOS5.
   ! Warning: as you are calling C directly, make sure that your 
   ! array args are like this.
@@ -233,6 +237,9 @@ end module HDFEOS5
 !====================
 
 ! $Log$
+! Revision 2.10  2004/03/24 23:52:11  pwagner
+! Added MLS_CHARTYPE
+!
 ! Revision 2.9  2004/02/26 21:58:23  pwagner
 ! Added HE5_EHINQGLATTS
 !
