@@ -974,9 +974,8 @@ contains ! =====     Public Procedures     =============================
     freq = 0
 
     nDims = HE5_SWinqdims(swid, list, dims)
-    print*,"just called inqdims: nDims=",ndims,"list=",list,"dims=",dims
-    if (nDims == -1) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
-         &get dimension information on hdfeos5 swath ' // trim(swathname))
+    if (nDims == -1) call MLSMessage(MLSMSG_Error, ModuleName, &
+      & 'Failed to get dimension information on hdfeos5 swath ' // trim(swathname))
     if ( index(list,'nLevels') /= 0 ) lev = 1
     if ( index(list,'Freq') /= 0 ) freq = 1
 !    if ( index(list,'Unlim') /= 0 ) then 
@@ -1007,7 +1006,6 @@ contains ! =====     Public Procedures     =============================
     endif
     l2gp%nTimes = size
     nTimes=size
-    print*,"Now nTimes : ", size
 
     if (lev == 0) then
        nLevels = 0
@@ -2759,6 +2757,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.77  2003/09/03 22:39:44  pwagner
+! Uses actual num of profiles for nTimes even if Unlim
+!
 ! Revision 2.76  2003/08/28 23:51:03  livesey
 ! Various bug fixes to the AppendL2GP stuff
 !
