@@ -51,6 +51,12 @@ MODULE MLSPCF1
    INTEGER, PARAMETER :: mlspcf_bwtbl_start = 904
    INTEGER, PARAMETER :: mlspcf_bwtbl_end = 904
    !
+   INTEGER, PARAMETER :: mlspcf_defltgains_start = 905
+   INTEGER, PARAMETER :: mlspcf_defltgains_end = 905
+   !
+   INTEGER, PARAMETER :: mlspcf_defltzeros_start = 906
+   INTEGER, PARAMETER :: mlspcf_defltzeros_end = 906
+   !
    INTEGER, PARAMETER :: mlspcf_l1b_radf_start = 30000
    INTEGER, PARAMETER :: mlspcf_l1b_radf_end = 30000
    !
@@ -62,6 +68,9 @@ MODULE MLSPCF1
    !
    INTEGER, PARAMETER :: mlspcf_l1b_eng_start = 30003
    INTEGER, PARAMETER :: mlspcf_l1b_eng_end = 30003
+   !
+   INTEGER, PARAMETER :: mlspcf_l1b_diag_start = 30004
+   INTEGER, PARAMETER :: mlspcf_l1b_diag_end = 30004
    !
    INTEGER, PARAMETER :: mlspcf_mcf_l1log_start = 4000
    INTEGER, PARAMETER :: mlspcf_mcf_l1log_end = 4000

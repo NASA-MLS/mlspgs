@@ -112,6 +112,8 @@ MODULE EngTbls   ! Level 1 engineering tables
   TYPE Eng_MAF_T
      INTEGER :: MAFno
      INTEGER :: MIFsPerMAF
+     INTEGER :: TotalMAF
+     CHARACTER(LEN=1) :: GSM_Side
      TYPE (Eng_T) :: Eng(maxtlm)
   END TYPE Eng_MAF_T
 
@@ -141,38 +143,38 @@ MODULE EngTbls   ! Level 1 engineering tables
   ! Initialize table with packet numbers and start bytes within the packet:
 
   TYPE (Riu_Tbl_T) :: Riu_tbl(nrius) = (/ &
-       Riu_tbl_t (1,  69, 0, 0, 0, 0), &
-       Riu_tbl_t (1,  69, 0, 0, 0, 0), &
+       Riu_tbl_t (1,  73, 0, 0, 0, 0), &
+       Riu_tbl_t (1,  73, 0, 0, 0, 0), &
        Riu_tbl_t (3,  21, 0, 0, 0, 0), &
        Riu_tbl_t (3,  21, 0, 0, 0, 0), &
        Riu_tbl_t (2,  47, 0, 0, 0, 0), &
-       Riu_tbl_t (5, 157, 0, 0, 0, 0), &
-       Riu_tbl_t (2, 105, 0, 0, 0, 0), &
+       Riu_tbl_t (5, 141, 0, 0, 0, 0), &
+       Riu_tbl_t (2, 103, 0, 0, 0, 0), &
        Riu_tbl_t (2, 161, 0, 0, 0, 0), &
-       Riu_tbl_t (2, 199, 0, 0, 0, 0), &
-       Riu_tbl_t (4, 147, 0, 0, 0, 0), &
-       Riu_tbl_t (4, 195, 0, 0, 0, 0), &
+       Riu_tbl_t (2, 205, 0, 0, 0, 0), &
+       Riu_tbl_t (4, 131, 0, 0, 0, 0), &
+       Riu_tbl_t (4, 179, 0, 0, 0, 0), &
        Riu_tbl_t (3,  79, 0, 0, 0, 0), &
        Riu_tbl_t (3, 127, 0, 0, 0, 0), &
        Riu_tbl_t (3, 175, 0, 0, 0, 0), &
-       Riu_tbl_t (2,  21, 0, 0, 0, 0), &
-       Riu_tbl_t (4,  21, 0, 0, 0, 0), &
+       Riu_tbl_t (2,  17, 0, 0, 0, 0), &
+       Riu_tbl_t (4,  19, 0, 0, 0, 0), &
        Riu_tbl_t (5,  21, 0, 0, 0, 0), &
-       Riu_tbl_t (4,  69, 0, 0, 0, 0), &
-       Riu_tbl_t (4,  83, 0, 0, 0, 0), &
-       Riu_tbl_t (4,  97, 0, 0, 0, 0), &
-       Riu_tbl_t (5,  69, 0, 0, 0, 0), &
-       Riu_tbl_t (5,  83, 0, 0, 0, 0), &
-       Riu_tbl_t (5, 103, 0, 0, 0, 0), &
+       Riu_tbl_t (4,  65, 0, 0, 0, 0), &
+       Riu_tbl_t (4,  75, 0, 0, 0, 0), &
+       Riu_tbl_t (4,  85, 0, 0, 0, 0), &
+       Riu_tbl_t (5,  67, 0, 0, 0, 0), &
+       Riu_tbl_t (5,  77, 0, 0, 0, 0), &
+       Riu_tbl_t (5,  95, 0, 0, 0, 0), &
+       Riu_tbl_t (5, 113, 0, 0, 0, 0), &
        Riu_tbl_t (5, 123, 0, 0, 0, 0), &
-       Riu_tbl_t (5, 137, 0, 0, 0, 0), &
-       Riu_tbl_t (6,  19, 0, 0, 0, 0), &
-       Riu_tbl_t (6,  39, 0, 0, 0, 0), &
-       Riu_tbl_t (6,  59, 0, 0, 0, 0), &
-       Riu_tbl_t (6,  73, 0, 0, 0, 0), &
-       Riu_tbl_t (1, 127, 0, 0, 0, 0), &
+       Riu_tbl_t (6,  15, 0, 0, 0, 0), &
+       Riu_tbl_t (6,  37, 0, 0, 0, 0), &
+       Riu_tbl_t (6,  55, 0, 0, 0, 0), &
+       Riu_tbl_t (6,  65, 0, 0, 0, 0), &
+       Riu_tbl_t (1, 129, 0, 0, 0, 0), &
        Riu_tbl_t (1, 159, 0, 0, 0, 0), &
-       Riu_tbl_t (4, 117, 0, 0, 0, 0) /)
+       Riu_tbl_t (4, 103, 0, 0, 0, 0) /)
 
 ! Survival telemetry table
 
@@ -255,7 +257,7 @@ CONTAINS
              Eng_tbl(i)%cal_indx = 0
           END IF
           IF (riu_no /= old_riu) THEN
-             Riu_tbl(riu_no)%first_pt = i;
+             Riu_tbl(riu_no)%first_pt = i
           END IF
           Riu_tbl(riu_no)%last_pt = i
           old_riu = riu_no
@@ -289,6 +291,9 @@ CONTAINS
 END MODULE EngTbls
 
 ! $Log$
+! Revision 2.3  2002/03/29 20:18:34  perun
+! Version 1.0 commit
+!
 ! Revision 2.2  2001/02/23 18:56:17  perun
 ! Version 0.5 commit
 !

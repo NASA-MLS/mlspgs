@@ -101,7 +101,7 @@ CONTAINS
     REAL(r8), PARAMETER :: b = 7.20107099888e-5
     REAL :: r
 
-    r = rin * 500.0 / r0;
+    r = rin * 500.0 / r0
     T = a * (r - 500.0) / (1.0 - b * r)
 
   END FUNCTION PRD_temp
@@ -127,22 +127,22 @@ CONTAINS
     IF (INDEX (mnemonic, "_Bus") /= 0) THEN
        IF (INDEX (mnemonic, "_V") /= 0) THEN
           IF (INDEX (mnemonic, "Quiet") /= 0) THEN
-             val = (tval - 0.3113) / 0.1183;   ! Quiet Bus Voltage
+             val = (tval - 0.3979) / 0.1172   ! Quiet Bus Voltage
           ELSE IF (INDEX (mnemonic, "Device") /= 0) THEN
-             val = (tval - 0.2638) / 0.1192;   ! Device Bus Voltage
+             val = (tval - 0.3979) / 0.1172   ! Device Bus Voltage
           ENDIF
        ELSE IF (INDEX (mnemonic, "_I") /= 0) THEN
           IF (INDEX (mnemonic, "Quiet") /= 0) THEN
-             val = (tval - 0.317) / 0.162;   ! Quiet Bus Current
+             val = (tval - 0.3848) / 0.1583   ! Quiet Bus Current
           ELSE IF (INDEX (mnemonic, "Device") /= 0) THEN
-             val = (tval - 0.228) / 1.691;   ! Device Bus Current
+             val = (tval - 0.2431) / 0.639    ! Device Bus Current
           ENDIF
        ENDIF
     ELSE IF (INDEX (mnemonic, "R4_RFE_Tripler_I") /= 0) THEN
-       val = (2.5 - tval) / 49.9;   ! Tripler Current
+       val = (2.5 - tval) / 49.9              ! Tripler Current
     ELSE IF (INDEX (mnemonic, "R4_HarmMixer_V") /= 0) THEN
        IF (tval > 0.0) THEN
-          val = 8.7225 * log (tval) - 29.277;   ! Harmonic Mixer Voltage
+          val = 8.7225 * log (tval) - 29.277  ! Harmonic Mixer Voltage
        ELSE
           val = QNan()
        ENDIF
@@ -154,13 +154,15 @@ CONTAINS
   END FUNCTION Use_equation
 
 
-  SUBROUTINE ConvertEngCounts
+  SUBROUTINE ConvertEngCounts (GMAB_ON)
 
     !! Convert the raw counts into engineering units
 
     USE EngTbls, ONLY: Eng_tbl, Riu_tbl, EngPkt, last_tlm_pt, temp_cal, &
      & vin_cal1, vin_cal2, prt1_cal1, prt1_cal2, prt2_cal1, prt2_cal2, &
      & ysi_cal1, ysi_cal2, Cal_const
+
+    LOGICAL :: GMAB_ON(*)
 
     INTEGER :: i, n, pkt_no, riu_no, byte1
     REAL :: scale
@@ -198,6 +200,21 @@ CONTAINS
        scale = Eng_tbl(i)%scale
 
        Eng_tbl(i)%value = QNan()
+
+       ! Skip the always bad THz sensor
+
+       IF ((INDEX (Eng_tbl(i)%mnemonic, "THzAmbCalTgt_T2") /= 0) .OR. &
+            (INDEX (Eng_tbl(i)%mnemonic, "THzAmbCalTgtRT2") /= 0)) CYCLE
+
+       IF (riu_no >= 1 .AND. riu_no <= 4) THEN
+          IF (.NOT. GMAB_ON(riu_no)) CYCLE     ! GMriu_no is NOT ON
+          IF (MOD (riu_no, 2) == 0) THEN
+             IF (GMAB_ON(riu_no-1)) CYCLE      ! Other related GMriu_no is ON
+          ELSE
+             IF (GMAB_ON(riu_no+1)) CYCLE      ! Other related GMriu_no is ON
+          ENDIF
+       ENDIF
+
        IF (Riu_tbl(riu_no)%id_word /= 0 .AND. &
             Eng_tbl(i)%counts > 0) THEN   ! Data available to convert
 
@@ -214,7 +231,7 @@ CONTAINS
                      & Cal_const(riu_no)%volts, 0.0) * 100.0 + abs_zero
              ENDIF
 
-          CASE ("Analog")
+          CASE ("VIN")
 
              Eng_tbl(i)%value = Cal_freq (Eng_tbl(i)%counts, &
                   & Riu_tbl(riu_no)%Cal_cnts(vin_cal1), &
@@ -244,7 +261,7 @@ CONTAINS
                   & Cal_const(riu_no)%prt2_hi, Cal_const(riu_no)%prt2_low), &
                   & scale)
 
-          CASE ("Therm")
+          CASE ("YSI")
 
              Eng_tbl(i)%value = Therm_temp (Cal_freq(Eng_tbl(i)%counts, &
                   & Riu_tbl(riu_no)%Cal_cnts(ysi_cal1), &
@@ -264,58 +281,62 @@ CONTAINS
   END SUBROUTINE ConvertEngCounts
 
 !=============================================================================
-  FUNCTION GetEngPkt () RESULT (OK)
-!=============================================================================
-
-    USE EngTbls, ONLY: ConvEngPkt
-    USE OpenInit, ONLY: eng_unit, eng_recno
-
-    LOGICAL OK
-    INTEGER :: i, ios
-
-    READ (eng_unit, rec=eng_recno, iostat=ios) ConvEngPkt
-
-    IF (ios /= 0) THEN
-       OK = .FALSE.
-       RETURN         ! Nothing more to get
-    ENDIF
-
-    eng_recno = eng_recno + 1            ! position for next record
-
-    OK = .TRUE.
-
-  END FUNCTION GetEngPkt
-
-!=============================================================================
   SUBROUTINE NextEngMAF (more_data)
 !=============================================================================
 
     USE EngTbls, ONLY: ConvEngPkt, EngPkt, EngMAF, Eng_tbl
     USE L0Utils, ONLY: ReadL0Eng
+    USE MLSL1Config, ONLY: L1Config
+    USE MLSL1Common, ONLY: L1BFileInfo
 
     !! Get the next MAF's engineering data
 
     LOGICAL, INTENT (OUT) :: more_data
 
-    LOGICAL :: OK
+    LOGICAL :: OK, GMAB_ON(4)
+    INTEGER, PARAMETER :: maskbit3 = z'8', maskbit7 = z'80'
 
     more_data = .TRUE.
 
-
-    CALL ReadL0Eng (EngPkt, EngMAF%MAFno, OK)
+    CALL ReadL0Eng (EngPkt, EngMAF%MAFno, EngMAF%TotalMAF, EngMAF%MIFsPerMAF, &
+         OK)
 
     IF (OK) THEN
 
-       CALL ConvertEngCounts
+       ! Determine GM01 to GM04 A/B ON/OFF states:
+
+       GMAB_ON(1) =(IAND (ICHAR (EngPkt(6)(103:103)), maskbit7) == maskbit7)
+       GMAB_ON(2) =(IAND (ICHAR (EngPkt(6)(103:103)), maskbit3) == maskbit3)
+       GMAB_ON(3) =(IAND (ICHAR (EngPkt(6)(109:109)), maskbit3) == maskbit3)
+       GMAB_ON(4) =(IAND (ICHAR (EngPkt(6)(110:110)), maskbit7) == maskbit7)
+
+       ! Determine which side GSM (GM03/GM04) is on:
+
+       IF (GMAB_ON(3) .AND. .NOT. GMAB_ON(4)) THEN
+          EngMAF%GSM_Side = "A"
+       ELSE IF (.NOT. GMAB_ON(3) .AND. GMAB_ON(4)) THEN
+          EngMAF%GSM_Side = "B"
+       ELSE
+          EngMAF%GSM_Side = "U"
+       ENDIF
+
+       ! Convert engineering counts
+
+       CALL ConvertEngCounts (GMAB_ON)
+
+       !! Write eng data to file (will use HDF later!!!)
+
+       WRITE (L1BFileInfo%EngId) EngMAF%MAFno
+       WRITE (L1BFileInfo%EngId) eng_tbl%value
 
        !! Save the required data for later use:
 
        EngMAF%Eng%value = Eng_tbl%value
        EngMAF%Eng%mnemonic = Eng_tbl%mnemonic
 
-       !! Will Get the MIFs per MAF from 2.5 and later!!!
+       !! Already have the current MIFsPerMAF
 
-       EngMAF%MIFsPerMAF = 148
+       !! EngMAF%MIFsPerMAF = L1Config%Calib%MIFsPerMAF
 
     ELSE
 
@@ -331,6 +352,9 @@ END MODULE EngUtils
 !=============================================================================
 
 ! $Log$
+! Revision 2.3  2002/03/29 20:18:34  perun
+! Version 1.0 commit
+!
 ! Revision 2.2  2001/02/23 18:55:17  perun
 ! Version 0.5 commit
 !
