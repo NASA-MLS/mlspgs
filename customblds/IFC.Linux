@@ -75,13 +75,13 @@ $(INSTALLDIR)/init_gen: $(UTILDIR)/init_gen.f90
    $(UTILDIR)/init_gen.f90
 
 $(S)/field_parm.f9h $(S)/field_add.f9h: $(S)/field_names.txt $(INSTALLDIR)/init_gen
-	sort -f $(S)/field_names.txt | $(INSTALLDIR)/init_gen \
+	sort -f -u $(S)/field_names.txt | $(INSTALLDIR)/init_gen \
           -f"last_Spectroscopy_Field + 1" -l field_last -pF_ \
           -j field_names.txt \
           $(S)/field_parm.f9h $(S)/field_add.f9h field_indices
 
 $(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
-	sort -f $(S)/lit_names.txt | $(INSTALLDIR)/init_gen \
+	sort -f -u $(S)/lit_names.txt | $(INSTALLDIR)/init_gen \
           -f"last_Spectroscopy_Lit + 1" -l last_lit -pl_ \
           -j lit_names.txt \
           $(S)/lit_parm.f9h $(S)/lit_add.f9h lit_indices
@@ -139,14 +139,14 @@ $(INSTALLDIR)/init_gen: $(UTILDIR)/init_gen.f90
    $(UTILDIR)/init_gen.f90
 
 $(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
-	sort -f $(S)/lit_names.txt | $(INSTALLDIR)/init_gen \
+	sort -f -u $(S)/lit_names.txt | $(INSTALLDIR)/init_gen \
           -l last_intrinsic_lit -pl_ \
           -j lit_names.txt \
           $(S)/lit_parm.f9h $(S)/lit_add.f9h lit_indices
 
 $(S)/mol_parm.f9h $(S)/mol_add.f9h: $(TABLES_DIR)/sps_cross_ref_table.txt $(INSTALLDIR)/init_gen
 	sed -n '/---\*/,$$ p' $(TABLES_DIR)/sps_cross_ref_table.txt | sed '1 d' | \
-          sed '/H2O_R/ d' | awk ' {print $$2}' | sort -f | \
+          sed '/H2O_R/ d' | awk ' {print $$2}' | sort -f -u| \
           $(INSTALLDIR)/init_gen \
           -f "last_rxx_molecule+1" -l last_molecule -pl_ \
           -j sps_cross_ref_table.txt \
@@ -235,13 +235,13 @@ $(INSTALLDIR)/init_gen: $(UTILDIR)/init_gen.f90
    $(UTILDIR)/init_gen.f90
 
 $(S)/field_parm.f9h $(S)/field_add.f9h: $(S)/field_names.txt $(INSTALLDIR)/init_gen
-	sort -f $(S)/field_names.txt | $(INSTALLDIR)/init_gen \
+	sort -f -u $(S)/field_names.txt | $(INSTALLDIR)/init_gen \
           -f"last_Spectroscopy_Field + 1" -l field_last -pF_ \
           -j field_names.txt \
           $(S)/field_parm.f9h $(S)/field_add.f9h field_indices
 
 $(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
-	sort -f $(S)/lit_names.txt | $(INSTALLDIR)/init_gen \
+	sort -f -u $(S)/lit_names.txt | $(INSTALLDIR)/init_gen \
           -f"last_Spectroscopy_Lit + 1" -l last_lit -pl_ \
           -j lit_names.txt \
           $(S)/lit_parm.f9h $(S)/lit_add.f9h lit_indices
@@ -287,14 +287,14 @@ $(INSTALLDIR)/init_gen: $(UTILDIR)/init_gen.f90
    $(UTILDIR)/init_gen.f90
 
 $(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
-	sort -f $(S)/lit_names.txt | $(INSTALLDIR)/init_gen \
+	sort -f -u $(S)/lit_names.txt | $(INSTALLDIR)/init_gen \
           -l last_intrinsic_lit -pl_ \
           -j lit_names.txt \
           $(S)/lit_parm.f9h $(S)/lit_add.f9h lit_indices
 
 $(S)/mol_parm.f9h $(S)/mol_add.f9h: $(TABLES_DIR)/sps_cross_ref_table.txt $(INSTALLDIR)/init_gen
 	sed -n '/---\*/,$$ p' $(TABLES_DIR)/sps_cross_ref_table.txt | sed '1 d' | \
-          sed '/H2O_R/ d' | awk ' {print $$2}' | sort -f | \
+          sed '/H2O_R/ d' | awk ' {print $$2}' | sort -f -u| \
           $(INSTALLDIR)/init_gen \
           -f "last_rxx_molecule+1" -l last_molecule -pl_ \
           -j sps_cross_ref_table.txt \
@@ -328,6 +328,9 @@ ncep_dao.o:
 
 endif
 # $Log$
+# Revision 1.4  2003/09/29 18:23:34  pwagner
+# Fixed problem with level 1 dependencies
+#
 # Revision 1.3  2003/05/21 17:46:02  pwagner
 # Commands to build mol_...f9h now formatted correctly
 #
