@@ -159,9 +159,12 @@ Real(r8) :: h_grid(Size(z_grid)),t_grid(Size(z_grid)),dhdt(Size(t_z_basis))
   t_grid(1:cnt) = t_glgrid(1:gl_count:Ngp1,k)
   if(cnt < jj) h_grid(cnt+1:jj) = h_glgrid(gl_count,k)
   if(cnt < jj) t_grid(cnt+1:jj) = t_glgrid(gl_count,k)
-  CALL get_heights('h',h_grid,t_grid,z_grid,n_lvls,tan_press,tan_hts, &
- &                  si-1,ier)
-  IF(ier /= 0) RETURN
+
+  do l = 1, no_mmaf
+    CALL get_heights('h',h_grid,t_grid,z_grid,n_lvls,tan_press, &
+   &                  tan_hts(:,l),si-1,ier)
+    IF(ier /= 0) RETURN
+  end do
 
 ! Interpolate the dh_dt into the tan_press grid:
 
@@ -372,6 +375,9 @@ END SUBROUTINE pq_ana
 
 end module HYDROSTATIC_MODEL_M
 ! $Log$
+! Revision 1.8  2001/03/29 01:27:15  livesey
+! Fixed bug with wrong intent for tan_press
+!
 ! Revision 1.7  2001/03/29 01:21:50  zvi
 ! Interim version
 !
