@@ -64,14 +64,18 @@ module INTRINSIC
   integer, parameter :: L_BASELINE      = first_lit
   integer, parameter :: L_C             = l_baseline + 1
   integer, parameter :: L_CHANNEL       = l_c + 1
-  integer, parameter :: L_DAYS          = l_channel + 1
+  integer, parameter :: L_CLOUDINDUCEDRADIANCE = l_channel + 1
+  integer, parameter :: L_CLOUDOPTICALDEPTH    = l_cloudInducedRadiance + 1
+  integer, parameter :: L_CLOUDSENSITIVITY     = l_cloudOpticalDepth + 1
+  integer, parameter :: L_DAYS          = l_cloudSensitivity + 1
   integer, parameter :: L_DEG           = l_days + 1
   integer, parameter :: L_DEGREES       = l_deg + 1
   integer, parameter :: L_DIMENSIONLESS = l_degrees + 1
   integer, parameter :: L_DIMLESS       = l_dimensionless + 1
   integer, parameter :: L_DL            = l_dimless + 1
   integer, parameter :: L_EARTHREFL     = l_dl + 1
-  integer, parameter :: L_ELEVOFFSET    = l_earthRefl + 1
+  integer, parameter :: L_EFFECTIVEOPTICALDEPTH = l_earthRefl + 1
+  integer, parameter :: L_ELEVOFFSET    = l_effectiveOpticalDepth + 1
   integer, parameter :: L_EXTINCTION    = l_elevOffset + 1
   integer, parameter :: L_FALSE         = l_extinction + 1
   integer, parameter :: L_FREQUENCY     = l_false + 1
@@ -96,7 +100,9 @@ module INTRINSIC
   integer, parameter :: L_M             = l_lsbfrequency + 1
   integer, parameter :: L_MAF           = l_m + 1
   integer, parameter :: L_MAFS          = l_maf + 1
-  integer, parameter :: L_MB            = l_mafs + 1
+  integer, parameter :: L_MASSMEANDIAMETERICE   = l_mafs + 1
+  integer, parameter :: L_MASSMEANDIAMETERWATER = l_massMeanDiameterIce + 1
+  integer, parameter :: L_MB            = l_massMeanDiameterWater + 1
   integer, parameter :: L_METERS        = l_mb + 1
   integer, parameter :: L_MHZ           = l_meters  + 1
   integer, parameter :: L_MIF           = l_mhz + 1
@@ -130,7 +136,8 @@ module INTRINSIC
   integer, parameter :: L_TNGTECI       = l_time + 1
   integer, parameter :: L_TNGTGEOCALT   = l_tngteci + 1
   integer, parameter :: L_TNGTGEODALT   = l_tngtgeocalt + 1
-  integer, parameter :: L_TRUE         =  l_tngtgeodalt + 1
+  integer, parameter :: L_TOTALOPTICALDEPTH =  l_tngtgeodalt + 1
+  integer, parameter :: L_TRUE         =  l_totalOpticalDepth + 1
   integer, parameter :: L_USBFREQUENCY  = l_true + 1
   integer, parameter :: L_VMR           = l_usbfrequency + 1
   integer, parameter :: L_XYZ           = l_vmr + 1
@@ -211,6 +218,9 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_baseline) =              add_ident ( 'baseline' )
     lit_indices(l_c) =                     add_ident ( 'C' )
     lit_indices(l_channel) =               add_ident ( 'channel' )
+    lit_indices(l_cloudInducedRadiance) =  add_ident ( 'cloudInducedRadiance' )
+    lit_indices(l_cloudOpticalDepth) =     add_ident ( 'cloudOpticalDepth' )
+    lit_indices(l_cloudSensitivity) =      add_ident ( 'cloudSensitivity' )
     lit_indices(l_days) =                  add_ident ( 'days' )
     lit_indices(l_deg) =                   add_ident ( 'deg' )
     lit_indices(l_degrees) =               add_ident ( 'degrees' )
@@ -219,6 +229,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_dl) =                    add_ident ( 'dl' )
     lit_indices(l_earthRefl) =             add_ident ( 'earthRefl' )
     lit_indices(l_elevOffset) =            add_ident ( 'elevOffset' )
+    lit_indices(l_effectiveOpticalDepth) = add_ident ( 'effectiveOpticalDepth' )
     lit_indices(l_extinction) =            add_ident ( 'extinction' )
     lit_indices(l_false) =                 add_ident ( 'false' )
     lit_indices(l_frequency) =             add_ident ( 'frequency' )
@@ -243,6 +254,8 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_m) =                     add_ident ( 'm' )
     lit_indices(l_maf) =                   add_ident ( 'maf' )
     lit_indices(l_mafs) =                  add_ident ( 'mafs' )
+    lit_indices(l_massMeanDiameterIce) =   add_ident ( 'massMeanDiameterIce' )
+    lit_indices(l_massMeanDiameterWater) = add_ident ( 'massMeanDiameterWater' )
     lit_indices(l_mb) =                    add_ident ( 'mb' )
     lit_indices(l_meters) =                add_ident ( 'meters' )
     lit_indices(l_mhz) =                   add_ident ( 'MHz' )
@@ -277,6 +290,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_tngteci) =               add_ident ( 'tngteci' )
     lit_indices(l_tngtgeocalt) =           add_ident ( 'tngtgeocalt' )
     lit_indices(l_tngtgeodalt) =           add_ident ( 'tngtgeodalt' )
+    lit_indices(l_totalOpticalDepth) =     add_ident ( 'totalOpticalDepth' )
     lit_indices(l_true) =                  add_ident ( 'true' )
     lit_indices(l_usbfrequency) =          add_ident ( 'USBFrequency')
     lit_indices(l_vmr) =                   add_ident ( 'vmr' )
@@ -358,6 +372,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.27  2001/05/31 20:27:37  livesey
+! New vector type associated with cloud quantities.
+!
 ! Revision 2.26  2001/05/29 22:45:45  livesey
 ! Moved some state vector component literals in from l2/init_tables_module.f90
 !
