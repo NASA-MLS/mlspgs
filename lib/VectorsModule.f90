@@ -18,6 +18,8 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   use OUTPUT_M, only: OUTPUT
   use QuantityTemplates, only: QuantityTemplate_T
   use STRING_TABLE, only: DISPLAY_STRING, GET_STRING, STRING_LENGTH
+  use SYMBOL_TABLE, only: ENTER_TERMINAL
+  use SYMBOL_TYPES, only: T_IDENTIFIER
 
   implicit none
   public
@@ -147,7 +149,7 @@ contains ! =====     Public Procedures     =============================
     ! Executable statements:
     if ( x%template%id /= y%template%id ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, "Cannot add vectors having different templates" )
-    call CloneVector ( z, x )
+    call CloneVector ( z, x, vectorNameText='_z' )
     do i = 1, size(x%quantities)
       z%quantities(i)%values = x%quantities(i)%values + y%quantities(i)%values
     end do
@@ -223,7 +225,7 @@ contains ! =====     Public Procedures     =============================
     ! Executable statements:
     if ( x%template%id /= y%template%id ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, "Cannot add vectors having different templates" )
-    call CloneVector ( z, x )
+    call CloneVector ( z, x, vectorNameText='_z' )
     do i = 1, size(x%quantities)
       z%quantities(i)%values = &
         & a * x%quantities(i)%values + y%quantities(i)%values
@@ -249,7 +251,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine ClearMask
 
   !-------------------------------------------------  CloneVector  -----
-  subroutine CloneVector ( Z, X )
+  subroutine CloneVector ( Z, X, VectorNameText )
   ! Destroy Z, except its name.
   ! Create the characteristics of a vector to be the same template as a
   ! given one (except it has no name).  Values are allocated, but not
@@ -264,11 +266,15 @@ contains ! =====     Public Procedures     =============================
     ! Dummy arguments:
     type(Vector_T), intent(inout) :: Z
     type(Vector_T), intent(in) :: X
+    character(len=*), intent(in), optional :: VectorNameText
     ! Local variables:
     integer :: I, Status
     ! Executable statements:
     call destroyVectorInfo ( z )
+    if ( present(vectorNameText) ) &
+      & z%name = enter_terminal ( vectorNameText, t_identifier )
     z%template = x%template
+i = size(x%quantities)
     allocate ( z%quantities(size(x%quantities)), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate // "z%quantities" )
@@ -300,7 +306,7 @@ contains ! =====     Public Procedures     =============================
     ! Local Variables:
     integer :: I              ! Subscript and loop inductor
     ! Executable statements:
-    call CloneVector ( z, x )
+    call CloneVector ( z, x, vectorNameText='_z' )
     do i = 1, size(x%quantities)
       z%quantities(i)%values = a * x%quantities(i)%values
     end do
@@ -359,7 +365,7 @@ contains ! =====     Public Procedures     =============================
     myclone = .false.
     if ( present(clone) ) myclone = clone
     if ( myclone ) then
-      call cloneVector ( Z, X )
+      call cloneVector ( Z, X, vectorNameText='_Z' )
     else
       if ( x%template%id /= z%template%id ) call MLSMessage &
         & ( MLSMSG_Error, ModuleName, 'Incompatible vectors in CopyVector' )
@@ -382,7 +388,8 @@ contains ! =====     Public Procedures     =============================
 
   ! -----------------------------------------------  CreateVector  -----
   type(Vector_T) function CreateVector &
-    & ( vectorName, vectorTemplate, quantities ) result ( vector )
+    & ( vectorName, vectorTemplate, quantities, VectorNameText ) &
+    & result ( vector )
 
   ! This routine creates an empty vector according to a given template
   ! Its mask is not allocated.  Use CreateMask if one is needed.
@@ -391,6 +398,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: vectorName   ! Sub_rosa index
     type (VectorTemplate_T), intent(in), target :: VectorTemplate ! For vector
     type (QuantityTemplate_T), dimension(:), intent(in), target :: Quantities
+    character(len=*), intent(in), optional :: VectorNameText
 
     ! Local variables
     integer :: QUANTITY                 ! Loop index
@@ -399,6 +407,8 @@ contains ! =====     Public Procedures     =============================
     ! Executable code
 
     vector%name = vectorName
+    if ( present(vectorNameText) ) &
+      & vector%name = enter_terminal ( vectorNameText, t_identifier )
     vector%template = vectorTemplate
     allocate ( vector%quantities(vectorTemplate%noQuantities), STAT=status )
     if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -836,7 +846,7 @@ contains ! =====     Public Procedures     =============================
     if ( x%template%id /= y%template%id ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, "Cannot multiply vectors having different templates" )
     if ( present(z) ) then
-      call CloneVector ( z, x )
+      call CloneVector ( z, x, vectorNameText='_z' )
       result => z
     else
       result => x
@@ -939,7 +949,7 @@ contains ! =====     Public Procedures     =============================
     ! Executable statements:
     if ( x%template%id /= y%template%id ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, "Cannot subtract vectors having different templates" )
-    call CloneVector ( z, x )
+    call CloneVector ( z, x, vectorNameText='_z' )
     do i = 1, size(x%quantities)
       z%quantities(i)%values = x%quantities(i)%values - y%quantities(i)%values
     end do
@@ -979,26 +989,26 @@ contains ! =====     Public Procedures     =============================
       if (quantity%template%coherent .neqv. coherent) then
         ValidateVectorQuantity=.FALSE.
         if(present(sayWhyNot)) then
-         call output('Coherent quantity checked with incoherent', advance='yes')
-         call output('quantity coherent? ', advance='no')
-         call output(quantity%template%coherent, advance='yes')
-         call output('check coherent? ', advance='no')
-         call output(coherent, advance='yes')
-        endif
+          call output('Coherent quantity checked with incoherent', advance='yes')
+          call output('quantity coherent? ', advance='no')
+          call output(quantity%template%coherent, advance='yes')
+          call output('check coherent? ', advance='no')
+          call output(coherent, advance='yes')
+        end if
         return
-      endif
+      end if
     end if
 
     if (present(stacked)) then
       if (quantity%template%stacked .neqv. stacked) then
         ValidateVectorQuantity=.FALSE.
         if(present(sayWhyNot)) then
-         call output('stacked quantity checked with unstacked', advance='yes')
-         call output('quantity stacked? ', advance='no')
-         call output(quantity%template%stacked, advance='yes')
-         call output('check stacked? ', advance='no')
-         call output(stacked, advance='yes')
-        endif
+          call output('stacked quantity checked with unstacked', advance='yes')
+          call output('quantity stacked? ', advance='no')
+          call output(quantity%template%stacked, advance='yes')
+          call output('check stacked? ', advance='no')
+          call output(stacked, advance='yes')
+        end if
         return
       end if
     end if
@@ -1007,12 +1017,12 @@ contains ! =====     Public Procedures     =============================
       if (quantity%template%regular .neqv. regular) then
         ValidateVectorQuantity=.FALSE.
         if(present(sayWhyNot)) then
-         call output('Regular quantity checked with irregular', advance='yes')
-         call output('quantity regular? ', advance='no')
-         call output(quantity%template%regular, advance='yes')
-         call output('check regular? ', advance='no')
-         call output(regular, advance='yes')
-        endif
+          call output('Regular quantity checked with irregular', advance='yes')
+          call output('quantity regular? ', advance='no')
+          call output(quantity%template%regular, advance='yes')
+          call output('check regular? ', advance='no')
+          call output(regular, advance='yes')
+        end if
         return
       end if
     end if
@@ -1021,12 +1031,12 @@ contains ! =====     Public Procedures     =============================
       if (quantity%template%minorFrame .neqv. minorFrame) then
         ValidateVectorQuantity=.FALSE.
         if(present(sayWhyNot)) then
-         call output('Minor fram quantity checked with not', advance='yes')
-         call output('quantity minor frame? ', advance='no')
-         call output(quantity%template%minorFrame, advance='yes')
-         call output('check minorFrame? ', advance='no')
-         call output(minorFrame, advance='yes')
-        endif
+          call output('Minor fram quantity checked with not', advance='yes')
+          call output('quantity minor frame? ', advance='no')
+          call output(quantity%template%minorFrame, advance='yes')
+          call output('check minorFrame? ', advance='no')
+          call output(minorFrame, advance='yes')
+        end if
         return
       end if
     end if
@@ -1034,60 +1044,60 @@ contains ! =====     Public Procedures     =============================
     if (present(verticalCoordinate)) then
       ValidateVectorQuantity=any(quantity%template%verticalCoordinate == verticalCoordinate)
         if(present(sayWhyNot) .and. .not. ValidateVectorQuantity) then
-         call output('quantity checked with dif vert coord', advance='yes')
-         call output('quantity vert coord ', advance='no')
-         call output(quantity%template%verticalCoordinate, advance='yes')
-         call output('check vert coord ', advance='no')
-         call output(verticalCoordinate, advance='yes')
-        endif
+          call output('quantity checked with dif vert coord', advance='yes')
+          call output('quantity vert coord ', advance='no')
+          call output(quantity%template%verticalCoordinate, advance='yes')
+          call output('check vert coord ', advance='no')
+          call output(verticalCoordinate, advance='yes')
+        end if
       if (.not. ValidateVectorQuantity) return
     end if
 
     if (present(frequencyCoordinate)) then
       ValidateVectorQuantity=any(quantity%template%frequencyCoordinate == frequencyCoordinate)
         if(present(sayWhyNot) .and. .not. ValidateVectorQuantity) then
-         call output('quantity checked with dif freq coord', advance='yes')
-         call output('quantity freq coord ', advance='no')
-         call output(quantity%template%frequencyCoordinate, advance='yes')
-         call output('check freq coord ', advance='no')
-         call output(frequencyCoordinate, advance='yes')
-        endif
+          call output('quantity checked with dif freq coord', advance='yes')
+          call output('quantity freq coord ', advance='no')
+          call output(quantity%template%frequencyCoordinate, advance='yes')
+          call output('check freq coord ', advance='no')
+          call output(frequencyCoordinate, advance='yes')
+        end if
       if (.not. ValidateVectorQuantity) return
     end if
 
     if (present(noInstances)) then
       ValidateVectorQuantity=any(quantity%template%noInstances == noInstances)
         if(present(sayWhyNot) .and. .not. ValidateVectorQuantity) then
-         call output('quantity checked with dif num insts', advance='yes')
-         call output('quantity num insts ', advance='no')
-         call output(quantity%template%noInstances, advance='yes')
-         call output('check noInstances ', advance='no')
-         call output(noInstances, advance='yes')
-        endif
+          call output('quantity checked with dif num insts', advance='yes')
+          call output('quantity num insts ', advance='no')
+          call output(quantity%template%noInstances, advance='yes')
+          call output('check noInstances ', advance='no')
+          call output(noInstances, advance='yes')
+        end if
       if (.not. ValidateVectorQuantity) return
     end if
 
     if (present(quantityType)) then
       ValidateVectorQuantity=any(quantity%template%quantityType == quantityType)
         if(present(sayWhyNot) .and. .not. ValidateVectorQuantity) then
-         call output('quantity checked with wrong type', advance='yes')
-         call output('quantity type ', advance='no')
-         call output(quantity%template%quantityType, advance='yes')
-         call output('check quantityType ', advance='no')
-         call output(quantityType, advance='yes')
-        endif
+          call output('quantity checked with wrong type', advance='yes')
+          call output('quantity type ', advance='no')
+          call output(quantity%template%quantityType, advance='yes')
+          call output('check quantityType ', advance='no')
+          call output(quantityType, advance='yes')
+        end if
       if (.not. ValidateVectorQuantity) return
     end if
 
     if (present(molecule)) then
       ValidateVectorQuantity=any(quantity%template%molecule == molecule)
         if(present(sayWhyNot) .and. .not. ValidateVectorQuantity) then
-         call output('quantity checked with wrong molecule', advance='yes')
-         call output('quantity molecule ', advance='no')
-         call output(quantity%template%molecule, advance='yes')
-         call output('check molecule ', advance='no')
-         call output(molecule, advance='yes')
-        endif
+          call output('quantity checked with wrong molecule', advance='yes')
+          call output('quantity molecule ', advance='no')
+          call output(quantity%template%molecule, advance='yes')
+          call output('check molecule ', advance='no')
+          call output(molecule, advance='yes')
+        end if
       if (.not. ValidateVectorQuantity) return
     end if
 
@@ -1113,6 +1123,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.35  2001/05/02 05:29:44  livesey
+! Added index argument to GetVectorQtyByTemplateIndex
+!
 ! Revision 2.34  2001/04/28 21:01:20  livesey
 ! Another bug fix in GetVectorQuantityByType
 !
