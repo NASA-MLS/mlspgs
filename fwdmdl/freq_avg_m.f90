@@ -4,6 +4,7 @@
 module FREQ_AVG_M
   use D_CSPLINE_M, only: CSPLINE
   use DSIMPSON_MODULE, only: SIMPS
+  use D_HUNT_M, only: HUNT
   use MLSCommon, only: I4, R8
   implicit NONE
   private
@@ -21,16 +22,36 @@ contains
     Real(r8), intent(in) :: Fltr_func(:)
     Real(r8), intent(in) :: F_grid(:), Rad(:), F_grid_fltr(:)
 
-    Integer(i4), intent(in) :: n, nfp
+    Integer(i4), intent(IN) :: n, nfp
 !
-    Real(r8), intent(out)    :: Avg
+    Real(r8), intent(OUT)   :: Avg
 !
-    Real(r8) :: rxf(nfp), tmpary(nfp), df
+    Integer(i4) :: klo,khi,i
+    Real(r8) :: rxf(nfp), tmpary(nfp), Fmin, Fmax, Rmin, Rmax, dF
+
+    Real(r8), PARAMETER :: p = 0.02_r8
 !
-    df = abs(F_grid_fltr(2) - F_grid_fltr(1))
-    Call Cspline(F_grid, F_grid_fltr, Rad, tmpary, n, nfp)
+    i = nfp / 2
+    dF = F_grid_fltr(i+1) - F_grid_fltr(i)
+    if(dF > 0.0_r8) then
+      Fmin = F_grid_fltr(001)
+      Fmax = F_grid_fltr(nfp)
+    else
+      dF = -dF
+      Fmin = F_grid_fltr(nfp)
+      Fmax = F_grid_fltr(001)
+    endif
+
+    Call Hunt(Fmin,F_grid,n,klo,i)
+    Call Hunt(Fmax,F_grid,n,i,khi)
+!
+    Rmin = (1.0_r8 - p) * MINVAL(Rad(klo:khi))
+    Rmax = (1.0_r8 + p) * MAXVAL(Rad(klo:khi))
+!
+    Call Cspline(F_grid, F_grid_fltr, Rad, tmpary, n, nfp, Rmin, Rmax)
+
     rxf(1:nfp) = tmpary(1:nfp) * Fltr_func(1:nfp)
-    Call Simps (rxf, df, nfp, Avg)
+    Call Simps (rxf, dF, nfp, Avg)
 
     RETURN
 
@@ -38,6 +59,9 @@ contains
 
 end module FREQ_AVG_M
 ! $Log$
+! Revision 2.0  2001/09/17 20:26:26  livesey
+! New forward model
+!
 ! Revision 1.6  2001/06/07 23:30:34  pwagner
 ! Added Copyright statement
 !
