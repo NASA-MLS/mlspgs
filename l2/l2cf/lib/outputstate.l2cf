@@ -10,44 +10,41 @@ begin Output
   {[joined_$1, $3_column]}), type=l2gp, $
   file='!outpathl2gp/MLS-Aura_L2GP-$2_!l2version_!day.he4'})
 
+!ifelse(!resolution,hiRes,{
+!standardProduct(temperature!res,Temperature!swathRes,)
+!standardProduct(gph!res,GPH!swathRes,)
+!standardProduct(h2o!res,H2O!swathRes,h2o!res)
+!standardProduct(o3!res,O3!swathRes,o3!res)
+!standardProduct(rhi!res,RHI!swathRes,)
+},{
 !standardProduct(temperature,Temperature,)
 !standardProduct(refgph,refGPH,)
 !standardProduct(gph,GPH,)
-!standardProduct(bro,BrO,)
-!standardProduct(ch3cn,CH3CN,)
-!standardProduct(clo,ClO,)
-!standardProduct(co,CO,)
-!standardProduct(h2o,H2O,)
-!standardProduct(hcl,HCl,)
-!standardProduct(hcn,HCN,)
-!standardProduct(hno3,HNO3,)
-!standardProduct(ho2,HO2,)
-!standardProduct(hocl,HOCl,)
-!standardProduct(n2o,N2O,)
-!standardProduct(o3,O3,)
-!standardProduct(oh,OH,)
-!standardProduct(so2,SO2,)
+!standardProduct(bro,BrO,bro)
+!standardProduct(ch3cn,CH3CN,ch3cn)
+!standardProduct(clo,ClO,clo)
+!standardProduct(co,CO,co)
+!standardProduct(h2o,H2O,h2o)
+!standardProduct(hcl,HCl,hcl)
+!standardProduct(hcn,HCN,hcn)
+!standardProduct(hno3,HNO3,hno3)
+!standardProduct(ho2,HO2,ho2)
+!standardProduct(hocl,HOCl,hocl)
+!standardProduct(n2o,N2O,n2o)
+!standardProduct(o3,O3,o3)
+!standardProduct(oh,OH,oh)
+!standardProduct(so2,SO2,so2)
 !standardProduct(rhi,RHI,)
-
+}) ; end !ifelse(!resolution,hiRes
 ;; Now output the DGG file
 !ifdef(gotDGGs,{
 Output, quantities=[ !undivert(!DGGDivert) ], type=l2gp, $
   file='!outpathl2gp/MLS-Aura_L2GP-DGG_!l2version_!day.he4'})
 
 ;; Now output the DGM file
-!ifdef(precisionEstimates,{
-!ifdef(gotDGMs,{
- Output, quantities=[ $
-   joined_ptanGHz, joined_ptanTHz, $
-   joined_ptanGHz_precision, joined_ptanTHz_precision, $
-   joined_phitanGHz, joined_phitanTHz, $
-   joined_phitanGHz_precision, joined_phitanTHz_precision ], $
-   type=l2aux, file='!outpathl2aux/MLS-Aura_L2AUX-DGM_!l2version_!day.h4'})
-},{
 !ifdef(gotDGMs,{
 Output, quantities=[ !undivert(!DGMDivert) ], type=l2aux, $
   file='!outpathl2aux/MLS-Aura_L2AUX-DGM_!l2version_!day.h4'})
-})
 
 ;; The forward model radiances have been output using direct writes
 })
