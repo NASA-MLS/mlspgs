@@ -103,6 +103,8 @@ contains ! =====     Public procedures     =============================
     call declare_unit ( l_pctrhi, 1.0d0, phyq_pctrhi )
     call declare_unit ( l_gauss, 1.0d0, phyq_gauss )
 
+    call declare_unit ( l_profiles, 1.0d0, phyq_profiles )
+
   contains
     subroutine DECLARE_UNIT ( NAME, VALUE, PHYS_UNIT )
       use DECLARATION_TABLE, only: DECLARE, UNITS_NAME
@@ -123,6 +125,9 @@ contains ! =====     Public procedures     =============================
 end module UNITS
 
 ! $Log$
+! Revision 2.20  2003/01/26 04:41:25  livesey
+! Added profiles
+!
 ! Revision 2.19  2003/01/10 21:54:50  vsnyder
 ! Move SpeedOfLight from Geometry, put kinds on constants
 !
