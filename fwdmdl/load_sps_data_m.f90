@@ -186,22 +186,24 @@ contains
     type (Grids_T), intent(inout) :: GRIDS_TMP ! All the temperatures
     type (VectorValue_T), intent(in) :: BOUNDARYPRESSURE
 
-    integer :: KF, KZ
+    integer :: KF, KZ, KP
     real(r8) :: RHI 
     integer :: Supersat_Index
-    integer :: Wf, Wf1, Wf2
-    integer :: V1               ! One before starting point in Values array
+    integer :: WF1, WF2
+    integer :: V0               ! One before starting point in Values array
     integer :: Z_index
-    integer :: Zet1, Zet2       ! Zeta_basis range is zet1+1:zet2
+    integer :: Z0, P, P0
     logical :: FAILED
 
     kf = Grids_f%l_f(h2o_ind) - Grids_f%l_f(h2o_ind-1)
     kz = Grids_f%l_z(h2o_ind) - Grids_f%l_z(h2o_ind-1)
-    v1 = Grids_f%l_v(h2o_ind-1)
+    kp = grids_f%l_p(h2o_ind) - grids_f%l_p(h2o_ind-1)
+
+    v0 = Grids_f%l_v(h2o_ind-1)
     wf1 = Grids_f%windowStart(h2o_ind)
     wf2 = Grids_f%windowFinish(h2o_ind)
-    zet1 = Grids_f%l_z(h2o_ind-1)
-    zet2 = Grids_f%l_z(h2o_ind)
+    z0 = Grids_f%l_z(h2o_ind-1)
+    p0 = Grids_f%l_p(h2o_ind-1)
 
     ! Here, we have to assert that temperature, h2o and boundarypressure share
     ! the same horizontal and vertical (except boundary pressure) grids.
@@ -216,9 +218,9 @@ contains
     else
       ! Do more checks
       failed = .not. all ( EssentiallyEqual ( &
-        & grids_f%zet_basis(zet1:zet2), grids_tmp%zet_basis ) )
+        & grids_f%zet_basis(z0+1:z0+kz), grids_tmp%zet_basis ) )
       failed = failed .or. .not. all ( EssentiallyEqual ( &
-        & grids_f%phi_basis(wf1:wf2), grids_tmp%phi_basis(wf1:wf2) ) )
+        & grids_f%phi_basis(p0+1:p0+kp), grids_tmp%phi_basis ) )
       if ( failed ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'When overwriting H2O, it must share coordinates with temperature' )
     end if
@@ -226,13 +228,13 @@ contains
     failed = size ( grids_tmp%phi_basis, 1 ) /= boundaryPressure%template%noInstances
     if ( .not. failed ) then
       failed = .not. all ( EssentiallyEqual ( &
-        & grids_tmp%phi_basis(wf1:wf2),  boundaryPressure%template%phi(1,wf1:wf2) ) )
+        & boundaryPressure%template%phi(1,wf1:wf2), grids_tmp%phi_basis ) )
     end if
     if ( failed ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'When overwriting H2O, boundary pressure must share coordinates with temperature' )
       
     ! To get height index h, profile index p the values are in:
-    ! h2o: grids_f%values ( v1 + h + kz*p )
+    ! h2o: grids_f%values ( v0 + h + kz*p )
     ! temperature: grids_tmp%values ( h + kz*p )
     ! tpPres: boundaryPressure%values ( 1, p )
     ! zetas (-log pressure) are given by grids_tmp%zet_basis
@@ -247,32 +249,30 @@ contains
     end select
 
     ! H2O may have log basis functions
-    do wf = wf1, wf2
-  ! find the index for the top of saturation levels
-    call Hunt (Grids_f%zet_basis(zet1+1:zet2), -log10(boundaryPressure%values(1,wf)), &
-      & supersat_Index, 1, nearest=.true.)
-
-    if (supersat_Index < 1 .or. supersat_Index > kz) then        
-       call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'the top for supersaturation is out of range' )
-    else
-
-      if ( Grids_f%lin_log(h2o_ind) ) then
-        do z_index = 1, supersat_Index
-          Grids_f%values(v1 + z_index + kz*(wf-wf1)) = &
-            & log ( RHIFromH2O_Factor ( grids_tmp%values(z_index + kz*(wf-wf1)), &
-            &   grids_f%zet_basis(zet1+z_index), 0, .true. ) * RHI )
-        end do
+    do p = 1, kp
+      ! find the index for the top of saturation levels
+      call Hunt (Grids_f%zet_basis(z0+1:z0+kz), -log10(boundaryPressure%values(1,p)), &
+        & supersat_Index, 1, nearest=.true.)
+      
+      if (supersat_Index < 1 .or. supersat_Index > kz) then        
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'the top for supersaturation is out of range' )
       else
-        do z_index = 1, supersat_Index
-          Grids_f%values(v1 + z_index + kz*(wf-wf1)) = &
-            & RHIFromH2O_Factor ( grids_tmp%values(z_index + kz*(wf-wf1)), &
-            &   grids_f%zet_basis(zet1+z_index), 0, .true. ) * RHI
-        end do
-      end if   ! linear or log basis
-    end if     ! check supersat_index
-    end do          
-
+        if ( Grids_f%lin_log(h2o_ind) ) then
+          do z_index = 1, supersat_Index
+            Grids_f%values(v0 + z_index + kz*(p-1)) = &
+              & log ( RHIFromH2O_Factor ( grids_tmp%values(z_index + kz*(p-1)), &
+              &   grids_f%zet_basis(z0+z_index), 0, .true. ) * RHI )
+          end do
+        else
+          do z_index = 1, supersat_Index
+            Grids_f%values(v0 + z_index + kz*(p-1)) = &
+              & RHIFromH2O_Factor ( grids_tmp%values(z_index + kz*(p-1)), &
+              &   grids_f%zet_basis(z0+z_index), 0, .true. ) * RHI
+          end do
+        end if   ! linear or log basis
+      end if     ! check supersat_index
+    end do
 
   end subroutine Modify_Values_For_Supersat
 
@@ -481,6 +481,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.46  2003/05/05 23:00:25  livesey
+! Merged in feb03 newfwm branch
+!
 ! Revision 2.42.2.7  2003/03/21 02:48:54  vsnyder
 ! Get QtyStuff_T from ForwardModelVectorTools, embellish some comments
 !
