@@ -10,7 +10,7 @@ module SubsetModule
   implicit none
   private
 
-  public :: RestrictRange, SetupSubset, SetupFlagCloud
+  public :: RestrictRange, SetupSubset, SetupFlagCloud, UpdateMask
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -702,7 +702,7 @@ contains ! ========= Public Procedures ============================
     use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST
     use Init_Tables_Module, only: F_QUANTITY, F_PTANQUANTITY, &
       & F_HEIGHT, F_CLOUDHEIGHT, F_CHANNELS, F_CLOUDCHANNELS, F_CLOUDRADIANCE, &
-      & F_CLOUDRADIANCECUTOFF
+      & F_CLOUDRADIANCECUTOFF, F_MASK
     use Init_Tables_Module, only: L_RADIANCE, L_CLOUDINDUCEDRADIANCE, L_ZETA
     use Declaration_table, only: NUM_VALUE
     use Intrinsic, only: PHYQ_PRESSURE, PHYQ_TEMPERATURE, &
@@ -794,6 +794,9 @@ contains ! ========= Public Procedures ============================
         if ( units(1) /= PHYQ_temperature ) &
           & call announceError ( key, WrongUnits, f_cloudRadianceCutoff )
         cloudRadianceCutoff = value(1)
+      case ( f_mask )
+        if ( .not. got(f_mask) ) maskBit = 0 ! clear default first time
+        maskBit = GetMaskBit ( son )
       case default
         ! Shouldn't get here if the type checker worked
       end select
@@ -928,6 +931,130 @@ contains ! ========= Public Procedures ============================
       & call Deallocate_test ( channels, 'channels', ModuleName )
 
   end subroutine SetupFlagCloud
+
+  ! ---------------------------------------------- UpdateMask -----
+  subroutine UpdateMask ( key, vectors )
+
+    use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST
+    use Init_Tables_Module, only: F_QUANTITY, F_SOURCEQUANTITY, &
+      & F_OPERATION, F_SOURCEMASK, F_MASK
+    use Init_Tables_Module, only: L_INVERT, L_COPY, L_ANDMASKS, L_ORMASKS
+    use VectorsModule, only: GETVECTORQTYBYTEMPLATEINDEX, SETMASK, VECTORVALUE_T, &
+      & VECTOR_T, CLEARMASK, CREATEMASK, M_LINALG, DUMPMASK
+    use Tree, only: NSONS, SUBTREE, DECORATION, NODE_ID
+    use MoreTree, only: GET_FIELD_ID
+    use Toggles, only: SWITCHES
+    use Output_M, only: OUTPUT
+
+    integer, intent(in) :: KEY          ! Tree node
+    type (Vector_T), dimension(:) :: VECTORS
+
+    ! Local variables
+    logical :: GOT(field_first:field_last)   ! "Got this field already"
+    integer :: SON                      ! Tree node
+    integer :: GSON                     ! Another tree node
+    integer :: MASKBIT                  ! Which bits
+    integer :: SOURCEMASKBIT            ! Which bits from source
+    integer :: J                        ! Loop counter
+    integer :: FIELD                    ! A field id
+    integer :: VECTORINDEX              ! In database
+    integer :: QUANTITYINDEX            ! In database not vector
+    integer :: OPERATION                ! What operation to perform
+    type (VectorValue_T), pointer :: QUANTITY
+    type (VectorValue_T), pointer :: SOURCEQUANTITY
+
+    ! Executable code
+    ! First work out what we've been asked to do
+
+    ! Executable code
+    nullify ( sourceQuantity )
+    got = .false.
+    do j = 2, nsons(key) ! fields of the "subset" specification
+      son = subtree(j, key)
+      field = get_field_id(son)   ! tree_checker prevents duplicates
+      if (nsons(son) > 1 ) gson = subtree(2,son) ! Gson is value
+      select case ( field )
+      case ( f_quantity )
+        vectorIndex = decoration(decoration(subtree(1,gson)))
+        quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+        quantity => GetVectorQtyByTemplateIndex(vectors(vectorIndex), quantityIndex)
+      case ( f_sourceQuantity )
+        vectorIndex = decoration(decoration(subtree(1,gson)))
+        quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+        sourceQuantity => GetVectorQtyByTemplateIndex(vectors(vectorIndeX), quantityIndex)
+      case ( f_mask )
+        if ( .not. got(f_mask) ) maskBit = 0 ! clear default first time
+        maskBit = GetMaskBit ( son, single=.true. )
+      case ( f_sourceMask )
+        if ( .not. got(f_sourceMask) ) sourceMaskBit = 0 ! clear default first time
+        sourceMaskBit = GetMaskBit ( son, single=.true. )
+      case ( f_operation )
+        operation = decoration(gson)
+      case default
+        ! Shouldn't get here if the type checker worked
+      end select
+      got(field) = .true.
+    end do ! j = 2, nsons(key)
+
+    ! Special checking for invert case
+    if ( operation == l_invert ) then
+      if ( associated(sourceQuantity) ) call AnnounceError ( key, &
+        & 'sourceQuantity not appropriate for invert updateMask' )
+      if ( got(f_sourceMask) ) call AnnounceError ( key, &
+        & 'sourceMask not appropriate for invert updateMask' )
+    end if
+
+    ! If we've got a source quantity then check it out.
+    if ( associated ( sourceQuantity ) ) then
+      if ( sourceQuantity%template%name /= quantity%template%name ) &
+        & call AnnounceError ( key, 'sourceQuantity and quantity not compatible' )
+      if ( .not. got(f_sourceMask) ) sourceMaskBit = maskBit
+    else
+      if ( operation /= l_invert ) then
+        if ( .not. got(f_sourceMask) ) call AnnounceError ( key, &
+          & 'sourceMask required for this operation' )
+        if ( sourceMaskBit == maskBit ) call AnnounceError ( key, &
+          & 'mask and sourceMask are the same information' )
+      end if
+      sourceQuantity => quantity
+    end if
+
+    ! If the result quantity has no mask then create one.
+    if ( .not. associated ( quantity%mask ) ) call CreateMask ( quantity )
+    ! Create one in the source too if it doesn't have one, potentially time wasting
+    ! later on, but unlikely
+    if ( .not. associated ( sourceQuantity%mask ) ) call CreateMask ( sourceQuantity )
+
+    ! Now work out what to do.
+    select case ( operation )
+    case ( l_invert )
+      quantity%mask = char ( &
+        & ior ( iand ( ichar(quantity%mask), not(maskBit) ), & ! Other bits
+        &       iand ( not ( iand ( ichar(quantity%mask), maskBit ) ), maskBit ) ) )
+    case ( l_copy )
+      quantity%mask = char ( &
+        & ior ( iand ( ichar(quantity%mask), not(maskBit) ), & ! Other bits
+        &       merge ( maskBit, 0, &
+        &              iand ( ichar(sourceQuantity%mask), sourceMaskBit ) /= 0 ) ) )
+    case ( l_andMasks )
+      ! Note, because we 'invert' the logic in storing the mask
+      ! this operation may look wrong at first glance
+      quantity%mask = char ( &
+        & ior ( iand ( ichar(quantity%mask), not(maskBit) ), & ! Other bits
+        &       merge ( 0, maskBit, &
+        &               iand ( ichar(sourceQuantity%mask), sourceMaskBit ) == 0 .and. &
+        &               iand ( ichar(quantity%mask), maskBit ) == 0  ) ) )
+    case ( l_orMasks )
+      ! Note, because we 'invert' the logic in storing the mask
+      ! this operation may look wrong at first glance
+      quantity%mask = char ( &
+        & ior ( iand ( ichar(quantity%mask), not(maskBit) ), & ! Other bits
+        &       merge ( 0, maskBit, &
+        &               iand ( ichar(sourceQuantity%mask), sourceMaskBit ) == 0 .or. &
+        &               iand ( ichar(quantity%mask), maskBit ) == 0  ) ) )
+    end select
+
+  end subroutine UpdateMask
  
   ! ===================================== Private procedures ============
 
@@ -949,7 +1076,7 @@ contains ! ========= Public Procedures ============================
     call output ( '***** At ' )
     call print_source ( source_ref(node) )
     call output ( ', SubsetModule complained: ', advance='yes' )
-    call output ( trim(string) )
+    call output ( trim(string), advance='yes' )
     if ( present ( fieldIndex ) ) then
       call output ( 'Offending field(s): ' )
       call output ( field_indices(fieldIndex) )
@@ -965,29 +1092,38 @@ contains ! ========= Public Procedures ============================
 
   ! -------------------------------------- GetMaskBit -------------
 
-  function GetMaskBit ( node ) result ( maskBit )
+  function GetMaskBit ( node, single ) result ( maskBit )
     use Tree, only: NSONS, DECORATION, SUBTREE
     use Init_Tables_Module, only: L_FILL, L_FULL_DERIVATIVES, &
-      & L_TIKHONOV, L_LINALG
+      & L_TIKHONOV, L_LINALG, L_SPARE, L_CLOUD
     use VectorsModule, only: M_FILL, M_FULLDERIVATIVES, M_LINALG, &
-      & M_TIKHONOV
+      & M_TIKHONOV, M_SPARE, M_CLOUD
 
     ! This routine parses the mask field in an l2cf command
     ! Dummy arguments
     integer, intent(in) :: NODE         ! Tree node
+    logical, optional, intent(in) :: SINGLE ! Raise error if more than one
     integer :: MASKBIT                  ! Result
     integer :: MASK                     ! Tree decoration
     integer :: I
+    if ( present ( single ) ) then
+      if ( single .and. nsons(node) > 2 ) &
+        & call AnnounceError ( node, 'Only one mask expected' )
+    end if
     maskBit = 0
     do i = 2, nsons(node)
       mask = decoration(subtree(i,node))
       select case ( mask )
+      case ( l_Cloud )
+        maskBit = ior(maskBit, m_Cloud)
       case ( l_fill )
         maskBit = ior(maskBit, m_fill)
       case ( l_full_derivatives )
         maskBit = ior(maskBit, m_fullDerivatives)
       case ( l_linAlg )
         maskBit = ior(maskBit, m_linAlg)
+      case ( l_Spare )
+        maskBit = ior(maskBit, m_Spare)
       case ( l_Tikhonov )
         maskBit = ior(maskBit, m_Tikhonov)
       end select
@@ -1001,6 +1137,9 @@ contains ! ========= Public Procedures ============================
 end module SubsetModule
  
 ! $Log$
+! Revision 2.5  2003/04/04 22:01:46  livesey
+! Added UpdateMask
+!
 ! Revision 2.4  2003/03/19 01:58:36  livesey
 ! Added nullify on signals
 !
