@@ -74,7 +74,7 @@ CONTAINS
        CASE ("COORDINATE")
           vGrid%verticalCoordinate=ParseVerticalCoordinateName(cell%charValue)
        CASE ("VALUES")
-          CALL ParseVerticalCoordinateSpec(cell%charValue,vGrid%surfs,family)
+          CALL ParseVertCoordSpec(cell%charValue,vGrid%surfs,family)
        CASE DEFAULT
           CALL MLSMessage(MLSMSG_Error,ModuleName,"Unexpected key "//&
                & TRIM(cell%keyword))
@@ -88,7 +88,7 @@ CONTAINS
     IF (vGrid%verticalCoordinate==VC_Invalid) CALL MLSMessage(MLSMSG_Error,&
          & ModuleName,"Invalid vertical coordinate for vGrid "//&
          & TRIM(vGrid%name))
-    IF (.NOT.(ASSOCIATED(vGrid%surfs))) CALL MLS_Message(MLSMSG_Error,&
+    IF (.NOT.(ASSOCIATED(vGrid%surfs))) CALL MLSMessage(MLSMSG_Error,&
          & ModuleName,"Invalid/absent surfaces in vGrid "//TRIM(vGrid%name))
 
     ! Check that the given surfaces are in an appropriate unit
@@ -196,6 +196,9 @@ END MODULE vGrid
 
 !
 ! $Log$
+! Revision 1.5  1999/12/16 18:04:15  livesey
+! Whoops, wrong name for END SUBROUTINE!
+!
 ! Revision 1.4  1999/12/16 00:04:51  livesey
 ! Renamed routine DestroyVGridInformation to DestroyVGridContents
 !

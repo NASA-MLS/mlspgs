@@ -1,11 +1,18 @@
 PROGRAM Test
+USE MLSCommon
 USE MLSSignalNomenclature
+USE QuantityTemplates
 IMPLICIT NONE
 
 TYPE (MLSSignalsDatabase_T) :: database
 TYPE (MLSSignal_T), POINTER, DIMENSION(:) :: signalA,signalB,signalResult
 INTEGER :: i
 CHARACTER (LEN=120) :: request
+
+PRINT*,MLSInstrumentModule_GHz
+PRINT*,MLSInstrumentModule_THz
+PRINT*,"Names:",MLSInstrumentModuleNames
+PRINT*,"QuantityTypes:",QTYTypeNames
 
 OPEN(UNIT=9,FILE="../../tables/emls-signals.dat",STATUS="OLD",ACTION="READ")
 !OPEN(UNIT=9,FILE="umls-signals.dat",STATUS="OLD",ACTION="READ")

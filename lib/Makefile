@@ -49,7 +49,7 @@ HGrid.o: MLSCommon.o MLSMessageModule.o MLSStrings.o L1BData.o MLSNumerics.o
 VGrid.o: MLSCommon.o VerticalCoordinate.o MLSStrings.o
 ConstructQuantityTemplates.o: MLSCommon.o MLSMessageModule.o \
 	QuantityTemplates.o VGrid.o HGrid.o VerticalCoordinate.o \
-	Units.o MLSSignalsNomenclature.o
+	Units.o MLSSignalNomenclature.o
 
 MLSMessageModule.o_debug: SDPToolkit.o_debug
 MLSStrings.o_debug: MLSMessageModule.o_debug
@@ -63,10 +63,13 @@ HGrid.o_debug: MLSCommon.o_debug MLSMessageModule.o_debug MLSStrings.o_debug \
 VGrid.o_debug: MLSCommon.o_debug VerticalCoordinate.o_debug MLSStrings.o_debug
 ConstructQuantityTemplates.o_debug: MLSCommon.o_debug MLSMessageModule.o_debug \
 	QuantityTemplates.o_debug VGrid.o_debug HGrid.o_debug \
-	VerticalCoordinate.o_debug Units.o_debug MLSSignalsNomenclature.o_debug
+	VerticalCoordinate.o_debug Units.o_debug MLSSignalNomenclature.o_debug
 
 #
 # $Log$
+# Revision 1.18  1999/12/16 23:45:15  livesey
+# Regular commit
+#
 # Revision 1.18  1999/12/16 23:45:15  livesey
 # Regular commit
 #
