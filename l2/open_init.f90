@@ -334,11 +334,14 @@ contains ! =====     Public Procedures     =============================
     mlspcf_log = 10101			! This seems to be hard-wired into PCF
 
     returnStatus = Pgs_pc_getReference(mlspcf_log, version, name)
-    if ( returnStatus /= PGS_S_SUCCESS ) &
-      & call announce_error ( 0, "Error retrieving log file name from PCF" )
-
-    indx = INDEX(name, '/', .TRUE.)
-    l2pcf%logGranID = name(indx+1:)
+    if ( returnStatus /= PGS_S_SUCCESS .AND. PUNISH_FOR_INVALID_PCF) then
+      call announce_error ( 0, "Error retrieving log file name from PCF" )
+    elseif ( returnStatus == PGS_S_SUCCESS) then
+      indx = INDEX(name, '/', .TRUE.)
+      l2pcf%logGranID = name(indx+1:)
+    else
+      l2pcf%logGranID = '(not found)'
+    endif
  
     if ( error /= 0 ) &
       & call MLSMessage(MLSMSG_Error,ModuleName, &
@@ -512,6 +515,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.52  2001/05/24 20:34:50  pwagner
+! More forgiving of faulty pcf
+!
 ! Revision 2.51  2001/05/17 22:31:54  pwagner
 ! Simpler info instead of bogus dump if no pcf
 !
