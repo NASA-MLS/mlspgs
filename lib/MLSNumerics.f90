@@ -383,9 +383,9 @@ contains
     A = (oldX(upperInds)-newX)/gap
 
     ! If extrapolate is "C"onstant, deal with that
-    if ( extrapolateMethod=="C" ) A = max(min(A,1.0D0),0.0)
+    if ( extrapolateMethod=="C" ) A = max(min(A,1.0_r8),0.0_r8)
 
-    B=1.0-A
+    B=1.0_r8-A
 
     ! If extrapolate mode is "B"ad, deal with that
     if ( extrapolateMethod=="B" ) then
@@ -540,6 +540,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.9  2001/05/03 23:13:28  livesey
+! Made Van's changes compile with NAG
+!
 ! Revision 2.8  2001/05/03 21:54:49  vsnyder
 ! Added some nullify's, did some cosmetic changes
 !
