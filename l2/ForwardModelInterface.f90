@@ -656,8 +656,6 @@ contains
     ! Compute the hydrostatic_model on the GL-Grid for all maf(s):
     ! First extend the grid below the surface.
 
-    si = ForwardModelConfig%SurfaceTangentIndex
-
     ! Now compute a hydrostatic grid given the temperature and refGPH
     ! information.
     call hydrostatic_model(ForwardModelConfig%SurfaceTangentIndex, &
@@ -707,7 +705,7 @@ contains
       !do maf = 1, noMAFs
       print*,'Doing maf:',maf
 
-      phi_tan = radiance%template%phi(1,maf) !??? Choose better value later
+      phi_tan = degtorad*temp%template%phi(1,maf) !??? Choose better value later
 
       ! Compute the ptg_angles (chi) for Antenna convolution, also the derivatives
       ! of chi w.r.t to T and other parameters
@@ -716,7 +714,7 @@ contains
         &     tan_hts(:,maf),tan_temp(:,maf),phi_tan,RoC,1e-3*scGeocAlt%values(1,1),  &
         &     elevOffset%values(1,1), &
         &     tan_dh_dt(:,maf,:),no_tan_hts,temp%template%noSurfs,temp%template%surfs(:,1),&
-        &     si,    &
+        &     forwardModelConfig%SurfaceTangentIndex, &
         &     center_angle,ptg_angles(:,maf),dx_dt,d2x_dxdt,ier)
       if(ier /= 0) goto 99
 
@@ -824,10 +822,10 @@ contains
           noFreqs = size(frequencies)
         endif ! If not, we dealt with this outside the loop
 
-        print*,'Using velocity:',1e-3*losVel%values(1,maf)
         call get_beta_path(frequencies,&
           & FMI%pfa_spectrum,no_ele, z_path(ptg_i,maf),t_path(ptg_i,maf), &
           & beta_path, 1e-3*losVel%values(1,maf),ier) !??? Note only using MIF 1 for losvel
+
         if(ier /= 0) goto 99
 !
 !  Define the dh_dt_path for this pointing and this MAF:
@@ -1026,7 +1024,7 @@ contains
         if(ForwardModelConfig%atmos_der) then
           do m = 1, noSpecies
             f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-              & quantityType=l_vmr, molecule=forwardModelConfig%molecules(specie))
+              & quantityType=l_vmr, molecule=forwardModelConfig%molecules(m))
 
             if(TFMI%atmospheric(m)%der_calc(FMI%band)) then
               k = f%template%noInstances
@@ -1368,6 +1366,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.59  2001/03/30 02:45:23  livesey
+! Numbers agree again, was velocity.
+!
 ! Revision 2.58  2001/03/30 01:45:08  livesey
 ! Some changes and debug stuff, still no agreement.
 !
