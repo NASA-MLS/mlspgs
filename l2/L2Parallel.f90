@@ -283,7 +283,7 @@ contains ! ================================ Procedures ======================
     type (L2AuxData_T), dimension(:), pointer :: L2AUXDATABASE
 
     ! Local parameter
-    integer, parameter :: DELAY=200000  ! For Usleep, no. microsecs
+    integer, parameter :: DELAY = 200000  ! For Usleep, no. microsecs
 
     ! External (C) function
     external :: Usleep
@@ -370,34 +370,37 @@ contains ! ================================ Procedures ======================
 
       ! In this next part, we listen out for communication from the slaves and
       ! process it accordingly.
-      call PVMFNRecv( -1, InfoTag, bufferID )
-      if ( bufferID < 0 ) then
-        call PVMErrorMessage ( info, "checking for Info message" )
-      else if ( bufferID > 0 ) then
-        ! Who sent this?
-        call PVMFBufInfo ( bufferID, bytes, msgTag, slaveTid, info )
-        if ( info /= 0 ) &
-          & call PVMErrorMessage ( info, "calling PVMFBufInfo" )
-        machine = FindFirst ( slaveTids == slaveTid )
-        if ( machine == -1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & "Got a message from an unknown slave")
-        ! Unpack the first integer in the buffer
-        call PVMF90Unpack ( signal, info )
-        if ( info /= 0 ) then
-          call PVMErrorMessage ( info, "unpacking signal" )
-        else
-          select case (signal) 
-          case ( sig_tojoin )
-          case ( sig_finished )
-            completed(slaveChunks(machine)) = .true.
-            machineFree(machine) = .true.
-          case default
-            call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & 'Unkown signal from slave' )
-          end select
+      receiveLoop: do
+        call PVMFNRecv( -1, InfoTag, bufferID )
+        if ( bufferID == 0 ) exit receiveLoop
+        if ( bufferID < 0 ) then
+          call PVMErrorMessage ( info, "checking for Info message" )
+        else if ( bufferID > 0 ) then
+          ! Who sent this?
+          call PVMFBufInfo ( bufferID, bytes, msgTag, slaveTid, info )
+          if ( info /= 0 ) &
+            & call PVMErrorMessage ( info, "calling PVMFBufInfo" )
+          machine = FindFirst ( slaveTids == slaveTid )
+          if ( machine == -1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & "Got a message from an unknown slave")
+          ! Unpack the first integer in the buffer
+          call PVMF90Unpack ( signal, info )
+          if ( info /= 0 ) then
+            call PVMErrorMessage ( info, "unpacking signal" )
+          else
+            select case (signal) 
+            case ( sig_tojoin )
+            case ( sig_finished )
+              completed(slaveChunks(machine)) = .true.
+              machineFree(machine) = .true.
+            case default
+              call MLSMessage ( MLSMSG_Error, ModuleName, &
+                & 'Unkown signal from slave' )
+            end select
+          end if
         end if
-      end if
-      
+      end do receiveLoop
+
       ! If we're done then exit
       if (all(completed)) exit masterLoop
 
