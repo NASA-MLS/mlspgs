@@ -25,6 +25,7 @@ MODULE PCFHdr
 
 ! Subroutines -- CreatePCFAnnotation
 !                WritePCF2Hdr
+!                WriteInputPointer
 
 ! Remarks:  This module contains subroutines for writing the PCF as an annotation
 ! to HDF files.
@@ -94,6 +95,29 @@ CONTAINS
 
 !------------------------------------
    END SUBROUTINE CreatePCFAnnotation
+!------------------------------------
+
+!----------------------------------------
+   FUNCTION WriteInputPointer (groups, attrName, inpt)
+!----------------------------------------
+
+!  Write InputPointer metadata
+!  Moved here to hide inconsistency of arguments from NAGging inquiry
+!  in the style of Enron's offshore limited partnerships
+
+!  Arguments
+    character (len = PGSd_MET_GROUP_NAME_L) :: Groups
+    character (len=132) :: Attrname
+    CHARACTER (LEN=98)  :: inpt(:)
+
+    integer             :: WriteInputPointer
+    integer, external   :: pgs_met_setAttr_s
+
+!   Executable statements
+       WriteInputPointer = pgs_met_setAttr_s(groups, attrName, inpt)
+
+!------------------------------------
+   END FUNCTION WriteInputPointer
 !------------------------------------
 
 !----------------------------------------
@@ -173,6 +197,9 @@ END MODULE PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.6  2002/08/29 16:54:44  pwagner
+!# Added WriteInputPointer
+!#
 !# Revision 2.5  2001/04/06 16:54:57  pwagner
 !# Reverting to version 2.2
 !#
