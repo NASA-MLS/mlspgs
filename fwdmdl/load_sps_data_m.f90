@@ -8,7 +8,7 @@ module LOAD_SPS_DATA_M
   implicit NONE
 
   private
-  public :: Load_SPS_Data, Load_One_Grid, Destroygrids_t
+  public :: Load_SPS_Data, Destroygrids_t
 
   type, public :: Grids_T             ! Fit all Gridding categories
     integer,  pointer :: no_f(:) => null()! No. of entries in frq. grid per sps
@@ -141,16 +141,16 @@ contains
 
     type (Grids_T), intent(out) :: Grids_x   ! All the coordinates
 
-    integer, optional, intent(out) :: P_LEN
-    integer, optional, intent(out) :: H2O_IND
-    integer, optional, intent(out) :: EXT_IND
-    integer, optional, intent(in)  :: i_supersat     ! Do the suprsaturation calculation?
+    integer, intent(out) :: P_LEN
+    integer, intent(out) :: H2O_IND
+    integer, intent(out) :: EXT_IND
+    integer, intent(in)  :: i_supersat     ! Do the suprsaturation calculation?
 !-----------------------------------------------------------------------------
 ! i_supersat indicates different clear and cloudy sky combinations:
 !        i_supersat =-1 is for clear-sky radiance limit assuming 110%RHi
 !        i_supersat =-2 is for clear-sky radiance limit assuming 0%RHi
 !-----------------------------------------------------------------------------
-    real(r8), dimension(:), optional, intent(in) :: &
+    real(r8), dimension(:), intent(in) :: &
                                     & temp_supersat  ! What temperatures to use for supersaturation
 ! Local variables:
 
@@ -192,9 +192,9 @@ contains
 
     f_len = 0
 
-    if ( present(p_len) ) p_len=0
-    if ( present(ext_ind) ) ext_ind = 0
-    if ( present(h2o_ind) ) h2o_ind = 0
+     p_len=0
+     ext_ind = 0
+     h2o_ind = 0
 
     phitan => GetQuantityforForwardModel ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_phitan, config=fwdModelConf, &
@@ -202,11 +202,14 @@ contains
 
     do ii = 1, no_mol
       kk = FwdModelConf%molecules(mol_cat_index(ii))
-      if ( present(h2o_ind) .and. spec_tags(kk) == sp_h2o ) h2o_ind = ii
+      if ( spec_tags(kk) == sp_h2o ) h2o_ind = ii
       f => GetQuantityforForwardModel ( fwdModelIn, fwdModelExtra, &
         & quantityType=quantityType, molIndex=mol_cat_index(ii), &
         & radiometer=radiometer, config=fwdModelConf )
       kz = f%template%noSurfs
+      if ( kz /= size(temp_supersat) ) &
+          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'template for this molecule on different vertical grid' )
       if ( f%template%frequencyCoordinate == l_none ) then
         kf = 1
       else
@@ -220,7 +223,7 @@ contains
       Grids_x%no_f(ii) = kf
       Grids_x%no_z(ii) = kz
       Grids_x%no_p(ii) = kp
-      if ( present(p_len) ) p_len = p_len + kz * kp
+      p_len = p_len + kz * kp
       f_len = f_len + kz * kp * kf
       if ( f%template%logBasis ) then
         Grids_x%lin_log(ii) = .true.
@@ -370,6 +373,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.38  2003/02/07 18:47:47  vsnyder
+! Back to 2.35
+!
 ! Revision 2.35  2003/02/07 03:30:37  vsnyder
 ! Correct i_supersat test?
 !
