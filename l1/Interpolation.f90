@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -62,11 +62,6 @@ CONTAINS
     ENDIF
 
     tVec_x = tVec - time
-    WHERE (apoVec == 1)
-       apoVec_x = 1
-    ELSEWHERE
-       apoVec_x = 0
-    ENDWHERE
     apoVec_x = apoVec * qualVec
 
     x1 = tVec_x * apoVec_x
@@ -92,6 +87,9 @@ END MODULE Interpolation
 !=============================================================================
 
 ! $Log$
+! Revision 2.5  2004/05/14 15:59:11  perun
+! Version 1.43 commit
+!
 ! Revision 2.4  2003/08/15 14:25:04  perun
 ! Version 1.2 commit
 !

@@ -119,9 +119,8 @@ CONTAINS
     USE MLSPCF1, ONLY: mlspcf_l1b_oa_start
     USE MLSL1Common, ONLY: L1BFileInfo, HDFversion
     USE MLSFiles, ONLY: MLS_openFile
-    use MLSHDF5, only: mls_h5open
     USE MLSL1Config, ONLY: L1Config
-!    USE H5LIB
+    USE MLSHDF5, ONLY: MLS_h5open
 
     CHARACTER (LEN=132) :: PhysicalFilename
     INTEGER :: error, returnStatus, sd_id, version
@@ -129,7 +128,7 @@ CONTAINS
 !! Open the HDF 5 Fortran Interface
 
     error = 0
-    CALL mls_h5open (error)
+    CALL MLS_h5open (error)
     IF (error /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName, &
          "Fortran HDF 5 API error on opening.")
 
@@ -172,6 +171,9 @@ END MODULE OpenInitBOA
 !=============================================================================
 
 ! $Log$
+! Revision 2.5  2004/05/14 15:59:11  perun
+! Version 1.43 commit
+!
 ! Revision 2.4  2004/05/06 21:59:23  pwagner
 ! Uses mls_h5open/close
 !

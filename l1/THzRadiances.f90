@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -7,7 +7,7 @@ MODULE THzRadiances ! Determine radiances for the THz module
 
   USE MLSCommon, ONLY: r8
   USE MLSL1Common, ONLY: THzNum, THzChans
-  USE THzCalibration, ONLY : CalBuf
+  USE THzCalibration, ONLY : CalBuf, Chisq, dLlo, yTsys, nvBounds
   USE MLSL1Rad, ONLY : THzRad
 
   IMPLICIT NONE
@@ -63,15 +63,17 @@ CONTAINS
   SUBROUTINE ProcessLimbData
 
     USE MLSL1Common, ONLY: L1BFileInfo
-    USE OutputL1B, ONLY: OutputL1B_rad
+    USE OutputL1B, ONLY: OutputL1B_rad, OutputL1B_DiagsT
     USE EngTbls, ONLY: Reflec_T
 
-    INTEGER :: MAFno, counterMAF, ibgn
+    INTEGER :: MAFno, counterMAF, ibgn, nv
     REAL(r8) :: TAI
     TYPE (Reflec_T) :: Reflec
- 
+    INTEGER, SAVE :: OrbNo = 1
+
     print *, 'ProcessLimbData'
 
+    nv = 1
     ibgn = 0
     DO MAFno = CalBuf%Cal_start, CalBuf%Cal_end
 
@@ -79,12 +81,23 @@ CONTAINS
 
        counterMAF = CalBuf%MAFdata(MAFno)%EMAF%TotalMAF
        TAI = CalBuf%MAFdata(MAFno)%SciMIF(0)%secTAI
+
 print *, "Outputting rad for MAFno: ", MAFno
        CALL OutputL1B_rad (MAFno, L1BFileInfo, counterMAF, Reflec, TAI, THzrad)
 
-! Write Diags (LATER!)
+! Write MAF dimensioned Diags
+
+       CALL OutputL1B_DiagsT (L1BFileInfo%DiagTid, MAFno=MAFno, &
+            counterMAF=counterMAF, MAFStartTimeTAI=TAI, nvBounds=nvBounds(nv))
+       nv = nv + 1
 
     ENDDO
+
+! Write orbit no. dimensioned Diags
+
+    CALL OutputL1B_DiagsT (L1BFileInfo%DiagTid, OrbNo=OrbNo, Chisq=Chisq, &
+         dLlo=dLlo, yTsys=yTsys)
+    OrbNo = OrbNo + 1
 
   END SUBROUTINE ProcessLimbData
 
@@ -93,6 +106,9 @@ END MODULE THzRadiances
 !=============================================================================
 
 ! $Log$
+! Revision 2.5  2004/05/14 15:59:11  perun
+! Version 1.43 commit
+!
 ! Revision 2.4  2004/01/09 17:46:23  perun
 ! Version 1.4 commit
 !

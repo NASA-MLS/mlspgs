@@ -6,7 +6,7 @@ MODULE THzCalibration ! Calibration data and routines for the THz module
 !=============================================================================
 
   USE MLSCommon, ONLY: r8
-  USE MLSL1Common, ONLY: MaxMIFs, THzChans, THzNum, LO1
+  USE MLSL1Common, ONLY: MaxMIFs, THzChans, THzNum, LO1, L1BFileInfo
   USE L0_sci_tbls, ONLY: THz_Sci_pkt_T
   USE EngTbls, ONLY : Eng_MAF_T
  
@@ -18,6 +18,7 @@ MODULE THzCalibration ! Calibration data and routines for the THz module
 
   PUBLIC :: CalibrateTHz, Chan_type_T, MAFdata_T, CalBuf_T, CalBuf, Cnts, &
        VarCnts, SpaceTemp
+  PUBLIC :: Chisq, dLlo, nvBounds, yTsys
 
   !------------------------------- RCS Ident Info ------------------------------
   CHARACTER(LEN=130) :: id = &
@@ -45,6 +46,7 @@ MODULE THzCalibration ! Calibration data and routines for the THz module
 
   TYPE CalBuf_T
      INTEGER :: MAFs, Cal_start, Cal_end
+     INTEGER :: CalNo = 0
      LOGICAL :: BankGood(THzNum)
      TYPE (MAFdata_T), DIMENSION(:), ALLOCATABLE :: MAFdata
   END TYPE CalBuf_T
@@ -57,13 +59,17 @@ MODULE THzCalibration ! Calibration data and routines for the THz module
   INTEGER, DIMENSION(:), ALLOCATABLE :: MIFx
   INTEGER, DIMENSION(:), ALLOCATABLE, TARGET :: CalFlag
   INTEGER, DIMENSION(:), ALLOCATABLE :: BoundsX
+  INTEGER, DIMENSION(:), ALLOCATABLE :: nvBounds
   REAL(r8), DIMENSION(:), ALLOCATABLE :: Bias
   REAL(r8), DIMENSION(:), ALLOCATABLE :: CalTemp
-  REAL(r8), DIMENSION(:,:), ALLOCATABLE :: VarGain
   REAL(r8), DIMENSION(:,:,:), ALLOCATABLE :: Cnts, dCnts, VarCnts
   LOGICAL, DIMENSION(:), ALLOCATABLE :: BiasGood
   REAL :: SpaceTemp
+  REAL(r8) :: VarGain(THzChans,THzNum)
+  REAL(r8) :: Chisq(THzChans,THzNum)
+  REAL(r8) :: dLlo(THzChans,THzNum)
   REAL(r8) :: yTsys(THzChans,THzNum)
+  CHARACTER(len=80) :: msg
 
 CONTAINS
 
@@ -75,8 +81,8 @@ CONTAINS
     USE MLSL1Config, ONLY: L1Config
     USE MLSL1Rad, ONLY: UpdateRadSignals, RadPwr
 
-    INTEGER :: i, j, last_MIF, mindx, MIF0, MIFno
-    INTEGER :: nBank, numMIFs, nMIFsM1, nBounds, status, Switch5
+    INTEGER :: i, j, last_MIF, mindx, MIF0, MIFno, ibgn, iend, iMAF, ibound
+    INTEGER :: nBank, numMIFs, nMIFsM1, nBounds, nv, status, Switch5
     REAL :: MaxBias
     TYPE (MAFdata_T), POINTER :: CurMAFdata => NULL()
     LOGICAL, DIMENSION(:), ALLOCATABLE, SAVE :: Bounds
@@ -88,6 +94,7 @@ CONTAINS
 
     Cal_end = MIN ((Cal_start+Cal_size-1), CalBuf%MAFs)
     IF ((CalBuf%MAFs - Cal_end) < Cal_size) Cal_end = CalBuf%MAFs
+    CalBuf%CalNo = CalBuf%CalNo + 1
 
 ! Figure out how many MIFs needed for calibration:
 
@@ -125,14 +132,16 @@ CONTAINS
     DEALLOCATE (Bounds, stat=status)
     ALLOCATE (Bounds(0:nMIFsM1))
 
+    DEALLOCATE (nvBounds, stat=status)
+    ALLOCATE (nvBounds(Cal_end-Cal_start+1))
+    nvBounds = 0
+
     DEALLOCATE (Cnts, stat=status)
     ALLOCATE (Cnts(THzChans,THzNum,0:nMIFsM1))
     DEALLOCATE (dCnts, stat=status)
     ALLOCATE (dCnts(THzChans,THzNum,0:nMIFsM1))
     DEALLOCATE (VarCnts, stat=status)
     ALLOCATE (VarCnts(THzChans,THzNum,0:nMIFsM1))
-    DEALLOCATE (VarGain, stat=status)
-    ALLOCATE (VarGain(THzChans,THzNum))
     Cnts = 0.0
     VarCnts = 1.0
 
@@ -213,6 +222,22 @@ CONTAINS
        ENDIF
     ENDDO
 
+! Determine nvBounds:
+
+    iMAF = 1
+    ibgn = 0
+    DO iBound = 1, nBounds
+       iend = BoundsX(iBound)
+       nv = iend - ibgn + 1
+       DO i = ibgn, iend
+          IF (CalMIF(i) == 0) THEN
+             nvBounds(iMAF) = nv
+             iMAF = iMAF + 1
+          ENDIF
+       ENDDO
+       ibgn = iend + 1
+    ENDDO
+
 ! Determine which filter bank counts are good to cal:
 
     DO nBank = 1, THzNum
@@ -224,6 +249,14 @@ CONTAINS
 ! Set signals based on end cal index
 
     CALL UpdateRadSignals (CalBuf%MAFdata(Cal_end)%BandSwitch)
+
+! Write to Log file:
+
+    WRITE (L1BFileInfo%LogId, *) ''
+    WRITE (msg, &
+         '("Cal Number: ", i0, ", nBounds: ", i0, ", nBiasGood: ", i0)') &
+         CalBuf%CalNo, nBounds, COUNT (BiasGood)
+    WRITE (L1BFileInfo%LogId, *) TRIM (msg)
 
 ! Save current cal start & end:
 
@@ -246,7 +279,7 @@ CONTAINS
     REAL(r8), DIMENSION(:), TARGET, ALLOCATABLE, SAVE :: BiasBuf, TempBuf
     REAL(r8) :: bb, det, tb, tt, yb(THzChans,THzNum), yt(THzChans,THzNum)
 
-    REAL(r8) :: dCal(THzChans,THzNum), dLlo(THzChans,THzNum)
+    REAL(r8) :: dCal(THzChans,THzNum)
 
     ntot = COUNT (CalFlag == 1)
     IF (ntot == 0) RETURN
@@ -500,7 +533,7 @@ CONTAINS
 !=============================================================================
 
     INTEGER :: i, nBank, nChan, ntot
-    REAL(r8) :: aerr(THzChans,THzNum), Chisq(THzChans,THzNum)
+    REAL(r8) :: aerr(THzChans,THzNum)
     REAL(r8) :: xavg(THzChans,THzNum), yavg(THzChans,THzNum)
     REAL(r8) :: xval(THzChans,THzNum), yval(THzChans,THzNum)
     REAL(r8) :: vnorm
@@ -575,6 +608,9 @@ END MODULE THzCalibration
 !=============================================================================
 
 ! $Log$
+! Revision 2.5  2004/05/14 15:59:11  perun
+! Version 1.43 commit
+!
 ! Revision 2.4  2004/01/13 17:15:45  perun
 ! Protect from arithmetic exception.
 !

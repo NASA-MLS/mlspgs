@@ -1,4 +1,4 @@
-! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -17,6 +17,10 @@ MODULE MLSL1Utils              ! Common utilities for the MLSL1 program
        "$Id$"
   CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSFile: $"
   !---------------------------------------------------------------------------
+
+  INTERFACE Finite
+     MODULE PROCEDURE Finite_S, Finite_D
+  END INTERFACE
 
   ! This module contains utility routines for the MLSL1 program
 
@@ -100,18 +104,31 @@ CONTAINS
 
   END FUNCTION QNan
 
-  FUNCTION Finite (x) RESULT (is_finite)
+  FUNCTION Finite_S (s) RESULT (is_finite)
 
     USE ieee_arithmetic, ONLY: ieee_is_finite
 
     !! Return whether or not input number is finite
 
-    REAL :: x
+    REAL :: s
     LOGICAL :: is_finite
 
-    is_finite = ieee_is_finite (x)
+    is_finite = ieee_is_finite (s)
 
-  END FUNCTION Finite
+  END FUNCTION Finite_S
+
+  FUNCTION Finite_D (d) RESULT (is_finite)
+
+    USE ieee_arithmetic, ONLY: ieee_is_finite
+
+    !! Return whether or not input number is finite
+
+    DOUBLE PRECISION :: d
+    LOGICAL :: is_finite
+
+    is_finite = ieee_is_finite (d)
+
+  END FUNCTION Finite_D
 
   FUNCTION GetIndexedAvg (value, indx) RESULT (avg)
 
@@ -152,6 +169,9 @@ END MODULE MLSL1Utils
 !=============================================================================
 
 ! $Log$
+! Revision 2.5  2004/05/14 15:59:11  perun
+! Version 1.43 commit
+!
 ! Revision 2.4  2003/01/31 18:13:34  perun
 ! Version 1.1 commit
 !
