@@ -272,9 +272,10 @@ contains
       use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST, F_MATRIX, F_EIGENVECTORS, F_SCALE, &
         & F_RHSOUT, F_FORWARDMODEL, F_FWDMODELIN, F_FWDMODELOUT, F_FWDMODELEXTRA, &
         & F_MEASUREMENTS, F_MEASUREMENTSD, F_REGORDERS, F_REGQUANTS, F_REGWEIGHTS, F_REGWEIGHTVEC, &
-        & F_HORIZONTAL
+        & F_HORIZONTAL, F_RETRIEVALEXTRA, F_RETRIEVALFORWARDMODEL, F_RETRIEVALIN, &
+        & F_TRUTHEXTRA, F_TRUTHFORWARDMODEL, F_TRUTHIN
       use Init_Tables_Module, only: L_TRUE
-      use Init_Tables_Module, only: S_COLUMNSCALE, S_CYCLICJACOBI, S_REFLECT, &
+      use Init_Tables_Module, only: S_COLUMNSCALE, S_CYCLICJACOBI, S_DISJOINTEQUATIONS, S_REFLECT, &
         & S_ROWSCALE, S_NORMALEQUATIONS, S_REGULARIZATION
       use MoreTree, only: GET_SPEC_ID, GET_BOOLEAN
         
@@ -290,6 +291,8 @@ contains
       logical :: HORIZONTAL             ! Regularization direction
       integer :: FIELDID                ! ID for a field (duh!)
       integer :: FORWARDMODELNODE       ! Tree node
+      integer :: TRUTHFORWARDMODELNODE  ! Tree node
+      integer :: RETRIEVALFORWARDMODELNODE ! Tree node
       integer :: I                      ! Loop counter
       integer :: KEY                    ! Tree node
       integer :: MATRIXIND              ! Index into matrix database
@@ -309,8 +312,12 @@ contains
       type(Vector_T), pointer :: FWDMODELOUT ! Output of forward models
       type(Vector_T), pointer :: MEASUREMENTS ! Measurement vector
       type(Vector_T), pointer :: MEASUREMENTSD ! Measurement noise vector
+      type(Vector_T), pointer :: RETRIEVALEXTRA ! Input for forward models
+      type(Vector_T), pointer :: RETRIEVALIN ! Input for forward models
       type(Vector_T), pointer :: RHSOUT ! Vector for normal equations
       type(Vector_T), pointer :: SCALE ! The scaling vector
+      type(Vector_T), pointer :: TRUTHEXTRA ! Input for forward models
+      type(Vector_T), pointer :: TRUTHIN ! Input for forward models
       type(Vector_T), pointer :: REGWEIGHTVEC ! Regularization vector
 
       ! Executable code
@@ -361,6 +368,12 @@ contains
           regWeights = son
         case ( f_regWeightVec )
           regWeightVec => vectorDatabase ( decoration ( value ) )
+        case ( f_retrievalExtra )
+          retrievalExtra => vectorDatabase ( decoration ( value ) )
+        case ( f_retrievalForwardModel )
+          retrievalForwardModelNode = son
+        case ( f_retrievalIn )
+          retrievalIn => vectorDatabase ( decoration ( value ) )
         case ( f_scale )
           scale => vectorDatabase ( decoration ( value ) )
         case ( f_matrix )
@@ -378,6 +391,12 @@ contains
           end select
         case ( f_rhsOut )
           rhsOut => vectorDatabase ( decoration ( value ) )
+        case ( f_truthExtra )
+          truthExtra => vectorDatabase ( decoration ( value ) )
+        case ( f_truthForwardModel )
+          truthForwardModelNode = son
+        case ( f_truthIn )
+          truthIn => vectorDatabase ( decoration ( value ) )
         end select
       end do
 
@@ -396,6 +415,11 @@ contains
       case ( s_cyclicJacobi ) 
         if ( matrixKind /= k_plain ) call Announce_Error ( key, notSupported )
         call CyclicJacobi ( matrix, eigenVectors )
+      case ( s_disjointEquations )
+        if ( matrixKind /= k_plain ) call Announce_Error ( key, notSupported )
+        call DisjointEquations ( matrix, truthIn, truthExtra, retrievalIn, retrievalExtra, &
+          & truthForwardModelNode, retrievalForwardModelNode, measurementSD, &
+          & chunk, forwardModelConfigDatabase )
       case ( s_reflect )
         if ( matrixKind /= k_plain ) call Announce_Error ( key, notSupported )
         call ReflectMatrix ( matrix )
@@ -413,8 +437,8 @@ contains
       case ( s_normalEquations )
         if ( matrixKind /= k_spd ) call Announce_Error ( key, notSupported )
         call NormalEquationsCommand ( matrix_s, rhsOut, forwardModelNode, &
-          & fwdModelIn, fwdModelExtra, fwdModelOut, chunk, measurements, measurementSD, &
-          & forwardModelConfigDatabase )
+          & fwdModelIn, fwdModelExtra, fwdModelOut, measurements, measurementSD, &
+          & chunk, forwardModelConfigDatabase )
       case ( s_regularization )
         if ( matrixKind /= k_plain ) call Announce_Error ( key, notSupported )
         call Regularize ( matrix, regOrders, regQuants, regWeights, regWeightVec, rows, horizontal )
@@ -1129,10 +1153,127 @@ contains
       get_spec = decoration ( subtree ( 1, get_spec ) )
     end function Get_Spec
 
+    ! ...........................................  DisjointEquations .....
+    subroutine DisjointEquations ( matrix, truthIn, truthExtra, retrievalIn, retrievalExtra, &
+      & truthForwardModelNode, retrievalForwardModelNode, measurementSD, &
+      & chunk, configDatabase )
+      !{This subroutine computes the \emph{disjoint equation} matrix. 
+      ! $K_r^T K_t$ where $K_r$ is a jacobian taken from a forward
+      ! model configured for a retrieval, and $K_t$ is one using a
+      ! different state vector (such as higher resolution) supposed to
+      ! reflect something closer to the truth
+
+      ! Imports
+      use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+      use ForwardModelWrappers, only: FORWARDMODEL
+      use MatrixModule_1, only: MULTIPLYMATRIX_XTY, CLEARMATRIX, DUMP_STRUCT, ROWSCALE
+      use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T, FORWARDMODELINTERMEDIATE_T
+      use VectorsModule, only: COPYVECTOR, SUBTRACTFROMVECTOR, CLONEVECTOR, MULTIPLY
+      ! Dummy arguments
+      type (Matrix_T), intent(inout) :: MATRIX ! Normal equation matrix
+      type (Vector_T), intent(in), target :: TRUTHIN ! Truth forward model state vector
+      type (Vector_T), pointer :: TRUTHEXTRA ! Truth extra forward model vector
+      type (Vector_T), intent(in), target :: RETRIEVALIN ! Retrieval forward model state vector
+      type (Vector_T), pointer :: RETRIEVALEXTRA ! Retrieval extra forward model vector
+      integer, intent(in) :: TRUTHFORWARDMODELNODE ! List of forward models.
+      integer, intent(in) :: RETRIEVALFORWARDMODELNODE ! List of forward models.
+      type (Vector_T), pointer :: MEASUREMENTSD ! Measurement noise (row scale)
+      type (MLSChunk_T), intent(in) :: CHUNK ! The chunk we're processing
+      type (ForwardModelConfig_T), intent(inout), dimension(:) :: CONFIGDATABASE
+
+      ! Local variables
+      integer :: NOMAFS                 ! Number of major frames
+      integer :: MAF                    ! Major frame number
+      type (ForwardModelStatus_T) :: FMSTAT ! Mainly maf counter
+      type (ForwardModelIntermediate_T) :: IFM ! Forward model workspace
+      type (Matrix_T) :: Kt             ! Truth Jacobian matrix
+      type (Matrix_T) :: Kr             ! Retrieval Jacobian matrix
+      integer, dimension(:), pointer :: TRUTHCONFIGS ! Indices of forward model configs
+      integer, dimension(:), pointer :: RETRIEVALCONFIGS ! Indices of forward model configs
+      integer :: CONFIG                 ! Index into configs
+      integer :: J                      ! Loop counter
+      integer :: NOTRUTHCONFIGS         ! Number of forward models
+      integer :: NORETRIEVALCONFIGS     ! Number of forward models
+      type (Vector_T) :: WEIGHT         ! 1/measurementSD
+      type (Vector_T) :: FWDMODELOUT    ! Scratch forward model output vector
+
+      ! Executable code
+      if ( .not. associated ( retrievalExtra ) ) retrievalExtra => retrievalIn
+      if ( .not. associated ( truthExtra ) ) truthExtra => truthIn
+      noMAFs = chunk%lastMAFIndex - chunk%firstMAFIndex + 1
+
+      ! Get the forward model configs
+      nullify ( truthConfigs, retrievalConfigs )
+
+      noRetrievalConfigs = nsons ( retrievalForwardModelNode ) - 1
+      call Allocate_Test ( retrievalConfigs, noRetrievalConfigs, 'retrievalConfigs', ModuleName )
+      do config = 2, noRetrievalConfigs+1
+        retrievalConfigs(config-1) = decoration(decoration(subtree(config,retrievalForwardModelNode)))
+      end do
+
+      noTruthConfigs = nsons ( truthForwardModelNode ) - 1
+      call Allocate_Test ( truthConfigs, noTruthConfigs, 'truthConfigs', ModuleName )
+      do config = 2, noTruthConfigs+1
+        truthConfigs(config-1) = decoration(decoration(subtree(config,truthForwardModelNode)))
+      end do
+
+      ! Sort out the jacobian matrices
+      call CreateEmptyMatrix ( Kr, 0, measurementSD, retrievalIn, text='Kr' )
+      call CreateEmptyMatrix ( Kt, 0, measurementSD, truthIn, text='Kt' )
+      call Allocate_test ( fmStat%rows, Kr%row%nb, 'fmStat%rows',&
+        & ModuleName )
+
+      ! Sort out the weight vector
+      call cloneVector ( weight, measurementSD, vectorNameText='weight' )
+      do j = 1, measurementSD%template%noQuantities
+        where ( measurementSD%quantities(j)%values <= 0.0 )
+          weight%quantities(j)%values = 1.0
+        elsewhere
+          weight%quantities(j)%values = 1.0 / &
+            & measurementSD%quantities(j)%values
+        end where
+      end do
+
+      ! Setup a scratch vector or two
+      call cloneVector ( fwdModelOut, measurementSD, vectorNameText='forwardModelOut' )
+
+      ! Loop over MAFs
+      do maf = 1, noMAFs
+        fmStat%maf = maf
+        ! Invoke both sets of forward models
+        do config = 1, noRetrievalConfigs
+          call ForwardModel ( configDatabase(retrievalConfigs(config)), &
+            & retrievalIn, retrievalExtra, fwdModelOut, ifm, fmStat, Kr )
+        end do
+        do config = 1, noTruthConfigs
+          call ForwardModel ( configDatabase(truthConfigs(config)), &
+            & truthIn, truthExtra, fwdModelOut, ifm, fmStat, Kt )
+        end do
+        ! Do any row scaling for the jacobians
+        call rowScale ( weight, Kr )
+        call rowScale ( weight, Kt )
+        ! Now add these terms to the disjoint equations
+        call MultiplyMatrix_XTY ( Kr, Kt, matrix, update=.true., useMask=.true. )
+        call dump_struct ( matrix, 'Disjoint equations' )
+        ! Now clear the jacobian matrix
+        call ClearMatrix ( Kr )
+        call ClearMatrix ( Kt )
+      enddo
+
+      ! Tidy up
+      call deallocate_test ( fmStat%rows, 'FmStat%rows', moduleName )
+      call deallocate_test ( retrievalConfigs, 'retrievalConfigs', ModuleName )
+      call deallocate_test ( truthConfigs, 'truthConfigs', ModuleName )
+      call DestroyVectorInfo ( weight )
+      call DestroyMatrix ( Kr )
+      call DestroyMatrix ( Kt )
+
+    end subroutine DisjointEquations
+
     ! ...........................................  NormalEquationsCommand .....
     subroutine NormalEquationsCommand ( matrix, rhsOut, forwardModelNode, &
-      & fwdModelIn, fwdModelExtra, fwdModelOut, chunk, &
-      & measurements, measurementSD, configDatabase )
+      & fwdModelIn, fwdModelExtra, fwdModelOut, &
+      & measurements, measurementSD, chunk, configDatabase )
       ! Imports
       use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
       use ForwardModelWrappers, only: FORWARDMODEL
@@ -1146,9 +1287,9 @@ contains
       type (Vector_T), intent(in), target :: FWDMODELIN ! Forward model state vector
       type (Vector_T), pointer :: FWDMODELEXTRA ! Extra forward model vector
       type (Vector_T), intent(inout) :: FWDMODELOUT ! Forward model results
-      type (MLSChunk_T), intent(in) :: CHUNK ! The chunk we're processing
       type (Vector_T), intent(in) :: MEASUREMENTS ! Measurement vector
       type (Vector_T), pointer :: MEASUREMENTSD ! Measurement noise (row scale)
+      type (MLSChunk_T), intent(in) :: CHUNK ! The chunk we're processing
       type (ForwardModelConfig_T), intent(inout), dimension(:) :: CONFIGDATABASE
 
       ! Local variables
@@ -1230,8 +1371,12 @@ contains
         call ClearMatrix ( jacobian )
       enddo
 
+      ! Tidy up
       call deallocate_test ( fmStat%rows, 'FmStat%rows', moduleName )
       call deallocate_test ( configs, 'configs', ModuleName )
+      call destroyVectorInfo ( delta )
+      call destroyVectorInfo ( weight )
+      call destroyMatrix ( jacobian )
       
     end subroutine NormalEquationsCommand
 
@@ -1244,6 +1389,9 @@ contains
 end module ALGEBRA_M
 
 ! $Log$
+! Revision 2.12  2004/04/30 21:49:26  livesey
+! Added DisjointEquations command
+!
 ! Revision 2.11  2004/04/29 01:26:47  livesey
 ! More refinements
 !
