@@ -407,10 +407,11 @@ CONTAINS
 
 !------------------------------------------------------------
    SUBROUTINE he5_readglobalattr (fileID, gAttributes, &
-     & ProcessLevel, DayofYear, TAI93At0zOfGranule)
+     & ProcessLevel, DayofYear, TAI93At0zOfGranule, returnStatus)
 !------------------------------------------------------------
 
-    use MLSHDFEOS, only: he5_EHrdglatt
+    use HDFEOS5, only: he5_EHinqglatts
+    use MLSHDFEOS, only: MAXDLISTLENGTH, he5_EHrdglatt
 ! Brief description of subroutine
 ! This subroutine reads the global attributes from an hdf-eos5 file
 
@@ -421,11 +422,24 @@ CONTAINS
       character(len=*), intent(out), optional  :: ProcessLevel
       integer, intent(out), optional           :: DayofYear
       double precision, optional, intent(out)  :: TAI93At0zOfGranule
+      integer, optional, intent(out)           :: returnStatus
 ! Internal variables
       integer :: status
       integer, dimension(1) :: ibuf
       real(r8), dimension(1) :: dbuf
+      character(len=MAXDLISTLENGTH) :: attrList
+      integer :: listSize
 ! Executable
+      status = he5_EHinqglatts(fileID, attrList, listSize)
+      if ( status /= 0 ) then
+        if ( present(returnStatus) ) then
+          returnStatus = 1
+        else
+          call MLSMessage(MLSMSG_Warning, ModuleName, &
+            & 'No global attributes in file: ' )
+        endif
+        return
+      endif
       status = he5_EHrdglatt(fileID, &
          & 'OrbitNumber', &
          &  gAttributes%OrbNum )
@@ -463,9 +477,12 @@ CONTAINS
        & 'GranuleYear', &
        &  ibuf  )
       gAttributes%GranuleYear = ibuf(1)
-      if ( present(TAI93At0zOfGranule) ) status = he5_EHrdglatt(fileID, &
-       & 'TAI93At0zOfGranule', dbuf )
-      TAI93At0zOfGranule = dbuf(1)
+      if ( present(TAI93At0zOfGranule) ) then
+        status = he5_EHrdglatt(fileID, &
+         & 'TAI93At0zOfGranule', dbuf )
+        TAI93At0zOfGranule = dbuf(1)
+      endif
+      if ( present(returnStatus) ) returnStatus = status
 !------------------------------------------------------------
    END SUBROUTINE he5_readglobalattr
 !------------------------------------------------------------
@@ -1059,6 +1076,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.30  2004/02/26 22:01:04  pwagner
+!# Acts more gracefully if l2gp file lacks global attributes
+!#
 !# Revision 2.29  2004/02/13 00:17:12  pwagner
 !# New stuff for reading swath attributes
 !#
