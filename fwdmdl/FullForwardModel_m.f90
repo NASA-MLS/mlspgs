@@ -63,7 +63,7 @@ contains
       & MLSMSG_Error, MLSMSG_Warning
     use MLSNumerics, ONLY: Hunt, InterpolateValues
     use MLSSignals_m, only: Signal_t, MatchSignal, AreSignalsSuperset, Dump, &
-                          & GetNameOfSignal
+                          & GetNameOfSignal, GetRadiometerFromSignal
     use Molecules, only: L_EXTINCTION, spec_tags
     use NO_CONV_AT_ALL_M, only: NO_CONV_AT_ALL
     use Output_m, only: OUTPUT
@@ -710,15 +710,28 @@ contains
           thisLine => lines(thisCatalogEntry%lines(k))
           if ( associated(thisLine%signals) ) then
             do sigInd = 1, size(fwdModelConf%signals)
-              doThis = any ( thisLine%signals == &
-                & fwdModelConf%signals(sigInd)%index )
+              if ( fwdModelConf%allLinesForRadiometer ) then
+                doThis = .false.
+                do i = 1, size(thisLine%signals)
+                  ! Tried to make GetRadiometerFromSignal elemental, but compile time
+                  ! in LF95 (optimized) for Construct.f90 went nuts! :-(
+                  doThis = doThis .or. GetRadiometerFromSignal ( thisLine%signals(i) ) == &
+                    & fwdModelConf%signals(sigInd)%radiometer
+                  if ( doThis ) exit
+                end do
+              else
+                doThis = any ( thisLine%signals == &
+                  & fwdModelConf%signals(sigInd)%index )
+              end if
 
-! If we're only doing one sideband, maybe we can remove some more lines
-
+              ! If we're only doing one sideband, maybe we can remove some more lines
               if ( sidebandStart==sidebandStop ) doThis = doThis .and. &
                 & any( ( thisLine%sidebands == sidebandStart ) .or. &
                 & ( thisLine%sidebands == 0 ) )
-              lineFlag(k) = lineFlag(k) .or. doThis
+              if ( doThis ) then
+                lineFlag(k) = .true.
+                exit
+              end if
             end do ! End loop over signals requested in fwm
           end if
         end do               ! End loop over lines
@@ -2471,6 +2484,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.99  2002/11/13 17:07:44  livesey
+! Passes FwdModelExtra into convolve/no_conv
+!
 ! Revision 2.98  2002/10/26 00:13:35  livesey
 ! Made the warning about lines less common as it checks for continuum
 ! aswell.
