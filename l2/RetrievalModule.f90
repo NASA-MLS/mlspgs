@@ -1332,7 +1332,7 @@ contains
             if ( index(switches,'spa') /= 0 ) &
               & call dump_struct ( factored%m, &
                 & 'Sparseness structure of blocks of factor:', upper=.true. )
-            if ( index(switches,'sca') /= 0 ) then
+            if ( nwt_flag == nf_getJ .and. index(switches,'sca') /= 0 ) then
               call output ( ' | F | = ' )
               call output ( sqrt ( aj%fnorm ), format='(1pe14.7)', advance='yes' )
             end if
@@ -3025,6 +3025,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.174  2002/09/11 20:21:49  livesey
+! Made second | F | print on GETJ not EVALJ
+!
 ! Revision 2.173  2002/09/11 17:40:59  livesey
 ! Changed meaning of v(f)
 !
