@@ -78,7 +78,7 @@ SHELL = /bin/sh
 # $LEVELS        -- automatic; built when target is not specified
 # .configure     -- automatic (if not yet extant; prerequisite for everything else)
 # $OTHER_SUBDIRS -- not automatic
-# all            -- all the sub-directories: l1, l2, l3, lib, fwdmdl
+# all            -- all the sub-directories: l1, l2, l3, lib, fwdmdl, cloudfwdm
 # subdirs        -- same as all
 # lib            -- libmls.a; a prerequisite for the others
 
@@ -526,13 +526,7 @@ all: $(SUBDIRS)
 
 subdirs: $(SUBDIRS)
 
-# In the long run just evict the stuff that assumes l2_NEEDS_fwdmdl is undefined
-l2_NEEDS_fwdmdl = true
-
-# This makes fwdmdl a prerequisite for l2 -- *if* l2_NEEDS_fwdmdl defined
-ifdef l2_NEEDS_fwdmdl
-l2: fwdmdl
-endif
+l2: fwdmdl cloudfwdm
 
 # This requires rm-ing uniquely-named sub-subs before archiving
 #tar tar_subs tar_sips: clean_all
@@ -552,6 +546,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.35  2001/05/30 17:39:18  pwagner
+# Added cloudfwdm to OTHER_SUBDIRS
+#
 # Revision 1.34  2001/05/24 17:14:01  pwagner
 # Added notes to EVERYTHING to be tarred up
 #
