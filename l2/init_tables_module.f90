@@ -170,7 +170,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_SOURCEL2AUX         = f_sourceGrid + 1
   integer, parameter :: F_SOURCEL2GP          = f_sourcel2aux + 1
   integer, parameter :: F_SOURCEQUANTITY      = f_sourcel2gp + 1
-  integer, parameter :: F_SOURCEVGRID         = f_sourcequantity + 1
+  integer, parameter :: F_SOURCESGRID         = f_sourcequantity + 1
+  integer, parameter :: F_SOURCEVGRID         = f_sourcesgrid + 1
   integer, parameter :: F_SPECIES             = f_sourcevGrid + 1
   integer, parameter :: F_SPECT_DER           = f_species + 1
   integer, parameter :: F_SPREAD              = f_spect_der + 1
@@ -528,6 +529,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_sourcel2aux) =         add_ident ( 'sourceL2AUX' )
     field_indices(f_sourcel2gp) =          add_ident ( 'sourceL2GP' )
     field_indices(f_sourcequantity) =      add_ident ( 'sourceQuantity' )
+    field_indices(f_sourcesGrid) =         add_ident ( 'sourcesGrid' )
     field_indices(f_sourcevGrid) =         add_ident ( 'sourcevGrid' )
     field_indices(f_species) =             add_ident ( 'species' )
     field_indices(f_spect_der) =           add_ident ( 'spect_der' )
@@ -842,6 +844,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_sourceL2GP, s+s_l2gp, n+n_field_spec, &
              begin, f+f_sourceL2AUX, s+s_l2aux, n+n_field_spec, &
              begin, f+f_sourceGrid, s+s_gridded, n+n_field_spec, &
+             begin, f+f_sourceSGrid, s+s_vGrid, n+n_field_spec, &
              begin, f+f_sourceVGrid, s+s_vGrid, n+n_field_spec, &
              begin, f+f_spread, t+t_boolean, n+n_field_type, &
              begin, f+f_systemTemperature, t+t_numeric, n+n_field_type, &
@@ -1029,6 +1032,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.144  2001/07/19 18:05:57  dwu
+! add sourceSGRID
+!
 ! Revision 2.143  2001/07/19 17:42:48  dwu
 ! add f_sGrid field
 !
