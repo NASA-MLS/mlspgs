@@ -317,6 +317,8 @@ contains
 
       REAL(r8) :: DMA
       REAL(r8) :: RATIO
+      REAL(r8) :: PH0(N,NU,NZmodel-1)
+      REAL(r8) :: W00(N,NZmodel-1)  
       REAL(r8) :: P11(NU)
       REAL(r8) :: RC11(3)
       REAL(r8) :: RC_TMP(N,3)
@@ -525,9 +527,13 @@ contains
          ENDDO                                ! 100MB or cloud top
          endif
 !----------------------------------------------------------------------------------
+
             PHH      = 0._r8     ! phase function
             DDm      = 0._r8     ! mass-mean diameter
             W0       = 0._r8     ! single scattering albedo
+
+            PH0      = 0._r8 
+            W00      = 0._r8 
 
          DO 1000 ILYR=1, NZmodel-1            ! START OF MODEL LAYER LOOP:   
  
@@ -542,19 +548,17 @@ contains
 
             DEPTH  = 0._r8
 
-
             DO ISPI=1,N
             CWC = RATIO*WC(ISPI,ILYR)
-            IF(CWC .ne. 0._r8 .and. ICON .ne. 0) then      !Don't compute this cloud info
-                  
-               CWC = MAX(1.E-9_r8,CWC)
+            IF(CWC .ne. 0._r8 .and. ICON .ne. 0) then           
+            CWC = MAX(1.E-9_r8,CWC)
               
 !=================================================
 !    >>>>>>>>> CLOUDY-SKY MODULE <<<<<<<<<<<
 !=================================================
 
                CALL CLOUDY_SKY ( ISPI,CWC,TEMP(ILYR),FREQUENCY(IFR),  &
-                       &          NU,U,DU,P11,RC11,IPSD(ILYR),DMA,       &
+                       &          NU,U,DU,P11,RC11,IPSD(ILYR),DMA,    &
                        &          PH1,NAB,P,DP,NR,R,RN,BC,A,B,NABR)
 
                PHH(ISPI,:,ILYR)=P11          ! INTERGRATED PHASE FUNCTION
@@ -589,7 +593,7 @@ contains
 
 !         CALL HEADER(4)
 
-         CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PHH*0._r8,MULTI,ZZT1,W0*0._r8,TAU0,RS,TS,&
+         CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,TAU0,RS,TS,&
               &     FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
               &     UI,UA,TT0,0,RE)                          !CLEAR-SKY
 
@@ -707,8 +711,6 @@ contains
 	         print*,'error in get_pressures'
 	         stop
 	      endif
-!              print*,fft_press, rad0
-!              stop
 
          ! Make sure the fft_press array is MONOTONICALY increasing:
          is = 1
@@ -788,6 +790,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.24  2001/10/25 16:10:37  dwu
+! fix a bug
+!
 ! Revision 1.23  2001/10/24 23:15:47  dwu
 ! some cleanup and correction
 !
