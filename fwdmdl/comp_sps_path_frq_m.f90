@@ -3,7 +3,7 @@
 !
 MODULE comp_sps_path_frq_m
 !
-  use MLSCommon, only: RP, IP
+  USE MLSCommon, ONLY: RP, IP, R8
   USE get_eta_matrix_m, ONLY: get_eta_sparse
   use Load_sps_data_m, only: Grids_T
 !
@@ -21,23 +21,18 @@ MODULE comp_sps_path_frq_m
  CONTAINS
 !-----------------------------------------------------------------
 !
-  SUBROUTINE comp_sps_path_frq(Grids_x,Frq,sps_values,eta_zp,do_calc_zp, &
-              &   skip_eta_frq,lin_log,sps_path,do_calc_fzp,eta_fzp)
+  SUBROUTINE comp_sps_path_frq(Grids_x,Frq,eta_zp,do_calc_zp,sps_path, &
+  & do_calc_fzp,eta_fzp)
 !
 ! Input:
 !
   type (Grids_T), INTENT(in) :: Grids_x  ! All the needed coordinates
 
-  REAL(rp), INTENT(in) :: Frq  ! Frequency at which to compute the values
-  REAL(rp), INTENT(in) :: sps_values(:) ! A vector of coefficient break-point
-!                         values entered sequentially according to the
-!                         heirarch, z_basis, phi_basis, sps_number
+  REAL(r8), INTENT(in) :: Frq  ! Frequency at which to compute the values
   REAL(rp), INTENT(in) :: eta_zp(:,:) ! Eta_z x Eta_phi for each state
 !                         vector element. This is the same length as sps_values.
   LOGICAL, INTENT(in) :: do_calc_zp(:,:) !logical indicating whether there
 !                        is a contribution for this state vector element
-  LOGICAL, INTENT(in) :: skip_eta_frq(:) ! Flags for specie with NO Freq. dim.
-  LOGICAL, INTENT(in) :: lin_log(:) ! species representation basis type
 !
 ! Output:
 !
@@ -67,14 +62,14 @@ MODULE comp_sps_path_frq_m
 !
   no_mol = SIZE(Grids_x%no_z)
 !
-  IF(Frq < 1.0) THEN
+  IF(frq < 1.0_r8) THEN
     eta_fzp = 0.0_rp
     sps_path = 0.0_rp
     do_calc_fzp = .FALSE.
   ELSE
     DO sps_i = 1, no_mol
-      IF(.NOT. skip_eta_frq(sps_i)) sps_path(:,sps_i) = 0.0_rp
-    END DO
+      IF(grids_x%no_f(sps_i) > 1) sps_path(:,sps_i) = 0.0_rp
+    ENDDO
   ENDIF
 !
   f_len = 0
@@ -92,7 +87,7 @@ MODULE comp_sps_path_frq_m
     v_indb = v_inda + nfzp
     w_indb = w_inda + n_zp
 
-    IF((Frq > 1.0) .AND. skip_eta_frq(sps_i)) THEN
+    IF((Frq > 1.0) .AND. grids_x%no_f(sps_i) == 1) THEN
       f_inda = f_indb
       v_inda = v_indb
       w_inda = w_indb
@@ -120,7 +115,7 @@ MODULE comp_sps_path_frq_m
         WHERE(do_calc_zp(:,sv_zp))
           eta_fzp(:,sv_j) = eta_f(1,sv_f) * eta_zp(:,sv_zp)
           sps_path(:,sps_i) = sps_path(:,sps_i) +  &
-                           &  sps_values(sv_j) * eta_fzp(:,sv_j)
+                           &  grids_x%values(sv_j) * eta_fzp(:,sv_j)
         ENDWHERE
         IF(Grids_x%deriv_flags(f_len)) THEN
           WHERE(do_calc_zp(:,sv_zp))
@@ -130,7 +125,7 @@ MODULE comp_sps_path_frq_m
       ENDIF
     END DO
 !
-    IF(lin_log(sps_i)) sps_path(:,sps_i) = EXP(sps_path(:,sps_i))
+    IF(grids_x%lin_log(sps_i)) sps_path(:,sps_i) = EXP(sps_path(:,sps_i))
 !
     f_inda = f_indb
     v_inda = v_indb
@@ -146,6 +141,9 @@ MODULE comp_sps_path_frq_m
 END MODULE comp_sps_path_frq_m
 !
 ! $Log$
+! Revision 2.8  2002/06/13 22:39:42  bill
+! some variable name changes--wgr
+!
 ! Revision 2.7  2002/06/04 10:28:00  zvi
 ! rename n_sps to: no_mol, more correctly
 !
