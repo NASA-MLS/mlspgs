@@ -277,7 +277,7 @@ begin Fill
 
   !ifdef(skipHiRes,{},{
     Fill, quantity=vReg.temperature_HR, method=explicit, explicitValues= 1K, /spread
-    Fill, quantity=vReg.o3_HR, method=explicit, method=profile, profileValues=[ 100mb:1ppmv ]
+    Fill, quantity=vReg.o3_HR, method=profile, profileValues=[ 100mb:1ppmv ]
     Fill, quantity=vReg.h2o_HR, method=profile, profileValues=[ 146mb:0ppmv, 100mb:0.3ppmv ]
   })
 
