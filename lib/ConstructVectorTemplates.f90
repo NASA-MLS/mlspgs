@@ -40,10 +40,10 @@ CONTAINS
     CHARACTER (LEN=NameLen) :: name=""
     LOGICAL, DIMENSION(:), ALLOCATABLE :: selected
     TYPE (MLSCFCell_T) :: cell
-
+    Character*80 errstr
     ! Executable code
 
-    ALLOCATE(selected(SIZE(quantityTemplates)),STAT=status)
+    ALLOCATE(selected(SIZE(quantityTemplates)), STAT=status)
     IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
          & "selected")
     selected=.FALSE.
@@ -74,6 +74,9 @@ CONTAINS
 
     CALL ConstructVectorTemplate(name,PACK(quantityTemplates,selected),&
          & vectorTemplate)
+    DEALLOCATE(selected, STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_DeAllocate//& 
+         & "selected")
 
   END SUBROUTINE CreateVecTemplateFromMLSCfInfo
 
@@ -83,6 +86,9 @@ END MODULE ConstructVectorTemplates
 
 !
 ! $Log$
+! Revision 1.2  2000/01/11 22:51:34  livesey
+! Dealt with ramifications of change from read_parse_l2cf to MLSCF
+!
 ! Revision 1.1  1999/12/18 03:00:45  livesey
 ! First version
 !
