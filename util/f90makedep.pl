@@ -587,11 +587,21 @@ sub MakeDependsf90 {
          ($objfile = $file) =~ s/\.f90$/.o/;
          undef @dependencies;
          if ( $var_1_mod ) {
-           print MAKEFILE "$modulename_by_file{$objfile}.mod $objfile: ";
+#           print MAKEFILE "$modulename_by_file{$objfile}.mod $objfile: ";
 #           print MAKEFILE "$objfile: ";
-#           if ("$modulename_by_file{$objfile}.mod" !~ /^\./) {
+           if ("$modulename_by_file{$objfile}.mod" !~ /^\./) {
+              print MAKEFILE "$objfile: $modulename_by_file{$objfile}.mod \n";
+              if ($dont_build{$file} != 1) {
+                print MAKEFILE "\t";
+                print MAKEFILE "touch $objfile \n";
+              }
+              print MAKEFILE "$modulename_by_file{$objfile}.mod: ";
+           } else {
+              print MAKEFILE "$objfile: ";
+           }
 #              print MAKEFILE "$modulename_by_file{$objfile}.mod ";
 #           }
+#           print MAKEFILE "$objfile: ";
            foreach $module (@modules) {
               $value = "$modulename_by_module{$module}.mod";
               if ($value !~ /^\./) {
@@ -654,6 +664,9 @@ sub MakeDependsf90 {
      }
    }
 # $Log$
+# Revision 1.7  2002/06/24 20:35:34  pwagner
+# Restored FAFTER to compiler invocation
+#
 # Revision 1.6  2002/06/04 17:04:06  pwagner
 # fixed bare word assignment value =
 #
