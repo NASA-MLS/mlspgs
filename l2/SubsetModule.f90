@@ -694,6 +694,8 @@ contains ! ========= Public Procedures ============================
   end subroutine SetupSubset
 
   ! -------------------------------------------------- FlagCloud ---
+  ! if flagged, m_cloud is set and an additional mask is also set if it's given
+
   subroutine SetupFlagCloud ( key, vectors )
     
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
@@ -710,7 +712,7 @@ contains ! ========= Public Procedures ============================
     use MoreTree, only: GET_FIELD_ID, GETINDEXFLAGSFROMLIST
     use VectorsModule, only: ClearMask, CreateMask, &
       & GetVectorQtyByTemplateIndex, SetMask, VectorValue_T, Vector_T, &
-      & M_LINALG
+      & M_LINALG, m_cloud
     use Tree, only: NSONS, SUBTREE, DECORATION
 
     integer, intent(in) :: KEY        ! Tree node
@@ -759,7 +761,6 @@ contains ! ========= Public Procedures ============================
     ! Executable code
     nullify ( channels, qty, ptan, cloudRadiance )
     got = .false.
-    maskBit = m_linalg   ! default mask bit
 
     do j = 2, nsons(key) ! fields of the "Flagcloud" specification
       son = subtree(j, key)
@@ -919,6 +920,10 @@ contains ! ========= Public Procedures ============================
           if ( doThisChannel ) then
             ind = channel + qty%template%noChans*(height-1)
             if ( doThisHeight .and. isCloud )  &
+              &     call SetMask ( qty%mask(:,instance), (/ ind /), &
+              &     what=m_cloud )
+            ! if additional maskbit is given, it is set as well
+            if ( doThisHeight .and. isCloud .and. got(f_mask))  &
               &     call SetMask ( qty%mask(:,instance), (/ ind /), &
               &     what=maskBit )
           end if                        ! do this channel
@@ -1137,6 +1142,9 @@ contains ! ========= Public Procedures ============================
 end module SubsetModule
  
 ! $Log$
+! Revision 2.6  2003/04/08 23:12:18  dwu
+! add m_cloud in setupFlagCloud
+!
 ! Revision 2.5  2003/04/04 22:01:46  livesey
 ! Added UpdateMask
 !
