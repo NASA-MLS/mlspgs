@@ -155,6 +155,7 @@ contains
     nullify ( apriori, configIndices, covariance, fwdModelOut )
     nullify ( measurements, measurementSD, state, outputSD )
     timing = section_times
+    if ( timing ) call cpu_time ( t1 )
 
     if ( toggle(gen) ) call trace_begin ( "Retrieve", root )
     do i = 2, nsons(root) - 1           ! skip names at begin/end of section
@@ -1368,6 +1369,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.71  2001/09/29 00:07:11  pwagner
+! Fixed various timing problems
+!
 ! Revision 2.70  2001/09/28 18:25:37  dwu
 ! prepare for adding lowcloud retrieval method
 !
