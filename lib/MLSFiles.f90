@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !===============================================================================
@@ -14,7 +14,8 @@ module MLSFiles               ! Utility file routines
   use MLSCommon, only: i4, BareFNLen, FileNameLen, MLSFile_T
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
     & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
-  use MLSStrings, only: Capitalize, LowerCase, Reverse, SortArray
+  use MLSStrings, only: Capitalize, LowerCase, ReplaceSubString, &
+    & Reverse, SortArray
   use output_m, only: blanks, output
   use SDPToolkit, only: &
     & HDF5_ACC_CREATE, HDF5_ACC_RDONLY, HDF5_ACC_RDWR,  &
@@ -39,7 +40,8 @@ module MLSFiles               ! Utility file routines
   & mls_io_gen_closeF, split_path_name, RmFileFromDataBase, &
   & mls_hdf_version, mls_inqswath, mls_sfstart, mls_sfend, &
   & mls_openFile, mls_closeFile, MLSFile_T, Deallocate_filedatabase, &
-  & open_MLSFile, close_MLSFile, Dump, mls_exists
+  & open_MLSFile, close_MLSFile, Dump, mls_exists, &
+  & maskName, unMaskName
 
   !------------------- RCS Ident Info -----------------------
   character(LEN=130) :: Id = &
@@ -81,6 +83,7 @@ module MLSFiles               ! Utility file routines
 ! Dump               Dumps file info: type, access, name, etc.
 ! GetPCFromRef       Turns a FileName into the corresponding PC
 ! get_free_lun       Gets a free logical unit number
+! maskname           Add stuff to file_name so parser can't recognize it
 ! mls_closeFile      Closes a file opened by mls_openFile
 ! mls_hdf_version    Returns one of 'hdf4', 'hdf5', or '????'
 ! mls_inqswath       A wrapper for doing swingswath for versions 4 and 5
@@ -92,6 +95,7 @@ module MLSFiles               ! Utility file routines
 ! open_MLSFile       Opens an mls file (of any type)
 ! RmFileFromDataBase Removes a FileName, id, etc. from the database
 ! split_path_name    splits the input path/name into path and name
+! unmaskname         Recover file name from maskzed form
 ! === (end of toc) ===
 
 ! (The following 2 are currently private, but could be made public if needed)
@@ -185,6 +189,10 @@ module MLSFiles               ! Utility file routines
   ! for use by Fortran opens, closes, reads and writes
   integer, parameter :: bottom_unit_num=1
   integer, parameter :: top_unit_num=99
+
+  ! Character(s) added to file name so parser won't recognize it
+  ! (Parser might change its case if it thinks it has seen the name before)
+  character (len=*), parameter :: MASKINGTAPE = ')('
 
   interface DUMP
     module procedure Dump_MLSFile
@@ -410,6 +418,21 @@ contains
   IF (opened .or. .not. exist) CALL MLSMessage ( MLSMSG_Error, moduleName,  &
      "No logical unit numbers available" )
   END FUNCTION get_free_lun
+
+! ---------------------------------------------- maskName ------
+
+! This function returns a free logical unit number
+
+  function maskName(inName) result(outName)
+  character(len=*), intent(in)     :: inName        ! Name to be masked
+  character(len=min(MAXFILENAMELENGTH, len(inName)+2)) :: outName       ! masked name
+  ! Executable
+  if ( len_trim(inName)  < 1 ) then
+    outName = ''
+  else
+    outName = trim(inName) // MASKINGTAPE
+  endif
+  end function maskName
 
   ! ---------------------------------------------  mls_io_gen_openF  -----
 
@@ -1898,6 +1921,23 @@ contains
   endif
   end function mls_exists
 
+! ---------------------------------------------- unMaskName ------
+
+! This function returns a free logical unit number
+
+  function unMaskName(inName) result(outName)
+  character(len=*), intent(in)     :: inName        ! Name to be masked
+  character(len=len(inName)) :: outName       ! masked name
+  ! Executable
+  if ( len_trim(inName)  < 1 ) then
+    outName = ''
+  elseif (index(inName, MASKINGTAPE) < 1) then
+    outName = inName
+  else
+    call ReplaceSubString(trim(inName), outName, MASKINGTAPE, '')
+  endif
+  end function unMaskName
+
 !-----------------------------------------------
 !       Private routines
 !------------------------
@@ -1911,6 +1951,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.55  2004/01/22 00:44:02  pwagner
+! Added (un)maskName
+!
 ! Revision 2.54  2004/01/21 18:54:54  livesey
 ! Typo!
 !
