@@ -119,6 +119,7 @@ hRegWeights
 hRegWeightVec
 
 ignore
+ignoreGeolocation
 ignoreNegative
 ignoreZero
 inclination
@@ -320,6 +321,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.106  2003/10/06 17:54:38  livesey
+# Added ignoreGeolocation
+#
 # Revision 2.105  2003/09/11 23:14:29  livesey
 # Added xStar and yStar
 #
