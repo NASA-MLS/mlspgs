@@ -216,6 +216,7 @@ contains
     logical, intent(in) :: Do_Calc(:,:)     ! path x sve. Eta_Zxp /= 0.0
     complex(rk), intent(out) :: D_Radiance(:,:,:) ! 2,2,sve
 
+    logical :: Do_Tau(size(t_script))       ! Some Tau(:,:,*) /= 0.0
     integer :: i_p, i_sv, k
     complex(rk) :: PDET                     ! Det(P_{k+1})
     complex(rk) :: PINV(2,2,size(t_script)) ! P_{k+1}^{-1}
@@ -225,6 +226,13 @@ contains
     complex(rk) :: Q_Tau(2,2)               ! Q x Tau
     integer :: NP                           ! How many terms do we need in W?
     complex(rk) :: W(2,2)
+
+    ! Find where Tau is not zero, so we don't test eight numbers (at
+    ! most) at every path point for every state vector element.
+
+    do i_p = 1, size(t_script)
+      do_tau = any(tau(1:2,1:2,i_p) /= 0.0)
+    end do
 
     ! Compute the P_{k+1}^{-1} matrices, but only up to where det(P_{k+1})
     ! becomes small.  We can get away with this for two reasons.  First, we
@@ -243,15 +251,14 @@ contains
     d_radiance = 0.0_rk
     do i_sv = 1, size(d_radiance,3)      ! state vector elements
       do i_p = 1, size(t_script)         ! path elements
-        if ( do_calc(i_p,i_sv) ) then    ! non-zero derivative D_E
+        if ( do_tau(i_p) ) then
           w = 0.0_rk
-          if ( any(tau(1:2,1:2,i_p) /= 0.0) ) then
-            do k = 1, min(np,i_p)-1
-              ! w = w + P_k DE_k P_{k+1}^{-1}
-              w = w + matmul ( matmul ( prod(1:2,1:2,k), d_e(1:2,1:2,k,i_sv) ), &
-                &              pinv(:,:,k+1) )
-            end do ! k = 1, i_p-1
-          end if
+          do k = 1, min(np,i_p)-1
+            ! w = w + P_k DE_k P_{k+1}^{-1}
+            if ( do_calc(k,i_sv) ) &     ! non-zero derivative D_E
+              & w = w + matmul ( matmul ( prod(1:2,1:2,k), d_e(1:2,1:2,k,i_sv) ), &
+                  &              pinv(:,:,k+1) )
+          end do ! k = 1, i_p-1
           q(1,1) = 0.5 * d_t_script(i_p,i_sv) + t_script(i_p) * w(1,1)
           q(1,2) =                              t_script(i_p) * w(1,2)
           q(2,1) =                              t_script(i_p) * w(2,2)
@@ -272,6 +279,9 @@ contains
 end module MCRT_m
 
 ! $Log$
+! Revision 2.6  2003/05/27 22:31:12  vsnyder
+! More work on polarized derivatives
+!
 ! Revision 2.5  2003/05/24 02:26:18  vsnyder
 ! More work on polarized temperature derivatives
 !
