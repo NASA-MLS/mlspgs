@@ -4,6 +4,7 @@
 ;; state vector.
 
 ;; First define the vector in question
+!define(flagGotTruth,1)
 begin Fill
 
   ;; --------------------------------------------- Setup vector
