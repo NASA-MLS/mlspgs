@@ -47,9 +47,6 @@ module WriteMetadata ! Populate metadata and write it out
   public :: Populate_metadata_std, Populate_metadata_oth, &
     & Get_l2gp_mcf, WriteMetaLog, NullifyPCFData
 
-  private :: First_grouping, Measured_parameter, Third_grouping, &
-    & ExpandFileTemplate
-
 ! This data type is used to store User-defined Runtime Parameters and other
 ! information taken from the PCF.
 
@@ -142,10 +139,6 @@ module WriteMetadata ! Populate metadata and write it out
   logical, public, parameter :: SETINPUTPOINTER = .not. ANNOTATEWITHPCF
   logical, public, parameter :: SFINBETWEENSTARTEND = .FALSE.
   integer, public, parameter :: MCFFORL2GPOPTION = 3     ! 1, public, 2 or 3
-  ! What gets written if ANNOTATEWITHPCF instead of InputPointer
-  character(len=*), private, parameter :: INPUTPOINTERMESG = &
-    & '/HDFEOS/ADDITIONAL/FILE_ATTRIBUTES/PCF'  ! path to PCF attribute
-  !  & 'See the PCF annotation to this file.'
   integer, private :: Module_error
 
 contains
@@ -408,7 +401,8 @@ contains
 
   ! ---------------------------------------------  Third_grouping  -----
 
-  subroutine Third_grouping ( HDF_FILE, hdf_sdid, L2pcf, Groups, hdfVersion )
+  subroutine Third_grouping ( HDF_FILE, hdf_sdid, L2pcf, Groups, &
+    & hdfVersion, filetype )
 
     ! This writes the following metadata attributes:
 
@@ -451,6 +445,7 @@ contains
 
     character (len = PGSd_MET_GROUP_NAME_L) :: groups(PGSd_MET_NUM_OF_GROUPS)
     integer, optional, intent(in) :: hdfVersion
+    character(len=*), optional, intent(in)  :: filetype  ! 'sw' or 'hdf'
 
     !Local Variables
 
@@ -464,7 +459,7 @@ contains
     character (len=132) :: attrname
     integer :: version, indx, i
     CHARACTER (LEN=INPUTPTR_STRING_LENGTH) :: inpt(31)
-!   CHARACTER (LEN=98) :: inpt(31)
+    CHARACTER (LEN=6) :: inptptr_filetype
     character (len=*), parameter :: METAWR_ERR = &
       & 'Error writing metadata attribute '
 
@@ -474,9 +469,10 @@ contains
     integer, external :: PGS_MET_setattr_d, &
          PGS_MET_setAttr_s, PGS_MET_SETATTR_I, &
          PGS_MET_write, PGS_MET_remove
-!   INTEGER, EXTERNAL :: pgs_pc_getUniversalRef
     !Executable code
 
+    inptptr_filetype = 'sw'
+    if ( present(filetype) ) inptptr_filetype = filetype
     version = 1
     returnStatus = PGS_PC_GetReference (HDF_FILE, version , physical_filename)
 
@@ -545,8 +541,10 @@ contains
         & (/ L2pcf%L1BOAPCFId, L2pcf%L1BRADPCFIds(:) /) )
       returnStatus = WriteInputPointer(groups(INVENTORY), attrName, inpt)
     else
-      returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
-           INPUTPOINTERMESG)
+      ! returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
+      !     INPUTPOINTERMESG)
+      returnStatus = WriteInputPointer(groups(INVENTORY), attrName, &
+        & filetype=inptptr_filetype)
     endif
     if ( returnStatus /= PGS_S_SUCCESS ) then
       call announce_error ( 0, &
@@ -794,7 +792,8 @@ contains
 		
     call first_grouping(HDF_FILE, MCF_FILE, l2pcf, groups)
     call measured_parameter (HDF_FILE, field_name, groups, 1)
-    call third_grouping (HDF_FILE, hdf_sdid, l2pcf, groups, hdfVersion)
+    call third_grouping (HDF_FILE, hdf_sdid, l2pcf, groups, &
+      & hdfVersion, filetype)
 
 !    sdid = sfstart (physical_fileName, DFACC_RDWR) 
     if ( SFINBETWEENSTARTEND ) then
@@ -811,23 +810,6 @@ contains
       return
     end if
 
-!    returnStatus = pgs_met_write (groups(INVENTORY), "coremetadata.0", sdid)
-
-!    if ( returnStatus /= PGS_S_SUCCESS .AND. &
-!         returnStatus /= PGSMET_W_METADATA_NOT_SET ) then 
-!      if ( returnStatus == PGSMET_W_METADATA_NOT_SET ) then 
-!        call announce_error ( 0, &
-!        & "Error--some of the mandatory parameters were not set") 
-!					return
-!      else
-!        call Pgs_smf_getMsg (returnStatus, attrname, errmsg)
-!        call MLSMessage (MLSMSG_WARNING, ModuleName, &
-!             "Metadata write failed in populate_metadata_std " &
-!             & //trim(attrname)//trim(errmsg))
-!      end if
-!    end if
-
-!    hdfReturn = sfend(sdid)
     hdfReturn = mls_sfend(sdid, hdfVersion=hdfVersion)
     if ( hdfReturn /= 0 ) then
         call announce_error ( 0, &
@@ -839,13 +821,9 @@ contains
 
     if ( ANNOTATEWITHPCF ) call writePCF2Hdr(physical_filename, l2pcf%anText, &
      & hdfVersion, filetype=filetype)
-     ! & hdfVersion, isHDFEOS=isHDFEOS)
 
     returnStatus = pgs_met_remove() 
     if ( returnStatus /= 0 .and. WARNIFCANTPGSMETREMOVE ) then
-        ! call announce_error ( 0, &
-        ! & "Error: metadata removal in populate_metadata_std.", &
-        ! & error_number=hdfReturn) 
         write(errmsg, *) returnStatus
         CALL MLSMessage (MLSMSG_Warning, ModuleName, &
               "Calling pgs_met_remove() failed with value " // trim(errmsg) )
@@ -944,7 +922,8 @@ contains
 
     end do
 
-    call third_grouping (HDF_FILE, hdf_sdid, l2pcf, groups, hdfVersion)
+    call third_grouping (HDF_FILE, hdf_sdid, l2pcf, groups, &
+      & hdfVersion, filetype)
 
 !    sdid = sfstart (physical_fileName, DFACC_RDWR) 
     if ( SFINBETWEENSTARTEND ) then
@@ -1536,6 +1515,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.43  2003/05/30 23:50:32  pwagner
+! Relies on lib/PCFHdr to know what mesg goes in InputPointer
+!
 ! Revision 2.42  2003/04/03 22:58:40  pwagner
 ! Alias now set in lib/L2GPData instead of l2/write_meta
 !
