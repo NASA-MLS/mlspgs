@@ -6,7 +6,7 @@ module MLSFiles               ! Utility file routines
   !===============================================================================
   use HDFEOS, only: gdclose, gdopen, swclose, swopen
   use machine, only: io_error
-  use MLSCommon, only: i4, NameLen
+  use MLSCommon, only: i4
   use MLSStrings, only: Capitalize, LowerCase, Reverse
   use output_m, only: output
   use SDPToolkit, only: Pgs_pc_getReference, PGS_S_SUCCESS, Pgs_smf_getMsg, &
@@ -304,6 +304,8 @@ contains
       if(returnStatus == 0) then
          ErrType = PGS_IO_Gen_OpenF(myPC, FileAccessType, record_length, &
           & theFileHandle, your_version)
+      else
+        ErrType = returnStatus
        endif
 
     case('sw')
@@ -618,6 +620,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.23  2002/01/11 00:44:37  pwagner
+! Fixed bug where ErrType was left unset
+!
 ! Revision 2.22  2002/01/09 23:43:26  pwagner
 ! Added toc; removed debugging stuff
 !
