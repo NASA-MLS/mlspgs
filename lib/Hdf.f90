@@ -13,6 +13,7 @@ module Hdf
   !------------------- RCS Ident Info -----------------------
   character(LEN=130) :: Id = &        
     "$Id$"
+    & "$RCSfile$"
   !----------------------------------------------------------
 
   ! Contents: 
@@ -663,6 +664,9 @@ contains ! ============================= Local wrappers ======================
 end module Hdf
 
 ! $Log$
+! Revision 2.10  2002/10/01 20:09:10  bwknosp
+! Added RCS info
+!
 ! Revision 2.9  2002/08/21 01:05:31  livesey
 ! New specifics to support single precision l2aux
 !
