@@ -116,9 +116,9 @@ program MLSL2
   !---------------- Task (2) ------------------
 ! Initialize the lexer, symbol table, and tree checker's tables:
 !  ( Under some circumstances, you may need to increase these )
-  call init_lexer ( n_chars=10000, n_symbols=1000, hash_table_size=2117 )
+  call init_lexer ( n_chars=10000, n_symbols=1000, hash_table_size=4051 )
   call allocate_decl ( ndecls=1000 )
-  call allocate_tree ( n_tree=15000 )
+  call allocate_tree ( n_tree=60000 )
   call init_tables
 
   ! We set up a mirror command line for launching slaves
@@ -431,6 +431,10 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.58  2001/10/09 22:37:55  livesey
+! Increased tree size and hash table size to accomodate new
+! spectroscopy database from Bill
+!
 ! Revision 2.57  2001/10/04 23:50:25  livesey
 ! Added the ckbk option
 !
