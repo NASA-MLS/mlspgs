@@ -106,6 +106,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
     ! Local variables
     type (VectorValue_T), pointer :: CLOUDICE                   ! Profiles
+    type (VectorValue_T), pointer :: IWC1 
     type (VectorValue_T), pointer :: CLOUDWATER                 ! Profiles
     type (VectorValue_T), pointer :: CLOUDEXTINCTION            ! Profiles
     type (VectorValue_T), pointer :: CLOUDINDUCEDRADIANCE       ! Like radiance
@@ -238,7 +239,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
              A_EFFECTIVEOPTICALDEPTH, A_MASSMEANDIAMETER,                    &
              A_TOTALEXTINCTION,FREQUENCIES,                         &
              superset, usedchannels, usedsignals, thisRatio,                 &
-             JBLOCK, state_ext, state_los )
+             JBLOCK, state_ext, state_los, IWC1 )
              
     nullify ( doChannel )
     
@@ -302,6 +303,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
           & quantityType=l_gph )
         cloudIce => GetVectorQuantityByType ( fwdModelExtra,   &
           & quantityType=l_cloudIce )
+        IWC1 => GetVectorQuantityByType ( fwdModelExtra,   &
+          & quantityType=l_cloudExtinction )
         cloudWater => GetVectorQuantityByType ( fwdModelExtra, &
           & quantityType=l_cloudWater )
         surfaceType => GetVectorQuantityByType ( fwdModelExtra, &
@@ -318,14 +321,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     !-----------------------------------------
     ! Make sure the quantities we need are got and with correct format
     !-----------------------------------------
-
-        if(.not. (associated(ptan) .and. associated(temp) .and. associated(gph) &
-           & .and. associated(cloudIce) .and. associated(cloudWater) &
-           & .and. associated(surfaceType) .and. associated(sizeDistribution) &
-           & .and. associated(earthradius) .and. associated(scGeocAlt) &
-           & .and. associated(elevOffset) ) ) &
-          call MLSMessage ( MLSMSG_Error, ModuleName,                        &
-                            'Cloud Model inputs are not sufficient')
 
     if ( .not. ValidateVectorQuantity(temp, stacked=.true., coherent=.true., &
        & frequencyCoordinate=(/l_none/)) ) call MLSMessage ( MLSMSG_Error,   &
@@ -578,7 +573,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       ! find cloud top index from state_ext that is defaulted as zero
        iCloudHeight = 0
        do i = 1, noCldSurf
-          if(state_ext%values(i,instance) > 1.e-6_r8) then
+!          if(state_ext%values(i,instance) > 1.e-6_r8) then
+          if(IWC1%values(i,instance-2) > 0.0_r8) then
             iCloudHeight = i                    ! FIND INDEX FOR CLOUD-TOP              
           endif
        enddo
@@ -910,6 +906,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.70  2001/11/02 00:47:34  dwu
+! correction in high cloud Jacobian
+!
 ! Revision 1.69  2001/11/02 00:45:33  dwu
 ! correction in high cloud Jacobian
 !
