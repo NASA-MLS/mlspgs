@@ -453,7 +453,8 @@ contains
 !
         no_ele = ndx_path(ptg_i,l)%total_number_of_elements
         Call get_beta_path(ptg_i,FMI%pfa_spectrum,no_ele,FMI%no_ptg_frq, &
-       &     FMI%ptg_frq_grid,z_path(ptg_i,l),t_path(ptg_i,l),beta_path,ier)
+       &     FMI%ptg_frq_grid,z_path(ptg_i,l),t_path(ptg_i,l),beta_path, &
+       &     FMC%vel_z_mmaf(l),ier)
         IF(ier /= 0) goto 99
 !
         k_temp_frq%values = 0.0
@@ -805,6 +806,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.17  2001/03/15 12:18:37  zvi
+! Adding the velocity effect on line center frequency
+!
 ! Revision 2.16  2001/03/13 00:43:12  zvi
 ! *** empty log message ***
 !
