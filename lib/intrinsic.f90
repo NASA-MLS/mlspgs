@@ -53,7 +53,9 @@ module INTRINSIC
   integer, parameter :: PHYQ_MIFS = 9          ! Default MIFs
   integer, parameter :: PHYQ_FREQUENCY = 10    ! Default MHz
   integer, parameter :: PHYQ_ZETA = 11         ! log10(pressure/hPa)
-  integer, parameter :: FIRST_PHYQ = phyq_invalid, LAST_PHYQ = phyq_zeta
+  integer, parameter :: PHYQ_VELOCITY = 12     ! Default meters/second
+  integer, parameter :: PHYQ_EXTINCTION =13    ! Default 1/meters
+  integer, parameter :: FIRST_PHYQ = phyq_invalid, LAST_PHYQ = phyq_extinction
   integer :: PHYQ_INDICES(first_phyq:last_phyq)
 
 ! Enumeration literals:
@@ -226,6 +228,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.10  2001/03/02 01:32:21  livesey
+! Added some new PHYQs
+!
 ! Revision 2.9  2001/02/22 23:57:38  vsnyder
 ! Remove ", public" from parameters, because default accessibility is public
 !
