@@ -54,25 +54,28 @@ contains
 
       REAL(r8) :: U(NU),DU(NU),THETA(NU),PHI(NUA),      &
       &     THETAI(NU,NU,NUA),UI(NU,NU,NUA),UA(NUA) 
+
       REAL(r8) :: PHH(N,NU,L),RS(NU/2),W0(N,L)
-      REAL(r8) :: TAU(L+1,2*L+1)          ! Integrated ptical depth at each LOS point for each tangent height 
+      REAL(r8) :: TAU(L+1,2*L+1)          ! Integrated ptical depth at each LOS point for 
+                                          ! each tangent height 
+
       REAL(r8) :: dTAU(L)                 ! Optical depth increment at each layer 
 
       REAL(r8) :: TEMP_AIR(L)             ! MEAN AIR TEMPERATURE AT L
       REAL(r8) :: YZ(L+1)                 ! PRESSURE HEIGHT (km)
       REAL(r8) :: ZT(NT)                  ! TANGENT HEIGHT (m)
-      REAL(r8) :: TT(NT+1,L+1)           ! TB AT ZT, LAST INDEX IS ZENITH LOOKING
+      REAL(r8) :: TT(NT+1,L+1)            ! TB AT ZT, LAST INDEX IS ZENITH LOOKING
       REAL(r8) :: FREQ                    ! FREQUENCY (GHz)
       REAL(r8) :: TSPACE                  ! COSMIC BACKGROUND RADIANCE
       REAL(r8) :: TS                      ! SURFACE TEMPERATURE (K)
-      REAL(r8) :: TEMP(L+1)                ! BRIGHTNESS TEMPERATURE FROM TEMP_AIR
-      REAL(r8) :: TB0(NU)                ! TB AT THE SURFACE
+      REAL(r8) :: TEMP(L+1)               ! BRIGHTNESS TEMPERATURE FROM TEMP_AIR
+      REAL(r8) :: TB0(NU)                 ! TB AT THE SURFACE
       REAL(r8) :: TAVG                    ! TB AVERAGED OVER PHI AT A GIVEN U
       REAL(r8) :: TB(NU,L+1)              ! TB IN FLAT PLANE GEOMETRY
                                           ! 1->NU/2 UPWELLING, NU/2->NU DOWNWELLING
-      REAL(r8) :: TSCAT(N,NU,L+1)        ! TB FROM SCATTERING PHASE FUNCTION
+      REAL(r8) :: TSCAT(N,NU,L+1)         ! TB FROM SCATTERING PHASE FUNCTION
 
-      INTEGER :: LMIN(L+1)                 ! LOWEST LAYER REACHED BY A TANGENT HT
+      INTEGER :: LMIN(L+1)                ! LOWEST LAYER REACHED BY A TANGENT HT
 
       INTEGER :: ICON                     ! CONTROL SWITCH
                                           ! 0 = CLEAR-SKY
@@ -91,14 +94,13 @@ contains
       REAL(r8) :: WK,WK1,U1(NU),UU,X2,RSAVG,XTB(L+1),WW0,CHK(L+1)
       REAL(r8) :: tsource, wwk, wwk1,www0
 
-
       TB=0.0_r8
       TT=0.0_r8
       Tscat = 0.0_r8
+
 !------------------------------------------------
 !     FIND BRIGHTNESS TEMPERATURE AT EACH LAYER
 !------------------------------------------------
-
       DO K=1,L
          CALL PLANCK(TEMP_AIR(K),FREQ,TEMP(K))
       ENDDO
@@ -117,7 +119,6 @@ contains
          ENDDO
          IF(CHK(K).NE.0.) ITS0=20
       ENDDO
-      
 !-----------------------------------------------------
 !     CALCULATE EQUIVALENT U FOR EACH TANGENT HEIGHT
 !----------------------------------------------------
@@ -136,7 +137,7 @@ contains
             IF(ZT(I) .LT. 0._r8) THEN
                D2=SQRT((YZ(K+1)+RE)**2-(ZT(I)+RE)**2)
                D1=SQRT((TGT+RE)**2-(ZT(I)+RE)**2)
-               UAVE(I,K)=(YZ(K+1)-YZ(K))/(D2-D1)          !
+               UAVE(I,K)=(YZ(K+1)-YZ(K))/(D2-D1)      
             ELSE  
                DY=SQRT(YZ(K+1)-ZT(I))-SQRT(TGT-ZT(I))
                UAVE(I,K)=(YZ(K+1)-YZ(K))/SQRT(2*RE+TGT+ZT(I))/DY
@@ -154,9 +155,9 @@ contains
 !         Do K=LMIN(I),L
 !         Tau(I,K+L+1)=Tau(I,K+L)+dTau(K)/UAVE(I,K)
 !         Enddo
+!--------------------------------------------------
       ENDDO    ! end of tangent height
 
-!      print*,'here again'
 !------------------------------------------------
 !     INITIAL GUESS OF TB, L=0 IS THE SURFACE
 !------------------------------------------------
@@ -204,12 +205,12 @@ contains
                         IF(THETAI(IP,IH,J).GT.PI/2) K1=K+1
                         CALL LOCATE(THETA,NU,NU,THETAI(IP,IH,J),JM)
                         WK=(TB(JM+1,K1)*(THETAI(IP,IH,J)-THETA(JM))+  &
-     &                     TB(JM,K1)*(THETA(JM+1)-THETAI(IP,IH,J)))/  &
-     &                     (THETA(JM+1)-THETA(JM))
+      &                     TB(JM,K1)*(THETA(JM+1)-THETAI(IP,IH,J)))/ &
+      &                     (THETA(JM+1)-THETA(JM))
                         TAVG = TAVG + WK*(PHI(2)-PHI(1))/2._r8/PI
                      ENDDO
                      TSCAT(ISPI,IP,K)=TSCAT(ISPI,IP,K)+               &
-     &                                2._r8*PHH(ISPI,IH,K)*TAVG*DU(IH)
+      &                                2._r8*PHH(ISPI,IH,K)*TAVG*DU(IH)
                   ENDDO
                ENDIF
  1008       CONTINUE
@@ -235,7 +236,7 @@ contains
             tsource=(1-WW0)*TEMP(K)+WK
 
             TB(I,K)=TB(I,K+1)*EXP(-dTAU(K)/UEFF)+           &
-     &              (1._r8-EXP(-dTAU(K)/UEFF))*tsource
+      &             (1._r8-EXP(-dTAU(K)/UEFF))*tsource
 
  1100 CONTINUE
 
@@ -265,7 +266,7 @@ contains
            tsource=(1-WW0)*TEMP(K)+WK
 
            TB(I,K+1)=TB(I,K)*EXP(-dTAU(K)/UEFF)+      &
-     &               (1._r8-EXP(-dTAU(K)/UEFF))*tsource
+      &              (1._r8-EXP(-dTAU(K)/UEFF))*tsource
 
  1200 CONTINUE
 
@@ -301,13 +302,13 @@ contains
       DO 2000 K=1,L-LMIN(ITT)
          K1=L-K
          UU=UAVE(ITT,K1)                 ! INCIDENT ANGLE AT ZT(ITT) 
-         CALL LOCATE(U1,NU/2,NU,-UU,JM) ! INTERPOLATE TSCAT ONTO UU
+         CALL LOCATE(U1,NU/2,NU,-UU,JM)  ! INTERPOLATE TSCAT ONTO UU
          WK=0._r8
          WW0=0._r8
          DO ISPI=1,N
             WK1=W0(ISPI,K1)*( (TSCAT(ISPI,JM+NU/2+1,K1)*(UU-U(JM))+  &
-     &          TSCAT(ISPI,JM+NU/2,K1)*(U(JM+1)-UU))/                &
-     &          (U(JM+1)-U(JM)) )
+      &         TSCAT(ISPI,JM+NU/2,K1)*(U(JM+1)-UU))/                &
+      &         (U(JM+1)-U(JM)) )
             WK=WK+WK1
             WW0=WW0+W0(ISPI,K1)
          END DO
@@ -322,7 +323,7 @@ contains
          ENDIF
 
          TT(ITT,K1)=TT(ITT,K1+1)*EXP(-dTAU(K1)/UU)+  &
-     &        (1._r8-EXP(-dTAU(K1)/UU))*tsource - D2*(1._r8-WW0)
+      &        (1._r8-EXP(-dTAU(K1)/UU))*tsource - D2*(1._r8-WW0)
 
  2000 CONTINUE
  
@@ -336,9 +337,9 @@ contains
          IF(LMIN(ITT).EQ.1) THEN
             CALL LOCATE(U1,NU/2,NU,-UAVE(ITT,1),JM) 
             RSAVG=(RS(JM+1)*(UAVE(ITT,1)-U(JM)) +                 &
-     &           RS(JM)*(U(JM+1)-UAVE(ITT,1)))/(U(JM+1)-U(JM))
+      &            RS(JM)*(U(JM+1)-UAVE(ITT,1)))/(U(JM+1)-U(JM))
             TT(ITT,1)=(TB0(JM+1)*(UAVE(ITT,1)-U(JM)) +            &
-     &               TB0(JM)*(U(JM+1)-UAVE(ITT,1)))/(U(JM+1)-U(JM))
+      &               TB0(JM)*(U(JM+1)-UAVE(ITT,1)))/(U(JM+1)-U(JM))
          ENDIF
  2500 CONTINUE
 
@@ -353,7 +354,7 @@ contains
          WW0=0._r8
          DO ISPI=1,N
             WK1=W0(ISPI,K)*(TSCAT(ISPI,JM+1,K)*(UU-U(JM))+     &
-     &          TSCAT(ISPI,JM,K)*(U(JM+1)-UU))/(U(JM+1)-U(JM)) 
+      &         TSCAT(ISPI,JM,K)*(U(JM+1)-UU))/(U(JM+1)-U(JM)) 
             WK=WK+WK1
             WW0=WW0+W0(ISPI,K)
          END DO
@@ -363,7 +364,7 @@ contains
          D2= (TEMP(K+1)-TEMP(K))*dTau(K1)/UU/2
          tsource=(1._r8-WW0)*D1+WK 
          TT(ITT,K+1)=TT(ITT,K)*EXP(-dTAU(K)/UU)+  &
-     &        (1._r8-EXP(-dTAU(K)/UU))*tsource - D2*(1._r8-WW0)
+      &        (1._r8-EXP(-dTAU(K)/UU))*tsource - D2*(1._r8-WW0)
 
  3000 CONTINUE
 
@@ -386,6 +387,9 @@ contains
 end module RadiativeTransferModule
 
 ! $Log$
+! Revision 1.13  2003/04/24 23:21:03  jonathan
+! currect a comment typo
+!
 ! Revision 1.12  2003/04/10 20:25:15  dwu
 ! make i_saturation as a verbal argument
 !
