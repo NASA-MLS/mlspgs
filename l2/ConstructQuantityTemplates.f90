@@ -305,18 +305,18 @@ contains ! =====     Public Procedures     =============================
         frequencyCoordinate = l_channel
       end if
       
-      ! For some cases we know the quantity is an xyz vector
-      if ( any(quantityType == (/ l_tngtECI, l_scECI, l_scVel /)) ) then
-        noChans = 3
-        frequencyCoordinate = l_xyz
-      end if
-
 
       ! Construct an empty quantity
       call ConstructMinorFrameQuantity ( l1bInfo, chunk, instrumentModule, &
         & qty, noChans=noChans, mifGeolocation=mifGeolocation )
+
+      ! Make absolutely certain template's dimensions are what we want
       qty%noSurfs = 1
       qty%verticalCoordinate = l_none
+      if ( quantityType == l_chiSqMMAF ) then
+        qty%noChans = 1
+        qty%instanceLen = 1
+      endif
         
    ! for losTransFunc type of quantity 
    elseif (quantityType == l_losTransFunc) then
@@ -780,6 +780,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.54  2001/09/17 23:11:50  pwagner
+! Tiny changes for chi^2
+!
 ! Revision 2.53  2001/09/17 21:58:50  livesey
 ! Added allocate of frequencies if needed
 !
