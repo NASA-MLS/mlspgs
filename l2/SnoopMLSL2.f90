@@ -247,7 +247,6 @@ contains ! ========  Public Procedures =========================================
     if ( info /= 0 ) call PVMErrorMessage ( info, "packing controled" )
     call PVMFSend ( snooper%tid, SnoopTag, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "sending status etc." )
-    print*,'Sent status to snooper'
   end subroutine SendStatusToSnooper
     
   ! ------------------------------------------------------  SNOOP  -----
@@ -339,7 +338,6 @@ contains ! ========  Public Procedures =========================================
           & call PVMErrorMessage ( info, "calling PVMFBufInfo" )
         snooper = FindFirst ( snoopers%tid == snooperTid )
         call PVMIDLUnpack ( line, info )
-        print*,'Got: ',trim(line)
         select case ( trim(line) )
 
         case ( 'NewSnooper' )
@@ -397,7 +395,6 @@ contains ! ========  Public Procedures =========================================
         if ( info < 0 ) then
           call PVMErrorMessage ( info, "unpacking dead snooper tid" )
         end if
-        print*,'Got died message'
         snooper = FindFirst ( snoopers%tid == snooperTid )
         if ( snooper /= 0 ) then
           call ForgetSnooper ( snoopers, snooper )
@@ -512,6 +509,9 @@ contains ! ========  Public Procedures =========================================
 end module SnoopMLSL2
 
 ! $Log$
+! Revision 2.15  2001/09/21 22:04:16  livesey
+! Removed some print statements
+!
 ! Revision 2.14  2001/09/20 23:08:21  livesey
 ! New version, minor tidy ups etc.
 !
