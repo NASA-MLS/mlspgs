@@ -113,80 +113,67 @@ BEGIN DailyMap
     ;; calMethod -- method of calculation for zonal means:
     ;;              l2 = from Level 2
     ;;              l3 = from Level 3 daily maps
-    ;; zComLvl -- daily zonal mean combined pressure levels
-    ;; zAscLvl -- daily zonal mean ascending pressure levels
-    ;; zDesLvl -- daily zonal mean descending pressure levels
     ;;
     mapSpec,l3prodNameD="ClO",timeD="12:00:00",mode=all, $
             latGridMap= -82.0:82.0,dLat=2.0, $
             longGrid= -180.0:176.0,dLon=4.0, $
             l3presLvl=1.0:100.0,ascPresLvl=1.0:100.0,desPresLvl=1.0:100.0, $
             rangFrequency= -1.0:6.0,rangWavenumber=1:8, intpMethod=lin, $
-            label="CLOL3DM", calMethod=l3, $
-            zComLvl=1.0:100.0,zAscLvl=1.0:100.0,zDesLvl=1.0:100.0
+            label="CLOL3DM", calMethod=l3
     mapSpec,l3prodNameD="GeopotentialHeight",timeD="12:00:00",mode=com, $
             latGridMap= -82.0:82.0,dLat=2.0, $
             longGrid= -180.0:176.0,dLon=4.0, $
             l3presLvl=0.01:464.0, $
             rangFrequency= -1.0:6.0,rangWavenumber=1:8, intpMethod=lin, $
-            label="ZL3DM", calMethod=l3, $
-            zComLvl=0.01:464.0,zAscLvl=0.01:464.0,zDesLvl=0.01:464.0
+            label="ZL3DM", calMethod=l3
     mapSpec,l3prodNameD="H2O",timeD="12:00:00",mode=com, $
             latGridMap= -82.0:82.0,dLat=2.0, $
             longGrid= -180.0:176.0,dLon=4.0, $
             l3presLvl=0.01:464.0, $
             rangFrequency= -1.0:6.0,rangWavenumber=1:8, intpMethod=lin, $
-            label="H2OL3DM", calMethod=l3, $
-            zComLvl=0.01:464.0,zAscLvl=0.01:464.0,zDesLvl=0.01:464.0
+            label="H2OL3DM", calMethod=l3
     mapSpec,l3prodNameD="HCl",timeD="12:00:00",mode=com, $
             latGridMap= -82.0:82.0,dLat=2.0, $
             longGrid= -180.0:176.0,dLon=4.0, $
             l3presLvl=0.1:100.0, $
             rangFrequency= -1.0:6.0,rangWavenumber=1:8, intpMethod=lin, $
-            label="HCLL3DM", calMethod=l3, $
-            zComLvl=0.1:100.0,zAscLvl=0.1:100.0,zDesLvl=0.1:100.0
+            label="HCLL3DM", calMethod=l3
     mapSpec,l3prodNameD="HCN",timeD="12:00:00",mode=com, $
             latGridMap= -82.0:82.0,dLat=2.0, $
             longGrid= -180.0:176.0,dLon=4.0, $
             l3presLvl=22.0:215.0, $
             rangFrequency= -1.0:6.0,rangWavenumber=1:8, intpMethod=lin, $
-            label="HCNL3DM", calMethod=l3, $
-            zComLvl=22.0:215.0,zAscLvl=22.0:215.0,zDesLvl=22.0:215.0
+            label="HCNL3DM", calMethod=l3
     mapSpec,l3prodNameD="HNO3",timeD="12:00:00",mode=com, $
             latGridMap= -82.0:82.0,dLat=2.0, $
             longGrid= -180.0:176.0,dLon=4.0, $
             l3presLvl=1.0:100.0, $
             rangFrequency= -1.0:6.0,rangWavenumber=1:8, intpMethod=lin, $
-            label="HNO3L3DM", calMethod=l3, $
-            zComLvl=1.0:100.0,zAscLvl=1.0:100.0,zDesLvl=1.0:100.0
+            label="HNO3L3DM", calMethod=l3
     mapSpec,l3prodNameD="N2O",timeD="12:00:00",mode=com, $
             latGridMap= -82.0:82.0,dLat=2.0, $
             longGrid= -180.0:176.0,dLon=4.0, $
             l3presLvl=1.0:215.0, $
             rangFrequency= -1.0:6.0,rangWavenumber=1:8, intpMethod=lin, $
-            label="N2OL3DM", calMethod=l3, $
-            zComLvl=1.0:215.0,zAscLvl=1.0:215.0,zDesLvl=1.0:215.0
+            label="N2OL3DM", calMethod=l3
     mapSpec,l3prodNameD="O3",timeD="12:00:00",mode=all, $
             latGridMap= -82.0:82.0,dLat=2.0, $
             longGrid= -180.0:176.0,dLon=4.0, $
             l3presLvl=0.316:316.0,ascPresLvl=0.01:3.16, desPresLvl=0.01:3.16, $
             rangFrequency= -1.0:6.0,rangWavenumber=1:8, intpMethod=lin, $
-            label="O3L3DM", calMethod=l3, $
-            zComLvl=0.316:316.0,zAscLvl=0.01:3.16,zDesLvl=0.01:3.16
+            label="O3L3DM", calMethod=l3
     mapSpec,l3prodNameD="OH",timeD="12:00:00",mode=all, $
             latGridMap= -82.0:82.0,dLat=2.0, $
             longGrid= -180.0:176.0,dLon=4.0, $
             l3presLvl=0.1:10.0,ascPresLvl=0.1:10.0,desPresLvl=0.1:10.0, $
             rangFrequency= -1.0:6.0,rangWavenumber=1:8, intpMethod=lin, $
-            label="OHL3DM", calMethod=l3, $
-            zComLvl=0.1:10.0,zAscLvl=0.1:10.0,zDesLvl=0.1:10.0
+            label="OHL3DM", calMethod=l3
     mapSpec,l3prodNameD="Temperature",timeD="12:00:00",mode=com, $
             latGridMap= -82.0:82.0,dLat=2.0, $
             longGrid= -180.0:176.0,dLon=4.0, $
             l3presLvl=0.01:464.0, $
             rangFrequency= -1.0:6.0,rangWavenumber=1:8, intpMethod=lin, $
-            label="TL3DM", calMethod=l3, $
-            zComLvl=0.01:464.0,zAscLvl=0.01:464.0,zDesLvl=0.01:464.0
+            label="TL3DM", calMethod=l3
     ;;
 END DailyMap
 ;
@@ -219,4 +206,7 @@ END Output
 ; ----------------------------------------------------------------------------
 ;
 ; $Log$
+; Revision 1.1  2001/05/04 18:47:47  nakamura
+; V.07 l3cf for all daily map products.
+;
 ;

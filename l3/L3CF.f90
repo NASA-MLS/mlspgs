@@ -105,12 +105,6 @@ MODULE L3CF
 
      CHARACTER (LEN=2) :: calMethod			! calculation method (l2/l3)
 
-     REAL(r8), DIMENSION(2) :: zComLvl		! min, max com pressure levels
-
-     REAL(r8), DIMENSION(2) :: zAscLvl		! min, max asc pressure levels
-
-     REAL(r8), DIMENSION(2) :: zDesLvl		! min, max des pressure levels
-
      ! Output section
 
      CHARACTER (LEN=FileNameLen) :: mcfName	! MCF name
@@ -542,39 +536,13 @@ CONTAINS
        l3cf(i)%fileTemplate = &
                           cf%Sections(iOut)%Entries(iLab)%Cells(indx)%CharValue
 
-! Daily Zonal Mean specifications -- find/save the DZ calculation method
+! Find/save the calculation method for Daily Zonal Means
 
        indx = LinearSearchStringArray( &
                      cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'calMethod')
        IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
                      &keyword CALMETHOD in the DailyMap section of the l3cf.')
        l3cf(i)%calMethod = cf%Sections(iMap)%Entries(i)%Cells(indx)%CharValue
-
-! Find/save the DZ min:max pressure levels
-
-       indx = LinearSearchStringArray( &
-                     cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'zComLvl')
-       IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
-                      &keyword ZCOMLVL in the DailyMap section of the l3cf.')
-       l3cf(i)%zComLvl(1) = cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
-       l3cf(i)%zComLvl(2) = &
-                      cf%Sections(iMap)%Entries(i)%Cells(indx)%RangeUpperBound
-
-       indx = LinearSearchStringArray( &
-                     cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'zAscLvl')
-       IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
-                      &keyword ZASCLVL in the DailyMap section of the l3cf.')
-       l3cf(i)%zAscLvl(1) = cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
-       l3cf(i)%zAscLvl(2) = &
-                      cf%Sections(iMap)%Entries(i)%Cells(indx)%RangeUpperBound
-
-       indx = LinearSearchStringArray( &
-                     cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'zDesLvl')
-       IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
-                      &keyword ZDESLVL in the DailyMap section of the l3cf.')
-       l3cf(i)%zDesLvl(1) = cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
-       l3cf(i)%zDesLvl(2) = &
-                      cf%Sections(iMap)%Entries(i)%Cells(indx)%RangeUpperBound
 
     ENDDO
 
@@ -587,6 +555,9 @@ END MODULE L3CF
 !==============
 
 ! $Log$
+! Revision 1.12  2001/05/09 16:17:35  nakamura
+! Added calculation of the negative part of the l2 nominal lat grid.
+!
 ! Revision 1.11  2001/05/04 18:29:16  nakamura
 ! Added DZ stuff.
 !

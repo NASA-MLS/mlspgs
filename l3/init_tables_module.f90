@@ -53,10 +53,7 @@ module INIT_TABLES_MODULE
   integer, public, parameter :: F_RANGFREQ = f_prodname + 1
   integer, public, parameter :: F_RANGWAVNUM = f_rangfreq + 1
   integer, public, parameter :: F_TIME = f_rangwavnum + 1
-  integer, public, parameter :: F_ZASC = f_time + 1
-  integer, public, parameter :: F_ZCOM = f_zasc + 1
-  integer, public, parameter :: F_ZDES = f_zcom + 1
-  integer, public, parameter :: FIELD_LAST = f_zdes
+  integer, public, parameter :: FIELD_LAST = f_time
 ! Enumeration literals:
   integer, public, parameter :: L_ALL   = last_signal_lit+1
   integer, public, parameter :: L_ASC   = l_all + 1
@@ -145,9 +142,6 @@ contains ! =====     Public procedures     =============================
     field_indices(f_rangfreq) =             add_ident ( 'rangFrequency' )
     field_indices(f_rangwavnum) =           add_ident ( 'rangWavenumber' )
     field_indices(f_time) =                 add_ident ( 'timeD' )
-    field_indices(f_zasc) =                 add_ident ( 'zAscLvl' )
-    field_indices(f_zcom) =                 add_ident ( 'zComLvl' )
-    field_indices(f_zdes) =                 add_ident ( 'zDesLvl' )
     ! Put parameter names into the symbol table
     parm_indices(p_l2_nom_lats) =           add_ident ( 'l2nomLats' )
     parm_indices(p_log_type) =              add_ident ( 'LogType' )
@@ -231,9 +225,6 @@ contains ! =====     Public procedures     =============================
              begin, f+f_imethod, t+t_intp, n+n_field_type, &
              begin, f+f_label, t+t_string, n+n_field_type, &
              begin, f+f_cmethod, t+t_cal, n+n_field_type, &
-             begin, f+f_zCom, t+t_numeric_range, n+n_field_type, &
-             begin, f+f_zAsc, t+t_numeric_range, n+n_field_type, &
-             begin, f+f_zDes, t+t_numeric_range, n+n_field_type, &
              n+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_output, &
@@ -267,6 +258,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 1.9  2001/05/04 18:43:22  nakamura
+! Includes new DZ specs, latest parser changes.
+!
 ! Revision 1.8  2001/04/11 18:53:24  nakamura
 ! Removed references to unused parser items.
 !
