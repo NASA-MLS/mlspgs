@@ -775,7 +775,7 @@ m:              do j = 3, nsons(field)
     field = check_field(son,spec_decl)
     if ( field == 0 ) then
       call announce_error ( son, not_field_of, fields=(/ spec_decl /) )
-      call dump_1_decl ( son )
+      call dump_1_decl ( sub_rosa(son) )
     else
       if ( check_field_type(field,t_boolean) ) then
         call decorate ( root, field )
@@ -862,6 +862,9 @@ m:              do j = 3, nsons(field)
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.7  2001/03/09 22:08:27  vsnyder
+! Improve error message for wrong type of field value
+!
 ! Revision 1.6  2001/03/06 22:50:11  vsnyder
 ! Correct processing of /foo when it's not a valid field.
 !
