@@ -77,8 +77,7 @@ module INTRINSIC
   integer, parameter :: L_DIMENSIONLESS = l_degrees + 1
   integer, parameter :: L_DIMLESS       = l_dimensionless + 1
   integer, parameter :: L_DL            = l_dimless + 1
-  integer, parameter :: L_EARTHRADIUS   = l_dl + 1
-  integer, parameter :: L_EARTHREFL     = l_earthRadius + 1
+  integer, parameter :: L_EARTHREFL     = l_dl + 1
   integer, parameter :: L_EFFECTIVEOPTICALDEPTH = l_earthRefl + 1
   integer, parameter :: L_ELEVOFFSET    = l_effectiveOpticalDepth + 1
   integer, parameter :: L_EXTINCTION    = l_elevOffset + 1
@@ -239,7 +238,6 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_dimensionless) =         add_ident ( 'dimensionless' )
     lit_indices(l_dimless) =               add_ident ( 'dimless' )
     lit_indices(l_dl) =                    add_ident ( 'dl' )
-    lit_indices(l_earthRadius) =           add_ident ( 'earthRadius' )
     lit_indices(l_earthRefl) =             add_ident ( 'earthRefl' )
     lit_indices(l_elevOffset) =            add_ident ( 'elevOffset' )
     lit_indices(l_effectiveOpticalDepth) = add_ident ( 'effectiveOpticalDepth' )
@@ -392,6 +390,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.33  2001/07/17 18:53:31  jonathan
+! remove earthradius (redundant quantity),jonathan/wu
+!
 ! Revision 2.32  2001/07/13 19:04:56  dwu
 ! fix problem after adding lostransfunc
 !
