@@ -1,0 +1,32 @@
+;; $Id$
+
+;; This l2cf fragment defines l2pc forward models
+
+!ifdef(doBaseline,{},{!define(doBaseline,{true})})
+
+!define(l2pcF,{
+l2pcSidsFwm$1: forwardModel, type=linear, signals=!signal($1), $
+  molecules=!molecules($1), do_baseline=!doBaseline
+l2pcSidsFwm$1_1D: forwardModel, type=linear, signals=!signal($1), $
+  molecules=!molecules($1), do_baseline=!doBaseline, phiWindow=1
+l2pcODFwm$1: forwardModel, type=linear, signals=!signal($1), $
+  molecules=!molecules($1)
+l2pcODFwm$1_1D: forwardModel, type=linear, signals=!signal($1), $
+  molecules=!molecules($1), phiWindow=1
+l2pcRetFwm$1: forwardModel, type=linear, signals=!signal($1), $
+  molecules=!molecules($1), moleculeDerivatives=!molecules($1), $
+  /atmos_der, /temp_der, do_baseline=!doBaseline
+l2pcRetFwm$1_1D: forwardModel, type=linear, signals=!signal($1), $
+  molecules=!molecules($1), moleculeDerivatives=!molecules($1), $
+  /atmos_der, /temp_der, do_baseline=!doBaseline, phiWindow=1})
+
+;; Just for the moment, I'm going to consider only the standard 25
+;; channel filterbanks, and exclude R1B.
+!l2pcF(1L)
+!forloop(
+{i}, 2, 20, {!l2pcF(!i)}
+)
+;; Also do B32W
+!l2pcF(32L)
+!l2pcF(33)
+
