@@ -9,11 +9,14 @@ module INIT_TABLES_MODULE
 
 ! Declaring the definitions is handled by the tree walker.
 
-  use INTRINSIC ! Everything. FIRST_LIT, FIRST_MOLECULE, INIT_INTRINSIC,
-    ! L_<several>, LAST_INTRINSIC_LIT, LAST_MOLECULE, T_BOOLEAN, T_FIRST,
-    ! T_LAST_INTRINSIC, T_NUMERIC, T_NUMERIC_RANGE and T_STRING are used
-    ! here, but everything is included so that it can be gotten by
-    ! USE INIT_TABLES_MODULE.
+  use Init_MLSSignals_m ! Everything. Init_MLSSignals, Field_First,
+    ! Last_Signal_Field, Spec_First, Last_Signal_Spec, Numerous S_....
+  use INTRINSIC ! Everything. ADD_IDENT, BEGIN, D, F, FIRST_LIT,
+    ! FIRST_MOLECULE,  INIT_INTRINSIC, L, L_<several>, LAST_INTRINSIC_LIT,
+    ! LAST_MOLECULE, MAKE_TREE, N, NADP, ND, NDP, NP, NR, P, S, T,
+    ! T_BOOLEAN, T_FIRST, T_LAST_INTRINSIC, T_NUMERIC, T_NUMERIC_RANGE,
+    ! T_STRING and Z are used here, but everything is included so that it
+    ! can be gotten by USE INIT_TABLES_MODULE.
 
   implicit NONE
   public ! This would be a MUCH LONGER list than the list of private
@@ -49,14 +52,10 @@ module INIT_TABLES_MODULE
   integer, parameter :: T_LAST           = t_vgridtype
   integer :: DATA_TYPE_INDICES(t_first:t_last)
 ! Field indices:
-  integer, parameter :: F_APRIORI             = 1
+  integer, parameter :: F_APRIORI             = last_Signal_Field + 1
   integer, parameter :: F_APRIORISCALE        = f_apriori + 1
   integer, parameter :: F_AUTOFILL            = f_aprioriScale + 1
-  integer, parameter :: F_BAND                = f_autofill + 1
-  integer, parameter :: F_CENTERFREQUENCY     = f_band + 1
-  integer, parameter :: F_CHANNEL             = f_centerfrequency + 1
-  integer, parameter :: F_CHANNELS            = f_channel + 1
-  integer, parameter :: F_COLUMNS             = f_channels + 1
+  integer, parameter :: F_COLUMNS             = f_autofill + 1
   integer, parameter :: F_COLUMNSCALE         = f_columns + 1
   integer, parameter :: F_COMMENT             = f_columnscale + 1
   integer, parameter :: F_COMPAREOVERLAPS     = f_comment + 1
@@ -64,17 +63,13 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_COPY                = f_coordinate + 1
   integer, parameter :: F_COVARIANCE          = f_copy + 1
   integer, parameter :: F_CRITERIA            = f_covariance + 1
-  integer, parameter :: F_DEFERRED            = f_criteria + 1
-  integer, parameter :: F_DIAGONAL            = f_deferred + 1
+  integer, parameter :: F_DIAGONAL            = f_criteria + 1
   integer, parameter :: F_DIAGONALOUT         = f_diagonal + 1
   integer, parameter :: F_EXPLICITVALUES      = f_diagonalout + 1
   integer, parameter :: F_FIELD               = f_explicitvalues + 1
   integer, parameter :: F_FILE                = f_field + 1
-  integer, parameter :: F_FIRST               = f_file + 1
-  integer, parameter :: F_FRACTION            = f_first + 1
-  integer, parameter :: F_FREQUENCIES         = f_fraction + 1
-  integer, parameter :: F_FREQUENCY           = f_frequencies + 1
-  integer, parameter :: F_FWDMODELEXTRA       = f_frequency + 1
+  integer, parameter :: F_FRACTION            = f_file + 1
+  integer, parameter :: F_FWDMODELEXTRA       = f_fraction + 1
   integer, parameter :: F_FWDMODELIN          = f_fwdModelExtra + 1
   integer, parameter :: F_FWDMODELOUT         = f_fwdModelIn + 1
   integer, parameter :: F_GEOCALTITUDEQUANTITY= f_fwdModelOut + 1
@@ -84,16 +79,13 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_HGRID               = f_height + 1
   integer, parameter :: F_INTERPOLATIONFACTOR = f_hgrid + 1
   integer, parameter :: F_JACOBIAN            = f_interpolationFactor + 1
-  integer, parameter :: F_LAST                = f_jacobian + 1
-  integer, parameter :: F_LENGTH              = f_last + 1
-  integer, parameter :: F_LO                  = f_length + 1
-  integer, parameter :: F_MAXITERATIONS       = f_lo + 1
+  integer, parameter :: F_LENGTH              = f_jacobian + 1
+  integer, parameter :: F_MAXITERATIONS       = f_length + 1
   integer, parameter :: F_MATRIX              = f_maxIterations + 1
   integer, parameter :: F_MEASUREMENTS        = f_matrix + 1
   integer, parameter :: F_METHOD              = f_measurements + 1
   integer, parameter :: F_MIF                 = f_method + 1
-  integer, parameter :: F_MODULE              = f_MIF + 1
-  integer, parameter :: F_MOLECULE            = f_module + 1 
+  integer, parameter :: F_MOLECULE            = f_MIF + 1 
   integer, parameter :: F_NUMBER              = f_molecule + 1
   integer, parameter :: F_ORIGIN              = f_number + 1
   integer, parameter :: F_OUTPUTCOVARIANCE    = f_origin + 1
@@ -102,8 +94,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_PER_DECADE          = f_overlaps + 1
   integer, parameter :: F_QUANTITIES          = f_per_decade + 1
   integer, parameter :: F_QUANTITY            = f_quantities + 1
-  integer, parameter :: F_RADIOMETER          = f_quantity + 1
-  integer, parameter :: F_RANGE               = f_radiometer + 1
+  integer, parameter :: F_RANGE               = f_quantity + 1
   integer, parameter :: F_REFGPHQUANTITY      = f_range + 1
   integer, parameter :: F_ROWS                = f_refGPHQuantity + 1
   integer, parameter :: F_SCALE               = f_rows + 1
@@ -115,19 +106,12 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_SOURCEL2AUX         = f_sourceApriori + 1
   integer, parameter :: F_SOURCEL2GP          = f_sourcel2aux + 1
   integer, parameter :: F_SOURCEQUANTITY      = f_sourcel2gp + 1
-  integer, parameter :: F_SPACECRAFT          = f_sourcequantity + 1
-  integer, parameter :: F_SPECIES             = f_spacecraft + 1
-  integer, parameter :: F_SPECTROMETER        = f_species + 1
-  integer, parameter :: F_SPECTROMETERTYPE    = f_spectrometer + 1
-  integer, parameter :: F_SPREAD              = f_spectrometerType + 1
-  integer, parameter :: F_START               = f_spread + 1
-  integer, parameter :: F_STATE               = f_start + 1
-  integer, parameter :: F_STEP                = f_state + 1
-  integer, parameter :: F_STOP                = f_step + 1
-  integer, parameter :: F_SUFFIX              = f_stop + 1
-  integer, parameter :: F_SWATH               = f_suffix + 1
-  integer, parameter :: F_SWITCH              = f_swath + 1
-  integer, parameter :: F_TEMPERATURE         = f_switch+1
+  integer, parameter :: F_SPECIES             = f_sourcequantity + 1
+  integer, parameter :: F_SPREAD              = f_species + 1
+  integer, parameter :: F_STATE               = f_spread + 1
+  integer, parameter :: F_STOP                = f_state + 1
+  integer, parameter :: F_SWATH               = f_stop + 1
+  integer, parameter :: F_TEMPERATURE         = f_swath+1
   integer, parameter :: F_TOLERANCEA          = f_temperature + 1
   integer, parameter :: F_TOLERANCEF          = f_tolerancea + 1
   integer, parameter :: F_TOLERANCER          = f_tolerancef + 1
@@ -140,17 +124,16 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_VALUES              = f_unit + 1
   integer, parameter :: F_VGRID               = f_values + 1
   integer, parameter :: F_WEIGHT              = f_vGrid + 1
-  integer, parameter :: F_WIDTH               = f_weight + 1
-  integer, parameter :: F_WIDTHS              = f_width + 1
+! integer, parameter :: FIELD_LAST = f_weight
   !??? Fields from here may be temporary for driving the forward model
-  integer, parameter :: F_BILL                = f_widths + 1  !???
+  integer, parameter :: F_BILL                = f_weight + 1  !???
   integer, parameter :: F_ATMOS_DER           = f_bill + 1    !???
   integer, parameter :: F_DO_CONV             = f_atmos_der+1 !???
   integer, parameter :: F_DO_FREQ_AVG         = f_do_conv + 1 !???
   integer, parameter :: F_SPECT_DER           = f_do_freq_avg+1 !???
   integer, parameter :: F_TEMP_DER            = f_spect_der + 1 !???
   integer, parameter :: F_ZVI                 = f_temp_der+1  !???
-  integer, parameter :: FIELD_FIRST = f_Apriori, FIELD_LAST = f_zvi
+  integer, parameter :: FIELD_LAST = f_zvi
   integer :: FIELD_INDICES(field_first:field_last)
 ! Enumeration literals (there are more in INTRINSIC and MOLECULES):
   integer, parameter :: L_ANGLE         = last_intrinsic_lit + 1
@@ -196,25 +179,6 @@ module INIT_TABLES_MODULE
   integer, parameter :: L_WEIGHTED      = l_vector + 1
   integer, parameter :: LAST_LIT        = l_weighted
   integer :: LIT_INDICES(first_lit:last_lit)
-! Parameter names:
-  ! In GlobalSettings section:
-  integer, parameter :: P_ALLOW_CLIMATOLOGY_OVERLOADS = 1
-  integer, parameter :: P_INPUT_VERSION_STRING        = 2
-  integer, parameter :: P_OUTPUT_VERSION_STRING       = 3
-  integer, parameter :: P_VERSION_COMMENT             = 4
-  ! In ChunkDivide section:
-  integer, parameter :: P_CRITICAL_BANDS              = 5
-  integer, parameter :: P_CRITICAL_SCANNING_MODULES   = 6
-  integer, parameter :: P_HOME_GEOD_ANGLE             = 7
-  integer, parameter :: P_HOME_MODULE                 = 8
-  integer, parameter :: P_IDEAL_LENGTH                = 9
-  integer, parameter :: P_MAX_GAP                     = 10
-  integer, parameter :: P_OVERLAP                     = 11
-  integer, parameter :: P_SCAN_LOWER_LIMIT            = 12
-  integer, parameter :: P_SCAN_UPPER_LIMIT            = 13
-  integer, parameter :: FIRST_PARM = P_ALLOW_CLIMATOLOGY_OVERLOADS
-  integer, parameter :: LAST_PARM = P_SCAN_UPPER_LIMIT
-  integer :: PARM_INDICES(first_parm:last_parm)
 ! Section identities.  Indices are in the order the sections are allowed to
 ! appear.  They're also used to index SECTION_ORDERING, so BE CAREFUL if
 ! you change them!
@@ -233,9 +197,8 @@ module INIT_TABLES_MODULE
   integer :: SECTION_INDICES(section_first:section_last)
 ! Specification indices don't overlap parameter indices, so a section can
 ! have both parameters and specifications:
-  integer, parameter :: S_APRIORI            = last_parm + 1
-  integer, parameter :: S_BAND               = s_apriori + 1
-  integer, parameter :: S_CREATE             = s_band + 1
+  integer, parameter :: S_APRIORI            = last_Signal_Spec + 1
+  integer, parameter :: S_CREATE             = s_apriori + 1
   integer, parameter :: S_FILL               = s_create + 1
   integer, parameter :: S_FORWARDMODEL       = s_fill + 1
   integer, parameter :: S_FORWARDMODELGLOBAL = s_forwardModel + 1 !???
@@ -245,16 +208,12 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_L2AUX              = s_l2gp + 1
   integer, parameter :: S_MATRIX             = s_l2aux + 1
   integer, parameter :: S_MERGE              = s_matrix + 1
-  integer, parameter :: S_MODULE             = s_merge + 1
-  integer, parameter :: S_OUTPUT             = s_module + 1
+  integer, parameter :: S_OUTPUT             = s_merge + 1
   integer, parameter :: S_QUANTITY           = s_output + 1
-  integer, parameter :: S_RADIOMETER         = s_quantity + 1
-  integer, parameter :: S_RETRIEVE           = s_radiometer + 1
+  integer, parameter :: S_RETRIEVE           = s_quantity + 1
   integer, parameter :: S_SIDS               = s_retrieve + 1    !??? for Zvi
-  integer, parameter :: S_SIGNAL             = s_sids + 1
-  integer, parameter :: S_SNOOP              = s_signal + 1
-  integer, parameter :: S_SPECTROMETERTYPE   = s_snoop + 1
-  integer, parameter :: S_SUBSET             = s_spectrometertype + 1
+  integer, parameter :: S_SNOOP              = s_sids + 1
+  integer, parameter :: S_SUBSET             = s_snoop + 1
   integer, parameter :: S_TEMPLATE           = s_subset + 1
   integer, parameter :: S_TIME               = s_template + 1
   integer, parameter :: S_TPFILL             = s_time + 1
@@ -262,9 +221,29 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_VECTORTEMPLATE     = s_vector + 1
   integer, parameter :: S_VGRID              = s_vectortemplate + 1
   integer, parameter :: S_L2LOAD             = s_vgrid + 1       !??? for Zvi
-  integer, parameter :: SPEC_FIRST = last_parm + 1, SPEC_LAST = s_l2load
-! integer, parameter :: SPEC_FIRST = last_parm + 1, SPEC_LAST = s_vGrid
+  integer, parameter :: SPEC_LAST = s_l2load
+! integer, parameter :: SPEC_LAST = s_vGrid
   integer :: SPEC_INDICES(spec_first:spec_last)
+
+! Parameter names:
+  ! In GlobalSettings section:
+  integer, parameter :: FIRST_PARM = spec_last + 1
+  integer, parameter :: P_ALLOW_CLIMATOLOGY_OVERLOADS = first_parm
+  integer, parameter :: P_INPUT_VERSION_STRING        = p_allow_climatology_overloads + 1
+  integer, parameter :: P_OUTPUT_VERSION_STRING       = p_input_version_string + 1
+  integer, parameter :: P_VERSION_COMMENT             = p_output_version_string + 1
+  ! In ChunkDivide section:
+  integer, parameter :: P_CRITICAL_BANDS              = p_version_comment + 1
+  integer, parameter :: P_CRITICAL_SCANNING_MODULES   = p_critical_bands + 1
+  integer, parameter :: P_HOME_GEOD_ANGLE             = p_critical_scanning_modules + 1
+  integer, parameter :: P_HOME_MODULE                 = p_home_geod_angle + 1
+  integer, parameter :: P_IDEAL_LENGTH                = p_home_module + 1
+  integer, parameter :: P_MAX_GAP                     = p_ideal_length + 1
+  integer, parameter :: P_OVERLAP                     = p_max_gap + 1
+  integer, parameter :: P_SCAN_LOWER_LIMIT            = p_overlap + 1
+  integer, parameter :: P_SCAN_UPPER_LIMIT            = p_scan_lower_limit + 1
+  integer, parameter :: LAST_PARM = p_scan_upper_limit
+  integer :: PARM_INDICES(first_parm:last_parm)
 
 ! Table for section ordering:
   integer, parameter :: OK = 1, & ! NO = 0
@@ -288,16 +267,6 @@ module INIT_TABLES_MODULE
 !       , shape(section_ordering) )
         , (/ section_last-section_first+1, section_last-section_first+2 /) )
 
-  integer, private, parameter :: BEGIN = -1
-  integer, private, parameter :: D = 1000000
-  integer, private, parameter :: F = 1000, L = 2000, N = 0
-  integer, private, parameter :: NADP = n+d*(all_fields+no_dup+no_positional)
-  integer, private, parameter :: ND = n+d*no_dup
-  integer, private, parameter :: NDP = n+d*(no_dup+no_positional)
-  integer, private, parameter :: NP = n+d*no_positional
-  integer, private, parameter :: NR = n+d*req_fld
-  integer, private, parameter :: P = 3000, S = 4000, T = 5000, Z = 6000
-
 contains ! =====     Public procedures     =============================
 ! --------------------------------------------------  INIT_TABLES  -----
   subroutine INIT_TABLES
@@ -307,6 +276,7 @@ contains ! =====     Public procedures     =============================
 
   ! Put intrinsic predefined identifiers into the symbol table.
     call init_intrinsic ( data_type_indices, lit_indices )
+    call init_MLSSignals ( field_Indices, spec_Indices, data_type_indices )
 
   ! Put nonintrinsic predefined identifiers into the symbol table.
     ! Put enumeration type names into the symbol table
@@ -328,7 +298,8 @@ contains ! =====     Public procedures     =============================
     data_type_indices(t_units) =           add_ident ( 'units' )
     data_type_indices(t_vgridcoord) =      add_ident ( 'vGridCoord' )
     data_type_indices(t_vgridtype) =       add_ident ( 'vGridType' )
-    ! Put enumeration literals into the symbol table:
+    ! Put enumeration literals into the symbol table.  Don't add ones
+    ! that are already put in by init_intrinsic or init_molecules.
     lit_indices(l_angle) =                 add_ident ( 'angle' )
     lit_indices(l_apriori) =               add_ident ( 'apriori' )
     lit_indices(l_both) =                  add_ident ( 'both' )
@@ -370,14 +341,11 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_spd) =                   add_ident ( 'spd' )
     lit_indices(l_vector) =                add_ident ( 'vector' )
     lit_indices(l_weighted) =              add_ident ( 'weighted' )
-    ! Put field names into the symbol table
+    ! Put field names into the symbol table.  Don't add ones that are
+    ! put in by init_MLSSignals.
     field_indices(f_apriori) =             add_ident ( 'apriori' )
     field_indices(f_aprioriscale) =        add_ident ( 'aprioriScale' )
     field_indices(f_autofill) =            add_ident ( 'autofill' )
-    field_indices(f_band) =                add_ident ( 'band' )
-    field_indices(f_centerFrequency) =     add_ident ( 'centerFrequency' )
-    field_indices(f_channel) =             add_ident ( 'channel' )
-    field_indices(f_channels) =            add_ident ( 'channels' )
     field_indices(f_columns) =             add_ident ( 'columns' )
     field_indices(f_columnscale) =         add_ident ( 'columnScale' )
     field_indices(f_comment) =             add_ident ( 'comment' )
@@ -386,16 +354,12 @@ contains ! =====     Public procedures     =============================
     field_indices(f_copy) =                add_ident ( 'copy' )
     field_indices(f_covariance) =          add_ident ( 'covariance' )
     field_indices(f_criteria) =            add_ident ( 'criteria' )
-    field_indices(f_deferred) =            add_ident ( 'deferred' )
     field_indices(f_diagonal) =            add_ident ( 'diagonal' )
     field_indices(f_diagonalOut) =         add_ident ( 'diagonalOut' )
     field_indices(f_explicitvalues) =      add_ident ( 'explicitValues' )
     field_indices(f_field) =               add_ident ( 'field' )
     field_indices(f_file) =                add_ident ( 'file' )
-    field_indices(f_first) =               add_ident ( 'first' )
     field_indices(f_fraction) =            add_ident ( 'fraction' )
-    field_indices(f_frequencies) =         add_ident ( 'frequencies' )
-    field_indices(f_frequency) =           add_ident ( 'frequency' )
     field_indices(f_fwdModelExtra) =       add_ident ( 'fwdModelExtra' )
     field_indices(f_fwdModelIn) =          add_ident ( 'fwdModelIn' )
     field_indices(f_fwdModelOut) =         add_ident ( 'fwdModelOut' )
@@ -406,15 +370,12 @@ contains ! =====     Public procedures     =============================
     field_indices(f_hgrid) =               add_ident ( 'hgrid' )
     field_indices(f_interpolationFactor) = add_ident ( 'interpolationFactor' )
     field_indices(f_jacobian) =            add_ident ( 'jacobian' )
-    field_indices(f_last) =                add_ident ( 'last' )
     field_indices(f_length) =              add_ident ( 'length' )
-    field_indices(f_lo) =                  add_ident ( 'lo' )
     field_indices(f_matrix) =              add_ident ( 'matrix' )
     field_indices(f_maxIterations) =       add_ident ( 'maxIterations' )
     field_indices(f_measurements) =        add_ident ( 'measurements' )
     field_indices(f_method) =              add_ident ( 'method' )
     field_indices(f_mif) =                 add_ident ( 'mif' )
-    field_indices(f_module) =              add_ident ( 'module' )
     field_indices(f_molecule) =            add_ident ( 'molecule' )
     field_indices(f_number) =              add_ident ( 'number' )
     field_indices(f_origin) =              add_ident ( 'origin' )
@@ -424,7 +385,6 @@ contains ! =====     Public procedures     =============================
     field_indices(f_per_decade) =          add_ident ( 'per_decade' )
     field_indices(f_quantities) =          add_ident ( 'quantities' )
     field_indices(f_quantity) =            add_ident ( 'quantity' )
-    field_indices(f_radiometer) =          add_ident ( 'radiometer' )
     field_indices(f_range) =               add_ident ( 'range' )
     field_indices(f_refGPHQuantity) =      add_ident ( 'refGPHquantity' )
     field_indices(f_rows) =                add_ident ( 'rows' )
@@ -437,18 +397,11 @@ contains ! =====     Public procedures     =============================
     field_indices(f_sourcel2aux) =         add_ident ( 'sourceL2AUX' )
     field_indices(f_sourcel2gp) =          add_ident ( 'sourceL2GP' )
     field_indices(f_sourcequantity) =      add_ident ( 'sourceQuantity' )
-    field_indices(f_spacecraft) =          add_ident ( 'spacecraft' )
     field_indices(f_species) =             add_ident ( 'species' )
-    field_indices(f_spectrometer) =        add_ident ( 'spectrometer' )
-    field_indices(f_spectrometerType) =    add_ident ( 'spectrometerType' )
     field_indices(f_spread) =              add_ident ( 'spread' )
-    field_indices(f_start) =               add_ident ( 'start' )
     field_indices(f_state) =               add_ident ( 'state' )
-    field_indices(f_step) =                add_ident ( 'step' )
     field_indices(f_stop) =                add_ident ( 'stop' )
-    field_indices(f_suffix) =              add_ident ( 'suffix' )
     field_indices(f_swath) =               add_ident ( 'swath' )
-    field_indices(f_switch) =              add_ident ( 'switch' )
     field_indices(f_temperature) =         add_ident ( 'temperature' )
     field_indices(f_temperaturequantity) = add_ident ( 'temperatureQuantity' )
     field_indices(f_tolerancea) =          add_ident ( 'Atolerance' )
@@ -462,8 +415,6 @@ contains ! =====     Public procedures     =============================
     field_indices(f_values) =              add_ident ( 'values' )
     field_indices(f_vGrid) =               add_ident ( 'vgrid' )
     field_indices(f_weight) =              add_ident ( 'weight' )
-    field_indices(f_width) =               add_ident ( 'width' )
-    field_indices(f_widths) =              add_ident ( 'widths' )
     field_indices(f_bill) =                add_ident ( 'bill' )        !???
     field_indices(f_atmos_der) =           add_ident ( 'atmos_der' )   !???
     field_indices(f_do_conv) =             add_ident ( 'conv' )        !???
@@ -471,7 +422,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_spect_der) =           add_ident ( 'spect_der' )   !???
     field_indices(f_temp_der) =            add_ident ( 'temp_der' )    !???
     field_indices(f_zvi) =                 add_ident ( 'zvi' )         !???
-    ! Put parameter names into the symbol table
+    ! Put parameter names into the symbol table:
     parm_indices(p_allow_climatology_overloads) = &
                                            add_ident ( 'AllowClimatologyOverloads' )
     parm_indices(p_input_version_string) = add_ident ( 'InputVersionString' )
@@ -487,7 +438,7 @@ contains ! =====     Public procedures     =============================
     parm_indices(p_overlap) =              add_ident ( 'Overlap' )
     parm_indices(p_scan_lower_limit) =     add_ident ( 'ScanLowerLimit' )
     parm_indices(p_scan_upper_limit) =     add_ident ( 'ScanUpperLimit' )
-    ! Put section names into the symbol table
+    ! Put section names into the symbol table:
     section_indices(z_chunkDivide) =       add_ident ( 'chunkDivide' )
     section_indices(z_construct) =         add_ident ( 'construct' )
     section_indices(z_fill) =              add_ident ( 'fill' )
@@ -498,9 +449,9 @@ contains ! =====     Public procedures     =============================
     section_indices(z_output) =            add_ident ( 'output' )
     section_indices(z_readApriori) =       add_ident ( 'readApriori' )
     section_indices(z_retrieve) =          add_ident ( 'retrieve' )
-    ! Put spec names into the symbol table
+    ! Put spec names into the symbol table.  Don't add ones that are
+    ! put in by init_MLSSignals.
     spec_indices(s_apriori) =              add_ident ( 'apriori' )
-    spec_indices(s_band) =                 add_ident ( 'band' )
     spec_indices(s_create) =               add_ident ( 'create' )
     spec_indices(s_fill) =                 add_ident ( 'fill' )
     spec_indices(s_forwardModel) =         add_ident ( 'forwardModel' )
@@ -511,14 +462,10 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_l2aux) =                add_ident ( 'l2aux' )
     spec_indices(s_matrix) =               add_ident ( 'matrix' )
     spec_indices(s_merge) =                add_ident ( 'merge' )
-    spec_indices(s_module) =               add_ident ( 'module' )
     spec_indices(s_output) =               add_ident ( 'output' )
     spec_indices(s_quantity) =             add_ident ( 'quantity' )
-    spec_indices(s_radiometer) =           add_ident ( 'radiometer' )
     spec_indices(s_retrieve) =             add_ident ( 'retrieve' )
-    spec_indices(s_signal) =               add_ident ( 'signal' )
     spec_indices(s_snoop) =                add_ident ( 'snoop' )
-    spec_indices(s_spectrometerType) =     add_ident ( 'spectrometerType' )
     spec_indices(s_subset) =               add_ident ( 'subset' )
     spec_indices(s_template) =             add_ident ( 'template' )
     spec_indices(s_time) =                 add_ident ( 'time' )
@@ -546,14 +493,9 @@ contains ! =====     Public procedures     =============================
 
   ! Start with the definitions of types. These are represented by trees of
   ! the form  < n_dt_def t_type_name l_lit ... l_lit >
-    ! Define the intrinsic data types
+    ! The intrinsic data types are defined in the intrinsic module
+    ! Define the nonintrinsic enumerated types
     call make_tree ( (/ &
-      begin, t+t_numeric, n+n_dt_def, &
-      begin, t+t_numeric_range, n+n_dt_def, &
-      begin, t+t_string, n+n_dt_def /) )
-    ! Define the enumerated types
-    call make_tree ( (/ &
-      begin, t+t_boolean, l+l_true, l+l_false, n+n_dt_def, &
       begin, t+t_griddedOrigin, l+l_climatology, l+l_dao, l+l_ncep, n+n_dt_def, &
       begin, t+t_criticalModule, l+l_both, l+l_either, l+l_ghz, l+l_neither, &
              l+l_thz, n+n_dt_def, &
@@ -592,6 +534,7 @@ contains ! =====     Public procedures     =============================
              l+l_pressure, l+l_theta, l+l_zeta, n+n_dt_def, &
       begin, t+t_vgridtype, l+l_explicit, l+l_linear, l+l_logarithmic, &
              n+n_dt_def /) )
+
     ! Define the relations between specs and fields, and the field types
     ! or names of other specifications allowed.  These are represented by
     ! trees of the form
@@ -612,38 +555,7 @@ contains ! =====     Public procedures     =============================
     ! present in the field given by the last f_field_name, which is
     ! required to be in a specification named by the next-to-last
     ! f_field_name ... of the specification named by the spec_name.
-    call make_tree ( (/ &
-      begin, s+s_module, &
-             begin, f+f_spacecraft, t+t_boolean, n+n_field_type, &
-             np+n_spec_def, &
-      begin, s+s_radiometer, &          ! Must be after module
-             begin, f+f_lo, t+t_numeric, n+n_field_type, &
-             begin, f+f_suffix, t+t_string, n+n_field_type, &
-             begin, f+f_module, s+s_module, n+n_field_spec, &
-             nadp+n_spec_def, &
-      begin, s+s_spectrometerType, &
-             begin, f+f_deferred, t+t_boolean, n+n_field_type, &
-             begin, f+f_first, t+t_numeric, n+n_field_type, &
-             begin, f+f_frequencies, t+t_numeric, n+n_field_type, &
-             begin, f+f_last, t+t_numeric, n+n_field_type, &
-             begin, f+f_start, t+t_numeric, n+n_field_type, &
-             begin, f+f_step, t+t_numeric, n+n_field_type, &
-             begin, f+f_width, t+t_numeric, n+n_field_type, &
-             begin, f+f_widths, t+t_numeric, n+n_field_type, &
-             ndp+n_spec_def, &
-      begin, s+s_band, &                ! Must be after radiometer and spectrometerType
-             begin, f+f_suffix, t+t_string, n+n_field_type, &
-             begin, f+f_spectrometerType, s+s_spectrometerType, nr+n_field_spec, &
-             begin, f+f_radiometer, s+s_radiometer, nr+n_field_spec, &
-             begin, f+f_centerfrequency, t+t_numeric, n+n_field_type, &
-             ndp+n_spec_def, &
-      begin, s+s_signal, &         ! Must be after band
-             begin, f+f_band, s+s_band, nr+n_field_spec, &
-             begin, f+f_spectrometer, t+t_numeric, nr+n_field_type, &
-             begin, f+f_frequencies, t+t_numeric, n+n_field_type, &
-             begin, f+f_widths, t+t_numeric, n+n_field_type, &
-             begin, f+f_switch, t+t_numeric, nr+n_field_type, &
-             ndp+n_spec_def /) )
+
     call make_tree ( (/ &
       begin, s+s_time, np+n_spec_def, &
       begin, s+s_gridded, &
@@ -864,21 +776,15 @@ contains ! =====     Public procedures     =============================
       begin, z+z_output, s+s_time, s+s_output, n+n_section /) )
   end subroutine INIT_TABLES
 
-! =====     Private procedures     =====================================
-  ! --------------------------------------------------  ADD_IDENT  -----
-  integer function ADD_IDENT ( TEXT )
-    use SYMBOL_TABLE, only: ENTER_TERMINAL
-    use SYMBOL_TYPES, only: T_IDENTIFIER
-    character(len=*), intent(in) :: TEXT
-    add_ident = enter_terminal ( text, t_identifier )
-  end function ADD_IDENT
-
   ! --------------------------------------------------  MAKE_TREE  -----
   include "make_tree.f9h"
 
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.45  2001/03/14 02:04:53  vsnyder
+! Moved MLSSignals_m to mlspgs/lib
+!
 ! Revision 2.44  2001/03/08 21:40:03  livesey
 ! Added elevOffset
 !
