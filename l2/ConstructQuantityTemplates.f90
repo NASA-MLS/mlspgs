@@ -23,7 +23,7 @@ module ConstructQuantityTemplates
   !---------------------------------------------------------------------------
 
   ! The various properties has/can have
-  integer, parameter :: NEXT = 0
+  integer, parameter :: NEXT = -1
   integer, parameter :: P_CHUNKED            = 1
   integer, parameter :: P_MAJORFRAME         = P_CHUNKED + 1
   integer, parameter :: P_MINORFRAME         = P_MAJORFRAME + 1
