@@ -145,6 +145,8 @@ module DNWT_MODULE
     real(rk) :: GDX        ! dot_product( Gradient, "Candidate DX" )
     real(rk) :: GFAC       ! Amount of best gradient to use for DX
     real(rk) :: GRADN      ! L2 norm of Gradient
+    real(rk) :: GRADNB     ! L2 norm of Gradient at best F
+    real(rk) :: QNSQ       ! Square of norm of solution of U^T q = x
     real(rk) :: SQ = 0.0   ! Levenberg-Marquardt parameter -- intent(out)
     real(rk) :: SQT        ! Total Levenberg-Marquardt stabilization -- intent(out)
     logical :: BIG         ! ANY( DX > 10.0 * epsilon(X) * X )
@@ -305,8 +307,8 @@ contains
 !           permitted for DXINC at any time. NOPT(I)= -14 gives
 !           DXMAXI = 10**30  .
 !    = 15   Set RELSF = XOPT(NOPT(I+1)), where convergence is indicated
-!           with NFLAG= 2 if FN - FNMIN < RELSF * FNMIN .
-!           NOPT(I) = -15 gives RELSF= 0.01  .
+!           with NFLAG = NF_TOLF if FN - FNMIN < RELSF * FNMIN .
+!           NOPT(I) = -15 gives RELSF = 0.01  .
 !    = 16   Set DXNIOS = XOPT(NOPT(I+1)), where DXNOIS is the smallest move
 !           considered to be significant when the norm of f increases.
 !           The initial default is 0, but DXNOIS if updated later.
@@ -362,6 +364,7 @@ contains
 ! C0       Constant 0
 ! C1       Constant 1
 ! C10      Constant 10
+! C100     Constant 100
 ! C1P025   Constant 1.025
 ! C1PXM4   Constant 1.E-4
 ! C4       Constant 4
@@ -458,26 +461,27 @@ contains
 
 ! TOLXA    absolute tolerance on X
 ! TOLXC    tolerance on X
-! TP
-! TP1      Temporary storage
+! TP       Temporary storage
 
 !-----     Local Variables     ------------------------------------
 
     real(rk), parameter :: C0 = 0.0_rk
     real(rk), parameter :: C1 = 1.0_rk
     real(rk), parameter :: C10 = 10.0_rk
+    real(rk), parameter :: C100 = 100.0_rk
     real(rk), parameter :: C1P025 = 1.025_rk
     real(rk), parameter :: C1PXM4 = 1.0E-4_rk
     real(rk), parameter :: C4 = 4.0_rk
-    real(rk), parameter :: CBIG = huge(c0)
+    real(rk), parameter :: CBIG = huge(1.0_rk)
     real(rk), parameter :: CP01 = 0.01_rk
     real(rk), parameter :: CP125 = 0.125_rk
     real(rk), parameter :: CP25 = 0.25_rk
     real(rk), parameter :: CP5 = 0.5_rk
     real(rk), parameter :: CP76 = 0.76_rk
     real(rk), parameter :: CP9 = 0.9_rk
+    integer, parameter :: INCBIG = huge(inc) / 2
 
-    real(rk) :: TP, TP1
+    real(rk) :: TP
 
     real(rk), parameter :: RND = 10.0_rk * epsilon(c0)
 
@@ -523,7 +527,6 @@ contains
 
 ! Test if a retreat to a previous -- best -- X should be made
 
-      ifl = nf_evalj
       tp = spl*ajn*cp9
       if ( fn < fnl ) then
         if ( fn >= fnb ) then
@@ -535,19 +538,7 @@ contains
 
 ! Test for convergence
 
-  200 if ( fnl > c0 ) then
-        if ( dxn <= tolxa .or. &
-           ((sq == c0).or.(spl <= spmini)) .and. dxn <= tolxr * axmax ) then
-          nfl = nf_tolx
-          if ( kb /= 0 ) then
-            aj%fnorm = fnb
-            nfl = nf_tolx_best
-          end if
-          nflag = nfl
-          return
-        end if
-      end if
-      if ( fn < fnl ) go to 735
+      if ( x_converge() ) return
       if ( inc >= 0 ) then
         if ( inc == 0 ) then ! Last X == Best X
           dxnbig = max(dxnl, dxnois)
@@ -561,14 +552,15 @@ contains
           end if
           if ( dxnl <= dxnois ) go to 219
           if ( kb < 0 ) go to 224
-          if ( (tp >= min(sql,sqb+sqb)) .or. (inc >= huge(inc)) ) go to 222
-          inc = inc + 1
+          if ( (tp >= min(sql,sqb+sqb)) .or. (inc >= incbig) ) go to 222
         end if
         sqmin = min(sqb, max(spl, spact)*ajn*c4)
         dxinc = max(dxnl*cp5, dxnois)
+        inc = inc + 1
       end if
 
   219 sql = tp
+      ifl = nf_evalj
       nflag = ifl
       return
 
@@ -582,7 +574,7 @@ contains
 
         kb = 0
         fnl = c0
-        gfac = -gfac/cp01
+        gfac = -gfac*c100
       end if
       go to 230
   228 gfac = -gfac*cp01
@@ -617,7 +609,7 @@ contains
       gradn = aj%gradn   ! L2 norm of gradient
       if ( gradn <= c0 ) then
          gradn = c1
-         if ( ajn <= c0) ajn=c1
+         if ( ajn <= c0) ajn = c1
       end if
       condai = max(min(condai, diag/ajn), (diag/ajn)**2)
       spact = cp25*condai
@@ -626,7 +618,7 @@ contains
       if ( iter == 1 ) then ! First iteration
         sp = spstrt
         spinc = sp
-        if ( frz <= rnd*fnmin ) go to 865
+        if ( frz <= rnd*fnmin ) go to 465
         dxi = cp125
       else
         if ( fn >= fnl ) then
@@ -637,7 +629,7 @@ contains
           if ( dxnl < dxnois ) then
             sp = c1pxm4*sp
             sqmin = min(sqmin, sp*ajn)
-!           dxnl = dxnl / cp01
+!           dxnl = dxnl * c100
             go to 520
           end if
           spfac = max((fn/fnl)**2, c10)
@@ -672,17 +664,22 @@ contains
         tp = fn - (c1+relsf)*fnmin
         if ( (tp < c0) .and. &
            & ( (sq == c0) .or. (spl <= spmini) .or. &
-           &   ( tp <= -(c1+relsf)*spl*fn) ) ) go to 865 ! May eventually
-           ! come back to next statement -- see computed GO TO on NFL near top
+           &   (tp <= -(c1+relsf)*spl*fn) ) ) go to 465
       end if
+      go to 470
 
-! Select new stabilizing parameter
+  465 nfl = nf_tolf
+      nflag = nfl
+      return
+
+! Select new stabilizing parameter.  Also comes back here if user continues
+! after TOLF convergence.
 
   470 tp = min((frz/frzl), (fn/fnl))
 
 ! Test if F appears almost linear over last step
 
-      if ( fn**2 < fnxe ) then ! F appears almost linear.
+      if ( fn**2 < 1.125_rk * fnxe ) then ! F appears almost linear.
         spfac = cp125*(c1p025-cdxdxl)*tp**2
         if ( spl <= spinc) spinc = cp25*spinc
         dxi = min(dxi,cp25)
@@ -693,9 +690,10 @@ contains
         spfac = min(tp*(fn**2)/fnxe, 32.D0*(1.025D0 - cdxdxl)**2)
         dxi = c1
       end if
-  515 if ( gradn > gradnl) spfac = spfac*gradnl/gradn
+  515 if ( gradn > gradnl ) spfac = spfac*gradnl/gradn
       sp = max(spinc, min(spb, spl*spfac))
   520 sp = max(sp, sqmin/ajn)
+!     if ( inc == 0 ) sp = min(sp, 0.5_rk*spl)
       spl = sp
       sq = sp*ajn
       aj%sqt = sq
@@ -719,10 +717,9 @@ contains
       condai = min(cgdx, gradn/(dxn*ajn**2), diag/ajn)
       fnxe = fnmin**2
       if ( sq /= c0) fnxe = fnxe - (sq*dxn)**2
-      tp = dxinc
       if ( inc < 0 ) then
         if ( dxn <= dxinc ) then
-          inc = huge(inc)
+          inc = incbig
           cdxdxl = c0
           go to 735
         end if
@@ -732,36 +729,82 @@ contains
           if ( k1it /= 0 ) call nwtdb ( width=9, level=0, why='Give up' )
           go to 222 ! Go do a gradient move
         end if
-        tp1 = min(cp5, dxi*((c1-cdxdxl)**2))
-        if ( tp*tp1 > dxnl) tp = dxnl/tp1
-        if ( dxn <= tp .or. sp >= 1.0e12_rk ) then
-          ifl = nf_dx
-          if ( inc == 0 ) go to 200
-          cait = cbig
-          go to 755
+        if ( dxn < 1.25_rk * dxinc )  then
+          if ( sq <= c0 .or. dxn > cp5 * dxinc ) then
+             if ( inc == 0 ) then
+               if ( x_converge() ) return
+               go to 735 ! Go save best X, then either DX or Aitken
+             end if
+             cait = cbig
+             go to 755   ! Go use DX
+          end if
+          dxinc = dxi * dxn * (c1 - cdxdxl)**2
         end if
       end if
 
-! Step length is too large
+! Step length is too large or too small
 
       if ( k1it /= 0 ) call nwtdb ( width=9, level=0, why='Step length' )
-      spinc = sp
-      sp = c4*spl + min(condai+condai, min(cp125, condai)*(dxn-tp)/tp)
-      sq = sp*ajn
-      spl = sqrt(sp**2+spl**2)
-      aj%sqt = spl*ajn
-      dxi = dxi*cp5
 
-! Calculate quantities necessary to determine Levenberg-Marquardt parameter
+!{ Calculate qn$^2$ necessary to determine Levenberg-Marquardt parameter.
+!  qn = $|| {\bf q} ||$ where ${\bf U}^T {\bf q} = {\delta\bf x}$.
 
       ifl = nf_lev
       nflag = ifl
       return
 
-! Determine the Levenberg-Marquardt parameter SQ.
+!{ Determine the Levenberg-Marquardt parameter $\lambda$, known here as SQ.
+!  The last Marquardt parameter used was SQ, which means that SQ**2 was
+!  added to the diagonal of the normal equations.  A little bit of 
+!  derivation so you have some idea of what is going on.  Start with
+!%
+!  $({\bf H} + \lambda {\bf I}) {\delta\bf x} = -{\bf g}$,
+!%
+!  where ${\bf H}$ is the Hessian matrix.  In our case, ${\bf A}^T {\bf A}$
+!  is an approximate Hessian.  Differentiating both sides with respect to
+!  $\lambda$ gives
+!%
+!  $({\bf H} + \lambda {\bf I}) \frac{\text{d}{\delta\bf x}}{\text{d}\lambda}
+!  = -{\delta\bf x}$.
+!%
+!  Or, using the Cholesky factor of $({\bf H} + \lambda {\bf I})$, we have
+!  ${\bf U}^T {\bf U} \frac{\text{d}{\delta\bf x}}{\text{d}\lambda} =
+!  -{\delta\bf x}$.
+!%
+!  The ${\bf q}$ we want is ${\bf U}^{-T} {\delta\bf x}$.  Thus from
+!  $\frac{\text{d}{\delta\bf x}}{\text{d}\lambda}^T {\bf U}^T {\bf U}
+!   \frac{\text{d}{\delta\bf x}}{\text{d}\lambda}
+!  = -\frac{\text{d}{\delta\bf x}}{\text{d}\lambda}^T {\delta\bf x}$ we have
+!  ${\bf q}^T {\bf q} =
+!  -\frac{\text{d}{\delta\bf x}}{\text{d}\lambda}^T {\delta\bf x}$.
+!
+!  We intend to find a zero of
+!  $\phi = \frac1{|| {\delta\bf x} ||} - \frac1{\rho}$, where $\rho$ is the desired
+!  step length ${\delta\bf x}$,
+!  treating ${\delta\bf x}$ as a function of $\lambda$.
+!
+!  $\frac{\text{d}\phi}{\text{d}\lambda} =
+!  \frac{\partial ( (|| {\delta\bf x} ||^2)^{-1/2}
+!   - \frac1{\rho})}{\partial{\delta\bf x}}
+!  {\delta\bf x}^T \frac{\partial{\delta\bf x}}{\partial\lambda}
+!  = \frac{-1}{|| {\delta\bf x} ||^{3}} (- {\bf q}^T {\bf q})$
+!
+!  The Newton method gives us
+!
+!  $\lambda_{\text{new}} = \lambda_{\text{old}} -
+!    \phi / \frac{\text{d}\phi}{\text{d}\lambda_{\text{old}}}
+!    = \lambda_{\text{old}} - \frac{|| {\delta\bf x} ||^3}{{\bf q}^T {\bf q}}
+!      \left( \frac1{|| {\delta\bf x} ||} - \frac1{\rho} \right)
+!    = \lambda_{\text{old}} - \frac{|| {\delta\bf x} ||^2}{|| {\bf q} ||^2}
+!      \left(1 - \frac{|| {\bf \delta x} ||}{\rho}\right)$
+!
+! (If you have been looking at Mor\'e and Sorensen, this update is the 
+! negative of theirs since they define $\lambda$ as the negative of the 
+! $\lambda$ above.)
 
   600 continue
-! FRED: This is presumably where you finish off the More' and Sorensen.
+      sq = sqrt(max( 0.0_rk, sq**2 - (dxn**2 / aj%qnsq) * (1.0_rk - dxn / dxinc) ))
+      sp = sq / ajn
       go to 530
 
 ! Store best X, the gradient, and other constants used if a
@@ -781,6 +824,7 @@ contains
       frzb = frz
 !     fnminb = fnmin
       gradnb = gradn
+      aj%gradnb = gradnb
       if ( abs(cdxdxl) < cp9 .or. sq /= c0 .or. dxn >= dxnl ) go to 755
 
 ! Compute scalar factor for (modified) Aitken acceleration
@@ -847,9 +891,6 @@ contains
       end if
       axmax = aj%axmax
       go to 20
-  865 nfl = nf_tolf
-      nflag = nfl
-      return
 
   870 if ( (inc > 0) .and. (kb /= 0) ) go to 222
 
@@ -865,6 +906,26 @@ contains
       nfl = nf_fandj
       nflag = nfl
       return
+
+  contains
+
+    ! ...............................................  X_CONVERGE  .....
+    logical function X_CONVERGE ( )
+    ! Test whether convergence has occurred due to very small \delta X
+      x_converge = .false.
+      if ( fnl > c0 ) then
+        if ( dxn <= tolxa .or. &
+          & ((sq == c0).or.(spl <= spmini)) .and. dxn <= tolxr * axmax ) then
+          nfl = nf_tolx
+          if ( kb /= 0 ) then
+            aj%fnorm = fnb
+            nfl = nf_tolx_best
+          end if
+          nflag = nfl
+          x_converge = .true.
+        end if
+      end if
+    end function X_CONVERGE
 
   end subroutine DNWTA
 
@@ -1023,7 +1084,7 @@ contains
     call add_to_line ( condai, 'CONDAI' )
     call add_to_line ( diag,   'DIAG' )
     if ( myLevel > 0 ) call add_to_line ( dxi,    'DXI' )
-    if ( myLevel > 0 ) call add_to_line ( dxinc,  'DXINC' )
+    call add_to_line ( dxinc,  'DXINC' )
     if ( myLevel > 0 ) call add_to_line ( dxmaxi, 'DXMAXI' )
     call add_to_line ( dxn,    'DXN' )
     if ( myLevel > 0 ) call add_to_line ( dxnbig, 'DXNBIG' )
@@ -1188,6 +1249,8 @@ contains
       itsName = 'EVALF'
     case ( NF_EVALJ )
       itsName = 'EVALJ'
+    case ( NF_LEV )
+      itsName = 'LEV'
     case ( NF_SOLVE )
       itsName = 'SOLVE'
     case ( NF_NEWX )
@@ -1226,6 +1289,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.41  2003/02/03 23:11:23  vsnyder
+! Implement Mor\'e and Sorensen calculation of the Lavenberg parameter
+!
 ! Revision 2.40  2003/01/18 01:39:57  vsnyder
 ! More output, prepare for More and Sorensen
 !
