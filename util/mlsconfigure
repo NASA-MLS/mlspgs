@@ -31,7 +31,7 @@
 #
 #        O p t i o n s
 #  -h[elp]              (if present) Help (a work in progress)
-#  -c compiler_name     Name of Fortran compiler (NAG or LF95)
+#  -c compiler_name     Name of Fortran compiler (Absoft, NAG, LF95, Sun)
 #  -p platform_name     Name of computer or OS (Linux , sun, or sgi)
 #  -dc conf_dir         Directory where .configuration file is to be stored
 #  -pc plat_dir         Directory where platforms directory to be found
@@ -137,7 +137,7 @@ EOF_1
 
 #accept user compiler and platforms settings to be written to file .configure
 
- UserPrompt "Fortran 95 Compiler (Lahey, NAG, absoft) [$current_compiler]"
+ UserPrompt "Fortran 95 Compiler (Lahey, NAG, absoft, Sun) [$current_compiler]"
    if [ "$user_response" != "" ] ; then
 	case  "$user_response" in
 	    n* | N* )
@@ -151,6 +151,10 @@ EOF_1
 	    a* | A* )
 		echo "Absoft compiler selected."
 		compiler=Abs
+	    ;;
+	    s* | S* )
+		echo "Sun's own (*not* NAG) f95 compiler selected."
+		compiler=Sun
 	    ;;
 	    * )
 		echo "Unknown compiler selected."
@@ -640,7 +644,7 @@ MLS_default_LDOPTS=
 
 #---------------------- Settings written to .configure file
 
-#MLSF95     name of the compiler: LF95, NAG, or Abs
+#MLSF95     name of the compiler: LF95, NAG, Sun, Abs
 #MLSPLAT    name of the platform: Sun, SGI, or Linux
 #MLSCONFG   MLSF95.MLSPLAT
 #PGSINC     path to the toolbox include files
@@ -826,6 +830,8 @@ if [ "$current_FOPTS" = "" ] ; then
 			fi
 		elif [ "$compiler" = "Abs" ] ; then
 			FOPTS="$MLS_default_FOPTS_Abs"
+		elif [ "$compiler" = "Sun" ] ; then
+			FOPTS="$MLS_default_FOPTS_Abs"
 		else
 			FOPTS="$MLS_default_FOPTS_LF95"
 		fi
@@ -979,6 +985,9 @@ fi
 
 exit
 # $Log$
+# Revision 1.20  2001/08/15 20:57:26  pwagner
+# Fixed bug--MLSF95 vand MLSPLAT were undefined
+#
 # Revision 1.19  2001/07/27 19:57:07  pwagner
 # Added mega_buck function; exports BLAS and LIB_BLAS
 #
