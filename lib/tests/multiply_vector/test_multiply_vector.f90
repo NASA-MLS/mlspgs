@@ -99,7 +99,7 @@ program TEST_MULTIPLY_VECTOR
       stop
     end if
     n = nrm * ncm
-    nnz = max(n * sparsity, ncm)
+    nnz = max( int(n * sparsity), ncm)
     call createBlock ( m, nrm, ncm, M_Column_Sparse, nnz )
     call random_number ( m%values )
     m%r2 = m%values(:,1) * n
@@ -168,6 +168,9 @@ program TEST_MULTIPLY_VECTOR
 end program TEST_MULTIPLY_VECTOR
 
 ! $Log$
+! Revision 1.1  2000/11/09 17:27:04  pwagner
+! First commit
+!
 ! Revision 2.1  2000/10/31 23:35:52  vsnyder
 ! Initial commit
 !
