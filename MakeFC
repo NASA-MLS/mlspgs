@@ -183,11 +183,12 @@ SHELL = /bin/sh
 # CondenseLeakLog-- build and install this prog
 # end_stmts      -- build and install this prog
 # f90tex         -- build and install this prog
-# init_gen       -- build and install this prog
 # h5cat          -- build and install this prog
 # h5subset       -- build and install this prog
 # heconvert      -- build and install this prog
 # hl             -- build and install this prog
+# init_gen       -- build and install this prog
+# utctotai       -- build and install this lib
 #
 #    The following are useful if you stored multiple configurations
 #     besides current one
@@ -295,7 +296,7 @@ EVERYTHING = $(SUBDIRS)  srclib\
 #    make tar TAR=/usr/local/gnu/bin/tar
 TAR=tar
 
-# These are all the configurations that will be removed by clean_all
+# These are all the configurations that will be removed by distclean
 # EVERY_MLSCONFG = LF95.Linux  NAG.Linux  NAG.SGI  NAG.Sun  Unknown.None  Sun.Sun
 # Instead of hard-coding, as customized name are now possible for MLSCONFG
 # we will let reecho.sh find the ones we'll use
@@ -322,6 +323,24 @@ else
 	LOOKS_LIKE_line = ln -s MakeFC Makefile
 endif
 
+# utctotai lib sources
+UTCDIR=utctotai
+# If we can't count on the toolkit routines, sadly then
+# we must supply some of the PGS_TD stuff ourselves
+ifndef PGSTK
+  utctotai_sources = \
+ $(UTCDIR)/PGS_SMF1.c $(UTCDIR)/PGS_SMF.h $(UTCDIR)/PGS_TD_timeCheck.c \
+ $(UTCDIR)/PGS_TD_TAIjdtoTAI.c $(UTCDIR)/PGS_TD_UTCtoUTCjd.c \
+ $(UTCDIR)/mls_bindFORTRAN.c $(UTCDIR)/mls_LeapSec.c $(UTCDIR)/mls_UTCtoTAI.c \
+ $(UTCDIR)/mls_UTCjdtoTAIjd.c \
+ test.f90
+else
+  utctotai_sources = \
+ $(UTCDIR)/PGS_SMF.h \
+ $(UTCDIR)/mls_bindFORTRAN.c $(UTCDIR)/mls_LeapSec.c $(UTCDIR)/mls_UTCtoTAI.c \
+ $(UTCDIR)/mls_UTCjdtoTAIjd.c \
+ test.f90
+endif
 #----------------------- Build instructions
 
 # Automatic targets
@@ -503,6 +522,15 @@ $(MLSBIN)/convert.c $(MLSBIN)/HE5_HdfEosDef.h: $(MLSBIN)/heconvert.shar
 	@cd $(MLSBIN); \
    /bin/sh heconvert.shar
 
+# unshar the sources for the utctotai lib
+$(utctotai_sources): $(MLSBIN)/utctotai.shar
+	@if [ ! -d $(UTCDIR) ]; then \
+     mkdir $(UTCDIR); \
+	fi ; \
+	cp $(MLSBIN)/utctotai.shar $(UTCDIR); \
+	cd $(UTCDIR); \
+	/bin/sh utctotai.shar
+
 # build and install some of the executables out of util
 CondenseLeakLog: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/CondenseLeakLog.f90
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
@@ -585,6 +613,11 @@ hl: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/hl.c
       -c $(MLSCONFG) -p $@ -M $(MAKE) \
 	   -C $(MLSCFILE) $(MLSBIN)/$@.c
 
+utctotai: $(CONFDIR)/$(MLSCFILE) $(utctotai_sources)
+		$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+		-c $(MLSCONFG) -p $@ -M $(MAKE) -T lib -ni\
+		-C $(MLSCFILE) $(utctotai_sources)
+		mv ./tests/misc/$(MLSCONFG)/libmisc.a $(INSTALLDIR)/libutctotai.a
 # allow user to forego "-f MakeFC" nonsense
 makefile:
 	@if [ $(COPY_NUMBER) -lt $(MAX_COPIES) ] ; then \
@@ -631,7 +664,7 @@ distclean:
 	 for dir in $(EVERY_MLSCONFG); do \
 	  $(MAKE) -f $(MakeFName) clean_config MLSCONFG=$$dir; \
 	done
-	@$(MAKE) -f $(MakeFName) internalcleanup ; \
+	@$(MAKE) -f $(MakeFName) internalcleanup
 
 #For preparing source distributions
 
@@ -848,6 +881,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.66  2002/04/18 20:16:30  pwagner
+# Tiny changes in comments
+#
 # Revision 1.65  2002/02/21 21:55:42  pwagner
 # Sets to blank extra options in install
 #
