@@ -57,6 +57,7 @@ SHELL = /bin/sh
 # clean          -- deletes uniquely-named sub-sub-directories
 # clean_objs     -- deletes only *.o, *.mod from sub-subs
 # install        -- mv programs mlsl* from sub-subs to CONFDIR
+# update         -- replaces customized Makefiles with latest versions
 #
 #    The following are useful if you stored multiple configurations
 #     besides current one
@@ -140,8 +141,10 @@ tar tar_subs tar_sips: clean_all
 
 install: all
 
+update: depends
+
 .PHONY: configure depends subdirs clean clean_objs clean_config clean_all\
-  tar tar_subs tar_sips all install levels configure_subdirs
+  tar tar_subs tar_sips all install levels configure_subdirs update
 
 configure:
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
@@ -160,6 +163,15 @@ configure_subdirs:
 		cd $$dir ; \
 		../$(MLSBIN)/mlsconfigure -dc "../$(CONFDIR)" -pc "$(PLATFORMS)" \
           -c "$(MLSF95)" -p "$(MLSPLAT)" -nc; \
+		cd .. ; \
+	done
+
+update:
+	@echo "Updating the Makefile in $(SUBDIRS)"; \
+	 for dir in $(SUBDIRS); do \
+		cd $$dir ; \
+		../$(MLSBIN)/mlsconfigure -dc "../$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -nc -nd; \
 		cd .. ; \
 	done
 
@@ -243,6 +255,9 @@ tar_subs:
 	tar -cvf mlspgs_subs.tar *.tgz
 
 # $Log$
+# Revision 1.14  2001/02/09 21:46:43  pwagner
+# Eliminated l2pc from other_subdirs
+#
 # Revision 1.13  2001/01/23 19:16:26  pwagner
 # #-ed out loop over subdirs when configuring
 #

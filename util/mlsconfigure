@@ -35,7 +35,8 @@
 #  -p platform_name     Name of computer or OS (Linux , sun, or sgi)
 #  -dc conf_dir         Directory where .configuration file is to be stored
 #  -pc plat_dir         Directory where platforms directory to be found
-#  -nc                  (if present) Don't query to change configuration
+#  -nc                  (if present) Don't query nor change configuration
+#  -nd                  (if present) Don't delete ./$MLSCONFG if it already exists
 #
 # Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
@@ -399,6 +400,7 @@ Help()
 conf_dir="./"
 plat_dir="./"
 get_confg="true"
+del_exist_dir="true"
 
 current_compiler=$MLSF95
 current_platform=$MLSPLAT
@@ -455,6 +457,10 @@ while [ "$1" != "" ] ; do
 	    get_confg="false"
 	;;
 
+	-nd )
+	    del_exist_dir="false"
+	;;
+
     esac
     shift
 
@@ -506,9 +512,11 @@ export MLSF95
 export MLSPLAT
 export MLSCONFG
 
-echo "MLSF95 is now $MLSF95"
-echo "MLSPLAT is now $MLSPLAT"
-echo "MLSCONFG is now $MLSCONFG"
+if [ $get_confg = "true" ] ; then
+	echo "MLSF95 is now $MLSF95"
+	echo "MLSPLAT is now $MLSPLAT"
+	echo "MLSCONFG is now $MLSCONFG"
+fi
 
 #Don't create object-file directory if platforms not a directory
 if [ ! -d $plat_dir/platforms ] ; then
@@ -516,8 +524,17 @@ if [ ! -d $plat_dir/platforms ] ; then
 fi
 
 #Create object-file directory for this MLSCONFG
+#unless $del_exist_dir reset to false
+# Because mlsconfigure may be called simply to update $MLSCONFG/Makefile
+made_new_dir="false"
+
 if [ "$MLSCONFG" = "." ] ; then
 	echo "MLSCONFG not yet defined--still $MLSCONFG"
+elif [ "$del_exist_dir" != "true" ] ; then
+	if [ ! -d $plat_dir/$MLSCONFG ] ; then
+        mkdir $plat_dir/$MLSCONFG
+			made_new_dir="true"
+	fi
 elif [ -d $plat_dir/$MLSCONFG ] ; then
 #	echo "Clearing out directory `pwd`$plat_dir/$MLSCONFG"
 #	echo "(Be careful that this is not too ambitious)"
@@ -528,6 +545,7 @@ elif [ -d $plat_dir/$MLSCONFG ] ; then
 	rm -f $plat_dir/$MLSCONFG/*
 else
         mkdir $plat_dir/$MLSCONFG
+			made_new_dir="true"
 fi
 
 if [ ! -f $plat_dir/platforms/$MLSCONFG ] ; then
@@ -540,19 +558,23 @@ if [ ! -f $plat_dir/platforms/targets ] ; then
 	exit
 fi
 
-# Because mlsconfigure may be called simply to update $MLSCONFG/Makefile
 cat $conf_dir/.configure $plat_dir/platforms/$MLSCONFG $plat_dir/platforms/targets > $plat_dir/$MLSCONFG/Makefile
 
-echo "Configured mls to use $plat_dir/platforms/$MLSCONFG "
-echo "(This is where your object files, .mod files, libraries,"
-echo "and executable programs will be created)"
-echo "To build the software, enter the 'make' command again"
-echo ""
-echo "If you later wish to rebuild for a different compiler"
-echo "or platform, enter 'make configure'"
+if [ "$made_new_dir" = "true" ] ; then
+	echo "Configured mls to use $plat_dir/platforms/$MLSCONFG "
+	echo "(This is where your object files, .mod files, libraries,"
+	echo "and executable programs will be created)"
+	echo "To build the software, enter the 'make' command again"
+	echo ""
+	echo "If you later wish to rebuild for a different compiler"
+	echo "or platform, enter 'make configure'"
+fi
 
 exit
 # $Log$
+# Revision 1.4  2001/01/23 19:41:36  pwagner
+# Adds support for PVM
+#
 # Revision 1.3  2000/10/21 00:23:58  pwagner
 # Added paths to .configure
 #
