@@ -30,6 +30,7 @@ module LOAD_SPS_DATA_M
     integer,  pointer :: windowfinish(:) => null()! horizontal ending index
 !                                                   from l2gp
     logical,  pointer :: lin_log(:) => null()   ! type of representation basis
+    real(r8), pointer :: min_val(:) => null()   ! Minimum value
     real(r8), pointer :: frq_basis(:) => null() ! frq grid entries for all
 !                                                 molecules
     real(rp), pointer :: zet_basis(:) => null() ! zeta grid entries for all
@@ -152,10 +153,12 @@ contains
     call allocate_test ( Grids_x%windowfinish,no_mol,'Grids_x%windowfinish',&
                        & ModuleName )
     call Allocate_test ( Grids_x%lin_log, no_mol, 'lin_log', ModuleName )
+    call Allocate_test ( Grids_x%min_val, no_mol, 'min_val', ModuleName )
 
     Grids_x%no_z = 0
     Grids_x%no_p = 0
     Grids_x%no_f = 0
+    grids_x%min_val = -huge(0.0_r8)
 
     f_len = 0
 
@@ -201,6 +204,7 @@ contains
       f_len = f_len + kz * kp * kf
       if (f%template%logBasis) then
         Grids_x%lin_log(ii) = .true.
+        Grids_x%min_val(ii) = f%template%minValue
       else
         Grids_x%lin_log(ii) = .false.
       endif
@@ -264,8 +268,8 @@ contains
       Grids_x%values(f_len:r-1) = reshape(f%values(1:kf*kz,wf1:wf2), &
                                       & (/kf*kz*kp/))
       if (Grids_x%lin_log(ii)) then
-        where (Grids_x%values(f_len:r-1) <= 1.0e-16_rp) &
-             & Grids_x%values(f_len:r-1) = 1.0e-16_rp
+        where (Grids_x%values(f_len:r-1) <= grids_x%min_val(ii)) &
+             & Grids_x%values(f_len:r-1) = grids_x%min_val(ii)
         Grids_x%values(f_len:r-1) = log(Grids_x%values(f_len:r-1))
       endif
 !
@@ -303,6 +307,7 @@ contains
   call deallocate_test(grids_x%no_p,'grids_x%no_p',modulename)
   call deallocate_test(grids_x%values,'grids_x%values',modulename)
   call deallocate_test(grids_x%lin_log,'grids_x%lin_log',modulename)
+  call deallocate_test(grids_x%min_val,'grids_x%min_val',modulename)
   call deallocate_test(grids_x%frq_basis,'grids_x%frq_basis',modulename)
   call deallocate_test(grids_x%zet_basis,'grids_x%zet_basis',modulename)
   call deallocate_test(grids_x%phi_basis,'grids_x%phi_basis',modulename)
@@ -314,6 +319,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.24  2002/09/05 20:48:59  livesey
+! Added moleculeDerivatives info into deriv_flags
+!
 ! Revision 2.23  2002/08/22 23:13:45  livesey
 ! New frequency basis on IF
 !
