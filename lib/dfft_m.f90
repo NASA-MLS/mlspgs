@@ -5,7 +5,24 @@ module DFFT_M
 
   implicit NONE
   private
-  public :: DFFT, DRFT1, DTCST
+  public :: DFFT, DRFT1, DTCST, FFT
+  public :: InitSineTable, RFT1, TCST
+
+  interface FFT
+    module procedure DFFT
+  end interface FFT
+
+  interface InitSineTable
+    module procedure DInitSineTable
+  end interface InitSineTable
+
+  interface RFT1
+    module procedure DRFT1
+  end interface RFT1
+
+  interface TCST
+    module procedure DTCST
+  end interface TCST
 
   !---------------------------- RCS Ident Info -------------------------------
   character(len=*), private, parameter :: IdParm = &
@@ -16,11 +33,13 @@ module DFFT_M
   private :: not_used_here
   !---------------------------------------------------------------------------
 
-  double precision, parameter :: HALF = 0.5d0
+  integer, parameter :: RK = kind(0.0d0) ! Real Kind type parameter
+
+  real(rk), parameter :: HALF = 0.5_rk
   ! PI4 = Pi/4
-  double precision, parameter :: PI4 = 0.7853981633974483096156608458198757D0
+  real(rk), parameter :: PI4 = 0.7853981633974483096156608458198757_rk
   ! SPI4 = Sin(Pi/4) = Sqrt(2)/2
-  double precision, parameter :: SPI4 = .7071067811865475244008443621048490D0
+  real(rk), parameter :: SPI4 = .7071067811865475244008443621048490_rk
 
 
   ! THE DIMENSION OF KE MUST BE AS LARGE AS THE MAXIMUM VALUE
@@ -43,11 +62,11 @@ module DFFT_M
 contains
 
 !=====================================================================
-!=================== Coversion of the f77 fft.f to f90 ===============
-!  The JPL Double Precision FFT Package.
+!=================== Conversion of the f77 fft.f to f90 ==============
+!  The JPL real(rk) FFT Package.
 !---------------------------------------------------------------------
 
-      subroutine DRFT1 (A,MODE,M,MS,S)
+      subroutine DRFT1 ( A, MODE, M, MS, S )
 
 !>> 1994-11-11 DRFT1  Krogh   Declared all vars.
 !>> 1994-10-20 DRFT1 Krogh  Changes to use M77CON
@@ -63,9 +82,10 @@ contains
       use ERMSG_M, only: ERM1, ERMSG
 
 !     Variables in the calling sequence have the following types
-      DOUBLE PRECISION A(:), S(:)
-      INTEGER          M, MS
-      CHARACTER        MODE
+      real(rk), intent(inout) :: A(:), S(:)
+      integer, intent(in)     :: M
+      integer, intent(inout)  :: MS
+      character, intent(in)   :: MODE
 
 !     Programmed by Fred T. Krogh at the Jet Propulsion Laboratory,
 !     Pasadena, Calif.   August 1, 1969.
@@ -144,12 +164,12 @@ contains
       INTEGER MA, MSI
       INTEGER N1P
 
-      DOUBLE PRECISION FN
-      DOUBLE PRECISION T, TI, TT, TTI, TWO, WI, WR
+      real(rk) FN
+      real(rk) T, TI, TT, TTI, TWO, WI, WR
       CHARACTER(LEN=19) :: MSG1 = 'Bad MODE, MODE =  .'
       LOGICAL ANAL
 
-      PARAMETER (TWO = 2.0D0)
+      PARAMETER (TWO = 2.0_rk)
 !     ------------------------------------------------------------------
 
       if ( MODE == 'A' .or. MODE == 'a' ) then
@@ -174,7 +194,7 @@ contains
          end if
          MS = MA
          MT = MA - 2
-         call DFFT (A, A, S)
+         call fft (A, A, S)
          if ( MSI == -1 ) return
       end if
       if ( MA /= 0 ) then
@@ -203,7 +223,7 @@ contains
             KEE(L+1) = KEE(L) / 2
          end do ! L
 
-         call DFFT (A(IR:), A(II:), S)
+         call fft (A(IR:), A(II:), S)
 !                              End of computing complex transform
 
          if ( .NOT. ANAL ) return
@@ -281,7 +301,7 @@ contains
 !     Pasadena, Calif.   August 1, 1969.
 !     Revised by Krogh at JPL -- January 19, 1988 -- For portability
 
-      DOUBLE PRECISION AR(:), AI(:), S(:)
+      real(rk), intent(inout) :: AR(:), AI(:), S(:)
 !     Minimum dimensions are AR(ILAST), AI(ILAST), S(NT-1), where ILAST
 !     and NT are module variables.
 
@@ -292,55 +312,24 @@ contains
 !     -----------------------------------------------------------------
 !--D replaces "?": ?FFT, C?FFTC
 !     -----------------------------------------------------------------
-      INTEGER I, I1, I2, I3, IJ
-      INTEGER J, JDIF, JI, JI2, JJ, JR
-      INTEGER K, KSI
-      INTEGER L, L1, L4, LJ, LL
-      INTEGER MTC
+      integer I, I1, I2, I3, IJ
+      integer J, JDIF, JI, JI2, JR
+      integer KSI
+      integer L, L1, L4, LJ
 
-      DOUBLE PRECISION T, T1, T1I, T2, T2I, T3, T3I, THETA
-      DOUBLE PRECISION TI, TP, TP1, TP1I, TPI
-      DOUBLE PRECISION WI1, WI2, WI3, WR1, WR2, WR3
-      LOGICAL SPCASE
+      real(rk) T, T1, T1I, T2, T2I, T3, T3I
+      real(rk) TI, TP, TP1, TP1I, TPI
+      real(rk) WI1, WI2, WI3, WR1, WR2, WR3
+      logical SPCASE
 
 !     -----------------------------------------------------------------
 
       if (NEEDST) then
 !                      Compute the sine table
-         NEEDST = .FALSE.
-         MTC = MT
-         NT = 2**MTC
-         if (MTC > 0) then
-!                            SET FOR L=1
-            J = NT
-            JJ = J / 2
-            S(JJ) = SPI4
-            if (MTC > 1) then
-               THETA = PI4
-               do L = 2, MTC
-                  THETA = HALF * THETA
-                  K = J
-                  J = JJ
-                  JJ = JJ / 2
-!                       At this point J = 2**(MT-L+1) and JJ = 2**(MT-L)
-                  S(JJ) = SIN(THETA)
-                  L1 = NT - JJ
-                  S(L1) = COS(THETA)
-                  LL = NT - K
-                  if (LL >= J) then
-                     do I = J, LL, J
-                        I1 = NT - I
-                        I2 = I + JJ
-                        S(I2) = S(I) * S(L1) + S(JJ) * S(I1)
-                     end do ! I
-                  end if
-               end do ! L
-            end if
-         end if
+         call initSineTable ( s, mt )
       else
 !                      Compute the transform
 !                           Scramble A
-!
          IJ = 1
          JI = 1
          L1 = KS
@@ -535,9 +524,10 @@ ij_l:       do
       use ERMSG_M, only: ERM1, ERMSG
 
 !     Variables in the calling sequence have the following types
-      DOUBLE PRECISION A(:), S(:)
-      INTEGER   ND, M(ND), MS
-      CHARACTER*(*) TCS, MODE
+      real(rk), intent(inout)      :: A(:), S(:)
+      integer, intent(in)          :: ND, M(ND)
+      integer, intent(inout)       :: MS
+      character(len=*), intent(in) :: TCS, MODE
 
 !     Programmed by Fred F. Krogh at the Jet Propulsion Laboratory,
 !     Pasadena, Calif.   August 1, 1969.
@@ -652,32 +642,26 @@ ij_l:       do
 !     Both versions use ERM1
 !     and need ERFIN, IERV1
 !     -----------------------------------------------------------------
-      INTEGER MAXMX, NDMAX
-      PARAMETER (NDMAX = 6)
+      integer, parameter :: NDMAX = 6
+      integer, parameter :: MAXMX = KEDIM+1
 
-      INTEGER I, I1, II, IR, ITCS(NDMAX), ITCSK
-      INTEGER J, JDIF, JJ, JK
-      INTEGER K, KDR
-      INTEGER KII, KIN, KK, KKI, KKL, KKN
-      INTEGER L
-      INTEGER MA, MI, MMAX, MSI, MU(NDMAX)
-      INTEGER N, NDD, NDIV, NF(NDMAX+1)
-      INTEGER NI, NI1, NI2, NI2I, NTOT2
+      integer I, I1, II, IR, ITCS(NDMAX), ITCSK
+      integer J, JDIF, JJ, JK
+      integer K, KDR
+      integer KII, KIN, KK, KKI, KKL, KKN
+      integer L
+      integer MA, MI, MMAX, MSI, MU(NDMAX)
+      integer N, NDD, NDIV, NF(NDMAX+1)
+      integer NI, NI1, NI2, NI2I, NTOT2
 
-      CHARACTER  MSG1*13, MSG2*12
+      character :: MSG1*13 = 'MODE(K:K) = ?', MSG2*12 = 'TCS(K:K) = ?'
 
-      DOUBLE PRECISION FN, FOUR, ONE
-      DOUBLE PRECISION SUM, T, T1, TP, TPI, TS, TS1, TWO
-      DOUBLE PRECISION WI, WR, ZERO
+      real(rk) FN, SUM, T, T1, TP, TPI, TS, TS1, WI, WR
 
-      PARAMETER (ZERO = 0.0D0)
-      PARAMETER (ONE = 1.0D0)
-      PARAMETER (TWO = 2.0D0)
-      PARAMETER (FOUR = 4.0D0)
+      real(rk), parameter :: ZERO = 0.0_rk, ONE = 1.0_rk, TWO = 2.0_rk
+      real(rk), parameter :: FOUR = 4.0_rk
 
-      PARAMETER (MAXMX = KEDIM+1)
-      DATA MSG1 / 'MODE(K:K) = ?' /
-      DATA MSG2 / 'TCS(K:K) = ?' /
+
 !     -----------------------------------------------------------------
 
       NDD = ND
@@ -728,9 +712,7 @@ ij_l:       do
             MM = MM + 1
          end if
          NF(K+1) = NF(K) * N
-         if ( MM > MMAX ) then
-            MMAX = MM
-         end if
+         MMAX = max(MMAX, MM)
       end do ! K
 
       MSI = MS
@@ -746,11 +728,11 @@ ij_l:       do
             end if
          end if
          NEEDST = .true.
-         call ERMSG('DRFT1', 3, 1, 'Invalid sine table (re)computed', '.')
+         call ERMSG('DTCST', 3, 1, 'Invalid sine table (re)computed', '.')
       end if
       MS = MMAX
       MT = MMAX - 2
-      call DFFT (A, A, S)
+      call fft (A, A, S)
       if ( MSI == -1 ) return
 !                   All setup for computation now
    15 NTOT2 = NF(NDD+1)
@@ -886,7 +868,7 @@ ii_l:      do
              II = IR + KDR
 
 !            Compute a one-dimensional complex Fourier transform
-  110        call DFFT (A(IR:), A(II:), S)
+  110        call fft (A(IR:), A(II:), S)
              if ( MI < 0 ) go to 80
              if ( MI /= 0 ) go to 140
   120        if ( ITCSK == 1 ) go to 140
@@ -948,6 +930,48 @@ ii_l:      do
 
 !=====================================================================
 
+  subroutine DInitSineTable ( S, LogSize )
+  ! Initialize a sine table S of size 2**LogSize - 1
+    real(rk), intent(out) :: S(:)
+    integer, intent(in) :: LogSize
+
+    integer :: I, I1, I2, J, JJ, K, L, L1, LL
+    real(rk) :: THETA
+    mt = logSize
+    needst = .true.
+    nt = 2**mt
+    if (mt > 0) then
+!                       Set for L = 1
+      j = nt
+      jj = j / 2
+      s(jj) = spi4
+      if (mt > 1) then
+        theta = pi4
+        do l = 2, mt
+          theta = half * theta
+          k = j
+          j = jj
+          jj = jj / 2
+!               At this point J = 2**(MT-L+1) and JJ = 2**(MT-L)
+          s(jj) = sin(theta)
+          l1 = nt - jj
+          s(l1) = cos(theta)
+          ll = nt - k
+          if (ll >= j) then
+            do i = j, ll, j
+              i1 = nt - i
+              i2 = i + jj
+              s(i2) = s(i) * s(l1) + s(jj) * s(i1)
+            end do ! I
+          end if
+        end do ! L
+      end if
+    end if
+
+  end subroutine DInitSineTable 
+   
+!=====================================================================
+
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
@@ -955,6 +979,9 @@ ii_l:      do
 end module DFFT_M
 
 ! $Log$
+! Revision 2.9  2004/02/12 02:19:12  vsnyder
+! Move DInitSineTable out of DFFT into a separate procedure, more f90-isms
+!
 ! Revision 2.8  2004/01/29 19:54:35  vsnyder
 ! Remove unused variable
 !
