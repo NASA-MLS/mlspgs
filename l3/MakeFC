@@ -78,7 +78,7 @@ $(PROG): $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
 		;; \
 	esac 
 
-$(libmls_objs)/libmls.a: $(libmls_f90)
+$(libmls_objs)/libmls.a: $(libmls_f90) $(CONFDIR)/.configure
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
 .PHONY: configure depends clean tar mostlyclean tarz targ mlsl3
@@ -143,6 +143,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl3
 
 # $Log$
+# Revision 1.16  2001/05/01 17:07:44  pwagner
+# Now runs ghostbuster when updating
+#
 # Revision 1.15  2001/04/12 22:03:08  pwagner
 # Changes to lib or fwdmdl trigger rebuilds even on suns
 #

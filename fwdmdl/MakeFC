@@ -73,7 +73,7 @@ $(PROG): $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
 l2_test: libfwdmdl.a
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) l2_test
 
-$(libmls_objs)/libmls.a: $(libmls_f90)
+$(libmls_objs)/libmls.a: $(libmls_f90) $(CONFDIR)/.configure
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
 .PHONY: configure depends clean tar mostlyclean targ tarz libfwdmdl.a l2_test
@@ -135,6 +135,9 @@ targ:
 	$(TAR) hcvzf ../fwdmdl.tgz * --exclude \*.o --exclude \*.mod --exclude l2_test
 
 # $Log$
+# Revision 1.12  2001/05/01 17:07:43  pwagner
+# Now runs ghostbuster when updating
+#
 # Revision 1.11  2001/04/12 22:03:08  pwagner
 # Changes to lib or fwdmdl trigger rebuilds even on suns
 #
