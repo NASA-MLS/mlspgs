@@ -52,7 +52,7 @@ contains
     integer :: Error                    ! >= indicates an error occurred
     integer :: Field                    ! Of the "sids" specification
     integer :: config                   ! Index for config loop
-    integer, pointer, dimension(:) :: configs=>NULL() ! Forward model configs
+    integer, dimension(:), pointer :: Configs ! Forward model configs
     type(vector_T), pointer :: FwdModelIn
     type(vector_T), pointer :: FwdModelExtra
     type(vector_T), pointer :: FwdModelOut
@@ -70,6 +70,8 @@ contains
     integer, parameter :: NotPlain = needJacobian + 1  ! Not a "plain" matrix
 
     if ( toggle(gen) ) call trace_begin ( "SIDS", root )
+
+    nullify ( configs )
 
     ! Process the fields of the "sids" specification
     error = 0
@@ -176,6 +178,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.27  2001/05/03 20:33:51  vsnyder
+! Added a nullify and did some cosmetic changes
+!
 ! Revision 2.26  2001/05/01 23:52:54  vsnyder
 ! Allocate and deallocate fmStat%rows here
 !
