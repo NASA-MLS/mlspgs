@@ -47,6 +47,7 @@ begin Fill
   ;; Now fill some remaining stuff
   Fill, quantity=apriori.refGPH, method=explicit, explicitvalues=16 km,/spread
 
+  !ifdef(skipHydrostatic,{},{
   ;; Now compute the tangent presssures for apriori
   Fill, quantity=apriori.ptanGHz, method=hydrostatic, $
     h2oQuantity=apriori.h2o, $
@@ -60,6 +61,7 @@ begin Fill
     refGPHQuantity=apriori.refGPH, $
     geocAltitudeQuantity=apriori.tngtGeocAltTHz, $
     maxIterations=10
+  })
 })
 
 end Fill

@@ -5,12 +5,6 @@ begin Construct
 
   ;; ----------------------------------------- Macros
 
-  ;; Define some macros we need for various quantities
-  !define(allRadiometers,{R1A, R1B, R2, R3, R4, R5H, R5V})
-  !define(allBands,{!forloop({i},1,33,{!i, })34}) ; 1,2,3..34
-  !define(allBandLSBs,{!makelist({},{L},!allBands)})
-  !define(allBandUSBs,{!makelist({},{U},!allBands)})
- 
   ;; Define all the molecules we'll consider.  Note that this is only
   ;; non-isotopic species (at least for the moment).
   ;; *** NOTE NO CONTINUATION LINES ALLOWED, SORRY!
@@ -203,9 +197,10 @@ begin Construct
   ;; Put extra line breaks here to get round a problem I'm having
   ;; running this with NAG.
   stateTemplate: VectorTemplate, quantities = [ $
-    ptanGHZ, ptanTHz, temperature, temperature_HR, refGPH, GPH, $
+    ptanGHZ, ptanTHz, temperature, $
+    !ifdef(skipHiRes,{},{temperature_HR,}) refGPH, GPH, $
     !allMolecules, $
-    !allHiResMolecules, $
+    !ifdef(skipHiRes,{},{!allHiResMolecules,}) $
     rhi, !allBaselines, $
     !allExtinctions, $
     !allIsotopeRatios, $

@@ -1,11 +1,5 @@
-!divert(-1)
-;; $Id$
+begin Output
 
-;; This l2cf fragment outputs the species joined by joinstate.l2cf
-
-
-;; Only do the output if the output version has been defined
-!divert!dnl
 !ifdef(outputVersion,{
 
 ;  This is good for the l2cf run with the toolkit panoply
@@ -38,3 +32,4 @@
 !stdprod(rhi,RHI,)
 
 })
+end Output

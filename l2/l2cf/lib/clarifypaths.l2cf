@@ -8,9 +8,9 @@
 !ifdef(inpathl1brad,{},{!define(inpathl1brad,!inpath)})
 ; ------------------------------------------ Level 2 files
 !ifdef(inpathl2gp,{},{!define(inpathl2gp,!inpath)})
+!ifdef(inpathl2aux,{},{!define(inpathl2aux,!inpath)})
 !ifdef(outpathl2gp,{},{!define(outpathl2gp,!outpath)})
-!ifdef(outpathl2gp,{},{!define(inpathl2aux,!inpath)})
-!ifdef(outpathl2gp,{},{!define(outpathl2aux,!outpath)})
+!ifdef(outpathl2aux,{},{!define(outpathl2aux,!outpath)})
 ; ------------------------------------------ Climatology files
 !ifdef(inpathcli,{},{!define(inpathcli,!calpath)})
 ; ------------------------------------------ Forward model input

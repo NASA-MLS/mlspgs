@@ -1,8 +1,14 @@
-!divert(-1)
+X!divert(-1)
 ; $Id$
 
 ; This l2cf fragment defines macros we're going to use a lot
 ; in doing phased retrievals
+
+; Define some macros we need for various quantities
+!define(allRadiometers,{R1A, R1B, R2, R3, R4, R5H, R5V})
+!define(allBands,{!forloop({i},1,33,{!i, })34}) ; 1,2,3..34
+!define(allBandLSBs,{!makelist({},{L},!allBands)})
+!define(allBandUSBs,{!makelist({},{U},!allBands)})
 
 !define(setupPhase,{!dnl
 begin Fill
@@ -17,6 +23,7 @@ begin Fill
   yNoise$1: Vector, template=y$1Template
   y$1: Vector, template=y$1Template
   f$1: Vector, template=y$1Template
+  od$1: Vector, template=od$1Template
 
   Transfer, source=state, destination=x$1
   Transfer, source=apriori, destination=a$1
@@ -52,4 +59,7 @@ Fill, quantity=yNoise$1.band$2, radianceQuantity=yClean$1.band$2, $
   method=estimatedNoise
 !addNoise($1,$2,$3)})
 ; $Log$
+; Revision 1.1  2002/04/29 21:54:59  pwagner
+; First commit
+;
 !divert!dnl
