@@ -4,6 +4,8 @@
 module Cloud_Extinction
 
   use MLSCommon,               only: r8, rp
+  use ScatteringAngle,         only: ANGLE
+  use CloudySkyModule,         only: CLOUDY_SKY
 
   IMPLICIT NONE
   private
@@ -22,7 +24,7 @@ contains
 
   SUBROUTINE get_beta_cloud (frequency, temperature, pressure, &
                           &  WC, IPSD, N, NU, NUA, NAB, NR,    &
-                          &  RC_TOT, W0, PHH                   )
+                          &  CLD_EXT, W0, PHH                   )
 
 !--------------------------------INPUT PARAMETERS----------------------------------
 
@@ -47,9 +49,9 @@ contains
 
 !--------------------------------OUTPUT PARAMETERS--------------------------------
 
-      REAL(r8),intent(out) :: RC_TOT(3)   ! TOTAL ABS.SCAT.EXT COEFFS.
       REAL(r8),intent(out) :: W0(N)       ! SINGLE SCATTERING ALBEDO
-      REAL(r8),intent(out) :: PHH(N,NU)   ! PHASE FUNCTION 
+      REAL(r8),intent(out) :: PHH(N,NU)   ! PHASE FUNCTION
+      REAL(r8),intent(out) :: cld_ext     ! CLOUD EXTINCTION 
 
 !-------------------------------Internal parameters-------------------------------
 
@@ -72,7 +74,7 @@ contains
       REAL(r8) :: BC(3,NR)                ! SINGLE PARTICLE ABS/SCAT/EXT COEFFS 
       REAL(r8) :: RC_TMP(N,3)
       REAL(r8) :: DDm(N)                         
-
+      REAL(r8) :: RC_TOT(3)               ! TOTAL ABS.SCAT.EXT COEFFS.
       COMPLEX(r8) A(NR,NAB),B(NR,NAB)     ! MIE COEFFICIENCIES
 
       INTEGER :: NABR(NR)                 ! TRUNCATION NUMBER FOR A, B
@@ -83,11 +85,11 @@ contains
 
       DO ISPI=1,N
 
-         CWC = WC(ISPI)
+         CWC = 0*.WC(ISPI) !0 for now
          IF (CWC .ne. 0._r8 ) then           
             CWC = MAX(1.E-9_r8, abs(CWC))
 
-            CALL CLOUDY_SKY (ISPI, CWC, TEMPERATURE, FREQUENCY,       &
+            CALL CLOUDY_SKY (ISPI, CWC, TEMPERATURE, 1000.*FREQUENCY,       &
                    &         NU, U, DU, P11, RC11, IPSD, DMA,         &
                    &         PH1, NAB, P, DP, NR, R, RN, BC, A, B, NABR)    
 
@@ -117,6 +119,9 @@ end Subroutine get_beta_cloud
 end module Cloud_Extinction
 
 ! $Log$
+! Revision 2.2  2003/01/31 20:18:06  jonathan
+! add ScatteringAngle module
+!
 ! Revision 2.1  2003/01/31 18:36:25  jonathan
 ! new module for cloud extinction
 !
