@@ -70,6 +70,33 @@ CONTAINS
     outstr=capstr
   END FUNCTION Capitalize
 
+!=============================== lowercase ==========================
+FUNCTION lowercase(str) RESULT (outstr)
+!=============================== lowercase ==========================
+    ! takes A-Z and replaces with a-z 
+    ! leaving other chars alone
+! (Obviously, a crude theft from the above)
+    !--------Argument--------!
+    CHARACTER (LEN=*), INTENT(IN) :: str
+    CHARACTER (LEN=LEN(str)) :: outstr
+
+    !----------Local vars----------!
+    CHARACTER(LEN=LEN(STR))::capstr
+    INTEGER::i,icode,offset
+    !----------Executable part----------!
+    capstr=str
+    offset=ICHAR("a")-ICHAR("A")
+
+    DO i=1,LEN(str)
+       icode=ICHAR(capstr(i:i))
+       IF ( icode >=ICHAR("A") .AND. icode <= ICHAR("Z")) THEN
+          capstr(i:i)=char(icode+offset)
+       ENDIF
+    ENDDO
+
+    outstr=capstr
+END FUNCTION lowercase
+
   Function depunctuate(str) result (outstr)
     ! Function that removes punctuation and replaces with blanks
     ! Added by HCP. This depends on the native character set being 
@@ -480,6 +507,9 @@ END MODULE MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.1  2000/11/30 00:24:49  pwagner
+! lowercase function moved here from Fill
+!
 ! Revision 2.0  2000/09/05 17:41:06  dcuddy
 ! Change revision to 2.0
 !
