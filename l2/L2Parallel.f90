@@ -453,9 +453,12 @@ contains ! ================================ Procedures ======================
           ! Does this chunk keep failing, if so, give up.
           if ( chunkFailures(deadChunk) > &
             & parallel%maxFailuresPerChunk ) then
-            if ( index(switches,'mas') /= 0 ) &
-              & call output ('This chunk keeps dying.  Giving up on it.', &
-              & advance='yes' )
+            if ( index(switches,'mas') /= 0 ) then
+              call output ( 'Chunk ' )
+              call output ( deadChunk )
+              call output ( ' keeps dying.  Giving up on it.', &
+                & advance='yes' )
+            end if
             chunksAbandoned(deadChunk) = .true.
           end if
 
