@@ -396,7 +396,8 @@ contains
   ! ----------------------------------------------  Abs_CS_Cont  -----
 
   ! Compute the general continuum contribution
-  pure real(rp) function Abs_CS_Cont ( Cont, Temperature, Pressure, Frequency )
+  pure function Abs_CS_Cont ( Cont, Temperature, Pressure, Frequency ) &
+    & result(Abs_CS_Cont_r)
   ! real(rp) function Abs_CS_Cont ( Cont, Temperature, Pressure, Frequency )
     use MLSCommon, only: RP
 
@@ -404,8 +405,9 @@ contains
     real(rp), intent(in) :: TEMPERATURE ! in Kelvin
     real(rp), intent(in) :: PRESSURE    ! in mbar
     real(rp), intent(in) :: FREQUENCY   ! in MegaHertz
+    real(rp) :: Abs_CS_Cont_r
 
-    abs_cs_cont = cont(1) * pressure * pressure * frequency * frequency * &
+    Abs_CS_Cont_r = cont(1) * pressure * pressure * frequency * frequency * &
       & ( (300.0_rp / temperature)**cont(2) )
 
   end function Abs_CS_Cont
@@ -413,7 +415,8 @@ contains
   ! -------------------------------------------  Abs_CS_N2_Cont  -----
 
   ! Compute the N2 continuum contribution
-  pure real(rp) function Abs_CS_N2_Cont ( Cont, Temperature, Pressure, Frequency )
+  pure function Abs_CS_N2_Cont ( Cont, Temperature, Pressure, Frequency ) &
+    & result(Abs_CS_N2_Cont_r)
   ! real(rp) Function Abs_CS_N2_cont ( Cont, Temperature, Pressure, Frequency )
     use MLSCommon, only: RP
 
@@ -421,13 +424,14 @@ contains
     real(rp), intent(in) :: TEMPERATURE ! in Kelvin
     real(rp), intent(in) :: PRESSURE    ! in mbar
     real(rp), intent(in) :: FREQUENCY   ! in MegaHertz
+    real(rp) :: Abs_CS_N2_Cont_r
 
     real(rp) :: THETA, FSQR, FSXT
 
     theta = 300.0_rp / temperature
     fsqr = frequency * frequency
     fsxt = fsqr * theta
-    abs_cs_n2_cont = pressure * pressure * fsqr * (theta**cont(2)) * &
+    Abs_CS_N2_Cont_r = pressure * pressure * fsqr * (theta**cont(2)) * &
                    & ( cont(1) * exp(-cont(3) * fsxt * theta) + &
                    &   cont(4) * exp(-cont(5) * fsxt * theta) * &
                    & (cont(6)**2 + fsqr))
@@ -437,7 +441,8 @@ contains
   ! -------------------------------------------  Abs_CS_O2_Cont  -----
 
   ! Compute the O2 continuum contribution
-  pure real(rp) function Abs_CS_O2_Cont ( Cont, Temperature, Pressure, Frequency )
+  pure function Abs_CS_O2_Cont ( Cont, Temperature, Pressure, Frequency ) &
+    & result(Abs_CS_O2_Cont_r)
   ! real(rp) Function ABS_CS_O2_CONT ( Cont, Temperature, Pressure, Frequency )
     use MLSCommon, only: RP
 
@@ -445,12 +450,13 @@ contains
     real(rp), intent(in) :: TEMPERATURE ! in Kelvin
     real(rp), intent(in) :: PRESSURE    ! in mbar
     real(rp), intent(in) :: FREQUENCY   ! in MegaHertz
+    real(rp) :: Abs_CS_O2_Cont_r
 
     real(rp) :: THETA, FSQR
 
     theta = 300.0_rp / temperature
     fsqr = frequency * frequency
-    abs_cs_o2_cont = cont(1) * pressure * pressure * fsqr * (theta**cont(2)) &
+    Abs_CS_O2_Cont_r = cont(1) * pressure * pressure * fsqr * (theta**cont(2)) &
                    & / (fsqr + (cont(3) * pressure * (theta**cont(4)) )**2 )
 
   end function Abs_CS_O2_Cont
@@ -899,6 +905,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.39  2003/07/04 02:47:50  vsnyder
+! Move Create_Beta here, add Create_Beta_Path routine
+!
 ! Revision 2.38  2003/06/27 22:09:19  vsnyder
 ! Move allocation of LineWidths out of loops; simplify exponent calculation
 !
