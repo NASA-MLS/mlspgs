@@ -19,7 +19,8 @@ module Open_Init
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error, MLSMSG_FileOpen
   use MLSPCF, only: MLSPCF_L1B_OA_START, MLSPCF_L1B_RAD_END, &
-    &               MLSPCF_L1B_RAD_START, MLSPCF_NOMEN_START
+    &               MLSPCF_L1B_RAD_START, MLSPCF_NOMEN_START, &
+    &               MLSPCF_L2CF_START
   use MLSSignalNomenclature, only: ReadSignalsDatabase
   use SDPToolkit, only: PGS_IO_Gen_closeF, PGS_IO_Gen_openF, &
     &                   Pgs_pc_getReference, PGS_S_SUCCESS, &
@@ -53,13 +54,13 @@ contains ! =====     Public Procedures     =============================
     character (len=256) :: Msg
     integer :: ReturnStatus
 
-!   returnStatus = Pgs_io_gen_closeF ( L2CFUnit )
+   returnStatus = Pgs_io_gen_closeF ( L2CFUnit )
 
-!   if ( returnStatus /= PGS_S_SUCCESS ) then
-!     call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
-!     call MLSMessage ( MLSMSG_Error, ModuleName, &
-!       & 'Error closing L2CF:  '//mnemonic//' '//msg)
-!   end if
+   if ( returnStatus /= PGS_S_SUCCESS ) then
+     call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
+     call MLSMessage ( MLSMSG_Error, ModuleName, &
+       & 'Error closing L2CF:  '//mnemonic//' '//msg)
+   end if
 
   end subroutine CloseMLSCF
 
@@ -221,15 +222,14 @@ contains ! =====     Public Procedures     =============================
 
 !   Open the MLSCF as a generic file for reading
     L2CF_Version = 1
-!   returnStatus = Pgs_io_gen_openF ( mlspcf_l2cf_start, PGSd_IO_Gen_RSeqFrm, &
-!     &                               0, L2CFUnit, L2CF_Version)
+   returnStatus = Pgs_io_gen_openF ( mlspcf_l2cf_start, PGSd_IO_Gen_RSeqFrm, &
+     &                               0, L2CFUnit, L2CF_Version)
 
-!   if ( returnStatus /= PGS_S_SUCCESS ) then
-
-!     call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
-!     call MLSMessage ( MLSMSG_Error, ModuleName, &
-!       & "Error opening MLSCF:  "//mnemonic//"  "//msg)
-!   end if
+   if ( returnStatus /= PGS_S_SUCCESS ) then
+     call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
+     call MLSMessage ( MLSMSG_Error, ModuleName, &
+       & "Error opening MLSCF:  "//mnemonic//"  "//msg)
+   end if
 
   end subroutine OpenMLSCF
 
@@ -389,6 +389,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.13  2001/02/09 00:38:22  livesey
+! Various updates
+!
 ! Revision 2.12  2001/02/08 00:58:14  vsnyder
 ! Correct calculation of "field"
 !
