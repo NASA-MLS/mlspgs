@@ -76,10 +76,11 @@ contains
     REAL(r8) :: VMR_HNO3                     ! HNO3 VOLUME MIXING RATIO
     REAL(r8) :: VP                          ! VAPOR PARTIAL PRESSURE (hPa)
 
-    Integer(ip) :: n_sps, i, j, no_of_lines, n_ele, IPSD, NU, NUA, NAB, NR, NC
+    Integer(ip) :: n_sps, i, j, no_of_lines, n_ele
+    integer(ip), parameter :: IPSD=1000, NU=16, NUA=8, NAB=50, NR=40, NC=2
     Integer(ip) :: Spectag, status
-    REAL(rp) :: bb, del_temp, cld_ext, WC(2) 
-    parameter (NC=2, NU=16, NUA=8, NAB=50, NR=40, IPSD=1000)
+    REAL(rp) :: bb, del_temp, cld_ext, WC(2), tanh1
+    real(r8), parameter :: Boltzmhz = 20836.74_r8
     REAL(rp), allocatable, dimension(:) :: PP, TT
     logical :: Do_1D, Incl_Cld
 
@@ -106,11 +107,9 @@ contains
     B=0.0_r8
     FF = F*1000.0_r8
 
-!    maxVert = Ng +1
-
     n_sps = Size(Catalog)
+!    maxVert = Ng +1
 !    n_ele = 2*maxVert
-
     n_ele = 1  ! number of pressure levels along the path, in our case =1
 
     allocate ( gl_slabs (n_ele,n_sps), stat=status )
@@ -143,51 +142,41 @@ contains
     call get_gl_slabs_arrays( Catalog, PP(1:n_ele), TT(1:n_ele), myLosVel, &
       & gl_slabs, n_ele, del_temp, Do_1D )
 
+! Note that expa only depends on temperature.
+    tanh1 = EXP(FF / (boltzmhz * t))
+    tanh1 = (1.0 - tanh1) / (1.0 + tanh1)
     DO i = 1, n_sps
       Spectag = Catalog(i)%Spec_Tag
 
-!       CALL create_beta ( Spectag, Catalog(i)%continuum, PB, T, &
-!         &  FF, Lines(Catalog(i)%Lines)%W, gl_slabs(n_ele,i), bb )
-! COMMENTED OUT FOR MERGE NJL
+       CALL create_beta ( Spectag, Catalog(i)%continuum, PB, T, &
+         &  FF, Lines(Catalog(i)%Lines)%W, gl_slabs(n_ele,i), tanh1, bb )
       
       select case (Spectag)
       case (SP_H2O)
-!      IF (Spectag .EQ. SP_H2O) THEN
         VMR = VMR_H2O
       case (SP_O2)
-!      ELSE IF (Spectag .EQ. SP_O2) THEN
         VMR = VMR_O2
       case (SP_N2)
-!      ELSE IF (Spectag .EQ. SP_N2) THEN
         VMR = VMR_N2
       case (SP_O_18_O)
-!      ELSE IF (Spectag .EQ. SP_O_18_O) THEN
         VMR = VMR_O_18_O
       case (SP_H2O_18)
-!      ELSE IF (Spectag .EQ. SP_H2O_18) THEN
         VMR = VMR_H2O_18
       case (SP_O3)
-!      ELSE IF (Spectag .EQ. SP_O3) THEN
         VMR = VMR_O3
       case (SP_N2O)
-!      ELSE IF (Spectag .EQ. SP_N2O) THEN
         VMR = VMR_N2O
       case (SP_HNO3)
-!      ELSE IF (Spectag .EQ. SP_HNO3) THEN
         VMR = VMR_HNO3
       case default
-!      ELSE
         VMR=0.0_r8
       end select
-!      ENDIF
 
       B = B + VMR*bb
 
     ENDDO
 
     ABSC=B/1000.0_r8     ! convert km-1 to m-1
-
-!    print*, B
 
     Call DestroyCompleteSlabs ( gl_slabs )
     DEAllocate(pp, stat=status)
@@ -208,6 +197,9 @@ contains
 End Module Bill_GasAbsorption
 
 ! $Log$
+! Revision 1.15  2003/05/05 23:01:13  livesey
+! Commented out call to create_beta for merge
+!
 ! Revision 1.14  2003/02/11 00:48:22  jonathan
 ! change call to create_beta
 !
