@@ -60,7 +60,8 @@ contains
     integer :: ptg                      ! Index
     integer :: ind                      ! Index
 !
-    real(r8) :: RAD(ptan%template%noSurfs), SRad(ptan%template%noSurfs)
+    real(r8) :: RAD( size(tan_press))
+    real(r8) :: SRad(ptan%template%noSurfs)
     real(r8) :: der_all(ptan%template%noSurfs)
     real(r8) :: i_star_all(ptan%template%noSurfs)
 !
@@ -271,6 +272,9 @@ contains
 !
 end module NO_CONV_AT_ALL_M
 ! $Log$
+! Revision 1.12  2001/04/20 23:09:29  livesey
+! Now folds in place
+!
 ! Revision 1.11  2001/04/20 02:57:00  livesey
 ! Writes derivatives in matrix_t
 !
