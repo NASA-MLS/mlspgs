@@ -355,20 +355,23 @@ internalupdate: internalsaymake
       m_option=""
 
 # install $(PROG) into $(INSTALLDIR)
-install: $(PROG)
-	@echo "Installing $(PROG) into $(INSTALLDIR)"; \
-	if [ ! -d $(INSTALLDIR) ] ; then \
-	   $(MLSBIN)/mkpath.sh $(INSTALLDIR) ; \
-	fi ; \
-	if [ -f $(PLATFORMS)/$(MLSCONFG)/mlsl2 ] ; then \
-     mv $(PLATFORMS)/$(MLSCONFG)/mlsl2 $(INSTALLDIR) ; \
-      rm -f $(INSTALLDIR)/mlsl2.sh ; \
-	   sed "s=mlsxxyyzz=mlsl2=; s=mlsbbiinn=$(INSTALLDIR)=; \
-        s=mlshhoommee=$(MLSHOME)=; s=mlseexxttrraa==" \
-        $(MLSBIN)/mlsprog.sh > $(INSTALLDIR)/mlsl2.sh ; \
-      chmod a+x $(INSTALLDIR)/mlsl2.sh ; \
-	fi
+#install: $(PROG)
+#	@echo "Installing $(PROG) into $(INSTALLDIR)"; \
+#	if [ ! -d $(INSTALLDIR) ] ; then \
+#	   $(MLSBIN)/mkpath.sh $(INSTALLDIR) ; \
+#	fi ; \
+#	if [ -f $(PLATFORMS)/$(MLSCONFG)/mlsl2 ] ; then \
+#     mv $(PLATFORMS)/$(MLSCONFG)/mlsl2 $(INSTALLDIR) ; \
+#      rm -f $(INSTALLDIR)/mlsl2.sh ; \
+#	   sed "s=mlsxxyyzz=mlsl2=; s=mlsbbiinn=$(INSTALLDIR)=; \
+#        s=mlshhoommee=$(MLSHOME)=; s=mlseexxttrraa==" \
+#        $(MLSBIN)/mlsprog.sh > $(INSTALLDIR)/mlsl2.sh ; \
+#      chmod a+x $(INSTALLDIR)/mlsl2.sh ; \
+#	fi
 
+install:
+	@cd .. ; \
+   $(MAKE) install LEVELS=l2
 tar:
 	rm -f ../$(PROG).tar
 	@echo "tar-ing l2"; \
@@ -384,6 +387,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.62  2003/08/01 20:01:41  pwagner
+# (Re)Uses install target at root level to install
+#
 # Revision 2.61  2003/06/03 20:38:24  pwagner
 # Renamed mkdir_cascade mkpath
 #
