@@ -63,8 +63,8 @@ module Comp_Sps_Path_Frq_m
 ! Internal declarations
 
     logical :: MyPFA
-    integer(ip) :: n_f
-    integer(ip) :: sps_i, no_mol, sv_zp, sv_f
+    integer(ip) :: mol_1, mol_n, n_f, no_mol
+    integer(ip) :: sps_i, sv_zp, sv_f
     integer(ip) :: v_inda, f_inda, f_indb, w_inda, w_indb
 
     real(rp) :: eta_f(1:1,1:maxval(grids_x%l_f(1:)-grids_x%l_f(0:ubound(grids_x%l_f,1)-1)))
@@ -75,7 +75,14 @@ module Comp_Sps_Path_Frq_m
     myPFA = .false.
     if ( present(doPFA) ) myPFA = doPFA
 
-    no_mol = grids_x%lastNonPFA
+    no_mol = ubound(grids_x%l_z,1)
+    if ( myPFA ) then
+      mol_1 = grids_x%lastNonPFA + 1
+      mol_n = no_mol
+    else
+      mol_1 = 1
+      mol_n = grids_x%lastNonPFA 
+    end if
 
     if ( frq <= 1.0_r8 ) then
       do_calc_fzp = .FALSE.
@@ -84,7 +91,7 @@ module Comp_Sps_Path_Frq_m
       not_zero_f = .TRUE.
       sps_path = 0.0_rp
     else
-      do sps_i = 1, no_mol
+      do sps_i = mol_1, mol_n
         if ( grids_x%l_f(sps_i) - grids_x%l_f(sps_i-1) > 1 ) sps_path(:,sps_i) = 0.0_rp
       end do
     end if
@@ -92,7 +99,7 @@ module Comp_Sps_Path_Frq_m
     f_inda = 0
     w_inda = 0
 
-    do sps_i = 1, no_mol
+    do sps_i = 1, mol_n ! begins at 1 instead of mol_1 to get w_ind[ab] right
 
       f_indb = grids_x%l_f(sps_i)
       n_f = f_indb - f_inda
@@ -111,10 +118,10 @@ module Comp_Sps_Path_Frq_m
 ! Compute eta_f:
         if ( frq > 1.0_rp ) then
           if ( sideband == -1 ) then
-            call get_eta_sparse ( lo+sideband*Grids_x%frq_basis(f_indb:f_inda+1:-1), &
+            call get_eta_sparse ( lo-Grids_x%frq_basis(f_indb:f_inda+1:-1), &
               & (/Frq/), eta_f(1:1,n_f:1:-1), not_zero_f(1:1,n_f:1:-1) )
           else
-            call get_eta_sparse ( lo+sideband*Grids_x%frq_basis(f_inda+1:f_indb), &
+            call get_eta_sparse ( lo+Grids_x%frq_basis(f_inda+1:f_indb), &
               & (/Frq/), eta_f(1:1,1:n_f), not_zero_f(1:1,1:n_f) )
           end if
         end if
@@ -204,6 +211,9 @@ module Comp_Sps_Path_Frq_m
 end module Comp_Sps_Path_Frq_m
 !
 ! $Log$
+! Revision 2.18  2004/08/03 21:59:49  vsnyder
+! Inching further toward PFA
+!
 ! Revision 2.17  2004/07/08 21:00:23  vsnyder
 ! Inching toward PFA
 !
