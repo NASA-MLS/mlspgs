@@ -26,7 +26,7 @@ module Comp_Sps_Path_Frq_m
 ! Compute the SPS path
 
     use MLSCommon, only: RP, IP, R8
-    use get_eta_matrix_m, only: Get_Eta_Sparse
+    use Get_Eta_Matrix_m, only: Get_Eta_Sparse
     use Load_sps_data_m, only: Grids_T
 
 ! Input:
@@ -36,18 +36,17 @@ module Comp_Sps_Path_Frq_m
     integer, intent(in) :: Sideband        ! -1 or 1
 
     real(r8), intent(in) :: Frq  ! Frequency at which to compute the values
-    real(rp), intent(in) :: Eta_zp(:,:)    ! Eta_z x Eta_phi for each state
-!                         vector element. First dimension is same as sps_values.
-    logical, intent(in) :: Do_Calc_Zp(:,:) !logical indicating whether there
+    real(rp), intent(in) :: Eta_zp(:,:)    ! Path X (Eta_z x Eta_phi)
+!                         First dimension is same as sps_values.
+    logical, intent(in) :: Do_Calc_Zp(:,:) ! logical indicating whether there
 !                         is a contribution for this state vector element
 
 ! Output:
 
-    real(rp), intent(inout) :: Sps_Path(:,:) ! vmr values along the path
-!                         by species number
-    real(rp), intent(inout) :: Eta_Fzp(:,:)  ! Eta_f x Eta_z x Eta_phi for each
-!                         state vector element. First dimension is same as
-!                         sps_values.
+    real(rp), intent(inout) :: Sps_Path(:,:) ! Path X Species.  vmr values
+!                         along the path by species number
+    real(rp), intent(inout) :: Eta_Fzp(:,:)  ! Path X (Eta_f x Eta_z x Eta_phi)
+!                         First dimension is same as sps_values.
     logical, intent(inout) :: Do_Calc_Fzp(:,:) ! indicates whether there
 !                         is a contribution for this state vector element.
 !                         Same shape as Eta_Fzp.
@@ -116,15 +115,19 @@ module Comp_Sps_Path_Frq_m
         do sv_zp = w_inda + 1, w_indb
           do sv_f = 1, n_f
             v_inda = v_inda + 1
-            eta_fzp ( :, v_inda ) = 0.0_r8
-            do_calc_fzp ( :, v_inda ) = .false.
             if ( not_zero_f(1,sv_f) ) then
               where ( do_calc_zp(:,sv_zp) )
                 eta_fzp(:,v_inda) = eta_f(1,sv_f) * eta_zp(:,sv_zp)
                 sps_path(:,sps_i) = sps_path(:,sps_i) +  &
                                  &  grids_x%values(v_inda) * eta_fzp(:,v_inda)
                 do_calc_fzp(:,v_inda) = Grids_x%deriv_flags(v_inda)
+              elsewhere
+                eta_fzp ( :, v_inda ) = 0.0_r8
+                do_calc_fzp ( :, v_inda ) = .false.
               end where
+            else
+              eta_fzp ( :, v_inda ) = 0.0_r8
+              do_calc_fzp ( :, v_inda ) = .false.
             end if
           end do ! sv_f
         end do ! sv_zp
@@ -191,6 +194,9 @@ module Comp_Sps_Path_Frq_m
 end module Comp_Sps_Path_Frq_m
 !
 ! $Log$
+! Revision 2.16  2003/07/08 02:01:31  vsnyder
+! Speed up a tad by storing zero in ELSE instead of everywhere
+!
 ! Revision 2.15  2003/05/16 02:46:33  vsnyder
 ! Removed USE's for unreferenced symbols
 !
