@@ -870,7 +870,7 @@ contains ! =====     Public Procedures     =============================
   ! matches our requirements
   
   function ValidateVectorQuantity(quantity, coherent, stacked, regular,&
-    & minorFrame, verticalCoordinate, quantityType)
+    & minorFrame, verticalCoordinate, quantityType, molecule)
 
     ! Dummy arguments
     type (VectorValue_T), intent(IN) :: QUANTITY ! Test quantity
@@ -881,6 +881,7 @@ contains ! =====     Public Procedures     =============================
 
     integer, optional, dimension(:), intent(IN) :: VERTICALCOORDINATE
     integer, optional, dimension(:), intent(IN) :: QUANTITYTYPE
+    integer, optional ,dimension(:), intent(IN) :: MOLECULE
 
     ! Result
     logical :: ValidateVectorQuantity
@@ -925,6 +926,11 @@ contains ! =====     Public Procedures     =============================
       if (.not. ValidateVectorQuantity) return
     end if
 
+    if (present(molecule)) then
+      ValidateVectorQuantity=any(quantity%template%molecule == molecule)
+      if (.not. ValidateVectorQuantity) return
+    end if
+
   end function ValidateVectorQuantity
 
 ! =====     Private Procedures     =====================================
@@ -947,6 +953,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.16  2001/03/03 00:07:01  livesey
+! Added GetVectorQtyByTemplateIndex
+!
 ! Revision 2.15  2001/02/28 17:34:25  livesey
 ! Added minorFrame optional argument to ValidateVectorQuantity
 !
