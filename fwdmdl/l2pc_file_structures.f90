@@ -3,7 +3,7 @@
 
 module L2PC_FILE_STRUCTURES
   use L2PC_File_Parameters ! everything
-  use MLSCommon, only: I4, R4
+  use MLSCommon, only: I4, R4, R8
   implicit NONE
 !  This has the standard structure constructions used for
 !    reading and writing the l2pc_xx.dat file.
@@ -18,10 +18,10 @@ module L2PC_FILE_STRUCTURES
 !    Update to ver 5.1 of l2pc code.
 ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 !---------------------------- RCS Ident Info -------------------------------
-  PRIVATE :: Id, ModuleName
-  CHARACTER (LEN=256) :: Id = &
-       "$Id$"
-  CHARACTER (LEN=*), PARAMETER :: ModuleName = &
+  character (len=*), private, parameter :: IdParm = &
+    & "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), parameter, private :: ModuleName = &
        "$RCSfile$"
 !---------------------------------------------------------------------------
 ! Header structures
@@ -103,6 +103,9 @@ module L2PC_FILE_STRUCTURES
 !**********  Size of(l2pc_keys) = 36 bytes (9 words)
 end module L2PC_FILE_STRUCTURES
 ! $Log$
+! Revision 2.0  2001/09/17 20:26:27  livesey
+! New forward model
+!
 ! Revision 1.5  2001/06/07 23:39:31  pwagner
 ! Added Copyright statement
 !
