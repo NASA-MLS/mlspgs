@@ -46,7 +46,7 @@ contains
 
   subroutine SET_GLOBAL_SETTINGS ( ROOT, ForwardModelConfigDatabase, &
 !   & VGrids ) !??? Restore when l2load isn't needed
-    & VGrids, FMC ) !??? Remove when l2load isn't needed
+    & VGrids, FMC, FMI, TFMI ) !??? Remove when l2load isn't needed
 
     integer, intent(in) :: ROOT    ! Index of N_CF node in abstract syntax tree
     type(ForwardModelConfig_T), dimension(:), pointer :: &
@@ -55,6 +55,9 @@ contains
 
 !??? Begin temporary stuff to start up the forward model
   type(fwd_mdl_config) :: FMC
+  type(fwd_mdl_info), dimension(:), pointer :: FMI
+  type(temporary_fwd_mdl_info), dimension(:), pointer :: TFMI
+
   integer :: IER
 !??? End of temporary stuff to start up the forward model
 
@@ -92,13 +95,16 @@ contains
           call forwardModelGlobalSetup ( son )
         case ( s_forwardModel )
           call decorate (son, AddForwardModelConfigToDatabase ( &
-            & forwardModelConfigDatabase, ConstructForwardModelConfig ( son ) ) )
+            & forwardModelConfigDatabase, ConstructForwardModelConfig ( son, vGrids ) ) )
         case ( s_l2load ) !??? More temporary stuff for l2load
           ! The only allowed field is the required ZVI field
           gson = subtree(2,son)
           call get_string ( sub_rosa(subtree(2,gson)), line ) ! ZVI file
           fmc%z = line(2:len_trim(line)-1)
           call l2_load ( fmc, ier=ier )
+          allocate(tfmi(1),fmi(1))
+          call l2_load(fmc, fmi(1), tfmi(1), ier)
+
           !??? End temporary stuff for l2load
         case ( s_vgrid )
           call decorate ( son, AddVGridToDatabase ( vGrids, &
@@ -118,6 +124,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.10  2001/03/28 01:24:55  vsnyder
+! Move vGrid from construct section to global settings section
+!
 ! Revision 2.9  2001/03/17 03:24:23  vsnyder
 ! Work on forwardModelGlobalSetup
 !
