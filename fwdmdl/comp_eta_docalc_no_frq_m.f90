@@ -45,7 +45,7 @@ MODULE comp_eta_docalc_no_frq_m
 ! Internal declaritions
 !
   INTEGER(ip) :: n_p, n_z, npz
-  INTEGER(ip) :: i_sps,n_sps,n_path,sv_i,sv_z,sv_p,sv_j
+  INTEGER(ip) :: sps_i,n_sps,n_path,sv_i,sv_z,sv_p,sv_j
   INTEGER(ip) :: p_inda,z_inda,v_inda,p_indb,z_indb,v_indb
 
   REAL(rp), ALLOCATABLE :: eta_z(:,:),eta_p(:,:)
@@ -63,10 +63,10 @@ MODULE comp_eta_docalc_no_frq_m
   z_inda = 1
   v_inda = 1
 !
-  DO i_sps = 1 , n_sps
+  DO sps_i = 1 , n_sps
 !
-    n_z = Grids_x%no_z(i_sps)
-    n_p = Grids_x%no_p(i_sps)
+    n_z = Grids_x%no_z(sps_i)
+    n_p = Grids_x%no_p(sps_i)
     npz = n_z * n_p
 
     z_indb = z_inda + n_z
@@ -114,7 +114,10 @@ MODULE comp_eta_docalc_no_frq_m
 END MODULE comp_eta_docalc_no_frq_m
 !
 ! $Log$
+! Revision 2.2  2002/01/27 08:37:46  zvi
+! Adding Users selected coefficients for derivatives
+!
 ! Revision 2.1  2001/11/02 10:47:37  zvi
 ! Implementing frequecy grid
 !
-! ! Revision 1.0 2001/10/30 14:00:00  zvi
+! Revision 1.0 2001/10/30 14:00:00  zvi
