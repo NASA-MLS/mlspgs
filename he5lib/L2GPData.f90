@@ -856,11 +856,11 @@ contains ! =====     Public Procedures     =============================
          &get dimension information.')
     if ( index(list,'nLevels') /= 0 ) lev = 1
     if ( index(list,'Freq') /= 0 ) freq = 1
-    if ( index(list,'Unlim') /= 0 ) then 
-      timeIsUnlim = .TRUE.
-    else
-      timeIsUnlim = .FALSE.
-    endif
+!    if ( index(list,'Unlim') /= 0 ) then 
+!      timeIsUnlim = .TRUE.
+!    else
+!      timeIsUnlim = .FALSE.
+!    endif
 
     size = HE5_SWdiminfo(swid, DIM_NAME1)
     !print*,"Got dims for ",DIM_NAME1," it was",size
@@ -909,7 +909,7 @@ contains ! =====     Public Procedures     =============================
     if (firstCheck) then
       ! Note that if time is an umlimited dimension, HDF-EOS won't 
       ! nTimes is wrong.
-       if ( (timeIsUnlim .and. firstProf >= l2gp%nTimes) &
+       if ( (firstProf >= l2gp%nTimes) &
          .or. (firstProf < 0) ) then
           msr = MLSMSG_INPUT // 'firstProf'
           call MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -933,11 +933,11 @@ contains ! =====     Public Procedures     =============================
        ! If user has supplied "last" _and_ time is unlimited, we have
        ! to believe the user about how many profiles there are.
        ! This is _crap_ and is a temporary workaround. 
-       if(timeIsUnlim) then
-         myNumProfs = lastProf - first + 1
-         nTimes=lastprof-first+1
-         l2gp%nTimes=nTimes
-       endif
+!       if(timeIsUnlim) then
+!         myNumProfs = lastProf - first + 1
+!         nTimes=lastprof-first+1
+!         l2gp%nTimes=nTimes
+!       endif
        if (lastProf >= nTimes) then
           myNumProfs = nTimes - first
        else
@@ -2501,6 +2501,12 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 1.22  2002/10/23 16:59:14  hcp
+! Added _VERY_ cheesy work-around for reading files where the time
+! dimension is unlimited.  This should not have any effect on files where
+! the time dimension is not an unlimited dimension.  This is a
+! work-around for some pathetically poor behaviour in HDF-EOS5.
+!
 ! Revision 1.21  2002/10/09 14:05:30  hcp
 ! replaced HE5S_UNLIMITED with   HE5S_UNLIMITED_F
 !
