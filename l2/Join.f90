@@ -30,7 +30,7 @@ module Join                     ! Join together chunk based data.
     & SUB_ROSA, SUBTREE
   use TREE_TYPES, only: N_NAMED, N_SET_ONE
   use VectorsModule, only: GetVectorQuantity, ValidateVectorQuantity, Vector_T, &
-    & VectorValue_T
+    & VectorValue_T, DUMP
   use Intrinsic, ONLY: L_NONE, L_INSTRUMENTCHANNEL, L_USBFREQUENCY, L_LSBFREQUENCY,&
        L_INTERMEDIATEFREQUENCY
 
@@ -279,7 +279,7 @@ contains ! =====     Public Procedures     =============================
     if ( l2gpDataIsNew ) then
       ! Now create an empty L2GP record with this dimension
 
-      if ( quantity%template%verticalCoordinate == l_Pressure ) then
+      if (any(quantity%template%verticalCoordinate == (/l_Pressure, l_Zeta /) )) then
         noSurfsInL2GP = quantity%template%noSurfs
       else
         noSurfsInL2GP = 0
@@ -665,6 +665,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.13  2001/03/01 18:38:27  livesey
+! Fixed bug with verticalCoordinate==l_Zeta
+!
 ! Revision 2.12  2001/02/27 17:38:21  livesey
 ! Tidied things up, removed unnecessary arguments
 !
