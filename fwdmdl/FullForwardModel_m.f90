@@ -539,7 +539,8 @@ contains ! ================================ FullForwardModel routine ======
     do sigInd = 1, size(fwdModelConf%signals)
       do i = 1, size(fwdModelConf%signals(sigInd)%frequencies)
         if (fwdModelConf%signals(sigInd)%channels(i)) then
-          usedChannels(channel) = i
+          usedChannels(channel) = i + &
+            & lbound(fwdModelConf%signals(sigInd)%frequencies,1) - 1
           usedSignals(channel) = sigInd
           channel = channel + 1
         end if
@@ -2163,6 +2164,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.44  2002/05/14 22:40:45  livesey
+! Bug fix in change in line gathering.  Never got to run it mercifully!
+!
 ! Revision 2.43  2002/05/14 22:32:45  livesey
 ! Added single sideband stuff.  Also skip line gathering for parent
 ! molecules.
