@@ -102,10 +102,10 @@ contains
             if ( get_field_id(gson) == f_bill ) then
               if ( associated(fmi) ) deallocate ( fmi, stat=ier )
               if ( associated(tfmi) ) deallocate ( tfmi, stat=ier )
-              allocate ( fmi(nsons(son)), stat=ier )
+              allocate ( fmi(nsons(son)-1), stat=ier )
               if ( ier /= 0 ) call MLSMessage ( MLSmsg_Error, moduleName, &
                 & MLSmsg_allocate // "fmi" )
-              allocate ( tfmi(nsons(son)), stat=ier )
+              allocate ( tfmi(nsons(son)-1), stat=ier )
               if ( ier /= 0 ) call MLSMessage ( MLSmsg_Error, moduleName, &
                 & MLSmsg_allocate // "tfmi" )
               do k = 2, nsons(gson)
@@ -127,6 +127,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.5  2001/03/09 00:24:30  vsnyder
+! Do subscripts right
+!
 ! Revision 2.4  2001/03/08 03:23:09  vsnyder
 ! More stuff to work with L2_Load
 !
