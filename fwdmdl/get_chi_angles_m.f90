@@ -56,7 +56,8 @@ Real(r8) :: r,t,dh,tanx,cse,ht,Rs_eq,ngrid,schi
 Real(r8) :: Eta(Nlvl,mxco)
 
   ier = 0
-  Rs_eq = h_obs + ampl * Sin(2.0*(phi_tan-phas))    ! ** Experimental
+! Rs_eq = h_obs + ampl * Sin(2.0*(phi_tan-phas))    ! ** Experimental
+  Rs_eq = h_obs
 
 ! Get 'No_tan_hts' convolution angles
 
@@ -109,6 +110,9 @@ Real(r8) :: Eta(Nlvl,mxco)
 END SUBROUTINE get_chi_angles
 end module GET_CHI_ANGLES_M
 ! $Log$
+! Revision 1.4  2001/03/09 01:23:52  zvi
+! *** empty log message ***
+!
 ! Revision 1.3  2001/02/19 22:20:40  zvi
 ! Latest modification: Conv/NoConv
 !
