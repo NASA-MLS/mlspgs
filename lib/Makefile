@@ -4,8 +4,10 @@
 #
 include make.inc
 
-OBJS= mlsstrings.o mlssignalnomenclature.o
-OBJS_DEBUG= mlsstrings.o_debug mlssignalnomenclature.o_debug
+OBJS=	mlsstrings.o mlssignalnomenclature.o verticalcoordinates.o \
+	vectorquantities.o
+OBJS_DEBUG= mlsstrings.o_debug mlssignalnomenclature.o_debug \
+	verticalcoordiantes.o_debug vectorquantities.o_debug
 MODULEPATH=.
 
 all: mlslib.a
@@ -19,8 +21,18 @@ mlslib.a_debug: ${OBJS_DEBUG}
 
 clean:
 	-rm -f *.o *.a *.mod *.M *.o_debug *.a_debug
+
+mlssignalnomenclature.o: mlsstrings.o
+vectorquantities.o: mlssignalnomenclature.o mlsstrings.o
+
+mlssignalnomenclature.o_debug: mlsstrings.o_debug
+vectorquantities.o_debug: mlssignalnomenclature.o_debug mlsstrings.o_debug
+
 #
 # $Log$
+# Revision 1.7  1999/11/24 23:07:20  livesey
+# Regular commit
+#
 # Revision 1.6  1999/11/10 01:52:00  livesey
 # Transfer to home
 #
