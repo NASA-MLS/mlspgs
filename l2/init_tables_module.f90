@@ -7,6 +7,26 @@ module INIT_TABLES_MODULE
 ! names.  Preload the tree with definitions of types, lits, fields,
 ! specifications, sections ....
 
+! init_tables_module includes two files: field_parm.f9h and field_add.f9h
+! They will normally be created automatically by the auxiliary program
+! init_gen based on the contents of the file field_names.txt
+!              What This Means
+! Don't edit field_parm.f9h and field_add.f9h directly
+! nor declare fields and add_idents for fields to init_tables_module
+! Instead add or delete any field names in field_names.txt
+
+! It has happened that the allocate_test/deallocate_test caused
+! a segment fault of the compiled code when the compiler
+! is NAG--if that happens, try turning off optimization
+! Another solution would be to insert some time-wasting computations
+! ahead of deallocate_test, but that would be an awkward hack
+
+! There is a parameter declared, ID_LAST_MAX, that limits
+! how many args you can accumulate by acorn between calls to
+! make_tree (see below for usage of acorn)
+! If the program quits with the message "Accumulated too many ids in acorn;"
+! hunt down its definition below and try doubling its current value
+
 ! Declaring the definitions is handled by the tree walker.
 
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
@@ -33,20 +53,27 @@ module INIT_TABLES_MODULE
   ! The advantage is that successive calls to acorn extend id_cum
   ! eliminating the (too) many continuation statements a single call to
   ! make_tree would require
-  ! To exploit this, replace
+  ! To exploit this, replace a many-line-spanning statement such as:
   !   call make_tree ( (/ &
   !      begin, stuff, .. &
   !      begin, morestuff, .. &
   !        ..
   !      begin, laststuff, .. &
   !      / ) )  
-  ! with
+  ! with the following:
   !   id_last = 0
-  !   call acorn ( begin, stuff, ..)
-  !   call acorn ( begin, morestuff, ..)
+  !   call acorn ( (/begin, stuff, ../) )
+  !   call acorn ( (/begin, morestuff, ../) )
   !        ..
-  !   call acorn ( begin, laststuff, ..)
+  !   call acorn ( (/begin, laststuff, ../) )
   !   call make_tree ( id_cum(1:id_last) )
+  !   ! remember to re-initialize id_last to zero before next call to acorn
+  !
+  ! In fact, you can split the original args in the call to make_tree
+  ! into however many pieces you like. In other words, 
+  ! you can do it line-by-line or once each occurrence of the token "begin"
+  ! or according to some other sytem that makes sense to you.
+  
   private :: ID_CUM, ID_LAST, ID_LAST_MAX, ACORN
   integer :: ID_LAST
   integer, parameter :: ID_LAST_MAX = 200     ! You will be told if too small
@@ -553,8 +580,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_swath, t+t_string, n+n_field_type, &
              begin, f+f_columnAbundance, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
-             begin, f+f_boundaryPressure, s+s_vector, f+f_template, f+f_quantities, &
-                    n+n_dot, &
+!             begin, f+f_boundaryPressure, s+s_vector, f+f_template, f+f_quantities, &
+!                    n+n_dot, &
              ndp+n_spec_def, &
       begin, s+s_l2aux, &   ! Must be AFTER s_vector
              begin, f+f_source, s+s_vector, f+f_template, f+f_quantities, &
@@ -804,7 +831,7 @@ contains ! =====     Public procedures     =============================
     elseif(id_next > id_last_max) then
             call MLSMessage ( MLSMSG_Error, ModuleName,&
             &   'Accumulated too many ids in acorn;' // &
-            &   ' increase id_last_max at line 52?')
+            &   ' increase id_last_max in l2/init_tables_module.f90')
     else
             id_cum(id_last+1:id_next) = ids
     endif
@@ -815,6 +842,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.156  2001/09/06 22:32:52  pwagner
+! Undid column join; improved comments on acorn, field_names.txt, etc.
+!
 ! Revision 2.155  2001/09/04 15:58:15  jonathan
 ! add cloud_fov, jonathan
 !
