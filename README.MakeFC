@@ -32,8 +32,7 @@ magnitude in the case of ATLAS)
  (7) BLAS--a library of basic linear algebra software
  (8) LAPACK--another linear algebra library
 
-Then, from the "top" level (where you see this file, as well as the l1, l2, l3,
-l3m, lib, fwmdl, cloudfwdm, srclib, and util directories) simply type
+Then, from the "top" level simply type
   make -f MakeFC update
 and you'll be asked to respond to some questions about your compiler, platform,
 and where the various libraries are installed. Then the software will be built.
@@ -45,7 +44,7 @@ just "make".
 
 For more information on obtaining and installing the SDP Toolkit, PVM, and the
 FFTW libraries, see BEFORE.mls which should be in the same directory as this
-file. Oe else type 'make -f MakeFC firsthelp'.
+file. Or else type 'make -f MakeFC firsthelp'.
 
 CONTENTS
 I     SUMMARY
@@ -95,7 +94,7 @@ way becomes
 This will automatically build lib and mlsln where n={1,2,3,3m}. To build other
 parts see the section BUILDING ONLY PARTS OF THE SOFTWARE below.
 
-To simplify things the set of directories {l1, l2, l3, l3m, lib, fwdmdl,
+To simplify things the set of directories {blas, l1, l2, l3, l3m, lib, fwdmdl,
 cloudfwdm} will be henceforth called simply the "mlslevels".
 
 WHAT YOU NEED
@@ -111,11 +110,11 @@ BEFORE.mls    makemakedep.sh     Makefile.dep       source
 README.MakeFC  f90makedep.pl      platforms/*          files)
               f90ghostfiles.pl                     Makefile.dep
               ghostbuster.sh
-                (much else)
+                 (etc.)
 
 BUILDING THE SOFTWARE
-Then to make the mls software, both the lib and all mlslevels, from the top
-level of the mlspgs directory, enter the command "make -f MakeFC". This should
+Then to make the mls software, including all mlslevels, from the top level of
+the mlspgs directory, enter the command "make -f MakeFC update". This should
 launch util/mlsconfigure. It will first query you for your compiler (only three
 choices available: NAG, Lahey, or Sun) and for your platform/OS (only three
 choices available: Sun, SGI, or Linux). You'll also be offered the chance to
@@ -137,12 +136,14 @@ will be offered as the default path setting for the former.
 
 Note whether you have the latest version of the toolkit (currently
 5.2.7.3v1.00) or an earlier one. The latest version includes version 5 of both
-the HDF and HDFEOS libraries, and so their paths need to be set. Gor earlier
+the HDF and HDFEOS libraries, and so their paths need to be set. For earlier
 versions, leave their paths blank.
 
 The next set of questions will pertain to four special libraries: BLAS, LAPACK,
-PVM and FFTW. BLAS is completely optional.  PVM is required only for level 2.
-FFTW is required only for level 3.
+PVM and FFTW. BLAS and LAPACK are completely optional, with the understanding
+that not supplying any paths for them will result in building an executable
+successfully, although perhaps one running a little slower than the fastest
+possible. PVM is required only for level 2. FFTW is required only for level 3.
 
 The final two questions allow you to set your own default compiler and loader
 options. You can instead safely accept the default values.
@@ -265,7 +266,7 @@ correctly. You might choose alternatively, especially if you have root
 privilege, and so may need more flexibility. The counterpart to HOSTMLSCFILE
 is MLSINSTALLDIR. Set it as an environment variable at login, and it will
 dictate where install moves mlsl1, etc. As an alternative, the counterpart to
-the command-line varaible MLSCFILE above is INSTALLDIR. Thus you may specify
+the command-line variable MLSCFILE above is INSTALLDIR. Thus you may specify
 the destination via
            make INSTALLDIR=/usr/local/bin install
 
@@ -305,8 +306,8 @@ help         lists topics on which more help is available
 help--brief  brief overview of building mls
 help--Makefile
              summarizes targets, settings, usage of Makefiles
-help--mlsconfigure
-             prints some details on the mlsconfigure script
+help--scripts
+             prints some details on the scripts used by the Makefiles
 install      moves the built programs from the mlslevels to INSTALLDIR
              also puts shell script versions of each binary executable there
              with names composed of binary + '.sh'; e.g., mlsl1.sh
@@ -359,24 +360,25 @@ any commands needed to build the end products if any prerequisites are newer.
 
 Hierarchy of make
 The following is a partial org chart showing how make invoked at the top will
-call make in the mlslevels which in turn will call make in subdirectories, and
-the names of the Makefile thus summoned.
+call make in the mlslevels which in turn will call make in subdirectories
 
-            <----------mlspgs/MakeFC-------------------------------------->
-           /              /   |    \             \        \               \
-   l1/MakeFC      l2/MakeFC---+--->cloudfwdm--->fwdmdl  l3m/MakeFC--->l3/MakeFC
-       |   \              \   |    /             /        /               /
-       |    -------------->lib/MakeFC<------------------------------------
+         <----------------mlspgs---------------------------------------->
+        /           /   /        \     \             \        \          \
+       l1         l2---+----------+--->cloudfwdm--->fwdmdl   l3m-------->l3
+       |\           \   \        /     /             /        /          /
+       | ------------+---+---->lib<---+-------------+--------------------
+       |              \   \    /     /             /
+       |               ---->blas<------------------
        |                      |
-   MLSCONFG/Makefile   MLSCONFG/Makefile
+   MLSCONFG               MLSCONFG
            
-where the bottom MLSCONFG directories only below lib and l1 have been shown,
+where the bottom MLSCONFG directories only below blas and l1 have been shown,
 although they exist in the other mlslevels, too. Note also the ability of make
 at the levels of l1, l2, ... to call make in lib. l2 is also able to call make
 in cloudfwdm and fwdmdl. cloudfwdm is also able to call make in fwdmdl. l3m is
 also able to call make in l3. The full path and name of the file shown at
 bottom center is (assuming a typical location for the archive)
-	${HOME}/mlspgs/lib/${MLSCONFG}/Makefile
+	${HOME}/mlspgs/blas/${MLSCONFG}/Makefile
 
 MLSCONFG/Makefile has the command near its start
  include 'Makefile.dep'
@@ -402,10 +404,10 @@ edit the line for you or else use it as is. Allowing this change will free you
 from being prompted about this again.
 
 CALL TO ACTION
-This is useable now. Please try it out and inform me of any bugs you
+This is usable now. Please try it out and inform me of any bugs you
 find. And tell me their solutions if you can, of course. Also of any
-improvements you think of. The configuration is messy, especially
-changing the paths.
+improvements you think of. The configuration step is laborious, especially
+changing the paths, and has become even more so as the system evolved.
 
 ACTUAL BUGS
 The Linux HDFEOS, HDF, PGSTK, etc. libraries as distributed can not be made to
@@ -438,7 +440,7 @@ configuration, you may build multiple versions of the mls software. For
 example, I built versions for both Sun and Linux platforms in my home
 directory. I can switch between versions by overwriting the current .configure
 with one saved for the other platform. See above for fuller explanation of how
-to easily handle multiple platforms.
+to easily handle multiple platforms or named configurations.
 
 Sometimes after doing a cvs update, especially if there has been a lot of
 active coding and cvs committing, the next make will exit complaining about an
@@ -455,7 +457,7 @@ Sometimes it may be obvious that some or all of the cascade is unnecessary. A
 deeper and more searching scrutiny, perhaps checking that the new .mod file
 created by a recompile (in the case of a compiler like NAG) is actually
 identical with the existing one, could pare the cascade down, but at the cost
-of requiring a more complex system of Makefiles than the this one.
+of requiring an even more complex system of Makefiles than this one.
 
 Another way to trigger massive recompilation is to modify the .configure file.
 Sometimes this may be appropriate, but not always. If you're certain that it is
@@ -495,8 +497,7 @@ to any of these settings. One way is to assign the value on the same line where
 make is invoked; e.g.
 	make target FOPTS="-g90 -gline" LDOPTS="-g90"
 would compile and link for debugging rather than speed-optimized, assuming use
-of NAG f95. Alternatively, the first seven of the following can be set by
-configure_full.
+of NAG f95. Alternatively, some of the following can be set by configure_full.
 
 make the_target SETTING=value
 (note that the left-hand side of the equal sign is UPPER-CASE)
@@ -569,7 +570,7 @@ idea.
 
 Under the lib directory is a lib/tests subdirectory containing five
 test programs. They were used to test libmls.a during development. It
-is possible they may no longer work, nor even compile and link properly.
+is likely they no longer compile nor link properly.
 
 Another wrinkle in the lib directory is the versions of machine.f90 which lurk
 under machines with names like machines/NAG.Linux/machine.f90 They are intended
@@ -628,10 +629,13 @@ export FFTW_ROOT
 export FOPTS
 export LDOPTS
 
--pw                           2000-Oct-24 to 2001-Nov-07
+-pw                           2000-Oct-24 to 2001-Nov-15
 EOF
 exit
 # $Log$
+# Revision 1.26  2001/11/09 21:48:34  pwagner
+# Some explanations added for custom-named configurations
+#
 # Revision 1.25  2001/11/08 00:39:14  pwagner
 # New help system; mention of NOCLEANING where appropriate
 #
