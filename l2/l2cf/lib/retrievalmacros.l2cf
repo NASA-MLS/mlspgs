@@ -534,18 +534,21 @@ Fill, quantity=otherDiagnostics.status!MFproduct, method=status, $
   sourceQuantity=temporaryDiagnostics.noRadsTmp, minValue=!MFminrads, /additional})
 
 !ifdef(MFcloudmax,{
-;; Status - cloudy radiances - already had the box car run on it.
+;; Status - cloudy radiances - don't do a box car.
 Fill, quantity=otherDiagnostics.status!MFproduct, method=status, status=!statusHighCloud+!statusBeWary, $
   sourceQuantity=otherDiagnostics.highCloudSummary!MFradiometer, maxValue=!MFcloudmax, /additional
 })
 !ifdef(MFcloudmin,{
-;; Status - cloudy radiances - already had the box car run on it.
+;; Status - cloudy radiances - don't do a boxcar.
 Fill, quantity=otherDiagnostics.status!MFproduct, method=status, status=!statusLowCloud+!statusBeWary, $
   sourceQuantity=otherDiagnostics.lowCloudSummary!MFradiometer, minValue=!MFcloudmin, /additional
 })})
 
 
 ; $Log$
+; Revision 1.95  2004/04/28 00:31:36  livesey
+; Bug fix in lowcloud flagging
+;
 ; Revision 1.94  2004/04/27 23:41:48  livesey
 ; Simplified the status/quality flagging by changing diagTmp
 ;
