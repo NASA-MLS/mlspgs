@@ -31,7 +31,7 @@ while [ -n "$(echo $1)" ]; do
     fi
     if [ $1 == "--dao" ]; then
 	case $MACHINE in
-	    soundbarrier )
+	    soundbarrier | scramjet )
 		echo "/research1/$MYUSER";;
 	    lightspeed )
 		echo "$HOME/$VERSION";;
@@ -45,7 +45,7 @@ while [ -n "$(echo $1)" ]; do
     fi
     if [ $1 == "--output" ]; then
 	case $MACHINE in
-	    soundbarrier )
+	    soundbarrier | scramjet)
 		echo "/research1/$MYUSER";;
 	    lightspeed )
 		echo "$HOME/$VERSION";;
@@ -55,7 +55,7 @@ while [ -n "$(echo $1)" ]; do
     fi
     if [ $1 == "--l2pc" ]; then
 	case $MACHINE in
-	    soundbarrier )
+	    soundbarrier | scramjet)
 		echo "/research1/$MYUSER/";;
 	    lightspeed )
 		echo "$HOME/$VERSION";;
@@ -65,7 +65,7 @@ while [ -n "$(echo $1)" ]; do
     fi
     if [ $1 == "--truthl2gp" ]; then
 	case $MACHINE in
-	    soundbarrier )
+	    soundbarrier | scramjet)
 		echo "/research1/$MYUSER/";;
 	    lightspeed )
 		echo "$HOME/$VERSION";;
@@ -75,7 +75,7 @@ while [ -n "$(echo $1)" ]; do
     fi
     if [ $1 == "--corel2gp" ]; then
 	case $MACHINE in
-	    soundbarrier )
+	    soundbarrier | scramjet)
 		echo "/research1/$MYUSER/";;
 	    lightspeed )
 		echo "$HOME/$VERSION";;
@@ -85,7 +85,7 @@ while [ -n "$(echo $1)" ]; do
     fi
     if [ $1 == "--l1boa" ]; then
 	case $MACHINE in
-	    soundbarrier )
+	    soundbarrier | scramjet)
 		echo "/research1/$MYUSER/";;
 	    lightspeed )
 		echo "$HOME/$VERSION";;
@@ -95,7 +95,7 @@ while [ -n "$(echo $1)" ]; do
     fi
     if [ $1 == "--l1brad" ]; then
 	case $MACHINE in
-	    soundbarrier )
+	    soundbarrier | scramjet)
 		echo "/research1/$MYUSER/";;
 	    lightspeed )
 		echo "$HOME/$VERSION";;
@@ -105,7 +105,7 @@ while [ -n "$(echo $1)" ]; do
     fi
     if [ $1 == "--l2cal" ]; then
 	case $MACHINE in
-	    soundbarrier )
+	    soundbarrier | scramjet)
 		echo "/research1/$MYUSER/";;
 	    lightspeed )
 		echo "$HOME/$VERSION";;
@@ -118,7 +118,7 @@ while [ -n "$(echo $1)" ]; do
     fi
     if [ $1 == "--tmp" ]; then
 	case $MACHINE in
-	    soundbarrier )
+	    soundbarrier | scramjet)
 		echo "/research1/$MYUSER/";;
 	    lightspeed )
 		echo "$HOME/$VERSION";;
@@ -128,7 +128,7 @@ while [ -n "$(echo $1)" ]; do
     fi
     if [ $1 == "--sidsrad" ]; then
 	case $MACHINE in
-	    soundbarrier )
+	    soundbarrier | scramjet)
 		echo "/research1/$MYUSER/";;
 	    lightspeed )
 		echo "$HOME/$VERSION";;
@@ -140,6 +140,9 @@ while [ -n "$(echo $1)" ]; do
 done
 
 # $Log$
+# Revision 1.25  2004/02/09 19:23:03  livesey
+# Made more lightspeed ready, gets machine name from ~/machine.id file.
+#
 # Revision 1.24  2004/02/09 18:47:05  livesey
 # Typo!
 #
