@@ -222,7 +222,8 @@ contains ! =====     Public Procedures     =============================
     use Expr_m, only: EXPR
     use Hdf, only: DFACC_CREATE, DFACC_RDONLY, DFACC_RDWR
     use Init_tables_module, only: F_SOURCE, F_PRECISION, F_HDFVERSION, F_FILE, F_TYPE
-    use Init_tables_module, only: L_L2GP, L_L2AUX, L_L2DGG, L_PRESSURE, L_ZETA
+    use Init_tables_module, only: L_L2GP, L_L2AUX, L_L2DGG, L_L2FWM, &
+      & L_PRESSURE, L_ZETA
     use intrinsic, only: L_NONE, L_GEODANGLE, L_HDF, L_SWATH, &
       & L_MAF, PHYQ_DIMENSIONLESS
     use L2ParInfo, only: PARALLEL, LOGDIRECTWRITEREQUEST, FINISHEDDIRECTWRITE
@@ -234,7 +235,8 @@ contains ! =====     Public Procedures     =============================
     use MLSL2Options, only: TOOLKIT, DEFAULT_HDFVERSION_WRITE
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSPCF2, only: mlspcf_l2gp_start, mlspcf_l2gp_end, &
-      & mlspcf_l2dgm_start, mlspcf_l2dgm_end
+      & mlspcf_l2dgm_start, mlspcf_l2dgm_end, mlspcf_l2fwm_full_start, &
+      & mlspcf_l2fwm_full_end
     use MoreTree, only: GET_FIELD_ID
     use Output_m, only: OUTPUT, BLANKS
     use OutputAndClose, only: add_metadata
@@ -273,7 +275,7 @@ contains ! =====     Public Procedures     =============================
     integer :: KEYNO                    ! Loop counter, field in l2cf line
     integer :: LASTFIELDINDEX           ! Type of previous field in l2cf line
     integer :: NOSOURCES                ! No. things to output
-    integer :: OUTPUTTYPE               ! l_l2gp, l_l2aux, l_l2dgg
+    integer :: OUTPUTTYPE               ! l_l2gp, l_l2aux, l_l2fwm, l_l2dgg
     integer :: SON                      ! A tree node
     integer :: SOURCE                   ! Loop counter
     integer :: RETURNSTATUS
@@ -403,7 +405,9 @@ contains ! =====     Public Procedures     =============================
         expectedType = l_l2aux
       end if
       if ( outputType /= expectedType .and. .not. &
-        & ( outputType == l_l2dgg .and. expectedType == l_l2gp ) ) then
+        & ( outputType == l_l2dgg .and. expectedType == l_l2gp ) &
+        &                           .and. .not.  &
+        & ( outputType == l_l2fwm .and. expectedType == l_l2aux ) ) then
         call output ( "Offending quantity " )
         call display_string ( qty%template%name, strip=.true., advance='yes' )
         call Announce_Error ( son, no_error_code, &
@@ -452,6 +456,11 @@ contains ! =====     Public Procedures     =============================
           & mlspcf_l2gp_end, &
           & TOOLKIT, returnStatus, l2gp_Version, DEEBUG, &
           & exactName=Filename)
+      elseif ( any ( outputType == (/ l_l2fwm /) ) ) then
+        Handle = GetPCFromRef(file_base, mlspcf_l2fwm_full_start, &
+          & mlspcf_l2fwm_full_end, &
+          & TOOLKIT, returnStatus, l2gp_Version, DEEBUG, &
+          & exactName=Filename)
       else
         Handle = GetPCFromRef(file_base, mlspcf_l2dgm_start, &
           & mlspcf_l2dgm_end, &
@@ -495,7 +504,7 @@ contains ! =====     Public Procedures     =============================
         ! file id should go into 'handle'
         handle = mls_io_gen_openF('sw', .true., ErrorType, &
           & record_length, FileAccess, trim(FileName), hdfVersion=hdfVersion)
-      case ( l_l2aux )
+      case ( l_l2aux, l_l2fwm )
         ! Call the l2aux open/create routine.  Filename is 'filename'
         ! file id should go into 'handle'
         handle = mls_io_gen_openF('hg', .true., ErrorType, &
@@ -557,7 +566,7 @@ contains ! =====     Public Procedures     =============================
           else
             filetype=l_swath
           endif
-        case ( l_l2aux )
+        case ( l_l2aux, l_l2fwm )
           ! Call the l2aux sd write routine.  This should write the 
           ! non-overlapped portion of qty (with possibly precision in precQty)
           ! into the l2aux sd named 'hdfName' starting at profile 
@@ -600,13 +609,14 @@ contains ! =====     Public Procedures     =============================
           if ( errortype /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'DirectWriteCommand unable to h5fclose ' // trim(filename) )
         endif
-      case ( l_l2aux )
+      case ( l_l2aux, l_l2fwm )
         ! Call the l2aux close routine
         errortype = mls_io_gen_closeF('hg', Handle, hdfVersion=hdfVersion)
       end select
       if ( errortype /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'DirectWriteCommand unable to close ' // trim(filename) )
-      if ( createFileFlag .and. TOOLKIT .and. .not. SKIPMETADATA ) then
+      if ( createFileFlag .and. TOOLKIT .and. .not. SKIPMETADATA .and. &
+        & outputType /= l_l2fwm ) then
         call add_metadata ( file_base, noSources, thisDirect%sdNames, &
           & hdfVersion, filetype, errortype )
         if ( errortype /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1341,6 +1351,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.88  2003/08/14 20:11:30  pwagner
+! DirectWrite may take l2fwm types for fwm radiances
+!
 ! Revision 2.87  2003/08/01 20:38:31  pwagner
 ! Distinguishes between l2dgg and l2gp when writing metadata as part of directwrite
 !
