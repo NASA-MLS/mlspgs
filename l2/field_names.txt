@@ -183,6 +183,7 @@ maxIterations
 maxJ # Maximum number of Jacobian evaluations in Retrieve
 maxLength
 maxLowerOverlap
+maxOrbY
 maxUpperOverlap
 maxValue
 measurements
@@ -364,6 +365,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.129  2004/08/09 21:43:27  livesey
+# Added maxOrbY
+#
 # Revision 2.128  2004/07/17 02:28:19  vsnyder
 # Add dump for entire PFA database
 #
