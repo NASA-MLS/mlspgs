@@ -104,43 +104,46 @@ MODULE SDPToolkit               ! F90 interface to SDP Toolkit.
 ! groups will be an array of length PGSd_MET_NUM_OF_GROUPS
 ! which in the current toolkit version is 20
 ! To see this value, execute "grep -i PGSd_MET_NUM_OF_GROUPS $PGSINC/*.h"
-      INTEGER FUNCTION PGS_MET_Init(file_id,groups)
+!
+! Unfortunately, these don't work right--don't use SDPToolkit for them
+! Better declare them as externals
+      INTEGER FUNCTION tk_PGS_MET_Init(file_id,groups)
         INTEGER, INTENT(IN) :: file_id
          character (len = *), dimension(:) :: Groups
-      END FUNCTION PGS_MET_Init
+      END FUNCTION tk_PGS_MET_Init
 
-      INTEGER FUNCTION PGS_MET_Setattr_d(imd_group, attr_name, dval)
+      INTEGER FUNCTION tk_PGS_MET_Setattr_d(imd_group, attr_name, dval)
          character (len = *) :: imd_group
          character (len=*), intent(in) :: attr_name
         DOUBLE PRECISION, INTENT(IN) :: dval
-      END FUNCTION PGS_MET_Setattr_d
+      END FUNCTION tk_PGS_MET_Setattr_d
 
-      INTEGER FUNCTION PGS_MET_Setattr_s(imd_group, attr_name, attr_value)
+      INTEGER FUNCTION tk_PGS_MET_Setattr_s(imd_group, attr_name, attr_value)
          character (len = *) :: imd_group
          character (len=*), intent(in) :: attr_name
          character (len=*), intent(in) :: attr_value
-      END FUNCTION PGS_MET_Setattr_s
+      END FUNCTION tk_PGS_MET_Setattr_s
 
-      INTEGER FUNCTION PGS_MET_Getsetattr_d(imd_group, attr_name, dval_array)
+      INTEGER FUNCTION tk_PGS_MET_Getsetattr_d(imd_group, attr_name, dval_array)
          character (len = *) :: imd_group
          character (len=*), intent(in) :: attr_name
         DOUBLE PRECISION, INTENT(OUT), DIMENSION(:) :: dval_array
-      END FUNCTION PGS_MET_Getsetattr_d
+      END FUNCTION tk_PGS_MET_Getsetattr_d
 
-      INTEGER FUNCTION PGS_MET_Setattr_i(imd_group, attr_name, attr_value)
+      INTEGER FUNCTION tk_PGS_MET_Setattr_i(imd_group, attr_name, attr_value)
          character (len = *) :: imd_group
          character (len=*), intent(in) :: attr_name
          integer, intent(in) :: attr_value
-      END FUNCTION PGS_MET_Setattr_i
+      END FUNCTION tk_PGS_MET_Setattr_i
 
-      INTEGER FUNCTION PGS_MET_Write(imd_group, hdf_attr_name, sd_id)
+      INTEGER FUNCTION tk_PGS_MET_Write(imd_group, hdf_attr_name, sd_id)
          character (len = *) :: imd_group
          character (len=*), intent(in) :: hdf_attr_name
          integer, intent(in) :: sd_id
-      END FUNCTION PGS_MET_Write
+      END FUNCTION tk_PGS_MET_Write
 
-      INTEGER FUNCTION PGS_MET_Remove( )
-      END FUNCTION PGS_MET_Remove
+      INTEGER FUNCTION tk_PGS_MET_Remove( )
+      END FUNCTION tk_PGS_MET_Remove
 
    END INTERFACE
 
@@ -170,6 +173,9 @@ END MODULE SDPToolkit
 
 !
 ! $Log$
+! Revision 2.5  2001/05/08 23:29:33  pwagner
+! Sorry-bad metadata function interfaces
+!
 ! Revision 2.4  2001/05/07 23:22:20  pwagner
 ! Added metadat functions
 !
