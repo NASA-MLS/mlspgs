@@ -22,6 +22,7 @@ module Join                     ! Join together chunk based data.
 
   ! logical, parameter, private :: DEEBUG = .true.           ! Usually FALSE
   logical, parameter, private :: FORCEDIRWRITEREOPEN = .false. ! Usually FALSE
+  logical, parameter, private :: SKIPMETADATA = .false. ! Usually FALSE
 
   ! Parameters for Announce_Error
 
@@ -356,6 +357,7 @@ contains ! =====     Public Procedures     =============================
     precisionQuantities = 0
     source = 0
     do keyNo = 2, nsons(node)
+      l2gp_Version = 1
       son = subtree ( keyNo, node )
       fieldIndex = get_field_id ( son )
       select case ( fieldIndex )
@@ -550,7 +552,11 @@ contains ! =====     Public Procedures     =============================
           call DirectWrite_l2GP ( handle, qty, precQty, hdfName, chunkNo, &
             & hdfVersion, filename=filename, &
             & createSwath=(.not. logicalBuffer(source)) )
-          filetype=l_swath
+          if ( outputType == l_l2dgg ) then
+            filetype=l_l2dgg
+          else
+            filetype=l_swath
+          endif
         case ( l_l2aux )
           ! Call the l2aux sd write routine.  This should write the 
           ! non-overlapped portion of qty (with possibly precision in precQty)
@@ -600,7 +606,7 @@ contains ! =====     Public Procedures     =============================
       end select
       if ( errortype /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'DirectWriteCommand unable to close ' // trim(filename) )
-      if ( createFileFlag .and. TOOLKIT ) then
+      if ( createFileFlag .and. TOOLKIT .and. .not. SKIPMETADATA ) then
         call add_metadata ( file_base, noSources, thisDirect%sdNames, &
           & hdfVersion, filetype, errortype )
         if ( errortype /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1335,6 +1341,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.87  2003/08/01 20:38:31  pwagner
+! Distinguishes between l2dgg and l2gp when writing metadata as part of directwrite
+!
 ! Revision 2.86  2003/07/25 00:51:06  livesey
 ! Added file type l2dgg to support metadata.
 !
