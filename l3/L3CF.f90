@@ -10,7 +10,7 @@ MODULE L3CF
    USE MLSCommon
    USE MLSL3Common
    USE MLSMessageModule
-   USE MLSPCF
+   USE MLSPCF3
    USE MLSStrings
    USE PCFModule
    USE SDPToolkit
@@ -45,6 +45,18 @@ MODULE L3CF
 
      CHARACTER (LEN=FileNameLen) :: logType
 	! template for the log file name
+
+     CHARACTER (LEN=FileNameLen) :: stdType
+	! template for the l3dz file for Standard products
+
+     CHARACTER (LEN=FileNameLen) :: dgType
+	! template for the l3dz file for Diagnostic products
+
+     CHARACTER (LEN=FileNameLen) :: stdMCFname	! Standard MCF name
+     CHARACTER (LEN=FileNameLen) :: dgMCFname	! Diagnostic MCF name
+
+     INTEGER :: stdMCFnum			! Standard MCF number
+     INTEGER :: dgMCFnum			! Diagnostic MCF number
 
      INTEGER :: minDays
 	! # of days of input data needed to process an l3 product
@@ -138,9 +150,9 @@ CONTAINS
    END SUBROUTINE CalculateArray
 !-------------------------------
 
-!-----------------------------------------------------------------------------
-   SUBROUTINE FillL3CF (cf, pcfL2Ver, pcfL3Ver, l3Days, l3Window, l3cf, cfDef)
-!-----------------------------------------------------------------------------
+!-------------------------------------------------------------------
+   SUBROUTINE FillL3CF (cf, pcfL3Ver, l3Days, l3Window, l3cf, cfDef)
+!-------------------------------------------------------------------
 ! Brief description of subroutine
 ! This subroutine checks the parser output and fills L3CFProd_T.
 
@@ -148,7 +160,7 @@ CONTAINS
 
       TYPE( Mlscf_T ), INTENT(IN) :: cf
 
-      CHARACTER (LEN=*), INTENT(IN) :: pcfL2Ver, pcfL3Ver
+      CHARACTER (LEN=*), INTENT(IN) :: pcfL3Ver
 
       CHARACTER (LEN=*), INTENT(IN) :: l3Days(:)
 
@@ -167,7 +179,7 @@ CONTAINS
 ! Variables
 
       CHARACTER (LEN=8) :: hhmmss
-      CHARACTER (LEN=10) :: l2Ver, l3Ver, label
+      CHARACTER (LEN=10) :: l3Ver, label
       CHARACTER (LEN=480) :: msr
       CHARACTER (LEN=CCSDSB_LEN) :: timeB(maxWindow)
       CHARACTER (LEN=FileNameLen) :: match
@@ -184,14 +196,7 @@ CONTAINS
       iMap = LinearSearchStringArray(cf%Sections%MlscfSectionName, 'DailyMap')
       iOut = LinearSearchStringArray(cf%Sections%MlscfSectionName, 'Output')
 
-! Check that the version numbers given in the CF will match the PCF file names
-
-      indx = LinearSearchStringArray(cf%Sections(iGlob)%Cells%Keyword,'L2Ver')
-      IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'No entry in &
-                                    &the CF for L2Ver.')
-      l2Ver = cf%Sections(iGlob)%Cells(indx)%CharValue
-      IF (l2Ver /= pcfL2Ver) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Input &
-                                      &versions in the CF and PCF differ.')
+! Check that the version number given in the CF will match the PCF file names
 
       indx = LinearSearchStringArray(cf%Sections(iGlob)%Cells%Keyword, &
                                      'OutputVersionString')
@@ -214,6 +219,84 @@ CONTAINS
       IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'No entry in &
                                     &the CF for MinDays.')
       cfDef%minDays = cf%Sections(iGlob)%Cells(indx)%RealValue
+
+! Find the L3DZS label
+
+       label = 'L3DZS'
+       iLab = LinearSearchStringArray( &
+                     cf%Sections(iOut)%Entries%MlscfLabelName, TRIM(label) )
+       IF (iLab == 0) THEN
+          msr = 'Missing l3cf Output specification for ' // label
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+
+! Find the Standard MCF file name; save it in L3CFDef_T
+
+       indx = LinearSearchStringArray( &
+                          cf%Sections(iOut)%Entries(iLab)%Cells%Keyword, 'mcf')
+       IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
+                              &keyword MCF in the Output section of the l3cf.')
+       cfDef%stdMCFName = cf%Sections(iOut)%Entries(iLab)%Cells(indx)%CharValue
+
+! Search for a match in the PCF
+
+       CALL SearchPCFNames(cfDef%stdMCFName, mlspcf_mcf_l3dz_start, &
+                           mlspcf_mcf_l3dz_end, mlspcf_mcf, match)
+       IF (mlspcf_mcf == -1) THEN
+          msr = 'No match in the PCF for file ' // cfDef%stdMCFName
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+
+! Save the PCF number in L3CFProd_T
+
+       cfDef%stdMCFNum = mlspcf_mcf
+
+! Find the file template from Output; save it in L3CFDef_T
+
+       indx = LinearSearchStringArray( &
+                         cf%Sections(iOut)%Entries(iLab)%Cells%Keyword, 'file')
+       IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
+                             &keyword FILE in the Output section of the l3cf.')
+       cfDef%stdType = cf%Sections(iOut)%Entries(iLab)%Cells(indx)%CharValue
+
+! Find the L3DZD label
+
+       label = 'L3DZD'
+       iLab = LinearSearchStringArray( &
+                     cf%Sections(iOut)%Entries%MlscfLabelName, TRIM(label) )
+       IF (iLab == 0) THEN
+          msr = 'Missing l3cf Output specification for ' // label
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+
+! Find the Diagnostic MCF file name; save it in L3CFDef_T
+
+       indx = LinearSearchStringArray( &
+                          cf%Sections(iOut)%Entries(iLab)%Cells%Keyword, 'mcf')
+       IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
+                              &keyword MCF in the Output section of the l3cf.')
+       cfDef%dgMCFName = cf%Sections(iOut)%Entries(iLab)%Cells(indx)%CharValue
+
+! Search for a match in the PCF
+
+       CALL SearchPCFNames(cfDef%dgMCFName, mlspcf_mcf_l3dz_start, &
+                           mlspcf_mcf_l3dz_end, mlspcf_mcf, match)
+       IF (mlspcf_mcf == -1) THEN
+          msr = 'No match in the PCF for file ' // cfDef%dgMCFName
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+       ENDIF
+
+! Save the PCF number in L3CFProd_T
+
+       cfDef%dgMCFNum = mlspcf_mcf
+
+! Find the file template from Output; save it in L3CFDef_T
+
+       indx = LinearSearchStringArray( &
+                         cf%Sections(iOut)%Entries(iLab)%Cells%Keyword, 'file')
+       IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
+                             &keyword FILE in the Output section of the l3cf.')
+       cfDef%dgType = cf%Sections(iOut)%Entries(iLab)%Cells(indx)%CharValue
 
 ! Find the number of products for which L3 processing was requested
 
@@ -414,6 +497,9 @@ END MODULE L3CF
 !==============
 
 ! $Log$
+! Revision 1.8  2001/01/18 16:51:07  nakamura
+! Added type L3CFDef_T; moved minDays from PCF to cf.
+!
 ! Revision 1.7  2001/01/16 17:41:49  nakamura
 ! Added mcfName to L3CFProd_T; extract logType from cf.
 !
