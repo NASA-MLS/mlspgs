@@ -60,6 +60,7 @@ MODULE L2AUXData                 ! Data types for storing L2AUX data internally
 
     ! A name for the L2AUX quantity, goes into SD name
     CHARACTER (LEN=L2AUXNameLen) :: Name ! Name for quantity to be output
+    INTEGER :: noDimensionsUsed ! Number of dimensions used in quantity (max 3)
 
     ! The dimensions for the quantity
     TYPE (L2AUX_Dimension_T), DIMENSION(3) :: dimensions
@@ -89,6 +90,7 @@ CONTAINS
 
     ! Fill the dimensions data structure
 
+    l2aux%noDimensionsUsed=COUNT(dimensionFamilies /= L2AUXDim_None)
     l2aux%dimensions%dimensionFamily=dimensionFamilies
     l2aux%dimensions%noValues=dimSizes
 
@@ -155,13 +157,9 @@ CONTAINS
 
     ! Executable code
 
-    ! First identity which is the `last' dimension.
+    ! First identity which is the `last' dimension, this is the one to expand
 
-    expandingDimension=3
-    DO WHILE( (l2Aux%dimensions(expandingDimension)%dimensionFamily==&
-         & L2AUXDim_None).AND.(expandingDimension>1))
-       expandingDimension=expandingDimension-1
-    END DO
+    expandingDimension=l2aux%noDimensionsUsed
 
     ! Now see how long this is
     oldSize=l2aux%dimensions(expandingDimension)%noValues
@@ -270,6 +268,9 @@ END MODULE L2AUXData
 
 !
 ! $Log$
+! Revision 1.9  2000/01/19 23:45:42  livesey
+! Added ExpandL2AUXDataInPlace routine for Join.
+!
 ! Revision 1.8  2000/01/19 21:42:18  livesey
 ! Just tided up some comments.
 !
