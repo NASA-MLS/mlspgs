@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module ChunkDivide_m
@@ -7,7 +7,9 @@ module ChunkDivide_m
   ! the data into chunks.
 
   use Intrinsic, only: L_NONE, PHYQ_INVALID
-  use MLSCommon, only: RP
+  use MLSCommon, only: R8, RP
+  use MLSNumerics, only: ISFILLVALUE
+  use MLSSets, only: FINDFIRST
 
   implicit none
   private
@@ -454,9 +456,13 @@ contains ! ===================================== Public Procedures =====
       call ReadL1BData ( l1bInfo%l1bOAId, trim(tp_angle), &
         & tpGeodAngle, noMAFsRead, flag, hdfVersion=l1b_hdf_version , &
         & dontPad=DONTPAD )
+      ! If you needed this, should you be using this chunkDivide?
+      call smoothOutDroppedMAFs(tpGeodAngle%dpField)
+      call smoothOutDroppedMAFs(tpGeodAngle%dpField, monotonize=.true.)
       call ReadL1BData ( l1bInfo%l1bOAId, trim(MAF_start), &
         & taiTime, noMAFsRead, flag, hdfVersion=l1b_hdf_version , &
         & dontPad=DONTPAD )
+      call smoothOutDroppedMAFs(taiTime%dpField)
       noMAFs = mafRange(2) - mafRange(1) + 1
       m1 = mafRange(1) + 1
       m2 = mafRange(2) + 1
@@ -597,9 +603,12 @@ contains ! ===================================== Public Procedures =====
       call ReadL1BData ( l1bInfo%l1bOAId, trim(tp_angle), &
         & tpGeodAngle, noMAFsRead, flag, hdfVersion=l1b_hdf_version , &
         & dontPad=DONTPAD )
+      call smoothOutDroppedMAFs(tpGeodAngle%dpField)
+      call smoothOutDroppedMAFs(tpGeodAngle%dpField, monotonize=.true.)
       call ReadL1BData ( l1bInfo%l1bOAId, trim(MAF_start), &
         & taiTime, noMAFsRead, flag, hdfVersion=l1b_hdf_version , &
         & dontPad=DONTPAD )
+      call smoothOutDroppedMAFs(taiTime%dpField)
       noMAFs = mafRange(2) - mafRange(1) + 1
       m1 = mafRange(1) + 1
       m2 = mafRange(2) + 1
@@ -1822,6 +1831,7 @@ contains ! ===================================== Public Procedures =====
       ! Local variables
       type (L1BData_T) :: TAITIME         ! Read from L1BOA file
       type (L1BData_T) :: TPGEODALT       ! Read from L1BOA file
+      type (L1BData_T) :: TPGEODANGLE     ! Read from L1BOA file
       type (L1BData_T) :: TPORBY          ! Read from L1BOA file
       type (Obstruction_T) :: NEWOBSTRUCTION ! A single obstruction
 
@@ -1836,13 +1846,15 @@ contains ! ===================================== Public Procedures =====
       logical :: LASTONEVALID             ! To run through valid
       logical :: THISONEVALID             ! To go into valid
       logical, dimension(:), pointer :: VALID ! Flag for each MAF
+      logical, dimension(:), pointer :: WASSMOOTHED ! Flag for each MAF
+      logical, dimension(:), pointer :: ANGLEWASSMOOTHED ! Flag for each MAF
 
       real(r8) :: SCANMAX                 ! Range of scan each maf
       real(r8) :: SCANMIN                 ! Range of scan each maf
       real(r8) :: ORBYMAX                 ! Maximum value of orbY each maf
 
       integer   ::                       l1b_hdf_version
-      character(len=NAME_LEN) ::         MAF_start, tp_alt, tp_orbY
+      character(len=NAME_LEN) ::         MAF_start, tp_alt, tp_orbY, tp_angle
       ! Executable code
 
       if ( LEVEL1_HDFVERSION /= WILDCARDHDFVERSION ) then
@@ -1861,6 +1873,7 @@ contains ! ===================================== Public Procedures =====
       call ReadL1BData ( l1bInfo%l1boaId, trim(MAF_start), taiTime, &
         & noMAFsRead, flag, hdfVersion=l1b_hdf_version , &
         & dontPad=DONTPAD )
+      call smoothOutDroppedMAFs(taiTime%dpField)
 
       ! Deduce the first and last MAFs to consider
       call Hunt ( taiTime%dpField(1,1,:), &
@@ -1885,7 +1898,11 @@ contains ! ===================================== Public Procedures =====
       ! Now look through the L1B data, first look for scan problems
       if ( config%criticalModules /= l_none ) then
         nullify ( valid )
+        nullify ( anglewasSmoothed )
+        nullify ( wasSmoothed )
         call Allocate_test ( valid, noMAFs, 'valid', ModuleName )
+        call Allocate_test ( anglewasSmoothed, noMAFs, 'angleWasSmoothed', ModuleName )
+        call Allocate_test ( wasSmoothed, noMAFs, 'wasSmoothed', ModuleName )
         if ( config%criticalModules == l_both ) then
           valid = .true.
         else
@@ -1896,6 +1913,8 @@ contains ! ===================================== Public Procedures =====
           tp_alt = AssembleL1BQtyName ( trim(modNameStr)//'.tpGeodAlt', &
             & l1b_hdf_version, .false. )
           tp_orby = AssembleL1BQtyName ( trim(modNameStr)//'.tpOrbY', &
+            & l1b_hdf_version, .false. )
+          tp_angle = AssembleL1BQtyName ( trim(modNameStr)//'.tpGeodAngle', &
             & l1b_hdf_version, .false. )
           if ( .not. modules(mod)%spacecraft .and. &
             & ( any ( config%criticalModules == (/ l_either, l_both /) ) .or. &
@@ -1908,6 +1927,14 @@ contains ! ===================================== Public Procedures =====
             call ReadL1BData ( l1bInfo%l1boaID, trim(tp_orby), &
               & tpOrbY, noMAFsRead, flag, hdfVersion=l1b_hdf_version , &
               & dontPad=DONTPAD )
+            call ReadL1BData ( l1bInfo%l1boaID, trim(tp_angle), &
+              & tpGeodAngle, noMAFsRead, flag, hdfVersion=l1b_hdf_version , &
+              & dontPad=DONTPAD )
+            call smoothOutDroppedMAFs(tpGeodAngle%dpField, angleWasSmoothed, &
+              & monotonize=.true.)
+            call smoothOutDroppedMAFs(tpGeodAlt%dpField, wasSmoothed)
+            call smoothOutDroppedMAFs(tpOrbY%dpField)
+            wasSmoothed = (wasSmoothed .or. angleWasSmoothed)
             ! Consider the scan range in each MAF in turn
             do maf = 1, noMAFs
               scanMax = maxval ( tpGeodAlt%dpField(1,:,maf) )
@@ -1921,6 +1948,9 @@ contains ! ===================================== Public Procedures =====
               if ( config%maxOrbY > 0.0 ) then
                 thisOneValid = thisOneValid .and. orbYMax < config%maxOrbY
               end if
+              ! this one is not valid if it's valid only by virtue
+              ! of having been smoothed
+              thisOneValid = thisOneValid .and. .not. wasSmoothed(maf)
               if ( config%criticalModules == l_both ) then
                 valid(maf) = valid(maf) .and. thisOneValid
               else
@@ -1928,11 +1958,16 @@ contains ! ===================================== Public Procedures =====
               end if
             end do                        ! Maf loop
             call DeallocateL1BData ( taiTime )
+            call DeallocateL1BData ( tpgeodalt )
+            call DeallocateL1BData ( tpgeodangle )
+            call DeallocateL1BData ( tporby )
           end if                          ! Consider this module
         end do                            ! Module Loop
         ! Convert this information into obstructions and tidy up.
         call ConvertFlagsToObstructions ( valid, obstructions )
         call Deallocate_test ( valid, 'valid', ModuleName )
+        call Deallocate_test ( wasSmoothed, 'wasSmoothed', ModuleName )
+        call Deallocate_test ( angleWasSmoothed, 'angleWasSmoothed', ModuleName )
       end if                              ! Consider scan issues
 
       ! Here we look at radiances and switch changes.
@@ -2111,6 +2146,43 @@ contains ! ===================================== Public Procedures =====
 
   end function ANY_GOOD_SIGNALDATA
 
+  subroutine smoothOutDroppedMAFs(field, wasSmoothed, monotonize)
+    ! detect any fillValues--replace them with nearest neighbor values
+    ! or, optionally, detect and correct any departures from monotone growth
+    ! Args
+    real(r8), intent(inout)                      :: field(:,:,:)
+    logical, dimension(:), optional, intent(out) :: wasSmoothed
+    logical, optional, intent(in)                :: monotonize
+    ! Internal variables
+    integer :: maf, nearest
+    logical :: myMonotonize
+    real(r8):: lastValue
+    ! Executable
+    myMonotonize = .false.
+    if ( present(monotonize) ) mymonotonize = monotonize
+    if ( present(wasSmoothed) ) wasSmoothed = .false.
+    lastValue = field(1,1,1)
+    do maf=1, size(field, 3)
+      if ( myMonotonize ) then
+        nearest = max(maf-1, 1)
+        if ( field(1,1,maf) < lastValue ) then
+          if ( present(wasSmoothed) ) wasSmoothed(maf) = .true.
+          field(:,:,maf) = field(:,:,nearest)
+        else
+          lastValue = field(1,1,maf)
+        endif
+      elseif ( any( isFillValue(field(:,:,maf)) ) ) then
+        if ( present(wasSmoothed) ) wasSmoothed(maf) = .true.
+        if ( maf == 1 ) then
+          nearest = findfirst(.not. isFillValue(field(1,1,:)) )
+        else
+          nearest = maf - 1
+        endif
+        field(:,:,maf) = field(:,:,nearest)
+      endif
+    enddo
+  end subroutine smoothOutDroppedMAFs
+
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
@@ -2118,6 +2190,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.55  2004/10/05 23:09:54  pwagner
+! Can handle dropped MAFs, maneuvers that disrupt monotonic geodAngle
+!
 ! Revision 2.54  2004/08/23 22:00:39  pwagner
 ! Made most readl1bData dontpad=.true.
 !
