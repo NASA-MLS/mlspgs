@@ -23,6 +23,7 @@ MakeFName = MakeFC
 # the functional targets update or depends are "built", i.e. performed
 # every tenth time an internalcleanup is automatically performed
 
+SCRIPTS = scripts
 # This is how big COPY_NUMBER may grow before being reset
 # ---> and triggering internalcleanup <---
 # (formerly 10)
@@ -64,18 +65,29 @@ else
    INSTALLDIR=$(CONFDIR)/bin/$(MLSCONFG)
 endif
 
+# --------------- scripts help
+# util is the subdirectory
 # where the following utility scripts 
 # (necessary to build the mls software) are stored
-#   build_f90_in_misc.sh
-#   f90GhostFiles.pl
-#   f90makedep.pl
-#   ghostbuster.sh
-#   makemakedep.sh
-#   mkdir_cascade.sh
-#   mlsconfigure*
-#   mlsprog.sh
-#   reecho.sh
-#   which_fftw.sh
+#   Script                        Function
+#   build_f90_in_misc.sh   Build a c or Fortran program
+#   f90GhostFiles.pl       Used by ghostbuster.sh   
+#   f90makedep.pl          Used ghostbuster.sh
+#   ghostbuster.sh         Deletes orphaned .o, .mod files from deceased sources
+#   makemakedep.sh         Calculates dependencies   
+#   mkdir_cascade.sh       Creates a directory, and any yet uncreated parents
+#   mlsconfigure           Configures Makefiles for building mlks software
+#   mlsprog.sh             sh wrapper to assure exit condition is "1" if probs
+#   reecho.sh              Filter list of args to remove bogus ones
+#   which_fftw.sh          Construct correct fftw link lines for level 3
+#
+#  More info on some of these scripts is available via
+#  Command                      for help on 
+#  make help--depends           makemakedep.sh
+#  make help--ghostbuster       ghostbuster.sh
+#  make help--mlsconfigure      mlsconfigure
+#  make help--reecho            reecho.sh
+# --------------- End scripts help
 
 MLSBIN=util
 
@@ -118,6 +130,7 @@ SHELL = /bin/sh
 # all            -- all the sub-directories: $LEVELS + $OTHER_SUBDIRS + lib
 # subdirs        -- same as all
 # lib            -- libmls.a; a prerequisite for the others
+# blas           -- libmlspack.a; another prerequisite for the others and for lib
 
 #                           (functional)
 # clean          -- deletes only *.o, *.mod from sub-subs
@@ -139,9 +152,14 @@ SHELL = /bin/sh
 #                   also deletes haunted library files
 # help           -- prints some orientation on available help
 # help--brief    -- prints some info on how to build the mls software
+# help--depends  -- prints some info on the makemakedep.sh script
+# help--ghostbuster
+#                -- prints some info on the ghostbuster.sh script
 # help--Makefile -- prints some info on this Makefile
 # help--mlsconfigure
 #                -- prints some info on the mlsconfigure script
+# help--reecho   -- prints some info on the reecho.sh script
+# help--util     -- prints some info on the scripts in the util directory
 # install        -- mv programs mlsl* from sub-subs to INSTALLDIR
 #                    also create shell scripts in INSTALLDIR for each program
 # makefile       -- allows you to summon this custom Makefile with shorter
@@ -249,7 +267,7 @@ OTHER_SUBDIRS = fwdmdl cloudfwdm
 
 # make all
 
-SUBDIRS = lib $(LEVELS) $(OTHER_SUBDIRS)
+SUBDIRS = blas lib $(LEVELS) $(OTHER_SUBDIRS)
 
 # This isn't really everything, just everything the SIPS might need
 # so it will be bundled up by tar
@@ -296,7 +314,7 @@ endif
 # Automatic targets
 
 levels:
-	 @for dir in lib $(LEVELS); do \
+	 @for dir in blas lib $(LEVELS); do \
 	  $(MAKE) -f $(MakeFName) -C $$dir; \
 	done
 
@@ -319,6 +337,9 @@ all subdirs:
 	done
 
 lib:
+	$(MAKE) -f $(MakeFName) -C $@
+
+blas:
 	$(MAKE) -f $(MakeFName) -C $@
 
 #              (functional)
@@ -387,6 +408,10 @@ help--Makefile:
 	@sed -n '/'$(MakeFName)' help/,/End '$(MakeFName)' help/ p' $(CONFDIR)/MakeFC \
 		| sed -n 's/^..//p' | sed '1 d; $$ d'
 
+help--scripts:
+	@sed -n '/'$(SCRIPTS)' help/,/End '$(SCRIPTS)' help/ p' $(CONFDIR)/MakeFC \
+		| sed -n 's/^..//p' | sed '1 d; $$ d'
+
 disthelp:
 	$(CONFDIR)/README.MakeFC
 
@@ -400,6 +425,15 @@ help:
 help--brief:
 	@$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
           -c "$(MLSF95)" -cf "$(MLSCFILE)" -p "$(MLSPLAT)" -help--brief
+
+help--depends:
+	@$(MLSBIN)/makemakedep.sh.sh -help
+
+help--ghostbuster:
+	@$(MLSBIN)/ghostbuster.sh -help
+
+help--reecho:
+	@$(MLSBIN)/reecho.sh -help
 
 # install the mls programs from $(LEVELS) into $(INSTALLDIR)
 install:
@@ -700,6 +734,8 @@ $(LEVELS): lib
 
 $(OTHER_SUBDIRS): lib
 
+lib: blas
+
 all: $(SUBDIRS)
 
 subdirs: $(SUBDIRS)
@@ -724,6 +760,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.57  2001/11/09 23:56:53  pwagner
+# Fixed problem with help--Makefile
+#
 # Revision 1.56  2001/11/09 21:47:08  pwagner
 # EVERY_MLSCONFG now calculated--allows for custom-named configs
 #
