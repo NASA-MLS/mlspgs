@@ -150,7 +150,7 @@ CONTAINS
 
 !---------------------------------------------------------------------------
    SUBROUTINE OutputProd (pcf, l3cf, cfDef, anText, l3sp, l3dm, dmA, dmD, &
-                          l3r, residA, residD, dzs, dzA, dzD, flags, zFiles)
+                          l3r, residA, residD, dzs, dzA, dzD, flags, sFiles)
 !---------------------------------------------------------------------------
 
 ! Brief description of subroutine
@@ -176,7 +176,7 @@ CONTAINS
 
       CHARACTER (LEN=1), POINTER :: anText(:)
 
-      TYPE( L3DZFiles_T ), INTENT(INOUT) :: zFiles
+      TYPE( OutputFiles_T ), INTENT(INOUT) :: sFiles
 
 ! Parameters
 
@@ -184,7 +184,7 @@ CONTAINS
 
 ! Variables
 
-      TYPE( L3DMFiles_T ) :: files
+      TYPE( OutputFiles_T ) :: files
 
       CHARACTER (LEN=FileNameLen) :: type
       CHARACTER (LEN=480) :: msr
@@ -287,29 +287,29 @@ CONTAINS
 
       ENDIF
 
-! L3DZ -- if data exist, write them to the l3dz Standard file; keep track of
+! L3DZ -- if data exist, write them to L3DZ Standard files; keep track of
 !         which files have been created for later metadata annotation
 
       IF (flags%writel3dzCom) THEN
-         CALL OutputL3DZ(cfDef%stdType, dzs, zFiles)
+         CALL OutputL3DZ(cfDef%stdType, dzs, sFiles)
       ELSE
          msr = TRIM(l3cf%l3prodNameD) // ' DZ' // NOOUT_ERR
          CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
       ENDIF
 
-! If ascending map data for the product exist, write them to l3dm files
+! If ascending data for the product exist, write them to the Standard files
 
       IF (flags%writel3dzAsc) THEN
-         CALL OutputL3DZ(cfDef%stdType, dza, zFiles)
+         CALL OutputL3DZ(cfDef%stdType, dza, sFiles)
       ELSE
          msr = TRIM(l3cf%l3prodNameD) // 'Ascending DZ' // NOOUT_ERR
          CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
       ENDIF
 
-! If descending map data for the product exist, write them to l3dm files
+! If descending data exist, write them to the Standard files
 
       IF (flags%writel3dzDes) THEN
-         CALL OutputL3DZ(cfDef%stdType, dzd, zFiles)
+         CALL OutputL3DZ(cfDef%stdType, dzd, sFiles)
       ELSE
          msr = TRIM(l3cf%l3prodNameD) // 'Descending DZ' // NOOUT_ERR
          CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
@@ -319,9 +319,10 @@ CONTAINS
    END SUBROUTINE OutputProd
 !---------------------------
 
-!----------------------------------------------------------------------------
-   SUBROUTINE OutputAndClose (cf, pcf, cfProd, cfDef, avgPer, anText, zFiles)
-!----------------------------------------------------------------------------
+!------------------------------------------------------------------------------
+   SUBROUTINE OutputAndClose (cf, pcf, cfProd, cfDef, avgPer, anText, sFiles, &
+                              dFiles)
+!------------------------------------------------------------------------------
 
 ! Brief description of subroutine
 ! This subroutine performs final Output & Close tasks outside the product loop.
@@ -330,7 +331,7 @@ CONTAINS
 
       TYPE( L3CFDef_T ), INTENT(IN) :: cfDef
 
-      TYPE( L3DZFiles_T ), INTENT(IN) :: zFiles
+      TYPE( OutputFiles_T ), INTENT(IN) :: dFiles, sFiles
 
       TYPE( PCFData_T ), INTENT(IN) :: pcf
 
@@ -354,18 +355,18 @@ CONTAINS
 
 ! Write the metadata to any L3DZ files created
 
-      IF (zFiles%nStd == 0) THEN
+      IF (sFiles%nFiles == 0) THEN
          CALL MLSMessage(MLSMSG_Warning, ModuleName, 'No L3DZ Standard files &
                                                                &were created.')
       ELSE
-         CALL WriteMetaL3DZS(pcf, cfDef, zFiles, anText)
+         CALL WriteMetaL3DZ(pcf, cfDef%stdMCFnum, sFiles, anText)
       ENDIF
 
-      IF (zFiles%nDg == 0) THEN
+      IF (dFiles%nFiles == 0) THEN
          CALL MLSMessage(MLSMSG_Warning, ModuleName, 'No L3DZ Diagnostic &
-                                                         &files were created.')
+                                                              &files were created.')
       ELSE
-         CALL WriteMetaL3DZD(pcf, cfDef, zFiles, anText)
+         CALL WriteMetaL3DZ(pcf, cfDef%dgMCFnum, dFiles, anText)
       ENDIF
 
 ! Write the log file metadata
@@ -395,6 +396,9 @@ END MODULE OutputClose
 !=====================
 
 !$Log$
+!Revision 1.11  2001/04/24 19:41:41  nakamura
+!Added ONLY to USE L2GPData statement.
+!
 !Revision 1.10  2001/04/11 18:51:38  nakamura
 !Moved deallocations for pointers passed between CORE & I/O up to main program.
 !
