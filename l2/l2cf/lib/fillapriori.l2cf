@@ -34,6 +34,24 @@ begin Fill
     temperatureQuantity=apriori.temperature, method=RHIFromH2O, /dontMask
   })
 
+  ;; --------------------------------------------- hiRes Fills
+
+  ;; This macro interpolates standard resolution quantities to the
+  ;; hiRes equivalents.  And a sub-macro to chop off {_HR}.
+  !define(trimHR,{!substr($1,0,!eval(!len($1)-3))})
+  !define(fillHiRes,{Fill, quantity=$1, sourceQuantity=!trimHR($1),!dnl
+     method=vector, /interpolate!nl})
+
+  !ifdef(skipHiRes,{},{
+    !fillHiRes(apriori.temperature_HR)
+    !forall(fillHiRes,!makelist(apriori.,{},!allHiResMolecules))
+    ;; Get RHI_HR from RHI_HR.  Not sure if this should really be from
+    ;; H2O_HR and temperature_HR
+    !fillHiRes(apriori.RHI_HR)
+  })
+
+  ;; --------------------------------------------- trop H2O
+
   ;; Put H2O in trop h2o
   Fill, quantity=apriori.tropH2O, sourceQuantity=apriori.h2o, $
     method=vector, /interpolate
@@ -62,30 +80,35 @@ begin Fill
   ;; Compute non refracted phitans for apriori
   Fill, quantity=apriori.phiTanGHz, method=refract, $
     ptanQuantity=apriori.ptanGHz, $
-    h2oQuantity=apriori.h2o, $
-    temperatureQuantity=apriori.temperature, refract=false
+    h2oQuantity=apriori.h2o!res, $
+    temperatureQuantity=apriori.temperature!res, refract=false
   Fill, quantity=apriori.phiTanTHz, method=refract, $
     ptanQuantity=apriori.ptanTHz, $
-    h2oQuantity=apriori.h2o, $
-    temperatureQuantity=apriori.temperature, refract=false
+    h2oQuantity=apriori.h2o!res, $
+    temperatureQuantity=apriori.temperature!res, refract=false
 
   !ifdef(skipHydrostatic,{},{
   ;; Get full GPH profile
   Fill, quantity=apriori.gph, method=hydrostatic, $
     temperatureQuantity=apriori.temperature, $
     refGPHquantity=apriori.refGPH
+  !ifdef(skipHiRes,{},{
+  Fill, quantity=apriori.gph_HR, method=hydrostatic, $
+    temperatureQuantity=apriori.temperature_HR, $
+    refGPHquantity=apriori.refGPH
+  })
   ;; Now compute the tangent presssures for apriori
   Fill, quantity=apriori.ptanGHz, method=hydrostatic, $
-    h2oQuantity=apriori.h2o, $
-    temperatureQuantity=apriori.temperature, $
+    h2oQuantity=apriori.h2o!res, $
+    temperatureQuantity=apriori.temperature!res, $
     refGPHQuantity=apriori.refGPH, $
     geocAltitudeQuantity=apriori.tngtGeocAltGHz, $
     orbitInclination=apriori.orbitInclination, $
     phiTan=apriori.phiTanGHz, $
     maxIterations=20
   Fill, quantity=apriori.ptanTHz, method=hydrostatic, $
-    h2oQuantity=apriori.h2o, $
-    temperatureQuantity=apriori.temperature, $
+    h2oQuantity=apriori.h2o!res, $
+    temperatureQuantity=apriori.temperature!res, $
     refGPHQuantity=apriori.refGPH, $
     geocAltitudeQuantity=apriori.tngtGeocAltTHz, $
     orbitInclination=apriori.orbitInclination, $
@@ -123,6 +146,12 @@ begin Fill
   Fill, quantity=aprioriPrecision.temperature, method=profile, $
     profileValues= [ 1000mb:5K, 220mb:10K, 68mb:20K ]
   Fill, quantity=aprioriPrecision.refGPH, method=explicit, /spread, explicitValues= 5 km
+
+  !ifdef(skipHiRes,{},{
+    !fillHiRes(aprioriPrecision.temperature_HR)
+    !forall(fillHiRes,!makelist(aprioriPrecision.,{},!allHiResMolecules))
+  })
+
   ;; Now we're going to fill the a priori length scales up
   !ifdef(standardLength,{},{!define(standardLength, 0 km)})
 
@@ -143,6 +172,11 @@ begin Fill
 
   Fill, quantity=length.temperature, method=explicit, /spread, $
     explicitValues= !standardLength
+
+  !ifdef(skipHiRes,{},{
+    !fillHiRes(length.temperature_HR)
+    !forall(fillHiRes,!makelist(length.,{},!allHiResMolecules))
+  })
 
   ;; Now do the same for extinction
   Fill, quantity=aprioriPrecision.extinctionConstantR1A, method=explicit, /spread, $
@@ -226,5 +260,12 @@ begin Fill
   Fill, quantity=highBound.tropH2O, method=explicit, explicitValues=0.01, /spread
   Fill, quantity=lowBound.h2o, method=explicit, explicitValues=0.1ppmv, /spread
   Fill, quantity=highBound.h2o, method=explicit, explicitValues=0.01, /spread
+
+  !ifdef(skipHiRes,{},{
+    !fillHiRes(lowBound.temperature_HR)
+    !fillHiRes(highBound.temperature_HR)
+    !forall(fillHiRes,!makelist(lowBound.,{},!allHiResMolecules))
+    !forall(fillHiRes,!makelist(highBound.,{},!allHiResMolecules))
+  })
 
 end Fill
