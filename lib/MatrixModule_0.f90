@@ -153,8 +153,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   end type MatrixElement_T
 
   ! - - -  Private data     - - - - - - - - - - - - - - - - - - - - - -
-  integer, parameter, private :: B_sizer = 0
-  integer, parameter, private :: B = bit_size(b_sizer) ! can't use "bit_size(b)"
+  integer, parameter, private :: B = bit_size(0) ! can't use "bit_size(b)"
   real, parameter, private :: COL_SPARSITY = 0.5  ! If more than this
     ! fraction of the elements between the first and last nonzero in a
     ! column are nonzero, use M_Banded, otherwise use M_Column_Sparse.
@@ -1243,13 +1242,17 @@ contains ! =====     Public Procedures     =============================
         if ( associated(xm) .or. associated(ym) ) then
           do j = 1, zb%ncols  ! Columns of ZB
             if ( associated(ym) ) then
-              if ( btest(ym(j/b+1),mod(j,b)) ) cycle
+              if ( btest(ym(j/b+1),mod(j,b)) ) then
+          cycle
+              end if
             end if
             mz = zb%nrows
             if ( my_upper ) mz = j
             do i = 1, mz      ! Rows of Z = columns of XB
               if ( associated(xm) ) then
-                if ( btest(xm(i/b+1),mod(i,b)) ) cycle
+                if ( btest(xm(i/b+1),mod(i,b)) ) then
+            cycle
+                end if
               end if
 !             xy = dot_product(xb%values(1:xb%nrows,i), yb%values(1:xb%nrows,j))
               xy = dot( xb%nrows, xb%values(1,i), 1, yb%values(1,j), 1 )
@@ -1272,59 +1275,76 @@ contains ! =====     Public Procedures     =============================
   end subroutine MultiplyMatrixBlocks
 
   ! -------------------------------------  MultiplyMatrixVector_0  -----
-  subroutine MultiplyMatrixVector_0 ( B, V, P, UPDATE, SUBTRACT )
-  ! P = B^T V if UPDATE is absent or false.
-  ! P = P + B^T V if UPDATE is present and true and SUBTRACT is absent or false.
-  ! P = P - B^T V if UPDATE is present and true and SUBTRACT is present and true.
-    type(MatrixElement_T), intent(in) :: B
+  subroutine MultiplyMatrixVector_0 ( A, V, P, UPDATE, SUBTRACT, MASK )
+  ! P = A^T V if UPDATE is absent or false.
+  ! P = P + A^T V if UPDATE is present and true and SUBTRACT is absent or false.
+  ! P = P - A^T V if UPDATE is present and true and SUBTRACT is present and true.
+  ! If MASK is present and associated, use it to suppress multiplying columns of A.
+    type(MatrixElement_T), intent(in) :: A
     real(r8), dimension(:), intent(in) :: V
     real(r8), dimension(:), intent(inout) :: P
     logical, optional, intent(in) :: UPDATE
     logical, optional, intent(in) :: SUBTRACT
+    integer, optional, pointer, dimension(:) :: MASK ! intent(in)
 
-    real(r8) :: BV                 ! Product of a column of B and the vector V
+    real(r8) :: AV                 ! Product of a column of A and the vector V
     integer :: I, M, N             ! Subscripts and loop inductors
+    integer, pointer, dimension(:) :: MY_MASK
     logical :: My_Sub, My_update
     real(r8) :: S                  ! SUBTRACT => -1 else +1
     integer :: V1                  ! Subscripts and loop inductors
 
-    if ( b%nrows /= size(v) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+    if ( a%nrows /= size(v) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & "Matrix block and vector not compatible in MultiplyMatrixVector_0" )
-    if ( b%ncols /= size(p) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+    if ( a%ncols /= size(p) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & "Matrix block and result not compatible in MultiplyMatrixVector_0" )
     my_update = .false.
     if ( present(update) ) my_update = update
     my_sub = .false.
     if ( present(subtract) ) my_sub = subtract
+    nullify ( my_Mask )
+    if ( present(mask) ) my_mask => mask
     s = 1.0_r8
     if ( my_sub ) s = -1.0_r8
     if ( .not. my_update ) p = 0.0_r8
-    select case ( b%kind )
+    select case ( a%kind )
     case ( M_Absent )
     case ( M_Banded )
       do i = 1, size(p)
-        v1 = b%r2(i-1)             ! starting position in B%VALUES - 1
-        n = b%r2(i) - v1           ! how many values
+        if ( associated(my_mask) ) then
+          if ( btest(my_mask(i/b+1),mod(i,b)) ) &
+      cycle
+        end if
+        v1 = a%r2(i-1)             ! starting position in A%VALUES - 1
+        n = a%r2(i) - v1           ! how many values
         if ( n > 0 ) then          ! Because v1+1 will be out-of-range if
                                    ! there is a final zero-size column
-          m = b%r1(i)              ! starting position in V
-!         bv = dot_product(b%values(v1+1:v1+n,1), v(m:m+n-1))
-          bv = dot(n, b%values(v1+1,1), 1, v(m), 1)
-          p(i) = p(i) + s * bv
+          m = a%r1(i)              ! starting position in V
+!         av = dot_product(a%values(v1+1:v1+n,1), v(m:m+n-1))
+          av = dot(n, a%values(v1+1,1), 1, v(m), 1)
+          p(i) = p(i) + s * av
         end if
       end do ! i
      case ( M_Column_Sparse )
       do i = 1, size(p)
-        bv = 0.0_r8
-        do n = b%r1(i-1)+1, b%r1(i)
-          bv = bv + b%values(n,1) * v(b%r2(n))
+        if ( associated(my_mask) ) then
+          if ( btest(my_mask(i/b+1),mod(i,b)) ) &
+      cycle
+        end if
+        av = 0.0_r8
+        do n = a%r1(i-1)+1, a%r1(i)
+          av = av + a%values(n,1) * v(a%r2(n))
         end do ! n
-        p(i) = p(i) + s * bv
+        p(i) = p(i) + s * av
       end do ! i
     case ( M_Full )
       do i = 1, size(p)
-        bv = dot(size(v), b%values(1,i), 1, v(1), 1)
-        p(i) = p(i) + s * bv
+        if ( associated(my_mask) ) then
+          if ( btest(my_mask(i/b+1),mod(i,b)) ) &
+      cycle
+        end if
+        av = dot(size(v), a%values(1,i), 1, v(1), 1)
+        p(i) = p(i) + s * av
       end do ! i
     end select
   end subroutine MultiplyMatrixVector_0
@@ -2036,6 +2056,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.46  2001/09/27 18:41:21  vsnyder
+! Apply mask in matrix-vector multiply
+!
 ! Revision 2.45  2001/09/24 23:01:11  vsnyder
 ! Make consistent/correct lower bound calculation for MASK array
 !
