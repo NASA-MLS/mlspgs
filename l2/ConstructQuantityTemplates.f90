@@ -15,13 +15,14 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
     & F_LOGBASIS, F_MODULE, F_MOLECULE, F_NOMIFS, F_RADIOMETER, &
     & F_SIGNAL, F_TYPE, F_UNIT, F_VGRID
   use INIT_TABLES_MODULE, only: FIELD_FIRST, FIELD_LAST, &
-    FIRST_LIT, LAST_LIT, L_BASELINE, L_CHANNEL, L_EARTHREFL, &
+    FIRST_LIT, LAST_LIT, L_BASELINE, L_CHANNEL, L_CloudIce,  L_EARTHREFL, &
     L_ELEVOFFSET, L_EXTINCTION, L_GEODALTITUDE, L_GPH, &
     L_HEIGHTOFFSET, L_LOSVEL, L_NONE, L_ORBITINCLINATION, L_PTAN, L_RADIANCE, &
     L_REFGPH, L_SCANRESIDUAL, L_SCECI, L_SCGEOCALT, L_SCVEL, L_SIDEBANDRATIO, &
     L_SPACERADIANCE, &
     L_TEMPERATURE, L_TNGTECI, L_TNGTGEOCALT, L_TNGTGEODALT, L_TRUE,&
-    L_VMR, L_XYZ, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_EXTINCTION, PHYQ_LENGTH,&
+    L_VMR, L_XYZ, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_EXTINCTION, &
+    PHYQ_IceDensity, PHYQ_LENGTH, &
     PHYQ_TEMPERATURE, PHYQ_VELOCITY, PHYQ_VMR, PHYQ_ZETA
   use L1BData, only: L1BData_T, READL1BDATA, DEALLOCATEL1BDATA
   use LEXER_CORE, only: PRINT_SOURCE
@@ -134,6 +135,7 @@ contains ! =====     Public Procedures     =============================
 
     natural_units = 0
     natural_units(l_baseline) =       PHYQ_Temperature
+    natural_units(l_cloudice) =       PHYQ_IceDensity
     natural_units(l_earthRefl) =      PHYQ_Dimensionless
     natural_units(l_elevOffset) =     PHYQ_Angle
     natural_units(l_extinction) =     PHYQ_Extinction
@@ -680,6 +682,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.39  2001/07/10 23:45:16  jonathan
+! added cloudicedensity and template for cloudsfwm, paul/jonathan
+!
 ! Revision 2.38  2001/07/09 22:37:23  livesey
 ! Embarassing memory leak caught!  It's our old friend
 ! mifGeolocation again.  I'm going to regret trying
