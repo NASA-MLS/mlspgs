@@ -13,13 +13,13 @@ MODULE PCFHdr
    IMPLICIT NONE
    PUBLIC
 
-   PRIVATE :: ID, ModuleName
-
-!------------------- RCS Ident Info -----------------------
-   CHARACTER(LEN=130) :: Id = &                                                    
-   "$Id$"
-   CHARACTER (LEN=*), PARAMETER :: ModuleName="$RCSfile$"
-!----------------------------------------------------------
+  !---------------------------- RCS Ident Info -------------------------------
+  character(len=*), private, parameter :: IdParm = &
+    & "$Id$"
+  character(len=len(idparm)), private :: Id = idParm
+  character(len=*), private, parameter :: ModuleName = &
+       & "$RCSfile$"
+  !---------------------------------------------------------------------------
 
 ! Contents:
 
@@ -197,6 +197,9 @@ END MODULE PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.7  2002/10/01 22:03:54  pwagner
+!# Fixed RCS Ident Block
+!#
 !# Revision 2.6  2002/08/29 16:54:44  pwagner
 !# Added WriteInputPointer
 !#
