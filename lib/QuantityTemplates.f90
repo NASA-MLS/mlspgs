@@ -58,6 +58,9 @@ module QuantityTemplates         ! Quantities within vectors
 
     logical :: minorFrame      ! Is this a minor frame quantity.
 
+    ! This one indicates whether log or linear interpolation should be used
+    logical :: logBasis                 ! If set use log
+
     ! This information describes how much of the data is in the overlap
     ! regions if any.
 
@@ -262,6 +265,7 @@ contains ! =====     Public Procedures     =============================
       qty%stacked = source%stacked
       qty%regular = source%regular
       qty%minorFrame = source%minorFrame
+      qty%logBasis = source%logBasis
       qty%instanceLen =  source%instanceLen
       qty%verticalCoordinate = source%verticalCoordinate
       qty%frequencyCoordinate = source%frequencyCoordinate
@@ -272,6 +276,7 @@ contains ! =====     Public Procedures     =============================
       qty%coherent = .TRUE.
       qty%stacked = .TRUE.
       qty%regular = .TRUE.
+      qty%logBasis = .FALSE.
       qty%minorFrame = .FALSE.
       qty%instanceLen = 1
       qty%verticalCoordinate=l_none
@@ -380,6 +385,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.7  2001/03/15 20:20:59  vsnyder
+! Correct the description of 'InstrumentModule'
+!
 ! Revision 2.6  2001/03/02 01:34:03  livesey
 ! New signals stuff
 !
