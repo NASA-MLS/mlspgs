@@ -11,7 +11,7 @@ module OutputAndClose ! outputs all data from the Join module to the
   use Allocate_Deallocate, only: Deallocate_Test
   use Hdf, only: DFACC_CREATE, SFEND, SFSTART
   use HDFEOS, only: SWCLOSE, SWOPEN
-  use INIT_TABLES_MODULE, only: F_FILE, F_OVERLAPS, F_QUANTITIES, F_TYPE, &
+  use INIT_TABLES_MODULE, only: F_FILE, F_OVERLAPS, F_PACKED, F_QUANTITIES, F_TYPE, &
     & L_L2AUX, L_L2DGG, L_L2GP, L_L2PC, S_OUTPUT, S_TIME
   use L2AUXData, only: L2AUXDATA_T, WriteL2AUXData
   use L2GPData, only: L2GPData_T, WriteL2GPData, L2GPNameLen
@@ -29,7 +29,7 @@ module OutputAndClose ! outputs all data from the Join module to the
     & MLSPCF_L2GP_START, mlspcf_l2dgg_start, mlspcf_l2dgg_end, &
     & Mlspcf_mcf_l2gp_start, Mlspcf_mcf_l2dgm_start, &
     & Mlspcf_mcf_l2dgg_start
-  use MoreTree, only: Get_Spec_ID
+  use MoreTree, only: Get_Spec_ID, GET_BOOLEAN
   use OUTPUT_M, only: blanks, OUTPUT
   use SDPToolkit, only: PGS_S_SUCCESS, PGSD_IO_GEN_WSEQFRM, Pgs_smf_getMsg
   use STRING_TABLE, only: GET_STRING
@@ -111,7 +111,9 @@ contains ! =====     Public Procedures     =============================
     integer :: NAME                     ! string index of label on output
     integer :: Numquantitiesperfile     ! < MAXQUANTITIESPERFILE
     integer :: OUTPUT_TYPE              ! L_L2AUX, L_L2GP, L_PC, L_L2DGG
+    logical :: PACKED                   ! Do we pack this l2pc?
     character (len=132) :: path
+    integer :: QUANTITIESNODE           ! A tree node
     character(len=L2GPNameLen), dimension(MAXQUANTITIESPERFILE) :: QuantityNames  ! From "quantities" field
     integer :: RECLEN                   ! For file stuff
     integer :: ReturnStatus
@@ -425,6 +427,7 @@ contains ! =====     Public Procedures     =============================
           if ( .not. canWriteL2PC ) call MLSMessage(MLSMSG_Error,ModuleName,&
             & "Cannot write l2pc files with multi chunk l2cf's")
           recLen = 0
+          packed = .false.
           l2pcUnit = mls_io_gen_openf ( 'open', .true., error,&
             & recLen, PGSd_IO_Gen_WSeqFrm, trim(file_base), 0,0,0, unknown=.true. )
           if ( error /= 0 ) call MLSMessage(MLSMSG_Error,ModuleName,&
@@ -433,15 +436,20 @@ contains ! =====     Public Procedures     =============================
             gson = subtree(field_no,key)
             select case ( decoration(subtree(1,gson)) )
             case ( f_quantities )
-              do in_field_no = 2, nsons(gson)
-                db_index = decoration(decoration(subtree(in_field_no ,gson)))
-                call GetFromMatrixDatabase ( matrices(db_index), tmpMatrix )
-                call writeOneL2PC ( tmpMatrix, l2pcUnit )
-              end do ! in_field_no = 2, nsons(gson)
+              quantitiesNode = gson
             case ( f_overlaps )
               ! ??? More work needed here
+            case ( f_packed )
+              packed = get_boolean ( gson )
             end select
           end do ! field_no = 2, nsons(key)
+
+          do in_field_no = 2, nsons(quantitiesNode)
+            db_index = decoration(decoration(subtree(in_field_no, quantitiesNode )))
+            call GetFromMatrixDatabase ( matrices(db_index), tmpMatrix )
+            call writeOneL2PC ( tmpMatrix, l2pcUnit, packed )
+          end do ! in_field_no = 2, nsons(gson)
+
           error = mls_io_gen_closef ( 'cl', l2pcUnit)
           if ( error /= 0 ) then
             call MLSMessage(MLSMSG_Error,ModuleName,&
@@ -675,6 +683,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.44  2002/01/18 00:24:34  livesey
+! Added packed option to outputing l2pc files
+!
 ! Revision 2.43  2001/11/20 00:48:54  livesey
 ! Alleviated one bug in zero chunks case, but there's another one to
 ! fix later.  We need to decide how to handle this one.
