@@ -840,10 +840,9 @@ contains ! =====     Public Procedures     =============================
   end function MaxAbsVal_0
 
 !---------------------------------------------Matrix Inversion for Array --
-  subroutine MatrixInversion(Ain, Aout)
+  subroutine MatrixInversion(A)
   
-  real (r8), dimension(:,:) :: Ain
-  real (r8), dimension(:,:) :: Aout
+  real (r8), dimension(:,:),intent(inout) :: A
   real (r8), dimension(:,:), allocatable :: U
   logical :: TRANSPOSE1
   real (r8), dimension(:), allocatable :: b
@@ -851,13 +850,13 @@ contains ! =====     Public Procedures     =============================
   
   integer :: i, n
   
-  n = size(Ain,2)
+  n = size(A,2)
     
   allocate(x(n))
   allocate(b(n))
   allocate(u(n,n))
 
-   call DenseCholesky (U, Ain)
+   call DenseCholesky (U, A)
 
   do i=1,n
    b = 0._r8
@@ -867,7 +866,7 @@ contains ! =====     Public Procedures     =============================
    b = x
    TRANSPOSE1 = .false.  
    call SolveCholeskyA_0 ( U, x, b, TRANSPOSE1 )
-   Aout(:,i) = x
+   A(:,i) = x
   end do
   
   deallocate(x)
@@ -2144,6 +2143,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.51  2001/10/03 17:33:11  dwu
+! modified MatrixInversion
+!
 ! Revision 2.50  2001/10/01 23:35:38  vsnyder
 ! Correct blunder in ClearRows_0
 !
