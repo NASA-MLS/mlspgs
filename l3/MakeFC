@@ -153,7 +153,8 @@ endif
 #----------------------- Build instructions
 
 $(PROG): $(PLATFORMS)/$(MLSCONFG)/libmlsl3.a
-		@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) ; \
+		@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
+      UNPREFXDPTHS="$(HDF5)/../fortran/src $(HDF5)/../include" ; \
         return_status=`expr $$?` ; \
         if [ $$return_status != "0" ]; then \
 		     exit 2 ; \
@@ -163,7 +164,8 @@ $(PROG): $(PLATFORMS)/$(MLSCONFG)/libmlsl3.a
          fi
 
 $(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG)
-		@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) ; \
+		@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
+      UNPREFXDPTHS="$(HDF5)/../fortran/src $(HDF5)/../include" ; \
         return_status=`expr $$?` ; \
         if [ $$return_status != "0" ]; then \
 		     exit 2 ; \
@@ -180,7 +182,8 @@ $(PLATFORMS)/$(MLSCONFG)/libmlsl3.a: $(PROG_prereqs)
 		exit 2 ; \
 		;; \
 	*) \
-		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) libmlsl3.a ; \
+		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) libmlsl3.a  \
+      UNPREFXDPTHS="$(HDF5)/../fortran/src $(HDF5)/../include"; \
 		;; \
 	esac 
 
@@ -269,6 +272,9 @@ targ:
    --exclude \*.mod --exclude $(PROG)
 
 # $Log$
+# Revision 1.38  2002/07/18 18:00:02  pwagner
+# NOHUNTING default when .mod-mediated dependency
+#
 # Revision 1.37  2002/07/15 16:52:59  pwagner
 # Exits make with status 2 if error in any level
 #

@@ -1,9 +1,3 @@
-# reecho.sh can filter out globbed file expansions that fail
-# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
-# However we will be using it just to create lapack_linker_line 
-# where LIB_LAPACK may contain multiple libraries
-REECHO=$(UTILDIR)/reecho.sh
-
 mlsl3d: MLSL3D.o
 
 short_name=l3
@@ -237,6 +231,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.24  2002/07/09 17:12:13  pwagner
+# Fixed embedded archive problem
+#
 # Revision 1.23  2002/07/01 17:32:22  pwagner
 # No longer compiles some sources twice
 #

@@ -171,7 +171,8 @@ $(PROG): $(PROG_prereqs)
 		exit 2 ; \
 		;; \
 	*) \
-		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) ; \
+		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
+      UNPREFXDPTHS="$(HDF5)/../fortran/src $(HDF5)/../include" ; \
         return_status=`expr $$?` ; \
         if [ $$return_status != "0" ]; then \
 		     exit 2 ; \
@@ -190,7 +191,8 @@ $(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG)
 		exit 2 ; \
 		;; \
 	*) \
-		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) ; \
+		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
+      UNPREFXDPTHS="$(HDF5)/../fortran/src $(HDF5)/../include" ; \
         return_status=`expr $$?` ; \
         if [ $$return_status != "0" ]; then \
 		     exit 2 ; \
@@ -293,6 +295,9 @@ targ:
    --exclude \*.mod --exclude $(PROG)
 
 # $Log$
+# Revision 1.18  2002/07/18 18:00:02  pwagner
+# NOHUNTING default when .mod-mediated dependency
+#
 # Revision 1.17  2002/07/15 23:12:15  pwagner
 # Dropped srclib from path searched for source files
 #

@@ -48,12 +48,17 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
    CHARACTER (LEN=1), POINTER :: anText(:)
    CHARACTER (LEN=DATE_LEN) :: mis_Days(maxWindow)
 
-   INTEGER :: i, l2Days
+   INTEGER :: i, l2Days, error
    INTEGER :: mis_l2Days
 
    REAL(r8), POINTER :: avgPer(:)
    integer, parameter :: NORMAL_EXIT_STATUS = 2
 
+   call h5open_f(error)                              
+   if (error /= 0) then                              
+       call MLSMessage ( MLSMSG_Error, moduleName, & 
+         & "Unable to h5_open_f" )                   
+   endif                                             
    CALL MLSMessage (MLSMSG_Info, ModuleName, 'EOS MLS Level 3 data processing started')
 
 ! Fill structures with input data from the PCF and L3CF.
@@ -119,6 +124,11 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
    CALL OutputAndClose(cf, pcf, cfProd, avgPer, anText)
 
    CALL MLSMessage (MLSMSG_Info, ModuleName, 'EOS MLS Level 3 data processing successfully completed!')
+   call h5close_f(error)                            
+   if (error /= 0) then                             
+     call MLSMessage ( MLSMSG_Error, moduleName, &  
+      & "Unable to h5_close_f" )                    
+   endif                                            
    call MLSMessageExit(NORMAL_EXIT_STATUS)
 
 
@@ -129,5 +139,4 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
 END PROGRAM MLSL3D
 !=================
 
-! $Log $
-!
+! $Log$

@@ -55,10 +55,15 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
 
    CHARACTER (LEN=DATE_LEN) :: mis_Days(maxWindow)
 
-   INTEGER :: i, l2Days, numFiles, mis_l2Days
+   INTEGER :: i, l2Days, numFiles, mis_l2Days, error
    integer, parameter :: NORMAL_EXIT_STATUS = 2
 
 ! Initializations
+   call h5open_f(error)
+   if (error /= 0) then
+       call MLSMessage ( MLSMSG_Error, moduleName, &
+         & "Unable to h5_open_f" )
+   endif    
 
    sFiles%nFiles = 0
    dFiles%nFiles = 0
@@ -194,6 +199,11 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
 
    CALL MLSMessage (MLSMSG_Info, ModuleName, &
     'EOS MLS Level 3 Monthly data processing successfully completed!')
+   call h5close_f(error)                            
+   if (error /= 0) then                             
+     call MLSMessage ( MLSMSG_Error, moduleName, &  
+      & "Unable to h5_close_f" )                    
+   endif                                            
    call MLSMessageExit(NORMAL_EXIT_STATUS)
 
 ! Detailed description of program
@@ -204,6 +214,9 @@ END PROGRAM MLSL3M
 !=================
 
 ! $Log$
+! Revision 1.11  2002/04/03 21:42:01  pwagner
+! Sets status on normal exit to 2
+!
 ! Revision 1.10  2002/03/28 21:54:02  ybj
 ! MLSL3M.f90
 !
