@@ -98,9 +98,7 @@ contains
     if ( associated(pointingGrids) ) call destroy_pointing_grid_database
 
     ! First, read through the file and count how much stuff is there.
-    read ( lun, '(a)', iostat=status ) line  ! Skip the first radiometer spec
-    if ( status < 0 ) go to 98
-    if ( status > 0 ) go to 99
+    read ( lun, '(a)', end=98, err=99, iostat=status ) line  ! Skip the first radiometer spec
     howManyRadiometers = 0
 outer1: do
       howManyRadiometers = howManyRadiometers + 1
@@ -110,9 +108,9 @@ outer1: do
       read ( lun, *, err=99 ) Frequency
       howManyGrids(howManyRadiometers) = 0
       do
-        read ( lun, '(a)', iostat=status ) line
+        read ( lun, '(a)', err=99, iostat=status ) line
         if ( status < 0 ) exit outer1
-        if ( status > 0 ) go to 99
+        line = adjustl(line)
         if ( verify(line(1:1), ' 0123456789.+-') /= 0 ) exit ! not a number
         howManyGrids(howManyRadiometers) = howManyGrids(howManyRadiometers) + 1
         read ( line, *, err=99 ) height, numHeights
@@ -126,6 +124,7 @@ outer1: do
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
       & MLSMSG_Allocate // "PointingGrids" )
     read ( lun, '(a)', iostat=status ) line  ! Read the first radiometer spec
+    if ( status > 0 ) go to 99
     howManyRadiometers = 0
 outer2: do
       howManyRadiometers = howManyRadiometers + 1
@@ -162,16 +161,16 @@ outer2: do
       ! The next thing should be gotten from the signals database.
       !??? Maybe not.  The one in the pointing grid file appears to have been
       !??? Doppler shifted.
-      read ( lun, *, err=99 ) pointingGrids(howManyRadiometers)%centerFrequency
+      read ( lun, *, err=99, iostat=status ) &
+        & pointingGrids(howManyRadiometers)%centerFrequency
       allocate ( pointingGrids(howManyRadiometers)% &
         & oneGrid(howManyGrids(howManyRadiometers)), stat=status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
         & MLSMSG_Allocate // "PointingGrids(?)%OneGrid" )
       n = 0
       do
-        read ( lun, '(a)', iostat=status ) line
+        read ( lun, '(a)', err=99, iostat=status ) line
         if ( status < 0 ) exit outer2
-        if ( status > 0 ) go to 99
         if ( verify(line(1:1), ' 0123456789.+-') /= 0 ) exit ! not a number
         n = n + 1
         read ( line, *, iostat=status, err=99 ) & 
@@ -256,6 +255,9 @@ outer2: do
 end module PointingGrid_m
 
 ! $Log$
+! Revision 1.9  2001/03/30 01:28:13  vsnyder
+! Repair handling of I/O status values
+!
 ! Revision 1.8  2001/03/29 23:53:21  vsnyder
 ! Use MaxSigLen parameter from MLSSignals
 !
