@@ -1,11 +1,11 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
 module MLSNumerics              ! Some low level numerical stuff
   !=============================================================================
 
-  use MLSCommon, only : r8
+  use MLSCommon, only : r8, rm
   use MLSMessageModule, only: MLSMessage,MLSMSG_Error
   use MLSStrings, only: Capitalize
   use MatrixModule_0, only: MatrixElement_T,CreateBlock_0,M_Column_Sparse,M_Absent,Sparsify
@@ -323,7 +323,7 @@ contains
     real(r8), dimension(:),   pointer :: p ! For 2nd der. guess
     real(r8), dimension(:,:), pointer :: spreadGap
     real(r8), dimension(:,:), pointer :: temp ! For 2nd der. guess
-    real(r8), dimension(:,:), pointer :: tempDNewByDOld ! Dense version.
+    real(rm), dimension(:,:), pointer :: tempDNewByDOld ! Dense version.
     integer, dimension(:),    pointer :: upperInds
     real(r8) :: sig       ! For second derivative guesser
     real(r8) :: dyByDxFill              ! Fill value for dyByDx
@@ -665,6 +665,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.20  2002/09/11 17:43:38  pwagner
+! Began changes needed to conform with matrix%values type move to rm from r8
+!
 ! Revision 2.19  2002/05/24 17:00:55  livesey
 ! Fixed bug with interpolation with only one oldX value
 !
