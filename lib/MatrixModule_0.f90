@@ -296,11 +296,11 @@ contains ! =====     Public Procedures     =============================
         call CopyBlock ( zb, y )                 ! Zb = y
 
 ! Commented-out on account of internal NAG v4.0 bug
-!        do k = 1, size(x%r1)
-!          zb%values(x%r2(x%r1(k-1)+1:x%r1(k)), k) = &
-!            & zb%values(x%r2(x%r1(k-1)+1:x%r1(k)), k) + &
-!              & x%values(x%r1(k-1)+1:x%r1(k),1)
-!        end do
+         do k = 1, size(x%r1)
+           zb%values(x%r2(x%r1(k-1)+1:x%r1(k)), k) = &
+             & zb%values(x%r2(x%r1(k-1)+1:x%r1(k)), k) + &
+               & x%values(x%r1(k-1)+1:x%r1(k),1)
+         end do
       end select
     case ( M_Full )
       select case ( y%kind )
@@ -503,9 +503,11 @@ contains ! =====     Public Procedures     =============================
     end if
     z%kind = x%kind
     z%nRows = x%nRows; z%nCols = x%nCols
-    call allocate_test ( z%r1, size(x%r1), "z%r1", ModuleName )
+    call allocate_test ( z%r1, ubound(x%r1,1), "z%r1", ModuleName, &
+      & lowBound=lbound(x%r1,1) )
     z%r1 = x%r1
-    call allocate_test ( z%r2, size(x%r2), "z%r2", ModuleName )
+    call allocate_test ( z%r2, ubound(x%r2,1), "z%r2", ModuleName, &
+      lowBound=lbound(x%r2,1) )
     z%r2 = x%r2
     call allocate_test ( z%values, size(x%values,1), size(x%values,2), &
       & "z%values", ModuleName )
@@ -513,8 +515,8 @@ contains ! =====     Public Procedures     =============================
 
   ! -------------------------------------------------  ColumnScale_0  -----
   subroutine ColumnScale_0 ( X, V, NEWX ) ! Z = X V where V is a diagonal
-  !                                     matrix represented by a vector and
-  !                                     Z is either X or NEWX.
+  !                                         matrix represented by a vector
+  !                                         and Z is either X or NEWX.
     type(MatrixElement_T), intent(inout), target :: X
     real(r8), intent(in), dimension(:) :: V
     type(MatrixElement_T), intent(out), target, optional :: NEWX
@@ -554,12 +556,16 @@ contains ! =====     Public Procedures     =============================
   end subroutine CopyBlock
 
   ! ----------------------------------------------  CreateBlock_0  -----
-  subroutine CreateBlock_0 ( Z, nRows, nCols, Kind, NumberNonzero, NoValues )
+  subroutine CreateBlock_0 ( Z, nRows, nCols, Kind, NumberNonzero, NoValues, &
+    & BandHeight )
   ! Create a matrix block, but don't fill any elements or structural
   ! information.  The "NumberNonzero" is required if and only if the
   ! "Kind" argument has the value M_Banded or M_Column_Sparse.
   ! The block is first destroyed, so as not to have a memory leak.
   ! If NoValues is present and true, the values component is not allocated
+  ! If Kind == M_Banded and BandHeight is present, the band height is
+  !   assumed to be uniform, and the R1 and R2 components are filled to
+  !   reflect that assumption.
 
   ! Filling the block after it's created depends on the kind.
   !  M_Absent: Do nothing
@@ -584,7 +590,9 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in), optional :: NumberNonzero ! Only for M_Banded and
                                                    ! M_Column_Sparse
     logical, intent(in), optional :: NoValues
+    integer, intent(in), optional :: BandHeight
 
+    integer :: I
     logical :: Values
 
     values = .true.
@@ -598,6 +606,12 @@ contains ! =====     Public Procedures     =============================
       call allocate_test ( z%r1, nCols, "z%r1", ModuleName )
       call allocate_test ( z%r2, nCols, "z%r2", ModuleName, lowBound=0 )
       z%r2(0) = 0
+      if ( present(bandHeight) ) then
+        do i = 1, nCols
+          z%r2(i) = i * bandHeight
+          z%r1(i) = 1 + z%r2(i) - bandHeight
+        end do
+      end if
       if ( values ) &
         & call allocate_test ( z%values, numberNonzero, 1, "z%values", ModuleName )
     case ( M_Column_sparse )
@@ -652,15 +666,14 @@ contains ! =====     Public Procedures     =============================
 
   ! ---------------------------------------------  DestroyBlock_0  -----
   subroutine DestroyBlock_0 ( B )
-    ! Deallocate the pointer components of the matrix block B
+    ! Deallocate the pointer components of the matrix block B.  Change
+    ! its kind to M_Absent.  Don't clobber b%nrows and b%ncols.
     type(MatrixElement_T), intent(inout) :: B
     ! Don't bother to destroy absent blocks
     if (b%kind /= M_Absent) then
       call deallocate_test ( b%r1, "b%r1", ModuleName )
       call deallocate_test ( b%r2, "b%r2", ModuleName )
       call deallocate_test ( b%values, "b%values", ModuleName )
-      ! Don't clobber b%nrows and b%ncols: They may be arguments to a
-      ! caller of DestroyBlock_0.
       b%kind = m_absent
     endif
   end subroutine DestroyBlock_0
@@ -1871,6 +1884,10 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.24  2001/05/09 19:45:37  vsnyder
+! More work correcting blunders in sparse matrix code.  Add BandHeight
+! argument to CreateBlock.  Correct loss of lower bounds in CloneBlock.
+!
 ! Revision 2.23  2001/05/09 01:58:12  vsnyder
 ! Improper intent(out) -> intent(inout), don't access an absent optional dummy
 !
