@@ -13,6 +13,7 @@ S = ..
 vpath %.o ./
 vpath %.f90 ../
 vpath %.f9h ../
+vpath %.f $(PGSINC)
 
 FC = lf95
 
@@ -46,6 +47,9 @@ libdir = ../../lib/$(MLSCONFG)
 #SDP =SDPToolkitSubstitute.o
 #GD=GDapi.o
 # $Log$
+# Revision 1.2  2000/10/21 00:15:39  pwagner
+# Removed hardwired PGSINC
+#
 # Revision 1.1  2000/10/18 22:11:28  pwagner
 # First commit
 #
