@@ -231,13 +231,14 @@ CONTAINS
 
 !     use HDF5, only: H5T_NATIVE_CHARACTER
       use HDFEOS5, only: HE5T_NATIVE_SCHAR
+      use he5_swapi, only: he5_EHwrglatt
 ! Brief description of subroutine
 ! This subroutine writes the global attributes for an hdf-eos5 file
 
 ! Arguments
 
       INTEGER, INTENT(IN) :: fileID
-      integer, external ::   he5_EHwrglatt
+      ! integer, external ::   he5_EHwrglatt
 ! Internal variables
       integer :: status
 ! Executable
@@ -572,6 +573,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.11  2003/02/08 00:32:11  pwagner
+!# Gets he5_EHwrglatt from he5_swapi
+!#
 !# Revision 2.10  2003/02/06 00:30:19  pwagner
 !# Added h5_ and he5_writeglobalattr
 !#
