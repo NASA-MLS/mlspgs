@@ -993,7 +993,6 @@ contains ! =====     Public Procedures     =============================
         update = .false.
         call DestroyBlock ( temp )
         do k = i, j-1
-          print*,'IJK',i,j,k
           call multiplyMatrix_XY ( b%block(i,k), u%m%block(k,j), temp, &
             & update=update, subtract=.true. )
           update = .true.
@@ -1827,6 +1826,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.65  2002/03/05 23:31:07  livesey
+! Removed a diagnostic print that got left behind
+!
 ! Revision 2.64  2002/03/05 23:17:03  livesey
 ! Changes adopted from Van
 !
