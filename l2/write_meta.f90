@@ -246,7 +246,8 @@ contains
     end if
 
     attrName = 'LocalVersionID'
-    call expandFileTemplate ( '$cycle', sval, cycle=l2pcf%cycle )
+    ! call expandFileTemplate ( '$cycle', sval, cycle=l2pcf%cycle )
+    sval = 'c' // l2pcf%cycle
     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, sval)
     if ( returnStatus /= PGS_S_SUCCESS ) then
       call announce_error ( 0, &
@@ -345,39 +346,41 @@ contains
     end if
 
     ! QAFlags Group
+    ! These have been moved to the MCF files
+    ! You should delete them in the next version
 
-    attrName = 'AutomaticQualityFlag' // '.' // class
-    returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
-         'Passed')
-    if ( returnStatus /= PGS_S_SUCCESS ) then
-      call announce_error ( 0, &
-        & "Error in writing AutomaticQualityFlag attribute." )
-    end if
-
-    attrName = 'AutomaticQualityFlagExplanation' // '.' // class
-    returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
-         'pending algorithm update')
-    if ( returnStatus /= PGS_S_SUCCESS ) then
-      call announce_error ( 0, &
-        & "Error in writing AutomaticQualityFlagExplanation attribute." )
-    end if
-
-    attrName = 'OperationalQualityFlag' // '.' // class
-    returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
-         'Not Investigated')
-    if ( returnStatus /= PGS_S_SUCCESS ) then
-      call announce_error ( 0, &
-      & "Error in writing OperationalQualityFlag attribute." )
-    end if
-
-    attrName = 'OperationalQualityFlagExplanation' // '.' // class
-    returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
-         'Not Investigated')
-    if ( returnStatus /= PGS_S_SUCCESS ) then
-      call announce_error ( 0, &
-        & "Error in writing OperationalQualityFlagExplanation attribute.") 
-    end if
-
+!     attrName = 'AutomaticQualityFlag' // '.' // class
+!     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
+!          'Passed')
+!     if ( returnStatus /= PGS_S_SUCCESS ) then
+!       call announce_error ( 0, &
+!         & "Error in writing AutomaticQualityFlag attribute." )
+!     end if
+! 
+!     attrName = 'AutomaticQualityFlagExplanation' // '.' // class
+!     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
+!          'pending algorithm update')
+!     if ( returnStatus /= PGS_S_SUCCESS ) then
+!       call announce_error ( 0, &
+!         & "Error in writing AutomaticQualityFlagExplanation attribute." )
+!     end if
+! 
+!     attrName = 'OperationalQualityFlag' // '.' // class
+!     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
+!          'Not Investigated')
+!     if ( returnStatus /= PGS_S_SUCCESS ) then
+!       call announce_error ( 0, &
+!       & "Error in writing OperationalQualityFlag attribute." )
+!     end if
+! 
+!     attrName = 'OperationalQualityFlagExplanation' // '.' // class
+!     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
+!          'Not Investigated')
+!     if ( returnStatus /= PGS_S_SUCCESS ) then
+!       call announce_error ( 0, &
+!         & "Error in writing OperationalQualityFlagExplanation attribute.") 
+!     end if
+! 
     ! QAStats Group
 
     attrName = 'QAPercentInterpolatedData' // '.' // class
@@ -1309,7 +1312,8 @@ contains
     result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), "LocalGranuleID", &
                                l2pcf%logGranID)
 
-    call expandFileTemplate('$cycle', sval, cycle=l2pcf%cycle)
+    ! call expandFileTemplate('$cycle', sval, cycle=l2pcf%cycle)
+    sval = 'c' // l2pcf%cycle
     result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), "LocalVersionID", &
                                sval)
 
@@ -1574,6 +1578,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.54  2004/12/14 21:41:53  pwagner
+! Repaired double-0 cycle; automaticQ.. and OperationalQ.. shifted to mcf
+!
 ! Revision 2.53  2004/08/04 23:19:58  pwagner
 ! Much moved from MLSStrings to MLSStringLists
 !
