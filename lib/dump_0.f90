@@ -182,18 +182,50 @@ contains
   end subroutine DUMP_1D_DCOMPLEX
 
  ! ---------------------------------------------  DUMP_1D_DOUBLE  -----
-  subroutine DUMP_1D_DOUBLE ( ARRAY, NAME, CLEAN, WIDTH, FORMAT )
+  subroutine DUMP_1D_DOUBLE ( ARRAY, NAME, FILLVALUE, CLEAN, WIDTH, FORMAT, STATS )
     double precision, intent(in) :: ARRAY(:)
     character(len=*), intent(in), optional :: NAME
+    double precision, intent(in), optional :: FILLVALUE
     logical, intent(in), optional :: CLEAN
     integer, intent(in), optional :: WIDTH
     character(len=*), intent(in), optional :: FORMAT
+    logical, intent(in), optional :: STATS
 
     logical :: MyClean
     integer :: J, K, MyWidth
     integer, parameter :: DefaultWidth = 5
+    double precision :: myFillValue
     character(len=64) :: MyFormat
+    integer :: NumZeroRows
 
+    logical :: MyStats
+    integer :: numNonFill, numFill
+    real :: pctNonFill, pctFill
+    ! Executable
+    myStats=.false.
+    if ( present(stats) ) myStats=stats
+    myFillValue = 0.d0
+    if ( present(FillValue) ) myFillValue=FillValue
+    if ( myStats ) then
+      numNonFill = count(array /= myFillValue)
+      numFill = size(array) - numNonFill
+      pctNonFill = numNonFill / ( 0.01 * (numNonFill+numFill) )
+      pctFill = 100.0 - pctNonFill
+      if ( present(name) ) call output(trim(name) // ' ', advance='no')
+      call output('Statistics on elements = or != ', advance='no')
+      call output(myFillValue, advance='yes')
+      call output('"!=" ', advance='no')
+      call output(numNonFill, advance='no')
+      call output('( ', advance='no')
+      call output(pctNonFill, advance='no')
+      call output('%)   ', advance='no')
+      call output(' "=" ', advance='no')
+      call output(numFill, advance='no')
+      call output('( ', advance='no')
+      call output(pctFill, advance='no')
+      call output('%)   ', advance='yes')
+      return
+    endif
     myClean = .false.
     if ( present(clean) ) myClean = clean
     myWidth = defaultWidth
@@ -201,6 +233,7 @@ contains
     myFormat = myFormatDefault
     if ( present(format) ) myFormat = format
 
+    numZeroRows = 0
     if ( size(array) == 0 ) then
       call empty ( name )
     else if ( size(array) == 1 ) then
@@ -210,31 +243,75 @@ contains
       call name_and_size ( name, myClean, size(array) )
       if ( present(name) ) call output ( '', advance='yes' )
       do j = 1, size(array), myWidth
+!         if (.not. myClean) then
+!           call output ( j, max(defaultWidth-1,ilog10(size(array))+1) )
+!           call output ( afterSub )
+!         end if
+!         do k = j, min(j+myWidth-1, size(array))
+!           call output ( array(k), myFormat )
+!         end do
         if (.not. myClean) then
-          call output ( j, max(defaultWidth-1,ilog10(size(array))+1) )
-          call output ( afterSub )
+          if ( any(array(j:min(j+myWidth-1, size(array))) /= myFillValue) ) then
+            call say_fill ( (/ j-1, size(array) /), numZeroRows, myFillValue, inc=1 )
+          else
+            numZeroRows = numZeroRows + 1
+          end if
         end if
-        do k = j, min(j+myWidth-1, size(array))
-          call output ( array(k), myFormat )
-        end do
-        call output ( '', advance='yes' )
+        if ( myClean .or. any(array(j:min(j+myWidth-1, size(array))) /= myFillValue) ) then
+          do k = j, min(j+myWidth-1, size(array))
+           call output ( array(k), myFormat )
+          end do
+          call output ( '', advance='yes' )
+        endif
       end do
+      call say_fill ( (/ j-myWidth, size(array) /), numZeroRows, myFillValue )
     end if
   end subroutine DUMP_1D_DOUBLE
 
   ! --------------------------------------------  DUMP_1D_INTEGER  -----
-  subroutine DUMP_1D_INTEGER ( ARRAY, NAME, CLEAN, FORMAT, WIDTH )
+  subroutine DUMP_1D_INTEGER ( ARRAY, NAME, FILLVALUE, CLEAN, FORMAT, WIDTH, STATS )
     integer, intent(in) :: ARRAY(:)
     character(len=*), intent(in), optional :: NAME
+    integer, intent(in), optional :: FILLVALUE
     logical, intent(in), optional :: CLEAN
     character(len=*), intent(in), optional :: FORMAT
     integer, intent(in), optional :: WIDTH ! How many numbers per line (10)?
+    logical, intent(in), optional :: STATS
 
     integer :: J, K
     logical :: MyClean
     integer :: MyWidth
     integer :: NumZeroRows
 
+    logical :: MyStats
+    integer :: numNonFill, numFill
+    real :: pctNonFill, pctFill
+    integer :: myFillValue
+    ! Executable
+    myStats=.false.
+    if ( present(stats) ) myStats=stats
+    myFillValue = 0
+    if ( present(FillValue) ) myFillValue=FillValue
+    if ( myStats ) then
+      numNonFill = count(array /= myFillValue)
+      numFill = size(array) - numNonFill
+      pctNonFill = numNonFill / ( 0.01 * (numNonFill+numFill) )
+      pctFill = 100.0 - pctNonFill
+      if ( present(name) ) call output(trim(name) // ' ', advance='no')
+      call output('Statistics on elements = or != ', advance='no')
+      call output(myFillValue, advance='yes')
+      call output('"!=" ', advance='no')
+      call output(numNonFill, advance='no')
+      call output('( ', advance='no')
+      call output(pctNonFill, advance='no')
+      call output('%)   ', advance='no')
+      call output(' "=" ', advance='no')
+      call output(numFill, advance='no')
+      call output('( ', advance='no')
+      call output(pctFill, advance='no')
+      call output('%)   ', advance='yes')
+      return
+    endif
     myClean = .false.
     if ( present(clean) ) myClean = clean
     myWidth = 10
@@ -251,13 +328,13 @@ contains
       if ( present(name) ) call output ( '', advance='yes' )
       do j = 1, size(array), myWidth
         if (.not. myClean) then
-          if ( any(array(j:min(j+myWidth-1, size(array))) /= 0) ) then
-            call say_fill ( (/ j-1, size(array) /), numZeroRows, 0, inc=1 )
+          if ( any(array(j:min(j+myWidth-1, size(array))) /= myFillValue) ) then
+            call say_fill ( (/ j-1, size(array) /), numZeroRows, myFillValue, inc=1 )
           else
             numZeroRows = numZeroRows + 1
           end if
         end if
-        if ( myClean .or. any(array(j:min(j+myWidth-1, size(array))) /= 0) ) then
+        if ( myClean .or. any(array(j:min(j+myWidth-1, size(array))) /= myFillValue) ) then
           do k = j, min(j+myWidth-1, size(array))
             if ( present(format) ) then
               call output ( array(k), format=format )
@@ -268,7 +345,7 @@ contains
           call output ( '', advance='yes' )
         end if
       end do ! j
-      call say_fill ( (/ j-myWidth, size(array) /), numZeroRows, 0 )
+      call say_fill ( (/ j-myWidth, size(array) /), numZeroRows, myFillValue )
     end if
   end subroutine DUMP_1D_INTEGER
 
@@ -306,17 +383,50 @@ contains
   end subroutine DUMP_1D_LOGICAL
 
   ! -----------------------------------------------  DUMP_1D_REAL  -----
-  subroutine DUMP_1D_REAL ( ARRAY, NAME, CLEAN, WIDTH, FORMAT )
+  subroutine DUMP_1D_REAL ( ARRAY, NAME, FILLVALUE, CLEAN, WIDTH, FORMAT, STATS )
     real, intent(in) :: ARRAY(:)
     character(len=*), intent(in), optional :: NAME
+    real, intent(in), optional :: FILLVALUE
     logical, intent(in), optional :: CLEAN
     integer, intent(in), optional :: WIDTH
     character(len=*), intent(in), optional :: FORMAT
+    logical, optional, intent(in) :: STATS
 
     logical :: myClean
     integer :: J, K, MyWidth
     integer, parameter :: DefaultWidth = 5
     character(len=64) :: MyFormat
+    integer :: NumZeroRows
+
+    logical :: MyStats
+    integer :: numNonFill, numFill
+    real :: pctNonFill, pctFill
+    real :: myFillValue
+    ! Executable
+    myStats=.false.
+    if ( present(stats) ) myStats=stats
+    myFillValue = 0.
+    if ( present(FillValue) ) myFillValue=FillValue
+    if ( myStats ) then
+      numNonFill = count(array /= myFillValue)
+      numFill = size(array) - numNonFill
+      pctNonFill = numNonFill / ( 0.01 * (numNonFill+numFill) )
+      pctFill = 100.0 - pctNonFill
+      if ( present(name) ) call output(trim(name) // ' ', advance='no')
+      call output('Statistics on elements = or != ', advance='no')
+      call output(myFillValue, advance='yes')
+      call output('"!=" ', advance='no')
+      call output(numNonFill, advance='no')
+      call output('( ', advance='no')
+      call output(pctNonFill, advance='no')
+      call output('%)   ', advance='no')
+      call output(' "=" ', advance='no')
+      call output(numFill, advance='no')
+      call output('( ', advance='no')
+      call output(pctFill, advance='no')
+      call output('%)   ', advance='yes')
+      return
+    endif
 
     myClean = .false.
     if ( present(clean) ) myClean = clean
@@ -325,6 +435,7 @@ contains
     myFormat = myFormatDefault
     if ( present(format) ) myFormat = format
 
+    numZeroRows = 0
     if ( size(array) == 0 ) then
       call empty ( name )
     else if ( size(array) == 1 ) then
@@ -334,15 +445,29 @@ contains
       call name_and_size ( name, myClean, size(array) )
       if ( present(name) ) call output ( '', advance='yes' )
       do j = 1, size(array), myWidth
+!         if (.not. myClean) then
+!           call output ( j, max(defaultWidth-1,ilog10(size(array))+1) )
+!           call output ( afterSub )
+!         end if
+!         do k = j, min(j+myWidth-1, size(array))
+!           call output ( array(k), myFormat )
+!         end do
+!        call output ( '', advance='yes' )
         if (.not. myClean) then
-          call output ( j, max(defaultWidth-1,ilog10(size(array))+1) )
-          call output ( afterSub )
+          if ( any(array(j:min(j+myWidth-1, size(array))) /= myFillValue) ) then
+            call say_fill ( (/ j-1, size(array) /), numZeroRows, myFillValue, inc=1 )
+          else
+            numZeroRows = numZeroRows + 1
+          end if
         end if
-        do k = j, min(j+myWidth-1, size(array))
-          call output ( array(k), myFormat )
-        end do
-        call output ( '', advance='yes' )
+        if ( myClean .or. any(array(j:min(j+myWidth-1, size(array))) /= myFillValue) ) then
+          do k = j, min(j+myWidth-1, size(array))
+           call output ( array(k), myFormat )
+          end do
+          call output ( '', advance='yes' )
+        endif
       end do
+      call say_fill ( (/ j-myWidth, size(array) /), numZeroRows, myFillValue )
     end if
   end subroutine DUMP_1D_REAL
 
@@ -846,12 +971,13 @@ contains
   end subroutine DUMP_3D_CHAR
 
   ! ---------------------------------------------  DUMP_3D_DOUBLE  -----
-  subroutine DUMP_3D_DOUBLE ( ARRAY, NAME, FILLVALUE, CLEAN, FORMAT )
+  subroutine DUMP_3D_DOUBLE ( ARRAY, NAME, FILLVALUE, CLEAN, FORMAT, STATS )
     double precision, intent(in) :: ARRAY(:,:,:)
     character(len=*), intent(in), optional :: NAME
     double precision, intent(in), optional :: FILLVALUE
     logical, intent(in), optional :: CLEAN
     character(len=*), intent(in), optional :: FORMAT
+    logical, optional, intent(in) :: STATS
 
     logical :: myClean
     integer :: I, J, K, L
@@ -859,8 +985,34 @@ contains
     double precision :: myFillValue
     character(len=64) :: myFormat
 
+    logical :: MyStats
+    integer :: numNonFill, numFill
+    real :: pctNonFill, pctFill
+    ! Executable
+    myStats=.false.
+    if ( present(stats) ) myStats=stats
     myFillValue = 0.d0
-    if ( present(FillValue) ) myFillValue = FillValue
+    if ( present(FillValue) ) myFillValue=FillValue
+    if ( myStats ) then
+      numNonFill = count(array /= myFillValue)
+      numFill = size(array) - numNonFill
+      pctNonFill = numNonFill / ( 0.01 * (numNonFill+numFill) )
+      pctFill = 100.0 - pctNonFill
+      if ( present(name) ) call output(trim(name) // ' ', advance='no')
+      call output('Statistics on elements = or != ', advance='no')
+      call output(myFillValue, advance='yes')
+      call output('"!=" ', advance='no')
+      call output(numNonFill, advance='no')
+      call output('( ', advance='no')
+      call output(pctNonFill, advance='no')
+      call output('%)   ', advance='no')
+      call output(' "=" ', advance='no')
+      call output(numFill, advance='no')
+      call output('( ', advance='no')
+      call output(pctFill, advance='no')
+      call output('%)   ', advance='yes')
+      return
+    endif
     myClean = .false.
     if ( present(clean) ) myClean = clean
     myFormat = MyFormatDefault
@@ -971,21 +1123,47 @@ contains
   end subroutine DUMP_3D_INTEGER
 
   ! ---------------------------------------------  DUMP_3D_REAL  -----
-  subroutine DUMP_3D_REAL ( ARRAY, NAME, FILLVALUE, CLEAN, FORMAT )
+  subroutine DUMP_3D_REAL ( ARRAY, NAME, FILLVALUE, CLEAN, FORMAT, STATS )
     real, intent(in) :: ARRAY(:,:,:)
     character(len=*), intent(in), optional :: NAME
     real, intent(in), optional :: FILLVALUE
     logical, intent(in), optional :: CLEAN
     character(len=*), intent(in), optional :: FORMAT
-
+    logical, optional, intent(in) :: STATS
     logical :: myClean
     integer :: I, J, K, L
     integer :: NumZeroRows
     real    :: myFillValue
     character(len=64) :: MyFormat
 
-    myFillValue = 0.e0
-    if ( present(FillValue) ) myFillValue = FillValue
+    logical :: MyStats
+    integer :: numNonFill, numFill
+    real :: pctNonFill, pctFill
+    ! Executable
+    myStats=.false.
+    if ( present(stats) ) myStats=stats
+    myFillValue = 0.
+    if ( present(FillValue) ) myFillValue=FillValue
+    if ( myStats ) then
+      numNonFill = count(array /= myFillValue)
+      numFill = size(array) - numNonFill
+      pctNonFill = numNonFill / ( 0.01 * (numNonFill+numFill) )
+      pctFill = 100.0 - pctNonFill
+      if ( present(name) ) call output(trim(name) // ' ', advance='no')
+      call output('Statistics on elements = or != ', advance='no')
+      call output(myFillValue, advance='yes')
+      call output('"!=" ', advance='no')
+      call output(numNonFill, advance='no')
+      call output('( ', advance='no')
+      call output(pctNonFill, advance='no')
+      call output('%)   ', advance='no')
+      call output(' "=" ', advance='no')
+      call output(numFill, advance='no')
+      call output('( ', advance='no')
+      call output(pctFill, advance='no')
+      call output('%)   ', advance='yes')
+      return
+    endif
     myClean = .false.
     if ( present(clean) ) myClean = clean
     myFormat = MyFormatDefault
@@ -1438,6 +1616,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.36  2004/05/27 23:25:33  pwagner
+! Added stats parameter; also more 1-d get fillvalue
+!
 ! Revision 2.35  2004/04/05 17:47:43  livesey
 ! Split dumpsize into real and integer versions
 !
