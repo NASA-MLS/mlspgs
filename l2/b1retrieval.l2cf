@@ -197,7 +197,7 @@ BEGIN Retrieve
    Retrieve, state=x, fwdModelExtra=b, measurements=y, measurementSD=yNoise, $
       forwardModel= [ retFwm, scanFwm ], $
       covariance=myCovariance, apriori=a, columnScale=none, $
-      maxF=8, maxJ=4, lambda=0.0, outputSD=SDout
+      maxF=8, maxJ=4, lambda=1.0, outputSD=SDout
    sids, fwdModelIn=x, fwdModelExtra=b, fwdModelOut=f,$
      forwardModel=[sidsFwm]
 
