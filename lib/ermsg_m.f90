@@ -1,94 +1,88 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
-!=============================================================================
-module ERMSG_M
-!=============================================================================
+!=======================================================================================
 
-  use OUTPUT_M, only: OUTPUT
+MODULE ERMSG_M
 
-  implicit NONE
-  private
+!=======================================================================================
 
-  public ERFIN, ERM1
-  interface ERM1; module procedure IERM1, SERM1, DERM1; end interface
-  public ERMN
-  interface ERMN; module procedure IERMN, SERMN, DERMN; end interface
-  public ERMOR, ERMSET, ERMSG, ERV1
-  interface ERV1; module procedure IERV1, SERV1, DERV1; end interface
-  public ERVN
-  interface ERVN; module procedure IERVN, SERVN, DERVN; end interface
+  IMPLICIT NONE
 
-  integer, save, public :: IDELTA=0 ! increment to LEVEL to calculate
+  PRIVATE
+
+  PUBLIC ERFIN, ERM1, IERM1, SERM1, DERM1
+  INTERFACE ERM1; MODULE PROCEDURE IERM1, SERM1, DERM1; END INTERFACE
+  PUBLIC ERMN, IERMN, SERMN, DERMN
+  INTERFACE ERMN; MODULE PROCEDURE IERMN, SERMN, DERMN; END INTERFACE
+  PUBLIC ERMOR, ERMSET, ERMSG, ERV1, IERV1, SERV1, DERV1
+  INTERFACE ERV1; MODULE PROCEDURE IERV1, SERV1, DERV1; END INTERFACE
+  PUBLIC ERVN, IERVN, SERVN, DERVN
+  INTERFACE ERVN; MODULE PROCEDURE IERVN, SERVN, DERVN; END INTERFACE
+
+  INTEGER, SAVE, PUBLIC :: IDELTA=0 ! increment to LEVEL to calculate
                                     ! IALPHA in ERMSG, q.v.
-  integer, save, public :: OLDLEV=0 ! last value of LEVEL passed to ERMSG
+  INTEGER, SAVE, PUBLIC :: OLDLEV=0 ! last value of LEVEL passed to ERMSG
 
-  integer, save, private :: IALPHA  ! = IDELTA + LEVEL; used to determine
+  INTEGER, SAVE, PRIVATE :: IALPHA  ! = IDELTA + LEVEL; used to determine
                                     ! whether to print
-
-  integer, private, parameter :: MAXCOL = 75
-  character(LEN=maxcol), private :: Output_line
-
-!---------------------------- RCS Ident Info -------------------------------
+  !------------------------------- RCS Ident Info ------------------------------
   character(len=*), parameter :: IdParm = &
-       "$Id$"
-  character (len=len(idParm)) :: Id = idParm
-  character (len=*), parameter :: ModuleName= &
-       "$RCSfile$"
+    & "$Id$"
+  character(len=len(idParm)) :: Id = idParm
+  character(len=*), parameter :: ModuleName = &
+    & "$RCSfile$"
   private :: not_used_here 
-!---------------------------------------------------------------------------
+  !-----------------------------------------------------------------------------
 
-contains
-  subroutine ERFIN
+CONTAINS
+  SUBROUTINE ERFIN
 !>> 1998-04-13 ERFIN  Snyder  Convert to F90
 !>> 1994-11-11 ERFIN  CLL     Typing all variables.
 !>> 1985-09-23 ERFIN  Lawson  Initial code.
  
-!    write (*,"(1X,72('$')/' ')")
-    write (output_line,"(1X,72('$'))")
-    call output ( trim(output_line), advance='yes' )
-    call output ( '', advance='yes' )
-    if (ialpha >= 2) stop
-    return
-  end subroutine ERFIN
+    WRITE (*,"(1X,72('$')/' ')")
+    IF (ialpha >= 2) STOP
+    RETURN
+  END SUBROUTINE ERFIN
 !=======================================================================
-  subroutine IERM1 (SUBNAM, INDIC, LEVEL, MSG, LABEL, VALUE, FLAG)
+  SUBROUTINE IERM1 (SUBNAM, INDIC, LEVEL, MSG, LABEL, VALUE, FLAG)
 !>> 1998-04-13 IERM1  Snyder  Convert to F90
 !>> 1990-01-18 IERM1  CLL     Typed all variables.
 !>> 1985-08-02 IERM1  Lawson  Initial code.
-    integer, intent(in) :: INDIC, LEVEL, VALUE
-    character(LEN=*), intent(in) :: SUBNAM, MSG, LABEL
-    character(LEN=1), intent(in) :: FLAG
-    call ERMSG (SUBNAM, INDIC, LEVEL, MSG, ',')
-    call ERV1 (LABEL, VALUE, FLAG)
-    return
-  end subroutine IERM1
+    INTEGER, INTENT(in) :: INDIC, LEVEL, VALUE
+    CHARACTER(LEN=*), INTENT(in) :: SUBNAM, MSG, LABEL
+    CHARACTER(LEN=1), INTENT(in) :: FLAG
+    CALL ERMSG (SUBNAM, INDIC, LEVEL, MSG, ',')
+    CALL ERV1 (LABEL, VALUE, FLAG)
+    RETURN
+  END SUBROUTINE IERM1
 
-  subroutine SERM1 (SUBNAM, INDIC, LEVEL, MSG, LABEL, VALUE, FLAG)
+  SUBROUTINE SERM1 (SUBNAM, INDIC, LEVEL, MSG, LABEL, VALUE, FLAG)
 !>> 1998-04-13 SERM1  Snyder  Convert to F90
 !>> 1990-01-18 SERM1  CLL     Typed all variables.
 !>> 1985-08-02 SERM1  Lawson  Initial code.
-    integer, intent(in) :: INDIC, LEVEL
-    real, intent(IN) :: VALUE
-    character(LEN=*), intent(in) :: SUBNAM, MSG, LABEL
-    character(LEN=1), intent(in) :: FLAG
-    call ERMSG (SUBNAM, INDIC, LEVEL, MSG, ',')
-    call ERV1 (LABEL, VALUE, FLAG)
-    return
-  end subroutine SERM1
+    INTEGER, INTENT(in) :: INDIC, LEVEL
+    REAL, INTENT(IN) :: VALUE
+    CHARACTER(LEN=*), INTENT(in) :: SUBNAM, MSG, LABEL
+    CHARACTER(LEN=1), INTENT(in) :: FLAG
+    CALL ERMSG (SUBNAM, INDIC, LEVEL, MSG, ',')
+    CALL ERV1 (LABEL, VALUE, FLAG)
+    RETURN
+  END SUBROUTINE SERM1
 
-  subroutine DERM1 (SUBNAM, INDIC, LEVEL, MSG, LABEL, VALUE, FLAG)
+  SUBROUTINE DERM1 (SUBNAM, INDIC, LEVEL, MSG, LABEL, VALUE, FLAG)
 !>> 1998-04-13 DERM1  Snyder  Convert to F90
 !>> 1990-01-18 DERM1  CLL     Typed all variables.
 !>> 1985-08-02 DERM1  Lawson  Initial code.
-    integer, intent(in) :: INDIC, LEVEL
-    double precision, intent(IN) :: VALUE
-    character(LEN=*), intent(in) :: SUBNAM, MSG, LABEL
-    character(LEN=1), intent(in) :: FLAG
-    call ERMSG (SUBNAM, INDIC, LEVEL, MSG, ',')
-    call ERV1 (LABEL, VALUE, FLAG)
-    return
-  end subroutine DERM1
+    INTEGER, INTENT(in) :: INDIC, LEVEL
+    DOUBLE PRECISION, INTENT(IN) :: VALUE
+    CHARACTER(LEN=*), INTENT(in) :: SUBNAM, MSG, LABEL
+    CHARACTER(LEN=1), INTENT(in) :: FLAG
+    CALL ERMSG (SUBNAM, INDIC, LEVEL, MSG, ',')
+    CALL ERV1 (LABEL, VALUE, FLAG)
+    RETURN
+  END SUBROUTINE DERM1
 !=======================================================================
 
 ! These subroutines call ERMSG to initiate an error message and then
@@ -128,49 +122,49 @@ contains
 !
 ! ------------------------------------------------------------------
 
-  subroutine IERMN (SUBNAM, INDIC, LEVEL, MSG, LABELS, VALUES, FLAG)
+  SUBROUTINE IERMN (SUBNAM, INDIC, LEVEL, MSG, LABELS, VALUES, FLAG)
 !>> 1998-04-13 IERMN  Snyder  Convert to F90
 !>> 1994-10-20 IERMN  Krogh   Changes to use M77CON
 !>> 1987-10-02 IERMN  Lawson  Initial code.
-    integer, intent(in) :: LEVEL, INDIC
-    character(len=*), intent(in) :: SUBNAM, MSG, LABELS(:)
-    character(len=1), intent(in) :: FLAG
-    integer, intent(in) :: VALUES(:)
+    INTEGER, INTENT(in) :: LEVEL, INDIC
+    CHARACTER(len=*), INTENT(in) :: SUBNAM, MSG, LABELS(:)
+    CHARACTER(len=1), INTENT(in) :: FLAG
+    INTEGER, INTENT(in) :: VALUES(:)
 
-    call ermsg (subnam, indic, level,msg, ',')
-    call ervn (labels, values, flag)
-    return
-  end subroutine IERMN
+    CALL ermsg (subnam, indic, level,msg, ',')
+    CALL ervn (labels, values, flag)
+    RETURN
+  END SUBROUTINE IERMN
 
-  subroutine SERMN (SUBNAM, INDIC, LEVEL, MSG, LABELS, VALUES, FLAG)
+  SUBROUTINE SERMN (SUBNAM, INDIC, LEVEL, MSG, LABELS, VALUES, FLAG)
 !>> 1998-04-13 SERMN  Snyder  Convert to F90
 !>> 1994-10-20 SERMN  Krogh   Changes to use M77CON
 !>> 1987-10-02 SERMN  Lawson  Initial code.
-    integer, intent(in) :: LEVEL, INDIC
-    character(len=*), intent(in) :: SUBNAM, MSG, LABELS(:)
-    character(len=1), intent(in) :: FLAG
-    real, intent(in) :: VALUES(:)
+    INTEGER, INTENT(in) :: LEVEL, INDIC
+    CHARACTER(len=*), INTENT(in) :: SUBNAM, MSG, LABELS(:)
+    CHARACTER(len=1), INTENT(in) :: FLAG
+    REAL, INTENT(in) :: VALUES(:)
 
-    call ermsg (subnam, indic, level,msg, ',')
-    call ervn (labels, values, flag)
-    return
-  end subroutine SERMN
+    CALL ermsg (subnam, indic, level,msg, ',')
+    CALL ervn (labels, values, flag)
+    RETURN
+  END SUBROUTINE SERMN
 
-  subroutine DERMN (SUBNAM, INDIC, LEVEL, MSG, LABELS, VALUES, FLAG)
+  SUBROUTINE DERMN (SUBNAM, INDIC, LEVEL, MSG, LABELS, VALUES, FLAG)
 !>> 1998-04-13 DERMN  Snyder  Convert to F90
 !>> 1994-10-20 DERMN  Krogh   Changes to use M77CON
 !>> 1987-10-02 DERMN  Lawson  Initial code.
-    integer, intent(in) :: LEVEL, INDIC
-    character(len=*), intent(in) :: SUBNAM, MSG, LABELS(:)
-    character(len=1), intent(in) :: FLAG
-    double precision, intent(in) :: VALUES(:)
+    INTEGER, INTENT(in) :: LEVEL, INDIC
+    CHARACTER(len=*), INTENT(in) :: SUBNAM, MSG, LABELS(:)
+    CHARACTER(len=1), INTENT(in) :: FLAG
+    DOUBLE PRECISION, INTENT(in) :: VALUES(:)
 
-    call ermsg (subnam, indic, level,msg, ',')
-    call ervn (labels, values, flag)
-    return
-  end subroutine DERMN
+    CALL ermsg (subnam, indic, level,msg, ',')
+    CALL ervn (labels, values, flag)
+    RETURN
+  END SUBROUTINE DERMN
 !=======================================================================
-  subroutine ERMOR (MSG, FLAG)
+  SUBROUTINE ERMOR (MSG, FLAG)
 !>> 1998-04-13 ERMOR  WVSnyder  Convert to F90
 !>> 1985-09-20 ERMOR  Lawson  Initial code.
 
@@ -185,25 +179,24 @@ contains
 !
 ! --------------------------------------------------------------
 !
-    character(len=*), intent(in) :: MSG
-    character(len=1), intent(in) :: FLAG
+    CHARACTER(len=*), INTENT(in) :: MSG
+    CHARACTER(len=1), INTENT(in) :: FLAG
 
-    if (ialpha >= -1) then
-!     write (*,*) msg
-      call output ( trim(msg), advance='yes' )
-      if (flag == '.') call erfin
-    end if
-    return
-  end subroutine ERMOR
+    IF (ialpha >= -1) THEN
+      WRITE (*,*) msg
+      IF (flag == '.') CALL erfin
+    END IF
+    RETURN
+  END SUBROUTINE ERMOR
 !=======================================================================
 ! ERMSET resets IDELTA.
-  subroutine ERMSET (IDEL)
-    integer, intent(in) :: IDEL
+  SUBROUTINE ERMSET (IDEL)
+    INTEGER, INTENT(in) :: IDEL
     idelta = idel
-    return
-  end subroutine ERMSET
+    RETURN
+  END SUBROUTINE ERMSET
 !=======================================================================
-  subroutine ERMSG (SUBNAM, INDIC, LEVEL, MSG, FLAG)
+  SUBROUTINE ERMSG (SUBNAM, INDIC, LEVEL, MSG, FLAG)
 !>> 1998-04-13 ERMSG  WVSnyder  Convert to F90
 !>> 1994-11-11 ERMSG  Krogh     Declared all vars.
 !>> 1992-10-20 ERMSG  WVSnyder  added ERLSET, ERLGET
@@ -247,26 +240,20 @@ contains
 !     C.Lawson & S.Chan, JPL, 1983 Nov
 !
 !     ------------------------------------------------------------------
-    integer, intent(in) :: LEVEL, INDIC
-    character(len=*), intent(in) :: SUBNAM, MSG
-    character(len=1), intent(in) :: FLAG
+    INTEGER, INTENT(in) :: LEVEL, INDIC
+    CHARACTER(len=*), INTENT(in) :: SUBNAM, MSG
+    CHARACTER(len=1), INTENT(in) :: FLAG
 
     oldlev = level
     ialpha = level + idelta
-    if (ialpha >= -1) then
-!      write (*,"('0',72('$')/' SUBPROGRAM ',A,' REPORTS ERROR NO. ',I4)") &
-!        subnam, indic
-!      write (*,*) msg
-      write (output_line,"('0',72('$'))")
-      call output ( trim(output_line), advance='yes' )
-      write (output_line,"(' SUBPROGRAM ',A,' REPORTS ERROR NO. ', I4)") &
-        & subnam, indic
-      call output ( trim(output_line), advance='yes' )
-      call output ( trim(msg), advance='yes' )
-      if (flag == '.') call erfin
-    end if
-    return
-  end subroutine ERMSG
+    IF (ialpha >= -1) THEN
+      WRITE (*,"('0',72('$')/' SUBPROGRAM ',A,' REPORTS ERROR NO. ',I4)") &
+        subnam, indic
+      WRITE (*,*) msg
+      IF (flag == '.') CALL erfin
+    ENDIF
+    RETURN
+  END SUBROUTINE ERMSG
 !=======================================================================
 ! ------------------------------------------------------------
 ! SUBROUTINE ARGUMENTS
@@ -279,53 +266,47 @@ contains
 !
 ! ------------------------------------------------------------
 
-  subroutine IERV1 (LABEL, VALUE, FLAG)
+  SUBROUTINE IERV1 (LABEL, VALUE, FLAG)
 !>> 1998-04-13 IERV1  Snyder  Convert to F90
 !>> 1985-09-20 IERV1  Lawson  Initial code.
-    integer, intent(in) :: VALUE
-    character(len=*), intent(in) ::  LABEL
-    character(len=1), intent(in) ::  FLAG
+    INTEGER, INTENT(in) :: VALUE
+    CHARACTER(len=*), INTENT(in) ::  LABEL
+    CHARACTER(len=1), INTENT(in) ::  FLAG
 
-    if (ialpha >= -1) then
-!      write (*,*) label, ' = ', value
-      write (output_line,*) label, ' = ', value
-      call output ( trim(output_line), advance='yes' )
-      if (flag == '.') call erfin
-    end if
-    return
-  end subroutine IERV1
+    IF (ialpha >= -1) THEN
+      WRITE (*,*) label, ' = ', value
+      IF (flag == '.') CALL erfin
+    END IF
+    RETURN
+  END SUBROUTINE IERV1
 
-  subroutine SERV1 (LABEL, VALUE, FLAG)
+  SUBROUTINE SERV1 (LABEL, VALUE, FLAG)
 !>> 1998-04-13 SERV1  Snyder  Convert to F90
 !>> 1985-09-20 SERV1  Lawson  Initial code.
-    real, intent(in) :: VALUE
-    character(len=*), intent(in) ::  LABEL
-    character(len=1), intent(in) ::  FLAG
+    REAL, INTENT(in) :: VALUE
+    CHARACTER(len=*), INTENT(in) ::  LABEL
+    CHARACTER(len=1), INTENT(in) ::  FLAG
 
-    if (ialpha >= -1) then
-!      write (*,*) label, ' = ', value
-      write (output_line,*) label, ' = ', value
-      call output ( trim(output_line), advance='yes' )
-      if (flag == '.') call erfin
-    end if
-    return
-  end subroutine SERV1
+    IF (ialpha >= -1) THEN
+      WRITE (*,*) label, ' = ', value
+      IF (flag == '.') CALL erfin
+    END IF
+    RETURN
+  END SUBROUTINE SERV1
 
-  subroutine DERV1 (LABEL, VALUE, FLAG)
+  SUBROUTINE DERV1 (LABEL, VALUE, FLAG)
 !>> 1998-04-13 DERV1  Snyder  Convert to F90
 !>> 1985-09-20 DERV1  Lawson  Initial code.
-    double precision, intent(in) :: VALUE
-    character(len=*), intent(in) ::  LABEL
-    character(len=1), intent(in) ::  FLAG
+    DOUBLE PRECISION, INTENT(in) :: VALUE
+    CHARACTER(len=*), INTENT(in) ::  LABEL
+    CHARACTER(len=1), INTENT(in) ::  FLAG
 
-    if (ialpha >= -1) then
-!      write (*,*) label, ' = ', value
-      write (output_line,*) label, ' = ', value
-      call output ( trim(output_line), advance='yes' )
-      if (flag == '.') call erfin
-    end if
-    return
-  end subroutine DERV1
+    IF (ialpha >= -1) THEN
+      WRITE (*,*) label, ' = ', value
+      IF (flag == '.') CALL erfin
+    END IF
+    RETURN
+  END SUBROUTINE DERV1
 !=======================================================================
 
 ! These subroutines print an array of values with labels as part of an
@@ -345,7 +326,7 @@ contains
 !          call the subroutine ERFIN and will just RETURN
 !          when set to any other character.
 
-  subroutine IERVN (LABELS, VALUES, FLAG)
+  SUBROUTINE IERVN (LABELS, VALUES, FLAG)
 !>> 1998-04-13 IERVN  Snyder Convert to F90
 !>> 1994-10-20 IERVN  Krogh  Changes to use M77CON
 !>> 1989-11-10 IERVN  CLL
@@ -354,26 +335,26 @@ contains
 ! 1989-11-10 CLL  Changed to keep length of printed line not
 ! greater than MAXCOL = 75 characters.
 ! ----------------------------------------------------------------------
-    character(LEN=*), intent(in) :: LABELS(:)
-    integer, intent(in) :: VALUES(SIZE(LABELS))
-    character(LEN=1), intent(in) :: FLAG
+    CHARACTER(LEN=*), INTENT(in) :: LABELS(:)
+    INTEGER, INTENT(in) :: VALUES(SIZE(LABELS))
+    CHARACTER(LEN=1), INTENT(in) :: FLAG
 
-    integer I, K, LENIDV, NUMBER
+    INTEGER I, K, LENIDV, NUMBER
+    INTEGER, PARAMETER :: MAXCOL = 75
 
-    if (ialpha >= -1) then
-      lenidv = len (labels)
+    IF (ialpha >= -1) THEN
+      lenidv = LEN (labels)
       number = maxcol / (lenidv+17)
-      do i = 1, size(labels), number
-        write (output_line,"(4(2x,a,'=',i14))") &
-          (labels(k), values(k), k = i, min(size(labels), i+number-1) )
-        call output ( trim(output_line), advance='yes' )
-      end do
-      if (flag == '.') call erfin
-    end if
-    return
-  end subroutine IERVN
+      DO i = 1, SIZE(labels), number
+        WRITE(*,"(4(2x,a,'=',i14))") &
+          (labels(k), values(k), k = i, MIN(SIZE(labels), i+number-1) )
+      END DO
+      IF (flag == '.') CALL erfin
+    ENDIF
+    RETURN
+  END SUBROUTINE IERVN
 
-  subroutine SERVN (LABELS, VALUES, FLAG)
+  SUBROUTINE SERVN (LABELS, VALUES, FLAG)
 !>> 1998-04-13 SERVN  Snyder Convert to F90
 !>> 1994-10-20 SERVN  Krogh  Changes to use M77CON
 !>> 1989-11-10 SERVN  CLL
@@ -382,26 +363,26 @@ contains
 ! 1989-11-10 CLL  Changed to keep length of printed line not
 ! greater than MAXCOL = 75 characters.
 ! ----------------------------------------------------------------------
-    character(LEN=*), intent(in) :: LABELS(:)
-    real, intent(in) :: VALUES(SIZE(LABELS))
-    character(LEN=1), intent(in) :: FLAG
+    CHARACTER(LEN=*), INTENT(in) :: LABELS(:)
+    REAL, INTENT(in) :: VALUES(SIZE(LABELS))
+    CHARACTER(LEN=1), INTENT(in) :: FLAG
 
-    integer I, K, LENIDV, NUMBER
+    INTEGER I, K, LENIDV, NUMBER
+    INTEGER, PARAMETER :: MAXCOL = 75
 
-    if (ialpha >= -1) then
-      lenidv = len (labels)
+    IF (ialpha >= -1) THEN
+      lenidv = LEN (labels)
       number = maxcol / (lenidv+17)
-      do i = 1, size(labels), number
-        write (output_line,"(4(2x,a,'=',g14.7))") &
-          (labels(k), values(k), k = i, min(size(labels), i+number-1) )
-        call output ( trim(output_line), advance='yes' )
-      end do
-      if (flag == '.') call erfin
-    end if
-    return
-  end subroutine SERVN
+      DO i = 1, SIZE(labels), number
+        WRITE(*,"(4(2x,a,'=',g14.7))") &
+          (labels(k), values(k), k = i, MIN(SIZE(labels), i+number-1) )
+      END DO
+      IF (flag == '.') CALL erfin
+    ENDIF
+    RETURN
+  END SUBROUTINE SERVN
 
-  subroutine DERVN (LABELS, VALUES, FLAG)
+  SUBROUTINE DERVN (LABELS, VALUES, FLAG)
 !>> 1998-04-13 DERVN  Snyder Convert to F90
 !>> 1994-10-20 DERVN  Krogh  Changes to use M77CON
 !>> 1989-11-10 DERVN  CLL
@@ -410,52 +391,40 @@ contains
 ! 1989-11-10 CLL  Changed to keep length of printed line not
 ! greater than MAXCOL = 75 characters.
 ! ----------------------------------------------------------------------
-    character(LEN=*), intent(in) :: LABELS(:)
-    double precision, intent(in) :: VALUES(SIZE(LABELS))
-    character(LEN=1), intent(in) :: FLAG
+    CHARACTER(LEN=*), INTENT(in) :: LABELS(:)
+    DOUBLE PRECISION, INTENT(in) :: VALUES(SIZE(LABELS))
+    CHARACTER(LEN=1), INTENT(in) :: FLAG
 
-    integer I, K, LENIDV, NUMBER
+    INTEGER I, K, LENIDV, NUMBER
+    INTEGER, PARAMETER :: MAXCOL = 75
 
-    if (ialpha >= -1) then
-      lenidv = len (labels)
+    IF (ialpha >= -1) THEN
+      lenidv = LEN (labels)
       number = maxcol / (lenidv+17)
-      do i = 1, size(labels), number
-        write (output_line,"(4(2x,a,'=',g14.7))") &
-          (labels(k), values(k), k = i, min(size(labels), i+number-1) )
-        call output ( trim(output_line), advance='yes' )
-      end do
-      if (flag == '.') call erfin
-    end if
-    return
-  end subroutine DERVN
+      DO i = 1, SIZE(labels), number
+        WRITE(*,"(4(2x,a,'=',g14.7))") &
+          (labels(k), values(k), k = i, MIN(SIZE(labels), i+number-1) )
+      END DO
+      IF (flag == '.') CALL erfin
+    ENDIF
+    RETURN
+  END SUBROUTINE DERVN
+
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
 
-end module ERMSG_M
+END MODULE ERMSG_M
 
 ! $Log$
-! Revision 2.3  2003/07/15 21:58:38  vsnyder
-! Moved from l2
+! Revision 2.4  2003/10/16 19:00:26  pwagner
+! This version moved here from l1
 !
-! Revision 2.6  2002/10/08 17:36:20  pwagner
-! Added idents to survive zealous Lahey optimizer
+! Revision 2.2  2003/01/31 18:13:34  perun
+! Version 1.1 commit
 !
-! Revision 2.5  2002/01/18 00:28:39  vsnyder
-! Account for '/' in formats
+! Then moved from l2 to lib
 !
-! Revision 2.4  2002/01/18 00:25:17  livesey
-! Another attempt to fix the string bug, seems to work now.
+! Then removed
 !
-! Revision 2.3  2002/01/17 17:32:53  livesey
-! Made output_line a lot bigger
-!
-! Revision 2.2  2002/01/09 00:00:04  pwagner
-! Replaced write or print statements with calls to output
-!
-! Revision 2.1  2001/02/06 23:21:28  vsnyder
-! Initial conversion from Math77 to Fortran 90
-!
-! Revision 1.2  2000/05/04 23:39:24  vsnyder
-! Initial conversion to Fortran 90 from Math 77 library
-!
+! Originally a Math77 routine
