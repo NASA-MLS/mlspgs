@@ -272,7 +272,6 @@ CONTAINS
          ENDIF
 
 ! Write the L3DM metadata
-
          CALL WriteMetaL3DM(pcf, l3cf, files, anText)
 
       ENDIF
@@ -315,18 +314,48 @@ CONTAINS
       CALL WriteMetaLog(pcf)
 
 ! Final deallocations
- 
-      DEALLOCATE(cfProd, anText, avgPer, STAT=err)
+! Check if the pointers are associated and then deallocate. 
+
+      if (associated(cfProd)) then
+
+      DEALLOCATE(cfProd, STAT=err)
       IF ( err /= 0 ) THEN
-         msr = MLSMSG_DeAllocate // '  Open/Init quantities.'
+         msr = MLSMSG_DeAllocate // '  cfProd pointer.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
+
+      endif
+
+      if (associated(anText)) then
+
+      DEALLOCATE(anText, STAT=err)
+      IF ( err /= 0 ) THEN
+         msr = MLSMSG_DeAllocate // '  anText pointer.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      endif
+
+
+      if (associated(avgPer)) then
+
+      DEALLOCATE(avgPer, STAT=err)
+      IF ( err /= 0 ) THEN
+         msr = MLSMSG_DeAllocate // '  avgPer pointer.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+      
+      endif
+
+      if ( associated(cf%Sections) ) then 
 
       DEALLOCATE (cf%Sections, STAT=err)
       IF ( err /= 0 ) THEN
          msr = MLSMSG_DeAllocate // '  cf section pointers.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
+
+      endif
 
 !-------------------------------
    END SUBROUTINE OutputAndClose
@@ -337,6 +366,9 @@ END MODULE OutputClose
 !=====================
 
 !$Log$
+!Revision 1.15  2001/12/13 20:51:20  nakamura
+!Removed separate write, flags for diagnostics.
+!
 !Revision 1.14  2001/11/26 19:27:14  nakamura
 !Added L3DMDiag stuff.
 !
