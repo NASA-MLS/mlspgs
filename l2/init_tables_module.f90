@@ -366,7 +366,8 @@ contains ! =====     Public procedures     =============================
       begin, t+t_fwmType, l+l_linear, l+l_full, l+l_scan, l+l_scan2d, &
              l+l_cloudFull, n+n_dt_def, &
       begin, t+t_i_saturation, l+l_clear, l+l_clear_110rh_below_top, &
-             l+l_clear_0rh, l+l_clear_lowest_0_110rh, l+l_cloudy_110rh_below_top, &
+             l+l_clear_0rh, l+l_clear_lowest_0_110rh, &
+             l+l_clear_110rh_below_tropopause, l+l_cloudy_110rh_below_top, &
              l+l_cloudy_110rh_in_cloud, l+l_cloudy_nearside_only, n+n_dt_def, &
       begin, t+t_hGridType, l+l_explicit, l+l_fixed, l+l_fractional, &
              l+l_height, l+l_regular, l+l_l2gp, n+n_dt_def, &
@@ -1013,6 +1014,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.303  2003/04/22 00:17:10  dwu
+! add a new option (clear_110RH_below_tropopause) to i_saturation
+!
 ! Revision 2.302  2003/04/17 23:08:29  pwagner
 ! Added optional AuraInstrument field to l2gp apriori reads
 !
