@@ -23,6 +23,9 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 ! AddVectorToDatabase          Adds a vector to a database of such vectors
 ! AssignVector                 Destroy 1st arg, then assign 2nd arg to it
 ! AxPy                         Result z = A x + y
+! CheckIntegrity_Vector
+! CheckIntegrity_VectorTemplate
+! CheckIntegrity_VectorValue
 ! ClearMask                    Clear bits of MASK according to TO_CLEAR
 ! ClearUnderMask               Clear elements of z corresponding to MASK
 ! ClearVector                  Clear elements of z
@@ -40,30 +43,40 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 ! DestroyVectorTemplateDatabase Destroys a vector template database
 ! DestroyVectorTemplateInfo    Destroys a vector template
 ! DestroyVectorValue           Destroy the "values" field in all of the quantities in a vector
+! DivideVectors                Y = A / X if Y is present, else X = A / X
 ! DotVectors                   z = x . y
 ! DotVectorsMasked             z = x . y, but only where mask is "off"
 ! DumpMask                     Display only the mask information for a vector
-! dump                         Interface for next three
-! dump_vector                  Display how a single vector is made up
-! dump_vectors                 Display how vector database is made up
+! Dump                         Generic for several dump_...; see the interface
+! DumpQuantityMask
+! DumpVectorMask
+! Dump_vector                  Display how a single vector is made up
+! Dump_vectors                 Display how vector database is made up
 ! Dump_Vector_Quantity         Display a vector quantity
-! dump_vector_templates        Display how vector template database is made up
+! Dump_vector_templates        Display how vector template database is made up
 ! GetVectorQuantity            Returns pointer to quantity by name in vector
 ! GetVectorQuantityByType      Returns pointer to quantity by type in vector
 ! GetVectorQtyByTemplateIndex  Returns pointer to quantity by template in vector
 ! GetVectorQuantityIndexByName Returns index to quantity by name in vector
 ! GetVectorQuantityIndexByType Returns index to quantity by type in vector
-! isVectorQtyMasked            Is the mask for VectorQty set for address
+! InflateQuantityTemplateDatabase
+! InflateVectorTemplateDatabase
+! IsVectorQtyMasked            Is the mask for VectorQty set for address
 ! MaskVectorQty                Set the mask for VectorQty for spec. address
 ! MultiplyVectors              Z = X # Y if Z present; else X = X # Y
-! rmVectorFromDatabase         Removes a vector from a database of such vectors
+! NullifyVectorTemplate
+! NullifyVectorValue
+! NullifyVector
+! PowVector                    X = X ** Power element-by-element
+! ReciprocateVector            Y = A / X if Y is present, else X = A / X -- scalar A
+! RmVectorFromDatabase         Removes a vector from a database of such vectors
 ! ScaleVector                  Y = A*X if Y is present, else X = A*X.
 ! SetMask                      Set bits of MASK indexed by elements of TO_SET
 ! SubtractFromVector           x = x - y
 ! SubtractVectors              Returns z = x - y
 ! ValidateVectorQuantity       Test vector quantity for matching components
 
-  !---------------------------------------------------------------------------
+  ! --------------------------------------------------------------------------
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use DUMP_0, only: DUMP
@@ -93,8 +106,8 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   public :: ConstructVectorTemplate, CopyVector, CopyVectorMask, CreateMaskArray
   public :: CreateMask, CreateVector, DestroyVectorDatabase, DestroyVectorInfo
   public :: DestroyVectorMask, DestroyVectorTemplateDatabase
-  public :: DestroyVectorTemplateInfo, DestroyVectorValue, DotVectors
-  public :: DotVectorsMasked
+  public :: DestroyVectorTemplateInfo, DestroyVectorValue, DivideVectors
+  public :: DotVectors, DotVectorsMasked
   public :: DumpMask, DumpQuantityMask, DumpVectorMask, Dump_Vector
   public :: Dump_Vectors, Dump_Vector_Template, Dump_Vector_Templates
   public :: Dump_Vector_Quantity
@@ -154,14 +167,14 @@ module VectorsModule            ! Vectors in the MLS PGS suite
     module procedure DotVectorsMasked
   end interface
 
-!---------------------------- RCS Ident Info -------------------------------
+! --------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
        "$Id$"
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
   private :: not_used_here 
-!---------------------------------------------------------------------------
+! --------------------------------------------------------------------------
 
   ! This type describes a vector template
 
@@ -228,7 +241,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 
 contains ! =====     Public Procedures     =============================
 
-  !-------------------------------------------------  AddToVector  -----
+  ! ------------------------------------------------  AddToVector  -----
   subroutine AddToVector ( X, Y, Scale )  ! X = X + [Scale*] Y
     ! Dummy arguments:
     type(Vector_T), intent(inout) :: X
@@ -251,7 +264,7 @@ contains ! =====     Public Procedures     =============================
     end if
   end subroutine AddToVector
 
-  !--------------------------------------------------  AddVectors  -----
+  ! -------------------------------------------------  AddVectors  -----
   type (Vector_T) function AddVectors ( X, Y ) result (Z)
   ! Add two vectors, producing one having the same template (but no name,
   ! of course).
@@ -276,7 +289,7 @@ contains ! =====     Public Procedures     =============================
     end do
   end function AddVectors
 
-  !---------------------------------  AddVectorTemplateToDatabase  -----
+  ! --------------------------------  AddVectorTemplateToDatabase  -----
   integer function AddVectorTemplateToDatabase ( DATABASE, ITEM )
 
   ! This routine adds a vector template to a database of such templates, 
@@ -294,7 +307,7 @@ contains ! =====     Public Procedures     =============================
     AddVectorTemplateToDatabase = newSize
   end function AddVectorTemplateToDatabase
 
-  !-----------------------------------------  AddVectorToDatabase  -----
+  ! ----------------------------------------  AddVectorToDatabase  -----
   integer function AddVectorToDatabase ( DATABASE, ITEM )
 
   ! This routine adds a vector to a database of such vectors, 
@@ -312,7 +325,7 @@ contains ! =====     Public Procedures     =============================
     AddVectorToDatabase = newSize
   end function AddVectorToDatabase
 
-  !------------------------------------------------  AssignVector  -----
+  ! -----------------------------------------------  AssignVector  -----
   subroutine AssignVector ( Z, X )
   ! Destroy Z, then assign X to it, by using pointer assignment for the
   ! components.  DO NOT DO Z = Z!  Notice that CopyVector uses deep
@@ -328,7 +341,7 @@ contains ! =====     Public Procedures     =============================
     z%quantities => x%quantities
   end subroutine AssignVector
 
-  !--------------------------------------------------------  AXPY  -----
+  ! -------------------------------------------------------  AXPY  -----
   type (Vector_T) function AXPY ( A, X, Y ) result (Z)
   ! Multiply the vector X by A and add Y to it, producing one having the
   ! same template (but no name, of course).
@@ -525,7 +538,7 @@ contains ! =====     Public Procedures     =============================
 
   end function CheckIntegrity_VectorValue
 
-  !---------------------------------------------------  ClearMask  -----
+  ! --------------------------------------------------  ClearMask  -----
   subroutine ClearMask ( MASK, TO_CLEAR, WHAT )
   ! Clear bits of MASK indexed by elements of TO_CLEAR.  Numbering of mask
   ! elements starts at one, not zero!  If TO_CLEAR is absent, clear all of
@@ -544,7 +557,7 @@ contains ! =====     Public Procedures     =============================
     end if
   end subroutine ClearMask
 
-  !-----------------------------------------------  ClearUnderMask -----
+  ! ----------------------------------------------  ClearUnderMask -----
   subroutine ClearUnderMask ( Z, Inst, Quant, What )
   ! Clear elements of Z that correspond to nonzero bits in its mask.
   ! If Inst is present, clear only elements of that instance.
@@ -587,7 +600,7 @@ contains ! =====     Public Procedures     =============================
     end do ! qi
   end subroutine ClearUnderMask 
 
-  !-------------------------------------------------  ClearVector  -----
+  ! ------------------------------------------------  ClearVector  -----
   subroutine ClearVector ( Z, value )
   ! Clear the elements of Z (make them zero).  Don't change its structure
   ! or mask.
@@ -602,7 +615,7 @@ contains ! =====     Public Procedures     =============================
     end do
   end subroutine ClearVector
 
-  !-------------------------------------------------  CloneVector  -----
+  ! ------------------------------------------------  CloneVector  -----
   subroutine CloneVector ( Z, X, VectorNameText, Database )
   ! Destroy Z, except its name.
   ! Create the characteristics of a vector to be the same template as a
@@ -646,7 +659,7 @@ contains ! =====     Public Procedures     =============================
     if ( present(database) ) i = addVectorToDatabase ( database, z )
   end subroutine  CloneVector
 
-  !---------------------------------------------  ConstantXVector  -----
+  ! --------------------------------------------  ConstantXVector  -----
   type (Vector_T) function ConstantXVector ( A, X ) result (Z)
   ! Multiply the vector X by A, producing one having the same template
   ! (but no name, of course).
@@ -670,7 +683,7 @@ contains ! =====     Public Procedures     =============================
     end do
   end function ConstantXVector
 
-  !-------------------------------------  ConstructVectorTemplate  -----
+  ! ------------------------------------  ConstructVectorTemplate  -----
   subroutine ConstructVectorTemplate ( name, quantities, selected, &
     & vectorTemplate )
 
@@ -947,7 +960,7 @@ contains ! =====     Public Procedures     =============================
     end if
   end subroutine DestroyVectorTemplateDatabase
 
-  !-----------------------------------  DestroyVectorTemplateInfo  -----
+  ! ----------------------------------  DestroyVectorTemplateInfo  -----
   subroutine DestroyVectorTemplateInfo ( VectorTemplate )
 
   ! This subroutine destroys a vector template created above
@@ -966,7 +979,7 @@ contains ! =====     Public Procedures     =============================
     vectorTemplate%name = 0
   end subroutine DestroyVectorTemplateInfo
 
-  !------------------------------------------  DestroyVectorValue  -----
+  ! -----------------------------------------  DestroyVectorValue  -----
   subroutine DestroyVectorValue ( Vector )
   ! Destroy the "values" field in all of the quantities in a vector.  This
   ! is useful when forming normal equations little-by-little.
@@ -981,7 +994,32 @@ contains ! =====     Public Procedures     =============================
     end do
   end subroutine DestroyVectorValue
 
-  !--------------------------------------------------  DotVectors  -----
+  ! ----------------------------------------------  DivideVectors  -----
+  subroutine DivideVectors ( X, A, Y )
+  ! Y = A / X if Y is present, else X = A / X, element-by-element.
+
+    ! Dummy arguments:
+    type(Vector_T), intent(inout), target :: X
+    type(Vector_T), intent(in) :: A
+    type(Vector_T), intent(inout), optional, target :: Y
+    ! Local Variables:
+    integer :: I              ! Subscript and loop inductor
+    type(Vector_T), pointer :: Z
+    ! Executable statements:
+    if ( x%template%name /= a%template%name ) call MLSMessage ( MLSMSG_Error, &
+        & ModuleName, 'Numerator vector has different template from denominator' )
+    z => x
+    if ( present(y) ) then
+      if ( x%template%name /= y%template%name ) call MLSMessage ( MLSMSG_Error, &
+        & ModuleName, 'Quotient vector has different template from original' )
+      z => y
+    end if
+    do i = 1, size(x%quantities)
+      z%quantities(i)%values = a%quantities(i)%values / x%quantities(i)%values
+    end do
+  end subroutine DivideVectors
+
+  ! -------------------------------------------------  DotVectors  -----
   real(rv) function DotVectors ( X, Y ) result (Z)
   ! Compute the inner product of two vectors.
 
@@ -998,7 +1036,7 @@ contains ! =====     Public Procedures     =============================
     end do
   end function DotVectors
 
-  !--------------------------------------------  DotVectorsMasked  -----
+  ! -------------------------------------------  DotVectorsMasked  -----
   real(rv) function DotVectorsMasked ( X, Y ) result (Z)
   ! Compute the inner product of two vectors.  Ignore elements masked
   ! by m_linAlg in either X or Y.
@@ -1656,7 +1694,7 @@ contains ! =====     Public Procedures     =============================
 
   end function GetVectorQuantityIndexByType
 
-  ! ---------------------------------- InflateQuantityTemplateDatabase --
+  ! ------------------------------ InflateQuantityTemplateDatabase -----
   integer function InflateVectorDatabase ( database, extra )
     ! Make a vector database bigger by extra
     ! Return index of first new element
@@ -1672,7 +1710,7 @@ contains ! =====     Public Procedures     =============================
     InflateVectorDatabase = firstNewItem
   end function InflateVectorDatabase
 
-  ! ---------------------------------- InflateQuantityTemplateDatabase --
+  ! -------------------------------- InflateVectorTemplateDatabase -----
   integer function InflateVectorTemplateDatabase ( database, extra )
     ! Make a vector template database bigger by extra
     ! Return index of first new element
@@ -1688,7 +1726,7 @@ contains ! =====     Public Procedures     =============================
     InflateVectorTemplateDatabase = firstNewItem
   end function InflateVectorTemplateDatabase
 
-  ! -------------------------------  IsVectorQtyMasked  -----
+  ! ------------------------------------------  IsVectorQtyMasked  -----
   logical function IsVectorQtyMasked ( vectorQty, Row, Column, What )
 
   ! Is the mask for VectorQty set for address (Row, Column) ?
@@ -1711,7 +1749,7 @@ contains ! =====     Public Procedures     =============================
 
   end function IsVectorQtyMasked
 
-  ! -------------------------------  MaskVectorQty  -----
+  ! ----------------------------------------------  MaskVectorQty  -----
   subroutine MaskVectorQty ( vectorQty, Row, Column, What )
 
   ! Set bits of the mask for VectorQty(Row,Column); meaning
@@ -1735,7 +1773,7 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine MaskVectorQty
 
-  !---------------------------------------------  MultiplyVectors  -----
+  ! --------------------------------------------  MultiplyVectors  -----
   subroutine MultiplyVectors ( X, Y, Z, Quant, Inst )
   ! If Z is present, destroy Z and clone a new one from X, then
   ! Z = X # Y where # means "element-by-element"; otherwise X = X # Y
@@ -1777,7 +1815,7 @@ contains ! =====     Public Procedures     =============================
     end if
   end subroutine MultiplyVectors
 
-  ! ---------------------------------------------- NullifyVectorTemplate -----
+  ! ---------------------------------------- NullifyVectorTemplate -----
   subroutine NullifyVectorTemplate ( V )
     ! Given a vector template, nullify all the pointers associated with it
     type ( VectorTemplate_T ), intent(out) :: V
@@ -1787,7 +1825,7 @@ contains ! =====     Public Procedures     =============================
     nullify ( v%quantities )
   end subroutine NullifyVectorTemplate
 
-  ! ---------------------------------------------- NullifyVectorValue -----
+  ! ------------------------------------------- NullifyVectorValue -----
   subroutine NullifyVectorValue ( V )
     ! Given a vector value, nullify all the pointers associated with it
     type ( VectorValue_T ), intent(out) :: V
@@ -1810,7 +1848,7 @@ contains ! =====     Public Procedures     =============================
     nullify ( v%quantities )
   end subroutine NullifyVector
 
-  !-------------------------------------------------  ReciprocateVector  -----
+  ! --------------------------------------------------  PowVector  -----
   subroutine PowVector ( X, POWER )
   ! Y = A / X if Y is present, else X = A / X.
 
@@ -1824,7 +1862,7 @@ contains ! =====     Public Procedures     =============================
     end do
   end subroutine PowVector
 
-  !-------------------------------------------------  ReciprocateVector  -----
+  ! ------------------------------------------  ReciprocateVector  -----
   subroutine ReciprocateVector ( X, A, Y )
   ! Y = A / X if Y is present, else X = A / X.
 
@@ -1847,7 +1885,7 @@ contains ! =====     Public Procedures     =============================
     end do
   end subroutine ReciprocateVector
 
-  !-----------------------------------------  RmVectorFromDatabase  -----
+  ! ----------------------------------------  RmVectorFromDatabase  -----
   integer function RmVectorFromDatabase ( DATABASE, ITEM )
 
   ! This routine removes a vector from a database of such vectors, 
@@ -1869,7 +1907,7 @@ contains ! =====     Public Procedures     =============================
     rmVectorFromDatabase = newSize
   end function RmVectorFromDatabase
 
-  !-------------------------------------------------  ScaleVector  -----
+  ! ------------------------------------------------  ScaleVector  -----
   subroutine ScaleVector ( X, A, Y )
   ! Y = A*X if Y is present, else X = A*X.
 
@@ -1892,7 +1930,7 @@ contains ! =====     Public Procedures     =============================
     end do
   end subroutine ScaleVector
 
-  !-----------------------------------------------------  SetMask  -----
+  ! ----------------------------------------------------  SetMask  -----
   subroutine SetMask ( MASK, TO_SET, MAXBIT, WHAT )
   ! Set bits of MASK indexed by elements of TO_SET.  Numbering of mask
   ! elements starts at one, not zero!  If TO_SET is absent, set bits of MASK.
@@ -1923,7 +1961,7 @@ contains ! =====     Public Procedures     =============================
     end if
   end subroutine SetMask
 
-  !------------------------------------------  SubtractFromVector  -----
+  ! -----------------------------------------  SubtractFromVector  -----
   subroutine SubtractFromVector ( X, Y, Quant, Inst ) ! X = X - Y.
 
     ! Dummy arguments:
@@ -1956,7 +1994,7 @@ contains ! =====     Public Procedures     =============================
     end if
   end subroutine SubtractFromVector
 
-  !---------------------------------------------  SubtractVectors  -----
+  ! --------------------------------------------  SubtractVectors  -----
   type (Vector_T) function SubtractVectors ( X, Y ) result (Z)
   ! Subtract Y from X, producing one having the same template (but no name,
   ! of course).
@@ -2226,6 +2264,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.110  2004/06/10 00:57:47  vsnyder
+! Move FindFirst, FindNext from MLSCommon to MLSSets
+!
 ! Revision 2.109  2004/05/01 04:07:44  vsnyder
 ! Rearranged some dumping stuff
 !
