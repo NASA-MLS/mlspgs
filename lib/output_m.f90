@@ -4,7 +4,8 @@
 module OUTPUT_M
 
   use MLSMessageModule, only: MLSMessage, MLSMSG_Info, MLSMSG_Error
-  use MLSStrings, only: ExtractSubString, lowercase , ReplaceSubString
+  use MLSStrings, only: ExtractSubString, &
+    & lowercase , ReplaceSubString
   implicit NONE
   private
 
@@ -227,17 +228,18 @@ contains
       ! return   ! But this prevented use of LogFormat
       line = ' '
       write ( line, Format ) value
-      k = len_trim(Format)
-      kChar=lowerCase(Format)
-      call ReplaceSubString(kChar, myFormat, 'g', 'f')
-      call ReplaceSubString(myFormat, kChar, 'e', 'f')
-      call ReplaceSubString(kChar, myFormat, 'd', 'f')
-      call ExtractSubString(TRIM(myFormat), kChar, 'f', '.')
-      read (kChar, '(i2)') k
-      if (k < 1) then
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-		  & 'Bad conversion to k in OUTPUT_DOUBLE (format neither "d" or "f"' )
-      end if
+      !k = len_trim(Format)
+      !kChar=lowerCase(Format)
+      !call ReplaceSubString(kChar, myFormat, 'g', 'f')
+      !call ReplaceSubString(myFormat, kChar, 'e', 'f')
+      !call ReplaceSubString(kChar, myFormat, 'd', 'f')
+      !call ExtractSubString(TRIM(myFormat), kChar, 'f', '.')
+      !read (kChar, '(i2)') k
+      !if (k < 1) then
+      !  call MLSMessage ( MLSMSG_Error, ModuleName, &
+		!  & 'Bad conversion to k in OUTPUT_DOUBLE (format neither "d" or "f"' )
+      !end if
+      k = nCharsinFormat(Format)
     end if
 
     !if ( prunit >= -1 ) return
@@ -421,17 +423,18 @@ contains
       !end if
       line = ' '
       write ( line, Format ) value
-      k = len_trim(Format)
-      kChar=lowerCase(Format)
-      call ReplaceSubString(kChar, myFormat, 'g', 'f')
-      call ReplaceSubString(myFormat, kChar, 'e', 'f')
-      call ReplaceSubString(kChar, myFormat, 'd', 'f')
-      call ExtractSubString(TRIM(myFormat), kChar, 'f', '.')
-      read (kChar, '(i2)') k
-      if (k < 1) then
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-		& 'Bad conversion to k in OUTPUT_SINGLE' )
-      end if
+      !k = len_trim(Format)
+      !kChar=lowerCase(Format)
+      !call ReplaceSubString(kChar, myFormat, 'g', 'f')
+      !call ReplaceSubString(myFormat, kChar, 'e', 'f')
+      !call ReplaceSubString(kChar, myFormat, 'd', 'f')
+      !call ExtractSubString(TRIM(myFormat), kChar, 'f', '.')
+      !read (kChar, '(i2)') k
+      !if (k < 1) then
+      !  call MLSMessage ( MLSMSG_Error, ModuleName, &
+		!& 'Bad conversion to k in OUTPUT_SINGLE' )
+      !end if
+      k = nCharsinFormat(Format)
     end if
     !call output ( line(:k), advance=my_adv )
 
@@ -478,6 +481,42 @@ contains
     end if
   end subroutine OUTPUT_SINGLE_ARRAY
 
+  function nCharsinFormat(Format) result(nplusm)
+     ! Utility to calculated how many characters in a format spec:
+     ! [n{xX}][,]{DEFGdefg}m.b
+     ! where n, m, and b are digits (we care only about n and m)
+     ! My plan is to return (n+m)
+     ! Args
+     character(len=*), intent(in) ::  Format
+     integer :: nplusm
+     ! Local variables
+     character(len=20) :: kChar, myFormat
+     integer :: n, m
+     ! Executable
+      kChar=lowerCase(Format)
+      call ReplaceSubString(kChar, myFormat, 'g', 'f')
+      call ReplaceSubString(myFormat, kChar, 'e', 'f')
+      call ReplaceSubString(kChar, myFormat, 'd', 'f')
+      call ExtractSubString(TRIM(myFormat), kChar, 'f', '.')
+      read (kChar, '(i2)') m
+      if (m < 1) then
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+		  & 'Bad conversion to m in OUTPUT_xxxLE (format not "{defg}"' )
+      end if
+      ! call GetStringElement(TRIM(myFormat), kChar, 1, .true., 'x')
+      call ExtractSubString(TRIM(myFormat), kChar, '(', 'x')
+      if ( trim(kChar) == trim(myFormat )) then
+        n = 0
+      else
+        read (kChar, '(i2)') n
+        if (n < 1) then
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+		    & 'Bad conversion to n in OUTPUT_xxxLE (format not "{defg}"' )
+        end if
+      endif
+      nplusm = n + m
+  end function nCharsinFormat
+
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
@@ -485,6 +524,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.25  2003/09/06 01:35:55  pwagner
+! Can account for (nx,{defg}m.b} in f.p. format
+!
 ! Revision 2.24  2003/08/25 17:48:37  pwagner
 ! Remembered formats may be gx.y
 !
