@@ -9,13 +9,14 @@ MODULE PCFHdr
 ! attributes, and otherwise do miscellaneous things to mls product files.
 ! It might have been better named PCFHdrAndGlobalAttributes
 ! or split off global attribute stuff into a separate module
-   USE Hdf, only: DFACC_WRITE, AN_FILE_DESC
+   USE Hdf, only: DFACC_RDWR, DFACC_WRITE, AN_FILE_DESC
 !  USE Hdf, only: hOpen, afStart, afFCreate, afWriteAnn, afEndAccess, &
 !    & afEnd, hClose
    USE MLSCommon, only: i4, r4, r8, FileNameLen
-   USE MLSFiles, only: GetPCFromRef, HDFVERSION_4, HDFVERSION_5
+   USE MLSFiles, only: GetPCFromRef, HDFVERSION_4, HDFVERSION_5, &
+     & MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
    USE MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
-     & MLSMSG_FILEOPEN
+     & MLSMSG_DeAllocate, MLSMSG_FILEOPEN
    USE SDPToolkit, only: PGSD_PC_UREF_LENGTH_MAX, PGS_S_SUCCESS, &
      & PGSD_MET_GROUP_NAME_L, PGS_IO_GEN_CLOSEF, PGS_IO_GEN_OPENF, &
      & PGSD_IO_GEN_RDIRUNF
@@ -62,12 +63,12 @@ MODULE PCFHdr
     character(len=GA_VALUE_LENGTH) :: PGEVersion = ''
     character(len=GA_VALUE_LENGTH) :: StartUTC = ''
     character(len=GA_VALUE_LENGTH) :: EndUTC = ''
-    character(len=GA_VALUE_LENGTH) :: GranuleMonth = ''
-    character(len=GA_VALUE_LENGTH) :: GranuleDay   = ''
-    character(len=GA_VALUE_LENGTH) :: GranuleYear  = ''
-    ! integer :: GranuleMonth                  = 0
-    ! integer :: GranuleDay                    = 0
-    ! integer :: GranuleYear                   = 0
+    ! character(len=GA_VALUE_LENGTH) :: GranuleMonth = ''
+    ! character(len=GA_VALUE_LENGTH) :: GranuleDay   = ''
+    ! character(len=GA_VALUE_LENGTH) :: GranuleYear  = ''
+    integer :: GranuleMonth                  = 0
+    integer :: GranuleDay                    = 0
+    integer :: GranuleYear                   = 0
   end type GlobalAttributes_T
 
   ! This variable describes the global attributes
@@ -147,8 +148,8 @@ CONTAINS
    SUBROUTINE gd_writeglobalattr (gridID)
 !------------------------------------------------------------
 
-!     use HDF5, only: H5T_NATIVE_CHARACTER
-      use HDFEOS5, only: HE5T_NATIVE_SCHAR
+      use HDFEOS5, only: HE5T_NATIVE_SCHAR, HE5T_NATIVE_INT
+      ! use he5_gdapi, only: he5_GDwrattr    ! Not coded yet
 ! Brief description of subroutine
 ! This subroutine writes the global attributes for an hdf-eos5 grid
 
@@ -177,6 +178,15 @@ CONTAINS
       status = he5_GDwrattr(gridID, &
        & 'EndUTC', HE5T_NATIVE_SCHAR, 1, &
        &  GlobalAttributes%EndUTC)
+! >       status = he5_GDwrattr(gridID, &
+! >        & 'GranuleMonth', HE5T_NATIVE_INT, 1, &
+! >        &  GlobalAttributes%GranuleMonth)
+! >       status = he5_GDwrattr(gridID, &
+! >        & 'GranuleDay', HE5T_NATIVE_INT, 1, &
+! >        &  GlobalAttributes%GranuleDay)
+! >       status = he5_GDwrattr(gridID, &
+! >        & 'GranuleYear', HE5T_NATIVE_INT, 1, &
+! >        &  GlobalAttributes%GranuleYear)
 !------------------------------------------------------------
    END SUBROUTINE gd_writeglobalattr
 !------------------------------------------------------------
@@ -211,12 +221,18 @@ CONTAINS
        & 'StartUTC', GlobalAttributes%StartUTC, .true.)
       call MakeHDF5Attribute(grp_id, &
        & 'EndUTC', GlobalAttributes%EndUTC, .true.)
-      if ( GlobalAttributes%GranuleDay == ' ') return
-      if ( GlobalAttributes%GranuleMonth == ' ') &
-       & call MakeHDF5Attribute(grp_id, &
+      ! if ( GlobalAttributes%GranuleDay == ' ') return
+      if ( GlobalAttributes%GranuleDay < 1 ) return
+      ! if ( GlobalAttributes%GranuleMonth /= ' ') &
+      if ( GlobalAttributes%GranuleMonth > 0 ) then
+        call MakeHDF5Attribute(grp_id, &
        & 'GranuleMonth', GlobalAttributes%GranuleMonth, .true.)
-      call MakeHDF5Attribute(grp_id, &
+        call MakeHDF5Attribute(grp_id, &
        & 'GranuleDay', GlobalAttributes%GranuleDay, .true.)
+      else
+        call MakeHDF5Attribute(grp_id, &
+       & 'GranuleDayOfYear', GlobalAttributes%GranuleDay, .true.)
+      endif
       call MakeHDF5Attribute(grp_id, &
        & 'GranuleYear', GlobalAttributes%GranuleYear, .true.)
       call h5gclose_f(grp_id, status)
@@ -230,7 +246,7 @@ CONTAINS
 !------------------------------------------------------------
 
 !     use HDF5, only: H5T_NATIVE_CHARACTER
-      use HDFEOS5, only: HE5T_NATIVE_SCHAR
+      use HDFEOS5, only: HE5T_NATIVE_SCHAR, HE5T_NATIVE_INT
       use he5_swapi, only: he5_EHwrglatt
 ! Brief description of subroutine
 ! This subroutine writes the global attributes for an hdf-eos5 file
@@ -260,17 +276,24 @@ CONTAINS
       status = he5_EHwrglatt(fileID, &
        & 'EndUTC', HE5T_NATIVE_SCHAR, 1, &
        &  GlobalAttributes%EndUTC)
-      if ( GlobalAttributes%GranuleDay == ' ') return
-      if ( GlobalAttributes%GranuleMonth == ' ') &
-       & status = he5_EHwrglatt(fileID, &
-       & 'GranuleMonth', HE5T_NATIVE_SCHAR, 1, &
-       &  GlobalAttributes%GranuleMonth)
+      ! if ( GlobalAttributes%GranuleDay == ' ') return
+      ! if ( GlobalAttributes%GranuleMonth == ' ') &
+      if ( GlobalAttributes%GranuleDay < 1 ) return
+      if ( GlobalAttributes%GranuleMonth  > 0 ) then
+        status = he5_EHwrglatt(fileID, &
+       & 'GranuleMonth', HE5T_NATIVE_INT, 1, &
+       &  (/ GlobalAttributes%GranuleMonth/) )
+        status = he5_EHwrglatt(fileID, &
+       & 'GranuleDay', HE5T_NATIVE_INT, 1, &
+       &  (/ GlobalAttributes%GranuleDay/) )
+      else
+        status = he5_EHwrglatt(fileID, &
+       & 'GranuleDayOfYear', HE5T_NATIVE_INT, 1, &
+       &  (/ GlobalAttributes%GranuleDay/) )
+      endif
       status = he5_EHwrglatt(fileID, &
-       & 'GranuleDay', HE5T_NATIVE_SCHAR, 1, &
-       &  GlobalAttributes%GranuleDay)
-      status = he5_EHwrglatt(fileID, &
-       & 'GranuleYear', HE5T_NATIVE_SCHAR, 1, &
-       &  GlobalAttributes%GranuleYear)
+       & 'GranuleYear', HE5T_NATIVE_INT, 1, &
+       &  (/ GlobalAttributes%GranuleYear/) )
 !------------------------------------------------------------
    END SUBROUTINE he5_writeglobalattr
 !------------------------------------------------------------
@@ -343,14 +366,15 @@ CONTAINS
    SUBROUTINE sw_writeglobalattr (swathID)
 !------------------------------------------------------------
 
-      use HDFEOS5, only: HE5T_NATIVE_SCHAR
+      use HDFEOS5, only: HE5T_NATIVE_SCHAR, HE5T_NATIVE_INT
+      use HE5_SWAPI, only: he5_SWwrattr
 ! Brief description of subroutine
 ! This subroutine writes the global attributes for an hdf-eos5 swath
 
 ! Arguments
 
       INTEGER, INTENT(IN) :: swathID
-      integer, external ::   he5_SWwrattr
+!     integer, external ::   he5_SWwrattr
 ! Internal variables
       integer :: status
 ! Executable
@@ -372,6 +396,22 @@ CONTAINS
       status = he5_SWwrattr(swathID, &
        & 'EndUTC', HE5T_NATIVE_SCHAR, 1, &
        &  GlobalAttributes%EndUTC)
+      if ( GlobalAttributes%GranuleDay < 1 ) return
+      if ( GlobalAttributes%GranuleMonth > 0 ) then
+        status = he5_SWwrattr(swathID, &
+         & 'GranuleMonth', HE5T_NATIVE_INT, 1, &
+         &  (/ GlobalAttributes%GranuleMonth/) )
+        status = he5_SWwrattr(swathID, &
+         & 'GranuleDay', HE5T_NATIVE_INT, 1, &
+         &  (/ GlobalAttributes%GranuleDay/) )
+      else
+        status = he5_SWwrattr(swathID, &
+         & 'GranuleDayOfYear', HE5T_NATIVE_INT, 1, &
+         &  (/ GlobalAttributes%GranuleDay/) )
+      endif
+      status = he5_SWwrattr(swathID, &
+       & 'GranuleYear', HE5T_NATIVE_INT, 1, &
+       &  (/ GlobalAttributes%GranuleYear/) )
 !------------------------------------------------------------
    END SUBROUTINE sw_writeglobalattr
 !------------------------------------------------------------
@@ -400,7 +440,7 @@ CONTAINS
 !------------------------------------
 
 !----------------------------------------
-   SUBROUTINE WritePCF2Hdr (file, anText, hdfVersion)
+   SUBROUTINE WritePCF2Hdr (file, anText, hdfVersion, isHDFEOS)
 !----------------------------------------
       use HDF5, only: H5F_ACC_RDWR_F, &
         & h5fopen_f, h5fclose_f
@@ -414,27 +454,48 @@ CONTAINS
 
       CHARACTER (LEN=1), POINTER              :: anText(:)
       integer, intent(in), optional           :: hdfVersion
+      logical, intent(in), optional           :: isHDFEOS
 
 ! Parameters
+      integer :: fileID
       integer :: my_hdfVersion
-      integer :: fileID, status
+      logical :: myisHDFEOS
+      integer :: record_length
+      integer :: status
 ! Executable
       my_hdfVersion = PCFHDR_DEFAULT_HDFVERSION
       if ( present(hdfVersion) ) my_hdfVersion = hdfVersion
+      myisHDFEOS = .false.
+      if ( present(isHDFEOS) ) myisHDFEOS = isHDFEOS
       select case(my_hdfVersion)
       case (HDFVERSION_4)
         call WritePCF2Hdr_hdf4 (file, anText)
       case (HDFVERSION_5)
-        call h5fopen_f(trim(file), H5F_ACC_RDWR_F, fileID, status)
-        if ( status /= PGS_S_SUCCESS) &
-          & CALL MLSMessage(MLSMSG_Error, ModuleName, &
-          & 'Error opening hdf5 file for annotating with PCF' )
-!       call WritePCF2Hdr_hdf5 (file, anText)
-        call WritePCF2Hdr_hdf5 (fileID, anText)
-        call h5fclose_f(fileID, status)
-        if ( status /= PGS_S_SUCCESS) &
-          & CALL MLSMessage(MLSMSG_Error, ModuleName, &
-          & 'Error closing hdf5 file for annotating with PCF' )
+        if ( myisHDFEOS ) then
+          fileID = mls_io_gen_openF('swopen', .TRUE., status, &
+           & record_length, DFACC_RDWR, FileName=trim(file), &
+           & hdfVersion=hdfVersion, debugOption=.false. )
+          if ( status /= PGS_S_SUCCESS) &
+            & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+            & 'Error opening hdfeos5 file for annotating with PCF' )
+          call WritePCF2Hdr_hdfeos5 (fileID, anText)
+          status = mls_io_gen_closeF('swclose', fileID, &
+            & hdfVersion=hdfVersion)
+          if ( status /= PGS_S_SUCCESS) &
+            & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+            & 'Error closing hdfeos5 file for annotating with PCF' )
+        else
+          call h5fopen_f(trim(file), H5F_ACC_RDWR_F, fileID, status)
+          if ( status /= PGS_S_SUCCESS) &
+            & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+            & 'Error opening hdf5 file for annotating with PCF' )
+          ! call WritePCF2Hdr_hdf5 (file, anText)
+          call WritePCF2Hdr_hdf5 (fileID, anText)
+          call h5fclose_f(fileID, status)
+          if ( status /= PGS_S_SUCCESS) &
+            & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+            & 'Error closing hdf5 file for annotating with PCF' )
+        endif
       case default
          CALL MLSMessage(MLSMSG_Error, ModuleName, &
            & 'Unrecognized hdfVersion in WritePCF2Hdr')
@@ -516,24 +577,20 @@ CONTAINS
 !-----------------------------
 
 !----------------------------------------
-!  SUBROUTINE WritePCF2Hdr_hdf5 (file, anText)
    SUBROUTINE WritePCF2Hdr_hdf5 (fileID, anText)
 !----------------------------------------
 
-!     use HDF5, only: H5F_ACC_RDWR_F, &
-!       & h5fopen_f, h5fclose_f, h5gclose_f, h5gopen_f
       use HDF5, only: h5gclose_f, h5gopen_f
       USE MLSHDF5, only: MakeHDF5Attribute
 ! Brief description of subroutine
-! This subroutine writes the PCF into an HDF-EOS5 file as an attribute.
+! This subroutine writes the PCF into an HDF5 file as an attribute.
 ! It does so at the root '/' group level, treating the file as if
 ! it were a plain hdf5 file
-! This may result in the dread hybrid file syndrome which may
+! If the file were in fact and hdfeos5 file
+! this may result in the dread hybrid file syndrome which may
 ! confuse some hdf-eos5 readers (not tested)
 
 ! Arguments
-
-!      CHARACTER (LEN=FileNameLen), INTENT(IN) :: file 
 
       CHARACTER (LEN=1), POINTER              :: anText(:)
 
@@ -542,10 +599,6 @@ CONTAINS
       integer :: grp_id
       integer :: status
 ! Executable
-!      call h5fopen_f(trim(file), H5F_ACC_RDWR_F, fileID, status)
-      ! if ( status /= PGS_S_SUCCESS) &
-      !  & CALL MLSMessage(MLSMSG_Error, ModuleName, &
-      !  & 'Error opening hdf5 file for annotating with PCF' )
       call h5gopen_f(fileID, '/', grp_id, status)
       if ( status /= PGS_S_SUCCESS) &
         & CALL MLSMessage(MLSMSG_Error, ModuleName, &
@@ -556,12 +609,59 @@ CONTAINS
       if ( status /= PGS_S_SUCCESS) &
         & CALL MLSMessage(MLSMSG_Error, ModuleName, &
         & 'Error closing hdf5 file root group for annotating with PCF' )
-      ! call h5fclose_f(fileID, status)
-      ! if ( status /= PGS_S_SUCCESS) &
-      !  & CALL MLSMessage(MLSMSG_Error, ModuleName, &
-      !  & 'Error closing hdf5 file for annotating with PCF' )
 !-----------------------------
    END SUBROUTINE WritePCF2Hdr_hdf5
+!-----------------------------
+
+!----------------------------------------
+   SUBROUTINE WritePCF2Hdr_hdfeos5 (fileID, anText)
+!----------------------------------------
+
+      use HDFEOS5, only: HE5T_NATIVE_SCHAR
+      use he5_swapi, only: he5_EHwrglatt
+! Brief description of subroutine
+! This subroutine writes the PCF into an HDF-EOS5 file as an attribute.
+! It does so as file level attributes
+! For unclear reasons the attributes are stored as an array of 40-length chars
+
+! Arguments
+
+      CHARACTER (LEN=1), POINTER              :: anText(:)
+      integer, intent(in)                     :: fileID
+
+! Local variables
+      integer :: divisor
+      integer :: grp_id
+      integer :: i
+      integer :: remainder
+      integer :: status
+      CHARACTER (LEN=40), POINTER             :: an40(:)
+      integer :: how_big
+! Executable
+! Find how big an40 must be to hold anText
+      how_big = 1 + (size(anText)-1)/40
+      allocate(an40(how_big), stat=status)
+      if ( status /= 0 ) &
+        & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+        & MLSMSG_Allocate // 'an40 for annotating hdfeos5 PCF' )
+      an40 = ' '
+      do i=1, size(anText)
+        divisor = (i-1) / 40
+        remainder = mod(i-1, 40)
+        an40(divisor+1)(remainder+1:remainder+1) = anText(i)
+      enddo
+      status = he5_EHwrglatt(fileID, &
+       & 'PCF', HE5T_NATIVE_SCHAR, how_big, &
+       &  an40)
+      if ( status /= PGS_S_SUCCESS) &
+        & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+        & 'Error annotating with PCF' )
+      deallocate(an40, stat=status)
+      if ( status /= PGS_S_SUCCESS) &
+        & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+        & MLSMSG_DeAllocate // 'an40 annotating hdfeos5 with PCF' )
+!-----------------------------
+   END SUBROUTINE WritePCF2Hdr_hdfeos5
 !-----------------------------
 
 !================
@@ -573,6 +673,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.12  2003/02/10 22:07:23  pwagner
+!# Granule Month, Day, Year now ints; he5 global attributes leave file pure hdfeos5
+!#
 !# Revision 2.11  2003/02/08 00:32:11  pwagner
 !# Gets he5_EHwrglatt from he5_swapi
 !#
