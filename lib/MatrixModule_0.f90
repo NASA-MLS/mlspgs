@@ -990,13 +990,13 @@ contains ! =====     Public Procedures     =============================
   ! $t_{ij}$.  (The index of summation $l$ runs from $i$ to $j$ instead of
   ! from $1$ to $n$ because we know that $U$ and $U^{-1}$ are triangular.) 
   ! This gives $t_{ii} = u_{ii}^{-1}$ (for $i = j$) and  $t_{ij} = - \left (
-  ! \sum_{l=i}^{j-1} t_{il} u_{lj} \right ) u_{ii}^{-1}$ (for $i < j$).  We
+  ! \sum_{l=i}^{j-1} t_{il} u_{lj} \right ) u_{jj}^{-1}$ (for $i < j$).  We
   ! compute the diagonal elements of $t$ first, giving the following
   ! algorithm:
   !
   ! \hspace*{0.5in}$t_{ii} := u_{ii}^{-1}~~ i = 1,~ \dots,~ n$\\
   ! \hspace*{0.5in}$\left \{ t_{ij} := -\left ( \sum_{l=i}^{j-1} t_{il} u_{lj}
-  !   \right ) t_{ii}~~ j = i+1,~ \dots,~ n \right \}~~ i = 1,~ \dots,~ n-1$
+  !   \right ) t_{jj}~~ j = i+1,~ \dots,~ n \right \}~~ i = 1,~ \dots,~ n-1$
 
     integer :: I, J, N
     character(len=6) :: Where ! for an output message
@@ -2757,6 +2757,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.64  2002/02/22 20:11:45  vsnyder
+! Fix the LaTeX in InvertDenseCholesky_0
+!
 ! Revision 2.63  2002/02/22 01:17:41  vsnyder
 ! Added InvertCholesky_0, InvertDenseCholesky_0, MultiplyMatrix_XY_0 and
 ! MultiplyMatrix_XY_T_0.  Changed the name MultiplyMatrixBlocks_0 to
