@@ -236,22 +236,20 @@ CONTAINS ! =====     Public Procedures     =============================
 
     ! Now go through the parameters one by one, and copy the previous contents
 
-    l2gp%latitude(1:l2gp%nTimes) = templ2gp%latitude
-    l2gp%longitude(1:l2gp%nTimes) = templ2gp%longitude
-    l2gp%solarTime(1:l2gp%nTimes) = templ2gp%solarTime
-    l2gp%solarZenith(1:l2gp%nTimes) = templ2gp%solarZenith
-    l2gp%losAngle(1:l2gp%nTimes) = templ2gp%losAngle
-    l2gp%geodAngle(1:l2gp%nTimes) = templ2gp%geodAngle
-    l2gp%time(1:l2gp%nTimes) = templ2gp%time
-    l2gp%chunkNumber(1:l2gp%nTimes) = templ2gp%chunkNumber
+    l2gp%latitude(1:templ2gp%nTimes) = templ2gp%latitude
+    l2gp%longitude(1:templ2gp%nTimes) = templ2gp%longitude
+    l2gp%solarTime(1:templ2gp%nTimes) = templ2gp%solarTime
+    l2gp%solarZenith(1:templ2gp%nTimes) = templ2gp%solarZenith
+    l2gp%losAngle(1:templ2gp%nTimes) = templ2gp%losAngle
+    l2gp%geodAngle(1:templ2gp%nTimes) = templ2gp%geodAngle
+    l2gp%time(1:templ2gp%nTimes) = templ2gp%time
+    l2gp%chunkNumber(1:templ2gp%nTimes) = templ2gp%chunkNumber
 
-    l2gp%l2gpValue(:,:,1:l2gp%nTimes) = templ2gp%l2gpValue
-    l2gp%l2gpPrecision(:,:,1:l2gp%nTimes) = templ2gp%l2gpPrecision
+    l2gp%l2gpValue(:,:,1:templ2gp%nTimes) = templ2gp%l2gpValue
+    l2gp%l2gpPrecision(:,:,1:templ2gp%nTimes) = templ2gp%l2gpPrecision
 
-    l2gp%status(1:l2gp%nTimes) = templ2gp%status
-    l2gp%quality(1:l2gp%nTimes) = templ2gp%quality
-
-    l2gp%nTimes=newNTimes
+    l2gp%status(1:templ2gp%nTimes) = templ2gp%status
+    l2gp%quality(1:templ2gp%nTimes) = templ2gp%quality
 
     ! Deallocate the old arrays
 
@@ -1141,6 +1139,9 @@ END MODULE L2GPData
 
 !
 ! $Log$
+! Revision 2.12  2001/02/05 23:58:22  pwagner
+! Uses swrdfld from swapi
+!
 ! Revision 2.11  2001/02/03 00:04:26  pwagner
 ! Uncommented EXTERNAL SWRDFLD until swapi done
 !
