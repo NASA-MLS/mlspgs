@@ -14,14 +14,15 @@ module Fill                     ! Create vectors and fill them.
     & F_GEOCALTITUDEQUANTITY, F_EARTHRADIUS, F_EXPLICITVALUES, &
     & F_EXTINCTION, F_FRACTION, F_H2OQUANTITY, F_LOSQTY,&
     & F_dontMask, F_IGNORENEGATIVE, F_IGNOREZERO, &
-    & F_INTEGRATIONTIME, F_INTERPOLATE, F_INVERT, F_LENGTHSCALE, F_MATRIX, &
-    & F_MAXITERATIONS, F_METHOD,F_MEASUREMENTS, F_MODEL, F_NOFINEGRID, F_PTANQUANTITY, &
+    & F_INTEGRATIONTIME, F_INTERPOLATE, F_INVERT, F_INTRINSIC, F_LENGTHSCALE, &
+    & F_MATRIX, F_MAXITERATIONS, F_METHOD, &
+    & F_MEASUREMENTS, F_MODEL, F_NOFINEGRID, F_PTANQUANTITY, &
     & F_QUANTITY, F_RADIANCEQUANTITY, F_RATIOQUANTITY, F_REFGPHQUANTITY, &
-    & F_Rows, F_SCECI, F_SCVEL, F_SOURCE, F_SOURCEGRID, F_SOURCEL2AUX, &
-    & F_SOURCEL2GP, F_SOURCEQUANTITY, F_SOURCEVGRID, &
+    & F_RESETSEED, F_Rows, F_SCECI, F_SCVEL, F_SEED, F_SOURCE, F_SOURCEGRID, &
+    & F_SOURCEL2AUX, F_SOURCEL2GP, F_SOURCEQUANTITY, F_SOURCEVGRID, &
     & F_SPREAD, F_SUPERDIAGONAL, &
-    & F_SYSTEMTEMPERATURE, F_TEMPERATUREQUANTITY, F_TEMPLATE, F_TNGTECI, F_TYPE, &
-    & F_VMRQUANTITY, FIELD_FIRST, FIELD_LAST
+    & F_SYSTEMTEMPERATURE, F_TEMPERATUREQUANTITY, F_TEMPLATE, F_TNGTECI, &
+    & F_TYPE, F_VMRQUANTITY, FIELD_FIRST, FIELD_LAST
   ! Now the literals:
   use INIT_TABLES_MODULE, only: L_ADDNOISE, L_BOUNDARYPRESSURE, L_CHISQCHAN, &
     & L_CHISQMMAF, L_CHISQMMIF, L_CHOLESKY, &
@@ -55,7 +56,7 @@ module Fill                     ! Create vectors and fill them.
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSNumerics, only: InterpolateValues
-  use MLSRandomNumber, only: drang
+  use MLSRandomNumber, only: drang, mls_random_seed
   use MLSSignals_m, only: GetSignalName, GetModuleName
   use Molecules, only: L_H2O
   use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
@@ -83,7 +84,7 @@ module Fill                     ! Create vectors and fill them.
   ! -----     Private declarations     ---------------------------------
 
   integer, private :: ERROR
-  logical, parameter :: DEEBUG = .TRUE.                 ! Usually FALSE
+  logical, parameter :: DEEBUG = .FALSE.                 ! Usually FALSE
 
   ! Error codes for "announce_error"  
   integer, parameter :: No_Error_code = 0
@@ -263,16 +264,19 @@ contains ! =====     Public Procedures     =============================
     integer :: RATIOVECTORINDEX         ! In the vector database
     integer :: REFGPHQUANTITYINDEX      ! in the quantities database
     integer :: REFGPHVECTORINDEX        ! In the vector database
+    logical :: ResetSeed                ! Let mls_random_seed choose new seed
     integer :: RowVector                ! Vector defining rows of Matrix
     integer :: SCECIQUANTITYINDEX       ! In the quantities database
     integer :: SCECIVECTORINDEX         ! In the vector database
     integer :: SCVELQUANTITYINDEX       ! In the quantities database
     integer :: SCVELVECTORINDEX         ! In the vector database
+    integer, dimension(2) :: SEED       ! integers used by random_numbers
     integer :: SON                      ! Of root, an n_spec_args or a n_named
     integer :: SOURCEQUANTITYINDEX      ! in the quantities database
     integer :: SOURCEVECTORINDEX        ! In the vector database
     logical :: SPREAD                   ! Do we spread values accross instances in explict
     integer :: SUPERDIAGONAL            ! Index of superdiagonal matrix in database
+    logical :: Switch2intrinsic         ! Have mls_random_seed call intrinsic
     !                                     -- for FillCovariance
     real(r8) :: SYSTEMTEMPERATURE       ! For estimated noise
     real :: T1, T2                      ! for timing
@@ -321,6 +325,8 @@ contains ! =====     Public Procedures     =============================
     extinction = .false.
     maxIterations = 4
     noFineGrid = 1
+    resetSeed = .false.
+    switch2intrinsic = .false.
 
     ! Loop over the lines in the configuration file
 
@@ -461,6 +467,8 @@ contains ! =====     Public Procedures     =============================
             else
               interpolate = decoration(subtree(2,gson)) == l_true
             end if
+          case ( f_intrinsic )
+            switch2intrinsic = get_boolean ( gson )
           case ( f_losQty ) ! For losGrid fill
             losVectorIndex = decoration(decoration(subtree(1,gson)))
             losQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -497,6 +505,8 @@ contains ! =====     Public Procedures     =============================
           case ( f_refGPHQuantity ) ! For hydrostatic
             refGPHVectorIndex = decoration(decoration(subtree(1,gson)))
             refGPHQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))    
+          case ( f_resetSeed )
+            resetSeed = get_boolean ( gson )
           case ( f_sourceQuantity )       ! When filling from a vector, what vector/quantity
             sourceVectorIndex = decoration(decoration(subtree(1,gson)))
             sourceQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -506,6 +516,8 @@ contains ! =====     Public Procedures     =============================
           case ( f_scVel )                ! For special fill of losVel
             scVelVectorIndex = decoration(decoration(subtree(1,gson)))
             scVelQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_seed ) ! For explicit fill
+            valuesNode=subtree(j,key)
           case ( f_sourceL2AUX )          ! Which L2AUXDatabase entry to use
             l2auxIndex = decoration(decoration(gson))
           case ( f_sourceL2GP )           ! Which L2GPDatabase entry to use
@@ -553,6 +565,37 @@ contains ! =====     Public Procedures     =============================
             & vectors(sourceVectorIndex), sourceQuantityIndex )
           noiseQty => GetVectorQtyByTemplateIndex( &
             & vectors(noiseVectorIndex), noiseQtyIndex)
+          if ( switch2intrinsic ) call mls_random_seed(MATH77_ranpack=.false.)
+          if (DEEBUG) then
+            call output('Switch to intrinsic? ', advance='no')
+            call output(switch2intrinsic, advance='yes')
+          endif
+          if ( resetSeed ) then
+            call mls_random_seed(new_seed=seed(1:))
+            if (DEEBUG) then
+              call output('Letting mls choose new seed ', advance='no')
+              call output(seed, advance='yes')
+            endif
+          elseif ( got(f_seed) ) then
+            seed = 0
+            do j=1, nsons(valuesNode)-1
+              call expr(subtree(j+1,valuesNode),unitAsArray,valueAsArray)
+              seed(j) = int(valueAsArray(1))
+            enddo
+            if ( seed(1) /= 0 .and. seed(2) /= 0 ) then
+              call mls_random_seed(pput=seed(1:))
+              if (DEEBUG) then
+                call output('Setting new seed ', advance='no')
+                call output(seed, advance='yes')
+              endif
+            else
+              call mls_random_seed(new_seed=seed(1:))
+              if (DEEBUG) then
+                call output('Letting mls choose new seed ', advance='no')
+                call output(seed, advance='yes')
+              endif
+            endif
+          endif
           call addGaussianNoise ( key, quantity, sourceQuantity, &
             & noiseQty )
 
@@ -2491,6 +2534,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.83  2001/10/16 23:34:05  pwagner
+! intrinsic, resetseed, seed fields added to addnoise method
+!
 ! Revision 2.82  2001/10/16 00:07:48  livesey
 ! Got smoothing working.
 !
