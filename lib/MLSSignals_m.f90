@@ -89,7 +89,7 @@ module MLSSignals_M
   
   interface Dump
     module procedure Dump_Bands, Dump_Radiometers, Dump_Signals, &
-      & Dump_SpectrometerTypes
+      & Dump_SpectrometerType, Dump_SpectrometerTypes
   end interface
 
   ! This boring type defines a module
@@ -486,9 +486,9 @@ contains
         end if
         if ( .not. any(got( (/ f_channels, f_deferred, f_start /) )) ) &
           & call announceError ( atLeastOne, f_channels, (/ f_deferred, f_start /) )
+        spectrometerType%dacs = dacs
         if ( error == 0 ) call decorate ( key, addSpectrometerTypeToDatabase ( &
           & spectrometerTypes, spectrometerType ) )
-        spectrometerType%dacs = dacs
 
         ! Nullify pointers to temporary stuff so it doesn't get hosed later
         nullify ( spectrometerType%frequencies )
@@ -883,12 +883,14 @@ contains
       else
         call output ( 'Cannot get spectrometer type name', advance='yes' )
       end if
+      call output ( '   DACS?: ' )
+      call output ( signals(i)%dacs )
       call output ( '   Channels: ' )
       call output ( lbound(signals(i)%frequencies,1), 3 )
       call output ( ':' )
       call output ( ubound(signals(i)%frequencies,1), 3, advance='yes' )
       call output ( '   Sideband: ' )
-      call output ( signals(i)%sideband, advance='yes')
+      call output ( signals(i)%sideband )
       call output ( '   Single Sideband: ' )
       call output ( signals(i)%singleSideband, advance='yes')
       if ( my_details ) then
@@ -914,29 +916,41 @@ contains
     end do
   end subroutine DUMP_SIGNALS
 
-  ! --------------------------------------  DumpSpectrometerTypes  -----
+  ! --------------------------------------  Dump_SpectrometerType  -----
+  subroutine DUMP_SPECTROMETERTYPE ( SPECTROMETERTYPE, N )
+    type (SpectrometerType_T), intent(in) :: SPECTROMETERTYPE
+    integer, intent(in), optional :: N
+
+    if ( present(n) ) then
+      call output ( n, 1 )
+      call output ( ': ')
+    end if
+    call display_string ( spectrometerType%name, advance='yes' )
+    if ( associated(spectrometerType%frequencies) ) then
+      call output ( '  Channels: ' )
+      call output ( lbound(spectrometerType%frequencies,1), 3 )
+      call output ( ':' )
+      call output ( ubound(spectrometerType%frequencies,1), 3 )
+      call output ( '  DACS?: ' )
+      call output ( spectrometerType%dacs, advance='yes' )
+      call output ( '  Frequencies:', advance='yes' )
+      call dump ( spectrometerType%frequencies )
+      call output ( '  Widths:', advance='yes' )
+      call dump ( spectrometerType%widths )
+    else
+      call output ('   Frequencies and widths deferred.', advance='yes' )
+    end if
+
+  end subroutine DUMP_SPECTROMETERTYPE
+
+  ! -------------------------------------  Dump_SpectrometerTypes  -----
   subroutine DUMP_SPECTROMETERTYPES ( SPECTROMETERTYPES )
     type (SpectrometerType_T), intent(in) :: SPECTROMETERTYPES(:)
     integer :: i
     call output ( 'SPECTROMETERTYPES: SIZE = ')
     call output ( size(spectrometerTypes), advance='yes' )
     do i = 1, size(spectrometerTypes)
-      call output ( i,1 )
-      call output ( ': ')
-      call display_string ( spectrometerTypes(i)%name, advance='yes' )
-      if ( associated(spectrometerTypes(i)%frequencies) ) then
-        call output ( '  Channels: ' )
-        call output ( lbound(spectrometerTypes(i)%frequencies,1), 3 )
-        call output ( ':' )
-        call output ( ubound(spectrometerTypes(i)%frequencies,1), 3, &
-          & advance='yes' )
-        call output ( '  Frequencies:', advance='yes' )
-        call dump ( spectrometerTypes(i)%frequencies )
-        call output ( '  Widths:', advance='yes' )
-        call dump ( spectrometerTypes(i)%widths )
-      else
-        call output ('   Frequencies and widths deferred.', advance='yes' )
-      end if
+      call dump ( spectrometerTypes(i), i )
     end do
   end subroutine DUMP_SPECTROMETERTYPES
 
@@ -1545,6 +1559,9 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.63  2004/01/28 01:17:36  vsnyder
+! Do spectrometerType%dacs = dacs BEFORE putting spectrometerType in the database
+!
 ! Revision 2.62  2004/01/16 21:36:28  livesey
 ! Added the ability to defer the connection between bands and radiometers
 ! until you define the signal.  This is to support some SMLS related
