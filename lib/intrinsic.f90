@@ -23,6 +23,10 @@ module INTRINSIC
        "$RCSfile$"
 !---------------------------------------------------------------------------
 
+! A "spec_def" vertex may be decorated with (sums of) the following flags:
+  integer, public, parameter :: NO_DUP = 1        ! Duplicate fields prohibited
+  integer, public, parameter :: ALL_FIELDS = 2    ! All fields required
+  integer, public, parameter :: NO_POSITIONAL = 4 ! Positional fields prohibited
 ! Data types that don't have enumerated literals:
   integer, public, parameter :: T_FIRST          = 1
   integer, public, parameter :: T_NUMERIC        = t_first
@@ -204,6 +208,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.5  2001/02/05 21:18:57  vsnyder
+! Add parameters for type checking rules.
+!
 ! Revision 2.4  2001/02/01 20:18:50  vsnyder
 ! Correct index and spelling for gph_precision and temperature_precision
 !
