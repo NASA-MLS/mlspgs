@@ -485,14 +485,14 @@ contains ! ================================ FullForwardModel routine ======
       endif
       maxNoFSurfs = max(maxNoFSurfs, f%template%noSurfs)
     end do
- 
+
     allocate ( mol_cat_index(no_mol), stat=ier )
     if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate//'mol_cat_index' )
  
     mol_cat_index(:) = 0
     mol_cat_index = PACK((/(i,i=1,noSpecies)/),fwdModelConf%molecules > 0)
- 
+
     allocate ( beta_group(no_mol), stat=ier )
     if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate//'beta_group' )
@@ -560,7 +560,7 @@ contains ! ================================ FullForwardModel routine ======
     ENDIF
 
     nullify ( gl_inds )
- 
+
     ! Work out which spectroscopy we're going to need ------------------------
     nullify ( my_catalog )
     allocate ( My_Catalog(noSpecies), stat=ier )
@@ -637,11 +637,13 @@ contains ! ================================ FullForwardModel routine ======
     if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
       & MLSMSG_Allocate//'k_spect_dv' )
  
+    call Allocate_test ( skip_eta_frq, no_mol, 'skip_eta_frq', ModuleName )
+ 
     ! Setup our temporary `state vector' like arrays -------------------------
     call load_sps_data ( fwdModelIn, fwdModelExtra, fwdModelConf%molecules, &
      &   firstSignal%radiometer, mol_cat_index, p_len, f_len, h2o_ind, &
      &   ext_ind, lin_log, sps_values, Grids_f, Grids_dw, Grids_dn, Grids_dv, &
-     &   temp, My_Catalog )
+     &   temp, My_Catalog, skip_eta_frq )
  
     ! Compute Gauss Legendre (GL) grid ---------------------------------------
     nlvl = size(FwdModelConf%integrationGrid%surfs)
@@ -779,10 +781,6 @@ contains ! ================================ FullForwardModel routine ======
     call Allocate_test ( eta_zp, no_ele, p_len, 'eta_zp', ModuleName )
     call Allocate_test ( eta_fzp, no_ele, f_len, 'eta_zp', ModuleName )
     call Allocate_test ( sps_path, no_ele, no_mol, 'sps_path', ModuleName )
- 
-    call Allocate_test ( skip_eta_frq, no_mol, 'skip_eta_frq', ModuleName )
- 
-    skip_eta_frq = (Grids_f%no_f < 1)
  
     if(FwdModelConf%temp_der) then
  
@@ -1903,7 +1901,7 @@ contains ! ================================ FullForwardModel routine ======
     call Deallocate_test ( eta_fzp, 'eta_fzp', ModuleName )
     call Deallocate_test ( sps_path, 'sps_path', ModuleName )
  
-    call Deallocate_test ( skip_eta_frq,   'skip_eta_frq',   ModuleName )
+    call Deallocate_test ( skip_eta_frq, 'skip_eta_frq', ModuleName )
  
     if(FwdModelConf%temp_der) then
       call Deallocate_test ( dRad_dt, 'dRad_dt', ModuleName )
@@ -1955,6 +1953,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
  
 ! $Log$
+! Revision 2.22  2002/01/08 01:01:19  livesey
+! Some changes to my_catalog and one_tan_height and one_tan_temp
+!
 ! Revision 2.21  2001/12/26 04:05:04  zvi
 ! Convert phi_tan to Radians
 !

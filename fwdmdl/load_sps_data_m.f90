@@ -42,16 +42,20 @@ contains
   subroutine load_sps_data(fwdModelIn, fwdModelExtra, molecules, radiometer, &
         &    mol_cat_index, p_len, f_len, h2o_ind, ext_ind, lin_log, &
         &    sps_values, Grids_f, Grids_dw, Grids_dn, Grids_dv, temp, &
-        &    MyCatalog)
+        &    MyCatalog,skip_eta_frq)
 
     type(vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
+
     integer, intent(in)  :: MOLECULES(:)
     integer, intent(in)  :: RADIOMETER
     integer, intent(in)  :: MOL_CAT_INDEX(:)
+
     integer, intent(out) :: F_LEN
     integer, intent(out) :: P_LEN
     integer, intent(out) :: H2O_IND
     integer, intent(out) :: EXT_IND
+
+    logical, intent(out) :: SKIP_ETA_FRQ(:)
 
     type (Grids_T) :: Grids_f   ! All the coordinates
     type (Grids_T) :: Grids_dw  ! All the spectroscopy(W) coordinates
@@ -104,6 +108,7 @@ contains
     p_len = 0
     h2o_ind = 0
     ext_ind = 0
+    skip_eta_frq = .false.
     do ii = 1, no_mol
       i = mol_cat_index(ii)
       kk = abs(molecules(i))
@@ -118,13 +123,12 @@ contains
       kz = f%template%noSurfs
       kp = f%template%noInstances
       if ( f%template%frequencyCoordinate == l_none ) then
-        mf = 1
         kf = 1
+        skip_eta_frq(ii) = .true.
       else
-        mf = 1
         kf = f%template%noChans
       endif
-      Grids_f%no_f(ii) = kf * mf
+      Grids_f%no_f(ii) = kf
       Grids_f%no_z(ii) = kz
       Grids_f%no_p(ii) = kp
       p_len = p_len + kz * kp
@@ -454,6 +458,10 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.7  2002/01/08 01:02:54  livesey
+! Made my_catalog intent(in) rather than pointer, also 'fixed'
+! problem with frequency coordinate?
+!
 ! Revision 2.6  2001/12/14 23:43:24  zvi
 ! Modification for Grouping concept
 !
