@@ -16,7 +16,7 @@ module Fill                     ! Create vectors and fill them.
     & F_dontMask, F_IGNORENEGATIVE, F_IGNOREZERO, &
     & F_INTEGRATIONTIME, F_INTERPOLATE, F_INVERT, F_INTRINSIC, F_LENGTHSCALE, &
     & F_MATRIX, F_MAXITERATIONS, F_METHOD, &
-    & F_MEASUREMENTS, F_MODEL, F_NOFINEGRID, F_PTANQUANTITY, &
+    & F_MEASUREMENTS, F_MODEL, F_MULTIPLIER, F_NOFINEGRID, F_PTANQUANTITY, &
     & F_QUANTITY, F_RADIANCEQUANTITY, F_RATIOQUANTITY, F_REFGPHQUANTITY, &
     & F_RESETSEED, F_Rows, F_SCECI, F_SCVEL, F_SEED, F_SOURCE, F_SOURCEGRID, &
     & F_SOURCEL2AUX, F_SOURCEL2GP, F_SOURCEQUANTITY, F_SOURCEVGRID, &
@@ -49,7 +49,8 @@ module Fill                     ! Create vectors and fill them.
   use ManipulateVectorQuantities, only: DOHGRIDSMATCH, DOVGRIDSMATCH
   use MatrixModule_0, only: Sparsify, MatrixInversion
   use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
-    & Dump, FindBlock, GetKindFromMatrixDatabase, GetFromMatrixDatabase, K_SPD, &
+    & DestroyMatrix, Dump, &
+    & FindBlock, GetKindFromMatrixDatabase, GetFromMatrixDatabase, K_SPD, &
     & Matrix_Cholesky_T, Matrix_Database_T, Matrix_Kronecker_T, Matrix_SPD_T, &
     & Matrix_T, UpdateDiagonal
   use MLSCommon, only: L1BInfo_T, MLSChunk_T, R8
@@ -151,6 +152,8 @@ module Fill                     ! Create vectors and fill them.
   integer, parameter :: NoSpecialFill = badUnitsForMaxIterations + 1
   integer, parameter :: BadlosVelFill = noSpecialFill + 1
   integer, parameter :: NotZetaForGrid = BadLosVelFill + 1
+  
+  real, parameter ::    UNDEFINED_VALUE = -999.99 ! Same as %template%badvalue
 
   !  integer, parameter :: s_Fill = 0   ! to be replaced by entry in init_tables_module
 !---------------------------- RCS Ident Info -------------------------------
@@ -254,14 +257,17 @@ contains ! =====     Public Procedures     =============================
     type(matrix_SPD_T) :: MatrixSPD
     type(matrix_T) :: MatrixPlain
     integer :: MatrixToFill             ! Index in database
+    integer :: MatrixToKill             ! Index in database
     integer :: MatrixType               ! Type of matrix, L_... from init_tables
     integer :: MAXITERATIONS            ! For hydrostatic fill
+    real, dimension(2) :: MULTIPLIER   ! To scale source,noise part of addNoise
+    integer :: MULTIPLIERNODE           ! For the parser
     integer :: NoFineGrid               ! no of fine grids for cloud extinction calculation
     integer :: PTANVECTORINDEX          !
     integer :: PTANQTYINDEX             !
     integer :: QUANTITYINDEX            ! Within the vector
     integer :: RADIANCEQUANTITYINDEX    ! For radiance quantity
-    integer :: RADIANCEVECTORINDEX    ! For radiance quantity
+    integer :: RADIANCEVECTORINDEX      ! For radiance quantity
     integer :: RATIOQUANTITYINDEX       ! in the quantities database
     integer :: RATIOVECTORINDEX         ! In the vector database
     integer :: REFGPHQUANTITYINDEX      ! in the quantities database
@@ -273,6 +279,7 @@ contains ! =====     Public Procedures     =============================
     integer :: SCVELQUANTITYINDEX       ! In the quantities database
     integer :: SCVELVECTORINDEX         ! In the vector database
     integer, dimension(2) :: SEED       ! integers used by random_numbers
+    integer :: SEEDNODE                 ! For the parser
     integer :: SON                      ! Of root, an n_spec_args or a n_named
     integer :: SOURCEQUANTITYINDEX      ! in the quantities database
     integer :: SOURCEVECTORINDEX        ! In the vector database
@@ -307,9 +314,6 @@ contains ! =====     Public Procedures     =============================
     ! Executable code
     timing = section_times
     if ( timing ) call cpu_time ( t1 )
-    dontMask = .false.
-    ignoreZero = .false.
-    ignoreNegative = .false.
     old_math77_ran_pack = math77_ran_pack
 
     if ( toggle(gen) ) call trace_begin ( "MLSL2Fill", root )
@@ -324,11 +328,7 @@ contains ! =====     Public Procedures     =============================
     error = 0
     templateIndex = -1
     vectorIndex = -1
-    spread = .false.
-    interpolate = .false.
-    extinction = .false.
     maxIterations = 4
-    noFineGrid = 1
 
     ! Loop over the lines in the configuration file
 
@@ -341,10 +341,17 @@ contains ! =====     Public Procedures     =============================
         key = son
         vectorName = 0
       end if
+      spread = .false.
+      interpolate = .false.
+      extinction = .false.
+      dontMask = .false.
+      ignoreZero = .false.
+      ignoreNegative = .false.
       got= .false.
       resetSeed = .false.
       switch2intrinsic = .false.
       seed = 0
+      noFineGrid = 1
 
       ! Node_id(key) is now n_spec_args.
 
@@ -505,6 +512,8 @@ contains ! =====     Public Procedures     =============================
           case ( f_model )   ! Only used for diagnostic special fills
             modelVectorIndex = decoration(decoration(subtree(1,gson)))
             modelQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_multiplier ) ! For scaling noise part of addnoise
+            multiplierNode=subtree(j,key)
           case ( f_noFineGrid )      ! For cloud extinction fill
             call expr ( subtree(2,subtree(j,key)), unitAsArray,valueAsArray )
             if ( all(unitAsArray(1) /= (/PHYQ_Dimensionless,PHYQ_Invalid/)) ) &
@@ -527,23 +536,23 @@ contains ! =====     Public Procedures     =============================
             refGPHQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))    
           case ( f_resetSeed )
             resetSeed = get_boolean ( gson )
-          case ( f_sourceQuantity )       ! When filling from a vector, what vector/quantity
-            sourceVectorIndex = decoration(decoration(subtree(1,gson)))
-            sourceQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_scECI )                ! For special fill of losVel
             scECIVectorIndex = decoration(decoration(subtree(1,gson)))
             scECIQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_scVel )                ! For special fill of losVel
             scVelVectorIndex = decoration(decoration(subtree(1,gson)))
             scVelQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
-          case ( f_seed ) ! For explicit fill
-            valuesNode=subtree(j,key)
+          case ( f_seed ) ! For explicitly setting mls_random_seed
+            seedNode=subtree(j,key)
           case ( f_sourceL2AUX )          ! Which L2AUXDatabase entry to use
             l2auxIndex = decoration(decoration(gson))
           case ( f_sourceL2GP )           ! Which L2GPDatabase entry to use
             l2gpIndex=decoration(decoration(gson))
           case ( f_sourceGrid )
             gridIndex=decoration(decoration(gson))
+          case ( f_sourceQuantity )       ! When filling from a vector, what vector/quantity
+            sourceVectorIndex = decoration(decoration(subtree(1,gson)))
+            sourceQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_sourceVGrid )
             vGridIndex=decoration(decoration(gson))
           case ( f_spread ) ! For explicit fill, note that gson here is not same as others
@@ -597,8 +606,8 @@ contains ! =====     Public Procedures     =============================
               call output(seed, advance='yes')
             endif
           elseif ( got(f_seed) ) then
-            do j=1, nsons(valuesNode)-1
-              call expr(subtree(j+1,valuesNode),unitAsArray,valueAsArray)
+            do j=1, min(nsons(seedNode)-1, 2)
+              call expr(subtree(j+1,seedNode),unitAsArray,valueAsArray)
               seed(j) = int(valueAsArray(1))
             enddo
             if ( seed(1) /= 0 .and. seed(2) /= 0 ) then
@@ -615,14 +624,30 @@ contains ! =====     Public Procedures     =============================
               endif
             endif
           else
-            call mls_random_seed(gget=seed(1:))
             if (DEEBUG) then
+              call mls_random_seed(gget=seed(1:))
               call output('Reusing current seed ', advance='no')
               call output(seed, advance='yes')
             endif
           endif
+
+          ! Either multiplier = [a, b] or multiplier = b are possible
+          if ( got(f_multiplier) ) then
+            multiplier = UNDEFINED_VALUE
+            do j=1, min(nsons(multiplierNode)-1, 2)
+              call expr(subtree(j+1,seedNode),unitAsArray,valueAsArray)
+              multiplier(j) = valueAsArray(1)
+            enddo
+          else
+            multiplier = 1.
+          endif
+
+          if (DEEBUG) then
+            call output('Using multipliers: ', advance='no')
+            call output(multiplier, advance='yes')
+          endif
           call addGaussianNoise ( key, quantity, sourceQuantity, &
-            & noiseQty )
+            & noiseQty, multiplier )
 
         case ( l_hydrostatic ) ! -------------  Hydrostatic fills  -----
           ! Need a temperature and a refgph quantity
@@ -852,43 +877,60 @@ contains ! =====     Public Procedures     =============================
       ! End of fill operations
 
       case ( s_destroy ) ! ===============================  Destroy ==
-        if (DEEBUG) call output('Destroy vector instruction', advance='no')
-        ! Here we're to try to shrink the vector database by removing a vector
+        if (DEEBUG) call output('Destroy vector/matrix instruction', &
+        &  advance='no')
+        ! Here we're to try to shrink the vector database by destroying a vector
+        ! or the matrix database database by destroying a matrix
         ! Loop over the instructions
         ! (Shall we allow multiple vectors on a single line? Maybe later)
         do j = 2, nsons(key)
           son = subtree(j,key)  ! The argument
           fieldIndex = get_field_id(son)
+          got(fieldIndex)=.true.
           if ( nsons(son) > 1 ) then
             fieldValue = decoration(subtree(2,son)) ! The field's value
           else
             fieldValue = son
           end if
           select case ( fieldIndex )
+          case ( f_matrix )
+            matrixToKill = decoration(decoration(subtree(2,son)))
           case ( f_vector )
             sourceVectorIndex = decoration(decoration(subtree(2,son)))
           case default ! Can't get here if type checker worked
           end select
         end do
-        if (DEEBUG) then
-          if ( vectors(sourceVectorIndex)%name /= 0 ) then
-            call output ( '   Vector Name = ' )
-            call display_string ( vectors(sourceVectorIndex)%name )
-          end if
-          if ( vectors(sourceVectorIndex)%template%name /= 0 ) then
-            call output ( ' Template_Name = ' )
-            call display_string ( vectors(sourceVectorIndex)%template%name )
-            call output ( ' ', advance='yes' )
-          end if
-          call output ( ' -- vector database before removal --', advance='yes' )
-          call dump(vectors, details=-2)
-        endif
+        if ( got(f_vector) ) then
+          if (DEEBUG) then
+            if ( vectors(sourceVectorIndex)%name /= 0 ) then
+              call output ( '   Vector Name = ' )
+              call display_string ( vectors(sourceVectorIndex)%name )
+            end if
+            if ( vectors(sourceVectorIndex)%template%name /= 0 ) then
+              call output ( ' Template_Name = ' )
+              call display_string ( vectors(sourceVectorIndex)%template%name )
+              call output ( ' ', advance='yes' )
+            end if
+            call output ( ' -- vector database before removal --', advance='yes' )
+            call dump(vectors, details=-2)
+          endif
 
-        call DestroyVectorInfo ( vectors(sourceVectorIndex) )
-!        vectorindex = rmVectorFromDatabase ( vectors, vectors(sourceVectorIndex) )
-        if (DEEBUG) then
-          call output ( ' -- vector database after removal --', advance='yes' )
-          call dump(vectors, details=-2)
+          call DestroyVectorInfo ( vectors(sourceVectorIndex) )
+     !    vectorindex = rmVectorFromDatabase ( vectors, vectors(sourceVectorIndex) )
+          if (DEEBUG) then
+            call output ( ' -- vector database after removal --', advance='yes' )
+            call dump(vectors, details=-2)
+          endif
+        elseif ( got(f_matrix) ) then
+          if (DEEBUG) then
+            ! if ( matrices(matrixToKill)%matrix%name /= 0 ) then
+             ! call output ( '   Matrix Name = ' )
+             ! call display_string ( matrices(matrixToKill)%matrix%name )
+             call dump(matrices(matrixToKill), -1)
+            ! end if
+          endif
+
+          call DestroyMatrix ( matrices(matrixToKill) )
         endif
 
       case ( s_transfer ) ! ===============================  Transfer ==
@@ -958,17 +1000,21 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------- addGaussianNoise ---
   subroutine addGaussianNoise ( key, quantity, sourceQuantity, &
-            & noiseQty )
+            & noiseQty, multiplier )
     ! A special fill: quantity = sourceQuantity + g() noiseQty
     ! where g() is a random number generator with mean 0 and std. dev. 1
+    ! Generalized into ( a sourceQuantity + b g() noiseQty )
+    ! where a and b are multipliers)
     ! Formal arguments
     integer, intent(in) :: KEY
-    type (VectorValue_T), intent(inout) ::   quantity
-    type (VectorValue_T), intent(in) ::      sourceQuantity
-    type (VectorValue_T), intent(in) ::      noiseQty
+    type (VectorValue_T), intent(inout) ::      quantity
+    type (VectorValue_T), intent(in) ::         sourceQuantity
+    type (VectorValue_T), intent(in) ::         noiseQty
+    real, dimension(:), intent(in), optional :: multiplier
 
     ! Local variables
     integer                          ::    ROW, COLUMN
+    real                             ::    a, b
 
     ! Executable code
     ! First check that things are OK.
@@ -979,11 +1025,29 @@ contains ! =====     Public Procedures     =============================
       return
     endif
     
+   ! Either multiplier = [a, b] or multiplier = b are possible
+    if ( .not. present(multiplier) ) then
+      a = 1.
+      b = 1.
+    elseif (&
+    & multiplier(1) == UNDEFINED_VALUE .and. multiplier(2) == UNDEFINED_VALUE &
+    & ) then
+      a = 1.
+      b = 1.
+    elseif ( multiplier(2) == UNDEFINED_VALUE ) then
+      a = 1.
+      b = multiplier(1)
+    else
+      a = multiplier(1)
+      b = multiplier(2)
+    endif
+    
     do column=1, size(quantity%values(1, :))
       do row=1, size(quantity%values(:, 1))
-        quantity%values(row, column) = sourceQuantity%values(row, column) &
+        quantity%values(row, column) = &
+          & sourceQuantity%values(row, column) * a &
           & + &
-          & drang() * noiseQty%values(row, column)
+          & drang() * noiseQty%values(row, column) * b
       enddo
     enddo
 
@@ -2634,6 +2698,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.92  2001/10/19 22:32:44  pwagner
+! Can destroy a vector or a matrix; def. multiplier(s) in addNoise
+!
 ! Revision 2.91  2001/10/19 00:00:36  pwagner
 ! Replaced remove with destroy
 !
