@@ -55,7 +55,11 @@
          T(I)=(XT(I+1)+XT(I))*0.5
          P=(LOG10(XP(I+1))+LOG10(XP(I)))*0.5     !!! NEED TO CHANGE TO P(I)
          P=10**P
-         DQ=(XQ(I+1)+XQ(I))*0.5
+
+!         DQ=(XQ(I+1)+XQ(I))*0.5
+
+         DQ=(LOG10( max(1.e-29_r8, XQ(I+1)) )+ &
+         &         LOG10( max(1.e-29_r8, XQ(I)) ) )*0.5
 
          DO J=1,NS
             VMR1(J)=(LOG10( max(1.e-19_r8, VMR(J,I+1)) )+ &

@@ -361,7 +361,7 @@
 
       DO 3000 IIWC=1, MY_NIWC    ! START OF IWC LOOP
          IF (ISWI .EQ. 0) THEN
-            RATIO=1.
+            RATIO=1._r8
          ELSE
             RATIO = 10.*(IIWC-1)**2*0.004+1.0E-9_r8
          ENDIF
@@ -417,7 +417,7 @@
             DO ISPI=1,2
                DO J=1,3
                   RC(ISPI,J)=0._r8
-                  RC_TMP(ISPI,J)=0.
+                  RC_TMP(ISPI,J)=0._r8
                ENDDO
                CDEPTH(ISPI) = 0._r8
                DO K=1,NU
@@ -518,6 +518,7 @@
 
 
       END IF
+
  2000 CONTINUE                               ! END OF FREQUENCY LOOP   
 
  3000 CONTINUE                               ! END OF IWC LOOP

@@ -199,16 +199,7 @@
                WW0=WW0+W0(ISPI,K)
             ENDDO
 
-            wwk=0._r8
-            www0=0._r8
-!            if (k+1 .le. L) then         !no L+1 levels for w0
-            DO ISPI=1,N
-               wwk=wwk+TSCAT(ISPI,I,K+1)*W0(ISPI,K+1)
-               www0=www0+W0(ISPI,K+1)
-            ENDDO
-!            endif
-
-         tsource=( ((1-WW0)*TEMP(K)+WK)+((1-www0)*TEMP(K+1)+wwk) )*0.5
+            tsource=(1-WW0)*TEMP(K)+WK
 
             TB(I,K)=TB(I,K+1)*EXP(-TAU(K)/UEFF)+           &
      &              (1._r8-EXP(-TAU(K)/UEFF))*tsource
@@ -238,15 +229,7 @@
               WW0=WW0+W0(ISPI,K)
            ENDDO
 
-           wwk=0._r8
-           www0=0._r8
-!           if (k+1 .le. L) then         !no K+1 for W0
-           DO ISPI=1,N
-              wwk=wwk+TSCAT(ISPI,I,K+1)*W0(ISPI,K+1)
-              www0=www0+W0(ISPI,K+1)
-           ENDDO
-!           endif
-           tsource=(((1-WW0)*TEMP(K)+WK)+((1-www0)*TEMP(K+1)+wwk))*0.5
+           tsource=(1-WW0)*TEMP(K)+WK
 
            TB(I,K+1)=TB(I,K)*EXP(-TAU(K)/UEFF)+      &
      &               (1._r8-EXP(-TAU(K)/UEFF))*tsource
@@ -296,22 +279,7 @@
             WW0=WW0+W0(ISPI,K1)
          END DO
 
-         UU=UAVE(ITT,K1+1) 
-         wwk=0._r8
-         www0=0._r8 
-!         if (k1+1 .le. L) then   !no L+1 level for W0
-         DO ISPI=1,N
-            wwk1=W0(ISPI,K1+1)*                                     &
-     &          ( (TSCAT(ISPI,JM+NU/2+1,K1+1)*(UU-U(JM))+      &
-     &          TSCAT(ISPI,JM+NU/2,K1+1)*(U(JM+1)-UU))/        &
-     &          (U(JM+1)-U(JM)) )
-            wwk=wwk+wwk1
-            www0=www0+W0(ISPI,K1+1)
-         END DO
-!         endif
-
-
-         tsource=(((1-WW0)*TEMP(K1)+WK)+((1-www0)*TEMP(K1+1)+wwk))/2.
+         tsource=(1-WW0)*TEMP(K1)+WK 
 
          IF (ICON .eq. 3) THEN
             tsource=( TEMP(K1)+TEMP(K1+1) )/2. ! NO CLOUD AFTER TANGENT POINT
@@ -358,23 +326,7 @@
             WW0=WW0+W0(ISPI,K)
          END DO
 
-         UU=uave(ITT,K+1)
-         wwk=0._r8
-         www0=0._r8
-
-!         if (k+1 .le. L) then
-         DO ISPI=1,N
-            wwk1=W0(ISPI,K+1)*(TSCAT(ISPI,JM+1,K+1)*(UU-U(JM))+ &
-     &          TSCAT(ISPI,JM,K+1)*(U(JM+1)-UU))/(U(JM+1)-U(JM)) 
-            wwk=wwk+wwk1
-            www0=www0+W0(ISPI,K+1)
-         END DO
-!         endif
-
-         tsource=( ((1-WW0)*TEMP(K)+WK)+((1-www0)*TEMP(K+1)+wwk) )*0.5
-
-!         UU=(UAVE(ITT,K)+UAVE(ITT,K+1))*0.5     ! the average is not true at tangent point
-                                                 ! it will reduce contribution by half
+         tsource= (1-WW0)*TEMP(K)+WK
 
          UU=UAVE(ITT,K)
 
