@@ -31,7 +31,7 @@ module PFADataBase_m
                                                    ! and sidebands added
     type(vGrid_t), pointer :: TGrid => NULL()      ! Log temperatures
     type(vGrid_t), pointer :: VGrid => NULL()      ! vertical grid
-    real(rk) :: VelLin                             ! Velocity linearization, km/s
+    real(rk) :: Vel_Cor                            ! 1 - vel_lin / c
     real(rk), pointer :: Absorption(:,:) => NULL() ! Ln Absorption data, T x P
     real(rk), pointer :: dAbsDwc(:,:) => NULL()    ! d Ln Absorption / d wc data
     real(rk), pointer :: dAbsDnc(:,:) => NULL()    ! d Ln Absorption / d nc data
@@ -158,7 +158,7 @@ contains ! =====     Public Procedures     =============================
     call output ( ', VGrid: ' )
     call display_string ( pfaDatum%vGrid%name, advance='yes' )
 
-    call output ( pfaDatum%velLin, before=' Velocity Linearization: ', &
+    call output ( pfaDatum%vel_cor, before=' Doppler correction: ', &
       & advance='yes' )
 
     if ( myDetails <= 0 ) return
@@ -215,7 +215,7 @@ contains ! =====     Public Procedures     =============================
       open ( lun, file=trim(myFile), form='unformatted', iostat=iostat, err=9 )
       what = 'write'
       write ( lun, iostat=iostat, err=9 ) pfaDatum%tGrid%noSurfs, pfaDatum%vGrid%noSurfs, &
-        & size(pfaDatum%molecules), pfaDatum%velLin, &
+        & size(pfaDatum%molecules), pfaDatum%vel_cor, &
         & len_trim(pfaDatum%signal), trim(pfaDatum%signal)
       write ( lun, iostat=iostat, err=9 ) pfaDatum%absorption, pfaDatum%dAbsDwc, &
         & pfaDatum%dAbsDnc, pfaDatum%dAbsDnu
@@ -247,6 +247,9 @@ contains ! =====     Public Procedures     =============================
 end module PFADataBase_m
 
 ! $Log$
+! Revision 2.6  2004/09/02 00:50:15  vsnyder
+! Replace vslLin with vel_cor
+!
 ! Revision 2.5  2004/09/01 00:28:54  vsnyder
 ! Make kind parameters more abstract, improve some comments
 !
