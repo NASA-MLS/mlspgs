@@ -423,7 +423,7 @@ contains
         !    call cpu_time ( t1 )
             call LowCloudRetrieval
           case ( l_highcloud )
-!            call HighCloudRetrieval
+            call HighCloudRetrieval
           end select ! method
           !??? Make sure the jacobian and outputCovariance get destroyed
           !??? after ?what? happens?  Can we destroy the entire matrix
@@ -1411,19 +1411,19 @@ contains
         print*,'Only one forward model and one signal is allowed in high cloud retrieval'
         stop
       end if
+      ! get signal information for this model. Note: allow only 1 signal 
+        signal = configDatabase(configIndices(1))%signals(1)
       
-        call allocate_test ( fmStat%rows, jacobian%row%nb, 'fmStat%rows', &
-        & ModuleName )
+        call allocate_test ( fmStat%rows, jacobian%row%nb, 'fmStat%rows',ModuleName )
       ! create FwdModelOut1 vector by cloning measurements
-        call cloneVector ( FwdModelOut1, measurements, vectorNameText='_covarianceDiag' )
-               
+        call cloneVector ( FwdModelOut1, measurements, vectorNameText='_covarianceDiag' )          
+
       ! find which channel is used
         ich = 0
         nFreqs = size (signal%frequencies)
         do k=1,nFreqs
               if(signal%channels(k)) ich=k
         end do
-
 
       ! find how many MAFs        
         nMAFs = chunk%lastMAFIndex-chunk%firstMAFIndex + 1
@@ -1457,9 +1457,6 @@ contains
           call forwardModel ( configDatabase(configIndices(1)), &
             & state, fwdModelExtra, FwdModelOut1, fmw, fmStat, jacobian )
             
-          ! get signal information for this model. Note: allow only 1 signal 
-          signal = configDatabase(configIndices(1))%signals(1)
-
           ! get clear sky radiances from forward model for this signal
           Tb0 => GetVectorQuantityByType ( fwdModelOut1,                 &
                & quantityType=l_radiance,                                      &
@@ -1529,7 +1526,7 @@ contains
                    & (1._r8 - 0.2_r8* teff**5) ! correction term (see ATBD)
 
                 ! in case we go into ambiguity altitudes with small sensitivity
-                if(abs(sensitivity) < 1._r8) sensitivity = 1._r8
+                if(abs(sensitivity) < 1._r8) sensitivity = 130._r8
                      
                 teff = y/sensitivity
                 if(teff > 1._r8) teff = 1._r8
@@ -1540,7 +1537,7 @@ contains
                      
                 do i=1,nz
                   do j=1,nInst
-                    dx(i+(j-1)*nz) = dx(i+(j-1)*nz) + jBlock%values(ich,i+(j-1)*nz)*y/sy
+                    dx(i+(j-1)*nz) = dx(i+(j-1)*nz) + jBlock%values(mif,i+(j-1)*nz)*y/sy
                   end do
                 end do
                 do i=1,nz
@@ -1548,7 +1545,7 @@ contains
                   do i1=1,nz
                    do j1=1,nInst
                    C(i+(j-1)*nz,i1+(j1-1)*nz) = C(i+(j-1)*nz,i1+(j1-1)*nz) + &
-                    & jBlock%values(ich,i+(j-1)*nz)*jBlock%values(ich,i1+(j1-1)*nz)/sy
+                    & jBlock%values(ich,i+(j-1)*nz)*jBlock%values(mif,i1+(j1-1)*nz)/sy
                    end do
                   end do
                  end do
@@ -1848,7 +1845,7 @@ contains
                            & (1._r8 + 0.46_r8* teff**6) ! correction term (see ATBD)
 
                      ! in case we go into ambiguity altitudes with small sensitivity
-                     if(abs(sensitivity) < 1._r8) sensitivity = 105._r8
+                     if(abs(sensitivity) < 1._r8) sensitivity = -105._r8
                      
                      teff = y(ich,mif)/sensitivity
                      if(teff > 1._r8) teff = 1._r8
@@ -2409,6 +2406,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.111  2001/11/02 01:11:45  dwu
+! a test for highcloudretrieval
+!
 ! Revision 2.110  2001/11/01 19:29:01  dwu
 ! corrections in cloud retrievals
 !
