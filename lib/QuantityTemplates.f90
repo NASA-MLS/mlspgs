@@ -85,11 +85,6 @@ module QuantityTemplates         ! Quantities within vectors
 
     integer :: instanceLen
 
-    ! Define how the data in each instance are stored, whether by
-    ! surface or channels (regular quantities only).
-
-    logical :: firstIndexChannel
-
     ! Give the vertical coordinates
 
     real(r8), dimension(:,:), pointer :: surfs
@@ -139,9 +134,8 @@ module QuantityTemplates         ! Quantities within vectors
 
     ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    ! For irregular quantities, instead of using the firstIndexChannel
-    ! information, we have these arrays to help us navigate around the
-    ! quantity.
+    ! For irregular quantities, instead of using the we have these arrays to
+    ! help us navigate around the quantity.
 
     integer, dimension(:,:), pointer :: surfIndex
     integer, dimension(:,:), pointer :: chanIndex
@@ -230,8 +224,7 @@ contains ! =====     Public Procedures     =============================
 
   ! -----------------------------------  SetupNewQuantityTemplate  -----
   subroutine SetupNewQuantityTemplate ( qty, source, noInstances, noSurfs, &
-    & noChans, coherent, stacked, regular, instanceLen, firstIndexChannel, &
-    & minorFrame )
+    & noChans, coherent, stacked, regular, instanceLen, minorFrame )
 
   ! Set up a new quantity template according to the user input.  This may
   ! be based on a previously supplied template (with possible
@@ -248,7 +241,6 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in), optional :: stacked
     logical, intent(in), optional :: regular
     integer, intent(in), optional :: instanceLen
-    logical, intent(in), optional :: firstIndexChannel
     logical, intent(in), optional :: minorFrame
 
     ! Local variables
@@ -310,10 +302,6 @@ contains ! =====     Public Procedures     =============================
     else
       qty%instanceLen = qty%noSurfs*qty%noChans
     end if
-
-    ! Deal with the firstindexchannel argument
-    qty%firstIndexchannel = .TRUE.
-    if ( present(firstindexchannel) ) qty%firstIndexchannel = firstindexchannel
 
     ! Now we allocate all the arrays we're going to need
 
@@ -388,6 +376,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.3  2001/02/09 00:38:56  livesey
+! Various changes
+!
 ! Revision 2.2  2000/12/04 23:43:59  vsnyder
 ! Move more of addItemToDatabase into the include
 !

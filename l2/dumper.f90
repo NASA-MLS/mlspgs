@@ -124,8 +124,6 @@ contains ! =====     Private Procedures     ============================
       call output ( quantity_templates(i)%scaleFactor, advance='yes' )
       call output ( '      InstanceLen = ' )
       call output ( quantity_templates(i)%InstanceLen )
-      if ( .not. quantity_templates(i)%firstIndexChannel ) call output ( ' not' )
-      call output ( ' firstIndexChannel' )
       call dump ( quantity_templates(i)%surfs, '  Surfs = ' )
       call dump ( quantity_templates(i)%phi, '      Phi = ' )
       call dump ( quantity_templates(i)%geodLat, '      GeodLat = ' )
