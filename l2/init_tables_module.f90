@@ -377,8 +377,8 @@ contains ! =====     Public procedures     =============================
       begin, t+t_fillMethod, l+l_gridded, l+l_estimatedNoise, l+l_explicit, &
              l+l_hydrostatic, l+l_addnoise, &
              l+l_isotope, l+l_l1b, l+l_l2aux, l+l_l2gp, l+l_negativePrecision, &
-             l+l_vector, l+l_special, &
-             l+l_rectanglefromlos,l+l_vGrid, n+n_dt_def, &
+             l+l_vector, l+l_special, l+l_fold, &
+             l+l_rectanglefromlos, l+l_vGrid, n+n_dt_def, &
       begin, t+t_fwmType, l+l_linear, l+l_full, l+l_scan, l+l_cloudFull, n+n_dt_def, &
       begin, t+t_hGridType, l+l_explicit, l+l_fixed, l+l_fractional, &
              l+l_height, l+l_regular, l+l_l2gp, n+n_dt_def, &
@@ -607,6 +607,10 @@ contains ! =====     Public procedures     =============================
      call acorn((/begin, f+f_intrinsic, t+t_boolean, n+n_field_type/))
      call acorn((/begin, f+f_isPrecision, t+t_boolean, n+n_field_type/))
      call acorn((/begin, f+f_losQty, s+s_vector, f+f_template, f+f_quantities, n+n_dot/))
+     call acorn((/begin, f+f_lsb, s+s_vector, f+f_template, &
+            f+f_quantities, n+n_dot/))
+     call acorn((/begin, f+f_lsbFraction, s+s_vector, f+f_template, &
+            f+f_quantities, n+n_dot/))
      call acorn((/begin, f+f_maxIterations, t+t_numeric, n+n_field_type/))
      call acorn((/begin, f+f_measurements, s+s_vector, f+f_template, &
             f+f_quantities, n+n_dot/))
@@ -652,6 +656,10 @@ contains ! =====     Public procedures     =============================
      call acorn((/begin, f+f_systemTemperature, s+s_vector, f+f_template, &
             f+f_quantities, n+n_dot/))
      call acorn((/begin, f+f_temperatureQuantity, s+s_vector, f+f_template, &
+            f+f_quantities, n+n_dot/))
+     call acorn((/begin, f+f_usb, s+s_vector, f+f_template, &
+            f+f_quantities, n+n_dot/))
+     call acorn((/begin, f+f_usbFraction, s+s_vector, f+f_template, &
             f+f_quantities, n+n_dot/))
      call acorn((/begin, f+f_vmrQuantity, s+s_vector, f+f_template, f+f_quantities, &
             n+n_dot, ndp+n_spec_def /) )
@@ -896,6 +904,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.220  2002/05/17 17:56:39  livesey
+! Stuff for sideband folding fills
+!
 ! Revision 2.219  2002/05/14 00:27:22  livesey
 ! Added system temperature and noise bandwidth quantity types
 !
