@@ -1,14 +1,16 @@
 module GLOBAL_SETTINGS
 
   use INIT_TABLES_MODULE, only: L_TRUE, P_ALLOW_CLIMATOLOGY_OVERLOADS, &
-    & P_INPUT_VERSION_STRING, P_OUTPUT_VERSION_STRING, P_VERSION_COMMENT
+    & P_INPUT_VERSION_STRING, P_OUTPUT_VERSION_STRING, P_VERSION_COMMENT, &
+    & S_FORWARDMODEL
   use MLSCommon, only: R8
   use TOGGLES, only: GEN, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
 
 !??? Begin temporary stuff to start up the forward model
-  use ForwardModelInterface, only: ForwardModelGlobalSetup, ForwardModelInfo_T
+  use ForwardModelInterface, only: AddForwardModelConfigToDatabase, &
+    ConstructForwardModelConfig, ForwardModelGlobalSetup, ForwardModelConfig_T
   use INIT_TABLES_MODULE, only: F_BILL, F_ZVI, S_ForwardModelGlobal, S_L2LOAD
   use L2_Load_M, only: L2_Load
   use L2_test_structures_m, only: FWD_MDL_CONFIG, FWD_MDL_INFO, &
@@ -16,8 +18,9 @@ module GLOBAL_SETTINGS
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
   use MoreTree, only: GET_FIELD_ID, GET_SPEC_ID
   use String_Table, only: Get_String
-  use TREE, only: NODE_ID
+  use TREE, only: NODE_ID, DECORATE
   use TREE_TYPES, only: N_EQUAL, N_NAMED
+  use ForwardModelInterface, only: dump
 !??? End of temporary stuff to start up the forward model
 
   implicit NONE
@@ -40,10 +43,11 @@ module GLOBAL_SETTINGS
 
 contains
 
-! subroutine SET_GLOBAL_SETTINGS ( ROOT, FwdModelInfo ) !??? Restore when l2load isn't needed
-  subroutine SET_GLOBAL_SETTINGS ( ROOT, FwdModelInfo, FMC, FMI, TFMI )
+! subroutine SET_GLOBAL_SETTINGS ( ROOT, ForwardModelConfigDatabase ) !??? Restore when l2load isn't needed
+  subroutine SET_GLOBAL_SETTINGS ( ROOT, ForwardModelConfigDatabase, FMC, FMI, TFMI )
     integer, intent(in) :: ROOT    ! Index of N_CF node in abstract syntax tree
-    type(forwardModelInfo_T), intent(inout) :: FwdModelInfo ! From ForwardModelSetup
+    type(ForwardModelConfig_T), dimension(:), pointer :: FORWARDMODELCONFIGDATABASE
+
 
 !??? Begin temporary stuff to start up the forward model
   type(fwd_mdl_config) :: FMC
@@ -58,11 +62,10 @@ contains
 
     integer :: I         ! Index of son of root
     integer :: SON       ! Son of root
+    integer :: N                        ! Size of forwardModelConfigDatabase
 
     if ( toggle(gen) ) call trace_begin ( 'SET_GLOBAL_SETTINGS', root )
 
-    fwdModelInfo = forwardModelInfo_T(.false., .false., .false., 0.0_r8, &
-      & .false., .false.)
     do i = 2, nsons(root)-1 ! Skip names at beginning and end of section
       son = subtree(i,root)
       if ( node_id(son) == n_equal ) then
@@ -80,13 +83,10 @@ contains
         if ( node_id(son) == n_named ) son = subtree(2,son)
         select case ( get_spec_id(son) )
         case ( s_forwardModelGlobal ) !??? Begin temporary stuff for l2load
-          call forwardModelGlobalSetup ( son, fwdModelInfo )
-          fmc%atmos_der = fwdModelInfo%atmos_der
-          fmc%do_conv = fwdModelInfo%do_conv
-          fmc%do_frqavg = fwdModelInfo%do_Freq_Avg
-          fmc%spect_Der = fwdModelInfo%spect_Der
-          fmc%temp_Der = fwdModelInfo%temp_Der
-          fmc%zfrq = fwdModelInfo%the_Freq
+          ! Nothing here yet
+        case ( s_forwardModel )
+          call decorate (son, AddForwardModelConfigToDatabase ( &
+            & forwardModelConfigDatabase, ConstructForwardModelConfig ( son ) ) )
         case ( s_l2load ) !??? More temporary stuff for l2load
           do j = 2, nsons(son)
             gson = subtree(j,son)
@@ -122,11 +122,16 @@ contains
 
     if ( toggle(gen) ) call trace_end ( 'SET_GLOBAL_SETTINGS' )
 
+    call dump(forwardModelConfigDatabase)
+
   end subroutine SET_GLOBAL_SETTINGS
 
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.6  2001/03/09 02:30:13  vsnyder
+! Allocate correct size for FMI and TFMI
+!
 ! Revision 2.5  2001/03/09 00:24:30  vsnyder
 ! Do subscripts right
 !
