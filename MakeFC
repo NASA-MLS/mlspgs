@@ -76,10 +76,11 @@ SHELL = /bin/sh
 # --------------- Target definitions
 #            (code sub-directories of mlspgs excluding util, sandbox)
 # $LEVELS        -- automatic; built when target is not specified
+#                   (for current value see below)
 # .configure     -- automatic (if not yet extant; prerequisite for everything else)
 #                    (its name by default; actual value stored in MLSCFILE)
 # $OTHER_SUBDIRS -- not automatic
-# all            -- all the sub-directories: l1, l2, l3, lib, fwdmdl, cloudfwdm
+# all            -- all the sub-directories: $LEVELS + $OTHER_SUBDIRS + lib
 # subdirs        -- same as all
 # lib            -- libmls.a; a prerequisite for the others
 
@@ -110,7 +111,7 @@ SHELL = /bin/sh
 #    The following are useful if you stored multiple configurations
 #     besides current one
 # clean_config   -- deletes the sub-subs "name"d in MLSCONFG="name" on command-line
-#                    e.g., make -f MakeFC clean_config MLSCONFG=NAG.Sun
+#                    e.g., make clean_config MLSCONFG=NAG.Sun
 # distclean      -- deletes every configuration
 #
 #     The following are useful for distributing all or portions of the archive
@@ -149,24 +150,29 @@ SHELL = /bin/sh
 #
 # --------------- End MakeFC help
 
+#             internal targets
+# Note that the above list of targets is supplemented by
+# internal targets. They are not usually explicitly
+# named on the make line (though it is legal to do so, of course)
+
+# internalsaymake    Copy or link MakeFC to Makefile (so you can just say make)
+# internalcleanup    Remove old Make.dep.nn files
+# internaladd_copy   Print notice that (previous value) of COPY_NUMBER increment
+# internaldepends    Recalculates dependencies
+# internalupdate     Updates the Makefile in each MLSCONFG; then internaldepends
+# internalreset_copy Resets COPY_NUMBER to 0
+# internalmftests    internalsaymake just for directories under tests
+
 #----------------------------------------------------------
 # LEVELS is the list of automatic targets; i.e.
 # they will be built when no target is specified
 # by entering
 
-# make -f MakeFC
+# make
 #
 #          Default levels
-#You may choose whether "make -f MakeFC' defaults to making
-#only l2 or all of l1 l2 and l3
-#by commenting out exactly one of the following assignments
-#(the prerequisite lib will always be made if necessary, however)
 
-#comment out the following to make only l2
 LEVELS = l1 l2 l3 l3m
-
-#comment out the following to make l1, l2, and l3
-#LEVELS = l2
 #----------------------------------------------------------
 
 #-----------------------
@@ -179,7 +185,7 @@ OTHER_SUBDIRS = fwdmdl cloudfwdm
 #You may build all the subdirectories via the "all" target; i.e.,
 #by entering
 
-# make -f MakeFC all
+# make all
 
 SUBDIRS = lib $(LEVELS) $(OTHER_SUBDIRS)
 
@@ -192,7 +198,7 @@ EVERYTHING = $(SUBDIRS) util blas srclib pcf idllib sids tables notes\
      
 # This is in case tar doesn't summon GNU tar, you may still use it via
 # something like
-#    make -f MakeFC tar_sips TAR=/usr/local/gnu/bin/tar
+#    make tar_sips TAR=/usr/local/gnu/bin/tar
 TAR=tar
 
 # These are all the configurations that will be removed by clean_all
@@ -229,7 +235,7 @@ levels:
 $(CONFDIR)/$(MLSCFILE):
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
           -c "$(MLSF95)" -cf "$(MLSCFILE)" -p "$(MLSPLAT)" -pv -fl
-	$(MAKE) -f $(MakeFName) internalmakefile makefilesintests
+	$(MAKE) -f $(MakeFName) internalsaymake internalmftests
 
 # Targets that must be named explicitly
 
@@ -313,10 +319,25 @@ disthelp:
 	$(CONFDIR)/README.MakeFC
 
 install:
+#prog in l3 now named mlsl3d
 	@echo "Installing programs from $(LEVELS) into $(CONFDIR)"; \
 	 for dir in $(LEVELS); do \
-	  mv $$dir/$(MLSCONFG)/mls$$dir $(CONFDIR) ; \
+	case "$$dir" in \
+	"l3") \
+			if [ -f $$dir/$(MLSCONFG)/mlsl3d ] ; then \
+	         mv $$dir/$(MLSCONFG)/mlsl3d $(CONFDIR) ; \
+			fi ; \
+		;; \
+	*) \
+			if [ -f $$dir/$(MLSCONFG)/mlsl3d ] ; then \
+      	  mv $$dir/$(MLSCONFG)/mls$$dir $(CONFDIR) ; \
+			fi ; \
+		;; \
+	esac ; \
 	done
+#	 for dir in $(LEVELS); do \
+#	  mv $$dir/$(MLSCONFG)/mls$$dir $(CONFDIR) ; \
+#	done
 
 makefile:
 	@if [ $(COPY_NUMBER) -lt $(MAX_COPIES) ] ; then \
@@ -325,7 +346,7 @@ makefile:
 		echo "Resetting copy number from  $(COPY_NUMBER) to 1"; \
 		$(MAKE) -f $(MakeFName) internalcleanup ; \
 	fi
-	@$(MAKE) -f $(MakeFName) internalmakefile
+	@$(MAKE) -f $(MakeFName) internalsaymake
 
 update:
 	@if [ $(COPY_NUMBER) -lt $(MAX_COPIES) ] ; then \
@@ -465,7 +486,7 @@ internaldepends:
         sed 's/OBJS =/srclib_objs =/' Makefile.dep > temp.dep; \
         mv temp.dep Makefile.dep
 
-internalmakefile:
+internalsaymake:
 	@echo "Copying or linking MakeFC to Makefile in ./ $(SUBDIRS)"; \
 	if [ -f Makefile ] ; then \
 		rm -f Makefile.old ;\
@@ -482,7 +503,7 @@ internalmakefile:
 	  cd ..; \
 	done
 
-internalupdate: internalmakefile makefilesintests
+internalupdate: internalsaymake internalmftests
 	@echo "Updating the Makefile in $(SUBDIRS)"; \
 	 for dir in $(SUBDIRS); do \
 		cd $$dir ; \
@@ -496,7 +517,7 @@ internalupdate: internalmakefile makefilesintests
 internalreset_copy:
 	@echo "MakeFC copy number reset from $(COPY_NUMBER) to 0"
 
-makefilesintests:
+internalmftests:
 	@echo "Copying or linking MakeFC to Makefile in $(tests_sub_dirs)"; \
 	echo "(and updating the Makefile in each $(MLSCONFG)"; \
 	 for dir in $(tests_sub_dirs); do \
@@ -544,12 +565,15 @@ update:
   tar substar disttar tarz substarz distarz targ substarg distarg substars\
   all install levels configure_subdirs makefile update\
   configure_pvm configure_fopts configure_full configure_help help disthelp\
-  internalcleanup internaldepends makefilesintests internalmakefile \
-  internalmakefile show_copy ghostbuster\
+  internalcleanup internaldepends internalmftests internalsaymake \
+  show_copy ghostbuster\
   $(SUBDIRS)
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.38  2001/07/20 00:03:17  pwagner
+# Added l3m to LEVELS
+#
 # Revision 1.37  2001/06/01 20:11:50  pwagner
 # Fixed configure_full
 #
