@@ -485,73 +485,116 @@ contains
 
   ! -------------------------------------------- WrapGriddedData ---
   subroutine WrapGriddedData ( GRID )
-    ! Given a grid add an extra longitude which helps when interpolating
-    ! over the +/- 180 degree region
-    ! One could do the same for local time, but I can't get too excited about
-    ! that I'm afraid.
+    ! Given a grid, possibly add extra points in longitude beyond +/-180
+    ! and in solar time beyond 0..24 to aid in interpolations.
     ! Dummy arguments
     type ( GriddedData_T ), intent(inout) :: GRID
     ! Local variables
     real (rgr), dimension(:), pointer :: NEWLONS
+    real (rgr), dimension(:), pointer :: NEWLSTS
     real (rgr), dimension(:,:,:,:,:,:), pointer :: NEWFIELD
-    integer :: LOWER
-    integer :: UPPER
+    integer :: LOWERLON
+    integer :: UPPERLON
+    integer :: LOWERLST
+    integer :: UPPERLST
     integer :: STATUS
     ! Executable code
-    ! Don't bother with 'zonal mean' type quantities
-    if ( grid%noLons <= 1 ) return
+    ! Don't bother with quantities that have no lon or lst variation.
+    if ( grid%noLons <= 1 .and. grid%noLsts <= 1 ) return
 
-    ! Check that this field is as we expect
-    lower = count ( grid%lons < -180.0 )
-    upper = count ( grid%lons > 180.0 )
-    if ( lower > 0 .or. upper > 0 ) then
-      ! This is either unconventional or it's already been wrapped
-      ! in either case, we're not going to do anything.
-      if ( lower > 1 .or. upper > 1 ) then
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Gridded data disobeys EOS convention of -180..180 longitude' )
-      endif
-      return
+    ! Check that this field is appropriate
+    ! These integers are the number of points at or beyond our boundaries
+    lowerLon = count ( grid%lons <= -180.0 )
+    upperLon = count ( grid%lons >= 180.0 )
+    lowerLst = count ( grid%lsts <= 0.0 )
+    upperLst = count ( grid%lsts >= 24.0 )
+
+    ! Check for unconventional grids.  We'll allow the case of 1 point at or
+    ! beyond our boundaries, as that could just mean it's already been wrapped.
+    ! More than that however is a problem.
+    if ( lowerLon > 1 .or. upperLon > 1 ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Gridded data disobeys EOS convention of -180..180 longitude' )
+    endif
+    if ( lowerLst > 1 .or. upperLst > 1 ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Gridded data disobeys EOS convention of 0..24 local time' )
+    endif
+
+    ! From this point on the integers are the number of points
+    ! we need to add (0 or 1)
+    lowerLon = 0
+    upperLon = 0
+    lowerLst = 0
+    upperLst = 0
+
+    if ( grid%noLons > 1 ) then
+      if ( grid%lons(1) > -180.0 ) lowerLon = 1
+      if ( grid%lons(grid%noLons) < 180.0 ) upperLon = 1
+    end if
+    if ( grid%noLsts > 1 ) then
+      if ( grid%lsts(1) > 0.0 ) lowerLst = 1
+      if ( grid%lsts(grid%noLsts ) < 24.0 ) upperLst = 1
     end if
 
-    ! Do we need one or two more points
-    lower = 0
-    upper = 0
-    if ( grid%lons(1) > -180.0 ) lower = 1
-    if ( grid%lons(grid%noLons) < 180.0 ) upper = 1
+    ! If these are all zero then there's nothing to do so we might
+    ! as well quit and save time
+    if ( all ( (/ lowerLon, upperLon, lowerLst, upperLst /) == 0 ) ) return
 
     ! Create new arrays
-    nullify ( newLons, newField )
-    call Allocate_test ( newLons, grid%noLons + lower + upper, &
+    nullify ( newLons, newLSTs, newField )
+    call Allocate_test ( newLons, grid%noLons + lowerLon + upperLon, &
       & 'newLons', ModuleName )
+    call Allocate_test ( newLsts, grid%noLsts + lowerLst + upperLst, &
+      & 'newLsts', ModuleName )
     allocate ( newField ( grid%noHeights, grid%noLats, &
-      & grid%noLons + lower + upper, &
-      & grid%noLsts, grid%noSzas, grid%noDates ), STAT=status )
+      & grid%noLons + lowerLon + upperLon, &
+      & grid%noLsts + lowerLst + upperLst, &
+      & grid%noSzas, grid%noDates ), STAT=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate//'newField' )
 
-    ! Fill them
-    newLons ( 1+lower : lower+grid%noLons ) = grid%lons
-    newField ( :, :, 1+lower : lower+grid%noLons, :, :, : ) = grid%field
-    if ( lower == 1 ) then
+    ! Fill the 'central' part of the fields
+    newLons ( 1+lowerLon : lowerLon+grid%noLons ) = grid%lons
+    newLsts ( 1+lowerLst : lowerLst+grid%noLsts ) = grid%lsts
+    newField ( :, :, &
+      & 1+lowerLon : lowerLon+grid%noLons, &
+      & 1+lowerLst : lowerLst+grid%noLsts, &
+      & :, : ) = grid%field
+
+    ! Wrap edges
+    if ( lowerLon == 1 ) then
       newLons(1) = grid%lons ( grid%noLons ) - 360.0
       newField ( :, :, 1, :, :, : ) = grid%field ( :, :, grid%noLons, :, :, : )
     end if
-    if ( upper == 1 ) then
-      newLons ( grid%noLons + lower + 1 ) = grid%lons ( 1 ) + 360.0
-      newField ( :, :, grid%noLons + lower + 1, :, :, : ) = &
-        & grid%field ( :, :, 1, : , : ,: )
+    if ( upperLon == 1 ) then
+      newLons ( grid%noLons + lowerLon + 1 ) = grid%lons ( 1 ) + 360.0
+      newField ( :, :, grid%noLons + lowerLon + 1, :, :, : ) = &
+        & grid%field ( :, :, 1, :, : ,: )
+    end if
+
+    if ( lowerLst == 1 ) then
+      newLsts(1) = grid%lsts ( grid%noLsts ) - 24.0
+      newField ( :, :, :, 1, :, : ) = grid%field ( :, :, :, grid%noLsts, :, : )
+    end if
+    if ( upperLst == 1 ) then
+      newLsts ( grid%noLsts + lowerLst + 1 ) = grid%lsts ( 1 ) + 24.0
+      newField ( :, :, :, grid%noLsts + lowerLst + 1, :, : ) = &
+        & grid%field ( :, :, :, 1, : ,: )
     end if
 
     ! Tidy up
     call Deallocate_test ( grid%lons, 'grid%lons', ModuleName )
+    call Deallocate_test ( grid%lsts, 'grid%lsts', ModuleName )
     deallocate ( grid%field, stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Deallocate//'grid%values' )
 
     ! Make grid use new values
-    grid%noLons = grid%noLons + lower + upper
+    grid%noLons = grid%noLons + lowerLon + upperLon
+    grid%noLsts = grid%noLsts + lowerLst + upperLst
     grid%lons => newLons
+    grid%lsts => newLsts
     grid%field => newField
   end subroutine WrapGriddedData
 
@@ -563,6 +606,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.26  2003/04/04 19:10:58  livesey
+! Bug fix
+!
 ! Revision 2.25  2003/04/04 00:09:32  livesey
 ! Added empty field, ConcatenateGriddedData, CopyGrid, WrapGriddedData,
 ! and appropriate changes to SetupNewGriddedData
