@@ -281,12 +281,14 @@ MODULE L0_sci_tbls  ! Define L0 science tables
      INTEGER :: MB(MBchans,MBnum)
      INTEGER :: WF(WFchans,WFnum)
      REAL :: DACS(DACSchans,DACSnum)
-     REAL :: APE_pos(2), ASE_pos(2), GME_pos(2), TSE_pos(2)
+     REAL :: APE_pos(2), ASA_pos(2), GSA_pos(2), TSSA_pos(2)
      REAL :: scAngleG                  ! Boresight wrt. spc +x (GHz)
      REAL :: scAngleT                  ! Boresight wrt. spc +x (THz)
      CHARACTER(len=1) :: GHz_sw_pos
      CHARACTER(len=1) :: THz_sw_pos
-     CHARACTER(len=80) :: LLO_DN       ! Laser LO data
+     CHARACTER(len=80) :: LLO_DN       ! Laser LO DN data
+     REAL :: LLO_EU(16)                ! Laser LO EU data
+     CHARACTER(len=70) :: PLL_DN       ! Phase Lock Loop data
      INTEGER :: GSN(4)                 ! GHz Switch Network readings
      INTEGER :: THzSw                  ! THz Switch reading
      INTEGER :: BandSwitch(5)          ! band associated with each switch
@@ -309,7 +311,7 @@ MODULE L0_sci_tbls  ! Define L0 science tables
      INTEGER :: MIFno
      INTEGER :: Orbit
      INTEGER :: FB(THzChans,THzNum)
-     REAL :: TSE_pos(2)
+     REAL :: TSSA_pos(2)
      REAL :: scAngle                   ! Boresight wrt. spc +x
      CHARACTER(len=1) :: SwMirPos
      REAL :: LLO_Bias                  ! LLO Bias V
@@ -515,6 +517,9 @@ CONTAINS
 END MODULE L0_sci_tbls
 
 ! $Log$
+! Revision 2.5  2003/09/15 17:15:53  perun
+! Version 1.3 commit
+!
 ! Revision 2.4  2003/08/15 14:25:04  perun
 ! Version 1.2 commit
 !

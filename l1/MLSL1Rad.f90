@@ -15,7 +15,7 @@ MODULE MLSL1Rad     ! Radiance data types and routines for the MLSL1 program
   PRIVATE
 
   PUBLIC :: InitRad, BandToBanks, UpdateRadSignals, RadPwr
-  PUBLIC :: Radiance_T, L1Brad, FBrad, MBrad, WFrad, DACSrad, THzRad
+  PUBLIC :: Radiance_T, L1Brad, FBrad, MBrad, WFrad, DACSrad, THzRad, Rad_Name
   PUBLIC :: SideBandFrac_T, SideBandFrac, SpilloverLoss_T, SpilloverLoss
 
   !---------------------------- RCS Ident Info -------------------------------
@@ -37,6 +37,34 @@ MODULE MLSL1Rad     ! Radiance data types and routines for the MLSL1 program
   TYPE (Radiance_T), DIMENSION(:), POINTER :: L1Brad, FBrad, MBrad, WFrad, &
        DACSrad, THzRad
 
+  CHARACTER(len=26), PARAMETER :: Rad_Name(52) = (/ &
+       "R1A:118.B1F:PT.S0.FB25-1  ", "R1A:118.B1F:PT.S3.FB25-8  ", &
+       "R2:190.B2F:H2O.S0.FB25-2  ", "R2:190.B2F:H2O.S2.FB25-3  ", &
+       "R2:190.B3F:N2O.S2.FB25-3  ", "R2:190.B4F:HNO3.S0.FB25-4 ", &
+       "R2:190.B4F:HNO3.S3.FB25-8 ", "R2:190.B5F:CLO.S0.FB25-5  ", &
+       "R2:190.B5F:CLO.S2.FB25-3  ", "R2:190.B6F:O3.S0.FB25-6   ", &
+       "R2:190.B6F:O3.S2.FB25-3   ", "R3:240.B7F:O3.S0.FB25-7   ", &
+       "R3:240.B7F:O3.S3.FB25-8   ", "R3:240.B8F:PT.S3.FB25-8   ", &
+       "R3:240.B8F:PT.S2.FB25-3   ", "R3:240.B9F:CO.S0.FB25-9   ", &
+       "R3:240.B9F:CO.S2.FB25-3   ", "R4:640.B10F:CLO.S0.FB25-10", &
+       "R4:640.B10F:CLO.S4.FB25-12", "R4:640.B11F:BRO.S0.FB25-11", &
+       "R4:640.B11F:BRO.S4.FB25-12", "R4:640.B12F:N2O.S4.FB25-12", &
+       "R4:640.B13F:HCL.S3.FB25-8 ", "R4:640.B13F:HCL.S0.FB25-13", &
+       "R4:640.B14F:O3.S0.FB25-14 ", "R4:640.B14F:O3.S4.FB25-12 ", &
+       "R5H:2T5.B15F:OH.S5.FB25-15", "R5H:2T5.B16F:OH.S0.FB25-16", &
+       "R5H:2T5.B16F:OH.S5.FB25-15", "R5H:2T5.B17F:PT.S0.FB25-17", &
+       "R5H:2T5.B17F:PT.S5.FB25-15", "R5V:2T5.B18F:OH.S0.FB25-18", &
+       "R5V:2T5.B18F:OH.S5.FB25-15", "R5V:2T5.B19F:OH.S0.FB25-19", &
+       "R5V:2T5.B19F:OH.S5.FB25-15", "R5V:2T5.B20F:PT.S4.FB25-12", &
+       "R5V:2T5.B20F:PT.S5.FB25-15", "R1B:118.B21F:PT.S4.FB25-12", &
+       "R1B:118.B21F:PT.S3.FB25-8 ", "R1A:118.B22D:PT.S0.DACS-4 ", &
+       "R2:190.B23D:H2O.S0.DACS-2 ", "R3:240.B24D:O3.S0.DACS-3  ", &
+       "R3:240.B25D:CO.S1.DACS-1  ", "R1B:118.B26D:PT.S1.DACS-1 ", &
+       "R2:190.B27M:HCN.S0.MB11-1 ", "R4:640.B28M:HO2.S0.MB11-2 ", &
+       "R4:640.B29M:HOCL.S0.MB11-3", "R4:640.B30M:HO2.S0.MB11-4 ", &
+       "R4:640.B31M:BRO.S0.MB11-5 ", "R1A:118.B32W:PT.S0.WF4-1  ", &
+       "R3:240.B33W:O3.S0.WF4-2   ", "R1B:118.B34W:PT.S0.WF4-3  " /)
+
   TYPE SideBandFrac_T
      REAL(r4), DIMENSION(:), POINTER :: lower, upper
   END TYPE SideBandFrac_T
@@ -48,6 +76,18 @@ MODULE MLSL1Rad     ! Radiance data types and routines for the MLSL1 program
   END TYPE SpilloverLoss_T
 
   TYPE (SpilloverLoss_T) :: SpilloverLoss(34)
+
+  TYPE RadiometerLoss_T
+     CHARACTER(len=3) :: Name
+     REAL(r4) :: Ohmic, Spillover, Radiance
+  END TYPE RadiometerLoss_T
+
+  TYPE (RadiometerLoss_T), PARAMETER :: RadiometerLoss(5) = (/ &
+       RadiometerLoss_T ("R1A", 0.9982**3, 0.9987, 150.0), &
+       RadiometerLoss_T ("R1B", 0.9982**3, 0.9964, 150.0), &
+       RadiometerLoss_T ("R2 ", 0.99736**3, 0.9992, 150.0), &
+       RadiometerLoss_T ("R3 ", 0.99449**3, 0.9987, 150.0), &
+       RadiometerLoss_T ("R4 ", 0.98819**3, 0.9916, 150.0)  /)
 
 CONTAINS
 
@@ -337,6 +377,9 @@ END MODULE MLSL1Rad
 
 !
 ! $Log$
+! Revision 2.5  2003/09/15 17:15:53  perun
+! Version 1.3 commit
+!
 ! Revision 2.4  2003/08/15 14:25:04  perun
 ! Version 1.2 commit
 !
