@@ -361,6 +361,13 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & size(forwardModelConfig%molecules), temp%template%noSurfs,           &
       & 'vmrArray', ModuleName )
 
+    !---------------------------------------------------------
+    ! Work out the closest instances from temperature
+    !---------------------------------------------------------
+    call FindClosestInstances ( temp, radiance, closestInstances )
+    instance = closestInstances(maf)
+
+
     ivmr=0
     do i = 1, size(forwardModelConfig%molecules)
       select case (forwardModelConfig%molecules(i))
@@ -381,9 +388,9 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         & frequencyCoordinate=(/l_none/)) ) call MLSMessage ( MLSMSG_Error,  &
         & ModuleName, InvalidQuantity//'vmr' )
 
-      call FindClosestInstances ( vmr, radiance, closestInstances )
+!      call FindClosestInstances ( vmr, radiance, closestInstances )
 !      vmrInst = closestInstances(maf)
-      instance = closestInstances(maf)
+!      instance = closestInstances(maf)
 
       call InterpolateValues ( &
         & vmr%template%surfs(:,1), &    ! Old X
@@ -398,12 +405,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       call MLSMessage( MLSMSG_Error, ModuleName,                             &
                       'Missing the required molecules' )
     endif
-
-    !---------------------------------------------------------
-    ! Work out the closest instances for the other quantities
-    !---------------------------------------------------------
-    call FindClosestInstances ( temp, radiance, closestInstances )
-    instance = closestInstances(maf)
 
     ! ----------------------------
     ! Get some basic dimensions
@@ -977,6 +978,9 @@ subroutine FindTransForSgrid ( PT, Re, NT, NZ, NS, Zlevel, TRANSonZ, Slevel, TRA
 end subroutine FindTransForSgrid
 
 ! $Log$
+! Revision 1.45  2001/10/08 20:23:54  jonathan
+! some changes
+!
 ! Revision 1.44  2001/10/08 19:25:48  jonathan
 ! delet vmrINS
 !
