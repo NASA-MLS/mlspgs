@@ -106,7 +106,21 @@ PROGRAM MLSL3 ! MLS Level 3 software
       CALL OutputProd(pcf, cfProd(i), cfDef, anText, l3sp, l3dm, dmA, dmD, &
                       l3r, residA, residD, dzs, dza, dzd, flags, zFiles)
 
-! Deallocate the l2gp database for the product
+! Deallocate the databases
+
+      CALL DestroyL2GPDatabase(l3r)
+      CALL DestroyL2GPDatabase(residA)
+      CALL DestroyL2GPDatabase(residD)
+
+      CALL DestroyL3DMDatabase(l3dm)
+      CALL DestroyL3DMDatabase(dmA)
+      CALL DestroyL3DMDatabase(dmD)
+
+      CALL DestroyL3SPDatabase(l3sp)
+
+      CALL DestroyL3DZDatabase(dzs)
+      CALL DestroyL3DZDatabase(dza)
+      CALL DestroyL3DZDatabase(dzd)
 
       CALL DestroyL2GPDatabase(l2gp)
 
@@ -130,6 +144,9 @@ END PROGRAM MLSL3
 !================
 
 ! $Log$
+! Revision 1.10  2001/02/28 18:00:07  nakamura
+! Fixed line-break in log comment.
+!
 ! Revision 1.9  2001/02/28 17:25:01  nakamura
 ! Integrated CORE module; changed name of loop routine to OutputProd & added terminal OutputAndClose.
 !
