@@ -120,7 +120,7 @@ program MLSL2
   integer :: RECORD_LENGTH
   integer :: ROOT                  ! of the abstract syntax tree
   integer :: SINGLECHUNK = 0       ! Just run one chunk; unless lastChunk nonzero
-  integer :: LastCHUNK = 0         ! Just run range [SINGLECHUNK, LastCHUNK]
+  integer :: LastCHUNK = 0         ! Just run range [SINGLECHUNK-LastCHUNK]
   integer :: SLAVEMAF = 0          ! Slave MAF for fwmParallel mode
   integer :: STATUS                ! From OPEN
   logical :: SWITCH                ! "First letter after -- was not n"
@@ -211,16 +211,11 @@ program MLSL2
       ! Perhaps we should do this for all multiletter options
       else if ( lowercase(line(3+n:8+n)) == 'checkp' ) then
         checkPaths = switch
-      else if ( line(3+n:7+n) == 'chunk' ) then
+      else if ( line(3+n:8+n) == 'chunk ' ) then
         call AccumulateSlaveArguments ( line )
-        if ( line(8+n:) /= ' ' ) then
-          copyArg = .false.
-          line(:7+n) = ' '
-        else
-          i = i + 1
-          call getarg ( i, line )
-          command_line = trim(command_line) // ' ' // trim(line)
-        end if
+        i = i + 1
+        call getarg ( i, line )
+        command_line = trim(command_line) // ' ' // trim(line)
         if ( singleChunk == 0 ) then
           read ( line, *, iostat=status ) singleChunk
           if ( status /= 0 ) then
@@ -361,6 +356,10 @@ program MLSL2
           call io_error ( "After --recl option", status, line )
           stop
         end if
+      else if ( lowercase(line(3+n:8)) == 'chunkr' ) then
+        i = i + 1
+        call getarg ( i, parallel%chunkRange )
+        command_line = trim(command_line) // ' ' // trim(parallel%chunkRange)
       else if ( lowercase(line(3+n:9+n))  == 'skipdir' ) then
         SKIPDIRECTWRITES = switch
       else if ( lowercase(line(3+n:10+n)) == 'skipretr' ) then
@@ -855,6 +854,9 @@ contains
       call output(' Sleep time in masterLoop (mus):                 ', advance='no') 
       call blanks(4, advance='no')                                                   
       call output(parallel%maxFailuresPerMachine, advance='yes')
+      call output(' Range of chunks run in parallel:                ', advance='no') 
+      call blanks(4, advance='no')                                                   
+      call output(trim(parallel%chunkRange), advance='yes')
       endif                      
       call output(' Is this a slave task in pvm?:                   ', advance='no')
       call blanks(4, advance='no')
@@ -920,6 +922,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.123  2004/08/05 22:47:47  pwagner
+! New --chunkRange option to run selected chunks in parallel mode
+!
 ! Revision 2.122  2004/08/04 23:19:57  pwagner
 ! Much moved from MLSStrings to MLSStringLists
 !
