@@ -21,15 +21,60 @@ module HDFEOS               ! F90 interface to HDF-EOS.
   interface
 
   ! grid interfaces
-    integer function GDATTACH ( GDFID, GRIDNAME )
+   integer function GDATTACH ( GDFID, GRIDNAME )
       integer, intent(in) :: GDFID
       character (len=*), intent(in) :: GRIDNAME
     end function GDATTACH
 
-        integer function GDDIMINFO (GRIDID,DIMNAME)
+    integer function GDCLOSE ( FILE_ID )
+      integer, intent(in) :: FILE_ID
+    end function GDCLOSE
+
+    integer function GDDETACH ( GRIDID )
+      integer, intent(in) :: GRIDID
+    end function GDDETACH
+
+    integer function GDDIMINFO (GRIDID,DIMNAME)
        integer,intent(in)::GRIDID
        character(len=*),intent(IN)::DIMNAME
     end function GDDIMINFO
+
+    integer function GDFIELDINFO (GRIDID,FIELDNAME,RANK,DIMS,NUMBERTYPE,DIMLIST)
+       integer,intent(in)::GRIDID
+       character(len=*),intent(IN)::FIELDNAME
+       integer,intent(out),dimension(*):: DIMS
+       integer,intent(out)             :: RANK, NUMBERTYPE
+       character(len=*),intent(OUT)::DIMLIST
+    end function GDFIELDINFO
+
+    integer function GDINQDIMS (GRIDID,DIMNAME,DIMS)
+       integer,intent(in)::GRIDID
+       character(len=*),intent(out)::DIMNAME
+       integer,intent(out),dimension(*)::DIMS
+    end function GDINQDIMS
+    
+    integer function GDINQFLDS (GRIDID, FIELDLIST, RANK, NUMBERTYPE)
+       integer,intent(in)::GRIDID
+       character(len=*),intent(out)::FIELDLIST
+       integer,intent(out),dimension(*)::RANK, NUMBERTYPE
+    end function GDINQFLDS
+    
+    integer function GDINQGRID (FILENAME, GRIDLIST, STRINGBUFFERSIZE)
+       character (len=*), intent(in) :: FILENAME
+       character(len=*),intent(out)::GRIDLIST
+       integer,intent(out)::STRINGBUFFERSIZE
+    end function GDINQGRID
+    
+    integer function GDNENTRIES (GRIDID, ENTRYCODE, STRINGBUFFERSIZE)
+       integer,intent(in)::GRIDID
+       integer,intent(in)::ENTRYCODE
+       integer,intent(out)::STRINGBUFFERSIZE
+    end function GDNENTRIES
+    
+    integer function GDOPEN ( FILENAME, ACCESS_MODE )
+      character (len=*), intent(in) :: FILENAME
+      integer, intent(in) :: ACCESS_MODE
+    end function GDOPEN
 
   ! swath interfaces
     integer function SWATTACH ( SWFID, SWATHNAME )
@@ -119,6 +164,9 @@ end module HDFEOS
 
 !
 ! $Log$
+! Revision 2.8  2001/03/03 00:45:25  pwagner
+! New grid interfaces--except for gdrdfld
+!
 ! Revision 2.7  2001/02/24 01:01:26  pwagner
 ! Started adding gd routine interfaces
 !
