@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
@@ -6,7 +6,7 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
   use GriddedData, only: GriddedData_T, v_is_pressure, &
     & AddGriddedDataToDatabase, Dump, SetupNewGriddedData, NullifyGriddedData
   use HDFEOS, only: HDFE_NENTDIM, &
-    & gdopen, gdattach, gdfldinfo, &
+    & gdopen, gdattach, gddetach, gdclose, gdfldinfo, &
     & gdinqgrid, gdnentries, gdinqdims, gdinqflds
   use Hdf, only: DFACC_RDONLY
   use l3ascii, only: l3ascii_read_field
@@ -15,7 +15,7 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
   use MLSFiles, only: GetPCFromRef, mls_io_gen_closeF, mls_io_gen_openF, &
     &                split_path_name
   use MLSStrings, only: GetStringElement, NumStringElements, Capitalize, &
-    & LowerCase
+    & LowerCase, ReplaceSubString
   use OUTPUT_M, only: BLANKS, OUTPUT
   use SDPToolkit, only: PGS_S_SUCCESS, PGS_PC_GETREFERENCE, &
     & PGS_IO_GEN_CLOSEF, PGS_IO_GEN_OPENF, PGSD_IO_GEN_RSEQFRM, &
@@ -42,6 +42,7 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
 
   ! First we'll define some global parameters and data types.
   character (len=*), parameter :: DEFAULTFIELDNAME = 'TMPU'
+  character (len=*), parameter :: DEFAULTNCEPGRIDNAME = 'TMP_3'
   character (len=*), parameter :: GEO_FIELD1 = 'Latitude'
   character (len=*), parameter :: GEO_FIELD2 = 'Longitude'
   character (len=*), parameter :: GEO_FIELD3 = 'Height'
@@ -50,6 +51,8 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
   character (len=*), parameter :: lit_dao = 'dao'
   character (len=*), parameter :: lit_ncep = 'ncep'
   character (len=*), parameter :: lit_clim = 'clim'
+  integer, parameter :: MAXLISTLENGTH=Linelen ! Max length list of grid names
+  integer, parameter :: NENTRIESMAX=200 ! Max num of entries
 
 contains
 
@@ -59,6 +62,523 @@ contains
 
     ! This routine reads a Gridded Data file, returning a filled data
     ! structure and the  appropriate for 'ncep' or 'dao'
+
+    ! FileName and the_g_data are required args
+    ! GeoDimList, if present, should be the Dimensions' short names
+    ! as a comma-delimited character string in the order:
+    ! longitude, latitude, vertical level, time
+
+    ! fieldName, if present, should be the rank 3 or higher object
+    ! like temperature
+
+    ! Arguments
+    character (LEN=*), intent(IN) :: FileName ! Name of the file containing the grid(s)
+    integer, intent(IN) :: lcf_where    ! node of the lcf that provoked me
+    integer, intent(IN) :: v_type       ! vertical coordinate; an 'enumerated' type
+    type( GriddedData_T ), intent(OUT) :: the_g_data ! Result
+    character (LEN=*), intent(IN) :: description ! e.g., 'dao'
+    character (LEN=*), optional, intent(IN) :: GeoDimList ! Comma-delimited dim names
+    character (LEN=*), optional, intent(IN) :: fieldName ! Name of gridded field
+
+    ! Local Variables
+    character ( len=NameLen) :: my_description   ! In case mixed case
+    ! Executable code
+    my_description = lowercase(description)
+
+! >     descrpt_is_legal = (my_description(:len(lit_dao)) == lit_dao) &
+! >       & .or. &
+! >       & (my_description(:len(lit_ncep)) == lit_ncep) &
+! >       & .or. &
+! >       & (my_description(:len(lit_clim)) == lit_clim)
+! > 
+! >     descrpt_is_misplcd = my_description(:len(lit_clim)) == lit_clim
+! > 
+! >     if(descrpt_is_misplcd) then
+! >       call announce_error(lcf_where, 'READGriddedData called with climatology' &
+! >         & // ' description')
+! >       return
+! >     elseif(.not. descrpt_is_legal) then
+! >       call announce_error(lcf_where, 'READGriddedData called with unknown' &
+! >         & // ' description: ' // description)
+! >       return
+! >     endif
+
+    ! According to the kinds of gridded data files we can read
+    select case ( trim(my_description) )
+    case ('clim')
+      call announce_error(lcf_where, 'READGriddedData called with climatology' &
+        & // ' description; appropriate for ncep/dao only')
+    case ('dao')
+      call Read_dao(FileName, lcf_where, v_type, &
+        & the_g_data, GeoDimList, fieldName)
+    case ('ncep')
+      call Read_ncep(FileName, lcf_where, v_type, &
+        & the_g_data, GeoDimList, fieldName)
+    case ('olddao', 'oldncep')
+      call Read_old(FileName, lcf_where, my_description(4:), v_type, &
+        & the_g_data, GeoDimList, fieldName)
+    case default
+      call announce_error(lcf_where, 'READGriddedData called with unknown' &
+        & // ' description: ' // trim(my_description))
+    end select
+
+  end subroutine ReadGriddedData
+
+  ! ----------------------------------------------- Read_dao
+  subroutine Read_dao(FileName, lcf_where, v_type, &
+    & the_g_data, GeoDimList, fieldName)
+
+    ! This routine reads a dao file, named something like
+    ! DAS.flk.asm.tsyn3d_mis_p.GEOS401.2003011800.2003011818.V01
+    ! returning a filled data
+    ! structure appropriate for newer style dao
+    ! (And just how does it differ from the older style? 
+    !  For one thing it holds 4-d, not 3-d fields)
+
+    ! FileName and the_g_data are required args
+    ! GeoDimList, if present, should be the Dimensions' short names
+    ! as a comma-delimited character string in the order:
+    ! longitude, latitude, vertical level, time
+
+    ! fieldName, if present, should be the rank 4
+    ! like temperature
+
+    ! This file is formatted in the following way:
+    ! At each gridded quantity, e.g. EOSGRID,
+    ! a rank 4 field, e.g. TMPU, is given with dimensions
+    ! 'Time, Height, YDim, XDim'
+    ! We'll simply copy it into a single gridded data type
+
+    ! Arguments
+    character (LEN=*), intent(IN) :: FileName ! Name of the file containing the grid(s)
+    integer, intent(IN) :: lcf_where    ! node of the lcf that provoked me
+    integer, intent(IN) :: v_type       ! vertical coordinate; an 'enumerated' type
+    type( GriddedData_T ), intent(OUT) :: the_g_data ! Result
+    character (LEN=*), optional, intent(IN) :: GeoDimList ! Comma-delimited dim names
+    character (LEN=*), optional, intent(IN) :: fieldName ! Name of gridded field
+
+    ! Local Variables
+    integer :: file_id, gd_id
+    integer :: inq_success
+    integer :: nentries, ngrids, ndims, nfields
+    integer :: strbufsize
+    logical,  parameter       :: CASESENSITIVE = .false.
+    integer, parameter :: GRIDORDER=1   ! What order grid written to file
+    character (len=MAXLISTLENGTH) :: gridlist
+    character (len=MAXLISTLENGTH) :: dimlist, actual_dim_list
+    character (len=MAXLISTLENGTH), dimension(1) :: dimlists
+    character (len=MAXLISTLENGTH) :: fieldlist
+    integer, parameter :: MAXNAMELENGTH=NameLen		! Max length of grid name
+    character (len=MAXNAMELENGTH) :: gridname, actual_field_name
+    integer, dimension(NENTRIESMAX) :: dims, rank, numberTypes
+    integer                        :: our_rank, numberType
+
+    integer :: start(4), stride(4), edge(4)
+    integer :: status
+    !                                  These start out initialized to one
+    integer                        :: nlon=1, nlat=1, nlev=1, ntime=1
+    integer, parameter             :: i_longitude=1
+    integer, parameter             :: i_latitude=i_longitude+1
+    integer, parameter             :: i_vertical=i_latitude+1
+    integer, parameter             :: i_time=i_vertical+1
+    integer, external :: GDRDFLD
+    logical, parameter :: COUNTEMPTY=.true.
+    real(r4), dimension(:,:,:,:), pointer :: all_the_fields
+    real(r8), dimension(:), pointer :: dim_field
+    ! Executable code
+    ! Find list of grid names on this file (This has been core dumping on me)
+    print *, 'About to find grid list of file ', trim(FileName)
+    print *, "proceed (yes) or (no)"
+    ! read *, gridlist
+    ! if ( index(gridlist, 'y') < 1 ) stop
+    inq_success = gdinqgrid(FileName, gridlist, strbufsize)
+    if (inq_success < 0) then
+      call announce_error(lcf_where, "Could not inquire gridlist "// trim(FileName))
+    end if
+    print *, 'grid list ', trim(gridlist)
+
+    error = 0
+    file_id = gdopen(FileName, DFACC_RDONLY)
+
+    if (file_id < 0) then
+      call announce_error(lcf_where, "Could not open "// FileName)
+    end if
+
+    ! Find grid name corresponding to the GRIDORDER'th one
+    ngrids = NumStringElements(gridlist, COUNTEMPTY)
+
+    if(ngrids <= 0) then
+      call announce_error(lcf_where, "NumStringElements of gridlist <= 0")
+    elseif(ngrids /= inq_success) then
+      call announce_error(lcf_where, "NumStringElements of gridlist /= inq_success")
+    elseif(ngrids < GRIDORDER) then
+      call announce_error(lcf_where, "NumStringElements of gridlist < GRIDORDER")
+    endif
+
+    call GetStringElement(gridlist, gridname, GRIDORDER, COUNTEMPTY)
+
+    gd_id = gdattach(file_id, gridname)
+    if (gd_id < 0) then
+      call announce_error(lcf_where, "Could not attach "//trim(gridname))
+    end if
+
+    ! Now find dimsize(), dimname(), etc.
+    nentries = gdnentries(gd_id, HDFE_NENTDIM, strbufsize)
+
+    if(nentries <= 0) then
+      call announce_error(lcf_where, "nentries of gd_id <= 0")
+    elseif(nentries > NENTRIESMAX) then
+      call announce_error(lcf_where, "nentries of gd_id > NENTRIESMAX")
+    endif
+
+    ndims = gdinqdims(gd_id, dimlist, dims)
+
+    if(ndims <= 0) then
+      call announce_error(lcf_where, "ndims of gd_id <= 0")
+    elseif(ndims > NENTRIESMAX) then
+      call announce_error(lcf_where, "ndims of gd_id > NENTRIESMAX")
+    endif
+
+    nfields = gdinqflds(gd_id, fieldlist, rank, numberTypes)
+
+    if(nfields <= 0) then
+      call announce_error(lcf_where, "nfields of gd_id <= 0")
+    elseif(nfields > NENTRIESMAX) then
+      call announce_error(lcf_where, "nfields of gd_id > NENTRIESMAX")
+    endif
+
+    if(.not. CASESENSITIVE) then
+      fieldlist = Capitalize(fieldlist)
+    endif
+
+    if(present(fieldName)) then
+      actual_field_name=fieldName
+    else
+      actual_field_name=DEFAULTFIELDNAME
+    endif
+
+    if(present(GeoDimList)) then
+      actual_dim_list=GeoDimList
+    else
+      actual_dim_list=GEO_FIELD1 // ',' // &
+        & GEO_FIELD2 // ',' // &
+        & GEO_FIELD3 // ',' // &
+        & GEO_FIELD4
+    endif
+
+    ! Now find the rank of our field
+    inq_success = gdfldinfo(gd_id, trim(actual_field_name), our_rank, dims, &
+      & numbertype, dimlists(1))
+
+    dimlist = trim(dimlists(1))
+    print *, 'our_rank ', our_rank
+    print *, 'dims ', dims(1:our_rank)
+    print *, 'dimlist ', dimlist
+
+    nlon = dims(1)
+    nlat = dims(2)
+    nlev = dims(3)
+    ntime = dims(4)
+
+    the_g_data%quantityName = actual_field_name
+    the_g_data%description = lit_dao
+    the_g_data%verticalCoordinate = v_type
+
+    the_g_data%noLons = nlon
+    the_g_data%noLats = nlat
+    the_g_data%noHeights = nlev
+    the_g_data%noLsts = ntime
+    the_g_data%units = 'K'
+
+    call nullifyGriddedData ( the_g_data ) ! for Sun's still useless compiler
+    ! Setup the grid
+    call SetupNewGriddedData ( the_g_data, noHeights=nlev, noLats=nlat, &
+      & noLons=nlon, noLsts=ntime, noSzas=1, noDates=1 )
+    allocate(all_the_fields(dims(1), dims(2), dims(3), dims(4)), stat=status)
+    if ( status /= 0 ) &
+        & call announce_error(lcf_where, "failed to allocate field_data")
+    start = 0                                                             
+    stride = 1                                                               
+    edge = dims(1:4)                                                        
+    status = gdrdfld(gd_id, trim(actual_field_name), start, stride, edge, &  
+      & all_the_fields)                                                          
+    if(status /= 0) &
+      & call announce_error(lcf_where, "failed to read field " &
+      & //trim(actual_field_name))
+    ! The actual dimlist is this                    XDim,YDim,Height,TIME                                                                                                               
+    ! Need to reshape it so that the order becomes: Height,YDim,XDim,TIME
+    the_g_data%field(:,:,:,:,1,1) = reshape( all_the_fields, &
+      & shape=(/nLev, nlat, nlon, ntime/), order=(/3,2,1,4/) &
+      & )
+    deallocate(all_the_fields)
+    ! Now read the dims
+    nullify(dim_field)
+    call read_the_dim(gd_id, 'XDim', dims(1), dim_field)
+    the_g_data%lons = dim_field
+    call read_the_dim(gd_id, 'YDim', dims(2), dim_field)
+    the_g_data%lats = dim_field
+    call read_the_dim(gd_id, 'Height', dims(3), dim_field)
+    the_g_data%Heights = dim_field
+    call read_the_dim(gd_id, 'TIME', dims(4), dim_field)
+    the_g_data%lsts = dim_field
+    deallocate(dim_field)        ! Before leaving, some light housekeeping
+    ! Close grid
+    status = gddetach(gd_id)
+    if(status /= 0) &
+      & call announce_error(lcf_where, "failed to detach from grid " &
+      & //trim(gridname))
+    status = gdclose(file_id)
+    if(status /= 0) &
+      & call announce_error(lcf_where, "failed to close file " //trim(FileName))
+    contains 
+       subroutine read_the_dim(gd_id, field_name, field_size, values)
+         ! Arguments
+         integer, intent(in) :: gd_id
+         character(len=*), intent(in) :: field_name
+         integer, intent(in) :: field_size
+         real(r8), dimension(:), pointer :: values
+         ! Local variables
+         integer :: status
+         integer, dimension(1) :: start, stride, edge
+         ! Executable
+         if ( associated(values) ) then
+           deallocate(values, stat=status)
+           if ( status /= 0 ) &
+             & call announce_error(lcf_where, "failed to deallocate dim field")
+         endif
+         allocate(values(field_size), stat=status)
+         if ( status /= 0 ) &
+           & call announce_error(lcf_where, "failed to allocate dim field")
+         start = 0                                                             
+         stride = 1                                                             
+         edge = field_size                                                       
+         status = gdrdfld(gd_id, trim(field_name), start, stride, edge, &
+           & values)                                                     
+         if ( status /= 0 ) &
+           & call announce_error(lcf_where, "failed to read dim field " &
+           & // trim(field_name))
+       end subroutine read_the_dim
+  end subroutine Read_dao
+
+  ! ----------------------------------------------- Read_ncep
+  subroutine Read_ncep(FileName, lcf_where, v_type, &
+    & the_g_data, GeoDimList, gridName)
+
+    ! This routine reads a ncep file, named something like
+    ! 6207ea2e-1dd2-11b2-b61e-ae069991db9a.hdfeos 
+    ! returning a filled data
+    ! structure appropriate for newer style ncep
+
+    ! FileName and the_g_data are required args
+    ! GeoDimList, if present, should be the Dimensions' short names
+    ! as a comma-delimited character string in the order:
+    ! longitude, latitude, vertical level, time
+
+    ! fieldName, if present, should be the rank 2 object
+    ! like temperature
+    
+    ! This file is formatted in the following way:
+    ! At each gridded quantity, e.g. TMP_3,
+    ! a series of 2d slices at a fixed pressure surface are
+    ! given as fields, with names like "ISOBARIC LEVEL AT 975 (hPa)"
+    ! We will read them, stacking them up in a single gridded data type
+
+    ! Arguments
+    character (LEN=*), intent(IN) :: FileName ! Name of the file containing the grid(s)
+    integer, intent(IN) :: lcf_where    ! node of the lcf that provoked me
+    integer, intent(IN) :: v_type       ! vertical coordinate; an 'enumerated' type
+    type( GriddedData_T ), intent(OUT) :: the_g_data ! Result
+    character (LEN=*), optional, intent(IN) :: GeoDimList ! Comma-delimited dim names
+    character (LEN=*), optional, intent(IN) :: gridName ! Name of grid
+
+    ! Local Variables
+    integer :: file_id, gd_id
+    integer :: inq_success
+    integer :: nentries, ngrids, ndims, nfields
+    integer :: strbufsize
+    character(len=NameLen) :: my_gridname
+    integer, parameter :: MAXLISTLENGTH=10*Linelen ! Max length list of grid names
+    character (len=MAXLISTLENGTH), dimension(1) :: dimlists
+    character (len=MAXLISTLENGTH) :: fieldlist
+    character (len=MAXLISTLENGTH) :: gridlist
+    character (len=MAXLISTLENGTH) :: dimlist
+    integer, parameter :: MAXNAMELENGTH=NameLen		! Max length of grid name
+    character (len=MAXNAMELENGTH) :: actual_field_name
+    integer, dimension(NENTRIESMAX) :: dims, rank, numberTypes
+    integer                        :: our_rank, numberType
+
+    integer :: start(2), stride(2), edge(2)
+    integer :: status
+    integer :: field
+    !                                  These start out initialized to one
+    integer                        :: nlon=1, nlat=1, nlev=1, ntime=1
+    integer, parameter             :: i_longitude=1
+    integer, parameter             :: i_latitude=i_longitude+1
+    integer, parameter             :: i_vertical=i_latitude+1
+    integer, parameter             :: i_time=i_vertical+1
+    integer, external :: GDRDFLD
+    logical, parameter :: COUNTEMPTY=.true.
+    real(r4), dimension(:), pointer     :: pressures
+    real(r4), dimension(:,:), pointer   :: field_data
+    real(r4), dimension(:,:,:), pointer :: all_the_fields, now_the_fields
+    real(r8) :: pressure
+    ! Executable
+    my_gridname = DEFAULTNCEPGRIDNAME
+    if ( present(gridname) ) my_gridname = gridname
+      call announce_error(lcf_where, 'Read_ncep' &
+        & // ' not yet capable of reading newer file formats')
+    ! Find list of grid names on this file (This has been core dumping on me)
+    print *, 'About to find grid list of file ', trim(FileName)
+    print *, "proceed (yes) or (no)"
+    ! read *, gridlist
+    ! if ( index(gridlist, 'y') < 1 ) stop
+    gridlist = ''
+    inq_success = 0 ! inq_success = gdinqgrid(FileName, gridlist, strbufsize)
+    if (inq_success < 0) then
+      call announce_error(lcf_where, "Could not inquire gridlist "// FileName)
+    end if
+    print *, 'grid list ', trim(gridlist)
+
+    error = 0
+    file_id = gdopen(FileName, DFACC_RDONLY)
+    print *, 'fileID: ', file_id
+
+    if (file_id < 0) then
+      call announce_error(lcf_where, "Could not open "// FileName)
+    end if
+
+    gd_id = gdattach(file_id, my_gridname)
+    print *, 'gridID: ', gd_id
+    if (gd_id < 0) then
+      call announce_error(lcf_where, "Could not attach "//trim(my_gridname))
+    end if
+
+    ! Now find dimsize(), dimname(), etc.
+    nentries = gdnentries(gd_id, HDFE_NENTDIM, strbufsize)
+
+    if(nentries <= 0) then
+      call announce_error(lcf_where, "nentries of gd_id <= 0", &
+        & 'nentries:', nentries)
+    elseif(nentries > NENTRIESMAX) then
+      call announce_error(lcf_where, "nentries of gd_id > NENTRIESMAX", &
+        & 'nentries:', nentries)
+    end if
+
+    ndims = gdinqdims(gd_id, dimlist, dims)
+
+    if(ndims <= 0) then
+      call announce_error(lcf_where, "ndims of gd_id <= 0", &
+        & 'ndims:', ndims)
+    elseif(ndims > NENTRIESMAX) then
+      call announce_error(lcf_where, "ndims of gd_id > NENTRIESMAX", &
+        & 'ndims:', ndims)
+    endif
+
+    nfields = gdinqflds(gd_id, fieldlist, rank, numberTypes)
+    print *, 'nfields: ', nfields
+
+    if(nfields <= 0) then
+      call announce_error(lcf_where, "nfields of gd_id <= 0", &
+        & 'nfields:', nfields)
+      return
+    elseif(nfields > NENTRIESMAX) then
+      call announce_error(lcf_where, "nfields of gd_id > NENTRIESMAX", &
+        & 'nfields:', nfields)
+      return
+    endif
+
+    the_g_data%noHeights = 0
+    allocate(pressures(nfields), stat=status)
+    if ( status /= 0 ) &
+        & call announce_error(lcf_where, "failed to allocate pressures")
+    ! Loop over data fields
+    do field=1, nfields
+      call getStringElement(fieldlist, actual_field_name, field, .false.)
+      print *, 'actual_field_name: ', trim(actual_field_name)
+      if ( actual_field_name == ' ' ) cycle
+      call ncepFieldNameTohPa(trim(actual_field_name), pressure)
+      print *, 'inferred pressure: ', pressure
+      if ( pressure < 0._r8 ) cycle
+      ! Now find the rank of our field
+      inq_success = gdfldinfo(gd_id, trim(actual_field_name), our_rank, dims, &
+        & numbertype, dimlists(1))
+
+      if ( our_rank /= 2 ) then
+        call announce_error(lcf_where, "rank /= 2")
+        cycle
+      endif
+      allocate(field_data(dims(1), dims(2)), stat=status)
+      if ( status /= 0 ) &
+        & call announce_error(lcf_where, "failed to allocate field_data")
+      
+      dimlist = trim(dimlists(1))
+
+      nlon = dims(1)
+      nlat = dims(2)
+
+      the_g_data%quantityName = my_gridname
+      the_g_data%description = lit_ncep
+      the_g_data%verticalCoordinate = v_type
+
+      the_g_data%noLons = nlon
+      the_g_data%noLats = nlat
+      the_g_data%noHeights = the_g_data%noHeights + 1
+      pressures(the_g_data%noHeights) = pressure
+      start(1) = 0
+      start(2) = 0
+      stride = 1
+      edge(1) = dims(1)
+      edge(2) = dims(2)
+      status = gdrdfld(gd_id, trim(actual_field_name), start, stride, edge, &
+        & field_data)
+      if(status /= 0) &
+        & call announce_error(lcf_where, "failed to read field " &
+        & //trim(actual_field_name))
+      ! Assemble the_fields into 3-d array all_the_fields
+      if (the_g_data%noHeights == 1) then
+        allocate(all_the_fields(1, dims(1), dims(2)))
+        all_the_fields(1, :, :) = field_data
+      else
+        allocate(now_the_fields(the_g_data%noHeights, dims(1), dims(2)))
+        now_the_fields(1:the_g_data%noHeights - 1, :, :) = all_the_fields
+        now_the_fields(the_g_data%noHeights, :, :) = field_data
+        deallocate(all_the_fields)
+        all_the_fields => now_the_fields
+      endif
+      deallocate(field_data)
+    enddo
+    the_g_data%noLsts = 0
+    the_g_data%units = 'K'
+
+    call nullifyGriddedData ( the_g_data ) ! for Sun's still useless compiler
+    ! Setup the grid
+    nLev = the_g_data%noHeights
+    call SetupNewGriddedData ( the_g_data, noHeights=nlev, noLats=nlat, &
+      & noLons=nlon, noLsts=1, noSzas=1, noDates=1 )
+    ! The dimlist as stacked up is this             Height,XDim,YDim                                                                                                              
+    ! Need to reshape it so that the order becomes: Height,YDim,XDim
+    the_g_data%field(:,:,:,1,1,1) = reshape( all_the_fields, &
+      & shape=(/nLev, nlat, nlon/), order=(/1, 3, 2/) &
+      & )
+    the_g_data%heights = pressures(1:the_g_data%noHeights)
+    deallocate(all_the_fields)
+    deallocate(pressures)
+    ! Close grid
+    status = gddetach(gd_id)
+    if(status /= 0) &
+      & call announce_error(lcf_where, "failed to detach from grid " // &
+      & trim(my_gridname))
+    status = gdclose(file_id)
+    if(status /= 0) &
+      & call announce_error(lcf_where, "failed to close file " //trim(FileName))
+  end subroutine Read_ncep
+
+  ! ----------------------------------------------- Read_old
+  subroutine Read_old(FileName, lcf_where, description, v_type, &
+    & the_g_data, GeoDimList, fieldName)
+
+    ! This routine reads a Gridded Data file, returning a filled data
+    ! structure appropriate for older style 'ncep' or 'dao'
 
     ! FileName and the_g_data are required args
     ! GeoDimList, if present, should be the Dimensions' short names
@@ -103,40 +623,24 @@ contains
     integer, parameter             :: i_time=i_vertical+1
     integer, external :: GDRDFLD
     logical, parameter :: COUNTEMPTY=.true.
-    logical            :: descrpt_is_legal
-    logical            :: descrpt_is_misplcd
-
+    integer :: status
     ! Executable code
-
-    descrpt_is_legal = (lowercase(description(:len(lit_dao))) == lit_dao) &
-      & .or. &
-      & (lowercase(description(:len(lit_ncep))) == lit_ncep) &
-      & .or. &
-      & (lowercase(description(:len(lit_clim))) == lit_clim)
-
-    descrpt_is_misplcd = lowercase(description(:len(lit_clim))) == lit_clim
-
-    if(descrpt_is_misplcd) then
-      call announce_error(lcf_where, 'READGriddedData called with climatology' &
-        & // ' description')
-      return
-    elseif(.not. descrpt_is_legal) then
-      call announce_error(lcf_where, 'READGriddedData called with unknown' &
-        & // ' description: ' // description)
-      return
-    endif
+    ! Find list of grid names on this file (This has been core dumping on me)
+    print *, 'About to find grid list'
+    print *, "proceed (yes) or (no)"
+    ! read *, gridlist
+    ! if ( index(gridlist, 'y') < 1 ) stop
+    inq_success = gdinqgrid(FileName, gridlist, strbufsize)
+    if (inq_success < 0) then
+      call announce_error(lcf_where, "Could not inquire gridlist "// FileName)
+    end if
+    print *, 'grid list ', trim(gridlist)
 
     error = 0
     file_id = gdopen(FileName, DFACC_RDONLY)
 
     if (file_id < 0) then
       call announce_error(lcf_where, "Could not open "// FileName)
-    end if
-
-    ! Find list of grid names on this file
-    inq_success = gdinqgrid(FileName, gridlist, strbufsize)
-    if (inq_success < 0) then
-      call announce_error(lcf_where, "Could not inquire gridlist "// FileName)
     end if
 
     ! Find grid name corresponding to the GRIDORDER'th one
@@ -221,7 +725,16 @@ contains
     the_g_data%noHeights = nlev
     the_g_data%noLsts = ntime
 
-  end subroutine ReadGriddedData
+    ! Close grid
+    status = gddetach(gd_id)
+    if(status /= 0) &
+      & call announce_error(lcf_where, "failed to detach from grid " // &
+      & trim(gridname))
+    status = gdclose(file_id)
+    if(status /= 0) &
+      & call announce_error(lcf_where, "failed to close file " // &
+      & trim(FileName))
+  end subroutine Read_old
 
   ! --------------------------------------------- ReadGloriaFile -------
   type ( GriddedData_T) function ReadGloriaFile ( filename ) result ( grid )
@@ -264,6 +777,7 @@ contains
     call SetupNewGriddedData ( grid, noHeights=noHeights, noLats=noLats, &
       & noLons=noLons, noLsts=1, noSzas=1, noDates=1 )
     grid%equivalentLatitude = .false.
+    grid%description = 'gloria'
 
     ! Now fill the coordinates
     grid%verticalCoordinate = v_is_pressure
@@ -483,7 +997,7 @@ contains
         !              &"Climatology file name unmatched in PCF")
         call announce_error (ROOT, &
           &"Climatology file name " // trim(fname) // " unmatched in PCF", &
-          & error_number=ErrType)
+          & 'error number: ', extra_number=ErrType)
         return
       endif
       ErrType = Pgs_io_gen_openF ( processCli, PGSd_IO_Gen_RSeqFrm, 0, &
@@ -547,11 +1061,13 @@ contains
       endif
       if(ErrType /= 0) then
         call announce_error (ROOT, &
-          &"Error closing " // fname, error_number=ErrType)
+          &"Error closing " // fname, &
+          &'error number: ', extra_number=ErrType)
       endif
     else
       call announce_error (ROOT, &
-        &"Error opening " // fname, error_number=ErrType)
+        &"Error opening " // fname, &
+        &'error number: ', extra_number=ErrType)
     endif
 
   end subroutine READ_CLIMATOLOGY
@@ -722,15 +1238,44 @@ contains
     endif
   end function source_file_already_read
 
+  ! ----- utility procedures ----
+  
+  ! ------------------------------------------------  ncepFieldNameTohPa  -----
+  subroutine ncepFieldNameTohPa ( field_name, pressure )
+
+    ! Snip INTRO and TAIL off filed_name
+    ! If remainder can be interpreted as a number return that
+    ! Otherwise return -999.99
+    ! Arguments
+    character(len=*), intent(in)    :: field_name
+    real(r8), intent(out)           :: pressure
+    ! Local variables
+    character(len=*), parameter     :: INTRO = 'ISOBARIC LEVEL AT'
+    character(len=*), parameter     :: TAIL = '(hPa)'
+    character(len=len(field_name))  :: beheaded
+    character(len=len(field_name))  :: remainder
+    ! Local variables
+    integer :: status
+    ! Executable
+    pressure = -999.99
+    call ReplaceSubString(field_name, beheaded, INTRO, ' ' )
+    call ReplaceSubString(beheaded, remainder, TAIL, ' ' )
+    ! Now attempt to interpret remainder as a number
+    ! print *, 'Attempting to interpret: ', trim(remainder)
+    read(remainder, *, iostat=status) pressure
+    if ( status /= 0 ) pressure = -999.99
+  end subroutine ncepFieldNameTohPa
+
   ! ------------------------------------------------  announce_error  -----
-  subroutine announce_error ( lcf_where, full_message, use_toolkit, &
-    & error_number )
+  subroutine announce_error ( lcf_where, full_message, &
+    & extra_message, extra_number, use_toolkit )
 
     ! Arguments
     integer, intent(in)    :: lcf_where
     character(LEN=*), intent(in)    :: full_message
     logical, intent(in), optional :: use_toolkit
-    integer, intent(in), optional    :: error_number
+    character(LEN=*), intent(in), optional    :: extra_message
+    integer, intent(in), optional    :: extra_number
 
     ! Local variables
     logical :: just_print_it
@@ -766,17 +1311,25 @@ contains
         & from_where=ModuleName)
       call output(trim(full_message), advance='yes', &
         & from_where=ModuleName)
-      if(present(error_number)) then
+      if(present(extra_message)) then
         call output('error number ', advance='no')
-        call output(error_number, places=9, advance='yes')
+        call output(extra_message, advance='yes')
+      endif
+      if(present(extra_number)) then
+        call output('error number ', advance='no')
+        call output(extra_number, places=9, advance='yes')
       endif
     else
       call output ( '***Error in module ' )
       call output ( ModuleName, advance='yes' )
       call output ( trim(full_message), advance='yes' )
-      if ( present(error_number) ) then
+      if ( present(extra_message) ) then
         call output ( 'Error number ' )
-        call output ( error_number, advance='yes' )
+        call output ( extra_message, advance='yes' )
+      end if
+      if ( present(extra_number) ) then
+        call output ( 'Error number ' )
+        call output ( extra_number, advance='yes' )
       end if
     end if
 
@@ -789,6 +1342,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.22  2003/02/19 19:14:16  pwagner
+! Many changes; not perfect yet
+!
 ! Revision 2.21  2002/11/22 12:57:59  mjf
 ! Added nullify routine(s) to get round Sun's WS6 compiler not
 ! initialising derived type function results.
