@@ -99,6 +99,7 @@ contains
     character (len=512), save :: Line   ! Line to output, should be long enough
     integer, save :: Line_len=0         ! Number of saved characters in line.
     !                                     If nonzero, do not insert prefix.
+    logical :: log_it
     logical :: My_adv
 
     ! Executable code
@@ -131,9 +132,17 @@ contains
        ! blanks remaining when my_adv is true, they'll be trimmed off.
 
        ! Log the message using the toolkit routine
+       ! (or its substitute)
+       ! if either using toolkit or severity is sufficient to
+       ! quit (which means we might have been called directly
+       ! rather than from output module)
 
        if ( my_adv ) then
-         if( MLSMessageConfig%useToolkit .and. UseSDPToolkit) &
+         log_it = &
+         & (MLSMessageConfig%useToolkit .and. UseSDPToolkit) &
+         & .or. &
+         & severity >= MLSMSG_Severity_to_quit
+         if( log_it ) &
          & dummy = PGS_SMF_GenerateStatusReport&
          & (TRIM(MLSMessageConfig%prefix)// &
               & TRIM(line))
@@ -213,6 +222,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.10  2001/05/14 23:43:59  pwagner
+! Added severity for reason to write to log
+!
 ! Revision 2.9  2001/05/11 23:42:27  pwagner
 ! Prevented unwanted double printing
 !
