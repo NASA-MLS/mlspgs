@@ -79,25 +79,25 @@ contains
     integer :: I              ! Subscript in RC%inst, RC%quant
     integer :: M              ! Subscript in Array of beginning of quantity
     integer :: N              ! Number of elements in a quantity
-    integer :: NB             ! Number of blocks specified by RC, minus 1
-    !                           if RC%Extra
+    integer :: NB             ! Number of blocks specified by RC
 
     call allocate_test ( array, vector%template%totalElements, 'Array', &
       & moduleName )
     m = 1
     nb = rc%nb
-    if ( rc%extra ) nb = nb - 1
     do i = 1, nb
       n = rc%nelts(i)
       array(m:m+n-1) = vector%quantities(rc%quant(i))%values(:,rc%inst(i))
       m = m + n
     end do
-    if ( rc%extra ) array(m) = 1.0 ! So it at least has a value
   end subroutine Biggify_Vector
 
 end module Biggify_M
 
 ! $Log$
+! Revision 2.3  2002/02/02 00:10:16  vsnyder
+! Get rid of 'Extra' component
+!
 ! Revision 2.2  2001/07/19 17:44:02  vsnyder
 ! Add 'update' option
 !
