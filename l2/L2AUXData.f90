@@ -481,7 +481,7 @@ contains ! =====     Public Procedures     =============================
 
   !----------------------------------------------------- WriteL2AUXData ------
 
-  subroutine WriteL2AUXData(l2aux, l2FileHandle, sdName, &
+  subroutine WriteL2AUXData(l2aux, l2FileHandle, returnStatus, sdName, &
     & NoMAFS, WriteCounterMAF)
   ! Write l2aux to the file with l2FileHandle
   ! Optionally, write a bogus CounterMAF sd so the
@@ -492,6 +492,7 @@ contains ! =====     Public Procedures     =============================
     character (len=*), optional, intent(in) :: SDNAME ! Defaults to l2aux%name
     integer, intent(in), optional :: NoMAFS
     logical, intent(in), optional :: WriteCounterMAF  ! Write bogus CounterMAF
+    integer, intent(out) :: returnStatus           ! 0 unless error
 
     ! Local variables
     integer :: NODIMENSIONSUSED         ! No. real dimensions
@@ -568,6 +569,8 @@ contains ! =====     Public Procedures     =============================
         if ( status /= 0 ) then
 		  		call output("dimID: ")
 		  		call output(dimID, advance='yes')
+		  		call output("dim name: ")
+		  		call output(TRIM(dimName), advance='yes')
 		      call announce_error ( 0, &
           & "Error writing dimension scale in l2auxFile:" )
 !		      call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -588,7 +591,12 @@ contains ! =====     Public Procedures     =============================
     call Deallocate_Test(dimSizes,"dimSizes",ModuleName)
     
     ! Terminate access to sd
-    status = sfendacc(sdId)
+    status = sfendacc(sdId)      ! 
+    if ( status /= 0 ) then
+	   call announce_error (0,&
+      & "Error ending access to the sd  " )
+    endif
+    returnStatus = error
     if ( .not. myWriteCounterMAF ) return
     
     ! Now create and write bogus counterMAF array
@@ -616,7 +624,11 @@ contains ! =====     Public Procedures     =============================
     
     ! Terminate access to sd
     status = sfendacc(sdId)
-    
+    if ( status /= 0 ) then
+	   call announce_error (0,&
+      & "Error ending access to the sd  " )
+    endif
+    returnStatus = error
 
   end subroutine WriteL2AUXData
 
@@ -634,7 +646,7 @@ contains ! =====     Public Procedures     =============================
     else
       call output ( '(no lcf node available)' )
     end if
-    call output ( ' OutputAndClose complained: ' )
+    call output ( ' L2AUXData complained: ' )
 
 
     call output ( " Caused the following error: ", advance='yes', &
@@ -653,6 +665,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.23  2002/08/15 21:47:04  pwagner
+! WriteL2AuxData now returns non-zero status if it fails
+!
 ! Revision 2.22  2001/11/01 21:03:59  pwagner
 ! Uses new sfwdata_f90 generic; added toc
 !
