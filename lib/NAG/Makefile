@@ -39,8 +39,14 @@ PGSTK = $(HOME)/mlspgs/SDPToolkit/LF95
 
 include $S/Makefile.inc
 
+machine.o: machine.f90
+	$(F90) -c $(FOPTS) machine.f90
+
 #
 # $Log$
+# Revision 2.3  2000/10/11 18:05:09  vsnyder
+# Put rule for machine.o back in -- it was erroneously deleted
+#
 # Revision 2.2  2000/10/10 22:44:26  vsnyder
 # Correct actions for test_sparsify and test_multiply
 #
