@@ -62,7 +62,7 @@ INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S -I $(libdir)
 
 # Currently MatrixModule_n compile only under Lahey's LF95
 # RettrievalModule needs MatrixModule_1.o
-RETRIEVAL_OBJS = RetrievalModule.o
+RETRIEVAL_OBJS = RetrievalModule.o ForwardModelInterface.o
 
 #SDP =SDPToolkitSubstitute.o
 #GD=GDapi.o
@@ -90,6 +90,9 @@ RETRIEVAL_OBJS = RetrievalModule.o
 l_specials = 
 
 # $Log$
+# Revision 1.7  2001/01/23 19:08:57  pwagner
+# Defines Retrieval_OBJS
+#
 # Revision 1.6  2000/11/18 00:16:39  pwagner
 # Now links on sun (pencil)
 #
