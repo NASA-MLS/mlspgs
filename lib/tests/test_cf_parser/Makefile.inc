@@ -10,8 +10,6 @@
 # I = option to tell compiler path to includes and .mod files (usually -I)
 # M = path to MLS library's .mod files and libmls.a
 # MLS = path to MLS library's source files
-# PLATFORM = The "platform" part of the path to HDF and HDFEOS libraries,
-#            e.g. linux, sgi or sun5.
 # S = path to source files
 # SDP = "Substitute" or empty -- used as: SDPToolkit$(SDP).o
 # TOOLKIT = Beginning of path to HDFEOS's GCT library, and to HDF's libraries,
@@ -28,30 +26,32 @@ OBJLIB = $M/declaration_table.o $M/error_handler.o     $M/expr_m.o \
          $M/toggles_core.o      $M/trace_m.o           $M/tree.o \
          $M/tree_types.o        $M/units.o
 
+L = $(MLS)/..
+
 # These are used to make tar, which is from the parent of $(MLS):
-SRCLIB = lib/declaration_table.f90 lib/error_handler.f90     lib/expr_m.f90 \
-         lib/hash.f90              lib/intrinsic.f90         lib/io_stuff.f90 \
-         lib/lexer_core.f90        lib/lexer_m.f90           lib/machine.f90 \
-         lib/MLSCF.f90             lib/MLSMessageModule.f90  lib/output_m.f90 \
-         lib/parser.f90            lib/string_table.f90      lib/symbol_table.f90 \
-         lib/symbol_types.f90      lib/table_dumper.f90      lib/table_generator.f90 \
-         lib/toggles_core.f90      lib/trace_m.f90           lib/tree.f90 \
-         lib/tree_types.f90        lib/units.f90
+LIBSRC = $L/declaration_table.f90 $L/error_handler.f90     $L/expr_m.f90 \
+         $L/hash.f90              $L/intrinsic.f90         $L/io_stuff.f90 \
+         $L/lexer_core.f90        $L/lexer_m.f90           $L/machine.f90 \
+         $L/MLSCF.f90             $L/MLSMessageModule.f90  $L/output_m.f90 \
+         $L/parser.f90            $L/string_table.f90      $L/symbol_table.f90 \
+         $L/symbol_types.f90      $L/table_dumper.f90      $L/table_generator.f90 \
+         $L/toggles_core.f90      $L/trace_m.f90           $L/tree.f90 \
+         $L/tree_types.f90        $L/units.f90
 
 # Files that must be compiled here from sources in the application:
  
 OBJ_L2 = init_tables_module.o
 
-# These are used to make tar, which is from the parent of $(MLS):
-SRC_L2 = l2/init_tables_module.f90
+# These are used to make tar, which is done from the parent of $(MLS):
+SRC_L2 = $A/init_tables_module.f90
 
-# Files that must be compiled here from sources in lib, because
+# Files that must be compiled here from sources in $(srclib), because
 # they depend on init_tables_module:
 
 OBJ_SRC_LIB = getCF_m.o tree_checker.o
 
 # These are used to make tar, which is from the parent of $(MLS):
-SRC_LIB = lib/getCF_m.f90 lib/tree_checker.f90
+SRC_LIB = $(srclib)/getCF_m.f90 $(srclib)/tree_checker.f90
 
 all: test
 
@@ -98,10 +98,13 @@ clean:
 tar:
 	rm -f $S/parser.tgz
 	cd $(MLS)/.. ; \
-	tar hcvzf lib/test_cf_parser/parser.tgz $(SRCLIB) $(SRC_L2) \
+	tar hcvzf lib/test_cf_parser/parser.tgz $(LIBSRC) $(SRC_L2) \
           $(SRC_LIB) lib/test_cf_parser/*
 
 # $Log$
+# Revision 1.1  2000/10/20 23:36:54  pwagner
+# moved to test directory
+#
 # Revision 1.1  2000/10/11 20:54:39  vsnyder
 # Initial addition
 #
