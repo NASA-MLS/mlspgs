@@ -370,7 +370,7 @@ contains ! =====     Public procedures     =============================
              l+l_cloudWater, l+l_columnabundance, &
              l+l_dnwt_ajn, l+l_dnwt_axmax, l+l_dnwt_cait, &
              l+l_dnwt_diag, l+l_dnwt_dxdx, l+l_dnwt_dxdxl, &
-             l+l_dnwt_dxn, l+l_dnwt_dxnl, l+l_dnwt_fnmin, &
+             l+l_dnwt_dxn, l+l_dnwt_dxnl, l+l_dnwt_flag, l+l_dnwt_fnmin, &
              l+l_dnwt_fnorm, l+l_dnwt_gdx, l+l_dnwt_gfac, &
              l+l_dnwt_gradn, l+l_dnwt_sq, l+l_dnwt_sq, l+l_dnwt_sqt,&
              l+l_earthRefl, l+l_effectiveOpticalDepth, l+l_elevOffset, &
@@ -698,7 +698,7 @@ contains ! =====     Public procedures     =============================
       begin, s+s_snoop, &
              begin, f+f_comment, t+t_string, n+n_field_type, &
              begin, f+f_level, t+t_numeric, n+n_field_type, &
-             nd+n_spec_def, &
+             ndp+n_spec_def, &
       begin, s+s_dumpblocks, &
              begin, f+f_matrix, s+s_matrix, nr+n_field_spec, &
              begin, f+f_rowQuantity, s+s_quantity, nr+n_field_spec, &
@@ -800,6 +800,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.170  2001/10/05 20:17:36  vsnyder
+! Disallow positional arguments on Snoop; add DNWT_FLAG quantity
+!
 ! Revision 2.169  2001/10/05 01:19:03  vsnyder
 ! Added 'level' field to Snoop spec
 !
