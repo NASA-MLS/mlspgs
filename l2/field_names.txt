@@ -181,6 +181,7 @@ lowBound # for the state vector during retrieval
 lowerOverlap
 lsb
 lsbFraction
+lsbPFAMolecules
 
 manipulation
 mask
@@ -240,7 +241,6 @@ overlaps
 packed
 perturbation
 pfaData
-pfaMolecules
 phaseName
 phiTan
 phiWindow
@@ -356,6 +356,7 @@ unit
 upperOverlap
 usb
 usbFraction
+usbPFAMolecules
 
 values
 vector
@@ -375,6 +376,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.138  2005/01/27 21:07:53  vsnyder
+# Add [LU]SBPFAMolecules, delete PFAMolecules
+#
 # Revision 2.137  2004/12/31 02:42:21  vsnyder
 # Add 'file' field
 #
