@@ -359,7 +359,7 @@ program MLSL2
     if ( status /= 0 ) then
       L2CF_file = trim(line) // L2CFNAMEEXTENSION
       open ( l2cf_unit, file=trim(line) // L2CFNAMEEXTENSION, status='old', &
-        & form='formatted', access='sequential', iostat=status )
+        & form='formatted', access='sequential', recl=recl, iostat=status )
     end if
     if ( status /= 0 ) then
       call io_error ( "While opening L2CF", status, line )
@@ -579,6 +579,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.74  2002/05/24 17:27:18  pwagner
+! Added recl=recl to second-chance open of l2cf
+!
 ! Revision 2.73  2002/05/23 20:57:57  vsnyder
 ! Add --recl option, some cosmetic changes
 !
