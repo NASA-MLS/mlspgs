@@ -96,7 +96,8 @@ contains ! =====     Public Procedures     =============================
       & L_XYZ, L_ZETA
     ! Now the specifications:
     use INIT_TABLES_MODULE, only: S_DESTROY, S_DUMP, S_FILL, S_FILLCOVARIANCE, &
-      & S_FILLDIAGONAL, S_FLUSHL2PCBINS, S_MATRIX,  S_NEGATIVEPRECISION, S_SNOOP, S_TIME, &
+      & S_FILLDIAGONAL, S_FLUSHL2PCBINS, S_MATRIX,  S_NEGATIVEPRECISION, &
+      & S_PHASE, S_SNOOP, S_TIME, &
       & S_TRANSFER, S_VECTOR, S_SUBSET, S_FLAGCLOUD, S_RESTRICTRANGE, S_UPDATEMASK
     ! Now some arrays
     use Intrinsic, only: FIELD_INDICES
@@ -124,7 +125,7 @@ contains ! =====     Public Procedures     =============================
     use MLSFiles, only: mls_hdf_version, HDFVERSION_5, &
       & ERRORINH5FFUNCTION, WRONGHDFVERSION
     use MLSL2Options, only: LEVEL1_HDFVERSION
-    use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
+    use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, add_to_phase_timing
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate, MLSMSG_Deallocate
     use MLSNumerics, only: InterpolateValues, Hunt
     use MLSRandomNumber, only: drang, mls_random_seed, MATH77_RAN_PACK
@@ -137,7 +138,7 @@ contains ! =====     Public Procedures     =============================
     use RHIFromH2O, only: RHIFromH2O_Factor, RHIPrecFromH2O
     use ScanModelModule, only: GetBasisGPH, Get2DHydrostaticTangentPressure, GetGPHPrecision
     use SnoopMLSL2, only: SNOOP
-    use String_Table, only: Display_String
+    use String_Table, only: Display_String, get_string
     use SubsetModule, only: SETUPSUBSET, SETUPFLAGCLOUD, RESTRICTRANGE, UPDATEMASK
     use Time_M, only: Time_Now
     use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
@@ -372,6 +373,7 @@ contains ! =====     Public Procedures     =============================
     real(rv) :: OFFSETAMOUNT            ! For offsetRadiance
     integer :: ORBITINCLINATIONVECTORINDEX ! In the vector database
     integer :: ORBITINCLINATIONQUANTITYINDEX ! In the quantities database
+    character(len=80) :: PHASESTRING    ! E.g., 'Core'
     integer :: PHITANVECTORINDEX        ! In the vector database
     integer :: PHITANQUANTITYINDEX      ! In the quantities database
     real(r8) :: PHIWINDOW               ! For hydrostatic ptan guesser
@@ -1708,7 +1710,7 @@ contains ! =====     Public Procedures     =============================
           call DestroyMatrix ( matrices(matrixToKill) )
         end if
 
-      case ( s_negativePrecision ) ! ===============================  Transfer ==
+      case ( s_negativePrecision ) ! =======================  negativePrecision ==
         ! Here we're on a setNegative instruction
         ! Loop over the instructions
         skipMask = .false.
@@ -1748,6 +1750,11 @@ contains ! =====     Public Procedures     =============================
             end where
           end do
         end if
+      
+      case ( s_phase ) ! ===============================  Phase ==
+        ! Set the name for this phase
+        call get_string(vectorname, phaseString)
+        call add_to_phase_timing(trim(phaseString))
       
       case ( s_transfer ) ! ===============================  Transfer ==
         ! Here we're on a transfer instruction
@@ -6046,6 +6053,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.245  2003/10/22 21:17:06  pwagner
+! aPhaseName: Phase added to Fill, Construct sections to time phases
+!
 ! Revision 2.244  2003/10/15 23:12:08  livesey
 ! Added ResetUnusedRadiances
 !
