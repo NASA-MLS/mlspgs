@@ -76,8 +76,8 @@ contains ! =====     Public Procedures     =============================
     ! Now the literals:
     use INIT_TABLES_MODULE, only: L_ADDNOISE, L_BINMAX, L_BINMEAN, L_BINMIN, L_BINTOTAL, &
       & L_BOUNDARYPRESSURE, L_BOXCAR, L_CHISQBINNED, L_CHISQCHAN, &
-      & L_CHISQMMAF, L_CHISQMMIF, L_CHOLESKY, &
-      & L_cloudice, L_cloudextinction, L_cloudInducedRADIANCE, L_COLUMNABUNDANCE, &
+      & L_CHANNEL, L_CHISQMMAF, L_CHISQMMIF, L_CHOLESKY, &
+      & L_cloudice, L_cloudextinction, L_cloudInducedRADIANCE, L_COMBINECHANNELS, L_COLUMNABUNDANCE, &
       & L_ECRTOFOV, L_ESTIMATEDNOISE, L_EXPLICIT, L_FOLD, L_GEODALTITUDE, &
       & L_GPH, L_GPHPRECISION, L_GRIDDED, L_H2OFROMRHI, &
       & L_HEIGHT, L_HYDROSTATIC, L_ISOTOPE, L_ISOTOPERATIO, &
@@ -688,7 +688,7 @@ contains ! =====     Public Procedures     =============================
         end do
         if ( got ( f_matrix ) ) then
           if ( got ( f_vector ) ) call Announce_Error ( key, 0, &
-            & 'Cannot adopt both vector and matrix' )
+            & 'Cannot load both vector and matrix' )
           call GetFromMatrixDatabase ( matrices(matrixToFill), matrix )
           call LoadMatrix ( matrix, binName, message )
         else if ( got ( f_vector ) ) then
@@ -1106,6 +1106,14 @@ contains ! =====     Public Procedures     =============================
             & 'Must supply width for boxcar fill' )
           call FillWithBoxcarFunction ( key, quantity, sourceQuantity, width, &
             & boxCarMethod )
+
+        case ( l_combineChannels )
+          if ( .not. got ( f_sourceQuantity ) ) &
+            & call Announce_Error ( key, 0, &
+            & 'Need source quantity for combine channels fill' )
+          sourceQuantity => GetVectorQtyByTemplateIndex( &
+            & vectors(sourceVectorIndex), sourceQuantityIndex )
+          call FillWithCombinedChannels ( key, quantity, sourceQuantity )
 
         case ( l_estimatedNoise ) ! ----------- Fill with estimated noise ---
           if (.not. all(got( (/ f_radianceQuantity, &
@@ -6418,6 +6426,81 @@ contains ! =====     Public Procedures     =============================
       quantity%values(1,:) = 1.0 - tanh ( sourceQuantity%values(surface,:) / scale )
     end subroutine FillQualityFromChisq
 
+    ! -------------------------------------- FillWithCombinedChannels ----------
+    subroutine FillWithCombinedChannels ( key, quantity, sourceQuantity )
+      ! This routine takes a (typically radiance) quantity on one set of channels
+      ! and combines the channels together appropriately to make them representative
+      ! of the data in another (presumably at a finer resolution.
+      integer, intent(in) :: KEY        ! Tree node
+      type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
+      type (VectorValue_T), intent(in) :: SOURCEQUANTITY ! Quantitiy on finer(?) channel grid
+      ! Local variables
+      type (Signal_T) :: signal, sourceSignal
+      integer :: COUT, CIN              ! Channel counters
+      integer :: SURF                   ! Loop counter
+      real(r8) :: CENTER, HALFWIDTH     ! Channel locations
+      integer, dimension(:), pointer :: NOINSIDE ! Number of channels that were caught
+
+      ! Do some sanity checking
+      if ( .not. DoVGridsMatch ( quantity, sourceQuantity ) ) &
+        & call Announce_Error ( key, no_error_code, 'Quantities must have matching vGrids' )
+      if ( .not. DoHGridsMatch ( quantity, sourceQuantity ) ) &
+        & call Announce_Error ( key, no_error_code, 'Quantities must have matching hGrids' )
+
+      if ( quantity%template%signal == 0 .or. &
+        &  quantity%template%frequencyCoordinate /= l_channel ) &
+        & call Announce_Error ( key, no_error_code, 'Quantity must have channels' )
+      if ( sourceQuantity%template%signal == 0 .or. &
+        &  sourceQuantity%template%frequencyCoordinate /= l_channel ) &
+        & call Announce_Error ( key, no_error_code, 'source quantity must have channels' )
+
+      signal = GetSignal ( quantity%template%signal )
+      sourceSignal = GetSignal ( sourceQuantity%template%signal )
+
+      if ( signal%radiometer /= sourceSignal%radiometer ) &
+        & call Announce_Error ( key, no_error_code, 'quantities must be from same radiometer' )
+
+      nullify ( noInside )
+      call Allocate_test ( noInside, quantity%template%noChans, 'noInside', ModuleName )
+
+      ! Do a quick first pass to get the numbers in each output channel
+      do cOut = 1, quantity%template%noChans
+        ! Work out where this output channel is
+        center = signal%centerFrequency + signal%direction * signal%frequencies ( cOut )
+        halfWidth = signal%frequencies ( cOut )
+        ! Now map this back into sourceSignal%frequencies
+        center = ( center - sourceSignal%centerFrequency ) * sourceSignal%direction
+        noInside(cOut) = count ( &
+          & ( sourceSignal%frequencies >= ( center - halfWidth ) ) .and. &
+          & ( sourceSignal%frequencies < ( center + halfWidth ) ) )
+      end do
+      if ( any ( noInside == 0 ) ) call Announce_Error ( key, no_error_code, &
+        & 'Some channels have no source' )
+
+      ! Loop over the channels in the result
+      do cOut = 1, quantity%template%noChans
+        ! Work out where this output channel is
+        center = signal%centerFrequency + signal%direction * signal%frequencies ( cOut )
+        halfWidth = signal%frequencies ( cOut )
+        ! Now map this back into sourceSignal%frequencies
+        center = ( center - sourceSignal%centerFrequency ) * sourceSignal%direction
+        ! Use nested loops to make the code easier to read, rather than complicated indexing
+        do cIn = 1, sourceQuantity%template%noChans
+          if ( ( sourceSignal%frequencies(cIn) >= ( center - halfWidth ) ) .and. &
+            &  (  sourceSignal%frequencies(cIn) < ( center + halfWidth ) ) ) then
+            do surf = 0, quantity%template%noSurfs - 1 ! 0..n-1 makes indexing easier
+              quantity%values ( cOut + surf * quantity%template%noChans, : ) = &
+                & quantity%values ( cOut +  surf * quantity%template%noChans, : ) + &
+                & sourceQuantity%values ( cIn + surf * sourceQuantity%template%noChans, : ) / &
+                &   noInside(cOut)
+            end do
+          end if
+        end do
+      end do
+      
+      call Deallocate_test ( noInside, 'noInside', ModuleName )
+    end subroutine FillWithCombinedChannels
+
     ! ----------------------------------------------- offsetradiancequantity ---
     subroutine OffsetRadianceQuantity ( quantity, radianceQuantity, amount )
       type (VectorValue_T), intent(inout) :: QUANTITY
@@ -6754,6 +6837,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.263  2004/03/22 18:25:25  livesey
+! Added CombineChannels fill (may actually replace this before too long).
+!
 ! Revision 2.262  2004/03/18 17:41:31  livesey
 ! Bug fix in quality fill.
 !
