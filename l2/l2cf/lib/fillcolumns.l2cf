@@ -3,9 +3,10 @@
 begin Fill
 
    ;; Fill the tropopause
-   Fill, quantity=aColumn.tpPressure, method=explicit, $
-    explicitValues=100mb, /spread
- !define(TropoName, {wmo tropopause})
+  !ifdef(tpPressure,{},{!define(tpPressure,100mb)})
+    Fill, quantity=state.tpPressure, method=explicit, $
+      explicitValues=!tpPressure, /spread
+  !define(TropoName, {wmo tropopause})
 
 end Fill
 
@@ -14,8 +15,8 @@ end Fill
 begin Fill
 
   !define(columnFill,{
-   Fill, quantity=aColumn.column_$1, method=special, vmrQuantity=$2.$1, $
-      boundaryPressure=aColumn.$3!dnl
+   Fill, quantity=state.column_$1, method=special, vmrQuantity=$2.$1, $
+      boundaryPressure=state.$3!dnl
 })!dnl
   !columnFill(bro,state,tpPressure)
   !columnFill(ch3cn,state,tpPressure)
