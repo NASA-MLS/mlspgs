@@ -219,7 +219,8 @@ contains
     integer :: offset
     logical :: myStrip
     character (len=1) :: firstChar, lastChar
-    
+
+    call test_string ( string, 'Display_String' )
     myStrip=.false.
     if (present(strip)) myStrip=strip
 
@@ -251,6 +252,7 @@ contains
   ! Return the FLOAT value of a string indexed by STRING
     integer, intent(in) :: STRING
     character(len=30) :: MY_CHAR
+    call test_string ( string, 'Float_Value' )
     call get_value ( &
       transfer(char_table(strings(string-1)+1:strings(string)), my_char), &
       strings(string) - strings(string-1) )
@@ -450,6 +452,7 @@ contains
   ! Return the numerical value of a string indexed by STRING
     integer, intent(in) :: STRING
     character(len=30) :: MY_CHAR
+    call test_string ( string, 'Numerical_Value' )
     call get_value ( &
       transfer(char_table(strings(string-1)+1:strings(string)), my_char), &
       strings(string) - strings(string-1) )
@@ -609,6 +612,9 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.5  2001/04/11 21:54:26  vsnyder
+! Put in more bounds checking
+!
 ! Revision 2.4  2001/04/05 00:54:59  vsnyder
 ! Correct 'increase table sizes automatically' code
 !
