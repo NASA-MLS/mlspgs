@@ -70,9 +70,12 @@ INC_PATHS = $(EXTRA_PATHS) -I $(PGSINC) -I $(srclib) -I $S -I $(libdir)\
 	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
 
 #Special load libraries
-l_specials = 
+l_specials = -lPGSTK.sv3
 
 # $Log$
+# Revision 1.2  2001/08/15 23:12:09  pwagner
+# Default rules for .f and .c; EXTRA_PATHS added to INC_PATHS
+#
 # Revision 1.1  2001/07/24 20:51:58  pwagner
 # First commit
 #
