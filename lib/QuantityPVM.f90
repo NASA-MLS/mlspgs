@@ -1,12 +1,12 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
 
 module QuantityPVM                      ! Send and receive vector quantities using pvm
   ! This module provides functionality for sending and receiving vectors
   ! through a pvm connection.
 
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use PVM, only: PVMDATADEFAULT, PVMFINITSEND, PVMFSEND, PVMERRORMESSAGE, &
+  use PVM, only: PVMDATADEFAULT, PVMFINITSEND, PVMFSEND, &
     & PVMFRECV
   use PVMIDL, only: PVMIDLPACK, PVMIDLUNPACK
   use MorePVM, only: PVMPackLitIndex, PVMPackStringIndex, &
@@ -16,7 +16,7 @@ module QuantityPVM                      ! Send and receive vector quantities usi
   use MLSCommon, only: R8
   use Intrinsic, only: LIT_INDICES
   use MLSSignals_m, only: GETSIGNALNAME
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, PVMERRORMESSAGE
   use QuantityTemplates, only: QUANTITYTEMPLATE_T, SETUPNEWQUANTITYTEMPLATE
   use Dump_0, only: DUMP
   use VectorsModule, only: CREATEMASKARRAY
@@ -423,6 +423,9 @@ contains ! ================================== Module procedures ============
 end module QuantityPVM
 
 ! $Log$
+! Revision 2.19  2005/03/15 23:48:55  pwagner
+! PVMERRORMESSAGE now part of MLSMessageModule
+!
 ! Revision 2.18  2003/07/07 20:28:53  livesey
 ! Removed a print statement
 !

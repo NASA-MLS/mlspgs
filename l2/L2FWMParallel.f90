@@ -1,5 +1,5 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
 
 module L2FWMParallel
   ! This module is an alternative approach to parallel processing in
@@ -45,12 +45,12 @@ contains
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_test
     use Chunks_m, only: MLSChunk_T
     use L2ParInfo, only: PARALLEL, GETMACHINENAMES, MACHINENAMELEN, &
-      & SLAVEARGUMENTS, SIG_REGISTER, INFOTAG, NOTIFYTAG, GETNICETIDSTRING
+      & SLAVEARGUMENTS, SIG_REGISTER, NOTIFYTAG, GETNICETIDSTRING
     use Machine, only: SHELL_COMMAND
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, PVMERRORMESSAGE
     use MLSSets, only: FINDFIRST
     use Output_m, only: Output
-    use PVM, only: MYPVMSPAWN, PVMFCATCHOUT, PVMERRORMESSAGE, &
+    use PVM, only: INFOTAG, MYPVMSPAWN, PVMFCATCHOUT, &
       & PVMFBUFINFO, PVMF90UNPACK, PVMFINITSEND, PVMFSEND, PVMF90PACK, &
       & PVMTASKHOST, PVMTASKEXIT, PVMRAW
     use Toggles, only: SWITCHES
@@ -170,13 +170,14 @@ contains
     use ForwardModelConfig, only: FORWARDMODELCONFIG_T, DESTROYFWMCONFIGDATABASE, &
       & PVMUNPACKFWMCONFIG
     use ForwardModelIntermediate, only: FORWARDMODELINTERMEDIATE_T, FORWARDMODELSTATUS_T
-    use L2ParInfo, only: PARALLEL, SIG_FINISHED, SIG_NEWSETUP, SIG_RUNMAF, INFOTAG, &
+    use L2ParInfo, only: PARALLEL, SIG_FINISHED, SIG_NEWSETUP, SIG_RUNMAF, &
       & SIG_SENDRESULTS, NOTIFYTAG
     use MorePVM, only: PVMUNPACKSTRINGINDEX
-    use PVM, only: PVMERRORMESSAGE, PVMFINITSEND, &
+    use PVM, only: INFOTAG, PVMFINITSEND, &
       & PVMF90UNPACK, PVMRAW, PVMFFREEBUF
     use PVMIDL, only: PVMIDLUNPACK, PVMIDLPACK
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate, &
+      & PVMERRORMESSAGE
     use MatrixModule_0, only: M_Absent, M_Banded, M_Column_Sparse, M_Full, MatrixElement_T
     use MatrixModule_1, only: Matrix_T, CREATEEMPTYMATRIX, CLEARMATRIX, &
       & DESTROYMATRIX
@@ -434,9 +435,10 @@ contains
     use VectorsModule, only: VECTOR_T
     use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
     use MatrixModule_1, only: MATRIX_T
-    use PVM, only: PVMERRORMESSAGE, PVMFFREEBUF
+    use MLSMessageModule, only: PVMERRORMESSAGE
+    use PVM, only: INFOTAG, PVMFFREEBUF
     use PVMIDL, only: PVMIDLUNPACK
-    use L2ParInfo, only: INFOTAG, GETNICETIDSTRING
+    use L2ParInfo, only: GETNICETIDSTRING
     use MatrixModule_1, only: CREATEBLOCK
     use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, MATRIXELEMENT_T
     use Toggles, only: SWITCHES
@@ -507,9 +509,10 @@ contains
   ! ----------------------------------------------- RequestSlavesOutput ---
   subroutine RequestSlavesOutput ( maf )
     ! The master uses this routine to ask a slave to pack its output up
-    use PVM, only: PVMFINITSEND, PVMF90PACK, PVMFSEND, &
-      & PVMERRORMESSAGE, PVMRAW
-    use L2ParInfo, only: PARALLEL, SIG_SENDRESULTS, INFOTAG, GETNICETIDSTRING
+    use MLSMessageModule, only: PVMERRORMESSAGE
+    use PVM, only: INFOTAG, PVMFINITSEND, PVMF90PACK, PVMFSEND, &
+      & PVMRAW
+    use L2ParInfo, only: PARALLEL, SIG_SENDRESULTS, GETNICETIDSTRING
     use Toggles, only: SWITCHES
     use Output_m, only: OUTPUT
     integer, intent(in) :: MAF
@@ -538,10 +541,11 @@ contains
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use ForwardModelConfig, only: FORWARDMODELCONFIG_T, PVMPACKFWMCONFIG
     use VectorsModule, only: VECTOR_T
-    use PVM, only: PVMFINITSEND, PVMERRORMESSAGE, PVMF90PACK, &
+    use MLSMessageModule, only: PVMERRORMESSAGE
+    use PVM, only: INFOTAG, PVMFINITSEND, PVMF90PACK, &
       & PVMFBCAST, PVMRAW, PVMFFREEBUF
     use PVMIDL, only: PVMIDLPACK, PVMIDLUNPACK
-    use L2ParInfo, only: SIG_NEWSETUP, FWMSLAVEGROUP, INFOTAG
+    use L2ParInfo, only: SIG_NEWSETUP, FWMSLAVEGROUP
     use QuantityPVM, only: PVMSENDQUANTITY
     use MorePVM, only: PVMPACKSTRINGINDEX
     use Toggles, only: SWITCHES
@@ -681,10 +685,10 @@ contains
   subroutine TriggerSlaveRun ( state, maf )
     ! This routine is used by the master to launch one run
     use VectorsModule, only: VECTOR_T
-    use PVM, only: PVMFINITSEND, PVMFSEND, PVMRAW, PVMF90PACK, &
-      & PVMErrorMessage
+    use MLSMessageModule, only: PVMERRORMESSAGE
+    use PVM, only: INFOTAG, PVMFINITSEND, PVMFSEND, PVMRAW, PVMF90PACK
     use PVMIDL, only: PVMIDLPACK
-    use L2ParInfo, only: SIG_RUNMAF, INFOTAG, GETNICETIDSTRING
+    use L2ParInfo, only: SIG_RUNMAF, GETNICETIDSTRING
     use Toggles, only: SWITCHES
     use Output_m, only: OUTPUT
     type (Vector_T), intent(in) :: STATE
@@ -733,9 +737,9 @@ contains
   ! ================================================ Private procedures
 
   subroutine IntelligentPVMFRecv ( tid, tag, bufferID )
-    use PVM, only: PVMFRECV, PVMERRORMESSAGE
     use L2PARINFO, only: NOTIFYTAG
-    use MLSMessageModule, only: MLSMSG_ERROR, MLSMESSAGE
+    use MLSMessageModule, only: MLSMSG_ERROR, MLSMESSAGE, PVMERRORMESSAGE
+    use PVM, only: PVMFRECV
     ! Dummy arguments
     integer, intent(in) :: TID
     integer, intent(in) :: TAG
@@ -763,6 +767,9 @@ contains
 end module L2FWMParallel
 
 ! $Log$
+! Revision 2.19  2005/03/15 23:50:15  pwagner
+! PVMERRORMESSAGE now part of MLSMessageModule
+!
 ! Revision 2.18  2004/06/10 00:58:45  vsnyder
 ! Move FindFirst, FindNext from MLSCommon to MLSSets
 !
