@@ -49,13 +49,14 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
   end interface
 
   type DirectData_T
-    integer :: type ! l_l2aux or l_l2gp  ! should be at least L2GPNameLen
-    integer :: fileIndex  ! Index into character tables nonsense
-    integer :: Handle     ! Some bit of toolkit foolishness
-    integer :: NSDNames
-    character(len=80), dimension(:), pointer :: sdNames => null()
+    integer :: type       ! l_l2aux or l_l2gp
+    integer :: autoType   ! 0 if not to be filled automatically, else type
+    integer :: fileIndex  ! Index into character tables
+    integer :: Handle     ! Set by toolkit
+    integer :: NSDNames   ! How many sources
+    character(len=80), dimension(:), pointer :: sdNames => null() ! source names
     character(len=1024) :: fileNameBase ! E.g., 'H2O'
-    character(len=1024) :: fileName ! E.g., '/data/../MLS..H2O..'
+    character(len=1024) :: fileName ! E.g., '/data/../MLS..H2O...he5'
   end type DirectData_T
   logical, parameter :: DEEBUG = .false.
   ! For Announce_Error
@@ -537,6 +538,12 @@ contains ! ======================= Public Procedures =========================
     else
       call output ( '(unknown)', advance='yes')
     endif
+    if ( directWrite%autoType < 1 ) then
+      call output ( '(Is not', advance='no')
+    else
+      call output ( '(Is', advance='no')
+    endif
+    call output ('( eligible to be auto-filled)', advance='yes' )
     call output ( 'Handle  : ')
     call output ( directWrite%Handle, advance='yes' )
     call output ( 'Num sci. datasets  : ')
@@ -664,8 +671,8 @@ contains ! ======================= Public Procedures =========================
     type (DirectData_T), intent(inout)  :: directData
     integer, intent(in) :: NsdNames            ! Dimensions
 
-    ! Local variables
     ! Allocate the sdNames
+    directData%autoType = 0
     directData%NSDNames = NSDNames
     nullify(directData%sdNames)
     if ( NSDNames <= 0 ) return
@@ -839,6 +846,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.17  2004/01/23 01:09:48  pwagner
+! Only directwrite files entered in global settings eligible to be auto-sourced
+!
 ! Revision 2.16  2004/01/22 06:38:26  livesey
 ! Typo fix
 !
