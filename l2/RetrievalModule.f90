@@ -1117,7 +1117,7 @@ contains
             call output ( v(candidateDX) .dot. v(candidateDX), advance='yes' )
             call MLSMessage ( MLSMSG_Warning, ModuleName, &
               & 'Norm of residual is imaginary!' )
-            aj%fnmin = sqrt ( tiny ( aj%fnmin ) )
+            aj%fnmin = tiny ( aj%fnmin )
           end if
           aj%fnmin = sqrt(aj%fnmin)
           aj%fnorm = sqrt(aj%fnorm)
@@ -1177,7 +1177,19 @@ contains
           call add_to_retrieval_timing( 'cholesky_solver', t1 )
           call time_now ( t1 )
           ! aj%fnorm is now the norm of f, not its square.
-          aj%fnmin = sqrt(aj%fnorm**2 - (v(candidateDX) .dot. v(candidateDX)) )
+          aj%fnmin = aj%fnorm**2 - (v(candidateDX) .dot. v(candidateDX))
+          if ( aj%fnmin < 0.0 ) then
+            call output ( 'How can aj%fnmin be negative?  aj%fnmin = ' )
+            call output ( aj%fnmin, advance='yes' )
+            call output ( 'aj%fnorm = ' )
+            call output ( aj%fnorm, advance='yes' )
+            call output ( 'norm(candidateDX) = ' )
+            call output ( v(candidateDX) .dot. v(candidateDX), advance='yes' )
+            call MLSMessage ( MLSMSG_Warning, ModuleName, &
+              & 'Norm of residual is imaginary!' )
+            aj%fnmin = tiny ( aj%fnmin )
+          end if
+          aj%fnmin = sqrt(aj%fnmin)
           call solveCholesky ( factored, v(candidateDX) )
           aj%dxn = sqrt(v(candidateDX) .dot. v(candidateDX)) ! L2Norm(dx)
           aj%gdx = v(gradient) .dot. v(candidateDX)
@@ -2664,6 +2676,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.134  2002/02/13 00:11:13  vsnyder
+! Test fnmin both places it's formed
+!
 ! Revision 2.133  2002/02/12 22:53:21  vsnyder
 ! Update a bunch of comments
 !
