@@ -7,7 +7,7 @@ module ChunkDivide_m
   use EXPR_M, only: EXPR
   use Dumper, only: DUMP
   use Dump_0, only: DUMP
-  use MLSCommon, only: R8, RP, L1BINFO_T, MLSCHUNK_T, TAI93_Range_T
+  use MLSCommon, only: R8, RP, L1BINFO_T, MLSCHUNK_T, TAI93_Range_T, FINDFIRST
   use MLSNumerics, only: Hunt
   use Intrinsic, only: L_NONE, FIELD_INDICES, LIT_INDICES
   use Tree, only: DECORATION, NODE_ID, NSONS, SOURCE_REF, SUBTREE
@@ -171,6 +171,20 @@ contains ! =================================== Public Procedures==============
     include "addItemToDatabase.f9h"
 
   end subroutine AddObstructionToDatabase
+
+  !---------------------------------------- Add chunk to database --
+  subroutine AddChunkToDatabase ( database, item )
+
+    ! Dummy arguments
+    type (MLSChunk_T), dimension(:), pointer :: DATABASE
+    type (MLSChunk_T), intent(in) :: ITEM
+
+    ! Local variables
+    type (MLSChunk_T), dimension(:), pointer :: TEMPDATABASE
+
+    include "addItemToDatabase.f9h"
+
+  end subroutine AddChunkToDatabase
 
   !----------------------------------------- ChunkDivide_Even --------
   subroutine ChunkDivide_Even ( config, mafRange, l1bInfo, &
@@ -347,7 +361,7 @@ contains ! =================================== Public Procedures==============
       
       ! Work out their positions
       do chunk = 1, noChunks
-        chunks(chunk)%lastMAFIndex = home + &
+        chunks(chunk)%lastMAFIndex = homeMAF + &
           & ( chunk - noChunksBelowHome ) * maxLength
       end do
     else
@@ -356,11 +370,11 @@ contains ! =================================== Public Procedures==============
       print*,'M1,M2', m1, m2
       select case ( config%maxLengthFamily )
       case ( PHYQ_Angle )
-        field => tpGeodAngle%dpField(1,1,m1:m2)
+        field => tpGeodAngle%dpField(1,1,:)
         minV = minAngle
         maxV = maxAngle
       case ( PHYQ_Time )
-        field => taiTime%dpField(1,1,m1:m2)
+        field => taiTime%dpField(1,1,:)
         minV = minTime
         maxV = maxTime
       case ( PHYQ_MAFs)
@@ -384,7 +398,7 @@ contains ! =================================== Public Procedures==============
       ! Boundaries are the angles/times at the end of the chunks
       call Allocate_test ( boundaries, noChunks, 'boundaries', ModuleName )
       do chunk = 1, noChunks
-        boundaries(chunk) = field(home) + ( chunk - noChunksBelowHome ) * config%maxLength
+        boundaries(chunk) = homeV + ( chunk - noChunksBelowHome ) * config%maxLength
       end do
       call dump ( boundaries, 'boundaries' )
       call Hunt ( field, boundaries, chunks%lastMAFIndex, &
@@ -436,8 +450,8 @@ contains ! =================================== Public Procedures==============
       newFirstMAFs = newFirstMAFs - 1
       newLastMAFs = newLastMAFs - 1
     end if
-    chunks%noMAFsLowerOverlap = chunks%lastMAFIndex - newLastMAFs
-    chunks%noMAFsUpperOverlap = newFirstMAFs - chunks%firstMAFIndex 
+    chunks%noMAFsLowerOverlap = chunks%firstMAFIndex - newFirstMAFs
+    chunks%noMAFsUpperOverlap = newLastMAFs - chunks%lastMAFIndex
     chunks%firstMAFIndex = newFirstMAFs
     chunks%lastMAFIndex = newLastMAFs
     call Deallocate_test ( newFirstMAFs, 'newFirstMAFs', ModuleName )
@@ -445,7 +459,8 @@ contains ! =================================== Public Procedures==============
 
     ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     ! Now think about the obstructions
-    
+
+    call DealWithObstructions ( chunks, obstructions )
 
     ! Tidy up
     call DeallocateL1BData ( tpGeodAngle )
@@ -684,6 +699,136 @@ contains ! =================================== Public Procedures==============
     end if
   end subroutine ConvertFlagsToObstructions
 
+  ! ----------------------------------- DealWithObstructions ------------
+  subroutine DealWithObstructions ( chunks, obstructions )
+    type (MLSChunk_T), dimension(:), pointer :: CHUNKS
+    type (Obstruction_T), dimension(:), intent(in) :: OBSTRUCTIONS
+
+    ! Local variables
+    type (MLSChunk_T) :: NEWCHUNK       ! A chunk to create
+    integer :: CHUNK                    ! Index of chunk under some consideration
+    integer :: DEADCHUNK                ! Index of chunk to kill
+    integer :: FIRSTMAF                 ! Index of first MAF in range
+    integer :: LASTMAF                  ! Index of last MAF in range
+    integer :: MAF                      ! Index of MAF for wall
+    integer :: OBSTRUCTION              ! Loop counter
+
+    ! Executable code
+
+    do obstruction = 1, size ( obstructions )
+      ! Find chunk where this obstruction is/starts
+      if ( obstructions(obstruction)%range ) then
+        ! A range obstruction
+
+        ! first identify the chunks whose non overlapped portion falls completely
+        ! within the range and delete them
+        firstMAF = obstructions(obstruction)%mafs(1)
+        lastMAF = obstructions(obstruction)%mafs(2)
+        insideRange: do
+          deadChunk = FindFirst ( &
+            & chunks%firstMAFIndex + chunks%noMAFsLowerOverlap >= firstMAF .and. &
+            & chunks%lastMAFIndex - chunks%noMAFsUpperOverlap <= lastMAF )
+          if ( deadChunk == 0 ) exit insideRange
+          call DeleteChunk ( chunks, deadChunk )
+        end do insideRange
+
+        ! Now think about chunks who's non overlapped part completely
+        ! encompas the range, and split them.
+        chunk = FindFirst ( &
+          & ( chunks%firstMAFIndex + chunks%noMAFsLowerOverlap <= firstMAF ) .and. &
+          & ( chunks%lastMAFIndex - chunks%noMAFsUpperOverlap >= lastMAF ) )
+        if ( chunk /= 0 ) then
+          ! Create two new chunks with the wall between, first the lower portion
+          newChunk = chunks ( chunk )
+          newChunk%lastMAFIndex = firstMAF - 1
+          newChunk%noMAFsUpperOverlap = 0
+          if ( newChunk%lastMAFIndex /= newChunk%firstMAFIndex ) &
+            & call AddChunkToDatabase ( chunks, newChunk )
+          ! Now the upper portion
+          newChunk = chunks ( chunk )
+          newChunk%firstMAFIndex = lastMAF + 1
+          newChunk%noMAFsLowerOverlap = 0
+          if ( newChunk%lastMAFIndex /= newChunk%firstMAFIndex ) &
+            & call AddChunkToDatabase ( chunks, newChunk )
+          ! Delete the old chunk
+          call DeleteChunk ( chunks, chunk )
+        endif
+
+        ! So the cases we have left do not involve deleting or creating new
+        ! chunks, just modifying existing ones
+        ! Look for chunks where the range starts in the chunk
+        chunk = FindFirst ( chunks%lastMAFIndex >= firstMAF )
+        if ( chunk /= 0 ) then
+          chunks(chunk)%noMAFsUpperOverlap = max ( 0, &
+            & chunks(chunk)%noMAFsUpperOverlap - &
+            &    ( chunks(chunk)%lastMAFIndex - (firstMAF-1) ) )
+          chunks(chunk)%lastMAFIndex = firstMAF - 1
+        end if
+        ! Look for chunks where the range ends in the chunk
+        chunk = FindFirst ( chunks%firstMAFIndex <= lastMAF )
+        if ( chunk /= 0 ) then
+          chunks(chunk)%noMAFsLowerOverlap = max ( 0, &
+            & chunks(chunk)%noMAFsLowerOverlap - &
+            &    ( (lastMAF+1) - chunks(chunk)%firstMafIndex ) )
+          chunks(chunk)%firstMAFIndex = lastMAF + 1
+        end if
+
+      else ! - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+        ! A wall obstruction
+        maf = obstructions(obstruction)%mafs(1)
+
+        chunk = FindFirst ( &
+          & ( chunks%firstMAFIndex + chunks%noMAFsLowerOverlap <= maf ) .and. &
+          & ( chunks%lastMAFIndex - chunks%noMAFsUpperOverlap >= maf ) )
+
+        if ( chunk /= 0 ) then
+          ! Create two new chunks with the wall between, first the lower portion
+          newChunk = chunks ( chunk )
+          newChunk%lastMAFIndex = maf - 1
+          newChunk%noMAFsUpperOverlap = 0
+          if ( newChunk%lastMAFIndex /= newChunk%firstMAFIndex ) &
+            & call AddChunkToDatabase ( chunks, newChunk )
+          ! Now the upper portion
+          newChunk = chunks ( chunk )
+          newChunk%firstMAFIndex = maf
+          newChunk%noMAFsLowerOverlap = 0
+          if ( newChunk%lastMAFIndex /= newChunk%firstMAFIndex ) &
+            & call AddChunkToDatabase ( chunks, newChunk )
+          ! Now delete the original chunk
+          call DeleteChunk ( chunks, chunk )
+        endif
+
+        ! For chunks where the wall is in the overlap, just make the 
+        ! overlap shorter 
+        ! First the lower overlap
+        chunk = FindFirst ( &
+          & ( chunks%firstMAFIndex <= maf ) .and. &
+          & ( chunks%firstMAFIndex + chunks%noMAFsLowerOverlap - 1 >= maf ) )
+        if ( chunk /= 0 ) then
+          chunks(chunk)%noMAFsLowerOverlap = &
+          & max ( chunks(chunk)%noMAFsLowerOverlap - &
+          & ( maf - chunks(chunk)%firstMAFIndex ), 0 )
+          chunks(chunk)%firstMAFIndex = maf
+        end if
+        ! Now the upper overlap
+        chunk = FindFirst ( &
+          & ( chunks%lastMAFIndex - chunks%noMAFsUpperOverlap + 1 <= maf ) .and. &
+          & ( chunks%lastMAFIndex >= maf ) )
+        if ( chunk /= 0 ) then
+          chunks(chunk)%noMAFsUpperOverlap = &
+          & max ( chunks(chunk)%noMAFsUpperOverlap - &
+          & ( chunks(chunk)%lastMAFIndex - (maf-1) ), 0 )
+          chunks(chunk)%lastMAFIndex = maf - 1
+        end if
+      end if                            ! Wall obstructions
+    end do                              ! Loop over obstructions
+
+    ! Sort the chunks back into order
+    call SortChunks ( chunks )
+
+  end subroutine DealWithObstructions
+
   ! ------------------------------------------- DeleteObstruction -------
   subroutine DeleteObstruction ( obstructions, index )
     ! Dummy arguments
@@ -710,6 +855,33 @@ contains ! =================================== Public Procedures==============
     obstructions => temp
 
   end subroutine DeleteObstruction
+
+  ! ------------------------------------------- DeleteChunk -------
+  subroutine DeleteChunk ( chunks, index )
+    ! Dummy arguments
+    type (MLSChunk_T), pointer, dimension(:) :: CHUNKS
+    integer, intent(in) :: INDEX
+
+    ! Local variables
+    type (MLSChunk_T), pointer, dimension(:) :: TEMP
+    integer :: STATUS                   ! From allocate
+
+    ! Executable code
+    allocate ( temp ( size(chunks) - 1 ), stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate//'temp' )
+
+    if ( index > 1 ) temp(1:index-1) = chunks(1:index-1)
+    if ( index < size(chunks) .and. size(chunks) > 1 ) &
+      & temp(index:) = chunks(index+1:)
+
+    deallocate ( chunks, stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Deallocate//'chunks' )
+
+    chunks => temp
+
+  end subroutine DeleteChunk
 
   ! --------------------------------------- Prune Obstructions ----------
   subroutine PruneObstructions ( obstructions )
@@ -799,7 +971,7 @@ contains ! =================================== Public Procedures==============
 
     ! Executable code
     do i = 1, size(obstructions) - 1
-      toSwap = maxloc ( obstructions(i:)%mafs(1) ) + (/ i-1 /)
+      toSwap = minloc ( obstructions(i:)%mafs(1) ) + (/ i-1 /)
       if ( toSwap(1) /= i ) then
         temp = obstructions(i)
         obstructions(i) = obstructions(toSwap(1))
@@ -807,6 +979,27 @@ contains ! =================================== Public Procedures==============
       end if
     end do
   end subroutine SortObstructions
+
+  ! ----------------------------------------- SortChunks ----------
+  subroutine SortChunks ( chunks )
+    ! Sort the chunks into order of increasing firstMAFIndex
+    type (MLSChunk_T), dimension(:), intent(inout) :: CHUNKS
+
+    ! Local variables
+    type (MLSChunk_T) :: TEMP
+    integer :: I                        ! Loop counters
+    integer, dimension(1) :: TOSWAP     ! Index
+
+    ! Executable code
+    do i = 1, size(chunks) - 1
+      toSwap = minloc ( chunks(i:)%firstMAFIndex ) + (/ i-1 /)
+      if ( toSwap(1) /= i ) then
+        temp = chunks(i)
+        chunks(i) = chunks(toSwap(1))
+        chunks(toSwap(1)) = temp
+      end if
+    end do
+  end subroutine SortChunks
 
   ! ------------------------------------------- SayTime -----------------
   subroutine SayTime
@@ -927,6 +1120,9 @@ contains ! =================================== Public Procedures==============
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.11  2001/11/14 22:33:40  livesey
+! This version seems pretty good.
+!
 ! Revision 2.10  2001/11/14 01:49:12  livesey
 ! Improvements, getting closer
 !
