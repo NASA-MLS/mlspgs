@@ -227,6 +227,11 @@ module PVM ! Interface to the f77 pvm library.
        integer, intent(out) :: info
      end subroutine pvmfbufinfo
 
+     subroutine pvmfkill(tid, info)
+       integer, intent(in) :: tid
+       integer, intent(out) :: info
+     end subroutine pvmfkill
+
      subroutine pvmfsend(tid, msgtag, info)
        integer, intent(in) :: tid
        integer, intent(in) :: msgtag
@@ -579,6 +584,9 @@ contains
 end module PVM
 
 ! $Log$
+! Revision 2.13  2004/04/16 00:44:36  livesey
+! Added pvmfkill
+!
 ! Revision 2.12  2003/01/13 20:58:53  livesey
 ! Added PVMFFreeBuf
 !
