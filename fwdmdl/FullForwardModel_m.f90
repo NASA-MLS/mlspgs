@@ -1791,8 +1791,6 @@ contains ! ================================ FullForwardModel routine ======
 
     ! Deallocate all variables allocated earlier -----------------------------
 
-    if ( maf == noMAFs ) fmStat%finished = .true.
-
     if ( toggle(emit) ) then
       call trace_end ( 'ForwardModel MAF=',fmStat%maf )
     end if
@@ -1802,6 +1800,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
  
 ! $Log$
+! Revision 2.3  2001/09/19 04:38:48  livesey
+! Lines per band stuff works now
+!
 ! Revision 2.2  2001/09/18 02:04:38  livesey
 ! Bug fix with signals/spectroscopy interaction
 !

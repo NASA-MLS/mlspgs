@@ -571,14 +571,15 @@ contains ! =====     Public Procedures     =============================
 
     end do                                ! End of sideband loop
 
-    if ( maf == radiance%template%noInstances ) fmStat%finished = .true.
-
     if ( toggle(emit) ) call trace_end ( 'LinearizedForwardModel' )
 
   end subroutine LinearizedForwardModel
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.0  2001/09/17 20:26:26  livesey
+! New forward model
+!
 ! Revision 1.22  2001/06/04 22:43:26  livesey
 ! Now works when no molecules at all
 !

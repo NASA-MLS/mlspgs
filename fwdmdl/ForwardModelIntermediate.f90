@@ -27,10 +27,8 @@ module ForwardModelIntermediate
   end type ForwardModelIntermediate_T
 
   type, public :: ForwardModelStatus_T
-    logical :: newHydros                ! Need to recompute hydrostatic
     logical :: newScanHydros            ! Scan model needs to recompute hydrostatic
-    integer :: maf                      ! The next maf to process
-    logical :: finished                 ! Flag to calling code to indicate completion
+    integer :: maf                      ! The MAF to process
     logical, dimension(:), pointer :: rows=>NULL() ! Flag to indicate this row has non zeros
   end type ForwardModelStatus_T
 
@@ -66,6 +64,9 @@ contains
 end module ForwardModelIntermediate
 
 ! $Log$
+! Revision 2.0  2001/09/17 20:26:25  livesey
+! New forward model
+!
 ! Revision 1.10.2.3  2001/09/10 10:02:32  zvi
 ! Cleanup..comp_path_entities_m.f90
 !
