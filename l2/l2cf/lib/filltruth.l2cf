@@ -54,17 +54,17 @@ begin Fill
     geocAltitudeQuantity=truth.tngtGeocAltTHz, $
     maxIterations=10
 
-  ;; Compute refracted phitans for apriori
-;   Fill, quantity=truth.phiTanGHz, method=refract, $
-;     ptanQuantity=truth.ptanGHz, $
-;     h2oQuantity=truth.h2o, $
-;     temperatureQuantity=truth.temperature, $
-;     refract=false
-;   Fill, quantity=truth.phiTanTHz, method=refract, $
-;     ptanQuantity=truth.ptanTHz, $
-;     h2oQuantity=truth.h2o, $
-;     temperatureQuantity=truth.temperature, $
-;     refract=false
+  ;; Compute refracted phitans for truth
+  Fill, quantity=truth.phiTanGHz, method=refract, $
+    ptanQuantity=truth.ptanGHz, $
+    h2oQuantity=truth.h2o, $
+    temperatureQuantity=truth.temperature, $
+    refract=false
+  Fill, quantity=truth.phiTanTHz, method=refract, $
+    ptanQuantity=truth.ptanTHz, $
+    h2oQuantity=truth.h2o, $
+    temperatureQuantity=truth.temperature, $
+    refract=false
 
 end Fill
 
