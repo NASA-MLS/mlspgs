@@ -32,7 +32,6 @@ begin Output
 !ifdef(gotDGGs,{
 Output, quantities=[ !undivert(!DGGDivert) ], type=l2gp, $
   file='!outpathl2gp/MLS-Aura_L2GP-DGG_!l2version_!day.he4'})
-HereIAM
 
 ;; Now outpt the DGM file
 !ifdef(gotDGMs,{
