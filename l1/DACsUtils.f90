@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -6,12 +6,14 @@ MODULE DACsUtils
 !=============================================================================
 
   USE MLSL1Utils, ONLY: BigEndianStr
+  USE L1BData, ONLY: L1BData_T, ReadL1BData, DeallocateL1BData
 
   IMPLICIT NONE
 
   PRIVATE
 
   PUBLIC :: ExtractDACSdata, UncompressDACSdata, ProcessDACSdata, InitDACS_FFT
+  PUBLIC :: FinalizeDACSdata
 
   INTEGER :: plan129
 
@@ -428,9 +430,259 @@ CONTAINS
 
   END SUBROUTINE ProcessUnpackedDACS
 
+!=============================================================================
+  SUBROUTINE FinalizeDACSdata
+!=============================================================================
+
+    USE MLSL1Common, ONLY: L1BFileInfo, DACSchans, DACSnum
+    USE MLSCommon, ONLY: rm
+    USE MLSL1Config, ONLY: MIFsGHz, L1Config
+    USE MLS_DataProducts, ONLY: DataProducts_T, Deallocate_DataProducts
+    USE MLSAuxData, ONLY: Build_MLSAuxData
+    USE MLSHDF5, ONLY: IsHDF5DSPresent, MakeHDF5Attribute
+    USE HDF5, ONLY: h5gopen_f
+    USE MatrixModule_0, ONLY: MatrixInversion
+    USE units, ONLY: Pi
+
+    INTEGER :: bno, ch, grp_id, i, Flag, maf, mif, noMAFs, sd_id, status
+    INTEGER, PARAMETER :: rch(2) = (/ 10, 100 /)  ! range of channels
+    INTEGER, PARAMETER :: Nch = (rch(2) - rch(1) + 1)  ! number of "good" chans
+    INTEGER :: Ycount(nch)
+    REAL :: Y(nch)  ! will contain average over + prec and within alt range
+    REAL, POINTER, DIMENSION(:,:) :: alt, sza
+    REAL, POINTER, DIMENSION(:,:,:) :: rad, rad_prec
+    REAL, PARAMETER :: MinAlt = 78000, MaxAlt = 100000 ! Altitude ranges (m)
+ 
+! High altitude model parameters:
+
+    REAL, PARAMETER :: cen(24:25) = (/ 48.384, 51.44 /)
+    REAL, PARAMETER :: dopp(24:25) = (/ 1.667, 2.2 /)
+    REAL, PARAMETER :: spur = (5.0e6 / 7*128 / 1.25e7)
+    REAL, PARAMETER :: f(Nch) = (/ ((i-1), i=rch(1),rch(2)) /)
+    REAL(rm) :: X(4,Nch), Xinv(4,4), Avec(4,24:25), B(4,Nch)
+    REAL :: apod(DACSchans,24:25), spurmag(2,24:25)
+    REAL :: NoiseInflationFactor(24:25)
+    REAL, PARAMETER :: MaxNoiseInflationFactor = 3.0
+    REAL, PARAMETER :: MinSZA(24:25) = (/ 100.0, 0.0 /)
+
+    TYPE (L1BData_T) :: L1BData
+    TYPE (DataProducts_T) :: DACsDS  
+
+    CHARACTER(len=26), PARAMETER :: DACS_Name(24:25) = (/ &
+         "R3:240.B24D:O3.S0.DACS-3  ", "R3:240.B25D:CO.S1.DACS-1  " /)
+
+!=============================================================================
+
+    IF (.NOT. L1Config%Calib%CalibDACS) RETURN   ! Nothing to do
+
+    PRINT *, 'Finalizing DACS data...'
+
+! Initialize attributes:
+
+    apod = 0.0
+    Avec = 0.0
+    spurmag = 0.0
+    NoiseInflationFactor = 0.0
+
+! Get altitude and SZA (GHz):
+
+    sd_id = L1BFileInfo%OAid
+
+    CALL ReadL1BData (sd_id, '/GHz/GeodAlt', L1BData, noMAFs, Flag, &
+         NeverFail=.TRUE., HDFversion=5)
+    ALLOCATE (alt(MIFsGHz,noMAFs))
+    alt = L1BData%DpField(1,:,:)
+    CALL DeallocateL1BData (L1BData)
+
+    CALL ReadL1BData (sd_id, '/GHz/SolarZenith', L1BData, noMAFs, Flag, &
+         NeverFail=.TRUE., HDFversion=5)
+    ALLOCATE (sza(MIFsGHz,noMAFs))
+    sza = L1BData%DpField(1,:,:)
+    CALL DeallocateL1BData (L1BData)
+
+! Set up for HDF output:
+
+    CALL Deallocate_DataProducts (DACsDS)
+    ALLOCATE (DACsDS%Dimensions(3))
+    DACsDS%data_type = 'real'
+    DACsDS%Dimensions(1) = 'chanDACS'
+    DACsDS%Dimensions(2) = 'GHz.MIF             '
+    DACsDS%Dimensions(3) = 'MAF                 '
+
+! get Band 24/25 data:
+
+    sd_id = L1BFileInfo%RADDid
+
+    DO bno = 25, 24, -1
+
+       IF (.NOT. IsHDF5DSPresent (sd_id, TRIM(DACS_Name(bno)))) CYCLE
+
+       DEALLOCATE (rad, stat=status)
+       DEALLOCATE (rad_prec, stat=status)
+       CALL ReadL1BData (sd_id, DACS_Name(bno), L1BData, noMAFs, Flag, &
+            NeverFail=.TRUE., HDFversion=5)
+       ALLOCATE (rad(DACSchans,MIFsGHz,noMAFs))
+       rad = L1BData%DpField(:,:,:)
+       CALL ReadL1BData (sd_id, TRIM(DACS_Name(bno))//' precision', L1BData, &
+            noMAFs, Flag, NeverFail=.TRUE., HDFversion=5)
+       ALLOCATE (rad_prec(DACSchans,MIFsGHz,noMAFs))
+       rad_prec = L1BData%DpField(:,:,:)
+       CALL DeallocateL1BData (L1BData)
+
+! Overwrite channels 110:129 with average of channels 100:110:
+
+       DO maf = 1, noMAFs
+          DO mif = 1, MIFsGHz
+             rad(110:129,mif,maf) = SUM(rad(100:110,mif,maf)) / 11
+          ENDDO
+       ENDDO
+       rad_prec(110:129,:,:) = -1 * ABS(rad_prec(110:129,:,:))  ! Negate precs
+
+! Mean over good, high altitude data:
+
+       Y = 0.0
+       Ycount = 0
+       DO maf = 1, noMAFs
+          DO mif = 1, MIFsGHz
+             IF (alt(mif,maf) >= MinAlt .AND. alt(mif,maf) <= MaxAlt .AND. &
+                  sza(mif,maf) > MinSZA(bno)) THEN
+                DO ch = rch(1), rch(2)  ! channel range
+                   IF (rad_prec(ch,mif,maf) > 0.0) THEN
+                      i = ch - rch(1) + 1
+                      Y(i) = Y(i) + rad(ch,mif,maf)
+                      yCount(i) = yCount(i) + 1
+                   ENDIF
+                ENDDO
+             ENDIF
+          ENDDO
+       ENDDO
+
+       DO ch = 1, Nch
+          IF (Ycount(ch) > 0) Y(ch) = Y(ch) / Ycount(ch)
+       ENDDO
+
+! High altitude model radiances:
+
+       X(1,:) = 2*EXP(-((f-cen(bno))/dopp(bno))**2/2)
+       X(2,:) = EXP(-((f-cen(bno)-spur)/dopp(bno))**2/2) + &
+            EXP(-((f-cen(bno)+spur)/dopp(bno))**2/2)
+       X(3,:) = EXP(-((f-cen(bno)-2*spur)/dopp(bno))**2/2) + &
+            EXP(-((f-cen(bno)+2*spur)/dopp(bno))**2/2)
+       X(4,:) = 1.0
+       Xinv = MATMUL (X, TRANSPOSE(X))
+
+       CALL MatrixInversion (Xinv)
+
+       B = MATMUL (Xinv, X)
+       Avec(:,bno) = MATMUL (B, Y)
+
+       spurmag(1,bno) = Avec(2,bno) / SUM (Avec(1:3,bno))
+       spurmag(2,bno) = Avec(3,bno) / SUM (Avec(1:3,bno))
+
+       DO i = 1, DACSchans
+          apod(i,bno) = 1.0 / (1 + spurmag(1,bno)*(COS(5e6/7*Pi/1.25e7 * &
+               (i-1)) - 1) + spurmag(2,bno)*(COS(2*5e6/7*Pi/1.25e7 * (i-1))-1))
+       ENDDO
+
+       NoiseInflationFactor(bno) = SQRT (SUM(apod(:,bno)**2) / 129)
+
+       IF (NoiseInflationFactor(bno) < MaxNoiseInflationFactor) THEN
+
+! Deconvolve:
+
+          CALL DeconvolveRads (rad, apod(:,bno))
+
+! Scale precisions:
+
+          rad_prec = rad_prec * NoiseInflationFactor(bno)
+
+! Output Band rads:
+
+          DACsDS%name = DACS_Name(bno)
+          DO maf = 1, noMAFS
+             CALL Build_MLSAuxData (sd_id, DACsDS, rad(:,:,maf), &
+                  lastIndex=maf, disable_attrib=.TRUE.)
+          ENDDO
+
+       ELSE
+          rad_prec = -1 * ABS(rad_prec)  ! Negate precs
+       ENDIF
+
+! Output Band precisions:
+
+       DACsDS%name = DACS_Name(bno)//' precision'
+       DO maf = 1, noMAFS
+          CALL Build_MLSAuxData (sd_id, DACsDS, rad_prec(:,:,maf), &
+               lastIndex=maf, disable_attrib=.TRUE.)
+       ENDDO
+
+    ENDDO
+
+! Output attribute vectors:
+
+    CALL h5gopen_f (sd_id, '/', grp_id, status)
+    CALL MakeHDF5Attribute (grp_id, 'apodB24', apod(:,24), .TRUE.)
+    CALL MakeHDF5Attribute (grp_id, 'apodB25', apod(:,25), .TRUE.)
+    CALL MakeHDF5Attribute (grp_id, 'AvecB24', Avec(:,24), .TRUE.)
+    CALL MakeHDF5Attribute (grp_id, 'AvecB25', Avec(:,25), .TRUE.)
+    CALL MakeHDF5Attribute (grp_id, 'spurmagB24', spurmag(:,24), .TRUE.)
+    CALL MakeHDF5Attribute (grp_id, 'spurmagB25', spurmag(:,25), .TRUE.)
+    CALL MakeHDF5Attribute (grp_id, 'NoiseInflationFactorB24', &
+         NoiseInflationFactor(24:24), .TRUE.)
+    CALL MakeHDF5Attribute (grp_id, 'NoiseInflationFactorB25', &
+         NoiseInflationFactor(25:25), .TRUE.)
+
+  END SUBROUTINE FinalizeDACSdata
+
+!=============================================================================
+  SUBROUTINE DeconvolveRads (rad, apod)
+!=============================================================================
+
+    USE MLSCommon, ONLY: r8
+    USE DFFT_m, ONLY: DRFT1
+
+    REAL, DIMENSION(:,:,:), INTENT(INOUT) :: rad
+    REAL, DIMENSION(:), INTENT(IN) :: apod
+
+    REAL(r8) :: dacs_dat(256), S(256)
+    INTEGER :: ms, maf, MAFs, mif, MIFs
+
+    MIFs = SIZE (rad(1,:,1))
+    MAFs = SIZE (rad(1,1,:))
+
+    ms = 0
+    DO mif = 1, MIFs
+       DO maf = 1, MAFs
+          dacs_dat(1:129) = rad(:,mif,maf)
+          dacs_dat(130:256) = dacs_dat(128:2:-1)
+
+! Analyze:
+
+          CALL DRFT1 (dacs_dat, 'A', 8, ms, S)
+
+! Apodize:
+
+          dacs_dat(1) = dacs_dat(1) * apod(1)
+          dacs_dat(2) = dacs_dat(2) * apod(129)
+          dacs_dat(3:255:2) = dacs_dat(3:255:2) * apod(2:128)
+          dacs_dat(4:256:2) = dacs_dat(4:256:2) * apod(2:128)
+
+! Synthesize:
+
+          CALL DRFT1 (dacs_dat, 'S', 8, ms, S)
+          rad(:,mif,maf) = dacs_dat(1:129)
+
+       ENDDO
+    ENDDO
+
+  END SUBROUTINE DeconvolveRads
+
 END MODULE DACsUtils
 
 ! $Log$
+! Revision 2.7  2004/12/01 17:08:56  perun
+! Add routines to deconvolve and remove spurs
+!
 ! Revision 2.6  2004/05/14 15:59:11  perun
 ! Version 1.43 commit
 !
