@@ -44,10 +44,12 @@ contains
 ! I is the independent variable grid index and J is the coefficient index
 
     n_coeffs = size(basis)
-    eta(:,:n_coeffs) = 0.0_rp
+    eta = 0.0_rp
+    ! eta(:,:n_coeffs) = 0.0_rp
     if ( present(not_zero) ) then
 
-      not_zero(:,:n_coeffs) = .false.
+      ! not_zero(:,:n_coeffs) = .false.
+      not_zero = .false.
 
 ! The wheres could be replaced with a search routine which would speed
 ! this up some more but you have to worry about sorting grid.
@@ -108,6 +110,9 @@ contains
 end module Get_Eta_Matrix_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.3  2002/10/08 17:08:04  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.2  2002/09/06 20:50:28  vsnyder
 ! Insert copyright notice, bound some array assignments
 !
