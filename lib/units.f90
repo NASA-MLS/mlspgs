@@ -97,7 +97,7 @@ contains ! =====     Public procedures     =============================
     call declare_unit ( l_invkm, 1.0d0, phyq_extinction )
 !    call declare_unit ( l_extinction, 1.0d0, phyq_extinction )
 !   this is = 1Pa*1000*1sec^2/1meter^4
-    call declare_unit ( l_icedensity, 1.0d1, phyq_icedensity )
+    call declare_unit ( l_icedensity, 1.0d0, phyq_icedensity )
 !   this is 1DU ( = 2.687e20 molecules/m^2)
     call declare_unit ( l_DobsonUnits, 1.0d0, phyq_DobsonUnits )
 
@@ -126,6 +126,9 @@ contains ! =====     Public procedures     =============================
 end module UNITS
 
 ! $Log$
+! Revision 2.22  2003/08/18 18:14:54  livesey
+! Bug fix in declaration of iceDensity
+!
 ! Revision 2.21  2003/08/16 00:34:02  vsnyder
 ! Use rad2deg instead of 180.0/Pi, push USE INTRINSIC down to procedure scope
 !
