@@ -758,13 +758,18 @@ contains ! =====     Public Procedures     =============================
   end subroutine CopyMatrix
 
   ! --------------------------------------------  CopyMatrixValue  -----
-  subroutine CopyMatrixValue ( Z, X )   ! Copy the elements of X to Z.
+  subroutine CopyMatrixValue ( Z, X, ALLOWNAMEMISMATCH )   ! Copy the elements of X to Z.
   ! Z and X must have the same template.
     type(matrix_T), intent(inout) :: Z
     type(matrix_T), intent(in) :: X
+    logical, intent(in), optional :: ALLOWNAMEMISMATCH
     integer :: I, J ! Subscripts and loop inductors
-    if ( x%col%vec%template%name /= z%col%vec%template%name &
-      & .or. x%row%vec%template%name /= z%row%vec%template%name &
+    logical :: MYALLOW
+    myAllow = .false.
+    if ( present ( allowNameMismatch ) ) myAllow = allowNameMismatch
+    if ( ( ( x%col%vec%template%name /= z%col%vec%template%name  &
+      & .or. x%row%vec%template%name /= z%row%vec%template%name ) &
+      &   .and. .not. myAllow ) &
       & .or. (x%col%instFirst .neqv. z%col%instFirst) &
       & .or. (x%row%instFirst .neqv. z%row%instFirst) ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -2295,6 +2300,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.95  2004/01/23 05:36:24  livesey
+! Added allowNameMismatch argument to CopyMatrixValues
+!
 ! Revision 2.94  2004/01/16 23:50:51  vsnyder
 ! Make AssignMatrix public, fix a comment
 !
