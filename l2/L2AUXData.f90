@@ -29,7 +29,7 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
     L_NOISEBANDWIDTH, L_NONE, L_NUMJ, L_ORBITINCLINATION, L_OPTICALDEPTH, &
     L_PHITAN, L_PRESSURE, L_PTAN, L_RADIANCE, &
     L_SCANRESIDUAL, L_SCECI, L_SCGEOCALT, L_SCVEL, &
-    L_SCVELECI, L_SCVELECR, L_SIDEBANDRATIO, L_SIZEDISTRIBUTION, &
+    L_SCVELECI, L_SCVELECR, L_LIMBSIDEBANDFRACTION, L_SIZEDISTRIBUTION, &
     L_SPACERADIANCE, L_SURFACETYPE, L_SYSTEMTEMPERATURE, &
     L_TNGTECI, L_TNGTGEOCALT, L_TNGTGEODALT, &
     L_TOTALEXTINCTION, L_USBFREQUENCY, L_VMR, L_XYZ
@@ -1426,7 +1426,7 @@ contains ! =====     Public Procedures     =============================
       framing = 'minor'
       units_name = 'm'
       dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
-    case ( l_sidebandRatio )  
+    case ( l_limbSidebandFraction )  
       framing = 'neither'
       dim_names = (/ l_channel, l_none, l_none /)                  
     case ( l_spaceRadiance )  
@@ -1507,6 +1507,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.53  2003/05/29 16:43:02  livesey
+! Renamed sideband fraction
+!
 ! Revision 2.52  2003/05/12 02:06:32  livesey
 ! Bound r8->r4 conversion
 !
