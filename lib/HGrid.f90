@@ -359,6 +359,10 @@ MODULE HGrid                    ! Horizontal grid information
     ! Executable code
 
     IF (ASSOCIATED(database)) THEN
+       ! Check we don't already have one of this name
+       IF (LinearSearchStringArray(database%name,hGrid%name, &
+            & caseInsensitive=.TRUE.)/=0) CALL MLSMessage(MLSMSG_Error,&
+            & ModuleName,MLSMSG_Duplicate//hGrid%name)
        newSize=SIZE(database)+1
     ELSE
        newSize=1
@@ -400,6 +404,9 @@ END MODULE HGrid
 
 !
 ! $Log$
+! Revision 1.2  1999/12/16 18:23:20  livesey
+! First version that compiles.
+!
 ! Revision 1.1  1999/12/16 01:26:46  livesey
 ! Nightly checkin
 !
