@@ -119,6 +119,7 @@ contains
     integer :: END_IND
     integer :: LOW_PT
     integer :: HI_PT
+    INTEGER :: noos ! number out of sequence
 
     real(rp) :: CSQ
     real(rp) :: CP2
@@ -139,6 +140,8 @@ contains
     integer, dimension(:), pointer :: FORCE_ZERO
     integer, dimension(:), pointer :: INDS
     integer, dimension(:), pointer :: TAN_IND
+    INTEGER, DIMENSION(:), POINTER :: diff
+    INTEGER, DIMENSION(:), POINTER :: ind_bp
 
     real(rp), dimension(:), pointer :: CVF_ANG_OFFSET
     real(rp), dimension(:), pointer :: CVF_H_TAN
@@ -414,15 +417,27 @@ contains
              & (cvf_z_grid(hi_pt) - cvf_z_grid(low_pt))
       else
 
-        end_ind = 1
+!        end_ind = 1
+!        st_ind = 1
+!        do while ( end_ind <= no_of_bad_fits )
+
+!          do while ( tan_ind(end_ind) <= tan_ind(st_ind) )
+!            end_ind = end_ind + 1
+!          end do
+
+!          end_ind = end_ind - 1
+! replacement code: find ranges of contigous indicies
+        NULLIFY(diff,ind_bp)
+        CALL ALLOCATE_TEST(diff, no_of_bad_fits, 'diff', modulename)
+        diff(1:no_of_bad_fits-1) = jun(2:no_of_bad_fits) &
+                               & - jun(1:no_of_bad_fits-1)
+        diff(no_of_bad_fits) = 2
+        noos = COUNT(diff > 1)
+        CALL ALLOCATE_TEST(ind_bp,noos,'ind_bp',modulename)
+        ind_bp = PACK((/(i,i=1,no_of_bad_fits)/),diff > 1)
         st_ind = 1
-        do while ( end_ind <= no_of_bad_fits )
-
-          do while ( tan_ind(end_ind) <= tan_ind(st_ind) )
-            end_ind = end_ind + 1
-          end do
-
-          end_ind = end_ind - 1
+        DO i = 1 , noos
+          end_ind = ind_bp(i)
 
           ! find which side of the tangent we are on
           if ( path_ind(st_ind) < n_vert + 1 ) then
@@ -441,8 +456,10 @@ contains
                & (cvf_z_grid(jun(st_ind):jun(end_ind))-cvf_z_grid(low_pt)) / &
                & (cvf_z_grid(hi_pt) - cvf_z_grid(low_pt))
           st_ind = end_ind + 1
-          end_ind = st_ind
+!          end_ind = st_ind
         end do
+        CALL DEALLOCATE_TEST(diff,'diff',modulename)
+        CALL DEALLOCATE_TEST(ind_bp,'ind_bp',modulename)
       end if
       print *,'completed re-estimation of bad points'
 
@@ -538,6 +555,10 @@ contains
 end module Metrics_m
 
 ! $Log$
+! Revision 2.13  2002/10/01 02:27:49  vsnyder
+! Reduce number of array temps, move allocation for some out of loops.  Fix
+! a bug (junk could be accessed after being deallocated).  Cosmetic changes.
+!
 ! Revision 2.12  2002/09/26 20:14:24  vsnyder
 ! Get PI from Units module
 !
