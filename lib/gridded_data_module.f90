@@ -748,7 +748,8 @@ contains
     real(kind=r8),pointer,dimension(:)::axis
     integer,intent(out)::axis_len
     !------- Local vars ---------!
-    character(len=30)::readitem
+    integer,parameter::ri_len=30
+    character(len=ri_len)::readitem
     character(len=1)::rdchar
     real(kind=r8),dimension(1:200)::tmpaxis
     integer::i,iotest
@@ -758,7 +759,10 @@ contains
     if (associated(axis)) then 
        deallocate(axis)
     endif
-
+    ! readitem needs to be initialised or there is a point where it 
+    ! can be used before being set. The string should be more than ri_len
+    ! spaces. 
+    readitem="                                              "
     ! An explicit axis is supplied as a parenthesised list, spread 
     ! over several lines. This is a Royal PIA.
     ! Read chars till we get to the (
