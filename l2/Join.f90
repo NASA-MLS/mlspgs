@@ -38,11 +38,12 @@ contains ! =====     Public Procedures     =============================
   ! through the tree and dispatches work to other routines.
 
   subroutine MLSL2Join ( root, vectors, l2gpDatabase, l2auxDatabase, &
-    & DirectDataBase, chunkNo, chunks )
+    & DirectDataBase, chunkNo, chunks, FWModelConfig )
     ! Imports
     use Chunks_m, only: MLSChunk_T
     use DirectWrite_m, only: DirectData_T
     use Init_Tables_Module, only: S_L2GP, S_L2AUX, S_TIME, S_DIRECTWRITE, S_LABEL
+    use ForwardModelConfig, only: ForwardModelConfig_T
     use L2GPData, only: L2GPDATA_T
     use L2AUXData, only: L2AUXDATA_T
     use L2ParInfo, only: PARALLEL, WAITFORDIRECTWRITEPERMISSION
@@ -67,6 +68,7 @@ contains ! =====     Public Procedures     =============================
     type (DirectData_T), dimension(:), pointer :: DirectDatabase
     integer, intent(in) :: chunkNo
     type (MLSChunk_T), dimension(:), intent(in) :: chunks
+    type(ForwardModelConfig_T), dimension(:), pointer :: FWModelConfig
 
     ! Local parameters
     integer, parameter :: DELAY = 500000  ! For Usleep, no. microsecs
@@ -187,14 +189,14 @@ contains ! =====     Public Procedures     =============================
                   if(DEEBUG)print*,'DirectWrite to ', &
                     & trim(DirectDataBase(dbIndex)%fileNameBase)
                   call DirectWriteCommand ( son, ticket, vectors, &
-                    & DirectdataBase, chunkNo, chunks, &
+                    & DirectdataBase, chunkNo, chunks, FWModelConfig, &
                     & theFile=DirectDataBase(dbIndex)%fileNameBase, &
                     & namedFile=namedFile )
                   if ( namedFile ) exit
                 end do
               else
                 call DirectWriteCommand ( son, ticket, vectors, &
-                  & DirectdataBase, chunkNo, chunks )
+                  & DirectdataBase, chunkNo, chunks, FWModelConfig )
               end if
               call add_to_directwrite_timing ( 'writing', dwt2)
             end if
@@ -205,7 +207,8 @@ contains ! =====     Public Procedures     =============================
             if(DEEBUG)call print_source ( source_ref(son) )
             if(DEEBUG)print*,'Calling direct write to do a setup'
             call DirectWriteCommand ( son, ticket, vectors, DirectdataBase, &
-              & chunkNo, chunks, makeRequest=.true., NoExtraWrites=noExtraWrites )
+              & chunkNo, chunks, FWModelConfig, makeRequest=.true., &
+	      & NoExtraWrites=noExtraWrites)
             noDirectWrites = noDirectWrites + noExtraWrites
           else
             ! On the later passes we do the actual direct write we've been
@@ -216,7 +219,8 @@ contains ! =====     Public Procedures     =============================
               if(DEEBUG)call print_source ( source_ref(son) )
               if(DEEBUG)print*,'Calling direct write to do the write'
               call DirectWriteCommand ( son, ticket, vectors, DirectdataBase, &
-                & chunkNo, chunks, create=createFile, theFile=theFile )
+                & chunkNo, chunks, FWModelConfig, create=createFile, &
+		& theFile=theFile )
               call add_to_directwrite_timing ( 'writing', dwt2)
               noDirectWritesCompleted = noDirectWritesCompleted + 1
               ! If that was the last one then bail out
@@ -273,7 +277,8 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------------ DirectWriteCommand -----
   subroutine DirectWriteCommand ( node, ticket, vectors, DirectDataBase, &
-    & chunkNo, chunks, makeRequest, create, theFile, noExtraWrites, namedFile )
+    & chunkNo, chunks, FWModelConfig, makeRequest, create, theFile, &
+    & noExtraWrites, namedFile)
     ! Imports
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use Chunks_m, only: MLSChunk_T
@@ -281,6 +286,7 @@ contains ! =====     Public Procedures     =============================
       & DirectWrite_l2GP, DirectWrite_l2aux, Dump, &
       & ExpandDirectDB, ExpandSDNames, FileNameToID
     use Expr_m, only: EXPR
+    use ForwardModelConfig, only: ForwardModelConfig_T
     use Hdf, only: DFACC_CREATE, DFACC_RDWR
     use Init_tables_module, only: F_SOURCE, F_PRECISION, F_HDFVERSION, F_FILE, &
       & f_QUALITY, F_STATUS, F_TYPE
@@ -314,6 +320,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: TICKET       ! Ticket number from master
     type (Vector_T), dimension(:), pointer :: VECTORS
     type (DirectData_T), dimension(:), pointer :: DirectDatabase
+    type(ForwardModelConfig_T), dimension(:), pointer :: FWModelConfig
     integer, intent(in) :: CHUNKNO
     type (MLSChunk_T), dimension(:), intent(in) :: CHUNKS
     ! The next 3 args are used in the multi-pass followed by each slave:
@@ -911,7 +918,7 @@ contains ! =====     Public Procedures     =============================
           ! minor frame quantity or not.  This mixed zero/one indexing is beomming
           ! a real pain.  I wish I never want down that road!
           call DirectWrite_L2Aux ( handle, qty, precQty, hdfName, hdfVersion, &
-            & chunkNo, chunks )
+            & chunkNo, chunks, FWModelConfig )
           NumOutput = NumOutput + 1
           filetype=l_hdf
         case default
@@ -1811,6 +1818,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.115  2004/07/22 20:49:58  cvuu
+! Add forwardModelConfigDatabase to the call MLSL2Join and MLSL2Fill
+!
 ! Revision 2.114  2004/06/10 00:58:45  vsnyder
 ! Move FindFirst, FindNext from MLSCommon to MLSSets
 !
