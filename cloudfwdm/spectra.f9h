@@ -1,11 +1,3 @@
-!---------------------------- RCS Ident Info -------------------------------
-  character (len=*), private, parameter :: IdParm =                          &
-    "$Id$"
-  character (len=len(idParm)), private :: Id = idParm
-  character (len=*), private, parameter :: ModuleName=                       &
-    "$RCSfile$"
- !---------------------------------------------------------------------------
-
 
 !... spectral header file 
 
@@ -30,4 +22,7 @@
 
 
 ! $Log$
+! Revision 1.5  2002/10/02 15:54:48  bwknosp
+! Added Id, RCS, and Log info
+!
 

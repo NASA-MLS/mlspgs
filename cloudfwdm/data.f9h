@@ -1,12 +1,3 @@
-!---------------------------- RCS Ident Info -------------------------------
-  character (len=*), private, parameter :: IdParm =                          &
-    "$Id$"
-  character (len=len(idParm)), private :: Id = idParm
-  character (len=*), private, parameter :: ModuleName=                       &
-    "$RCSfile$"
- !---------------------------------------------------------------------------
-
-
       INTEGER :: N_O2_LINES
       INTEGER :: N_H2O_LINES
       INTEGER :: N_O18O_LINES
@@ -2090,3 +2081,6 @@
 
 ! ----------------------------------------------------------------------------------
 ! $Log$
+! Revision 1.6  2002/10/02 15:54:42  bwknosp
+! Added Id, RCS, and Log info
+!

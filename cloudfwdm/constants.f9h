@@ -1,11 +1,3 @@
-!---------------------------- RCS Ident Info -------------------------------
-  character (len=*), private, parameter :: IdParm =                          &
-    "$Id$"
-  character (len=len(idParm)), private :: Id = idParm
-  character (len=*), private, parameter :: ModuleName=                       &
-    "$RCSfile$"
- !---------------------------------------------------------------------------
-
 	real :: pi
 	parameter (pi=3.1415926)
 	real(r8) :: re		! earth radius
@@ -15,3 +7,6 @@
 
 
 ! $Log$
+! Revision 1.3  2002/10/02 15:54:30  bwknosp
+! Added Id, RCS, and Log info
+!
