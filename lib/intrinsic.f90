@@ -61,7 +61,8 @@ module INTRINSIC
   integer, parameter :: PHYQ_ICEDENSITY =      phyq_extinction+1  ! Default g/meters^3
   integer, parameter :: PHYQ_DOBSONUNITS =     phyq_icedensity+1  ! 1 DU = 2.687e20 molecules/m^2
   integer, parameter :: PHYQ_PCTRHI =          phyq_dobsonunits+1 ! default %RHI
-  integer, parameter :: FIRST_PHYQ = phyq_invalid, LAST_PHYQ = phyq_pctrhi
+  integer, parameter :: PHYQ_GAUSS =           phyq_pctrhi + 1
+  integer, parameter :: FIRST_PHYQ = phyq_invalid, LAST_PHYQ = phyq_gauss
   integer :: PHYQ_INDICES(first_phyq:last_phyq)
 
 ! Enumeration literals:
@@ -231,6 +232,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.45  2003/01/07 23:43:59  livesey
+! Added Gauss
+!
 ! Revision 2.44  2002/10/08 00:09:10  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
