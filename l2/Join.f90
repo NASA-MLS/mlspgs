@@ -430,14 +430,15 @@ contains ! =====     Public Procedures     =============================
     ! is to be stored in the l2aux data.
 
     ! Local variables
-
+    integer :: FIRSTMAF                 ! Index
+    integer :: LASTMAF                  ! Index
     integer ::                           Status, ProfNo
     integer ::                           UseFirstInstance, UseLastInstance, &
     &                                    NoOutputInstances
     type (L2AUXData_T) ::                NewL2AUX
     type (L2AUXData_T), pointer ::       ThisL2AUX
     logical ::                           L2auxDataIsNew
-    integer, dimension(3) ::             DimensionFamilies, DimensionSizes
+    integer, dimension(3) ::             DimensionFamilies, DimensionSizes, DimensionStarts
     integer ::                           AuxFamily     ! Channel or Frequency
     integer ::                           DimensionIndex, Channel, Surf, Prof, &
     &                                    NoMAFs,index, InstanceNo
@@ -497,17 +498,20 @@ contains ! =====     Public Procedures     =============================
         ! For minor frame quantities, we're going to allocate them to the full
         ! size from the start, rather than expand them, as this will be more
         ! efficient
-        noMAFs = maxval( chunks%lastMAFIndex ) - &
-          &      minval( chunks%firstMAFIndex ) + 1
+        firstMAF = minval ( chunks%firstMAFIndex )
+        lastMAF = maxval ( chunks%lastMAFIndex )
+        noMAFs = lastMAF - firstMAF + 1
         ! THINK HERE ABOT RUNS THAT DON'T START AT THE BEGINNING !???????
         ! MAY NEED TO CHANGE ALLOCATE
         if ( quantity%template%frequencyCoordinate==L_None ) then
           dimensionFamilies = (/L_None, L_MIF, L_MAF/)
           dimensionSizes = (/1, quantity%template%noSurfs, noMAFs/)
+          dimensionStarts = (/1, quantity%template%noSurfs, firstMAF /)
         else
           dimensionFamilies = (/auxFamily, L_MIF, L_MAF/)
           dimensionSizes = (/quantity%template%noChans, quantity%template%noSurfs, &
             & noMAFs/)
+          dimensionStarts = (/1, 1, firstMAF /)
         end if
       else
         ! Not a minor frame quantity; for non minor frame l2aux quantities
@@ -529,15 +533,18 @@ contains ! =====     Public Procedures     =============================
           dimensionFamilies = (/L_geodAngle, L_None, &
             & L_None/)
           dimensionSizes = (/quantity%template%noInstances, 1, 1/)
+          dimensionStarts = (/1, 1, 1/)
         else
           dimensionFamilies = (/auxFamily, L_geodAngle, &
             & L_None/)
           dimensionSizes = (/quantity%template%noChans, quantity%template%noInstances, 1/)
+          dimensionStarts = (/1, 1, 1/)
         end if
       end if
 
       ! Now we setup the new quantity
-      call SetupNewL2AUXRecord ( dimensionFamilies, dimensionSizes, newL2AUX )
+      call SetupNewL2AUXRecord ( dimensionFamilies, dimensionSizes, &
+        & dimensionStarts, newL2AUX )
       newL2AUX%minorFrame=quantity%template%minorFrame
       newL2AUX%instrumentModule=quantity%template%instrumentModule
 
@@ -625,6 +632,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.37  2001/05/12 00:18:17  livesey
+! Tidied up array bounds for L2AUX/MAF.
+!
 ! Revision 2.36  2001/05/10 16:31:24  livesey
 ! Added prefix signal option for swath/sd name
 !
