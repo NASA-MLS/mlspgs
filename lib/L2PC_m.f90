@@ -1270,6 +1270,7 @@ contains ! ============= Public Procedures ==========================
       signal = 0
       sideband = 0
       molecule = 0
+      frequencyCoordinate = l_none
       select case ( quantityType )
       case ( l_vmr )
         call GetHDF5Attribute ( qID, 'molecule', word )
@@ -1470,6 +1471,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.45  2002/08/28 01:12:20  livesey
+! Bug fix in frequency coordinate.
+!
 ! Revision 2.44  2002/08/23 01:23:44  livesey
 ! Now optionally reads frequency coordinate and frequencies
 !
