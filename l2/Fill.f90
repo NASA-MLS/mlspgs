@@ -1512,7 +1512,7 @@ contains ! =====     Public Procedures     =============================
           if ( vGrids(vGridIndex)%noSurfs /= quantity%template%noSurfs )&
             & call Announce_Error ( key, No_Error_code, &
             &  'VGrid is not of the same size as the quantity' )
-          quantity%values = spread ( vGrids(vGridIndex)%surfs, 2, &
+          quantity%values = spread ( vGrids(vGridIndex)%surfs(:,1), 2, &
             & quantity%template%noInstances )
 
         case ( l_wmoTropopause ) ! ---------------- Fill with wmo tropopause --
@@ -1924,12 +1924,12 @@ contains ! =====     Public Procedures     =============================
         end if
           
         ! Check the validity of the supplied vectors
-        if ( covariance%m%row%vec%template%id /= &
-          & dMasked%template%id ) call MLSMessage ( MLSMSG_Error, &
+        if ( covariance%m%row%vec%template%name /= &
+          & dMasked%template%name ) call MLSMessage ( MLSMSG_Error, &
           & ModuleName, "diagonal and covariance not compatible in fillCovariance" )
         if ( lengthScale /= 0 ) then    ! Check length if supplied
-          if ( covariance%m%row%vec%template%id /= &
-            & lMasked%template%id ) call MLSMessage ( MLSMSG_Error, &
+          if ( covariance%m%row%vec%template%name /= &
+            & lMasked%template%name ) call MLSMessage ( MLSMSG_Error, &
             & ModuleName, "lengthScale and covariance not compatible in fillCovariance" )
           if ( lMasked%globalUnit /= phyq_length ) &
             & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1938,8 +1938,8 @@ contains ! =====     Public Procedures     =============================
           thisLength = 0.0
         end if
         if ( fraction /= 0 ) then       ! Check fraction if supplied
-          if ( covariance%m%row%vec%template%id /= &
-            & vectors(fraction)%template%id ) call MLSMessage ( MLSMSG_Error, &
+          if ( covariance%m%row%vec%template%name /= &
+            & vectors(fraction)%template%name ) call MLSMessage ( MLSMSG_Error, &
             & ModuleName, "fraction and covariance not compatible in fillCovariance" )
           if ( vectors(fraction)%globalUnit /= phyq_dimensionless ) &
             & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -4743,14 +4743,37 @@ contains ! =====     Public Procedures     =============================
       type ( VectorValue_T), intent(inout) :: QTY
       type ( L2AUXData_T), intent(in) :: L2AUX
       integer, intent(inout) :: ERRORCODE
-
+      ! Local variables
+      integer :: FIRSTPROFILE
+      integer :: LASTPROFILE
       ! Executable code
       errorCode = 0
-      ! Should check maybe that the following reshape will work
-      ! otherwise return informative errorcode
+      ! Work out which profile in the l2aux this belongs to
+      firstProfile = qty%template%instanceOffset - qty%template%noInstancesLowerOverlap
+      lastProfile = firstProfile + qty%template%noInstances - 1
+      ! In the case of minor/major frame quanties, while instanceOffset is
+      ! Numbered from zero, as in L1B, our array starts from 1.
+      if ( qty%template%minorFrame .or. qty%template%majorFrame ) then
+        firstProfile = firstProfile + 1
+        lastProfile = lastProfile + 1
+      end if
+      ! Check that the dimensions are appropriate
+      if ( firstProfile < lbound ( l2aux%values, 3 ) ) then
+        errorCode = CantFillFromL2AUX
+        return
+      end if
+      if ( lastProfile > lbound ( l2aux%values, 3 ) ) then
+        errorCode = CantFillFromL2AUX
+        return
+      end if
+      if ( size ( l2aux%values, 1 ) /= qty%template%noChans .or. &
+        &  size ( l2aux%values, 2 ) /= qty%template%noSurfs ) then
+        errorCode = CantFillFromL2AUX
+        return
+      end if
+      ! Do the fill
       qty%values = reshape ( l2aux%values ( :, :,  &
-        & qty%template%mafIndex(1)+1 : &
-        & qty%template%mafIndex(qty%template%noInstances)+1 ), &
+        & firstProfile : lastProfile ), &
         & (/ qty%template%instanceLen, qty%template%noInstances /) )
     end subroutine FillVectorQuantityFromL2AUX
 
@@ -5289,10 +5312,10 @@ contains ! =====     Public Procedures     =============================
         ! Interpolate temperature onto 'finer' pressure grid
         call InterpolateValues ( &
           & temperature%template%surfs(:,1), temperature%values(:,i), &
-          & grid%surfs, tFine, method='Spline' )
+          & grid%surfs(:,1), tFine, method='Spline' )
         ! Now get the height for this.
         call Hydrostatic ( GeodToGeocLat ( temperature%template%geodLat(1,i) ), &
-          & grid%surfs, tFine, grid%surfs, &
+          & grid%surfs(:,1), tFine, grid%surfs(:,1), &
           & refGPH%template%surfs(1,1), refGPH%values(1,i), &
           & dummyT, hFine, dummyDHDT, dummyDHDZ )
         ! Note while much of the software thinks in meters.  The hydrostatic
@@ -5304,7 +5327,7 @@ contains ! =====     Public Procedures     =============================
         dTdH = - dTdH
         
         ! Locate the 500mb surface
-        call Hunt ( grid%surfs, -log10(500.0_r8), s500 )
+        call Hunt ( grid%surfs(:,1), -log10(500.0_r8), s500 )
 
         ! Find the 'first' tropopause.  We're not going to bother
         ! with the 'second'
@@ -5350,11 +5373,11 @@ contains ! =====     Public Procedures     =============================
         ! the value we really want.
         if ( s > 1 ) then
           tpPres%values(1,i) = 10.0 ** ( -( &
-            & grid%surfs(s-1) + &
-            & ( grid%surfs(s) - grid%surfs(s-1) ) * ( dTdH(s-1) - 2.0 ) / &
+            & grid%surfs(s-1,1) + &
+            & ( grid%surfs(s,1) - grid%surfs(s-1,1) ) * ( dTdH(s-1) - 2.0 ) / &
             & ( dTdH(s-1) - dTdH(s) ) ) )
         else
-          tpPres%values(1,i) = 10.0 ** ( - grid%surfs(s) )
+          tpPres%values(1,i) = 10.0 ** ( - grid%surfs(s,1) )
         end if
       end do instanceLoop
     end subroutine FillQtyWithWMOTropopause
@@ -5801,6 +5824,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.230  2003/06/20 19:37:06  pwagner
+! Quanities now share grids stored separately in databses
+!
 ! Revision 2.229  2003/06/05 22:08:55  livesey
 ! Cosmetic and superficial changes to FillFromSplitSideband
 !
