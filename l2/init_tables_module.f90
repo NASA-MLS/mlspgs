@@ -338,7 +338,7 @@ contains ! =====     Public procedures     =============================
       begin, t+t_fillMethod, l+l_gridded, l+l_estimatedNoise, l+l_explicit, &
              l+l_hydrostatic, l+l_addnoise, l+l_refract, &
              l+l_isotope, l+l_l1b, l+l_l2aux, l+l_l2gp, l+l_negativePrecision, &
-             l+l_profile, l+l_vector, l+l_special, l+l_fold, &
+             l+l_offsetRadiance, l+l_profile, l+l_vector, l+l_special, l+l_fold, &
              l+l_rectanglefromlos, l+l_vGrid, n+n_dt_def, &
       begin, t+t_fwmType, l+l_linear, l+l_full, l+l_scan, l+l_scan2d, &
              l+l_cloudFull, n+n_dt_def, &
@@ -871,6 +871,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.236  2002/08/28 01:14:05  livesey
+! Added offsetRadiance fill
+!
 ! Revision 2.235  2002/08/26 20:01:36  livesey
 ! Added instances argument to fill (profile method)
 !
