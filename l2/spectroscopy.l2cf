@@ -1,509 +1,1288 @@
-; ---------------------------------------------------  Spectroscopy  -----
-BEGIN Spectroscopy
-
-;----------------------------------------------------------- OH ---
-
-    oh_1: line, v0= 2509935.44 MHz, el= 1.8E-03, str= -0.8048, w= 2.652, $
-      ps= 0, n= 0.74, delta= 0, n1= 0, gamma= 0, n2= 0
-    oh_2: line, v0= 2509949.01 MHz, el= 1.8E-03, str= 0.3413, w= 2.652, $
-      ps= 0, n= 0.74, delta= 0, n1= 0, gamma= 0, n2= 0
-    oh_3: line, v0= 2509988.15 MHz, el= 0, str= 0.1494, w= 2.652, $
-      ps= 0, n= 0.74, delta= 0, n1= 0, gamma= 0, n2= 0
-    oh_4: line, v0= 2514298.73 MHz, el= 5.74E-02, str= -0.8036, w= 2.652, $
-      ps= 0, n= 0.74, delta= 0, n1= 0, gamma= 0, n2= 0
-    oh_5: line, v0= 2514316.705 MHz, el= 5.74E-02, str= 0.3425, w= 2.652, $
-      ps= 0, n= 0.74, delta= 0, n1= 0, gamma= 0, n2= 0
-    oh_6: line, v0= 2514353.49 MHz, el= 5.56E-02, str= 0.1506, w= 2.652, $
-      ps= 0, n= 0.74, delta= 0, n1= 0, gamma= 0, n2= 0
-
-    spectra, molecule=oh, Qlog=[1.9111, 1.7803, 1.6036], $
-      lines=[oh_1, oh_2, oh_3, oh_4, oh_5, oh_6]
-
-;----------------------------------------------------------- O2 ---
-
-    o2_1: line, v0= 118750.341 MHz, el= 0.2458, str= -6.5323, w= 1.63, $
-      ps= 0, n= 0.8, delta= -3.1E-05, n1= 0.8, gamma= 8.0E-06, n2= 1.8
-    o2_2: line, v0= 2502323.923 MHz, el= 260.5009, str= -5.9917, w= 1.28, $
-      ps= 0, n= 0.75, delta= 0, n1= 0, gamma= 0, n2= 0
-
-    spectra, molecule=o2, Qlog=[2.3398, 2.2152, 2.0398], lines=[o2_1, o2_2]
-
-;----------------------------------------------------------- O2_V1 ---
-
-    o2_v1_1: line, v0= 2531334.2007 MHz, el= 1814.0099, str= -9.743, w= 2.0, $
-      ps= 0, n= 0.2, delta= 0, n1= 0, gamma= 0, n2= 0
-
-    spectra, molecule=o2_v1, Qlog=[2.3398, 2.2152, 2.0398], lines=o2_v1_1
-
-;----------------------------------------------------------- HCN ---
-
-    hcn_1: line, v0= 177259.677 MHz, el= 2.9564, str= -2.6671, w= 4.31, $
-      ps= 0, n= 0.75, delta= 0, n1= 0, gamma= 0, n2= 0
-    hcn_2: line, v0= 177259.923 MHz, el= 2.9564, str= -2.5422, w= 4.31, $
-      ps= 0, n= 0.75, delta= 0, n1= 0, gamma= 0, n2= 0
-    hcn_3: line, v0= 177261.11 MHz, el= 2.9564, str= -2.19, w= 4.31, $
-      ps= 0, n= 0.75, delta= 0, n1= 0, gamma= 0, n2= 0
-    hcn_4: line, v0= 177261.223 MHz, el= 2.9564, str= -1.9189, w= 4.31, $
-      ps= 0, n= 0.75, delta= 0, n1= 0, gamma= 0, n2= 0
-    hcn_5: line, v0= 177262.0122 MHz, el= 2.9564, str= -3.8432, w= 4.31, $
-      ps= 0, n= 0.75, delta= 0, n1= 0, gamma= 0, n2= 0
-    hcn_6: line, v0= 177263.445 MHz, el= 2.9564, str= -2.6671, w= 4.31, $
-      ps= 0, n= 0.75, delta= 0, n1= 0, gamma= 0, n2= 0
-
-    spectra, molecule=hcn, Qlog=[2.6277, 2.5031, 2.3276], $
-      lines=[hcn_1, hcn_2, hcn_3, hcn_4, hcn_5, hcn_6]
-
-;----------------------------------------------------------- O3 ---
-
-    o3_1: line, v0= 180001.29 MHz, el= 676.7956, str= -5.5818, w= 1.9861, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_2: line, v0= 184377.82 MHz, el= 39.7506, str= -4.0792, w= 2.373, $
-      ps= 0, n= 0.7, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_3: line, v0= 184748.72 MHz, el= 222.5716, str= -4.565, w= 2.138, $
-      ps= 0, n= 0.75, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_4: line, v0= 206132.049 MHz, el= 323.6207, str= -4.7272, w= 2.168, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_5: line, v0= 229575.0227 MHz, el= 302.637, str= -4.6135, w= 2.1, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_6: line, v0= 231281.4919 MHz, el= 112.5424, str= -3.8328, w= 2.282, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_7: line, v0= 235709.84 MHz, el= 120.2571, str= -3.6741, w= 2.29, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_8: line, v0= 237146.1921 MHz, el= 93.6687, str= -3.69, w= 2.3, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_9: line, v0= 242318.7357 MHz, el= 70.4557, str= -3.7166, w= 2.31, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_10: line, v0= 243453.7 MHz, el= 56.805, str= -3.7609, w= 2.31, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_11: line, v0= 244158.04 MHz, el= 50.3021, str= -4.5503, w= 2.177, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_12: line, v0= 247761.77 MHz, el= 142.7128, str= -4.4156, w= 2.115, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_13: line, v0= 248183.38 MHz, el= 183.4307, str= -3.6582, w= 2.247, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_14: line, v0= 249788.6 MHz, el= 17.5973, str= -3.8955, w= 2.367, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_15: line, v0= 249961.96 MHz, el= 50.6432, str= -3.7595, w= 2.294, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_16: line, v0= 623687.8457 MHz, el= 281.833, str= -3.1677, w= 2.15, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_17: line, v0= 625371.4686 MHz, el= 192.5235, str= -3.8734, w= 2.071, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_18: line, v0= 632177.05 MHz, el= 327.5579, str= -3.2254, w= 2.109, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_19: line, v0= 633352.9979 MHz, el= 344.5328, str= -3.9507, w= 2.071, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_20: line, v0= 634461.7341 MHz, el= 241.8317, str= -3.1159, w= 2.141, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_21: line, v0= 634519.7678 MHz, el= 707.1504, str= -4.22, w= 1.98, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_22: line, v0= 647840.1883 MHz, el= 172.2974, str= -3.0551, w= 2.124, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_23: line, v0= 650732.9663 MHz, el= 179.0698, str= -3.8698, w= 2.071, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_24: line, v0= 651556.9699 MHz, el= 56.805, str= -3.4321, w= 2.27, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_25: line, v0= 653762.5698 MHz, el= 116.552, str= -3.0558, w= 2.109, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_26: line, v0= 658815.2932 MHz, el= 325.1934, str= -3.9109, w= 2.071, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_27: line, v0= 661458.3584 MHz, el= 346.232, str= -3.2073, w= 2.121, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_28: line, v0= 2501411.4461 MHz, el= 464.3759, str= -2.4524, w= 2.056, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_29: line, v0= 2509560.4399 MHz, el= 759.2807, str= -3.0024, w= 2.004, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_30: line, v0= 2510614.2022 MHz, el= 360.4138, str= -4.4563, w= 2.159, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_31: line, v0= 2510875.7352 MHz, el= 308.4246, str= -4.8178, w= 2.121, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_32: line, v0= 2534224.3415 MHz, el= 790.3635, str= -3.053, w= 1.995, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_33: line, v0= 2536301.7542 MHz, el= 762.2312, str= -5.571, w= 1.951, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_34: line, v0= 2542119.3911 MHz, el= 1023.0811, str= -3.5181, w= 1.939, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_35: line, v0= 2543208.4034 MHz, el= 643.1247, str= -2.7646, w= 2.056, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-
-    spectra, molecule=o3, Qlog=[3.5506, 3.3484, 3.0787], $
-      lines=[o3_1, o3_2, o3_3, o3_4, o3_5, o3_6, o3_7, o3_8, o3_9, $
-             o3_10, o3_11, o3_12, o3_13, o3_14, o3_15, o3_16, o3_17, o3_18, $
-             o3_19, o3_20, o3_21, o3_22, o3_23, o3_24, o3_25, o3_26, o3_27, $
-             o3_28, o3_29, o3_30, o3_31, o3_32, o3_33, o3_34, o3_35]
-
-;----------------------------------------------------------- H2O ---
-
-    h2o_1: line, v0= 183310.091 MHz, el= 136.164, str= -3.643, w= 2.83, $
-      ps= -0.16, n= 0.75, delta= 0, n1= 0, gamma= 0, n2= 0
-    h2o_2: line, v0= 2531917.811 MHz, el= 1131.7756, str= -2.7836, w= 3.2, $
-      ps= 0, n= 0.68, delta= 0, n1= 0, gamma= 0, n2= 0
-
-    spectra, molecule=h2o, Qlog=[2.2507, 2.0645, 1.804], lines=[h2o_1, h2o_2]
-
-;----------------------------------------------------------- HNO3 ---
-
-    hno3_1: line, v0= 181179.1123 MHz, el= 28.2003, str= -3.8837, w= 3.8, $
-      ps= 0, n= 0.6, delta= 0, n1= 0, gamma= 0, n2= 0
-    hno3_2: line, v0= 181253.3038 MHz, el= 164.4142, str= -3.6897, w= 3.4, $
-      ps= 0, n= 0.8, delta= 0, n1= 0, gamma= 0, n2= 0
-    hno3_3: line, v0= 181403.7376 MHz, el= 146.0384, str= -3.6996, w= 3.4, $
-      ps= 0, n= 0.8, delta= 0, n1= 0, gamma= 0, n2= 0
-    hno3_4: line, v0= 181537.0066 MHz, el= 128.4939, str= -3.7198, w= 3.4, $
-      ps= 0, n= 0.8, delta= 0, n1= 0, gamma= 0, n2= 0
-    hno3_5: line, v0= 181559.8656 MHz, el= 40.728, str= -3.0896, w= 3.7, $
-      ps= 0, n= 0.6, delta= 0, n1= 0, gamma= 0, n2= 0
-    hno3_6: line, v0= 181594.298 MHz, el= 39.904, str= -3.154, w= 3.7, $
-      ps= 0, n= 0.6, delta= 0, n1= 0, gamma= 0, n2= 0
-    hno3_7: line, v0= 181630.5529 MHz, el= 38.2393, str= -3.2262, w= 3.7, $
-      ps= 0, n= 0.6, delta= 0, n1= 0, gamma= 0, n2= 0
-    hno3_8: line, v0= 181654.6172 MHz, el= 111.7811, str= -3.7534, w= 3.4, $
-      ps= 0, n= 0.8, delta= 0, n1= 0, gamma= 0, n2= 0
-    hno3_9: line, v0= 181678.0 MHz, el= 35.7326, str= -3.911, w= 3.7, $
-      ps= 0, n= 0.6, delta= 0, n1= 0, gamma= 0, n2= 0
-    hno3_10: line, v0= 181757.9834 MHz, el= 95.9006, str= -3.8059, w= 3.4, $
-      ps= 0, n= 0.8, delta= 0, n1= 0, gamma= 0, n2= 0
-    hno3_11: line, v0= 181772.04 MHz, el= 32.3799, str= -3.7744, w= 3.7, $
-      ps= 0, n= 0.6, delta= 0, n1= 0, gamma= 0, n2= 0
-    hno3_12: line, v0= 181789.2 MHz, el= 32.3793, str= -3.7743, w= 3.7, $
-      ps= 0, n= 0.6, delta= 0, n1= 0, gamma= 0, n2= 0
-    hno3_13: line, v0= 181848.4311 MHz, el= 80.8529, str= -3.8873, w= 3.5, $
-      ps= 0, n= 0.7, delta= 0, n1= 0, gamma= 0, n2= 0
-    hno3_14: line, v0= 181927.2032 MHz, el= 66.6385, str= -4.0207, w= 3.6, $
-      ps= 0, n= 0.7, delta= 0, n1= 0, gamma= 0, n2= 0
-    hno3_15: line, v0= 183413.8725 MHz, el= 28.1106, str= -3.8618, w= 3.8, $
-      ps= 0, n= 0.6, delta= 0, n1= 0, gamma= 0, n2= 0
-    hno3_16: line, v0= 205376.7458 MHz, el= 302.9905, str= -3.6874, w= 3.17, $
-      ps= 0, n= 0.8, delta= 0, n1= 0, gamma= 0, n2= 0
-    hno3_17: line, v0= 205611.2 MHz, el= 278.7983, str= -3.6641, w= 3.17, $
-      ps= 0, n= 0.8, delta= 0, n1= 0, gamma= 0, n2= 0
-    hno3_18: line, v0= 205736.9662 MHz, el= 35.7211, str= -3.7607, w= 3.68, $
-      ps= 0, n= 0.64, delta= 0, n1= 0, gamma= 0, n2= 0
-    hno3_19: line, v0= 205824.7169 MHz, el= 255.4339, str= -3.6455, w= 3.17, $
-      ps= 0, n= 0.8, delta= 0, n1= 0, gamma= 0, n2= 0
-    hno3_20: line, v0= 206018.7703 MHz, el= 232.898, str= -3.6318, w= 3.16, $
-      ps= 0, n= 0.85, delta= 0, n1= 0, gamma= 0, n2= 0
-    hno3_21: line, v0= 206194.7518 MHz, el= 211.1912, str= -3.6241, w= 3.26, $
-      ps= 0, n= 0.72, delta= 0, n1= 0, gamma= 0, n2= 0
-    hno3_22: line, v0= 206353.9761 MHz, el= 190.3143, str= -3.6232, w= 3.16, $
-      ps= 0, n= 0.83, delta= 0, n1= 0, gamma= 0, n2= 0
-    hno3_23: line, v0= 206497.686 MHz, el= 170.2678, str= -3.6304, w= 3.17, $
-      ps= 0, n= 0.8, delta= 0, n1= 0, gamma= 0, n2= 0
-    hno3_24: line, v0= 206594.6855 MHz, el= 53.2579, str= -2.9445, w= 3.33, $
-      ps= 0, n= 0.65, delta= 0, n1= 0, gamma= 0, n2= 0
-    hno3_25: line, v0= 206628.6816 MHz, el= 52.4362, str= -3.0, w= 3.43, $
-      ps= 0, n= 0.64, delta= 0, n1= 0, gamma= 0, n2= 0
-    hno3_26: line, v0= 206663.1951 MHz, el= 50.7739, str= -3.0607, w= 3.53, $
-      ps= 0, n= 0.61, delta= 0, n1= 0, gamma= 0, n2= 0
-    hno3_27: line, v0= 206703.2186 MHz, el= 48.2702, str= -3.1285, w= 3.63, $
-      ps= 0, n= 0.65, delta= 0, n1= 0, gamma= 0, n2= 0
-    hno3_28: line, v0= 206743.1987 MHz, el= 132.6683, str= -3.679, w= 3.17, $
-      ps= 0, n= 0.8, delta= 0, n1= 0, gamma= 0, n2= 0
-    hno3_29: line, v0= 206765.0232 MHz, el= 44.9231, str= -3.2054, w= 3.47, $
-      ps= 0, n= 0.64, delta= 0, n1= 0, gamma= 0, n2= 0
-    hno3_30: line, v0= 206847.1622 MHz, el= 115.1164, str= -3.7289, w= 3.17, $
-      ps= 0, n= 0.8, delta= 0, n1= 0, gamma= 0, n2= 0
-    hno3_31: line, v0= 206901.4468 MHz, el= 40.7262, str= -3.66, w= 3.64, $
-      ps= 0, n= 0.64, delta= 0, n1= 0, gamma= 0, n2= 0
-    hno3_32: line, v0= 206939.9384 MHz, el= 98.397, str= -3.8081, w= 3.17, $
-      ps= 0, n= 0.8, delta= 0, n1= 0, gamma= 0, n2= 0
-    hno3_33: line, v0= 206951.2528 MHz, el= 40.7244, str= -3.6597, w= 3.64, $
-      ps= 0, n= 0.64, delta= 0, n1= 0, gamma= 0, n2= 0
-    hno3_34: line, v0= 207022.4627 MHz, el= 82.5107, str= -3.9393, w= 3.17, $
-      ps= 0, n= 0.8, delta= 0, n1= 0, gamma= 0, n2= 0
-    hno3_35: line, v0= 659149.3708 MHz, el= 388.2566, str= -3.858, w= 3.17, $
-      ps= 0, n= 0.8, delta= 0, n1= 0, gamma= 0, n2= 0
-    hno3_36: line, v0= 659157.9297 MHz, el= 388.2566, str= -2.9788, w= 3.74, $
-      ps= 0, n= 0.64, delta= 0, n1= 0, gamma= 0, n2= 0
-    hno3_37: line, v0= 659197.9058 MHz, el= 388.4549, str= -2.8639, w= 3.17, $
-      ps= 0, n= 0.8, delta= 0, n1= 0, gamma= 0, n2= 0
-    hno3_38: line, v0= 659206.8279 MHz, el= 388.2547, str= -2.9787, w= 3.17, $
-      ps= 0, n= 0.8, delta= 0, n1= 0, gamma= 0, n2= 0
-    hno3_39: line, v0= 659215.3868 MHz, el= 388.2547, str= -3.8578, w= 3.17, $
-      ps= 0, n= 0.8, delta= 0, n1= 0, gamma= 0, n2= 0
-
-    spectra, molecule=hno3, Qlog=[4.4462, 4.2589, 3.9947], $
-      lines=[hno3_1, hno3_2, hno3_3, hno3_4, hno3_5, hno3_6, hno3_7, $
-             hno3_8, hno3_9, hno3_10, hno3_11, hno3_12, hno3_13, hno3_14, $
-             hno3_15, hno3_16, hno3_17, hno3_18, hno3_19, hno3_20, hno3_21, $
-             hno3_22, hno3_23, hno3_24, hno3_25, hno3_26, hno3_27, hno3_28, $
-             hno3_29, hno3_30, hno3_31, hno3_32, hno3_33, hno3_34, hno3_35, $
-             hno3_36, hno3_37, hno3_38, hno3_39]
-
-;----------------------------------------------------------- N2 ---
-
-    n2_1: line, v0= 0 MHz, el= 0, str= 0, w= 0, $
-      ps= 0, n= 0, delta= 0, n1= 0, gamma= 0, n2= 0
-
-    spectra, molecule=n2, Qlog=[0, 0, 0], lines=n2_1
-
-;----------------------------------------------------------- N2O ---
-
-    n2o_1: line, v0= 200975.26 MHz, el= 23.4641, str= -4.0066, w= 2.43, $
-      ps= 0, n= 0.87, delta= 0, n1= 0, gamma= 0, n2= 0
-    n2o_2: line, v0=652833.7897 MHz, el=272.2826, str= -3.0051, w=2.300, $
-      ps= 0, n=0.75, delta= 0, n1= 0, gamma= 0, n2= 0
-
-    spectra, molecule=n2o, Qlog=[2.6972, 2.5724, 2.3965], lines=[n2o_1,n2o_2]
-
-;----------------------------------------------------------- H2O_18 ---
-
-    h2o_18_1: line, v0= 203407.52 MHz, el= 134.7832, str= -3.5657, w= 2.83, $
-      ps= -0.16, n= 0.75, delta= 0, n1= 0, gamma= 0, n2= 0
-
-    spectra, molecule=h2o_18, Qlog=[2.2544, 2.0682, 1.8076], lines=h2o_18_1
-
-;----------------------------------------------------------- ClO ---
-
-    clo_1: line, v0= 204294.4344 MHz, el= 13.0222, str= -4.1901, w= 2.529, $
-      ps= 0, n= 0.62, delta= 0, n1= 0, gamma= 0, n2= 0
-    clo_2: line, v0= 204327.6085 MHz, el= 13.0203, str= -4.0695, w= 2.529, $
-      ps= 0, n= 0.62, delta= 0, n1= 0, gamma= 0, n2= 0
-    clo_3: line, v0= 204346.0 MHz, el= 13.0222, str= -2.7855, w= 2.529, $
-      ps= 0, n= 0.62, delta= 0, n1= 0, gamma= 0, n2= 0
-    clo_4: line, v0= 204351.8796 MHz, el= 13.0198, str= -2.8476, w= 2.529, $
-      ps= 0, n= 0.62, delta= 0, n1= 0, gamma= 0, n2= 0
-    clo_5: line, v0= 204357.17 MHz, el= 13.0193, str= -2.9525, w= 2.529, $
-      ps= 0, n= 0.62, delta= 0, n1= 0, gamma= 0, n2= 0
-    clo_6: line, v0= 204362.557 MHz, el= 13.0189, str= -3.0373, w= 2.529, $
-      ps= 0, n= 0.62, delta= 0, n1= 0, gamma= 0, n2= 0
-    clo_7: line, v0= 649445.04 MHz, el= 176.527, str= -1.4015, w= 2.087, $
-      ps= 0, n= 0.857, delta= 0, n1= 0, gamma= 0, n2= 0
-    clo_8: line, v0= 649451.17 MHz, el= 176.528, str= -1.4016, w= 2.087, $
-      ps= 0, n= 0.857, delta= 0, n1= 0, gamma= 0, n2= 0
-    clo_9: line, v0= 650629.306 MHz, el= 498.309, str= -2.0674, w= 2.087, $
-      ps= 0, n= 0.857, delta= 0, n1= 0, gamma= 0, n2= 0
-    clo_10: line, v0= 651298.7186 MHz, el= 498.69, str= -2.0673, w= 2.087, $
-      ps= 0, n= 0.857, delta= 0, n1= 0, gamma= 0, n2= 0
-
-    spectra, molecule=clo, Qlog=[3.525, 3.3632, 3.1537], $
-      lines=[clo_1, clo_2, clo_3, clo_4, clo_5, clo_6, clo_7, clo_8, $
-             clo_9, clo_10]
-
-;----------------------------------------------------------- CO ---
-
-    co_1: line, v0= 230538.0 MHz, el= 3.845, str= -4.1197, w= 2.33, $
-      ps= 0, n= 0.75, delta= 0, n1= 0, gamma= 0, n2= 0
-
-    spectra, molecule=co, Qlog=[2.0369, 1.9123, 1.737], lines=co_1
-
-;----------------------------------------------------------- O_18_O ---
-
-    o_18_o_1: line, v0= 233946.179 MHz, el= 0, str= -6.6837, w= 1.98, $
-      ps= 0, n= 0.2, delta= 0, n1= 0, gamma= 0, n2= 0
-
-    spectra, molecule=o_18_o, Qlog=[2.6638, 2.5387, 2.3625], lines=o_18_o_1
-
-;----------------------------------------------------------- O3_V2 ---
-
-    o3_v2_1: line, v0= 246512.6283 MHz, el= 771.2002, str= -5.1625, w= 2.31, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_v2_2: line, v0= 625280.8257 MHz, el= 1406.2328, str= -5.6804, w= 1.98, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_v2_3: line, v0= 625324.2654 MHz, el= 1832.3977, str= -5.9613, w= 1.913, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_v2_4: line, v0= 626654.6988 MHz, el= 1053.2765, str= -5.008, w= 2.065, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_v2_5: line, v0= 652188.1959 MHz, el= 1177.4709, str= -4.9517, w= 2.074, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_v2_6: line, v0= 652270.646 MHz, el= 731.2869, str= -4.694, w= 2.185, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_v2_7: line, v0= 653460.2649 MHz, el= 906.0238, str= -4.5232, w= 2.133, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_v2_8: line, v0= 659091.0854 MHz, el= 873.1248, str= -4.5007, w= 2.124, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_v2_9: line, v0= 2502973.9957 MHz, el= 1193.2393, str= -3.9794, w= 2.068, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_v2_10: line, v0= 2509207.0106 MHz, el= 1159.6021, str= -3.9112, w= 2.048, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_v2_11: line, v0= 2534290.7804 MHz, el= 1171.3165, str= -3.9247, w= 2.056, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_v2_12: line, v0= 2544322.6785 MHz, el= 1321.6419, str= -4.1997, w= 2.059, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-
-    spectra, molecule=o3_v2, Qlog=[3.5506, 3.3484, 3.0787], $
-      lines=[o3_v2_1, o3_v2_2, o3_v2_3, o3_v2_4, o3_v2_5, o3_v2_6, $
-             o3_v2_7, o3_v2_8, o3_v2_9, o3_v2_10, o3_v2_11, o3_v2_12]
-
-;----------------------------------------------------------- HCl ---
-
-    hcl_1: line, v0= 625901.603 MHz, el= 0, str= -1.3118, w= 2.557, $
-      ps= 0.1, n= 0.705, delta= 0, n1= 0, gamma= 0, n2= 0
-    hcl_2: line, v0= 625918.756 MHz, el= 0, str= -1.1357, w= 2.557, $
-      ps= 0.1, n= 0.705, delta= 0, n1= 0, gamma= 0, n2= 0
-    hcl_3: line, v0= 625932.007 MHz, el= 0, str= -1.6128, w= 2.557, $
-      ps= 0.1, n= 0.705, delta= 0, n1= 0, gamma= 0, n2= 0
-
-    spectra, molecule=hcl, Qlog=[1.9211, 1.8018, 1.6369], lines=[hcl_1, hcl_2, hcl_3]
-
-;----------------------------------------------------------- HCl_35 ---
-
-    hcl_35_1: line, v0= 625901.603 MHz, el= 0, str= -1.3118, w= 2.557, $
-      ps= 0.1, n= 0.705, delta= 0, n1= 0, gamma= 0, n2= 0
-    hcl_35_2: line, v0= 625918.756 MHz, el= 0, str= -1.1357, w= 2.557, $
-      ps= 0.1, n= 0.705, delta= 0, n1= 0, gamma= 0, n2= 0
-    hcl_35_3: line, v0= 625932.007 MHz, el= 0, str= -1.6128, w= 2.557, $
-      ps= 0.1, n= 0.705, delta= 0, n1= 0, gamma= 0, n2= 0
-
-    spectra, molecule=hcl_35, Qlog=[1.9211, 1.8018, 1.6369],  $
-      lines=[hcl_35_1, hcl_35_2, hcl_35_3]
-
-;----------------------------------------------------------- HCl_37 ---
-
-    hcl_37_1: line, v0= 624964.374 MHz, el= 0, str= -1.3137, w= 2.557, $
-      ps= 0.1, n= 0.705, delta= 0, n1= 0, gamma= 0, n2= 0
-    hcl_37_2: line, v0= 624977.821 MHz, el= 0, str= -1.1376, w= 2.557, $
-      ps= 0.1, n= 0.705, delta= 0, n1= 0, gamma= 0, n2= 0
-    hcl_37_3: line, v0= 624988.334 MHz, el= 0, str= -1.6147, w= 2.557, $
-      ps= 0.1, n= 0.705, delta= 0, n1= 0, gamma= 0, n2= 0
-
-    spectra, molecule=hcl_37, Qlog=[1.9218, 1.8024, 1.6375], $
-      lines=[hcl_37_1, hcl_37_2, hcl_37_3]
-
-;----------------------------------------------------------- Br_81_O ---
-
-    br_81_o_1: line, v0= 624764.857 MHz, el= 243.5061, str= -1.7976, w= 2.34, $
-      ps= 0, n= 0.655, delta= 0, n1= 0, gamma= 0, n2= 0
-    br_81_o_2: line, v0= 624766.3907 MHz, el= 243.5093, str= -1.8154, w= 2.34, $
-      ps= 0, n= 0.655, delta= 0, n1= 0, gamma= 0, n2= 0
-    br_81_o_3: line, v0= 624766.704 MHz, el= 243.5066, str= -1.7976, w= 2.34, $
-      ps= 0, n= 0.655, delta= 0, n1= 0, gamma= 0, n2= 0
-    br_81_o_4: line, v0= 624767.9257 MHz, el= 243.5073, str= -1.8332, w= 2.34, $
-      ps= 0, n= 0.655, delta= 0, n1= 0, gamma= 0, n2= 0
-    br_81_o_5: line, v0= 624768.0666 MHz, el= 243.5097, str= -1.8154, w= 2.34, $
-      ps= 0, n= 0.655, delta= 0, n1= 0, gamma= 0, n2= 0
-    br_81_o_6: line, v0= 624768.8034 MHz, el= 243.502, str= -1.851, w= 2.34, $
-      ps= 0, n= 0.655, delta= 0, n1= 0, gamma= 0, n2= 0
-    br_81_o_7: line, v0= 624769.593 MHz, el= 243.5082, str= -1.8332, w= 2.34, $
-      ps= 0, n= 0.655, delta= 0, n1= 0, gamma= 0, n2= 0
-    br_81_o_8: line, v0= 624770.6246 MHz, el= 243.5026, str= -1.851, w= 2.34, $
-      ps= 0, n= 0.655, delta= 0, n1= 0, gamma= 0, n2= 0
-    br_81_o_9: line, v0= 650175.8041 MHz, el= 264.346, str= -1.7907, w= 2.34, $
-      ps= 0, n= 0.655, delta= 0, n1= 0, gamma= 0, n2= 0
-    br_81_o_10: line, v0= 650177.2087 MHz, el= 264.3493, str= -1.8078, w= 2.34, $
-      ps= 0, n= 0.655, delta= 0, n1= 0, gamma= 0, n2= 0
-    br_81_o_11: line, v0= 650177.7979 MHz, el= 264.3465, str= -1.7907, w= 2.34, $
-      ps= 0, n= 0.655, delta= 0, n1= 0, gamma= 0, n2= 0
-    br_81_o_12: line, v0= 650178.6151 MHz, el= 264.3478, str= -1.8249, w= 2.34, $
-      ps= 0, n= 0.655, delta= 0, n1= 0, gamma= 0, n2= 0
-    br_81_o_13: line, v0= 650179.031 MHz, el= 264.3497, str= -1.8078, w= 2.34, $
-      ps= 0, n= 0.655, delta= 0, n1= 0, gamma= 0, n2= 0
-    br_81_o_14: line, v0= 650179.4142 MHz, el= 264.3421, str= -1.842, w= 2.34, $
-      ps= 0, n= 0.655, delta= 0, n1= 0, gamma= 0, n2= 0
-    br_81_o_15: line, v0= 650180.4285 MHz, el= 264.3482, str= -1.8249, w= 2.34, $
-      ps= 0, n= 0.655, delta= 0, n1= 0, gamma= 0, n2= 0
-    br_81_o_16: line, v0= 650181.3811 MHz, el= 264.3427, str= -1.842, w= 2.34, $
-      ps= 0, n= 0.655, delta= 0, n1= 0, gamma= 0, n2= 0
-
-    spectra, molecule=br_81_o, Qlog=[3.5926, 3.4699, 3.2952], $
-      lines=[br_81_o_1, br_81_o_2, br_81_o_3, br_81_o_4, br_81_o_5, $
-             br_81_o_6, br_81_o_7, br_81_o_8, br_81_o_9, br_81_o_10, $
-             br_81_o_11, br_81_o_12, br_81_o_13, br_81_o_14, br_81_o_15, $
-             br_81_o_16]
-
-;----------------------------------------------------------- HO2 ---
-
-    ho2_1: line, v0= 624008.954 MHz, el= 97.7995, str= -2.1248, w= 3.2, $
-      ps= 0, n= 0.75, delta= 0, n1= 0, gamma= 0, n2= 0
-    ho2_2: line, v0= 624014.1264 MHz, el= 97.7991, str= -2.1735, w= 3.2, $
-      ps= 0, n= 0.75, delta= 0, n1= 0, gamma= 0, n2= 0
-    ho2_3: line, v0= 625660.3542 MHz, el= 119.4374, str= -2.1242, w= 3.2, $
-      ps= 0, n= 0.75, delta= 0, n1= 0, gamma= 0, n2= 0
-    ho2_4: line, v0= 625663.7997 MHz, el= 119.437, str= -2.0845, w= 3.2, $
-      ps= 0, n= 0.75, delta= 0, n1= 0, gamma= 0, n2= 0
-    ho2_5: line, v0= 648613.8526 MHz, el= 169.3204, str= -2.1283, w= 3.2, $
-      ps= 0, n= 0.75, delta= 0, n1= 0, gamma= 0, n2= 0
-    ho2_6: line, v0= 648617.4877 MHz, el= 169.32, str= -2.0947, w= 3.2, $
-      ps= 0, n= 0.75, delta= 0, n1= 0, gamma= 0, n2= 0
-    ho2_7: line, v0= 649701.4773 MHz, el= 175.3035, str= -2.3448, w= 3.2, $
-      ps= 0, n= 0.75, delta= 0, n1= 0, gamma= 0, n2= 0
-    ho2_8: line, v0= 649701.5134 MHz, el= 175.3039, str= -2.2987, w= 3.2, $
-      ps= 0, n= 0.75, delta= 0, n1= 0, gamma= 0, n2= 0
-    ho2_9: line, v0= 660115.6907 MHz, el= 118.614, str= -2.2009, w= 3.2, $
-      ps= 0, n= 0.75, delta= 0, n1= 0, gamma= 0, n2= 0
-    ho2_10: line, v0= 660115.8615 MHz, el= 118.6142, str= -2.1549, w= 3.2, $
-      ps= 0, n= 0.75, delta= 0, n1= 0, gamma= 0, n2= 0
-    ho2_11: line, v0= 660485.6655 MHz, el= 118.2757, str= -2.1527, w= 3.2, $
-      ps= 0, n= 0.75, delta= 0, n1= 0, gamma= 0, n2= 0
-    ho2_12: line, v0= 660485.7114 MHz, el= 118.2754, str= -2.1111, w= 3.2, $
-      ps= 0, n= 0.75, delta= 0, n1= 0, gamma= 0, n2= 0
-
-    spectra, molecule=ho2, Qlog=[3.641, 3.4536, 3.1896], $
-      lines=[ho2_1, ho2_2, ho2_3, ho2_4, ho2_5, ho2_6, ho2_7, ho2_8, $
-             ho2_9, ho2_10, ho2_11, ho2_12]
-
-;----------------------------------------------------------- O3_V1_3 ---
-
-    o3_v1_3_1: line, v0= 632949.7372 MHz, el= 1228.0027, str= -5.2444, w= 2.068, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_v1_3_2: line, v0= 650510.845 MHz, el= 1275.1962, str= -5.3516, w= 2.124, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_v1_3_3: line, v0= 635316.5654 MHz, el= 1324.038, str= -5.0909, w= 2.036, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_v1_3_4: line, v0= 636672.3675 MHz, el= 1071.822, str= -5.4256, w= 2.188, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_v1_3_5: line, v0= 659212.6886 MHz, el= 1077.7053, str= -5.3814, w= 2.168, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_v1_3_6: line, v0= 659465.1985 MHz, el= 1240.8279, str= -5.2588, w= 2.048, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_v1_3_7: line, v0=2534560.2526 MHz, el= 1721.3582, str= -5.0392, w=2.059, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_v1_3_8: line, v0=2542657.8486 MHz, el=1893.0692, str= -5.3607, w=1.995, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-
-    spectra, molecule=o3_v1_3, Qlog=[3.5506, 3.3484, 3.0787], $
-      lines=[o3_v1_3_1, o3_v1_3_2, o3_v1_3_3, o3_v1_3_4, o3_v1_3_5, $
-             o3_v1_3_6, o3_v1_3_7, o3_v1_3_8]
-
-;----------------------------------------------------------- HOCl ---
-
-    hocl_1: line, v0= 635870.022 MHz, el= 188.9661, str= -1.7504, w= 2.7, $
-      ps= 0, n= 0.75, delta= 0, n1= 0, gamma= 0, n2= 0
-
-    spectra, molecule=hocl, Qlog=[3.9787, 3.7911, 3.5268], lines=hocl_1
-
-;----------------------------------------------------------- HOCl_37 ---
-
-    hocl_37_1: line, v0= 2515171.7266 MHz, el= 212.7575, str= -1.4991, w= 2.7, $
-      ps= 0, n= 0.75, delta= 0, n1= 0, gamma= 0, n2= 0
-
-    spectra, molecule=hocl_37, Qlog=[3.9863, 3.7987, 3.5344], lines=hocl_37_1
-
-;----------------------------------------------------------- O3_ASYM_O_18 ---
-
-    o3_asym_o_18_1: line, v0= 636124.0614 MHz, el= 195.1492, str= -3.3757, $
-      w= 2.133, ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_asym_o_18_2: line, v0= 649137.1089 MHz, el= 306.9562, str= -3.4672, $
-      w= 2.036, ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_asym_o_18_3: line, v0= 649138.5046 MHz, el= 685.5488, str= -4.1816, w= 1.963, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_asym_o_18_4: line, v0= 649152.1201 MHz, el= 330.2889, str= -4.199, w= 2.033, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_asym_o_18_5: line, v0= 649152.9292 MHz, el= 330.2888, str= -4.199, w= 2.071, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_asym_o_18_6: line, v0= 660150.1537 MHz, el= 422.1055, str= -3.6114, w= 2.112, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_asym_o_18_7: line, v0= 2510299.3261 MHz, el= 625.199, str= -2.7403, w= 2.051, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_asym_o_18_8: line, v0= 2513742.9096 MHz, el= 545.3744, str= -2.6068, w= 2.059, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_asym_o_18_9: line, v0= 2531428.7404 MHz, el= 848.1749, str= -3.4781, w= 1.971, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_asym_o_18_10: line, v0= 2531429.4581 MHz, el= 848.1749, str= -3.4781, w= 1.971, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-
-    spectra, molecule=o3_asym_o_18, Qlog=[3.8582, 3.6708, 3.4065], $
-      lines=[o3_asym_o_18_1, o3_asym_o_18_2, o3_asym_o_18_3, $
-             o3_asym_o_18_4, o3_asym_o_18_5, o3_asym_o_18_6, $
-             o3_asym_o_18_7, o3_asym_o_18_8, o3_asym_o_18_9, o3_asym_o_18_10]
-
-;----------------------------------------------------------- O3_SYM_O_18 ---
-
-    o3_sym_o_18_1: line, v0=661047.7728 MHz, el=218.7333, str= -3.0757, w=2.177, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    o3_sym_o_18_2: line, v0= 2535208.0603 MHz, el= 649.4622, str= -2.7769, w= 2.051, $
-      ps= 0, n= 0.76, delta= 0, n1= 0, gamma= 0, n2= 0
-    spectra, molecule=o3_sym_o_18, Qlog=[3.5472, 3.3599, 3.0959], $
-      lines=[o3_sym_o_18_1, o3_sym_o_18_2]
-
-END Spectroscopy
+; --------------------------------------------- Spectroscopy ---- 
+; This file is automatically generated by the program
+; mlspgs/idllib/createspectroscopyl2cf.pro
+; do NOT edit it by hand.
+begin spectroscopy
+
+  ;; ----------------------------------- Br_81_O
+
+  Br_81_O_1: line, v0= 624764.8570 MHz, el= 243.50610, str= -1.7976, $
+    w= 2.3400, n= 0.655, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B31LM' ]
+  Br_81_O_2: line, v0= 624766.3907 MHz, el= 243.50929, str= -1.8154, $
+    w= 2.3400, n= 0.655, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B31LM' ]
+  Br_81_O_3: line, v0= 624766.7040 MHz, el= 243.50661, str= -1.7976, $
+    w= 2.3400, n= 0.655, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B31LM' ]
+  Br_81_O_4: line, v0= 624767.9257 MHz, el= 243.50729, str= -1.8332, $
+    w= 2.3400, n= 0.655, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B31LM' ]
+  Br_81_O_5: line, v0= 624768.0666 MHz, el= 243.50970, str= -1.8154, $
+    w= 2.3400, n= 0.655, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B31LM' ]
+  Br_81_O_6: line, v0= 624768.8034 MHz, el= 243.50200, str= -1.8510, $
+    w= 2.3400, n= 0.655, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B31LM' ]
+  Br_81_O_7: line, v0= 624769.5930 MHz, el= 243.50819, str= -1.8332, $
+    w= 2.3400, n= 0.655, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B31LM' ]
+  Br_81_O_8: line, v0= 624770.6246 MHz, el= 243.50259, str= -1.8510, $
+    w= 2.3400, n= 0.655, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B31LM' ]
+  Br_81_O_9: line, v0= 650175.8041 MHz, el= 264.34601, str= -1.7907, $
+    w= 2.2840, n= 0.560, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B10LF', $
+    'B11LF', 'B28LM', 'B29LM' ]
+  Br_81_O_10: line, v0= 650177.2087 MHz, el= 264.34930, str= -1.8078, $
+    w= 2.2840, n= 0.560, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B10LF', $
+    'B11LF', 'B28LM', 'B29LM' ]
+  Br_81_O_11: line, v0= 650177.7979 MHz, el= 264.34650, str= -1.7907, $
+    w= 2.2840, n= 0.560, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B10LF', $
+    'B11LF', 'B28LM', 'B29LM' ]
+  Br_81_O_12: line, v0= 650178.6151 MHz, el= 264.34781, str= -1.8249, $
+    w= 2.2840, n= 0.560, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B10LF', $
+    'B11LF', 'B28LM', 'B29LM' ]
+  Br_81_O_13: line, v0= 650179.0310 MHz, el= 264.34970, str= -1.8078, $
+    w= 2.2840, n= 0.560, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B10LF', $
+    'B11LF', 'B28LM', 'B29LM' ]
+  Br_81_O_14: line, v0= 650179.4142 MHz, el= 264.34210, str= -1.8420, $
+    w= 2.2840, n= 0.560, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B10LF', $
+    'B11LF', 'B28LM', 'B29LM' ]
+  Br_81_O_15: line, v0= 650180.4285 MHz, el= 264.34821, str= -1.8249, $
+    w= 2.2840, n= 0.560, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B10LF', $
+    'B11LF', 'B28LM', 'B29LM' ]
+  Br_81_O_16: line, v0= 650181.3811 MHz, el= 264.34271, str= -1.8420, $
+    w= 2.2840, n= 0.560, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B10LF', $
+    'B11LF', 'B28LM', 'B29LM' ]
+
+  spectra, molecule= Br_81_O, Qlog=[ 3.5926, 3.4699, 3.2952 ], $
+    lines=[ Br_81_O_1, Br_81_O_2, Br_81_O_3, Br_81_O_4, Br_81_O_5, $
+    Br_81_O_6, Br_81_O_7, Br_81_O_8, Br_81_O_9, Br_81_O_10, Br_81_O_11, $
+    Br_81_O_12, Br_81_O_13, Br_81_O_14, Br_81_O_15, Br_81_O_16 ]
+
+  ;; ----------------------------------- CH3CN
+
+  CH3CN_1: line, v0= 183835.3287 MHz, el= 206.27730, str= -2.6280, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B2LF', 'B3LF', $
+    'B4LF' ]
+  CH3CN_2: line, v0= 183874.2327 MHz, el= 151.71190, str= -2.7463, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B2LF', 'B3LF', $
+    'B4LF' ]
+  CH3CN_3: line, v0= 183906.0868 MHz, el= 107.05050, str= -2.6039, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B2LF', 'B3LF', $
+    'B4LF' ]
+  CH3CN_4: line, v0= 183930.8684 MHz, el= 72.303299, str= -2.1956, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B2LF', 'B3LF', $
+    'B4LF' ]
+  CH3CN_5: line, v0= 183948.4900 MHz, el= 47.478199, str= -2.4216, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B2LF', 'B3LF', $
+    'B4LF' ]
+  CH3CN_6: line, v0= 183959.0800 MHz, el= 32.580898, str= -2.3772, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B2LF', 'B3LF', $
+    'B4LF' ]
+  CH3CN_7: line, v0= 183962.6200 MHz, el= 27.614799, str= -2.3624, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B2LF', 'B3LF', $
+    'B4LF' ]
+  CH3CN_8: line, v0= 184481.0600 MHz, el= 431.05688, str= -2.9486, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B2LF', 'B3LF', $
+    'B4LF' ]
+  CH3CN_9: line, v0= 184489.5600 MHz, el= 435.07111, str= -3.1700, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B2LF', 'B3LF', $
+    'B4LF' ]
+  CH3CN_10: line, v0= 202164.7978 MHz, el= 276.86499, str= -3.1408, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B2UF', 'B3UF', $
+    'B4UF' ], umlsSignals=[ 'B2LF', 'B3LF' ]
+  CH3CN_11: line, v0= 202215.3769 MHz, el= 212.40939, str= -2.4763, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B2UF', 'B3UF', $
+    'B4UF' ], umlsSignals=[ 'B2LF', 'B3LF' ]
+  CH3CN_12: line, v0= 202258.1607 MHz, el= 157.84531, str= -2.6106, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B2UF', 'B3UF', $
+    'B4UF' ], umlsSignals=[ 'B2LF', 'B3LF' ]
+  CH3CN_13: line, v0= 202293.1896 MHz, el= 113.18490, str= -2.4785, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B2UF', 'B3UF', $
+    'B4UF' ], umlsSignals=[ 'B2LF', 'B3LF' ]
+  CH3CN_14: line, v0= 202320.4492 MHz, el= 78.438599, str= -2.0770, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B2UF', 'B3UF', $
+    'B4UF' ], umlsSignals=[ 'B2LF', 'B3LF' ]
+  CH3CN_15: line, v0= 202340.1000 MHz, el= 53.614101, str= -2.3072, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B2UF', 'B3UF', $
+    'B4UF' ], umlsSignals=[ 'B2LF', 'B3LF' ]
+  CH3CN_16: line, v0= 202351.4500 MHz, el= 38.717201, str= -2.2652, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B2UF', 'B3UF', $
+    'B4UF' ], umlsSignals=[ 'B2LF', 'B3LF' ]
+  CH3CN_17: line, v0= 202355.6100 MHz, el= 33.751099, str= -2.2512, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B2UF', 'B3UF', $
+    'B4UF' ], umlsSignals=[ 'B2LF', 'B3LF' ]
+  CH3CN_18: line, v0= 202769.9400 MHz, el= 394.55069, str= -3.4746, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B2UF', 'B3UF', $
+    'B4UF' ], umlsSignals=[ 'B2LF', 'B3LF' ]
+  CH3CN_19: line, v0= 202924.9400 MHz, el= 437.21051, str= -2.8343, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B2UF', 'B3UF', $
+    'B4UF' ], umlsSignals=[ 'B2LF', 'B3LF' ]
+  CH3CN_20: line, v0= 202935.6700 MHz, el= 441.22501, str= -2.8896, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B2UF', 'B3UF', $
+    'B4UF' ], umlsSignals=[ 'B2LF', 'B3LF' ]
+  CH3CN_21: line, v0= 202950.9700 MHz, el= 398.86731, str= -3.4792, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B2UF', 'B3UF', $
+    'B4UF' ], umlsSignals=[ 'B2LF', 'B3LF' ]
+  CH3CN_22: line, v0= 202972.6300 MHz, el= 400.22000, str= -3.4965, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B2UF', 'B3UF', $
+    'B4UF' ], umlsSignals=[ 'B2LF', 'B3LF' ]
+  CH3CN_23: line, v0= 623740.0094 MHz, el= 839.19739, str= -2.5126, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13LF', $
+    'B14LF', 'B30LM', 'B31LM' ]
+  CH3CN_24: line, v0= 623964.8233 MHz, el= 745.27588, str= -2.0079, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13LF', $
+    'B14LF', 'B30LM', 'B31LM' ]
+  CH3CN_25: line, v0= 624166.2158 MHz, el= 661.18378, str= -2.1267, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13LF', $
+    'B14LF', 'B30LM', 'B31LM' ]
+  CH3CN_26: line, v0= 624344.1066 MHz, el= 586.94019, str= -1.9659, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13LF', $
+    'B14LF', 'B30LM', 'B31LM' ]
+  CH3CN_27: line, v0= 624498.4440 MHz, el= 522.56158, str= -1.5255, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13LF', $
+    'B14LF', 'B30LM', 'B31LM' ]
+  CH3CN_28: line, v0= 624629.1074 MHz, el= 468.06271, str= -1.7086, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13LF', $
+    'B14LF', 'B30LM', 'B31LM' ]
+  CH3CN_29: line, v0= 624736.1023 MHz, el= 423.45590, str= -1.6121, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13LF', $
+    'B14LF', 'B30LM', 'B31LM' ]
+  CH3CN_30: line, v0= 624819.3430 MHz, el= 388.75110, str= -1.2360, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13LF', $
+    'B14LF', 'B30LM', 'B31LM' ]
+  CH3CN_31: line, v0= 624878.8642 MHz, el= 363.95630, str= -1.4834, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13LF', $
+    'B14LF', 'B30LM', 'B31LM' ]
+  CH3CN_32: line, v0= 624914.5729 MHz, el= 349.07721, str= -1.4512, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13LF', $
+    'B14LF', 'B30LM', 'B31LM' ]
+  CH3CN_33: line, v0= 624926.4775 MHz, el= 344.11710, str= -1.4405, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13LF', $
+    'B14LF', 'B30LM', 'B31LM' ]
+  CH3CN_34: line, v0= 625781.4529 MHz, el= 1100.9120, str= -2.7709, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13LF', $
+    'B14LF', 'B30LM', 'B31LM' ]
+  CH3CN_35: line, v0= 625880.6391 MHz, el= 1111.9238, str= -2.8083, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13LF', $
+    'B14LF', 'B30LM', 'B31LM' ]
+  CH3CN_36: line, v0= 625981.3774 MHz, el= 1017.4755, str= -2.8920, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13LF', $
+    'B14LF', 'B30LM', 'B31LM' ]
+  CH3CN_37: line, v0= 626085.6569 MHz, el= 1027.4916, str= -2.9254, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13LF', $
+    'B14LF', 'B30LM', 'B31LM' ]
+  CH3CN_38: line, v0= 626156.5645 MHz, el= 943.89581, str= -2.7334, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13LF', $
+    'B14LF', 'B30LM', 'B31LM' ]
+  CH3CN_39: line, v0= 626197.9513 MHz, el= 705.55017, str= -2.2235, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13LF', $
+    'B14LF', 'B30LM', 'B31LM' ]
+  CH3CN_40: line, v0= 626268.2045 MHz, el= 952.83801, str= -2.7629, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13LF', $
+    'B14LF', 'B30LM', 'B31LM' ]
+  CH3CN_41: line, v0= 626306.3411 MHz, el= 880.18939, str= -2.2953, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13LF', $
+    'B14LF', 'B30LM', 'B31LM' ]
+  CH3CN_42: line, v0= 626429.1164 MHz, el= 862.79041, str= -2.0922, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13LF', $
+    'B14LF', 'B30LM', 'B31LM' ]
+  CH3CN_43: line, v0= 626514.1923 MHz, el= 710.08289, str= -2.2323, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13LF', $
+    'B14LF', 'B30LM', 'B31LM' ]
+  CH3CN_44: line, v0= 626524.1653 MHz, el= 782.44611, str= -2.3863, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13LF', $
+    'B14LF', 'B30LM', 'B31LM' ]
+  CH3CN_45: line, v0= 626568.4038 MHz, el= 832.96991, str= -2.5018, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13LF', $
+    'B14LF', 'B30LM', 'B31LM' ]
+  CH3CN_46: line, v0= 626585.3403 MHz, el= 748.42578, str= -2.0125, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13LF', $
+    'B14LF', 'B30LM', 'B31LM' ]
+  CH3CN_47: line, v0= 626599.8234 MHz, el= 724.30981, str= -2.2622, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13LF', $
+    'B14LF', 'B30LM', 'B31LM' ]
+  CH3CN_48: line, v0= 626689.0476 MHz, el= 787.80011, str= -2.4033, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13LF', $
+    'B14LF', 'B30LM', 'B31LM' ]
+  CH3CN_49: line, v0= 626795.3707 MHz, el= 752.49933, str= -2.0252, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13LF', $
+    'B14LF', 'B30LM', 'B31LM' ]
+  CH3CN_50: line, v0= 626900.5831 MHz, el= 727.08600, str= -2.2705, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13LF', $
+    'B14LF', 'B30LM', 'B31LM' ]
+  CH3CN_51: line, v0= 627058.0532 MHz, el= 711.58972, str= -2.2361, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13LF', $
+    'B14LF', 'B30LM', 'B31LM' ]
+  CH3CN_52: line, v0= 627398.2440 MHz, el= 706.21368, str= -2.2233, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13LF', $
+    'B14LF', 'B30LM', 'B31LM' ]
+  CH3CN_53: line, v0= 659806.6002 MHz, el= 1098.6299, str= -2.6913, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13UF', $
+    'B14UF', 'B30UM', 'B31UM' ]
+  CH3CN_54: line, v0= 660093.4901 MHz, el= 985.13281, str= -2.7470, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13UF', $
+    'B14UF', 'B30UM', 'B31UM' ]
+  CH3CN_55: line, v0= 660355.8166 MHz, el= 881.41962, str= -2.5230, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13UF', $
+    'B14UF', 'B30UM', 'B31UM' ]
+  CH3CN_56: line, v0= 660593.4768 MHz, el= 787.51331, str= -2.0192, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13UF', $
+    'B14UF', 'B30UM', 'B31UM' ]
+  CH3CN_57: line, v0= 660806.3769 MHz, el= 703.43488, str= -2.1388, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13UF', $
+    'B14UF', 'B30UM', 'B31UM' ]
+  CH3CN_58: line, v0= 660994.4323 MHz, el= 629.20319, str= -1.9787, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13UF', $
+    'B14UF', 'B30UM', 'B31UM' ]
+  CH3CN_59: line, v0= 661157.5676 MHz, el= 564.83508, str= -1.5389, $
+    w= 3.0000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13UF', $
+    'B14UF', 'B30UM', 'B31UM' ]
+
+  spectra, molecule= CH3CN, Qlog=[ 4.6136, 4.3733, 4.0569 ], $
+    lines=[ CH3CN_1, CH3CN_2, CH3CN_3, CH3CN_4, CH3CN_5, CH3CN_6, $
+    CH3CN_7, CH3CN_8, CH3CN_9, CH3CN_10, CH3CN_11, CH3CN_12, CH3CN_13, $
+    CH3CN_14, CH3CN_15, CH3CN_16, CH3CN_17, CH3CN_18, CH3CN_19, $
+    CH3CN_20, CH3CN_21, CH3CN_22, CH3CN_23, CH3CN_24, CH3CN_25, $
+    CH3CN_26, CH3CN_27, CH3CN_28, CH3CN_29, CH3CN_30, CH3CN_31, $
+    CH3CN_32, CH3CN_33, CH3CN_34, CH3CN_35, CH3CN_36, CH3CN_37, $
+    CH3CN_38, CH3CN_39, CH3CN_40, CH3CN_41, CH3CN_42, CH3CN_43, $
+    CH3CN_44, CH3CN_45, CH3CN_46, CH3CN_47, CH3CN_48, CH3CN_49, $
+    CH3CN_50, CH3CN_51, CH3CN_52, CH3CN_53, CH3CN_54, CH3CN_55, $
+    CH3CN_56, CH3CN_57, CH3CN_58, CH3CN_59 ]
+
+  ;; ----------------------------------- CO
+
+  CO_1: line, v0= 230538.0000 MHz, el= 3.8450000, str= -4.1197, $
+    w= 2.3300, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B9LF', 'B25LD' ]
+
+  spectra, molecule= CO, Qlog=[ 2.0369, 1.9123, 1.7370 ], $
+    lines=[ CO_1 ]
+
+  ;; ----------------------------------- Cl_35_O
+
+  Cl_35_O_1: line, v0= 204294.4344 MHz, el= 13.022200, str= -4.1901, $
+    w= 2.5290, n= 0.620, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B5UF' ], $
+    umlsSignals=[ 'B2UF', 'B3UF' ]
+  Cl_35_O_2: line, v0= 204327.6085 MHz, el= 13.020300, str= -4.0695, $
+    w= 2.5290, n= 0.620, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B5UF' ], $
+    umlsSignals=[ 'B2UF', 'B3UF' ]
+  Cl_35_O_3: line, v0= 204346.0000 MHz, el= 13.022200, str= -2.7855, $
+    w= 2.5290, n= 0.620, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B5UF' ], $
+    umlsSignals=[ 'B2UF', 'B3UF' ]
+  Cl_35_O_4: line, v0= 204351.8796 MHz, el= 13.019800, str= -2.8476, $
+    w= 2.5290, n= 0.620, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B5UF' ], $
+    umlsSignals=[ 'B2UF', 'B3UF' ]
+  Cl_35_O_5: line, v0= 204357.1700 MHz, el= 13.019300, str= -2.9525, $
+    w= 2.5290, n= 0.620, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B5UF' ], $
+    umlsSignals=[ 'B2UF', 'B3UF' ]
+  Cl_35_O_6: line, v0= 204362.5570 MHz, el= 13.018900, str= -3.0373, $
+    w= 2.5290, n= 0.620, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B5UF' ], $
+    umlsSignals=[ 'B2UF', 'B3UF' ]
+  Cl_35_O_7: line, v0= 649445.0400 MHz, el= 176.52699, str= -1.4015, $
+    w= 2.0870, n= 0.857, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B10UF', $
+    'B11UF', 'B28UM', 'B29UM' ]
+  Cl_35_O_8: line, v0= 649451.1700 MHz, el= 176.52800, str= -1.4016, $
+    w= 2.0870, n= 0.857, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B10UF', $
+    'B11UF', 'B28UM', 'B29UM' ]
+  Cl_35_O_9: line, v0= 650629.3060 MHz, el= 498.30899, str= -2.0674, $
+    w= 2.0870, n= 0.857, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B10UF', $
+    'B11UF', 'B28UM', 'B29UM' ]
+  Cl_35_O_10: line, v0= 651298.7186 MHz, el= 498.69000, str= -2.0673, $
+    w= 2.0870, n= 0.857, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B10UF', $
+    'B11UF', 'B28UM', 'B29UM' ]
+
+  spectra, molecule= Cl_35_O, Qlog=[ 3.5250, 3.3632, 3.1537 ], $
+    lines=[ Cl_35_O_1, Cl_35_O_2, Cl_35_O_3, Cl_35_O_4, Cl_35_O_5, $
+    Cl_35_O_6, Cl_35_O_7, Cl_35_O_8, Cl_35_O_9, Cl_35_O_10 ]
+
+  ;; ----------------------------------- HCl_35
+
+  HCl_35_1: line, v0= 625901.6030 MHz, el= 0.0000000, str= -1.3118, $
+    w= 2.5570, n= 0.705, ps= 0.10000, ns= -0.057, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13LF', $
+    'B14LF' ]
+  HCl_35_2: line, v0= 625918.7560 MHz, el= 0.0000000, str= -1.1357, $
+    w= 2.5570, n= 0.705, ps= 0.10000, ns= -0.057, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13LF', $
+    'B14LF' ]
+  HCl_35_3: line, v0= 625932.0070 MHz, el= 0.0000000, str= -1.6128, $
+    w= 2.5570, n= 0.705, ps= 0.10000, ns= -0.057, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13LF', $
+    'B14LF' ]
+
+  spectra, molecule= HCl_35, Qlog=[ 1.9211, 1.8018, 1.6369 ], $
+    lines=[ HCl_35_1, HCl_35_2, HCl_35_3 ]
+
+  ;; ----------------------------------- HCl_37
+
+  HCl_37_1: line, v0= 624964.3740 MHz, el= 0.0000000, str= -1.3137, $
+    w= 2.5570, n= 0.705, ps= 0.10000, ns= -0.057, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13LF', $
+    'B14LF', 'B30M', 'B31M' ]
+  HCl_37_2: line, v0= 624977.8210 MHz, el= 0.0000000, str= -1.1376, $
+    w= 2.5570, n= 0.705, ps= 0.10000, ns= -0.057, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13LF', $
+    'B14LF', 'B30M', 'B31M' ]
+  HCl_37_3: line, v0= 624988.3340 MHz, el= 0.0000000, str= -1.6147, $
+    w= 2.5570, n= 0.705, ps= 0.10000, ns= -0.057, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13LF', $
+    'B14LF', 'B30M', 'B31M' ]
+
+  spectra, molecule= HCl_37, Qlog=[ 1.9218, 1.8024, 1.6375 ], $
+    lines=[ HCl_37_1, HCl_37_2, HCl_37_3 ]
+
+  ;; ----------------------------------- HCN
+
+  HCN_1: line, v0= 177259.6770 MHz, el= 2.9563999, str= -2.6671, $
+    w= 4.3100, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B6LF', 'B27LM' ]
+  HCN_2: line, v0= 177259.9230 MHz, el= 2.9563999, str= -2.5422, $
+    w= 4.3100, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B6LF', 'B27LM' ]
+  HCN_3: line, v0= 177261.1100 MHz, el= 2.9563999, str= -2.1900, $
+    w= 4.3100, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B6LF', 'B27LM' ]
+  HCN_4: line, v0= 177261.2230 MHz, el= 2.9563999, str= -1.9189, $
+    w= 4.3100, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B6LF', 'B27LM' ]
+  HCN_5: line, v0= 177262.0122 MHz, el= 2.9563999, str= -3.8432, $
+    w= 4.3100, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B6LF', 'B27LM' ]
+  HCN_6: line, v0= 177263.4450 MHz, el= 2.9563999, str= -2.6671, $
+    w= 4.3100, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B6LF', 'B27LM' ]
+
+  spectra, molecule= HCN, Qlog=[ 2.6277, 2.5031, 2.3276 ], $
+    lines=[ HCN_1, HCN_2, HCN_3, HCN_4, HCN_5, HCN_6 ]
+
+  ;; ----------------------------------- H2O
+
+  H2O_1: line, v0= 22235.0800 MHz, el= 446.51071, str= -5.8812, $
+    w= 2.8100, n= 0.690, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000
+  H2O_2: line, v0= 183310.1170 MHz, el= 136.16400, str= -3.6465, $
+    w= 2.8300, n= 0.750, ps= -0.16000, ns= 1.375, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B2LF', 'B3LF', $
+    'B4LF', 'B5LF', 'B6LF', 'B23LD', 'B27LM' ], umlsSignals=[ 'B5LF', $
+    'B6LF', 'B5UF', 'B6UF' ]
+  H2O_3: line, v0= 380197.3700 MHz, el= 315.77960, str= -3.5687, $
+    w= 2.7800, n= 0.680, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000
+  H2O_4: line, v0= 325152.9200 MHz, el= 212.15640, str= -2.6122, $
+    w= 2.8400, n= 0.540, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000
+  H2O_5: line, v0= 448001.0890 MHz, el= 285.41861, str= -2.5909, $
+    w= 2.6300, n= 0.660, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000
+  H2O_6: line, v0= 556936.0000 MHz, el= 23.794399, str= -0.8147, $
+    w= 3.2100, n= 0.690, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B10LF', $
+    'B11LF', 'B12LF', 'B13LF', 'B14LF', 'B30LM', 'B31LM', 'B10UF', $
+    'B11UF', 'B12UF', 'B13UF', 'B14UF', 'B30UM', 'B31UM' ]
+  H2O_7: line, v0= 752033.2300 MHz, el= 70.090797, str= -0.9941, $
+    w= 3.0600, n= 0.680, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000
+  H2O_8: line, v0= 2531917.8110 MHz, el= 1131.7756, str= -2.7836, $
+    w= 3.2000, n= 0.680, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B15UF', $
+    'B18UF' ]
+
+  spectra, molecule= H2O, Qlog=[ 2.2507, 2.0645, 1.8040 ], $
+    lines=[ H2O_1, H2O_2, H2O_3, H2O_4, H2O_5, H2O_6, H2O_7, H2O_8 ]
+
+  ;; ----------------------------------- H2O_18
+
+  H2O_18_1: line, v0= 203407.5200 MHz, el= 134.78320, str= -3.5657, $
+    w= 2.8300, n= 0.750, ps= -0.16000, ns= 1.375, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B5UF' ], $
+    umlsSignals=[ 'B2LF', 'B3LF', 'B2UF', 'B3UF' ]
+
+  spectra, molecule= H2O_18, Qlog=[ 2.2544, 2.0682, 1.8076 ], $
+    lines=[ H2O_18_1 ]
+
+  ;; ----------------------------------- H2O2
+
+  H2O2_1: line, v0= 204574.7000 MHz, el= 475.33511, str= -2.9201, $
+    w= 2.9100, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, umlsSignals=[ 'B2UF', 'B3UF' ]
+
+  spectra, molecule= H2O2, Qlog=[ 3.9906, 3.7605, 3.4494 ], $
+    lines=[ H2O2_1 ]
+
+  ;; ----------------------------------- HNO3
+
+  HNO3_1: line, v0= 181179.1123 MHz, el= 28.200300, str= -3.8837, $
+    w= 3.8000, n= 0.600, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B2LF', 'B3LF', $
+    'B4LF' ]
+  HNO3_2: line, v0= 181253.3038 MHz, el= 164.41420, str= -3.6897, $
+    w= 3.4000, n= 0.800, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B2LF', 'B3LF', $
+    'B4LF' ]
+  HNO3_3: line, v0= 181403.7376 MHz, el= 146.03841, str= -3.6996, $
+    w= 3.4000, n= 0.800, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B2LF', 'B3LF', $
+    'B4LF' ]
+  HNO3_4: line, v0= 181537.0066 MHz, el= 128.49390, str= -3.7198, $
+    w= 3.4000, n= 0.800, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B2LF', 'B3LF', $
+    'B4LF' ]
+  HNO3_5: line, v0= 181559.8656 MHz, el= 40.728001, str= -3.0896, $
+    w= 3.7000, n= 0.600, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B2LF', 'B3LF', $
+    'B4LF' ]
+  HNO3_6: line, v0= 181594.2980 MHz, el= 39.903999, str= -3.1540, $
+    w= 3.7000, n= 0.600, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B2LF', 'B3LF', $
+    'B4LF' ]
+  HNO3_7: line, v0= 181630.5529 MHz, el= 38.239300, str= -3.2262, $
+    w= 3.7000, n= 0.600, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B2LF', 'B3LF', $
+    'B4LF' ]
+  HNO3_8: line, v0= 181654.6172 MHz, el= 111.78110, str= -3.7534, $
+    w= 3.4000, n= 0.800, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B2LF', 'B3LF', $
+    'B4LF' ]
+  HNO3_9: line, v0= 181678.0000 MHz, el= 35.732601, str= -3.9110, $
+    w= 3.7000, n= 0.600, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B2LF', 'B3LF', $
+    'B4LF' ]
+  HNO3_10: line, v0= 181757.9834 MHz, el= 95.900597, str= -3.8059, $
+    w= 3.4000, n= 0.800, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B2LF', 'B3LF', $
+    'B4LF' ]
+  HNO3_11: line, v0= 181772.0400 MHz, el= 32.379902, str= -3.7744, $
+    w= 3.7000, n= 0.600, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B2LF', 'B3LF', $
+    'B4LF' ]
+  HNO3_12: line, v0= 181789.2000 MHz, el= 32.379299, str= -3.7743, $
+    w= 3.7000, n= 0.600, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B2LF', 'B3LF', $
+    'B4LF' ]
+  HNO3_13: line, v0= 181848.4311 MHz, el= 80.852898, str= -3.8873, $
+    w= 3.5000, n= 0.700, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B2LF', 'B3LF', $
+    'B4LF' ]
+  HNO3_14: line, v0= 181927.2032 MHz, el= 66.638496, str= -4.0207, $
+    w= 3.6000, n= 0.700, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B2LF', 'B3LF', $
+    'B4LF' ]
+  HNO3_15: line, v0= 183413.8725 MHz, el= 28.110600, str= -3.8618, $
+    w= 3.8000, n= 0.600, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B2LF', 'B3LF', $
+    'B4LF' ]
+  HNO3_16: line, v0= 205376.7458 MHz, el= 302.99051, str= -3.6874, $
+    w= 3.1700, n= 0.800, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+  HNO3_17: line, v0= 205611.2000 MHz, el= 278.79831, str= -3.6641, $
+    w= 3.1700, n= 0.800, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+  HNO3_18: line, v0= 205736.9662 MHz, el= 35.721100, str= -3.7607, $
+    w= 3.6800, n= 0.640, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+  HNO3_19: line, v0= 205824.7169 MHz, el= 255.43390, str= -3.6455, $
+    w= 3.1700, n= 0.800, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+  HNO3_20: line, v0= 206018.7703 MHz, el= 232.89799, str= -3.6318, $
+    w= 3.1600, n= 0.850, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+  HNO3_21: line, v0= 206194.7518 MHz, el= 211.19119, str= -3.6241, $
+    w= 3.2600, n= 0.720, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+  HNO3_22: line, v0= 206353.9761 MHz, el= 190.31430, str= -3.6232, $
+    w= 3.1600, n= 0.830, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+  HNO3_23: line, v0= 206497.6860 MHz, el= 170.26781, str= -3.6304, $
+    w= 3.1700, n= 0.800, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+  HNO3_24: line, v0= 206594.6855 MHz, el= 53.257900, str= -2.9445, $
+    w= 3.3300, n= 0.650, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+  HNO3_25: line, v0= 206628.6816 MHz, el= 52.436199, str= -3.0000, $
+    w= 3.4300, n= 0.640, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+  HNO3_26: line, v0= 206663.1951 MHz, el= 50.773899, str= -3.0607, $
+    w= 3.5300, n= 0.610, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+  HNO3_27: line, v0= 206703.2186 MHz, el= 48.270199, str= -3.1285, $
+    w= 3.6300, n= 0.650, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+  HNO3_28: line, v0= 206743.1987 MHz, el= 132.66830, str= -3.6790, $
+    w= 3.1700, n= 0.800, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+  HNO3_29: line, v0= 206765.0232 MHz, el= 44.923100, str= -3.2054, $
+    w= 3.4700, n= 0.640, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+  HNO3_30: line, v0= 206847.1622 MHz, el= 115.11640, str= -3.7289, $
+    w= 3.1700, n= 0.800, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+  HNO3_31: line, v0= 206901.4468 MHz, el= 40.726200, str= -3.6600, $
+    w= 3.6400, n= 0.640, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+  HNO3_32: line, v0= 206939.9384 MHz, el= 98.397003, str= -3.8081, $
+    w= 3.1700, n= 0.800, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+  HNO3_33: line, v0= 206951.2528 MHz, el= 40.724400, str= -3.6597, $
+    w= 3.6400, n= 0.640, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+  HNO3_34: line, v0= 207022.4627 MHz, el= 82.510696, str= -3.9393, $
+    w= 3.1700, n= 0.800, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+  HNO3_35: line, v0= 659149.3708 MHz, el= 388.25659, str= -3.8580, $
+    w= 3.1700, n= 0.800, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13UF', $
+    'B14UF' ]
+  HNO3_36: line, v0= 659157.9297 MHz, el= 388.25659, str= -2.9788, $
+    w= 3.7400, n= 0.640, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13UF', $
+    'B14UF' ]
+  HNO3_37: line, v0= 659197.9058 MHz, el= 388.45490, str= -2.8639, $
+    w= 3.1700, n= 0.800, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13UF', $
+    'B14UF' ]
+  HNO3_38: line, v0= 659206.8279 MHz, el= 388.25470, str= -2.9787, $
+    w= 3.1700, n= 0.800, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13UF', $
+    'B14UF' ]
+  HNO3_39: line, v0= 659215.3868 MHz, el= 388.25470, str= -3.8578, $
+    w= 3.1700, n= 0.800, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13UF', $
+    'B14UF' ]
+
+  spectra, molecule= HNO3, Qlog=[ 4.4462, 4.2589, 3.9947 ], $
+    lines=[ HNO3_1, HNO3_2, HNO3_3, HNO3_4, HNO3_5, HNO3_6, HNO3_7, $
+    HNO3_8, HNO3_9, HNO3_10, HNO3_11, HNO3_12, HNO3_13, HNO3_14, $
+    HNO3_15, HNO3_16, HNO3_17, HNO3_18, HNO3_19, HNO3_20, HNO3_21, $
+    HNO3_22, HNO3_23, HNO3_24, HNO3_25, HNO3_26, HNO3_27, HNO3_28, $
+    HNO3_29, HNO3_30, HNO3_31, HNO3_32, HNO3_33, HNO3_34, HNO3_35, $
+    HNO3_36, HNO3_37, HNO3_38, HNO3_39 ]
+
+  ;; ----------------------------------- HOCl_35
+
+  HOCl_35_1: line, v0= 635870.0220 MHz, el= 188.96609, str= -1.7504, $
+    w= 2.7000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B10LF', $
+    'B11LF', 'B28LM', 'B29LM' ]
+
+  spectra, molecule= HOCl_35, Qlog=[ 3.9787, 3.7911, 3.5268 ], $
+    lines=[ HOCl_35_1 ]
+
+  ;; ----------------------------------- HOCl_37
+
+  HOCl_37_1: line, v0= 2515171.7266 MHz, el= 212.75751, str= -1.4991, $
+    w= 2.7000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B15LF', $
+    'B18LF' ]
+
+  spectra, molecule= HOCl_37, Qlog=[ 3.9863, 3.7987, 3.5344 ], $
+    lines=[ HOCl_37_1 ]
+
+  ;; ----------------------------------- HO2
+
+  HO2_1: line, v0= 624008.9540 MHz, el= 97.799500, str= -2.1248, $
+    w= 4.1000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000
+  HO2_2: line, v0= 624014.1264 MHz, el= 97.799103, str= -2.1735, $
+    w= 4.1000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000
+  HO2_3: line, v0= 625660.3542 MHz, el= 119.43740, str= -2.1242, $
+    w= 4.1000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13LF', $
+    'B14LF' ]
+  HO2_4: line, v0= 625663.7997 MHz, el= 119.43700, str= -2.0845, $
+    w= 4.1000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13LF', $
+    'B14LF' ]
+  HO2_5: line, v0= 648613.8526 MHz, el= 169.32040, str= -2.1283, $
+    w= 4.1000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000
+  HO2_6: line, v0= 648617.4877 MHz, el= 169.32001, str= -2.0947, $
+    w= 4.1000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000
+  HO2_7: line, v0= 649701.4773 MHz, el= 175.30350, str= -2.3448, $
+    w= 4.1000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B10LF', $
+    'B28UM', 'B29UM' ]
+  HO2_8: line, v0= 649701.5134 MHz, el= 175.30389, str= -2.2987, $
+    w= 4.1000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B10LF', $
+    'B28UM', 'B29UM' ]
+  HO2_9: line, v0= 660115.6907 MHz, el= 118.61400, str= -2.2009, $
+    w= 4.1000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13UF', $
+    'B14UF' ]
+  HO2_10: line, v0= 660115.8615 MHz, el= 118.61420, str= -2.1549, $
+    w= 4.1000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13UF', $
+    'B14UF' ]
+  HO2_11: line, v0= 660485.6655 MHz, el= 118.27570, str= -2.1527, $
+    w= 4.1000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13UF', $
+    'B14UF', 'B30UM' ]
+  HO2_12: line, v0= 660485.7114 MHz, el= 118.27540, str= -2.1111, $
+    w= 4.1000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13UF', $
+    'B14UF', 'B30UM' ]
+
+  spectra, molecule= HO2, Qlog=[ 3.6410, 3.4536, 3.1896 ], $
+    lines=[ HO2_1, HO2_2, HO2_3, HO2_4, HO2_5, HO2_6, HO2_7, HO2_8, $
+    HO2_9, HO2_10, HO2_11, HO2_12 ]
+
+  ;; ----------------------------------- N2
+
+
+  spectra, molecule= N2, Qlog=[ 0.0000, 0.0000, 0.0000 ]
+
+  ;; ----------------------------------- N2O
+
+  N2O_1: line, v0= 200975.2600 MHz, el= 23.464100, str= -4.0066, $
+    w= 2.4300, n= 0.870, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B2UF', 'B3UF', $
+    'B4UF' ], umlsSignals=[ 'B2LF', 'B3LF', 'B4LF' ]
+  N2O_2: line, v0= 652833.7897 MHz, el= 272.28259, str= -3.0051, $
+    w= 2.3000, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B12UF' ]
+
+  spectra, molecule= N2O, Qlog=[ 2.6972, 2.5724, 2.3965 ], $
+    lines=[ N2O_1, N2O_2 ]
+
+  ;; ----------------------------------- OH
+
+  OH_1: line, v0= 2509935.4400 MHz, el= 0.0018000000, str= -0.8048, $
+    w= 2.6520, n= 0.740, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B16LF', $
+    'B19LF' ]
+  OH_2: line, v0= 2509949.0100 MHz, el= 0.0018000000, str= 0.3413, $
+    w= 2.6520, n= 0.740, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B16LF', $
+    'B19LF' ]
+  OH_3: line, v0= 2509988.1500 MHz, el= 0.0000000, str= 0.1494, $
+    w= 2.6520, n= 0.740, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B16LF', $
+    'B19LF' ]
+  OH_4: line, v0= 2514298.7300 MHz, el= 0.057399999, str= -0.8036, $
+    w= 2.6520, n= 0.740, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B15LF', $
+    'B18LF' ]
+  OH_5: line, v0= 2514316.7050 MHz, el= 0.057399999, str= 0.3425, $
+    w= 2.6520, n= 0.740, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B15LF', $
+    'B18LF' ]
+  OH_6: line, v0= 2514353.4900 MHz, el= 0.055599999, str= 0.1506, $
+    w= 2.6520, n= 0.740, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B15LF', $
+    'B18LF' ]
+
+  spectra, molecule= OH, Qlog=[ 1.9111, 1.7803, 1.6036 ], $
+    lines=[ OH_1, OH_2, OH_3, OH_4, OH_5, OH_6 ]
+
+  ;; ----------------------------------- O2
+
+  O2_1: line, v0= 50474.2042 MHz, el= 2011.2062, str= -9.8881, $
+    w= 0.8900, n= 0.800, ps= 0.0000, ns= 0.000, gamma= 0.00024000, $
+    n1= 0.800, delta= 0.00079000, n2= 1.800
+  O2_2: line, v0= 50987.7278 MHz, el= 1803.1726, str= -9.4699, $
+    w= 0.9100, n= 0.800, ps= 0.0000, ns= 0.000, gamma= 0.00022000, $
+    n1= 0.800, delta= 0.00078000, n2= 1.800
+  O2_3: line, v0= 51503.3389 MHz, el= 1606.3473, str= -9.0764, $
+    w= 0.9400, n= 0.800, ps= 0.0000, ns= 0.000, gamma= 0.00019700, $
+    n1= 0.800, delta= 0.00077400, n2= 1.800
+  O2_4: line, v0= 52021.4047 MHz, el= 1420.7625, str= -8.7079, $
+    w= 0.9700, n= 0.800, ps= 0.0000, ns= 0.000, gamma= 0.00016600, $
+    n1= 0.800, delta= 0.00076400, n2= 1.800
+  O2_5: line, v0= 52542.3925 MHz, el= 1246.4482, str= -8.3648, $
+    w= 0.9900, n= 0.800, ps= 0.0000, ns= 0.000, gamma= 0.00013600, $
+    n1= 0.800, delta= 0.00075100, n2= 1.800
+  O2_6: line, v0= 53066.9079 MHz, el= 1083.4329, str= -8.0472, $
+    w= 1.0200, n= 0.800, ps= 0.0000, ns= 0.000, gamma= 0.00013100, $
+    n1= 0.800, delta= 0.00071400, n2= 1.800
+  O2_7: line, v0= 53595.7507 MHz, el= 931.74298, str= -7.7555, $
+    w= 1.0500, n= 0.800, ps= 0.0000, ns= 0.000, gamma= 0.00023000, $
+    n1= 0.800, delta= 0.00058400, n2= 1.800
+  O2_8: line, v0= 54130.0016 MHz, el= 791.40302, str= -7.4901, $
+    w= 1.0700, n= 0.800, ps= 0.0000, ns= 0.000, gamma= 0.00033500, $
+    n1= 0.800, delta= 0.00043100, n2= 1.800
+  O2_9: line, v0= 54671.1450 MHz, el= 662.43579, str= -7.2516, $
+    w= 1.1000, n= 0.800, ps= 0.0000, ns= 0.000, gamma= 0.00037400, $
+    n1= 0.800, delta= 0.00030500, n2= 1.800
+  O2_10: line, v0= 55221.3720 MHz, el= 544.86218, str= -7.0406, $
+    w= 1.1300, n= 0.800, ps= 0.0000, ns= 0.000, gamma= 0.00025800, $
+    n1= 0.800, delta= 0.00033900, n2= 1.800
+  O2_11: line, v0= 55783.8190 MHz, el= 438.70099, str= -6.8578, $
+    w= 1.1700, n= 0.800, ps= 0.0000, ns= 0.000, gamma= -0.00011600, $
+    n1= 0.800, delta= 0.00070500, n2= 1.800
+  O2_12: line, v0= 56264.7660 MHz, el= 2.0843000, str= -7.0947, $
+    w= 1.7300, n= 0.800, ps= 0.0000, ns= 0.000, gamma= 0.00039000, $
+    n1= 0.800, delta= -0.00011300, n2= 1.800
+  O2_13: line, v0= 56363.3930 MHz, el= 343.96939, str= -6.7045, $
+    w= 1.2000, n= 0.800, ps= 0.0000, ns= 0.000, gamma= -0.00029700, $
+    n1= 0.800, delta= 0.00075300, n2= 1.800
+  O2_14: line, v0= 56968.1800 MHz, el= 260.68250, str= -6.5822, $
+    w= 1.2400, n= 0.800, ps= 0.0000, ns= 0.000, gamma= -0.00041600, $
+    n1= 0.800, delta= 0.00074200, n2= 1.800
+  O2_15: line, v0= 57612.4802 MHz, el= 188.85310, str= -6.4931, $
+    w= 1.2800, n= 0.800, ps= 0.0000, ns= 0.000, gamma= -0.00061300, $
+    n1= 0.800, delta= 0.00069700, n2= 1.800
+  O2_16: line, v0= 58323.8850 MHz, el= 128.49200, str= -6.4408, $
+    w= 1.3300, n= 0.800, ps= 0.0000, ns= 0.000, gamma= -0.00020500, $
+    n1= 0.800, delta= 5.1000e-05, n2= 1.800
+  O2_17: line, v0= 58446.5800 MHz, el= 16.387600, str= -6.6543, $
+    w= 1.5200, n= 0.800, ps= 0.0000, ns= 0.000, gamma= 0.00074800, $
+    n1= 0.800, delta= -0.00014600, n2= 1.800
+  O2_18: line, v0= 59164.2150 MHz, el= 79.607002, str= -6.4313, $
+    w= 1.3900, n= 0.800, ps= 0.0000, ns= 0.000, gamma= -0.00072200, $
+    n1= 0.800, delta= 0.00026600, n2= 1.800
+  O2_19: line, v0= 59590.9780 MHz, el= 42.223999, str= -6.4845, $
+    w= 1.4300, n= 0.800, ps= 0.0000, ns= 0.000, gamma= 0.00076500, $
+    n1= 0.800, delta= -9.0000e-05, n2= 1.800
+  O2_20: line, v0= 60306.0440 MHz, el= 42.200100, str= -6.4767, $
+    w= 1.4500, n= 0.800, ps= 0.0000, ns= 0.000, gamma= -0.00070500, $
+    n1= 0.800, delta= 8.1000e-05, n2= 1.800
+  O2_21: line, v0= 60434.7760 MHz, el= 79.564598, str= -6.4119, $
+    w= 1.3600, n= 0.800, ps= 0.0000, ns= 0.000, gamma= 0.00069700, $
+    n1= 0.800, delta= -0.00032400, n2= 1.800
+  O2_22: line, v0= 61150.5700 MHz, el= 128.39780, str= -6.3991, $
+    w= 1.3100, n= 0.800, ps= 0.0000, ns= 0.000, gamma= 0.00010400, $
+    n1= 0.800, delta= -6.7000e-05, n2= 1.800
+  O2_23: line, v0= 61800.1550 MHz, el= 188.71339, str= -6.4318, $
+    w= 1.2700, n= 0.800, ps= 0.0000, ns= 0.000, gamma= 0.00057000, $
+    n1= 0.800, delta= -0.00076100, n2= 1.800
+  O2_24: line, v0= 62411.2230 MHz, el= 260.50089, str= -6.5026, $
+    w= 1.2300, n= 0.800, ps= 0.0000, ns= 0.000, gamma= 0.00036000, $
+    n1= 0.800, delta= -0.00077700, n2= 1.800
+  O2_25: line, v0= 62486.2550 MHz, el= 16.252899, str= -6.6072, $
+    w= 1.5400, n= 0.800, ps= 0.0000, ns= 0.000, gamma= -0.00049800, $
+    n1= 0.800, delta= 9.7000e-05, n2= 1.800
+  O2_26: line, v0= 62997.9772 MHz, el= 343.74811, str= -6.6076, $
+    w= 1.2000, n= 0.800, ps= 0.0000, ns= 0.000, gamma= 0.00023900, $
+    n1= 0.800, delta= -0.00076800, n2= 1.800, umlsSignals=[ 'B1LF', $
+    'B1UF' ]
+  O2_27: line, v0= 63568.5200 MHz, el= 438.44141, str= -6.7440, $
+    w= 1.1700, n= 0.800, ps= 0.0000, ns= 0.000, gamma= 0.00010800, $
+    n1= 0.800, delta= -0.00070600, n2= 1.800, umlsSignals=[ 'B1LF', $
+    'B2UF' ]
+  O2_28: line, v0= 64127.7770 MHz, el= 544.56512, str= -6.9103, $
+    w= 1.1300, n= 0.800, ps= 0.0000, ns= 0.000, gamma= -0.00031100, $
+    n1= 0.800, delta= -0.00033200, n2= 1.800
+  O2_29: line, v0= 64678.8985 MHz, el= 662.10199, str= -7.1052, $
+    w= 1.1000, n= 0.800, ps= 0.0000, ns= 0.000, gamma= -0.00042100, $
+    n1= 0.800, delta= -0.00029800, n2= 1.800
+  O2_30: line, v0= 65224.0647 MHz, el= 791.03302, str= -7.3278, $
+    w= 1.0700, n= 0.800, ps= 0.0000, ns= 0.000, gamma= -0.00037500, $
+    n1= 0.800, delta= -0.00042300, n2= 1.800
+  O2_31: line, v0= 65764.7440 MHz, el= 931.33698, str= -7.5773, $
+    w= 1.0500, n= 0.800, ps= 0.0000, ns= 0.000, gamma= -0.00026700, $
+    n1= 0.800, delta= -0.00057500, n2= 1.800
+  O2_32: line, v0= 66302.0821 MHz, el= 1082.9915, str= -7.8533, $
+    w= 1.0200, n= 0.800, ps= 0.0000, ns= 0.000, gamma= -0.00016800, $
+    n1= 0.800, delta= -0.00070000, n2= 1.800
+  O2_33: line, v0= 66836.8204 MHz, el= 1245.9714, str= -8.1552, $
+    w= 0.9900, n= 0.800, ps= 0.0000, ns= 0.000, gamma= -0.00016900, $
+    n1= 0.800, delta= -0.00073500, n2= 1.800
+  O2_34: line, v0= 67369.5887 MHz, el= 1420.2505, str= -8.4828, $
+    w= 0.9700, n= 0.800, ps= 0.0000, ns= 0.000, gamma= -0.00020000, $
+    n1= 0.800, delta= -0.00074400, n2= 1.800
+  O2_35: line, v0= 67900.8670 MHz, el= 1605.8004, str= -8.8357, $
+    w= 0.9400, n= 0.800, ps= 0.0000, ns= 0.000, gamma= -0.00022800, $
+    n1= 0.800, delta= -0.00075300, n2= 1.800
+  O2_36: line, v0= 68431.0050 MHz, el= 1802.5907, str= -9.2137, $
+    w= 0.9200, n= 0.800, ps= 0.0000, ns= 0.000, gamma= -0.00024000, $
+    n1= 0.800, delta= -0.00076000, n2= 1.800
+  O2_37: line, v0= 68960.3120 MHz, el= 2010.5895, str= -9.6164, $
+    w= 0.9000, n= 0.800, ps= 0.0000, ns= 0.000, gamma= -0.00025000, $
+    n1= 0.800, delta= -0.00076500, n2= 1.800
+  O2_38: line, v0= 118750.3410 MHz, el= 0.24580000, str= -6.5323, $
+    w= 1.6060, n= 0.740, ps= -0.14000, ns= 1.360, gamma= -3.6000e-05, $
+    n1= 0.800, delta= 9.0000e-06, n2= 1.800, emlsSignals=[ 'B1LF', $
+    'B21LF', 'B22LD', 'B26LD', 'B32LW', 'B34LW' ]
+  O2_39: line, v0= 368498.3443 MHz, el= 3.9611001, str= -7.1917, $
+    w= 1.9200, n= 0.200, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000
+  O2_40: line, v0= 424763.1200 MHz, el= 2.0843000, str= -6.1477, $
+    w= 1.9300, n= 0.200, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000
+  O2_41: line, v0= 487249.3755 MHz, el= 2.0843000, str= -6.5101, $
+    w= 1.9200, n= 0.200, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000
+  O2_42: line, v0= 715393.0720 MHz, el= 18.337200, str= -6.7458, $
+    w= 1.8100, n= 0.200, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000
+  O2_43: line, v0= 773839.6910 MHz, el= 16.387600, str= -5.9341, $
+    w= 1.8200, n= 0.200, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000
+  O2_44: line, v0= 834145.7191 MHz, el= 16.387600, str= -6.3844, $
+    w= 1.8100, n= 0.200, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000
+  O2_45: line, v0= 2502323.9230 MHz, el= 260.50089, str= -5.9917, $
+    w= 1.2800, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B17LF', $
+    'B20LF' ]
+
+  spectra, molecule= O2, Qlog=[ 2.3398, 2.2152, 2.0398 ], $
+    lines=[ O2_1, O2_2, O2_3, O2_4, O2_5, O2_6, O2_7, O2_8, O2_9, $
+    O2_10, O2_11, O2_12, O2_13, O2_14, O2_15, O2_16, O2_17, O2_18, $
+    O2_19, O2_20, O2_21, O2_22, O2_23, O2_24, O2_25, O2_26, O2_27, $
+    O2_28, O2_29, O2_30, O2_31, O2_32, O2_33, O2_34, O2_35, O2_36, $
+    O2_37, O2_38, O2_39, O2_40, O2_41, O2_42, O2_43, O2_44, O2_45 ]
+
+  ;; ----------------------------------- O2_v1
+
+  O2_v1_1: line, v0= 2531334.2007 MHz, el= 1814.0099, str= -9.7430, $
+    w= 1.2800, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B15UF', $
+    'B18UF' ]
+
+  spectra, molecule= O2_v1, Qlog=[ 2.3398, 2.2152, 2.0398 ], $
+    lines=[ O2_v1_1 ]
+
+  ;; ----------------------------------- O_18_O
+
+  O_18_O_1: line, v0= 233946.1790 MHz, el= 0.0000000, str= -6.6837, $
+    w= 1.9800, n= 0.200, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B7LF' ]
+
+  spectra, molecule= O_18_O, Qlog=[ 2.6638, 2.5387, 2.3625 ], $
+    lines=[ O_18_O_1 ]
+
+  ;; ----------------------------------- O3
+
+  O3_1: line, v0= 180001.2900 MHz, el= 676.79559, str= -5.5818, $
+    w= 1.9860, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B5LF' ]
+  O3_2: line, v0= 184377.8200 MHz, el= 39.750599, str= -4.0792, $
+    w= 2.3730, n= 0.700, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B2LF', 'B3LF', $
+    'B4LF' ], umlsSignals=[ 'B5LF', 'B6LF', 'B5UF', 'B6UF' ]
+  O3_3: line, v0= 184748.7200 MHz, el= 222.57159, str= -4.5650, $
+    w= 2.1380, n= 0.750, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B2LF', 'B3LF', $
+    'B4LF' ], umlsSignals=[ 'B5LF', 'B6LF', 'B5UF', 'B6UF' ]
+  O3_4: line, v0= 206132.0490 MHz, el= 323.62070, str= -4.7272, $
+    w= 2.1680, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
+    , umlsSignals=[ 'B4UF' ]
+  O3_5: line, v0= 229575.0227 MHz, el= 302.63699, str= -4.6135, $
+    w= 2.1000, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B9LF' ]
+  O3_6: line, v0= 231281.4919 MHz, el= 112.54240, str= -3.8328, $
+    w= 2.2820, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B7LF', 'B8LF', $
+    'B9LF', 'B33LW' ]
+  O3_7: line, v0= 235709.8400 MHz, el= 120.25710, str= -3.6741, $
+    w= 2.2900, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B7LF', 'B8LF', $
+    'B9LF', 'B24LD', 'B33LW' ]
+  O3_8: line, v0= 237146.1921 MHz, el= 93.668701, str= -3.6900, $
+    w= 2.3000, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B7LF', 'B8LF', $
+    'B9LF', 'B33LW' ]
+  O3_9: line, v0= 242318.7357 MHz, el= 70.455704, str= -3.7166, $
+    w= 2.3100, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B7UF', 'B8UF', $
+    'B9UF', 'B33UW' ]
+  O3_10: line, v0= 243453.7000 MHz, el= 56.805000, str= -3.7609, $
+    w= 2.3100, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B7UF', 'B8UF', $
+    'B9UF', 'B24UD', 'B33UW' ]
+  O3_11: line, v0= 244158.0400 MHz, el= 50.302101, str= -4.5503, $
+    w= 2.1770, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B7UF', 'B8UF', $
+    'B9UF', 'B33UW' ]
+  O3_12: line, v0= 247761.7700 MHz, el= 142.71280, str= -4.4156, $
+    w= 2.1150, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B7UF', 'B8UF', $
+    'B9UF', 'B33UW' ]
+  O3_13: line, v0= 248183.3800 MHz, el= 183.43069, str= -3.6582, $
+    w= 2.2470, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B7UF', 'B8UF', $
+    'B9UF', 'B33UW' ]
+  O3_14: line, v0= 249788.6000 MHz, el= 17.597300, str= -3.8955, $
+    w= 2.3670, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B7UF', 'B8UF', $
+    'B9UF', 'B33UW' ]
+  O3_15: line, v0= 249961.9600 MHz, el= 50.643200, str= -3.7595, $
+    w= 2.2940, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B7UF', 'B8UF', $
+    'B9UF', 'B33UW' ]
+  O3_16: line, v0= 623687.8457 MHz, el= 281.83301, str= -3.1677, $
+    w= 2.1500, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13LF', $
+    'B14LF', 'B30LM', 'B31LM' ]
+  O3_17: line, v0= 625371.4686 MHz, el= 192.52350, str= -3.8734, $
+    w= 2.0710, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13LF', $
+    'B14LF', 'B30LM', 'B31LM' ]
+  O3_18: line, v0= 632177.0500 MHz, el= 327.55789, str= -3.2254, $
+    w= 2.1090, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B12LF' ]
+  O3_19: line, v0= 633352.9979 MHz, el= 344.53281, str= -3.9507, $
+    w= 2.0710, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B12LF' ]
+  O3_20: line, v0= 634461.7341 MHz, el= 241.83170, str= -3.1159, $
+    w= 2.1410, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B10LF', $
+    'B11LF', 'B28LM', 'B29LM' ]
+  O3_21: line, v0= 634519.7678 MHz, el= 707.15039, str= -4.2200, $
+    w= 1.9800, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B10LF', $
+    'B11LF', 'B28LM', 'B29LM' ]
+  O3_22: line, v0= 647840.1883 MHz, el= 172.29739, str= -3.0551, $
+    w= 2.1240, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B10UF', $
+    'B11UF', 'B28UM', 'B29UM' ]
+  O3_23: line, v0= 650732.9663 MHz, el= 179.06979, str= -3.8698, $
+    w= 2.0710, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B10UF', $
+    'B11UF', 'B28UM', 'B29UM' ]
+  O3_24: line, v0= 651475.9809 MHz, el= 142.71280, str= -3.0471, $
+    w= 2.1000, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B12UF' ]
+  O3_25: line, v0= 651556.9699 MHz, el= 56.805000, str= -3.4321, $
+    w= 2.2700, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B12UF' ]
+  O3_26: line, v0= 653762.5698 MHz, el= 116.55200, str= -3.0558, $
+    w= 2.1090, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B12LF' ]
+  O3_27: line, v0= 658815.2932 MHz, el= 325.19339, str= -3.9109, $
+    w= 2.0710, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13UF', $
+    'B14UF', 'B30UM', 'B31UM' ]
+  O3_28: line, v0= 661458.3584 MHz, el= 346.23199, str= -3.2073, $
+    w= 2.1210, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13UF', $
+    'B14UF', 'B30UM', 'B31UM' ]
+  O3_29: line, v0= 2501411.4461 MHz, el= 464.37589, str= -2.4524, $
+    w= 2.0560, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B17LF', $
+    'B20LF' ]
+  O3_30: line, v0= 2509560.4399 MHz, el= 759.28070, str= -3.0024, $
+    w= 2.0040, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B16LF', $
+    'B19LF' ]
+  O3_31: line, v0= 2510614.2022 MHz, el= 360.41379, str= -4.4563, $
+    w= 2.1590, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B16LF', $
+    'B19LF' ]
+  O3_32: line, v0= 2510875.7352 MHz, el= 308.42459, str= -4.8178, $
+    w= 2.1210, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B16LF', $
+    'B19LF' ]
+  O3_33: line, v0= 2534224.3415 MHz, el= 790.36353, str= -3.0530, $
+    w= 1.9950, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B16UF', $
+    'B19UF' ]
+  O3_34: line, v0= 2536301.7542 MHz, el= 762.23120, str= -5.5710, $
+    w= 1.9510, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B16UF', $
+    'B19UF' ]
+  O3_35: line, v0= 2542119.3911 MHz, el= 1023.0811, str= -3.5181, $
+    w= 1.9390, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B17UF', $
+    'B20UF' ]
+  O3_36: line, v0= 2543208.4034 MHz, el= 643.12469, str= -2.7646, $
+    w= 2.0560, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B17UF', $
+    'B20UF' ]
+
+  spectra, molecule= O3, Qlog=[ 3.5506, 3.3484, 3.0787 ], $
+    lines=[ O3_1, O3_2, O3_3, O3_4, O3_5, O3_6, O3_7, O3_8, O3_9, $
+    O3_10, O3_11, O3_12, O3_13, O3_14, O3_15, O3_16, O3_17, O3_18, $
+    O3_19, O3_20, O3_21, O3_22, O3_23, O3_24, O3_25, O3_26, O3_27, $
+    O3_28, O3_29, O3_30, O3_31, O3_32, O3_33, O3_34, O3_35, O3_36 ]
+
+  ;; ----------------------------------- O3_v1_3
+
+  O3_v1_3_1: line, v0= 632949.7372 MHz, el= 1228.0027, str= -5.2444, $
+    w= 2.0680, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B12LF' ]
+  O3_v1_3_2: line, v0= 635316.5654 MHz, el= 1324.0380, str= -5.0909, $
+    w= 2.0360, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B11LF' ]
+  O3_v1_3_3: line, v0= 636672.3675 MHz, el= 1071.8220, str= -5.4256, $
+    w= 2.1880, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B10LF' ]
+  O3_v1_3_4: line, v0= 650510.8450 MHz, el= 1275.1962, str= -5.3516, $
+    w= 2.1240, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B11UF' ]
+  O3_v1_3_5: line, v0= 659212.6886 MHz, el= 1077.7053, str= -5.3814, $
+    w= 2.1680, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13UF' ]
+  O3_v1_3_6: line, v0= 659465.1985 MHz, el= 1240.8279, str= -5.2588, $
+    w= 2.0480, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13UF' ]
+  O3_v1_3_7: line, v0= 2534560.2526 MHz, el= 1721.3582, str= -5.0392, $
+    w= 2.0590, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B16UF', $
+    'B19UF' ]
+  O3_v1_3_8: line, v0= 2542657.8486 MHz, el= 1893.0692, str= -5.3607, $
+    w= 1.9950, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B17UF', $
+    'B20UF' ]
+
+  spectra, molecule= O3_v1_3, Qlog=[ 3.5506, 3.3484, 3.0787 ], $
+    lines=[ O3_v1_3_1, O3_v1_3_2, O3_v1_3_3, O3_v1_3_4, O3_v1_3_5, $
+    O3_v1_3_6, O3_v1_3_7, O3_v1_3_8 ]
+
+  ;; ----------------------------------- O3_v2
+
+  O3_v2_1: line, v0= 206496.0360 MHz, el= 873.12482, str= -6.0181, $
+    w= 2.1400, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, umlsSignals=[ 'B4UF' ]
+  O3_v2_2: line, v0= 246512.6283 MHz, el= 771.20020, str= -5.1625, $
+    w= 2.3100, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B8UF' ]
+  O3_v2_3: line, v0= 625280.8257 MHz, el= 1406.2328, str= -5.6804, $
+    w= 1.9800, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13LF', $
+    'B14LF', 'B30LM' ]
+  O3_v2_4: line, v0= 625324.2654 MHz, el= 1832.3977, str= -5.9613, $
+    w= 1.9130, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13LF', $
+    'B14LF', 'B30LM' ]
+  O3_v2_5: line, v0= 626654.6988 MHz, el= 1053.2765, str= -5.0080, $
+    w= 2.0650, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B14LF' ]
+  O3_v2_6: line, v0= 652188.1959 MHz, el= 1177.4709, str= -4.9517, $
+    w= 2.0740, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B12UF' ]
+  O3_v2_7: line, v0= 652270.6460 MHz, el= 731.28693, str= -4.6940, $
+    w= 2.1850, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B12UF' ]
+  O3_v2_8: line, v0= 653460.2649 MHz, el= 906.02380, str= -4.5232, $
+    w= 2.1330, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B12UF' ]
+  O3_v2_9: line, v0= 659091.0854 MHz, el= 873.12482, str= -4.5007, $
+    w= 2.1240, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13UF', $
+    'B14UF' ]
+  O3_v2_10: line, v0= 2502973.9957 MHz, el= 1193.2393, str= -3.9794, $
+    w= 2.0680, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B17LF', $
+    'B20LF' ]
+  O3_v2_11: line, v0= 2509207.0106 MHz, el= 1159.6021, str= -3.9112, $
+    w= 2.0480, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B16LF', $
+    'B19LF' ]
+  O3_v2_12: line, v0= 2534290.7804 MHz, el= 1171.3165, str= -3.9247, $
+    w= 2.0560, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B16UF', $
+    'B19UF' ]
+  O3_v2_13: line, v0= 2544322.6785 MHz, el= 1321.6418, str= -4.1997, $
+    w= 2.0590, n= 0.760, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B17UF', $
+    'B20UF' ]
+
+  spectra, molecule= O3_v2, Qlog=[ 3.5506, 3.3484, 3.0787 ], $
+    lines=[ O3_v2_1, O3_v2_2, O3_v2_3, O3_v2_4, O3_v2_5, O3_v2_6, $
+    O3_v2_7, O3_v2_8, O3_v2_9, O3_v2_10, O3_v2_11, O3_v2_12, O3_v2_13 ]
+
+  ;; ----------------------------------- O3_ASYM_O_18
+
+  O3_ASYM_O_18_1: line, v0= 202229.5092 MHz, el= 328.72269, $
+    str= -5.0311, w= 2.1300, n= 0.760, ps= 0.0000, ns= 0.000, $
+    gamma= 0.0000, n1= 0.000, delta= 0.0000, n2= 0.000, umlsSignals=[ $
+    'B2LF', 'B3LF' ]
+  O3_ASYM_O_18_2: line, v0= 202385.5621 MHz, el= 7.9927001, $
+    str= -5.7597, w= 2.3400, n= 0.760, ps= 0.0000, ns= 0.000, $
+    gamma= 0.0000, n1= 0.000, delta= 0.0000, n2= 0.000, umlsSignals=[ $
+    'B2LF', 'B3LF' ]
+  O3_ASYM_O_18_3: line, v0= 204591.9999 MHz, el= 1007.9151, $
+    str= -6.1461, w= 2.3400, n= 0.760, ps= 0.0000, ns= 0.000, $
+    gamma= 0.0000, n1= 0.000, delta= 0.0000, n2= 0.000, umlsSignals=[ $
+    'B2UF', 'B3UF' ]
+  O3_ASYM_O_18_4: line, v0= 636124.0614 MHz, el= 195.14920, $
+    str= -3.3757, w= 2.1330, n= 0.760, ps= 0.0000, ns= 0.000, $
+    gamma= 0.0000, n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ $
+    'B10LF', 'B11LF', 'B28LM' ]
+  O3_ASYM_O_18_5: line, v0= 649137.1089 MHz, el= 306.95621, $
+    str= -3.4672, w= 2.0360, n= 0.760, ps= 0.0000, ns= 0.000, $
+    gamma= 0.0000, n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ $
+    'B10UF' ]
+  O3_ASYM_O_18_6: line, v0= 649138.5046 MHz, el= 685.54883, $
+    str= -4.1816, w= 1.9630, n= 0.760, ps= 0.0000, ns= 0.000, $
+    gamma= 0.0000, n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ $
+    'B10UF' ]
+  O3_ASYM_O_18_7: line, v0= 649152.1201 MHz, el= 330.28891, $
+    str= -4.1990, w= 2.0330, n= 0.760, ps= 0.0000, ns= 0.000, $
+    gamma= 0.0000, n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ $
+    'B10UF' ]
+  O3_ASYM_O_18_8: line, v0= 649152.9292 MHz, el= 330.28879, $
+    str= -4.1990, w= 2.0710, n= 0.760, ps= 0.0000, ns= 0.000, $
+    gamma= 0.0000, n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ $
+    'B10UF' ]
+  O3_ASYM_O_18_9: line, v0= 660150.1537 MHz, el= 422.10550, $
+    str= -3.6114, w= 2.1120, n= 0.760, ps= 0.0000, ns= 0.000, $
+    gamma= 0.0000, n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ $
+    'B13UF', 'B14UF' ]
+  O3_ASYM_O_18_10: line, v0= 2510299.3261 MHz, el= 625.19897, $
+    str= -2.7403, w= 2.0510, n= 0.760, ps= 0.0000, ns= 0.000, $
+    gamma= 0.0000, n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ $
+    'B16LF', 'B19LF' ]
+  O3_ASYM_O_18_11: line, v0= 2513742.9096 MHz, el= 545.37439, $
+    str= -2.6068, w= 2.0590, n= 0.760, ps= 0.0000, ns= 0.000, $
+    gamma= 0.0000, n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ $
+    'B15LF', 'B18LF' ]
+  O3_ASYM_O_18_12: line, v0= 2531428.7404 MHz, el= 848.17493, $
+    str= -3.4781, w= 1.9710, n= 0.760, ps= 0.0000, ns= 0.000, $
+    gamma= 0.0000, n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ $
+    'B15UF', 'B18UF' ]
+  O3_ASYM_O_18_13: line, v0= 2531429.4581 MHz, el= 848.17493, $
+    str= -3.4781, w= 1.9710, n= 0.760, ps= 0.0000, ns= 0.000, $
+    gamma= 0.0000, n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ $
+    'B15UF', 'B18UF' ]
+
+  spectra, molecule= O3_ASYM_O_18, Qlog=[ 3.8582, 3.6708, 3.4065 ], $
+    lines=[ O3_ASYM_O_18_1, O3_ASYM_O_18_2, O3_ASYM_O_18_3, $
+    O3_ASYM_O_18_4, O3_ASYM_O_18_5, O3_ASYM_O_18_6, O3_ASYM_O_18_7, $
+    O3_ASYM_O_18_8, O3_ASYM_O_18_9, O3_ASYM_O_18_10, O3_ASYM_O_18_11, $
+    O3_ASYM_O_18_12, O3_ASYM_O_18_13 ]
+
+  ;; ----------------------------------- O3_SYM_O_18
+
+  O3_SYM_O_18_1: line, v0= 205850.8977 MHz, el= 436.39990, $
+    str= -4.8985, w= 2.1000, n= 0.760, ps= 0.0000, ns= 0.000, $
+    gamma= 0.0000, n1= 0.000, delta= 0.0000, n2= 0.000, umlsSignals=[ $
+    'B4UF' ]
+  O3_SYM_O_18_2: line, v0= 206272.3015 MHz, el= 49.100700, $
+    str= -4.6914, w= 2.2000, n= 0.760, ps= 0.0000, ns= 0.000, $
+    gamma= 0.0000, n1= 0.000, delta= 0.0000, n2= 0.000, umlsSignals=[ $
+    'B4UF' ]
+  O3_SYM_O_18_3: line, v0= 661047.7728 MHz, el= 218.73331, $
+    str= -3.0757, w= 2.1770, n= 0.760, ps= 0.0000, ns= 0.000, $
+    gamma= 0.0000, n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ $
+    'B14UF', 'B31UM' ]
+  O3_SYM_O_18_4: line, v0= 2535208.0603 MHz, el= 649.46222, $
+    str= -2.7769, w= 2.0510, n= 0.760, ps= 0.0000, ns= 0.000, $
+    gamma= 0.0000, n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ $
+    'B16UF', 'B19UF' ]
+
+  spectra, molecule= O3_SYM_O_18, Qlog=[ 3.5472, 3.3599, 3.0959 ], $
+    lines=[ O3_SYM_O_18_1, O3_SYM_O_18_2, O3_SYM_O_18_3, O3_SYM_O_18_4 ]
+
+  ;; ----------------------------------- S_32_O2
+
+  S_32_O2_1: line, v0= 200287.5300 MHz, el= 203.46339, str= -3.0624, $
+    w= 2.9200, n= 0.780, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B2UF', 'B3UF', $
+    'B4UF' ], umlsSignals=[ 'B4LF' ]
+  S_32_O2_2: line, v0= 204246.7720 MHz, el= 118.68480, str= -3.0440, $
+    w= 2.9200, n= 0.780, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B5UF' ], $
+    umlsSignals=[ 'B2UF', 'B3UF' ]
+  S_32_O2_3: line, v0= 204384.3000 MHz, el= 38.367699, str= -4.1892, $
+    w= 2.9200, n= 0.780, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B5UF' ], $
+    umlsSignals=[ 'B2UF', 'B3UF' ]
+  S_32_O2_4: line, v0= 660472.6960 MHz, el= 237.86391, str= -2.3406, $
+    w= 2.9200, n= 0.780, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13UF', $
+    'B14UF', 'B30UM' ]
+  S_32_O2_5: line, v0= 660919.3140 MHz, el= 223.13229, str= -2.3331, $
+    w= 2.9200, n= 0.780, ps= 0.0000, ns= 0.000, gamma= 0.0000, $
+    n1= 0.000, delta= 0.0000, n2= 0.000, emlsSignals=[ 'B13UF', $
+    'B14UF', 'B31UM' ]
+
+  spectra, molecule= S_32_O2, Qlog=[ 3.7722, 3.5845, 3.3203 ], $
+    lines=[ S_32_O2_1, S_32_O2_2, S_32_O2_3, S_32_O2_4, S_32_O2_5 ]
+
+end spectroscopy
+
