@@ -2,8 +2,9 @@
 PROGRAM hhmmss_value_test ! tests subroutine
 !=================================
 
-   USE MLSCommon , ONLY: r8
-   USE MLSStrings , ONLY: hhmmss_value
+   USE MLSCommon , ONLY: r8, FileNameLen
+   USE MLSStrings , ONLY: hhmmss_value, utc_to_yyyymmdd
+   use SDPTOOLKIT, only: mls_utctotai
 
    IMPLICIT NONE
 
@@ -29,10 +30,14 @@ PROGRAM hhmmss_value_test ! tests subroutine
    INTEGER, PARAMETER :: MAXWORDLENGTH=16
 	CHARACTER (LEN=MAXLISTLENGTH) :: theString
 	CHARACTER (LEN=MAXWORDLENGTH) :: quotes, cquotes
+   character(LEN=FileNameLen) :: LeapSecFileName
 	LOGICAL, PARAMETER :: strict = .false.
    real(r8) :: theValue
    integer :: ErrTyp
 
+ 	print *, 'Enter the leap second file name (with path)'
+	read(*, '(A126)') LeapSecFileName
+	print *, 'leap second file: ', trim(LeapSecFileName)
 	DO
 
 ! Prompt for input
@@ -52,7 +57,12 @@ PROGRAM hhmmss_value_test ! tests subroutine
       else
         print *, 'Sorry--can''t grok your string as hh:mm:ss'
       endif
-
+! Convert to tai
+      if ( LeapSecFileName /= ' ' ) then
+        ErrTyp = mls_utctotai(trim(LeapSecFileName), trim(theString), &
+        & theValue)
+        print *, '           (tai) ', theValue
+      endif
 	ENDDO
 
 
@@ -61,4 +71,7 @@ END PROGRAM hhmmss_value_test
 !==================
 
 !# $Log$
+!# Revision 1.1  2002/02/19 23:28:19  pwagner
+!# First commit
+!#
 !#
