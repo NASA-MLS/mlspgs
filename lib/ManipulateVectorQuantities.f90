@@ -158,6 +158,8 @@ contains
     real (r8) :: MINA, MINB, MAXA, MAXB ! Information on a and b
 
     ! Executable code
+    DoHGridsMatch = .false.
+
     mySpacingOnly = .false.
     if ( present ( spacingOnly ) ) mySpacingOnly = spacingOnly
 
@@ -223,6 +225,9 @@ contains
 end module ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.16  2002/07/25 08:43:19  mjf
+! Initialised DoHGridsMatch to .false. at start of function.
+!
 ! Revision 2.15  2002/07/17 06:01:27  livesey
 ! Fixed bugs in DoH/VGrids match
 !
