@@ -93,7 +93,8 @@ blaslib_f := $(shell ${REECHO} $(blaslib)/*.c $(blaslib)/*.f $(blaslib)/*.f90 \
 he5lib_f := $(shell ${REECHO} $(he5lib)/*.c $(he5lib)/*.f $(he5lib)/*.f90)
 
 PROG_prereqs := $(CONFDIR)/$(MLSCFILE) \
-   $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
+   $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a \
+   $(INSTALLDIR)/libutctotai.a
 
 ifdef HDFVERSIONS
    PROG_prereqs := $(PROG_prereqs) $(he5lib_objs)/libhe5.a
@@ -203,6 +204,9 @@ $(he5lib_objs)/libhe5.a: $(libmls_objs)/libmls.a $(he5lib_f)
 	   rm -f $(he5lib_objs)/libhe5.a ; \
 	fi ; \
 	$(MAKE) -f $(MakeFName) libhe5.a -C $(he5lib) MARK_ALL_AS_UPTODATE=no
+
+$(INSTALLDIR)/libutctotai.a:
+	$(MAKE) -f $(MakeFName) utctotai -C $(CONFDIR)
 
 .PHONY: clean configure depends depends--mod ghostbuster install \
   internalsaymake internalupdate mostlyclean \
@@ -314,6 +318,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl1
 
 # $Log$
+# Revision 2.40  2003/03/06 19:45:58  pwagner
+# Added libutctotai as explicit prerequisite
+#
 # Revision 2.39  2003/02/24 21:16:01  pwagner
 # Fixed bug where changes to .f9h were not triggering recompiles
 #
