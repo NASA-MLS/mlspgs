@@ -122,7 +122,8 @@ PROG_prereqs := $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) \
 
 ifdef HDFVERSIONS
    PROG_prereqs := $(PROG_prereqs) $(he5lib_objs)/libhe5.a
-   ADD2PATHS := $(ADD2PATHS) ../$(he5lib)/$(MLSCONFG)
+   ADD2PATHS := $(ADD2PATHS) ../$(he5lib)/$(MLSCONFG) \
+   $(HDF5)/../fortran/src $(HDF5)/../include
 endif
 
 #ifdef BLAS
@@ -196,7 +197,9 @@ $(PROG): $(PROG_prereqs)
 	*) \
 		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
         UNPREFXDPTHS="$(ADD2PATHS)" ;\
-        if [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
+        return_status=`expr $$?` ; \
+        if [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" -a \
+        $$return_status = "0" ]; then \
 		     $(MAKE) mark_all_as_uptodate \
            UNPREFXDPTHS="$(ADD2PATHS)" MARK_ALL_AS_UPTODATE= ;\
          fi ; \
@@ -213,7 +216,9 @@ $(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG)
 	*) \
 		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
         UNPREFXDPTHS="$(ADD2PATHS)" ;\
-        if [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
+        return_status=`expr $$?` ; \
+        if [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" -a \
+        $$return_status = "0" ]; then \
 		     $(MAKE) mark_all_as_uptodate \
            UNPREFXDPTHS="$(ADD2PATHS)" MARK_ALL_AS_UPTODATE= ;\
          fi ; \
@@ -259,6 +264,8 @@ $(he5lib_objs)/libhe5.a: $(libmls_objs)/libmls.a $(he5lib_f)
 
 $(INSTALLDIR)/libutctotai.a:
 	$(MAKE) -f $(MakeFName) utctotai -C $(CONFDIR)
+
+.DELETE_ON_ERROR:
 
 .PHONY: configure depends clean tar mostlyclean tarz targ mlsl2 ghostbuster \
   depends--mod internalsaymake internalupdate
@@ -344,6 +351,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.50  2002/07/02 00:14:01  pwagner
+# Skips marking uptodate after an error
+#
 # Revision 2.49  2002/07/01 17:31:19  pwagner
 # No longer compiles some sources twice
 #
