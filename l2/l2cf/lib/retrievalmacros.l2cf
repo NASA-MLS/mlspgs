@@ -52,18 +52,23 @@ end Fill})
 ;; or DGG file.  $1 is the quantity within state, $2 is the name to
 ;; give the internal l2gp item (to avoid confusion with the 'main'
 ;; one), and $3 is the swath name.
+!define(DGGDivert,1)
+!define(DGMDivert,2)
+
 !define(joinDGG,{
 joinedDGG_$2: l2gp, source=state.$1, precision=outputPrecision.$1, swath='$3'
-!ifdef(DGGQuantities,
-  !define(DGGQuantities,{!DGGQuantities,joinedDGG_$2}),
-  !define(DGGQuantities,{joinedDGG_$2}))
+!ifdef(gotDGGs,{!dnl
+  !divert(!DGGDivert), joinedDGG_$2!divert},{!dnl
+  !divert(!DGGDivert)joinedDGG_$2!divert})
+!define(gotDGGs,{Yes})
 })
 !define(joinDGM,{
 joinedDGM_$2: l2aux, source=state.$1, sdName='$3'
 joinedDGM_$2_precision: l2aux, source=outputPrecision.$1, sdName='$3 precision'
-!ifdef(DGMQuantities,
-  !define(DGMQuantities,{!DGMQuantities, joinedDGM_$2, joinedDGM_$2_precision}),
-  !define(DGMQuantities,{joinedDGM_$2, joinedDGM_$2_precision}))
+!ifdef(gotDGMs,{!dnl
+  !divert(!DGMDivert), joinedDGM_$2, joinedDGM_$2_precision!divert},{!dnl
+  !divert(!DGMDivert)joinedDGM_$2, joinedDGM_$2_precision!divert})
+!define(gotDGMs,{Yes})
 })
 
 ;; This macro is used to invoke direct writes to store forward model
@@ -80,6 +85,9 @@ joinedDGM_$2_precision: l2aux, source=outputPrecision.$1, sdName='$3 precision'
   outputSD=sdOut$1, fwdModelOut=f$1})
 
 ; $Log$
+; Revision 1.5  2002/07/05 17:46:38  livesey
+; New work for multiphase retrievals
+;
 ; Revision 1.4  2002/06/24 17:24:47  livesey
 ; Bug in doNoise macro.
 ;
