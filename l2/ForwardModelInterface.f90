@@ -628,9 +628,10 @@ contains ! =====     Public Procedures     =============================
 
     ! Deal with fmStat%rows
     if ( present(Jacobian) .and. ( .not. associated (fmStat%rows) ) ) then
-      & call Allocate_test ( fmStat%rows, Jacobian%row%nb, 'fmStat%rows', &
+      call Allocate_test ( fmStat%rows, Jacobian%row%nb, 'fmStat%rows', &
         & ModuleName)
       fmStat%rows = .false.
+    endif
 
     ! Work out what signal we're after
     signal = forwardModelConfig%signals(1)
@@ -1440,6 +1441,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.102  2001/04/20 02:59:40  livesey
+! Whoops typo!
+!
 ! Revision 2.101  2001/04/20 02:55:19  livesey
 ! Now writes back derivatives in Jacobian!!! Not folded yet though,
 ! but that will be easy!
