@@ -17,7 +17,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
     & Multiply, MultiplyMatrix_XY, MultiplyMatrix_XY_T, &
     & MultiplyMatrixVectorNoT, &
     & operator(+), &
-    & operator(.TX.), RowScale, ScaleBlock, SolveCholesky, &
+    & operator(.TX.), RowScale, ScaleBlock, SolveCholesky, Spill, &
     & UpdateDiagonal
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
@@ -52,7 +52,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   public :: Negate, Negate_1
   public :: NewMultiplyMatrixVector, NormalEquations, operator(.TX.)
   public :: operator(+), RC_Info, RowScale, RowScale_1, ScaleMatrix
-  public :: SolveCholesky, SolveCholesky_1
+  public :: SolveCholesky, SolveCholesky_1, Spill, Spill_1
   public :: UpdateDiagonal, UpdateDiagonal_1, UpdateDiagonalVec_1
 
 ! =====     Defined Operators and Generic Identifiers     ==============
@@ -162,6 +162,10 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 
   interface SolveCholesky
     module procedure SolveCholesky_1
+  end interface
+
+  interface Spill
+    module procedure Spill_1
   end interface
 
   interface UpdateDiagonal
@@ -383,77 +387,74 @@ contains ! =====     Public Procedures     =============================
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
           & "Matrices in CholeskyFactor are not compatible" )
 
-!{Suppose $A$ is symmetric and positive definite.  Regard $A = (A_{ij})$
-!  and its upper-triangular Cholesky factor $G = (G_{ij})$ as $N \times N$
+!{Suppose $X$ is symmetric and positive definite.  Regard $X = (X_{ij})$
+!  and its upper-triangular Cholesky factor $Z = (Z_{ij})$ as $N \times N$
 !  matrices with square diagonal blocks.  By equating $(i,j)$ blocks in the
-!  equation $A = G^T G$ with $i \leq j$, it follows that
+!  equation $X = Z^T Z$ with $i \leq j$, it follows that
 !  \begin{equation*}
-!   A_{ij} = \sum_{k=1}^i G_{ki}^T G_{kj}
+!   X_{ij} = \sum_{k=1}^i Z_{ki}^T Z_{kj}
 !  \end{equation*}
 !  Define
 !  \begin{equation*}
-!  S = A_{ij} - \sum_{k=1}^{i-1} G_{ki}^T G_{kj}
-!    = A_{ij} - \sum_{k=1}^i G_{ki}^T G_{kj} + G_{ii}^T G_{ij}
-!    = G_{ii}^T G_{ij}
+!  S = X_{ij} - \sum_{k=1}^{i-1} Z_{ki}^T Z_{kj}
+!    = X_{ij} - \sum_{k=1}^i Z_{ki}^T Z_{kj} + Z_{ii}^T Z_{ij}
+!    = Z_{ii}^T Z_{ij}
 !  \end{equation*}
 !  
 !  Rearranging, we have the following algorithm:
 !  
 !  {\bf do} $i = 1, N$\\
-!  \hspace*{0.25in} $S= A_{ii} - \sum_{k=1}^{i-1} G_{ki}^T G_{ki}$\\
-!  \hspace*{0.25in} $G_{ii} = $ Cholesky factor of $S$\\
+!  \hspace*{0.25in} $S= X_{ii} - \sum_{k=1}^{i-1} Z_{ki}^T Z_{ki}$\\
+!  \hspace*{0.25in} $Z_{ii} = $ Cholesky factor of $S$\\
 !  \hspace*{0.25in} {\bf do} $j = i+1, N$\\
-!  \hspace*{0.5in}    $S= A_{ij} - \sum_{k=1}^{i-1} G_{ki}^T G_{kj}$\\
-!  \hspace*{0.5in}    solve $G_{ii}^T G_{ij} = S$ for $G_{ij}$\\
+!  \hspace*{0.5in}    $S= X_{ij} - \sum_{k=1}^{i-1} Z_{ki}^T Z_{kj}$\\
+!  \hspace*{0.5in}    solve $Z_{ii}^T Z_{ij} = S$ for $Z_{ij}$\\
 !  \hspace*{0.25in} {\bf end do} ! j\\
 !  {\bf end do} ! i
 
     ! Handle the first row specially, to avoid a copy followed by no-dot-product
-    !{ $Z_{11}^T Z_{11} = X_{11}$
+    !{ Get $Z_{11}$, where $Z_{11}^T Z_{11} = X_{11}$
     call choleskyFactor ( z%m%block(1,1), x%m%block(1,1), status )
     if ( status /= 0 ) then
       write ( line, '(a, i0, a)') &
         & 'Block (1,1) of matrix is not positive definite (element ', &
         & status, ')'
       call MLSMessage ( MLSMSG_Error, ModuleName, line )
-    endif
+    end if
     do j = 2, x%m%row%nb
       !{ Solve $Z_{11}^T Z_{1j} = X_{1j}$ for $Z_{1j}$
       call solveCholesky ( z%m%block(1,1), z%m%block(1,j), x%m%block(1,j), &
         & transpose=.true. )
     end do
     do i = 2, x%m%row%nb
-      call copyBlock ( s, x%m%block(i,i) )        ! Destroy s, then s := z...
+      call copyBlock ( s, x%m%block(i,i) )        ! Destroy s, then s := x...
       do k = 1, i-1
         !{ $S = X_{ii} - \sum_{k=1}^{i-1} Z_{ki}^T Z_{ki}$
         call multiply ( z%m%block(k,i), z%m%block(k,i), s, &
           & update=.true., subtract=.true. )
       end do ! k = 1, i-1
-      !{ $Z_{ii}^T Z_{ii} = S$
+      !{ Get $Z_{ii}$, where $Z_{ii}^T Z_{ii} = S$
       call choleskyFactor ( z%m%block(i,i), s, status )   ! z%m%block(i,i) = factor of s
       if ( status /= 0 ) then
-        call dump ( z%m%block(i,i)%values, name='Guilty party:' )
+        call dump ( s, name='Guilty party:' )
         write ( line, '(a, i0, a, i0, a, i0, a)') &
           & 'Block (',i,',',i,') of matrix is not positive definite (element ', &
           & status, ')'
         call MLSMessage ( MLSMSG_Error, ModuleName, line )
-      endif
+      end if
       do j = i+1, x%m%row%nb
-        if ( i == 1 ) then                        ! Avoid a copy
-        else
-          call copyBlock ( s, x%m%block(i,j) )    ! Destroy s, then s := x...
-          do k = 1, i-1
-            !{ $S = X_{ij} - \sum_{k=1}^{i-1} Z_{ki}^T Z_{kj}$
-            call multiply ( z%m%block(k,i), z%m%block(k,j), s, &
-              & update=.true., subtract=.true. )
-          end do ! k = 1, i-1
-          !{ Solve $Z_{ii}^T Z_{ij} = S$ for $Z_{ij}$
-          call solveCholesky ( z%m%block(i,i), z%m%block(i,j), s, &
-            & transpose=.true. )
-        end if
+        call copyBlock ( s, x%m%block(i,j) )    ! Destroy s, then s := x...
+        do k = 1, i-1
+          !{ $S = X_{ij} - \sum_{k=1}^{i-1} Z_{ki}^T Z_{kj}$
+          call multiply ( z%m%block(k,i), z%m%block(k,j), s, &
+            & update=.true., subtract=.true. )
+        end do ! k = 1, i-1
+        !{ Solve $Z_{ii}^T Z_{ij} = S$ for $Z_{ij}$
+        call solveCholesky ( z%m%block(i,i), z%m%block(i,j), s, &
+          & transpose=.true. )
       end do ! j = i+1, x%m%row%nb
       call destroyBlock( s )                      ! Avoid a memory leak
-    end do ! i = 1, n
+    end do ! i = 2, n
   end subroutine CholeskyFactor_1
 
   ! ------------------------------------------------  ClearMatrix  -----
@@ -1458,6 +1459,29 @@ contains ! =====     Public Procedures     =============================
     end if
   end subroutine SolveCholesky_1
 
+  ! ----------------------------------------------------  Spill_1  -----
+  subroutine Spill_1 ( A, Unit, ID, Text )
+  ! Spill the matrix A to Fortran Unit, which is presumed to be open
+  ! for unformatted output.  The order of output is:
+  ! Two integers, giving the number of row blocks and the number of
+  ! column blocks, then the blocks in column-major order, as output
+  ! by Spill_0.
+    type(Matrix_T), intent(in) :: A
+    integer, intent(in) :: Unit
+    integer, intent(in) :: ID                ! Whatever you like
+    character(len=*), intent(in) :: Text     ! Whatever you like
+
+    integer :: I, J                          ! Subscripts and loop inductors
+
+    write ( unit ) id, len(text), text
+    write ( unit ) a%row%nb, a%col%nb
+    do j = 1, a%col%nb
+      do i = 1, a%row%nb
+        call spill ( a%block(i,j), unit )
+      end do
+    end do
+  end subroutine Spill_1
+
   ! -------------------------------------------  UpdateDiagonal_1  -----
   subroutine UpdateDiagonal_1 ( A, LAMBDA, SQUARE, INVERT )
   ! Add LAMBDA to the diagonal of A.
@@ -1520,7 +1544,7 @@ contains ! =====     Public Procedures     =============================
           & x%quantities(a%m%row%quant(i))%values(:,a%m%row%inst(i)), &
           & subtract, invert )
       end do
-    endif
+    end if
   end subroutine UpdateDiagonalVec_1
 
 ! =====     Private Procedures     =====================================
@@ -1806,6 +1830,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.68  2002/06/18 01:22:49  vsnyder
+! Add Spill_1.  Cosmetic changes in LaTeX stuff and elsewhere.
+!
 ! Revision 2.67  2002/05/21 20:22:19  vsnyder
 ! Remove some commented-out obsolete code and its comments
 !
