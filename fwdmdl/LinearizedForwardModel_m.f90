@@ -435,6 +435,12 @@ contains ! =====     Public Procedures     =============================
           & xP%quantities(qtyInd)%values - &
           & l2pc%col%vec%quantities(qtyInd)%values
 
+        !!!!!!!!!!!!!!!! AVOID BUG !!!!!!!!!!!!!!!!!!!!11
+        if (deltaX%quantities(qtyInd)%template%quantityType == l_temperature) &
+          & deltaX%quantities(qtyInd)%values(:, &
+          & deltaX%quantities(qtyInd)%template%noInstances) = 0.0
+          !!!!!!!!!!!!!!!!!!! DEBUG
+
 
         ! NOTE FOR FUTURE ******************************************
         ! Now make sure that the deltaX's where mask is set are zero
@@ -562,6 +568,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 1.10  2001/04/30 15:50:29  livesey
+! Commented out code associated with mask
+!
 ! Revision 1.9  2001/04/28 22:32:07  livesey
 ! Nothing much changed apart from comments.
 ! Need to add code to have it ignore state stuff according to MASK.
