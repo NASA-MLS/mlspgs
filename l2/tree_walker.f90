@@ -18,8 +18,8 @@ module TREE_WALKER
   use JOIN, only: MLSL2Join
   use L2AUXData, only: DestroyL2AUXDatabase, L2AUXData_T
   use L2GPData, only: DestroyL2GPDatabase, L2GPData_T
-  use L2Parallel, only: PARALLEL, GETCHUNKFROMMASTER, L2MASTERTASK, &
-    & CLOSEPARALLEL
+  use L2ParInfo, only: PARALLEL, CLOSEPARALLEL
+  use L2Parallel, only: GETCHUNKFROMMASTER, L2MASTERTASK
   use L2PC_m, only: DestroyL2PCDatabase
   use MatrixModule_1, only: DestroyMatrixDatabase, Matrix_Database_T
   use MLSCommon, only: L1BINFO_T, MLSCHUNK_T, TAI93_RANGE_T
@@ -207,6 +207,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.53  2001/05/23 01:44:35  livesey
+! Parallel stuff taking shape
+!
 ! Revision 2.52  2001/05/10 00:43:23  livesey
 ! Tree walker now owns hGrids
 !
