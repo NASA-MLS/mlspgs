@@ -56,6 +56,7 @@ contains ! ====     Public Procedures     ==============================
     use MLSCommon, only: L1BINFO_T, MLSCHUNK_T, TAI93_RANGE_T, MLSFile_T
     ! use MLSFiles, only: MLSFile_T
     use MLSL2Options, only: GARBAGE_COLLECTION_BY_CHUNK
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Info
     use MLSSignals_M, only: Bands, DestroyBandDatabase, DestroyModuleDatabase, &
       & DestroyRadiometerDatabase, DestroySignalDatabase, &
       & DestroySpectrometerTypeDatabase, MLSSignals, Modules, Radiometers, &
@@ -70,7 +71,7 @@ contains ! ====     Public Procedures     ==============================
     use RetrievalModule, only: Retrieve
     use SpectroscopyCatalog_m, only: Destroy_Line_Database, &
       & Destroy_SpectCat_Database, Spectroscopy
-    use Test_Parse_Signals_m, only: Test_Parse_Signals
+    ! use Test_Parse_Signals_m, only: Test_Parse_Signals
     use Time_M, only: Time_Now
     use Toggles, only: GEN, LEVELS, SWITCHES, TOGGLE
     use Trace_m, only: DEPTH, TRACE_BEGIN, TRACE_END
@@ -147,7 +148,11 @@ contains ! ====     Public Procedures     ==============================
         call add_to_section_timing ( 'global_settings', t1)
       case ( z_mlsSignals )
         call MLSSignals ( son )
-        if ( index(switches,'tps') /= 0 ) call test_parse_signals
+        if ( index(switches,'tps') /= 0 ) then
+            ! call test_parse_signals
+            call MLSMessage ( MLSMSG_Info, ModuleName, &
+              & 'Go back and uncomment the previous line in tree_walker' )
+        endif
         call add_to_section_timing ( 'signals', t1)
       case ( z_spectroscopy )
         call spectroscopy ( son )
@@ -372,6 +377,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.102  2003/01/13 20:59:14  livesey
+! Removed a print statement
+!
 ! Revision 2.101  2002/12/05 19:45:20  pwagner
 ! Moved MLSFile_T from MLSFiles to MLSCommon
 !
