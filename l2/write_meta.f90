@@ -9,7 +9,8 @@ module WriteMetadata ! Populate metadata and write it out
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: FileNameLen, NameLen, R8
   use MLSFiles, only: GetPCFromRef, mls_sfstart, mls_sfend, Split_path_name
-  use MLSL2Options, only: PENALTY_FOR_NO_METADATA, CREATEMETADATA
+  use MLSL2Options, only: PENALTY_FOR_NO_METADATA, CREATEMETADATA, &
+    & ILLEGALL1BRADID
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use MLSPCF2, only: Mlspcf_mcf_l2gp_end, Mlspcf_mcf_l2gp_start, &
     & Mlspcf_mcf_l2log_start
@@ -123,11 +124,16 @@ module WriteMetadata ! Populate metadata and write it out
 
     character (len=fileNameLen) :: logGranID
 
+    ! Parts of the input pointer
+    INTEGER :: L1BOAPCFId=0  ! The PCF ID for the L1BOA file
+    INTEGER, DIMENSION(:), POINTER :: L1BRADPCFIds=>NULL()
+
   end type PCFData_T
 
   integer, public, parameter :: INVENTORYMETADATA=2
   logical, public, parameter :: MCFCASESENSITIVE=.FALSE.
   logical, public, parameter :: ANNOTATEWITHPCF=.FALSE.
+  logical, public, parameter :: SETINPUTPOINTER=.TRUE.
   logical, public, parameter :: SFINBETWEENSTARTEND=.FALSE.
   integer, public, parameter :: MCFFORL2GPOPTION=3     ! 1, public, 2 or 3
   integer, private :: Module_error
@@ -436,12 +442,13 @@ contains
     integer :: HdfReturn
     integer :: ReturnStatus
 
-    real(r8) Dval
+    real(r8) :: Dval
     integer, parameter :: INVENTORY=2, ARCHIVE=1
     character (len=PGSd_PC_FILE_PATH_MAX) :: physical_filename
     character (len=PGSd_PC_FILE_PATH_MAX) :: sval
     character (len=132) :: attrname
-    integer :: version, indx
+    integer :: version, indx, i
+    CHARACTER (LEN=98) :: inpt(31)
     character (len=*), parameter :: METAWR_ERR = &
       & 'Error writing metadata attribute '
 
@@ -451,6 +458,7 @@ contains
     integer, external :: PGS_MET_setattr_d, &
          PGS_MET_setAttr_s, PGS_MET_SETATTR_I, &
          PGS_MET_write, PGS_MET_remove
+    INTEGER, EXTERNAL :: pgs_pc_getUniversalRef
 
     !Executable code
 
@@ -517,8 +525,27 @@ contains
     ! InputPointer
 
     attrName = 'InputPointer'
-    returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
-         'See the PCF annotation to this file.')
+    if ( SETINPUTPOINTER ) then
+      inpt = ' '
+      DO i = 0, size(L2pcf%L1BRADPCFIds)
+        version = 1
+        if ( i == 0 ) then
+         returnStatus = pgs_pc_getUniversalRef(L2pcf%L1BOAPCFId, version, sval)
+        elseif ( L2pcf%L1BRADPCFIds(i) /= ILLEGALL1BRADID ) then
+         returnStatus = pgs_pc_getUniversalRef(L2pcf%L1BRADPCFIds(i), &
+           & version, sval)
+        else
+         returnStatus = PGS_S_SUCCESS + 1
+        endif
+        IF (returnStatus == PGS_S_SUCCESS) THEN 
+           inpt(i+1) = sval                     
+        ENDIF                                   
+      ENDDO
+      returnStatus = pgs_met_setAttr_s(groups(INVENTORY), attrName, inpt)
+    else
+      returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
+           'See the PCF annotation to this file.')
+    endif
     if ( returnStatus /= PGS_S_SUCCESS ) then
       call announce_error ( 0, &
       & "Error in writing InputPointer attribute.") 
@@ -703,6 +730,7 @@ contains
     integer :: returnStatus
     integer :: sdid, hdf_sdid
     character (len=132) :: attrname, errmsg
+    CHARACTER (LEN=98) :: inpt(31)
 
     integer, parameter :: INVENTORY=2, ARCHIVE=1
     character (len=PGSd_PC_FILE_PATH_MAX) :: physical_filename
@@ -1463,6 +1491,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.28  2002/08/28 22:27:26  pwagner
+! Now writes input pointer metadata like L3MMData
+!
 ! Revision 2.27  2002/03/13 18:31:01  pwagner
 ! Opens, writes metadata, closes each file only once
 !
