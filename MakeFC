@@ -77,6 +77,7 @@ SHELL = /bin/sh
 #            (code sub-directories of mlspgs excluding util, sandbox)
 # $LEVELS        -- automatic; built when target is not specified
 # .configure     -- automatic (if not yet extant; prerequisite for everything else)
+#                    (its name by default; actual value stored in MLSCFILE)
 # $OTHER_SUBDIRS -- not automatic
 # all            -- all the sub-directories: l1, l2, l3, lib, fwdmdl, cloudfwdm
 # subdirs        -- same as all
@@ -97,6 +98,7 @@ SHELL = /bin/sh
 #                  where *.o, *.mod, lib*.a, mlsl*, etc. built
 # depends        -- runs makemakedep.sh to calculate dependencies
 # ghostbuster    -- removes orphaned .o, .mod files from uniquely-named ssds
+#                   also deletes haunted library files
 # help           -- prints some info on how to build the mls software
 # disthelp       -- prints README.MakeFC--a long file
 # install        -- mv programs mlsl* from sub-subs to CONFDIR
@@ -277,7 +279,7 @@ configure_fopts:
 	@$(MAKE) -f $(MakeFName) update
 
 configure_full:
-	echo $(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
           -c "$(MLSF95)" -cf "$(MLSCFILE)" -p "$(MLSPLAT)" -pv -fl
 	@$(MAKE) -f $(MakeFName) update
 
@@ -546,6 +548,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.36  2001/05/31 23:26:57  pwagner
+# Ended role of l2_NEEDS_fwdmdl; cloudfwdm prereq of l2
+#
 # Revision 1.35  2001/05/30 17:39:18  pwagner
 # Added cloudfwdm to OTHER_SUBDIRS
 #
