@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -16,6 +16,8 @@ MODULE L1BOutUtils
        "$Id$"
   CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
   !-----------------------------------------------------------------------------
+
+    logical, parameter :: USEPCF2HDRFORHDF5 = .true.
 
 CONTAINS
 
@@ -58,7 +60,7 @@ CONTAINS
 
     USE OpenInit, ONLY: antextPCF, antextCF
     USE PCFHdr, ONLY: WritePCF2Hdr
-    USE MLSFiles, ONLY: HDFVERSION_4
+    USE MLSFiles, ONLY: HDFVERSION_4, HDFVERSION_5
     USE MLS_DataProducts, ONLY: DataProducts_T, Deallocate_DataProducts
     USE MLSAuxData, ONLY: Build_MLSAuxData, MaxCharFieldLen
 
@@ -69,8 +71,13 @@ CONTAINS
     TYPE (DataProducts_T) :: dataset
 
     IF (HDFversion == HDFVERSION_4) THEN
-       CALL WritePCF2Hdr (FileName, anTextPCF)
-       CALL WritePCF2Hdr (FileName, anTextCF)
+       CALL WritePCF2Hdr (FileName, anTextPCF, hdfVersion=HDFVERSION_4)
+       CALL WritePCF2Hdr (FileName, anTextCF, hdfVersion=HDFVERSION_4)
+    elseif (USEPCF2HDRFORHDF5) THEN
+       CALL WritePCF2Hdr (FileName, anTextPCF, hdfVersion=HDFVERSION_5, &
+         & fileType='hdf')
+       CALL WritePCF2Hdr (FileName, anTextCF, hdfVersion=HDFVERSION_5, &
+         & fileType='hdf', name='/LCF')
     ELSE
        CALL Deallocate_DataProducts (dataset)
        dataset%name      = 'TextPCF'
@@ -89,6 +96,9 @@ CONTAINS
 END MODULE L1BOutUtils
 
 ! $Log$
+! Revision 2.7  2003/05/30 23:47:51  pwagner
+! Prefers to use WritePCF2Hdr for either hdf version
+!
 ! Revision 2.6  2003/01/31 18:13:34  perun
 ! Version 1.1 commit
 !
