@@ -766,7 +766,7 @@ contains ! =====     Public Procedures     =============================
     status = SFWDATA_F90(sdId, start(1:noDims), &
       & stride(1:noDims), sizes(1:noDims), quantity%values ( :, &
       & 1+quantity%template%noInstancesLowerOverlap : &
-      & quantity%template%noInstances - quantity%template%noInstancesLowerOverlap ) )
+      & quantity%template%noInstances - quantity%template%noInstancesUpperOverlap ) )
     if ( status /= 0 ) then
       call announce_error (0,&
         & "Error writing SDS data to l2aux file:  " )
@@ -853,6 +853,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.53  2002/05/22 16:30:31  livesey
+! Bug fix in directWrite
+!
 ! Revision 2.52  2002/05/22 00:49:01  livesey
 ! Added direct write stuff
 !
