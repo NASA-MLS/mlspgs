@@ -11,23 +11,20 @@ module RetrievalModule
 ! This module and ones it calls consume most of the cycles.
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-  use Dump_0, only: Dump
   use Expr_M, only: Expr
   use ForwardModelConfig, only: ForwardModelConfig_T
   use Init_Tables_Module, only: F_apriori, F_aprioriScale, F_channels, &
-    & F_criteria, F_columnScale, F_covariance, F_diagonal, F_forwardModel, &
+    & F_columnScale, F_covariance, F_diagonal, F_forwardModel, &
     & F_fuzz, F_fwdModelExtra, F_fwdModelOut, F_height, F_ignore, F_jacobian, &
     & F_lambda, F_maxF, F_maxJ, F_measurements, F_measurementSD, F_method, &
     & F_opticalDepth, F_outputCovariance, F_outputSD, F_ptanQuantity, &
-    & F_quantity, F_regOrders, F_regQuants, F_regWeight, F_state, F_test, &
+    & F_quantity, F_regOrders, F_regQuants, F_regWeight, F_state, &
     & F_toleranceA, F_toleranceF, F_toleranceR, &
     & Field_first, Field_last, &
     & L_apriori, L_covariance, L_newtonian, L_none, L_norm, L_pressure, L_zeta, &
     & S_dumpBlocks, S_forwardModel, S_sids, S_matrix, S_subset, S_retrieve, &
     & S_time
-  use Intrinsic, only: Field_indices, PHYQ_Dimensionless, &
-    & PHYQ_LENGTH, PHYQ_PRESSURE, PHYQ_ZETA, Spec_indices
-  use Lexer_Core, only: Print_Source
+  use Intrinsic, only: PHYQ_Dimensionless
   use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
     & DestroyMatrix, GetFromMatrixDatabase, Matrix_T, Matrix_Database_T, &
     & Matrix_SPD_T
@@ -36,7 +33,6 @@ module RetrievalModule
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
   use Output_M, only: Output
-  use String_Table, only: Display_String
   use SidsModule, only: SIDS
   use Toggles, only: Gen, Switches, Toggle
   use Trace_M, only: Trace_begin, Trace_end
@@ -44,7 +40,7 @@ module RetrievalModule
     & Subtree
   use Tree_Types, only: N_named
   use VectorsModule, only: CloneVector, CopyVector, DestroyVectorInfo, &
-    & DestroyVectorMask, Dump, Vector_T
+    & DestroyVectorMask, Vector_T
 
   implicit NONE
   private
@@ -84,14 +80,10 @@ contains
     ! Local variables:
     type(vector_T), pointer :: Apriori  ! A priori estimate of state
     real(r8) :: AprioriScale            ! Weight for apriori, default 1.0
-    integer :: Channels                 ! Index in tree of "channels" field
-                                        ! of subset specification, or zero
     integer :: ColumnScaling            ! one of l_apriori, l_covariance,
                                         ! l_none or l_norm
     integer, pointer, dimension(:) :: ConfigIndices    ! In ConfigDatabase
     type(matrix_SPD_T), pointer :: Covariance     ! covariance**(-1) of Apriori
-    integer :: Criteria                 ! Index in tree of "criteria" field
-                                        ! of subset specification, or zero
     logical :: Diagonal                 ! "Iterate with the diagonal of the
                                         ! a priori covariance matrix until
                                         ! convergence, then put in the whole
@@ -127,8 +119,6 @@ contains
     type(matrix_T), target :: MyJacobian          ! for Jacobian to point at
     type(matrix_SPD_T), pointer :: OutputCovariance   ! Covariance of the sol'n
     type(vector_T), pointer :: OutputSD ! Vector containing SD of result
-    integer :: Quantity                 ! Index in tree of "quantity" field
-                                        ! of subset specification, or zero
     integer :: RegOrders                ! Regularization orders
     integer :: RegQuants                ! Regularization quantities
     real(r8) :: RegWeight               ! Weight of regularization conditions
@@ -136,8 +126,6 @@ contains
     integer :: Spec                     ! s_matrix, s_subset or s_retrieve
     type(vector_T), pointer :: State    ! The state vector
     real :: T1, T2                      ! for timing
-    integer :: Test                     ! Index in tree of "test" field
-                                        ! of subset specification, or zero
     logical :: Timing
     double precision :: ToleranceA      ! convergence tolerance for NWT,
                                         ! norm of move
@@ -319,8 +307,8 @@ contains
           if ( got(f_jacobian) ) then
             k = decoration(ixJacobian)
             if ( k == 0 ) then
-              call createEmptyMatrix ( myJacobian, sub_rosa(k), measurements, &
-                & state )
+              call createEmptyMatrix ( myJacobian, &
+                & sub_rosa(subtree(1,ixJacobian)), measurements, state )
               k = addToMatrixDatabase( matrixDatabase, myJacobian )
               call decorate ( ixJacobian, k )
             end if
@@ -395,6 +383,11 @@ contains
   contains
     ! --------------------------------------------  AnnounceError  -----
     subroutine AnnounceError ( Code, FieldIndex, AnotherFieldIndex )
+
+      use Intrinsic, only: Field_indices, Spec_indices
+      use Lexer_Core, only: Print_Source
+      use String_Table, only: Display_String
+
       integer, intent(in) :: Code       ! Index of error message
       integer, intent(in), optional :: FieldIndex, AnotherFieldIndex ! f_...
 
@@ -466,6 +459,7 @@ contains
         & NF_NEWX, NF_GMOVE, NF_BEST, NF_AITKEN, NF_DX, NF_DX_AITKEN, &
         & NF_START, NF_TOLX, NF_TOLX_BEST, NF_TOLF, NF_TOO_SMALL, &
         & NF_FANDJ, NWT, NWT_T, NWTA, NWTDB, RK
+      use Dump_0, only: Dump
       use ForwardModelWrappers, only: ForwardModel
       use ForwardModelIntermediate, only: ForwardModelIntermediate_T, &
         & ForwardModelStatus_T
@@ -478,7 +472,7 @@ contains
         & Negate, RowScale, ScaleMatrix, SolveCholesky, UpdateDiagonal
       use Regularization, only: Regularize
       use VectorsModule, only: AddToVector, DestroyVectorInfo, &
-        & DestroyVectorValue, Multiply, operator(.DOT.), operator(-), &
+        & DestroyVectorValue, Dump, Multiply, operator(.DOT.), operator(-), &
         & ScaleVector, SubtractFromVector
 
       ! Local Variables
@@ -1138,6 +1132,7 @@ contains
     subroutine SetupSubset ( key, vectors )
 
       use Declaration_table, only: NUM_VALUE, RANGE
+      use Intrinsic, only: PHYQ_LENGTH, PHYQ_PRESSURE
       use VectorsModule, only: ClearMask, CreateMask, &
         & GetVectorQtyByTemplateIndex, SetMask, VectorValue_T
 
@@ -1336,6 +1331,10 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.52  2001/06/30 03:07:43  vsnyder
+! Remove some unused variables.  Move some more internal-subroutine-peculiar
+! USEs into them.  Don't access sub_rosa(0) when creating a Jacobian.
+!
 ! Revision 2.51  2001/06/30 02:35:43  vsnyder
 ! Don't use the "extra" column to solve for the residual.  Move the Newtonian
 ! solver, and its variables and USEs, into an internal subroutine.  Move USEs
