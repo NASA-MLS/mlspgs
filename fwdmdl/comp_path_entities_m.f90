@@ -93,7 +93,7 @@ type (atmos_comp), intent(inout) :: ATMOSPHERIC(*)
 
   DEALLOCATE(zpath,hpath,tpath,ppath,dhdzp,STAT=i)
   ALLOCATE(zpath(ngt),hpath(ngt),tpath(ngt),ppath(ngt),dhdzp(ngt), &
- &         STAT=ier)
+ &         phi_eta(ngt,no_phi_t),STAT=ier)
   IF(ier /= 0) THEN
     Print *,'** Allocation Error in comp_path_entities: ?path ...'
     PRINT *,'** Error: ALLOCATION error in MAIN ..'
@@ -207,6 +207,9 @@ END SUBROUTINE comp_path_entities
 
 end module COMP_PATH_ENTITIES_M
 ! $Log$
+! Revision 1.10  2001/03/26 17:56:14  zvi
+! New codes to deal with dh_dt_path issue.. now being computed on the fly
+!
 ! Revision 1.9  2001/03/21 18:40:09  livesey
 ! Removed dump statements
 !
