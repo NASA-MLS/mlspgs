@@ -23,7 +23,7 @@ module Regularization
 contains
 
   ! -------------------------------------------------  Regularize  -----
-  subroutine Regularize ( A, Orders, Quants, Weights, WeightVec, Rows )
+  subroutine Regularize ( A, Orders, Quants, Weights, WeightVec, Rows, Horiz )
 
   !{Apply Tikhonov regularization conditions of the form $\Delta^k \delta
   ! \bf{x} \simeq 0$ to the blocks of A, where $\Delta^k$ is the central
@@ -77,12 +77,13 @@ contains
     use Tree, only: DECORATION, NSONS, SOURCE_REF, SUBTREE
     use VectorsModule, only: M_Tikhonov, Vector_T
 
-    type(Matrix_T), intent(inout) :: A
+    type(matrix_T), intent(inout) :: A
     integer, intent(in) :: Orders
     integer, intent(in) :: Quants
     integer, intent(in) :: Weights
     type(vector_T), pointer :: WeightVec
     integer, intent(out) :: Rows   ! Last row used; ultimately, number of rows
+    logical, intent(in), optional :: Horiz   ! "Do horizontal regularization"
 
     integer, parameter :: MaxRegOrd = 56 ! Maximum regularization
     ! order.  26!/(13!)**2 < 1/EPSILON(0.0E0) < 27!/(13!)**2 for 24-bit fraction.
@@ -98,26 +99,14 @@ contains
 
     integer :: Error               ! non-zero if an error occurs
 
-    integer :: C1, C2              ! Column boundaries, esp. if a mask is used.
-    integer :: I, J                ! Subscripts, Loop inductors
-    integer :: IB                  ! Which block is being regularized
-    integer :: MaxCols             ! Columns in block with with max cols.
-    integer :: NB                  ! Number of column blocks of A
-    integer :: NCOL                ! Number of columns in a block of A
-    integer :: NI, NQ              ! Indices for instance and quantity
-    integer :: NROW                ! Number of rows in first row block of A
-    integer :: Ord                 ! Order for the current block
-    integer :: Type                ! Type of value returned by EXPR
-    integer :: Units(2)            ! Units of value returned by EXPR
-    double precision :: Value(2)   ! Value returned by EXPR
-    logical :: Warn                ! Send warning message to MLSMessage
-    real(r8) :: Wt                 ! The weight for the current block
-    real(r8), pointer :: WtVec(:)  ! In case a quantity has a vector weight
+    logical :: MyHoriz             ! Copy of Horiz if present, else .false.
 
     error = 0
-    nb = a%col%nb
-    rows = 0
-    warn = .false.
+    myHoriz = .false.
+    if ( present(horiz) ) myHoriz = horiz
+
+    ! Check relations between weights, quants, and orders fields in the
+    ! Retrieve spec.
     if ( nsons(orders) /= 2 ) then
       if ( quants == 0 ) then
         call announceError ( regQuantsReq, orders )
@@ -125,13 +114,13 @@ contains
         call announceError ( fieldSizes, orders )
       end if
     end if
-    if ( weights == 0 ) then
-      wt = 1.0
-    else if ( nsons(weights) /= 2 ) then
-      if ( quants == 0 ) then
-        call announceError ( regQuantsReq, weights )
-      else if ( nsons(weights) /= nsons(quants) ) then
-        call announceError ( fieldSizes, weights )
+    if ( weights /= 0 ) then
+      if ( nsons(weights) /= 2 ) then
+        if ( quants == 0 ) then
+          call announceError ( regQuantsReq, weights )
+        else if ( nsons(weights) /= nsons(quants) ) then
+          call announceError ( fieldSizes, weights )
+        end if
       end if
     end if
     if ( associated(weightVec) ) then
@@ -141,11 +130,203 @@ contains
 
     if ( error == 0 ) then
 
-      maxCols = 0
-      do ib = 1, a%col%nb ! Find number of columns in widest block
-        if ( quants == 0 ) then ! Doing all of the blocks
-          maxCols = max(maxCols, a%col%nelts(ib))
+      if ( myHoriz ) then
+        call horizReg ( a, orders, quants, weights, weightVec, rows )
+      else
+        call vertReg ( a, orders, quants, weights, weightVec, rows )
+      end if
+
+    else   ! error /= 0
+      call MLSMessage ( MLSMSG_Error, moduleName, "Regularization failed." )
+    end if ! error == 0
+
+  contains
+
+    ! --------------------------------------------  AnnounceError  -----
+    subroutine AnnounceError ( code, where )
+      use Lexer_Core, only: Print_Source
+
+      integer, intent(in) :: Code    ! The message number
+      integer, intent(in) :: Where   ! Where in the tree
+
+      error = max(error,1)
+      call output ( '***** At or near ' )
+      call print_source ( source_ref(where) )
+      call output ( ' RetrievalModule complained: ' )
+      select case ( code )
+      case ( fieldSizes )       ! size(regOrders) /= size(regQuants)
+        call output ( "Number of values of regOrders or regWeights shall be 1 " )
+        call output ( "or the same as for regQuants.", advance="yes" )
+      case ( orderTooBig )
+        call output ( "Regularization order exceeds " )
+        call output ( maxRegOrd, advance="yes" )
+      case ( regQuantsReq )     ! RegQuants required if size(regOrders) /= 1
+        call output ( "The regQuants field is required if more than one order " )
+        call output ( "is specified.", advance="yes" )
+      case ( regTemplate )
+        call output ( "The template for the regularization weights vector is " )
+        call output ( "not the same as for the columns of the Jacobian matrix.", &
+          & advance='yes' )
+      case ( tooFewRows )
+        call output ( "Not enough rows in the matrix to do regularization.", &
+          & advance="yes" )
+      case ( unitless )         ! regOrders must be unitless
+        call output ( "The orders shall be unitless.", advance="yes" )
+      end select
+
+    end subroutine AnnounceError
+
+    ! ------------------------------------------------  FillBlock  -----
+    subroutine FillBlock ( B, Ord, Rows, C1, C2, Wt, WtVec )
+    ! Fill the block B with regularization coefficients starting at row Rows+1
+    ! and columns C1 to C2.  Update Rows to the last row filled.
+      type(matrixElement_T), intent(inout) :: B   ! Block to fill
+      integer, intent(in) :: Ord        ! Order of regularization operator
+      integer, intent(inout) :: Rows    ! Last row used
+      integer, intent(in) :: C1, C2     ! Columns to fill
+      real(r8), intent(in) :: Wt        ! Scalar weight for coefficients
+      real(r8), intent(inout), dimension(:), optional :: WtVec ! Weights vector
+
+      real(r8), dimension(0:maxRegOrd) :: C ! Binomial regularization
+      ! coefficients in reverse order.
+      integer :: I, J                   ! Subscripts, Loop inductors
+      integer :: K                      ! Column being filled
+      integer :: MaxRow                 ! Maximum row to be filled = ncol - ord
+      integer :: NCOL                   ! Number of columns -- C2 - C1 + 1
+      integer :: NV                     ! Next element in VALUES component
+      integer :: S                      ! Sign of regularization coefficient.
+
+      ncol = c2 - c1 + 1
+
+      !{ Calculate binomial coefficients with alternating sign,
+      ! $(-1)^i C_i^n = (-1)^i \frac{n!}{i! (n-i)!}$
+      !  by the recursion
+      !  $C_0^n = 1\text{, } C_i^n = -(n-i+1) C_{i-1}^n / i$.
+      ! Notice that $C_i^n = -1^n C_{n-i}^n$, so we only need
+      ! to go halfway through the array.
+      s = 1 - 2*mod(ord,2) ! +1 for even order, -1 for odd order
+      c(0) = s
+      c(ord) = 1
+      do i = 1, ord / 2
+        c(i) = ( -(ord-i+1) * c(i-1) ) / i
+        c(ord-i) = s * c(i)
+      end do
+      c(0:ord) = ( wt * 0.5_r8 ** ord ) * c(0:ord)
+
+      ! If there is a weight vector, it's the same length as the number
+      ! of columns.  But we want to weight the rows.  So construct a new
+      ! weight vector that is the same length as the number of rows, i.e.,
+      ! (number of columns) - (order), by averaging using the absolute
+      ! value of the coefficients.
+
+      if ( present(wtVec) ) then
+        do i = 1, ncol
+          j = min(i+ord,ncol)
+          wtVec(i) = dot_product(wtVec(i:j),abs(c(0:j-i)))
+        end do
+      end if
+
+      ! Each row has the binomial coefficients.  Therefore, each column
+      ! has the binomial coefficients in reverse order (which wouldn't
+      ! matter if the signs didn't alternate).  Except the first and
+      ! last ord columns have 1, 2, ..., ord and ord, ord-1, ..., 1
+      ! elements.  E.g., for order three, the first four rows look like:
+
+      !  1  -3   3  -1
+      !      1  -3   3  -1
+      !          1  -3   3  -1
+      !              1  -3   3  -1
+
+      ! (assuming there are at least seven columns)
+
+      k = c1
+      maxRow = ncol - ord
+      ! Fill in coefficients from the end of C(:Ord) (but no more than
+      ! maxRow-1 of them)
+      do i = 1, ord + 1
+        nv = b%r2(k-1) + 1
+        j = min(i,maxRow) ! Number of coefficients
+        b%r1(k) = i
+        b%r2(k) = nv + j - 1
+        if ( present(wtVec) ) then
+          b%values(nv:nv+j-1,1) = c(ord-i+1:ord-i+j) * wtVec(i:i+j-1)
         else
+          b%values(nv:nv+j-1,1) = c(ord-i+1:ord-i+j)
+        end if
+        k = k + 1
+      end do
+      ! Fill in coefficients from all of C(:Ord)
+      do i = ord+2, maxRow
+        nv = b%r2(k-1) + 1
+        b%r1(k) = i
+        b%r2(k) = nv + ord
+        if ( present(wtVec) ) then
+          b%values(nv:nv+ord,1) = c(0:ord) * wtVec(i:i+ord)
+        else
+          b%values(nv:nv+ord,1) = c(0:ord)
+        end if
+        k = k + 1
+      end do
+      ! Fill in coefficients from the beginning of C(:Ord) (but no more
+      ! than maxRow-1 of them)
+      j = min(maxrow-1,ord) - 1 ! Index of last coefficient
+      do i = max(ord+2,maxRow+1), ncol
+        nv = b%r2(k-1) + 1
+        b%r1(k) = i
+        b%r2(k) = nv + j
+        if ( present(wtVec) ) then
+          b%values(nv:nv+j,1) = c(0:j) * wtVec(ncol-j:ncol)
+        else
+          b%values(nv:nv+j,1) = c(0:j)
+        end if
+        j = j - 1
+        k = k + 1
+      end do
+      rows = rows + maxRow
+    end subroutine FillBlock
+
+    ! -------------------------------------------------  HorizReg  -----
+    subroutine HorizReg ( A, Orders, Quants, Weights, WeightVec, Rows )
+      type(matrix_T), intent(inout) :: A
+      integer, intent(in) :: Orders, Quants, Weights ! Tree node indices
+      type(vector_T), pointer :: WeightVec
+      integer, intent(out) :: Rows ! Last row used; ultimately, number of rows
+
+      rows = 0
+    end subroutine HorizReg
+
+    ! --------------------------------------------------  VertReg  -----
+    subroutine VertReg ( A, Orders, Quants, Weights, WeightVec, Rows )
+      type(matrix_T), intent(inout) :: A
+      integer, intent(in) :: Orders, Quants, Weights ! Tree node indices
+      type(vector_T), pointer :: WeightVec
+      integer, intent(out) :: Rows ! Last row used; ultimately, number of rows
+
+      integer :: C1, C2            ! Column boundaries, esp. if a mask is used.
+      integer :: I, J              ! Subscripts, Loop inductors
+      integer :: IB                ! Which block is being regularized
+      integer :: MaxCols           ! Columns in block with with max cols.
+      integer :: NB                ! Number of column blocks of A
+      integer :: NCOL              ! Number of columns in a block of A
+      integer :: NI, NQ            ! Indices for instance and quantity
+      integer :: NROW              ! Number of rows in a block of A
+      integer :: Ord               ! Order for the current block
+      integer :: Type              ! Type of value returned by EXPR
+      integer :: Units(2)          ! Units of value returned by EXPR
+      double precision :: Value(2) ! Value returned by EXPR
+      logical :: Warn              ! Send warning message to MLSMessage
+      real(r8) :: Wt               ! The weight for the current block
+      real(r8), pointer :: WtVec(:)! In case a quantity has a vector weight
+
+      nb = a%col%nb
+      rows = 0
+      warn = .false.
+      wt = 1.0
+      if ( quants == 0 ) then ! Doing all of the blocks
+        maxCols = maxval(a%col%nelts)
+      else
+        maxCols = 0
+        do ib = 1, nb ! Find number of columns in widest block
           do i = 2, nsons(quants)
             if ( decoration(subtree(i,quants)) == &
               & a%col%vec%quantities(a%col%quant(ib))%template%quantityType ) then
@@ -153,8 +334,8 @@ contains
                 exit
             end if
           end do
-        end if
-      end do
+        end do
+      end if
       nullify ( wtVec )
       call allocate_test ( wtVec, maxCols, "Weight vector", moduleName )
         if ( index(switches,'reg') /= 0 ) then
@@ -178,7 +359,7 @@ contains
               & a%col%vec%quantities(a%col%quant(ib))%template%quantityType ) then
               j = min(i,nsons(orders))
               call expr ( subtree(j,orders), units, value, type )
-              ord = value(1)
+              ord = nint(value(1))
               if ( weights /= 0 ) then
                 j = min(i,nsons(weights))
                 call expr ( subtree(j,weights), units, value, type )
@@ -254,158 +435,16 @@ o:          do while ( c2 <= a%block(ib,ib)%ncols )
       call deallocate_test ( wtVec, "Weight vector", moduleName )
       if ( warn ) call MLSMessage ( MLSMSG_Warning, moduleName, &
         & "Some blocks not regularized, or at lower order than requested" )
-    else
-      call MLSMessage ( MLSMSG_Error, moduleName, "Regularization failed." )
-    end if ! error == 0
-
-  contains
-
-    subroutine AnnounceError ( code, where )
-      use Lexer_Core, only: Print_Source
-
-      integer, intent(in) :: Code    ! The message number
-      integer, intent(in) :: Where   ! Where in the tree
-
-      error = max(error,1)
-      call output ( '***** At or near ' )
-      call print_source ( source_ref(where) )
-      call output ( ' RetrievalModule complained: ' )
-      select case ( code )
-      case ( fieldSizes )       ! size(regOrders) /= size(regQuants)
-        call output ( "Number of values of regOrders or regWeights shall be 1 " )
-        call output ( "or the same as for regQuants.", advance="yes" )
-      case ( orderTooBig )
-        call output ( "Regularization order exceeds " )
-        call output ( maxRegOrd, advance="yes" )
-      case ( regQuantsReq )     ! RegQuants required if size(regOrders) /= 1
-        call output ( "The regQuants field is required if more than one order " )
-        call output ( "is specified.", advance="yes" )
-      case ( regTemplate )
-        call output ( "The template for the regularization weights vector is " )
-        call output ( "not the same as for the columns of the Jacobian matrix.", &
-          & advance='yes' )
-      case ( tooFewRows )
-        call output ( "Not enough rows in the matrix to do regularization.", &
-          & advance="yes" )
-      case ( unitless )         ! regOrders must be unitless
-        call output ( "The orders shall be unitless.", advance="yes" )
-      end select
-
-    end subroutine AnnounceError
-
-    subroutine FillBlock ( B, Ord, Rows, C1, C2, Wt, WtVec )
-    ! Fill the block B with regularization coefficients starting at row Rows+1
-    ! and columns C1 to C2.  Update Rows to the last row filled.
-      type(matrixElement_T), intent(inout) :: B   ! Block to fill
-      integer, intent(in) :: Ord        ! Order of regularization operator
-      integer, intent(inout) :: Rows    ! Last row used
-      integer, intent(in) :: C1, C2     ! Columns to fill
-      real(r8), intent(in) :: Wt        ! Scalar weight for coefficients
-      real(r8), intent(inout), dimension(:), optional :: WtVec ! Weights vector
-
-      real(r8), dimension(0:maxRegOrd) :: C ! Binomial regularization
-      ! coefficients in reverse order.
-      integer :: I, J                   ! Subscripts, Loop inductors
-      integer :: K                      ! Column being filled
-      integer :: MaxRow                 ! Maximum row to be filled = ncol - ord
-      integer :: NCOL                   ! Number of columns -- C2 - C1 + 1
-      integer :: NV                     ! Next element in VALUES component
-      integer :: S                      ! Sign of regularization coefficient.
-
-      ncol = c2 - c1 + 1
-
-      !{ Calculate binomial coefficients with alternating sign,
-      ! $(-1)^i C_i^n = (-1)^i \frac{n!}{i! (n-i)!}$
-      !  by the recursion
-      !  $C_0^n = 1\text{, } C_i^n = -(n-i+1) C_{i-1}^n / i$.
-      ! Notice that $C_i^n = -1^n C_{n-i}^n$, so we only need
-      ! to go halfway through the array.
-      s = 1 - 2*mod(ord,2) ! +1 for even order, -1 for odd order
-      c(0) = s
-      c(ord) = 1
-      do i = 1, ord / 2
-        c(i) = ( -(ord-i+1) * c(i-1) ) / i
-        c(ord-i) = s * c(i)
-      end do
-      c(0:ord) = wt * c(0:ord) / 2.0_r8 ** ord
-
-      ! If there is a weight vector, it's the same length as the number
-      ! of columns.  But we want to weight the rows.  So construct a new
-      ! weight vector that is the same length as the number of rows, i.e.,
-      ! (number of columns) - (order), by averaging using the absolute
-      ! value of the coefficients.
-
-      if ( present(wtVec) ) then
-        do i = 1, ncol
-          j = min(i+ord,ncol)
-          wtVec(i) = dot_product(wtVec(i:j),abs(c(0:j-i)))
-        end do
-      end if
-
-      ! Each row has the binomial coefficients.  Therefore, each column
-      ! has the binomial coefficients in reverse order (which wouldn't
-      ! matter if the signs didn't alternate).  Except the first and
-      ! last ord columns have 1, 2, ..., ord and ord, ord-1, ..., 1
-      ! elements.  E.g., for order three, the first four rows look like:
-
-      !  1  -3   3  -1
-      !      1  -3   3  -1
-      !          1  -3   3  -1
-      !              1  -3   3  -1
-
-      ! (assuming there are at least seven columns)
-
-      k = c1
-      maxRow = ncol - ord
-      ! Fill in coefficients from the end of C(:Ord) (but no more than
-      ! maxRow-1 of them)
-      do i = 1, ord + 1
-        nv = b%r2(k-1) + 1
-        j = min(i,maxRow) ! Number of coefficients
-        b%r1(k) = i
-        b%r2(k) = nv + j - 1
-        if ( present(wtVec) ) then
-          b%values(nv:nv+j-1,1) = c(ord-i+1:ord-i+j) * wtVec(i:i+j-1)
-        else
-          b%values(nv:nv+j-1,1) = c(ord-i+1:ord-i+j)
-        end if
-        k = k + 1
-      end do
-      ! Fill in coefficients from all of C(:Ord)
-      do i = ord+2, maxRow
-        nv = b%r2(k-1) + 1
-        b%r1(k) = i - ord
-        b%r2(k) = nv + ord
-        if ( present(wtVec) ) then
-          b%values(nv:nv+ord,1) = c(0:ord) * wtVec(i:i+ord)
-        else
-          b%values(nv:nv+ord,1) = c(0:ord)
-        end if
-        k = k + 1
-      end do
-      ! Fill in coefficients from the beginning of C(:Ord) (but no more
-      ! than maxRow-1 of them)
-      j = min(maxrow-1,ord) - 1 ! Index of last coefficient
-      do i = max(ord+2,maxRow+1), ncol
-        nv = b%r2(k-1) + 1
-        b%r1(k) = i - ord
-        b%r2(k) = nv + j
-        if ( present(wtVec) ) then
-          b%values(nv:nv+j,1) = c(0:j) * wtVec(ncol-j:ncol)
-        else
-          b%values(nv:nv+j,1) = c(0:j)
-        end if
-        j = j - 1
-        k = k + 1
-      end do
-      rows = rows + maxRow
-    end subroutine FillBlock
+    end subroutine VertReg
 
   end subroutine Regularize
 
 end module Regularization
 
 ! $Log$
+! Revision 2.20  2002/08/23 19:03:48  vsnyder
+! Fix a bug in row indexing; pave the way for horizontal regularization
+!
 ! Revision 2.19  2002/08/20 19:54:19  vsnyder
 ! Re-arrange to use a matrix with the same row and column vector definitions.
 ! Don't try to put all of the regularization into one block.  Instead, fill
