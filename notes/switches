@@ -24,6 +24,7 @@ Switches (set by -S option in mlsl2's command line):
   fmt1 =>   mean & standard deviation for timing FullForwardModel at last chunk
   fnorm =>  Dump the individual contributions to fnorm
   fvec =>   'F' vector during Newton iteration
+  fwmd =>   Forward model config whenever 'derived' part is computed
   geom =>   Show geometry of chunks/hGrids
   glo[n] => Global settings, info on l1b files [higher the n, more the info]
   gridd =>  Gridded data quantities
@@ -107,6 +108,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.43  2004/07/08 21:02:11  vsnyder
+ Replace 'bgrp' switch with 'sps' switch
+
  Revision 1.42  2004/06/17 22:50:34  pwagner
  Details for dumping VGrids determined by switch setting
 
