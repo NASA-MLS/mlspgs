@@ -1377,6 +1377,8 @@ contains ! =============== Subroutines and functions ==========================
 !
   REAL(rp), PARAMETER :: deg2rad = pi / 180.0_rp ! degree to radians
   REAL(rp), PARAMETER :: boltz = 660.988_rp ! = kln10/m  m^2/(K sec^2)
+  REAL(rp) :: z_surf
+  REAL(rp) :: surf_refr_indx(1)
 !
   REAL(rp), POINTER :: earthradc(:)  ! minor axis of earth ellipsoid in orbit
 !                              plane projected system
@@ -1411,6 +1413,7 @@ contains ! =============== Subroutines and functions ==========================
   REAL(rp), POINTER :: eta_piqxp(:,:)
   REAL(rp), POINTER :: eta_zxp_t(:,:)
   REAL(rp), POINTER :: eta_zxp_h2o(:,:)
+  REAL(rp), POINTER :: eta_at_one_phi(:,:)
 !
   LOGICAL, POINTER :: not_zero_z(:,:)
   LOGICAL, POINTER :: not_zero_p_t(:,:)
@@ -1424,6 +1427,7 @@ contains ! =============== Subroutines and functions ==========================
   NULLIFY(mass_corr, dgphdr, dscandz, eta_z, eta_p_t, eta_p_h2o, piq)
   NULLIFY(eta_zxp_t, eta_zxp_h2o, not_zero_z, not_zero_p_t, not_zero_p_h2o)
   NULLIFY(eta_piqxp, not_zero_t, not_zero_h2o, ratio2_gph, ratio4_gph) 
+  NULLIFY(eta_at_one_phi) 
 ! Identify the vector quantities from state/extra
   orbIncline => GetVectorQuantityByType ( state, extra, &
     & quantityType=l_orbitInclination )
@@ -1484,6 +1488,8 @@ contains ! =============== Subroutines and functions ==========================
   geoclats = ASIN(earthradc**2 * SIN(red_phi_t) &
   & * SIN(deg2rad*orbincline%values(1:ptan%template%noSurfs,fmStat%maf)) &
   & / SQRT(earthrada**4*cosphi2 + earthradc**4*sinphi2))
+! some testing code
+!  WRITE(*,'(8f8.4)') geoclats - GeodToGeocLat(ptan%template%geodLat(:,fmStat%maf))
   sinlat2 = SIN(geoclats)**2
   coslat2 = 1.0_rp - sinlat2
   p2=0.5_rp * (3.0_rp*sinlat2 - 1.0_rp)
@@ -1560,7 +1566,6 @@ contains ! =============== Subroutines and functions ==========================
         & = piq(:,sv_z) * eta_p_t(:,sv_p)
     ENDDO
   ENDDO
-  CALL DEALLOCATE_TEST(g_ref,'g_ref',modulename)
   CALL deallocate_test(piq, 'piq',ModuleName)
   CALL deallocate_test(eta_z, 'eta_z',ModuleName)
   CALL deallocate_test(not_zero_z,'not_zero_z',ModuleName)
@@ -1608,6 +1613,25 @@ contains ! =============== Subroutines and functions ==========================
   & modulename)
   CALL refractive_index(10.0_rp**(-ptan%values(:,fmStat%maf)), tan_temp, &
   & tan_refr_indx,h2o_path = tan_h2o)
+! compute surface pressure
+  CALL ALLOCATE_TEST(eta_at_one_phi,1,windowfinish_t-windowstart_t+1, &
+  & 'eta_at_one_phi',modulename)
+  CALL get_eta_sparse(temp%template%phi(1,windowstart_t:windowfinish_t), &
+  & (/phitan%values(1,fmStat%maf)/),eta_at_one_phi)
+  z_surf = z_surface(temp%template%surfs(:,1),SUM(temp%values(:, &
+  & windowstart_t:windowfinish_t)*SPREAD( &
+  & RESHAPE(eta_at_one_phi,(/windowfinish_t-windowstart_t+1/)),1, &
+  & temp%template%nosurfs),dim=2),g_ref(1), &
+  & SUM(refgph%values(1,windowstart_t:windowfinish_t) * eta_p_t(1,:)), &
+  & refGPH%template%surfs(1,1),boltz)
+  CALL DEALLOCATE_TEST(eta_at_one_phi,'eta_at_one_phi',modulename)
+! compute refractive index at the surface
+! we assume that the lowermost temperature and water vapor values are
+! appropriate for this estimate.
+  CALL refractive_index(10.0_rp**(-(/z_surf/)),tan_temp(1:1),surf_refr_indx, &
+  & h2o_path = tan_h2o(1:1))
+! set all refr indicies below the surface to the surface value
+  WHERE(ptan%values(:,fmStat%maf) < z_surf) tan_refr_indx = surf_refr_indx(1)
 ! compute l1 geopotential
   CALL ALLOCATE_TEST(l1altrefr,ptan%template%nosurfs,'l1altrefr', &
   & modulename)
@@ -1736,6 +1760,7 @@ contains ! =============== Subroutines and functions ==========================
   CALL DEALLOCATE_TEST(p4,'p4',modulename)
   CALL DEALLOCATE_TEST(earth_radius,'earth_radius', modulename)
   CALL DEALLOCATE_TEST(eff_earth_radius,'eff_earth_radius', modulename)
+  CALL DEALLOCATE_TEST(g_ref,'g_ref',modulename)
   CALL DEALLOCATE_TEST(l1refalt,'l1refalt',modulename)
   CALL DEALLOCATE_TEST(refgeomalt_denom,'refgeomalt_denom',modulename)
   CALL DEALLOCATE_TEST(ratio2,'ratio2',modulename)
@@ -1755,9 +1780,83 @@ contains ! =============== Subroutines and functions ==========================
   CALL deallocate_test(tan_h2o,'tan_h2o',ModuleName)
   CALL DEALLOCATE_TEST(tan_refr_indx,'tan_refr_indx', modulename)
   end subroutine TwoDScanForwardModel
+!
+  REAL(rp) FUNCTION z_surface(z_basis,t_values,g_ref,h_ref,z_ref,boltz, &
+  & threshold,maxiterations)
+! finds the surface pressure
+! inputs:
+  REAL(rp), INTENT(in) :: z_basis(:) ! zeta basis for temperature
+  REAL(rp), INTENT(in) :: t_values(:) ! temperature coefficients
+  REAL(rp), INTENT(in) :: g_ref      ! reference acceloration at the surface
+  REAL(rp), INTENT(in) :: h_ref      ! reference geopotential
+  REAL(rp), INTENT(in) :: z_ref      ! reference zeta for h_ref
+  REAL(rp), INTENT(in) :: boltz      ! k*ln10/m in your favorite units
+! note that the units of h_ref, g_ref, and boltz must be consistent
+  REAL(rp), OPTIONAL, INTENT(in) :: threshold ! zeta convergence criteria
+  INTEGER, OPTIONAL, INTENT(in) :: maxiterations ! maximum number of
+!                                  iterations
+! This is a one dimensional calculation where g_ref is assumed to apply
+! throughout the entire vertical range of t_basis.
+! internals
+  INTEGER :: iter
+  INTEGER :: maxiter
+  INTEGER :: n_coeffs
+!
+  REAL(rp) :: z_new
+  REAL(rp) :: thresh
+!
+  REAL(rp), POINTER :: eta(:,:)
+  REAL(rp), POINTER :: piq(:,:)
+! 
+! begin code
+!  WRITE(*,'(a)') 'inputted g_ref,h_ref,z_ref,boltz'
+!  WRITE(*,*) g_ref, h_ref,z_ref,boltz
+!  WRITE(*,'(a)') 'inputted z_basis'
+!  WRITE(*,'(8f9.4)') z_basis
+!  WRITE(*,'(a)') 'inputted t_values'
+!  WRITE(*,'(8f8.2)') t_values
+  NULLIFY(eta,piq)
+  maxiter = 10
+  thresh = 0.0001_rp
+  IF (PRESENT(maxiterations)) maxiter = maxiterations
+  IF (PRESENT(threshold)) thresh = threshold
+  n_coeffs = SIZE(z_basis)
+! intitial guess
+  z_surface = z_ref - g_ref*h_ref/(t_values(1)*boltz)
+  CALL ALLOCATE_TEST(piq,1,n_coeffs,'piq',modulename)
+  CALL ALLOCATE_TEST(eta,1,n_coeffs,'eta',modulename)
+  CALL piq_int((/z_surface/),z_basis,z_ref,piq)
+  CALL get_eta_sparse(z_basis,(/z_surface/),eta)
+! correct
+  z_new = z_surface - (h_ref*g_ref &
+  & + boltz*SUM(RESHAPE(piq,(/n_coeffs/))*t_values)) &
+  & / (boltz*SUM(RESHAPE(eta,(/n_coeffs/))*t_values))
+  iter = 0
+  DO
+    iter = iter + 1
+    IF(ABS(z_new - z_surface) < thresh .OR. iter == maxiter) EXIT
+    z_surface = z_new
+    CALL piq_int((/z_surface/),z_basis,z_ref,piq)
+    CALL get_eta_sparse(z_basis,(/z_surface/),eta)
+! correct
+    z_new = z_surface - (h_ref*g_ref &
+    & + boltz*SUM(RESHAPE(piq,(/n_coeffs/))*t_values)) &
+    & / (boltz*SUM(RESHAPE(eta,(/n_coeffs/))*t_values))
+!  WRITE(*,'(a,i3)') 'iterating',iter
+!  WRITE(*,'(f9.4)') z_surface
+  ENDDO
+!  WRITE(*,'(a)') 'done iterating'
+!  WRITE(*,'(f9.4)') z_surface
+  z_surface = z_new
+  CALL DEALLOCATE_TEST(eta,'eta',modulename)
+  CALL DEALLOCATE_TEST(piq,'piq',modulename)
+  END FUNCTION z_surface
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.38  2002/06/26 18:44:12  bill
+! added a feature to limit the index of refraction to its surface value--wgr
+!
 ! Revision 2.37  2002/06/26 01:26:10  livesey
 ! Added 2D pressure guesser
 !
