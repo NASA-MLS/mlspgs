@@ -10,6 +10,7 @@ module L2ParInfo
   use PVM, only: PVMFMYTID, PVMFINITSEND, PVMF90PACK, PVMFSEND, &
     & PVMDATADEFAULT, PVMERRORMESSAGE, PVMF90UNPACK, NEXTPVMARG, PVMTASKEXIT
   use PVMIDL, only: PVMIDLPACK
+  use MorePVM, only: PVMPACKSTRINGINDEX
   use VectorsModule, only: VECTORVALUE_T
   use QuantityPVM, only: PVMSENDQUANTITY
   use MLSStrings, only: LowerCase
@@ -21,7 +22,8 @@ module L2ParInfo
   public :: L2ParallelInfo_T, parallel, InitParallel, CloseParallel
   public :: SIG_ToJoin, SIG_Finished, SIG_Register, ChunkTag, InfoTag, SlaveJoin
   public :: SIG_AckFinish, SIG_RequestDirectWrite, SIG_DirectWriteGranted
-  public :: SIG_DirectWriteFinished, SIG_NewSetup, SIG_RunMAF, SIG_SendResults
+  public :: SIG_DirectWriteFinished, SIG_DirectWriteWait, SIG_DirectWriteAbandoned
+  public :: SIG_NewSetup, SIG_RunMAF, SIG_SendResults
   public :: NotifyTag, GetNiceTidString, GiveUpTag, SlaveArguments
   public :: AccumulateSlaveArguments, RequestDirectWritePermission
   public :: FinishedDirectWrite, MachineNameLen, GetMachineNames
@@ -49,9 +51,11 @@ module L2ParInfo
   integer, parameter :: SIG_ACKFINISH = SIG_finished + 1
   integer, parameter :: SIG_REGISTER = SIG_AckFinish + 1
   integer, parameter :: SIG_REQUESTDIRECTWRITE = SIG_Register + 1
-  integer, parameter :: SIG_DIRECTWRITEGRANTED = SIG_RequestDirectWrite + 1
+  integer, parameter :: SIG_DIRECTWRITEABANDONED = SIG_RequestDirectWrite + 1
+  integer, parameter :: SIG_DIRECTWRITEGRANTED = SIG_DirectWriteAbandoned + 1
   integer, parameter :: SIG_DIRECTWRITEFINISHED = SIG_DirectWriteGranted + 1
-  integer, parameter :: SIG_NEWSETUP = SIG_DirectWriteFinished + 1
+  integer, parameter :: SIG_DIRECTWRITEWAIT = SIG_DirectWriteFinished + 1
+  integer, parameter :: SIG_NEWSETUP = SIG_DirectWriteWait + 1
   integer, parameter :: SIG_RUNMAF = SIG_NewSetup + 1
   integer, parameter :: SIG_SENDRESULTS = SIG_RunMAF + 1
 
@@ -311,9 +315,11 @@ contains ! ==================================================================
   end subroutine GetMachineNames
 
   ! ---------------------------------------- RequestDirectWritePermission --
-  subroutine RequestDirectWritePermission (filename, createFile )
+  subroutine RequestDirectWritePermission ( filename, createFile, waitItOut, granted )
     integer, intent(in) :: FILENAME
     logical, intent(out) :: CREATEFILE
+    logical, intent(in) :: WAITITOUT    ! Just wait if not granted
+    logical, intent(out) :: GRANTED     ! Set if permission granted (and not waiting)
 
     ! Local variables
     integer :: BUFFERID                 ! From PVM
@@ -328,7 +334,7 @@ contains ! ==================================================================
     call PVMF90Pack ( SIG_RequestDirectWrite, info )
     if ( info /= 0 ) &
       & call PVMErrorMessage ( info, "packing direct write request flag" )
-    call PVMF90Pack ( filename, info )
+    call PVMPackStringIndex ( filename, info )
     if ( info /= 0 ) &
       & call PVMErrorMessage ( info, "packing direct write information" )
 
@@ -338,20 +344,53 @@ contains ! ==================================================================
 
     ! Now wait for a reply.  This may mean waiting for other chunks to
     ! finish writing their part of the file.
-    call PVMFRecv ( parallel%masterTid, InfoTag, bufferID )
-    if ( bufferID <= 0 ) call PVMErrorMessage ( bufferID, &
-      & 'receiving direct write permission' )
+    waitForPermission: do
+      call PVMFRecv ( parallel%masterTid, InfoTag, bufferID )
+      if ( bufferID <= 0 ) call PVMErrorMessage ( bufferID, &
+        & 'receiving direct write permission/wait' )
+      
+      ! Once we have the reply unpack it
+      call PVMF90Unpack ( signal, info )
+      if ( info /= 0 ) &
+        & call PVMErrorMessage ( info, 'unpacking direct write permission')
+      select case ( signal )
+      case ( SIG_DirectWriteGranted )
+        granted = .true.
+        exit waitForPermission
+      case ( SIG_DirectWriteWait )
+        ! If we're told to wait, we can either wait it out, in
+        ! which case we go round this loop again and wait for a second
+        ! message, or we can abandon our request.
+        if ( .not. waitItOut ) then
+          granted = .false.
+          exit waitForPermission
+        end if
+      case default
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Got unrecognised signal from master' )
+      end select
+      ! If we get here, it means permission was denied and we're happy
+      ! to wait so simply wait for the next message.
+    end do waitForPermission
 
-    ! Once we have the reply unpack it
-    call PVMF90Unpack ( signal, info )
-    if ( info /= 0 ) &
-      & call PVMErrorMessage ( info, 'unpacking direct write permission')
-    if ( signal /= SIG_DirectWriteGranted ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Got unrecognised signal from master' )
-    call PVMF90Unpack ( createFlag, info )
-    if ( info /= 0 ) &
-      & call PVMErrorMessage ( info, 'unpacking create file flag')
-    createFile = createFlag == 1
+    if ( granted ) then
+      ! Second piece of info in this packet is the createFile flag
+      call PVMF90Unpack ( createFlag, info )
+      if ( info /= 0 ) &
+        & call PVMErrorMessage ( info, 'unpacking create file flag')
+      createFile = createFlag == 1
+    else
+      ! If permission was not granted, and (by being here), we're
+      ! not prepared to wait it out, abandon our request.
+      call PVMFInitSend ( PvmDataDefault, bufferID )
+      call PVMF90Pack ( SIG_DirectWriteAbandoned, info )
+      if ( info /= 0 ) &
+        & call PVMErrorMessage ( info, "packing direct write abandoned flag" )
+      call PVMFSend ( parallel%masterTid, InfoTag, info )
+      if ( info /= 0 ) &
+        & call PVMErrorMessage ( info, "sending direct write abandoned packet" )
+    end if
+
   end subroutine RequestDirectWritePermission
 
   ! ------------------------------------------- SlaveJoin ---------------
@@ -406,6 +445,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.29  2003/06/20 19:38:25  pwagner
+! Allows direct writing of output products
+!
 ! Revision 2.28  2003/05/12 19:04:50  livesey
 ! Added the staging file to L2ParallelInfo_T
 !
