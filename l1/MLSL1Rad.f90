@@ -16,7 +16,6 @@ MODULE MLSL1Rad     ! Radiance data types and routines for the MLSL1 program
 
   PUBLIC :: InitRad, BandToBanks, UpdateRadSignals, RadPwr
   PUBLIC :: Radiance_T, L1Brad, FBrad, MBrad, WFrad, DACSrad, THzRad, Rad_Name
-  PUBLIC :: SideBandFrac_T, SideBandFrac, SpilloverLoss_T, SpilloverLoss
 
   !---------------------------- RCS Ident Info -------------------------------
   CHARACTER (LEN=256) :: Id = &
@@ -31,6 +30,7 @@ MODULE MLSL1Rad     ! Radiance data types and routines for the MLSL1 program
 
   TYPE Radiance_T
      TYPE (MLSSignal_T) :: signal
+     INTEGER :: BandNo
      REAL(r4), DIMENSION (:,:), POINTER :: value, precision
   END TYPE Radiance_T
 
@@ -65,30 +65,6 @@ MODULE MLSL1Rad     ! Radiance data types and routines for the MLSL1 program
        "R4:640.B31M:BRO.S0.MB11-5 ", "R1A:118.B32W:PT.S0.WF4-1  ", &
        "R3:240.B33W:O3.S0.WF4-2   ", "R1B:118.B34W:PT.S0.WF4-3  " /)
 
-  TYPE SideBandFrac_T
-     REAL(r4), DIMENSION(:), POINTER :: lower, upper
-  END TYPE SideBandFrac_T
-
-  TYPE (SideBandFrac_T) :: SideBandFrac(34)
-
-  TYPE SpilloverLoss_T
-     REAL(r4), DIMENSION(:,:), POINTER :: lower, upper
-  END TYPE SpilloverLoss_T
-
-  TYPE (SpilloverLoss_T) :: SpilloverLoss(34)
-
-  TYPE RadiometerLoss_T
-     CHARACTER(len=3) :: Name
-     REAL(r4) :: Ohmic, Spillover, Radiance
-  END TYPE RadiometerLoss_T
-
-  TYPE (RadiometerLoss_T), PARAMETER :: RadiometerLoss(5) = (/ &
-       RadiometerLoss_T ("R1A", 0.9982**3, 0.9987, 150.0), &
-       RadiometerLoss_T ("R1B", 0.9982**3, 0.9964, 150.0), &
-       RadiometerLoss_T ("R2 ", 0.99736**3, 0.9992, 150.0), &
-       RadiometerLoss_T ("R3 ", 0.99449**3, 0.9987, 150.0), &
-       RadiometerLoss_T ("R4 ", 0.98819**3, 0.9916, 150.0)  /)
-
 CONTAINS
 
 !=============================================================================
@@ -108,41 +84,6 @@ CONTAINS
     TYPE (MLSSignal_T), DIMENSION(:), POINTER :: signal => NULL()
     CHARACTER (LEN=11) :: request
     INTEGER, PARAMETER :: DACSbandNo(4) = (/ 25, 23, 24, 22 /)
-
-!! Allocate Sideband fraction arrays:
-
-    DO i = 1, 21
-       ALLOCATE (SideBandFrac(i)%lower(FBchans))
-       ALLOCATE (SideBandFrac(i)%upper(FBchans))
-    ENDDO
-    DO i = 22, 26
-       ALLOCATE (SideBandFrac(i)%lower(DACSchans))
-       ALLOCATE (SideBandFrac(i)%upper(DACSchans))
-    ENDDO
-    DO i = 27, 31
-       ALLOCATE (SideBandFrac(i)%lower(MBchans))
-       ALLOCATE (SideBandFrac(i)%upper(MBchans))
-    ENDDO
-    DO i = 32, 34
-       ALLOCATE (SideBandFrac(i)%lower(WFchans))
-       ALLOCATE (SideBandFrac(i)%upper(WFchans))
-    ENDDO
-
-!! Allocate and Initialize Spillover Loss
-
-    DO i = 1, 31
-       ALLOCATE (SpilloverLoss(i)%lower(3,1))
-       ALLOCATE (SpilloverLoss(i)%upper(3,1))
-       SpilloverLoss(i)%lower = 0.0
-       SpilloverLoss(i)%upper = 0.0
-    ENDDO
-
-    DO i = 32, 34
-       ALLOCATE (SpilloverLoss(i)%lower(3,4))
-       ALLOCATE (SpilloverLoss(i)%upper(3,4))
-       SpilloverLoss(i)%lower = 0.0
-       SpilloverLoss(i)%upper = 0.0
-    ENDDO
 
     IF (THz) THEN  ! Allocate for THz
        ALLOCATE (L1Brad(THzNum), STAT=status)
@@ -172,8 +113,8 @@ CONTAINS
           WRITE (request, '("B",i2.2,".FB25-",i2)') BandNo, BankNo
           request = request(1:9)//ADJUSTL(request(10:11))
           CALL ParseMLSSignalRequest (request, signal, .FALSE.)
-
           L1Brad(i)%signal = signal(1)
+          L1Brad(i)%BandNo = BandNo
           DEALLOCATE (signal)
 
        END DO
@@ -212,6 +153,7 @@ CONTAINS
        request = request(1:9)//ADJUSTL(request(10:11))
        CALL ParseMLSSignalRequest (request, signal, .FALSE.)
        L1Brad(i)%signal = signal(1)
+       L1Brad(i)%BandNo = BandNo
        DEALLOCATE (signal)
 
     END DO
@@ -231,6 +173,7 @@ CONTAINS
        WRITE (request, '("B",i2.2,".MB11-",i1)') (i+26), i
        CALL ParseMLSSignalRequest (request, signal, .FALSE.)
        L1Brad(i+GHzNum)%signal = signal(1)
+       L1Brad(i+GHzNum)%BandNo = i + 26
        DEALLOCATE (signal)
 
     END DO
@@ -250,6 +193,7 @@ CONTAINS
        WRITE (request, '("B",i2.2,".WF4-",i1)') (i+31), i
        CALL ParseMLSSignalRequest (request, signal, .FALSE.)
        L1Brad(i+GHzNum+MBnum)%signal = signal(1)
+       L1Brad(i+GHzNum+MBnum)%BandNo = i + 31
        DEALLOCATE (signal)
 
     END DO
@@ -276,6 +220,7 @@ CONTAINS
        WRITE (request, '("B",i2.2,".DACS-",i1)') BandNo, i
        CALL ParseMLSSignalRequest (request, signal, .FALSE.)
        L1Brad(i+GHzNum+MBnum+WFnum)%signal = signal(1)
+       L1Brad(i+GHzNum+MBnum+WFnum)%BandNo = BandNo
        DEALLOCATE (signal)
 
     END DO
@@ -290,7 +235,7 @@ CONTAINS
 
     USE MLSL1Common, ONLY: SwitchBank
 
-    INTEGER :: BandSwitch(*)
+    INTEGER, DIMENSION(:) :: BandSwitch
 
     TYPE (MLSSignal_T), DIMENSION(:), POINTER :: signal => NULL()
     CHARACTER (LEN=11) :: request
@@ -307,8 +252,10 @@ CONTAINS
              CALL ParseMLSSignalRequest (request, signal, .FALSE.)
              IF (i == 5) THEN
                 L1Brad(1)%signal = signal(1)
+                L1Brad(1)%BandNo = BandSwitch(i)
              ELSE
                 L1Brad(THzNum)%signal = signal(1)
+                L1Brad(THzNum)%BandNo = BandSwitch(i)
              ENDIF
              DEALLOCATE (signal)
           ENDIF
@@ -324,6 +271,7 @@ CONTAINS
        WRITE (request, '("B",i2.2,".DACS-1")') BandSwitch(1)
        CALL ParseMLSSignalRequest (request, signal, .FALSE.)
        L1Brad(1+GHzNum+MBnum+WFnum)%signal = signal(1)
+       L1Brad(1+GHzNum+MBnum+WFnum)%BandNo = BandSwitch(1)
        DEALLOCATE (signal)
     ENDIF
     
@@ -335,6 +283,7 @@ CONTAINS
           request = request(1:9)//ADJUSTL(request(10:11))
           CALL ParseMLSSignalRequest (request, signal, .FALSE.)
           L1Brad(SwitchBank(i))%signal = signal(1)
+          L1Brad(SwitchBank(i))%BandNo = BandSwitch(i)
           DEALLOCATE (signal)
        ENDIF
     ENDDO
@@ -367,6 +316,9 @@ CONTAINS
     REAL :: T     !! temperature in Kelvin
     REAL :: P     !! radiant power
 
+    P = 0.0
+    IF (Hz <= 0.0) RETURN
+
     P = (planck * Hz) / (boltz * (exp ((planck * Hz) / (boltz * T)) - 1.0))
 
   END FUNCTION RadPwr
@@ -377,6 +329,9 @@ END MODULE MLSL1Rad
 
 !
 ! $Log$
+! Revision 2.6  2004/01/09 17:46:22  perun
+! Version 1.4 commit
+!
 ! Revision 2.5  2003/09/15 17:15:53  perun
 ! Version 1.3 commit
 !

@@ -6,7 +6,7 @@ MODULE L0_sci_tbls  ! Define L0 science tables
 !=============================================================================
 
   USE MLSL1Common, ONLY: R8, FBnum, FBchans, MBnum, MBchans, WFnum, WFchans, &
-       DACSnum, DACSchans, MaxMIFs, THzChans, THzNum
+       DACSnum, DACSchans, MaxMIFs, THzChans, THzNum, NumBands, BankLogical_T
 
   IMPLICIT NONE
 
@@ -45,7 +45,7 @@ MODULE L0_sci_tbls  ! Define L0 science tables
      CHARACTER (LEN=2) :: fine_time
   END TYPE CCSDS_T
 
-!! Using format of 03/10/01
+!! Using format of 08/25/03
 
   TYPE Sci1_T1_T     ! science packet 1 Type I
      SEQUENCE
@@ -105,8 +105,9 @@ MODULE L0_sci_tbls  ! Define L0 science tables
      CHARACTER (LEN=1) :: TM03_stat(2)
      CHARACTER (LEN=24) :: ghz_ant_scan
      CHARACTER (LEN=24) :: ghz_switch
-     CHARACTER (LEN=9) :: eng_data
-     CHARACTER (LEN=1) :: spare2(23)
+     CHARACTER (LEN=1) :: spare2(25)
+     CHARACTER (LEN=1) :: attenuation(5)
+     CHARACTER (LEN=1) :: spare3(2)
      CHARACTER (LEN=2) :: checksum
   END TYPE Sci2_T1_T
 
@@ -166,9 +167,9 @@ MODULE L0_sci_tbls  ! Define L0 science tables
      CHARACTER (LEN=1) :: TM03_stat(2)
      CHARACTER (LEN=24) :: ghz_ant_scan
      CHARACTER (LEN=24) :: ghz_switch
-     CHARACTER (LEN=1) :: spare2
-     CHARACTER (LEN=9) :: eng_data
-     CHARACTER (LEN=1) :: spare3(7)
+     CHARACTER (LEN=1) :: spare2(10)
+     CHARACTER (LEN=1) :: attenuation(5)
+     CHARACTER (LEN=1) :: spare3(2)
      CHARACTER (LEN=2) :: checksum
   END TYPE Sci2_T2_T
 
@@ -186,7 +187,7 @@ MODULE L0_sci_tbls  ! Define L0 science tables
 
   CHARACTER (LEN=*), PARAMETER :: Sci2_T1_fmt = &
        "(3A2,3A1,A4,A2,2A1,2A2,A1,2(11A2,25A2,A2),2(25A2),2(11A2),A2,4(25A2),&
-       & 320A1,A24,A80,2A1,2A24,A1,A9,A1,A2)"
+       & 320A1,A24,A80,2A1,2A24,25A1,5A1,2A1,A2)"
 
 !! Formats to convert Type II/III raw Science packets internally:
 
@@ -196,7 +197,7 @@ MODULE L0_sci_tbls  ! Define L0 science tables
 
   CHARACTER (LEN=*), PARAMETER :: Sci2_T2_fmt = &
        "(3A2,3A1,A4,A2,2A1,2A2,A1,3(11A2,25A2,A2),2(25A2),2(11A2),A2,4(25A2),&
-       & 261A1,A24,A80,2A1,2A24,A1,A9,A1,A2)"
+       & 261A1,A24,A80,2A1,2A24,10A1,5A1,2A1,A2)"
 
 !! Character (LEN=1) pointer types
 
@@ -237,6 +238,7 @@ MODULE L0_sci_tbls  ! Define L0 science tables
      TYPE (CS1PTR) :: THzSw          ! THz Switch
      CHARACTER (LEN=80), POINTER :: LLO_DN         ! Laser LO data pointers
      CHARACTER (LEN=24), POINTER :: GHz_ant_scan, GHz_sw, THz_sw
+     TYPE (C1PTR) :: Attenuation     ! Attenuation read backs
 
   END TYPE Sci_cptr_T
 
@@ -270,6 +272,15 @@ MODULE L0_sci_tbls  ! Define L0 science tables
   INTEGER, PARAMETER :: Pkt1_T2_FB(10) = (/ 12, 1, 4, 2, 7, 3, 5, 13, 9, 8 /)
   INTEGER, PARAMETER :: Pkt2_T2_FB(9) = (/ 6, 10, 11, 15, 14, 17, 16, 19, 18 /)
 
+!! Attenuation setting read back structure:
+
+  TYPE Atten_T
+     INTEGER :: RIU
+     INTEGER :: Addr
+     INTEGER :: Mask
+     INTEGER :: Value
+  END TYPE Atten_T
+
 !! L0 science data packet for 1 MIF:
 
   TYPE Sci_pkt_T
@@ -292,6 +303,8 @@ MODULE L0_sci_tbls  ! Define L0 science tables
      INTEGER :: GSN(4)                 ! GHz Switch Network readings
      INTEGER :: THzSw                  ! THz Switch reading
      INTEGER :: BandSwitch(5)          ! band associated with each switch
+     TYPE (BankLogical_T) :: MaxAtten  ! Whether in maximum attenuation
+     LOGICAL :: AttenMaxed             ! Some attenuation is maximum
      LOGICAL :: CRC_good
   END TYPE Sci_pkt_T
 
@@ -311,6 +324,8 @@ MODULE L0_sci_tbls  ! Define L0 science tables
      INTEGER :: MIFno
      INTEGER :: Orbit
      INTEGER :: FB(THzChans,THzNum)
+     LOGICAL :: MaxAtten(THzNum)       ! Whether in maximum attenuation
+     LOGICAL :: AttenMaxed             ! Some attenuation is maximum
      REAL :: TSSA_pos(2)
      REAL :: scAngle                   ! Boresight wrt. spc +x
      CHARACTER(len=1) :: SwMirPos
@@ -342,6 +357,45 @@ MODULE L0_sci_tbls  ! Define L0 science tables
 !! L0 DACS data for 1 MAF:
 
   TYPE (DACS_pkt_T) :: DACS_MAF(0:(MaxMIFs-1))
+
+!! Band attenuation table:
+
+  TYPE (Atten_T), PARAMETER :: BandAtten(NumBands) = (/ &
+       Atten_T ( 91, 49168, 255, 0), & ! 5B, C010, FF, 0   Band  1
+       Atten_T ( 95, 49170, 255, 0), & ! 5F, C012, FF, 0   Band  2
+       Atten_T ( 95, 49171, 255, 0), & ! 5F, C013, FF, 0   Band  3
+       Atten_T ( 95, 49172, 255, 0), & ! 5F, C014, FF, 0   Band  4
+       Atten_T ( 95, 49173, 255, 0), & ! 5F, C015, FF, 0   Band  5
+       Atten_T ( 95, 49174, 255, 0), & ! 5F, C016, FF, 0   Band  6
+       Atten_T ( 96, 49169, 255, 0), & ! 60, C011, FF, 0   Band  7
+       Atten_T ( 96, 49170, 255, 0), & ! 60, C012, FF, 0   Band  8
+       Atten_T ( 96, 49171, 255, 0), & ! 60, C013, FF, 0   Band  9
+       Atten_T (110, 49170, 255, 0), & ! 6E, C012, FF, 0   Band 10
+       Atten_T (110, 49171, 255, 0), & ! 6E, C013, FF, 0   Band 11
+       Atten_T (110, 49172, 255, 0), & ! 6E, C014, FF, 0   Band 12
+       Atten_T (110, 49173, 255, 0), & ! 6E, C015, FF, 0   Band 13
+       Atten_T (110, 49174, 255, 0), & ! 6E, C016, FF, 0   Band 14
+       Atten_T ( 84, 49170, 255, 0), & ! 54, C012, FF, 0   Band 15
+       Atten_T ( 84, 49169, 255, 0), & ! 54, C011, FF, 0   Band 16
+       Atten_T ( 84, 49168, 255, 0), & ! 54, C010, FF, 0   Band 17
+       Atten_T ( 84, 49173, 255, 0), & ! 54, C015, FF, 0   Band 18
+       Atten_T ( 84, 49172, 255, 0), & ! 54, C014, FF, 0   Band 19
+       Atten_T ( 84, 49171, 255, 0), & ! 54, C013, FF, 0   Band 20
+       Atten_T ( 92, 49168, 255, 0), & ! 5C, C010, FF, 0   Band 21
+       Atten_T (111, 49168, 255, 0), & ! 6F, C010, FF, 0   Band 22 ------|
+       Atten_T ( 97, 49168, 255, 0), & ! 61, C010, FF, 0   Band 23       |
+       Atten_T (111, 49169, 255, 0), & ! 6F, C011, FF, 0   Band 24  DACS |
+       Atten_T ( 97, 49169, 255, 0), & ! 61, C011, FF, 0   Band 25       |
+       Atten_T ( 97, 49169, 255, 0), & ! 61, C011, FF, 0   Band 26 ------|
+       Atten_T ( 95, 49174, 255, 0), & ! 5F, C016, FF, 0   Band 27 - B 6
+       Atten_T (110, 49171, 255, 0), & ! 6E, C013, FF, 0   Band 28 - B 11
+       Atten_T (110, 49170, 255, 0), & ! 6E, C012, FF, 0   Band 29 - B 10
+       Atten_T (110, 49175, 255, 0), & ! 6E, C017, FF, 0   Band 30 - MB 4
+       Atten_T (110, 49175, 255, 0), & ! 6E, C017, FF, 0   Band 31 - MB 5
+       Atten_T ( 91, 49169, 255, 0), & ! 5B, C011, FF, 0   Band 32 - R1A - WF 1
+       Atten_T ( 96, 49172, 255, 0), & ! 60, C014, FF, 0   Band 33 - R3  - WF 2
+       Atten_T ( 92, 49169, 255, 0)  & ! 5C, C011, FF, 0   Band 34 - R1B - WF 3
+       /)
 
 !! Default APE pos2 values for use in simulations:
 
@@ -455,6 +509,7 @@ CONTAINS
     sci_cptr(1)%GSN%ptr => sci1_T1%GM15_stat(2:5)      ! GSN data
     sci_cptr(1)%THzSw%ptr => sci2_T1%TM03_stat(2)      ! THz switch data
     sci_cptr(1)%LLO_DN => sci2_T1%laser_lo
+    sci_cptr(1)%Attenuation%ptr => sci2_T1%Attenuation
 
     !! Initialize pointers for Type II/III science packets:
 
@@ -466,10 +521,11 @@ CONTAINS
     sci_cptr(2)%MIF(2)%ptr => sci2_T2%MIF
     sci_cptr(2)%orbit(1)%ptr => sci1_T2%orbit
     sci_cptr(2)%orbit(2)%ptr => sci2_T2%orbit
+    sci_cptr(2)%Attenuation%ptr => sci2_T2%Attenuation
 
     !! Filter Bank pointers
 
-    !!  Science packet #2
+    !!  Science packet #1
 
     DO i = 1, SIZE (Pkt1_T2_FB)
        sci_cptr(2)%FB(Pkt1_T2_FB(i))%ptr => &
@@ -517,6 +573,9 @@ CONTAINS
 END MODULE L0_sci_tbls
 
 ! $Log$
+! Revision 2.6  2004/01/09 17:46:22  perun
+! Version 1.4 commit
+!
 ! Revision 2.5  2003/09/15 17:15:53  perun
 ! Version 1.3 commit
 !
