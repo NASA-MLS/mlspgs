@@ -74,14 +74,15 @@ endif
 #                            using heconvert
 #   build_f90_in_misc.sh   Build a c or Fortran program
 #   f90GhostFiles.pl       Used by ghostbuster.sh   
-#   f90makedep.pl          Used ghostbuster.sh
+#   f90makedep.pl          Used by makemakedep.sh
 #   ghostbuster.sh         Deletes orphaned .o, .mod files from deceased sources
+#   l2cfmaker.sh           "Compiler" for building l2cf
 #   makemakedep.sh         Calculates dependencies   
 #   mkdir_cascade.sh       Creates a directory, and any yet uncreated parents
 #   mlsconfigure           Configures Makefiles for building mlks software
 #   mlsprog.sh             sh wrapper to assure exit condition is "1" if probs
 #   reecho.sh              Filter list of args to remove bogus ones
-#   uotodate.make          Ensure that custom machine files are up-to-date
+#   uptodate.make          Ensure that custom machine files are up-to-date
 #   which_fftw.sh          Construct correct fftw link lines for level 3
 #
 #  More info on some of these scripts is available via
@@ -847,6 +848,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.65  2002/02/21 21:55:42  pwagner
+# Sets to blank extra options in install
+#
 # Revision 1.64  2002/02/12 18:37:24  pwagner
 # Repaired builds for util executables; added h5cat
 #
