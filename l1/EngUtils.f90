@@ -1,4 +1,4 @@
-! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -10,7 +10,10 @@ MODULE EngUtils   ! Engineering utilities
 
   IMPLICIT NONE
 
-  PRIVATE :: Id, ModuleName
+  PRIVATE
+
+  PUBLIC :: NextEngMAF
+
   !------------------------------- RCS Ident Info ------------------------------
   CHARACTER(LEN=130) :: id = &
        "$Id$"
@@ -127,29 +130,24 @@ CONTAINS
     IF (INDEX (mnemonic, "_Bus") /= 0) THEN
        IF (INDEX (mnemonic, "_V") /= 0) THEN
           IF (INDEX (mnemonic, "Quiet") /= 0) THEN
-             val = (tval - 0.3979) / 0.1172   ! Quiet Bus Voltage
+             val = (tval - 0.3113) / 0.1183   ! Quiet Bus Voltage
           ELSE IF (INDEX (mnemonic, "Device") /= 0) THEN
-             val = (tval - 0.3979) / 0.1172   ! Device Bus Voltage
+             val = (tval - 0.2638) / 0.1192   ! Device Bus Voltage
           ENDIF
        ELSE IF (INDEX (mnemonic, "_I") /= 0) THEN
           IF (INDEX (mnemonic, "Quiet") /= 0) THEN
-             val = (tval - 0.3848) / 0.1583   ! Quiet Bus Current
+             val = (tval - 0.317) / 0.162    ! Quiet Bus Current
           ELSE IF (INDEX (mnemonic, "Device") /= 0) THEN
-             val = (tval - 0.2431) / 0.639    ! Device Bus Current
+             val = (tval - 0.228) / 1.691    ! Device Bus Current
           ENDIF
        ENDIF
-    ELSE IF (INDEX (mnemonic, "R4_RFE_Tripler_I") /= 0) THEN
-       val = (2.5 - tval) / 49.9              ! Tripler Current
-    ELSE IF (INDEX (mnemonic, "R4_HarmMixer_V") /= 0) THEN
+    ELSE IF (INDEX (mnemonic, "R4_IF_voltage") /= 0) THEN
        IF (tval > 0.0) THEN
-          val = 8.7225 * log (tval) - 29.277  ! Harmonic Mixer Voltage
+          val = 8.4459 * log (tval) - 47.755  ! R4 IF Voltage
        ELSE
           val = QNan()
        ENDIF
     ENDIF
-
-    ! will need to add equation for R4_RFE_Gunn_I later:
-    !  24231 * V3out - 16822 * V2out + 4597 * Vout - 291.58
 
   END FUNCTION Use_equation
 
@@ -294,12 +292,13 @@ CONTAINS
     LOGICAL, INTENT (OUT) :: more_data
 
     LOGICAL :: OK, GMAB_ON(4)
+    INTEGER :: ios
     INTEGER, PARAMETER :: maskbit3 = z'8', maskbit7 = z'80'
 
     more_data = .TRUE.
 
     CALL ReadL0Eng (EngPkt, EngMAF%MAFno, EngMAF%TotalMAF, EngMAF%MIFsPerMAF, &
-         OK)
+         EngMAF%secTAI, OK)
 
     IF (OK) THEN
 
@@ -324,10 +323,10 @@ CONTAINS
 
        CALL ConvertEngCounts (GMAB_ON)
 
-       !! Write eng data to file (will use HDF later!!!)
+       !! Write eng data to file:
 
-       WRITE (L1BFileInfo%EngId) EngMAF%MAFno
-       WRITE (L1BFileInfo%EngId) eng_tbl%value
+       WRITE (L1BFileInfo%EngId, iostat=ios) EngMAF%MAFno
+       WRITE (L1BFileInfo%EngId, iostat=ios) eng_tbl%value
 
        !! Save the required data for later use:
 
@@ -352,8 +351,8 @@ END MODULE EngUtils
 !=============================================================================
 
 ! $Log$
-! Revision 2.3  2002/03/29 20:18:34  perun
-! Version 1.0 commit
+! Revision 2.4  2003/01/31 18:13:34  perun
+! Version 1.1 commit
 !
 ! Revision 2.2  2001/02/23 18:55:17  perun
 ! Version 0.5 commit

@@ -104,7 +104,7 @@ CONTAINS
           CALL MLSMessage (MLSMSG_Info, ModuleName, &
                & 'Closed L0 Science file: '//L0FileInfo%SciFileName(sindx))
 
-          L0FileInfo%sci_pcf(sindx) = L0FileInfo%sci_pcf(sindx) + 1  ! Next entry
+          L0FileInfo%sci_pcf(sindx) = L0FileInfo%sci_pcf(sindx) + 1 ! Next entry
           version = 1
           returnStatus = PGS_PC_getReference (L0FileInfo%sci_pcf(sindx), &
                version, filename)
@@ -115,8 +115,9 @@ CONTAINS
              RETURN
           ENDIF
 
-          CALL OpenL0File (L0FileInfo%sci_pcf(sindx), L0FileInfo%sci_unit(sindx),&
-               L0FileInfo%SciFilename(sindx), "Science")
+          CALL OpenL0File (L0FileInfo%sci_pcf(sindx), &
+               L0FileInfo%sci_unit(sindx), L0FileInfo%SciFilename(sindx), &
+               "Science")
        ENDIF
 
        MIF(sindx) = ICHAR (SciPkt(sindx)(17:17))
@@ -135,12 +136,13 @@ CONTAINS
 
   END SUBROUTINE ReadL0Sci
 
-  SUBROUTINE ReadL0Eng (engpkt, MAFno, TotalMAF, MIFsPerMAF, OK)
+  SUBROUTINE ReadL0Eng (engpkt, MAFno, TotalMAF, MIFsPerMAF, MAFtime, OK)
 
     USE MLSL1Utils, ONLY: BigEndianStr
 
     CHARACTER(LEN=*), DIMENSION(:) :: engpkt
     INTEGER :: MAFno, TotalMAF, MIFsPerMAF
+    REAL(r8) :: MAFtime
     LOGICAL :: OK
 
     INTEGER :: i, returnStatus, MAF(6), version
@@ -149,7 +151,7 @@ CONTAINS
     LOGICAL :: EOD
     CHARACTER(len=132) :: filename
 
-! For Version 3.0:
+! For Version 3.0 and above:
 
     INTEGER, PARAMETER :: MAF_offset(6) = (/ 61, 253, 253, 17, 19, 17 /)
 
@@ -162,7 +164,10 @@ CONTAINS
           ret_len = ReadL0Packet (L0FileInfo%eng_unit(i), LEN(engpkt(i)), &
                engpkt(i), TAI93, EOD)
 
-          IF (i == 1) engtime = TAI93   ! Save time from packet #1 for comparisons
+          IF (i == 1) THEN
+             engtime = TAI93 ! Save time from packet #1 for comparisons
+             MAFtime = engtime
+          ENDIF
 
           IF (EOD) THEN    ! May need to do this elsewhere or pass flag here
 
@@ -173,8 +178,8 @@ CONTAINS
 
              L0FileInfo%eng_pcf(i) = L0FileInfo%eng_pcf(i) + 1  ! Next entry
              version = 1
-             returnStatus = PGS_PC_getReference (L0FileInfo%eng_pcf(i), version, &
-                  filename)
+             returnStatus = PGS_PC_getReference (L0FileInfo%eng_pcf(i), &
+                  version, filename)
              IF (returnStatus /= PGS_S_SUCCESS) THEN
                 CALL MLSMessage (MLSMSG_Warning, ModuleName, &
                      & 'No next L0 Eng File')
@@ -215,6 +220,9 @@ END MODULE L0Utils
 !=============================================================================
 
 ! $Log$
+! Revision 2.4  2003/01/31 18:13:34  perun
+! Version 1.1 commit
+!
 ! Revision 2.3  2002/09/12 16:18:39  perun
 ! Align science packets to same MIF and MAF
 !

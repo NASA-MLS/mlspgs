@@ -8,15 +8,19 @@ MODULE SciUtils ! L0 science utilities
   USE MLSCommon, ONLY: r8
   USE L0_sci_tbls, ONLY: sci_type, l0_sci1, l0_sci2, sci1_T1_fmt, sci2_T1_fmt, &
        sci1_T2_fmt, sci2_T2_fmt, sci1_T1, sci2_T1, sci1_T2, sci2_T2, &
-       sci_cptr, Sci_pkt, SciMAF, type_sci1
+       sci_cptr, Sci_pkt, SciMAF, type_sci1, THzSciMAF, DACS_pkt, DACS_MAF
   USE L0Utils, ONLY: ReadL0Sci
   USE MLSL1Utils, ONLY: BigEndianStr, ExtractBigEndians, SwapBytes, QNan, &
        Finite
   USE DACsUtils, ONLY: ExtractDACSdata, UncompressDACSdata, ProcessDACSdata
   USE MLSL1Common, ONLY: FBnum, MBnum, WFnum, WFchans, deg24, DACSnum, &
-       DACSchans, BandSwitch
+       DACSchans, BandSwitch, L1ProgType, THzType, MaxMIFs
 
   IMPLICIT NONE
+
+  PRIVATE
+
+  PUBLIC :: NextSciMAF
 
   !------------------------------- RCS Ident Info ------------------------------
   CHARACTER(LEN=130) :: id = &
@@ -45,10 +49,11 @@ MODULE SciUtils ! L0 science utilities
     CHARACTER(len=1), PARAMETER :: sw_good = CHAR(7)
     CHARACTER(len=2) :: WFdat(WFchans)   ! wide filter raw data buffer
     CHARACTER (LEN=1024) :: scipkt(2)
+    CHARACTER (LEN=24) :: DN
 
-    INTEGER :: DACS_K(DACSchans)
-    INTEGER :: DACS_i1, DACS_i2
-    INTEGER :: D(4), Dtot, TP, DIO, LO, nchans
+    INTEGER :: DACS_C_K(DACSchans)
+    INTEGER :: DACS_i1, DACS_i2, DACS_indx(2)
+    INTEGER :: D(4), Dtot, TP, DIO, LO, nchans, Zlag
 
     INTEGER, PARAMETER :: type_I = 1
     INTEGER, PARAMETER :: type_II = 3
@@ -95,27 +100,30 @@ MODULE SciUtils ! L0 science utilities
 
     ENDIF
 
+!! Check for good checksums (LATER!!!):
+
+    Sci_pkt%CRC_good = .TRUE.
+
 !! Convert to angles:
 
-    IF (sci_cptr(tindex)%THz_sw(1:1) == sw_good) THEN
-       Sci_pkt%THz_sw_angle(1)  = deg24 * &
-            BigEndianStr (sci_cptr(tindex)%THz_sw(3:5))
-       Sci_pkt%THz_sw_angle(2)  = deg24 * &
-            BigEndianStr (sci_cptr(tindex)%THz_sw(6:8))
+    DN = sci_cptr(tindex)%THz_sw
+    IF (DN(1:1) /= sw_good) DN = DN(4:)   ! shift and try
+    IF (DN(1:1) == sw_good) THEN
+       Sci_pkt%TSE_pos(1)  = deg24 * BigEndianStr (DN(3:5))
+       Sci_pkt%TSE_pos(2)  = deg24 * BigEndianStr (DN(6:8))
     ELSE
-       Sci_pkt%THz_sw_angle(:) = QNan()
+       Sci_pkt%TSE_pos(:) = QNan()
     ENDIF
-    Sci_pkt%THz_sw_pos = SwMirPos ("T", Sci_pkt%THz_sw_angle)
+    Sci_pkt%THz_sw_pos = SwMirPos ("T", Sci_pkt%TSE_pos)
 
-    IF (sci_cptr(tindex)%GHz_sw(1:1) == sw_good) THEN
-       Sci_pkt%GHz_sw_angle(1)  = deg24 * &
-            BigEndianStr (sci_cptr(tindex)%GHz_sw(3:5))
-       Sci_pkt%GHz_sw_angle(2)  = deg24 * &
-            BigEndianStr (sci_cptr(tindex)%GHz_sw(6:8))
+    DN = sci_cptr(tindex)%GHz_sw
+    IF (DN(1:1) == sw_good) THEN
+       Sci_pkt%GME_pos(1)  = deg24 * BigEndianStr (DN(3:5))
+       Sci_pkt%GME_pos(2)  = deg24 * BigEndianStr (DN(6:8))
     ELSE
-       Sci_pkt%GHz_sw_angle(:) = QNan()
+       Sci_pkt%GME_pos(:) = QNan()
     ENDIF
-    Sci_pkt%GHz_sw_pos = SwMirPos ("G", Sci_pkt%GHz_sw_angle)
+    Sci_pkt%GHz_sw_pos = SwMirPos ("G", Sci_pkt%GME_pos)
 
 !! Filter bank switches
 
@@ -124,7 +132,7 @@ MODULE SciUtils ! L0 science utilities
        CALL Band_switch (i, Sci_pkt%GSN(i), Sci_pkt%BandSwitch(i))
     ENDDO
     Sci_pkt%THzSw = ICHAR (sci_cptr(tindex)%THzSw%ptr)
-    CALL Band_switch (i, Sci_pkt%THzSw, Sci_pkt%BandSwitch(5))
+    CALL Band_switch (5, Sci_pkt%THzSw, Sci_pkt%BandSwitch(5))
 
     DO i = 1, 5
        IF (Sci_pkt%BandSwitch(i) == 0) THEN
@@ -145,11 +153,19 @@ MODULE SciUtils ! L0 science utilities
 
     returnstatus = PGS_TD_EOSPMGIRDtoTAI (scipkt(1)(8:15), Sci_pkt%secTAI)
 
+!! LLO data
+
+    Sci_pkt%LLO_DN = sci_cptr(tindex)%LLO_DN
+!print '(16(1x,Z2.2))', ICHAR(Sci_pkt%LLO_data(1:16))
+
     DO i = 1, FBnum
        CALL ExtractBigEndians (sci_cptr(tindex)%FB(i)%ptr, FBcnts)
        Sci_pkt%FB(:,i) = FBcnts
-
     ENDDO
+
+! Nothing more if THz
+
+    IF (L1ProgType == THzType) RETURN
 
     DO i = 1, MBnum
        CALL ExtractBigEndians (sci_cptr(tindex)%MB(i)%ptr, MBcnts)
@@ -169,37 +185,43 @@ MODULE SciUtils ! L0 science utilities
 
     CALL ermset (-4)      ! turn OFF error messages
 
+    Sci_pkt%DACS = 0.0
+    DACS_pkt%D = 0
+
     IF (sci_type == type_I) THEN    ! compressed DACS
 
+       DACS_pkt%Compressed = .TRUE.
        DO i = 1, 4
-          CALL UncompressDACSdata (sci_cptr(tindex)%DACS(i)%ptr)
+
+          CALL UncompressDACSdata (sci_cptr(tindex)%DACS(i)%ptr, &
+               DACS_C_K(1:128), D, TP, DIO, LO, Zlag)
+
+          DACS_pkt%C_K(:,i) = DACS_C_K
+          DACS_pkt%D(:,i) = D
+          DACS_pkt%TP(i) = TP
+          DACS_pkt%DIO(i) = DIO
+          DACS_pkt%LO(i) = LO
+          DACS_pkt%Zlag(i) = Zlag
+
        ENDDO
-!print *, "compressed DACS"
+
     ELSE
 
-       Sci_pkt%DACS = 0.0
-
+       DACS_pkt%Compressed = .FALSE.
        DO i = DACS_i1, DACS_i2
 
-          CALL ExtractDACSdata (sci_cptr(tindex)%DACS(i)%ptr, DACS_K, D, TP, &
-               DIO, LO, nchans)
+          CALL ExtractDACSdata (sci_cptr(tindex)%DACS(i)%ptr, DACS_C_K, D, TP, &
+               DIO, LO)
 
-          CALL ProcessDACSdata (D, DACS_K, nchans, TP, Sci_pkt%DACS(:,i))
+          DACS_pkt%C_K(:,i) = DACS_C_K
+          DACS_pkt%D(:,i) = D
+          DACS_pkt%TP(i) = TP
+          DACS_pkt%DIO(i) = DIO
+          DACS_pkt%LO(i) = LO
 
        ENDDO
 
     ENDIF
-
-!! LLO data
-
-    Sci_pkt%LLO_data = sci_cptr(tindex)%LLO_data%ptr
-!print '(16(1x,Z2.2))', ICHAR(Sci_pkt%LLO_data(1:16))
-
-!! Check for good checksums (LATER!!!):
-
-    Sci_pkt%CRC_good = .TRUE.
-
-    OK = .TRUE.
 
   END FUNCTION GetSciPkt
 
@@ -208,6 +230,7 @@ MODULE SciUtils ! L0 science utilities
 !=============================================================================
 
     USE MLSL1Config, ONLY: L1Config
+    USE MLSL1Common, ONLY : L1ProgType, LogType
 
     !! Get the next MAF's science data
 
@@ -215,8 +238,10 @@ MODULE SciUtils ! L0 science utilities
 
     INTEGER, PARAMETER :: no_data = -1   ! no data is available
     INTEGER, SAVE :: prev_MAF = no_data
+    INTEGER :: last_MIF, i, ios
+    REAL :: pos1(2)
+    CHARACTER(len=1) :: mir_pos
 
-    INTEGER :: last_MIF !! = 147   !! Nominal last MIFno minus 1 (TEST!!!)
     more_data = .TRUE.
 
     !! Initialize MAF/MIF counters to indicate no data
@@ -224,15 +249,20 @@ MODULE SciUtils ! L0 science utilities
     SciMAF%MAFno = no_data
     SciMAF%MIFno = no_data
     last_MIF = L1Config%Calib%MIFsPerMAF -1
+    DO i = 0, (MaxMIFs - 1); DACS_MAF(i)%D = 0; ENDDO
 
-    !! Initialize CRC flags to not good
+    !! Initialize CRC flags to good
 
-    SciMAF%CRC_good = .FALSE.
+    SciMAF%CRC_good = .TRUE.
 
     !! Save previously read packet (if available):
 
     IF (prev_MAF /= no_data) THEN
        SciMAF(Sci_pkt%MIFno) = Sci_pkt
+       DACS_MAF(Sci_pkt%MIFno) = DACS_pkt
+       IF (L1ProgType == THzType) THEN
+          CALL Save_THz_pkt (SciMAF(Sci_pkt%MIFno), THzSciMAF(Sci_pkt%MIFno))
+       ENDIF
     ENDIF
 
     DO
@@ -251,6 +281,38 @@ MODULE SciUtils ! L0 science utilities
           ENDIF
 
           SciMAF(Sci_pkt%MIFno) = Sci_pkt  ! save current packet
+          DACS_MAF(Sci_pkt%MIFno) = DACS_pkt  ! save DACS data
+
+          IF (L1ProgType == THzType) &
+           CALL Save_THz_pkt (SciMAF(Sci_pkt%MIFno), THzSciMAF(Sci_pkt%MIFno))
+
+! Shift mechanism encoder readings to corresponding MIF
+
+          IF (Sci_pkt%MIFno > 0) THEN
+             SciMAF(Sci_pkt%MIFno-1)%GME_pos = &
+                  SciMAF(Sci_pkt%MIFno)%GME_pos
+             SciMAF(Sci_pkt%MIFno-1)%APE_pos(2) = &
+                  SciMAF(Sci_pkt%MIFno)%APE_pos(2)
+             SciMAF(Sci_pkt%MIFno-1)%ASE_pos(2) = &
+                  SciMAF(Sci_pkt%MIFno)%ASE_pos(2)
+             SciMAF(Sci_pkt%MIFno-1)%GHz_sw_pos = &
+                  SciMAF(Sci_pkt%MIFno)%GHz_sw_pos
+
+             IF (L1ProgType == THzType) THEN            ! THz if needed
+                THzSciMAF(Sci_pkt%MIFno-1)%TSE_pos = &
+                     THzSciMAF(Sci_pkt%MIFno)%TSE_pos
+                THzSciMAF(Sci_pkt%MIFno-1)%SwMirPos = &
+                     THzSciMAF(Sci_pkt%MIFno)%SwMirPos
+             ENDIF
+
+          ENDIF
+
+          IF (Sci_pkt%MIFno > 1) THEN
+             SciMAF(Sci_pkt%MIFno-2)%APE_pos(1) = &
+                  SciMAF(Sci_pkt%MIFno)%APE_pos(1)
+             SciMAF(Sci_pkt%MIFno-2)%ASE_pos(1) = &
+                  SciMAF(Sci_pkt%MIFno)%ASE_pos(1)
+          ENDIF
 
           prev_MAF = Sci_pkt%MAFno
 
@@ -261,7 +323,28 @@ MODULE SciUtils ! L0 science utilities
           EXIT  ! Nothing more is available
 
        ENDIF
+
     ENDDO
+
+! Compare previous pos1 against current MIF pos1/2:
+
+    IF (L1ProgType == THzType) THEN
+       DO i = 1, (MaxMIFs - 1)
+          IF (THzSciMAF(i)%SwMirPos /= "D") THEN
+             pos1(1) = THzSciMAF(i-1)%TSE_pos(1)  ! previous pos1
+             pos1(2) = pos1(1)   ! need 2 angles to figure sw mir pos
+             IF (Finite (pos1(1))) THEN
+                mir_pos = SwMirPos ("T", pos1)
+                IF (mir_pos /= THzSciMAF(i)%SwMirPos) &
+                     THzSciMAF(i)%SwMirPos = "D"
+             ENDIF
+          ENDIF
+       ENDDO
+    ENDIF
+
+! Process DACS data for the current MAF
+
+    IF (L1ProgType /= LogType) CALL ProcessDACSdata
 
   END SUBROUTINE NextSciMAF
 
@@ -296,10 +379,10 @@ MODULE SciUtils ! L0 science utilities
     ENDIF
 
     DO n = 1, SIZE (SwMir_Range)
-       IF (angle(1) >= SwMir_Range(n)%low_angle .AND. &
-            angle(1) <= SwMir_Range(n)%high_angle .AND. &
-            angle(2) >=  SwMir_Range(n)%low_angle .AND. &
-            angle(2) <=  SwMir_Range(n)%high_angle) THEN
+       IF (angle(1) > SwMir_Range(n)%low_angle .AND. &
+            angle(1) < SwMir_Range(n)%high_angle .AND. &
+            angle(2) >  SwMir_Range(n)%low_angle .AND. &
+            angle(2) <  SwMir_Range(n)%high_angle) THEN
           sw_pos = SwMir_Range(n)%pos
           EXIT
        ENDIF
@@ -307,13 +390,16 @@ MODULE SciUtils ! L0 science utilities
 
   END FUNCTION SwMirPos
 
+!=============================================================================
   SUBROUTINE Band_switch (switch, sw_val, band)
+!=============================================================================
 
     INTEGER :: band, sw_val, switch
 
     INTEGER :: i, pos
 
     INTEGER :: pos_no(6) 
+    DATA pos_no / z'FE', z'FD', z'FB', z'F7', z'EF', z'DF' /
 
     INTEGER, PARAMETER :: sw_bands(6,5) = RESHAPE ((/ &
          25, 26,  0,  0,  0,  0, &                 ! switch #1 bands
@@ -322,8 +408,6 @@ MODULE SciUtils ! L0 science utilities
          10, 11, 14, 12, 20, 21, &                 ! switch #4 bands
          15, 16, 17, 18, 19, 20 /), &              ! switch #5 bands
           (/ 6, 5 /))                              ! final shape
-    DATA pos_no / &
-         z'FE', z'FD', z'FB', z'F7', z'EF', z'DF' /
 
     IF (sw_val == 0) THEN     ! no change from previous
        band = 0
@@ -341,9 +425,6 @@ MODULE SciUtils ! L0 science utilities
     ENDDO
     pos = i
     IF (pos > 6) THEN
-       ! print *, 'illegal switch position!'
-       ! print *, 'switch, sw_val: ', switch, sw_val
-       ! stop
        band = 0
        RETURN
     ENDIF
@@ -351,11 +432,51 @@ MODULE SciUtils ! L0 science utilities
 
   END SUBROUTINE Band_switch
 
+!=============================================================================
+  SUBROUTINE Save_THz_pkt (Sci_pkt, THz_Sci_pkt)
+!=============================================================================
+
+    USE L0_sci_tbls, ONLY: Sci_pkt_T, THz_Sci_pkt_T
+    USE THzUtils, ONLY: LLO_Bias
+    USE MLSL1Common, ONLY: Deflt_zero
+
+    TYPE (Sci_pkt_T), INTENT (IN) :: Sci_pkt
+    TYPE (THz_Sci_pkt_T), INTENT (OUT) :: THz_Sci_pkt
+
+    INTEGER :: bank
+
+    THz_Sci_pkt%secTAI = Sci_pkt%secTAI
+    THz_Sci_pkt%MAFno = Sci_pkt%MAFno
+    THz_Sci_pkt%MIFno = Sci_pkt%MIFno
+    THz_Sci_pkt%Orbit = Sci_pkt%Orbit
+    THz_Sci_pkt%FB(:,1:5) = Sci_pkt%FB(:,15:)
+    DO bank = 1, 5
+       IF (ANY (THz_Sci_pkt%FB(:,bank) > 0)) THz_Sci_pkt%FB(:,bank) = &
+            THz_Sci_pkt%FB(:,bank) - Deflt_zero%FB(:,bank+14)
+    ENDDO
+    THz_Sci_pkt%FB(:,6) = Sci_pkt%FB(:,12)
+    IF (ANY (THz_Sci_pkt%FB(:,6) > 0)) THz_Sci_pkt%FB(:,6) = &
+         THz_Sci_pkt%FB(:,6) - Deflt_zero%FB(:,12)
+    THz_Sci_pkt%TSE_pos = Sci_pkt%TSE_pos
+    THz_Sci_pkt%SwMirPos = Sci_pkt%THz_sw_pos
+    THz_Sci_pkt%LLO_bias = LLO_Bias (Sci_pkt%LLO_DN, Sci_pkt%MIFno)
+    THz_Sci_pkt%BandSwitch = Sci_pkt%BandSwitch(4:5)  !Only need sw #4 & #5
+    THz_Sci_pkt%CRC_good = Sci_pkt%CRC_good
+
+  END SUBROUTINE Save_THz_pkt
+
 END MODULE SciUtils
 
 ! $Log$
+! Revision 2.4  2003/01/31 18:13:34  perun
+! Version 1.1 commit
+!
 ! Revision 2.3  2002/10/03 17:43:53  jdone
 ! moved parameter statement to data statement for LF/NAG compatitibility
+!
+! $Log$
+! Revision 2.4  2003/01/31 18:13:34  perun
+! Version 1.1 commit
 !
 ! Revision 2.2  2002/03/29 20:18:34  perun
 ! Version 1.0 commit

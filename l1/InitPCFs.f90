@@ -1,4 +1,4 @@
-! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -10,7 +10,10 @@ MODULE InitPCFs ! Init PCF data used by MLSL1 program
 
   IMPLICIT NONE
 
-  PRIVATE :: Id, ModuleName
+  PRIVATE
+
+  PUBLIC :: L1PCF, PCFData_T, GetPCFParameters
+  
   !------------------------------- RCS Ident Info ------------------------------
   CHARACTER(LEN=130) :: id = &
        "$Id$"
@@ -25,6 +28,8 @@ MODULE InitPCFs ! Init PCF data used by MLSL1 program
       CHARACTER(LEN=27) :: EndUTC
       CHARACTER(LEN=80) :: OutputVersion
       CHARACTER(LEN=80) :: Cycle
+      CHARACTER(LEN=132) :: PCF_filename
+      CHARACTER(LEN=132) :: L1CF_filename
    END TYPE PCFData_T
 
    TYPE (PCFData_T) :: L1PCF
@@ -86,6 +91,9 @@ CONTAINS
 END MODULE InitPCFs
 
 ! $Log$
+! Revision 2.4  2003/01/31 18:13:34  perun
+! Version 1.1 commit
+!
 ! Revision 2.3  2002/07/17 15:25:42  perun
 ! Increase length of outputversion and cycle
 !
