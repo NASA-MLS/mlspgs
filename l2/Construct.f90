@@ -1,5 +1,5 @@
-! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
 
 !=============================================================================
 MODULE Construct                ! The construct module for the MLS L2 sw.
@@ -88,6 +88,8 @@ contains ! =====     Public Procedures     =============================
       & S_PHASE, S_QUANTITY, S_TIME, S_VECTORTEMPLATE
     use L2GPData, only: L2GPDATA_T
     use MLSCommon, only: L1BInfo_T, TAI93_Range_T
+    use MLSL2Options, only: RESTARTWARNINGS
+    use MLSMessageModule, only: MLSMessageReset
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, add_to_phase_timing
     use MoreTree, only: Get_Spec_ID
     use OUTPUT_M, only: BLANKS, OUTPUT
@@ -170,6 +172,7 @@ contains ! =====     Public Procedures     =============================
       case ( s_phase )
         call get_string(name, phaseString)
         call add_to_phase_timing(trim(phaseString))
+        if ( RESTARTWARNINGS ) call MLSMessageReset(Warnings=.true.)
       case ( s_quantity )
         call decorate ( key, AddQuantityTemplateToDatabase ( &
           & quantityTemplatesBase, CreateQtyTemplateFromMLSCfInfo ( name, key, &
@@ -238,6 +241,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.50  2005/03/12 00:50:27  pwagner
+! May restart warnings counter at each phase
+!
 ! Revision 2.49  2004/10/13 02:24:02  livesey
 ! Added vGrids to Forge command
 !
