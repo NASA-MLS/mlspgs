@@ -19,7 +19,8 @@ module OutputAndClose ! outputs all data from the Join module to the
   use LEXER_CORE, only: PRINT_SOURCE
   use MatrixModule_1, only: MATRIX_DATABASE_T, MATRIX_T, GETFROMMATRIXDATABASE
   use MLSCommon, only: I4
-  use MLSFiles, only: GetPCFromRef, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
+  use MLSFiles, only: GetPCFromRef, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, &
+    & split_path_name
   use MLSL2Options, only: PENALTY_FOR_NO_METADATA, CREATEMETADATA, PCF, &
     & PCFL2CFSAMECASE
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
@@ -105,6 +106,7 @@ contains ! =====     Public Procedures     =============================
     integer :: NAME                     ! string index of label on output
     integer :: Numquantitiesperfile        
     integer :: OUTPUT_TYPE              ! L_L2AUX, L_L2GP, L_PC, L_L2DGG
+    character (len=132) :: path
     character(len=L2GPNameLen), dimension(MAXQUANTITIESPERFILE) :: QuantityNames  ! From "quantities" field
     integer :: RECLEN                   ! For file stuff
     integer :: ReturnStatus
@@ -183,6 +185,7 @@ contains ! =====     Public Procedures     =============================
           ! Get the l2gp file name from the PCF
 
           if ( PCF ) then
+            call split_path_name(file_base, path, file_base)
             l2gpFileHandle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
             & mlspcf_l2gp_end, &
             & PCFL2CFSAMECASE, returnStatus, l2gp_Version, DEBUG, &
@@ -298,6 +301,7 @@ contains ! =====     Public Procedures     =============================
           ! Get the l2aux file name from the PCF
 
           if ( PCF ) then
+            call split_path_name(file_base, path, file_base)
             l2auxFileHandle = GetPCFromRef(file_base, mlspcf_l2dgm_start, &
             & mlspcf_l2dgm_end, &
             & PCFL2CFSAMECASE, returnStatus, l2aux_Version, DEBUG, &
@@ -439,6 +443,7 @@ contains ! =====     Public Procedures     =============================
           ! Get the l2gp file name from the PCF
 
           if ( PCF ) then
+            call split_path_name(file_base, path, file_base)
             l2gpFileHandle = GetPCFromRef(file_base, mlspcf_l2dgg_start, &
             & mlspcf_l2dgg_end, &
             & PCFL2CFSAMECASE, returnStatus, l2gp_Version, DEBUG, &
@@ -644,6 +649,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.37  2001/06/04 23:57:40  pwagner
+! Splits path from l2cf-defined file name before getPCfromRef
+!
 ! Revision 2.36  2001/05/30 23:03:13  pwagner
 ! Moved PCFL2CFSAMECASE to MLSL2Options
 !
