@@ -1,98 +1,109 @@
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module GET_CHI_ANGLES_M
-  use MLSCommon, only: RP, IP
-  use L2PC_FILE_PARAMETERS, only: DEG2RAD
-  Implicit NONE
-  Private
-  Public :: get_chi_angles
+
+  implicit NONE
+
+  private
+  public :: GET_CHI_ANGLES
+
 !---------------------------- RCS Ident Info -------------------------------
-  CHARACTER (LEN=256) :: Id = &
-       "$Id$"
-  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
-       "$RCSfile$"
+  character (len=*), parameter :: IdParm = &
+    & "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName = &
+    & "$RCSfile$"
 !---------------------------------------------------------------------------
 contains
-!----------------------------------------------------------------------
-! Set up array of pointing angles
+!---------------------------------------------------------------------------
+  ! Set up array of pointing angles
 
-SUBROUTINE get_chi_angles(sc_geoc_alt,tan_index_refr,tan_ht, &
-           phi_tan,Req,elev_offset,ptg_angle,dx_dh,dh_dz,tan_dh_dt,&
-           tan_d2h_dhdt,dx_dt,d2x_dxdt)
+  subroutine GET_CHI_ANGLES ( sc_geoc_alt, tan_index_refr, tan_ht, &
+             & phi_tan, Req, elev_offset, ptg_angle, dx_dh, dh_dz, tan_dh_dt, &
+             & tan_d2h_dhdt, dx_dt, d2x_dxdt )
 
-!  ===============================================================
-!  Declaration of variables for sub-program: get_chi_angles
-!  ===============================================================
-!  ---------------------------
-!  Calling sequence variables:
-!  ---------------------------
-! inputs
-!
-  REAL(rp), INTENT(IN) :: sc_geoc_alt ! geocentric spacecraft(observer)
-                                      ! altitude in km
-  REAL(rp), INTENT(IN) :: tan_index_refr ! tangent index of refraction
-  REAL(rp), INTENT(IN) :: tan_ht ! tangent height relative to Req
-  REAL(rp), INTENT(IN) :: phi_tan ! tangent orbit plane projected
-                                  ! geodetic angle in radians
-  REAL(rp), INTENT(IN) :: Req ! equivalent earth radius in km
-  REAL(rp), INTENT(IN) :: elev_offset ! radiometer pointing offset in radians
-  REAL(rp), INTENT(IN) :: dh_dz ! dh/dz  at the tangent point
-!
-! output
-!
-  REAL(rp), INTENT(OUT) :: ptg_angle ! pointing angle in radians
-  REAL(rp), INTENT(OUT) :: dx_dh     ! derivative of pointing angle
-                                     ! wrt height
-!
-! keywords
-!
-  REAL(rp), OPTIONAL, INTENT(IN) :: tan_dh_dt(:) ! derivative of tangent
-                                                 ! height wrt temperature
-  REAL(rp), OPTIONAL, INTENT(IN) :: tan_d2h_dhdt(:) ! 2nd derivative of
-                                    ! tangent height wrt temperature & height
-  REAL(rp), OPTIONAL, INTENT(OUT) :: dx_dt(:) ! derivative of pointing angle
-                                              ! wrt temperature
-  REAL(rp), OPTIONAL, INTENT(OUT) :: d2x_dxdt(:) ! second derivative of
-                                   ! tangent wrt temperature, pointing angle
-!  ----------------
-!  Local variables:
-!  ----------------
-!
-  Real(rp), PARAMETER :: ampl = 38.9014
-  Real(rp), PARAMETER :: phas = 51.6814 * Deg2Rad
-  Real(rp), PARAMETER :: Ln10 = 2.302585092994045684_rp
-!
-  REAL(rp) :: ht, tp, hs, x, q, Np1
-!
-! Start code:
-!
-  ht = Req + tan_ht
-  Np1 = 1.0_rp + tan_index_refr
-  hs = sc_geoc_alt + ampl * SIN(2.0*(phi_tan-phas))
-  x = Np1 * ht / hs
-  ptg_angle = elev_offset + ASIN(x * min(ht,Req)/Req)
-!
-  if(tan_ht >= 0.0_rp) then
-    q = Np1 - ht * tan_index_refr * Ln10 / dh_dz
-  else
-    q = 2.0_rp * ht * Np1 / Req
-  endif
-  dx_dh = q / (hs * Cos(x))
-!
-! Do temperature stuff if user requests it
-! Set up: dx_dt, d2x_dxdt arrays for temperature derivative computations
-! (NOTE: These entities has NO PHI dimension, so take the center Phi in dh_dt)
-!
-  IF(PRESENT(tan_dh_dt)) THEN
-    tp = TAN(ptg_angle)
-    dx_dt = tp * tan_dh_dt / ht
-    d2x_dxdt = tp * tp * tan_dh_dt / ht + tan_d2h_dhdt
-  ENDIF
+    use Geometry, only: Ln10
+    use L2PC_FILE_PARAMETERS, only: DEG2RAD
+    use MLSCommon, only: RP
 
-  RETURN
+  !  ===============================================================
+  !  Declaration of variables for sub-program: get_chi_angles
+  !  ===============================================================
+  !  ---------------------------
+  !  Calling sequence variables:
+  !  ---------------------------
+  ! inputs
 
-END SUBROUTINE get_chi_angles
+    real(rp), intent(in) :: sc_geoc_alt ! geocentric spacecraft(observer)
+                                        ! altitude in km
+    real(rp), intent(in) :: tan_index_refr ! tangent index of refraction
+    real(rp), intent(in) :: tan_ht ! tangent height relative to Req
+    real(rp), intent(in) :: phi_tan ! tangent orbit plane projected
+                                    ! geodetic angle in radians
+    real(rp), intent(in) :: Req ! equivalent earth radius in km
+    real(rp), intent(in) :: elev_offset ! radiometer pointing offset in radians
+    real(rp), intent(in) :: dh_dz ! dh/dz  at the tangent point
+
+  ! outputs
+
+    real(rp), intent(out) :: ptg_angle ! pointing angle in radians
+    real(rp), intent(out) :: dx_dh     ! derivative of pointing angle
+                                       ! wrt height
+
+  ! keywords
+
+    real(rp), optional, intent(in) :: tan_dh_dt(:) ! derivative of tangent
+                                                   ! height wrt temperature
+    real(rp), optional, intent(in) :: tan_d2h_dhdt(:) ! 2nd derivative of
+                                      ! tangent height wrt temperature & height
+    real(rp), optional, intent(out) :: dx_dt(:) ! derivative of pointing angle
+                                                ! wrt temperature
+    real(rp), optional, intent(out) :: d2x_dxdt(:) ! second derivative of
+                                     ! tangent wrt temperature, pointing angle
+  !  ----------------
+  !  Local variables:
+  !  ----------------
+
+    real(rp), parameter :: ampl = 38.9014
+    real(rp), parameter :: phas = 51.6814 * Deg2Rad
+
+    real(rp) :: ht, tp, hs, x, q, Np1
+
+  ! Start code:
+
+    ht = Req + tan_ht
+    Np1 = 1.0_rp + tan_index_refr
+    hs = sc_geoc_alt + ampl * sin(2.0*(phi_tan-phas))
+    x = Np1 * ht / hs
+    ptg_angle = elev_offset + asin(x * min(ht,Req)/Req)
+
+    if ( tan_ht >= 0.0_rp ) then
+      q = Np1 - ht * tan_index_refr * Ln10 / dh_dz
+    else
+      q = 2.0_rp * ht * Np1 / Req
+    end if
+    dx_dh = q / (hs * Cos(x))
+
+  ! Do temperature stuff if user requests it
+  ! Set up: dx_dt, d2x_dxdt arrays for temperature derivative computations
+  ! (NOTE: These entities has NO PHI dimension, so take the center Phi in dh_dt)
+
+    if ( present(tan_dh_dt) ) then
+      tp = tan(ptg_angle)
+      dx_dt = tp * tan_dh_dt / ht
+      d2x_dxdt = tp * tp * tan_dh_dt / ht + tan_d2h_dhdt
+    end if
+
+    return
+
+  end subroutine GET_CHI_ANGLES
 
 end module GET_CHI_ANGLES_M
 ! $Log$
+! Revision 2.9  2002/07/05 07:52:47  zvi
+! Coor. switch (phi,z) -> (z,phi)
+!
 ! Revision 2.8  2002/06/28 11:06:50  zvi
 ! computes dx_dh on output grid as well
 !
