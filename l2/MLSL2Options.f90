@@ -28,9 +28,12 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! --------------------------------------------------------------------------
 
   ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-  ! Set each of the following to TRUE before delivering level 2 to sips
-  logical            :: ECHO_GLOBAL_STNGS = .true. ! Show l2cf, pcf params in log?
+  ! The foolowing are most useful for internal development
+  ! They may be set to FALSE to spare the SIPS possibly unwanted output
+  logical            :: ECHO_GLOBAL_STNGS = .false. ! Show l2cf, pcf params in log?
   logical            :: LOG_TO_STDOUT = .true. ! Send log msgs to stdout?
+
+  ! Set each of the following to TRUE before delivering level 2 to sips
   logical            :: PUNISH_FOR_INVALID_PCF=.false. 
   logical, parameter :: PUNISH_FOR_NO_L1BRAD=.false. 
   logical, parameter :: PUNISH_FOR_NO_L1BOA=.false.
@@ -59,7 +62,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
    ! -2          sent to Log file (via MLSMessage)
    ! < -2        both stdout and Log file
    ! > -1        Fortran 'unit=OUTPUT_PRINT_UNIT')
-   integer, parameter :: OUTPUT_PRINT_UNIT = -2
+   integer            :: OUTPUT_PRINT_UNIT = -2
 
    ! Set the following to MLSMSG_Error before delivering to sips;
    ! when set higher, it allows program keep going despite errors
@@ -72,6 +75,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.7  2001/05/11 23:48:23  pwagner
+! Changed to not echo globals; added note on SIPS
+!
 ! Revision 2.6  2001/05/09 23:34:13  pwagner
 ! Added ECHO_GLOBAL_STNGS LOG_TO_STDOUT
 !
