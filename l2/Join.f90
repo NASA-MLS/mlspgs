@@ -229,8 +229,8 @@ contains ! =====     Public Procedures     =============================
     ! Imports
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use DirectWrite_m, only: DirectData_T, &
-      & AddDirectToDatabase, DirectWrite_l2GP, DirectWrite_l2aux, &
-      & SetUpNewDirect
+      & AddDirectToDatabase, DirectWrite_l2GP, DirectWrite_l2aux, Dump, &
+      & ExpandDirectDB, ExpandSDNames
     use Expr_m, only: EXPR
     use Hdf, only: DFACC_CREATE, DFACC_RDONLY, DFACC_RDWR
     use Init_tables_module, only: F_SOURCE, F_PRECISION, F_HDFVERSION, F_FILE, F_TYPE
@@ -274,17 +274,18 @@ contains ! =====     Public Procedures     =============================
     integer, dimension(maxFiles), save :: CREATEDFILENAMES = 0
     integer, save :: NOCREATEDFILES=0   ! Number of files created
     ! Local variables
-    integer :: fileaccess               ! DFACC_CREATE or DFACC_RDWR
     integer :: DBINDEX
     integer :: ERRORTYPE
     integer :: EXPECTEDTYPE             ! l2gp/l2aux
-    integer :: FIELDINDEX               ! Type of field in l2cf line
     integer :: FILE                     ! File name string index
+    integer :: FILEACCESS               ! DFACC_CREATE or DFACC_RDWR
+    integer :: FIELDINDEX               ! Type of field in l2cf line
     integer :: FILETYPE
     integer :: GSON                     ! Son of son
     integer :: HANDLE                   ! File handle from hdf/hdf-eos
     integer :: HDFNAMEINDEX             ! String index for output name
     integer :: HDFVERSION               ! 4 or 5
+    logical :: ISNEWDIRECT              ! TRUE if not already in database
     integer :: KEYNO                    ! Loop counter, field in l2cf line
     integer :: LASTFIELDINDEX           ! Type of previous field in l2cf line
     integer :: NOSOURCES                ! No. things to output
@@ -313,12 +314,13 @@ contains ! =====     Public Procedures     =============================
     type(VectorValue_T), pointer :: QTY ! The quantity
     type(VectorValue_T), pointer :: PRECQTY ! The quantities precision
     type(DirectData_T) :: newDirect
-    type(DirectData_T), pointer :: thisDirect
+    type(DirectData_T), pointer :: thisDirect ! => null()
     logical :: DEEBUG
     integer, external :: he5_SWclose
 
     ! Executable code
     DEEBUG = (index(switches, 'direct') /= 0)
+    nullify(thisDirect)
 
     myMakeRequest = .false.
     if ( present ( makeRequest ) ) myMakeRequest = makeRequest
@@ -462,11 +464,26 @@ contains ! =====     Public Procedures     =============================
         end if
       end if
       
+      returnStatus = 0
       ! Open/create the file of interest
+      isnewdirect = .true.  ! Just so it has a value even for toolkitless runs
       call split_path_name(filename, path, file_base)
+      if ( TOOLKIT ) then
+        call ExpandDirectDB ( DirectDatabase, file_base, thisDirect, &
+        & isnewdirect )
+        if ( .not. associated(thisDirect) ) then
+          call Announce_Error ( son, NO_ERROR_CODE, &
+              & 'ExpandDirectDB returned unassociated thisDirect' )
+          call dump(DirectDatabase)
+          call MLSMessage( MLSMSG_Error, ModuleName, &
+          & 'ExpandDirectDB returned unassociated thisDirect' )
+        endif
+      endif
       if ( .not. TOOLKIT ) then
         handle = 0
-        returnStatus = 0
+      elseif ( .not. isnewdirect ) then
+        Filename = thisDirect%fileName
+        Handle = thisDirect%Handle
       elseif ( any ( outputType == (/ l_l2gp /) ) ) then
         Handle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
           & mlspcf_l2gp_end, &
@@ -492,6 +509,10 @@ contains ! =====     Public Procedures     =============================
          & MLSMSG_Error, ModuleName, &
          & 'Failed in GetPCFromRef for ' // trim(filename) )
 
+      if ( isnewdirect .and. TOOLKIT ) then
+        thisDirect%Handle = Handle
+        thisDirect%FileName = FileName
+      endif
       ! Done what we wished to do if just checking paths
       if ( checkPaths ) return
       
@@ -542,18 +563,19 @@ contains ! =====     Public Procedures     =============================
         call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'DirectWriteCommand unable to open ' // trim(filename) )
       endif
-      call SetUpNewDirect(newDirect, noSources)
+      ! call SetUpNewDirect(newDirect, noSources)
       ! Add it to the database of directly writeable quantities
-      dbindex = AddDirectToDatabase ( DirectDatabase, newDirect )
-      call decorate ( node, -dbindex ) ! So we can find it later
-      thisDirect => DirectDatabase(dbindex)
+      ! dbindex = AddDirectToDatabase ( DirectDatabase, newDirect )
+      ! call decorate ( node, -dbindex ) ! So we can find it later
+      ! thisDirect => DirectDatabase(dbindex)
       ! Loop over the quantities to output
       do source = 1, noSources
         qty => GetVectorQtyByTemplateIndex ( vectors(sourceVectors(source)), &
           & sourceQuantities(source) )
         hdfNameIndex = qty%label
         call get_string ( hdfNameIndex, hdfName, strip=.true. )
-        thisDirect%sdNames(source) = hdfName
+        ! thisDirect%sdNames(source) = hdfName
+        if ( TOOLKIT ) call ExpandSDNames(thisDirect, trim(hdfName))
         if ( precisionVectors(source) /= 0 ) then
           precQty => GetVectorQtyByTemplateIndex ( vectors(precisionVectors(source)), &
             & precisionQuantities(source) )
@@ -607,8 +629,10 @@ contains ! =====     Public Procedures     =============================
         end select
       end do ! End loop over swaths/sds
 
-      thisDirect%type = outputType
-      thisDirect%fileNameBase = file_base
+      if ( TOOLKIT ) then
+        thisDirect%type = outputType
+        thisDirect%fileNameBase = file_base
+      endif
 
       ! Close the output file of interest (does this need to be split like this?)
       select case ( outputType )
@@ -1378,6 +1402,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.97  2003/11/14 23:38:45  pwagner
+! Uses DirectWrite databse in preference to repeated calls to toolkit
+!
 ! Revision 2.96  2003/11/07 00:46:51  pwagner
 ! New quicker preflight option: --checkPaths
 !
