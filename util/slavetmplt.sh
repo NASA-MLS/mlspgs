@@ -43,11 +43,6 @@ if [ ! -w "$LOGFILE" ]
 then
   echo "#mlsl2.log" > "$LOGFILE"
 fi
-#echo "Called as $@" >> "$LOGFILE"
-#echo "command is $0" >> "$LOGFILE"
-#echo "1st arg is $1" >> "$LOGFILE"
-#echo "2nd arg is $2" >> "$LOGFILE"
-#echo "3rd arg is $3" >> "$LOGFILE"
 
 SLVPROG=mlsl2.ssllaavvee
 # It's possible that $1 is the command name--in which case we
@@ -58,12 +53,17 @@ then
   echo "Need to shift because 1st arg is command name" >> "$LOGFILE"
 fi
 
+otheropts="-g -S'slv,opt1,log,pro,time'"
 more_opts="yes"
 while [ "$more_opts" = "yes" ] ; do
 
     case "$1" in
     --chunk )
        shift
+       shift
+       ;;
+    --skipR* )
+       otheropts="--skipRetrieval $otheropts"
        shift
        ;;
     --slave )
@@ -104,7 +104,8 @@ then
   exit 1
 fi
 
-$PVM_BIN/mlsl2 --tk -m --slave $masterTid -g -S'slv,opt1,log,pro,time' >> "$LOGFILE"
+$PVM_BIN/mlsl2 --tk -m --slave $masterTid $otheropts  >> "$LOGFILE"
+# $PVM_BIN/mlsl2 --tk -m --slave $masterTid -g -S'slv,opt1,log,pro,time'  >> "$LOGFILE"
 
 }
       
@@ -126,6 +127,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.2  2003/09/05 23:45:51  pwagner
+# Made name of log file a variable: LOGFILE; tweaked initial comments
+#
 # Revision 1.1  2003/08/01 16:46:31  pwagner
 # First commit
 #
