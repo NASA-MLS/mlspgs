@@ -4574,6 +4574,7 @@ contains ! =====     Public Procedures     =============================
         & quantity%template%sideband /= radianceQuantity%template%sideband ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Quantity and rad. qty. in offsetRadiance fill different signal/sideband' )
+      if ( .not. associated ( radianceQuantity%mask ) ) return
       where ( iand ( ichar(radianceQuantity%mask), m_linAlg ) == 1 )
         quantity%values = quantity%values + amount
       end where
@@ -4765,6 +4766,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.170  2003/01/08 23:52:16  livesey
+! Bug fix in offset radiance
+!
 ! Revision 2.169  2003/01/07 23:46:38  livesey
 ! Added magentic model
 !
