@@ -82,12 +82,9 @@ SHELL = /bin/sh
 #
 
 #----------------------------------------------------------
-#These seem to no longer work right (maybe some change to our suns?)
-#libmls_f90 := $(wildcard $(libmls_sources)/*.f90)
-#libfwdmdl_f90 := $(wildcard $(libfwdmdl_sources)/*.f90)
 libmls_f90 := $(shell echo $(libmls_sources)/*.f90 $(libmls_sources)/*.c)
 libfwdmdl_f90 := $(shell echo $(libfwdmdl_sources)/*.f90)
-libcloud_f90 := $(shell echo $(libcloud_sources)/*.f90 $(libcloud_sources)/*.f)
+libcloud_f90 := $(shell echo $(libcloud_sources)/*.f90)
 blaslib_f := $(shell echo $(blaslib)/*.f)
 
 
@@ -134,12 +131,11 @@ $(PROG): $(PROG_prereqs)
 $(libmls_objs)/libmls.a: $(LIB_prereqs)
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
-#$(libfwdmdl_objs)/libfwdmdl.a: $(libfwdmdl_f90) $(libmls_objs)/libmls.a \
-#               $(CONFDIR)/$(MLSCFILE)
-#	$(MAKE) -f $(MakeFName) libfwdmdl.a -C $(libfwdmdl_sources)
+$(libfwdmdl_objs)/libfwdmdl.a: $(libfwdmdl_f90) $(LIB_prereqs)
+	$(MAKE) -f $(MakeFName) libfwdmdl.a -C $(libfwdmdl_sources)
 
-$(libcloud_objs)/libcloud.a: $(libcloud_f90) $(libmls_objs)/libmls.a \
-               $(libfwdmdl_objs)/libfwdmdl.a $(CONFDIR)/$(MLSCFILE)
+$(libcloud_objs)/libcloud.a: $(libcloud_f90) $(libfwdmdl_f90) \
+               $(LIB_prereqs)
 	$(MAKE) -f $(MakeFName) libcloud.a -C $(libcloud_sources)
 
 .PHONY: configure depends clean tar mostlyclean tarz targ mlsl2 ghostbuster
@@ -209,6 +205,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.33  2001/07/25 23:19:58  pwagner
+# Removed unnecessary lib...a from target prereqs
+#
 # Revision 2.32  2001/07/18 00:12:55  pwagner
 # No longer makes libfwdmdl directly
 #
