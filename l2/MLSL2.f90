@@ -7,7 +7,7 @@ program MLSL2
   use LEXER_CORE, only: INIT_LEXER
   use LEXER_M, only: CapIdentifiers
   use MACHINE ! At least HP for command lines, and maybe GETARG, too
-  use MLSL2Options, only: PCF
+  use MLSL2Options, only: PCF, OUTPUT_PRINT_UNIT
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSPCF2, only: MLSPCF_L2CF_START
   use OBTAIN_MLSCF, only: Close_MLSCF, Open_MLSCF
@@ -43,6 +43,9 @@ program MLSL2
   CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
   !-----------------------------------------------------------------------------
 
+! Where to send output
+   prunit = OUTPUT_PRINT_UNIT
+   
 ! Initialize the lexer, symbol table, and tree checker's tables:
   call init_lexer ( n_chars=10000, n_symbols=1000, hash_table_size=2017 )
   call allocate_decl ( ndecls=1000 )
@@ -201,6 +204,9 @@ program MLSL2
 end program MLSL2
 
 ! $Log$
+! Revision 2.20  2001/04/17 22:08:56  pwagner
+! Sets prunit according to OUTPUT_PRINT_UNIT
+!
 ! Revision 2.19  2001/04/16 23:46:58  pwagner
 ! Gets PCF flag from MLSL2Options
 !
