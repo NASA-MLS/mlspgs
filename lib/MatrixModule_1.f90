@@ -79,7 +79,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   end interface
 
   interface Dump
-    module procedure Dump_Matrix
+    module procedure Dump_Matrix, Dump_Matrix_Database
   end interface
 
   interface GetDiagonal
@@ -139,10 +139,10 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 
   type RC_Info
   ! Information about the row or column of a matrix
-    type(Vector_T), pointer :: Vec ! Vector used to define the row or column
-      ! space of the matrix, if any.
-    integer :: NB                  ! Number of blocks of rows or columns
-    logical :: Extra               ! There is an extra row or column that is
+    type(Vector_T), pointer :: Vec => NULL() ! Vector used to define the row
+      ! or column space of the matrix, if any.
+    integer :: NB = 0              ! Number of blocks of rows or columns
+    logical :: Extra = .false.     ! There is an extra row or column that is
       ! not accounted for by vec.
     logical :: InstFirst = .true.  ! TRUE means horizontal instance is the
       ! major order and quantity is the minor order.
@@ -508,8 +508,11 @@ contains ! =====     Public Procedures     =============================
     integer :: STATUS    ! From ALLOCATE
 
     z%name = name
+print *, 'Row%template%totalinstances =', row%template%totalinstances
+print *, 'Col%template%totalinstances =', col%template%totalinstances
     call defineInfo ( z%row, row, row_Quan_First, extra_Row )
     call defineInfo ( z%col, col, col_Quan_First, extra_Col )
+print *, 'Size(z%block) =', z%row%nb,z%col%nb
     allocate ( z%block(z%row%nb,z%col%nb), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate // "Z%Block in CreateEmptyMatrix" )
@@ -529,7 +532,7 @@ contains ! =====     Public Procedures     =============================
       rc%vec => vec
       rc%instFirst = .true.
       if ( present(quanFirst) ) rc%instFirst = .not. quanFirst
-      rc%nb = row%template%totalInstances
+      rc%nb = vec%template%totalInstances
       if ( rc%extra ) rc%nb = rc%nb + 1
       call allocate_test ( rc%nelts, rc%nb, &
         & "rc%nelts in CreateEmptyMatrix", ModuleName )
@@ -585,9 +588,11 @@ contains ! =====     Public Procedures     =============================
     integer :: STATUS              ! From deallocate
 
     call clearMatrix ( a )
-    deallocate ( a%block, stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_DeAllocate // "A%Block in DestroyMatrix" )
+    if ( associated(a%block) ) then
+      deallocate ( a%block, stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_DeAllocate // "A%Block in DestroyMatrix" )
+    end if
   end subroutine DestroyBlock_1
 
   ! ----------------------------------------------  DestroyMatrix  -----
@@ -1257,7 +1262,7 @@ contains ! =====     Public Procedures     =============================
     call deallocate_test ( rc%quant, "rc%quant in DestroyRCInfo", moduleName )
   end subroutine DestroyRCInfo
 
-  ! -------------------------------------------------  DumpMatrix  -----
+  ! ------------------------------------------------  Dump_Matrix  -----
   subroutine Dump_Matrix ( Matrix, Name, Details )
     type(Matrix_T), intent(in) :: Matrix
     character(len=*), intent(in), optional :: Name
@@ -1270,7 +1275,14 @@ contains ! =====     Public Procedures     =============================
 
     my_details = 1
     if ( present(details) ) my_details = details
-    if ( present(name) ) call output ( name, advance='yes' )
+    if ( present(name) ) call output ( name )
+    if ( matrix%name > 0 ) then
+      if ( present(name) ) call output ( ', ' )
+      call output ( 'Name = ' )
+      call display_string ( matrix%name, advance='yes' )
+    else
+      if ( present(name) ) call output ( '', advance='yes' )
+    end if
     call dump_rc ( matrix%row, 'row', my_details>0 )
     call dump_rc ( matrix%col, 'column', my_details>0 )
     do j = 1, matrix%col%nb
@@ -1284,6 +1296,32 @@ contains ! =====     Public Procedures     =============================
     end do
   end subroutine Dump_Matrix
 
+  ! ---------------------------------------  Dump_Matrix_Database  -----
+  subroutine Dump_Matrix_Database ( MatrixDatabase, Details )
+    type(Matrix_Database_T), dimension(:), pointer :: MatrixDatabase
+    integer, intent(in), optional :: Details   ! Print details, default 1
+    !  <= Zero => no details, == One => Details of matrix but not its blocks,
+    !  >One => Details of the blocks, too.
+
+    integer :: I
+
+    if ( .not. associated(MatrixDatabase) ) return
+    do i = 1, size(MatrixDatabase)
+      call output ( i, 4 )
+      call output ( ': ' )
+      if ( associated(matrixDatabase(i)%matrix) ) then
+        call dump ( matrixDatabase(i)%matrix, 'Plain', details )
+      else if ( associated(matrixDatabase(i)%cholesky) ) then
+        call dump ( matrixDatabase(i)%cholesky%m, 'Cholesky', details )
+      else if ( associated(matrixDatabase(i)%kronecker) ) then
+        call dump ( matrixDatabase(i)%kronecker%m, 'Kronecker', details )
+      else if ( associated(matrixDatabase(i)%spd) ) then
+        call dump ( matrixDatabase(i)%spd%m, 'SPD', details )
+      end if
+    end do
+  end subroutine Dump_Matrix_Database
+
+  ! ----------------------------------------------------  Dump_RC  -----
   subroutine Dump_RC ( RC, R_or_C, Details )
     type(rc_info), intent(in) :: RC
     character(len=*), intent(in) :: R_or_C
@@ -1339,6 +1377,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.13  2001/04/11 00:03:42  vsnyder
+! Repair matrix creation, improve 'dump'
+!
 ! Revision 2.12  2001/04/10 00:19:11  vsnyder
 ! Add GetKindFromMatrixDatabase and necessary parameters
 !
