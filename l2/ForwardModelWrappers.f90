@@ -82,6 +82,7 @@ contains ! ============= Public Procedures ==========================
     case ( l_baseline )
       call BaselineForwardModel ( config, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
+      call add_to_retrieval_timing( 'baseline' )
     case ( l_full )
       call FullForwardModel ( config, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
@@ -93,11 +94,11 @@ contains ! ============= Public Procedures ==========================
     case ( l_hybrid )
       call HybridForwardModel ( config, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian, vectors )
-      call add_to_retrieval_timing( 'full_fwm' )
+      call add_to_retrieval_timing( 'hybrid' )
     case ( l_polarLinear )
       call PolarLinearModel ( config, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian, vectors )
-      call add_to_retrieval_timing( 'full_fwm' )
+      call add_to_retrieval_timing( 'polar_linear' )
     case ( l_scan )
       call ScanForwardModel ( config, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
@@ -113,14 +114,17 @@ contains ! ============= Public Procedures ==========================
     case ( l_switchingMirror )
       call SwitchingMirrorModel ( config, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
+      call add_to_retrieval_timing( 'switching_mirror' )
     case default ! Shouldn't get here if parser etc. worked
     end select
     
     if ( radianceModel ) then
       call BaselineForwardModel ( config, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
+      call add_to_retrieval_timing( 'baseline' )
       call SwitchingMirrorModel ( config, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
+      call add_to_retrieval_timing( 'switching_mirror' )
     end if
 
     ! Report we're finished
@@ -146,6 +150,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.24  2003/10/20 18:22:47  pwagner
+! New forwardModel types added to RetrievalTimings breakdown
+!
 ! Revision 2.23  2003/09/11 23:15:10  livesey
 ! Added vectors argument which is handed on to some but not all models.
 ! This is needed to support the xStar/yStar capability of the linear
