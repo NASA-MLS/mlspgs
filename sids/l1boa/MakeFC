@@ -132,7 +132,7 @@ $(OBJ_DIR)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
 
 depends:
 	@$(MLSBIN)/makemakedep.sh \
-        $(libmls_sources) $(srclib)
+        $(libmls_sources) $(mlsl1_sources) $(srclib)
 
 ghostbuster:
 	$(MLSBIN)/ghostbuster.sh -lib $(OBJ_DIR)/$(MLSCONFG) ./ $(srclib)
@@ -181,6 +181,9 @@ update:
 	$(MAKE) -f $(MakeFName) depends ghostbuster
 
 # $Log$
+# Revision 1.4  2001/11/09 21:57:07  pwagner
+# Does depends and ghostbuster after update, not beforre
+#
 # Revision 1.3  2001/11/07 00:30:04  pwagner
 # Improved and silenced update target
 #
