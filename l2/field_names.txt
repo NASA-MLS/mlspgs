@@ -134,6 +134,7 @@ minValue
 moleculeDerivatives
 molecules
 multiplier
+muMin
 
 nabterms
 nameFragment
@@ -257,6 +258,9 @@ vRegWeightVec
 writeCounterMAF
 
 # $Log$
+# Revision 2.57  2002/10/19 23:41:54  livesey
+# Added muMin
+#
 # Revision 2.56  2002/10/19 01:51:38  livesey
 # Added serial option for retrieve
 #
