@@ -38,7 +38,7 @@ Module global_data
   double complex, Allocatable, Dimension(:) :: phikra, phikrd, phikr
   
   Real(r8), Allocatable, Dimension(:) :: DAcend, Dscend, Ascend, wn, sigma, & 
-       & wna, sigmaa, wnd, sigmad
+       & wna, sigmaa, wnd, sigmad, DPrec, APrec
   
   Real, Allocatable, Dimension(:) :: lonD, tD, sD, rD, lonA, tA, sA, rA, &
        & lonDA, tDA, sDA, rDA
@@ -54,6 +54,9 @@ End Module global_data
 !=====================
 
 ! $Log$
+! Revision 1.4  2003/03/22 02:56:31  jdone
+! use only and indentation added
+!
 ! Revision 1.3  2001/03/03 01:41:56  ybj
 ! *** empty log message ***
 !
