@@ -24,8 +24,13 @@ module ManipulateVectorQuantities ! Various routines for manipulating vectors
   private
 
   public :: AnyGoodDataInQty, FindClosestInstances, FindOneClosestInstance, &
-    & FindInstanceWindow, DoHGridsMatch, DoVGridsMatch, DoFGridsMatch, &
-    & DoQuantitiesMatch, DoQtysDescribeSameThing, DoVectorsMatch, FillWithCombinedChannels
+    & FindInstanceWindow, DoHGridsMatch, DoVGridsMatch, DoVGridsMatch_Vec, &
+    & DoFGridsMatch, DoQuantitiesMatch, DoQtysDescribeSameThing, &
+    & DoVectorsMatch, FillWithCombinedChannels
+
+  interface DoVGridsMatch
+    module procedure DoVGridsMatch_Vec
+  end interface
 
 contains
 
@@ -342,17 +347,15 @@ contains
     DoVectorsMatch = .true.
   end function DoVectorsMatch
 
-  ! --------------------------------------- DoVGridsMatch --------------
-  logical function DoVGridsMatch ( a, b )
+  ! ------------------------------------------  DoVGridsMatch_Vec  -----
+  logical function DoVGridsMatch_Vec ( A, B )
     ! Returns true if quantities have same vGrid information
-    type (VectorValue_T), intent(in) :: A ! First quantity
-    type (VectorValue_T), intent(in) :: B ! Second quantity
-
-    ! Local parameters
-    real (r8), parameter :: ZTOL = 0.01 ! Tolerance in whatever coordinate
+    use MLSNumerics, only: EssentiallyEqual
+    type (vectorValue_T), intent(in) :: A ! First quantity
+    type (vectorValue_T), intent(in) :: B ! Second quantity
 
     ! Executable code
-    DoVGridsMatch = .false.
+    doVGridsMatch_Vec = .false.
     if ( a%template%noSurfs /= b%template%noSurfs ) return
     if ( a%template%verticalCoordinate /= &
       &  b%template%verticalCoordinate ) return
@@ -360,15 +363,15 @@ contains
     if ( a%template%regular .neqv. b%template%regular ) return
     if ( ( .not. a%template%coherent) .and. &
       &  ( a%template%noInstances /= b%template%noInstances ) ) return
-    if ( any(abs(a%template%surfs - &
-      &          b%template%surfs) > zTol) ) return
+    if ( any ( .not. essentiallyEqual ( a%template%surfs, &
+                                        b%template%surfs ) ) ) return
     if (.not. a%template%regular ) then
       if ( any(a%template%surfIndex /= b%template%surfIndex) .or. &
         &  any(a%template%chanIndex /= b%template%chanIndex) ) return
     end if
 
-    DoVGridsMatch = .true.
-  end function DoVGridsMatch
+    doVGridsMatch_Vec = .true.
+  end function DoVGridsMatch_Vec
 
   ! --------------------------------------- DoVGridsMatch --------------
   logical function DoFGridsMatch ( a, b, sizeOnly )
@@ -435,6 +438,9 @@ contains
 end module ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.29  2004/12/13 20:28:44  vsnyder
+! Changed DoVGridsMatch to a generic, with a DoVGridsMatch_Vec specific.
+!
 ! Revision 2.28  2004/09/25 00:15:48  livesey
 ! Bug fixes etc. in FillWithCombinedChannels
 !
