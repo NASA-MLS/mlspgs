@@ -17,6 +17,7 @@ module QuantityPVM                      ! Send and receive vector quantities usi
   use MLSSignals_m, only: GETSIGNALNAME
   use QuantityTemplates, only: QUANTITYTEMPLATE_T, SETUPNEWQUANTITYTEMPLATE
   use Dump_0, only: DUMP
+  use VectorsModule, only: CREATEMASKARRAY
 
   implicit none
   private
@@ -37,21 +38,29 @@ module QuantityPVM                      ! Send and receive vector quantities usi
 contains ! ================================== Module procedures ============
 
   ! ---------------------------------- PVMSendQuantity ---------------------
-  subroutine PVMSendQuantity ( Q, tid, justPack )
+  subroutine PVMSendQuantity ( Q, tid, justPack, noValues, noMask )
     type (VectorValue_T), intent(in) :: Q ! Quantity to send
     integer, intent(in), optional :: TID ! Task to send it to
     logical, intent(in), optional :: JUSTPACK ! Just pack it into an existing buffer
+    logical, intent(in), optional :: NOVALUES ! Don't send the values
+    logical, intent(in), optional :: NOMASK ! Don't send the mask
 
     ! Local variables
     integer :: BUFFERID                 ! From pvm
     integer :: INFO                     ! Flag
     logical :: MYJUSTPACK               ! Copy of justPack
+    logical :: MYNOVALUES               ! Copy of noValues
+    logical :: MYNOMASK                 ! Copy of noMask
 
     character(len=132) :: WORD          ! Result of get_string etc.
 
     ! Executable code
     myJustPack = .false.
+    myNoValues = .false.
+    myNoMask = .false.
     if ( present(justPack) ) myJustPack = justPack
+    if ( present(noValues) ) myNoValues = noValues
+    if ( present(noMask) ) myNoMask = noMask
 
     ! Now we simply pack the quantity up and send it down the pvm spigot
     if (.not. myJustPack) call PVMFInitSend ( PvmDataDefault, bufferID )
@@ -174,6 +183,11 @@ contains ! ================================== Module procedures ============
       if ( info /= 0 ) call PVMErrorMessage ( info, "packing chanIndex" )
     end if
 
+    ! Now pack the noValues, noMask flag
+    myNoMask = myNoMask .or. ( .not. associated(q%mask) )
+    call PVMIDLPAck ( (/ myNoValues, myNoMask /), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing values/mask flags" )    
+
     ! Now we're going to send this to the snooper.
 
     if (.not. myJustPack) then
@@ -181,17 +195,24 @@ contains ! ================================== Module procedures ============
       if ( info /= 0 ) call PVMErrorMessage ( info, "sending vector template" )
       
       ! Now we're going to send the values in a separate message
-      call PVMFInitSend ( PVMDataDefault, bufferID)
+      if ( .not. all ( (/myNoValues, myNoMask /) ) ) &
+        & call PVMFInitSend ( PVMDataDefault, bufferID)
     end if
 
     ! Pack the values
-    call PVMIDLPack ( q%values, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "sending values" )
+    if ( .not. myNoValues ) then 
+      call PVMIDLPack ( q%values, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "sending values" )
+    endif
 
     ! Skip the mask for the moment.
+    if ( .not. myNoMask ) then
+      call PVMIDLPack ( q%mask, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "sending mask" )
+    endif
 
     ! Send this buffer
-    if (.not. myJustPack) then
+    if (.not. myJustPack .and. .not. all ((/myNoValues, myNoMask/)) ) then
       call PVMFSend ( tid, QtyMsgTag, info )
       if ( info /= 0 ) call PVMErrorMessage ( info, "sending vector values" )
     end if
@@ -199,10 +220,11 @@ contains ! ================================== Module procedures ============
   end subroutine PVMSendQuantity
 
   ! ---------------------------------- PVMReceiveQuantity ---------------------
-  subroutine PVMReceiveQuantity ( QT, values, tid, justUnpack )
+  subroutine PVMReceiveQuantity ( QT, values, tid, mask, justUnpack )
     type (QuantityTemplate_T), intent(out) :: QT ! Template for quantity
     real (r8), dimension(:,:), pointer :: VALUES ! Values for quantity
     integer, intent(in), optional :: TID ! Task to get it from
+    integer, dimension(:,:), optional, pointer :: MASK ! Mask
     logical, intent(in), optional :: JUSTUNPACK ! Just unpack from existing buffer
 
     ! Local variables
@@ -210,10 +232,13 @@ contains ! ================================== Module procedures ============
     integer :: INFO                     ! Flag
     integer :: I4(4)                    ! Unpacked stuff
     integer :: I12(12)                  ! Unpacked stuff
+    logical :: L2(2)                    ! Unpacked stuff
     logical :: L5(5)                    ! Unpacked stuff
     logical :: FLAG(1)                  ! To unpack
     character(len=132) :: WORD          ! Result of get_string etc.
-    logical :: MYJUSTUNPACK
+    logical :: MYJUSTUNPACK             ! Copy of justUnPack
+    logical :: NOVALUES                 ! No values sent
+    logical :: NOMASK                   ! No mask sent
 
     ! Executable code
 
@@ -351,21 +376,35 @@ contains ! ================================== Module procedures ============
       if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking chanIndex" )
     end if
 
+    ! Now the value/mask flags
+    call PVMIDLUnPack ( l2, info ) 
+    if ( info /= 0 ) call PVMErrorMessage ( info, &
+      & "unpacking value/mask flags" )
+    noValues = l2(1)
+    noMask = l2(2)
+
     ! Setup the values
     nullify ( values )
     call Allocate_Test ( values, qt%instanceLen, qt%noInstances, &
       & 'values', ModuleName )
 
-    if ( .not. myJustUnpack ) then
+    if ( .not. myJustUnpack .and. .not. all ((/noValues,noMask/)) ) then
       ! Now we're going to receive the values in a separate message
       call PVMFrecv ( tid, QtyMsgTag, bufferID )
     end if
 
     ! Unpack the values
-    call PVMIDLUnpack ( values, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking values" )
+    if ( .not. noValues ) then
+      call PVMIDLUnpack ( values, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking values" )
+    endif
 
     ! Skip the mask for the moment.
+    if ( .not. noMask .and. present(mask) ) then
+      call CreateMaskArray ( mask, values )
+      call PVMIDLUnpack ( mask, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking mask" )
+    end if
       
   end subroutine PVMReceiveQuantity
 
