@@ -693,30 +693,32 @@ contains ! =====     Public Procedures     =============================
   end function GetVectorQuantityByType
 
   ! ------------------------------- GetVectorQtyByTemplateIndex --i
-  function GetVectorQtyByTemplateIndex(vector, quantityIndex)
+  function GetVectorQtyByTemplateIndex(vector, quantityIndex, indexInVector )
     ! Given a vector and an index into the quantity templates, find quantity
     ! with matching template within vector.
 
     ! Dummy arguments
     type (vector_T), intent(in) :: vector
     integer, intent(in) :: quantityIndex
+    integer, intent(out), optional :: indexInVector
     ! Result
     type (VectorValue_T), pointer :: GetVectorQtyByTemplateIndex
 
     ! Local variables
-    integer :: i, indexWithinQuantity
+    integer :: i, myIndexInVector
 
     ! Executable code
-    indexWithinQuantity=0
+    myIndexInVector=0
     GetVectorQtyByTemplateIndex => NULL()
     do i=1,vector%template%noQuantities
       if ( vector%template%quantities(i) == quantityIndex) then
-        indexWithinQuantity=i
+        myIndexInVector=i
       end if
     end do
-    if ( indexWithinQuantity /= 0 ) &
+    if ( myIndexInVector /= 0 ) &
       & GetVectorQtyByTemplateIndex => &
-      &   vector%quantities(indexWithinQuantity)
+      &   vector%quantities(myIndexInVector)
+    if ( present ( indexInVector ) ) indexInVector = myIndexInVector
   end function GetVectorQtyByTemplateIndex
 
   ! -------------------------------  GetVectorQuantityIndexByName  -----
@@ -1111,6 +1113,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.34  2001/04/28 21:01:20  livesey
+! Another bug fix in GetVectorQuantityByType
+!
 ! Revision 2.33  2001/04/28 20:54:48  livesey
 ! Minor bug fix in GetVectorQuantityByType
 !
