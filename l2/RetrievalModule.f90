@@ -540,7 +540,6 @@ contains
           ! Create the averaging kernel matrix
           if ( got(f_average) ) then
             k = decoration(ixAverage)
-            print*,'AVERAGE:', k
             if ( k == 0 ) then
               call createEmptyMatrix ( myAverage, &
                 & sub_rosa(subtree(1,ixAverage)), state, state )
@@ -2242,6 +2241,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.254  2004/01/29 01:45:32  livesey
+! Removed print statement
+!
 ! Revision 2.253  2004/01/24 03:22:49  livesey
 ! Changed logistics of computing averaging kernel to preserve vectors that
 ! describe edges.
