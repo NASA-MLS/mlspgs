@@ -82,6 +82,7 @@ h2oPrecisionQuantity
 hdfversion
 height
 hgrid
+highBound # for the state vector during retrieval
 homeGeodAngle
 homeModule
 hRegOrders
@@ -113,6 +114,7 @@ level
 lockBins
 logBasis
 losqty
+lowBound # for the state vector during retrieval
 lsb
 lsbFraction
 
@@ -254,6 +256,9 @@ vRegWeightVec
 writeCounterMAF
 
 # $Log$
+# Revision 2.55  2002/10/17 00:16:40  vsnyder
+# Add lowBound and highBound fields for the Retrieve spec
+#
 # Revision 2.54  2002/10/16 20:19:13  mjf
 # Added GPH precision.
 #
