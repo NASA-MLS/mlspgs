@@ -18,8 +18,8 @@ module ForwardModelIntermediate
 
   type, public :: ForwardModelIntermediate_T
 
-    real (r8), dimension(:,:),             pointer :: h_glgrid
-    real (r8), dimension(:,:),             pointer :: t_glgrid
+    real (r8), dimension(:,:),             pointer :: H_GLGRID
+    real (r8), dimension(:,:),             pointer :: T_GLGRID
     real (r8), dimension(:),               pointer :: z_glgrid
 
     real (r8), dimension(:,:,:),           pointer :: dh_dt_glgrid
@@ -36,6 +36,7 @@ module ForwardModelIntermediate
     type (path_vector), dimension(:,:),    pointer :: phi_path
     type (path_vector), dimension(:,:),    pointer :: dhdz_path
     type (path_Vector_2d), dimension(:,:), pointer :: eta_phi
+    type (path_index),  dimension(:,:),    pointer :: NDX_PATH
     type (ellipse), dimension(:,:),        pointer :: elvar
 
   end type ForwardModelIntermediate_T
@@ -57,3 +58,6 @@ module ForwardModelIntermediate
 end module ForwardModelIntermediate
 
 ! $Log$
+! Revision 1.1  2001/04/10 22:06:26  livesey
+! Very first version.  Bare bones only.
+!

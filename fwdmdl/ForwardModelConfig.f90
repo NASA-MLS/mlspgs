@@ -14,7 +14,7 @@ module ForwardModelConfig
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate,&
     & MLSMSG_Error
-  use MLSSignals_M, only: GetSignalName, MaxSigLen
+  use MLSSignals_M, only: GetSignalName, MaxSigLen, Signal_T
   use Output_M, only: Output
   use String_Table, only: Display_String
   use VGridsDatabase, only: VGrid_T
@@ -31,11 +31,6 @@ module ForwardModelConfig
 
   ! Public Types:
 
-  type, public :: ForwardModelSignalInfo_T
-    integer :: signal                   ! The signal we're considering
-    logical, dimension(:), pointer :: channelIncluded=>null() ! Which channels to use
-  end type ForwardModelSignalInfo_T
-
   type, public :: ForwardModelConfig_T
     integer :: fwmType        ! l_linear, l_full or l_scan
     logical :: Atmos_Der      ! Do atmospheric derivatives
@@ -44,7 +39,7 @@ module ForwardModelConfig
     integer, dimension(:), pointer :: molecules=>NULL() ! Which molecules to consider
     logical, dimension(:), pointer :: moleculeDerivatives=>NULL() ! Want jacobians
     real(r8) :: The_Freq      ! Frequency to use if .not. do_freq_avg
-    type (ForwardModelSignalInfo_T), dimension(:), pointer :: siginfo=>NULL()
+    type (Signal_T), dimension(:), pointer :: signals=>NULL()
     logical :: Spect_Der      ! Do spectroscopy derivatives
     logical :: Temp_Der       ! Do temperature derivatives
     type(vGrid_T), pointer :: integrationGrid ! Zeta grid for integration
@@ -93,13 +88,13 @@ contains
 
     if ( associated(database) ) then
       do config = 1, size(database)
-        do signal = 1, size(database(config)%sigInfo)
-          deallocate ( database(config)%sigInfo(signal)%channelIncluded, &
+        do signal = 1, size(database(config)%signals)
+          deallocate ( database(config)%signals(signal)%channels, &
             & stat=status )
           if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
             & MLSMSG_Deallocate // "database%signals%channelIncluded" )
         end do
-        deallocate ( database(config)%sigInfo, stat=status )
+        deallocate ( database(config)%signals, stat=status )
         if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & MLSMSG_Deallocate // "database%signals" )
         deallocate ( database(config)%molecules, stat=status )
@@ -151,11 +146,12 @@ contains
           end if
         end do
         call output ( '  Signals:', advance='yes')
-        do j = 1, size(database(i)%sigInfo)
+        do j = 1, size(database(i)%signals)
           call output ( '    ' )
-          call GetSignalName( database(i)%sigInfo(j)%signal, signalName)
+          !call GetSignalName( signal=database(i)%signals(j), signalName)
+          ! Sort this out later!
           call output ( signalName//' channelIncluded:', advance='yes')
-          call dump ( database(i)%sigInfo(j)%channelIncluded )
+          call dump ( database(i)%signals(j)%channels )
         end do
       end do
     end if
@@ -164,3 +160,6 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 1.1  2001/04/07 01:56:25  vsnyder
+! Initial commit
+!
