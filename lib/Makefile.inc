@@ -12,7 +12,7 @@ SRCS =	Allocate_Deallocate.f90 GriddedData.f90 HDF-EOS.f90 Hdf.f90 \
         MLSNumerics.f90 MLSPCF.f90 MLSSignalNomenclature.f90 MLSStrings.f90 \
         MatrixModule_0.f90 SDPToolkit.f90 Units.f90 \
         VerticalCoordinate.f90 dates_module.f90 dump_0.f90 \
-        gridded_data_module.f90 heights_module.f90 swapi.f90 \
+        gridded_data_module.f90 heights_module.f90 machine.f90 swapi.f90 \
         swapi_character_array.f90 swapi_character_scalar.f90 \
         swapi_double.f90 swapi_integer.f90 swapi_real.f90
 
@@ -22,7 +22,7 @@ OBJS =	Allocate_Deallocate.o GriddedData.o HDF-EOS.o Hdf.o \
         MLSNumerics.o MLSPCF.o MLSSignalNomenclature.o MLSStrings.o \
         MatrixModule_0.o SDPToolkit.o Units.o \
         VerticalCoordinate.o dates_module.o dump_0.o \
-        gridded_data_module.o heights_module.o swapi.o \
+        gridded_data_module.o heights_module.o machine.o swapi.o \
         swapi_character_array.o swapi_character_scalar.o \
         swapi_double.o swapi_integer.o swapi_real.o
 
@@ -89,6 +89,11 @@ test_sparsify: test_sparsify.o
 # ========================================================================
 
 # $Log$
+# Revision 2.6  2000/10/05 01:35:34  vsnyder
+# Revised to account for moving test_multiply from mlspgs/l2.  Also,
+# mlslib.a was deleted, because libraries are required to begin with
+# lib, so we have libmls.a instead.
+#
 # Revision 2.5  2000/10/04 20:24:21  vsnyder
 # Account for moving Allocate_Deallocate, MatrixModule_0 and test_sparsify
 # from mlspgs/l2
