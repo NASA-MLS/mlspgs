@@ -1011,7 +1011,7 @@ contains ! ================================ FullForwardModel routine ======
         ! within it.
         call allocate_test ( grids, no_tan_hts, "Grids", ModuleName )
         call Hunt ( PointingGrids(whichPointingGrid)%oneGrid%height, &
-                 &  tan_press, grids, allowTopValue=.TRUE. )
+                 &  tan_press, grids, allowTopValue=.TRUE.,nearest=.true.)
         ! Work out the maximum number of frequencies
         maxNoPtgFreqs = 0
         do ptg_i = 1, no_tan_hts
@@ -1252,11 +1252,8 @@ contains ! ================================ FullForwardModel routine ======
           call allocate_test ( frequencies,nofreqs, "frequencies", ModuleName )
 ! VELOCITY shift correction to frequency grid
           frequencies =  &
-         & PointingGrids(whichPointingGrid)%oneGrid(grids(ptg_i))%frequencies
-!
-          r = 1.0_rp - losvel%values(1,maf) / 299792.4583_rp
-          frequencies = frequencies * r
-
+       & (PointingGrids(whichPointingGrid)%oneGrid(grids(ptg_i))%frequencies) &
+                      *(1.0_rp - losvel%values(1,maf) / 299792458.3_rp)
 !          frequencies =>  &
 !         & PointingGrids(whichPointingGrid)%oneGrid(grids(ptg_i))%frequencies
 !          noFreqs = size(frequencies)
@@ -1518,7 +1515,6 @@ contains ! ================================ FullForwardModel routine ======
           if ( toggle(emit) .and. levels(emit) > 5 ) &
             & call Trace_End ('ForwardModel.Frequency ',index=frq_i)
         end do            ! End freq. loop
-
         if ( toggle(emit) .and. levels(emit) > 4 ) &
           & call Trace_End ( 'ForwardModel.FrequencyLoop' )
 
@@ -2113,6 +2109,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.37  2002/02/20 22:19:45  zvi
+! Reversing the subset logic ..
+!
 ! Revision 2.36  2002/02/16 10:32:16  zvi
 ! Fixing small bug..
 !
