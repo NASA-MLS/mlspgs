@@ -528,7 +528,7 @@ contains ! ================================ Procedures ======================
           request => directWriteRequests ( noDirectWriteRequests )
           ! Record this request, and have it 'take a ticket'
           request%chunk = chunk
-          request%machine = machine
+          if ( .not. usingSubmit ) request%machine = machine
           request%node = node
           request%fileIndex = fileIndex
           request%ticket = nextTicket
@@ -1280,6 +1280,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.55  2003/07/11 21:50:02  livesey
+! Bug fix in a diagnostic message
+!
 ! Revision 2.54  2003/07/11 01:23:59  livesey
 ! Minor bug fix and more informative output
 !
