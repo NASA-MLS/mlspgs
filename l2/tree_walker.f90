@@ -70,10 +70,11 @@ module TREE_WALKER
 
 contains ! ====     Public Procedures     ==============================
   ! -------------------------------------  WALK_TREE_TO_DO_MLS_L2  -----
-  subroutine WALK_TREE_TO_DO_MLS_L2 ( ROOT, ERROR_FLAG, FIRST_SECTION )
+  subroutine WALK_TREE_TO_DO_MLS_L2 ( ROOT, ERROR_FLAG, FIRST_SECTION, COUNTCHUNKS )
     integer, intent(in) ::     ROOT         ! Root of the abstract syntax tree
     integer, intent(out) ::    ERROR_FLAG  ! Nonzero means failure
     integer, intent(in) ::     FIRST_SECTION! Index of son of root of first n_cf
+    logical, intent(in) ::     COUNTCHUNKS ! Just count the chunks, print them out and quit
 
     integer ::                                  chunkNo                  ! Index of Chunks
     type (MLSChunk_T), dimension(:), pointer :: Chunks ! of data
@@ -141,6 +142,11 @@ contains ! ====     Public Procedures     ==============================
           ! This is the old routine, which will be going away shortly
           ! call ScanAndDivide ( son, processingRange, l1bInfo, chunks )
           call ChunkDivide ( son, processingRange, l1bInfo, chunks )
+          if ( countChunks ) then
+            error_flag = 0
+            call output ( size(chunks) )
+            return
+          end if
         else
           call GetChunkFromMaster ( chunks )
         endif
@@ -287,6 +293,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.72  2001/12/10 20:22:09  livesey
+! Added code for EmpiricalGeometry.
+!
 ! Revision 2.71  2001/11/20 00:48:15  livesey
 ! Fixed problem when no chunks to process
 !
