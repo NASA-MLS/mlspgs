@@ -5,7 +5,7 @@
 #
 #special case:
 #the 1st time through, before .configure exists yet,
-#execute $(MLSBIN)/configure to create .configure
+#execute $(MLSBIN)/mlsconfigure to create .configure
 
 #This file name is usu. Makefile but may be different;
 #i.e., if you call are building this mls
@@ -72,13 +72,6 @@ $(PROG): $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG)
 
 tar: clean
 
-# The configure target, and the succeeding two targets .configure and
-# $MLSCONFG, too,
-# have five lines commented-out from their build statements
-# These lines may become necessary if a later option to allow
-# non-PVM-dependent installation is implemented
-# At present, however, we *require* PVM
-
 configure:
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
           -c "$(MLSF95)" -p "$(MLSPLAT)" ; \
@@ -90,20 +83,6 @@ $(CONFDIR)/.configure:
 $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/.configure
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
           -c "$(MLSF95)" -p "$(MLSPLAT)" -nc 
-#	@case "$(PVM_ROOT)" in \
-#		"") \
-#		echo "Preparing mls library without PVM support" ; \
-#		rm -f $(PLATFORMS)/PVM_OBJS.inc ; \
-#		echo "#   PVM_OBJS.inc  (included in lib Makefile)" > $(PLATFORMS)/PVM_OBJS.inc ; \
-#		echo "PVM_OBJS=" >> $(PLATFORMS)/PVM_OBJS.inc ; \
-#		;; \
-#		*) \
-#		echo "Preparing mls library with PVM support" ; \
-#		rm -f $(PLATFORMS)/PVM_OBJS.inc ; \
-#		echo "#   PVM_OBJS.inc  (included in lib Makefile)" > $(PLATFORMS)/PVM_OBJS.inc ; \
-#		echo "PVM_OBJS=PVMwrappers.o PVM.o PVMIDL.o" >> $(PLATFORMS)/PVM_OBJS.inc ; \
-#		;; \
-#	esac 
 
 depends:
 #	$(MLSBIN)/makemakedep.sh -d test_cholesky.f90 -d test_multiply.f90 \
@@ -116,12 +95,7 @@ clean:
 	@echo "Cleaning directory $(MLSCONFG)" ; \
 	if [ "$(MLSCONFG)" != "" ] ; then  \
 		echo "Deleting $(MLSCONFG) files" ; \
-		rm -f $(PLATFORMS)/$(MLSCONFG)/*.[ao] ; \
-		rm -f $(PLATFORMS)/$(MLSCONFG)/*.mod ; \
-		rm -f $(PLATFORMS)/$(MLSCONFG)/$(PROG) ; \
-		rm -f $(PLATFORMS)/$(MLSCONFG)/Makefile ; \
-		rm -f $(PLATFORMS)/$(MLSCONFG)/*.f90 ; \
-		rm -f $(PLATFORMS)/$(MLSCONFG)/core ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/* ; \
 	fi ; \
 	if [ -d "$(PLATFORMS)/$(MLSCONFG)" ] ; then  \
 		echo "Deleting $(MLSCONFG) directory" ; \
@@ -129,9 +103,6 @@ clean:
 	fi ; \
 	echo "Cleaning $(testdir)"; \
 	$(MAKE) -f $(MakeFName) -C $(testdir) clean
-#	 for dir in $(testsubdirs); do \
-#	  $(MAKE) -f $(MakeFName) -C $$dir clean; \
-#	done
 
 clean_objs:
 	@echo "Cleaning objects from directory $(MLSCONFG)" ; \
@@ -157,6 +128,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.15  2001/03/06 18:17:57  pwagner
+# clean more amitious--rms * from MLSCONFGl[13]/MakeFC
+#
 # Revision 2.14  2001/03/05 18:51:32  pwagner
 # libmls.a again automatic target
 #
