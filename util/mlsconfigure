@@ -294,7 +294,7 @@ fi
 #accept user compiler and platforms settings to be written to file .configure
 
    eecchhoo "" "f 9 5"
- UserPrompt "Fortran 95 Compiler (Lahey, NAG, absoft, Sun) [$current_MLSF95]"
+ UserPrompt "Fortran 95 Compiler (Lahey, NAG, absoft, Sun, Intel, Gnu) [$current_MLSF95]"
    if [ "$user_response" != "" ] ; then
 	case  "$user_response" in
 	    n* | N* )
@@ -308,6 +308,10 @@ fi
 	    i* | I* )
 		echo "Intel compiler selected."
 		compiler=IFC
+	    ;;
+	    g* | G* )
+		echo "Gnu compiler selected."
+		compiler=G95
 	    ;;
 	    a* | A* )
 		echo "Absoft compiler selected."
@@ -859,6 +863,8 @@ GetFOPTS()
 			fi
 		elif [ "$current_MLSF95" = "Abs" ] ; then
 			default_FOPTS="$MLS_default_FOPTS_Abs"
+		elif [ "$current_MLSF95" = "G95" ] ; then
+			default_FOPTS="$MLS_default_FOPTS_G95"
 		elif [ "$current_MLSF95" = "IFC" ] ; then
 			default_FOPTS="$MLS_default_FOPTS_IFC"
          default_LDOPTS="$MLS_default_LDOPTS_IFC"
@@ -1044,6 +1050,7 @@ debugging="off"
 MLS_default_FOPTS_NAG="-w"
 MLS_default_FOPTS_NAG_SGI="-w -abi=n32"
 MLS_default_FOPTS_LF95=
+MLS_default_FOPTS_G95=
 MLS_default_FOPTS_IFC=
 MLS_default_FOPTS_Abs="-w"
 MLS_default_LDOPTS=
@@ -1065,7 +1072,7 @@ MLS_default_LDOPTS_IFC="-Vaxlib"
 
 #---------------------- Settings written to .configure file
 
-#MLSF95     name of the compiler: LF95, NAG, Sun, Abs, IFC
+#MLSF95     name of the compiler: LF95, NAG, Sun, Abs, IFC, G95
 #MLSPLAT    name of the platform: Sun, SGI, or Linux
 #MLSCONFG   MLSF95.MLSPLAT or else a name chosen by user
 #PGSINC     path to the toolbox include files
@@ -1337,6 +1344,8 @@ if [ "$current_FOPTS" = "" ] ; then
 			FOPTS="$MLS_default_FOPTS_Abs"
 		elif [ "$compiler" = "IFC" ] ; then
 			FOPTS="$MLS_default_FOPTS_IFC"
+		elif [ "$compiler" = "G95" ] ; then
+			FOPTS="$MLS_default_FOPTS_G95"
 		elif [ "$compiler" = "Sun" ] ; then
 			FOPTS="$MLS_default_FOPTS_Abs"
 		else
@@ -1465,6 +1474,9 @@ fi
 exit
 
 # $Log$
+# Revision 1.34  2003/04/01 23:16:43  pwagner
+# Added IFC to the alternative compilers
+#
 # Revision 1.33  2002/09/04 18:10:22  pwagner
 # LIB_BLAS may be multiple libraries (e.g., f77blas atlas)
 #
