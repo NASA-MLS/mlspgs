@@ -2,7 +2,7 @@
 #
 #  Lost? Type 'cd ../; make help -f MakeFC' from this directory
 #
-# Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+# Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 # "$Id$"
@@ -105,6 +105,9 @@ libmls_f90 := $(shell ${REECHO} $(libmls_sources)/*.f $(libmls_sources)/*.f90 \
 blaslib_f := $(shell ${REECHO} $(blaslib)/*.c $(blaslib)/*.f $(blaslib)/*.f90 \
   $(blaslib)/*.f9h $(srclib)/*.f9h)
 he5lib_f := $(shell ${REECHO} $(he5lib)/*.c $(he5lib)/*.f $(he5lib)/*.f90)
+machinelib := $(libmls_sources)/machines/$(MLSCONFG)/
+machine_f := $(shell ${REECHO} $(machinelib)/*.c $(machinelib)/*.f \
+  $(machinelib)/*.f90)
 
 PROG_prereqs := $(CONFDIR)/$(MLSCFILE) \
    $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a \
@@ -120,11 +123,11 @@ endif
 ifndef DONTBUILDPREQS
 ifdef BLAS
    LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
-   $(libmls_sources)/machines/$(MLSCONFG)/machine.f90 \
+   $(machine_f) \
    $(REECHO) $(libmls_objs)
 else
    LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
-   $(libmls_sources)/machines/$(MLSCONFG)/machine.f90 \
+   $(machine_f) \
    $(blaslib_f) $(REECHO) $(libmls_objs)
 endif
 HE5_LIB_prereqs=$(libmls_objs)/libmls.a $(he5lib_f)
@@ -133,13 +136,13 @@ endif
 #Any sources to explicitly exclude from dependency list?
 OMIT_SRCS := $(OMIT) MLSL1.f90
 
-PROG=mlsl1log mlsl1g mlsl1t
+PROG=mlsl1log mlsl1g mlsl1t mlsl1boa
 # PROG=mlsl1
 
 OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
 
 #These are the source files for the drivers; they should be excluded from OBJS
-DRIVERS=MLSL1G.f90 MLSL1log.f90 MLSL1T.f90
+DRIVERS=MLSL1G.f90 MLSL1log.f90 MLSL1T.f90 MLSL1BOA.f90
 DRIVERS_PREFXD := $(shell ${REECHO} -prefix=-do $(DRIVERS))
 
 #CASCADE determines whether to create/use .mod dependencies:
@@ -309,6 +312,9 @@ install: $(PROG)
 	   $(MLSBIN)/mkpath.sh $(INSTALLDIR) ; \
 	fi ; \
 	if [ -f $(PLATFORMS)/$(MLSCONFG)/mlsl1log ] ; then \
+	   mv $(PLATFORMS)/$(MLSCONFG)/mlsl1boa $(INSTALLDIR) ; \
+	fi ; \
+	if [ -f $(PLATFORMS)/$(MLSCONFG)/mlsl1log ] ; then \
 	   mv $(PLATFORMS)/$(MLSCONFG)/mlsl1log $(INSTALLDIR) ; \
 	fi ; \
 	if [ -f $(PLATFORMS)/$(MLSCONFG)/mlsl1t ] ; then \
@@ -340,6 +346,12 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl1
 
 # $Log$
+# Revision 2.47  2004/03/30 00:21:50  pwagner
+# Take care that lib is rebuilt after changes in machines directory
+#
+# Revision 2.46  2003/10/24 20:59:21  pwagner
+# Added mlsl1boa utility as new target
+#
 # Revision 2.45  2003/06/03 20:38:24  pwagner
 # Renamed mkdir_cascade mkpath
 #

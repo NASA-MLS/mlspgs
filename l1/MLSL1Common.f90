@@ -121,6 +121,14 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
      REAL(r8) :: DACS(DACSchans,DACSnum)   ! DACS filters
   END TYPE Chan_R8_T
 
+  ! Real types for all channels and bands, except DACS:
+
+  TYPE ChanBand_R_T
+     REAL :: FB(FBchans,FBnum+2)       ! standard filter banks/bands
+     REAL :: MB(MBchans,MBnum)         ! mid-band filter bands
+     REAL :: WF(WFchans,WFnum)         ! wide filter bands
+  END TYPE ChanBand_R_T
+
 !! Factor to convert 23 bit encoder angle data (shifted by 1 bit) into degrees:
 
   REAL, PARAMETER :: DEG24 = 360.0 * 2.0**(-24)
@@ -185,6 +193,7 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
 !! Useful channel defaults:
 
   TYPE (Chan_R_T), TARGET :: deflt_gain, deflt_zero
+  TYPE (ChanBand_R_T), TARGET :: deflt_chi2
 
   REAL :: tau = 1.0 / 6.0  ! default data rate (secs)
 
@@ -211,6 +220,9 @@ END MODULE MLSL1Common
 !=============================================================================
 
 ! $Log$
+! Revision 2.10  2004/05/14 15:59:11  perun
+! Version 1.43 commit
+!
 ! Revision 2.9  2004/01/09 17:46:22  perun
 ! Version 1.4 commit
 !
