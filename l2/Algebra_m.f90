@@ -10,8 +10,9 @@ module ALGEBRA_M
   public :: Algebra
 
 !--------------------------------- RCS Ident Info -------------------------------
-  character (len=256), private :: Id = &
-       "$Id$"
+  character (len=*), parameter :: IdParm = &
+    & "$Id$"
+  character (len=len(idParm)) :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
   private :: not_used_here
@@ -45,7 +46,7 @@ contains
     use Toggles, only: Gen, Switches, Toggle
     use Trace_m, only: Trace_Begin, Trace_End
     use TREE, only: NODE_ID, NSONS, SUB_ROSA, SUBTREE
-    use TREE_TYPES ! Everything, especially everything beginning with N_
+    use TREE_TYPES ! Everything, except tree_init; remainder begin with N_
     use VectorsModule, only:  AddToVector, AddVectorToDatabase,  CopyVector, &
       & DestroyVectorInfo, Dump, ScaleVector, Vector_T
 
@@ -79,7 +80,9 @@ contains
     integer, parameter :: CantInvertVector = ambiguous + 1    ! Can't invert vector
     integer, parameter :: Incompatible = cantInvertVector + 1 ! incompatible operands
     integer, parameter :: Undefined = incompatible + 1 ! undefined operand
-    integer, parameter :: UnknownOp = undefined + 1    ! unknown operator
+    integer, parameter :: UnknownFunc = undefined + 1  ! unknown function
+    integer, parameter :: UnknownOp = UnknownFunc + 1  ! unknown operator
+    integer, parameter :: WrongNumArgs = UnknownOp + 1 ! wrong number of args
 
     ! Parameters for WHAT argument of EXPR
     integer, parameter :: W_Nothing = 0               ! An error occurred
@@ -217,13 +220,15 @@ contains
     subroutine Announce_Error ( Where, What )
       use LEXER_CORE, only: PRINT_SOURCE
       use OUTPUT_M, only: OUTPUT
-      use TREE, only: SOURCE_REF
+      use TREE, only: DUMP_TREE_NODE, SOURCE_REF
       integer :: Where        ! Root of subtree where error occurred
       integer :: What         ! What message to emit
 
       error = max(error,1)
       call output ( '***** At ', from_where = "Algebra module" )
       call print_source ( source_ref(where) )
+      call output ( ', tree ' )
+      call output ( where )
       call output ( ': ' )
       select case ( what )
       case ( ambiguous )
@@ -234,8 +239,16 @@ contains
         call output ( 'Operands are incompatible.', advance='yes' )
       case ( undefined )
         call output ( 'Name in expression is undefined.', advance='yes' )
+      case ( unknownFunc )
+        call output ( 'Function "' )
+        call display_string(sub_rosa(where))
+        call output ( ' is not recognized.', advance='yes' )
       case ( unknownOp )
-        call output ( 'Operator in expression is unknown.', advance='yes' )
+        call output ( 'Operator "' )
+        call dump_tree_node ( where, 0 )
+        call output ( '" in expression is unknown.', advance='yes' )
+      case ( wrongNumArgs )
+        call output ( 'Wrong number of arguments.', advance='yes' )
       case default
         call output ( 'What is error code ' )
         call output ( what )
@@ -254,7 +267,8 @@ contains
       ! The output vectors or matrices are COPIES.  They must be destroyed
       ! or put into a database to avoid memory leaks.
 
-      use DECLARATION_TABLE, only: DECLS, EMPTY
+      use DECLARATION_TABLE, only: DECLS, EMPTY, FUNCTION, GET_DECL
+      use FUNCTIONS, only: F_CHOLESKY, F_TRANSPOSE
       use STRING_TABLE, only: FLOAT_VALUE
       use TREE, only: NODE_ID, NSONS, SUB_ROSA, SUBTREE
       use TREE_TYPES ! Everything, especially everything beginning with N_
@@ -272,6 +286,7 @@ contains
 
       type(decls) :: DECL          ! Declaration of a name
       real(r8) :: DValue2          ! Value of RH operand if Value2 == 0
+      integer :: I                 ! Index for sons of function operator
       integer :: ME                ! Node ID for root
       integer :: Son1, Son2        ! Sons of Root
       integer :: String            ! String table index
@@ -339,13 +354,44 @@ contains
       case ( n_number ) ! -------------------------------------------- Number
         dvalue = float_value(sub_rosa(root))
         what = w_number
+      case ( n_func_ref )
+        son1 = subtree(1,root)
+        string = sub_rosa(son1)
+        ! Look up the function name
+        decl = get_decl(string,function)
+        if ( decl%type /= function ) call announce_error ( son1, unknownFunc )
+        if ( nsons(root) > 1 ) then
+          son2 = subtree(2,root)
+          call expr ( son2, what2, dvalue2, vector2, matrix2, matrix_c2, &
+            & matrix_k2, matrix_s2 )
+        end if
+        select case ( decl%units )
+        case ( f_cholesky )
+          if ( nsons(root) /= 2 ) then
+            call announce_error ( son1, wrongNumArgs )
+          else
+            if ( what2 /= w_matrix ) then
+              call announce_error ( son2, incompatible )
+            else
+            end if
+          end if
+        case ( f_transpose )
+          if ( nsons(root) /= 2 ) then
+            call announce_error ( son1, wrongNumArgs )
+          else
+            if ( what2 /= w_matrix ) then
+              call announce_error ( son2, incompatible )
+            else
+            end if
+          end if
+        end select
       case default
         son1 = subtree(1,root)
         call expr ( son1, what, dvalue, vector, matrix, matrix_c, &
           & matrix_k, matrix_s )
         what2 = w_nothing
         if ( nsons(root) > 1 ) then
-        son2 = subtree(2,root)
+          son2 = subtree(2,root)
           call expr ( son2, what2, dvalue2, vector2, matrix2, matrix_c2, &
             & matrix_k2, matrix_s2 )
         end if
@@ -675,6 +721,9 @@ contains
 end module ALGEBRA_M
 
 ! $Log$
+! Revision 2.2  2004/01/17 03:04:15  vsnyder
+! Provide for functions in expressions
+!
 ! Revision 2.1  2004/01/17 00:28:32  vsnyder
 ! Initial commit
 !
