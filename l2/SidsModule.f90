@@ -8,8 +8,12 @@ module SidsModule
   ! This module evaluates the radiative transfer equation, and maybe
   ! its derivatives.  It is used for SIDS and L2PC runs.
 
+  use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use Dump_0, only: dump
   use ForwardModelConfig, only: ForwardModelConfig_T
   use ForwardModelInterface, only: ForwardModel
+  use ForwardModelIntermediate, only: ForwardModelIntermediate_T,&
+    & ForwardModelStatus_T, DestroyForwardModelIntermediate
   use Init_Tables_Module, only: f_forwardModel, f_fwdModelIn, f_fwdModelExtra, &
     f_fwdModelOut, f_jacobian
   use Lexer_Core, only: Print_Source
@@ -21,17 +25,14 @@ module SidsModule
   use Trace_M, only: Trace_begin, Trace_end
   use Tree, only: Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, Subtree
   use VectorsModule, only: Vector_T
-  use Dump_0, only: dump
-  use ForwardModelIntermediate, only: ForwardModelIntermediate_T,&
-    & ForwardModelStatus_T, DestroyForwardModelIntermediate
-  use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
 
-  !---------------------------- RCS Ident Info -------------------------------
-  character (len=130), private :: Id = &
-    & "$Id$"
-  character (len=*), parameter, private :: ModuleName= &
-    & "$RCSfile$"
-  !---------------------------------------------------------------------------
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+!---------------------------------------------------------------------------
 
 contains
 
@@ -108,7 +109,7 @@ contains
     nullify ( fmStat%rows )
 
     ! Loop over mafs
-    do while (.not. fmStat%finished )
+    do while ( .not. fmStat%finished )
       ! What if one config set finished but others still had more to do?
       ! Ermmm, think of this next time.
       fmStat%maf = fmStat%maf + 1
@@ -124,8 +125,9 @@ contains
         end if
       end do
     end do
+    call deallocate_test ( fmStat%rows, 'FmStat%rows', moduleName )
 
-    call DestroyForwardModelIntermediate( ifm )
+    call DestroyForwardModelIntermediate ( ifm )
 
     if ( toggle(gen) ) call trace_end ( "SIDS" )
 
@@ -155,6 +157,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.22  2001/04/26 00:57:20  vsnyder
+! Deallocate fmStat%rows, cosmetic changes
+!
 ! Revision 2.21  2001/04/24 23:11:40  vsnyder
 ! Remove 'Done forward model!' print
 !
