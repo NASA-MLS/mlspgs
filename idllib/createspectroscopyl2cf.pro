@@ -237,10 +237,22 @@ printf, unit, '; ----------------------------------------- Molecules per band'
 printf, unit, ''
 array(*,*,where(niceNames eq 'H2O')) = 1
 array(*,*,where(niceNames eq 'N2')) = 1
-
 sidebandStrings = ['L','','U']
 noBands = (size ( array ) ) (2)
-for band = 0, noBands - 1 do begin
+
+;; Now, add some extra virtual bands which are the radiometers
+database = ReadValidSignals()
+newArray = intarr ( noSidebands, noBands+database.noRadiometers, noMols )
+newArray(*,0:noBands-1,*) = array
+for radiometer = 0, database.noRadiometers-1 do begin
+  relevantBands = where ( database.bands.radiometerIndex eq radiometer )
+  collapsed = total ( array (*,relevantBands,*), 2 )
+  newArray(*,noBands+radiometer,*) = collapsed gt 0
+endfor
+array=newArray
+  
+
+for band = 0, noBands + database.noRadiometers - 1 do begin
   for sideband = 0, 2 do begin
     ;; Which molecules does it use
     usedMols = where ( reform ( array(sideband, band, *) ) )
@@ -248,9 +260,12 @@ for band = 0, noBands - 1 do begin
     usedParents = parentNames ( usedMols )
     usedParents = usedParents ( sort ( usedParents ) )
     usedParents = usedParents ( uniq ( usedParents ) )
+    if band lt noBands then $
+      outName = string ( band+1, format='(i0)' ) $
+    else outName = database.radiometers(band-noBands).prefix
 
     ;; First do the comprehensive lists for full forward models.
-    line = '!define(moleculesFor' + string ( band+1, format='(i0)' ) + $
+    line = '!define(moleculesFor' + outName + $
       sidebandStrings(sideband)+',{[ '
     for p = 0, n_elements(usedParents)-1 do begin
       if p ne 0 then line = line +', '
@@ -272,7 +287,7 @@ for band = 0, noBands - 1 do begin
 
     ;; Now do just the parents for l2pc line forward models
     ;; First do the comprehensive lists for full forward models.
-    line = '!define(moleculeFamiliesFor' + string ( band+1, format='(i0)' ) + $
+    line = '!define(moleculeFamiliesFor' + outName + $
       sidebandStrings(sideband)+',{[ '
     for p = 0, n_elements(usedParents)-1 do begin
       if p ne 0 then line = line + ', '
