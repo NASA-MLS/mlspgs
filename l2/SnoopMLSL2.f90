@@ -99,6 +99,42 @@ contains ! ========  Public Procedures =========================================
     end select
   end subroutine GetSnooperModeString
 
+  ! ------------------------------------- SendMatrixListToSnooper ------
+  subroutine SendMatrixListToSnooper ( snooper, MatrixDatabase )
+    ! Arguments
+    type (SnooperInfo_T), intent(in) :: SNOOPER
+    type (Matrix_T), dimension(:), optional, intent(in) :: MATRIXDATABASE
+
+    ! Local variables
+    integer :: BUFFERID                 ! For PVM
+    integer :: INFO                     ! Flag
+    integer :: MATRIX                   ! Loop counter
+    character(len=132) :: LINE          ! A line of text
+    
+    if ( present ( MatrixDatabase ) ) then
+      call PVMFInitSend ( PvmDataDefault, bufferID )
+
+      call PVMIDLPack ( "Matrices", info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing 'Matrices'" )
+
+      call PVMIDLPack ( size(matrixDatabase), info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing number of matrices" )
+
+      do matrix = 1, size(matrixDatabase)
+        call get_string ( matrixDatabase(matrix)%name, line )
+        call PVMIDLPack ( trim(line), info )
+        if (info /= 0) call PVMErrorMessage ( info, "packing matrix name:" &
+          & // trim(line) )
+        ! Don't think we need to send row/column vector information at this
+        ! stage.
+      end do
+
+    else
+      call PVMIDLSend ( "No Matrices", snooper%tid, info, msgTag=SnoopTag )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "Sending 'No Matrices'" )
+    endif
+  end subroutine SendMatrixListToSnooper
+
   ! ------------------------------------- SendVectorsListToSnooper -----
   subroutine SendVectorsListToSnooper ( SNOOPER, VectorDatabase, &
     & AnotherVectorDatabase )
@@ -106,7 +142,7 @@ contains ! ========  Public Procedures =========================================
     ! Arguments
     type (SnooperInfo_T), intent(in) :: SNOOPER
     type (Vector_T), dimension(:), optional, pointer :: VectorDatabase
-    type (Vector_T), dimension(:), optional :: AnotherVectorDatabase
+    type (Vector_T), dimension(:), optional, intent(in) :: AnotherVectorDatabase
 
     ! Local variables
     logical :: AnyMoreVectors, AnyVectors ! Flags
@@ -133,8 +169,8 @@ contains ! ========  Public Procedures =========================================
       call PVMIDLPack ( totalVectors, info )
       if ( info /= 0 ) call PVMErrorMessage ( info, "packing totalVectors" )
 
-      if ( anyVectors ) call sendVectorAndQuantityNames ( vectorDatabase )
-      if ( anyMoreVectors ) call sendVectorAndQuantityNames ( anotherVectorDatabase )
+      if ( anyVectors ) call SendVectorAndQuantityNames ( vectorDatabase )
+      if ( anyMoreVectors ) call SendVectorAndQuantityNames ( anotherVectorDatabase )
 
       ! Now send this buffer
       call PVMFSend ( snooper%tid, SnoopTag, info )
@@ -153,7 +189,7 @@ contains ! ========  Public Procedures =========================================
       do vector = 1, size(vectors)
         if ( vectors(vector)%name > 0 ) then
           call get_string ( vectors(vector)%name, line )
-          call PVMIDLPack ( TRIM(line), info )
+          call PVMIDLPack ( trim(line), info )
           if ( info /=0 ) call PVMErrorMessage ( info, "packing vector name:" &
             & // TRIM(line) )
 
@@ -277,18 +313,20 @@ contains ! ========  Public Procedures =========================================
   ! to pass to and from the IDL end of the snooper.
 
   subroutine Snoop ( KEY, VectorDatabase, AnotherVectorDatabase, &
-    & AnotherComment )
+    & AnotherComment, matrixDatabase )
 
     ! Arguments
     integer, intent(in), optional :: KEY ! Tree node where snoop called
     type (Vector_T), dimension(:), optional, pointer :: VectorDatabase
     type (Vector_T), dimension(:), optional :: AnotherVectorDatabase
     character(len=*), intent(in), optional :: AnotherComment ! Replaces
+    type (Matrix_T), dimension(:), optional :: MatrixDatabase
     ! comment field of "snoop" command if present.
-    !  TYPE (Matrix_T), DIMENSION(:), POINTER, OPTIONAL :: MATRIXDATABASE
     
-    ! Local parameter
+    ! Local parameters
     integer, parameter :: DELAY=50*1000  ! For Usleep, no. microsecs
+    character(len=*), parameter :: UNPACKERROR = &
+      & 'unpacking response from snooper'
     ! External (C) function
     external :: Usleep
 
@@ -354,7 +392,8 @@ contains ! ========  Public Procedures =========================================
         & any ( snoopers%mode == SnooperControling ) )
       call SendVectorsListToSnooper ( snoopers(snooper), vectorDatabase, &
         & anotherVectorDatabase )
-    end do
+      call SendMatrixListToSnooper ( snoopers(snooper), matrixDatabase ) 
+   end do
 
     snoopEventLoop: do ! ---------------------------- Snoop event loop -----
 
@@ -374,20 +413,6 @@ contains ! ========  Public Procedures =========================================
         call PVMIDLUnpack ( line, info )
         select case ( trim(line) )
 
-        case ( 'NewSnooper' )
-          keepWaiting = .false.
-          call RegisterNewSnooper ( snoopers, snooperTid )
-          snooper = FindFirst ( snoopers%tid == snooperTid )
-          ! Tell it where we are
-          call SendStatusToSnooper ( snoopers(snooper), 'Ready', location, comment, &
-            & any(snoopers%mode == SnooperControling ) )
-          ! Send it vectors
-          call SendVectorsListToSnooper ( snoopers(snooper), vectorDatabase, &
-            anotherVectorDatabase )
-          
-        case ( 'Finishing' )
-          call ForgetSnooper ( snoopers, snooper )
-
         case ( 'Continue' )
           if ( snoopers(snooper)%mode == SnooperControling ) &
             exit SnoopEventLoop
@@ -402,21 +427,52 @@ contains ! ========  Public Procedures =========================================
           if ( info /= 0 ) call PVMErrorMessage ( info, &
             & "sending control response" )
 
-        case ( 'Relinquish' )
-          snoopers(snooper)%mode = SnooperObserving
-          call PVMIDLSend ( 'Relinquished', snooperTid, info, msgTag=SnoopTag )
-          if ( info /= 0 ) call PVMErrorMessage ( info, &
-            & "sending relinquish response" )
+        case ( 'Finishing' )
+          call ForgetSnooper ( snoopers, snooper )
 
+        case ( 'MatrixBlock' )
+          call PVMIDLUnpack ( nextLine, info )
+          if ( info /= 0 ) call PVMErrorMessage ( info, unpackError )
+          if ( present(matrixDatabase) ) then
+            call SnooperRequestedMatrixBlock ( snoopers(snooper), &
+              & trim(nextLine), matrixDatabase )
+          endif
+
+        case ( 'MatrixMap' )
+          call PVMIDLUnpack ( nextLine, info )
+          if ( info /= 0 ) call PVMErrorMessage ( info, unpackError )
+          if ( present(matrixDatabase) ) then
+            call SnooperRequestedMatrixMap ( snoopers(snooper), &
+              & trim(nextLine), matrixDatabase )
+          endif
+
+        case ( 'NewSnooper' )
+          keepWaiting = .false.
+          call RegisterNewSnooper ( snoopers, snooperTid )
+          snooper = FindFirst ( snoopers%tid == snooperTid )
+          ! Tell it where we are
+          call SendStatusToSnooper ( snoopers(snooper), 'Ready', location, comment, &
+            & any(snoopers%mode == SnooperControling ) )
+          ! Send it vectors
+          call SendVectorsListToSnooper ( snoopers(snooper), vectorDatabase, &
+            & anotherVectorDatabase )
+          ! Send it matrices
+          call SendMatrixListToSnooper ( snoopers(snooper), matrixDatabase )
+          
         case ( 'Quantity' )
           call PVMIDLUnpack ( nextLine, info )
-          if ( info /=0 ) call PVMErrorMessage ( info, &
-            & "unpacking response from snooper" )
+          if ( info /= 0 ) call PVMErrorMessage ( info, unpackError )
           call SnooperRequestedQuantity ( snoopers(snooper), &
             & trim(nextLine), vectorDatabase )
           if ( present(anotherVectorDatabase) ) &
             & call SnooperRequestedQuantity ( snoopers(snooper), &
               & trim(nextLine), anotherVectorDatabase )
+
+        case ( 'Relinquish' )
+          snoopers(snooper)%mode = SnooperObserving
+          call PVMIDLSend ( 'Relinquished', snooperTid, info, msgTag=SnoopTag )
+          if ( info /= 0 ) call PVMErrorMessage ( info, &
+            & "sending relinquish response" )
 
         case default
           call MLSMessage ( MLSMSG_Warning, ModuleName, &
@@ -459,8 +515,8 @@ contains ! ========  Public Procedures =========================================
     
   end subroutine Snoop
 
-  ! ------------------------------------- Snooper requested matrix -----
-  subroutine SnooperRequestedMatrix ( SNOOPER, LINE, MATRIXDATABASE )
+  ! ------------------------------------- SnooperRequestedMatrixBlockMap -----
+  subroutine SnooperRequestedMatrixMap ( SNOOPER, LINE, MATRIXDATABASE )
     ! This routine sends a matrix (including the vectors associated
     ! with it) to a snooping task.  It will probably take a while in many
     ! cases.
@@ -468,7 +524,7 @@ contains ! ========  Public Procedures =========================================
     ! Dummy arguments
     type (SnooperInfo_T), intent(in) :: SNOOPER ! This snooper
     character (len=*), intent(in) :: LINE ! Name of matrix to send
-    type (Matrix_T), dimension(:), pointer :: MATRIXDATABASE
+    type (Matrix_T), dimension(:), intent(in) :: MATRIXDATABASE
 
     ! Local variables
     integer :: MATRIXNAME               ! String index of matrix name
@@ -486,7 +542,36 @@ contains ! ========  Public Procedures =========================================
 
     !call PVMSendMatrix ( matrixDatabase(matrix), snooper%tid )
 
-  end subroutine SnooperRequestedMatrix
+  end subroutine SnooperRequestedMatrixMap
+  
+  ! ------------------------------------- Snooper requested matrixBlock -----
+  subroutine SnooperRequestedMatrixBlock ( SNOOPER, LINE, MATRIXDATABASE )
+    ! This routine sends a matrix (including the vectors associated
+    ! with it) to a snooping task.  It will probably take a while in many
+    ! cases.
+
+    ! Dummy arguments
+    type (SnooperInfo_T), intent(in) :: SNOOPER ! This snooper
+    character (len=*), intent(in) :: LINE ! Name of matrix to send
+    type (Matrix_T), dimension(:), intent(in) :: MATRIXDATABASE
+
+    ! Local variables
+    integer :: MATRIXNAME               ! String index of matrix name
+    integer :: MATRIX                   ! Index of matrix in database
+
+    ! Executable code
+
+    matrixName = enter_terminal ( line, t_identifier )
+    do matrix = 1, size(matrixDatabase)
+      if ( matrixDatabase(matrix)%name == matrixName ) exit
+    end do
+    if ( matrixDatabase(matrix)%name /= matrixName ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to find requested matrix:'//trim(line) )
+
+    !call PVMSendMatrix ( matrixDatabase(matrix), snooper%tid )
+    
+  end subroutine SnooperRequestedMatrixBlock
 
   ! ----------------------------------- Snooper requested quantity -----
   subroutine SnooperRequestedQuantity ( SNOOPER, LINE, VectorDatabase )
@@ -545,6 +630,9 @@ contains ! ========  Public Procedures =========================================
 end module SnoopMLSL2
 
 ! $Log$
+! Revision 2.25  2001/10/22 22:40:39  livesey
+! On the way to getting matrices working
+!
 ! Revision 2.24  2001/10/15 22:38:50  vsnyder
 ! Make anotherVectorsDatabase not a pointer
 !
