@@ -7,7 +7,7 @@ MODULE MLSFiles               ! Utility file routines
    USE HDFEOS, only: gdclose, gdopen, swclose, swopen
    USE machine, only: io_error
    USE MLSCommon, only: i4, NameLen
-   USE MLSStrings, only: Capitalize, LowerCase
+   USE MLSStrings, only: Capitalize, LowerCase, Reverse
    USE output_m, only: output
   use SDPToolkit, only: Pgs_pc_getReference, PGS_S_SUCCESS, Pgs_smf_getMsg, &
   & PGSd_IO_Gen_RSeqFrm, PGSd_IO_Gen_RSeqUnf, & 
@@ -445,12 +445,76 @@ MODULE MLSFiles               ! Utility file routines
 
   END FUNCTION mls_io_gen_closeF
 
+  ! ---------------------------------------------  split_path_name  -----
+
+  ! This routine splits the input full_file_name
+  ! into its components path and name
+  ! where path may include one or more "/" or slash elements
+  ! (but one must be the terminating one; e.g., 'System/')
+  ! while name must have none
+  ! special cases by example: full_file_name -> (path, name)
+  ! look.ma.no.slash -> (' ', 'look.ma.no.slash')
+  ! Luke/I/am/your/father/ -> ('Luke/I/am/your/father/', ' ')
+  
+  ! optionally you may supply the slash divider
+  ! which must be a single character
+  
+  SUBROUTINE split_path_name(full_file_name, path, name, slash)
+
+	! Arguments
+
+	character (len=*), intent(in) :: full_file_name
+	character (len=*), intent(out) :: path
+	character (len=*), intent(out) :: name
+	character (len=1), optional, intent(in) :: slash
+	
+	! Local
+	
+	character (len=1) :: mySlash
+	character (len=NameLEN) :: mirrored_ffn
+	character (len=NameLEN) :: mirrored_name
+	character (len=NameLEN) :: mirrored_path
+	integer :: loc
+	
+	! Begin
+	
+	if(present(slash)) then
+		mySlash = slash
+	else
+		mySlash = '/'
+	endif
+	
+	if(len(full_file_name) <= 0) then
+		path = ' '
+		name = ' '
+		return
+	endif
+	
+	mirrored_ffn = Reverse(full_file_name)
+	loc = INDEX(mirrored_ffn, mySlash)
+	
+	if(loc <= 0) then
+		path = ' '
+		name = adjustl(full_file_name)
+	elseif(loc == 1) then
+		path = adjustl(full_file_name)
+		name = ' '
+	else
+		path = adjustl(Reverse(mirrored_ffn(loc:)))
+		name = adjustl(Reverse(mirrored_ffn(:loc-1)))
+	endif
+	
+  END SUBROUTINE split_path_name
+
 !====================
 END MODULE MLSFiles
 !====================
 
 !
 ! $Log$
+! Revision 2.7  2001/04/03 23:52:29  pwagner
+! Added split_path_name
+!
 ! Revision 2.6  2001/03/27 17:30:59  pwagner
 ! Added mls_io_gen_closeF
 !
