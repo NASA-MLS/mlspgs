@@ -520,7 +520,13 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         & reshape(temp%template%surfs(:,1),(/noSurf/)),   &    ! New X
         & vmrArray(i,:),                                  &    ! New Y
         & 'Linear', extrapolate='Clamp' )
+
     end do
+    if ( .not. got(l_n2o)) vmrArray(3,:) = 0._r8
+    if ( .not. got(l_hno3)) vmrArray(4,:) = 0._r8
+    if ( .not. got(l_n2)) vmrArray(5,:) = 0.805_r8
+    if ( .not. got(l_o2)) vmrArray(5,:) = 0.2095_r8
+
     if ( .not. got(l_h2o) .or. .not. got(l_o3) ) then
     !make sure we have at least two molecules h2o and o3. 
       call MLSMessage(MLSMSG_Error, ModuleName,'Missing the required molecules')
@@ -1057,6 +1063,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.106  2003/01/17 01:08:11  jonathan
+! add vmrArray=0. after allocate
+!
 ! Revision 1.105  2003/01/17 00:52:05  jonathan
 ! if specices missing, set VMR=0 accordingly
 !
