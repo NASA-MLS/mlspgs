@@ -150,7 +150,7 @@ endif
 #----------------------- Build instructions
 
 $(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) \
-         $(libblas_objs)/libmlspack.a
+         $(libblas_objs)/libmlspack.a hdfeos5.f9h
 	@case "$(MLSCONFG)" in \
 	"") \
 		echo "Sorry--your configuration is not yet defined" ; \
@@ -158,7 +158,8 @@ $(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) \
 		exit 2 ; \
 		;; \
 	*) \
-		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) ; \
+		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
+      UNPREFXDPTHS="$(HDF5)/../fortran/src $(HDF5)/../include" ; \
         return_status=`expr $$?` ; \
         if [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" -a \
         $$return_status = "0" ]; then \
@@ -175,7 +176,8 @@ $(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG)
 		exit 2 ; \
 		;; \
 	*) \
-		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) ; \
+		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
+      UNPREFXDPTHS="$(HDF5)/../fortran/src $(HDF5)/../include" ; \
         return_status=`expr $$?` ; \
         if [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" -a \
         $$return_status = "0" ]; then \
@@ -190,6 +192,10 @@ $(libblas_objs)/libmlspack.a: $(libblas_f90) \
 	   rm -f $(libblas_objs)/libmlspack.a ; \
 	fi ; \
 	$(MAKE) -f $(MakeFName) libmlspack.a -C $(libblas_sources)
+
+hdfeos5.f9h: $(HDFEOS5)/../../include/hdfeos5.inc
+	@sed 's/^C/!/' $(HDFEOS5)/../../include/hdfeos5.inc > temp ; \
+	mv temp hdfeos5.f9h
 
 .PHONY: configure depends clean alltests tar tarz targ mostlyclean \
 	all libmls.a ghostbuster
@@ -279,6 +285,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.41  2002/07/11 22:12:11  pwagner
+# Changes to support hdf5/hdfeos5
+#
 # Revision 2.40  2002/07/02 00:14:01  pwagner
 # Skips marking uptodate after an error
 #
