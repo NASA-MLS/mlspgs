@@ -84,43 +84,6 @@ CONTAINS
 
   END SUBROUTINE CopyVGridInfoIntoQuantity
 
-  ! -------------------------------------------------------------------------
-
-  ! This function populates an array with the MIF times for each MIF in a MAF
-  ! given an array of MAF start times.
-  
-  SUBROUTINE GetMIFTimesFromMAFTimes(mafStartTimeTAI,mifTimeTAI)  
-
-    ! Dummy arguments
-    REAL(r8), DIMENSION(:), INTENT(IN) :: mafStartTimeTAI ! (MAF)
-    REAL(r8), DIMENSION(:,:), INTENT(OUT) :: mifTimeTAI   ! (MIF,MAF)
-
-    ! Parameters
-    REAL(r8), PARAMETER :: mifDuration=0.166666666666666666666666666666667
-    ! This is a real kludge. In later versions we'll need some way in the L1
-    ! file to denote the length of a MIF
-
-    ! Local variables
-    INTEGER :: noMAFs,noMIFs
-    INTEGER :: mif,maf          ! Loop counters
-
-    ! Executable code
-
-    noMAFs=SIZE(mifTimeTAI,2)
-    noMIFs=SIZE(mifTimeTAI,1)
-    
-    IF (SIZE(mafStartTimeTAI) /= noMAFs) CALL MLSMessage(&
-         & MLSMSG_Error,ModuleName,&
-         & "Argument mismatch in GetMIFTimesFrom MAFTimes")
-
-    DO maf=1,noMAFs
-       DO mif=1,noMIFs
-          mifTimeTAI(mif,maf)=mafStartTimeTAI(maf)+(mif-1)*mifDuration
-       END DO
-    END DO
-
-  END SUBROUTINE GetMIFTimesFromMAFTimes
-
   ! --------------------------------------------------------------------------
 
   ! This routine constructs a minor frame based quantity.
@@ -161,7 +124,7 @@ CONTAINS
     TYPE (L1BData_T) :: l1bField
     CHARACTER (LEN=NameLen) :: l1bItemName
 
-    INTEGER :: noMAFs,l1bFlag,l1bItem,mafIndex
+    INTEGER :: noMAFs,l1bFlag,l1bItem,mafIndex,mifIndex
 
     ! Executable code. There are basically two cases here. If we have a
     ! MIFGeolocation argument this conveys all the geolocation for this
@@ -251,8 +214,18 @@ CONTAINS
 
           SELECT CASE(l1bItem)
           CASE(1)
-             CALL GetMIFStartTimesFromMAFTimes(l1bField%dpField(1,:,:),&
-                  & qty%time)
+             ! For time we have to do something a little more complicated.
+             ! ******* This is a real kludge, and we have to find a way
+             ! to do it better in 0.5. Probably simply have time as a minor
+             ! frame quantity in L1, or MIF duration.
+             !
+             DO mafIndex=1,noMAFs
+                DO mifIndex=1,l1bField%maxMIFs
+                   qty%time(mifIndex,mafIndex)=&
+                        & l1bField%dpField(1,1,mafIndex)+&
+                        & (mifIndex-1)*0.166666666666667D0
+                END DO
+             END DO
           CASE(2)
              qty%geodLat=l1bField%dpField(1,:,:)
           CASE(3)
@@ -460,6 +433,9 @@ END MODULE ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 1.11  2000/05/16 19:58:58  livesey
+! Added stuff to deal with `time' correctly.
+!
 ! Revision 1.10  2000/05/02 15:58:48  livesey
 ! Fixed a typo
 !
