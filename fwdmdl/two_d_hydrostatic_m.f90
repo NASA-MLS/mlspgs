@@ -1,126 +1,130 @@
-! This subroutine computes the 2 dimensional hydrostatic stuff
-MODULE two_d_hydrostatic_m
-  use MLSCommon, only: RP, IP
-  USE Geometry, ONLY: earthRadA, earthRadB, PI
-  USE hydrostatic_m, only: hydrostatic
-  USE get_eta_m, only: get_eta
-  USE Load_sps_data_m, ONLY: Grids_T
-  IMPLICIT none
-  Private
-  Public two_d_hydrostatic
+! Copyright (c) 1999, California Institute of Technology. ALL RIGHTS RESERVED.
+! U.S. Government sponsorship under NASA Contract NAS7407 is acknowledged.
+
+module Two_D_Hydrostatic_m
+
+  implicit none
+
+  private
+  public Two_D_Hydrostatic
+
 !---------------------------- RCS Ident Info -------------------------------
-  CHARACTER (LEN=256) :: Id = &
- "$Id$"
-  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
- "$RCSfile$"
+  character (len=*), parameter :: IdParm = &
+    & "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= &
+    & "$RCSfile$"
 !---------------------------------------------------------------------------
-  CONTAINS
+  contains
 !---------------------------------------------------------------------------
 
-  SUBROUTINE two_d_hydrostatic(Grids_tmp,z_refs,h_refs,z_grid,beta,t_grid, &
-                            &  h_grid,dhidzij,dhidtlm,ddhdhdtl0)
-!
+  subroutine Two_D_Hydrostatic ( Grids_tmp, z_refs, h_refs, z_grid, beta, &
+                              &  t_grid, h_grid, dhidzij, dhidtlm, ddhdhdtl0 )
+
+! Compute the 2 dimensional hydrostatic stuff
+
+  use Geometry, only: earthRadA, earthRadB, PI
+  use Get_eta_m, only: get_eta
+  use Hydrostatic_m, only: hydrostatic
+  use Load_sps_data_m, ONLY: Grids_T
+  use MLSCommon, only: RP, IP
+
 ! inputs:
-!
-  type (Grids_T), INTENT(in) :: Grids_tmp   ! All Temperature's coordinates
-  REAL(rp), INTENT(in) :: z_refs(:)  !reference pressures
-  REAL(rp), INTENT(in) :: h_refs(:)  !reference geopotential heights at z_refs
+
+  type (Grids_T), intent(in) :: Grids_tmp   ! All Temperature's coordinates
+  real(rp), intent(in) :: z_refs(:)  !reference pressures
+  real(rp), intent(in) :: h_refs(:)  !reference geopotential heights at z_refs
 !                                 the horizontal bases for these is aligned
 !                                 with p_basis.
-  REAL(rp), INTENT(in) :: z_grid(:)!pressures for which heights/temps are
+  real(rp), intent(in) :: z_grid(:)!pressures for which heights/temps are
 !                                   needed
-  REAL(rp), INTENT(in) :: beta   ! spacecraft beta angle (Radians)
-!
+  real(rp), intent(in) :: beta   ! spacecraft beta angle (Radians)
+
 ! outputs:
-!
-  REAL(rp), INTENT(out):: t_grid(:,:)!computed temperatures
-  REAL(rp), INTENT(out):: h_grid(:,:)!computed heights
-  REAL(rp), INTENT(out):: dhidzij(:,:)!derivative of height wrt zeta
-  REAL(rp), INTENT(out):: dhidtlm(:,:,:) !derivative of height wrt temps
+
+  real(rp), intent(out):: t_grid(:,:)!computed temperatures
+  real(rp), intent(out):: h_grid(:,:)!computed heights
+  real(rp), intent(out):: dhidzij(:,:)!derivative of height wrt zeta
+  real(rp), intent(out):: dhidtlm(:,:,:) !derivative of height wrt temps
 !                                     on outputted phi grid
-  REAL(rp), OPTIONAL, INTENT(out):: ddhdhdtl0(:,:,:)!second order derivative
+  real(rp), optional, intent(out):: ddhdhdtl0(:,:,:)!second order derivative
 !                             at the tangent only---used for antenna affects
 ! internal stuff
-!
-  INTEGER(ip) :: n_vert,z_coeffs,p_coeffs,i,j1,j2
 
-  REAL(rp) :: c
-  REAL(rp), ALLOCATABLE, DIMENSION(:) :: lats,t_prfl,h_prfl,dhidzi,red_phi_t
-  REAL(rp), ALLOCATABLE, DIMENSION(:,:) :: ddhdhdtq,dhidtq
-  REAL(rp), PARAMETER :: Pi = 3.1415926535897932384626434_rp
-!
+  integer(ip) :: z_coeffs, p_coeffs, i, j1, j2
+
+  real(rp) :: CSQ ! C**2
+  real(rp), dimension(size(z_grid),Grids_tmp%no_z(1)) :: ddhdhdtq, dhidtq
+  real(rp), dimension(Grids_tmp%no_p(1)) :: lats, red_phi_t
+  real(rp), dimension(size(z_grid)) :: t_prfl, h_prfl, dhidzi
+  real(rp) :: SinBeta, SinBetaSQ, SinPhi, SinPhiSQ
+
+  real(rp), parameter :: PId2=0.5_rp*pi, PI2=2.0_rp*pi, PI3d2=1.5_rp*pi
+
 ! NOTES
 ! allocate arrays
-!
-  n_vert = SIZE(z_grid)
+
   z_coeffs = Grids_tmp%no_z(1)
   p_coeffs = Grids_tmp%no_p(1)
-!
-! allocate arrays
-!
-  ALLOCATE(lats(1:p_coeffs))
-  ALLOCATE(t_prfl(1:n_vert))
-  ALLOCATE(h_prfl(1:n_vert))
-  ALLOCATE(dhidzi(1:n_vert))
-  ALLOCATE(red_phi_t(1:p_coeffs))
-  ALLOCATE(dhidtq(1:n_vert,1:z_coeffs))
 
-  c = earthrada*earthradb / SQRT(earthrada**2 &
-    * SIN(beta)**2 + earthradb**2*COS(beta)**2) ! in meters
-!
+  sinBeta = sin(beta)
+  sinBetaSQ = sinBeta**2
+  csq = (earthrada*earthradb)**2 / (earthrada**2 * sinBetaSQ + &
+      &                             earthradb**2 * (1 - sinBetaSQ) ) ! in meters
+
 ! rephase the phi
-!
-  red_phi_t = MODULO(Grids_tmp%phi_basis,2.0_rp*Pi)
-  WHERE(0.5_rp*Pi < red_phi_t .AND. red_phi_t <= 1.5_rp*Pi) &
-              &  red_phi_t = Pi - red_phi_t
-  WHERE(red_phi_t > 1.5_rp*Pi) red_phi_t = red_phi_t - 2.0_rp*Pi
-  lats = ASIN(c**2 * SIN(red_phi_t) * SIN(beta) &
-       / SQRT(earthrada**4*COS(red_phi_t)**2 + &
-              c**4*SIN(red_phi_t)**2))
-!
+
+  red_phi_t = modulo(Grids_tmp%phi_basis,PI2)
+  where ( PiD2 < red_phi_t .AND. red_phi_t <= Pi3D2 )
+    red_phi_t = Pi - red_phi_t
+  elsewhere ( red_phi_t > Pi3D2 )
+    red_phi_t = red_phi_t - Pi2
+  end where
+
+  do i = 1, size(lats) ! so we don't calculate both sin(red_phi_t) and cos(")
+    sinPhi = sin(red_phi_t(i))
+    sinPhiSQ = sinPhi**2
+    lats(i) = asin(csq * sinPhi * sinBeta &
+       / sqrt(earthrada**4*(1-sinPhiSQ) + csq**2*sinPhiSQ))
+  end do
+
 ! compute the 2 d hydrostatic
-!
-  IF(PRESENT(ddhdhdtl0)) THEN
-    ALLOCATE(ddhdhdtq(1:n_vert,1:z_coeffs))
+
+  if ( present(ddhdhdtl0) ) then
     j2 = 0
-    DO i = 1,p_coeffs
+    do i = 1, p_coeffs
       j1 = j2 + 1
       j2 = j1 + z_coeffs - 1
-      CALL hydrostatic(lats(i),Grids_tmp%zet_basis,Grids_tmp%values(j1:j2),&
-         & z_grid,z_refs(i),h_refs(i),t_prfl,h_prfl,dhidtq,dhidzi,ddhdhdtq)
+      call hydrostatic ( lats(i), Grids_tmp%zet_basis, Grids_tmp%values(j1:j2), &
+         & z_grid, z_refs(i), h_refs(i), t_prfl, h_prfl, dhidtq, dhidzi, ddhdhdtq )
       t_grid(:,i) = t_prfl
       h_grid(:,i) = h_prfl
       dhidzij(:,i) = dhidzi
       dhidtlm(:,:,i) = dhidtq
       ddhdhdtl0(:,:,i) = ddhdhdtq
-    END DO
-    DEALLOCATE(ddhdhdtq)
-  ELSE
+    end do
+  else
     j2 = 0
-    DO i = 1,p_coeffs
+    do i = 1,p_coeffs
       j1 = j2 + 1
       j2 = j1 + z_coeffs - 1
-      CALL hydrostatic(lats(i),Grids_tmp%zet_basis,Grids_tmp%values(j1:j2),&
-         & z_grid,z_refs(i),h_refs(i),t_prfl,h_prfl,dhidtq,dhidzi)
+      call hydrostatic ( lats(i), Grids_tmp%zet_basis, Grids_tmp%values(j1:j2), &
+         & z_grid, z_refs(i), h_refs(i), t_prfl, h_prfl, dhidtq, dhidzi )
       t_grid(:,i) = t_prfl
       h_grid(:,i) = h_prfl
       dhidzij(:,i) = dhidzi
       dhidtlm(:,:,i) = dhidtq
-    END DO
-  ENDIF
-!
-  DEALLOCATE(red_phi_t)
-  DEALLOCATE(dhidzi)
-  DEALLOCATE(dhidtq)
-  DEALLOCATE(h_prfl)
-  DEALLOCATE(t_prfl)
-  DEALLOCATE(lats)
-!
- END SUBROUTINE two_d_hydrostatic
+    end do
+  end if
 
-END MODULE two_d_hydrostatic_m
+ end subroutine Two_D_Hydrostatic
+
+end module Two_D_Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.6  2002/07/05 07:52:53  zvi
+! Coor. switch (phi,z) -> (z,phi)
+!
 ! Revision 2.5  2002/06/24 21:11:25  zvi
 ! Adding Grids_tmp stracture and modifying calling sequences
 !
