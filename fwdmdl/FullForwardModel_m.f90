@@ -51,8 +51,7 @@ contains
       & L_CLOUDWATER, L_DN, L_DV, L_DW, L_EARTHREFL, L_ECRtoFOV, &
       & L_ELEVOFFSET, L_GPH, L_LOSVEL, L_LIMBSIDEBANDFRACTION, L_MAGNETICFIELD, &
       & L_ORBITINCLINATION, L_PHITAN, L_PTAN, L_RADIANCE, L_REFGPH, L_SCGEOCALT, &
-      & L_SIZEDISTRIBUTION, L_SPACERADIANCE, L_TEMPERATURE, L_VMR, &
-      & LIT_INDICES
+      & L_SIZEDISTRIBUTION, L_SPACERADIANCE, L_TEMPERATURE, L_VMR
     use Load_Sps_Data_m, only: DestroyGrids_t, Grids_T, Load_One_Item_Grid, &
       & Load_Sps_Data, Modify_values_for_supersat
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT, ALLOCATESLABS, &
@@ -66,8 +65,7 @@ contains
     use MLSNumerics, only: Hunt, InterpolateValues
     use MLSSignals_m, only: AreSignalsSuperset, GetNameOfSignal, MatchSignal, &
       & Radiometers, Signal_t
-    use Molecules, only: FIRST_MOLECULE, LAST_MOLECULE,                      &
-                       & L_H2O, L_H2O_18, L_N2, L_N2O, L_O_18_O, L_O2, L_O3
+    use Molecules, only: L_H2O, L_N2O, L_O3
     use NO_CONV_AT_ALL_M, only: NO_CONV_AT_ALL
     use Output_m, only: Output
     use Path_Contrib_M, only: Get_GL_Inds
@@ -75,7 +73,6 @@ contains
     use PointingGrid_m, only: POINTINGGRIDS
     use REFRACTION_M, only: REFRACTIVE_INDEX, COMP_REFCOR
     use SLABS_SW_M, only: GET_GL_SLABS_ARRAYS
-    use String_table, only: GET_STRING
 ! use testfield_m
     use Tau_M, only: Get_Tau, Tau_T
     use Toggles, only: Emit, Levels, Switches, Toggle
@@ -172,7 +169,6 @@ contains
     logical :: PATCHEDAPTG              ! Used in patching the pointings
 
     character (len=32) :: SigName       ! Name of a Signal
-    character (len=32) :: molName       ! Name of a molecule
 
     logical :: Clean                    ! Used for dumping
     logical, parameter :: dummy(2) = (/.FALSE.,.FALSE./)  ! dummy Flag array for Metrics
@@ -212,7 +208,6 @@ contains
     logical, dimension(:,:), pointer :: DO_CALC_Tscat_ZP ! 'Avoid zeros' indicator
     logical, dimension(:,:), pointer :: DO_CALC_Salb_ZP  ! 'Avoid zeros' indicator
     logical, dimension(:,:), pointer :: DO_CALC_Cext_ZP  ! 'Avoid zeros' indicator
-    logical :: Got( FIRST_MOLECULE : LAST_MOLECULE )  !
     logical, dimension(:), pointer :: true_path_flags ! array of trues
     logical, dimension(:), pointer :: t_der_path_flags! a flag that tells the
 ! where an absorption coefficient is needed for a temperature derivative.
@@ -673,49 +668,38 @@ contains
       call FindClosestInstances ( temp, thisRadiance, closestInstances )
       inst = closestInstances(MAF)
 
-      ! now checking spectroscopy
-      got = .false.
-      nspec = no_lbl
+      ! checking done in ForwardModelSupport%ConstructForwardModelConfig
+      nspec = no_lbl ! Will be at least 3 if l_n2o is included, because
+                     ! l_h2o and l_o3 are required
       noSurf  = temp%template%noSurfs
       call allocate_test ( vmrArray, nspec, n_t_zeta, 'vmrArray', ModuleName )
       vmrarray = 0.0_r8
 
       do j = 1, nspec      ! Loop over species
-        call get_string ( lit_indices( abs(fwdModelConf%molecules(j)) ), molName )
 
-        select case (fwdModelConf%molecules(j))
-        case ( L_H2O, L_O3, L_N2O )
-          ispec = 0
-          if(fwdModelConf%molecules(j) == l_h2o) ispec = 1
-          if(fwdModelConf%molecules(j) == l_o3) ispec = 2
-          if(fwdModelConf%molecules(j) == l_n2o) ispec = 3
-          if(fwdModelConf%molecules(j) == l_h2o) got(L_H2O) = .true.
-          if(fwdModelConf%molecules(j) == l_o3) got(L_O3) = .true.
+        if ( fwdModelConf%molecules(j) == l_h2o ) then
+          ispec = 1
+        else if ( fwdModelConf%molecules(j) == l_o3 ) then
+          ispec = 2
+        else if ( fwdModelConf%molecules(j) == l_n2o ) then
+          ispec = 3
+        else
+          cycle
+        end if
 
-          vmr => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra,            &
-            & quantityType=l_vmr, molecule=fwdModelConf%molecules(j) )
+        vmr => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra,            &
+          & quantityType=l_vmr, molecule=fwdModelConf%molecules(j) )
 
-          novmrSurf = vmr%template%nosurfs
+        novmrSurf = vmr%template%nosurfs
 
-          call InterpolateValues ( &
-          & reshape(vmr%template%surfs(:,1),(/novmrSurf/)), &    ! Old X
-          & reshape(vmr%values(:,inst),(/novmrSurf/)),      &    ! Old Y
-          & reshape(temp%template%surfs(:,1),(/noSurf/)),   &    ! New X
-          & vmrArray(ispec,:),                              &    ! New Y
-          & 'Linear', extrapolate='Clamp' )
+        call InterpolateValues ( &
+        & reshape(vmr%template%surfs(:,1),(/novmrSurf/)), &    ! Old X
+        & reshape(vmr%values(:,inst),(/novmrSurf/)),      &    ! Old Y
+        & reshape(temp%template%surfs(:,1),(/noSurf/)),   &    ! New X
+        & vmrArray(ispec,:),                              &    ! New Y
+        & 'Linear', extrapolate='Clamp' )
 
-        case ( L_N2, L_O2, L_H2O_18, L_O_18_O)
-          call MLSMessage(MLSMSG_Warning, ModuleName, &
-          &'cloud fwd model internally has this molecule: '//trim(molName))
-        case default
-          call MLSMessage(MLSMSG_Error, ModuleName, &
-          &'cloud fwd model currently cannot accept this molecule: '//trim(molName))
-        end select
       end do ! End of Loop over species
-
-      ! make sure we have at least two molecules h2o and o3.
-      if ( .not. got(l_h2o) .or. .not. got(l_o3) ) &
-        & call MLSMessage(MLSMSG_Error, ModuleName, 'Missing molecules H2O or O3 in cloud FM' )
 
     end if ! end of cloud block
 
@@ -3218,6 +3202,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.225  2004/10/07 23:26:09  vsnyder
+! Changes in Beta_Group structure
+!
 ! Revision 2.224  2004/10/06 21:27:41  vsnyder
 ! More work on PFA -- seems to work now
 !
