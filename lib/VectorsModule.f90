@@ -793,6 +793,8 @@ contains ! =====     Public Procedures     =============================
     ! dump only first matching quantity
     type(Vector_T), intent(in) :: VECTOR
     integer, intent(in), optional :: DETAILS ! <=0 => Don't dump quantity values
+    !                                        ! -1 Skip quantity details beyond names
+    !                                        ! -2 Skip all quantity details
     !                                        ! >0 Do dump quantity values
     !                                        ! Default 1
     character(len=*), intent(in), optional :: NAME
@@ -833,6 +835,7 @@ contains ! =====     Public Procedures     =============================
     end if
     call output ( ' Template_ID = ' )
     call output ( vector%template%id, advance='yes' )
+    if ( myDetails < -1 ) return
     do j = 1, size(vector%quantities)
       dumpThisQty = .true.
       if ( present (quantitytypes) ) dumpThisQty = &
@@ -858,6 +861,10 @@ contains ! =====     Public Procedures     =============================
           call output ( ' Qty_Template_Name = ' )
           call display_string ( vector%quantities(j)%template%name )
         end if
+        if ( myDetails < 0 ) then
+          call output(' ', advance='yes')
+          cycle
+        endif
         call output ( ' noChans = ' )
         call output ( vector%quantities(j)%template%noChans, advance='no' )
         call output ( ' noSurfs = ' )
@@ -927,6 +934,8 @@ contains ! =====     Public Procedures     =============================
     ! dump only first matching vector
     type(Vector_T), intent(in) :: VECTORS(:)
     integer, intent(in), optional :: DETAILS ! <=0 => Don't dump quantity values
+    !                                        ! -1 Skip quantity details beyond names
+    !                                        ! -2 Skip all quantity details
     !                                        ! >0 Do dump quantity values
     !                                        ! Default 1
     character(len=*), intent(in), optional :: NAME
@@ -961,6 +970,13 @@ contains ! =====     Public Procedures     =============================
       ! Presume do not need to dump vector; hence preset to FALSE -- 
       ! becomes TRUE if wish to dump one or more quantities
       dumpThisVector = .false.
+      if ( .not. associated(vectors(i)%quantities) ) then
+        call output ( '(entry  ', advance='no' )
+        call output ( i, advance='no' )
+        call output ( '  in the vector database had been destroyed)  ', &
+        & advance='yes' )
+        cycle
+      endif
       do j=1, size(vectors(i)%quantities)
         ! Presume need to dump quantity; hence preset to TRUE --
         ! becomes FALSE if fails to match a requirement
@@ -1297,6 +1313,8 @@ contains ! =====     Public Procedures     =============================
 
   ! This routine removes a vector from a database of such vectors, 
   ! deallocating the database if necessary.
+  ! Alas, doesn't work--we need to know how to undecorate character tree
+  ! first before we will be able to make it work; sorry (P. Wagner)
 
     ! Dummy arguments
     type (Vector_T), dimension(:), pointer :: DATABASE
@@ -1306,6 +1324,8 @@ contains ! =====     Public Procedures     =============================
     type (Vector_T), dimension(:), pointer :: tempDatabase
     logical, parameter                     :: okToDeallocEmptyDB = .FALSE.
     include "rmItemFromDatabase.f9h"
+    call MLSMessage ( MLSMSG_Error, &
+        & ModuleName, "Cannot yet (ever?) rm vector from database" ) 
 
     rmVectorFromDatabase = newSize
   end function RmVectorFromDatabase
@@ -1623,6 +1643,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.69  2001/10/15 22:11:54  livesey
+! Added globalUnit stuff
+!
 ! Revision 2.68  2001/10/12 23:10:18  pwagner
 ! Better dumps, fewer bumps
 !
