@@ -60,7 +60,7 @@ contains
 
     do lun = 20, 99
       inquire ( unit=lun, exist=exist, opened=opened )
-      if ( exist .and. .not. opened ) exit
+      if ( exist .and. .not. opened ) EXIT
     end do
     if ( opened .or. .not. exist ) call MLSMessage ( MLSMSG_Error, moduleName, &
       & "No logical unit numbers available" )
@@ -108,7 +108,7 @@ contains
       & moduleName )
 
     ! First, read through the file and count how much stuff is there.
-    read ( lun, '(a)', end=98, err=99, iostat=status ) line
+    read ( lun, '(A)', end=98, err=99, iostat=status ) line
     howManyRadiometers = 0
 outer1: do
       howManyRadiometers = howManyRadiometers + 1
@@ -135,16 +135,16 @@ outer1: do
           & moduleName, "Improper signal specification: " // trim(line) )
         howManySignals(howManyRadiometers) = &
           & howManySignals(howManyRadiometers) + signalCount
-        read ( lun, '(a)', end=98, err=99, iostat=status ) line
-        if ( verify(line(1:1), ' 0123456789.+-') == 0 ) exit ! a number
+        read ( lun, '(A)', end=98, err=99, iostat=status ) line
+        if ( verify(line(1:1), ' 0123456789.+-') == 0 ) EXIT ! a number
       end do
       read ( line, *, err=99 ) Frequency
       howManyGrids(howManyRadiometers) = 0
       do
-        read ( lun, '(a)', err=99, iostat=status ) line
-        if ( status < 0 ) exit outer1
+        read ( lun, '(A)', err=99, iostat=status ) line
+        if ( status < 0 ) EXIT outer1
         line = adjustl(line)
-        if ( verify(line(1:1), ' 0123456789.+-') /= 0 ) exit ! not a number
+        if ( verify(line(1:1), ' 0123456789.+-') /= 0 ) EXIT ! not a number
         howManyGrids(howManyRadiometers) = howManyGrids(howManyRadiometers) + 1
         read ( line, *, err=99 ) height, numHeights
         read ( lun, *, err=99, end=98 ) ( height, i = 1, numHeights )
@@ -156,7 +156,7 @@ outer1: do
     allocate ( pointingGrids(howManyRadiometers), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
       & MLSMSG_Allocate // "PointingGrids" )
-    read ( lun, '(a)', iostat=status ) line  ! Read the first radiometer spec
+    read ( lun, '(A)', iostat=status ) line  ! Read the first radiometer spec
     if ( status > 0 ) go to 99
     howManyRadiometers = 0
 outer2: do
@@ -180,8 +180,8 @@ outer2: do
           pointingGrids(howManyRadiometers)%signals(n)%channels => channels
         end do
         call deallocate_test ( signal_indices, 'Signal_Indices', moduleName )
-        read ( lun, '(a)', err=99, iostat=status ) line
-        if ( verify(line(1:1), ' 0123456789.+-') == 0 ) exit ! a number
+        read ( lun, '(A)', err=99, iostat=status ) line
+        if ( verify(line(1:1), ' 0123456789.+-') == 0 ) EXIT ! a number
       end do
       !??? Should the centerFrequency be gotten from the signals database?
       !??? Maybe not.  The one in the pointing grid file appears to have been
@@ -194,12 +194,12 @@ outer2: do
         & MLSMSG_Allocate // "PointingGrids(?)%OneGrid" )
       n = 0
       do
-        read ( lun, '(a)', err=99, iostat=status ) line
-        if ( status < 0 ) exit outer2
-        if ( verify(line(1:1), ' 0123456789.+-') /= 0 ) exit ! not a number
+        read ( lun, '(A)', err=99, iostat=status ) line
+        if ( status < 0 ) EXIT outer2
+        if ( verify(line(1:1), ' 0123456789.+-') /= 0 ) EXIT ! not a number
         n = n + 1
         read ( line, *, iostat=status, err=99 ) height, numHeights
-        if ( status < 0 ) exit outer2
+        if ( status < 0 ) EXIT outer2
         if ( status /= 0 ) goto 99
         pointingGrids(howManyRadiometers)%oneGrid(n)%height = height
         call allocate_test ( &
@@ -224,7 +224,8 @@ outer2: do
       call trace_end ( "Read_Pointing_Grid_File" )
     end if
 
-    return
+    Return
+
   98 call MLSMessage ( MLSMSG_Error, moduleName, "Unexpected end-of-file" )
   99 call io_error ( "While reading the pointing grid file", status )
      call MLSMessage ( MLSMSG_Error, moduleName, "Input error" )
@@ -292,6 +293,9 @@ outer2: do
 end module PointingGrid_m
 
 ! $Log$
+! Revision 2.0  2001/09/17 20:26:26  livesey
+! New forward model
+!
 ! Revision 1.17.2.2  2001/09/14 20:14:49  livesey
 ! Rewrote Destroy_Pointing_Grid_Database to handle the signals
 ! differently.  Seemed to fix some memory stomping I didn't
