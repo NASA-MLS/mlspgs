@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -24,6 +24,15 @@ module L3ascii ! Collections of Hugh's subroutines to handle TYPE GriddedData_T
   character(len=*), private, parameter :: ModuleName = &
     & "$RCSfile$"
   !-----------------------------------------------------------------------------
+
+!     c o n t e n t s
+!     - - - - - - - -
+
+! L3ascii_open           Opens a l3ascii file, reads, prints
+! L3ascii_read_field     Read field info and all the axis info
+! L3ascii_interp_field   Get value in outval at the specified pressure, lat, etc
+! make_log_axis          Create log axis according to specified divisions
+! L3ascii_get_multiplier How much was the mixing ratio multiplied by?
 
   public::L3ascii_open, L3ascii_read_field, L3ascii_interp_field, Make_log_axis
   public::L3ascii_get_multiplier
@@ -917,10 +926,12 @@ itemsloop:do
         call output ( error_number, places=9, advance='yes' )
       end if
     else
-      print*, '***Error in module ', ModuleName
-      print*, trim(full_message)
+      call output ( '***Error in module ' )
+      call output ( ModuleName, advance='yes' )
+      call output ( trim(full_message), advance='yes' )
       if ( present(error_number) ) then
-        print*, 'error number ', error_number
+        call output ( 'Error number ' )
+        call output ( error_number, advance='yes' )
       end if
     end if
 
@@ -934,6 +945,9 @@ END MODULE L3ascii
 
 !
 ! $Log$
+! Revision 2.12  2002/01/09 23:46:42  pwagner
+! Added toc; removed debugging stuff
+!
 ! Revision 2.11  2001/07/12 23:28:39  livesey
 ! Tidied up a bit.  More work needs to come here.
 !

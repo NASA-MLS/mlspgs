@@ -11,7 +11,7 @@ module STRING_TABLE
                   HASH_BAD_LOC => BAD_LOC, HASH_EMPTY => EMPTY
   use IO_STUFF, only: GET_LUN
   use MACHINE, only: IO_ERROR
-  use OUTPUT_M, only: OUTPUT
+  use OUTPUT_M, only: BLANKS, OUTPUT
   implicit NONE
   private
 
@@ -478,50 +478,108 @@ contains
         hash_table(2,loc) = nstring
         string = nstring
         strings(nstring+1) = strings(nstring)
-      if(myDEBUG) then
-        write ( *, * ) 'STRING_TABLE%LOOKUP_AND_INSERT-E- ', &
-                       'hash_key was not found in table'
-      write (*, *) 'hash key: ', hash_key
-      write (*, *) 'hash table keys: ', hash_table(2,:)
-      write (*, *) 'Compare', hash_table(2,loc), ': ', &
-      char_table(strings(hash_table(2,loc)-1)+1:strings(hash_table(2,loc))), &
-      ' to ',1, ': ', char_table(1:strings(2))
-      endif
+        if(myDEBUG) then
+!        write ( *, * ) 'STRING_TABLE%LOOKUP_AND_INSERT-E- ', &
+!                       'hash_key was not found in table'
+!      write (*, *) 'hash key: ', hash_key
+!      write (*, *) 'hash table keys: ', hash_table(2,:)
+!      write (*, *) 'Compare', hash_table(2,loc), ': ', &
+!      char_table(strings(hash_table(2,loc)-1)+1:strings(hash_table(2,loc))), &
+!      ' to ',1, ': ', char_table(1:strings(2))
+          call output('STRING_TABLE%LOOKUP_AND_INSERT-E- ', advance='no')
+          call blanks(3)
+          call output('hash_key was not found in table ', advance='yes')
+      
+          call output('hash key: ', advance='no')
+          call output(hash_key, advance='yes')
+      
+          call output('hash table keys: ', advance='no')
+          call output(hash_table(2,:), advance='yes')
+      
+          call output('Compare ', advance='no')
+          call output(hash_table(2,loc), advance='no')
+          call blanks(1)
+          call output(':', advance='no')
+          call blanks(1)
+          call output(char_table(strings( &
+           & hash_table(2,loc)-1)+1:strings(hash_table(2,loc) &
+           & )), advance='yes')
+
+          call output('to', advance='yes')
+
+          call output('1 : ', advance='no')
+          call blanks(1)
+          call output(char_table(1:strings(2)), advance='yes')
+        endif
         return
       end if
       if ( status /= hash_found ) then
-        write ( *, * ) 'STRING_TABLE%LOOKUP_AND_INSERT-E- ', &
-                       'Either the hash table is full'
-        write ( *, * ) 'or the program is using the hash software ', &
-                       'incorrectly.'
-        write ( *, * ) 'Unfortunately, the program doesn''t know how ', &
-                       'to increase the hash table size.'
-      write (*, *) 'status: ', status
-      if(status == HASH_FULL) then
-        write (*, *) '(hash full)'
-      elseif(status == HASH_NOT_KEY) then
-        write (*, *) '(hash not key)'
-      elseif(status == HASH_BAD_LOC) then
-        write (*, *) '(hash bad loc)'
-      elseif(status == HASH_EMPTY) then
-        write (*, *) '(hash empty)'
-      else
-        write (*, *) '(unrecognized hash error)'
-      endif
-      write (*, *) 'hash key: ', hash_key
-      write (*, *) 'hash table keys: ', hash_table(2,:)
-      write (*, *) 'hash table size ', size(hash_table(2,:))
-      if(status == HASH_FULL) then
-        write (*, *) 'You can probably fix this problem by increasing hash_table_size,'
-        write (*, *) 'the last arg in the call to init_lexer in your main program'
-      endif
+!        write ( *, * ) 'STRING_TABLE%LOOKUP_AND_INSERT-E- ', &
+!                       'Either the hash table is full'
+!        write ( *, * ) 'or the program is using the hash software ', &
+!                       'incorrectly.'
+!        write ( *, * ) 'Unfortunately, the program doesn''t know how ', &
+!                       'to increase the hash table size.'
+!      write (*, *) 'status: ', status
+          call output('STRING_TABLE%LOOKUP_AND_INSERT-E- ', advance='no')
+          call blanks(3)
+          call output('Either the hash table is full', advance='yes')
+          call output('or the program is using the hash software' // &
+          & 'incorrectly.', advance='yes')
+          call output('Unfortunately, the program doesn''t know how' // &
+          & 'to increase the hash table size.', advance='yes')
+      
+          call output('status: ', advance='no')
+          call output(status, advance='yes')
+      
+          if(status == HASH_FULL) then
+            call output( '(hash full)', advance='yes')
+          elseif(status == HASH_NOT_KEY) then
+            call output( '(hash not key)', advance='yes')
+          elseif(status == HASH_BAD_LOC) then
+            call output( '(hash bad loc)', advance='yes')
+          elseif(status == HASH_EMPTY) then
+            call output( '(hash empty)', advance='yes')
+          else
+            call output( '(unrecognized hash error)', advance='yes')
+          endif
+!      write (*, *) 'hash key: ', hash_key
+!      write (*, *) 'hash table keys: ', hash_table(2,:)
+!      write (*, *) 'hash table size ', size(hash_table(2,:))
+          call output('hash key: ', advance='no')
+          call output(hash_key, advance='yes')
+          call output('hash table keys: ', advance='no')
+          call output(hash_table(2,:), advance='yes')
+          call output('hash table size: ', advance='no')
+          call output(size(hash_table(2,:)), advance='yes')
+          if(status == HASH_FULL) then
+             call output( 'You can probably fix this problem by ' // &
+              & 'increasing hash_table_size,', advance='yes')
+             call output( 'the last arg in the call to init_lexer ' // &
+              & 'in your main program', advance='yes')
+          endif
         stop
       end if
       ! The hash key matches; check whether the string does
       if(myDEBUG) then
-write (*, *) 'Compare', hash_table(2,loc), ': ', &
-char_table(strings(hash_table(2,loc)-1)+1:strings(hash_table(2,loc))), &
-' to ', nstring+1, ': ', char_table(strings(nstring)+1:strings(nstring+1))
+! write (*, *) 'Compare', hash_table(2,loc), ': ', &
+! char_table(strings(hash_table(2,loc)-1)+1:strings(hash_table(2,loc))), &
+! ' to ', nstring+1, ': ', char_table(strings(nstring)+1:strings(nstring+1))
+          call output('Compare ', advance='no')
+          call output(hash_table(2,loc), advance='no')
+          call blanks(1)
+          call output(':', advance='no')
+          call blanks(1)
+          call output(char_table(strings( &
+           & hash_table(2,loc)-1)+1:strings(hash_table(2,loc) &
+           & )), advance='yes')
+
+          call output('to', advance='yes')
+
+          call output(nstring+1, advance='no')
+          call blanks(1)
+          call output(':', advance='no')
+          call output(char_table(strings(nstring)+1:strings(nstring+1)), advance='yes')
 
   call output ( 'Compare ', advance='no' )
   call output ( hash_table(2,loc) ); call output ( ': ', advance='no')
@@ -591,7 +649,7 @@ char_table(strings(hash_table(2,loc)-1)+1:strings(hash_table(2,loc))), &
       end if
       call io_error ( 'STRING_TABLE%OPEN_INPUT-E- Unable to open input file', &
                       iostat, my_file )
-      write ( *, * ) 'Enter input file name: '
+      call output( 'Enter input file name: ', advance='yes')
       read ( *, '(a)', end=999 ) my_file
     end do
 999 stop
@@ -710,8 +768,12 @@ char_table(strings(hash_table(2,loc)-1)+1:strings(hash_table(2,loc))), &
         ierr=1
         return
       else
-        write ( *, * ) 'STRING_TABLE%', routine, '-E- String index ', &
-          string, ' not in 1 .. ', nstring
+        call output( 'STRING_TABLE%' // trim(routine) // &
+         & '-E- ', advance='yes')
+        call output( 'String index ', advance='no')
+        call output( string, advance='no')
+        call output( ' not in 1 .. ', advance='no')
+        call output( nstring, advance='yes')
         stop
       end if
     end if
@@ -721,6 +783,9 @@ char_table(strings(hash_table(2,loc)-1)+1:strings(hash_table(2,loc))), &
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.12  2002/01/09 23:49:38  pwagner
+! Each print became call output
+!
 ! Revision 2.11  2001/10/12 23:08:14  pwagner
 ! New ierr option to prevent (unwanted) stoppings
 !
