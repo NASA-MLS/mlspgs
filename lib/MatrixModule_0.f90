@@ -833,30 +833,9 @@ contains ! =====     Public Procedures     =============================
       !                            so that the destroyBlock in cloneBlock
       !                            gets a chance to clean up surds
     type(MatrixElement_T), pointer :: Z
-
     integer :: I
 
-    if ( present(newx) ) then
-      z => newx
-      call copyBlock ( z, x )
-    else
-      z => x
-    end if
-    select case ( z%kind )
-    case ( M_Absent )
-    case ( M_Banded )
-      do i = 1, z%nCols
-        z%values(z%r2(i-1)+1:z%r2(i),1) = x%values(z%r2(i-1)+1:z%r2(i),1) * v(i)
-      end do
-    case ( M_Column_Sparse )
-      do i = 1, z%nCols
-        z%values(z%r1(i-1)+1:z%r1(i),1) = x%values(z%r1(i-1)+1:z%r1(i),1) * v(i)
-      end do
-    case ( M_Full )
-      do i = 1, z%nCols
-        z%values(:,i) = x%values(:,i) * v(i)
-      end do
-    end select
+    include "columnscale_0.f9h"
   end subroutine ColumnScale_0_r4
 
   ! -------------------------------------------------  ColumnScale_0_r8  -----
@@ -871,28 +850,7 @@ contains ! =====     Public Procedures     =============================
     type(MatrixElement_T), pointer :: Z
 
     integer :: I
-
-    if ( present(newx) ) then
-      z => newx
-      call copyBlock ( z, x )
-    else
-      z => x
-    end if
-    select case ( z%kind )
-    case ( M_Absent )
-    case ( M_Banded )
-      do i = 1, z%nCols
-        z%values(z%r2(i-1)+1:z%r2(i),1) = x%values(z%r2(i-1)+1:z%r2(i),1) * v(i)
-      end do
-    case ( M_Column_Sparse )
-      do i = 1, z%nCols
-        z%values(z%r1(i-1)+1:z%r1(i),1) = x%values(z%r1(i-1)+1:z%r1(i),1) * v(i)
-      end do
-    case ( M_Full )
-      do i = 1, z%nCols
-        z%values(:,i) = x%values(:,i) * v(i)
-      end do
-    end select
+    include "columnscale_0.f9h"
   end subroutine ColumnScale_0_r8
 
   ! -----------------------------------------------------  Col_L1  -----
@@ -1096,46 +1054,9 @@ contains ! =====     Public Procedures     =============================
     type(MatrixElement_T), intent(in) :: B
     real(r4), dimension(:), intent(out) :: X
     logical, intent(in), optional :: SquareRoot
-
     integer :: I, J, N
-
-    n = min(b%nRows,b%nCols)
-    if ( n > size(x) ) call MLSMessage ( MLSMSG_Error, moduleName, &
-      & 'Array "X" to small in GetDiagonal_0' )
-    select case ( b%kind )
-    case ( M_Absent )
-      x = 0.0_r4
-    case ( M_Banded )
-      do i = 1, n
-        if ( b%r1(i) <= i .and. b%r1(i) + b%r2(i) - b%r2(i-1) > i ) then
-          x(i) = b%values(b%r2(i-1)+i-b%r1(i)+1,1)
-        else
-          x(i) = 0.0_r4
-        end if
-      end do
-    case ( M_Column_Sparse )
-      x = 0.0_rm
-      do j = b%r1(i-1)+1, b%r1(i)
-        if ( b%r2(j) == i ) then
-          x(i) = b%values(j,1)
-          exit ! j loop
-        end if
-        if ( b%r2(j) > i ) exit ! j loop
-      end do ! j
-    case ( M_Full )
-      do i = 1, n
-        x(i) = b%values(i,i)
-      end do
-    end select
-    if ( present(squareRoot) ) then
-      if ( squareRoot ) then
-        do i = 1, n
-          if ( x(i) < 0.0_r4 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-            & "Negative diagonal element in GetDiagonal_0 and SquareRoot is true" )
-          x(i) = sqrt(x(i))
-        end do
-      end if
-    end if
+ 
+    include "getdiagonal_0.f9h"
   end subroutine GetDiagonal_0_r4
 
   ! ----------------------------------------------  GetDiagonal_0_r8  -----
@@ -1145,46 +1066,9 @@ contains ! =====     Public Procedures     =============================
     type(MatrixElement_T), intent(in) :: B
     real(r8), dimension(:), intent(out) :: X
     logical, intent(in), optional :: SquareRoot
-
     integer :: I, J, N
 
-    n = min(b%nRows,b%nCols)
-    if ( n > size(x) ) call MLSMessage ( MLSMSG_Error, moduleName, &
-      & 'Array "X" to small in GetDiagonal_0' )
-    select case ( b%kind )
-    case ( M_Absent )
-      x = 0.0_r8
-    case ( M_Banded )
-      do i = 1, n
-        if ( b%r1(i) <= i .and. b%r1(i) + b%r2(i) - b%r2(i-1) > i ) then
-          x(i) = b%values(b%r2(i-1)+i-b%r1(i)+1,1)
-        else
-          x(i) = 0.0_r8
-        end if
-      end do
-    case ( M_Column_Sparse )
-      x = 0.0_r8
-      do j = b%r1(i-1)+1, b%r1(i)
-        if ( b%r2(j) == i ) then
-          x(i) = b%values(j,1)
-          exit ! j loop
-        end if
-        if ( b%r2(j) > i ) exit ! j loop
-      end do ! j
-    case ( M_Full )
-      do i = 1, n
-        x(i) = b%values(i,i)
-      end do
-    end select
-    if ( present(squareRoot) ) then
-      if ( squareRoot ) then
-        do i = 1, n
-          if ( x(i) < 0.0_r8 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-            & "Negative diagonal element in GetDiagonal_0 and SquareRoot is true" )
-          x(i) = sqrt(x(i))
-        end do
-      end if
-    end if
+    include "getdiagonal_0.f9h"
   end subroutine GetDiagonal_0_r8
 
   ! -----------------------------------------  GetMatrixElement_0  -----
@@ -1224,24 +1108,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: Column
     real(r4), dimension(:), intent(out) :: X
 
-    if ( column < 1 .or. column > b%nCols ) call MLSMessage ( MLSMSG_Error, &
-      & moduleName, '"Column" is out-of-range in GetVectorFromColumn_0' )
-    if ( size(x) < b%nRows )  call MLSMessage ( MLSMSG_Error, &
-      & moduleName, '"X" is too small in GetVectorFromColumn_0' )
-    select case ( b%kind )
-    case ( M_Absent )
-      x = 0.0_r4
-    case ( M_Banded )
-      x = 0.0_r4
-      x(b%r1(column):b%r1(column)+b%r2(column)-b%r2(column-1)-1) = &
-        b%values(b%r2(column-1)+1:b%r2(column),column)
-    case ( M_Column_Sparse )
-      x = 0.0_r4
-      x(b%r2(b%r1(column-1)+1:b%r1(column))) = &
-        b%values(b%r1(column-1)+1:b%r1(column),column)
-    case ( M_Full )
-      x(1:b%nRows) = b%values(1:b%nRows,column)
-    end select
+    include "getvectorfromcolumn_0.f9h"
   end subroutine GetVectorFromColumn_0_r4
 
   ! --------------------------------------  GetVectorFromColumn_0_r8  -----
@@ -1251,24 +1118,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: Column
     real(r8), dimension(:), intent(out) :: X
 
-    if ( column < 1 .or. column > b%nCols ) call MLSMessage ( MLSMSG_Error, &
-      & moduleName, '"Column" is out-of-range in GetVectorFromColumn_0' )
-    if ( size(x) < b%nRows )  call MLSMessage ( MLSMSG_Error, &
-      & moduleName, '"X" is too small in GetVectorFromColumn_0' )
-    select case ( b%kind )
-    case ( M_Absent )
-      x = 0.0_r8
-    case ( M_Banded )
-      x = 0.0_r8
-      x(b%r1(column):b%r1(column)+b%r2(column)-b%r2(column-1)-1) = &
-        b%values(b%r2(column-1)+1:b%r2(column),column)
-    case ( M_Column_Sparse )
-      x = 0.0_r8
-      x(b%r2(b%r1(column-1)+1:b%r1(column))) = &
-        b%values(b%r1(column-1)+1:b%r1(column),column)
-    case ( M_Full )
-      x(1:b%nRows) = b%values(1:b%nRows,column)
-    end select
+    include "getvectorfromcolumn_0.f9h"
   end subroutine GetVectorFromColumn_0_r8
 
   ! -------------------------------------------  InvertCholesky_0  -----
@@ -2239,65 +2089,7 @@ contains ! =====     Public Procedures     =============================
     real(rm) :: S                  ! SUBTRACT => -1 else +1
     integer :: V1                  ! Subscripts and loop inductors
 
-    if ( a%nRows /= size(v) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & "Matrix block and vector not compatible in MultiplyMatrixVector_0" )
-    if ( a%nCols /= size(p) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & "Matrix block and result not compatible in MultiplyMatrixVector_0" )
-    my_update = .false.
-    if ( present(update) ) my_update = update
-    my_sub = .false.
-    if ( present(subtract) ) my_sub = subtract
-    nullify ( my_Mask )
-    if ( present(mask) ) my_mask => mask
-    s = 1.0_rm
-    if ( my_sub ) s = -1.0_rm
-    if ( .not. my_update ) p = 0.0_r4
-    select case ( a%kind )
-    case ( M_Absent )
-    case ( M_Banded )
-!$OMP PARALLEL DO private ( v1, n, m, av )
-      do i = 1, size(p)
-        if ( associated(my_mask) ) then
-          if ( iand(ichar(my_mask(i)),m_LinAlg) /= 0 ) &
-      cycle
-        end if
-        v1 = a%r2(i-1)             ! starting position in A%VALUES - 1
-        n = a%r2(i) - v1           ! how many values
-        if ( n <= 0 ) cycle
-        m = a%r1(i)                ! starting position in V
-        av = dot(n, a%values(v1+1,1), 1, v(m), 1)
-!       av = dot_product( a%values(v1+1:v1+n,1), v(m:m+n-1) )
-        p(i) = p(i) + s * av
-      end do ! i
-!$OMP END PARALLEL DO
-     case ( M_Column_Sparse )
-      do i = 1, size(p)
-        if ( associated(my_mask) ) then
-          if ( iand(ichar(my_mask(i)),m_LinAlg) /= 0 ) &
-      cycle
-        end if
-        av = 0.0_r8
-        do n = a%r1(i-1)+1, a%r1(i)
-          av = av + a%values(n,1) * v(a%r2(n))
-        end do ! n
-        p(i) = p(i) + s * av
-      end do ! i
-    case ( M_Full )
-      if ( associated(my_mask) ) then
-!$OMP PARALLEL DO
-        do i = 1, size(p)
-          if ( iand(ichar(my_mask(i)),m_LinAlg) /= 0 ) &
-        cycle
-          p(i) = p(i) + s * dot(size(v), a%values(1,i), 1, v(1), 1)
-!         p(i) = p(i) + s * dot_product( a%values(:,i), v)
-        end do ! i
-!$OMP END PARALLEL DO
-      else
-        call gemv ( 't', size(a%values,1), size(a%values,2), s, a%values, &
-          & size(a%values,1), v, 1, 1.0_rm, p, 1 )
-!       p = p + s * matmul(transpose(a%values),v)
-      end if
-    end select
+    include "multiplymatrixvector_0.f9h"
   end subroutine MultiplyMatrixVector_0_r4
 
   ! -------------------------------------  MultiplyMatrixVector_0_r8  -----
@@ -2321,65 +2113,7 @@ contains ! =====     Public Procedures     =============================
     real(rm) :: S                  ! SUBTRACT => -1 else +1
     integer :: V1                  ! Subscripts and loop inductors
 
-    if ( a%nRows /= size(v) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & "Matrix block and vector not compatible in MultiplyMatrixVector_0" )
-    if ( a%nCols /= size(p) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & "Matrix block and result not compatible in MultiplyMatrixVector_0" )
-    my_update = .false.
-    if ( present(update) ) my_update = update
-    my_sub = .false.
-    if ( present(subtract) ) my_sub = subtract
-    nullify ( my_Mask )
-    if ( present(mask) ) my_mask => mask
-    s = 1.0_rm
-    if ( my_sub ) s = -1.0_rm
-    if ( .not. my_update ) p = 0.0_r8
-    select case ( a%kind )
-    case ( M_Absent )
-    case ( M_Banded )
-!$OMP PARALLEL DO private ( v1, n, m, av )
-      do i = 1, size(p)
-        if ( associated(my_mask) ) then
-          if ( iand(ichar(my_mask(i)),m_LinAlg) /= 0 ) &
-      cycle
-        end if
-        v1 = a%r2(i-1)             ! starting position in A%VALUES - 1
-        n = a%r2(i) - v1           ! how many values
-        if ( n <= 0 ) cycle
-        m = a%r1(i)                ! starting position in V
-        av = dot(n, a%values(v1+1,1), 1, v(m), 1)
-!       av = dot_product( a%values(v1+1:v1+n,1), v(m:m+n-1) )
-        p(i) = p(i) + s * av
-      end do ! i
-!$OMP END PARALLEL DO
-     case ( M_Column_Sparse )
-      do i = 1, size(p)
-        if ( associated(my_mask) ) then
-          if ( iand(ichar(my_mask(i)),m_LinAlg) /= 0 ) &
-      cycle
-        end if
-        av = 0.0_r8
-        do n = a%r1(i-1)+1, a%r1(i)
-          av = av + a%values(n,1) * v(a%r2(n))
-        end do ! n
-        p(i) = p(i) + s * av
-      end do ! i
-    case ( M_Full )
-      if ( associated(my_mask) ) then
-!$OMP PARALLEL DO
-        do i = 1, size(p)
-          if ( iand(ichar(my_mask(i)),m_LinAlg) /= 0 ) &
-        cycle
-          p(i) = p(i) + s * dot(size(v), a%values(1,i), 1, v(1), 1)
-!         p(i) = p(i) + s * dot_product( a%values(:,i), v)
-        end do ! i
-!$OMP END PARALLEL DO
-      else
-        call gemv ( 't', size(a%values,1), size(a%values,2), s, a%values, &
-          & size(a%values,1), v, 1, 1.0_rm, p, 1 )
-!       p = p + s * matmul(transpose(a%values),v)
-      end if
-    end select
+    include "multiplymatrixvector_0.f9h"
   end subroutine MultiplyMatrixVector_0_r8
 
   ! ----------------------------------  MultiplyMatrixVectorNoT_0_r4  -----
@@ -2399,69 +2133,7 @@ contains ! =====     Public Procedures     =============================
     real(rm) :: SIGN               ! Multiplying by sign is faster than testing
     integer :: V1                  ! Subscripts and loop inductors
 
-    if ( b%nCols /= size(v) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & "Matrix block and vector not compatible in MultiplyMatrixVectorNoT_0" )
-    if ( b%nRows /= size(p) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & "Matrix block and result not compatible in MultiplyMatrixVectorNoT_0" )
-    my_update = .false.
-    if ( present(update) ) my_update = update
-    my_diag = .true.
-    if ( present(doDiag) ) my_diag = doDiag
-    my_sub = .false.
-    if ( present(subtract) ) my_sub = subtract
-    sign = 1.0_rm
-    if ( my_sub ) sign = -1.0_rm
-    if ( .not. my_update ) p = 0.0_r4
-    select case ( b%kind )
-    case ( M_Absent )
-    case ( M_Banded )
-      do j = 1, size(v)            ! columns
-        v1 = b%r2(j-1)             ! (starting position in B%VALUES) - 1
-        n = b%r2(j) - v1           ! how many values
-        m = b%r1(j)                ! starting row subscript in B%VALUES
-        if ( my_diag ) then        ! do the whole matrix
-          do i = m, m+n-1          ! rows
-            p(i) = p(i) + sign * b%values(v1+i-m+1,1) * v(j)
-          end do ! i = 1, n
-        else                       ! skip the diagonal
-          do i = m, min(m+n-1,j-1) ! rows
-            p(i) = p(i) + sign * b%values(v1+i-m+1,1) * v(j)
-          end do ! i = m, min(m+n-1,j-1)
-          do i = max(m,j+1), m+n-1 ! rows
-            p(i) = p(i) + sign * b%values(v1+i-m+1,1) * v(j)
-          end do ! i = m, min(m,n-1,j-1)
-        end if
-      end do ! j
-     case ( M_Column_Sparse )
-      do j = 1, size(p)            ! columns
-        do n = b%r1(j-1)+1, b%r1(j)! rows
-          i = b%r2(n)              ! row number
-          if ( i/=j .or. my_diag ) &
-            & p(i) = p(i) + sign * b%values(n,1) * v(j)
-        end do ! n
-      end do ! j
-    case ( M_Full )
-      if ( my_diag ) then          ! do the whole matrix
-        call gemv ( 'n', size(b%values,1), size(b%values,2), sign, b%values, &
-          & size(b%values,1), v, 1, 1.0_rm, p, 1 )
-!       p = p + sign * matmul(b%values,v)
-!       do i = 1, size(p)
-!         p(i) = p(i) + sign * dot(size(v), b%values(i,1), size(b%values,1), v(1), 1)
-!         p(i) = p(i) + sign * dot_product( b%values(i,:), v )
-!       end do ! i
-      else                         ! skip the diagonal
-!$OMP PARALLEL DO
-        do i = 1, size(p)
-          if ( i > 1 ) p(i) = p(i) + &
-            & sign * dot(i-1, b%values(i,1), size(b%values,1), v(1), 1)
-!           & sign * dot_product(b%values(i,1:i-1), v(1:i-1))
-          if ( i < size(v) ) p(i) = p(i) + &
-            & sign * dot(size(v)-i, b%values(i,i+1), size(b%values,1), v(i+1), 1)
-!           & sign * dot_product(b%values(i,i+1:), v(i+1:))
-        end do ! i
-!$OMP END PARALLEL DO
-      end if
-    end select
+    include "multiplymatrixvectornot_0.f9h"
   end subroutine MultiplyMatrixVectorNoT_0_r4
 
   ! ----------------------------------  MultiplyMatrixVectorNoT_0_r8  -----
@@ -2481,69 +2153,7 @@ contains ! =====     Public Procedures     =============================
     real(rm) :: SIGN               ! Multiplying by sign is faster than testing
     integer :: V1                  ! Subscripts and loop inductors
 
-    if ( b%nCols /= size(v) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & "Matrix block and vector not compatible in MultiplyMatrixVectorNoT_0" )
-    if ( b%nRows /= size(p) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & "Matrix block and result not compatible in MultiplyMatrixVectorNoT_0" )
-    my_update = .false.
-    if ( present(update) ) my_update = update
-    my_diag = .true.
-    if ( present(doDiag) ) my_diag = doDiag
-    my_sub = .false.
-    if ( present(subtract) ) my_sub = subtract
-    sign = 1.0_rm
-    if ( my_sub ) sign = -1.0_rm
-    if ( .not. my_update ) p = 0.0_r8
-    select case ( b%kind )
-    case ( M_Absent )
-    case ( M_Banded )
-      do j = 1, size(v)            ! columns
-        v1 = b%r2(j-1)             ! (starting position in B%VALUES) - 1
-        n = b%r2(j) - v1           ! how many values
-        m = b%r1(j)                ! starting row subscript in B%VALUES
-        if ( my_diag ) then        ! do the whole matrix
-          do i = m, m+n-1          ! rows
-            p(i) = p(i) + sign * b%values(v1+i-m+1,1) * v(j)
-          end do ! i = 1, n
-        else                       ! skip the diagonal
-          do i = m, min(m+n-1,j-1) ! rows
-            p(i) = p(i) + sign * b%values(v1+i-m+1,1) * v(j)
-          end do ! i = m, min(m+n-1,j-1)
-          do i = max(m,j+1), m+n-1 ! rows
-            p(i) = p(i) + sign * b%values(v1+i-m+1,1) * v(j)
-          end do ! i = m, min(m,n-1,j-1)
-        end if
-      end do ! j
-     case ( M_Column_Sparse )
-      do j = 1, size(p)            ! columns
-        do n = b%r1(j-1)+1, b%r1(j)! rows
-          i = b%r2(n)              ! row number
-          if ( i/=j .or. my_diag ) &
-            & p(i) = p(i) + sign * b%values(n,1) * v(j)
-        end do ! n
-      end do ! j
-    case ( M_Full )
-      if ( my_diag ) then          ! do the whole matrix
-        call gemv ( 'n', size(b%values,1), size(b%values,2), sign, b%values, &
-          & size(b%values,1), v, 1, 1.0_rm, p, 1 )
-!       p = p + sign * matmul(b%values,v)
-!       do i = 1, size(p)
-!         p(i) = p(i) + sign * dot(size(v), b%values(i,1), size(b%values,1), v(1), 1)
-!         p(i) = p(i) + sign * dot_product( b%values(i,:), v )
-!       end do ! i
-      else                         ! skip the diagonal
-!$OMP PARALLEL DO
-        do i = 1, size(p)
-          if ( i > 1 ) p(i) = p(i) + &
-            & sign * dot(i-1, b%values(i,1), size(b%values,1), v(1), 1)
-!           & sign * dot_product(b%values(i,1:i-1), v(1:i-1))
-          if ( i < size(v) ) p(i) = p(i) + &
-            & sign * dot(size(v)-i, b%values(i,i+1), size(b%values,1), v(i+1), 1)
-!           & sign * dot_product(b%values(i,i+1:), v(i+1:))
-        end do ! i
-!$OMP END PARALLEL DO
-      end if
-    end select
+    include "multiplymatrixvectornot_0.f9h"
   end subroutine MultiplyMatrixVectorNoT_0_r8
 
   ! -------------------------------------  NewMultiplyMatrix_XTY_0  ----
@@ -2635,30 +2245,7 @@ contains ! =====     Public Procedures     =============================
 
     integer :: I
 
-    if ( present(newx) ) then
-      z => newx
-      call copyBlock ( z, x )
-    else
-      z => x
-    end if
-    select case ( z%kind )
-    case ( M_Absent )
-    case ( M_Banded )
-      do i = 1, z%nCols
-        z%values(z%r2(i-1)+1:z%r2(i),1) = &
-          & v(z%r1(i):z%r1(i)+z%r2(i)-z%r2(i-1)-1) * &
-          & x%values(z%r2(i-1)+1:z%r2(i),1)
-      end do
-    case ( M_Column_Sparse )
-      do i = 1, z%nCols
-        z%values(z%r1(i-1)+1:z%r1(i),1) = v(z%r2(z%r1(i-1)+1:z%r1(i))) * &
-          & x%values(z%r1(i-1)+1:z%r1(i),1)
-      end do
-    case ( M_Full )
-      do i = 1, z%nRows
-        z%values(i,:) = v(i) * x%values(i,:)
-      end do
-    end select
+    include "rowscale_0.f9h"
   end subroutine RowScale_0_r4
 
   ! -------------------------------------------------  RowScale_0_r8  -----
@@ -2674,30 +2261,7 @@ contains ! =====     Public Procedures     =============================
 
     integer :: I
 
-    if ( present(newx) ) then
-      z => newx
-      call copyBlock ( z, x )
-    else
-      z => x
-    end if
-    select case ( z%kind )
-    case ( M_Absent )
-    case ( M_Banded )
-      do i = 1, z%nCols
-        z%values(z%r2(i-1)+1:z%r2(i),1) = &
-          & v(z%r1(i):z%r1(i)+z%r2(i)-z%r2(i-1)-1) * &
-          & x%values(z%r2(i-1)+1:z%r2(i),1)
-      end do
-    case ( M_Column_Sparse )
-      do i = 1, z%nCols
-        z%values(z%r1(i-1)+1:z%r1(i),1) = v(z%r2(z%r1(i-1)+1:z%r1(i))) * &
-          & x%values(z%r1(i-1)+1:z%r1(i),1)
-      end do
-    case ( M_Full )
-      do i = 1, z%nRows
-        z%values(i,:) = v(i) * x%values(i,:)
-      end do
-    end select
+    include "rowscale_0.f9h"
   end subroutine RowScale_0_r8
 
   ! -------------------------------------------------  ScaleBlock  -----
@@ -2728,38 +2292,7 @@ contains ! =====     Public Procedures     =============================
     real (rm), parameter :: TOL = tiny(0.0)
     real (rm), dimension(:,:), intent(in) :: U 
 
-    n = size(x)
-    
-    my_b => x
-    if ( present(b) ) my_b => b
-    my_t = .false.
-    if ( present(transpose) ) my_t = transpose
-
-    if ( my_t ) then ! solve U^T X = B for X
-      d = u(1,1)                                                           
-      if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &    
-          & "U matrix in SolveCholeskyA_0 is singular" )                   
-      x(1) = my_b(1) / d                                                   
-      do i = 2, n                                                          
-        d = u(i,i)                                                         
-        if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &  
-            & "U matrix in SolveCholeskyA_0 is singular" )                 
-        x(i) = ( my_b(i) - dot(i-1, u(1,i), 1, x(1), 1) ) / d              
-!       x(i) = ( my_b(i) - dot_product( u(:i-1,i), x(:i-1)) ) / d          
-      end do ! i = 2, n                                                    
-    else             ! solve U X = B for X
-      d = u(n,n)
-      if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & "U matrix in SolveCholeskyA_0 is singular" )
-      x(n) = my_b(n) / d
-      do i = n-1, 1, -1
-        d = u(i,i)
-        if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & "U matrix in SolveCholeskyA_0 is singular" )
-        x(i) = ( my_b(i) - dot(n-i, u(i,i+1), size(u,1), x(i+1), 1) ) / d
-!       x(i) = ( my_b(i) - dot_product(u(i,i+1:n), x(i+1:n)) ) / d
-      end do ! i = n-1, 1, -1
-    end if ! my_t
+    include "solvecholeskya_0.f9h"
   end subroutine SolveCholeskyA_0_r4
 
   ! -------------------------------------------  SolveCholeskyA_0_r8  -----  
@@ -2783,38 +2316,7 @@ contains ! =====     Public Procedures     =============================
     real (rm), parameter :: TOL = tiny(0.0)
     real (rm), dimension(:,:), intent(in) :: U 
 
-    n = size(x)
-    
-    my_b => x
-    if ( present(b) ) my_b => b
-    my_t = .false.
-    if ( present(transpose) ) my_t = transpose
-
-    if ( my_t ) then ! solve U^T X = B for X
-      d = u(1,1)                                                           
-      if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &    
-          & "U matrix in SolveCholeskyA_0 is singular" )                   
-      x(1) = my_b(1) / d                                                   
-      do i = 2, n                                                          
-        d = u(i,i)                                                         
-        if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &  
-            & "U matrix in SolveCholeskyA_0 is singular" )                 
-        x(i) = ( my_b(i) - dot(i-1, u(1,i), 1, x(1), 1) ) / d              
-!       x(i) = ( my_b(i) - dot_product( u(:i-1,i), x(:i-1)) ) / d          
-      end do ! i = 2, n                                                    
-    else             ! solve U X = B for X
-      d = u(n,n)
-      if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & "U matrix in SolveCholeskyA_0 is singular" )
-      x(n) = my_b(n) / d
-      do i = n-1, 1, -1
-        d = u(i,i)
-        if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & "U matrix in SolveCholeskyA_0 is singular" )
-        x(i) = ( my_b(i) - dot(n-i, u(i,i+1), size(u,1), x(i+1), 1) ) / d
-!       x(i) = ( my_b(i) - dot_product(u(i,i+1:n), x(i+1:n)) ) / d
-      end do ! i = n-1, 1, -1
-    end if ! my_t
+    include "solvecholeskya_0.f9h"
   end subroutine SolveCholeskyA_0_r8
 
   ! -------------------------------------------  SolveCholeskyM_0  -----
@@ -2982,80 +2484,7 @@ contains ! =====     Public Procedures     =============================
     real(rm), parameter :: TOL = tiny(0.0_rm)
     real(rm), dimension(:,:), pointer :: UD  ! U, densified
 
-    n = u%nRows
-    if ( n /= u%nCols ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & "U matrix in SolveCholeskyV_0 must be square" )
-    my_b => x
-    if ( present(b) ) my_b => b
-    if ( n /= size(my_b) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & "B matrix not compatible with U matrix in SolveCholeskyV_0" )
-    my_t = .false.
-    if ( present(transpose) ) my_t = transpose
-
-    if ( my_t ) then ! solve U^T X = B for X
-      select case ( u%kind )
-      case ( M_Absent )
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & "U matrix in SolveCholeskyV_0 must not be absent" )
-      case ( M_Banded )
-        do i = 1, n
-          if ( u%r1(i) + u%r2(i) - u%r2(i-1) - 1 /= i ) &
-            & call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & "U matrix in SolveCholeskyV_0 is not triangular" )
-          d = u%values(u%r2(i),1)
-          if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & "U matrix in SolveCholeskyV_0 is singular" )
-          x(i) = ( my_b(i) - dot(u%r2(i)-u%r2(i-1)-1, &
-            &      u%values(u%r2(i-1)+1,1), 1, &
-            &      my_b(u%r1(i)), 1) ) / d
-!         x(i) = ( my_b(i) - dot_product ( &
-!           &      u%values(u%r2(i-1)+1:u%r2(i)-1,1), &
-!           &      my_b(u%r1(i):i-1)) ) / d
-        end do ! i = 1, n
-      case ( M_Column_Sparse )
-        do i = 1, n
-          if ( u%r2(u%r1(i)) /= i ) &
-            & call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & "U matrix in SolveCholeskyV_0 is not triangular" )
-          d = u%values(u%r1(i),1)
-          if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & "U matrix in SolveCholeskyV_0 is singular" )
-          do h = u%r1(i-1)+1, u%r1(i)-1
-            x(i) = my_b(i) - u%values(h,1) * my_b(u%r2(h))
-          end do ! h = u%r1(i-1)+1, u%r1(i)-1
-          x(i) = x(i) / d
-        end do ! i = 1, n
-      case ( M_Full )
-        do i = 1, n
-          d = u%values(i,i)
-          if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & "U matrix in SolveCholeskyV_0 is singular" )
-          x(i) = ( my_b(i) - dot(i-1, u%values(1,i), 1, x(1), 1) ) / d
-!         x(i) = ( my_b(i) - dot_product( u%values(1:i-1,i), x(1:i-1)) ) / d
-        end do ! i = 1, n
-      end select
-    else             ! solve U X = B for X
-      if ( u%kind == M_full ) then
-        ud => u%values
-      else
-        nullify ( ud )
-        call allocate_test ( ud, n, n, "UD in SolveCholeskyV_0", ModuleName )
-        call densify ( ud, u )
-      end if
-      d = ud(n,n)
-      if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & "U matrix in SolveCholeskyV_0 is singular" )
-      x(n) = my_b(n) / d
-      do i = n-1, 1, -1
-        d = ud(i,i)
-        if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & "U matrix in SolveCholeskyV_0 is singular" )
-!       x(i) = ( my_b(i) - dot(n-i, ud(i,i+1), size(ud,1), x(i+1), 1) ) / d
-        x(i) = ( my_b(i) - dot_product(ud(i,i+1:n), x(i+1:n)) ) / d
-      end do ! i = 1, n
-      if ( u%kind /= M_Full ) &
-        & call deallocate_test ( ud, "UD in SolveCholeskyV_0", ModuleName )
-    end if ! my_t
+    include "solvecholeskyv_0.f9h"
   end subroutine SolveCholeskyV_0_r4
 
   ! -------------------------------------------  SolveCholeskyV_0_r8  -----
@@ -3081,80 +2510,7 @@ contains ! =====     Public Procedures     =============================
     real(rm), parameter :: TOL = tiny(0.0_rm)
     real(rm), dimension(:,:), pointer :: UD  ! U, densified
 
-    n = u%nRows
-    if ( n /= u%nCols ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & "U matrix in SolveCholeskyV_0 must be square" )
-    my_b => x
-    if ( present(b) ) my_b => b
-    if ( n /= size(my_b) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & "B matrix not compatible with U matrix in SolveCholeskyV_0" )
-    my_t = .false.
-    if ( present(transpose) ) my_t = transpose
-
-    if ( my_t ) then ! solve U^T X = B for X
-      select case ( u%kind )
-      case ( M_Absent )
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & "U matrix in SolveCholeskyV_0 must not be absent" )
-      case ( M_Banded )
-        do i = 1, n
-          if ( u%r1(i) + u%r2(i) - u%r2(i-1) - 1 /= i ) &
-            & call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & "U matrix in SolveCholeskyV_0 is not triangular" )
-          d = u%values(u%r2(i),1)
-          if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & "U matrix in SolveCholeskyV_0 is singular" )
-          x(i) = ( my_b(i) - dot(u%r2(i)-u%r2(i-1)-1, &
-            &      u%values(u%r2(i-1)+1,1), 1, &
-            &      my_b(u%r1(i)), 1) ) / d
-!         x(i) = ( my_b(i) - dot_product ( &
-!           &      u%values(u%r2(i-1)+1:u%r2(i)-1,1), &
-!           &      my_b(u%r1(i):i-1)) ) / d
-        end do ! i = 1, n
-      case ( M_Column_Sparse )
-        do i = 1, n
-          if ( u%r2(u%r1(i)) /= i ) &
-            & call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & "U matrix in SolveCholeskyV_0 is not triangular" )
-          d = u%values(u%r1(i),1)
-          if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & "U matrix in SolveCholeskyV_0 is singular" )
-          do h = u%r1(i-1)+1, u%r1(i)-1
-            x(i) = my_b(i) - u%values(h,1) * my_b(u%r2(h))
-          end do ! h = u%r1(i-1)+1, u%r1(i)-1
-          x(i) = x(i) / d
-        end do ! i = 1, n
-      case ( M_Full )
-        do i = 1, n
-          d = u%values(i,i)
-          if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & "U matrix in SolveCholeskyV_0 is singular" )
-          x(i) = ( my_b(i) - dot(i-1, u%values(1,i), 1, x(1), 1) ) / d
-!         x(i) = ( my_b(i) - dot_product( u%values(1:i-1,i), x(1:i-1)) ) / d
-        end do ! i = 1, n
-      end select
-    else             ! solve U X = B for X
-      if ( u%kind == M_full ) then
-        ud => u%values
-      else
-        nullify ( ud )
-        call allocate_test ( ud, n, n, "UD in SolveCholeskyV_0", ModuleName )
-        call densify ( ud, u )
-      end if
-      d = ud(n,n)
-      if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & "U matrix in SolveCholeskyV_0 is singular" )
-      x(n) = my_b(n) / d
-      do i = n-1, 1, -1
-        d = ud(i,i)
-        if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & "U matrix in SolveCholeskyV_0 is singular" )
-!       x(i) = ( my_b(i) - dot(n-i, ud(i,i+1), size(ud,1), x(i+1), 1) ) / d
-        x(i) = ( my_b(i) - dot_product(ud(i,i+1:n), x(i+1:n)) ) / d
-      end do ! i = 1, n
-      if ( u%kind /= M_Full ) &
-        & call deallocate_test ( ud, "UD in SolveCholeskyV_0", ModuleName )
-    end if ! my_t
+    include "solvecholeskyv_0.f9h"
   end subroutine SolveCholeskyV_0_r8
 
   ! ---------------------------------------------------  Sparsify_r4  -----
@@ -3186,79 +2542,7 @@ contains ! =====     Public Procedures     =============================
       ! max(sqrt(sq_eps*zt),tiny(1.0_rm)).  Elements less than this threshold
       ! in magnitude are considered to be zero.
 
-    if ( sq_eps < 0.0_rm ) sq_eps = sqrt(epsilon(1.0_rm))
-    do j = 1, size(z,2)
-    ! zt(j) = maxval(abs(z(:,j)))
-    ! zt(j) = max(sq_eps*zt(j), sqrt(tiny(1.0_rm)))
-    ! nnzc(j) = count(abs(z(:,j)) < zt(j))
-      zt(j) = 0.0_rm
-!     do i1 = 1, size(z,1)
-!       zt(j) = max(zt(j),abs(z(i1,j)))
-!     end do ! i1
-!     zt(j) = max(sq_eps*zt(j), sqrt(tiny(1.0_rm)))
-      nnzc(j) = 0
-      do i1 = 1, size(z,1)
-        if ( abs(z(i1,j)) > zt(j) ) nnzc(j) = nnzc(j) + 1
-      end do ! i1
-    end do ! j
-    nnz = sum(nnzc)
-    if ( nnz == 0 ) then ! Empty
-      call createBlock ( b, size(z,1), size(z,2), M_Absent )
-    else if ( nnz <= int(sparsity * size(z)) ) then ! sparse
-      kind = M_Banded
-      do j = 1, size(z,2)
-        do i1 = 1, size(z,1)       ! Find row number of first nonzero
-          if ( abs(z(i1,j)) > zt(j) ) exit
-        end do
-        r1(j) = i1
-        do i2 = size(z,1), 1, -1   ! Find row number of last nonzero
-          if ( abs(z(i2,j)) > zt(j) ) exit
-        end do
-        if ( int(col_sparsity*(i2 - i1)) > nnzc(j) ) then
-          kind = M_Column_Sparse
-          do i1 = 1, j-1 ! I1 is a column number in this case
-            nnzc(i1) = count(abs(z(:,i1)) <= zt(i1))
-          end do ! i1
-          exit
-        end if
-        nnzc(j) = max(i2 - i1 + 1,0)
-      end do ! j
-      if ( kind == M_Banded ) then
-        call createBlock ( b, size(z,1), size(z,2), M_Banded, sum(nnzc) )
-        b%r1 = r1        ! Row number of first nonzero in the column
-        do j = 1, size(z,2)
-          b%r2(j) = nnzc(j) + b%r2(j-1) ! Subscript of last nonzero in the
-                                        ! column
-          b%values(b%r2(j-1)+1:b%r2(j),1) = &
-            & z(b%r1(j):b%r1(j)+b%r2(j)-b%r2(j-1)-1,j)
-        end do
-      else
-        call createBlock ( b, size(z,1), size(z,2), M_Column_Sparse, nnz )
-        i1 = 0
-        do j = 1, size(z,2)
-          do i2 = 1, size(z,1)
-            if ( abs(z(i2,j)) > zt(j) ) then
-              i1 = i1 + 1
-              b%values(i1,1) = z(i2,j)
-              b%r2(i1) = i2
-            end if
-            b%r1(j) = i1
-          end do ! i2
-        end do ! j
-      end if
-    else ! full
-      call createBlock ( b, size(z,1), size(z,2), M_Full )
-      b%values = z
-    end if
-    if ( present(why) ) then
-      if ( present(callingModule) ) then
-        call deallocate_test ( z, why, callingModule )
-      else
-        call deallocate_test ( z, why, "No module specified" )
-      end if
-    else if ( present(callingModule) ) then
-      call deallocate_test ( z, "No variable specified", callingModule )
-    end if
+    include "sparsify.f9h"
   end subroutine Sparsify_r4
 
   ! ---------------------------------------------------  Sparsify_r8  -----
@@ -3290,79 +2574,7 @@ contains ! =====     Public Procedures     =============================
       ! max(sqrt(sq_eps*zt),tiny(1.0_rm)).  Elements less than this threshold
       ! in magnitude are considered to be zero.
 
-    if ( sq_eps < 0.0_rm ) sq_eps = sqrt(epsilon(1.0_rm))
-    do j = 1, size(z,2)
-    ! zt(j) = maxval(abs(z(:,j)))
-    ! zt(j) = max(sq_eps*zt(j), sqrt(tiny(1.0_rm)))
-    ! nnzc(j) = count(abs(z(:,j)) < zt(j))
-      zt(j) = 0.0_rm
-!     do i1 = 1, size(z,1)
-!       zt(j) = max(zt(j),abs(z(i1,j)))
-!     end do ! i1
-!     zt(j) = max(sq_eps*zt(j), sqrt(tiny(1.0_rm)))
-      nnzc(j) = 0
-      do i1 = 1, size(z,1)
-        if ( abs(z(i1,j)) > zt(j) ) nnzc(j) = nnzc(j) + 1
-      end do ! i1
-    end do ! j
-    nnz = sum(nnzc)
-    if ( nnz == 0 ) then ! Empty
-      call createBlock ( b, size(z,1), size(z,2), M_Absent )
-    else if ( nnz <= int(sparsity * size(z)) ) then ! sparse
-      kind = M_Banded
-      do j = 1, size(z,2)
-        do i1 = 1, size(z,1)       ! Find row number of first nonzero
-          if ( abs(z(i1,j)) > zt(j) ) exit
-        end do
-        r1(j) = i1
-        do i2 = size(z,1), 1, -1   ! Find row number of last nonzero
-          if ( abs(z(i2,j)) > zt(j) ) exit
-        end do
-        if ( int(col_sparsity*(i2 - i1)) > nnzc(j) ) then
-          kind = M_Column_Sparse
-          do i1 = 1, j-1 ! I1 is a column number in this case
-            nnzc(i1) = count(abs(z(:,i1)) <= zt(i1))
-          end do ! i1
-          exit
-        end if
-        nnzc(j) = max(i2 - i1 + 1,0)
-      end do ! j
-      if ( kind == M_Banded ) then
-        call createBlock ( b, size(z,1), size(z,2), M_Banded, sum(nnzc) )
-        b%r1 = r1        ! Row number of first nonzero in the column
-        do j = 1, size(z,2)
-          b%r2(j) = nnzc(j) + b%r2(j-1) ! Subscript of last nonzero in the
-                                        ! column
-          b%values(b%r2(j-1)+1:b%r2(j),1) = &
-            & z(b%r1(j):b%r1(j)+b%r2(j)-b%r2(j-1)-1,j)
-        end do
-      else
-        call createBlock ( b, size(z,1), size(z,2), M_Column_Sparse, nnz )
-        i1 = 0
-        do j = 1, size(z,2)
-          do i2 = 1, size(z,1)
-            if ( abs(z(i2,j)) > zt(j) ) then
-              i1 = i1 + 1
-              b%values(i1,1) = z(i2,j)
-              b%r2(i1) = i2
-            end if
-            b%r1(j) = i1
-          end do ! i2
-        end do ! j
-      end if
-    else ! full
-      call createBlock ( b, size(z,1), size(z,2), M_Full )
-      b%values = z
-    end if
-    if ( present(why) ) then
-      if ( present(callingModule) ) then
-        call deallocate_test ( z, why, callingModule )
-      else
-        call deallocate_test ( z, why, "No module specified" )
-      end if
-    else if ( present(callingModule) ) then
-      call deallocate_test ( z, "No variable specified", callingModule )
-    end if
+    include "sparsify.f9h"
   end subroutine Sparsify_r8
 
   ! ----------------------------------------------------  Spill_0  -----
@@ -3429,53 +2641,7 @@ contains ! =====     Public Procedures     =============================
     integer :: nCols, nRows                  ! Copies of a%...
     real(rm), dimension(:,:), pointer :: T   ! A temporary dense matrix
 
-    nullify ( t )
-    n = min(a%nCols,a%nRows)
-    select case ( a%kind )
-    case ( m_absent )
-      nCols = a%nCols ! because createBlock destroys A before re-creating it
-      nRows = a%nRows
-      call createBlock ( a, nRows, nCols, m_banded, n )
-      do i = 1, n
-        a%r1(i) = i
-        a%r2(i) = i
-        a%values(i,1) = lambda
-      end do
-    case ( m_banded )
-      do i = 1, n
-        if ( i < a%r1(i) .or. i > a%r1(i) + a%r2(i) - a%r2(i-1) - 1 ) then
-          ! No diagonal element.  Make room for one by densify-update-sparsify
-          call allocate_test ( t, a%nRows, a%nCols, "T in UpdateDiagonal_0", &
-            & ModuleName )
-          call densify ( t, a )
-          call updateDenseDiagonal ( t, lambda, i )
-          call sparsify ( t, a, "T in UpdateDiagonal_0", ModuleName ) ! A := T
-          call deallocate_test ( t, "T in UpdateDiagonal_0", ModuleName )
-          return
-        end if
-        a%values(a%r2(i-1)+i-a%r1(i)+1,1) = &
-          & a%values(a%r2(i-1)+i-a%r1(i)+1,1) + lambda
-      end do
-    case ( m_column_sparse )
-      do i = 1, n
-        do j = a%r1(i-1)+1, a%r1(i) ! hunt for the diagonal subscript
-          if ( a%r2(j) == i ) then
-            a%values(j,1) = a%values(j,1) + lambda
-          else if ( a%r2(j) > i ) then
-            ! No diagonal element.  Make room for one by densify-update-sparsify
-            call allocate_test ( t, a%nRows, a%nCols, "T in UpdateDiagonal_0", &
-              & ModuleName )
-            call densify ( t, a )
-            call updateDenseDiagonal ( t, lambda, i )
-            call sparsify ( t, a, "T in UpdateDiagonal_0", ModuleName ) ! A := T
-            call deallocate_test ( t, "T in UpdateDiagonal_0", ModuleName )
-            return
-          end if
-        end do
-      end do
-    case ( m_full )
-      call updateDenseDiagonal ( a%values, lambda, 1 )
-    end select
+    include "updatediagonal_0.f9h"
 
   contains
     subroutine UpdateDenseDiagonal ( T, LAMBDA, START )
@@ -3487,6 +2653,7 @@ contains ! =====     Public Procedures     =============================
         t(i,i) = t(i,i) + lambda
       end do
     end subroutine UpdateDenseDiagonal
+
   end subroutine UpdateDiagonal_0_r8
 
   ! -------------------------------------------  UpdateDiagonal_0_r4  -----
@@ -3500,53 +2667,7 @@ contains ! =====     Public Procedures     =============================
     integer :: nCols, nRows                  ! Copies of a%...
     real(rm), dimension(:,:), pointer :: T   ! A temporary dense matrix
 
-    nullify ( t )
-    n = min(a%nCols,a%nRows)
-    select case ( a%kind )
-    case ( m_absent )
-      nCols = a%nCols ! because createBlock destroys A before re-creating it
-      nRows = a%nRows
-      call createBlock ( a, nRows, nCols, m_banded, n )
-      do i = 1, n
-        a%r1(i) = i
-        a%r2(i) = i
-        a%values(i,1) = lambda
-      end do
-    case ( m_banded )
-      do i = 1, n
-        if ( i < a%r1(i) .or. i > a%r1(i) + a%r2(i) - a%r2(i-1) - 1 ) then
-          ! No diagonal element.  Make room for one by densify-update-sparsify
-          call allocate_test ( t, a%nRows, a%nCols, "T in UpdateDiagonal_0", &
-            & ModuleName )
-          call densify ( t, a )
-          call updateDenseDiagonal ( t, lambda, i )
-          call sparsify ( t, a, "T in UpdateDiagonal_0", ModuleName ) ! A := T
-          call deallocate_test ( t, "T in UpdateDiagonal_0", ModuleName )
-          return
-        end if
-        a%values(a%r2(i-1)+i-a%r1(i)+1,1) = &
-          & a%values(a%r2(i-1)+i-a%r1(i)+1,1) + lambda
-      end do
-    case ( m_column_sparse )
-      do i = 1, n
-        do j = a%r1(i-1)+1, a%r1(i) ! hunt for the diagonal subscript
-          if ( a%r2(j) == i ) then
-            a%values(j,1) = a%values(j,1) + lambda
-          else if ( a%r2(j) > i ) then
-            ! No diagonal element.  Make room for one by densify-update-sparsify
-            call allocate_test ( t, a%nRows, a%nCols, "T in UpdateDiagonal_0", &
-              & ModuleName )
-            call densify ( t, a )
-            call updateDenseDiagonal ( t, lambda, i )
-            call sparsify ( t, a, "T in UpdateDiagonal_0", ModuleName ) ! A := T
-            call deallocate_test ( t, "T in UpdateDiagonal_0", ModuleName )
-            return
-          end if
-        end do
-      end do
-    case ( m_full )
-      call updateDenseDiagonal ( a%values, lambda, 1 )
-    end select
+    include "updatediagonal_0.f9h"
 
   contains
     subroutine UpdateDenseDiagonal ( T, LAMBDA, START )
@@ -3558,6 +2679,7 @@ contains ! =====     Public Procedures     =============================
         t(i,i) = t(i,i) + lambda
       end do
     end subroutine UpdateDenseDiagonal
+
   end subroutine UpdateDiagonal_0_r4
 
   ! ----------------------------------------  UpdateDiagonalVec_0_r8  -----
@@ -3580,86 +2702,7 @@ contains ! =====     Public Procedures     =============================
     real(rm) :: V                            ! The value to update.  Either
     !                                          S*X or S/X.
 
-    nullify ( t )
-    s = 1.0_rm
-    if ( present(subtract) ) then
-      if ( subtract ) s = -1.0_rm
-    end if
-    myInvert = .false.
-    if ( present(invert) ) myInvert = invert
-    n = min(a%nCols,a%nRows)
-    m = max(a%nCols,a%nRows) / n
-    select case ( a%kind )
-    case ( m_absent )
-      nCols = a%nCols ! because the createBlock destroys A before re-creating it
-      nRows = a%nRows
-      call createBlock ( a, nRows, nCols, m_banded, m*n )
-      do i = 1, n                       ! Loop over shorter side
-        j = 1 + m*(i-1)                 ! Index into longer side
-        a%r1(i) = j
-        a%r2(i) = j + m - 1
-        if ( myInvert ) then
-          if ( abs(x(i)) <= tiny(0.0_r8) ) call MLSMessage ( &
-            & MLSMSG_Error, moduleName, &
-            & "Cannot update with inverse of zero in UpdateDiagonalVec_0" )
-          ! Don't misinterpret the use of r1 and r2 here, it does make sense
-          ! see their assignment above.
-          a%values(a%r1(i):a%r2(i),1) = s / x(a%r1(i):a%r2(i))
-        else
-          a%values(a%r1(i):a%r2(i),1) = s * x(a%r1(i):a%r2(i))
-        end if
-      end do
-    case ( m_banded )
-      do i = 1, n
-        if ( i < a%r1(i) .or. i > a%r1(i) + a%r2(i) - a%r2(i-1) - 1 ) then
-          ! No diagonal element.  Make room for one by densify-update-sparsify
-          call allocate_test ( t, a%nRows, a%nCols, "T in UpdateDiagonal_0", &
-            & ModuleName )
-          call densify ( t, a )
-          call updateDenseDiagonal ( t, x, s, i )
-          call sparsify ( t, a, "T in UpdateDiagonal_0", ModuleName ) ! A := T
-          call deallocate_test ( t, "T in UpdateDiagonal_0", ModuleName )
-          return
-        end if
-        if ( myInvert ) then
-          if ( abs(x(i)) <= tiny(0.0_r8) ) call MLSMessage ( &
-            & MLSMSG_Error, moduleName, &
-            & "Cannot update with inverse of zero in UpdateDiagonalVec_0" )
-          v = s / x(i)
-        else
-          v = s * x(i)
-        end if
-        a%values(a%r2(i-1)+i-a%r1(i)+1,1) = &
-          & a%values(a%r2(i-1)+i-a%r1(i)+1,1) + v
-      end do
-    case ( m_column_sparse )
-      do i = 1, n
-        do j = a%r1(i-1)+1, a%r1(i) ! hunt for the diagonal subscript
-          if ( a%r2(j) == i ) then
-            if ( myInvert ) then
-              if ( abs(x(i)) <= tiny(0.0_r8) ) call MLSMessage ( &
-                & MLSMSG_Error, moduleName, &
-                & "Cannot update with inverse of zero in UpdateDiagonalVec_0" )
-              v = s / x(i)
-            else
-              v = s * x(i)
-            end if
-            a%values(j,1) = a%values(j,1) + v
-          else if ( a%r2(j) > i ) then
-            ! No diagonal element.  Make room for one by densify-update-sparsify
-            call allocate_test ( t, a%nRows, a%nCols, "T in UpdateDiagonal_0", &
-              & ModuleName )
-            call densify ( t, a )
-            call updateDenseDiagonal ( t, x, s, i )
-            call sparsify ( t, a, "T in UpdateDiagonal_0", moduleName ) ! A := T
-            call deallocate_test ( t, "T in UpdateDiagonal_0", moduleName )
-            return
-          end if
-        end do
-      end do
-    case ( m_full )
-      call updateDenseDiagonal ( a%values, x, s, 1 )
-    end select
+    include "updatediagonalvec_0.f9h"
 
   contains
     subroutine UpdateDenseDiagonal ( T, X, S, START )
@@ -3680,6 +2723,7 @@ contains ! =====     Public Procedures     =============================
         t(i,i) = t(i,i) + v
       end do
     end subroutine UpdateDenseDiagonal
+
   end subroutine UpdateDiagonalVec_0_r8
 
   ! ----------------------------------------  UpdateDiagonalVec_0_r4  -----
@@ -3702,86 +2746,7 @@ contains ! =====     Public Procedures     =============================
     real(rm) :: V                            ! The value to update.  Either
     !                                          S*X or S/X.
 
-    nullify ( t )
-    s = 1.0_rm
-    if ( present(subtract) ) then
-      if ( subtract ) s = -1.0_rm
-    end if
-    myInvert = .false.
-    if ( present(invert) ) myInvert = invert
-    n = min(a%nCols,a%nRows)
-    m = max(a%nCols,a%nRows) / n
-    select case ( a%kind )
-    case ( m_absent )
-      nCols = a%nCols ! because the createBlock destroys A before re-creating it
-      nRows = a%nRows
-      call createBlock ( a, nRows, nCols, m_banded, m*n )
-      do i = 1, n                       ! Loop over shorter side
-        j = 1 + m*(i-1)                 ! Index into longer side
-        a%r1(i) = j
-        a%r2(i) = j + m - 1
-        if ( myInvert ) then
-          if ( abs(x(i)) <= tiny(0.0_r4) ) call MLSMessage ( &
-            & MLSMSG_Error, moduleName, &
-            & "Cannot update with inverse of zero in UpdateDiagonalVec_0" )
-          ! Don't misinterpret the use of r1 and r2 here, it does make sense
-          ! see their assignment above.
-          a%values(a%r1(i):a%r2(i),1) = s / x(a%r1(i):a%r2(i))
-        else
-          a%values(a%r1(i):a%r2(i),1) = s * x(a%r1(i):a%r2(i))
-        end if
-      end do
-    case ( m_banded )
-      do i = 1, n
-        if ( i < a%r1(i) .or. i > a%r1(i) + a%r2(i) - a%r2(i-1) - 1 ) then
-          ! No diagonal element.  Make room for one by densify-update-sparsify
-          call allocate_test ( t, a%nRows, a%nCols, "T in UpdateDiagonal_0", &
-            & ModuleName )
-          call densify ( t, a )
-          call updateDenseDiagonal ( t, x, s, i )
-          call sparsify ( t, a, "T in UpdateDiagonal_0", ModuleName ) ! A := T
-          call deallocate_test ( t, "T in UpdateDiagonal_0", ModuleName )
-          return
-        end if
-        if ( myInvert ) then
-          if ( abs(x(i)) <= tiny(0.0_r4) ) call MLSMessage ( &
-            & MLSMSG_Error, moduleName, &
-            & "Cannot update with inverse of zero in UpdateDiagonalVec_0" )
-          v = s / x(i)
-        else
-          v = s * x(i)
-        end if
-        a%values(a%r2(i-1)+i-a%r1(i)+1,1) = &
-          & a%values(a%r2(i-1)+i-a%r1(i)+1,1) + v
-      end do
-    case ( m_column_sparse )
-      do i = 1, n
-        do j = a%r1(i-1)+1, a%r1(i) ! hunt for the diagonal subscript
-          if ( a%r2(j) == i ) then
-            if ( myInvert ) then
-              if ( abs(x(i)) <= tiny(0.0_r4) ) call MLSMessage ( &
-                & MLSMSG_Error, moduleName, &
-                & "Cannot update with inverse of zero in UpdateDiagonalVec_0" )
-              v = s / x(i)
-            else
-              v = s * x(i)
-            end if
-            a%values(j,1) = a%values(j,1) + v
-          else if ( a%r2(j) > i ) then
-            ! No diagonal element.  Make room for one by densify-update-sparsify
-            call allocate_test ( t, a%nRows, a%nCols, "T in UpdateDiagonal_0", &
-              & ModuleName )
-            call densify ( t, a )
-            call updateDenseDiagonal ( t, x, s, i )
-            call sparsify ( t, a, "T in UpdateDiagonal_0", moduleName ) ! A := T
-            call deallocate_test ( t, "T in UpdateDiagonal_0", moduleName )
-            return
-          end if
-        end do
-      end do
-    case ( m_full )
-      call updateDenseDiagonal ( a%values, x, s, 1 )
-    end select
+    include "updatediagonalvec_0.f9h"
 
   contains
     subroutine UpdateDenseDiagonal ( T, X, S, START )
@@ -3792,7 +2757,7 @@ contains ! =====     Public Procedures     =============================
       integer :: I
       do i = start, n
         if ( myInvert ) then
-          if ( abs(x(i)) <= tiny(0.0_r4) ) call MLSMessage ( &
+          if ( abs(x(i)) <= tiny(0.0_r8) ) call MLSMessage ( &
             & MLSMSG_Error, moduleName, &
             & "Cannot update with inverse of zero in UpdateDiagonalVec_0" )
           v = s / x(i)
@@ -3949,6 +2914,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.87  2003/01/08 21:32:29  livesey
+! Split off _r4, _r8 routines into generic includes where sensible
+!
 ! Revision 2.86  2002/11/22 12:52:50  mjf
 ! Added nullify routine(s) to get round Sun's WS6 compiler not
 ! initialising derived type function results.
