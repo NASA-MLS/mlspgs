@@ -2,13 +2,13 @@
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
-MODULE MLSCommon                ! Common definitions for the MLS software
+module MLSCommon                ! Common definitions for the MLS software
 !=============================================================================
 
-  USE SDPTOOLKIT, only: PGSd_PC_FILE_PATH_MAX
+  use SDPTOOLKIT, only: PGSd_PC_FILE_PATH_MAX
 
-  IMPLICIT NONE
-  PUBLIC
+  implicit none
+  public
 
  ! === (start of toc) ===                                                 
 !     c o n t e n t s                                                    
@@ -33,11 +33,11 @@ MODULE MLSCommon                ! Common definitions for the MLS software
 ! === (start of api) ===
 ! int FindFirst (log condition(:))      
 ! === (end of api) ===
- PRIVATE :: Id, ModuleName
+ private :: Id, ModuleName
   !---------------------------- RCS Ident Info -------------------------------
-  CHARACTER (LEN=256) :: Id = &
+  character (LEN=256) :: Id = &
        "$Id$"
-  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile$"
+  character (LEN=*), parameter :: ModuleName= "$RCSfile$"
   private :: not_used_here 
   !---------------------------------------------------------------------------
 
@@ -47,11 +47,11 @@ MODULE MLSCommon                ! Common definitions for the MLS software
   ! Firstly, these are standard numerical types, copied from HCP
   ! (again with my change in case, sorry Hugh!)
 
-  INTEGER, PARAMETER:: i1=SELECTED_INT_KIND(2)
-  INTEGER, PARAMETER:: i2=SELECTED_INT_KIND(4)
-  INTEGER, PARAMETER:: i4=SELECTED_INT_KIND(7)
-  INTEGER, PARAMETER:: r4=SELECTED_REAL_KIND(5)
-  INTEGER, PARAMETER:: r8=SELECTED_REAL_KIND(13)
+  integer, parameter:: i1=selected_int_kind(2)
+  integer, parameter:: i2=selected_int_kind(4)
+  integer, parameter:: i4=selected_int_kind(7)
+  integer, parameter:: r4=selected_real_kind(5)
+  integer, parameter:: r8=selected_real_kind(13)
 
   ! Now choose the precision we want by preference (may automate this through
   ! make later on, with perl or m4 or something).
@@ -61,19 +61,19 @@ MODULE MLSCommon                ! Common definitions for the MLS software
   !     m                 Matrix            r8  (r4 to save memory)
   !     p                 Forward Model     r8
   !     v                 Vector            r8
-  INTEGER, PARAMETER:: rm=r4
-  INTEGER, PARAMETER:: rp=r8
-  INTEGER, PARAMETER:: ip=i4
-  INTEGER, PARAMETER:: rv=r8
+  integer, parameter:: rm=r4
+  integer, parameter:: rp=r8
+  integer, parameter:: ip=i4
+  integer, parameter:: rv=r8
 
   ! Now we have the lengths for various strings
 
-  INTEGER, PARAMETER :: NameLen=32
-  INTEGER, PARAMETER :: LineLen=132
+  integer, parameter :: NameLen=32
+  integer, parameter :: LineLen=132
 
 ! Shouldn't this be PGSd_PC_FILE_PATH_MAX ?
-  INTEGER, PARAMETER :: FileNameLen=max(PGSd_PC_FILE_PATH_MAX, 132) ! was 132
-  INTEGER, PARAMETER :: BareFNLen=64      ! Bare file name length (w/o path)
+  integer, parameter :: FileNameLen=max(PGSd_PC_FILE_PATH_MAX, 132) ! was 132
+  integer, parameter :: BareFNLen=64      ! Bare file name length (w/o path)
 
   ! --------------------------------------------------------------------------
   
@@ -81,48 +81,54 @@ MODULE MLSCommon                ! Common definitions for the MLS software
   ! Information describing the files used by the mls software
   ! Stop passing file handles back & forth bewteen routines
   ! -- pass one of these instead
-  TYPE MLSFile_T
-    CHARACTER (LEN=8) :: Type=""  ! e.g., 'ascii', 'hdf', 'swath', 'binary'
-    CHARACTER (LEN=8) :: access=""  ! e.g., 'rdonly', 'write', 'rdwrite'
-    CHARACTER (LEN=8) :: content=""  ! e.g., 'l1brad', 'l2gp', 'l2aux'
-    CHARACTER (LEN=FileNameLen) :: Name=""  ! its name (usu. w/path)
-    INTEGER :: File_Id=0     ! The HDF ID (handle) or io unit for the file
-    INTEGER :: PCF_Id=0      ! The PCF ID (ref), if any,  for the file
-    INTEGER :: HDFVersion=0  ! Which hdf version is the file if hdf(eos)
-    LOGICAL :: StillOpen=.false.
-  END TYPE MLSFile_T
+  type MLSFile_T
+    character (LEN=8) :: type=""  ! e.g., 'ascii', 'hdf', 'swath', 'binary'
+    character (LEN=8) :: access=""  ! e.g., 'rdonly', 'write', 'rdwrite'
+    character (LEN=8) :: content=""  ! e.g., 'l1brad', 'l2gp', 'l2aux'
+    character (LEN=FileNameLen) :: Name=""  ! its name (usu. w/path)
+    integer :: File_Id=0     ! The HDF ID (handle) or io unit for the file
+    integer :: PCF_Id=0      ! The PCF ID (ref), if any,  for the file
+    integer :: HDFVersion=0  ! Which hdf version is the file if hdf(eos)
+    logical :: StillOpen=.false.
+  end type MLSFile_T
 
   ! The next datatype describes the information on the L1B data files in use
 
-  TYPE L1BInfo_T
-    INTEGER :: L1BOAId=0     ! The HDF ID (handle) for the L1BOA file
+  type L1BInfo_T
+    integer :: L1BOAId=0     ! The HDF ID (handle) for the L1BOA file
     ! Id(s) for the L1BRAD file(s)
-    INTEGER, DIMENSION(:), POINTER :: L1BRADIds=>NULL()
-    CHARACTER (LEN=FileNameLen) :: L1BOAFileName=""  ! L1BOA file name
-    CHARACTER (LEN=FileNameLen), DIMENSION(:), POINTER :: &
+    integer, dimension(:), pointer :: L1BRADIds=>NULL()
+    character (LEN=FileNameLen) :: L1BOAFileName=""  ! L1BOA file name
+    character (LEN=FileNameLen), dimension(:), pointer :: &
          & L1BRADFileNames=>NULL()
-  END TYPE L1BInfo_T
+  end type L1BInfo_T
 
   ! --------------------------------------------------------------------------
 
   ! This datatype defines the `chunks' into which the input dataset is split
 
-  TYPE MLSChunk_T
-    INTEGER :: firstMAFIndex   ! Index of first MAF in the chunk
-    INTEGER :: lastMAFIndex    ! Index of last MAF in the chunk
-    INTEGER :: noMAFsLowerOverlap ! Number of MAFs in the lower overlap region
-    INTEGER :: noMAFsUpperOverlap ! Number of MAFs in the upper overlap region
-    INTEGER :: accumulatedMAFs ! Number of non overlapped MAFs before this.
-  END TYPE MLSChunk_T
+  type MLSChunk_T
+    integer :: firstMAFIndex   ! Index of first MAF in the chunk
+    integer :: lastMAFIndex    ! Index of last MAF in the chunk
+    integer :: noMAFsLowerOverlap ! Number of MAFs in the lower overlap region
+    integer :: noMAFsUpperOverlap ! Number of MAFs in the upper overlap region
+    integer :: chunkNumber              ! Index of this chunk
+    integer, dimension(:), pointer :: HGridOffsets => NULL()
+    ! This for each chunk is the index of the first non-overlapped profile in 
+    ! each hGrid into the relevant output (l2gp?) file.
+    integer, dimension(:), pointer :: HGridTotals => NULL()
+    ! This is somewhat repetetive.  It's the total number of profiles in
+    ! the output hGrid.  It's only really used in parallel runs.
+  end type MLSChunk_T
 
   ! --------------------------------------------------------------------------
 
   ! The TAI93 time range
 
-  TYPE TAI93_Range_T
-    REAL(r8) :: startTime ! TAI93 format
-    REAL(r8) :: endTime   ! TAI93 format
-  END TYPE TAI93_Range_T
+  type TAI93_Range_T
+    real(r8) :: startTime ! TAI93 format
+    real(r8) :: endTime   ! TAI93 format
+  end type TAI93_Range_T
   ! --------------------------------------------------------------------------
 
   contains
@@ -156,6 +162,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.17  2003/06/20 19:31:39  pwagner
+! Changes to allow direct writing of products
+!
 ! Revision 2.16  2003/02/17 03:52:49  livesey
 ! Bit the bullet and changed rm to r4.
 !
