@@ -353,11 +353,15 @@ CONTAINS
 
       CALL SetProcessingWindow(startDay, endDay, dates, numDays)
 
+      if (numDays .gt. 0) then 
+
       ALLOCATE(avgPer(numDays), STAT=err)
       IF ( err /= 0 ) THEN
          msr = MLSMSG_Allocate // ' array of period averages.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
+
+      endif
 
 ! For each day in the input window,
 
@@ -403,7 +407,11 @@ CONTAINS
 
 ! Get the average period for the day
 
-         avgPer(i) = sum/(numOrbits-1)
+         if (numOrbits .gt. 1) then 
+           avgPer(i) = sum/float(numOrbits-1)
+         else
+           avgPer(i) = 0.0
+         endif
 
       ENDDO
 
@@ -416,6 +424,9 @@ END MODULE OpenInit
 !==================
 
 ! $Log$
+! Revision 1.8  2001/03/27 19:35:37  nakamura
+! Changed from PCFModule to PCFHdr; save logGranID with .dat; allowed for a 1 day output window.
+!
 ! Revision 1.7  2001/02/21 21:11:59  nakamura
 ! Changed MLSPCF to MLSPCF3; removed inputVersion.
 !
