@@ -65,8 +65,8 @@ module FullCloudForwardModel
                      & L_CLOUDICE,                                           &
                      & L_CLOUDWATER,                                         &
                      & L_LOSTRANSFUNC,                                       &
-   		     & L_SCGEOCALT,                                          &
-		     & L_ELEVOFFSET,                                         &
+          		      & L_SCGEOCALT,                                          &
+         		      & L_ELEVOFFSET,                                         &
                      & L_SIDEBANDRATIO,                                      &
                      & L_CHANNEL,                                            &
                      & L_NONE
@@ -106,7 +106,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
     ! Local variables
     type (VectorValue_T), pointer :: CLOUDICE                   ! Profiles
-    type (VectorValue_T), pointer :: IWC1 
     type (VectorValue_T), pointer :: CLOUDWATER                 ! Profiles
     type (VectorValue_T), pointer :: CLOUDEXTINCTION            ! Profiles
     type (VectorValue_T), pointer :: CLOUDINDUCEDRADIANCE       ! Like radiance
@@ -239,7 +238,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
              A_EFFECTIVEOPTICALDEPTH, A_MASSMEANDIAMETER,                    &
              A_TOTALEXTINCTION,FREQUENCIES,                         &
              superset, usedchannels, usedsignals, thisRatio,                 &
-             JBLOCK, state_ext, state_los, IWC1 )
+             JBLOCK, state_ext, state_los )
              
     nullify ( doChannel )
     
@@ -303,8 +302,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
           & quantityType=l_gph )
         cloudIce => GetVectorQuantityByType ( fwdModelExtra,   &
           & quantityType=l_cloudIce )
-        IWC1 => GetVectorQuantityByType ( fwdModelExtra,   &
-          & quantityType=l_cloudExtinction )
         cloudWater => GetVectorQuantityByType ( fwdModelExtra, &
           & quantityType=l_cloudWater )
         surfaceType => GetVectorQuantityByType ( fwdModelExtra, &
@@ -562,6 +559,14 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
         Slevl = state_los%template%frequencies
 
+     ! get tangent height from tangent pressure
+      call InterpolateValues ( &
+        & reshape(temp%template%surfs,(/noSurf/)), &    ! Old X
+        & reshape(gph%values(:,instance),(/noSurf/)), &            ! Old Y
+        & reshape(ptan%values(:,maf),(/noMifs/)), &   ! New X
+        & zt, &                     ! New Y
+        & 'Linear' )
+
      IF ( present(jacobian) ) THEN
 
        if (tLat .ge. -30._r8 .and. tLat .le. 30._r8) then
@@ -570,32 +575,21 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
           CloudType='Frontal'
        endif
 
-      ! find cloud top index from state_ext that is defaulted as zero
+      ! find cloud top index from Tcir, threshold to be determined
+      !     for high Zt, use Tcir(maf)
+      !     for low Zt, use Tcir(maf-2)
        iCloudHeight = 0
-       do i = 1, noCldSurf
-!          if(state_ext%values(i,instance) > 1.e-6_r8) then
-         if(instance > 2) then
-          if(IWC1%values(i,instance-2) > 0.0_r8) then
-            iCloudHeight = i                    ! FIND INDEX FOR CLOUD-TOP
-          endif
-         endif
+       do i = 1, noMifs
+         if(cloudInducedRadiance%values(i,maf) .ne. 0.0_r8) iCloudHeight = i
        enddo
 
        CloudHeight = 18.e3_r8     ! meters
-       if(iCloudHeight .ne. 0) CloudHeight = gph%values(iCloudHeight, instance)
+       if(iCloudHeight .ne. 0) CloudHeight = zt(iCloudHeight)
 
-       call CLOUD_MODEL ( CloudType, CloudHeight, gph%values(:,instance),   &
-	     &            noSurf, WC )
+      ! set up artificial cloud profile for retrieval use only
+       call CLOUD_MODEL (CloudType, CloudHeight, gph%values(:,instance), noSurf, WC)
 
     ENDIF
-
-! get tangent height from tangent pressure
-      call InterpolateValues ( &
-        & reshape(temp%template%surfs,(/noSurf/)), &    ! Old X
-        & reshape(gph%values(:,instance),(/noSurf/)), &            ! Old Y
-        & reshape(ptan%values(:,maf),(/noMifs/)), &   ! New X
-        & zt, &                     ! New Y
-        & 'Linear' )
 
     !------------------------------------------
     ! Now call the full CloudForwardModel code
@@ -604,7 +598,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     call CloudForwardModel ( doChannel,                                      &
       & noFreqs,                                                             &
       & noSurf,                                                              & 
-      & radiance%template%noSurfs,                                           &
+      & noMifs,                                           &
       & size(ForwardModelConfig%molecules),                                  &
       & ForwardModelConfig%no_cloud_species,                                 &
       & ForwardModelConfig%no_model_surfs,                                   &
@@ -807,10 +801,10 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
          do i = 1,noInstances             ! loop over profile
          do j = 1,noCldSurf               ! loop over cloudQty surface
          do k = 1,nfine*noInstances       ! sum up all the lengths
-           if(abs(zp_fine(k) - state_ext%template%surfs(j,1)) < dz/2. &
-           & .AND. abs(phi_fine(k) - state_ext%template%phi(1,i)) < dphi/2.) &
+           if(abs(zp_fine(k) - state_ext%template%surfs(j,1)) < dz/2._r8 &
+           & .AND. abs(phi_fine(k) - state_ext%template%phi(1,i)) < dphi/2._r8) &
            & jBlock%values(mif,j+(i-1)*noCldSurf) = &
-           & jBlock%values(mif,j+(i-1)*noCldSurf) + ds_fine(k)/ds_tot
+           & jBlock%values(mif,j+(i-1)*noCldSurf) + ds_fine(k)/1.e3_r8
          end do
          end do
          end do
@@ -912,6 +906,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.74  2001/11/05 22:39:57  dwu
+! high Zt Jacobian
+!
 ! Revision 1.73  2001/11/05 20:25:14  dwu
 ! *** empty log message ***
 !
