@@ -10,7 +10,7 @@ module Convolve_All_m
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
     & "$Id$"
-  character (len=len(idParm)) :: Id
+  character (len=len(idParm)) :: Id = idParm
   character (len=*), parameter :: ModuleName = &
     & "$RCSfile$"
   private :: not_used_here 
@@ -26,19 +26,19 @@ module Convolve_All_m
            & surf_angle, di_dt, dx_dt, d2x_dxdt, dxdt_tan, dxdt_surface, di_df,&
            & ptan_Der )
 
-    use MLSCommon, only: I4, r4, R8, rp, RM
-    use intrinsic, only: L_VMR
-    use Molecules, only: L_EXTINCTION
     use Allocate_Deallocate, only: allocate_test, deallocate_test
+    use AntennaPatterns_m, only: AntennaPattern_T
     use ForwardModelConfig, only: ForwardModelConfig_T
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use Fov_Convolve_m, only: Fov_Convolve
-    use VectorsModule, only: Vector_T, VectorValue_T
-    use AntennaPatterns_m, only: AntennaPattern_T
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use intrinsic, only: L_VMR
+    use Load_sps_data_m, only: Grids_T
     use MatrixModule_0, only: M_ABSENT, M_BANDED, M_FULL
     use MatrixModule_1, only: CREATEBLOCK, FINDBLOCK, MATRIX_T
-    use Load_sps_data_m, only: Grids_T
+    use MLSCommon, only: I4, r4, R8, rp, RM
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use Molecules, only: L_EXTINCTION
+    use VectorsModule, only: Vector_T, VectorValue_T
 
 ! inputs
 
@@ -355,15 +355,18 @@ module Convolve_All_m
 
     call deallocate_test ( drad_df_out, 'drad_df_out', ModuleName )
 
- end subroutine Convolve_All
+  end subroutine Convolve_All
 
-  logical function not_used_here()
+  logical function NOT_USED_HERE()
     not_used_here = (id(1:1) == ModuleName(1:1))
-  end function not_used_here
+  end function NOT_USED_HERE
 
 end module Convolve_All_m
 
 ! $Log$
+! Revision 2.24  2002/10/08 17:08:01  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.23  2002/09/26 18:01:52  livesey
 ! Now uses GetQuantityForForwardModel.
 !
