@@ -11,10 +11,22 @@ F90DEBUGFLAGS=-g
 INCLUDE=-I/usr/local/TOOLKIT/include
 VPATH=..
 
+# Platform path
+P=LF95
+
+# Path to source files
+S=..
+
+# Path to cf_parser
+C=$S/cf_parser/$P
+
 include ../Makefile.inc
 
 #
 # $Log$
+# Revision 2.0  2000/09/05 17:41:31  dcuddy
+# Change revision to 2.0
+#
 # Revision 1.1  2000/09/02 01:50:26  vsnyder
 # Initial installation
 #
