@@ -390,10 +390,12 @@ contains ! =====     Public Procedures     =============================
         call output ( error_number, places=9, advance='yes' )
       end if
     else
-      print*, '***Error in module ', ModuleName
-      print*, trim(full_message)
+      call output ( '***Error in module ' )
+      call output ( ModuleName, advance='yes' )
+      call output ( trim(full_message), advance='yes' )
       if ( present(error_number) ) then
-        print*, 'error number ', error_number
+        call output ( 'Error number ' )
+        call output ( error_number, advance='yes' )
       end if
     end if
 
@@ -407,6 +409,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.27  2002/01/09 00:00:04  pwagner
+! Replaced write or print statements with calls to output
+!
 ! Revision 2.26  2001/11/09 23:17:22  vsnyder
 ! Use Time_Now instead of CPU_TIME
 !
