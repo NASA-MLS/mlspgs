@@ -161,7 +161,7 @@ contains
   subroutine PVMPackFWMConfig ( config )
     use PVMIDL, only: PVMIDLPack
     use PVM, only: PVMErrorMessage
-    use MorePVM, only: PVMPackLitIndex
+    use MorePVM, only: PVMPackLitIndex, PVMPackStringIndex
     use MLSSignals_m, only: PVMPackSignal
     use VGridsDatabase, only: PVMPackVGrid
     ! Dummy arguments
@@ -238,13 +238,17 @@ contains
     if ( associated ( config%tangentGrid ) ) &
       & call PVMPackVGrid ( config%tangentGrid )
 
+    ! Name fragment
+    call PVMPackStringIndex ( config%nameFragment, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "Packing nameFragment" )
+
   end subroutine PVMPackFWMConfig
 
   ! ----------------------------------------- PVMUnpackFWMConfig ---------
   subroutine PVMUnpackFWMConfig ( CONFIG )
     use PVMIDL, only: PVMIDLUnpack
     use PVM, only: PVMErrorMessage
-    use MorePVM, only: PVMUnpackLitIndex
+    use MorePVM, only: PVMUnpackLitIndex, PVMUnpackStringIndex
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
     use Allocate_Deallocate, only: Allocate_test
     use MLSSignals_m, only: PVMUnpackSignal
@@ -350,6 +354,10 @@ contains
         & MLSMSG_Allocate//'config%tangentGrid' )
       call PVMUnpackVGrid ( config%tangentGrid )
     end if
+
+    ! Name fragment
+    call PVMUnpackStringIndex ( config%nameFragment, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking name fragment" )
 
   end subroutine PVMUnpackFWMConfig
 
@@ -485,6 +493,10 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.16  2002/11/22 12:14:31  mjf
+! Added nullify routine(s) to get round Sun's WS6 compiler not
+! initialising derived type function results.
+!
 ! Revision 2.15  2002/11/15 01:32:53  livesey
 ! Added allLinesForRadiometer
 !
