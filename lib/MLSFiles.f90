@@ -974,7 +974,7 @@ contains
     
     integer, parameter :: h5p_default_f = 0
     integer, external :: PGS_MET_SFstart
-    logical, parameter :: DEBUG = .true.
+    logical, parameter :: DEBUG = .false.
 
     ! begin
    if ( DEBUG ) then
@@ -1052,7 +1052,7 @@ contains
 
     integer                       :: myhdfVersion
     integer, external :: PGS_MET_SFend
-    logical, parameter :: DEBUG = .true.
+    logical, parameter :: DEBUG = .false.
 
     ! begin
    if ( DEBUG ) then
@@ -1162,6 +1162,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.34  2002/07/23 00:06:55  pwagner
+! debug set to false in sfstart and sfend
+!
 ! Revision 2.33  2002/07/11 22:21:01  pwagner
 ! These hdf5-savvy versions transferred from he5lib
 !
