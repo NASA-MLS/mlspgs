@@ -265,8 +265,11 @@ EVERYTHING = $(SUBDIRS)  srclib\
 TAR=tar
 
 # These are all the configurations that will be removed by clean_all
-# If it becomes more widely used, I could add Abs.Linux
-EVERY_MLSCONFG = LF95.Linux  NAG.Linux  NAG.SGI  NAG.Sun  Unknown.None  Sun.Sun
+# EVERY_MLSCONFG = LF95.Linux  NAG.Linux  NAG.SGI  NAG.Sun  Unknown.None  Sun.Sun
+# Instead of hard-coding, as customized name are now possible for MLSCONFG
+# we will let reecho.sh find the ones we'll use
+REECHO=$(MLSBIN)/reecho.sh
+EVERY_MLSCONFG = $(shell ${REECHO} -d -dirn lib/machines -excl CVS)
 
 # The next 2 may be commented out if you're absolutely sure you won't need them
 tests_sub_dirs := $(shell echo tests/*)
@@ -323,6 +326,10 @@ lib:
 mostlyclean:
 	@echo "Cleaning $(SUBDIRS)"; \
 	 for dir in $(SUBDIRS); do \
+	  $(MAKE) -f $(MakeFName) -C $$dir mostlyclean; \
+	done
+	@echo "Cleaning $(tests_sub_dirs)"; \
+	 for dir in $(tests_sub_dirs) $(sids_l1boa); do \
 	  $(MAKE) -f $(MakeFName) -C $$dir mostlyclean; \
 	done
 	@$(MAKE) -f $(MakeFName) internalcleanup ; \
@@ -486,11 +493,24 @@ update:
 
 # Useful for cleaning multiple configurations
 
+clean_config_test:
+	@echo "Cleaning $(SUBDIRS) according to configuration $(MLSCONFG)"; \
+	 mv $(CONFDIR)/$(MLSCFILE) $(CONFDIR)/temp.configure; \
+	 echo "MLSCONFG=$(MLSCONFG)" > $(CONFDIR)/$(MLSCFILE); \
+	 echo "$(MAKE) -f $(MakeFName) mostlyclean"; \
+    if [ ! -d "lib/machines/$(MLSCONFG)/CVS" ] ; then \
+	   echo "rm -f -r lib/machines/$(MLSCONFG)" ; \
+	 fi ; \
+	 mv $(CONFDIR)/temp.configure $(CONFDIR)/$(MLSCFILE)
+
 clean_config:
 	@echo "Cleaning $(SUBDIRS) according to configuration $(MLSCONFG)"; \
 	 mv $(CONFDIR)/$(MLSCFILE) $(CONFDIR)/temp.configure; \
 	 echo "MLSCONFG=$(MLSCONFG)" > $(CONFDIR)/$(MLSCFILE); \
 	 $(MAKE) -f $(MakeFName) mostlyclean; \
+    if [ ! -d "lib/machines/$(MLSCONFG)/CVS" ] ; then \
+	   rm -f -r lib/machines/$(MLSCONFG) ; \
+	 fi ; \
 	 mv $(CONFDIR)/temp.configure $(CONFDIR)/$(MLSCFILE)
 
 distclean:
@@ -704,6 +724,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.55  2001/11/08 00:39:14  pwagner
+# New help system; mention of NOCLEANING where appropriate
+#
 # Revision 1.54  2001/11/06 00:21:34  pwagner
 # Set MAX_COPIES to 1; make help brought up to date
 #
