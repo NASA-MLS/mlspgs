@@ -4,6 +4,8 @@
 module LOAD_SPS_DATA_M
 
   use MLSCommon, only: R8, RP
+  use MLSNumerics, only: HUNT
+  use RHIFromH2O, only: RHIFromH2O_Factor
 
   implicit NONE
 
@@ -46,7 +48,7 @@ contains
   subroutine Load_SPS_Data ( FwdModelConf, fwdModelIn, fwdModelExtra, FmStat, &
        &    radiometer, mol_cat_index, p_len, f_len, h2o_ind, ext_ind,        &
        &    Grids_f, f_len_dw, Grids_dw, f_len_dn, Grids_dn, f_len_dv,        &
-       &    Grids_dv )
+       &    Grids_dv, i_supersat, temp_supersat )
 
     use ForwardModelConfig, only: ForwardModelConfig_t
     use ForwardModelIntermediate, only: ForwardModelStatus_t
@@ -78,11 +80,19 @@ contains
 ! All the spectroscopy(V) coordinates
     type (Grids_T), optional, intent(out) :: Grids_dv
 
+    integer, optional, intent(in)  :: i_supersat     ! Do the suprsaturation calculation?
+!-----------------------------------------------------------------------------
+! i_supersat indicates different clear and cloudy sky combinations:
+!        i_supersat =-1 is for clear-sky radiance limit assuming 110%RHi
+!        i_supersat =-2 is for clear-sky radiance limit assuming 0%RHi
+!-----------------------------------------------------------------------------
+    real(r8), dimension(:), optional, intent(in) :: &
+                                    & temp_supersat  ! What temperatures to use for supersaturation
 ! Begin code:
 
     call load_one_grid ( FwdModelConf, fwdModelIn, fwdModelExtra, FmStat, &
        & radiometer, mol_cat_index, f_len, l_vmr, Grids_f, p_len, h2o_ind,&
-       & ext_ind )
+       & ext_ind, i_supersat, temp_supersat )
 
 ! ** When the spectroscopy flags are properly introduced into the database,
 !    un-comment the following codes:
@@ -105,7 +115,7 @@ contains
 
   subroutine Load_One_Grid ( FwdModelConf, fwdModelIn, fwdModelExtra, FmStat, &
        &    radiometer, mol_cat_index, f_len, QuantityType, Grids_x, p_len,      &
-       &    h2o_ind, ext_ind )
+       &    h2o_ind, ext_ind, i_supersat, temp_supersat )
 
     use Allocate_Deallocate, only: Allocate_test
     use ForwardModelConfig, only: ForwardModelConfig_t
@@ -134,7 +144,14 @@ contains
     integer, optional, intent(out) :: P_LEN
     integer, optional, intent(out) :: H2O_IND
     integer, optional, intent(out) :: EXT_IND
-
+    integer, optional, intent(in)  :: i_supersat     ! Do the suprsaturation calculation?
+!-----------------------------------------------------------------------------
+! i_supersat indicates different clear and cloudy sky combinations:
+!        i_supersat =-1 is for clear-sky radiance limit assuming 110%RHi
+!        i_supersat =-2 is for clear-sky radiance limit assuming 0%RHi
+!-----------------------------------------------------------------------------
+    real(r8), dimension(:), optional, intent(in) :: &
+                                    & temp_supersat  ! What temperatures to use for supersaturation
 ! Local variables:
 
     integer :: i, j, k, l, m, n, r, s, kz, kp, kf
@@ -145,6 +162,13 @@ contains
     type (VectorValue_T), pointer :: PHITAN  ! Tangent geodAngle component of
 
     logical :: FoundInFirst                  ! Flag
+    integer :: supersat_Index
+    integer :: wf
+    integer :: f_index
+    integer :: z_index
+    integer :: values_index
+    real(r8), parameter :: refPRESSURE = 100._r8
+    real(r8) :: RHI 
 
 
     !******************* LOAD SPECIES DATA ************
@@ -282,6 +306,40 @@ contains
       s = m
       f_len = r
 
+
+
+      ! do the following only if i_supersat not equal to 0
+      IF ( i_supersat .eq. 0 ) THEN
+            select case ( i_supersat )
+            case ( -1 )
+              RHI=110.0_r8
+            case ( -2 )
+              RHI=1.0e-9_r8
+            end select  
+
+      call Hunt (Grids_x%zet_basis(1:n-1), -log(refPRESSURE), supersat_Index, &
+      & l, nearest=.true.)
+      
+      If (supersat_Index < 1) Then        
+         call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Could not find value of Zeta in Grid_T; returned index too small' )
+      
+      Else If (supersat_Index > size(Grids_x%values) ) Then
+         call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Could not find value of Zeta in Grid_T; returned index too BIG' )
+      Else
+       do wf=wf1, wf2
+         do f_index=1, kf
+           do z_index=1, supersat_Index
+             values_index = f_len - 1 + f_index + kf*(z_index-1) + kf*kz*(wf-wf1)
+             Grids_x%values(values_index) = RHIFromH2O_Factor (temp_supersat(z_index), &
+              & grids_x%zet_basis(l+z_index-1), 0, .true.)*RHI
+           end do
+         end do
+       end do
+      Endif
+      ENDIF
+
     end do
 
     f_len = f_len - 1
@@ -315,6 +373,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.32  2003/02/06 20:00:06  vsnyder
+! Make Load_One_Grid a public module procedure instead of internal
+!
 ! Revision 2.31  2003/01/26 04:42:42  livesey
 ! Added profiles/angle options for phiWindow
 !

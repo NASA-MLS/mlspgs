@@ -420,6 +420,10 @@ contains
 
     type (beta_group_T), dimension(:), pointer :: beta_group
 
+! temperature on surfaces where supersaturation may need to be calculated
+    real(r8), dimension(:), pointer :: temp_supersat
+
+
     ! Executable code --------------------------------------------------------
     ! ------------------------------------------------------------------------
 !   Print *, '** Enter ForwardModel, MAF =',fmstat%maf   ! ** ZEBUG
@@ -468,7 +472,7 @@ contains
       & tan_phi, tan_press, tan_temp, tau, t_glgrid, t_path, t_path_c, t_path_f, &
       & t_script, usedchannels, usedsignals, z_all, z_basis, z_basis_dn, &
       & z_basis_dv, z_basis_dw, z_glgrid, z_path, z_path_c, z_tmp, tan_temps, &
-      & tan_hts, reqs, cloudIce, cloudWater, sizeDistribution )
+      & tan_hts, reqs, cloudIce, cloudWater, sizeDistribution, temp_supersat )
 
     ! Work out what we've been asked to do -----------------------------------
 
@@ -884,18 +888,26 @@ contains
 
 ! Now, allocate other variables we're going to need later ----------------
 
+    call allocate_test ( temp_supersat, n_t_zeta, 'temp_supersat', moduleName )
+    do i=1, n_t_zeta
+      temp_supersat(i) = grids_tmp%values(i)
+    enddo
+
 ! Setup our temporary `state vector' like arrays -------------------------
 
     if ( spect_der ) then
       call load_sps_data ( FwdModelConf,  FwdModelIn, FwdModelExtra, FmStat, &
        &   firstSignal%radiometer, mol_cat_index, p_len, f_len, h2o_ind,     &
        &   ext_ind, Grids_f, f_len_dw, Grids_dw, f_len_dn, Grids_dn,         &
-       &   f_len_dv, Grids_dv )
+       &   f_len_dv, Grids_dv, i_supersat=ICON, temp_supersat=temp_supersat )
     else
       call load_sps_data ( FwdModelConf,  FwdModelIn, FwdModelExtra, FmStat, &
        &   firstSignal%radiometer, mol_cat_index, p_len, f_len, h2o_ind,     &
-       &   ext_ind, Grids_f )
+       &   ext_ind, Grids_f, i_supersat=ICON, temp_supersat=temp_supersat )
     end if
+
+! Deallocate our temp_supersat array
+   call deallocate_test(temp_supersat, 'temp_supersat', moduleName )
 
 ! set up output pointing angles------------------------------------------
 ! note we have to compute req !!!!!!!
@@ -2793,6 +2805,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.123  2003/02/06 22:04:25  vsnyder
+! Add f_moleculesPol, f_moleculeDerivativesPol, delete f_polarized
+!
 ! Revision 2.122  2003/02/06 19:15:47  jonathan
 !  fix a bug
 !
