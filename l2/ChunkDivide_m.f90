@@ -1354,15 +1354,20 @@ contains ! ===================================== Public Procedures =====
       ! (Possibly) time-consuming step:
       ! Read through the l1b radiance files for all signals,
       ! noting which ones are good, which not
+      
+      ! A wrinkle: only check center-band signals
       nullify ( signals_buffer )
       call allocate_test( &
         & signals_buffer, mafRange(2) - mafRange(1) + 1 , size(SIGNALS), &
         & 'signals_buffer', ModuleName)
+      good_signals_now = .false.   ! Initializing
       do Signal_index=1, size(SIGNALS)
-        good_signals_now(Signal_index) = &
-           & any_good_signaldata ( Signal_index, Signal%sideband, &
+        if ( Signal%sideband == 0 ) then
+          good_signals_now(Signal_index) = &
+            & any_good_signaldata ( Signal_index, Signal%sideband, &
             & l1bInfo, mafRange(1), mafRange(2), &
             & signals_buffer(:,Signal_index) )
+        endif
       enddo
 
       ! Task (1a): Find mafs where there is at least one signal which
@@ -1853,6 +1858,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.34  2003/05/17 00:06:06  pwagner
+! Wont check sidebands for missing radiances
+!
 ! Revision 2.33  2003/05/09 16:43:05  pwagner
 ! Speedup of L1B radiance check
 !
