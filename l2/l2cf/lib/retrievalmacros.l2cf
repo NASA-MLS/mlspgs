@@ -408,7 +408,7 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
    Fill, quantity=mappedChisqMax.chisqBinned$1, method=binmax, $
      sourceQuantity=minorFrameDiagnostics.chisqMMIF$1, $
      ptanQuantity=state.ptan!moduleForBand($1)
-   Fill, quantity=otherDiagnostics.chisqProfile$1, method=binmax, $
+   Fill, quantity=otherDiagnostics.chisqProfile$1, method=binmean, $
      sourceQuantity=minorFrameDiagnostics.chisqMMIF$1, $
      ptanQuantity=state.ptan!moduleForBand($1)
    Fill, quantity=otherDiagnostics.noRadsBinned$1, method=binTotal, $
@@ -518,7 +518,7 @@ Fill, quantity=cloudOutput.DTband$1, method=manipulate, $
 
 ; ------------------ High level macros for status and quality filling
 !define(addInOneChisq,{!dnl
-Fill, quantity=temporaryDiagnostics.chisqTmp, method=manipulate, manipulation='a>b', $
+Fill, quantity=temporaryDiagnostics.chisqTmp, method=manipulate, manipulation='(a+b)/2', $
   a=temporaryDiagnostics.chisqTmp, b=otherDiagnostics.chisqProfile$1, /force!nl})
 !define(addInOneNoRads,{!dnl
 Fill, quantity=temporaryDiagnostics.noRadsTmp, method=manipulate, manipulation='a+b', $
@@ -569,6 +569,9 @@ Fill, quantity=otherDiagnostics.status!MFproduct, method=status, status=!statusL
 
 
 ; $Log$
+; Revision 1.101  2004/10/30 00:04:20  livesey
+; Added bit 9 for status (never actually used as such).
+;
 ; Revision 1.100  2004/10/28 22:51:29  dwu
 ; add SO2 as a standard species
 ;
