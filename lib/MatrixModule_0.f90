@@ -14,6 +14,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   use DOT_M, only: DOT
   use DUMP_0, only: DUMP
   use Gemm_M, only: GEMM
+  use Gemv_M, only: GEMV
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use OUTPUT_M, only: OUTPUT
@@ -1537,16 +1538,20 @@ contains ! =====     Public Procedures     =============================
         p(i) = p(i) + s * av
       end do ! i
     case ( M_Full )
+      if ( associated(my_mask) ) then
 !$OMP PARALLEL DO
-      do i = 1, size(p)
-        if ( associated(my_mask) ) then
+        do i = 1, size(p)
           if ( btest(my_mask((i-1)/b+1),mod(i-1,b)) ) &
-      cycle
-        end if
-        p(i) = p(i) + s * dot(size(v), a%values(1,i), 1, v(1), 1)
-!       p(i) = p(i) + s * dot_product( a%values(:,i), v)
-      end do ! i
+        cycle
+          p(i) = p(i) + s * dot(size(v), a%values(1,i), 1, v(1), 1)
+!         p(i) = p(i) + s * dot_product( a%values(:,i), v)
+        end do ! i
 !$OMP END PARALLEL DO
+      else
+        call gemv ( 't', size(a%values,1), size(a%values,2), s, a%values, &
+          & size(a%values,1), v, 1, 1.0_r8, p, 1 )
+!       p = p + s * matmul(transpose(a%values),v)
+      end if
     end select
   end subroutine MultiplyMatrixVector_0
 
@@ -1610,12 +1615,13 @@ contains ! =====     Public Procedures     =============================
       end do ! j
     case ( M_Full )
       if ( my_diag ) then          ! do the whole matrix
-!$OMP PARALLEL DO
-        do i = 1, size(p)
-          p(i) = p(i) + sign * dot(size(v), b%values(i,1), size(b%values,1), v(1), 1)
+        call gemv ( 'n', size(b%values,1), size(b%values,2), sign, b%values, &
+          & size(b%values,1), v, 1, 1.0_r8, p, 1 )
+!       p = p + sign * matmul(b%values,v)
+!       do i = 1, size(p)
+!         p(i) = p(i) + sign * dot(size(v), b%values(i,1), size(b%values,1), v(1), 1)
 !         p(i) = p(i) + sign * dot_product( b%values(i,:), v )
-        end do ! i
-!$OMP END PARALLEL DO
+!       end do ! i
       else                         ! skip the diagonal
 !$OMP PARALLEL DO
         do i = 1, size(p)
@@ -2399,6 +2405,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.59  2001/11/14 01:00:07  vsnyder
+! Use LAPACK GEMV interface for dense matrix-vector multiply
+!
 ! Revision 2.58  2001/11/09 18:12:09  livesey
 ! Change checkBlocks to default to false.
 !
