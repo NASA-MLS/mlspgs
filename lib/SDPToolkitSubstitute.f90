@@ -20,13 +20,46 @@
 
 !CONTAINS
 
-  FUNCTION PGS_SMF_GenerateStatusReport(message)
-    CHARACTER (LEN=*), INTENT(IN) :: message
-    INTEGER :: PGS_SMF_GenerateStatusReport
+       INTEGER FUNCTION PGS_SMF_GenerateStatusReport(msg)
+             CHARACTER (LEN=*):: msg
+             !INTEGER :: PGS_SMF_GenerateStatusReport
 
-    PRINT*,message
-    PGS_SMF_GenerateStatusReport=0
-  END FUNCTION PGS_SMF_GenerateStatusReport
+             PRINT*,msg
+             PGS_SMF_GenerateStatusReport=0
+       END FUNCTION PGS_SMF_GenerateStatusReport
+
+      INTEGER FUNCTION PGS_IO_Gen_OpenF(file_logical,file_access, &
+           & record_length, file_handle, file_version)
+        INTEGER, INTENT(IN) :: file_logical
+        INTEGER, INTENT(IN) :: file_access
+        INTEGER, INTENT(IN) :: record_length
+        INTEGER, INTENT(OUT) :: file_handle
+        INTEGER, INTENT(IN) :: file_version
+      END FUNCTION PGS_IO_Gen_OpenF
+
+
+      INTEGER FUNCTION PGS_IO_Gen_CloseF(file_handle)
+        INTEGER, INTENT(IN) :: file_handle
+      END FUNCTION PGS_IO_Gen_CloseF
+
+      INTEGER FUNCTION Pgs_pc_getReference(file_handle, &
+         file_version, physicalfilename)
+        INTEGER, INTENT(IN) :: file_handle
+        INTEGER, INTENT(INOUT) :: file_version
+        character (LEN=*), INTENT(OUT) :: physicalfilename
+      END FUNCTION Pgs_pc_getReference
+
+
+      subroutine Pgs_smf_getMsg ( CODE, MNEMONIC, MSG )
+        integer, intent(out) :: CODE              ! Previously stored code
+        character(len=*), intent(out) :: MNEMONIC ! Previously stored mnemonic
+        character(len=*), intent(out) :: MSG      ! Previously stored message
+      end subroutine Pgs_smf_getMsg
+
+      INTEGER FUNCTION PGS_TD_TAItoUTC(sectai93,asciiutc)
+        DOUBLE PRECISION, INTENT(IN) :: sectai93
+        CHARACTER(LEN=27), INTENT(OUT) :: asciiutc
+      END FUNCTION PGS_TD_TAItoUTC
 
 !=============================================================================
 !END MODULE SDPToolkitSubstitute
@@ -34,6 +67,11 @@
 
 !
 ! $Log$
+! Revision 2.1  2000/11/06 18:52:22  pumphrey
+! Added routines so that every routine in SDPToolkit.f90 is represented.
+! The routines do nothing, they are just to satisfy the link stage with
+! some of the odder Fortran 9x compilers (NA FortranPlus in fact)
+!
 ! Revision 2.0  2000/09/05 17:41:07  dcuddy
 ! Change revision to 2.0
 !
