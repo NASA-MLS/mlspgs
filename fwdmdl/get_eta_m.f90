@@ -28,10 +28,9 @@ contains
     do while (i <= no_x .and. peaks(1) > x(i))
       eta(i,1) = 1.0
       eta(i,2:no_peaks) = 0.0
+      if ( i == no_x ) exit
       i = i + 1
     end do
-!
-    if (i > no_x) Return
 !
 ! Normal triangular function for j=2 to j=no_peaks-1
 !
@@ -44,10 +43,9 @@ contains
       r = peaks(j) - peaks(j-1)
       eta(i,j-1) = (peaks(j  ) - x(i)) / r
       eta(i,j  ) = (x(i) - peaks(j-1)) / r
+      if ( i == no_x ) exit
       i = i + 1
     end do
-!
-    if (i > no_x) Return
 !
 ! The no_peaks coefficient ramps up as a triangle until x = peaks(no_peaks)
 ! then afterwards it is equal to one
@@ -62,5 +60,8 @@ contains
   End Subroutine GET_ETA
 end module GET_ETA_M
 ! $Log$
+! Revision 1.4  2001/01/31 01:08:48  zvi
+! New version of forward model
+!
 ! Revision 1.1  2000/05/04 18:12:05  vsnyder
 ! Initial conversion to Fortran 90
