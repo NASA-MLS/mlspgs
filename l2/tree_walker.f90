@@ -11,6 +11,7 @@ module TREE_WALKER
   use ForwardModelConfig, only: ForwardModelConfig_T, DestroyFWMConfigDatabase
   use Global_Settings, only: Set_Global_Settings
   use GriddedData, only: GriddedData_T
+  use HGrid, only: HGrid_T
   use Init_Tables_Module, only: Z_CHUNKDIVIDE,  Z_CONSTRUCT, Z_FILL, &
     & Z_GLOBALSETTINGS, Z_JOIN, Z_MERGEAPRIORI, Z_MLSSIGNALS, Z_OUTPUT, &
     & Z_READAPRIORI, Z_RETRIEVE, Z_SPECTROSCOPY
@@ -69,6 +70,7 @@ contains ! ====     Public Procedures     ==============================
     type (ForwardModelConfig_T), dimension(:), &
       & pointer :: ForwardModelConfigDatabase
     type (GriddedData_T), dimension(:), pointer :: GriddedData
+    type (HGrid_T), dimension(:), pointer :: HGrids
     integer :: HOWMANY                  ! Nsons(Root)
     integer :: I, J                     ! Loop inductors
     type (L1BInfo_T) :: L1BInfo         ! File handles etc. for L1B dataset
@@ -87,7 +89,7 @@ contains ! ====     Public Procedures     ==============================
     type (VectorTemplate_T), dimension(:), pointer :: VectorTemplates
 
     nullify ( chunks, forwardModelConfigDatabase, griddedData, &
-      & l2auxDatabase, l2gpDatabase, matrices, mifGeolocation, &
+      & hGrids, l2auxDatabase, l2gpDatabase, matrices, mifGeolocation, &
       & qtyTemplates, vectors, vectorTemplates, vGrids )
 
     call InitParallel
@@ -129,7 +131,8 @@ subtrees: do while ( j <= howmany )
             select case ( decoration(subtree(1,son)) ) ! section index
             case ( z_construct )
               call MLSL2Construct ( son, l1bInfo, chunks(chunkNo), &
-                & qtyTemplates, vectorTemplates, vGrids, l2gpDatabase, mifGeolocation )
+                & qtyTemplates, vectorTemplates, vGrids, hGrids, &
+                & l2gpDatabase, mifGeolocation )
             case ( z_fill )
               call MLSL2Fill ( son, l1bInfo, griddedData, vectorTemplates, &
                 & vectors, qtyTemplates, matrices, vGrids, l2gpDatabase , &
@@ -148,7 +151,7 @@ subtrees: do while ( j <= howmany )
           ! Otherwise, we'll save them as we may need to output them as l2pc files.
           if ( size(chunks) > 1) then
             call MLSL2DeConstruct ( qtyTemplates, vectorTemplates, &
-              & mifGeolocation )
+              & mifGeolocation, hGrids )
             call DestroyVectorDatabase ( vectors )
             call DestroyMatrixDatabase ( matrices )
           end if
@@ -162,7 +165,7 @@ subtrees: do while ( j <= howmany )
         ! This is to guard against destroying stuff needed by l2pc writing
         if ( size(chunks) == 1) then
           call MLSL2DeConstruct ( qtyTemplates, vectorTemplates, &
-            & mifGeolocation )
+            & mifGeolocation, hGrids )
           call DestroyVectorDatabase ( vectors )
           call DestroyMatrixDatabase ( matrices )
         end if
@@ -199,6 +202,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.51  2001/05/04 17:12:25  pwagner
+! Passes necessary args to global_settings
+!
 ! Revision 2.50  2001/05/03 20:34:08  vsnyder
 ! Cosmetic changes
 !
