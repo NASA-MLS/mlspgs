@@ -1,6 +1,6 @@
 #	Makefile
 #
-#  Lost? Type 'make -f MakeFC help' from the directory where you see this file
+#  Lost? Type 'make help -f MakeFC' from the directory where you see this file
 #
 # Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
@@ -724,6 +724,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.56  2001/11/09 21:47:08  pwagner
+# EVERY_MLSCONFG now calculated--allows for custom-named configs
+#
 # Revision 1.55  2001/11/08 00:39:14  pwagner
 # New help system; mention of NOCLEANING where appropriate
 #
