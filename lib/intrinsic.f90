@@ -76,11 +76,28 @@ module INTRINSIC
   integer, parameter :: L_DAYS          = l_cloudWater + 1
   integer, parameter :: L_DEG           = l_days + 1
   integer, parameter :: L_DEGREES       = l_deg + 1
-  integer, parameter :: L_DEGREESOFFREEDOM = l_degrees + 1
-  integer, parameter :: L_DIMENSIONLESS = l_degreesOfFreedom + 1
+  integer, parameter :: L_DIMENSIONLESS = l_degrees + 1
   integer, parameter :: L_DIMLESS       = l_dimensionless + 1
   integer, parameter :: L_DL            = l_dimless + 1
-  integer, parameter :: L_DOBSONUNITS   = l_dl + 1
+  ! Quantities to report on progress of DNWT.  See NWT_T in dnwt_module
+  integer, parameter :: L_DNWT_AJN      = l_dl + 1
+  integer, parameter :: L_DNWT_AXMAX    = l_dnwt_ajn + 1
+  integer, parameter :: L_DNWT_CAIT     = l_dnwt_axmax + 1
+  integer, parameter :: L_DNWT_DIAG     = l_dnwt_cait + 1
+  integer, parameter :: L_DNWT_DXDX     = l_dnwt_diag + 1
+  integer, parameter :: L_DNWT_DXDXL    = l_dnwt_dxdx + 1
+  integer, parameter :: L_DNWT_DXN      = l_dnwt_dxdxl + 1
+  integer, parameter :: L_DNWT_DXNL     = l_dnwt_dxn + 1
+  integer, parameter :: L_DNWT_FNMIN    = l_dnwt_dxnl + 1
+  integer, parameter :: L_DNWT_FNORM    = l_dnwt_fnmin + 1
+  integer, parameter :: L_DNWT_GDX      = l_dnwt_fnorm + 1
+  integer, parameter :: L_DNWT_GFAC     = l_dnwt_gdx + 1
+  integer, parameter :: L_DNWT_GRADN    = l_dnwt_gfac + 1
+  integer, parameter :: L_DNWT_SQ       = l_dnwt_gradn + 1
+  integer, parameter :: L_DNWT_SQ       = l_dnwt_gradn + 1
+  integer, parameter :: L_DNWT_SQT      = l_dnwt_sq + 1
+  ! End of quantities to report progress of DNWT
+  integer, parameter :: L_DOBSONUNITS   = l_dnwt_sqt + 1
   integer, parameter :: L_EARTHREFL     = l_dobsonunits + 1
   integer, parameter :: L_EFFECTIVEOPTICALDEPTH = l_earthRefl + 1
   integer, parameter :: L_ELEVOFFSET    = l_effectiveOpticalDepth + 1
@@ -100,7 +117,9 @@ module INTRINSIC
   integer, parameter :: L_ICEDENSITY    = l_hz + 1
   integer, parameter :: L_INTERMEDIATEFREQUENCY= l_icedensity + 1
   integer, parameter :: L_ISOTOPERATIO  = l_intermediatefrequency + 1
-  integer, parameter :: L_K             = l_isotopeRatio + 1
+  integer, parameter :: L_Jacobian_Cols = l_isotopeRatio + 1
+  integer, parameter :: L_Jacobian_Rows = l_jacobian_Cols + 1
+  integer, parameter :: L_K             = l_jacobian_Rows + 1
   integer, parameter :: L_KHZ           = l_k  + 1
   integer, parameter :: L_KM            = l_khz + 1
   integer, parameter :: L_LINEWIDTH     = l_km + 1
@@ -242,7 +261,6 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_days) =                  add_ident ( 'days' )
     lit_indices(l_deg) =                   add_ident ( 'deg' )
     lit_indices(l_degrees) =               add_ident ( 'degrees' )
-    lit_indices(l_degreesOfFreedom) =      add_ident ( 'degreesOfFreedom' )
     lit_indices(l_dimensionless) =         add_ident ( 'dimensionless' )
     lit_indices(l_dimless) =               add_ident ( 'dimless' )
     lit_indices(l_dl) =                    add_ident ( 'dl' )
@@ -404,6 +422,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.39  2001/10/03 17:36:47  vsnyder
+! Add lits for DNWT quantities
+!
 ! Revision 2.38  2001/10/02 23:39:39  vsnyder
 ! Add L_DegreesOfFreedom
 !
