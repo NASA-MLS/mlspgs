@@ -48,6 +48,14 @@ include ../Makefile.dep
 # if LIB_BLAS is f95, then blas will be supported by f95 intrinsics
 
 # ========================================================================
+ifdef MLSINSTALLDIR
+   INSTALLDIR:=$(MLSINSTALLDIR)
+else
+ifndef INSTALLDIR
+   INSTALLDIR:=$(CONFDIR)/bin/$(MLSCONFG)
+endif
+endif
+# ========================================================================
 ifndef NO_MACHINE
 ${OBJS}: machine.o
 ALLOBJS = $(OBJS) machine.o
@@ -186,6 +194,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.15  2002/11/25 21:21:02  pwagner
+# gcc_version to allow building with Lahey on gcc post 2.96
+#
 # Revision 1.14  2002/09/06 00:09:08  pwagner
 # BLAS can now bring in more than a single
 #
