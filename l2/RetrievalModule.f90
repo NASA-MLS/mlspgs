@@ -1033,7 +1033,8 @@ contains
               call forwardModel ( configDatabase(configIndices(k)), &
                 & v(x), fwdModelExtra, v(f_rowScaled), fmw, fmStat, jacobian )
             end do ! k
-              call add_to_retrieval_timing( 'forward_model', t1 )
+              ! Forward model calls add_to_retrieval_timing
+              call time_now ( t1 )
             do rowBlock = 1, size(fmStat%rows)
               if ( fmStat%rows(rowBlock) ) then
                  ! Store what we've just got in v(f) ie fwdModelOut
@@ -2960,6 +2961,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.182  2002/09/21 00:04:14  vsnyder
+! Put back an erroneously-removed timing call
+!
 ! Revision 2.181  2002/09/19 01:26:46  vsnyder
 ! Mostly fixing up comments and LaTeX stuff
 !
