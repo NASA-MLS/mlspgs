@@ -182,13 +182,11 @@ module INIT_TABLES_MODULE
   integer, parameter :: L_CHOLESKY      = l_both + 1
   integer, parameter :: L_CLIMATOLOGY   = l_cholesky+1
   integer, parameter :: L_CLOUDFULL     = l_climatology + 1
-  integer, parameter :: L_COVARIANCE    = l_cloudFill + 1
+  integer, parameter :: L_COVARIANCE    = l_cloudFull + 1
   integer, parameter :: L_DAO 	        = l_covariance + 1
   integer, parameter :: L_DIRECT        = l_dao + 1
-  integer, parameter :: L_EARTHREFL     = l_direct + 1
-  integer, parameter :: L_EITHER        = l_earthRefl + 1
-  integer, parameter :: L_ELEVOFFSET    = l_either + 1
-  integer, parameter :: L_ESTIMATEDNOISE= l_elevOffset + 1
+  integer, parameter :: L_EITHER        = l_direct + 1
+  integer, parameter :: L_ESTIMATEDNOISE= l_either + 1
   integer, parameter :: L_EXPLICIT      = l_estimatedNoise + 1
   integer, parameter :: L_FIXED         = l_explicit + 1
   integer, parameter :: L_FRACTIONAL    = l_fixed + 1
@@ -209,13 +207,10 @@ module INIT_TABLES_MODULE
   integer, parameter :: L_NEITHER       = l_ncep + 1
   integer, parameter :: L_NEWTONIAN     = l_neither + 1
   integer, parameter :: L_NORM          = l_newtonian + 1
-  integer, parameter :: L_ORBITINCLINE  = l_norm + 1
-  integer, parameter :: L_PLAIN         = l_orbitIncline + 1
+  integer, parameter :: L_PLAIN         = l_norm + 1
   integer, parameter :: L_PRESSURE      = l_plain + 1
   integer, parameter :: L_SCAN          = l_pressure + 1
-  integer, parameter :: L_SCGEOCALT     = l_scan + 1
-  integer, parameter :: L_SPACERADIANCE = l_scGeocAlt + 1
-  integer, parameter :: L_SPD           = l_spaceRadiance + 1
+  integer, parameter :: L_SPD           = l_scan + 1
   integer, parameter :: L_SPECIAL       = l_spd + 1
   integer, parameter :: L_VECTOR        = l_special + 1
   integer, parameter :: L_VGRID         = l_vector + 1
@@ -360,7 +355,6 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_direct) =                add_ident ( 'direct' )
     lit_indices(l_earthRefl) =             add_ident ( 'earthRefl' )
     lit_indices(l_either) =                add_ident ( 'either' )
-    lit_indices(l_elevOffset) =            add_ident ( 'elevOffset' )
     lit_indices(l_explicit) =              add_ident ( 'explicit' )
     lit_indices(l_estimatedNoise) =        add_ident ( 'estimatedNoise' )
     lit_indices(l_fixed) =                 add_ident ( 'fixed' )
@@ -382,11 +376,9 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_neither) =               add_ident ( 'neither' )
     lit_indices(l_newtonian) =             add_ident ( 'newtonian' )
     lit_indices(l_norm) =                  add_ident ( 'norm' )
-    lit_indices(l_orbitIncline) =          add_ident ( 'orbitIncline' )
     lit_indices(l_plain) =                 add_ident ( 'plain' )
     lit_indices(l_pressure) =              add_ident ( 'pressure' )
     lit_indices(l_scan) =                  add_ident ( 'scan' )
-    lit_indices(l_scGeocAlt) =             add_ident ( 'scGeocAlt' )
     lit_indices(l_spaceRadiance) =         add_ident ( 'spaceRadiance' )
     lit_indices(l_spd) =                   add_ident ( 'spd' )
     lit_indices(l_special) =               add_ident ( 'special' )
@@ -623,7 +615,7 @@ contains ! =====     Public procedures     =============================
     call make_tree ( (/ &
       begin, t+t_quantityType, l+l_baseline, l+l_earthRefl, l+l_elevOffset, &
              l+l_extinction, l+l_gph, l+l_heightOffset, l+l_isotopeRatio, l+l_losVel, &
-             l+l_orbitIncline, l+l_ptan, l+l_radiance, l+l_refGPH, &
+             l+l_orbitInclination, l+l_ptan, l+l_radiance, l+l_refGPH, &
              l+l_scanResidual, l+l_scECI, l+l_scVel, l+l_scGeocAlt, &
              l+l_sidebandRatio, l+l_spaceRadiance, l+l_temperature,&
              l+l_tngtECI, l+l_tngtGeodAlt, l+l_tngtGeocAlt, l+l_vmr, n+n_dt_def, &
@@ -964,6 +956,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.112  2001/05/29 23:22:48  livesey
+! Some state vector types moved down to intrinsic to be with the others.
+!
 ! Revision 2.111  2001/05/29 20:19:27  livesey
 ! Added cloudFull forward model type
 !
