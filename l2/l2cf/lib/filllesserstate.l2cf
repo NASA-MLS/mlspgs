@@ -99,6 +99,11 @@ begin Fill
   Fill, quantity = apriori.scGeocAlt, method = explicit, $
     explicitValues = 7070 km, /spread
 
+  ;; Fake an identity matrix as the ECRtoFOV
+  Subset, quantity = apriori.ecrtofov, mask=fill, channels=[2:4,6:8], /ignore
+  Fill, quantity=apriori.ecrtofov, method=explicit, explicitValues=1.0, /spread
+  Subset, quantity = apriori.ecrtofov, mask=fill, /reset
+
   ;; Note, we're doing NOTHING here about tangent point altitudes.
   ;; The presumption is that we don't need them for an l2pc calculation.
   },{
