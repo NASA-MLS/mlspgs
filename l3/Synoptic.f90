@@ -189,11 +189,6 @@ CONTAINS
      
     !!      Initialize Daily Map & Diagnostic
 
-    !print *, 'cfProd%mode', cfProd%mode
-    !print *, 'numDays', numDays 
-    !print *, 'nlev', nlev
-    !print *, 'n', cfDef%N
-
     if (numDays .gt. 0) then
        IF (cfProd%mode == 'com') THEN        
           ALLOCATE( l3dm(numDays), STAT=error )
@@ -534,15 +529,10 @@ CONTAINS
        tau0 = tau0 + avgPeriod(i)
     ENDDO
        
-    print *, 'tau0 before if, avgPeriod ', tau0, size(avgPeriod) 
     IF (size(avgPeriod) .ne. 0) tau0 = tau0/86400.0/float(size(avgPeriod))
-    print *, 'tau0 after if ', tau0
         
     !*** Sort & Prepare the Data 
     
-    !print *, 'pStartIndex', pStartIndex    
-    !print *, 'pEndIndex', pEndIndex
-
     Call SortData(cfProd, l2Days, l2gp, 	&
          & pStartIndex, pEndIndex,		&
          & tau0, 				&
@@ -2582,7 +2572,6 @@ CONTAINS
        endif
        
        if ( associated(alats) ) then
-          !print *,'deallocate alats'
           DeAllocate(alats, STAT=error)
           IF ( error /= 0 ) THEN
              msr = MLSMSG_DeAllocate // '  alats array.'
@@ -3234,6 +3223,9 @@ CONTAINS
 !===================
 
 ! $Log$
+! Revision 1.32  2004/05/04 15:33:15  cvuu
+! v1.4.3: Use int array for Date in Data Field
+!
 ! Revision 1.31  2004/01/07 21:43:18  cvuu
 ! version 1.4 commit
 !
