@@ -17,10 +17,8 @@ module ForwardModelInterface
   use Init_Tables_Module, only: F_ATMOS_DER, F_CHANNELS, F_DO_CONV, F_DO_FREQ_AVG, &
     F_FREQUENCY, F_MOLECULES, F_MOLECULEDERIVATIVES, F_SIGNALS, &
     F_SPECT_DER, F_TEMP_DER
-  use Init_Tables_Module, only: field_indices, field_first, field_last, &
-    & lit_indices, spec_indices
-!  use Init_Tables_Module, only: F_ATMOS_DER, F_DO_CONV, F_DO_FREQ_AVG, &
-!    & F_EXTRAHEIGHTS, F_FREQUENCY, F_POINTINGGRIDS, F_SPECT_DER, F_TEMP_DER, &
+  use Init_Tables_Module, only: F_POINTINGGRIDS, F_ZVI, field_indices, &
+    & field_first, field_last, lit_indices, spec_indices
   use Lexer_Core, only: Print_Source
   use MatrixModule_1, only: Matrix_Database_T, Matrix_T
   use MLSCommon, only: R8
@@ -29,8 +27,8 @@ module ForwardModelInterface
   use MoreTree, only: Get_Boolean, Get_Field_ID
   use Output_M, only: Output
   use PointingGrid_m, only: Close_Pointing_Grid_File, &
-    & Dump_Pointing_Grid_Database, ExtraHeights, Open_Pointing_Grid_File, &
-    & Read_Pointing_Grid_File
+    & Dump_Pointing_Grid_Database, Get_Grids_Near_Tan_Pressures, &
+    & Open_Pointing_Grid_File, Read_Pointing_Grid_File
   use String_Table, only: Display_String, Get_String
   use Toggles, only: Gen, Toggle
   use Trace_M, only: Trace_begin, Trace_end
@@ -90,49 +88,28 @@ module ForwardModelInterface
 contains
 
   ! ------------------------------------  ForwardModelGlobalSetup  -----
-  subroutine ForwardModelGlobalSetup ( Root, ForwardModelConfig )
+  subroutine ForwardModelGlobalSetup ( Root )
   ! Process the forwardModel specification to produce ForwardModelInfo.
 
-    integer :: Root                     ! of the forwardModel specification.
-                                        ! Indexes either a "named" or
-                                        ! "spec_args" vertex.
-    type(forwardModelConfig_T), intent(inout) :: ForwardModelConfig
+    integer, intent(in) :: Root         ! of the forwardModel specification.
+                                        ! Indexes a "spec_args" vertex.
 
-    integer :: Field                    ! Field index -- f_something
-    integer :: I                        ! Subscript and loop inductor.
-    integer :: Key                      ! Indexes the spec_args vertex.
     integer :: Lun                      ! Unit number for pointing grid file
-    integer :: Name                     ! sub_rosa of label of specification,
-                                        ! if any, else zero.
     character(len=80) :: PointingGridsFile   ! Duh
     integer :: Son                      ! Some subtree of root.
-    integer :: Type                     ! Type of value returned by EXPR
-    integer :: Units(2)                 ! Units of value returned by EXPR
-    real (r8) :: Value(2)               ! Value returned by EXPR
 
     ! Error message codes
 
     error = 0
     if ( toggle(gen) ) call trace_begin ( "ForwardModelGlobalSetup", root )
-    if ( node_id(root) == n_named ) then
-      name = subtree(1, root)
-      key = subtree(2, root)
-    else
-      name = 0
-      key = root
-    end if
 
-    ! "Key" now indexes an n_spec_args vertex.  See "Configuration file
+    ! "Root" now indexes an n_spec_args vertex.  See "Configuration file
     ! parser users' guide" for pictures of the trees being analyzed.
     ! Collect data from the fields.
 
-    do i = 2, nsons(key)
-      son = subtree(i,key)
-      field = get_field_id(son)
-      select case ( field )
-        ! Shouldn't get here if the type checker worked
-      end select
-    end do ! i = 2, nsons(key)
+    ! The only field so far is the PointingGrids field, and it is required.
+    son = subtree(2,root)
+    call get_string ( sub_rosa(subtree(2,son)), pointingGridsFile )
 
     ! The ExtraHeights and PointingGrids fields are required, so we don't
     ! need to verify that they were provided.
@@ -173,7 +150,7 @@ contains
     ! Error message codes
 
     error = 0
-    if ( toggle(gen) ) call trace_begin ( "ForwardModelSetup", root )
+    if ( toggle(gen) ) call trace_begin ( "ConstructForwardModelConfig", root )
     if ( node_id(root) == n_named ) then
       name = subtree(1, root)
       key = subtree(2, root)
@@ -282,14 +259,14 @@ contains
       end select
       if (error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, 'An error occured')
     end do ! i = 2, nsons(key)
-    if ( toggle(gen) ) call trace_end ( "ForwardModelSetup" )
+    if ( toggle(gen) ) call trace_end ( "ConstructForwardModelConfig" )
   end function ConstructForwardModelConfig
 
   ! -----------------------------------------------  ForwardModel  -----
 ! subroutine ForwardModel ( ForwardModelConfig, FwdModelExtra, FwdModelIn, &
 !   &                       Jacobian, RowBlock, FwdModelOut )
   subroutine ForwardModel ( ForwardModelConfig, FwdModelExtra, FwdModelIn, &
-    &                      Jacobian, RowBlock, FwdModelOut, FMC, FMI, TFMI )
+    &                       Jacobian, RowBlock, FwdModelOut, FMC, FMI, TFMI )
 
 !zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
 
@@ -337,7 +314,7 @@ contains
 
 !zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
 
-    Integer(i4), PARAMETER :: ngt = (Ng+1) * N2lvl
+    Integer(i4), parameter :: ngt = (Ng+1) * N2lvl
 
     Integer(i4) :: i, j, k, kk, kz, ht_i, mnz, no_tan_hts, ch, Spectag, &
                    m, prev_npf, ier, mmaf, si, ptg_i, &
@@ -345,6 +322,8 @@ contains
                    k_info_count, gl_count, ld
 
     Integer(i4) :: ch1, ch2, no_pfa_ch, pfa_ch(2)
+
+    Integer(i4) :: WhichPointingGrid
 
     Type(path_index)  :: ndx_path(Nptg,mnm)
     Type(path_vector) :: z_path(Nptg,mnm),t_path(Nptg,mnm),h_path(Nptg,mnm),  &
@@ -401,7 +380,13 @@ contains
     Character (LEN=80) :: Line
     Character (LEN=40) :: Ax, Dtm1, Dtm2
 
-    Real(r8), DIMENSION(:), ALLOCATABLE :: RadV, F_grid
+    Real(r8), dimension(:), allocatable :: RadV, F_grid
+
+    real(r8), parameter :: TOL = 0.001            ! How close to a tan_press
+    !                                               must a frq grid be in order
+    !                                               to correspond?
+    integer, pointer, dimension(:) :: Grids       ! Frq grid for each tan_press
+    type(signal_t) :: Signal
 
 !zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
 
@@ -426,8 +411,25 @@ contains
 !
 ! Load the "Frequency gridding by pointing" file ("Bill's" file..)
 !
-    Call ptg_frq_load(FMC, FMI, Ier)
-    if(ier /= 0) goto 99
+! This has been moved into ForwardModelGlobalSetup, q.v.
+!   Call ptg_frq_load(FMC, FMI, Ier)
+!   if(ier /= 0) goto 99
+
+    signal = getSignal ( forwardModelConfig%signals(1)%signal )
+    whichPointingGrid = signal%pointingGrid
+    if ( whichPointingGrid <= 0 ) &
+      call MLSMessage ( MLSMSG_Error, moduleName, &
+        & "There is no pointing grid for the desired signal" )
+    call allocate_test ( grids, size(FMI%tan_press), "Grids", moduleName )
+    call get_grids_near_tan_pressures ( whichPointingGrid, FMI%tan_press, &
+    & tol, grids )
+
+!??? Zvi:  The frequency pointing grids (The "Bill" file) are now read by
+!??? PointingGrid_m.  That routine doesn't any longer have the tangent
+!??? pressure arrays, so it doesn't eliminate grids that aren't "near"
+!??? tangent pressures.  The intent is that get_grids_near_tan_pressures
+!??? gives you the indices of the frequency grids that are "near" tangent
+!??? pressures.
 !
 ! Convert GeoDetic Latitude to GeoCentric Latitude, and convert both to
 ! Radians (instead of Degrees). Also compute the effective earth radius.
@@ -503,7 +505,13 @@ contains
 ! **********************  MAIN Pointing Loop *******************
 !
       DO ptg_i = 1, no_tan_hts-1
-!
+        if ( grids(ptg_i) == 0 ) cycle ! Skip tangent heights that don't have
+        !                                a nearby pointing grid
+
+!??? Zvi: This is as far as I got in my new scheme for frequency pointing
+!??? grids.  Below, you'll need to use PointingGrids(grids(ptg_i)).  See
+!??? the PointingGrid_m module for details of the data structure.
+
         k = ptg_i
         h_tan = tan_hts(k,l)
         kk = FMI%no_ptg_frq(k)
@@ -919,7 +927,7 @@ contains
 
   end subroutine ForwardModel
 
-  ! ------------------------------------------- AddForwardModelConfigToDatabase --
+  ! ----------------------------  AddForwardModelConfigToDatabase  -----
   integer function AddForwardModelConfigToDatabase ( database, item )
 
   ! Add a quantity template to a database, or create the database if it
@@ -937,7 +945,7 @@ contains
     AddForwardModelConfigToDatabase = newSize
   end function AddForwardModelConfigToDatabase
 
-  ! ------------------------------------------ DestroyForwardModelConfigDatabase --
+  ! --------------------------  DestroyForwardModelConfigDatabase  -----
   subroutine DestroyFWMConfigDatabase(database)
     ! Dummy arguments
     type (ForwardModelConfig_T), dimension(:), pointer :: DATABASE
@@ -970,8 +978,8 @@ contains
 
 
 ! =====     Private Procedures     =====================================
-  ! ------------------------------------------ DUMP_FOWARDMODELCONFIGS --
-  subroutine Dump_ForwardModelConfigs(database)
+  ! ------------------------------------  DUMP_FOWARDMODELCONFIGS  -----
+  subroutine Dump_ForwardModelConfigs ( database )
     type (ForwardModelConfig_T), dimension(:), pointer :: database
 
     ! Local variables
@@ -979,7 +987,7 @@ contains
     character (len=80) :: signalName    ! A line of text
 
     ! executable code
-    if (associated(database)) then
+    if ( associated(database) ) then
       do i = 1, size(database)
         call output ( 'FowardModelConfig: ' )
         call output ( i, advance = 'yes' )
@@ -1044,6 +1052,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.22  2001/03/17 03:24:23  vsnyder
+! Work on forwardModelGlobalSetup
+!
 ! Revision 2.21  2001/03/17 01:05:46  livesey
 ! OK, I've sorted it out, but problems may remain in forwardmodelglobalsetup
 !
