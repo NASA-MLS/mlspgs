@@ -33,8 +33,8 @@ module ForwardModelInterface
   ! Now literals
   use Init_Tables_Module, only: L_CHANNEL, L_EARTHREFL, L_ELEVOFFSET, L_FULL, &
     & L_LINEAR, L_LOSVEL, L_NONE, L_ORBITINCLINE, L_PTAN, L_RADIANCE,&
-    & L_REFGPH, L_SCAN, L_SCGEOCALT, L_SIDEBANDRATIO, L_SPACERADIANCE, L_TEMPERATURE, &
-    & L_VMR
+    & L_REFGPH, L_SCAN, L_SCGEOCALT, L_SIDEBANDRATIO, L_SPACERADIANCE, &
+    & L_TEMPERATURE, L_VMR
   ! That's it for Init_Tables_Module
   use Lexer_Core, only: Print_Source
   use ManipulateVectorQuantities, only: FindClosestInstances
@@ -453,6 +453,7 @@ contains ! =====     Public Procedures     =============================
     integer :: NOFREQS                  ! Number of frequencies for a pointing
     integer :: NOMAFS                   ! Number of major frames
     integer :: NOMIFS                   ! Number of minor frames
+    integer :: NO_PHI_T                 ! No. of Temp. profiles in the chunk
     integer :: NOSPECIES                ! Number of molecules we're considering
     integer :: NAMELEN                  ! Length of string
     integer :: PHIWINDOW                ! Copy of forward model config%phiWindow
@@ -639,6 +640,7 @@ contains ! =====     Public Procedures     =============================
     ! Get some dimensions which we'll use a lot
     noMAFs = radiance%template%noInstances
     noMIFs = radiance%template%noSurfs
+    no_phi_t = temp%template%noInstances
     no_tan_hts = ForwardModelConfig%TangentGrid%nosurfs
     maxPath = 2 * (NG+1) * size(ForwardModelConfig%integrationGrid%surfs)
     nlvl=size(ForwardModelConfig%integrationGrid%surfs)
@@ -646,6 +648,7 @@ contains ! =====     Public Procedures     =============================
     phiWindow = ForwardModelConfig%phiWindow
     print*,'Dimensions:'
     print*,'noMAFs:',noMAFs
+    print*,'no_phi_t:',no_phi_t
     print*,'no_tan_hts:',no_tan_hts
     print*,'maxPath:',maxPath
     print*,'nlvl:',nlvl
@@ -653,13 +656,15 @@ contains ! =====     Public Procedures     =============================
     print*,'phiWindow:',phiWindow
     print*,'noSpecies:',noSpecies
     print*,'maxNoFSurfs:',maxNoFSurfs
+    fmStat%maf = 3                          ! DEBUG, Zvi
     print*,'MAF:',fmStat%maf
 
     ! Work out which channels are used
-    call allocate_test ( channelIndex, size(signal%frequencies), 'channelIndex', &
-      & ModuleName )
+    call allocate_test ( channelIndex, size(signal%frequencies), &
+    &                   'channelIndex', ModuleName )
     noUsedChannels = count ( signal%channels )
-    call allocate_test ( usedChannels, noUsedChannels, 'channelIndex', ModuleName )
+    call allocate_test ( usedChannels, noUsedChannels, 'channelIndex', &
+                      &  ModuleName )
     do channel = 1, size( signal%frequencies)
       channelIndex(channel) = channel
     end do
@@ -700,18 +705,23 @@ contains ! =====     Public Procedures     =============================
       call allocate_test ( ifm%geoc_lat, noMAFs, 'geoc_lat', ModuleName )
       call allocate_test ( ifm%e_rad, noMAFs, 'e_rad', ModuleName )
 
-      call allocate_test ( ifm%h_glgrid, maxPath, noMAFs, 'h_glgrid', ModuleName )
-      call allocate_test ( ifm%t_glgrid, maxPath, noMAFs, 't_glgrid', ModuleName )
       call allocate_test ( ifm%z_glgrid, maxPath/2, 'z_glgrid', ModuleName )
-      call allocate_test ( ifm%dh_dt_glgrid, maxPath, noMAFs, &
+      call allocate_test ( ifm%h_glgrid, maxPath, no_phi_t, 'h_glgrid', &
+                        &  ModuleName )
+      call allocate_test ( ifm%t_glgrid, maxPath, no_phi_t, 't_glgrid', &
+                        &  ModuleName )
+      call allocate_test ( ifm%dh_dt_glgrid, maxPath, no_phi_t, &
         & temp%template%noSurfs,'dh_dt_glgrid', ModuleName )
-      call allocate_test ( ifm%dhdz_glgrid, maxPath, noMAFs, 'dhdz_glgrid', ModuleName )
+      call allocate_test ( ifm%dhdz_glgrid, maxPath, no_phi_t, &
+                        &  'dhdz_glgrid', ModuleName )
       call allocate_test ( ifm%tan_hts, &
-        & size(ForwardModelConfig%tangentGrid%surfs), noMAFs, 'tan_hts', ModuleName )
+        & size(ForwardModelConfig%tangentGrid%surfs), no_phi_t, 'tan_hts', &
+                        &  ModuleName )
       call allocate_test ( ifm%tan_temp, &
-        & size(ForwardModelConfig%tangentGrid%surfs), noMAFs, 'tan_hts', ModuleName )
-      call allocate_test ( ifm%tan_dh_dt, nlvl, noMAFs, &
-        & temp%template%noSurfs, 'tan_dh_dt', ModuleName )
+        & size(ForwardModelConfig%tangentGrid%surfs), no_phi_t, 'tan_hts', &
+                        &  ModuleName )
+      call allocate_test ( ifm%tan_dh_dt, nlvl, no_phi_t, &
+                        & temp%template%noSurfs, 'tan_dh_dt', ModuleName )
 
       ! Setup for hydrostatic calculation
       ! Assert radiance%template%noInstances=temp%template%noInstances
@@ -729,7 +739,7 @@ contains ! =====     Public Procedures     =============================
       ! Now compute a hydrostatic grid given the temperature and refGPH
       ! information.
       call hydrostatic_model ( ForwardModelConfig%SurfaceTangentIndex, &
-        &  noMAFs, ifm%geoc_lat, 0.001*refGPH%values(1,:), &
+        &  no_phi_t, ifm%geoc_lat, 0.001*refGPH%values(1,:), &
         &  refGPH%template%surfs(1,1), &
         &  ForwardModelConfig%integrationGrid%surfs, &
         &  temp%template%surfs(:,1), temp%values, &
@@ -746,7 +756,7 @@ contains ! =====     Public Procedures     =============================
         &  temp%template%noSurfs, ifm%gl_count, ifm%ndx_path, ifm%z_glgrid, &
         &  ifm%t_glgrid, ifm%h_glgrid, ifm%dhdz_glgrid, ifm%tan_hts,        &
         &  no_tan_hts, ifm%z_path, ifm%h_path, ifm%t_path, ifm%phi_path,    &
-        &  ifm%dhdz_path, ifm%eta_phi, temp%template%noInstances,           &
+        &  ifm%dhdz_path, ifm%eta_phi, no_phi_t,                            &
         &  temp%template%phi(1,:)*Deg2Rad, noMAFs, phiWindow, ifm%elvar, Ier )
       if ( ier /= 0 ) goto 99
 
@@ -811,7 +821,10 @@ contains ! =====     Public Procedures     =============================
 
     ! ----------------- Begin loop over sidebands -----------------------
     do thisSideband = sidebandStart, sidebandStop, sidebandStep
-      print*,'Doing sideband:', thisSideband, '( ',sidebandStart,sidebandStop,')'
+!  print*,'Doing sideband:', thisSideband, '( ',sidebandStart,sidebandStop,')'
+
+      print 901,thisSideband,sidebandStart,sidebandStop
+901   format(' Doing sideband: ',i2,' (',i2,', ',i2,')')
 
       ! Now code splits into two sections, one for when we're doing frequency
       ! averaging, and one when we're not.
@@ -863,8 +876,8 @@ contains ! =====     Public Procedures     =============================
           & MLSMSG_DeAllocate//'allSignals')
         call deallocate_test(signalsGrid, 'signalsGrid', ModuleName)
         
-        ! Now we've identified the pointing grids.  Locate the tangent grid within
-        ! it.
+   ! Now we've identified the pointing grids.  Locate the tangent grid within
+   ! it.
         call allocate_test ( grids, ForwardModelConfig%TangentGrid%nosurfs, &
           "Grids", ModuleName )
         call Hunt ( PointingGrids(whichPointingGrid)%oneGrid%height, &
@@ -920,9 +933,9 @@ contains ! =====     Public Procedures     =============================
       ! all the paths for the current maf
 
       Call get_path_spsfunc_ngrid ( fwdModelIn, fwdModelExtra, &
-        &     forwardModelConfig%molecules, ifm%ndx_path(:,maf), no_tan_hts, &
-        &     ifm%z_path(:,maf), ifm%t_path(:,maf), ifm%phi_path(:,maf), n_path, &
-        &     spsfunc_path, Ier )
+        &  forwardModelConfig%molecules, ifm%ndx_path(:,maf), no_tan_hts, &
+        &  ifm%z_path(:,maf), ifm%t_path(:,maf), ifm%phi_path(:,maf), n_path, &
+        &  spsfunc_path, Ier )
       if ( ier /= 0 ) goto 99
 
       !??? Choose better value for phi_tan later
@@ -931,14 +944,14 @@ contains ! =====     Public Procedures     =============================
       ! Compute the ptg_angles (chi) for Antenna convolution, also the
       ! derivatives of chi w.r.t to T and other parameters
       call get_chi_angles ( ifm%ndx_path(:,maf), n_path, &
-        &     forwardModelConfig%tangentGrid%surfs,      &
-        &     ifm%tan_hts(:,maf), ifm%tan_temp(:,maf), phi_tan, ifm%elvar(maf)%Roc, &
-        &     0.001*scGeocAlt%values(1,1),  &
-        &     elevOffset%values(1,1), &
-        &     ifm%tan_dh_dt(:,maf,:), no_tan_hts, temp%template%noSurfs, &
-        &     temp%template%surfs(:,1), &
-        &     forwardModelConfig%SurfaceTangentIndex, &
-        &     center_angle, ptg_angles, dx_dt, d2x_dxdt, ier )
+        &  forwardModelConfig%tangentGrid%surfs,      &
+        &  ifm%tan_hts(:,maf),ifm%tan_temp(:,maf),phi_tan,ifm%elvar(maf)%Roc,&
+        &  0.001*scGeocAlt%values(1,1),  &
+        &  elevOffset%values(1,1), &
+        &  ifm%tan_dh_dt(:,maf,:), no_tan_hts, temp%template%noSurfs, &
+        &  temp%template%surfs(:,1), &
+        &  forwardModelConfig%SurfaceTangentIndex, &
+        &  center_angle, ptg_angles, dx_dt, d2x_dxdt, ier )
       if ( ier /= 0 ) goto 99
 
       ! Compute the refraction correction scaling matrix for this mmaf:
@@ -983,7 +996,7 @@ contains ! =====     Public Procedures     =============================
 
         ! Allocate intermediate space for vmr derivatives
         if ( forwardModelConfig%moleculeDerivatives(specie) ) then
-          allocate ( k_atmos_frq(specie)%values( maxNoFreqs, f%template%noSurfs, &
+          allocate (k_atmos_frq(specie)%values(maxNoFreqs,f%template%noSurfs,&
             & windowStart:windowFinish), stat=status )
           if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName,&
             & MLSMSG_Allocate//'k_atmos_frq' )
@@ -997,7 +1010,7 @@ contains ! =====     Public Procedures     =============================
         k = ptg_i
         h_tan = ifm%tan_hts(k,maf)
 
-        ! Compute the beta's along the path, for this tanget hight and this mmaf:
+   ! Compute the beta's along the path, for this tanget hight and this mmaf:
 
         no_ele = ifm%ndx_path(ptg_i,maf)%total_number_of_elements
 
@@ -1028,8 +1041,9 @@ contains ! =====     Public Procedures     =============================
           else
             do j = 1,  temp%template%noSurfs
               do i = 1, temp%template%noInstances
-                call Lintrp ( ifm%z_glgrid, ifm%z_path(ptg_i,maf)%values,       &
-                  &           ifm%dh_dt_glgrid(:,i,j), dum, ifm%gl_count, no_ele )
+                call Lintrp ( ifm%z_glgrid, ifm%z_path(ptg_i,maf)%values,&
+                  &           ifm%dh_dt_glgrid(:,i,j), dum, ifm%gl_count,&
+                  &           no_ele )
                 dh_dt_path(:,i,j) = dum(:) * ifm%eta_phi(ptg_i,maf)%values(:,i)
               end do
             end do
@@ -1097,9 +1111,9 @@ contains ! =====     Public Procedures     =============================
                 do surface = 1, temp%template%noSurfs
                   ToAvg => k_temp_frq%values(1:noFreqs,surface,instance)
                   call Freq_Avg ( frequencies,                        &
-                    &        centerFreq+thisSideband*FilterShapes(ch)%FilterGrid, &
-                    &        FilterShapes(ch)%FilterShape, real(ToAvg,r8), &
-                    &        noFreqs, Size(FilterShapes(ch)%FilterGrid), r )
+                    &  centerFreq+thisSideband*FilterShapes(ch)%FilterGrid, &
+                    &  FilterShapes(ch)%FilterShape, real(ToAvg,r8), &
+                    &  noFreqs, Size(FilterShapes(ch)%FilterGrid), r )
                   k_temp(i,ptg_i,surface,instance) = r
                 end do                  ! Surface loop
               end do                    ! Instance loop
@@ -1126,9 +1140,9 @@ contains ! =====     Public Procedures     =============================
                   do surface = 1, f%template%noSurfs
                     ToAvg => k_atmos_frq(specie)%values(1:noFreqs,surface,instance)
                     call Freq_Avg ( frequencies,                      &
-                      &          centerFreq+thisSideband*FilterShapes(ch)%FilterGrid, &
-                      &          FilterShapes(ch)%FilterShape, real(ToAvg,r8),  &
-                      &          noFreqs, Size(FilterShapes(ch)%FilterGrid), r )
+                      &  centerFreq+thisSideband*FilterShapes(ch)%FilterGrid, &
+                      &  FilterShapes(ch)%FilterShape, real(ToAvg,r8),  &
+                      &  noFreqs, Size(FilterShapes(ch)%FilterGrid), r )
                     k_atmos(i,ptg_i,surface,instance,specie) = r
                   end do                ! Surface loop
                 end do                  ! Instance loop
@@ -1208,7 +1222,7 @@ contains ! =====     Public Procedures     =============================
       end do                            ! Channel loop
 
     end do
-    ! ---------------------------- End of loop over sideband --------------------
+    ! ---------------------------- End of loop over sideband ------------------
     ! ------------------------------ End of Major Frame Specific stuff --------
 
     if ( maf == noMAFs ) fmStat%finished = .true.
@@ -1265,54 +1279,6 @@ contains ! =====     Public Procedures     =============================
 
     call Deallocate_test ( usedChannels, 'usedChannels', ModuleName )
 
-!     ! ** DEBUG, Zvi
-!     !   if ( i > -22) Stop
-!     ! ** END DEBUG
-
-!     if ( .not. any((/ForwardModelConfig%temp_der,&
-!       & ForwardModelConfig%atmos_der,ForwardModelConfig%spect_der/)) ) goto 99
-
-!     m = ptan%template%noSurfs
-!     tau(1:m) = ptan%values(1:m,3)
-!     tau(m+1:) = 0.0
-
-!     klo = -1
-!     Zeta = -1.666667
-!     call Hunt_zvi ( Zeta, tau, m, klo, j )
-!     if ( abs(Zeta-tau(j)) < abs(Zeta-tau(klo))) klo=j
-
-!     m = -1
-!     ch = 1
-!     tau = 0.0
-!     do i = 1, k_info_count
-!       print *
-!       Name = ' '
-!       Name = k_star_info(i)%name
-!       if ( Name == 'PTAN') cycle
-!       kz = k_star_info(i)%first_dim_index
-!       mnz = k_star_info(i)%no_zeta_basis
-!       ht_i = k_star_info(i)%no_phi_basis
-!       nameLen = len_trim(Name)
-!       if ( Name(nameLen-1:nameLen) == '_W' .or.  &
-!         &   Name(nameLen-1:nameLen) == '_N' .or.  &
-!         &   Name(nameLen-1:nameLen) == '_V' ) then
-!         print *,Name
-! !        r = sum(k_star_all(ch,kz,1:mnz,1:ht_i,klo))
-!         print *,'  Sum over all zeta & phi coeff:',sngl(r)
-!       else
-!         if ( Name == 'TEMP' ) then
-!           write(6,913) 'dI_dT',char(92),ht_i
-!         else
-!           write(6,913) 'dI_d'//Name(1:nameLen),char(92),ht_i
-!         end if
-!         tau = 0.0
-!         tau(1:mnz) = k_star_info(i)%zeta_basis(1:mnz)
-!         call Hunt_zvi ( Zeta, tau, mnz, m, j )
-!         if ( abs(Zeta-tau(j)) < abs(Zeta-tau(m))) m=j
-! !        print *,(k_star_all(ch,kz,m,j,klo),j=1,ht_i)
-!       end if
-!     end do
-
 99  continue
 
 913 format(a,a1,i2.2)
@@ -1360,17 +1326,9 @@ contains ! =====     Public Procedures     =============================
     call deallocate_test ( radiances, 'Radiances', ModuleName )
     call deallocate_test ( i_star_all, 'i_star_all', ModuleName )
     call deallocate_test ( radv, 'rad_v', ModuleName )
+    call deallocate_test ( grids, 'grids',  ModuleName )
 
-    if ( fmStat%Finished ) then
-
-      call deallocate_test ( grids, 'grids',  ModuleName )
-      call deallocate_test ( radV, 'radV', ModuleName )
-
-    end if
-
-    ! ** DEBUG, Zvi
-    !         if ( i > -22) Stop
-    ! ** END DEBUG
+    if ( i > -22) Stop      ! DEBUG, Zvi
 
     Return
 
@@ -1397,9 +1355,9 @@ contains ! =====     Public Procedures     =============================
       call output ( 'molecule must be defined before moleules derivatives.', &
         & advance='yes')
     case ( DefineSignalsFirst )
-      call output ( 'signals must be defined before channels.', advance='yes')
+      call output ( 'signals must be defined before channels.',advance='yes')
     case ( IncompleteFullFwm )
-      call output ( 'incomplete full foward model specification', advance='yes' )
+      call output ('incomplete full foward model specification',advance='yes' )
     case ( IncompleteLinearFwm )
       call output ( 'incomplete linear foward model specification', &
         & advance='yes' )
@@ -1407,8 +1365,8 @@ contains ! =====     Public Procedures     =============================
       call output ( 'irrelevant parameter for this forward model type', &
         & advance='yes' )
     case ( TangentNotSubset )
-      call output ( 'non subsurface tangent grid not a subset of integration grid', &
-        & advance='yes' )
+      call output ('non subsurface tangent grid not a subset of integration&
+        & grid', advance='yes' )
     case ( PhiWindowMustBeOdd )
       call output ( 'phiWindow is not odd', advance='yes' )
     end select
@@ -1423,6 +1381,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.106  2001/04/23 21:42:46  zvi
+! Introducing no_phi_t etc.
+!
 ! Revision 2.105  2001/04/21 01:21:29  livesey
 ! Fixed memory leak properly!
 !
