@@ -49,7 +49,7 @@ begin Fill
   !ifdef(tpPressure,{
     Fill, quantity=apriori.tpPressure, method=explicit, $
       explicitValues=!tpPressure, /spread
-  }{
+  },{
     Fill, quantity=apriori.tpPressure, method=wmoTropopause, $
       temperatureQuantity=apriori.temperature, refGPHQuantity=apriori.refGPH, $
       internalVgrid=vGridWMO

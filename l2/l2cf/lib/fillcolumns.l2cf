@@ -8,7 +8,7 @@ begin Fill
   !ifdef(tpPressure,{
     Fill, quantity=state.tpPressure, method=explicit, $
       explicitValues=!tpPressure, /spread
-    !define(TropoName, {wmo tropopause})}{
+    !define(TropoName, {wmo tropopause})},{
   Fill, quantity=state.tpPressure, method=wmoTropopause, $
     temperatureQuantity=state.temperature, refGPHQuantity=state.refGPH, $
     internalVgrid=vGridWMO
