@@ -8,6 +8,13 @@ module MoreTree
   use Intrinsic, only: L_true
   use Tree, only: Decoration, Node_ID, Subtree, nsons
   use Tree_Types, only: N_Set_one
+  use MLSCommon, only: R8
+  use Units, only: PHYQ_DIMENSIONLESS
+  use Tree_Types, only: N_colon, N_colon_less, N_less_colon, &
+    & N_less_colon_less
+  use Expr_m, only: EXPR
+  use Declaration_table, only: NUM_VALUE
+  
 
   implicit NONE
   public
@@ -65,9 +72,72 @@ contains ! ====     Public Procedures     ==============================
     get_spec_id = decoration(subtree(1,decoration(subtree(1,root))))
   end function Get_Spec_Id
 
+  ! ----------------------------------------------- GetIndexFlagsFromList
+
+  subroutine GetIndexFlagsFromList ( root, flags, status, lower, noError )
+    ! Given the root of a numeric/numeric range array
+    ! Set the flags array appropriately
+    integer, intent(in) :: ROOT         ! Tree node
+    logical, dimension(:), intent(inout) :: FLAGS ! Result
+    integer, intent(out) :: STATUS      ! Error flag, 0=success
+    integer, intent(in), optional :: LOWER ! Lower bound for result
+    logical, intent(in), optional :: NOERROR ! If set don't give bounds errors
+
+    ! Local variables
+    integer :: I,J                      ! Loop counters
+    real(r8), dimension(2) :: VALUE     ! From expr
+    integer, dimension(2) :: UNITS      ! From expr
+    integer :: TYPE                     ! From expr
+    integer :: RANGE_LOW, RANGE_HI      ! Range for flags
+    logical :: MYNOERROR                ! Copy of noError
+    integer :: MYLOWER                  ! Copy of lower
+    integer :: SON                      ! Tree node
+
+    ! Executable code
+    flags = .false.
+    status = 0
+    myNoError = .false.
+    if ( present ( noError ) ) myNoError = noError
+    mylower = 1
+    if ( present ( lower ) ) myLower = lower
+
+    do j = 2, nsons(root)
+      son = subtree ( j, root )
+      call expr ( son, units, value, type )
+      do i = 1, merge(1,2,type==num_value)
+        if ( units(i) /= phyq_dimensionless ) then
+          status = 1
+          return
+        end if
+      end do
+      range_low = nint(value(1))
+      range_hi = nint(value(merge(1,2,type==num_value)))
+      select case ( node_id(son) )
+      case ( n_colon_less )
+        range_hi = range_hi - 1
+      case ( n_less_colon )
+        range_low = range_low + 1
+      case ( n_less_colon_less )
+        range_low = range_low + 1
+        range_hi = range_hi - 1
+      end select
+      if ( .not. myNoError .and. &
+        & ( range_low < myLower .or. range_hi > myLower+size(flags)-1 ) ) then
+        status = 1
+        return
+      end if
+      range_low = max ( range_low, myLower )
+      range_hi = min ( range_hi, myLower+size(flags)-1 )
+      flags ( range_low-myLower+1 : range_hi-myLower+1 ) = .true.
+    end do
+  end subroutine GetIndexFlagsFromList
+
 end module MoreTree
 
 ! $Log$
+! Revision 2.3  2002/08/26 20:01:22  livesey
+! Added GetIndexFlagsFromList
+!
 ! Revision 2.2  2002/06/07 17:51:56  livesey
 ! More versitility in get_boolean
 !
