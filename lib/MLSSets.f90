@@ -7,7 +7,7 @@ module MLSSets
 
   implicit NONE
   private
-  public :: FindFirst, FindNext, FindAll, Intersect, Intersection, Union
+  public :: FindAll, FindFirst, FindNext, Intersect, Intersection, Union
 
   interface FindFirst
     module procedure FindFirstInteger, FindFirstLogical!, FindFirstCharacter
@@ -382,6 +382,9 @@ contains ! =====     Public Procedures     =============================
 end module MLSSets
 
 ! $Log$
+! Revision 2.5  2004/06/11 20:03:01  vsnyder
+! Cannonball polishing
+!
 ! Revision 2.4  2004/06/11 20:02:14  vsnyder
 ! Add Intersect function
 !
