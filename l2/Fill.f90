@@ -5741,6 +5741,10 @@ contains ! =====     Public Procedures     =============================
       type (VectorValue_T), pointer :: B
       integer, intent(in) :: MANIPULATION
       integer, intent(in) :: KEY        ! Tree node
+      ! Local parameters
+      integer, parameter :: NOMANIPULATIONS = 5
+      character(len=3), parameter :: VALIDMANIPULATIONS ( noManipulations ) = &
+        & (/ 'a+b', 'a-b', 'a*b', 'a>b', 'a<b' /)
       ! Local variables
       character (len=128) :: MSTR
       character (len=1) :: ABNAME
@@ -5752,9 +5756,8 @@ contains ! =====     Public Procedures     =============================
       ! Currently we have a rather brain dead approach to this, so
       ! check that what the user has asked for, we can supply.
       call get_string ( manipulation, mstr, strip=.true. )
-      if ( mstr /= 'a+b' .and. mstr /= 'a-b' .and. mstr /= 'a*b' ) then
-        call Announce_Error ( key, 0, &
-          & 'Only a+b, a-b, or a*b allowed for manipulation at the moment' )
+      if ( all ( mstr /= validManipulations ) ) then
+        call Announce_Error ( key, 0, 'Invalid manipulation' )
         return
       end if
 
@@ -5801,7 +5804,8 @@ contains ! =====     Public Procedures     =============================
 
       ! OK do the simple work for now
       ! Later we'll do fancy stuff to parse the manipulation.
-      if ( mstr .eq. 'a+b' ) then
+      select case ( mstr )
+      case ( 'a+b' )
         if ( .not. associated ( quantity%mask ) ) then
           quantity%values = a%values + b%values
         else
@@ -5809,8 +5813,7 @@ contains ! =====     Public Procedures     =============================
             quantity%values = a%values + b%values
           end where
         end if
-      end if
-      if ( mstr .eq. 'a-b' ) then
+      case ( 'a-b' )
         if ( .not. associated ( quantity%mask ) ) then
           quantity%values = a%values - b%values
         else
@@ -5818,8 +5821,7 @@ contains ! =====     Public Procedures     =============================
             quantity%values = a%values - b%values
           end where
         end if
-      end if
-      if ( mstr .eq. 'a*b' ) then
+      case ( 'a*b' )
         if ( .not. associated ( quantity%mask ) ) then
           quantity%values = a%values * b%values
         else
@@ -5827,7 +5829,23 @@ contains ! =====     Public Procedures     =============================
             quantity%values = a%values * b%values
           end where
         end if
-      end if
+      case ( 'a>b' )
+        if ( .not. associated ( quantity%mask ) ) then
+          quantity%values = max ( a%values, b%values )
+        else
+          where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 )
+            quantity%values = max ( a%values, b%values )
+          end where
+        end if
+      case ( 'a<b' )
+        if ( .not. associated ( quantity%mask ) ) then
+          quantity%values = min ( a%values, b%values )
+        else
+          where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 )
+            quantity%values = min ( a%values, b%values )
+          end where
+        end if
+      end select
 
     end subroutine FillQuantityByManipulation
 
@@ -6569,6 +6587,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.259  2004/03/03 22:40:59  livesey
+! Added a<b and a>b to manipulations
+!
 ! Revision 2.258  2004/03/03 19:26:38  pwagner
 ! More printing if tropopause outside pressure grid
 !
