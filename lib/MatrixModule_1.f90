@@ -1208,7 +1208,7 @@ contains ! =====     Public Procedures     =============================
       do i = r1, r2
         nullify ( mi )
         if ( associated(a%col%vec%quantities(a%col%quant(i))%mask) .and. my_Mask ) &
-          & mi => a%col%vec%quantities(a%col%quant(i))%mask(:,a%row%inst(i))
+          & mi => a%col%vec%quantities(a%col%quant(i))%mask(:,a%col%inst(i))
         do_update = my_update
         do k = 1, a%row%nb
           call multiply ( a%block(k,i), a%block(k,j), z%m%block(i,j), &
@@ -1660,6 +1660,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.55  2001/09/28 23:34:20  vsnyder
+! Correct looking at row%inst to get column mask in NormalEquations
+!
 ! Revision 2.54  2001/09/27 18:41:05  vsnyder
 ! Apply mask in forming RHS of normal equations
 !
