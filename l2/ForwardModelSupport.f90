@@ -101,7 +101,7 @@ contains ! =====     Public Procedures     =============================
 
     ! We skip this stage if we're just a master task
     any_errors = 0                      ! At least clear error if we're master
-    if ( parallel%master ) return
+    if ( parallel%master .and. .not. parallel%fwmParallel ) return
 
     error = 0
     if ( toggle(gen) .and. levels(gen) > 0 ) &
@@ -670,6 +670,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.38  2002/10/18 18:01:58  livesey
+! Ensure l2pc files etc. read in fwmParallel master mode.
+!
 ! Revision 2.37  2002/10/08 17:36:20  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
