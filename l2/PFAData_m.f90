@@ -246,7 +246,8 @@ contains ! =====     Public Procedures     =============================
       if ( got(f_file) ) call write_PFADatum ( pfaDatum, fileName, fileType )
     end if
     PFADatum%vel_rel = velLin / c ! Doppler correction factor
-    if ( PFADatum%sideband == 0 ) call announce_error ( fileIndex, DSBSignal )
+    if ( PFADatum%theSignal%sideband == 0 ) &
+      & call announce_error ( fileIndex, DSBSignal )
 
     if ( error == 0 ) then
       call decorate ( root, addPFADatumToDatabase ( pfaData, pfaDatum ) )
@@ -282,7 +283,7 @@ contains ! =====     Public Procedures     =============================
         call output ( more, before='.  IOSTAT = ', after='.', advance='yes' )
         call io_error ( 'Cannot read file ', more, trim(string) )
       case ( DSBSignal )
-        call output ( 'DSB signals not allowed for PFA', advance='yes' ) )
+        call output ( 'DSB signals not allowed for PFA', advance='yes' )
         call dump ( pfaDatum )
       case ( notMolecule )
         call output ( 'Symbol ' )
@@ -377,6 +378,9 @@ contains ! =====     Public Procedures     =============================
 end module PFAData_m
 
 ! $Log$
+! Revision 2.10  2004/09/25 00:29:44  vsnyder
+! Don't know how the defective one got committed....
+!
 ! Revision 2.9  2004/09/24 23:44:05  vsnyder
 ! Don't allow DSB signal
 !
