@@ -4,7 +4,7 @@
 !===============================================================================
 MODULE MLSFiles               ! Utility file routines
 !===============================================================================
-   USE HDFEOS, only: gdopen, swopen
+   USE HDFEOS, only: gdclose, gdopen, swclose, swopen
    USE machine, only: io_error
    USE MLSCommon, only: i4, NameLen
    USE MLSStrings, only: Capitalize, LowerCase
@@ -16,7 +16,8 @@ MODULE MLSFiles               ! Utility file routines
   & PGSd_IO_Gen_WDirFrm, PGSd_IO_Gen_WDirUnf, & 
   & PGSd_IO_Gen_USeqFrm, PGSd_IO_Gen_USeqUnf, & 
   & PGSd_IO_Gen_UDirFrm, PGSd_IO_Gen_UDirUnf, & 
-  & PGSd_IO_Gen_ASeqFrm, PGSd_IO_Gen_ASeqUnf, PGS_IO_GEN_OpenF
+  & PGSd_IO_Gen_ASeqFrm, PGSd_IO_Gen_ASeqUnf, &
+  & PGS_IO_GEN_CloseF, PGS_IO_GEN_OpenF
    IMPLICIT NONE
    PUBLIC
 
@@ -26,6 +27,9 @@ MODULE MLSFiles               ! Utility file routines
    CHARACTER(LEN=130) :: Id = &
    "$Id$"
 !----------------------------------------------------------
+
+	! This needs to be twice NameLen becuase it may have a path prefixed
+	INTEGER, PARAMETER :: MAXFILENAMELENGTH=2*NameLen
 
   ! These are error codes that may be returned by GetPCFromRef
 
@@ -69,9 +73,8 @@ MODULE MLSFiles               ! Utility file routines
     INTEGER(i4),  OPTIONAL     :: versionNum
   
     ! Local variables
-	INTEGER, PARAMETER :: MAXNAMELENGTH=NameLen
 	
-	CHARACTER (LEN=MAXNAMELENGTH) :: MatchName, TryName
+	CHARACTER (LEN=MAXFILENAMELENGTH) :: MatchName, TryName
 	INTEGER                       :: version, returnStatus
 		
 	!
@@ -121,7 +124,12 @@ MODULE MLSFiles               ! Utility file routines
 
   ! This function opens a generic file using either the toolbox
   ! or else a Fortran OPEN statement
-  ! according to toolbox_mode
+  ! according to toolbox_mode:
+  ! 'sw' for swath files opened with swopen
+  ! 'gd' for grid files opened with gdopen
+  ! 'pg' for generic files opened with pgs_io_gen_openF
+  ! 'op' for l3ascii files opened with simple fortran 'open'
+
   ! It returns theFileHandle corresponding to the FileName or the PC
 
   ! If given a FileName as an arg and a range of PC numbers
@@ -163,8 +171,8 @@ MODULE MLSFiles               ! Utility file routines
 
 	LOGICAL, PARAMETER :: PRINT_EVERY_OPEN=.TRUE.
 	INTEGER, PARAMETER :: FH_ON_ERROR=-99
-	INTEGER, PARAMETER :: KEYWORDLEN=12			! Length of keywords in OPEN(...)
-	CHARACTER (LEN=NameLen) :: myName
+	INTEGER, PARAMETER :: KEYWORDLEN=12			! Max length of keywords in OPEN(...)
+	CHARACTER (LEN=MAXFILENAMELENGTH) :: myName
 	INTEGER(i4) :: myPC
 	INTEGER                       :: version, returnStatus
    LOGICAL       :: tiedup
@@ -349,18 +357,18 @@ MODULE MLSFiles               ! Utility file routines
 		
 		if(ErrType /= 0 .OR. PRINT_EVERY_OPEN) then
 			call output( 'Fortran opening unit ', advance='no')
-			call output(  unit)
-			call output( 'access ' // access)
-			call output( 'action ' // action)
-			call output( 'form ' // form)
-			call output( 'position ' // position)
-			call output( 'status ' // status)
-			call output( 'file ' // myName)
+			call output(  unit, advance='yes')
+			call output( 'access ' // access, advance='yes')
+			call output( 'action ' // action, advance='yes')
+			call output( 'form ' // form, advance='yes')
+			call output( 'position ' // position, advance='yes')
+			call output( 'status ' // status, advance='yes')
+			call output( 'file ' // myName, advance='yes')
 		endif
 		
 		if(ErrType /= 0) then
 			call output( 'iostat ', advance='no')
-			call output(  ErrType)
+			call output(  ErrType, advance='yes')
 			call io_error('io error in MLSFiles: mls_io_gen_openF' // &
 			& ' Fortran open', ErrType, myName)
 		else
@@ -378,12 +386,74 @@ MODULE MLSFiles               ! Utility file routines
 
   END FUNCTION mls_io_gen_openF
 
+  ! ---------------------------------------------  mls_io_gen_closeF  -----
+
+  ! This function closes a generic file using either the toolbox
+  ! or else a Fortran OPEN statement
+  ! according to toolbox_mode:
+  ! 'sw' for swath files opened with swopen
+  ! 'gd' for grid files opened with gdopen
+  ! 'pg' for generic files opened with pgs_io_gen_openF
+  ! 'cl' for l3ascii files opened with simple fortran 'open'
+
+  ! It returns a non-zero error status only if unsuccessful
+
+  ! If must be given a FileHandle as an arg
+  ! (A later version may allow choice between file handle and file name)
+  FUNCTION mls_io_gen_closeF(toolbox_mode, theFileHandle) &
+  &  RESULT (ErrType)
+
+    ! Dummy arguments
+    INTEGER(i4)  :: ErrType
+    INTEGER(i4), INTENT(IN)  :: theFileHandle
+    CHARACTER (LEN=*), INTENT(IN)   :: toolbox_mode
+
+    ! Local variables
+
+	LOGICAL, PARAMETER :: PRINT_EVERY_CLOSE=.TRUE.
+
+	select case (LowerCase(toolbox_mode(1:2)))
+	
+	case('pg')
+			ErrType = PGS_IO_Gen_CLoseF(theFileHandle)
+			
+	case('sw')
+			ErrType = swclose(theFileHandle)
+			
+	case('gd')
+			ErrType = gdclose(theFileHandle)
+	
+	case('cl')
+			close(unit=theFileHandle, iostat=ErrType)		
+
+		if(ErrType /= 0 .OR. PRINT_EVERY_CLOSE) then
+			call output( 'Fortran closing unit ', advance='no')
+			call output(  theFileHandle, advance='yes')
+		endif
+		
+		if(ErrType /= 0) then
+			call output( 'iostat ', advance='no')
+			call output(  ErrType, advance='yes')
+			call io_error('io error in MLSFiles: mls_io_gen_closeF' // &
+			& ' Fortran close', ErrType, 'unknown')
+		endif
+
+	case default
+		ErrType = UNKNOWNTOOLBOXMODE
+
+	end select
+
+  END FUNCTION mls_io_gen_closeF
+
 !====================
 END MODULE MLSFiles
 !====================
 
 !
 ! $Log$
+! Revision 2.6  2001/03/27 17:30:59  pwagner
+! Added mls_io_gen_closeF
+!
 ! Revision 2.5  2001/03/24 00:30:14  pwagner
 ! Now complains only if an error, and then via output
 !

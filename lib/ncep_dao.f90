@@ -17,14 +17,14 @@ MODULE ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
   use l3ascii, only: l3ascii_read_field
   use LEXER_CORE, only: PRINT_SOURCE
   USE MLSCommon, only: R8, LineLen, NameLen
-  USE MLSFiles, only: GetPCFromRef, mls_io_gen_openF
+  USE MLSFiles, only: GetPCFromRef, mls_io_gen_closeF, mls_io_gen_openF
   USE MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate, &
   & MLSMSG_Deallocate, MLSMSG_Warning
   USE MLSStrings, only: GetStringElement, NumStringElements, Capitalize, &
   & GetIntHashElement, LowerCase
   use OUTPUT_M, only: OUTPUT
   USE SDPToolkit, only: PGS_S_SUCCESS, PGS_PC_GETREFERENCE, &
-  & PGS_IO_GEN_OPENF, PGSD_IO_GEN_RSEQFRM
+  & PGS_IO_GEN_CLOSEF, PGS_IO_GEN_OPENF, PGSD_IO_GEN_RSEQFRM
   use TREE, only: DUMP_TREE_NODE, SOURCE_REF
 
   IMPLICIT NONE
@@ -40,7 +40,8 @@ MODULE ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
  
 
   public::SetupNewGridTemplate, DestroyGridTemplateContents, &
-	&   AddGridTemplateToDatabase, DestroyGridTemplateDatabase
+	&   AddGridTemplateToDatabase, DestroyGridTemplateDatabase, &
+	& Dump_Gridded_Database
   public::OBTAIN_CLIM, READ_CLIMATOLOGY, OBTAIN_DAO, Obtain_NCEP
   public::ReadGriddedData
   private::announce_error
@@ -119,40 +120,40 @@ MODULE ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
     ! First the vertical coordinates
 
     ALLOCATE (qty%heights(qty%noHeights),STAT=status)
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+    IF (status /= 0) call announce_error(0,  &
          & MLSMSG_Allocate//"heights")
 
     ! Now the geolocation coordinates
     ALLOCATE (qty%lats(qty%noLats),STAT=status)
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+    IF (status /= 0) call announce_error(0,  &
          & MLSMSG_Allocate//"lats")
 
     ALLOCATE (qty%lons(qty%noLons),STAT=status)
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+    IF (status /= 0) call announce_error(0,  &
          & MLSMSG_Allocate//"lons")
 
     ALLOCATE (qty%lsts(qty%noLsts),STAT=status)
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+    IF (status /= 0) call announce_error(0,  &
          & MLSMSG_Allocate//"lsts")
 
     ALLOCATE (qty%szas(qty%noSzas),STAT=status)
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+    IF (status /= 0) call announce_error(0,  &
          & MLSMSG_Allocate//"szas")
 
     !Now the temporal coordinates
     ALLOCATE (qty%DateStarts(qty%noDates),STAT=status)
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+    IF (status /= 0) call announce_error(0,  &
          & MLSMSG_Allocate//"DateStarts")
 
     ALLOCATE (qty%DateEnds(qty%noDates),STAT=status)
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+    IF (status /= 0) call announce_error(0,  &
          & MLSMSG_Allocate//"DateEnds")
 
     !Now the data itself
     ALLOCATE(qty%field(qty%noHeights, qty%noLats, qty%noLons,  &
              qty%noLsts, qty%noSzas, qty%noDates), STAT=status)
 
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+    IF (status /= 0) call announce_error(0,  &
          & MLSMSG_Allocate//"field")
 
 
@@ -173,42 +174,42 @@ MODULE ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
 
     DEALLOCATE (qty%heights, STAT=status)
 
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+    IF (status /= 0) call announce_error(0,  &
          & MLSMSG_DeAllocate//"heights")
 
     DEALLOCATE (qty%lats, STAT=status)
 
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+    IF (status /= 0) call announce_error(0,  &
          & MLSMSG_DeAllocate//"lats")
 
     DEALLOCATE (qty%lons, STAT=status)
 
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+    IF (status /= 0) call announce_error(0,  &
          & MLSMSG_DeAllocate//"lons")
 
     DEALLOCATE (qty%lsts, STAT=status)
 
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+    IF (status /= 0) call announce_error(0,  &
          & MLSMSG_DeAllocate//"lsts")
 
     DEALLOCATE (qty%szas, STAT=status)
 
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+    IF (status /= 0) call announce_error(0,  &
          & MLSMSG_DeAllocate//"szas")
 
     DEALLOCATE (qty%DateStarts, STAT=status)
 
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+    IF (status /= 0) call announce_error(0,  &
          & MLSMSG_DeAllocate//"DateStarts")
 
     DEALLOCATE (qty%DateEnds, STAT=status)
 
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+    IF (status /= 0) call announce_error(0,  &
          & MLSMSG_DeAllocate//"DateEnds")
 
     DEALLOCATE (qty%field, STAT=status)
 
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+    IF (status /= 0) call announce_error(0,  &
          & MLSMSG_DeAllocate//"field")    
 
 
@@ -277,7 +278,7 @@ MODULE ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
           CALL DestroyGridTemplateContents(database(qtyIndex))
        ENDDO
        DEALLOCATE(database, stat=status)
-       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+       IF (status /= 0) call announce_error(0,  &
          & MLSMSG_DeAllocate//"database")
     ENDIF
   END SUBROUTINE DestroyGridTemplateDatabase
@@ -523,7 +524,7 @@ MODULE ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
 
   ! --------------------------------------------------  READ_CLIMATOLOGY  -----
   SUBROUTINE READ_CLIMATOLOGY ( fname, root, aprioriData, &
-  & mlspcf_l2clim_start, mlspcf_l2clim_end )
+  & mlspcf_l2clim_start, mlspcf_l2clim_end, echo_data )
   ! --------------------------------------------------
   ! Brief description of program
   ! This subroutine reads a l3ascii file and returns
@@ -535,15 +536,25 @@ MODULE ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
     type (GriddedData_T), dimension(:), pointer :: aprioriData 
     integer, intent(in) :: ROOT        ! Root of the L2CF abstract syntax tree
 	 INTEGER, OPTIONAL, INTENT(IN) :: mlspcf_l2clim_start, mlspcf_l2clim_end
+    LOGICAL, OPTIONAL, intent(in) :: echo_data        ! Root of the L2CF abstract syntax tree
 	 
 	 ! Local
     type (GriddedData_T)        :: gddata 
 	 INTEGER :: ErrType
 	 INTEGER, PARAMETER :: version=1
-	 LOGICAL :: end_of_file=.FALSE.
+	 LOGICAL :: end_of_file
+	 LOGICAL, PARAMETER :: debug=.FALSE.
+	 LOGICAL, PARAMETER :: ECHO_GRIDDED_QUANTITIES=.TRUE.
+	 LOGICAL :: echo
     integer:: processCli, CliUnit, record_length
 	 
 	! begin
+	end_of_file=.FALSE.
+	if(present(echo_data)) then
+		echo = echo_data
+	ELSE
+		echo = ECHO_GRIDDED_QUANTITIES
+	ENDIF
 	
 	! use PCF
 
@@ -566,34 +577,64 @@ MODULE ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
 	! use Fortran open
 	else
 	
-		call output('opening ' // fname)
+		if(debug) call output('opening ' // fname, advance = 'yes')
 
 		CliUnit = mls_io_gen_openF ( 'open', .true., ErrType, &
 	& record_length, PGSd_IO_Gen_RSeqFrm, FileName=fname)
 	
 	endif
 
+	if(debug) then
+		if(.NOT. end_of_file) then
+			call output('Not yet eof on io unit', advance = 'yes')
+		else
+			call output('Starting at eof on io unit', advance = 'yes')
+		endif
+	endif
+
+
       if ( ErrType == PGS_S_SUCCESS ) then
 
       do while (.NOT. end_of_file)
 
-			call output('reading l3ascii file')
+			if(debug) call output('reading l3ascii file', advance = 'yes')
 
         call l3ascii_read_field ( CliUnit, gddata, end_of_file)
+		  if(debug) then
 			call output('adding to grid database', advance='yes')
 			call output('adding grid template to database ', advance='yes')
+		endif
+		  if(echo .OR. debug) then
 			call output('quantity name ' // gddata%quantityName, advance='yes')
 			call output('description ' // gddata%description, advance='yes')
 			call output('units ' // gddata%units, advance='yes')
+		endif
 
         ErrType = AddGridTemplateToDatabase(aprioriData, gddata)
 
-			call output('Destroying our grid template', advance='yes')
+			if(debug) call output('Destroying our grid template', advance='yes')
 			
         call DestroyGridTemplateContents ( gddata )
 
       end do !(.not. end_of_file)
 		
+	! ok, done with this file and unit number
+	if(present(mlspcf_l2clim_start) .and. present(mlspcf_l2clim_end)) then
+      ErrType = Pgs_io_gen_CloseF ( CliUnit )
+
+	! use Fortran close
+	else
+	
+		if(debug) call output('closing ' // fname, advance = 'yes')
+		ErrType = mls_io_gen_CloseF ('close', CliUnit )
+		
+	endif
+
+	if(ErrType /= 0) then
+    		CALL announce_error (ROOT, &
+              &"Error closing " // fname, error_number=ErrType)
+	endif
+	
 		else
 
     		CALL announce_error (ROOT, &
@@ -710,6 +751,77 @@ MODULE ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
   end subroutine Obtain_NCEP
 !===========================
 
+  ! --------------------------------  Dump_Gridded_Database  -----
+  subroutine Dump_Gridded_Database(GriddedData, root)
+    use Dump_0, only: Dump
+
+	! Imitating what dump_pointing_grid_database does, but for gridded data
+	! which may come from climatology, ncep, dao
+	
+    type (GriddedData_T), dimension(:), pointer :: GriddedData 
+
+    integer, intent(in) :: ROOT        ! Root of the L2CF abstract syntax tree
+
+    ! Local Variables
+    logical, parameter :: MAYDUMPFIELDVALUES = .FALSE.
+    integer :: I, J                ! Subscripts, loop inductors
+
+    call output ( 'a priori grids: SIZE = ' )
+    call output ( size(GriddedData), advance='yes' )
+    do i = 1, size(GriddedData)
+			call output('quantity name ' // GriddedData(i)%quantityName, advance='yes')
+			call output('description ' // GriddedData(i)%description, advance='yes')
+			call output('units ' // GriddedData(i)%units, advance='yes')
+
+      call output ( ' ************ Geometry ********** ' ,advance='yes')
+
+      call output ( ' Vertical coordinate = ' )
+      call output ( GriddedData(i)%verticalCoordinate, advance='yes' )
+      call output ( ' No. of heights = ' )
+      call output ( GriddedData(i)%noHeights, advance='yes' )
+        call dump ( GriddedData(i)%heights, &
+          & '    Heights =' )
+
+      call output ( ' Equivalent latitude = ' )
+      call output ( GriddedData(i)%equivalentLatitude, advance='yes' )
+      call output ( ' No. of latitudes = ' )
+      call output ( GriddedData(i)%noLats, advance='yes' )
+        call dump ( GriddedData(i)%lats, &
+          & '    latitudes =' )
+
+      call output ( ' No. of longitudes = ' )
+      call output ( GriddedData(i)%noLons, advance='yes' )
+        call dump ( GriddedData(i)%lons, &
+          & '    longitudes =' )
+
+      call output ( ' No. of local times = ' )
+      call output ( GriddedData(i)%noLsts, advance='yes' )
+        call dump ( GriddedData(i)%lsts, &
+          & '    local times =' )
+
+      call output ( ' No. of solar zenith angles = ' )
+      call output ( GriddedData(i)%noSzas, advance='yes' )
+        call dump ( GriddedData(i)%szas, &
+          & '    solar zenith angles =' )
+
+      call output ( ' No. of dates = ' )
+      call output ( GriddedData(i)%noDates, advance='yes' )
+        call dump ( GriddedData(i)%dateStarts, &
+          & '    starting dates =' )
+        call dump ( GriddedData(i)%dateEnds, &
+          & '    ending dates =' )
+
+		if(MAYDUMPFIELDVALUES) then
+     	 call output ( ' ************ tabulated field values ********** ' ,advance='yes')
+
+	! No dump for 6-dimensional double arrays yet, anyway
+   !     call dump ( GriddedData(i)%field, &
+    !      & '    gridded field values =' )
+		endif
+
+    end do ! i
+  end subroutine Dump_Gridded_Database
+
   ! ------------------------------------------------  announce_error  -----
   subroutine announce_error ( lcf_where, full_message, use_toolkit, &
   & error_number )
@@ -781,6 +893,9 @@ END MODULE ncep_dao
 
 !
 ! $Log$
+! Revision 2.6  2001/03/27 17:28:31  pwagner
+! Can dump gridded database
+!
 ! Revision 2.5  2001/03/24 00:29:32  pwagner
 ! Now seems to read climatology files better
 !
