@@ -7,21 +7,18 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
   use DUMP_0, only: DUMP
   use Hdf, only: DFACC_READ, DFNT_CHAR8, DFNT_FLOAT32, DFNT_INT32, DFNT_FLOAT64
-  use HDFEOS!, only: SWATTACH, SWCREATE, SWDEFDFLD, SWDEFDIM, SWDEFGFLD, &
-     !& SWDETACH
+  use HDFEOS, only: SWATTACH, SWCREATE, SWDETACH, SWINQDIMS
   use Intrinsic ! "units" type literals, beginning with L_
   use MLSCommon, only: R4, R8
   use MLSFiles, only: FILENOTFOUND, HDFVERSION_4, HDFVERSION_5, &
-    & WILDCARDHDFVERSION, &
     & MLS_HDF_VERSION, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error, MLSMSG_Warning, MLSMSG_Debug
-  use MLSStrings, only: ExtractSubString, GetStringHashElement, ints2Strings, &
-    & list2array, lowercase, strings2Ints
+  use MLSStrings, only: Capitalize, ExtractSubString, GetStringHashElement, &
+    & ints2Strings, list2array, lowercase, strings2Ints
   use OUTPUT_M, only: OUTPUT
   use PCFHdr, only: GA_VALUE_LENGTH
   use STRING_TABLE, only: DISPLAY_STRING
-  use SWAPI, only: SWWRFLD, SWRDFLD
 
   implicit none
 
@@ -77,10 +74,6 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 ! WriteL2GPData           Writes an L2GP into a swath file
 
   ! First some local parameters
-  ! (This 1st one enables some changes *not* made by paw zeroing out frequency)
-  logical, private, parameter :: MONKEYAROUND = .FALSE. ! If true, then ???
-
-
   ! Assume L2GP files w/o explicit hdfVersion field are this
   ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc. 
   integer, parameter :: L2GPDEFAULT_HDFVERSION = HDFVERSION_4
@@ -93,14 +86,16 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   integer, parameter :: L2GPNameLen = 80
   integer, parameter :: NumGeolocFields = 10
 
+   ! The following are the current data fields
    character (len=*), parameter :: DATA_FIELD1 = 'L2gpValue'
    character (len=*), parameter :: DATA_FIELD2 = 'L2gpPrecision'
    character (len=*), parameter :: DATA_FIELD3 = 'Status'
    character (len=*), parameter :: DATA_FIELD4 = 'Quality'
+   ! This is the above except for Status which has proved troublesome
    character (len=*), parameter :: DATA_FIELDS = &
      & 'L2gpValue,L2gpPrecision,Quality'
 
-   ! The old names of the following lacked "MLS.."
+   ! The following are the current geolocation fields
    character (len=*), parameter :: GEO_FIELD1 = 'Latitude'
    character (len=*), parameter :: GEO_FIELD2 = 'Longitude'
    character (len=*), parameter :: GEO_FIELD3 = 'Time'
@@ -111,13 +106,17 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
    character (len=*), parameter :: GEO_FIELD8 = 'ChunkNumber'
    character (len=*), parameter :: GEO_FIELD9 = 'Pressure'
    character (len=*), parameter :: GEO_FIELD10= 'Frequency'
+   ! These are the above except for 8,9,10 which have special attributes
    character (len=*), parameter :: GEO_FIELDS = &
      & 'Latitude,Longitude,LocalSolarTime,SolarZenithAngle,LineOfSightAngle' // &
      & ',OrbitGeodeticAngle'
 
+   ! The following are the dimension names according to the mls spec
    character (len=*), parameter :: DIM_NAME1 = 'nTimes'
    character (len=*), parameter :: DIM_NAME2 = 'nLevels'
    character (len=*), parameter :: DIM_NAME3 = 'nFreqs'
+   ! An alternate name for DIM_NAME3 used by HIRDLS
+   character (len=*), parameter :: HRD_DIM_NAME3 = 'nChans'
    character (len=*), parameter :: DIM_NAME12 = 'nLevels,nTimes'
    character (len=*), parameter :: DIM_NAME123 = 'nFreqs,nLevels,nTimes'
    ! These are for the new max_dimlist parameter added to  SWdefgfld.
@@ -130,7 +129,10 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
    character (len=*), parameter :: MAX_DIML123 = 'nFreqs,nLevels,Unlim'
 
 !   INTEGER,PARAMETER::CHUNKFREQS=13,CHUNKLEVELS=17,CHUNKTIMES=9,CHUNK4=1
-
+   
+   character (len=*), parameter :: DEFAULTMAXDIM = UNLIM
+   integer, parameter :: DEFAULT_CHUNKRANK = 1
+   integer, dimension(7), parameter :: DEFAULT_CHUNKDIMS = (/ 1,1,1,1,1,1,1 /)
    integer, parameter :: HDFE_AUTOMERGE = 1     ! MERGE FIELDS WITH SHARE DIM
    integer, parameter :: HDFE_NOMERGE = 0       ! don't merge
   ! The following, if true, says to encode strings as ints
@@ -210,12 +212,14 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
      ! character(len=CHARATTRLEN)        :: DIM_Names = '' ! ','-separated
      ! character(len=CHARATTRLEN)        :: DIM_Units = '' ! ','-separated
      ! character(len=CHARATTRLEN)        :: VALUE_Units = '' 
+     real (rgp)                        :: MissingValue = UNDEFINED_VALUE
   end type L2GPData_T
 
 contains ! =====     Public Procedures     =============================
 
   !------------------------------------------  SetupNewL2GPRecord  -----
-  subroutine SetupNewL2GPRecord ( l2gp, nFreqs, nLevels, nTimes)
+  subroutine SetupNewL2GPRecord ( l2gp, nFreqs, nLevels, nTimes, &
+    & FillIn)
 
     ! This routine sets up the arrays for an l2gp datatype.
 
@@ -224,6 +228,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in), optional :: nFreqs            ! Dimensions
     integer, intent(in), optional :: nLevels           ! Dimensions
     integer, intent(in), optional :: nTimes            ! Dimensions
+    logical, intent(in), optional :: FillIn    ! Fill with MissingValue
 
     ! Local variables
     integer :: useNFreqs, useNLevels, useNTimes
@@ -287,6 +292,21 @@ contains ! =====     Public Procedures     =============================
 
     call allocate_test(l2gp%status, useNTimes,"l2gp%status", ModuleName)
     call allocate_test(l2gp%quality,useNTimes,"l2gp%quality",ModuleName)
+    if ( .not. present(FillIn) ) return
+    if ( .not. FillIn ) return
+    l2gp%pressures = l2gp%MissingValue
+    l2gp%frequency = l2gp%MissingValue
+    l2gp%latitude = l2gp%MissingValue
+    l2gp%longitude = l2gp%MissingValue
+    l2gp%solarTime = l2gp%MissingValue
+    l2gp%losAngle = l2gp%MissingValue
+    l2gp%geodAngle = l2gp%MissingValue
+    l2gp%time = l2gp%MissingValue
+    l2gp%chunkNumber = l2gp%MissingValue
+    l2gp%l2gpValue = l2gp%MissingValue
+    l2gp%l2gpPrecision = l2gp%MissingValue
+    l2gp%status = ' '
+    l2gp%quality = l2gp%MissingValue
 
   end subroutine SetupNewL2GPRecord
 
@@ -366,7 +386,7 @@ contains ! =====     Public Procedures     =============================
     tmpNFreqs = l2gp%nFreqs
     tmpNLevels = l2gp%nLevels
     call SetupNewL2GPRecord( l2gp, nFreqs=tmpNFreqs, nLevels=tmpNLevels, &
-      & nTimes=myNTimes )
+      & nTimes=myNTimes, FillIn = .true. )
 
     ! Don't forget the `global' stuff
     l2gp%pressures=templ2gp%pressures
@@ -439,7 +459,7 @@ contains ! =====     Public Procedures     =============================
   ! ---------------------- ReadL2GPData_fileID  -----------------------------
 
   subroutine ReadL2GPData_fileID(L2FileHandle, swathname, l2gp, numProfs, &
-       firstProf, lastProf, hdfVersion)
+       firstProf, lastProf, hdfVersion, HMOT)
     !------------------------------------------------------------------------
 
     ! Given a file handle,
@@ -456,9 +476,11 @@ contains ! =====     Public Procedures     =============================
     type( l2GPData_T ), intent(out) :: l2gp ! Result
     integer, intent(out), optional :: numProfs ! Number actually read
     integer, optional, intent(in) :: hdfVersion
+    character, optional, intent(in) :: hmot   ! 'H' 'M'(def) 'O' 'T'
 
     ! Local
     integer :: myhdfVersion
+    character :: my_hmot
     
     ! Executable code
     if (present(hdfVersion)) then
@@ -466,18 +488,32 @@ contains ! =====     Public Procedures     =============================
     else
       myhdfVersion = L2GPDEFAULT_HDFVERSION
     endif
+    my_hmot = 'M'
+    if ( present(hmot)) my_hmot = Capitalize(hmot)
+    ! Check for valid hmot
+    select case (my_hmot)
+    case ('H')
+    case ('M')
+    case ('O')
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "Unable to Read OMI L2GPData" )
+    case ('T')
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "Unable to Read TES L2GPData" )
+    case default
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "Unrecognized instrument key passed to ReadL2GPData: "// my_hmot )
+    end select
     !print*,"In readl2gpdata: first/last prof=",firstProf, lastProf
     if (myhdfVersion == HDFVERSION_4) then
-      call ReadL2GPData_hdf4(L2FileHandle, swathname, l2gp, numProfs, &
-       firstProf, lastProf)
+      call ReadL2GPData_hdf4(L2FileHandle, swathname, l2gp, my_hmot, &
+        & numProfs, firstProf, lastProf)
     elseif (myhdfVersion /= HDFVERSION_5) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &
       & "Unrecognized hdfVersion passed to ReadL2GPData" )
     else
-      call ReadL2GPData_hdf5(L2FileHandle, swathname, l2gp, numProfs, &
-       firstProf, lastProf)
-!       call MLSMessage ( MLSMSG_Error, ModuleName, &
-!            & 'This version of L2GPData not yet ready for hdf5' )
+      call ReadL2GPData_hdf5(L2FileHandle, swathname, l2gp, my_hmot, &
+        & numProfs, firstProf, lastProf)
     endif
     !print*,"In readl2gpdata: first/last/read prof=",firstProf,&
     !  lastProf,numProfs
@@ -486,7 +522,7 @@ contains ! =====     Public Procedures     =============================
   ! ---------------------- ReadL2GPData_fileName  -----------------------------
 
   subroutine ReadL2GPData_fileName(fileName, swathname, l2gp, numProfs, &
-       firstProf, lastProf, hdfVersion)
+       firstProf, lastProf, hdfVersion, HMOT)
     !------------------------------------------------------------------------
 
     ! Given a file name,
@@ -503,6 +539,7 @@ contains ! =====     Public Procedures     =============================
     type( l2GPData_T ), intent(out) :: l2gp ! Result
     integer, intent(out), optional :: numProfs ! Number actually read
     integer, optional, intent(in) :: hdfVersion
+    character, optional, intent(in) :: hmot   ! 'H' 'M'(def) 'O' 'T'
 
     ! Local
     integer :: L2FileHandle
@@ -516,6 +553,7 @@ contains ! =====     Public Procedures     =============================
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'File not found; make sure the name and path are correct' &
         & // trim(fileName) )
+
     L2FileHandle = mls_io_gen_openF('swopen', .TRUE., status, &
        & record_length, DFACC_READ, FileName=FileName, &
        & hdfVersion=hdfVersion, debugOption=.false. )
@@ -523,7 +561,8 @@ contains ! =====     Public Procedures     =============================
       call MLSMessage ( MLSMSG_Error, ModuleName, &
        & "Unable to open L2gp file: " // trim(FileName) // ' for reading')
     call ReadL2GPData_fileID(L2FileHandle, swathname, l2gp, numProfs=numProfs, &
-       & firstProf=firstProf, lastProf=lastProf, hdfVersion=the_hdfVersion)
+       & firstProf=firstProf, lastProf=lastProf, hdfVersion=the_hdfVersion, &
+       & hmot=hmot)
     status = mls_io_gen_closeF('swclose', L2FileHandle, FileName=FileName, &
       & hdfVersion=hdfVersion)
     if ( status /= 0 ) &
@@ -533,8 +572,9 @@ contains ! =====     Public Procedures     =============================
 
   ! ---------------------- ReadL2GPData_hdf4  -----------------------------
 
-  subroutine ReadL2GPData_hdf4(L2FileHandle, swathname, l2gp, numProfs, &
-       firstProf, lastProf)
+  subroutine ReadL2GPData_hdf4(L2FileHandle, swathname, l2gp, HMOT, &
+    & numProfs, firstProf, lastProf)
+  use MLSHDFEOS, only: mls_swdiminfo, mls_swrdfld
     !------------------------------------------------------------------------
 
     ! This routine reads an L2GP file, assuming it is hdfeos2 format
@@ -547,6 +587,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: L2FileHandle ! Returned by swopen
     integer, intent(in), optional :: firstProf, lastProf ! Defaults to first and last
     type( l2GPData_T ), intent(out) :: l2gp ! Result
+    character, intent(in) :: HMOT   ! 'H' 'M'(def) 'O' 'T'
     integer, intent(out), optional :: numProfs ! Number actually read
 
     ! Local Parameters
@@ -557,6 +598,8 @@ contains ! =====     Public Procedures     =============================
                                                      &field:'
 
     ! Local Variables
+    character (len=80) :: DF_Name
+    character (len=80) :: DF_Precision
     character (len=80) :: list
     character (len=480) :: msr
     integer :: alloc_err, first, freq, lev, nDims, size, swid, status
@@ -565,6 +608,7 @@ contains ! =====     Public Procedures     =============================
     logical :: firstCheck, lastCheck
 
     real, allocatable :: realSurf(:), realProf(:), real3(:,:,:)
+    logical :: dontfail
 !  How to deal with status and columnTypes? swrfld fails
 !  with char data on Linux
 !  Have recourse to ints2Strings and strings2Ints if USEINTS4STRINGS
@@ -572,11 +616,27 @@ contains ! =====     Public Procedures     =============================
 !    character (LEN=L2GPNameLen), allocatable :: the_status_buffer(:)
     integer, allocatable, dimension(:,:) :: string_buffer
 
+    ! Don't fail when trying to read an mls-specific field 
+    ! if the file is from another Aura instrument
+    dontfail = (HMOT /= 'M')
+
     ! Attach to the swath for reading
 
     l2gp%Name = swathname
 
-    swid = swattach(L2FileHandle, TRIM(l2gp%Name))
+    select case (HMOT)
+    case ('H')
+      swid = swattach(L2FileHandle, 'HIRDLS')
+      DF_Name = TRIM(l2gp%Name)
+      DF_Precision = TRIM(l2gp%Name) // 'Precision'
+      l2gp%MissingValue = -999.
+    case ('M')
+      swid = swattach(L2FileHandle, TRIM(l2gp%Name))
+      DF_Name = DATA_FIELD1
+      DF_Precision = DATA_FIELD2
+    case default
+    end select
+
     if ( swid == -1) call MLSMessage ( MLSMSG_Error, ModuleName, 'Failed to &
          &attach to hdfeos2 swath interface for reading: ' // trim(swathname))
 
@@ -589,36 +649,34 @@ contains ! =====     Public Procedures     =============================
     if ( nDims == -1) call MLSMessage ( MLSMSG_Error, ModuleName, 'Failed to &
          &get dimension information on hdfeos2 swath ' // trim(swathname))
     if ( INDEX(list,'nLevels') /= 0 ) lev = 1
-    if ( INDEX(list,'Freq') /= 0 ) freq = 1
 
-    size = swdiminfo(swid, DIM_NAME1)
-    if ( size == -1 ) then
-       msr = SZ_ERR // DIM_NAME1 // ' '  // trim(swathname)
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    select case (HMOT)
+    case ('H')
+      if ( INDEX(list,'Chan') /= 0 ) freq = 1
+    case ('M')
+      if ( INDEX(list,'Freq') /= 0 ) freq = 1
+    case default
+    end select
+
+    size = mls_swdiminfo(swid, 'nTimes', hdfVersion=HDFVERSION_4)
     l2gp%nTimes = size
     nTimes=size
     if ( lev == 0 ) then
        nLevels = 0
     else
-       size = swdiminfo(swid, DIM_NAME2)
-       if ( size == -1 ) then
-          msr = SZ_ERR // DIM_NAME2 // ' '  // trim(swathname)
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
-       nLevels = size
+      size = mls_swdiminfo(swid, 'nLevels', hdfVersion=HDFVERSION_4)
+      nLevels = size
 
     end if
 
-    if ( freq == 1 ) then
-       size = swdiminfo(swid, DIM_NAME3)
-       if ( size == -1 ) then
-          msr = SZ_ERR // DIM_NAME3 // ' ' // trim(swathname)
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
-       nFreqs = size
+    if ( freq == 1 .and. HMOT == 'M') then
+      size = mls_swdiminfo(swid, 'nFreqs', hdfVersion=HDFVERSION_4)
+      nFreqs = size
+    elseif ( freq == 1 .and. HMOT == 'H') then
+      size = mls_swdiminfo(swid, 'nChans', hdfVersion=HDFVERSION_4)
+      nFreqs = size
     else
-       nFreqs = 0
+      nFreqs = 0
     end if
 
     ! Check optional input arguments
@@ -663,7 +721,7 @@ contains ! =====     Public Procedures     =============================
     ! Allocate result
 
     call SetupNewL2GPRecord ( l2gp, nFreqs=nFreqs, nLevels=nLevels, &
-    & nTimes=myNumProfs )
+    & nTimes=myNumProfs, FillIn = .true. )
 
     ! Allocate temporary arrays
 
@@ -686,91 +744,42 @@ contains ! =====     Public Procedures     =============================
     edge(3) = myNumProfs
     status=0
 
-    status = swrdfld(swid, GEO_FIELD1, start(3:3), stride(3:3), edge(3:3), &
-      &    realProf)
-    if ( status == -1 ) then
-       msr = MLSMSG_L2GPRead // GEO_FIELD1 // ' ' // trim(swathname)
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    status = mls_swrdfld(swid, 'Latitude', start(3:3), stride(3:3), edge(3:3), &
+      &    realProf, hdfVersion=HDFVERSION_4)
     l2gp%latitude = realProf
 
-    status = swrdfld(swid, GEO_FIELD2, start(3:3), stride(3:3), edge(3:3), &
-      &    realProf)
-    if ( status == -1 ) then
-       msr = MLSMSG_L2GPRead // GEO_FIELD2 // ' ' // trim(swathname)
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    status = mls_swrdfld(swid, 'Longitude', start(3:3), stride(3:3), edge(3:3), &
+      &    realProf, hdfVersion=HDFVERSION_4)
     l2gp%longitude = realProf
 
-    status = swrdfld(swid, GEO_FIELD3, start(3:3), stride(3:3), edge(3:3), &
-      &    l2gp%time)
-    if ( status == -1 ) then
-       msr = MLSMSG_L2GPRead // GEO_FIELD3
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    status = mls_swrdfld(swid, 'Time', start(3:3), stride(3:3), edge(3:3), &
+      &    l2gp%time, hdfVersion=HDFVERSION_4)
 
-    status = swrdfld(swid, GEO_FIELD4, start(3:3), stride(3:3), edge(3:3), &
-      &    realProf)
-    if ( status == -1 ) then
-       msr = MLSMSG_L2GPRead // GEO_FIELD4
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    status = mls_swrdfld(swid, 'LocalSolarTime', start(3:3), stride(3:3), edge(3:3), &
+      &    realProf, hdfVersion=HDFVERSION_4)
     l2gp%solarTime = realProf
 
-    status = swrdfld(swid, GEO_FIELD5, start(3:3), stride(3:3), edge(3:3), &
-      &    realProf)
-    if ( status == -1 ) then
-       msr = MLSMSG_L2GPRead // GEO_FIELD5
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    status = mls_swrdfld(swid, 'SolarZenithAngle', start(3:3), stride(3:3), edge(3:3), &
+      &    realProf, hdfVersion=HDFVERSION_4)
     l2gp%solarZenith = realProf
 
-    status = swrdfld(swid, GEO_FIELD6, start(3:3), stride(3:3), edge(3:3), &
-      &    realProf)
-    if ( status == -1 ) then
-       msr = MLSMSG_L2GPRead // GEO_FIELD6
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    status = mls_swrdfld(swid, 'LineOfSightAngle', start(3:3), stride(3:3), edge(3:3), &
+      &    realProf, hdfVersion=HDFVERSION_4, dontfail=dontfail)
     l2gp%losAngle = realProf
 
-    status = swrdfld(swid, GEO_FIELD7, start(3:3), stride(3:3), edge(3:3), &
-      &    realProf)
-    ! Give it a 2nd chance--perhaps saved under old name
-    if ( status == -1 .and. GEO_FIELD7 /= 'OrbitGeodeticAngle' ) then
-        status = swrdfld(swid, 'OrbitGeodeticAngle', &
-         & start(3:3), stride(3:3), edge(3:3), &
-         &    realProf)
-    end if
-    if ( status == -1 ) then
-       msr = MLSMSG_L2GPRead // GEO_FIELD7
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    status = mls_swrdfld(swid, 'OrbitGeodeticAngle', start(3:3), stride(3:3), edge(3:3), &
+      &    realProf, hdfVersion=HDFVERSION_4, dontfail=dontfail)
     l2gp%geodAngle = realProf
 
-    status = swrdfld(swid, GEO_FIELD8, start(3:3), stride(3:3), edge(3:3), &
-      &    l2gp%chunkNumber)
-    ! Give it a 2nd chance--perhaps it was saved under an old name
-    if ( status == -1 .and. GEO_FIELD8 /= 'ChunkNumber' ) then
-      status = swrdfld(swid, 'ChunkNumber', &
-        & start(3:3), stride(3:3), edge(3:3), &
-        &    l2gp%chunkNumber)
-    end if
-    if ( status == -1 ) then
-       msr = MLSMSG_L2GPRead // GEO_FIELD8
-       call MLSMessage ( MLSMSG_Warning, ModuleName, msr )
-    end if
+    status = mls_swrdfld(swid, 'ChunkNumber', start(3:3), stride(3:3), edge(3:3), &
+      &    l2gp%chunkNumber, hdfVersion=HDFVERSION_4, dontfail=dontfail)
 
     ! Read the pressures vertical geolocation field, if it exists
 
     if ( lev /= 0 ) then
 
-       status = swrdfld(swid, GEO_FIELD9, start(2:2), stride(2:2), edge(2:2), &
-         & realSurf)
-       if ( status == -1 ) then
-          msr = MLSMSG_L2GPRead // GEO_FIELD9
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
-
+       status = mls_swrdfld(swid, 'Pressure', start(2:2), stride(2:2), edge(2:2), &
+         & realSurf, hdfVersion=HDFVERSION_4, dontfail=dontfail)
        l2gp%pressures = realSurf
 
     end if
@@ -781,18 +790,8 @@ contains ! =====     Public Procedures     =============================
 
        edge(1) = l2gp%nFreqs
 
-       status = swrdfld(swid, GEO_FIELD10, start(1:1), stride(1:1), edge(1:1), &
-         & l2gp%frequency)
-       ! Give it a 2nd chance--perhaps saved under old name
-       if ( status == -1 .and. GEO_FIELD10 /= 'Frequency' ) then
-         status = swrdfld(swid, 'Frequency', start(1:1), stride(1:1), &
-           & edge(1:1), &
-           & l2gp%frequency)
-       end if
-       if ( status == -1 ) then
-          msr = MLSMSG_L2GPRead // GEO_FIELD10
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
+       status = mls_swrdfld(swid, 'Frequency', start(1:1), stride(1:1), edge(1:1), &
+         & l2gp%frequency, hdfVersion=HDFVERSION_4)
 
     end if
 
@@ -800,54 +799,32 @@ contains ! =====     Public Procedures     =============================
 
     if ( freq == 1 ) then
 
-       status = swrdfld(swid, DATA_FIELD1, start, stride, edge, real3)
-       if ( status == -1 ) then
-          msr = MLSMSG_L2GPRead // DATA_FIELD1
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
+       status = mls_swrdfld(swid, trim(DF_Name), start, stride, edge, real3, &
+         & hdfVersion=HDFVERSION_4)
        l2gp%l2gpValue = real3
 
-       status = swrdfld(swid, DATA_FIELD2, start, stride, edge, real3)
-       if ( status == -1 ) then
-          msr = MLSMSG_L2GPRead // DATA_FIELD2
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
+       status = mls_swrdfld(swid, trim(DF_Precision), start, stride, edge, real3, &
+         & hdfVersion=HDFVERSION_4)
        l2gp%l2gpPrecision = real3
 
     else if ( lev == 1 ) then
 
-      status = swrdfld( swid, DATA_FIELD1, start(2:3), stride(2:3), &
-        &   edge(2:3), real3(1,:,:) )
-      if ( status == -1 ) then
-        msr = MLSMSG_L2GPRead // DATA_FIELD1
-        call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-      end if
+      status = mls_swrdfld( swid, trim(DF_Name), start(2:3), stride(2:3), &
+        &   edge(2:3), real3(1,:,:), hdfVersion=HDFVERSION_4 )
       l2gp%l2gpValue = real3
       
-      status = swrdfld( swid, DATA_FIELD2, start(2:3), stride(2:3), &
-        & edge(2:3), real3(1,:,:) )
-      if ( status == -1 ) then
-        msr = MLSMSG_L2GPRead // DATA_FIELD2
-        call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-      end if
+      status = mls_swrdfld( swid, trim(DF_Precision), start(2:3), stride(2:3), &
+        & edge(2:3), real3(1,:,:), hdfVersion=HDFVERSION_4 )
       l2gp%l2gpPrecision = real3
       
     else
 
-       status = swrdfld( swid, DATA_FIELD1, start(3:3), stride(3:3), edge(3:3), &
-         &   real3(1,1,:) )
-       if ( status == -1 ) then
-          msr = MLSMSG_L2GPRead // DATA_FIELD1
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
+       status = mls_swrdfld( swid, trim(DF_Name), start(3:3), stride(3:3), edge(3:3), &
+         &   real3(1,1,:), hdfVersion=HDFVERSION_4 )
        l2gp%l2gpValue = real3
 
-       status = swrdfld( swid, DATA_FIELD2, start(3:3), stride(3:3), edge(3:3), &
-            real3(1,1,:) )
-       if ( status == -1 ) then
-          msr = MLSMSG_L2GPRead // DATA_FIELD2
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
+       status = mls_swrdfld( swid, trim(DF_Precision), start(3:3), stride(3:3), edge(3:3), &
+            real3(1,1,:), hdfVersion=HDFVERSION_4 )
        l2gp%l2gpPrecision = real3
 
     end if
@@ -876,22 +853,14 @@ contains ! =====     Public Procedures     =============================
 
     l2gp%status = ' ' ! So it has a value.
 
-   if(USEINTS4STRINGS) then
-       status = swrdfld(swid, DATA_FIELD3,start(3:3),stride(3:3),edge(3:3),&
-         string_buffer)
-       if ( status == -1 ) then
-         msr = MLSMSG_L2GPRead // DATA_FIELD3
-         call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
-       call ints2Strings(string_buffer, l2gp%status)
-    end if
+!   if(USEINTS4STRINGS) then
+!       status = mls_swrdfld(swid, DATA_FIELD3,start(3:3),stride(3:3),edge(3:3),&
+!         string_buffer, hdfVersion=HDFVERSION_4)
+!       call ints2Strings(string_buffer, l2gp%status)
+!    end if
 
-    status = swrdfld(swid, DATA_FIELD4, start(3:3), stride(3:3), edge(3:3), &
-      &   realProf)
-    if ( status == -1 ) then
-       msr = MLSMSG_L2GPRead // DATA_FIELD4
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    status = mls_swrdfld(swid, 'Quality', start(3:3), stride(3:3), edge(3:3), &
+      &   realProf, hdfVersion=HDFVERSION_4, dontfail=dontfail)
     l2gp%quality = realProf
 
     ! Deallocate local variables
@@ -919,10 +888,10 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------- ReadL2GPData_hdf5 ----------------
 
-  subroutine ReadL2GPData_hdf5(L2FileHandle, swathname, l2gp, numProfs, &
-       firstProf, lastProf)
-  use HDFEOS5
-  use HE5_SWAPI 
+  subroutine ReadL2GPData_hdf5(L2FileHandle, swathname, l2gp, HMOT, &
+    & numProfs, firstProf, lastProf)
+  use HDFEOS5, only: HE5_swattach, HE5_swdetach, HE5_SWINQDIMS
+  use MLSHDFEOS, only: mls_swdiminfo, mls_swrdfld
     !------------------------------------------------------------------------
 
     ! This routine reads an L2GP file, returning a filled data structure and the !
@@ -931,9 +900,10 @@ contains ! =====     Public Procedures     =============================
     ! Arguments
 
     character (LEN=*), intent(IN) :: swathname ! Name of swath
-    integer, intent(IN) :: L2FileHandle ! Returned by swopen
+    integer, intent(IN) :: L2FileHandle ! Returned by HE5_swopen
     integer, intent(IN), optional :: firstProf, lastProf ! Defaults to first and last
     type( L2GPData_T ), intent(OUT) :: l2gp ! Result
+    character, intent(in) :: HMOT   ! 'H' 'M'(def) 'O' 'T'
     integer, intent(OUT),optional :: numProfs ! Number actually read
 
     ! Local Parameters
@@ -943,27 +913,45 @@ contains ! =====     Public Procedures     =============================
     character (LEN=*), parameter :: MLSMSG_L2GPRead = 'Unable to read L2GP &
                                                      &field:'
     ! Local Variables
+    character (len=80) :: DF_Name
+    character (len=80) :: DF_Precision
     character (LEN=80) :: list
     character (LEN=480) :: msr
 
-    integer :: alloc_err, first, freq, lev, nDims, size, ulsize, swid, status
+    integer :: alloc_err, first, freq, lev, nDims, size, swid, status
     integer :: start(3), stride(3), edge(3), dims(3)
     integer :: nFreqs, nLevels, nTimes, nFreqsOr1, nLevelsOr1, myNumProfs
     logical :: firstCheck, lastCheck, timeIsUnlim
 
     real, allocatable :: realFreq(:), realSurf(:), realProf(:), real3(:,:,:)
+    logical :: dontfail
 !  How to deal with status and columnTypes? swrfld fails
 !  with char data on Linux with HDF4. With HDF5 we may or may not need to
 !  Have recourse to ints2Strings and strings2Ints if USEINTS4STRINGS
 !    character (LEN=8), allocatable :: the_status_buffer(:)
 !    character (LEN=L2GPNameLen), allocatable :: the_status_buffer(:)
     integer, allocatable, dimension(:,:) :: string_buffer
+    
+    ! Don't fail when trying to read an mls-specific field 
+    ! if the file is from another Aura instrument
+    dontfail = (HMOT /= 'M')
 
     ! Attach to the swath for reading
     !print*," in readl2gpdata_hdf5: first/last=",firstprof,lastprof
     l2gp%Name = swathname
     
-    swid = HE5_SWattach(L2FileHandle, l2gp%Name)
+    select case (HMOT)
+    case ('H')
+      swid = HE5_SWattach(L2FileHandle, 'HIRDLS')
+      DF_Name = TRIM(l2gp%Name)
+      DF_Precision = TRIM(l2gp%Name) // 'Precision'
+      l2gp%MissingValue = -999.
+    case ('M')
+      swid = HE5_SWattach(L2FileHandle, l2gp%Name)
+      DF_Name = DATA_FIELD1
+      DF_Precision = DATA_FIELD2
+    case default
+    end select
     if (swid == -1) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
          &attach to hdfeos5 swath interface for reading' // trim(swathname))
 
@@ -984,12 +972,7 @@ contains ! =====     Public Procedures     =============================
 !      timeIsUnlim = .FALSE.
 !    endif
 
-    size = HE5_SWdiminfo(swid, DIM_NAME1)
-    !print*,"Got dims for ",DIM_NAME1," it was",size
-    if (size == -1) then
-       msr = SZ_ERR // DIM_NAME1
-       call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
+    size = mls_swdiminfo(swid, 'nTimes', hdfVersion=HDFVERSION_5)
     ! This will be wrong if timeIsUnlim .eq. .TRUE. . 
     ! HE5_SWdiminfo returns 1 instead of the right answer.
       
@@ -999,26 +982,17 @@ contains ! =====     Public Procedures     =============================
     if (lev == 0) then
        nLevels = 0
     else
-      size = HE5_SWdiminfo(swid, DIM_NAME2)
-      !print*,"Got dims for ",DIM_NAME2," it was",size
-       size = HE5_SWdiminfo(swid, DIM_NAME2)
-       if (size == -1) then
-          msr = SZ_ERR // DIM_NAME2
-          call MLSMessage(MLSMSG_Error, ModuleName, msr)
-       endif
+      size = mls_swdiminfo(swid, 'nLevels', hdfVersion=HDFVERSION_5)
        nLevels = size
 
     endif
 
-    if (freq == 1) then
-      size = HE5_SWdiminfo(swid, DIM_NAME3)
-      !print*,"Got dims for ",DIM_NAME3," it was",size
-       size = HE5_SWdiminfo(swid, DIM_NAME3)
-       if (size == -1) then
-          msr = SZ_ERR // DIM_NAME3
-          call MLSMessage(MLSMSG_Error, ModuleName, msr)
-       endif
+    if ( freq == 1 .and. HMOT == 'M') then
+      size = mls_swdiminfo(swid, 'nFreqs', hdfVersion=HDFVERSION_5)
        nFreqs = size
+    elseif ( freq == 1 .and. HMOT == 'H') then
+      size = mls_swdiminfo(swid, 'nChans', hdfVersion=HDFVERSION_5)
+      nFreqs = size
     else
        nFreqs = 0
     endif
@@ -1075,7 +1049,7 @@ contains ! =====     Public Procedures     =============================
     ! Allocate result
 
     call SetupNewL2GPRecord (l2gp, nFreqs=nFreqs, nLevels=nLevels, &
-      &  nTimes=mynumProfs)
+      &  nTimes=mynumProfs, FillIn = .true.)
 
     ! Allocate temporary arrays
 
@@ -1099,91 +1073,42 @@ contains ! =====     Public Procedures     =============================
     edge(3) = myNumProfs
     status=0
 
-    status = HE5_SWrdfld(swid, GEO_FIELD1, start(3:3), stride(3:3), &
-      edge(3:3), realProf)
-    if (status == -1) then
-       msr = MLSMSG_L2GPRead // GEO_FIELD1
-       call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
+    status = mls_SWrdfld(swid, 'Latitude', start(3:3), stride(3:3), &
+      edge(3:3), realProf, hdfVersion=HDFVERSION_5)
     l2gp%latitude = realProf
 
-    status = HE5_SWrdfld(swid, GEO_FIELD2, start(3:3), stride(3:3), edge(3:3),&
-      &    realProf)
-    if (status == -1) then
-       msr = MLSMSG_L2GPRead // GEO_FIELD2
-       call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
+    status = mls_SWrdfld(swid, 'Longitude', start(3:3), stride(3:3), edge(3:3),&
+      &    realProf, hdfVersion=HDFVERSION_5)
     l2gp%longitude = realProf
 
-    status = HE5_SWrdfld(swid, GEO_FIELD3, start(3:3), stride(3:3), edge(3:3),&
-      &    l2gp%time)
-    if (status == -1) then
-       msr = MLSMSG_L2GPRead // GEO_FIELD3
-       call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
+    status = mls_SWrdfld(swid, 'Time', start(3:3), stride(3:3), edge(3:3),&
+      &    l2gp%time, hdfVersion=HDFVERSION_5)
 
-    status = HE5_SWrdfld(swid, GEO_FIELD4, start(3:3), stride(3:3), edge(3:3),&
-      &    realProf)
-    if (status == -1) then
-       msr = MLSMSG_L2GPRead // GEO_FIELD4
-       call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
+    status = mls_SWrdfld(swid, 'LocalSolarTime', start(3:3), stride(3:3), edge(3:3),&
+      &    realProf, hdfVersion=HDFVERSION_5)
     l2gp%solarTime = realProf
 
-    status = HE5_SWrdfld(swid, GEO_FIELD5, start(3:3), stride(3:3), edge(3:3),&
-      &    realProf)
-    if (status == -1) then
-       msr = MLSMSG_L2GPRead // GEO_FIELD5
-       call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
+    status = mls_SWrdfld(swid, 'SolarZenithAngle', start(3:3), stride(3:3), edge(3:3),&
+      &    realProf, hdfVersion=HDFVERSION_5)
     l2gp%solarZenith = realProf
 
-    status = HE5_SWrdfld(swid, GEO_FIELD6, start(3:3), stride(3:3), edge(3:3),&
-      &    realProf)
-    if (status == -1) then
-       msr = MLSMSG_L2GPRead // GEO_FIELD6
-       call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
+    status = mls_SWrdfld(swid, 'LineOfSightAngle', start(3:3), stride(3:3), edge(3:3),&
+      &    realProf, hdfVersion=HDFVERSION_5, dontfail=dontfail)
     l2gp%losAngle = realProf
 
-    status = HE5_SWrdfld(swid, GEO_FIELD7, start(3:3), stride(3:3), edge(3:3),&
-      &   realProf)
-    ! Give it a 2nd chance--perhaps saved under old name
-    if ( status == -1 .and. GEO_FIELD7 /= 'OrbitGeodeticAngle' ) then
-    status = HE5_SWrdfld(swid, 'OrbitGeodeticAngle', &
-      & start(3:3), stride(3:3), edge(3:3),&
-      &   realProf)
-    endif
-    if (status == -1) then
-       msr = MLSMSG_L2GPRead // GEO_FIELD7
-       call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
+    status = mls_SWrdfld(swid, 'OrbitGeodeticAngle', start(3:3), stride(3:3), edge(3:3),&
+      &   realProf, hdfVersion=HDFVERSION_5, dontfail=dontfail)
     l2gp%geodAngle = realProf
 
-    status = HE5_SWrdfld(swid, GEO_FIELD8, start(3:3), stride(3:3), edge(3:3),&
-      &    l2gp%chunkNumber)
-    ! Give it a 2nd chance--perhaps saved under old name
-    if ( status == -1 .and. GEO_FIELD8 /= 'ChunkNumber' ) then
-      status = HE5_SWrdfld(swid, 'ChunkNumber', &
-        &  start(3:3), stride(3:3), edge(3:3),&
-        &    l2gp%chunkNumber)
-    endif
-    if (status == -1) then
-       msr = MLSMSG_L2GPRead // GEO_FIELD8
-       call MLSMessage(MLSMSG_Warning, ModuleName, msr)
-    endif
+    status = mls_SWrdfld(swid, 'ChunkNumber', start(3:3), stride(3:3), edge(3:3),&
+      &    l2gp%chunkNumber, hdfVersion=HDFVERSION_5, dontfail=dontfail)
 
     ! Read the pressures vertical geolocation field, if it exists
 
     if (lev /= 0) then
 
-       status = HE5_SWrdfld(swid,GEO_FIELD9,start(2:2),stride(2:2), edge(2:2),&
-         & realSurf)
-       if (status == -1) then
-          msr = MLSMSG_L2GPRead // GEO_FIELD9
-          call MLSMessage(MLSMSG_Error, ModuleName, msr)
-       endif
-
+       status = mls_SWrdfld(swid,'Pressure',start(2:2),stride(2:2), edge(2:2),&
+         & realSurf, hdfVersion=HDFVERSION_5, dontfail=dontfail)
        l2gp%pressures = realSurf
 
     endif
@@ -1194,18 +1119,8 @@ contains ! =====     Public Procedures     =============================
 
        edge(1) = l2gp%nFreqs
 
-       status = HE5_SWrdfld(swid,GEO_FIELD10,start(1:1),stride(1:1),edge(1:1),&
-         & realFreq)
-       ! Give it a 2nd chance--perhaps saved under old name
-       if ( status == -1 .and. GEO_FIELD10 /= 'Frequency' ) then
-         status = HE5_SWrdfld(swid, 'Frequency', &
-           & start(1:1), stride(1:1), edge(1:1),&
-           & realFreq)
-       endif
-       if (status == -1) then
-          msr = MLSMSG_L2GPRead // GEO_FIELD10
-          call MLSMessage(MLSMSG_Error, ModuleName, msr)
-       endif
+       status = mls_SWrdfld(swid,'Frequency',start(1:1),stride(1:1),edge(1:1),&
+         & realFreq, hdfVersion=HDFVERSION_5, dontfail=dontfail)
        l2gp%frequency = realFreq
 
     endif
@@ -1214,55 +1129,32 @@ contains ! =====     Public Procedures     =============================
 
     if ( freq == 1) then
 
-       status = HE5_SWrdfld(swid, DATA_FIELD1, start, stride, edge, real3)
-       if (status == -1) then
-          msr = MLSMSG_L2GPRead // DATA_FIELD1
-          call MLSMessage(MLSMSG_Error, ModuleName, msr)
-       endif
+       status = mls_SWrdfld(swid, trim(DF_Name), start, stride, edge, real3, &
+         & hdfVersion=HDFVERSION_5)
        l2gp%l2gpValue = real3
 
-       status = HE5_SWrdfld(swid, DATA_FIELD2, start, stride, edge, real3)
-       if (status == -1) then
-          msr = MLSMSG_L2GPRead // DATA_FIELD2
-          call MLSMessage(MLSMSG_Error, ModuleName, msr)
-       endif
+       status = mls_SWrdfld(swid, trim(DF_Precision), start, stride, edge, real3, &
+         & hdfVersion=HDFVERSION_5)
        l2gp%l2gpPrecision = real3
 
     else if ( lev == 1) then
 
-       status = HE5_SWrdfld( swid, DATA_FIELD1, start(2:3), stride(2:3), &
-            edge(2:3), real3 )
-!            edge(2:3), real3(1,:,:) )
-       if (status == -1) then
-          msr = MLSMSG_L2GPRead // DATA_FIELD1
-          call MLSMessage(MLSMSG_Error, ModuleName, msr)
-       endif
+       status = mls_SWrdfld( swid, trim(DF_Name), start(2:3), stride(2:3), &
+            edge(2:3), real3(1,:,:), hdfVersion=HDFVERSION_5 )
        l2gp%l2gpValue = real3
 
-       status = HE5_SWrdfld( swid, DATA_FIELD2, start(2:3), stride(2:3), &
-            edge(2:3), real3(1,:,:) )
-       if (status == -1) then
-          msr = MLSMSG_L2GPRead // DATA_FIELD2
-          call MLSMessage(MLSMSG_Error, ModuleName, msr)
-       endif
+       status = mls_SWrdfld( swid, trim(DF_Precision), start(2:3), stride(2:3), &
+            edge(2:3), real3(1,:,:), hdfVersion=HDFVERSION_5 )
        l2gp%l2gpPrecision = real3
 
     else
 
-       status = HE5_SWrdfld(swid,DATA_FIELD1,start(3:3),stride(3:3),edge(3:3),&
-         &   real3(1,1,:) )
-       if (status == -1) then
-          msr = MLSMSG_L2GPRead // DATA_FIELD1
-          call MLSMessage(MLSMSG_Error, ModuleName, msr)
-       endif
+       status = mls_SWrdfld(swid,trim(DF_Name),start(3:3),stride(3:3),edge(3:3),&
+         &   real3(1,1,:), hdfVersion=HDFVERSION_5 )
        l2gp%l2gpValue = real3
 
-       status = HE5_SWrdfld( swid, DATA_FIELD2, start(3:3), stride(3:3), edge(3:3), &
-            real3(1,1,:) )
-       if (status == -1) then
-          msr = MLSMSG_L2GPRead // DATA_FIELD2
-          call MLSMessage(MLSMSG_Error, ModuleName, msr)
-       endif
+       status = mls_SWrdfld( swid, trim(DF_Precision), start(3:3), stride(3:3), edge(3:3), &
+            real3(1,1,:), hdfVersion=HDFVERSION_5 )
        l2gp%l2gpPrecision = real3
 
     endif
@@ -1297,25 +1189,17 @@ contains ! =====     Public Procedures     =============================
     l2gp%status = ' ' ! So it has a value.
 
    if(USEINTS4STRINGS) then
-       status = HE5_swrdfld(swid,DATA_FIELD3,start(3:3),stride(3:3),edge(3:3),&
-         string_buffer)
-       if ( status == -1 ) then
-         msr = MLSMSG_L2GPRead // DATA_FIELD3
-         call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
-       call ints2Strings(string_buffer, l2gp%status)
+!       status = mls_swrdfld(swid,DATA_FIELD3,start(3:3),stride(3:3),edge(3:3),&
+!         string_buffer, hdfVersion=HDFVERSION_5)
+!       call ints2Strings(string_buffer, l2gp%status)
     else
       call MLSMessage(MLSMSG_Debug, ModuleName, &
         "reading of status field disabled")
       status=0
     end if
 
-    status = HE5_SWrdfld(swid, DATA_FIELD4, start(3:3), stride(3:3),&
-      edge(3:3),realProf)
-    if (status == -1) then
-       msr = MLSMSG_L2GPRead // DATA_FIELD4
-       call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    endif
+    status = mls_SWrdfld(swid, 'Quality', start(3:3), stride(3:3),&
+      edge(3:3),realProf, hdfVersion=HDFVERSION_5, dontfail=dontfail)
     l2gp%quality = realProf
 
     ! Deallocate local variables
@@ -1345,6 +1229,7 @@ contains ! =====     Public Procedures     =============================
 
   ! --------------------------------------  OutputL2GP_createFile_hdf4  -----
   subroutine OutputL2GP_createFile_hdf4 (l2gp, L2FileHandle, swathName)
+  use MLSHDFEOS, only: mls_dfldsetup, mls_gfldsetup, mls_swdefdim
 
     ! Brief description of subroutine
     ! This subroutine sets up the structural definitions in an empty L2GP file.
@@ -1385,177 +1270,114 @@ contains ! =====     Public Procedures     =============================
 
     ! Define dimensions
 
-    status = swdefdim(swid, DIM_NAME1, l2gp%nTimes)
-    if ( status == -1 ) then
-       msr = DIM_ERR // DIM_NAME1
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    status = mls_swdefdim(swid, 'nTimes', l2gp%nTimes, &
+      & hdfVersion=HDFVERSION_4)
 
     if ( l2gp%nLevels > 0 ) then
-       status = swdefdim(swid, DIM_NAME2, l2gp%nLevels)
-       if ( status == -1 ) then
-          msr = DIM_ERR // DIM_NAME2
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
+      status = mls_swdefdim(swid, 'nLevels', l2gp%nLevels, &
+        & hdfVersion=HDFVERSION_4)
     end if
 
     if ( l2gp%nFreqs > 0 ) then
-       status = swdefdim(swid, DIM_NAME3, l2gp%nFreqs)
-       if ( status == -1 ) then
-          msr = DIM_ERR // DIM_NAME3
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
+      status = mls_swdefdim(swid, 'nFreqs', l2gp%nFreqs, &
+        & hdfVersion=HDFVERSION_4)
     end if
 
     ! Define horizontal geolocation fields using above dimensions
 
-    status = swdefgfld(swid, GEO_FIELD1, DIM_NAME1, DFNT_FLOAT32, &
-         HDFE_NOMERGE)
-    if ( status == -1 ) then
-       msr = GEO_ERR // GEO_FIELD1
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    status = mls_gfldsetup(swid, 'Latitude', 'nTimes', DEFAULTMAXDIM, &
+      & DFNT_FLOAT32, HDFE_NOMERGE, DEFAULT_CHUNKRANK, DEFAULT_CHUNKDIMS, &
+      & hdfVersion=HDFVERSION_4)
+         
+    status = mls_gfldsetup(swid, 'Longitude', 'nTimes', DEFAULTMAXDIM, &
+      & DFNT_FLOAT32, HDFE_NOMERGE, DEFAULT_CHUNKRANK, DEFAULT_CHUNKDIMS, &
+      & hdfVersion=HDFVERSION_4)
 
-    status = swdefgfld(swid, GEO_FIELD2, DIM_NAME1, DFNT_FLOAT32, &
-         HDFE_NOMERGE)
-    if ( status == -1 ) then
-       msr = GEO_ERR // GEO_FIELD2
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    status = mls_gfldsetup(swid, 'Time', 'nTimes', DEFAULTMAXDIM, &
+      & DFNT_FLOAT64, HDFE_NOMERGE, DEFAULT_CHUNKRANK, DEFAULT_CHUNKDIMS, &
+      & hdfVersion=HDFVERSION_4)
 
-    status = swdefgfld(swid, GEO_FIELD3, DIM_NAME1, DFNT_FLOAT64, &
-         HDFE_NOMERGE)
-    if ( status == -1 ) then
-       msr = GEO_ERR // GEO_FIELD3
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    status = mls_gfldsetup(swid, 'LocalSolarTime', 'nTimes', DEFAULTMAXDIM, &
+      & DFNT_FLOAT32, HDFE_NOMERGE, DEFAULT_CHUNKRANK, DEFAULT_CHUNKDIMS, &
+      & hdfVersion=HDFVERSION_4)
 
-    status = swdefgfld(swid, GEO_FIELD4, DIM_NAME1, DFNT_FLOAT32, &
-         HDFE_NOMERGE)
-    if ( status == -1 ) then
-       msr = GEO_ERR // GEO_FIELD4
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    status = mls_gfldsetup(swid, 'SolarZenithAngle', 'nTimes', DEFAULTMAXDIM, &
+      & DFNT_FLOAT32, HDFE_NOMERGE, DEFAULT_CHUNKRANK, DEFAULT_CHUNKDIMS, &
+      & hdfVersion=HDFVERSION_4)
 
-    status = swdefgfld(swid, GEO_FIELD5, DIM_NAME1, DFNT_FLOAT32, &
-         HDFE_NOMERGE)
-    if ( status == -1 ) then
-       msr = GEO_ERR // GEO_FIELD5
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    status = mls_gfldsetup(swid, 'LineOfSightAngle', 'nTimes', DEFAULTMAXDIM, &
+      & DFNT_FLOAT32, HDFE_NOMERGE, DEFAULT_CHUNKRANK, DEFAULT_CHUNKDIMS, &
+      & hdfVersion=HDFVERSION_4)
 
-    status = swdefgfld(swid, GEO_FIELD6, DIM_NAME1, DFNT_FLOAT32, &
-         HDFE_NOMERGE)
-    if ( status == -1 ) then
-       msr = GEO_ERR // GEO_FIELD6
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    status = mls_gfldsetup(swid, 'OrbitGeodeticAngle', 'nTimes', DEFAULTMAXDIM, &
+      & DFNT_FLOAT32, HDFE_NOMERGE, DEFAULT_CHUNKRANK, DEFAULT_CHUNKDIMS, &
+      & hdfVersion=HDFVERSION_4)
 
-    status = swdefgfld(swid, GEO_FIELD7, DIM_NAME1, DFNT_FLOAT32, &
-         HDFE_NOMERGE)
-    if ( status == -1 ) then
-       msr = GEO_ERR // GEO_FIELD7
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
-
-    status = swdefgfld(swid, GEO_FIELD8, DIM_NAME1, DFNT_INT32, &
-         HDFE_NOMERGE)
-    if ( status == -1 ) then
-       msr = GEO_ERR // GEO_FIELD8
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    status = mls_gfldsetup(swid, 'ChunkNumber', 'nTimes', DEFAULTMAXDIM, &
+      & DFNT_INT32, HDFE_NOMERGE, DEFAULT_CHUNKRANK, DEFAULT_CHUNKDIMS, &
+      & hdfVersion=HDFVERSION_4)
 
     if ( l2gp%nLevels > 0 ) then
-       status = swdefgfld(swid, GEO_FIELD9, DIM_NAME2, DFNT_FLOAT32, &
-            HDFE_NOMERGE)
-       if ( status == -1 ) then
-          msr = GEO_ERR // GEO_FIELD9
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
+      status = mls_gfldsetup(swid, 'Pressure', 'nLevels', DEFAULTMAXDIM, &
+      & DFNT_FLOAT32, HDFE_NOMERGE, DEFAULT_CHUNKRANK, DEFAULT_CHUNKDIMS, &
+      & hdfVersion=HDFVERSION_4)
     end if
 
     if ( l2gp%nFreqs > 0 ) then
-       status = swdefgfld(swid, GEO_FIELD10, DIM_NAME3, DFNT_FLOAT32, &
-            HDFE_NOMERGE)
-       if ( status == -1 ) then
-          msr = GEO_ERR // GEO_FIELD10
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
+      status = mls_gfldsetup(swid, 'Frequency', 'nFreqs', DEFAULTMAXDIM, &
+      & DFNT_FLOAT32, HDFE_NOMERGE, DEFAULT_CHUNKRANK, DEFAULT_CHUNKDIMS, &
+      & hdfVersion=HDFVERSION_4)
     end if
 
     ! Define data fields using above dimensions
 
     if ( (l2gp%nFreqs > 0) .AND. (l2gp%nLevels > 0) ) then
 
-       status = swdefdfld(swid, DATA_FIELD1, DIM_NAME123, DFNT_FLOAT32, &
-            HDFE_NOMERGE)
+      status = mls_dfldsetup(swid, 'L2gpValue', 'nFreqs,nLevels,nTimes', &
+      & DEFAULTMAXDIM, &
+      & DFNT_FLOAT32, HDFE_NOMERGE, DEFAULT_CHUNKRANK, DEFAULT_CHUNKDIMS, &
+      & hdfVersion=HDFVERSION_4)
 
-       if ( status == -1 ) then
-          msr = DAT_ERR // DATA_FIELD1 // ' for 3D quantity.'
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
-
-
-       status = swdefdfld(swid, DATA_FIELD2, DIM_NAME123, DFNT_FLOAT32, &
-            HDFE_NOMERGE)
-
-       if ( status == -1 ) then
-          msr = DAT_ERR // DATA_FIELD2 // ' for 3D quantity.'
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
-
+      status = mls_dfldsetup(swid, 'L2gpPrecision', 'nFreqs,nLevels,nTimes', &
+      & DEFAULTMAXDIM, &
+      & DFNT_FLOAT32, HDFE_NOMERGE, DEFAULT_CHUNKRANK, DEFAULT_CHUNKDIMS, &
+      & hdfVersion=HDFVERSION_4)
 
     else if ( l2gp%nLevels > 0 ) then
 
-       status = swdefdfld(swid, DATA_FIELD1, DIM_NAME12, DFNT_FLOAT32, &
-            HDFE_NOMERGE)
+      status = mls_dfldsetup(swid, 'L2gpValue', 'nLevels,nTimes', &
+      & DEFAULTMAXDIM, &
+      & DFNT_FLOAT32, HDFE_NOMERGE, DEFAULT_CHUNKRANK, DEFAULT_CHUNKDIMS, &
+      & hdfVersion=HDFVERSION_4)
 
-       if ( status == -1 ) then
-          msr = DAT_ERR // DATA_FIELD1 //  ' for 2D quantity.'
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
-
-       status = swdefdfld(swid, DATA_FIELD2, DIM_NAME12, DFNT_FLOAT32, &
-            HDFE_NOMERGE)
-
-       if ( status == -1 ) then
-          msr = DAT_ERR // DATA_FIELD2 //  ' for 2D quantity.'
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
+      status = mls_dfldsetup(swid, 'L2gpPrecision', 'nLevels,nTimes', &
+      & DEFAULTMAXDIM, &
+      & DFNT_FLOAT32, HDFE_NOMERGE, DEFAULT_CHUNKRANK, DEFAULT_CHUNKDIMS, &
+      & hdfVersion=HDFVERSION_4)
 
     else
 
-       status = swdefdfld(swid, DATA_FIELD1, DIM_NAME1, DFNT_FLOAT32, &
-            HDFE_NOMERGE)
+      status = mls_dfldsetup(swid, 'L2gpValue', 'nTimes', &
+      & DEFAULTMAXDIM, &
+      & DFNT_FLOAT32, HDFE_NOMERGE, DEFAULT_CHUNKRANK, DEFAULT_CHUNKDIMS, &
+      & hdfVersion=HDFVERSION_4)
 
-       if ( status == -1 ) then
-          msr = DAT_ERR // DATA_FIELD1 // ' for 1D quantity.'
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
-
-       status = swdefdfld(swid, DATA_FIELD2, DIM_NAME1, DFNT_FLOAT32, &
-            HDFE_NOMERGE)
-
-       if ( status == -1 ) then
-          msr = DAT_ERR // DATA_FIELD2 // ' for 1D quantity.'
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
+      status = mls_dfldsetup(swid, 'L2gpPrecision', 'nTimes', &
+      & DEFAULTMAXDIM, &
+      & DFNT_FLOAT32, HDFE_NOMERGE, DEFAULT_CHUNKRANK, DEFAULT_CHUNKDIMS, &
+      & hdfVersion=HDFVERSION_4)
 
     end if
 
-    status = swdefdfld(swid, DATA_FIELD3, DIM_NAME1, DFNT_CHAR8, &
-         HDFE_NOMERGE)
-    if ( status == -1 ) then
-       msr = DAT_ERR // DATA_FIELD3
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    status = mls_dfldsetup(swid, 'Status', 'nTimes', &
+    & DEFAULTMAXDIM, &
+    & DFNT_CHAR8, HDFE_NOMERGE, DEFAULT_CHUNKRANK, DEFAULT_CHUNKDIMS, &
+    & hdfVersion=HDFVERSION_4)
 
-    status = swdefdfld(swid, DATA_FIELD4, DIM_NAME1, DFNT_FLOAT32, &
-         HDFE_NOMERGE)
-    if ( status == -1 ) then
-       msr = DAT_ERR // DATA_FIELD4
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    status = mls_dfldsetup(swid, 'Quality', 'nTimes', &
+    & DEFAULTMAXDIM, &
+    & DFNT_FLOAT32, HDFE_NOMERGE, DEFAULT_CHUNKRANK, DEFAULT_CHUNKDIMS, &
+    & hdfVersion=HDFVERSION_4)
 
     ! Detach from the swath interface.  This stores the swath info within the
     ! file and must be done before writing or reading data to or from the
@@ -1573,6 +1395,7 @@ contains ! =====     Public Procedures     =============================
 
   !-----------------------------------------  OutputL2GP_writeGeo_hdf4  -----
   subroutine OutputL2GP_writeGeo_hdf4 (l2gp, l2FileHandle, swathName, offset)
+  use MLSHDFEOS, only: mls_swwrfld
 
     ! Brief description of subroutine
     ! This subroutine writes the geolocation fields to an L2GP output file.
@@ -1591,7 +1414,6 @@ contains ! =====     Public Procedures     =============================
 
     ! Variables
 
-    character (len=480) :: msr
     character (len=132) :: name ! Either swathName or l2gp%name
 
     integer :: status, swid,myOffset
@@ -1618,85 +1440,42 @@ contains ! =====     Public Procedures     =============================
     start(1) = 0     ! myOffset
     edge(1) = l2gp%nTimes
 
-    status = swwrfld(swid, GEO_FIELD1, start, stride, edge, &
-         real(l2gp%latitude))
-    if ( status == -1 ) then
-       msr = WR_ERR // GEO_FIELD1
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    status = mls_swwrfld(swid, 'Latitude', start, stride, edge, &
+         real(l2gp%latitude), hdfVersion=HDFVERSION_4)
 
-    status = swwrfld(swid, GEO_FIELD2, start, stride, edge, &
-         real(l2gp%longitude))
-    if ( status == -1 ) then
-       msr = WR_ERR // GEO_FIELD2
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    status = mls_swwrfld(swid, 'Longitude', start, stride, edge, &
+         real(l2gp%longitude), hdfVersion=HDFVERSION_4)
 
-    status = swwrfld(swid, GEO_FIELD3, start, stride, edge, &
-         l2gp%time)
-    if ( status == -1 ) then
-       msr = WR_ERR // GEO_FIELD3
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    status = mls_swwrfld(swid, 'Time', start, stride, edge, &
+         l2gp%time, hdfVersion=HDFVERSION_4)
 
-    status = swwrfld(swid, GEO_FIELD4, start, stride, edge, &
-        real(l2gp%solarTime))
-    if ( status == -1 ) then
-       msr = WR_ERR // GEO_FIELD4
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    status = mls_swwrfld(swid, 'LocalSolarTime', start, stride, edge, &
+        real(l2gp%solarTime), hdfVersion=HDFVERSION_4)
 
-    status = swwrfld(swid, GEO_FIELD5, start, stride, edge, &
-         real(l2gp%solarZenith))
-    if ( status == -1 ) then
-       msr = WR_ERR // GEO_FIELD5
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    status = mls_swwrfld(swid, 'SolarZenithAngle', start, stride, edge, &
+         real(l2gp%solarZenith), hdfVersion=HDFVERSION_4)
 
-    status = swwrfld(swid, GEO_FIELD6, start, stride, edge, &
-         real(l2gp%losAngle))
-    if ( status == -1 ) then
-       msr = WR_ERR // GEO_FIELD6
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    status = mls_swwrfld(swid, 'LineOfSightAngle', start, stride, edge, &
+         real(l2gp%losAngle), hdfVersion=HDFVERSION_4)
 
-    status = swwrfld(swid, GEO_FIELD7, start, stride, edge, &
-         real(l2gp%geodAngle))
-    if ( status == -1 ) then
-       msr = WR_ERR // GEO_FIELD7
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    status = mls_swwrfld(swid, 'OrbitGeodeticAngle', start, stride, edge, &
+         real(l2gp%geodAngle), hdfVersion=HDFVERSION_4)
 
-    status = swwrfld(swid, GEO_FIELD8, start, stride, edge, &
-         l2gp%chunkNumber)
-    if ( status == -1 ) then
-       msr = WR_ERR // GEO_FIELD8
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    status = mls_swwrfld(swid, 'ChunkNumber', start, stride, edge, &
+         l2gp%chunkNumber, hdfVersion=HDFVERSION_4)
 
     if ( l2gp%nLevels > 0 ) then
        edge(1) = l2gp%nLevels
        ! start(1)=0 ! needed because offset may have made this /=0
-       status = swwrfld(swid, GEO_FIELD9, start, stride, edge, &
-            real(l2gp%pressures))
-       if ( status == -1 ) then
-          msr = WR_ERR // GEO_FIELD9
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
+       status = mls_swwrfld(swid, 'Pressure', start, stride, edge, &
+            real(l2gp%pressures), hdfVersion=HDFVERSION_4)
     end if
 
     if ( l2gp%nFreqs > 0 ) then
        edge(1) = l2gp%nFreqs
        ! start(1)=0 ! needed because offset may have made this /=0
-       if (MONKEYAROUND) then
-         l2gp%frequency = 0
-       endif
-       status = swwrfld(swid, GEO_FIELD10, start, stride, edge, &
-            real(l2gp%frequency))
-       if ( status == -1 ) then
-          msr = WR_ERR // GEO_FIELD10
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
+       status = mls_swwrfld(swid, 'Frequency', start, stride, edge, &
+            real(l2gp%frequency), hdfVersion=HDFVERSION_4)
     end if
 
     ! Detach from the swath interface.  
@@ -1714,6 +1493,7 @@ contains ! =====     Public Procedures     =============================
 
   !----------------------------------------  OutputL2GP_writeData_hdf4  -----
   subroutine OutputL2GP_writeData_hdf4(l2gp, l2FileHandle, swathName, offset)
+  use MLSHDFEOS, only: mls_swwrfld
 
     ! Brief description of subroutine
     ! This subroutine writes the data fields to an L2GP output file.
@@ -1731,7 +1511,6 @@ contains ! =====     Public Procedures     =============================
 
     ! Variables
 
-    character (len=480) :: msr
     character (len=132) :: name     ! Either swathName or l2gp%name
 
     integer :: status, myOffset
@@ -1768,79 +1547,45 @@ contains ! =====     Public Procedures     =============================
     if ( l2gp%nFreqs > 0 ) then
        ! Value and Precision are 3-D fields
 
-       status = swwrfld(swid, DATA_FIELD1, start, stride, edge, &
-            & RESHAPE(real(l2gp%l2gpValue), (/SIZE(l2gp%l2gpValue)/)) )
-       if ( status == -1 ) then
-          msr = WR_ERR // DATA_FIELD1
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
-       status = swwrfld(swid, DATA_FIELD2, start, stride, edge, &
-            & RESHAPE(real(l2gp%l2gpPrecision), (/SIZE(l2gp%l2gpPrecision)/)) )
-       if ( status == -1 ) then
-          msr = WR_ERR // DATA_FIELD2
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
+       status = mls_swwrfld(swid, 'L2gpValue', start, stride, edge, &
+            & RESHAPE(real(l2gp%l2gpValue), (/SIZE(l2gp%l2gpValue)/)), &
+            & hdfVersion=HDFVERSION_4 )
+       status = mls_swwrfld(swid, 'L2gpPrecision', start, stride, edge, &
+            & RESHAPE(real(l2gp%l2gpPrecision), (/SIZE(l2gp%l2gpPrecision)/)), &
+            & hdfVersion=HDFVERSION_4 )
 
     else if ( l2gp%nLevels > 0 ) then
        ! Value and Precision are 2-D fields
 
-       status = swwrfld( swid, DATA_FIELD1, start(2:3), stride(2:3), &
-            edge(2:3), real(l2gp%l2gpValue(1,:,:)) )
+       status = mls_swwrfld( swid, 'L2gpValue', start(2:3), stride(2:3), &
+            edge(2:3), real(l2gp%l2gpValue(1,:,:)), hdfVersion=HDFVERSION_4 )
 
-       if ( status == -1 ) then
-          msr = WR_ERR // DATA_FIELD1
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
-       status = swwrfld( swid, DATA_FIELD2, start(2:3), stride(2:3), &
-            edge(2:3), real(l2gp%l2gpPrecision(1,:,:) ))
-       if ( status == -1 ) then
-          msr = WR_ERR // DATA_FIELD2
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
+       status = mls_swwrfld( swid, 'L2gpPrecision', start(2:3), stride(2:3), &
+            edge(2:3), real(l2gp%l2gpPrecision(1,:,:) ), hdfVersion=HDFVERSION_4)
     else
 
        ! Value and Precision are 1-D fields
-       status = swwrfld( swid, DATA_FIELD1, start(3:3), stride(3:3), edge(3:3), &
-            real(l2gp%l2gpValue(1,1,:) ))
-       if ( status == -1 ) then
-          msr = WR_ERR // DATA_FIELD1
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
-       status = swwrfld( swid, DATA_FIELD2, start(3:3), stride(3:3), edge(3:3), &
-            real(l2gp%l2gpPrecision(1,1,:) ))
-       if ( status == -1 ) then
-          msr = WR_ERR // DATA_FIELD2
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
+       status = mls_swwrfld( swid, 'L2gpValue', start(3:3), stride(3:3), edge(3:3), &
+            real(l2gp%l2gpValue(1,1,:) ), hdfVersion=HDFVERSION_4)
+       status = mls_swwrfld( swid, 'L2gpPrecision', start(3:3), stride(3:3), edge(3:3), &
+            real(l2gp%l2gpPrecision(1,1,:) ), hdfVersion=HDFVERSION_4)
     end if
 
     ! 1-D status & quality fields
 
    if(USEINTS4STRINGS) then
-      allocate(string_buffer(1,l2gp%nTimes))
-      call strings2Ints(l2gp%status, string_buffer)
-      status = swwrfld(swid, DATA_FIELD3, start(3:3), stride(3:3), edge(3:3), &
-           string_buffer)
-      if ( status == -1 ) then
-         msr = WR_ERR // DATA_FIELD3
-         call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-      end if
-      deallocate(string_buffer)
+!      allocate(string_buffer(1,l2gp%nTimes))
+!      call strings2Ints(l2gp%status, string_buffer)
+!      status = mls_swwrfld(swid, DATA_FIELD3, start(3:3), stride(3:3), edge(3:3), &
+!           string_buffer, hdfVersion=HDFVERSION_4)
+!      deallocate(string_buffer)
    else
-      status = swwrfld(swid, DATA_FIELD3, start(3:3), stride(3:3), edge(3:3), &
-           l2gp%status)
-      if ( status == -1 ) then
-         msr = WR_ERR // DATA_FIELD3
-         call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-      end if
+!      status = mls_swwrfld(swid, DATA_FIELD3, start(3:3), stride(3:3), edge(3:3), &
+!           l2gp%status, hdfVersion=HDFVERSION_4)
    end if
     !  l2gp%quality = 0 !??????? Why was this here !??? NJL
-    status = swwrfld(swid, DATA_FIELD4, start(3:3), stride(3:3), edge(3:3), &
-         real(l2gp%quality))
-    if ( status == -1 ) then
-       msr = WR_ERR // DATA_FIELD4
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    status = mls_swwrfld(swid, 'Quality', start(3:3), stride(3:3), edge(3:3), &
+         real(l2gp%quality), hdfVersion=HDFVERSION_4)
 
     !     Detach from the swath interface.
 
@@ -1857,12 +1602,11 @@ contains ! =====     Public Procedures     =============================
   ! --------------------------------------  OutputL2GP_createFile_hdf5  -----
   subroutine OutputL2GP_createFile_hdf5 (l2gp, L2FileHandle, swathName,nLevels)
 
-  use HDFEOS5, only: HE5_SWdefchunk, HE5_SWcreate, HE5_SWdefdfld, &
-    & HE5_SWdefdim, HE5_SWdetach, &
-    & HE5_SWdefgfld, &
-    & HE5S_UNLIMITED_F, HE5T_NATIVE_DOUBLE, HE5T_NATIVE_INT, HE5T_NATIVE_FLOAT
-  ! use HE5_SWAPI
-  use MLSHDFEOS, only : mls_swsetfill
+  use HDFEOS5, only: HE5_SWcreate, HE5_SWdetach, &
+    & HE5S_UNLIMITED_F, &
+    & HE5T_NATIVE_CHAR, HE5T_NATIVE_DOUBLE, HE5T_NATIVE_INT, HE5T_NATIVE_FLOAT
+  use MLSHDFEOS, ONLY : mls_dfldsetup, mls_gfldsetup, mls_swdefdim, &
+    & MLS_SWSETFILL
     ! Brief description of subroutine
     ! This subroutine sets up the structural definitions in an empty L2GP file.
 
@@ -1919,31 +1663,21 @@ contains ! =====     Public Procedures     =============================
 
     ! Defining special "unlimited dimension called UNLIM
     ! print*,"Defined Unlim with size", HE5S_UNLIMITED_f
-    status = HE5_SWdefdim(swid, UNLIM, HE5S_UNLIMITED_F)
+    ! status = HE5_SWdefdim(swid, UNLIM, HE5S_UNLIMITED_F)
+    status = mls_swdefdim(swid, UNLIM, HE5S_UNLIMITED_F, &
+      & hdfVersion=HDFVERSION_5)
 
-    ! print*,"Defining dimension ", DIM_NAME1," with size",l2gp%nTimes
-    status = HE5_SWdefdim(swid, DIM_NAME1, l2gp%nTimes)
-    if ( status == -1 ) then
-       msr = DIM_ERR // DIM_NAME1
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    status = mls_swdefdim(swid, 'nTimes', l2gp%nTimes, &
+      & hdfVersion=HDFVERSION_5)
 
     if ( l2gp%nLevels > 0 ) then
-      ! print*,"Defining dimension ", DIM_NAME2," with size",l2gp%nLevels
-       status = HE5_SWdefdim(swid, DIM_NAME2, l2gp%nLevels)
-       if ( status == -1 ) then
-          msr = DIM_ERR // DIM_NAME2
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
+      status = mls_swdefdim(swid, 'nLevels', l2gp%nLevels, &
+        & hdfVersion=HDFVERSION_5)
     end if
 
     if ( l2gp%nFreqs > 0 ) then
-       ! print*,"Defining dimension ", DIM_NAME3," with size",l2gp%nFreqs
-       status = HE5_SWdefdim(swid, DIM_NAME3, l2gp%nFreqs)
-       if ( status == -1 ) then
-          msr = DIM_ERR // DIM_NAME3
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
+      status = mls_swdefdim(swid, 'nFreqs', l2gp%nFreqs, &
+        & hdfVersion=HDFVERSION_5)
     end if
 
     ! Define horizontal geolocation fields using above dimensions
@@ -1953,94 +1687,52 @@ contains ! =====     Public Procedures     =============================
     chunk_rank=1
     chunk_dims=1
     chunk_dims(1)=CHUNKTIMES
-    status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
-!    print*,"Set chunking -- status=",status
-    status = HE5_SWdefgfld(swid, GEO_FIELD1, DIM_NAME1,MAX_DIML1,&
-         HE5T_NATIVE_FLOAT , 0)
-    if ( status == -1 ) then
-       msr = GEO_ERR // GEO_FIELD1
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    status = mls_gfldsetup(swid, 'Latitude', 'nTimes', MAX_DIML1, &
+      & HE5T_NATIVE_FLOAT, HDFE_NOMERGE, chunk_rank, chunk_dims, &
+      & hdfVersion=HDFVERSION_5)
 !    print*,"Defined geolocation field ",GEO_FIELD1,"of dim.", DIM_NAME1
 !    print*,"... and of type ",HE5T_NATIVE_FLOAT
 
-    status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
+    status = mls_gfldsetup(swid, 'Longitude', 'nTimes', MAX_DIML1, &
+      & HE5T_NATIVE_FLOAT, HDFE_NOMERGE, chunk_rank, chunk_dims, &
+      & hdfVersion=HDFVERSION_5)
 
-    status = HE5_SWdefgfld(swid, GEO_FIELD2, DIM_NAME1, MAX_DIML1,&
-         HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
-    if ( status == -1 ) then
-       msr = GEO_ERR // GEO_FIELD2
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    status = mls_gfldsetup(swid, 'Time', 'nTimes', MAX_DIML1, &
+      & HE5T_NATIVE_DOUBLE, HDFE_NOMERGE, chunk_rank, chunk_dims, &
+      & hdfVersion=HDFVERSION_5)
 
-    status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
-    status = HE5_SWdefgfld(swid, GEO_FIELD3, DIM_NAME1, MAX_DIML1, &
-    HE5T_NATIVE_DOUBLE, HDFE_NOMERGE)
-    if ( status == -1 ) then
-       msr = GEO_ERR // GEO_FIELD3
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    status = mls_gfldsetup(swid, 'LocalSolarTime', 'nTimes', MAX_DIML1, &
+      & HE5T_NATIVE_FLOAT, HDFE_NOMERGE, chunk_rank, chunk_dims, &
+      & hdfVersion=HDFVERSION_5)
 
-    status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
-    status = HE5_SWdefgfld(swid, GEO_FIELD4, DIM_NAME1,MAX_DIML1,&
-         HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
-    if ( status == -1 ) then
-       msr = GEO_ERR // GEO_FIELD4
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    status = mls_gfldsetup(swid, 'SolarZenithAngle', 'nTimes', MAX_DIML1, &
+      & HE5T_NATIVE_FLOAT, HDFE_NOMERGE, chunk_rank, chunk_dims, &
+      & hdfVersion=HDFVERSION_5)
 
-    status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
-    status = HE5_SWdefgfld(swid, GEO_FIELD5, DIM_NAME1, MAX_DIML1, &
-         HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
-    if ( status == -1 ) then
-       msr = GEO_ERR // GEO_FIELD5
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    status = mls_gfldsetup(swid, 'LineOfSightAngle', 'nTimes', MAX_DIML1, &
+      & HE5T_NATIVE_FLOAT, HDFE_NOMERGE, chunk_rank, chunk_dims, &
+      & hdfVersion=HDFVERSION_5)
 
-    status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
-    status = HE5_SWdefgfld(swid, GEO_FIELD6, DIM_NAME1,MAX_DIML1,&
-         HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
-    if ( status == -1 ) then
-       msr = GEO_ERR // GEO_FIELD6
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    status = mls_gfldsetup(swid, 'OrbitGeodeticAngle', 'nTimes', MAX_DIML1, &
+      & HE5T_NATIVE_FLOAT, HDFE_NOMERGE, chunk_rank, chunk_dims, &
+      & hdfVersion=HDFVERSION_5)
 
-    status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
-    status = HE5_SWdefgfld(swid, GEO_FIELD7, DIM_NAME1, MAX_DIML1,&
-    HE5T_NATIVE_FLOAT,   HDFE_NOMERGE)
-    if ( status == -1 ) then
-       msr = GEO_ERR // GEO_FIELD7
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
-
-    status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
-    ! status = HE5_SWdefgfld(swid, GEO_FIELD8, DIM_NAME1, MAX_DIML1,&
-    !     HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
-    status = HE5_SWdefgfld(swid, GEO_FIELD8, DIM_NAME1, MAX_DIML1,&
-         HE5T_NATIVE_INT, HDFE_NOMERGE)
-    if ( status == -1 ) then
-       msr = GEO_ERR // GEO_FIELD8
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    status = mls_gfldsetup(swid, 'ChunkNumber', 'nTimes', MAX_DIML1, &
+      & HE5T_NATIVE_INT, HDFE_NOMERGE, chunk_rank, chunk_dims, &
+      & hdfVersion=HDFVERSION_5)
 
     if ( l2gp%nLevels > 0 ) then
 
-       status = HE5_SWdefgfld(swid, GEO_FIELD9, DIM_NAME2,MAX_DIML,&
-            HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
-       if ( status == -1 ) then
-          msr = GEO_ERR // GEO_FIELD9
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
+      status = mls_gfldsetup(swid, 'Pressure', 'nLevels', MAX_DIML, &
+      & HE5T_NATIVE_FLOAT, HDFE_NOMERGE, 0, chunk_dims, &
+      & hdfVersion=HDFVERSION_5)
     end if
 
     if ( l2gp%nFreqs > 0 ) then
 
-       status = HE5_SWdefgfld(swid, GEO_FIELD10, DIM_NAME3,MAX_DIML,&
-            HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
-       if ( status == -1 ) then
-          msr = GEO_ERR // GEO_FIELD10
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
+      status = mls_gfldsetup(swid, 'Frequency', 'nFreqs', MAX_DIML, &
+      & HE5T_NATIVE_FLOAT, HDFE_NOMERGE, 0, chunk_dims, &
+      & hdfVersion=HDFVERSION_5)
     end if
 
     ! Define data fields using above dimensions
@@ -2048,87 +1740,56 @@ contains ! =====     Public Procedures     =============================
     if ( (l2gp%nFreqs > 0) .and. (l2gp%nLevels > 0) ) then
        chunk_rank=3
        chunk_dims(1:3)=(/ CHUNKFREQS,CHUNKLEVELS,CHUNKTIMES /)
-       status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
 
-       status = HE5_SWdefdfld(swid, DATA_FIELD1, DIM_NAME123, MAX_DIML123,&
-       HE5T_NATIVE_FLOAT,HDFE_NOMERGE)
-       ! status = HE5_SWsetfill(swid, DATA_FIELD1, HE5T_NATIVE_FLOAT, &
-       !  & UNDEFINED_VALUE)
+      status = mls_dfldsetup(swid, 'L2gpValue', 'nFreqs,nLevels,nTimes', &
+      & MAX_DIML123, &
+      & HE5T_NATIVE_FLOAT, HDFE_NOMERGE, chunk_rank, chunk_dims, &
+      & hdfVersion=HDFVERSION_5)
 
-       if ( status == -1 ) then
-          msr = DAT_ERR // DATA_FIELD1 // ' for 3D quantity.'
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
-
-       status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
-       status = HE5_SWdefdfld(swid, DATA_FIELD2, DIM_NAME123, MAX_DIML123,&
-            HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
-
-       if ( status == -1 ) then
-          msr = DAT_ERR // DATA_FIELD2 // ' for 3D quantity.'
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
-
+      status = mls_dfldsetup(swid, 'L2gpPrecision', 'nFreqs,nLevels,nTimes', &
+      & MAX_DIML123, &
+      & HE5T_NATIVE_FLOAT, HDFE_NOMERGE, chunk_rank, chunk_dims, &
+      & hdfVersion=HDFVERSION_5)
 
     else if ( l2gp%nLevels > 0 ) then
        chunk_rank=2
        chunk_dims(1:7)=(/ CHUNKLEVELS,CHUNKTIMES,37,38,39,47,49/)
-       status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
-       ! print*,"Set chunking with status=",status
-       ! print*,"chunking=",chunk_dims
-       ! print*,"About to define 2-D extendible field"
 
-       ! print*,"Calling SWdefdfld with args ",swid, DATA_FIELD1, &
-       !      DIM_NAME12, MAX_DIML12, HE5T_NATIVE_FLOAT, HDFE_NOMERGE
-       status = HE5_SWdefdfld(swid, DATA_FIELD1, DIM_NAME12, MAX_DIML12, &
-            HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
-       ! status = HE5_SWsetfill(swid, DATA_FIELD1, HE5T_NATIVE_FLOAT, &
-       !  & UNDEFINED_VALUE)
-       ! print*,"Defined 2-D extendible field"
+      status = mls_dfldsetup(swid, 'L2gpValue', 'nLevels,nTimes', &
+      & MAX_DIML12, &
+      & HE5T_NATIVE_FLOAT, HDFE_NOMERGE, chunk_rank, chunk_dims, &
+      & hdfVersion=HDFVERSION_5)
 
-       if ( status == -1 ) then
-          msr = DAT_ERR // DATA_FIELD1 //  ' for 2D quantity.'
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
-
-       status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
-       status = HE5_SWdefdfld(swid, DATA_FIELD2, DIM_NAME12, MAX_DIML12,&
-        HE5T_NATIVE_FLOAT,HDFE_NOMERGE)
-
-       if ( status == -1 ) then
-          msr = DAT_ERR // DATA_FIELD2 //  ' for 2D quantity.'
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
+      status = mls_dfldsetup(swid, 'L2gpPrecision', 'nLevels,nTimes', &
+      & MAX_DIML12, &
+      & HE5T_NATIVE_FLOAT, HDFE_NOMERGE, chunk_rank, chunk_dims, &
+      & hdfVersion=HDFVERSION_5)
 
     else
        chunk_rank=1
        chunk_dims(1)=CHUNKTIMES
-       status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
-    
-       status = HE5_SWdefdfld(swid, DATA_FIELD1, DIM_NAME1,MAX_DIML1,&
-            HE5T_NATIVE_FLOAT,HDFE_NOMERGE)
 
-       if ( status == -1 ) then
-          msr = DAT_ERR // DATA_FIELD1 // ' for 1D quantity.'
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
+      status = mls_dfldsetup(swid, 'L2gpValue', 'nTimes', &
+      & MAX_DIML1, &
+      & HE5T_NATIVE_FLOAT, HDFE_NOMERGE, chunk_rank, chunk_dims, &
+      & hdfVersion=HDFVERSION_5)
 
-       ! status = HE5_SWsetfill(swid, DATA_FIELD1, HE5T_NATIVE_FLOAT, &
-       !  & UNDEFINED_VALUE)
-       status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
-       status = HE5_SWdefdfld(swid, DATA_FIELD2, DIM_NAME1, MAX_DIML1,&
-       HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
-
-       if ( status == -1 ) then
-          msr = DAT_ERR // DATA_FIELD2 // ' for 1D quantity.'
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
+      status = mls_dfldsetup(swid, 'L2gpPrecision', 'nTimes', &
+      & MAX_DIML1, &
+      & HE5T_NATIVE_FLOAT, HDFE_NOMERGE, chunk_rank, chunk_dims, &
+      & hdfVersion=HDFVERSION_5)
 
     end if
 
 !    print*,"Defining data field ",DATA_FIELD3,"of dim.", DIM_NAME1
 !    print*,"... and of type ",HE5T_NATIVE_CHAR
 
+    chunk_rank=1
+    chunk_dims(1)=CHUNKTIMES
+    status = mls_dfldsetup(swid, 'Status', 'nTimes', &
+    & MAX_DIML1, &
+    & HE5T_NATIVE_CHAR, HDFE_NOMERGE, chunk_rank, chunk_dims, &
+    & hdfVersion=HDFVERSION_5)
 !    status = HE5_SWdefdfld(swid, DATA_FIELD3, DIM_NAME1,MAX_DIML1,&
 !         HE5T_NATIVE_CHAR, HDFE_NOMERGE)
 !    IF ( status == -1 ) THEN
@@ -2139,49 +1800,45 @@ contains ! =====     Public Procedures     =============================
 !    print*,"Defined data field ",DATA_FIELD3,"of dim.", DIM_NAME1
     chunk_rank=1
     chunk_dims(1)=CHUNKTIMES
-    status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
-
-    status = HE5_SWdefdfld(swid, DATA_FIELD4, DIM_NAME1,MAX_DIML1,&
-         HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
-    if ( status == -1 ) then
-       msr = DAT_ERR // DATA_FIELD4
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    status = mls_dfldsetup(swid, 'Quality', 'nTimes', &
+    & MAX_DIML1, &
+    & HE5T_NATIVE_FLOAT, HDFE_NOMERGE, chunk_rank, chunk_dims, &
+    & hdfVersion=HDFVERSION_5)
 
     ! Set Fill Values
     status =  mls_swsetfill(swid, DATA_FIELDS, HE5T_NATIVE_FLOAT, &
-     & UNDEFINED_VALUE)
+     & l2gp%MissingValue)
     if ( status == -1 ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
          & 'Cant set fill for ' // DATA_FIELDS )
     status =  mls_swsetfill(swid, GEO_FIELDS, HE5T_NATIVE_FLOAT, &
-     & UNDEFINED_VALUE)
+     & l2gp%MissingValue)
     if ( status == -1 ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
          & 'Cant set fill for ' // GEO_FIELDS )
-    status =  mls_swsetfill(swid, GEO_FIELD3, HE5T_NATIVE_DOUBLE, &
-     & real(UNDEFINED_VALUE, r8) )
+    status =  mls_swsetfill(swid, 'Time', HE5T_NATIVE_DOUBLE, &
+     & real(l2gp%MissingValue, r8) )
     if ( status == -1 ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
-         & 'Cant set fill for ' // GEO_FIELD3 )
-    status =  mls_swsetfill(swid, GEO_FIELD8, HE5T_NATIVE_INT, &
-     & int(UNDEFINED_VALUE) )
+         & 'Cant set fill for ' // 'Time' )
+    status =  mls_swsetfill(swid, 'ChunkNumber', HE5T_NATIVE_INT, &
+     & int(l2gp%MissingValue) )
     if ( status == -1 ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
-         & 'Cant set fill for ' // GEO_FIELD8 )
+         & 'Cant set fill for ' // 'ChunkNumber' )
     if ( l2gp%nLevels > 0 ) then
-      status =  mls_swsetfill(swid, GEO_FIELD9, HE5T_NATIVE_FLOAT, &
-       & UNDEFINED_VALUE)
+      status =  mls_swsetfill(swid, 'Pressure', HE5T_NATIVE_FLOAT, &
+       & l2gp%MissingValue)
       if ( status == -1 ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
-           & 'Cant set fill for ' // GEO_FIELD9 )
+           & 'Cant set fill for ' // 'Pressure' )
     endif
     if ( l2gp%nFreqs > 0 ) then
-      status =  mls_swsetfill(swid, GEO_FIELD10, HE5T_NATIVE_FLOAT, &
-       & UNDEFINED_VALUE)
+      status =  mls_swsetfill(swid, 'Frequency', HE5T_NATIVE_FLOAT, &
+       & l2gp%MissingValue)
       if ( status == -1 ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
-           & 'Cant set fill for ' // GEO_FIELD10 )
+           & 'Cant set fill for ' // 'Frequency' )
     endif
 
     ! Detach from the HE5_SWath interface.This stores the swath info within the
@@ -2201,8 +1858,8 @@ contains ! =====     Public Procedures     =============================
   !-----------------------------------------  OutputL2GP_writeGeo_hdf5  -----
   subroutine OutputL2GP_writeGeo_hdf5 (l2gp, l2FileHandle, swathName,offset)
 
-  use HDFEOS5
-  use HE5_SWAPI 
+  use HDFEOS5, only: HE5_swattach, HE5_swdetach
+  use MLSHDFEOS, only: mls_swwrfld
     ! Brief description of subroutine
     ! This subroutine writes the geolocation fields to an L2GP output file.
 
@@ -2219,7 +1876,6 @@ contains ! =====     Public Procedures     =============================
     
     ! Variables
 
-    character (len=480) :: msr
     character (len=132) :: name ! Either swathName or l2gp%name
     
     integer :: status, swid,myOffset
@@ -2245,85 +1901,42 @@ contains ! =====     Public Procedures     =============================
     stride = 1
     start = myOffset ! Please do not set to zero
     edge(1) = l2gp%nTimes
-    status = HE5_SWwrfld(swid, GEO_FIELD1, start, stride, edge, &
-         real(l2gp%latitude))
-    if ( status == -1 ) then
-       msr = WR_ERR // GEO_FIELD1
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    status = mls_SWwrfld(swid, 'Latitude', start, stride, edge, &
+         real(l2gp%latitude), hdfVersion=HDFVERSION_5)
 
-    status = HE5_SWwrfld(swid, GEO_FIELD2, start, stride, edge, &
-         real(l2gp%longitude))
-    if ( status == -1 ) then
-       msr = WR_ERR // GEO_FIELD2
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    status = mls_SWwrfld(swid, 'Longitude', start, stride, edge, &
+         real(l2gp%longitude), hdfVersion=HDFVERSION_5)
 
-    status = HE5_SWwrfld(swid, GEO_FIELD3, start, stride, edge, &
-         l2gp%time)
-    if ( status == -1 ) then
-       msr = WR_ERR // GEO_FIELD3
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    status = mls_SWwrfld(swid, 'Time', start, stride, edge, &
+         l2gp%time, hdfVersion=HDFVERSION_5)
 
+    status = mls_SWwrfld(swid, 'LocalSolarTime', start, stride, edge, &
+        real(l2gp%solarTime), hdfVersion=HDFVERSION_5)
 
-    status = HE5_SWwrfld(swid, GEO_FIELD5, start, stride, edge, &
-         real(l2gp%solarZenith))
-    if ( status == -1 ) then
-       msr = WR_ERR // GEO_FIELD5
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    status = mls_SWwrfld(swid, 'SolarZenithAngle', start, stride, edge, &
+         real(l2gp%solarZenith), hdfVersion=HDFVERSION_5)
 
-    status = HE5_SWwrfld(swid, GEO_FIELD4, start, stride, edge, &
-        real(l2gp%solarTime))
-    if ( status == -1 ) then
-       msr = WR_ERR // GEO_FIELD4
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    status = mls_SWwrfld(swid, 'LineOfSightAngle', start, stride, edge, &
+         real(l2gp%losAngle), hdfVersion=HDFVERSION_5)
 
+    status = mls_SWwrfld(swid, 'OrbitGeodeticAngle', start, stride, edge, &
+         real(l2gp%geodAngle), hdfVersion=HDFVERSION_5)
 
-    status = HE5_SWwrfld(swid, GEO_FIELD6, start, stride, edge, &
-         real(l2gp%losAngle))
-    if ( status == -1 ) then
-       msr = WR_ERR // GEO_FIELD6
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
-
-    status = HE5_SWwrfld(swid, GEO_FIELD7, start, stride, edge, &
-         real(l2gp%geodAngle))
-    if ( status == -1 ) then
-       msr = WR_ERR // GEO_FIELD7
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
-
-    status = HE5_SWwrfld(swid, GEO_FIELD8, start, stride, edge, &
-         l2gp%chunkNumber)
-    if ( status == -1 ) then
-       msr = WR_ERR // GEO_FIELD8
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    status = mls_SWwrfld(swid, 'ChunkNumber', start, stride, edge, &
+         l2gp%chunkNumber, hdfVersion=HDFVERSION_5)
 
     if ( l2gp%nLevels > 0 ) then
        edge(1) = l2gp%nLevels
        start(1)=0 ! needed because offset may have made this /=0
-       status = HE5_SWwrfld(swid, GEO_FIELD9, start, stride, edge, &
-            real(l2gp%pressures))
-       if ( status == -1 ) then
-          msr = WR_ERR // GEO_FIELD9
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
+       status = mls_SWwrfld(swid, 'Pressure', start, stride, edge, &
+            real(l2gp%pressures), hdfVersion=HDFVERSION_5)
     end if
 
     if ( l2gp%nFreqs > 0 ) then
        edge(1) = l2gp%nFreqs
        start(1)=0 ! needed because offset may have made this /=0
-       if (MONKEYAROUND) l2gp%frequency = 0
-       status = HE5_SWwrfld(swid, GEO_FIELD10, start, stride, edge, &
-            real(l2gp%frequency))
-       if ( status == -1 ) then
-          msr = WR_ERR // GEO_FIELD10
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
+       status = mls_SWwrfld(swid, 'Frequency', start, stride, edge, &
+            real(l2gp%frequency), hdfVersion=HDFVERSION_5)
     end if
 
     ! Detach from the swath interface.  
@@ -2341,8 +1954,8 @@ contains ! =====     Public Procedures     =============================
   !----------------------------------------  OutputL2GP_writeData_hdf5  -----
   subroutine OutputL2GP_writeData_hdf5(l2gp, l2FileHandle, swathName,offset)
 
-  use HDFEOS5
-  use HE5_SWAPI 
+  use HDFEOS5, only: HE5_swattach, HE5_swdetach
+  use MLSHDFEOS, only: mls_swwrfld
     ! Brief description of subroutine
     ! This subroutine writes the data fields to an L2GP output file.
     ! For now, you have to write all of l2gp, but you can choose to write
@@ -2395,49 +2008,27 @@ contains ! =====     Public Procedures     =============================
     swid = HE5_SWattach (l2FileHandle, name)
     if ( l2gp%nFreqs > 0 ) then
        ! Value and Precision are 3-D fields
-       status = HE5_SWwrfld(swid, DATA_FIELD1, start, stride, edge, &
-            & reshape(real(l2gp%l2gpValue), (/size(l2gp%l2gpValue)/)) )
-       if ( status == -1 ) then
-          msr = WR_ERR // DATA_FIELD1
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
-       status = HE5_SWwrfld(swid, DATA_FIELD2, start, stride, edge, &
-            & reshape(real(l2gp%l2gpPrecision), (/size(l2gp%l2gpPrecision)/)) )
-       if ( status == -1 ) then
-          msr = WR_ERR // DATA_FIELD2
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
+       status = mls_SWwrfld(swid, 'L2gpValue', start, stride, edge, &
+            & reshape(real(l2gp%l2gpValue), (/size(l2gp%l2gpValue)/)), &
+            & hdfVersion=HDFVERSION_5 )
+       status = mls_SWwrfld(swid, 'L2gpPrecision', start, stride, edge, &
+            & reshape(real(l2gp%l2gpPrecision), (/size(l2gp%l2gpPrecision)/)), &
+            & hdfVersion=HDFVERSION_5 )
 
     else if ( l2gp%nLevels > 0 ) then
        ! Value and Precision are 2-D fields
       
-       status = HE5_SWwrfld( swid, DATA_FIELD1, start(2:3), stride(2:3), &
-            edge(2:3), real(l2gp%l2gpValue(1,:,:) ))
-       if ( status == -1 ) then
-          msr = WR_ERR // DATA_FIELD1
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
-       status = HE5_SWwrfld( swid, DATA_FIELD2, start(2:3), stride(2:3), &
-            edge(2:3), real(l2gp%l2gpPrecision(1,:,:) ))
-       if ( status == -1 ) then
-          msr = WR_ERR // DATA_FIELD2
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
+       status = mls_SWwrfld( swid, 'L2gpValue', start(2:3), stride(2:3), &
+            edge(2:3), real(l2gp%l2gpValue(1,:,:) ), hdfVersion=HDFVERSION_5)
+       status = mls_SWwrfld( swid, 'L2gpPrecision', start(2:3), stride(2:3), &
+            edge(2:3), real(l2gp%l2gpPrecision(1,:,:) ), hdfVersion=HDFVERSION_5)
     else
 
        ! Value and Precision are 1-D fields
-       status = HE5_SWwrfld( swid, DATA_FIELD1, start(3:3), stride(3:3), edge(3:3), &
-            real(l2gp%l2gpValue(1,1,:) ))
-       if ( status == -1 ) then
-          msr = WR_ERR // DATA_FIELD1
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
-       status = HE5_SWwrfld( swid, DATA_FIELD2, start(3:3), stride(3:3), edge(3:3), &
-            real(l2gp%l2gpPrecision(1,1,:) ))
-       if ( status == -1 ) then
-          msr = WR_ERR // DATA_FIELD2
-          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-       end if
+       status = mls_SWwrfld( swid, 'L2gpValue', start(3:3), stride(3:3), edge(3:3), &
+            real(l2gp%l2gpValue(1,1,:) ), hdfVersion=HDFVERSION_5)
+       status = mls_SWwrfld( swid, 'L2gpPrecision', start(3:3), stride(3:3), edge(3:3), &
+            real(l2gp%l2gpPrecision(1,1,:) ), hdfVersion=HDFVERSION_5)
     end if
 
     ! 1-D status & quality fields
@@ -2445,15 +2036,11 @@ contains ! =====     Public Procedures     =============================
     !HDF-EOS5 won't write a dataset of chars from FORTRAN
 
    if(USEINTS4STRINGS) then
-      allocate(string_buffer(1,l2gp%nTimes))
-      call strings2Ints(l2gp%status, string_buffer)
-      status = HE5_swwrfld(swid,DATA_FIELD3,start(3:3),stride(3:3),edge(3:3),&
-           string_buffer)
-      if ( status == -1 ) then
-         msr = WR_ERR // DATA_FIELD3
-         call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-      end if
-      deallocate(string_buffer)
+!      allocate(string_buffer(1,l2gp%nTimes))
+!      call strings2Ints(l2gp%status, string_buffer)
+!      status = mls_swwrfld(swid,DATA_FIELD3,start(3:3),stride(3:3),edge(3:3),&
+!           string_buffer, hdfVersion=HDFVERSION_5)
+!      deallocate(string_buffer)
     else
       !    status = HE5_SWwrfld(swid, DATA_FIELD3, start(3:3), stride(3:3),&
       !        edge(3:3), l2gp%status) ! 
@@ -2466,12 +2053,8 @@ contains ! =====     Public Procedures     =============================
          call MLSMessage ( MLSMSG_Error, ModuleName, msr )
       end if
     end if
-    status = HE5_SWwrfld(swid, DATA_FIELD4, start(3:3), stride(3:3), edge(3:3), &
-         real(l2gp%quality))
-    if ( status == -1 ) then
-       msr = WR_ERR // DATA_FIELD4
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+    status = mls_SWwrfld(swid, 'Quality', start(3:3), stride(3:3), edge(3:3), &
+         real(l2gp%quality), hdfVersion=HDFVERSION_5)
 
     !     Detach from the swath interface.
 
@@ -2583,7 +2166,7 @@ contains ! =====     Public Procedures     =============================
     status = he5_swwrattr(swid, 'VerticalCoordinate', HE5T_NATIVE_SCHAR, 1, &
       & field_name)
     status = he5_swwrattr(swid, 'MissingValue', rgp_type, 1, &
-      & (/ real(UNDEFINED_VALUE, rgp) /) )
+      & (/ real(l2gp%MissingValue, rgp) /) )
     
     !   - -   G e o l o c a t i o n   A t t r i b u t e s   - -
     ! print *, 'Writing geolocation attributes'
@@ -2613,15 +2196,15 @@ contains ! =====     Public Procedures     =============================
         if ( trim(theTitles(field)) == 'Time' ) then
           status = he5_swwrlattr(swid, trim(theTitles(field)), &
             & 'MissingValue', &
-            & HE5T_NATIVE_DOUBLE, 1, (/ real(UNDEFINED_VALUE, r8) /) )
+            & HE5T_NATIVE_DOUBLE, 1, (/ real(l2gp%MissingValue, r8) /) )
         elseif ( trim(theTitles(field)) == 'ChunkNumber' ) then
           status = he5_swwrlattr(swid, trim(theTitles(field)), &
             & 'MissingValue', &
-            & HE5T_NATIVE_INT, 1, (/ int(UNDEFINED_VALUE) /) )
+            & HE5T_NATIVE_INT, 1, (/ int(l2gp%MissingValue) /) )
         else
           status = he5_swwrlattr(swid, trim(theTitles(field)), &
             & 'MissingValue', &
-            & rgp_type, 1, (/ real(UNDEFINED_VALUE, rgp) /) )
+            & rgp_type, 1, (/ real(l2gp%MissingValue, rgp) /) )
         endif
         status = he5_swwrlattr(swid, trim(theTitles(field)), &
           & 'UniqueFieldDefinition', &
@@ -2657,24 +2240,37 @@ contains ! =====     Public Procedures     =============================
     ! print *, 'Writing data attributes'
     ! print *, 'title ', trim(field_name)
     ! print *, 'units ', trim(units_name)
-    status = he5_swwrlattr(swid, DATA_FIELD1, 'Title', &
+    status = he5_swwrlattr(swid, 'L2gpValue', 'Title', &
       & HE5T_NATIVE_SCHAR, 1, field_name)
-    status = he5_swwrlattr(swid, DATA_FIELD1, 'Units', &
+    status = he5_swwrlattr(swid, 'L2gpValue', 'Units', &
       & HE5T_NATIVE_SCHAR, 1, units_name)
-    status = he5_swwrlattr(swid, DATA_FIELD1, 'MissingValue', &
-      & rgp_type, 1, (/ real(UNDEFINED_VALUE, rgp) /) )
-    status = he5_swwrlattr(swid, DATA_FIELD1, &
+    status = he5_swwrlattr(swid, 'L2gpValue', 'MissingValue', &
+      & rgp_type, 1, (/ real(l2gp%MissingValue, rgp) /) )
+    status = he5_swwrlattr(swid, 'L2gpValue', &
       & 'UniqueFieldDefinition', &
       & HE5T_NATIVE_SCHAR, 1, trim(expnd_uniq_fdef))
-    status = he5_swwrlattr(swid, DATA_FIELD2, 'Title', &
+    status = he5_swwrlattr(swid, 'L2gpPrecision', 'Title', &
       & HE5T_NATIVE_SCHAR, 1, trim(field_name)//'Precision')
-    status = he5_swwrlattr(swid, DATA_FIELD2, 'Units', &
+    status = he5_swwrlattr(swid, 'L2gpPrecision', 'Units', &
       & HE5T_NATIVE_SCHAR, 1, units_name)
-    status = he5_swwrlattr(swid, DATA_FIELD2, 'MissingValue', &
-      & rgp_type, 1, (/ real(UNDEFINED_VALUE, rgp) /) )
-    status = he5_swwrlattr(swid, DATA_FIELD2, &
+    status = he5_swwrlattr(swid, 'L2gpPrecision', 'MissingValue', &
+      & rgp_type, 1, (/ real(l2gp%MissingValue, rgp) /) )
+    status = he5_swwrlattr(swid, 'L2gpPrecision', &
       & 'UniqueFieldDefinition', &
       & HE5T_NATIVE_SCHAR, 1, trim(expnd_uniq_fdef))
+
+    ! ('Status' data field not yet written)
+    
+    status = he5_swwrlattr(swid, 'Quality', 'Title', &
+      & HE5T_NATIVE_SCHAR, 1, trim(field_name)//'Quality')
+    status = he5_swwrlattr(swid, 'Quality', 'Units', &
+      & HE5T_NATIVE_SCHAR, 1, units_name)
+    status = he5_swwrlattr(swid, 'Quality', 'MissingValue', &
+      & rgp_type, 1, (/ real(l2gp%MissingValue, rgp) /) )
+    status = he5_swwrlattr(swid, 'Quality', &
+      & 'UniqueFieldDefinition', &
+      & HE5T_NATIVE_SCHAR, 1, 'MLS-Specific')
+    
     status = HE5_SWdetach(swid)
     if ( status == -1 ) then
        call MLSMessage ( MLSMSG_Warning, ModuleName, &
@@ -2865,6 +2461,8 @@ contains ! =====     Public Procedures     =============================
     integer :: ierr
     logical :: myColumnsOnly
     integer :: MYDETAILS
+    real(r8) :: FillValue
+    integer :: ChunkFillValue
 
     ! Executable code
     myDetails = 1
@@ -2877,6 +2475,9 @@ contains ! =====     Public Procedures     =============================
     endif
 
       if ( myColumnsOnly .and. l2gp%nLevels > 1 ) return
+      
+      FillValue = real(l2gp%MissingValue, r8)
+      ChunkFillValue = int(l2gp%MissingValue)
 
       call output ( 'L2GP Data: (swath name) ')
       call output ( trim(l2gp%name) )
@@ -2922,9 +2523,11 @@ contains ! =====     Public Procedures     =============================
         & call dump ( l2gp%frequency, 'Frequencies:' )
       
       if ( myDetails < 1 ) return
-      call dump ( real(l2gp%l2gpValue, r8), 'L2GPValue:' )
+      call dump ( real(l2gp%l2gpValue, r8), 'L2GPValue:', &
+        & FillValue=FillValue )
       
-      call dump ( real(l2gp%l2gpPrecision, r8), 'L2GPPrecision:' )
+      call dump ( real(l2gp%l2gpPrecision, r8), 'L2GPPrecision:', &
+        & FillValue=FillValue )
       
       !    call dump ( l2gp%status, 'Status:' )
       
@@ -2982,6 +2585,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.62  2003/04/15 23:14:50  pwagner
+! New chunking so hdfeos5 files dont balloon; some swsetfill tweaking
+!
 ! Revision 2.61  2003/04/11 23:35:10  pwagner
 ! Added new UniqueFieldDefinition attribute; sets fill and MissingValue attributes for all fields
 !
