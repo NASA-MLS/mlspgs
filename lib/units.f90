@@ -100,6 +100,8 @@ contains ! =====     Public procedures     =============================
 !   this is 1DU ( = 2.687e20 molecules/m^2)
     call declare_unit ( l_DobsonUnits, 1.0d0, phyq_DobsonUnits )
 
+    call declare_unit ( l_pctrhi, 1.0d0, phyq_pctrhi )
+
   contains
     subroutine DECLARE_UNIT ( NAME, VALUE, PHYS_UNIT )
       integer, intent(in) :: NAME
@@ -114,6 +116,9 @@ contains ! =====     Public procedures     =============================
 end module UNITS
 
 ! $Log$
+! Revision 2.13  2002/04/10 17:42:59  pwagner
+! Added pctrhi unit
+!
 ! Revision 2.12  2001/12/06 23:45:34  livesey
 ! Moved Omega into here. Might be time to have a physical constants
 ! module somehere?
