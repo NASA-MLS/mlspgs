@@ -142,7 +142,7 @@ contains ! =====     Public Procedures     =============================
       if (sd_id == -1) then
 
         call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & "Error opening L1OA file"//L1physicalFilename )
+          & "Error opening L1OA file "//L1physicalFilename )
 
       else
         l1bInfo%L1BOAID = sd_id
@@ -226,6 +226,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.3  2000/11/16 01:02:16  vsnyder
+! Correct an error message.
+!
 ! Revision 2.2  2000/09/11 19:48:01  ahanzel
 ! Removed old log entries in file.
 !
