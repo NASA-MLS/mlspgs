@@ -230,7 +230,7 @@ contains ! ================================ Procedures ======================
     ! Local parameter
     integer, parameter :: DELAY = 200000  ! For Usleep, no. microsecs
     integer, parameter :: MAXDIRECTWRITEFILES=200 ! For internal array sizing
-    integer, parameter :: DATABASEINFLATION=5
+    integer, parameter :: DATABASEINFLATION=100
 
     ! External (C) function
     external :: Usleep
@@ -720,7 +720,7 @@ contains ! ================================ Procedures ======================
               & directWriteRequests(requestIndex)%fileIndex ) = .false.
             ! Now forget all the requests we had pending
             where ( directWriteRequests%chunk == deadChunk )
-              directWriteRequests%status = dw_Completed
+              directWriteRequests%status = DW_Completed
             end where
 
             ! Does this chunk keep failing, if so, give up.
@@ -765,6 +765,8 @@ contains ! ================================ Procedures ======================
         call PVMErrorMessage ( info, "checking for Notify message" )
       end if
 
+      ! -------------------------------------------- Direct write permission logic ---
+
       ! Now hand out whatever direct write permissions we are able to give
       ! Give each request a value the same as their ticket number
       directWriteRequests%value = directWriteRequests%ticket
@@ -776,7 +778,7 @@ contains ! ================================ Procedures ======================
       do requestIndex = 1, noDirectWriteRequests
         if ( directWriteRequests(requestIndex)%status == DW_Pending ) then
           if ( chunksWriting(directWriteRequests(requestIndex)%chunk) ) &
-            & directWriteRequests%value = nextTicket + 1
+            & directWriteRequests(requestIndex)%value = nextTicket + 1
         end if
       end do
       ! Now invalidate all corresponding to busy files
@@ -1262,6 +1264,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.53  2003/07/08 17:30:43  livesey
+! Bug fix in ticket issuing
+!
 ! Revision 2.52  2003/07/07 17:32:00  livesey
 ! New approach to directWrite
 !
