@@ -74,7 +74,7 @@ contains ! =====     Public Procedures     =============================
       & F_TYPE, F_USB, F_USBFRACTION, F_VECTOR, F_VMRQUANTITY, &
       & FIELD_FIRST, FIELD_LAST
     ! Now the literals:
-    use INIT_TABLES_MODULE, only: L_ADDNOISE, L_BINMAX, L_BINMIN, &
+    use INIT_TABLES_MODULE, only: L_ADDNOISE, L_BINMAX, L_BINMIN, L_BINTOTAL, &
       & L_BOUNDARYPRESSURE, L_CHISQCHAN, &
       & L_CHISQMMAF, L_CHISQMMIF, L_CHOLESKY, L_cloudInducedRADIANCE, L_COLUMNABUNDANCE, &
       & L_ECRTOFOV, L_ESTIMATEDNOISE, L_EXPLICIT, L_FOLD, L_GEODALTITUDE, &
@@ -83,7 +83,7 @@ contains ! =====     Public Procedures     =============================
       & L_HYDROSTATIC, L_ISOTOPE, L_ISOTOPERATIO, L_KRONECKER, L_L1B, L_L2GP, &
       & L_L2AUX, L_LOSVEL, L_MAGNETICFIELD, L_MAGNETICMODEL, &
       & L_MANIPULATE, L_NEGATIVEPRECISION, L_NOISEBANDWIDTH, L_NONE, &
-      & L_OFFSETRADIANCE, L_ORBITINCLINATION, L_PHITAN, &
+      & L_NORADSPERMIF, L_OFFSETRADIANCE, L_ORBITINCLINATION, L_PHITAN, &
       & L_PLAIN, L_PRESSURE, L_PROFILE, L_PTAN, &
       & L_RADIANCE, L_RECTANGLEFROMLOS, L_REFGPH, L_REFRACT, L_RHI, &
       & L_RHIFROMH2O, L_RHIPRECISIONFROMH2O, L_SCALEOVERLAPS, &
@@ -907,7 +907,7 @@ contains ! =====     Public Procedures     =============================
           call addGaussianNoise ( key, quantity, sourceQuantity, &
             & noiseQty, multiplier )
 
-        case ( l_binMax, l_binMin )
+        case ( l_binMax, l_binMin, l_binTotal )
           if ( .not. got ( f_sourceQuantity ) ) &
             & call Announce_Error ( key, 0, &
             & 'Need source quantity for bin max/min fill' )
@@ -933,8 +933,8 @@ contains ! =====     Public Procedures     =============================
               & 'Instrument module mismatch between ptan and source quantity' )
           end if
 
-          call FillWithBinMinMax ( key, quantity, sourceQuantity, ptanQuantity, &
-            & channel, fillMethod == l_binMax )
+          call FillWithBinResults ( key, quantity, sourceQuantity, ptanQuantity, &
+            & channel, fillMethod )
 
         case ( l_estimatedNoise ) ! ----------- Fill with estimated noise ---
           if (.not. all(got( (/ f_radianceQuantity, &
@@ -1377,6 +1377,15 @@ contains ! =====     Public Procedures     =============================
               call FillChiSqMMif ( key, quantity, &
                 & measQty, modelQty, noiseQty, &
                 & dontMask, ignoreZero, ignoreNegative, multiplier )
+            end if
+          case ( l_noRadsPerMIF )
+            if ( .not. got ( f_measurements ) ) then
+              call Announce_error ( key, No_Error_code, &
+              & 'Missing a required field to fill noRadsPerMIF on MIFs'  )
+            else
+              measQty => GetVectorQtyByTemplateIndex( &
+                & vectors(measVectorIndex), measQtyIndex)
+              call FillNoRadsPerMIF ( key, quantity, measQty )
             end if
           case default
             call Announce_error ( key, noSpecialFill )
@@ -3472,7 +3481,37 @@ contains ! =====     Public Procedures     =============================
 ! >       end function C
 
 !MJF
-      ! ------------------------------------- FillRHIPrecisionFromH2O ----
+
+    ! ------------------------------------- FillNoRadsPerMIF -----
+    subroutine FillNoRadsPerMIF ( key, quantity, measQty )
+      integer, intent(in) :: KEY
+      type(VectorValue_T), intent(inout) :: QUANTITY
+      type(VectorValue_T), intent(in) :: MEASQTY
+      ! Local variables
+      integer :: MIF, MAF               ! Loop counters
+      integer :: I0, I1                 ! Indices
+
+      ! Executable code
+      ! Do some fairly limited checking.
+      if ( .not. ValidateVectorQuantity ( measQty, quantityType=(/l_radiance/), &
+        & signal=(/quantity%template%signal/), sideband=(/quantity%template%sideband/) ) ) &
+        & call Announce_Error ( key, no_error_code, &
+        & 'Quantity and measurement quantity disagree' )
+      if ( associated ( measQty%mask ) ) then
+        do maf = 1, quantity%template%noInstances
+          do mif = 1, quantity%template%noSurfs
+            i0 = 1 +  ( mif-1 ) * measQty%template%noChans
+            i1 = i0 + measQty%template%noChans - 1
+            quantity%values ( mif, maf ) = count ( &
+              & iand ( ichar ( quantity%mask ( i0:i1, maf ) ), m_linAlg ) == 0 )
+          end do
+        end do
+      else
+        quantity%values = measQty%template%noChans
+      end if
+    end subroutine FillNoRadsPerMIF
+
+    ! ------------------------------------- FillRHIPrecisionFromH2O ----
     subroutine FillRHIPrecisionFromH2O ( key, quantity, &
      & sourcePrecisionQuantity, tempPrecisionQuantity, sourceQuantity, temperatureQuantity, &
      & dontMask, ignoreZero, ignoreNegative, interpolate, &
@@ -5157,8 +5196,8 @@ contains ! =====     Public Procedures     =============================
     end subroutine FillQtyWithWMOTropopause
 
     ! -------------------------------------------- FillWithBinMinMax -----
-    subroutine FillWithBinMinMax ( key, quantity, sourceQuantity, ptanQuantity, &
-      & channel, fillMax )
+    subroutine FillWithBinResults ( key, quantity, sourceQuantity, ptanQuantity, &
+      & channel, method )
       ! This fills a coherent quantity with the max/min binned value of 
       ! a typically incoherent one.  The bins are centered horizontally
       ! on the profiles in quantity, but vertically the bins run between one
@@ -5168,7 +5207,7 @@ contains ! =====     Public Procedures     =============================
       type (VectorValue_T), intent(in) :: SOURCEQUANTITY
       type (VectorValue_T), pointer :: PTANQUANTITY
       integer, intent(in) :: CHANNEL
-      logical, intent(in) :: FILLMAX
+      integer, intent(in) :: METHOD
 
       ! Local variables
       real(r8), dimension(:,:), pointer :: SOURCEHEIGHTS ! might be ptan.
@@ -5183,7 +5222,7 @@ contains ! =====     Public Procedures     =============================
       if ( .not. ValidateVectorQuantity ( quantity, &
         & coherent=.true., stacked=.true., frequencyCoordinate=(/l_none/) ) ) &
         & call Announce_Error ( key, 0, &
-        & 'Illegal quantity for bin max/min fill' )
+        & 'Illegal quantity for bin min/max/total fill' )
 
       ! Also should have the condition:
       !  quantityType = (/ sourceQuantity%template%quantityType /)
@@ -5259,17 +5298,23 @@ contains ! =====     Public Procedures     =============================
       do qi = 1, quantity%template%noInstances
         do qs = 1, quantity%template%noSurfs
           if ( count ( surfs == qs .and. insts == qi ) > 0 ) then
-            if ( fillMax ) then
+            select case ( method )
+            case  ( l_binMax )
               quantity%values(qs,qi) = maxval ( pack ( sourceQuantity%values ( &
                 & channel : sourceQuantity%template%instanceLen : &
                 &   sourceQuantity%template%noChans, : ), &
                 & surfs == qs .and. insts == qi ) )
-            else
+            case ( l_binMin )
               quantity%values(qs,qi) = minval ( pack ( sourceQuantity%values ( &
                 & channel : sourceQuantity%template%instanceLen : &
                 &   sourceQuantity%template%noChans, : ), &
                 & surfs == qs .and. insts == qi ) )
-            end if
+            case ( l_binTotal )
+              quantity%values(qs,qi) = sum ( pack ( sourceQuantity%values ( &
+                & channel : sourceQuantity%template%instanceLen : &
+                &   sourceQuantity%template%noChans, : ), &
+                & surfs == qs .and. insts == qi ) )
+            end select
           else
             quantity%values(qs,qi) = 0.0
           end if
@@ -5281,7 +5326,7 @@ contains ! =====     Public Procedures     =============================
       call Deallocate_test ( insts, 'insts', ModuleName )
       if ( associated ( ptanQuantity ) .and. sourceQuantity%template%minorFrame ) &
         & call Deallocate_test ( sourceHeights, 'sourceHeights', ModuleName )
-    end subroutine FillWithBinMinMax
+    end subroutine FillWithBinResults
 
     ! ----------------------------------------------- OffsetRadianceQuantity ---
     subroutine OffsetRadianceQuantity ( quantity, radianceQuantity, amount )
@@ -5586,6 +5631,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.210  2003/05/10 01:07:58  livesey
+! Added binTotal and noRads fills
+!
 ! Revision 2.209  2003/05/08 19:34:58  dwu
 ! add more options to splitsideband, and tidy up
 !
