@@ -63,6 +63,26 @@ MODULE Hdf
       INTEGER FUNCTION sfend(sd_id)
         INTEGER, INTENT (IN) :: sd_id
       END FUNCTION sfend 
+      INTEGER FUNCTION sfrdata(sds_id, start, stride, edges , data)      
+        INTEGER, INTENT (IN) :: sds_id
+        INTEGER, INTENT (IN), DIMENSION (:) :: start, stride, edges
+        DOUBLE PRECISION, INTENT (OUT), DIMENSION (:,:,:) :: data
+      END FUNCTION sfrdata
+      INTEGER FUNCTION sfn2index(sd_id, sds_name)      
+        INTEGER, INTENT (IN) :: sd_id
+        CHARACTER (LEN=*), INTENT (IN) :: sds_name
+      END FUNCTION sfn2index
+      INTEGER FUNCTION sfselect(sd_id, sds_index)      
+        INTEGER, INTENT (IN) :: sd_id
+        INTEGER, INTENT (IN) :: sds_index
+      END FUNCTION sfselect
+      INTEGER FUNCTION sfgetinfo(sds_id, sds_name, rank, dimsizes, data_type, &
+      & num_attrs)      
+        INTEGER, INTENT (IN) :: sds_id
+        INTEGER, INTENT (OUT) :: rank, data_type, num_attrs
+        CHARACTER (LEN=*), INTENT (OUT) :: sds_name
+        INTEGER, INTENT (IN), DIMENSION (:) :: dimsizes
+      END FUNCTION sfgetinfo
 
    END INTERFACE
 
@@ -467,6 +487,9 @@ END MODULE Hdf
 !===============================================================================
 
 !# $Log$
+!# Revision 2.2  2000/12/02 00:05:22  pwagner
+!# Added sfgetinfo, sfrdata, sfn2index, sfselect
+!#
 !# Revision 2.1  2000/11/29 19:33:18  pumphrey
 !# Added EXTERNAL reference for sfsfill
 !#
