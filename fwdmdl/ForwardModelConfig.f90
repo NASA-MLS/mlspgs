@@ -294,7 +294,7 @@ contains
     logical :: FLAG                     ! A flag from the sender
     logical, dimension(13) :: l13       ! Temporary array
     logical, dimension(2) :: l2         ! Temporary array
-    integer, dimension(12) :: i11       ! Temporary array
+    integer, dimension(11) :: i11       ! Temporary array
     real(r8), dimension(2) :: r2        ! Temporary array
     integer :: I                        ! Loop counter
     integer :: N                        ! Array size
@@ -552,6 +552,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.32  2003/04/02 21:46:51  jonathan
+! remove cloud_fov, changed i12 to i11
+!
 ! Revision 2.31  2003/03/07 03:16:00  livesey
 ! Changed use of DestroySignal
 !
