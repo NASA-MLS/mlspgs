@@ -17,6 +17,7 @@ addnoise
 andMasks
 applyBaseline
 apriori
+asciiFile
 
 binMax
 binMean
@@ -157,6 +158,9 @@ weighted
 wmoTropopause
 
 # $Log$
+# Revision 2.53  2004/10/16 17:24:59  livesey
+# Added ASCIIFile
+#
 # Revision 2.52  2004/09/27 20:10:28  livesey
 # Added applyBaseline
 #
