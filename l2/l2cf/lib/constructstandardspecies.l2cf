@@ -141,7 +141,7 @@ begin Construct
   ;; More quality flag precursors
   !define(constructOneCloudSummary,{!dnl
   lowCloudSummary$1:  Quantity, vGrid=vGridLowCloud$1, hGrid=hGridStandard, type=temperature
-  highCloudSummary$1: Quantity, vGrid=vGridLowCloud$1, hGrid=hGridStandard, type=temperature!nl})
+  highCloudSummary$1: Quantity, vGrid=vGridHighCloud$1, hGrid=hGridStandard, type=temperature!nl})
   !forall(constructOneCloudSummary,!allRadiometers)
   !define(allCloudSummaries,{!makelist({lowCloudSummary},{},!allRadiometers), $
     !makelist({highCloudSummary},{},!allRadiometers)})
