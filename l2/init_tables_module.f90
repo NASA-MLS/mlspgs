@@ -242,6 +242,7 @@ contains ! =====     Public procedures     =============================
     data_type_indices(t_fwmType) =         add_ident ( 'fwmType' )
     data_type_indices(t_griddedOrigin) =   add_ident ( 'griddedOrigin' )
     data_type_indices(t_hgridtype) =       add_ident ( 'hGridType' )
+    data_type_indices(t_masks) =           add_ident ( 'masks' )
     data_type_indices(t_matrix) =          add_ident ( 'matrixType' )
     data_type_indices(t_method) =          add_ident ( 'method' )
     data_type_indices(t_module) =          add_ident ( 'module' )
@@ -799,7 +800,7 @@ contains ! =====     Public procedures     =============================
              begin, p+p_starttime, t+t_string, n+n_name_def, &
              begin, p+p_endtime, t+t_string, n+n_name_def, s+s_l1brad, s+s_l1boa, &
              s+s_empiricalGeometry, s+s_forwardModel, s+s_forwardModelGlobal, &
-             s+s_time, s+s_vgrid, &
+             s+s_time, s+s_vgrid, s+s_binSelector, &
              s+s_fGrid, s+s_l1brad, s+s_l1boa, n+n_section, &
       begin, z+z_readapriori, s+s_time, s+s_gridded, s+s_l2gp, &
              s+s_l2aux, s+s_snoop, n+n_section, &
@@ -864,6 +865,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.199  2002/02/07 21:40:26  livesey
+! Added string for t_masks
+!
 ! Revision 2.198  2002/02/07 02:55:02  vsnyder
 ! Add a 'mask' field to the 'setup' spec
 !
