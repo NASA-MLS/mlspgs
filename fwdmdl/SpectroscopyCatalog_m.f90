@@ -17,10 +17,11 @@ module SpectroscopyCatalog_m
   ! Public procedures:
   public :: Spectroscopy, SearchByQn
   public :: Destroy_Line_Database, Destroy_SpectCat_Database
-  public :: Dump_Lines_Database, Dump_SpectCat_Database, Dump
+  public :: Dump_Lines_Database, Dump_SpectCat_Database, Dump_SpectCat_Item, Dump
 
   interface DUMP
-    module procedure Dump_SpectCat_Database, Dump_SpectCat_Database_2d
+    module procedure Dump_Line, Dump_SpectCat_Database, Dump_SpectCat_Database_2d
+    module procedure Dump_SpectCat_Item
   end interface
 
   ! Private parameters
@@ -29,19 +30,20 @@ module SpectroscopyCatalog_m
   ! Public types:
   type, public :: Line_T           ! One line in the spectrum for a species
     integer :: Line_Name           ! Sub_rosa index
-    Real(r8) :: DELTA              ! Delta interference coefficient at 300K 1/mb
-    Real(r8) :: EL                 ! Lower state energy cm-1
-    Real(r8) :: GAMMA              ! Gamma interference coefficient at 300K 1/mb
-    Real(r8) :: N                  ! Temperature power dependence of w
-    Real(r8) :: N1                 ! Temperature dependency of delta
-    Real(r8) :: N2                 ! Temperature dependency of gamma
-    Real(r8) :: PS                 ! Pressure shift parameter in MHz/mbar
-    Real(r8) :: NS                 ! Pressure shift on temperature dependency
-    Real(r8) :: STR                ! Integrated spectral intensity
+    real(r8) :: DELTA              ! Delta interference coefficient at 300K 1/mb
+    real(r8) :: EL                 ! Lower state energy cm-1
+    real(r8) :: GAMMA              ! Gamma interference coefficient at 300K 1/mb
+    real(r8) :: N                  ! Temperature power dependence of w
+    real(r8) :: N1                 ! Temperature dependency of delta
+    real(r8) :: N2                 ! Temperature dependency of gamma
+    real(r8) :: PS                 ! Pressure shift parameter in MHz/mbar
+    real(r8) :: NS                 ! Pressure shift dependency on temperature
+    real(r8) :: STR                ! Integrated spectral intensity
                                    ! Log(nm**2 MHz) at 300 K
-    Real(r8) :: V0                 ! Line center frequency MHz
-    Real(r8) :: W                  ! Collision broadening parameter
+    real(r8) :: V0                 ! Line center frequency MHz
+    real(r8) :: W                  ! Collision broadening parameter
                                    ! MHz/mbar at 300 K
+    logical :: UseYi               ! Delta /= 0 or Gamma /= 0
     integer, dimension(:), pointer :: QN=>NULL()      ! Optional quantum numbers
     integer, dimension(:), pointer :: Signals=>NULL() ! List of signal indices for line
     integer, dimension(:), pointer :: Sidebands=>NULL() ! Sidebands for above bands (-1,0,1)
@@ -142,7 +144,8 @@ contains ! =====  Public Procedures  ===================================
 
     ! Error message codes
     integer, parameter :: DupSpectra = 1               ! Duplicate s_spectra
-    integer, parameter :: No_Mass = dupSpectra + 1     ! Lines field but no mass field
+    integer, parameter :: Negative = dupSpectra + 1    ! Parameter is negative
+    integer, parameter :: No_Mass = negative + 1       ! Lines field but no mass field
     integer, parameter :: NotInt = no_mass + 1         ! QN not an integer
     integer, parameter :: NotListedSignal = NotInt + 1 ! Polarized signal is not
                                         ! listed as emlsSignal
@@ -204,6 +207,7 @@ contains ! =====  Public Procedures  ===================================
             call expr_check ( subtree(2,son), lines(numLines)%delta, phyq_dimless )
           case ( f_el )
             call expr_check ( subtree(2,son), lines(numLines)%el, phyq_dimless )
+            if ( lines(numLines)%el < 0.0_r8 ) call announce_error ( son, negative )
           case ( f_emlsSignals )
             if ( instrument == l_emls ) signalsNode = son
           case ( f_emlsSignalsPol )
@@ -242,6 +246,8 @@ contains ! =====  Public Procedures  ===================================
             ! Can't get here if the type checker worked
           end select
         end do
+        lines(numLines)%useYi = abs(lines(numLines)%delta) > 0.0 .or. &
+          &                     abs(lines(numLines)%gamma) > 0.0
         if ( signalsNode /= 0 ) then
           ! First work out how many signals we're dealing with
           noSignals = 0
@@ -375,14 +381,14 @@ contains ! =====  Public Procedures  ===================================
   contains
     ! ...........................................  Announce_Error  .....
     subroutine Announce_Error ( Where, Code, More )
-      use Intrinsic, only: Lit_Indices, Phyq_Indices
+      use Intrinsic, only: Field_Indices, Lit_Indices, Phyq_Indices
       use Lexer_Core, only: Print_Source
       use Output_m, only: Output
       use String_Table, only: Display_String
       use Tree, only: Source_Ref
       integer, intent(in) :: Where      ! In the tree
       integer, intent(in) :: Code       ! The error code
-      integer, intent(in), optional :: MOre  ! In case some error messages need
+      integer, intent(in), optional :: More  ! In case some error messages need
 
       error = max(error, 1)
       call output ( '***** At ' )
@@ -392,6 +398,9 @@ contains ! =====  Public Procedures  ===================================
       case ( dupSpectra )
         call display_string ( lit_indices(more), &
           & before='Duplicate SPECTRA specification for ', advance='yes' )
+      case ( negative )
+        call display_string ( field_indices(get_field_id(where)), before='The ' )
+        call output ( ' parameter shall not be negative.', advance='yes' )
       case ( no_mass )
         call output ( &
           & 'A "mass" field is required if the "lines" field is present.', &
@@ -494,11 +503,55 @@ contains ! =====  Public Procedures  ===================================
     catalog%molecule = l_none ! Clobber them all
   end subroutine Destroy_SpectCat_Database
 
-  ! ----------------------------------------  Dump_Lines_Database  -----
-  subroutine Dump_Lines_Database ( Start, End, Number )
+  ! --------------------------------------------------  Dump_Line  -----
+  subroutine Dump_Line ( Line )
     use Dump_0, only: Dump
     use Output_m, only: Blanks, Output
     use String_Table, only: Display_String
+    type(line_t), intent(in) :: Line
+
+    if ( line%line_name /= 0 ) then
+      call output ( 'Name = ' )
+      call display_string ( line%line_name )
+      call output ( ', ' )
+    end if
+    call output ( 'V0 = ' )
+    call output ( line%v0 )
+    call output ( ', El = ' )
+    call output ( line%el )
+    call output ( ', Str =' )
+    call output ( line%str )
+    call output ( ', W =' )
+    call output ( line%str, advance='yes' )
+    call blanks ( 6 )
+    call output ( 'Ns = ' )
+    call output ( line%ns )
+    call output ( ', Ps = ' )
+    call output ( line%ps )
+    call output ( ', N = ' )
+    call output ( line%n )
+    call output ( ': Delta = ' )
+    call output ( line%delta )
+    call output ( ', N1 = ' )
+    call output ( line%n1, advance='yes' )
+    call blanks ( 6 )
+    call output ( 'Gamma = ' )
+    call output ( line%gamma )
+    call output ( ', N2 = ' )
+    call output ( line%n2, advance='yes' )
+    if ( associated(line%qn) ) call dump ( line%qn, '      QN' )
+    if ( associated(line%signals) ) &
+      & call dump ( line%signals, '      Signals' )
+    if ( associated(line%sidebands) ) &
+      & call dump ( line%sidebands, '      Sidebands' )
+    if ( associated(line%polarized) ) &
+      & call dump ( line%polarized, '      Polarized' )
+
+  end subroutine Dump_Line
+
+  ! ----------------------------------------  Dump_Lines_Database  -----
+  subroutine Dump_Lines_Database ( Start, End, Number )
+    use Output_m, only: Blanks, Output
     integer, intent(in), optional :: Start, End
     logical, intent(in), optional :: Number
     integer :: I                   ! Subscript, loop inductor
@@ -522,56 +575,9 @@ contains ! =====  Public Procedures  ===================================
       else
         call blanks ( 6 )
       end if
-      if ( lines(i)%line_name /= 0 ) then
-        call output ( 'Name = ' )
-        call display_string ( lines(i)%line_name )
-        call output ( ', ' )
-      end if
-      call output ( 'V0 = ' )
-      call output ( lines(i)%v0 )
-      call output ( ', El = ' )
-      call output ( lines(i)%el )
-      call output ( ', Str =' )
-      call output ( lines(i)%str )
-      call output ( ', W =' )
-      call output ( lines(i)%str, advance='yes' )
-      call blanks ( 6 )
-      call output ( 'Ns = ' )
-      call output ( lines(i)%ns )
-      call output ( ', Ps = ' )
-      call output ( lines(i)%ps )
-      call output ( ', N = ' )
-      call output ( lines(i)%n )
-      call output ( ': Delta = ' )
-      call output ( lines(i)%delta )
-      call output ( ', N1 = ' )
-      call output ( lines(i)%n1, advance='yes' )
-      call blanks ( 6 )
-      call output ( 'Gamma = ' )
-      call output ( lines(i)%gamma )
-      call output ( ', N2 = ' )
-      call output ( lines(i)%n2, advance='yes' )
-      if ( associated(lines(i)%qn) ) call dump ( lines(i)%qn, '      QN' )
-      if ( associated(lines(i)%signals) ) &
-        & call dump ( lines(i)%signals, '      Signals' )
-      if ( associated(lines(i)%sidebands) ) &
-        & call dump ( lines(i)%sidebands, '      Sidebands' )
-      if ( associated(lines(i)%polarized) ) &
-        & call dump ( lines(i)%polarized, '      Polarized' )
+      call dump_line ( lines(i) )
     end do
   end subroutine Dump_Lines_Database
-
-  ! ----------------------------------  Dump_SpectCat_Database_2D  -----
-  subroutine Dump_SpectCat_Database_2d ( Catalog, Name, Details )
-    type(catalog_T), pointer :: Catalog(:,:)
-    character(len=*), intent(in), optional :: Name
-    integer, optional, intent(in) :: Details ! <= 0 => Don't dump lines, default 0
-    integer :: Sideband
-    ! Executable code
-    do sideband = lbound(catalog,1), ubound(catalog,1), 2
-      call Dump ( catalog(sideband,:), name, sideband, details )
-    end do
-  end subroutine Dump_SpectCat_Database_2d
 
   ! -------------------------------------  Dump_SpectCat_Database  -----
   subroutine Dump_SpectCat_Database ( Catalog, Name, Sideband, Details )
@@ -585,12 +591,8 @@ contains ! =====  Public Procedures  ===================================
     integer, intent(in), optional :: Sideband
     integer, optional, intent(in) :: Details ! <= 0 => Don't dump lines, default 0
 
-    integer :: I, J                ! Subscript, loop inductor
-    integer :: MyDetails
-    character(len=15) :: Print
+    integer :: I                   ! Subscript, loop inductor
 
-    myDetails = 0
-    if ( present(details) ) myDetails = details
     call output ( 'Spectroscopy catalog' )
     if ( present(name) ) call output ( ' '//trim(name) )
     if ( present(sideband) ) call output ( sideband, before=' for sideband ' )
@@ -600,51 +602,100 @@ contains ! =====  Public Procedures  ===================================
       if ( catalog(i)%molecule == l_none ) cycle
       call output ( i, 4 )
       call output ( ': ' )
-      if ( catalog(i)%species_name /= 0 ) then
-        call display_string ( catalog(i)%species_name )
-        call output ( ', ' )
-      end if
-      call output ( 'Species = ' )
-      call display_string ( lit_indices(catalog(i)%molecule) )
-      write ( print, '(f10.3)' ) catalog(i)%mass
-      call output ( ' Mass = ' // trim(adjustl(print)) // ', Qlog = [ ' )
-      do j = 1, 3
-        write ( print, '(f10.4)' ) catalog(i)%qlog(j)
-        call output ( trim(adjustl(print)) )
-        if ( j < 3 ) call output ( ', ' )
-      end do
-      call output ( ' ]', advance='yes' )
+      call dump_spectCat_item ( catalog(i), details )
+    end do ! i
+  end subroutine Dump_SpectCat_Database
+
+  ! -----------------------------------------  Dump_SpectCat_Item  -----
+  subroutine Dump_SpectCat_Item ( Catalog, Details )
+    use Dump_0, only: Dump
+    use Intrinsic, only: Lit_indices
+    use Output_m, only: Blanks, NewLine, Output
+    use String_Table, only: Display_String, String_Length
+
+    type(catalog_T), intent(in) :: Catalog
+    integer, optional, intent(in) :: Details ! <= 0 => Don't dump lines,
+      !                                      ! == 1 => Dump line names,
+      !                                      !  > 1 => Dump lines, default 0
+
+    integer :: J                   ! Subscript, loop inductor
+    integer :: MyDetails
+    character(len=15) :: Print
+    integer :: W
+
+    myDetails = 0
+    if ( present(details) ) myDetails = details
+    if ( catalog%species_name /= 0 ) then
+      call display_string ( catalog%species_name )
+      call output ( ', ' )
+    end if
+    call output ( 'Species = ' )
+    call display_string ( lit_indices(catalog%molecule) )
+    write ( print, '(f10.3)' ) catalog%mass
+    call output ( ' Mass = ' // trim(adjustl(print)) // ', Qlog = [ ' )
+    do j = 1, 3
+      write ( print, '(f10.4)' ) catalog%qlog(j)
+      call output ( trim(adjustl(print)) )
+      if ( j < 3 ) call output ( ', ' )
+    end do
+    call output ( ' ]', advance='yes' )
+    call blanks ( 6 )
+    call output ( 'Continuum = [ ' )
+    do j = 1, MaxContinuum
+      write ( print, '(g15.3)' ) catalog%continuum(j)
+      call output ( trim(adjustl(print)) )
+      if ( j < MaxContinuum ) call output ( ', ' )
+    end do
+    call output ( ' ]', advance='yes' )
+    if ( myDetails > 0 ) then
       call blanks ( 6 )
-      call output ( 'continuum = [ ' )
-      do j = 1, MaxContinuum
-        write ( print, '(g15.3)' ) catalog(i)%continuum(j)
-        call output ( trim(adjustl(print)) )
-        if ( j < MaxContinuum ) call output ( ', ' )
-      end do
-      call output ( ' ]', advance='yes' )
-      if ( myDetails > 0 ) then
-        call blanks ( 6 )
-        call output ( 'Lines:' )
-        if ( associated(catalog(i)%lines) ) then
-          if ( size(catalog(i)%lines) > 0 ) then
+      call output ( 'Lines:' )
+      if ( associated(catalog%lines) ) then
+        if ( size(catalog%lines) > 0 ) then
+          if ( details == 1 ) then
+            w = 12
+            do j = 1, size(catalog%lines)
+              if ( w > 72 ) then
+                call newLine
+                call blanks ( 12 )
+                w = 12
+              end if
+              call blanks ( 1 )
+              call display_string ( lines(catalog%lines(j))%line_name )
+              w = w + string_length ( lines(catalog%lines(j))%line_name )
+            end do
             call newLine
-            do j = 1, size(catalog(i)%lines)
-              call dump_lines_database ( catalog(i)%lines(j), catalog(i)%lines(j), &
+          else
+            call newLine
+            do j = 1, size(catalog%lines)
+              call dump_lines_database ( catalog%lines(j), catalog%lines(j), &
                 & .false. )
             end do
-          else
-            call output ( ' none', advance='yes' )
           end if
         else
           call output ( ' none', advance='yes' )
         end if
-        if ( associated(catalog(i)%polarized) ) &
-          & call dump ( catalog(i)%polarized, '      Polarized:' )
-      end if ! myDetails > 0
-    end do ! i
-  end subroutine Dump_SpectCat_Database
+      else
+        call output ( ' none', advance='yes' )
+      end if
+      if ( associated(catalog%polarized) ) &
+        & call dump ( catalog%polarized, '      Polarized:' )
+    end if ! myDetails > 0
+  end subroutine Dump_SpectCat_Item
 
-! ---------------------------------------------------  SearchByQn  -----
+  ! ----------------------------------  Dump_SpectCat_Database_2D  -----
+  subroutine Dump_SpectCat_Database_2d ( Catalog, Name, Details )
+    type(catalog_T), pointer :: Catalog(:,:)
+    character(len=*), intent(in), optional :: Name
+    integer, optional, intent(in) :: Details ! <= 0 => Don't dump lines, default 0
+    integer :: Sideband
+    ! Executable code
+    do sideband = lbound(catalog,1), ubound(catalog,1), 2
+      call Dump ( catalog(sideband,:), name, sideband, details )
+    end do
+  end subroutine Dump_SpectCat_Database_2d
+
+  ! -------------------------------------------------  SearchByQn  -----
   integer function SearchByQn ( molecule, QNs )
   ! Find an element in the Catalog database that has a molecule.
   ! Then in its Lines database find an object that has its QN field
@@ -684,6 +735,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.30  2004/11/16 03:05:18  vsnyder
+! Not using correct bounds for dump
+!
 ! Revision 2.29  2004/11/04 03:56:35  vsnyder
 ! Correct a blunder
 !
