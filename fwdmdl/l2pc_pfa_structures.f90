@@ -80,7 +80,10 @@ module L2PC_PFA_STRUCTURES
   type K_MATRIX_INFO
     character(len=8) :: NAME
     Integer(i4) :: FIRST_DIM_INDEX
+    Integer(i4) :: NO_ZETA_BASIS
     Integer(i4) :: NO_PHI_BASIS
+    Real(r4)    :: PHI_BASIS(max_no_phi+2)
+    Real(r4)    :: ZETA_BASIS(max_no_elmnts_per_sv_component+2)
   end type K_MATRIX_INFO
 
 !-----------------------------------------------------------------------

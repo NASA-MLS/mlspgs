@@ -24,23 +24,23 @@ contains
 ! convolution grid to the users specified points. This module uses
 ! cubic spline interpolation to do the job.
 !
-Subroutine convolve_all (ich, ptg_press, atmospheric, n_sps, temp_der, &
-           tan_press,ptg_angles,tan_temp,dx_dt,d2x_dxdt,band,center_angle, &
-           fft_pts, i_raw, k_temp, k_atmos, k_spect_dw, k_spect_dn,    &
-           k_spect_dnu, spect_atmos, no_tan_hts, k_info_count, i_star_all, &
-           k_star_all, k_star_info, no_t, no_phi_t, no_phi_f, InDir, Aaap, &
-           spectroscopic, Ier)
+Subroutine convolve_all (ptg_press,atmospheric,n_sps,temp_der,tan_press,   &
+           ptg_angles,tan_temp,dx_dt,d2x_dxdt,band,center_angle,fft_pts,   &
+           i_raw, k_temp, k_atmos, k_spect_dw, k_spect_dn,k_spect_dnu,     &
+           spect_atmos, no_tan_hts, k_info_count, i_star_all,k_star_all,   &
+           k_star_info,no_t,no_phi_t,no_phi_f,InDir,Aaap,spectroscopic,    &
+           t_z_basis, Ier)
 !
-    Logical, intent(in) :: temp_der
+    Logical, intent(IN) :: temp_der
 !
-    integer(i4), intent(in) :: no_t, n_sps, no_tan_hts, band, &
-   &                           ich, fft_pts, no_phi_t
-    integer(i4), intent(in) :: no_phi_f(*), spect_atmos(*)
+    integer(i4), intent(IN) :: no_t, n_sps, no_tan_hts, band, &
+   &                           fft_pts, no_phi_t
+    integer(i4), intent(IN) :: no_phi_f(*), spect_atmos(*)
 !
-    real(r8), intent(in) :: CENTER_ANGLE
-    real(r8), intent(in) :: TAN_PRESS(*), PTG_ANGLES(*), TAN_TEMP(*)
-    real(r8), intent(in) :: DX_DT(Nptg,*), D2X_DXDT(Nptg,*)
-    real(r8), intent(in) :: I_RAW(*)
+    real(r8), intent(IN) :: CENTER_ANGLE
+    real(r8), intent(IN) :: I_RAW(*), T_Z_BASIS(*)
+    real(r8), intent(IN) :: TAN_PRESS(*), PTG_ANGLES(*), TAN_TEMP(*)
+    real(r8), intent(IN) :: DX_DT(Nptg,*), D2X_DXDT(Nptg,*)
 
     Real(r4) :: k_temp(Nptg,mxco,mnp)
     Real(r4) :: k_atmos(Nptg,mxco,mnp,Nsps)
@@ -48,29 +48,28 @@ Subroutine convolve_all (ich, ptg_press, atmospheric, n_sps, temp_der, &
                 k_spect_dn(Nptg,mxco,mnp,Nsps),  &
                 k_spect_dnu(Nptg,mxco,mnp,Nsps)
 !
-    Character(LEN=*), intent(in) :: InDir, Aaap
+    Character(LEN=*), intent(IN) :: InDir, Aaap
 !
-    type(limb_press), intent(in) :: PTG_PRESS
-    type(atmos_comp), intent(in) :: ATMOSPHERIC(*)
-    type (spectro_param), intent(in) :: SPECTROSCOPIC(*)
+    type(limb_press), intent(IN) :: PTG_PRESS
+    type(atmos_comp), intent(IN) :: ATMOSPHERIC(*)
+    type (spectro_param), intent(IN) :: SPECTROSCOPIC(*)
 !
 ! -----     Output Variables   ----------------------------------------
 !
     integer(i4), intent(out) :: IER, K_INFO_COUNT
 !
-    real(r8), intent(out) :: I_STAR_ALL(*)
-    real(r4), intent(out) :: K_STAR_ALL(20,mxco,mnp,Nptg)
-    type(k_matrix_info), intent(out) :: k_star_info(20)
+    real(r8), intent(OUT) :: I_STAR_ALL(*)
+    real(r4), intent(OUT) :: K_STAR_ALL(:,:,:,:)
+    type(k_matrix_info), intent(OUT) :: k_star_info(*)
 !
 ! -----     Local Variables     ----------------------------------------
 !
-    integer(i4) :: FFT_INDEX(2**fft_pts)
-    integer(i4) :: N, I, IS, J, K, NF, NTR, PTG_I, SV_I, Spectag, ki, kc
+    integer(i4) :: FFT_INDEX(2**fft_pts), nz
+    integer(i4) :: n,i,is,j,k,nf,Ntr,ptg_i,sv_i,Spectag,ki,kc,jp,si
 !
     real(r8) :: FFT_PRESS(2**fft_pts)
     real(r8) :: FFT_ANGLES(2**fft_pts), RAD(2**fft_pts)
-    real(r8) :: SC1(Nlvl), SC2(Nlvl)
-    real(r8) :: TERM(Nlvl), PtP(Nlvl), Q, R
+    real(r8) :: SC1(Nlvl), TERM(Nlvl), PtP(Nlvl), Q, R
 !
     Character(LEN=01) :: CA
 !
@@ -83,6 +82,7 @@ Subroutine convolve_all (ich, ptg_press, atmospheric, n_sps, temp_der, &
     Ier = 0
     ntr = 2**fft_pts
     K_INFO_COUNT = 0
+    jp = (no_phi_t+1)/2
 !
     Rad(1:no_tan_hts) = i_raw(1:no_tan_hts)
 !
@@ -96,45 +96,50 @@ Subroutine convolve_all (ich, ptg_press, atmospheric, n_sps, temp_der, &
     Call fov_convolve(fft_angles,Rad,center_angle,1,no_tan_hts,band, &
    &                  fft_pts,InDir,Aaap,Ier)
     if (Ier /= 0) Return
-!
-!  Get 'ntr' pressures associated with the fft_angles:
-!
-    Call get_pressures('a',ptg_angles,tan_temp,tan_press,no_tan_hts, &
-                        fft_angles,fft_press,ntr,Ier)
-    if (Ier /= 0) Return
-!
-! Make sure the fft_press array is MONOTONICALY increasing:
-!
-    is = 1
-    do while (is < ntr.and.fft_press(is) >= fft_press(is+1))
-      is = is + 1
-    end do
-!
-    k = 1
-    Rad(k) = Rad(is)
-    fft_index(k) = is
-    fft_press(k) = fft_press(is)
-!
-    do ptg_i = is+1, ntr
-      q = fft_press(ptg_i)
-      if (q > fft_press(k)) then
-        k = k + 1
-        fft_press(k) = q
-        Rad(k) = Rad(ptg_i)
-        fft_index(k) = ptg_i
-      endif
-    end do
-!
-    if (k == ntr) fft_index(1) = -2
-!
-! Interpolate the output values and store the radiances in: i_star_all
-!
-    j = ptg_press%no_lin_values
-    Call Cspline_der(fft_press,PtP,Rad,i_star_all,term,k,j)
+
+    si = no_tan_hts - j + 1
+    Call Cspline(fft_angles,ptg_angles(si:no_tan_hts),Rad,Sc1,Ntr,j)
+    i_star_all(1:j) = Sc1(1:j)
 !
 ! Find out if user wants pointing derivatives
 !
     if (ptg_press%der_calc(band)) then
+!
+!  Get 'Ntr' pressures associated with the fft_angles:
+!
+      Call get_pressures('a',ptg_angles,tan_temp,tan_press,no_tan_hts, &
+                        fft_angles,fft_press,Ntr,Ier)
+      if (Ier /= 0) Return
+!
+! Make sure the fft_press array is MONOTONICALY increasing:
+!
+      is = 1
+      do while (is < Ntr.and.fft_press(is) >= fft_press(is+1))
+        is = is + 1
+      end do
+!
+      k = 1
+      Rad(k) = Rad(is)
+      fft_index(k) = is
+      fft_press(k) = fft_press(is)
+!
+      do ptg_i = is+1, Ntr
+        q = fft_press(ptg_i)
+        if (q > fft_press(k)) then
+          k = k + 1
+          fft_press(k) = q
+          Rad(k) = Rad(ptg_i)
+          fft_index(k) = ptg_i
+        endif
+      end do
+!
+      if (k == Ntr) fft_index(1) = -2
+!
+! Interpolate the output values and store the radiances derivative
+! with respect to pointing pressures in: term
+!
+      j = ptg_press%no_lin_values
+      Call Cspline_der(fft_press,PtP,Rad,Sc1,term,k,j)
 !
 ! Derivatives wanted,find index location k_star_all and write the derivative
 !
@@ -164,7 +169,9 @@ Subroutine convolve_all (ich, ptg_press, atmospheric, n_sps, temp_der, &
       kc = kc + 1
       k_star_info(kc)%name = 'TEMP'
       k_star_info(kc)%first_dim_index = ki
+      k_star_info(kc)%no_zeta_basis = no_t
       k_star_info(kc)%no_phi_basis = no_phi_t
+      k_star_info(kc)%zeta_basis(1:no_t) = t_z_basis(1:no_t)
 !
       do nf = 1, no_phi_t
 !
@@ -175,7 +182,8 @@ Subroutine convolve_all (ich, ptg_press, atmospheric, n_sps, temp_der, &
 ! Integrand over temperature derivative plus pointing differential
 !
           do ptg_i = 1, no_tan_hts
-            q = d2x_dxdt(ptg_i,sv_i)
+            q = 0.0
+            if(nf == jp) q = d2x_dxdt(ptg_i,sv_i)
             Rad(ptg_i) = i_raw(ptg_i) * q + k_temp(ptg_i,sv_i,nf)
           end do
 !
@@ -186,14 +194,12 @@ Subroutine convolve_all (ich, ptg_press, atmospheric, n_sps, temp_der, &
    &           band,fft_pts,InDir,Aaap,Ier)
           if (Ier /= 0) Return
 !
-          if (fft_index(1) > 0) then
-            do ptg_i = 1, k
-              Rad(ptg_i) = Rad(fft_index(ptg_i))
-            end do
-          endif
-!
-          Call Cspline(fft_press,PtP,Rad,Sc1,k,j)
+          Call Cspline(fft_angles,ptg_angles(si:no_tan_hts),Rad,Sc1,Ntr,j)
           k_star_all(ki,sv_i,nf,1:j) = Sc1(1:j)
+!
+!  For any index off center Phi, skip the rest of the phi loop ...
+!
+          if(nf /= jp) CYCLE
 !
 ! Now the convolution of radiance with the derivative antenna field
 !
@@ -206,20 +212,14 @@ Subroutine convolve_all (ich, ptg_press, atmospheric, n_sps, temp_der, &
    &           band,fft_pts,InDir,Aaap,Ier)
           if (Ier /= 0) Return
 !
-          if (fft_index(1) > 0) then
-            do ptg_i = 1, k
-              Rad(ptg_i) = Rad(fft_index(ptg_i))
-            end do
-          endif
-!
-          Call Cspline(fft_press,PtP,Rad,term,k,j)
+          Call Cspline(fft_angles,ptg_angles(si:no_tan_hts),Rad,term,Ntr,j)
 !
 ! Transfer dx_dt from convolution grid onto the output grid
 !
-          Call Lintrp(tan_press,PtP,dx_dt(1:,sv_i),sc2,no_tan_hts,j)
+          Call Lintrp(tan_press,PtP,dx_dt(1:,sv_i),Sc1,no_tan_hts,j)
 !
           do ptg_i = 1, j
-            r = sc2(ptg_i) * term(ptg_i)
+            r = Sc1(ptg_i) * term(ptg_i)
             q = k_star_all(ki,sv_i,nf,ptg_i)
             k_star_all(ki,sv_i,nf,ptg_i) = q + r
           end do
@@ -237,13 +237,7 @@ Subroutine convolve_all (ich, ptg_press, atmospheric, n_sps, temp_der, &
    &           band,fft_pts,InDir,Aaap,Ier)
           if (Ier /= 0) Return
 !
-          if (fft_index(1) > 0) then
-            do ptg_i = 1, k
-              Rad(ptg_i) = Rad(fft_index(ptg_i))
-            end do
-          endif
-!
-          Call Cspline(fft_press,PtP,Rad,term,k,j)
+          Call Cspline(fft_angles,ptg_angles(si:no_tan_hts),Rad,term,Ntr,j)
 !
           do ptg_i = 1, j
             q = k_star_all(ki,sv_i,nf,ptg_i)
@@ -253,27 +247,6 @@ Subroutine convolve_all (ich, ptg_press, atmospheric, n_sps, temp_der, &
         end do
 !
       end do
-!
-! *** DEBUG
-!
-      if (ich == 61) then
-        sv_i = 9
-        r = -1.666667
-        write(*,910) sv_i,r
-        do nf = 1, no_phi_t
-          write(*,919) nf,char(92),j
-          write(*,909) (k_star_all(ki,sv_i,nf,ptg_i),ptg_i=1,j)
-        end do
-      endif
-!
- 909  Format(6(1x,1pe12.5))
- 919  Format('di_dtemp_phi_',i1,a1,i4.4,'n')
-!
- 910  Format(/,21x,'CONVOLVED k_temp dump',/,4x,     &
-     &'Derivatrives of Radiance with respect to TEMP',i2.2,  &
-     &' (Zeta=',f7.4,')',/)
-!
-! *** END DEBUG
 !
     endif
 !
@@ -286,15 +259,19 @@ Subroutine convolve_all (ich, ptg_press, atmospheric, n_sps, temp_der, &
 !
         ki = ki + 1
         kc = kc + 1
+        nz = atmospheric(is)%no_lin_values
         k_star_info(kc)%name = atmospheric(is)%name
         k_star_info(kc)%first_dim_index = ki
         k_star_info(kc)%no_phi_basis = no_phi_f(is)
+        k_star_info(kc)%no_zeta_basis = nz
+        k_star_info(kc)%zeta_basis(1:nz) = &
+                &  atmospheric(is)%basis_peaks(1:nz)
 !
 ! Derivatives needed continue to process
 !
         do nf = 1, no_phi_f(is)
 !
-          do sv_i = 1, atmospheric(is)%no_lin_values
+          do sv_i = 1, nz
 !
 ! run through representation basis coefficients
 !
@@ -307,41 +284,14 @@ Subroutine convolve_all (ich, ptg_press, atmospheric, n_sps, temp_der, &
    &             band,fft_pts,InDir,Aaap,Ier)
             if (Ier /= 0) Return
 !
-            if (fft_index(1) > 0) then
-              do ptg_i = 1, k
-                Rad(ptg_i) = Rad(fft_index(ptg_i))
-              end do
-            endif
-!
 ! Interpolate onto the output grid, and store in k_star_all ..
 !
-            Call Lintrp(fft_press,PtP,Rad,Sc1,k,j)
+            Call Lintrp(fft_angles,ptg_angles(si:no_tan_hts),Rad,Sc1,Ntr,j)
             k_star_all(ki,sv_i,nf,1:j) = Sc1(1:j)
 !
           end do
 !
         end do
-!
-! *** DEBUG
-!
-        if (ich == 61 .and. atmospheric(is)%name == 'H2O') then
-          sv_i = 9
-          r = -1.666667
-          write(*,911) sv_i,r
-          do nf = 1, no_phi_f(is)
-            write(*,918) nf,char(92),j
-            write(*,908) (k_star_all(ki,sv_i,nf,ptg_i),ptg_i=1,j)
-          end do
-        endif
-!
- 908  Format(6(1x,1pe12.5))
- 918  Format('di_dh2o_phi_',i1,a1,i4.4,'n')
-!
- 911  Format(/,21x,'CONVOLVED k_atmos_dump',/,4x,       &
-     &'Derivatrives of Radiance with respect to H2O',i2.2,   &
-     &' (Zeta=',f7.4,')',/)
-!
-! *** END DEBUG
 !
       endif
 !
@@ -351,9 +301,9 @@ Subroutine convolve_all (ich, ptg_press, atmospheric, n_sps, temp_der, &
 !
     do is = 1, n_sps
 !
-      j = spect_atmos(is)
-      if(j < 1) CYCLE
-      if(.not.spectroscopic(j)%DER_CALC(band)) CYCLE
+      i = spect_atmos(is)
+      if(i < 1) CYCLE
+      if(.not.spectroscopic(i)%DER_CALC(band)) CYCLE
 !
 ! Derivatives needed continue to process
 !
@@ -361,27 +311,30 @@ Subroutine convolve_all (ich, ptg_press, atmospheric, n_sps, temp_der, &
 !
       DO
 !
-        if(spectroscopic(j)%Spectag /= Spectag) EXIT
-        n = spectroscopic(j)%no_phi_values
-        i = spectroscopic(j)%no_zeta_values
+        if(spectroscopic(i)%Spectag /= Spectag) EXIT
+        n = spectroscopic(i)%no_phi_values
+        nz = spectroscopic(i)%no_zeta_values
+        CA = spectroscopic(i)%type
         ki = ki + 1
         kc = kc + 1
-        k_star_info(kc)%name = spectroscopic(j)%NAME
+        k_star_info(kc)%name = spectroscopic(i)%NAME
         k_star_info(kc)%first_dim_index = ki
         k_star_info(kc)%no_phi_basis = n
-        CA = spectroscopic(j)%type
+        k_star_info(kc)%no_zeta_basis = nz
+        k_star_info(kc)%zeta_basis(1:nz) = &
+                &  spectroscopic(i)%zeta_basis(1:nz)
 !
         do nf = 1, n
 !
-          do sv_i = 1, i
+          do sv_i = 1, nz
 !
             select case ( CA )
               case ( 'W' )
-                Rad(1:no_tan_hts) = k_spect_dw(1:no_tan_hts,sv_i,nf,j)
+                Rad(1:no_tan_hts) = k_spect_dw(1:no_tan_hts,sv_i,nf,i)
               case ( 'N' )
-                Rad(1:no_tan_hts) = k_spect_dn(1:no_tan_hts,sv_i,nf,j)
+                Rad(1:no_tan_hts) = k_spect_dn(1:no_tan_hts,sv_i,nf,i)
               case ( 'V' )
-                Rad(1:no_tan_hts) = k_spect_dnu(1:no_tan_hts,sv_i,nf,j)
+                Rad(1:no_tan_hts) = k_spect_dnu(1:no_tan_hts,sv_i,nf,i)
               case default
                 Ier = -99
                 Print *,'** Unknown Spectroscopic element !'
@@ -395,46 +348,19 @@ Subroutine convolve_all (ich, ptg_press, atmospheric, n_sps, temp_der, &
    &             band,fft_pts,InDir,Aaap,Ier)
             if (Ier /= 0) Return
 !
-            if (fft_index(1) > 0) then
-              do ptg_i = 1, k
-                Rad(ptg_i) = Rad(fft_index(ptg_i))
-              end do
-            endif
-!
 ! Interpolate onto the output grid, and store in k_star_all ..
 !
-            Call Lintrp(fft_press,PtP,Rad,Sc1,k,j)
+            Call Lintrp(fft_angles,ptg_angles(si:no_tan_hts),Rad,Sc1,Ntr,j)
             k_star_all(ki,sv_i,nf,1:j) = Sc1(1:j)
 !
           end do        ! sv_i loop
 !
         end do          ! nf loop
 !
-        j = j + 1
-        if(j > 3 * n_sps) EXIT
+        i = i + 1
+        if(i > 3 * n_sps) EXIT
 !
       END DO
-!
-! *** DEBUG
-!
-      if (ich == 61 .and. atmospheric(is)%name == 'H2O') then
-        sv_i = 9
-        r = -1.666667
-        write(*,912) sv_i,r
-        do nf = 1, no_phi_f(is)
-          write(*,917) nf,char(92),j
-          write(*,907) (k_star_all(ki,sv_i,nf,ptg_i),ptg_i=1,j)
-        end do
-      endif
-!
- 907  Format(6(1x,1pe12.5))
- 917  Format('di_dh2o_w_phi_',i1,a1,i4.4,'n')
-!
- 912  Format(/,21x,'CONVOLVED k_spectro_dump',/,4x,       &
-     &'Derivatrives of Radiance with respect to H2O_W',i2.2,   &
-     &' (Zeta=',f7.4,')',/)
-!
-! *** END DEBUG
 !
     end do
 !

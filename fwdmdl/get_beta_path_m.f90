@@ -16,8 +16,8 @@ module GET_BETA_PATH_M
 contains
 !----------------------------------------------------------------------
 
- SUBROUTINE get_beta_path(ptg_i,pfa_spectrum,no_ele,no_ptg_frq, &
-                     &    ptg_frq_grid,z_path,t_path,beta_path,ier)
+ SUBROUTINE get_beta_path(ptg_i,pfs,no_ele,no_ptg_frq,ptg_frq_grid, &
+                       &  z_path,t_path,beta_path,ier)
 
 !  ===============================================================
 !  Declaration of variables for sub-program: get_beta_path
@@ -33,7 +33,7 @@ Integer(i4), INTENT(OUT) :: ier
 Type(path_vector), INTENT(IN) :: ptg_frq_grid(*)
 Type(path_vector), INTENT(IN) :: z_path, t_path
 
-Type (pfa_slab), INTENT(IN) :: PFA_SPECTRUM(*)
+Type (pfa_slab), INTENT(IN) :: pfs(*)
 
 Type(path_beta), INTENT(OUT) :: beta_path(:,:)  ! (sps_i,frq_i)
 
@@ -41,7 +41,7 @@ Type(path_beta), INTENT(OUT) :: beta_path(:,:)  ! (sps_i,frq_i)
 !  Local variables:
 !  ----------------
 
-Integer(i4) :: nl, sps_i, no_sps, spectag, h_i, frq_i
+Integer(i4) :: nl, i, no_sps, spectag, h_i, frq_i
 
 Real(r8) :: Qlog(3), mass, z, p, t, Frq
 Real(r8) :: values,t_power,dbeta_dw,dbeta_dn,dbeta_dnu
@@ -59,23 +59,20 @@ Real(r8) :: v0sm(MAXLINES), x1m(MAXLINES), ym(MAXLINES), yim(MAXLINES), &
 ! Begin code:
 
   ier = 0
-  no_sps = pfa_spectrum(1)%no_sps
+  no_sps = pfs(1)%no_sps
 !
 ! Allocate all the needed space for beta..
 !
-  do sps_i = 1, no_sps
+  do i = 1, no_sps
     do frq_i = 1, no_ptg_frq(ptg_i)
-      DEALLOCATE(beta_path(sps_i,frq_i)%values,      &
-  &              beta_path(sps_i,frq_i)%t_power,     &
-  &              beta_path(sps_i,frq_i)%dbeta_dw,    &
-  &              beta_path(sps_i,frq_i)%dbeta_dn,    &
-  &              beta_path(sps_i,frq_i)%dbeta_dnu, STAT = h_i)
-      ALLOCATE(beta_path(sps_i,frq_i)%values(no_ele),    &
-  &            beta_path(sps_i,frq_i)%t_power(no_ele),   &
-  &            beta_path(sps_i,frq_i)%dbeta_dw(no_ele),  &
-  &            beta_path(sps_i,frq_i)%dbeta_dn(no_ele),  &
-  &            beta_path(sps_i,frq_i)%dbeta_dnu(no_ele), &
-  &            STAT = ier)
+      DEALLOCATE(beta_path(i,frq_i)%values,beta_path(i,frq_i)%t_power,&
+  &              beta_path(i,frq_i)%dbeta_dw,beta_path(i,frq_i)%dbeta_dn,&
+  &              beta_path(i,frq_i)%dbeta_dnu, STAT=h_i)
+      ALLOCATE(beta_path(i,frq_i)%values(no_ele),    &
+  &            beta_path(i,frq_i)%t_power(no_ele),   &
+  &            beta_path(i,frq_i)%dbeta_dw(no_ele),  &
+  &            beta_path(i,frq_i)%dbeta_dn(no_ele),  &
+  &            beta_path(i,frq_i)%dbeta_dnu(no_ele), STAT = ier)
       if(ier /= 0) then
         PRINT *,'** Allocation error in routine: get_beta_path ..'
         PRINT *,'   IER =',ier
@@ -84,13 +81,13 @@ Real(r8) :: v0sm(MAXLINES), x1m(MAXLINES), ym(MAXLINES), yim(MAXLINES), &
     end do
   end do
 !
-  DO sps_i = 1, no_sps
+  DO i = 1, no_sps
 !
-    Spectag = pfa_spectrum(sps_i)%sps_spectag
+    Spectag = pfs(i)%sps_spectag
     mass = Real(Spectag) / 1000.0
 !
-    nl = pfa_spectrum(sps_i)%NO_LINES
-    Qlog(1:3) = pfa_spectrum(sps_i)%SPS_QLOG(1:3)
+    nl = pfs(i)%NO_LINES
+    Qlog(1:3) = pfs(i)%SPS_QLOG(1:3)
 
     do h_i = 1, no_ele
 !
@@ -106,35 +103,33 @@ Real(r8) :: v0sm(MAXLINES), x1m(MAXLINES), ym(MAXLINES), yim(MAXLINES), &
 !
         Frq = ptg_frq_grid(ptg_i)%values(frq_i)
 !
-        Call Create_beta (Spectag,p,t,Frq,nl,pfa_spectrum(sps_i), &
-       &     v0s,x1,y,yi,slabs1,dx1_dv0,dy_dv0,dslabs1_dv0,v0sp,  &
-       &     x1p,yp,yip,slabs1p,v0sm,x1m,ym,yim,slabs1m,values,   &
-       &     t_power,dbeta_dw,dbeta_dn,dbeta_dnu,Ier)
+        Call Create_beta (Spectag,p,t,Frq,nl,pfs(i),v0s,x1,y,yi,&
+       &     slabs1,dx1_dv0,dy_dv0,dslabs1_dv0,v0sp,x1p,yp,yip, &
+       &     slabs1p,v0sm,x1m,ym,yim,slabs1m,values,t_power,    &
+       &     dbeta_dw,dbeta_dn,dbeta_dnu,Ier)
         if(Ier /= 0) goto 99
 !
-        beta_path(sps_i,frq_i)%values(h_i) = values
-        beta_path(sps_i,frq_i)%t_power(h_i) = t_power
-        beta_path(sps_i,frq_i)%dbeta_dw(h_i) = dbeta_dw
-        beta_path(sps_i,frq_i)%dbeta_dn(h_i) = dbeta_dn
-        beta_path(sps_i,frq_i)%dbeta_dnu(h_i) = dbeta_dnu
+        beta_path(i,frq_i)%values(h_i) = values
+        beta_path(i,frq_i)%t_power(h_i) = t_power
+        beta_path(i,frq_i)%dbeta_dw(h_i) = dbeta_dw
+        beta_path(i,frq_i)%dbeta_dn(h_i) = dbeta_dn
+        beta_path(i,frq_i)%dbeta_dnu(h_i) = dbeta_dnu
 !
       end do          ! On frq_i
 !
     end do            ! On h_i
 !
-  END DO              ! On sps_i
+  END DO              ! On i
 
   Return
 !
 ! Cleanup cycle ...
 !
- 99  do sps_i = 1, no_sps
+ 99  do i = 1, no_sps
        do frq_i = 1, no_ptg_frq(ptg_i)
-         DEALLOCATE(beta_path(sps_i,frq_i)%values,   &
-        &           beta_path(sps_i,frq_i)%t_power,  &
-        &           beta_path(sps_i,frq_i)%dbeta_dw, &
-        &           beta_path(sps_i,frq_i)%dbeta_dn, &
-        &           beta_path(sps_i,frq_i)%dbeta_dnu, STAT = h_i)
+         DEALLOCATE(beta_path(i,frq_i)%values,beta_path(i,frq_i)%t_power,&
+        &           beta_path(i,frq_i)%dbeta_dw,beta_path(i,frq_i)%dbeta_dn,&
+        &           beta_path(i,frq_i)%dbeta_dnu, STAT=h_i)
        end do
      end do
 
@@ -147,7 +142,7 @@ Real(r8) :: v0sm(MAXLINES), x1m(MAXLINES), ym(MAXLINES), yim(MAXLINES), &
   Subroutine Slabs_Prep_Arrays
 !
   Integer(i4) :: j
-  Real(r8) :: v0,el,log_i,w,ps,n,n1,n2,gamma,delta,dslabs1,tp,tm
+  Real(r8) :: dslabs1,tp,tm
 
   if(Spectag==18999 .or. Spectag==28964 .or. Spectag==28965) Return
 !
@@ -155,30 +150,27 @@ Real(r8) :: v0sm(MAXLINES), x1m(MAXLINES), ym(MAXLINES), yim(MAXLINES), &
 !
   do j = 1, nl
 !
-    n = pfa_spectrum(sps_i)%SPS_N(j)
-    w = pfa_spectrum(sps_i)%SPS_W(j)
-    v0 = pfa_spectrum(sps_i)%SPS_V0(j)
-    el = pfa_spectrum(sps_i)%SPS_EL(j)
-    ps = pfa_spectrum(sps_i)%SPS_PS(j)
-    n1 = pfa_spectrum(sps_i)%SPS_N1(j)
-    n2 = pfa_spectrum(sps_i)%SPS_N2(j)
-    log_i = pfa_spectrum(sps_i)%SPS_STR(j)
-    gamma = pfa_spectrum(sps_i)%SPS_GAMMA(j)
-    delta = pfa_spectrum(sps_i)%SPS_DELTA(j)
-!
 ! Prepare the temperature weighted coefficients:
 !
-    Call Slabs_prep_wder(t,mass,v0,el,w,ps,p,n,log_i,Qlog,delta, &
-   &           gamma,n1,n2,v0s(j),x1(j),y(j),yi(j),slabs1(j),&
-   &           dx1_dv0(j),dy_dv0(j),dslabs1_dv0(j))
+    Call Slabs_prep_wder(t,mass,pfs(i)%SPS_V0(j),pfs(i)%SPS_EL(j),&
+   &     pfs(i)%SPS_W(j),pfs(i)%SPS_PS(j),p,pfs(i)%SPS_N(j),      &
+   &     pfs(i)%SPS_STR(j),Qlog,pfs(i)%SPS_DELTA(j),pfs(i)%SPS_GAMMA(j),& 
+   &     pfs(i)%SPS_N1(j),pfs(i)%SPS_N2(j),v0s(j),x1(j),y(j),yi(j),&
+   &     slabs1(j),dx1_dv0(j),dy_dv0(j),dslabs1_dv0(j))
 !
     tp = t + 10.0
-    Call slabs_prep(tp,mass,v0,el,w,ps,p,n,log_i,Qlog,delta,gamma, &
-   &           n1,n2,v0sp(j),x1p(j),yp(j),yip(j),slabs1p(j),dslabs1)
+    Call slabs_prep(tp,mass,pfs(i)%SPS_V0(j),pfs(i)%SPS_EL(j), &
+   &     pfs(i)%SPS_W(j),pfs(i)%SPS_PS(j),p,pfs(i)%SPS_N(j),   &
+   &     pfs(i)%SPS_STR(j),Qlog,pfs(i)%SPS_DELTA(j),pfs(i)%SPS_GAMMA(j),&
+   &     pfs(i)%SPS_N1(j),pfs(i)%SPS_N2(j),v0sp(j),x1p(j),yp(j),&
+   &     yip(j),slabs1p(j),dslabs1)
 !
     tm = t - 10.0
-    Call slabs_prep(tm,mass,v0,el,w,ps,p,n,log_i,Qlog,delta,gamma, &
-   &           n1,n2,v0sm(j),x1m(j),ym(j),yim(j),slabs1m(j),dslabs1)
+    Call slabs_prep(tm,mass,pfs(i)%SPS_V0(j),pfs(i)%SPS_EL(j), &
+   &     pfs(i)%SPS_W(j),pfs(i)%SPS_PS(j),p,pfs(i)%SPS_N(j),   &
+   &     pfs(i)%SPS_STR(j),Qlog,pfs(i)%SPS_DELTA(j),pfs(i)%SPS_GAMMA(j),&
+   &     pfs(i)%SPS_N1(j),pfs(i)%SPS_N2(j),v0sm(j),x1m(j),ym(j),&
+   &     yim(j),slabs1m(j),dslabs1)
 !
   end do
 !

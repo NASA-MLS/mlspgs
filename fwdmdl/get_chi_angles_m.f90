@@ -19,8 +19,8 @@ contains
 ! Set up array of pointing angles
 
 SUBROUTINE get_chi_angles(ndx_path,n_path,tan_press,tan_hts,tan_temp, &
-           phi_tan,RoC,h_obs,elev_offset,dh_dt_grid,N_lvls,no_tan_hts,&
-           no_t,t_z_basis,z_grid,si,cen_ang,ptg_angle,dx_dt,d2x_dxdt,ier)
+           phi_tan,RoC,h_obs,elev_offset,tan_dh_dt,no_tan_hts,no_t,   &
+           t_z_basis,si,cen_ang,ptg_angle,dx_dt,d2x_dxdt,ier)
 
 !  ===============================================================
 !  Declaration of variables for sub-program: get_chi_angles
@@ -28,9 +28,9 @@ SUBROUTINE get_chi_angles(ndx_path,n_path,tan_press,tan_hts,tan_temp, &
 !  ---------------------------
 !  Calling sequence variables:
 !  ---------------------------
-Integer(i4), INTENT(IN) :: no_tan_hts,no_t,N_lvls,si
+Integer(i4), INTENT(IN) :: no_tan_hts,no_t,si
 
-Real(r8), INTENT(IN) :: t_z_basis(:), z_grid(:), dh_dt_grid(:,:)
+Real(r8), INTENT(IN) :: t_z_basis(:), tan_dh_dt(:,:)
 Real(r8), INTENT(IN) :: tan_hts(:), tan_temp(:), tan_press(:)
 Real(r8), INTENT(IN) :: RoC, phi_tan, h_obs, elev_offset
 
@@ -44,7 +44,7 @@ Real(r8), INTENT(OUT) :: dx_dt(:,:), d2x_dxdt(:,:)
 !  ----------------
 !  Local variables:
 !  ----------------
-Integer(i4) :: i, brkpt, ptg_i, sv_i, k, is, h_i
+Integer(i4) :: i, brkpt, sv_i, is, h_i
 
 ! Real(r8), PARAMETER :: ampl = 38.91
 ! Real(r8), PARAMETER :: phas = 51.6152 * deg2rad
@@ -53,7 +53,7 @@ Real(r8), PARAMETER :: ampl = 38.9014
 Real(r8), PARAMETER :: phas = 51.6814 * deg2rad
 
 Real(r8) :: r,t,dh,tanx,cse,ht,Rs_eq,ngrid,schi
-Real(r8) :: Eta(Nlvl,mxco), temp_dh_dt(Nlvl,mxco)
+Real(r8) :: Eta(Nlvl,mxco)
 
   Rs_eq = h_obs + ampl * Sin(2.0*(phi_tan-phas))    ! ** Experimental
 
@@ -82,28 +82,13 @@ Real(r8) :: Eta(Nlvl,mxco), temp_dh_dt(Nlvl,mxco)
 !
   Call get_eta(tan_press,t_z_basis,no_tan_hts,no_t,Nlvl,Eta)
 !
-  temp_dh_dt(1:si+1,1:no_t) = 0.0
-!
-  ptg_i = no_tan_hts - si + 1
-  do sv_i = 1, no_t
-    Call Lintrp(z_grid,tan_press(si:no_tan_hts),dh_dt_grid(1:,sv_i), &
-   &            temp_dh_dt(si:no_tan_hts,sv_i),N_lvls,ptg_i)
-  end do
-!
-  k = 2 * N_lvls
   do sv_i = 1, no_t
 !
     is = 1
-    r = dh_dt_grid(1,sv_i)
-!
     do while (tan_hts(is)  <  0.0)
-      t = tan_temp(is)
-      dh = tan_hts(is) + RoC
       eta(is,sv_i) = 0.0
-      tanx = Tan(ptg_angle(is))
-      cse = tanx * tanx
-      dx_dt(is,sv_i) = r * tanx / dh
-      d2x_dxdt(is,sv_i) = (2.0+cse)*r/dh + Eta(is,sv_i)/t
+      dx_dt(is,sv_i) = 0.0
+      d2x_dxdt(is,sv_i) = 0.0
       is = is + 1
     end do
 !
@@ -112,7 +97,7 @@ Real(r8) :: Eta(Nlvl,mxco), temp_dh_dt(Nlvl,mxco)
       dh = tan_hts(h_i) + RoC
       tanx = tan(ptg_angle(h_i))
       cse = tanx * tanx
-      r = temp_dh_dt(h_i,sv_i)
+      r = tan_dh_dt(h_i,sv_i)
       dx_dt(h_i,sv_i) = r * tanx / dh
       d2x_dxdt(h_i,sv_i) = (2.0+cse)*r/dh + Eta(h_i,sv_i)/t
     end do

@@ -17,7 +17,7 @@ module HYDROSTATIC_MODEL_M
 contains
 !---------------------------------------------------------------
 
-SUBROUTINE hydrostatic_model(si, n_lvls, no_t, no_mmaf, t_indx,        &
+SUBROUTINE hydrostatic_model(si,n_lvls,no_t,no_mmaf,t_indx,   &
            no_tan_hts, geoc_lat, Href, Zref, z_grid, thbs, t_z_basis,  &
            t_coeff, z_glgrid, h_glgrid, t_glgrid, dhdz_glgrid,         &
            dh_dt_glgrid, tan_press, tan_hts, tan_temp, tan_dh_dt,      &
@@ -30,7 +30,8 @@ SUBROUTINE hydrostatic_model(si, n_lvls, no_t, no_mmaf, t_indx,        &
 !  Calling sequence variables:
 !  ---------------------------
 
-Integer(i4), INTENT(IN) :: si, n_lvls, no_t, no_mmaf, t_indx(*)
+Integer(i4), INTENT(IN) :: t_indx(*)
+Integer(i4), INTENT(IN) :: si,N_lvls,no_t,no_mmaf
 
 Integer(i4), INTENT(IN OUT) :: no_tan_hts
 
@@ -167,7 +168,7 @@ Real(r8) :: h_grid(Nlvl),t_grid(Nlvl),dhdt(mxco)
       CALL lintrp(z_grid,tan_press(si:),t_grid,tan_dh_dt(si:,l,m), &
      &            cnt,no_tan_hts-si+1)
       tan_dh_dt(1:si-1,l,m) = 0.0
-      tan_dh_dt(h_i+1:,l,m) = dh_dt_glgrid(gl_count,l,m)
+      tan_dh_dt(no_tan_hts+1:,l,m) = dh_dt_glgrid(gl_count,l,m)
     END DO
   END DO
 
