@@ -180,7 +180,6 @@ END MODULE L2AUXData
 
 !
 ! $Log$
-! Revision 1.1  1999/12/03 19:10:34  livesey
-! First version
-!
+! Revision 1.1  1999/12/03 21:22:02  livesey
+! First versions, modified from L2GPData module
 !
