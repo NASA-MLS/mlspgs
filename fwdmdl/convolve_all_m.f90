@@ -26,7 +26,7 @@ contains
 !
 Subroutine convolve_all (Ptan,atmospheric,n_sps,temp_der,atmos_der, &
            spect_der,tan_press,ptg_angles,tan_temp,dx_dt,d2x_dxdt,band,  &
-           center_angle,fft_pts,i_raw, k_temp, k_atmos, k_spect_dw,      &
+           si,center_angle,fft_pts,i_raw, k_temp, k_atmos, k_spect_dw,   &
            k_spect_dn,k_spect_dnu,spect_atmos,no_tan_hts,k_info_count,  &
            i_star_all,k_star_all,k_star_info,no_t,no_phi_t,no_phi_f,     &
            spectroscopic,t_z_basis,XLAMDA,AAAP,D1AAP,D2AAP,IAS,Ier)
@@ -34,14 +34,14 @@ Subroutine convolve_all (Ptan,atmospheric,n_sps,temp_der,atmos_der, &
     real(r8), dimension(:), intent(IN) :: Ptan
     Logical, intent(IN) :: temp_der,atmos_der,spect_der
 !
-    integer(i4), intent(IN) :: no_t, n_sps, no_tan_hts, band, &
+    integer(i4), intent(IN) :: no_t, n_sps, no_tan_hts, si, band, &
    &                           fft_pts, no_phi_t, IAS
-    integer(i4), intent(IN) :: no_phi_f(*), spect_atmos(*)
+    integer(i4), intent(IN) :: no_phi_f(:), spect_atmos(:)
 !
     real(r8), intent(IN) :: CENTER_ANGLE, XLAMDA
-    real(r8), intent(IN) :: I_RAW(*), T_Z_BASIS(*)
-    real(r8), intent(IN) :: TAN_PRESS(*), PTG_ANGLES(*), TAN_TEMP(*)
-    real(r8), intent(IN) :: DX_DT(Nptg,*), D2X_DXDT(Nptg,*)
+    real(r8), intent(IN) :: I_RAW(:), T_Z_BASIS(:)
+    real(r8), intent(IN) :: TAN_PRESS(:), PTG_ANGLES(:), TAN_TEMP(:)
+    real(r8), intent(IN) :: DX_DT(:,:), D2X_DXDT(:,:)
     Real(r8), intent(in) :: AAAP(:,:),D1AAP(:,:),D2AAP(:,:)
 
     Real(r4) :: k_temp(Nptg,mxco,mnp)
@@ -50,21 +50,21 @@ Subroutine convolve_all (Ptan,atmospheric,n_sps,temp_der,atmos_der, &
                 k_spect_dn(Nptg,mxco,mnp,Nsps),  &
                 k_spect_dnu(Nptg,mxco,mnp,Nsps)
 !
-    type(atmos_comp), intent(IN) :: ATMOSPHERIC(*)
-    type (spectro_param), intent(IN) :: SPECTROSCOPIC(*)
+    type(atmos_comp), intent(IN) :: ATMOSPHERIC(:)
+    type (spectro_param), intent(IN) :: SPECTROSCOPIC(:)
 !
 ! -----     Output Variables   ----------------------------------------
 !
     integer(i4), intent(out) :: IER, K_INFO_COUNT
 !
-    real(r8), intent(OUT) :: I_STAR_ALL(*)
+    real(r8), intent(OUT) :: I_STAR_ALL(:)
     real(r4), intent(OUT) :: K_STAR_ALL(:,:,:,:)
-    type(k_matrix_info), intent(OUT) :: k_star_info(*)
+    type(k_matrix_info), intent(OUT) :: k_star_info(:)
 !
 ! -----     Local Variables     ----------------------------------------
 !
     integer(i4) :: FFT_INDEX(2**fft_pts), nz
-    integer(i4) :: n,i,is,j,k,nf,Ntr,ptg_i,sv_i,Spectag,ki,kc,jp,si
+    integer(i4) :: n,i,j,is,Ktr,nf,Ntr,ptg_i,sv_i,Spectag,ki,kc,jp
 !
     real(r8) :: FFT_PRESS(2**fft_pts)
     real(r8) :: FFT_ANGLES(2**fft_pts), RAD(2**fft_pts)
@@ -96,50 +96,43 @@ Subroutine convolve_all (Ptan,atmospheric,n_sps,temp_der,atmos_der, &
    &                  fft_pts,XLAMDA,AAAP,D1AAP,D2AAP,IAS,Ier)
     if (Ier /= 0) Return
 !
-    si = no_tan_hts - j + 1
-    Call Cspline(fft_angles,ptg_angles(si:no_tan_hts),Rad,SRad,Ntr,j)
+!  Get 'Ntr' pressures associated with the fft_angles:
+!
+    Call get_pressures('a',ptg_angles,tan_temp,tan_press,no_tan_hts, &
+                       fft_angles,fft_press,Ntr,Ier)
+    if (Ier /= 0) Return
+!
+! Make sure the fft_press array is MONOTONICALY increasing:
+!
+    is = 1
+    do while (is < Ntr  .and.  fft_press(is) >= fft_press(is+1))
+      is = is + 1
+    end do
+!
+    Ktr = 1
+    Rad(Ktr) = Rad(is)
+    fft_index(Ktr) = is
+    fft_press(Ktr) = fft_press(is)
+!
+    do ptg_i = is+1, Ntr
+      q = fft_press(ptg_i)
+      if (q > fft_press(Ktr)) then
+        Ktr = Ktr + 1
+        fft_press(Ktr) = q
+        Rad(Ktr) = Rad(ptg_i)
+        fft_index(Ktr) = ptg_i
+      endif
+    end do
+!
+! Interpolate the output values
+! (Store the radiances derivative with respect to pointing pressures in: Term)
+!
+    Call Cspline_der(fft_press,Ptan,Rad,SRad,Term,Ktr,j)
     i_star_all(1:j) = SRad(1:j)
 !
 ! Find out if user wants pointing derivatives
 !
     if (.true.) then                    ! Add a condition later !??? NJL
-      
-!
-!  Get 'Ntr' pressures associated with the fft_angles:
-!
-      Call get_pressures('a',ptg_angles,tan_temp,tan_press,no_tan_hts, &
-                        fft_angles,fft_press,Ntr,Ier)
-      if (Ier /= 0) Return
-!
-! Make sure the fft_press array is MONOTONICALY increasing:
-!
-      is = 1
-      do while (is < Ntr.and.fft_press(is) >= fft_press(is+1))
-        is = is + 1
-      end do
-!
-      k = 1
-      Rad(k) = Rad(is)
-      fft_index(k) = is
-      fft_press(k) = fft_press(is)
-!
-      do ptg_i = is+1, Ntr
-        q = fft_press(ptg_i)
-        if (q > fft_press(k)) then
-          k = k + 1
-          fft_press(k) = q
-          Rad(k) = Rad(ptg_i)
-          fft_index(k) = ptg_i
-        endif
-      end do
-!
-      if (k == Ntr) fft_index(1) = -2
-!
-! Interpolate the output values and store the radiances derivative
-! with respect to pointing pressures in: Term
-!
-      j = size(Ptan)
-      Call Cspline_der(fft_press,Ptan,Rad,SRad,Term,k,j)
 !
 ! Derivatives wanted,find index location k_star_all and write the derivative
 !
@@ -199,7 +192,13 @@ Subroutine convolve_all (Ptan,atmospheric,n_sps,temp_der,atmos_der, &
    &           band,fft_pts,XLAMDA,AAAP,D1AAP,D2AAP,IAS,Ier)
           if (Ier /= 0) Return
 !
-          Call Cspline(fft_angles,ptg_angles(si:no_tan_hts),Rad,SRad,Ntr,j)
+          if(fft_index(1).gt.0) then
+            do ptg_i = 1, Ktr
+              Rad(ptg_i) = Rad(fft_index(ptg_i))
+            end do
+          endif
+!
+          Call Cspline(fft_press,Ptan,Rad,SRad,Ktr,j)
           k_star_all(ki,sv_i,nf,1:j) = SRad(1:j)
 !
 !  For any index off center Phi, skip the rest of the phi loop ...
@@ -217,7 +216,13 @@ Subroutine convolve_all (Ptan,atmospheric,n_sps,temp_der,atmos_der, &
    &           band,fft_pts,XLAMDA,AAAP,D1AAP,D2AAP,IAS,Ier)
           if (Ier /= 0) Return
 !
-          Call Cspline(fft_angles,ptg_angles(si:no_tan_hts),Rad,Term,Ntr,j)
+          if(fft_index(1).gt.0) then
+            do ptg_i = 1, Ktr
+              Rad(ptg_i) = Rad(fft_index(ptg_i))
+            end do
+          endif
+!
+          Call Cspline(fft_press,Ptan,Rad,Term,Ktr,j)
 !
 ! Transfer dx_dt from convolution grid onto the output grid
 !
@@ -242,7 +247,13 @@ Subroutine convolve_all (Ptan,atmospheric,n_sps,temp_der,atmos_der, &
    &           band,fft_pts,XLAMDA,AAAP,D1AAP,D2AAP,IAS,Ier)
           if (Ier /= 0) Return
 !
-          Call Cspline(fft_angles,ptg_angles(si:no_tan_hts),Rad,Term,Ntr,j)
+          if(fft_index(1).gt.0) then
+            do ptg_i = 1, Ktr
+              Rad(ptg_i) = Rad(fft_index(ptg_i))
+            end do
+          endif
+!
+          Call Cspline(fft_press,Ptan,Rad,Term,Ktr,j)
 !
           do ptg_i = 1, j
             q = k_star_all(ki,sv_i,nf,ptg_i)
@@ -290,9 +301,15 @@ Subroutine convolve_all (Ptan,atmospheric,n_sps,temp_der,atmos_der, &
    &               band,fft_pts,XLAMDA,AAAP,D1AAP,D2AAP,IAS,Ier)
               if (Ier /= 0) Return
 !
+              if(fft_index(1).gt.0) then
+                do ptg_i = 1, Ktr
+                  Rad(ptg_i) = Rad(fft_index(ptg_i))
+                end do
+              endif
+!
 ! Interpolate onto the output grid, and store in k_star_all ..
 !
-              Call Lintrp(fft_angles,ptg_angles(si:no_tan_hts),Rad,SRad,Ntr,j)
+              Call Lintrp(fft_press,Ptan,Rad,SRad,Ktr,j)
               k_star_all(ki,sv_i,nf,1:j) = SRad(1:j)
 !
             end do
@@ -358,9 +375,15 @@ Subroutine convolve_all (Ptan,atmospheric,n_sps,temp_der,atmos_der, &
    &               band,fft_pts,XLAMDA,AAAP,D1AAP,D2AAP,IAS,Ier)
               if (Ier /= 0) Return
 !
+              if(fft_index(1).gt.0) then
+                do ptg_i = 1, Ktr
+                  Rad(ptg_i) = Rad(fft_index(ptg_i))
+                end do
+              endif
+!
 ! Interpolate onto the output grid, and store in k_star_all ..
 !
-              Call Lintrp(fft_angles,ptg_angles(si:no_tan_hts),Rad,SRad,Ntr,j)
+              Call Lintrp(fft_press,Ptan,Rad,SRad,Ktr,j)
               k_star_all(ki,sv_i,nf,1:j) = SRad(1:j)
 !
             end do        ! sv_i loop
@@ -383,6 +406,9 @@ Subroutine convolve_all (Ptan,atmospheric,n_sps,temp_der,atmos_der, &
 !
 end module CONVOLVE_ALL_M
 ! $Log$
+! Revision 1.7  2001/03/26 17:56:14  zvi
+! New codes to deal with dh_dt_path issue.. now being computed on the fly
+!
 ! Revision 1.6  2001/03/21 01:10:31  livesey
 ! Now gets Ptan from vector
 !

@@ -56,7 +56,7 @@ contains
     spt = sin(Phi_tan)
     cpt = cos(Phi_tan)
     sw = spt * spt
-    cw = 1.0_r8 - sw
+    cw = cpt * cpt
 
     nphi_tan = a2 / sqrt(c2-(c2-a2)*cw)
 
@@ -73,13 +73,17 @@ contains
     q = ((a2*a2)*cw+(b2*b2)*sw)/(a2*cw+b2*sw)
     Rp = sqrt(q)
 
-    return
+    Return
 
-  end subroutine GEOC_GEOD_CONV
+  End subroutine GEOC_GEOD_CONV
 
 end module GEOC_GEOD_CONV_M
 
 ! $Log$
+! Revision 1.4  2001/03/27 19:48:00  vsnyder
+! Get Deg2Rad from Units, add some comments, make everything but
+! geoc_geod_conv private, make constants _r8 instead of d0, cosmetic changes
+!
 ! Revision 1.3  2001/03/20 23:22:40  zvi
 ! Change to new geoc_geod routine..
 !
