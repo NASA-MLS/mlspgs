@@ -16,7 +16,7 @@ module OutputAndClose ! outputs all data from the Join module to the
 
   implicit none
   private
-  public :: Output_Close
+  public :: Output_Close, add_metadata
 
   !------------------------------- RCS Ident Info ------------------------------
   character(len=*), parameter :: IdParm = &
@@ -38,7 +38,7 @@ contains ! =====     Public Procedures     =============================
 
   ! -----------------------------------------------  Output_Close  -----
   subroutine Output_Close ( root, l2gpDatabase, l2auxDatabase, DirectDatabase, &
-    & matrices, l2pcf, canWriteL2PC )
+    & matrices, canWriteL2PC )
 
     ! Hard-wired assumptions:
 
@@ -58,7 +58,8 @@ contains ! =====     Public Procedures     =============================
       & F_METANAME, F_METADATAONLY, F_OVERLAPS, F_PACKED, F_QUANTITIES, &
       & F_TYPE, F_WRITECOUNTERMAF, &
       & L_L2AUX, L_L2DGG, L_L2GP, L_L2PC, S_OUTPUT, S_TIME
-    use Intrinsic, only: PHYQ_Dimensionless
+    use Intrinsic, only: l_swath, l_grid, l_hdf, &
+      & PHYQ_Dimensionless
     use L2AUXData, only: L2AUXDATA_T, WriteL2AUXData
     use L2GPData, only: L2GPData_T, WriteL2GPData, L2GPNameLen
     use L2PC_m, only: WRITEONEL2PC, OUTPUTHDF5L2PC
@@ -80,7 +81,7 @@ contains ! =====     Public Procedures     =============================
     use TOGGLES, only: GEN, TOGGLE, Switches
     use TREE, only: DECORATION, NODE_ID, NSONS, SUBTREE, SUB_ROSA
     use TREE_TYPES, only: N_NAMED
-    use WriteMetadata, only: PCFData_T, Populate_metadata_std, &
+    use WriteMetadata, only: L2PCF, Populate_metadata_std, &
       & Populate_metadata_oth, WriteMetaLog, Get_l2gp_mcf
 
     ! Arguments
@@ -90,7 +91,7 @@ contains ! =====     Public Procedures     =============================
     type (Matrix_Database_T), dimension(:), pointer :: MATRICES ! Matrix database (for l2pcs)
     type (DirectData_T), dimension(:), pointer :: DirectDatabase
     logical, intent(in) :: canWriteL2PC ! Flag
-    type(PCFData_T), intent(in) :: l2pcf
+    ! type(PCFData_T), intent(in) :: l2pcf
 
     ! - - - Local declarations - - -
 
@@ -304,7 +305,7 @@ contains ! =====     Public Procedures     =============================
 
             ! Write the metadata file
 
-            call get_l2gp_mcf ( file_base, meta_name, l2gp_mcf, l2pcf  )
+            call get_l2gp_mcf ( file_base, meta_name, l2gp_mcf  )
 
             if ( l2gp_mcf <= 0 ) then
 
@@ -335,9 +336,9 @@ contains ! =====     Public Procedures     =============================
               end if
 
               call populate_metadata_std &
-                & (l2gpFileHandle, l2gp_mcf, l2pcf, QuantityNames(1), &
+                & (l2gpFileHandle, l2gp_mcf, QuantityNames(1), &
                 & hdfVersion=hdfVersion, metadata_error=metadata_error, &
-                & filetype='sw' )
+                & filetype=l_swath )
               error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
 
             else
@@ -354,10 +355,10 @@ contains ! =====     Public Procedures     =============================
               end if
 
               call populate_metadata_oth &
-                & ( l2gpFileHandle, l2gp_mcf, l2pcf, &
+                & ( l2gpFileHandle, l2gp_mcf, &
                 & numquantitiesperfile, QuantityNames, &
                 & hdfVersion=hdfVersion, metadata_error=metadata_error, &
-                & filetype='sw'  )
+                & filetype=l_swath  )
               error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
             end if
 
@@ -469,10 +470,10 @@ contains ! =====     Public Procedures     =============================
                 end do
               end if
               call populate_metadata_oth &
-                & ( l2auxFileHandle, l2aux_mcf, l2pcf, &
+                & ( l2auxFileHandle, l2aux_mcf, &
                 & numquantitiesperfile, QuantityNames,&
                 & hdfVersion=hdfVersion, metadata_error=metadata_error, &
-                & filetype='hdf'  )
+                & filetype=l_hdf  )
               error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
             end if
 
@@ -634,10 +635,10 @@ contains ! =====     Public Procedures     =============================
               end if
 
               call populate_metadata_oth &
-                & ( l2gpFileHandle, mlspcf_mcf_l2dgg_start, l2pcf, &
+                & ( l2gpFileHandle, mlspcf_mcf_l2dgg_start, &
                 & numquantitiesperfile, QuantityNames, &
                 & hdfVersion=hdfVersion, metadata_error=metadata_error, &
-                & filetype='sw'  )
+                & filetype=l_swath  )
               error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
             end if
 
@@ -694,7 +695,7 @@ contains ! =====     Public Procedures     =============================
               & exactName=l2gpPhysicalFilename)
             ! Write the metadata file
 
-            call get_l2gp_mcf ( file_base, meta_name, l2gp_mcf, l2pcf  )
+            call get_l2gp_mcf ( file_base, meta_name, l2gp_mcf  )
 
             if ( l2gp_mcf <= 0 ) then
 
@@ -725,9 +726,9 @@ contains ! =====     Public Procedures     =============================
               end if
 
               call populate_metadata_std &
-                & (l2gpFileHandle, l2gp_mcf, l2pcf, QuantityNames(1), &
+                & (l2gpFileHandle, l2gp_mcf, QuantityNames(1), &
                 & hdfVersion=hdfVersion, metadata_error=metadata_error, &
-                & filetype='sw' )
+                & filetype=l_swath )
               error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
 
             else
@@ -744,10 +745,10 @@ contains ! =====     Public Procedures     =============================
               end if
 
               call populate_metadata_oth &
-                & ( l2gpFileHandle, l2gp_mcf, l2pcf, &
+                & ( l2gpFileHandle, l2gp_mcf, &
                 & numquantitiesperfile, QuantityNames, &
                 & hdfVersion=hdfVersion, metadata_error=metadata_error, &
-                & filetype='sw'  )
+                & filetype=l_swath  )
               error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
             end if
           case ( l_l2aux ) ! ------------------------------ Writing l2aux files ---
@@ -777,10 +778,10 @@ contains ! =====     Public Procedures     =============================
               end do
             end if
             call populate_metadata_oth &
-              & ( l2auxFileHandle, l2aux_mcf, l2pcf, &
+              & ( l2auxFileHandle, l2aux_mcf, &
               & numquantitiesperfile, QuantityNames,&
               & hdfVersion=hdfVersion, metadata_error=metadata_error, &
-              & filetype='hdf'  )
+              & filetype=l_hdf  )
             error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
           case ( l_l2pc ) ! ------------------------------ Writing l2pc files --
             ! I intend to completely ignore the PCF file in this case,
@@ -808,10 +809,10 @@ contains ! =====     Public Procedures     =============================
             end if
 
             call populate_metadata_oth &
-              & ( l2gpFileHandle, mlspcf_mcf_l2dgg_start, l2pcf, &
+              & ( l2gpFileHandle, mlspcf_mcf_l2dgg_start, &
               & numquantitiesperfile, QuantityNames, &
               & hdfVersion=hdfVersion, metadata_error=metadata_error, &
-              & filetype='sw'  )
+              & filetype=l_swath  )
             error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
           case default
             call announce_error ( ROOT, &
@@ -828,7 +829,7 @@ contains ! =====     Public Procedures     =============================
         end if
 
         if ( TOOLKIT ) then
-          call writeMetaLog ( l2pcf, metadata_error )
+          call writeMetaLog ( metadata_error )
           error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
         end if
       end if
@@ -868,6 +869,114 @@ contains ! =====     Public Procedures     =============================
     end subroutine SayTime
 
   end subroutine Output_Close
+
+  ! ---------------------------------------------  announce_success  -----
+  subroutine add_metadata ( fileName, numquantitiesperfile, quantityNames, &
+    & hdfVersion, filetype, metadata_error )
+    use Intrinsic, only: l_swath, l_grid, l_hdf
+    use MLSFiles, only: GetPCFromRef, split_path_name
+    use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, MLSPCF_L2GP_END, &
+      & MLSPCF_L2GP_START, mlspcf_l2dgg_start, mlspcf_l2dgg_end, &
+      & Mlspcf_mcf_l2gp_start, Mlspcf_mcf_l2dgm_start, &
+      & Mlspcf_mcf_l2dgg_start
+    use WriteMetadata, only: Populate_metadata_std, &
+      & Populate_metadata_oth, Get_l2gp_mcf
+  ! Deal with metadata--1st for direct write, but later for all cases
+  character(len=*), intent(in) :: fileName
+  integer, intent(in) :: numquantitiesperfile
+  character(len=*), dimension(:), intent(in) :: quantityNames
+  integer, intent(in) :: hdfVersion
+  integer, intent(in) :: fileType  ! l_swath, l_hdf, ..
+  integer, intent(out) :: metadata_error
+  
+  ! Internal variables
+  logical, parameter :: DEBUG = .true.
+  integer :: field_no
+  character (len=132) :: FILE_BASE
+  integer :: fileHandle
+  integer :: L2aux_mcf
+  integer :: L2gp_mcf
+  character (len=32) :: meta_name=' '
+  character (len=132) :: path
+  character(len=len(fileName)) :: PhysicalFilename
+  integer :: returnStatus
+  integer :: Version
+  ! Executable
+  Version = 1
+  select case (filetype)
+  case (l_swath)
+     call split_path_name(fileName, path, file_base)
+     FileHandle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
+       & mlspcf_l2gp_end, &
+       & .true., returnStatus, Version, DEBUG, &
+       & exactName=PhysicalFilename)
+     call get_l2gp_mcf ( file_base, meta_name, l2gp_mcf  )
+
+     if ( QuantityNames(numquantitiesperfile) &
+       & == QuantityNames(1) ) then
+       ! Typical homogeneous l2gp file: 
+       ! e.g., associated with BrO is ML2BRO.001.MCF
+       if ( DEBUG ) then
+         call output('preparing to populate metadata_std', advance='yes')
+         call output('l2gpFileHandle: ', advance='no')
+         call output(FileHandle , advance='no')
+         call output('   l2gp_mcf: ', advance='no')
+         call output(l2gp_mcf , advance='yes')
+       end if
+       call populate_metadata_std &
+         & (FileHandle, l2gp_mcf, QuantityNames(1), &
+         & hdfVersion=hdfVersion, metadata_error=metadata_error, &
+         & filetype=filetype  )
+     else
+       ! Type l2gp file 'other'
+       if ( DEBUG ) then
+         call output ( 'preparing to populate metadata_oth', advance='yes' )
+         call output ( 'l2gpFileHandle: ', advance='no' )
+         call output ( FileHandle , advance='no' )
+         call output ( '   l2gp_mcf: ', advance='no' )
+         call output ( l2gp_mcf , advance='yes' )
+       end if
+
+       call populate_metadata_oth &
+         & ( FileHandle, l2gp_mcf, &
+         & numquantitiesperfile, QuantityNames, &
+         & hdfVersion=hdfVersion, metadata_error=metadata_error, &
+         & filetype=filetype  )
+     end if
+  case (l_hdf)
+     if ( DEBUG ) call output ( 'output file type l2aux', advance='yes' )
+     ! Get the l2aux file name from the PCF
+
+     call split_path_name(fileName, path, file_base)
+     FileHandle = GetPCFromRef(file_base, mlspcf_l2dgm_start, &
+       & mlspcf_l2dgm_end, &
+       & .true., returnStatus, Version, DEBUG, &
+       & exactName=PhysicalFilename)
+     if ( DEBUG ) then
+       call output ( 'preparing to populate metadata_oth', advance='yes' )
+       call output ( 'l2auxFileHandle: ', advance='no' )
+       call output ( FileHandle , advance='no' )
+       call output ( '   l2aux_mcf: ', advance='no' )
+       call output ( l2aux_mcf , advance='no' )
+       call output ( '   number of quantities: ', advance='no' )
+       call output ( numquantitiesperfile , advance='yes' )
+       do field_no=1, numquantitiesperfile
+         call output ( field_no , advance='no' )
+         call output ( '       ', advance='no' )
+         call output ( trim(QuantityNames(field_no)) , advance='yes' )
+       end do
+     end if
+     call populate_metadata_oth &
+       & ( FileHandle, l2aux_mcf, &
+       & numquantitiesperfile, QuantityNames,&
+       & hdfVersion=hdfVersion, metadata_error=metadata_error, &
+       & filetype=filetype  )
+  case default
+    call MLSMessage(MLSMSG_Error,ModuleName,&
+      & "Unrecognized filetype in add_metadata (must be swath or hdf) ")
+  end select
+
+  end subroutine add_metadata
 
 ! =====     Private Procedures     =====================================
 
@@ -945,6 +1054,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.78  2003/07/07 23:49:11  pwagner
+! Add_metadata procedure now public
+!
 ! Revision 2.77  2003/07/07 17:31:44  livesey
 ! Mainly cosmetic changes
 !
