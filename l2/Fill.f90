@@ -95,7 +95,7 @@ contains ! =====     Public Procedures     =============================
       & L_TNGTGEOCALT, L_TRUE, L_VECTOR, L_VGRID, L_VMR, L_WMOTROPOPAUSE, &
       & L_XYZ, L_ZETA
     ! Now the specifications:
-    use INIT_TABLES_MODULE, only: S_ADOPT, S_DESTROY, S_DUMP, S_FILL, S_FILLCOVARIANCE, &
+    use INIT_TABLES_MODULE, only: S_LOAD, S_DESTROY, S_DUMP, S_FILL, S_FILLCOVARIANCE, &
       & S_FILLDIAGONAL, S_FLUSHL2PCBINS, S_MATRIX,  S_NEGATIVEPRECISION, &
       & S_PHASE, S_POPULATEL2PCBIN, S_SNOOP, S_TIME, &
       & S_TRANSFER, S_VECTOR, S_SUBSET, S_FLAGCLOUD, S_RESTRICTRANGE, S_UPDATEMASK
@@ -108,7 +108,7 @@ contains ! =====     Public Procedures     =============================
       & PRECISIONSUFFIX, ReadL1BData, AssembleL1BQtyName
     use L2GPData, only: L2GPData_T
     use L2AUXData, only: L2AUXData_T
-    use L2PC_m, only: POPULATEL2PCBINBYNAME, ADOPTMATRIX
+    use L2PC_m, only: POPULATEL2PCBINBYNAME, LOADMATRIX, LOADVECTOR
     use LinearizedForwardModel_m, only: FLUSHLOCKEDBINS
     use L3ASCII, only: L3ASCII_INTERP_FIELD
     use LEXER_CORE, only: PRINT_SOURCE
@@ -411,6 +411,7 @@ contains ! =====     Public Procedures     =============================
     integer :: SEEDNODE                 ! For the parser
     logical :: SKIPMASK                 ! Flag for transfer
     integer :: SON                      ! Of root, an n_spec_args or a n_named
+    integer :: SOURCE                   ! l_rows or l_colums for adoption
     integer :: SOURCEQUANTITYINDEX      ! in the quantities database
     integer :: SOURCEVECTORINDEX        ! In the vector database
     logical :: SPREADFLAG               ! Do we spread values accross instances in explict
@@ -644,7 +645,7 @@ contains ! =====     Public Procedures     =============================
       case ( s_flushL2PCBins )
         call FlushLockedBins
 
-      case ( s_adopt )
+      case ( s_load )
         got = .false.
         do j = 2, nsons(key)
           gson = subtree(j,key)              ! The field
@@ -653,12 +654,26 @@ contains ! =====     Public Procedures     =============================
           select case ( fieldIndex )
           case ( f_matrix )
             matrixToFill = decoration(decoration( subtree(2, gson) ))
+          case ( f_vector )
+            vectorIndex = decoration(decoration( subtree(2, gson) ))
           case ( f_bin )
             binName = sub_rosa ( subtree(2,gson) )  
+          case ( f_source )
+            source = decoration ( subtree(2,gson) )
           end select
         end do
-        call GetFromMatrixDatabase ( matrices(matrixToFill), matrix )
-        call AdoptMatrix ( matrix, binName, message )
+        if ( got ( f_matrix ) ) then
+          if ( got ( f_vector ) ) call Announce_Error ( key, 0, &
+            & 'Cannot adopt both vector and matrix' )
+          call GetFromMatrixDatabase ( matrices(matrixToFill), matrix )
+          call LoadMatrix ( matrix, binName, message )
+        else if ( got ( f_vector ) ) then
+          if ( .not. got ( f_source ) ) call Announce_Error ( key, 0, &
+            & 'Must supply source=rows/columns for vector adoption' )
+          call LoadVector ( vectors(vectorIndex), binName, source, message )
+        else
+          call Announce_Error ( key, 0, 'Must supply either matrix or vector to adopt' )
+        end if
         if ( len_trim(message) /= 0 ) call Announce_Error ( key, 0, trim(message) )
 
       case ( s_populateL2PCBin )
@@ -6148,6 +6163,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.251  2004/01/23 19:07:35  livesey
+! Finished off the adoption stuff
+!
 ! Revision 2.250  2004/01/23 05:47:38  livesey
 ! Added the adoption stuff
 !
