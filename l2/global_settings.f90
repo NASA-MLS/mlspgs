@@ -154,6 +154,17 @@ contains
 
     if ( toggle(gen) ) call trace_begin ( 'SET_GLOBAL_SETTINGS', root )
 
+    i = index(switches, 'glo')
+    if ( i /= 0 ) then
+      if ( switches(i+3:i+3) >= '0' .and. switches(i+3:i+3) <= '9' ) then
+        details = iachar(switches(i+3:i+3)) - iachar('0') - 2
+      else
+        details = -3
+      end if
+    else
+      details = -4
+    end if
+
     do i = 2, nsons(root)-1 ! Skip names at beginning and end of section
       son = subtree(i,root)
       if ( node_id(son) == n_equal ) then
@@ -306,8 +317,8 @@ contains
 	       else
                   GlobalAttributes%OrbPeriod = OrbPeriod
 	       end if
-          call output ('finished readL1BAttribute in global_setting', &
-		    & advance='yes')
+          if ( details > -4 ) call output &
+            & ('finished readL1BAttribute in global_setting', advance='yes')
           if ( TOOLKIT ) &
             & call announce_error(0, &
             & '*** l2cf overrides pcf for L1BOA file ***', &
@@ -445,18 +456,8 @@ contains
       call utc_to_yyyymmdd(GlobalAttributes%StartUTC, returnStatus, &
         & GlobalAttributes%GranuleYear, GlobalAttributes%GranuleMonth, &
         & GlobalAttributes%GranuleDay) 
-    endif
-
-    if ( index(switches, 'glo3') /= 0 ) then
-      Details = 1
-    elseif ( index(switches, 'glo2') /= 0 ) then
-      Details = 0
-    elseif ( index(switches, 'glo1') /= 0 ) then
-      Details = -1
-    else
-      Details = -2
     end if
-    if( index(switches, 'glo') /= 0 ) &
+    if ( details > -4 ) &
       & call dump_global_settings( processingRange, l1bInfo, DirectDatabase, &
       & LeapSecFileName, details )
 
@@ -833,6 +834,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.83  2004/06/08 19:28:07  vsnyder
+! Add tGrid, improve error detection and reporting
+!
 ! Revision 2.82  2004/05/29 02:50:49  vsnyder
 ! Added more dumps
 !
