@@ -592,7 +592,7 @@ contains
   ! ---------------------------------------------  mls_io_gen_closeF  -----
 
   ! This function closes a generic file using either the toolbox
-  ! or else a Fortran OPEN statement
+  ! or else a Fortran CLOSE statement
   ! according to toolbox_mode:
   ! 'sw' for swath files opened with swopen
   ! 'gd' for grid files opened with gdopen
@@ -603,13 +603,16 @@ contains
 
   ! If must be given a FileHandle as an arg
   ! (A later version may allow choice between file handle and file name)
-  function mls_io_gen_closeF(toolbox_mode, theFileHandle, hdfVersion) &
+  ! (This version only uses a file name in autodetecting its hdf version)
+  function mls_io_gen_closeF(toolbox_mode, theFileHandle, &
+    & FileName, hdfVersion) &
     &  result (ErrType)
 
     ! Dummy arguments
     integer(i4)  :: ErrType
     integer(i4), intent(IN)  :: theFileHandle
     character (LEN=*), intent(IN)   :: toolbox_mode
+    character (LEN=*), optional, intent(IN)   :: FileName
 
     integer, optional, intent(in) :: hdfVersion
 
@@ -847,6 +850,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.29  2002/01/31 00:35:56  pwagner
+! Brought mls_io_gen_closeF into compilance with he5lib version
+!
 ! Revision 2.28  2002/01/29 23:45:26  pwagner
 ! Added WILDCARDHDFVERSION as public param
 !
