@@ -129,10 +129,8 @@ Subset, quantity=y$1.band$2, height=$3, ptanQuantity=state.ptanTHz, $
 
 !define(joinDGG,{
 joinedDGG_$1_!phase: l2gp, source=state.$1, precision=outputPrecision.$1, swath='$2'
-!ifdef(gotDGGs,{!dnl
-  !divert(!DGGDivert), joinedDGG_$1_!phase!divert},{!dnl
-  !divert(!DGGDivert)joinedDGG_$1_!phase!divert})
-!define(gotDGGs,{Yes})
+  !ifdef(gotDGGs,{!divert(!DGGDivert),!divert})!define(gotDGGs,{Yes})
+  !divert(!DGGDivert)joinedDGG_$1_!phase!divert
 {
 ; --ConfigInfo-- DGG: $2
 }
@@ -140,13 +138,40 @@ joinedDGG_$1_!phase: l2gp, source=state.$1, precision=outputPrecision.$1, swath=
 !define(joinDGM,{
 joinedDGM_$1_!phase: l2aux, source=state.$1, sdName='$2'
 joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 precision'
-!ifdef(gotDGMs,{!dnl
-  !divert(!DGMDivert), joinedDGM_$1_!phase, joinedDGM_$1_!phase_precision!divert},{!dnl
-  !divert(!DGMDivert)joinedDGM_$1_!phase, joinedDGM_$1_!phase_precision!divert})
-!define(gotDGMs,{Yes})
+!ifdef(gotDGMs,{!divert(!DGMDivert),!divert})!define(gotDGMs,{Yes})
+  !divert(!DGMDivert)joinedDGM_$1_!phase, joinedDGM_$1_!phase_precision!divert
 {;} --ConfigInfo-- DGM: $2
 {;} --ConfigInfo-- DGM: $2 precision
 })
+
+;; This macro is used to fill radiance chi squares
+!define(fillBandsRadianceChisq,{!dnl
+   Fill, quantity=radianceChisq.chisqMMAF$1, method=special, $
+     measurements=y!phase.band$1, model=f!phase.band$1, $
+     noise=yNoise!phase.band$1
+   Fill, quantity=radianceChisq.chisqMMIF$1, method=special, $
+     measurements=y!phase.band$1, model=f!phase.band$1, $
+     noise=yNoise!phase.band$1
+   Fill, quantity=radianceChisq.chisqChan$1, method=special, $
+     measurements=y!phase.band$1, model=f!phase.band$1, $
+     noise=yNoise!phase.band$1!nl})
+;; This macro joins the above filled quantities
+!define(joinBandsRadianceChisq,{!dnl
+   joinedDGM_chisqMMAF$1_!phase: l2aux, source=radianceChisq.chisqMMAF$1, $
+     /prefixSignal, sdName=' chisqMMAF !phase'
+   joinedDGM_chisqMMIF$1_!phase: l2aux, source=radianceChisq.chisqMMIF$1, $
+     /prefixSignal, sdName=' chisqMMIF !phase'
+   joinedDGM_chisqChan$1_!phase: l2aux, source=radianceChisq.chisqChan$1, $
+     /prefixSignal, sdName=' chisqChan !phase'
+   !ifdef(gotDGMs,{!divert(!DGMDivert),!divert})!define(gotDGMs,{Yes})
+   !divert(!DGMDivert)joinedDGM_chisqMMAF$1_!phase, joinedDGM_chisqMMIF$1_!phase, joinedDGM_chisqChan$1_!phase!divert})
+!define(doRadianceDiagnostics,{!dnl
+   begin Fill
+     !forall(fillBandsRadianceChisq,$*)
+   end Fill
+   begin Join
+     !forall(joinBandsRadianceChisq,$*)
+   end Join!nl})
 
 ;; This macro is used to offset the forward model radiances
 ;; It is called inside a Fill statement.  Note it takes !phase as a
@@ -172,10 +197,8 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
 !define(joinOneDiagDGG,{
   joinedDGG_$1_!phase: l2gp, source=diag!phase.$1, precision=diag!phase.$1, $
     swath='!translit($1,{_},{-})-!phase'
-!ifdef(gotDGGs,{!dnl
-  !divert(!DGGDivert), joinedDGG_$1_!phase!divert},{!dnl
-  !divert(!DGGDivert)joinedDGG_$1_!phase!divert})!dnl
-!define(gotDGGs,{Yes})!dnl
+  !ifdef(gotDGGs,{!divert(!DGGDivert),!divert})!define(gotDGGs,{Yes})
+  !divert(!DGGDivert)joinedDGG_$1_!phase!divert!dnl
 {;} --ConfigInfo-- DGG: !translit($1,{_},{-})-!phase
 })
 
@@ -202,144 +225,10 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
 !define(systemp,{!systemp$1})
 !define(nbw,{!nbw$1})
 
-;; This macro defines a set of full forward models under a given name
-;; $1, for band $2, signal $3.
-;; -------------------------- 2D forward models
-!define(makeSimpleFwm,{!dnl
-  $1: ForwardModel, type=full, $
-    signals=$3, $
-    phiWindow=4.0, $
-    molecules = !simplerMolecules($2), $
-    moleculeDerivatives = !simplerMoleculeFamilies($2), $
-    integrationGrid=vGridTangent, $
-    tangentGrid=vGridTangent, $
-    /do_conv, /do_freq_avg, /atmos_der, /temp_der, /do_baseline
-  $1_mono: ForwardModel, type=full, $
-    signals=$3, $
-    phiWindow=4.0, $
-    molecules = !simplerMolecules($2), $
-    moleculeDerivatives = !simplerMoleculeFamilies($2), $
-    integrationGrid=vGridTangent, $
-    tangentGrid=vGridTangent, $
-    /do_conv, /atmos_der, /temp_der, /do_baseline
-  $1_notd: ForwardModel, type=full, $
-    signals=$3, $
-    phiWindow=4.0, $
-    molecules = !simplerMolecules($2), $
-    moleculeDerivatives = !simplerMoleculeFamilies($2), $
-    integrationGrid=vGridTangent, $
-    tangentGrid=vGridTangent, $
-    /do_conv, /do_freq_avg, /atmos_der, /do_baseline
-  $1_mono_notd: ForwardModel, type=full, $
-    signals=$3, $
-    phiWindow=4.0, $
-    molecules = !simplerMolecules($2), $
-    moleculeDerivatives = !simplerMoleculeFamilies($2), $
-    integrationGrid=vGridTangent, $
-    tangentGrid=vGridTangent, $
-    /do_conv, /atmos_der, /do_baseline})
-!define(makeFwm,{!dnl
-  $1: ForwardModel, type=full, $
-    signals=$3, $
-    phiWindow=4.0, $
-    molecules = !molecules($2), $
-    moleculeDerivatives = !moleculeFamilies($2), $
-    integrationGrid=vGridTangent, $
-    tangentGrid=vGridTangent, $
-    /do_conv, /do_freq_avg, /atmos_der, /temp_der, /do_baseline
-  $1_mono: ForwardModel, type=full, $
-    signals=$3, $
-    phiWindow=4.0, $
-    molecules = !molecules($2), $
-    moleculeDerivatives = !moleculeFamilies($2), $
-    integrationGrid=vGridTangent, $
-    tangentGrid=vGridTangent, $
-    /do_conv, /atmos_der, /temp_der, /do_baseline
-  $1_notd: ForwardModel, type=full, $
-    signals=$3, $
-    phiWindow=4.0, $
-    molecules = !molecules($2), $
-    moleculeDerivatives = !moleculeFamilies($2), $
-    integrationGrid=vGridTangent, $
-    tangentGrid=vGridTangent, $
-    /do_conv, /do_freq_avg, /atmos_der, /do_baseline
-  $1_mono_notd: ForwardModel, type=full, $
-    signals=$3, $
-    phiWindow=4.0, $
-    molecules = !molecules($2), $
-    moleculeDerivatives = !moleculeFamilies($2), $
-    integrationGrid=vGridTangent, $
-    tangentGrid=vGridTangent, $
-    /do_conv, /atmos_der, /do_baseline})
-; ------------------ 1D forward models
-!define(makeSimpleFwm1d,{!dnl
-  $1_1d: ForwardModel, type=full, $
-    signals=$3, $
-    phiWindow=0.0, $
-    molecules = !simplerMolecules($2), $
-    moleculeDerivatives = !simplerMoleculeFamilies($2), $
-    integrationGrid=vGridTangent, $
-    tangentGrid=vGridTangent, $
-    /do_conv, /do_freq_avg, /atmos_der, /temp_der, /do_baseline
-  $1_mono_1d: ForwardModel, type=full, $
-    signals=$3, $
-    phiWindow=0.0, $
-    molecules = !simplerMolecules($2), $
-    moleculeDerivatives = !simplerMoleculeFamilies($2), $
-    integrationGrid=vGridTangent, $
-    tangentGrid=vGridTangent, $
-    /do_conv, /atmos_der, /temp_der, /do_baseline
-  $1_notd_1d: ForwardModel, type=full, $
-    signals=$3, $
-    phiWindow=0.0, $
-    molecules = !simplerMolecules($2), $
-    moleculeDerivatives = !simplerMoleculeFamilies($2), $
-    integrationGrid=vGridTangent, $
-    tangentGrid=vGridTangent, $
-    /do_conv, /do_freq_avg, /atmos_der, /do_baseline
-  $1_mono_notd_1d: ForwardModel, type=full, $
-    signals=$3, $
-    phiWindow=0.0, $
-    molecules = !simplerMolecules($2), $
-    moleculeDerivatives = !simplerMoleculeFamilies($2), $
-    integrationGrid=vGridTangent, $
-    tangentGrid=vGridTangent, $
-    /do_conv, /atmos_der, /do_baseline})
-!define(makeFwm1d,{!dnl
-  $1_1d: ForwardModel, type=full, $
-    signals=$3, $
-    phiWindow=0.0, $
-    molecules = !molecules($2), $
-    moleculeDerivatives = !moleculeFamilies($2), $
-    integrationGrid=vGridTangent, $
-    tangentGrid=vGridTangent, $
-    /do_conv, /do_freq_avg, /atmos_der, /temp_der, /do_baseline
-  $1_mono_1d: ForwardModel, type=full, $
-    signals=$3, $
-    phiWindow=0.0, $
-    molecules = !molecules($2), $
-    moleculeDerivatives = !moleculeFamilies($2), $
-    integrationGrid=vGridTangent, $
-    tangentGrid=vGridTangent, $
-    /do_conv, /atmos_der, /temp_der, /do_baseline
-  $1_notd_1d: ForwardModel, type=full, $
-    signals=$3, $
-    phiWindow=0.0, $
-    molecules = !molecules($2), $
-    moleculeDerivatives = !moleculeFamilies($2), $
-    integrationGrid=vGridTangent, $
-    tangentGrid=vGridTangent, $
-    /do_conv, /do_freq_avg, /atmos_der, /do_baseline
-  $1_mono_notd_1d: ForwardModel, type=full, $
-    signals=$3, $
-    phiWindow=0.0, $
-    molecules = !molecules($2), $
-    moleculeDerivatives = !moleculeFamilies($2), $
-    integrationGrid=vGridTangent, $
-    tangentGrid=vGridTangent, $
-    /do_conv, /atmos_der, /do_baseline})
-
 ; $Log$
+; Revision 1.37  2002/11/21 18:24:11  livesey
+; Refined Avk stuff
+;
 ; Revision 1.36  2002/11/21 01:24:01  livesey
 ; Add transfer of outputPrecision.tropH2O if requested
 ;

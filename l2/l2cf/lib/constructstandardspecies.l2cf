@@ -209,6 +209,24 @@ begin Construct
   !define(allUSBNoiseBandwidths, {!makelist({noiseBandwidth},{},!allBandUSBs)})
   !define(allUnfoldedNoiseBandwidths, {!allLSBNoiseBandwidths, !allUSBNoiseBandwidths})
 
+  ;; ----------------------------------------- ChiSquares
+
+  !define(constructChisqMMAF, {chisqMMAF$1: Quantity, $
+    type=chisqMMAF, signal=!signal($1)!nl})
+  !define(constructChisqMMIF, {chisqMMIF$1: Quantity, $
+    type=chisqMMIF, signal=!signal($1)!nl})
+  !define(constructChisqChan, {chisqChan$1: Quantity, $
+    type=chisqChan, signal=!signal($1)!nl})
+  !forall(constructChisqMMAF,!allBands)
+  !forall(constructChisqMMIF,!allBands)
+  !forall(constructChisqChan,!allBands)
+
+  ;; All
+  !define(allChisqMMAFs,{!makelist({chisqMMAF},{},!allBands)})
+  !define(allChisqMMIFs,{!makelist({chisqMMIF},{},!allBands)})
+  !define(allChisqChans,{!makelist({chisqChan},{},!allBands)})
+  !define(allRadianceChisqs,{!allChisqMMAFs, !allChisqMMIFs, !allChisqChans})
+
   ;; ----------------------------------------- Scan residuals
 
   scanResidualGHz: Quantity, type=scanResidual, module=GHz
@@ -281,5 +299,7 @@ begin Construct
   depthTemplate: VectorTemplate, quantities = [ !allFoldedDepths ]
 
   retrievalDiagnosticsTemplate: VectorTemplate, quantities = [ !allRetrievalDiagnostics ]
+
+  radianceChisqTemplate: VectorTemplate, quantities = [ !allRadianceChisqs ]
 
 end Construct
