@@ -145,6 +145,12 @@ begin Fill
   ;; Fill the magnetic field.
   Fill, quantity=apriori.magneticField, method=magneticModel, $
     GPHquantity=apriori.gph
+  Fill, quantity=apriori.fieldAzimuth, method=rotateField, $
+    fieldECR=apriori.magneticField, ecrToFOV=apriori.ecrToFOV
+  Fill, quantity=apriori.fieldElevation, method=rotateField, $
+    fieldECR=apriori.magneticField, ecrToFOV=apriori.ecrToFOV
+  Fill, quantity=apriori.fieldStrength, method=rotateField, $
+    fieldECR=apriori.magneticField, ecrToFOV=apriori.ecrToFOV
   
   ;; -------------------------------- Apriori precisions for species
 
