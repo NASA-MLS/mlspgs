@@ -6,13 +6,12 @@ module FGrid                    ! Frequency grid information
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
   use EXPR_M, only: EXPR
   use Intrinsic, only: L_Frequency, L_IntermediateFrequency, &
-    & L_LSBFrequency, L_None, L_USBFrequency
+    & L_LSBFrequency, L_None, L_USBFrequency, PHYQ_DIMENSIONLESS, PHYQ_FREQUENCY
   use Init_tables_module, only: F_Coordinate, F_Values
   use MLSCommon, only: r8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
     & MLSMSG_Deallocate
   use Tree, only: DECORATION, NSONS, SUBTREE
-  use Units, only: PHYQ_DIMENSIONLESS, PHYQ_FREQUENCY
 
   implicit none
   private
@@ -152,6 +151,9 @@ contains ! ===================================== Public procedures =====
 end module FGrid
 
 ! $Log$
+! Revision 2.5  2003/08/15 23:58:20  vsnyder
+! Get PHYQ_... directly from Intrinsic instead of indirectly via Units
+!
 ! Revision 2.4  2002/11/22 12:17:48  mjf
 ! Added nullify routine(s) to get round Sun's WS6 compiler not
 ! initialising derived type function results.
