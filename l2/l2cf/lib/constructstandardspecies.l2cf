@@ -121,9 +121,8 @@ begin Construct
   !define(constructCloudMinMax,{!dnl
   cloudRadMin$1: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=temperature
   cloudRadMax$1: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=temperature!nl})
-  !define(cloudBands,{2,5,10,33})
-  !forall(constructCloudMinMax,!cloudBands)
-  !define(allCloudMinMax,{!makelist({cloudRadMin},{},!cloudBands),!makelist({cloudRadMax},{},!cloudBands)})
+  !forall(constructCloudMinMax,!allBands)
+  !define(allCloudMinMax,{!makelist({cloudRadMin},{},!allBands),!makelist({cloudRadMax},{},!allBands)})
 
   ;; ----------------------------------------- Baselines
   !define(constructBaseline,{baseline$1: Quantity, type=baseline, $
