@@ -1028,7 +1028,6 @@ contains ! =====     Public Procedures     =============================
       do j = 1, a%col%nb
         k = a%col%quant(j)
         l = a%col%inst(j)
-        print*,j,k,l,shape(z%quantities(m)%values(:,n))
         call multiplyMatrixVectorNoT ( a%block(i,j), &
           & v%quantities(k)%values(:,l), z%quantities(m)%values(:,n), &
           & do_update )
@@ -1472,6 +1471,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.24  2001/04/28 07:03:59  livesey
+! Removed print statement
+!
 ! Revision 2.23  2001/04/28 04:42:29  livesey
 ! Removing some of the unnecessary(?) assertions of square matrices in
 ! multiplyMatrixVector and its relatives.  Also sorted out some of the
