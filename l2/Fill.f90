@@ -1200,7 +1200,7 @@ contains ! =====     Public Procedures     =============================
         case ( l_l2aux ) ! ------------  Fill from L2AUX quantity  -----
           if ( .NOT. got(f_sourceL2AUX) ) &
             & call Announce_Error ( key, noSourceL2AUXGiven )
-!          call FillVectorQuantityFromL2AUX(quantity,l2auxDatabase(l2auxIndex),errorCode)
+          call FillVectorQuantityFromL2AUX(quantity,l2auxDatabase(l2auxIndex),errorCode)
           if ( errorCode /= 0 ) call Announce_error ( key, errorCode )
 
         case ( l_vector ) ! ---------------- Fill from another qty.
@@ -1739,6 +1739,7 @@ contains ! =====     Public Procedures     =============================
       integer, intent(out) :: errorCode ! Error code
 
       ! Local parameters
+      real(r8), parameter :: FTOL = 1.0e-3 ! 1 kHz
       real(r8), parameter :: TOLERANCE=0.05 ! Tolerence for angles
       real(r8), parameter :: TIMETOL=5.0  ! Tolerence for time (not sure why this
       ! needs to be so big !????????? NJL)
@@ -1761,6 +1762,12 @@ contains ! =====     Public Procedures     =============================
         &  ((quantity%template%noChans/=1) .or. (l2gp%nFreqs/=0)) ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Quantity and l2gp have different number of channels' )
+      if ( associated ( quantity%template%frequencies ) ) then
+        if ( any ( abs ( l2gp%frequency - &
+          & quantity%template%frequencies ) > fTol ) ) &
+          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Quantity and l2pg have different frequency grids' )
+      end if
 
       if ( quantity%template%noSurfs /= l2gp%nLevels .and. (.not. interpolate) ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -4043,6 +4050,26 @@ contains ! =====     Public Procedures     =============================
       if (toggle(gen) .and. levels(gen) > 0 ) call trace_end( "FillVectorQuantityFromL1B" )
     end subroutine FillVectorQuantityFromL1B
 
+    ! ------------------------------------------- FillVectorQuantityFromL2AUX --
+    subroutine FillVectorQuantityFromL2AUX ( qty, l2aux, errorCode )
+      type ( VectorValue_T), intent(inout) :: QTY
+      type ( L2AUXData_T), intent(in) :: L2AUX
+      integer, intent(inout) :: ERRORCODE
+
+      ! Executable code
+      if ( .not. qty%template%minorFrame ) then
+        errorCode = CantFillFromL2AUX
+      else
+        if ( size(l2aux%values,3) /= 1 ) &
+          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Can only fill from 2D minor frame l2auxs until hdf5 comes along')
+        qty%values = reshape ( l2aux%values ( :, &
+          & qty%template%mafIndex(1)+1 : &
+          & qty%template%mafIndex(qty%template%noInstances)+1, 1 ), &
+          & (/ qty%template%instanceLen, qty%template%noInstances /) )
+      end if
+    end subroutine FillVectorQuantityFromL2AUX
+
     ! ------------------------------------------- FillQtyFromInterpolatedQty
     subroutine FillQtyFromInterpolatedQty ( qty, source, key )
       type (VectorValue_T), intent(inout) :: QTY
@@ -4517,6 +4544,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.161  2002/11/06 02:01:05  livesey
+! Changes to fill from l2aux
+!
 ! Revision 2.160  2002/10/26 00:02:51  livesey
 ! Another typo! Going too fast!
 !
