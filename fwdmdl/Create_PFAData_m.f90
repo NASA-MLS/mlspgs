@@ -34,7 +34,7 @@ contains ! =====     Public Procedures     =============================
     use L2PC_PFA_STRUCTURES, only: AllocateOneSlabs, DeAllocateOneSlabs, &
       & SLABS_STRUCT
     use MLSCommon, only: RP, R8
-    use MLSSignals_m, only: GetNameOfSignal, MatchSignal, MaxSigLen, Signal_T
+    use MLSSignals_m, only: GetNameOfSignal, MatchSignal, Signal_T
     use Output_m, only: Output
     use PFADataBase_m, only: AddPFADatumToDatabase, PFAData, PFAData_T, &
       & Sort_PFADataBase
@@ -81,7 +81,6 @@ contains ! =====     Public Procedures     =============================
     integer :: ShapeInd ! Index of filter shape for signal/sideband/channel
     integer, pointer :: SigInd(:)   ! Index of signal for signal/channel pair
     type(signal_t), pointer :: Signal
-    character(maxSigLen) :: SignalName
     logical :: SkipIt   ! No lines or continuum for molecule/signal combination
     type(slabs_struct) :: Slabs
     real(rp) :: T       ! Temperature from temperature grid
@@ -92,7 +91,8 @@ contains ! =====     Public Procedures     =============================
     real(rp) :: VelRel  ! LosVel/c
 
     integer, parameter :: NoCat = 1
-    integer, parameter :: NoLines = noCat + 1
+    integer, parameter :: NoFilter = noCat + 1
+    integer, parameter :: NoLines = noFilter + 1
 
     if ( toggle(emit) ) & ! set by -f command-line switch
       & call trace_begin ( 'Create_PFAData' )
@@ -130,14 +130,27 @@ contains ! =====     Public Procedures     =============================
       call cpu_time ( t0 )
       t1 = t0
     end if
+    pfaDatum%name = 0
     do c = 1, numChannels
       signal => signals(sigind(c))
+
+      ! Create an empty PFA Datum
+      call getNameOfSignal ( signal, pfaDatum%signal, channel=channel(c) )
+      pfaDatum%signalIndex = signal%index
+      pfaDatum%spectroscopyFile = spectroscopyFile
+      pfaDatum%theSignal = signal
+      pfaDatum%tGrid = temperatures
+      pfaDatum%vel_Rel = velRel
+      pfaDatum%vGrid = pressures
+      pfaDatum%whichLines = whichLines
       ! Get the filter shape for the signal
       shapeInd = matchSignal ( filterShapes%signal, signal, &
         & sideband=signal%sideband, channel=channel(c) )
+      if ( shapeInd == 0 ) then
+        call announce_error ( where, noFilter, pfaDatum%signal )
+        cycle
+      end if
       pfaDatum%filterFile = filterShapes(shapeInd)%file
-      pfaDatum%spectroscopyFile = spectroscopyFile
-      pfaDatum%whichLines = whichLines
       nfp = size(filterShapes(shapeInd)%filterGrid)
       df = filterShapes(shapeInd)%filterGrid(2) - filterShapes(shapeInd)%filterGrid(1)
       ! Compute integral of filter shape, for normalization.  Should be 1.0,
@@ -147,21 +160,15 @@ contains ! =====     Public Procedures     =============================
       ! Now, for all the molecules....
       do m = 1, size(molecules)
         n = molecules(m)
-
-        ! Create an empty PFA Datum
-        pfaDatum%name = 0
         pfaDatum%molecule = n
-        call getNameOfSignal ( signal, pfaDatum%signal, channel=channel(c) )
-        pfaDatum%signalIndex = signal%index
-        pfaDatum%theSignal = signal
+        ! The channels field is allocated here so each one in the
+        ! database will have a separate one, even if they are the same.
+        ! Otherwise, when it comes time to destroy them, the first one
+        ! will work, and the next one will fail with a dangling pointer.
         nullify ( pfaDatum%theSignal%channels )
         call allocate_test ( pfaDatum%theSignal%channels, channel(c), &
           & 'PFADatum%theSignal%channels', moduleName, lowBound=channel(c) )
         pfaDatum%theSignal%channels = .true.
-        pfaDatum%tGrid = temperatures
-        pfaDatum%vGrid = pressures
-        pfaDatum%vel_Rel = velRel
-
         px = pfaDatum%vGrid%noSurfs
         tx = pfaDatum%tGrid%noSurfs
         nullify ( pfaDatum%absorption, pfaDatum%dAbsDnc, pfaDatum%dAbsDnu, pfaDatum%dAbsDwc )
@@ -196,6 +203,7 @@ contains ! =====     Public Procedures     =============================
 
         ! Put it away
         create_PFAData = AddPFADatumToDatabase ( pfaData, pfaDatum )
+        call deallocate_test ( myCatalog%lines, 'myCatalog%lines', moduleName )
 
         if ( progress .or. dumpIt > 0 ) then
           call output ( 'Created PFA for ' )
@@ -225,7 +233,7 @@ contains ! =====     Public Procedures     =============================
 
     if ( progress ) then
       call cpu_time ( t2 )
-      call output ( t2-t0, before='Total CPU time = ', advance='yes' )
+      call output ( t2-t0, before='Total CPU time for CreatePFA = ', advance='yes' )
     end if
 
     if ( toggle(emit) ) & ! set by -f command-line switch
@@ -247,6 +255,9 @@ contains ! =====     Public Procedures     =============================
       case ( noCat )
         call output ( 'No catalog for ' )
         call display_string ( more, advance='yes' )
+      case ( noFilter )
+        call output ( 'No filter for ' )
+        call output ( trim(string), advance='yes' )
       case ( noLines )
         call output ( 'No lines or continuum for ' )
         call display_string ( more )
@@ -323,8 +334,7 @@ contains ! =====     Public Procedures     =============================
         ! Check we have at least one line for specie.  Allocate lines if so.
         l = count(lineFlag)
         if ( l == 0 .and. all(myCatalog%continuum == 0) ) then
-          call getNameOfSignal ( signal, signalName )
-          call announce_error ( where, noLines, signalName, lit_indices(n) )
+          call announce_error ( where, noLines, pfaDatum%signal, lit_indices(n) )
           skipIt = .true.
           return
         end if
@@ -352,6 +362,9 @@ contains ! =====     Public Procedures     =============================
 end module Create_PFAData_m
 
 ! $Log$
+! Revision 2.8  2005/04/04 19:52:46  vsnyder
+! Hoist some loop-invariant stuff
+!
 ! Revision 2.7  2005/03/28 20:22:59  vsnyder
 ! Add more progress dumps
 !
