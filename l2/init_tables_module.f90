@@ -1008,11 +1008,12 @@ contains ! =====     Public procedures     =============================
              begin, f+f_xStar, s+s_vector, n+n_field_spec, &
              begin, f+f_yStar, s+s_vector, n+n_field_spec, &
              ndp+n_spec_def /), continue=.true. )
-    call make_tree ( (/ & ! Must be AFTER s_vector, s_vectorTemplate and
-                          ! s_forwardModel
+    call make_tree ( (/ & ! Must be AFTER s_forwardModel, s_hGrid, s_vector,
+                          ! and s_vectorTemplate
       begin, s+s_dump, &
              begin, f+f_details, t+t_numeric, n+n_field_type, &
              begin, f+f_forwardModel, s+s_forwardModel, n+n_field_spec, &
+             begin, f+f_hGrid, s+s_hgrid, n+n_field_spec, &
              begin, f+f_quantity, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
              begin, f+f_template, s+s_vectorTemplate, s+s_quantity, n+n_field_spec, &
@@ -1232,6 +1233,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.370  2004/05/18 01:06:28  vsnyder
+! Add HGrid field to DUMP command
+!
 ! Revision 2.369  2004/05/04 01:03:33  livesey
 ! Added excludebelowbottom flag for binmax/binmin fill
 !
