@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module INIT_TABLES_MODULE
@@ -513,6 +513,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_scanUpperLimit, t+t_numeric_range, n+n_field_type, &
              begin, f+f_criticalModules, t+t_criticalModule, n+n_field_type, &
              begin, f+f_maxGap, t+t_numeric, n+n_field_type, &
+             begin, f+f_skipL1BCheck, t+t_boolean, n+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_template, &
@@ -1020,6 +1021,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.308  2003/05/07 22:50:29  pwagner
+! Optionally may skipL1BCheck in ChunkDivide
+!
 ! Revision 2.307  2003/05/07 01:01:50  livesey
 ! Added chiSqBinned
 !
