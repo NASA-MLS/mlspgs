@@ -36,7 +36,7 @@ contains
 
 ! subroutine SIDS ( Root, VectorDatabase, MatrixDatabase, FwdModelInfo )
   subroutine SIDS ( Root, VectorDatabase, MatrixDatabase, FwdModelInfo, &
-    & fmc, fmi, tfmi )
+    & FMC, FMI, TFMI )
 
     ! Dummy arguments:
     integer, intent(in) :: Root         ! Of the relevant subtree of the AST
@@ -93,7 +93,8 @@ contains
 
     call forwardModel ( FwdModelInfo, FwdModelExtra, FwdModelIn, &
     &                   Jacobian, FwdModelOut=FwdModelOut, &
-    &                   FMC=FMC, FMI=FMI, TFMI=TFMI ) !??? Last line temporary
+    &                   FMC=FMC, FMI=FMI(1), TFMI=TFMI(1))
+!   &                   FMC=FMC,FMI=FMI,TFMI=TFMI) !??? Last line temporary
     if ( toggle(gen) ) call trace_end ( "SIDS" )
 
   contains
@@ -117,6 +118,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.3  2001/03/08 20:11:19  zvi
+! *** empty log message ***
+!
 ! Revision 2.2  2001/03/08 03:23:09  vsnyder
 ! More stuff to work with L2_Load
 !
