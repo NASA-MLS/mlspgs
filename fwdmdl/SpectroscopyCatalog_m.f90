@@ -104,8 +104,9 @@ contains ! =====  Public Procedures  ===================================
       & F_El, F_EMLSSIGNALS, F_EMLSSIGNALSPOL, F_Gamma, F_Lines, F_Mass, &
       & F_Molecule, F_MLS1SIGNALS, F_N, F_N1, F_N2, F_Ns, F_Ps, F_Qlog, F_QN, &
       & F_Str, F_UMLSSIGNALS, F_V0, F_W
-    use Intrinsic, only: Phyq_Dimless => Phyq_Dimensionless, Phyq_Frequency, &
-      & S_Time, L_EMLS, L_UMLS, L_MLS1
+    use Intrinsic, only: Lit_Indices, L_EMLS, L_MLS1, L_UMLS, &
+      & Phyq_Dimless => Phyq_Dimensionless, Phyq_Frequency, &
+      & S_Time
     use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
       & MLSMSG_DeAllocate, MLSMSG_Error
     use MoreTree, only: Get_Field_Id, Get_Spec_Id
@@ -1337,6 +1338,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.35  2005/01/13 01:32:24  vsnyder
+! Add DefaultIsotopeRatio to Catalog_t
+!
 ! Revision 2.34  2005/01/12 03:10:00  vsnyder
 ! Add error message in Read_Spectroscopy if the file cannot be opened
 !
