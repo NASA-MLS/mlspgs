@@ -72,7 +72,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_EXPLICITVALUES      = f_do_freq_avg + 1
   integer, parameter :: F_FIELD               = f_explicitValues + 1
   integer, parameter :: F_FILE                = f_field + 1
-  integer, parameter :: F_FORMULA             = f_file + 1
+  integer, parameter :: F_FILTERSHAPES        = f_file + 1
+  integer, parameter :: F_FORMULA             = f_filtershapes + 1
   integer, parameter :: F_FORWARDMODEL        = f_formula + 1
   integer, parameter :: F_FRACTION            = f_forwardModel + 1
   integer, parameter :: F_FWDMODELEXTRA       = f_fraction + 1
@@ -367,6 +368,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_explicitValues) =      add_ident ( 'explicitValues' )
     field_indices(f_field) =               add_ident ( 'field' )
     field_indices(f_file) =                add_ident ( 'file' )
+    field_indices(f_filtershapes) =        add_ident ( 'filterShapes' )
     field_indices(f_formula) =             add_ident ( 'formula' )
     field_indices(f_forwardModel) =        add_ident ( 'forwardModel' )
     field_indices(f_fraction) =            add_ident ( 'fraction' )
@@ -717,6 +719,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_tangentGrid, s+s_vGrid, n+n_field_spec, &
              np+n_spec_def, &      
       begin, s+s_forwardModelGlobal, &                                 !???
+             begin, f+f_filterShapes, t+t_string, n+n_field_type, &
              begin, f+f_pointingGrids, t+t_string, n+n_field_type, &
              nadp+n_spec_def /) )                                      !???
     call make_tree ( (/ &
@@ -808,6 +811,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.61  2001/03/29 23:42:55  vsnyder
+! Add 'filterShapes' field to forwardModelGlobal
+!
 ! Revision 2.60  2001/03/29 22:07:25  livesey
 ! Added phiWindow
 !
