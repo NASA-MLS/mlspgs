@@ -1,4 +1,4 @@
-! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -21,9 +21,12 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
 
   ! This module simply contains initial settings and accumulated values.
 
-  logical            :: SECTION_TIMES = .false.  ! Show times in each section
-  logical            :: TOTAL_TIMES = .false.    ! Show total times from start
+  ! The following public settings are stored here; they may be set by MLSL2
+  logical          :: SECTION_TIMES = .false.  ! Show times in each section
+  logical          :: TOTAL_TIMES = .false.    ! Show total times from start
+
   logical, private   :: COUNTEMPTY = .false.     ! Any sections named ' '?
+  logical, private   :: ALLOWUNKNOWNNAMES = .false.  ! Any unknown section names
 
   character*(*), parameter           :: section_names = &
     & 'main,open_init,global_settings,signals,spectroscopy,' // &
@@ -34,17 +37,22 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
     & 'full_fwm,fullcloud_fwm,scan_fwm,twod_scan_fwm,linear_fwm,' // &
     & 'low_cloud,high_cloud,sids,form_normeq,tikh_reg'
   integer, parameter                 :: num_retrieval_times = 14
-  real, dimension(num_section_times+num_retrieval_times), &
+  ! dimension of the following is +2 to allow possible unknown
+  ! section names and unknown retrieval names
+  real, dimension(num_section_times+num_retrieval_times+2), &
     & save                           :: section_timings = 0.
+  integer, parameter                 :: unknown_section = &
+    &                               num_section_times+num_retrieval_times + 1
+  integer, parameter                 :: unknown_retrieval = unknown_section + 1
 
 contains ! =====     Public Procedures     =============================
 
-  ! -----------------------------------------------  add_to_retrieval_timing  -----
+  ! -----------------------------------------  add_to_retrieval_timing  -----
   subroutine add_to_retrieval_timing( section_name, t1 )
   ! Add current elapsed retrieval section time to total so far for section_name
 
   ! Formal arguments
-    character(LEN=*), intent(in):: section_name   ! One of the retrieval section_names
+    character(LEN=*), intent(in):: section_name   ! One of the retr. sect_names
     real, optional, intent(inout)  :: t1          ! Prior time_now, then current
 
   ! Private
@@ -57,9 +65,15 @@ contains ! =====     Public Procedures     =============================
 
       elem = StringElementNum(retrieval_names, LowerCase(section_name), countEmpty)
       if ( elem < 1 .or. elem > num_retrieval_times ) then
-        call MLSMessage ( MLSMSG_Error, moduleName, &
+        if ( ALLOWUNKNOWNNAMES ) then
+          call time_now ( t2 )
+          section_timings(unknown_retrieval) = &
+            & section_timings(unknown_retrieval) + t2 - myLastTime
+        else
+          call MLSMessage ( MLSMSG_Error, moduleName, &
         & 'Unable to find retrieval section name ' // section_name // &
         & ' among list ' // retrieval_names )
+        endif
       else
         call time_now ( t2 )
         section_timings(num_section_times+elem) = &
@@ -76,29 +90,38 @@ contains ! =====     Public Procedures     =============================
 
   ! Formal arguments
     character(LEN=*), intent(in):: section_name   ! One of the section_names
-    real, intent(in)            :: t1             ! Prior time_now 
+    real, optional, intent(inout)  :: t1          ! Prior time_now, then current
 
   ! Private
     integer                     :: elem
     real                        :: t2
+    real, save                  :: myLastTime
 
   ! Executable
+    if ( present(t1) ) myLastTime = t1
     elem = StringElementNum(section_names, LowerCase(section_name), countEmpty)
     if ( elem < 1 .or. elem > num_section_times ) then
       elem = StringElementNum(retrieval_names, LowerCase(section_name), countEmpty)
       if ( elem < 1 .or. elem > num_retrieval_times ) then
-        call MLSMessage ( MLSMSG_Error, moduleName, &
-        & 'Unable to find section name ' // section_name // &
-        & ' among list ' // section_names // ',' // retrieval_names )
+        if ( ALLOWUNKNOWNNAMES ) then
+          call time_now ( t2 )
+          section_timings(unknown_section) = &
+            & section_timings(unknown_section) + t2 - myLastTime
+        else
+          call MLSMessage ( MLSMSG_Error, moduleName, &
+          & 'Unable to find section name ' // section_name // &
+          & ' among list ' // section_names // ',' // retrieval_names )
+        endif
       else
         call time_now ( t2 )
         section_timings(num_section_times+elem) = &
-          & section_timings(num_section_times+elem) + t2 - t1
+          & section_timings(num_section_times+elem) + t2 - myLastTime
       endif
     else
       call time_now ( t2 )
-      section_timings(elem) = section_timings(elem) + t2 - t1
+      section_timings(elem) = section_timings(elem) + t2 - myLastTime
     endif
+    if ( present(t1) ) call time_now ( t1 )
   end subroutine add_to_section_timing
 
   ! -----------------------------------------------  dump_section_timings  -----
@@ -114,9 +137,13 @@ contains ! =====     Public Procedures     =============================
     real                            :: final
     real                            :: total
     real                            :: percent
+    real                            :: elem_time
     character(LEN=LEN(TIMEFORMBIG)) :: TIMEFORM
+    logical                         :: Unknown_nonzero
+    integer                         :: num_elems
 
   ! Executable
+    Unknown_nonzero = (section_timings(unknown_section) > 0.)
     call output ( '==========================================', advance='yes' )
     call blanks ( 8, advance='no' )
     call output ( 'Level 2 section timings : ', advance='yes' )
@@ -126,7 +153,8 @@ contains ! =====     Public Procedures     =============================
     call output ( 'time ', advance='no' )
     call blanks ( 8, advance='no' )
     call output ( 'percent ', advance='yes' )
-    total = sum(section_timings(1:num_section_times))
+    total = sum(section_timings(1:num_section_times)) + &
+     & section_timings(unknown_section)
     call time_now ( final )
     final = max(final, total)
     if ( final <= 0.0 ) final = 1.0       ! Just so we don't divide by 0
@@ -135,12 +163,23 @@ contains ! =====     Public Procedures     =============================
     else
       TIMEFORM = TIMEFORMSMALL
     endif
+    if ( Unknown_nonzero ) then
+      num_elems = num_section_times + 1
+    else
+      num_elems = num_section_times
+    endif
     do elem = 1, num_section_times
-      call GetStringElement(section_names, section_name, elem, countEmpty)
-      percent = 100 * section_timings(elem) / final
+      if ( elem > num_section_times ) then
+        elem_time = section_timings(unknown_section)
+        section_name = 'unknown name'
+      else
+        elem_time = section_timings(elem)
+        call GetStringElement(section_names, section_name, elem, countEmpty)
+      endif
+      percent = 100 * elem_time / final
       call output ( section_name, advance='no' )
       call blanks ( 2, advance='no' )
-      call output ( section_timings(elem), FORMAT=TIMEFORM, advance='no' )
+      call output ( elem_time, FORMAT=TIMEFORM, advance='no' )
       call blanks ( 2, advance='no' )
       call output ( percent, FORMAT=PCTFORM, advance='yes' )
     enddo
@@ -195,13 +234,26 @@ contains ! =====     Public Procedures     =============================
     call output ( 'time ', advance='no' )
     call blanks ( 8, advance='no' )
     call output ( 'percent of total retrieval time', advance='yes' )
-    total = sum(section_timings(1+num_section_times:))
-    do elem = 1, num_retrieval_times
-      call GetStringElement(retrieval_names, section_name, elem, countEmpty)
-      percent = 100 * section_timings(num_section_times+elem) / final
+    total = sum(section_timings(1+num_section_times:)) - &
+      & section_timings(unknown_section)
+    Unknown_nonzero = (section_timings(unknown_retrieval) > 0.)
+    if ( Unknown_nonzero ) then
+      num_elems = num_retrieval_times + 1
+    else
+      num_elems = num_retrieval_times
+    endif
+    do elem = 1, num_elems
+      if ( elem > num_retrieval_times ) then
+        elem_time = section_timings(unknown_retrieval)
+        section_name = 'unknown name'
+      else
+        elem_time = section_timings(num_section_times+elem)
+        call GetStringElement(retrieval_names, section_name, elem, countEmpty)
+      endif
+      percent = 100 * elem_time / final
       call output ( section_name, advance='no' )
       call blanks ( 2, advance='no' )
-      call output ( section_timings(num_section_times+elem), FORMAT=TIMEFORM, advance='no' )
+      call output ( elem_time, FORMAT=TIMEFORM, advance='no' )
       call blanks ( 2, advance='no' )
       call output ( percent, FORMAT=PCTFORM, advance='yes' )
     enddo
@@ -219,6 +271,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.11  2002/09/24 18:15:12  pwagner
+! Prepared to allow unknown names; add_to_section_timing now like retrieval
+!
 ! Revision 2.10  2002/09/19 19:07:05  vsnyder
 ! Only update t1 if it's present!
 !
