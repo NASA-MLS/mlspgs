@@ -698,13 +698,11 @@ contains ! =====     Public Procedures     =============================
 
       case default ! Can't get here if tree_checker worked correctly
       end select
-      if ( ERROR /= 0 ) then
-        call MLSMessage ( MLSMSG_Error, ModuleName, 'Problem with Fill section' )
-!        call Announce_error ( key, 0, &
-!                          & 'Problem with Fill section (This would be fatal)')
-      end if
     end do
 
+    if ( ERROR /= 0 ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, 'Problem with Fill section' )
+    end if
 
     if ( toggle(gen) ) then
       if ( levels(gen) > 0 ) then
@@ -975,6 +973,8 @@ contains ! =====     Public Procedures     =============================
 
     ! Local variables
     real (r8) :: AoverMg         ! A/(M g) from Appendix A
+    logical ::   zeta_surfs      ! If true, surfs are zeta-type; else pressures
+    integer ::   status
     integer ::   surface
     integer ::   instance
     integer ::   surfaceInstance
@@ -988,6 +988,8 @@ contains ! =====     Public Procedures     =============================
     real (r8) :: Delta_log_minus ! ln p[j-1] - ln p[j]
     real (r8) :: Delta_p_0       ! p[j+1] - p[j]
     real (r8) :: Delta_log_0     ! ln p[j+1] - ln p[j]
+
+    real (r8), allocatable, dimension(:) :: p         ! p[i] in hPa
 
     ! Executable code
     ! First check that things are OK.
@@ -1011,9 +1013,11 @@ contains ! =====     Public Procedures     =============================
           call Announce_error ( key, No_Error_code, &
               & 'Attempt to fill column abundance with different HGrids'  )
       return
-    elseif ( vmrQty%template%verticalCoordinate /= l_pressure) then
+    elseif ( .not. &
+    & any(vmrQty%template%verticalCoordinate == (/l_pressure, l_zeta/)) &
+    & ) then
           call Announce_error ( key, No_Error_code, &
-              & 'Fill column abundance, but vmr not on pressure surfs.'  )
+              & 'Fill column abundance, but vmr not on [log]pressure surfs.'  )
       return
     end if
 
@@ -1038,6 +1042,14 @@ contains ! =====     Public Procedures     =============================
    ! (1) p is in hPa
    ! (2) f is in PHYQ_vmr (*not* ppmv)
    AoverMg = 4.12e5 / (2.687 * 0.192)
+
+   zeta_surfs = vmrQty%template%verticalCoordinate == l_zeta
+   allocate(p(vmrQty%template%noSurfs), stat=status)
+   if(status /= 0) then
+          call Announce_error ( key, No_Error_code, &
+              & 'Error in allocating p'  )
+      return
+   endif   
 !   do instance=1, vmrQty%template%noInstances
    do instance=useFirstInstance, useLastInstance
       if(vmrQty%template%coherent) then
@@ -1046,7 +1058,19 @@ contains ! =====     Public Procedures     =============================
          surfaceInstance=instance
       endif
 
-      if(vmrQty%template%surfs(1, surfaceInstance) &
+      if(zeta_surfs) then
+         ! Invert zeta = -log10(p)
+         do surface=1, vmrQty%template%noSurfs
+            p(surface) = exp(-log(10.)* &
+            & vmrQty%template%surfs(surface, surfaceInstance))
+         enddo
+      else
+         do surface=1, vmrQty%template%noSurfs
+            p(surface) = vmrQty%template%surfs(surface, surfaceInstance)
+         enddo
+      endif
+ 
+      if(p(1) &
          &  < bndPressQty%values(1, instance)) then
           call Announce_error ( key, No_Error_code, &
               & 'Fill column abundance, but tropopause below VGrid'  )
@@ -1055,7 +1079,7 @@ contains ! =====     Public Procedures     =============================
    ! Find 1st surface at or above tropopause
    ! (i.e., at a pressure equal to or less than boundaryPressure)
       do surface=1, vmrQty%template%noSurfs
-         if(vmrQty%template%surfs(surface, surfaceInstance) &
+         if(p(surface) &
          &  <= bndPressQty%values(1, instance)) exit
       enddo
       firstSurface = surface
@@ -1066,18 +1090,14 @@ contains ! =====     Public Procedures     =============================
    ! Do summation
    ! Initialize sum, Deltas
       columnSum = 0.
-      Delta_p_plus = vmrQty%template%surfs(firstSurface+1, surfaceInstance) - &
-      & vmrQty%template%surfs(firstSurface, surfaceInstance)
-      Delta_log_plus = log(vmrQty%template%surfs(firstSurface+1, surfaceInstance)) - &
-      & log(vmrQty%template%surfs(firstSurface, surfaceInstance))
+      Delta_p_plus = p(firstSurface+1) - p(firstSurface)
+      Delta_log_plus = log(p(firstSurface+1)) - log(p(firstSurface))
    ! Loop over surfaces from tropoause+1 to uppermost-1
       do surface = firstSurface+1, vmrQty%template%noSurfs-1
          Delta_p_minus = - Delta_p_plus
          Delta_log_minus = - Delta_log_plus
-         Delta_p_plus = vmrQty%template%surfs(surface+1, surfaceInstance) - &
-         & vmrQty%template%surfs(surface, surfaceInstance)
-         Delta_log_plus = log(vmrQty%template%surfs(surface+1, surfaceInstance)) - &
-         & log(vmrQty%template%surfs(surface, surfaceInstance))
+         Delta_p_plus = p(surface+1) - p(surface)
+         Delta_log_plus = log(p(surface+1)) - log(p(surface))
          columnSum = columnSum + &
          & vmrQty%values(surface, instance)* &
          & ( &
@@ -1088,6 +1108,12 @@ contains ! =====     Public Procedures     =============================
       enddo
       qty%values(1, instance) = AoverMg * columnSum
    enddo
+
+   deallocate(p, stat=status)
+   if(status /= 0) then
+          call Announce_error ( key, No_Error_code, &
+              & 'Error in deallocating p'  )
+   endif   
 
   end subroutine FillColAbundance
 
@@ -1740,6 +1766,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.70  2001/08/03 23:13:52  pwagner
+! Began testing; at least now exits normally again
+!
 ! Revision 2.69  2001/08/02 00:17:06  pwagner
 ! Mostly done with column fill; untested
 !
