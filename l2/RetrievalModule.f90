@@ -136,7 +136,7 @@ contains
     integer :: HRegQuants               ! Regularization quantities           
     integer :: HRegWeights              ! Weight of regularization conditions 
     type(vector_T), pointer :: HRegWeightVec  ! Weight vector for regularization
-    integer :: I, J, K                  ! Subscripts and loop inductors
+    integer :: I_Key, I_Sons, J         ! Subscripts and loop inductors
     real(r8) :: InitLambda              ! Initial Levenberg-Marquardt parameter
     integer :: IxAverage                ! Index in tree of averagingKernel
     integer :: IxCovariance             ! Index in tree of outputCovariance
@@ -145,6 +145,7 @@ contains
     integer :: Jacobian_Cols            ! Number of columns of the Jacobian.
     integer :: Jacobian_Rows            ! (Number of rows of Jacobian) -
                                         ! (masked-off rows of Jacobian)
+    integer :: K                        ! Subscript, loop inductor, local temp
     integer :: Key                      ! Index of an n_spec_args.  Either
                                         ! a son or grandson of root.
     type(vector_T), pointer :: LowBound ! For state during retrieval
@@ -249,8 +250,8 @@ contains
     if ( timing ) call time_now ( t1 )
 
     if ( toggle(gen) ) call trace_begin ( "Retrieve", root )
-    do i = 2, nsons(root) - 1           ! skip names at begin/end of section
-      son = subtree(i, root)
+    do i_sons = 2, nsons(root) - 1      ! skip names at begin/end of section
+      son = subtree(i_sons, root)
       if ( node_id(son) == n_named ) then
         key = subtree(2, son)
       else
@@ -275,8 +276,8 @@ contains
         if ( toggle(gen) ) call trace_end ( "Retrieve.matrix/vector" )
       case ( s_snoop )
         snoopKey = key
-        do j = 2, nsons(key)
-          son = subtree(j, key)
+        do i_key = 2, nsons(key)
+          son = subtree(i_key, key)
           field = get_field_id(son)  ! tree_checker prevents duplicates
           select case ( field )
           case ( f_comment )
@@ -324,8 +325,8 @@ contains
         tikhonovApriori = .false.
         tikhonovBefore = .true.
         nullify ( vRegWeightVec )
-        do j = 2, nsons(key) ! fields of the "retrieve" specification
-          son = subtree(j, key)
+        do i_key = 2, nsons(key) ! fields of the "retrieve" specification
+          son = subtree(i_key, key)
           field = get_field_id(son)  ! tree_checker prevents duplicates
           got(field) = .true.
           select case ( field )
@@ -430,7 +431,7 @@ contains
           case default
             ! Shouldn't get here if the type checker worked
           end select
-        end do ! j = 2, nsons(key)
+        end do ! i_key = 2, nsons(key)
 
         if ( got(f_apriori) .neqv. got(f_covariance) ) &
           & call announceError ( bothOrNeither, f_apriori, f_covariance )
@@ -595,7 +596,7 @@ contains
         call destroyVectorInfo ( v(j) )
       end do
 
-    end do ! i = 2, nsons(root) - 1
+    end do ! i_sons = 2, nsons(root) - 1
     if ( toggle(gen) ) call trace_end ( "Retrieve" )
     if ( timing ) call sayTime
 
@@ -3650,6 +3651,12 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.225  2003/01/18 02:15:43  vsnyder
+! Change names of global loop inductors "I" and "J" to something more clever,
+! i.e., I_Sons and I_Key.  It's too easy to use "I" and "J" in internal
+! procedures, thereby clobbering the important values of these loop
+! inductors.
+!
 ! Revision 2.224  2003/01/18 01:40:10  vsnyder
 ! Prepare for More and Sorensen
 !
