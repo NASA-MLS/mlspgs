@@ -740,6 +740,7 @@ contains ! =====     Public Procedures     =============================
       use L2PC_M, only: BINSELECTORS, BINSELECTOR_T
       use Intrinsic, only: L_NAMEFRAGMENT, L_SZA
       use Toggles, only: SWITCHES
+      use MLSNumerics, only: ESSENTIALLYEQUAL
 
       type (VectorValue_T), intent(in) :: RADIANCE ! The radiance we're after
       integer, intent(in) :: MAF                      ! MAF index
@@ -842,7 +843,6 @@ contains ! =====     Public Procedures     =============================
 
       do bin = 1, noBins
         binRad => l2pcDatabase(bin)%row%vec%quantities(1)%template
-        ! This is a bit of a hack, but if there
         do selector = 1, noSelectors
           sel => binSelectors ( fmConf%binSelectors(selector) )
           select case ( sel%selectorType )
@@ -854,16 +854,27 @@ contains ! =====     Public Procedures     =============================
             end if
           case ( l_latitude )
             ! When we say latitude, we really mean an empirical phi.
-            cost(bin) = sqrt ( sum ( &
+            thisCost = sqrt ( sum ( &
               & (NormalizePhi(radiance%template%phi(1,maf1:mafN)) - &  
               &  NormalizePhi(binRad%phi(1,1)) )**2 ) / (mafN-maf1+1) ) / &
               & sel%cost
+            if ( sel%exact ) then
+              possible ( :, bin ) = EssentiallyEqual ( thisCost, 0.0_r8 )
+            else
+              cost(bin) = cost(bin) + thisCost
+            end if
           case ( l_sza )
-            cost(bin) = sqrt ( sum ( &
+            thisCost = sqrt ( sum ( &
               & ( radiance%template%solarZenith(1,maf1:mafN) - &
               &   binRad%solarZenith(1,1) )**2 ) / &
               & (mafN-maf1+1) ) / sel%cost
+            if ( sel%exact ) then
+              possible ( :, bin ) = EssentiallyEqual ( thisCost, 0.0_r8 )
+            else
+              cost(bin) = cost(bin) + thisCost
+            end if
           case ( l_temperature, l_vmr, l_fieldStrength, l_fieldElevation, l_fieldAzimuth )
+            ! This one involves matching elements of xStart with x.
             if ( sel%selectorType == l_vmr ) then
               l2pcQ => GetVectorQuantityByType ( &
                 & l2pcDatabase(bin)%col%vec, quantityType=l_vmr, &
@@ -898,8 +909,12 @@ contains ! =====     Public Procedures     =============================
                   & ( stateQ%values ( s1(1):s2(1), stateInstance ) - &
                   &   l2pcQ%values  ( s1(1):s2(1), l2pcInstance  ) ) **2 )
               end do
-              cost ( bin ) = cost ( bin ) + sqrt ( thisCost / &
-                &  ( ( s2(1)-s1(1)+1 ) * ( mafN - maf1 + 1 ) ) ) / sel%cost
+              if ( sel%exact ) then
+                possible ( :, bin ) = EssentiallyEqual ( thisCost, 0.0_r8 )
+              else
+                cost ( bin ) = cost ( bin ) + sqrt ( thisCost / &
+                  &  ( ( s2(1)-s1(1)+1 ) * ( mafN - maf1 + 1 ) ) ) / sel%cost
+              end if
             end if
           end select                  ! Bin selector type
         end do                        ! Loop over selectors
@@ -978,6 +993,10 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.43  2003/08/13 00:48:23  livesey
+! Removed the faking of binSelectors, forwardModelSupport now ensures
+! there's always one to hand.
+!
 ! Revision 2.42  2003/07/15 22:10:38  livesey
 ! Added support for hybrid model
 !
