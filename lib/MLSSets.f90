@@ -1,0 +1,248 @@
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+module MLSSets
+
+! Various operations on sets
+
+  implicit NONE
+  private
+  public :: FindFirst, FindNext, Intersection, Union
+
+  interface FindFirst
+    module procedure FindFirstInteger, FindFirstLogical
+  end interface
+
+  interface FindNext
+    module procedure FindNextInteger, FindNextLogical
+  end interface
+
+! === (start of toc) ===                                                 
+!     c o n t e n t s                                                    
+!     - - - - - - - -                                                    
+
+!     (subroutines and functions)
+! FindFirst     Find the first logical in the array that is true, or the
+!               first integer in the array equal to the probe
+! FindNext      Find the next logical in the array that is true, or the
+!               next integer in the array equal to the probe
+! Intersection  Compute intersection of two sets, represented as arrays of integers
+! Union         Compute union of two sets, represented as arrays of integers
+! === (end of toc) ===                                                   
+
+! === (start of api) ===
+! int FindFirstInteger (int set(:), int probe)      
+! int FindFirstLogical (log condition(:))      
+! int FindNextInteger (int set(:), int probe, int current, {log wrap}, {log repeat})      
+! int FindNextLogical (log condition(:), int current, {log wrap}, {log repeat})      
+! int *Intersection ( int a(:), int b(:) )
+! int *Union ( int a(:), int b(:) )
+! === (end of api) ===
+
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains ! =====     Public Procedures     =============================
+
+  ! -------------------------------------------  FindFirstInteger  -----
+  integer function FindFirstInteger ( Set, Probe )
+    ! Find the first element in the array Set that is equal to Probe
+    integer, dimension(:), intent(in) :: Set
+    integer, intent(in) :: Probe
+
+    ! Executable code
+    do FindFirstInteger = 1, size(set)
+      if ( set(FindFirstInteger) == probe ) return
+    end do
+    FindFirstInteger = 0
+  end function FindFirstInteger
+
+  ! -------------------------------------------  FindFirstLogical  -----
+  integer function FindFirstLogical ( condition )
+    ! Find the first logical in the array that is true
+    logical, dimension(:), intent(in) :: CONDITION
+
+    ! Executable code
+    do FindFirstLogical = 1, size(condition)
+      if ( condition(FindFirstLogical) ) return
+    end do
+    FindFirstLogical = 0
+  end function FindFirstLogical
+
+  ! --------------------------------------------  FindNextInteger  -----
+  integer function FindNextInteger ( Set, Probe, Current, Wrap, Repeat )
+    ! Find the next element in the array Set that is equal to Probe after the
+    ! current one
+    ! May optionally wrap or repeat
+    ! e.g., if wrap is true and current is last true, return first true
+    ! e.g., if repeat is true and current is also last true, return current
+    ! wrap takes priority over repeat if both are present and true
+    integer, dimension(:), intent(in) :: Set
+    integer, intent(in) :: Probe
+    integer, intent(in) :: Current
+    logical, optional, intent(in) :: Wrap
+    logical, optional, intent(in) :: Repeat
+
+    ! Local variables
+    integer :: I                        ! Loop counter
+    logical :: myWrap
+    logical :: myRepeat
+
+    ! Executable code
+    myWrap = .false.
+    if ( present(wrap) ) myWrap = wrap
+    myRepeat = .false.
+    if ( present(repeat) ) myRepeat = repeat
+    FindNextInteger = 0
+    ! We'll assume you gave us valid args; otherwise return 0
+    if ( current < 1 .or. current > size(set)) return
+    if ( set(current) /= probe ) return
+    ! Now check for current already at end of array
+    if ( current < size(set) ) then
+      do i = current+1, size(set)
+        if ( set(i) == probe ) then
+          FindNextInteger = i
+          return
+        end if
+      end do
+    end if
+    ! Uh-oh, this means current is last true
+    if ( myWrap ) then
+      FindNextInteger = FindFirst(set,probe)
+    else if ( myRepeat ) then
+      FindNextInteger = current
+    end if
+  end function FindNextInteger
+
+  ! --------------------------------------------  FindNextLogical  -----
+  integer function FindNextLogical ( condition, current, wrap, repeat )
+    ! Find the next logical in the array that is true after the current one
+    ! May optionally wrap or repeat
+    ! e.g., if wrap is true and current is last true, return first true
+    ! e.g., if repeat is true and current is also last true, return current
+    ! wrap takes priority over repeat if both are present and true
+    logical, dimension(:), intent(in) :: CONDITION
+    integer, intent(in) :: CURRENT
+    logical, optional, intent(in) :: WRAP
+    logical, optional, intent(in) :: REPEAT
+
+    ! Local variables
+    integer :: I                        ! Loop counter
+    logical :: myWrap
+    logical :: myRepeat
+
+    ! Executable code
+    myWrap = .false.
+    if ( present(wrap) ) myWrap = wrap
+    myRepeat = .false.
+    if ( present(repeat) ) myRepeat = repeat
+    FindNextLogical = 0
+    ! We'll assume you gave us valid args; otherwise return 0
+    if ( current < 1 .or. current > size(condition)) return
+    if ( .not. condition(current)) return
+    ! Now check for current already at end of array
+    if ( current < size(condition) ) then
+      do i = current+1, size(condition)
+        if ( condition(i) ) then
+          FindNextLogical = i
+          return
+        end if
+      end do
+    end if
+    ! Uh-oh, this means current is last true
+    if ( myWrap ) then
+      FindNextLogical = FindFirst(condition)
+    else if ( myRepeat ) then
+      FindNextLogical = current
+    end if
+  end function FindNextLogical
+
+  ! -----------------------------------------------  Intersection  -----
+  function Intersection ( A, B ) result ( C )
+  ! Compute the intersection C of the sets A and B, each represented by
+  ! arrays of integers.
+
+    use Allocate_Deallocate, only: Allocate_Test
+    use Sort_M, only: Sort
+
+    integer, intent(in) :: A(:), B(:)
+    integer, pointer :: C(:) ! Intent(out) -- nullified and then allocated here
+
+    integer :: I, J, K
+    integer :: TA(size(a)), TB(size(b)), TC(size(a)+size(b))
+
+    ta = a
+    tb = b
+    call sort ( ta, 1, size(ta) )
+    call sort ( tb, 1, size(tb) )
+
+    i = 1; j=1; k=0
+    do while ( i <= size(ta) .and. j <= size(tb) )
+      if ( ta(i) == tb(j) ) then
+        tc(k+1) = ta(i)
+        i = i + 1; j = j + 1; k = k + 1
+      else if ( ta(i) < tb(j) ) then
+        i = i + 1
+      else
+        j = j + 1
+      end if
+    end do
+
+    nullify ( c )
+    call allocate_test ( c, k, 'C in Intersection', moduleName )
+    c = tc(:k)
+
+  end function Intersection
+
+  ! ------------------------------------------------------  Union  -----
+  function Union ( A, B ) result ( C )
+  ! Compute the union C of the sets A and B, each represented by
+  ! arrays of integers.
+
+    use Allocate_Deallocate, only: Allocate_Test
+    use Sort_M, only: Sort
+
+    integer, intent(in) :: A(:), B(:)
+    integer, pointer :: C(:) ! Intent(out) -- nullified and then allocated here
+
+    integer :: I, J, T(size(a)+size(b))
+
+    t(1:size(a)) = a
+    t(size(a)+1:size(t)) = b
+    call sort ( t, 1, size(t) )
+
+    ! remove duplicates
+    i = 0; j = 0
+    do while ( i < size(t) .and. j < size(t) )
+      i = i + 1; j = j + 1
+      t(i) = t(j)
+      do while ( j < size(t) )
+        if ( t(j+1) /= t(i) ) exit
+        j = j + 1
+      end do
+    end do
+
+    nullify ( c )
+    call allocate_test ( c, i, 'C in Union', moduleName )
+    c = t(:i)
+
+  end function Union
+
+! =====     Private Procedures     =====================================
+
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
+end module MLSSets
+
+! $Log$
+! Revision 2.1  2004/06/10 00:12:22  vsnyder
+! Initial commit
+!
