@@ -165,7 +165,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   real, parameter, private :: SPARSITY = 0.33     ! If a full matrix has
     ! a greater fraction of nonzeroes than specified by this number, there's
     ! no point in making it sparse.
-  logical, save :: CHECKBLOCKS = .true.
+  logical, save :: CHECKBLOCKS = .false.
 
 contains ! =====     Public Procedures     =============================
 
@@ -2399,6 +2399,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.58  2001/11/09 18:12:09  livesey
+! Change checkBlocks to default to false.
+!
 ! Revision 2.57  2001/11/09 02:03:47  vsnyder
 ! Corrected procedure name in character literals in calls to allocate_test
 ! Corrected some comments.  Put some if's around references to dot, in case
