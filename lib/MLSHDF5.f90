@@ -608,7 +608,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to create dataspace for 1D double array '//trim(name) )
     ! Create the dataset
-    call h5dCreate_f ( locID, trim(name), H5T_NATIVE_DOUBLE, spaceID, setID, &
+    call h5dCreate_f ( locID, trim(name), H5T_NATIVE_REAL, spaceID, setID, &
       & status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to create dataset for 1D double array '//trim(name) )
@@ -646,7 +646,7 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to create dataspace for 2D integer array '//trim(name) )
     ! Create the dataset
-    call h5dCreate_f ( locID, trim(name), H5T_NATIVE_DOUBLE, spaceID, setID, &
+    call h5dCreate_f ( locID, trim(name), H5T_NATIVE_REAL, spaceID, setID, &
       & status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to create dataset for 2D integer array '//trim(name) )
@@ -927,6 +927,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.8  2002/10/02 23:20:07  livesey
+! Bug fix in single precision stuff
+!
 ! Revision 2.7  2002/09/27 23:39:26  pwagner
 ! Added GetHDF5DSQType
 !
