@@ -94,10 +94,10 @@ begin Construct
   earthradius: Quantity, hGrid=hGridStandard, type=earthradius
   surfaceType: Quantity, hGrid=hGridStandard, type=surfaceType
 
-  IWC_Coarse:  Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=CloudIce
+  IWC:  Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=CloudIce
   LWC:  Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=CloudWater
 
-  IWC:  Quantity, vGrid=vGridIWC, hGrid=hGridFine, type=CloudIce
+  IwcFine:  Quantity, vGrid=vGridIWC, hGrid=hGridFine, type=CloudIce
 
   trans:   Quantity, type=  losTransFunc,   Sgrid=sGridStandard, module=GHz
   cext:    Quantity, vGrid= vGridIWC, hGrid=hGridStandard, type=cloudExtinction
@@ -398,7 +398,7 @@ begin Construct
     temperature, temperature_HR, $
     refGPH, GPH, GPH_HR, $
     tpPressure, $
-    iwc_coarse, iwc, lwc, surfaceType, psd, earthRadius, $
+    iwc, iwcFine, lwc, surfaceType, psd, earthRadius, $
     trans, cext, cextFine, $
     massMeanDiameterIce, massMeanDiameterWater, $
     !allMolecules, tropH2O, tropH2O_HR, $
