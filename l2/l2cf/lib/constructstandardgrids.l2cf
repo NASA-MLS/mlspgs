@@ -14,7 +14,8 @@ vGridStandard: vGrid, type=Logarithmic, coordinate=Zeta, $
 vGridHiRes: vGrid, type=Logarithmic, coordinate=Zeta, $
   start=1000mb, formula=[21:12,14:6,12:3]})
 
-vGridBaseline: vGrid, type=Explicit, coordinate=Zeta, values=100mb
+vGridBaseline: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start=1000mb, formula=[13:6,4:1]
 vGridTropH2O: vGrid, type=Logarithmic, coordinate=Zeta, $
   start= 1000mb, formula=[2:3,5:6]
 vGridTropH2OHiRes: vGrid, type=Logarithmic, coordinate=Zeta, $
@@ -43,6 +44,9 @@ vGridWMO: VGrid, type=Logarithmic, coordinate=Zeta, $
   start=1000mb, formula=[97:48]
 
 ; $Log$
+; Revision 1.11  2003/05/27 20:57:15  livesey
+; New approach to extending grid
+;
 ; Revision 1.10  2003/05/27 20:01:00  livesey
 ; New vGrid for temperature
 ;
