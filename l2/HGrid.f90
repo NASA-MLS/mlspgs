@@ -47,7 +47,7 @@ contains ! =====     Public Procedures     =============================
     use INIT_TABLES_MODULE, only: F_FORBIDOVERSPILL, F_FRACTION, F_GEODANGLE, &
       & F_HEIGHT, FIELD_FIRST, FIELD_LAST, F_INCLINATION, F_INSETOVERLAPS, &
       & F_INTERPOLATIONFACTOR, F_MAXLOWEROVERLAP, F_MAXUPPEROVERLAP, F_MIF, &
-      & F_MODULE, F_ORIGIN, F_SOLARTIME, F_SOLARZENITH, F_SOURCEL2GP, &
+      & F_MODULE, F_ORIGIN, F_SINGLE, F_SOLARTIME, F_SOLARZENITH, F_SOURCEL2GP, &
       & F_SPACING, F_TYPE, L_EXPLICIT, L_FIXED, L_FRACTIONAL, L_HEIGHT, &
       & L_L2GP, L_REGULAR, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_LENGTH
     use L1BData, only: DeallocateL1BData, L1BData_T, ReadL1BData, &
@@ -104,6 +104,7 @@ contains ! =====     Public Procedures     =============================
     integer :: MAXUPPEROVERLAP          ! For some hGrids
     integer :: MIF                      ! For fixed hGrids
     integer :: NOMAFS                   ! Number of MAFs of L1B data read
+    logical :: SINGLE                   ! Just one profile please
     integer :: SON                      ! Son of Root
     integer :: SOLARTIMENODE            ! Tree node
     integer :: SOLARZENITHNODE          ! Tree node
@@ -132,6 +133,7 @@ contains ! =====     Public Procedures     =============================
     maxLowerOverlap = -1
     maxUpperOverlap = -1
     insetOverlaps = .false.
+    single = .false.
     solarTimeNode = 0
     solarZenithNode = 0
     geodAngleNode = 0
@@ -200,6 +202,8 @@ contains ! =====     Public Procedures     =============================
           & call announce_error ( field, angleUnitMessage )
       case ( f_geodAngle )
         geodAngleNode = son
+      case ( f_single )
+        single = get_boolean ( fieldValue )
       case ( f_solarTime )
         solarTimeNode = son
       case ( f_solarZenith )
@@ -236,7 +240,7 @@ contains ! =====     Public Procedures     =============================
       else
         call CreateRegularHGrid ( l1bInfo, processingRange, chunk, &
           & spacing, origin, trim(instrumentModuleName), forbidOverspill, &
-          & maxLowerOverlap, maxUpperOverlap, insetOverlaps, hGrid )
+          & maxLowerOverlap, maxUpperOverlap, insetOverlaps, single, hGrid )
       end if
 
     case ( l_l2gp) ! -------------------- L2GP ------------------------
@@ -657,7 +661,7 @@ contains ! =====     Public Procedures     =============================
   ! -----------------------------------------  CreateRegularHGrid  -----
   subroutine CreateRegularHGrid ( l1bInfo, processingRange, chunk, &
     & spacing, origin, instrumentModuleName, forbidOverspill, &
-    & maxLowerOverlap, maxUpperOverlap, insetOverlaps, hGrid )
+    & maxLowerOverlap, maxUpperOverlap, insetOverlaps, single, hGrid )
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Dump_0, only: DUMP
@@ -685,6 +689,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: MAXLOWEROVERLAP
     integer, intent(in) :: MAXUPPEROVERLAP
     logical, intent(in) :: INSETOVERLAPS
+    logical, intent(in) :: SINGLE
     type (HGrid_T), intent(inout) :: HGRID ! Needs inout as name set by caller
 
     ! Local variables/parameters
@@ -696,6 +701,9 @@ contains ! =====     Public Procedures     =============================
     integer :: NOMAFS                   ! From ReadL1B
     integer :: FLAG                     ! From ReadL1B
     integer :: I                        ! Loop counter
+    integer :: EXTRA                    ! How many profiles over 1 are we
+    integer :: LEFT                     ! How many profiles to delete from the LHS in single
+    integer :: RIGHT                     ! How many profiles to delete from the RHS in single
     integer :: FIRSTPROFINRUN           ! Index of first profile in processing time
     integer :: LASTPROFINRUN            ! Index of last profile in processing time
 
@@ -756,6 +764,10 @@ contains ! =====     Public Procedures     =============================
 
     call DeallocateL1BData ( l1bField )
 
+    ! Check that the single option is appropriate if set
+    if ( single .and. noMAFs /= 1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Single hGrid option set but more than one MAF in chunk' )
+
     ! Now choose the geodetic angles for the hGrid
     ! First identify the first point - the one closest to the start of the first MAF
     first = origin + spacing * int ( (minAngle-origin)/spacing )
@@ -777,23 +789,25 @@ contains ! =====     Public Procedures     =============================
 
     ! Now in the case where we have overlaps, let's try and have the
     ! first and last profile inside the MAF range
-    if ( chunk%noMAFsLowerOverlap > 0 ) then
-      setFirstLoop: do
-        if ( first >= last ) exit setFirstLoop
-        if ( first > maxAngleFirstMAF ) exit setFirstLoop
-        first = first + spacing
-      end do setFirstLoop
-    else 
-      if ( .not. insetOverlaps .and. first > minAngle ) first = first - spacing
-    end if
-    if ( chunk%noMAFsUpperOverlap > 0 ) then
-      setLastLoop: do
-        if ( last <= first ) exit setLastLoop
-        if ( last < minAngleLastMAF ) exit setLastLoop
-        last = last - spacing
-      end do setLastLoop
-    else
-      if ( .not. insetOverlaps .and. last < maxAngle ) last = last + spacing
+    if ( .not. single ) then
+      if ( chunk%noMAFsLowerOverlap > 0 ) then
+        setFirstLoop: do
+          if ( first >= last ) exit setFirstLoop
+          if ( first > maxAngleFirstMAF ) exit setFirstLoop
+          first = first + spacing
+        end do setFirstLoop
+      else 
+        if ( .not. insetOverlaps .and. first > minAngle ) first = first - spacing
+      end if
+      if ( chunk%noMAFsUpperOverlap > 0 ) then
+        setLastLoop: do
+          if ( last <= first ) exit setLastLoop
+          if ( last < minAngleLastMAF ) exit setLastLoop
+          last = last - spacing
+        end do setLastLoop
+      else
+        if ( .not. insetOverlaps .and. last < maxAngle ) last = last + spacing
+      end if
     end if
 
     ! Now work out how many profiles that is and lay them down
@@ -1005,12 +1019,30 @@ contains ! =====     Public Procedures     =============================
     end if
 
     ! Now deal with the user requests
-    if ( maxLowerOverlap >= 0 .and. &
-      & ( hGrid%noProfsLowerOverlap > maxLowerOverlap ) ) &
-      call TrimHGrid ( hGrid, -1, hGrid%noProfsLowerOverlap - maxLowerOverlap )
-    if ( maxUpperOverlap >= 0 .and. &
-      & ( hGrid%noProfsUpperOverlap > maxUpperOverlap ) ) &
-      call TrimHGrid ( hGrid, -1, hGrid%noProfsUpperOverlap - maxUpperOverlap )
+    if ( single ) then
+      if ( hGrid%noProfs /= 1 ) then
+        ! Set up for no overlaps
+        hGrid%noProfsLowerOverlap = 0
+        hGrid%noProfsUpperOverlap = 0
+        ! Delete all but the 'center' profile
+        extra = hGrid%noProfs - 1
+        left = extra / 2
+        right = extra - left
+        if ( left > 0 ) call TrimHGrid ( hGrid, -1, left )
+        if ( right > 0 ) call TrimHGrid ( hGrid, 1, right )
+      end if
+    else
+      if ( maxLowerOverlap >= 0 .and. &
+        & ( hGrid%noProfsLowerOverlap > maxLowerOverlap ) ) &
+        call TrimHGrid ( hGrid, -1, hGrid%noProfsLowerOverlap - maxLowerOverlap )
+      if ( maxUpperOverlap >= 0 .and. &
+        & ( hGrid%noProfsUpperOverlap > maxUpperOverlap ) ) &
+        call TrimHGrid ( hGrid, 1, hGrid%noProfsUpperOverlap - maxUpperOverlap )
+    end if
+
+    if ( hGrid%noProfs == 0 ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, 'No profiles in hGrid' )
+    end if
 
     ! Finally we're done.
     if ( index ( switches, 'hgrid' ) /= 0  .or. deebug ) then
@@ -1372,6 +1404,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.55  2003/08/11 18:08:27  livesey
+! Added the single option for regular hGrids
+!
 ! Revision 2.54  2003/06/25 22:27:02  livesey
 ! Fixed an undefined variable
 !
