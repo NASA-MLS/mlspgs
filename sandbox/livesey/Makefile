@@ -9,7 +9,7 @@ MODULEPATH=../../lib/
 LIB=../../lib/mlslib.a
 LIB_DEBUG=../../lib/mlslib.a_debug
 
-OBJS=test.o
+OBJS=test.o assignmodule.o assigntest.o
 OBJS_DEBUG=test.o_debug
 
 all:	test
@@ -34,5 +34,7 @@ clean:
 allclean: clean
 	cd ../../lib ; ${MAKE} clean
 
+assigntest.o: assignmodule.o
 
-
+assigntest:	assigntest.o assignmodule.o
+	${F90} -g -o assigntest assigntest.o assignmodule.o
