@@ -8,7 +8,7 @@ module TIME_M
 ! Compute either CPU time, in arbitrary units, or wall-clock time, in
 ! seconds since midnight.
 
-  use MLSStrings, only: yyyymmdd_to_dai
+  use MLSStringLists, only: yyyymmdd_to_dai
   implicit NONE
   private
 
@@ -189,6 +189,9 @@ contains
 end module TIME_M
 
 !$Log$
+!Revision 2.6  2004/08/04 23:19:02  pwagner
+!Much moved from MLSStrings to MLSStringLists
+!
 !Revision 2.5  2003/12/07 23:12:14  pwagner
 !wall clock is now time elapsed from start; may set start time
 !
