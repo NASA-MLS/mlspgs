@@ -936,6 +936,41 @@ contains ! =====     Public Procedures     =============================
           call FillWithBinMinMax ( key, quantity, sourceQuantity, ptanQuantity, &
             & channel, fillMethod == l_binMax )
 
+        case ( l_estimatedNoise ) ! ----------- Fill with estimated noise ---
+          if (.not. all(got( (/ f_radianceQuantity, &
+            & f_systemTemperature, f_integrationTime /)))) &
+            & call Announce_Error ( key, badEstNoiseFill )
+          radianceQuantity => GetVectorQtyByTemplateIndex( &
+            & vectors(radianceVectorIndex), radianceQuantityIndex )
+          sysTempQuantity => GetVectorQtyByTemplateIndex( &
+            & vectors(sysTempVectorIndex), sysTempQuantityIndex )
+          if ( got ( f_noiseBandwidth ) ) then
+            nbwQuantity => GetVectorQtyByTemplateIndex( &
+              & vectors(nbwVectorIndex), nbwQuantityIndex )
+          else
+            nbwQuantity => NULL()
+          end if
+          call FillVectorQtyWithEstNoise ( &
+            & quantity, radianceQuantity, sysTempQuantity, nbwQuantity, &
+            & integrationTime )
+
+        case ( l_explicit ) ! ---------  Explicity fill from l2cf  -----
+          if ( .not. got(f_explicitValues) ) &
+            & call Announce_Error ( key, noExplicitValuesGiven )
+          call ExplicitFillVectorQuantity ( quantity, valuesNode, spreadFlag, &
+            & vectors(vectorIndex)%globalUnit, dontmask )
+
+        case ( l_fold ) ! --------------- Fill by sideband folding -----
+          lsb => GetVectorQtyByTemplateIndex ( &
+            & vectors(lsbVectorIndex), lsbQuantityIndex )
+          lsbFraction => GetVectorQtyByTemplateIndex ( &
+            & vectors(lsbFractionVectorIndex), lsbFractionQuantityIndex )
+          usb => GetVectorQtyByTemplateIndex ( &
+            & vectors(usbVectorIndex), usbQuantityIndex )
+          usbFraction => GetVectorQtyByTemplateIndex ( &
+            & vectors(usbFractionVectorIndex), usbFractionQuantityIndex )
+          call FillFoldedRadiance ( quantity, lsb, usb, lsbFraction, usbFraction, key )
+
         case ( l_gphPrecision) ! -------------  GPH precision  -----
           ! Need a tempPrecision and a refgphPrecision quantity
           if ( .not.all(got( (/ f_refGPHPrecisionQuantity, f_tempPrecisionQuantity /))) ) &
@@ -953,6 +988,70 @@ contains ! =====     Public Procedures     =============================
 
           call FillGPHPrecision ( key, quantity, tempPrecisionQuantity, &
             & refGPHPrecisionQuantity )          
+
+        case ( l_gridded ) ! ------------  Fill from gridded data  -----
+          if ( .not. got(f_sourceGrid) ) &
+            & call Announce_Error ( key,noSourceGridGiven )
+          call FillVectorQuantityFromGrid &
+            & ( quantity, griddedDataBase(gridIndex), allowMissing, errorCode )
+          if ( errorCode /= 0 ) call Announce_error ( key, errorCode )
+
+        case ( l_l1b ) ! --------------------  Fill from L1B data  -----
+          if ( got(f_precision) ) then
+            precisionQuantity => GetVectorQtyByTemplateIndex( &
+            & vectors(precisionVectorIndex), precisionQuantityIndex )
+            call FillVectorQuantityFromL1B ( key, quantity, chunks(chunkNo), &
+              & l1bInfo, isPrecision, precisionQuantity )
+          else
+            call FillVectorQuantityFromL1B ( key, quantity, chunks(chunkNo), &
+              & l1bInfo, isPrecision )
+          end if
+
+        case ( l_l2gp ) ! --------------  Fill from L2GP quantity  -----
+          if ( .NOT. got(f_sourceL2GP) ) &
+            & call Announce_Error ( key, noSourceL2GPGiven )
+          call FillVectorQuantityFromL2GP &
+            & ( quantity, l2gpDatabase(l2gpIndex), interpolate, profile, errorCode )
+          if ( errorCode /= 0 ) call Announce_error ( key, errorCode )
+
+        case ( l_l2aux ) ! ------------  Fill from L2AUX quantity  -----
+          if ( .NOT. got(f_sourceL2AUX) ) &
+            & call Announce_Error ( key, noSourceL2AUXGiven )
+          call FillVectorQuantityFromL2AUX(quantity,l2auxDatabase(l2auxIndex),errorCode)
+          if ( errorCode /= 0 ) call Announce_error ( key, errorCode )
+
+        case ( l_H2OfromRHI ) ! -------fill H2O from RHI quantity -------
+            if ( .not. any(got( &
+             & (/f_rhiQuantity, f_temperatureQuantity/) &
+             & )) ) then
+              call Announce_error ( key, No_Error_code, &
+              & 'Missing a required field to fill h2o from rhi'  )
+            else
+              sourceQuantity => GetVectorQtyByTemplateIndex( &
+                & vectors(sourceVectorIndex), sourceQuantityIndex)
+              temperatureQuantity => GetVectorQtyByTemplateIndex( &
+                & vectors(temperatureVectorIndex), temperatureQuantityIndex)
+              if ( .not. ValidateVectorQuantity(sourceQuantity, &
+                & quantityType=(/l_rhi/)) ) then
+                call Announce_Error ( key, No_Error_code, &
+                & 'The rhiQuantity is not an rhi'  )
+              else if ( .not. ValidateVectorQuantity(Quantity, &
+                & quantityType=(/l_vmr/), molecule=(/l_h2o/)) ) then
+                call Announce_Error ( key, No_Error_code, &
+                & 'The Quantity is not a vmr for the H2O molecule'  )
+              else if ( .not. ValidateVectorQuantity(temperatureQuantity, &
+                & quantityType=(/l_temperature/)) ) then
+                call Announce_Error ( key, No_Error_code, &
+                & 'The temperatureQuantity is not a temperature'  )
+              else
+                invert = .true.
+                call FillRHIFromH2O ( key, quantity, &
+                  & sourceQuantity, temperatureQuantity, &
+                  & dontMask, ignoreZero, ignoreNegative, interpolate, &
+                  & .true., &   ! Mark Undefined values?
+                  & invert )    ! invert rather than convert?
+              end if
+            end if
 
         case ( l_hydrostatic ) ! -------------  Hydrostatic fills  -----
           ! Need a temperature and a refgph quantity
@@ -1040,6 +1139,16 @@ contains ! =====     Public Procedures     =============================
             call FillQuantityUsingMagneticModel ( quantity, gphQuantity, key )          
           end if
           
+        case ( l_negativePrecision ) ! ------------ Set output SD -ve wrt apriori
+          if ( .not. got ( f_aprioriPrecision ) ) &
+            & call Announce_Error ( key, No_Error_code, &
+            & 'Missing aprioriPrecision field for negativePrecision fill' )
+          aprioriPrecision => GetVectorQtyByTemplateIndex ( &
+            & vectors(aprPrecVctrIndex), aprPrecQtyIndex )
+          where ( quantity%values >= aprioriPrecision%values*precisionFactor )
+            quantity%values = - quantity%values
+          end where
+
         case ( l_offsetRadiance ) ! ------------------- Offset radiance --
           if ( .not. got ( f_radianceQuantity ) ) &
             & call Announce_error ( key, 0, 'radianceQuantity not supplied' )
@@ -1118,39 +1227,8 @@ contains ! =====     Public Procedures     =============================
                     & invert )    ! invert rather than convert?
                 end if
             end if
-        case ( l_H2OfromRHI ) ! -------fill H2O from RHI quantity -------
-            if ( .not. any(got( &
-             & (/f_rhiQuantity, f_temperatureQuantity/) &
-             & )) ) then
-              call Announce_error ( key, No_Error_code, &
-              & 'Missing a required field to fill h2o from rhi'  )
-            else
-              sourceQuantity => GetVectorQtyByTemplateIndex( &
-                & vectors(sourceVectorIndex), sourceQuantityIndex)
-              temperatureQuantity => GetVectorQtyByTemplateIndex( &
-                & vectors(temperatureVectorIndex), temperatureQuantityIndex)
-              if ( .not. ValidateVectorQuantity(sourceQuantity, &
-                & quantityType=(/l_rhi/)) ) then
-                call Announce_Error ( key, No_Error_code, &
-                & 'The rhiQuantity is not an rhi'  )
-              else if ( .not. ValidateVectorQuantity(Quantity, &
-                & quantityType=(/l_vmr/), molecule=(/l_h2o/)) ) then
-                call Announce_Error ( key, No_Error_code, &
-                & 'The Quantity is not a vmr for the H2O molecule'  )
-              else if ( .not. ValidateVectorQuantity(temperatureQuantity, &
-                & quantityType=(/l_temperature/)) ) then
-                call Announce_Error ( key, No_Error_code, &
-                & 'The temperatureQuantity is not a temperature'  )
-              else
-                invert = .true.
-                call FillRHIFromH2O ( key, quantity, &
-                  & sourceQuantity, temperatureQuantity, &
-                  & dontMask, ignoreZero, ignoreNegative, interpolate, &
-                  & .true., &   ! Mark Undefined values?
-                  & invert )    ! invert rather than convert?
-              end if
-            end if
-          case ( l_RHIPrecisionfromH2O ) ! --fill RHI prec. from H2O quantity --
+
+        case ( l_RHIPrecisionfromH2O ) ! --fill RHI prec. from H2O quantity --
             if ( .not. any(got( &
               & (/f_h2oquantity, f_temperatureQuantity, &
               & f_h2oPrecisionquantity, f_tempPrecisionQuantity/) &
@@ -1203,7 +1281,7 @@ contains ! =====     Public Procedures     =============================
               end if
             end if
 
-          case ( l_scaleOverlaps )
+        case ( l_scaleOverlaps )
             if ( .not. got ( f_multiplier ) ) then
               call Announce_Error ( key, no_error_code, &
                 & 'Must supply multipler for scaleOverlaps fill' )
@@ -1211,7 +1289,7 @@ contains ! =====     Public Procedures     =============================
               call ScaleOverlaps ( key, quantity, multiplierNode, dontMask )
             end if
 
-          case ( l_special ) ! -  Special fills for some quantities  -----
+        case ( l_special ) ! -  Special fills for some quantities  -----
             ! Either multiplier = [a, b] or multiplier = b are possible
           if ( got(f_multiplier) ) then
             multiplier = UNDEFINED_VALUE
@@ -1302,17 +1380,69 @@ contains ! =====     Public Procedures     =============================
             end if
           case default
             call Announce_error ( key, noSpecialFill )
-          end select
+          end select ! quantity types in special fill cases
 
-        case ( l_negativePrecision ) ! ------------ Set output SD -ve wrt apriori
-          if ( .not. got ( f_aprioriPrecision ) ) &
-            & call Announce_Error ( key, No_Error_code, &
-            & 'Missing aprioriPrecision field for negativePrecision fill' )
-          aprioriPrecision => GetVectorQtyByTemplateIndex ( &
-            & vectors(aprPrecVctrIndex), aprPrecQtyIndex )
-          where ( quantity%values >= aprioriPrecision%values*precisionFactor )
-            quantity%values = - quantity%values
-          end where
+        case ( l_splitSideband ) ! --------------- Split the sidebands
+          if ( .not. got(f_sourceQuantity) ) &
+            & call Announce_Error ( key, No_Error_Code, &
+            & 'Missing a source field for vector fill' )
+          if ( .not. all(got( (/f_lsbFraction,f_usbFraction/) ))) &
+            & call Announce_Error ( key, No_Error_Code, &
+            & 'Missing a usb/lsb fraction field for vector fill' )
+          if ( .not. got ( f_channel ) ) call Announce_Error ( key, &
+            & no_error_code, 'Must supply channel for spreadChannel fill' )
+          sourceQuantity => GetVectorQtyByTemplateIndex( &
+            & vectors(sourceVectorIndex), sourceQuantityIndex )
+          lsbFraction => GetVectorQtyByTemplateIndex ( &
+            & vectors(lsbFractionVectorIndex), lsbFractionQuantityIndex )
+          usbFraction => GetVectorQtyByTemplateIndex ( &
+            & vectors(usbFractionVectorIndex), usbFractionQuantityIndex )
+          if ( got ( f_usb ) ) then
+               usb => GetVectorQtyByTemplateIndex ( &
+               & vectors(usbVectorIndex), usbQuantityIndex )
+          else
+            nullify ( usb )
+          end if
+
+          call FillFromSplitSideband ( quantity, sourceQuantity, &
+            & lsbFraction, usbFraction, spreadFlag, usb, channel, key )
+
+        case ( l_spreadChannel )
+          if ( .not. got ( f_channel ) ) call Announce_Error ( key, &
+            & no_error_code, 'Must supply channel for spreadChannel fill' )
+          call SpreadChannelFill ( quantity, channel, dontMask, key )
+          
+        case ( l_vector ) ! ---------------- Fill from another qty.
+          ! This is VERY PRELIMINARY, A more fancy one needs to be written
+          ! before too long.
+          ! Note that this does *NOT* copy the mask (at least for the moment)
+          ! It is assumed that the original one (e.g. inherited from transfer)
+          ! is still relevant.
+          if ( .not. got(f_sourceQuantity) ) &
+            & call Announce_Error ( key, No_Error_Code, &
+            & 'Missing a source field for vector fill' )
+          Quantity => GetVectorQtyByTemplateIndex( &
+            & vectors(VectorIndex), QuantityIndex )
+          sourceQuantity => GetVectorQtyByTemplateIndex( &
+            & vectors(sourceVectorIndex), sourceQuantityIndex )
+          if ( quantity%template%name /= sourceQuantity%template%name ) then
+            if ( .not. interpolate) then
+              call Announce_Error ( key, No_Error_Code, &
+                & 'Quantity and sourceQuantity do not have the same template' )
+            else
+              call FillQtyFromInterpolatedQty ( quantity, sourceQuantity, force, key )
+            end if
+          else
+            ! Just a straight copy
+            ! If we have a mask and we're going to obey it then do so
+            if ( associated(quantity%mask) .and. .not. dontMask ) then
+              where ( iand ( ichar(quantity%mask(:,:)), m_Fill ) == 0 )
+                quantity%values(:,:) = sourceQuantity%values(:,:)
+              end where
+            else ! Otherwise, just blindly copy
+              quantity%values = sourceQuantity%values
+            end if
+          end if
 
         case ( l_vGrid ) ! ---------------------  Fill from vGrid  -----
           if (.not. ValidateVectorQuantity(quantity, &
@@ -1368,130 +1498,9 @@ contains ! =====     Public Procedures     =============================
             & temperatureQuantity, refGPHQuantity, vGrids(internalVGridIndex) )
 
 
-        case ( l_fold ) ! --------------- Fill by sideband folding -----
-          lsb => GetVectorQtyByTemplateIndex ( &
-            & vectors(lsbVectorIndex), lsbQuantityIndex )
-          lsbFraction => GetVectorQtyByTemplateIndex ( &
-            & vectors(lsbFractionVectorIndex), lsbFractionQuantityIndex )
-          usb => GetVectorQtyByTemplateIndex ( &
-            & vectors(usbVectorIndex), usbQuantityIndex )
-          usbFraction => GetVectorQtyByTemplateIndex ( &
-            & vectors(usbFractionVectorIndex), usbFractionQuantityIndex )
-          call FillFoldedRadiance ( quantity, lsb, usb, lsbFraction, usbFraction, key )
-
-        case ( l_gridded ) ! ------------  Fill from gridded data  -----
-          if ( .not. got(f_sourceGrid) ) &
-            & call Announce_Error ( key,noSourceGridGiven )
-          call FillVectorQuantityFromGrid &
-            & ( quantity, griddedDataBase(gridIndex), allowMissing, errorCode )
-          if ( errorCode /= 0 ) call Announce_error ( key, errorCode )
-
-        case ( l_l2gp ) ! --------------  Fill from L2GP quantity  -----
-          if ( .NOT. got(f_sourceL2GP) ) &
-            & call Announce_Error ( key, noSourceL2GPGiven )
-          call FillVectorQuantityFromL2GP &
-            & ( quantity, l2gpDatabase(l2gpIndex), interpolate, profile, errorCode )
-          if ( errorCode /= 0 ) call Announce_error ( key, errorCode )
-
-        case ( l_l2aux ) ! ------------  Fill from L2AUX quantity  -----
-          if ( .NOT. got(f_sourceL2AUX) ) &
-            & call Announce_Error ( key, noSourceL2AUXGiven )
-          call FillVectorQuantityFromL2AUX(quantity,l2auxDatabase(l2auxIndex),errorCode)
-          if ( errorCode /= 0 ) call Announce_error ( key, errorCode )
-
-        case ( l_splitSideband ) ! --------------- Split the sidebands
-          if ( .not. got(f_sourceQuantity) ) &
-            & call Announce_Error ( key, No_Error_Code, &
-            & 'Missing a source field for vector fill' )
-          if ( .not. all(got( (/f_lsbFraction,f_usbFraction/) ))) &
-            & call Announce_Error ( key, No_Error_Code, &
-            & 'Missing a usb/lsb fraction field for vector fill' )
-          if ( .not. got ( f_channel ) ) call Announce_Error ( key, &
-            & no_error_code, 'Must supply channel for spreadChannel fill' )
-          sourceQuantity => GetVectorQtyByTemplateIndex( &
-            & vectors(sourceVectorIndex), sourceQuantityIndex )
-          lsbFraction => GetVectorQtyByTemplateIndex ( &
-            & vectors(lsbFractionVectorIndex), lsbFractionQuantityIndex )
-          usbFraction => GetVectorQtyByTemplateIndex ( &
-            & vectors(usbFractionVectorIndex), usbFractionQuantityIndex )
-          call FillFromSplitSideband ( quantity, sourceQuantity, &
-            & lsbFraction, usbFraction, spreadFlag, channel, key )
-
-        case ( l_spreadChannel )
-          if ( .not. got ( f_channel ) ) call Announce_Error ( key, &
-            & no_error_code, 'Must supply channel for spreadChannel fill' )
-          call SpreadChannelFill ( quantity, channel, dontMask, key )
-          
-        case ( l_vector ) ! ---------------- Fill from another qty.
-          ! This is VERY PRELIMINARY, A more fancy one needs to be written
-          ! before too long.
-          ! Note that this does *NOT* copy the mask (at least for the moment)
-          ! It is assumed that the original one (e.g. inherited from transfer)
-          ! is still relevant.
-          if ( .not. got(f_sourceQuantity) ) &
-            & call Announce_Error ( key, No_Error_Code, &
-            & 'Missing a source field for vector fill' )
-          Quantity => GetVectorQtyByTemplateIndex( &
-            & vectors(VectorIndex), QuantityIndex )
-          sourceQuantity => GetVectorQtyByTemplateIndex( &
-            & vectors(sourceVectorIndex), sourceQuantityIndex )
-          if ( quantity%template%name /= sourceQuantity%template%name ) then
-            if ( .not. interpolate) then
-              call Announce_Error ( key, No_Error_Code, &
-                & 'Quantity and sourceQuantity do not have the same template' )
-            else
-              call FillQtyFromInterpolatedQty ( quantity, sourceQuantity, force, key )
-            end if
-          else
-            ! Just a straight copy
-            ! If we have a mask and we're going to obey it then do so
-            if ( associated(quantity%mask) .and. .not. dontMask ) then
-              where ( iand ( ichar(quantity%mask(:,:)), m_Fill ) == 0 )
-                quantity%values(:,:) = sourceQuantity%values(:,:)
-              end where
-            else ! Otherwise, just blindly copy
-              quantity%values = sourceQuantity%values
-            end if
-          end if
-
-        case ( l_estimatedNoise ) ! ----------- Fill with estimated noise ---
-          if (.not. all(got( (/ f_radianceQuantity, &
-            & f_systemTemperature, f_integrationTime /)))) &
-            & call Announce_Error ( key, badEstNoiseFill )
-          radianceQuantity => GetVectorQtyByTemplateIndex( &
-            & vectors(radianceVectorIndex), radianceQuantityIndex )
-          sysTempQuantity => GetVectorQtyByTemplateIndex( &
-            & vectors(sysTempVectorIndex), sysTempQuantityIndex )
-          if ( got ( f_noiseBandwidth ) ) then
-            nbwQuantity => GetVectorQtyByTemplateIndex( &
-              & vectors(nbwVectorIndex), nbwQuantityIndex )
-          else
-            nbwQuantity => NULL()
-          end if
-          call FillVectorQtyWithEstNoise ( &
-            & quantity, radianceQuantity, sysTempQuantity, nbwQuantity, &
-            & integrationTime )
-
-        case ( l_explicit ) ! ---------  Explicity fill from l2cf  -----
-          if ( .not. got(f_explicitValues) ) &
-            & call Announce_Error ( key, noExplicitValuesGiven )
-          call ExplicitFillVectorQuantity ( quantity, valuesNode, spreadFlag, &
-            & vectors(vectorIndex)%globalUnit, dontmask )
-
-        case ( l_l1b ) ! --------------------  Fill from L1B data  -----
-          if ( got(f_precision) ) then
-            precisionQuantity => GetVectorQtyByTemplateIndex( &
-            & vectors(precisionVectorIndex), precisionQuantityIndex )
-            call FillVectorQuantityFromL1B ( key, quantity, chunks(chunkNo), &
-              & l1bInfo, isPrecision, precisionQuantity )
-          else
-            call FillVectorQuantityFromL1B ( key, quantity, chunks(chunkNo), &
-              & l1bInfo, isPrecision )
-          end if
-
         case default
           call Announce_error ( key, 0, 'This fill method not yet implemented' )
-        end select
+        end select      ! s_method
 
       case ( s_FillCovariance ) ! ===============  FillCovariance  =====
         invert = .false. ! Default if the field isn't present
@@ -4081,22 +4090,26 @@ contains ! =====     Public Procedures     =============================
 
     ! ------------------------------------- FillFromSplitSideband ----
     subroutine FillFromSplitSideband ( quantity, sourceQuantity, &
-      & lsbFraction, usbFraction, spreadFlag, channel, key )
+      & lsbFraction, usbFraction, spreadFlag, usb, channel, key )
 
       type (VectorValue_T), intent(inout) :: QUANTITY
       type (VectorValue_T), intent(in) :: SOURCEQUANTITY
       type (VectorValue_T), intent(in) :: LSBFRACTION
       type (VectorValue_T), intent(in) :: USBFRACTION
+      type (VectorValue_T), pointer :: USB
       logical, intent(in) :: SPREADFLAG   ! One instance given, spread to all
       integer, intent(in) :: CHANNEL
       integer, intent(in) :: KEY
       ! Local variables
       integer :: MYCHANNEL              ! Possibly offset channel
       integer :: mif, maf
-      type (Signal_T) :: signalIn, signalOut
+      type (Signal_T) :: signalIn, signalOut, signalRef
       real(r8), dimension(:), pointer :: freq1, freqL1, freqU1
       real(r8), dimension(:), pointer :: freq2, freqL2, freqU2
-
+      real(r8), dimension(:), pointer :: freq, freqL, freqU
+      real(r8) :: ratio1, ratio2    ! signal sideband fractions
+      real(r8) :: scaledRad   ! scaled radiance according to the f^4 law 
+      
       ! Executable code
       if (.not. ValidateVectorQuantity ( quantity, quantityType=(/l_cloudInducedRadiance/), &
         & sideband=(/-1,1/), minorFrame=.true. )) &
@@ -4105,13 +4118,11 @@ contains ! =====     Public Procedures     =============================
       signalIn = GetSignal ( sourceQuantity%template%signal )
       signalOut = GetSignal ( Quantity%template%signal )
       
-      ! this method is only appliable to the cloud-induced radiances that have 
-      ! similar penetration depth (usually close in frequency) and are 
-      ! proportional to frequency^4. And this operation is only applied to
-      ! maskbit = m_cloud
-
       myChannel = channel - lbound ( signalIn%frequencies, 1 ) + 1
 
+      call allocate_test ( freq, size(signalIn%frequencies), 'frequencies', ModuleName )
+      call allocate_test ( freqL, size(signalIn%frequencies), 'LSBfrequencies', ModuleName )
+      call allocate_test ( freqU, size(signalIn%frequencies), 'USBfrequencies', ModuleName )
       call allocate_test ( freq1, size(signalIn%frequencies), 'frequencies', ModuleName )
       call allocate_test ( freqL1, size(signalIn%frequencies), 'LSBfrequencies', ModuleName )
       call allocate_test ( freqU1, size(signalIn%frequencies), 'USBfrequencies', ModuleName )
@@ -4142,10 +4153,10 @@ contains ! =====     Public Procedures     =============================
         do i=1,size(signalOut%frequencies)
            do maf=1, quantity%template%noInstances
            do mif=1, quantity%template%noSurfs
-             if(iand(ichar(Quantity%mask(i+(mif-1)*size(signalOut%frequencies), maf)), m_cloud) == 1) &
-             & quantity%values(i+(mif-1)*size(signalOut%frequencies), maf) = &
-	          &    sourceQuantity%values(MyChannel+(mif-1)*size(signalIn%frequencies), maf) * &
+	          scaledRad = sourceQuantity%values(MyChannel+(mif-1)*size(signalIn%frequencies), maf) * &
              &    freq2(i)**4/freq1(MyChannel)**4
+             if(iand(ichar(Quantity%mask(i+(mif-1)*size(signalOut%frequencies), maf)), m_cloud) == 1) &
+             & quantity%values(i+(mif-1)*size(signalOut%frequencies), maf) = scaledRad
    	     enddo
 	        enddo
         enddo
@@ -4153,7 +4164,9 @@ contains ! =====     Public Procedures     =============================
       else
       ! split two sideband radiances according to the f^4 law
       ! The source cloudy radiance must be from the same signal of double sideband 
-        if (.not. ValidateVectorQuantity ( sourceQuantity, quantityType=(/l_cloudInducedRadiance/), &
+
+        if (.not. ValidateVectorQuantity ( sourceQuantity, &
+        & quantityType=(/l_cloudInducedRadiance/), &
         & sideband=(/0/), signal=(/quantity%template%signal/), minorFrame=.true. )) &
         & call Announce_Error ( key, 0, 'Inappropriate sourceQuantity radiance for fill' )
         if (.not. ValidateVectorQuantity ( lsbFraction, quantityType=(/l_sidebandRatio/), &
@@ -4162,7 +4175,16 @@ contains ! =====     Public Procedures     =============================
         if (.not. ValidateVectorQuantity ( usbFraction, quantityType=(/l_sidebandRatio/), &
         & signal=(/quantity%template%signal/), sideband=(/1/) ) ) &
         & call Announce_Error ( key, 0, 'Inappropriate usbFraction quantity for fill' )
-        do i=1,size(signalOut%frequencies)
+
+        ! This method is only appliable to the cloud-induced radiances. One may assume 
+        ! that the scattering radiances are proportional to f^4. And this operation 
+        ! is only applied to maskbit = m_cloud.
+
+        if(.not. associated(usb)) then
+        ! If both sidebands are within 20GHz and have similar penetration depths
+        ! in the attenuative atmosphere. We can neglect the attenuation and split cloudy
+        ! radiances assuming that they are fully due to scattering and obey the f^4 law.
+         do i=1,size(signalOut%frequencies)
            do maf=1, quantity%template%noInstances
            do mif=1, quantity%template%noSurfs
              if(iand(ichar(Quantity%mask(i+(mif-1)*size(signalOut%frequencies), maf)), m_cloud) == 1) &
@@ -4172,9 +4194,62 @@ contains ! =====     Public Procedures     =============================
 	          &   usbFraction%values(MyChannel,1) * freqU1(MyChannel)**4)
    	     enddo
 	        enddo
-        enddo
+         enddo        
+        else
+        ! If both sidebands are within 20GHz but have very different penetration depths,
+        ! where one is optically thick and one is optically thin. We may use a reference
+        ! cloud radiance near the optically-thin sideband to split cloud radiance in the
+        ! optically-thick sideband. The reference radiance must be a single sideband 
+        ! radiance in this case, namely usb (upper sideband in most cases). The usb is 
+        ! scaled to the sourceQty upperside (thin) via the f^4 law, and the rest cloud
+        ! radiance is for the lower sideband.
+        !
+        ! In this case, channel will for the reference signal and sideband frac remains for
+        ! source signal.
+        !
+         if (.not. ValidateVectorQuantity ( usb, &
+          & quantityType=(/l_cloudInducedRadiance/), sideband=(/-1,1/), minorFrame=.true. )) &
+          & call Announce_Error ( key, 0, 'Inappropriate reference radiance for splitting' )
+
+            signalRef = GetSignal ( usb%template%signal )
+            freq = signalRef%centerFrequency + signalRef%direction*signalRef%frequencies 
+            freqL = signalOut%lo - freq    ! lower sideband freq
+            freqU = signalOut%lo + freq    ! upper sideband freq
+               if(signalRef%sideband == -1) freq = freqL
+               if(signalRef%sideband == 1) freq = freqU
+         do i=1,size(signalOut%frequencies)
+         
+           ! need to scale the opposite sideband for the output signal
+           if(signalOut%sideband == 1) then 
+               ratio1 = lsbFraction%values(i,1)
+               ratio2 = usbFraction%values(i,1)
+               freq2 = freqL2
+           endif
+           if(signalOut%sideband == -1) then
+               ratio2 = lsbFraction%values(i,1)
+               ratio1 = usbFraction%values(i,1)
+               freq2 = freqU2
+           endif
+
+           do maf=1, quantity%template%noInstances
+           do mif=1, quantity%template%noSurfs
+	          scaledRad = usb%values(MyChannel+(mif-1)*size(signalIn%frequencies), maf) * &
+             &    freq2(i)**4/freq(MyChannel)**4
+
+             if(iand(ichar(Quantity%mask(i+(mif-1)*size(signalOut%frequencies), maf)), m_cloud) == 1) &
+	          & quantity%values(i+(mif-1)*size(signalOut%frequencies), maf) = &
+	          &   (sourceQuantity%values(i+(mif-1)*size(signalIn%frequencies), maf) - &
+             &    ratio1*scaledRad)/ratio2 
+   	     enddo
+	        enddo
+         enddo        
+
+        endif
       endif
 
+      call deallocate_test ( freq, 'frequencies', ModuleName )
+      call deallocate_test ( freqL,'LSBfrequencies', ModuleName )
+      call deallocate_test ( freqU,'USBfrequencies', ModuleName )
       call deallocate_test ( freq1, 'frequencies', ModuleName )
       call deallocate_test ( freqL1,'LSBfrequencies', ModuleName )
       call deallocate_test ( freqU1,'USBfrequencies', ModuleName )
@@ -5511,6 +5586,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.209  2003/05/08 19:34:58  dwu
+! add more options to splitsideband, and tidy up
+!
 ! Revision 2.208  2003/05/07 00:16:52  livesey
 ! Added the dump for magnetic field results.
 !
