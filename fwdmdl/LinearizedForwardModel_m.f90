@@ -64,6 +64,7 @@ contains ! =====     Public Procedures     =============================
     integer :: CLOSESTINSTANCE          ! A closest profile to this MAF
     integer :: COLJBLOCK                ! Column index in jacobian
     integer :: COLLBLOCK                ! Column index in l2pc
+    integer :: DELTAINSTANCE            ! Instance offset between center an current
     integer :: I                        ! Array index
     integer :: INSTANCELEN              ! For the state quantity
     integer :: L2PCBIN                  ! Which l2pc to use
@@ -338,9 +339,10 @@ contains ! =====     Public Procedures     =============================
         ! Loop over profiles
         do xStarInstance = 1, l2pcQ%template%noInstances
           ! Identify this instance in state
-          xInstance = closestInstance - &
-            & l2pcQ%template%noInstances/2 + &
-            & xStarInstance - 1
+          deltaInstance = xStarInstance - l2pcQ%template%noInstances/2 - 1
+          deltaInstance = max ( -forwardModelConfig%phiWindow/2, &
+            &                   min ( deltaInstance, forwardModelConfig%phiWindow/2) )
+          xInstance = closestInstance + deltaInstance
           xInstance = max ( 1, min ( xInstance, stateQ%template%noInstances ) )
 
           ! Fill this part of xP
@@ -574,6 +576,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 1.20  2001/06/01 20:09:28  livesey
+! Embarassing bug to do with edge effects removed.  This version makes L2 work!
+!
 ! Revision 1.19  2001/05/25 19:12:21  livesey
 ! Embarassing bug fix.  Was using quantity basis as framework for interpolation,
 ! not pointings in the l2pc file!
