@@ -33,7 +33,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   public :: L2GPData_T
   public :: L2GPNameLen
   public :: AddL2GPToDatabase, AppendL2GPData, cpL2GPData, &
-    & DestroyL2GPContents,  DestroyL2GPDatabase, Dump, &
+    & DestroyL2GPContents,  DestroyL2GPDatabase, diff, Dump, &
     & ExpandL2GPDataInPlace, &
     & ReadL2GPData, SetupNewL2GPRecord, WriteL2GPData
 
@@ -45,6 +45,11 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
        & "$RCSfile$"
   private :: not_used_here 
   !---------------------------------------------------------------------------
+
+  interface DIFF
+    module procedure DiffL2GPData
+    module procedure DiffL2GPFiles
+  end interface
 
   interface DUMP
     module procedure DUMP_L2GP
@@ -2251,6 +2256,217 @@ contains ! =====     Public Procedures     =============================
     endif
   end subroutine cpL2GPData_fileName
 
+  ! ------------------------------------------ DiffL2GPData ------------
+  subroutine DiffL2GPData ( L2gp1, L2gp2, Details )
+    ! Show diff between l2gp1 and l2gp2 down to level of Details
+    ! Assumes fields of each already allocated and have same shape
+    ! (If not, then why are you trying to show differences?)
+    ! Dummy arguments
+    type (l2gpData_T), intent(in) ::          L2GP1
+    type (l2gpData_T), intent(in) ::          L2GP2
+    integer, intent(in), optional :: DETAILS ! <=0 => Don't diff data fields
+    !                                        ! -1 Skip even geolocation fields
+    !                                        ! -2 Skip all but name
+    !                                        ! >0 Diff even data fields
+    !                                        ! Default 1
+
+    ! Local variables
+    integer :: ierr
+    integer :: MYDETAILS
+    real(r8) :: FillValue
+    integer :: ChunkFillValue
+
+    ! Executable code
+    myDetails = 1
+    if ( present(details) ) myDetails = details
+    
+      FillValue = real(l2gp1%MissingValue, r8)
+      ChunkFillValue = int(l2gp1%MissingValue)
+
+      if ( trim(l2gp1%name) /= trim(l2gp2%name) ) then
+        call output('(1) name: ' // trim(l2gp1%name), advance='yes')
+        call output('(2) name: ' // trim(l2gp2%name), advance='yes')
+      endif
+      if ( myDetails < -1 ) return
+      if ( L2gp1%MissingValue /= L2gp2%MissingValue ) then
+        call output(' (1) MissingValue = ', advance='no')
+        call output(L2gp1%nTimes, advance='yes')
+        call output(' (2) MissingValue = ', advance='no')
+        call output(L2gp2%nTimes, advance='yes')
+      endif
+      if ( L2gp1%nTimes /= L2gp2%nTimes ) then
+        call output(' (1) nTimes = ', advance='no')
+        call output(L2gp1%nTimes, advance='yes')
+        call output(' (2) nTimes = ', advance='no')
+        call output(L2gp2%nTimes, advance='yes')
+      endif
+      if ( L2gp1%nLevels /= L2gp2%nLevels ) then
+        call output(' (1) nLevels = ', advance='no')
+        call output(L2gp1%nLevels, advance='yes')
+        call output(' (2) nLevels = ', advance='no')
+        call output(L2gp2%nLevels, advance='yes')
+      endif
+      if ( L2gp1%nFreqs /= L2gp2%nFreqs ) then
+        call output(' (1) nFreqs = ', advance='no')
+        call output(L2gp1%nFreqs, advance='yes')
+        call output(' (2) nFreqs = ', advance='no')
+        call output(L2gp2%nFreqs, advance='yes')
+      endif
+      if ( myDetails < 0 ) return
+      if ( any(l2gp1%pressures /= l2gp2%pressures)) then
+        call dump ( l2gp1%pressures - l2gp2%pressures, &
+          & 'l2gp%pressures (diff)' )
+      endif
+      if ( any(l2gp1%latitude /= l2gp2%latitude)) then
+        call dump ( l2gp1%latitude - l2gp2%latitude, &
+          & 'l2gp%latitude (diff)' )
+      endif
+      if ( any(l2gp1%longitude /= l2gp2%longitude)) then
+        call dump ( l2gp1%longitude - l2gp2%longitude, &
+          & 'l2gp%longitude (diff)' )
+      endif
+      if ( any(l2gp1%solarTime /= l2gp2%solarTime)) then
+        call dump ( l2gp1%solarTime - l2gp2%solarTime, &
+          & 'l2gp%solarTime (diff)' )
+      endif
+      if ( any(l2gp1%solarZenith /= l2gp2%solarZenith)) then
+        call dump ( l2gp1%solarZenith - l2gp2%solarZenith, &
+          & 'l2gp%solarZenith (diff)' )
+      endif
+      if ( any(l2gp1%losAngle /= l2gp2%losAngle)) then
+        call dump ( l2gp1%losAngle - l2gp2%losAngle, &
+          & 'l2gp%losAngle (diff)' )
+      endif
+      if ( any(l2gp1%geodAngle /= l2gp2%geodAngle)) then
+        call dump ( l2gp1%geodAngle - l2gp2%geodAngle, &
+          & 'l2gp%geodAngle (diff)' )
+      endif
+      if ( any(l2gp1%time /= l2gp2%time)) then
+        call dump ( l2gp1%time - l2gp2%time, &
+          & 'l2gp%time (diff)' )
+      endif
+      if ( any(l2gp1%chunkNumber /= l2gp2%chunkNumber)) then
+        call dump ( l2gp1%chunkNumber - l2gp2%chunkNumber, &
+          & 'l2gp%chunkNumber (diff)' )
+      endif
+      
+      if ( associated(l2gp1%frequency) .and.  associated(l2gp2%frequency)) then
+        if ( any(l2gp1%frequency /= l2gp2%frequency)) then
+          call dump ( l2gp1%frequency - l2gp2%frequency, &
+            & 'l2gp%frequency (diff)' )
+        endif
+      endif
+      
+      if ( myDetails < 1 ) return
+      if ( any(l2gp1%l2gpValue /= l2gp2%l2gpValue)) then
+        call dump ( real(l2gp1%l2gpValue - l2gp2%l2gpValue, r8), &
+          & 'l2gp%l2gpValue (diff)', FillValue=FillValue )
+      endif
+      if ( any(l2gp1%l2gpPrecision /= l2gp2%l2gpPrecision)) then
+        call dump ( real(l2gp1%l2gpPrecision - l2gp2%l2gpPrecision, r8), &
+          & 'l2gp%l2gpPrecision (diff)', FillValue=FillValue )
+      endif
+      
+      if ( any(l2gp1%status /= l2gp2%status)) then
+        call dump (l2gp1%status - l2gp2%status, &
+          & 'l2gp%status (diff)' )
+      endif
+      if ( any(l2gp1%quality /= l2gp2%quality)) then
+        call dump ( l2gp1%quality - l2gp2%quality, &
+          & 'l2gp%quality (diff)' )
+      endif
+      
+  end subroutine DiffL2GPData
+    
+  ! ------------------------------------------ DiffL2GPFiles ------------
+  subroutine DiffL2GPFiles ( file1, file2, Details )
+    ! Show diff between swaths in file1 and file2 down to level of Details
+    ! Dummy arguments
+    character (len=*), intent(in) :: file1 ! Name of file 1
+    character (len=*), intent(in) :: file2 ! Name of file 2
+    integer, intent(in), optional :: DETAILS ! <=0 => Don't diff data fields
+    !                                        ! -1 Skip even geolocation fields
+    !                                        ! -2 Skip all but name
+    !                                        ! >0 Diff even data fields
+    !                                        ! Default 1
+    ! Local
+    logical, parameter            :: countEmpty = .true.
+    integer :: File1Handle
+    integer :: File2Handle
+    integer :: record_length
+    integer :: i
+    integer :: status
+    integer :: the_hdfVersion1
+    integer :: the_hdfVersion2
+    logical :: file_exists
+    integer :: file_access
+    integer :: listsize
+    integer :: noSwaths
+    character (len=MAXSWATHNAMESBUFSIZE) :: swathList1
+    character (len=MAXSWATHNAMESBUFSIZE) :: swathList2
+    character (len=L2GPNameLen) :: swath
+    type (L2GPData_T) :: l2gp1
+    type (L2GPData_T) :: l2gp2
+    ! Executable code
+    file_exists = ( mls_exists(trim(File1)) == 0 )
+    if ( .not. file_exists ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'File 1 not found; make sure the name and path are correct' &
+        & // trim(file1) )
+    endif
+    the_hdfVersion2 = mls_hdf_version(File2)
+    file_exists = ( mls_exists(trim(File2)) == 0 )
+    if ( .not. file_exists ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'File 2 not found; make sure the name and path are correct' &
+        & // trim(file1) )
+    endif
+    the_hdfVersion2 = mls_hdf_version(File2)
+    noSwaths = mls_InqSwath ( file1, swathList1, listSize, &
+         & hdfVersion=the_hdfVersion1)
+    noSwaths = mls_InqSwath ( file2, swathList2, listSize, &
+         & hdfVersion=the_hdfVersion2)
+    File1Handle = mls_io_gen_openF('swopen', .TRUE., status, &
+       & record_length, DFACC_READ, FileName=File1, &
+       & hdfVersion=the_hdfVersion1, debugOption=.false. )
+    if ( status /= 0 ) &
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+       & "Unable to open L2gp file: " // trim(File1) // ' for diff')
+    File2Handle = mls_io_gen_openF('swopen', .TRUE., status, &
+       & record_length, DFACC_READ, FileName=File2, &
+       & hdfVersion=the_hdfVersion2, debugOption=.false. )
+    if ( status /= 0 ) &
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+       & "Unable to open L2gp file: " // trim(File2) // ' for diff')
+    ! Loop over swaths in file 1
+    do i = 1, noSwaths
+      call GetStringElement (trim(swathList1), swath, i, countEmpty )
+      status = stringElementNum(swathList2, trim(swath), countEmpty)
+      if ( status < 1 ) then
+        call output('Swath ' // trim(swath) // ' not found in ' // &
+          & trim(File2), advance='yes')
+        cycle
+      endif
+      call ReadL2GPData ( File1Handle, trim(swath), l2gp1, &
+           & hdfVersion=the_hdfVersion1 )
+      call ReadL2GPData ( File2Handle, trim(swath), l2gp2, &
+           & hdfVersion=the_hdfVersion2 )
+      call DiffL2GPData(l2gp1, l2gp2, details)
+      call DestroyL2GPContents ( l2gp1 )
+      call DestroyL2GPContents ( l2gp2 )
+    enddo
+    status = mls_io_gen_closeF('swclose', File1Handle, FileName=File1, &
+      & hdfVersion=the_hdfVersion1, debugOption=.false.)
+    if ( status /= 0 ) &
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+       & "Unable to close L2gp file: " // trim(File1) // ' after diff')
+    status = mls_io_gen_closeF('swclose', File2Handle, FileName=File2, &
+      & hdfVersion=the_hdfVersion1, debugOption=.false.)
+    if ( status /= 0 ) &
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+       & "Unable to close L2gp file: " // trim(File2) // ' after diff')
+  end subroutine DiffL2GPFiles
+    
   ! ------------------------------------------ DUMP_L2GP_DATABASE ------------
 
   subroutine DUMP_L2GP_DATABASE ( L2gp, Name, ColumnsOnly, Details )
@@ -2660,6 +2876,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.103  2004/05/26 20:31:29  pwagner
+! Raised MAXNUMSWATHPERFILE to 250
+!
 ! Revision 2.102  2004/05/05 21:29:53  pwagner
 ! May change copied swath names with optional arg swathlist2
 !
