@@ -13,7 +13,7 @@ MODULE Construct                ! The construct module for the MLS L2 sw.
 
   private
 
-  public :: MLSL2Construct, MLSL2DeConstruct
+  public :: MLSL2Construct, MLSL2DeConstruct, ConstructMIFGeolocation
   
   !------------------------------- RCS Ident Info ------------------------------
   character(len=*), parameter :: IdParm = &
@@ -23,6 +23,47 @@ MODULE Construct                ! The construct module for the MLS L2 sw.
   !-----------------------------------------------------------------------------
 
 contains ! =====     Public Procedures     =============================
+
+  ! --------------------------------------------- ConstructMIFGeolocation --
+  subroutine ConstructMIFGeolocation ( mifGeolocation, l1bInfo, chunks, chunkNo )
+    ! mifGeolocation is just quantity templates containing geolocation
+    ! information for the GHz and THz modules.  The software can then
+    ! point to these for geolocation information for all minor frame
+    ! quantities saving file IO and memory.
+    use ConstructQuantityTemplates, only: ConstructMinorFrameQuantity
+    use QuantityTemplates, only: QUANTITYTEMPLATE_T
+    use MLSCommon, only: L1BINFO_T, MLSCHUNK_T
+    use MLSSignals_m, only: MODULES
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
+
+    type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
+    type (L1BInfo_T), intent(in) :: l1bInfo
+    type (MLSChunk_T), dimension(:), intent(in) :: chunks
+    integer, intent(in) :: chunkNo
+    
+    ! Local variables
+    integer :: INSTRUMENTMODULEINDEX    ! Loop counter
+    integer :: STATUS                   ! Flag
+
+    if ( .not. associated ( mifGeolocation ) ) then
+      ! Don't overwrite it if we already have it, e.g. from previous construct
+      ! or forge.
+      allocate ( mifGeolocation(size(modules)), STAT=status )
+      if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_Allocate//"mifGeolocation" )
+    
+      ! Now try to fill it if we have any L1BFiles
+      if (l1bInfo%l1boaID /= 0 ) then
+        do instrumentModuleIndex = 1, size(modules)
+          call ConstructMinorFrameQuantity ( l1bInfo, chunks(chunkNo), &
+            & instrumentModuleIndex, mifGeolocation(instrumentModuleIndex) )
+        end do
+      else
+        mifGeolocation%noSurfs = 0
+        mifGeolocation%noInstances = 0
+      end if
+    end if
+  end subroutine ConstructMIFGeolocation
 
   ! ---------------------------------------------  MLSL2Construct  -----
   subroutine MLSL2Construct ( root, l1bInfo, processingRange, chunks, chunkNo, &
@@ -47,7 +88,6 @@ contains ! =====     Public Procedures     =============================
     use MLSCommon, only: L1BInfo_T, MLSChunk_T, TAI93_Range_T
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
     use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
-    use MLSSignals_m, only: Modules
     use MoreTree, only: Get_Spec_ID
     use OUTPUT_M, only: BLANKS, OUTPUT
     use QuantityTemplates, only: AddQuantityTemplateToDatabase, &
@@ -81,7 +121,6 @@ contains ! =====     Public Procedures     =============================
     ! Local variables
 
     integer :: I                ! Loop counter
-    integer :: InstrumentModuleIndex ! Loop counter
     integer :: KEY              ! S_... from Init_Tables_Module.
     integer :: NAME             ! Sub-rosa index of name
     integer :: SON              ! Son or grandson of Root
@@ -93,32 +132,10 @@ contains ! =====     Public Procedures     =============================
     timing = section_times
     if ( timing ) call time_now ( t1 )
 
-    ! First we're going to setup our mifGeolocation quantityTemplates.
-    ! These are just two quantity templates containing geolocation
-    ! information for the GHz and THz modules.  The software can then
-    ! point to these for geolocation information for all minor frame
-    ! quantities saving file IO and memory.
-
     if ( toggle(gen) ) call trace_begin ( "MLSL2Construct", root )
-    
-    if (.not. associated(mifGeolocation) ) then
-      ! Don't overwrite it if we already have it, e.g. from previous construct
-      ! or forge.
-      allocate ( mifGeolocation(size(modules)), STAT=status )
-      if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_Allocate//"mifGeolocation" )
-    
-      ! Now try to fill it if we have any L1BFiles
-      if (l1bInfo%l1boaID /= 0 ) then
-        do instrumentModuleIndex = 1, size(modules)
-          call ConstructMinorFrameQuantity ( l1bInfo, chunks(chunkNo), &
-            & instrumentModuleIndex, mifGeolocation(instrumentModuleIndex) )
-        end do
-      else
-        mifGeolocation%noSurfs = 0
-        mifGeolocation%noInstances = 0
-      end if
-    end if
+
+    ! First we're going to setup our mifGeolocation quantityTemplates.
+    call ConstructMIFGeolocation ( mifGeolocation, l1bInfo, chunks, chunkNo )
 
     ! The rest is fairly simple really.  We just loop over the mlscf 
     ! instructions and hand them off to people
@@ -224,6 +241,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.37  2002/10/05 00:43:47  livesey
+! Split out ConstructMIFGeolocation
+!
 ! Revision 2.36  2002/09/26 23:58:57  livesey
 ! Bug fix, decorated wrong node
 !
