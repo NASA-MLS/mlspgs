@@ -70,15 +70,13 @@ contains
 ! Local variables.
 
     real(rp), pointer :: dBdn(:), dBdT(:), dBdv(:), dBdw(:) ! slices of dBeta_d*_path
-    integer(ip) :: I, N, IB, No_mol
+    integer(ip) :: I, N
 
 ! begin the code
 
-    no_mol = size(beta_group)
-
     nullify ( dBdn, dBdv, dBdw )
 
-    do i = 1, no_mol
+    do i = 1, size(beta_group)
       if ( associated(dBeta_dn_path) ) then
         dBdn => dBeta_dn_path(:,i)
         dBdn = 0.0_rp
@@ -100,9 +98,9 @@ contains
       end if
 
       do n = 1, size(beta_group(i)%cat_index)
-        ib = beta_group(i)%cat_index(n)
         call create_beta_path ( path_inds, p_path, t_path, frq,             &
-          & beta_group(i)%ratio(n), gl_slabs(:,ib), tanh_path, noPolarized, &
+          & beta_group(i)%ratio(n), gl_slabs(:,beta_group(i)%cat_index(n)), &
+          & tanh_path, noPolarized, &
           & beta_path(:,i), dTanh_dT, t_der_path_flags, dBdT, dBdw, dBdn, dBdv )
       end do
     end do
@@ -110,20 +108,21 @@ contains
   end subroutine Get_Beta_Path_Scalar
 
   ! ------------------------------------------  Get_Beta_Path_PFA  -----
-  subroutine Get_Beta_Path_PFA ( Frq, P_Path, Path_Inds, T_Path, PFAInds, &
-    & BetaInds, Vel_Rel, Beta_Path, T_Der_Path_Flags, &
+  subroutine Get_Beta_Path_PFA ( Frq, Frq_i, P_Path, Path_Inds, T_Path, &
+    & Beta_Group, Vel_Rel, Beta_Path, T_Der_Path_Flags, &
     & dBeta_dT_Path, dBeta_dw_Path, dBeta_dn_Path, dBeta_dv_Path )
 
+    use ForwardModelConfig, only: PFA_T
     use MLSCommon, only: RP, R8
     use PFADataBase_m, only: PFAData
 
 ! Inputs
     real(r8), intent(in) :: Frq         ! Channel center frequency in MHz
+    integer, intent(in) :: Frq_i        ! Channel index
     real(rp), intent(in) :: P_path(:)   ! path pressures in hPa!
     integer, intent(in) :: Path_inds(:) ! indicies for reading P_path
     real(rp), intent(in) :: T_path(:)   ! path temperatures
-    integer, intent(in) :: PFAInds(:)   ! indices in PFA database
-    integer, intent(in) :: BetaInds(:)  ! indices in Beta_path, etc.
+    type(PFA_t), intent(in) :: Beta_Group(:) ! PFA stuff for the beta group
     real(rp), intent(in) :: Vel_Rel     ! LOS Vel / C
 
 ! Output
@@ -146,37 +145,39 @@ contains
     real(rp), pointer :: dBeta_dv_path(:,:) ! line position
 
     real(rp), pointer :: dBdn(:), dBdT(:), dBdv(:), dBdw(:) ! slices of dBeta_d*_path
-    integer :: I, SV_I
+    integer :: I, N
 
     nullify ( dBdT, dBdn, dBdv, dBdw )
 
-    do i = 1, size(betaInds)
-      sv_i = betaInds(i)
+    do i = 1, size(beta_group)
       if ( associated(dBeta_dt_path) ) then
-        dBdT => dBeta_dt_path(:,sv_i)
+        dBdT => dBeta_dt_path(:,i)
         dBdT = 0.0_rp
       end if
       if ( associated(dBeta_dn_path) ) then
-        dBdn => dBeta_dn_path(:,sv_i)
+        dBdn => dBeta_dn_path(:,i)
         dBdn = 0.0_rp
       end if
       if ( associated(dBeta_dv_path) ) then
-        dBdv => dBeta_dv_path(:,sv_i)
+        dBdv => dBeta_dv_path(:,i)
         dBdv = 0.0_rp
       end if
       if ( associated(dBeta_dw_path) ) then
-        dBdw => dBeta_dw_path(:,sv_i)
+        dBdw => dBeta_dw_path(:,i)
         dBdw = 0.0_rp
       end if
 
-      beta_path(:,sv_i) = 0.0_rp
+      beta_path(:,i) = 0.0_rp
 
-      if ( PFAInds(i) /= 0 ) &
-        & call create_beta_path_pfa ( frq, path_inds, p_path, t_path, vel_rel, &
-          & PFAData(PFAInds(i)), beta_path(:,sv_i), t_der_path_flags, &
-          & dBdT, dBdw, dBdn, dBdv )
+      do n = 1, size(beta_group(i)%molecules)
+        if ( beta_group(i)%indices(frq_i,n) /= 0 ) &
+          & call create_beta_path_pfa ( frq, p_path, path_inds, t_path, vel_rel, &
+            & PFAData(beta_group(i)%indices(frq_i,n)), beta_group(i)%ratio(n), &
+            & beta_path(:,i), t_der_path_flags, &
+            & dBdT, dBdw, dBdn, dBdv )
+      end do ! n = 1, size(beta_group(i)%molecules)
 
-    end do
+    end do ! i = 1, size(beta_group)
 
   end subroutine Get_Beta_Path_PFA
 
@@ -708,8 +709,8 @@ contains
   end Subroutine Create_beta_path
 
   ! ---------------------------------------  Create_Beta_Path_PFA  -----
-  subroutine Create_Beta_Path_PFA ( Frq, Path_Inds, P_Path, T_Path, Vel_Rel, &
-    & PFAD, Beta_Path, T_Der_Path, dBdT, dBdw, dBdn, dBdv )
+  subroutine Create_Beta_Path_PFA ( Frq, P_Path, Path_Inds, T_Path, Vel_Rel, &
+    & PFAD, Ratio, Beta_Path, T_Der_Path, dBdT, dBdw, dBdn, dBdv )
 
     use Dump_0, only: Dump
     use D_Hunt_m, only: Hunt
@@ -721,12 +722,13 @@ contains
 
 ! Inputs:
     real(r8), intent(in) :: Frq         ! Channel center frequency in MHz
-    integer, intent(in) :: Path_inds(:) ! Which Pressures to use
     real(rp), intent(in) :: P_Path(:)   ! Log10 ( Pressure in hPa _)
                                         ! on the fine path grid
+    integer, intent(in) :: Path_inds(:) ! Which Pressures to use
     real(rp), intent(in) :: T_Path(:)   ! Temperature in K along the path
     real(rp), intent(in) :: Vel_Rel     ! LOS vel/c
     type(PFAData_t), intent(in) :: PFAD ! PFA datum from PFA Database
+    real(rp), intent(in) :: Ratio       ! Isotope ratio
     
 ! Outputs
     real(rp), intent(inout) :: Beta_Path(:)
@@ -743,6 +745,7 @@ contains
 ! -----     Local variables     ----------------------------------------
 
     real(rk), pointer :: A(:,:)  ! Absorption from PFAD
+    real(kind(beta_path)) :: BP  ! Temp for one cell of beta_path
     real(r8), parameter :: C = speedOfLight / 1000.0_r8 ! km/s
     real(rp) :: dBdNu            ! d log Beta / d nu, for Doppler correction
     real(rp) :: Del_T            ! Log Temperature step in tGrid
@@ -792,14 +795,6 @@ contains
       p_fac = (p_path(k) - PFAD%vGrid%surfs(p_i1,1)) / &
         & (PFAD%vGrid%surfs(p_i2,1) - PFAD%vGrid%surfs(p_i1,1))
 
-      ! Interpolate to get log Beta at the linearization velocity, then
-      ! exponentiate to get Beta
-      beta_path(j) = exp( &
-        & a(t_i1  ,p_i1  ) * (1.0-t_fac) * (1.0-p_fac) + &
-        & a(t_i1+1,p_i1  ) * t_fac       * (1.0-p_fac) + &
-        & a(t_i1  ,p_i1+1) * (1.0-t_fac) * p_fac       + &
-        & a(t_i1+1,p_i1+1) * t_fac * p_fac )
-
       ! Interpolate to get d log Beta / d nu.  We need this to Doppler-correct
       ! Beta even if dBdv is not associated.
       dBdNu = &
@@ -808,8 +803,15 @@ contains
         & PFAD%dAbsDnu(t_i1  ,p_i1+1) * (1.0-t_fac) * p_fac       + &
         & PFAD%dAbsDnu(t_i1+1,p_i1+1) * t_fac * p_fac
 
-      ! Now correct beta_path(j) for Doppler
-      beta_path(j) = beta_path(j) * ( 1.0 + doppler * dBdNu )
+      ! Interpolate to get log Beta at the linearization velocity, then
+      ! exponentiate to get Beta
+      bp = ratio * ( 1.0 + doppler * dBdNu ) * exp( &
+        & a(t_i1  ,p_i1  ) * (1.0-t_fac) * (1.0-p_fac) + &
+        & a(t_i1+1,p_i1  ) * t_fac       * (1.0-p_fac) + &
+        & a(t_i1  ,p_i1+1) * (1.0-t_fac) * p_fac       + &
+        & a(t_i1+1,p_i1+1) * t_fac * p_fac )
+      beta_path(j) = beta_path(j) + bp
+
 
       !{ \raggedright 
       !  $\frac{\partial \beta}{\partial T} \approx
@@ -848,12 +850,15 @@ contains
       !  $\nabla_T$ means ``Differences in $T$ coordinate, interpolated in
       !  $P$ coordinate.''
 
+      ! Now the derivatives.  Remember that bp includes ratio, so we don't
+      ! beed to weight by ratio here.
+
       if ( temp_der ) then
         ! Interpolate to get d^2 log Beta / d log T d Nu, to Doppler-correct
         ! d log Beta d log T.
         ! Interpolate to get d log Beta / d log T, then Doppler correct
         ! and multiply by Beta / T to get dBeta / dT
-        dBdT(j) = beta_path(j) / (del_t * t_path(j)) * ( &
+        dBdT(j) = dBdT(j) + bp / (del_t * t_path(j)) * ( &
           & ( a(t_i1+1,p_i1  ) - a(t_i1,  p_i1  ) ) * (1.0-p_fac) + &
           & ( a(t_i1+1,p_i1+1) - a(t_i1,  p_i1+1) ) * p_fac + &
           & doppler * ( ( PFAD%dAbsDnu(t_i1+1,p_i1  ) - &
@@ -865,19 +870,19 @@ contains
       ! Interpolate to get d log Beta / d*, then multiply by Beta to get
       ! dBeta / d*.  We can't Doppler correct these because we don't have
       ! the second partials with respect to d* dNu.
-      if ( associated(dBdw) ) dBdw(j) = beta_path(j) * ( &
+      if ( associated(dBdw) ) dBdw(j) = dBdw(j) + bp * ( &
         & PFAD%dAbsDwc(t_i1  ,p_i1  ) * (1.0-t_fac) * (1.0-p_fac) + &
         & PFAD%dAbsDwc(t_i1+1,p_i1  ) * t_fac       * (1.0-p_fac) + &
         & PFAD%dAbsDwc(t_i1  ,p_i1+1) * (1.0-t_fac) * p_fac       + &
         & PFAD%dAbsDwc(t_i1+1,p_i1+1) * t_fac * p_fac )
 
-      if ( associated(dBdn) ) dBdn(j) = beta_path(j) * ( &
+      if ( associated(dBdn) ) dBdn(j) = dBdn(j) + bp * ( &
         & PFAD%dAbsDnc(t_i1  ,p_i1  ) * (1.0-t_fac) * (1.0-p_fac) + &
         & PFAD%dAbsDnc(t_i1+1,p_i1  ) * t_fac       * (1.0-p_fac) + &
         & PFAD%dAbsDnc(t_i1  ,p_i1+1) * (1.0-t_fac) * p_fac       + &
         & PFAD%dAbsDnc(t_i1+1,p_i1+1) * t_fac * p_fac )
 
-      if ( associated(dBdv) ) dBdv(j) = beta_path(j) * dBdNu
+      if ( associated(dBdv) ) dBdv(j) = dBdv(j) + bp * dBdNu
 
     end do ! j
 
@@ -1075,6 +1080,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.70  2005/02/16 23:16:50  vsnyder
+! Revise data structures for split-sideband PFA
+!
 ! Revision 2.69  2004/12/13 20:47:52  vsnyder
 ! Use Slabs_0%UseYi field instead of MaxVal(Abs(...%yi))
 !
