@@ -36,7 +36,7 @@ module RetrievalModule
   use Intrinsic, only: PHYQ_Dimensionless
   use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
     & DestroyMatrix, GetFromMatrixDatabase, Matrix_T, Matrix_Database_T, &
-    & Matrix_SPD_T
+    & Matrix_SPD_T, MultiplyMatrixVectorNoT
   use MatrixTools, only: DumpBlock
   use MLSCommon, only: R8, MLSCHUNK_T
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, add_to_retrieval_timing
@@ -51,9 +51,9 @@ module RetrievalModule
   use Tree, only: Decorate, Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, &
     & Subtree
   use Tree_Types, only: N_named
-  use VectorsModule, only: AddVectorToDatabase, ClearVector, CloneVector, &
-    & CopyVector, DestroyVectorInfo, DestroyVectorDatabase, DumpMask, &
-    & GetVectorQuantityByType, Vector_T, VectorValue_T
+  use VectorsModule, only: AddToVector, AddVectorToDatabase, ClearVector, &
+    & CloneVector, CopyVector, DestroyVectorInfo, DestroyVectorDatabase, &
+    & DumpMask, GetVectorQuantityByType, Vector_T, VectorValue_T
 
   implicit NONE
   private
@@ -402,7 +402,10 @@ contains
           if ( .not. got(f_outputCovariance) ) &
             & call destroyMatrix ( outputCovariance%m )
         end if
-        if ( got(f_fwdModelOut) ) call copyVector ( fwdModelOut, f )
+        if ( got(f_fwdModelOut) ) then
+          call copyVector ( fwdModelOut, f )
+          call addToVector ( fwdModelOut, measurements )
+        end if
         call deallocate_test ( configIndices, "ConfigIndices", moduleName )
         if ( toggle(gen) ) call trace_end ( "Retrieve.retrieve" )
       case ( s_sids )
@@ -446,7 +449,7 @@ contains
         call display_string ( field_indices(fieldIndex) )
         call output ( ' or ' )
         call display_string ( field_indices(anotherFieldIndex) )
-        call output ( ' appears, but the other is not.', advance='yes' )
+        call output ( ' appears, but the other does not.', advance='yes' )
       case ( ifAThenB )
         call output ( 'If the ' )
         call display_string ( field_indices(fieldIndex) )
@@ -592,7 +595,7 @@ contains
       call copyVector ( f_rowScaled, measurements, clone=.true., & ! mask only
         & noValues=.true., vectorNameText='_f_rowScaled', database=myVectors )
       call cloneVector ( gradient, x, vectorNameText='_gradient', database=myVectors )
-      call cloneVector ( reg_X_x, x, vectorNameText='_reg_X_x', database=myVectors )
+      call cloneVector ( reg_X_x, measurements, vectorNameText='_reg_X_x', database=myVectors )
       if ( got(f_measurementSD) ) then
         call cloneVector ( weight, measurementSD, vectorNameText='_weight', &
           & database=myVectors )
@@ -849,7 +852,7 @@ contains
           ! Add Tikhonov regularization if requested
           if ( got(f_regOrders) ) then
             call regularize ( jacobian, regOrders, regQuants, regWeight )
-            call multiply ( jacobian, x, reg_X_x ) ! regularization * x_n
+            call multiplyMatrixVectorNoT ( jacobian, x, reg_X_x ) ! regularization * x_n
             call scaleVector ( reg_X_x, -regWeight )   ! -R x_n
             call formNormalEquations ( jacobian, normalEquations, &
               & reg_X_x, atb, update=update, useMask=.false. )
@@ -1311,7 +1314,7 @@ contains
       ! Local Variables
       type (ForwardModelStatus_T) :: FmStat        ! Status for forward model
       type (ForwardModelIntermediate_T) :: Fmw     ! Work space for forward model
-      type (vector_T) :: FwdModelOut1               ! Forward outputs
+      type (vector_T) :: fwdModelOut1              ! Forward outputs
       type (Signal_T) :: signal                    ! signal info in each model
       type (VectorValue_T), pointer :: xPtr        ! pointer of l_lostransfunc quantity
       type (VectorValue_T), pointer :: xVar        ! variance of apriori
@@ -1350,7 +1353,7 @@ contains
       real(r8), dimension(:,:,:), allocatable :: C    ! for problem y=Kx, c=K^t#Sy^-1#K
                                                       ! last dimension is for mif
                                                       ! first two are (chan, s)
-	! for temporary test
+      ! for temporary test
 	p_lowcut = -2.5
 print*,'begin cloud retrieval'
       call allocate_test ( fmStat%rows, jacobian%row%nb, 'fmStat%rows', &
@@ -1783,6 +1786,9 @@ print*,'start inversion'
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.89  2001/10/09 20:38:23  vsnyder
+! Corrections for regularization; output f, not f-measurementsRetrievalModule.f90
+!
 ! Revision 2.88  2001/10/05 20:50:16  vsnyder
 ! Concatenate Snoop comment and DNWT flag; clear F before EVAL[FJ]
 !
