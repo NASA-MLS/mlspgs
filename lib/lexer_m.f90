@@ -528,23 +528,20 @@ contains
     ! Parameters for states
     integer, parameter :: Start = 1
     integer, parameter :: Id = 2
-    integer, parameter :: Number = 3
 
 !     Recognize a token according to the following DFA.  Column labels are
 !     Classes, row labels are DFA states.  Table elements are DFA states or
 !     actions to be taken when a token is recognized.
 !
-!                         dot
-!                       punct
-!         letter digit opchar End  more
-! Start     Id  Number    1    4  Error
-! Id        Id    Id      2    2    2
-! Number     3  Number    3    3    3
+!                   dot
+!         letter  punct
+!          digit opchar End  more
+! Start     Id      1    3  Error
+! Id        Id      2    2    2
 !
 ! Actions:  1: Output an operator or punctuator.  Consume the character.
 !           2: Output an identifier.  Don't consume the character.
-!           3: Output a number.  Don't consume the character.
-!           4: Output an end-of-input signal.  Don't consume the "character."
+!           3: Output an end-of-input signal.  Don't consume the "character."
 
     state = start
     do
@@ -564,11 +561,7 @@ contains
           the_token = token( t_end_of_input, string_index, .false., where )
           call set_symbol ( string_index, t_end_of_input )
     exit
-        case ( digit )
-          call add_char ( ch )
-          source_start = where
-          state = number
-        case ( letter )
+        case ( letter, digit )
           call add_char ( ch )
           source_start = where
           state = id
@@ -597,15 +590,6 @@ contains
           the_token = token( t_identifier, string_index, .true., source_start )
     exit ! main lexer loop
         end if
-      case ( number )
-        if ( class == digit ) then
-          call add_char ( ch )
-        else
-          where = where - 1
-          string_index = add_terminal ( t_number )
-          the_token = token( t_number, string_index, .true., source_start )
-    exit ! main lexer loop
-        end if
       end select
     end do
 
@@ -619,6 +603,9 @@ contains
 end module LEXER_M
 
 ! $Log$
+! Revision 2.13  2001/03/15 18:40:39  vsnyder
+! Don't generate numeric tokens in lex_signal; call them identifiers.
+!
 ! Revision 2.12  2001/03/14 19:15:32  vsnyder
 ! Add comments that describe the DFA used in lex_signal.
 !
