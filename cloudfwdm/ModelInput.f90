@@ -94,7 +94,7 @@ contains
       END DO
 
       DO I=1,NZ
-         ZVMR(I)=LOG10( max(1.e-39_r8, VMR(1,I)) )
+         ZVMR(I)=LOG10( max(1.e-19_r8, VMR(1,I)) )
       END DO
 
 
@@ -132,9 +132,8 @@ contains
             Yq(J)=((HEIGHT(JM+1)-ZH(J))*zvmr(JM)+(ZH(J)-HEIGHT(JM))*  &
      &            zvmr(JM+1))/(HEIGHT(JM+1)-HEIGHT(JM))             
 
+            YQ(J) = 10**YQ(J)
 
-            YQ(J) =10**YQ(J)
-          
             DO K=1,NS-1
             VMR1(K,J)=((HEIGHT(JM+1)-ZH(J))*VMR(K+1,JM)+(ZH(J)-HEIGHT(JM))*  &
      &            VMR(K+1,JM+1))/(HEIGHT(JM+1)-HEIGHT(JM))             
@@ -151,6 +150,9 @@ contains
 end module ModelInput
 
 ! $Log$
+! Revision 1.9  2002/12/02 17:44:15  dwu
+! remove the bug in interpolating IPSD
+!
 ! Revision 1.7  2002/10/08 17:08:07  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !

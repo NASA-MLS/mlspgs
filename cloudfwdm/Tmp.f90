@@ -64,14 +64,14 @@ contains
 
          ZPT1(J)=((ZH(JM+1)-ZZ(J))*(-LOG10(YP(JM)))+(ZZ(J)-ZH(JM))*  &
      &                (-LOG10(YP(JM+1))))/(ZH(JM+1)-ZH(JM))             
-
          ZPT1(J) = 10**(-ZPT1(J))
 
          ZTT1(J)=((ZH(JM+1)-ZZ(J))*YT(JM)+(ZZ(J)-ZH(JM))*    &
      &                YT(JM+1))/(ZH(JM+1)-ZH(JM))             
 
-         ZVT1(J)=((ZH(JM+1)-ZZ(J))*YQ(JM)+(ZZ(J)-ZH(JM))*    &
-     &                YQ(JM+1))/(ZH(JM+1)-ZH(JM))             
+         ZVT1(J)=((ZH(JM+1)-ZZ(J))*(-LOG10(YQ(JM)))+(ZZ(J)-ZH(JM))*    &
+     &                (-LOG10(YQ(JM+1))))/(ZH(JM+1)-ZH(JM))             
+         ZVT1(J) = 10**(-ZVT1(J))
 
       ENDDO
 
@@ -84,6 +84,9 @@ contains
 end module Tmp
 
 ! $Log$
+! Revision 1.3  2002/10/08 17:08:08  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 1.2  2001/09/21 15:51:38  jonathan
 ! modified F95 version
 !

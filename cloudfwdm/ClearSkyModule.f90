@@ -111,13 +111,13 @@ contains
          P=(LOG10(XP(I+1))+LOG10(XP(I)))*0.5     
          P=10**P
 
-         DQ=(LOG10( max(1.e-39_r8, XQ(I+1)) )+ &
-         &         LOG10( max(1.e-39_r8, XQ(I)) ) )*0.5
+         DQ=(LOG10( max(1.e-8_r8, XQ(I+1)) )+ &
+         &         LOG10( max(1.e-8_r8, XQ(I)) ) )*0.5
          DQ= 10**DQ
 
          DO J=1,NS-1
-            VMR1(J)=(LOG10( max(1.e-29_r8, VMR(J,I+1)) )+ &
-                   & LOG10( max(1.e-29_r8, VMR(J,I))  )  )*0.5   !vmr cannot be zero
+            VMR1(J)=(LOG10( max(1.e-19_r8, VMR(J,I+1)) )+ &
+                   & LOG10( max(1.e-19_r8, VMR(J,I))  )  )*0.5   !vmr cannot be zero
             VMR1(J)=10**VMR1(J)
          ENDDO
 
@@ -160,6 +160,9 @@ contains
 end module ClearSkyModule
 
 ! $Log$
+! Revision 1.18  2002/10/08 17:08:07  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 1.17  2002/08/22 00:13:29  jonathan
 ! upgrade to include more molecules
 !

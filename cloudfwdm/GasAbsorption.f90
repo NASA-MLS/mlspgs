@@ -84,7 +84,7 @@ contains
       END IF
 
       VMR_O2 = 0.209476_r8
-      FF     = F*1000.                 ! CONVERT F TO MHz
+      FF     = F*1000.                   ! CONVERT F TO MHz
       ZP     = -LOG10( max(1.e-9_r8,P) ) ! CONVERT P(hPa) TO ZP
       TT     = 300._r8/T
 
@@ -212,7 +212,6 @@ contains
 ! The factor 1.8 is fix to match B2U of Bill's FWM without [o2, o2]
 !      ABSC = ABSC + B*0.65*(P/1013.)**2*TT**2*(F/30)**2*1.e5/1.8  
 !======================================================================================
-
 !     CONT_1=1.4e-10*(1-1.2e-5*F**1.5)     ! LIEBE 1989
 !     CONT_1 = 1.4e-12/(1+1.93e-5*F**1.5)  ! LIEBE 1993
 !
@@ -240,7 +239,7 @@ contains
 ! difference with Bill's FWM f15 Band2U~6K, B10L~1K
 
 !      CONT_1 = 7.53e-16     ! wu's version
-      CONT_1 = 7.53e-16/1.36 ! best fit to band2 and band6
+      CONT_1 = 7.53e-16/1.3 ! best fit to band2 and band6
       CONT_2 = 4.20
       CONT_3 = 0.00
       SC_CONST = CONT_1 * FF**2 * EXP(-CONT_3 * FF**2)
@@ -311,6 +310,9 @@ contains
 end module GasAbsorption
 
 ! $Log$
+! Revision 1.13  2002/11/06 19:08:08  jonathan
+! best fit to b2 and b6
+!
 ! Revision 1.12  2002/11/06 18:20:03  jonathan
 ! add N2O
 !
