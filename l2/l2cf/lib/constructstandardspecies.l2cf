@@ -96,7 +96,7 @@ begin Construct
   IWC:  Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type = CloudIce
   LWC:  Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type = CloudWater
 
-  IWC_Fine:  Quantity, vGrid=vGridStandard, hGrid=hGridFine, type = CloudIce
+  IWC_Fine:  Quantity, vGrid=vGridIWC, hGrid=hGridFine, type = CloudIce
 
   trans:   Quantity, type=  losTransFunc,   Sgrid=sGridStandard, module=GHz
   cext:    Quantity, vGrid= vGridIWC, hGrid=hGridStandard, type = cloudExtinction
