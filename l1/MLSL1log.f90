@@ -5,10 +5,11 @@
 PROGRAM MLSL1log       ! MLS Level 1 software to produce data log
 !============================================================================
 
-  USE MLSL1Common, ONLY : L1ProgType, LogType
-  USE OpenInitLog, ONLY : OpenAndInitializeLog
-  USE L1LogUtils, ONLY : ExamineData, LogStatus
-  USE Close_Files, ONLY : CloseFiles
+  USE MLSL1Common, ONLY: L1ProgType, LogType
+  USE OpenInitLog, ONLY: OpenAndInitializeLog
+  USE L1LogUtils, ONLY: ExamineData, LogStatus
+  USE CalibWeightsFlags, ONLY: DetermineWeightsFlags
+  USE Close_Files, ONLY: CloseFiles
   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Info, MLSMessageExit
 
   IMPLICIT NONE
@@ -30,6 +31,8 @@ PROGRAM MLSL1log       ! MLS Level 1 software to produce data log
 
   CALL ExamineData
 
+  CALL DetermineWeightsFlags
+
   CALL CloseFiles
 
   CALL LogStatus
@@ -44,6 +47,9 @@ END PROGRAM MLSL1log
 !=============================================================================
 
 ! $Log$
+! Revision 2.2  2003/08/15 14:25:04  perun
+! Version 1.2 commit
+!
 ! Revision 2.1  2003/01/31 18:13:34  perun
 ! Version 1.1 commit
 !

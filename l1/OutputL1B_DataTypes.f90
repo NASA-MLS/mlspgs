@@ -1,72 +1,90 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 MODULE OutputL1B_DataTypes
+
   USE MLSCommon
+
   IMPLICIT NONE
+
   PRIVATE
+
   PUBLIC :: LENG, LENT, LENCOORD, LENUTC, L1BOAINDEX_T, L1BOASC_T, L1BOATP_T
   !------------------- RCS Ident Info -----------------------
-  CHARACTER(LEN=130) :: Id = &                                                    
+  CHARACTER(LEN=130) :: Id = & 
     "$Id$"
-  CHARACTER (LEN=*), PARAMETER :: ModuleName="$RCSfile$"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName=&
+       "$RCSfile$"
   !----------------------------------------------------------
   INTEGER, PARAMETER :: lenCoord =   3
   INTEGER, PARAMETER :: lenUTC   =  27
-  INTEGER, PARAMETER :: lenG     = 120
-  INTEGER, PARAMETER :: lenT     = 120
+  INTEGER, PARAMETER :: lenG     = 125
+  INTEGER, PARAMETER :: lenT     = lenG         ! same size for Level 2
+
   ! This data type contains index information for the L1BOA data file.
+
   TYPE L1BOAindex_T
     CHARACTER(LEN=lenUTC) :: MAFStartTimeUTC    ! MAF start time in ascii UTC
     REAL(r8) :: MAFStartTimeTAI		        ! MAF start time in TAI
     INTEGER  :: noMIFs                          ! total number of MIFs per MAF
     INTEGER  :: counterMAF                      ! MAF counter
   END TYPE L1BOAindex_T
+
   ! This data type contains spacecraft quantities for the L1BOA data file.
+
   TYPE L1BOAsc_T
     ! dimensioned (xyz,MIF)
-    REAL(r8), DIMENSION(:,:), POINTER :: scECI	        ! s/c ECI location
-    REAL(r8), DIMENSION(:,:), POINTER :: scECR	        ! s/c ECR location
+    REAL(r8), DIMENSION(:,:), POINTER :: scECI => NULL()   ! s/c ECI location
+    REAL(r8), DIMENSION(:,:), POINTER :: scECR => NULL()   ! s/c ECR location
     ! dimensioned (MIF)
-    REAL(r8), DIMENSION(:),   POINTER :: scGeocAlt   ! s/c geoc alt
-    REAL(r8), DIMENSION(:),   POINTER :: scGeodAlt   ! s/c geod alt
-    REAL,     DIMENSION(:),   POINTER :: scGeocLat   ! s/c geoc lat
-    REAL,     DIMENSION(:),   POINTER :: scGeodLat   ! s/c geod lat
-    REAL,     DIMENSION(:),   POINTER :: scLon	     ! s/c longitude
-    REAL,     DIMENSION(:),   POINTER :: scGeodAngle ! s/c master coordinate
-    REAL,     DIMENSION(:),   POINTER :: scOrbIncl  ! instant.orb incl ECR(deg)
+    REAL(r8), DIMENSION(:), POINTER :: MIF_TAI => NULL()   ! TAI time per MIF
+    REAL(r8), DIMENSION(:), POINTER :: scGeocAlt => NULL() ! s/c geoc alt
+    REAL(r8), DIMENSION(:), POINTER :: scGeodAlt => NULL() ! s/c geod alt
+    REAL,     DIMENSION(:), POINTER :: scGeocLat => NULL() ! s/c geoc lat
+    REAL,     DIMENSION(:), POINTER :: scGeodLat => NULL() ! s/c geod lat
+    REAL,     DIMENSION(:), POINTER :: scLon => NULL()     ! s/c longitude
+    REAL,     DIMENSION(:), POINTER :: scGeodAngle => NULL() ! s/c master coord
+    REAL,     DIMENSION(:), POINTER :: scOrbIncl => NULL() ! instant.orb incl ECR(deg)
     ! dimensioned (xyz,MIF)
-    REAL(r8), DIMENSION(:,:), POINTER :: scVelECI	! s/c ECI velocity
-    REAL(r8), DIMENSION(:,:), POINTER :: scVelECR       ! s/c ECR velocity
-    REAL(r8), DIMENSION(:,:), POINTER :: ypr		! s/c yaw, pitch, roll
-    REAL(r8), DIMENSION(:,:), POINTER :: yprRate	! s/c y-p-r rate
+    REAL(r8), DIMENSION(:,:), POINTER :: scVelECI => NULL()  ! s/c ECI velocity
+    REAL(r8), DIMENSION(:,:), POINTER :: scVelECR => NULL()  ! s/c ECR velocity
+    REAL(r8), DIMENSION(:,:), POINTER :: ypr => NULL()	  ! s/c yaw, pitch, roll
+    REAL(r8), DIMENSION(:,:), POINTER :: yprRate => NULL()   ! s/c y-p-r rate
   END TYPE L1BOAsc_T
+
   ! This data type contains tangent point quantities for the L1BOA data file.
+
   TYPE L1BOAtp_T
     ! dimensioned (MIF)
-    REAL(r8), DIMENSION(:),  POINTER :: encoderAngle  ! boresight wrt instr.
-    REAL(r8), DIMENSION(:),  POINTER :: scAngle	      ! boresight wrt s/c +x
-    REAL(r8), DIMENSION(:),  POINTER :: scanAngle     ! boresight wrt orbit +x
-    REAL,     DIMENSION(:),  POINTER :: scanRate      ! of change of scanAngle
+    REAL(r8), DIMENSION(:), POINTER :: encoderAngle => NULL() ! boresight wrt instr.
+    REAL(r8), DIMENSION(:), POINTER :: scAngle => NULL() ! boresight wrt s/c +x
+    REAL(r8), DIMENSION(:), POINTER :: scanAngle  => NULL() ! boresight wrt orbit +x
+    REAL,     DIMENSION(:), POINTER :: scanRate  => NULL() ! of change of scanAngle
     ! dimensioned (xyz,mod.MIF)
-    REAL(r8), DIMENSION(:,:), POINTER :: tpECI	      ! tp location in ECI
-    REAL(r8), DIMENSION(:,:), POINTER :: tpECR	      ! tp location in ECR
+    REAL(r8), DIMENSION(:,:), POINTER :: tpECI => NULL()    ! tp location in ECI
+    REAL(r8), DIMENSION(:,:), POINTER :: tpECR => NULL()    ! tp location in ECR
+    REAL(r8), DIMENSION(:,:), POINTER :: tpECRtoFOV => NULL() ! tp ECR to FOV
     ! dimensioned (mod.MIF)
-    REAL(r8), DIMENSION(:), POINTER :: tpGeodAlt       ! geod alt of tp 
-    REAL(r8), DIMENSION(:), POINTER :: tpGeocAlt       ! geoc alt of tp
-    REAL,     DIMENSION(:), POINTER :: tpOrbY	       ! out-of-plane distance
-    REAL,     DIMENSION(:), POINTER :: tpGeocLat       ! geoc lat of tp
-    REAL,     DIMENSION(:), POINTER :: tpGeocAltRate   ! of change of tpGeocAlt
-    REAL,     DIMENSION(:), POINTER :: tpGeodLat       ! geod lat of tp
-    REAL,     DIMENSION(:), POINTER :: tpGeodAltRate   ! of change of tpGeodAlt
-    REAL,     DIMENSION(:), POINTER :: tpLon	       ! longitude of tp
-    REAL,     DIMENSION(:), POINTER :: tpGeodAngle     ! tp master coordinate
-    REAL,     DIMENSION(:), POINTER :: tpSolarTime     ! solar time coordinate
-    REAL,     DIMENSION(:), POINTER :: tpSolarZenith   ! solar zenith angle
-    REAL,     DIMENSION(:), POINTER :: tpLosAngle      ! line-of-sight ang to N
+    REAL(r8), DIMENSION(:), POINTER :: tpGeodAlt => NULL()  ! geod alt of tp 
+    REAL(r8), DIMENSION(:), POINTER :: tpGeocAlt  => NULL() ! geoc alt of tp
+    REAL,     DIMENSION(:), POINTER :: tpOrbY => NULL()	    ! out-of-plane dist.
+    REAL,     DIMENSION(:), POINTER :: tpGeocLat  => NULL() ! geoc lat of tp
+    REAL,     DIMENSION(:), POINTER :: tpGeocAltRate => NULL() ! of change of tpGeocAlt
+    REAL,     DIMENSION(:), POINTER :: tpGeodLat => NULL()     ! geod lat of tp
+    REAL,     DIMENSION(:), POINTER :: tpGeodAltRate => NULL() ! of change of tpGeodAlt
+    REAL,     DIMENSION(:), POINTER :: tpLon => NULL()	      ! longitude of tp
+    REAL,     DIMENSION(:), POINTER :: tpGeodAngle => NULL()  ! tp master coord
+    REAL,     DIMENSION(:), POINTER :: tpSolarTime => NULL()  ! solar time coord
+    REAL,     DIMENSION(:), POINTER :: tpSolarZenith => NULL() ! solar zenith ang
+    REAL,     DIMENSION(:), POINTER :: tpLosAngle => NULL() ! line-of-sight ang to N
+    REAL(r8), DIMENSION(:), POINTER :: tpLosVel => NULL()   ! line-of-sight velocity
   END TYPE L1BOAtp_T
+
 END MODULE OutputL1B_DataTypes
 
 ! $Log$
+! Revision 2.2  2003/08/15 14:25:04  perun
+! Version 1.2 commit
+!
 ! Revision 2.1  2002/11/07 21:27:13  jdone
 ! Consolidate datatypes used by the output routines.
 !

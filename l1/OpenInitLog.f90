@@ -33,9 +33,10 @@ CONTAINS
     USE MLSL1Config, ONLY: L1Config, GetL1Config
     USE InitPCFs, ONLY: L1PCF, GetPCFParameters
     USE MLSPCF1, ONLY: mlspcf_engtbl_start, mlspcf_l1b_log_start, &
-         mlspcf_pcf_start, mlspcf_l1cf_start
+         mlspcf_pcf_start, mlspcf_l1cf_start, mlspcf_sciMAF_start, &
+         mlspcf_engMAF_start, mlspcf_MAF_data_start, mlspcf_l1b_eng_start
     USE L0_sci_tbls, ONLY: InitSciPointers
-    USE EngTbls, ONLY: Load_Eng_tbls
+    USE EngTbls, ONLY: Load_Eng_tbls, Eng_tbl, maxtlm
     USE MLSL1Common, ONLY: L1BFileInfo
 
     CHARACTER (LEN=132) :: PhysicalFilename
@@ -43,7 +44,7 @@ CONTAINS
     INTEGER :: eng_tbl_unit, ios, log_unit
     INTEGER :: returnStatus, version
 
-    INTEGER, EXTERNAL :: PGS_TD_UTCtoTAI
+    INTEGER, EXTERNAL :: PGS_TD_UTCtoTAI, PGS_IO_Gen_Track_LUN
 
     TYPE (TAI93_Range_T) :: procRange
 
@@ -120,6 +121,38 @@ CONTAINS
     CALL MLSMessage (MLSMSG_Info, ModuleName, &
          & "Closed engineering table file")
 
+!! Open L1BENG File
+
+    WRITE (PhysicalFilename, "(I5.5)") mlspcf_l1b_eng_start
+    version = 1
+    returnStatus = PGS_PC_getReference (mlspcf_l1b_eng_start, version, &
+     PhysicalFilename)
+
+    IF (returnStatus /= PGS_S_SUCCESS) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not find L1BENG file entry")
+    ENDIF
+
+    returnStatus = PGS_IO_Gen_Track_LUN (L1BFileInfo%EngId, 0)
+
+    OPEN (unit=L1BFileInfo%EngId, file=PhysicalFilename, &
+         status="REPLACE", FORM="UNFORMATTED", ACCESS="SEQUENTIAL", iostat=ios)
+
+    IF (ios /= 0) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not open L1B engineering file: " // PhysicalFilename)
+    ENDIF
+    
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & "Opened L1B engineering file: " // PhysicalFilename)
+
+    L1BFileInfo%EngFileName = PhysicalFilename
+
+! write header info
+
+    WRITE (L1BFileInfo%EngId) maxtlm
+    WRITE (L1BFileInfo%EngId) eng_tbl%mnemonic
+
 !! Open L0 files:
 
     CALL OpenL0Files
@@ -136,7 +169,7 @@ CONTAINS
           & PhysicalFilename)
     IF (returnstatus /= PGS_S_SUCCESS) THEN
        CALL MLSMessage (MLSMSG_Error, ModuleName, &
-            & "Could not find file entry for pcf_log_start " // &
+            & "Could not find file entry for pcf_log_start: " // &
             PhysicalFilename)
     ENDIF
 
@@ -158,6 +191,83 @@ CONTAINS
     L1BFileInfo%LogId = log_unit
     L1BFileInfo%LogFilename = PhysicalFilename
 
+!! Open Eng/Sci MAF files:
+
+    WRITE (PhysicalFilename, "(I3.3)") mlspcf_engMAF_start
+    version = 1
+    returnStatus = PGS_PC_getReference (mlspcf_engMAF_start, version, &
+          & PhysicalFilename)
+    IF (returnstatus /= PGS_S_SUCCESS) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not find file entry for pcf_engMAF_start: " // &
+            PhysicalFilename)
+    ENDIF
+
+    returnStatus = PGS_IO_Gen_Track_LUN (L1BFileInfo%EngMAF_unit, 0)
+
+    OPEN (unit=L1BFileInfo%EngMAF_unit, file=PhysicalFilename, &
+         status="REPLACE", FORM="UNFORMATTED", ACCESS="SEQUENTIAL", iostat=ios)
+
+    IF (ios /= 0) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not open engMAF file: " // PhysicalFilename)
+    ENDIF
+
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & "Opened engMAF file: " // PhysicalFilename)
+
+    WRITE (PhysicalFilename, "(I3.3)") mlspcf_sciMAF_start
+    version = 1
+    returnStatus = PGS_PC_getReference (mlspcf_sciMAF_start, version, &
+          & PhysicalFilename)
+    IF (returnstatus /= PGS_S_SUCCESS) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not find file entry for pcf_sciMAF_start: " // &
+            PhysicalFilename)
+    ENDIF
+
+    returnStatus = PGS_IO_Gen_Track_LUN (L1BFileInfo%SciMAF_unit, 0)
+
+    OPEN (unit=L1BFileInfo%sciMAF_unit, file=PhysicalFilename, &
+         status="REPLACE", FORM="UNFORMATTED", ACCESS="SEQUENTIAL", iostat=ios)
+
+    IF (ios /= 0) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not open sciMAF file: " // PhysicalFilename)
+    ENDIF
+
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & "Opened sciMAF file: " // PhysicalFilename)
+
+    WRITE (PhysicalFilename, "(I3.3)") mlspcf_MAF_data_start
+    version = 1
+    returnStatus = PGS_PC_getReference (mlspcf_MAF_data_start, version, &
+          & PhysicalFilename)
+    IF (returnstatus /= PGS_S_SUCCESS) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not find file entry for pcf_MAF_data_start: " // &
+            PhysicalFilename)
+    ENDIF
+
+    returnStatus = PGS_IO_Gen_Track_LUN (L1BFileInfo%MAF_data_unit, 0)
+
+    OPEN (unit=L1BFileInfo%MAF_data_unit, file=PhysicalFilename, &
+         status="REPLACE", FORM="UNFORMATTED", ACCESS="SEQUENTIAL", &
+         ACTION="READWRITE", iostat=ios)
+
+    IF (ios /= 0) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not open MAF_data file: " // PhysicalFilename)
+    ENDIF
+
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & "Opened MAF_data file: " // PhysicalFilename)
+
+!! Write some header info for comparisons:
+
+    WRITE (L1BFileInfo%MAF_data_unit) L1PCF%PCF_filename
+    WRITE (L1BFileInfo%MAF_data_unit) L1PCF%L1CF_filename
+
   END SUBROUTINE OpenAndInitializeLog
 
 !=============================================================================
@@ -165,6 +275,9 @@ END MODULE OpenInitLog
 !=============================================================================
 
 ! $Log$
+! Revision 2.2  2003/08/15 14:25:04  perun
+! Version 1.2 commit
+!
 ! Revision 2.1  2003/01/31 18:13:34  perun
 ! Version 1.1 commit
 !

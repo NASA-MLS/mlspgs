@@ -14,7 +14,7 @@ MODULE L1LogUtils
 
   PRIVATE
 
-  PUBLIC :: ExamineData, LogStatus
+  PUBLIC :: ExamineData, LogStatus, EngMAFs, SciMAFs
 
   !------------------------------- RCS Ident Info ------------------------------
   CHARACTER(LEN=130) :: id = &
@@ -73,6 +73,7 @@ CONTAINS
           DO
              IF (EngMAF%MAFno == BeginEnd%SciMAFno(1)) EXIT
              CALL NextEngMAF (more_data)
+             IF (.NOT. more_data) EXIT
           ENDDO
 
           BeginEnd%EngMAFno(1) = EngMAF%MAFno
@@ -81,6 +82,10 @@ CONTAINS
           last_TAI = EngMAF%secTAI
           first = .FALSE.
        ENDIF
+
+! Save data for further processing:
+
+       WRITE (L1BFileInfo%EngMAF_unit) EngMAF
 
 ! Check for data gaps:
 
@@ -107,6 +112,8 @@ CONTAINS
        IF (.NOT. more_data) more_data = (EngMAF%MAFno /= BeginEnd%SciMAFno(2))
        IF (.NOT. more_data) EXIT
    ENDDO
+
+   ENDFILE L1BFileInfo%EngMAF_unit
 
    IF (Eng_Warns == 0 .AND. Eng_Errs == 0) &
         WRITE (unit, *) '##### No Warnings and no Errors ###'
@@ -147,6 +154,10 @@ CONTAINS
           first = .FALSE.
        ENDIF
 
+! Save data for further processing:
+
+       WRITE (L1BFileInfo%SciMAF_unit) SciMAF
+
 ! Check for data gaps:
 
        MAF_dif = INT ((SciMAF(0)%secTAI - last_TAI) / MAF_dur + 0.1)
@@ -168,6 +179,8 @@ CONTAINS
        BeginEnd%SciTAI(2) = SciMAF(0)%secTAI
 
     ENDDO
+
+    ENDFILE L1BFileInfo%SciMAF_unit
 
     IF (Sci_Warns == 0 .AND. Sci_Errs == 0) &
          WRITE (unit, *) '##### No Warnings and no Errors ###'
@@ -294,6 +307,9 @@ END MODULE L1LogUtils
 !=============================================================================
 
 ! $Log$
+! Revision 2.2  2003/08/15 14:25:04  perun
+! Version 1.2 commit
+!
 ! Revision 2.1  2003/01/31 18:13:34  perun
 ! Version 1.1 commit
 !
