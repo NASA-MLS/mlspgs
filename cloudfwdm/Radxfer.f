@@ -45,9 +45,13 @@ C===================================================================
       REAL TSCAT(N0,NU0,NZ)            ! TB FROM SCATTERING PHASE FUNCTION
 
       INTEGER LMIN(NZ)                 ! LOWEST LAYER REACHED BY A TANGENT HT
-      INTEGER ICON                     ! CLOUD CONTROL SWITCH
-                                       ! 0 = CLOUDS IN BOTH UP/DOWNWARD PATH
-                                       ! 1 = CLOUDS IN UPWARD PATH ONLY
+
+      INTEGER ICON                             ! CONTROL SWITCH
+                                               ! 0 = CLEAR-SKY
+                                               ! 1 = CLEAR-SKY, 100% R.H. 
+                                               !     BELOW 100hPa
+                                               ! 2 = DEFAULT
+                                               ! 3 = NEAR SIDE CLOUD ONLY
 
       REAL UAVE(NZ,NZ)                 ! INCIDENT ANGLES FOR EACH TANGENT HT
       REAL UEFF                        ! EFFECTIVE U BETWEEN K AND K+1
@@ -293,7 +297,7 @@ C-----------------------------------------------------------
 
          tsource=(((1-WW0)*TEMP(K1)+WK)+((1-www0)*TEMP(K1+1)+wwk))/2.
 
-         IF (ICON .eq. 0) THEN
+         IF (ICON .eq. 3) THEN
             tsource=( TEMP(K1)+TEMP(K1+1) )/2. ! NO CLOUD AFTER TANGENT POINT
          ENDIF
 

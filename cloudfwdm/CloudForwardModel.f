@@ -1,50 +1,93 @@
 
-      SUBROUTINE CloudForwardModel (NF, NZ, NT, NS,
-     1           FREQUENCY,PRESSURE,HEIGHT,TEMPERATURE,VMRin,IWC,LWC,
-     1           ZT, RE, IPSD, ISURF, ISWI, ICON,
-     2           TB0,DTcir,BETA,BETAc,Dm,TAUeff,SS )  
+      SUBROUTINE CloudForwardModel ( NF, NZ, NT, NS,
+     1           FREQUENCY, PRESSURE, HEIGHT, TEMPERATURE, VMRin,
+     2           IWC, LWC, IPSD, 
+     3           ZT, RE, ISURF, ISWI, ICON,
+     4           TB0, DTcir, BETA, BETAc, Dm, TAUeff, SS )  
 
-C===========================================================================C
-C   >>>>>>>> CLOUDY-SKY FORWARD MODEL FOR MICROWAVE LIMB SOUNDER <<<<<<<<   C
-C---------------------------------------------------------------------------C
-C                                                                           C
-C     DESCRIPTION OF MODEL PARAMETERS           NOTES                       C
-C     -------------------------------           -----                       C
-C     1. INPUT:  FREQUENCY  (NF)                                            C 
-C                PRESSURE   (NZ)    . The internal model resuires NZ=640    C
-C                HEIGHT     (NZ)      and the top model layer is defined    C
-C                TEMPERATURE(NZ)      at PRESSURE(640)=10^(-(40./16.-3.)).  C 
-C                VMRin      (NS,NZ) . Volume mixing ratios (N:1=H2O,2=O3)   C
-C                IWC        (NZ)                                            C
-C                LWC        (NZ)                                            C
-C                ZT         (NT)    . Tangent pressure                      C
-C                RE                 . Earth radius                          C
-C                IPSD,ISURE,ISWI,   . User determined size-distribution,    C
-C                ICON                 surface-type, sensitivity calcula-    C
-C                                     tion and cloud control switches.      C 
-C                                     Default: (0,0,0,2)                    C
-C                                                                           C
-C     2. OUTPUT: TB0     (NT,NF)    . Background clear-sky radiance         C 
-C                DRcir   (NT,NF)    . Cloud induced radiance                C
-C                BETA    (NZ-1,NF)  . Total extinction profile              C
-C                BETAc   (NZ-1,NF)  . Cloud extinction profile              C
-C                TAUeff  (NT,NF)    . Effective cloud optical depth         C
-C                SS      (NT,NF)    . Cloud radiance sensitivity            C
-C                Dm      (2,NZ-1)   . Mass-mean-diameters (1=ice,2=water)   C
-C     -------------------------------                                       C
-C     FREQUENCY RANGE: 1-3000GHz                                            C
-C                                                                           C
-C     VERSION: 1.0, MAY 18, 2001                                            C
-C     MICROWAVE ATMOSPHERIC SCIENCE TEAM                                    C
-C     JET PROPULSION LABORATORY                                             C
-C     CALIFORNIA INSTITUTE OF TECHNOLOGY                                    C
-C     4800 OAK GROVE DRIVE                                                  C
-C     PASADENA, CA 91109-8099                                               C
-C                                                                           C
-C     EMAIL: JONATHAN@MLS.JPL.NASA.GOV                                      C
-C     PHONE: (818) 354-7135                                                 C
-C     FAX:   (818) 393-5065                                                 C
-C===========================================================================C
+C============================================================================C
+C   >>>>>>>>> FULL CLOUD FORWARD MODEL FOR MICROWAVE LIMB SOUNDER >>>>>>>>   C
+C----------------------------------------------------------------------------C
+C                                                                            C
+C     THIS PROGRAM IS USED IN LEVEL 2 DATA PROCESSING TO SIMULATE CLOUD      C
+C     INDUCED RADIANCES AND CLOUD RADIANCE SENSITIVITY.  IT CAN ALSO BE      C
+C     IN CLEAR-SKY CONDITION AS A CLEAR-SKY FORWARD MODEL, THAT WILL BE      C
+C     IN CLOUD FLAGING PROCESS. IN THE CLOUD FLAGING CASE, THIS PROGRAM      C
+C     MUST BE CALLED TWICE TO COMPUTE CLEAR-SKY RADIANCES IN BOTH DRY &      C
+C     WET (100% RELATIVE HUMIDITY) CONDITIONS.                               C
+C                                                                            C
+C     JONATHAN H. JIANG, JUNE 6, 2001                                        C
+C                                                                            C
+C----------------------------------------------------------------------------C
+C                                                                            C
+C     <<< INPUT PARAMETERS >>>                                               C
+C     ------------------------                                               C
+C                                                                            C
+C     0. DEMENSION:                                                          C
+C     -------------                                                          C
+C     NF:             -> Number of Frequencies.                              C
+C     NZ:             -> Number of Pressure Levels. Note the internal model  C 
+C                        grid resuires NZ=640 and top of the model layer is  C
+C                        defined at PRESSURE(640)=10^(-(40/16-3)). However,  C
+C                        the input can be any number of pressure levels and  C
+C                        this program will check the input grid and convert  C
+C                        the input grid to internal model grid, if it finds  C
+C                        the input grid not matching the internal grid.      C
+C     NT:             -> Number of Tangent Pressures.                        C
+C     NS:             -> Number of Chemical Species.                         C
+C                                                                            C
+C     1. ATMOSPHERIC PROFILES:                                               C
+C     ------------------------                                               C
+C     FREQUENCY  (NF) -> Frequency (GHz).                                    C 
+C     PRESSURE   (NZ) -> Pressure (hPa).                                     C
+C     HEIGHT     (NZ) -> Geopotential Height (hPa).                          C
+C     TEMPERATURE(NZ) -> Temperature (K).                                    C 
+C     VMRin   (NS,NZ) -> Volumn Mixing Ratios (ppm). Note: only H2O and O3   C
+C                        mixing ratios are needed for input.                 C
+C                                                                            C
+C     2. CLOUD PARAMETERS:                                                   C
+C     --------------------                                                   C
+C     IWC        (NZ) -> Cloud Ice Water Content (g/m3).                     C
+C     LWC        (NZ) -> Cloud Liquid Water Content (g/m3).                  C
+C     IPSD       (NZ) -> Particle Size Distribution Flag.                    C
+C                                                                            C
+C     3. OTHER PARAMETERS:                                                   C
+C     --------------------                                                   C
+C     ZT         (NT) -> Tangent Pressure (hPa).                             C
+C     RE              -> Radius of Earth (m).                                C
+C     ISURE           -> Surface Types (Default: 0).                         C
+C     ISWI            -> Switch for Sensitivity Calculation (Default: 0).    C
+C     ICON            -> Cloud Control Switch (Default: 2).                  C
+C     -----------------------------------------------                        C
+C                                                                            C
+C     >>> OUTPUT PARAMETERS <<<                                              C
+C     -------------------------                                              C
+C                                                                            C
+C     4. STANDARD OUTPUTS:                                                   C
+C     --------------------                                                   C
+C     TB0     (NT,NF) -> Background Clear-sky Radiance (K).                  C 
+C     DRcir   (NT,NF) -> Cloud Induced Radiance (K).                         C
+C     TAUeff  (NT,NF) -> Effective Cloud Optical Depth.                      C
+C     SS      (NT,NF) -> Cloud Radiance Sensitivity (K).                     C
+C     BETA  (NZ-1,NF) -> Total Extinction Profile (m-1).                     C
+C     BETAc (NZ-1,NF) -> Cloud Extinction Profile (m-1).                     C
+C     Dm     (2,NZ-1) -> Mass-Mean-Diameters (micron). Note:1=Ice,2=Liquid.  C
+C                                                                            C
+C     -----------------------------------------------                        C
+C                                                                            C
+C     FREQUENCY RANGE: 1-3000GHz                                             C
+C                                                                            C
+C     VERSION: 1.0, MAY 18, 2001                                             C
+C     MICROWAVE ATMOSPHERIC SCIENCE TEAM                                     C
+C     JET PROPULSION LABORATORY                                              C
+C     CALIFORNIA INSTITUTE OF TECHNOLOGY                                     C
+C     4800 OAK GROVE DRIVE                                                   C
+C     PASADENA, CA 91109-8099                                                C
+C                                                                            C
+C     EMAIL: JONATHAN@MLS.JPL.NASA.GOV                                       C
+C     PHONE: (818) 354-7135                                                  C
+C     FAX:   (818) 393-5065                                                  C
+C============================================================================C
 
       IMPLICIT NONE
 
@@ -57,15 +100,16 @@ C---------------------------------------
       INTEGER NT                               ! NUMBER OF TANGENT HEIGHTS
       INTEGER NS                               ! NUMBER OF SPECIES
 
-      INTEGER IPSD                             ! SIZE-DISTRIBUTION TYPE
-                                               ! 0 = MH          
-                                               ! 1 = LIU-CURRY
-                                               ! 2 = PSD FOR LIQUID WATER
-                                               ! 3 = PSD FOR PSC
-                                               ! 10-19 MODIFIED GAMMA WITH 
-                                               !       VARIOUS Deff, Alpha
-                                               ! 20-29 KNOLLENBERG WITH 
-                                               !       VARIOUS b1
+      INTEGER IPSD(NZ)                         ! SIZE-DISTRIBUTION FLAG
+                                               ! IILL     (I=ICE, L=LIQUID)
+                                               ! 1000:     I->MH, L->GAMMA 
+                                               ! 1100:     I->LIU-CURRY
+                                               ! 2000-3900:I->MODIFIED GAMMA
+                                               !              WITH VARIOUS De,
+                                               !              alpha
+                                               ! 4000-5900:I->KNOLLENBERG WITH 
+                                               !              VARIOUS b1
+                                               ! 6000:     I->PSD FOR PSC
 
       INTEGER ISURF                            ! SURFACE TYPE
                                                ! 0 = SIMPLE MODEL
@@ -73,13 +117,15 @@ C---------------------------------------
                                                ! 2 = SEA 
   
       INTEGER ISWI                             ! SENSITIVITY SWITCH
-                                               ! 0 = NO SENSITIVITY CALCULATION
-                                               ! 1 = COMPUTE SENSITIVITY
+                                               ! 0 = OFF
+                                               ! 1 = ON
 
-      INTEGER ICON                             ! CLOUD CONTROL SWITCH
-                                               ! 0 = NO CLOUD
-                                               ! 1 = NEAR SIDE CLOUD ONLY
+      INTEGER ICON                             ! CONTROL SWITCH
+                                               ! 0 = CLEAR-SKY
+                                               ! 1 = CLEAR-SKY, 100% R.H. 
+                                               !     BELOW 100hPa
                                                ! 2 = DEFAULT
+                                               ! 3 = NEAR SIDE CLOUD ONLY
 
       REAL FREQUENCY(NF)                       ! FREQUENCIES (GHz)
       REAL PRESSURE(NZ)                        ! PRESSURE LEVEL
@@ -185,6 +231,7 @@ C----------------------------
 C     CLOUD MODEL PARAMETERS
 C----------------------------
 
+      INTEGER PSDF(L+1)                        ! SIDE DISTRIBUTION FLAG 
       REAL WC(N,L+1)                           ! CLOUD WATER CONTENT (g/m3)
                                                ! (N=1 ICE, N=2 WATER)
       REAL CWC                                 ! CLOUD WATER CONTENT (g/m3)
@@ -224,7 +271,8 @@ C=========================================================================
       CALL MODEL_ATMOS(PRESSURE,HEIGHT,TEMPERATURE,VMRin,NZ,NS,  
      >                  YP,YZ,YT,YQ,VMR,L+1,ZT,ZZT,NT) 
                                                        
-      CALL CLOUD_CHECK(PRESSURE,IWC,LWC,NZ,WC,CHK_CLD,L+1)     
+      CALL CLOUD_CHECK(PRESSURE,IWC,LWC,IPSD,NZ,
+     >                  WC,PSDF,CHK_CLD,L+1)     
 
 C-----------------------------------------------
 C     INITIALIZE SCATTERING AND INCIDENT ANGLES 
@@ -289,6 +337,12 @@ C-----------------------------------------------------
             ENDIF
          ENDDO
 
+         IF (ICON .EQ. 1) THEN
+            DO IL=1,ICLD_TOP             ! 100% SATURATION BELOW CLOUD 
+               TAU0(IL)=TAU100(IL)       
+            ENDDO
+         ENDIF   
+
 C--------------------------------------------------------
 
          DO 1000 ILYR=1,L                 ! START OF MODEL LAYER LOOP:   
@@ -322,15 +376,15 @@ C--------------------------------------------------------
             IF(CHK_CLD(ILYR) .NE. 0.) THEN 
 
                DO ISPI=1,N
-                  CWC = WC(ISPI,ILYR) 
+                  CWC = RATIO*WC(ISPI,ILYR) 
                   CWC = MAX(1.E-9,CWC)
               
 C=================================================
 C    >>>>>>>>> CLOUDY-SKY MODULE <<<<<<<<<<<
 C=================================================
        
-                  CALL CLOUDY_SKY(ISPI,CWC,TEMP(ILYR),FREQ(IFR),
-     >                            NU,U,DU,P11,RC11,IPSD,DMA)
+                  CALL CLOUDY_SKY ( ISPI,CWC,TEMP(ILYR),FREQ(IFR),
+     >                            NU,U,DU,P11,RC11,PSDF(ILYR),DMA )
 
                   DO K=1,NU
                      PHH(ISPI,K,ILYR)=P11(K)      ! INTERGRATED PHASE FUNCTION
@@ -372,12 +426,12 @@ C==================================================
          CALL HEADER(4)
 
          CALL RADXFER(L,NU,NUA,U,DU,PH0,NT,ZZT,W00,TAU0,RS,TS,FREQ(IFR),
-     >                YZ,TEMP,N,THETA,THETAI,PHI,UI,UA,TT0,MNT,ICON,RE)  !CLEAR-SKY
+     >              YZ,TEMP,N,THETA,THETAI,PHI,UI,UA,TT0,MNT,ICON,RE) !CLEAR-SKY
 
-         IF(ICON .NE. 0) THEN                                          
+         IF(ICON .GT. 1) THEN                                          
 
            CALL RADXFER(L,NU,NUA,U,DU,PHH,NT,ZZT,W0,TAU,RS,TS,FREQ(IFR),
-     >                YZ,TEMP,N,THETA,THETAI,PHI,UI,UA,TT,MNT,ICON,RE)   !CLOUDY-SKY
+     >             YZ,TEMP,N,THETA,THETAI,PHI,UI,UA,TT,MNT,ICON,RE)  !CLOUDY-SKY
 
          ENDIF
 
