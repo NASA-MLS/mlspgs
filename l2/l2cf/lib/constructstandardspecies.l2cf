@@ -24,10 +24,13 @@ begin Construct
   !define(allMolecules,{!allLinearMolecules,!allLogMolecules})
   !define(allHiResMolecules,
     {!makelist({},{_HR},!allLinearHRMolecules),!makelist({},{_HR},!allLogHRMolecules)})
-  ;; ----------------------------------------- Tangent pressures
+  ;; ----------------------------------------- Tangent pressures and phis
 
   ptanGHz: Quantity, type=ptan, module=GHz
   ptanTHz: Quantity, type=ptan, module=THz
+
+  phitanGHz: Quantity, type=phitan, module=GHz
+  phitanTHz: Quantity, type=phitan, module=THz
 
   ;; ----------------------------------------- Temperature / refgph
   
@@ -197,7 +200,7 @@ begin Construct
   ;; Put extra line breaks here to get round a problem I'm having
   ;; running this with NAG.
   stateTemplate: VectorTemplate, quantities = [ $
-    ptanGHZ, ptanTHz, temperature, $
+    ptanGHZ, ptanTHz, phitanGHz, phitanTHz, temperature, $
     !ifdef(skipHiRes,{},{temperature_HR,}) refGPH, GPH, $
     !allMolecules, $
     !ifdef(skipHiRes,{},{!allHiResMolecules,}) $
