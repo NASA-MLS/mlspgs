@@ -480,7 +480,8 @@ is_same = .true.       !! TEST!!!
 !!$          IF (is_same) is_same = (ALL (cal_qual%FB(i,j) == qualVecP))
 
              ! is_same = ALL (CalWin%MAFdata%nominal%FB(j))
-             IF (is_same .AND. calen == nVec) THEN
+!             IF (is_same .AND. calen == nVec) THEN
+             IF (is_same) THEN
                 comVec = comVecP
                 errmul = errmulP
                 Istat = statusP
@@ -519,7 +520,8 @@ is_same = .true.       !! TEST!!!
 !!$          IF (is_same) is_same = (ALL (cal_qual%MB(i,j) == qualVecP))
 
           ! is_same = ALL (CalWin%MAFdata%nominal%MB(j))
-          IF (is_same .AND. calen == nVec) THEN
+!          IF (is_same .AND. calen == nVec) THEN
+          IF (is_same) THEN
              comVec = comVecP
              errmul = errmulP
              Istat = statusP
@@ -555,7 +557,8 @@ is_same = .true.       !! TEST!!!
 !!$          IF (is_same) is_same = (ALL (cal_qual%WF(i,j) == qualVecP))
 
           ! is_same = ALL (CalWin%MAFdata%nominal%WF(j))
-          IF (is_same .AND. calen == nVec) THEN
+!          IF (is_same .AND. calen == nVec) THEN
+          IF (is_same) THEN
              comVec = comVecP
              errmul = errmulP
              Istat = statusP
@@ -593,7 +596,8 @@ is_same = .true.       !! TEST!!!
 !!$          IF (is_same) is_same = (ALL (cal_qual%DACS(i,j) == qualVecP))
 
              ! is_same = ALL (CalWin%MAFdata%nominal%DACS(j))
-             IF (is_same .AND. calen == nVec) THEN
+!             IF (is_same .AND. calen == nVec) THEN
+             IF (is_same) THEN
                 comVec = comVecP
                 errmul = errmulP
                 Istat = statusP
@@ -793,6 +797,9 @@ END MODULE Calibration
 !=============================================================================
 
 ! $Log$
+! Revision 2.5  2002/10/24 14:42:55  perun
+! Do not redo quad interpolation until next version
+!
 ! Revision 2.4  2002/08/06 20:43:45  perun
 ! Set all calibration to precomputed until further notice.
 !
