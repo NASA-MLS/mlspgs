@@ -21,12 +21,14 @@ contains
   Subroutine Create_beta (Spectag, pressure, Temp, Fgr, nl, Catalog,     &
          &   v0s, x1,y, yi, slabs1, dx1_dv0, dy_dv0, dslabs1_dv0, v0sp,  &
          &   x1p, yp, yip, slabs1p, v0sm, x1m, ym,yim,slabs1m,beta_value,&
-         &   t_power, dbeta_dw, dbeta_dn, dbeta_dnu0, Frq_Gap, Ier)
+         &   t_power, dbeta_dw, dbeta_dn, dbeta_dnu0, Frq_Gap, temp_der, &
+         &   spect_der,Ier)
 !
 !  For a given channel, frequency and height, compute beta_value function.
 !  This routine should be called for primary and image seperately.
 !
     Integer(i4), intent(in) :: SPECTAG, nl
+    Logical, intent(in) :: temp_der, spect_der
 
     Real(r8), intent(in) :: Pressure, Temp, Fgr, Frq_Gap
 
@@ -130,12 +132,17 @@ contains
 
       Call dvoigt_spectral(dNu,v0s(ln_i),x1(ln_i),yi(ln_i),y(ln_i), &
      &       w,temp,slabs1(ln_i),dx1_dv0(ln_i),dy_dv0(ln_i),          &
-     &       dslabs1_dv0(ln_i),bb,dw,dn,ds)
+     &       dslabs1_dv0(ln_i),bb,spect_der,dw,dn,ds)
 !
       beta_value = beta_value + bb
-      dbeta_dw = dbeta_dw + dw
-      dbeta_dn = dbeta_dn + dn
-      dbeta_dnu0 = dbeta_dnu0 + ds
+!
+      if(spect_der) then
+        dbeta_dw = dbeta_dw + dw
+        dbeta_dn = dbeta_dn + dn
+        dbeta_dnu0 = dbeta_dnu0 + ds
+      endif
+
+      if(.not. temp_der) CYCLE
 !
 !  Find the temperatue power dependency now:
 !
@@ -163,6 +170,9 @@ contains
   End Subroutine Create_beta
 end module CREATE_BETA_M
 ! $Log$
+! Revision 1.10  2001/05/14 23:16:31  zvi
+! Added Freq. Gap test..
+!
 ! Revision 1.9  2001/05/14 23:14:54  zvi
 ! Added Freq. Gap test..
 !

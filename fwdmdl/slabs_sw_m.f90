@@ -549,11 +549,12 @@ END Subroutine Drayson
 !       routine to compute dx1_dv0,dy_dv0 and dslabs1_dNu0
 !
  Subroutine dvoigt_spectral(dNu,Nu0,x1,yi,y,w,t,slabs1,dx1_dv0, &
-     &      dy_dv0,dslabs1_dNu0,SwI,dSwI_dw,dSwI_dn,dSwI_dNu0)
+     &      dy_dv0,dslabs1_dNu0,SwI,spect_der,dSwI_dw,dSwI_dn,dSwI_dNu0)
 !
   Real(r8), Parameter :: twovspi = 1.1283791670955125739_r8   ! 2.0/Sqrt(Pi)
   Real(r8), Parameter :: oneovspi = 0.5_r8 * twovspi
 !
+  Logical, INTENT(IN) :: spect_der
   Real(r8), INTENT(IN) :: dNu, Nu0, x1, yi, y, w, t, slabs1, &
                           dslabs1_dNu0, dx1_dv0, dy_dv0
 
@@ -584,6 +585,8 @@ END Subroutine Drayson
   r = z * oneovspi + yi * v
   vvw = (u + r) * q2
   SwI = slabs1 * vvw
+
+  if(.not. spect_der) Return
 !
 ! Compute the derivative of SwI w.r.t. w
 !
@@ -615,5 +618,8 @@ END Subroutine Drayson
 !
 End module SLABS_SW_M
 ! $Log$
+! Revision 1.1  2001/02/03 02:07:01  zvi
+! Changes and additions
+!
 ! Revision 1.1  2001/01/31 18:12:06  Z.Shippony
 ! Initial conversion to Fortran 90

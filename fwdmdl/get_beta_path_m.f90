@@ -25,7 +25,7 @@ contains
 !----------------------------------------------------------------------
 
  subroutine Get_beta_path ( frequencies, Catalog, no_ele, z_path, t_path, &
-                      &     beta_path, vel_z, Frq_Gap, ier )
+                      &     beta_path, vel_z, Frq_Gap, temp_der, spect_der, Ier)
 
   !  ===============================================================
   !  Declaration of variables for sub-program: get_beta_path
@@ -36,6 +36,7 @@ contains
 
   Real(r8), dimension(:), intent(in) :: frequencies
   Integer(i4), intent(in) :: no_ele
+  Logical, intent(in) :: temp_der, spect_der
 
   Real(r8),    intent(in) :: vel_z, Frq_Gap
 
@@ -138,7 +139,7 @@ contains
         Call Create_beta (Spectag,p,t,Frq,nl,Catalog(i),v0s,x1, &
        &     y,yi,slabs1,dx1_dv0,dy_dv0,dslabs1_dv0,v0sp,x1p,yp,&
        &     yip,slabs1p,v0sm,x1m,ym,yim,slabs1m,values,t_power,&
-       &     dbeta_dw,dbeta_dn,dbeta_dnu,Frq_Gap,Ier)
+       &     dbeta_dw,dbeta_dn,dbeta_dnu,Frq_Gap,temp_der,spect_der,Ier)
         if(Ier /= 0) goto 99
 
         beta_path(i,frq_i)%values(h_i) = values
@@ -211,6 +212,9 @@ contains
   end subroutine get_beta_path
 end module GET_BETA_PATH_M
 ! $Log$
+! Revision 1.19  2001/05/14 23:14:54  zvi
+! Added Freq. Gap test..
+!
 ! Revision 1.18  2001/05/03 22:17:32  vsnyder
 ! Changed some d0 constants to _r8, cosmetic changes
 !
