@@ -68,10 +68,11 @@ contains
   end subroutine DUMP_1D_DOUBLE
 
   ! --------------------------------------------  DUMP_1D_INTEGER  -----
-  subroutine DUMP_1D_INTEGER ( ARRAY, NAME, CLEAN )
+  subroutine DUMP_1D_INTEGER ( ARRAY, NAME, CLEAN, FORMAT )
     integer, intent(in) :: ARRAY(:)
     character(len=*), intent(in), optional :: NAME
     logical, intent(in), optional :: CLEAN
+    character(len=*), intent(in), optional :: FORMAT
 
     logical :: myClean
     integer :: J, K
@@ -95,11 +96,15 @@ contains
       if ( present(name) ) call output ( name, advance='yes' )
       do j = 1, size(array), 10
         if (.not. myClean) then
-          call output ( j, max(4,ilog10(size(array))+1) )
+          call output ( j, places=max(4,ilog10(size(array))+1) )
           call output ( afterSub )
         endif
         do k = j, min(j+9, size(array))
-          call output ( array(k), 6 )
+          if ( present(format) ) then
+            call output ( array(k), format=format )
+          else
+            call output ( array(k), places=6 )
+          end if
         end do
         call output ( '', advance='yes' )
       end do
@@ -190,10 +195,11 @@ contains
   end subroutine DUMP_2D_DOUBLE
 
   ! --------------------------------------------  DUMP_2D_INTEGER  -----
-  subroutine DUMP_2D_INTEGER ( ARRAY, NAME, CLEAN )
+  subroutine DUMP_2D_INTEGER ( ARRAY, NAME, CLEAN, FORMAT )
     integer, intent(in) :: ARRAY(:,:)
     character(len=*), intent(in), optional :: NAME
     logical, intent(in), optional :: CLEAN
+    character(len=*), intent(in), optional :: FORMAT
 
     logical :: myClean
     integer :: I, J, K
@@ -220,12 +226,16 @@ contains
       do i = 1, size(array,1)
         do j = 1, size(array,2), 10
           if (.not. myClean) then
-            call output ( i, max(4,ilog10(size(array,1))+1) )
-            call output ( j, max(4,ilog10(size(array,2))+1) )
-            call output ( afterSub )
+             call output ( i, places=max(4,ilog10(size(array,1))+1) )
+             call output ( j, places=max(4,ilog10(size(array,2))+1) )
+             call output ( afterSub )
           end if
           do k = j, min(j+9, size(array,2))
-            call output ( array(i,k), 6 )
+            if ( present(format) ) then
+              call output ( array(i,k), format=format )
+            else
+              call output ( array(i,k), places=6 )
+            end if
           end do
           call output ( '', advance='yes' )
         end do
@@ -290,6 +300,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.7  2001/05/08 20:27:24  vsnyder
+! Added an optional 'format' argument in a few more places
+!
 ! Revision 2.6  2001/05/08 17:21:02  livesey
 ! Added a `clean' option to the array dumps.  This omits the indices at
 ! the start, making it easier for other programs to read output.
