@@ -261,7 +261,7 @@ MODULE VectorQuantities         ! Quantities within vectors
        IF (status /= 0) CALL MLSMessage(AllocateMessage//"chanIndex", &
          & error=.TRUE.)
     ENDIF
-  END SUBROUTINE CreateNewQuantityTemplate
+  END SUBROUTINE SetupNewQuantityTemplate
 
   ! --------------------------------------------------------------------------
 
@@ -283,7 +283,6 @@ MODULE VectorQuantities         ! Quantities within vectors
     DEALLOCATE (qty%solarZenith)
     DEALLOCATE (qty%losAngle)
     DEALLOCATE (qty%subVectorIndex)
-    DEALLOCATE (qty%subVectorLen)
     
     IF (.NOT. qty%regular) THEN
        DEALLOCATE (qty%surfIndex)
@@ -298,5 +297,8 @@ END MODULE VectorQuantities
 
 !
 ! $Log$
+! Revision 1.1  1999/11/24 23:06:33  livesey
+! First simple version.
+!
 !
 
