@@ -551,10 +551,10 @@ contains
     nl = size(slabs_0(1)%catalog%lines) ! All of the slabs have the same catalog
     spect_der = associated(dBeta_dw) .or. associated(dBeta_dn) .or. &
               & associated(dBeta_dv)
-    temp_der = associated(dBeta_dT)
 
     do j = 1, size(path_inds)
       k = path_inds(j)
+      temp_der = associated(dBeta_dT)
       if ( temp_der .and. associated(path_flags) ) temp_der = path_flags(k)
 
       cont => slabs_0(k)%catalog%continuum
@@ -854,6 +854,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.61  2004/08/05 20:59:02  vsnyder
+! Get rid of beta_group%n_elements
+!
 ! Revision 2.60  2004/08/03 22:06:45  vsnyder
 ! Inching further toward PFA
 !
