@@ -10,11 +10,11 @@ module Fill                     ! Create vectors and fill them.
   use GriddedData, only: GriddedData_T
   ! We need many things from Init_Tables_Module.  First the fields:
   use INIT_TABLES_MODULE, only: F_COLUMNS, F_DECAY, F_DESTINATION, F_DIAGONAL, &
-    & F_GEOCALTITUDEQUANTITY, &
-    & F_EARTHRADIUS, F_EXPLICITVALUES, F_EXTRA, F_H2OQUANTITY, F_LOSQTY,&
+    & F_GEOCALTITUDEQUANTITY, F_EARTHRADIUS, F_EXPLICITVALUES, &
+    & F_EXTINCTION, F_EXTRA, F_H2OQUANTITY, F_LOSQTY,&
     & F_INTEGRATIONTIME, F_INTERPOLATE, F_INVERT, F_MAXITERATIONS, &
-    & F_MATRIX, F_METHOD, F_PTANQUANTITY, F_QUANTITY, F_RADIANCEQUANTITY, &
-    & F_RATIOQUANTITY, F_REFGPHQUANTITY, &
+    & F_MATRIX, F_METHOD, F_NOFINEGRID, F_PTANQUANTITY, F_QUANTITY, &
+    & F_RADIANCEQUANTITY, F_RATIOQUANTITY, F_REFGPHQUANTITY, &
     & F_Rows, F_SCECI, F_SCVEL, F_SOURCE, F_SOURCEGRID, F_SOURCEL2AUX, &
     & F_SOURCEL2GP, F_SOURCEQUANTITY, F_SOURCESGRID, F_SOURCEVGRID, &
     & F_SPREAD, F_SUPERDIAGONAL, &
@@ -200,6 +200,7 @@ contains ! =====     Public Procedures     =============================
     integer :: Diagonal                 ! Index of diagonal vector in database
     !                                     -- for FillCovariance
     integer :: ERRORCODE                ! 0 unless error; returned by called routines
+    logical :: Extinction               ! Flag for cloud extinction calculation
     logical :: Extra                    ! Matrix needs an extra column / row
     integer :: FIELDINDEX               ! Entry in tree
     integer :: FieldValue               ! Value of a field in the L2CF
@@ -232,6 +233,7 @@ contains ! =====     Public Procedures     =============================
     integer :: MAXITERATIONS            ! For hydrostatic fill
     character (LEN=LineLen) ::  Msr
     type (Vector_T) :: NewVector ! A vector we've created
+    integer :: NoFineGrid               ! no of fine grids for cloud extinction calculation
     integer :: PREVDEFDQT               !
     integer :: PTANVECTORINDEX          !
     integer :: PTANQTYINDEX             !
@@ -285,7 +287,9 @@ contains ! =====     Public Procedures     =============================
     vectorIndex = -1
     spread = .false.
     interpolate = .false.
+    extinction = .false.
     maxIterations = 4
+    noFineGrid = 1
 
     ! Loop over the lines in the configuration file
 
@@ -455,6 +459,17 @@ contains ! =====     Public Procedures     =============================
             else
               interpolate = decoration(subtree(2,gson)) == l_true
             end if
+          case ( f_extinction ) ! For cloud extinction fill
+            if ( node_id(gson) == n_set_one ) then
+              extinction=.TRUE.
+            else
+              extinction = decoration(subtree(2,gson)) == l_true
+            end if
+          case ( f_noFineGrid )      ! For cloud extinction fill
+            call expr ( subtree(2,subtree(j,key)), unitAsArray,valueAsArray )
+            if ( all(unitAsArray(1) /= (/PHYQ_Dimensionless,PHYQ_Invalid/)) ) &
+              & call Announce_error ( key, badUnitsForMaxIterations )
+            noFineGrid = valueAsArray(1)
           end select
         end do                  ! Loop over arguments to fill instruction
 
@@ -517,7 +532,8 @@ contains ! =====     Public Procedures     =============================
           losQty => GetVectorQtyByTemplateIndex( &
             & vectors(losVectorIndex), losQtyIndex )
           call FillQuantityFromLosGrid ( key, Quantity, losQty, &
-            & Vgrids(vGridIndex), tngtPresQuantity, earthRadiusQty, errorCode )
+            & Vgrids(vGridIndex), tngtPresQuantity, earthRadiusQty, &
+            & noFineGrid, extinction, errorCode )
 
         case ( l_special ) ! -  Special fills for some quantities  -----
           select case ( quantity%template%quantityType )
@@ -1222,7 +1238,7 @@ contains ! =====     Public Procedures     =============================
 
   !=============================== FillQuantityFromLosGrid ====
   subroutine FillQuantityFromLosGrid ( key, Qty, LOS, Sgrid, &
-   & Ptan, Re, errorCode )
+   & Ptan, Re, noFineGrid, extinction, errorCode )
 
     ! This is to fill a l2gp type of quantity with a los grid type of quantity.
     ! The los quantity is a vector quantity that has dimension of (s, mif, maf),
@@ -1238,17 +1254,22 @@ contains ! =====     Public Procedures     =============================
     type (VectorValue_T), intent(in) :: Ptan ! tangent pressure
     type (VectorValue_T), intent(in) :: Re ! Earth's radius
     type (VectorValue_T), INTENT(INOUT) :: QTY ! Quantity to fill
+    integer, intent(in) :: noFineGrid   ! make finer sGrid with this number
+    logical, intent(in) :: extinction  ! Flag for extinction fill and calculation
     integer, intent(out) :: errorCode ! Error code
 
     ! Local variables
     integer :: i, j, maf, mif                ! Loop counter
     integer :: maxZ, minZ                    ! pressure range indices of sGrid
-    integer :: noMAFs, noMIFs, noDepths    
+    integer :: noMAFs,noMIFs,noDepths
     integer, dimension(qty%template%noSurfs,qty%template%noInstances) :: cnt
     real (r8), dimension(qty%template%noSurfs,qty%template%noInstances) :: out
     real (r8), dimension(qty%template%noSurfs) :: outZeta, phi_out, beta_out
     real (r8), dimension(los%template%noChans) :: x_in, y_in
     real (r8), dimension(los%template%noSurfs) :: zt
+    real (r8), dimension(los%template%noSurfs*noFineGrid) :: betaFine, TransFine, SFine
+    real (r8), dimension(los%template%noChans,los%template%noSurfs,los%template%noInstances) :: beta
+    real (r8) :: ds, ColTrans
 
     if ( toggle(gen) ) call trace_begin ( "FillQuantityFromLosGrid", key )
 
@@ -1256,9 +1277,8 @@ contains ! =====     Public Procedures     =============================
 
     ! Make sure this quantity is appropriate
 !    if (.not. ValidateVectorQuantity(qty, coherent=.TRUE., stacked=.TRUE., &
-!      & verticalCoordinate= (/ l_pressure, l_zeta /)) ) then
-!      errorCode=vectorWontMatchL2GP
-!      return
+!      & verticalCoordinate= (/ l_pressure, l_zeta /) ) ) then
+!      call output ( " quantity vertical grid in FillQuantityFromLOSgrid is not valid")
 !    end if
 
     if ( qty%template%verticalCoordinate == l_pressure ) then
@@ -1266,11 +1286,56 @@ contains ! =====     Public Procedures     =============================
     else
         outZeta = qty%template%surfs(:,1)
     end if
+
+    noMAFs=los%template%noInstances
+    noMIFs=los%template%noSurfs
+    noDepths=los%template%noChans
       
-    noMAFs = los%template%noInstances
-    noMIFs = los%template%noSurfs
-    noDepths = los%template%noChans
-    
+! the input losQty is the increment of cloud transmission function by default.
+! it is converted to cloud extinction if extinction flag is on.
+   if(extinction) then
+
+   Sfine(1) = sGrid%surfs(1)
+   ds = sGrid%surfs(2)-sGrid%surfs(1) ! both sGrid and sFineGrid are expected to be evenly spaced at present
+   do i=1,noDepths
+   do j=1,noFineGrid
+      Sfine(j+i*noFineGrid) = sGrid%surfs(i)+j*ds/noFineGrid
+   end do
+   end do
+   
+   do maf=1,noMafs
+   do mif=1,noMifs
+      do i=1,noDepths
+        y_in(i) = los%values(i+(mif-1)*noDepths,maf)/ds  ! convert increments to derivatives
+      end do
+      call InterpolateValues(sGrid%surfs,y_in,sFine,TransFine,method='Linear')  
+      ! calculate column transmission function by integrating the derivatives on fine grid
+      do i=1,noFineGrid*noDepths
+      betaFine = 0._r8
+        colTrans=0._r8
+        do j=1,i
+          colTrans=colTrans + transFine(j)*ds/noFineGrid
+        end do
+        colTrans = 1._r8 - colTrans
+      if(colTrans > 0.02) betaFine(i)= transFine(i)/colTrans
+      end do
+      ! interpolate betaFine back to the coarser sGrid
+      call InterpolateValues(sFine,betaFine,sGrid%surfs,beta(:,mif,maf),method='Linear')
+   end do
+   end do
+   
+   else
+   
+   do maf=1,noMafs
+   do mif=1,noMifs
+      do i=1,noDepths
+         beta(i,mif,maf)=los%values(i+(mif-1)*noDepths,maf)
+      end do
+   end do
+   end do
+   
+   end if
+      
 ! initialize quantity
    do j = 1, qty%template%noInstances
    do i = 1, qty%template%noSurfs
@@ -1312,10 +1377,8 @@ contains ! =====     Public Procedures     =============================
         ! interpolate phi onto standard vertical grids     
         call InterpolateValues(x_in,y_in,outZeta(minZ:maxZ),phi_out(minZ:maxZ), &
            & method='Linear')
-        ! interpolate quantity to standard vertical grids
-        do i=1,noDepths
-          y_in = los%values(i+(mif-1)*noDepths,maf)
-        end do
+        ! interpolate quantity to standard vertical grids      
+        y_in = beta(:,mif,maf)
         call InterpolateValues(x_in,y_in,outZeta(minZ:maxZ),beta_out(minZ:maxZ), &
            & method='Linear')
         ! interpolate quantity to standard phi grids
@@ -1508,6 +1571,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.62  2001/07/20 19:25:03  dwu
+! add cloud extinction calculation
+!
 ! Revision 2.61  2001/07/19 21:45:33  dwu
 ! some fixes for FillQuantityFromLOS
 !
