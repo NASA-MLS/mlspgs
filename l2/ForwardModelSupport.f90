@@ -16,11 +16,11 @@ module ForwardModelSupport
     & F_FREQUENCY, F_HEIGHT, F_DIFFERENTIALSCAN, F_DO_1D, F_INCL_CLD, &
     & F_INTEGRATIONGRID, F_LOCKBINS, F_L2PC, F_MOLECULE, F_MOLECULES, &
     & F_MOLECULEDERIVATIVES, &
-    & F_PHIWINDOW, F_POINTINGGRIDS, F_POLARIZED, F_SIGNALS, F_SPECT_DER, &
+    & F_PHIWINDOW, F_POINTINGGRIDS, F_POLARIZED, F_SPECT_DER, &
     & F_TANGENTGRID, F_TEMP_DER, F_TYPE, F_MODULE, F_SKIPOVERLAPS, F_TOLERANCE, &
     & F_NABTERMS, F_NAMEFRAGMENT, F_NAZIMUTHANGLES, F_NCLOUDSPECIES, F_NMODELSURFS, &
     & F_NSCATTERINGANGLES, F_NSIZEBINS, F_I_SATURATION, F_CLOUD_FOV, &
-    & F_DEFAULT_spectroscopy, F_SPECIFICQUANTITIES
+    & F_DEFAULT_spectroscopy, F_SPECIFICQUANTITIES, F_SIGNALS, F_BINSELECTORS
   use MLSCommon, only: R8
   use MoreTree, only: Get_Boolean, Get_Field_ID
   use Parse_Signal_m, only: PARSE_SIGNAL
@@ -210,7 +210,7 @@ contains ! =====     Public Procedures     =============================
   type (BinSelector_T) function CreateBinSelectorFromMLSCFINFO ( root ) &
     & result ( binSelector )
 
-    use L2PC_m, only: BINSELECTOR_T, NullifyBinSelector
+    use L2PC_m, only: BINSELECTOR_T
 
     integer, intent(in) :: ROOT         ! Tree node
     ! Local variables
@@ -229,7 +229,6 @@ contains ! =====     Public Procedures     =============================
     integer :: THISSIGNALCOUNT          ! Number of signals for one signal string
 
     ! Exeuctable code
-    call nullifyBinSelector ( binSelector ) ! for Sun's rubbish compiler
     do i = 2, nsons(root)               ! Skip binSelector command
       son = subtree ( i, root )
       field = get_field_id ( son )
@@ -254,35 +253,6 @@ contains ! =====     Public Procedures     =============================
         call expr ( gson, units, value, type )
         ! Some units checking should probably go here in the long run !???? NJL
         binSelector%cost = value(1)
-      case ( f_signals )
-        ! First count the signals
-        signalCount = 0
-        do j = 2, nsons(son)
-          gson = subtree ( j, son )
-          call Get_string ( sub_rosa(gson), signalString, strip=.true. )
-          call Parse_Signal ( signalString, theseSignals, onlyCountEm=thisSignalCount, &
-            & tree_index = son )
-          signalCount = signalCount + thisSignalCount
-        end do
-        ! Now setup the result
-        call Allocate_test ( binSelector%signals, signalCount, &
-          & 'binSelector%signals', ModuleName )
-        call Allocate_test ( binSelector%sidebands, signalCount, &
-          & 'binSelector%sidebands', ModuleName )
-        ! Go through again and fill it up, use signalCount as index
-        signalCount = 1
-        do j = 2, nsons(son)
-          gson = subtree ( j, son )
-          call Get_string ( sub_rosa(gson), signalString, strip=.true. )
-          call Parse_Signal ( signalString, theseSignals, &
-            & sideband=thisSideband, tree_index = son )
-          binSelector%signals ( signalCount : signalCount+size(theseSignals)-1 ) = &
-            & theseSignals
-          binSelector%sidebands ( signalCount : signalCount+size(theseSignals)-1 ) = &
-            & thisSideband
-          signalCount = signalCount + size(theseSignals)
-          call Deallocate_test ( theseSignals, 'theseSignals', ModuleName )
-        end do
       end select
     end do
 
@@ -371,7 +341,6 @@ contains ! =====     Public Procedures     =============================
     info%skipOverlaps = .false.
     info%differentialScan = .false.
     info%cloud_der = 0
-    info%nameFragment = 0
     info%no_cloud_species=2
     info%no_model_surfs =640
     info%NUM_SCATTERING_ANGLES=16
@@ -381,7 +350,6 @@ contains ! =====     Public Procedures     =============================
     info%phiwindow = 5
     info%windowUnits = phyq_profiles
     info%i_saturation = 0
-!    info%cloud_width = 2
     info%cloud_fov = 1
 
     noChannelsSpecs=0
@@ -402,6 +370,12 @@ contains ! =====     Public Procedures     =============================
         info%allLinesForRadiometer = get_boolean(son)
       case ( f_atmos_der )
         info%atmos_der = get_boolean(son)
+      case  ( f_binSelectors )
+        call Allocate_test ( info%binSelectors, nsons(son)-1, &
+          & 'info%binSelectors', ModuleName )
+        do j = 1, nsons(son) - 1
+          info%binSelectors(j) = decoration ( decoration ( subtree ( j+1, son ) ) )
+        end do
       case ( f_differentialScan )
         info%differentialScan = get_boolean(son)
       case ( f_do_conv )
@@ -418,8 +392,6 @@ contains ! =====     Public Procedures     =============================
         info%lockBins = get_boolean(son)
       case ( f_polarized )
         info%polarized = get_boolean(son)
-      case ( f_nameFragment )
-        info%nameFragment = sub_rosa ( subtree(2,son) )
       case ( f_DEFAULT_spectroscopy )
         info%DEFAULT_spectroscopy = get_boolean(son)
       case ( f_skipOverlaps )
@@ -692,6 +664,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.51  2003/02/05 21:56:39  livesey
+! New binSelectors stuff
+!
 ! Revision 2.50  2003/02/04 22:02:18  jonathan
 ! set i_saturation==0 as default
 !
