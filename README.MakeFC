@@ -27,11 +27,14 @@ it is mostly self-configuring. First, you will need:
 
 Then, from the "top" level (where you see this file, as well as the l1, l2, l3,
 lib, srclib, and util directories) simply type
-  make -f MakeFC
+  make -f MakeFC update
 and you'll be asked to respond to some questions about your compiler, platform,
 and where the various libraries are installed. Then the software will be built.
 You may quit out of this now and try it out, perhaps coming back later if you
-are curious or if something goes wrong.
+are curious or if something goes wrong. The reasons for putting each of the
+two parts "-f MakeFC" and "update" this first time are explained below, but the
+point is that after this first time, you will usually be able to make do with
+just "make".
 
 For more information on obtaining and installing the SDP Toolkit, PVM, and the
 FFTW libraries, see BEFORE.mls which should be in the same directory as this
@@ -75,9 +78,10 @@ at least most of the time. This is what has been done with mls software.
 The configurable Makefile is MakeFC. It is found in the mlspgs directory. The
 name MakeFC was chosen as unlikely to conflict with other Makefiles. An
 unfortunate consequence of this decision is that to use it to build the
-software, the "make" command must always be accompanied by the "-f MakeFC"
-arguments. E.g., the usual way to invoke it is
-         "make -f MakeFC".
+software, the "make" command must be accompanied by the "-f MakeFC" the first
+time it is used. After that, however, "make" alone suffices. E.g., the usual
+way becomes
+         make
 This will automatically build lib and mls[1-3]. To build other parts see
 the section BUILDING ONLY PARTS OF THE SOFTWARE below.
 
@@ -153,11 +157,10 @@ configuration will have to done only this once.
 BUILDING ONLY PARTS OF THE SOFTWARE
 If you wish to build only lib, for example, you may specify that target,
 i.e.
-        make -f MakeFC lib
-and similarly for l1, l2, l3, l2pc, or fwdmdl. Alternatively, if you are in
-lib, perhaps changing some of its modules, then while there you may use the
-simple
-        make -f MakeFC
+        make lib
+and similarly for l1, l2, l3, or fwdmdl. Alternatively, if you are in lib,
+perhaps changing some of its modules, then while there you may use the simple
+        make
 and only libmls.a will be rebuilt. Again the same is true while in the other
 levels when only the software in that level will be built.
 
@@ -165,13 +168,13 @@ OTHER OPTIONS
 These are available either at the "top" level, mlspgs, or in parts at lib or
 the other levels.
 
-make -f MakeFC the_option
+make the_option
 
 option                 Effect
 
-clean      removes all binaries created during compilation and linking;
+mostlyclean  removes all binaries created during compilation and linking;
            then deletes the subdirectory containing them
-clean_objs removes only the .o and .mod files from the subdirectory; 
+clean      removes only the .o and .mod files from the subdirectory; 
            any library or program files remain
 depends    recalculates dependencies;
            typically done only after adding/removing a module or adding a
@@ -182,9 +185,12 @@ configure  change configuration: compiler, (less often) platform/OS,
 
 (All the following apply only at the top level)
 all        builds lib, l1, l2, l3, and fwdmdl
-clean_all  does a clean; more thorough in case of multiple configurations
+distclean  does a clean; restores archive nearly to initial state
 help       prints this file
 install    moves the built programs from l1, l2, l3 to the mlspgs top level
+makefile   makes a new symbolic link from MakeFC to Makefile
+           at the top level as well as each of the subdirectories;
+           useful if you have previously configured your archive w/o the link
 update     replaces Makefiles in subdirectories with latest versions after
            recalculating dependencies; useful after a cvs update
 
@@ -195,10 +201,13 @@ configure_fopts  reset default Fortran95 compiler and linker switches
 configure_full  combines configure, configure_pvm, configure_fopts
 configure_help  prints brief help on how to configure the build
 
-(The following perform a top-level "clean_all" before archiving)
-tar        tar the whole mlspgs archive for distribution: mlspgs.tgz
-tar_subs   tar lib, l1, .. : lib.tgz, l1,tgz, .., and mlspgs_subs.tar
-tar_sips   tar everything from mlspgs needed by the SIPS: mlspgs_sips.tgz
+  If the target is entered exactly as shown below, the
+  resulting archive will be an uncompressed .tar file; but with:
+  a "z" suffix, e.g. "tarz" -- use gzip to compress -> .tgz
+  a "g" suffix, e.g. "targ" -- assume GNU tar compress -> .tgz
+disttar    tar the whole mlspgs archive for distribution: mlspgs.tar
+substar    tar lib, l1, .. : lib.tar, l1.tar, .., and mlspgs_subs.tar
+tar        tar everything from mlspgs needed by the SIPS: mlspgs_sips.tar
 
 HOW IT WORKS
 Chronology:
@@ -240,11 +249,11 @@ export FFTW_ROOT
 export FOPTS
 export LDOPTS
 
-In addition, inside lib, l1, l2, and l3 a new directory will be created with a
-unique name given by the value of MLSCONFG. In the example above that name
-would be NAG.Linux. In this directory mlsconfigure places a Makefile which is
-the catenation of .configure with two files found in the directory platforms:
-e.g., assuming the value of MLSCONFG is NAG.Linux:
+In addition, inside fwdmdl, lib, l1, l2, and l3 a new directory will be created
+with a unique name given by the value of MLSCONFG. In the example above that
+name would be NAG.Linux. In this directory mlsconfigure places a Makefile which
+is the catenation of .configure with two files found in the directory
+platforms: e.g., assuming the value of MLSCONFG is NAG.Linux:
         cat .configure l2/platforms/NAG.Linux l2/platforms/targets > \
                 l2/NAG.Linux/Makefile
 Here platforms/NAG.Linux is a file of compiler settings specific to the NAG
@@ -255,9 +264,13 @@ As make proceeds to build the prerequisites of the final program, the
 binaries, .o and .mod files, and end products, e.g. libmls.a or mlsl2, are
 all placed in MLSCONFG.
 
-In subsequent invocations, .configure already exists, so make simply
-executes any commands needed to build the end products if any
-prerequisites are newer.
+Another step make takes at its first invocation is to create a symbolic link
+from MakeFC to a new file named Makefile. If a file named Makefile already
+exists, it is renamed Makefile.old. That is why subsequent uses of make can
+omit the "-f MakeFC" part.
+
+Also, in subsequent uses, .configure already exists, so make simply executes
+any commands needed to build the end products if any prerequisites are newer.
 
 Hierarchy of make
 The following is a partial org chart showing how make invoked at higher levels
@@ -265,7 +278,7 @@ will call make in lower levels, and the names of the Makefile thus summoned.
 
                     <----------mlspgs/MakeFC------------>
                    /              /   |    \            \
-           l1/MakeFC      l2/MakeFC   |    l3/MakeFC    ...  
+           l1/MakeFC      l2/MakeFC---+--->fwdmdl    l3/MakeFC
                |   \              \   |    /            /
                |    -------------->lib/MakeFC<----------
                |                      |
@@ -273,25 +286,25 @@ will call make in lower levels, and the names of the Makefile thus summoned.
            
 where the bottom MLSCONFG directories only below lib and l1 have been shown,
 although they exist in the other levels, too. Note also the ability of make at
-the levels of l1, l2, ... to call make in lib. The full path and name of the
-file shown at bottom center is (assuming a typical location for the archive)
+the levels of l1, l2, ... to call make in lib. l2 is also able to call make in
+fwdmdl. The full path and name of the file shown at bottom center is (assuming
+a typical location for the archive)
 	${HOME}/mlspgs/lib/${MLSCONFG}/Makefile
 
 MLSCONFG/Makefile has the command near its start
  include 'Makefile.dep'
-that copies in the dependencies in the form of the file Makefile.dep. This is
+that copies in the dependencies stored in the file Makefile.dep. This is
 how make learns which sources to compile to create the binaries, called OBJS. A
 dependency is a line containing a target and a list of prerequisites needed to
 build that target. Makefile.dep contains only the dependencies, no explicit
 build commands.
 
-It would be desirable to make Makefile.dep a target of prerequisites to
-force it to be updated on any change to the source files. Instead, the
-only way to change it is by the explicit command 
-	"make -f MakeFC depends". 
-Among the drawbacks to this are that an outdated Makefile.dep is possibly
-what cvs finds when checking out the archive. See the recommendation concerning
-the update target below.
+It would be desirable to make Makefile.dep a target of prerequisites to force
+it to be updated on any change to the source files. Instead, the only ways to
+change it are by either of the explicit commands "make depends" or, at the
+mlspgs level, "make update".  Among the drawbacks to this are that an outdated
+Makefile.dep is possibly what cvs finds when checking out the archive. See the
+recommendation concerning the update target below.
 
 To create Makefile.dep the shell script util/makemakedep.sh is launched,
 and it in turn uses one of the following:
@@ -357,16 +370,19 @@ build multiple versions of the mls software. For example, I built versions for
 both Sun and Linux platforms in my home directory. I can switch between versions
 by overwriting the current .configure with one saved for the other platform.
 
-Sometimes after doing a cvs update, especially if there has been a lot
-of active coding and cvs committing, the next "make -f MakeFC" command
-will cause make to exit complaining about an illegal separator.  This is
-usually the result of cvs "merging" your copy of Makefile.dep with one
-it has archived.  The solution is to do a "make -f MakeFC depends" to
-create a fresh, unmerged copy.  Even better is to do a "make -f MakeFC
-update" from the top mlspgs level.  It is also possible for MakeFC
-itself to get messed up in this way -- the above cures will not work 
-in this case. You may be able to fix the problem by deleting MakeFC and 
-doing a CVS update to fetch a new copy.
+Sometimes after doing a cvs update, especially if there has been a lot of
+active coding and cvs committing, the next make will exit complaining about an
+illegal separator.  This is usually the result of cvs "merging" your copy of
+Makefile.dep with one it has archived.  The solution is to do a "make update"
+from the top mlspgs level.  It is also possible for MakeFC itself to get messed
+up in this way -- the above cures will not work  in this case. You may be able
+to fix the problem by deleting MakeFC and doing a CVS update to fetch a new
+copy.
+
+If you get link errors you might try adding more libraries to the link
+statement. One way to do this is to use the LDOPTS or LAFTER setting (see under
+Advanced Settings). E.g., Archie MacDonald was able to link only by using "make
+LDOPTS='-lsocket'".
 
 The sources currently must reside directly under lib, srclib, or l[1-3],
 and this fact is "hard-wired" into the Makefiles.  It may become
@@ -398,42 +414,50 @@ that after changes to source files in lib, if the dependencies were recalculated
 by makedepf90, files in l2 may not be recompiled, even when they should be.
 This is a good reason to use f90makedep.pl, the default.
 
-If this ever seems to work well enough, similar MakeFC and platforms
-could be devised for the remaining parts of mls. By design it remains an
-optional way to build, coexisting in parallel with other ways.
-
 ADVANCED SETTINGS
 These include features which are otherwise given default values which may prove
 unacceptable for reasons of performance or because debugging flags need to be
 set for the compiler and loader. There may be more than one way to give a value
 to any of these settings. One way is to assign the value on the same line where
 make is invoked; e.g.
-	make -f MakeFC target FOPTS="-gline -gc" LDOPTS="-gc"
+	make target FOPTS="-gline -gc" LDOPTS="-gc"
 would compile and link for debugging and garbage collection, assuming use of
-NAG f95. Alternatively, all of these settings, with the exception of BLAS and
-TAR, can be set by configure_full or via enviroment variables.
+NAG f95. Alternatively, the first five of the following can be set by
+configure_full or via enviroment variables.
 
 Setting            Use
 FOPTS              Override default compiler option; note that you must
                    use only legal options
 LDOPTS             Override default (blank) loader option; note that you must
                    use only legal options
-BLAS               Path to an external blas library; note that the library
-                   must then be named \$BLAS/libblas.a
-                   You would use this if you had a precompiled, highly-optimized
-                   library of the usual blas routines.
 PVM_ROOT           Path to the root of the pvm libraries; note that they
                    must then be named \$PVM_ROOT/\$PVM_ARCH/lib*.a;
                    Warning: if PVM_ROOT is set, then so must PVM_ARCH
 PVM_ARCH           (see above)
 FFTW_ROOT          Path to the FFTW library; required for mlsl3
-TAR                Path to GNU tar in case your tar won't gzip; only necessary 
-                   for targets tar and tar_sips
-                   
+
+The following cannot be set by configure_full
+BLAS               Path to an external blas library; note that the library
+                   must then be named \$BLAS/libblas.a
+                   You would use this if you already had a precompiled, 
+                   highly-optimized library of the usual blas routines
+TAR                Overrides name of tar command; e.g. path to GNU tar 
+                   in case your tar won't gzip for targets *targ
+FAFTER             Appears at the end of each line invoking the compiler
+                   e.g., for post-processing to highlight warnings and errors
+                   make FAFTER='2>&1 | hl'  # see util/hl.c for the source    
+LAFTER             Appears at the end of the very long link statement
+                   e.g., for additional libraries required to link successfully
+FC                 Overrides the name by which the compiler is called
+                   e.g., Hugh Pumphrey renamed NAG to nagf95 to avoid conflict
+                   with Sun's own f95; then used "make FC=nagf95"
 -pw                           2000-Oct-24 to 2001-Mar-8
 EOF
 exit
 # $Log$
+# Revision 1.14  2001/03/08 23:52:48  pwagner
+# TAR option; complete description of 1st time
+#
 # Revision 1.13  2001/03/07 14:28:01  pumphrey
 # Added note on dealing with corrupted MakeFC
 #
