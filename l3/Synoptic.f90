@@ -334,7 +334,8 @@ CONTAINS
 		           CALL Diagnostics(cfProd%mode, atimes(J, iL, iP), alons(J, iL, iP), l3ret) 
 			   l3r(iD)%time(nc(iD))     = atimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
 			   l3r(iD)%latitude(nc(iD)) = cfProd%latGridMap(J) 
-			   l3r(iD)%longitude(nc(iD)) = alons(J, iL, iP) -  mod( real(alons(J, iL, iP)), (2.0*PI) ) 
+			   !l3r(iD)%longitude(nc(iD)) = alons(J, iL, iP) -  mod( real(alons(J, iL, iP)), (2.0*PI) ) 
+			   l3r(iD)%longitude(nc(iD)) = FindRealLon(real(alons(J, iL, iP)))
 			   l3r(iD)%l2gpValue(1, iP, nc(iD)) = afields(J, iL, iP)-l3ret 
 			   l3r(iD)%l2gpPrecision(1, iP, nc(iD)) = 0.0 
 			END IF
@@ -346,7 +347,8 @@ CONTAINS
 		           CALL Diagnostics(cfProd%mode, dtimes(J, iL, iP), dlons(J, iL, iP), l3ret) 
 			   l3r(iD)%time(nc(iD))     = dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
 			   l3r(iD)%latitude(nc(iD)) = cfProd%latGridMap(J) 
-			   l3r(iD)%longitude(nc(iD)) = dlons(J, iL, iP) -  mod( real(dlons(J, iL, iP)), (2.0*PI) ) 
+			   !l3r(iD)%longitude(nc(iD)) = dlons(J, iL, iP) -  mod( real(dlons(J, iL, iP)), (2.0*PI) ) 
+			   l3r(iD)%longitude(nc(iD)) = FindRealLon(real(dlons(J, iL, iP)))
 			   l3r(iD)%l2gpValue(1, iP, nc(iD)) = dfields(J, iL, iP)-l3ret 
 			   l3r(iD)%l2gpPrecision(1, iP, nc(iD)) = 0.0 
 			END IF
@@ -380,7 +382,8 @@ CONTAINS
 		           CALL Diagnostics(cfProd%mode, atimes(J, iL, iP), alons(J, iL, iP), l3ret) 
 			   residA(iD)%time(nc(iD))     = atimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
 			   residA(iD)%latitude(nc(iD)) = cfProd%latGridMap(J) 
-			   residA(iD)%longitude(nc(iD)) = alons(J, iL, iP) -  mod( real(alons(J, iL, iP)), (2.0*PI) ) 
+			   !residA(iD)%longitude(nc(iD)) = alons(J, iL, iP) -  mod( real(alons(J, iL, iP)), (2.0*PI) ) 
+			   residA(iD)%longitude(nc(iD)) = FindRealLon(real(alons(J, iL, iP)))
 			   residA(iD)%l2gpValue(1, iP, nc(iD)) = afields(J, iL, iP)-l3ret 
 			   residA(iD)%l2gpPrecision(1, iP, nc(iD)) = 0.0 
 			END IF
@@ -414,7 +417,8 @@ CONTAINS
 		           CALL Diagnostics(cfProd%mode, dtimes(J, iL, iP), dlons(J, iL, iP), l3ret) 
 			   residD(iD)%time(nc(iD))     = dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
 			   residD(iD)%latitude(nc(iD)) = cfProd%latGridMap(J) 
-			   residD(iD)%longitude(nc(iD)) = dlons(J, iL, iP) -  mod( real(dlons(J, iL, iP)), (2.0*PI) ) 
+			   !residD(iD)%longitude(nc(iD)) = dlons(J, iL, iP) -  mod( real(dlons(J, iL, iP)), (2.0*PI) ) 
+			   residD(iD)%longitude(nc(iD)) = FindRealLon(real(dlons(J, iL, iP)))
 			   residD(iD)%l2gpValue(1, iP, nc(iD)) = dfields(J, iL, iP)-l3ret 
 			   residD(iD)%l2gpPrecision(1, iP, nc(iD)) = 0.0 
 			END IF
@@ -448,7 +452,8 @@ CONTAINS
 		           CALL Diagnostics('com', atimes(J, iL, iP), alons(J, iL, iP), l3ret) 
 			   l3r(iD)%time(nc(iD))     = atimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
 			   l3r(iD)%latitude(nc(iD)) = cfProd%latGridMap(J) 
-			   l3r(iD)%longitude(nc(iD)) = alons(J, iL, iP) -  mod( real(alons(J, iL, iP)), (2.0*PI) ) 
+			   !l3r(iD)%longitude(nc(iD)) = alons(J, iL, iP) -  mod( real(alons(J, iL, iP)), (2.0*PI) ) 
+			   l3r(iD)%longitude(nc(iD)) = FindRealLon(real(alons(J, iL, iP)))
 			   l3r(iD)%l2gpValue(1, iP, nc(iD)) = afields(J, iL, iP)-l3ret 
 			   l3r(iD)%l2gpPrecision(1, iP, nc(iD)) = 0.0 
 			END IF
@@ -460,7 +465,8 @@ CONTAINS
 		           CALL Diagnostics('com', dtimes(J, iL, iP), dlons(J, iL, iP), l3ret) 
 			   l3r(iD)%time(nc(iD))     = dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
 			   l3r(iD)%latitude(nc(iD)) = cfProd%latGridMap(J) 
-			   l3r(iD)%longitude(nc(iD)) = dlons(J, iL, iP) -  mod( real(dlons(J, iL, iP)), (2.0*PI) ) 
+			   !l3r(iD)%longitude(nc(iD)) = dlons(J, iL, iP) -  mod( real(dlons(J, iL, iP)), (2.0*PI) ) 
+			   l3r(iD)%longitude(nc(iD)) = FindRealLon(real(dlons(J, iL, iP)))
 			   l3r(iD)%l2gpValue(1, iP, nc(iD)) = dfields(J, iL, iP)-l3ret 
 			   l3r(iD)%l2gpPrecision(1, iP, nc(iD)) = 0.0 
 			END IF
@@ -494,7 +500,8 @@ CONTAINS
 		           CALL Diagnostics('asc', atimes(J, iL, iP), alons(J, iL, iP), l3ret) 
 			   residA(iD)%time(nc(iD))     = atimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
 			   residA(iD)%latitude(nca(iD)) = cfProd%latGridMap(J) 
-			   residA(iD)%longitude(nca(iD)) = alons(J, iL, iP) -  mod( real(alons(J, iL, iP)), (2.0*PI) ) 
+			   !residA(iD)%longitude(nca(iD)) = alons(J, iL, iP) - mod( real(alons(J, iL, iP)), (2.0*PI) ) 
+			   residA(iD)%longitude(nc(iD)) = FindRealLon(real(alons(J, iL, iP)))
 			   residA(iD)%l2gpValue(1, iP, nca(iD)) = afields(J, iL, iP)-l3ret 
 			   residA(iD)%l2gpPrecision(1, iP, nca(iD)) = 0.0 
 			END IF
@@ -528,7 +535,8 @@ CONTAINS
 		           CALL Diagnostics('des', dtimes(J, iL, iP), dlons(J, iL, iP), l3ret) 
 			   residD(iD)%time(ncd(iD))     = dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
 			   residD(iD)%latitude(ncd(iD)) = cfProd%latGridMap(J) 
-			   residD(iD)%longitude(nc(iD)) = dlons(J, iL, iP) -  mod( real(dlons(J, iL, iP)), (2.0*PI) ) 
+			   !residD(iD)%longitude(nc(iD)) = dlons(J, iL, iP) -  mod( real(dlons(J, iL, iP)), (2.0*PI) ) 
+			   residD(iD)%longitude(nc(iD)) = FindRealLon(real(dlons(J, iL, iP)))
 			   residD(iD)%l2gpValue(1, iP, ncd(iD)) = dfields(J, iL, iP)-l3ret 
 			   residD(iD)%l2gpPrecision(1, iP, ncd(iD)) = 0.0 
 			END IF
@@ -839,6 +847,9 @@ END MODULE Synoptic
 !===================
 
 ! $Log$
+! Revision 1.12  2001/04/11 18:29:22  ybj
+! reasonable values
+!
 ! Revision 1.11  2001/03/08 00:53:15  ybj
 ! *** empty log message ***
 !
