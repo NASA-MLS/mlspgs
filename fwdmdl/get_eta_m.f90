@@ -12,9 +12,9 @@ module GET_ETA_M
 contains
 ! This subroutine gets the eta function for temperature
 !
-  Subroutine GET_ETA ( X, PEAKS, NO_X, NO_PEAKS, Nlvl, ETA )
+  Subroutine GET_ETA ( X, PEAKS, NO_X, NO_PEAKS, ETA )
     Real(r8), intent(in) :: X(:), PEAKS(:)
-    Integer(i4), intent(in) :: NO_X, NO_PEAKS, Nlvl
+    Integer(i4), intent(in) :: NO_X, NO_PEAKS
     Real(r8), intent(out) :: ETA(:,:)
 !
     Integer(i4) :: I, J
@@ -60,6 +60,9 @@ contains
   End Subroutine GET_ETA
 end module GET_ETA_M
 ! $Log$
+! Revision 1.6  2001/03/29 08:51:01  zvi
+! Changing the (*) toi (:) everywhere
+!
 ! Revision 1.5  2001/03/21 22:46:53  livesey
 ! Some bugs found with range checking fixed
 !

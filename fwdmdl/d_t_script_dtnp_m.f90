@@ -1,6 +1,5 @@
 module D_T_SCRIPT_DTNP_M
   use D_STAT_TEMP_M, only: STAT_TEMP
-  use L2PCdim, only: N2LVL
   use MLSCommon, only: I4, R8
   use PHYSICS, only: H_O_K => h_over_k
   use PATH_ENTITIES_M, only: PATH_VECTOR
@@ -40,15 +39,15 @@ contains
     real(r8), intent(out) :: DT_SCRIPT_DTNP(:)
 
     integer(i4) :: i, j, m, mid, Ngp1
-    real(r8) :: hxf, s, t1, t2, dt_dnp(N2lvl)
-    real(r8) :: etan, etap
+    real(r8) :: hxf, s, t1, t2, etan, etap
+    real(r8) :: dt_dnp(size(dt_script_dtnp))
 !
     hxf = h_o_k * Frq
 !
 !  Initialize the array:
 !
-    dt_dnp(1:N2lvl) = 0.0
-    dt_script_dtnp(1:N2lvl) = 0.0
+    dt_dnp(:) = 0.0
+    dt_script_dtnp(:) = 0.0
 
 ! 'brkpt' is the index of the path break-point (when it change from
 !         incoming ray to outgoing ray)
@@ -114,6 +113,9 @@ contains
   End subroutine D_T_SCRIPT_DTNP
 end module D_T_SCRIPT_DTNP_M
 ! $Log$
+! Revision 1.5  2001/03/29 08:51:01  zvi
+! Changing the (*) toi (:) everywhere
+!
 ! Revision 1.4  2001/01/31 01:08:48  zvi
 ! New version of forward model
 !

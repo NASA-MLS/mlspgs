@@ -1,9 +1,7 @@
 module CONVOLVE_ALL_M
   use MLSCommon, only: I4, R4, R8
-  use L2PCDIM, only: Nlvl, Nsps, Nptg, MNP => max_no_phi
   use FOV_CONVOLVE_M, only: FOV_CONVOLVE
   use HYDROSTATIC_INTRP, only: GET_PRESSURES
-  use L2PC_FILE_PARAMETERS, only: MXCO => max_no_elmnts_per_sv_component
   use L2PC_PFA_STRUCTURES, only: ATMOS_COMP, LIMB_PRESS, SPECTRO_PARAM, &
                                  K_MATRIX_INFO
   use DUMP_0, only: DUMP
@@ -45,11 +43,11 @@ Subroutine convolve_all (Ptan,atmospheric,n_sps,temp_der,atmos_der, &
     real(r8), intent(IN) :: DX_DT(:,:), D2X_DXDT(:,:)
     Real(r8), intent(in) :: AAAP(:,:),D1AAP(:,:),D2AAP(:,:)
 
-    Real(r4) :: k_temp(Nptg,mxco,mnp)
-    Real(r4) :: k_atmos(Nptg,mxco,mnp,Nsps)
-    Real(r4) :: k_spect_dw(Nptg,mxco,mnp,Nsps),  &
-                k_spect_dn(Nptg,mxco,mnp,Nsps),  &
-                k_spect_dnu(Nptg,mxco,mnp,Nsps)
+    Real(r4) :: k_temp(:,:,:)                   ! (Nptg,mxco,mnp)
+    Real(r4) :: k_atmos(:,:,:,:)                ! (Nptg,mxco,mnp,Nsps)
+    Real(r4) :: k_spect_dw(:,:,:,:)             ! (Nptg,mxco,mnp,Nsps)
+    Real(r4) :: k_spect_dn(:,:,:,:)             ! (Nptg,mxco,mnp,Nsps)
+    Real(r4) :: k_spect_dnu(:,:,:,:)            ! (Nptg,mxco,mnp,Nsps)
 !
     type(atmos_comp), intent(IN) :: ATMOSPHERIC(:)
     type (spectro_param), intent(IN) :: SPECTROSCOPIC(:)
@@ -67,9 +65,10 @@ Subroutine convolve_all (Ptan,atmospheric,n_sps,temp_der,atmos_der, &
     integer(i4) :: FFT_INDEX(2**fft_pts), nz
     integer(i4) :: n,i,j,is,Ktr,nf,Ntr,ptg_i,sv_i,Spectag,ki,kc,jp
 !
-    real(r8) :: FFT_PRESS(2**fft_pts)
-    real(r8) :: FFT_ANGLES(2**fft_pts), RAD(2**fft_pts)
-    real(r8) :: SRad(Nlvl), Term(Nlvl), Q, R
+    Real(r8) :: Q, R
+    Real(r8) :: SRad(size(Ptan)), Term(size(Ptan))
+    Real(r8) :: FFT_PRESS(2**fft_pts), FFT_ANGLES(2**fft_pts), &
+   &            RAD(2**fft_pts)
 !
     Character(LEN=01) :: CA
 !
@@ -141,10 +140,8 @@ Subroutine convolve_all (Ptan,atmospheric,n_sps,temp_der,atmos_der, &
       kc = kc + 1
       k_star_info(kc)%name = 'PTAN'
       k_star_info(kc)%first_dim_index = ki
-      k_star_info(kc)%no_phi_basis = mnp
-      do nf = 1, mnp
-        k_star_all(ki,1,nf,1:j) = Term(1:j)
-      end do
+      k_star_info(kc)%no_phi_basis = 1
+      k_star_all(ki,1,1,1:j) = Term(1:j)
 !
     endif
 
@@ -407,6 +404,9 @@ Subroutine convolve_all (Ptan,atmospheric,n_sps,temp_der,atmos_der, &
 !
 end module CONVOLVE_ALL_M
 ! $Log$
+! Revision 1.10  2001/03/29 12:08:17  zvi
+! Fixing bugs
+!
 ! Revision 1.9  2001/03/28 01:32:12  livesey
 ! Working version
 !

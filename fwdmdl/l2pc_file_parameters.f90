@@ -1,6 +1,5 @@
 module L2PC_FILE_PARAMETERS
   use MLSCommon, only: I4, R4, R8
-  use L2PCDIM, only: NSPS
   implicit NONE
   public
 !---------------------------- RCS Ident Info -------------------------------
@@ -49,7 +48,7 @@ module L2PC_FILE_PARAMETERS
   integer(i4), parameter :: MAX_NO_MAG_FIELDS = 4
   integer(i4), parameter :: MAX_NO_SV_COMPONENTS = 32
   integer(i4), parameter :: MAX_NO_SV_ELMNTS =                          &
-     &                       MAX_NO_ELMNTS_PER_SV_COMPONENT * NSPS
+     &                       MAX_NO_ELMNTS_PER_SV_COMPONENT * 20
   integer(i4), parameter :: MAX_NO_SV_DERIVATIVES = 400
   integer(i4), parameter :: MAX_CHAR_LEN_L2PC_KEY_DES =                 &
  &                            max_char_len_l2pc_key - max_char_len_avail_keys
@@ -72,6 +71,9 @@ module L2PC_FILE_PARAMETERS
 !
 end module L2PC_FILE_PARAMETERS
 ! $Log$
+! Revision 1.5  2001/03/20 11:03:16  zvi
+! Fixing code for "real" data run, increase dim. etc.
+!
 ! Revision 1.4  2001/01/31 01:08:48  zvi
 ! New version of forward model
 !

@@ -13,10 +13,9 @@ module FAST_ZOPACITY_M
 contains
 ! This subroutine computes the incremental opacity matrices.
 !
-  Subroutine FAST_ZOPACITY (n_sps, Ngp1, N2lvl, brkpt, &
- &                          no_ele, delta, del_opacity)
+  Subroutine FAST_ZOPACITY (n_sps,Ngp1,brkpt,no_ele,delta,del_opacity)
 !
-    integer(i4), intent(in) :: Ngp1,brkpt,no_ele,N2lvl
+    integer(i4), intent(in) :: Ngp1,brkpt,no_ele
     integer(i4), intent(in) :: N_SPS
 !
     real(r8), intent(in) :: DELTA(:,:)
@@ -75,6 +74,9 @@ contains
 !
 end module FAST_ZOPACITY_M
 ! $Log$
+! Revision 1.3  2001/03/29 08:51:01  zvi
+! Changing the (*) toi (:) everywhere
+!
 ! Revision 1.2  2001/01/31 01:08:48  zvi
 ! New version of forward model
 !

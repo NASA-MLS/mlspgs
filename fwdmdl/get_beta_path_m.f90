@@ -1,6 +1,6 @@
 module GET_BETA_PATH_M
   use MLSCommon, only: I4, R8
-  use L2PC_PFA_STRUCTURES, only: PFA_SLAB, MAXLINES
+  use L2PC_PFA_STRUCTURES, only: PFA_SLAB
   use PATH_ENTITIES_M, only: PATH_VECTOR, PATH_BETA
   use SLABS_SW_M, only: SLABS_PREP_WDER, SLABS_PREP
   use CREATE_BETA_M, only: CREATE_BETA
@@ -50,17 +50,28 @@ Integer(i4) :: nl, i, no_sps, mnf, spectag, h_i, frq_i
 
 Real(r8) :: Qlog(3), mass, z, p, t, Frq, Vel_z_correction
 Real(r8) :: values,t_power,dbeta_dw,dbeta_dn,dbeta_dnu
-
-Real(r8) :: v0s(MAXLINES), x1(MAXLINES), y(MAXLINES), yi(MAXLINES), &
-            slabs1(MAXLINES), dx1_dv0(MAXLINES), dy_dv0(MAXLINES),  &
-            dslabs1_dv0(MAXLINES)
-
-Real(r8) :: v0sp(MAXLINES), x1p(MAXLINES), yp(MAXLINES), yip(MAXLINES), &
-            slabs1p(MAXLINES)
-
-Real(r8) :: v0sm(MAXLINES), x1m(MAXLINES), ym(MAXLINES), yim(MAXLINES), &
-            slabs1m(MAXLINES)
-
+!
+Real(r8) :: y(size(pfs(1)%SPS_V0)), ym(size(pfs(1)%SPS_V0)), &
+            yp(size(pfs(1)%SPS_V0))
+!
+Real(r8) :: x1(size(pfs(1)%SPS_V0)), x1m(size(pfs(1)%SPS_V0)), &
+            x1p(size(pfs(1)%SPS_V0))
+!
+Real(r8) :: y1(size(pfs(1)%SPS_V0)), y1m(size(pfs(1)%SPS_V0)), &
+            y1p(size(pfs(1)%SPS_V0))
+!
+Real(r8) :: yi(size(pfs(1)%SPS_V0)), yim(size(pfs(1)%SPS_V0)),&
+            yip(size(pfs(1)%SPS_V0))
+!
+Real(r8) :: v0s(size(pfs(1)%SPS_V0)), v0sm(size(pfs(1)%SPS_V0)), &
+            v0sp(size(pfs(1)%SPS_V0))
+!
+Real(r8) :: slabs1(size(pfs(1)%SPS_V0)), slabs1m(size(pfs(1)%SPS_V0)), &
+            slabs1p(size(pfs(1)%SPS_V0))
+!
+Real(r8) :: dy_dv0(size(pfs(1)%SPS_V0)), dx1_dv0(size(pfs(1)%SPS_V0)), &
+            dslabs1_dv0(size(pfs(1)%SPS_V0))
+!
 ! Begin code:
 
   ier = 0
@@ -183,7 +194,7 @@ Real(r8) :: v0sm(MAXLINES), x1m(MAXLINES), ym(MAXLINES), yim(MAXLINES), &
 !
     Call Slabs_prep_wder(t,mass,pfs(i)%SPS_V0(j),pfs(i)%SPS_EL(j),&
    &     pfs(i)%SPS_W(j),pfs(i)%SPS_PS(j),p,pfs(i)%SPS_N(j),      &
-   &     pfs(i)%SPS_STR(j),Qlog,pfs(i)%SPS_DELTA(j),pfs(i)%SPS_GAMMA(j),& 
+   &     pfs(i)%SPS_STR(j),Qlog,pfs(i)%SPS_DELTA(j),pfs(i)%SPS_GAMMA(j),&
    &     pfs(i)%SPS_N1(j),pfs(i)%SPS_N2(j),v0s(j),x1(j),y(j),yi(j),&
    &     slabs1(j),dx1_dv0(j),dy_dv0(j),dslabs1_dv0(j))
 !
@@ -208,6 +219,9 @@ Real(r8) :: v0sm(MAXLINES), x1m(MAXLINES), ym(MAXLINES), yim(MAXLINES), &
  END SUBROUTINE get_beta_path
 end module GET_BETA_PATH_M
 ! $Log$
+! Revision 1.13  2001/03/29 08:51:01  zvi
+! Changing the (*) toi (:) everywhere
+!
 ! Revision 1.12  2001/03/20 23:22:40  zvi
 ! Change to new geoc_geod routine..
 !

@@ -1,5 +1,4 @@
 module VERT_TO_PATH_M
-  use L2PCDim, only: Nlvl, NSPS, N2LVL
   use MLSCommon, only: I4, R4, R8
   use D_LINTRP_M, only: LINTRP
   use I_HUNT_M, only: HUNT
@@ -304,6 +303,9 @@ Real(r8), ALLOCATABLE, DIMENSION(:,:) :: h_a
 END SUBROUTINE vert_to_path
 end module VERT_TO_PATH_M
 ! $Log$
+! Revision 1.6  2001/03/30 20:28:21  zvi
+! General fix-up to get rid of COMMON BLOCK (ELLIPSE)
+!
 ! Revision 1.5  2001/03/26 17:56:14  zvi
 ! New codes to deal with dh_dt_path issue.. now being computed on the fly
 !

@@ -1,10 +1,8 @@
 module COMP_PATH_ENTITIES_M
   use MLSCommon, only: I4, R4, R8
-  use L2PCDIM, only: N2lvl, MNP => max_no_phi
   use GL6P, only: NG
   use L2PC_PFA_STRUCTURES, only: ATMOS_COMP, GEOM_PARAM
-  use L2PC_FILE_PARAMETERS, only: MXCO => max_no_elmnts_per_sv_component, &
-                                  DEG2RAD
+  use L2PC_FILE_PARAMETERS, only: DEG2RAD
   use ELLIPSE_M, only: ELLIPSE
   use PATH_ENTITIES_M, only: PATH_INDEX, PATH_VECTOR, PATH_DERIVATIVE, &
                              PATH_VECTOR_2D
@@ -38,13 +36,10 @@ SUBROUTINE comp_path_entities(fwdModelIn, fwdModelExtra, molecules, &
 type (Vector_T), intent(in) :: fwdModelIn, fwdModelExtra
 integer, dimension(:), intent(in) :: molecules
 
-Integer(i4), PARAMETER :: ngt = (Ng+1) * N2lvl
-
 !  ---------------------------
 !  Calling sequence variables:
 !  ---------------------------
-Integer(i4), INTENT(IN) :: no_t, n_lvls, gl_count, &
-             no_mmaf, no_phi_t
+Integer(i4), INTENT(IN) :: no_t, n_lvls, gl_count, no_mmaf, no_phi_t
 !
 Integer(i4), INTENT(IN OUT) :: no_tan_hts
 
@@ -69,7 +64,7 @@ Type(path_vector_2d), INTENT(OUT) :: eta_phi(:,:)
 !  ----------------
 
 Integer(i4) :: i, j, k, l, jp, sps_i, jj, kk, ih2o, lmin, lmax, &
-               klo, khi
+               klo, khi, ngt
 
 Real(r8) :: h, q, r, zeta, phi
 
@@ -81,6 +76,7 @@ type (VectorValue_T), pointer :: f, h2o
 !  PFA variables:
 
   ier = 0
+  ngt = 2 * (Ng+1) * (N_lvls+1)
 
 ! Compute all the various integration paths according to tanget heights.
 ! Get the z, t, h, phi, dhdz & dh_dt arrays on these paths.
@@ -202,6 +198,9 @@ END SUBROUTINE comp_path_entities
 
 end module COMP_PATH_ENTITIES_M
 ! $Log$
+! Revision 1.15  2001/03/30 20:28:21  zvi
+! General fix-up to get rid of COMMON BLOCK (ELLIPSE)
+!
 ! Revision 1.14  2001/03/30 01:40:24  livesey
 ! Removed some arguments
 !

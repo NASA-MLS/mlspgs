@@ -1,6 +1,5 @@
 module REFRACTION_M
   use MLSCommon, only: I4, R4, R8
-  use L2PCDIM, only: N2lvl, Nptg
   use D_LINTRP_M, only: LINTRP
   use D_SOLVE_QUAD_M, only: SOLVE_QUAD
   use TWO_D_POLATE_M, only: TWO_D_POLATE
@@ -107,7 +106,11 @@ Real(r8), INTENT(OUT) :: ref_corr(:,:)       ! (N2lvl,Nptg)
 !  ----------------
 Integer(i4) :: i, j, k, m, ptg_i, no_ele, Ngp1, count, revc, brkpt
 
-Real(r8) :: ngrid(N2lvl), hgrid(N2lvl), refcor(N2lvl), h_tan, ht2, h
+Real(r8) :: ngrid(size(ref_corr,1))
+Real(r8) :: hgrid(size(ref_corr,1))
+Real(r8) :: refcor(size(ref_corr,1))
+
+Real(r8) :: h_tan, ht2, h
 
   Ngp1 = Ng + 1
 
@@ -119,9 +122,9 @@ Real(r8) :: ngrid(N2lvl), hgrid(N2lvl), refcor(N2lvl), h_tan, ht2, h
     h_tan = tan_hts(ptg_i) + E_rad
     ht2 = h_tan * h_tan
 !
-    hgrid(1:N2lvl) = -1.0
-    ngrid(1:N2lvl) =  1.0
-    ref_corr(1:N2lvl,ptg_i) = 1.0
+    hgrid(1:) = -1.0
+    ngrid(1:) =  1.0
+    ref_corr(1:,ptg_i) = 1.0
 
     k = 0
     j = 1 - Ngp1
@@ -150,8 +153,8 @@ Real(r8) :: ngrid(N2lvl), hgrid(N2lvl), refcor(N2lvl), h_tan, ht2, h
       ref_corr(i,ptg_i) = refcor(count+1-i)
     end do
 
-    hgrid(1:N2lvl) = -1.0
-    ngrid(1:N2lvl) =  1.0
+    hgrid(1:) = -1.0
+    ngrid(1:) =  1.0
 
     count = 0
     j = brkpt+1-Ngp1
@@ -206,13 +209,13 @@ Real(r8) :: hn, pr, hneg, hpos, q, r, hsk, hsk1, an1, an2, dndh, n1, n2, &
 
 ! For first time in, Load the Gauss-Legendre abscissae & weights
 
-  refcor(1:N2lvl) = 1.0
+  refcor(1:) = 1.0
 
   if ( n_lvls > 1) then
     k = n_lvls
     x1 = ngrid(n_lvls-1)
     x2 = ngrid(n_lvls)
-    DO WHILE(k < N2lvl .AND. x1 > 1.0d-13)
+    DO WHILE(k < Size(ngrid) .AND. x1 > 1.0d-13)
       k = k + 1
       xm = x2 * (x2 / x1)
       IF(xm >= 1.0D-13) THEN
@@ -257,7 +260,7 @@ Real(r8) :: hn, pr, hneg, hpos, q, r, hsk, hsk1, an1, an2, dndh, n1, n2, &
   END DO
 
   q = refcor(max(n_lvls-1,1))
-  refcor(n_lvls:N2lvl) = q
+  refcor(n_lvls:) = q
 
   if(ht < 0.0) Return
 
@@ -345,7 +348,7 @@ Real(r8) :: hn, pr, hneg, hpos, q, r, hsk, hsk1, an1, an2, dndh, n1, n2, &
   END DO
 
   q = refcor(max(n_lvls-1,1))
-  refcor(n_lvls:N2lvl) = q
+  refcor(n_lvls:) = q
 
   RETURN
 END SUBROUTINE create_ref_corr
@@ -461,6 +464,9 @@ END SUBROUTINE solve_hn
 
 end module REFRACTION_M
 ! $Log$
+! Revision 1.4  2001/03/21 22:46:34  livesey
+! Some bug found with range checking fixed
+!
 ! Revision 1.3  2001/03/20 11:03:16  zvi
 ! Fixing code for "real" data run, increase dim. etc.
 !

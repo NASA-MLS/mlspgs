@@ -1,7 +1,5 @@
 module NO_CONV_AT_ALL_M
   use MLSCommon, only: I4, R4, R8
-  use L2PCDIM, only: Nlvl, Nsps, Nptg, MNP => max_no_phi
-  use L2PC_FILE_PARAMETERS, only: MXCO => max_no_elmnts_per_sv_component
   use L2PC_PFA_STRUCTURES, only: ATMOS_COMP, LIMB_PRESS, SPECTRO_PARAM, &
                                  K_MATRIX_INFO
   use D_LINTRP_M, only: LINTRP
@@ -36,11 +34,11 @@ Subroutine no_conv_at_all (Ptan,n_sps,tan_press,band,temp_der,atmos_der,&
 !
     real(r8), intent(IN) :: I_RAW(:),TAN_PRESS(:),T_Z_BASIS(:)
 
-    Real(r4) :: k_temp(Nptg,mxco,mnp)
-    Real(r4) :: k_atmos(Nptg,mxco,mnp,Nsps)
-    Real(r4) :: k_spect_dw(Nptg,mxco,mnp,Nsps),  &
-                k_spect_dn(Nptg,mxco,mnp,Nsps),  &
-                k_spect_dnu(Nptg,mxco,mnp,Nsps)
+    Real(r4) :: k_temp(:,:,:)                    ! (Nptg,mxco,mnp)
+    Real(r4) :: k_atmos(:,:,:,:)                 ! (Nptg,mxco,mnp,Nsps)
+    Real(r4) :: k_spect_dw(:,:,:,:)              ! (Nptg,mxco,mnp,Nsps)
+    Real(r4) :: k_spect_dn(:,:,:,:)              ! (Nptg,mxco,mnp,Nsps)
+    Real(r4) :: k_spect_dnu(:,:,:,:)             ! (Nptg,mxco,mnp,Nsps)
 !
     type(atmos_comp), intent(IN) :: ATMOSPHERIC(:)
     type (spectro_param), intent(IN) :: SPECTROSCOPIC(:)
@@ -58,7 +56,7 @@ Subroutine no_conv_at_all (Ptan,n_sps,tan_press,band,temp_der,atmos_der,&
     integer(i4) :: nz
     integer(i4) :: N, I, IS, J, K, NF, SV_I, Spectag, ki, kc
 !
-    real(r8) :: RAD(Nlvl), SRad(Nlvl)
+    real(r8) :: RAD(size(Ptan)), SRad(size(Ptan))
 !
     Character(LEN=01) :: CA
 !
@@ -211,12 +209,16 @@ Subroutine no_conv_at_all (Ptan,n_sps,tan_press,band,temp_der,atmos_der,&
     endif
 !
     K_INFO_COUNT = kc
+
     Return
 !
   End Subroutine NO_CONV_AT_ALL
 !
 end module NO_CONV_AT_ALL_M
 ! $Log$
+! Revision 1.6  2001/03/29 02:54:49  livesey
+! Removed print statements
+!
 ! Revision 1.5  2001/03/29 02:54:29  livesey
 ! Changed assumed size to assumed shape
 !

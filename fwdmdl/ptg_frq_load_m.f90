@@ -1,7 +1,6 @@
 module PTG_FRQ_LOAD_M
   use MLSCommon, only: I4, R8
   use L2_TEST_STRUCTURES_M
-  use L2PCdim, only: N2lvl, Nptg
   use D_HUNT_M, only: HUNT
   implicit NONE
 !---------------------------- RCS Ident Info -------------------------------
@@ -26,9 +25,7 @@ Integer(i4), INTENT(OUT) :: ier
 !
 Integer(i4) :: i, k, kk, jp, io, l
 
-Real(r8) :: dummy(N2lvl)
-
-Real(r8) :: q, r
+Real(r8) :: q, r, dummy(200)
 !
 Character (LEN=80) :: Fnd, Line
 !
@@ -39,8 +36,17 @@ Character (LEN=80) :: Fnd, Line
   Fnd(1:) = ' '
   Fnd = FMC%B
 !
+  k = size(FMI%tan_press)
+  ALLOCATE(FMI%no_ptg_frq(k),STAT=ier)
+  IF(ier /= 0) ALLOCATE(FMI%ptg_frq_grid(k),STAT=ier)
+  IF(ier /= 0) THEN
+    PRINT *,'** ALLOCATION error for no_ptg_frq or ptg_frq_grid ..'
+    PRINT *,'   Allocation STAT =',ier
+    Return
+  ENDIF
+
   kk = -1
-  FMI%no_ptg_frq(1:Nptg) = 0
+  FMI%no_ptg_frq(1:k) = 0
 !
   CLOSE(32,iostat=i)
   OPEN(32,file=Fnd,action='READ',status='OLD',iostat=io)
@@ -152,6 +158,9 @@ Character (LEN=80) :: Fnd, Line
 
 end module PTG_FRQ_LOAD_M
 ! $Log$
+! Revision 1.5  2001/03/20 11:03:16  zvi
+! Fixing code for "real" data run, increase dim. etc.
+!
 ! Revision 1.3  2001/03/09 00:51:28  zvi
 ! Fixed ier not set in ptg_frq_load
 !

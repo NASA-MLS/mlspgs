@@ -19,11 +19,11 @@ contains
 !
 !  ** NOTE: This routine integrate in ZETA Space !
 !
-  Subroutine FAST_DELTA(mid,brkpt,no_ele,z_path,h_path,phi_path, &
- &           beta_path,dHdz_path,spsfunc_path,n_sps,N_lvls,      &
- &           Nlvl,ref_corr,elvar,delta,Ier)
+  Subroutine FAST_DELTA(mid,brkpt,no_ele,z_path,h_path,phi_path,    &
+ &           beta_path,dHdz_path,spsfunc_path,n_sps,N_lvls,ref_corr,&
+ &           elvar,delta,Ier)
 !
-    Integer(i4), intent(in) :: NLVL, N_SPS, N_LVLS, MID, BRKPT, NO_ELE
+    Integer(i4), intent(in) :: N_SPS, N_LVLS, MID, BRKPT, NO_ELE
 
     Real(r8), intent(in) :: REF_CORR(:)
 
@@ -82,6 +82,9 @@ contains
 !
 end module FAST_DELTA_M
 ! $Log$
+! Revision 1.4  2001/03/30 20:28:21  zvi
+! General fix-up to get rid of COMMON BLOCK (ELLIPSE)
+!
 ! Revision 1.3  2001/03/29 08:51:01  zvi
 ! Changing the (*) toi (:) everywhere
 !

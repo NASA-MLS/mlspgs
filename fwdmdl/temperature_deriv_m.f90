@@ -2,8 +2,6 @@ module TEMPERATURE_DERIV_M
   use ELLIPSE_M, only: ELLIPSE
   use D_DELTA_DT_M, only: D_DELTA_DT
   use GET_DRAD_M, only: GET_DRAD
-  use L2PC_FILE_PARAMETERS, only: MXCO => max_no_elmnts_per_sv_component
-  use L2PCdim, only: N2LVL, NLVL
   use MLSCommon, only: I4, R8
   use PATH_ENTITIES_M, only: PATH_VECTOR, PATH_BETA, PATH_DERIVATIVE
   implicit NONE
@@ -44,7 +42,7 @@ contains
     Type(path_derivative), INTENT(in out) :: k_temp
 !
     Integer(i4) :: IN, IP
-    Real(r8) :: D_DELTA_DTNP(N2lvl), r
+    Real(r8) :: D_DELTA_DTNP(Size(tau)), r
 !
 ! Begin sweep through elements to see if user wants derivatives for this
 ! channel at this frequency
@@ -56,7 +54,7 @@ contains
 ! Compute the temperature derivative of delta:
 !
         Call d_delta_dt(mid,brkpt,no_ele,z_path,t_path,h_path,phi_path, &
-       &     beta_path,dHdz_path,dh_dt_path(:,ip,in),N_lvls,n_sps,Nlvl, &
+       &     beta_path,dHdz_path,dh_dt_path(:,ip,in),N_lvls,n_sps,      &
        &     ref_corr,t_z_basis,no_t,t_phi_basis,no_phi_t,spsfunc_path, &
        &     in,ip,elvar,d_delta_dtnp)
 !
@@ -74,6 +72,9 @@ contains
   End Subroutine TEMPERATURE_DERIV
 end module TEMPERATURE_DERIV_M
 ! $Log$
+! Revision 1.8  2001/03/30 20:28:21  zvi
+! General fix-up to get rid of COMMON BLOCK (ELLIPSE)
+!
 ! Revision 1.7  2001/03/29 08:51:01  zvi
 ! Changing the (*) toi (:) everywhere
 !

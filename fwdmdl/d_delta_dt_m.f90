@@ -19,12 +19,11 @@ contains
 !
 !  ** NOTE: This routine integrates in ZETA Space !!
 !
-  Subroutine d_delta_dt(mid,brkpt,no_ele,z_path,t_path,h_path,phi_path, &
- &           beta_path,dHdz_path,dh_dt_path,N_lvls,n_sps,Nlvl,  &
- &           ref_corr,t_z_basis,no_t,t_phi_basis,no_phi_t,spsfunc_path, &
- &           in,ip,elvar,d_delta_dtnp)
+  Subroutine d_delta_dt(mid,brkpt,no_ele,z_path,t_path,h_path,phi_path,     &
+ &           beta_path,dHdz_path,dh_dt_path,N_lvls,n_sps,ref_corr,t_z_basis,&
+ &           no_t,t_phi_basis,no_phi_t,spsfunc_path,in,ip,elvar,d_delta_dtnp)
 !
-    Integer(i4), intent(in) :: NLVL,NO_PHI_T,N_LVLS,N_SPS, &
+    Integer(i4), intent(in) :: NO_PHI_T,N_LVLS,N_SPS, &
    &             NO_T,IN,IP,MID,BRKPT,NO_ELE
 !
     Type(path_beta), intent(in) :: BETA_PATH(:)      ! (Nsps)
@@ -33,7 +32,7 @@ contains
     Type(path_vector), intent(in) :: Z_PATH, T_PATH, H_PATH, PHI_PATH, &
    &                                 DHDZ_PATH
 
-    real(r8), intent(in) :: T_Z_BASIS(:), T_PHI_BASIS(:),DH_DT_PATH(:)
+    real(r8), intent(in) :: T_Z_BASIS(:),T_PHI_BASIS(:),DH_DT_PATH(:)
     real(r8), intent(in) :: REF_CORR(:)
 
     Type(ELLIPSE), intent(in out) :: elvar
@@ -68,7 +67,7 @@ contains
 !
 !  Initialize all the arrays:
 !
-    d_delta_dtnp(1:2*Nlvl) = 0.0
+    d_delta_dtnp(1:) = 0.0
 !
 ! First, do the right hand side of the ray path:
 !
@@ -347,14 +346,5 @@ contains
 !
 end module D_DELTA_DT_M
 ! $Log$
-! Revision 1.6  2001/03/29 08:51:01  zvi
-! Changing the (*) toi (:) everywhere
-!
-! Revision 1.5  2001/03/26 17:56:14  zvi
-! New codes to deal with dh_dt_path issue.. now being computed on the fly
-!
-! Revision 1.4  2001/01/31 01:08:48  zvi
-! New version of forward model
-!
 ! Revision 1.1  2000/05/04 18:12:04  vsnyder
 ! Initial conversion to Fortran 90

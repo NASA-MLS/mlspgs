@@ -18,13 +18,13 @@ contains
 !
 !  ** NOTE: This routine integrate in ZETA Space !
 !
-  Subroutine GET_DELTA(mid,brkpt,no_ele,z_path,h_path,phi_path,         &
- &           beta_path,dHdz_path,n_sps,N_lvls,Nc,ncoeffs,Nlvl,  &
- &           z_basis,ref_corr,mnp,no_phi_f,phi_basis,spsfunc_path,mr_f, &
+  Subroutine GET_DELTA(mid,brkpt,no_ele,z_path,h_path,phi_path,    &
+ &           beta_path,dHdz_path,n_sps,N_lvls,ncoeffs,z_basis,  &
+ &           ref_corr,no_phi_f,phi_basis,spsfunc_path,mr_f,    &
  &           is_f_log,elvar,delta,Ier)
 
     Logical,     intent(in) :: IS_F_LOG(:)
-    Integer(i4), intent(in) :: NLVL, NC, N_SPS, N_LVLS, MNP
+    Integer(i4), intent(in) :: N_SPS, N_LVLS
     Integer(i4), intent(in) :: NCOEFFS(:), NO_PHI_F(:)
     Integer(i4), intent(in) :: mid, brkpt, no_ele
 
@@ -73,8 +73,8 @@ contains
 !
     do j = 1, n_sps
 !
-      npf = no_phi_f(j)
       nco = ncoeffs(j)
+      npf = no_phi_f(j)
 !
       integrand(1:no_ele) = beta_path(j)%values(1:no_ele)
 !
@@ -114,6 +114,9 @@ contains
 !
 end module GET_DELTA_M
 ! $Log$
+! Revision 1.6  2001/03/30 20:28:21  zvi
+! General fix-up to get rid of COMMON BLOCK (ELLIPSE)
+!
 ! Revision 1.5  2001/03/29 08:51:01  zvi
 ! Changing the (*) toi (:) everywhere
 !

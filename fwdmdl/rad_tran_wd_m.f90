@@ -1,9 +1,7 @@
 module RAD_TRAN_WD_M
   use GL6P, only: NG
   use ELLIPSE_M, only: ELLIPSE
-  use L2PCDim, only: NLVL, NSPS, N2LVL, MNP => max_no_phi
   use MLSCommon, only: I4, R8
-  use L2PC_FILE_PARAMETERS, only: MXCO => max_no_elmnts_per_sv_component
   use L2PC_PFA_STRUCTURES, only: ATMOS_COMP, SPECTRO_PARAM
   use PATH_ENTITIES_M, only: PATH_VECTOR, PATH_BETA, PATH_DERIVATIVE
   use D_T_SCRIPT_DTNP_M, only: D_T_SCRIPT_DTNP
@@ -76,21 +74,38 @@ Subroutine Rad_Tran_WD(elvar,frq_i,band,Frq,N_lvls,n_sps,temp_der,atmos_der,&
     Integer(i4) :: i, j, Ngp1, Spectag
     Integer(i4) :: nf, sa, s_np, s_nz
 
-    Real(r8) :: dt_scrpt_dnp(N2lvl,mxco,mnp), delta(N2lvl,mxco,mnp,Nsps)
+! Real(r8), allocatable, dimension(:,:,:) :: dt_scrpt_dnp  ! N2lvl,mxco,mnp
+! Real(r8), allocatable, dimension(:,:,:,:) :: delta  ! N2lvl,mxco,mnp,Nsps
 
-    Real(r8), Parameter, Dimension(N2lvl) :: ary_zero = 0.0
+    Real(r8) :: dt_scrpt_dnp(size(tau),no_t,no_phi_t)
+    Real(r8) :: delta(size(tau),max(no_t,MAXVAL(no_coeffs_f)), &
+   &                  max(no_phi_t,MAXVAL(no_phi_f)),n_sps)
+!
+!  Begin code:
 !
     Ngp1 = Ng + 1
+
+!   sa = max(no_t,MAXVAL(no_coeffs_f))
+!   i = max(no_phi_t,MAXVAL(no_phi_f))
+!
+!   j = 2*(N_lvls+1)
+!   Allocate (delta(j,sa,i,n_sps),STAT=ier)
+!   if (Ier /= 0) then
+!     Print *,'** Error: Allocation error in Rad_Tran_WD routine ..'
+!     Print *,'          Allocation STAT error code: ',Ier
+!     Return
+!   endif
 
     if(atmos_der) then
 !
 !  Atmospheric derivatives:
 !
       Call GET_DELTA(mid,brkpt,no_ele,z_path,h_path,phi_path,   &
-   &       beta_path,dHdz_path,n_sps,N_lvls,mxco,no_coeffs_f,   &
-   &       Nlvl,f_basis,ref_corr,mnp,no_phi_f, &
+   &       beta_path,dHdz_path,n_sps,N_lvls,no_coeffs_f,   &
+   &       f_basis,ref_corr,no_phi_f, &
    &       phi_basis_f,spsfunc_path,mr_f,is_f_log,elvar,delta,Ier)
       if (Ier /= 0) Return
+!     if (Ier /= 0) goto 99
 !
 ! Compute atmosperic derivatives for this channel
 !
@@ -98,12 +113,21 @@ Subroutine Rad_Tran_WD(elvar,frq_i,band,Frq,N_lvls,n_sps,temp_der,atmos_der,&
    &              no_coeffs_f,mid,delta,t_script,tau,ilo,ihi, &
    &              no_phi_f,k_atmos,Ier)
       if (Ier /= 0) Return
+!     if (Ier /= 0) goto 99
 !
     endif
 !
 ! Compute temperature derivative for this channel (if requested)
 !
     if (temp_der) then
+
+!     j = 2*(N_lvls+1)
+!     Allocate (dt_scrpt_dnp(j,no_t,no_phi_t),STAT=ier)
+!     if (Ier /= 0) then
+!       Print *,'** Error: Allocation error in Rad_Tran_WD routine ..'
+!       Print *,'          Allocation STAT error code: ',Ier
+!       goto 99
+!     endif
 !
 ! Create the dt_scrpt_dnp arrays for all coefficients:
 !
@@ -150,27 +174,28 @@ Subroutine Rad_Tran_WD(elvar,frq_i,band,Frq,N_lvls,n_sps,temp_der,atmos_der,&
 
           if (CA == 'W') then
             Call spectro_derivative(mid, brkpt, no_ele, z_path,         &
- &               h_path, phi_path, DHDZ_PATH, N_lvls,mxco, ref_corr,mnp,&
+ &               h_path, phi_path, DHDZ_PATH, N_lvls,ref_corr,    &
  &               spsfunc_path(nf)%values, beta_path(nf)%dbeta_dw, tau,  &
- &               t_script,ary_zero,s_np,s_nz,ilo,ihi,spectroscopic(sa), &
+ &               t_script,s_np,s_nz,ilo,ihi,spectroscopic(sa), &
  &               frq_i,elvar,k_spect_dw(nf), Ier )
 !
           else if (CA == 'N') then
             Call spectro_derivative(mid, brkpt, no_ele, z_path,         &
- &               h_path, phi_path, DHDZ_PATH, N_lvls,mxco, ref_corr,mnp,&
+ &               h_path, phi_path, DHDZ_PATH, N_lvls,ref_corr,    &
  &               spsfunc_path(nf)%values, beta_path(nf)%dbeta_dn, tau,  &
- &               t_script,ary_zero,s_np,s_nz,ilo,ihi,spectroscopic(sa), &
+ &               t_script,s_np,s_nz,ilo,ihi,spectroscopic(sa), &
  &               frq_i,elvar,k_spect_dn(nf), Ier )
 !
           else if (CA == 'V') then
             Call spectro_derivative(mid, brkpt, no_ele, z_path,         &
- &               h_path, phi_path, DHDZ_PATH, N_lvls,mxco, ref_corr,mnp,&
+ &               h_path, phi_path, DHDZ_PATH, N_lvls,ref_corr,    &
  &               spsfunc_path(nf)%values, beta_path(nf)%dbeta_dnu, tau, &
- &               t_script,ary_zero,s_np,s_nz,ilo,ihi,spectroscopic(sa), &
+ &               t_script,s_np,s_nz,ilo,ihi,spectroscopic(sa), &
  &               frq_i,elvar,k_spect_dnu(nf), Ier )
 !
           end if
 !
+!         if (Ier /= 0) goto 99
           if (Ier /= 0) Return
 !
           sa = sa + 1
@@ -182,10 +207,16 @@ Subroutine Rad_Tran_WD(elvar,frq_i,band,Frq,N_lvls,n_sps,temp_der,atmos_der,&
 !
     end if                        ! on Derivatives 'if'
 !
+!99  Deallocate (delta,STAT=i)
+!    Deallocate (dt_scrpt_dnp,STAT=i)
+
     Return
   End Subroutine RAD_TRAN_WD
 end module RAD_TRAN_WD_M
 ! $Log$
+! Revision 1.7  2001/03/30 20:28:21  zvi
+! General fix-up to get rid of COMMON BLOCK (ELLIPSE)
+!
 ! Revision 1.6  2001/03/29 08:51:01  zvi
 ! Changing the (*) toi (:) everywhere
 !

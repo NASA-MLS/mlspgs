@@ -1,5 +1,4 @@
 module FOV_CONVOLVE_M
-  use L2PCdim, only: NLVL
   use MLSCommon, only: I4, R8
   use D_CSPLINE_M, only: CSPLINE
   implicit NONE
@@ -31,8 +30,7 @@ contains
     real(r8) :: X
 !
     ntr = 2**m
-    call ftgrid(eil_angle,radiance,delta0,xlamda,np,ntr,ier)
-    if(ier /= 0) return
+    call ftgrid(eil_angle,radiance,delta0,xlamda,np,ntr)
 !
     j = ntr/2 + 2
     do i = j, ntr
@@ -120,75 +118,60 @@ contains
 ! This subroutine performs the interpolation onto the computational grid
 ! it uses cubic splines
 !
-  Subroutine FTGRID ( EIL_ANGLE, RADIANCE, DELTA0, XLAMDA, NP, NTR, IERR )
+  Subroutine FTGRID ( EIL_ANGLE, RADIANCE, DELTA0, XLAMDA, NP, NTR )
 
     Real(r8), intent(inout) :: EIL_ANGLE(:)
     Real(r8), intent(inout) :: RADIANCE(:)
     Real(r8), intent(in) :: DELTA0, XLAMDA
     Integer(i4), intent(in) :: NP, NTR
-    Integer(i4), intent(out) :: IERR
 
     Integer(i4) :: I, K1, KN, N, MP
 !
-    Real(r8) :: X1, XN, R1,RN
-    Real(r8) :: X(Nlvl), R(Nlvl)
-    Real(r8) :: V, W, OOX, PP, DEL
-!
-    ierr = 0
-    if (nlvl > np) then
+    Real(r8) :: X1, XN, R1,RN, V, OOX, PP, DEL
+    Real(r8) :: X(np), R(np)
 !
 !  Make sure the EIL_ANGLE is a Monotonically increasing array:
 !
-      mp = 1
-      r(1) = radiance(1)
-      x(1) = eil_angle(1)
-      do i = 2, np
-        xn = eil_angle(i)
-        if(xn > x(mp)) then
-          mp = mp + 1
-          x(mp) = xn
-          r(mp) = radiance(i)
-        endif
-      end do
+    mp = 1
+    r(1) = radiance(1)
+    x(1) = eil_angle(1)
+    do i = 2, np
+      xn = eil_angle(i)
+      if(xn > x(mp)) then
+        mp = mp + 1
+        x(mp) = xn
+        r(mp) = radiance(i)
+      endif
+    end do
 !
-      v = dble(xlamda)
-      w = dble(delta0)
-      oox = 1.0 / v
-      pp = 0.185_r8 * oox
-      del = oox / ntr
+    oox = 1.0_r8 / xlamda
+    pp = 0.185_r8 * oox
+    del = oox / ntr
 !
-      do i = 1, ntr
-        v = w - pp + del * (i - 1)             ! new code
-        eil_angle(i) = v
-        radiance(i) = 0.0
-      end do
+    do i = 1, ntr
+      v = delta0 - pp + del * (i - 1)            ! new code
+      eil_angle(i) = v
+      radiance(i) = 0.0
+    end do
 !
-      k1 = 1
-      r1 = r(1)
-      x1 = x(1)
-      do while ( eil_angle(k1) <= x1 .and. k1 < ntr )
-        radiance(k1) = r1
-        k1 = k1 + 1
-      end do
+    k1 = 1
+    r1 = r(1)
+    x1 = x(1)
+    do while ( eil_angle(k1) <= x1 .and. k1 < ntr )
+      radiance(k1) = r1
+      k1 = k1 + 1
+    end do
 !
-      kn = ntr
-      rn = r(mp)
-      xn = x(mp)
-      do while ( eil_angle(kn) >= xn.and.kn > 1 )
-        radiance(kn) = rn
-        kn = kn - 1
-      end do
+    kn = ntr
+    rn = r(mp)
+    xn = x(mp)
+    do while ( eil_angle(kn) >= xn.and.kn > 1 )
+      radiance(kn) = rn
+      kn = kn - 1
+    end do
 !
-      n = kn - k1 + 1
-      call cspline(x, eil_angle(k1:kn), r, radiance(k1:kn), mp, n)
-!
-    else
-!
-      ierr = 4
-      Print *,'** Errro in FTGRID subroutine'
-      Print *,'   MAXP < = NP (NP too big)'
-!
-    endif
+    n = kn - k1 + 1
+    call cspline(x, eil_angle(k1:kn), r, radiance(k1:kn), mp, n)
 !
     return
   End subroutine FTGRID
@@ -725,6 +708,9 @@ contains
 
 end module FOV_CONVOLVE_M
 ! $Log$
+! Revision 1.6  2001/03/29 08:51:01  zvi
+! Changing the (*) toi (:) everywhere
+!
 ! Revision 1.5  2001/02/26 09:01:16  zvi
 ! New version - Using "Super-Structures"
 !

@@ -1,8 +1,6 @@
 module GET_CHI_ANGLES_M
   use MLSCOMMON, only: I4, R8
-  use L2PCDIM, only: Nlvl
-  use L2PC_FILE_PARAMETERS, only: mxco => MAX_NO_ELMNTS_PER_SV_COMPONENT, &
-                                  DEG2RAD
+  use L2PC_FILE_PARAMETERS, only: DEG2RAD
   use PATH_ENTITIES_M, only: PATH_INDEX, PATH_VECTOR
   use GET_ETA_M, only: GET_ETA
   use D_LINTRP_M, only: LINTRP
@@ -53,10 +51,11 @@ Integer(i4) :: i, brkpt, sv_i, is, h_i
 Real(r8), PARAMETER :: ampl = 38.9014
 Real(r8), PARAMETER :: phas = 51.6814 * deg2rad
 
+Real(r8) :: Eta(no_tan_hts,no_t)
 Real(r8) :: r,t,dh,tanx,cse,ht,Rs_eq,ngrid,schi
-Real(r8) :: Eta(Nlvl,mxco)
-
-  ier = 0
+!
+! Begin code:
+!
   Rs_eq = h_obs + ampl * Sin(2.0*(phi_tan-phas))    ! ** Experimental
 
 ! Get 'No_tan_hts' convolution angles
@@ -70,7 +69,7 @@ Real(r8) :: Eta(Nlvl,mxco)
       ier = 1
       PRINT *,'*** Error in get_chi_angles subroutine !'
       PRINT *,'    arg > 1.0 in ArcSin(arg) ..'
-      RETURN
+      Return
     END IF
     ptg_angle(i) = DAsin(schi) + elev_offset
   END DO
@@ -82,7 +81,7 @@ Real(r8) :: Eta(Nlvl,mxco)
 !
 !  First: Get table of temperature basis functions
 !
-  Call get_eta(tan_press,t_z_basis,no_tan_hts,no_t,Nlvl,Eta)
+  Call get_eta(tan_press,t_z_basis,no_tan_hts,no_t,Eta)
 !
   do sv_i = 1, no_t
 !
@@ -110,6 +109,9 @@ Real(r8) :: Eta(Nlvl,mxco)
 END SUBROUTINE get_chi_angles
 end module GET_CHI_ANGLES_M
 ! $Log$
+! Revision 1.7  2001/03/21 22:47:28  livesey
+! Bugs found with range checking fixed.
+!
 ! Revision 1.6  2001/03/09 03:34:44  zvi
 ! *** empty log message ***
 !

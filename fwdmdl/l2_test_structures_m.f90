@@ -1,6 +1,5 @@
 module L2_TEST_STRUCTURES_M
   use MLSCommon, only: I4, R8
-  use L2PCDim, only: MAX_NO_PHI, NLVL, NPTG
   use L2PC_PFA_STRUCTURES, only: LIMB_PRESS, ATMOS_COMP, &
  &                               SPECTRO_PARAM, PFA_SLAB
   use PATH_ENTITIES_M, only: PATH_VECTOR
@@ -85,7 +84,7 @@ module L2_TEST_STRUCTURES_M
     Integer(i4) :: NO_SPECT_CAT
     Integer(i4) :: Surface_index
     Integer(i4) :: No_filt_pts
-    Integer(i4) :: no_ptg_frq(Nptg)
+    Integer(i4), DIMENSION(:), POINTER :: no_ptg_frq => NULL()
     Integer(i4), DIMENSION(:), POINTER :: Spect_atmos => NULL()
     Real(r8) :: Xlamda
     Real(r8), DIMENSION(:), POINTER :: z_grid => NULL()
@@ -97,13 +96,16 @@ module L2_TEST_STRUCTURES_M
     Real(r8), DIMENSION(:,:), POINTER :: D1Aaap => NULL()       ! (maxfft,3)
     Character(LEN=8), DIMENSION(:), POINTER :: Species => NULL()
     Real(r8), DIMENSION(:,:), POINTER :: D2Aaap => NULL()       ! (maxfft,3)
-    Type(PATH_VECTOR) :: Ptg_frq_grid(Nptg)
+    Type(PATH_VECTOR), DIMENSION(:), POINTER :: Ptg_frq_grid
     Type(PFA_SLAB), DIMENSION(:), POINTER :: Pfa_spectrum => NULL()
     Type(SPECTRO_PARAM), DIMENSION(:), POINTER :: Spectroscopic => NULL()
   end type FWD_MDL_INFO
 !
 end module L2_TEST_STRUCTURES_M
 ! $Log$
+! Revision 1.7  2001/03/20 23:22:40  zvi
+! Change to new geoc_geod routine..
+!
 ! Revision 1.6  2001/03/20 11:03:16  zvi
 ! Fixing code for "real" data run, increase dim. etc.
 !

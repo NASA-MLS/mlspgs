@@ -1,8 +1,6 @@
 module L2PC_PFA_STRUCTURES
   use MLSCommon, only: I4, R4, R8
-  use L2PCDim, only: MAX_NO_PHI, NLVL
-  use L2PC_File_Parameters, only: MAX_NO_BANDS, &
-                                  MAX_NO_ELMNTS_PER_SV_COMPONENT, &
+  use L2PC_File_Parameters, only: MAX_NO_ELMNTS_PER_SV_COMPONENT, &
                                   MAX_NO_POINTINGS
   implicit NONE
 !  This has the standard structure constructions used for
@@ -32,7 +30,7 @@ module L2PC_PFA_STRUCTURES
   type LIMB_PRESS
     character(len=8) :: NAME
     Integer(i4) :: NO_LIN_VALUES
-    Logical DER_CALC(max_no_bands)
+    Logical DER_CALC(6)
     Real(r4) :: LIN_VAL(max_no_pointings)
   end type LIMB_PRESS
 
@@ -40,7 +38,7 @@ module L2PC_PFA_STRUCTURES
 ! with a single value
   type GEOM_PARAM
     character(len=8) :: NAME
-    Logical DER_CALC(max_no_bands)
+    Logical DER_CALC(6)
     Real(r4) :: LIN_VAL
   end type GEOM_PARAM
 
@@ -51,18 +49,18 @@ module L2PC_PFA_STRUCTURES
     Integer(i4) :: SPECTAG
     Integer(i4) :: NO_PHI_VALUES
     Integer(i4) :: NO_ZETA_VALUES
-    Logical DER_CALC(max_no_bands)
-    Real(r4) :: PHI_BASIS(max_no_phi+2)
-    Real(r4) :: ZETA_BASIS(max_no_elmnts_per_sv_component+2)
+    Logical DER_CALC(6)
+    Real(r4) :: PHI_BASIS(12)
+    Real(r4) :: ZETA_BASIS(52)
   end type SPECTRO_PARAM
 
 ! This structure contains geophysical information about the atmosphere
   type GEOPHYS_PARAM
     character(len=8) :: NAME
     Integer(i4) :: NO_LIN_VALUES
-    Logical DER_CALC(max_no_bands)
-    Real(r4) :: LIN_VAL(max_no_elmnts_per_sv_component)
-    Real(r4) :: BASIS_PEAKS(max_no_elmnts_per_sv_component)
+    Logical DER_CALC(6)
+    Real(r4) :: LIN_VAL(50)
+    Real(r4) :: BASIS_PEAKS(52)
   end type GEOPHYS_PARAM
 
 ! This structure contains atmospheric composition of the atmosphere
@@ -70,10 +68,10 @@ module L2PC_PFA_STRUCTURES
     character(len=8) :: NAME
     Integer(i4) :: SPECTAG
     Integer(i4) :: NO_LIN_VALUES
-    Logical FWD_CALC(max_no_bands)
-    Logical DER_CALC(max_no_bands)
-    Real(r4) :: LIN_VAL(max_no_elmnts_per_sv_component)
-    Real(r4) :: BASIS_PEAKS(max_no_elmnts_per_sv_component+2)
+    Logical FWD_CALC(6)
+    Logical DER_CALC(6)
+    Real(r4) :: LIN_VAL(50)
+    Real(r4) :: BASIS_PEAKS(52)
   end type ATMOS_COMP
 
 ! This NEW structure contains info about the K matrix
@@ -82,8 +80,8 @@ module L2PC_PFA_STRUCTURES
     Integer(i4) :: FIRST_DIM_INDEX
     Integer(i4) :: NO_ZETA_BASIS
     Integer(i4) :: NO_PHI_BASIS
-    Real(r4)    :: PHI_BASIS(max_no_phi+2)
-    Real(r4)    :: ZETA_BASIS(max_no_elmnts_per_sv_component+2)
+    Real(r4)    :: PHI_BASIS(12)
+    Real(r4)    :: ZETA_BASIS(52)
   end type K_MATRIX_INFO
 
 !-----------------------------------------------------------------------
@@ -122,6 +120,9 @@ module L2PC_PFA_STRUCTURES
 
 end module L2PC_PFA_STRUCTURES
 ! $Log$
+! Revision 1.7  2001/02/19 22:20:40  zvi
+! Latest modification: Conv/NoConv
+!
 ! Revision 1.6  2001/02/19 22:14:21  zvi
 !
 ! Revision 1.1  2000/06/21 21:56:15  zvi

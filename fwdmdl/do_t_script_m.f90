@@ -1,5 +1,4 @@
 module DO_T_SCRIPT_M
-  use L2PCdim, only: N2LVL
   use MLSCommon, only: I4, R8
   use PATH_ENTITIES_M, only: PATH_VECTOR
   use D_STAT_TEMP_M, only: STAT_TEMP
@@ -30,10 +29,12 @@ contains
     Real(r8), intent(out) :: t_script(:)
 !
     Integer(i4) :: i, j, m
-    real(r8)    :: Tb(N2lvl)
-
-    tb(1:N2lvl) = 0.0
-    t_script(1:N2lvl) = 0.0
+    Real(r8) :: Tb(size(t_script))
+!
+!  Begin code:
+!
+    tb(:) = 0.0
+    t_script(:) = 0.0
 
 ! 'brkpt' is the index of the path break-point (when it change from
 !         incoming ray to outgoing ray)
@@ -80,6 +81,9 @@ contains
   End Subroutine DO_T_SCRIPT
 end module DO_T_SCRIPT_M
 ! $Log$
+! Revision 1.5  2001/03/29 08:51:01  zvi
+! Changing the (*) toi (:) everywhere
+!
 ! Revision 1.4  2001/01/31 01:08:48  zvi
 ! New version of forward model
 !
