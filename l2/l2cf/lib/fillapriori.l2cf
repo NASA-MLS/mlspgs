@@ -103,6 +103,16 @@ begin Fill
   Fill, quantity=aprioriPrecision.temperature, method=explicit, /spread, explicitValues= 20 K
   Fill, quantity=aprioriPrecision.refGPH, method=explicit, /spread, explicitValues= 5 km
 
+  ;; Now make the h2o error 1000ppmv in the troposphere.
+  ;; A bit messy this one.
+end Fill
+begin Retrieve
+  Subset, quantity=aprioriPrecision.h2o, height=[1000.0mb:150.0mb], mask=fill
+end Retrieve
+begin Fill
+  Fill, quantity=aprioriPrecision.h2o, method=explicit, /spread, $
+    explicitValues=1000 ppmv
+
   ;; Now we're going to fill the a priori length scales up
   !ifdef(standardLength,{},{!define(standardLength, 5 km)})
   Fill, quantity=length.bro,     method=explicit, /spread, explicitValues= !standardLength
