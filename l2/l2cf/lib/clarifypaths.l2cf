@@ -39,7 +39,9 @@
 !define(lossesL2cf,{!calpath/MLS-Aura_L2Cal-Antenna-Losses_v1-2-0_0000d000.l2cf})
 ; The next lot are arguments to fowardModelGlobal, so quoted.
 !define(antennaFile,{'!calpath/MLS-Aura_L2Cal-AAAP_v1-2-0_0000d000.txt'})
-!define(climatologyFile,{'!inpathcli/MLS-Aura_L2Cal-Climatologies_v1-2-0_0000d000.txt'})
+!define(climatologyFile,!dnl
+{!ifdef(usingPCF,{'Climatologies'},!dnl
+{'!inpathcli/MLS-Aura_L2Cal-Climatologies_v1-2-0_0000d000.txt'})})
 !define(filterFile,{'!calpath/MLS-Aura_L2Cal-Filters_v1-2-0_0000d000.txt'})
 !define(pfgFile,{'!calpath/MLS-Aura_L2Cal-PFG_v1-2-1_0000d000.txt'})
 !define(pfgRtvlFile,{'!calpath/MLS-Aura_L2Cal-PFG-rtvl_v1-2-2_0000d000.txt'})
