@@ -19,10 +19,10 @@ module LinearizedForwardModel_m
   use MLSSignals_m, only: Signal_T
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
   use MLSNumerics, only: INTERPOLATEVALUES
-  use VectorsModule, only: assignment(=), OPERATOR(-),&
+  use VectorsModule, only: assignment(=), OPERATOR(-), OPERATOR(+), &
     & CLONEVECTOR, CONSTRUCTVECTORTEMPLATE, COPYVECTOR, CREATEVECTOR,&
     & DESTROYVECTORINFO, GETVECTORQUANTITYBYTYPE, VECTOR_T, &
-    & VECTORVALUE_T, VECTORTEMPLATE_T
+    & VECTORVALUE_T, VECTORTEMPLATE_T, DUMP
   use QuantityTemplates, only: QuantityTemplate_T
   use String_Table, only: Display_String
   use Intrinsic, only: L_RADIANCE, L_TEMPERATURE, L_PTAN,L_VMR
@@ -87,6 +87,7 @@ contains ! =====     Public Procedures     =============================
     type(VectorValue_T), pointer :: RADINL2PC ! The relevant radiance part of yStar
     type(VectorValue_T), pointer :: STATEQ ! A state vector quantity
     type(VectorValue_T), pointer :: PTAN ! Tangent pressure quantity
+    type(VectorValue_T), pointer :: XSTARPTAN ! Tangent pressure in l2pc
     type(VectorValue_T), pointer :: L2PCQ ! A quantity in the l2pc
     ! Executable code
 
@@ -128,14 +129,8 @@ contains ! =====     Public Procedures     =============================
     ! -------- Main loop over xStar quantities -------------------------------
     do qtyInd = 1, size ( l2pc%col%vec%quantities )
 
-      print*,'Doing l2pc quantity:',qtyInd
       ! Identify this quantity in xStar
       l2pcQ => l2pc%col%vec%quantities(qtyInd)
-      call display_string(lit_indices(l2pcQ%template%quantityType), &
-        & advance='yes')
-      if (l2pcQ%template%quantityType == l_vmr) &
-        & call display_string(lit_indices(l2pcQ%template%molecule), &
-        &    advance='yes')
       
       ! Now see if we are wanting to deal with this
       if ( l2pcQ%template%quantityType == l_ptan ) cycle ! Get this from interpolation
@@ -221,21 +216,19 @@ contains ! =====     Public Procedures     =============================
         & xP%quantities(qtyInd)%values - &
         & l2pc%col%vec%quantities(qtyInd)%values
 
-    end do
+      !???? SPECIAL TESTS, NJL
+      if ( l2pcQ%template%quantityType == l_Temperature ) then
+        deltaX%quantities(qtyInd)%values(max(1,l2pcQ%template%noSurfs-maf):,:) = 0.0
+      endif
+
+    end do                              ! End loop over quantities
 
     ! Now compute yP
 
     call cloneVector( yp, l2pc%row%vec )
-    print*,'Got to the multiply'
-    do qtyInd = 1, size(yp%quantities)
-      print*,qtyInd,&
-        & yp%quantities(qtyInd)%template%noInstances, &
-        & yp%quantities(qtyInd)%template%instanceLen, &
-        & shape(yp%quantities(qtyInd)%values )
-    end do
-    print*,'OK doing it'
     call MultiplyMatrixVectorNoT ( l2pc, deltaX, yP )
-    print*,'Survived the multiply'
+
+    yP = yP + l2pc%row%vec
 
     ! Now we interpolate yP to ptan
 
@@ -243,40 +236,34 @@ contains ! =====     Public Procedures     =============================
       & quantityType = l_ptan, &
       & instrumentModule = radiance%template%instrumentModule )
 
-    print*,0
-    
+    xStarPtan => GetVectorQuantityByType ( l2pc%col%vec, &
+      & quantityType = l_ptan )
+
     call allocate_test( ypMapped, radInL2PC%template%noSurfs, &
       & radInL2PC%template%noChans, 'ypMapped', ModuleName )
     call allocate_test( resultMapped, radiance%template%noSurfs, &
       & radInL2PC%template%noChans, 'resultMapped', ModuleName )
     call allocate_test( dyByDx, radiance%template%noSurfs, &
       & radInL2PC%template%noChans, 'dyByDX', ModuleName )
-    print*,1
 
     yPmapped = transpose ( &
       & reshape ( yp%quantities(1)%values(:,1), &
       &           (/radInL2PC%template%noChans, radInL2PC%template%noSurfs/) ) )
-    print*,2
 
     call InterpolateValues ( &
-      & radInL2PC%template%surfs(:,1), & ! OldX
-      & yPmapped, &                      ! OldY
-      & ptan%values(:,maf), &            ! NewX
-      & resultMapped, &                  ! NewY
-      & 'Spline', &                      ! use spline
-      & extrapolate='Constant', &        ! dont extrapolate, clamp
+      & xStarPtan%values(:,1), &        ! OldX
+      & yPmapped, &                     ! OldY
+      & ptan%values(:,maf), &           ! NewX
+      & resultMapped, &                 ! NewY
+      & 'Spline', &                     ! use spline
+      & extrapolate='Constant', &       ! dont extrapolate, clamp
       & dyByDx=dyByDx )
-
-    print*,3
-
 
     ! For the moment, overwrite, may make it an addition later for unfolded
     ! cases
+
     radiance%values(:,maf) = reshape(transpose(resultMapped),&
       & (/radiance%template%instanceLen/))
-    print*,'Result:'
-    call dump ( radiance%values(:,maf) )
-    stop
 
     ! Put ptan derivatives here. !?????????
 
@@ -287,10 +274,15 @@ contains ! =====     Public Procedures     =============================
     call Deallocate_test ( resultMapped, 'resultMapped', ModuleName )
     call Deallocate_test ( ypMapped, 'ypMapped', ModuleName )
 
+    if ( maf == radiance%template%noInstances ) fmStat%finished = .true.
+
   end subroutine LinearizedForwardModel
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 1.5  2001/04/28 04:40:56  livesey
+! Another interim version.
+!
 ! Revision 1.4  2001/04/28 01:54:54  livesey
 ! Interim, non working but compiling version
 !
