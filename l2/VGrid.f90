@@ -5,27 +5,6 @@
 module vGrid                    ! Definitions for vGrids in vector quantities
 !=============================================================================
 
-  use Allocate_Deallocate, only: Allocate_Test
-  use EXPR_M, only: EXPR
-  use INIT_TABLES_MODULE, only: F_COORDINATE, F_FORMULA, F_NUMBER, &
-    & F_RESOLUTION, F_SOURCEL2GP, F_START, F_STOP, F_TYPE, F_VALUES, FIELD_FIRST, &
-    & FIELD_LAST, L_ANGLE, L_EXPLICIT, L_GEODALTITUDE, L_GPH, L_L2GP, &
-    & L_LINEAR, L_LOGARITHMIC, L_NONE, L_PRESSURE, L_THETA, L_ZETA, &
-    & PHYQ_Angle, PHYQ_Dimensionless, PHYQ_Length, PHYQ_Pressure, &
-    & PHYQ_Temperature
-  use Intrinsic, only: FIELD_INDICES, LIT_INDICES
-  use LEXER_CORE, only: PRINT_SOURCE
-  use MLSCommon, only: R8       ! General constants etc.
-  use MLSMessageModule, only: & ! Message logging
-    & MLSMessage, MLSMSG_Allocate, MLSMSG_Error, MLSMSG_Warning
-  use OUTPUT_M, only: OUTPUT
-  use STRING_TABLE, only: DISPLAY_STRING
-  use TRACE_M, only: TRACE_BEGIN, TRACE_END
-  use TOGGLES, only: GEN, TOGGLE
-  use TREE, only: DECORATION, DUMP_TREE_NODE, NSONS, SOURCE_REF, SUBTREE
-  use VGridsDatabase, only: AddVGridToDatabase, Dump, VGrid_T, NullifyVGrid
-  use L2GPData, only: L2GPDATA_T
-
   implicit none
   private
 
@@ -64,6 +43,22 @@ contains ! =====     Public Procedures     =============================
 
     ! This routine creates a vGrid according to user supplied information
     ! in the l2cf.
+
+    use Allocate_Deallocate, only: Allocate_Test
+    use EXPR_M, only: EXPR
+    use INIT_TABLES_MODULE, only: F_COORDINATE, F_FORMULA, F_NUMBER, &
+      & F_RESOLUTION, F_SOURCEL2GP, F_START, F_STOP, F_TYPE, F_VALUES, FIELD_FIRST, &
+      & FIELD_LAST, L_ANGLE, L_EXPLICIT, L_GEODALTITUDE, L_GPH, L_L2GP, &
+      & L_LINEAR, L_LOGARITHMIC, L_NONE, L_PRESSURE, L_THETA, L_ZETA, &
+      & PHYQ_Angle, PHYQ_Dimensionless, PHYQ_Length, PHYQ_Pressure, &
+      & PHYQ_Temperature
+    use L2GPData, only: L2GPDATA_T
+    use MLSMessageModule, only: & ! Message logging
+      & MLSMessage, MLSMSG_Error, MLSMSG_Warning
+    use TOGGLES, only: GEN, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use TREE, only: DECORATION, NSONS, SUBTREE
+    use VGridsDatabase, only: VGrid_T, NullifyVGrid
 
     ! Dummy arguments
     integer, intent(in) :: NAME    ! String index of name
@@ -282,14 +277,17 @@ contains ! =====     Public Procedures     =============================
 
 ! -----------------------------------------------  ANNOUNCE_ERROR  -----
   subroutine ANNOUNCE_ERROR ( WHERE, CODE, FIELD_INDEX, LIT_INDEX )
+    use Intrinsic, only: FIELD_INDICES, LIT_INDICES
+    use MoreTree, only: StartErrorMessage
+    use OUTPUT_M, only: OUTPUT
+    use STRING_TABLE, only: DISPLAY_STRING
+    use TREE, only: DUMP_TREE_NODE
     integer, intent(in) :: WHERE   ! Tree node where error was noticed
     integer, intent(in) :: CODE    ! Code for error message
     integer, intent(in), optional :: FIELD_INDEX, LIT_INDEX ! Extra stuff
 
     error = max(error,1)
-    call output ( '***** At ' )
-    call print_source ( source_ref(where) )
-    call output ( ': ' )
+    call startErrorMessage ( where )
     select case ( code )
     case ( extraIf )
       call output ( "If the type is '" )
@@ -372,6 +370,11 @@ contains ! =====     Public Procedures     =============================
   ! Check that subtrees 2-n of Root have the same units, or that all
   ! but one are PHYQ_Dimensionless
 
+    use EXPR_M, only: EXPR
+    use INIT_TABLES_MODULE, only: PHYQ_Dimensionless
+    use MLSCommon, only: R8       ! General constants etc.
+    use TREE, only: NSONS, SUBTREE
+
     integer, intent(in) :: ROOT         ! Root of the subtree
     integer, intent(in) :: FIELD_INDEX  ! F_... From Init_Tables_Module
     real(r8), intent(out), optional :: FIELD_VALUES(:)  ! Values of the fields
@@ -401,6 +404,9 @@ end module vGrid
 
 !
 ! $Log$
+! Revision 2.19  2004/05/22 02:30:54  vsnyder
+! Use StartErrorMessage from MoreTree, push USEs down
+!
 ! Revision 2.18  2004/04/02 01:06:39  livesey
 ! Fixed a bug in the resolution/explicit stuff
 !
