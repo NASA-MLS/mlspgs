@@ -1,5 +1,5 @@
-! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
 
 !=================================
 program chunktimes ! Reads chunk times from l2aux file(s)
@@ -15,7 +15,7 @@ program chunktimes ! Reads chunk times from l2aux file(s)
    use MLSHDF5, only: CpHDF5Attribute, GetHDF5Attribute, GetHDF5DSDims, &
      & IsHDF5AttributePresent, LoadFromHDF5DS, mls_h5open, mls_h5close
    use MLSMessageModule, only: MLSMessageConfig
-   use MLSSets, only: FindAll
+   use MLSSets, only: FindAll, FindFirst, FindNext
    use MLSStats1, only: STAT_T, &
      & ALLSTATS, DUMPSTAT=>DUMP, MLSMIN, MLSMAX, MLSMEAN, MLSSTDDEV, MLSRMS, STATISTICS
    use MLSStringLists, only: catLists, GetStringElement, GetUniqueList, &
@@ -49,11 +49,13 @@ program chunktimes ! Reads chunk times from l2aux file(s)
     logical            :: tabulate = .false.        ! tabulate
     logical            :: showFailed = .false.      ! show howmany, which failed
     logical            :: showStats = .true.        ! show max, min, mean, etc.
+    logical            :: showQManager = .false.    ! show QManager performance
     character(len=255) :: DSName= 'phase timing'    ! Dataset name
     character(len=255) :: binopts= ' '              ! 'nbins,X1,X2'
     character(len=3)   :: convert= ' '              ! 's2h', 'h2s', ''
     integer            :: hdfVersion = HDFVERSION_5
     integer            :: finalPhase = 10           ! phase number ~ total
+    integer            :: nHosts = 0                ! number of hosts
     real(r4)           :: longChunks = 0._r4
   end type options_T
   
@@ -80,6 +82,7 @@ program chunktimes ! Reads chunk times from l2aux file(s)
   integer     ::  fileAccess
   real(r4), dimension(:,:,:), pointer   :: l2auxValue => NULL()
   real(r4), dimension(:), pointer     :: timings => NULL()
+  real(r4), dimension(:,:), pointer     :: alltimings => NULL()
   logical     :: is_hdf5
   ! logical     :: verbose = .false.
   real        :: t1
@@ -140,6 +143,10 @@ program chunktimes ! Reads chunk times from l2aux file(s)
        cycle
      end select
     enddo
+    if ( options%showQManager ) then
+      allocate(alltimings(MAXCHUNKS, n_filenames), stat=status)
+      alltimings = UNDEFINEDVALUE
+    endif
     call time_now ( t1 )
     if ( options%verbose ) print *, 'Reading chunk times'
     do i=1, n_filenames
@@ -187,6 +194,8 @@ program chunktimes ! Reads chunk times from l2aux file(s)
       timings = l2auxValue(1, options%finalPhase, :)
       if ( options%tabulate ) &
         & call tabulate(l2auxValue(1, 1:options%finalPhase, :))
+      if ( options%showQManager ) &
+        & alltimings(1:dims(3), i) = timings
       if ( .not. options%merge ) statistic%count=0
       call statistics(real(timings, r8), statistic, real(UNDEFINEDVALUE, r8))
       if ( options%longChunks > 0._r4 ) then
@@ -228,6 +237,10 @@ program chunktimes ! Reads chunk times from l2aux file(s)
         & call dump(longChunkList, 'list of long chunks')
     endif
     if ( options%verbose ) call sayTime('reading all files')
+    if ( options%showQManager ) then
+      call QManager(alltimings, options%nHosts, options%verbose)
+      deallocate(alltimings, stat=status)
+    endif
   endif
   call output_date_and_time(msg='ending chunktimes', &
     & dateFormat='yyyydoy', timeFormat='HH:mm:ss')
@@ -294,6 +307,11 @@ contains
       elseif ( filename(1:3) == '-v ' ) then
         options%verbose = .true.
         exit
+      elseif ( filename(1:2) == '-q ' ) then
+        call getarg ( i+1+hp, filename )
+        options%showQManager = .true.
+        read(filename, *) options%nHosts
+        i = i + 1
       else
         call print_help
       end if
@@ -415,6 +433,8 @@ contains
       write (*,*) '          -nstat      => skip showing statistics'
       write (*,*) '          -s2h        => convert from sec to hours; or'
       write (*,*) '          -h2s        => convert from hours to sec'
+      write (*,*) '          -q n        => show queue managers hypothetical'
+      write (*,*) '                         performance with n hosts (dont)'
       write (*,*) '          -v          => switch on verbose mode (off)'
       write (*,*) '          -m[erge]    => merge data from all files (dont)'
       write (*,*) '          -fail       => show failed chunks (dont)'
@@ -422,6 +442,137 @@ contains
       write (*,*) '          -h          => print brief help'
       stop
   end subroutine print_help
+
+!------------------------- QManager ---------------------
+  subroutine QManager ( table, nHosts, verbose )
+    ! Args
+    real(r4), dimension(:,:), intent(in) :: table
+    integer, intent(in) :: nHosts
+    logical, intent(in) :: verbose
+    ! Internal variables
+    integer :: chunk
+    integer :: nextchunk
+    integer :: host
+    integer :: nexthost
+    integer :: master
+    integer :: thismaster
+    integer :: nMasters
+    integer, dimension(1) :: iarray
+    integer, dimension(nHosts) :: chunkNumber
+    integer, dimension(nHosts) :: masterNumber
+    logical, dimension(nHosts) :: HostBusy
+    real(r4), dimension(nHosts) :: HostTimes
+    real(r4), dimension(nHosts) :: HostTimesProjected
+    real(r4), dimension(size(table, 2)) :: MasterTimes
+    real(r4), dimension(size(table, 2)) :: MaxTimes
+    logical, dimension(size(table, 1), size(table, 2)) :: ChunkAssigned
+    logical, dimension(size(table, 1), size(table, 2)) :: ChunkDone
+    real(r4) :: unQTime
+    logical, parameter :: DEEBUG = .false.
+    ! Executable
+    nMasters = size(table, 2)
+    if ( verbose ) then
+      call output('Starting QManager with ')
+      call output(nMasters)
+      call output(' Masters ', advance='yes')
+    endif
+    ChunkDone = (table < 0._r4)
+    ChunkAssigned = (table < 0._r4)
+    HostBusy = .false.
+    HostTimes = 0._r4
+    MasterTimes = UNDEFINEDVALUE
+    unQTime = 0._r4
+    do master=1, nMasters
+      MaxTimes(master) = maxval(table(:, master))
+      unQTime = unQTime + MaxTimes(master)
+    enddo
+    ! Loop over assigning chunks to hosts from current master
+    ! chunk = 1
+    master = 1
+    chunk = findFirst(table(:, master) > 0._r4)
+    do while(any(.not. ChunkDone))
+      do while(any(.not. HostBusy) .and. any(.not. ChunkAssigned))
+        ! Find free host
+        host = findFirst(.not. HostBusy)
+        ! HostTimes(host) = HostTimes(host) + table(chunk, master)
+        ChunkAssigned(chunk, master) = .true.
+        HostBusy(host) = .true.
+        chunkNumber(host) = chunk
+        masterNumber(host) = master
+        if ( DEEBUG ) print *, 'Assigned ', chunk, master, host
+        nextchunk = FindNext(table(:, master) > 0._r4, chunk)
+        chunk = nextchunk
+        if ( chunk > 0 ) cycle
+        if ( master == nMasters ) exit
+        master = master + 1
+        chunk = findFirst(table(:, master) > 0._r4)
+        if ( verbose ) then
+          call output('Starting new master ')
+          call output(master, advance='yes')
+        endif
+      enddo
+      ! Now find next host, chunk to finish
+      HostTimesProjected = UNDEFINEDVALUE
+      do host = 1, nHosts
+        if ( .not. HostBusy(host) ) cycle
+        HostTimesProjected(host) = HostTimes(host) + &
+          & table(chunkNumber(host), masterNumber(host))
+      enddo
+      iarray = minloc(HostTimesProjected, HostTimesProjected > 0._r4)
+      nextHost = iarray(1)
+      host = nexthost
+      HostTimes(host) = HostTimesProjected(host)
+      nextchunk = chunkNumber(host)
+      thismaster = masterNumber(host)
+      HostBusy(host) = .false.
+      ChunkDone(nextchunk, thismaster) = .true.
+      if ( DEEBUG ) print *, 'finished ', nextchunk, thismaster, host
+      ! Now check if this was last chunk for this master
+      if ( all(ChunkDone(:, thismaster)) ) then
+        MasterTimes(thisMaster) = HostTimes(host)
+        if ( verbose ) then
+          call output('All chunks done for master ')
+          call output(thismaster, advance='yes')
+          call output(MasterTimes(thisMaster), advance='yes')
+        endif
+      endif
+    enddo
+    ! Print summary of hosttimes
+    call output('Summary of QManager performance', advance='yes')
+    call output('Time with QManager :', advance='no')
+    call output(maxval(hosttimes), advance='yes')
+    call output('Time without QManager :', advance='no')
+    call output(unQTime, advance='yes')
+    !
+    call output('Breakdown by master', advance='yes')
+    call output('master', advance='no')
+    call blanks(6)
+    call output('Q time', advance='no')
+    call blanks(6)
+    call output('noQ time', advance='yes')
+    unQTime = 0._r4
+    do master=1, nmasters
+      unQTime = unQTime + maxTimes(master)
+      call output(master)
+      call blanks(6)
+      call output(masterTimes(master), advance='no')
+      call blanks(2)
+      call output(unQTime, advance='yes')
+    enddo
+    !
+    call output('Breakdown by host', advance='yes')
+    call output('host', advance='no')
+    call blanks(6)
+    call output('time', advance='yes')
+    do host=1, nHosts
+      iarray = minloc(hosttimes, hosttimes > 0._r4)
+      nexthost = iarray(1)
+      call output(nexthost)
+      call blanks(6)
+      call output(hostTimes(nexthost), advance='yes')
+      hostTimes(nexthost) = UNDEFINEDVALUE
+    enddo
+  end subroutine QManager
 
 !------------------------- SayTime ---------------------
   subroutine SayTime ( What, startTime )
@@ -480,6 +631,9 @@ end program chunktimes
 !==================
 
 ! $Log$
+! Revision 1.4  2004/09/28 23:13:18  pwagner
+! Added -l, -nstat options; may deduce failed chunks
+!
 ! Revision 1.3  2004/09/16 23:58:46  pwagner
 ! Reports machine names of failed chunks
 !
