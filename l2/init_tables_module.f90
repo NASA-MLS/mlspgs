@@ -785,17 +785,17 @@ contains ! =====     Public procedures     =============================
     !  < n_section section_name s_spec ... s_spec >
     call make_tree ( (/ &
       begin, z+z_mlsSignals, s+s_module, s+s_band, s+s_radiometer, &
-                             s+s_signal, s+s_spectrometerType, &
+                             s+s_signal, s+s_spectrometerType, s+s_time, &
              n+n_section, &
-      begin, z+z_spectroscopy, s+s_line, s+s_spectra, n+n_section, &
+      begin, z+z_spectroscopy, s+s_line, s+s_spectra, s+s_time, n+n_section, &
       begin, z+z_globalsettings, &
              begin, p+p_version_comment, t+t_string, n+n_name_def, &
              begin, p+p_input_version_string, t+t_string, n+n_name_def, &
              begin, p+p_output_version_string, t+t_string, n+n_name_def, &
              begin, p+p_allow_climatology_overloads, t+t_boolean, &
                     n+n_name_def,&
-             s+s_time, s+s_forwardModel, s+s_forwardModelGlobal, &
-             s+s_vgrid, &
+             s+s_forwardModel, s+s_forwardModelGlobal, &
+             s+s_time, s+s_vgrid, &
              n+n_section, &
       begin, z+z_readapriori, s+s_time, s+s_gridded, s+s_l2gp, &
              s+s_l2aux, s+s_snoop, n+n_section, &
@@ -813,9 +813,9 @@ contains ! =====     Public procedures     =============================
              begin, p+p_overlap, t+t_numeric, n+n_name_def, &
              begin, p+p_scan_lower_limit, t+t_numeric_range, n+n_name_def, &
              begin, p+p_scan_upper_limit, t+t_numeric_range, n+n_name_def, &
-             n+n_section, &
-      begin, z+z_construct, s+s_time, s+s_hgrid, s+s_forge, s+s_quantity, &
-             s+s_vectortemplate, s+s_snoop, n+n_section, &
+             s+s_time, n+n_section, &
+      begin, z+z_construct, s+s_hgrid, s+s_forge, s+s_quantity, &
+             s+s_snoop, s+s_time, s+s_vectortemplate, n+n_section, &
       begin, z+z_fill, s+s_time, s+s_vector, s+s_create, &
                        s+s_fill, s+s_matrix, s+s_snoop, &
              n+n_section, &
@@ -834,6 +834,10 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.80  2001/04/23 23:45:01  vsnyder
+! Add 'time' to MLSSignals, Spectroscopy, GlobalSettings and ChunkDivide
+! sections.
+!
 ! Revision 2.79  2001/04/23 23:24:10  livesey
 ! Added forge instruction
 !
