@@ -8,9 +8,18 @@ MODULE GriddedData ! Collections of subroutines to handle TYPE GriddedData_T
 !=============================================================================
 
 
-  USE MLSCommon
-  USE MLSMessageModule
-  USE MLSStrings
+  use HDFEOS, only: HDFE_NENTDIM, HDFE_NENTDFLD, &
+  & gdopen, gdattach, gddetach, gdclose, &
+  & gdinqgrid, gdnentries, gdinqdims, gdinqflds
+  use Hdf, only: SUCCEED, DFACC_RDONLY
+  USE MLSCommon, only: R8, LineLen, NameLen
+  USE MLSFiles, only: GetPCFromRef
+  USE MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate, &
+  & MLSMSG_Deallocate, MLSMSG_Warning
+  USE MLSStrings, only: GetStringElement, NumStringElements, Capitalize, &
+  & Count_words, ReadCompleteLineWithoutComments
+  USE SDPToolkit, only: PGS_S_SUCCESS, PGS_PC_GETREFERENCE, &
+  & PGS_IO_GEN_OPENF, PGSD_IO_GEN_RSEQFRM
 
   IMPLICIT NONE
   PUBLIC
@@ -1122,12 +1131,333 @@ END TYPE GriddedData_T
    multiplier=1.0_r8
   end function l3ascii_get_multiplier
 
+!----------------- Beginning of Paul's code ------------------
+
+    !---------------------------- ReadGriddedData ---------------------
+  SUBROUTINE ReadGriddedData(FileName, the_g_data, fieldName)
+    !------------------------------------------------------------------------
+
+    ! This routine reads a Gridded Data file, returning a filled data structure and the !
+
+    ! Arguments
+
+    CHARACTER (LEN=*), INTENT(IN) :: FileName ! Name of the file containing the grid(s)
+     TYPE( GriddedData_T ), INTENT(OUT) :: the_g_data ! Result
+    CHARACTER (LEN=*), OPTIONAL, INTENT(IN) :: fieldName ! Name of gridded field
+
+    ! Local Variables
+
+  integer :: edges(4)
+  integer :: file_id, gd_id
+  integer :: inq_success
+  integer :: i
+  integer :: nentries, ngrids, ndims, nfields
+  integer :: strbufsize
+  character (len=80) :: msg, mnemonic
+  integer :: start(4)
+  integer :: status
+  integer :: stride(4)
+
+  integer, parameter :: GRIDORDER=1				! What order grid written to file
+  integer, parameter :: MAXLISTLENGTH=80		! Max length list of grid names
+  integer, parameter :: NENTRIESMAX=20		   ! Max num of entries
+  character (len=MAXLISTLENGTH) :: gridlist
+  character (len=MAXLISTLENGTH) :: dimlist
+  character (len=MAXLISTLENGTH) :: fieldlist
+  integer, parameter :: MAXNAMELENGTH=16		! Max length of grid name
+  character (len=MAXNAMELENGTH) :: gridname
+  INTEGER, DIMENSION(NENTRIESMAX) :: dims, rank, numberType
+  ! External functions
+!  integer, external :: gdopen, gdattach, gdrdfld, gddetach, gdclose
+!  integer, external :: gdinqgrid, gdnentries, gdinqdims, gdinqflds
+  INTEGER, EXTERNAL :: GDRDFLD
+  logical, parameter :: COUNTEMPTY=.TRUE.
+
+  ! - - - begin - - -
+
+  file_id = gdopen(FileName, DFACC_RDONLY)
+
+  IF (file_id /= SUCCEED) THEN
+    CALL Pgs_smf_getMsg(status, mnemonic, msg)
+    CALL MLSMessage (MLSMSG_Error, ModuleName, &
+              &"Could not open "// FileName//" "//mnemonic//" "//msg)
+  END IF
+
+! Find list of grid names on this file
+  inq_success = gdinqgrid(FileName, gridlist, strbufsize)
+  IF (inq_success /= SUCCEED) THEN
+    CALL Pgs_smf_getMsg(status, mnemonic, msg)
+    CALL MLSMessage (MLSMSG_Error, ModuleName, &
+              &"Could not inquire gridlist "// FileName//" "//mnemonic//" "//msg)
+  END IF
+
+! Find grid name corresponding to the GRIDORDER'th one
+	ngrids = NumStringElements(gridlist, COUNTEMPTY)
+	
+	IF(ngrids <= 0) THEN
+    CALL MLSMessage (MLSMSG_Error, ModuleName, &
+              &"NumStringElements of gridlist <= 0")
+	ELSEIF(ngrids < GRIDORDER) THEN
+    CALL MLSMessage (MLSMSG_Error, ModuleName, &
+              &"NumStringElements of gridlist < GRIDORDER")
+	ENDIF
+	
+	CALL GetStringElement(gridlist, gridname, GRIDORDER, COUNTEMPTY)
+
+  gd_id = gdattach(file_id, gridname)
+  IF (gd_id /= SUCCEED) THEN
+    CALL Pgs_smf_getMsg(status, mnemonic, msg)
+    CALL MLSMessage (MLSMSG_Error, ModuleName, &
+               "Could not attach "//FileName//" "//mnemonic//" "//msg)
+  END IF
+
+! Now find dimsize(), dimname(), etc.
+	nentries = gdnentries(gd_id, HDFE_NENTDIM, strbufsize)
+
+	IF(nentries <= 0) THEN
+    CALL MLSMessage (MLSMSG_Error, ModuleName, &
+              &"nentries of gd_id <= 0")
+	ELSEIF(nentries > NENTRIESMAX) THEN
+    CALL MLSMessage (MLSMSG_Error, ModuleName, &
+              &"nentries of gd_id > NENTRIESMAX")
+	ENDIF
+
+	ndims = gdinqdims(gd_id, dimlist, dims)
+
+	IF(ndims <= 0) THEN
+    CALL MLSMessage (MLSMSG_Error, ModuleName, &
+              &"ndims of gd_id <= 0")
+	ELSEIF(ndims > NENTRIESMAX) THEN
+    CALL MLSMessage (MLSMSG_Error, ModuleName, &
+              &"ndims of gd_id > NENTRIESMAX")
+	ENDIF
+
+	nfields = gdinqflds(gd_id, fieldlist, rank, numberType)
+
+	IF(nfields <= 0) THEN
+    CALL MLSMessage (MLSMSG_Error, ModuleName, &
+              &"nfields of gd_id <= 0")
+	ELSEIF(nfields > NENTRIESMAX) THEN
+    CALL MLSMessage (MLSMSG_Error, ModuleName, &
+              &"nfields of gd_id > NENTRIESMAX")
+	ENDIF
+    !-----------------------------
+  END SUBROUTINE ReadGriddedData
+  !-----------------------------
+
+  ! ------------------------------------------------  OBTAIN_CLIM  -----
+  !=====================================================================
+  subroutine OBTAIN_CLIM ( aprioriData, root, &
+  & mlspcf_l2clim_start, mlspcf_l2clim_end )
+  !=====================================================================
+
+	! An atavism--
+	! a throwback to when ncep files were opened
+	! independently of being required by the lcf
+
+    !Arguments 
+    type (GriddedData_T), dimension(:), pointer :: aprioriData 
+    ! Input a priori database
+    integer, intent(in) :: root        ! Root of the L2CF abstract syntax tree
+    integer, intent(in) :: mlspcf_l2clim_start, mlspcf_l2clim_end
+
+    !Local Variables
+
+    type (GriddedData_T):: qty
+    character (LEN=256) :: msg, mnemonic
+    integer:: CliUnit, processCli, returnStatus, version
+
+    logical :: end_of_file = .FALSE.
+
+    do CliUnit = mlspcf_l2clim_start, mlspcf_l2clim_end
+
+!     Open one Climatology file as a generic file for reading
+      version = 1
+      returnStatus = Pgs_io_gen_openF ( CliUnit, PGSd_IO_Gen_RSeqFrm, 0, &
+                                        processCli, version )
+      if ( returnStatus == PGS_S_SUCCESS ) then
+
+      do while (.NOT. end_of_file)
+
+        call l3ascii_read_field ( processCli, qty, end_of_file)
+        returnStatus = AddGridTemplateToDatabase(aprioriData, qty)
+        call DestroyGridTemplateContents ( qty )
+
+      end do !(.not. end_of_file)
+		
+		end_of_file = .FALSE.
+
+      end if
+
+    end do ! CliUnit = mlspcf_l2clim_start, mlspcf_l2clim_end
+
+  return
+  !============================
+  end subroutine OBTAIN_CLIM
+  !============================
+
+
+  ! --------------------------------------------------  READ_CLIMATOLOGY  -----
+  SUBROUTINE READ_CLIMATOLOGY ( fname, aprioriData, &
+  & mlspcf_l2clim_start, mlspcf_l2clim_end )
+  ! --------------------------------------------------
+  ! Brief description of program
+  ! This subroutine reads a l3ascii file and returns
+  ! the data_array to the caller
+
+  ! Arguments
+
+  character*(*), intent(in) :: fname			! Physical file name
+    type (GriddedData_T), dimension(:), pointer :: aprioriData 
+	 INTEGER, INTENT(IN) :: mlspcf_l2clim_start, mlspcf_l2clim_end
+	 
+	 ! Local
+    type (GriddedData_T)        :: gddata 
+	 INTEGER :: thePC, ErrType
+	 INTEGER, PARAMETER :: version=1
+	 LOGICAL :: end_of_file=.FALSE.
+    integer:: processCli, CliUnit
+	 
+	 thePC = GetPCFromRef(fname, mlspcf_l2clim_start, mlspcf_l2clim_end, &
+  & .TRUE., ErrType, version)
+  
+  IF(ErrType /= 0) THEN
+    CALL MLSMessage (MLSMSG_Error, ModuleName, &
+              &"Climatology file name unmatched in PCF")
+	RETURN
+  ENDIF
+
+      ErrType = Pgs_io_gen_openF ( CliUnit, PGSd_IO_Gen_RSeqFrm, 0, &
+                                        processCli, version )
+      if ( ErrType == PGS_S_SUCCESS ) then
+
+      do while (.NOT. end_of_file)
+
+        call l3ascii_read_field ( processCli, gddata, end_of_file)
+        ErrType = AddGridTemplateToDatabase(aprioriData, gddata)
+        call DestroyGridTemplateContents ( gddata )
+
+      end do !(.not. end_of_file)
+		
+		endif
+
+	END SUBROUTINE READ_CLIMATOLOGY
+
+  ! -------------------------------------------------  OBTAIN_DAO  -----
+  subroutine OBTAIN_DAO ( aprioriData, root, &
+  & mlspcf_l2dao_start, mlspcf_l2dao_end )
+ 
+	! An atavism--
+	! a throwback to when ncep files were opened
+	! independently of being required by the lcf
+
+    type (GriddedData_T), dimension(:), pointer :: aprioriData 
+    ! Input a priori database
+    integer, intent(in) :: ROOT        ! Root of L2CF abstract syntax tree
+	 INTEGER, INTENT(IN) :: mlspcf_l2dao_start, mlspcf_l2dao_end
+
+! Local Variables
+
+!    real(R8) :: data_array(XDIM, YDIM, ZDIM)
+    integer :: DAOFileHandle, DAO_Version
+    character (LEN=132) :: DAOphysicalFilename
+    character (len=256) :: mnemonic, msg
+    type (GriddedData_T):: qty
+    integer :: returnStatus
+!   integer :: sd_id
+    character (LEN=80) :: vname
+
+!    ALLOCATE (data_array(XDIM, YDIM, ZDIM), stat=returnStatus)
+
+    DAO_Version = 1
+    vname = "TMPU" ! for now
+
+
+! Get the DAO file name from the PCF
+
+    do DAOFileHandle = mlspcf_l2dao_start, mlspcf_l2dao_end
+
+      returnStatus = Pgs_pc_getReference ( DAOFileHandle, DAO_Version, &
+                                           DAOphysicalFilename )
+
+      if ( returnStatus == PGS_S_SUCCESS ) then
+
+! Open the HDF-EOS file and read gridded data
+        returnStatus = AddGridTemplateToDatabase(aprioriData, qty)
+
+!        call read_dao ( DAOphysicalFilename, vname, data_array )
+			IF(returnStatus > 0) THEN
+				call ReadGriddedData ( DAOphysicalFilename, aprioriData(returnStatus) )
+			ENDIF
+
+      end if
+
+    end do ! DAOFileHandle = mlspcf_l2_dao_start, mlspcf_l2_dao_end
+
+!===========================
+  end subroutine Obtain_DAO
+!===========================
+
+  ! ------------------------------------------------  Obtain_NCEP  -----
+  subroutine Obtain_NCEP ( aprioriData, root, &
+  & mlspcf_l2ncep_start, mlspcf_l2ncep_end )
+
+	! An atavism--
+	! a throwback to when ncep files were opened
+	! independently of being required by the lcf
+
+	    ! Arguments
+    type (GriddedData_T), dimension(:), pointer :: aprioriData 
+    ! Input a priori database
+    integer, intent(in) :: ROOT        ! Root of the L2CF abstract syntax tree
+	 INTEGER, INTENT(IN) :: mlspcf_l2ncep_start, mlspcf_l2ncep_end
+
+    ! Local Variables
+    character (len=80) :: MSG, MNEMONIC
+    integer :: NCEPFileHandle, NCEP_Version
+    character (len=132) :: NCEPphysicalFilename
+    type (GriddedData_T):: QTY
+    integer :: RETURNSTATUS
+!    character (len=80) :: VNAME
+
+!   allocate ( data_array(XDIM, YDIM, ZDIM), stat=returnStatus )
+
+    NCEP_Version = 1
+!    vname = "TMP_3" ! for now
+! Get the NCEP file name from the PCF
+
+    do NCEPFileHandle = mlspcf_l2ncep_start, mlspcf_l2ncep_end
+
+      returnStatus = Pgs_pc_getReference ( NCEPFileHandle, NCEP_Version, &
+                                           NCEPphysicalFilename )
+
+      if ( returnStatus == PGS_S_SUCCESS ) then
+
+! Open the HDF-EOS file and read gridded data
+
+        returnStatus = AddGridTemplateToDatabase(aprioriData, qty)
+
+!        call read_ncep ( NCEPphysicalFilename, data_array )
+			IF(returnStatus > 0) THEN
+				call ReadGriddedData ( NCEPphysicalFilename, aprioriData(returnStatus) )
+			ENDIF
+
+      end if
+
+    end do ! NCEPFileHandle = mlspcf_l2_ncep_start, mlspcf_l2_ncep_end
+!===========================
+  end subroutine Obtain_NCEP
+!===========================
+
 !=============================================================================
 END MODULE GriddedData
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.3  2001/03/07 01:03:19  pwagner
+! ReadGriddedData added
+!
 ! Revision 2.2  2001/02/21 00:36:43  pwagner
 ! l3ascii_read_field now has eof as intent(out) arg
 !

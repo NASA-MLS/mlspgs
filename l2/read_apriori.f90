@@ -4,7 +4,8 @@
 !=============================================================================
 module ReadAPriori
 
-  use GriddedData, only: GriddedData_T, AddGridTemplateToDatabase
+  use GriddedData, only: GriddedData_T, AddGridTemplateToDatabase, &
+  & READ_CLIMATOLOGY, ReadGriddedData
   use Hdf, only: DFACC_READ, SFSTART
   use Hdfeos, only: swopen, swclose
   use INIT_TABLES_MODULE, only: F_FILE, F_SWATH, S_L2AUX, S_L2GP !, s_ncep, &
@@ -15,15 +16,19 @@ module ReadAPriori
   use MLSCommon, only: FileNameLen, L1BInfo_T, TAI93_Range_T
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     &                         MLSMSG_Error, MLSMSG_FileOpen!, MLSMSG_Info
-  use OBTAINCLIMATOLOGY, only: READ_CLIMATOLOGY
-  use OBTAINDAO, only: READ_DAO
-  use OBTAINNCEP, only: READ_NCEP
+!  use OBTAINCLIMATOLOGY, only: READ_CLIMATOLOGY
+!  use OBTAINDAO, only: READ_DAO
+!  use OBTAINNCEP, only: READ_NCEP
+  use MLSPCF2, only: mlspcf_l2clim_start, mlspcf_l2clim_end
   use String_Table, only: GET_STRING
   use TOGGLES, only: GEN, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, &
     &             SUB_ROSA, SUBTREE
   use TREE_TYPES, only: N_NAMED!, N_DOT
+
+! 	
+
 
   implicit none
   private
@@ -174,26 +179,25 @@ contains ! =====     Public Procedures     =============================
         CALL ReadL2AUXData(sd_id, swathNameString, L2AUXDatabase(l2Index))
 
 	! The remaining cases are gridded data types
+!	ReadGriddedData(FileName, the_g_data, fieldName)
       case ( s_ncep )
 
         l2Index = AddGridTemplateToDatabase( aprioriData, GriddedData )
         call decorate ( key, l2Index )
-			CALL READ_NCEP(FileNameString, &
-			& aprioriData(l2Index)%field(1, 1, 1, :, :, :))
+			CALL ReadGriddedData(FileNameString, &
+			& aprioriData(l2Index), 'Some_field_name')
 
       case ( s_dao )
 
         l2Index = AddGridTemplateToDatabase( aprioriData, GriddedData )
         call decorate ( key, l2Index )
-			CALL READ_DAO(FileNameString, 'Some_vector_name', &
-			& aprioriData(l2Index)%field(1, 1, 1, :, :, :))
+			CALL ReadGriddedData(FileNameString, &
+			& aprioriData(l2Index), 'Some_field_name')
 
       case ( s_climatology )
 
-        l2Index = AddGridTemplateToDatabase( aprioriData, GriddedData )
-        call decorate ( key, l2Index )
 			CALL READ_CLIMATOLOGY(FileNameString, &
-			& aprioriData(l2Index)%field(1, 1, 1, :, :, :))
+			& aprioriData, mlspcf_l2clim_start, mlspcf_l2clim_end)
 
       case default ! Can't get here if tree_checker worked correctly
       end select
@@ -211,6 +215,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.3  2001/03/07 01:04:33  pwagner
+! No longer uses obtainclim, obtaindao, obtainncep
+!
 ! Revision 2.2  2001/03/06 00:23:58  pwagner
 ! A little bit more
 !
