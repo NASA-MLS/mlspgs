@@ -395,7 +395,8 @@ contains ! =====     Public Procedures     =============================
                   if ( db_index >= 1 ) then
                     call WriteL2AUXData ( l2auxDatabase(db_index), sdfid, returnStatus,&
                       & WriteCounterMAF = &
-                      &   (writeCounterMAF .and. numquantitiesperfile == 0))
+                      &   (writeCounterMAF .and. numquantitiesperfile == 0), &
+                      & hdfVersion=hdfVersion )
                     error = max(error, returnStatus)
                     numquantitiesperfile = numquantitiesperfile+1
                     if ( DEBUG ) call output(&
@@ -903,6 +904,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.61  2002/11/13 01:10:09  pwagner
+! Beginnings of attempt to write hdf5 L2AUX; incomplete
+!
 ! Revision 2.60  2002/10/08 17:36:22  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
