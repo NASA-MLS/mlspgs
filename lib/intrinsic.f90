@@ -109,7 +109,7 @@ module INTRINSIC
   integer, parameter :: L_SCVEL         = l_scECI + 1
   integer, parameter :: L_SECONDS       = l_scvel + 1
   integer, parameter :: L_SIDEBANDRATIO = l_seconds + 1
-  integer, parameter :: L_TEMPERATURE   = l_seconds + 1
+  integer, parameter :: L_TEMPERATURE   = l_sidebandratio + 1
   integer, parameter :: L_TEMPERATURE_PREC = l_temperature + 1
   integer, parameter :: L_THETA         = l_temperature_prec + 1
   integer, parameter :: L_THZ           = l_theta + 1
@@ -296,6 +296,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.19  2001/04/09 14:56:04  perun
+! Corrected enumeration literal definition for l_temperature
+!
 ! Revision 2.18  2001/04/04 17:56:42  vsnyder
 ! Insert "USE TREE" because "make depends" can't see the one in "make_tree"
 ! (because of the "include").
