@@ -165,7 +165,7 @@ contains
         aa = gl_inds(a)
         incoptdepth(more_inds(i)) = incoptdepth(more_inds(i)) + &
           & del_zeta(more_inds(i)) * &
-          & sum( (alpha_path_gl(a:a+ng-1) -  alpha_path_c(more_inds(i))) * &            
+          & sum( (alpha_path_gl(a:a+ng-1) - alpha_path_c(more_inds(i))) * &            
                & ds_dz_gw(aa:aa+ng-1) ) 
         a = a + ng
       end do ! i
@@ -255,8 +255,8 @@ contains
                  &  ds_dz_gw,                    &
                  &  gl_delta_polarized, more_inds, gl_inds )
 
-      ! Turn sigma-, pi, sigma+ GL corrections  into 2X2 matrix of
-      ! GL corrections to to incoptdepth_pol
+      ! Turn sigma-, pi, sigma+ GL corrections into 2X2 matrix of
+      ! GL corrections to incoptdepth_pol
       call opacity ( ct(more_inds), stcp(more_inds), stsp(more_inds), &
         & gl_delta_polarized, incoptdepth_pol_gl )
 
@@ -673,7 +673,6 @@ contains
                          &  ds_dh, dh_dz_gw, ds_dz_gw, t_script, dt_scr_dt, &
                          &  tau, i_stop, deriv_flags, d_delta_dt, drad_dt )
 
-    use DO_DELTA_M, ONLY: HYD_OPACITY
     use GLNP, only: NG
     use MLSCommon, only: RP, IP
     use SCRT_DN_M, ONLY: GET_DSCRT_DN
@@ -744,7 +743,7 @@ contains
 !                                             element. (K)
 ! Internals
 
-    integer(ip) :: A, AA
+    integer(ip) :: A, AA, B, BB
     integer(ip) :: i, j, i_start, mid, n_inds, n_path, no_to_gl, p_i, sv_i
     integer(ip), target, dimension(1:Ng*size(tau)) :: all_inds_B
     integer(ip), target, dimension(1:size(tau)) :: inds_B, more_inds_B
@@ -757,14 +756,12 @@ contains
                                          ! Indices on the coarse path where GL
                                          ! corrections get applied.
 
-    real(rp), target, dimension(1:size(tau)) :: gl_delta_B
     real(rp) :: fa, fb
-    real(rp), pointer :: gl_delta(:)     ! gl_delta => part_of_gl_delta_B
     real(rp) :: S_DEl_S                  ! Running sum of Del_S
-    real(rp) :: singularity(1:size(tau)) ! integrand on left edge of coarse
+    real(rp) :: singularity(1:size(del_zeta)) ! integrand on left edge of coarse
                                          ! grid panel -- singular at tangent pt.
 
-    logical :: do_calc(1:size(tau))      ! do_calc_t_c .or. ( do_gl .and. any
+    logical :: do_calc(1:size(del_zeta)) ! do_calc_t_c .or. ( do_gl .and. any
                                          ! of the corresponding do_calc_t_f ).
     logical :: NeedFA                    ! Need F(A) for hydrostatic
 
@@ -810,7 +807,7 @@ contains
           all_inds => all_inds_B(1:ng*no_to_gl)
           more_inds => more_inds_B(1:no_to_gl)
 
-          call Get_Inds ( Do_GL, Do_Calc, More_Inds, All_Inds )
+          call get_inds ( do_gl, do_calc, more_inds, all_inds )
 
       !{ Apply Gauss-Legendre quadrature to the panels indicated by
       !  {\tt more\_inds}.  We remove a singularity (which actually only
@@ -831,14 +828,15 @@ contains
           a = 1
           do i = 1, no_to_gl
             aa = all_inds(a)
+            bb = aa + ng - 1
             j = more_inds(i)
             d_delta_dt(j,sv_i) = d_delta_dt(j,sv_i) + &
               & del_zeta(j) * &
-              & sum( (alphaxn_path_f(aa:aa+ng-1) * &
-                   &  eta_zxp_f(aa:aa+ng-1,sv_i) / &
-                   &  t_path_f(aa:aa+ng-1) - &
+              & sum( (alphaxn_path_f(aa:bb) * &
+                   &  eta_zxp_f(aa:bb,sv_i) / &
+                   &  t_path_f(aa:bb) - &
                    &  singularity(j)) * &
-                   & ds_dz_gw(gl_inds(aa:aa+ng-1)) )
+                   & ds_dz_gw(gl_inds(aa:bb)) )
             a = a + ng
           end do
 
@@ -875,8 +873,8 @@ contains
               needFA = .false.
             end if
             s_del_s = s_del_s - del_s(p_i)
-            fb = (h_path_c(p_i)*dh_dt_path_c(p_i,sv_i) &
-              & - h_tan * dh_dt_tan(sv_i)) / s_del_s
+            fb = (h_path_c(p_i) * dh_dt_path_c(p_i,sv_i) - &
+                & h_tan * dh_dt_tan(sv_i)) / s_del_s
             inds(i) = p_i
             d_delta_dt(p_i,sv_i) = d_delta_dt(p_i,sv_i) + &
               &                    alpha_path_c(p_i) * (fa - fb)
@@ -898,7 +896,7 @@ contains
         needFA = .not. do_calc(mid+1)
         s_del_s = del_s(mid+1)
         if ( do_calc(mid+1) ) then
-          fa = (h_path_c(mid+2)*dh_dt_path_c(mid+2,sv_i) - &
+          fa = (h_path_c(mid+2) * dh_dt_path_c(mid+2,sv_i) - &
               & h_tan * dh_dt_tan(sv_i)) / s_del_s
           d_delta_dt(mid+1,sv_i) = d_delta_dt(mid+1,sv_i) + &
             &                      alpha_path_c(mid+1) * fa
@@ -928,28 +926,26 @@ contains
           end if
         end do ! p_i
 
-        no_to_gl = count(do_gl(inds))
-        if ( no_to_gl > 0 ) then
-
-! see if anything needs to be gl-d
-
-          all_inds => all_inds_B(1:ng*no_to_gl)
-          gl_delta => gl_delta_B(1:no_to_gl)
-          more_inds => more_inds_B(1:no_to_gl)
-
-          call Get_Inds ( Do_GL, Do_Calc, More_Inds, All_Inds )
-
-! add special hydrostatic gl routine here
-! the singularity point is alpha_path_c(more_inds)
-
-          call hyd_opacity ( del_zeta, alpha_path_c,         &                 
-             & alpha_path_f, h_path_f,                       &
-             & dh_dt_path_f(:,sv_i), t_path_f, h_tan,        &
-             & dh_dt_tan(sv_i), eta_zxp_f(:,sv_i), ds_dh,    &
-             & dh_dz_gw, gl_inds, more_inds, all_inds(::ng), gl_delta )
-
-          d_delta_dt(more_inds,sv_i) = d_delta_dt(more_inds,sv_i) + gl_delta
-        end if
+        ! Do GL for hydrostatic for any panels that need it; the singularity
+        ! correction is alpha_path_c.
+        a = 1
+        do p_i = 2, n_path-1           ! along the path
+          if ( do_gl(p_i) ) then
+            b = a + ng
+            ! Don't test do_calc: There may be GL corrections even if
+            ! dh_dt_path_c (from whence came do_calc) is zero.
+            d_delta_dt(p_i,sv_i) = d_delta_dt(p_i,sv_i) + &
+              & del_zeta(p_i) * &
+              & sum( ( alpha_path_f(a:b-1) - alpha_path_c(p_i) ) *   &
+              & (((2.0_rp*h_path_f(a:b-1)**2 - 3.0_rp*h_tan**2)      &     
+              &   * dh_dt_path_f(a:b-1,sv_i) +                       &     
+              &   h_path_f(a:b-1) * h_tan * dh_dt_tan(sv_i)) /       &     
+              &  (sqrt(h_path_f(a:b-1)**2 - h_tan**2))**3            &     
+              &  + eta_zxp_f(a:b-1,sv_i) * ds_dh(gl_inds(a:b-1)) /   &     
+              &  t_path_f(a:b-1)) * dh_dz_gw(gl_inds(a:b-1)) )
+            a = b
+          end if
+        end do ! p_i
 
         i_start = min(i_start,inds(1))
 
@@ -965,6 +961,7 @@ contains
                        &  i_stop, drad_dt(sv_i) )
 
     end do ! sv_i
+
   end subroutine DRad_tran_dt
 
   ! ------------------------------------------------  Get_Do_Calc  -----
@@ -1069,7 +1066,17 @@ contains
   end function not_used_here
 
 end module RAD_TRAN_M
+
 ! $Log$
+! Revision 2.34  2004/01/23 01:16:05  vsnyder
+! Repair mistakes in polarized radiance calculation:  CS_EXPMAT needs to be
+! applied to incoptdepth_pol even if no GL is done, because the earlier
+! calculation (in FullForwardModel) didn't have ref_cor.  We can't stop
+! doing CS_EXPMAT when the sum of the eigenvalues gets large and negative,
+! because the terms in the matrix are large if the difference of the
+! eigenvalues is large.  If we had both eigenvalues, we'd be nearly done
+! with CS_EXPMAT, so avoiding it would be as expensive as doing it.
+!
 ! Revision 2.33  2003/12/08 17:52:47  jonathan
 ! update for 2d cldfwm
 !
