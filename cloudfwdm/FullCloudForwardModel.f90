@@ -571,13 +571,15 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
           CloudType='frontal'
        endif
 
+       iCloudHeight = 0
        do i = 1, noSurf  
           if(state_ext%values(i,instance) .ne. 0.) then
             iCloudHeight = i                    ! FIND INDEX FOR CLOUD-TOP              
           endif
         enddo
 
-        CloudHeight = gph%values(iCloudHeight, instance)
+        CloudHeight = 18.     ! km  as a default
+        if(iCloudHeight .ne. 0) CloudHeight = gph%values(iCloudHeight, instance)
 
         call CLOUD_MODEL ( CloudType, CloudHeight, gph%values(:,instance),   &
 	     &            noSurf, WC )
@@ -978,6 +980,9 @@ subroutine FindTransForSgrid ( PT, Re, NT, NZ, NS, Zlevel, TRANSonZ, Slevel, TRA
 end subroutine FindTransForSgrid
 
 ! $Log$
+! Revision 1.46  2001/10/08 20:34:18  dwu
+! *** empty log message ***
+!
 ! Revision 1.45  2001/10/08 20:23:54  jonathan
 ! some changes
 !
