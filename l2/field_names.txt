@@ -71,16 +71,19 @@ do_baseline
 do_conv
 do_freq_avg
 do_1d
+dontPack
 incl_cld
 dontMask
 
 earthRadius
+ECRtoFOV
 extendedAverage
 explicitValues
 extinction
 
 fgrid
 field
+fieldECR
 file
 filterShapes
 forbidOverspill
@@ -311,6 +314,9 @@ vRegWeightVec
 writeCounterMAF
 
 # $Log$
+# Revision 2.102  2003/08/08 23:07:16  livesey
+# Added dontPack, and the rotateField fill stuff
+#
 # Revision 2.101  2003/07/16 01:06:36  vsnyder
 # Add DACS filter shapes
 #
