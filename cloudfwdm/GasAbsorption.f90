@@ -8,6 +8,7 @@ module GasAbsorption
 ! -------------------------------------------------------------------------
 
       use MLSCommon, only: r8
+      use WaterVapor, only: RHtoEV
       IMPLICIT NONE
       Private
       Public :: GET_BETA
