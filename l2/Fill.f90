@@ -580,7 +580,7 @@ contains ! =====     Public Procedures     =============================
 
         ! All the fields are collected.  Now fill the matrix.
         call getFromMatrixDatabase ( matrices(matrixToFill), covariance )
-        call updateDiagonal ( covariance, vectors(diagonal), squareRoot=.true. )
+        call updateDiagonal ( covariance, vectors(diagonal), square=.true. )
 
       ! End of fill operations
 
@@ -1301,6 +1301,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.52  2001/05/19 00:15:39  livesey
+! OK, that should have been square!!! (fool!)
+!
 ! Revision 2.51  2001/05/19 00:13:41  livesey
 ! Made fillcovariance apply square root option to update diagonal
 !
