@@ -40,7 +40,7 @@ contains ! =====     Public Procedures     =============================
     use Physics, only: h_over_K, SpeedOfLight ! m/s
     use Slabs_SW_m, only: Slabs_Prep_Struct
     use SpectroscopyCatalog_m, only: Catalog, Catalog_t, Line_t, Lines, &
-      & MostLines
+      & MostLines, SpectroscopyFile
     use String_Table, only: Display_String
     use Toggles, only: Emit, Switches, Toggle
     use Trace_M, only: Trace_begin, Trace_end
@@ -130,6 +130,7 @@ contains ! =====     Public Procedures     =============================
       shapeInd = matchSignal ( filterShapes%signal, signal, &
         & sideband=signal%sideband, channel=channel(c) )
       pfaDatum%filterFile = filterShapes(shapeInd)%file
+      pfaDatum%spectroscopyFile = spectroscopyFile
       nfp = size(filterShapes(shapeInd)%filterGrid)
       df = filterShapes(shapeInd)%filterGrid(2) - filterShapes(shapeInd)%filterGrid(1)
       ! Compute integral of filter shape, for normalization.  Should be 1.0,
@@ -336,6 +337,9 @@ contains ! =====     Public Procedures     =============================
 end module Create_PFAData_m
 
 ! $Log$
+! Revision 2.6  2005/03/17 01:32:26  vsnyder
+! Put spectroscopy file's string index in PFAData structure
+!
 ! Revision 2.5  2005/03/16 23:59:56  vsnyder
 ! Add allLinesForRadiometer and allLinesInCatalog to makePFA
 !
