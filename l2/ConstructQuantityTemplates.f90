@@ -444,7 +444,6 @@ contains ! =====     Public Procedures     =============================
           & MLSMSG_L1BRead//l1bItemName )
        
         call DeallocateL1BData(l1bfield)
-        return
         ! Now noMAFs qty%noInstances, l1bField%maxMIFs is no surfs.
         call SetupNewQuantityTemplate ( qty, noInstances=noMAFs, &
           & noSurfs=l1bField%maxMIFs, noChans=noChans, coherent=.FALSE., &
@@ -475,12 +474,11 @@ contains ! =====     Public Procedures     =============================
         call GetModuleName ( instrumentModule, l1bItemName )
         l1bItemName = TRIM(l1bItemName) // "." // "tpGeodAlt"
         
-!         call ReadL1BData ( l1bInfo%l1boaid, l1bItemName, l1bField, noMAFs, &
-!           & l1bFlag, firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
-!         if ( l1bFlag==-1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-!           & MLSMSG_L1BRead//l1bItemName )
-!         call DeallocateL1BData(l1bfield, l1bFlag)
-        return
+        call ReadL1BData ( l1bInfo%l1boaid, l1bItemName, l1bField, noMAFs, &
+          & l1bFlag, firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
+        if ( l1bFlag==-1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & MLSMSG_L1BRead//l1bItemName )
+        call DeallocateL1BData(l1bfield, l1bFlag)
         
         ! Now noMAFs qty%noInstances, l1bField%maxMIFs is no surfs.
         
@@ -703,6 +701,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.35  2001/05/30 23:55:28  livesey
+! Previous one was debug version, this is correct one.
+!
 ! Revision 2.34  2001/05/30 23:53:01  livesey
 ! For new version of L1Bdata
 !
