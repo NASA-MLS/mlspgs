@@ -32,7 +32,7 @@ module Fill                     ! Create vectors and fill them.
     & L_PRESSURE, L_PTAN, L_RADIANCE, &
     & L_REFGPH, L_SCECI, L_SCGEOCALT, L_SCVEL, &
     & L_SPD, L_SPECIAL, L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, &
-    & L_TNGTGEOCALT, L_TRUE, L_VGRID, L_VMR, L_ZETA
+    & L_TNGTGEOCALT, L_TRUE, L_VECTOR, L_VGRID, L_VMR, L_ZETA
   ! Now the specifications:
   use INIT_TABLES_MODULE, only: S_DESTROY, S_DUMP, S_FILL, S_FILLCOVARIANCE, &
     & S_FILLDIAGONAL, S_MATRIX,  S_SNOOP, S_TIME, S_TRANSFER, S_VECTOR
@@ -848,6 +848,30 @@ contains ! =====     Public Procedures     =============================
             & call Announce_Error ( key, noSourceL2AUXGiven )
 !          call FillVectorQuantityFromL2AUX(quantity,l2auxDatabase(l2auxIndex),errorCode)
           if ( errorCode /= 0 ) call Announce_error ( key, errorCode )
+
+        case ( l_vector ) ! ---------------- Fill from another qty.
+          ! This is VERY PRELIMINARY, A more fancy one needs to be written
+          ! before too long.
+          if ( .not. got(f_sourceQuantity) ) &
+            & call Announce_Error ( key, No_Error_Code, &
+            & 'Missing a source field for vector fill' )
+          Quantity => GetVectorQtyByTemplateIndex( &
+            & vectors(VectorIndex), QuantityIndex )
+          sourceQuantity => GetVectorQtyByTemplateIndex( &
+            & vectors(sourceVectorIndex), sourceQuantityIndex )
+          if ( quantity%template%name /= sourceQuantity%template%name ) &
+            & call Announce_Error ( key, No_Error_Code, &
+            & 'Quantity and sourceQuantity do not have the same template' )
+          quantity%values = sourceQuantity%values
+          ! If we have a mask, copy it over.
+          if ( associated(sourceQuantity%mask) ) then
+            call CreateMask ( quantity )
+            quantity%mask = sourceQuantity%mask
+          else
+            ! Otherwise, if the destination quantity had one, then
+            ! delete that.
+            call Deallocate_test ( quantity%mask, 'quantity%mask', ModuleName )
+          end if
 
         case ( l_estimatedNoise ) ! ----------- Fill with estimated noise ---
           radianceQuantity => GetVectorQtyByTemplateIndex( &
@@ -2876,6 +2900,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.104  2002/02/05 01:45:21  livesey
+! Added preliminary vector/vector fill, not yet tested.
+!
 ! Revision 2.103  2002/01/18 00:24:21  livesey
 ! Added sideband argument to call to GetSignalName when reading
 ! L1B radiances (so can now read split signals).
