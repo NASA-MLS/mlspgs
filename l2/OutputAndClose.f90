@@ -988,7 +988,7 @@ contains ! =====     Public Procedures     =============================
     ! basically repeat the steps you go through in SetupNewl2auxRecord;
     ! see e.g. Join
     ! call WriteL2AUXAttributes(fileID, l2aux, trim(dataProduct%name))
-    call h5_writeglobalattr(fileID)
+    call h5_writeglobalattr(fileID, skip_if_already_there=.true.)
     status = mls_sfend( fileID, hdfVersion=hdfVersion)
     if ( status == -1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Error ending closing direct write file (hdf5)' )
@@ -1074,6 +1074,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.66  2003/02/12 21:51:32  pwagner
+! Should allow direct write with attributes
+!
 ! Revision 2.65  2003/02/10 22:01:54  pwagner
 ! Passes isHDFEOS to metadata; writes globalattributes during DirectWrite
 !
