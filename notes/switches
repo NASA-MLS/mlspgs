@@ -13,10 +13,11 @@ Switches (set by -S option in mlsl2's command line):
   cho =>    How good was the Cholesky decomposition?
   chu =>    Enslaved chunk processing
   col =>    Column scale vector for Newton iteration
+  dacsfil => Dump DACS filter shapes after reading them
   diag =>   diagonal of factored normal equations
   dvec =>   'DX' vector during Newton iteration
   fac =>    Factors of normal equations during retriever iterations
-  filt =>   Filter shapes
+  filt =>   Dump filter shapes after reading them
   fmt2 =>   mean & standard deviation for timing FullForwardModel at each chunk
   fmt1 =>   mean & standard deviation for timing FullForwardModel at last chunk
   fnorm =>  Dump the individual contributions to fnorm
@@ -100,6 +101,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.38  2003/10/09 23:29:56  pwagner
+ Changed grid to gridd; ,-separated switches recommended
+
  Revision 1.37  2003/10/09 21:03:40  vsnyder
  Add the 'nodb' (no dump blocks) switch
 
