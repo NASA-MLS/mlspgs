@@ -32,6 +32,10 @@ module VectorsModule            ! Vectors in the MLS PGS suite
     module procedure AddVectors
   end interface
 
+  interface operator (-)
+    module procedure SubtractVectors
+  end interface
+
   interface operator (*)
     module procedure MultiplyVectors ! element-by-element
     module procedure ScaleVector     ! by a scalar on the left
@@ -61,12 +65,8 @@ module VectorsModule            ! Vectors in the MLS PGS suite
     integer :: NoQuantities    ! Number of quantities in the vector
     integer :: TotalInstances  ! Number of horizontal instances in the vector
     integer :: TotalElements   ! Total of numbers of elements in the vector
-    integer, dimension(:), pointer :: Starts ! Where the quantities' values
-      ! start in the rank-one quantity vector -- see Vector_T below.
-
-    ! Indices of the quantity templates in the quantities database
-
-    integer, dimension(:), pointer :: QUANTITIES
+    integer, dimension(:), pointer :: QUANTITIES  ! Indices of the quantity
+    !                            templates in the quantities database
   end type VectorTemplate_T
 
   ! This type describes the subset of the values of a vector that
@@ -74,11 +74,9 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 
   type VectorValue_T
     type (QuantityTemplate_T), pointer :: TEMPLATE ! Template for this quantity
-    ! The dimensions of VALUES are Frequencies (or 1), Vertical Coordinates
-    ! (or 1), and Horizontal Instances (scan or profile or 1).  The target of
-    ! VALUES is the appropriate piece of the VALUES field of the containing
-    ! object of type Vector_T.
-    real(r8), dimension(:,:,:), pointer :: VALUES => NULL()
+    ! The dimensions of VALUES are Frequencies (or 1) * Vertical Coordinates
+    ! (or 1), and Horizontal Instances (scan or profile or 1).
+    real(r8), dimension(:,:), pointer :: VALUES => NULL()
   end type VectorValue_T
 
   ! This type describes a vector.
@@ -86,19 +84,10 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   type Vector_T
     integer :: Name            ! Sub-rosa index of the vector name
     type (VectorTemplate_T), pointer :: TEMPLATE ! In the template database
-    ! There is a subterfuge going on here.  We allocate VALUES, and then
-    ! take pointers to pieces of it as QUANTITIES%VALUES.  This seems to
-    ! be impossible, because VALUES is rank 1, but QUANTITIES%VALUES are
-    ! rank 3.  We do this by way of an external subroutine, GET_3D_VIEW,
-    ! that is declared here to have a rank-1 first argument, but is declared
-    ! within itself to have a rank-3 first argument.  That is WE LIE.  This
-    ! is OK, because rank-1 vectors are required to be stored contiguously.
-    ! This all worked in Fortran 77.  Hopefully, Fortran will someday have
-    ! a straightforward way to take a rank-3 view of a rank-1 vector.
-    real(r8), dimension(:), pointer :: VALUES => NULL()
+
     ! The dimension of QUANTITIES is the same as for the QUANTITIES field
     ! of the vector template.  Each element of QUANTITIES here corresponds
-    ! to the one in the same position of the QUANTITIES field of the
+    ! to the one in the same position in the QUANTITIES field of the
     ! vector template.
     type (VectorValue_T), dimension(:), pointer :: QUANTITIES
   end type Vector_T
@@ -106,15 +95,6 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   ! This incrementing counter is used to set the id field for a vector template
 
   integer, save, private :: vectorTemplateCounter = 0
-
-  interface 
-    subroutine GET_3D_VIEW ( Input, I1, I2, I3, Output )
-      use MLSCommon, only: R8
-      integer, intent(in) :: I1, I2, I3
-      real(r8), intent(in), target :: Input(*)
-      real(r8), pointer :: Output(:,:,:)
-    end subroutine GET_3D_VIEW
-  end interface
 
 contains ! =====     Public Procedures     =============================
 
@@ -131,13 +111,15 @@ contains ! =====     Public Procedures     =============================
 
     ! Dummy arguments:
     type(Vector_T), intent(in) :: X, Y
-    ! Local variables:
-    integer :: I, Status
+    ! Local Variables:
+    integer :: I              ! Subscript and loop inductor
     ! Executable statements:
     if ( x%template%id /= y%template%id ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, "Cannot add vectors having different templates" )
     call CloneVector ( z, x )
-    z%values = x%values + y%values
+    do i = 1, size(x%quantities)
+      z%quantities(i)%values = x%quantities(i)%values + y%quantities(i)%values
+    end do
   end function AddVectors
 
   !---------------------------------  AddVectorTemplateToDatabase  -----
@@ -193,12 +175,15 @@ contains ! =====     Public Procedures     =============================
     real, intent(in) :: A
     type(Vector_T), intent(in) :: X, Y
     ! Local variables:
-    integer :: I, Status
+    integer :: I              ! Subscript and loop inductor
     ! Executable statements:
     if ( x%template%id /= y%template%id ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, "Cannot add vectors having different templates" )
     call CloneVector ( z, x )
-    z%values = a * x%values + y%values
+    do i = 1, size(x%quantities)
+      z%quantities(i)%values = &
+        & a * x%quantities(i)%values + y%quantities(i)%values
+    end do
   end function AXPY
 
   !-------------------------------------------------  CloneVector  -----
@@ -245,19 +230,11 @@ contains ! =====     Public Procedures     =============================
     type (VectorTemplate_T), intent(out) :: vectorTemplate
 
     ! Local variables
-    integer :: qty, status
+    integer :: status
 
     ! Executable code
     vectorTemplate%name = name
     vectorTemplate%noQuantities = SIZE(selected)
-    call allocate_test ( vectorTemplate%starts, vectorTemplate%noQuantities, &
-      & "vectorTemplate%starts", ModuleName )
-    vectorTemplate%starts(1) = 1
-    do qty = 1, vectorTemplate%noQuantities - 1
-      vectorTemplate%starts(qty+1) = vectorTemplate%starts(qty) + &
-        & quantities(selected(qty))%noInstances * &
-        & quantities(selected(qty))%instanceLen
-    end do
     vectorTemplate%totalInstances = SUM(quantities(selected)%noInstances)
     vectorTemplate%totalElements = &
       & SUM(quantities(selected)%noInstances*quantities(selected)%instanceLen)
@@ -329,19 +306,22 @@ contains ! =====     Public Procedures     =============================
   end subroutine DestroyVectorDatabase
 
   ! ------------------------------------------  DestroyVectorInfo  -----
-  subroutine DestroyVectorInfo ( vector )
+  subroutine DestroyVectorInfo ( Vector )
 
   ! This routine destroys a vector created above
 
     ! Dummy arguments
     type (Vector_T), intent(inout) :: VECTOR
 
-    ! Local Variables
-    integer :: I, Status
+    ! Local Variables:
+    integer :: I, STATUS
 
     ! Executable code
 
-    call deallocate_test ( vector%values, "vector%values", ModuleName )
+    do i = 1, size(vector%quantities)
+      call deallocate_test ( vector%quantities(i)%values, &
+        & "vector%quantities(i)%values", ModuleName )
+    end do
     deallocate ( vector%quantities, stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
       & MLSMSG_deallocate // "vector%quantities" )
@@ -376,10 +356,10 @@ contains ! =====     Public Procedures     =============================
     ! Dummy arguments
     type (VectorTemplate_T), intent(inout) :: vectorTemplate
 
-    ! Local variables
-    integer :: QTY, STATUS
-
     ! Executable code
+
+    ! Local Variables:
+    integer :: STATUS
 
     deallocate ( vectorTemplate%quantities, stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
@@ -399,11 +379,14 @@ contains ! =====     Public Procedures     =============================
     ! Dummy arguments:
     type(Vector_T), intent(in) :: X, Y
     ! Local variables:
-    integer :: I, K, L
+    integer :: I              ! Subscript and loop inductor
     ! Executable statements:
     if ( x%template%id /= y%template%id ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, "Cannot .DOT. vectors having different templates" )
-    z = dot_product(x%values,y%values)
+    z = 0.0_r8
+    do i = 1, size(x%quantities)
+      z = z + sum( x%quantities(i)%values * y%quantities(i)%values )
+    end do
   end function DotVectors
 
   ! -----------------------------------------------  DUMP_VECTORS  -----
@@ -442,7 +425,7 @@ contains ! =====     Public Procedures     =============================
   ! --------------------------------------  DUMP_VECTOR_TEMPLATES  -----
   subroutine DUMP_VECTOR_TEMPLATES ( VECTOR_TEMPLATES )
     type(VectorTemplate_T), intent(in) :: VECTOR_TEMPLATES(:)
-    integer :: I, J
+    integer :: I
     call output ( 'VECTOR_TEMPLATES: SIZE = ' )
     call output ( size(vector_templates), advance='yes' )
     do i = 1, size(vector_templates)
@@ -490,6 +473,7 @@ contains ! =====     Public Procedures     =============================
         do search = 1, size(vector%quantities)
           if ( quantity == vector%quantities(search)%template%name ) then
             GetVectorQuantity => vector%quantities(search)
+    return
           end if
         end do
         call get_string ( quantity, msg )
@@ -519,13 +503,15 @@ contains ! =====     Public Procedures     =============================
 
     ! Dummy arguments:
     type(Vector_T), intent(in) :: X, Y
-    ! Local variables:
-    integer :: I, Status
+    ! Local Variables:
+    integer :: I              ! Subscript and loop inductor
     ! Executable statements:
     if ( x%template%id /= y%template%id ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, "Cannot multiply vectors having different templates" )
     call CloneVector ( z, x )
-    z%values = x%values * y%values
+    do i = 1, size(x%quantities)
+      z%quantities(i)%values = x%quantities(i)%values * y%quantities(i)%values
+    end do
   end function MultiplyVectors
 
   !-------------------------------------------------  ScaleVector  -----
@@ -542,12 +528,38 @@ contains ! =====     Public Procedures     =============================
     ! Dummy arguments:
     real(r8), intent(in) :: A
     type(Vector_T), intent(in) :: X
-    ! Local variables:
-    integer :: I, Status
+    ! Local Variables:
+    integer :: I              ! Subscript and loop inductor
     ! Executable statements:
     call CloneVector ( z, x )
-    z%values = a * x%values
+    do i = 1, size(x%quantities)
+      z%quantities(i)%values = a * x%quantities(i)%values
+    end do
   end function ScaleVector
+
+  !---------------------------------------------  SubtractVectors  -----
+  type (Vector_T) function SubtractVectors ( X, Y ) result (Z)
+  ! Subtract Y from X, producing one having the same template (but no name,
+  ! of course).
+
+  ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
+  ! It is important to invoke DestroyVectorInfo using the result of this
+  ! function after it is no longer needed. Otherwise, a memory leak will
+  ! result.
+  ! !!!!! ===== END NOTE ===== !!!!! 
+
+    ! Dummy arguments:
+    type(Vector_T), intent(in) :: X, Y
+    ! Local Variables:
+    integer :: I              ! Subscript and loop inductor
+    ! Executable statements:
+    if ( x%template%id /= y%template%id ) call MLSMessage ( MLSMSG_Error, &
+        & ModuleName, "Cannot add vectors having different templates" )
+    call CloneVector ( z, x )
+    do i = 1, size(x%quantities)
+      z%quantities(i)%values = x%quantities(i)%values - y%quantities(i)%values
+    end do
+  end function SubtractVectors
 
 ! =====     Private Procedures     =====================================
   subroutine CreateValues ( Vector )
@@ -555,14 +567,12 @@ contains ! =====     Public Procedures     =============================
   ! the values for each of the quantities.
     type(Vector_T), intent(inout) :: Vector
     integer :: QTY
-    call allocate_test ( vector%values, vector%template%totalElements, &
-      & "vector%values", ModuleName )
     do qty = 1, size(vector%quantities)
-      call get_3d_view ( vector%values(vector%template%starts(qty):), &
-        & vector%quantities(qty)%template%noChans, &
+      call allocate_test ( vector%quantities(qty)%values, &
+        & vector%quantities(qty)%template%noChans * &
         & vector%quantities(qty)%template%noSurfs, &
         & vector%quantities(qty)%template%noInstances, &
-        & vector%quantities(qty)%values )
+        & "Vector%quantities(qty)%values", ModuleName )
     end do
   end subroutine
 !=======================================================================
@@ -571,6 +581,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.1  2000/10/13 00:00:37  vsnyder
+! Moved from mlspgs/l2 to mlspgs/lib
+!
 ! Revision 2.0  2000/09/05 18:57:05  ahanzel
 ! Changing file revision to 2.0.
 !
