@@ -550,15 +550,17 @@ contains ! ============= Public procedures ===================================
         ! Now we're going to deal with a VGrid for this quantity
         qty%verticalCoordinate = l_geodAltitude
         qty%surfs = l1bField%dpField(1,:,:)  ! Vert coord is tpGeodAlt read above.
+
+        call DeallocateL1BData(l1bfield)
+
+        ! Now we're going to fill in the hGrid information
         qty%instanceOffset = chunk%firstMAFIndex + chunk%noMAFsLowerOverlap
+        qty%grandTotalInstances = 0
         if ( index(switches,'qtmp') /= 0 ) then
           call output ( "Instance offset for minor frame quantity is:" )
           call output ( qty%instanceOffset, advance='yes' )
         endif
 
-        call DeallocateL1BData(l1bfield)
-
-        ! Now we're going to fill in the hGrid information
         do l1bItem = 1, NoL1BItemsToRead
           ! Get the name of the item to read
           l1bItemName = l1bItemsToRead(l1bItem)
@@ -1177,6 +1179,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.103  2003/07/01 23:18:04  livesey
+! Added setting of grandTotalInstances for minor frame quantities.
+!
 ! Revision 2.102  2003/07/01 19:29:32  livesey
 ! Added filling of grandTotalInstances
 !
