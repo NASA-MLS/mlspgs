@@ -62,6 +62,7 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
 
     ! Now the latitudinal coordinate
     logical :: equivalentLatitude       ! If set, coordinate is equivalent latitude
+    logical :: noYear                   ! If set, field is for any year
     integer :: noLats                   ! Number of latitudes
     real (rp), pointer, dimension(:) :: Lats => NULL() ! Latitudes [noLats]
     integer :: noLons                   ! Number of longitudes
@@ -329,6 +330,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.16  2002/07/01 23:57:18  livesey
+! Added the noYear field
+!
 ! Revision 2.15  2002/06/27 00:09:50  vsnyder
 ! Don't deallocate qty%field if it's not associated.  Don't say allocate
 ! failed when the deallocate fails.
