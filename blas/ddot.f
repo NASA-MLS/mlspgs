@@ -2,6 +2,14 @@ C     .  Copyright (C) 1989-1999, California Institute of Technology.
 C     .  U. S. Government sponsorship under
 C     .  NASA contract NAS7-918 is acknowledged.
 
+C === (start of toc) ===
+C ddot      Returns dot product of two double-precision vectors
+C === (end of toc) ===
+
+C === (start of api) ===
+C dble ddot ( int n, dble x(:), int incx, dble y(:), int incy )
+C === (end of api) ===
+
       DOUBLE PRECISION FUNCTION DDOT(N,X,INCX,Y,INCY)
 C>> 1994-11-11 DDOT  Krogh   Declared all vars.
 c>> 1994-10-20 DDOT   Krogh  Changes to use M77CON
@@ -63,3 +71,6 @@ C
       RETURN
       END
 ! $Log$
+! Revision 1.2  2001/03/06 18:17:56  pwagner
+! clean more amitious--rms * from MLSCONFGl[13]/MakeFC
+!

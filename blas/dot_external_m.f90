@@ -12,8 +12,18 @@ module Dot_M
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
+! === (start of toc) ===
+! dot         Returns dot product of two vectors
+! === (end of toc) ===
+
+! === (start of api) ===
+! value dot ( int n, val1 x(:), int incx, val2 y(:), int incy )
+!      where val1, val2 can be any of the types:
+!      { real, double precision }
+! === (end of api) ===
   interface DOT
     real function SDOT ( N, X, INCX, Y, INCY )
       integer, intent(in) :: N, INCX, INCY
@@ -34,9 +44,17 @@ module Dot_M
       real, intent(in) :: Y
     end function MDSDOT
   end interface
+contains 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module Dot_M
 
 ! $Log$
+! Revision 1.5  2002/09/13 22:50:51  pwagner
+! Change external names to MSDDOT and MDSDOT; removed pointer copies
+!
 ! Revision 1.4  2002/09/13 18:04:31  pwagner
 ! Added mixed type dot products: a_r4 . b_r8 and a_r8 . b_r4
 !

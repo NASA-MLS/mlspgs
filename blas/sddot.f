@@ -1,6 +1,16 @@
 C Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 C U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
+C === (start of toc) ===
+C mdsdot      Returns dot product of a double- by a single-precision vector
+C msddot      Returns dot product of a single- by a double-precision vector
+C === (end of toc) ===
+
+C === (start of api) ===
+C dble mdsdot ( int n, dble x(:), int incx, real y(:), int incy )
+C dble msddot ( int n, real x(:), int incx, dble y(:), int incy )
+C === (end of api) ===
+
 C > >       DOUBLE PRECISION      FUNCTION MSDDOT(N,X,INCX,Y,INCY)
 C > > C Dot product of mixed type input
 C > >       INTEGER N, INCX, INCY, IX, IY, I, M, MP1, NS
@@ -99,6 +109,9 @@ C Dot product of mixed type input
       END
 
 C $Log$
+C Revision 1.2  2002/09/13 22:49:10  pwagner
+C Change external names to MSDDOT and MDSDOT
+C
 C Revision 1.1  2002/09/13 18:02:07  pwagner
 C First commit
 C

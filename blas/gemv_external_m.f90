@@ -12,8 +12,20 @@ module Gemv_M
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
+! === (start of toc) ===
+! gemv        product of a matrix and a vector
+! === (end of toc) ===
+
+! === (start of api) ===
+! gemv ( char TRANS, int M, int N, 
+!                  val1 ALPHA, val1 A(LDA,*), int LDA, 
+!                  val2 X(*), int incx, val2 BETA, val Y(*), int incy )
+!      where val1, val2 can be any of the types:
+!      { real, double precision }
+! === (end of api) ===
   interface GEMV
     subroutine DGEMV ( TRANS, M, N, ALPHA, A, LDA, X, INCX, &
         &                BETA, Y, INCY )
@@ -74,9 +86,16 @@ module Gemv_M
       ! deallocate(y_double, x_double)
     end subroutine DSGEMV
   
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module Gemv_M
 
 !$Log$
+!Revision 1.4  2002/09/18 22:45:34  pwagner
+!Replaced internal arrays a-double, x_double with intrinsic dble function
+!
 !Revision 1.3  2002/09/13 22:52:13  pwagner
 !Replaced pointers with automatic arrays
 !

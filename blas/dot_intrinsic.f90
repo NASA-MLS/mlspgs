@@ -12,7 +12,26 @@ module Dot_M
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
+
+! === (start of toc) ===
+! dot         Returns dot product of any two vectors
+! ddot        Returns dot product of two double-precision vectors
+! sdot        Returns dot product of two single-precision vectors
+! mdsdot      Returns dot product of a double- by a single-precision vector
+! msddot      Returns dot product of a single- by a double-precision vector
+! === (end of toc) ===
+
+! === (start of api) ===
+! value dot ( int n, val1 x(:), int incx, val2 y(:), int incy )
+!      where val1, val2 can be any of the types:
+!      { real, double precision }
+! dble ddot ( int n, dble x(:), int incx, dble y(:), int incy )
+! real sdot ( int n, real x(:), int incx, real y(:), int incy )
+! dble mdsdot ( int n, dble x(:), int incx, real y(:), int incy )
+! dble msddot ( int n, real x(:), int incx, dble y(:), int incy )
+! === (end of api) ===
 
   interface DOT
     module procedure DDOT, SDOT, MSDDOT, MDSDOT
@@ -58,9 +77,16 @@ contains
     mdsdot = dot_product(x(1:1+(n-1)*incx:incx), y(1:1+(n-1)*incy:incy))
   end function MDSDOT
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module Dot_M
 
 ! $Log$
+! Revision 1.5  2002/09/23 23:42:26  pwagner
+! fixxed obvious type error
+!
 ! Revision 1.4  2002/09/13 22:50:51  pwagner
 ! Change external names to MSDDOT and MDSDOT; removed pointer copies
 !

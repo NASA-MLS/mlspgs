@@ -2,6 +2,14 @@ C     .  Copyright (C) 1989-1999, California Institute of Technology.
 C     .  U. S. Government sponsorship under
 C     .  NASA contract NAS7-918 is acknowledged.
 
+C === (start of toc) ===
+C sdot      Returns dot product of two single-precision vectors
+C === (end of toc) ===
+
+C === (start of api) ===
+C real sdot ( int n, real x(:), int incx, real y(:), int incy )
+C === (end of api) ===
+
       REAL             FUNCTION SDOT(N,X,INCX,Y,INCY)
 C>> 1994-11-11 SDOT  Krogh   Declared all vars.
 c>> 1994-10-20 SDOT   Krogh  Changes to use M77CON
