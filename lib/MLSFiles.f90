@@ -143,13 +143,6 @@ contains
 
     do thePC = PCBottom, PCTop
 
-      !		if(debug) then
-      !			call output('pc: ' )
-      !			call output(thePC, advance='no')
-      !			call output('              version: ' )
-      !			call output(version, advance='yes')
-      !		endif
-
       if(present(versionNum)) then
         version = versionNum
       else
@@ -246,7 +239,7 @@ contains
     integer, parameter :: KEYWORDLEN=12			! Max length of keywords in OPEN(...)
     character (LEN=MAXFILENAMELENGTH) :: myName
     integer(i4) :: myPC
-    integer                       :: version, returnStatus
+    integer                       :: version, returnStatus, your_version
     logical       :: tiedup
     character (LEN=KEYWORDLEN) :: access, action, form, position, status
     character (LEN=2) :: the_eff_mode
@@ -266,16 +259,17 @@ contains
 
    if(UseSDPToolkit) then
     the_eff_mode = LowerCase(toolbox_mode(1:2))
+    your_version = version
    ! Using Toolkit
     if(present(thePC)) then
       myPC = thePC
-      returnStatus = Pgs_pc_getReference(thePC, version, &
+      returnStatus = Pgs_pc_getReference(thePC, your_version, &
         & myName)
     elseif(present(FileName)) then
       myName = FileName
       if(LowerCase(toolbox_mode(1:2)) == 'pg') then
-        myPC = GetPCFromRef(FileName, PCBottom, PCTop, &
-          &	 caseSensitive, returnStatus, versionNum)
+        myPC = GetPCFromRef(trim(FileName), PCBottom, PCTop, &
+          &	 caseSensitive, returnStatus, your_version)
       endif
 
     else
@@ -295,17 +289,18 @@ contains
       if(the_eff_mode == 'pg') the_eff_mode = 'op'
    endif
 
+    your_version = version
     select case (the_eff_mode)
 
     case('pg')
       if(returnStatus == 0) then
-        ErrType = PGS_IO_Gen_OpenF(myPC, FileAccessType, record_length, &
-          & theFileHandle, version)
-      endif
+         ErrType = PGS_IO_Gen_OpenF(myPC, FileAccessType, record_length, &
+          & theFileHandle, your_version)
+       endif
 
     case('sw')
       if(returnStatus == 0) then
-        theFileHandle = swopen(myName, FileAccessType)
+        theFileHandle = swopen(trim(myName), FileAccessType)
         if(theFileHandle <= 0) then
           ErrType = min(theFileHandle, -1)
         else
@@ -317,7 +312,7 @@ contains
 
     case('gd')
       if(returnStatus == 0) then
-        theFileHandle = gdopen(myName, FileAccessType)
+        theFileHandle = gdopen(trim(myName), FileAccessType)
         if(theFileHandle <= 0) then
           ErrType = min(theFileHandle, -1)
         else
@@ -442,10 +437,10 @@ contains
 
       if(access /= 'direct') then
         open(unit=unit, access=access, action=action, form=form, &
-          & position=position, status=status, file=myName, iostat=ErrType)
+          & position=position, status=status, file=trim(myName), iostat=ErrType)
       else
         open(unit=unit, access=access, action=action, form=form, &
-          & status=status, file=myName, iostat=ErrType)
+          & status=status, file=trim(myName), iostat=ErrType)
       endif
 
       if(ErrType /= 0 .or. PRINT_EVERY_OPEN) then
@@ -463,7 +458,7 @@ contains
         call output( 'iostat ', advance='no')
         call output(  ErrType, advance='yes')
         call io_error('io error in MLSFiles: mls_io_gen_openF' // &
-          & ' Fortran open', ErrType, myName)
+          & ' Fortran open', ErrType, trim(myName))
       else
         theFileHandle = unit
       endif
@@ -622,6 +617,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.21  2001/07/18 23:59:16  pwagner
+! Fixed bug with version variable in mls_io_gen_openf
+!
 ! Revision 2.20  2001/06/19 22:22:28  pwagner
 ! Set record_length to DEFAULTRECLEN unless otherwise
 !
