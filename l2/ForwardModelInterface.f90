@@ -26,6 +26,10 @@ module ForwardModelInterface
   use Tree_Types, only: N_named
   use VectorsModule, only: Vector_T
 
+  !??? The next USE statement is Temporary for l2load:
+  use L2_TEST_STRUCTURES_M, only: FWD_MDL_CONFIG, FWD_MDL_INFO, &
+    & TEMPORARY_FWD_MDL_INFO
+
   implicit NONE
   private
   public :: ForwardModel, ForwardModelGlobalSetup, ForwardModelInfo_T, &
@@ -159,14 +163,23 @@ contains
   end subroutine ForwardModelSetup
 
   ! -----------------------------------------------  ForwardModel  -----
+! subroutine ForwardModel ( FwdModelInfo, FwdModelExtra, FwdModelIn, &
+!   &                       Jacobian, RowBlock, FwdModelOut )
   subroutine ForwardModel ( FwdModelInfo, FwdModelExtra, FwdModelIn, &
-    &                       Jacobian, RowBlock, FwdModelOut )
+    &                       Jacobian, RowBlock, FwdModelOut, FMC, FMI, TFMI )
     type(forwardModelInfo_T), intent(in) :: FwdModelInfo ! From ForwardModelSetup
     type(vector_T), intent(in) :: FwdModelExtra, FwdModelIn ! ???
     type(matrix_T), intent(inout), optional :: Jacobian
     integer, intent(in), optional :: RowBlock          ! With which block of
     ! rows of F and Jacobian are we computing? All of them if absent.
     type(vector_T), intent(inout), optional :: FwdModelOut  ! Radiances, etc.
+
+!??? Begin temporary stuff to start up the forward model
+  type(fwd_mdl_config), optional :: FMC
+  type(fwd_mdl_info), dimension(:), pointer, optional :: FMI
+  type(temporary_fwd_mdl_info), dimension(:), pointer, optional :: TFMI
+!??? End of temporary stuff to start up the forward model
+
   end subroutine ForwardModel
 
 ! =====     Private Procedures     =====================================
@@ -186,6 +199,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.5  2001/03/08 00:42:09  vsnyder
+! Add temporary stuff to use with L2_Load
+!
 ! Revision 2.4  2001/03/07 23:59:52  vsnyder
 ! Add stuff for SIDS.
 !
