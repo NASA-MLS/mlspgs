@@ -108,6 +108,8 @@ else
    libl1_prereqs := $(libmls_objs)/libmls.a $(mlsl1_f90)
 endif
 
+UNPREFXDPTHS=$(HDF5)/../fortran/src $(HDF5)/../include
+EXTRA_PATHS =-I $(HDF5)/../fortran/src -I $(HDF5)/../include
 PROG=sids_l1boa
 # PROG=test
 
@@ -118,7 +120,8 @@ PROG=sids_l1boa
 #
 $(PROG): $(CONFDIR)/$(MLSCFILE) $(OBJ_DIR)/$(MLSCONFG) \
      $(libmls_objs)/libmls.a $(OBJ_DIR)/$(MLSCONFG)/libl1.a
-		cd $(OBJ_DIR)/$(MLSCONFG) && $(MAKE) PROG_NAME=$(PROG) $(PROG)
+		cd $(OBJ_DIR)/$(MLSCONFG) && $(MAKE) PROG_NAME=$(PROG) $(PROG) \
+        EXTRA_PATHS="$(EXTRA_PATHS)"
 
 $(libmls_objs)/libmls.a: $(LIB_prereqs)
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
@@ -198,12 +201,17 @@ targ:
 #update: depends ghostbuster
 update:
 	@cp $(MakeFName) Makefile; \
-	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
-          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" \
-          -mc "$(OBJ_DIR)" -nc -nd
+	$(MLSBIN)/updatemf.sh -pc "$(PLATFORMS)" \
+         -cf "$(CONFDIR)/$(MLSCFILE)"
+#	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+#          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" \
+#          -mc "$(OBJ_DIR)" -nc -nd
 	$(MAKE) -f $(MakeFName) depends ghostbuster
 
 # $Log$
+# Revision 1.6  2002/05/10 22:13:58  pwagner
+# he5lib prereq is HDFVERSIONS set; depends produces Makefile.nodep, too
+#
 # Revision 1.5  2001/12/06 01:03:11  pwagner
 # Depends follows changes in l1 directory
 #
