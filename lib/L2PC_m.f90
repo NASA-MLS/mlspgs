@@ -1482,7 +1482,7 @@ contains ! ============= Public Procedures ==========================
   use MLSHDF5, only: MakeHDF5Attribute, SaveAsHDF5DS
     use MLSSignals_m, only: Radiometers, Radiometer_T
     integer, intent(in) :: LOCATION     ! The HDF5 location for the vector
-    type (Vector_T), intent(in) :: VECTOR ! The vector to write
+    type (Vector_T), intent(in), target :: VECTOR ! The vector to write
     character(len=*), intent(in) :: NAME ! Name for vector
     logical, dimension(:), intent(in) :: PACKINFO ! Pack vector if set
 
@@ -1570,6 +1570,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.66  2003/09/15 17:45:03  livesey
+! Added target declaration for fussy intel compiler
+!
 ! Revision 2.65  2003/08/14 20:24:23  livesey
 ! Added the exact bin selector stuff
 !
