@@ -49,6 +49,8 @@ SHELL = /bin/sh
 
 #                           (functional)
 # configure      -- runs mlsconfigure to (re)set compiler, platform, paths
+# configure_pvm  -- (re)set PVM and FFTW paths
+# configure_fopts  -- (re)set default FOPTS and LDOPTS
 # configure_subdirs
 #                  also (re)creates uniquely-named sub-sub-directories
 #                  within mlspgs sub-directories with customized Makefiles
@@ -144,7 +146,8 @@ install: all
 update: depends
 
 .PHONY: configure depends subdirs clean clean_objs clean_config clean_all\
-  tar tar_subs tar_sips all install levels configure_subdirs update
+  tar tar_subs tar_sips all install levels configure_subdirs update\
+  configure_pvm configure_fopts
 
 configure:
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
@@ -165,6 +168,14 @@ configure_subdirs:
           -c "$(MLSF95)" -p "$(MLSPLAT)" -nc; \
 		cd .. ; \
 	done
+
+configure_pvm:
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -nc -pv
+
+configure_fopts:
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -nc -fl
 
 update:
 	@echo "Updating the Makefile in $(SUBDIRS)"; \
@@ -255,6 +266,9 @@ tar_subs:
 	tar -cvf mlspgs_subs.tar *.tgz
 
 # $Log$
+# Revision 1.15  2001/02/10 00:06:47  pwagner
+# update now a target of make -f MakeFC; replaces customized Makefiles with latest versions
+#
 # Revision 1.14  2001/02/09 21:46:43  pwagner
 # Eliminated l2pc from other_subdirs
 #
