@@ -52,14 +52,6 @@ OBJS =	MLSCommon.o abs_cs_air_cont_m.o abs_cs_h2o_213g_cont_m.o \
 ALLOBJS = $(OBJS) machine.o
 LIBS =	
 
-CC = cc
-CFLAGS = -O
-FC = f77
-FFLAGS = -O
-F90 = lf95
-F90FLAGS = -O --f95
-LDFLAGS = -s
-
 all: $(PROG)
 objs: $(ALLOBJS)
 
@@ -119,8 +111,9 @@ dump_k_records_m.o: MLSCommon.o format_key_m.o l2pc_file_parameters.o \
 earth_intersection_m.o: MLSCommon.o ellipse.o
 ellipse.o: MLSCommon.o
 eos_mdb.o: MLSCommon.o
-format_key_m.o: MLSCommon.o strings.o
-fov_convolve_m.o: MLSCommon.o d_fft.o l2pcdim.o s_cspline_m.o units.o
+format_key_m.o: MLSCommon.o machine.o strings.o
+fov_convolve_m.o: MLSCommon.o d_fft.o l2pcdim.o machine.o s_cspline_m.o \
+	units.o
 fwd_mdl_m.o: MLSCommon.o complete_i_k_m.o d_t_script_dtnp_m.o do_t_script_m.o \
 	dump_k_records_m.o earth_intersection_m.o ellipse.o eos_mdb.o \
 	get_delta_m.o get_eta_m.o gl6p.o i_and_k_star_m.o \
@@ -144,8 +137,9 @@ i_and_k_star_m.o: MLSCommon.o fov_convolve_m.o hydrostatic_intrp.o \
 i_k_star_no_conv_m.o: MLSCommon.o hydrostatic_intrp.o l2pc_file_parameters.o \
 	l2pc_file_structures.o l2pc_pfa_structures.o l2pcdim.o s_csinterp_m.o \
 	s_cspline_m.o s_lintrp_m.o scspline_der_m.o
-l2pc_file.o: MLSCommon.o l2pc_file_parameters.o l2pc_file_structures.o \
-	l2pc_pfa_structures.o l2pcdim.o mdbeta.o read_uif_m.o
+l2pc_file.o: MLSCommon.o eos_mdb.o fwd_mdl_m.o gl6p.o l2pc_file_parameters.o \
+	l2pc_file_structures.o l2pc_pfa_structures.o l2pcdim.o mdbeta.o \
+	read_uif_m.o time_mod.o
 l2pc_file_parameters.o: MLSCommon.o l2pcdim.o
 l2pc_file_structures.o: MLSCommon.o l2pc_file_parameters.o
 l2pc_pfa_structures.o: MLSCommon.o l2pc_file_parameters.o l2pcdim.o
@@ -163,7 +157,7 @@ pfa_fwd_model_m.o: MLSCommon.o aitken_int_m.o create_beta_coeff_m.o \
 	scspline_der_m.o spectro_derivative_m.o strings.o zopacity_m.o
 physics.o: MLSCommon.o
 read_uif_m.o: MLSCommon.o l2pc_file_parameters.o l2pc_file_structures.o \
-	l2pc_pfa_structures.o l2pcdim.o s_brkline_m.o strings.o
+	l2pc_pfa_structures.o l2pcdim.o machine.o s_brkline_m.o strings.o
 s_brkline_m.o: brkline.f9h
 s_csinterp_m.o: MLSCommon.o csinterp.f9h
 s_cspline_m.o: s_hunt_m.o s_pcspl_m.o cspline.f9h
@@ -184,9 +178,10 @@ ssimpson_module.o: MLSCommon.o s_cspline_m.o simpson.inc
 temperature_deriv_m.o: MLSCommon.o d_delta_dt_m.o get_drad_m.o \
 	l2pc_file_parameters.o l2pc_pfa_structures.o l2pcdim.o
 two_d_polate.o: MLSCommon.o s_get_one_eta_m.o
-write_k_records_m.o: MLSCommon.o l2pc_file_structures.o write_one_record_m.o
+write_k_records_m.o: MLSCommon.o l2pc_file_structures.o machine.o \
+	write_one_record_m.o
 write_one_record_m.o: MLSCommon.o format_key_m.o l2pc_file_parameters.o \
-	l2pc_file_structures.o
+	l2pc_file_structures.o machine.o
 write_x_i_records_m.o: MLSCommon.o l2pc_file_parameters.o \
 	l2pc_file_structures.o l2pc_pfa_structures.o l2pcdim.o \
 	write_one_record_m.o
@@ -195,6 +190,9 @@ zatmos_deriv_m.o: MLSCommon.o get_drad_m.o l2pc_file_parameters.o \
 zopacity_m.o: MLSCommon.o
 
 # $Log$
+# Revision 1.3  2000/05/05 17:18:14  vsnyder
+# Replaced because CVS lost v1.1
+#
 # Revision 1.1  2000/05/04 18:12:04  vsnyder
 # Initial conversion to Fortran 90
 #
