@@ -21,6 +21,7 @@ module LEXER_M
   public :: Lexer, Lex_Signal
 
   logical, public  :: CapIdentifiers = .true.     ! Capitalize identifiers?
+
   ! Parameters for character classes
   integer, parameter :: LETTER = 1
   integer, parameter :: DIGIT = 2
@@ -529,6 +530,22 @@ contains
     integer, parameter :: Id = 2
     integer, parameter :: Number = 3
 
+!     Recognize a token according to the following DFA.  Column labels are
+!     Classes, row labels are DFA states.  Table elements are DFA states or
+!     actions to be taken when a token is recognized.
+!
+!                         dot
+!                       punct
+!         letter digit opchar End  more
+! Start     Id  Number    1    4  Error
+! Id        Id    Id      2    2    2
+! Number     3  Number    3    3    3
+!
+! Actions:  1: Output an operator or punctuator.  Consume the character.
+!           2: Output an identifier.  Don't consume the character.
+!           3: Output a number.  Don't consume the character.
+!           4: Output an end-of-input signal.  Don't consume the "character."
+
     state = start
     do
       where = where + 1
@@ -602,6 +619,9 @@ contains
 end module LEXER_M
 
 ! $Log$
+! Revision 2.12  2001/03/14 19:15:32  vsnyder
+! Add comments that describe the DFA used in lex_signal.
+!
 ! Revision 2.11  2001/03/14 18:59:54  vsnyder
 ! Added public variable CapIdentifiers to control whether identifiers are
 ! capitalized.
