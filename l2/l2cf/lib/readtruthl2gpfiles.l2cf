@@ -40,6 +40,16 @@ begin ReadApriori
     file='!inpathtruthl2gp/MLS-Aura_L2GP-H2O_s6!simulationVersion--t_!day.he4'!nl})
 
   !define(l2gpInputSpecies,{!mostL2GPSpecies,H2O})
-})
+  })
+
+  ;; --------------------------------------- Simulation series sAura2
+  !ifelse(!simulationSeries,{sAura2},{
+  !define(readTruthL2GP,{l2gpTruth$1Input: l2gp, $
+    file='!inpathtruthl2gp/MLS-Aura_L2GP-$1_!simulationSeries!simulationVersion--t_!day.he5', $
+    hdfVersion=5!nl})
+
+  !define(l2gpInputSpecies,{BrO,CO,ClO,GPH,H2O,HCl,HNO3,HO2,HOCl,N2O,O3,OH,Temperature})
+  !forall(readTruthL2GP,!l2gpInputSpecies)
+  })
   
 end ReadApriori
