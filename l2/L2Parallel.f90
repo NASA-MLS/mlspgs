@@ -28,6 +28,7 @@ module L2Parallel
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_ALLOCATE, &
     & MLSMSG_Deallocate, MLSMSG_WARNING
   use MLSSets, only: FINDFIRST
+  use MLSStringLists, only: ExpandStringRange
   use MorePVM, only: PVMUNPACKSTRINGINDEX, PVMPACKSTRINGINDEX
   use MoreTree, only: Get_Spec_ID
   use Output_m, only: Output
@@ -377,6 +378,10 @@ contains ! ================================ Procedures ======================
       chunksAbandoned(2:size(chunks)) = .true.
     elseif ( index(switches,'runlast') /=0 ) then
       chunksAbandoned(1:size(chunks)-1) = .true.
+    elseif ( parallel%chunkRange /= '' ) then
+      chunksAbandoned = .true.
+      call ExpandStringRange(trim(parallel%chunkRange), chunksAbandoned, &
+        & sense=.false.)
     endif    
 
     masterLoop: do ! --------------------------- Master loop -----------------------
@@ -1325,6 +1330,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.66  2004/08/05 22:47:47  pwagner
+! New --chunkRange option to run selected chunks in parallel mode
+!
 ! Revision 2.65  2004/08/03 23:14:56  pwagner
 ! Unseemly switch to allow running first last, or first and last chunks only
 !
