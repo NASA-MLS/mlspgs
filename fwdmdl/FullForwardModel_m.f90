@@ -479,18 +479,17 @@ contains ! ================================ FullForwardModel routine ======
         lineFlag = .false.
         do k = 1, size ( thisCatalogEntry%lines )
           thisLine => lines(thisCatalogEntry%lines(k))
-          do sigInd = 1, size(fwdModelConf%signals)
-            if ( associated(thisLine%signals) ) then
-              doThis = any ( thisLine%signals == fwdModelConf%signals(sigInd)%index )
+          if ( associated(thisLine%signals) ) then
+            do sigInd = 1, size(fwdModelConf%signals)
+              doThis = any ( thisLine%signals == &
+                & fwdModelConf%signals(sigInd)%index )
               ! If we're only doing one sideband, maybe we can remove some more lines
               if ( sidebandStart==sidebandStop ) doThis = doThis .and. &
                 & any( ( thisLine%sidebands == sidebandStart ) .or. &
                 & ( thisLine%sidebands == 0 ) )
-            else
-              doThis = .true.
-            end if
-            lineFlag(k) = lineFlag(k) .or. doThis
-          end do ! End loop over signals requested in fwm
+              lineFlag(k) = lineFlag(k) .or. doThis
+            end do ! End loop over signals requested in fwm
+          end if
         end do ! End loop over lines
         My_Catalog(j) = thisCatalogEntry
         nullify ( my_catalog(j)%lines ) ! Don't deallocate it by mistake
@@ -1831,6 +1830,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.9  2001/11/07 09:58:41  zvi
+! More effective code for sps_path calculations
+!
 ! Revision 2.6  2001/10/12 20:40:25  livesey
 ! Moved sideband ratio check
 !
