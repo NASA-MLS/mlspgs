@@ -18,7 +18,7 @@ module ForwardModelSupport
     & F_MODULE, F_SKIPOVERLAPS, F_TOLERANCE, &
     & S_FORWARDMODEL, &
     & F_NABTERMS, F_NAZIMUTHANGLES, F_NCLOUDSPECIES, F_NMODELSURFS,&
-    & F_NSCATTERINGANGLES, F_NSIZEBINS
+    & F_NSCATTERINGANGLES, F_NSIZEBINS, F_CLOUD_WIDTH
   use MLSFiles, only: GetPCFromRef, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
   use MLSCommon, only: R8
   use MLSL2Options, only: PCF, PCFL2CFSAMECASE, PUNISH_FOR_INVALID_PCF
@@ -242,6 +242,7 @@ contains ! =====     Public Procedures     =============================
     info%NUM_AB_TERMS=50
     info%NUM_SIZE_BINS=40
     info%phiwindow = 5
+    info%cloud_width = 2
     info%frqGap = 0.0                   ! Default to everything
 
     noChannelsSpecs=0
@@ -366,6 +367,9 @@ contains ! =====     Public Procedures     =============================
       case ( f_nsizebins )
         call expr ( subtree(2,son), units, value, type )
         info%NUM_SIZE_BINS = nint( value(1) )
+      case ( f_cloud_width )
+        call expr ( subtree(2,son), units, value, type )
+        info%cloud_width = nint( value(1) )
       case default
         ! Shouldn't get here if the type checker worked
       end select
@@ -461,6 +465,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.11  2001/07/17 22:36:19  jonathan
+! add cloud_width, jonathan/paul
+!
 ! Revision 2.10  2001/07/16 22:07:21  jonathan
 ! change cloud_der to integer-type, jonathan
 !
