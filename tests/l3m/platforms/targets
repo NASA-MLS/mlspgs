@@ -1,3 +1,12 @@
+# This is the default name of the configure file
+# It may be overridden for multiple platforms, special options, etc.
+ifdef HOSTMLSCFILE
+   MLSCFILE=$(HOSTMLSCFILE)
+else
+   MLSCFILE=.configure
+endif
+
+CONFDIR=../../..
 include ../Makefile.dep
 
 # "$Id$"
@@ -130,7 +139,8 @@ endif
 	ar d $@ $(owndir)/$(l3_driver)
 
 #test: $(ALLOBJS) $(PVM_OBJS) $(itmdir)/libmlsl3.a  $(libdir)/libmls.a
-$(PROG_NAME): $(ALLOBJS) libl3m.a $(itmdir)/libmlsl3.a $(libdir)/libmls.a
+$(PROG_NAME): $(ALLOBJS) libl3m.a $(itmdir)/libmlsl3.a $(libdir)/libmls.a \
+     $(CONFDIR)/$(MLSCFILE)
 		@echo "$(pvm_message)"
 		@echo "$(blas_message)"
 		@echo "$(lapack_message)"
@@ -166,6 +176,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.6  2001/11/21 00:25:34  pwagner
+# Added hdfeos5_linker_line
+#
 # Revision 1.5  2001/11/07 01:14:30  pwagner
 # lapack message refers to this case, not mlsl2
 #

@@ -52,6 +52,7 @@ ALLOBJS = $(OBJS) $(srclib_objs)
 
 l3_driver = MLSL3D.o
 
+CONFDIR=../..
 UTILDIR=../../util
 
 # reecho.sh can filter out globbed file expansions that fail
@@ -136,7 +137,7 @@ libmlsl3.a: $(ALLOBJS) $(libdir)/libmls.a
 	ar ru $@ $?
 	ar d $@ $(l3_driver)
 
-mlsl3d: libmlsl3.a
+mlsl3d: libmlsl3.a $(CONFDIR)/$(MLSCFILE)
 		@echo "$(pvm_message)"
 		@echo "$(blas_message)"
 		@echo "$(lapack_message)"
@@ -183,6 +184,9 @@ L3DMDiag.o:
 
 # ========================================================================
 # $Log$
+# Revision 1.18  2001/11/26 18:41:37  pwagner
+# Added custom build for L3DMDiag.f90
+#
 # Revision 1.17  2001/11/07 01:14:30  pwagner
 # lapack message refers to this case, not mlsl2
 #

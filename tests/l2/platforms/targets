@@ -6,6 +6,7 @@ else
    MLSCFILE=.configure
 endif
 
+CONFDIR=../../..
 include ../Makefile.dep
 
 # "$Id$"
@@ -100,7 +101,7 @@ l2_NEEDS_fwdmdl = true
    cloud_linker_line=-L${clouddir} -lcloud
    cloud_message=Building mlsl2 with cloud forward model
    mlsl2_prereqs=$(ALLOBJS) $(PVM_OBJS) $(libdir)/libmls.a libl2.a \
-	 $(fwdmdldir)/libfwdmdl.a $(clouddir)/libcloud.a
+	 $(fwdmdldir)/libfwdmdl.a $(clouddir)/libcloud.a $(CONFDIR)/$(MLSCFILE)
 
 ifdef LAPACK
 ifdef LIB_LAPACK
@@ -189,6 +190,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.15  2002/02/21 00:53:58  pwagner
+# Brought up-to-date with versions in main directory
+#
 # Revision 1.14  2001/11/21 00:25:34  pwagner
 # Added hdfeos5_linker_line
 #

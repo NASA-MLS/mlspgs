@@ -2,6 +2,7 @@ include ../Makefile.dep
 
 # where which_fftw.sh is stored
 MLSBIN=../../util
+CONFDIR=../..
 
 # "$Id$"
 
@@ -118,7 +119,7 @@ endif
 
 fftw_linker_line = $(shell ${MLSBIN}/which_fftw.sh ${FFTW_ROOT} ${FFTW_PREC})
 # ========================================================================
-mlsl1: $(ALLOBJS) $(libdir)/libmls.a $(PVM_OBJS)
+mlsl1: $(ALLOBJS) $(libdir)/libmls.a $(PVM_OBJS) $(CONFDIR)/$(MLSCFILE)
 		@echo "$(pvm_message)"
 		@echo "$(blas_message)"
 		@echo "$(lapack_message)"
@@ -159,6 +160,9 @@ OutputL1B.o:
 
 # ========================================================================
 # $Log$
+# Revision 1.15  2002/03/29 21:28:16  pwagner
+# Satisfies requirement for fftw during link
+#
 # Revision 1.14  2001/11/07 01:14:30  pwagner
 # lapack message refers to this case, not mlsl2
 #

@@ -119,7 +119,7 @@ fwdmdl_message=Building mlsl2 with forward model
 cloud_linker_line=-L${clouddir} -lcloud
 cloud_message=Building mlsl2 with cloud forward model
 mlsl2_prereqs=$(ALLOBJS) $(PVM_OBJS) $(mlspack_dir)/libmlspack.a $(libdir)/libmls.a \
-	 $(fwdmdldir)/libfwdmdl.a $(clouddir)/libcloud.a
+	 $(fwdmdldir)/libfwdmdl.a $(clouddir)/libcloud.a $(CONFDIR)/$(MLSCFILE)
 
 ifdef PGSTK
    tk_message=Building mlslib with toolkit
@@ -255,6 +255,9 @@ MLSL2.o: $(CONFDIR)/notes/switches $(CONFDIR)/notes/options
 
 
 # $Log$
+# Revision 1.35  2002/01/31 00:33:13  pwagner
+# Prefixes preset paths just like forwaard model
+#
 # Revision 1.34  2001/11/15 00:07:57  pwagner
 # Now works with new libmlspack.a and .mod files in blas
 #

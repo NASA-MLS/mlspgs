@@ -1,3 +1,12 @@
+# This is the default name of the configure file
+# It may be overridden for multiple platforms, special options, etc.
+ifdef HOSTMLSCFILE
+   MLSCFILE=$(HOSTMLSCFILE)
+else
+   MLSCFILE=.configure
+endif
+
+CONFDIR=../../..
 include ../Makefile.dep
 
 # "$Id$"
@@ -112,7 +121,7 @@ else
 endif
 
 # ========================================================================
-$(PROG_NAME): $(ALLOBJS)
+$(PROG_NAME): $(ALLOBJS) $(CONFDIR)/$(MLSCFILE)
 		@echo "$(pvm_message)"
 		@echo "$(blas_message)"
 		@echo "$(lapack_message)"
@@ -154,6 +163,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.8  2002/02/08 18:34:52  pwagner
+# Custom build for machine.o depends on whether collecting garbage
+#
 # Revision 1.7  2001/11/21 00:25:34  pwagner
 # Added hdfeos5_linker_line
 #

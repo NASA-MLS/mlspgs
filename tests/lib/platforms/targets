@@ -1,3 +1,12 @@
+# This is the default name of the configure file
+# It may be overridden for multiple platforms, special options, etc.
+ifdef HOSTMLSCFILE
+   MLSCFILE=$(HOSTMLSCFILE)
+else
+   MLSCFILE=.configure
+endif
+
+CONFDIR=../../..
 include ../Makefile.dep
 
 # "$Id$"
@@ -119,7 +128,7 @@ else
 endif
 
 # ========================================================================
-$(PROG_NAME): $(ALLOBJS) $(PVM_OBJS) $(libdir)/libmls.a
+$(PROG_NAME): $(ALLOBJS) $(PVM_OBJS) $(libdir)/libmls.a $(CONFDIR)/$(MLSCFILE)
 		@echo "$(pvm_message)"
 		@echo "$(blas_message)"
 		@echo "$(lapack_message)"
@@ -153,6 +162,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.11  2001/11/21 00:25:34  pwagner
+# Added hdfeos5_linker_line
+#
 # Revision 1.10  2001/11/16 19:15:32  pwagner
 # Added stuff to work with mlspack
 #

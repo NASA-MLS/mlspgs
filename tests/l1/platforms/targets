@@ -1,3 +1,12 @@
+# This is the default name of the configure file
+# It may be overridden for multiple platforms, special options, etc.
+ifdef HOSTMLSCFILE
+   MLSCFILE=$(HOSTMLSCFILE)
+else
+   MLSCFILE=.configure
+endif
+
+CONFDIR=../../..
 include ../Makefile.dep
 
 # "$Id$"
@@ -130,7 +139,8 @@ endif
 	ar ru $@ $?
 	ar d $@ $(itmdir)/$(l1_driver)
 
-$(PROG_NAME): $(ALLOBJS) $(PVM_OBJS) libl1.a $(libdir)/libmls.a
+$(PROG_NAME): $(ALLOBJS) $(PVM_OBJS) libl1.a $(libdir)/libmls.a \
+     $(CONFDIR)/$(MLSCFILE)
 		@echo "$(pvm_message)"
 		@echo "$(blas_message)"
 		@echo "$(lapack_message)"
@@ -173,6 +183,9 @@ Sd.o:
 
 # ========================================================================
 # $Log$
+# Revision 1.15  2002/04/16 23:31:49  pwagner
+# Satisfies requirement for fftw during link
+#
 # Revision 1.14  2001/11/21 00:25:34  pwagner
 # Added hdfeos5_linker_line
 #
