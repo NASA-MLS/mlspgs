@@ -81,6 +81,13 @@ module VectorsModule            ! Vectors in the MLS PGS suite
     ! The dimensions of VALUES are Frequencies (or 1) * Vertical Coordinates
     ! (or 1), and Horizontal Instances (scan or profile or 1).
     real(r8), dimension(:,:), pointer :: VALUES => NULL()
+    ! MASK is used to control whether elements of vectors are of interest.
+    ! If MASK is not associated, every element is of interest.  Otherwise,the
+    ! dimensions of MASK are (size(values,1)+bit_size(mask)-1)/bit_size(mask)
+    ! and size(values,2).  Bits of MASK are used to determine what is not
+    ! interesting.  Zero means the corresponding element of VALUES is
+    ! interesting, and one means it is not.
+    integer, dimension(:,:), pointer :: MASK => NULL()
   end type VectorValue_T
 
   ! This type describes a vector.
@@ -99,6 +106,9 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   ! This incrementing counter is used to set the id field for a vector template
 
   integer, save, private :: vectorTemplateCounter = 0
+
+  integer, parameter, private :: B_sizer = 0
+  integer, parameter, private :: B = bit_size(b_sizer) ! can't use bit_size(b)
 
 contains ! =====     Public Procedures     =============================
 
@@ -205,12 +215,30 @@ contains ! =====     Public Procedures     =============================
     end do
   end function AXPY
 
+  !---------------------------------------------------  ClearMask  -----
+  subroutine ClearMask ( MASK, TO_CLEAR )
+  ! Clear bits of MASK indexed by elements of TO_CLEAR.  If TO_CLEAR is
+  ! absent, clear all of the bits of MASK.
+    integer, intent(inout), dimension(:) :: MASK
+    integer, intent(in), dimension(:), optional :: TO_CLEAR
+    integer :: I, W, P
+    if ( present(to_clear) ) then
+      do i = 1, size(to_clear)
+        w = to_clear(i) / b
+        p = mod(to_clear(i), b)
+        mask(w+1) = ibclr(mask(w+1),p)
+      end do
+    else
+      mask = 0
+    end if
+  end subroutine ClearMask
+
   !-------------------------------------------------  CloneVector  -----
   subroutine CloneVector ( Z, X )
   ! Destroy Z, except its name.
   ! Create the characteristics of a vector to be the same template as a
   ! given one (except it has no name).  Values are allocated, but not
-  ! filled.
+  ! filled.  Z's mask is allocated if X's is allocated, but it is not filled.
 
   ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
   ! It is important to invoke DestroyVectorInfo using the result of this
@@ -233,6 +261,10 @@ contains ! =====     Public Procedures     =============================
       z%quantities(i)%template => x%quantities(i)%template
     end do
     call createValues ( z )
+    do i = 1, size(x%quantities)
+      if ( associated(x%quantities(i)%mask) ) &
+        & call createMask ( z%quantities(i) )
+    end do
   end subroutine  CloneVector
 
   !-------------------------------------  ConstructVectorTemplate  -----
@@ -284,14 +316,26 @@ contains ! =====     Public Procedures     =============================
     call cloneVector ( Z, X )
     do i = 1, size(x%quantities)
       z%quantities(i)%values = x%quantities(i)%values
+      if ( associated (x%quantities(i)%mask ) ) &
+        & z%quantities(i)%mask = x%quantities(i)%mask
     end do
   end subroutine CopyVector
+
+  ! -------------------------------------------------  CreateMask  -----
+  subroutine CreateMask ( VectorValue )
+  ! Allocate the MASK array for a vector quantity.
+    type(VectorValue_T), intent(inout) :: VectorValue
+    call allocate_test ( vectorValue%mask, (size(vectorValue%values,1)+b-1)/b, &
+      & size(vectorValue%values,2), "MASK in CreateMask", ModuleName )
+    vectorValue%mask = 0 ! All vector elements are interesting
+  end subroutine CreateMask
 
   ! -----------------------------------------------  CreateVector  -----
   type(Vector_T) function CreateVector &
     & ( vectorName, vectorTemplate, quantities ) result (vector )
 
   ! This routine creates an empty vector according to a given template
+  ! Its mask is not allocated.  Use CreateMask if one is needed.
 
     ! Dummy arguments
     integer, intent(in) :: vectorName   ! Sub_rosa index
@@ -566,6 +610,19 @@ contains ! =====     Public Procedures     =============================
     end do
   end function ScaleVector
 
+  !-----------------------------------------------------  SetMask  -----
+  subroutine SetMask ( MASK, TO_SET )
+  ! Set bits of MASK indexed by elements of TO_CLEAR.
+    integer, intent(inout), dimension(:) :: MASK
+    integer, intent(in), dimension(:) :: TO_SET
+    integer :: I, W, P
+    do i = 1, size(to_set)
+      w = to_set(i) / b
+      p = mod(to_set(i), b)
+      mask(w+1) = ibset(mask(w+1),p)
+    end do
+  end subroutine SetMask
+
   !---------------------------------------------  SubtractVectors  -----
   type (Vector_T) function SubtractVectors ( X, Y ) result (Z)
   ! Subtract Y from X, producing one having the same template (but no name,
@@ -592,8 +649,7 @@ contains ! =====     Public Procedures     =============================
 
 ! =====     Private Procedures     =====================================
   subroutine CreateValues ( Vector )
-  ! Allocate space for the values of a vector.  Create rank-3 views of
-  ! the values for each of the quantities.
+  ! Allocate space for the values of a vector.
     type(Vector_T), intent(inout) :: Vector
     integer :: QTY
     do qty = 1, size(vector%quantities)
@@ -610,6 +666,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.3  2000/11/15 01:33:58  vsnyder
+! Added copyVector, assignment(=)
+!
 ! Revision 2.2  2000/11/10 00:24:24  vsnyder
 ! Changed VectorValue_t%values from rank-3 to rank-2
 !
