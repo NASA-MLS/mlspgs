@@ -451,14 +451,14 @@ contains ! =====     Public Procedures     =============================
     case ( M_Banded )              ! ??? Adjust the sparsity representation ???
       do j = 1, x%ncols
         do i = x%r1(j), x%r1(j) + x%r2(j) - x%r2(j-1) - 1 ! row numbers
-          if ( btest( mask(i/b+1), mod(i,b) ) ) &
+          if ( btest( mask((i-1)/b+1), mod((i-1),b) ) ) &
             & x%values(x%r2(j-1) + i - x%r1(j) + 1, 1) = 0.0_r8
         end do ! i
       end do ! j = 1, x%ncols
     case ( M_Column_Sparse )       ! ??? Adjust the sparsity representation ???
       do j = 1, x%ncols
         do i = x%r1(j-1)+1, x%r1(j)
-          if ( btest( mask(x%r2(i)/b+1), mod(x%r2(i),b) ) ) &
+          if ( btest( mask((x%r2(i)-1)/b+1), mod(x%r2(i)-1,b) ) ) &
             & x%values(j,1) = 0.0_r8
         end do ! i
       end do ! j = 1, x%ncols
@@ -992,7 +992,7 @@ contains ! =====     Public Procedures     =============================
         end if
         do j = 1, zb%ncols    ! Columns of Z = columns of YB
           if ( associated(ym) ) then
-            if ( btest(ym(j/b+1),mod(j,b)) ) cycle
+            if ( btest(ym((j-1)/b+1),mod(j-1,b)) ) cycle
           end if
           yi_1 = yb%r2(j-1)+1   ! index of 1st /=0 el. in this col of yb
           yi_n = yb%r2(j)       ! index of last /=0 el. in this col of yb
@@ -1003,7 +1003,7 @@ contains ! =====     Public Procedures     =============================
           do i = 1, mz  ! Rows of Z = columns of XB
             ! Inner product of column I of XB with column J of YB
             if ( associated(xm) ) then
-              if ( btest(xm(i/b+1),mod(i,b)) ) cycle
+              if ( btest(xm((i-1)/b+1),mod(i-1,b)) ) cycle
             end if
             xi_1 = xb%r2(i-1)+1  ! index of 1st /=0 el. in this col of xb
             xi_n = xb%r2(i)      ! index of last /=0 el. in this col of xb
@@ -1040,13 +1040,13 @@ contains ! =====     Public Procedures     =============================
         end if
         do j = 1, zb%ncols    ! Columns of Z
           if ( associated(ym) ) then
-            if ( btest(ym(j/b+1),mod(j,b)) ) cycle
+            if ( btest(ym((j-1)/b+1),mod(j-1,b)) ) cycle
           end if
           mz = zb%nrows
           if ( my_upper ) mz = j
           do i = 1, mz  ! Rows of Z = columns of XB
             if ( associated(xm) ) then
-              if ( btest(xm(i/b+1),mod(i,b)) ) cycle
+              if ( btest(xm((i-1)/b+1),mod(i-1,b)) ) cycle
             end if
             k = xb%r1(i)      ! Row subscript of first nonzero in XB's column I
             l = xb%r2(i-1)+1  ! Position in XB%VALUES of it
@@ -1085,7 +1085,7 @@ contains ! =====     Public Procedures     =============================
         if ( .not. my_upd ) zb%values = 0.0_r8
         do i = 1, xb%ncols    ! Rows of ZB
           if ( associated(xm) ) then
-            if ( btest(xm(i/b+1),mod(i,b)) ) cycle
+            if ( btest(xm((i-1)/b+1),mod(i-1,b)) ) cycle
           end if
           m = xb%r1(i)        ! Index of first row of XB with nonzero value
           k = xb%r2(i-1) + 1
@@ -1095,7 +1095,7 @@ contains ! =====     Public Procedures     =============================
           if ( my_upper ) mz = i
           do j = mz, yb%ncols  ! Columns of ZB
             if ( associated(ym) ) then
-              if ( btest(ym(j/b+1),mod(j,b)) ) cycle
+              if ( btest(ym((j-1)/b+1),mod(j-1,b)) ) cycle
             end if
             ! Inner product of column I of XB with column J of YB
 !           xy = dot_product( xb%values(k:l,1), yb%values(m:m+l-k,j) )
@@ -1118,13 +1118,13 @@ contains ! =====     Public Procedures     =============================
         end if
         do j = 1, zb%ncols    ! Columns of Z
           if ( associated(ym) ) then
-            if ( btest(ym(j/b+1),mod(j,b)) ) cycle
+            if ( btest(ym((j-1)/b+1),mod(j-1,b)) ) cycle
           end if
           mz = zb%nrows
           if ( my_upper ) mz = j
           do i = 1, mz  ! Rows of Z = columns of XB
             if ( associated(xm) ) then
-              if ( btest(xm(i/b+1),mod(i,b)) ) cycle
+              if ( btest(xm((i-1)/b+1),mod(i-1,b)) ) cycle
             end if
             l = xb%r1(i-1)+1  ! Position in XB%R2 of row subscript in XB
             k = xb%r2(l)      ! Row subscript of nonzero in XB's column I
@@ -1164,13 +1164,13 @@ contains ! =====     Public Procedures     =============================
         end if
         do j = 1, zb%ncols    ! Columns of Z
           if ( associated(ym) ) then
-            if ( btest(ym(j/b+1),mod(j,b)) ) cycle
+            if ( btest(ym((j-1)/b+1),mod(j-1,b)) ) cycle
           end if
           mz = zb%nrows
           if ( my_upper ) mz = j
           do i = 1, mz  ! Rows of Z = columns of XB
             if ( associated(xm) ) then
-              if ( btest(xm(i/b+1),mod(i,b)) ) cycle
+              if ( btest(xm((i-1)/b+1),mod(i-1,b)) ) cycle
             end if
             l = xb%r1(i-1)+1  ! Position in XB%R2 of row subscript in XB
             k = xb%r2(l)      ! Row subscript of nonzero in XB's column I
@@ -1212,13 +1212,13 @@ contains ! =====     Public Procedures     =============================
         if ( .not. my_upd ) zb%values = 0.0_r8
         do j = 1, zb%ncols    ! Columns of ZB
           if ( associated(ym) ) then
-            if ( btest(ym(j/b+1),mod(j,b)) ) cycle
+            if ( btest(ym((j-1)/b+1),mod(j-1,b)) ) cycle
           end if
           mz = zb%nrows
           if ( my_upper ) mz = j
           do i = 1, mz  ! Rows of Z = columns of XB
             if ( associated(xm) ) then
-              if ( btest(xm(i/b+1),mod(i,b)) ) cycle
+              if ( btest(xm((i-1)/b+1),mod(i-1,b)) ) cycle
             end if
             k = xb%r1(i-1)+1
             l = xb%r1(i)
@@ -1242,7 +1242,7 @@ contains ! =====     Public Procedures     =============================
       case ( M_Banded )       ! XB full, YB banded
         do j = 1, zb%ncols    ! Columns of ZB
           if ( associated(ym) ) then
-            if ( btest(ym(j/b+1),mod(j,b)) ) cycle
+            if ( btest(ym((j-1)/b+1),mod(j-1,b)) ) cycle
           end if
           m = yb%r1(j)        ! Index of first row of YB with nonzero value
           k = yb%r2(j-1)+1    ! K and L are indices of YB
@@ -1251,7 +1251,7 @@ contains ! =====     Public Procedures     =============================
           if ( my_upper ) mz = j
           do i = 1, mz  ! Rows of Z = columns of XB
             if ( associated(xm) ) then
-              if ( btest(xm(i/b+1),mod(i,b)) ) cycle
+              if ( btest(xm((i-1)/b+1),mod(i-1,b)) ) cycle
             end if
             ! Inner product of column I of XB with column J of YB
 !           xy = dot_product( xb%values(m:m+l-k,i), yb%values(k:l,1))
@@ -1262,7 +1262,7 @@ contains ! =====     Public Procedures     =============================
       case ( M_Column_sparse ) ! XB full, YB column-sparse
         do j = 1, zb%ncols    ! Columns of ZB
           if ( associated(ym) ) then
-            if ( btest(ym(j/b+1),mod(j,b)) ) cycle
+            if ( btest(ym((j-1)/b+1),mod(j-1,b)) ) cycle
           end if
           k = yb%r1(j-1)+1    ! K and L are indices of YB
           l = yb%r1(j)
@@ -1270,7 +1270,7 @@ contains ! =====     Public Procedures     =============================
           if ( my_upper ) mz = j
           do i = 1, mz  ! Rows of Z = columns of XB
             if ( associated(xm) ) then
-              if ( btest(xm(i/b+1),mod(i,b)) ) cycle
+              if ( btest(xm((i-1)/b+1),mod(i-1,b)) ) cycle
             end if
             ! Inner product of column I of XB with column J of YB
             xy = dot_product( xb%values(yb%r2(k:l),i), yb%values(k:l,1) )
@@ -1281,7 +1281,7 @@ contains ! =====     Public Procedures     =============================
         if ( associated(xm) .or. associated(ym) ) then
           do j = 1, zb%ncols  ! Columns of ZB
             if ( associated(ym) ) then
-              if ( btest(ym(j/b+1),mod(j,b)) ) then
+              if ( btest(ym((j-1)/b+1),mod(j-1,b)) ) then
           cycle
               end if
             end if
@@ -1289,7 +1289,7 @@ contains ! =====     Public Procedures     =============================
             if ( my_upper ) mz = j
             do i = 1, mz      ! Rows of Z = columns of XB
               if ( associated(xm) ) then
-                if ( btest(xm(i/b+1),mod(i,b)) ) then
+                if ( btest(xm((i-1)/b+1),mod(i-1,b)) ) then
             cycle
                 end if
               end if
@@ -2144,6 +2144,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.48  2001/09/29 00:25:51  vsnyder
+! Correct word indexing for mask operations
+!
 ! Revision 2.47  2001/09/28 17:56:10  dwu
 ! add MatrixInversion, SolveCholeskyA_0
 !
