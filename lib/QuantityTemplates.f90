@@ -78,8 +78,7 @@ module QuantityTemplates         ! Quantities within vectors
 
     real(r8) :: badValue      ! Value used to flag bad/missing data
     integer :: unit           ! Unit quantity is in when scaled as below,
-                              ! an l_lit of the type t_units in
-                              ! Init_Tables_Module.
+                              ! an l_lit of the type t_units in Units.f90.
     real(r8) :: scaleFactor   ! Scale factor used when printing etc.
 
     ! For regular quantities the number of elements of each instance
@@ -114,7 +113,8 @@ module QuantityTemplates         ! Quantities within vectors
     ! These optional integer arrays are used for minor frame quantities,
     ! to index the major frames.
 
-    integer, dimension(:), pointer :: mafIndex => NULL(), mafCounter => NULL()
+    integer, dimension(:), pointer :: mafIndex => NULL() ! (noInstances) index in l1b file
+    integer, dimension(:), pointer :: mafCounter => NULL() ! (noInstances) from l1b
 
     ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     ! For quantities containing `channels' the following information may or
@@ -139,7 +139,7 @@ module QuantityTemplates         ! Quantities within vectors
     integer :: instrumentModule ! Index in the Modules database in MLSSignals_m
     integer :: radiometer       ! For ptan etc., index into radiometers database
     integer :: molecule ! What molecule does this refer to? (One of the l_...
-                        ! lits of type t_molecule in Init_Tables_Module.)
+                        ! lits of type t_molecule in Molecules.)
 
     ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -393,6 +393,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.14  2001/05/23 20:38:35  livesey
+! Updated a comment
+!
 ! Revision 2.13  2001/04/23 23:52:16  livesey
 ! Sorry, should have put comment in one below.  Now has optional ignoreMinorFrame
 ! argument to DestroyQuantityTemplateDatabase
