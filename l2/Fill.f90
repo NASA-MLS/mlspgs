@@ -5,167 +5,12 @@
 module Fill                     ! Create vectors and fill them.
   !=============================================================================
 
-  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-  use Expr_M, only: EXPR
-  use GriddedData, only: GriddedData_T
-  ! We need many things from Init_Tables_Module.  First the fields:
-  use INIT_TABLES_MODULE, only: F_APRIORIPRECISION, F_BOUNDARYPRESSURE, &
-    & F_COLUMNS, F_DESTINATION, F_DIAGONAL, F_NOISE, &
-    & F_GEOCALTITUDEQUANTITY, F_EARTHRADIUS, F_EXPLICITVALUES, &
-    & F_EXTINCTION, F_FRACTION, F_H2OQUANTITY, F_LOSQTY,&
-    & F_dontMask, F_IGNORENEGATIVE, F_IGNOREZERO, &
-    & F_INTEGRATIONTIME, F_INTERPOLATE, F_INVERT, F_INTRINSIC, F_ISPRECISION, &
-    & F_LSB, F_LSBFRACTION, &
-    & F_LENGTHSCALE, F_MATRIX, F_MAXITERATIONS, F_METHOD, F_MEASUREMENTS, &
-    & F_MODEL, F_MULTIPLIER, F_NOFINEGRID, F_NOISEBANDWIDTH, F_PRECISION,  &
-    & F_ORBITINCLINATION, F_PRECISIONFACTOR, F_PROFILEVALUES, &
-    & F_PTANQUANTITY, F_PHITAN, F_QUANTITY, F_RADIANCEQUANTITY, F_RATIOQUANTITY, &
-    & F_REFRACT, F_REFGPHQUANTITY, F_RESETSEED, F_RHIQUANTITY, F_Rows, &
-    & F_SCECI, F_SCVEL, F_SCVELECI, F_SCVELECR, F_SEED, &
-    & F_SOURCE, F_SOURCEGRID, &
-    & F_SOURCEL2AUX, F_SOURCEL2GP, F_SOURCEQUANTITY, F_SOURCEVGRID, &
-    & F_SPREAD, F_SUPERDIAGONAL, &
-    & F_SYSTEMTEMPERATURE, F_TEMPERATUREQUANTITY, F_TEMPLATE, F_TNGTECI, &
-    & F_TYPE, F_USB, F_USBFRACTION, F_VECTOR, F_VMRQUANTITY, FIELD_FIRST, FIELD_LAST
-  ! Now the literals:
-  use INIT_TABLES_MODULE, only: L_ADDNOISE, L_BOUNDARYPRESSURE, L_CHISQCHAN, &
-    & L_CHISQMMAF, L_CHISQMMIF, L_CHOLESKY, &
-    & L_COLUMNABUNDANCE, L_ESTIMATEDNOISE, L_EXPLICIT, L_FOLD, L_GPH, L_GRIDDED, L_HEIGHT, &
-    & L_HYDROSTATIC, L_ISOTOPE, L_ISOTOPERATIO, L_KRONECKER, L_L1B, L_L2GP, L_L2AUX, &
-    & L_RECTANGLEFROMLOS, L_NEGATIVEPRECISION, L_NOISEBANDWIDTH, L_ORBITINCLINATION, &
-    & L_LOSVEL, L_NONE, L_PLAIN, &
-    & L_PRESSURE, L_PHITAN, L_PROFILE, L_PTAN, L_RADIANCE, L_RHI, &
-    & L_REFGPH, L_REFRACT, L_SCECI, L_SCGEOCALT, L_SCVEL, L_SCVELECI, L_SCVELECR, &
-    & L_SIDEBANDRATIO, L_SPD, L_SPECIAL, L_SYSTEMTEMPERATURE, &
-    & L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, &
-    & L_TNGTGEOCALT, L_TRUE, L_VECTOR, L_VGRID, L_VMR, L_XYZ, L_ZETA
-  ! Now the specifications:
-  use INIT_TABLES_MODULE, only: S_DESTROY, S_DUMP, S_FILL, S_FILLCOVARIANCE, &
-    & S_FILLDIAGONAL, S_MATRIX,  S_SNOOP, S_TIME, S_TRANSFER, S_VECTOR
-  ! Now some arrays
-  use Intrinsic, only: Field_Indices
-  use Intrinsic, only: &
-    & PHYQ_Dimensionless, PHYQ_Invalid, PHYQ_Temperature, &
-    & PHYQ_Time, PHYQ_Length, PHYQ_Pressure, PHYQ_Zeta
-  use L1BData, only: DeallocateL1BData, Dump, FindL1BData, L1BData_T, &
-    & PRECISIONSUFFIX, ReadL1BData
-  use L2GPData, only: L2GPData_T
-  use L2AUXData, only: L2AUXData_T
-  use L3ASCII, only: L3ASCII_INTERP_FIELD
-  use LEXER_CORE, only: PRINT_SOURCE
-  use ManipulateVectorQuantities, only: DOHGRIDSMATCH, DOVGRIDSMATCH
-  use MatrixModule_0, only: Sparsify, MatrixInversion
-  use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
-    & DestroyMatrix, Dump, GetActualMatrixFromDatabase, GetDiagonal, &
-    & FindBlock, GetKindFromMatrixDatabase, GetFromMatrixDatabase, K_SPD, &
-    & Matrix_Cholesky_T, Matrix_Database_T, Matrix_Kronecker_T, Matrix_SPD_T, &
-    & Matrix_T, UpdateDiagonal
-  ! NOTE: If you ever want to include defined assignment for matrices, please
-  ! carefully check out the code around the call to snoop.
-  use MLSCommon, only: L1BInfo_T, MLSChunk_T, R8
-  use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate, MLSMSG_Deallocate
-  use MLSNumerics, only: InterpolateValues
-  use MLSRandomNumber, only: drang, mls_random_seed, MATH77_RAN_PACK
-  use MLSSignals_m, only: GetSignalName, GetModuleName, IsModuleSpacecraft
-  use Molecules, only: L_H2O
-  use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
-  use OUTPUT_M, only: BLANKS, OUTPUT
-  use QuantityTemplates, only: QuantityTemplate_T
-  use ScanModelModule, only: GetBasisGPH, Get2DHydrostaticTangentPressure
-  use SnoopMLSL2, only: SNOOP
-  use String_Table, only: Display_String
-  use Time_M, only: Time_Now
-  use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
-  use TRACE_M, only: TRACE_BEGIN, TRACE_END
-  use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, &
-    & SOURCE_REF, SUB_ROSA, SUBTREE
-  use TREE_TYPES, only: N_NAMED, N_SET_ONE
-  use UNITS, only: Omega, PI
-  use VectorsModule, only: AddVectorToDatabase, &
-    & ClearUnderMask, CopyVector, CreateMask, CreateVector, &
-    & DestroyVectorInfo, Dump, &
-    & GetVectorQtyByTemplateIndex, isVectorQtyMasked, MaskVectorQty, &
-    & rmVectorFromDatabase, ValidateVectorQuantity, Vector_T, &
-    & VectorTemplate_T, VectorValue_T, M_Fill
-  use VGridsDatabase, only: VGRID_T, GETUNITFORVERTICALCOORDINATE
+  ! This module performs the Fill operation in the Level 2 software.  
+  ! This takes a vector template, and creates and fills an appropriate vector
 
   implicit none
   private
   public :: MLSL2Fill
-
-  ! -----     Private declarations     ---------------------------------
-
-  integer, private :: ERROR
-  logical, parameter :: DEEBUG = .FALSE.                 ! Usually FALSE
-
-  ! Error codes for "announce_error"  
-  integer, parameter :: No_Error_code = 0
-  integer, parameter :: Wrong_Number = No_Error_code+1     ! of fields of a VECTOR command
-  integer, parameter :: UnknownQuantityName = wrong_number + 1
-  integer, parameter :: Source_not_in_db = unknownQuantityName + 1
-  integer, parameter :: ZeroProfilesFound = source_not_in_db + 1
-  integer, parameter :: ZeroGeodSpan = zeroProfilesFound + 1
-  integer, parameter :: CantFillFromL2AUX = ZeroGeodSpan + 1
-  integer, parameter :: VectorWontMatchPDef = cantFillFromL2AUX + 1
-  integer, parameter :: CantFillFromL1B = vectorWontMatchPDef + 1
-
-  ! Error codes for "Matrix" specification
-  integer, parameter :: MissingField = cantFillFromL1B + 1
-
-  ! More Error codes relating to FillVector
-  integer, parameter :: NumInstancesisZero = missingField + 1
-  integer, parameter :: NumSurfsisZero = numInstancesisZero + 1
-  integer, parameter :: NumChansisZero = numSurfsisZero + 1
-  integer, parameter :: ObjIsFullRank3 = numChansisZero + 1
-  integer, parameter :: OtherErrorInFillVector = objIsFullRank3 + 1
-  integer, parameter :: NoSourceGridGiven= otherErrorInFillVector + 1
-  integer, parameter :: NoSourceL2GPGiven= noSourceGridGiven + 1
-  integer, parameter :: NoSourceL2AUXGiven= noSourceL2GPGiven + 1
-  integer, parameter :: NoExplicitValuesGiven= noSourceL2AUXGiven + 1
-  integer, parameter :: NoSourceQuantityGiven= noExplicitValuesGiven + 1
-  integer, parameter :: InvalidExplicitFill= noSourceQuantityGiven + 1
-  integer, parameter :: BadUnitsForExplicit= invalidExplicitFill + 1
-  integer, parameter :: BadUnitsForIntegrationTime = badUnitsForExplicit + 1
-  integer, parameter :: BadUnitsForSystemTemperature = badUnitsForIntegrationTime + 1
-  integer, parameter :: BadIsotopeFill = badUnitsForSystemTemperature + 1
-  integer, parameter :: BadlosGridFill = badIsotopeFill + 1
-  integer, parameter :: CantInterpolate3d = badlosGridFill + 1
-
-  ! Error codes resulting from FillCovariance
-  integer, parameter :: NotSPD = CantInterpolate3D + 1
-  integer, parameter :: NotImplemented = notSPD + 1
-  integer, parameter :: BothFractionAndLength = NotImplemented + 1
-
-  ! Error codes resulting from squeeze
-  integer, parameter :: N1_is_zero = BothFractionAndLength + 1
-  integer, parameter :: N2_is_zero = n1_is_zero + 1
-  integer, parameter :: N3_is_zero = n2_is_zero + 1
-  integer, parameter :: M1_too_small = n3_is_zero + 1
-  integer, parameter :: M2_too_small = m1_too_small + 1
-  integer, parameter :: Not_permutation = m2_too_small + 1
-  integer, parameter :: Allocation_err = not_permutation + 1
-  integer, parameter :: Deallocation_err = allocation_err + 1
-
-  ! Miscellaneous
-  integer, parameter :: Miscellaneous_err = deallocation_err + 1
-  integer, parameter :: ErrorReadingL1B = miscellaneous_err + 1
-  integer, parameter :: NeedTempREFGPH = errorReadingL1B + 1
-  integer, parameter :: NeedH2O = needTempRefGPH + 1
-  integer, parameter :: NeedOrbitInclination = needH2O + 1
-  integer, parameter :: NeedGeocAltitude = needOrbitInclination + 1
-  integer, parameter :: BadGeocAltitudeQuantity = needGeocAltitude + 1
-  integer, parameter :: BadTemperatureQuantity = badGeocAltitudeQuantity + 1
-  integer, parameter :: BadREFGPHQuantity = badTemperatureQuantity + 1
-  integer, parameter :: NonConformingHydrostatic = badREFGPHQuantity + 1
-  integer, parameter :: BadUnitsForMaxIterations = nonConformingHydrostatic + 1
-  integer, parameter :: NoSpecialFill = badUnitsForMaxIterations + 1
-  integer, parameter :: BadlosVelFill = noSpecialFill + 1
-  integer, parameter :: NotZetaForGrid = BadLosVelFill + 1
-  integer, parameter :: BadEstNoiseFill = NotZetaForGrid + 1
-  integer, parameter :: BadRefractFill = BadEstNoiseFill + 1
-  
-  real, parameter ::    UNDEFINED_VALUE = -999.99 ! Same as %template%badvalue
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -175,23 +20,107 @@ module Fill                     ! Create vectors and fill them.
        "$RCSfile$"
 !---------------------------------------------------------------------------
 
-  ! This module performs the Fill operation in the Level 2 software.  
-  ! This takes a vector template, and creates and fills an appropriate vector
-
 contains ! =====     Public Procedures     =============================
 
   !---------------------------------------------------  MLSL2Fill  -----
 
-  subroutine MLSL2Fill ( Root, L1bInfo, GriddedData, VectorTemplates, Vectors, &
-    & QtyTemplates , Matrices, vGrids, L2GPDatabase, L2AUXDatabase, Chunks, ChunkNo )
+  subroutine MLSL2Fill ( Root, L1bInfo, GriddedDataBase, VectorTemplates, &
+    & Vectors, QtyTemplates , Matrices, vGrids, L2GPDatabase, L2AUXDatabase, &
+    & Chunks, ChunkNo )
 
     ! This is the main routine for the module.  It parses the relevant lines
     ! of the l2cf and works out what to do.
 
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    use Expr_M, only: EXPR
+    use GriddedData, only: GriddedData_T
+    ! We need many things from Init_Tables_Module.  First the fields:
+    use INIT_TABLES_MODULE, only: F_APRIORIPRECISION, F_BOUNDARYPRESSURE, &
+      & F_COLUMNS, F_DESTINATION, F_DIAGONAL, F_dontMask, F_EARTHRADIUS, &
+      & F_EXPLICITVALUES, F_EXTINCTION, &
+      & F_FRACTION, F_GEOCALTITUDEQUANTITY, F_H2OQUANTITY, &
+      & F_IGNORENEGATIVE, F_IGNOREZERO, F_INTEGRATIONTIME, &
+      & F_INTERPOLATE, F_INVERT, F_INTRINSIC, F_ISPRECISION, &
+      & F_LENGTHSCALE, F_LOSQTY, F_LSB, F_LSBFRACTION, &
+      & F_MATRIX, F_MAXITERATIONS, F_MEASUREMENTS, F_METHOD, &
+      & F_MODEL, F_MULTIPLIER, F_NOFINEGRID, F_NOISE, F_NOISEBANDWIDTH, &
+      & F_ORBITINCLINATION, F_PHITAN, F_PRECISION, F_PRECISIONFACTOR, &
+      & F_PROFILEVALUES, F_PTANQUANTITY, &
+      & F_QUANTITY, F_RADIANCEQUANTITY, F_RATIOQUANTITY, &
+      & F_REFRACT, F_REFGPHQUANTITY, F_RESETSEED, F_RHIQUANTITY, F_Rows, &
+      & F_SCECI, F_SCVEL, F_SCVELECI, F_SCVELECR, F_SEED, &
+      & F_SOURCE, F_SOURCEGRID, F_SOURCEL2AUX, F_SOURCEL2GP, &
+      & F_SOURCEQUANTITY, F_SOURCEVGRID, F_SPREAD, F_SUPERDIAGONAL, &
+      & F_SYSTEMTEMPERATURE, F_TEMPERATUREQUANTITY, F_TEMPLATE, F_TNGTECI, &
+      & F_TYPE, F_USB, F_USBFRACTION, F_VECTOR, F_VMRQUANTITY, &
+      & FIELD_FIRST, FIELD_LAST
+    ! Now the literals:
+    use INIT_TABLES_MODULE, only: L_ADDNOISE, L_BOUNDARYPRESSURE, L_CHISQCHAN, &
+      & L_CHISQMMAF, L_CHISQMMIF, L_CHOLESKY, L_COLUMNABUNDANCE, &
+      & L_ESTIMATEDNOISE, L_EXPLICIT, L_FOLD, L_GPH, L_GRIDDED, L_HEIGHT, &
+      & L_HYDROSTATIC, L_ISOTOPE, L_ISOTOPERATIO, L_KRONECKER, L_L1B, L_L2GP, &
+      & L_L2AUX, L_LOSVEL, L_NEGATIVEPRECISION, L_NOISEBANDWIDTH, L_NONE, &
+      & L_ORBITINCLINATION, L_PHITAN, L_PLAIN, L_PRESSURE, L_PROFILE, L_PTAN, &
+      & L_RADIANCE, L_RECTANGLEFROMLOS, L_REFGPH, L_REFRACT, L_RHI, &
+      & L_SCECI, L_SCGEOCALT, L_SCVEL, L_SCVELECI, L_SCVELECR, &
+      & L_SIDEBANDRATIO, L_SPD, L_SPECIAL, L_SYSTEMTEMPERATURE, &
+      & L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, &
+      & L_TNGTGEOCALT, L_TRUE, L_VECTOR, L_VGRID, L_VMR, L_XYZ, L_ZETA
+    ! Now the specifications:
+    use INIT_TABLES_MODULE, only: S_DESTROY, S_DUMP, S_FILL, S_FILLCOVARIANCE, &
+      & S_FILLDIAGONAL, S_MATRIX,  S_SNOOP, S_TIME, S_TRANSFER, S_VECTOR
+    ! Now some arrays
+    use Intrinsic, only: Field_Indices
+    use Intrinsic, only: &
+      & PHYQ_Dimensionless, PHYQ_Invalid, PHYQ_Temperature, &
+      & PHYQ_Time, PHYQ_Length, PHYQ_Pressure, PHYQ_Zeta
+    use L1BData, only: DeallocateL1BData, Dump, FindL1BData, L1BData_T, &
+      & PRECISIONSUFFIX, ReadL1BData
+    use L2GPData, only: L2GPData_T
+    use L2AUXData, only: L2AUXData_T
+    use L3ASCII, only: L3ASCII_INTERP_FIELD
+    use LEXER_CORE, only: PRINT_SOURCE
+    use ManipulateVectorQuantities, only: DOHGRIDSMATCH, DOVGRIDSMATCH
+    use MatrixModule_0, only: Sparsify, MatrixInversion
+    use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
+      & DestroyMatrix, Dump, GetActualMatrixFromDatabase, GetDiagonal, &
+      & FindBlock, GetKindFromMatrixDatabase, GetFromMatrixDatabase, K_SPD, &
+      & Matrix_Cholesky_T, Matrix_Database_T, Matrix_Kronecker_T, Matrix_SPD_T, &
+      & Matrix_T, UpdateDiagonal
+    ! NOTE: If you ever want to include defined assignment for matrices, please
+    ! carefully check out the code around the call to snoop.
+    use MLSCommon, only: L1BInfo_T, MLSChunk_T, R8
+    use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate, MLSMSG_Deallocate
+    use MLSNumerics, only: InterpolateValues
+    use MLSRandomNumber, only: drang, mls_random_seed, MATH77_RAN_PACK
+    use MLSSignals_m, only: GetSignalName, GetModuleName, IsModuleSpacecraft
+    use Molecules, only: L_H2O
+    use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
+    use OUTPUT_M, only: BLANKS, OUTPUT
+    use QuantityTemplates, only: QuantityTemplate_T
+    use ScanModelModule, only: GetBasisGPH, Get2DHydrostaticTangentPressure
+    use SnoopMLSL2, only: SNOOP
+    use String_Table, only: Display_String
+    use Time_M, only: Time_Now
+    use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, &
+      & SOURCE_REF, SUB_ROSA, SUBTREE
+    use TREE_TYPES, only: N_NAMED, N_SET_ONE
+    use UNITS, only: Omega, PI
+    use VectorsModule, only: AddVectorToDatabase, &
+      & ClearUnderMask, CopyVector, CreateMask, CreateVector, &
+      & DestroyVectorInfo, Dump, &
+      & GetVectorQtyByTemplateIndex, isVectorQtyMasked, MaskVectorQty, &
+      & rmVectorFromDatabase, ValidateVectorQuantity, Vector_T, &
+      & VectorTemplate_T, VectorValue_T, M_Fill
+    use VGridsDatabase, only: VGRID_T, GETUNITFORVERTICALCOORDINATE
+
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Of the FILL section in the AST
     type (l1BInfo_T), intent(in) :: L1bInfo
-    type (griddedData_T), dimension(:), pointer :: GriddedData
+    type (griddedData_T), dimension(:), pointer :: GriddedDataBase
     type (vectorTemplate_T), dimension(:), pointer :: VectorTemplates
     type (vector_T), dimension(:), pointer :: Vectors
     type (quantityTemplate_T), dimension(:), pointer :: QtyTemplates
@@ -201,6 +130,79 @@ contains ! =====     Public Procedures     =============================
     type (l2AUXData_T), dimension(:), pointer :: L2AUXDatabase
     type (mlSChunk_T), dimension(:), pointer :: Chunks
     integer, intent(in) :: ChunkNo
+
+    ! -----     Declarations for Fill and internal subroutines     -------
+
+    integer :: ERROR
+    logical, parameter :: DEEBUG = .FALSE.                 ! Usually FALSE
+
+    ! Error codes for "announce_error"  
+    integer, parameter :: No_Error_code = 0
+    integer, parameter :: Wrong_Number = No_Error_code+1     ! of fields of a VECTOR command
+    integer, parameter :: UnknownQuantityName = wrong_number + 1
+    integer, parameter :: Source_not_in_db = unknownQuantityName + 1
+    integer, parameter :: ZeroProfilesFound = source_not_in_db + 1
+    integer, parameter :: ZeroGeodSpan = zeroProfilesFound + 1
+    integer, parameter :: CantFillFromL2AUX = ZeroGeodSpan + 1
+    integer, parameter :: VectorWontMatchPDef = cantFillFromL2AUX + 1
+    integer, parameter :: CantFillFromL1B = vectorWontMatchPDef + 1
+
+    ! Error codes for "Matrix" specification
+    integer, parameter :: MissingField = cantFillFromL1B + 1
+
+    ! More Error codes relating to FillVector
+    integer, parameter :: NumInstancesisZero = missingField + 1
+    integer, parameter :: NumSurfsisZero = numInstancesisZero + 1
+    integer, parameter :: NumChansisZero = numSurfsisZero + 1
+    integer, parameter :: ObjIsFullRank3 = numChansisZero + 1
+    integer, parameter :: OtherErrorInFillVector = objIsFullRank3 + 1
+    integer, parameter :: NoSourceGridGiven= otherErrorInFillVector + 1
+    integer, parameter :: NoSourceL2GPGiven= noSourceGridGiven + 1
+    integer, parameter :: NoSourceL2AUXGiven= noSourceL2GPGiven + 1
+    integer, parameter :: NoExplicitValuesGiven= noSourceL2AUXGiven + 1
+    integer, parameter :: NoSourceQuantityGiven= noExplicitValuesGiven + 1
+    integer, parameter :: InvalidExplicitFill= noSourceQuantityGiven + 1
+    integer, parameter :: BadUnitsForExplicit= invalidExplicitFill + 1
+    integer, parameter :: BadUnitsForIntegrationTime = badUnitsForExplicit + 1
+    integer, parameter :: BadUnitsForSystemTemperature = badUnitsForIntegrationTime + 1
+    integer, parameter :: BadIsotopeFill = badUnitsForSystemTemperature + 1
+    integer, parameter :: BadlosGridFill = badIsotopeFill + 1
+    integer, parameter :: CantInterpolate3d = badlosGridFill + 1
+
+    ! Error codes resulting from FillCovariance
+    integer, parameter :: NotSPD = CantInterpolate3D + 1
+    integer, parameter :: NotImplemented = notSPD + 1
+    integer, parameter :: BothFractionAndLength = NotImplemented + 1
+
+    ! Error codes resulting from squeeze
+    integer, parameter :: N1_is_zero = BothFractionAndLength + 1
+    integer, parameter :: N2_is_zero = n1_is_zero + 1
+    integer, parameter :: N3_is_zero = n2_is_zero + 1
+    integer, parameter :: M1_too_small = n3_is_zero + 1
+    integer, parameter :: M2_too_small = m1_too_small + 1
+    integer, parameter :: Not_permutation = m2_too_small + 1
+    integer, parameter :: Allocation_err = not_permutation + 1
+    integer, parameter :: Deallocation_err = allocation_err + 1
+
+    ! Miscellaneous
+    integer, parameter :: Miscellaneous_err = deallocation_err + 1
+    integer, parameter :: ErrorReadingL1B = miscellaneous_err + 1
+    integer, parameter :: NeedTempREFGPH = errorReadingL1B + 1
+    integer, parameter :: NeedH2O = needTempRefGPH + 1
+    integer, parameter :: NeedOrbitInclination = needH2O + 1
+    integer, parameter :: NeedGeocAltitude = needOrbitInclination + 1
+    integer, parameter :: BadGeocAltitudeQuantity = needGeocAltitude + 1
+    integer, parameter :: BadTemperatureQuantity = badGeocAltitudeQuantity + 1
+    integer, parameter :: BadREFGPHQuantity = badTemperatureQuantity + 1
+    integer, parameter :: NonConformingHydrostatic = badREFGPHQuantity + 1
+    integer, parameter :: BadUnitsForMaxIterations = nonConformingHydrostatic + 1
+    integer, parameter :: NoSpecialFill = badUnitsForMaxIterations + 1
+    integer, parameter :: BadlosVelFill = noSpecialFill + 1
+    integer, parameter :: NotZetaForGrid = BadLosVelFill + 1
+    integer, parameter :: BadEstNoiseFill = NotZetaForGrid + 1
+    integer, parameter :: BadRefractFill = BadEstNoiseFill + 1
+
+    real, parameter ::    UNDEFINED_VALUE = -999.99 ! Same as %template%badvalue
 
     ! Local variables
 
@@ -696,38 +698,38 @@ contains ! =====     Public Procedures     =============================
             call output(resetSeed, advance='yes')
             call output('got(f_seed)? ', advance='no')
             call output(got(f_seed), advance='yes')
-          endif
+          end if
           if ( resetSeed ) then
             call mls_random_seed(new_seed=seed(1:))
             if (DEEBUG) then
               call output('Letting mls choose new seed ', advance='no')
               call output(seed, advance='yes')
-            endif
-          elseif ( got(f_seed) ) then
+            end if
+          else if ( got(f_seed) ) then
             do j=1, min(nsons(seedNode)-1, 2)
               call expr(subtree(j+1,seedNode),unitAsArray,valueAsArray)
               seed(j) = int(valueAsArray(1))+chunkNo
-            enddo
+            end do
             if ( seed(1) /= 0 .and. seed(2) /= 0 ) then
               call mls_random_seed(pput=seed(1:))
               if (DEEBUG) then
                 call output('Setting new seed ', advance='no')
                 call output(seed, advance='yes')
-              endif
+              end if
             else
               call mls_random_seed(new_seed=seed(1:))
               if (DEEBUG) then
                 call output('Letting mls choose new seed ', advance='no')
                 call output(seed, advance='yes')
-              endif
-            endif
+              end if
+            end if
           else
             if (DEEBUG) then
               call mls_random_seed(gget=seed(1:))
               call output('Reusing current seed ', advance='no')
               call output(seed, advance='yes')
-            endif
-          endif
+            end if
+          end if
 
           ! Either multiplier = [a, b] or multiplier = b are possible
           if ( got(f_multiplier) ) then
@@ -735,15 +737,15 @@ contains ! =====     Public Procedures     =============================
             do j=1, min(nsons(multiplierNode)-1, 2)
               call expr(subtree(j+1,multiplierNode),unitAsArray,valueAsArray)
               multiplier(j) = valueAsArray(1)
-            enddo
+            end do
           else
             multiplier = 1.
-          endif
+          end if
 
           if (DEEBUG) then
             call output('Using multipliers: ', advance='no')
             call output(multiplier, advance='yes')
-          endif
+          end if
           call addGaussianNoise ( key, quantity, sourceQuantity, &
             & noiseQty, multiplier )
 
@@ -852,15 +854,15 @@ contains ! =====     Public Procedures     =============================
             do j=1, min(nsons(multiplierNode)-1, 2)
               call expr(subtree(j+1,multiplierNode),unitAsArray,valueAsArray)
               multiplier(j) = valueAsArray(1)
-            enddo
+            end do
           else
             multiplier = 1.
-          endif
+          end if
 
           if (DEEBUG) then
             call output('Using multipliers: ', advance='no')
             call output(multiplier, advance='yes')
-          endif
+          end if
 
           select case ( quantity%template%quantityType )
           case ( l_losVel )
@@ -888,7 +890,7 @@ contains ! =====     Public Procedures     =============================
                 & vectors(vmrQtyVctrIndex), vmrQtyIndex)
               call FillColAbundance ( key, quantity, &
                 & bndPressQty, vmrQty )
-            endif
+            end if
           case ( l_chiSQChan )
             if ( .not. any(got( (/f_measurements, f_model, f_noise/) )) ) then
               call Announce_error ( key, No_Error_code, &
@@ -903,7 +905,7 @@ contains ! =====     Public Procedures     =============================
               call FillChiSqChan ( key, quantity, &
                 & measQty, modelQty, noiseQty, &
                 & dontMask, ignoreZero, ignoreNegative, multiplier )
-            endif
+            end if
           case ( l_chiSQMMaf )
             if ( .not. any(got( (/f_measurements, f_model, f_noise/) )) ) then
               call Announce_error ( key, No_Error_code, &
@@ -918,7 +920,7 @@ contains ! =====     Public Procedures     =============================
               call FillChiSqMMaf ( key, quantity, &
                 & measQty, modelQty, noiseQty, &
                 & dontMask, ignoreZero, ignoreNegative, multiplier )
-            endif
+            end if
           case ( l_chiSQMMif )
             if ( .not. any(got( (/f_measurements, f_model, f_noise/) )) ) then
               call Announce_error ( key, No_Error_code, &
@@ -933,7 +935,7 @@ contains ! =====     Public Procedures     =============================
               call FillChiSqMMif ( key, quantity, &
                 & measQty, modelQty, noiseQty, &
                 & dontMask, ignoreZero, ignoreNegative, multiplier )
-            endif
+            end if
           case ( l_rhi )
             ! Later may allow inverted fill specified by /invert field
             ! which would fill h2o quantity form rhi
@@ -951,7 +953,7 @@ contains ! =====     Public Procedures     =============================
                 & quantityType=(/l_vmr/), molecule=(/l_h2o/)) ) then
                 call Announce_Error ( key, No_Error_code, &
                 & 'The h2oQuantity is not a vmr for the H2O molecule'  )
-              elseif ( .not. ValidateVectorQuantity(temperatureQuantity, &
+              else if ( .not. ValidateVectorQuantity(temperatureQuantity, &
                 & quantityType=(/l_temperature/)) ) then
                 call Announce_Error ( key, No_Error_code, &
                 & 'The temperatureQuantity is not a temperature'  )
@@ -960,7 +962,7 @@ contains ! =====     Public Procedures     =============================
               ! _always_ be the one getting filled according to
               ! the pattern '[verb] [direct-object] [modifier(s)]'
               ! see case l_vmr below for how to do this
-              !elseif ( invert ) then
+              !else if ( invert ) then
               !  call FillRHIFromH2O ( key, h2oquantity, &
               !  & Quantity, temperatureQuantity, &
               !  & dontMask, ignoreZero, ignoreNegative, interpolate, &
@@ -972,8 +974,8 @@ contains ! =====     Public Procedures     =============================
                 & dontMask, ignoreZero, ignoreNegative, interpolate, &
                 & .true., &   ! Mark Undefined values?
                 & invert )    ! invert rather than convert?
-              endif
-            endif
+              end if
+            end if
           case ( l_vmr )
             ! Later may allow other special fills of vmr quantities
             ! For now only vmr from rhi
@@ -991,11 +993,11 @@ contains ! =====     Public Procedures     =============================
                 & quantityType=(/l_rhi/)) ) then
                 call Announce_Error ( key, No_Error_code, &
                 & 'The rhiQuantity is not an rhi'  )
-              elseif ( .not. ValidateVectorQuantity(Quantity, &
+              else if ( .not. ValidateVectorQuantity(Quantity, &
                 & quantityType=(/l_vmr/), molecule=(/l_h2o/)) ) then
                 call Announce_Error ( key, No_Error_code, &
                 & 'The Quantity is not a vmr for the H2O molecule'  )
-              elseif ( .not. ValidateVectorQuantity(temperatureQuantity, &
+              else if ( .not. ValidateVectorQuantity(temperatureQuantity, &
                 & quantityType=(/l_temperature/)) ) then
                 call Announce_Error ( key, No_Error_code, &
                 & 'The temperatureQuantity is not a temperature'  )
@@ -1006,8 +1008,8 @@ contains ! =====     Public Procedures     =============================
                 & dontMask, ignoreZero, ignoreNegative, interpolate, &
                 & .true., &   ! Mark Undefined values?
                 & invert )    ! invert rather than convert?
-              endif
-            endif
+              end if
+            end if
           case default
             call Announce_error ( key, noSpecialFill )
           end select
@@ -1055,7 +1057,7 @@ contains ! =====     Public Procedures     =============================
           if ( .not. got(f_sourceGrid) ) &
             & call Announce_Error ( key,noSourceGridGiven )
           call FillVectorQuantityFromGrid &
-            & ( quantity, griddedData(gridIndex), errorCode )
+            & ( quantity, griddedDataBase(gridIndex), errorCode )
           if ( errorCode /= 0 ) call Announce_error ( key, errorCode )
 
         case ( l_l2gp ) ! --------------  Fill from L2GP quantity  -----
@@ -1130,7 +1132,7 @@ contains ! =====     Public Procedures     =============================
           else
             call FillVectorQuantityFromL1B ( key, quantity, chunks(chunkNo), &
               & l1bInfo, isPrecision )
-          endif
+          end if
 
         case default
           call Announce_error ( key, 0, 'This fill method not yet implemented' )
@@ -1229,25 +1231,25 @@ contains ! =====     Public Procedures     =============================
             end if
             call output ( ' -- vector database before removal --', advance='yes' )
             call dump(vectors, details=-2)
-          endif
+          end if
 
           call DestroyVectorInfo ( vectors(sourceVectorIndex) )
      !    vectorindex = rmVectorFromDatabase ( vectors, vectors(sourceVectorIndex) )
           if (DEEBUG) then
             call output ( ' -- vector database after removal --', advance='yes' )
             call dump(vectors, details=-2)
-          endif
-        elseif ( got(f_matrix) ) then
+          end if
+        else if ( got(f_matrix) ) then
           if (DEEBUG) then
             ! if ( matrices(matrixToKill)%matrix%name /= 0 ) then
              ! call output ( '   Matrix Name = ' )
              ! call display_string ( matrices(matrixToKill)%matrix%name )
              call dump(matrices(matrixToKill), -1)
             ! end if
-          endif
+          end if
 
           call DestroyMatrix ( matrices(matrixToKill) )
-        endif
+        end if
 
       case ( s_transfer ) ! ===============================  Transfer ==
         ! Here we're on a transfer instruction
@@ -1318,2400 +1320,2403 @@ contains ! =====     Public Procedures     =============================
     math77_ran_pack = old_math77_ran_pack
     if ( timing ) call sayTime
 
+  ! =====     Internal Procedures     ==================================
+
   contains
+
+    ! --------------------------------------------------  SayTime  -----
     subroutine SayTime
       call time_now ( t2 )
       if ( total_times ) then
         call output ( "Total time = " )
         call output ( dble(t2), advance = 'no' )
         call blanks ( 4, advance = 'no' )
-      endif
+      end if
       call output ( "Timing for MLSL2Fill = " )
       call output ( dble(t2 - t1), advance = 'yes' )
       timing = .false.
     end subroutine SayTime
-  end subroutine MLSL2Fill
 
-  ! =====     Private Procedures     =====================================
+    ! ------------------------------------------- addGaussianNoise ---
+    subroutine addGaussianNoise ( key, quantity, sourceQuantity, &
+              & noiseQty, multiplier )
+      ! A special fill: quantity = sourceQuantity + g() noiseQty
+      ! where g() is a random number generator with mean 0 and std. dev. 1
+      ! Generalized into ( a sourceQuantity + b g() noiseQty )
+      ! where a and b are multipliers)
+      ! Formal arguments
+      integer, intent(in) :: KEY
+      type (VectorValue_T), intent(inout) ::      quantity
+      type (VectorValue_T), intent(in) ::         sourceQuantity
+      type (VectorValue_T), intent(in) ::         noiseQty
+      real, dimension(:), intent(in), optional :: multiplier
 
+      ! Local variables
+      integer                          ::    ROW, COLUMN
+      real                             ::    a, b
 
-  ! ------------------------------------------- addGaussianNoise ---
-  subroutine addGaussianNoise ( key, quantity, sourceQuantity, &
-            & noiseQty, multiplier )
-    ! A special fill: quantity = sourceQuantity + g() noiseQty
-    ! where g() is a random number generator with mean 0 and std. dev. 1
-    ! Generalized into ( a sourceQuantity + b g() noiseQty )
-    ! where a and b are multipliers)
-    ! Formal arguments
-    integer, intent(in) :: KEY
-    type (VectorValue_T), intent(inout) ::      quantity
-    type (VectorValue_T), intent(in) ::         sourceQuantity
-    type (VectorValue_T), intent(in) ::         noiseQty
-    real, dimension(:), intent(in), optional :: multiplier
+      ! Executable code
+      ! First check that things are OK.
+      if (.not. FillableChiSq ( quantity, &
+        & sourceQuantity, noiseQty ) ) then
+        call Announce_error ( key, No_Error_code, &
+        & 'Incompatibility among vector quantities adding noise'  )
+        return
+      end if
 
-    ! Local variables
-    integer                          ::    ROW, COLUMN
-    real                             ::    a, b
+     ! Either multiplier = [a, b] or multiplier = b are possible
+      if ( .not. present(multiplier) ) then
+        a = 1.
+        b = 1.
+      else if (&
+      & multiplier(1) == UNDEFINED_VALUE .and. multiplier(2) == UNDEFINED_VALUE &
+      & ) then
+        a = 1.
+        b = 1.
+      else if ( multiplier(2) == UNDEFINED_VALUE ) then
+        a = 1.
+        b = multiplier(1)
+      else
+        a = multiplier(1)
+        b = multiplier(2)
+      end if
 
-    ! Executable code
-    ! First check that things are OK.
-    if (.not. FillableChiSq ( quantity, &
-      & sourceQuantity, noiseQty ) ) then
-      call Announce_error ( key, No_Error_code, &
-      & 'Incompatibility among vector quantities adding noise'  )
-      return
-    endif
-    
-   ! Either multiplier = [a, b] or multiplier = b are possible
-    if ( .not. present(multiplier) ) then
-      a = 1.
-      b = 1.
-    elseif (&
-    & multiplier(1) == UNDEFINED_VALUE .and. multiplier(2) == UNDEFINED_VALUE &
-    & ) then
-      a = 1.
-      b = 1.
-    elseif ( multiplier(2) == UNDEFINED_VALUE ) then
-      a = 1.
-      b = multiplier(1)
-    else
-      a = multiplier(1)
-      b = multiplier(2)
-    endif
-    
-    do column=1, size(quantity%values(1, :))
-      do row=1, size(quantity%values(:, 1))
-        quantity%values(row, column) = &
-          & sourceQuantity%values(row, column) * a &
-          & + &
-          & drang() * noiseQty%values(row, column) * b
-      enddo
-    enddo
+      do column=1, size(quantity%values(1, :))
+        do row=1, size(quantity%values(:, 1))
+          quantity%values(row, column) = &
+            & sourceQuantity%values(row, column) * a &
+            & + &
+            & drang() * noiseQty%values(row, column) * b
+        end do
+      end do
 
-  end subroutine addGaussianNoise
+    end subroutine addGaussianNoise
 
-  !------------------------------------- FillCovariance ------------
+    !------------------------------------- FillCovariance ------------
 
-  subroutine FillCovariance ( covariance, vectors, diagonal, &
-    & lengthScale, fraction, invert )
-    ! This routine fills a covariance matrix from a given set of vectors
-    type (Matrix_SPD_T), intent(inout) :: COVARIANCE ! The matrix to fill
-    type (Vector_T), dimension(:), intent(in), target :: VECTORS ! The vector database
-    integer, intent(in) :: DIAGONAL     ! Index of vector describing diagonal
-    integer, intent(in) :: LENGTHSCALE  ! Index of vector describing length scale
-    integer, intent(in) :: FRACTION     ! Index of vector describing fraction
-    logical, intent(in) :: INVERT       ! We actually want the inverse
+    subroutine FillCovariance ( covariance, vectors, diagonal, &
+      & lengthScale, fraction, invert )
+      ! This routine fills a covariance matrix from a given set of vectors
+      type (Matrix_SPD_T), intent(inout) :: COVARIANCE ! The matrix to fill
+      type (Vector_T), dimension(:), intent(in), target :: VECTORS ! The vector database
+      integer, intent(in) :: DIAGONAL     ! Index of vector describing diagonal
+      integer, intent(in) :: LENGTHSCALE  ! Index of vector describing length scale
+      integer, intent(in) :: FRACTION     ! Index of vector describing fraction
+      logical, intent(in) :: INVERT       ! We actually want the inverse
 
-    ! Local parameters
-    real(r8), parameter :: DECADE = 16000.0 ! Number of meters per decade.
+      ! Local parameters
+      real(r8), parameter :: DECADE = 16000.0 ! Number of meters per decade.
 
-    ! Local variables
-    type (VectorValue_T), pointer :: d  ! Diagonal
-    type (VectorValue_T), pointer :: l  ! Length
-    type (VectorValue_T), pointer :: f  ! Fraction
-    type (QuantityTemplate_T), pointer :: qt ! One quantity template
-    type (Vector_T) :: DMASKED ! Masked diagonal
-    type (Vector_T) :: LMASKED ! Masked length scale
-    integer :: B                        ! Block index
-    integer :: I                        ! Instance index
-    integer :: J                        ! Loop index
-    integer :: K                        ! Loop index
-    integer :: N                        ! Size of matrix block
-    integer :: Q                        ! Quantity index
-    real (r8), dimension(:,:), pointer :: M ! The matrix being filled
-    real (r8), dimension(:), pointer :: SURFS ! The vertical coordinate
-    real (r8) :: distance               ! Distance between two points
-    real (r8) :: meanLength             ! Geometric mean length scale
-    real (r8) :: meanDiag               ! Geometric mean diagonal value
-    real (r8) :: thisFraction           ! Geometric mean diagonal value
-    logical, dimension(:), pointer :: condition ! Condition
+      ! Local variables
+      type (VectorValue_T), pointer :: d  ! Diagonal
+      type (VectorValue_T), pointer :: l  ! Length
+      type (VectorValue_T), pointer :: f  ! Fraction
+      type (QuantityTemplate_T), pointer :: qt ! One quantity template
+      type (Vector_T) :: DMASKED ! Masked diagonal
+      type (Vector_T) :: LMASKED ! Masked length scale
+      integer :: B                        ! Block index
+      integer :: I                        ! Instance index
+      integer :: J                        ! Loop index
+      integer :: K                        ! Loop index
+      integer :: N                        ! Size of matrix block
+      integer :: Q                        ! Quantity index
+      real (r8), dimension(:,:), pointer :: M ! The matrix being filled
+      real (r8), dimension(:), pointer :: SURFS ! The vertical coordinate
+      real (r8) :: distance               ! Distance between two points
+      real (r8) :: meanLength             ! Geometric mean length scale
+      real (r8) :: meanDiag               ! Geometric mean diagonal value
+      real (r8) :: thisFraction           ! Geometric mean diagonal value
+      logical, dimension(:), pointer :: condition ! Condition
 
-    ! Executable code
+      ! Executable code
 
-    ! Apply mask to diagonal
-    nullify ( m, condition )
-    call CopyVector ( Dmasked, vectors(diagonal), clone=.true., &
-      & vectorNameText='_Dmasked' )
-    call ClearUnderMask ( Dmasked )
-    
-    if ( lengthScale == 0 ) then
-      call updateDiagonal ( covariance, vectors(diagonal), square=.true., &
-        & invert=invert )
+      ! Apply mask to diagonal
+      nullify ( m, condition )
+      call CopyVector ( Dmasked, vectors(diagonal), clone=.true., &
+        & vectorNameText='_Dmasked' )
+      call ClearUnderMask ( Dmasked )
 
-    else ! Do a more complex fill.
+      if ( lengthScale == 0 ) then
+        call updateDiagonal ( covariance, vectors(diagonal), square=.true., &
+          & invert=invert )
 
-      ! Setup some stuff
-      call CopyVector ( Lmasked, vectors(lengthScale), clone=.true., &
-        & vectorNameText='_Lmasked' ) 
-      call ClearUnderMask ( Lmasked )
-      
-      ! Check the validity of the supplied vectors
-      if ( covariance%m%row%vec%template%id /= &
-        & dMasked%template%id ) call MLSMessage ( MLSMSG_Error, &
-        & ModuleName, "diagonal and covariance not compatible in fillCovariance" )
-      if ( covariance%m%row%vec%template%id /= &
-        & lMasked%template%id ) call MLSMessage ( MLSMSG_Error, &
-        & ModuleName, "lengthScale and covariance not compatible in fillCovariance" )
-      if ( lMasked%globalUnit /= phyq_length ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & "length vector does not have dimensions of length" )
+      else ! Do a more complex fill.
 
-      if ( fraction /= 0 ) then
+        ! Setup some stuff
+        call CopyVector ( Lmasked, vectors(lengthScale), clone=.true., &
+          & vectorNameText='_Lmasked' ) 
+        call ClearUnderMask ( Lmasked )
+
+        ! Check the validity of the supplied vectors
         if ( covariance%m%row%vec%template%id /= &
-          & vectors(fraction)%template%id ) call MLSMessage ( MLSMSG_Error, &
-          & ModuleName, "fraction and covariance not compatible in fillCovariance" )
-        if ( vectors(fraction)%globalUnit /= phyq_dimensionless ) &
+          & dMasked%template%id ) call MLSMessage ( MLSMSG_Error, &
+          & ModuleName, "diagonal and covariance not compatible in fillCovariance" )
+        if ( covariance%m%row%vec%template%id /= &
+          & lMasked%template%id ) call MLSMessage ( MLSMSG_Error, &
+          & ModuleName, "lengthScale and covariance not compatible in fillCovariance" )
+        if ( lMasked%globalUnit /= phyq_length ) &
           & call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & "fraction vector is not dimensionless" )
-      else
-        thisFraction = 1.0
+          & "length vector does not have dimensions of length" )
+
+        if ( fraction /= 0 ) then
+          if ( covariance%m%row%vec%template%id /= &
+            & vectors(fraction)%template%id ) call MLSMessage ( MLSMSG_Error, &
+            & ModuleName, "fraction and covariance not compatible in fillCovariance" )
+          if ( vectors(fraction)%globalUnit /= phyq_dimensionless ) &
+            & call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & "fraction vector is not dimensionless" )
+        else
+          thisFraction = 1.0
+        end if
+
+        ! Now loop over the quantities
+        do q = 1, covariance%m%col%vec%template%noQuantities
+
+          ! Setup pointers etc.
+          d => dMasked%quantities(q)
+          qt => d%template
+          l => lMasked%quantities(q)
+          if (fraction /=0) f => vectors(fraction)%quantities(q)
+          n = qt%instanceLen
+          if ( qt%coherent ) surfs => qt%surfs(:,1)
+          if ( .not. qt%regular ) &
+            & call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & "Unable to handle irregular quantity in FillCovariance" )
+          call Allocate_test ( m, n, n, 'M', ModuleName )
+
+          ! Loop over the instances
+          do i = 1, qt%noInstances
+            if ( .not. qt%coherent ) surfs => qt%surfs(:,i)
+
+            ! Clear the working matrix and load the diagonal
+            m = 0.0
+            do j = 1, n
+              m(j,j) = d%values(j,i) ** 2.0
+            end do
+
+            ! Now if appropriate add off diagonal terms.
+            if ( any( qt%verticalCoordinate == (/ l_height, l_pressure, l_zeta /) ) ) then
+              ! Loop over off diagonal terms
+              do j = 1, n
+                do k = j+1, n
+                  meanLength = sqrt ( l%values(j,i) * l%values(k,i) )
+                  meanDiag = sqrt ( m(j,j) * m(k,k) ) 
+                  if ( fraction /= 0) thisFraction = f%values(j,i)
+                  select case (qt%verticalCoordinate)
+                  case ( l_height )
+                    distance = abs ( surfs ( (j-1)/qt%noChans + 1 ) - &
+                      & surfs ( (k-1)/qt%noChans + 1) )
+                  case ( l_zeta )
+                    distance = abs ( surfs ( (j-1)/qt%noChans + 1 ) - &
+                      & surfs ( (k-1)/qt%noChans + 1 ) ) * decade
+                  case ( l_pressure )
+                    distance = abs ( -log10 ( surfs( (j-1)/qt%noChans + 1) ) + &
+                      &               log10 ( surfs( (k-1)/qt%noChans + 1) ) ) / decade
+                  end select
+                  if ( meanLength > 0.0 ) &
+                    & m(j,k) = meanDiag*thisFraction*exp(-distance/meanLength)
+                end do                    ! Loop over k (in M)
+              end do                      ! Loop over j (in M)
+            end if                        ! An appropriate vertical coordinate
+
+            ! Now we may need to invert this, if so we need to be clever.
+            if ( invert ) then
+              call Allocate_test ( condition, n, 'condition', ModuleName )
+              condition = d%values(:,i) <= 0.0
+              do j = 1, n
+                if ( condition(j) ) M(j,j) = 1.0
+              end do
+              call MatrixInversion(M, upper=.true.)
+              do j = 1, n
+                if ( condition(j) ) M(j,j) = 0.0
+              end do
+              call Deallocate_test ( condition, 'condition', ModuleName )
+            end if
+
+            b = FindBlock ( covariance%m%col, q, i )
+            call Sparsify ( M, covariance%m%block(b,b) )
+          end do                          ! Loop over instances
+          call Deallocate_test ( m, 'M', ModuleName )
+        end do                            ! Loop over quantities
+      end if                              ! A non diagonal fill
+
+      call DestroyVectorInfo ( DMasked )
+      call DestroyVectorInfo ( LMasked )
+
+    end subroutine FillCovariance
+
+    !=============================== FillVectorQuantityFromGrid ============
+    subroutine FillVectorQuantityFromGrid(quantity,grid, errorCode)
+      ! Dummy arguments
+      type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
+      type (GriddedData_T), intent(in) :: GRID ! Grid to fill it from
+      integer, intent(out) :: ERRORCODE   ! Error code (one of constants defined above)
+
+      ! Local variables
+      integer :: instance,surf            ! Loop counter
+      integer :: instIndex,surfIndex      ! Indices
+
+      ! Executable code
+      errorCode = 0
+
+      if (quantity%template%verticalCoordinate /= l_zeta) then
+        errorCode=NotZetaForGrid
+        return
       end if
 
-      ! Now loop over the quantities
-      do q = 1, covariance%m%col%vec%template%noQuantities
+      instIndex=1
+      surfIndex=1
 
-        ! Setup pointers etc.
-        d => dMasked%quantities(q)
-        qt => d%template
-        l => lMasked%quantities(q)
-        if (fraction /=0) f => vectors(fraction)%quantities(q)
-        n = qt%instanceLen
-        if ( qt%coherent ) surfs => qt%surfs(:,1)
-        if ( .not. qt%regular ) &
-          & call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & "Unable to handle irregular quantity in FillCovariance" )
-        call Allocate_test ( m, n, n, 'M', ModuleName )
-
-        ! Loop over the instances
-        do i = 1, qt%noInstances
-          if ( .not. qt%coherent ) surfs => qt%surfs(:,i)
-
-          ! Clear the working matrix and load the diagonal
-          m = 0.0
-          do j = 1, n
-            m(j,j) = d%values(j,i) ** 2.0
-          end do
-
-          ! Now if appropriate add off diagonal terms.
-          if ( any( qt%verticalCoordinate == (/ l_height, l_pressure, l_zeta /) ) ) then
-            ! Loop over off diagonal terms
-            do j = 1, n
-              do k = j+1, n
-                meanLength = sqrt ( l%values(j,i) * l%values(k,i) )
-                meanDiag = sqrt ( m(j,j) * m(k,k) ) 
-                if ( fraction /= 0) thisFraction = f%values(j,i)
-                select case (qt%verticalCoordinate)
-                case ( l_height )
-                  distance = abs ( surfs ( (j-1)/qt%noChans + 1 ) - &
-                    & surfs ( (k-1)/qt%noChans + 1) )
-                case ( l_zeta )
-                  distance = abs ( surfs ( (j-1)/qt%noChans + 1 ) - &
-                    & surfs ( (k-1)/qt%noChans + 1 ) ) * decade
-                case ( l_pressure )
-                  distance = abs ( -log10 ( surfs( (j-1)/qt%noChans + 1) ) + &
-                    &               log10 ( surfs( (k-1)/qt%noChans + 1) ) ) / decade
-                end select
-                if ( meanLength > 0.0 ) &
-                  & m(j,k) = meanDiag*thisFraction*exp(-distance/meanLength)
-              end do                    ! Loop over k (in M)
-            end do                      ! Loop over j (in M)
-          end if                        ! An appropriate vertical coordinate
-
-          ! Now we may need to invert this, if so we need to be clever.
-          if ( invert ) then
-            call Allocate_test ( condition, n, 'condition', ModuleName )
-            condition = d%values(:,i) <= 0.0
-            do j = 1, n
-              if ( condition(j) ) M(j,j) = 1.0
-            end do
-            call MatrixInversion(M, upper=.true.)
-            do j = 1, n
-              if ( condition(j) ) M(j,j) = 0.0
-            end do
-            call Deallocate_test ( condition, 'condition', ModuleName )
-          endif
-
-          b = FindBlock ( covariance%m%col, q, i )
-          call Sparsify ( M, covariance%m%block(b,b) )
-        end do                          ! Loop over instances
-        call Deallocate_test ( m, 'M', ModuleName )
-      end do                            ! Loop over quantities
-    end if                              ! A non diagonal fill
-
-    call DestroyVectorInfo ( DMasked )
-    call DestroyVectorInfo ( LMasked )
-
-  end subroutine FillCovariance
-
-  !=============================== FillVectorQuantityFromGrid ============
-  subroutine FillVectorQuantityFromGrid(quantity,grid, errorCode)
-    ! Dummy arguments
-    type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
-    type (GriddedData_T), intent(in) :: GRID ! Grid to fill it from
-    integer, intent(out) :: ERRORCODE   ! Error code (one of constants defined above)
-
-    ! Local variables
-    integer :: instance,surf            ! Loop counter
-    integer :: instIndex,surfIndex      ! Indices
-
-    ! Executable code
-    errorCode = 0
-
-    if (quantity%template%verticalCoordinate /= l_zeta) then
-      errorCode=NotZetaForGrid
-      return
-    endif
-
-    instIndex=1
-    surfIndex=1
-
-    do instance = 1, quantity%template%noInstances
-      if (.not. quantity%template%stacked) instIndex=instance
-
-      do surf = 1, quantity%template%noSurfs
-        if (.not. quantity%template%coherent) surfIndex=surf
-        call l3ascii_interp_field(grid, quantity%values(surf,instance), &
-          & pressure=10.0**(-quantity%template%surfs(surf,instIndex)), &
-          & lat=quantity%template%geodLat(surfIndex,instance), &
-          & lon=quantity%template%lon(surfIndex,instance), &
-          & lst=quantity%template%solarTime(surfIndex,instance), &
-          & sza=quantity%template%solarZenith(surfIndex,instance), &
-          & date=quantity%template%time(surfIndex,instance))
-      end do                            ! End surface loop
-    end do                              ! End instance loop
-  end subroutine FillVectorQuantityFromGrid
-
-  !=============================== FillVectorQuantityFromL2GP ==========
-  subroutine FillVectorQuantityFromL2GP ( quantity,l2gp, interpolate, errorCode )
-
-    ! If the times, pressures, and geolocations match, fill the quantity with
-    ! the appropriate subset of profiles from the l2gp
-
-    ! Dummy arguments
-    type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
-    type (L2GPData_T), intent(in) :: L2GP ! L2GP to fill from
-    logical, intent(in) :: interpolate  ! Flag
-    integer, intent(out) :: errorCode ! Error code
-
-    ! Local parameters
-    real(r8), parameter :: TOLERANCE=0.05 ! Tolerence for angles
-    real(r8), parameter :: TIMETOL=5.0  ! Tolerence for time (not sure why this
-    ! needs to be so big !????????? NJL)
-
-    ! Local variables
-    integer ::    FIRSTPROFILE, LASTPROFILE
-    integer, dimension(1) :: FIRSTPROFILEASARRAY
-    integer :: INSTANCE                 ! Loop counter 
-
-    real (r8), dimension(quantity%template%noSurfs) :: outZeta
-
-    errorCode=0
-    ! Make sure this quantity is appropriate
-    if (.not. ValidateVectorQuantity(quantity, coherent=.TRUE., stacked=.TRUE., &
-      & verticalCoordinate= (/ l_pressure, l_zeta /) ) ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Quantity to fill is not on pressure or zeta coordinates' )
-
-    if ( (quantity%template%noChans/=l2gp%nFreqs) .and. &
-      &  ((quantity%template%noChans/=1) .or. (l2gp%nFreqs/=0)) ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Quantity and l2gp have different number of channels' )
-
-    if ( quantity%template%noSurfs /= l2gp%nLevels .and. (.not. interpolate) ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Quantity and l2gp have different number of surfaces (set interpolate?)' )
-
-    if (.not. interpolate) then 
-      if ( quantity%template%verticalCoordinate == l_pressure ) then
-        if ( any(ABS(-LOG10(quantity%template%surfs(:,1))+ &
-          & LOG10(l2gp%pressures)) > TOLERANCE) ) &
-          & call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Quantity and l2gp are on different surfaces (set interpolate?)' )
-      else                                ! Must be l_zeta
-        if ( any(ABS(quantity%template%surfs(:,1)+ &
-          & LOG10(l2gp%pressures)) > TOLERANCE) ) &
-          & call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Quantity and l2gp are on different surfaces (set interpolate?)' )
-      end if
-    end if
-
-    ! Attempt to match up the first location
-    firstProfileAsArray=MINLOC(ABS(quantity%template%phi(1,1)-l2gp%geodAngle))
-    firstProfile=firstProfileAsArray(1)
-
-    ! Well, the last profile has to be noInstances later, check this would be OK
-    lastProfile=firstProfile+quantity%template%noInstances-1
-    if (lastProfile > l2gp%nTimes ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Quantity has profiles beyond the end of the l2gp' )
-
-    ! Now check that geodAngle's are a sufficient match
-    if (any(abs(l2gp%geodAngle(firstProfile:lastProfile)-&
-      &         quantity%template%phi(1,:)) > tolerance) ) then
-      call dump ( l2gp%geodAngle(firstProfile:lastProfile), 'L2GP geodetic angle' )
-      call dump ( quantity%template%phi(1,:), 'Quantity Geodetic angle' )
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Quantity has profiles that mismatch l2gp in geodetic angle' )
-    end if
-
-    if (any(abs(l2gp%time(firstProfile:lastProfile)- &
-      &         quantity%template%time(1,:)) > timeTol) ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Quantity has profiles that mismatch l2gp in time' )
-
-    if (interpolate .and. quantity%template%noChans /= 1) then
-      errorCode=cantInterpolate3D
-      return
-    endif
-
-    if (.not. interpolate) then
-      quantity%values=RESHAPE(l2gp%l2gpValue(:,:,firstProfile:lastProfile),&
-        & (/quantity%template%noChans*quantity%template%noSurfs,&
-        &   quantity%template%noInstances/))
-    else
-      if ( quantity%template%verticalCoordinate == l_pressure ) then
-        outZeta = -log10 ( quantity%template%surfs(:,1) )
-      else
-        outZeta = quantity%template%surfs(:,1)
-      endif
       do instance = 1, quantity%template%noInstances
-        call InterpolateValues ( &
-          & -log10(l2gp%pressures), &  ! Old X
-          & l2gp%l2gpValue(1,:,firstProfile+instance-1), & ! OldY
-          & outZeta, & ! New X
-          & quantity%values(:,instance), & ! New Y
-          & method='Linear', extrapolate='Clamp' )
-      enddo
-    endif
+        if (.not. quantity%template%stacked) instIndex=instance
 
-  end subroutine FillVectorQuantityFromL2GP
+        do surf = 1, quantity%template%noSurfs
+          if (.not. quantity%template%coherent) surfIndex=surf
+          call l3ascii_interp_field(grid, quantity%values(surf,instance), &
+            & pressure=10.0**(-quantity%template%surfs(surf,instIndex)), &
+            & lat=quantity%template%geodLat(surfIndex,instance), &
+            & lon=quantity%template%lon(surfIndex,instance), &
+            & lst=quantity%template%solarTime(surfIndex,instance), &
+            & sza=quantity%template%solarZenith(surfIndex,instance), &
+            & date=quantity%template%time(surfIndex,instance))
+        end do                            ! End surface loop
+      end do                              ! End instance loop
+    end subroutine FillVectorQuantityFromGrid
 
-  ! -------------------------------------- FillVectorQuantityFromProfile --
-  subroutine FillVectorQtyFromProfile ( key, quantity, valuesNode, &
-    & globalUnit, dontMask )
-    ! This fill is slightly complicated.  Given a values array along
-    ! the lines of [ 1000mb : 1.0K, 100mb : 1.0K,  10mb : 2.0K] etc. it
-    ! does the linear interpolation appropriate to perform the fill.
-    integer, intent(in) :: KEY          ! Tree node
-    type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
-    integer, intent(in) :: VALUESNODE   ! Tree node for values
-    integer, intent(in) :: GLOBALUNIT   ! Possible global unit
-    logical, intent(in) :: DONTMASK     ! If set don't follow the fill mask
+    !=============================== FillVectorQuantityFromL2GP ==========
+    subroutine FillVectorQuantityFromL2GP ( quantity,l2gp, interpolate, errorCode )
 
-    ! Local variables
-    integer :: HEIGHTUNIT               ! Unit for height
-    integer :: NOPOINTS                 ! Number of points supplied
-    integer :: I                        ! Loop counter
-    integer :: TESTUNIT                 ! Unit for value
-    logical :: LOCALOUTHEIGHTS          ! Set if out heights is our own variable
-    real (r8), dimension(:), pointer :: HEIGHTS ! Heights for the points
-    real (r8), dimension(:), pointer :: VALUES ! Values for the points
-    real (r8), dimension(:), pointer :: OUTHEIGHTS ! Heights for output
-    real (r8), dimension(:), pointer :: OUTVALUES ! Single profile for output
-    real (r8), dimension(2) :: EXPRVALUE ! Value of expression
-    integer, dimension(2) :: EXPRUNIT   ! Unit for expression
+      ! If the times, pressures, and geolocations match, fill the quantity with
+      ! the appropriate subset of profiles from the l2gp
 
-    ! Executable code
+      ! Dummy arguments
+      type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
+      type (L2GPData_T), intent(in) :: L2GP ! L2GP to fill from
+      logical, intent(in) :: interpolate  ! Flag
+      integer, intent(out) :: errorCode ! Error code
 
-    ! Check the quantity is amenable to this type of fill
-    if ( .not. ValidateVectorQuantity ( quantity, &
-      & coherent=.true., frequencyCoordinate=(/l_none/) ) ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'The quantity is not amenable to a profile fill' )
+      ! Local parameters
+      real(r8), parameter :: TOLERANCE=0.05 ! Tolerence for angles
+      real(r8), parameter :: TIMETOL=5.0  ! Tolerence for time (not sure why this
+      ! needs to be so big !????????? NJL)
 
-    ! Check the units
-    testUnit = quantity%template%unit
-    if ( globalUnit /= phyq_Invalid ) testUnit = globalUnit
+      ! Local variables
+      integer ::    FIRSTPROFILE, LASTPROFILE
+      integer, dimension(1) :: FIRSTPROFILEASARRAY
+      integer :: INSTANCE                 ! Loop counter 
 
-    ! Set some stuff up
-    noPoints = nsons ( valuesNode ) - 1
-    nullify ( heights, values, outHeights, outValues )
-    call Allocate_test ( heights, noPoints, 'heights', ModuleName )
-    call Allocate_test ( values, noPoints, 'values', ModuleName )
-    call Allocate_test ( outValues, quantity%template%instanceLen, &
-      &'outValues', ModuleName )
+      real (r8), dimension(quantity%template%noSurfs) :: outZeta
 
-    ! Loop over the values
-    do i = 1, noPoints
-      ! Get value from tree
-      call expr ( subtree ( i+1, valuesNode ), exprUnit, exprValue )
-      ! Check height unit OK
-      heightUnit = GetUnitForVerticalCoordinate ( quantity%template%verticalCoordinate )
-      if ( exprUnit(1) /= heightUnit .and. exprUnit(1) /= PHYQ_Dimensionless &
-        & .and. .not. ( exprUnit(1) == PHYQ_Pressure .and. heightUnit == PHYQ_Zeta ) ) &
-        & call Announce_error ( valuesNode, 0, 'Bad height units for profile fill' )
-      ! Store height
-      if ( heightUnit == PHYQ_Zeta ) then
-        ! Assume zeta coordinates are expressed in mb
-        heights(i) = -log10 ( exprValue(1) )
-      else
-        heights(i) = exprValue(1)
+      errorCode=0
+      ! Make sure this quantity is appropriate
+      if (.not. ValidateVectorQuantity(quantity, coherent=.TRUE., stacked=.TRUE., &
+        & verticalCoordinate= (/ l_pressure, l_zeta /) ) ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Quantity to fill is not on pressure or zeta coordinates' )
+
+      if ( (quantity%template%noChans/=l2gp%nFreqs) .and. &
+        &  ((quantity%template%noChans/=1) .or. (l2gp%nFreqs/=0)) ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Quantity and l2gp have different number of channels' )
+
+      if ( quantity%template%noSurfs /= l2gp%nLevels .and. (.not. interpolate) ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Quantity and l2gp have different number of surfaces (set interpolate?)' )
+
+      if (.not. interpolate) then 
+        if ( quantity%template%verticalCoordinate == l_pressure ) then
+          if ( any(ABS(-LOG10(quantity%template%surfs(:,1))+ &
+            & LOG10(l2gp%pressures)) > TOLERANCE) ) &
+            & call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Quantity and l2gp are on different surfaces (set interpolate?)' )
+        else                                ! Must be l_zeta
+          if ( any(ABS(quantity%template%surfs(:,1)+ &
+            & LOG10(l2gp%pressures)) > TOLERANCE) ) &
+            & call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Quantity and l2gp are on different surfaces (set interpolate?)' )
+        end if
       end if
-      ! Check value unit OK
-      if ( all ( exprUnit(2) /= (/ testUnit, PHYQ_Dimensionless /) ) ) &
-        & call Announce_error ( valuesNode, 0, 'Bad units for profile fill' )
-      ! Store value
-      values ( i ) = exprValue(2)
-    end do
 
-    ! Get the appropriate height coordinate for output, for pressure take log.
-    if ( quantity%template%verticalCoordinate == l_pressure ) then
-      localOutHeights = .true.
-      call Allocate_test ( outHeights, quantity%template%noSurfs, &
+      ! Attempt to match up the first location
+      firstProfileAsArray=MINLOC(ABS(quantity%template%phi(1,1)-l2gp%geodAngle))
+      firstProfile=firstProfileAsArray(1)
+
+      ! Well, the last profile has to be noInstances later, check this would be OK
+      lastProfile=firstProfile+quantity%template%noInstances-1
+      if (lastProfile > l2gp%nTimes ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Quantity has profiles beyond the end of the l2gp' )
+
+      ! Now check that geodAngle's are a sufficient match
+      if (any(abs(l2gp%geodAngle(firstProfile:lastProfile)-&
+        &         quantity%template%phi(1,:)) > tolerance) ) then
+        call dump ( l2gp%geodAngle(firstProfile:lastProfile), 'L2GP geodetic angle' )
+        call dump ( quantity%template%phi(1,:), 'Quantity Geodetic angle' )
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Quantity has profiles that mismatch l2gp in geodetic angle' )
+      end if
+
+      if (any(abs(l2gp%time(firstProfile:lastProfile)- &
+        &         quantity%template%time(1,:)) > timeTol) ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Quantity has profiles that mismatch l2gp in time' )
+
+      if (interpolate .and. quantity%template%noChans /= 1) then
+        errorCode=cantInterpolate3D
+        return
+      end if
+
+      if (.not. interpolate) then
+        quantity%values=RESHAPE(l2gp%l2gpValue(:,:,firstProfile:lastProfile),&
+          & (/quantity%template%noChans*quantity%template%noSurfs,&
+          &   quantity%template%noInstances/))
+      else
+        if ( quantity%template%verticalCoordinate == l_pressure ) then
+          outZeta = -log10 ( quantity%template%surfs(:,1) )
+        else
+          outZeta = quantity%template%surfs(:,1)
+        end if
+        do instance = 1, quantity%template%noInstances
+          call InterpolateValues ( &
+            & -log10(l2gp%pressures), &  ! Old X
+            & l2gp%l2gpValue(1,:,firstProfile+instance-1), & ! OldY
+            & outZeta, & ! New X
+            & quantity%values(:,instance), & ! New Y
+            & method='Linear', extrapolate='Clamp' )
+        end do
+      end if
+
+    end subroutine FillVectorQuantityFromL2GP
+
+    ! -------------------------------------- FillVectorQuantityFromProfile --
+    subroutine FillVectorQtyFromProfile ( key, quantity, valuesNode, &
+      & globalUnit, dontMask )
+      ! This fill is slightly complicated.  Given a values array along
+      ! the lines of [ 1000mb : 1.0K, 100mb : 1.0K,  10mb : 2.0K] etc. it
+      ! does the linear interpolation appropriate to perform the fill.
+      integer, intent(in) :: KEY          ! Tree node
+      type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
+      integer, intent(in) :: VALUESNODE   ! Tree node for values
+      integer, intent(in) :: GLOBALUNIT   ! Possible global unit
+      logical, intent(in) :: DONTMASK     ! If set don't follow the fill mask
+
+      ! Local variables
+      integer :: HEIGHTUNIT               ! Unit for height
+      integer :: NOPOINTS                 ! Number of points supplied
+      integer :: I                        ! Loop counter
+      integer :: TESTUNIT                 ! Unit for value
+      logical :: LOCALOUTHEIGHTS          ! Set if out heights is our own variable
+      real (r8), dimension(:), pointer :: HEIGHTS ! Heights for the points
+      real (r8), dimension(:), pointer :: VALUES ! Values for the points
+      real (r8), dimension(:), pointer :: OUTHEIGHTS ! Heights for output
+      real (r8), dimension(:), pointer :: OUTVALUES ! Single profile for output
+      real (r8), dimension(2) :: EXPRVALUE ! Value of expression
+      integer, dimension(2) :: EXPRUNIT   ! Unit for expression
+
+      intrinsic :: Spread                 ! Because there's a variable of
+                                          ! the same name in the host
+      ! Executable code
+
+      ! Check the quantity is amenable to this type of fill
+      if ( .not. ValidateVectorQuantity ( quantity, &
+        & coherent=.true., frequencyCoordinate=(/l_none/) ) ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'The quantity is not amenable to a profile fill' )
+
+      ! Check the units
+      testUnit = quantity%template%unit
+      if ( globalUnit /= phyq_Invalid ) testUnit = globalUnit
+
+      ! Set some stuff up
+      noPoints = nsons ( valuesNode ) - 1
+      nullify ( heights, values, outHeights, outValues )
+      call Allocate_test ( heights, noPoints, 'heights', ModuleName )
+      call Allocate_test ( values, noPoints, 'values', ModuleName )
+      call Allocate_test ( outValues, quantity%template%instanceLen, &
+        &'outValues', ModuleName )
+
+      ! Loop over the values
+      do i = 1, noPoints
+        ! Get value from tree
+        call expr ( subtree ( i+1, valuesNode ), exprUnit, exprValue )
+        ! Check height unit OK
+        heightUnit = GetUnitForVerticalCoordinate ( quantity%template%verticalCoordinate )
+        if ( exprUnit(1) /= heightUnit .and. exprUnit(1) /= PHYQ_Dimensionless &
+          & .and. .not. ( exprUnit(1) == PHYQ_Pressure .and. heightUnit == PHYQ_Zeta ) ) &
+          & call Announce_error ( valuesNode, 0, 'Bad height units for profile fill' )
+        ! Store height
+        if ( heightUnit == PHYQ_Zeta ) then
+          ! Assume zeta coordinates are expressed in mb
+          heights(i) = -log10 ( exprValue(1) )
+        else
+          heights(i) = exprValue(1)
+        end if
+        ! Check value unit OK
+        if ( all ( exprUnit(2) /= (/ testUnit, PHYQ_Dimensionless /) ) ) &
+          & call Announce_error ( valuesNode, 0, 'Bad units for profile fill' )
+        ! Store value
+        values ( i ) = exprValue(2)
+      end do
+
+      ! Get the appropriate height coordinate for output, for pressure take log.
+      if ( quantity%template%verticalCoordinate == l_pressure ) then
+        localOutHeights = .true.
+        call Allocate_test ( outHeights, quantity%template%noSurfs, &
+          & 'outHeights', ModuleName )
+        outHeights = -log10 ( quantity%template%surfs(:,1) )
+      else
+        localOutHeights = .false.
+        outHeights => quantity%template%surfs(:,1)
+      end if
+
+      ! Now do the interpolation for the first instance
+      call InterpolateValues ( heights, values, outHeights, &
+        & outValues, 'Linear', extrapolate='Constant' )
+      ! Spread it into the other instances, worry about the mask
+      if ( .not. associated ( quantity%mask ) ) then
+        quantity%values = spread ( &
+          & outValues, quantity%template%noInstances, 2 )
+      else
+        do i = 1, quantity%template%noInstances
+          where ( iand ( ichar(quantity%mask(:,i)) , m_fill ) == 0 )
+            quantity%values(:,i) = outValues(:)
+          end where
+        end do
+      end if
+      ! Finish off
+      if ( localOutHeights ) call Deallocate_test ( outHeights, &
         & 'outHeights', ModuleName )
-      outHeights = -log10 ( quantity%template%surfs(:,1) )
-    else
-      localOutHeights = .false.
-      outHeights => quantity%template%surfs(:,1)
-    endif
+      call Deallocate_test ( heights, 'heights', ModuleName )
+      call Deallocate_test ( values, 'values', ModuleName )
+      call Deallocate_test ( outValues, 'outValues', ModuleName )
+    end subroutine FillVectorQtyFromProfile
 
-    ! Now do the interpolation for the first instance
-    call InterpolateValues ( heights, values, outHeights, &
-      & outValues, 'Linear', extrapolate='Constant' )
-    ! Spread it into the other instances, worry about the mask
-    if ( .not. associated ( quantity%mask ) ) then
-      quantity%values = spread ( &
-        & outValues, quantity%template%noInstances, 2 )
-    else
-      do i = 1, quantity%template%noInstances
-        where ( iand ( ichar(quantity%mask(:,i)) , m_fill ) == 0 )
-          quantity%values(:,i) = outValues(:)
-        end where
+    ! ------------------------------------------- FillLOSVelocity ---
+    subroutine FillLOSVelocity ( key, qty, tngtECI, scECI, scVel)
+      ! A special fill from geometry arguments
+      integer, intent(in) :: KEY
+      type (VectorValue_T), intent(inout) :: QTY
+      type (VectorValue_T), intent(in) :: TNGTECI
+      type (VectorValue_T), intent(in) :: SCECI
+      type (VectorValue_T), intent(in) :: SCVEL
+
+
+      ! Local variables
+      integer :: MAF                      ! Loop counter
+      integer :: MIF                      ! Loop counter
+      integer :: noMAFs                   ! Number of major frames
+      integer :: noMIFs                   ! Number of minor frames for this module
+      integer :: x,y,z                    ! Indicies into the vectors
+
+      real (r8), dimension(3) :: tngtVel   ! Due to rotation of earth
+      real (r8), dimension(3) :: los       ! Normalised line of sight vector
+
+      ! Executable code
+      ! First check that things are OK.
+      if ( .not. ValidateVectorQuantity ( qty, &
+        & quantityType=(/l_losVel/), &
+        & minorFrame=.true., &
+        & frequencyCoordinate=(/l_none/) ) ) call Announce_Error ( key, No_Error_Code, &
+        & 'Quantity to fill is not a valid LOS Velocity' )
+      if ( .not. ValidateVectorQuantity ( tngtECI, &
+        & quantityType=(/l_tngtECI/), &
+        & minorFrame=.true., &
+        & frequencyCoordinate=(/l_xyz/) ) ) call Announce_Error ( key, No_Error_Code, &
+        & 'Tangent ECI quantity is not of an appropriate form' )
+      if ( .not. ValidateVectorQuantity ( scECI, &
+        & quantityType=(/l_scECI/), &
+        & minorFrame=.true., &
+        & frequencyCoordinate=(/l_xyz/) ) ) call Announce_Error ( key, No_Error_Code, &
+        & 'Spacecraft ECI quantity is not of an approriate form' )
+      if ( qty%template%instrumentModule /= tngtECI%template%instrumentModule ) &
+        & call Announce_Error ( key, No_Error_Code, &
+        & 'LOS Velocity and Tangent ECI quantities are not for the same module' )
+      if ( .not. IsModuleSpacecraft ( scECI%template%instrumentModule ) ) &
+        & call Announce_Error ( key, No_Error_Code, &
+        & 'Spacecraft ECI quantity is not for the spacecraft' )
+
+      noMAFs = qty%template%noInstances
+      noMIFs = qty%template%noSurfs
+
+      do maf = 1, noMAFs
+        do mif = 1, noMIFs
+
+          ! First compute the tangent point velocity in ECI coordinates due 
+          ! to the rotation of the earth.  This no doubt makes approximations
+          ! due to the slight non alignment between the earth's rotation axis and
+          ! the ECI z axis, but I'm going to ignore this.
+
+          ! Work out the indices in 3*mif,maf space
+          x = 1 + 3*(mif-1)
+          y = x+1
+          z = x+2
+
+          tngtVel= omega* (/ -tngtECI%values(y,maf), &
+            &                 tngtECI%values(x,maf), 0.0_r8 /)
+
+          ! Now compute the line of sight direction normal
+          los = tngtECI%values(x:z,maf) - scECI%values(x:z,maf)
+          los = los / sqrt(sum(los**2))
+
+          ! Now compute the net velocity in this direction.  For the moment I'll
+          ! assume +ve means the sc and tp are moving apart, and -ve that they're
+          ! getting closer.
+
+          qty%values(mif,maf) = dot_product(tngtVel, los) - &
+            &                   dot_product(scVel%values(x:z,maf), los)
+
+          ! Note that even though x,y,z have been used up to now for a GHz/THz
+          ! minor frame quantity, they're OK with this sc one too.
+        end do
       end do
-    end if
-    ! Finish off
-    if ( localOutHeights ) call Deallocate_test ( outHeights, &
-      & 'outHeights', ModuleName )
-    call Deallocate_test ( heights, 'heights', ModuleName )
-    call Deallocate_test ( values, 'values', ModuleName )
-    call Deallocate_test ( outValues, 'outValues', ModuleName )
-  end subroutine FillVectorQtyFromProfile
+    end subroutine FillLOSVelocity
 
-  ! ------------------------------------------- FillLOSVelocity ---
-  subroutine FillLOSVelocity ( key, qty, tngtECI, scECI, scVel)
-    ! A special fill from geometry arguments
-    integer, intent(in) :: KEY
-    type (VectorValue_T), intent(inout) :: QTY
-    type (VectorValue_T), intent(in) :: TNGTECI
-    type (VectorValue_T), intent(in) :: SCECI
-    type (VectorValue_T), intent(in) :: SCVEL
+    ! ------------------------------------------- FillableChiSq ---
+    function FillableChiSq ( qty, measQty, modelQty, noiseQty ) result ( aok )
+      ! Purpose (A)
+      !   Check whether we may proceed with special fill of chi squared
+      !   case where all VectorValue_T args present
+      ! Purpose (B)
+      !   Check whether we may proceed with special fill of addNoise
+      !   case where missing noiseQty arg
+      type (VectorValue_T), intent(in) ::              QTY
+      type (VectorValue_T), intent(in) ::              modelQty
+      type (VectorValue_T), intent(in) ::              measQty
+      type (VectorValue_T), optional, intent(in) ::    noiseQty
+      LOGICAL ::                                       AOK
 
+      ! What we will check is that (for the args we have been given):
+      ! (0) all quantities have associated values
+      ! (1) all quantities have same molecule
+      ! (2) all quantities have same signal
+      ! (3) all quantities have same HGrid
+      ! (4A) all but qty (chiSq) have same VGrid
+      ! (4B) all have same VGrid
+      ! Ah, but radiances have no VGrid or HGrid,
+      ! and molecule should be part of signal, so
+      ! if radiances need only check on signal
+      ! if vmr, check on others
 
-    ! Local variables
-    integer :: MAF                      ! Loop counter
-    integer :: MIF                      ! Loop counter
-    integer :: noMAFs                   ! Number of major frames
-    integer :: noMIFs                   ! Number of minor frames for this module
-    integer :: x,y,z                    ! Indicies into the vectors
+     ! Local variables
+      LOGICAL ::       minorFrame   ! TRUE if radiances, FALSE if vmr
 
-    real (r8), dimension(3) :: tngtVel   ! Due to rotation of earth
-    real (r8), dimension(3) :: los       ! Normalised line of sight vector
+      aok = .true.
 
-    ! Executable code
-    ! First check that things are OK.
-    if ( .not. ValidateVectorQuantity ( qty, &
-      & quantityType=(/l_losVel/), &
-      & minorFrame=.true., &
-      & frequencyCoordinate=(/l_none/) ) ) call Announce_Error ( key, No_Error_Code, &
-      & 'Quantity to fill is not a valid LOS Velocity' )
-    if ( .not. ValidateVectorQuantity ( tngtECI, &
-      & quantityType=(/l_tngtECI/), &
-      & minorFrame=.true., &
-      & frequencyCoordinate=(/l_xyz/) ) ) call Announce_Error ( key, No_Error_Code, &
-      & 'Tangent ECI quantity is not of an appropriate form' )
-    if ( .not. ValidateVectorQuantity ( scECI, &
-      & quantityType=(/l_scECI/), &
-      & minorFrame=.true., &
-      & frequencyCoordinate=(/l_xyz/) ) ) call Announce_Error ( key, No_Error_Code, &
-      & 'Spacecraft ECI quantity is not of an approriate form' )
-    if ( qty%template%instrumentModule /= tngtECI%template%instrumentModule ) &
-      & call Announce_Error ( key, No_Error_Code, &
-      & 'LOS Velocity and Tangent ECI quantities are not for the same module' )
-    if ( .not. IsModuleSpacecraft ( scECI%template%instrumentModule ) ) &
-      & call Announce_Error ( key, No_Error_Code, &
-      & 'Spacecraft ECI quantity is not for the spacecraft' )
-
-    noMAFs = qty%template%noInstances
-    noMIFs = qty%template%noSurfs
-
-    do maf = 1, noMAFs
-      do mif = 1, noMIFs
-
-        ! First compute the tangent point velocity in ECI coordinates due 
-        ! to the rotation of the earth.  This no doubt makes approximations
-        ! due to the slight non alignment between the earth's rotation axis and
-        ! the ECI z axis, but I'm going to ignore this.
-
-        ! Work out the indices in 3*mif,maf space
-        x = 1 + 3*(mif-1)
-        y = x+1
-        z = x+2
-
-        tngtVel= omega* (/ -tngtECI%values(y,maf), &
-          &                 tngtECI%values(x,maf), 0.0_r8 /)
-
-        ! Now compute the line of sight direction normal
-        los = tngtECI%values(x:z,maf) - scECI%values(x:z,maf)
-        los = los / sqrt(sum(los**2))
-
-        ! Now compute the net velocity in this direction.  For the moment I'll
-        ! assume +ve means the sc and tp are moving apart, and -ve that they're
-        ! getting closer.
-
-        qty%values(mif,maf) = dot_product(tngtVel, los) - &
-          &                   dot_product(scVel%values(x:z,maf), los)
-
-        ! Note that even though x,y,z have been used up to now for a GHz/THz
-        ! minor frame quantity, they're OK with this sc one too.
-      end do
-    end do
-  end subroutine FillLOSVelocity
-
-  ! ------------------------------------------- FillableChiSq ---
-  function FillableChiSq ( qty, measQty, modelQty, noiseQty ) result ( aok )
-    ! Purpose (A)
-    !   Check whether we may proceed with special fill of chi squared
-    !   case where all VectorValue_T args present
-    ! Purpose (B)
-    !   Check whether we may proceed with special fill of addNoise
-    !   case where missing noiseQty arg
-    type (VectorValue_T), intent(in) ::              QTY
-    type (VectorValue_T), intent(in) ::              modelQty
-    type (VectorValue_T), intent(in) ::              measQty
-    type (VectorValue_T), optional, intent(in) ::    noiseQty
-    LOGICAL ::                                       AOK
-    
-    ! What we will check is that (for the args we have been given):
-    ! (0) all quantities have associated values
-    ! (1) all quantities have same molecule
-    ! (2) all quantities have same signal
-    ! (3) all quantities have same HGrid
-    ! (4A) all but qty (chiSq) have same VGrid
-    ! (4B) all have same VGrid
-    ! Ah, but radiances have no VGrid or HGrid,
-    ! and molecule should be part of signal, so
-    ! if radiances need only check on signal
-    ! if vmr, check on others
-
-   ! Local variables
-    LOGICAL ::       minorFrame   ! TRUE if radiances, FALSE if vmr
-
-    aok = .true.
-    
-    ! (0)
-    if ( present(noiseQty) ) then
-      aok = associated(noiseQty%values)
-      if ( DEEBUG .and. .not. associated(noiseQty%values) ) &
-        & call announce_error( 0, No_Error_code, &
-        & 'Noise values unassociated in FillableChiSq')
-    endif
-    aok = aok .and. &
-      & associated(qty%values) .and. &
-      & associated(measQty%values) .and. &
-      & associated(modelQty%values)
-
-    if ( DEEBUG ) then
-      if ( .not. associated(qty%values) ) &
-        & call announce_error( 0, No_Error_code, &
-        & 'Quantity values unassociated in FillableChiSq')
-      if ( .not. associated(measQty%values) ) &
-        & call announce_error( 0, No_Error_code, &
-        & 'Measurements values unassociated in FillableChiSq')
-      if ( .not. associated(modelQty%values) ) &
-        & call announce_error( 0, No_Error_code, &
-        & 'Model values unassociated in FillableChiSq')
-    endif
-
-    if ( .not. aok ) return
-
-    minorFrame = qty%template%minorFrame .or. qty%template%majorFrame
-    ! (1)
-    if (.not. minorFrame ) then
-      aok = aok .and. &
-        & (qty%template%molecule == measQty%template%molecule) &
-        & .and. &
-        & (qty%template%molecule == modelQty%template%molecule)
-      if ( present(noiseQty) ) aok = aok &
-        & .and. &
-        & (qty%template%molecule == noiseQty%template%molecule)
-    endif
-
-    ! (2)
-    if (minorFrame ) then
-      aok = aok .and. &
-        & (qty%template%signal == measQty%template%signal) &
-        & .and. &
-        & (qty%template%signal == modelQty%template%signal)
-      if ( present(noiseQty) ) aok = aok &
-        & .and. &
-        & (qty%template%signal == noiseQty%template%signal)
-    endif
-
-    ! (3)
-    if (.not. minorFrame ) then
-      aok = aok .and. &
-        & DoHgridsMatch( qty, measQty ) &
-        & .and. &
-        & DoHgridsMatch( qty, modelQty )
-      if ( present(noiseQty) ) aok = aok &
-        & .and. &
-        & DoHgridsMatch( qty, noiseQty )
-
-      ! (4)
-      aok = aok .and. &
-        & DoVgridsMatch( measqty, modelQty )
+      ! (0)
       if ( present(noiseQty) ) then
-        aok = aok &
-        & .and. &
-        & DoVgridsMatch( measqty, noiseQty )
-      else
-        aok = aok &
-        & .and. &
-        & DoVgridsMatch( measqty, Qty )
-      endif
-    endif
-    
-    return
-  end function FillableChiSq
+        aok = associated(noiseQty%values)
+        if ( DEEBUG .and. .not. associated(noiseQty%values) ) &
+          & call announce_error( 0, No_Error_code, &
+          & 'Noise values unassociated in FillableChiSq')
+      end if
+      aok = aok .and. &
+        & associated(qty%values) .and. &
+        & associated(measQty%values) .and. &
+        & associated(modelQty%values)
 
-  ! ------------------------------------------- FillChiSqChan ---
-  subroutine FillChiSqChan ( key, qty, measQty, modelQty, noiseQty, &
-  & dontMask, ignoreZero, ignoreNegative, multiplier, &
-  & firstInstance, lastInstance )
-    ! A special fill of chi squared 
-    ! broken out according to channels
-    ! Formal arguments
-    integer, intent(in) :: KEY
-    type (VectorValue_T), intent(inout) :: QTY
-    type (VectorValue_T), intent(in) ::    modelQty
-    type (VectorValue_T), intent(in) ::    measQty
-    type (VectorValue_T), intent(in) ::    noiseQty
-    logical, intent(in)           ::       dontMask    ! Use even masked values
-    logical, intent(in)           ::       ignoreZero  ! Ignore 0 values of noiseQty
-    logical, intent(in)           ::       ignoreNegative  ! Ignore <0 values of noiseQty
-    real, dimension(:), intent(in), optional :: multiplier
-
-    integer, intent(in), optional ::       firstInstance, lastInstance
-    ! The last two are set if only part (e.g. overlap regions) of the quantity
-    ! is to be stored in qty
-
-    ! Local variables
-    real(r8), dimension(:), pointer  ::    VALUES => NULL()
-    integer ::                             UseFirstInstance, UseLastInstance, &
-    &                                      NoOutputInstances
-    integer ::                             C           ! Channel loop counter
-    integer ::                             S           ! Surface loop counter
-    integer ::                             I           ! Instances
-    integer ::                             QINDEX
-    integer ::                             NOCHANS
-    integer ::                             N           ! Num. of summed values
-    logical ::                             skipMe
-    real                             ::    a, b
-
-    ! Executable code
-    
-   ! Either multiplier = [a, b] or multiplier = 1/a if a=b are possible
-    if ( .not. present(multiplier) ) then
-      a = 1.
-      b = 1.
-    elseif (&
-    & multiplier(1) == UNDEFINED_VALUE .and. multiplier(2) == UNDEFINED_VALUE &
-    & ) then
-      a = 1.
-      b = 1.
-    elseif ( multiplier(2) == UNDEFINED_VALUE ) then
-      a = 0.
-      if ( multiplier(1) /= 0. ) a = 1./multiplier(1)
-      b = a
-    else
-      a = multiplier(1)
-      b = multiplier(2)
-    endif
-
-    ! First check that things are OK.
-    if (.not. ValidateVectorQuantity ( qty, &
-      & quantityType=(/l_chiSqChan/), majorFrame=.true.) ) then
-      call Announce_error ( key, No_Error_code, &
-      & 'Attempting to fill wrong quantity with chi^2 channelwise'  )
       if ( DEEBUG ) then
-        call output('major frame? ', advance = 'no')
-        call output(qty%template%majorFrame, advance = 'no')
-        call output('   quantity type ', advance = 'no')
-        call output(qty%template%quantityType, advance = 'no')
-        call output('   compared with ', advance = 'no')
-        call output(l_chiSqChan, advance = 'yes')
-      endif
-      return
-    elseif (.not. FillableChiSq ( qty, measQty, modelQty, noiseQty ) ) then
-      call Announce_error ( key, No_Error_code, &
-      & 'Incompatibility among vector quantities filling chi^2 channelwise'  )
-      return
-    elseif (any ( noiseQty%values == 0.0) .and. &
-      & .not. (ignoreZero .or. .not. dontMask) ) then
-      call Announce_error ( key, No_Error_code, &
-      & 'A vanishing error filling chi^2 channelwise'  )
-      return
-    endif
+        if ( .not. associated(qty%values) ) &
+          & call announce_error( 0, No_Error_code, &
+          & 'Quantity values unassociated in FillableChiSq')
+        if ( .not. associated(measQty%values) ) &
+          & call announce_error( 0, No_Error_code, &
+          & 'Measurements values unassociated in FillableChiSq')
+        if ( .not. associated(modelQty%values) ) &
+          & call announce_error( 0, No_Error_code, &
+          & 'Model values unassociated in FillableChiSq')
+      end if
 
-    ! Work out what to do with the first and last Instance information
-    
-    if ( PRESENT(firstInstance) ) then
-      useFirstInstance = firstInstance
-    else
-      useFirstInstance = 1
-    end if
+      if ( .not. aok ) return
 
-    if ( PRESENT(lastInstance) ) then
-      useLastInstance = lastInstance
-    else
-      useLastInstance = qty%template%noInstances
-    end if
-    noOutputInstances = useLastInstance-useFirstInstance+1
-    ! If we've not been asked to output anything then don't carry on
-    if ( noOutputInstances < 1 ) return
+      minorFrame = qty%template%minorFrame .or. qty%template%majorFrame
+      ! (1)
+      if (.not. minorFrame ) then
+        aok = aok .and. &
+          & (qty%template%molecule == measQty%template%molecule) &
+          & .and. &
+          & (qty%template%molecule == modelQty%template%molecule)
+        if ( present(noiseQty) ) aok = aok &
+          & .and. &
+          & (qty%template%molecule == noiseQty%template%molecule)
+      end if
 
-    call allocate_test(values, measQty%template%noSurfs, &
-      & 'chi^2 unsummed', ModuleName)
-    noChans = qty%template%noChans
-    do i=useFirstInstance, useLastInstance
-      do c=1, noChans
-        N = 0
-        values = 0.0
-        do s=1, measQty%template%noSurfs
-          qIndex = c + (s-1)*nochans
-          skipMe = &
-          & .not. dontMask .and. ( &
-          &   isVectorQtyMasked(measQty, qIndex, i) .or. &
-          &   isVectorQtyMasked(modelQty, qIndex, i) .or. &
-          &   isVectorQtyMasked(noiseQty, qIndex, i) ) &
-          & .or. (ignoreNegative .and. noiseQty%values(qIndex, i) < 0.0 ) &
-          & .or. (ignoreZero .and. noiseQty%values(qIndex, i) == 0.0 )
-          if ( .not. skipMe ) then
-            values(s) = ( &
-            & (a*measQty%values(qIndex, i) - b*modelQty%values(qIndex, i)) &
-            & / &
-            & noiseQty%values(qIndex, i) &
-            &  ) ** 2
-            N = N + 1
-          endif
-        enddo
-        if ( N > 0 ) then
-          qty%values(c, i) = sum(values) / N
+      ! (2)
+      if (minorFrame ) then
+        aok = aok .and. &
+          & (qty%template%signal == measQty%template%signal) &
+          & .and. &
+          & (qty%template%signal == modelQty%template%signal)
+        if ( present(noiseQty) ) aok = aok &
+          & .and. &
+          & (qty%template%signal == noiseQty%template%signal)
+      end if
+
+      ! (3)
+      if (.not. minorFrame ) then
+        aok = aok .and. &
+          & DoHgridsMatch( qty, measQty ) &
+          & .and. &
+          & DoHgridsMatch( qty, modelQty )
+        if ( present(noiseQty) ) aok = aok &
+          & .and. &
+          & DoHgridsMatch( qty, noiseQty )
+
+        ! (4)
+        aok = aok .and. &
+          & DoVgridsMatch( measqty, modelQty )
+        if ( present(noiseQty) ) then
+          aok = aok &
+          & .and. &
+          & DoVgridsMatch( measqty, noiseQty )
         else
-          qty%values(c, i) = 0.
-        endif
-      enddo
-    enddo
-    call deallocate_test(values, &
-      & 'chi^2 unsummed', ModuleName)
-  end subroutine FillChiSqChan
+          aok = aok &
+          & .and. &
+          & DoVgridsMatch( measqty, Qty )
+        end if
+      end if
 
-  ! ------------------------------------------- FillChiSqMMaf ---
-  subroutine FillChiSqMMaf ( key, qty, measQty, modelQty, noiseQty, &
-  & dontMask, ignoreZero, ignoreNegative, multiplier, &
-  & firstInstance, lastInstance )
-    ! A special fill of chi squared 
-    ! broken out according to major frames
-    ! Formal arguments
-    integer, intent(in) :: KEY
-    type (VectorValue_T), intent(inout) :: QTY
-    type (VectorValue_T), intent(in) ::    modelQty
-    type (VectorValue_T), intent(in) ::    measQty
-    type (VectorValue_T), intent(in) ::    noiseQty
-    logical, intent(in)           ::       dontMask    ! Use even masked values
-    logical, intent(in)           ::       ignoreZero  ! Ignore 0 values of noiseQty
-    logical, intent(in)           ::       ignoreNegative  ! Ignore <0 values of noiseQty
-    real, dimension(:), intent(in), optional :: multiplier
-
-    integer, intent(in), optional ::       firstInstance, lastInstance
-    ! The last two are set if only part (e.g. overlap regions) of the quantity
-    ! is to be stored in the qty
-
-    ! Local variables
-    real(r8), dimension(:), pointer  ::    VALUES => NULL()
-    integer ::                             UseFirstInstance, UseLastInstance, &
-    &                                      NoOutputInstances
-    integer ::                             I           ! Instances
-    integer ::                             ROW         ! Running 1st coord
-    integer ::                             INSTANCELEN ! Num of rows
-    integer ::                             N           ! Num. of summed values
-    logical ::                             skipMe
-
-    ! Executable code
-    real                             ::    a, b
-
-    ! Executable code
-    
-   ! Either multiplier = [a, b] or multiplier = 1/a if a=b are possible
-    if ( .not. present(multiplier) ) then
-      a = 1.
-      b = 1.
-    elseif (&
-    & multiplier(1) == UNDEFINED_VALUE .and. multiplier(2) == UNDEFINED_VALUE &
-    & ) then
-      a = 1.
-      b = 1.
-    elseif ( multiplier(2) == UNDEFINED_VALUE ) then
-      a = 0.
-      if ( multiplier(1) /= 0. ) a = 1./multiplier(1)
-      b = a
-    else
-      a = multiplier(1)
-      b = multiplier(2)
-    endif
-
-    ! First check that things are OK.
-    if (.not. ValidateVectorQuantity ( qty, &
-      & quantityType=(/l_chiSqMMaf/), majorFrame=.true.) ) then
-      call Announce_error ( key, No_Error_code, &
-      & 'Attempting to fill wrong quantity with chi^2 MMAFwise'  )
-      if ( DEEBUG ) then
-        call output('major frame? ', advance = 'no')
-        call output(qty%template%majorFrame, advance = 'no')
-        call output('   quantity type ', advance = 'no')
-        call output(qty%template%quantityType, advance = 'no')
-        call output('   compared with ', advance = 'no')
-        call output(l_chiSqMMaf, advance = 'yes')
-      endif
       return
-    elseif (.not. FillableChiSq ( qty, measQty, modelQty, noiseQty ) ) then
-      call Announce_error ( key, No_Error_code, &
-      & 'Incompatibility among vector quantities filling chi^2 MMAFwise'  )
-      return
-    elseif (any ( noiseQty%values == 0.0) .and. &
-      & .not. (ignoreZero .or. .not. dontMask) ) then
-      call Announce_error ( key, No_Error_code, &
-      & 'A vanishing noise filling chi^2 MMAFwise'  )
-      return
-    endif
+    end function FillableChiSq
 
-    ! Work out what to do with the first and last Instance information
-    
-    if ( PRESENT(firstInstance) ) then
-      useFirstInstance = firstInstance
-    else
-      useFirstInstance = 1
-    end if
+    ! ------------------------------------------- FillChiSqChan ---
+    subroutine FillChiSqChan ( key, qty, measQty, modelQty, noiseQty, &
+    & dontMask, ignoreZero, ignoreNegative, multiplier, &
+    & firstInstance, lastInstance )
+      ! A special fill of chi squared 
+      ! broken out according to channels
+      ! Formal arguments
+      integer, intent(in) :: KEY
+      type (VectorValue_T), intent(inout) :: QTY
+      type (VectorValue_T), intent(in) ::    modelQty
+      type (VectorValue_T), intent(in) ::    measQty
+      type (VectorValue_T), intent(in) ::    noiseQty
+      logical, intent(in)           ::       dontMask    ! Use even masked values
+      logical, intent(in)           ::       ignoreZero  ! Ignore 0 values of noiseQty
+      logical, intent(in)           ::       ignoreNegative  ! Ignore <0 values of noiseQty
+      real, dimension(:), intent(in), optional :: multiplier
 
-    if ( PRESENT(lastInstance) ) then
-      useLastInstance = lastInstance
-    else
-      useLastInstance = qty%template%noInstances
-    end if
-    noOutputInstances = useLastInstance-useFirstInstance+1
-    ! If we've not been asked to output anything then don't carry on
-    if ( noOutputInstances < 1 ) return
+      integer, intent(in), optional ::       firstInstance, lastInstance
+      ! The last two are set if only part (e.g. overlap regions) of the quantity
+      ! is to be stored in qty
 
-    instanceLen = measQty%template%noChans * measQty%template%noSurfs
-    call allocate_test(values, instanceLen, &
-      & 'chi^2 unsummed', ModuleName)
-    do i=useFirstInstance, useLastInstance
-      if( .not. (.not. dontMask .or. ignoreNegative .or. ignoreZero )) then
-          values = ( &
-          & (measQty%values(:, i) - modelQty%values(:, i)) &
-          & / &
-          & noiseQty%values(:, i) &
-          &  ) ** 2
-          qty%values(1, i) = sum(values) / instanceLen
+      ! Local variables
+      real(r8), dimension(:), pointer  ::    VALUES => NULL()
+      integer ::                             UseFirstInstance, UseLastInstance, &
+      &                                      NoOutputInstances
+      integer ::                             C           ! Channel loop counter
+      integer ::                             S           ! Surface loop counter
+      integer ::                             I           ! Instances
+      integer ::                             QINDEX
+      integer ::                             NOCHANS
+      integer ::                             N           ! Num. of summed values
+      logical ::                             skipMe
+      real                             ::    a, b
+
+      ! Executable code
+
+     ! Either multiplier = [a, b] or multiplier = 1/a if a=b are possible
+      if ( .not. present(multiplier) ) then
+        a = 1.
+        b = 1.
+      else if (&
+      & multiplier(1) == UNDEFINED_VALUE .and. multiplier(2) == UNDEFINED_VALUE &
+      & ) then
+        a = 1.
+        b = 1.
+      else if ( multiplier(2) == UNDEFINED_VALUE ) then
+        a = 0.
+        if ( multiplier(1) /= 0.0 ) a = 1.0/multiplier(1)
+        b = a
       else
-        N = 0
-        values = 0.0
-        do row = 1, instanceLen
-          skipMe = &
-          & .not. dontMask .and. ( &
-          &   isVectorQtyMasked(measQty, row, i) .or. &
-          &   isVectorQtyMasked(modelQty, row, i) .or. &
-          &   isVectorQtyMasked(noiseQty, row, i) ) &
-          & .or. (ignoreNegative .and. noiseQty%values(row, i) < 0.0 ) &
-          & .or. (ignoreZero .and. noiseQty%values(row, i) == 0.0 )
-          if ( .not. skipMe ) then
-            values(row) = ( &
-            & (a*measQty%values(row, i) - b*modelQty%values(row, i)) &
-            & / &
-            & noiseQty%values(row, i) &
-            &  ) ** 2
-            N = N + 1
-          endif
-        enddo
-        if ( N > 0 ) then
-          qty%values(1, i) = sum(values) / N
-        else
-          qty%values(1, i) = 0.
-        endif
-      endif
-    enddo
-    call deallocate_test(values, &
-      & 'chi^2 unsummed', ModuleName)
-  end subroutine FillChiSqMMaf
+        a = multiplier(1)
+        b = multiplier(2)
+      end if
 
-  ! ------------------------------------------- FillChiSqMMif ---
-  subroutine FillChiSqMMif ( key, qty, measQty, modelQty, noiseQty, &
-  & dontMask, ignoreZero, ignoreNegative, multiplier, &
-  & firstInstance, lastInstance )
-    ! A special fill of chi squared 
-    ! broken out according to Mifs
-    ! Formal arguments
-    integer, intent(in) :: KEY
-    type (VectorValue_T), intent(inout) :: QTY
-    type (VectorValue_T), intent(in) ::    modelQty
-    type (VectorValue_T), intent(in) ::    measQty
-    type (VectorValue_T), intent(in) ::    noiseQty
-    logical, intent(in)           ::       dontMask    ! Use even masked values
-    logical, intent(in)           ::       ignoreZero  ! Ignore 0 values of noiseQty
-    logical, intent(in)           ::       ignoreNegative  ! Ignore <0 values of noiseQty
-    real, dimension(:), intent(in), optional :: multiplier
+      ! First check that things are OK.
+      if (.not. ValidateVectorQuantity ( qty, &
+        & quantityType=(/l_chiSqChan/), majorFrame=.true.) ) then
+        call Announce_error ( key, No_Error_code, &
+        & 'Attempting to fill wrong quantity with chi^2 channelwise'  )
+        if ( DEEBUG ) then
+          call output('major frame? ', advance = 'no')
+          call output(qty%template%majorFrame, advance = 'no')
+          call output('   quantity type ', advance = 'no')
+          call output(qty%template%quantityType, advance = 'no')
+          call output('   compared with ', advance = 'no')
+          call output(l_chiSqChan, advance = 'yes')
+        end if
+        return
+      else if (.not. FillableChiSq ( qty, measQty, modelQty, noiseQty ) ) then
+        call Announce_error ( key, No_Error_code, &
+        & 'Incompatibility among vector quantities filling chi^2 channelwise'  )
+        return
+      else if (any ( noiseQty%values == 0.0) .and. &
+        & .not. (ignoreZero .or. .not. dontMask) ) then
+        call Announce_error ( key, No_Error_code, &
+        & 'A vanishing error filling chi^2 channelwise'  )
+        return
+      end if
 
-    integer, intent(in), optional ::       firstInstance, lastInstance
-    ! The last two are set if only part (e.g. overlap regions) of the quantity
-    ! is to be stored in the qty
+      ! Work out what to do with the first and last Instance information
 
-    ! Local variables
-    real(r8), dimension(:), pointer  ::    VALUES => NULL()
-    integer ::                             UseFirstInstance, UseLastInstance, &
-    &                                      NoOutputInstances
-    integer ::                             C           ! Channel loop counter
-    integer ::                             S           ! Surface loop counter
-    integer ::                             I           ! Instances
-    integer ::                             QINDEX
-    integer ::                             NOMIFS
-    integer ::                             N           ! Num. of summed values
-    logical ::                             skipMe
-
-    ! Executable code
-    real                             ::    a, b
-
-    ! Executable code
-    
-   ! Either multiplier = [a, b] or multiplier = 1/a if a=b are possible
-    if ( .not. present(multiplier) ) then
-      a = 1.
-      b = 1.
-    elseif (&
-    & multiplier(1) == UNDEFINED_VALUE .and. multiplier(2) == UNDEFINED_VALUE &
-    & ) then
-      a = 1.
-      b = 1.
-    elseif ( multiplier(2) == UNDEFINED_VALUE ) then
-      a = 0.
-      if ( multiplier(1) /= 0. ) a = 1./multiplier(1)
-      b = a
-    else
-      a = multiplier(1)
-      b = multiplier(2)
-    endif
-
-    ! First check that things are OK.
-    if (.not. ValidateVectorQuantity ( qty, &
-      & quantityType=(/l_chiSqMMif/), minorFrame=.true.) ) then
-      call Announce_error ( key, No_Error_code, &
-      & 'Attempting to fill wrong quantity with chi^2 MMIFwise'  )
-      if ( DEEBUG ) then
-        call output('minor frame? ', advance = 'no')
-        call output(qty%template%minorFrame, advance = 'no')
-        call output('   quantity type ', advance = 'no')
-        call output(qty%template%quantityType, advance = 'no')
-        call output('   compared with ', advance = 'no')
-        call output(l_chiSqMMif, advance = 'yes')
-      endif
-      return
-    elseif (.not. FillableChiSq ( qty, measQty, modelQty, noiseQty ) ) then
-      call Announce_error ( key, No_Error_code, &
-      & 'Incompatibility among vector quantities filling chi^2 MMIFwise'  )
-      return
-    elseif (any ( noiseQty%values == 0.0) .and. &
-      & .not. (ignoreZero .or. .not. dontMask) ) then
-      call Announce_error ( key, No_Error_code, &
-      & 'A vanishing noise filling chi^2 MMIFwise'  )
-      return
-    endif
-
-    ! Work out what to do with the first and last Instance information
-    
-    if ( PRESENT(firstInstance) ) then
-      useFirstInstance = firstInstance
-    else
-      useFirstInstance = 1
-    end if
-
-    if ( PRESENT(lastInstance) ) then
-      useLastInstance = lastInstance
-    else
-      useLastInstance = qty%template%noInstances
-    end if
-    noOutputInstances = useLastInstance-useFirstInstance+1
-    ! If we've not been asked to output anything then don't carry on
-    if ( noOutputInstances < 1 ) return
-
-    call allocate_test(values, measQty%template%noChans, &
-      & 'chi^2 unsummed', ModuleName)
-    noMIFs = measQty%template%noSurfs
-    do i=useFirstInstance, useLastInstance
-      do s=1, noMIFs
-        N = 0
-        values = 0.0
-        do c=1, measQty%template%noChans
-          qIndex = c + (s-1)*measQty%template%noChans
-          skipMe = &
-          & .not. dontMask .and. ( &
-          &   isVectorQtyMasked(measQty, qIndex, i) .or. &
-          &   isVectorQtyMasked(modelQty, qIndex, i) .or. &
-          &   isVectorQtyMasked(noiseQty, qIndex, i) ) &
-          & .or. (ignoreNegative .and. noiseQty%values(qIndex, i) < 0.0 ) &
-          & .or. (ignoreZero .and. noiseQty%values(qIndex, i) == 0.0 )
-          if ( .not. skipMe ) then
-            values(c) = ( &
-            & (a*measQty%values(qIndex, i) - b*modelQty%values(qIndex, i)) &
-            & / &
-            & noiseQty%values(qIndex, i) &
-            &  ) ** 2
-            N = N + 1
-          endif
-        enddo
-        if ( N > 0 ) then
-          qty%values(s, i) = sum(values) / N
-        else
-          qty%values(s, i) = 0.
-        endif
-      enddo
-    enddo
-    call deallocate_test(values, &
-      & 'chi^2 unsummed', ModuleName)
-  end subroutine FillChiSqMMif
-
-  ! ------------------------------------------- FillColAbundance ---
-  subroutine FillColAbundance ( key, qty, bndPressQty, vmrQty, &
-  & firstInstance, lastInstance )
-    ! A special fill according to Appendix A of EOS MLS ATBD
-    ! JPL D-16159
-    ! EOS MLS DRL 601 (part 3)
-    ! ATBD-MLS-03
-    ! (Livesey and Wu)
-    
-    ! Assumptions:
-    ! (1)This fill operation is triggered by a command
-    !    such as the following in the lcf
-    !      Fill, state.columnO3, method=special, vmrQuantity=state.o3, $
-    !      boundaryPressure=state.tpPressure
-    ! (2)the vmr is in units of PHYQ_VMR and not, say, ppmv;
-    !    it is in fact identical to the coefficients of the mls basis functions
-    ! (3)The pressure surfaces are in hPa, but not all necessarily at the
-    !    same logarithmic distance from one another
-    ! (4)The tropospheric boundary pressure is somewhere in between the surfs
-    ! (5)Unless first,last instances are args, fill all instances
-    !    (unlike join which has to worry about chunks and overlaps)
-    integer, intent(in) :: KEY
-    type (VectorValue_T), intent(inout) :: QTY
-    type (VectorValue_T), intent(in) ::    bndPressQty
-    type (VectorValue_T), intent(in) ::    vmrQty
-    integer, intent(in), optional ::       firstInstance, lastInstance
-    ! The last two are set if only part (e.g. overlap regions) of the quantity
-    ! is to be stored in the column data.
-
-    ! Local variables
-    real (r8) :: AoverMg         ! A/(M g) from Appendix A
-    logical ::   zeta_surfs      ! If true, surfs are zeta-type; else pressures
-    integer ::   status
-    integer ::   surface
-    integer ::   instance
-    integer ::   surfaceInstance
-    integer ::   firstSurface
-    integer ::   UseFirstInstance, UseLastInstance, &
-    &            NoOutputInstances
-    real (r8) :: columnSum
-    real (r8) :: Delta_p_plus    ! p[j+1] - p[j]
-    real (r8) :: Delta_p_minus   ! p[j-1] - p[j]
-    real (r8) :: Delta_log_plus  ! ln p[j+1] - ln p[j]
-    real (r8) :: Delta_log_minus ! ln p[j-1] - ln p[j]
-
-    real (r8), allocatable, dimension(:) :: p         ! p[i] in hPa
-
-    ! Executable code
-    ! First check that things are OK.
-    if ( (qty%template%quantityType /= l_columnAbundance) .or. &
-      &  (bndPressQty%template%quantityType /= l_boundaryPressure) .or. &
-      &  (vmrQty%template%quantityType /= l_vmr) ) then
-          call Announce_error ( key, No_Error_code, &
-              & 'Wrong quantity type found while filling column abundance'  )
-      return
-    elseif ( qty%template%molecule /= vmrQty%template%molecule) then
-          call Announce_error ( key, No_Error_code, &
-              & 'Attempt to fill column abundance with different molecule'  )
-      return
-    elseif ( &
-    & .not. ( &
-    & DoHgridsMatch( qty, vmrQty ) &
-    & .and. &
-    & DoHgridsMatch( qty, bndPressQty ) &
-    & ) &
-    & ) then
-          call Announce_error ( key, No_Error_code, &
-              & 'Attempt to fill column abundance with different HGrids'  )
-      return
-    elseif ( .not. &
-    & any(vmrQty%template%verticalCoordinate == (/l_pressure, l_zeta/)) &
-    & ) then
-          call Announce_error ( key, No_Error_code, &
-              & 'Fill column abundance, but vmr not on [log]pressure surfs.'  )
-      return
-    end if
-
-    ! Work out what to do with the first and last Instance information
-    
-    if ( PRESENT(firstInstance) ) then
-      useFirstInstance = firstInstance
-    else
-      useFirstInstance = 1
-    end if
-
-    if ( PRESENT(lastInstance) ) then
-      useLastInstance = lastInstance
-    else
-      useLastInstance = qty%template%noInstances
-    end if
-    noOutputInstances = useLastInstance-useFirstInstance+1
-    ! If we've not been asked to output anything then don't carry on
-    if ( noOutputInstances < 1 ) return
-   !    AoverMg = 4.12e25 / (2.687e20 * 0.192)
-   !    This assumes that
-   ! (1) p is in hPa
-   ! (2) f is in PHYQ_vmr (*not* ppmv)
-   AoverMg = 4.12e5 / (2.687 * 0.192)
-
-   zeta_surfs = vmrQty%template%verticalCoordinate == l_zeta
-   allocate(p(vmrQty%template%noSurfs), stat=status)
-   if(status /= 0) then
-          call Announce_error ( key, No_Error_code, &
-              & 'Error in allocating p'  )
-      return
-   endif   
-!   do instance=1, vmrQty%template%noInstances
-   do instance=useFirstInstance, useLastInstance
-      if(vmrQty%template%coherent) then
-         surfaceInstance=1
+      if ( PRESENT(firstInstance) ) then
+        useFirstInstance = firstInstance
       else
-         surfaceInstance=instance
-      endif
+        useFirstInstance = 1
+      end if
 
-      if(zeta_surfs) then
-         ! Invert zeta = -log10(p)
-         do surface=1, vmrQty%template%noSurfs
-            p(surface) = exp(-log(10.)* &
-            & vmrQty%template%surfs(surface, surfaceInstance))
-         enddo
+      if ( PRESENT(lastInstance) ) then
+        useLastInstance = lastInstance
       else
-         do surface=1, vmrQty%template%noSurfs
-            p(surface) = vmrQty%template%surfs(surface, surfaceInstance)
-         enddo
-      endif
- 
-      if(p(1) &
-         &  < bndPressQty%values(1, instance)) then
-          call Announce_error ( key, No_Error_code, &
-              & 'Fill column abundance, but tropopause below VGrid'  )
-      endif
+        useLastInstance = qty%template%noInstances
+      end if
+      noOutputInstances = useLastInstance-useFirstInstance+1
+      ! If we've not been asked to output anything then don't carry on
+      if ( noOutputInstances < 1 ) return
 
-   ! Find 1st surface at or above tropopause
-   ! (i.e., at a pressure equal to or less than boundaryPressure)
-      do surface=1, vmrQty%template%noSurfs
-         if(p(surface) &
-         &  <= bndPressQty%values(1, instance)) exit
-      enddo
-      firstSurface = surface
-      if(firstSurface > vmrQty%template%noSurfs-2) then
-          call Announce_error ( key, No_Error_code, &
-              & 'Fill column abundance, but tropopause above VGrid'  )
-      endif
-   ! Do summation
-   ! Initialize sum, Deltas
-      columnSum = 0.
-      Delta_p_plus = p(firstSurface+1) - p(firstSurface)
-      Delta_log_plus = log(p(firstSurface+1)) - log(p(firstSurface))
-   ! Loop over surfaces from tropoause+1 to uppermost-1
-      do surface = firstSurface+1, vmrQty%template%noSurfs-1
-         Delta_p_minus = - Delta_p_plus
-         Delta_log_minus = - Delta_log_plus
-         Delta_p_plus = p(surface+1) - p(surface)
-         Delta_log_plus = log(p(surface+1)) - log(p(surface))
-         columnSum = columnSum + &
-         & vmrQty%values(surface, instance)* &
-         & ( &
-         & Delta_p_minus/Delta_log_minus &
-         & - &
-         & Delta_p_plus/Delta_log_plus &
-         & )          
-      enddo
-      qty%values(1, instance) = AoverMg * columnSum
-   enddo
-
-   deallocate(p, stat=status)
-   if(status /= 0) then
-          call Announce_error ( key, No_Error_code, &
-              & 'Error in deallocating p'  )
-   endif   
-
-  end subroutine FillColAbundance
-  
-  ! ------------------------------------- FillFoldedRadiance ---
-  subroutine FillFoldedRadiance ( radiance, lsb, usb, &
-    & lsbFraction, usbFraction, key )
-    type (VectorValue_T), intent(inout) :: RADIANCE
-    type (VectorValue_T), intent(in) :: USB
-    type (VectorValue_T), intent(in) :: LSB
-    type (VectorValue_T), intent(in) :: USBFRACTION
-    type (VectorValue_T), intent(in) :: LSBFRACTION
-    integer, intent(in) :: KEY
-
-    ! Local variables
-    integer :: C                        ! Channel loop inductor
-    integer :: I                        ! Array index
-    integer :: MIF                      ! Minor frame loop inductor
-
-    ! Executable code
-    ! First some sanity checks
-    if (.not. ValidateVectorQuantity ( radiance, quantityType=(/l_radiance/), &
-      & sideband=(/0/), minorFrame=.true. )) &
-      & call Announce_Error ( key, 0, 'Inappropriate radiance quantity to fill' )
-    if (.not. ValidateVectorQuantity ( lsb, quantityType=(/l_radiance/), &
-      & sideband=(/-1/), signal=(/radiance%template%signal/), minorFrame=.true. )) &
-      & call Announce_Error ( key, 0, 'Inappropriate lsb radiance quantity for fill' )
-    if (.not. ValidateVectorQuantity ( usb, quantityType=(/l_radiance/), &
-      & sideband=(/1/), signal=(/radiance%template%signal/), minorFrame=.true. )) &
-      & call Announce_Error ( key, 0, 'Inappropriate usb radiance quantity for fill' )
-    if (.not. ValidateVectorQuantity ( lsbFraction, quantityType=(/l_sidebandRatio/), &
-      & signal=(/radiance%template%signal/), sideband=(/-1/) ) ) &
-      & call Announce_Error ( key, 0, 'Inappropriate lsbFraction quantity for fill' )
-    if (.not. ValidateVectorQuantity ( usbFraction, quantityType=(/l_sidebandRatio/), &
-      & signal=(/radiance%template%signal/), sideband=(/-1/) ) ) &
-      & call Announce_Error ( key, 0, 'Inappropriate usbFraction quantity for fill' )
-
-    ! Now do the work
-    i = 1                               ! Use i as a composit mif,channel index
-    do mif = 1, radiance%template%noSurfs
-      do c = 1, radiance%template%noChans
-        radiance%values(i,:) = &
-          & lsbFraction%values(c,1) * lsb%values(i,:) + &
-          & usbFraction%values(c,1) * usb%values(i,:)
-        i = i + 1
+      call allocate_test(values, measQty%template%noSurfs, &
+        & 'chi^2 unsummed', ModuleName)
+      noChans = qty%template%noChans
+      do i=useFirstInstance, useLastInstance
+        do c=1, noChans
+          N = 0
+          values = 0.0
+          do s=1, measQty%template%noSurfs
+            qIndex = c + (s-1)*nochans
+            skipMe = &
+            & .not. dontMask .and. ( &
+            &   isVectorQtyMasked(measQty, qIndex, i) .or. &
+            &   isVectorQtyMasked(modelQty, qIndex, i) .or. &
+            &   isVectorQtyMasked(noiseQty, qIndex, i) ) &
+            & .or. (ignoreNegative .and. noiseQty%values(qIndex, i) < 0.0 ) &
+            & .or. (ignoreZero .and. noiseQty%values(qIndex, i) == 0.0 )
+            if ( .not. skipMe ) then
+              values(s) = ( &
+              & (a*measQty%values(qIndex, i) - b*modelQty%values(qIndex, i)) &
+              & / &
+              & noiseQty%values(qIndex, i) &
+              &  ) ** 2
+              N = N + 1
+            end if
+          end do
+          if ( N > 0 ) then
+            qty%values(c, i) = sum(values) / N
+          else
+            qty%values(c, i) = 0.
+          end if
+        end do
       end do
-    end do
+      call deallocate_test(values, &
+        & 'chi^2 unsummed', ModuleName)
+    end subroutine FillChiSqChan
 
-  end subroutine FillFoldedRadiance
+    ! ------------------------------------------- FillChiSqMMaf ---
+    subroutine FillChiSqMMaf ( key, qty, measQty, modelQty, noiseQty, &
+    & dontMask, ignoreZero, ignoreNegative, multiplier, &
+    & firstInstance, lastInstance )
+      ! A special fill of chi squared 
+      ! broken out according to major frames
+      ! Formal arguments
+      integer, intent(in) :: KEY
+      type (VectorValue_T), intent(inout) :: QTY
+      type (VectorValue_T), intent(in) ::    modelQty
+      type (VectorValue_T), intent(in) ::    measQty
+      type (VectorValue_T), intent(in) ::    noiseQty
+      logical, intent(in)           ::       dontMask    ! Use even masked values
+      logical, intent(in)           ::       ignoreZero  ! Ignore 0 values of noiseQty
+      logical, intent(in)           ::       ignoreNegative  ! Ignore <0 values of noiseQty
+      real, dimension(:), intent(in), optional :: multiplier
 
-  ! ------------------------------------ FillPhiTanWithRefraction --
-  subroutine FillPhiTanWithRefraction ( key, quantity, ptanQuantity, &
-    & temperatureQuantity, h2oQuantity, refract )
-    integer, intent(in) :: KEY          ! Tree node
-    type (VectorValue_T), intent(inout) :: QUANTITY ! PhiTan quantity to fill
-    type (VectorValue_T), pointer :: PTANQUANTITY ! Ptan for same module
-    type (VectorValue_T), pointer :: TEMPERATUREQUANTITY ! Temperature
-    type (VectorValue_T), pointer :: H2OQUANTITY ! Water vapor
-    logical, intent(in) :: REFRACT      ! Do refraction or not
+      integer, intent(in), optional ::       firstInstance, lastInstance
+      ! The last two are set if only part (e.g. overlap regions) of the quantity
+      ! is to be stored in the qty
 
-    ! Executable code
-    ! First check sanity
-    if ( .not. ValidateVectorQuantity ( quantity, &
-      & quantityType=(/l_phiTan/), minorFrame=.true. ) ) &
-      & call Announce_error ( key, 0, 'Quantity to fill is not phiTan' )
-    if ( refract ) then
-      ! More sanity checks
-      if ( .not. ValidateVectorQuantity ( ptanQuantity, &
-        & quantityType=(/l_ptan/), minorFrame=.true. ) ) &
-        & call Announce_error ( key, 0, 'Problem with ptan quantity for phiTan fill' )
-      if ( quantity%template%instrumentModule /= &
-        &  ptanQuantity%template%instrumentModule ) &
-        & call Announce_error ( key, 0, 'phiTan and ptan quantities not for same module' )
-      if ( .not. ValidateVectorQuantity ( temperatureQuantity, &
-        & quantityType=(/l_temperature/), coherent=.true., stacked=.true., &
-        & frequencyCoordinate=(/l_none/), verticalCoordinate=(/l_zeta/) ) ) &
-        & call Announce_error ( key, 0, 'Problem with temperature quantity for phiTan fill' )
-      if ( .not. ValidateVectorQuantity ( h2oQuantity, &
-        & quantityType=(/l_vmr/), molecule=(/l_h2o/), coherent=.true., stacked=.true., &
-        & frequencyCoordinate=(/l_none/), verticalCoordinate=(/l_zeta/) ) ) &
-        & call Announce_error ( key, 0, 'Problem with temperature quantity for phiTan fill' )
+      ! Local variables
+      real(r8), dimension(:), pointer  ::    VALUES => NULL()
+      integer ::                             UseFirstInstance, UseLastInstance, &
+      &                                      NoOutputInstances
+      integer ::                             I           ! Instances
+      integer ::                             ROW         ! Running 1st coord
+      integer ::                             INSTANCELEN ! Num of rows
+      integer ::                             N           ! Num. of summed values
+      logical ::                             skipMe
 
-      ! OK, do the refraction calculation
-      call Announce_error ( key, 0, 'Refract=true, not yet supported' )
-    else
-      ! Just copy it from the template
-      quantity%values = quantity%template%phi
-    endif
+      ! Executable code
+      real                             ::    a, b
 
-  end subroutine FillPhiTanWithRefraction
+      ! Executable code
 
-    ! ------------------------------------- FillRHIFromH2O ----
-  subroutine FillRHIFromH2O ( key, quantity, &
-   & sourceQuantity, temperatureQuantity, &
-   & dontMask, ignoreZero, ignoreNegative, interpolate, &
-   & markUndefinedValues, invert )
-    ! Convert h2o vmr to %RHI for all instances, channels, surfaces
-    ! (See Eq. 9 from "UARS Microwave Limb Sounder upper tropospheric
-    !  humidity measurement: Method and validation" Read et. al. 
-    !  J. Geoph. Res. Dec. 2001 (106) D23)
-
-    !  Method:
-    ! (1) straight convert--all quantities must have the same shape
-    !     (strictly we assume they have _all_ the same geolocations)
-    ! (2) interpolate--all quantities may have different shapes
-    !     (the interpolation will be along the vertical coordinate only)
-    !     I.e., for xQuantity (where x can be h2o or temperature)
-    !     if NoChans(xQuantity) /= NoChans(Quantity)
-    !        => use only xQuantity(channel==1)
-    !     if NoInstances(xQuantity) /= NoInstances(Quantity)
-    !        => use only xQuantity(instance==1)
-    !
-    ! (3) if invert is TRUE, like (1) but its inverse: %RHI to h2o vmr
-    integer, intent(in) :: key          ! For messages
-    ! Actually, the meaning of the next two is reversed if invert is TRUE)
-    type (VectorValue_T), intent(inout) :: QUANTITY ! (rhi) Quantity to fill
-    type (VectorValue_T), intent(in) :: sourceQuantity ! vmr (unless invert)
-    type (VectorValue_T), intent(in) :: temperatureQuantity ! T(zeta)
-!   type (VectorValue_T), intent(in) :: refGPHQuantity ! zeta
-    logical, intent(in)           ::    dontMask    ! Use even masked values
-    logical, intent(in)           ::    ignoreZero  ! Ignore 0 values of h2o
-    logical, intent(in)           ::    ignoreNegative  ! Ignore <0 values
-    logical, intent(in)           ::    interpolate ! If VGrids or HGrids differ
-    logical, intent(in)           ::    markUndefinedValues ! as UNDEFINED_VALUE
-    logical, intent(in)           ::    invert      ! %RHI -> vmr if TRUE
-
-    ! Local variables
-    integer ::                          Channel     ! Channel loop counter    
-    integer ::                          Chan_h2o    ! Channel loop counter    
-    integer ::                          Chan_T      ! Channel loop counter    
-    logical, parameter ::               DEEBUG_RHI = .false.
-    integer                          :: dim
-    integer ::                          I           ! Instances
-    integer ::                          I_H2O       ! Instance num for values
-    integer ::                          I_T         ! Instance num for values
-    integer ::                          invs        ! 1 if invert, else -1
-    integer ::                          QINDEX                                
-    integer ::                          N           ! Num. of summed values   
-    logical                          :: matched_h2o_channels
-    logical                          :: matched_h2o_instances
-    logical                          :: matched_sizes
-    logical                          :: matched_surfs
-    logical                          :: matched_T_channels
-    logical                          :: matched_T_instances
-    integer ::                          S           ! Surface loop counter    
-    integer ::                          S_H2O       ! Instance num for surfs
-    integer ::                          S_RHI       ! Instance num for surfs
-    integer ::                          S_T         ! Instance num for surfs
-    logical ::                          skipMe                                
-    real (r8) ::                        T
-    character(len=*), parameter ::      VMR_UNITS = 'vmr'
-    integer ::                          VMR_UNIT_CNV
-    logical ::                          wereAnySkipped
-    ! These automatic arrays could cause trouble later
-    ! You may consider declaring them as pointers and
-    ! calling allocate_test and deallocate_test
-    real (r8), dimension(quantity%template%noSurfs) :: &
-     &                                  zeta, TofZeta, H2OofZeta
-    real (r8), dimension(Temperaturequantity%template%noSurfs) :: &
-     &                                  zetaTemperature, oldTemperature
-    real (r8), dimension(sourceQuantity%template%noSurfs) :: &
-     &                                  zetaH2o, oldH2o
-    ! Executable statements
-    ! Let any undefined values be so marked (but not necessarily masked)
-    if ( markUndefinedValues ) Quantity%values = UNDEFINED_VALUE
-    ! Will we convert %RHI to vmr?
-    if ( invert ) then
-      invs = 1
-    else
-      invs = -1
-    endif
-    ! Do we need to internally convert the vmr units?
-    if ( VMR_UNITS == 'ppmv' ) then
-      vmr_unit_cnv = 6
-    elseif ( VMR_UNITS == 'ppbv' ) then
-      vmr_unit_cnv = 9
-    else
-      vmr_unit_cnv = 0
-    endif
-    ! Check that all is well
-    if ( invert .and. interpolate ) then
-     call Announce_Error ( key, No_Error_code, &
-      & ' FillRHIFromH2O unable to invert and interpolate simultaneously' )
-     return
-    endif
-    matched_sizes = .true.
-    do dim=1, 2
-      matched_sizes = matched_sizes .and. &
-      & .not. any( size(Quantity%values,dim) /= &
-      &(/ size(sourceQuantity%values,dim), &
-      & size(temperatureQuantity%values,dim) /)&
-      & )
-    enddo
-    if ( .not. (matched_sizes .or. interpolate) ) then
-     call Announce_Error ( key, No_Error_code, &
-      & 'Incompatible quantities in FillRHIFromH2O--' //&
-      & '(unless interpolating, all must have same shape)' )
-     return
-    endif
-    matched_surfs = .true.
-    matched_surfs = matched_surfs .and. &
-     & .not. any( Quantity%template%noSurfs /= &
-     &(/ sourceQuantity%template%noSurfs, &
-     & temperatureQuantity%template%noSurfs /)&
-     & )
-    if ( .not. (matched_surfs .or. interpolate) ) then
-     call Announce_Error ( key, No_Error_code, &
-      & 'Different vertical coords in FillRHIFromH2O--' //&
-      & '(unless interpolating, all must be on the same VGrid)' )
-     return
-    endif
-    matched_h2o_channels = &
-     &   (sourceQuantity%template%noChans == Quantity%template%noChans)
-    matched_h2o_instances = &
-     &   (sourceQuantity%template%noInstances == Quantity%template%noInstances)
-    matched_T_channels = &
-     &   (TemperatureQuantity%template%noChans == Quantity%template%noChans)
-    matched_T_instances = &
-     &   (TemperatureQuantity%template%noInstances == Quantity%template%noInstances)
-    wereAnySkipped = .false.
-    ! Now let's do the actual conversion
-    do i=1, quantity%template%noInstances
-      if ( quantity%template%coherent ) then
-        s_rhi = 1
+     ! Either multiplier = [a, b] or multiplier = 1/a if a=b are possible
+      if ( .not. present(multiplier) ) then
+        a = 1.
+        b = 1.
+      else if (&
+      & multiplier(1) == UNDEFINED_VALUE .and. multiplier(2) == UNDEFINED_VALUE &
+      & ) then
+        a = 1.
+        b = 1.
+      else if ( multiplier(2) == UNDEFINED_VALUE ) then
+        a = 0.
+        if ( multiplier(1) /= 0.0 ) a = 1.0/multiplier(1)
+        b = a
       else
-        s_rhi = i
-      endif
-      if ( sourceQuantity%template%coherent ) then
-        s_h2o = 1
+        a = multiplier(1)
+        b = multiplier(2)
+      end if
+
+      ! First check that things are OK.
+      if (.not. ValidateVectorQuantity ( qty, &
+        & quantityType=(/l_chiSqMMaf/), majorFrame=.true.) ) then
+        call Announce_error ( key, No_Error_code, &
+        & 'Attempting to fill wrong quantity with chi^2 MMAFwise'  )
+        if ( DEEBUG ) then
+          call output('major frame? ', advance = 'no')
+          call output(qty%template%majorFrame, advance = 'no')
+          call output('   quantity type ', advance = 'no')
+          call output(qty%template%quantityType, advance = 'no')
+          call output('   compared with ', advance = 'no')
+          call output(l_chiSqMMaf, advance = 'yes')
+        end if
+        return
+      else if (.not. FillableChiSq ( qty, measQty, modelQty, noiseQty ) ) then
+        call Announce_error ( key, No_Error_code, &
+        & 'Incompatibility among vector quantities filling chi^2 MMAFwise'  )
+        return
+      else if (any ( noiseQty%values == 0.0) .and. &
+        & .not. (ignoreZero .or. .not. dontMask) ) then
+        call Announce_error ( key, No_Error_code, &
+        & 'A vanishing noise filling chi^2 MMAFwise'  )
+        return
+      end if
+
+      ! Work out what to do with the first and last Instance information
+
+      if ( PRESENT(firstInstance) ) then
+        useFirstInstance = firstInstance
       else
-        s_h2o = i
-      endif
-      if ( temperaturequantity%template%coherent ) then
-        s_t = 1
+        useFirstInstance = 1
+      end if
+
+      if ( PRESENT(lastInstance) ) then
+        useLastInstance = lastInstance
       else
-        s_t = i
-      endif
-      ! zeta must be in log(hPa) units
-      if ( quantity%template%verticalCoordinate == l_pressure ) then 
-        zeta = -log10 ( quantity%template%surfs(:,s_rhi) )             
-      else
-        zeta = quantity%template%surfs(:,s_rhi)                        
-      endif
-      if ( interpolate .and. .not. matched_h2o_instances ) then
-        i_h2o = 1
-      else
-        i_h2o = i
-      endif
-      if ( interpolate .and. .not. matched_T_instances ) then
-        i_T = 1
-      else
-        i_T = i
-      endif
-      if ( sourceQuantity%template%verticalCoordinate == l_pressure ) then 
-        zetah2o = -log10 ( sourceQuantity%template%surfs(:,s_h2o) )             
-      else                                                           
-        zetah2o = sourceQuantity%template%surfs(:,s_h2o)            
-      endif
-      if ( Temperaturequantity%template%verticalCoordinate == l_pressure ) then 
-        zetaTemperature = -log10 ( Temperaturequantity%template%surfs(:,s_T) )             
-      else                                                           
-        zetaTemperature = Temperaturequantity%template%surfs(:,s_T)            
-      endif
-      N = 0
-      do Channel=1, quantity%template%noChans
-        if ( interpolate .and. .not. matched_h2o_channels ) then
-          Chan_h2o = 1
+        useLastInstance = qty%template%noInstances
+      end if
+      noOutputInstances = useLastInstance-useFirstInstance+1
+      ! If we've not been asked to output anything then don't carry on
+      if ( noOutputInstances < 1 ) return
+
+      instanceLen = measQty%template%noChans * measQty%template%noSurfs
+      call allocate_test(values, instanceLen, &
+        & 'chi^2 unsummed', ModuleName)
+      do i=useFirstInstance, useLastInstance
+        if( .not. (.not. dontMask .or. ignoreNegative .or. ignoreZero )) then
+            values = ( &
+            & (measQty%values(:, i) - modelQty%values(:, i)) &
+            & / &
+            & noiseQty%values(:, i) &
+            &  ) ** 2
+            qty%values(1, i) = sum(values) / instanceLen
         else
-          Chan_h2o = Channel
-        endif
-        if ( interpolate .and. .not. matched_T_channels ) then
-          Chan_T = 1
+          N = 0
+          values = 0.0
+          do row = 1, instanceLen
+            skipMe = &
+            & .not. dontMask .and. ( &
+            &   isVectorQtyMasked(measQty, row, i) .or. &
+            &   isVectorQtyMasked(modelQty, row, i) .or. &
+            &   isVectorQtyMasked(noiseQty, row, i) ) &
+            & .or. (ignoreNegative .and. noiseQty%values(row, i) < 0.0 ) &
+            & .or. (ignoreZero .and. noiseQty%values(row, i) == 0.0 )
+            if ( .not. skipMe ) then
+              values(row) = ( &
+              & (a*measQty%values(row, i) - b*modelQty%values(row, i)) &
+              & / &
+              & noiseQty%values(row, i) &
+              &  ) ** 2
+              N = N + 1
+            end if
+          end do
+          if ( N > 0 ) then
+            qty%values(1, i) = sum(values) / N
+          else
+            qty%values(1, i) = 0.
+          end if
+        end if
+      end do
+      call deallocate_test(values, &
+        & 'chi^2 unsummed', ModuleName)
+    end subroutine FillChiSqMMaf
+
+    ! ------------------------------------------- FillChiSqMMif ---
+    subroutine FillChiSqMMif ( key, qty, measQty, modelQty, noiseQty, &
+    & dontMask, ignoreZero, ignoreNegative, multiplier, &
+    & firstInstance, lastInstance )
+      ! A special fill of chi squared 
+      ! broken out according to Mifs
+      ! Formal arguments
+      integer, intent(in) :: KEY
+      type (VectorValue_T), intent(inout) :: QTY
+      type (VectorValue_T), intent(in) ::    modelQty
+      type (VectorValue_T), intent(in) ::    measQty
+      type (VectorValue_T), intent(in) ::    noiseQty
+      logical, intent(in)           ::       dontMask    ! Use even masked values
+      logical, intent(in)           ::       ignoreZero  ! Ignore 0 values of noiseQty
+      logical, intent(in)           ::       ignoreNegative  ! Ignore <0 values of noiseQty
+      real, dimension(:), intent(in), optional :: multiplier
+
+      integer, intent(in), optional ::       firstInstance, lastInstance
+      ! The last two are set if only part (e.g. overlap regions) of the quantity
+      ! is to be stored in the qty
+
+      ! Local variables
+      real(r8), dimension(:), pointer  ::    VALUES => NULL()
+      integer ::                             UseFirstInstance, UseLastInstance, &
+      &                                      NoOutputInstances
+      integer ::                             C           ! Channel loop counter
+      integer ::                             S           ! Surface loop counter
+      integer ::                             I           ! Instances
+      integer ::                             QINDEX
+      integer ::                             NOMIFS
+      integer ::                             N           ! Num. of summed values
+      logical ::                             skipMe
+
+      ! Executable code
+      real                             ::    a, b
+
+      ! Executable code
+
+     ! Either multiplier = [a, b] or multiplier = 1/a if a=b are possible
+      if ( .not. present(multiplier) ) then
+        a = 1.
+        b = 1.
+      else if (&
+      & multiplier(1) == UNDEFINED_VALUE .and. multiplier(2) == UNDEFINED_VALUE &
+      & ) then
+        a = 1.
+        b = 1.
+      else if ( multiplier(2) == UNDEFINED_VALUE ) then
+        a = 0.
+        if ( multiplier(1) /= 0.0 ) a = 1.0/multiplier(1)
+        b = a
+      else
+        a = multiplier(1)
+        b = multiplier(2)
+      end if
+
+      ! First check that things are OK.
+      if (.not. ValidateVectorQuantity ( qty, &
+        & quantityType=(/l_chiSqMMif/), minorFrame=.true.) ) then
+        call Announce_error ( key, No_Error_code, &
+        & 'Attempting to fill wrong quantity with chi^2 MMIFwise'  )
+        if ( DEEBUG ) then
+          call output('minor frame? ', advance = 'no')
+          call output(qty%template%minorFrame, advance = 'no')
+          call output('   quantity type ', advance = 'no')
+          call output(qty%template%quantityType, advance = 'no')
+          call output('   compared with ', advance = 'no')
+          call output(l_chiSqMMif, advance = 'yes')
+        end if
+        return
+      else if (.not. FillableChiSq ( qty, measQty, modelQty, noiseQty ) ) then
+        call Announce_error ( key, No_Error_code, &
+        & 'Incompatibility among vector quantities filling chi^2 MMIFwise'  )
+        return
+      else if (any ( noiseQty%values == 0.0) .and. &
+        & .not. (ignoreZero .or. .not. dontMask) ) then
+        call Announce_error ( key, No_Error_code, &
+        & 'A vanishing noise filling chi^2 MMIFwise'  )
+        return
+      end if
+
+      ! Work out what to do with the first and last Instance information
+
+      if ( PRESENT(firstInstance) ) then
+        useFirstInstance = firstInstance
+      else
+        useFirstInstance = 1
+      end if
+
+      if ( PRESENT(lastInstance) ) then
+        useLastInstance = lastInstance
+      else
+        useLastInstance = qty%template%noInstances
+      end if
+      noOutputInstances = useLastInstance-useFirstInstance+1
+      ! If we've not been asked to output anything then don't carry on
+      if ( noOutputInstances < 1 ) return
+
+      call allocate_test(values, measQty%template%noChans, &
+        & 'chi^2 unsummed', ModuleName)
+      noMIFs = measQty%template%noSurfs
+      do i=useFirstInstance, useLastInstance
+        do s=1, noMIFs
+          N = 0
+          values = 0.0
+          do c=1, measQty%template%noChans
+            qIndex = c + (s-1)*measQty%template%noChans
+            skipMe = &
+            & .not. dontMask .and. ( &
+            &   isVectorQtyMasked(measQty, qIndex, i) .or. &
+            &   isVectorQtyMasked(modelQty, qIndex, i) .or. &
+            &   isVectorQtyMasked(noiseQty, qIndex, i) ) &
+            & .or. (ignoreNegative .and. noiseQty%values(qIndex, i) < 0.0 ) &
+            & .or. (ignoreZero .and. noiseQty%values(qIndex, i) == 0.0 )
+            if ( .not. skipMe ) then
+              values(c) = ( &
+              & (a*measQty%values(qIndex, i) - b*modelQty%values(qIndex, i)) &
+              & / &
+              & noiseQty%values(qIndex, i) &
+              &  ) ** 2
+              N = N + 1
+            end if
+          end do
+          if ( N > 0 ) then
+            qty%values(s, i) = sum(values) / N
+          else
+            qty%values(s, i) = 0.
+          end if
+        end do
+      end do
+      call deallocate_test(values, &
+        & 'chi^2 unsummed', ModuleName)
+    end subroutine FillChiSqMMif
+
+    ! ------------------------------------------- FillColAbundance ---
+    subroutine FillColAbundance ( key, qty, bndPressQty, vmrQty, &
+    & firstInstance, lastInstance )
+      ! A special fill according to Appendix A of EOS MLS ATBD
+      ! JPL D-16159
+      ! EOS MLS DRL 601 (part 3)
+      ! ATBD-MLS-03
+      ! (Livesey and Wu)
+
+      ! Assumptions:
+      ! (1)This fill operation is triggered by a command
+      !    such as the following in the lcf
+      !      Fill, state.columnO3, method=special, vmrQuantity=state.o3, $
+      !      boundaryPressure=state.tpPressure
+      ! (2)the vmr is in units of PHYQ_VMR and not, say, ppmv;
+      !    it is in fact identical to the coefficients of the mls basis functions
+      ! (3)The pressure surfaces are in hPa, but not all necessarily at the
+      !    same logarithmic distance from one another
+      ! (4)The tropospheric boundary pressure is somewhere in between the surfs
+      ! (5)Unless first,last instances are args, fill all instances
+      !    (unlike join which has to worry about chunks and overlaps)
+      integer, intent(in) :: KEY
+      type (VectorValue_T), intent(inout) :: QTY
+      type (VectorValue_T), intent(in) ::    bndPressQty
+      type (VectorValue_T), intent(in) ::    vmrQty
+      integer, intent(in), optional ::       firstInstance, lastInstance
+      ! The last two are set if only part (e.g. overlap regions) of the quantity
+      ! is to be stored in the column data.
+
+      ! Local variables
+      real (r8) :: AoverMg         ! A/(M g) from Appendix A
+      logical ::   zeta_surfs      ! If true, surfs are zeta-type; else pressures
+      integer ::   status
+      integer ::   surface
+      integer ::   instance
+      integer ::   surfaceInstance
+      integer ::   firstSurface
+      integer ::   UseFirstInstance, UseLastInstance, &
+      &            NoOutputInstances
+      real (r8) :: columnSum
+      real (r8) :: Delta_p_plus    ! p[j+1] - p[j]
+      real (r8) :: Delta_p_minus   ! p[j-1] - p[j]
+      real (r8) :: Delta_log_plus  ! ln p[j+1] - ln p[j]
+      real (r8) :: Delta_log_minus ! ln p[j-1] - ln p[j]
+
+      real (r8), allocatable, dimension(:) :: p         ! p[i] in hPa
+
+      ! Executable code
+      ! First check that things are OK.
+      if ( (qty%template%quantityType /= l_columnAbundance) .or. &
+        &  (bndPressQty%template%quantityType /= l_boundaryPressure) .or. &
+        &  (vmrQty%template%quantityType /= l_vmr) ) then
+            call Announce_error ( key, No_Error_code, &
+                & 'Wrong quantity type found while filling column abundance'  )
+        return
+      else if ( qty%template%molecule /= vmrQty%template%molecule) then
+            call Announce_error ( key, No_Error_code, &
+                & 'Attempt to fill column abundance with different molecule'  )
+        return
+      else if ( &
+      & .not. ( &
+      & DoHgridsMatch( qty, vmrQty ) &
+      & .and. &
+      & DoHgridsMatch( qty, bndPressQty ) &
+      & ) &
+      & ) then
+            call Announce_error ( key, No_Error_code, &
+                & 'Attempt to fill column abundance with different HGrids'  )
+        return
+      else if ( .not. &
+      & any(vmrQty%template%verticalCoordinate == (/l_pressure, l_zeta/)) &
+      & ) then
+            call Announce_error ( key, No_Error_code, &
+                & 'Fill column abundance, but vmr not on [log]pressure surfs.'  )
+        return
+      end if
+
+      ! Work out what to do with the first and last Instance information
+
+      if ( PRESENT(firstInstance) ) then
+        useFirstInstance = firstInstance
+      else
+        useFirstInstance = 1
+      end if
+
+      if ( PRESENT(lastInstance) ) then
+        useLastInstance = lastInstance
+      else
+        useLastInstance = qty%template%noInstances
+      end if
+      noOutputInstances = useLastInstance-useFirstInstance+1
+      ! If we've not been asked to output anything then don't carry on
+      if ( noOutputInstances < 1 ) return
+     !    AoverMg = 4.12e25 / (2.687e20 * 0.192)
+     !    This assumes that
+     ! (1) p is in hPa
+     ! (2) f is in PHYQ_vmr (*not* ppmv)
+     AoverMg = 4.12e5 / (2.687 * 0.192)
+
+     zeta_surfs = vmrQty%template%verticalCoordinate == l_zeta
+     allocate(p(vmrQty%template%noSurfs), stat=status)
+     if(status /= 0) then
+            call Announce_error ( key, No_Error_code, &
+                & 'Error in allocating p'  )
+        return
+     end if   
+  !   do instance=1, vmrQty%template%noInstances
+     do instance=useFirstInstance, useLastInstance
+        if(vmrQty%template%coherent) then
+           surfaceInstance=1
         else
-          Chan_T = Channel
-        endif
-        if ( interpolate ) then
-          do s=1, sourceQuantity%template%noSurfs
-            qIndex = Chan_h2o + (s-1)*sourceQuantity%template%noChans
-            oldH2o(s) = sourceQuantity%values(qIndex, i_h2o)
-          enddo
-          ! Know the following about the procedure we will call:
-          ! First pair of args are old(X,Y), next pair are new(X,Y)
-          ! We want newY(newX) via linear interp. w/o extrapolating
-          ! and mark undefined values among oldY with UNDEFINED_VALUE
-          call InterpolateValues( zetah2o, oldH2o, &
-           & zeta, H2OofZeta, &
-           & 'Linear', extrapolate='Constant', &
-           & badValue=real(UNDEFINED_VALUE, r8), &
-           & missingRegions=.TRUE. )
-          do s=1, Temperaturequantity%template%noSurfs
-            qIndex = Chan_T + (s-1)*Temperaturequantity%template%noChans
-            oldTemperature(s) = TemperatureQuantity%values(qIndex, i_T)
-          enddo
-          call InterpolateValues( zetaTemperature, oldTemperature, &
-           & zeta, TofZeta, &
-           & 'Linear', extrapolate='Constant', &
-           & badValue=real(UNDEFINED_VALUE, r8), &
-           & missingRegions=.TRUE. )
+           surfaceInstance=instance
+        end if
+
+        if(zeta_surfs) then
+           ! Invert zeta = -log10(p)
+           do surface=1, vmrQty%template%noSurfs
+              p(surface) = exp(-log(10.)* &
+              & vmrQty%template%surfs(surface, surfaceInstance))
+           end do
         else
+           do surface=1, vmrQty%template%noSurfs
+              p(surface) = vmrQty%template%surfs(surface, surfaceInstance)
+           end do
+        end if
+
+        if(p(1) &
+           &  < bndPressQty%values(1, instance)) then
+            call Announce_error ( key, No_Error_code, &
+                & 'Fill column abundance, but tropopause below VGrid'  )
+        end if
+
+     ! Find 1st surface at or above tropopause
+     ! (i.e., at a pressure equal to or less than boundaryPressure)
+        do surface=1, vmrQty%template%noSurfs
+           if(p(surface) &
+           &  <= bndPressQty%values(1, instance)) exit
+        end do
+        firstSurface = surface
+        if(firstSurface > vmrQty%template%noSurfs-2) then
+            call Announce_error ( key, No_Error_code, &
+                & 'Fill column abundance, but tropopause above VGrid'  )
+        end if
+     ! Do summation
+     ! Initialize sum, Deltas
+        columnSum = 0.
+        Delta_p_plus = p(firstSurface+1) - p(firstSurface)
+        Delta_log_plus = log(p(firstSurface+1)) - log(p(firstSurface))
+     ! Loop over surfaces from tropoause+1 to uppermost-1
+        do surface = firstSurface+1, vmrQty%template%noSurfs-1
+           Delta_p_minus = - Delta_p_plus
+           Delta_log_minus = - Delta_log_plus
+           Delta_p_plus = p(surface+1) - p(surface)
+           Delta_log_plus = log(p(surface+1)) - log(p(surface))
+           columnSum = columnSum + &
+           & vmrQty%values(surface, instance)* &
+           & ( &
+           & Delta_p_minus/Delta_log_minus &
+           & - &
+           & Delta_p_plus/Delta_log_plus &
+           & )          
+        end do
+        qty%values(1, instance) = AoverMg * columnSum
+     end do
+
+     deallocate(p, stat=status)
+     if(status /= 0) then
+            call Announce_error ( key, No_Error_code, &
+                & 'Error in deallocating p'  )
+     end if   
+
+    end subroutine FillColAbundance
+
+    ! ------------------------------------- FillFoldedRadiance ---
+    subroutine FillFoldedRadiance ( radiance, lsb, usb, &
+      & lsbFraction, usbFraction, key )
+      type (VectorValue_T), intent(inout) :: RADIANCE
+      type (VectorValue_T), intent(in) :: USB
+      type (VectorValue_T), intent(in) :: LSB
+      type (VectorValue_T), intent(in) :: USBFRACTION
+      type (VectorValue_T), intent(in) :: LSBFRACTION
+      integer, intent(in) :: KEY
+
+      ! Local variables
+      integer :: C                        ! Channel loop inductor
+      integer :: I                        ! Array index
+      integer :: MIF                      ! Minor frame loop inductor
+
+      ! Executable code
+      ! First some sanity checks
+      if (.not. ValidateVectorQuantity ( radiance, quantityType=(/l_radiance/), &
+        & sideband=(/0/), minorFrame=.true. )) &
+        & call Announce_Error ( key, 0, 'Inappropriate radiance quantity to fill' )
+      if (.not. ValidateVectorQuantity ( lsb, quantityType=(/l_radiance/), &
+        & sideband=(/-1/), signal=(/radiance%template%signal/), minorFrame=.true. )) &
+        & call Announce_Error ( key, 0, 'Inappropriate lsb radiance quantity for fill' )
+      if (.not. ValidateVectorQuantity ( usb, quantityType=(/l_radiance/), &
+        & sideband=(/1/), signal=(/radiance%template%signal/), minorFrame=.true. )) &
+        & call Announce_Error ( key, 0, 'Inappropriate usb radiance quantity for fill' )
+      if (.not. ValidateVectorQuantity ( lsbFraction, quantityType=(/l_sidebandRatio/), &
+        & signal=(/radiance%template%signal/), sideband=(/-1/) ) ) &
+        & call Announce_Error ( key, 0, 'Inappropriate lsbFraction quantity for fill' )
+      if (.not. ValidateVectorQuantity ( usbFraction, quantityType=(/l_sidebandRatio/), &
+        & signal=(/radiance%template%signal/), sideband=(/-1/) ) ) &
+        & call Announce_Error ( key, 0, 'Inappropriate usbFraction quantity for fill' )
+
+      ! Now do the work
+      i = 1                               ! Use i as a composit mif,channel index
+      do mif = 1, radiance%template%noSurfs
+        do c = 1, radiance%template%noChans
+          radiance%values(i,:) = &
+            & lsbFraction%values(c,1) * lsb%values(i,:) + &
+            & usbFraction%values(c,1) * usb%values(i,:)
+          i = i + 1
+        end do
+      end do
+
+    end subroutine FillFoldedRadiance
+
+    ! ------------------------------------ FillPhiTanWithRefraction --
+    subroutine FillPhiTanWithRefraction ( key, quantity, ptanQuantity, &
+      & temperatureQuantity, h2oQuantity, refract )
+      integer, intent(in) :: KEY          ! Tree node
+      type (VectorValue_T), intent(inout) :: QUANTITY ! PhiTan quantity to fill
+      type (VectorValue_T), pointer :: PTANQUANTITY ! Ptan for same module
+      type (VectorValue_T), pointer :: TEMPERATUREQUANTITY ! Temperature
+      type (VectorValue_T), pointer :: H2OQUANTITY ! Water vapor
+      logical, intent(in) :: REFRACT      ! Do refraction or not
+
+      ! Executable code
+      ! First check sanity
+      if ( .not. ValidateVectorQuantity ( quantity, &
+        & quantityType=(/l_phiTan/), minorFrame=.true. ) ) &
+        & call Announce_error ( key, 0, 'Quantity to fill is not phiTan' )
+      if ( refract ) then
+        ! More sanity checks
+        if ( .not. ValidateVectorQuantity ( ptanQuantity, &
+          & quantityType=(/l_ptan/), minorFrame=.true. ) ) &
+          & call Announce_error ( key, 0, 'Problem with ptan quantity for phiTan fill' )
+        if ( quantity%template%instrumentModule /= &
+          &  ptanQuantity%template%instrumentModule ) &
+          & call Announce_error ( key, 0, 'phiTan and ptan quantities not for same module' )
+        if ( .not. ValidateVectorQuantity ( temperatureQuantity, &
+          & quantityType=(/l_temperature/), coherent=.true., stacked=.true., &
+          & frequencyCoordinate=(/l_none/), verticalCoordinate=(/l_zeta/) ) ) &
+          & call Announce_error ( key, 0, 'Problem with temperature quantity for phiTan fill' )
+        if ( .not. ValidateVectorQuantity ( h2oQuantity, &
+          & quantityType=(/l_vmr/), molecule=(/l_h2o/), coherent=.true., stacked=.true., &
+          & frequencyCoordinate=(/l_none/), verticalCoordinate=(/l_zeta/) ) ) &
+          & call Announce_error ( key, 0, 'Problem with temperature quantity for phiTan fill' )
+
+        ! OK, do the refraction calculation
+        call Announce_error ( key, 0, 'Refract=true, not yet supported' )
+      else
+        ! Just copy it from the template
+        quantity%values = quantity%template%phi
+      end if
+
+    end subroutine FillPhiTanWithRefraction
+
+      ! ------------------------------------- FillRHIFromH2O ----
+    subroutine FillRHIFromH2O ( key, quantity, &
+     & sourceQuantity, temperatureQuantity, &
+     & dontMask, ignoreZero, ignoreNegative, interpolate, &
+     & markUndefinedValues, invert )
+      ! Convert h2o vmr to %RHI for all instances, channels, surfaces
+      ! (See Eq. 9 from "UARS Microwave Limb Sounder upper tropospheric
+      !  humidity measurement: Method and validation" Read et. al. 
+      !  J. Geoph. Res. Dec. 2001 (106) D23)
+
+      !  Method:
+      ! (1) straight convert--all quantities must have the same shape
+      !     (strictly we assume they have _all_ the same geolocations)
+      ! (2) interpolate--all quantities may have different shapes
+      !     (the interpolation will be along the vertical coordinate only)
+      !     I.e., for xQuantity (where x can be h2o or temperature)
+      !     if NoChans(xQuantity) /= NoChans(Quantity)
+      !        => use only xQuantity(channel==1)
+      !     if NoInstances(xQuantity) /= NoInstances(Quantity)
+      !        => use only xQuantity(instance==1)
+      !
+      ! (3) if invert is TRUE, like (1) but its inverse: %RHI to h2o vmr
+      integer, intent(in) :: key          ! For messages
+      ! Actually, the meaning of the next two is reversed if invert is TRUE)
+      type (VectorValue_T), intent(inout) :: QUANTITY ! (rhi) Quantity to fill
+      type (VectorValue_T), intent(in) :: sourceQuantity ! vmr (unless invert)
+      type (VectorValue_T), intent(in) :: temperatureQuantity ! T(zeta)
+  !   type (VectorValue_T), intent(in) :: refGPHQuantity ! zeta
+      logical, intent(in)           ::    dontMask    ! Use even masked values
+      logical, intent(in)           ::    ignoreZero  ! Ignore 0 values of h2o
+      logical, intent(in)           ::    ignoreNegative  ! Ignore <0 values
+      logical, intent(in)           ::    interpolate ! If VGrids or HGrids differ
+      logical, intent(in)           ::    markUndefinedValues ! as UNDEFINED_VALUE
+      logical, intent(in)           ::    invert      ! %RHI -> vmr if TRUE
+
+      ! Local variables
+      integer ::                          Channel     ! Channel loop counter    
+      integer ::                          Chan_h2o    ! Channel loop counter    
+      integer ::                          Chan_T      ! Channel loop counter    
+      logical, parameter ::               DEEBUG_RHI = .false.
+      integer                          :: dim
+      integer ::                          I           ! Instances
+      integer ::                          I_H2O       ! Instance num for values
+      integer ::                          I_T         ! Instance num for values
+      integer ::                          invs        ! 1 if invert, else -1
+      integer ::                          QINDEX                                
+      integer ::                          N           ! Num. of summed values   
+      logical                          :: matched_h2o_channels
+      logical                          :: matched_h2o_instances
+      logical                          :: matched_sizes
+      logical                          :: matched_surfs
+      logical                          :: matched_T_channels
+      logical                          :: matched_T_instances
+      integer ::                          S           ! Surface loop counter    
+      integer ::                          S_H2O       ! Instance num for surfs
+      integer ::                          S_RHI       ! Instance num for surfs
+      integer ::                          S_T         ! Instance num for surfs
+      logical ::                          skipMe                                
+      real (r8) ::                        T
+      character(len=*), parameter ::      VMR_UNITS = 'vmr'
+      integer ::                          VMR_UNIT_CNV
+      logical ::                          wereAnySkipped
+      ! These automatic arrays could cause trouble later
+      ! You may consider declaring them as pointers and
+      ! calling allocate_test and deallocate_test
+      real (r8), dimension(quantity%template%noSurfs) :: &
+       &                                  zeta, TofZeta, H2OofZeta
+      real (r8), dimension(Temperaturequantity%template%noSurfs) :: &
+       &                                  zetaTemperature, oldTemperature
+      real (r8), dimension(sourceQuantity%template%noSurfs) :: &
+       &                                  zetaH2o, oldH2o
+      ! Executable statements
+      ! Let any undefined values be so marked (but not necessarily masked)
+      if ( markUndefinedValues ) Quantity%values = UNDEFINED_VALUE
+      ! Will we convert %RHI to vmr?
+      if ( invert ) then
+        invs = 1
+      else
+        invs = -1
+      end if
+      ! Do we need to internally convert the vmr units?
+      if ( VMR_UNITS == 'ppmv' ) then
+        vmr_unit_cnv = 6
+      else if ( VMR_UNITS == 'ppbv' ) then
+        vmr_unit_cnv = 9
+      else
+        vmr_unit_cnv = 0
+      end if
+      ! Check that all is well
+      if ( invert .and. interpolate ) then
+       call Announce_Error ( key, No_Error_code, &
+        & ' FillRHIFromH2O unable to invert and interpolate simultaneously' )
+       return
+      end if
+      matched_sizes = .true.
+      do dim=1, 2
+        matched_sizes = matched_sizes .and. &
+        & .not. any( size(Quantity%values,dim) /= &
+        &(/ size(sourceQuantity%values,dim), &
+        & size(temperatureQuantity%values,dim) /)&
+        & )
+      end do
+      if ( .not. (matched_sizes .or. interpolate) ) then
+       call Announce_Error ( key, No_Error_code, &
+        & 'Incompatible quantities in FillRHIFromH2O--' //&
+        & '(unless interpolating, all must have same shape)' )
+       return
+      end if
+      matched_surfs = .true.
+      matched_surfs = matched_surfs .and. &
+       & .not. any( Quantity%template%noSurfs /= &
+       &(/ sourceQuantity%template%noSurfs, &
+       & temperatureQuantity%template%noSurfs /)&
+       & )
+      if ( .not. (matched_surfs .or. interpolate) ) then
+       call Announce_Error ( key, No_Error_code, &
+        & 'Different vertical coords in FillRHIFromH2O--' //&
+        & '(unless interpolating, all must be on the same VGrid)' )
+       return
+      end if
+      matched_h2o_channels = &
+       &   (sourceQuantity%template%noChans == Quantity%template%noChans)
+      matched_h2o_instances = &
+       &   (sourceQuantity%template%noInstances == Quantity%template%noInstances)
+      matched_T_channels = &
+       &   (TemperatureQuantity%template%noChans == Quantity%template%noChans)
+      matched_T_instances = &
+       &   (TemperatureQuantity%template%noInstances == Quantity%template%noInstances)
+      wereAnySkipped = .false.
+      ! Now let's do the actual conversion
+      do i=1, quantity%template%noInstances
+        if ( quantity%template%coherent ) then
+          s_rhi = 1
+        else
+          s_rhi = i
+        end if
+        if ( sourceQuantity%template%coherent ) then
+          s_h2o = 1
+        else
+          s_h2o = i
+        end if
+        if ( temperaturequantity%template%coherent ) then
+          s_t = 1
+        else
+          s_t = i
+        end if
+        ! zeta must be in log(hPa) units
+        if ( quantity%template%verticalCoordinate == l_pressure ) then 
+          zeta = -log10 ( quantity%template%surfs(:,s_rhi) )             
+        else
+          zeta = quantity%template%surfs(:,s_rhi)                        
+        end if
+        if ( interpolate .and. .not. matched_h2o_instances ) then
+          i_h2o = 1
+        else
+          i_h2o = i
+        end if
+        if ( interpolate .and. .not. matched_T_instances ) then
+          i_T = 1
+        else
+          i_T = i
+        end if
+        if ( sourceQuantity%template%verticalCoordinate == l_pressure ) then 
+          zetah2o = -log10 ( sourceQuantity%template%surfs(:,s_h2o) )             
+        else                                                           
+          zetah2o = sourceQuantity%template%surfs(:,s_h2o)            
+        end if
+        if ( Temperaturequantity%template%verticalCoordinate == l_pressure ) then 
+          zetaTemperature = -log10 ( Temperaturequantity%template%surfs(:,s_T) )             
+        else                                                           
+          zetaTemperature = Temperaturequantity%template%surfs(:,s_T)            
+        end if
+        N = 0
+        do Channel=1, quantity%template%noChans
+          if ( interpolate .and. .not. matched_h2o_channels ) then
+            Chan_h2o = 1
+          else
+            Chan_h2o = Channel
+          end if
+          if ( interpolate .and. .not. matched_T_channels ) then
+            Chan_T = 1
+          else
+            Chan_T = Channel
+          end if
+          if ( interpolate ) then
+            do s=1, sourceQuantity%template%noSurfs
+              qIndex = Chan_h2o + (s-1)*sourceQuantity%template%noChans
+              oldH2o(s) = sourceQuantity%values(qIndex, i_h2o)
+            end do
+            ! Know the following about the procedure we will call:
+            ! First pair of args are old(X,Y), next pair are new(X,Y)
+            ! We want newY(newX) via linear interp. w/o extrapolating
+            ! and mark undefined values among oldY with UNDEFINED_VALUE
+            call InterpolateValues( zetah2o, oldH2o, &
+             & zeta, H2OofZeta, &
+             & 'Linear', extrapolate='Constant', &
+             & badValue=real(UNDEFINED_VALUE, r8), &
+             & missingRegions=.TRUE. )
+            do s=1, Temperaturequantity%template%noSurfs
+              qIndex = Chan_T + (s-1)*Temperaturequantity%template%noChans
+              oldTemperature(s) = TemperatureQuantity%values(qIndex, i_T)
+            end do
+            call InterpolateValues( zetaTemperature, oldTemperature, &
+             & zeta, TofZeta, &
+             & 'Linear', extrapolate='Constant', &
+             & badValue=real(UNDEFINED_VALUE, r8), &
+             & missingRegions=.TRUE. )
+          else
+            do s=1, quantity%template%noSurfs
+              N = N + 1
+              qIndex = Channel + (s-1)*quantity%template%noChans
+              H2OofZeta(s) = sourceQuantity%values(qIndex, i)
+              TofZeta(s) = TemperatureQuantity%values(qIndex, i)
+            end do
+          end if
           do s=1, quantity%template%noSurfs
             N = N + 1
             qIndex = Channel + (s-1)*quantity%template%noChans
-            H2OofZeta(s) = sourceQuantity%values(qIndex, i)
-            TofZeta(s) = TemperatureQuantity%values(qIndex, i)
-          enddo
-        endif
-        do s=1, quantity%template%noSurfs
-          N = N + 1
-          qIndex = Channel + (s-1)*quantity%template%noChans
-          skipMe = .false.
-          if ( .not. interpolate) then
-           skipMe = skipMe .or. &
-           & .not. dontMask .and. ( &
-           &   isVectorQtyMasked(sourceQuantity, qIndex, i) .or. &
-           &   isVectorQtyMasked(temperatureQuantity, qIndex, i) &
-           & )
-          endif
-          skipMe = skipMe .or. &
-          & .not. dontMask .and. ( &
-          & (ignoreNegative .and. H2OofZeta(s) < 0.0 ) &
-          & .or. (ignoreZero .and. H2OofZeta(s) == 0.0 ) &
-          & )
-          ! But skip no matter what else if temperature illegal
-          skipMe = skipMe .or. TofZeta(s) <= 0.0
-          if ( .not. skipMe ) then
-            T = TofZeta(s)
-            Quantity%values(qIndex, i) = &
-             & H2OofZeta(s) &
-             & * &
-             & exp(invs*( &
-             & (C(T)+zeta(qIndex)+vmr_unit_cnv) * log(10.) &
-             & + &
-             & 3.56654*log(T/273.16) &
-             & ))
-          endif
-          wereAnySkipped = wereAnySkipped .or. skipMe
-        enddo
-      enddo
-    enddo
-    if ( DEEBUG_RHI ) then
-      call output('rhi Num. instances: ', advance='no')
-      if ( invert ) then
-        call output(sourceQuantity%template%noInstances, advance='yes')
-      else
-        call output(quantity%template%noInstances, advance='yes')
-      endif
-      call output('  size(surfs,2) ', advance='no')
-      call output(size(quantity%template%surfs,2), advance='yes')
-      call output('Were any rhi left undefined? ', advance='no')
-      call output(wereAnySkipped, advance='yes')
-      call dump(zeta, 'zeta(-log hPa)')
-      do s=1, quantity%template%noSurfs
+            skipMe = .false.
+            if ( .not. interpolate) then
+             skipMe = skipMe .or. &
+             & .not. dontMask .and. ( &
+             &   isVectorQtyMasked(sourceQuantity, qIndex, i) .or. &
+             &   isVectorQtyMasked(temperatureQuantity, qIndex, i) &
+             & )
+            end if
+            skipMe = skipMe .or. &
+            & .not. dontMask .and. ( &
+            & (ignoreNegative .and. H2OofZeta(s) < 0.0 ) &
+            & .or. (ignoreZero .and. H2OofZeta(s) == 0.0 ) &
+            & )
+            ! But skip no matter what else if temperature illegal
+            skipMe = skipMe .or. TofZeta(s) <= 0.0
+            if ( .not. skipMe ) then
+              T = TofZeta(s)
+              Quantity%values(qIndex, i) = &
+               & H2OofZeta(s) &
+               & * &
+               & exp(invs*( &
+               & (C(T)+zeta(qIndex)+vmr_unit_cnv) * log(10.) &
+               & + &
+               & 3.56654*log(T/273.16) &
+               & ))
+            end if
+            wereAnySkipped = wereAnySkipped .or. skipMe
+          end do
+        end do
+      end do
+      if ( DEEBUG_RHI ) then
+        call output('rhi Num. instances: ', advance='no')
         if ( invert ) then
-          zeta(s) = 1000000*Quantity%values(s,1)
+          call output(sourceQuantity%template%noInstances, advance='yes')
         else
-          zeta(s) = 1000000*sourceQuantity%values(s,1)
-        endif
-      enddo
-      call dump(zeta, 'H2O(ppmv)')
-      call dump(TemperatureQuantity%values(:,1), 'Temperature(K)')
-      if ( invert ) then
-        call dump(sourceQuantity%values(:,1), 'RHI(%)')
-      else
-        call dump(Quantity%values(:,1), 'RHI(%)')
-      endif
-    endif
-    contains
-    function C ( T )
-      ! As found in ref.
-      real(r8), intent(in)   :: T
-      real(r8)               :: C
-      ! Local
-      real(r8), parameter    :: a0 = -1.2141649d0
-      real(r8), parameter    :: a1 = 9.09718d0
-      real(r8), parameter    :: a2 = 0.876793d0
-      real, parameter        :: ILLEGALTEMP = UNDEFINED_VALUE
-      !
-      if ( T > 0.d0 ) then
-        C = a0 - a1*(273.16/T -1.0d0) + a2*(1.0d0 - T/273.16)
-      else
-        C = ILLEGALTEMP
-      endif
-    end function C
-  end subroutine FillRHIFromH2O
+          call output(quantity%template%noInstances, advance='yes')
+        end if
+        call output('  size(surfs,2) ', advance='no')
+        call output(size(quantity%template%surfs,2), advance='yes')
+        call output('Were any rhi left undefined? ', advance='no')
+        call output(wereAnySkipped, advance='yes')
+        call dump(zeta, 'zeta(-log hPa)')
+        do s=1, quantity%template%noSurfs
+          if ( invert ) then
+            zeta(s) = 1000000*Quantity%values(s,1)
+          else
+            zeta(s) = 1000000*sourceQuantity%values(s,1)
+          end if
+        end do
+        call dump(zeta, 'H2O(ppmv)')
+        call dump(TemperatureQuantity%values(:,1), 'Temperature(K)')
+        if ( invert ) then
+          call dump(sourceQuantity%values(:,1), 'RHI(%)')
+        else
+          call dump(Quantity%values(:,1), 'RHI(%)')
+        end if
+      end if
+    end subroutine FillRHIFromH2O
 
-  ! ---------------------------------- FillVectorQuantityWithEsimatedNoise ---
-  subroutine FillVectorQtyWithEstNoise ( quantity, radiance, &
-    & sysTemp, nbw, integrationTime )
+      ! Properly belongs in FillRHIFromH2O, but that would make two levels
+      function C ( T )
+        ! As found in ref.
+        real(r8), intent(in)   :: T
+        real(r8)               :: C
+        ! Local
+        real(r8), parameter    :: a0 = -1.2141649d0
+        real(r8), parameter    :: a1 = 9.09718d0
+        real(r8), parameter    :: a2 = 0.876793d0
+        real, parameter        :: ILLEGALTEMP = UNDEFINED_VALUE
+        !
+        if ( T > 0.d0 ) then
+          C = a0 - a1*(273.16/T -1.0d0) + a2*(1.0d0 - T/273.16)
+        else
+          C = ILLEGALTEMP
+        end if
+      end function C
 
-    use MLSSignals_m, only: signals
+    ! ---------------------------------- FillVectorQuantityWithEsimatedNoise ---
+    subroutine FillVectorQtyWithEstNoise ( quantity, radiance, &
+      & sysTemp, nbw, integrationTime )
 
-    ! Dummy arguments
-    type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
-    type (VectorValue_T), intent(in) :: RADIANCE ! Radiances to use in calculation
-    type (VectorValue_T), intent(in) :: SYSTEMP ! System temperature
-    type (VectorValue_T), pointer :: NBW ! Noise bandwidth
-    real(r8), intent(in) :: INTEGRATIONTIME ! Integration time in seconds
+      use MLSSignals_m, only: signals
 
-    ! Local variables
-    integer :: C                        ! Channel loop counter
-    integer :: S                        ! Surface loop counter
-    integer :: I                        ! Index into first dimension of values
-    real (r8), dimension(2) :: VALUEASARRAY
-    integer, dimension(2) :: UNITASARRAY
+      ! Dummy arguments
+      type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
+      type (VectorValue_T), intent(in) :: RADIANCE ! Radiances to use in calculation
+      type (VectorValue_T), intent(in) :: SYSTEMP ! System temperature
+      type (VectorValue_T), pointer :: NBW ! Noise bandwidth
+      real(r8), intent(in) :: INTEGRATIONTIME ! Integration time in seconds
 
-    real (r8), dimension(:), pointer :: WIDTH ! Channel widths in MHz
-    real (r8), dimension(quantity%template%noChans) :: SYSTEMTEMPERATURE
+      ! Local variables
+      integer :: C                        ! Channel loop counter
+      integer :: S                        ! Surface loop counter
+      integer :: I                        ! Index into first dimension of values
 
-    ! Executable code
+      real (r8), dimension(:), pointer :: WIDTH ! Channel widths in MHz
 
-    if (.not. ValidateVectorQuantity ( quantity, &
-      & quantityType=(/l_radiance/), minorFrame=.true.) ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & "Invalid quantity for estimated noise fill.")
+      ! Executable code
 
-    if (.not. ValidateVectorQuantity ( radiance, &
-      & quantityType=(/l_radiance/), minorFrame=.true.) ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & "Invalid quantity for estimated noise fill.")
+      if (.not. ValidateVectorQuantity ( quantity, &
+        & quantityType=(/l_radiance/), minorFrame=.true.) ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & "Invalid quantity for estimated noise fill.")
 
-    if ( ( radiance%template%signal /= quantity%template%signal ) .or. &
-      &  ( radiance%template%sideband /= quantity%template%sideband ) ) &
-      & call MLSMEssage ( MLSMSG_Error, ModuleName, &
-      & "Quantity and radiances not same signal for estimated noise fill.")
+      if (.not. ValidateVectorQuantity ( radiance, &
+        & quantityType=(/l_radiance/), minorFrame=.true.) ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & "Invalid quantity for estimated noise fill.")
 
-    if ( ( systemp%template%signal /= quantity%template%signal ) .or. &
-      &  ( systemp%template%sideband /= quantity%template%sideband ) ) &
-      & call MLSMEssage ( MLSMSG_Error, ModuleName, &
-      & "Quantity and system temperature not same signal for estimated noise fill." )
+      if ( ( radiance%template%signal /= quantity%template%signal ) .or. &
+        &  ( radiance%template%sideband /= quantity%template%sideband ) ) &
+        & call MLSMEssage ( MLSMSG_Error, ModuleName, &
+        & "Quantity and radiances not same signal for estimated noise fill.")
 
-    if (.not. ValidateVectorQuantity ( &
-      & sysTemp, &
-      & quantityType=(/l_systemTemperature/), &
-      & verticalCoordinate=(/l_none/), &
-      & noInstances=(/1/) ) ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & "Invalid system temperature quantity for estimated noise fill.")
+      if ( ( systemp%template%signal /= quantity%template%signal ) .or. &
+        &  ( systemp%template%sideband /= quantity%template%sideband ) ) &
+        & call MLSMEssage ( MLSMSG_Error, ModuleName, &
+        & "Quantity and system temperature not same signal for estimated noise fill." )
 
-    if ( associated ( nbw ) ) then 
       if (.not. ValidateVectorQuantity ( &
-        & nbw, &
-        & quantityType=(/l_noiseBandwidth/), &
+        & sysTemp, &
+        & quantityType=(/l_systemTemperature/), &
         & verticalCoordinate=(/l_none/), &
         & noInstances=(/1/) ) ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & "Invalid noise bandwidth quantity for estimated noise fill.")
-      if ( ( nbw%template%signal /= quantity%template%signal ) .or. &
-        &    ( nbw%template%sideband /= quantity%template%sideband ) ) &
-        & call MLSMEssage ( MLSMSG_Error, ModuleName, &
-        & "Quantity and noise bandwidth not same signal for estimated noise fill." )
-      width => nbw%values(:,1)
-    else
-      width => signals(radiance%template%signal)%widths(:)
-    end if
+        & "Invalid system temperature quantity for estimated noise fill.")
 
-    i = 1
-    do s = 1, quantity%template%noSurfs
-      do c = 1, quantity%template%noChans
-        quantity%values(i,:) = ( radiance%values(i,:) + sysTemp%values(c,1) ) / &
-          & sqrt ( integrationTime * 1e6 * width(c) )
-        i = i + 1
+      if ( associated ( nbw ) ) then 
+        if (.not. ValidateVectorQuantity ( &
+          & nbw, &
+          & quantityType=(/l_noiseBandwidth/), &
+          & verticalCoordinate=(/l_none/), &
+          & noInstances=(/1/) ) ) &
+          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & "Invalid noise bandwidth quantity for estimated noise fill.")
+        if ( ( nbw%template%signal /= quantity%template%signal ) .or. &
+          &    ( nbw%template%sideband /= quantity%template%sideband ) ) &
+          & call MLSMEssage ( MLSMSG_Error, ModuleName, &
+          & "Quantity and noise bandwidth not same signal for estimated noise fill." )
+        width => nbw%values(:,1)
+      else
+        width => signals(radiance%template%signal)%widths(:)
+      end if
+
+      i = 1
+      do s = 1, quantity%template%noSurfs
+        do c = 1, quantity%template%noChans
+          quantity%values(i,:) = ( radiance%values(i,:) + sysTemp%values(c,1) ) / &
+            & sqrt ( integrationTime * 1e6 * width(c) )
+          i = i + 1
+        end do
       end do
-    end do
 
-  end subroutine FillVectorQtyWithEstNoise
+    end subroutine FillVectorQtyWithEstNoise
 
-  ! ------------------------------------- FillVectorHydrostatically ----
-  subroutine FillVectorQtyHydrostatically ( key, quantity, &
-    & temperatureQuantity, refGPHQuantity, h2oQuantity, &
-    & orbitInclinationQuantity, phiTanQuantity, geocAltitudeQuantity, maxIterations )
-    ! Various hydrostatic fill operations
-    integer, intent(in) :: key          ! For messages
-    type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
-    type (VectorValue_T), intent(in) :: TEMPERATUREQUANTITY
-    type (VectorValue_T), intent(in) :: REFGPHQUANTITY
-    type (VectorValue_T), pointer :: H2OQUANTITY
-    type (VectorValue_T), pointer :: ORBITINCLINATIONQUANTITY
-    type (VectorValue_T), pointer :: PHITANQUANTITY
-    type (VectorValue_T), pointer :: GEOCALTITUDEQUANTITY
-    integer, intent(in) :: MAXITERATIONS
-    ! H2OQuantity and GeocAltitudeQuantity have to be pointers
-    ! as they may be absent.
+    ! ------------------------------------- FillVectorHydrostatically ----
+    subroutine FillVectorQtyHydrostatically ( key, quantity, &
+      & temperatureQuantity, refGPHQuantity, h2oQuantity, &
+      & orbitInclinationQuantity, phiTanQuantity, geocAltitudeQuantity, maxIterations )
+      ! Various hydrostatic fill operations
+      integer, intent(in) :: key          ! For messages
+      type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
+      type (VectorValue_T), intent(in) :: TEMPERATUREQUANTITY
+      type (VectorValue_T), intent(in) :: REFGPHQUANTITY
+      type (VectorValue_T), pointer :: H2OQUANTITY
+      type (VectorValue_T), pointer :: ORBITINCLINATIONQUANTITY
+      type (VectorValue_T), pointer :: PHITANQUANTITY
+      type (VectorValue_T), pointer :: GEOCALTITUDEQUANTITY
+      integer, intent(in) :: MAXITERATIONS
+      ! H2OQuantity and GeocAltitudeQuantity have to be pointers
+      ! as they may be absent.
 
-    ! Local variables
+      ! Local variables
 
-    ! Executable code
+      ! Executable code
 
-    if ( toggle(gen) ) call trace_begin ( "FillVectorQtyHydrostatically", key )
+      if ( toggle(gen) ) call trace_begin ( "FillVectorQtyHydrostatically", key )
 
-    select case ( quantity%template%quantityType )
-    case ( l_gph )
-      if ( (temperatureQuantity%template%noSurfs /= &
-        &   quantity%template%noSurfs) .or. &
-        &  (refGPHQuantity%template%noInstances /= &
-        &   quantity%template%noInstances) .or. &
-        &  (temperatureQuantity%template%noInstances /= &
-        &   quantity%template%noInstances) ) then
-        call Announce_Error ( key, nonConformingHydrostatic, &
-          & "case l_gph failed first test" )
-	if ( toggle(gen) ) call trace_end ( "FillVectorQtyHydrostatically")
-        return
-      end if
-      if ( (any(quantity%template%surfs /= temperatureQuantity%template%surfs)) .or. &
-        & (any(quantity%template%phi /= temperatureQuantity%template%phi)) .or. &
-        & (any(quantity%template%phi /= refGPHQuantity%template%phi)) ) then
-        call Announce_Error ( key, nonConformingHydrostatic, &
-          &  "case l_gph failed second test" )
-	if ( toggle(gen) ) call trace_end ( "FillVectorQtyHydrostatically")
-        return
-      end if
-      call GetBasisGPH ( temperatureQuantity, refGPHQuantity, quantity%values )
-    case ( l_ptan )
-      if ( (temperatureQuantity%template%noInstances /= &
-        &   refGPHquantity%template%noInstances) .or. &
-        &  (temperatureQuantity%template%noInstances /= &
-        &   h2oQuantity%template%noInstances) ) then
-        call Announce_Error ( key, nonConformingHydrostatic, &
-          & "case l_ptan failed first test" )
-	if ( toggle(gen) ) call trace_end ( "FillVectorQtyHydrostatically")
-        return
-      end if
-      if ( (any(refGPHquantity%template%phi /= temperatureQuantity%template%phi)) .or. &
-        & (any(h2oQuantity%template%phi /= temperatureQuantity%template%phi)) ) then
-        call Announce_Error ( key, nonConformingHydrostatic, &
-          & "case l_ptan failed second test" )
-	if ( toggle(gen) ) call trace_end ( "FillVectorQtyHydrostatically")
-        return
-      end if
-      if ( (.not. ValidateVectorQuantity(quantity, minorFrame=.true.) ) .or. &
-        &  (.not. ValidateVectorQuantity(geocAltitudeQuantity, minorFrame=.true.) ) .or. &
-        &  (quantity%template%instrumentModule /= &
-        &   geocAltitudeQuantity%template%instrumentModule) )  then
-        call Announce_Error ( key, nonConformingHydrostatic, &
-          & "case l_ptan failed third test" )
-!        print *, 'ValidateVectorQuantity(quantity, minorFrame=.true.) ', &
-!        &  ValidateVectorQuantity(quantity, minorFrame=.true., sayWhyNot=.true.)
-!        print *, 'ValidateVectorQuantity(geocAltitudeQuantity, minorFrame=.true.) ', &
-!        & ValidateVectorQuantity(geocAltitudeQuantity, minorFrame=.true., sayWhyNot=.true.)
-!        print *, 'quantity%template%instrumentModule ', &
-!        & quantity%template%instrumentModule
-!        print *, 'geocAltitudeQuantity%template%instrumentModule ', &
-!        & geocAltitudeQuantity%template%instrumentModule
-         call output('ValidateVectorQuantity(quantity, minorFrame=.true.) ')
-         call blanks(3)
-         call output( &
-         & ValidateVectorQuantity(quantity, minorFrame=.true., sayWhyNot=.true.), &
-         & advance='yes')
-
-         call output('ValidateVectorQuantity(geocAltitudeQuantity, minorFrame=.true.) ')
-         call blanks(3)
-         call output( &
-         & ValidateVectorQuantity(geocAltitudeQuantity, minorFrame=.true., sayWhyNot=.true.), &
-         & advance='yes')
-
-         call output('quantity%template%instrumentModule ')
-         call blanks(3)
-         call output( &
-         & quantity%template%instrumentModule, &
-         & advance='yes')
-
-         call output('geocAltitudeQuantity%template%instrumentModule ')
-         call blanks(3)
-         call output( &
-         & geocAltitudeQuantity%template%instrumentModule, &
-         & advance='yes')
-	if ( toggle(gen) ) call trace_end ( "FillVectorQtyHydrostatically")
-        return
-      end if
-      call Get2DHydrostaticTangentPressure ( quantity, temperatureQuantity,&
-        & refGPHQuantity, h2oQuantity, orbitInclinationQuantity, &
-        & phiTanQuantity, geocAltitudeQuantity, maxIterations )
-    case default
-      call Announce_error ( 0, 0, 'No such fill yet' )
-    end select
-
-    if ( toggle(gen) ) call trace_end ( "FillVectorQtyHydrostatically" )
-
-  end subroutine FillVectorQtyHydrostatically
-
-  ! -------------------------------------- FillVectorQtyFromIsotope -----------
-
-  subroutine FillVectorQtyFromIsotope ( key, quantity, sourceQuantity, &
-            & ratioQuantity )
-    ! This routine fills one vector from another, given an appropriate
-    ! isotope ratio.
-
-    integer, intent(in) :: KEY          ! Tree node
-    type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
-    type (VectorValue_T), intent(in) :: SOURCEQUANTITY ! Quantity to take vmr from
-    type (VectorValue_T), intent(in) :: RATIOQUANTITY ! Isotope ratio information
-
-    ! Local variables
-    real (r8) :: FACTOR                 ! Multiplier to apply to sourceQuantity
-
-    ! Executable code
-
-    if (.not. ValidateVectorQuantity ( quantity, &
-      & quantityType=(/ l_vmr /), frequencyCoordinate=(/ l_none /) ) ) &
-      &   call MLSMessage ( MLSMSG_Error, ModuleName, &
-      &      "Inappropriate quantity for isotope fill")
-
-    if (.not. ValidateVectorQuantity ( sourceQuantity, &
-      & quantityType=(/ l_vmr /), frequencyCoordinate=(/ l_none /) ) ) &
-      &   call MLSMessage ( MLSMSG_Error, ModuleName, &
-      &      "Inappropriate source quantity for isotope fill")
-
-    if (.not. ValidateVectorQuantity ( ratioQuantity, &
-      & quantityType=(/ l_isotopeRatio /), frequencyCoordinate=(/ l_none /), &
-      & noInstances=(/1/), noSurfs=(/1/) ) ) &
-      &   call MLSMessage ( MLSMSG_Error, ModuleName, &
-      &     "Inappropriate form/quantity for isotope ratio")
-
-
-    if ( .not. DoHGridsMatch ( quantity, sourceQuantity ) .or. &
-      &  .not. DoVGridsMatch ( quantity, sourceQuantity ) ) &
-      &    call MLSMessage ( MLSMSG_Error, ModuleName, &
-      &      "Quantity and source quantity don't match for isotope fill" )
-
-    if ( quantity%template%molecule == sourceQuantity%template%molecule ) &
-      & call MLSMessage( MLSMSG_Error, ModuleName, &
-      &   "Source and quantity both describe same molecule in isotope fill")
-
-    if ( ratioQuantity%template%molecule == quantity%template%molecule ) then
-      ! Going from parent to isotope
-      factor = ratioQuantity%values(1,1)
-    else if ( ratioQuantity%template%molecule == sourceQuantity%template%molecule ) then
-      ! Going from isotope to parent
-      factor = 1.0/ratioQuantity%values(1,1)
-    else 
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & "Unable to understand isotope fill" )
-    end if
-
-    quantity%values = sourceQuantity%values * factor
-
-  end subroutine FillVectorQtyFromIsotope
-  
-  !=============================================== ExplicitFillVectorQuantity ==
-  subroutine ExplicitFillVectorQuantity(quantity, valuesNode, spread, globalUnit, &
-    & dontmask)
-
-    ! This routine is called from MLSL2Fill to fill values from an explicit
-    ! fill command line
-
-    ! Dummy arguments
-    type (VectorValue_T), intent(inout) :: QUANTITY ! The quantity to fill
-    integer, intent(in) :: VALUESNODE   ! Tree node
-    logical, intent(in) :: SPREAD       ! One instance given, spread to all
-    integer, intent(in) :: GLOBALUNIT   ! From parent vector
-    logical, intent(in) :: DONTMASK     ! Don't bother with the mask
-
-    ! Local variables
-    integer :: K                        ! Loop counter
-    integer :: I,J                      ! Other indices
-    integer, DIMENSION(2) :: unitAsArray ! Unit for value given
-    real (r8), DIMENSION(2) :: valueAsArray ! Value given
-    integer :: TestUnit                 ! Unit to use
-    
-    ! Executable code
-    testUnit = quantity%template%unit
-    if ( globalUnit /= phyq_Invalid ) testUnit = globalUnit
-
-    if (spread) then      ! 1 instance/value given, spread to all instances
-
-      ! Check we have the right number of values
-      if ( ( (nsons(valuesNode)-1 /= quantity%template%instanceLen) .and. &
-        &    (nsons(valuesNode)-1 /= 1) ) .or. &
-        &  (.not. quantity%template%regular)) &
-        & call Announce_error ( valuesNode, invalidExplicitFill )
-
-      ! Loop over the values
-      do k=1,nsons(valuesNode)-1
-        ! Get value from tree
-        call expr(subtree(k+1,valuesNode),unitAsArray,valueAsArray)
-        ! Check unit OK
-        if ( (unitAsArray(1) /= testUnit) .and. &
-          &  (unitAsArray(1) /= PHYQ_Dimensionless) ) &
-          & call Announce_error ( valuesNode, badUnitsForExplicit )
-        ! Store value
-        if ( .not. dontMask .and. associated ( quantity%mask ) ) then
-          if ( nsons(valuesNode)-1 == 1 ) then
-            where ( iand ( ichar(quantity%mask), m_Fill ) == 0 )
-              quantity%values=valueAsArray(1)
-            end where
-          else
-            where ( iand ( ichar(quantity%mask(k,:)), m_Fill ) == 0 )
-              quantity%values(k,:)=valueAsArray(1)
-            end where
-          end if
-        else
-          ! No mask to worry about
-          if (nsons(valuesNode)-1 == 1) then
-            quantity%values=valueAsArray(1)
-          else
-            quantity%values(k,:)=valueAsArray(1)
-          endif
+      select case ( quantity%template%quantityType )
+      case ( l_gph )
+        if ( (temperatureQuantity%template%noSurfs /= &
+          &   quantity%template%noSurfs) .or. &
+          &  (refGPHQuantity%template%noInstances /= &
+          &   quantity%template%noInstances) .or. &
+          &  (temperatureQuantity%template%noInstances /= &
+          &   quantity%template%noInstances) ) then
+          call Announce_Error ( key, nonConformingHydrostatic, &
+            & "case l_gph failed first test" )
+	  if ( toggle(gen) ) call trace_end ( "FillVectorQtyHydrostatically")
+          return
         end if
-      end do
-     
-    else                  ! Not spread, fill all values
-
-      ! Check we have the right number of values
-      if (nsons(valuesNode)-1 /= &
-        & quantity%template%noInstances*quantity%template%instanceLen) &
-        & call Announce_error ( valuesNode, invalidExplicitFill )
-
-      ! Loop over values
-      do k=1,nsons(valuesNode)-1
-        ! Get value from tree
-        call expr(subtree(k+1,valuesNode),unitAsArray,valueAsArray)
-        ! Check unit OK
-        if ( (unitAsArray(1) /= testUnit) .and. &
-          &  (unitAsArray(1) /= PHYQ_Dimensionless) ) &
-          & call Announce_error ( valuesNode, badUnitsForExplicit )
-        ! Store value
-        i = mod(k-1,quantity%template%instanceLen) + 1
-        j = (k-1) / quantity%template%instanceLen + 1
-        if ( .not. dontMask .and. associated ( quantity%mask ) ) then
-          if ( iand ( ichar(quantity%mask(i,j)), m_Fill ) == 0 ) &
-            & quantity%values(i,j) = valueAsArray(1)
-        else
-          quantity%values(i,j) = valueAsArray(1)
+        if ( (any(quantity%template%surfs /= temperatureQuantity%template%surfs)) .or. &
+          & (any(quantity%template%phi /= temperatureQuantity%template%phi)) .or. &
+          & (any(quantity%template%phi /= refGPHQuantity%template%phi)) ) then
+          call Announce_Error ( key, nonConformingHydrostatic, &
+            &  "case l_gph failed second test" )
+	  if ( toggle(gen) ) call trace_end ( "FillVectorQtyHydrostatically")
+          return
         end if
-      end do
-    end if
-  end subroutine ExplicitFillVectorQuantity
+        call GetBasisGPH ( temperatureQuantity, refGPHQuantity, quantity%values )
+      case ( l_ptan )
+        if ( (temperatureQuantity%template%noInstances /= &
+          &   refGPHquantity%template%noInstances) .or. &
+          &  (temperatureQuantity%template%noInstances /= &
+          &   h2oQuantity%template%noInstances) ) then
+          call Announce_Error ( key, nonConformingHydrostatic, &
+            & "case l_ptan failed first test" )
+	  if ( toggle(gen) ) call trace_end ( "FillVectorQtyHydrostatically")
+          return
+        end if
+        if ( (any(refGPHquantity%template%phi /= temperatureQuantity%template%phi)) .or. &
+          & (any(h2oQuantity%template%phi /= temperatureQuantity%template%phi)) ) then
+          call Announce_Error ( key, nonConformingHydrostatic, &
+            & "case l_ptan failed second test" )
+	  if ( toggle(gen) ) call trace_end ( "FillVectorQtyHydrostatically")
+          return
+        end if
+        if ( (.not. ValidateVectorQuantity(quantity, minorFrame=.true.) ) .or. &
+          &  (.not. ValidateVectorQuantity(geocAltitudeQuantity, minorFrame=.true.) ) .or. &
+          &  (quantity%template%instrumentModule /= &
+          &   geocAltitudeQuantity%template%instrumentModule) )  then
+          call Announce_Error ( key, nonConformingHydrostatic, &
+            & "case l_ptan failed third test" )
+  !        print *, 'ValidateVectorQuantity(quantity, minorFrame=.true.) ', &
+  !        &  ValidateVectorQuantity(quantity, minorFrame=.true., sayWhyNot=.true.)
+  !        print *, 'ValidateVectorQuantity(geocAltitudeQuantity, minorFrame=.true.) ', &
+  !        & ValidateVectorQuantity(geocAltitudeQuantity, minorFrame=.true., sayWhyNot=.true.)
+  !        print *, 'quantity%template%instrumentModule ', &
+  !        & quantity%template%instrumentModule
+  !        print *, 'geocAltitudeQuantity%template%instrumentModule ', &
+  !        & geocAltitudeQuantity%template%instrumentModule
+           call output('ValidateVectorQuantity(quantity, minorFrame=.true.) ')
+           call blanks(3)
+           call output( &
+           & ValidateVectorQuantity(quantity, minorFrame=.true., sayWhyNot=.true.), &
+           & advance='yes')
 
-  ! ----------------------------------------- FillVectorQuantityFromL1B ----
-  subroutine FillVectorQuantityFromL1B ( root, quantity, chunk, l1bInfo, &
-    & isPrecision, PrecisionQuantity )
-    integer, intent(in) :: root
-    type (VectorValue_T), INTENT(INOUT) ::        QUANTITY
-    type (MLSChunk_T), INTENT(IN) ::              CHUNK
-    type (l1bInfo_T), INTENT(IN) ::               L1BINFO
-    logical, intent(in)               ::          ISPRECISION
-    type (VectorValue_T), INTENT(IN), optional :: PRECISIONQUANTITY
+           call output('ValidateVectorQuantity(geocAltitudeQuantity, minorFrame=.true.) ')
+           call blanks(3)
+           call output( &
+           & ValidateVectorQuantity(geocAltitudeQuantity, minorFrame=.true., sayWhyNot=.true.), &
+           & advance='yes')
 
-    ! Local variables
-    character (len=80) :: NAMESTRING
-    integer :: fileID, FLAG, NOMAFS
-    type (l1bData_T) :: L1BDATA
-    integer :: ROW, COLUMN
+           call output('quantity%template%instrumentModule ')
+           call blanks(3)
+           call output( &
+           & quantity%template%instrumentModule, &
+           & advance='yes')
 
-    ! Executable code
+           call output('geocAltitudeQuantity%template%instrumentModule ')
+           call blanks(3)
+           call output( &
+           & geocAltitudeQuantity%template%instrumentModule, &
+           & advance='yes')
+	  if ( toggle(gen) ) call trace_end ( "FillVectorQtyHydrostatically")
+          return
+        end if
+        call Get2DHydrostaticTangentPressure ( quantity, temperatureQuantity,&
+          & refGPHQuantity, h2oQuantity, orbitInclinationQuantity, &
+          & phiTanQuantity, geocAltitudeQuantity, maxIterations )
+      case default
+        call Announce_error ( 0, 0, 'No such fill yet' )
+      end select
 
-    if ( toggle(gen) ) call trace_begin ("FillVectorQuantityFromL1B",root)
+      if ( toggle(gen) ) call trace_end ( "FillVectorQtyHydrostatically" )
 
-    fileID=l1bInfo%l1bOAID
-    select case ( quantity%template%quantityType )
-    case ( l_ptan )
-      call GetModuleName( quantity%template%instrumentModule,nameString )
-      nameString=TRIM(nameString)//'.ptan'
-    case ( l_radiance )
-      call GetSignalName ( quantity%template%signal, nameString, &
-        & sideband=quantity%template%sideband, noChannels=.TRUE. )
-      fileID = FindL1BData (l1bInfo%l1bRadIDs, nameString )
-    case ( l_tngtECI )
-      call GetModuleName( quantity%template%instrumentModule,nameString )
-      nameString=TRIM(nameString)//'.tpECI'
-    case ( l_tngtGeodAlt )
-      call GetModuleName( quantity%template%instrumentModule,nameString )
-      nameString=TRIM(nameString)//'.tpGeodAlt'
-    case ( l_tngtGeocAlt )
-      call GetModuleName( quantity%template%instrumentModule,nameString )
-      nameString=TRIM(nameString)//'.tpGeocAlt'
-    case ( l_scECI )
-      nameString='scECI'
-    case ( l_scVel )
-      nameString='scVel'
-    case ( l_scVelECI )
-      nameString='scVelECI'
-    case ( l_scVelECR )
-      nameString='scVelECR'
-    case ( l_scGeocAlt )
-      nameString='scGeocAlt'
-    case ( l_orbitInclination )
-      nameString='scOrbIncl'
-    case default
-      call Announce_Error ( root, cantFillFromL1B )
-    end select
+    end subroutine FillVectorQtyHydrostatically
 
-    if ( isPrecision ) nameString = trim(nameString) // PRECISIONSUFFIX
+    ! -------------------------------------- FillVectorQtyFromIsotope -----------
 
-    call ReadL1BData ( fileID , nameString, l1bData, noMAFs, flag, &
-      & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
-      & NeverFail= .false. )
-    ! We'll have to think about `bad' values here .....
-    if ( flag /= 0 ) then
-      call Announce_Error ( root, errorReadingL1B )
-      if ( toggle(gen) ) call trace_end ( "FillVectorQuantityFromL1B")
-      return
-    end if
-    quantity%values = RESHAPE(l1bData%dpField, &
-      & (/ quantity%template%instanceLen, quantity%template%noInstances /) )
-    if ( isPrecision ) then
-      do column=1, size(quantity%values(1, :))
-        do row=1, size(quantity%values(:, 1))
-          if ( quantity%values(row, column) < 0.d0 ) &
-            & call MaskVectorQty(quantity, row, column)
-        enddo
-      enddo
-    elseif ( present(precisionQuantity) ) then
-      do column=1, size(quantity%values(1, :))
-        do row=1, size(quantity%values(:, 1))
-          if ( isVectorQtyMasked(precisionQuantity, row, column) ) &
-            & call MaskVectorQty(quantity, row, column)
-        enddo
-      enddo
-    endif
+    subroutine FillVectorQtyFromIsotope ( key, quantity, sourceQuantity, &
+              & ratioQuantity )
+      ! This routine fills one vector from another, given an appropriate
+      ! isotope ratio.
 
-    if ( index(switches, 'l1b') /= 0 ) &
-      & call Dump( l1bData )
-    call DeallocateL1BData(l1bData)
+      integer, intent(in) :: KEY          ! Tree node
+      type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
+      type (VectorValue_T), intent(in) :: SOURCEQUANTITY ! Quantity to take vmr from
+      type (VectorValue_T), intent(in) :: RATIOQUANTITY ! Isotope ratio information
 
-    if (toggle(gen) ) call trace_end( "FillVectorQuantityFromL1B" )
-  end subroutine FillVectorQuantityFromL1B
+      ! Local variables
+      real (r8) :: FACTOR                 ! Multiplier to apply to sourceQuantity
 
-  !=============================== FillQuantityFromLosGrid ====
-  subroutine FillQuantityFromLosGrid ( key, Qty, LOS, &
-    & Ptan, Re, noFineGrid, extinction, errorCode )
+      ! Executable code
 
-    ! This is to fill a l2gp type of quantity with a los grid type of quantity.
-    ! The los quantity is a vector quantity that has dimension of (s, mif, maf),
-    ! where s is the path along los.
+      if (.not. ValidateVectorQuantity ( quantity, &
+        & quantityType=(/ l_vmr /), frequencyCoordinate=(/ l_none /) ) ) &
+        &   call MLSMessage ( MLSMSG_Error, ModuleName, &
+        &      "Inappropriate quantity for isotope fill")
 
-    ! Linear interpolation is used to fill l2gp grids and unfilled grids are
-    ! marked with the baddata flag (-999.)
+      if (.not. ValidateVectorQuantity ( sourceQuantity, &
+        & quantityType=(/ l_vmr /), frequencyCoordinate=(/ l_none /) ) ) &
+        &   call MLSMessage ( MLSMSG_Error, ModuleName, &
+        &      "Inappropriate source quantity for isotope fill")
 
-    ! Dummy arguments
-    integer, intent(in) :: key          ! For messages    
-    type (VectorValue_T), intent(in) :: LOS ! Vector quantity to fill from
-    type (VectorValue_T), intent(in) :: Ptan ! tangent pressure
-    type (VectorValue_T), intent(in) :: Re ! Earth's radius
-    type (VectorValue_T), INTENT(INOUT) :: QTY ! Quantity to fill
-    integer, intent(in) :: noFineGrid   ! make finer sGrid with this number
-    logical, intent(in) :: extinction  ! Flag for extinction fill and calculation
-    integer, intent(out) :: errorCode ! Error code
+      if (.not. ValidateVectorQuantity ( ratioQuantity, &
+        & quantityType=(/ l_isotopeRatio /), frequencyCoordinate=(/ l_none /), &
+        & noInstances=(/1/), noSurfs=(/1/) ) ) &
+        &   call MLSMessage ( MLSMSG_Error, ModuleName, &
+        &     "Inappropriate form/quantity for isotope ratio")
 
-    ! Local variables
-    integer :: i, j, maf, mif                ! Loop counter
-    integer :: maxZ, minZ                    ! pressure range indices of sGrid
-    integer :: noMAFs,noMIFs,noDepths
-    integer, dimension(qty%template%noSurfs,qty%template%noInstances) :: cnt
-    real (r8), dimension(qty%template%noSurfs,qty%template%noInstances) :: out
-    real (r8), dimension(qty%template%noSurfs) :: outZeta, phi_out, beta_out
-    real (r8), dimension(los%template%noChans) :: x_in, y_in, sLevel
-    real (r8), dimension(los%template%noSurfs) :: zt
-    real (r8), dimension(los%template%noChans*noFineGrid) :: betaFine, TransFine, SFine
-    real (r8), dimension(los%template%noChans, &
-      & los%template%noSurfs,los%template%noInstances) :: beta
-    real (r8) :: ds, ColTrans
 
-    if ( toggle(gen) ) call trace_begin ( "FillQuantityFromLosGrid", key )
+      if ( .not. DoHGridsMatch ( quantity, sourceQuantity ) .or. &
+        &  .not. DoVGridsMatch ( quantity, sourceQuantity ) ) &
+        &    call MLSMessage ( MLSMSG_Error, ModuleName, &
+        &      "Quantity and source quantity don't match for isotope fill" )
 
-    errorCode=0
+      if ( quantity%template%molecule == sourceQuantity%template%molecule ) &
+        & call MLSMessage( MLSMSG_Error, ModuleName, &
+        &   "Source and quantity both describe same molecule in isotope fill")
 
-    ! Make sure this quantity is appropriate
-    !    if (.not. ValidateVectorQuantity(qty, coherent=.TRUE., stacked=.TRUE., &
-    !      & verticalCoordinate= (/ l_pressure, l_zeta /) ) ) then
-    !      call output ( " quantity vertical grid in FillQuantityFromLOSgrid is not valid")
-    !    end if
+      if ( ratioQuantity%template%molecule == quantity%template%molecule ) then
+        ! Going from parent to isotope
+        factor = ratioQuantity%values(1,1)
+      else if ( ratioQuantity%template%molecule == sourceQuantity%template%molecule ) then
+        ! Going from isotope to parent
+        factor = 1.0/ratioQuantity%values(1,1)
+      else 
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & "Unable to understand isotope fill" )
+      end if
 
-    if ( qty%template%verticalCoordinate == l_pressure ) then
-      outZeta = -log10 ( qty%template%surfs(:,1) )
-    else
-      outZeta = qty%template%surfs(:,1)
-    end if
+      quantity%values = sourceQuantity%values * factor
 
-    noMAFs=los%template%noInstances
-    noMIFs=los%template%noSurfs
-    ! Now, we use frequency coordinate as sGrid along the path
-    noDepths=los%template%noChans
-    sLevel = los%template%frequencies
+    end subroutine FillVectorQtyFromIsotope
 
-    ! the input losQty is the increment of cloud transmission function by default.
-    ! it is converted to cloud extinction if extinction flag is on.
-    if(extinction) then
-      ! both sGrid and sFineGrid are expected to be evenly spaced at present
-      ds = sLevel(2)-sLevel(1)  
-      do i=1,noDepths
-        do j=1,noFineGrid
-          Sfine(j+(i-1)*noFineGrid) = sLevel(i)+(j-1._r8)*ds/noFineGrid
-        end do
-      end do
+    !=============================================== ExplicitFillVectorQuantity ==
+    subroutine ExplicitFillVectorQuantity(quantity, valuesNode, spread, globalUnit, &
+      & dontmask)
 
-      do maf=1,noMafs
-        do mif=1,noMifs
-          do i=1,noDepths
-            ! convert increments to derivatives
-            y_in(i) = los%values(i+(mif-1)*noDepths,maf)/ds
-          end do
-          call InterpolateValues(sLevel,y_in,sFine,TransFine,method='Linear')  
-          ! calculate column transmission function by integrating
-          ! the derivatives on fine grid
-          do i=1,noFineGrid*noDepths
-            betaFine(i) = 0._r8
-            colTrans=0._r8
-            do j=1,i
-              colTrans=colTrans + transFine(j)*ds/noFineGrid
-            end do
-            colTrans = 1._r8 - colTrans
-            if(colTrans > 0.02_r8) betaFine(i)= transFine(i)/colTrans
-          end do
-          ! interpolate betaFine back to the coarser sGrid
-          call InterpolateValues(sFine,betaFine,sLevel,beta(:,mif,maf),method='Linear')
+      ! This routine is called from MLSL2Fill to fill values from an explicit
+      ! fill command line
 
-        end do
-      end do
+      ! Dummy arguments
+      type (VectorValue_T), intent(inout) :: QUANTITY ! The quantity to fill
+      integer, intent(in) :: VALUESNODE   ! Tree node
+      logical, intent(in) :: SPREAD       ! One instance given, spread to all
+      integer, intent(in) :: GLOBALUNIT   ! From parent vector
+      logical, intent(in) :: DONTMASK     ! Don't bother with the mask
 
-    else
+      ! Local variables
+      integer :: K                        ! Loop counter
+      integer :: I,J                      ! Other indices
+      integer, DIMENSION(2) :: unitAsArray ! Unit for value given
+      real (r8), DIMENSION(2) :: valueAsArray ! Value given
+      integer :: TestUnit                 ! Unit to use
 
-      do maf=1,noMafs
-        do mif=1,noMifs
-          do i=1,noDepths
-            beta(i,mif,maf)=los%values(i+(mif-1)*noDepths,maf)
-          end do
-        end do
-      end do
+      ! Executable code
+      testUnit = quantity%template%unit
+      if ( globalUnit /= phyq_Invalid ) testUnit = globalUnit
 
-    end if
+      if (spread) then      ! 1 instance/value given, spread to all instances
 
-    ! initialize quantity
-    do j = 1, qty%template%noInstances
-      do i = 1, qty%template%noSurfs
-        qty%values(i,j)=qty%template%badValue
-        cnt(i,j)=0
-        out(i,j)=0._r8
-      end do
-    end do
+        ! Check we have the right number of values
+        if ( ( (nsons(valuesNode)-1 /= quantity%template%instanceLen) .and. &
+          &    (nsons(valuesNode)-1 /= 1) ) .or. &
+          &  (.not. quantity%template%regular)) &
+          & call Announce_error ( valuesNode, invalidExplicitFill )
 
-    do maf=1,noMAFs  
-      zt = ptan%values(:,maf)   ! noChans=1 for ptan
-      zt = (zt+3.)*16.                      ! converted to height in km
-      do mif=1,noMIFs
-        if (ptan%values(mif,maf) .gt. -2.5) cycle ! for testing
-        ! find altitude of each s grid
-        x_in = sLevel**2/2./(re%values(1,maf)*0.001_r8 + zt(mif))
-        ! converted to zeta
-        x_in = x_in/16. + ptan%values(mif,maf)
-        ! find minimum and maximum pressures indices in sGrid
-        do i = 2,qty%template%noSurfs-1
-          if (ptan%values(mif,maf) < (outZeta(i)+outZeta(i+1))/2. .and. &
-            & ptan%values(mif,maf) > (outZeta(i)+outZeta(i-1))/2.) &
-            & minZ = i
-        end do
-        if (ptan%values(mif,maf) < (outZeta(1)+outZeta(2))/2.) minZ=1
-        if (ptan%values(mif,maf) > outZeta(qty%template%noSurfs)) cycle ! goto next mif
-
-        do i = 2,qty%template%noSurfs-1
-          if (x_in(noDepths) < (outZeta(i)+outZeta(i+1))/2. .and. &
-            & x_in(noDepths) > (outZeta(i)+outZeta(i-1))/2.) &
-            & maxZ = i
-        end do
-        if (x_in(noDepths) < (outZeta(1)+outZeta(2))/2.) cycle    ! goto next mif
-        if (x_in(noDepths) > outZeta(qty%template%noSurfs)) maxZ=qty%template%noSurfs
-
-        ! get phi along path for each mif (phi is in degree)
-        y_in = los%template%phi(mif,maf) &
-          & - atan(sLevel/(re%values(1,maf)*0.001_r8 + zt(mif)))*180._r8/Pi
-        ! interpolate phi onto standard vertical grids     
-        call InterpolateValues(x_in,y_in,outZeta(minZ:maxZ),phi_out(minZ:maxZ), &
-          & method='Linear')
-        ! interpolate quantity to standard vertical grids      
-        y_in = beta(:,mif,maf)
-        call InterpolateValues(x_in,y_in,outZeta(minZ:maxZ),beta_out(minZ:maxZ), &
-          & method='Linear')
-        ! interpolate quantity to standard phi grids
-        do i=minZ,maxZ  
-          do j = 2, qty%template%noInstances-1
-            if(phi_out(i) .lt. &     
-              & (qty%template%phi(1,j)+qty%template%phi(1,j+1))/2. &
-              & .and. phi_out(i) .ge. &  
-              & (qty%template%phi(1,j-1)+qty%template%phi(1,j))/2. ) then
-              out(i,j)=out(i,j) + beta_out(i)
-              cnt(i,j)=cnt(i,j)+1       !  counter
+        ! Loop over the values
+        do k=1,nsons(valuesNode)-1
+          ! Get value from tree
+          call expr(subtree(k+1,valuesNode),unitAsArray,valueAsArray)
+          ! Check unit OK
+          if ( (unitAsArray(1) /= testUnit) .and. &
+            &  (unitAsArray(1) /= PHYQ_Dimensionless) ) &
+            & call Announce_error ( valuesNode, badUnitsForExplicit )
+          ! Store value
+          if ( .not. dontMask .and. associated ( quantity%mask ) ) then
+            if ( nsons(valuesNode)-1 == 1 ) then
+              where ( iand ( ichar(quantity%mask), m_Fill ) == 0 )
+                quantity%values=valueAsArray(1)
+              end where
+            else
+              where ( iand ( ichar(quantity%mask(k,:)), m_Fill ) == 0 )
+                quantity%values(k,:)=valueAsArray(1)
+              end where
             end if
+          else
+            ! No mask to worry about
+            if (nsons(valuesNode)-1 == 1) then
+              quantity%values=valueAsArray(1)
+            else
+              quantity%values(k,:)=valueAsArray(1)
+            end if
+          end if
+        end do
+
+      else                  ! Not spread, fill all values
+
+        ! Check we have the right number of values
+        if (nsons(valuesNode)-1 /= &
+          & quantity%template%noInstances*quantity%template%instanceLen) &
+          & call Announce_error ( valuesNode, invalidExplicitFill )
+
+        ! Loop over values
+        do k=1,nsons(valuesNode)-1
+          ! Get value from tree
+          call expr(subtree(k+1,valuesNode),unitAsArray,valueAsArray)
+          ! Check unit OK
+          if ( (unitAsArray(1) /= testUnit) .and. &
+            &  (unitAsArray(1) /= PHYQ_Dimensionless) ) &
+            & call Announce_error ( valuesNode, badUnitsForExplicit )
+          ! Store value
+          i = mod(k-1,quantity%template%instanceLen) + 1
+          j = (k-1) / quantity%template%instanceLen + 1
+          if ( .not. dontMask .and. associated ( quantity%mask ) ) then
+            if ( iand ( ichar(quantity%mask(i,j)), m_Fill ) == 0 ) &
+              & quantity%values(i,j) = valueAsArray(1)
+          else
+            quantity%values(i,j) = valueAsArray(1)
+          end if
+        end do
+      end if
+    end subroutine ExplicitFillVectorQuantity
+
+    ! ----------------------------------------- FillVectorQuantityFromL1B ----
+    subroutine FillVectorQuantityFromL1B ( root, quantity, chunk, l1bInfo, &
+      & isPrecision, PrecisionQuantity )
+      integer, intent(in) :: root
+      type (VectorValue_T), INTENT(INOUT) ::        QUANTITY
+      type (MLSChunk_T), INTENT(IN) ::              CHUNK
+      type (l1bInfo_T), INTENT(IN) ::               L1BINFO
+      logical, intent(in)               ::          ISPRECISION
+      type (VectorValue_T), INTENT(IN), optional :: PRECISIONQUANTITY
+
+      ! Local variables
+      character (len=80) :: NAMESTRING
+      integer :: fileID, FLAG, NOMAFS
+      type (l1bData_T) :: L1BDATA
+      integer :: ROW, COLUMN
+
+      ! Executable code
+
+      if ( toggle(gen) ) call trace_begin ("FillVectorQuantityFromL1B",root)
+
+      fileID=l1bInfo%l1bOAID
+      select case ( quantity%template%quantityType )
+      case ( l_ptan )
+        call GetModuleName( quantity%template%instrumentModule,nameString )
+        nameString=TRIM(nameString)//'.ptan'
+      case ( l_radiance )
+        call GetSignalName ( quantity%template%signal, nameString, &
+          & sideband=quantity%template%sideband, noChannels=.TRUE. )
+        fileID = FindL1BData (l1bInfo%l1bRadIDs, nameString )
+      case ( l_tngtECI )
+        call GetModuleName( quantity%template%instrumentModule,nameString )
+        nameString=TRIM(nameString)//'.tpECI'
+      case ( l_tngtGeodAlt )
+        call GetModuleName( quantity%template%instrumentModule,nameString )
+        nameString=TRIM(nameString)//'.tpGeodAlt'
+      case ( l_tngtGeocAlt )
+        call GetModuleName( quantity%template%instrumentModule,nameString )
+        nameString=TRIM(nameString)//'.tpGeocAlt'
+      case ( l_scECI )
+        nameString='scECI'
+      case ( l_scVel )
+        nameString='scVel'
+      case ( l_scVelECI )
+        nameString='scVelECI'
+      case ( l_scVelECR )
+        nameString='scVelECR'
+      case ( l_scGeocAlt )
+        nameString='scGeocAlt'
+      case ( l_orbitInclination )
+        nameString='scOrbIncl'
+      case default
+        call Announce_Error ( root, cantFillFromL1B )
+      end select
+
+      if ( isPrecision ) nameString = trim(nameString) // PRECISIONSUFFIX
+
+      call ReadL1BData ( fileID , nameString, l1bData, noMAFs, flag, &
+        & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
+        & NeverFail= .false. )
+      ! We'll have to think about `bad' values here .....
+      if ( flag /= 0 ) then
+        call Announce_Error ( root, errorReadingL1B )
+        if ( toggle(gen) ) call trace_end ( "FillVectorQuantityFromL1B")
+        return
+      end if
+      quantity%values = RESHAPE(l1bData%dpField, &
+        & (/ quantity%template%instanceLen, quantity%template%noInstances /) )
+      if ( isPrecision ) then
+        do column=1, size(quantity%values(1, :))
+          do row=1, size(quantity%values(:, 1))
+            if ( quantity%values(row, column) < 0.d0 ) &
+              & call MaskVectorQty(quantity, row, column)
           end do
         end do
-      end do                            ! End surface loop
-    end do                              ! End instance loop
-    ! average all non-zero bins
-    where (cnt > 0) qty%values = out/cnt
-
-  end subroutine FillQuantityFromLosGrid
-
-  ! ---------------------------------------------- TRANSFERVECTORS -----
-  subroutine TransferVectors ( source, dest )
-    ! Copy common items in source to those in dest
-    type (Vector_T), intent(in) :: SOURCE
-    type (Vector_T), intent(inout) :: DEST
-
-    ! Local variables
-    integer :: Dummy                   ! Dummy integer
-    type (VectorValue_T), pointer :: DQ ! Destination quantity
-    type (VectorValue_T), pointer :: SQ ! Source quantity
-    integer :: SQI                      ! Quantity index in source
-
-    ! Executable code
-
-    ! First copy those things in source, loop over them
-    dest%globalUnit = source%globalUnit
-    do sqi = 1, size ( source%quantities )
-      ! Try to find this in dest
-      sq => source%quantities(sqi)
-      dq => GetVectorQtyByTemplateIndex ( dest, source%template%quantities(sqi), dummy )
-      if ( associated ( dq ) ) then
-        dq%values = sq%values
-        if (associated(sq%mask)) then
-          if (.not. associated(dq%mask)) call CreateMask ( dq )
-          dq%mask = sq%mask
-        else
-          if ( associated(dq%mask) ) &
-            & call Deallocate_test ( dq%mask, 'dq%mask', ModuleName )
-        endif
+      else if ( present(precisionQuantity) ) then
+        do column=1, size(quantity%values(1, :))
+          do row=1, size(quantity%values(:, 1))
+            if ( isVectorQtyMasked(precisionQuantity, row, column) ) &
+              & call MaskVectorQty(quantity, row, column)
+          end do
+        end do
       end if
-    end do
-  end subroutine TransferVectors
 
-  ! ---------------------------------------------  ANNOUNCE_ERROR  -----
-  subroutine ANNOUNCE_ERROR ( where, CODE , ExtraMessage, ExtraInfo )
-    integer, intent(in) :: where   ! Tree node where error was noticed
-    integer, intent(in) :: CODE    ! Code for error message
-    character (LEN=*), intent(in), optional :: ExtraMessage
-    integer, intent(in), dimension(:), optional :: ExtraInfo
+      if ( index(switches, 'l1b') /= 0 ) &
+        & call Dump( l1bData )
+      call DeallocateL1BData(l1bData)
 
-    integer :: I
+      if (toggle(gen) ) call trace_end( "FillVectorQuantityFromL1B" )
+    end subroutine FillVectorQuantityFromL1B
 
-    error = max(error,1)
-    call output ( '***** At ' )
+    !=============================== FillQuantityFromLosGrid ====
+    subroutine FillQuantityFromLosGrid ( key, Qty, LOS, &
+      & Ptan, Re, noFineGrid, extinction, errorCode )
 
-    if ( where > 0 ) then
-      call print_source ( source_ref(where) )
-    else
-      call output ( '(no lcf tree available)' )
-    end if
+      ! This is to fill a l2gp type of quantity with a los grid type of quantity.
+      ! The los quantity is a vector quantity that has dimension of (s, mif, maf),
+      ! where s is the path along los.
 
-    call output ( ': ' )
-    call output ( "The " );
+      ! Linear interpolation is used to fill l2gp grids and unfilled grids are
+      ! marked with the baddata flag (-999.)
 
-    select case ( code )
-    case ( allocation_err )
-      call output ( " command caused an allocation error in squeeze.", advance='yes' )
-    case ( badEstNoiseFill )
-      call output ( " missing information for estimated noise fill", advance='yes' )
-    case ( badGeocAltitudeQuantity )
-      call output ( " geocAltitudeQuantity is not geocAltitude", advance='yes' )
-    case ( badlosGridfill )
-      call output ( " incomplete/incorrect information for los Grid fill", advance='yes' )
-    case ( badlosvelfill )
-      call output ( " incomplete/incorrect information for los velocity", advance='yes' )
-    case ( badIsotopeFill )
-      call output ( " incomplete/incorrect information for isotope fill", advance='yes' )
-    case ( badREFGPHQuantity )
-      call output ( " refGPHQuantity is not refGPH", advance='yes' )
-    case ( badTemperatureQuantity )
-      call output ( " temperatureQuantity is not temperature", advance='yes' )
-    case ( badUnitsForExplicit )
-      call output ( " explitictValues field has inappropriate " // &
-        & "units for Fill instruction.", advance='yes' )
-    case ( badUnitsForIntegrationTime )
-      call output ( " has inappropriate units for integration time.", advance='yes' )
-    case ( badUnitsForSystemTemperature )
-      call output ( " has inappropriate units for system temperature.", advance='yes' )
-    case ( badUnitsForMaxIterations )
-      call output ( " maxIterations should be dimensionless", advance='yes' )
-    case ( bothFractionAndLength )
-      call output ( " specified both fraction and lengthScale", advance='yes' )
-    case ( cantFillFromL1B )
-      call output ( " command could not be filled from L1B.", advance='yes' )
-    case ( cantFillFromL2AUX )
-      call output ( " command could not be filled from L2AUX.", advance='yes' )
-    case ( cantInterpolate3D )
-      call output ( " cannot interpolate 3d quantities (yet).", advance='yes' )
-    case ( deallocation_err )
-      call output ( " command caused an deallocation error in squeeze.", advance='yes' )
-    case ( errorReadingL1B )
-      call output ( " L1B file could not be read.", advance='yes' )
-    case ( invalidExplicitFill )
-      call output ( " has inappropriate dimensionality for explicit fill.", advance='yes' )
-    case ( m1_too_small )
-      call output ( " command caused a m1 too small error in squeeze.", advance='yes' )
-    case ( m2_too_small )
-      call output ( " command caused a m2 too small error in squeeze.", advance='yes' )
-    case ( missingField )
-      call output ( " fields " )
-      do i = 1, size(extraInfo)
-        call display_string ( field_indices(i) )
-        if ( i == size(extraInfo) ) then
-          call output ( " and " )
-        else
-          call output ( ", " )
+      ! Dummy arguments
+      integer, intent(in) :: key          ! For messages    
+      type (VectorValue_T), intent(in) :: LOS ! Vector quantity to fill from
+      type (VectorValue_T), intent(in) :: Ptan ! tangent pressure
+      type (VectorValue_T), intent(in) :: Re ! Earth's radius
+      type (VectorValue_T), INTENT(INOUT) :: QTY ! Quantity to fill
+      integer, intent(in) :: noFineGrid   ! make finer sGrid with this number
+      logical, intent(in) :: extinction  ! Flag for extinction fill and calculation
+      integer, intent(out) :: errorCode ! Error code
+
+      ! Local variables
+      integer :: i, j, maf, mif                ! Loop counter
+      integer :: maxZ, minZ                    ! pressure range indices of sGrid
+      integer :: noMAFs,noMIFs,noDepths
+      integer, dimension(qty%template%noSurfs,qty%template%noInstances) :: cnt
+      real (r8), dimension(qty%template%noSurfs,qty%template%noInstances) :: out
+      real (r8), dimension(qty%template%noSurfs) :: outZeta, phi_out, beta_out
+      real (r8), dimension(los%template%noChans) :: x_in, y_in, sLevel
+      real (r8), dimension(los%template%noSurfs) :: zt
+      real (r8), dimension(los%template%noChans*noFineGrid) :: betaFine, TransFine, SFine
+      real (r8), dimension(los%template%noChans, &
+        & los%template%noSurfs,los%template%noInstances) :: beta
+      real (r8) :: ds, ColTrans
+
+      if ( toggle(gen) ) call trace_begin ( "FillQuantityFromLosGrid", key )
+
+      errorCode=0
+
+      ! Make sure this quantity is appropriate
+      !    if (.not. ValidateVectorQuantity(qty, coherent=.TRUE., stacked=.TRUE., &
+      !      & verticalCoordinate= (/ l_pressure, l_zeta /) ) ) then
+      !      call output ( " quantity vertical grid in FillQuantityFromLOSgrid is not valid")
+      !    end if
+
+      if ( qty%template%verticalCoordinate == l_pressure ) then
+        outZeta = -log10 ( qty%template%surfs(:,1) )
+      else
+        outZeta = qty%template%surfs(:,1)
+      end if
+
+      noMAFs=los%template%noInstances
+      noMIFs=los%template%noSurfs
+      ! Now, we use frequency coordinate as sGrid along the path
+      noDepths=los%template%noChans
+      sLevel = los%template%frequencies
+
+      ! the input losQty is the increment of cloud transmission function by default.
+      ! it is converted to cloud extinction if extinction flag is on.
+      if(extinction) then
+        ! both sGrid and sFineGrid are expected to be evenly spaced at present
+        ds = sLevel(2)-sLevel(1)  
+        do i=1,noDepths
+          do j=1,noFineGrid
+            Sfine(j+(i-1)*noFineGrid) = sLevel(i)+(j-1._r8)*ds/noFineGrid
+          end do
+        end do
+
+        do maf=1,noMafs
+          do mif=1,noMifs
+            do i=1,noDepths
+              ! convert increments to derivatives
+              y_in(i) = los%values(i+(mif-1)*noDepths,maf)/ds
+            end do
+            call InterpolateValues(sLevel,y_in,sFine,TransFine,method='Linear')  
+            ! calculate column transmission function by integrating
+            ! the derivatives on fine grid
+            do i=1,noFineGrid*noDepths
+              betaFine(i) = 0._r8
+              colTrans=0._r8
+              do j=1,i
+                colTrans=colTrans + transFine(j)*ds/noFineGrid
+              end do
+              colTrans = 1._r8 - colTrans
+              if(colTrans > 0.02_r8) betaFine(i)= transFine(i)/colTrans
+            end do
+            ! interpolate betaFine back to the coarser sGrid
+            call InterpolateValues(sFine,betaFine,sLevel,beta(:,mif,maf),method='Linear')
+
+          end do
+        end do
+
+      else
+
+        do maf=1,noMafs
+          do mif=1,noMifs
+            do i=1,noDepths
+              beta(i,mif,maf)=los%values(i+(mif-1)*noDepths,maf)
+            end do
+          end do
+        end do
+
+      end if
+
+      ! initialize quantity
+      do j = 1, qty%template%noInstances
+        do i = 1, qty%template%noSurfs
+          qty%values(i,j)=qty%template%badValue
+          cnt(i,j)=0
+          out(i,j)=0._r8
+        end do
+      end do
+
+      do maf=1,noMAFs  
+        zt = ptan%values(:,maf)   ! noChans=1 for ptan
+        zt = (zt+3.)*16.                      ! converted to height in km
+        do mif=1,noMIFs
+          if (ptan%values(mif,maf) .gt. -2.5) cycle ! for testing
+          ! find altitude of each s grid
+          x_in = sLevel**2/2./(re%values(1,maf)*0.001_r8 + zt(mif))
+          ! converted to zeta
+          x_in = x_in/16. + ptan%values(mif,maf)
+          ! find minimum and maximum pressures indices in sGrid
+          do i = 2,qty%template%noSurfs-1
+            if (ptan%values(mif,maf) < (outZeta(i)+outZeta(i+1))/2. .and. &
+              & ptan%values(mif,maf) > (outZeta(i)+outZeta(i-1))/2.) &
+              & minZ = i
+          end do
+          if (ptan%values(mif,maf) < (outZeta(1)+outZeta(2))/2.) minZ=1
+          if (ptan%values(mif,maf) > outZeta(qty%template%noSurfs)) cycle ! goto next mif
+
+          do i = 2,qty%template%noSurfs-1
+            if (x_in(noDepths) < (outZeta(i)+outZeta(i+1))/2. .and. &
+              & x_in(noDepths) > (outZeta(i)+outZeta(i-1))/2.) &
+              & maxZ = i
+          end do
+          if (x_in(noDepths) < (outZeta(1)+outZeta(2))/2.) cycle    ! goto next mif
+          if (x_in(noDepths) > outZeta(qty%template%noSurfs)) maxZ=qty%template%noSurfs
+
+          ! get phi along path for each mif (phi is in degree)
+          y_in = los%template%phi(mif,maf) &
+            & - atan(sLevel/(re%values(1,maf)*0.001_r8 + zt(mif)))*180._r8/Pi
+          ! interpolate phi onto standard vertical grids     
+          call InterpolateValues(x_in,y_in,outZeta(minZ:maxZ),phi_out(minZ:maxZ), &
+            & method='Linear')
+          ! interpolate quantity to standard vertical grids      
+          y_in = beta(:,mif,maf)
+          call InterpolateValues(x_in,y_in,outZeta(minZ:maxZ),beta_out(minZ:maxZ), &
+            & method='Linear')
+          ! interpolate quantity to standard phi grids
+          do i=minZ,maxZ  
+            do j = 2, qty%template%noInstances-1
+              if(phi_out(i) .lt. &     
+                & (qty%template%phi(1,j)+qty%template%phi(1,j+1))/2. &
+                & .and. phi_out(i) .ge. &  
+                & (qty%template%phi(1,j-1)+qty%template%phi(1,j))/2. ) then
+                out(i,j)=out(i,j) + beta_out(i)
+                cnt(i,j)=cnt(i,j)+1       !  counter
+              end if
+            end do
+          end do
+        end do                            ! End surface loop
+      end do                              ! End instance loop
+      ! average all non-zero bins
+      where (cnt > 0) qty%values = out/cnt
+
+    end subroutine FillQuantityFromLosGrid
+
+    ! ---------------------------------------------- TRANSFERVECTORS -----
+    subroutine TransferVectors ( source, dest )
+      ! Copy common items in source to those in dest
+      type (Vector_T), intent(in) :: SOURCE
+      type (Vector_T), intent(inout) :: DEST
+
+      ! Local variables
+      integer :: Dummy                   ! Dummy integer
+      type (VectorValue_T), pointer :: DQ ! Destination quantity
+      type (VectorValue_T), pointer :: SQ ! Source quantity
+      integer :: SQI                      ! Quantity index in source
+
+      ! Executable code
+
+      ! First copy those things in source, loop over them
+      dest%globalUnit = source%globalUnit
+      do sqi = 1, size ( source%quantities )
+        ! Try to find this in dest
+        sq => source%quantities(sqi)
+        dq => GetVectorQtyByTemplateIndex ( dest, source%template%quantities(sqi), dummy )
+        if ( associated ( dq ) ) then
+          dq%values = sq%values
+          if (associated(sq%mask)) then
+            if (.not. associated(dq%mask)) call CreateMask ( dq )
+            dq%mask = sq%mask
+          else
+            if ( associated(dq%mask) ) &
+              & call Deallocate_test ( dq%mask, 'dq%mask', ModuleName )
+          end if
         end if
       end do
-      call output ( " are required.", advance='yes' )
-    case ( needGeocAltitude )
-      call output ( " needs geocAltitudeQuantity.", advance='yes' )
-    case ( needH2O )
-      call output ( " needs H2OQuantity.", advance='yes' )
-    case ( needOrbitInclination )
-      call output ( " needs OrbitalInclination.", advance='yes' )
-    case ( needTempREFGPH )
-      call output ( " needs temperatureQuantity and refGPHquantity.", advance='yes' )
-    case ( noExplicitValuesGiven )
-      call output ( " no explicit values given for explicit fill.", advance='yes' )
-    case ( nonConformingHydrostatic )
-      call output ( " quantities needed for hydrostatic fill do not conform", advance='yes' )
-    case ( noSourceGridGiven )
-      call output ( " no sourceGrid field given for gridded fill.", advance='yes' )
-    case ( noSourceL2AUXGiven )
-      call output ( " no sourceL2AUX field given for L2AUX fill.", advance='yes' )
-    case ( noSourceL2GPGiven )
-      call output ( " no sourceL2GP field given for L2GP fill.", advance='yes' )
-    case ( noSourceQuantityGiven )
-      call output ( " no sourceQuantity field given for vector fill.", advance='yes' )
-    case ( noSpecialFill )
-      call output ( " invalid special fill", advance='yes' )
-    case ( notImplemented )
-      call output ( extraMessage )
-      call output ( " is not implemented yet.", advance='yes' )
-    case ( notSPD )
-      call output ( " is not a SPD matrix.", advance='yes' )
-    case ( not_permutation )
-      call output ( " command caused an illegal permutation in squeeze.", advance='yes' )
-    case ( numInstancesisZero )
-      call output ( " command has zero instances.", advance='yes' )
-    case ( numSurfsisZero )
-      call output ( " command has zero surfaces.", advance='yes' )
-    case ( n1_is_zero )
-      call output ( " command caused an n1=0 error in squeeze.", advance='yes' )
-    case ( n2_is_zero )
-      call output ( " command caused an n2=0 error in squeeze.", advance='yes' )
-    case ( n3_is_zero )
-      call output ( " command caused an n3=0 error in squeeze.", advance='yes' )
-    case ( objIsFullRank3 )
-      call output ( " command array is full rank 3.", advance='yes' )
-    case ( otherErrorInFillVector )
-      call output ( " command caused an error in FillVector.", advance='yes' )
-    case ( source_not_in_db )
-      call output ( " source was not found in the db.", advance='yes' )
-    case ( unknownQuantityName )
-      call output ( " quantity was not found in the vector", advance='yes' )
-    case ( vectorWontMatchPDef )
-      call output ( " command found new and prev. vectors unmatched.", advance='yes' )
-    case ( wrong_number )
-      call output ( " command does not have exactly one field.", advance='yes' )
-    case ( zeroGeodSpan )
-      call output ( " command found zero geod. ang. span.", advance='yes' )
-    case ( zeroProfilesFound )
-      call output ( " command found zero profiles.", advance='yes' )
-    case ( badRefractFill )
-      call output ( " missing information for phiTan refract fill", advance='yes' )
-    case default
-      call output ( " command caused an unrecognized programming error", advance='yes' )
-    end select
-    if ( present(ExtraMessage) ) then
-      call output(ExtraMessage, advance='yes')
-    end if
-  end subroutine ANNOUNCE_ERROR
+    end subroutine TransferVectors
 
+    ! ---------------------------------------------  ANNOUNCE_ERROR  -----
+    subroutine ANNOUNCE_ERROR ( where, CODE , ExtraMessage, ExtraInfo )
+      integer, intent(in) :: where   ! Tree node where error was noticed
+      integer, intent(in) :: CODE    ! Code for error message
+      character (LEN=*), intent(in), optional :: ExtraMessage
+      integer, intent(in), dimension(:), optional :: ExtraInfo
+
+      integer :: I
+
+      error = max(error,1)
+      call output ( '***** At ' )
+
+      if ( where > 0 ) then
+        call print_source ( source_ref(where) )
+      else
+        call output ( '(no lcf tree available)' )
+      end if
+
+      call output ( ': ' )
+      call output ( "The " );
+
+      select case ( code )
+      case ( allocation_err )
+        call output ( " command caused an allocation error in squeeze.", advance='yes' )
+      case ( badEstNoiseFill )
+        call output ( " missing information for estimated noise fill", advance='yes' )
+      case ( badGeocAltitudeQuantity )
+        call output ( " geocAltitudeQuantity is not geocAltitude", advance='yes' )
+      case ( badlosGridfill )
+        call output ( " incomplete/incorrect information for los Grid fill", advance='yes' )
+      case ( badlosvelfill )
+        call output ( " incomplete/incorrect information for los velocity", advance='yes' )
+      case ( badIsotopeFill )
+        call output ( " incomplete/incorrect information for isotope fill", advance='yes' )
+      case ( badREFGPHQuantity )
+        call output ( " refGPHQuantity is not refGPH", advance='yes' )
+      case ( badTemperatureQuantity )
+        call output ( " temperatureQuantity is not temperature", advance='yes' )
+      case ( badUnitsForExplicit )
+        call output ( " explitictValues field has inappropriate " // &
+          & "units for Fill instruction.", advance='yes' )
+      case ( badUnitsForIntegrationTime )
+        call output ( " has inappropriate units for integration time.", advance='yes' )
+      case ( badUnitsForSystemTemperature )
+        call output ( " has inappropriate units for system temperature.", advance='yes' )
+      case ( badUnitsForMaxIterations )
+        call output ( " maxIterations should be dimensionless", advance='yes' )
+      case ( bothFractionAndLength )
+        call output ( " specified both fraction and lengthScale", advance='yes' )
+      case ( cantFillFromL1B )
+        call output ( " command could not be filled from L1B.", advance='yes' )
+      case ( cantFillFromL2AUX )
+        call output ( " command could not be filled from L2AUX.", advance='yes' )
+      case ( cantInterpolate3D )
+        call output ( " cannot interpolate 3d quantities (yet).", advance='yes' )
+      case ( deallocation_err )
+        call output ( " command caused an deallocation error in squeeze.", advance='yes' )
+      case ( errorReadingL1B )
+        call output ( " L1B file could not be read.", advance='yes' )
+      case ( invalidExplicitFill )
+        call output ( " has inappropriate dimensionality for explicit fill.", advance='yes' )
+      case ( m1_too_small )
+        call output ( " command caused a m1 too small error in squeeze.", advance='yes' )
+      case ( m2_too_small )
+        call output ( " command caused a m2 too small error in squeeze.", advance='yes' )
+      case ( missingField )
+        call output ( " fields " )
+        do i = 1, size(extraInfo)
+          call display_string ( field_indices(i) )
+          if ( i == size(extraInfo) ) then
+            call output ( " and " )
+          else
+            call output ( ", " )
+          end if
+        end do
+        call output ( " are required.", advance='yes' )
+      case ( needGeocAltitude )
+        call output ( " needs geocAltitudeQuantity.", advance='yes' )
+      case ( needH2O )
+        call output ( " needs H2OQuantity.", advance='yes' )
+      case ( needOrbitInclination )
+        call output ( " needs OrbitalInclination.", advance='yes' )
+      case ( needTempREFGPH )
+        call output ( " needs temperatureQuantity and refGPHquantity.", advance='yes' )
+      case ( noExplicitValuesGiven )
+        call output ( " no explicit values given for explicit fill.", advance='yes' )
+      case ( nonConformingHydrostatic )
+        call output ( " quantities needed for hydrostatic fill do not conform", advance='yes' )
+      case ( noSourceGridGiven )
+        call output ( " no sourceGrid field given for gridded fill.", advance='yes' )
+      case ( noSourceL2AUXGiven )
+        call output ( " no sourceL2AUX field given for L2AUX fill.", advance='yes' )
+      case ( noSourceL2GPGiven )
+        call output ( " no sourceL2GP field given for L2GP fill.", advance='yes' )
+      case ( noSourceQuantityGiven )
+        call output ( " no sourceQuantity field given for vector fill.", advance='yes' )
+      case ( noSpecialFill )
+        call output ( " invalid special fill", advance='yes' )
+      case ( notImplemented )
+        call output ( extraMessage )
+        call output ( " is not implemented yet.", advance='yes' )
+      case ( notSPD )
+        call output ( " is not a SPD matrix.", advance='yes' )
+      case ( not_permutation )
+        call output ( " command caused an illegal permutation in squeeze.", advance='yes' )
+      case ( numInstancesisZero )
+        call output ( " command has zero instances.", advance='yes' )
+      case ( numSurfsisZero )
+        call output ( " command has zero surfaces.", advance='yes' )
+      case ( n1_is_zero )
+        call output ( " command caused an n1=0 error in squeeze.", advance='yes' )
+      case ( n2_is_zero )
+        call output ( " command caused an n2=0 error in squeeze.", advance='yes' )
+      case ( n3_is_zero )
+        call output ( " command caused an n3=0 error in squeeze.", advance='yes' )
+      case ( objIsFullRank3 )
+        call output ( " command array is full rank 3.", advance='yes' )
+      case ( otherErrorInFillVector )
+        call output ( " command caused an error in FillVector.", advance='yes' )
+      case ( source_not_in_db )
+        call output ( " source was not found in the db.", advance='yes' )
+      case ( unknownQuantityName )
+        call output ( " quantity was not found in the vector", advance='yes' )
+      case ( vectorWontMatchPDef )
+        call output ( " command found new and prev. vectors unmatched.", advance='yes' )
+      case ( wrong_number )
+        call output ( " command does not have exactly one field.", advance='yes' )
+      case ( zeroGeodSpan )
+        call output ( " command found zero geod. ang. span.", advance='yes' )
+      case ( zeroProfilesFound )
+        call output ( " command found zero profiles.", advance='yes' )
+      case ( badRefractFill )
+        call output ( " missing information for phiTan refract fill", advance='yes' )
+      case default
+        call output ( " command caused an unrecognized programming error", advance='yes' )
+      end select
+      if ( present(ExtraMessage) ) then
+        call output(ExtraMessage, advance='yes')
+      end if
+    end subroutine ANNOUNCE_ERROR
+  end subroutine MLSL2Fill
 
 end module Fill
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.137  2002/08/20 22:10:49  vsnyder
+! Move USE statements from module scope to procedure scope
+!
 ! Revision 2.136  2002/08/20 19:30:24  livesey
 ! Typo!
 !
