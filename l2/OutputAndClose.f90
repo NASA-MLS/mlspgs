@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=======================================================================================
@@ -308,8 +308,8 @@ contains ! =====     Public Procedures     =============================
             if ( .not. TOOLKIT ) cycle
 
             ! Write the metadata file
-            call add_metadata ( file_base, numquantitiesperfile, quantityNames, &
-              & hdfVersion, l_swath, metadata_error )
+            call add_metadata ( son, file_base, numquantitiesperfile, &
+              & quantityNames, hdfVersion, l_swath, metadata_error )
           elseif ( returnStatus /= PGS_S_SUCCESS ) then
             call announce_error ( son, &
               &  "Error finding l2gp file matching:  "//file_base, returnStatus)
@@ -394,8 +394,8 @@ contains ! =====     Public Procedures     =============================
             if ( .not. TOOLKIT ) cycle
 
             ! Write the metadata file
-            call add_metadata ( file_base, numquantitiesperfile, quantityNames, &
-              & hdfVersion, l_hdf, metadata_error )
+            call add_metadata ( son, file_base, numquantitiesperfile, &
+              & quantityNames, hdfVersion, l_hdf, metadata_error )
 
           elseif ( returnStatus /= PGS_S_SUCCESS ) then
             call announce_error ( son, &
@@ -542,8 +542,8 @@ contains ! =====     Public Procedures     =============================
             if ( .not. TOOLKIT ) cycle
 
             ! Write the metadata file
-            call add_metadata ( file_base, numquantitiesperfile, quantityNames, &
-              & hdfVersion, output_type, metadata_error )
+            call add_metadata ( son, file_base, numquantitiesperfile, &
+              & quantityNames, hdfVersion, output_type, metadata_error )
 
           elseif ( returnStatus /= PGS_S_SUCCESS ) then
             call announce_error ( son, &
@@ -639,8 +639,9 @@ contains ! =====     Public Procedures     =============================
   end subroutine Output_Close
 
   ! ---------------------------------------------  add_metadata  -----
-  subroutine add_metadata ( fileName, numquantitiesperfile, quantityNames, &
-    & hdfVersion, filetype, metadata_error )
+  subroutine add_metadata ( node, fileName, numquantitiesperfile, &
+    & quantityNames, hdfVersion, filetype, metadata_error )
+    
     use INIT_TABLES_MODULE, only: L_L2DGG
     use Intrinsic, only: l_swath, l_grid, l_hdf
     use MLSFiles, only: GetPCFromRef, split_path_name
@@ -651,6 +652,7 @@ contains ! =====     Public Procedures     =============================
     use WriteMetadata, only: Populate_metadata_std, &
       & Populate_metadata_oth, Get_l2gp_mcf
   ! Deal with metadata--1st for direct write, but later for all cases
+  integer, intent(in) :: node
   character(len=*), intent(in) :: fileName
   integer, intent(in) :: numquantitiesperfile
   character(len=*), dimension(:), intent(in) :: quantityNames
@@ -767,8 +769,11 @@ contains ! =====     Public Procedures     =============================
        & hdfVersion=hdfVersion, metadata_error=metadata_error, &
        & filetype=filetype  )
   case default
+    call announce_error ( node, &
+      &  "Error--filetype unrecognized", filetype)
     call MLSMessage(MLSMSG_Error,ModuleName,&
-      & "Unrecognized filetype in add_metadata (must be swath or hdf) ")
+      & "Unrecognized filetype in add_metadata (must be swath or hdf) "&
+      & // trim(filename))
   end select
 
   end subroutine add_metadata
@@ -837,8 +842,10 @@ contains ! =====     Public Procedures     =============================
     call output ( trim(full_message), advance='yes', &
       & from_where=ModuleName )
     if ( present(code) ) then
-      select case ( code )
-      end select
+      ! select case ( code )
+      ! end select
+      call output ( ' Code: ' )
+      call output ( Code, advance='yes' )
     end  if
   end subroutine ANNOUNCE_ERROR
 
@@ -849,6 +856,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.89  2004/01/22 00:52:19  pwagner
+! Small changes regarding metadata
+!
 ! Revision 2.88  2003/11/07 00:46:51  pwagner
 ! New quicker preflight option: --checkPaths
 !
