@@ -106,7 +106,7 @@ contains ! ========  Public Procedures =========================================
     ! Arguments
     type (SnooperInfo_T), intent(in) :: SNOOPER
     type (Vector_T), dimension(:), optional, pointer :: VectorDatabase
-    type (Vector_T), dimension(:), optional, pointer :: AnotherVectorDatabase
+    type (Vector_T), dimension(:), optional :: AnotherVectorDatabase
 
     ! Local variables
     logical :: AnyMoreVectors, AnyVectors ! Flags
@@ -114,19 +114,17 @@ contains ! ========  Public Procedures =========================================
     integer :: INFO                     ! Flag
     character (len=132) :: LINE         ! A line of text
     integer :: TOTALVECTORS             ! In both databases
-    integer :: VECTOR, QUANTITY         ! Loop counters
     
     anyVectors = present(vectorDatabase)
     if ( anyVectors ) anyVectors = associated(vectorDatabase)
     if ( anyVectors ) anyVectors = size(vectorDatabase) > 0
     anyMoreVectors = present(anotherVectorDatabase)
-    if ( anyMoreVectors ) anyMoreVectors = associated(anotherVectorDatabase)
     if ( anyMoreVectors ) anyMoreVectors = size(anotherVectorDatabase) > 0
     totalVectors = 0
-    if ( anyVectors ) totalVectors = totalVectors + size(vectorDatabase)
-    if ( anyMoreVectors ) totalVectors = totalVectors + size(anotherVectorDatabase)
+    if ( anyVectors ) totalVectors = totalVectors + count(vectorDatabase%name>0)
+    if ( anyMoreVectors ) totalVectors = totalVectors + count(anotherVectorDatabase%name>0)
 
-    if ( anyVectors .or. anyMoreVectors) then
+    if ( totalVectors > 0 ) then
       call PVMFInitSend ( PvmDataDefault, bufferID )
 
       call PVMIDLPack ( "Vectors", info )
@@ -135,45 +133,8 @@ contains ! ========  Public Procedures =========================================
       call PVMIDLPack ( totalVectors, info )
       if ( info /= 0 ) call PVMErrorMessage ( info, "packing totalVectors" )
 
-      ! Send vector names and quantity names
-      do vector = 1, size(vectorDatabase)
-        call get_string ( vectorDatabase(vector)%name, line )
-        call PVMIDLPack ( TRIM(line), info )
-        if ( info /=0 ) call PVMErrorMessage ( info, "packing vector name:" &
-          & // TRIM(line) )
-        
-        call PVMIDLPack ( size(vectorDatabase(vector)%quantities), info )
-        if ( info /=0 ) call PVMErrorMessage ( info, "packing no quantities for " &
-          & // TRIM(line) )
-        
-        do quantity = 1, size(vectorDatabase(vector)%quantities)
-          call get_string &
-            & ( vectorDatabase(vector)%quantities(quantity)%template%name, line )
-          call PVMIDLPack ( TRIM(line), info )
-          if ( info /=0 ) call PVMErrorMessage ( info, "packing quantity name:" &
-            & // TRIM(line) )
-        end do
-      end do
-
-      ! Send more vector names and quantity names
-      do vector = 1, size(anotherVectorDatabase)
-        call get_string ( anotherVectorDatabase(vector)%name, line )
-        call PVMIDLPack ( TRIM(line), info )
-        if ( info /=0 ) call PVMErrorMessage ( info, "packing vector name:" &
-          & // TRIM(line) )
-        
-        call PVMIDLPack ( size(anotherVectorDatabase(vector)%quantities), info )
-        if ( info /=0 ) call PVMErrorMessage ( info, "packing no quantities for " &
-          & // TRIM(line) )
-        
-        do quantity = 1, size(anotherVectorDatabase(vector)%quantities)
-          call get_string &
-            & ( anotherVectorDatabase(vector)%quantities(quantity)%template%name, line )
-          call PVMIDLPack ( TRIM(line), info )
-          if ( info /=0 ) call PVMErrorMessage ( info, "packing quantity name:" &
-            & // TRIM(line) )
-        end do
-      end do
+      if ( anyVectors ) call sendVectorAndQuantityNames ( vectorDatabase )
+      if ( anyMoreVectors ) call sendVectorAndQuantityNames ( anotherVectorDatabase )
 
       ! Now send this buffer
       call PVMFSend ( snooper%tid, SnoopTag, info )
@@ -182,8 +143,34 @@ contains ! ========  Public Procedures =========================================
     else                                ! No vectors to send
       call PVMIDLSend ( "No Vectors", snooper%tid, info, msgTag=SnoopTag )
       if ( info /= 0 ) call PVMErrorMessage ( info, "sending 'No Vectors'" )
-    endif
+    end if
 
+  contains
+    subroutine SendVectorAndQuantityNames ( Vectors )
+      type (Vector_T), dimension(:) :: Vectors
+      integer :: VECTOR, QUANTITY         ! Loop counters
+
+      do vector = 1, size(vectors)
+        if ( vectors(vector)%name > 0 ) then
+          call get_string ( vectors(vector)%name, line )
+          call PVMIDLPack ( TRIM(line), info )
+          if ( info /=0 ) call PVMErrorMessage ( info, "packing vector name:" &
+            & // TRIM(line) )
+
+          call PVMIDLPack ( size(vectors(vector)%quantities), info )
+          if ( info /=0 ) call PVMErrorMessage ( info, "packing no quantities for " &
+            & // TRIM(line) )
+
+          do quantity = 1, size(vectors(vector)%quantities)
+            call get_string &
+              & ( vectors(vector)%quantities(quantity)%template%name, line )
+            call PVMIDLPack ( TRIM(line), info )
+            if ( info /=0 ) call PVMErrorMessage ( info, "packing quantity name:" &
+              & // TRIM(line) )
+          end do
+        end if
+      end do
+    end subroutine SendVectorAndQuantityNames
   end subroutine SendVectorsListToSnooper
 
   ! ---------------------------------------- AddSnooperToDatabase ------
@@ -294,8 +281,8 @@ contains ! ========  Public Procedures =========================================
 
     ! Arguments
     integer, intent(in), optional :: KEY ! Tree node where snoop called
-    type (Vector_T), dimension(:), pointer, optional :: VectorDatabase
-    type (Vector_T), dimension(:), pointer, optional :: AnotherVectorDatabase
+    type (Vector_T), dimension(:), optional, pointer :: VectorDatabase
+    type (Vector_T), dimension(:), optional :: AnotherVectorDatabase
     character(len=*), intent(in), optional :: AnotherComment ! Replaces
     ! comment field of "snoop" command if present.
     !  TYPE (Matrix_T), DIMENSION(:), POINTER, OPTIONAL :: MATRIXDATABASE
@@ -509,7 +496,7 @@ contains ! ========  Public Procedures =========================================
     ! Dummy arguments
     type (SnooperInfo_T), intent(in) :: SNOOPER ! This snooper
     character (len=*), intent(in) :: LINE ! Name of quantity to send
-    type (Vector_T), dimension(:), pointer :: VectorDatabase
+    type (Vector_T), dimension(:), target :: VectorDatabase
 
     ! Local variables
     integer :: BUFFERID                 ! ID for PVM
@@ -558,6 +545,9 @@ contains ! ========  Public Procedures =========================================
 end module SnoopMLSL2
 
 ! $Log$
+! Revision 2.24  2001/10/15 22:38:50  vsnyder
+! Make anotherVectorsDatabase not a pointer
+!
 ! Revision 2.23  2001/10/06 23:52:01  livesey
 ! Bug fix with vector count
 !
