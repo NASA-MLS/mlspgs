@@ -11,7 +11,7 @@ module Fill                     ! Create vectors and fill them.
   ! We need many things from Init_Tables_Module.  First the fields:
   use INIT_TABLES_MODULE, only: F_COLUMNS, F_DECAY, F_DESTINATION, F_DIAGONAL, &
     & F_GEOCALTITUDEQUANTITY, F_EARTHRADIUS, F_EXPLICITVALUES, &
-    & F_EXTINCTION, F_EXTRA, F_H2OQUANTITY, F_LOSQTY,&
+    & F_EXTINCTION, F_H2OQUANTITY, F_LOSQTY,&
     & F_INTEGRATIONTIME, F_INTERPOLATE, F_INVERT, F_MAXITERATIONS, &
     & F_MATRIX, F_METHOD, F_NOFINEGRID, F_PTANQUANTITY, F_QUANTITY, &
     & F_RADIANCEQUANTITY, F_RATIOQUANTITY, F_REFGPHQUANTITY, &
@@ -201,7 +201,6 @@ contains ! =====     Public Procedures     =============================
     !                                     -- for FillCovariance
     integer :: ERRORCODE                ! 0 unless error; returned by called routines
     logical :: Extinction               ! Flag for cloud extinction calculation
-    logical :: Extra                    ! Matrix needs an extra column / row
     integer :: FIELDINDEX               ! Entry in tree
     integer :: FieldValue               ! Value of a field in the L2CF
     integer :: FILLMETHOD               ! How will we fill this quantity
@@ -320,7 +319,6 @@ contains ! =====     Public Procedures     =============================
         ! That's the end of the create operation
 
       case ( s_matrix ) ! ===============================  Matrix  =====
-        extra = .false.
         got = .false.
         matrixType = l_plain
         do j = 2, nsons(key)
@@ -334,8 +332,6 @@ contains ! =====     Public Procedures     =============================
             colVector = decoration(fieldValue)
           case ( f_rows )
             rowVector = decoration(fieldValue)
-          case ( f_extra )
-            extra = get_boolean(gson)
           case ( f_type )
             matrixType = fieldValue
           end select
@@ -344,8 +340,7 @@ contains ! =====     Public Procedures     =============================
           select case ( matrixType )
           case ( l_cholesky )
             call createEmptyMatrix ( matrixCholesky%m, vectorName, &
-              & vectors(rowVector), vectors(colVector), &
-              & extra_Row = extra, extra_Col = extra )
+              & vectors(rowVector), vectors(colVector) )
             call decorate ( key, addToMatrixDatabase(matrices, matrixCholesky) )
           case ( l_kronecker )
             call createEmptyMatrix ( matrixKronecker%m, vectorName, &
@@ -353,12 +348,11 @@ contains ! =====     Public Procedures     =============================
             call decorate ( key, addToMatrixDatabase(matrices, matrixKronecker) )
           case ( l_plain )
             call createEmptyMatrix ( matrixPlain, vectorName, vectors(rowVector), &
-              vectors(colVector), extra_Col = extra )
+              vectors(colVector) )
             call decorate ( key, addToMatrixDatabase(matrices, matrixPlain) )
           case ( l_spd )
             call createEmptyMatrix ( matrixSPD%m, vectorName, &
-              & vectors(colVector), vectors(colVector), &
-              & extra_Row = extra, extra_Col = extra )
+              & vectors(colVector), vectors(colVector) )
             call decorate ( key, addToMatrixDatabase(matrices, matrixSPD) )
           end select
         else
@@ -1571,6 +1565,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.64  2001/07/26 20:33:40  vsnyder
+! Eliminate the 'extra' field of the 'matrix' spec
+!
 ! Revision 2.63  2001/07/20 20:03:30  dwu
 ! fix problems in cloud extinction calculation
 !
