@@ -26,12 +26,12 @@ begin Fill
     ;; First generate the flags
     Fill, quantity=otherDiagnostics.lowCloudSummary!radiometerForBand($1), method=binMin, $
       ptanQuantity=state.ptan!moduleForBand($1), sourceQuantity=cloudOutput.dtBand$1, channel=$2
-    Fill, quantity=otherDiagnostics.highCloudSummary!radiometerForBand($1), method=binMin, $
+    Fill, quantity=otherDiagnostics.highCloudSummary!radiometerForBand($1), method=binMax, $
       ptanQuantity=state.ptan!moduleForBand($1), sourceQuantity=cloudOutput.dtBand$1, channel=$2
     ;; Now boxcar them by five profiles
     Fill, quantity=otherDiagnostics.lowCloudSummary!radiometerForBand($1), method=boxCar, boxCarMethod=min, $
       sourceQuantity=otherDiagnostics.lowCloudSummary!radiometerForBand($1), width=5
-    Fill, quantity=otherDiagnostics.highCloudSummary!radiometerForBand($1), method=boxCar, boxCarMethod=min, $
+    Fill, quantity=otherDiagnostics.highCloudSummary!radiometerForBand($1), method=boxCar, boxCarMethod=max, $
       sourceQuantity=otherDiagnostics.highCloudSummary!radiometerForBand($1), width=5!nl})
 
   ;; Now invoke it for our significant channels.
@@ -43,10 +43,4 @@ begin Fill
 
 end Fill
 
-
-
-
-
-
-
-
+; $Log$
