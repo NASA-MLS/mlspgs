@@ -168,7 +168,7 @@ module MLSAuxData
     H5_ERROR_PROPERTY_CLOSE  = 'HDF5 Error Closing Property List '
 
   TYPE DataProducts_T
-     CHARACTER(len=18) :: name, data_type
+     CHARACTER(len=80) :: name, data_type
   END TYPE DataProducts_T
 
 interface Build_MLSAuxData
@@ -2129,6 +2129,9 @@ contains ! ============================ MODULE PROCEDURES ====================
 end module MLSAuxData
 
 ! $Log$
+! Revision 2.16  2002/11/11 19:20:25  jdone
+! name in DataProducts_T now has length of 80
+!
 ! Revision 2.15  2002/10/31 22:12:49  jdone
 ! Added Build_MLSAuxData.
 !
