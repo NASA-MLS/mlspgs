@@ -151,7 +151,6 @@ contains
 
     ! SizeMBECSDataGranule (automatic)
     ! ReProcessingPlanned
-    ! ReProcessingActual
     ! LocalGranuleID
     ! DayNightFlag
     ! ProductionDateTime (automatic)
@@ -214,15 +213,6 @@ contains
     if ( returnStatus /= PGS_S_SUCCESS ) then
       call announce_error ( 0, &
         & "Error in writing ReprocessingPlanned attribute." )
-    end if
-
-    attrName = 'ReprocessingActual'
-    returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
-         'unknown')
-         ! 'processed once')
-    if ( returnStatus /= PGS_S_SUCCESS ) then
-      call announce_error ( 0, &
-        & "Error in writing ReprocessingActual attribute." )
     end if
 
     attrName = 'LocalGranuleID'
@@ -1367,6 +1357,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.57  2005/01/27 00:35:06  pwagner
+! ReprocessingActual field dropped from product metadata
+!
 ! Revision 2.56  2005/01/14 21:37:30  pwagner
 ! ch3cn now has mcf, so special treatment lifted
 !
