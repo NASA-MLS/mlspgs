@@ -1,6 +1,8 @@
 ! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
+!OCL INDEPENDENT (dot) ! For LF95 auto-parallelization
+
 !=============================================================================
 module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
 !=============================================================================
@@ -415,8 +417,12 @@ contains ! =====     Public Procedures     =============================
         do j = i+1, nc
           ij = i - x%r1(j)    ! Offset in VALUES of (I,J) element
           rz = max(r1(i),r1(j))
-          g = - dot( i-rz, zt(rz,i), 1, zt(rz,j), 1 )
-!         g = - dot_product( zt(rz:i-1,i), zt(rz:i-1,j) )
+          if ( i <= rz ) then
+            g = 0.0
+          else
+            g = - dot( i-rz, zt(rz,i), 1, zt(rz,j), 1 )
+!           g = - dot_product( zt(rz:i-1,i), zt(rz:i-1,j) )
+          end if
           if ( ij >= 0 .and. ij <= x%r2(j) - x%r2(j-1) ) &
             & g = x%values(ij+x%r2(j-1)+1,1) + g
           zt(i,j) = g / d
@@ -1013,12 +1019,12 @@ contains ! =====     Public Procedures     =============================
 
     if ( xb%nrows /= yb%nrows ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & "XB and YB Matrix sizes incompatible in Multiply_Matrix_Blocks" )
+        & "XB and YB Matrix sizes incompatible in MultiplyMatrixBlocks" )
     if ( my_upd ) then
       if ( zb%kind /= m_absent ) then
         if ( xb%ncols /= zb%nrows .or. yb%ncols /= zb%ncols ) &
           & call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & "ZB Matrix size incompatible in Multiply_Matrix_Blocks" )
+            & "ZB Matrix size incompatible in MultiplyMatrixBlocks" )
       else
         zb%nrows = xb%ncols
         zb%ncols = yb%ncols
@@ -1050,7 +1056,7 @@ contains ! =====     Public Procedures     =============================
         ! ??? Make a full matrix, then sparsify it.  There _must_ be a
         ! ??? better way
         call allocate_test ( z, zb%nrows, zb%ncols, &
-          & "Z for banded X banded in Multiply_Matrix_Blocks", ModuleName )
+          & "Z for banded X banded in MultiplyMatrixBlocks", ModuleName )
         if ( update .and. zb%kind /= m_absent ) then
           call densify ( z, zb )
         else
@@ -1067,7 +1073,7 @@ contains ! =====     Public Procedures     =============================
           mz = zb%nrows
           if ( my_upper ) mz = j
 !$OMP PARALLEL DO private ( xi_1, xi_n, xr_1, xr_n, cr_1, cr_n, c_n, xd, yd, xy)
-          do i = 1, mz  ! Rows of Z = columns of XB
+          do i = 1, mz       ! Rows of Z = columns of XB
             ! Inner product of column I of XB with column J of YB
             if ( associated(xm) ) then
               if ( btest(xm((i-1)/b+1),mod(i-1,b)) ) cycle
@@ -1096,12 +1102,12 @@ contains ! =====     Public Procedures     =============================
 !$OMP END PARALLEL DO
         end do ! j
         call sparsify ( z, zb, & ! Zb := Z
-          & "Z for banded X banded in Multiply_Matrix_Blocks", ModuleName )
+          & "Z for banded X banded in MultiplyMatrixBlocks", ModuleName )
       case ( M_Column_sparse ) ! XB banded, YB column-sparse
         ! ??? Make a full matrix, then sparsify it.  There _must_ be a
         ! ??? better way
         call allocate_test ( z, xb%ncols, yb%ncols, &
-          & "Z for banded X sparse in Multiply_Matrix_Blocks", ModuleName )
+          & "Z for banded X sparse in MultiplyMatrixBlocks", ModuleName )
         if ( update .and. zb%kind /= m_absent ) then
           call densify ( z, zb )
         else
@@ -1144,11 +1150,11 @@ contains ! =====     Public Procedures     =============================
 !$OMP END PARALLEL DO
         end do ! j
         call sparsify ( z, zb, & ! Zb := Z
-          & "Z for banded X banded in Multiply_Matrix_Blocks", ModuleName )
+          & "Z for banded X banded in MultiplyMatrixBlocks", ModuleName )
       case ( M_Full )         ! XB banded, YB full
         if ( zb%kind /= m_full ) then
           call allocate_test ( z, xb%ncols, yb%ncols, &
-            & "Z for banded X full in Multiply_Matrix_Blocks", ModuleName )
+            & "Z for banded X full in MultiplyMatrixBlocks", ModuleName )
           if ( my_upd ) call densify ( z, zb )
           call createBlock ( zb, xb%ncols, yb%ncols, M_Full, novalues=.true. )
           zb%values => z
@@ -1169,6 +1175,7 @@ contains ! =====     Public Procedures     =============================
             if ( associated(ym) ) then
               if ( btest(ym((j-1)/b+1),mod(j-1,b)) ) cycle
             end if
+            if ( l < k ) cycle
             ! Inner product of column I of XB with column J of YB
             xy = dot( l-k+1, xb%values(k,1), 1, yb%values(m,j), 1 )
 !           xy = dot_product( xb%values(k:l,1), yb%values(m:m+l-k,j) )
@@ -1183,7 +1190,7 @@ contains ! =====     Public Procedures     =============================
         ! ??? Make a full matrix, then sparsify it.  There _must_ be a
         ! ??? better way
         call allocate_test ( z, xb%ncols, yb%ncols, &
-          & "Z for sparse X banded in Multiply_Matrix_Blocks", ModuleName )
+          & "Z for sparse X banded in MultiplyMatrixBlocks", ModuleName )
         if ( update .and. zb%kind /= m_absent ) then
           call densify ( z, zb )
         else
@@ -1226,12 +1233,12 @@ contains ! =====     Public Procedures     =============================
 !$OMP END PARALLEL DO
         end do ! j
         call sparsify ( z, zb, & ! Zb := Z
-          & "Z for banded X banded in Multiply_Matrix_Blocks", ModuleName )
+          & "Z for banded X banded in MultiplyMatrixBlocks", ModuleName )
       case ( M_Column_sparse ) ! XB column-sparse, YB column-sparse
         ! ??? Make a full matrix, then sparsify it.  There _must_ be a
         ! ??? better way
         call allocate_test ( z, xb%ncols, yb%ncols, &
-          & "Z for sparse X sparse in Multiply_Matrix_Blocks", ModuleName )
+          & "Z for sparse X sparse in MultiplyMatrixBlocks", ModuleName )
         if ( update .and. zb%kind /= m_absent ) then
           call densify ( z, zb )
         else
@@ -1279,11 +1286,11 @@ contains ! =====     Public Procedures     =============================
 !$OMP END PARALLEL DO
         end do ! j
         call sparsify ( z, zb, & ! Zb := Z
-          & "Z for banded X banded in Multiply_Matrix_Blocks", ModuleName )
+          & "Z for banded X banded in MultiplyMatrixBlocks", ModuleName )
       case ( M_Full )         ! XB column-sparse, YB full
         if ( zb%kind /= m_full ) then
           call allocate_test ( z, xb%ncols, yb%ncols, &
-            & "Z for sparse X full in Multiply_Matrix_Blocks", ModuleName )
+            & "Z for sparse X full in MultiplyMatrixBlocks", ModuleName )
           if ( my_upd ) call densify ( z, zb )
           call createBlock ( zb, xb%ncols, yb%ncols, M_Full, novalues=.true. )
           zb%values => z
@@ -1302,6 +1309,7 @@ contains ! =====     Public Procedures     =============================
             end if
             k = xb%r1(i-1)+1
             l = xb%r1(i)
+            if ( l < k ) cycle
             ! Inner product of column I of XB with column J of YB
             xy = dot( l-k+1, xb%values(k,1), 1, yb%values(xb%r2(k),j), 1 )
 !           xy = dot_product( xb%values(k:l,1), yb%values(xb%r2(k:l),j) )
@@ -1313,7 +1321,7 @@ contains ! =====     Public Procedures     =============================
     case ( M_Full )
       if ( zb%kind /= m_full ) then
         call allocate_test ( z, xb%ncols, yb%ncols, &
-          & "Z for full X <anything> in Multiply_Matrix_Blocks", ModuleName )
+          & "Z for full X <anything> in MultiplyMatrixBlocks", ModuleName )
         if ( my_upd ) call densify ( z, zb )
         call createBlock ( zb, xb%ncols, yb%ncols, M_Full, novalues=.true. )
         zb%values => z
@@ -1335,6 +1343,7 @@ contains ! =====     Public Procedures     =============================
             if ( associated(xm) ) then
               if ( btest(xm((i-1)/b+1),mod(i-1,b)) ) cycle
             end if
+            if ( l < k ) cycle
             ! Inner product of column I of XB with column J of YB
             xy = dot( l-k+1, xb%values(m,i), 1, yb%values(k,1), 1 )
 !           xy = dot_product( xb%values(m:m+l-k,i), yb%values(k:l,1) )
@@ -1433,10 +1442,16 @@ contains ! =====     Public Procedures     =============================
         end do
       end if
       if ( my_sub ) then
-        zDns = zDns - matmul(transpose(xDns), yDns)
+        call gemm ( 'T', 'N', size(xDns,2), size(yDns,2), size(xDns,1), -1.0_r8, &
+          & xDns, size(xDns,1), yDns, size(yDns,1), 1.0_r8, &
+          & zDns, size(zDns,1) )
+!       zDns = zDns - matmul(transpose(xDns), yDns)
         line = trim(line) // ' Subtract'
       else
-        zDns = zDns + matmul(transpose(xDns), yDns)
+        call gemm ( 'T', 'N', size(xDns,2), size(yDns,2), size(xDns,1), +1.0_r8, &
+          & xDns, size(xDns,1), yDns, size(yDns,1), 1.0_r8, &
+          & zDns, size(zDns,1) )
+!       zDns = zDns + matmul(transpose(xDns), yDns)
       end if
       if ( my_upper ) then
         line = trim(line) // ' Upper'
@@ -1502,7 +1517,8 @@ contains ! =====     Public Procedures     =============================
         end if
         v1 = a%r2(i-1)             ! starting position in A%VALUES - 1
         n = a%r2(i) - v1           ! how many values
-        m = a%r1(i)              ! starting position in V
+        if ( n <= 0 ) cycle
+        m = a%r1(i)                ! starting position in V
         av = dot(n, a%values(v1+1,1), 1, v(m), 1)
 !       av = dot_product( a%values(v1+1:v1+n,1), v(m:m+n-1) )
         p(i) = p(i) + s * av
@@ -1603,10 +1619,10 @@ contains ! =====     Public Procedures     =============================
       else                         ! skip the diagonal
 !$OMP PARALLEL DO
         do i = 1, size(p)
-          p(i) = p(i) + &
+          if ( i > 1 ) p(i) = p(i) + &
             & sign * dot(i-1, b%values(i,1), size(b%values,1), v(1), 1)
 !           & sign * dot_product(b%values(i,1:i-1), v(1:i-1))
-          p(i) = p(i) + &
+          if ( i < size(v) ) p(i) = p(i) + &
             & sign * dot(size(v)-i, b%values(i,i+1), size(b%values,1), v(i+1), 1)
 !           & sign * dot_product(b%values(i,i+1:), v(i+1:))
         end do ! i
@@ -1758,7 +1774,7 @@ contains ! =====     Public Procedures     =============================
           end do ! j = 1, nc
         end do ! i = 1, n
       case ( M_Full )
-        do i = 1, n
+        do i = 2, n
           d = u%values(i,i)
           if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
               & "U matrix in SolveCholeskyM_0 is singular" )
@@ -1768,7 +1784,7 @@ contains ! =====     Public Procedures     =============================
 !           xs(i,j) = ( xs(i,j) - &
 !                   &   dot_product( u%values(1:i-1,i), xs(1:i-1,j)) ) / d
           end do ! j = 1, nc
-        end do ! i = 1, n
+        end do ! i = 2, n
       end select
     else             ! solve U X = B for X
       if ( u%kind == M_full ) then
@@ -2322,8 +2338,8 @@ contains ! =====     Public Procedures     =============================
       & (/'Absent', 'Banded','Sparse','Full  '/)
     ! Local variables
     real(r8), dimension(:,:), pointer :: BM ! B dense
-    real(r8) :: E = -1.0_r8
-    integer :: I, J                         ! Subscripts, loop inductors
+    real(r8) :: D, E = -1.0_r8, EMAX
+    integer :: I, IMAX, J, JMAX             ! Subscripts, loop inductors
     real(r8), parameter :: T = tiny(1.0_r8)
 
     ! Executable code
@@ -2333,39 +2349,61 @@ contains ! =====     Public Procedures     =============================
     call Allocate_test ( bm, b%nRows, b%nCols, 'bm', ModuleName )
     call Densify ( bm, b )
 
+    emax = -1.0_r8
   o:do j = 1, ubound(m,2)
       do i = 1, ubound(m,1)
-        if ( abs(bm(i,j)-m(i,j)) > 1.0e3_r8 * max(t,e*(abs(bm(i,j))+abs(m(i,j)))) ) then
-          ok = .false.
-          call output ( 'Matrix algebra failed', advance='yes' )
-          call dump ( bm, name='L2 Result')
-          call dump ( m, name='Slow result')
-          call output ( 'Matrix algebra failed' )
-          if (present(name)) call output ( ' for '//trim(name) )
-          if (present(kinda) .or. present(kindb)) then
-            call output ( ' case' )
-            if (present(kindA)) call output ( ' '//kindNames(kindA) )
-            if (present(kindB)) call output ( ' '//kindNames(kindB) )
+        d = abs(bm(i,j)-m(i,j))
+        if ( d > 1.0e3_r8 * max(t,e*(abs(bm(i,j))+abs(m(i,j)))) ) then
+          if ( d > emax ) then
+            emax = d
+            imax = i
+            jmax = j
           end if
-          call output ( '', advance='yes' )
-          call output ( 'First error at i = ' )
-          call output ( i )
-          call output ( ', j = ' )
-          call output ( j )
-          call output ( ' bm(i,j) = ' )
-          call output ( bm(i,j) )
-          call output ( ', m(i,j) = ' )
-          call output ( m(i,j), advance='yes' )
-    exit o
+          if ( ok ) then ! Don't print twice
+            call output ( 'Matrix algebra failed', advance='yes' )
+            call dump ( bm, name='L2 Result')
+            call dump ( m, name='Slow result')
+            call output ( 'Matrix algebra failed' )
+            if (present(name)) call output ( ' for '//trim(name) )
+            if (present(kinda) .or. present(kindb)) then
+              call output ( ' case' )
+              if (present(kindA)) call output ( ' '//kindNames(kindA) )
+              if (present(kindB)) call output ( ' '//kindNames(kindB) )
+            end if
+            call output ( '', advance='yes' )
+            call output ( 'First error at i = ' )
+            call output ( i )
+            call output ( ', j = ' )
+            call output ( j )
+            call output ( ' bm(i,j) = ' )
+            call output ( bm(i,j) )
+            call output ( ', m(i,j) = ' )
+            call output ( m(i,j), advance='yes' )
+            ok = .false.
+          end if
         end if
       end do
     end do o
+    if ( .not. ok ) then
+      call output ( 'Maximum absolute error = ' )
+      call output ( emax )
+      call output ( ' at (' )
+      call output ( imax )
+      call output ( ',' )
+      call output ( jmax )
+      call output ( ')', advance='yes' )
+    end if
     call deallocate_test ( bm, 'bm', ModuleName )
   end subroutine TestBlock
 
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.57  2001/11/09 02:03:47  vsnyder
+! Corrected procedure name in character literals in calls to allocate_test
+! Corrected some comments.  Put some if's around references to dot, in case
+! N = 0 but a subscript is out of bounds.
+!
 ! Revision 2.56  2001/11/08 02:08:04  vsnyder
 ! Moved interfaces for DOT to dot_external
 ! Added OpenMP comments
