@@ -219,7 +219,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   end type L2GPData_T
 
   ! Print debugging stuff?
-  logical, parameter :: DEEBUG = .false.  
+  logical, parameter :: DEEBUG = .true.  
   logical, parameter ::SWATHLEVELMISSINGVALUE = .false. ! Make it swath attr?
 
 contains ! =====     Public Procedures     =============================
@@ -1713,15 +1713,30 @@ contains ! =====     Public Procedures     =============================
     ! l2FileHandle,starting at the profile number "offset" (First profile
     ! in the file has offset==0). If this runs off the end of the swath, 
     ! it is lengthened automagically. 
+    ! This call has been altered recently, so that it can be used to create
+    ! a swath as well as adding to one. 
+
     ! Arguments
 
     integer, intent(IN) :: l2FileHandle ! From swopen
+
+    ! This is a L2GPData_T structure containing all the data to be written
     type (L2GPData_T), intent(INOUT) :: l2gp
+    ! This is the name the swath is given in the file. By default it is
+    ! the name contained in l2gp
     character (LEN=*), optional, intent(IN) ::swathName!default->l2gp%swathName
     character (LEN=*), optional, intent(IN) ::fileName
+    ! This (offset) is the point in the swath at which the data is written. 
+    ! First profile in the file has offset==0. If the swath in the file is 
+    ! shorter than offset + ( num of profiles in l2gp) then it grows by magic
     integer,intent(IN),optional::offset
+    ! TotNumProfs is a new argument. It seems only to be used if we are 
+    ! creating a swath, rather than adding to one. In that case I guess
+    ! it is the total number of profiles in the swath created. I also 
+    ! guess that this is done so that we can avoid growing and re-growing 
+    ! the swath.
     integer,intent(IN),optional::TotNumProfs
-    integer, optional, intent(in) :: hdfVersion
+    integer, optional, intent(in) :: hdfVersion ! better be 4 or 5!
     logical, intent(in), optional :: createSwath
     ! Local
     integer :: actual_ntimes
@@ -1738,8 +1753,13 @@ contains ! =====     Public Procedures     =============================
     else
       myhdfVersion = L2GPDEFAULT_HDFVERSION
     endif
+    ! Optional args should _ONLY_ appear like this, inside an IF 
+    ! block that checks if they are present. HCP replaced one occurance
+    ! of TotNumProfs with myLastProfile as they are equal if TotNumProfs
+    ! is present and cause a crash if it is not. Another occurrance seemed 
+    ! wrong anyway, so I commented it out.
     if (present(TotNumProfs)) then
-      myLastProfile = TotNumProfs
+      myLastProfile = TotNumProfs 
     else
       myLastProfile = L2GP%nTimes
     endif
@@ -1767,7 +1787,7 @@ contains ! =====     Public Procedures     =============================
     else
       ! Must create swath in file w/o disturbing other swaths
       if(DEEBUG) print *, 'Must create swath'
-      if(DEEBUG) print *, 'Will have ', TotNumProfs, ' profiles'
+      if(DEEBUG) print *, 'Will have ', myLastProfile, ' profiles'
       if(DEEBUG) print *, 'instead of ', l2gp%nTimes, ' profiles'
       actual_ntimes = l2gp%nTimes
       ! if ( present(TotNumProfs) ) l2gp%nTimes = TotNumProfs
@@ -1787,9 +1807,17 @@ contains ! =====     Public Procedures     =============================
       ! l2gp%nTimes = actual_ntimes
     endif
 
-    if ( offset == totNumProfs .or. size(l2gp%l2gpValue,3) == 0 ) then
+    if(DEEBUG) then
+      print*,"offset=",offset,"myLastProfile=",myLastProfile,&
+        "size(l2gp%l2gpValue,3)=",size(l2gp%l2gpValue,3)
+    endif
+    ! This line caused an error because TotNumProfs is optional and 
+    ! is not here checked for present-ness. 
+    ! if ( offset == TotNumProfs .or. size(l2gp%l2gpValue,3) == 0 ) then
+    if ( size(l2gp%l2gpValue,3) == 0 ) then
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
-      & "No profiles in this chunk" )
+        & "No profiles in this chunk" )
+
     else
       call OutputL2GP_writeGeo_hdf (l2gp, l2FileHandle, myHDFVersion, &
         & myswathName, offset)
@@ -2049,6 +2077,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.82  2003/10/28 21:41:06  pwagner
+! Removed swath-level MissingValue attribute; renamed -Precision softlink
+!
 ! Revision 2.81  2003/10/28 00:39:00  pwagner
 ! Fixed bug where character-vlaued attributes were only 1 char long
 !
