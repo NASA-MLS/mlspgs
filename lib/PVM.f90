@@ -1,5 +1,5 @@
-! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
 
 module PVM ! Interface to the f77 pvm library.
 
@@ -7,7 +7,7 @@ module PVM ! Interface to the f77 pvm library.
   ! MLS code (mainly aimed at level 2
 
   use MLSCommon, only: r8
-  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
+  ! use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
 
   implicit none
 
@@ -182,6 +182,11 @@ module PVM ! Interface to the f77 pvm library.
   integer, parameter :: PvmNoEntry    = -32
   integer, parameter :: PvmDupEntry   = -33
 
+  ! ----------------------------------
+  ! tag your dying message with this tag, signal
+  ! ----------------------------------
+  integer, parameter :: INFOTag = 10
+  integer, parameter :: SIG_ABOUTTODIE = 1
   interface
 
      subroutine pvmfspawn ( task, flag, whr, ntask, tids, numt )
@@ -539,23 +544,11 @@ contains
     values=reshape(tmpVal,shape(values))
   end subroutine pvmf90unpackRealarr3
 
-  ! --------------------------------------------  PVMERRORMESSAGE  -----
-  subroutine PVMErrorMessage ( INFO, PLACE )
-    ! This routine is called to log a PVM error
-    integer, intent(in) :: INFO
-    character (LEN=*) :: PLACE
-
-    character (LEN=132) :: LINE
-
-    write (line, * ) info
-    call MLSMessage(MLSMSG_Error,ModuleName,'PVM error '//trim(place)//&
-      ' Info='//trim(adjustl(line)))
-  end subroutine PVMErrorMessage
-
   ! --------------------------------------------- GetMachineNameFromTid --
-  subroutine GetMachineNameFromTid ( tid, rightname )
+  subroutine GetMachineNameFromTid ( tid, rightname, ierror )
     integer, intent(in) :: TID
     character (len=*), intent(out) :: RIGHTNAME
+    integer, intent(out) :: IERROR
 
     ! Local variables
     integer :: RIGHTDTID
@@ -569,17 +562,20 @@ contains
     integer :: I
 
     ! Executable code
+    ierror = -1
     call PVMFTidToHost ( tid, rightDtid )
     i = 1
     rightName = ''
     hostLoop: do
       call PVMFConfig ( nhost, narch, dtid, name, arch, speed, info )
-      if ( info < 0 ) call PVMErrorMessage ( info, &
-        & 'Calling PVMFConfig' )
+      ! if ( info < 0 ) call PVMErrorMessage ( info, &
+      !   & 'Calling PVMFConfig' )
+      if ( info < 0 ) return
       if ( dtid == rightDtid ) rightName = trim(name)
       i = i + 1
       if ( i > nhost ) exit hostLoop
     end do hostLoop
+    ierror = 0
   end subroutine GetMachineNameFromTid
 
   logical function not_used_here()
@@ -589,6 +585,9 @@ contains
 end module PVM
 
 ! $Log$
+! Revision 2.15  2005/03/15 23:46:44  pwagner
+! Moved PVMERRORMESSAGE to MLSMessageModule
+!
 ! Revision 2.14  2004/12/14 21:33:19  pwagner
 ! Added pvmfpstat
 !
