@@ -10,7 +10,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
        & MLSMSG_Error, MLSMSG_Warning
   use MLSCommon, only: R8
-
+  use MLSStrings, only: ints2Strings, strings2Ints
   use Hdf, only: DFNT_CHAR8, DFNT_FLOAT32, DFNT_INT32, DFNT_FLOAT64
   use HDFEOS!, only: SWATTACH, SWCREATE, SWDEFDFLD, SWDEFDIM, SWDEFGFLD, &
      !& SWDETACH
@@ -82,7 +82,11 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 
   integer, parameter :: HDFE_AUTOMERGE = 1     ! MERGE FIELDS WITH SHARE DIM
   integer, parameter :: HDFE_NOMERGE = 0       ! don't merge
-
+  ! The following, if true, says to encode strings as ints
+  ! before swapi write; also decode ints to strings after read
+  ! otherwise, try swapi read, write directly with strings
+  logical, parameter :: USEINTS4STRINGS = .false.  
+  
   ! This datatype is the main one, it simply defines one l2gp swath
 
   typE L2GPData_T
@@ -97,6 +101,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
      integer :: nTimes          ! Total number of profiles
      integer :: nLevels         ! Total number of surfaces
      integer :: nFreqs          ! Number of frequencies in breakdown
+     integer :: nColumns        ! Number of diff. tropopause definitions
 
      ! Now we store the geolocation fields, first the vertical one:
      real (r8), pointer, dimension(:) :: pressures => NULL() ! Vertical coords (nLevels)
@@ -138,17 +143,20 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 contains ! =====     Public Procedures     =============================
 
   !------------------------------------------  SetupNewL2GPRecord  -----
-  subroutine SetupNewL2GPRecord ( l2gp, nFreqs, nLevels, nTimes)
+  subroutine SetupNewL2GPRecord ( l2gp, nFreqs, nLevels, nTimes, nColumns)
 
     ! This routine sets up the arrays for an l2gp datatype.
 
     ! Dummy arguments
     type (L2GPData_T), intent(inout)  :: l2gp
-    integer, intent(in), optional :: nFreqs, nLevels, nTimes ! Dimensions
+    integer, intent(in), optional :: nFreqs            ! Dimensions
+    integer, intent(in), optional :: nLevels           ! Dimensions
+    integer, intent(in), optional :: nTimes            ! Dimensions
+    integer, intent(in), optional :: nColumns          ! Dimensions
 
     ! Local variables
     integer :: freqsArrayLen, status, surfsArrayLen
-    integer :: useNFreqs, useNLevels, useNTimes
+    integer :: useNFreqs, useNLevels, useNTimes, useNCOLUMNS
 
     if ( present(nFreqs) ) then
        useNFreqs=nFreqs
@@ -168,11 +176,18 @@ contains ! =====     Public Procedures     =============================
        useNTimes=0              ! Default to empty l2gp
     end if
 
+    if ( present(nColumns) ) then
+       useNColumns=nColumns
+    else
+       useNColumns=0              ! Defaults to no columns
+    end if
+
     ! Store the dimensionality
 
     l2gp%nTimes = useNTimes
     l2gp%nLevels = useNLevels
     l2gp%nFreqs = useNFreqs
+    l2gp%nColumns = useNColumns
 
     ! But allocate to at least one for times, freqs
  
@@ -255,23 +270,22 @@ contains ! =====     Public Procedures     =============================
   end subroutine DestroyL2GPContents
 
   !---------------------------------------  ExpandL2GPDataInPlace  -----
-  subroutine ExpandL2GPDataInPlace ( l2gp, newNTimes, newColumn )
+  subroutine ExpandL2GPDataInPlace ( l2gp, newNTimes, newNColumns )
 
     ! This subroutine expands an L2GPData_T in place allowing the user to 
     ! (1) add more profiles to it; or
-    ! (2) add another column (or a 1st one)
+    ! (2) add more columns (or a 1st one)
     ! 
 
     ! Dummy arguments
     type (L2GPData_T), intent(inout) :: l2gp
     integer, optional, intent(in)    :: newNTimes
-    logical, optional, intent(in)    :: newColumn
+    integer, optional, intent(in)    :: newNColumns
 
     ! Local variables
     integer :: status                   ! From ALLOCATE
     type (L2GPData_T) :: tempL2gp       ! For copying data around
     integer :: NumColumns, myNTimes, myNColms
-    logical :: myNewColumn
 
     ! Executable code
 
@@ -281,18 +295,22 @@ contains ! =====     Public Procedures     =============================
       myNTimes = l2gp%nTimes
    endif
 
-   if(present(newColumn)) then
-      myNewColumn = newColumn
+   if(present(newNColumns)) then
+      myNColms = newNColumns
    else
-      myNewColumn = .false.
+      myNColms = l2gp%nColumns
    endif
 
     ! First do a sanity check
 
 
-    if ( myNTimes<l2gp%nTimes ) &
-         & call MLSMessage ( MLSMSG_Error, ModuleName, &
+    if ( myNTimes<l2gp%nTimes ) then
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
          & "The number of profiles requested is fewer than those already present" )
+    elseif ( myNColms<l2gp%nColumns ) then
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+         & "The number of columns requested is fewer than those already present" )
+    endif
 
     tempL2gp = l2gp ! Copy the pointers to the old information
 
@@ -306,7 +324,7 @@ contains ! =====     Public Procedures     =============================
       & l2gp%l2gpPrecision, l2gp%status, l2gp%quality, &
       & l2gp%columnTypes, l2gp%columnValues, l2gp%boundaryPressures )
     call SetupNewL2GPRecord( l2gp, nFreqs=l2gp%nFreqs, nLevels=l2gp%nLevels, &
-      & nTimes=myNTimes)
+      & nTimes=myNTimes, nColumns=myNColms)
 
     ! Don't forget the `global' stuff
     l2gp%pressures=templ2gp%pressures
@@ -332,12 +350,6 @@ contains ! =====     Public Procedures     =============================
       numColumns = size(templ2gp%columnTypes)
     else
       numColumns = 0
-    endif
-    
-    if(myNewColumn) then
-      myNColms = numColumns+1
-    else
-      myNColms = numColumns
     endif
     
     if(myNColms > 0) then
@@ -441,7 +453,12 @@ contains ! =====     Public Procedures     =============================
     logical :: firstCheck, lastCheck
 
     real, allocatable :: realFreq(:), realSurf(:), realProf(:), real3(:,:,:)
-    character (LEN=8), allocatable :: the_status_buffer(:)
+!  How to deal with status and columnTypes? swrfld fails
+!  with char data on Linux
+!  Have recourse to ints2Strings and strings2Ints if USEINTS4STRINGS
+!    character (LEN=8), allocatable :: the_status_buffer(:)
+!    character (LEN=L2GPNameLen), allocatable :: the_status_buffer(:)
+    integer, allocatable, dimension(:,:) :: string_buffer
 
     ! Attach to the swath for reading
 
@@ -537,19 +554,20 @@ contains ! =====     Public Procedures     =============================
    ! Don't die--you may just have an older l2gp file--pre column-bian
        size = 0
     end if
-!    l2gp%nColumns = size
+    l2gp%nColumns = size
     nColumns=size
 
     ! Allocate result
 
-    call SetupNewL2GPRecord (l2gp, nFreqs=nFreqs, nLevels=nLevels, nTimes=myNumProfs)
+    call SetupNewL2GPRecord (l2gp, nFreqs=nFreqs, nLevels=nLevels, &
+    & nTimes=myNumProfs, nColumns=nColumns)
 
     ! Allocate temporary arrays
 
     nFreqsOr1=MAX(nFreqs,1)
     nLevelsOr1=MAX(nLevels, 1)
     allocate ( realProf(myNumProfs), realSurf(l2gp%nLevels), &
-      &   the_status_buffer(myNumProfs), &
+      &   string_buffer(1,myNumProfs), &
       &   realFreq(l2gp%nFreqs), &
       &   real3(nFreqsOr1,nLevelsOr1,myNumProfs), STAT=alloc_err )
     if ( alloc_err /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -734,7 +752,19 @@ contains ! =====     Public Procedures     =============================
 !      call MLSMessage ( MLSMSG_Error, ModuleName, msr )
 !    end if
 !    l2gp%status = the_status_buffer(:)(1:1)
+
+
     l2gp%status = ' ' ! So it has a value.
+
+   if(USEINTS4STRINGS) then
+       status = swrdfld(swid, DATA_FIELD3,start(3:3),stride(3:3),edge(3:3),&
+         string_buffer)
+       if ( status == -1 ) then
+         msr = MLSMSG_L2GPRead // DATA_FIELD3
+         call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+       call ints2Strings(string_buffer, l2gp%status)
+    end if
 
     status = swrdfld(swid, DATA_FIELD4, start(3:3), stride(3:3), edge(3:3), &
       &   realProf)
@@ -750,13 +780,13 @@ contains ! =====     Public Procedures     =============================
     if ( alloc_err /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
          'Failed deallocation of local real variables.' )
 
-    deallocate ( the_status_buffer, STAT=alloc_err )
+    deallocate ( string_buffer, STAT=alloc_err )
     if ( alloc_err /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
          'Failed deallocation of status buffer.' )
 
    ! Column data
    if(nColumns > 0) then
-    allocate ( the_status_buffer(nColumns), &
+    allocate ( string_buffer(L2GPNameLen,nColumns), &
       &   real3(myNumProfs,nColumns,1), STAT=alloc_err )
     if ( alloc_err /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate//' column-related things in ReadL2GPData' )
@@ -781,6 +811,23 @@ contains ! =====     Public Procedures     =============================
 !      call MLSMessage ( MLSMSG_Error, ModuleName, msr )
 !    end if
 !    l2gp%columnTypes = the_status_buffer(:)
+
+   l2gp%columnTypes = ' '   ! So it has some value
+   if(USEINTS4STRINGS) then
+      ! Need these temporarily
+       col_start(1) = 0
+       col_edge(1) = L2GPNameLen
+       status = swrdfld(swid, DATA_FIELD3, col_start, col_stride, col_edge, &
+         string_buffer)
+       if ( status == -1 ) then
+         msr = MLSMSG_L2GPRead // DATA_FIELD3
+         call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       end if
+       call ints2Strings(string_buffer, l2gp%columnTypes)
+       col_start(1) = first
+       col_edge(1) = myNumProfs
+    end if
+
       status = swrdfld( swid, DATA_FIELD6, col_start, col_stride, &
         &   col_edge, real3(:,:,1) )
       if ( status == -1 ) then
@@ -797,7 +844,8 @@ contains ! =====     Public Procedures     =============================
        end if
        l2gp%boundaryPressures = real3(:,:,1)
 
-    deallocate ( the_status_buffer, real3, STAT=alloc_err )
+    deallocate ( string_buffer, real3, STAT=alloc_err )
+!    deallocate ( the_status_buffer, real3, STAT=alloc_err )
     if ( alloc_err /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
          'Failed deallocation of local column-related variables.' )
 
@@ -881,7 +929,8 @@ contains ! =====     Public Procedures     =============================
     end if
 
     if ( associated(l2gp%columnTypes) ) then
-       status = swdefdim(swid, DIM_NAME4, size(l2gp%columnTypes))
+       status = swdefdim(swid, DIM_NAME4, l2gp%nColumns)
+!       status = swdefdim(swid, DIM_NAME4, size(l2gp%columnTypes))
        if ( status == -1 ) then
           msr = DIM_ERR // DIM_NAME4
           call MLSMessage ( MLSMSG_Error, ModuleName, msr )
@@ -1229,6 +1278,13 @@ contains ! =====     Public Procedures     =============================
     integer :: start(3), stride(3), edge(3)
     integer :: swid
 
+!  How to deal with status and columnTypes? swrfld fails
+!  with char data on Linux
+!  Have recourse to ints2Strings and strings2Ints if USEINTS4STRINGS
+!    character (LEN=8), allocatable :: the_status_buffer(:)
+!    character (LEN=L2GPNameLen), allocatable :: the_status_buffer(:)
+    integer, allocatable, dimension(:,:) :: string_buffer
+
     if ( present(swathName) ) then
        name=swathName
     else
@@ -1293,12 +1349,24 @@ contains ! =====     Public Procedures     =============================
 
     ! 1-D status & quality fields
 
-    status = swwrfld(swid, DATA_FIELD3, start(3:3), stride(3:3), edge(3:3), &
-         l2gp%status)  
-    if ( status == -1 ) then
-       msr = WR_ERR // DATA_FIELD3
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
+   if(USEINTS4STRINGS) then
+      allocate(string_buffer(1,l2gp%nTimes))
+      call strings2Ints(l2gp%status, string_buffer)
+      status = swwrfld(swid, DATA_FIELD3, start(3:3), stride(3:3), edge(3:3), &
+           string_buffer)
+      if ( status == -1 ) then
+         msr = WR_ERR // DATA_FIELD3
+         call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+      end if
+      deallocate(string_buffer)
+   else
+      status = swwrfld(swid, DATA_FIELD3, start(3:3), stride(3:3), edge(3:3), &
+           l2gp%status)
+      if ( status == -1 ) then
+         msr = WR_ERR // DATA_FIELD3
+         call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+      end if
+   end if
     !  l2gp%quality = 0 !??????? Why was this here !??? NJL
     status = swwrfld(swid, DATA_FIELD4, start(3:3), stride(3:3), edge(3:3), &
          real(l2gp%quality))
@@ -1308,17 +1376,28 @@ contains ! =====     Public Procedures     =============================
     end if
 
    ! Column data
-   if(associated(l2gp%columnTypes)) then
+   if(l2gp%nColumns > 0) then
       ! These are good only for column data
-       nColumns = size(l2gp%columnTypes)
+       nColumns = l2gp%nColumns
        col_start(1) = 0
        col_start(2) = 0
        stride = 1
        col_edge(1) = l2gp%nTimes
        col_edge(2) = nColumns
        
-       status = swwrfld(swid, DATA_FIELD5, &
-       & col_start(2:2), col_stride(2:2), col_edge(2:2), l2gp%columnTypes)
+      if(USEINTS4STRINGS) then
+         allocate ( string_buffer(L2GPNameLen,nColumns) )
+        ! Need these temporarily
+         col_edge(1) = L2GPNameLen
+         call strings2Ints(l2gp%columnTypes, string_buffer)
+         status = swwrfld(swid, DATA_FIELD5, &
+         & col_start, col_stride, col_edge, string_buffer)
+         col_edge(1) = l2gp%nTimes
+         deallocate(string_buffer)
+      else
+         status = swwrfld(swid, DATA_FIELD5, &
+         & col_start(2:2), col_stride(2:2), col_edge(2:2), l2gp%columnTypes)
+      endif
        if ( status == -1 ) then
           msr = WR_ERR // DATA_FIELD5
           call MLSMessage ( MLSMSG_Error, ModuleName, msr )
@@ -1434,6 +1513,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.32  2001/08/02 00:17:56  pwagner
+! Added column components; untested
+!
 ! Revision 2.31  2001/06/13 20:36:15  vsnyder
 ! Commented out reading l2gp%status.  It appears that reading characters from
 ! HDF can't be made to work, due to fundamental design flaws in HDF.
