@@ -34,12 +34,13 @@ contains
       & EXPRN_V, GET_DECL, LABEL, NUM_VALUE, REDECLARE
     use Init_Tables_Module, only: S_Matrix, S_Vector
     use MatrixModule_1, only: AddToMatrix, AddToMatrixDatabase, AssignMatrix, &
-      & CopyMatrix, DestroyMatrix, Dump, GetActualMatrixFromDatabase, &
+      & CreateEmptyMatrix, CopyMatrix, &
+      & CopyMatrixValue, DestroyMatrix, Dump, GetActualMatrixFromDatabase, &
       & GetFromMatrixDatabase, GetKindFromMatrixDatabase, &
       & K_Cholesky, K_Empty, K_Kronecker, K_Plain, K_SPD, Matrix_Cholesky_T, &
       & Matrix_Database_T, Matrix_Kronecker_T, Matrix_SPD_T, Matrix_T, &
       & MultiplyMatrixVectorNoT, multiplyMatrixVectorSPD_1, &
-      & MultiplyMatrix_XY, ScaleMatrix
+      & MultiplyMatrix_XY, ScaleMatrix, Dump_Struct, TransposeMatrix
     use MLSCommon, only: R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use Output_M, only: Output
@@ -138,6 +139,7 @@ contains
           end select
           call declare ( string, dvalue, type, value, son )
         else ! ------------------- Update the declaration for an existing name
+          value = decoration ( decl%tree )
           select case ( what )
           case ( w_number )
             if ( decl%type /= exprn .and. decl%type /= num_value ) then
@@ -158,7 +160,7 @@ contains
               what = w_nothing
    go to 100
             end if
-            call copyVector ( vectorDatabase(decl%units), vector, clone=.true. )
+            call copyVector ( vectorDatabase(value), vector )
           case ( w_matrix, w_matrix_c, w_matrix_k, w_matrix_s )
             if ( decl%type == label ) then
               spec = get_spec(decl%tree)
@@ -172,21 +174,24 @@ contains
               what = w_nothing
    go to 100
             end if
-            call getActualMatrixFromDatabase ( matrixDatabase(decl%units), &
+            call getActualMatrixFromDatabase ( matrixDatabase(value), &
               & LHSMatrix )
             select case ( what )
             case ( w_matrix )
-              call copyMatrix ( LHSmatrix, matrix )     ! deep copy
+              call copyMatrixValue ( LHSmatrix, matrix )     ! deep copy
             case ( w_matrix_c )
-              call copyMatrix ( LHSmatrix, matrix_c%m ) ! deep copy
+              call copyMatrixValue ( LHSmatrix, matrix_c%m ) ! deep copy
             case ( w_matrix_k )
-              call copyMatrix ( LHSmatrix, matrix_k%m ) ! deep copy
+              call copyMatrixValue ( LHSmatrix, matrix_k%m ) ! deep copy
             case ( w_matrix_s )
-              call copyMatrix ( LHSmatrix, matrix_s%m ) ! deep copy
+              call copyMatrixValue ( LHSmatrix, matrix_s%m ) ! deep copy
             end select
+            if ( index(switches,'spa') /= 0 ) call dump_struct ( matrix, 'Result of expression' )
+          case default
+            stop
           end select
           call redeclare ( string, dvalue, decl%type, decl%units, decl%tree )
-          value = decl%units ! in case switches contains 'alg'
+          value = decoration ( decl%tree ) ! in case switches contains 'alg'
 100       call destroyStuff ( what, vector, matrix, matrix_c, matrix_k, matrix_s )
         end if
         if ( index(switches,'alg') /= 0 ) then
@@ -303,7 +308,7 @@ contains
       data whats(k_kronecker) / w_matrix_k /, whats(k_plain) / w_matrix /
       data whats(k_spd) / w_matrix_s /
 
-      call print_subtree ( root, 0, dump_decor=.true. )
+!      call print_subtree ( root, 0, dump_decor=.true. )
 
       if ( toggle(gen) ) call trace_begin ( 'Algebra.Expr', root )
       dvalue = 0.0_r8
@@ -315,7 +320,7 @@ contains
         decl = get_my_decl(root)
         if ( decl%type == label ) then
           spec = get_spec(decl%tree)
-          call print_subtree ( decl%tree, 0, dump_decor=.true. )
+          ! call print_subtree ( decl%tree, 0, dump_decor=.true. )
           if ( spec == s_matrix ) then
             decl%type = exprn_m
           else if ( spec == s_vector ) then
@@ -385,6 +390,12 @@ contains
             if ( what2 /= w_matrix ) then
               call announce_error ( son2, incompatible )
             else
+              ! Create result matrix as transpose
+              call CreateEmptyMatrix ( matrix, 0, &
+                & matrix2%col%vec, matrix2%row%vec, &
+                & .not. matrix2%col%instFirst, .not. matrix2%row%instFirst )
+              call TransposeMatrix ( matrix, matrix2 )
+              what = w_matrix
               ! Optimization?  Instead of actually doing the transpose here,
               ! consider returning a flag that the result needs transposing.
               ! Then one could use multiply routines that are aware of the
@@ -482,6 +493,7 @@ contains
               call copyMatrix ( matrix_s%m, matrix_s2%m )
               call scaleMatrix ( matrix_s%m, dValue )
             end select
+            what = what2
           case ( w_vector )
             select case ( what2 )
             case ( w_number ) ! ........................ Vector * Number
@@ -499,6 +511,7 @@ contains
             case ( w_vector ) ! ........................ Matrix * Vector
               call CloneVector ( vector, matrix%row%vec )
               call multiplyMatrixVectorNoT ( matrix, vector2, vector )
+              what = w_vector
             case ( w_matrix ) ! ........................ Matrix * Matrix
               call multiplyMatrix_XY ( matrix, matrix2, matrix3 )
               call assignMatrix ( matrix, matrix3 ) ! Destroys Matrix first
@@ -733,6 +746,9 @@ contains
 end module ALGEBRA_M
 
 ! $Log$
+! Revision 2.7  2004/01/24 01:04:52  livesey
+! More bug fixes and population
+!
 ! Revision 2.6  2004/01/23 05:38:22  livesey
 ! Various bug fixes
 !
