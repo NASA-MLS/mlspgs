@@ -13,12 +13,15 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   use MLSCommon, only: R4, R8
   use MLSFiles, only: FILENOTFOUND, &
     & HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, &
-    & MLS_HDF_VERSION, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, MLS_EXISTS
+    & MLS_HDF_VERSION, MLS_INQSWATH, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, &
+    & MLS_EXISTS
   use MLSHDFEOS, only: mls_swattach, mls_swdetach
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error, MLSMSG_Warning, MLSMSG_Debug
-  use MLSStrings, only: Capitalize, ExtractSubString, GetStringHashElement, &
-    & ints2Strings, list2array, lowercase, strings2Ints, StringElementNum
+  use MLSStrings, only: Capitalize, ExtractSubString, &
+    & GetStringHashElement, GetStringElement, &
+    & ints2Strings, list2array, lowercase, NumStringElements, &
+    & strings2Ints, StringElementNum
   use OUTPUT_M, only: OUTPUT
   use PCFHdr, only: GA_VALUE_LENGTH
   use STRING_TABLE, only: DISPLAY_STRING
@@ -28,9 +31,10 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   private
   public :: L2GPData_T
   public :: L2GPNameLen
-  public :: AddL2GPToDatabase,  DestroyL2GPContents,  DestroyL2GPDatabase, &
-    & Dump, ExpandL2GPDataInPlace, AppendL2GPData, &
-    & ReadL2GPData, SetupNewL2GPRecord,  WriteL2GPData
+  public :: AddL2GPToDatabase, AppendL2GPData, cpL2GPData, &
+    & DestroyL2GPContents,  DestroyL2GPDatabase, Dump, &
+    & ExpandL2GPDataInPlace, &
+    & ReadL2GPData, SetupNewL2GPRecord, WriteL2GPData
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -54,6 +58,11 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   interface AppendL2GPData
     module procedure AppendL2GPData_fileID
     module procedure AppendL2GPData_fileName
+  end interface
+
+  interface cpL2GPData
+    module procedure cpL2GPData_fileID
+    module procedure cpL2GPData_fileName
   end interface
 
   ! This module defines datatypes and gives basic routines for storing and
@@ -83,6 +92,10 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 
   ! r4 corresponds to sing. prec. :: same as stored in files
   integer, public, parameter :: rgp = r4
+
+  ! How long may the list of swath names grow (~80 x max num. of swaths/file)
+  integer, public, parameter :: MAXNUMSWATHPERFILE = 200
+  integer, public, parameter :: MAXSWATHNAMESBUFSIZE = 80*MAXNUMSWATHPERFILE
 
   ! TRUE means we can avoid using unlimited dimension and its time penalty
   logical, public            :: AVOIDUNLIMITEDDIMS = .true.
@@ -1869,7 +1882,7 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine AppendL2GPData_fileID
 
-  ! ---------------------- AppendL2GPData_fileName  -----------------------------
+  ! ---------------------- AppendL2GPData_fileName  ---------------------------
 
   subroutine AppendL2GPData_fileName(l2gp, fileName, &
     & swathname, offset, TotNumProfs, hdfVersion)
@@ -1937,6 +1950,136 @@ contains ! =====     Public Procedures     =============================
       call MLSMessage ( MLSMSG_Error, ModuleName, &
        & "Unable to close L2gp file: " // trim(FileName) // ' after appending')
   end subroutine AppendL2GPData_fileName
+
+  ! ---------------------- cpL2GPData_fileID  ---------------------------
+
+  subroutine cpL2GPData_fileID(file1, file2, swathList, hdfVersion)
+    !------------------------------------------------------------------------
+
+    ! Given file names file1 and file2,
+    ! This routine copies swathList from 1 to 2
+
+    ! Arguments
+
+    integer, intent(in) :: file1 ! handle of file 1
+    integer, intent(in) :: file2 ! handle of file 1
+    character (len=*), intent(in) :: swathList
+    integer, optional, intent(in) :: hdfVersion
+
+    ! Local variables
+    logical, parameter            :: countEmpty = .true.
+    type (L2GPData_T) :: l2gp
+    integer :: i
+    integer :: noSwaths
+    character (len=L2GPNameLen) :: swath
+    
+    ! Executable code
+    noSwaths = NumStringElements(trim(swathList), countEmpty)
+    if ( noSwaths < 1 ) then
+       call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'No swaths cp to file--unable to count swaths in ' // trim(swathList) )
+    endif
+    ! Loop over swaths in file 1
+    do i = 1, noSwaths
+      call GetStringElement (trim(swathList), swath, i, countEmpty )
+      ! Allocate and fill l2gp
+      call ReadL2GPData ( file1, trim(swath), l2gp, &
+           & hdfVersion=hdfVersion )
+      ! Write the filled l2gp to file2
+      call WriteL2GPData(l2gp, file2, trim(swath), hdfVersion=hdfVersion)
+      ! Deallocate memory used by the l2gp
+      call DestroyL2GPContents ( l2gp )
+    enddo
+       
+  end subroutine cpL2GPData_fileID
+
+  ! ---------------------- cpL2GPData_fileName  ---------------------------
+
+  subroutine cpL2GPData_fileName(file1, file2, create2, hdfVersion, swathList)
+    !------------------------------------------------------------------------
+
+    ! Given file names file1 and file2,
+    ! This routine copies all the l2gpdata from 1 to 2
+    ! (see cpL2GPData_fileID)
+    ! If file2 doesn't exist yet, or if create2 is TRUE, it'll create it
+
+    ! Arguments
+
+    character (len=*), intent(in) :: file1 ! Name of file 1
+    character (len=*), intent(in) :: file2 ! Name of file 2
+    logical, optional, intent(in) :: create2
+    integer, optional, intent(in) :: hdfVersion
+    character (len=*), optional, intent(in) :: swathList
+
+    ! Local
+    integer :: File1Handle
+    integer :: File2Handle
+    integer :: record_length
+    integer :: status
+    integer :: the_hdfVersion
+    logical :: file_exists
+    integer :: file_access
+    integer :: listsize
+    integer :: noSwaths
+    character (len=MAXSWATHNAMESBUFSIZE) :: mySwathList
+    
+    ! Executable code
+    the_hdfVersion = L2GPDEFAULT_HDFVERSION
+    if ( present(hdfVersion) ) the_hdfVersion = hdfVersion
+    file_exists = ( mls_exists(trim(File1)) == 0 )
+    if ( .not. file_exists ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'File 1 not found; make sure the name and path are correct' &
+        & // trim(file1) )
+    endif
+    if ( the_hdfVersion == WILDCARDHDFVERSION ) then
+      the_hdfVersion = mls_hdf_version(File1, hdfVersion)
+      if ( the_hdfVersion == FILENOTFOUND ) &
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'File 1 not found; make sure the name and path are correct' &
+          & // trim(file1) )
+    endif
+    if ( present(swathList) ) then
+      mySwathList = swathList
+    else
+      noSwaths = mls_InqSwath ( file1, mySwathList, listSize, &
+           & hdfVersion=the_hdfVersion)
+    endif
+    File1Handle = mls_io_gen_openF('swopen', .TRUE., status, &
+       & record_length, file_access, FileName=File1, &
+       & hdfVersion=the_hdfVersion, debugOption=.false. )
+    if ( status /= 0 ) &
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+       & "Unable to open L2gp file: " // trim(File1) // ' for cp-ing')
+
+    file_exists = ( mls_exists(trim(File2)) == 0 )
+    if ( file_exists ) then
+      file_access = DFACC_RDWR
+    else
+      file_access = DFACC_CREATE
+    endif
+    if ( present(create2) ) then
+      if ( create2 ) file_access = DFACC_CREATE
+    endif
+    File2Handle = mls_io_gen_openF('swopen', .TRUE., status, &
+       & record_length, file_access, FileName=File2, &
+       & hdfVersion=the_hdfVersion, debugOption=.false. )
+    if ( status /= 0 ) &
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+       & "Unable to open L2gp file: " // trim(File2) // ' for cping')
+    call cpL2GPData_fileID(File1Handle, File2Handle, &
+      & mySwathList, hdfVersion=the_hdfVersion)
+    status = mls_io_gen_closeF('swclose', File1Handle, FileName=File1, &
+      & hdfVersion=the_hdfVersion)
+    if ( status /= 0 ) &
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+       & "Unable to close L2gp file: " // trim(File1) // ' after cping')
+    status = mls_io_gen_closeF('swclose', File2Handle, FileName=File2, &
+      & hdfVersion=the_hdfVersion)
+    if ( status /= 0 ) &
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+       & "Unable to close L2gp file: " // trim(File2) // ' after cping')
+  end subroutine cpL2GPData_fileName
 
   ! ------------------------------------------ DUMP_L2GP_DATABASE ------------
 
@@ -2108,6 +2251,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.87  2004/01/09 00:20:56  pwagner
+! Added avoidUnlimitedDims to allow bypassing bug directWriting range of chunks
+!
 ! Revision 2.86  2003/12/03 17:51:14  pwagner
 ! L2GP tracks both nTimes (for this slave) and nTimesTotal (done by all)
 !
