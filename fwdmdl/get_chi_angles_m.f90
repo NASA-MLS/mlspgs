@@ -39,6 +39,8 @@ contains
                                         ! geodetic angle in radians
     real(rp), intent(in) :: Req         ! equivalent earth radius in km
     real(rp), intent(in) :: Elev_offset ! radiometer pointing offset in radians
+!                                         positive is towards the earth,
+!                                         negative is towards space.
     real(rp), intent(in) :: dh_dz       ! dh/dz  at the tangent point
 
   ! outputs
@@ -79,7 +81,7 @@ contains
     !{ $\sin \chi^{\text{refr}}_{\text{eq}} = N_t \frac{H_t}{H_s}
     !    \frac{ \text{min} ( H_t, H^{\oplus} ) }{H^{\oplus}}$
 
-    ! ptg_angle = elev_offset + asin(x * min(ht,Req)/Req)
+    ! ptg_angle = asin(x * min(ht,Req)/Req) - elev_offset
 
     if ( tan_ht >= 0.0_rp ) then      ! min(ht,Req)/Req = 1
 
@@ -109,7 +111,7 @@ contains
       q = 2.0_rp * ht * Np1 / Req
     end if
 
-    ptg_angle = elev_offset + asin(sinChi)
+    ptg_angle = ASIN(sinChi) - elev_offset
     dx_dh = q / (hs * sqrt(1.0_rp - sinChi**2))
 
   ! Do temperature stuff if user requests it
@@ -132,6 +134,9 @@ contains
 
 end module Get_Chi_Angles_m
 ! $Log$
+! Revision 2.13  2002/10/08 17:08:04  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.12  2002/10/03 22:23:03  vsnyder
 ! Fix a bug in derivative calculation.  Get Deg2Rad from Units.  Cosmetic
 ! changes, including LaTeX equations.
