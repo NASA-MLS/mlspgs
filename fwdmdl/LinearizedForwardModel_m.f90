@@ -47,7 +47,8 @@ contains ! =====     Public Procedures     =============================
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use Intrinsic, only: LIT_INDICES
     use Intrinsic, only: L_NONE, L_RADIANCE, L_TEMPERATURE, L_PTAN, L_VMR, &
-      & L_LIMBSIDEBANDFRACTION, L_ZETA, L_OPTICALDEPTH, L_LATITUDE
+      & L_LIMBSIDEBANDFRACTION, L_ZETA, L_OPTICALDEPTH, L_LATITUDE, L_FIELDSTRENGTH, &
+      & L_FIELDELEVATION, L_FIELDAZIMUTH
     use L2PC_m, only: L2PCDATABASE, BINSELECTORS, POPULATEL2PCBIN
     use ManipulateVectorQuantities, only: FINDONECLOSESTINSTANCE, &
       & DOHGRIDSMATCH, DOVGRIDSMATCH, DOFGRIDSMATCH
@@ -764,7 +765,6 @@ contains ! =====     Public Procedures     =============================
       integer :: STATEINSTANCE          ! Instance index
       integer :: STATUS                 ! Flag
       logical :: SPLIT                  ! Need a split calculation
-      logical :: FAKESELECTORS          ! No selectors, so fake one
       logical :: FOUNDINFIRST           ! Flag, not used
       real(r8) :: THISCOST              ! Interim cost
 
@@ -838,26 +838,13 @@ contains ! =====     Public Procedures     =============================
       ! We have a bit of a hack here to ensure that in the absence of any
       ! other information, it will choose the closest latitude one (the
       ! previous behavior)
-      fakeSelectors = .true.
-      noSelectors = 1
-      if ( associated ( fmConf%binSelectors ) ) then
-        noSelectors = size ( fmConf%binSelectors )
-        fakeSelectors = noSelectors == 0
-      end if
-      if ( fakeSelectors ) then
-        allocate ( sel, STAT=status )
-        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & MLSMSG_Allocate//'sel' )
-        sel%selectorType = l_latitude
-        sel%cost = 1.0
-      end if
+      noSelectors = size ( fmConf%binSelectors )
 
       do bin = 1, noBins
         binRad => l2pcDatabase(bin)%row%vec%quantities(1)%template
         ! This is a bit of a hack, but if there
         do selector = 1, noSelectors
-          if ( .not. fakeSelectors ) &
-            & sel => binSelectors ( fmConf%binSelectors(selector) )
+          sel => binSelectors ( fmConf%binSelectors(selector) )
           select case ( sel%selectorType )
           case ( l_nameFragment )
             call get_string ( l2pcDatabase(bin)%name, binName, strip=.true. )
@@ -876,18 +863,16 @@ contains ! =====     Public Procedures     =============================
               & ( radiance%template%solarZenith(1,maf1:mafN) - &
               &   binRad%solarZenith(1,1) )**2 ) / &
               & (mafN-maf1+1) ) / sel%cost
-          case ( l_temperature, l_vmr )
-            ! This one requires more thought, I'll do it later
-            select case ( sel%selectorType )
-            case ( l_temperature )
-              l2pcQ => GetVectorQuantityByType ( &
-                & l2pcDatabase(bin)%col%vec, quantityType=l_temperature, &
-                & noError=.true. )
-            case ( l_vmr )
+          case ( l_temperature, l_vmr, l_fieldStrength, l_fieldElevation, l_fieldAzimuth )
+            if ( sel%selectorType == l_vmr ) then
               l2pcQ => GetVectorQuantityByType ( &
                 & l2pcDatabase(bin)%col%vec, quantityType=l_vmr, &
                 & molecule=sel%molecule, noError=.true. )
-            end select
+            else
+              l2pcQ => GetVectorQuantityByType ( &
+                & l2pcDatabase(bin)%col%vec, quantityType=sel%selectorType, &
+                & noError=.true. )
+            end if
             if ( .not. ValidateVectorQuantity ( l2pcQ,&
               & verticalCoordinate = (/ l_zeta /) ) ) &
               & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -919,12 +904,6 @@ contains ! =====     Public Procedures     =============================
           end select                  ! Bin selector type
         end do                        ! Loop over selectors
       end do                          ! Loop over bins
-
-      if ( fakeSelectors ) then
-        deallocate ( sel, STAT=status )
-        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & MLSMSG_Allocate//'sel' )
-      end if
 
       if ( index ( switches, 'binsel' ) /= 0 ) then
         call output ( 'Choosing bin for ' )
@@ -999,6 +978,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.42  2003/07/15 22:10:38  livesey
+! Added support for hybrid model
+!
 ! Revision 2.41  2003/07/09 20:16:26  livesey
 ! Anticipative bug fix in sideband stuff (not really used so far)
 !
