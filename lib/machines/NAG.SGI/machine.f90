@@ -1,6 +1,8 @@
 module MACHINE
   use F90_UNIX_ENV, only: IARGC, NAG_GETARG => GETARG
   use F90_iostat				! everything; see iostat_msg_NAG
+  ! Exit and return an integer status to the invoking process
+  use F90_UNIX_PROC, only: EXIT_WITH_STATUS => EXIT
   implicit none
 
   character(LEN=2) :: END_LINE = ' ' // char(10)
@@ -82,8 +84,8 @@ select case (iostat)
 		print*, '! READ beyond end of direct access file on unit %d'
     case(IOERR_RECL_LE_ZERO)              ! 213
 		print*, '! Invalid value for RECL! specifier (must be positive)'
-    case(IOERR_NO_FILE_WITH_REPLACE)      ! 212
-		print*, '! No FILE! specifier with STATUS=REPLACE'
+!    case(IOERR_NO_FILE_WITH_REPLACE)      ! 212
+!		print*, '! No FILE! specifier with STATUS=REPLACE'
     case(IOERR_INTEGER64_TOO_BIG)         ! 211
 		print*, '! Input value too large for 64-bit integer'
     case(IOERR_RW_AFTER_ENDFILE)          ! 210
@@ -196,8 +198,8 @@ select case (iostat)
 		print*, '! OPEN on connected unit has different STATUS! specifier'
     case(IOERR_SCRATCH_NAMED)             ! 156
 		print*, '! FILE! specifier on OPEN with STATUS=SCRATCH'
-    case(IOERR_NOT_CONNECTED_NO_FILENAME) ! 155
-		print*, '! Unit is not connected and no FILE! specifier on OPEN'
+!    case(IOERR_NOT_CONNECTED_NO_FILENAME) ! 155
+!		print*, '! Unit is not connected and no FILE! specifier on OPEN'
     case(IOERR_NOT_UNFORMATTED)           ! 154
 		print*, '! Unit is not connected for UNFORMATTED i/o'
     case(IOERR_NOT_WRITE)                 ! 153
@@ -334,6 +336,9 @@ end select
 end module MACHINE
 
 ! $Log$
+! Revision 1.2  2001/03/21 00:42:34  pwagner
+! Added print_iostat_msg_NAG
+!
 ! Revision 1.1  2001/01/13 00:29:44  pwagner
 ! moved to lib/machines/MLSCONFG/machine.f90
 !
