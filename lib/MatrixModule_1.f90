@@ -704,6 +704,10 @@ contains ! =====     Public Procedures     =============================
     if ( present(row) ) then
       if ( row < 1 .or. row > a%row%nb ) call MLSMessage ( MLSMSG_Error, &
         & moduleName, "Row number out-of-range in FillExtraCol" )
+      if ( a%block(row,a%col%nb)%kind /= m_full ) &
+        & call destroyBlock ( a%block(row,a%col%nb) )
+      if ( .not. associated(a%block(row,a%col%nb)%values) ) &
+        & call createBlock ( a%block(row,a%col%nb), a%row%nelts(row), 1, m_full )
       a%block(row,a%col%nb)%values(:,1) = &
           & x%quantities(a%row%quant(row))%values(:,a%row%inst(row))
     else
@@ -1474,6 +1478,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.27  2001/05/01 23:54:13  vsnyder
+! Create a block for the extra column
+!
 ! Revision 2.26  2001/05/01 06:56:32  livesey
 ! Bug fix, was using optional argument, not local copy/default.
 !
