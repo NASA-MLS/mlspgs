@@ -364,6 +364,7 @@ contains
       integer :: Insts(maxVal(a%col%vec%quantities(a%col%quant)%template%noInstances))
 
       integer :: IQ                ! Index of a quantity
+      integer :: MyOrd             ! Temporary, ord or less
       logical :: Need(a%col%nb)    ! "Need to do the quantity in this block of A"
       integer :: NB                ! Number of column blocks of A
       integer :: NI                ! Number of instances of this quantity
@@ -399,8 +400,8 @@ contains
               j = j + 1
               insts(j) = i
             end if
-            if ( j /= ni ) stop "!!! WHOOPS !!!"
           end do
+          if ( j /= ni ) stop "!!! WHOOPS !!!"
           need(insts(:ni)) = .false.    ! Remember that we've done them
         end if
 
@@ -428,7 +429,7 @@ o:          do while ( c2 <= ni )
                 if ( .not. associated(a%col%vec%quantities(iq)%mask) ) exit
                 ii = a%col%inst(insts(c1))
                 if ( iand(ichar(a%col%vec%quantities(iq)%mask(h,ii)),M_Tikhonov) &
-                  & /= 0 ) exit
+                  & == 0 ) exit
                 if ( c1 >= ni ) exit o
                 c1 = c1 + 1
               end do
@@ -438,28 +439,31 @@ o:          do while ( c2 <= ni )
                 if ( .not. associated(a%col%vec%quantities(iq)%mask) ) exit
                 ii = a%col%inst(insts(c2))
                 if ( iand(ichar(a%col%vec%quantities(iq)%mask(h,ii)),M_Tikhonov) &
-                  & == 0 ) exit
+                  & /= 0 ) exit
                 c2 = c2 + 1
                 if ( c2 > ni ) exit
               end do
 
               ! Compute regularization operator
+              myOrd = min(ord,c2-c1)
+              if ( myOrd < ord ) warn = .true.
+              if ( myOrd <= 1 ) cycle
               if ( associated(weightVec) ) then
-                do j = c1, c2
+                do j = c1, c2-1
                   i = insts(j)
                   iq = a%col%quant(i)
                   ii = a%col%inst(i)
-                  wtVec(i-c1+1) = weightVec%quantities(iq)%values(h,ii)
+                  wtVec(j-c1+1) = weightVec%quantities(iq)%values(h,ii)
                 end do
-                call coeffs ( ord, wt, c, wtVec(c1:c2), c2-c1+1 )
+                call coeffs ( myOrd, wt, c, wtVec(c1:c2-1), c2-c1 )
               else
-                call coeffs ( ord, wt, c )
+                call coeffs ( myOrd, wt, c )
                 wtVec = 1.0_r8
               end if
 
               ! Plug it in
-              do i = c1, c2 - ord
-                do j = i, i+ord
+              do i = c1, c2 - 1 - myOrd
+                do j = i, i + myOrd
                   if ( a%block(insts(i),insts(j))%kind == m_absent ) &
                     & call updateDiagonal ( a%block(insts(i),insts(j)), 0.0_r8 )
                   a%block(insts(i),insts(j))%values(h,1) = c(j-i) * wtVec(j)
@@ -598,6 +602,9 @@ o:          do while ( c2 <= a%block(ib,ib)%ncols )
 end module Regularization
 
 ! $Log$
+! Revision 2.23  2002/08/28 00:51:04  vsnyder
+! Correct more blunders in Tikhonov regularization
+!
 ! Revision 2.22  2002/08/28 00:01:04  vsnyder
 ! Correct two blunders in GetOrdAndWeight
 !
