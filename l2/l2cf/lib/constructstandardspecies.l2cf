@@ -21,7 +21,7 @@ begin Construct
   ;; ----------------------------------------- Derived macros
 
   ;; These are macros derived from above
-  !define(allMolecules,{!allLinearMolecules,!allLogMolecules})
+  !define(allMolecules,{!allLinearMolecules, !allLogMolecules})
   !define(allHiResMolecules,
     {!makelist({},{_HR},!allLinearHRMolecules),!makelist({},{_HR},!allLogHRMolecules)})
   ;; ----------------------------------------- Tangent pressures and phis
