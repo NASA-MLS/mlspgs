@@ -31,5 +31,8 @@ begin Output
 !stdprod(so2,SO2,)
 ;!stdprod(rhi,RHI,)
 
+Output, [ joined_ptanGHz, joined_ptanTHz, joined_phitanGHz, joined_phitanTHz ], $
+  type=l2aux, file='!outpathl2aux/MLS-Aura_L2AUX-DGM_!l2version_!day.h4'
+
 })
 end Output
