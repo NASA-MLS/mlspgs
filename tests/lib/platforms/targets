@@ -129,6 +129,7 @@ $(PROG_NAME): $(ALLOBJS) $(PVM_OBJS) $(libdir)/libmls.a
                       -L${libdir} -lmls \
 		-L${PGSTK} -lPGSTK \
         -L${HDFEOS} -lhdfeos \
+        $(hdfeos5_linker_line) \
 		-L${HDF} -lmfhdf \
         -ldf \
         -lz \
@@ -152,6 +153,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.10  2001/11/16 19:15:32  pwagner
+# Added stuff to work with mlspack
+#
 # Revision 1.9  2001/11/07 01:14:30  pwagner
 # lapack message refers to this case, not mlsl2
 #

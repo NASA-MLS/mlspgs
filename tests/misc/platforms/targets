@@ -120,6 +120,7 @@ $(PROG_NAME): $(ALLOBJS)
 		$(FC) $(LDOPTS) -o $(PROG_NAME) $(ALLOBJS)  \
 		-L${PGSTK} -lPGSTK \
         -L${HDFEOS} -lhdfeos \
+        $(hdfeos5_linker_line) \
 		-L${HDF} -lmfhdf \
         -ldf \
         -lz \
@@ -142,6 +143,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.6  2001/11/07 01:14:30  pwagner
+# lapack message refers to this case, not mlsl2
+#
 # Revision 1.5  2001/11/07 00:31:44  pwagner
 # Added lapack linker line and msg
 #

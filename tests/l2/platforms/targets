@@ -156,6 +156,7 @@ $(PROG_NAME): $(mlsl2_prereqs)
                       -L${libdir} -lmls \
 		-L${PGSTK} -lPGSTK \
         -L${HDFEOS} -lhdfeos \
+        $(hdfeos5_linker_line) \
 		-L${HDF} -lmfhdf \
         -ldf \
         -lz \
@@ -179,6 +180,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.13  2001/11/16 19:15:32  pwagner
+# Added stuff to work with mlspack
+#
 # Revision 1.12  2001/11/07 00:31:44  pwagner
 # Added lapack linker line and msg
 #

@@ -138,6 +138,7 @@ $(PROG_NAME): $(ALLOBJS) $(PVM_OBJS) libl1.a $(libdir)/libmls.a
                       -L${libdir} -lmls \
 		-L${PGSTK} -lPGSTK \
         -L${HDFEOS} -lhdfeos \
+        $(hdfeos5_linker_line) \
 		-L${HDF} -lmfhdf \
         -ldf \
         -lz \
@@ -168,6 +169,9 @@ Sd.o:
 
 # ========================================================================
 # $Log$
+# Revision 1.13  2001/11/07 01:14:30  pwagner
+# lapack message refers to this case, not mlsl2
+#
 # Revision 1.12  2001/11/07 00:31:44  pwagner
 # Added lapack linker line and msg
 #
