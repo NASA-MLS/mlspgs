@@ -10,7 +10,6 @@ module RetrievalModule
 
 ! This module and ones it calls consume most of the cycles.
 
-use VectorsModule, only: Dump
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use DNWT_Module, only: NF_EVALF, NF_EVALJ, NF_SOLVE, NF_NEWX, &
     & NF_GMOVE, NF_BEST, NF_AITKEN, NF_DX, NF_DX_AITKEN, NF_TOLX, &
@@ -405,6 +404,8 @@ contains
           ! Do the retrieval
           select case ( method )
           case ( l_newtonian )
+            call allocate_test ( fmStat%rows, jacobian%row%nb, 'fmStat%rows', &
+              & ModuleName )
             ! Set options for NWT
             nwt_opt(1:7) = (/  15, 1,      17, 2,      18, 3,      0 /)
             nwt_xopt(1:3) = (/ toleranceF, toleranceA, toleranceR /)
@@ -424,6 +425,10 @@ contains
                 & covarianceXApriori ) ! covarianceXApriori := covariance X apriori
             end if
             iter = 0
+            aj%axmax = 0.0
+            do k = 1, size(state%quantities)
+              aj%axmax = max(aj%axmax, maxval(abs(state%quantities(k)%values)))
+            end do
             do
               call nwta ( nwt_flag, aj )
               select case ( nwt_flag )
@@ -435,7 +440,6 @@ contains
                 fmStat%newHydros = .true.
                 fmStat%maf = 0
                 fmStat%finished = .false.
-                nullify ( fmStat%rows )
 
                 ! Loop over mafs
                 do while (.not. fmStat%finished )
@@ -481,14 +485,12 @@ contains
                 fmStat%newHydros = .true.
                 fmStat%maf = 0
                 fmStat%finished = .false.
-                nullify ( fmStat%rows )
 
                 ! Loop over mafs
                 do while ( .not. fmStat%finished )
                   ! What if one config set finished but others still had more
                   ! to do? Ermmm, think of this next time.
                   fmStat%maf = fmStat%maf + 1
-call dump ( (/ x, fwdModelExtra, f /), details=0 )
                   do k = 1, size(configIndices)
                     call forwardModel ( configDatabase(configIndices(k)), &
                       & x, fwdModelExtra, f, fmw, fmStat, jacobian )
@@ -508,7 +510,6 @@ call dump ( (/ x, fwdModelExtra, f /), details=0 )
 !                 call clearMatrix ( jacobian )  ! free the space
 !                 call destroyVectorValue ( f )  ! free the space
                 end do ! mafs
-                call deallocate_test ( fmStat%rows, 'FmStat%rows', moduleName )
                 ! Compute (negative of the) gradient = -(Jacobian)**T * F.
                 ! This is the RHS of the normal equations 
                 ! J**T * J * "Candidate DX" = -J**T * F:
@@ -641,6 +642,7 @@ call dump ( (/ x, fwdModelExtra, f /), details=0 )
             call destroyVectorInfo ( gradient )
             call destroyMatrix ( normalEquations%m )
             call destroyMatrix ( factored%m )
+            call deallocate_test ( fmStat%rows, 'FmStat%rows', moduleName )
           end select ! method
           !??? Make sure the jacobian and outputCovariance get destroyed
           !??? after ?what? happens?  Can we destroy the entire matrix
@@ -722,6 +724,9 @@ call dump ( (/ x, fwdModelExtra, f /), details=0 )
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.24  2001/05/01 23:52:04  vsnyder
+! Allocate and deallocate fmStat%rows here
+!
 ! Revision 2.23  2001/04/28 01:47:17  vsnyder
 ! Don't try to create initial value for state
 !
