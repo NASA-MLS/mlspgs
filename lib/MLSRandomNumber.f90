@@ -29,8 +29,8 @@ module MLSRandomNumber              ! Some random number-generating things
        "$RCSfile$"
 !---------------------------------------------------------------------------
 
-  integer, private, parameter          :: haystack=97
-  real, private, dimension(haystack)   :: harvest
+  integer, private, parameter          ::      haystack=97
+  real, private, dimension(haystack), save  :: harvest
 
 !     c o n t e n t s
 !     - - - - - - - -
@@ -38,7 +38,13 @@ module MLSRandomNumber              ! Some random number-generating things
 ! drang             gauss. distribution: 0 mean, 1 s.d. (double)
 ! srang             gauss. distribution: 0 mean, 1 s.d. (single)
 
-
+! Modified to use f95 intrinsic random_number instead of ranpk1 and ranpk2
+! Unfortunately, using NAG f95, this has side-effect of making test case
+! results worse than when MATH77 libraries were used.
+! Revisiting this issue later would be justified if this module
+! became required for regular processing.
+! However, its current use is for testing whether diagnostic products
+! were correctly coded
 contains
 
       double precision function  DRANG ()
@@ -157,7 +163,8 @@ contains
 !
 !                                Compute result as  R*Sin(PHI)
 !
-         DRANG = (XX-YY)*R
+!         DRANG = (XX-YY)*R
+         DRANG = (X-Y)*(X+Y)*R
          DGFLAG = .true.
          return
       endif
@@ -294,8 +301,8 @@ contains
 !
 !                                Compute result as  R*Sin(PHI)
 !
-         SRANG = (XX-YY)*R
-         SGFLAG = .true.
+!         SRANG = (XX-YY)*R
+         SRANG = (X-Y)*(X+Y)*R
          return
       endif
 !     -- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -313,6 +320,9 @@ end module MLSRandomNumber
 
 !
 ! $Log$
+! Revision 2.4  2001/09/27 16:39:24  pwagner
+! saves harvest array
+!
 ! Revision 2.3  2001/09/24 23:04:11  pwagner
 ! Now uses intrinsic random_number rather than MATH77 ranpk
 !
