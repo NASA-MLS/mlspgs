@@ -145,7 +145,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------  ConstructForwardModelConfig  -----
   type (forwardModelConfig_T) function ConstructForwardModelConfig &
-    & ( ROOT, VGRIDS ) result(info)
+    & ( ROOT, VGRIDS ) result ( info )
     ! Process the forwardModel specification to produce ForwardModelConfig to add
     ! to the database
     use MLSSignals_M, only: Signals
@@ -155,6 +155,7 @@ contains ! =====     Public Procedures     =============================
     !                                     "spec_args" vertex. Local variables
     type (vGrid_T), dimension(:), target :: vGrids ! vGrid database
 
+    logical, dimension(:), pointer :: Channels   ! From Parse_Signal
     integer :: COMMONSIZE               ! Dimension
     integer :: Field                    ! Field index -- f_something
     logical :: Got(field_first:field_last)   ! "Got this field already"
@@ -165,17 +166,16 @@ contains ! =====     Public Procedures     =============================
     ! if any, else zero.
     integer :: NoChannelsSpecs          ! Number of channel specs we've had
     integer :: SIDEBAND                 ! Returned from Parse_Signal
+    integer, dimension(:), pointer :: SIGNALINDS ! From Parse_Signal
+    character (len=80) :: SIGNALSTRING  ! E.g. R1A....
     integer :: Son                      ! Some subtree of root.
     integer :: STATUS                   ! From allocates etc.
+    integer :: TANGENT                  ! Loop counter
     integer :: THISMOLECULE             ! Tree index.
     integer :: type                     ! Type of value returned by EXPR
-    integer :: TANGENT                  ! Loop counter
     integer :: Units(2)                 ! Units of value returned by EXPR
-    integer :: WANTED                   ! Which signal do we want?
     real (r8) :: Value(2)               ! Value returned by EXPR
-    character (len=80) :: SIGNALSTRING  ! E.g. R1A....
-    logical, dimension(:), pointer :: channels   ! From Parse_Signal
-    integer, dimension(:), pointer :: SIGNALINDS ! From Parse_Signal
+    integer :: WANTED                   ! Which signal do we want?
 
     ! Error message codes
 
@@ -374,9 +374,9 @@ contains ! =====     Public Procedures     =============================
     ! Local variables ----------------------------------------------------------
 
     ! First the old stuff which we hope to get rid of or redefine
-    integer(i4) :: i, j, k, m, n, no_tan_hts, ch, Spectag, ier, &
-                   maf, si, ptg_i, frq_i, brkpt, no_ele, mid, ilo, ihi, &
-                   lmax, max_phi_dim, max_zeta_dim
+    integer(i4) :: brkpt, ch, frq_i, i, ier, ihi, ilo, j, k, lmax, m, maf, &
+                   max_phi_dim, max_zeta_dim, mid, n, no_ele, no_tan_hts, &
+                   ptg_i, si, Spectag
 
 !    real(r4) :: K_STAR_ALL(25,20,mxco,mnp,Nptg)
 !    type(k_matrix_info) :: K_star_info(20)
@@ -387,11 +387,7 @@ contains ! =====     Public Procedures     =============================
 
     type(path_beta), dimension(:,:), pointer :: Beta_path
 
-    real(r8) :: Frq, H_tan, Rad, Geod_lat, Phi_tan, R
-
-    Real(r8), dimension(:), allocatable :: dum
-
-    real(r8), dimension(:), pointer :: RadV
+    real(r8) :: Frq, Geod_lat, H_tan, Phi_tan, Rad
 
     ! This is the `legit stuff' we hope will stay; they are all pointers to
     ! VectorValue_T's containing vector quantities.
@@ -439,42 +435,45 @@ contains ! =====     Public Procedures     =============================
 
     real (r8) :: CENTERFREQ             ! Of band
     real (r8) :: CENTER_ANGLE           ! For angles
+    real (r8) :: R                      ! To convert the kind of output from
+    !                                     Freq_Avg
     real (r8) :: THISRATIO              ! A sideband ratio
 
     integer, dimension(:), pointer :: CHANNELINDEX ! E.g. 1..25
+    integer, dimension(:), pointer :: GRIDS            ! Frq grid for each tan_press
     integer, dimension(:), pointer :: SIGNALSGRID ! Used in ptg grid hunt
     integer, dimension(:), pointer :: USEDCHANNELS ! Array of indices used
 
-    logical, dimension(:), pointer :: ALLMATCH ! Used in pointing grid hunt
-    logical, dimension(:), pointer :: THISMATCH ! USed in pointing grid hunt
+    logical, dimension(:), pointer :: ALLMATCH  ! Used in pointing grid hunt
+    logical :: FOUNDINFIRST                     ! Flag to indicate derivatives
+    logical, dimension(:), pointer :: THISMATCH ! Used in pointing grid hunt
 
-    real(r4), dimension(:),     pointer :: TOAVG       ! Stuff to be passed to frq.avg.
-    real(r8), dimension(:),     pointer :: FREQUENCIES ! Frequency points
-    real(r8), dimension(:,:,:), pointer :: DH_DT_PATH  ! (pathSize, Tsurfs, Tinstance)
-    real(r8), dimension(:,:),   pointer :: DX_DT       ! (No_tan_hts, Tsurfs)
     real(r8), dimension(:,:),   pointer :: D2X_DXDT    ! (No_tan_hts, Tsurfs)
-    real(r8), dimension(:),     pointer :: T_SCRIPT    ! (n2lvl)
-    real(r8), dimension(:,:),   pointer :: REF_CORR    ! (n2lvl, no_tan_hts)
-    real(r8), dimension(:),     pointer :: TAU         ! (n2lvl)
-    real(r8), dimension(:),     pointer :: PTG_ANGLES  ! (no_tan_hts)
-
-    real(r4), dimension(:,:,:,:), pointer :: K_TEMP    ! (channel,Nptg,mxco,mnp)
+    real(r8), dimension(:,:,:), pointer :: DH_DT_PATH  ! (pathSize, Tsurfs, Tinstance)
+    real(r8), dimension(:), allocatable :: Dum
+    real(r8), dimension(:,:),   pointer :: DX_DT       ! (No_tan_hts, Tsurfs)
+    real(r8), dimension(:),     pointer :: FREQUENCIES ! Frequency points
+    real(r8), dimension(:,:),   pointer :: I_STAR_ALL    ! (noMIFs,noChans)
     real(r4), dimension(:,:,:,:,:), pointer :: K_ATMOS ! (channel,Nptg,mxco,mnp,Nsps)
-    real(r8), dimension(:,:), pointer :: RADIANCES     ! (Nptg,noChans)
-    real(r8), dimension(:,:), pointer :: I_STAR_ALL    ! (noMIFs,noChans)
+    real(r4), dimension(:,:,:,:), pointer :: K_TEMP    ! (channel,Nptg,mxco,mnp)
+    real(r8), dimension(:),     pointer :: PTG_ANGLES  ! (no_tan_hts)
+    real(r8), dimension(:,:),   pointer :: RADIANCES     ! (Nptg,noChans)
+    real(r8), dimension(:),     pointer :: RadV
+    real(r8), dimension(:,:),   pointer :: REF_CORR    ! (n2lvl, no_tan_hts)
+!   real(r4), dimension(:), pointer :: TOAVG ! Stuff to be passed to frq.avg.
+    real(kind(k_temp_frq%values)), dimension(:), pointer :: TOAVG ! Stuff to be passed to frq.avg.
+    real(r8), dimension(:),     pointer :: T_SCRIPT    ! (n2lvl)
+    real(r8), dimension(:),     pointer :: TAU         ! (n2lvl)
 
-    integer, pointer, dimension(:) :: GRIDS            ! Frq grid for each tan_press
 
-    logical :: FOUNDINFIRST             ! Flag to indicate derivatives
+    type(Signal_T), dimension(:), pointer :: ALLSIGNALS ! Used in ptg grid hunt
 
-    type(Signal_T), pointer, dimension(:) :: ALLSIGNALS ! Used in ptg grid hunt
-
-    type(path_vector), allocatable, dimension(:) :: N_PATH    ! (No_tan_hts)
+    type(path_vector), dimension(:), allocatable :: N_PATH    ! (No_tan_hts)
 
     ! dimensions of SPSFUNC_PATH are: (Nsps,No_tan_hts)
     type(path_vector), allocatable, dimension(:,:) :: SPSFUNC_PATH
     type(signal_t) :: Signal
-    type(catalog_T), pointer, dimension(:) :: My_Catalog
+    type(catalog_T), dimension(:), pointer :: My_Catalog
 
     ! Executable code --------------------------------------------------------
 
@@ -484,10 +483,10 @@ contains ! =====     Public Procedures     =============================
     ! deallocate them.  We don't want them to be initialized NULL()
     ! because that makes them SAVEd.
 
-    nullify ( radV, channelIndex, usedChannels, frequencies, dh_dt_path, &
-      & dx_dt, d2x_dxdt, t_script, ref_corr, tau, ptg_angles, k_temp, &
-      & k_atmos, radiances, grids, my_Catalog, beta_path, allMatch, thisMatch,&
-      & signalsGrid, i_star_all )
+    nullify ( allMatch, beta_path, channelIndex, d2x_dxdt, dh_dt_path, dx_dt, &
+      & frequencies, grids, i_star_all, k_atmos, k_temp, my_Catalog, &
+      & ptg_angles, radiances, radV, ref_corr, signalsGrid, t_script, &
+      & tau, thisMatch, usedChannels )
 
     ! Identify the vector quantities we're going to need.
     ! The key is to identify the signal we'll be working with first
@@ -1162,7 +1161,7 @@ contains ! =====     Public Procedures     =============================
                       &  centerFreq+thisSideband*FilterShapes(ch)%FilterGrid, &
                       &  FilterShapes(ch)%FilterShape, real(ToAvg,r8),  &
                       &  noFreqs, Size(FilterShapes(ch)%FilterGrid), r )
-                    k_atmos(i,ptg_i,surface,instance,specie) = r
+                      k_atmos(i,ptg_i,surface,instance,specie) = r
                   end do                ! Surface loop
                 end do                  ! Instance loop
               end do                    ! Channel loop
@@ -1403,6 +1402,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.126  2001/05/03 20:31:34  vsnyder
+! Thought I needed to add a nullify, ended up with only cosmetic changes
+!
 ! Revision 2.125  2001/05/02 20:31:43  livesey
 ! Removed frequency from config
 !
