@@ -60,7 +60,7 @@ contains
   end subroutine SSORT
 
   subroutine DSORTP (A, M, N, P)
-    double precision, intent(inout) :: A(*)
+    double precision, intent(in) :: A(*)
     integer, intent(in) :: M, N
     integer, intent(out) :: P(*)
     integer :: I
@@ -71,7 +71,7 @@ contains
   end subroutine DSORTP
 
   subroutine ISORTP (A, M, N, P)
-    integer, intent(inout) :: A(*)
+    integer, intent(in) :: A(*)
     integer, intent(in) :: M, N
     integer, intent(out) :: P(*)
     integer :: I
@@ -82,7 +82,7 @@ contains
   end subroutine ISORTP
 
   subroutine SSORTP (A, M, N, P)
-    real, intent(inout) :: A(*)
+    real, intent(in) :: A(*)
     integer, intent(in) :: M, N
     integer, intent(out) :: P(*)
     integer :: I
@@ -93,19 +93,19 @@ contains
   end subroutine SSORTP
 
   subroutine DSORTQ (A, M, N, P)
-    double precision, intent(inout) :: A(*)
+    double precision, intent(in) :: A(*)
     double precision :: PARTN
     include "sortq.f9h"
   end subroutine DSORTQ
 
   subroutine ISORTQ (A, M, N, P)
-    integer, intent(inout) :: A(*)
+    integer, intent(in) :: A(*)
     integer :: PARTN
     include "sortq.f9h"
   end subroutine ISORTQ
 
   subroutine SSORTQ (A, M, N, P)
-    real, intent(inout) :: A(*)
+    real, intent(in) :: A(*)
     real :: PARTN
     include "sortq.f9h"
   end subroutine SSORTQ
@@ -118,6 +118,9 @@ contains
 end module Sort_M
 
 ! $Log$
+! Revision 2.4  2003/06/20 01:34:30  vsnyder
+! Change intent for A and P
+!
 ! Revision 2.3  2003/06/20 00:18:23  vsnyder
 ! Add SORTP and SORTQ
 !
