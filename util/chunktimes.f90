@@ -5,8 +5,9 @@
 program chunktimes ! Reads chunk times from l2aux file(s)
 !=================================
 
+   use dump_0, only: dump
    use Hdf, only: DFACC_CREATE, DFACC_RDWR, DFACC_RDONLY, DFACC_READ
-   use HDF5, only: HSIZE_T, h5fis_hdf5_f   
+   use HDF5, only: HSIZE_T, h5fis_hdf5_f, h5gclose_f, h5gopen_f
    use MACHINE, only: FILSEP, HP, IO_ERROR, GETARG
    use MLSCommon, only: R4, R8
    use MLSFiles, only: mls_exists, MLS_SFSTART, MLS_SFEND, &
@@ -44,6 +45,7 @@ program chunktimes ! Reads chunk times from l2aux file(s)
     logical            :: verbose = .false.
     logical            :: merge = .false.           ! Merge data from files
     logical            :: tabulate = .false.        ! tabulate
+    logical            :: showFailed = .false.      ! show howmany, which failed
     character(len=255) :: DSName= 'phase timing'    ! Dataset name
     character(len=255) :: binopts= ' '              ! 'nbins,X1,X2'
     character(len=3)   :: convert= 's2h'            ! 's2h', 'h2s', ''
@@ -167,6 +169,9 @@ program chunktimes ! Reads chunk times from l2aux file(s)
       if ( .not. options%merge ) statistic%count=0
       call statistics(real(timings, r8), statistic, real(UNDEFINEDVALUE, r8))
       if ( .not. options%merge ) call dumpstat(statistic)
+      if ( options%showFailed ) then
+        call dumpFailedChunks(fileID)
+      endif
       status = mls_sfend( fileID,hdfVersion=options%hdfVersion )
       deallocate(l2auxValue, timings, stat=status)
       if ( options%verbose )  call sayTime('reading this file', tFile)
@@ -224,6 +229,9 @@ contains
       elseif ( filename(1:2) == '-m' ) then
         options%merge = .true.
         exit
+      elseif ( filename(1:5) == '-fail' ) then
+        options%showFailed = .true.
+        exit
       elseif ( filename(1:2) == '-t' ) then
         options%tabulate = .true.
         exit
@@ -249,6 +257,50 @@ contains
     
   end subroutine get_filename
 
+!------------------------- dumpFailedChunks ---------------------
+  subroutine dumpFailedChunks(fileID)
+  ! Print info on chunks that failed
+  ! Args
+  integer, intent(in)         :: fileID
+  ! Internal variables
+  integer                     :: grp_id
+  integer                     :: number
+  integer                     :: returnStatus
+  character(len=4096)         :: failedChunks
+  character(len=*), parameter :: NUMCOMPLETEATTRIBUTENAME = 'NumCompletedChunks'
+  character(len=*), parameter :: NUMFAILATTRIBUTENAME = 'NumFailedChunks'
+  character(len=*), parameter :: FAILATTRIBUTENAME = 'FailedChunks'
+  ! Executable
+  call h5gopen_f(fileId, '/', grp_id, returnStatus)
+  call output(NUMCOMPLETEATTRIBUTENAME, advance='no')
+  if ( IsHDF5AttributePresent(grp_id, NUMCOMPLETEATTRIBUTENAME) ) then
+    call GetHDF5Attribute (grp_ID, NUMCOMPLETEATTRIBUTENAME, number)
+    call blanks(4)
+    call output(number, advance='yes')
+  else
+    call output(' attribute not found', advance='yes')
+  endif
+
+  call output(NUMFAILATTRIBUTENAME, advance='no')
+  if ( IsHDF5AttributePresent(grp_id, NUMFAILATTRIBUTENAME) ) then
+    call GetHDF5Attribute (grp_ID, NUMFAILATTRIBUTENAME, number)
+    call blanks(4)
+    call output(number, advance='yes')
+  else
+    call output(' attribute not found', advance='yes')
+  endif
+
+  if ( IsHDF5AttributePresent(grp_id, FAILATTRIBUTENAME) ) then
+    call GetHDF5Attribute (grp_ID, FAILATTRIBUTENAME, failedChunks)
+    call dump(trim(failedChunks), FAILATTRIBUTENAME)
+  else
+    call output(FAILATTRIBUTENAME, advance='no')
+    call output(' attribute not found', advance='yes')
+  endif
+
+  call h5gclose_f(grp_id, returnStatus)
+  end subroutine dumpFailedChunks
+
 !------------------------- print_help ---------------------
   subroutine print_help
   ! Print brief but helpful message
@@ -272,6 +324,7 @@ contains
       write (*,*) '          -h2s        => convert from hours to sec (-s2h)'
       write (*,*) '          -v          => switch on verbose mode (off)'
       write (*,*) '          -m[erge]    => merge data from all files (dont)'
+      write (*,*) '          -fail       => show failed chunks (dont)'
       write (*,*) '          -t[abulate] => print data in tables (dont)'
       write (*,*) '          -h          => print brief help'
       stop
@@ -334,3 +387,6 @@ end program chunktimes
 !==================
 
 ! $Log$
+! Revision 1.1  2004/09/14 18:52:37  pwagner
+! First commit
+!
