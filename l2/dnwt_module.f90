@@ -48,8 +48,9 @@ module DNWT_MODULE
 !         Set AJ%FNORM = L2 norm of f(x)
 !         IF ( AJ%FNORM is small enough ) EXIT
 !       CASE ( NF_EVALJ )
+!         IF ( too many Jacobian values ) EXIT
 !         Compute the Jacobian matrix J if you didn't do it when NFLAG
-!         was -1:
+!         was NF_EVALF:
 !           J(K,L) = Partial of F(K) / W.R.T. X(L), K = 1, NF, L = 1, NX
 !         Triangularize J, and compute (negative of the) gradient =
 !         -(Jacobian)**T * F.  This is the RHS of the normal equations
@@ -144,7 +145,7 @@ module DNWT_MODULE
 
   ! Reasons for returning to user.  See description of usage above.
   ! Reasons to continue
-  !      Evaluate F AJ%FNORM:
+  !      Evaluate F and AJ%FNORM:
   integer, parameter, public :: NF_EVALF = -1
   !      Evaluate J and do other things:
   integer, parameter, public :: NF_EVALJ = nf_evalf-1
@@ -794,6 +795,7 @@ contains
 
 ! Compute new X and test for too small a correction
 
+      aj%starting = inc < 0
       ifl = nf_newx
       nflag = ifl
       return
@@ -977,6 +979,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.10  2001/05/22 19:10:33  vsnyder
+! Compute aj%starting; improve some comments
+!
 ! Revision 2.9  2001/05/18 01:02:43  vsnyder
 ! Checking for 'big' move incorrectly
 !
