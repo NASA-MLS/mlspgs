@@ -50,15 +50,15 @@ contains ! =====     Public Procedures     =============================
   end subroutine CLOSE_MLSCF
 
   ! -------------------------------------------------  OPEN_MLSCF  -----
-  subroutine OPEN_MLSCF ( MLSPCF_Start, CF_Unit )
+  subroutine OPEN_MLSCF ( MLSPCF_Start, CF_Unit, return_status )
 
     integer, intent(in) :: MLSPCF_Start
     integer, intent(out) :: CF_Unit
+    integer, intent(out) :: return_status
 
     integer :: L2CF_VERSION
     character (LEN=32) :: MNEMONIC
     character (LEN=256) :: MSG
-    integer :: RETURN_STATUS
 
     error = 0
     L2CF_Version = 1
@@ -91,7 +91,7 @@ contains ! =====     Public Procedures     =============================
  
       error = 0
     if ( present(use_toolkit) ) then
-      just_print_it = use_toolkit
+      just_print_it = .not. use_toolkit
     else if ( default_output_by_toolkit ) then
       just_print_it = .false.
     else
@@ -139,6 +139,9 @@ contains ! =====     Public Procedures     =============================
 end module OBTAIN_MLSCF
 
 ! $Log$
+! Revision 2.5  2001/04/12 22:19:33  vsnyder
+! Improved an error message
+!
 ! Revision 2.4  2001/04/05 23:42:10  pwagner
 ! Added announce_error, deleted all MLSMessages
 !
