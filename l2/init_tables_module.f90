@@ -424,6 +424,7 @@ contains ! =====     Public procedures     =============================
       begin, s+s_gridded, &
              begin, f+f_dimList, t+t_string, n+n_field_type, &
              begin, f+f_file, t+t_string, n+n_field_type, &
+             begin, f+f_missingValue, t+t_numeric, n+n_field_type, &
              begin, f+f_field, t+t_string, n+n_field_type, &
              begin, f+f_origin, t+t_griddedOrigin, n+n_field_type, &
              np+n_spec_def, &
@@ -954,6 +955,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.288  2003/03/01 00:24:27  pwagner
+! Added missingValue as filed to reading Gridded data
+!
 ! Revision 2.287  2003/02/27 17:58:34  bill
 ! Added polarized
 !
