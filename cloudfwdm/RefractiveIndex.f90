@@ -48,7 +48,7 @@ contains
 
           subroutine comx(wi,t,f,e) 
 
-          complex(r8) :: e
+          complex(r8) :: e,c
           character*1 wi
           real(r8) :: t, f, th, fp, fs, e0, e1, e2, x, y
           real(r8) :: a, b
@@ -101,10 +101,14 @@ contains
 
 !... from Hufford (1991) model
 
-  200	a=(50.4+62.*(th-1))*1e-4*exp(-22.1*(th-1.))
+  200	a=(50.4+62.*(th-1))*1.e-4*exp(-22.1*(th-1.))
 	b=(0.633/th-0.131)*1e-4+(7.36e-4*th/(th-0.9927))**2
+
+!... additional term from Mishima
+	c=1.16e-11
+
 	x=3.15
-	y=a/f+b*f
+	y=a/f+b*f+c*f**3
 
 !        write(*,*)y,f,t
 
@@ -116,3 +120,6 @@ contains
 end module RefractiveIndex
 
 ! $Log$
+! Revision 1.2  2001/09/21 15:51:37  jonathan
+! modified F95 version
+!
