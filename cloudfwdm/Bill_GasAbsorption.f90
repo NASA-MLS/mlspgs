@@ -3,8 +3,7 @@
 
 Module Bill_GasAbsorption
 
-   USE MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
-     & MLSMSG_DeAllocate
+   USE MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
   implicit NONE
   private
   public :: get_beta_bill
@@ -77,25 +76,23 @@ contains
     REAL(r8) :: VMR_HNO3                    ! HNO3 VOLUME MIXING RATIO       
     REAL(r8) :: VP                          ! VAPOR PARTIAL PRESSURE (hPa)
 
-    Integer(ip) :: n_sps, i, j, no_of_lines, n_ele
+    Integer(ip) :: n_sps, i
     integer(ip), parameter :: IPSD=1000, NU=16, NUA=8, NAB=50, NR=40, NC=2
     Integer(ip) :: status
-    REAL(rp) :: bb, del_temp, cld_ext, WC(2), tanh1
-    real(r8), parameter :: Boltzmhz = 1 / h_over_k
-    real(rp), allocatable, dimension(:) :: PP, TT
+    real(rp) :: bb, del_temp, cld_ext, WC(2), tanh1
+    real(r8), parameter :: Boltzmhz2 = 0.5 / h_over_k
     logical :: Do_1D, Incl_Cld
-    LOGICAL, ALLOCATABLE, dimension(:) :: true_path_flags
 
 !-----------------------------------------------------------------------------
     WC= 0._r8
     IF (RH /= 100.0_r8) THEN
-       VMR_H2O = RH                     ! PH HERE IS WATER VAPOR MIXING RATIO
-       VP=VMR_H2O*PB                    ! VP IS VAPOR PRESSURE, PB IS TOTAL
-       P=PB-VP                          ! PRESSURE, P IS DRY-AIR PRESSURE
+       VMR_H2O = RH                     ! RH HERE IS WATER VAPOR MIXING RATIO
+       VP = VMR_H2O*PB                  ! VP IS VAPOR PRESSURE, PB IS TOTAL
+       P = PB - VP                      ! PRESSURE, P IS DRY-AIR PRESSURE
     ELSE IF (VMR_H2O == 100.0_r8) THEN
-       CALL RHtoEV(T, 100.0_r8, VP)     ! RH HERE IS 100% RELATIVE HUMIDITY 
-       P = PB-VP
-       VMR_H2O = VP/(max(1.e-19_r8, P))
+       CALL RHtoEV ( T, 100.0_r8, VP )  ! RH HERE IS 100% RELATIVE HUMIDITY 
+       P = PB - VP
+       VMR_H2O = VP / max(1.e-19_r8, P)
     END IF
 
     VMR_O2     = 0.2095_r8
@@ -111,45 +108,28 @@ contains
 
     n_sps = Size(Catalog)
 !    maxVert = Ng +1
-!    n_ele = 2*maxVert
-    n_ele = 1  ! number of pressure levels along the path, in our case =1
 
-    allocate ( true_path_flags(n_ele), stat=status )
-    true_path_flags = .true.
-    allocate ( gl_slabs(n_ele,n_sps), stat=status )
+    allocate ( gl_slabs(1,n_sps), stat=status )
     if ( status /= 0 ) &
       & CALL MLSMessage(MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate // ' gl_slabs ')
-    allocate ( pp(n_ele), stat=status )
-    if ( status /= 0 ) &
-      & CALL MLSMessage(MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // ' pp ')
-    allocate ( tt(n_ele), stat=status )
-    if ( status /= 0 ) &
-      & CALL MLSMessage(MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // ' tt ')
     do i = 1, n_sps
-      no_of_lines =  size(Catalog(i)%Lines)
-      do j = 1, n_ele
-          Call AllocateOneSlabs ( gl_slabs(j, i), no_of_lines )
-      enddo
+      Call AllocateOneSlabs ( gl_slabs(1, i), size(Catalog(i)%Lines) )
     enddo
 
-    pp(1) = p
-    tt(1) = t
                               ! Bill uses km/sec 
     myLosVel=losVel*0.00_rp   ! The Doppler correction already been done 
                               ! in the FullCloudForwardModel, so set it 0
 
-    call get_gl_slabs_arrays ( Catalog, PP(1:n_ele), TT(1:n_ele), myLosVel, &
-      & gl_slabs, Do_1D, true_path_flags )
+    call get_gl_slabs_arrays ( Catalog, (/ p /), (/ t /), myLosVel, gl_slabs, &
+      & Do_1D, (/ .true. /) )
 
 ! Note that expa only depends on temperature.
-    tanh1 = tanh( ff / (( 2.0 * boltzmhz ) * t))
-    DO i = 1, n_sps
+    tanh1 = tanh( ff / ( boltzmhz2 * t))
+    do i = 1, n_sps
 
-      CALL create_beta ( catalog(i)%molecule, Catalog(i)%continuum, PB, T, &
-        &  FF, Lines(Catalog(i)%Lines)%W, gl_slabs(n_ele,i), tanh1, bb )
+      call create_beta ( catalog(i)%molecule, Catalog(i)%continuum, PB, T, &
+        &  FF, Lines(Catalog(i)%Lines)%W, gl_slabs(1,i), tanh1, bb )
       
       select case (catalog(i)%molecule)
       case (L_H2O)
@@ -174,23 +154,14 @@ contains
 
       B = B + VMR*bb
 
-    ENDDO
+    end do
 
-    ABSC=B/1000.0_r8     ! convert km-1 to m-1
+    ABSC = B/1000.0_r8     ! convert km-1 to m-1
 
-    Call DestroyCompleteSlabs ( gl_slabs )
-    Deallocate (pp, stat=status)
-    if ( status /= 0 ) &
-      & CALL MLSMessage(MLSMSG_Error, ModuleName, &
-      & MLSMSG_DeAllocate // ' pp ')
-    Deallocate (tt, stat=status)
-    if ( status /= 0 ) &
-      & CALL MLSMessage(MLSMSG_Error, ModuleName, &
-      & MLSMSG_DeAllocate // ' tt ')
-    Deallocate (true_path_flags,stat=status)
+    call DestroyCompleteSlabs ( gl_slabs )
 
-  END SUBROUTINE get_beta_bill 
- 
+  end subroutine get_beta_bill 
+
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
@@ -198,6 +169,9 @@ contains
 End Module Bill_GasAbsorption
 
 ! $Log$
+! Revision 1.21  2003/07/07 19:09:07  vsnyder
+! Get Create_Beta from get_beta_path
+!
 ! Revision 1.20  2003/07/04 02:49:12  vsnyder
 ! Simplify interface to Get_GL_Slabs_Arrays
 !
