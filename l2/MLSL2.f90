@@ -67,7 +67,11 @@ program MLSL2
   cycle
     end if
     if ( line(1:2) == '--' ) then       ! "word" options
-      if ( line(3:6) == 'kit ' ) then
+      if ( line(3:8) == 'cfpcf ' ) then
+        pcf_for_input = .true.
+      else if ( line(3:9) == 'ncfpcf ' ) then
+        pcf_for_input = .false.
+      else if ( line(3:6) == 'kit ' ) then
         MLSMessageConfig%useToolkit = .true.
       else if ( line(3:6) == 'nkit ' ) then
         MLSMessageConfig%useToolkit = .false.
@@ -159,17 +163,18 @@ program MLSL2
           print *, '  The above options can be concatenated after one hyphen,'
           print *, '  except that -S takes the rest of the option as its ', &
             &         '"string".'
+          print *, '  --[n]cfpcf: Open the L2CF [without] using the Toolkit ', &
+            &        'and the PCF.'
+          if ( pcf_for_input ) then
+            print *, '    --ncfpcf assumed if L2CF-name is present.  ', &
+              &      'Default: --cfpcf'
+          else
+            print *, '    --ncfpcf assumed if L2CF-name is present.  ', &
+              &      'Default: --ncfpcf'
+          end if
           print *, '  --[n]kit: Output error messages [not] using the SDP Toolkit'
           print *, '  --[n]meta: [Do not] Create metadata files.'
-          print *, '  --[n]pcf: Open the L2CF [without] using the Toolkit ', &
-            &        'and the PCF.'
-          if ( pcf ) then
-            print *, '    --npcf assumed if L2CF-name is present.  ', &
-              &      'Default: --pcf'
-          else
-            print *, '    --npcf assumed if L2CF-name is present.  ', &
-              &      'Default: --npcf'
-          end if
+          print *, '  --[n]pcf: [Do not] Use the PCF for file names, parameters, etc.'
           print *, '  --[n]tk: [Do not] Use the panoply of the PGS_toolkit'
           print *, '    (--ntk automatically sets --npcf and --nmeta).'
           print *, '  --master: This is the master task in a PVM setup'
@@ -228,7 +233,7 @@ program MLSL2
         & "Unable to open L2CF file " // trim(line) )
     end if
     inunit = l2cf_unit
-  else if ( PCF_FOR_INPUT ) then
+  else if ( pcf_for_input ) then
     call open_MLSCF ( MLSPCF_L2CF_Start, inunit, status )
     if(status /= 0) then
       call MLSMessage ( MLSMSG_Error, moduleName, &
@@ -295,6 +300,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.34  2001/05/07 21:05:03  vsnyder
+! Separated '[n]pcf' and [n]cfpcf'
+!
 ! Revision 2.33  2001/05/07 18:16:11  vsnyder
 ! Added "do [not] output MLSMessage messages through the toolkit" option.
 ! Resolved conflicts on merge.
