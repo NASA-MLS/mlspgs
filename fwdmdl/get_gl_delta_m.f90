@@ -87,7 +87,6 @@ contains
                         & gl_delta)
 
     use DO_DELTA_M, ONLY: POLARIZED_PATH_OPACITY
-    use GLNP, ONLY: Ng
     use MLSCommon, only: RP, IP
 
     integer(ip), intent(in) :: Indices_c(:) ! coarse grid indices
@@ -142,6 +141,9 @@ contains
 end module GET_GL_DELTA_M
 
 !$Log$
+!Revision 2.5  2003/06/02 22:41:33  vsnyder
+!Remove unused symbols
+!
 !Revision 2.4  2003/05/20 00:05:13  vsnyder
 !Cosmetic changes
 !
