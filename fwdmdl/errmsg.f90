@@ -1,11 +1,16 @@
 ! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
+!===============================================================================
+module ERRMSG_M               ! F95 nonsense
+!===============================================================================
 !
 !-----------------------------------------------------------------------
 !=====================  For NAG Fortran 95 only =====================
 !
  
+  implicit none
+
 !------------------- RCS Ident Info -----------------------
   character(len=130), private :: Id = &
     & "$Id$"
@@ -13,6 +18,7 @@
     & "$RCSfile$"
   !----------------------------------------------------------
 
+contains ! =====     Public Procedures     =============================
 SUBROUTINE lu_errmsg(lu,msg,ier)
  
 !
@@ -20,7 +26,6 @@ SUBROUTINE lu_errmsg(lu,msg,ier)
 !  msg - the User's message if he/she wishes. It could be empty.
 !  ier  the iostat or STAT integer flag (error number)
 !
-Implicit NONE
 !
  
 INTEGER, INTENT(IN)            :: lu, ier
@@ -244,9 +249,7 @@ END SUBROUTINE lu_errmsg
 !-----------------------------------------------------------------------
  
 SUBROUTINE errmsg(msg,ier)
- 
-Implicit NONE
- 
+  
 INTEGER, INTENT(IN)            :: ier
 CHARACTER (LEN=*), INTENT(IN)  :: msg
  
@@ -258,4 +261,10 @@ CALL lu_errmsg(lu,msg,ier)
 RETURN
 END SUBROUTINE errmsg
  
+  !=============================================================================
+end module ERRMSG_M
+!=============================================================================
 ! $Log$
+! Revision 2.1  2002/10/01 20:12:45  bwknosp
+! Added Id, RCS, and Log info
+!
