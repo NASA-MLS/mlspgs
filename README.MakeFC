@@ -1,4 +1,7 @@
 #!/bin/sh
+#
+#  Lost? Type 'make -f MakeFC help' from the directory where you see this file
+#
 #    README.MakeFC        Instructions about building the mls software
 # Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
@@ -24,7 +27,8 @@ it is mostly self-configuring. First, you will need:
  (5) PVM--a library to emulate parallel virtual machines
  (6) FFTW--a library to accomplish fast Fourier transforms
 and you may want to inquire about the availability of the following two: 
-having them can result in greatly improved performance
+having them can result in greatly improved performance (as much as an order of
+magnitude in the case of ATLAS)
  (7) BLAS--a library of basic linear algebra software
  (8) LAPACK--another linear algebra library
 
@@ -41,7 +45,7 @@ just "make".
 
 For more information on obtaining and installing the SDP Toolkit, PVM, and the
 FFTW libraries, see BEFORE.mls which should be in the same directory as this
-file.
+file. Oe else type 'make -f MakeFC firsthelp'.
 
 CONTENTS
 I     SUMMARY
@@ -429,6 +433,11 @@ created by a recompile (in the case of a compiler like NAG) is actually
 identical with the existing one, could pare the cascade down, but at the cost
 of requiring a more complex system of Makefiles than the this one.
 
+Another way to trigger massive recompilation is to modify the .configure file.
+Sometimes this may be appropriate, but not always. If you're certain that it is
+not necessary, you may put the NOCLEANING setting to "yes", or in fact to
+anything other than its blank default.
+
 There may be cases where make can be observed "hunting", where it enters a
 prerequisite-containing directory repeatedly, as if to rebuild the
 prerequisite, but not doing so. This happens because make believes wrongly the
@@ -436,7 +445,7 @@ prerequisite is itself the target of a newer prerequisite. While this hunting
 behavior seems wrong, it will not cause make to fail, and in fact minimizes
 rebuilding the prerequisites. At the cost of some added rebuilding of
 prerequisites, make can be made to give up hunting by putting the NOHUNTING
-setting to "yes" or in fact anything other than its blank default.
+setting to "yes", or in fact to anything other than its blank default.
 
 PVMWrappers.c in lib is a c source requiring a c compiler. The default value
 for CC is cc. If you get an error along the lines of "cc: Command not found",
@@ -505,7 +514,9 @@ LAFTER             Appears at the end of the very long link statement
                    e.g., for additional libraries required to link successfully
                    or else to highlight errors as in FAFTER
 MLSCFILE           Overrides the name of the .configure file
-NOHUNTING          Stop make from hunting if non-blank (see above)
+NOCLEANING         Don't rebuild everything on any change to .configure
+                    if non-blank
+NOHUNTING          Stop make from hunting if non-blank
 PGSTK              Also mentioned below in connection with .configure,
                    but if set to blank on the line invoking make, it will
                    cause make to build a toolkit-free version of lib and l2;
@@ -543,7 +554,7 @@ advanced setting. In other words, you may override any of these on the command
 line. E.g., "make PGSTK=/some/other/path".
 
 EXAMPLE OF A .configure FILE
-#       .configure for mls
+#	.configure for mls
 MLSF95=NAG
 MLSPLAT=Linux
 MLSCONFG=NAG.Linux
@@ -559,34 +570,43 @@ HDFEOS_LIB=/software/SRC/TOOLKIT-5.2.7.3v1.00/hdfeos/lib/linux
 HDFLIB=/software/SRC/TOOLKIT-5.2.7.3v1.00/hdf/linux/HDF4.1r3/lib
 BLAS=
 LIB_BLAS=
-PVM_ROOT=/user2/pwagner/pvm3
+LAPACK=
+LIB_LAPACK=f95
+PVM_ROOT=/usr/share/pvm3
 PVM_ARCH=LINUX
-FFTW_ROOT=/usr/local/lib
-FOPTS=-w
+FFTW_ROOT=/usr/lib
+FOPTS=-C -O
 LDOPTS=
 export MLSF95
 export MLSPLAT
 export MLSCONFG
 export PGSINC
-export PGSLIB
-export HDFEOS_LIB
-export HDFLIB
 export PGSTK
 export HDFEOS
 export HDFEOS5
 export HDF
 export HDF5
 export GCTP
+export PGSLIB
+export HDFEOS_LIB
+export HDFLIB
+export BLAS
+export LIB_BLAS
+export LAPACK
+export LIB_LAPACK
 export PVM_ROOT
 export PVM_ARCH
 export FFTW_ROOT
 export FOPTS
 export LDOPTS
 
--pw                           2000-Oct-24 to 2001-Sep-25
+-pw                           2000-Oct-24 to 2001-Nov-07
 EOF
 exit
 # $Log$
+# Revision 1.24  2001/11/06 00:22:51  pwagner
+# BLAS, LAPACK usage explained
+#
 # Revision 1.23  2001/09/26 17:32:20  pwagner
 # Renamed SIMPLIFYMAKE to NOHUNTING
 #

@@ -1,6 +1,6 @@
 #!/bin/sh
+# --------------- mlsconfigure help
 #                 mlsconfigure    configures the mls for compiler, platform
-#
 #
 # Called for either or both of two purposes:
 #
@@ -32,6 +32,8 @@
 #
 #        O p t i o n s
 #  -h[elp]              (if present) Help (a work in progress)
+#  -help--brief         Brief overview
+#  -help--mlsconfigure  Help on mlsconfigure script
 #  -c compiler_name     Name of Fortran compiler (Absoft, NAG, LF95, Sun)
 #  -p platform_name     Name of computer or OS (Linux , sun, or sgi)
 #  -dc conf_dir         Directory where .configuration file is to be stored
@@ -44,6 +46,7 @@
 #  -pv                  (if present) Change PVM and FFTW settings
 #  -fl                  (if present) Change default FOPTS and LDOPTS
 #  -cf file_name        (if present) Use file_name instead of .configure
+# --------------- End mlsconfigure help
 #
 # Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
@@ -539,6 +542,7 @@ if [ $change_paths = "true" ] ; then
    echo "(a) Use an externally-supplied library of BLAS routines"
    echo "(b) Use f95 intrinsics"
    echo "(c) Let the mls software build its own BLAS routines"
+   echo "(Choose (a) only if you know your BLAS library path and name)"
 
    UserPrompt "Which of (a b c) do you choose [$which_blas_option]"
    case "$user_response" in
@@ -558,6 +562,11 @@ if [ $change_paths = "true" ] ; then
       echo "unless you reconfigure; enter 'make configure_pvm'."
       BLAS=""
      fi
+
+     #Since we are using an external, don't let a prior choice of intrinsic stand
+     if [ "$current_LIB_BLAS" = "f95" ] ; then
+        current_LIB_BLAS=""
+     fi                               
 
      #Change BLAS library name                                               
      UserPrompt "BLAS library name (if x, then libx.a) [$current_LIB_BLAS]"  
@@ -594,6 +603,7 @@ if [ $change_paths = "true" ] ; then
    echo "The following options for satisfying LAPACK routines are available"
    echo "(a) Use an externally-supplied library of LAPACK routines"
    echo "(b) Use f95 intrinsics"
+   echo "(Choose (a) only if you know your LAPACK library path and name)"
 
    UserPrompt "Which of (a b) do you choose [$which_lapack_option]"
    case "$user_response" in
@@ -613,6 +623,11 @@ if [ $change_paths = "true" ] ; then
       echo "unless you reconfigure; enter 'make configure_pvm'."
       LAPACK=""
      fi
+
+     #Since we are using an external, don't let a prior choice of intrinsic stand
+     if [ "$current_LIB_LAPACK" = "f95" ] ; then
+        current_LIB_LAPACK=""
+     fi                               
 
      #Change LAPACK library name                                               
 	  echo "(Enter multiple names on the same line like this: x y z)"
@@ -743,7 +758,7 @@ EOF_5
 # Function to output brief help message and exit
 #
 
-Help()
+HelpBrief()
 {
 
         more << EOF_6
@@ -769,8 +784,30 @@ basic and an absolute prerequisite; the other two are optional
        set to default values that work well, you may have a reason to prefer
        different options.To change these settings later,
        enter "make configure_fopts"
-		 
+       
 EOF_6
+
+#No further help available yet
+    exit
+}
+
+#------------------------------- Help ------------
+#
+# Function to output help options and exit
+#
+
+Help()
+{
+
+        more << EOF_7
+To see help on specific topics:
+Topic                            Command
+mlsconfigure script              'make help--mlsconfigure'
+Makefiles                        'make help--Makefile'
+Prerequisites                    'make firsthelp'
+In depth explanation             'make disthelp'
+Brief overview                   'make help--brief'
+EOF_7
 
 #No further help available yet
     exit
@@ -797,16 +834,18 @@ MLS_default_FOPTS_Abs="-w"
 MLS_default_LDOPTS=
 
 #---------------------- variables controlling mlsconfigure
+#                        controllable by Options--see above
 
-#conf_dir   the directory where the .configure file is to be stored
-#plat_dir   the directory to keep the platforms subdirectories
-#get_confg  true if need to query for configuration; false if use input values
+#conf_dir     the directory where the .configure file is to be stored
+#plat_dir     the directory to keep the platforms subdirectories
+#get_confg    true if need to query for configuration; false if use input values
 #write_confg  true if need to (re)write .configure file
 #chngd_confg  true if user changed MLSF95 or MLSPLAT; else false
-#add_PVM_PATH  true if need to query for PVM and FFTW paths; else false
-#add_FOPTS  true if need to query for FOPTS and LDOPTS; else false
-#del_exist_dir  true if need to delete existing uniquely-named sub-dir
-#made_new_dir  true if created new uniquely-named sub-dir; else false
+#add_PVM_PATH true if need to query for PVM and FFTW paths; else false
+#add_FOPTS    true if need to query for FOPTS and LDOPTS; else false
+#del_exist_dir  
+#             true if need to delete existing uniquely-named sub-dir
+#made_new_dir true if created new uniquely-named sub-dir; else false
 
 #---------------------- Settings written to .configure file
 
@@ -845,6 +884,10 @@ MLS_default_LDOPTS=
 #---------------------- 
 
 # List all settings (some are duplicates--see above)
+# Add any additional ones to this sh array
+# Be aware then of possibly needing to add current* settings below
+# Also, decide where to actually interactively read user input
+# e.g., GetPVM, GetFOPTS or GetPlatform
 all_my_opts="MLSF95 MLSPLAT MLSCONFG PGSINC PGSTK HDFEOS HDFEOS5 \
 HDF HDF5 GCTP PGSLIB HDFEOS_LIB HDFLIB BLAS LIB_BLAS LAPACK LIB_LAPACK \
 PVM_ROOT PVM_ARCH FFTW_ROOT FOPTS LDOPTS"
@@ -900,6 +943,7 @@ fi
 #
 
 me="$0"
+me_simple=mlsconfigure
 REECHO="`echo $0 | sed 's/mlsconfigure/reecho.sh/'`"
 
 while [ "$1" != "" ] ; do
@@ -907,9 +951,19 @@ while [ "$1" != "" ] ; do
     case "$1" in
 
 	-h | -help )
-#            sed -n '2, 35 p' $me
 	    Help
-            exit
+       exit
+	;;
+
+	-help--brief )
+	    HelpBrief
+       exit
+	;;
+
+	-help--mlsconfigure )
+	    sed -n '/'$me_simple' help/,/End '$me_simple' help/ p' $me \
+		| sed -n 's/^..//p' | sed '1 d; $ d'
+       exit
 	;;
 
 	-c )
@@ -956,6 +1010,12 @@ while [ "$1" != "" ] ; do
 
 	-fl )
 	    add_FOPTS="true"
+	;;
+
+	* )
+       echo "Unrecognized option in util/mlsconfigure: $1"
+	    Help
+       exit
 	;;
 
     esac
@@ -1124,17 +1184,19 @@ if [ ! -d $plat_dir/platforms ] ; then
 	exit
 fi
 
-#Create object-file directory for this MLSCONFG
+#Re-create object-file directory for this MLSCONFG
 #unless $del_exist_dir reset to false
-# Because mlsconfigure may be called simply to update $MLSCONFG/Makefile
+#(Because mlsconfigure may be called simply to update $MLSCONFG/Makefile)
 made_new_dir="false"
 
 if [ "$MLSCONFG" = "." ] ; then
 	echo "MLSCONFG not yet defined--still $MLSCONFG"
 elif [ "$del_exist_dir" != "true" ] ; then
 	if [ ! -d $mcfg_dir/$MLSCONFG ] ; then
-        mkdir $mcfg_dir/$MLSCONFG
-			made_new_dir="true"
+      mkdir $mcfg_dir/$MLSCONFG
+		made_new_dir="true"
+   else
+      rm -f $mcfg_dir/$MLSCONFG/Makefile
 	fi
 elif [ -d $mcfg_dir/$MLSCONFG ] ; then
 #	echo "Clearing out directory `pwd`$mcfg_dir/$MLSCONFG"
@@ -1145,8 +1207,8 @@ elif [ -d $mcfg_dir/$MLSCONFG ] ; then
 #	rm -f $mcfg_dir/$MLSCONFG/Makefile
 	rm -f $mcfg_dir/$MLSCONFG/*
 else
-        mkdir $mcfg_dir/$MLSCONFG
-			made_new_dir="true"
+   mkdir $mcfg_dir/$MLSCONFG   
+	made_new_dir="true"        
 fi
 
 if [ ! -f $plat_dir/platforms/$MLSCONFG ] ; then
@@ -1160,7 +1222,7 @@ if [ ! -f $plat_dir/platforms/targets ] ; then
 fi
 
 cat $conf_dir/$MLSCFILE $plat_dir/platforms/$MLSCONFG \
-       $plat_dir/platforms/targets > $mcfg_dir/$MLSCONFG/Makefile
+   $plat_dir/platforms/targets > $mcfg_dir/$MLSCONFG/Makefile
 
 if [ "$made_new_dir" = "true" ] ; then
 	echo "Configured mls to use $mcfg_dir/$MLSCONFG "
@@ -1174,6 +1236,9 @@ fi
 
 exit
 # $Log$
+# Revision 1.24  2001/11/07 00:27:49  pwagner
+# Tells how to enter multiple LAPACK library names
+#
 # Revision 1.23  2001/11/06 00:20:34  pwagner
 # Sets BLAS, LAPACK options and paths in new, simpler way
 #

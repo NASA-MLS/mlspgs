@@ -1,11 +1,9 @@
 #	Makefile
-# Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+#
+#  Lost? Type 'make -f MakeFC help' from the directory where you see this file
+#
+# Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
-
-# Details and a general explanation of how to use this file can be found
-# by entering
-#	README.name_of_this_file
-#    (where of course for name_of_this_file use the name of this file)
 
 # ---------------------- The name of this file (is the right-hand-side below)
 MakeFName = MakeFC
@@ -122,35 +120,44 @@ SHELL = /bin/sh
 # lib            -- libmls.a; a prerequisite for the others
 
 #                           (functional)
-# mostlyclean    -- deletes uniquely-named sub-sub-directories
 # clean          -- deletes only *.o, *.mod from sub-subs
 # configure      -- runs mlsconfigure to (re)set compiler, platform, paths
 #                   (invoked automatically if .configure not found)
+# configure_fopts  
+#                -- (re)set default FOPTS and LDOPTS
+# configure_full -- does same as running all of above three
+# configure_help -- same as help--mlsconfigure
 # configure_pvm  -- (re)set PVM and FFTW paths
-# configure_fopts  -- (re)set default FOPTS and LDOPTS
-# configure_full  -- does same as running all of above three
-# configure_help -- prints some info on how to configure the build
 # configure_subdirs
-#                  also (re)creates uniquely-named sub-sub-directories
-#                  within mlspgs sub-directories with customized Makefiles
-#                  where *.o, *.mod, lib*.a, mlsl*, etc. built
+#                -- also (re)creates uniquely-named sub-sub-directories
+#                   within mlspgs sub-directories with customized Makefiles
+#                   where *.o, *.mod, lib*.a, mlsl*, etc. built
 # depends        -- runs makemakedep.sh to calculate dependencies
+# disthelp       -- prints README.MakeFC--a long file
+# firsthelp      -- prints BEFORE.mls--lists prerequisites for mls software
 # ghostbuster    -- removes orphaned .o, .mod files from uniquely-named ssds
 #                   also deletes haunted library files
-# help           -- prints some info on how to build the mls software
-# disthelp       -- prints README.MakeFC--a long file
+# help           -- prints some orientation on available help
+# help--brief    -- prints some info on how to build the mls software
+# help--Makefile -- prints some info on this Makefile
+# help--mlsconfigure
+#                -- prints some info on the mlsconfigure script
 # install        -- mv programs mlsl* from sub-subs to INSTALLDIR
 #                    also create shell scripts in INSTALLDIR for each program
-# CondenseLeakLog-- build and install this prog out of util directory
-# end_stmts      -- build and install this prog out of util directory
-# f90tex         -- build and install this prog out of util directory
-# init_gen       -- build and install this prog out of util directory
-# h5subset       -- build and install this prog out of util directory
-# hl             -- build and install this prog out of util directory
 # makefile       -- allows you to summon this custom Makefile with shorter
 #                    "make" rather than laborious "make -f $(MakeFName)"
+# mostlyclean    -- deletes uniquely-named sub-sub-directories
 # update         -- replaces customized Makefiles with latest versions
 #                    also recalculates dependenencies, removes orphaned .o, .mod
+#
+# The following targets refer to programs whose sources are in the 
+# util directory. You may or may not be interested in building and running them.
+# CondenseLeakLog-- build and install this prog
+# end_stmts      -- build and install this prog
+# f90tex         -- build and install this prog
+# init_gen       -- build and install this prog
+# h5subset       -- build and install this prog
+# hl             -- build and install this prog
 #
 #    The following are useful if you stored multiple configurations
 #     besides current one
@@ -197,6 +204,8 @@ SHELL = /bin/sh
 # CC                 Overrides the name by which the c compiler is called
 # INSTALLDIR         Destination where install moves mlsl1, etc.
 # MLSCFILE           Overrides the name of the .configure file
+# NOCLEANING         Don't rebuild everything on any change to .configure
+#                    if non-blank
 # NOHUNTING          Stop make from hunting if non-blank
 # EXTRA_PATHS        Extra directories to be searched for .h, .f9h, or .mod
 #                    files while compiling
@@ -345,9 +354,9 @@ configure_full:
           -c "$(MLSF95)" -cf "$(MLSCFILE)" -p "$(MLSPLAT)" -pv -fl
 	@$(MAKE) -f $(MakeFName) update
 
-configure_help:
-	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
-          -c "$(MLSF95)" -cf "$(MLSCFILE)" -p "$(MLSPLAT)" -help
+configure_help help--mlsconfigure:
+	@$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -cf "$(MLSCFILE)" -p "$(MLSPLAT)" -help--mlsconfigure
 
 configure_subdirs:
 	@echo "Configuring $(SUBDIRS)"; \
@@ -367,12 +376,23 @@ depends:
 	fi
 	@$(MAKE) -f $(MakeFName) internaldepends
 
-help:
+help--Makefile:
 	@sed -n '/'$(MakeFName)' help/,/End '$(MakeFName)' help/ p' $(CONFDIR)/MakeFC \
 		| sed -n 's/^..//p' | sed '1 d; $$ d'
 
 disthelp:
 	$(CONFDIR)/README.MakeFC
+
+firsthelp:
+	$(CONFDIR)/BEFORE.mls
+
+help:
+	@$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -cf "$(MLSCFILE)" -p "$(MLSPLAT)" -help
+
+help--brief:
+	@$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -cf "$(MLSCFILE)" -p "$(MLSPLAT)" -help--brief
 
 # install the mls programs from $(LEVELS) into $(INSTALLDIR)
 install:
@@ -676,6 +696,7 @@ update:
   tar substar disttar tarz substarz distarz targ substarg distarg substars\
   all install levels configure_subdirs makefile update\
   configure_pvm configure_fopts configure_full configure_help help disthelp\
+  firsthelp help--brief help--mlsconfigure help--Makefile\
   internalcleanup internaldepends internalmftests internalsaymake \
   internaladd_copy internalreset_copy internalupdate\
   show_copy ghostbuster\
@@ -683,6 +704,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.54  2001/11/06 00:21:34  pwagner
+# Set MAX_COPIES to 1; make help brought up to date
+#
 # Revision 1.53  2001/10/18 16:43:37  pwagner
 # Removed target convert_spectroscopy anticipating its removal from util
 #
