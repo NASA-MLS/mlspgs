@@ -22,6 +22,7 @@ module FullForwardModel_m
   use SLABS_SW_M, only: GET_GL_SLABS_ARRAYS
   use FREQ_AVG_M, only: FREQ_AVG
   use CONVOLVE_ALL_M, only: CONVOLVE_ALL
+  USE fov_convolve_v2_m, only: fov_convolve_v2
   use NO_CONV_AT_ALL_M, only: NO_CONV_AT_ALL
   use D_LINTRP_M, only: LINTRP
   use D_HUNT_M, only: hunt_zvi => HUNT
@@ -2057,6 +2058,16 @@ contains ! ================================ FullForwardModel routine ======
           whichPattern = whichPatternAsArray(1)
 
           center_angle = ptg_angles(surfaceTangentIndex)
+          CALL fov_convolve_v2(antennaPatterns(whichPattern)%aaap, &
+            & antennaPatterns(whichPattern)%lambda,ptg_angles, &
+            & Radiances(:,i),tan_chi_out, &
+            & thisradiance%values(1:ptan%template%nosurfs,maf))
+! bills debug
+          WRITE(lu_debug,'(a)') 'angles_out, press_out, rad_out'
+          DO  j = 1 , ptan%template%nosurfs
+            WRITE(lu_debug,'(f11.8,1x,f10.5,1x,f9.4)') tan_chi_out(j), &
+          ptan%values(j,maf),thisradiance%values(j,maf)
+          ENDDO
        WRITE(*,'(a)') 'WARNING Two d antenna code not properly implemented!'
        WRITE(*,'(a)') 'for general 2 d temperature coefficients'
           call convolve_all ( fwdModelConf, fwdModelIn, maf, channel, &
@@ -2325,6 +2336,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.54  2002/06/07 04:50:03  bill
+! fixes and improvements--wgr
+!
 ! Revision 2.53  2002/06/05 17:20:28  livesey
 ! Fixed tan_temp
 !
