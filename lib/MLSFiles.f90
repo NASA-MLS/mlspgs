@@ -1595,7 +1595,7 @@ contains
        ! call mls_openFile(filename, 'readonly', mls_sfstart, HDFVERSION_5)
      case default
        call h5fopen_f(trim(filename), H5F_ACC_RDONLY_F, mls_sfstart, &
-1         & returnStatus)
+         & returnStatus)
        ! call mls_openFile(filename, 'readonly', mls_sfstart, HDFVERSION_5)
      end select
    endif
@@ -1911,6 +1911,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.54  2004/01/21 18:54:54  livesey
+! Typo!
+!
 ! Revision 2.53  2004/01/21 18:48:59  livesey
 ! Bug fix in mls_inqswath
 !
