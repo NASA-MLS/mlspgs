@@ -25,10 +25,11 @@ module SYMBOL_TABLE
   integer, save, private :: TYPE_TEXTS(FIRST_TYPE: LAST_TYPE) = 0
 
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=256), private :: Id = &
-       "$Id$"
-  character (len=*), private, parameter :: ModuleName= &
-       "$RCSfile$"
+  character (len=*), parameter :: IdParm = &
+    & "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= &
+    & "$RCSfile$"
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
@@ -247,6 +248,9 @@ contains
 end module SYMBOL_TABLE
 
 ! $Log$
+! Revision 2.11  2004/10/30 00:19:56  vsnyder
+! Revised the CVS stuff
+!
 ! Revision 2.10  2004/01/22 00:43:12  pwagner
 ! Fixed bug in passing args from enter_terminal to add_terminal
 !
