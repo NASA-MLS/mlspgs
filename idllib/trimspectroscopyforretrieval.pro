@@ -28,13 +28,13 @@ for mol = 0, noMolecules - 1 do begin
     if scoreL eq 7 then begin
       if frq lt 180500.0d0 $
         then newBands = 'B5L, B6L, B27L' $
-      else newBands = 'B2L, B3L, B4L, B23L'
+      else newBands = 'B2L, B3L, B4L, B5L, B6L, B23L, B27L'
     endif
     if scoreU eq 7 then begin
       if newBands ne '' then newBands = newBands + ', '
-      if frq gt 203000.0d0 $
+      if frq gt 203500.0d0 $
         then newBands = newBands + 'B5U, B6U, B27U' $
-      else newBands = newBands + 'B2U, B3U, B4U, B23U'
+      else newBands = newBands + 'B2U, B3U, B4U, B5U, B6U, B23U, B27U'
     endif
     data(mol).eos_bands(line) = newBands
   endfor
