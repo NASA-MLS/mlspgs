@@ -5462,7 +5462,13 @@ contains ! =====     Public Procedures     =============================
       if ( quantity%template%quantityType /= l_radiance ) then
         filenamestring = l1bInfo%L1BOAFileName
       else
-        filenamestring = l1bInfo%L1BRADFileNames(1)
+        if ( .not. associated(l1bInfo%L1BRADFilenames) ) then
+          call Announce_Error ( root, No_Error_code, &
+            & 'No radiances files to read from' )
+          return
+        else
+          filenamestring = l1bInfo%L1BRADFileNames(1)
+        end if
       end if
       this_hdfVersion = mls_hdf_version(trim(filenamestring), LEVEL1_HDFVERSION)
       if ( this_hdfVersion == ERRORINH5FFUNCTION ) then
@@ -6008,9 +6014,15 @@ contains ! =====     Public Procedures     =============================
       integer, intent(in) :: KEY        ! Tree node
       logical, intent(in) :: FORCE      ! If set throw caution to the wind
       ! Local parameters
-      integer, parameter :: NOMANIPULATIONS = 6
-      character(len=3), parameter :: VALIDMANIPULATIONS ( noManipulations ) = &
-        & (/ 'a+b', 'a-b', 'a*b', 'a>b', 'a<b', 'a|b' /)
+      integer, parameter :: NOMANIPULATIONS = 7
+      character(len=7), parameter :: VALIDMANIPULATIONS ( noManipulations ) = (/ &
+        & 'a+b    ', &
+        & '(a+b)/2', &
+        & 'a-b    ', &
+        & 'a*b    ', &
+        & 'a>b    ', &
+        & 'a<b    ', &
+        & 'a|b    ' /)
       ! Local variables
       character (len=128) :: MSTR
       character (len=1) :: ABNAME
@@ -6083,6 +6095,14 @@ contains ! =====     Public Procedures     =============================
         else
           where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 )
             quantity%values = a%values + b%values
+          end where
+        end if
+      case ( '(a+b)/2' )
+        if ( .not. associated ( quantity%mask ) ) then
+          quantity%values = 0.5 * ( a%values + b%values )
+        else
+          where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 )
+            quantity%values = 0.5 * ( a%values + b%values )
           end where
         end if
       case ( 'a-b' )
@@ -6634,8 +6654,10 @@ contains ! =====     Public Procedures     =============================
       else
         surface = 1
       end if
-
-      quantity%values(1,:) = min ( exp ( 1.0_r8 - sourceQuantity%values(surface,:) / scale ), 1.0_r8 )
+      quantity%values(1,:) = 0.0_r8
+      where ( sourceQuantity%values(surface,:) /= 0.0_r8 )
+        quantity%values(1,:) = scale / sourceQuantity%values(surface,:)
+      end where
     end subroutine FillQualityFromChisq
 
     ! ----------------------------------------------- offsetradiancequantity ---
@@ -6977,6 +6999,11 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.295  2004/11/29 21:53:33  livesey
+! Bug fix for reading L1B data when no radiances files specified.
+! Also, added (a+b)/2 manipulation and changed definition of quality to be
+! 1.0/chisq.
+!
 ! Revision 2.294  2004/11/24 22:51:37  livesey
 ! Bug fix in off line sideband folding
 !
