@@ -34,9 +34,13 @@ srclib=../srclib
 # where the platforms directory is
 PLATFORMS = .
 
+# This is the default name of the configure file
+# It may be overridden for multiple platforms, special options, etc.
+MLSCFILE=.configure
+
 # This will set our MLS platform, compiler. etc.
 # w/o complaining if it does nor exist yet
--include $(CONFDIR)/.configure
+-include $(CONFDIR)/$(MLSCFILE)
 
 # This is in case tar doesn't summon GNU tar, you may still use it via
 # something like
@@ -66,10 +70,10 @@ PROG=mlsl1
 
 #----------------------- Build instructions
 
-$(PROG): $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
+$(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
 
-$(libmls_objs)/libmls.a: $(libmls_f90) $(CONFDIR)/.configure
+$(libmls_objs)/libmls.a: $(libmls_f90) $(CONFDIR)/$(MLSCFILE)
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
 .PHONY: configure depends clean tar mostlyclean tarz targ mlsl1
@@ -78,15 +82,15 @@ tar:
 
 configure:
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
-          -c "$(MLSF95)" -p "$(MLSPLAT)"
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)"
 
-$(CONFDIR)/.configure:
+$(CONFDIR)/$(MLSCFILE):
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
-          -c "$(MLSF95)" -p "$(MLSPLAT)"
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)"
 
-$(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/.configure
+$(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
-          -c "$(MLSF95)" -p "$(MLSPLAT)" -nc
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" -nc
 
 depends:
 	$(MLSBIN)/makemakedep.sh $(libmls_sources) $(srclib)
@@ -131,6 +135,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl1
 
 # $Log$
+# Revision 2.14  2001/05/14 17:37:14  pwagner
+# .configure now a variable file name
+#
 # Revision 2.13  2001/05/01 18:32:13  pwagner
 # Added .configure to prereqs for lib
 #
