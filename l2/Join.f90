@@ -82,7 +82,7 @@ contains ! =====     Public Procedures     =============================
     logical, dimension(:), pointer :: DWCOMPLETED
     
     ! Executable code
-    if ( toggle(gen) ) call trace_end ( "MLSL2Join" )
+    if ( toggle(gen) ) call trace_begin ( "MLSL2Join", root )
     timing = section_times
     if ( timing ) call time_now ( t1 )
 
@@ -453,8 +453,7 @@ contains ! =====     Public Procedures     =============================
         ! non-overlapped portion of qty (with possibly precision in precQty)
         ! into the l2gp swath named 'hdfName' starting at profile 
         ! qty%template%instanceOffset + 1
-        call DirectWrite_l2GP( Handle, &
-          & qty, precQty, hdfName, chunkNo, &
+        call DirectWrite_l2GP ( handle, qty, precQty, hdfName, chunkNo, &
           & hdfVersion )   ! May optionally supply first, last profiles
       case ( l_l2aux )
         ! Call the l2aux sd write routine.  This should write the 
@@ -464,7 +463,7 @@ contains ! =====     Public Procedures     =============================
         ! Note sure about the +1 in this case, probably depends whether it's a
         ! minor frame quantity or not.  This mixed zero/one indexing is beomming
         ! a real pain.  I wish I never want down that road!
-        call DirectWrite_L2Aux(Handle, qty, precQty, hdfName, hdfVersion, &
+        call DirectWrite_L2Aux ( handle, qty, precQty, hdfName, hdfVersion, &
           & chunkNo, chunks )
       end select
     end do ! End loop over swaths/sds
@@ -495,9 +494,13 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------------ LabelVectorQuantity -----
   subroutine LabelVectorQuantity ( node, vectors )
-    use VectorsModule, only: VECTOR_T
+    use VectorsModule, only: VECTOR_T, VECTORVALUE_T, GETVECTORQTYBYTEMPLATEINDEX
     use MoreTree, only: GET_FIELD_ID, GET_BOOLEAN
     use Init_tables_module, only: F_QUANTITY, F_PREFIXSIGNAL, F_LABEL
+    use Symbol_Table, only: ENTER_TERMINAL
+    use Symbol_Types, only: T_STRING
+    use String_Table, only: GET_STRING
+    use MLSSignals_m, only: GETSIGNALNAME
     use Tree, only: NSONS, SUBTREE, SUB_ROSA, DECORATION
     ! Dummy arguments
     integer, intent(in) :: NODE          ! Tree node for l2cf line
@@ -512,7 +515,10 @@ contains ! =====     Public Procedures     =============================
     integer :: VECTORINDEX              ! Index into database
     logical :: PREFIXSIGNAL             ! From l2cf
     ! Executable code
+    type (VectorValue_T), pointer :: QTY ! The quantity
+    character(len=1024) :: LABELSTR     ! The label itself
 
+    prefixSignal = .false.
     ! Loop over the fields of the mlscf line
     do keyNo = 2, nsons(node) ! Skip spec name
       son = subtree(keyNo,node)
@@ -529,6 +535,26 @@ contains ! =====     Public Procedures     =============================
       case default ! Can't get here if tree_checker worked properly
       end select
     end do
+
+    ! Get the quantity
+    qty => GetVectorQtyByTemplateIndex ( vectors(vectorIndex), quantityIndex )
+
+    ! Adapt the label if the prefix signal flag is set.
+    if ( prefixSignal ) then
+      if ( qty%template%signal == 0 ) then
+        call Announce_Error ( node, no_error_code, &
+          & 'The quantity has no signal so prefixSignal is not appropriate' )
+        return
+      end if
+      call GetSignalName ( qty%template%signal, labelStr, &
+        & sideband=qty%template%sideband )
+      call Get_String( label, labelStr(len_trim(labelStr)+1:), strip=.true. )
+      ! Now get an index for this possibly new name which may include the signal
+      label = enter_terminal ( trim(labelStr), t_string, caseSensitive=.true. )
+    end if
+
+    ! Attach the label
+    qty%label = label
   end subroutine LabelVectorQuantity
 
   ! --------------------------------------------------  JoinQuantities  -----
@@ -1172,6 +1198,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.74  2003/06/24 23:30:00  livesey
+! Finished LabelVectorQuantity and made some other bug fixes.
+!
 ! Revision 2.73  2003/06/23 23:55:17  pwagner
 ! Added DirectData_T to keep track of data written directly
 !
