@@ -21,6 +21,7 @@ module ChunkDivide_m
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
     "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
 
   ! This type is filled by the l2cf and describes the configuration of the
@@ -1332,9 +1333,16 @@ contains ! ===================================== Public Procedures =====
     end if
   end subroutine Dump_Obstructions
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.24  2002/10/07 23:49:49  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.23  2002/10/07 18:00:10  livesey
 ! Added call to trace_end, whoops!
 !
