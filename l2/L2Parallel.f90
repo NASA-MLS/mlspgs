@@ -500,18 +500,32 @@ contains ! ================================ Procedures ======================
         & 'All chunks abandoned' )
 
       ! If we're done then exit
-      if (all(chunksCompleted .or. chunksAbandoned)) exit masterLoop
+      if (all(chunksCompleted .or. chunksAbandoned)) then
+        if ( index(switches,'mas') /= 0 ) &
+          & call output ( 'All chunks either processed or abandoned', advance='yes' )
+        exit masterLoop
+      end if
 
       ! Now deal with the case where we have no machines left to use.
       ! When all the chunks that have started have finished (surely this is a
       ! necessary condition anyway?) finish.
       if ( .not. any(machineOK) .and. &
-        &  all ( chunksStarted .eqv. chunksCompleted ) ) exit masterLoop
+        &  all ( chunksStarted .eqv. chunksCompleted ) ) then
+        if ( index(switches,'mas') /= 0 ) &
+          & call output ( 'No machines left to do the remaining work', &
+          & advance='yes' )
+        exit masterLoop
+      end if
 
       ! Now, rather than chew up cpu time on the master machine, we'll wait a
       ! bit here.
       call usleep ( delay )
     end do masterLoop ! --------------------- End of master loop --------------
+
+    ! Now, we have to tidy some stuff up here to ensure we can join things
+    where ( .not. chunksCompleted )
+      chunksAbandoned = .true.
+    end where
 
     if ( count(chunksCompleted) == 0 ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -654,7 +668,7 @@ contains ! ================================ Procedures ======================
     integer :: PVIND                    ! Index for precision vector
     integer :: I                        ! Loop inductor
     integer :: NOSTOREDRESULTS          ! Array size
-    logical :: CONDITION                ! Flag
+    logical :: SEENTHISBEFORE           ! Flag
     real (r8), dimension(:,:), pointer :: VALUES ! Values for this vector quantity
     type (QuantityTemplate_T) :: qt     ! A quantity template
     type (VectorTemplate_T) :: vt       ! A vector template
@@ -676,7 +690,7 @@ contains ! ================================ Procedures ======================
     
     ! Now get the quantity itself, possibly also the precision
     do i = 1, gotPrecision+1
-      call PVMReceiveQuantity ( qt, values, tid )
+      call PVMReceiveQuantity ( qt, values, justUnpack=.true. )
 
       ! Now add its template to our template database
       qt%id = joinedQTCounter
@@ -702,9 +716,12 @@ contains ! ================================ Procedures ======================
 
     ! Now update our stored result stuff
 
-    condition = .not. associated ( storedResults )
-    if (.not. condition ) condition = .not. any (storedResults%key == key )
-    if ( condition ) then
+    seenThisBefore = associated ( storedResults ) ! Perhaps, anyway
+    if ( seenThisBefore ) seenThisBefore = any (storedResults%key == key )
+
+    if ( seenThisBefore ) then
+      thisResult => storedResults ( FindFirst ( storedResults%key == key ) )
+    else
       ! We haven't seen this one before
       oneResult%key = key
       oneResult%gotPrecision = ( gotPrecision == 1 )
@@ -714,10 +731,11 @@ contains ! ================================ Procedures ======================
       if ( oneResult%gotPrecision ) &
         & call allocate_test ( oneResult%precInds, noChunks, &
         & 'precInds', ModuleName )
+      ! Shouldn't need these really, but just in case
+      oneResult%valInds = 0
+      oneResult%precInds = 0
       noStoredResults = AddStoredResultToDatabase ( storedResults, oneResult )
       thisResult => storedResults ( noStoredResults )
-    else
-      thisResult => storedResults ( FindFirst ( storedResults%key == key ) )
     end if
 
     thisResult%valInds(chunk) = vInd
@@ -755,6 +773,8 @@ contains ! ================================ Procedures ======================
         call DestroyVectorTemplateInfo ( joinedVectorTemplates(precInd) )
         call DestroyQuantityTemplateContents ( joinedQuantities(precInd) )
       end if
+      storedResults(res)%valInds(chunk) = 0
+      storedResults(res)%precInds(chunk) = 0
     end do
   end subroutine CleanUpDeadChunksOutput
 
