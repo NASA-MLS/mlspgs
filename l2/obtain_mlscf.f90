@@ -7,7 +7,7 @@ module OBTAIN_MLSCF
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSFiles, only: MLS_io_gen_openf, MLS_io_gen_closef
   USE output_m, only: output
-  use SDPToolkit, only: PGS_S_SUCCESS, PGSd_IO_Gen_RSeqFrm
+  use SDPToolkit, only: PGS_S_SUCCESS, PGSd_IO_Gen_RSeqFrm, Pgs_pc_getReference
   use TREE, only: DUMP_TREE_NODE, SOURCE_REF
 
   implicit NONE
@@ -46,19 +46,24 @@ contains ! =====     Public Procedures     =============================
   end subroutine CLOSE_MLSCF
 
   ! -------------------------------------------------  OPEN_MLSCF  -----
-  subroutine OPEN_MLSCF ( MLSPCF_Start, CF_Unit, return_status, debugOption )
+  subroutine OPEN_MLSCF ( MLSPCF_Start, CF_Unit, L2CF_file, return_status, &
+   & debugOption )
 
     integer, intent(in) :: MLSPCF_Start
     integer, intent(out) :: CF_Unit
     integer, intent(out) :: return_status
+    character(len=*), intent(out) :: L2CF_file
     logical, optional, intent(in) :: debugOption
 
     integer :: record_length
+    integer :: version
 
     error = 0
 !    return_Status = Pgs_io_gen_openF ( MLSPCF_Start, PGSd_IO_Gen_RSeqFrm, &
 !                                      0, CF_Unit, L2CF_Version)
 
+    version = 1
+    return_Status = Pgs_pc_getReference(MLSPCF_Start, version, L2CF_file)
     CF_Unit = Mls_io_gen_openF ( 'pg', .true., return_Status, record_length, &
       & PGSd_IO_Gen_RSeqFrm, &
       & thePC=MLSPCF_Start, debugOption=debugOption)
@@ -134,6 +139,9 @@ contains ! =====     Public Procedures     =============================
 end module OBTAIN_MLSCF
 
 ! $Log$
+! Revision 2.11  2002/01/18 23:09:14  pwagner
+! Added debugOption to subroutine args
+!
 ! Revision 2.10  2002/01/11 00:43:22  pwagner
 ! Removed some unused stuff; simplified error msg
 !
