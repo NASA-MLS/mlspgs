@@ -82,7 +82,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_INTERPOLATIONFACTOR = f_hgrid + 1
   integer, parameter :: F_JACOBIAN            = f_interpolationFactor + 1
   integer, parameter :: F_LENGTH              = f_jacobian + 1
-  integer, parameter :: F_MAXITERATIONS       = f_length + 1
+  integer, parameter :: F_LOGBASIS            = f_length + 1
+  integer, parameter :: F_MAXITERATIONS       = f_logBasis + 1
   integer, parameter :: F_MATRIX              = f_maxIterations + 1
   integer, parameter :: F_MEASUREMENTS        = f_matrix + 1
   integer, parameter :: F_METHOD              = f_measurements + 1
@@ -367,6 +368,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_interpolationFactor) = add_ident ( 'interpolationFactor' )
     field_indices(f_jacobian) =            add_ident ( 'jacobian' )
     field_indices(f_length) =              add_ident ( 'length' )
+    field_indices(f_logBasis) =            add_ident ( 'logBasis' )
     field_indices(f_matrix) =              add_ident ( 'matrix' )
     field_indices(f_maxIterations) =       add_ident ( 'maxIterations' )
     field_indices(f_measurements) =        add_ident ( 'measurements' )
@@ -603,6 +605,7 @@ contains ! =====     Public procedures     =============================
       begin, s+s_quantity, & ! Must be AFTER s_hgrid and s_vgrid
              begin, f+f_hGrid, s+s_hgrid, n+n_field_spec, &
              begin, f+f_vGrid, s+s_vgrid, n+n_field_spec, &
+             begin, f+f_logBasis, t+t_boolean, n+n_field_type, &
              begin, f+f_molecule, t+t_molecule, n+n_field_type, &
              begin, f+f_radiometer, s+s_radiometer, n+n_field_spec, &
              begin, f+f_module, s+s_module, n+n_field_spec, &
@@ -787,6 +790,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.53  2001/03/17 02:24:45  livesey
+! Added logBasis
+!
 ! Revision 2.52  2001/03/17 00:50:38  livesey
 ! New forwardModel section (plus merge from Van)
 !
