@@ -31,12 +31,21 @@ PLATFORMS = .
 
 SHELL = /bin/sh
 
+# where sources for libmls.a are stored
+libmls_sources=../../../lib
+
+# where objects and libmls.a are stored
+libmls_objs=$(libmls_sources)/$(MLSCONFG)
+
 PROG=test_multiply
 
 TESTOUTPUT=out.test
 
-$(PROG): $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG)
+$(PROG): $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
+
+$(libmls_objs)/libmls.a: $(libmls_sources)/*.f90
+	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
 output: $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG)
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(TESTOUTPUT)
@@ -56,7 +65,7 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/.configure
           -c "$(MLSF95)" -p "$(MLSPLAT)" -nc
 
 depends:
-	$(MLSBIN)/makemakedep.sh
+	$(MLSBIN)/makemakedep.sh $(libmls_sources)
 
 clean:
 	@echo "Cleaning directory $(MLSCONFG)" ; \
@@ -72,10 +81,7 @@ clean:
 		rmdir $(PLATFORMS)/$(MLSCONFG) ; \
 	fi
 # $Log$
-# Revision 1.1  2000/10/20 23:35:50  pwagner
-# first commit
-#
-# Revision 2.1  2000/10/18 21:58:16  pwagner
+# Revision 1.1  2000/11/09 17:26:43  pwagner
 # First commit
 #
 

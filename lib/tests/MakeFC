@@ -36,7 +36,8 @@ PROG=tests
 #the subdirectory where testing programs kept
 #testdir = tests
 
-testsubdirs = multiply sparsify test_cf_parser
+#testsubdirs = multiply sparsify test_cf_parser multiply_vector cholesky
+testsubdirs = multiply sparsify test_cf_parser cholesky
 
 
 #================= For testing purposes only =============
@@ -63,7 +64,7 @@ $(CONFDIR)/.configure:
 depends:
 	@echo "Calculating dependencies $(testsubdirs)"; \
 	 for dir in $(testsubdirs); do \
-		$(MLSBIN)/makemakedep.sh ; \
+	  $(MAKE) -f $(MakeFName) -C $$dir depends; \
 	done
 
 clean:
@@ -77,6 +78,9 @@ tar:
 	tar hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod
 
 # $Log$
+# Revision 1.1  2000/10/24 20:56:46  pwagner
+# First commit
+#
 # Revision 2.1  2000/10/18 21:59:19  pwagner
 # First commit
 #
