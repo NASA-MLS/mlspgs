@@ -283,9 +283,9 @@ begin Construct
 
   ;; ----------------------------------------- Elevation offsets
 
-  !define(constructElev,{elev$1: Quantity, type=elevOffset, radiometer=$1!nl})
-  !forall(constructElev,!allRadiometers)
-  !define(allElevs, {!makelist({elev},{},!allRadiometers)})
+  !define(constructElev,{elev$1: Quantity, type=elevOffset, signal=!signal($1)!nl})
+  !forall(constructElev,!allBandLSBs,!allBandUSBs)
+  !define(allElevs, {!makelist({elev},{},!allBandLSBs,!allBandUSBs)})
 
   ;; ----------------------------------------- Retrieval diagnostics
   ;; Note no continuation lines allowed here, sorry!
