@@ -6,9 +6,11 @@ program MLSL2
   use INIT_TABLES_MODULE, only: INIT_TABLES, LIT_INDICES
   use LEXER_CORE, only: INIT_LEXER
   use MACHINE ! At least HP for command lines, and maybe GETARG, too
+  use OBTAIN_MLSCF, only: Close_MLSCF, Open_MLSCF
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+  use MLSPCF2, only: MLSPCF_L2CF_START
+! use Open_Init, only: Close_MLSCF, Open_MLSCF !!! Enormous compile time !!!
   use OUTPUT_M, only: OUTPUT, PRUNIT
-  use Open_Init, only: CloseMLSCF, OpenMLSCF
   use PARSER, only: CONFIGURATION
   use STRING_TABLE, only: DO_LISTING, INUNIT
   use TOGGLES, only: CON, GEN, LEVELS, LEX, PAR, SYN, TAB, TOGGLE
@@ -51,6 +53,8 @@ program MLSL2
     if ( line(1:2) == '--' ) then       ! "word" options
       if ( line(3:6) == 'pcf ' ) then
         pcf = .true.
+      else if ( line(3:7) == 'npcf ' ) then
+        pcf = .false.
       else if ( line(3:) == ' ' ) then  ! "--" means "no more options"
         i = i + 1
         call getarg ( i, line )
@@ -97,7 +101,13 @@ program MLSL2
           print *, '  -t: Trace declaration table construction.'
           print *, '  -v: List the configuration file.'
           print *, '  The above options can be concatenated after one hyphen.'
-          print *, '  --pcf: Open the L2CF using the Toolkit and the PCF.'
+          print *, '  --[n]pcf: Open the L2CF [without] using the Toolkit ', &
+          &          'and the PCF.'
+          if ( pcf ) then
+            print *, '            Default: --pcf'
+          else
+            print *, '            Default: --npcf'
+          end if
           print *, '  Options a, c, g1, l, p and t can be toggled in the ', &
           &          'configuration file by'
           print *, '  @A, @C, @G, @L, @P and @S respectively.  @T in the ', &
@@ -126,7 +136,7 @@ program MLSL2
 
 ! Parse the L2CF, producing an abstract syntax tree
   if ( pcf ) then
-    call openMLSCF
+    call open_MLSCF ( MLSPCF_L2CF_Start, inunit )
   else if ( line /= ' ' ) then
     open ( l2cf_unit, file=line, status='old', &
       & form='formatted', access='sequential', iostat=status )
@@ -139,9 +149,9 @@ program MLSL2
   end if
   call configuration ( root )
   if ( pcf ) then
-    call closeMLSCF
+    call close_MLSCF ( inunit )
   else
-    close ( l2cf_unit )  ! Don't worry about the status
+    if ( inunit >= 0 ) close ( inunit )  ! Don't worry about the status
   end if
   if ( root <= 0 ) then
     call output ( &
@@ -167,6 +177,9 @@ program MLSL2
 end program MLSL2
 
 ! $Log$
+! Revision 2.8  2001/02/28 01:59:29  vsnyder
+! Access Open_MLSCF and Close_MLSCF from Obtain_MLSCF instead of Open_Init
+!
 ! Revision 2.7  2001/02/23 02:39:56  vsnyder
 ! Add description of --pcf option to usage instructions.
 !
