@@ -534,19 +534,19 @@ contains ! =============== Subroutines and functions ==========================
     real (r8), dimension(:), pointer :: BASISGPH ! From ifm
     real (r8), dimension(:), pointer :: DH2OBYDPTAN ! Derivative
     real (r8), dimension(:), pointer :: DHYDROSGPHBYDPTAN ! Derivative
-    real (r8), dimension(:), pointer :: DL1GPHBYDHEIGHTOFFSET ! Derivaite
-    real (r8), dimension(:), pointer :: DL1GPHBYDL1REFRGEOCALT ! Derivaite
-    real (r8), dimension(:), pointer :: DL1GPHBYDPTAN ! Derivaite
-    real (r8), dimension(:), pointer :: DL1GPHBYDTEMPLOWER ! Derivaite
-    real (r8), dimension(:), pointer :: DL1GPHBYDTEMPUPPER ! Derivaite
-    real (r8), dimension(:), pointer :: DL1REFRGEOCALTBYDHEIGHTOFFSET ! Derivaite
-    real (r8), dimension(:), pointer :: DL1REFRGEOCALTBYDN ! Derivaite
-    real (r8), dimension(:), pointer :: DL1REFRGEOCALTBYDPTAN ! Derivaite
-    real (r8), dimension(:), pointer :: DL1REFRGEOCALTBYDTEMPLOWER ! Derivaite
-    real (r8), dimension(:), pointer :: DL1REFRGEOCALTBYDTEMPUPPER ! Derivaite
-    real (r8), dimension(:), pointer :: DNBYDPTAN ! Derivaite
-    real (r8), dimension(:), pointer :: DNBYDTEMPLOWER ! Derivaite
-    real (r8), dimension(:), pointer :: DNBYDTEMPUPPER ! Derivaite
+    real (r8), dimension(:), pointer :: DL1GPHBYDHEIGHTOFFSET ! Derivative
+    real (r8), dimension(:), pointer :: DL1GPHBYDL1REFRGEOCALT ! Derivative
+    real (r8), dimension(:), pointer :: DL1GPHBYDPTAN ! Derivative
+    real (r8), dimension(:), pointer :: DL1GPHBYDTEMPLOWER ! Derivative
+    real (r8), dimension(:), pointer :: DL1GPHBYDTEMPUPPER ! Derivative
+    real (r8), dimension(:), pointer :: DL1REFRGEOCALTBYDHEIGHTOFFSET ! Derivative
+    real (r8), dimension(:), pointer :: DL1REFRGEOCALTBYDN ! Derivative
+    real (r8), dimension(:), pointer :: DL1REFRGEOCALTBYDPTAN ! Derivative
+    real (r8), dimension(:), pointer :: DL1REFRGEOCALTBYDTEMPLOWER ! Derivative
+    real (r8), dimension(:), pointer :: DL1REFRGEOCALTBYDTEMPUPPER ! Derivative
+    real (r8), dimension(:), pointer :: DNBYDPTAN ! Derivative
+    real (r8), dimension(:), pointer :: DNBYDTEMPLOWER ! Derivative
+    real (r8), dimension(:), pointer :: DNBYDTEMPUPPER ! Derivative
     real (r8), dimension(:), pointer :: DTEMPBYDPTAN ! Derivative
     real (r8), dimension(:), pointer :: GEOCLAT ! TP GeocLat
     real (r8), dimension(:), pointer :: H2OBASIS ! => h2o%template%surfs
@@ -1208,6 +1208,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.29  2002/06/05 00:00:29  livesey
+! Typo fixed
+!
 ! Revision 2.28  2002/02/13 00:08:58  livesey
 ! Added differential scan model
 !
