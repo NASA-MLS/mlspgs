@@ -72,7 +72,7 @@ contains ! =====     Public Procedures     =============================
       & GetPCFromRef, mls_exists, &
       & MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, MLS_SFSTART, MLS_SFEND, &
       & SPLIT_PATH_NAME, unSplitName
-    use MLSHDF5, only: MakeHDF5Attribute
+    use MLSHDF5, only: CpHDF5GlAttribute, MakeHDF5Attribute
     use MLSL2Options, only: CATENATESPLITS, CHECKPATHS, &
       & DEFAULT_HDFVERSION_WRITE, PENALTY_FOR_NO_METADATA, TOOLKIT
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
@@ -84,6 +84,7 @@ contains ! =====     Public Procedures     =============================
     use MLSStringLists, only: Array2List
     use MoreTree, only: Get_Spec_ID, GET_BOOLEAN
     use SDPToolkit, only: PGS_S_SUCCESS, PGSD_IO_GEN_WSEQFRM, Pgs_smf_getMsg
+    use readAPriori, only: writeAPrioriAttributes
     use Time_M, only: Time_Now
     use TOGGLES, only: GEN, TOGGLE, Switches
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -649,6 +650,8 @@ contains ! =====     Public Procedures     =============================
           if ( returnStatus /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'unable to addmetadata to ' // trim(l2gpPhysicalFilename) )
         end if
+        if ( madeFile ) &
+         & call writeAPrioriAttributes(trim(l2gpPhysicalFilename), HDFVERSION_5)
       end if
       ! Next we would do the same for any split dgm direct write files
       DB_index = findFirst( DirectDatabase%autoType, l_l2aux )
@@ -697,6 +700,9 @@ contains ! =====     Public Procedures     =============================
             & trim(l2auxPhysicalFilename), create2=(DB_index==1), &
             & hdfVersion=HDFVERSION_5)
           end if
+          if ( DB_index==1 ) &
+            & call CpHDF5GlAttribute ( DirectDatabase(DB_index)%fileName, &
+            & l2auxPhysicalFilename, 'Phase Names' )
         end do
         ! Is metadata really needed for l2aux files?
         if ( TOOLKIT .and. madeFile ) then
@@ -1003,6 +1009,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.103  2004/09/23 23:02:46  pwagner
+! DGG gets apriori attrs; master task copies Phase Names from slave DGM
+!
 ! Revision 2.102  2004/09/16 23:57:54  pwagner
 ! Now tracks machine names of failed chunks
 !
