@@ -42,6 +42,7 @@ Switches (set by -S option in mlsl2's command line):
   lblB =>   lblb + temperature and pressure grids
   LBLB =>   lblB and then stop
   log =>    Log file messages
+  mach =>   Machine names (that can be enslaved by master task)
   mas =>    Activities of the PVM master task
   msk =>    Mask set up by subset command in Retrieve
   ndb =>    Dump 12 interesting Newton method internal variables after every SOLVE step
@@ -122,6 +123,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.48  2004/11/04 03:46:24  vsnyder
+ Correct spec, add fwmg and fwmG
+
  Revision 1.47  2004/08/05 22:46:04  pwagner
  New --chunkRange option to run selected chunks in parallel mode
 
