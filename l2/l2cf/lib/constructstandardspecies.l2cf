@@ -125,6 +125,9 @@ begin Construct
   massMeanDiameterWater: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, $
                                  type = massMeanDiameterWater
 
+  ; cldRad in l2gp format for quality flag uses
+  cldRadMin: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=temperature
+  cldRadMax: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=temperature
 ;; ----------------------------------------- Baselines
   
   !define(constructBaseline,{baseline$1: Quantity, type=baseline, $
@@ -319,6 +322,7 @@ begin Construct
     temperature, !ifdef(skipHiRes,{},{temperature_HR,}) $
     refGPH, GPH, !ifdef(skipHiRes,{},{GPH_HR,}) $
     tpPressure, $
+    cldRadMin, cldRadMax, $
     !allMolecules, tropH2O, !ifdef(skipHiRes,{},{tropH2O_HR,})$
     !ifdef(skipHiRes,{},{!allHiResMolecules,}) $
     rhi, !ifdef(skipHiRes,{},{rhi_HR,}) $

@@ -145,6 +145,10 @@ begin Fill
 Fill, quantity=apriori.magneticField, method=magneticModel, $
   GPHquantity=apriori.gph
 
+;; initialize cldRad flag
+  Fill, quantity=apriori.cldRadMin,  method=explicit, /spread, explicitValues= 0 K
+  Fill, quantity=apriori.cldRadMax,  method=explicit, /spread, explicitValues= 0 K
+
 end Fill
 
 ;; -------------------------------- Apriori precisions
