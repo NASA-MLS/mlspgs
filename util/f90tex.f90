@@ -261,7 +261,7 @@ contains
           write ( out_unit, '(a)', advance='no' ) '\'
         write ( out_unit, '(a)', advance='no' ) text(i:i)
       end do
-      write ( out_unit, '(a)' )
+      write ( out_unit, '(a)', advance=advance )
     else
       if ( present(tex) ) write ( *, '(a)', advance='no' ) '\'
       do i = 1, len(text)
@@ -269,7 +269,7 @@ contains
           write ( *, '(a)', advance='no' ) '\'
         write ( *, '(a)', advance='no' ) text(i:i)
       end do
-      write ( *, '(a)' )
+      write ( *, '(a)', advance=advance )
     end if
     return
   end subroutine OUTPUT
@@ -277,6 +277,9 @@ contains
 end program F90TEX
 
 ! $Log$
+! Revision 1.4  2001/06/14 23:06:48  pwagner
+! Added GETARG to machine modules used
+!
 ! Revision 1.3  2001/06/01 21:50:16  vsnyder
 ! Remove 'private' from CVS stuff (oops!)
 !
