@@ -870,7 +870,7 @@ contains
 
   ! --------------------------------------------  GetNameOfSignal  -----
   subroutine GetNameOfSignal ( Signal, String_text, NoRadiometer, NoBand, &
-    & NoSwitch, NoSpectrometer, NoChannels, NoSuffix )
+    & NoSwitch, NoSpectrometer, NoChannels, NoSuffix, sideband )
     ! Given a signal object, this routine constructs a full signal name.
     type(signal_T), intent(in) :: SIGNAL
     character(len=*), intent(inout) :: STRING_TEXT
@@ -880,12 +880,14 @@ contains
     logical, intent(in), optional :: NOSPECTROMETER
     logical, intent(in), optional :: NOCHANNELS
     logical, intent(in), optional :: NOSUFFIX
+    integer, intent(in), optional :: SIDEBAND
 
     ! Local variables
     logical :: First     ! First channel in signal text
     integer :: I, J, L
     logical :: MY_NORADIOMETER, MY_NOBAND, MY_NOSWITCH
     logical :: MY_NOSPECTROMETER, MY_NOCHANNELS
+    integer :: MY_SIDEBAND
     character (len=8) :: word
 
     ! Executable code
@@ -895,12 +897,14 @@ contains
     my_noSwitch       = .false.
     my_noSpectrometer = .false.
     my_noChannels     = .false.
+    my_sideband       = signal%sideband
 
     if ( present(noRadiometer) )   my_noRadiometer =   noRadiometer
     if ( present(noBand) )         my_noBand =         noBand
     if ( present(noSwitch) )       my_noSwitch =       noSwitch
     if ( present(noSpectrometer) ) my_noSpectrometer = noSpectrometer
     if ( present(noChannels) )     my_noChannels =     noChannels
+    if ( present(sideband) )       my_sideband =       sideband
 
     if ( .not. my_noRadiometer ) call GetRadiometerName ( signal%radiometer, &
       & string_text, noSuffix=noSuffix )
@@ -910,7 +914,7 @@ contains
         &  (len_trim(string_text)<len(string_text)) ) &
         &  string_text = TRIM(string_text) // '.'
       call GetBandName ( signal%band, &
-        & string_text(LEN_TRIM(string_text)+1:), sideband=signal%sideband, &
+        & string_text(LEN_TRIM(string_text)+1:), sideband=my_sideband, &
         & noSuffix=noSuffix )
     end if
 
@@ -1018,7 +1022,7 @@ oc:   do
 
   ! ----------------------------------------------  GetSignalName  -----
   subroutine GetSignalName ( Signal, String_text, NoRadiometer, NoBand, &
-    & NoSwitch, NoSpectrometer, NoChannels, NoSuffix )
+    & NoSwitch, NoSpectrometer, NoChannels, NoSuffix, SIDEBAND )
     ! Given an index in the signals database, this routine constructs a
     ! full signal name.
     integer, intent(in) :: SIGNAL                 ! Database index
@@ -1029,9 +1033,10 @@ oc:   do
     logical, intent(in), optional :: NOSPECTROMETER
     logical, intent(in), optional :: NOCHANNELS
     logical, intent(in), optional :: NOSUFFIX
+    integer, intent(in), optional :: SIDEBAND
 
     call getNameOfSignal ( signals(signal), string_text, noRadiometer, noBand, &
-      & noSwitch, noSpectrometer, noChannels, noSuffix )
+      & noSwitch, noSpectrometer, noChannels, noSuffix, sideband )
   end subroutine GetSignalName 
 
   ! ----------------------------------------  GetSpectrometerName  -----
@@ -1123,6 +1128,9 @@ oc:   do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.34  2001/04/26 19:33:25  livesey
+! Add sideband field to getSignalName etc.
+!
 ! Revision 2.33  2001/04/26 02:33:03  vsnyder
 ! Moved *_indices declarations from init_tables_module to intrinsic
 !
