@@ -39,7 +39,6 @@ module MLSHDF5
     & H5SCREATE_F, H5SCREATE_SIMPLE_F, H5SGET_SIMPLE_EXTENT_NDIMS_F, &
     & H5SGET_SIMPLE_EXTENT_DIMS_F, H5SSELECT_HYPERSLAB_F, &
     & H5TCLOSE_F, H5TCOPY_F, H5TEQUAL_F, H5TGET_SIZE_F, H5TSET_SIZE_F
-  use MLSCommon, only: r4, r8
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
   use MLSStringLists, only: catLists
 
@@ -106,17 +105,18 @@ module MLSHDF5
 !       [log skip_if_already_there]) 
 ! SaveAsHDF5DS (int locID, char name, value) 
 !     value can be one of:
-!    {char* value, int value, r4 value, r8 value, 
+!    {char* value, int value, real value, double precision value, 
 !     int value(:),
-!     r4 value(:), r4 value(:,:), r4 value(:,:,:),
-!     r8 value(:), r8 value(:,:), r8 value(:,:,:)}
+!     real value(:), real value(:,:), real value(:,:,:), real value(:,:,:,:),
+!     double precision value(:), double precision value(:,:), 
+!     double precision value(:,:,:)}
 ! === (end of api) ===
   interface GetAllHDF5DSNames
     module procedure GetAllHDF5DSNames_fileID, GetAllHDF5DSNames_filename
   end interface
 
   interface MakeHDF5Attribute
-    module procedure MakeHDF5Attribute_dbl, &
+    module procedure MakeHDF5Attribute_dbl, MakeHDF5Attribute_sngl, &
       & MakeHDF5Attribute_int, MakeHDF5Attribute_logical, &
       & MakeHDF5Attribute_string, MakeHDF5Attribute_snglarr1, &
       & MakeHDF5Attribute_dblarr1, MakeHDF5Attribute_string_arr1, &
@@ -330,7 +330,7 @@ contains ! ======================= Public Procedures =========================
    & skip_if_already_there )
     integer, intent(in) :: ITEMID       ! Group etc. to make attr to.
     character (len=*), intent(in) :: NAME ! Name of attribute
-    real(r8), intent(in) :: VALUE        ! Value of attribute
+    double precision, intent(in) :: VALUE ! Value of attribute
     logical, intent(in), optional :: skip_if_already_there
 
     ! Local variables
@@ -364,6 +364,46 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close attribute dataspace '//trim(name) )
   end subroutine MakeHDF5Attribute_dbl
+
+  ! ------------------------------------- MakeHDF5Attribute_sngl
+  subroutine MakeHDF5Attribute_sngl ( itemID, name, value, &
+   & skip_if_already_there )
+    integer, intent(in) :: ITEMID       ! Group etc. to make attr to.
+    character (len=*), intent(in) :: NAME ! Name of attribute
+    real, intent(in) :: VALUE           ! Value of attribute
+    logical, intent(in), optional :: skip_if_already_there
+
+    ! Local variables
+    integer :: ATTRID                   ! ID for attribute
+    integer :: DSID                     ! ID for dataspace
+    integer :: STATUS                   ! Flag from HDF5
+    logical :: my_skip
+
+    ! Executable code
+    my_skip = .false.
+    if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
+    if ( my_skip ) then
+      if ( IsHDF5AttributePresent_in_DSID(itemID, name) ) return
+    endif
+    call h5sCreate_F ( h5s_scalar_f, dsID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to create dataspace for attribute '//trim(name) )
+    ! Now create the attribute
+    call h5aCreate_f ( itemID, trim(name), H5T_NATIVE_DOUBLE, dsID, attrID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to create attribute '//trim(name) )
+    ! Write
+    call h5aWrite_f ( attrID, H5T_NATIVE_DOUBLE, value, ones, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to write attribute '//trim(name) )
+    ! Finish off
+    call h5aClose_f ( attrID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close attribute '//trim(name) )
+    call h5sClose_f ( dsID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close attribute dataspace '//trim(name) )
+  end subroutine MakeHDF5Attribute_sngl
 
   ! ------------------------------------- MakeHDF5Attribute_int
   subroutine MakeHDF5Attribute_int ( itemID, name, value, &
@@ -559,7 +599,7 @@ contains ! ======================= Public Procedures =========================
    & skip_if_already_there )
     integer, intent(in) :: ITEMID       ! Group etc. to make attr to.
     character (len=*), intent(in) :: NAME ! Name of attribute
-    real(r4), intent(in) :: VALUE(:)     ! The attribute array itself
+    real, intent(in) :: VALUE(:)        ! The attribute array itself
     logical, intent(in), optional :: skip_if_already_there
 
     ! Local variables
@@ -602,8 +642,8 @@ contains ! ======================= Public Procedures =========================
   subroutine MakeHDF5Attribute_dblarr1 ( itemID, name, value , &
    & skip_if_already_there )
     integer, intent(in) :: ITEMID       ! Group etc. to make attr to.
-    character (len=*), intent(in) :: NAME ! Name of attribute
-    real(r8), intent(in) :: VALUE(:)     ! The attribute array itself
+    character (len=*), intent(in) :: NAME    ! Name of attribute
+    double precision, intent(in) :: VALUE(:) ! The attribute array itself
     logical, intent(in), optional :: skip_if_already_there
 
     ! Local variables
@@ -817,7 +857,7 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in) :: FILEID       ! FIle where to find them
     character (len=*), intent(in) :: DATANAME ! Name of data set
     character (len=*), intent(in) :: ATTRNAME ! Name of attribute
-    real(r4), intent(in) :: VALUE(:)     ! The attribute array itself
+    real, intent(in) :: VALUE(:)        ! The attribute array itself
     logical, intent(in), optional :: skip_if_already_there
 
     ! Local variables
@@ -832,8 +872,7 @@ contains ! ======================= Public Procedures =========================
       if ( IsHDF5AttributePresent_in_fID( fileID, dataName, attrName ) ) return
     endif
     dataID = name_to_dataID( fileID, dataName)
-    call MakeHDF5Attribute_snglarr1( &
-     & dataID, attrName, value )
+    call MakeHDF5Attribute ( dataID, attrName, value )
     call h5dclose_f(dataID, status)
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close data '//trim(dataName) )
@@ -846,7 +885,7 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in) :: FILEID       ! FIle where to find them
     character (len=*), intent(in) :: DATANAME ! Name of data set
     character (len=*), intent(in) :: ATTRNAME ! Name of attribute
-    real(r8), intent(in) :: VALUE(:)     ! The attribute array itself
+    double precision, intent(in) :: VALUE(:)  ! The attribute array itself
     logical, intent(in), optional :: skip_if_already_there
 
     ! Local variables
@@ -861,8 +900,7 @@ contains ! ======================= Public Procedures =========================
       if ( IsHDF5AttributePresent_in_fID( fileID, dataName, attrName ) ) return
     endif
     dataID = name_to_dataID( fileID, dataName)
-    call MakeHDF5Attribute_dblarr1( &
-     & dataID, attrName, value )
+    call MakeHDF5Attribute ( dataID, attrName, value )
     call h5dclose_f(dataID, status)
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close data '//trim(dataName) )
@@ -1018,7 +1056,7 @@ contains ! ======================= Public Procedures =========================
   subroutine GetHDF5Attribute_snglarr1 ( itemID, name, value )
     integer, intent(in) :: ITEMID       ! Group etc. to get attribute from
     character (len=*), intent(in) :: NAME ! Name of attribute
-    real(r4), intent(out) :: VALUE(:)     ! The attribute array result
+    real, intent(out) :: VALUE(:)       ! The attribute array result
 
     ! Local variables
     integer :: ATTRID                   ! ID for attribute
@@ -1046,7 +1084,7 @@ contains ! ======================= Public Procedures =========================
   subroutine GetHDF5Attribute_sngl ( itemID, name, value )
     integer, intent(in) :: ITEMID       ! Group etc. to get attribute from
     character (len=*), intent(in) :: NAME ! Name of attribute
-    real(r4), intent(out) :: VALUE     ! The attribute result
+    real, intent(out) :: VALUE          ! The attribute result
 
     ! Local variables
     integer :: ATTRID                   ! ID for attribute
@@ -1070,9 +1108,9 @@ contains ! ======================= Public Procedures =========================
    
   ! ------------------------------------------- GetHDF5Attribute_dbl
   subroutine GetHDF5Attribute_dbl ( itemID, name, value )
-    integer, intent(in) :: ITEMID       ! Group etc. to get attribute from
-    character (len=*), intent(in) :: NAME ! Name of attribute
-    real(r8), intent(out) :: VALUE     ! The attribute result
+    integer, intent(in) :: ITEMID          ! Group etc. to get attribute from
+    character (len=*), intent(in) :: NAME  ! Name of attribute
+    double precision, intent(out) :: VALUE ! The attribute result
 
     ! Local variables
     integer :: ATTRID                   ! ID for attribute
@@ -1097,8 +1135,8 @@ contains ! ======================= Public Procedures =========================
   ! ------------------------------------------- GetHDF5Attribute_dblarr1
   subroutine GetHDF5Attribute_dblarr1 ( itemID, name, value )
     integer, intent(in) :: ITEMID       ! Group etc. to get attribute from
-    character (len=*), intent(in) :: NAME ! Name of attribute
-    real(r8), intent(out) :: VALUE(:)     ! The attribute result
+    character (len=*), intent(in) :: NAME     ! Name of attribute
+    double precision, intent(out) :: VALUE(:) ! The attribute result
 
     ! Local variables
     integer :: ATTRID                   ! ID for attribute
@@ -1719,8 +1757,8 @@ contains ! ======================= Public Procedures =========================
     ! This routine does the initial work of creating a dataset
     integer, intent(in) :: LOCID        ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
-    real(r8), intent(in) :: VALUE(:)     ! The array itself
-    real(r8), optional, intent(in) :: FILLVALUE
+    double precision, intent(in) :: VALUE(:)     ! The array itself
+    double precision, optional, intent(in) :: FILLVALUE
     integer, dimension(1), optional, intent(in) :: FINALSHAPE
     logical, optional, intent(in)     :: adding_to
 
@@ -1759,8 +1797,8 @@ contains ! ======================= Public Procedures =========================
     ! This routine does the initial work of creating a dataset
     integer, intent(in) :: LOCID        ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
-    real(r8), intent(in) :: VALUE(:,:)  ! The array itself
-    real(r8), optional, intent(in) :: FILLVALUE
+    double precision, intent(in) :: VALUE(:,:)  ! The array itself
+    double precision, optional, intent(in) :: FILLVALUE
     integer, dimension(2), optional, intent(in) :: FINALSHAPE
     logical, optional, intent(in)     :: adding_to
 
@@ -1799,8 +1837,8 @@ contains ! ======================= Public Procedures =========================
     ! This routine does the initial work of creating a dataset
     integer, intent(in) :: LOCID        ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
-    real(r8), intent(in) :: VALUE(:,:,:)  ! The array itself
-    real(r8), optional, intent(in) :: FILLVALUE
+    double precision, intent(in) :: VALUE(:,:,:)  ! The array itself
+    double precision, optional, intent(in) :: FILLVALUE
     integer, dimension(3), optional, intent(in) :: FINALSHAPE
     logical, optional, intent(in)     :: adding_to
 
@@ -1839,8 +1877,8 @@ contains ! ======================= Public Procedures =========================
     ! This routine does the initial work of creating a dataset
     integer, intent(in) :: LOCID        ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
-    real(r4), intent(in) :: VALUE(:)     ! The array itself
-    real(r4), optional, intent(in) :: FILLVALUE
+    real, intent(in) :: VALUE(:)     ! The array itself
+    real, optional, intent(in) :: FILLVALUE
     integer, dimension(1), optional, intent(in) :: FINALSHAPE
     logical, optional, intent(in)     :: adding_to
 
@@ -1879,8 +1917,8 @@ contains ! ======================= Public Procedures =========================
     ! This routine does the initial work of creating a dataset
     integer, intent(in) :: LOCID        ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
-    real(r4), intent(in) :: VALUE(:,:)  ! The array itself
-    real(r4), optional, intent(in) :: FILLVALUE
+    real, intent(in) :: VALUE(:,:)      ! The array itself
+    real, optional, intent(in) :: FILLVALUE
 
     integer, dimension(:), optional, intent(in) :: start
                                  ! Starting coordinatess of hyperslab
@@ -2093,8 +2131,8 @@ contains ! ======================= Public Procedures =========================
     ! This routine does the initial work of creating a dataset
     integer, intent(in) :: LOCID        ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
-    real(r4), intent(in) :: VALUE(:,:,:)  ! The array itself
-    real(r4), optional, intent(in) :: FILLVALUE
+    real, intent(in) :: VALUE(:,:,:)    ! The array itself
+    real, optional, intent(in) :: FILLVALUE
     integer, dimension(:), optional, intent(in) :: start
                                  ! Starting coordinatess of hyperslab
     integer, dimension(:), optional, intent(in) :: count
@@ -2271,8 +2309,8 @@ contains ! ======================= Public Procedures =========================
     ! This routine does the initial work of creating a dataset
     integer, intent(in) :: LOCID        ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
-    real(r4), intent(in) :: VALUE(:,:,:,:)  ! The array itself
-    real(r4), optional, intent(in) :: FILLVALUE
+    real, intent(in) :: VALUE(:,:,:,:)  ! The array itself
+    real, optional, intent(in) :: FILLVALUE
     integer, dimension(:), optional, intent(in) :: start
                                  ! Starting coordinatess of hyperslab
     integer, dimension(:), optional, intent(in) :: count
@@ -2691,8 +2729,8 @@ contains ! ======================= Public Procedures =========================
     & start, count, stride, block )
     ! This routine loads a predefined array with values from a DS
     integer, intent(in) :: LOCID        ! Where to place it (group/file)
-    character (len=*), intent(in) :: NAME ! Name for this dataset
-    real(r8), intent(out) :: VALUE(:)    ! The array itself
+    character (len=*), intent(in) :: NAME     ! Name for this dataset
+    double precision, intent(out) :: VALUE(:) ! The array itself
     integer, dimension(:), optional, intent(in) :: start
                                  ! Starting coordinatess of hyperslab
     integer, dimension(:), optional, intent(in) :: count
@@ -2752,8 +2790,8 @@ contains ! ======================= Public Procedures =========================
     & start, count, stride, block )
     ! This routine loads a predefined array with values from a DS
     integer, intent(in) :: LOCID        ! Where to place it (group/file)
-    character (len=*), intent(in) :: NAME ! Name for this dataset
-    real(r8), intent(out) :: VALUE(:,:) ! The array itself
+    character (len=*), intent(in) :: NAME       ! Name for this dataset
+    double precision, intent(out) :: VALUE(:,:) ! The array itself
     integer, dimension(:), optional, intent(in) :: start
                                  ! Starting coordinatess of hyperslab
     integer, dimension(:), optional, intent(in) :: count
@@ -2813,7 +2851,7 @@ contains ! ======================= Public Procedures =========================
     ! This routine loads a predefined array with values from a DS
     integer, intent(in) :: LOCID          ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
-    real(r8), intent(out) :: VALUE(:,:,:) ! The array itself
+    double precision, intent(out) :: VALUE(:,:,:) ! The array itself
     integer, dimension(:), optional, intent(in) :: start
                                  ! Starting coordinatess of hyperslab
     integer, dimension(:), optional, intent(in) :: count
@@ -2873,7 +2911,7 @@ contains ! ======================= Public Procedures =========================
     ! This routine loads a predefined array with values from a DS
     integer, intent(in) :: LOCID        ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
-    real(r4), intent(out) :: VALUE(:)    ! The array itself
+    real, intent(out) :: VALUE(:)       ! The array itself
     integer, dimension(:), optional, intent(in) :: start
                                  ! Starting coordinatess of hyperslab
     integer, dimension(:), optional, intent(in) :: count
@@ -2933,7 +2971,7 @@ contains ! ======================= Public Procedures =========================
     ! This routine loads a predefined array with values from a DS
     integer, intent(in) :: LOCID        ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
-    real(r4), intent(out) :: VALUE(:,:) ! The array itself
+    real, intent(out) :: VALUE(:,:)     ! The array itself
     integer, dimension(:), optional, intent(in) :: start
                                  ! Starting coordinatess of hyperslab
     integer, dimension(:), optional, intent(in) :: count
@@ -2993,7 +3031,7 @@ contains ! ======================= Public Procedures =========================
     ! This routine loads a predefined array with values from a DS
     integer, intent(in) :: LOCID          ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
-    real(r4), intent(out) :: VALUE(:,:,:) ! The array itself
+    real, intent(out) :: VALUE(:,:,:)     ! The array itself
     integer, dimension(:), optional, intent(in) :: start
                                  ! Starting coordinatess of hyperslab
     integer, dimension(:), optional, intent(in) :: count
@@ -3053,7 +3091,7 @@ contains ! ======================= Public Procedures =========================
     ! This routine loads a predefined array with values from a DS
     integer, intent(in) :: LOCID          ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
-    real(r4), intent(out) :: VALUE(:,:,:,:) ! The array itself
+    real, intent(out) :: VALUE(:,:,:,:)   ! The array itself
     integer, dimension(:), optional, intent(in) :: start
                                  ! Starting coordinatess of hyperslab
     integer, dimension(:), optional, intent(in) :: count
@@ -3230,18 +3268,18 @@ contains ! ======================= Public Procedures =========================
     integer, intent(out)              :: status
     logical, optional, intent(in)     :: adding_to
     character(len=*), optional, intent(in) :: cFill
-    real(r8), optional, intent(in)    :: dFill
+    double precision, optional, intent(in) :: dFill
     integer, optional, intent(in)     :: iFill
-    real(r4), optional, intent(in)    :: rFill
+    real, optional, intent(in)        :: rFill
     integer, dimension(:), optional, intent(in) :: chunk_dims
     ! Internal variables
     logical :: my_adding_to
     logical :: my_fill
     integer(hsize_t), dimension(rank) :: my_chunkdims, my_maxdims
     character(len=1) :: cFilled
-    real(r8) :: dFilled
+    double precision :: dFilled
     integer :: iFilled
-    real(r4) :: rFilled
+    real :: rFilled
     ! Executable
     my_adding_to = .false.
     if ( present(adding_to) ) my_adding_to = adding_to
@@ -3554,7 +3592,7 @@ contains ! ======================= Public Procedures =========================
     character (len=*), intent(in) :: names   ! comma-separated list of names
     integer, dimension(:), optional, intent(in)          :: ints
     real, dimension(:), optional, intent(in)             :: reals
-    real(r8), dimension(:), optional, intent(in)         :: doubles
+    double precision, dimension(:), optional, intent(in) :: doubles
     logical, optional, intent(in)                        :: no_pairs
     ! Local variables
     logical, parameter          :: clean=.false.
@@ -3655,6 +3693,12 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.46  2004/12/13 20:26:53  vsnyder
+! Added MakeHDF5Attribute_sngl.  Change specifics for generics to use Real
+! and Double Precision instead of r4 (which isn't guaranteed to be default
+! real) and r8 (which isn't guaranteed to be different from default real).
+! Changed a few references to specifics to refer to generics.
+!
 ! Revision 2.45  2004/09/23 23:00:10  pwagner
 ! Added CpHDF5GlAttribute, CpHDF5Attribute
 !
