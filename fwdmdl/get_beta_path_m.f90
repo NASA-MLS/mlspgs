@@ -439,7 +439,7 @@ contains
     integer(ip) :: LN_I             ! Line index
     integer(ip) :: NL               ! no of lines
 
-    real(rp) :: bv, dNu, dw, dn, ds, dbdw, dbdn, dbdv
+    real(rp) :: bv, dNu, dw, dn, ds, dbdt, dbdw, dbdn, dbdv
 
 !----------------------------------------------------------------------------
 
@@ -528,19 +528,21 @@ contains
 
       if ( .not. present(dBeta_dT) ) then
         if ( slabs_0%useYi ) then
-          beta_value = slabswint_lines ( Fgr, slabs_0, tanh1, noPolarized )
+          bv = slabswint_lines ( Fgr, slabs_0, tanh1, noPolarized )
         else
-          beta_value = slabs_lines ( Fgr, slabs_0, tanh1, noPolarized )
+          bv = slabs_lines ( Fgr, slabs_0, tanh1, noPolarized )
         end if
       else ! Temperature derivatives needed
         if ( slabs_0%useYi ) then
           call slabswint_lines_dT ( fgr, slabs_0, tanh1, dTanh_dT, &
-            & beta_value, dBeta_dT, noPolarized )
+            & bv, dbdt, noPolarized )
         else
           call slabs_lines_dT ( fgr, slabs_0, tanh1, dTanh_dT, &
-            & beta_value, dBeta_dT, noPolarized )
+            & bv, dbdt, noPolarized )
         end if
+        dBeta_dT = dBeta_dT + dbdt
       end if
+      beta_value = beta_value + bv
 
     end if
 
@@ -812,7 +814,7 @@ contains
         & t_i1, t_i2 )
       del_t = PFAD%tGrid%surfs(t_i2,1) - PFAD%tGrid%surfs(t_i1,1)
       t_fac = (logT - PFAD%tGrid%surfs(t_i1,1)) / del_t
-      call hunt ( p_path(k), PFAD%vGrid%surfs(:,1), PFAD%tGrid%noSurfs, &
+      call hunt ( p_path(k), PFAD%vGrid%surfs(:,1), PFAD%vGrid%noSurfs, &
         & p_i1, p_i2 )
       p_fac = (p_path(k) - PFAD%vGrid%surfs(p_i1,1)) / &
         & (PFAD%vGrid%surfs(p_i2,1) - PFAD%vGrid%surfs(p_i1,1))
@@ -833,7 +835,6 @@ contains
         & a(t_i1  ,p_i1+1) * (1.0-t_fac) * p_fac       + &
         & a(t_i1+1,p_i1+1) * t_fac * p_fac )
       beta_path(j) = beta_path(j) + bp
-
 
       !{ \raggedright 
       !  $\frac{\partial \beta}{\partial T} \approx
@@ -1090,6 +1091,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.72  2005/03/03 02:07:10  vsnyder
+! Move dumps from Create_Beta_Path... to Get_Beta_Path...
+!
 ! Revision 2.71  2005/02/17 02:35:13  vsnyder
 ! Remove PFA stuff from Channels part of config
 !
