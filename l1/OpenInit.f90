@@ -14,9 +14,12 @@ MODULE OpenInit ! Opens input L0 files and output L1 files
 
   IMPLICIT NONE
 
+  PRIVATE
+
+  PUBLIC :: OpenAndInitialize, OpenL0File, OpenL0Files, anTextPCF, anTextCF
+
   CHARACTER (LEN=1), POINTER :: anTextPCF(:), anTextCF(:)
 
-  PRIVATE :: Id, ModuleName
   !------------------------------- RCS Ident Info ------------------------------
   CHARACTER(LEN=130) :: id = &
        "$Id$"
@@ -33,10 +36,12 @@ CONTAINS
     USE InitPCFs, ONLY: L1PCF, GetPCFParameters
     USE MLSPCF1, ONLY: mlspcf_engtbl_start, mlspcf_bwtbl_start, &
          mlspcf_nomen_start, mlspcf_pcf_start, mlspcf_l1cf_start, &
-         mlspcf_defltgains_start, mlspcf_defltzeros_start
+         mlspcf_defltgains_start, mlspcf_defltzeros_start, &
+         mlspcf_dacsconst_start
     USE PCFHdr, ONLY: CreatePCFAnnotation
     USE L0_sci_tbls, ONLY: InitSciPointers
-    USE MLSL1Common, ONLY: L1BFileInfo, deflt_gain, deflt_zero
+    USE MLSL1Common, ONLY: L1BFileInfo, deflt_gain, deflt_zero, L1ProgType, &
+         THzType
     USE Orbit, ONLY: Orbit_init, altG, altT, ascTAI, dscTAI, numOrb, &
          orbIncline, orbitNumber, scanRate, scanRateT
     USE Calibration, ONLY: InitCalibWindow
@@ -46,11 +51,24 @@ CONTAINS
     USE OutputL1B, ONLY: OutputL1B_create
     USE DACSUtils, ONLY: InitDACS_FFT
 
-    TYPE (TAI93_Range_T) :: procRange
     CHARACTER (LEN=132) :: PhysicalFilename
-    INTEGER :: bw_tbl_unit, eng_tbl_unit, gains_tbl_unit, nomen_unit, &
-         zeros_tbl_unit, errno, ios, lenarg, lenval, returnStatus, version
+
+    INTEGER :: bw_tbl_unit
+    INTEGER :: dacs_tbl_unit
+    INTEGER :: eng_tbl_unit
+    INTEGER :: gains_tbl_unit
+    INTEGER :: nomen_unit
+    INTEGER :: zeros_tbl_unit
+    INTEGER :: errno, ios, lenarg, lenval
+    INTEGER :: returnStatus, version
+
+    LOGICAL :: THz
+
     INTEGER, EXTERNAL :: PGS_TD_UTCtoTAI
+
+    TYPE (TAI93_Range_T) :: procRange
+
+    THz = L1ProgType .EQ. THzType
 
 !! Get user parameters from the PCF file
 
@@ -84,19 +102,21 @@ CONTAINS
 
     L1Config%Expanded_TAI = L1Config%Input_TAI
 
-!! TEST expansion time!!!
+!! Expand time range!!!
 
-    L1Config%Expanded_TAI%startTime = L1Config%Expanded_TAI%startTime - 120.0
-    L1Config%Expanded_TAI%endTime = L1Config%Expanded_TAI%endTime + 120.0
+    IF (.NOT. THz) THEN
+       L1Config%Expanded_TAI%startTime = L1Config%Expanded_TAI%startTime - 120.0
+       L1Config%Expanded_TAI%endTime = L1Config%Expanded_TAI%endTime + 120.0
+    ENDIF
 
-!! Init orbit data
+!! Init orbit data:
 
     numOrb = 1
 
     IF (L1Config%Globals%ProduceL1BOA) THEN
 
-       CALL Orbit_init (procRange, L1PCF%startUTC, altG, altT, ascTAI, dscTAI, &
-            numOrb, orbIncline, orbitNumber, scanRate, scanRateT)
+       CALL Orbit_init (procRange, L1PCF%startUTC, altG, altT, ascTAI, &
+            dscTAI, numOrb, orbIncline, orbitNumber, scanRate, scanRateT)
 
     ENDIF
 
@@ -228,6 +248,38 @@ CONTAINS
     CALL MLSMessage (MLSMSG_Info, ModuleName, &
          & "Closed default zeros table file")
 
+!! Open and initialize DACS constants table:
+
+    version = 1
+    returnStatus = PGS_PC_getReference (mlspcf_dacsconst_start, version, &
+          & PhysicalFilename)
+
+    version = 1
+    returnStatus = PGS_IO_Gen_openF (mlspcf_dacsconst_start, &
+         PGSd_IO_Gen_RSeqFrm, 0, dacs_tbl_unit, version)
+    IF (returnstatus /= PGS_S_SUCCESS) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not open DACS constants table file: " // PhysicalFilename)
+    ENDIF
+
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & "Opened DACS constants table file: " // PhysicalFilename)
+
+    CALL GetDACSconsts (dacs_tbl_unit, ios)
+
+    returnStatus = PGS_IO_Gen_CloseF (dacs_tbl_unit)
+
+    IF (ios /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName, &
+         & "Error reading DACS constants table file")
+
+    IF (returnstatus /= PGS_S_SUCCESS) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not close DACS constants table file")
+    ENDIF
+
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & "Closed DACS constants table file")
+
 !! Open and Read nomenclature file
 
     version = 1
@@ -252,7 +304,7 @@ CONTAINS
 
 !! Open L1B output files
 
-    CALL OpenL1BFiles
+    CALL OpenL1BFiles (THz)
 
 !! Initialize the science data pointers:
 
@@ -264,15 +316,15 @@ CONTAINS
 
 !! Initialize Radiances:
 
-    CALL InitRad
+    CALL InitRad (THz)
 
 !! Initialize DACS FFT
 
-    CALL InitDACS_FFT
+    IF (.NOT. THz) CALL InitDACS_FFT
           
 !! Define the SD structures in the output files
 
-    CALL OutputL1B_create (L1BFileInfo)
+    CALL OutputL1B_create (L1BFileInfo, THz)
 
   END SUBROUTINE OpenAndInitialize
 
@@ -421,7 +473,7 @@ CONTAINS
           ELSE IF (L1Config%Expanded_TAI%startTime < TAI_range%startTime) THEN
 
              CALL MLSMessage (MLSMSG_Error, ModuleName, &
-                  "Requested tart time is before first data file start time")
+                  "Requested start time is before first data file start time")
 
           ELSE
              EXIT
@@ -444,16 +496,18 @@ CONTAINS
   END SUBROUTINE OpenL0Files
 
 !=============================================================================
-  SUBROUTINE OpenL1BFiles
+  SUBROUTINE OpenL1BFiles (THz)
 !=============================================================================
 
     USE MLSPCF1, ONLY: mlspcf_l1b_radf_start, mlspcf_l1b_radd_start, &
-         mlspcf_l1b_oa_start, mlspcf_l1b_eng_start, mlspcf_l1b_diag_start
+         mlspcf_l1b_oa_start, mlspcf_l1b_eng_start, mlspcf_l1b_diag_start, &
+         mlspcf_l1b_radt_start
     USE MLSL1Common, ONLY: L1BFileInfo
     USE EngTbls, ONLY: Eng_tbl, maxtlm
-    USE Hdf, ONLY: DFACC_CREATE, sfstart
-    USE MLSFiles, ONLY: mls_openFile, HDFVERSION_5, HDFVERSION_4
+    USE MLSFiles, ONLY: MLS_openFile, HDFVERSION_5
     USE MLSL1Config, ONLY: L1Config
+
+    LOGICAL :: THz
 
     CHARACTER (LEN=132) :: PhysicalFilename
     INTEGER :: error, returnStatus, sd_id, version, hdfVersion
@@ -463,11 +517,46 @@ CONTAINS
 !! Open the HDF 5 Fortran Interface based on CF file
 
     IF (hdfVersion == HDFVERSION_5) THEN
-
        error = 0
        CALL h5open_f (error)
        IF (error /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName, &
             "Fortran HDF 5 API error on opening.")
+    ENDIF
+
+    ! Initialize IDs
+
+    L1BFileInfo%RADFID = 0
+    L1BFileInfo%RADDID = 0
+    L1BFileInfo%RADTID = 0
+    L1BFileInfo%OAID = 0
+    L1BFileInfo%ENGID = 0
+    L1BFileInfo%DIAGID = 0
+
+    ! Open L1BRADT File
+
+    IF (THz) THEN
+       version = 1
+       returnStatus = PGS_PC_getReference (mlspcf_l1b_radt_start, version, &
+            PhysicalFilename)
+
+       IF (returnStatus == PGS_S_SUCCESS) THEN
+
+          ! Open the HDF file and initialize the SD interface
+
+          CALL MLS_openFile (PhysicalFilename, 'create', sd_id, hdfVersion)
+          CALL MLSMessage (MLSMSG_Info, &
+               & ModuleName, "Opened L1BRADT file: "//PhysicalFilename)
+          L1BFileInfo%RADTID = sd_id
+          L1BFileInfo%RADTFileName = PhysicalFilename
+
+       ELSE
+
+          CALL MLSMessage (MLSMSG_Error, ModuleName, &
+               & "Could not find L1BRADT file entry")
+
+       ENDIF
+
+       RETURN   !! Nothing more to Open
 
     ENDIF
 
@@ -478,15 +567,20 @@ CONTAINS
      PhysicalFilename)
 
     IF (returnStatus == PGS_S_SUCCESS) THEN
+
        ! Open the HDF file and initialize the SD interface
-          CALL  mls_openFile(TRIM(PhysicalFilename),'create',sd_id, hdfVersion)
-          L1BFileInfo%RADDID = sd_id
-          L1BFileInfo%RADDFileName = TRIM(PhysicalFilename)
-          CALL MLSMessage (MLSMSG_Info, ModuleName, &
-               "Opened L1BRADD file: "//TRIM(PhysicalFilename))
+
+       CALL MLS_openFile (PhysicalFilename, 'create', sd_id, hdfVersion)
+       CALL MLSMessage (MLSMSG_Info, &
+            & ModuleName, "Opened L1BRADD file: "//PhysicalFilename)
+       L1BFileInfo%RADDID = sd_id
+       L1BFileInfo%RADDFileName = PhysicalFilename
+
     ELSE
+
        CALL MLSMessage (MLSMSG_Error, ModuleName, &
-            "Could not find L1BRADD file entry")
+            & "Could not find L1BRADD file entry")
+
     ENDIF
 
     ! Open L1BRADF File
@@ -499,12 +593,12 @@ CONTAINS
 
        ! Open the HDF file and initialize the SD interface
 
-          CALL  mls_openFile(PhysicalFilename,'create',sd_id, hdfVersion)
 
-          L1BFileInfo%RADFID = sd_id
-          L1BFileInfo%RADFFileName = PhysicalFilename
-          CALL MLSMessage (MLSMSG_Info, ModuleName, &
-               "Opened L1BRADF file: "//PhysicalFilename)
+       CALL MLS_openFile (PhysicalFilename, 'create', sd_id, hdfVersion)
+       CALL MLSMessage (MLSMSG_Info, &
+            & ModuleName, "Opened L1BRADF file: "//PhysicalFilename)
+       L1BFileInfo%RADFID = sd_id
+       L1BFileInfo%RADFFileName = PhysicalFilename
 
     ELSE
 
@@ -523,13 +617,11 @@ CONTAINS
 
        ! Open the HDF file and initialize the SD interface
 
-       CALL  mls_openFile(PhysicalFilename,'create',sd_id, hdfVersion)
-
-          L1BFileInfo%OAID = sd_id
-          L1BFileInfo%OAFileName = PhysicalFilename
-
-          CALL MLSMessage (MLSMSG_Info, ModuleName, &
-               "Opened L1BOA file: "//PhysicalFilename)
+       CALL MLS_openFile (PhysicalFilename, 'create', sd_id, hdfVersion)
+       CALL MLSMessage (MLSMSG_Info, &
+            & ModuleName, "Opened L1BOA file: "//PhysicalFilename)
+       L1BFileInfo%OAID = sd_id
+       L1BFileInfo%OAFileName = PhysicalFilename
 
     ELSE
 
@@ -546,8 +638,6 @@ CONTAINS
 
     IF (returnStatus == PGS_S_SUCCESS) THEN
        version = 1
-
-!! Will replace with HDF in a future version!
 
        returnStatus = PGS_IO_Gen_openF (mlspcf_l1b_eng_start, &
             PGSd_IO_Gen_WSeqUnf, 0, sd_id, version)
@@ -717,10 +807,55 @@ CONTAINS
   END SUBROUTINE GetChanDefaults
 
 !=============================================================================
+  SUBROUTINE GetDACSconsts (unit, ios)
+!=============================================================================
+
+    USE MLSL1Common, ONLY: DACS_const
+
+    INTEGER :: unit, ios
+    CHARACTER (len=80) :: line
+    INTEGER ::  i
+
+! Read comments until start of data
+
+    DO
+       READ (unit, '(A)') line
+       IF (line(1:6) == "#DATA") EXIT
+    ENDDO
+
+! Read data constants
+
+    DO
+       READ (unit, '(A)', IOSTAT=ios, ERR=999) line
+       IF (line(1:1) == "#" .OR. ios /= 0) EXIT
+    ENDDO
+
+    READ (unit, *, IOSTAT=ios, ERR=999) DACS_const%L
+
+    DO
+       READ (unit, '(A)', IOSTAT=ios, ERR=999) line
+       IF (line(1:1) == "#" .OR. ios /= 0) EXIT
+    ENDDO
+
+    READ (unit, *, IOSTAT=ios, ERR=999) DACS_const%A
+
+999 CONTINUE
+
+    IF (ios /= 0) THEN
+       CALL MLSMessage (MLSMSG_Error, &
+            & ModuleName, "Error reading DACS constants file!")
+    ENDIF
+
+   END SUBROUTINE GetDACSconsts
+
+!=============================================================================
 END MODULE OpenInit
 !=============================================================================
 
 ! $Log$
+! Revision 2.10  2003/01/31 18:13:34  perun
+! Version 1.1 commit
+!
 ! Revision 2.9  2002/11/20 16:07:28  perun
 ! Always get PCF annotations and moved h5open_f to OpenL1BFiles routine
 !
