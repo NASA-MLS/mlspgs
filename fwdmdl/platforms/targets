@@ -40,6 +40,8 @@ ALLOBJS = $(OBJS)
 
 l2_test.o: ${OBJS} 
 
+PVM_PATH = ${PVM_ROOT}/lib/${PVM_ARCH}
+
 ifdef PVM_ROOT
    pvm_linker_line=-L${PVM_PATH} -lfpvm3 -lgpvm3 -lpvm3
    pvm_message=Building mlsl2 with PVM support
@@ -116,6 +118,9 @@ d_delta_dt_m.o:
 #	$(FC) -c $(DUSTY) machine.f90
 # ========================================================================
 # $Log$
+# Revision 1.6  2001/02/08 23:20:52  pwagner
+# variable_linker_line tied to PVM and BLAS
+#
 # Revision 1.5  2001/02/05 19:37:37  pwagner
 # LDOPTS added to load statements
 #
