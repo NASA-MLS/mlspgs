@@ -84,8 +84,9 @@ for index = 0, noCrossRefs - 1 do begin
 endfor  
 
 ; Sort out nitrogen
-change = (where(data.name eq 'N$_{2}$' or data.name eq 'EXTINCTION' $
-  or strmid(data.name,0,10) eq 'H$_{2}$O-r') )
+change = where(data.name eq 'N$_{2}$' or data.name eq 'EXTINCTION' $
+  or strmid(data.name,0,10) eq 'H$_{2}$O-r' or strmid(data.name,0,9) eq 'O$_{3}$-r' $
+  or strmid(data.name,0,7) eq 'CLOUD\_' )
 data(change).q=1.0
 
 ; Open the output file
@@ -132,6 +133,9 @@ for mol = 0, noMols - 1 do begin
     if strmid ( data(mol).name, 0, 10 ) eq 'H$_{2}$O-r' then begin
       niceNames(mol) = 'H2O_R' + strupcase ( strmid ( data(mol).name, 10, 2 ) )
       parentNames(mol) = 'H2O'
+    endif else if strmid ( data(mol).name, 0, 9 ) eq 'O$_{3}$-r' then begin
+      niceNames(mol) = 'O3_R' + strupcase ( strmid ( data(mol).name, 9, 2 ) )
+      parentNames(mol) = 'O3'
     endif else begin
       MyMessage, /error, "Unrecognized molecule: " + data(mol).name
     endelse
@@ -321,10 +325,11 @@ endcase
 array(1,*,*) = array(0,*,*) or array(1,*,*) or array(2,*,*) 
 printf, unit, '; ----------------------------------------- Molecules per band'
 printf, unit, ''
-;; Make H2O, N2 and extinction used everywhere.
+;; Make H2O, O3, N2 and extinction used everywhere.
 array(*,*,where(niceNames eq 'H2O')) = 1
 array(*,*,where(niceNames eq 'N2')) = 1
 array(*,*,where(niceNames eq 'O2')) = 1
+array(*,*,where(niceNames eq 'O3')) = 1
 array(*,*,where(niceNames eq 'EXTINCTION')) = 1
 sidebandStrings = ['L','','U']
 noBands = (size ( array ) ) (2)
@@ -334,6 +339,13 @@ for radiometer = 0, database.noRadiometers-1 do begin
   relevantBands = where ( database.bands.radiometerIndex eq radiometer )
   array(*,relevantBands, $
     where(niceNames eq 'H2O_'+database.radiometers(radiometer).prefix ) ) = 1
+endfor
+;; Make the O3_<radiometer> species used where appropriate
+database = ReadValidSignals()
+for radiometer = 0, database.noRadiometers-1 do begin
+  relevantBands = where ( database.bands.radiometerIndex eq radiometer )
+  array(*,relevantBands, $
+    where(niceNames eq 'O3_'+database.radiometers(radiometer).prefix ) ) = 1
 endfor
 
 ;; Now, add some extra virtual bands which are the radiometers and one
