@@ -5,13 +5,14 @@
 
 ; First some m4 directives.
 include(m4defs.l2cf)
+!ifdef(band, ,!define(band,2L))
 !define(outpath,{/bigdata/livesey/misc/})
 !define(ver,test4)
 !define(day,1996-051)
 !define(year,1996)
 !define(signal,!sigBand$1)
 !define(molecules,!mol$1)
-!define(systemp,!systemp$1)
+!define(systemp,{!systemp}$1)
 
 ; Now include the valid signals database
 !include(validsignals-emls.l2cf)
@@ -36,6 +37,8 @@ BEGIN GlobalSettings
     endTime = "23:59:59"
 
     vGridStandard: vGrid, coordinate=Zeta, type=Logarithmic, $
+                   start=1000mb, formula=[72:12]
+    vGridBaseline: vGrid, coordinate=Zeta, type=Logarithmic, $
                    start=1000mb, formula=[72:12]
 
     vGridRefGPH: vGrid, coordinate=Zeta, type=Explicit, values=100mb
@@ -82,8 +85,8 @@ BEGIN Construct
 
 END Construct
 
-l2cfinc(constructstandardspecies.l2cf)
-l2cfinc(constructunfoldedradiances.l2cf)
+!include(constructstandardspecies.l2cf)
+!include(constructunfoldedradiances.l2cf)
 
 BEGIN Construct
     stateTemplate: VectorTemplate, quantities=  $
@@ -129,10 +132,10 @@ END Fill
 
 ; Define the names of the standard vectors for the canned fills used below
 
-define(_x,x)
-define(_b,b)
-l2cfinc(filllesserstate.l2cf)
-l2cfinc(fillisotopes.l2cf)
+!define(x,x)
+!define(b,b)
+!include(filllesserstate.l2cf)
+!include(fillisotopes.l2cf)
 
 BEGIN Fill
 
@@ -153,7 +156,7 @@ BEGIN Fill
     
 END Fill
 
-l2cfinc(fillsidebandratios.l2cf)
+!include(fillsidebandratios.l2cf)
 
 ; ------------------------------------------------------- Retrieve -----
 
@@ -166,7 +169,7 @@ END Retrieve
 
 ; ------------------------------------------------- Fill, noise -----
 
-l2cfinc(definesystemp.l2cf)
+!include(definesystemp.l2cf)
 
 BEGIN Fill
 

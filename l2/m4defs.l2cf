@@ -8,10 +8,10 @@ changesyntax({@!})
 ; Make _ not a possible part of m4 names
 !changesyntax({O_})
 ; Define a very simple for loop prototcol
-!define(forloop,
-  {!pushdef({$1}, {$2})!_forloop({$1}, {$2}, {$3}, {$4})!popdef({$1})})
-!define({!_forloop},{$4{}!ifelse($1, {$3}, ,
-  {!define({$1}, !incr($1))!_forloop({$1}, {$2}, {$3}, {$4})})})
+!define({forloop},
+  {!pushdef({$1}, {$2})!forloopint({$1}, {$2}, {$3}, {$4})!popdef({$1})})
+!define(forloopint,{$4{}!ifelse(!$1, {$3}, ,
+    {!define({$1}, !incr(!$1))!forloopint({$1}, {$2}, {$3}, {$4})})})
 ; Redefine include to do fancy stuff for error checking.
 !undefine({include})
 !define(include,{

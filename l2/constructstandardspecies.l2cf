@@ -172,7 +172,7 @@ begin Construct
     band33: Quantity, type=radiance, signal='R3:240.B33W:O3'
     band34: Quantity, type=radiance, signal='R1B:118.B34W:PT'
 
-    !define(AllBands, {!forloop({i}, 1, 33, {{band}i, })band34})
+    !define(AllBands, {!forloop({i}, 1, 33, {band!i, })band34})
 
   ;; ----------------------------------------- Scan residuals
 
@@ -241,7 +241,7 @@ begin Construct
     band33ratio: Quantity, type=sidebandRatio, signal='R3:240.B33W:O3'
     band34ratio: Quantity, type=sidebandRatio, signal='R1B:118.B34W:PT'
 
-    !define(AllSBRatios, {!forloop({i}, 1, 33, {{band}i{ratio}, })band34ratio})
+    !define(AllSBRatios, {!forloop({i}, 1, 33, {band!i{}ratio, })band34ratio})
 
     ;; ----------------------------------------- Other minor stuff
 
