@@ -26,13 +26,14 @@ module RetrievalModule
     & s_forwardModel, s_sids, s_matrix, s_subset, s_retrieve, s_time, &
     & spec_indices
   use Lexer_Core, only: Print_Source
-  use MatrixModule_1, only: AddToMatrixDatabase, CholeskyFactor, ClearMatrix, &
-    & ColumnScale, CopyMatrixValue, CreateEmptyMatrix, DestroyMatrix, &
+  use MatrixModule_1, only: AddToMatrix, AddToMatrixDatabase, CholeskyFactor, &
+    & ClearMatrix, ColumnScale, CopyMatrixValue, CreateEmptyMatrix, &
+    & DestroyMatrix, &
     & FillExtraCol, FillExtraRow, FormNormalEquations => NormalEquations, &
     & GetDiagonal, GetFromMatrixDatabase, GetVectorFromColumn, InvertCholesky, &
     & Matrix_T, &
     & Matrix_Database_T, Matrix_Cholesky_T, Matrix_SPD_T, MaxAbsVal, MinDiag, &
-    & MultiplyMatrixVector, RowScale, ScaleMatrix, SolveCholesky, &
+    & MultiplyMatrixVector, Negate, RowScale, ScaleMatrix, SolveCholesky, &
     & UpdateDiagonal
   use MLSCommon, only: R8
   use MoreTree, only: Get_Boolean, Get_Spec_ID
@@ -517,7 +518,10 @@ contains
               case ( nf_solve )
                 ! Apply Marquardt stabilization with parameter = AJ%SQ:
                 call updateDiagonal ( normalEquations, aj%sq**2 )
-                factored%m%block => normalEquations%m%block ! to save space
+!???            factored%m%block => normalEquations%m%block ! to save space
+!???            Can't do this because we need to keep the normal equations
+!???            around, in order to subtract Levenberg-Marquardt and
+!???            apriori covariance, in order to compute a posteriori covariance
                 call choleskyFactor ( normalEquations, factored )
                 ! Solve for "candidate DX" = -(Jacobian)**(-1) * F
                 call getVectorFromColumn ( factored%m, n, candidateDX )
@@ -582,10 +586,17 @@ contains
               iter = iter + 1
             end do ! Newton iteration
             if ( got(f_outputCovariance) ) then
-              ! ??? Subtract sum of Levenberg-Marquardt updates and   ???
-              ! ??? a priori covariance matrix from normal equations, ???
-              ! ??? and re-factor them.
+              ! Subtract sum of Levenberg-Marquardt updates from normal
+              ! equations
+              call updateDiagonal ( normalEquations, -aj%sqt**2 )
+              ! Subtract a priori covariance matrix from normal equations
+              call negate ( covariance%m )
+              call addToMatrix ( normalEquations%m, covariance%m )
+              call negate ( covariance%m )
+              ! Re-factor normal equations
+              call choleskyFactor ( normalEquations, factored )
               call invertCholesky ( factored, outputCovariance%m )
+              !??? Don't forget to scale the covariance
               if ( diagonalOut ) then
               else
               end if
@@ -678,6 +689,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.14  2001/04/12 01:50:21  vsnyder
+! Work on getting a posteriori covariance
+!
 ! Revision 2.13  2001/04/10 02:46:17  livesey
 ! Working version, no more FMI/TFMI
 !
