@@ -44,7 +44,6 @@ module ForwardModelConfig
     logical :: Spect_Der      ! Do spectroscopy derivatives
     logical :: Temp_Der       ! Do temperature derivatives
     logical :: skipOverlaps   ! Don't calculate for MAFs in overlap regions
-    integer :: cloud_der      ! Compute cloud sensitivity in cloud models.
     type(vGrid_T), pointer :: integrationGrid=>NULL() ! Zeta grid for integration
     type(vGrid_T), pointer :: tangentGrid=>NULL()     ! Zeta grid for integration
     integer :: surfaceTangentIndex  ! Index in Tangentgrid of Earth's surface
@@ -58,6 +57,8 @@ module ForwardModelConfig
     integer :: NUM_AZIMUTH_ANGLES   ! No of azmuth angles '8'
     integer :: NUM_AB_TERMS         ! No of AB terms '50'
     integer :: NUM_SIZE_BINS        ! No of size bins '40'
+    integer :: cloud_der            ! Compute cloud sensitivity in cloud models.
+    integer :: cloud_width          ! Flag for cloud horizontal extend.
   end type ForwardModelConfig_T
 
   !---------------------------- RCS Ident Info -------------------------------
@@ -175,6 +176,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 1.13  2001/07/16 22:07:57  jonathan
+! change cloud_der to integer-type, jonathan
+!
 ! Revision 1.12  2001/07/06 18:55:13  jonathan
 ! Modified for cloud model, Paul/Jonathan
 !

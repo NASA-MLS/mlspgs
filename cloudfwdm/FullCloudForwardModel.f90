@@ -361,7 +361,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & radiusofearth%values(1,1),                                           &
       & surfaceType%values(1, instance),                                     &
       & forwardModelConfig%cloud_der,                                        &
-      & forwardModelConfig%phiWINDOW,                                        &
+      & forwardModelConfig%cloud_width,                                      &
       & a_clearSkyRadiance,                                                  &
       & a_cloudInducedRadiance,                                              &
       & a_totalExtinction,                                                   &
