@@ -141,6 +141,131 @@ EOF
 
 #export platform
 #export compiler
+
+        more << EOF
+                    *        *        *
+
+To properly link the mls software requires that you set the paths to
+the libraries installed along with the SDP Toolkit. If you don't know these
+locations, you might have to ask the person at your site who installed
+this toolkit. It is possible that during the installation, these paths
+were automatically "hard wired" as environment variables, and if so the
+values shown below will be correct. If they are correct, simply answer
+Y[es] to the nest question. Otherwise you will be asked to supply the
+correct paths.
+
+Note: a path is a length of test that looks something like this:
+    /head/Toolkit/lib/linux
+would correspond to the path to the SDP Toolkit (called just "toolkit")
+
+Currently your paths are given by:
+
+        "include" files:  $current_PGSINC
+        toolkit:          $current_PGSTK
+        hdf-eos:          $current_HDFEOS
+        hdf:              $current_HDF
+        gctp:             $current_GCTP
+
+If these settings are wrong, or you wish to change them in order to
+prepare multiple installations at your site, you will be given an
+opportunity to (re)set them momentarily.
+
+EOF
+
+ UserPrompt "Are these paths correct [Y[es] or N[o]]"
+   if [ "$user_response" != "" ] ; then
+	case  "$user_response" in
+	    n* | N* )
+		change_paths="true"
+	    ;;
+	    y* | Y* )
+		change_paths="false"
+	    ;;
+	esac
+   else
+	change_paths="false"
+    fi
+
+if [ $change_paths = "true" ] ; then
+#Change Includes path
+ UserPrompt "include files path [$current_PGSINC]"
+   if [ "$user_response" != "" ] ; then
+	 PGSINC=$user_response
+   elif [ "$current_PGSINC" != "" ] ; then
+	echo "include files path is still $current_PGSINC."
+        PGSINC=$current_PGSINC
+   else
+	echo "Warning: No include files path selected; none found"
+	echo "mls software may not compile properly "
+	echo "unless you reconfigure; enter 'make configure'."
+	PGSINC="/"
+   fi
+ export PGSINC
+
+#Change Toolkit path
+ UserPrompt "Toolkit path [$current_PGSTK]"
+   if [ "$user_response" != "" ] ; then
+	 PGSTK=$user_response
+   elif [ "$current_PGSTK" != "" ] ; then
+	echo "Toolkit path is still $current_PGSTK."
+        PGSTK=$current_PGSTK
+   else
+	echo "Warning: No toolkit path selected; none found"
+	echo "mls software may not link properly "
+	echo "unless you reconfigure; enter 'make configure'."
+	PGSTK="/"
+   fi
+
+#Change hdfeos path
+ UserPrompt "HDFEOS path [$current_HDFEOS]"
+   if [ "$user_response" != "" ] ; then
+	 HDFEOS=$user_response
+   elif [ "$current_HDFEOS" != "" ] ; then
+	echo "Toolkit path is still $current_HDFEOS."
+        HDFEOS=$current_HDFEOS
+   else
+	echo "Warning: No HDFEOS path selected; none found"
+	echo "mls software may not link properly "
+	echo "unless you reconfigure; enter 'make configure'."
+	HDFEOS="/"
+   fi
+
+#Change hdf path
+ UserPrompt "HDF path [$current_HDF]"
+   if [ "$user_response" != "" ] ; then
+	 HDF=$user_response
+   elif [ "$current_HDF" != "" ] ; then
+	echo "Toolkit path is still $current_HDF."
+        HDF=$current_HDF
+   else
+	echo "Warning: No HDF path selected; none found"
+	echo "mls software may not link properly "
+	echo "unless you reconfigure; enter 'make configure'."
+	HDF="/"
+   fi
+
+#Change gctp path
+ UserPrompt "GCTP path [$current_GCTP]"
+   if [ "$user_response" != "" ] ; then
+	 GCTP=$user_response
+   elif [ "$current_GCTP" != "" ] ; then
+	echo "Toolkit path is still $current_GCTP."
+        GCTP=$current_GCTP
+   else
+	echo "Warning: No GCTP path selected; none found"
+	echo "mls software may not link properly "
+	echo "unless you reconfigure; enter 'make configure'."
+	GCTP="/"
+   fi
+
+else
+    PGSINC=$current_PGSINC
+    PGSTK=$current_PGSTK
+    HDFEOS=$current_HDFEOS
+    HDF=$current_HDF
+    GCTP=$current_GCTP
+fi
+
 }
 
 #
@@ -170,6 +295,11 @@ Help()
 conf_dir="./"
 plat_dir="./"
 get_confg="true"
+current_PGSINC=$PGSINC
+current_PGSTK=$PGSLIB
+current_HDFEOS=$HDFEOS_LIB
+current_HDF=$HDFLIB
+current_GCTP=$HDFEOS_LIB
 me="$0"
 
 while [ "$1" != "" ] ; do
@@ -223,9 +353,21 @@ if [ $get_confg = "true" ] ; then
 	echo "MLSF95=$compiler" >> $conf_dir/.configure
 	echo "MLSPLAT=$platform" >> $conf_dir/.configure
 	echo "MLSCONFG=$compiler.$platform" >> $conf_dir/.configure
+	echo "PGSINC=$PGSINC" >> $conf_dir/.configure
+	echo "PGSTK=$PGSTK" >> $conf_dir/.configure
+	echo "HDFEOS=$HDFEOS" >> $conf_dir/.configure
+	echo "HDF=$HDF" >> $conf_dir/.configure
+	echo "GCTP=$GCTP" >> $conf_dir/.configure
+	echo "PGSLIB=$PGSTK" >> $conf_dir/.configure
+	echo "HDFEOS_LIB=$HDFEOS" >> $conf_dir/.configure
+	echo "HDFLIB=$HDF" >> $conf_dir/.configure
 	echo "export MLSF95" >> $conf_dir/.configure
 	echo "export MLSPLAT" >> $conf_dir/.configure
 	echo "export MLSCONFG" >> $conf_dir/.configure
+	echo "export PGSINC" >> $conf_dir/.configure
+	echo "export PGSLIB" >> $conf_dir/.configure
+	echo "export HDFEOS_LIB" >> $conf_dir/.configure
+	echo "export HDFLIB" >> $conf_dir/.configure
 else
 #	just re-use current settings
 	compiler=$current_compiler
@@ -243,6 +385,7 @@ fi
 
 #Create object-file directory for this MLSCONFG
 if [ -d $plat_dir/$MLSCONFG ] ; then
+	chmod u+w $plat_dir/$MLSCONFG/*
 	rm -f $plat_dir/$MLSCONFG/*.o
 	rm -f $plat_dir/$MLSCONFG/*.mod
 	rm -f $plat_dir/$MLSCONFG/Makefile
@@ -273,6 +416,9 @@ echo "or platform, enter 'make configure'"
 
 exit
 # $Log$
+# Revision 1.2  2000/10/18 20:56:21  pwagner
+# Fixed obvious bug; 1st step towards -h option
+#
 # Revision 1.1  2000/10/16 18:31:19  pwagner
 # first commit
 #
