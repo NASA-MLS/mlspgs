@@ -1602,25 +1602,25 @@ contains
             scat_src%template = temp%template
             call load_one_item_grid ( grids_tscat, scat_src, phitan, maf, fwdModelConf, .false. )
             call Deallocate_test ( vmrArray,'vmrArray',ModuleName )
+            !! Jonathan's construction zone
+!!            call get_beta_path_cloud ( Frq,                              &
+!!              &  p_path(1:no_ele), t_path(1:no_ele),                     &  
+!!              &  beta_group, c_inds(1:npc), beta_path_cloud_c(1:npc),    &
+!!              &  beta_path_w0_c(1:npc), beta_path_phh_c(1:npc,:),        &
+!!              &  IPSD(1:no_ele),  WC(:,1:no_ele), fwdModelConf ) 
 
-            call get_beta_path_cloud ( Frq,                              &
-              &  p_path(1:no_ele), t_path(1:no_ele),                     &  
-              &  beta_group, c_inds(1:npc), beta_path_cloud_c(1:npc),    &
-              &  beta_path_w0_c(1:npc), beta_path_phh_c(1:npc,:),        &
-              &  IPSD(1:no_ele),  WC(:,1:no_ele), fwdModelConf ) 
-
-            do j = 1, npc ! Don't trust compilers to fuse loops
-              alpha_path_c(j) = dot_product( sps_path(c_inds(j),:), &
-                                    & beta_path_c(j,:) ) + &
-                                    & beta_path_cloud_c(j)
-
-              incoptdepth(j) = alpha_path_c(j) * del_s(j)
-            end do
+!!            do j = 1, npc ! Don't trust compilers to fuse loops
+!!              alpha_path_c(j) = dot_product( sps_path(c_inds(j),:), &
+!!                                    & beta_path_c(j,:) ) + &
+!!                                    & beta_path_cloud_c(j)
+!!
+!!              incoptdepth(j) = alpha_path_c(j) * del_s(j)
+!!            end do
 
             ! Determine where to use Gauss-Legendre instead of a trapezoid.
 
-            call path_contrib ( incoptdepth(1:npc), e_rflty, &
-              & fwdModelConf%tolerance, do_gl(1:npc) )
+!!            call path_contrib ( incoptdepth(1:npc), e_rflty, &
+!!              & fwdModelConf%tolerance, do_gl(1:npc) )
 
           else ! Not cloud model
 
@@ -1739,14 +1739,6 @@ contains
           if ( .not. FwdModelConf%polarized ) then
 
           ! Compute SCALAR radiative transfer ---------------------------------------
-
-          ! Compute Scattering source function !JJ under construction
-
-          ! if ( FwdModelConf%incl_cld ) then
-          !  CALL Tscat (Frq,  beta_path_w0_c(1:npc),        &
-          !    &  beta_path_phh_c(1:npc,:), ICON, NU,        &
-          !    &  t_scat(1:npc) )
-          ! END IF
 
           ! Compute radiative transfer ---------------------------------------
 
@@ -2755,6 +2747,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.182  2003/11/07 03:18:49  vsnyder
+! Cosmetic changes
+!
 ! Revision 2.181  2003/11/06 01:13:14  bill
 ! fixed DACS freq extrapolation problem
 !
