@@ -116,7 +116,7 @@ contains
     ! Make sure the fft_press array is MONOTONICALY increasing:
 
     is = 1
-    do while (is < Ntr  .and.  fft_press(is) >= fft_press(is+1))
+    do while (is < Ntr-1  .and.  fft_press(is) >= fft_press(is+1))
       is = is + 1
     end do
 
@@ -367,6 +367,9 @@ contains
 !
 end module CONVOLVE_ALL_M
 ! $Log$
+! Revision 1.28  2001/05/18 00:01:19  livesey
+! Zero out some arrays to start with (mainly to make them safe to dump).
+!
 ! Revision 1.27  2001/05/09 19:46:49  vsnyder
 ! Use new bandHeight argument of createBlock
 !
