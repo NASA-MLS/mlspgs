@@ -13,7 +13,7 @@ module GLOBAL_SETTINGS
     & P_INPUT_VERSION_STRING, P_OUTPUT_VERSION_STRING, P_VERSION_COMMENT, &
     & S_FGRID, S_FORWARDMODEL, S_ForwardModelGlobal, S_TIME, S_VGRID, F_FILE, &
     & P_CYCLE, P_STARTTIME, P_ENDTIME, &
-    & S_L1BRAD, S_L1BOA, S_LEAPSECFILE, P_INSTRUMENT, S_EMPIRICALGEOMETRY, &
+    & S_L1BRAD, S_L1BOA, P_INSTRUMENT, S_EMPIRICALGEOMETRY, &
     & S_BINSELECTOR
   use L1BData, only: l1bradSetup, l1boaSetup, ReadL1BData, L1BData_T, &
     & DeallocateL1BData, Dump, NAME_LEN, PRECISIONSUFFIX
@@ -241,17 +241,17 @@ contains
             & call announce_error(0, &
             & '*** l2cf overrides pcf for L1BOA file ***', &
             & just_a_warning = .true.)
-        case ( s_leapsecfile )
-          if ( .not. pcf ) then  
-            sub_rosa_index = sub_rosa(subtree(2,subtree(2, son)))
-            call get_string ( sub_rosa_index, LeapSecFileName, strip=.true. )
-            if(index(switches, 'pro') /= 0) &  
-            & call proclaim(LeapSecFileName, 'leapsecfile')
-          else
-            call announce_error(0, &
-            & '*** Leap Second File in global settings despite pcf ***', &
-            & just_a_warning = .true.)
-          endif
+!        case ( s_leapsecfile )
+!          if ( .not. pcf ) then  
+!            sub_rosa_index = sub_rosa(subtree(2,subtree(2, son)))
+!            call get_string ( sub_rosa_index, LeapSecFileName, strip=.true. )
+!            if(index(switches, 'pro') /= 0) &  
+!            & call proclaim(LeapSecFileName, 'leapsecfile')
+!          else
+!            call announce_error(0, &
+!            & '*** Leap Second File in global settings despite pcf ***', &
+!            & just_a_warning = .true.)
+!          endif
         case ( s_empiricalGeometry )
           call InitEmpiricalGeometry ( son )
         case ( s_time )
@@ -627,6 +627,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.53  2002/04/29 17:42:16  pwagner
+! Can convert starttime, endtime to tai w/o pcf
+!
 ! Revision 2.52  2002/02/08 22:52:56  livesey
 ! Hooked up bin selectors
 !
