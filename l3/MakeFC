@@ -59,7 +59,8 @@ SHELL = /bin/sh
 #
 
 #----------------------------------------------------------
-libmls_f90 := $(wildcard $(libmls_sources)/*.f90)
+#wildcard seems to no longer work right (maybe some change to our suns?)
+libmls_f90 := $(shell echo $(libmls_sources)/*.f90)
 
 PROG=mlsl3
 
@@ -139,6 +140,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl3
 
 # $Log$
+# Revision 1.14  2001/04/05 17:15:54  pwagner
+# Added PROG to .PHONY list
+#
 # Revision 1.13  2001/03/13 19:07:59  pwagner
 # clean now removes executables, too
 #
