@@ -14,8 +14,8 @@ module FullCloudForwardModel
   use Hdf,                          only: DFACC_READ, DFACC_CREATE
   use HDFEOS,                       only: SWOPEN, SWCLOSE
   use L2GPData,                     only: L2GPData_T, ReadL2GPData, WriteL2GPData
-  use MLSCommon,                    only: NameLen, FileNameLen, r8,  FINDFIRST
-  use MLSMessageModule,             only: MLSMessage, MLSMSG_Error
+  use MLSCommon,                    only: NameLen, FileNameLen, r8, rp, FINDFIRST
+  use MLSMessageModule,             only: MLSMessage, MLSMSG_Error, MLSMSG_Warning, MLSMSG_Allocate, MLSMSG_Deallocate
   use MLSSignals_m,                 only: SIGNAL_T, ARESIGNALSSUPERSET
   use MatrixModule_0,               only: M_Absent, M_BANDED, MATRIXELEMENT_T, M_BANDED, &
                                         & M_COLUMN_SPARSE, CREATEBLOCK, M_FULL
@@ -25,6 +25,7 @@ module FullCloudForwardModel
   use Molecules,                    only: L_H2O, L_O3, spec_tags
   use Output_m,                     only: OUTPUT
   use PointingGrid_m,               only: POINTINGGRIDS
+  use String_table,                 only: GET_STRING, DISPLAY_STRING
   use SpectroscopyCatalog_m,        only: CATALOG_T, LINE_T, LINES, CATALOG
   use Toggles,                      only: Emit, Levels, Toggle
   use Trace_M,                      only: Trace_begin, Trace_end
@@ -59,7 +60,8 @@ module FullCloudForwardModel
                      & L_SIDEBANDRATIO,                                      &
                      & L_CHANNEL,                                            &
                      & L_NONE,                                               &
-                     & L_LOSVEL
+                     & L_LOSVEL,                                             &
+                     & LIT_INDICES
 
   implicit none
   private
@@ -119,7 +121,9 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     type (Signal_T)               :: signal                     ! A signal
     type(VectorValue_T),  pointer :: STATE_ext                  ! A state vector quantity
     type(VectorValue_T),  pointer :: STATE_los                  ! A state vector quantity
-    type(VectorValue_T),  pointer :: SIDEBANDRATIO              ! From the state vector
+    type(VectorValue_T),  pointer :: SIDEBANDRATIO              ! The sideband ratio to use
+    type(VectorValue_T), pointer :: LOWERSIDEBANDRATIO ! From the state vector
+    type(VectorValue_T), pointer :: UPPERSIDEBANDRATIO ! From the state vector
 
     type (catalog_T), dimension(:), pointer :: MY_CATALOG 
     type (catalog_T), pointer :: thisCatalogEntry
@@ -137,6 +141,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     integer :: noCldSurf                           ! Number of cloud ext levels
     integer :: NOFREQS                             ! Number of frequencies
     integer :: NOFREQS0                            ! Number of frequencies of the last signal
+    integer :: DIRECTION                           ! Direction of channel numbering
 
     integer :: i                                   ! Loop counter
     integer :: j                                   ! Loop counter
@@ -151,7 +156,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     integer :: nfine                               ! no of fine resolution grids
     integer :: nNear                               ! no of nearest profiles
     integer :: status                              ! allocation status 
-    integer :: SIDEBAND                            ! Loop index
+    integer :: SIDEBAND                            ! Loop index    
     integer :: SIDEBANDSTART                       ! For sideband loop
     integer :: SIDEBANDSTEP                        ! For sideband loop
     integer :: SIDEBANDSTOP                        ! For sideband loop
@@ -179,7 +184,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     real(r8), dimension(:,:), pointer :: VMRARRAY  ! The VMRs
     real(r8), dimension(:), allocatable :: Slevl   ! S grid
     real(r8), dimension(:), allocatable :: Zt      ! tangent height
-    real (r8), dimension(:), pointer :: thisRatio  ! Sideband ratio values
+    real (r8), dimension(:), pointer :: thisRatio ! Sideband ratio values
+    real(rp) :: Vel_Cor                 ! Velocity correction due to Vel_z
 
     real(r8), dimension(:), pointer :: phi_fine    ! Fine resolution for phi 
     real(r8), dimension(:), pointer :: z_fine      ! Fine resolution for z
@@ -189,7 +195,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     real(r8), dimension(:), pointer :: w_fine      ! weight along s_fine
 
     real(r8), dimension(:,:,:), allocatable  :: A_TRANS
-    real(r8), dimension(:), pointer :: FREQUENCIES
+    real(r8), dimension(:), pointer :: FREQUENCIES 
     real(r8), dimension(:,:), allocatable :: WC
 
     real(r8) :: phi_tan
@@ -205,8 +211,11 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     logical :: dee_bug = .true.  
     logical :: prt_log = .false.
     logical :: FOUNDINFIRST                        ! Flag to indicate derivatives
+    logical, dimension(:), pointer :: LINEFLAG     ! Use this line (noLines per species)
+    logical :: doThis                              ! Flag for lines
 
     character :: cloudtype                         ! cloud profile type
+    character (len=32) :: molName       ! Name of a molecule
 
     !---------------------------------------------------------------------------
     ! >>>>>>>>>>>>>>>>>>>>>>>>>>> Executable code  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -226,18 +235,18 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
              A_CLEARSKYRADIANCE, A_CLOUDINDUCEDRADIANCE,                        &
              A_CLOUDEXTINCTION, A_CLOUDRADSENSITIVITY,                          &
              A_EFFECTIVEOPTICALDEPTH, A_MASSMEANDIAMETER,                       &
-             A_TOTALEXTINCTION,FREQUENCIES,                                     &
-             superset, thisRatio, JBLOCK, state_ext, state_los,                 &
+             A_TOTALEXTINCTION,FREQUENCIES, thisRatio,                          &
+             superset, JBLOCK, state_ext, state_los,                            &
              MY_CATALOG, thisCatalogEntry, thisLine, LOSVEL )
              
-    nullify ( doChannel )
+    nullify ( doChannel, lineFlag )
     
     ! ------------------------------------
     ! Find which maf is called at present
     ! ------------------------------------
 
     maf = fmStat%maf
-  
+
     !------------------------------------------
     ! Determine which retrieval is to be used
     !    cloud_der = 0     high tangent height
@@ -248,6 +257,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     if(forwardModelConfig%cloud_der == 0) doHighZt = .true.
     if(forwardModelConfig%cloud_der == 1) doLowZt  = .true.
 
+    !--------------------------------------------------------------------
+    
     signal = forwardModelConfig%signals(size(forwardModelConfig%signals))
 
     ! --------------------------------------------------------------------
@@ -256,20 +267,127 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     obsCloudRadiance => GetVectorQuantityByType ( fwdModelExtra,     &
           & quantityType=l_cloudInducedRadiance,                     &
           & signal=signal%index, sideband=signal%sideband )
-      noFreqs0 = size (signal%frequencies)
-      do i=1, noFreqs0
-        if (signal%channels(i)) whichChannel=i
+
+      ! find which channel is used
+      noFreqs = size (signal%frequencies)
+      do i=1, noFreqs
+        if (signal%channels(i)) whichChannel=i    
       end do
+
+ !-----------------------
+ ! Think about sidebands
+ !----------------------- 
+
+!     print*,'Signal%sideband', Signal%sideband
+!     print*,'Signal%singleSideband', Signal%singleSideband
+
+   if ( ( Signal%sideband == 0 ) .and.&
+     &  ( Signal%singleSideband == 0 ) ) then     ! =1 only if R1A, R1B
+      ! Do a folded measurement
+      sidebandStart = -1
+      sidebandStop = 1
+      sidebandStep = 2
+    else
+      ! It's either a single sideband radiometer, or the user requested a
+      ! specific sideband.
+      ! Check sanity, if they are both non zero they should be the same.
+      if ( ( Signal%singleSideband /= 0 ) .and. &
+        &  ( Signal%sideband /= 0 ) .and. &
+        &  ( Signal%singleSideband /= &
+        &    Signal%sideband ) ) Call MLSMessage ( &
+        & MLSMSG_Error, ModuleName, &
+        & "User requested a sideband that doesn't exist" )
+      ! OK, use whichever one is given
+      if ( Signal%singleSideband /= 0 ) then
+        sidebandStart = Signal%singleSideband           ! ==0 in case of R1A,B
+      else
+        sidebandStart = Signal%sideband                 ! \=0 all other cases
+      end if
+      sidebandStop = sidebandStart
+      sidebandStep = 1
+    end if
+ !---------------------------
+ ! END of thinking sidebands
+ !---------------------------
+
+ !----------------------------------------------------------------------------------
+ ! When using Bill's Spectral data, work out which spectroscopy we're going to need
+ !----------------------------------------------------------------------------------
+    allocate ( My_Catalog(size(forwardModelConfig%molecules)), stat=ier )
+    if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, 'my_catalog' )
+
+    do j = 1, size(forwardModelConfig%molecules)      ! Loop over species
+
+      ! Skip if the next molecule is negative (indicates that this one is a parent)
+      if ( (j < size(forwardModelConfig%molecules)) .and. (forwardModelConfig%molecules(j)>0)) then
+        if ( forwardModelConfig%molecules(j+1) < 0 ) then
+          nullify ( my_catalog(j)%lines ) ! Don't deallocate it by mistake
+          Call Allocate_test ( my_catalog(j)%lines, 0, &
+                            & 'my_catalog(?)%lines(0)', ModuleName )
+          CYCLE
+        end if
+      end if
+
+      Spectag = spec_tags( abs(forwardModelConfig%molecules(j)) )
+      thisCatalogEntry => Catalog(FindFirst(catalog%spec_tag == spectag ) )
+
+      if ( associated ( thisCatalogEntry%lines ) ) then
+        ! Now subset the lines according to the signal we're using
+        Call Allocate_test ( lineFlag, size(thisCatalogEntry%lines), &
+                         &  'lineFlag', ModuleName )
+        lineFlag = .FALSE.
+        do k = 1, size ( thisCatalogEntry%lines )
+          thisLine => lines(thisCatalogEntry%lines(k))
+          if ( associated(thisLine%signals) ) then
+            do sigInd = 1, size(forwardModelConfig%signals)
+              doThis = any ( thisLine%signals == &
+                & forwardModelConfig%signals(sigInd)%index )
+                ! If we're only doing one sideband, maybe we can remove some more lines
+                if ( sidebandStart==sidebandStop ) doThis = doThis .and. &
+                & any( ( thisLine%sidebands == sidebandStart ) .or. &
+                & ( thisLine%sidebands == 0 ) )
+              lineFlag(k) = lineFlag(k) .or. doThis
+            end do ! End loop over signals requested in fwm
+          end if
+        end do               ! End loop over lines
+
+        My_Catalog(j) = thisCatalogEntry
+        nullify ( my_catalog(j)%lines ) ! Don't deallocate it by mistake 
+
+        ! Check we have at least one line for this
+
+        if ( count(lineFlag) == 0 ) then
+          Call get_string ( lit_indices( abs(forwardModelConfig%molecules(j)) ), molName )
+          Call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'No relevant lines for '//trim(molName) )
+        endif
+        Call Allocate_test ( my_catalog(j)%lines, count(lineFlag),&
+          & 'my_catalog(?)%lines', ModuleName )
+        my_catalog(j)%lines = pack ( thisCatalogEntry%lines, lineFlag )
+        Call Deallocate_test ( lineFlag, 'lineFlag', ModuleName )
+      else
+        ! No lines for this species
+        my_catalog(j) = thisCatalogEntry
+        nullify ( my_catalog(j)%lines ) ! Don't deallocate it by mistake
+        Call Allocate_test ( my_catalog(j)%lines, 0, 'my_catalog(?)%lines(0)', &
+          & ModuleName )
+      end if
+
+    enddo ! End of Loop over species
+
+    !--------------------------------------------
+    ! Loop over signals
+    !--------------------------------------------
 
     do sigInd = 1, size(forwardModelConfig%signals)
 
     ! -------------------------------------
     ! Identify the signal (band)
     ! -------------------------------------
-      
-     signal = forwardModelConfig%signals(sigInd)
 
-     if (prt_log) print*,signal%index
+       signal = forwardModelConfig%signals(sigInd)
+
+       if (prt_log) print*,'signal%index', signal%index
 
     ! --------------------------------------------
     ! Get the quantities we need from the vectors
@@ -343,8 +461,25 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     ! Get some basic dimensions
     ! ----------------------------
     noMIFs  = radiance%template%noSurfs
-    noFreqs = size (signal%frequencies) ! Note: noFreq and noChans should be the same
     noSurf  = temp%template%noSurfs     ! Number of model layers
+!    noChans = radiance%template%noChans
+
+    !----------------------------
+    ! get state quantity type (need both ext and los quantities for Jacobians)
+    !----------------------------
+       state_ext => GetVectorQuantityByType(FwdModelIn,quantityType=l_cloudExtinction)
+       state_los => GetVectorQuantityByType(FwdModelIn,quantityType=l_LosTransFunc)
+
+        ! Get number of cloud surfaces for retrieval
+        noCldSurf=state_ext%template%noSurfs
+        ! Get s dimension
+        noSgrid=state_los%template%noChans
+        
+          Allocate( a_Trans(noSgrid, noMIFs, noFreqs))
+          
+          Allocate( Slevl(noSgrid))
+
+          Slevl = state_los%template%frequencies
 
     !----------------------------------
     ! Set up some temporary quantities
@@ -391,11 +526,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         & frequencyCoordinate=(/l_none/)) ) call MLSMessage ( MLSMSG_Error,  &
         & ModuleName, InvalidQuantity//'vmr' )
 
-!      call FindClosestInstances ( vmr, radiance, closestInstances )
-!      vmrInst = closestInstances(maf)
-!      instance = closestInstances(maf)
 
-	   novmrSurf = vmr%template%nosurfs
+       novmrSurf = vmr%template%nosurfs
 
       call InterpolateValues ( &
         & reshape(vmr%template%surfs(:,1),(/novmrSurf/)), &    ! Old X
@@ -410,53 +542,13 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       call MLSMessage( MLSMSG_Error, ModuleName,          &
                       'Missing the required molecules' )
     endif
-
-    call allocate_test ( thisRatio, noFreqs, 'thisRatio', ModuleName )
+     
     call allocate_test ( doChannel, noFreqs, 'doChannel', ModuleName )
-    allocate(zt(noMifs))
+    
+         allocate(zt(noMifs))
 
     doChannel = .true.
     if ( associated ( signal%channels ) ) doChannel = signal%channels
-
-    !----------------------------------------------------------
-    ! Old version has only single sideband
-    ! Now changed to double sideband, Oct 2, 2001
-    !----------------------------------------------------------
-    ! if ( signal%sideband == 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,  &
-    !   & 'Only single sidebands allowed in FullForwardCloudModel for now' )
-    !----------------------------------------------------------
-
-    !-------------------------------------------------
-    ! Allow folded double sideband
-    !-------------------------------------------------
-
-    if ( signal%sideband == 0 ) then
-       sidebandStart = -1
-       sidebandStop  = 1
-       sidebandStep  = 2
-       sidebandRatio => GetVectorQuantityByType ( fwdModelExtra, &
-                     & quantityType = l_sidebandRatio, signal=signal%index )
-       thisRatio = sidebandRatio%values(:,1)
-    else
-       sidebandStart = 0
-       sidebandStop  = 0
-       sidebandStep  = 1
-    endif
-
-    !--------------------------------------------
-    ! Loop over sidebands 
-    !--------------------------------------------
-
-    do sideband = sidebandStart, sidebandStop, sidebandStep
-
-    !-----------------------------
-    ! Setup a sideband ratio array
-    !------------------------------
-
-    if ( sidebandStart /= sidebandStop ) then
-       thisRatio = sidebandRatio%values(:,1)
-       if ( sideband == 1 ) thisRatio = 1.0 - thisRatio
-    end if
 
     !-----------------------------------------------------
     ! Make temporary arrays for the cloud forward model
@@ -491,7 +583,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         & 'number of levels in radiance does not match no of levels in ptan' )
     endif
 
-    allocate ( WC(2,NOsurf), STAT=status )
+    allocate ( WC(2,NoSurf), STAT=status )
 
     WC (1,:) = CloudIce%values(:,instance)
     WC (2,:) = CloudWater%values(:,instance)
@@ -518,51 +610,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
        call output ( whichPattern, advance='yes' )
     end if
 
-
-    call Allocate_test ( frequencies, noFreqs, 'frequencies', ModuleName )
-
-    frequencies = signal%sideband * ( signal%centerFrequency +   &
-                  signal%frequencies)
-   
-        select case ( sideband )
-        case ( -1 )
-          frequencies = signal%lo - frequencies
-        case ( +1 )
-          frequencies = signal%lo + frequencies
-        case ( 0 )
-          frequencies = signal%lo + frequencies
-        case default
-          call MLSMessage ( MLSMSG_Error, ModuleName,            &
-            & 'Bad value of signal%sideband' )
-        end select
-
-        ! frequencies = signal%lo + signal%sideband * ( signal%centerFrequency +   &
-        !               signal%frequencies)
-
-    if (prt_log) then
-       print*, ' '
-       print*,'No. of Frequencies:', noFreqs 
-       print*,'Frequency=', frequencies/1e3_r8
-    endif
-
-
     if (prt_log) print*, 'jacobian is true'
-
-    !----------------------------
-    ! get state quantity type (need both ext and los quantities for Jacobians)
-    !----------------------------
-       state_ext => GetVectorQuantityByType(FwdModelIn,quantityType=l_cloudExtinction)
-       state_los => GetVectorQuantityByType(FwdModelIn,quantityType=l_LosTransFunc)
-
-        ! Get number of cloud surfaces for retrieval
-        noCldSurf=state_ext%template%noSurfs
-        ! Get s dimension
-        noSgrid=state_los%template%noChans
-        
-        Allocate( a_Trans(noSgrid, noMIFs, noFreqs))
-        Allocate( Slevl(noSgrid))
-
-        Slevl = state_los%template%frequencies
 
      ! get tangent height from tangent pressure
       call InterpolateValues ( &
@@ -583,7 +631,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
       ! find cloud top index from observed Tcir, threshold to be determined
       !     for high Zt, use Tcir(maf)
-      !     for low Zt, use Tcir(maf-2)
+       !     for low Zt, use Tcir(maf-2)
       if(.not. associated(obsCloudRadiance)) then
          call MLSMessage( MLSMSG_Error, ModuleName,                             &
                       'Need cloud radiances to estimate cloud top in retrieval' )
@@ -591,12 +639,12 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
        iCloudHeight = 0
        if(doHighZt) then
          do mif = 1, noMifs
-           if(obsCloudRadiance%values(whichchannel+(mif-1)*noFreqs0,maf) .ne. 0.0_r8) &
+           if(obsCloudRadiance%values(whichchannel+(mif-1)*noFreqs,maf) .ne. 0.0_r8) &
                 & iCloudHeight = mif
          enddo
        else
          do mif = 1, noMifs
-           if(obsCloudRadiance%values(whichchannel+(mif-1)*noFreqs0,maf) .ne. 0.0_r8) & 
+           if(obsCloudRadiance%values(whichchannel+(mif-1)*noFreqs,maf) .ne. 0.0_r8) & 
                 & iCloudHeight = mif
          enddo
        end if
@@ -610,38 +658,94 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       
     ENDIF
 
-    ! Work out which spectroscopy we're going to need ------------------------
-    allocate ( My_Catalog(size(forwardModelConfig%molecules)), stat=ier )
-    if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, 'my_catalog' )
 
-    do j = 1, size(forwardModelConfig%molecules)
-      Spectag = spec_tags(forwardModelConfig%molecules(j))
-!      print*, Spectag
-      thisCatalogEntry => Catalog(FindFirst(catalog%spec_tag == spectag ) )
-      My_Catalog(j) = thisCatalogEntry
-    enddo
+    call Allocate_test ( frequencies, noFreqs, 'frequencies', ModuleName )
 
+! It is equavelent to shift either spectral line frequencies or filter frequencies
+! but the sign is opposite.
+!    Vel_Cor = 1.0_rp - losVel%values(1,maf)/299792458.3_rp    ! for shift spectral lines
+    Vel_Cor = 1.0_rp + losVel%values(1,maf)/299792458.3_rp  ! for shift spectral channnels
+
+    !--------------------------------------------
+    ! Loop over sidebands 
+    !--------------------------------------------
+
+    call allocate_test ( thisRatio, noFreqs, 'thisRatio', ModuleName )
+
+    if ( sidebandStart /= sidebandStop ) then 
+      sidebandRatio => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+        & quantityType = l_sidebandRatio, signal=signal%index, noError=.true. )
+      lowerSidebandRatio => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+        & quantityType = l_sidebandRatio, signal=signal%index, &
+        & sideband=-1, noError=.true. )
+      upperSidebandRatio => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+        & quantityType = l_sidebandRatio, signal=signal%index, &
+        & sideband=1, noError=.true. )
+      if (.not. associated (sidebandRatio) .and. .not. &
+        & ( associated ( lowerSidebandRatio) .and. associated ( upperSidebandRatio ) ) ) &
+        & call MLSMessage(MLSMSG_Error,ModuleName, &
+        & "No sideband ratio supplied")
+    end if
+
+
+    do thisSideband = sidebandStart, sidebandStop, sidebandStep
+
+    !-----------------------------
+    ! Setup a sideband ratio array
+    !------------------------------
+
+      if ( sidebandStart /= sidebandStop ) then   ! We're folding
+          if ( thisSideband == -1 ) then
+            thisRatio = lowerSidebandRatio%values(:,1)
+          else
+            thisRatio = upperSidebandRatio%values(:,1)
+          end if
+      else                  ! Otherwise, want just unfolded signal
+        thisRatio = 1.0
+      end if
+
+!      print*, thisRatio
+
+    direction = signal%direction
+
+    frequencies = signal%centerFrequency + direction*signal%frequencies 
+
+!    print*,frequencies
+!    print*, signal%lo
+
+        if(signal%sideband == 0) &
+        frequencies = signal%lo + thisSideband * frequencies    ! double sideband cases
+
+        if(signal%sideband /= 0) &
+        frequencies = signal%lo + signal%sideband * frequencies    ! signal sideband cases
+
+
+!--------------------------------------------
+! VELOCITY shift correction to frequencies
+!--------------------------------------------
+!          print*, vel_cor
+!          print*,' '
+!          print*,frequencies
+
+!        IF (.NOT. forwardModelConfig%default_spectroscopy) THEN
+
+          frequencies =  Vel_Cor * frequencies
+        
+!        ENDIF
+
+!          print*,' '
+!          print*,frequencies
+!          stop
+
+    if (prt_log) then
+       print*, ' '
+       print*,'No. of Frequencies:', noFreqs 
+       print*,'Frequency=', frequencies/1e3_r8
+    endif
+ 
     !---------------------------------------------
     ! Now call the Full CloudForwardModel routine
     !---------------------------------------------
-
-    ! all demensions are in meters
-!    if (instance .gt. size(gph%values, 2)) then
-!      print*, 'gph values array size exceeded ' , instance
-!    else if (instance .gt. size(temp%values, 2)) then
-!      print*, 'temp values array size exceeded ' , instance
-!    else if (maf .gt. size(ptan%values, 2)) then
-!      print*, 'ptan ' , maf
-!    else if (maf .gt. size(earthradius%values, 2)) then
-!      print*, 'earthradius ' , maf
-!      print*, 'ptansize ' , size(ptan%values, 2)
-!    else if (instance .gt. size(sizeDistribution%values, 2)) then
-!      print*, 'sizeDistribution ' , instance
-!    else if (instance .gt. size(surfacetype%values, 2)) then
-!      print*, 'surfacetype ' , instance
-!    else if (maf .gt. size(losVel%values, 2)) then
-!      print*, 'losVel ' , maf
-!    endif
 
     call CloudForwardModel ( doChannel,                                      &
       & noFreqs,                                                             &
@@ -683,30 +787,86 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & forwardModelConfig%NUM_SIZE_BINS,                                    &
       & Slevl*1000._r8, noSgrid,                                             &
       & My_Catalog, losVel%values(1,1) )   
+
 !      & My_Catalog, losVel%values(1,maf) )                    
                                 
-
     if (prt_log) print*, 'Successfully done with Full Cloud Foward Model ! '
 
     ! Output minor frame quantities if they are asked: check channel and type
-   
-    do i =1 , noFreqs
-    if (doChannel(i)) then
-    do mif=1, noMIFs
-    radiance%values (i+(mif-1)*noFreqs, maf) = a_clearSkyRadiance(mif,i) 
 
-    modelCloudRadiance%values (i+(mif-1)*noFreqs, maf ) =                    &
-      & a_cloudInducedRadiance(mif,i)
+!    do i =1 , noFreqs
+!    do mif=1, noMIFs
+!      a_clearSkyRadiance(mif,i)      = thisRatio(i)*a_clearSkyRadiance(mif,i)
+!      a_cloudInducedRadiance(mif,i)  = thisRatio(i)*a_cloudInducedRadiance(mif,i)
+!      a_effectiveOpticalDepth(mif,i) = thisRatio(i)*a_cloudRADSensitivity(mif,i)
+!      a_cloudRADSensitivity(mif,i)   = thisRatio(i)*a_cloudRADSensitivity(mif,i)
+!    enddo
+!    enddo
 
-    if(associated(effectiveOpticalDepth))                                    &
-      & effectiveOpticalDepth%values (i+(mif-1)*noFreqs, maf ) =             &
-      & a_effectiveOpticalDepth(mif,i)
+   if ( sidebandStart == sidebandStop ) then
+     radiance%values ( :, maf) =                                              &
+       & reshape ( transpose(a_clearSkyRadiance),                             &
+       & (/radiance%template%instanceLen/) )
+     modelCloudRadiance%values ( :, maf ) =                                   &
+       & reshape ( transpose(a_cloudInducedRadiance),                         &
+       & (/modelCloudRadiance%template%instanceLen/) )
+     effectiveOpticalDepth%values ( :, maf ) =                                &
+       & reshape ( transpose(a_effectiveOpticalDepth),                        &
+       & (/effectiveOpticalDepth%template%instanceLen/) )
+     cloudRADSensitivity%values ( :, maf ) =                                  &
+       & reshape ( transpose(a_cloudRADSensitivity),                          &
+       & (/cloudRADSensitivity%template%instanceLen/) )
+   else
+    
+   IF ( thisSideband == sidebandStart ) THEN
+     do i =1 , noFreqs
+       if (doChannel(i)) then
+         do mif=1, noMIFs
+           radiance%values (i+(mif-1)*noFreqs, maf) =                               &
+             &                       thisRatio(i)*a_clearSkyRadiance(mif,i)
+           modelCloudRadiance%values (i+(mif-1)*noFreqs, maf ) =                    &
+             &                       thisRatio(i)*a_cloudInducedRadiance(mif,i)
+           if(associated(effectiveOpticalDepth))                                    &
+             & effectiveOpticalDepth%values (i+(mif-1)*noFreqs, maf ) =             &
+             &                       thisRatio(i)*a_effectiveOpticalDepth(mif,i)
+           if(associated(cloudRADSensitivity))                                      &
+             & cloudRADSensitivity%values (i+(mif-1)*noFreqs, maf ) =               &
+             &                       thisRatio(i)*a_cloudRADSensitivity(mif,i)
+         end do
+       endif
+     enddo
+   ELSE
+     do i =1 , noFreqs
+       if (doChannel(i)) then
+         do mif=1, noMIFs
 
-    if(associated(cloudRADSensitivity))                                      &
-      & cloudRADSensitivity%values (i+(mif-1)*noFreqs, maf ) =               &
-      & a_cloudRADSensitivity(mif,i)
-    enddo
-    endif
+           radiance%values (i+(mif-1)*noFreqs, maf) =                               &
+             &               radiance%values (i+(mif-1)*noFreqs, maf)               &
+             &             + thisRatio(i)*a_clearSkyRadiance(mif,i) 
+
+           modelCloudRadiance%values (i+(mif-1)*noFreqs, maf ) =                    &
+             &        modelCloudRadiance%values (i+(mif-1)*noFreqs, maf )           &
+             &      + thisRatio(i)*a_cloudInducedRadiance(mif,i)
+
+           if(associated(effectiveOpticalDepth))                                    &
+             & effectiveOpticalDepth%values (i+(mif-1)*noFreqs, maf ) =             &
+             &        effectiveOpticalDepth%values (i+(mif-1)*noFreqs, maf )        &
+             &      + thisRatio(i)*a_effectiveOpticalDepth(mif,i)
+
+           if(associated(cloudRADSensitivity))                                      &
+             & cloudRADSensitivity%values (i+(mif-1)*noFreqs, maf ) =               &
+             &        cloudRADSensitivity%values (i+(mif-1)*noFreqs, maf )          &  
+             &      + thisRatio(i)*a_cloudRADSensitivity(mif,i)
+
+         enddo
+       endif
+     enddo
+   endif
+   ENDIF
+
+    !--------------------------------------------
+    ! End of sideband loop 
+    !--------------------------------------------
     enddo
 
     ! -----------------------------------------------------------------------------
@@ -897,8 +1057,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     !------------------------------
     ! Remove temporary quantities
     !------------------------------
-    Deallocate (WC, a_trans, Slevl, Zt )
-    Deallocate ( my_catalog, stat=ier )
 
     call deallocate_test ( superset, 'superset',          ModuleName )
     call Deallocate_test ( a_massMeanDiameter,'a_massMeanDiameter',ModuleName )
@@ -911,18 +1069,31 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     call Deallocate_test ( vmrArray,'vmrArray',ModuleName )
     call Deallocate_test ( closestInstances,'closestInstances',ModuleName )
     call Deallocate_test ( doChannel, 'doChannel',        ModuleName )
-    !--------------------------------------------
-    ! End of sideband loop 
-    !--------------------------------------------
-    enddo
+    call Deallocate_test ( thisRatio, 'thisRatio',        ModuleName )
+    call Deallocate_test (frequencies,'frequencies',ModuleName )
+    Deallocate (a_trans, Slevl, Zt )
 
     if (prt_log) then
       print*, ' '
       print*, 'Time Instance: ', instance
     endif
 
+    Deallocate (WC, stat=ier )
+
     end do  ! End of signals
-    
+
+    do i = 1, size(my_catalog)
+      if ( associated ( my_catalog(i)%lines ) ) &
+        & Call Deallocate_test ( my_catalog(i)%lines, 'my_catalog(?)%lines', &
+        & ModuleName )
+    end do
+    deallocate ( my_catalog, stat=ier )
+    ! Note that we don't deallocate the signals/sidebands stuff for each line
+    ! as these are shallow copies of the main spectroscopy catalog stuff
+
+    if ( ier /= 0 ) Call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Deallocate//'my_catalog' )
+
     if ( toggle(emit) ) call trace_end ( 'FullCloudForwardModel' )
 
     if(prt_log) print*, 'Successful done with full cloud forward wapper !'
@@ -933,6 +1104,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.92  2002/05/08 17:03:39  jonathan
+! use earthradius(1,1) for now
+!
 ! Revision 1.91  2002/01/14 19:30:16  jonathan
 ! minor changes
 !

@@ -7,7 +7,7 @@ module GasAbsorption
 ! COMPUTE ATMOSPHERIC GASES ABSORPTION COEFFICIENTS
 ! -------------------------------------------------------------------------
 
-      use MLSCommon, only: r8
+      use MLSCommon, only: r8 
       use WaterVapor, only: RHtoEV
       IMPLICIT NONE
       Private
@@ -24,7 +24,7 @@ module GasAbsorption
 contains
 
       SUBROUTINE GET_BETA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,GAMMA,N2, &
-                 &        MOL,NMOL,NCNT,T,PB,F,RH,VMR,ABSC,NS)
+                 &        MOL,NMOL,NCNT,T,PB,F,RH,VMR,ABSC,NS )
 
 !==============================================================
 !      CALCULATE CLEAR-SKY ABSORPTION COEFFICIENT AT F AND T
@@ -57,9 +57,11 @@ contains
       REAL(r8) :: CONT_1,CONT_2,CONT_3        ! CONTINUUM ABSORPTION COEFFICIENTS
       REAL(r8) :: SC_CONST
       REAL(r8) :: SD,G0                       ! DEBY CONTRIBUTION (LIEBE 1989)
-
+      REAL(r8) :: PS, NPS                     ! PRESSURE SHIFT PARAMETERS
+     
       REAL :: PI
       PARAMETER (PI=3.1415926)
+
       REAL(r8) :: ZP,YY,TT,TWTH0,DWTH0        ! WORKING SPACE
       INTEGER :: I, J, IMOL
 
@@ -88,17 +90,49 @@ contains
       ABSC=0.
       I=0
 
-!      print*,'check'
+
 
 !-------------------------------------
 !     LINE EMISSION
 !-------------------------------------
       DO IMOL=1,NMOL
+
          B=0.
+         
          DO J=1,NCNT(IMOL)
             I=I+1
 
             IF(IMOL.GE.3.AND.ABS(V0(i)-FF).GT.10000.) GOTO 100 ! SAVE CPU
+            
+            PS  = 0.00_r8
+            NPS = 0.00_r8
+
+         ! Determine pressure shift parameters
+            IF(IMOL .EQ. 1) THEN                         ! O2
+              IF ( V0(i) .eq. 118750.3410_r8 ) THEN
+                PS   = -0.140_r8
+                NPS  = 1.36_r8
+              END IF
+            ELSE IF(IMOL .EQ. 2) THEN                    ! H2O
+              IF ( V0(i) .eq. 183310.0910_r8) THEN 
+                PS   = -0.160_r8
+                NPS  = 1.375_r8
+              ENDIF
+            ELSE IF(IMOL .EQ. 3) THEN                    ! O_18_O
+              PS   = 0.00_r8
+              NPS  = 0.00_r8
+            ELSE IF(IMOL .EQ. 4) THEN                    ! H2O_18
+              IF ( V0(i) .eq. 203407.5200_r8 ) THEN
+                PS   = -0.160_r8
+                NPS  = 1.375_r8 
+              END IF
+            ELSE IF(IMOL .EQ. 5) THEN                    ! O3
+              PS   = 0.00_r8
+              NPS  = 0.00_r8
+            END IF
+
+            v01(i) = 0.0_r8
+            V01(i) = V0(i) + PS * P * (TT**NPS) ! Include Hugh Pumphrey's Pressure Shift effects
 
             IF(T .LE. QTP(2)) THEN
                QRAT = (QLG(2,I)-QLG(1,I))+(QLG(3,I)-QLG(2,I))*(T-QTP(2))/(QTP(3)-QTP(2))
@@ -133,14 +167,12 @@ contains
 !---------------------------------------------------------------
 !	TO SAVE COMPUTING TIME CHECK IF FREQ IS CLOSE TO O3 LINES
 !----------------------------------------------------------------
-!            print*,IST(I),GSE(I),V0(I), FF, YY, TWTH0, T
-!            print*,ZP, MYSHAPE(V0(i),FF,YY,TWTH0)   
 
             B = B+2.30549e09_r8*10.0**(IST(I)-QRAT+GSE(I)*   &
      &		(1._r8/300._r8 - 1._r8/T)/1.600386_r8 - ZP) * PI * &
-     &		 MYSHAPE(V0(i),FF,YY,TWTH0) * FF/V0(I) *  &
-     &		(1._r8 - EXP(-V0(i)/(20836.7_r8*T)))/           &
-     &		(1._r8 - EXP(-V0(i)/(20836.7_r8*300.0_r8)))/T 
+     &		 MYSHAPE(V01(i),FF,YY,TWTH0) * FF/V01(I) *  &
+     &		(1._r8 - EXP(-V01(i)/(20836.7_r8*T)))/           &
+     &		(1._r8 - EXP(-V01(i)/(20836.7_r8*300.0_r8)))/T 
 
  100     CONTINUE
 
@@ -183,7 +215,7 @@ contains
 !----------------------------------------
 !     WET CONTINUUM 
 !----------------------------------------
-!     CONT_1 = 1.28e-15 	! BILL'S VALIDATION PAPER
+!      CONT_1 = 1.28e-15 	! BILL'S VALIDATION PAPER
 !      CONT_1 = 1.37e-15         ! UARS 203GHz  v5 
       CONT_1 = 7.53e-16   ! wu's version
       CONT_2 = 4.20
@@ -245,6 +277,9 @@ contains
 end module GasAbsorption
 
 ! $Log$
+! Revision 1.7  2002/05/06 22:35:22  jonathan
+! add Bill's version for H2O
+!
 ! Revision 1.6  2002/04/30 18:15:22  jonathan
 ! change CONT_1
 !

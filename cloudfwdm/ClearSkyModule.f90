@@ -13,7 +13,7 @@ module ClearSkyModule
       use PrtMsg, only: HEADER
       use SpectraLines, only: SETUP_SPECTRA
       use SurfaceModel, only: SURFACE
-      use SpectroscopyCatalog_m, only: CATALOG_T, LINES
+      use SpectroscopyCatalog_m, only: CATALOG_T, LINE_T, LINES, CATALOG
 
       IMPLICIT NONE
       Private
@@ -125,12 +125,12 @@ contains
            ! Using default spectroscopy data
            ! --------------------------------
            CALL GET_BETA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,GAMMA,N2,  &
-                &        MOL,NMOL,NCNT,T(I),P,F,DQ,VMR1,DR,NS)   
+                &        MOL,NMOL,NCNT,T(I),P,F,DQ,VMR1,DR,NS )   
                                              ! HERE DQ IS H2O MIXING RATIO
            TAU(I)=DR*Z(I)
 
            CALL GET_BETA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,GAMMA,N2,  &
-                &        MOL,NMOL,NCNT,T(I),P,F,100._r8,VMR1,DR,NS) 
+                &        MOL,NMOL,NCNT,T(I),P,F,100._r8,VMR1,DR,NS ) 
                                              ! HERE DQ IS RELATIVE HUMIDITY!
            TAU100(I)=DR*Z(I)
          
@@ -155,6 +155,9 @@ contains
 end module ClearSkyModule
 
 ! $Log$
+! Revision 1.15  2001/11/20 19:36:46  jonathan
+! some changes to save CPU
+!
 ! Revision 1.14  2001/11/16 00:40:52  jonathan
 ! add losVel
 !

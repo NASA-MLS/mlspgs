@@ -2,8 +2,9 @@
 
 	integer :: no_line		     ! max no. of lines for all species
 	integer :: no_mol		     ! max no. of molecules
-	parameter (no_line= 907, no_mol = 20)
+	parameter (no_line= 979, no_mol = 20)
 	real(r8) :: v0(no_line)              ! Line center frequency MHz
+	real(r8) :: v01(no_line)              ! Line center frequency MHz
 	real(r8) :: gse(no_line)             ! Ground state energy in cm-1 
 	real(r8) :: ist(no_line)             ! Logarithm of the integrated intensity
 	real(r8) :: wth(no_line)             ! Collision broadening parameter

@@ -133,7 +133,7 @@ contains
                D2=SQRT((YZ(K+1)+RE)**2-(ZT(I)+RE)**2)
                D1=SQRT((TGT+RE)**2-(ZT(I)+RE)**2)
                UAVE(I,K)=(YZ(K+1)-YZ(K))/(D2-D1)          !
-            ELSE
+            ELSE  
                DY=SQRT(YZ(K+1)-ZT(I))-SQRT(TGT-ZT(I))
                UAVE(I,K)=(YZ(K+1)-YZ(K))/SQRT(2*RE+TGT+ZT(I))/DY
             ENDIF
@@ -363,6 +363,9 @@ contains
 end module RadiativeTransferModule
 
 ! $Log$
+! Revision 1.6  2001/10/25 16:45:15  dwu
+! fix problem of  dimension index=0 in tscat calculation
+!
 ! Revision 1.5  2001/10/05 16:03:02  dwu
 ! *** empty log message ***
 !

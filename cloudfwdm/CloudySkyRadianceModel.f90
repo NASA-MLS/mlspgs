@@ -362,6 +362,7 @@ contains
 
       REAL(r8), PARAMETER :: CONST1 = 0.0000776_r8
       REAL(r8), PARAMETER :: CONST2 = 4810.0_r8
+
       Logical :: Bill_data 
 
       COMPLEX(r8) A(NR,NAB),B(NR,NAB)          ! MIE COEFFICIENCIES
@@ -408,18 +409,15 @@ contains
 
       MULTI=NZmodel/8-1
 
-!         DO I=1, Multi
-!            ZZT1(I)=YZ(I*8-7)
-!            ZPT1(I)=YP(I*8-7)
-!            ZTT1(I)=YT(I*8-7)
-!            ZVT1(I)=YQ(I*8-7)      
-!         ENDDO
-!
-! ---------------The following sets first 9 tangent heights below zero
+! ---------------The following sets first 5 tangent heights below zero
 
       DO I=1, Multi
-         if (i .le. 10) zzt1(i) = -20000.0_r8 + i*2000.0_r8 
-         if (i .gt. 10) zzt1(i) = 1000._r8*i-10000._r8 
+
+         if (i .le. 5) zzt1(i) = -20000.0_r8 + i*2000.0_r8 
+         if (i .gt. 5) then
+            if(i .le. (multi-5)/2) zzt1(i) = YZ( (I-5)*4-3)
+            if(i .gt. (multi-5)/2) zzt1(i) = YZ( (I-5)*8-7-(multi-5)/2*8)
+         endif
 
          ZPT1(I) = 0._r8    
          ZTT1(I) = 0._r8
@@ -432,11 +430,6 @@ contains
                     &               ZPT1, ZZT1, ZTT1, ZVT1, Multi )
 
       ENDIF
-
-!      DO I=1, Multi
-!       print*,  ZZT1(I), ZPT1(I), ZTT1(I), ZVT1(I)                
-!      ENDDO
-!      stop
 
 !-----------------------------------------------
 !     INITIALIZE SCATTERING AND INCIDENT ANGLES 
@@ -482,7 +475,9 @@ contains
 !=========================================================================
 
       DO 2000 IFR=1, NF
+
       IF ( doChannel(IFR) ) then
+        
         
          CALL CLEAR_SKY(NZmodel-1,NU,TS,S,LORS,SWIND,           &
               &         YZ,YP,YT,YQ,VMR,NS,                     &
@@ -501,8 +496,9 @@ contains
 
          ICLD_TOP = 0
          I100_TOP = 0
-
+         
          DO IL=1, NZmodel-1  
+            CHK_CLD(IL) =0. !test clear sky
             IF(CHK_CLD(IL) .NE. 0.)THEN
                ICLD_TOP=IL                    ! FIND INDEX FOR CLOUD-TOP 
                TAU0(IL)=TAU100(IL)            ! 100% SATURATION INSIDE CLOUD 
@@ -517,7 +513,7 @@ contains
          if (ICON .ne. 0) then                ! only for cloudy retrieval cases
            DO IL=1,MAX(ICLD_TOP,I100_TOP)        
               delTAU100(IL)=TAU100(IL)        ! MASK 100% SATURATION BELOW
-           ENDDO                                ! 100MB or cloud top
+           ENDDO                              ! 100MB or cloud top
          endif
 
          IF (ICON .EQ. 1) THEN
@@ -595,14 +591,15 @@ contains
          CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,TAU0,RS,TS,&
               &     FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
               &     UI,UA,TT0,0,RE)                          !CLEAR-SKY
-         TT = TT0	! so that dTcir=0
-
+          
+         TT  = TT0	   ! so that dTcir=0
+          
          IF(ICON .GE. 1) THEN                               
 
            CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PHH,MULTI,ZZT1,W0,TAU,RS,TS,&
                 &  FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,         &
                 &  UI,UA,TT,ICON,RE)                            !CLOUDY-SKY
-
+ 
          ENDIF
 
 
@@ -757,6 +754,9 @@ contains
 
          IF (IFOV .EQ. 0) THEN       
 
+! set the last zzt1 to 120km to protect interpolation
+!           zzt1(NZmodel/8-1)=120000._r8     !not necessary now
+
          ! CLEAR-SKY BACKGROUND
          CALL INTERPOLATEVALUES(ZZT1,TT0(:,NZmodel),ZZT,TB0(:,IFR),method='Linear')
 
@@ -790,6 +790,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.32  2002/06/17 17:49:41  bill
+! changed fov_convolve to fov_convolve_old--wgr
+!
 ! Revision 1.31  2002/05/08 17:00:55  jonathan
 ! fix tangent height bug
 !

@@ -2,11 +2,13 @@ Module Bill_GasAbsorption
 
   use GLNP, only: NG
   use MLSCommon, only: r8, rp, ip
-  use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT, ALLOCATEONESLABS
+  use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT, ALLOCATEONESLABS, DESTROYCOMPLETESLABS
   use SpectroscopyCatalog_m, only: CATALOG_T, LINES
   use SLABS_SW_M, only: GET_GL_SLABS_ARRAYS
   use CREATE_BETA_M, only: CREATE_BETA
   use WaterVapor, only: RHtoEV
+  USE Make_Z_Grid_M, only: MAKE_Z_GRID
+
   Implicit NONE
   private
   PUBLIC :: get_beta_bill
@@ -60,12 +62,13 @@ contains
     REAL(r8) :: VMR_O2                       ! O2    VOLUME MIXING RATIO
     REAL(r8) :: VMR_O_18_O                   ! O18O  VOLUME MIXING RATIO
     REAL(r8) :: VMR_H2O_18                   ! H2O18 VOLUME MIXING RATIO
+    REAL(r8) :: VMR_N2                       ! N2 VOLUME MIXING RATIO
 
-    Integer(ip) :: n_sps, n_path, i, j, k, m, nl, no_of_lines, n_ele
+    Integer(ip) :: n_sps, n_path, i, j, k, m, nl, no_of_lines, n_ele, maxvert
     Integer(ip) :: Spectag, status
     REAL(rp) :: bb, v0, vm, tm, tp, bp, bm, del_temp
-    REAL(rp), allocatable, dimension(:) :: LineWidth, PP, TT
-    
+    REAL(rp), allocatable, dimension(:) :: LineWidth, PP, TT, z_psig(:)
+
 !-----------------------------------------------------------------------------
 
     IF (RH .NE. 100._r8) THEN
@@ -75,37 +78,49 @@ contains
     ELSE IF(VMR_H2O .EQ. 100._r8) THEN
        CALL RHtoEV(T, 100._r8, VP)        ! RH HERE IS 100% RELATIVE HUMIDITY 
        P = PB-VP
-       VMR_H2O = VP/(max(1.e-9_r8, P))
+       VMR_H2O = VP/(max(1.e-19_r8, P))
     END IF
 
 !    VMR_H2O    = MAX(1.e-29_r8, VMR_H2O)
 !    VMR_O3     = MAX(1.e-29_r8, VMR_O3)
-    VMR_O2     = 0.209476_r8
+
+    VMR_O2     = 0.2095_r8
+    VMR_N2     = 0.805_r8
     VMR_O_18_O = VMR_O2*0.00409524_r8 
     VMR_H2O_18 = VMR_H2O*0.00204_r8
 
     B=0._r8
     FF = F*1000._r8
+
+!    maxVert = Ng +1
+
     n_sps = Size(Catalog)
-    n_ele = 1
-    allocate ( gl_slabs (1,n_sps), stat=status )
+!    n_ele = 2*maxVert
+
+    n_ele = 1  ! number of pressure levels along the path, in our case =1
+
+    allocate ( gl_slabs (n_ele,n_sps), stat=status )
     allocate ( pp(n_ele), stat=status )
     allocate ( tt(n_ele), stat=status )
 
     do i = 1, n_sps
       no_of_lines =  size(Catalog(i)%Lines)
-      gl_slabs(1,i)%no_lines =  no_of_lines
-      call AllocateOneSlabs ( gl_slabs(1, i), no_of_lines )
+      gl_slabs(1:n_ele,i)%no_lines =  no_of_lines
+      do j = 1, n_ele
+          Call AllocateOneSlabs ( gl_slabs(j, i), no_of_lines )
+      enddo
     enddo
 
     pp(1) = p
     tt(1) = t
     del_temp = 0.0_rp
 
-    losVel=losVel*0.0001_rp   ! Bill use km/sec
 
-    call get_gl_slabs_arrays(Catalog,PP(1:n_ele),TT(1:n_ele),losVel,gl_slabs,1,del_temp)
 
+    losVel=losVel*0.00_rp   ! Bill use km/sec ! The Doppler correction already been done 
+                                              ! in the FullCloudForwardModel, so set it 0
+
+    call get_gl_slabs_arrays( Catalog,PP(1:n_ele),TT(1:n_ele),losVel,gl_slabs,n_ele,del_temp)
 
     DO i = 1, n_sps
       Spectag = Catalog(i)%Spec_Tag
@@ -117,14 +132,16 @@ contains
       end do
 
       CALL create_beta(Spectag, Catalog(i)%continuum, PB, T,                 &
-        &  FF, no_of_lines, LineWidth, gl_slabs(1,i)%v0s, gl_slabs(1,i)%x1,  &
-        &  gl_slabs(1,i)%y, gl_slabs(1,i)%yi, gl_slabs(1,i)%slabs1,  bb,     &
-        &  gl_slabs(1,i)%dslabs1_dv0 )
+        &  FF, no_of_lines, LineWidth, gl_slabs(n_ele,i)%v0s, gl_slabs(n_ele,i)%x1,  &
+        &  gl_slabs(n_ele,i)%y, gl_slabs(n_ele,i)%yi, gl_slabs(n_ele,i)%slabs1,  bb, &
+        &  gl_slabs(n_ele,i)%dslabs1_dv0 )
       
       IF (Spectag .EQ. 18003) THEN
         VMR = VMR_H2O
       ELSE IF (Spectag .EQ. 32001) THEN
         VMR = VMR_O2
+      ELSE IF (Spectag .EQ. 28964) THEN
+        VMR = VMR_N2
       ELSE IF (Spectag .EQ. 34001) THEN
         VMR = VMR_O_18_O
       ELSE IF (Spectag .EQ. 20003) THEN
@@ -136,13 +153,14 @@ contains
       B = B + VMR*bb
 
       DEAllocate(LineWidth)
+
     ENDDO
 
     ABSC=B/1000._r8     ! convert km-1 to m-1
 
 !    print*, B
 
-    DEAllocate(gl_slabs)
+    Call DestroyCompleteSlabs ( gl_slabs )
     DEAllocate(pp)
     DEAllocate(tt)
 
@@ -151,6 +169,9 @@ contains
 End Module Bill_GasAbsorption
 
 ! $Log$
+! Revision 1.5  2002/06/05 18:17:14  jonathan
+!  fix bug
+!
 ! Revision 1.4  2001/11/16 00:40:44  jonathan
 ! add losVel
 !
