@@ -1358,6 +1358,7 @@ contains ! =====     Public Procedures     =============================
         v1 = b%r2(i-1)             ! starting position in B%VALUES - 1
         n = b%r2(i) - v1           ! how many values
         m = b%r1(i)                ! starting position in V
+        if (n == 0) cycle
         if ( my_sub ) then
           p(i) = p(i) - dot(n, b%values(v1+1,1), 1, v(m), 1)
         else
@@ -2094,6 +2095,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.43  2001/07/16 20:36:49  livesey
+! Added fix for empty columns in banded MatrixVector multiply
+!
 ! Revision 2.42  2001/07/11 22:07:57  vsnyder
 ! Interim commit -- may still be broken
 !
