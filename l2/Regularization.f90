@@ -214,7 +214,7 @@ contains
       ! value of the coefficients.
 
       if ( present(wtVec) ) then
-        do i = 1, n
+        do i = 1, n - ord
           j = min(i+ord,n)
           wtVec(i) = dot_product(wtVec(i:j),abs(c(0:j-i)))
         end do
@@ -236,7 +236,7 @@ contains
       ! coefficients in reverse order.
       integer :: I, J                   ! Subscripts, Loop inductors
       integer :: K                      ! Column being filled
-      integer :: MaxRow                 ! Maximum row to be filled = ncol - ord
+      integer :: MaxRow                 ! Maximum row to bed = ncol - ord
       integer :: MyOrd                  ! min(Ord, C2-C1)
       integer :: Ncol                   ! Number of columns -- C2 - C1 + 1
       integer :: Nv                     ! Next element in VALUES component
@@ -460,9 +460,9 @@ o:          do while ( c2 <= ni )
                   iq = a%col%quant(i)
                   ii = a%col%inst(i)
                   if ( weightVec%quantities(iq)%values(h,ii) /= 0.0 ) then
-                    wtVec(j-c1+1) = 1.0 / weightVec%quantities(iq)%values(h,ii)
+                    wtVec(j) = 1.0 / weightVec%quantities(iq)%values(h,ii)
                   else
-                    wtVec(j-c1+1) = 0.0
+                    wtVec(j) = 0.0
                   end if
                 end do
                 call coeffs ( myOrd, wt, c, wtVec(c1:c2-1), c2-c1 )
@@ -476,7 +476,7 @@ o:          do while ( c2 <= ni )
                 do j = i, i + myOrd
                   if ( a%block(insts(i),insts(j))%kind == m_absent ) &
                     & call updateDiagonal ( a%block(insts(i),insts(j)), 0.0_r8 )
-                  a%block(insts(i),insts(j))%values(h,1) = c(j-i) * wtVec(j)
+                  a%block(insts(i),insts(j))%values(h,1) = c(j-i) * wtVec(i)
                 end do
               end do
             end do o
@@ -596,7 +596,7 @@ o:          do while ( c2 <= a%block(ib,ib)%ncols )
                 where ( weightVec%quantities(nq)%values(c1:c2-1,ni) /= 0.0 )
                   wtVec ( c1 : c2-1 ) = 1.0 / weightVec%quantities(nq)%values(c1:c2-1,ni)
                 end where
-                call fillBlock ( a%block(ib,ib), ord, rows, c1, c2-1, wt, wtVec )
+                call fillBlock ( a%block(ib,ib), ord, rows, c1, c2-1, wt, wtVec(c1:c2-1) )
               else
                 call fillBlock ( a%block(ib,ib), ord, rows, c1, c2-1, wt )
               end if
@@ -620,6 +620,9 @@ o:          do while ( c2 <= a%block(ib,ib)%ncols )
 end module Regularization
 
 ! $Log$
+! Revision 2.32  2002/10/30 00:09:25  vsnyder
+! Fix bugs in handling wtVec -- hopefully without introducing new ones
+!
 ! Revision 2.31  2002/10/22 19:23:28  livesey
 ! Fixed the bug with hRegVweightVec not being reciprocated.
 !
