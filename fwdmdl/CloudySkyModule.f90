@@ -22,7 +22,7 @@ module CloudySkyModule
       
 contains
 
-      SUBROUTINE CLOUDY_SKY(ISPI,CWC,TEMP,F,NU,U,DU,PH,RC,IPSD,Dm, &
+  SUBROUTINE CLOUDY_SKY(ISPI,CWC,TEMP,F,NU,U,DU,PH,RC,IPSD,Dm, &
                  &          PH1,NAB,P,DP,NR,R,RN,BC,A,B,NABR)
 
 !=======================================================
@@ -130,14 +130,14 @@ contains
          PH(K)=0.
       ENDDO
 
-      DO 200 I=1,NR
+      DO I=1,NR
 
          W1=PI*R(I)*R(I)*1.E-12*RN(I)*BC(2,I)
          
          IF(W1 .GT. 0.) THEN
             SUM = 0.
 
-            DO 100 K=1,NU
+            DO K=1,NU
 
                US=SQRT(1-U(K)*U(K))
                S1=CMPLX(0.)
@@ -148,40 +148,40 @@ contains
      &               +B(I,J)*P(J,K)/US)
                   S2=S2+(2*J+1.)/J/(J+1.)*(A(I,J)*P(J,K)/US    &
      &               +B(I,J)*DP(J,K))
-               ENDDO
+               END DO
                PH1(K)=ABS(S1)**2+ABS(S2)**2
                SUM=SUM+PH1(K)*DU(K)
 
- 100        ENDDO
+            END DO   ! angle nu
    
             SUM=SUM*2           ! FACTOR 2 ACCOUNTS FOR HALF PLANE
 
             DO K=1,NU
                PH(K)=PH(K)+PH1(K)*W1/RC(2)/SUM
             ENDDO
-         ENDIF
-   
- 200  CONTINUE   
+         ENDIF       ! w1
+      End do         ! particle radius 1-nr
 
-      END SUBROUTINE CLOUDY_SKY
+   END SUBROUTINE CLOUDY_SKY
 
 
-      SUBROUTINE CLOUD_MODEL(ITYPE,CHT,YZ,NH,WC)
+   SUBROUTINE CLOUD_MODEL(ITYPE,CHT,YZ,NH,WC,Ncldsps)
 
 !=========================================================================C
 !  DEFINE VERTICAL PROFILES OF CLOUD ICE-WATER-CONTENT                    C
 !  J.JIANG -05/18/2001                                                    C
 !          -10/05/2001, MODIFIED TO FIT CLOUD RETREVIAL REQUIREMENTS      C
 !=========================================================================C
-
+      use MLSMessageModule, only: MLSMessage, MLSMSG_Error, &
+                                        & MLSMSG_Warning, MLSMSG_Deallocate
       use MLSCommon, only: r8      
 
       CHARACTER :: ITYPE
 
-      INTEGER :: NH,I
+      INTEGER :: NH,Ncldsps,isps
 
       REAL(r8) :: YZ(NH)
-      REAL(r8) :: WC(2,NH)
+      REAL(r8) :: WC(Ncldsps,NH)
 
       REAL(r8) :: CLD_TOP
       REAL(r8) :: CLD_BASE
@@ -198,19 +198,37 @@ contains
       ENDIF
 
       WCscale=0.1
+      WC = 0.0
 
-      IF(ITYPE .EQ. 'C') THEN
+      do isps=1,Ncldsps
+        Select case (itype)
+           case ('C')
+              if(isps == 1) call convective_ice
+!              if(isps == 2) call convective_liquid
+           case ('F')
+              call frontal_ice
+           case ('A')
+              call anvil_ice
+           case ('T')
+              call thin_ice
+           case default
+              call MLSMessage ( MLSMSG_Error, ModuleName, &
+               'invalid cloud profile model' )
+        end select
+      end do 
 
-!         PRINT*,' '
-!         PRINT*,' -> CLOUD-TYPE: DEEP-CONVECTIVE SYSTEM '
+      WC=WCscale*WC
 
+    contains
+      
+        ! ---------- Ice CLOUDs
+        subroutine convective_ice
+        integer :: i
          CLD_TOP   = HT + 1000.         ! CONVECTIVE CLOUD-TOP
          CLD_BASE  = HT - 11600.        ! CONVECTIVE CLOUD-BASE
          UPPER_LAG = HT - 8000.
          LOWER_LAG = HT - 10000.
-
          DO I=1,NH
-
             IF (YZ(I) .GT. CLD_TOP .OR. YZ(I) .LT. CLD_BASE) THEN
                WC(1,I) = 0.0
             ELSE IF (YZ(I).LE.UPPER_LAG .AND. YZ(I).GE.LOWER_LAG) THEN
@@ -220,20 +238,11 @@ contains
             ELSE IF (YZ(I).LT.LOWER_LAG .AND. YZ(I).GE.CLD_BASE) THEN
                WC(1,I) = 1.0*EXP(-(LOWER_LAG-YZ(I))/500.)
             ENDIF
-
-            ! LIQUID WATER CLOUD
-            
-            IF (YZ(I).GT.5000. .AND. YZ(I).LT. 10000.) THEN
-               WC(2,I) = 0.1*0.
-            ENDIF
          ENDDO
+        end subroutine convective_ice
 
-
-      ELSE IF (ITYPE .EQ. 'F') THEN
-
-!         PRINT*,' '
-!         PRINT*,' -> CLOUD-TYPE: FRONTAL SYSTEM '
-
+        subroutine frontal_ice
+        integer :: i
          CLD_TOP   = HT - 5000.         ! FRONTAL CLOUD-TOP
          CLD_BASE  = HT - 11000.        ! FRONTAL CLOUD-BASE
          UPPER_LAG = HT - 7000.
@@ -249,14 +258,12 @@ contains
             ELSE IF (YZ(I).LT.LOWER_LAG .AND. YZ(I).GE.CLD_BASE) THEN
                WC(1,I) = 1.0*EXP(-(LOWER_LAG-YZ(I))/500.)
             ENDIF
-            WC(2,I) = 0.0
          ENDDO
+        end subroutine frontal_ice
 
-      ELSE IF (ITYPE .EQ. 'A') THEN
 
-!         PRINT*,' '
-!         PRINT*,' -> CLOUD-TYPE: ANVILS'
-
+        subroutine anvil_ice
+        integer :: i
          CLD_TOP   = HT - 4000.         !ANVIL CLOUD-TOP
          CLD_BASE  = HT - 11000.        !ANVIL CLOUD-BASE
          UPPER_LAG = HT - 5000.
@@ -272,14 +279,11 @@ contains
             ELSE IF (YZ(I).LT.LOWER_LAG .AND. YZ(I).GE.CLD_BASE) THEN
                WC(1,I) = 1.0*EXP(-(LOWER_LAG-YZ(I))/600.)
             ENDIF
-            WC(2,I) = 0.0
          ENDDO
+        end subroutine anvil_ice
 
-      ELSE IF (ITYPE .EQ. 'T') THEN
-
-!         PRINT*,' '
-!         PRINT*,' -> CLOUD-TYPE: THIN-LAYER CIRRUS'
-
+        subroutine thin_ice
+        integer :: i
          CLD_TOP   = HT + 500.         !1KM THICK CLOUD LAYER
          CLD_BASE  = HT - 500.
          UPPER_LAG = HT + 200.
@@ -295,30 +299,22 @@ contains
             ELSE IF (YZ(I).LT.LOWER_LAG .AND. YZ(I).GE.CLD_BASE) THEN
                WC(1,I) = 1.0*EXP(-(HT-YZ(I))/500.)
             ENDIF
-            WC(2,I)=0.0
          ENDDO
- 
-      ELSE
+        end subroutine thin_ice
 
-        PRINT*, 'NO CLOUDS'
-       
-        DO I=1,NH
-            WC(1,I)=0.0
-            WC(2,I)=0.0
-        ENDDO
-
-      ENDIF
-
-
-        DO I=1,NH
-            WC(1,I)=WCscale*WC(1,I)
-            WC(2,I)=WCscale*WC(2,I)
-        ENDDO
-
+        ! ---------- LIQUID WATER CLOUDs
+        subroutine convective_liquid
+        integer :: i
+         do i=1,nh            
+            IF (YZ(I).GT.5000. .AND. YZ(I).LT. 10000.) THEN
+               WC(2,I) = 0.1
+            ENDIF
+         end do
+        end subroutine convective_liquid
 
 !------------------------------------------------------
 
-      END SUBROUTINE CLOUD_MODEL
+  END SUBROUTINE CLOUD_MODEL
 
 
   logical function not_used_here()
@@ -328,6 +324,9 @@ contains
 end module CloudySkyModule
 
 ! $Log$
+! Revision 2.3  2003/05/14 23:13:00  dwu
+! fix a dimension problem and modify the structure
+!
 ! Revision 2.2  2003/05/05 23:00:24  livesey
 ! Merged in feb03 newfwm branch
 !
