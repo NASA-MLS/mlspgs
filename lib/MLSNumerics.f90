@@ -247,19 +247,27 @@ CONTAINS
     INTEGER :: ind,newInd       ! Loop counters
     LOGICAL :: computeDNewByDOld   ! Set if dNewByDOld is present
 
-    INTEGER, DIMENSION(:), POINTER :: lowerInds,upperInds
-    REAL(R8), DIMENSION(:),   POINTER :: maskVector
-    REAL(R8), DIMENSION(:),   POINTER :: gap,gap2
-    REAL(R8), DIMENSION(:,:), POINTER :: spreadGap
-    REAL(R8), DIMENSION(:,:), POINTER :: oldSecond
-    REAL(R8), DIMENSION(:,:), POINTER :: oldYupper,oldYlower
-    REAL(R8), DIMENSION(:,:), POINTER :: oldSecondLower
-    REAL(R8), DIMENSION(:,:), POINTER :: oldSecondUpper
-    REAL(R8), DIMENSION(:),   POINTER :: A,B,C,D ! Coefficients
-    REAL(R8), DIMENSION(:,:), POINTER :: AA,BB,CC,DD ! Spread coefs.
-    REAL(R8), DIMENSION(:,:), POINTER :: temp ! For 2nd der. guess
-    REAL(R8), DIMENSION(:),   POINTER :: p ! For 2nd der. guess
-    REAL(R8), DIMENSION(:,:), POINTER :: tempDNewByDOld ! Dense version.
+    INTEGER, DIMENSION(:),    POINTER :: lowerInds=> NULL()
+    INTEGER, DIMENSION(:),    POINTER :: upperInds=> NULL()
+    REAL(R8), DIMENSION(:),   POINTER :: maskVector=> NULL()
+    REAL(R8), DIMENSION(:),   POINTER :: gap,gap2=> NULL()
+    REAL(R8), DIMENSION(:,:), POINTER :: spreadGap=> NULL()
+    REAL(R8), DIMENSION(:,:), POINTER :: oldSecond=> NULL()
+    REAL(R8), DIMENSION(:,:), POINTER :: oldYupper=> NULL()
+    REAL(R8), DIMENSION(:,:), POINTER :: oldYlower=> NULL()
+    REAL(R8), DIMENSION(:,:), POINTER :: oldSecondLower=> NULL()
+    REAL(R8), DIMENSION(:,:), POINTER :: oldSecondUpper=> NULL()
+    REAL(R8), DIMENSION(:),   POINTER :: A=> NULL()
+    REAL(R8), DIMENSION(:),   POINTER :: B=> NULL()
+    REAL(R8), DIMENSION(:),   POINTER :: C=> NULL()
+    REAL(R8), DIMENSION(:),   POINTER :: D=> NULL() ! Coefficients
+    REAL(R8), DIMENSION(:,:), POINTER :: AA=> NULL()
+    REAL(R8), DIMENSION(:,:), POINTER :: BB=> NULL()
+    REAL(R8), DIMENSION(:,:), POINTER :: CC=> NULL()
+    REAL(R8), DIMENSION(:,:), POINTER :: DD=> NULL() ! Spread coefs.
+    REAL(R8), DIMENSION(:,:), POINTER :: temp=> NULL() ! For 2nd der. guess
+    REAL(R8), DIMENSION(:),   POINTER :: p=> NULL() ! For 2nd der. guess
+    REAL(R8), DIMENSION(:,:), POINTER :: tempDNewByDOld=> NULL() ! Dense version.
     REAL(R8) :: sig       ! For second derivative guesser
     
     CHARACTER :: extrapolateMethod ! Tidy copy of extrapolate parameter
@@ -490,8 +498,8 @@ CONTAINS
     REAL(R8), DIMENSION(:), OPTIONAL, INTENT(OUT) :: dyByDx
     LOGICAL, OPTIONAL, INTENT(IN) :: missingRegions ! Allow missing regions
 
-    REAL(R8), DIMENSION(:,:), POINTER :: tempResult
-    REAL(R8), DIMENSION(:,:), POINTER :: tempDerivative
+    REAL(R8), DIMENSION(:,:), POINTER :: tempResult => NULL()
+    REAL(R8), DIMENSION(:,:), POINTER :: tempDerivative => NULL()
 
     ! Executable code
 
@@ -520,6 +528,9 @@ END MODULE MLSNumerics
 
 !
 ! $Log$
+! Revision 2.3  2001/03/05 01:20:36  livesey
+! Nullified pointers
+!
 ! Revision 2.2  2001/02/22 01:59:52  vsnyder
 ! Remove declarations for unused variables and parameters
 !
