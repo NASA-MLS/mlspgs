@@ -1,5 +1,5 @@
-! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
 
 !=============================================================================
 MODULE MLSStrings               ! Some low level string handling stuff
@@ -44,6 +44,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! Reverse            Turns 'a string' -> 'gnirts a'
 ! SplitWords         Splits 'first, the, rest, last' -> 'first', 'the, rest', 'last'
 ! Strings2Ints       Converts an array of strings to ints using "ichar" ftn
+! trim_safe          trims string down, but never to length 0
 ! WriteIntsToChars   Converts an array of ints to strings using Fortran write
 ! === (end of toc) ===
 
@@ -65,6 +66,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! SplitWords (char *line, char* first, char* rest, [char* last], &
 !       & [log threeWay], [char* delimiter])
 ! strings2Ints (char* strs(:), int ints(:,:))
+! char* trim_safe (char* str)
 ! writeIntsToChars (int ints(:), char* strs(:))
 ! Many of these routines take optional arguments that greatly modify
 ! their default operation
@@ -85,7 +87,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
    & LowerCase, &
    & ReadCompleteLineWithoutComments, readIntsFromChars, &
    & reformatDate, reformatTime, Reverse, &
-   & SplitWords, strings2Ints, &
+   & SplitWords, strings2Ints, trim_safe, &
    & writeIntsToChars
 
   ! hhmmss_value
@@ -992,6 +994,24 @@ contains
 
   END SUBROUTINE strings2Ints
 
+  ! -------------------------------------------------  TRIM_SAFE  -----
+  function trim_safe (STR) result (OUTSTR)
+    ! trims str returning a string of length no less than 1
+    ! similar to trim, but will return a single blank character
+    ! Useful in those cases where trim would result in strings of length 0
+    ! E.g., MakeHDFAttribute(trim(' ')) fails but
+    ! E.g., MakeHDFAttribute(trim_safe(' ')) succeeds
+    !--------Argument--------!
+    character (len=*), intent(in) :: STR
+    character (len=max(len_trim(str), 1)) :: OUTSTR
+
+    !----------Executable part----------!
+    outstr=' '
+
+    if ( len_trim(str) > 0 ) outstr=trim(str)
+
+  end function trim_safe
+
   ! --------------------------------------------------  writeIntsToChars  -----
   SUBROUTINE writeIntsToChars (ints, strs)
     ! takes an array of integers and returns string array
@@ -1160,6 +1180,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.53  2005/03/15 23:45:05  pwagner
+! Added trim_safe to stop trimming at length 1
+!
 ! Revision 2.52  2005/01/20 01:29:42  vsnyder
 ! Add CatStrings
 !
