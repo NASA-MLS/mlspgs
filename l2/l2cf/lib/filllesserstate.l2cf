@@ -64,11 +64,13 @@ begin Fill
   Fill, quantity=apriori.spaceRadiance, $
     method=explicit, explicitValues=!spaceRadiance
 
+  !ifdef(precisionEstimates,{},{
   Fill, quantity=apriori.o2, method=explicit,  $
     explicitValues=!o2vmr, /spread
 
   Fill, quantity=apriori.n2, method=explicit,  $
     explicitValues=!n2vmr, /spread
+  })
 
   ;; --------------------------------------------------- Stuff from L1BOA
 
