@@ -49,11 +49,19 @@ contains
     else if ( size(array) == 1 ) then
       if ( present(name) ) then
         call output ( name )
+        if ( myClean ) call output ( ' \ 1 ' )
         call output ( ' ' )
       end if
       call output ( array(1), '(1x,1pg13.6)', advance='yes' )
     else
-      if ( present(name) ) call output ( name, advance='yes' )
+      if ( present(name) ) then 
+        call output ( name )
+        if ( myClean ) then 
+          call output ( ' \ ' )
+          call output ( size(array) )
+        endif
+        call output ( '', advance='yes' )
+      endif
       do j = 1, size(array), 5
         if (.not. myClean) then
           call output ( j, max(4,ilog10(size(array))+1) )
@@ -89,11 +97,19 @@ contains
     else if ( size(array) == 1 ) then
       if ( present(name) ) then
         call output ( name )
+        if ( myClean ) call output ( ' \ 1 ' )
         call output ( ' ' )
       end if
       call output ( array(1), advance='yes' )
     else
-      if ( present(name) ) call output ( name, advance='yes' )
+      if ( present(name) ) then 
+        call output ( name )
+        if ( myClean ) then 
+          call output ( ' \ ' )
+          call output ( size(array) )
+        endif
+        call output ( '', advance='yes' )
+      endif
       do j = 1, size(array), 10
         if (.not. myClean) then
           call output ( j, places=max(4,ilog10(size(array))+1) )
@@ -132,11 +148,19 @@ contains
     else if ( size(array) == 1 ) then
       if ( present(name) ) then
         call output ( name )
+        if ( myClean ) call output ( ' \ 1 ' )
         call output ( ' ' )
       end if
       call output ( array(1), advance='yes' )
     else
-      if ( present(name) ) call output ( name, advance='yes' )
+      if ( present(name) ) then 
+        call output ( name )
+        if ( myClean ) then 
+          call output ( ' \ ' )
+          call output ( size(array) )
+        endif
+        call output ( '', advance='yes' )
+      endif
       do j = 1, size(array), 34
         if (.not. myClean) then
           call output ( j, max(4,ilog10(size(array))+1) )
@@ -171,13 +195,21 @@ contains
     else if ( size(array) == 1 ) then
       if ( present(name) ) then
         call output ( name )
+        if ( myClean ) call output ( ' \ 1 ' )
         call output ( ' ' )
       end if
       call output ( array(1,1), '(1x,1pg13.6)', advance='yes' )
     else if ( size(array,2) == 1 ) then
-      call dump ( array(:,1), name )
-    else
-      if ( present(name) ) call output ( name )
+      call dump ( array(:,1), name, clean=clean )
+    else 
+      if ( present(name) ) then 
+        call output ( name )
+        if ( myClean ) then 
+          call output ( ' \ ' )
+          call output ( size(array) )
+        endif
+        call output ( '', advance='yes' )
+      endif
       if ( size(array,2) >= min(5,size(array,1)) .or. myClean ) then
         call output ( '', advance='yes' )
         do i = 1, size(array,1)
@@ -232,13 +264,21 @@ contains
     else if ( size(array) == 1 ) then
       if ( present(name) ) then
         call output ( name )
+        if ( myClean ) call output ( ' \ 1 ' )
         call output ( ' ' )
       end if
       call output ( array(1,1), advance='yes' )
     else if ( size(array,2) == 1 ) then
-      call dump ( array(:,1), name )
+      call dump ( array(:,1), name, clean=clean )
     else
-      if ( present(name) ) call output ( name, advance='yes' )
+      if ( present(name) ) then 
+        call output ( name )
+        if ( myClean ) then 
+          call output ( ' \ ' )
+          call output ( size(array) )
+        endif
+        call output ( '', advance='yes' )
+      endif
       do i = 1, size(array,1)
         do j = 1, size(array,2), 10
           if (.not. myClean) then
@@ -280,15 +320,23 @@ contains
     else if ( size(array) == 1 ) then
       if ( present(name) ) then
         call output ( name )
+        if ( myClean ) call output ( ' \ 1 ' )
         call output ( ' ' )
       end if
       call output ( array(1,1,1), '(1x,1pg13.6)', advance='yes' )
     else if ( size(array,2) == 1 .and. size(array,3) == 1 ) then
-      call dump ( array(:,1,1), name )
+      call dump ( array(:,1,1), name, clean=clean )
     else if ( size(array,3) == 1 ) then
-      call dump ( array(:,:,1), name )
+      call dump ( array(:,:,1), name, clean=clean )
     else
-      if ( present(name) ) call output ( name, advance='yes' )
+      if ( present(name) ) then 
+        call output ( name )
+        if ( myClean ) then 
+          call output ( ' \ ' )
+          call output ( size(array) )
+        endif
+        call output ( '', advance='yes' )
+      endif
       do i = 1, size(array,1)
         do j = 1, size(array,2)
           do k = 1, size(array,3), 5
@@ -316,6 +364,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.9  2001/09/11 22:52:32  livesey
+! Added printing of sizes
+!
 ! Revision 2.8  2001/05/11 22:44:54  vsnyder
 ! Print transpose of 2d-double if it would take fewer lines.  Get rid of
 ! double printing of "without mask"
