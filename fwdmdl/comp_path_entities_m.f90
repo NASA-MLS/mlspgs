@@ -98,7 +98,7 @@ contains
     endif
     do k = 1, no_tan_hts
       h = tan_hts(k,l)
-      call vert_to_path ( elvar(maf), n_lvls, Ng, ngt, gl_count, WinSize, &
+      call vert_to_path ( elvar(l), n_lvls, Ng, ngt, gl_count, WinSize, &
         & MidWin, no_t, h, z_glgrid, t_glgrid(1:,lmin:lmax), &
         & h_glgrid(1:,lmin:lmax), dhdz_glgrid(1:,lmin:lmax), &
         & t_phi_basis(lmin:lmax), zpath, hpath, &
@@ -137,6 +137,9 @@ end subroutine Comp_Path_Entities
 
 end module Comp_Path_Entities_M
 ! $Log$
+! Revision 1.30  2001/04/23 22:12:08  livesey
+! Whoops, bug fix.
+!
 ! Revision 1.29  2001/04/23 21:56:25  livesey
 ! Accepts closestInstances as parameter
 !
