@@ -41,6 +41,7 @@ module ForwardModelSupport
   integer, parameter :: BadQuantityType      = NoMolecule + 1
   integer, parameter :: WrongUnitsForWindow  = BadQuantityType + 1
   integer, parameter :: NeedBothXYStar       = WrongUnitsForWindow + 1
+  integer, parameter :: PolarizedAndAllLines = NeedBothXYStar + 1
 
   integer :: Error            ! Error level -- 0 = OK
 
@@ -309,8 +310,8 @@ contains ! =====     Public Procedures     =============================
     use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST
     use Init_Tables_Module, only: L_FULL, L_SCAN, L_LINEAR, L_CLOUDFULL, L_HYBRID, &
       & L_POLARLINEAR
-    use Init_Tables_Module, only: F_ALLLINESFORRADIOMETER, F_ATMOS_DER, &
-      & F_BINSELECTORS, F_CHANNELS, F_CLOUD_DER, &
+    use Init_Tables_Module, only: F_ALLLINESFORRADIOMETER, F_ALLLINESINCATALOG, &
+      & F_ATMOS_DER, F_BINSELECTORS, F_CHANNELS, F_CLOUD_DER, &
       & F_DEFAULT_spectroscopy, F_DIFFERENTIALSCAN, F_DO_BASELINE, F_DO_CONV, &
       & F_DO_FREQ_AVG, F_DO_1D, F_FREQUENCY, F_I_SATURATION, F_INCL_CLD, &
       & F_FORCESIDEBANDFRACTION, F_INTEGRATIONGRID, F_LOCKBINS, F_MODULE, F_MOLECULES, &
@@ -377,6 +378,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Set sensible defaults
     info%allLinesForRadiometer = .false.
+    info%allLinesInCatalog = .false.
     info%atmos_der = .false.
     info%cloud_der = l_none
     info%DEFAULT_spectroscopy = .false.
@@ -420,6 +422,8 @@ contains ! =====     Public Procedures     =============================
       select case ( field )
       case ( f_allLinesForRadiometer )
         info%allLinesForRadiometer = get_boolean(son)
+      case ( f_allLinesInCatalog )
+        info%allLinesInCatalog = get_boolean(son)
       case ( f_atmos_der )
         info%atmos_der = get_boolean(son)
       case  ( f_binSelectors )
@@ -605,6 +609,10 @@ contains ! =====     Public Procedures     =============================
 
       ! Make sure signal specifications make sense; get sideband Start/Stop
       call validateSignals
+
+      ! Cannot specify allLinesInCatalog and polarized
+      if ( info%allLinesInCatalog .and. info%polarized ) &
+        & call AnnounceError ( PolarizedAndAllLines, root )
     case ( l_cloudfull )
 
       ! full cloud forward model
@@ -856,6 +864,9 @@ contains ! =====     Public Procedures     =============================
     case ( NeedBothXYStar )
       call output ( 'x/yStar must either be both present or both absent', &
         & advance='yes' )
+    case ( PolarizedAndAllLines )
+      call output ( 'cannot specify both polarized and allLinesInCatalog', &
+        & advance='yes' )
     case default
       call output ( '(no specific description of this error)', advance='yes' )
     end select
@@ -869,6 +880,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.90  2004/03/22 18:24:40  livesey
+! Added handling of AllLinesInCatalog flag.
+!
 ! Revision 2.89  2004/03/05 18:32:55  livesey
 ! Bug fix, but commented out for the moment, as I need to get a test
 ! going.
