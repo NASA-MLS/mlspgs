@@ -482,9 +482,14 @@ contains ! =====     Public Procedures     =============================
           if ( .not. gotAlready ) then
             ! No, well read it then, add its entire contents to the database
             call read_climatology ( FileNameString, son, &
-              & GriddedDatabase, mlspcf_l2apriori_start, mlspcf_l2apriori_end, &
+              & GriddedDatabase, returnStatus, &
+              & mlspcf_l2apriori_start, mlspcf_l2apriori_end, &
               & missingValue )
+            if ( returnStatus /= 0 ) &
+              & call Announce_error ( field, &                               
+              & 'read_climatology unsuccessful--check file name and path')  
           end if
+          if ( .not. associated(GriddedDatabase) ) cycle  ! Last chance
        
           ! Locate requested grid by name, store index in gridIndex
           ! Check that field name is among those added by the source field
@@ -644,6 +649,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.55  2004/06/23 17:13:34  pwagner
+! Should quit gracefully if climatolgy file not found
+!
 ! Revision 2.54  2004/01/23 01:10:58  pwagner
 ! Gets max swathlist length from L2GPData
 !
