@@ -23,6 +23,7 @@ PROGRAM dateconverter
   type options_T
     logical     :: verbose = .false.
     character(len=255) :: outputFormat= ' '        ! output format
+    character(len=255) :: inputFormat= ' '         ! input format
   end type options_T
 
   type ( options_T ) :: options
@@ -73,11 +74,12 @@ PROGRAM dateconverter
   enddo
   do i=1, n_dates
     date = dates(i)
-    fromForm = trim(dateForm(date))
+    fromForm = dateForm(date)
+    if ( len_trim(options%inputFormat) > 0 ) fromForm = options%inputFormat
     ! Figure out logical format to convert it to
     if ( options%outputFormat /= ' ' ) then
       toForm = options%outputFormat
-    elseif ( index(fromForm, 'doy') > 0 ) then
+    elseif ( index(lowercase(fromForm), 'doy') > 0 ) then
       toForm = MFORMAT
     else
       toForm = DOYFORMAT
@@ -163,7 +165,7 @@ contains
     i = 0
     j = 0
     do
-      if ( i >= len_trim(date) ) exit
+      if ( j >= len_trim(date) ) exit
       i = i + 1
       j = j + 1
       select case (date(j:j))
@@ -171,16 +173,18 @@ contains
         form(i:i+2) = 'doy'
         i = i + 3
         j = j + 3
+        ! print *, 'After d field: ', form
       case ('J', 'F', 'M', 'A', 'S', 'O', 'N', 'D')
-        month = monthNameToNumber(date(i:))
+        month = monthNameToNumber(date(j:))
         if ( month < 1 .or. month > 12 ) then
-          form = 'month name uncrecognized in ' // trim(date(i:))
+          form = 'month name uncrecognized in ' // trim(date(j:))
           return
         endif
         j = j + len_trim(MONTHNAME(month)) - 1
         form(i:i) = 'M'
         s = 'd'
         ! write(tempFormat(5:6),'(i2.2)') month
+        ! print *, 'After M field: ', form
       case ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9')
         select case (s)
         case ('m')
@@ -189,24 +193,28 @@ contains
           s = 'd'
           i = i + 1
           j = j + 1
+          ! print *, 'After 0-9  m field: ', form
         case ('d')
           ! Was mm, now dd
           form(i:i+1) = 'dd'
           s = ' '
           i = i + 1
           j = j + 1
+          ! print *, 'After 0-9  d field: ', form
         case ('y')
           ! yyyy
           form(i:i+3) = 'yyyy'
           s = 'm'
           i = i + 3
           j = j + 3
+          ! print *, 'After 0-9  y field: ', form
         case default
           ! Huh? Already finished with dd
           print *, 'Unexpected digit in dateForm'
         end select
       case default
         form(i:i) = date(j:j)
+        ! print *, 'After default field: ', form
       end select
     enddo
   end function dateForm
@@ -246,6 +254,10 @@ contains
       if ( date(1:1) /= '-' ) exit
       if ( date(1:3) == '-h ' ) then
         call print_help
+      elseif ( date(1:3) == '-i ' ) then
+        call getarg ( i+1+hp, options%inputFormat )
+        i = i + 1
+        exit
       elseif ( date(1:3) == '-o ' ) then
         call getarg ( i+1+hp, options%outputFormat )
         i = i + 1
@@ -280,6 +292,8 @@ contains
       write (*,*) ' Options: -o format   => output format to use (e.g. yyyymmdd)'
       write (*,*) '                        by default output will complement input'
       write (*,*) '                        e.g., "2004 October 01" <=> 2004-d275'
+      write (*,*) '          -i format   => input format'
+      write (*,*) '                        by default attempt to auto-recognize'
       write (*,*) '          -v          => switch on verbose mode'
       write (*,*) '          -h          => print brief help'
       stop
@@ -295,3 +309,6 @@ END PROGRAM dateconverter
 !==================
 
 ! $Log$
+! Revision 1.2  2004/10/12 23:42:29  pwagner
+! Suitable for shell substitution tasks now
+!
