@@ -12,9 +12,10 @@ module Open_Init
   use INIT_TABLES_MODULE, only: F_FILE, F_SWATH, S_L2AUX, S_L2GP
   use L2AUXData, only: AddL2AUXToDatabase, L2AUXData_T, ReadL2AUXData
   use L2GPData, only: AddL2GPToDatabase, L2GPData_T, ReadL2GPData
+  use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: FileNameLen, L1BInfo_T, TAI93_Range_T
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
-    &                         MLSMSG_Error, MLSMSG_FileOpen!, MLSMSG_Info
+!  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
+!    &                         MLSMSG_Error, MLSMSG_FileOpen!, MLSMSG_Info
   use MLSPCF2, only: MLSPCF_L1B_OA_START, MLSPCF_L1B_RAD_END, &
     &                MLSPCF_L1B_RAD_START, MLSPCF_NOMEN_START, &
     &                mlspcf_pcf_start
@@ -28,7 +29,7 @@ module Open_Init
   use Toggles, only: Gen, Levels, Switches, Toggle
   use Trace_M, only: Trace_begin, Trace_end
   use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, &
-    &             SUB_ROSA, SUBTREE
+    &             SUB_ROSA, SUBTREE, DUMP_TREE_NODE, SOURCE_REF
   use TREE_TYPES, only: N_NAMED!, N_DOT
   use WriteMetadata, only: PCFData_T
 
@@ -46,36 +47,22 @@ module Open_Init
   !-----------------------------------------------------------------------------
 
     integer, parameter :: CCSDSLen=27
+  integer, private :: ERROR
 
 contains ! =====     Public Procedures     =============================
-
-  ! ------------------------------------------------  Close_MLSCF  -----
-  subroutine Close_MLSCF ( CF_Unit )
-
-    integer, intent(in) :: CF_Unit
-
-    character (len=32) :: Mnemonic
-    character (len=256) :: Msg
-    integer :: ReturnStatus
-
-    returnStatus = Pgs_io_gen_closeF ( CF_Unit )
-
-    if ( returnStatus /= PGS_S_SUCCESS ) then
-      call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Error closing L2CF:  '//mnemonic//' '//msg)
-    end if
-
-  end subroutine Close_MLSCF
 
   ! ---------------------------------------------  DestroyL1BInfo  -----
   subroutine DestroyL1BInfo ( L1BInfo )
     type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
     integer :: STATUS ! from deallocate
+    error = 0
     if (associated(l1bInfo%L1BRADIDs)) then
        deallocate( l1bInfo%L1BRADIDs, stat=status )
-       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & MLSMSG_DeAllocate // "l1bInfo" )
+       if ( status /= 0 ) then
+		 !	call MLSMessage ( MLSMSG_Error, ModuleName, &
+       !     & MLSMSG_DeAllocate // "l1bInfo" )
+		call announce_error(0, 'Error deallocating L1BRADIDs')
+    endif
     endif
   end subroutine DestroyL1BInfo
 
@@ -96,6 +83,7 @@ contains ! =====     Public Procedures     =============================
     CHARACTER (LEN=1), POINTER :: anText(:)
 
     !Local Variables
+    logical, parameter :: DEBUG = .FALSE.
     integer, parameter :: CCSDSEndId = 10412
     integer, parameter :: CCSDSStartId = 10411
 
@@ -114,18 +102,25 @@ contains ! =====     Public Procedures     =============================
 
     integer :: pgs_td_utctotai, pgs_pc_getconfigdata
 
+    error = 0
     if ( toggle(gen) ) call trace_begin ( "OpenAndInitialize" )
+
+	if(DEBUG) call announce_error(0, &
+	& 'Read the PCF into an annotation for file headers')
+
 ! Read the PCF into an annotation for file headers
 
       CALL CreatePCFAnnotation(mlspcf_pcf_start, anText)
 
     ifl1 = 0
 
+	if(DEBUG) call announce_error(0, 'Opening L1 RAD files')
+
     ! Open L1 RAD files
+    do L1FileHandle = mlspcf_l1b_rad_start, mlspcf_l1b_rad_end
+
     ! Get the l1 file name from the PCF
     L1_Version = 1
-
-    do L1FileHandle = mlspcf_l1b_rad_start, mlspcf_l1b_rad_end
 
       returnStatus = Pgs_pc_getReference(L1FileHandle, L1_Version, &
         & L1physicalFilename)
@@ -137,14 +132,18 @@ contains ! =====     Public Procedures     =============================
         ! Allocate L1BRADIDs
 
         allocate( l1bInfo%L1BRADIDs(10), stat=status )
-        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & MLSMSG_Allocate // "l1bInfo" )
+        if ( status /= 0 ) then
+!		  	call MLSMessage ( MLSMSG_Error, ModuleName, &
+!          & MLSMSG_Allocate // "l1bInfo" )
+			call announce_error(0, 'Allocation failed for L1BRADIDs')
+			endif
 
         sd_id = sfstart(L1physicalFilename, DFACC_READ)
         if (sd_id == -1) then
-          call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & "Error opening L1RAD file "//L1physicalFilename )
-
+!          call MLSMessage ( MLSMSG_Error, ModuleName, &
+!            & "Error opening L1RAD file "//L1physicalFilename )
+				call announce_error(0, &
+				& 'Error opening L1RAD file: ' //L1physicalFilename)
         else
           ifl1 = ifl1 + 1
           l1bInfo%L1BRADIDs(ifl1) = sd_id
@@ -155,6 +154,7 @@ contains ! =====     Public Procedures     =============================
     !if (ifl1 == 0) call MLSMessage ( MLSMSG_Error, ModuleName, &
     !  & "Could not find any L1BRAD files" )
 
+	if(DEBUG) call announce_error(0, 'Opening LOA file')
     ! Open L1OA File
 
     L1_Version = 1
@@ -168,40 +168,53 @@ contains ! =====     Public Procedures     =============================
       sd_id = sfstart(L1physicalFilename, DFACC_READ)
       if (sd_id == -1) then
 
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & "Error opening L1OA file "//L1physicalFilename )
-
+!        call MLSMessage ( MLSMSG_Error, ModuleName, &
+!          & "Error opening L1OA file "//L1physicalFilename )
+			call announce_error(0, "Error opening L1OA file "//L1physicalFilename )
       else
         l1bInfo%L1BOAID = sd_id
       end if
 
     else
 
-      call MLSMessage ( MLSMSG_Error, ModuleName, "Could not find L1BOA file" )
+!      call MLSMessage ( MLSMSG_Error, ModuleName, "Could not find L1BOA file" )
+			call announce_error(0, "Could not find L1BOA file" )
 
     end if
 
     ! Get the Start and End Times from PCF
 
     returnStatus = pgs_pc_getconfigdata (CCSDSStartId, CCSDSStartTime)
-    if ( returnstatus /= PGS_S_SUCCESS ) call MLSMessage ( MLSMSG_Error, &
-      & ModuleName, "Could not get CCSDS Start Time" )
+    if ( returnstatus /= PGS_S_SUCCESS ) then
+	! call MLSMessage ( MLSMSG_Error, &
+   !   & ModuleName, "Could not get CCSDS Start Time" )
+			call announce_error(0, "Could not get CCSDS Start Time" )
+	endif
 
     returnStatus = pgs_td_utctotai (CCSDSStartTime, processingrange%starttime)
     !   ??? Is PGSTD_E_NO_LEAP_SECS an OK status ???
     if ( returnstatus /= PGS_S_SUCCESS .and. &
-      &  returnstatus /= PGSTD_E_NO_LEAP_SECS ) call MLSMessage ( MLSMSG_Error, &
-      & ModuleName, "Could not convert UTC Start time to TAI" )
+      &  returnstatus /= PGSTD_E_NO_LEAP_SECS ) then
+	!	call MLSMessage ( MLSMSG_Error, &
+   !   & ModuleName, "Could not convert UTC Start time to TAI" )
+			call announce_error(0, "Could not convert UTC Start time to TAI" )
+	endif
 
     returnStatus = pgs_pc_getconfigdata (CCSDSEndId, CCSDSEndTime)
-    if ( returnstatus /= PGS_S_SUCCESS ) call MLSMessage ( MLSMSG_Error, &
-      & ModuleName, "Could not get CCSDS End Time" )
+    if ( returnstatus /= PGS_S_SUCCESS ) then
+	 !	call MLSMessage ( MLSMSG_Error, &
+    !  & ModuleName, "Could not get CCSDS End Time" )
+			call announce_error(0, "Could not get CCSDS End Time" )
+	endif
 
     returnStatus = pgs_td_utctotai (CCSDSEndTime, processingrange%endtime)
     !   ??? Is PGSTD_E_NO_LEAP_SECS an OK status ???
     if ( returnstatus /= PGS_S_SUCCESS .and. &
-      & returnstatus /= PGSTD_E_NO_LEAP_SECS) call MLSMessage ( MLSMSG_Error, &
-      & ModuleName, "Could not convert UTC Start time to TAI" )
+      & returnstatus /= PGSTD_E_NO_LEAP_SECS) then
+	!	call MLSMessage ( MLSMSG_Error, &
+   !   & ModuleName, "Could not convert UTC Start time to TAI" )
+			call announce_error(0, "Could not convert UTC End time to TAI" )
+	endif
 
 	! -- May need to change these if we have
 	!    configuration parameters introduced into PCF file
@@ -226,8 +239,12 @@ contains ! =====     Public Procedures     =============================
       mlspcf_log = 10101			! This seems to be hard-wired into PCF
 
       returnStatus = Pgs_pc_getReference(mlspcf_log, version, name)
-      IF (returnStatus /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, &
-                        ModuleName, 'Error retrieving log file name from PCF.')
+      IF (returnStatus /= PGS_S_SUCCESS) then
+		!	CALL MLSMessage(MLSMSG_Error, &
+      !                  ModuleName, 'Error retrieving log file name from PCF.')
+			call announce_error(0, "Error retrieving log file name from PCF" )
+	endif
+
       indx = INDEX(name, '/', .TRUE.)
       l2pcf%logGranID = name(indx+1:)
  
@@ -240,30 +257,6 @@ contains ! =====     Public Procedures     =============================
     return
 
   end subroutine OpenAndInitialize
-
-  ! -------------------------------------------------  Open_MLSCF  -----
-  subroutine Open_MLSCF ( MLSPCF_Start, CF_Unit )
-
-    integer, intent(in) :: MLSPCF_Start
-    integer, intent(out) :: CF_Unit
-
-    integer :: L2CF_Version
-    character (len=32) :: Mnemonic
-    character (len=256) :: Msg
-    integer :: ReturnStatus
-
-    !   Open the MLSCF as a generic file for reading
-    L2CF_Version = 1
-    returnStatus = Pgs_io_gen_openF ( mlspcf_start, PGSd_IO_Gen_RSeqFrm, &
-      &                               0, CF_Unit, L2CF_Version)
-
-    if ( returnStatus /= PGS_S_SUCCESS ) then
-      call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & "Error opening MLSCF:  "//mnemonic//"  "//msg)
-    end if
-
-  end subroutine Open_MLSCF
 
   ! -------------------------------------------------  dump_L1B_database  -----
   subroutine dump_L1B_database(num_l1b_files, l1binfo, l2pcf, &
@@ -330,12 +323,76 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine dump_L1B_database
 
+  ! ------------------------------------------------  announce_error  -----
+  subroutine announce_error ( lcf_where, full_message, use_toolkit, &
+  & error_number )
+  
+   ! Arguments
+	
+	integer, intent(in)    :: lcf_where
+	character(LEN=*), intent(in)    :: full_message
+	logical, intent(in), optional :: use_toolkit
+	integer, intent(in), optional    :: error_number
+
+	! Local
+  logical :: just_print_it
+  logical, parameter :: default_output_by_toolkit = .true.
+	
+	if(present(use_toolkit)) then
+		just_print_it = use_toolkit
+	elseif(default_output_by_toolkit) then
+		just_print_it = .false.
+	else
+		just_print_it = .true.
+	endif
+	
+	if(.not. just_print_it) then
+    error = max(error,1)
+    call output ( '***** At ' )
+
+	if(lcf_where > 0) then
+	    call print_source ( source_ref(lcf_where) )
+		else
+    call output ( '(no lcf node available)' )
+		endif
+
+    call output ( ': ' )
+    call output ( "The " );
+	if(lcf_where > 0) then
+    call dump_tree_node ( lcf_where, 0 )
+		else
+    call output ( '(no lcf tree available)' )
+		endif
+
+		CALL output("Caused the following error:", advance='yes', &
+		& from_where=ModuleName)
+		CALL output(trim(full_message), advance='yes', &
+		& from_where=ModuleName)
+		if(present(error_number)) then
+			CALL output('error number ', advance='no')
+			CALL output(error_number, places=9, advance='yes')
+		endif
+	else
+		print*, '***Error in module ', ModuleName
+		print*, trim(full_message)
+		if(present(error_number)) then
+			print*, 'error number ', error_number
+		endif
+	endif
+
+!===========================
+  end subroutine announce_error
+!===========================
+
 end module Open_Init
 
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.28  2001/04/05 23:40:50  pwagner
+! Deleted open_mlscf and close_mlscf and all MLSMessages
+!
 ! Revision 2.27  2001/04/04 23:46:18  pwagner
 ! Added trace_*, dump_l1b_database
 !
