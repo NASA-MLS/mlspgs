@@ -4,10 +4,17 @@
 ! This subroutine only works in Init_Tables_Module, where it should be
 ! included by an include line.
 
-  subroutine MAKE_TREE ( IDS )
+  subroutine MAKE_TREE ( IDS, CONTINUE )
   ! Build a tree specified by the "ids" array.  "begin" marks the
   ! beginning of a tree.  A tree-node marks the end of the corresponding
   ! tree.  Pseudo-terminals are decorated with their indices.
+
+  ! If "continue" is absent or false, it is assumed that Make_Tree is starting
+  ! on an entirely new subtree.
+
+  ! If "continue" is present and true, it is assumed that Make_Tree is
+  ! continuing work on a previously-started subtree.  This is accomplished
+  ! by not making the internal stack initially empty.
 
     ! You may need to copy this USE statement to the routine or module
     ! that incorporates this one by "include", because "make depends" can't
@@ -16,9 +23,12 @@
     implicit NONE
 
     integer, intent(in) :: IDS(:)
+    logical, intent(in), optional :: CONTINUE
 
     integer, save :: CALLNO = 0    ! Which call to Make_Tree -- for error msg.
-    integer :: DECOR, I, J, K, ITEM, M, N_IDS, STACK(0:30), STRING, WHICH
+    integer :: DECOR, I, J, K, ITEM, N_IDS, STRING, WHICH
+    integer, save :: M = 0, STACK(0:30) = 0
+    logical :: MyCont
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -26,15 +36,22 @@
   character (len=len(idParm)) :: Id = idParm
 !---------------------------------------------------------------------------
 
+    myCont = .false.
+    if ( present(continue) ) myCont = continue
+
     callno = callno + 1
     n_ids = size(ids)
-    m = 0
-    stack(0) = 0 ! just so it's defined, in case it gets incremented
-                 ! after build_tree
-    if ( ids(1) >= 0 ) then
-      m = 1
-      stack(1) = 0
+
+    if ( .not. myCont ) then
+      m = 0
+      stack(0) = 0 ! just so it's defined, in case it gets incremented
+                   ! after build_tree
+      if ( ids(1) >= 0 ) then
+        m = 1
+        stack(1) = 0
+      end if
     end if
+
     do i = 1, n_ids
       if ( ids(i) == begin ) then
         m = m + 1
@@ -97,6 +114,9 @@
   end subroutine MAKE_TREE
 
 ! $Log$
+! Revision 1.5  2001/06/07 21:56:55  pwagner
+! Added Copyright statement
+!
 ! Revision 1.4  2001/04/04 17:59:17  vsnyder
 ! Add a comment about adding "USE TREE" in the including scoping unit, because
 ! "make depends" can't see the "use" here (because of the "include").
