@@ -99,6 +99,7 @@ program MLSL2
   integer :: J                     ! index within option
   character(len=2048) :: LINE           ! Into which is read the command args
   integer :: N                     ! Offset for start of --'s text
+  integer :: RECL = 10000          ! Record length for l2cf
   integer :: ROOT                  ! of the abstract syntax tree
   integer :: SINGLECHUNK = 0       ! Just run one chunk
   integer :: STATUS                ! From OPEN
@@ -184,8 +185,6 @@ program MLSL2
         garbage_collection_by_dt = switch
       else if ( line(3+n:6+n) == 'kit ' ) then
         MLSMessageConfig%useToolkit = switch
-      else if ( line(3+n:7+n) == 'meta ' ) then
-        createMetadata = switch
       else if ( line(3+n:9+n) == 'master ' ) then
         copyArg = .false.
         parallel%master = .true.
@@ -196,13 +195,18 @@ program MLSL2
         word = '--slave'
         write ( word(len_trim(word)+1:), * ) parallel%myTid
         call AccumulateSlaveArguments(word)
+      else if ( line(3+n:7+n) == 'meta ' ) then
+        createMetadata = switch
       else if ( line(3+n:6+n) == 'pcf ' ) then
         pcf = switch
-      else if ( line(3+n:9+n) == 'submit ' ) then
-        copyArg = .false.
+      else if ( line(3+n:7+n) == 'recl ' ) then
         i = i + 1
         call getarg ( i, line )
-        parallel%submit = trim ( line )
+        read ( line, *, iostat=status ) recl
+        if ( status /= 0 ) then
+          call io_error ( "After --recl option", status, line )
+          stop
+        end if
       else if ( line(3+n:7+n) == 'slave' ) then
         copyArg=.false.
         parallel%slave = .true.
@@ -219,6 +223,11 @@ program MLSL2
         end if
       else if ( line(3+n:8+n) == 'snoop ' ) then
         snoopingActive = .true.
+      else if ( line(3+n:9+n) == 'submit ' ) then
+        copyArg = .false.
+        i = i + 1
+        call getarg ( i, line )
+        parallel%submit = trim ( line )
       else if ( line(3+n:5+n) == 'tk ' ) then
         toolkit = switch
       else if ( line(3+n:10+n) == 'version ' ) then
@@ -346,7 +355,7 @@ program MLSL2
   if ( line /= ' ' ) then
     L2CF_file = line
     open ( l2cf_unit, file=line, status='old', &
-      & form='formatted', access='sequential', iostat=status )
+      & form='formatted', access='sequential', recl=recl, iostat=status )
     if ( status /= 0 ) then
       L2CF_file = trim(line) // L2CFNAMEEXTENSION
       open ( l2cf_unit, file=trim(line) // L2CFNAMEEXTENSION, status='old', &
@@ -475,7 +484,7 @@ contains
   ! Unfortunately, we have not yet decided which method to use
   ! until *after* processing all the options.
   
-  subroutine switch_usage
+  subroutine Switch_usage
     print *, 'Switch usage: -S"sw1 sw2 .. swn" or -Ssw1 -Ssw2 ..'
     print *, ' where each of the swk may be one of the following'
    ! (This incorporates automatic source code replacement by
@@ -485,9 +494,9 @@ contains
     print *, '  A => AntennaPatterns'
    ! === (end of automatic usage lines) ===
     stop
-  end subroutine switch_usage
+  end subroutine Switch_usage
 
-  subroutine option_usage
+  subroutine Option_usage
     call getarg ( 0+hp, line )
     print *, 'Usage: ', trim(line), ' [options] [--] [L2CF-name]'
     print *, ' Options:'
@@ -498,9 +507,9 @@ contains
     print *, '  -A: Dump the un-decorated abstract syntax tree.'
    ! === (end of automatic option lines) ===
     stop
-  end subroutine option_usage
+  end subroutine Option_usage
 
-  subroutine dump_settings
+  subroutine Dump_settings
   ! Show current run-time settings resulting from
   ! command-line, MLSL2Options, etc.
     call output(' mlsl2 called with command line options: ', advance='no')
@@ -565,11 +574,14 @@ contains
       call output(' ----------------------------------------------------------', &
         & advance='yes')
     endif
-  end subroutine dump_settings
+  end subroutine Dump_settings
 
 end program MLSL2
 
 ! $Log$
+! Revision 2.73  2002/05/23 20:57:57  vsnyder
+! Add --recl option, some cosmetic changes
+!
 ! Revision 2.72  2002/05/14 00:26:49  livesey
 ! Larger table sizes (may be unnecessary)
 !
