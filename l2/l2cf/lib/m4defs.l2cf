@@ -17,10 +17,11 @@ changesyntax({@!})
 ; Make _ not a possible part of m4 names
 !changesyntax({O_})
 ; Define a very simple for loop prototcol
+; Increment $1 from $2 to $3, doing $4
 !define({forloop},
   {!pushdef({$1}, {$2})!forloopint({$1}, {$2}, {$3}, {$4})!popdef({$1})})
-!define(forloopint,{$4{}!ifelse(!$1, {$3}, ,
-    {!define({$1}, !incr(!$1))!forloopint({$1}, {$2}, {$3}, {$4})})})
+!define(forloopint,{!ifelse(!eval(!$1<={$3}),1,{$4{}!ifelse(!$1, {$3}, ,
+    {!define({$1}, !incr(!$1))!forloopint({$1}, {$2}, {$3}, {$4})})},{})})
 ; ------------------------------------------------------------------
 ; This next bit commented out as never really made use of it
 ; Redefine include to do fancy stuff for error checking.
