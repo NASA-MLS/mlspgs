@@ -18,7 +18,8 @@ begin Fill
   a$1: Vector, template=x$1Template
   t$1: Vector, template=x$1Template
   l$1: Vector, template=x$1Template
-  r$1: Vector, template=x$1Template
+  vr$1: Vector, template=x$1Template
+  hr$1: Vector, template=x$1Template
   sdIn$1: Vector, template=x$1Template
   sdOut$1: Vector, template=x$1Template
   ;; Define measurement related vectors
@@ -32,7 +33,8 @@ begin Fill
   Transfer, source=apriori, destination=a$1
   Transfer, source=aprioriPrecision, destination=sdIn$1
   Transfer, source=length, destination=l$1
-  Transfer, source=reg, destination=r$1
+  Transfer, source=vReg, destination=vr$1
+  Transfer, source=hReg, destination=hr$1
   ;; Construct and fill state covariance
   myCovariance$1: matrix, columns=a$1, type=spd
   FillCovariance, matrix=myCovariance$1, diagonal=sdIn$1, /invert, lengthScale=l$1
@@ -127,7 +129,8 @@ joinedDGM_$2_precision: l2aux, source=outputPrecision.$1, sdName='$3 precision'
 !define(retrievalArguments,{state=x$1, fwdModelExtra=state, $
   measurements=y$1, measurementSD=yNoise$1, $
   apriori=a$1, covariance=myCovariance$1, $
-  outputSD=sdOut$1, fwdModelOut=f$1})
+  outputSD=sdOut$1, fwdModelOut=f$1, $
+  vRegWeightVec=vr$1, hRegWeightVec=hr$1})
 
 ;; This macro is used in sids runs to get the band number part of a band
 ;; specifier (i.e. strip off the sideband if it is present)
@@ -136,6 +139,9 @@ joinedDGM_$2_precision: l2aux, source=outputPrecision.$1, sdName='$3 precision'
 !define(nbw,{!nbw$1})
 
 ; $Log$
+; Revision 1.17  2002/08/23 23:26:29  livesey
+; Made the FWM rad stuff report the actual signal
+;
 ; Revision 1.16  2002/08/15 22:46:00  livesey
 ; Added regularization vector
 ;
