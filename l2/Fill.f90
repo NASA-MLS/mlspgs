@@ -1841,6 +1841,7 @@ contains ! =====     Public Procedures     =============================
     ! -------------------------------------- FillVectorQuantityFromProfile --
     subroutine FillVectorQtyFromProfile ( key, quantity, valuesNode, &
       & instancesNode, globalUnit, dontMask )
+      use MLSNumerics, only: HUNT
       ! This fill is slightly complicated.  Given a values array along
       ! the lines of [ 1000mb : 1.0K, 100mb : 1.0K,  10mb : 2.0K] etc. it
       ! does the linear interpolation appropriate to perform the fill.
@@ -1867,6 +1868,7 @@ contains ! =====     Public Procedures     =============================
       logical, dimension(:), pointer :: INSTANCES ! Flags
       real (r8), dimension(2) :: EXPRVALUE ! Value of expression
       integer, dimension(2) :: EXPRUNIT   ! Unit for expression
+      integer, dimension(:), pointer :: ININDS ! Indices
 
       ! Executable code
 
@@ -1922,6 +1924,17 @@ contains ! =====     Public Procedures     =============================
       else
         localOutHeights = .false.
         outHeights => quantity%template%surfs(:,1)
+      end if
+
+      ! Now, if the quantity is coherent, let's assume the user wanted the
+      ! 'nearest' values
+      if ( quantity%template%coherent ) then
+        nullify ( inInds )
+        call allocate_test ( inInds, noPoints, 'inInds', ModuleName )
+        call hunt ( outHeights, heights, inInds, &
+          & nearest=.true., allowTopValue=.true. )
+        heights = outHeights ( inInds )
+        call deallocate_test ( inInds, 'inInds', ModuleName )
       end if
 
       ! Now do the interpolation for the first instance
@@ -4544,6 +4557,10 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.163  2002/11/14 17:28:01  livesey
+! Made the profile fill do a 'nearest' on the input heights in the case of
+! coherent quantities.
+!
 ! Revision 2.162  2002/11/13 01:06:42  pwagner
 ! Fixed small bug
 !
