@@ -19,9 +19,10 @@ module WriteMetadata ! Populate metadata and write it out
   use SDPToolkit, only: FileNameLen, PGSd_MET_GROUP_NAME_L, &
     & PGSd_MET_NUM_OF_GROUPS, PGSd_PC_FILE_PATH_MAX, PGS_PC_GetReference, &
     & PGSPC_W_NO_REFERENCE_FOUND, PGS_S_SUCCESS, PGSMET_W_METADATA_NOT_SET, &
-    & PGS_MET_init, PGS_MET_setattr_d, &
-      &  PGS_MET_setAttr_s, PGS_MET_setattr_i, &
-      &  PGS_MET_write, PGS_MET_remove, PGS_PC_getconfigdata
+   & PGS_PC_getconfigdata!, &
+!    & PGS_MET_init, PGS_MET_setattr_d, &
+!      &  PGS_MET_setAttr_s, PGS_MET_setattr_i, &
+!      &  PGS_MET_write, PGS_MET_remove
   use TREE, only: DUMP_TREE_NODE, SOURCE_REF
 
   implicit none
@@ -171,9 +172,9 @@ contains
 
     ! Externals
 
-!    integer, external :: PGS_MET_init, PGS_MET_setattr_d, &
-!      &  PGS_MET_setAttr_s, PGS_MET_getsetattr_d, PGS_MET_setattr_i, &
-!      &  PGS_MET_write, PGS_MET_remove
+    integer, external :: PGS_MET_init, PGS_MET_setattr_d, &
+      &  PGS_MET_setAttr_s, PGS_MET_getsetattr_d, PGS_MET_setattr_i, &
+      &  PGS_MET_write, PGS_MET_remove
 
     ! Executable code
 
@@ -285,9 +286,9 @@ contains
 
     ! Externals
 
-!    integer, external :: PGS_MET_init, PGS_MET_setattr_d, &
-!      &  PGS_MET_setAttr_s, PGS_MET_getsetattr_d, PGS_MET_SETATTR_I, &
-!      &  PGS_MET_write, PGS_MET_remove
+    integer, external :: PGS_MET_init, PGS_MET_setattr_d, &
+      &  PGS_MET_setAttr_s, PGS_MET_getsetattr_d, PGS_MET_SETATTR_I, &
+      &  PGS_MET_write, PGS_MET_remove
 
     !Executable code
 
@@ -445,9 +446,9 @@ contains
 
     ! Externals
 
-!    integer, external :: PGS_MET_init, PGS_MET_setattr_d, &
-!         PGS_MET_setAttr_s, PGS_MET_getsetattr_d, PGS_MET_SETATTR_I, &
-!         PGS_MET_write, PGS_MET_remove
+    integer, external :: PGS_MET_init, PGS_MET_setattr_d, &
+         PGS_MET_setAttr_s, PGS_MET_getsetattr_d, PGS_MET_SETATTR_I, &
+         PGS_MET_write, PGS_MET_remove
 
     !Executable code
 
@@ -707,9 +708,9 @@ contains
 
     ! Externals
 
-!    integer, external :: PGS_MET_init, PGS_MET_setattr_d, &
-!      &  PGS_MET_setAttr_s, PGS_MET_getsetattr_d, PGS_MET_SETATTR_I, &
-!      &  PGS_MET_write, PGS_MET_remove
+    integer, external :: PGS_MET_init, PGS_MET_setattr_d, &
+      &  PGS_MET_setAttr_s, PGS_MET_getsetattr_d, PGS_MET_SETATTR_I, &
+      &  PGS_MET_write, PGS_MET_remove
 
     !Executable code
 
@@ -825,9 +826,9 @@ contains
 
     ! Externals
 
-!    integer, external :: PGS_MET_init, PGS_MET_setattr_d, &
-!      &  PGS_MET_setAttr_s, PGS_MET_getsetattr_d, PGS_MET_SETATTR_I, &
-!      &  PGS_MET_write, PGS_MET_remove
+    integer, external :: PGS_MET_init, PGS_MET_setattr_d, &
+      &  PGS_MET_setAttr_s, PGS_MET_getsetattr_d, PGS_MET_SETATTR_I, &
+      &  PGS_MET_write, PGS_MET_remove
 
     !Executable code
 
@@ -1125,9 +1126,9 @@ contains
 
     ! Functions
 
-!    integer, external :: PGS_MET_init, PGS_MET_remove, PGS_MET_setattr_d
-!    integer, external :: PGS_MET_setattr_s, PGS_MET_write
-!    integer, external :: PGS_PC_getconfigdata
+    integer, external :: PGS_MET_init, PGS_MET_remove, PGS_MET_setattr_d
+    integer, external :: PGS_MET_setattr_s, PGS_MET_write
+    integer, external :: PGS_PC_getconfigdata
 
     ! Internal
 
@@ -1430,6 +1431,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.17  2001/05/08 23:28:46  pwagner
+! Sorry-bad metadata functions in SDPToolkit
+!
 ! Revision 2.16  2001/05/07 23:30:05  pwagner
 ! Gets all pgs_ from SDPToolkit
 !
