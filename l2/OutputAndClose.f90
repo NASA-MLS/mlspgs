@@ -22,6 +22,7 @@ module OutputAndClose ! outputs all data from the Join module to the
 !    & MLSPCF_L2GP_START
   use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, MLSPCF_L2GP_END, &
     & MLSPCF_L2GP_START
+  use MoreTree, only: Get_Spec_ID
   use OUTPUT_M, only: OUTPUT
   use SDPToolkit, only: Pgs_pc_getReference, PGS_S_SUCCESS, Pgs_smf_getMsg
   use STRING_TABLE, only: GET_STRING
@@ -122,7 +123,7 @@ contains ! =====     Public Procedures     =============================
         name = 0
       end if
 
-      select case( decoration(subtree(1,decoration(subtree(1,key)))) )
+      select case( get_spec_id(key) )
       case ( s_output )
         do field_no = 2, nsons(key)       ! Skip the command name
           gson = subtree(field_no, key)   ! An assign node
@@ -280,6 +281,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.11  2001/03/15 21:18:57  vsnyder
+! Use Get_Spec_ID instead of decoration(subtree...
+!
 ! Revision 2.10  2001/03/06 22:40:24  livesey
 ! Working l2aux
 !
