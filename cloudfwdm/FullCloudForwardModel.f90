@@ -522,13 +522,16 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         & vmrArray(i,:),                                  &    ! New Y
         & 'Linear', extrapolate='Clamp' )
     end do
-
     if ( .not. got(l_h2o) .or. .not. got(l_o3) ) then
-!   make sure we have at least two molecules h2o and o3. 
-      call MLSMessage( MLSMSG_Error, ModuleName,          &
-                      'Missing the required molecules' )
+    !make sure we have at least two molecules h2o and o3. 
+      call MLSMessage(MLSMSG_Error, ModuleName,'Missing the required molecules')
     endif
      
+    if (.not. got(L_N2O) )  vmrArray(i,:) = 0._r8
+    if (.not. got(L_HNO3))  vmrArray(i,:) = 0._r8
+    if (.not. got(L_N2)  )  vmrArray(i,:) = 0._r8
+    if (.not. got(L_O2)  )  vmrArray(i,:) = 0._r8
+
     call allocate_test ( doChannel, noFreqs, 'doChannel', ModuleName )
     
     allocate ( zt(noMifs) )
@@ -1060,6 +1063,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.104  2003/01/16 18:39:41  pwagner
+! Removed some unused variables
+!
 ! Revision 1.103  2003/01/13 17:59:52  jonathan
 !  change cloud_width to i_saturation
 !
