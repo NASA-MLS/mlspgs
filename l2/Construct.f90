@@ -27,7 +27,7 @@ contains ! =====     Public Procedures     =============================
   ! ---------------------------------------------  MLSL2Construct  -----
   subroutine MLSL2Construct ( root, l1bInfo, processingRange, chunks, chunkNo, &
        & quantityTemplatesBase, vectorTemplates, FGrids, VGrids, HGrids, &
-       & l2gpDatabase, mifGeolocation )
+       & l2gpDatabase, ForwardModelConfigDatabase, mifGeolocation )
 
   ! This is the `main' subroutine for this module
 
@@ -36,8 +36,11 @@ contains ! =====     Public Procedures     =============================
     use ConstructVectorTemplates, only: CreateVecTemplateFromMLSCfInfo
     use Dumper, only: Dump
     use FGrid, only: FGrid_T
+    use ForwardModelConfig, only: AddForwardModelConfigToDatabase, &
+      & ForwardModelConfig_T
+    use ForwardModelSupport, only: ConstructForwardModelConfig
     use HGrid, only: AddHGridToDatabase, CreateHGridFromMLSCFInfo, HGrid_T
-    use INIT_TABLES_MODULE, only: S_FORGE, S_HGRID, S_QUANTITY, S_TIME, &
+    use INIT_TABLES_MODULE, only: S_FORGE, S_FORWARDMODEL, S_HGRID, S_QUANTITY, S_TIME, &
       & S_VECTORTEMPLATE
     use Intrinsic, ONLY: L_None
     use L2GPData, only: L2GPDATA_T
@@ -72,6 +75,7 @@ contains ! =====     Public Procedures     =============================
     type (VGrid_T), dimension(:), pointer :: vGrids
     type (HGrid_T), dimension(:), pointer :: HGrids
     type (L2GPData_T), dimension(:), pointer :: L2GPDatabase
+    type (ForwardModelConfig_T), dimension(:), pointer :: ForwardModelConfigDatabase
     type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
 
     ! Local variables
@@ -134,7 +138,11 @@ contains ! =====     Public Procedures     =============================
       select case( get_spec_id(key) )
       case ( s_forge )
         call ForgeMinorFrames ( key, chunks(chunkNo), mifGeolocation )
-      case( s_hgrid )
+      case ( s_forwardModel )
+        call decorate (son, AddForwardModelConfigToDatabase ( &
+          & forwardModelConfigDatabase, &
+          & ConstructForwardModelConfig ( son, vGrids, .false. ) ) )
+      case ( s_hgrid )
         call decorate ( key, AddHGridToDatabase ( hGrids, &
           & CreateHGridFromMLSCFInfo ( name, key, l1bInfo, l2gpDatabase, &
           & processingRange, chunks, chunkNo ) ) )
@@ -216,6 +224,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.35  2002/09/25 20:07:41  livesey
+! Can now construct forward models inside construct
+!
 ! Revision 2.34  2002/09/18 22:49:42  pwagner
 ! Receives returnStatus from CreateQtyTemplateFromMLSCFInfo
 !
