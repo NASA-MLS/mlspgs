@@ -3,43 +3,7 @@
 
 module GLOBAL_SETTINGS
 
-  use EmpiricalGeometry, only: INITEMPIRICALGEOMETRY
-  use FGrid, only: AddFGridToDatabase, CreateFGridFromMLSCFInfo, FGrid_T
-  use ForwardModelConfig, only: AddForwardModelConfigToDatabase, &
-    & ForwardModelConfig_T
-  use ForwardModelSupport, only: ConstructForwardModelConfig, &
-    & ForwardModelGlobalSetup, CreateBinSelectorFromMLSCFInfo
-  use INIT_TABLES_MODULE, only: L_TRUE, P_ALLOW_CLIMATOLOGY_OVERLOADS, &
-    & P_INPUT_VERSION_STRING, P_OUTPUT_VERSION_STRING, P_VERSION_COMMENT, &
-    & S_FGRID, S_FORWARDMODEL, S_ForwardModelGlobal, S_TIME, S_VGRID, F_FILE, &
-    & P_CYCLE, P_STARTTIME, P_ENDTIME, P_LEAPSECFILE, &
-    & S_L1BRAD, S_L1BOA, P_INSTRUMENT, S_EMPIRICALGEOMETRY, &
-    & S_BINSELECTOR
-  use L1BData, only: l1bradSetup, l1boaSetup, ReadL1BData, L1BData_T, &
-    & DeallocateL1BData, Dump, NAME_LEN, PRECISIONSUFFIX
-  use L2GPData, only: L2GPDATA_T
-  use L2PC_M, only: AddBinSelectorToDatabase, BinSelectors
-  use LEXER_CORE, only: PRINT_SOURCE
-  use MLSCommon, only: R8, FileNameLen, NameLen, L1BInfo_T, TAI93_Range_T
-  use MLSL2Options, only: PCF
-  use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSPCF2, only: MLSPCF_L1B_RAD_END, MLSPCF_L1B_RAD_START
-  use MLSStrings, only: hhmmss_value
-  use MLSSignals_m, only: INSTRUMENT
-  use MoreTree, only: GET_SPEC_ID
-  use OUTPUT_M, only: BLANKS, OUTPUT
-  use SDPTOOLKIT, only: mls_utctotai
-  use String_Table, only: Get_String
-  use Time_M, only: Time_Now
-  use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
-  use TRACE_M, only: TRACE_BEGIN, TRACE_END
-  use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE, &
-  & DUMP_TREE_NODE, SOURCE_REF
-  use TREE_TYPES, only: N_EQUAL, N_NAMED
-  use VGrid, only: CreateVGridFromMLSCFInfo
-  use VGridsDatabase, only: AddVGridToDatabase, Dump, VGrid_T
-  use WriteMetadata, only: PCFData_T
 
   implicit NONE
 
@@ -73,6 +37,41 @@ contains
   subroutine SET_GLOBAL_SETTINGS ( ROOT, ForwardModelConfigDatabase, &
     & FGrids, VGrids, l2gpDatabase, l2pcf, processingRange, l1bInfo )
 
+    use EmpiricalGeometry, only: INITEMPIRICALGEOMETRY
+    use FGrid, only: AddFGridToDatabase, CreateFGridFromMLSCFInfo, FGrid_T
+    use ForwardModelConfig, only: AddForwardModelConfigToDatabase, &
+      & ForwardModelConfig_T
+    use ForwardModelSupport, only: ConstructForwardModelConfig, &
+      & ForwardModelGlobalSetup, CreateBinSelectorFromMLSCFInfo
+    use INIT_TABLES_MODULE, only: F_FILE, L_TRUE, P_ALLOW_CLIMATOLOGY_OVERLOADS, &
+      & P_CYCLE, P_ENDTIME, P_INPUT_VERSION_STRING, P_INSTRUMENT, &
+      & P_LEAPSECFILE, P_OUTPUT_VERSION_STRING, P_STARTTIME, &
+      & P_VERSION_COMMENT, S_BINSELECTOR, S_EMPIRICALGEOMETRY, S_FGRID, &
+      & S_FORWARDMODEL, S_ForwardModelGlobal, S_L1BOA, S_L1BRAD, S_TIME, S_VGRID
+    use L1BData, only: l1bradSetup, l1boaSetup, ReadL1BData, L1BData_T, &
+      & DeallocateL1BData, Dump, NAME_LEN, PRECISIONSUFFIX
+    use L2GPData, only: L2GPDATA_T
+    use L2PC_M, only: AddBinSelectorToDatabase, BinSelectors
+    use MLSCommon, only: R8, FileNameLen, NameLen, L1BInfo_T, TAI93_Range_T
+    use MLSL2Options, only: PCF
+    use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MLSStrings, only: hhmmss_value
+    use MLSSignals_m, only: INSTRUMENT
+    use MoreTree, only: GET_SPEC_ID
+    use OUTPUT_M, only: BLANKS, OUTPUT
+    use SDPTOOLKIT, only: mls_utctotai
+    use String_Table, only: Get_String
+    use Time_M, only: Time_Now
+    use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE, &
+    & DUMP_TREE_NODE, SOURCE_REF
+    use TREE_TYPES, only: N_EQUAL, N_NAMED
+    use VGrid, only: CreateVGridFromMLSCFInfo
+    use VGridsDatabase, only: AddVGridToDatabase, Dump, VGrid_T
+    use WriteMetadata, only: PCFData_T
+
     integer, intent(in) :: ROOT    ! Index of N_CF node in abstract syntax tree
     type(ForwardModelConfig_T), dimension(:), pointer :: &
       & ForwardModelConfigDatabase
@@ -80,33 +79,33 @@ contains
     type ( vGrid_T ), pointer, dimension(:) :: VGrids
     type ( l2gpData_T), dimension(:), pointer :: L2GPDATABASE
     type (TAI93_Range_T) :: processingRange ! Data processing range
-    type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
-    type (L1BData_T) :: l1bField ! L1B data
-    type(PCFData_T) :: l2pcf
+    type (L1BInfo_T) :: l1bInfo    ! File handles etc. for L1B dataset
+    type (L1BData_T) :: l1bField   ! L1B data
+    type (PCFData_T) :: l2pcf
 
     integer :: Details   ! How much info about l1b files to dump
     logical :: GOT(2) = .false.
-    integer :: hdfVersion               ! 4 or 5 (corresp. to hdf4 or hdf5)
-    integer :: I         ! Index of son of root
+    integer :: hdfVersion          ! 4 or 5 (corresp. to hdf4 or hdf5)
+    integer :: I                   ! Index of son of root
     integer :: L1BFLAG
-    real(r8) :: MINTIME, MAXTIME        ! Time Span in L1B file data
-    integer :: NAME      ! Sub-rosa index of name of vGrid or hGrid
-    integer :: NOMAFS             ! Number of MAFs of L1B data read
-    integer :: returnStatus             ! non-zero means trouble
-    integer :: SON       ! Son of root
-    integer :: sub_rosa_index
-    logical :: TIMING    ! For S_Time
-    logical :: startTimeIsAbsolute, stopTimeIsAbsolute
-    real :: T1, T2       ! For S_Time
-    real(r8) :: start_time_from_1stMAF, end_time_from_1stMAF
-    logical ::  itExists
+    real(r8) :: MINTIME, MAXTIME   ! Time Span in L1B file data
+    integer :: NAME                ! Sub-rosa index of name of vGrid or hGrid
+    integer :: NOMAFS              ! Number of MAFs of L1B data read
+    integer :: ReturnStatus        ! non-zero means trouble
+    integer :: SON                 ! Son of root
+    integer :: Sub_rosa_index
+    logical :: TIMING              ! For S_Time
+    logical :: StartTimeIsAbsolute, stopTimeIsAbsolute
+    real :: T1, T2                 ! For S_Time
+    real(r8) :: Start_time_from_1stMAF, End_time_from_1stMAF
+    logical ::  ItExists
 
 
-    character(LEN=NameLen) :: name_string
-    character(LEN=NameLen) :: end_time_string, start_time_string
+    character(LEN=NameLen) :: Name_string
+    character(LEN=NameLen) :: End_time_string, Start_time_string
     character(LEN=FileNameLen) :: FilenameString, LeapSecFileName
     character (len=name_len) :: QUANTITY
-    character(LEN=*), parameter :: time_conversion='(F32.0)'
+    character(LEN=*), parameter :: Time_conversion='(F32.0)'
 
     timing = section_times
     if ( timing ) call time_now ( t1 )
@@ -166,7 +165,7 @@ contains
 !             start_time_from_1stMAF = value(1)
             read ( name_string, * ) start_time_from_1stMAF
             startTimeIsAbsolute = .true.
-          endif
+          end if
           if ( pcf ) &
             & call announce_error(0, &
             & '*** l2cf overrides pcf for start time ***', &
@@ -184,7 +183,7 @@ contains
 !             end_time_from_1stMAF = value(1)
             read ( name_string, * ) end_time_from_1stMAF
             stopTimeIsAbsolute = .true.
-          endif
+          end if
           if ( pcf ) &
             & call announce_error(0, &
             & '*** l2cf overrides pcf for end time ***', &
@@ -201,7 +200,7 @@ contains
             call announce_error(0, &
             & '*** Leap Second File supplied global settings despite pcf ***', &
             & just_a_warning = .true.)
-          endif
+          end if
         case default
           call announce_error(son, 'unrecognized global settings parameter')
         end select
@@ -238,7 +237,7 @@ contains
             call get_string ( sub_rosa_index, FilenameString, strip=.true. )
             call proclaim(FilenameString, 'l1brad', &                   
             & hdfVersion=LEVEL1_HDFVERSION) 
-          endif
+          end if
           if ( pcf ) &
             & call announce_error(0, &
             & '*** l2cf overrides pcf for L1B Rad. file(s) ***', &
@@ -252,7 +251,7 @@ contains
             call get_string ( sub_rosa_index, FilenameString, strip=.true. )
             call proclaim(FilenameString, 'l1boa', &                   
             & hdfVersion=LEVEL1_HDFVERSION) 
-          endif
+          end if
           if ( pcf ) &
             & call announce_error(0, &
             & '*** l2cf overrides pcf for L1BOA file ***', &
@@ -268,7 +267,7 @@ contains
 !            call announce_error(0, &
 !            & '*** Leap Second File in global settings despite pcf ***', &
 !            & just_a_warning = .true.)
-!          endif
+!          end if
         case ( s_empiricalGeometry )
           call InitEmpiricalGeometry ( son )
         case ( s_time )
@@ -297,7 +296,7 @@ contains
       if(l1bInfo%L1BOAID == ILLEGALL1BRADID) then
         call announce_error(son, &
           & 'L1BOA file required by global data--but not set')
-      endif
+      end if
       quantity = 'MAFStartTimeTAI'
       call ReadL1BData ( l1bInfo%l1boaID, quantity, l1bField, noMAFs, &
         & l1bFlag)
@@ -309,9 +308,9 @@ contains
       else
         minTime = l1bField%dpField(1,1,1)
         maxTime = l1bField%dpField(1,1,noMAFs) ! This is start time of last MAF
-      endif
+      end if
       call DeallocateL1BData ( l1bField )
-    endif
+    end if
 
     if ( startTimeIsAbsolute ) then
       processingRange%startTime = start_time_from_1stMAF
@@ -323,12 +322,12 @@ contains
           call announce_error(0, &
           & 'Error converting start time in mls_utctotai; code number: ')
           call output(returnStatus, advance='yes')
-        endif
+        end if
       elseif(got(1)) then
         processingrange%starttime = minTime + start_time_from_1stMAF
       elseif(.not. PCF) then
         processingrange%starttime = minTime
-      endif
+      end if
     end if
 
     if ( stopTimeIsAbsolute ) then
@@ -341,12 +340,12 @@ contains
           call announce_error(0, &
           & 'Error converting end time in mls_utctotai; code number: ')
           call output(returnStatus, advance='yes')
-        endif
+        end if
       elseif(got(2)) then
         processingrange%endtime = minTime + end_time_from_1stMAF
       elseif(.not. PCF) then
         processingrange%endtime = maxTime + 1.0
-      endif
+      end if
     end if
 
     if ( index(switches, 'glo3') /= 0 ) then
@@ -357,7 +356,7 @@ contains
       Details = -1
     else
       Details = -2
-    endif
+    end if
     if( levels(gen) > 0 .or. &
       & index(switches, 'glo') /= 0 ) &
       & call dump_global_settings( l2pcf, processingRange, l1bInfo, &
@@ -376,6 +375,264 @@ contains
 
   contains
 
+    ! ---------------------------------------------  Announce_Error  -----
+    subroutine Announce_Error ( Lcf_where, Full_message, Use_toolkit, &
+      & Error_number, just_a_warning )
+
+      use LEXER_CORE, only: PRINT_SOURCE
+
+      ! Arguments
+
+      integer, intent(in) :: Lcf_where
+      character(LEN=*), intent(in) :: Full_message
+      logical, intent(in), optional :: Use_toolkit
+      integer, intent(in), optional :: Error_number
+      logical, intent(in), optional :: just_a_warning
+
+      ! Local
+      logical :: Just_print_it, my_warning
+      logical, parameter :: Default_output_by_toolkit = .true.
+
+      just_print_it = .not. default_output_by_toolkit
+      if ( present(use_toolkit) ) just_print_it = .not. use_toolkit
+      if ( present(just_a_warning) ) then
+        my_warning = just_a_warning
+      else
+        my_warning = .false.
+      end if
+
+      if ( .not. just_print_it ) then
+       if ( .not. my_warning ) then
+        error = max(error,1)
+        call output ( '***** At ' )
+
+        if ( lcf_where > 0 ) then
+          call print_source ( source_ref(lcf_where) )
+        else
+          call output ( '(no lcf node available)' )
+        end if
+
+        call output ( ": The " );
+        if ( lcf_where > 0 ) then
+          call dump_tree_node ( lcf_where, 0 )
+        else
+          call output ( '(no lcf tree available)' )
+        end if
+
+        call output ( " Caused the following error:", advance='yes', &
+         & from_where=ModuleName)
+
+        end if
+
+        call output ( trim(full_message), advance='yes', &
+          & from_where=ModuleName)
+
+        if ( present(error_number) ) then
+         if (my_warning) then
+          call output ( 'Warning number ', advance='no' )
+        else
+          call output ( 'Error number ', advance='no' )
+        end if
+
+          call output ( error_number, places=9, advance='yes' )
+        end if
+      else
+
+        if ( .not. my_warning) then
+        call output ( '***Error in module ' )
+        call output ( ModuleName, advance='yes' )
+        end if
+
+        call output ( trim(full_message), advance='yes' )
+        if ( present(error_number) ) then
+         if(my_warning) then
+          call output ( 'Warning number ' )
+        else
+          call output ( 'Error number ' )
+         end if
+          call output ( error_number, advance='yes' )
+        end if
+      end if
+
+    end subroutine Announce_Error
+
+    ! ------------------------------------------  dump_global_settings  -----
+    subroutine dump_global_settings ( l2pcf, processingRange, l1bInfo, &
+      & LeapSecFileName, dumpL1BDetails )
+
+      ! Dump info obtained during OpenAndInitialize and global_settings:
+      ! L1B databse
+      ! L1OA file
+      ! Start and end times
+      ! output version
+      ! cycle number
+      ! logfile name
+
+      integer :: num_l1b_files = MAXNUML1BRADIDS
+
+      ! Arguments
+      type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
+      type(PCFData_T) :: l2pcf
+      type (TAI93_Range_T) :: processingRange ! Data processing range
+
+      ! The following dtermines the level of detail to expose:
+      ! -1 Skip even counterMAF
+      ! -2 Skip all but name (default)
+      ! >0 Dump even multi-dim arrays
+      integer, optional, intent(in) :: dumpL1BDetails
+      character(len=*) LeapSecFileName
+  !    character(len=CCSDSlen) CCSDSStartTime
+
+      ! Local
+
+      type (L1BData_T) :: l1bData   ! L1B dataset
+      integer ::                              i, version, NoMAFs, IERR
+      integer ::                              myL1BDetails
+      character (len=*), parameter ::         TIME_FORMAT = '(1pD18.12)'
+      character (len=NAME_LEN), parameter ::  BASE_QUANT_NAME = &
+                                      &       'R2:190.B3F:N2O.S2.FB25-3'
+  !                                    &       'R1A:118.B1F:PT.S0.FB25-1'
+      character (len=LEN(BASE_QUANT_NAME)) :: l1b_quant_name
+      logical, parameter ::                   DUMPPRECISIONTOO = .true.
+
+      ! Begin
+      myL1BDetails = -2
+      if ( present(dumpL1BDetails) ) myL1BDetails = dumpL1BDetails
+      version = 1
+
+      call output ( '============ Global Settings ============', advance='yes' )
+      call output ( ' ', advance='yes' )
+
+      call output ( 'L1B database:', advance='yes' )
+
+     if(associated(l1bInfo%L1BRADIDs)) then
+      if ( num_l1b_files > 0 ) then
+        do i = 1, num_l1b_files
+        if(l1bInfo%L1BRADIDs(i) /= ILLEGALL1BRADID) then
+  	      call output ( 'fileid:   ' )
+	      call output ( l1bInfo%L1BRADIDs(i), advance='yes' )
+         call output ( 'name:   ' )
+    	   call output ( TRIM(l1bInfo%L1BRADFileNames(i)), advance='yes' )
+         if ( myL1BDetails > -2 ) then
+           l1b_quant_name = BASE_QUANT_NAME
+           call ReadL1BData ( l1bInfo%L1BRADIDs(i), l1b_quant_name, L1bData, &
+            & NoMAFs, IERR, NeverFail=.true. )
+           if ( IERR == 0 ) then
+             call Dump(l1bData, myL1BDetails )
+             call DeallocateL1BData ( l1bData )
+           else
+             call output ( 'Error number  ' )
+             call output ( IERR )
+             call output ( ' while reading quantity named  ' )
+             call output ( trim(l1b_quant_name), advance='yes' )
+           end if
+         end if
+         if ( myL1BDetails > -2 .and. DUMPPRECISIONTOO ) then
+           l1b_quant_name = trim(BASE_QUANT_NAME) // PRECISIONSUFFIX
+           call ReadL1BData ( l1bInfo%L1BRADIDs(i), l1b_quant_name, L1bData, &
+            & NoMAFs, IERR, NeverFail=.true. )
+           if ( IERR == 0 ) then
+             call Dump(l1bData, myL1BDetails )
+             call DeallocateL1BData ( l1bData )
+           else
+             call output ( 'Error number  ' )
+             call output ( IERR )
+             call output ( ' while reading quantity named  ' )
+             call output ( trim(l1b_quant_name), advance='yes' )
+           end if
+         end if
+        end if
+        end do
+
+      else
+        call output ( '(empty database)', advance='yes' )
+      end if
+
+     else
+      call output ( '(null database)', advance='yes' )
+
+     end if
+
+      call output ( ' ', advance='yes' )
+      call output ( 'L1OA file:', advance='yes' )
+
+        if(l1bInfo%L1BOAID /= ILLEGALL1BRADID) then
+        call output ( 'fileid:   ' )
+        call output ( l1bInfo%L1BOAID, advance='yes' )
+        call output ( 'name:   ' )
+        call output ( TRIM(l1bInfo%L1BOAFileName), advance='yes' )
+      else
+        call output ( '(file unknown)', advance='yes' )
+      end if
+
+      call output ( ' ', advance='yes' )
+      call output ( 'Start Time:   ' )
+      call output ( l2pcf%startutc, advance='yes' )
+
+      call output ( 'End Time:     ' )
+      call output ( l2pcf%endutc, advance='yes' )
+
+      call output ( 'Start Time (tai):   ' )
+      call output ( processingrange%starttime, format=TIME_FORMAT, advance='yes' )
+
+      call output ( 'End Time (tai):     ' )
+      call output ( processingrange%endtime, format=TIME_FORMAT, advance='yes' )
+
+      call output ( 'Processing Range:     ' )
+      call output ( processingrange%endtime-processingrange%starttime, advance='yes' )
+
+      if ( LeapSecFileName /= '' ) then
+        call output ( 'Leap Seconds File:   ' )
+        call output ( LeapSecFileName, advance='yes' )
+      end if
+
+      call output ( 'PGE version:   ' )
+      call output ( l2pcf%PGEVersion, advance='yes' )
+
+      call output ( 'input version:   ' )
+      call output ( l2pcf%InputVersion, advance='yes' )
+
+      call output ( 'cycle:   ' )
+      call output ( l2pcf%cycle, advance='yes' )
+
+      call output ( 'Log file name:   ' )
+      call output ( TRIM(l2pcf%logGranID), advance='yes' )
+
+      call output ( 'l2gp species name keys:   ' )
+      call output ( TRIM(l2pcf%spec_keys), advance='yes' )
+
+      call output ( 'corresponding mcf hash:   ' )
+      call output ( TRIM(l2pcf%spec_hash), advance='yes' )
+
+      call output ( 'Allow climatology overloads?:   ' )
+      call output ( allow_climatology_overloads, advance='yes' )
+
+      call output ( ' ', advance='yes' )
+      call output ( '============ End Global Settings ============', advance='yes' )
+
+    end subroutine dump_global_settings
+
+    ! ---------------------------------------------  proclaim  -----
+    subroutine proclaim ( Name, l1_type, hdfVersion )
+      character(LEN=*), intent(in)   :: Name
+      character(LEN=*), intent(in)   :: l1_type
+      integer, optional,  intent(in) :: hdfVersion
+
+      call output ( 'Level 1 product type : ' )
+      call output ( trim(l1_type), advance='no')
+      if ( present(hdfVersion) ) then
+        call blanks(4)
+        call output ( 'hdf ' )
+        call output ( hdfVersion, advance='yes')
+      else
+        call output ( ' ', advance='yes')
+      end if
+      call blanks(15)
+      call output ( 'name : ' )
+      call blanks(8)
+      call output ( trim(Name), advance='yes')
+    end subroutine proclaim
+
     ! --------------------------------------------------  SayTime  -----
     subroutine SayTime
       call time_now ( t2 )
@@ -383,7 +640,7 @@ contains
         call output ( "Total time = " )
         call output ( dble(t2), advance = 'no' )
         call blanks ( 4, advance = 'no' )
-      endif
+      end if
       call output ( "Timing for GlobalSettings = " )
       call output ( dble(t2 - t1), advance = 'yes' )
       timing = .false.
@@ -393,267 +650,12 @@ contains
 
 ! =====     Private Procedures     =====================================
 
-  ! ---------------------------------------------  proclaim  -----
-  subroutine proclaim ( Name, l1_type, hdfVersion )
-    character(LEN=*), intent(in)   :: Name
-    character(LEN=*), intent(in)   :: l1_type
-    integer, optional,  intent(in) :: hdfVersion
-
-    call output ( 'Level 1 product type : ' )
-    call output ( trim(l1_type), advance='no')
-    if ( present(hdfVersion) ) then
-      call blanks(4)
-      call output ( 'hdf ' )
-      call output ( hdfVersion, advance='yes')
-    else
-      call output ( ' ', advance='yes')
-    endif
-    call blanks(15)
-    call output ( 'name : ' )
-    call blanks(8)
-    call output ( trim(Name), advance='yes')
-  end subroutine proclaim
-
-  ! ------------------------------------------  dump_global_settings  -----
-  subroutine dump_global_settings ( l2pcf, processingRange, l1bInfo, &
-    & LeapSecFileName, dumpL1BDetails )
-  
-    ! Dump info obtained during OpenAndInitialize and global_settings:
-    ! L1B databse
-    ! L1OA file
-    ! Start and end times
-    ! output version
-    ! cycle number
-    ! logfile name
-  
-    integer :: num_l1b_files = MAXNUML1BRADIDS
-
-    ! Arguments
-    type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
-    type(PCFData_T) :: l2pcf
-    type (TAI93_Range_T) :: processingRange ! Data processing range
-    
-    ! The following dtermines the level of detail to expose:
-    ! -1 Skip even counterMAF
-    ! -2 Skip all but name (default)
-    ! >0 Dump even multi-dim arrays
-    integer, optional, intent(in) :: dumpL1BDetails
-    character(len=*) LeapSecFileName
-!    character(len=CCSDSlen) CCSDSStartTime
-	
-    ! Local
-
-    type (L1BData_T) :: l1bData   ! L1B dataset
-    integer ::                              i, version, NoMAFs, IERR
-    integer ::                              myL1BDetails
-    character (len=*), parameter ::         TIME_FORMAT = '(1pD18.12)'
-    character (len=NAME_LEN), parameter ::  BASE_QUANT_NAME = &
-                                    &       'R2:190.B3F:N2O.S2.FB25-3'
-!                                    &       'R1A:118.B1F:PT.S0.FB25-1'
-    character (len=LEN(BASE_QUANT_NAME)) :: l1b_quant_name
-    logical, parameter ::                   DUMPPRECISIONTOO = .true.
-
-    ! Begin
-    myL1BDetails = -2
-    if ( present(dumpL1BDetails) ) myL1BDetails = dumpL1BDetails
-    version = 1
-
-    call output ( '============ Global Settings ============', advance='yes' )
-    call output ( ' ', advance='yes' )
-  
-    call output ( 'L1B database:', advance='yes' )
-  
-   if(associated(l1bInfo%L1BRADIDs)) then
-    if ( num_l1b_files > 0 ) then
-      do i = 1, num_l1b_files
-      if(l1bInfo%L1BRADIDs(i) /= ILLEGALL1BRADID) then
-  	    call output ( 'fileid:   ' )
-	    call output ( l1bInfo%L1BRADIDs(i), advance='yes' )
-       call output ( 'name:   ' )
-    	 call output ( TRIM(l1bInfo%L1BRADFileNames(i)), advance='yes' )
-       if ( myL1BDetails > -2 ) then
-         l1b_quant_name = BASE_QUANT_NAME
-         call ReadL1BData ( l1bInfo%L1BRADIDs(i), l1b_quant_name, L1bData, &
-          & NoMAFs, IERR, NeverFail=.true. )
-         if ( IERR == 0 ) then
-           call Dump(l1bData, myL1BDetails )
-           call DeallocateL1BData ( l1bData )
-         else
-           call output ( 'Error number  ' )
-           call output ( IERR )
-           call output ( ' while reading quantity named  ' )
-           call output ( trim(l1b_quant_name), advance='yes' )
-         endif
-       endif
-       if ( myL1BDetails > -2 .and. DUMPPRECISIONTOO ) then
-         l1b_quant_name = trim(BASE_QUANT_NAME) // PRECISIONSUFFIX
-         call ReadL1BData ( l1bInfo%L1BRADIDs(i), l1b_quant_name, L1bData, &
-          & NoMAFs, IERR, NeverFail=.true. )
-         if ( IERR == 0 ) then
-           call Dump(l1bData, myL1BDetails )
-           call DeallocateL1BData ( l1bData )
-         else
-           call output ( 'Error number  ' )
-           call output ( IERR )
-           call output ( ' while reading quantity named  ' )
-           call output ( trim(l1b_quant_name), advance='yes' )
-         endif
-       endif
-      endif
-      end do
-
-    else
-      call output ( '(empty database)', advance='yes' )
-    end if
-
-   else
-    call output ( '(null database)', advance='yes' )
-
-   endif
-
-    call output ( ' ', advance='yes' )
-    call output ( 'L1OA file:', advance='yes' )
-  
-      if(l1bInfo%L1BOAID /= ILLEGALL1BRADID) then
-      call output ( 'fileid:   ' )
-      call output ( l1bInfo%L1BOAID, advance='yes' )
-      call output ( 'name:   ' )
-      call output ( TRIM(l1bInfo%L1BOAFileName), advance='yes' )
-    else
-      call output ( '(file unknown)', advance='yes' )
-    end if
-
-    call output ( ' ', advance='yes' )
-    call output ( 'Start Time:   ' )
-    call output ( l2pcf%startutc, advance='yes' )
-
-    call output ( 'End Time:     ' )
-    call output ( l2pcf%endutc, advance='yes' )
-
-    call output ( 'Start Time (tai):   ' )
-    call output ( processingrange%starttime, format=TIME_FORMAT, advance='yes' )
-
-    call output ( 'End Time (tai):     ' )
-    call output ( processingrange%endtime, format=TIME_FORMAT, advance='yes' )
-
-    call output ( 'Processing Range:     ' )
-    call output ( processingrange%endtime-processingrange%starttime, advance='yes' )
-
-    if ( LeapSecFileName /= '' ) then
-      call output ( 'Leap Seconds File:   ' )
-      call output ( LeapSecFileName, advance='yes' )
-    endif
-
-    call output ( 'PGE version:   ' )
-    call output ( l2pcf%PGEVersion, advance='yes' )
-
-    call output ( 'input version:   ' )
-    call output ( l2pcf%InputVersion, advance='yes' )
-
-    call output ( 'cycle:   ' )
-    call output ( l2pcf%cycle, advance='yes' )
-
-    call output ( 'Log file name:   ' )
-    call output ( TRIM(l2pcf%logGranID), advance='yes' )
-
-    call output ( 'l2gp species name keys:   ' )
-    call output ( TRIM(l2pcf%spec_keys), advance='yes' )
-
-    call output ( 'corresponding mcf hash:   ' )
-    call output ( TRIM(l2pcf%spec_hash), advance='yes' )
-
-    call output ( 'Allow climatology overloads?:   ' )
-    call output ( allow_climatology_overloads, advance='yes' )
-
-    call output ( ' ', advance='yes' )
-    call output ( '============ End Global Settings ============', advance='yes' )
-
-  end subroutine dump_global_settings
-
-  ! ---------------------------------------------  Announce_Error  -----
-  subroutine Announce_Error ( Lcf_where, Full_message, Use_toolkit, &
-    & Error_number, just_a_warning )
-  
-    ! Arguments
-
-    integer, intent(in) :: Lcf_where
-    character(LEN=*), intent(in) :: Full_message
-    logical, intent(in), optional :: Use_toolkit
-    integer, intent(in), optional :: Error_number
-    logical, intent(in), optional :: just_a_warning
-
-    ! Local
-    logical :: Just_print_it, my_warning
-    logical, parameter :: Default_output_by_toolkit = .true.
-
-    just_print_it = .not. default_output_by_toolkit
-    if ( present(use_toolkit) ) just_print_it = .not. use_toolkit
-    if ( present(just_a_warning) ) then
-      my_warning = just_a_warning
-    else
-      my_warning = .false.
-    endif
-
-    if ( .not. just_print_it ) then
-     if ( .not. my_warning ) then
-      error = max(error,1)
-      call output ( '***** At ' )
-
-      if ( lcf_where > 0 ) then
-        call print_source ( source_ref(lcf_where) )
-      else
-        call output ( '(no lcf node available)' )
-      end if
-
-      call output ( ": The " );
-      if ( lcf_where > 0 ) then
-        call dump_tree_node ( lcf_where, 0 )
-      else
-        call output ( '(no lcf tree available)' )
-      end if
-
-      call output ( " Caused the following error:", advance='yes', &
-       & from_where=ModuleName)
-
-      endif
-      
-      call output ( trim(full_message), advance='yes', &
-        & from_where=ModuleName)
-
-      if ( present(error_number) ) then
-       if (my_warning) then
-        call output ( 'Warning number ', advance='no' )
-      else
-        call output ( 'Error number ', advance='no' )
-      endif
-
-        call output ( error_number, places=9, advance='yes' )
-      end if
-    else
-
-      if ( .not. my_warning) then
-      call output ( '***Error in module ' )
-      call output ( ModuleName, advance='yes' )
-      endif
-      
-      call output ( trim(full_message), advance='yes' )
-      if ( present(error_number) ) then
-       if(my_warning) then
-        call output ( 'Warning number ' )
-      else
-        call output ( 'Error number ' )
-       endif
-        call output ( error_number, advance='yes' )
-      end if
-    end if
-
-!===========================
-  end subroutine Announce_Error
-!===========================
-
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.55  2002/05/01 22:03:50  pwagner
+! If leapsecfile parameter set, will convert start, end times
+!
 ! Revision 2.54  2002/05/01 16:14:13  pwagner
 ! Dropped S_LEAPSECFILE
 !
