@@ -120,6 +120,7 @@ clean:
 	if [ "$(MLSCONFG)" != "" ] ; then  \
 		rm -f $(PLATFORMS)/$(MLSCONFG)/*.[ao] ; \
 		rm -f $(PLATFORMS)/$(MLSCONFG)/*.mod ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/$(PROG) ; \
 	fi
 	rm -f Make.dep.*
 
@@ -138,6 +139,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl3
 
 # $Log$
+# Revision 1.12  2001/03/12 22:46:57  pwagner
+# Revised clean, tar; automatic symlink to Makefile
+#
 # Revision 1.11  2001/03/09 19:36:06  pwagner
 # Added TAR=... option
 #
