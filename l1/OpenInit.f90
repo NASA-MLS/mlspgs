@@ -46,7 +46,6 @@ CONTAINS
     USE MLSSignalNomenclature, ONLY: ReadSignalsDatabase
     USE OutputL1B, ONLY: OutputL1B_create
     USE DACSUtils, ONLY: InitDACS_FFT
-    USE MLSStrings, ONLY: lowercase
 
     TYPE (TAI93_Range_T) :: procRange
     CHARACTER (LEN=132) :: PhysicalFilename
@@ -63,32 +62,24 @@ CONTAINS
 
     CALL GetL1Config
 
-!! Open the HDF Fortran Interface
+!! Open the HDF Fortran Interface based on CF file
 
-    error = 0
-    SELECT CASE (lowercase(TRIM(L1Config%Output%HDFVersionString))) 
-       CASE ('hdf4')
-          hdfVersion = HDFVERSION_4
-       CASE ('hdf5')
-          CALL h5open_f(error)
-          hdfVersion = HDFVERSION_5
-       CASE default
-          hdfVersion = HDFVERSION_4
-    END SELECT 
-
-    IF (error /= 0) THEN 
-       CALL MLSMessage (MLSMSG_Error, ModuleName, &
-            "Fortran API error on opening.")
-    ENDIF
+    hdfVersion = L1Config%Output%HDFVersion
 
 !! Get annotation from PCF and CF files  (ONLY HDF 4!)
-
 
     IF (hdfVersion == HDFVERSION_4) THEN
 
        CALL CreatePCFAnnotation (mlspcf_pcf_start, anTextPCF)
 
        CALL CreatePCFAnnotation (mlspcf_l1cf_start, anTextCF)
+
+    ELSE       ! Open HDF 5
+
+       error = 0
+       CALL h5open_f (error)
+       IF (error /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            "Fortran HDF 5 API error on opening.")
 
     ENDIF
 
@@ -480,19 +471,11 @@ CONTAINS
     USE Hdf, ONLY: DFACC_CREATE, sfstart
     USE MLSFiles, ONLY: mls_openFile, HDFVERSION_5, HDFVERSION_4
     USE MLSL1Config, ONLY: L1Config
-    USE MLSStrings, ONLY: lowercase
 
     CHARACTER (LEN=132) :: PhysicalFilename
     INTEGER :: returnStatus, sd_id, version, hdfVersion
 
-    SELECT CASE (lowercase(TRIM(L1Config%Output%HDFVersionString))) 
-       CASE ('hdf4')
-          hdfVersion = HDFVERSION_4
-       CASE ('hdf5')
-          hdfVersion = HDFVERSION_5
-       CASE default
-          hdfVersion = HDFVERSION_4
-    END SELECT 
+    hdfVersion = L1Config%Output%HDFversion
 
     ! Open L1BRADD File
 
@@ -744,6 +727,9 @@ END MODULE OpenInit
 !=============================================================================
 
 ! $Log$
+! Revision 2.8  2002/11/19 21:21:46  perun
+! Use HDFversion instead of HDFVersionString
+!
 ! Revision 2.7  2002/11/14 21:46:04  perun
 ! Restored PCF annotations for HDF 4
 !
