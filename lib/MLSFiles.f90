@@ -62,9 +62,13 @@ module MLSFiles               ! Utility file routines
 ! mls_sfstart        Opens an hdf file for writing metadata
 ! mls_sfend          Closes a file opened by mls_sfstart
 ! split_path_name    splits the input path/name into path and name
+! === (end of toc) ===
+
+! (The following 2 are currently private, but could be made public if needed)
 ! hdf2hdf5_fileaccess
 !                    Translates version 4 hdf access codes to version 5
-! === (end of toc) ===
+! he2he5_fileaccess
+!                    Translates version 4 hdfeos access codes to version 5
 
    ! Assume hdf files w/o explicit hdfVersion field are this
    ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc.
@@ -508,7 +512,7 @@ contains
         return
       elseif(myhdfVersion == HDFVERSION_5) then
         theFileHandle = he5_swopen(trim(myName), &
-          & hdf2hdf5_fileaccess(FileAccessType))
+          & he2he5_fileaccess(FileAccessType))
       elseif(myhdfVersion == HDFVERSION_4) then
         theFileHandle = swopen(trim(myName), FileAccessType)
       else
@@ -528,7 +532,7 @@ contains
           call output(trim(myName), advance='yes')                         
           call output('File Access: ', advance='no')                       
           call blanks(2)                                                   
-          call output(hdf2hdf5_fileaccess(FileAccessType), advance='yes')  
+          call output(he2he5_fileaccess(FileAccessType), advance='yes')  
           call output('theFileHandle: ', advance='no')                     
           call blanks(2)                                                   
           call output(theFileHandle, advance='yes')                        
@@ -540,7 +544,7 @@ contains
         return
       elseif(myhdfVersion == HDFVERSION_5) then
         theFileHandle = he5_gdopen(trim(myName), &
-          & hdf2hdf5_fileaccess(FileAccessType))
+          & he2he5_fileaccess(FileAccessType))
       elseif(myhdfVersion == HDFVERSION_4) then
         theFileHandle = gdopen(trim(myName), FileAccessType)
       else
@@ -916,12 +920,12 @@ contains
 
   end subroutine split_path_name
 
-  ! ---------------------------------------------  hdf2hdf5_fileaccess  -----
+  ! ---------------------------------------------  he2he5_fileaccess  -----
 
-  ! This function converts hdf4 file access types to
-  ! corresponding hdf5 numbers
+  ! This function converts hdfeos2 file access types to
+  ! corresponding hdfeos5 numbers
 
-  function hdf2hdf5_fileaccess(FileAccesshdf4) result (FileAccesshdf5)
+  function he2he5_fileaccess(FileAccesshdf4) result (FileAccesshdf5)
 
     ! Arguments
 
@@ -938,11 +942,39 @@ contains
     case(DFACC_CREATE)
       FileAccesshdf5 = HE5F_ACC_TRUNC   ! H5F_ACC_TRUNC
 
-    case(DFACC_READ)
+    case(DFACC_READ)                      ! also , DFACC_RDONLY
       FileAccesshdf5 = HE5F_ACC_RDONLY   ! H5F_ACC_RDONLY
 
     case default
       FileAccesshdf5 = HE5F_ACC_RDWR   ! H5F_ACC_RDWR
+
+    end select
+
+  end function he2he5_fileaccess
+
+  ! ---------------------------------------------  hdf2hdf5_fileaccess  -----
+
+  ! This function converts hdf4 file access types to
+  ! corresponding hdf5 numbers
+
+  function hdf2hdf5_fileaccess(FileAccesshdf4) result (FileAccesshdf5)
+
+    ! Arguments
+
+    integer(i4), intent(IN)       :: FileAccesshdf4
+    integer(i4)                   :: FileAccesshdf5
+    
+    ! begin
+    select case (FileAccesshdf4)
+
+    case(DFACC_CREATE)
+      FileAccesshdf5 = H5F_ACC_TRUNC_F
+
+    case(DFACC_READ)    ! also , DFACC_RDONLY
+      FileAccesshdf5 = H5F_ACC_RDONLY_F
+
+    case default
+      FileAccesshdf5 = H5F_ACC_RDWR_F
 
     end select
 
@@ -1038,7 +1070,7 @@ contains
    endif
    if ( PGS_MET4MLS_SF ) then
      if ( .not. HDF5_ACC_TYPES_TO_MET ) then
-       myAccess = hdf2hdf5_fileaccess(FileAccess)
+       myAccess = he2he5_fileaccess(FileAccess)
      elseif ( FileAccess == DFACC_RDWR ) then
        myAccess = HE5F_ACC_RDWR  ! HDF5_ACC_RDWR
      elseif ( FileAccess == DFACC_CREATE ) then
@@ -1051,7 +1083,7 @@ contains
      returnStatus = PGS_MET_SFstart(trim(FileName), myAccess, mls_sfstart)
    else
      access_prp_default = h5p_default_f
-     call h5fopen_f(trim(FileName), hdf2hdf5_fileaccess(FileAccess), &
+     call h5fopen_f(trim(FileName), he2he5_fileaccess(FileAccess), &
       & mls_sfstart, returnStatus, access_prp_default)
    endif
      if (returnStatus /= 0 ) then
@@ -1265,6 +1297,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.39  2002/10/08 23:46:03  pwagner
+! Separate he2he5_fileaccess and hdf2hdf5_fileaccess functions
+!
 ! Revision 2.38  2002/10/08 00:09:11  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
