@@ -62,7 +62,7 @@ contains
       & L_numJ, L_opticalDepth, L_pressure, L_radiance, L_Tikhonov, L_zeta, &
       & S_dumpBlocks, S_flagCloud, S_matrix, S_retrieve, S_sids, S_snoop, &
       & S_subset, S_time
-    use Intrinsic, only: PHYQ_Dimensionless
+    use Intrinsic, only: PHYQ_Dimensionless, PHYQ_Invalid
     use L2ParInfo, only: PARALLEL
     use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
       & DestroyMatrix, GetFromMatrixDatabase, Matrix_T, Matrix_Database_T, &
@@ -3104,7 +3104,7 @@ contains
           & call AnnounceError ( badOpticalDepthSignal, key )
       endif
       
-      if ( vectors(mainVectorIndex)%globalUnit /= phyq_dimensionless ) then
+      if ( vectors(mainVectorIndex)%globalUnit /= phyq_invalid ) then
         testUnit = vectors(mainVectorIndex)%globalUnit
       else
         testUnit = qty%template%unit
@@ -3646,6 +3646,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.223  2003/01/17 22:59:47  livesey
+! Minor bug fix in units checking for max/minValue in subset.
+!
 ! Revision 2.222  2003/01/17 22:13:46  dwu
 ! fix a bug in flagCloud
 !
