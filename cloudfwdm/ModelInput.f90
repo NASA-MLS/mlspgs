@@ -163,23 +163,23 @@ contains
       ENDIF
 
 !----------------------------------------------------------------------
-
+! now we don't need this because tangent heights are given along with tangent pressure
 !==========================================
 !     PRODUCE TANGENT HEIGHTS (KM)
 !==========================================
 
-      DO I=1,NT
+!      DO I=1,NT
 !        print*, ZT(I)
-         ZZ(I)=-LOG10( max(1.e-9_r8, ZT(I)) )
-      END DO
+!         ZZ(I)=-LOG10( max(1.e-9_r8, ZT(I)) )
+!      END DO
 
 !      stop
 
-      DO J=1,NT      
-         CALL LOCATE (ZA,NZ,NH,ZZ(J),JM)
-         ZZT(J)=((ZA(JM+1)-ZZ(J))*HEIGHT(JM)+(ZZ(J)-ZA(JM))*    &
-     &                HEIGHT(JM+1))/(ZA(JM+1)-ZA(JM))             
-      ENDDO
+!      DO J=1,NT      
+!         CALL LOCATE (ZA,NZ,NH,ZZ(J),JM)
+!         ZZT(J)=((ZA(JM+1)-ZZ(J))*HEIGHT(JM)+(ZZ(J)-ZA(JM))*    &
+!     &                HEIGHT(JM+1))/(ZA(JM+1)-ZA(JM))             
+!      ENDDO
 
 !----------------------------------------------------------------------
 
@@ -189,3 +189,6 @@ contains
 end module ModelInput
 
 ! $Log$
+! Revision 1.2  2001/09/21 15:51:37  jonathan
+! modified F95 version
+!
