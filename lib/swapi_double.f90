@@ -18,7 +18,7 @@ contains
     integer, intent(in) :: STARTS(*)    ! Start array
     integer, intent(in) :: STRIDES(*)   ! Stride array
     integer, intent(in) :: EDGES(*)     ! Edge array
-    double precision, intent(out) :: BUFFER(*)  ! Buffer for read
+    double precision, intent(out) :: BUFFER(:)  ! Buffer for read
 
     integer, external :: SWRDFLD
 
@@ -33,7 +33,7 @@ contains
     integer, intent(in) :: STARTS(*)    ! Start array
     integer, intent(in) :: STRIDES(*)   ! Stride array
     integer, intent(in) :: EDGES(*)     ! Edge array
-    double precision, intent(out) :: BUFFER(1,*)  ! Buffer for read
+    double precision, intent(out) :: BUFFER(:,:)  ! Buffer for read
 
     integer, external :: SWRDFLD
 
@@ -48,7 +48,7 @@ contains
     integer, intent(in) :: STARTS(*)    ! Start array
     integer, intent(in) :: STRIDES(*)   ! Stride array
     integer, intent(in) :: EDGES(*)     ! Edge array
-    double precision, intent(out) :: BUFFER(1,1,*)  ! Buffer for read
+    double precision, intent(out) :: BUFFER(:,:,:)  ! Buffer for read
 
     integer, external :: SWRDFLD
 
@@ -63,7 +63,7 @@ contains
     integer, intent(in) :: STARTS(*)    ! Start array
     integer, intent(in) :: STRIDES(*)   ! Stride array
     integer, intent(in) :: EDGES(*)     ! Edge array
-    double precision, intent(in) :: BUFFER(*)   ! Buffer for write
+    double precision, intent(in) :: BUFFER(:)   ! Buffer for write
 
     integer, external :: SWWRFLD
 
@@ -78,7 +78,7 @@ contains
     integer, intent(in) :: STARTS(*)    ! Start array
     integer, intent(in) :: STRIDES(*)   ! Stride array
     integer, intent(in) :: EDGES(*)     ! Edge array
-    double precision, intent(in) :: BUFFER(1,*)  ! Buffer for write
+    double precision, intent(in) :: BUFFER(:,:)  ! Buffer for write
 
     integer, external :: SWWRFLD
 
@@ -93,7 +93,7 @@ contains
     integer, intent(in) :: STARTS(*)    ! Start array
     integer, intent(in) :: STRIDES(*)   ! Stride array
     integer, intent(in) :: EDGES(*)     ! Edge array
-    double precision, intent(in) :: BUFFER(1,1,*)  ! Buffer for write
+    double precision, intent(in) :: BUFFER(:,:,:)  ! Buffer for write
 
     integer, external :: SWWRFLD
 
@@ -104,6 +104,9 @@ contains
 end module SWAPI_DOUBLE
 
 ! $Log$
+! Revision 2.0  2000/09/05 17:41:08  dcuddy
+! Change revision to 2.0
+!
 ! Revision 1.1  2000/09/02 01:56:36  vsnyder
 ! Initial code
 !

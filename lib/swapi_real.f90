@@ -23,7 +23,7 @@ contains
     integer, external :: SWRDFLD
 
     swrdfld_real  = swrdfld(swathid, fieldname, starts, strides, &
-      & edges, reshape(buffer, (/size(buffer)/) ) )
+      & edges, buffer )
   end function SWRDFLD_REAL
 
   integer function SWRDFLD_REAL_2D ( SWATHID, FIELDNAME, &
@@ -38,7 +38,7 @@ contains
     integer, external :: SWRDFLD
 
     swrdfld_real_2d  = swrdfld(swathid, fieldname, starts, strides, &
-      & edges, reshape(buffer, (/size(buffer)/) ) )
+      & edges, buffer )
   end function SWRDFLD_REAL_2D
 
   integer function SWRDFLD_REAL_3D ( SWATHID, FIELDNAME, &
@@ -53,7 +53,7 @@ contains
     integer, external :: SWRDFLD
 
     swrdfld_real_3d  = swrdfld(swathid, fieldname, starts, strides, &
-      & edges, reshape(buffer, (/size(buffer)/) ) )
+      & edges, buffer )
   end function SWRDFLD_REAL_3D
 
   integer function SWWRFLD_REAL ( SWATHID, FIELDNAME, &
@@ -68,7 +68,7 @@ contains
     integer, external :: SWWRFLD
 
     swwrfld_real = swwrfld(swathid, fieldname, starts, strides, &
-      & edges, reshape(buffer, (/size(buffer)/) ) )
+      & edges, buffer )
   end function SWWRFLD_REAL
 
   integer function SWWRFLD_REAL_2D ( SWATHID, FIELDNAME, &
@@ -83,7 +83,7 @@ contains
     integer, external :: SWWRFLD
 
     swwrfld_real_2d  = swwrfld(swathid, fieldname, starts, strides, &
-      & edges, reshape(buffer, (/size(buffer)/) ) )
+      & edges, buffer )
   end function SWWRFLD_REAL_2D
 
   integer function SWWRFLD_REAL_3D ( SWATHID, FIELDNAME, &
@@ -98,12 +98,15 @@ contains
     integer, external :: SWWRFLD
 
     swwrfld_real_3d  = swwrfld(swathid, fieldname, starts, strides, &
-      & edges, reshape(buffer, (/size(buffer)/) ) )
+      & edges, buffer )
   end function SWWRFLD_REAL_3D
 
 end module SWAPI_REAL
 
 ! $Log$
+! Revision 2.0  2000/09/05 17:41:08  dcuddy
+! Change revision to 2.0
+!
 ! Revision 1.1  2000/09/02 01:56:36  vsnyder
 ! Initial code
 !
