@@ -207,7 +207,7 @@ contains ! ====     Public Procedures     ==============================
         do i = 2, nsons(sons(1))
           if ( i > 2 ) call output ( ',' )
           call output ( ' ' )
-          if ( i > 2 .and. i == nsons(sons(i)) ) call output ( 'or ' )
+          if ( i > 2 .and. i == nsons(sons(1)) ) call output ( 'or ' )
           call display_string ( sub_rosa(subtree(i,sons(1))) )
         end do
         call output ( '', advance='yes' )
@@ -879,6 +879,9 @@ m:              do j = 3, nsons(field)
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.15  2002/10/02 00:43:41  vsnyder
+! Remove check for consistent units
+!
 ! Revision 1.14  2002/07/25 00:25:10  vsnyder
 ! In Check_Field_Type, say NO if type is out-of-range -- i.e., don't crash
 !
