@@ -18,12 +18,12 @@ module ReadAPriori
   use L2GPData, only: L2GPData_T, AddL2GPToDatabase, ReadL2GPData, Dump
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: FileNameLen
-  use MLSFiles, only: MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, &
-    & MLS_INQSWATH, MLS_SFSTART, MLS_SFEND
-  use MLSL2Options, only: DEFAULT_HDFVERSION_READ, PCF
+  use MLSFiles, only: GetPCFromRef, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, &
+    & MLS_INQSWATH, MLS_SFSTART, MLS_SFEND, SPLIT_PATH_NAME
+  use MLSL2Options, only: DEFAULT_HDFVERSION_READ, PCF, PCFL2CFSAMECASE
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-  use MLSPCF2, only: mlspcf_l2clim_start, mlspcf_l2clim_end
+  use MLSPCF2, only: mlspcf_l2apriori_start, mlspcf_l2apriori_end
   use MoreTree, only: Get_Spec_ID
   use ncep_dao, only: READ_CLIMATOLOGY, ReadGriddedData, ReadGloriaFile
   use OUTPUT_M, only: BLANKS, OUTPUT
@@ -68,6 +68,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Local Variables
     integer :: COMMAPOS                 ! For parsing string
+    logical, parameter :: DEBUG = .FALSE.
     integer :: Details             ! How much info about the files to dump
     integer :: FIELD               ! Son of KEY, must be n_assign
     integer :: FIELDINDEX          ! Literal
@@ -85,6 +86,7 @@ contains ! =====     Public Procedures     =============================
     integer :: hdfVersion               ! 4 or 5 (corresp. to hdf4 or hdf5)
     integer :: I, J                ! Loop indices for section, spec
     integer :: KEY                 ! Index of n_spec_args in the AST
+    integer :: L2apriori_version
     integer :: LastClimPCF
     integer :: LISTSIZE                 ! Size of string from SWInqSwath
     type (L2AUXData_T) :: L2AUX
@@ -92,6 +94,7 @@ contains ! =====     Public Procedures     =============================
     integer :: L2Index             ! In the l2gp or l2aux database
     integer :: L2Name              ! Sub-rosa index of L2[aux/gp] label
     integer :: NOSWATHS                 ! In an input file
+    character(len=FileNameLen) :: path   ! path of actual literal file name
     integer :: pcf_indx            ! loop index of climatology pcf numbers
     integer :: record_length
     integer :: ReturnStatus
@@ -99,6 +102,7 @@ contains ! =====     Public Procedures     =============================
     integer :: SdName        ! sub-rosa index of name in sdName='name'
     character(len=FileNameLen) :: SDNAMESTRING ! actual literal sdName
     integer :: Sd_id
+    character(len=FileNameLen) :: subString   ! file name w/o path
     integer :: SwathName        ! sub-rosa index of name in swath='name'
     character(len=FileNameLen) :: SWATHNAMESTRING ! actual literal swath name
     real :: T1, T2                      ! for timing
@@ -130,10 +134,11 @@ contains ! =====     Public Procedures     =============================
     & call output ( '============ Read APriori ============', advance='yes' )    
     version = 1
     allswathnames = ' '
-    lastClimPCF = mlspcf_l2clim_start - 1
+    lastClimPCF = mlspcf_l2apriori_start - 1
 
     do i = 2, nsons(root)-1 ! Skip the section name at begin and end
       hdfVersion = DEFAULT_HDFVERSION_READ
+      L2apriori_version = 1
       got = .false.
       son = subtree(i,root)
       if ( node_id(son) == n_named ) then ! Is spec labeled?
@@ -206,6 +211,13 @@ contains ! =====     Public Procedures     =============================
           end if
         endif
         
+        if ( PCF ) then
+          call split_path_name(FileNameString, path, SubString)
+          LastClimPCF = GetPCFromRef(SubString, mlspcf_l2apriori_start, &
+          & mlspcf_l2apriori_end, &                                     
+          & PCFL2CFSAMECASE, returnStatus, l2apriori_Version, DEBUG, &  
+          & exactName=FileNameString)                             
+        endif
         ! Open the l2gp file
 !        fileHandle = swopen(FileNameString, DFACC_READ)
         fileHandle = mls_io_gen_openF('swopen', .TRUE., returnStatus, &
@@ -241,6 +253,13 @@ contains ! =====     Public Procedures     =============================
         ! copy.
       case ( s_l2aux )
 
+        if ( PCF ) then
+          call split_path_name(FileNameString, path, SubString)
+          LastClimPCF = GetPCFromRef(SubString, mlspcf_l2apriori_start, &
+          & mlspcf_l2apriori_end, &                                     
+          & PCFL2CFSAMECASE, returnStatus, l2apriori_Version, DEBUG, &  
+          & exactName=FileNameString)                             
+        endif
         if ( .not. all(got((/f_sdName, f_file/)))) &
           & call announce_error ( son, &
             & 'file/sd name must both be specified in read a priori' )
@@ -287,6 +306,14 @@ contains ! =====     Public Procedures     =============================
 
       case ( s_gridded )
 
+        if ( PCF .and. got(f_file) ) then
+          call split_path_name(FileNameString, path, SubString)
+          LastClimPCF = GetPCFromRef(SubString, mlspcf_l2apriori_start, &
+          & mlspcf_l2apriori_end, &                                     
+          & PCFL2CFSAMECASE, returnStatus, l2apriori_Version, DEBUG, &  
+          & exactName=FileNameString)                             
+        endif
+
         if ( .not. all(got((/f_origin, f_field/))) ) &
           & call announce_error ( son, 'Incomplete gridded data information' )
 
@@ -314,7 +341,7 @@ contains ! =====     Public Procedures     =============================
         case ( l_climatology ) ! -------------------- Climatology data
           ! Identify file (maybe from PCF if no name given)
           if ( .NOT. got(f_file) .and. PCF) then
-            do pcf_indx = lastClimPCF+1, mlspcf_l2clim_end
+            do pcf_indx = lastClimPCF+1, mlspcf_l2apriori_end
               returnStatus = Pgs_pc_getReference(i, version, fileNameString)
               if ( returnStatus == PGS_S_SUCCESS) exit
             end do
@@ -333,7 +360,7 @@ contains ! =====     Public Procedures     =============================
           if ( .not. gotAlready ) then
             ! No, well read it then, add its entire contents to the database
             call read_climatology ( FileNameString, son, &
-              & GriddedDatabase, mlspcf_l2clim_start, mlspcf_l2clim_end )
+              & GriddedDatabase, mlspcf_l2apriori_start, mlspcf_l2apriori_end )
           end if
        
           ! Locate requested grid by name, store index in gridIndex
@@ -479,6 +506,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.35  2002/04/06 00:11:18  pwagner
+! Combined pcf numbers for dao, ncep, clim, l2gp into apriori
+!
 ! Revision 2.34  2002/01/29 23:49:38  pwagner
 ! Separate DEFAULT_HDFVERSION_(READ)(WRITE)
 !
