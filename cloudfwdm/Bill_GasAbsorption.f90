@@ -1,17 +1,8 @@
 Module Bill_GasAbsorption
 
-  use GLNP, only: NG
-  use MLSCommon, only: r8, rp, ip
-  use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT, ALLOCATEONESLABS, DESTROYCOMPLETESLABS
-  use SpectroscopyCatalog_m, only: CATALOG_T, LINES
-  use SLABS_SW_M, only: GET_GL_SLABS_ARRAYS
-  use CREATE_BETA_M, only: CREATE_BETA
-  use WaterVapor, only: RHtoEV
-  USE Make_Z_Grid_M, only: MAKE_Z_GRID
-
-  Implicit NONE
+  implicit NONE
   private
-  PUBLIC :: get_beta_bill
+  public :: get_beta_bill
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter, private :: IdParm = &
@@ -30,6 +21,17 @@ contains
 !      USING BILL'S NEW SPECTROSCOPY DATA. 
 !      LATEST UPDATE: J.JIANG, NOVEMBER 14, 2001
 !==============================================================
+
+    use CREATE_BETA_M, only: CREATE_BETA
+    use GLNP, only: NG
+    use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT, ALLOCATEONESLABS, DESTROYCOMPLETESLABS
+    use Make_Z_Grid_M, only: MAKE_Z_GRID
+    use MLSCommon, only: R8, RP, IP
+    use Molecules, only: SP_H2O, SP_H2O_18, SP_HNO3, SP_N2, SP_N2O, SP_O_18_O, &
+      & SP_O2, SP_O3
+    use SLABS_SW_M, only: GET_GL_SLABS_ARRAYS
+    use SpectroscopyCatalog_m, only: CATALOG_T, LINES
+    use WaterVapor, only: RHtoEV
 
     !-----------------
     ! INPUTS
@@ -72,16 +74,16 @@ contains
     Integer(ip) :: n_sps, n_path, i, j, k, m, nl, no_of_lines, n_ele, maxvert
     Integer(ip) :: Spectag, status
     REAL(rp) :: bb, v0, vm, tm, tp, bp, bm, del_temp
-    REAL(rp), allocatable, dimension(:) :: LineWidth, PP, TT, z_psig(:)
+    REAL(rp), allocatable, dimension(:) :: PP, TT, z_psig
 
 !-----------------------------------------------------------------------------
 
-    IF (RH .NE. 100._r8) THEN
+    IF (RH .NE. 100.0_r8) THEN
        VMR_H2O = RH                     ! PH HERE IS WATER VAPOR MIXING RATIO
        VP=VMR_H2O*PB                    ! VP IS VAPOR PRESSURE, PB IS TOTAL
        P=PB-VP                          ! PRESSURE, P IS DRY-AIR PRESSURE
-    ELSE IF(VMR_H2O .EQ. 100._r8) THEN
-       CALL RHtoEV(T, 100._r8, VP)        ! RH HERE IS 100% RELATIVE HUMIDITY 
+    ELSE IF(VMR_H2O .EQ. 100.0_r8) THEN
+       CALL RHtoEV(T, 100.0_r8, VP)        ! RH HERE IS 100% RELATIVE HUMIDITY 
        P = PB-VP
        VMR_H2O = VP/(max(1.e-19_r8, P))
     END IF
@@ -94,8 +96,8 @@ contains
     VMR_N2O    = VMR_in(2)
     VMR_HNO3   = VMR_in(3)
 
-    B=0._r8
-    FF = F*1000._r8
+    B=0.0_r8
+    FF = F*1000.0_r8
 
 !    maxVert = Ng +1
 
@@ -127,45 +129,35 @@ contains
 
     DO i = 1, n_sps
       Spectag = Catalog(i)%Spec_Tag
-      no_of_lines =  size(Catalog(i)%Lines)
-      Allocate(LineWidth(no_of_lines))
-      do k = 1, no_of_lines
-        m = Catalog(i)%Lines(k)
-        LineWidth(k) = Lines(m)%W
-      end do
 
-      CALL create_beta(Spectag, Catalog(i)%continuum, PB, T,                 &
-        &  FF, no_of_lines, LineWidth, gl_slabs(n_ele,i)%v0s, gl_slabs(n_ele,i)%x1,  &
-        &  gl_slabs(n_ele,i)%y, gl_slabs(n_ele,i)%yi, gl_slabs(n_ele,i)%slabs1,  bb, &
-        &  gl_slabs(n_ele,i)%dslabs1_dv0 )
+      CALL create_beta ( Spectag, Catalog(i)%continuum, PB, T, &
+        &  FF, Lines(Catalog(i)%Lines)%W, gl_slabs(n_ele,i), bb )
       
-      IF (Spectag .EQ. 18003) THEN
+      IF (Spectag .EQ. SP_H2O) THEN
         VMR = VMR_H2O
-      ELSE IF (Spectag .EQ. 32001) THEN
+      ELSE IF (Spectag .EQ. SP_O2) THEN
         VMR = VMR_O2
-      ELSE IF (Spectag .EQ. 28964) THEN
+      ELSE IF (Spectag .EQ. SP_N2) THEN
         VMR = VMR_N2
-      ELSE IF (Spectag .EQ. 34001) THEN
+      ELSE IF (Spectag .EQ. SP_O_18_O) THEN
         VMR = VMR_O_18_O
-      ELSE IF (Spectag .EQ. 20003) THEN
+      ELSE IF (Spectag .EQ. SP_H2O_18) THEN
         VMR = VMR_H2O_18
-      ELSE IF (Spectag .EQ. 48004) THEN
+      ELSE IF (Spectag .EQ. SP_O3) THEN
         VMR = VMR_O3
-      ELSE IF (Spectag .EQ. 44004) THEN
+      ELSE IF (Spectag .EQ. SP_N2O) THEN
         VMR = VMR_N2O
-      ELSE IF (Spectag .EQ. 63001) THEN
+      ELSE IF (Spectag .EQ. SP_HNO3) THEN
         VMR = VMR_HNO3
       ELSE
-        VMR=0._r8
+        VMR=0.0_r8
       ENDIF
 
       B = B + VMR*bb
 
-      DEAllocate(LineWidth)
-
     ENDDO
 
-    ABSC=B/1000._r8     ! convert km-1 to m-1
+    ABSC=B/1000.0_r8     ! convert km-1 to m-1
 
 !    print*, B
 
@@ -182,6 +174,9 @@ contains
 End Module Bill_GasAbsorption
 
 ! $Log$
+! Revision 1.8  2002/10/08 17:08:06  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 1.7  2002/08/22 00:13:01  jonathan
 ! upgrade to include more molecules
 !
