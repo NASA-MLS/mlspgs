@@ -33,10 +33,13 @@ init_gen: init_gen.f90
           -L $(HOME)/mlspgs/lib/$(PLATFORM) -lmls
 
 h5cat: h5cat.c
-	$(CC) -g -o h5cat -I $(HDF5INC) h5cat.c -static -static-libgcc \
+	$(CC) -g -o h5cat -I $(HDF5INC) h5cat.c \
           -L $(HDF5LIB) -lz -lm -lhdf5
 
 # $Log$
+# Revision 1.3  2003/08/13 18:16:36  livesey
+# New HDF5 library.
+#
 # Revision 1.2  2001/07/25 02:07:24  vsnyder
 # Account for init_gen
 #
