@@ -481,7 +481,7 @@ contains ! =================================== Public Procedures==============
               ! Delete wall obstruction at start of a range or at another wall
               call DeleteObstruction ( obstructions, i )
               foundOne = .true.
-              exit Middle Loop
+              exit MiddleLoop
             end if
           end if
 
@@ -537,3 +537,8 @@ contains ! =================================== Public Procedures==============
   end subroutine SurveyL1BData
 
 end module ChunkDivide_m
+
+! $Log$
+! Revision 2.2  2001/11/09 06:34:39  livesey
+! Minor bug fix, and added Log stuff
+!
