@@ -46,6 +46,7 @@ module MLSFiles               ! Utility file routines
     "$Id$"
   character (len=*), private, parameter :: ModuleName= &
     "$RCSfile$"
+  private :: not_used_here 
   !----------------------------------------------------------
 
 ! === (start of toc) ===
@@ -1255,11 +1256,18 @@ contains
 !-----------------------------------------------
 
 !====================
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module MLSFiles
 !====================
 
 !
 ! $Log$
+! Revision 2.38  2002/10/08 00:09:11  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.37  2002/09/27 23:38:38  pwagner
 ! Added hg type to mls_gen_close
 !
