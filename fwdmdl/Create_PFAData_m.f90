@@ -33,15 +33,16 @@ contains ! =====     Public Procedures     =============================
     use L2PC_PFA_STRUCTURES, only: AllocateOneSlabs, DeAllocateOneSlabs, &
       & SLABS_STRUCT
     use MLSCommon, only: RP, R8
-    use MLSSignals_m, only: GetNameOfSignal, GetRadiometerFromSignal, &
-      & MatchSignal, Signal_T
+    use MLSSignals_m, only: GetNameOfSignal, MatchSignal, MaxSigLen, Signal_T
+    use Output_m, only: Output
     use PFADataBase_m, only: AddPFADatumToDatabase, PFAData, PFAData_T, &
       & Sort_PFADataBase
     use Physics, only: h_over_K, SpeedOfLight ! m/s
     use Slabs_SW_m, only: Slabs_Prep_Struct
     use SpectroscopyCatalog_m, only: Catalog, Catalog_t, Line_t, Lines, &
       & MostLines
-    use Toggles, only: Emit, Toggle
+    use String_Table, only: Display_String
+    use Toggles, only: Emit, Switches, Toggle
     use Trace_M, only: Trace_begin, Trace_end
     use VGridsDatabase, only: VGrid_t
 
@@ -67,16 +68,19 @@ contains ! =====     Public Procedures     =============================
     integer :: NFP      ! Number of points in filter bank's frequency grid
     real(r8) :: Norm    ! Normalization for filter grid
     integer :: NumChannels
-    type(PFAData_T) :: PFADatum
     real(rp) :: P       ! Pressure
+    type(PFAData_T) :: PFADatum
+    logical :: Progress ! Dump signal/molecule
     integer :: PX       ! Index for pressures
     integer :: S        ! Index for signals
     integer :: ShapeInd ! Index of filter shape for signal/sideband/channel
     integer, pointer :: SigInd(:)   ! Index of signal for signal/channel pair
     type(signal_t), pointer :: Signal
-    character(127) :: SignalName
+    character(maxSigLen) :: SignalName
+    logical :: SkipIt   ! No lines or continuum for molecule/signal combination
     type(slabs_struct) :: Slabs
     real(rp) :: T       ! Temperature from temperature grid
+    real :: T0, T1, T2  ! for timing
     integer :: TX       ! Index for temperature grid
     type (line_T), pointer :: ThisLine
     real(rp) :: VelCor  ! Velocity correction = 1 - velRel
@@ -87,6 +91,7 @@ contains ! =====     Public Procedures     =============================
 
     if ( toggle(emit) ) & ! set by -f command-line switch
       & call trace_begin ( 'Create_PFAData' )
+    progress = index(switches,'pfag') /= 0
 
     ! Opposite sign convention here from ATBD
     velRel = losVel / speedOfLight ! losVel & speedOfLight both M/s
@@ -115,6 +120,10 @@ contains ! =====     Public Procedures     =============================
     end do ! s
 
     ! Now, for all the channels....
+    if ( progress ) then
+      call cpu_time ( t0 )
+      t1 = t0
+    end if
     do c = 1, numChannels
       signal => signals(sigind(c))
       ! Get the filter shape for the signal
@@ -158,7 +167,10 @@ contains ! =====     Public Procedures     =============================
           cycle
         end if
         call work_out_spectroscopy
-
+        if ( skipIt ) then
+          if ( progress ) call cpu_time ( t1 )
+          cycle
+        end if
 
         ! Then for all the pressures and temperatures....
         do tx = 1, temperatures%noSurfs
@@ -175,6 +187,16 @@ contains ! =====     Public Procedures     =============================
         ! Put it away
         create_PFAData = AddPFADatumToDatabase ( pfaData, pfaDatum )
 
+        if ( progress ) then
+          call output ( 'Created PFA for ' )
+          call display_string ( lit_indices(n) )
+          call output ( ' / ' )
+          call output ( trim(pfaDatum%signal) )
+          call cpu_time ( t2 )
+          call output ( t2-t1, before=' using ', after=' seconds', &
+            & format='(f0.2)', advance='yes' )
+          t1 = t2
+        end if
       end do ! m
     end do ! c
 
@@ -182,6 +204,11 @@ contains ! =====     Public Procedures     =============================
     call deallocate_test ( sigInd, 'SigInd', moduleName )
 
     call sort_PFADataBase
+
+    if ( progress ) then
+      call cpu_time ( t2 )
+      call output ( t2-t0, before='Total CPU time = ', advance='yes' )
+    end if
 
     if ( toggle(emit) ) & ! set by -f command-line switch
       & call trace_end ( 'Create_PFAData' )
@@ -204,9 +231,9 @@ contains ! =====     Public Procedures     =============================
         call output ( 'No catalog for ' )
         call display_string ( more, advance='yes' )
       case ( noLines )
-        call output ( 'No lines or continuum for molecule ' )
+        call output ( 'No lines or continuum for ' )
         call display_string ( more )
-        call output ( ' and signal ' )
+        call output ( ' / ' )
         call output ( trim(string), advance='yes' )
       end select
     end subroutine Announce_Error
@@ -248,6 +275,7 @@ contains ! =====     Public Procedures     =============================
 
     ! ....................................  Work_Out_Spectroscopy  .....
     subroutine Work_Out_Spectroscopy
+      skipIt = .false. ! Assume there will be lines and/or continuum
       ! Don't deallocate lines by mistake -- myCatalog is a shallow copy
       nullify ( myCatalog%lines )
       if ( associated ( catalog(n)%lines ) ) then
@@ -272,20 +300,20 @@ contains ! =====     Public Procedures     =============================
         if ( l == 0 .and. all(myCatalog%continuum == 0) ) then
           call getNameOfSignal ( signal, signalName )
           call announce_error ( where, noLines, signalName, lit_indices(n) )
+          skipIt = .true.
+          return
         end if
-        call allocate_test ( myCatalog%lines, l, &
-          & 'myCatalog(?,?)%lines(0)', moduleName )
+        call allocate_test ( myCatalog%lines, l, 'myCatalog%lines', moduleName )
         myCatalog%lines = pack ( catalog(n)%lines, lineFlag )
 
       else
 
         ! No lines for this specie.  However, its continuum is still valid 
         ! so don't set it to empty.
-        ! Won't bother checking that continuum /= 0 as if it were then
+        ! Don't bother checking that continuum /= 0 as otherwise then
         ! presumably having no continuum and no lines it wouldn't be in the
         ! catalog!
-        call allocate_test ( myCatalog%lines, 0, &
-          & 'myCatalog(?,?)%lines(0)', moduleName )
+        call allocate_test ( myCatalog%lines, 0, 'myCatalog%lines(0)', moduleName )
       end if
     end subroutine Work_Out_Spectroscopy
   end function Create_PFAData
@@ -299,6 +327,9 @@ contains ! =====     Public Procedures     =============================
 end module Create_PFAData_m
 
 ! $Log$
+! Revision 2.2  2004/12/31 02:41:01  vsnyder
+! Create PFA data
+!
 ! Revision 2.1  2004/12/13 23:54:46  vsnyder
 ! Initial commit
 !
