@@ -112,7 +112,8 @@ module INIT_TABLES_MODULE
   include 'field_parm.f9h'    
 ! Enumeration literals (there are more in INTRINSIC and MOLECULES):
   integer, parameter :: L_ANGLE                = last_Spectroscopy_Lit + 1
-  integer, parameter :: L_APRIORI              = l_angle + 1
+  integer, parameter :: L_ADDNOISE             = l_angle + 1
+  integer, parameter :: L_APRIORI              = l_addnoise + 1
   integer, parameter :: L_BOTH 	              = l_apriori + 1
   integer, parameter :: L_BOUNDARYPRESSURE     = l_both + 1
   integer, parameter :: L_CHISQCHAN            = l_boundarypressure + 1
@@ -290,6 +291,7 @@ contains ! =====     Public procedures     =============================
     data_type_indices(t_vgridtype) =       add_ident ( 'vGridType' )
     ! Put enumeration literals into the symbol table.  Don't add ones
     ! that are already put in by init_intrinsic or init_molecules.
+    lit_indices(l_addnoise) =              add_ident ( 'addnoise' )
     lit_indices(l_angle) =                 add_ident ( 'angle' )
     lit_indices(l_apriori) =               add_ident ( 'apriori' )
     lit_indices(l_both) =                  add_ident ( 'both' )
@@ -435,7 +437,7 @@ contains ! =====     Public procedures     =============================
       begin, t+t_criticalModule, l+l_both, l+l_either, l+l_ghz, l+l_neither, &
              l+l_thz, n+n_dt_def, &
       begin, t+t_fillMethod, l+l_gridded, l+l_estimatedNoise, l+l_explicit, &
-             l+l_hydrostatic, &
+             l+l_hydrostatic, l+l_addnoise, &
              l+l_isotope, l+l_l1b, l+l_l2aux, l+l_l2gp, l+l_vector, l+l_special, &
              l+l_rectanglefromlos,l+l_vGrid, n+n_dt_def, &
       begin, t+t_fwmType, l+l_linear, l+l_full, l+l_scan, l+l_cloudFull, n+n_dt_def, &
@@ -612,7 +614,7 @@ contains ! =====     Public procedures     =============================
             f+f_quantities, n+n_dot/))
      call acorn((/begin, f+f_earthRadius, s+s_vector, f+f_template, f+f_quantities, &
             n+n_dot/))
-     call acorn((/begin, f+f_error, s+s_vector, f+f_template, &
+     call acorn((/begin, f+f_noise, s+s_vector, f+f_template, &
             f+f_quantities, n+n_dot/))
      call acorn((/begin, f+f_explicitValues, t+t_numeric, n+n_field_type/))
      call acorn((/begin, f+f_extinction, t+t_boolean, n+n_field_type/))
@@ -865,6 +867,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.161  2001/09/18 23:53:08  pwagner
+! Replaced error field name with noise; began addNoise Fill method
+!
 ! Revision 2.160  2001/09/17 23:13:09  livesey
 ! Added instrument stuff to global settings etc
 !
