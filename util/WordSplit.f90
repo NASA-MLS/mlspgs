@@ -21,9 +21,9 @@ o:do
     if ( s /= 0 ) exit
     do
       line = adjustl(line)
-      if ( line(1:1) == '!' .or. line(1:1) == ' ' .or. line(:i) == ')' ) &
+      if ( line(1:1) == '!' .or. line(1:1) == ' ' .or. line(1:1) == ')' ) &
   cycle o
-      i = scan(line,', )&')
+      i = scan(line,', )&!')
       if ( line(:i) /= '&' .and. i /= 1 ) write ( *, '(a)') line(:i-1)
       line(:i) = ''
     end do
@@ -32,6 +32,9 @@ o:do
 end program WordSplit
 
 ! $Log$
+! Revision 1.2  2004/01/26 20:40:09  vsnyder
+! Allow a word to end with ampersand
+!
 ! Revision 1.1  2004/01/26 20:35:05  vsnyder
 ! Initial commit
 !
