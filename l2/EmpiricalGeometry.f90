@@ -3,15 +3,9 @@
 
 module EmpiricalGeometry                ! For empirically obtaining orbit information
 
-  use Allocate_Deallocate, only: Allocate_test, Deallocate_test
-  use Expr_M, only: EXPR
-  use MLSCommon, only: L1BInfo_T, R8, MLSChunk_T
+  use Allocate_Deallocate, only: Allocate_test
+  use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-  use MoreTree, only: Get_Field_ID
-  use Tree, only: NSONS, SUBTREE, NODE_ID
-  use Units, only: Deg2Rad, PHYQ_Angle, PHYQ_DimensionLess
-  use L1BData, only: L1BData_T, ReadL1BData, DeallocateL1BData
-  use Init_Tables_Module, only: F_ITERATIONS, F_TERMS
 
   implicit none
   private
@@ -42,6 +36,8 @@ contains ! ========================= Public Procedures ====================
     ! This function returns an empirical longitude for a given
     ! geodetic angle.
     ! Argument
+
+    use Units, only: Deg2Rad
     real(r8), dimension(:), intent(in) :: GEODANGLE
     real(r8), dimension(size(geodAngle)), intent(out) :: LON
     real(r8), optional, intent(in) :: TRYLON0
@@ -76,6 +72,13 @@ contains ! ========================= Public Procedures ====================
   ! ----------------------------------------------- InitEmpiricalGeomtry --
   subroutine InitEmpiricalGeometry ( root )
     ! This subroutine sets up the empirical geometry from l2cf information
+
+    use Expr_M, only: EXPR
+    use Init_Tables_Module, only: F_ITERATIONS, F_TERMS
+    use MoreTree, only: Get_Field_ID
+    use Tree, only: NSONS, SUBTREE
+    use Units, only: PHYQ_DimensionLess
+
     integer, intent(in) :: ROOT         ! Root of tree
 
     ! Local parameters
@@ -83,7 +86,7 @@ contains ! ========================= Public Procedures ====================
 
     ! Local variables
     real(r8), dimension(2) :: VALUE     ! From EXPR
-    integer, dimension(2) :: UNITS      ! From EXPR
+    integer, dimension(2) :: TheUnits   ! From EXPR
     integer :: I,J                      ! Loop inductors
     integer :: SON                      ! Son of root
     integer :: NOTERMS                  ! Number of terms
@@ -103,14 +106,14 @@ contains ! ========================= Public Procedures ====================
         call Allocate_Test ( empiricalTerms, noTerms, 'empiricalTerms', &
           & ModuleName )
         do j = 2, noTerms + 1
-          call expr ( subtree(j,son), units, value )
-          if ( units(1) /= PHYQ_Dimensionless ) call MLSMessage ( MLSMSG_Error, &
+          call expr ( subtree(j,son), theUnits, value )
+          if ( theUnits(1) /= PHYQ_Dimensionless ) call MLSMessage ( MLSMSG_Error, &
             & ModuleName, "No units expected for empirical terms" )
           empiricalTerms(j-1) = value(1)
         end do
       case ( f_iterations )
-        call expr ( subtree(2,son), units, value )
-        if ( units(1) /= PHYQ_Dimensionless ) call MLSMessage ( MLSMSG_Error, &
+        call expr ( subtree(2,son), theUnits, value )
+        if ( theUnits(1) /= PHYQ_Dimensionless ) call MLSMessage ( MLSMSG_Error, &
           & ModuleName, "No units expected for iterations" )
         noIterations = value(1)
       end select
@@ -120,6 +123,11 @@ contains ! ========================= Public Procedures ====================
 
   ! -------------------------------------------------- ChooseOptimumLon0 -----
   subroutine ChooseOptimumLon0 ( l1bInfo, chunk )
+
+    use Allocate_Deallocate, only: Deallocate_test
+    use L1BData, only: L1BData_T, ReadL1BData, DeallocateL1BData
+    use MLSCommon, only: L1BInfo_T, MLSChunk_T
+
     type (L1BInfo_T), intent(in) :: L1BINFO ! Where to find L1 files
     type (MLSChunk_T), intent(in) :: CHUNK ! This chunk
 
@@ -188,6 +196,9 @@ contains ! ========================= Public Procedures ====================
 end module EmpiricalGeometry
 
 ! $Log$
+! Revision 2.5  2002/08/20 22:43:37  vsnyder
+! Move USE statements from module scope to procedure scope
+!
 ! Revision 2.4  2001/12/16 00:58:06  livesey
 ! New method for computing lon0 (much more efficient)
 !
