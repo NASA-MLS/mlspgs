@@ -40,7 +40,7 @@ contains
 
   ! Outputs
     integer, intent(out) :: Nlvl                  ! Levels in coarse grid
-    integer, intent(out) :: MaxVert               ! Levels in find grid
+    integer, intent(out) :: MaxVert               ! Levels in fine grid
 
   ! Would be intent(out) if they weren't pointers.  First thing here
   ! is to nullify them.
@@ -160,6 +160,9 @@ contains
 end module Compute_GL_Grid_M
 
 ! $Log$
+! Revision 2.7  2004/07/02 01:35:52  vsnyder
+! Correct a comment
+!
 ! Revision 2.6  2004/05/19 18:53:50  vsnyder
 ! Remove USE for unreferenced symbol
 !
