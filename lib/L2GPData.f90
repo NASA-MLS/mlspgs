@@ -71,7 +71,7 @@ CONTAINS
 
     ! Dummy arguments
     INTEGER, INTENT(IN) :: noProfs,noSurfs,noFreqs ! Dimensions
-    TYPE (L2GPData_T) :: l2gp
+    TYPE (L2GPData_T), INTENT(OUT)  :: l2gp
 
     ! Local variables
     INTEGER :: status
@@ -115,7 +115,7 @@ CONTAINS
   SUBROUTINE DestroyL2GPContents(l2gp)
 
     ! Dummy arguments
-    TYPE (L2GPData_T) :: l2gp
+    TYPE (L2GPData_T), INTENT(INOUT) :: l2gp
 
     ! Executable code
 
@@ -140,7 +140,7 @@ CONTAINS
 
     ! Dummy arguments
     TYPE (L2GPData_T), DIMENSION(:), POINTER :: database
-    TYPE (L2GPData_T) :: l2gp
+    TYPE (L2GPData_T), INTENT(IN) :: l2gp
 
     ! Local variables
     TYPE (L2GPData_T), DIMENSION(:), POINTER :: tempDatabase
@@ -191,6 +191,9 @@ END MODULE L2GPData
 
 !
 ! $Log$
+! Revision 1.2  1999/12/03 21:28:56  livesey
+! Renamed L2GP_T to L2GPData_T
+!
 ! Revision 1.1  1999/12/03 19:10:34  livesey
 ! First version
 !

@@ -35,24 +35,24 @@ MODULE L2AUXData                 ! Data types for storing L2AUX data internally
 
   ! This datatype describes a dimension for an L2AUX quantity
 
-  TYPE L2AUX_Dimension
+  TYPE L2AUX_Dimension_T
      INTEGER :: noValues        ! Length of this dimension
      INTEGER :: dimensionFamily ! What is this dimension
      DOUBLE PRECISION, DIMENSION(:), POINTER :: values ! (noValues)
-  END TYPE L2AUX_Dimension
+  END TYPE L2AUX_Dimension_T
 
   ! This datatype describes an l2aux dimension.
 
-  TYPE L2AUX_T
+  TYPE L2AUXData_T
 
     ! A name for the L2AUX quantity, goes into SD name
     CHARACTER (LEN=L2AUXNameLen) :: Name ! Name for quantity to be output
 
     ! The dimensions for the quantity
-    TYPE (L2AUX_Dimension), DIMENSION(3) :: dimensions
+    TYPE (L2AUX_Dimension_T), DIMENSION(3) :: dimensions
 
     DOUBLE PRECISION, POINTER, DIMENSION(:,:,:) :: values
-  END TYPE L2AUX_T
+  END TYPE L2AUXData_T
 
 CONTAINS
 
@@ -68,7 +68,7 @@ CONTAINS
     ! Dummy arguments
     INTEGER, DIMENSION(3), INTENT(IN) :: dimensionFamilies
     INTEGER, DIMENSION(3), INTENT(IN) :: dimSizes
-    TYPE (L2AUX_T) :: l2aux
+    TYPE (L2AUXData_T), INTENT(OUT) :: l2aux
 
     ! Local variables
     INTEGER :: dimIndex
@@ -110,7 +110,7 @@ CONTAINS
   SUBROUTINE DestroyL2AUXContents(l2aux)
 
     ! Dummy arguments
-    TYPE (L2AUX_T) :: l2aux
+    TYPE (L2AUXData_T), INTENT(INOUT) :: l2aux
 
     ! Executable code
     DEALLOCATE(l2aux%dimensions(1)%values, &
@@ -128,11 +128,11 @@ CONTAINS
   SUBROUTINE AddL2AUXToDatabase(database,l2aux)
 
     ! Dummy arguments
-    TYPE (L2AUX_T), DIMENSION(:), POINTER :: database
-    TYPE (L2AUX_T) :: l2aux
+    TYPE (L2AUXData_T), DIMENSION(:), POINTER :: database
+    TYPE (L2AUXData_T), INTENT(IN) :: l2aux
 
     ! Local variables
-    TYPE (L2AUX_T), DIMENSION(:), POINTER :: tempDatabase
+    TYPE (L2AUXData_T), DIMENSION(:), POINTER :: tempDatabase
     INTEGER :: newSize,status
 
     ! Executable code
@@ -160,7 +160,7 @@ CONTAINS
   SUBROUTINE DestroyL2AUXDatabase(database)
 
     ! Dummy argument
-    TYPE (L2AUX_T), DIMENSION(:), POINTER :: database
+    TYPE (L2AUXData_T), DIMENSION(:), POINTER :: database
 
     ! Local variables
     INTEGER :: l2auxIndex
@@ -180,6 +180,9 @@ END MODULE L2AUXData
 
 !
 ! $Log$
+! Revision 1.2  1999/12/03 21:22:23  livesey
+! Removed old log data
+!
 ! Revision 1.1  1999/12/03 21:22:02  livesey
 ! First versions, modified from L2GPData module
 !

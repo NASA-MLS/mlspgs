@@ -281,7 +281,7 @@ MODULE VectorQuantities         ! Quantities within vectors
   SUBROUTINE DestroyQuantityTemplateContents(qty)
 
     ! Dummy argument
-    TYPE (QuantityTemplate_T) :: qty
+    TYPE (QuantityTemplate_T), INTENT(INOUT) :: qty
 
     ! Executable code
 
@@ -311,7 +311,7 @@ MODULE VectorQuantities         ! Quantities within vectors
 
     ! Dummy arguments
     TYPE (QuantityTemplate_T), DIMENSION(:), POINTER :: database
-    TYPE (QuantityTemplate_T) :: qty
+    TYPE (QuantityTemplate_T), INTENT(IN) :: qty
 
     ! Local variables
     TYPE (QuantityTemplate_T), DIMENSION(:), POINTER :: tempDatabase
@@ -361,6 +361,9 @@ END MODULE VectorQuantities
 
 !
 ! $Log$
+! Revision 1.5  1999/12/03 21:57:34  livesey
+! Added the code to set the id field with an incrementing counter
+!
 ! Revision 1.4  1999/12/01 23:01:41  livesey
 ! Before renaming things to upper/lower case
 !
