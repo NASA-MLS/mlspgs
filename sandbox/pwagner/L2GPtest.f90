@@ -6,6 +6,7 @@ PROGRAM L2GPtest ! tests L2GPData routines
 !=================================
 
    use Hdf, only: DFACC_CREATE, DFACC_RDWR, DFACC_READ
+   use HDFEOS5, only: HE5T_NATIVE_CHAR
    use L2GPData, only: Dump, L2GPData_T, ReadL2GPData, WriteL2GPData, &
      SetupNewL2GPRecord 
    use MLSCommon, only: R8
@@ -34,27 +35,35 @@ PROGRAM L2GPtest ! tests L2GPData routines
 ! rm -f l2gp.h4 l2gptest.out ; echo "1,4" | LF95.Linux.atlas/test > l2gptest.out
 
 ! Variables
-   type (L2GPData_T)            :: l2gp, read_l2gp
+   type (L2GPData_T)            :: l2gp, read_l2gp, alias_l2gp
    integer                      :: hdfVersion
    integer                      :: nTimes, time, freq, level
-   integer                      :: returnStatus, swfid, record_length
+   integer                      :: returnStatus, swfid, record_length, swid
    integer, parameter           :: nFreqs = 10
    integer, parameter           :: nLevels = 10
    character(len=*), parameter  :: l2gpFilename_h4 = 'l2gp.h4'
    character(len=*), parameter  :: l2gpFilename_h5 = 'l2gp.h5'
    character(len=len(l2gpFilename_h4))  :: l2gpFilename
    character(len=*), parameter  :: swathName = 'test swath'
+   character(len=*), parameter  :: aliasName = 'swath alias'
    character(len=80)            :: inputString
    character(len=8), dimension(2) :: int_chars
    integer, dimension(2)        :: the_ints
    real(r8)                     :: diff
+   integer, external            :: he5_swwrlattr, he5_swopen, he5_EHwrglatt, &
+     &                             HE5_SWattach, HE5_SWdetach, he5_SWsetalias, &
+     &                             HE5_SWrdfld 
+   character(len=*), parameter  :: alphabet = &
+     & 'abcdefghijklmnopqrstuvwxyz'
+   character(len=40000)         :: big_file
+    real, allocatable :: real3(:,:,:)
    ! Some extra assigments
    GlobalAttributes%InstrumentName = 'Totally bogus name'
    GlobalAttributes%ProcessLevel = 'Level 9'
    GlobalAttributes%InputVersion = 'v 2.001'
    GlobalAttributes%PGEVersion = 'v 1.1'
-   GlobalAttributes%StartUTC = '01012999Z00:00:00.0'
-   GlobalAttributes%EndUTC = '01012999Z23:59:59.9'
+   GlobalAttributes%StartUTC = '01012999T00:00:00Z'
+   GlobalAttributes%EndUTC = '01012999T23:59:59.9Z'
    ! Executable
    call h5open_f(returnStatus)
 
@@ -113,6 +122,42 @@ PROGRAM L2GPtest ! tests L2GPData routines
 
    print *, 'Frequencies: (after writeL2GPData)'
    print *, l2gp%frequency
+   ! Test some extra attribute stuff'
+   if ( hdfVersion == HDFVERSION_5 ) then
+     big_file = alphabet
+     big_file = adjustr(big_file(1:len(big_file)-len(alphabet)))
+     big_file = alphabet // big_file
+     swid = HE5_SWattach (swfid, trim(swathName))
+     returnStatus = he5_swwrlattr(swid, "L2gpValue", "attr_1char", &
+       & HE5T_NATIVE_CHAR, 1, alphabet(1:1))
+     returnStatus = he5_swwrlattr(swid, "L2gpValue", "attr_13chars", &
+       & HE5T_NATIVE_CHAR, 13, alphabet(1:13))
+     returnStatus = he5_swwrlattr(swid, "L2gpValue", "attr_26chars", &
+       & HE5T_NATIVE_CHAR, len(alphabet), alphabet)
+     returnStatus = he5_swwrlattr(swid, "L2gpValue", "attr_big_file", &
+       & HE5T_NATIVE_CHAR, len(big_file), big_file)
+     returnStatus = he5_SWdetach(swid)
+     returnStatus = he5_EHwrglatt(swfid, 'attr_1char', &
+       & HE5T_NATIVE_CHAR, 1, alphabet(1:1))
+     returnStatus = he5_EHwrglatt(swfid, 'attr_13chars', &
+       & HE5T_NATIVE_CHAR, 13, alphabet(1:13))
+     returnStatus = he5_EHwrglatt(swfid, 'attr_26chars', &
+       & HE5T_NATIVE_CHAR, len(alphabet), alphabet)
+     returnStatus = he5_EHwrglatt(swfid, 'attr_big_file', &
+       & HE5T_NATIVE_CHAR, len(big_file), big_file)
+   ! And test the alias or soft link
+     swid = HE5_SWattach (swfid, trim(swathName))
+     returnStatus = he5_SWsetalias(swid, "L2gpValue", aliasName)
+     returnStatus = he5_swwrlattr(swid, aliasName, "alias_attr_1char", &
+       & HE5T_NATIVE_CHAR, 1, alphabet(1:1))
+     returnStatus = he5_swwrlattr(swid, aliasName, "alias_attr_13chars", &
+       & HE5T_NATIVE_CHAR, 13, alphabet(1:13))
+     returnStatus = he5_swwrlattr(swid, aliasName, "alias_attr_26chars", &
+       & HE5T_NATIVE_CHAR, len(alphabet), alphabet)
+     returnStatus = he5_swwrlattr(swid, aliasName, "alias_attr_big_file", &
+       & HE5T_NATIVE_CHAR, len(big_file), big_file)
+     returnStatus = he5_SWdetach(swid)
+   endif
    returnStatus = mls_io_gen_closeF('swclose', swfid, &
     & hdfVersion=hdfVersion)
    ! Now read what we just wrote and see if it's the same
@@ -122,12 +167,30 @@ PROGRAM L2GPtest ! tests L2GPData routines
    call ReadL2GPData ( swfid, swathName, read_l2gp, &
     & hdfVersion=hdfVersion )
    read_l2gp%name = swathName // ' (read)'
+   if ( hdfVersion == HDFVERSION_5 ) then
+     allocate(real3(nFreqs, nLevels, nTimes))
+     swid = HE5_SWattach (swfid, trim(swathName))
+     call SetupNewL2GPRecord(alias_l2gp, &
+       & nFreqs, nLevels, nTimes)
+     alias_l2gp = read_l2gp
+     returnStatus = HE5_SWrdfld(swid, aliasName, &
+       & (/0,0,0/), (/1,1,1/), (/nFreqs, nLevels, nTimes/), real3)
+     if (returnStatus == -1) then
+        print *, 'Tough luck reading field ' // aliasName
+        stop
+     endif
+     alias_l2gp%l2gpValue = real3
+     alias_l2gp%name = aliasName // ' (read)'
+     returnStatus = he5_SWdetach(swid)
+     deallocate(real3)
+   endif
    returnStatus = mls_io_gen_closeF('swclose', swfid, &
     & hdfVersion=hdfVersion)
 
    ! Dump 2 l2gps and accumulate differences
    call dump(l2gp)
    call dump(read_l2gp)
+   if ( hdfVersion == HDFVERSION_5 ) call dump(alias_l2gp)
    diff = 0.
    do time=1, nTimes
      do level=1, nLevels
@@ -148,6 +211,9 @@ END PROGRAM L2GPtest
 !==================
 
 ! $Log$
+! Revision 1.3  2003/01/31 00:32:43  pwagner
+! Added Global attributes for writing
+!
 ! Revision 1.2  2003/01/16 01:05:02  pwagner
 ! added h5open/close_f calls
 !
