@@ -1411,23 +1411,20 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in), optional :: SQUARE ! Update with square of value
 
     integer :: I, N
-    logical :: MYSQUARE
+    real(r8) :: MYLAMBDA
 
-    mySquare = .false.
-    if ( present(square) ) mySquare = square
+    myLambda = lambda
+    if ( present(square) ) then
+      if (square) myLambda = lambda**2
+    endif
 
     n = max(a%m%row%nb,a%m%col%nb)
     if ( a%m%row%extra .or. a%m%col%extra ) n = n - 1
     
-    if ( mySquare ) then
-      do i = 1, n
-        call updateDiagonal ( a%m%block(i,i), lambda**2 )
-      end do
-    else
-      do i = 1, n
-        call updateDiagonal ( a%m%block(i,i), lambda )
-      end do
-    endif
+    do i = 1, n
+      call updateDiagonal ( a%m%block(i,i), myLambda )
+    end do
+
   end subroutine UpdateDiagonal_1
 
   ! ----------------------------------------  UpdateDiagonalVec_1  -----
@@ -1740,6 +1737,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.41  2001/05/19 00:20:05  livesey
+! Cosmetic changes from Van.
+!
 ! Revision 2.40  2001/05/19 00:14:57  livesey
 ! OK that should have been square (idiot!)
 !
