@@ -360,6 +360,7 @@ contains ! =====     Public Procedures     =============================
       returnStatus = mls_utctotai ( trim(LeapSecFileName), trim(dateString), hGrid%time(1,1) )
       call output ( hGrid%time(1,1), advance='yes' )
       if ( returnStatus /= 0 ) call announce_error( key, badTime )
+      hGrid%time = hGrid%time(1,1)
     else
       hGrid%time = time                   ! Get it from input time range
     end if
@@ -1439,6 +1440,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.59  2004/03/24 01:30:16  livesey
+! Bug fix in hGrid%time
+!
 ! Revision 2.58  2004/03/24 01:03:23  livesey
 ! Added date option to explicit hGrid
 !
