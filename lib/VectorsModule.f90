@@ -38,6 +38,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 ! DestroyVectorTemplateInfo    Destroys a vector template
 ! DestroyVectorValue           Destroy the "values" field in all of the quantities in a vector
 ! DotVectors                   z = x . y
+! DumpMask                     Display only the mask information for a vector
 ! dump                         Interface for next three
 ! dump_vector                  Display how a single vector is made up
 ! dump_vectors                 Display how vector database is made up
@@ -82,6 +83,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   public :: CreateMask, CreateVector, DestroyVectorDatabase, DestroyVectorInfo
   public :: DestroyVectorMask, DestroyVectorTemplateDatabase
   public :: DestroyVectorTemplateInfo, DestroyVectorValue, DotVectors
+  public :: DumpMask
   public :: Dump_Vector, Dump_Vectors, Dump_Vector_Templates, GetVectorQuantity
   public :: GetVectorQuantityByType, GetVectorQtyByTemplateIndex
   public :: GetVectorQuantityIndexByName, GetVectorQuantityIndexByType
@@ -697,6 +699,59 @@ contains ! =====     Public Procedures     =============================
       z = z + sum( x%quantities(i)%values * y%quantities(i)%values )
     end do
   end function DotVectors
+
+  ! -------------------------------------------------  DumpMask  -----
+  subroutine DumpMask ( VECTOR )
+    type (Vector_T), intent(in), target :: VECTOR
+
+    ! Local variables
+    integer :: i                        ! Instance index
+    integer :: q                        ! Quantity index
+    integer :: s                        ! Surface index
+    integer :: j                        ! Element index
+    integer :: b                        ! Bit size
+    integer :: c                        ! Channel index
+
+    ! Executable code
+    call output ( 'Dumping mask for vector ' )
+    call display_string ( vector%name, advance='yes' )
+
+    do q = 1, size(vector%quantities)
+      call output ( 'Quantity ' )
+      call display_string ( vector%quantities(q)%template%name )
+
+      if ( .not. vector%quantities(q)%template%regular ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName,&
+        & 'Unable to dump mask for irregular quantities' )
+
+      if ( .not. associated ( vector%quantities(q)%mask ) ) then
+        call output ( ' has no mask.', advance='yes' )
+      else
+        call output ( '', advance='yes' )
+        do i = 1, vector%quantities(q)%template%noInstances
+          call output ( 'Instance: ' )
+          call output ( i, advance='yes' )
+          b = bit_size (vector%quantities(q)%mask)
+          j = 1
+          do s = 1, vector%quantities(q)%template%noSurfs
+            call output ( 'Surface ' )
+            call output ( s )
+            call output ( ': ' )
+            do c = 1, vector%quantities(q)%template%noChans
+              if ( btest(vector%quantities(q)%mask(j/b+1,i), &
+                & mod (j,b) ) ) then
+                call output ( '1' )
+              else
+                call output ( '0' )
+              end if
+              j = j + 1
+            end do
+            call output ( '', advance='yes' )
+          end do                        ! Surface loop
+        end do                          ! Instance loop
+      end if                            ! Has a mask
+    end do                              ! Loop over quantities
+  end subroutine DumpMask
 
   ! ------------------------------------------------  Dump_Vector  -----
   subroutine Dump_Vector ( VECTOR, DETAILS, NAME, &
@@ -1437,6 +1492,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.57  2001/09/25 00:47:08  vsnyder
+! Add noMask & noValues optional arguments to CopyVector
+!
 ! Revision 2.56  2001/09/25 00:18:23  livesey
 ! Bug fix
 !
