@@ -4,19 +4,19 @@
 ; forward models in various channels
 
 !define(simplerMoleculesFor2,{[ EXTINCTION, [ H2O, H2O, $
-  H2O_R2, H2O_18 ], [ HNO3, HNO3 ], [ N2, N2 ], [ N2O, N2O ], [ O3, O3, $
+  H2O_R2, H2O_18 ], [ N2, N2 ], [ N2O, N2O ], [ O3, O3, $
   O3_v2 ] ]})
-!define(simplerMoleculeFamiliesFor2,{[EXTINCTION, H2O, HNO3, N2, N2O, O3]})
+!define(simplerMoleculeFamiliesFor2,{[EXTINCTION, H2O, N2, N2O, O3]})
 
 !define(simplerMoleculesFor3,{[ EXTINCTION, [ H2O, H2O, $
-  H2O_R2, H2O_18 ], [ HNO3, HNO3 ], [ N2, N2 ], [ N2O, N2O ], [ O3, O3, $
+  H2O_R2, H2O_18 ], [ N2, N2 ], [ N2O, N2O ], [ O3, O3, $
   O3_v2 ] ]})
-!define(simplerMoleculeFamiliesFor3,{[EXTINCTION, H2O, HNO3, N2, N2O, O3]})
+!define(simplerMoleculeFamiliesFor3,{[EXTINCTION, H2O, N2, N2O, O3]})
 
 !define(simplerMoleculesFor4,{[ EXTINCTION, [ H2O, H2O, $
-  H2O_R2, H2O_18 ], [ HNO3, HNO3 ], [ N2, N2 ], [ N2O, N2O ], [ O3, O3, $
+  H2O_R2, H2O_18 ], [ N2, N2 ], [ N2O, N2O ], [ O3, O3, $
   O3_v2 ] ]})
-!define(simplerMoleculeFamiliesFor4,{[EXTINCTION, H2O, HNO3, N2, N2O, O3]})
+!define(simplerMoleculeFamiliesFor4,{[EXTINCTION, H2O, N2, N2O, O3]})
 
 !define(simplerMoleculesFor5,{[ [ ClO, Cl_35_O ], EXTINCTION, [ H2O, H2O, $
   H2O_R2, H2O_18 ], [ N2, N2 ], [ O3, O3 ] ]})
