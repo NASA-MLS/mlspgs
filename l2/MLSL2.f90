@@ -255,6 +255,10 @@ program MLSL2
     ! types for fields of commands, correct command order, etc.
     call cpu_time ( t1 )
     call check_tree ( root, error, first_section )
+   if(error /= 0) then
+      call MLSMessage(MLSMSG_Error, ModuleName, &
+      & 'error in check_tree: probably need to repair l2cf ' )
+   endif
     if ( timing ) call sayTime ( 'Type checking the L2CF' )
     if ( do_dump ) call dump_decl
     if ( toggle(syn) ) then
@@ -286,6 +290,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.32  2001/05/07 17:17:31  pwagner
+! Calls MLSMessage to exit with error if check_tree fails
+!
 ! Revision 2.31  2001/05/04 22:55:36  pwagner
 ! Added cascading negatives; new command line options
 !
