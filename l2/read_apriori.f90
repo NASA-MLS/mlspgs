@@ -5,7 +5,7 @@
 module ReadAPriori
 
   use GriddedData, only: rgr, GriddedData_T, v_is_pressure, &
-    & AddGriddedDataToDatabase, Dump
+    & AddGriddedDataToDatabase, Dump, SetupNewGriddedData
   use Expr_M, only: Expr
   use Hdf, only: DFACC_READ
   use INIT_TABLES_MODULE, only: F_AURAINSTRUMENT, F_DIMLIST, F_FIELD, F_FILE, &
@@ -367,22 +367,31 @@ contains ! =====     Public Procedures     =============================
               if ( returnStatus == PGS_S_SUCCESS) exit
             end do
             if ( returnStatus /= PGS_S_SUCCESS ) then
-              call announce_error ( son, &
-                & 'PCF number not found to supply' // &
-                & ' missing ncep file name' )
+              ! call announce_error ( son, &
+              !  & 'PCF number not found to supply' // &
+              !  & ' missing ncep file name' )
+              call announce_success('ncep', 'no entry in PCF',  ' ')
+            else
+              LastNCEPPCF = pcf_indx
             end if
-            LastNCEPPCF = pcf_indx
           endif
           if (griddedOrigin == l_ncep) then
              description = 'ncep'
           else
              description = 'strat'
           end if
+          ! The gridded data needs to part of the database, even if the file
+          ! won't be found and the gridded data empty,
+          ! so it can be merged w/o segment faulting
           gridIndex = AddGriddedDataToDatabase( GriddedDatabase, GriddedData )
           call decorate ( key, gridIndex )
-          call readGriddedData ( FileNameString, son, description, &
-	    & v_is_pressure, GriddedDatabase(gridIndex), returnStatus, &
-            & dimListString, TRIM(fieldNameString), missingValue )
+          if ( returnStatus == PGS_S_SUCCESS) then
+            call readGriddedData ( FileNameString, son, description, &
+	           & v_is_pressure, GriddedDatabase(gridIndex), returnStatus, &
+              & dimListString, TRIM(fieldNameString), missingValue )
+          else
+            call SetupNewGriddedData ( GriddedDatabase(gridIndex), empty=.true. )
+          endif
           if ( returnStatus == 0 ) then
             if(index(switches, 'pro') /= 0) &
               & call announce_success(FilenameString, 'ncep', &                    
@@ -405,18 +414,27 @@ contains ! =====     Public Procedures     =============================
               if ( returnStatus == PGS_S_SUCCESS) exit
             end do
             if ( returnStatus /= PGS_S_SUCCESS ) then
-              call announce_error ( son, &
-                & 'PCF number not found to supply' // &
-                & ' missing dao file name' )
+              ! call announce_error ( son, &
+              !  & 'PCF number not found to supply' // &
+              !  & ' missing dao file name' )
+              call announce_success('dao', 'no entry in PCF',  ' ')
+            else
+              LastDAOPCF = pcf_indx
             end if
-            LastDAOPCF = pcf_indx
           endif
+          ! The gridded data needs to part of the database, even if the file
+          ! won't be found and the gridded data empty,
+          ! so it can be merged w/o segment faulting
           gridIndex = AddGriddedDataToDatabase( GriddedDatabase, GriddedData )
           call decorate ( key, gridIndex )
-          call ReadGriddedData ( FileNameString, son, 'dao', v_is_pressure, &
-            & GriddedDatabase(gridIndex), returnStatus, &
-            & dimListString, TRIM(fieldNameString), &
-            & missingValue )
+          if ( returnStatus == PGS_S_SUCCESS) then
+            call ReadGriddedData ( FileNameString, son, 'dao', v_is_pressure, &
+              & GriddedDatabase(gridIndex), returnStatus, &
+              & dimListString, TRIM(fieldNameString), &
+              & missingValue )
+          else
+            call SetupNewGriddedData ( GriddedDatabase(gridIndex), empty=.true. )
+          endif
           if ( returnStatus == 0 ) then
             if(index(switches, 'pro') /= 0) &
               & call announce_success(FilenameString, 'dao', &                    
@@ -649,6 +667,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.56  2004/06/28 20:25:54  pwagner
+! Handle dao, ncep missing from PCF with grace
+!
 ! Revision 2.55  2004/06/23 17:13:34  pwagner
 ! Should quit gracefully if climatolgy file not found
 !
