@@ -11,7 +11,7 @@ module CloudySkyRadianceModel
       use ClearSkyModule,          only: CLEAR_SKY
       use CloudySkyModule,         only: CLOUDY_SKY
       use DCSPLINE_DER_M,          only: CSPLINE_DER
-      use FOV_CONVOLVE_M,          only: FOV_CONVOLVE_OLD
+      use FOV_CONVOLVE_M,          only: FOV_CONVOLVE_OLD, FOV_CONVOLVE
       use HYDROSTATIC_INTRP,       only: GET_PRESSURES
       use L2PC_FILE_PARAMETERS,    only: DEG2RAD
       use ModelInput,              only: MODEL_ATMOS
@@ -339,6 +339,7 @@ contains
       REAL(r8) :: ZNT1(NZmodel/8-1+Nsub) 
 
       REAL(r8) :: ptg_angle(NZmodel/8-1+Nsub)       ! POINTING ANGLES CORRESPONDING TO ZZT1
+      REAL(r8) :: ptg_angle_out(NZmodel/8-1+Nsub)       
 
       type(antennaPattern_T), intent(in) :: AntennaPattern
       Type(Catalog_T), INTENT(IN) :: Catalog(:)
@@ -347,7 +348,7 @@ contains
       REAL(r8) :: schi, center_angle, Q
       Real(r8) :: dTB0_dZT(NT,NF), dDTcir_dZT(NT,NF)
 
-      Real(r8), dimension(size(fft_index)) :: FFT_ANGLES, FFT_PRESS, RAD0, RAD
+      Real(r8), dimension( NZmodel/8+Nsub ) :: RAD0, RAD, SRad0, SRad, RADIANCE0, RADIANCE
 
       REAL(r8) :: PH1(NU)                      ! SINGLE PARTICLE PHASE FUNCTION
       REAL(r8) :: P(NAB,NU)                    ! LEGENDRE POLYNOMIALS l=1
@@ -376,14 +377,6 @@ contains
 !---------------<<<<<<<<<<<<< START EXCUTION >>>>>>>>>>>>-----------------
 
 !      CALL HEADER(1)
-
-!      print*,temperature   !OK
-!      print*,pressure      !OK
-!      print*,height        !OK
-!      print*,VMRin(1,:)    !OK
-!      print*,VMRin(2,:)    !OK
-!      print*, zt           !OK 
-!      print*, zzt          !OK
 
 ! initialization of TB0, DTcir, Trans, BETA, BETAc, Dm, TAUeff, SS
 
@@ -676,7 +669,6 @@ contains
          schi = 0.0_r8
          RT = 0.0_r8
          ptg_angle = 0.0_r8
-         center_angle = 0.0_r8
 
   	 DO I = 1, Multi
             
@@ -693,21 +685,12 @@ contains
                STOP
             END IF
     	    ptg_angle(i) = Asin(schi) + elev_offset
-!            print*, real(ptg_angle(i)), real(TT0(i,NZmodel))
 
   	 END DO
-
-	 center_angle = ptg_angle(1)
 
 ! ----------------------------------------------------------------
 ! 	 THEN DO THE FIELD OF VIEW AVERAGING
 ! ----------------------------------------------------------------
-
-         Ier = 0
-         ntr = size(antennaPattern%aaap)
-         
-         fft_pts = 0.0_r8
-	 fft_pts = nint(log(real(size(AntennaPattern%aaap)))/log(2.0))
 
          RAD0=0.0_r8
          RAD0(1:Multi)=TT0(1:Multi,NZmodel)
@@ -715,84 +698,25 @@ contains
          RAD=0.0_r8
          RAD(1:Multi)=TT(1:Multi,NZmodel)
 
-         fft_angles=0.0
-         fft_angles(1:Multi) = ptg_angle(1:Multi)    ! Multi = No. of tangent heights
-	
-         Call fov_convolve_old ( fft_angles, RAD0, center_angle, 1, Multi,   &
-              &              fft_pts, AntennaPattern, Ier )
-              if ( Ier /= 0) then
-	         print*,'error in FOV CONV'
-	         stop
-	      endif
+         SRad0=0.0_r8
+         SRad =0.0_r8
 
-         fft_angles=0.0
-         fft_angles(1:Multi) = ptg_angle(1:Multi)    ! Multi = No. of tangent heights
-
-         Call fov_convolve_old ( fft_angles, RAD, center_angle, 1, Multi,   &
-              &              fft_pts, AntennaPattern, Ier )
-              if ( Ier /= 0) then
-	         print*,'error in FOV CONV'
-	         stop
-	      endif
-
-              !------------------------------------------------------------------
-              !  TT   ___                                     RAD  ___|___
-              !          \                                        /   |   \
-              !           \          after fov_convolve ==>      /    |    \
-              !            \                                    /  -  | +   \
-              !             \___                            ___/      |      \___
-              !-------------------------------------------------------------------
-
-         !  Get 'ntr' pressures associated with the fft_angles:
-         fft_press=0.0_r8
-         Call get_pressures ( 'a', ptg_angle, ZTT1, -log10(ZPT1), Multi,     &
-              &                    fft_angles, fft_press, Ntr, Ier )
-              if ( Ier /= 0) then
-	         print*,'error in get_pressures'
-	         stop
-	      endif
-
-         ! Make sure the fft_press array is MONOTONICALY increasing:
-         is = 1
-         do while (is < Ntr-1  .and.  fft_press(is) >= fft_press(is+1)) 
-            is = is + 1                                                  
-         end do                                                         
-          ! There was an error in zvi's code, in which he wrote is<Ntr. This will cause 
-          ! subscript fft_press(is+1) out of range when run the program after compile 
-          ! with -C, as "Subscript 1 of FFT_PRESS (value 1025) is out of range (1:1024)"
-          ! UPDATE: zvi and I have fixed above error on 08/29/01
-
-         Ktr = 1
-         Rad0(Ktr) = Rad0(is)
-         Rad(Ktr) = Rad(is)
-         fft_index(Ktr) = is
-         fft_press(Ktr) = fft_press(is)
-
-         do ptg_i = is+1, Ntr
-           q = fft_press(ptg_i)
-           if ( q > fft_press(Ktr)) then
-             Ktr = Ktr + 1
-             fft_press(Ktr) = q
-             Rad0(Ktr) = Rad0(ptg_i)
-             Rad(Ktr) = Rad(ptg_i)
-             fft_index(Ktr) = ptg_i
-           end if
-         end do
- 
-! ----------------------------------------------------------------------------
-!        INTERPOLATE THE OUTPUT VALUES RAD0 TO TB0 WITH RESPECT TO L2 TANGENT
-!        PRESSURES ZT (i.e. ptan).
-!        (ALSO STORE THE RADIANCE DERIVATIVES WITH RESPECT TO ZT)
-! ----------------------------------------------------------------------------
-
-         dTB0_dZT=0.0_r8
-         dDTcir_dZT=0.0_r8
-
-         Call Cspline_der ( fft_press, -log10(ZT), RAD0, TB0(:,IFR), dTB0_dZT(:,IFR), Ktr, NT )
-         Call Cspline_der ( fft_press, -log10(ZT), RAD-RAD0, DTcir(:,IFR), dDTcir_dZT(:,IFR), Ktr, NT )
+         call fov_convolve ( AntennaPattern, ptg_angle, RAD0, ptg_angle, SRad0 )
+         call fov_convolve ( AntennaPattern, ptg_angle, RAD,  ptg_angle, SRad )
 
 ! -----------------------------------------------------------------------------
-         END IF     ! **** END OF FOV AVERAGING ****
+
+         ! CLEAR-SKY BACKGROUND
+         CALL INTERPOLATEVALUES(ZZT1,SRad0(:),ZZT,TB0(:,IFR),method='Linear')
+
+         ! CLOUD-INDUCED RADIANCE
+         CALL INTERPOLATEVALUES(ZZT1,SRad(:)-SRad0(:),ZZT,DTcir(:,IFR), &
+              &                 method='Linear')
+
+         END IF     
+
+! **** END OF FOV AVERAGING ****
+
 
 !====================================
 !    >>>>>>> MODEL-OUTPUT <<<<<<<<<
@@ -836,6 +760,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.36  2002/08/22 00:13:58  jonathan
+! upgrade to include more molecules
+!
 ! Revision 1.35  2002/08/19 22:22:03  jonathan
 ! debug stuff
 !
