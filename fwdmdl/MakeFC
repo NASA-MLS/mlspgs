@@ -84,7 +84,7 @@ PROG=libfwdmdl.a
 
 #----------------------- Build instructions
 
-$(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
+$(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) $(LIB_prereqs)
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
 
 l2_test: libfwdmdl.a
@@ -153,6 +153,9 @@ targ:
 	$(TAR) hcvzf ../fwdmdl.tgz * --exclude \*.o --exclude \*.mod --exclude l2_test
 
 # $Log$
+# Revision 1.18  2001/05/31 20:24:49  pwagner
+# ghostbuster called with -lib option
+#
 # Revision 1.17  2001/05/24 17:56:39  pwagner
 # Expanded LIB_prereqs
 #

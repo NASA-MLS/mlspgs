@@ -80,11 +80,6 @@ libmls_f90 := $(shell echo $(libmls_sources)/*.f90 $(libmls_sources)/*.c)
 libfwdmdl_f90 := $(shell echo $(libfwdmdl_sources)/*.f90)
 blaslib_f := $(shell echo $(blaslib)/*.f)
 
-#Where else to look for USEd and INCLUDED files to add to dependency list
-depends_where:=$(libmls_sources) $(srclib) $(libfwdmdl_sources)
-PROG_prereqs=$(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) \
-	  $(libmls_objs)/libmls.a $(libfwdmdl_objs)/libfwdmdl.a
-
 ifdef BLAS
    LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
    $(libmls_sources)/machines/$(MLSCONFG)/machine.f90
@@ -94,6 +89,12 @@ else
    $(blaslib_f)
 endif
 
+#Where else to look for USEd and INCLUDED files to add to dependency list
+depends_where:=$(libmls_sources) $(srclib) $(libfwdmdl_sources)
+
+FM_LIB_prereqs=$(libfwdmdl_f90) $(LIB_prereqs)
+
+PROG_prereqs=$(PLATFORMS)/$(MLSCONFG) $(FM_LIB_prereqs)
 
 PROG=libcloud.a
 
@@ -105,8 +106,7 @@ $(PROG): $(PROG_prereqs)
 $(libmls_objs)/libmls.a: $(LIB_prereqs)
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
-$(libfwdmdl_objs)/libfwdmdl.a: $(libfwdmdl_f90) $(libmls_objs)/libmls.a \
-               $(CONFDIR)/$(MLSCFILE)
+$(libfwdmdl_objs)/libfwdmdl.a: $(FM_LIB_prereqs)
 	$(MAKE) -f $(MakeFName) libfwdmdl.a -C $(libfwdmdl_sources)
 
 .PHONY: configure depends clean tar mostlyclean tarz targ ghostbuster
@@ -168,6 +168,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 1.2  2001/05/31 20:24:49  pwagner
+# ghostbuster called with -lib option
+#
 # Revision 1.1  2001/05/30 16:42:53  pwagner
 # First commit
 #
