@@ -246,6 +246,7 @@ contains ! =====     Public procedures     =============================
     phyq_indices(phyq_mafs) =              add_ident ( 'mafs' )
     phyq_indices(phyq_mifs) =              add_ident ( 'mifs' )
     phyq_indices(phyq_frequency) =         add_ident ( 'frequency' )
+    phyq_indices(phyq_velocity) =          add_ident ( 'velocity' )
     phyq_indices(phyq_zeta) =              add_ident ( 'zeta' )
 
   ! Definitions are represented by trees.  The notation in the comments
@@ -359,6 +360,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.15  2001/03/17 02:23:40  livesey
+! Bug fix, defined phyq_indices(phyq_velocity)
+!
 ! Revision 2.14  2001/03/15 18:41:04  livesey
 ! Added some more, losvel etc.
 !
