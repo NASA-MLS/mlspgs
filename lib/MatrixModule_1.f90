@@ -40,7 +40,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 ! public :: LevenbergUpdateCholesky
   public :: Matrix_T, Matrix_Cholesky_T, Matrix_Database_T, Matrix_Kronecker_T
   public :: Matrix_SPD_T, MaxAbsVal, MaxAbsVal_1, MaxL1
-  public :: MinDiag, MinDiag_Cholesky, MinDiag_SPD, MultiplyMatrices
+  public :: MinDiag, MinDiag_Cholesky, MinDiag_SPD, Multiply, MultiplyMatrices
   public :: MultiplyMatrixVector, MultiplyMatrixVector_1
   public :: MultiplyMatrixVectorNoT, MultiplyMatrixVectorNoT_1
   public :: MultiplyMatrixVectorSPD_1
@@ -113,6 +113,10 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 
   interface GetMatrixElement
     module procedure GetMatrixElement_1
+  end interface
+
+  interface Multiply
+    module procedure MultiplyMatrixVector_1, MultiplyMatrixVectorSPD_1
   end interface
 
   interface MultiplyMatrixVector   ! A^T V
@@ -341,15 +345,21 @@ contains ! =====     Public Procedures     =============================
   end subroutine AssignMatrix
 
   ! -------------------------------------------  CholeskyFactor_1  -----
-  subroutine CholeskyFactor_1 ( Z, X )
+  subroutine CholeskyFactor_1 ( Z, X, NoExtra )
   ! Compute the Cholesky factor Z of the matrix X.  Z%M%Block can be
   ! associated with X%M%Block to save space.
+  ! Don't factor the extra column if NoExtra is present and true.
     type(Matrix_Cholesky_T), intent(inout) :: Z   ! Factored matrix.
     type(Matrix_SPD_T), intent(in) :: X ! Matrix to factor.
+    logical, intent(in), optional :: NoExtra
 
     integer :: I, J, K                  ! Subscripts and loop inductors
+    logical :: MyNoExtra
     integer :: N                        ! Columns(blocks)
     type(MatrixElement_T) :: S          ! Sum, to accumulate "inner product"
+
+    myNoExtra = .false.
+    if ( present(noExtra) ) myNoExtra = noExtra
 
     ! Check that the matrices are compatible.  We don't need to check
     ! Nelts or Nb, because these are deduced from Vec.
@@ -386,6 +396,7 @@ contains ! =====     Public Procedures     =============================
 !  {\bf end do} ! i
 
     n = x%m%row%nb
+    if ( myNoExtra .and. x%m%row%extra ) n = n - 1
     ! Handle the first row specially, to avoid a copy followed by no-dot-product
     !{ $Z_{11}^T Z_{11} = X_{11}$
     call choleskyFactor ( z%m%block(1,1), x%m%block(1,1) )
@@ -846,20 +857,23 @@ contains ! =====     Public Procedures     =============================
   end subroutine GetCholeskyFromDatabase
 
   ! ----------------------------------------------  GetDiagonal_1  -----
-  subroutine GetDiagonal_1 ( A, X )
+  subroutine GetDiagonal_1 ( A, X, SquareRoot )
   ! Get X from the diagonal of A.  Don't get the extra row or column.
   ! Destroy X and re-create it by cloning the row-defining vector of A.
-    type(Matrix_SPD_T), intent(in) :: A
+  ! Return the square roots of the diagonal elements if SquareRoot is
+  ! present and true.
+    type(Matrix_T), intent(in) :: A
     type(vector_T), intent(inout) :: X
+    logical, intent(in), optional :: SquareRoot
 
     integer :: I, N
 
-    call cloneVector ( x, a%m%row%vec, vectorNameText='_x' )
-    n = max(a%m%row%nb,a%m%col%nb)
-    if ( a%m%row%extra .or. a%m%col%extra ) n = n - 1
+    call cloneVector ( x, a%row%vec, vectorNameText='_x' )
+    n = max(a%row%nb,a%col%nb)
+    if ( a%row%extra .or. a%col%extra ) n = n - 1
     do i = 1, n
-      call getDiagonal ( a%m%block(i,i), &
-        & x%quantities(a%m%row%quant(i))%values(:,a%m%row%inst(i)) )
+      call getDiagonal ( a%block(i,i), &
+        & x%quantities(a%row%quant(i))%values(:,a%row%inst(i)), squareRoot )
     end do
   end subroutine GetDiagonal_1
 
@@ -1770,6 +1784,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.44  2001/06/01 01:04:00  vsnyder
+! Add 'sqrt' option to 'GetDiagonal_0'; add 'Multiply' generic
+!
 ! Revision 2.43  2001/05/30 20:18:01  vsnyder
 ! Add 'invert' argument to 'UpdateDiagonal'
 !
