@@ -31,20 +31,24 @@ MODULE SDPToolkit               ! F90 interface to SDP Toolkit.
 ! Plust interfaces for toolkit routines.
 
 ! Remarks:  This module contains include files required to use the toolkit.
+! At this point, a number of files were included that were no longer
+! supplied with the SDP toolkit. I (HCP) have commented out the lines 
+! in question. If this breaks your code, please work out why, and consider
+! which of the *CURRENT* toolkit include files are needed. 
 
    INCLUDE 'PGS_CBP.f'
-   INCLUDE 'PGS_CBP_6.f'
-   INCLUDE 'PGS_CSC_4.f'
-   INCLUDE 'PGS_EPH_5.f'
+!   INCLUDE 'PGS_CBP_6.f'
+!   INCLUDE 'PGS_CSC_4.f'
+!   INCLUDE 'PGS_EPH_5.f'
    INCLUDE 'PGS_IO.f'
-   INCLUDE 'PGS_IO_1.f'
-   INCLUDE 'PGS_MEM_7.f'
+!   INCLUDE 'PGS_IO_1.f'
+!   INCLUDE 'PGS_MEM_7.f'
    INCLUDE 'PGS_PC.f'
-   INCLUDE 'PGS_PC_9.f'
+!   INCLUDE 'PGS_PC_9.f'
    INCLUDE 'PGS_SMF.f'
    INCLUDE 'PGS_TD.f'
-   INCLUDE 'PGS_TD_3.f'
-   INCLUDE 'PGS_MET_13.f'
+!   INCLUDE 'PGS_TD_3.f'
+!   INCLUDE 'PGS_MET_13.f'
    INCLUDE 'PGS_MET.f'
 
 
@@ -108,6 +112,9 @@ END MODULE SDPToolkit
 
 !
 ! $Log$
+! Revision 2.1  2000/09/19 11:16:38  pumphrey
+! Removed INCLUDEs of files that are not supplied with the SDP toolkit
+!
 ! Revision 2.0  2000/09/05 17:41:07  dcuddy
 ! Change revision to 2.0
 !
