@@ -56,7 +56,8 @@ module INTRINSIC
   integer, parameter :: PHYQ_ZETA = 11         ! log10(pressure/hPa)
   integer, parameter :: PHYQ_VELOCITY = 12     ! Default meters/second
   integer, parameter :: PHYQ_EXTINCTION =13    ! Default 1/meters
-  integer, parameter :: FIRST_PHYQ = phyq_invalid, LAST_PHYQ = phyq_extinction
+  integer, parameter :: PHYQ_IceDensity =14    ! Default g/meters^3
+  integer, parameter :: FIRST_PHYQ = phyq_invalid, LAST_PHYQ = phyq_icedensity
   integer :: PHYQ_INDICES(first_phyq:last_phyq)
 
 ! Enumeration literals:
@@ -92,7 +93,8 @@ module INTRINSIC
   integer, parameter :: L_HOURS         = l_heightOffset + 1
   integer, parameter :: L_HPA           = l_hours + 1
   integer, parameter :: L_HZ            = l_hpa + 1
-  integer, parameter :: L_INTERMEDIATEFREQUENCY= l_hz + 1
+  integer, parameter :: L_ICEDENSITY    = l_hz + 1
+  integer, parameter :: L_INTERMEDIATEFREQUENCY= l_icedensity + 1
   integer, parameter :: L_ISOTOPERATIO  = l_intermediatefrequency + 1
   integer, parameter :: L_K             = l_isotopeRatio + 1
   integer, parameter :: L_KHZ           = l_k  + 1
@@ -252,6 +254,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_hours) =                 add_ident ( 'hours' )
     lit_indices(l_hpa) =                   add_ident ( 'hPa' )
     lit_indices(l_hz) =                    add_ident ( 'Hz' )
+    lit_indices(l_icedensity) =            add_ident ( 'IceDensity' )
     lit_indices(l_intermediatefrequency) = add_ident ( 'intermediatefrequency' )
     lit_indices(l_isotopeRatio) =          add_ident ( 'isotopeRatio' )
     lit_indices(l_k) =                     add_ident ( 'K' )
@@ -327,6 +330,8 @@ contains ! =====     Public procedures     =============================
     phyq_indices(phyq_frequency) =         add_ident ( 'frequency' )
     phyq_indices(phyq_velocity) =          add_ident ( 'velocity' )
     phyq_indices(phyq_zeta) =              add_ident ( 'zeta' )
+    phyq_indices(phyq_extinction) =        add_ident ( 'extinction' )
+    phyq_indices(phyq_icedensity) =        add_ident ( 'icedensity' )
 
   ! Definitions are represented by trees.  The notation in the comments
   ! for the trees is < root first_son ... last_son >.  This is sometimes
@@ -385,6 +390,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.30  2001/07/10 23:46:35  jonathan
+! added l_icedensity, paul/jonathan
+!
 ! Revision 2.29  2001/07/06 18:55:40  jonathan
 ! Modified for cloud model, Paul/Jonathan
 !
