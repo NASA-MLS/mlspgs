@@ -13,9 +13,9 @@ if n_elements(lineName) eq 0 then $
   lineName = getenv('HOME')+'/mlspgs/tables/line_data_table.tex'
 
 ; Call Bills code to read the files
-Read_Spect_Dbase, molName, lineName, '', data, molID=molID, lineID=lineID
+Read_Spect_Dbase, molName, lineName, '', data,  $
+  molID=molID, lineID=lineID, readID=readID
 myID='$Id$'
-help,data,/st
 
 ; Sort out nitrogen
 n2= (where(data.name eq 'N$_{2}$') )(0)
@@ -32,7 +32,8 @@ printf, unit, ';'
 printf, unit, '; Source file information:'
 printf, unit, '; '+strmid(molID,7,strlen(molID)-9)
 printf, unit, '; '+strmid(lineID,7,strlen(lineID)-9)
-printf, unit, '; '+strmid(myID,5,strlen(lineID)-7)
+printf, unit, '; '+strmid(readID,5,strlen(readID)-7)
+printf, unit, '; '+strmid(myID,5,strlen(myID)-7)
 printf, unit, ''
 
 printf, unit, 'begin spectroscopy'
@@ -172,7 +173,7 @@ for mol = 0, noMols - 1 do begin
         strtrim(string(data(mol).cont(i)),2)+', '
     endfor
       AddWordToLine, text, unit, 4, $
-        strtrim(string(data(mol).cont(noNonZero-1)),2)+']'
+        strtrim(string(data(mol).cont(noNonZero-1)),2)+' ]'
   endif
   
   ;; Finish off
