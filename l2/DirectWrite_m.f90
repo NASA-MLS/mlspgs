@@ -46,7 +46,7 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
 
   interface DirectWrite_L2Aux
     module procedure DirectWrite_L2Aux_fileID
-    module procedure DirectWrite_L2Aux_fileName
+    ! module procedure DirectWrite_L2Aux_fileName
   end interface
 
   type DirectData_T
@@ -244,101 +244,6 @@ contains ! ======================= Public Procedures =========================
   end subroutine DirectWrite_L2GP_fileID
 
   ! ------------------------------------------- DirectWrite_L2Aux_FileName --------
-  subroutine DirectWrite_L2Aux_FileName ( quantity, precision, sdName, file, &
-    & hdfVersion, chunkNo, chunks )
-
-    ! If slave, requests permission from master to access file
-    ! Opens File (if it exists already) or else creates it
-    ! Calls for direct write by file handle
-    ! Closes file
-    ! If slave, tells master it has finished
-    use Hdf, only: DFACC_CREATE, DFACC_RDWR
-    use L2ParInfo, only: PARALLEL !, REQUESTDIRECTWRITEPERMISSION, FINISHEDDIRECTWRITE
-    use MLSCommon, only: MLSCHUNK_T
-    use MLSFiles, only: &
-      & GetPCFromRef, split_path_name, mls_sfstart, mls_sfend
-    use MLSL2Options, only: TOOLKIT
-    use MLSPCF2, only: mlspcf_l2fwm_full_start, mlspcf_l2fwm_full_end
-    use VectorsModule, only: VectorValue_T
-
-    type (VectorValue_T), intent(in) :: QUANTITY
-    type (VectorValue_T), pointer :: PRECISION
-    ! integer, intent(in) :: SDNAME       ! Name of sd in output file
-    character(len=*), intent(in) :: SDNAME       ! Name of sd in output file
-    integer, intent(in) :: FILE         ! Name of output file
-    integer, intent(in) :: HDFVERSION   ! Version of HDF file to write out
-    integer, intent(in) :: CHUNKNO      ! Index into chunks
-    type (MLSChunk_T), dimension(:), intent(in) :: CHUNKS
-    ! Local parameters
-    logical, parameter :: DEBUG = .FALSE.
-    character (len=132) :: FILE_BASE    ! From the FILE location in string table
-    character (len=1024) :: FILENAME    ! The actual filename
-    integer :: fileID, L2fwm_Version
-    integer, parameter :: MAXFILES = 100             ! Set for an internal array
-    integer, save :: NOCREATEDFILES=0   ! Number of files created
-
-    character (len=132) :: path
-    integer :: status
-    integer :: ReturnStatus
-    logical :: createFile
-    logical :: you_may
-    ! Saved variable - used to work out file information.
-    integer, dimension(maxFiles), save :: CREATEDFILENAMES = 0
-    ! executable code
-
-    ! Setup information, sanity checks etc.
-    call get_string ( file, file_base, strip=.true. )
-    l2fwm_Version = 1
-    if ( TOOLKIT ) then
-      call split_path_name(file_base, path, file_base)
-      if ( DEBUG ) call output('file_base after split: ', advance='no')
-      if ( DEBUG ) call output(trim(file_base), advance='yes')
-
-      fileID = GetPCFromRef(file_base, mlspcf_l2fwm_full_start, &
-      & mlspcf_l2fwm_full_end, &
-      & TOOLKIT, returnStatus, L2fwm_Version, DEBUG, &
-      & exactName=Filename)
-    else
-      Filename = file_base
-      returnStatus = 0
-    end if
-    if ( returnStatus /= 0 ) then
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-         &  "Error finding l2gp file matching:  "// trim(file_base))
-    endif
-    ! Setup information, sanity checks etc.
-    ! If we're a slave, we need to request permission from the master.
-    if ( parallel%slave ) then
-!      call RequestDirectWritePermission ( file, createFile, .true., you_may )
-    else
-      createFile = .not. any ( createdFilenames == file )
-      if ( createFile ) then
-        noCreatedFiles = noCreatedFiles + 1
-        if ( noCreatedFiles > maxFiles ) call MLSMessage ( &
-          & MLSMSG_Error, ModuleName, 'Too many direct write files (hdf4)' )
-        createdFilenames ( noCreatedFiles ) = file
-      end if
-    end if
-
-    ! Create or open the file
-    if ( createFile ) then
-      fileID = mls_sfstart ( trim(filename), DFACC_CREATE, &
-       & hdfVersion=hdfVersion )
-    else
-      fileID = mls_sfstart ( trim(filename), DFACC_RDWR, hdfVersion=hdfVersion )
-    end if
-    call DirectWrite_L2Aux_FileID ( fileID, quantity, precision, sdName, &
-      & hdfVersion, chunkNo, chunks )
-
-    status = mls_sfend( fileID, hdfVersion=hdfVersion)
-    if ( status == -1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Error ending closing direct write l2aux file' )
-
-    ! Tell master we're done
-!    if ( parallel%slave ) call FinishedDirectWrite
-  end subroutine DirectWrite_L2Aux_FileName
-
-  ! ------------------------------------------- DirectWrite_L2Aux_FileName --------
   subroutine DirectWrite_L2Aux_FileID ( fileID, quantity, precision, sdName, &
     & hdfVersion, chunkNo, chunks )
 
@@ -477,7 +382,9 @@ contains ! ======================= Public Procedures =========================
     !  & start(noDims) = quantity%template%instanceOffset + 1
 
     ! Now write it out
-    status = SFWDATA_F90(sdId, start(1:noDims), &
+    status = 0
+    if ( sizes(noDims) > 0 ) &
+      & status = SFWDATA_F90(sdId, start(1:noDims), &
       & stride(1:noDims), sizes(1:noDims), &
       & real ( max ( -hugeR4, min ( hugeR4, &
       &   quantity%values ( :, &
@@ -814,6 +721,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.7  2003/07/07 21:03:43  pwagner
+! Removed DirectWrite_L2Aux_FileName; tries to deal sensibly with all-overlap chunks
+!
 ! Revision 2.6  2003/07/07 17:32:30  livesey
 ! New approach to DirectWrite
 !
