@@ -31,17 +31,24 @@ contains
   ! ForwardModel to dump a forward model config, or Details to specify
   ! the level of detail for subsequent dumps.
 
+    use AntennaPatterns_m, only: Dump_Antenna_Patterns_Database
     use Declaration_table, only: Num_Value
     use Expr_m, only: Expr
+    use FilterShapes_m, only: Dump_Filter_Shapes_Database, &
+      & Dump_DACS_Filter_Database
     use ForwardModelConfig, only: Dump, ForwardModelConfig_T
     use HGridsDatabase, only: Dump, HGRID_T
-    use Init_Tables_Module, only: F_Details, F_ForwardModel, F_HGrid, &
-      & F_PfaData, F_Quantity, F_Template, F_Vector, F_VGrid, &
+    use Init_Tables_Module, only: F_AllForwardModels, F_AllHGrids, &
+      & F_AllQuantityTemplates, F_AllVectors, F_AllVectorTemplates, &
+      & F_AllVGrids, F_AntennaPatterns, F_Details, F_DACSFilterShapes, &
+      & F_FilterShapes, F_ForwardModel, F_HGrid, F_PfaData, &
+      & F_PointingGrids, F_Quantity, F_Template, F_Vector, F_VGrid, &
       & S_Quantity, S_VectorTemplate
     use Intrinsic, only: PHYQ_Dimensionless
-    use MoreTree, only: Get_Field_ID, Get_Spec_ID
+    use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
     use Output_M, only: Output
     use PFAData_m, only: Dump, PFAData
+    use PointingGrid_m, only: Dump_Pointing_Grid_Database
     use QuantityTemplates, only: Dump, QuantityTemplate_T
     use Tree, only: Decoration, Node_Id, Nsons, Subtree
     use Tree_Types, only: N_Spec_Args
@@ -54,14 +61,15 @@ contains
     type (quantityTemplate_t), dimension(:), intent(in), optional :: QuantityTemplatesDB
     type (vectorTemplate_T), dimension(:), intent(in), optional :: VectorTemplates
     type (vector_T), dimension(:), intent(in), optional :: Vectors
-    type (forwardModelConfig_t), dimension(:), intent(in), optional :: ForwardModelConfigs
+    type (forwardModelConfig_t), dimension(:), pointer, optional :: ForwardModelConfigs
     type (HGrid_T), dimension(:), intent(in), optional :: HGrids
-    type (VGrid_T), dimension(:), intent(in), optional :: VGrids
+    type (VGrid_T), dimension(:), pointer, optional :: VGrids
 
     integer :: Details
     integer :: FieldIndex
     integer :: GSON, J, Look
     integer :: QuantityIndex
+    integer :: Son
     integer :: VectorIndex
     integer :: Type     ! of the Details expr -- has to be num_value
     integer :: Units(2) ! of the Details expr -- has to be phyq_dimensionless
@@ -81,14 +89,65 @@ contains
 
     details = 0
     do j = 2, nsons(root)
-      gson = subtree(j,root) ! The argument
-      fieldIndex = get_field_id(gson)
-      if (nsons(gson) > 1) gson = subtree(2,gson) ! Now value of said argument
+      son = subtree(j,root) ! The argument
+      fieldIndex = get_field_id(son)
+      if (nsons(son) > 1) gson = subtree(2,son) ! Now value of said argument
       select case ( fieldIndex )
+      case ( f_allForwardModels, f_allHGrids, f_allQuantityTemplates, &
+        & f_allVectors, f_allVectorTemplates, f_allVGrids, f_antennaPatterns, &
+        & f_DACSfilterShapes, f_filterShapes, f_pointingGrids )
+        if ( get_boolean(son) ) then
+          select case ( fieldIndex )
+          case ( f_allForwardModels )
+            if ( present(forwardModelConfigs) ) then
+              call dump ( forwardModelConfigs, where=son )
+            else
+              call announceError ( son, noFWM )
+            end if
+          case ( f_allHGrids )
+            if ( present(hGrids) ) then
+              call dump ( hGrids )
+            else
+              call announceError ( son, noHGrid )
+            end if
+          case ( f_allQuantityTemplates )
+            if ( present(quantityTemplatesDB) ) then
+              call dump ( quantityTemplatesDB )
+            else
+              call announceError ( son, noQT )
+            end if
+          case ( f_allVectors )
+            if ( present(vectors) ) then
+              call dump ( vectors )
+            else
+              call announceError ( son, noVectors )
+            end if
+          case ( f_allVectorTemplates )
+            if ( present(vectorTemplates) ) then
+              call dump ( vectorTemplates )
+            else
+              call announceError ( son, noVT )
+            end if
+          case ( f_allVGrids )
+            if ( present(vGrids) ) then
+              call dump ( vGrids )
+            else
+              call announceError ( son, noVG )
+            end if
+          case ( f_antennaPatterns )
+            call dump_antenna_patterns_database ( son )
+          case ( f_DACSfilterShapes )
+            call dump_dacs_filter_database ( son )
+          case ( f_filterShapes )
+            call dump_filter_shapes_database ( son )
+          case ( f_pointingGrids )
+            call dump_pointing_grid_database ( son )
+          end select
+        end if
       case ( f_details )
         call expr ( gson, units, values, type )
         if ( units(1) /= phyq_dimensionless ) call AnnounceError ( gson, dimless )
-        if ( type /= num_value ) call AnnounceError ( gson, numeric )
+        if ( type /= num_value ) call announceError ( gson, numeric )
         details = nint(values(1))
       case ( f_forwardModel ) ! Dump a forward model config
         if ( present(forwardModelConfigs) ) then
@@ -106,7 +165,7 @@ contains
           call announceError ( gson, noHGrid )
         end if
       case ( f_pfaData )
-        call output ( ' PFA Data', advance='yes' )
+        call output ( ' PFA Data' )
         call dump ( pfaData(decoration(decoration(gson))) )
       case ( f_quantity ) ! Dump a vector quantity
         vectorIndex = decoration(decoration(subtree(1,gson)))
@@ -186,6 +245,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.6  2004/05/29 02:50:49  vsnyder
+! Added more dumps
+!
 ! Revision 2.5  2004/05/22 02:31:23  vsnyder
 ! Dump PFAData, VGrids
 !
