@@ -150,7 +150,7 @@ contains ! ================================ Procedures ======================
       call PVMF90Unpack ( values, info )
       if ( info /= 0 ) &
         & call PVMErrorMessage ( info, 'unpacking one chunk')
-      chunks(chunkNo) = MLSChunk_T ( &
+      chunks(chunk) = MLSChunk_T ( &
         & values(1), values(2), values(3), values(4), values(5) )
     end do
 
@@ -847,6 +847,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.26  2002/01/10 01:07:43  livesey
+! Another bug fix, slave wasn't receiving chunks correctly.
+!
 ! Revision 2.25  2002/01/09 23:16:34  livesey
 ! Whoops, left the SendChunkInfoToSlave call in the wrong place!
 !
