@@ -196,13 +196,13 @@ contains ! ================================ Procedures ======================
     integer :: FILEINDEX                ! Index for a direct write
     integer :: HDFNAMEINDEX             ! String index
     integer :: INFO                     ! From PVM
+    integer :: NEXTTICKET               ! For direct write handling
     integer :: MACHINE                  ! Index
     integer :: MSGTAG                   ! Dummy from PVMFBufInfo
     integer :: NEXTCHUNK                ! A chunk number
     integer :: NOCHUNKS                 ! Number of chunks
     integer :: NODIRECTWRITEFILES       ! Need to keep track of filenames
     integer :: NOMACHINES               ! Number of slaves
-    integer :: PENDINGCHUNK             ! Chunk waiting for direct write permission
     integer :: PRECIND                  ! Array index
     integer :: RESIND                   ! Loop counter
     integer :: REQUESTEDFILE            ! String index from slave
@@ -216,6 +216,7 @@ contains ! ================================ Procedures ======================
     integer, dimension(size(chunks)) :: CHUNKTIDS ! Tids for chunks
 
     integer, dimension(size(chunks)) :: DIRECTWRITESTATUS
+    integer, dimension(size(chunks)) :: DIRECTWRITETICKET
     integer, dimension(maxDirectWriteFiles) :: DIRECTWRITEFILES
     integer, dimension(maxDirectWriteFiles) :: NODIRECTWRITECHUNKS
 
@@ -256,6 +257,8 @@ contains ! ================================ Procedures ======================
     noDirectWriteChunks = 0
     directWriteStatus = 0
     noDirectWriteFiles = 0
+    directWriteTicket = 0
+    nextTicket = 1
 
     ! Work out the information on our virtual machine
     if ( .not. usingSubmit ) then
@@ -438,12 +441,14 @@ contains ! ================================ Procedures ======================
             ! Is anyone else using this file?
             if ( any ( directWriteStatus == requestedFile ) ) then
               ! If so, log a request for it by setting our status to 
-              ! -requestedFile
+              ! -requestedFile, and have this chunk 'take a ticket'
               if ( index ( switches, 'mas' ) /= 0 ) then
                 call output ( 'Request pending', &
                   & advance='yes' )
               end if
               directWriteStatus(chunk) = -requestedFile
+              directWriteTicket(chunk) = nextTicket
+              nextTicket = nextTicket + 1
               ! At this point, create file, true or otherwise, becomes irrelevant.
             else
               ! Otherwise, go ahead
@@ -457,6 +462,7 @@ contains ! ================================ Procedures ======================
               end if
               call GrantDirectWrite ( slaveTid, createFile )
               directWriteStatus(chunk) = requestedFile
+              directWriteTicket(chunk) = 0
             end if
 
           case ( sig_DirectWriteFinished ) ! - Finished with direct write -
@@ -466,6 +472,7 @@ contains ! ================================ Procedures ======================
             noDirectWriteChunks ( fileIndex ) = &
               & noDirectWriteChunks ( fileIndex ) + 1
             directWriteStatus(chunk) = 0
+            directWriteTicket(chunk) = 0
             if ( index ( switches, 'mas' ) /= 0 ) then
               call output ( 'Direct write finished on file ' )
               call output ( completedFile )
@@ -476,20 +483,8 @@ contains ! ================================ Procedures ======================
               call output ( ' chunk ' )
               call output ( chunk, advance='yes')
             end if
-            ! Is anyone else waiting for this file?
-            pendingChunk = FindFirst ( directWriteStatus == -completedFile )
-            if ( pendingChunk /= 0 ) then
-              if ( index ( switches, 'mas' ) /= 0 ) then
-                call output ( 'Permission granted to ' // &
-                  & trim(GetNiceTidString(chunkTids(pendingChunk))) // &
-                  & ' chunk ' )
-                call output ( pendingChunk, advance='yes' )
-              end if
-              ! We know createFile is false here because someone else just
-              ! wrote to the file sucessfully!
-              call GrantDirectWrite ( chunkTids(pendingChunk), .false. )
-              directWriteStatus ( pendingChunk ) = completedFile
-            end if
+            ! OK, perhaps someone else's turn to write to this file
+            call NextSlaveToWrite ( completedFile )
 
           case ( sig_finished ) ! -------------- Got a finish message ----
             if ( index(switches,'mas') /= 0 ) then
@@ -610,8 +605,9 @@ contains ! ================================ Procedures ======================
               & joinedVectorTemplates, joinedVectors, storedResults )
             chunksStarted(deadChunk) = .false.
             chunkFailures(deadChunk) = chunkFailures(deadChunk) + 1
-            directWriteStatus(deadChunk) = 0
-            if ( .not. usingSubmit ) then
+            directWriteStatus(deadChunk) = 0 
+            directWriteTicket(deadChunk) = 0
+           if ( .not. usingSubmit ) then
               where ( machineNames(deadMachine) == machineNames )
                 jobsMachineKilled = jobsMachineKilled + 1
               end where
@@ -626,20 +622,11 @@ contains ! ================================ Procedures ======================
               deadFile = directWriteStatus ( deadChunk )
               fileIndex = FindFirst ( directWriteFiles(1:noDirectWriteFiles) == deadFile )
               createFile = noDirectWriteChunks ( fileIndex ) == 0
-              pendingChunk = FindFirst ( directWriteStatus == -deadFile )
-              if ( pendingChunk /= 0 ) then
-                ! Was the dead chunk the first to write the file?
-                if ( index ( switches, 'mas' ) /= 0 ) then
-                  call output ( 'Permission granted to ' // &
-                    & trim(GetNiceTidString(chunkTids(pendingChunk))) // &
-                    & ' chunk ' )
-                  call output ( pendingChunk, advance='yes' )
-                end if
-                call GrantDirectWrite ( chunkTids(pendingChunk), createFile )
-                directWriteStatus ( pendingChunk ) = deadFile
-              end if
+              ! OK perhaps someone else's turn for this file, sort that out.
+              call NextSlaveToWrite ( deadFile )
             end if
             directWriteStatus ( deadChunk ) = 0
+            directWriteTicket ( deadChunk ) = 0
             
             ! Does this chunk keep failing, if so, give up.
             if ( chunkFailures(deadChunk) > &
@@ -826,6 +813,38 @@ contains ! ================================ Procedures ======================
       if ( info /= 0 ) &
         & call PVMErrorMessage ( info, 'sending direct write permission' )
     end subroutine GrantDirectWrite
+
+    subroutine NextSlaveToWrite ( file )
+      ! This routine works out who is the next slave to do a direct
+      ! write and lets them know
+      ! Dummy arguments
+      integer, intent(in) :: FILE
+      ! Local variables
+      integer, dimension(size(chunks)) :: RELEVANTTICKETS
+      integer :: LOCATION(1)            ! Result of minloc
+      integer :: CHUNK                  ! Chunk index
+      ! Exectuable code
+      relevantTickets = directWriteTicket
+      where ( directWriteStatus /= -file .or. directWriteTicket == 0 )
+        ! Mark the irrelevant ones out as being very new (i.e. never chosen)
+        relevantTickets = nextTicket + 1
+      end where
+      if ( any ( relevantTickets /= nextTicket + 1 ) ) then
+        location = minloc ( relevantTickets )
+        chunk = location ( 1 )
+        if ( index ( switches, 'mas' ) /= 0 ) then
+          call output ( 'Permission granted to ' // &
+            & trim(GetNiceTidString(chunkTids(chunk))) // &
+            & ' chunk ' )
+          call output ( chunk, advance='yes' )
+        end if
+        ! We know createFile is false here because someone else just
+        ! wrote to the file sucessfully!
+        call GrantDirectWrite ( chunkTids(chunk), .false. )
+        directWriteStatus ( chunk ) = file
+        directWriteTicket ( chunk ) = 0
+      end if
+    end subroutine NextSlaveToWrite
 
     subroutine WelcomeSlave ( chunk, tid )
       ! This routine welcomes a slave into the fold and tells it stuff
@@ -1036,6 +1055,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.43  2003/02/20 20:32:56  livesey
+! Added the 'take a ticket' approach to direct write conflicts.
+!
 ! Revision 2.42  2003/01/17 21:54:12  livesey
 ! Added the machineFixed stuff.
 !
