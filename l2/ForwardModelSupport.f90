@@ -215,6 +215,7 @@ contains ! =====     Public Procedures     =============================
     integer :: I                        ! Subscript and loop inductor.
     integer :: J                        ! Subscript and loop inductor.
     integer :: Key                      ! Indexes the spec_args vertex.
+    integer :: MoleculeSign             ! in the info%molecules array.
     integer :: Name                     ! sub_rosa of label of specification,
     ! if any, else zero.
     integer :: NELTS                    ! Number of elements of an array tree
@@ -319,6 +320,7 @@ contains ! =====     Public Procedures     =============================
         info%moleculeDerivatives = .false.
         nelts = 0
         do j = 2, nsons(son)
+          moleculeSign = +1 ! Indicate "root of a tree of molecules"
           call fillElements ( subtree(j,son), nelts, 0, info%molecules )
         end do
       case ( f_moleculeDerivatives )
@@ -469,15 +471,15 @@ contains ! =====     Public Procedures     =============================
       integer, intent(inout) :: COUNT   ! of array elements processed
       integer, intent(in) :: DEPTH      ! in the array tree
       integer, intent(inout) :: MOLECULES(:)      ! The array to be filled
+      integer :: I                      ! Subtree index, loop inductor
       if ( node_id(root) == n_array ) then
         do i = 1, nsons(root)
           call fillElements ( subtree(i,root), count, depth+1, molecules )
         end do
       else
         count = count + 1
-        molecules(count) = decoration(root)
-        if ( count > 1 .and. (depth > 1 .or. depth > 0 .and. i > 1 ) ) &
-          & molecules(count) = -molecules(count)
+        molecules(count) = moleculeSign * decoration(root)
+        moleculeSign = -1 ! Indicate "Part of a tree of molecules"
       end if
     end subroutine FillElements
   end function ConstructForwardModelConfig
@@ -532,6 +534,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.20  2001/12/17 18:26:37  vsnyder
+! Improve method to put '-' sign on 'part of a tree of molecules'
+!
 ! Revision 2.19  2001/11/29 00:27:56  vsnyder
 ! Fix blunders in arrays-of-arrays, alphabetize USEs
 !
