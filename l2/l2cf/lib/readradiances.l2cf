@@ -25,7 +25,7 @@ begin Fill
     explicitValues = !scanModelPrecision, /spread
   Fill, quantity=measurementNoise.scanResidualTHz, method=explicit, $
     explicitValues = !scanModelPrecision, /spread
-  !ifelse(!cleannoisy,noisy,{
+  !ifelse(!substr(!cleannoisy,0,5),noisy,{
      Fill, quantity=measurement.scanResidualGHz, method=addNoise, $
        sourceQuantity=cleanMeasurement.scanResidualGHz, $
        noise=measurementNoise.scanResidualGHz, seed = [ 0, 10000 ]
@@ -36,6 +36,9 @@ begin Fill
 end Fill
 
 ; $Log$
+; Revision 1.5  2004/02/03 21:43:56  livesey
+; Updated handling of chisqBinned stuff
+;
 ; Revision 1.4  2003/05/10 00:57:18  livesey
 ; Renamed radianceChisq to radianceDiagnostics
 ;
