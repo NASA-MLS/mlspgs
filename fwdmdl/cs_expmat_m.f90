@@ -61,8 +61,8 @@ contains
 !%
 ! where $h = z_1 - z_2$.  This is well behaved as $h \rightarrow 0$, so we
 ! don't need to futz with L'H\^opital's rule.  Since
-! $\lim_{h \rightarrow 0}\frac{\text{d}}{\text{d}h} \frac{e^h-1}h = \frac12$,
-! the relative error in the first term is only half of the relative error
+! $\lim_{h \rightarrow 0}\frac{\text{d}}{\text{d}h} \frac{e^h-1}h = 1$,
+! the relative error in the first term no larger than the relative error
 ! in $h$ when $h$ is small.
 
 !{This could also be written as
@@ -129,6 +129,9 @@ contains
 end module CS_ExpMat_M
 
 ! $Log$
+! Revision 2.6  2004/04/21 18:23:56  vsnyder
+! Correct a TeXnicality
+!
 ! Revision 2.5  2003/07/02 17:19:38  vsnyder
 ! Don't set status if it's not present!
 !
