@@ -2841,28 +2841,28 @@ contains ! =====     Public Procedures     =============================
   end subroutine Spill_0
 
   ! -------------------------------------------  TransposeMatrix_0 -----
-  subroutine TransposeMatrix_0 ( M, MT )
-    ! Given the matrix M, compute MT
-    type ( MatrixElement_T), intent(in) :: M ! Input matrix
-    type ( MatrixElement_T), intent(inout) :: MT ! Output matrix
+  subroutine TransposeMatrix_0 ( Z, A )
+    ! Given the matrix A, compute Z=M^T
+    type ( MatrixElement_T), intent(inout) :: Z ! Output matrix
+    type ( MatrixElement_T), intent(in) :: A ! Input matrix
     ! Local variables
     real (rm), dimension(:,:), pointer :: D ! Dense form of matrix
     real (rm), dimension(:,:), pointer :: DT ! Transpose of D
 
     ! Executable code
-    call DestroyBlock ( MT )
-    select case ( m%kind )
+    call DestroyBlock ( Z )
+    select case ( a%kind )
     case ( m_absent )
     case ( m_full )
-      call CreateBlock ( mt, m%nCols, m%nRows, m_full )
-      mt%values = transpose ( m%values )
+      call CreateBlock ( z, a%nCols, a%nRows, m_full )
+      z%values = transpose ( a%values )
     case ( m_banded, m_column_sparse )
       nullify ( D, DT )
-      call Allocate_test ( D, m%nRows, m%nCols, 'D', ModuleName )
-      call Allocate_test ( DT, m%nCols, m%nRows, 'DT', ModuleName )
-      call Densify ( D, M )
+      call Allocate_test ( D, a%nRows, a%nCols, 'D', ModuleName )
+      call Allocate_test ( DT, a%nCols, a%nRows, 'DT', ModuleName )
+      call Densify ( D, A )
       DT = transpose ( D )
-      call Sparsify ( DT, MT, 'DT in TransposeMatrix_0', ModuleName )
+      call Sparsify ( DT, Z, 'DT in TransposeMatrix_0', ModuleName )
       call Deallocate_test ( D, 'D', ModuleName )
     end select
   end subroutine TransposeMatrix_0
@@ -3151,6 +3151,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.98  2004/01/24 01:02:12  livesey
+! Changed order of arguments in TransposeMatrix_0
+!
 ! Revision 2.97  2003/10/09 22:15:46  livesey
 ! Added more intelligence in the sparse/spase and banded/banded adds, so
 ! if blocks have same layout just add the values.  Also added the
