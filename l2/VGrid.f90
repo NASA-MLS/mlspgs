@@ -278,7 +278,7 @@ contains ! =====     Public Procedures     =============================
     ! Executable code
 
     vGrid%noSurfs = 0
-    vGrid%verticalCoordinate = VC_Invalid
+    vGrid%verticalCoordinate = L_None
 
     deallocate ( vGrid%surfs, stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -445,6 +445,9 @@ end module vGrid
 
 !
 ! $Log$
+! Revision 2.4  2001/02/22 23:44:50  livesey
+! Got rid of VC_Invalid
+!
 ! Revision 2.3  2001/02/22 23:43:43  livesey
 ! Nullified vGrid_T%surfs by default
 !
