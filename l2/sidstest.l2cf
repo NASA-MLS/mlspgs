@@ -230,6 +230,13 @@ BEGIN GlobalSettings
     AllowClimatologyOverloads=FALSE
 
     ;; Construct vGrids
+
+    fwmIntegrationGrid: vGrid, coordinate=Zeta, type=Logarithmic, $
+      start = 1000mb, formula=[ 65:48, 40:24, 20:12]
+    ;; Forward model tangent grid needs points below the surface.
+    fwmTangentGrid: vGrid, coordinate=Zeta, type=Logarithmic, $
+      start = 10.0e9 mb, formula=[8:1, 32:24, 20:12, 10:6]
+
     vGridStandard: vGrid, coordinate=Zeta, type=Logarithmic, $
                    start=1000mb, formula=[25:12, 24:6]
     vGridRefGPH: vGrid, coordinate=Zeta, type=Explicit, values=100mb
@@ -244,8 +251,10 @@ BEGIN GlobalSettings
       filterShapes='/user5/vsnyder/mlspgs/l2/normalized_filter_banks.dat', $
       pointingGrids='/user1/livesey/mlspgs/l2/full_r2_b234_lsb'
 
-    testFwm: forwardModel, type=full, signals = [sig_band2], molecules = [h2o], $
-       frequency=182610.091 MHz, channels = [1], /do_conv
+    testFwm: forwardModel, type=full, signals = [sig_band2], $
+      molecules = [h2o], frequency=182610.091 MHz, channels = [1], $
+      integrationGrid=fwmIntegrationGrid, tangentGrid=fwmTangentGrid, $
+      /do_conv, /do_freq_avg
 
 END GlobalSettings
 
@@ -434,6 +443,9 @@ END Output
 ; ==========================================================================
 
 ; $Log$
+; Revision 2.12  2001/04/02 23:57:00  vsnyder
+; Incorporate grids for Zvi
+;
 ; Revision 2.11  2001/03/30 02:41:28  vsnyder
 ; Add antennaPatterns field to forwardModelGlobal
 ;
