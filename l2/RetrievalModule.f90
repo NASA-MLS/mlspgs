@@ -62,7 +62,7 @@ contains
       & L_linalg, L_lowcloud, L_newtonian, L_none, L_norm, &
       & L_numJ, L_opticalDepth, L_pressure, L_radiance, L_Tikhonov, L_zeta, &
       & S_dumpBlocks, S_flagCloud, S_matrix, S_retrieve, S_sids, S_snoop, &
-      & S_subset, S_time
+      & S_subset, S_time, S_RESTRICTRANGE
     use Intrinsic, only: PHYQ_Dimensionless, PHYQ_Invalid
     use L2ParInfo, only: PARALLEL
     use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
@@ -78,7 +78,7 @@ contains
     use SidsModule, only: SIDS
     use SnoopMLSL2, only: SNOOP
     use String_Table, only: Display_String, Get_String
-    use SubsetModule, only: SETUPSUBSET, SETUPFLAGCLOUD
+    use SubsetModule, only: SETUPSUBSET, SETUPFLAGCLOUD, RESTRICTRANGE
     use Time_M, only: Time_Now
     use Toggles, only: Gen, Switches, Toggle, Levels
     use Trace_M, only: Trace_begin, Trace_end
@@ -301,6 +301,12 @@ contains
         call SetupSubset ( key, vectorDatabase )
         if ( toggle(gen) .and. levels(gen) > 0 ) &
           & call trace_end ( "Retrieve.subset" )
+      case ( s_restrictRange )
+        if ( toggle(gen) .and. levels(gen) > 0 ) &
+          & call trace_begin ( "Retrieve.RestrictRange", root )
+        call RestrictRange ( key, vectorDatabase )
+        if ( toggle(gen) .and. levels(gen) > 0 ) &
+          & call trace_end ( "Retrieve.RestrictRange" )
       case ( s_flagCloud )
         if ( toggle(gen) .and. levels(gen) > 0 ) &
           & call trace_begin ( "Retrieve.flagCloud", root )
@@ -2997,6 +3003,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.238  2003/03/07 03:17:03  livesey
+! Added Restrict Range
+!
 ! Revision 2.237  2003/03/06 00:46:41  livesey
 ! Now gets subset etc. from subsetmodule
 !
