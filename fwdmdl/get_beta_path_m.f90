@@ -77,17 +77,20 @@ contains
 !  $T+\delta T$ and $T-\delta T$.  These are called {\tt bp} and {\tt bm}
 !  below.  We assume $\beta$ has the form
 !
-!  $\beta_0 \left(\frac{T}{T_0}\right) ^n$.  Taking logarithms, we have
-!  $\ln \beta = \ln \beta_0 + n \ln T - n \ln T_0$.
-!  Using three estimates for $\frac{\partial\beta}{\partial T}$, \emph{viz}.
+!  $\beta_0 \left(\frac{T}{T_0}\right) ^n$.  Taking logarithms, we have $\ln
+!  (\beta / \beta_0) = n ( \ln ( T / T_0 ) )$.  Assuming $n$ doesn't change
+!  too quickly as a function of $T$, you can solve for $n$ from estimates of
+!  $\beta(T)$ and $\beta(T+\delta T)$ (you need $\beta$ at two temperatures
+!  because you don't know $\beta_0$ and $T_0$).  Actually, we use three
+!  estimates for $\frac{\partial\beta}{\partial T}$, \emph{viz}.
 !  $(\beta(T+\delta T) - \beta(T-\delta T)) / ( 2 \delta T)$,
-!  $(\beta(T+\delta T) - \beta(T) ) / \delta T$, and
-!  $(\beta(T) - \beta(T - \delta T)) / \delta T$, we compute three estimates
-!  for $n$.  It's the value of $n$ that's returned in {\tt dBeta\_dT\_path},
-!  not $\frac{\partial\beta}{\partial T}$.  $\frac{\partial\beta}{\partial T}$
-!  is actually assembled in {\tt dRad\_tran\_dT}.
+!  $(\beta(T+\delta T) - \beta(T) ) / \delta T$, and $(\beta(T) - \beta(T -
+!  \delta T)) / \delta T$, from which we compute three estimates for $n$. 
+!  It's the value of $n$ that's returned in {\tt dBeta\_dT\_path}, not
+!  $\frac{\partial\beta}{\partial T}$.  $\frac{\partial\beta}{\partial T}$ is
+!  actually assembled in {\tt dRad\_tran\_dT}.
 
-    real(rp), pointer :: dbeta_dt_path(:,:) ! t dep.
+    real(rp), pointer :: dbeta_dt_path(:,:) ! n in beta = beta_0 (T/T_0)^n
     real(rp), pointer :: dbeta_dw_path(:,:) ! line width
     real(rp), pointer :: dbeta_dn_path(:,:) ! line width t dep.
     real(rp), pointer :: dbeta_dv_path(:,:) ! line position
@@ -975,6 +978,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.48  2003/12/07 19:46:10  jonathan
+! update for use in 2D cloud FWM
+!
 ! Revision 2.47  2003/08/20 21:12:39  bill
 ! fixed tanh1 bug associated with T-ders
 !
