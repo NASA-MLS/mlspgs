@@ -20,6 +20,7 @@
     logical :: spline              ! Flag
     real(rk), dimension(:), pointer :: temp ! For 2nd der. guess
     logical :: useMissingRegions   ! Copy of missing regions
+    logical :: doNewY              ! Not skipNewY (or true if absent)
 
     ! Executable code
 
@@ -34,21 +35,26 @@
     extrapolateMethod="A"
     if ( present(extrapolate)) extrapolateMethod=Capitalize(extrapolate(1:1))
 
+    doNewY = .true.
+    if ( present(skipNewY)) doNewY = .not. skipNewY
+
     ! Special case where only one input point
     if ( noOld == 1 ) then
       ! If extrapolating allowed or clamped, out values same as in
       if ( extrapolateMethod=="A" .or. extrapolateMethod=="C" ) then
-        newY = oldY(1)
+        if ( doNewY ) newY = oldY(1)
         ! Note these next two aren't totally gracefull with respect to 
         ! the missingRegions flag.
         if ( present(dyByDx) ) dyByDx = 0.0_rk
       else
         ! Else extrapolation forbidden
-        where ( newX == oldX(1) )
-          newY = oldY(1)
-        elsewhere
-          newY = badValue
-        endwhere
+        if ( doNewY ) then
+          where ( newX == oldX(1) )
+            newY = oldY(1)
+          elsewhere
+            newY = badValue
+          endwhere
+        end if
         if ( present(dyByDx) ) then
           where ( newX == oldX(1) )
             dyByDx = 0.0_rk
@@ -111,15 +117,23 @@
 
     if ( extrapolateMethod=="B" ) then
       ! Extrapolate mode is "B"ad; deal with that
-      where ( coeffs%badValue )
+      if ( doNewY ) then
+        where ( coeffs%badValue )
           newY = badValue
-      elsewhere
+        elsewhere
           newY = 0.0_rk
-      end where
-      if ( present(dyByDx) ) dyByDx = newY
+        end where
+      end if
+      if ( present(dyByDx) ) then
+        where ( coeffs%badValue )
+          dyByDx = badValue
+        elsewhere
+          dyByDx = 0.0_rk
+        end where
+      end if
     else
       ! Clear the result array(s)
-      newY = 0.0_rk
+      if ( doNewY ) newY = 0.0_rk
       if ( present(dyByDx) ) dyByDx = 0.0_rk
     end if
 
@@ -130,32 +144,32 @@
     ! If we were to spread coeffs%badValue, coeffs%a, coeffs%b and coeffs%gap,
     ! the DO's could be WHERE's.
     if ( useMissingRegions ) then ! worry about the missing regions flag
-      where ( coeffs%badValue(coeffs%lowerInds) .or. &
-           &  coeffs%badValue(coeffs%upperInds) )
+      if ( doNewY ) then
+        where ( coeffs%badValue(coeffs%lowerInds) .or. coeffs%badValue(coeffs%upperInds) )
           newY = badValue
-      elsewhere
-          newY = newY + coeffs%a*oldYlower + coeffs%b*oldYupper
-      end where
-      if ( present(dyByDx) ) then
-        where ( coeffs%badValue(coeffs%lowerInds) .or. &
-            &  coeffs%badValue(coeffs%upperInds) )
-            dyByDx = badValue
         elsewhere
-            dyByDx = (oldYupper-oldYlower) / coeffs%gap
+          newY = newY + coeffs%a*oldYlower + coeffs%b*oldYupper
+        end where
+      end if
+      if ( present(dyByDx) ) then
+        where ( coeffs%badValue(coeffs%lowerInds) .or. coeffs%badValue(coeffs%upperInds) )
+          dyByDx = badValue
+        elsewhere
+          dyByDx = (oldYupper-oldYlower) / coeffs%gap
         end where
       end if
     else  ! Don't worry about missing regions flag
-      newY = newY + coeffs%a*oldYlower + coeffs%b*oldYupper
+      if ( doNewY ) newY = newY + coeffs%a*oldYlower + coeffs%b*oldYupper
       if ( present(dyByDx) ) dyByDx = (oldYupper-oldYlower)/coeffs%gap
     end if
 
     ! Now do the spline calculation
     if ( spline ) then
-
-      newY = newY + coeffs%C*oldSecondLower + coeffs%D*oldSecondUpper
+      if ( doNewY ) &
+        & newY = newY + coeffs%C*oldSecondLower + coeffs%D*oldSecondUpper
       if ( present(dyByDx)) &
         & dyByDx = dyByDx + (coeffs%Gap/6.0_rk) * &
-          &  ( coeffs%f*oldSecondUpper - coeffs%e*oldSecondLower )
+        &   ( coeffs%f*oldSecondUpper - coeffs%e*oldSecondLower )
     end if
 
     ! Now make sure the dyByDX's are correct for extrapolated regions
@@ -182,3 +196,6 @@
 ! end subroutine InterpolateScalarUsingSetup_r*
 
 ! $Log$
+! Revision 1.1  2002/11/23 02:31:15  vsnyder
+! Initial commit
+!

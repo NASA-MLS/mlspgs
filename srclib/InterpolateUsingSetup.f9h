@@ -20,6 +20,7 @@
     logical :: spline              ! Flag
     real(rk), dimension(:,:), pointer :: temp ! For 2nd der. guess
     logical :: useMissingRegions   ! Copy of missing regions
+    logical :: doNewY              ! Not skipNewY (or true if absent)
 
     ! Executable code
 
@@ -35,13 +36,18 @@
     extrapolateMethod="A"
     if ( present(extrapolate)) extrapolateMethod=Capitalize(extrapolate(1:1))
 
+    doNewY = .true.
+    if ( present(skipNewY)) doNewY = .not. skipNewY
+
     ! Special case where only one input point
     if ( noOld == 1 ) then
       ! If extrapolating allowed or clamped, out values same as in
       if ( extrapolateMethod=="A" .or. extrapolateMethod=="C" ) then
-        do ind = 1, noNew
-          newY(ind,:) = oldY(1,:)
-        end do
+        if ( doNewY ) then
+          do ind = 1, noNew
+            newY(ind,:) = oldY(1,:)
+          end do
+        end if
         ! Note these next two aren't totally gracefull with respect to 
         ! the missingRegions flag.
         if ( present(dyByDx) ) dyByDx = 0.0_rk
@@ -49,10 +55,10 @@
         ! Else extrapolation forbidden
         do ind = 1, noNew
           if ( newX(ind) == oldX(1) ) then
-            newY(ind,:) = oldY(1,:)
+            if ( doNewY ) newY(ind,:) = oldY(1,:)
             if ( present(dyByDx) ) dyByDx = 0.0_rk
           else
-            newY(ind,:) = badValue
+            if ( doNewY) newY(ind,:) = badValue
             if ( present(dyByDx) ) dyByDx = badValue
           end if
         end do
@@ -113,17 +119,27 @@
 
     if ( extrapolateMethod=="B" ) then
       ! Extrapolate mode is "B"ad; deal with that
-      do ind = 1, noNew
-        if ( coeffs%badValue(ind) ) then
-          newY(ind,:) = badValue
-        else
-          newY(ind,:) = 0.0_rk
-        end if
-      end do
-      if ( present(dyByDx) ) dyByDx = newY
+      if ( doNewY ) then
+        do ind = 1, noNew
+          if ( coeffs%badValue(ind) ) then
+            newY(ind,:) = badValue
+          else
+            newY(ind,:) = 0.0_rk
+          end if
+        end do
+      end if
+      if ( present(dyByDx) ) then
+        do ind = 1, noNew
+          if ( coeffs%badValue(ind) ) then
+            dyByDx(ind,:) = badValue
+          else
+            dyByDx(ind,:) = 0.0_rk
+          end if
+        end do
+      end if
     else
       ! Clear the result array(s)
-      newY = 0.0_rk
+      if ( doNewY ) newY = 0.0_rk
       if ( present(dyByDx) ) dyByDx = 0.0_rk
     end if
 
@@ -134,15 +150,17 @@
     ! If we were to spread coeffs%badValue, coeffs%a, coeffs%b and coeffs%gap,
     ! the DO's could be WHERE's.
     if ( useMissingRegions ) then ! worry about the missing regions flag
-      do ind = 1, noNew
-        if ( coeffs%badValue(coeffs%lowerInds(ind)) .or. &
-          &  coeffs%badValue(coeffs%upperInds(ind)) ) then
-          newY(ind,:) = badValue
-        else
-          newY(ind,:) = newY(ind,:) + coeffs%a(ind)*oldYlower(ind,:) + &
-            &                         coeffs%b(ind)*oldYupper(ind,:)
-        end if
-      end do
+      if ( doNewY ) then
+        do ind = 1, noNew
+          if ( coeffs%badValue(coeffs%lowerInds(ind)) .or. &
+            &  coeffs%badValue(coeffs%upperInds(ind)) ) then
+            newY(ind,:) = badValue
+          else
+            newY(ind,:) = newY(ind,:) + coeffs%a(ind)*oldYlower(ind,:) + &
+              &                         coeffs%b(ind)*oldYupper(ind,:)
+          end if
+        end do
+      end if
       if ( present(dyByDx) ) then
         do ind = 1, noNew
           if ( coeffs%badValue(coeffs%lowerInds(ind)) .or. &
@@ -155,10 +173,12 @@
         end do
       end if
     else  ! Don't worry about missing regions flag
-      do ind = 1, noNew
-        newY(ind,:) = newY(ind,:) + coeffs%a(ind)*oldYlower(ind,:) + &
-          &                         coeffs%b(ind)*oldYupper(ind,:)
-      end do
+      if ( doNewY ) then
+        do ind = 1, noNew
+          newY(ind,:) = newY(ind,:) + coeffs%a(ind)*oldYlower(ind,:) + &
+            &                         coeffs%b(ind)*oldYupper(ind,:)
+        end do
+      end if
       if ( present(dyByDx) ) then
         do ind = 1, noNew
           dyByDx(ind,:) = (oldYupper(ind,:)-oldYlower(ind,:))/coeffs%gap(ind)
@@ -168,11 +188,12 @@
 
     ! Now do the spline calculation
     if ( spline ) then
-
-      do ind = 1, noNew
-        newY(ind,:) = newY(ind,:) + coeffs%C(ind)*oldSecondLower(ind,:) + &
-          &                         coeffs%D(ind)*oldSecondUpper(ind,:)
-      end do
+      if ( doNewY ) then
+        do ind = 1, noNew
+          newY(ind,:) = newY(ind,:) + coeffs%C(ind)*oldSecondLower(ind,:) + &
+            &                         coeffs%D(ind)*oldSecondUpper(ind,:)
+        end do
+      end if
       if ( present(dyByDx)) then
         do ind = 1, noNew
           dyByDx(ind,:) = dyByDx(ind,:) + (coeffs%Gap(ind)/6.0_rk)*( &
@@ -208,5 +229,8 @@
 ! end subroutine InterpolateUsingSetup_r*
 
 ! $Log$
+! Revision 1.2  2002/11/23 02:32:09  vsnyder
+! Modifications to accomodate InterpolateScalarUsingSetup
+!
 ! Revision 1.1  2002/11/22 23:58:49  vsnyder
 ! Initial Commit
