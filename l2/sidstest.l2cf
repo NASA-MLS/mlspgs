@@ -7,7 +7,7 @@
 ; dataset for band 2.
 
 
-; ------------------------------------------------- MLSSignals --------
+; -----------------------------------------------------  MLSSignals  -----
 BEGIN MLSSignals
 
     ;; Modules
@@ -215,7 +215,7 @@ BEGIN MLSSignals
 END MLSSignals
 
 
-; ---------------------------------------------------- GlobalSettings --
+; -------------------------------------------------  GlobalSettings  -----
 BEGIN GlobalSettings
 
     ;; In reality we probably don't need any of these.
@@ -224,10 +224,15 @@ BEGIN GlobalSettings
     OutputVersionString="v0-1-0-test"
     AllowClimatologyOverloads=FALSE
 
+;; Stuff to start up the forward model from Zvi's and Bill's files
+    forwardModelGlobal, atmos_der=false, conv=false, freq_avg=true, $
+      spect_der=false, temp_der=false, frequency= -1.0
+    l2load, bill='/user5/zvi/ptg_frq_grid_b05.dat', zvi='/user5/zvi/seez'
+;; End of stuff to start up the forward model from Zvi's and Bill's files
 END GlobalSettings
 
 
-; ---------------------------------------------------- ReadApriori --
+; ----------------------------------------------------  ReadApriori  -----
 BEGIN ReadApriori
 
     ;; Currently this reads apriori data from l2gp files, designed for
@@ -244,13 +249,13 @@ BEGIN ReadApriori
 END ReadApriori
 
 
-; --------------------------------------------------- MergeApriori --
+; ---------------------------------------------------  MergeApriori  -----
 BEGIN MergeApriori
     ;; Nothing to do here
 END MergeApriori
 
 
-; --------------------------------------------------- ChunkDivide --
+; ----------------------------------------------------  ChunkDivide  -----
 BEGIN ChunkDivide
     ;; Just a pretty typical setup, except no overlaps to avoid bug
 
@@ -270,7 +275,7 @@ BEGIN ChunkDivide
 END ChunkDivide
 
 
-; -------------------------------------------------------------- Construct --
+; ------------------------------------------------------  Construct  -----
 BEGIN Construct
 
     ;; First construct vGrids and hGrids
@@ -312,7 +317,7 @@ BEGIN Construct
 END Construct
 
 
-; -------------------------------------------------------------- Fill --
+; ------------------------------------------------------------  Fill -----
 BEGIN Fill
 
     ;; First create our vectors
@@ -352,15 +357,15 @@ BEGIN Fill
 END Fill
 
 
+; -------------------------------------------------------  Retrieve  -----
+BEGIN Retrieve
 
-; ***********************************************************
-; THIS IS WHERE YOU WOULD PUT THE SIDS CALCULATION PRESUMABLY
-; ***********************************************************
+  sids, fwdModelIn = state, fwdModelExtra = extraState, fwdModelOut = radiance
+
+END Retrieve
 
 
-
-
-; ---------------------------------------------------------------- Join ----
+; -----------------------------------------------------------  Join  -----
 BEGIN Join
 
     tempL2gp: l2gp, source=state.temp, swath='Temperature'
@@ -373,7 +378,7 @@ BEGIN Join
 END Join
 
 
-; ------------------------------------------------------------- Output ----
+; ---------------------------------------------------------  Output  -----
 BEGIN Output
 
     output, file='l2gp_temp', quantities=tempL2gp,type=l2gp
@@ -387,6 +392,9 @@ END Output
 ; ==========================================================================
 
 ; $Log$
+; Revision 2.2  2001/03/08 22:00:23  vsnyder
+; Add stuff to start up forward model using L2_Load, put in a "sids" spec.
+;
 ; Revision 2.1  2001/03/08 21:17:47  livesey
 ; First version
 ;
