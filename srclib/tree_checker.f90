@@ -232,21 +232,12 @@ contains ! ====     Public Procedures     ==============================
     integer, intent(out) :: TYPE, UNITS    ! Output from "expr"
     double precision, intent(out) :: VALUE ! Output from "expr"
 
-    type(decls) :: DECL  ! Declaration of a name
     integer :: FIELD     ! Tree node of field's declaration
     integer :: FIELD_LIT ! f_... for a field
-    integer :: FIELD_LOOK ! A field being sought during n_dot checking
-    integer :: FIELD_REF ! The value of a field -- a ref to a n_spec_arg
-    integer :: FIELD_TEST ! A son of Field_Ref
-    integer :: GSON      ! Son of Son
     integer :: I         ! Index of son of "root"
-    integer :: J         ! Index of son of "field"
-    integer :: K         ! Index of a son of a n_spec_args
     integer :: LOOK_FOR  ! Look for an enum_value or a spec?
     integer :: SON1, SON ! Sons of "root"
     integer :: SPEC_DECL ! Tree node of the spec's declaration
-    integer :: TEST_TYPE ! Used to test the tree-node for a type reference
-    integer :: TYPE_DECL ! Tree node of declaration of name of field's type
 
     if ( toggle(con) ) call trace_begin ( 'ASSIGN', root )
     son1 = subtree(1,root)
@@ -271,93 +262,114 @@ contains ! ====     Public Procedures     ==============================
         end if
         got(field_lit) = .true.
         call decorate ( son1, field_lit )
-o:      do i = 2, nsons(root)
+        do i = 2, nsons(root)
           son = subtree(i,root)
-          if ( node_id(son) == n_dot ) then ! label_ref.field
-            gson = subtree(1,son)
-            type_decl = decoration(subtree(2,field)) ! Required spec
-            decl = get_decl(sub_rosa(gson),label)
-            do while ( decl%tree /= null_tree )
-              test_type = decoration(subtree(1,decl%tree)) ! spec's index
-              if ( test_type == type_decl ) then  ! right kind of spec
-                field_ref = decl%tree
-                call decorate ( gson, field_ref ) ! decorate label_ref with tree
-m:              do j = 3, nsons(field)
-                ! This loop assumes there is only one field of the required
-                ! name.  If it is desired to search through several fields,
-                ! it will be necessary to have a stack to keep track of the
-                ! subtree indices.  It goes through the field names that are
-                ! given by sons 3-n of the n_dot vertex of the definition,
-                ! looking for fields of the same name, starting at the first
-                ! son of the n_dot vertex in the input, and thence from the
-                ! decoration of the brother of the found field name.
-                  field_look = decoration(subtree(j,field))
-                  do k = 2, nsons(field_ref)
-                    field_test = subtree(k,field_ref)
-                    if ( node_id(field_test) == n_asg ) then
-                      if ( decoration(subtree(1,field_test)) == &
-                        &  field_look ) then
-                        ! Get the next n_spec_arg tree in the chain
-                        field_ref = decoration(subtree(2,field_test))
-                cycle m
-                      end if
-                    end if
-                  end do ! k
-                  call announce_error ( gson, no_such_field, (/ field_look /) )
-        cycle o
-                end do m ! j
-                ! The final field_test is the parent n_asg of the field
-                ! that should have the same name as the second son of the
-                ! n_dot vertex in the input.
-                gson = subtree(2,son)
-                field_look = sub_rosa(gson)
-                do k = 2, nsons(field_test)
-                  if ( sub_rosa(subtree(k,field_test)) == field_look ) then
-                    call decorate ( gson, subtree(k,field_test) )
-        cycle o
-                  end if
-                end do ! k
-                call announce_error ( gson, no_such_reference, &
-                  & (/ subtree(1,field_test) /) )
-        cycle o
-              end if
-              decl = prior_decl(decl,label)
-            end do
-            call announce_error ( son1, wrong_type )
-          else if ( node_id(son) == n_identifier ) then
-            do j = 2, nsons(field)                 ! Try all of the types
-              type_decl = decoration(subtree(j,field))
-              decl = get_decl(sub_rosa(son),look_for)
-              do while ( decl%tree /= null_tree )
-                if ( node_id(type_decl) == n_spec_def ) then
-                  test_type = decoration(subtree(1,decl%tree))
-                else
-                  test_type = decl%tree
-                end if
-                if ( test_type == type_decl ) then  ! right type
-                  if ( look_for == enum_value ) then
-                    call decorate ( son, decl%units ) ! decorate son with lit#
-                  else
-                    call decorate ( son, decl%tree )  ! decorate son with tree
-                  end if
-        cycle o
-                end if
-                decl = prior_decl(decl,look_for)
-              end do
-            end do
-            call announce_error ( son1, wrong_type )
-          else
-            call expr ( son, type, units, value )
-            if ( .not. check_field_type(field,type_map(type)) ) then
-              call announce_error ( son1, wrong_type, sons = (/ field /) )
-            end if
-          end if
-        end do o ! i = 2, nsons(root)
+          call assignBody ( son )
+        end do ! i = 2, nsons(root)
       end if
     else
       call announce_error ( son1, not_name )
     end if
     if ( toggle(con) ) call trace_end ( 'ASSIGN' )
+  contains
+    recursive subroutine AssignBody ( Son )
+      integer, intent(in) :: Son   ! of n_asg or n_array
+      type(decls) :: DECL  ! Declaration of a name
+      integer :: FIELD_LOOK ! A field being sought during n_dot checking
+      integer :: FIELD_REF ! The value of a field -- a ref to a n_spec_arg
+      integer :: FIELD_TEST ! A son of Field_Ref
+      integer :: GSON      ! Son of Son
+      integer :: I         ! subtree index and loop inductor        
+      integer :: J         ! Index of son of "field"                
+      integer :: K         ! Index of a son of a n_spec_args
+      integer :: TEST_TYPE ! Used to test the tree-node for a type reference
+      integer :: TYPE_DECL ! Tree node of declaration of name of field's type
+
+      select case ( node_id(son) )
+      case ( n_dot ) ! label_ref.field
+        gson = subtree(1,son)
+        type_decl = decoration(subtree(2,field)) ! Required spec
+        decl = get_decl(sub_rosa(gson),label)
+        do while ( decl%tree /= null_tree )
+          test_type = decoration(subtree(1,decl%tree)) ! spec's index
+          if ( test_type == type_decl ) then  ! right kind of spec
+            field_ref = decl%tree
+            call decorate ( gson, field_ref ) ! decorate label_ref with tree
+m:              do j = 3, nsons(field)
+            ! This loop assumes there is only one field of the required
+            ! name.  If it is desired to search through several fields,
+            ! it will be necessary to have a stack to keep track of the
+            ! subtree indices.  It goes through the field names that are
+            ! given by sons 3-n of the n_dot vertex of the definition,
+            ! looking for fields of the same name, starting at the first
+            ! son of the n_dot vertex in the input, and thence from the
+            ! decoration of the brother of the found field name.
+              field_look = decoration(subtree(j,field))
+              do k = 2, nsons(field_ref)
+                field_test = subtree(k,field_ref)
+                if ( node_id(field_test) == n_asg ) then
+                  if ( decoration(subtree(1,field_test)) == &
+                    &  field_look ) then
+                    ! Get the next n_spec_arg tree in the chain
+                    field_ref = decoration(subtree(2,field_test))
+            cycle m
+                  end if
+                end if
+              end do ! k
+              call announce_error ( gson, no_such_field, (/ field_look /) )
+    return
+            end do m ! j
+            ! The final field_test is the parent n_asg of the field
+            ! that should have the same name as the second son of the
+            ! n_dot vertex in the input.
+            gson = subtree(2,son)
+            field_look = sub_rosa(gson)
+            do k = 2, nsons(field_test)
+              if ( sub_rosa(subtree(k,field_test)) == field_look ) then
+                call decorate ( gson, subtree(k,field_test) )
+    return
+              end if
+            end do ! k
+            call announce_error ( gson, no_such_reference, &
+              & (/ subtree(1,field_test) /) )
+    return
+          end if
+          decl = prior_decl(decl,label)
+        end do
+        call announce_error ( son1, wrong_type )
+      case ( n_identifier )
+        do j = 2, nsons(field)                 ! Try all of the types
+          type_decl = decoration(subtree(j,field))
+          decl = get_decl(sub_rosa(son),look_for)
+          do while ( decl%tree /= null_tree )
+            if ( node_id(type_decl) == n_spec_def ) then
+              test_type = decoration(subtree(1,decl%tree))
+            else
+              test_type = decl%tree
+            end if
+            if ( test_type == type_decl ) then  ! right type
+              if ( look_for == enum_value ) then
+                call decorate ( son, decl%units ) ! decorate son with lit#
+              else
+                call decorate ( son, decl%tree )  ! decorate son with tree
+              end if
+    return
+            end if
+            decl = prior_decl(decl,look_for)
+          end do
+        end do
+        call announce_error ( son1, wrong_type )
+      case ( n_array )
+        do j = 1, nsons(son)
+          call assignBody ( subtree(j,son) )
+        end do
+      case default
+        call expr ( son, type, units, value )
+        if ( .not. check_field_type(field,type_map(type)) ) then
+          call announce_error ( son1, wrong_type, sons = (/ field /) )
+        end if
+      end select
+    end subroutine AssignBody
   end subroutine ASSIGN
 ! --------------------------------------------------  CHECK_FIELD  -----
   integer function CHECK_FIELD ( FIELD, SPEC )
@@ -627,17 +639,6 @@ m:              do j = 3, nsons(field)
         units = decl%units
         value = value * decl%value
       end if
-    case ( n_array )
-      son1 = subtree(1,root)
-      call expr ( son1, type, units, value )
-      do i = 2, nsons(root)
-        call expr ( son2, type2, units2, value2 )
-        if ( units /= units2 ) &
-          & call announce_error ( root, inconsistent_units, (/ son1, son2 /) )
-        if ( type /= type2 ) &
-          & call announce_error ( root, inconsistent_types, (/ son1, son2 /) )
-      end do
-      value = 0.0d0
     case ( n_colon, n_colon_less, n_less_colon, n_less_colon_less )
       son1 = subtree(1,root); son2 = subtree(2,root)
       call expr ( son1, type, units, value )
@@ -877,6 +878,9 @@ m:              do j = 3, nsons(field)
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.11  2001/11/28 03:15:37  vsnyder
+! Implement arrays of arrays
+!
 ! Revision 1.10  2001/11/27 00:50:45  vsnyder
 ! Implement (partially) open ranges
 !
