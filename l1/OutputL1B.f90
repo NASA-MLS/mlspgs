@@ -1,28 +1,28 @@
-! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 
-module OutputL1B
+MODULE OutputL1B
 
-  use Hdf
-  use MLSCommon
-  use MLSL1Common
-  use MLSL1Config, only: MIFsGHz, MIFsTHz
-  use MLSL1Rad
-  use MLSMessageModule, only : MLSMessage
+  USE Hdf
+  USE MLSCommon
+  USE MLSL1Common
+  USE MLSL1Config, ONLY: MIFsGHz, MIFsTHz
+  USE MLSL1Rad
+  USE MLSMessageModule, ONLY : MLSMessage, MLSMSG_Error, MLSMSG_Warning
 
-  implicit none
-  private
+  IMPLICIT NONE
+  PRIVATE
 
-  public :: L1BOAINDEX_T, L1BOASC_T, L1BOATP_T, &
+  PUBLIC :: L1BOAINDEX_T, L1BOASC_T, L1BOATP_T, &
     & OUTPUTL1B_CREATE, OUTPUTL1B_INDEX, OUTPUTL1B_SC, &
     & OUTPUTL1B_GHZ, OUTPUTL1B_THZ, OUTPUTL1B_RAD, &
     & LENG, LENT, LENCOORD
 
   !------------------- RCS Ident Info -----------------------
-  character(LEN=130) :: Id = &                                                    
+  CHARACTER(LEN=130) :: Id = &                                                    
     "$Id$"
-  character (LEN=*), parameter :: ModuleName="$RCSfile$"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName="$RCSfile$"
   !----------------------------------------------------------
 
   ! This module contains the subroutines needed to write L1B data to
@@ -30,169 +30,169 @@ module OutputL1B
 
   ! Parameters
 
-  character(len=*), public, parameter :: SDS1_NAME = 'MAFStartTimeUTC'
-  character(len=*), public, parameter :: SDS2_NAME = 'MAFStartTimeTAI'
-  character(len=*), public, parameter :: SDS3_NAME = 'noMIFs'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS1_NAME = 'MAFStartTimeUTC'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS2_NAME = 'MAFStartTimeTAI'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS3_NAME = 'noMIFs'
 
-  character(len=*), public, parameter :: SDS4_NAME = 'scECI'
-  character(len=*), public, parameter :: SDS5_NAME = 'scECR'
-  character(len=*), public, parameter :: SDS6_NAME = 'scGeocAlt'
-  character(len=*), public, parameter :: SDS7_NAME = 'scGeocLat'
-  character(len=*), public, parameter :: SDS8_NAME = 'scGeodAlt'
-  character(len=*), public, parameter :: SDS9_NAME = 'scGeodLat'
-  character(len=*), public, parameter :: SDS10_NAME = 'scLon'
-  character(len=*), public, parameter :: SDS11_NAME = 'scGeodAngle'
-  character(len=*), public, parameter :: SDS12_NAME = 'scVelECI'
-  character(len=*), public, parameter :: SDS13_NAME = 'ypr'
-  character(len=*), public, parameter :: SDS14_NAME = 'yprRate'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS4_NAME = 'scECI'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS5_NAME = 'scECR'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS6_NAME = 'scGeocAlt'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS7_NAME = 'scGeocLat'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS8_NAME = 'scGeodAlt'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS9_NAME = 'scGeodLat'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS10_NAME = 'scLon'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS11_NAME = 'scGeodAngle'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS12_NAME = 'scVelECI'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS13_NAME = 'ypr'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS14_NAME = 'yprRate'
 
-  character(len=*), public, parameter :: SDS15_NAME = 'GHz.encoderAngle'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS15_NAME = 'GHz.encoderAngle'
 
-  character(len=*), public, parameter :: SDS16_NAME = 'GHz.scAngle'
-  character(len=*), public, parameter :: SDS17_NAME = 'GHz.scanAngle'
-  character(len=*), public, parameter :: SDS18_NAME = 'GHz.scanRate'
-  character(len=*), public, parameter :: SDS19_NAME = 'GHz.tpECI'
-  character(len=*), public, parameter :: SDS20_NAME = 'GHz.tpECR'
-  character(len=*), public, parameter :: SDS21_NAME = 'GHz.tpOrbY'
-  character(len=*), public, parameter :: SDS22_NAME = 'GHz.tpGeocAlt'
-  character(len=*), public, parameter :: SDS23_NAME = 'GHz.tpGeocLat'
-  character(len=*), public, parameter :: SDS24_NAME = 'GHz.tpGeocAltRate'
-  character(len=*), public, parameter :: SDS25_NAME = 'GHz.tpGeodAlt'
-  character(len=*), public, parameter :: SDS26_NAME = 'GHz.tpGeodLat'
-  character(len=*), public, parameter :: SDS27_NAME = 'GHz.tpGeodAltRate'
-  character(len=*), public, parameter :: SDS28_NAME = 'GHz.tpLon'
-  character(len=*), public, parameter :: SDS29_NAME = 'GHz.tpGeodAngle'
-  character(len=*), public, parameter :: SDS30_NAME = 'GHz.tpSolarTime'
-  character(len=*), public, parameter :: SDS31_NAME = 'GHz.tpSolarZenith'
-  character(len=*), public, parameter :: SDS32_NAME = 'GHz.tpLosAngle'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS16_NAME = 'GHz.scAngle'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS17_NAME = 'GHz.scanAngle'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS18_NAME = 'GHz.scanRate'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS19_NAME = 'GHz.tpECI'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS20_NAME = 'GHz.tpECR'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS21_NAME = 'GHz.tpOrbY'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS22_NAME = 'GHz.tpGeocAlt'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS23_NAME = 'GHz.tpGeocLat'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS24_NAME = 'GHz.tpGeocAltRate'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS25_NAME = 'GHz.tpGeodAlt'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS26_NAME = 'GHz.tpGeodLat'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS27_NAME = 'GHz.tpGeodAltRate'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS28_NAME = 'GHz.tpLon'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS29_NAME = 'GHz.tpGeodAngle'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS30_NAME = 'GHz.tpSolarTime'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS31_NAME = 'GHz.tpSolarZenith'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS32_NAME = 'GHz.tpLosAngle'
 
-  character(len=*), public, parameter :: SDS33_NAME = 'THz.encoderAngle'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS33_NAME = 'THz.encoderAngle'
 
-  character(len=*), public, parameter :: SDS34_NAME = 'THz.scAngle'
-  character(len=*), public, parameter :: SDS35_NAME = 'THz.scanAngle'
-  character(len=*), public, parameter :: SDS36_NAME = 'THz.scanRate'
-  character(len=*), public, parameter :: SDS37_NAME = 'THz.tpECI'
-  character(len=*), public, parameter :: SDS38_NAME = 'THz.tpECR'
-  character(len=*), public, parameter :: SDS39_NAME = 'THz.tpOrbY'
-  character(len=*), public, parameter :: SDS40_NAME = 'THz.tpGeocAlt'
-  character(len=*), public, parameter :: SDS41_NAME = 'THz.tpGeocLat'
-  character(len=*), public, parameter :: SDS42_NAME = 'THz.tpGeocAltRate'
-  character(len=*), public, parameter :: SDS43_NAME = 'THz.tpGeodAlt'
-  character(len=*), public, parameter :: SDS44_NAME = 'THz.tpGeodLat'
-  character(len=*), public, parameter :: SDS45_NAME = 'THz.tpGeodAltRate'
-  character(len=*), public, parameter :: SDS46_NAME = 'THz.tpLon'
-  character(len=*), public, parameter :: SDS47_NAME = 'THz.tpGeodAngle'
-  character(len=*), public, parameter :: SDS48_NAME = 'THz.tpSolarTime'
-  character(len=*), public, parameter :: SDS49_NAME = 'THz.tpSolarZenith'
-  character(len=*), public, parameter :: SDS50_NAME = 'THz.tpLosAngle'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS34_NAME = 'THz.scAngle'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS35_NAME = 'THz.scanAngle'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS36_NAME = 'THz.scanRate'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS37_NAME = 'THz.tpECI'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS38_NAME = 'THz.tpECR'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS39_NAME = 'THz.tpOrbY'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS40_NAME = 'THz.tpGeocAlt'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS41_NAME = 'THz.tpGeocLat'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS42_NAME = 'THz.tpGeocAltRate'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS43_NAME = 'THz.tpGeodAlt'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS44_NAME = 'THz.tpGeodLat'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS45_NAME = 'THz.tpGeodAltRate'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS46_NAME = 'THz.tpLon'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS47_NAME = 'THz.tpGeodAngle'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS48_NAME = 'THz.tpSolarTime'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS49_NAME = 'THz.tpSolarZenith'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS50_NAME = 'THz.tpLosAngle'
 
-  character(len=*), public, parameter :: SDS51_NAME = 'counterMAF'
-  character(len=*), public, parameter :: SDS62_NAME = 'scVelECR'
-  character(len=*), public, parameter :: SDS63_NAME = 'scOrbIncl'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS51_NAME = 'counterMAF'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS62_NAME = 'scVelECR'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS63_NAME = 'scOrbIncl'
 
-  character(len=*), public, parameter :: DIM1_NAME = 'MAF'
-  character(len=*), public, parameter :: DIM2_NAME = 'MIF'
-  character(len=*), public, parameter :: DIM3_NAME = 'GHz.MIF'
-  character(len=*), public, parameter :: DIM4_NAME = 'THz.MIF'
-  character(len=*), public, parameter :: DIM5_NAME = 'xyz'
-  character(len=*), public, parameter :: DIM6_NAME = 'charUTC'
-  character(len=*), public, parameter :: DIM7_NAME = 'chanFB'
-  character(len=*), public, parameter :: DIM8_NAME = 'chanMB'
-  character(len=*), public, parameter :: DIM9_NAME = 'chanWF'
-  character(len=*), public, parameter :: DIM10_NAME = 'chanDACS'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: DIM1_NAME = 'MAF'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: DIM2_NAME = 'MIF'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: DIM3_NAME = 'GHz.MIF'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: DIM4_NAME = 'THz.MIF'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: DIM5_NAME = 'xyz'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: DIM6_NAME = 'charUTC'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: DIM7_NAME = 'chanFB'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: DIM8_NAME = 'chanMB'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: DIM9_NAME = 'chanWF'
+  CHARACTER(len=*), PUBLIC, PARAMETER :: DIM10_NAME = 'chanDACS'
 
-  integer, parameter :: lenCoord = 3
-  integer, public, parameter :: lenUTC = 27
-  integer, parameter :: lenG = 120
-  integer, parameter :: lenT = 114
+  INTEGER, PARAMETER :: lenCoord = 3
+  INTEGER, PUBLIC, PARAMETER :: lenUTC = 27
+  INTEGER, PARAMETER :: lenG = 150
+  INTEGER, PARAMETER :: lenT = 150
 
-  real, public, parameter :: FILL_REAL = -999.9
-  real(r8), public, parameter :: FILL_DP = -999.9
+  REAL, PUBLIC, PARAMETER :: FILL_REAL = -999.9
+  REAL(r8), PUBLIC, PARAMETER :: FILL_DP = -999.9
 
   ! This data type contains index information for the L1BOA data file.
-  type L1BOAindex_T
-    character(LEN=lenUTC) :: MAFStartTimeUTC ! MAF start time in ascii UTC
-    real(r8) :: MAFStartTimeTAI		! MAF start time in TAI
-    integer :: noMIFs                   ! total number of MIFs per MAF
-    integer :: counterMAF               ! MAF counter
-  end type L1BOAindex_T
+  TYPE L1BOAindex_T
+    CHARACTER(LEN=lenUTC) :: MAFStartTimeUTC ! MAF start time in ascii UTC
+    REAL(r8) :: MAFStartTimeTAI		! MAF start time in TAI
+    INTEGER :: noMIFs                   ! total number of MIFs per MAF
+    INTEGER :: counterMAF               ! MAF counter
+  END TYPE L1BOAindex_T
 
   ! This data type contains spacecraft quantities for the L1BOA data file.
-  type L1BOAsc_T
+  TYPE L1BOAsc_T
     ! dimensioned (xyz,MIF)
-    real(r8), dimension(:,:), pointer :: scECI	! s/c ECI location
-    real(r8), dimension(:,:), pointer :: scECR	! s/c ECR location
+    REAL(r8), DIMENSION(:,:), POINTER :: scECI	! s/c ECI location
+    REAL(r8), DIMENSION(:,:), POINTER :: scECR	! s/c ECR location
 
     ! dimensioned (MIF)
-    real(r8), dimension(:), pointer :: scGeocAlt	! s/c geoc alt
-    real, dimension(:), pointer :: scGeocLat		! s/c geoc lat
-    real(r8), dimension(:), pointer :: scGeodAlt	! s/c geod alt
-    real, dimension(:), pointer :: scGeodLat		! s/c geod lat
-    real, dimension(:), pointer :: scLon		! s/c longitude
-    real, dimension(:), pointer :: scGeodAngle	! s/c master coordinate
-    real, dimension(:), pointer :: scOrbIncl     ! instant. orb incl ECR (deg)
+    REAL(r8), DIMENSION(:), POINTER :: scGeocAlt	! s/c geoc alt
+    REAL, DIMENSION(:), POINTER :: scGeocLat		! s/c geoc lat
+    REAL(r8), DIMENSION(:), POINTER :: scGeodAlt	! s/c geod alt
+    REAL, DIMENSION(:), POINTER :: scGeodLat		! s/c geod lat
+    REAL, DIMENSION(:), POINTER :: scLon		! s/c longitude
+    REAL, DIMENSION(:), POINTER :: scGeodAngle	! s/c master coordinate
+    REAL, DIMENSION(:), POINTER :: scOrbIncl     ! instant. orb incl ECR (deg)
 
     ! dimensioned (xyz,MIF)
-    real(r8), dimension(:,:), pointer :: scVelECI	! s/c ECI velocity
-    real(r8), dimension(:,:), pointer :: scVelECR     ! s/c ECR velocity
-    real(r8), dimension(:,:), pointer :: ypr		! s/c yaw, pitch, roll
-    real(r8), dimension(:,:), pointer :: yprRate	! s/c y-p-r rate
-  end type L1BOAsc_T
+    REAL(r8), DIMENSION(:,:), POINTER :: scVelECI	! s/c ECI velocity
+    REAL(r8), DIMENSION(:,:), POINTER :: scVelECR     ! s/c ECR velocity
+    REAL(r8), DIMENSION(:,:), POINTER :: ypr		! s/c yaw, pitch, roll
+    REAL(r8), DIMENSION(:,:), POINTER :: yprRate	! s/c y-p-r rate
+  END TYPE L1BOAsc_T
 
   ! This data type contains tangent point quantities for the L1BOA data file.
-  type L1BOAtp_T
+  TYPE L1BOAtp_T
 
     ! dimensioned (MIF)
-    real(r8), dimension(:), pointer :: encoderAngle	! boresight wrt instr.
-    real(r8), dimension(:), pointer :: scAngle	! boresight wrt s/c +x
-    real(r8), dimension(:), pointer :: scanAngle	! boresight wrt orbit +x
-    real, dimension(:), pointer :: scanRate		! of change of scanAngle
+    REAL(r8), DIMENSION(:), POINTER :: encoderAngle	! boresight wrt instr.
+    REAL(r8), DIMENSION(:), POINTER :: scAngle	! boresight wrt s/c +x
+    REAL(r8), DIMENSION(:), POINTER :: scanAngle	! boresight wrt orbit +x
+    REAL, DIMENSION(:), POINTER :: scanRate		! of change of scanAngle
 
     ! dimensioned (xyz,mod.MIF)
-    real(r8), dimension(:,:), pointer :: tpECI	! tp location in ECI
-    real(r8), dimension(:,:), pointer :: tpECR	! tp location in ECR
+    REAL(r8), DIMENSION(:,:), POINTER :: tpECI	! tp location in ECI
+    REAL(r8), DIMENSION(:,:), POINTER :: tpECR	! tp location in ECR
 
     ! dimensioned (mod.MIF)
-    real, dimension(:), pointer :: tpOrbY		! out-of-plane distance
-    real(r8), dimension(:), pointer :: tpGeocAlt	! geoc alt of tp
-    real, dimension(:), pointer :: tpGeocLat		! geoc lat of tp
-    real, dimension(:), pointer :: tpGeocAltRate	! of change of tpGeocAlt
-    real(r8), dimension(:), pointer :: tpGeodAlt	! geod alt of tp 
-    real, dimension(:), pointer :: tpGeodLat		! geod lat of tp
-    real, dimension(:), pointer :: tpGeodAltRate	! of change of tpGeodAlt
-    real, dimension(:), pointer :: tpLon		! longitude of tp
-    real, dimension(:), pointer :: tpGeodAngle	! tp master coordinate
-    real, dimension(:), pointer :: tpSolarTime	! solar time coordinate
-    real, dimension(:), pointer :: tpSolarZenith	! solar zenith angle
-    real, dimension(:), pointer :: tpLosAngle		! line-of-sight ang to N
-  end type L1BOAtp_T
+    REAL, DIMENSION(:), POINTER :: tpOrbY		! out-of-plane distance
+    REAL(r8), DIMENSION(:), POINTER :: tpGeocAlt	! geoc alt of tp
+    REAL, DIMENSION(:), POINTER :: tpGeocLat		! geoc lat of tp
+    REAL, DIMENSION(:), POINTER :: tpGeocAltRate	! of change of tpGeocAlt
+    REAL(r8), DIMENSION(:), POINTER :: tpGeodAlt	! geod alt of tp 
+    REAL, DIMENSION(:), POINTER :: tpGeodLat		! geod lat of tp
+    REAL, DIMENSION(:), POINTER :: tpGeodAltRate	! of change of tpGeodAlt
+    REAL, DIMENSION(:), POINTER :: tpLon		! longitude of tp
+    REAL, DIMENSION(:), POINTER :: tpGeodAngle	! tp master coordinate
+    REAL, DIMENSION(:), POINTER :: tpSolarTime	! solar time coordinate
+    REAL, DIMENSION(:), POINTER :: tpSolarZenith	! solar zenith angle
+    REAL, DIMENSION(:), POINTER :: tpLosAngle		! line-of-sight ang to N
+  END TYPE L1BOAtp_T
 
-contains
+CONTAINS
 
   !----------------------------------- OutputL1B_Create ----
-  subroutine OutputL1B_create(sdId)
+  SUBROUTINE OutputL1B_create(sdId)
     ! This subroutine opens/creates the SD output files, and names the arrays and
     ! dimensions contained within them.
 
     ! Arguments
-    type( L1BFileInfo_T ), intent(IN) :: sdId
+    TYPE( L1BFileInfo_T ), INTENT(IN) :: sdId
 
     ! Functions
-    integer :: sfcreate, sfdimid, sfsdmname, sfendacc, sfsfill
+    INTEGER :: sfcreate, sfdimid, sfsdmname, sfendacc, sfsfill
 
     ! Variables
-    integer :: dim_id, rank, status
-    integer :: sds1_id, sds2_id, sds3_id, sds4_id, sds5_id, sds6_id, sds7_id
-    integer :: sds8_id, sds9_id, sds10_id, sds11_id, sds12_id, sds13_id
-    integer :: sds14_id, sds15_id, sds16_id, sds17_id, sds18_id, sds19_id
-    integer :: sds20_id, sds21_id, sds22_id, sds23_id, sds24_id, sds25_id
-    integer :: sds26_id, sds27_id, sds28_id, sds29_id, sds30_id, sds31_id
-    integer :: sds32_id, sds33_id, sds34_id, sds35_id, sds36_id, sds37_id
-    integer :: sds38_id, sds39_id, sds40_id, sds41_id, sds42_id, sds43_id
-    integer :: sds44_id, sds45_id, sds46_id, sds47_id, sds48_id, sds49_id
-    integer :: sds50_id, sds51_id, sds52_id, sds53_id
-    integer :: sds62_id, sds63_id
-    integer :: dimSize(3)
+    INTEGER :: dim_id, rank, status
+    INTEGER :: sds1_id, sds2_id, sds3_id, sds4_id, sds5_id, sds6_id, sds7_id
+    INTEGER :: sds8_id, sds9_id, sds10_id, sds11_id, sds12_id, sds13_id
+    INTEGER :: sds14_id, sds15_id, sds16_id, sds17_id, sds18_id, sds19_id
+    INTEGER :: sds20_id, sds21_id, sds22_id, sds23_id, sds24_id, sds25_id
+    INTEGER :: sds26_id, sds27_id, sds28_id, sds29_id, sds30_id, sds31_id
+    INTEGER :: sds32_id, sds33_id, sds34_id, sds35_id, sds36_id, sds37_id
+    INTEGER :: sds38_id, sds39_id, sds40_id, sds41_id, sds42_id, sds43_id
+    INTEGER :: sds44_id, sds45_id, sds46_id, sds47_id, sds48_id, sds49_id
+    INTEGER :: sds50_id, sds51_id, sds52_id, sds53_id
+    INTEGER :: sds62_id, sds63_id
+    INTEGER :: dimSize(3)
 
     ! Create the counterMAF SD in rad file F; name the dimension; terminate access
     ! to the data set.
@@ -736,22 +736,22 @@ contains
     status = sfendacc(sds50_id)
     status = sfendacc(sds51_id)
 
-  end subroutine OutputL1B_create
+  END SUBROUTINE OutputL1B_create
 
   !------------------------------------------------- OuptutL1B_index ----
-  subroutine OutputL1B_index(noMAF, sd_id, index)
+  SUBROUTINE OutputL1B_index(noMAF, sd_id, index)
     ! This subroutine writes the time/MIF indexing quantities to the HDF-SD file. 
 
     ! Arguments
-    type( L1BOAindex_T), intent(IN) :: index
-    integer, intent(IN) :: sd_id, noMAF
+    TYPE( L1BOAindex_T), INTENT(IN) :: index
+    INTEGER, INTENT(IN) :: sd_id, noMAF
 
     ! Functions
-    integer :: sfn2index, sfselect, sfwdata, sfwcdata, sfendacc
+    INTEGER :: sfn2index, sfselect, sfwdata, sfwcdata, sfendacc
 
     ! Variables
-    integer :: sds_index, sds1_id, sds2_id, sds3_id, sds51_id, status
-    integer :: edge(2), start(2), stride(2)
+    INTEGER :: sds_index, sds1_id, sds2_id, sds3_id, sds51_id, status
+    INTEGER :: edge(2), start(2), stride(2)
 
     ! Executable code
 
@@ -790,25 +790,25 @@ contains
     status = sfendacc(sds3_id)
     status = sfendacc(sds51_id)
 
-  end subroutine OutputL1B_index
+  END SUBROUTINE OutputL1B_index
 
   !------------------------------------------- OutputL1B_sc ------------
-  subroutine OutputL1B_sc(noMAF, sd_id, sc)
+  SUBROUTINE OutputL1B_sc(noMAF, sd_id, sc)
     ! This subroutine writes the spacecraft quantities to the HDF-SD file.
 
     ! Arguments
-    type( L1BOAsc_T ), intent(IN) :: sc
-    integer, intent(IN) :: noMAF, sd_id
+    TYPE( L1BOAsc_T ), INTENT(IN) :: sc
+    INTEGER, INTENT(IN) :: noMAF, sd_id
 
     ! Parameters
-    integer :: sfn2index, sfselect, sfwdata, sfendacc
+    INTEGER :: sfn2index, sfselect, sfwdata, sfendacc
 
     ! Variables
-    integer :: sds_index, status
-    integer :: sds4_id, sds5_id, sds6_id, sds7_id, sds8_id, sds9_id
-    integer :: sds10_id, sds11_id, sds12_id, sds13_id, sds14_id
-    integer :: sds62_id, sds63_id
-    integer :: edge(3), start(3), stride(3)
+    INTEGER :: sds_index, status
+    INTEGER :: sds4_id, sds5_id, sds6_id, sds7_id, sds8_id, sds9_id
+    INTEGER :: sds10_id, sds11_id, sds12_id, sds13_id, sds14_id
+    INTEGER :: sds62_id, sds63_id
+    INTEGER :: edge(3), start(3), stride(3)
 
     ! Find data sets by name
     sds_index = sfn2index(sd_id, SDS4_NAME)
@@ -859,7 +859,7 @@ contains
     start(2) = 0
     start(3) = noMAF-1
     edge(1) = lenCoord
-    edge(2) = size(sc%scECI,2)
+    edge(2) = SIZE(sc%scECI,2)
 
     status = sfwdata(sds4_id, start, stride, edge, sc%scECI)
     status = sfwdata(sds5_id, start, stride, edge, sc%scECR)
@@ -870,7 +870,7 @@ contains
 
     ! Write 2-D slabs (MIF x MAF)
     start(2) = noMAF-1
-    edge(1) = size(sc%scGeocAlt)
+    edge(1) = SIZE(sc%scGeocAlt)
     edge(2) = 1
 
     status = sfwdata(sds6_id, start(1:2), stride(1:2), edge(1:2), &
@@ -902,24 +902,24 @@ contains
     status = sfendacc(sds13_id)
     status = sfendacc(sds14_id)
 
-  end subroutine OutputL1B_sc
+  END SUBROUTINE OutputL1B_sc
 
   !-------------------------------------------- OutputL1B_GHz -------
-  subroutine OutputL1B_GHz(noMAF, sd_id, tp)
+  SUBROUTINE OutputL1B_GHz(noMAF, sd_id, tp)
     ! This subroutine writes the GHz tangent point quantities to the HDF-SD file.
     ! Arguments
-    type( L1BOAtp_T ), intent(IN) :: tp
-    integer, intent(IN) :: noMAF, sd_id
+    TYPE( L1BOAtp_T ), INTENT(IN) :: tp
+    INTEGER, INTENT(IN) :: noMAF, sd_id
 
     ! Functions
-    integer :: sfn2index, sfselect, sfwdata, sfendacc
+    INTEGER :: sfn2index, sfselect, sfwdata, sfendacc
 
     ! Variables
-    integer :: sds_index, sds15_id, sds16_id, sds17_id, sds18_id
-    integer :: sds19_id, sds20_id, sds21_id, sds22_id, sds23_id, sds24_id
-    integer :: sds25_id, sds26_id, sds27_id, sds28_id, sds29_id, sds30_id
-    integer :: sds31_id, sds32_id, status
-    integer :: edge(3), start(3), stride(3)
+    INTEGER :: sds_index, sds15_id, sds16_id, sds17_id, sds18_id
+    INTEGER :: sds19_id, sds20_id, sds21_id, sds22_id, sds23_id, sds24_id
+    INTEGER :: sds25_id, sds26_id, sds27_id, sds28_id, sds29_id, sds30_id
+    INTEGER :: sds31_id, sds32_id, status
+    INTEGER :: edge(3), start(3), stride(3)
 
     ! Find data sets by name
     sds_index = sfn2index(sd_id, SDS15_NAME)
@@ -985,7 +985,7 @@ contains
     ! Write GHz data
 
     start(2) = noMAF-1
-    edge(1) = size(tp%encoderAngle)
+    edge(1) = SIZE(tp%encoderAngle)
     edge(2) = 1
 
     status = sfwdata(sds15_id, start(1:2), stride(1:2), edge(1:2), &
@@ -997,7 +997,7 @@ contains
     status = sfwdata(sds18_id, start(1:2), stride(1:2), edge(1:2), &
       tp%scanRate)
 
-    edge(1) = size(tp%tpOrbY)
+    edge(1) = SIZE(tp%tpOrbY)
 
     status = sfwdata(sds21_id, start(1:2), stride(1:2), edge(1:2), tp%tpOrbY)
     status = sfwdata(sds22_id, start(1:2), stride(1:2), edge(1:2), &
@@ -1025,7 +1025,7 @@ contains
     start(2) = 0
     start(3) = noMAF-1
     edge(1) = lenCoord
-    edge(2) = size(tp%tpECI,2)
+    edge(2) = SIZE(tp%tpECI,2)
 
     status = sfwdata(sds19_id, start, stride, edge, tp%tpECI)
     status = sfwdata(sds20_id, start, stride, edge, tp%tpECR)
@@ -1050,25 +1050,25 @@ contains
     status = sfendacc(sds31_id)
     status = sfendacc(sds32_id)
 
-  end subroutine OutputL1B_GHz
+  END SUBROUTINE OutputL1B_GHz
 
   !-------------------------------------------- OutputL1B_THz --------------
-  subroutine OutputL1B_THz(noMAF, sd_id, tp)
+  SUBROUTINE OutputL1B_THz(noMAF, sd_id, tp)
     ! This subroutine writes the THz tangent point quantities to the HDF-SD file.
 
     ! Arguments
-    type( L1BOAtp_T ), intent(IN) :: tp
-    integer, intent(IN) :: noMAF, sd_id
+    TYPE( L1BOAtp_T ), INTENT(IN) :: tp
+    INTEGER, INTENT(IN) :: noMAF, sd_id
 
     ! Functions
-    integer :: sfn2index, sfselect, sfwdata, sfendacc
+    INTEGER :: sfn2index, sfselect, sfwdata, sfendacc
 
     ! Variables
-    integer :: sds_index,  sds33_id, sds34_id, sds35_id, sds36_id
-    integer :: sds37_id, sds38_id, sds39_id, sds40_id, sds41_id, sds42_id
-    integer :: sds43_id, sds44_id, sds45_id, sds46_id, sds47_id, sds48_id
-    integer :: sds49_id, sds50_id, status
-    integer :: edge(3), start(3), stride(3)
+    INTEGER :: sds_index,  sds33_id, sds34_id, sds35_id, sds36_id
+    INTEGER :: sds37_id, sds38_id, sds39_id, sds40_id, sds41_id, sds42_id
+    INTEGER :: sds43_id, sds44_id, sds45_id, sds46_id, sds47_id, sds48_id
+    INTEGER :: sds49_id, sds50_id, status
+    INTEGER :: edge(3), start(3), stride(3)
 
     ! Find data sets by name
     sds_index = sfn2index(sd_id, SDS33_NAME)
@@ -1132,7 +1132,7 @@ contains
 
     ! Write THz data
     start(2) = noMAF-1
-    edge(1) = size(tp%encoderAngle)
+    edge(1) = SIZE(tp%encoderAngle)
     edge(2) = 1
 
     status = sfwdata(sds33_id, start(1:2), stride(1:2), edge(1:2), &
@@ -1144,7 +1144,7 @@ contains
     status = sfwdata(sds36_id, start(1:2), stride(1:2), edge(1:2), &
       tp%scanRate)
 
-    edge(1) = size(tp%tpOrbY)
+    edge(1) = SIZE(tp%tpOrbY)
 
     status = sfwdata(sds39_id, start(1:2), stride(1:2), edge(1:2), tp%tpOrbY)
     status = sfwdata(sds40_id, start(1:2), stride(1:2), edge(1:2), &
@@ -1172,7 +1172,7 @@ contains
     start(2) = 0
     start(3) = noMAF-1
     edge(1) = lenCoord
-    edge(2) = size(tp%tpECI,2)
+    edge(2) = SIZE(tp%tpECI,2)
 
     status = sfwdata(sds37_id, start, stride, edge, tp%tpECI)
     status = sfwdata(sds38_id, start, stride, edge, tp%tpECR)
@@ -1197,27 +1197,33 @@ contains
     status = sfendacc(sds49_id)
     status = sfendacc(sds50_id)
 
-  end subroutine OutputL1B_THz
+  END SUBROUTINE OutputL1B_THz
 
   !-------------------------------------------------------- OutputL1B_rad
-  subroutine OutputL1B_rad(noMAF, sdId, counterMAF, rad)
+  SUBROUTINE OutputL1B_rad(noMAF, sdId, counterMAF, rad)
     ! This subroutine writes an MAF's worth of data to the L1BRad D & F files
 
     ! Arguments
-    type( L1BFileInfo_T ) :: sdId
-    type( Radiance_T ) :: rad(:)
-    integer, intent(IN) :: counterMAF, noMAF
+    TYPE( L1BFileInfo_T ) :: sdId
+    TYPE( Radiance_T ) :: rad(:)
+    INTEGER, INTENT(IN) :: counterMAF, noMAF
+
+! Parameters
+
+      REAL, PARAMETER :: FILL_RAD = -999.9  ! 0.0
+      REAL, PARAMETER :: FILL_RAD_ERR = -1.0
 
     ! Functions
-    integer :: sfcreate, sfdimid, sfendacc, sfn2index, sfsdmname, sfsfill
-    integer :: sfselect, sfwdata
+    INTEGER :: sfcreate, sfdimid, sfendacc, sfn2index, sfsdmname, sfsfill
+    INTEGER :: sfselect, sfwdata
 
     ! Variables
-    character (LEN=64) :: dim_chan, dim_mif, name, prec
+    CHARACTER (LEN=64) :: dim_chan, dim_mif, name, prec
 
-    integer :: dim_id, i, noSDs, rank, status, sd_id, sds_index
-    integer :: sds1_id, sds2_id
-    integer :: dimSize(3), start(3), stride(3), edge(3)
+    INTEGER :: dim_id, i, noSDs, rank, status, sd_id, sds_index
+    INTEGER :: sds1_id, sds2_id
+    INTEGER :: dimSize(3), start(3), stride(3), edge(3)
+    LOGICAL :: good_rad
 
     ! Set parameters that won't change in loop through SDs
     rank = 3
@@ -1236,7 +1242,7 @@ contains
     sds1_id = sfselect(sdId%RADFID, sds_index)
     status = sfwdata(sds1_id, start(3), stride(3), edge(3), counterMAF)
     status = sfendacc(sds1_id)
-    if (status == -1) call MLSMessage(MLSMSG_Error, ModuleName, 'Error &
+    IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Error &
       &writing counterMAF to rad F file')
 
     ! Do the same for file RADD
@@ -1244,68 +1250,72 @@ contains
     sds2_id = sfselect(sdId%RADDID, sds_index)
     status = sfwdata(sds2_id, start(3), stride(3), edge(3), counterMAF)
     status = sfendacc(sds2_id)
-    if (status == -1) call MLSMessage(MLSMSG_Error, ModuleName, 'Error &
+    IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Error &
       &writing counterMAF to rad D file')
 
     ! Loop on number of SDs per MAF
-    noSDs = size(rad)
+    noSDs = SIZE(rad)
 
-    do i = 1, noSDs
+    DO i = 1, noSDs
       ! Concatenate SD names
-      call GetFullMLSSignalName(rad(i)%signal, name)
-      prec = trim(name) // ' precision'
+      CALL GetFullMLSSignalName(rad(i)%signal, name)
+      prec = TRIM(name) // ' precision'
 
       ! Set parameters based on input data dimensions
-      dimSize(1) = size(rad(i)%value,1)
+      dimSize(1) = SIZE(rad(i)%value,1)
       edge(1) = dimSize(1)
 
       ! Based on the SD name, set dim name for channel, get Id of output file
-      if ( index(name,'FB') /= 0 ) then
+      IF ( INDEX(name,'FB') /= 0 ) THEN
         dim_chan = DIM7_NAME
         sd_id = sdId%RADFID
-      else if ( index(name,'MB') /= 0 ) then
+      ELSE IF ( INDEX(name,'MB') /= 0 ) THEN
         dim_chan = DIM8_NAME
         sd_id = sdId%RADFID
-      else if ( index(name,'WF') /= 0 ) then
+      ELSE IF ( INDEX(name,'WF') /= 0 ) THEN
         dim_chan = DIM9_NAME
         sd_id = sdId%RADFID
-      else if ( index(name,'DACS') /= 0 ) then
+      ELSE IF ( INDEX(name,'DACS') /= 0 ) THEN
         dim_chan = DIM10_NAME
         sd_id = sdId%RADDID
-      endif
+      ENDIF
 
       ! Based on rad module, set dim name & size, edge for # of MIFs
-      if ( index(name,'R5') /= 0 ) then
+      IF ( INDEX(name,'R5') /= 0 ) THEN
         dim_mif = DIM4_NAME
         dimSize(2) = MIFsTHz  !! lenT
         edge(2) = MIFsTHz     !! lenT
-      else
+      ELSE
         dim_mif = DIM3_NAME
         dimSize(2) = MIFsGHz  !! lenG
         edge(2) = MIFsGHz     !! lenG
-      endif
+      ENDIF
 
       ! If # of input MIFs exceeds dim size, re-set & output warning msg
-      if ( size(rad(i)%value,2) > edge(2) ) call MLSMessage(MLSMSG_Warning,&
+      IF ( SIZE(rad(i)%value,2) > edge(2) ) CALL MLSMessage(MLSMSG_Warning,&
         ModuleName, 'Number of MIFs exceeds SD size -- output truncated.')
+
+! Determine if good radiance data exists:
+
+         good_rad = ANY (rad(i)%value /= 0.0)
 
       ! Check whether the SD already exists
       sds_index = sfn2index(sd_id, name)
 
       ! If not, create it, and a corresponding one for precision
-      if ( sds_index == -1) then
+      IF (sds_index == -1 .AND. good_rad) THEN
 
         sds1_id = sfcreate(sd_id, name, DFNT_FLOAT32, rank, dimSize)
-        if (sds1_id == -1) call MLSMessage(MLSMSG_Error, ModuleName, &
+        IF (sds1_id == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, &
           'Error creating value SD.')
-        status = sfsfill(sds1_id, FILL_REAL)
+        status = sfsfill(sds1_id, FILL_RAD)
 
         sds2_id = sfcreate(sd_id, prec, DFNT_FLOAT32, rank, dimSize)
-        if (sds2_id == -1) call MLSMessage(MLSMSG_Error, ModuleName, &
+        IF (sds2_id == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, &
           'Error creating precision SD.')
-        status = sfsfill(sds2_id, FILL_REAL)
+        status = sfsfill(sds2_id, FILL_RAD_ERR)
 
-        if (status == -1) call MLSMessage(MLSMSG_Error, ModuleName, &
+        IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, &
           'Error setting fill values.')
 
         ! Give names to the dimensions
@@ -1323,35 +1333,41 @@ contains
         dim_id = sfdimid(sds2_id, 2)
         status = sfsdmname(dim_id, DIM1_NAME)
 
-        if (status == -1) call MLSMessage(MLSMSG_Error, ModuleName, &
+        IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, &
           'Error setting dimension names.')
 
         ! If the SD already exists, find the sds_id numbers for it & its precision
-      else
+      ELSE
         sds1_id = sfselect(sd_id, sds_index)
         sds_index = sfn2index(sd_id, prec)
         sds2_id = sfselect(sd_id, sds_index)
 
-      endif
+      ENDIF
+
       ! Write data to the value & precision SDs
-      status = sfwdata(sds1_id, start, stride, edge, rad(i)%value)
-      status = sfwdata(sds2_id, start, stride, edge, rad(i)%precision)
-      if (status == -1) call MLSMessage(MLSMSG_Error, ModuleName, &
-        'Error writing rad data.')
+      IF (good_rad) THEN
+         status = sfwdata(sds1_id, start, stride, edge, rad(i)%value)
+         status = sfwdata(sds2_id, start, stride, edge, rad(i)%precision)
+         IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+           'Error writing rad data.')
 
       ! Terminate access to the value & precision data sets
-      status = sfendacc(sds1_id)
-      status = sfendacc(sds2_id)
-      if (status == -1) call MLSMessage(MLSMSG_Error, ModuleName, 'Error &
-        &terminating access to the value or precision SD.')
+         status = sfendacc(sds1_id)
+         status = sfendacc(sds2_id)
+         IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Error &
+           &terminating access to the value or precision SD.')
+      ENDIF
 
-    enddo
+    ENDDO
 
-  end subroutine OutputL1B_rad
+  END SUBROUTINE OutputL1B_rad
 
-end module OutputL1B
+END MODULE OutputL1B
 
 ! $Log$
+! Revision 2.5  2002/03/12 16:37:06  perun
+! Changed lenG and lenT to 150; added good_rad flag for output control.
+!
 ! Revision 2.4  2001/12/06 01:03:46  pwagner
 ! Now writes orbit incline angle in ECR
 !
