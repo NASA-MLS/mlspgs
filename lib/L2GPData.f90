@@ -119,7 +119,7 @@ CONTAINS ! =====     Public Procedures     =============================
     ! This routine sets up the arrays for an l2gp datatype.
 
     ! Dummy arguments
-    TYPE (L2GPData_T), INTENT(out)  :: l2gp
+    TYPE (L2GPData_T), INTENT(inout)  :: l2gp
     INTEGER, INTENT(in), OPTIONAL :: nFreqs, nLevels, nTimes ! Dimensions
 
     ! Local variables
@@ -243,8 +243,15 @@ CONTAINS ! =====     Public Procedures     =============================
     tempL2gp = l2gp ! Copy the pointers to the old information
 
     ! Now recreate l2gp with the new size.
-
-    CALL SetupNewL2GPRecord( l2gp, nFreqs=l2gp%nFreqs, nLevels=l2gp%nLevels, nTimes=newNTimes)
+    ! First, nullify all of the pointers in l2gp, so that a deallocate_test
+    ! won't delete them.  After all, we just went to the trouble to preserve
+    ! them in TempL2GP!
+    nullify ( l2gp%pressures, l2gp%latitude, l2gp%longitude, l2gp%solarTime, &
+      & l2gp%solarZenith, l2gp%losAngle, l2gp%losAngle, l2gp%geodAngle, &
+      & l2gp%chunkNumber, l2gp%time, l2gp%frequency, l2gp%l2gpValue, &
+      & l2gp%l2gpPrecision, l2gp%status, l2gp%quality )
+    CALL SetupNewL2GPRecord( l2gp, nFreqs=l2gp%nFreqs, nLevels=l2gp%nLevels, &
+      & nTimes=newNTimes)
 
     ! Don't forget the `global' stuff
     l2gp%pressures=templ2gp%pressures
@@ -267,7 +274,6 @@ CONTAINS ! =====     Public Procedures     =============================
     l2gp%quality(1:templ2gp%nTimes) = templ2gp%quality(1:templ2gp%nTimes)
 
     ! Deallocate the old arrays
-
     CALL DestroyL2GPContents(templ2gp)
 
   END SUBROUTINE ExpandL2GPDataInPlace
@@ -1146,15 +1152,17 @@ CONTAINS ! =====     Public Procedures     =============================
 
   ! ------------------------------------------ DUMP_L2GP ------------
 
-  subroutine Dump_L2GP(l2gp)
+  subroutine Dump_L2GP ( L2gp, Name )
 
     ! Dummy arguments
     type (l2gpData_T), intent(in) :: L2GP(:)
+    character(len=*), optional :: Name
 
     ! Local variables
     integer :: i
 
-    do i=1,size(l2gp)
+    if ( present(name) ) call output ( name, advance='yes' )
+    do i = 1, size(l2gp)
       call output ( 'L2GP Data: ')
       call display_string ( l2gp(i)%nameIndex, advance='yes' )
       call output ( 'nTimes: ')
@@ -1164,49 +1172,34 @@ CONTAINS ! =====     Public Procedures     =============================
       call output ( '  nFreqs: ')
       call output ( l2gp(i)%nFreqs, 3, advance='yes')
       
-      call output ( 'Pressures:', advance='yes' )
-      call dump ( l2gp(i)%pressures )
+      call dump ( l2gp(i)%pressures, 'Pressures:' )
       
-      call output ( 'Latitude:' , advance='yes' )
-      call dump (l2gp(i)%latitude )
+      call dump ( l2gp(i)%latitude, 'Latitude:' )
       
-      call output ( 'Longitude:' , advance='yes' )
-      call dump (l2gp(i)%longitude )
+      call dump ( l2gp(i)%longitude, 'Longitude:' )
       
-      call output ( 'SolarTime:' , advance='yes' )
-      call dump (l2gp(i)%solarTime )
+      call dump ( l2gp(i)%solarTime, 'SolarTime:' )
       
-      call output ( 'SolarZenith:' , advance='yes' )
-      call dump (l2gp(i)%solarZenith )
+      call dump ( l2gp(i)%solarZenith, 'SolarZenith:' )
       
-      call output ( 'LOSAngle:' , advance='yes' )
-      call dump (l2gp(i)%losAngle )
+      call dump ( l2gp(i)%losAngle, 'LOSAngle:' )
       
-      call output ( 'geodAngle:' , advance='yes' )
-      call dump (l2gp(i)%geodAngle )
+      call dump ( l2gp(i)%geodAngle, 'geodAngle:' )
       
-      call output ( 'Time:' , advance='yes' )
-      call dump (l2gp(i)%time )
+      call dump ( l2gp(i)%time, 'Time:' )
       
-      call output ( 'ChunkNumber:' , advance='yes' )
-      call dump (l2gp(i)%chunkNumber )
+      call dump ( l2gp(i)%chunkNumber, 'ChunkNumber:' )
       
-      if ( associated(l2gp(i)%frequency) ) then
-        call output ( 'Frequencies:', advance='yes' )
-        call dump ( l2gp(i)%frequency )
-      end if
+      if ( associated(l2gp(i)%frequency) ) &
+        & call dump ( l2gp(i)%frequency, 'Frequencies:' )
       
-      call output ( 'L2GPValue:', advance='yes' )
-      call dump(l2gp(i)%l2gpValue)
+      call dump ( l2gp(i)%l2gpValue, 'L2GPValue:' )
       
-      call output ( 'L2GPPrecision:', advance='yes' )
-      call dump(l2gp(i)%l2gpPrecision)
+      call dump ( l2gp(i)%l2gpPrecision, 'L2GPPrecision:' )
       
-      !    call output ( 'Status:', advance='yes' )
-      !    call dump( l2gp(i)%status )
+      !    call dump ( l2gp(i)%status, 'Status:' )
       
-      call output ( 'Quality:', advance='yes' )
-      call dump(l2gp(i)%quality)
+      call dump ( l2gp(i)%quality, 'Quality:' )
 
     end do
   end subroutine Dump_L2GP
@@ -1218,6 +1211,9 @@ END MODULE L2GPData
 
 !
 ! $Log$
+! Revision 2.23  2001/03/01 18:37:51  livesey
+! Added dumper routine
+!
 ! Revision 2.22  2001/02/22 21:54:22  livesey
 ! Added initialisation to NULL() for pointer components of L2GPData_T
 !
