@@ -236,6 +236,17 @@ you invoke make, so you can go back to simply typing "make". If you need to
 override the HOSTMLSCFILE, you can be assured that setting MLSCFILE on the line
 invoking make takes precedence for that invocation.
 
+Another setting that may need to vary running on multiple platforms is the
+destination where you wish "make install" to place your executables. By default
+this would be mlspgs/bin/MLSCONFG and so automatically tracks different
+platforms correctly. You might choose alternatively, especially if you have
+root priviledge, and so may need more flexibility. The counterpart to
+HOSTMLSCFILE is MLSINSTALLDIR. Set it as an environment variable at login, and
+it will dictate where install moves mlsl1, etc. As an alternative, the
+counterpart to the command-line varaible MLSCFILE above is INSTALLDIR. Thus you
+may specify the destination via
+           make INSTALLDIR=/usr/local/bin install
+
 OTHER OPTIONS
 These are available either at the "top" level, mlspgs, or in parts at lib or
 the other mlslevels.
@@ -260,7 +271,7 @@ all        builds all the mlslevels
 distclean  does a clean; restores archive nearly to initial state
 help       complete summary of targets, settings, usage of MakeFC
 disthelp   prints this file
-install    moves the built programs from the mlslevels to the mlspgs top level
+install    moves the built programs from the mlslevels to INSTALLDIR
 makefile   makes a new symbolic link from MakeFC to Makefile
            at the top level as well as each of the subdirectories;
            useful for older archives before the link became automatic
@@ -462,6 +473,7 @@ FC                 Overrides the name by which the Fortran compiler is called
 CC                 Overrides the name by which the c compiler is called
                    e.g., to build on pencil, I used "make CC=gcc"
 MLSCFILE           Overrides the name of the .configure file
+INSTALLDIR         Destination where install moves mlsl1, etc.
 PGSTK              Also mentioned below in connection with .configure,
                    but if set to blank on the line invoking make, it will
                    cause make to build a toolkit-free version of lib and l2;
@@ -566,6 +578,9 @@ export LDOPTS
 EOF
 exit
 # $Log$
+# Revision 1.19  2001/07/24 23:35:26  pwagner
+# Mentions l3m; no longer recommend -gc
+#
 # Revision 1.18  2001/07/07 00:27:30  pwagner
 # Mentions new version of Toolkit, LIB_BLAS, and cloudfwdm
 #
