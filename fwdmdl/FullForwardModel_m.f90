@@ -926,10 +926,10 @@ contains
     call allocate_test ( beta_path_phh_c,  npc, fwdModelConf%num_scattering_angles,     'beta_path_phh_c', moduleName ) !JJ
     call allocate_test ( beta_path_f,   no_ele, no_mol, 'beta_path_f',   moduleName )
     call allocate_test ( do_calc_fzp,   no_ele, size(grids_f%values),  'do_calc_fzp',   moduleName )
-    call allocate_test ( do_calc_zp,    no_ele, grids_f%p_len,  'do_calc_zp',    moduleName )
-    call allocate_test ( eta_fzp,       no_ele, size(grids_f%values),  'eta_fzp',       moduleName )
-    call allocate_test ( eta_zp,        no_ele, grids_f%p_len,  'eta_zp',        moduleName )
-    call allocate_test ( sps_path,      no_ele, no_mol, 'sps_path',      moduleName )
+    call allocate_test ( do_calc_zp,    no_ele, grids_f%p_len,  'do_calc_zp',     moduleName )
+    call allocate_test ( eta_fzp,       no_ele, size(grids_f%values),  'eta_fzp', moduleName )
+    call allocate_test ( eta_zp,        no_ele, grids_f%p_len,  'eta_zp', moduleName )
+    call allocate_test ( sps_path,      no_ele, no_mol, 'sps_path',       moduleName )
     if ( fwdModelConf%Incl_Cld ) then !JJ
       call allocate_test ( do_calc_iwc,    no_ele, size(grids_iwc%values),  'do_calc_iwc',  moduleName )
       call allocate_test ( eta_iwc,        no_ele, size(grids_iwc%values),  'eta_iwc',      moduleName )
@@ -987,7 +987,7 @@ contains
       call allocate_test ( tan_dh_dt,1,sv_t_len, 'tan_dh_dt', moduleName )
       call allocate_test ( tan_d2h_dhdt,1,sv_t_len, 'tan_d2h_dhdt', moduleName )
 
-    end if
+    end if ! temp_der
 
     if ( atmos_der ) then
       call allocate_test ( dRad_df, size(grids_f%values), 'dRad_df', moduleName )
@@ -1271,7 +1271,7 @@ contains
               &  DHIDTLM = dh_dt_glgrid,                                     &
               &  DHITDTLM = dh_dt_path(1:no_ele,:),                          &
               &  Z_BASIS = Grids_tmp%zet_basis,                              &
-              &  ETA_ZXP=eta_zxp_t(1:no_ele,:),                              &
+              &  ETA_ZXP = eta_zxp_t(1:no_ele,:),                            &
               &  DO_CALC_T = do_calc_t(1:no_ele,:),                          &
               &  DO_CALC_HYD = do_calc_hyd(1:no_ele,:) )
             dh_dt_path_c(1:npc,:) = dh_dt_path(indices_c(1:npc),:)
@@ -2608,6 +2608,9 @@ alpha_path_f = 0.5 * alpha_path_f
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.138  2003/05/22 04:03:41  livesey
+! Now handles elevation offset as a channel by channel quantity
+!
 ! Revision 2.137  2003/05/20 00:05:39  vsnyder
 ! Move some stuff to subroutines
 !
