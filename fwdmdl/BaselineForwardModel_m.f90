@@ -29,7 +29,8 @@ contains ! ======================================== BaselineForwardModel ======
     use ForwardModelIntermediate, only: FORWARDMODELINTERMEDIATE_T, FORWARDMODELSTATUS_T
     use Intrinsic, only: L_BASELINE, L_PTAN, L_NONE, L_RADIANCE, L_INTERMEDIATEFREQUENCY
     use ManipulateVectorQuantities, only: FINDONECLOSESTINSTANCE
-    use MatrixModule_0, only: SPARSIFY, MATRIXELEMENT_T, M_ABSENT, M_BANDED, DENSIFY
+    use MatrixModule_0, only: SPARSIFY, MATRIXELEMENT_T, M_ABSENT, M_BANDED, DENSIFY, &
+      & CHECKFORSIMPLEBANDEDLAYOUT
     use MatrixModule_1, only: MATRIX_T, FINDBLOCK, CREATEBLOCK
     use MLSCommon, only: RP, RM
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, &
@@ -359,6 +360,8 @@ contains ! ======================================== BaselineForwardModel ======
               & noMIFs*noChans, bandHeight=noChans )
             jBlock%values = 0.0_rm
           case (m_banded)
+            call CheckForSimpleBandedLayout ( jBlock, noChans, &
+              & 'd[Radiance]/d[ptan] in baseline model' )
           case default
             call MLSMessage ( MLSMSG_Error, ModuleName,&
               & 'Wrong matrix type for ptan derivative')
@@ -420,6 +423,9 @@ contains ! ======================================== BaselineForwardModel ======
 end module BaselineForwardModel_m
   
 ! $Log$
+! Revision 2.18  2003/10/09 22:16:13  livesey
+! Added call to CheckForSimpleBandedLayout.
+!
 ! Revision 2.17  2003/08/15 22:42:24  livesey
 ! Bug fix in frequency interpolation, other minor changes
 !
