@@ -77,27 +77,36 @@
 # data set files to the location specified by the new setting.
 !  ~/runtime
 #
-#-----------------
-# Test input files
-#-----------------
-22100|mls_l2gp_clo_v0-05-c1_1996-051.dat|/duke/nakamura/L1BOA/EMLS-SIDS||||1
-22101|mls_l2gp_z_v0-05-c1_1996-051.dat|/duke/nakamura/L1BOA/EMLS-SIDS||||1
-22102|mls_l2gp_h2o_v0-05-c1_1996-051.dat|/duke/nakamura/L1BOA/EMLS-SIDS||||1
-22103|mls_l2gp_hcl_v0-05-c1_1996-051.dat|/duke/nakamura/L1BOA/EMLS-SIDS||||1
-22104|mls_l2gp_hcn_v0-05-c1_1996-051.dat|/duke/nakamura/L1BOA/EMLS-SIDS||||1
-22105|mls_l2gp_hno3_v0-05-c1_1996-051.dat|/duke/nakamura/L1BOA/EMLS-SIDS||||1
-22106|mls_l2gp_n2o_v0-05-c1_1996-051.dat|/duke/nakamura/L1BOA/EMLS-SIDS||||1
-22107|mls_l2gp_o3_v0-05-c1_1996-051.dat|/duke/nakamura/L1BOA/EMLS-SIDS||||1
-22108|mls_l2gp_oh_v0-05-c1_1996-051.dat|/duke/nakamura/L1BOA/EMLS-SIDS||||1
-22109|mls_l2gp_t_v0-05-c1_1996-051.dat|/duke/nakamura/L1BOA/EMLS-SIDS||||1
-22110|mls_l2gp_oth_v0-05-c1_1996-051.dat|/duke/nakamura/L1BOA/EMLS-SIDS||||1
-22400|mls_l2_dgg_v0-05-c1_1996-051.dat|/duke/nakamura/L1BOA/EMLS-SIDS||||1
-22401|mls_l2_dgm_v0-05-c1_1996-051.dat|/duke/nakamura/L1BOA/EMLS-SIDS||||1
-#
-#----------------------
-# L3 configuration file
-#----------------------
-30000|l3d_cf.v0-05|/duke/nakamura/mlspgs/l3||||1
+21000|mls_l2gp_clo_v0-05-c1_1996-032.dat|/user2/nakamura/L1BOA/EMLS-SIDS||||1
+21001|mls_l2gp_clo_v0-05-c1_1996-033.dat|/user2/nakamura/L1BOA/EMLS-SIDS||||1
+21002|mls_l2gp_clo_v0-05-c1_1996-034.dat|/user2/nakamura/L1BOA/EMLS-SIDS||||1
+21003|mls_l2gp_clo_v0-05-c1_1996-035.dat|/user2/nakamura/L1BOA/EMLS-SIDS||||1
+21004|mls_l2gp_clo_v0-05-c1_1996-036.dat|/user2/nakamura/L1BOA/EMLS-SIDS||||1
+21005|mls_l2gp_clo_v0-05-c1_1996-037.dat|/user2/nakamura/L1BOA/EMLS-SIDS||||1
+21006|mls_l2gp_clo_v0-05-c1_1996-038.dat|/user2/nakamura/L1BOA/EMLS-SIDS||||1
+21007|mls_l2gp_clo_v0-05-c1_1996-039.dat|/user2/nakamura/L1BOA/EMLS-SIDS||||1
+21008|mls_l2gp_clo_v0-05-c1_1996-040.dat|/user2/nakamura/L1BOA/EMLS-SIDS||||1
+21009|mls_l2gp_clo_v0-05-c1_1996-041.dat|/user2/nakamura/L1BOA/EMLS-SIDS||||1
+21010|mls_l2gp_clo_v0-05-c1_1996-042.dat|/user2/nakamura/L1BOA/EMLS-SIDS||||1
+21011|mls_l2gp_clo_v0-05-c1_1996-043.dat|/user2/nakamura/L1BOA/EMLS-SIDS||||1
+21012|mls_l2gp_clo_v0-05-c1_1996-044.dat|/user2/nakamura/L1BOA/EMLS-SIDS||||1
+21013|mls_l2gp_clo_v0-05-c1_1996-045.dat|/user2/nakamura/L1BOA/EMLS-SIDS||||1
+21014|mls_l2gp_clo_v0-05-c1_1996-046.dat|/user2/nakamura/L1BOA/EMLS-SIDS||||1
+21015|mls_l2gp_clo_v0-05-c1_1996-047.dat|/user2/nakamura/L1BOA/EMLS-SIDS||||1
+21016|mls_l2gp_clo_v0-05-c1_1996-048.dat|/user2/nakamura/L1BOA/EMLS-SIDS||||1
+21017|mls_l2gp_clo_v0-05-c1_1996-049.dat|/user2/nakamura/L1BOA/EMLS-SIDS||||1
+21018|mls_l2gp_clo_v0-05-c1_1996-050.dat|/user2/nakamura/L1BOA/EMLS-SIDS||||1
+21019|mls_l2gp_clo_v0-05-c1_1996-051.dat|/user2/nakamura/L1BOA/EMLS-SIDS||||1
+21020|mls_l2gp_clo_v0-05-c1_1996-052.dat|/user2/nakamura/L1BOA/EMLS-SIDS||||1
+21021|mls_l2gp_clo_v0-05-c1_1996-053.dat|/user2/nakamura/L1BOA/EMLS-SIDS||||1
+21022|mls_l2gp_clo_v0-05-c1_1996-054.dat|/user2/nakamura/L1BOA/EMLS-SIDS||||1
+21023|mls_l2gp_clo_v0-05-c1_1996-055.dat|/user2/nakamura/L1BOA/EMLS-SIDS||||1
+21024|mls_l2gp_clo_v0-05-c1_1996-056.dat|/user2/nakamura/L1BOA/EMLS-SIDS||||1
+21025|mls_l2gp_clo_v0-05-c1_1996-057.dat|/user2/nakamura/L1BOA/EMLS-SIDS||||1
+21026|mls_l2gp_clo_v0-05-c1_1996-058.dat|/user2/nakamura/L1BOA/EMLS-SIDS||||1
+21027|mls_l2gp_clo_v0-05-c1_1996-059.dat|/user2/nakamura/L1BOA/EMLS-SIDS||||1
+21028|mls_l2gp_clo_v0-05-c1_1996-060.dat|/user2/nakamura/L1BOA/EMLS-SIDS||||1
+30000|l3d_cf.v0-05|/user2/nakamura/mlspgs/l3||||1
 #
 # -----------------------------------------------------------------------
 # These are actual ancillary data set files - supplied by ECS or the
@@ -178,20 +187,20 @@
 # dump metadata from the hdf attributes and is used by PGS_MET_GetPCAttr.
 # (DO NOT REMOVE THESE ENTRIES)
 #------------------------------------------------------------------------
-10250|MCF|/duke/nakamura/L1BOA||||1
-10252|GetAttr.temp|/duke/nakamura/L1BOA||||1
-10254|MCFWrite.temp|/duke/nakamura/L1BOA||||1
-50001|mls_l3_log.mcf|/duke/nakamura/L1BOA/META||||1
-50100|mls_l3dm_clo.mcf|/duke/nakamura/L1BOA/META||||1
-50101|mls_l3dm_z.mcf|/duke/nakamura/L1BOA/META||||1
-50102|mls_l3dm_h2o.mcf|/duke/nakamura/L1BOA/META||||1
-50103|mls_l3dm_hcl.mcf|/duke/nakamura/L1BOA/META||||1
-50104|mls_l3dm_hcn.mcf|/duke/nakamura/L1BOA/META||||1
-50105|mls_l3dm_hno3.mcf|/duke/nakamura/L1BOA/META||||1
-50106|mls_l3dm_n2o.mcf|/duke/nakamura/L1BOA/META||||1
-50107|mls_l3dm_o3.mcf|/duke/nakamura/L1BOA/META||||1
-50108|mls_l3dm_oh.mcf|/duke/nakamura/L1BOA/META||||1
-50109|mls_l3dm_t.mcf|/duke/nakamura/L1BOA/META||||1
+10250|MCF|/user2/nakamura/L1BOA||||1
+10252|GetAttr.temp|/user2/nakamura/L1BOA||||1
+10254|MCFWrite.temp|/user2/nakamura/L1BOA||||1
+50001|ML3LOG.001.MCF|/user2/nakamura/L1BOA/META||||1
+50100|ML3DCLO.001.MCF|/user2/nakamura/L1BOA/META||||1
+50101|ML3DH2O.001.MCF|/user2/nakamura/L1BOA/META||||1
+50102|ML3DHCL.001.MCF|/user2/nakamura/L1BOA/META||||1
+50103|ML3DHCN.001.MCF|/user2/nakamura/L1BOA/META||||1
+50104|ML3DHNO3.001.MCF|/user2/nakamura/L1BOA/META||||1
+50105|ML3DN2O.001.MCF|/user2/nakamura/L1BOA/META||||1
+50106|ML3DO3.001.MCF|/user2/nakamura/L1BOA/META||||1
+50107|ML3DOH.001.MCF|/user2/nakamura/L1BOA/META||||1
+50108|ML3DT.001.MCF|/user2/nakamura/L1BOA/META||||1
+50109|ML3DZ.001.MCF|/user2/nakamura/L1BOA/META||||1
 #
 #
 # -----------------------------------------------------------------------
@@ -202,12 +211,8 @@
 # or attitude files.
 # -----------------------------------------------------------------------
 #
-10501|EOSCHEM_1996-02-21.eph|/duke/nakamura/L1BOA/EPH||||3
-10501|EOSCHEM_1996-02-20.eph|/duke/nakamura/L1BOA/EPH||||2
-10501|EOSCHEM_1996-02-19.eph|/duke/nakamura/L1BOA/EPH||||1
-10502|EOSCHEM_1996-02-21.att|/duke/nakamura/L1BOA/EPH||||3
-10502|EOSCHEM_1996-02-20.att|/duke/nakamura/L1BOA/EPH||||2
-10502|EOSCHEM_1996-02-19.att|/duke/nakamura/L1BOA/EPH||||1
+10501|EOSCHEM_1996-02-19.eph|/user2/nakamura/L1BOA/EPH||||1
+10502|EOSCHEM_1996-02-19.att|/user2/nakamura/L1BOA/EPH||||1
 #
 #------------------------------------------------------------------------
 # Datasets for PGS_DEM tools.
@@ -246,17 +251,26 @@
 #------------------
 # Test output files
 #------------------
-100|mls_l3_log_v0-05-c1_1996-051:1996-060.dat|/duke/nakamura/L1BOA||||1
-30100|mls_l3dm_clo_v0-05-c1_1996-051.dat|/duke/nakamura/L1BOA||||1
-30110|mls_l3dm_z_v0-05-c1_1996-051.dat|/duke/nakamura/L1BOA||||1
-30111|mls_l3dm_h2o_v0-05-c1_1996-051.dat|/duke/nakamura/L1BOA||||1
-30112|mls_l3dm_hcl_v0-05-c1_1996-051.dat|/duke/nakamura/L1BOA||||1
-30113|mls_l3dm_hcn_v0-05-c1_1996-051.dat|/duke/nakamura/L1BOA||||1
-30114|mls_l3dm_hno3_v0-05-c1_1996-051.dat|/duke/nakamura/L1BOA||||1
-30115|mls_l3dm_n2o_v0-05-c1_1996-051.dat|/duke/nakamura/L1BOA||||1
-30116|mls_l3dm_o3_v0-05-c1_1996-051.dat|/duke/nakamura/L1BOA||||1
-30117|mls_l3dm_oh_v0-05-c1_1996-051.dat|/duke/nakamura/L1BOA||||1
-30118|mls_l3dm_t_v0-05-c1_1996-051.dat|/duke/nakamura/L1BOA||||1
+100|mls_l3_log_v0-05-c1_1996-042:1996-051.dat|/user2/nakamura/L1BOA||||1
+30100|mls_l3dm_clo_v0-05-c1_1996-042.dat|/user2/nakamura/L1BOA||||1
+30101|mls_l3dm_clo_v0-05-c1_1996-043.dat|/user2/nakamura/L1BOA||||1
+30102|mls_l3dm_clo_v0-05-c1_1996-044.dat|/user2/nakamura/L1BOA||||1
+30103|mls_l3dm_clo_v0-05-c1_1996-045.dat|/user2/nakamura/L1BOA||||1
+30104|mls_l3dm_clo_v0-05-c1_1996-046.dat|/user2/nakamura/L1BOA||||1
+30105|mls_l3dm_clo_v0-05-c1_1996-047.dat|/user2/nakamura/L1BOA||||1
+30106|mls_l3dm_clo_v0-05-c1_1996-048.dat|/user2/nakamura/L1BOA||||1
+30107|mls_l3dm_clo_v0-05-c1_1996-049.dat|/user2/nakamura/L1BOA||||1
+30108|mls_l3dm_clo_v0-05-c1_1996-050.dat|/user2/nakamura/L1BOA||||1
+30109|mls_l3dm_clo_v0-05-c1_1996-051.dat|/user2/nakamura/L1BOA||||1
+30110|mls_l3dm_h2o_v0-05-c1_1996-051.dat|/user2/nakamura/L1BOA||||1
+30111|mls_l3dm_hcl_v0-05-c1_1996-051.dat|/user2/nakamura/L1BOA||||1
+30112|mls_l3dm_hcn_v0-05-c1_1996-051.dat|/user2/nakamura/L1BOA||||1
+30113|mls_l3dm_hno3_v0-05-c1_1996-051.dat|/user2/nakamura/L1BOA||||1
+30114|mls_l3dm_n2o_v0-05-c1_1996-051.dat|/user2/nakamura/L1BOA||||1
+30115|mls_l3dm_o3_v0-05-c1_1996-051.dat|/user2/nakamura/L1BOA||||1
+30116|mls_l3dm_oh_v0-05-c1_1996-051.dat|/user2/nakamura/L1BOA||||1
+30117|mls_l3dm_t_v0-05-c1_1996-051.dat|/user2/nakamura/L1BOA||||1
+30118|mls_l3dm_z_v0-05-c1_1996-051.dat|/user2/nakamura/L1BOA||||1
 #
 #------------------------------------------------------------------------
 # This file is created when PGS_MET_Write is used with an intention
@@ -387,13 +401,13 @@
 # leap seconds (TAI-UTC) file (DO NOT REMOVE THIS ENTRY)
 # -----------------------------------------------------------------------
 #10301|leapsec.dat|~/database/common/TD||||1
-10301|leapsec.sids|/duke/nakamura/L1BOA/EPH||||1
+10301|leapsec.sids|/user2/nakamura/L1BOA/EPH||||1
 #
 # -----------------------------------------------------------------------
 # polar motion and UTC-UT1 file (DO NOT REMOVE THIS ENTRY)
 # -----------------------------------------------------------------------
 #10401|utcpole.dat|~/database/common/CSC||||1
-10401|utcpole.sids|/duke/nakamura/L1BOA/EPH||||1
+10401|utcpole.sids|/user2/nakamura/L1BOA/EPH||||1
 #
 # -----------------------------------------------------------------------
 # earth model tags file (DO NOT REMOVE THIS ENTRY)
@@ -437,9 +451,9 @@
 # Remember: all executables within a PGE will contribute status data to 
 # the same batch of log files. (DO NOT REMOVE THESE ENTRIES)
 # -----------------------------------------------------------------------
-10100|LogStatus|/duke/nakamura/L1BOA||||1
-10101|mls_l3_log_v0-05-c1_1996-051:1996-060.dat|/duke/nakamura/L1BOA||||1
-10102|LogUser|/duke/nakamura/L1BOA||||1
+10100|LogStatus|/user2/nakamura/L1BOA||||1
+10101|mls_l3_log_v0-05-c1_1996-042:1996-051.dat|/user2/nakamura/L1BOA||||1
+10102|LogUser|/user2/nakamura/L1BOA||||1
 10103|TmpStatus|||||1
 10104|TmpReport|||||1
 10105|TmpUser|||||1
@@ -466,9 +480,9 @@
 3000|InputVersion|v0-05
 3001|OutputVersion|v0-05
 3002|Cycle|1
-3003|L2DayRange|1996-051:1996-051
-3004|MinDays|1
-3005|RangDays|1996-051:1996-060
+3003|L2DayRange|1996-032:1996-060
+3004|MinDays|15
+3005|RangDays|1996-042:1996-051
 #
 # -----------------------------------------------------------------------
 # These parameters are required to support the PGS_SMF_Send...() tools.
