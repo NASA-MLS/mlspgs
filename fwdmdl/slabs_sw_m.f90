@@ -3,7 +3,6 @@ module SLABS_SW_M
   ! Single-Line Absorption Software
 
   use MLSCommon, only: R8, RP
-  use SpectroscopyCatalog_m, only: CATALOG_T, Lines
   use Units, only: SqrtPi
 
   implicit NONE
@@ -12,12 +11,10 @@ module SLABS_SW_M
 
   ! Routines to compute Betas and their derivatives, and to get ready to do so:
   public :: Get_GL_Slabs_Arrays,                                          &
-         &  Slabs, Slabs_dT, Slabs_Lines, Slabs_Lines_dT,                 &
-         &  Slabswint, Slabswint_dT, Slabswint_Lines, Slabswint_Lines_dT, &
-         &  Voigt_Lorentz,                                                &
+         &  Slabs, Slabs_dT, Slabs_Lines, Slabs_Lines_dT, Slabs_Prep,     &
+         &  Slabs_Prep_Struct, Slabs_Prep_dT, Slabswint, Slabswint_dT,    &
+         &  Slabswint_Lines, Slabswint_Lines_dT, Voigt_Lorentz,           &
          &  DVoigt_Spectral, DVoigt_Spectral_Lines
-
-  private :: Slabs_Prep, Slabs_Prep_dT
 
   real(rp), parameter :: OneOvSPi = 1.0_rp / sqrtPi  ! 1.0/Sqrt(Pi)
 
@@ -237,10 +234,13 @@ contains
 !  (Bill + Zvi, July/7/92)
 
 !{ Let $V(a,y)$ be the Voigt function ({\tt u} above), $\delta = \nu-\nu_{0_s}$,
-!  $\sigma = \nu + \nu_{0_s}$, $a = x_1 \delta$, and
-!  $D = \frac1{\sigma^2 x_1^2 + y^2}$.
+!  $\sigma = \nu + \nu_{0_s}$, $a = x_1 \delta, b = x_1 \sigma$, and
+!  $D = \frac1{b^2 + y^2}$.
 !  Then {\tt Slabs = } $ S_1 \frac{\nu}{\nu_0}
-!   \tanh(\frac{h \nu}{2 k T}) \left( V(a,y) + \frac{y D}{\sqrt{\pi}} \right)$.
+!   \tanh\left(\frac{h \nu}{2 k T}\right)
+!    \left( V(a,y) + V(b,y) \right)$.  $b$ is always huge, so we approximate
+!  $V(b,y)$ with one term of an asymptotic expansion, \emph{viz.}
+!  $V(b,y) \sim \frac{y D}{\sqrt{\pi}}$.
 
     Slabs = slabs1 * real(nu / v0, rp) * tanh1 * &
       & (u + OneOvSPi*y/((x1*(nu+v0s))**2 + y*y))
@@ -283,10 +283,13 @@ contains
     call D_Real_Simple_Voigt ( x1*delta, y, da, y*dy_dT, u, du )
 
 !{ Let $V(a,y)$ be the Voigt function ({\tt u} above), $\delta = \nu-\nu_{0_s}$,
-!  $\sigma = \nu + \nu_{0_s}$, $a = x_1 \delta$, and
-!  $D = \frac1{\sigma^2 x_1^2 + y^2}$.
+!  $\sigma = \nu + \nu_{0_s}$, $a = x_1 \delta, b = x_1 \sigma$, and
+!  $D = \frac1{b^2 + y^2}$.
 !  Then {\tt Slabs = } $ S_1 \frac{\nu}{\nu_0}
-!   \tanh(\frac{h \nu}{2 k T}) \left( V(a,y) + \frac{y D}{\sqrt{\pi}} \right)$.
+!   \tanh\left(\frac{h \nu}{2 k T}\right)
+!    \left( V(a,y) + V(b,y) \right)$.  $b$ is always huge, so we approximate
+!  $V(b,y)$ with one term of an asymptotic expansion, \emph{viz.}
+!  $V(b,y) \sim \frac{y D}{\sqrt{\pi}}$.
 
     sigma = nu + v0s
     sigmaX1 = sigma * x1
@@ -305,18 +308,18 @@ contains
 !  $w(z)$, not just Voigt.
 !
 !  Write $S = S_a + S_b$ where
-!  $S_a = S_1 \frac{\nu}{\nu_0} \tanh(\frac{h \nu}{2 k T}) V(a,y)$ and
-!  $S_b = S_1 \frac{\nu}{\nu_0} \tanh(\frac{h \nu}{2 k T}) \frac{y D}{\sqrt{\pi}}$.\\
+!  $S_a = S_1 \frac{\nu}{\nu_0} \tanh\left(\frac{h \nu}{2 k T}\right) V(a,y)$ and
+!  $S_b = S_1 \frac{\nu}{\nu_0} \tanh\left(\frac{h \nu}{2 k T}\right) \frac{y D}{\sqrt{\pi}}$.\\
 !  Then
 !  $\frac{\partial S}{\partial T} = \frac{\partial S_a}{\partial T} +
 !   \frac{\partial S_b}{\partial T}$, where\\
 !  $\frac1{S_a}\frac{\partial S_a}{\partial T} =
 !   \frac1{S_1}\frac{\partial S_1}{\partial T} +
-!   \frac1{\tanh(\frac{h \nu}{2 k T})}\frac{\partial}{\partial T} \tanh(\frac{h \nu}{2 k T}) +
+!   \frac1{\tanh\left(\frac{h \nu}{2 k T}\right)}\frac{\partial}{\partial T} \tanh\left(\frac{h \nu}{2 k T}\right) +
 !   \frac1{V(a,y)} \Re \frac{\partial w(z)}{\partial T}$ and\\
 !  $\frac1{S_b}\frac{\partial S_b}{\partial T} = 
 !   \frac1{S_1}\frac{\partial S_1}{\partial T} +
-!   \frac1{\tanh(\frac{h \nu}{2 k T})}\frac{\partial}{\partial T} \tanh(\frac{h \nu}{2 k T}) +
+!   \frac1{\tanh\left(\frac{h \nu}{2 k T}\right)}\frac{\partial}{\partial T} \tanh\left(\frac{h \nu}{2 k T}\right) +
 !    \frac1y \frac{\partial y}{\partial T} - 
 !    2 D \left( x_1 \sigma \left( x_1 \frac{\partial \nu_{0_s}}{\partial T} +
 !     \sigma \frac{\partial x_1}{\partial T} \right) +
@@ -363,7 +366,8 @@ contains
 !  $\sigma = \nu + \nu_{0_s}$, $a = x_1 \delta$, and
 !  $D = \frac1{\sigma^2 x_1^2 + y^2}$.
 !  Then {\tt Slabs = } $ S_1 \frac{\nu}{\nu_0}
-!   \tanh(\frac{h \nu}{2 k T}) \left( V(a,y) + \frac{y D}{\sqrt{\pi}} \right)$.
+!   \tanh\left(\frac{h \nu}{2 k T}\right)
+!    \left( V(a,y) + \frac{y D}{\sqrt{\pi}} \right)$.
 
     beta = 0.0_rp
     catLines => slabs%catalog%lines
@@ -506,7 +510,8 @@ contains
 !{ Let $V(a,y)$ be the Voigt function ({\tt u} above), $\delta = \nu-\nu_{0_s}$,
 !  $\sigma = \nu + \nu_{0_s}$, $a = x_1 \delta$,
 !  $D_1 = \frac1{\sigma^2 x_1^2 + y^2}$ and $D_2 = \frac1{a^2 + y^2}$.
-!  Then {\tt Slabswint = } $ S_1 \frac{\nu}{\nu_0} \tanh(\frac{h \nu}{2 k T})
+!  Then {\tt Slabswint = } $ S_1 \frac{\nu}{\nu_0}
+!  \tanh\left(\frac{h \nu}{2 k T}\right)
 !   \left( V(a,y) + \frac{(y - \sigma x_1 y_i) D_1}{\sqrt{\pi}}
 !     + \frac{y_i a D_2}{\sqrt{\pi}} \right)$.
 
@@ -568,7 +573,8 @@ contains
 !{ Let $V(a,y)$ be the Voigt function ({\tt u} above), $\delta = \nu-\nu_{0_s}$,
 !  $\sigma = \nu + \nu_{0_s}$, $a = x_1 \delta$,
 !  $D_1 = \frac1{\sigma^2 x_1^2 + y^2}$ and $D_2 = \frac1{a^2 + y^2}$.
-!  Then {\tt Slabswint = } $ S_1 \frac{\nu}{\nu_0} \tanh(\frac{h \nu}{2 k T})
+!  Then {\tt Slabswint = } $ S_1 \frac{\nu}{\nu_0}
+!  \tanh\left(\frac{h \nu}{2 k T}\right)
 !   \left( V(a,y) + \frac{(y - \sigma x_1 y_i) D_1}{\sqrt{\pi}}
 !     + \frac{y_i a D_2}{\sqrt{\pi}} \right)$.
 
@@ -593,33 +599,33 @@ contains
 !  $w(z)$, not just Voigt.
 !
 !  Write $S = S_a + S_b - S_c + S_d$ where
-!  $S_a = S_1 \frac{\nu}{\nu_0} \tanh(\frac{h \nu}{2 k T}) V(a,y)$,
-!  $S_b = S_1 \frac{\nu}{\nu_0} \tanh(\frac{h \nu}{2 k T}) \frac{y D_1}{\sqrt{\pi}}$,
-!  $S_c = S_1 \frac{\nu}{\nu_0} \tanh(\frac{h \nu}{2 k T}) \frac{\sigma x_1 y_i D_1}{\sqrt{\pi}}$, and
-!  $S_d = S_1 \frac{\nu}{\nu_0} \tanh(\frac{h \nu}{2 k T}) \frac{a y_i D_2}{\sqrt{\pi}}$.\\
+!  $S_a = S_1 \frac{\nu}{\nu_0} \tanh\left(\frac{h \nu}{2 k T}\right) V(a,y)$,
+!  $S_b = S_1 \frac{\nu}{\nu_0} \tanh\left(\frac{h \nu}{2 k T}\right) \frac{y D_1}{\sqrt{\pi}}$,
+!  $S_c = S_1 \frac{\nu}{\nu_0} \tanh\left(\frac{h \nu}{2 k T}\right) \frac{\sigma x_1 y_i D_1}{\sqrt{\pi}}$, and
+!  $S_d = S_1 \frac{\nu}{\nu_0} \tanh\left(\frac{h \nu}{2 k T}\right) \frac{a y_i D_2}{\sqrt{\pi}}$.\\
 !  Then
 !  $\frac{\partial S}{\partial T} = \frac{\partial S_a}{\partial T} +
 !   \frac{\partial S_b}{\partial T} - \frac{\partial S_c}{\partial T} +
 !   \frac{\partial S_d}{\partial T}$, where\\
 !  $\frac1{S_a}\frac{\partial S_a}{\partial T} =
 !   \frac1{S_1}\frac{\partial S_1}{\partial T} +
-!   \frac1{\tanh(\frac{h \nu}{2 k T})}\frac{\partial}{\partial T} \tanh(\frac{h \nu}{2 k T}) +
+!   \frac1{\tanh\left(\frac{h \nu}{2 k T}\right)}\frac{\partial}{\partial T} \tanh\left(\frac{h \nu}{2 k T}\right) +
 !   \frac1{V(a,y)} \Re \frac{\partial w(z)}{\partial T}$,\\
 !  $\frac1{S_b}\frac{\partial S_b}{\partial T} = 
 !   \frac1{S_1}\frac{\partial S_1}{\partial T} +
-!   \frac1{\tanh(\frac{h \nu}{2 k T})}\frac{\partial}{\partial T} \tanh(\frac{h \nu}{2 k T}) +
+!   \frac1{\tanh\left(\frac{h \nu}{2 k T}\right)}\frac{\partial}{\partial T} \tanh\left(\frac{h \nu}{2 k T}\right) +
 !   \frac1{D_1}\frac{\partial D_1}{\partial T} +
 !   \frac1y \frac{\partial y}{\partial T}$,\\
 !  $\frac1{S_c}\frac{\partial S_c}{\partial T} = 
 !   \frac1{S_1}\frac{\partial S_1}{\partial T} +
-!   \frac1{\tanh(\frac{h \nu}{2 k T})}\frac{\partial}{\partial T} \tanh(\frac{h \nu}{2 k T}) +
+!   \frac1{\tanh\left(\frac{h \nu}{2 k T}\right)}\frac{\partial}{\partial T} \tanh\left(\frac{h \nu}{2 k T}\right) +
 !   \frac1{D_1}\frac{\partial D_1}{\partial T} +
 !   \frac1{y_i}\frac{\partial y_i}{\partial T} +
 !   \frac1{x_1}\frac{\partial x_1}{\partial T} +
 !   \frac1{\sigma}\frac{\partial \nu_{0_s}}{\partial T}$, and\\
 !  $\frac1{S_d}\frac{\partial S_d}{\partial T} = 
 !   \frac1{S_1}\frac{\partial S_1}{\partial T} +
-!   \frac1{\tanh(\frac{h \nu}{2 k T})}\frac{\partial}{\partial T} \tanh(\frac{h \nu}{2 k T}) +
+!   \frac1{\tanh\left(\frac{h \nu}{2 k T}\right)}\frac{\partial}{\partial T} \tanh\left(\frac{h \nu}{2 k T}\right) +
 !   \frac1{D_2}\frac{\partial D_2}{\partial T} +
 !   \frac1{y_i}\frac{\partial y_i}{\partial T} +
 !   \frac1{a}\frac{\partial a}{\partial T}$
@@ -685,44 +691,34 @@ contains
 !{ Let $V(a,y)$ be the Voigt function ({\tt u} above), $\delta = \nu-\nu_{0_s}$,
 !  $\sigma = \nu + \nu_{0_s}$, $a = x_1 \delta$,
 !  $D_1 = \frac1{\sigma^2 x_1^2 + y^2}$ and $D_2 = \frac1{a^2 + y^2}$.
-!  Then {\tt Slabswint = } $ S_1 \frac{\nu}{\nu_0} \tanh(\frac{h \nu}{2 k T})
+!  Then {\tt Slabswint = } $ S_1 \frac{\nu}{\nu_0}
+!  \tanh\left(\frac{h \nu}{2 k T}\right)
 !   \left( V(a,y) + \frac{(y - \sigma x_1 y_i) D_1}{\sqrt{\pi}}
 !     + \frac{y_i a D_2}{\sqrt{\pi}} \right)$.
 
     beta = 0.0_rp
     catLines => slabs%catalog%lines
-    if ( .not. noPolarized ) then
-      do l = 1, size(catLines)
-        v0s = slabs%v0s(l)
-        x1 = slabs%x1(l)
-        y = slabs%y(l)
-        yi = slabs%yi(l)
-        a = x1 * real(nu-v0s,rp)
-        call real_simple_voigt ( a, y, u )
+    do l = 1, size(slabs%v0s)
+      if ( noPolarized .and. slabs%catalog%polarized(l) ) cycle
+      v0s = slabs%v0s(l)
+      x1 = slabs%x1(l)
+      y = slabs%y(l)
+      yi = slabs%yi(l)
+      a = x1 * real(nu-v0s,rp)
+      call real_simple_voigt ( a, y, u )
 
-        sigmaX1 = x1 * (nu + v0s)
-        y2 = y*y
+      sigmaX1 = x1 * (nu + v0s)
+      y2 = y*y
+      if ( abs(yi) > 1.0e-6_rp ) then ! Include interference effect
         beta = beta + slabs%slabs1(l) * &
           &           real(Nu / lines(catLines(l))%v0, rp) * tanh1 * &
           & (u + OneOvSPi*((y - sigmaX1*yi)/(sigmaX1*sigmaX1 + y2) + yi*a/(a*a+y2)))
-      end do
-    else
-      do l = 1, size(slabs%v0s)
-        if ( slabs%catalog%polarized(l) ) cycle
-        v0s = slabs%v0s(l)
-        x1 = slabs%x1(l)
-        y = slabs%y(l)
-        yi = slabs%yi(l)
-        a = x1 * real(nu-v0s,rp)
-        call real_simple_voigt ( a, y, u )
-
-        sigmaX1 = x1 * (nu + v0s)
-        y2 = y*y
+      else
         beta = beta + slabs%slabs1(l) * &
           &           real(Nu / lines(catLines(l))%v0, rp) * tanh1 * &
-          & (u + OneOvSPi*((y - sigmaX1*yi)/(sigmaX1*sigmaX1 + y2) + yi*a/(a*a+y2)))
-      end do
-    end if
+          & (u + OneOvSPi*(y/(sigmaX1*sigmaX1 + y2)))
+      end if
+    end do
 
   end function Slabswint_Lines
 
@@ -751,7 +747,7 @@ contains
 ! frequency has enter here.
 
     real(rp) :: A               ! x1 * delta
-    real(rp) :: C               ! Terms common to the parts of dSlabs_dT
+    real(rp) :: C1, C2          ! Common terms
     integer, pointer :: CatLines(:)  ! slabs%catalog%lines
     real(rp) :: D1              ! 1 / (SigmaX1**2 + y**2)
     real(rp) :: D2              ! 1 / (a**2 + y**2)
@@ -780,9 +776,7 @@ contains
     dBeta_dT = 0.0_rp
     do l = 1, size(catLines)
 
-      if ( noPolarized ) then
-        if ( slabs%catalog%polarized(l) ) cycle
-      end if
+      if ( noPolarized .and. slabs%catalog%polarized(l) ) cycle
 
       v0s = slabs%v0s(l)
       x1 = slabs%x1(l)
@@ -802,24 +796,29 @@ contains
       y2 = y * y
       d1 = 1.0_rp / ( sigmaX1**2 + y2 )
       d2 = 1.0_rp / ( a * a + y2 )
-      c = slabs%slabs1(l) * real(nu / lines(catLines(l))%v0,rp) * &
+      c1 = slabs%slabs1(l) * real(nu / lines(catLines(l))%v0,rp) * &
         & tanh1
-      sa = c * u
-      c = c * OneOvSPi
-      sb = c * y * d1
-      sc = c * sigmaX1 * yi * d1
-      sd = c * yi * d2
-      beta = beta + sa + sb - sc + sd * a
-
-      c = slabs%dSlabs1_dT(l) + dtanh_dT
+      sa = c1 * u
+      c1 = c1 * OneOvSPi
+      sb = c1 * y * d1
+      c2 = slabs%dSlabs1_dT(l) + dtanh_dT
       dd1 = -2.0_rp * d1 * ( sigmaX1 * ( x1 * dv0s_dT + sigmaX1 * dx1_dT ) + y2 * dy_dT )
-      dd2 = -2.0_rp * d2 * ( a * da + y2 * dy_dT )
+      if ( abs(yi) > 1.0e-6_rp ) then
+        sc = c1 * sigmaX1 * yi * d1
+        sd = c1 * yi * d2
+        beta = beta + sa + sb - sc + sd * a
 
-      dBeta_dT = dBeta_dT &
-        &      + sa * ( c + du / u ) &
-        &      + sb * ( c + dd1 + dy_dT ) &
-        &      - sc * ( c + dd1 + dyi_dT + dx1_dT + dv0s_dT / sigma ) &
-        &      + sd * ( a * (c + dd2 + dyi_dT) + da )
+        dd2 = -2.0_rp * d2 * ( a * da + y2 * dy_dT )
+
+        dBeta_dT = dBeta_dT &
+          &      + sa * ( c2 + du / u ) &
+          &      + sb * ( c2 + dd1 + dy_dT ) &
+          &      - sc * ( c2 + dd1 + dyi_dT + dx1_dT + dv0s_dT / sigma ) &
+          &      + sd * ( a * (c2 + dd2 + dyi_dT) + da )
+      else
+        beta = beta + sa + sb
+        dBeta_dT = dBeta_dT + sa * ( c2 + du / u )
+      end if
 
     end do
 
@@ -906,7 +905,7 @@ contains
 
   ! -------------------------------------------------  Slabs_prep  -----
   subroutine Slabs_prep ( t, m, v0, el, w, ps, p, n, ns, i, q, delta, gamma, &
-                      &   n1, n2, velCor, &
+                      &   n1, n2, velCor, useYi, &
                       &   v0s, x1, y, yi, slabs1, dslabs1 )
 
 ! This function computes a single line type absorption coefficient
@@ -940,6 +939,7 @@ contains
     real(r8), intent(in) :: N1       ! Temperature dependency of delta
     real(r8), intent(in) :: N2       ! Temperature dependency of gamma
     real(r8), intent(in) :: VelCor   ! Doppler velocity correction term
+    logical, intent(in) :: UseYi     ! delta + gamma > 0.0
 
 ! outputs:
 
@@ -992,9 +992,11 @@ contains
 !{ $y_i = p \left( \delta \left( \frac{300}T \right)^{n_1} +
 !                  \gamma \left( \frac{300}T \right)^{n_2} \right)$.
 
-    yi = p * (delta*exp(n1*t3t) + gamma*exp(n2*t3t))
+    yi = 0.0
+    if ( useYi ) yi = p * (delta*exp(n1*t3t) + gamma*exp(n2*t3t))
 
 !{ $\nu_{0_s} = v_c \left[ \nu_0 + p_s p \left( \frac{300}T \right) ^{n_s} \right]$.
+!  $\frac{\partial \nu_{0_s}}{\partial \nu_0} = v_c$.
 
     v0s = velCor * ( v0 + ps * p * exp(ns*t3t) )
 
@@ -1003,10 +1005,12 @@ contains
     Wd = v0 * dc * Sqrt(t/m)
 
 !{ $x_1 = \frac{\sqrt{\ln 2}}{w_d}$.
+!  $\frac{\partial x_1}{\partial \nu_0} = -\frac{x_1}{\nu_0}$.
 
     x1 = real(sqrtln2,rp) / Wd
 
 !{ $y = x_1 w p \left( \frac{300}T \right) ^n$.
+!  $\frac{\partial y}{\partial \nu_0} = -\frac{y}{\nu_0}$.
 
     y = x1 * w * p * exp(n*t3t)
 
@@ -1024,8 +1028,8 @@ contains
     end if
     q_log_b = -1.0 - q_log_b ! This is more useful below
 
-    expd = EXP(-v0*(oned300/boltzmhz))
-    expn = EXP(-betav*onedt)
+    expd = EXP(-v0*(oned300/boltzmhz)) ! H
+    expn = EXP(-betav*onedt) ! G
     z1 = 1.0 + expn          ! 1 + G
     z2 = 1.0 - expd          ! 1 - H
 
@@ -1044,17 +1048,74 @@ contains
       & * z1 / (Wd * z2)
 
 !{ $\frac{\partial S}{\partial \nu_0} =
-!   -S \left( \frac{G_1}T + \frac{H_1}{300} \right) \frac{h}k$ where
-!   $G_1 = 1 + G$ and $H_1 = 1 - H$.
+!   -S \left[ \left( \frac{G_1}T \frac{\partial \nu_{0_s}}{\partial \nu_0}
+!   + \frac{H_1}{300} \right) \frac{h}k + \frac1{\nu_0} \right]$ where
+!   $G_1 = \frac{G}{1 + G}$ and $H_1 = \frac{H}{1 - H}$.
 
-    dslabs1 = -slabs1 * (expn / (t * z1) + expd / (300.0_rp * z2)) / &
-      & boltzmhz
+    dslabs1 = -slabs1 * ( ( expn / (t * z1) * velCor + expd / (300.0_rp * z2)) / &
+      & boltzmhz + 1.0 / v0 )
 
   end subroutine Slabs_prep
 
+  ! ------------------------------------------  Slabs_prep_struct  -----
+  subroutine Slabs_prep_struct ( T, P, Catalog, VelCor, Derivs, Slabs )
+  ! Fill all the fields of the Slabs structure
+
+    use L2PC_PFA_STRUCTURES, only: Slabs_Struct
+    use SpectroscopyCatalog_m, only: Catalog_T, Lines
+
+    ! inputs:
+
+    real(rp), intent(in) :: T        ! Temperature K
+    real(rp), intent(in) :: P        ! Pressure
+    type(catalog_t), intent(in) :: Catalog ! The spectroscopy
+    real(rp), intent(in) :: VelCor   ! Doppler velocity correction term, 
+                                     ! 1 - losVel / C
+    logical, intent(in) :: Derivs    ! "Setup for derivative calculations"
+
+    ! output:
+
+    type(slabs_struct), intent(inout) :: Slabs ! inout so as not to clobber
+                                     ! pointer associations
+
+    integer :: I ! A loop index
+    integer :: L ! Index in the Lines array
+
+    slabs%useYi = .false.
+    do i = 1, size(catalog%lines)
+      slabs%dx1_dv0(i) = 0.0
+      slabs%dy_dv0(i) = 0.0
+      l = catalog%lines(i)
+      slabs%useYi = slabs%useYi .or. lines(l)%useYi
+      if ( derivs ) then
+        call slabs_prep_dT ( t, catalog%mass, &
+          & lines(l)%v0, lines(l)%el, lines(l)%w, lines(l)%ps, p, &
+          & lines(l)%n, lines(l)%ns, lines(l)%str, catalog%QLOG(1:3), &
+          & lines(l)%delta, lines(l)%gamma, lines(l)%n1, lines(l)%n2, &
+          & velCor, lines(l)%useYi, &
+          & slabs%v0s(i), slabs%x1(i), slabs%y(i), &
+          & slabs%yi(i), slabs%slabs1(i), &
+          & slabs%dslabs1_dv0(i), &
+          & slabs%dv0s_dT(i), slabs%dx1_dT(i), &
+          & slabs%dy_dT(i), slabs%dyi_dT(i), &
+          & slabs%dslabs1_dT(i) )
+      else
+        call slabs_prep ( t, catalog%mass, &
+          & lines(l)%v0, lines(l)%el, lines(l)%w, lines(l)%ps, p, &
+          & lines(l)%n, lines(l)%ns, lines(l)%str, catalog%QLOG(1:3), &
+          & lines(l)%delta, lines(l)%gamma, lines(l)%n1, lines(l)%n2, &
+          & velCor, lines(l)%useYi, &
+          & slabs%v0s(i), slabs%x1(i), slabs%y(i), &
+          & slabs%yi(i), slabs%slabs1(i), &
+          & slabs%dslabs1_dv0(i) )
+      end if
+    end do ! i = 1, size(catalog%lines)
+
+  end subroutine Slabs_prep_struct
+
   ! ----------------------------------------------  Slabs_prep_DT  -----
   subroutine Slabs_prep_dT ( t, m, v0, el, w, ps, p, n, ns, i, q, delta, gamma, &
-                         &   n1, n2, velCor, &
+                         &   n1, n2, velCor, useYi, &
                          &   v0s, x1, y, yi, slabs1, dslabs1_dv0, &
                          &   dv0s_dT, dx1_dT, dy_dT, dyi_dT, dslabs1_dT )
 
@@ -1088,6 +1149,7 @@ contains
     real(r8), intent(in) :: N1       ! Temperature dependency of delta
     real(r8), intent(in) :: N2       ! Temperature dependency of gamma
     real(rp), intent(in) :: VelCor   ! Doppler velocity correction term
+    logical, intent(in) :: UseYi     ! delta + gamma > 0
 
 ! outputs:
 
@@ -1155,25 +1217,32 @@ contains
 !                    n_1 \delta \left( \frac{300}T \right)^{n_1} +
 !                    n_2 \gamma \left( \frac{300}T \right)^{n_2} \right)$.
 
-    z1 = delta*exp(n1*t3t)
-    z2 = gamma*exp(n2*t3t)
-    yi = ( z1 + z2 )
-    dyi_dT = -onedt * ( n1 * z1 + n2 * z2 )
-    if ( yi /= 0.0_r8 ) then
-      dyi_dT = dyi_dT / yi ! 1/yi dyi/dT
+    if ( useYi ) then
+      z1 = delta*exp(n1*t3t)
+      z2 = gamma*exp(n2*t3t)
+      yi = ( z1 + z2 )
+      dyi_dT = -onedt * ( n1 * z1 + n2 * z2 ) / yi ! 1/yi dyi/dT
       yi = p * yi
-!   else ! yi == 0.0 -- do nothing
+    else ! yi == 0.0
       ! If yi == 0.0, dyi_dT will necessarily be zero.  The 1/yi cancels
       ! a yi in a numerator where dyi_dT is used, so 0.0 is the correct
       ! result.  We don't need a fancy l'Hospital argument to justify it.
+      yi = 0.0
+      dyi_dT = 0.0
     end if
 
 !{ $\nu_{0_s} = v_c \left[ \nu_0 + p_s p \left( \frac{300}T \right)^{n_s} \right]$.
 !  $\frac{\partial \nu_{0_s}}{\partial T} = \frac{-n_s}T ( \nu_{0_s} - v_c \nu_0 )$.
+!  $\frac{\partial \nu_{0_s}}{\partial \nu_0} = v_c$.
 
-    v0s = velCor * ps * p * exp(ns*t3t)
-    dv0s_dT = -ns * v0s * onedt
-    v0s = velCor * v0 + v0s
+    if ( ps /= 0.0_r8 ) then
+      v0s = velCor * ps * p * exp(ns*t3t)
+      dv0s_dT = -ns * v0s * onedt
+      v0s = velCor * v0 + v0s
+    else
+      v0s = velCor * v0
+      dv0s_dT = 0.0
+    end if
 
 !{ $w_d = \nu_0 d_c \sqrt{\frac{T}M}$.  The $\nu_0$ term should
 !  really be $\nu$.  We approximate $\nu$ by $\nu_0$ so that we can use
@@ -1194,6 +1263,7 @@ contains
 !  depends on frequency.  Here's $\frac1x \frac{\partial x}{\partial T} =
 !  \frac1{x_1}\frac{\partial x_1}{\partial T} - \frac1{\nu - \nu_{0_s}}
 !  \frac{\partial \nu_{0_s}}{\partial T}$ anyway, for reference.
+!  $\frac{\partial x_1}{\partial \nu_0} = -\frac{x_1}{\nu_0}$.
 
     x1 = real(sqrtln2,rp) / Wd
     dx1_dT = dWd_dT ! 1/x1 dx1/dT
@@ -1202,6 +1272,7 @@ contains
 !  $\frac1y \frac{\partial y}{\partial T} =
 !    \left( \frac1{x_1} \frac{\partial x_1}{\partial T} - \frac{n}T \right)
 !    = -\frac1{2T}(1+2n)$.
+!  $\frac{\partial y}{\partial \nu_0} = -\frac{y}{\nu_0}$.
 
     y = x1 * w * p * exp(n*t3t)
     dy_dT = ( dx1_dT - n * onedt ) ! 1/y dy/dT
@@ -1254,14 +1325,16 @@ contains
       & dWd_dT ! Remember dWd_dT is really -dWd_dT/Wd
 
 !{ $\frac{\partial S}{\partial \nu_0} =
-!   -S \left( \frac{G_1}T + \frac{H_1}{300} \right) \frac{h}k$
+!   -S \left[ \left( \frac{G_1}T \frac{\partial \nu_{0_s}}{\partial \nu_0}
+!    + \frac{H_1}{300} \right) \frac{h}k + \frac1{\nu_0} \right] $
 !   where $H_1 = \frac{H}{1-H}$.
 
-    dslabs1_dv0 = -slabs1 * (z1 * onedt + z2) / boltzmhz
+    dslabs1_dv0 = -slabs1 * ( (z1 * onedt * velCor + expd / z2 * oned300) / boltzmhz + &
+      & 1.0 / v0 )
 
   end subroutine Slabs_prep_dT
 
-!{ \newpage
+!{\newpage
 
   ! ----------------------------------------  Get_GL_Slabs_Arrays  -----
   subroutine Get_GL_Slabs_Arrays ( P_path, T_path, Vel_z, GL_Slabs, &
@@ -1270,6 +1343,7 @@ contains
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use Molecules, only: L_Extinction
     use Physics, only: SpeedOfLight
+    use SpectroscopyCatalog_m, only: Catalog_T, Lines
 
     real(rp), intent(in) :: p_path(:) ! Pressure in hPa or mbar
     real(rp), intent(in) :: t_path(:)
@@ -1305,6 +1379,7 @@ contains
     do i = 1, n_sps
 
       catalog => gl_slabs(1,i)%catalog ! gl_slabs(:,i)%catalog are all the same
+      gl_slabs(:,i)%useYi = any(lines(catalog%lines)%useYi)
 
       nl = Size(catalog%Lines)
       if ( nl == 0 ) cycle
@@ -1314,34 +1389,8 @@ contains
       do j = 1, n
         temp_der = present(t_der_flags)
         if ( temp_der ) temp_der = t_der_flags(j)
-        if ( temp_der ) then ! do temperature derivative stuff
-          do k = 1, nl
-            l = catalog%lines(k)
-            call slabs_prep_dT ( t_path(j), catalog%mass, &
-              & lines(l)%v0, lines(l)%el, lines(l)%w, lines(l)%ps, p_path(j), &
-              & lines(l)%n, lines(l)%ns, lines(l)%str, catalog%QLOG(1:3), &
-              & lines(l)%delta, lines(l)%gamma, lines(l)%n1, lines(l)%n2, &
-              & Vel_z_correction, &
-              & gl_slabs(j,i)%v0s(k), gl_slabs(j,i)%x1(k), gl_slabs(j,i)%y(k), &
-              & gl_slabs(j,i)%yi(k), gl_slabs(j,i)%slabs1(k), &
-              & gl_slabs(j,i)%dslabs1_dv0(k), &
-              & gl_slabs(j,i)%dv0s_dT(k), gl_slabs(j,i)%dx1_dT(k), &
-              & gl_slabs(j,i)%dy_dT(k), gl_slabs(j,i)%dyi_dT(k), &
-              & gl_slabs(j,i)%dslabs1_dT(k) )
-          end do ! k = 1, nl
-        else
-          do k = 1, nl
-            l = catalog%lines(k)
-            call slabs_prep ( t_path(j), catalog%mass, &
-              & lines(l)%v0, lines(l)%el, lines(l)%w, lines(l)%ps, p_path(j), &
-              & lines(l)%n, lines(l)%ns, lines(l)%str, catalog%QLOG(1:3), &
-              & lines(l)%delta, lines(l)%gamma, lines(l)%n1, lines(l)%n2, &
-              & Vel_z_correction, &
-              & gl_slabs(j,i)%v0s(k), gl_slabs(j,i)%x1(k), gl_slabs(j,i)%y(k), &
-              & gl_slabs(j,i)%yi(k), gl_slabs(j,i)%slabs1(k), &
-              & gl_slabs(j,i)%dslabs1_dv0(k) )
-          end do ! k = 1, nl
-        end if ! t_der_flags(j)
+        call slabs_prep_struct ( t_path(j), p_path(j), catalog, &
+          &                      Vel_z_correction, temp_der, gl_slabs(j,i) )
       end do ! j = 1, n
 
       if ( Do_1D ) then
@@ -1354,6 +1403,8 @@ contains
           gl_slabs(j,i)%yi          = gl_slabs(k,i)%yi 
           gl_slabs(j,i)%slabs1      = gl_slabs(k,i)%slabs1 
           gl_slabs(j,i)%dslabs1_dv0 = gl_slabs(k,i)%dslabs1_dv0
+          gl_slabs(j,i)%dx1_dv0     = gl_slabs(k,i)%dx1_dv0
+          gl_slabs(j,i)%dy_dv0      = gl_slabs(k,i)%dy_dv0
         end do ! j = no_ele, no_ele/2+1, -1
 
         if ( present(t_der_flags) ) then
@@ -1383,6 +1434,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.40  2004/09/23 20:08:47  vsnyder
+! Finish correcting divide by zero
+!
 ! Revision 2.39  2004/09/16 22:16:21  vsnyder
 ! Avoid dividing by zero in Slabswint_dT also
 !
