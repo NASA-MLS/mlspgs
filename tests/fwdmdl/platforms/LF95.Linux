@@ -35,6 +35,12 @@ ourdir=../../../$(our_dir)/$(MLSCONFG)
 
 dir2 = $(itmdir)/
 
+# Use the fwdmdl directory, fwdmdldir, for more .mod files
+# dir3 is the path prepended to its .o files in dependency lists
+fwdmdldir = ../../../fwdmdl/$(MLSCONFG)
+
+dir3 = $(fwdmdldir)/
+
 # Use the libmlspack.a directory, blaslib, for .mod files
 blaslib = ../../../blas/$(MLSCONFG)
 
@@ -54,7 +60,7 @@ DUSTY = $(FOPTS)
 # All the paths to supply .mod and INCLUDE files used in compiling %.f90
 # Precede each path by "-I "
 INC_PATHS = $(EXTRA_PATHS) \
- -I $(PGSINC) -I $(srclib) -I $S -I $(libdir) -I $(itmdir) -I $(blaslib)
+ -I $(PGSINC) -I $(srclib) -I $S -I $(libdir) -I $(itmdir) -I $(blaslib) -I $(fwdmdldir)
 
 # Define some suffix rules
 
@@ -76,6 +82,9 @@ INC_PATHS = $(EXTRA_PATHS) \
 l_specials = -lPGSTK.sv3
 
 # $Log$
+# Revision 1.8  2001/11/16 19:15:32  pwagner
+# Added stuff to work with mlspack
+#
 # Revision 1.7  2001/10/23 16:59:07  pwagner
 # l_specials set as in mlspgs/l2
 #
