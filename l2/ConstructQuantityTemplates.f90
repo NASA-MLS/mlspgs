@@ -63,6 +63,7 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
   integer :: ERROR
   logical, parameter :: DEEBUG = .FALSE.                 ! Normally FALSE
   logical, parameter :: ALWAYSFIRSTSIGNAL = .FALSE.      ! Normally FALSE
+  logical, parameter :: BE_WHINY_ABOUT_IT = .FALSE.      ! Normally FALSE
   integer, parameter :: HOWSEVEREISNOGOODSIGNAL = 0      ! Normally 0
 
 ! Error codes for "announce_error"
@@ -253,7 +254,8 @@ contains ! =====     Public Procedures     =============================
         end if
         ! print *, 'Parsed ', trim(signalString), ' for ', size(signalInds), &
         !  & ' bands'
-        if ( size(signalInds) == 1 .or. ALWAYSFIRSTSIGNAL ) then
+        if ( size(signalInds) == 1 .or. ALWAYSFIRSTSIGNAL &
+          & .or. .not. associated(L1bInfo%L1BRADIds) ) then
           signal = signalInds(1)
         else
           ! Seek a signal with any precision values !< 0
@@ -262,7 +264,7 @@ contains ! =====     Public Procedures     =============================
               & l1bInfo, Chunk) ) exit
           enddo
           if ( s_index > size(signalInds) ) then
-            call announce_error (root, No_Error_Code, &
+            if (BE_WHINY_ABOUT_IT ) call announce_error (root, No_Error_Code, &
               & 'Warning: no good signal data found for ' &
               & // trim(signalString), HOWSEVEREISNOGOODSIGNAL)
             signal = signalInds(1)
@@ -937,6 +939,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.70  2002/09/24 00:27:16  pwagner
+! Wont bomb if no l1brads; nor whine if no good signals
+!
 ! Revision 2.69  2002/09/18 22:48:32  pwagner
 ! Chooses signals first band with any good data
 !
