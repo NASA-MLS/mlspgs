@@ -15,11 +15,11 @@ module RetrievalModule
   use Dump_0, only: Dump
   use Expr_M, only: Expr
   use ForwardModelConfig, only: ForwardModelConfig_T
-  use Init_Tables_Module, only: F_apriori, F_aprioriScale, F_channels, &
-    & F_columnScale, F_Comment, F_covariance, F_diagnostics, F_diagonal, &
-    & F_forwardModel, F_fuzz, F_fwdModelExtra, F_fwdModelOut, F_height, &
-    & F_ignore, F_jacobian, F_lambda, F_Level, F_mask, F_maxF, F_maxJ, &
-    & F_measurements, F_measurementSD, F_method, F_opticalDepth, &
+  use Init_Tables_Module, only: F_apriori, F_aprioriScale, F_Average, &
+    & F_channels, F_columnScale, F_Comment, F_covariance, F_diagnostics, &
+    & F_diagonal, F_forwardModel, F_fuzz, F_fwdModelExtra, F_fwdModelOut, &
+    & F_height, F_ignore, F_jacobian, F_lambda, F_Level, F_mask, F_maxF, &
+    & F_maxJ, F_measurements, F_measurementSD, F_method, F_opticalDepth, &
     & F_opticalDepthCutoff, &
     & F_outputCovariance, F_outputSD, F_phaseName, F_ptanQuantity, &
     & F_quantity, F_regOrders, F_regQuants, F_regWeight, F_state, &
@@ -37,7 +37,7 @@ module RetrievalModule
   use Intrinsic, only: PHYQ_Dimensionless
   use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
     & DestroyMatrix, GetFromMatrixDatabase, Matrix_T, Matrix_Database_T, &
-    & Matrix_SPD_T, MultiplyMatrixVectorNoT, Dump
+    & Matrix_SPD_T, MultiplyMatrixVectorNoT, operator(.TX.), Dump
   use MatrixTools, only: DumpBlock
   use MLSCommon, only: R8, MLSCHUNK_T
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, add_to_retrieval_timing
@@ -101,6 +101,7 @@ contains
     ! Local variables:
     type(vector_T), pointer :: Apriori  ! A priori estimate of state
     real(r8) :: AprioriScale            ! Weight for apriori, default 1.0
+    type(matrix_T), pointer :: AveragingKernel ! NormalEquationsMatrix^{-1} (J^T J)
     integer :: ColumnScaling            ! one of l_apriori, l_covariance,
                                         ! l_none or l_norm
     integer, pointer, dimension(:) :: ConfigIndices    ! In ConfigDatabase
@@ -122,6 +123,7 @@ contains
     logical :: Got(field_first:field_last)   ! "Got this field already"
     integer :: I, J, K                  ! Subscripts and loop inductors
     real(r8) :: InitLambda              ! Initial Levenberg-Marquardt parameter
+    integer :: IxAverage                ! Index in tree of averagingKernel
     integer :: IxCovariance             ! Index in tree of outputCovariance
     integer :: IxJacobian               ! Index in tree of jacobian matrix
     type(matrix_T), pointer :: Jacobian ! The Jacobian matrix
@@ -138,9 +140,11 @@ contains
     type(vector_T), pointer :: MeasurementSD ! The measurements vector's Std. Dev.
     integer :: Method                   ! Method to use for inversion, currently
                                         ! only l_Newtonian.
+    type(matrix_T), target :: MyAverage ! for OutputAverage to point to
     type(matrix_SPD_T), target :: MyCovariance    ! for OutputCovariance to point at
     type(matrix_T), target :: MyJacobian          ! for Jacobian to point at
     type(vector_T), dimension(:), pointer :: MyVectors ! database
+    type(matrix_T), pointer :: OutputAverage      ! Averaging Kernel
     type(matrix_SPD_T), pointer :: OutputCovariance    ! Covariance of the sol'n
     type(vector_T), pointer :: OutputSD ! Vector containing SD of result
     character(len=127) :: PhaseName     ! To pass to snoopers
@@ -199,7 +203,8 @@ contains
     integer, parameter :: InconsistentUnits = Inconsistent + 1
     integer, parameter :: NeedBothDepthAndCutoff = InconsistentUnits + 1
     integer, parameter :: NoFields = NeedBothDepthAndCutoff + 1  ! No fields are allowed
-    integer, parameter :: NotSPD = noFields + 1   ! Not symmetric pos. definite
+    integer, parameter :: NotGeneral = noFields + 1  ! Not a general matrix
+    integer, parameter :: NotSPD = notGeneral + 1    ! Not symmetric pos. definite
     integer, parameter :: RangeNotAppropriate = NotSPD + 1
     integer, parameter :: WrongUnits = RangeNotAppropriate + 1
 
@@ -281,6 +286,8 @@ contains
           select case ( field )
           case ( f_apriori )
             apriori => vectorDatabase(decoration(decoration(subtree(2,son))))
+          case ( f_average )
+            ixAverage = decoration(subtree(2,son)) ! averagingKernel matrix vertex
           case ( f_columnScale )
             columnScaling = decoration(subtree(2,son))
           case ( f_covariance )      ! of apriori
@@ -395,6 +402,7 @@ contains
             jacobian => myJacobian
             call createEmptyMatrix ( jacobian, 0, measurements, state )
           end if
+
           ! Create the output covariance matrix
           if ( got(f_outputCovariance) ) then
             k = decoration(ixCovariance)
@@ -416,6 +424,26 @@ contains
           else
             outputCovariance => myCovariance
             call createEmptyMatrix ( myCovariance%m, 0, state, state )
+          end if
+
+          ! Create the averaging kernel matrix
+          if ( got(f_average) ) then
+            k = decoration(ixAverage)
+            if ( k == 0 ) then
+              call createEmptyMatrix ( myAverage, &
+                & sub_rosa(subtree(1,ixAverage)), state, state )
+              k = addToMatrixDatabase( matrixDatabase, myAverage )
+              call decorate ( ixAverage, k )
+            end if
+            call getFromMatrixDatabase ( matrixDatabase(k), outputAverage )
+            if ( .not. associated(outputAverage) ) then
+              call announceError ( notGeneral, f_average )
+            else
+              if ( outputAverage%row%vec%template%id /= state%template%id &
+                & .or. &
+                &  outputAverage%col%vec%template%id /= state%template%id ) &
+                & call announceError ( inconsistent, f_average, f_state )
+            end if
           end if
         end if
         if ( error == 0 ) then
@@ -510,7 +538,7 @@ contains
         call output ( ' the ' )
         call display_string ( field_indices(anotherFieldIndex) )
         call output ( ' field shall also appear.', advance='yes' )
-      case ( inconsistent, notSPD )
+      case ( inconsistent, notGeneral, notSPD )
         call output ( 'the field ' )
         call display_string ( field_indices(fieldIndex) )
         select case ( code )
@@ -518,6 +546,8 @@ contains
           call output ( ' is not consistent with the ' )
           call display_string ( field_indices(anotherFieldIndex ) )
           call output ( ' field.', advance='yes' )
+        case ( notGeneral )
+          call output ( ' is not a general matrix.', advance='yes' )
         case ( notSPD )
           call output ( ' is not a symmetric positive-definite matrix.', &
             & advance='yes' )
@@ -594,10 +624,17 @@ contains
       type (ForwardModelStatus_T) :: FmStat ! Status for forward model
       type (ForwardModelIntermediate_T) :: Fmw ! Work space for forward model
       type(vector_T) :: FuzzState       ! Random numbers to fuzz the state
+      type(matrix_SPD_T), pointer :: KTK ! The Jacobian-derived part of the
+                                        ! normal equations.  NormalEquations
+                                        ! if no averaging kernel is requested,
+                                        ! else kTkSep.
+      type(matrix_SPD_T), target :: KTKSep ! The Jacobian-derived part of the
+                                        ! normal equations if an averaging kernel
+                                        ! is requested.
       integer, parameter :: NF_GetJ = NF_Smallest_Flag - 1 ! Take an extra loop
                                         ! to get J.
       integer :: J, K                   ! Loop inductors and subscripts
-      type(matrix_SPD_T) :: NormalEquations  ! Jacobian**T * Jacobian
+      type(matrix_SPD_T), target :: NormalEquations  ! Jacobian**T * Jacobian
       integer :: NumF, NumJ             ! Number of Function, Jacobian evaluations
       integer :: NWT_Flag               ! Signal from NWT, q.v., indicating
                                         ! the action to take.
@@ -725,7 +762,8 @@ contains
             ! Jacobian, and form normal equations -- the last two so that the
             ! a posteriori covariance is consistent with BestX.
             call copyVector ( v(x), v(bestX) ) ! x := bestX
-            if ( got(f_outputCovariance) .or. got(f_outputSD) ) then
+            if ( got(f_outputCovariance) .or. got(f_outputSD) .or. &
+              &  got(f_average) ) then
               nwt_flag = nf_getJ
               cycle
             end if
@@ -815,7 +853,8 @@ contains
             ! Jacobian, and form normal equations -- the last two so that the
             ! a posteriori covariance is consistent with BestX.
             call copyVector ( v(x), v(bestX) ) ! x := bestX
-            if ( got(f_outputCovariance) .or. got(f_outputSD) ) then
+            if ( got(f_outputCovariance) .or. got(f_outputSD) .or. &
+              &  got(f_average) ) then
               nwt_flag = nf_getJ
               cycle
             end if
@@ -897,7 +936,8 @@ contains
             ! Jacobian, and form normal equations -- the last two so that the
             ! a posteriori covariance is consistent with BestX.
             call copyVector ( v(x), v(bestX) ) ! x := bestX
-            if ( .not. (got(f_outputCovariance) .or. got(f_outputSD)) ) exit
+            if ( .not. (got(f_outputCovariance) .or. got(f_outputSD) .or. &
+              & got(f_average)) ) exit
             nwt_flag = nf_getJ
           end if
           update = got(f_apriori)
@@ -968,8 +1008,17 @@ contains
 
           if ( index(switches,'vir') /=0 ) call dump ( normalEquations%m, details=2 )
 
-          ! Loop over MAFs
+          ! Include the part of the normal equations due to the Jacobian matrix
+          ! and the measurements
           call clearVector ( v(f_rowScaled) )
+          if ( got(f_average) ) then ! Need a separate matrix for J^T J
+            kTk => kTkSep
+            call clearMatrix ( kTkSep%m )
+          else
+            kTk => normalEquations
+          end if
+
+          ! Loop over MAFs
           do while (fmStat%maf < chunk%lastMAFIndex-chunk%firstMAFIndex+1)
             call add_to_retrieval_timing( 'newton_solver', t1 )
             call time_now ( t1 )
@@ -1013,9 +1062,8 @@ contains
             ! {\bf J}^T {\bf S}_m^{-1} {\bf J \delta \hat x} =
             ! {\bf J}^T {\bf W}^T {\bf W f} =
             ! {\bf J}^T {\bf S}_m^{-1} {\bf f}$:
-            call formNormalEquations ( jacobian, normalEquations, &
-              & rhs_in=v(f_rowScaled), rhs_out=v(aTb), update=update, &
-              & useMask=.true. )
+            call formNormalEquations ( jacobian, kTk, rhs_in=v(f_rowScaled), &
+              & rhs_out=v(aTb), update=update, useMask=.true. )
             update = .true.
               if ( index(switches,'jac') /= 0 ) &
                 call dump_Linf ( jacobian, 'L_infty norms of Jacobian blocks:' )
@@ -1024,6 +1072,10 @@ contains
                   & 'Sparseness structure of Jacobian blocks:' )
             call clearMatrix ( jacobian )  ! free the space
           end do ! mafs
+
+          ! If an averaging kernel has been requested, K^T K was accumulated
+          ! separately from normalEquations.  So we need to add it in.
+          if ( got(f_average) ) call addToMatrix ( normalEquations%m, kTk%m )
 
           ! aj%fnorm is still the square of the function norm
           aj%fnorm = aj%fnorm + ( v(f_rowScaled) .mdot. v(f_rowScaled) )
@@ -1330,7 +1382,8 @@ contains
                 & call output ( &
                   & 'Newton iteration terminated because of convergence', &
                   & advance='yes' )
-            if ( got(f_outputCovariance) .or. got(f_outputSD) ) then
+            if ( got(f_outputCovariance) .or. got(f_outputSD) .or. &
+              &  got(f_average) ) then
               nwt_flag = nf_getJ
               cycle
             end if
@@ -1375,15 +1428,18 @@ contains
 
         end if
       end do ! Newton iteration
-      if ( got(f_outputCovariance) .or. got(f_outputSD) ) then
+
+      ! Compute the covariance of the solution
+      if ( got(f_outputCovariance) .or. got(f_outputSD) .or. &
+        &  got(f_average) ) then
         if ( nwt_flag /= nf_getJ ) then
           print *, 'BUG in Retrieval module -- should need to getJ to quit'
           stop
         end if
         if ( got(f_diagnostics) ) then
           ! Compute rows of Jacobian actually used.  Don't count rows due
-          ! to Levenberg-Marquardt stabilization.  Do count rows due to a
-          ! priori or regularization.  Put numbers of rows and columns
+          ! to Levenberg-Marquardt stabilization.  Do count rows due to
+          ! a priori or regularization.  Put numbers of rows and columns
           ! into diagnostic vector.
           jacobian_cols = sum(normalEquations%m%col%nelts)
           jacobian_rows = sum(normalEquations%m%row%nelts)
@@ -1404,14 +1460,19 @@ contains
         call invertCholesky ( factored, outputCovariance%m )
         call add_to_retrieval_timing( 'cholesky_invert', t1 )
         call time_now ( t1 )
-        !??? Don't forget to scale the covariance
-        if ( associated(outputSD) ) then !???
+        ! Scale the covariance
+        if ( columnScaling /= l_none ) then
+          call columnScale ( outputCovariance%m, v(columnScaleVector) )
+          call rowScale ( v(columnScaleVector), outputCovariance%m )
+        end if
+        if ( associated(outputSD) ) then
           call GetDiagonal ( outputCovariance%m, outputSD )
-          if ( columnScaling /= l_none ) then
-            call multiply ( outputSD, v(columnScaleVector) )
-          end if
         end if
       end if
+
+      ! Compute the averaging kernel
+      if ( got(f_average) ) outputAverage = outputCovariance%m .tx. kTk%m
+
       call copyVector ( state, v(x) )
         if ( index(switches,'svec') /= 0 ) &
           & call dump ( state, name='Final state' )
@@ -1428,10 +1489,10 @@ contains
     ! ------------------------------------------  HighCloudRetrieval  -----
     subroutine HighCloudRetrieval
 
-      use Intrinsic, only: L_PTAN, L_RADIANCE, &
-                     & L_CLOUDINDUCEDRADIANCE,                               &
+      use Intrinsic, only: L_PTAN, L_RADIANCE,                           &
+                     & L_CLOUDINDUCEDRADIANCE,                           &
                      & L_CLOUDEXTINCTION,                                &
-                     & L_CLOUDRADSENSITIVITY,                                &
+                     & L_CLOUDRADSENSITIVITY,                            &
                      & L_EARTHRADIUS
       use MatrixModule_0, only: MatrixInversion, MATRIXELEMENT_T
       use MatrixModule_1, only: ClearMatrix, FINDBLOCK, GetDiagonal
@@ -1496,8 +1557,8 @@ contains
       
       if (size(configIndices) > 1 .or. &
         & size(configDatabase(configIndices(1))%signals) > 1) &
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Only one signal is allowed in high cloud retrieval' )
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Only one signal is allowed in high cloud retrieval' )
 
       ! get signal information for this model. Note: allow only 1 signal 
         signal = configDatabase(configIndices(1))%signals(1)
@@ -2732,6 +2793,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.139  2002/04/22 20:55:00  vsnyder
+! Compute and output the averaging kernel
+!
 ! Revision 2.138  2002/03/13 22:01:50  livesey
 ! Changed explicitFill to fill
 !
