@@ -134,7 +134,7 @@ contains ! =====     Public Procedures     =============================
       &                MLSPCF_L2_param_switches, &
       &                MLSPCF_PCF_start
     use MLSStrings, only: LowerCase
-    use PCFHdr, only: CreatePCFAnnotation
+    use PCFHdr, only: CreatePCFAnnotation, FillTAI93Attribute
     use SDPToolkit, only: Pgs_pc_getFileSize, pgs_td_utctotai,&
       &    pgs_pc_getconfigdata, Pgs_pc_getReference, PGS_S_SUCCESS, &
       &    PGSTD_E_NO_LEAP_SECS
@@ -451,6 +451,7 @@ contains ! =====     Public Procedures     =============================
     call utc_to_yyyymmdd(GlobalAttributes%StartUTC, returnStatus, &
       & GlobalAttributes%GranuleYear, GlobalAttributes%GranuleMonth, &
       & GlobalAttributes%GranuleDay) 
+    call FillTAI93Attribute
     if ( error /= 0 ) &
       & call MLSMessage(MLSMSG_Error,ModuleName, &
         & 'Problem with open_init section')
@@ -712,6 +713,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.70  2003/02/27 21:55:14  pwagner
+! Calls FillTAI93Attribute
+!
 ! Revision 2.69  2003/02/01 00:38:33  pwagner
 ! Defines Global Attributes from user data
 !
