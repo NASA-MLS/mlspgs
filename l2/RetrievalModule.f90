@@ -766,7 +766,8 @@ contains
             call multiply ( jacobian, x, reg_X_x ) ! regularization * x_n
             call scaleVector ( reg_X_x, -regWeight )   ! -R x_n
             call formNormalEquations ( jacobian, normalEquations, &
-              & reg_X_x, atb, update=update )
+              & reg_X_x, atb, update=update, useMask=.false. )
+            update = .true.
             call clearMatrix ( jacobian )        ! free the space
             aj%fnorm = aj%fnorm + ( reg_X_x .dot. reg_X_x )
             call destroyVectorValue ( reg_X_x )  ! free the space
@@ -822,7 +823,7 @@ contains
             !{Form normal equations:
             ! $\mathbf{J^T W^T W J \delta \hat x = J^T W^T W f}$:
             call formNormalEquations ( jacobian, normalEquations, &
-              & rhs_in=f_rowScaled, rhs_out=atb, update=update )
+              & rhs_in=f_rowScaled, rhs_out=atb, update=update, useMask=.true. )
             update = .true.
               if ( index(switches,'jac') /= 0 ) &
                 call dump_Linf ( jacobian, 'L_infty norms of Jacobian blocks:' )
@@ -1353,6 +1354,9 @@ call dump ( qty%mask, format='(1x,z8.8)' )
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.67  2001/09/27 18:40:26  vsnyder
+! Explicitly control mask use for FormNormalEquations
+!
 ! Revision 2.66  2001/09/26 02:15:40  vsnyder
 ! More work on checking the Subset command
 !
