@@ -142,10 +142,10 @@ CONTAINS
     DEALLOCATE(l2aux%dimensions(1)%values, &
          & l2aux%dimensions(2)%values, &
          & l2aux%dimensions(3)%values, stat=status)
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Warning,ModuleName, &
          & MLSMSG_DeAllocate//"l2aux%dimensions") 
     DEALLOCATE(l2aux%values, stat=status)
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Warning,ModuleName, &
          & MLSMSG_DeAllocate//"l2aux%values") 
   END SUBROUTINE DestroyL2AUXContents
 
@@ -278,7 +278,7 @@ CONTAINS
           CALL DestroyL2AUXContents(database(l2auxIndex))
        ENDDO
        DEALLOCATE(database, stat=status)
-       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+       IF (status /= 0) CALL MLSMessage(MLSMSG_Warning,ModuleName, &
          & MLSMSG_DeAllocate//"database")
     ENDIF
   END SUBROUTINE DestroyL2AUXDatabase
@@ -290,6 +290,9 @@ END MODULE L2AUXData
 
 !
 ! $Log$
+! Revision 1.13  2000/06/19 22:57:08  lungu
+! Added status check after each DEALLOCATE.
+!
 ! Revision 1.12  2000/05/17 23:36:58  lungu
 ! Added check "IF (ASSOCIATED(database))DEALLOCATE(database)" so it doesn't chrash trying to dealocate
 ! an "empty" database.
