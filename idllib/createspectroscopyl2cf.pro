@@ -76,7 +76,7 @@ for mol = 0, noMols - 1 do begin
   printf,unit, '  ;; ----------------------------------- '+thisMolName
   printf,unit, ''
   for line = 0, data(mol).no_Lines - 1 do begin
-    text= '  '+thisMolName + '_' + string ( line+1, format='(I0)' ) + ': line, '
+    text= '  '+thisMolName + '_L' + string ( line+1, format='(I0)' ) + ': line, '
     AddWordToLine,text,unit,4, $
       'v0= '+strtrim(string( data(mol).frq(line), format='(f12.4)' ),2) + ' MHz, '
     AddWordToLine,text,unit,4, $
@@ -154,10 +154,10 @@ for mol = 0, noMols - 1 do begin
     text = '    lines=[ '
     for line = 0, data(mol).no_lines - 2 do begin
       AddWordToLine, text, unit, 4, $
-        thisMolName+'_'+string(line+1,format='(I0)')+', '
+        thisMolName+'_L'+string(line+1,format='(I0)')+', '
     endfor
     AddWordToLine, text, unit, 4, $
-      thisMolName+'_'+string(data(mol).no_lines,format='(I0)')+' ]'
+      thisMolName+'_L'+string(data(mol).no_lines,format='(I0)')+' ]'
   endif else begin
     text = text + ' ]'
   endelse
