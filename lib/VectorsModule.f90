@@ -307,7 +307,7 @@ contains ! =====     Public Procedures     =============================
   subroutine ClearMask ( MASK, TO_CLEAR )
   ! Clear bits of MASK indexed by elements of TO_CLEAR.  If TO_CLEAR is
   ! absent, clear all of the bits of MASK.
-    integer, intent(inout), dimension(0:) :: MASK
+    integer, intent(inout), dimension(:) :: MASK
     integer, intent(in), dimension(:), optional :: TO_CLEAR
     integer :: I, W
     if ( present(to_clear) ) then
@@ -1161,7 +1161,7 @@ contains ! =====     Public Procedures     =============================
   subroutine SetMask ( MASK, TO_SET )
   ! Set bits of MASK indexed by elements of TO_SET.  If TO_SET is absent,
   ! set all of the bits of MASK.
-    integer, intent(inout), dimension(0:) :: MASK
+    integer, intent(inout), dimension(:) :: MASK
     integer, intent(in), dimension(:), optional :: TO_SET
     integer :: I, W
     if ( present(to_set) ) then
@@ -1427,6 +1427,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.55  2001/09/24 23:01:11  vsnyder
+! Make consistent/correct lower bound calculation for MASK array
+!
 ! Revision 2.54  2001/09/21 17:38:46  pwagner
 ! Added args to dump_vector(s)
 !
