@@ -100,7 +100,7 @@ BEGIN ReadApriori
     ;;
     ;; So for example
     ;;
-    aprioriTemp: apriori, source=temp, length=200km, $
+    aprioriTemp: climatology, source=temp, length=200km, $
        versionRange="1999-01-01T" : "2000-01-01T"
     ;;
     ;; The quantity is aprioriTemp, information for this (value,
@@ -112,21 +112,21 @@ BEGIN ReadApriori
     ;; So here are the rest of the quantities.  We'll just consider
     ;; the primary products here.
     ;;
-    aprioriGPH: apriori, source=GPH, length=200km, $
+    aprioriGPH: climatology, source=GPH, length=200km, $
       versionRange="1999-01-01" : "2000-01-01"
-    aprioriH2O: apriori, source=H2O, length=200km, $
+    aprioriH2O: climatology, source=H2O, length=200km, $
       versionRange="1999-01-01" : "2000-01-01"
-    aprioriHNO3: apriori, source=HNO3, length=200km, $
+    aprioriHNO3: climatology, source=HNO3, length=200km, $
       versionRange="1999-01-01" : "2000-01-01"
-    aprioriO3: apriori, source=O3, length=200km, $
+    aprioriO3: climatology, source=O3, length=200km, $
       versionRange="1999-01-01" : "2000-01-01"
-    aprioriHCl: apriori, source=HCL, length=200km, $
+    aprioriHCl: climatology, source=HCL, length=200km, $
       versionRange="1999-01-01" : "2000-01-01"
-    aprioriClO: apriori, source=ClO, length=200km, $
+    aprioriClO: climatology, source=ClO, length=200km, $
       versionRange="1999-01-01" : "2000-01-01"
-    aprioriN2O: apriori, source=N2O, length=200km, $
+    aprioriN2O: climatology, source=N2O, length=200km, $
       versionRange="1999-01-01" : "2000-01-01"
-    aprioriCO: apriori, source=CO, length=200km, $
+    aprioriCO: climatology, source=CO, length=200km, $
       versionRange="1999-01-01" : "2000-01-01"
     ;;
 END ReadApriori
@@ -547,6 +547,10 @@ END Output
 ; ----------------------------------------------------------------------------
 ;
 ; $Log$
+; Revision 1.3  2000/05/18 00:43:16  vsnyder
+; Replaced "oversampled" and "undersampled" fields of "hGrid" by
+; "interpolationfactor"
+;
 ; Revision 1.2  2000/05/18 00:39:42  vsnyder
 ; Changed "fields" of "output" to "quantities".  Changed hGrids to use
 ; hGrid specification name, and things like hGridTroposphere became
