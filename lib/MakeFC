@@ -44,6 +44,10 @@ endif
 # w/o complaining if it does nor exist yet
 -include $(CONFDIR)/$(MLSCFILE)
 
+# All the implicit pattern-matching involving suffixes
+# will be done in the uniquely-named sub-directories, not here--so
+.SUFFIXES:
+
 # This is in case tar doesn't summon GNU tar, you may still use it via
 # something like
 #    make -f MakeFC tar_sips TAR=/usr/local/gnu/bin/tar
@@ -194,6 +198,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.30  2001/10/04 22:24:49  pwagner
+# Limit suffix-based rules to (MLSCONFG)
+#
 # Revision 2.29  2001/09/26 17:24:59  pwagner
 # Removed errors introduced with last changes; SIMPLIFYMAKE renamed NOHUNTING
 #
