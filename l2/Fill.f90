@@ -45,6 +45,7 @@ contains ! =====     Public Procedures     =============================
     ! of the l2cf and works out what to do.
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    use Chunks_m, only: MLSChunk_T
     use DumpCommand_m, only: DumpCommand
     use Expr_M, only: EXPR
     use GriddedData, only: GriddedData_T, WrapGriddedData
@@ -124,7 +125,7 @@ contains ! =====     Public Procedures     =============================
       & Matrix_T, NullifyMatrix, UpdateDiagonal
     ! NOTE: If you ever want to include defined assignment for matrices, please
     ! carefully check out the code around the call to snoop.
-    use MLSCommon, only: FileNameLen, L1BInfo_T, MLSChunk_T, R4, R8, RM, RV, FindFirst
+    use MLSCommon, only: FileNameLen, L1BInfo_T, R4, R8, RM, RV, FindFirst
     use MLSFiles, only: mls_hdf_version, HDFVERSION_5, &
       & ERRORINH5FFUNCTION, WRONGHDFVERSION
     use MLSL2Options, only: LEVEL1_HDFVERSION
@@ -6857,6 +6858,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.271  2004/05/19 19:16:09  vsnyder
+! Move MLSChunk_t to Chunks_m
+!
 ! Revision 2.270  2004/05/04 01:03:56  livesey
 ! Added excludeBelowBottom flag for binmax/binmin fill
 !
