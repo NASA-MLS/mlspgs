@@ -6,15 +6,16 @@ module L2ParInfo
   ! manage the parallel aspects of the L2 code.
 
   use Allocate_Deallocate, only: ALLOCATE_TEST
-  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_Allocate
+  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_Allocate, MLSMSG_Deallocate
   use PVM, only: PVMFMYTID, PVMFINITSEND, PVMF90PACK, PVMFSEND, &
     & PVMDATADEFAULT, PVMERRORMESSAGE, PVMF90UNPACK, NEXTPVMARG, PVMTASKEXIT
   use PVMIDL, only: PVMIDLPACK
-  use MorePVM, only: PVMPACKSTRINGINDEX
+  use MorePVM, only: PVMPACKSTRINGINDEX, PVMUNPACKSTRINGINDEX
   use VectorsModule, only: VECTORVALUE_T
   use QuantityPVM, only: PVMSENDQUANTITY
   use MLSStrings, only: LowerCase
   use Output_M, only: Output
+  use Toggles, only: SWITCHES
 
   implicit none
   private
@@ -22,12 +23,15 @@ module L2ParInfo
   public :: L2ParallelInfo_T, parallel, InitParallel, CloseParallel
   public :: SIG_ToJoin, SIG_Finished, SIG_Register, ChunkTag, InfoTag, SlaveJoin
   public :: SIG_AckFinish, SIG_RequestDirectWrite, SIG_DirectWriteGranted
-  public :: SIG_DirectWriteFinished, SIG_DirectWriteWait, SIG_DirectWriteAbandoned
+  public :: SIG_DirectWriteFinished
   public :: SIG_NewSetup, SIG_RunMAF, SIG_SendResults
   public :: NotifyTag, GetNiceTidString, GiveUpTag, SlaveArguments
-  public :: AccumulateSlaveArguments, RequestDirectWritePermission
+  public :: AccumulateSlaveArguments, LogDirectWriteRequest
   public :: FinishedDirectWrite, MachineNameLen, GetMachineNames
-  public :: FWMSlaveGroup, MachineFixedTag
+  public :: FWMSlaveGroup, MachineFixedTag, DirectWriteRequest_T
+  public :: DW_Invalid, DW_Pending, DW_InProgress, DW_Completed
+  public :: InflateDirectWriteRequestDB, WaitForDirectWritePermission
+  public :: CompactDirectWriteRequestDB, Dump
   
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -51,11 +55,9 @@ module L2ParInfo
   integer, parameter :: SIG_ACKFINISH = SIG_finished + 1
   integer, parameter :: SIG_REGISTER = SIG_AckFinish + 1
   integer, parameter :: SIG_REQUESTDIRECTWRITE = SIG_Register + 1
-  integer, parameter :: SIG_DIRECTWRITEABANDONED = SIG_RequestDirectWrite + 1
-  integer, parameter :: SIG_DIRECTWRITEGRANTED = SIG_DirectWriteAbandoned + 1
+  integer, parameter :: SIG_DIRECTWRITEGRANTED = SIG_RequestDirectWrite + 1
   integer, parameter :: SIG_DIRECTWRITEFINISHED = SIG_DirectWriteGranted + 1
-  integer, parameter :: SIG_DIRECTWRITEWAIT = SIG_DirectWriteFinished + 1
-  integer, parameter :: SIG_NEWSETUP = SIG_DirectWriteWait + 1
+  integer, parameter :: SIG_NEWSETUP = SIG_DirectWriteFinished + 1
   integer, parameter :: SIG_RUNMAF = SIG_NewSetup + 1
   integer, parameter :: SIG_SENDRESULTS = SIG_RunMAF + 1
 
@@ -83,10 +85,30 @@ module L2ParInfo
     integer :: maxFailuresPerChunk = 10 ! More than this then give up on getting it
   end type L2ParallelInfo_T
 
-  ! Shared variables
+  ! This enumerated type describes the state that directWrites can be in
+  integer, parameter :: DW_INVALID = 0
+  integer, parameter :: DW_PENDING = DW_INVALID + 1
+  integer, parameter :: DW_INPROGRESS = DW_PENDING + 1
+  integer, parameter :: DW_COMPLETED = DW_INPROGRESS + 1
 
+  ! This datatype logs a directWrite request
+  type DirectWriteRequest_T
+    integer :: CHUNK=0                  ! Which chunk made the request
+    integer :: MACHINE=0                ! What machine is that on
+    integer :: NODE=0                   ! What tree node was it
+    integer :: FILEINDEX=0              ! Which file was it
+    integer :: TICKET=0                 ! What ticket number is it
+    integer :: VALUE=0                  ! Workspace for master
+    integer :: STATUS=DW_INVALID        ! One of the DW_... above
+  end type DirectWriteRequest_T
+
+  ! Shared variables
   type (L2ParallelInfo_T), save :: parallel
   character ( len=2048 ), save :: slaveArguments = ""
+
+  interface dump
+    module procedure DumpDirectWriteRequest, DumpAllDirectWriteRequests
+  end interface
 
 contains ! ==================================================================
 
@@ -103,6 +125,7 @@ contains ! ==================================================================
     
   ! ---------------------------------------------- InitParallel -------------
   subroutine InitParallel ( chunkNo, MAFNo )
+    use Output_m, only: PRUNIT
     ! This routine initialises the parallel code
     integer, intent(in) :: chunkNo      ! Chunk number asked to do.
     integer, intent(in) :: MAFNo        ! MAF number asked to do in fwmParallel mode.
@@ -143,6 +166,7 @@ contains ! ==================================================================
 
   ! --------------------------------------------- CloseParallel -------------
   subroutine CloseParallel
+    use Output_m, only: PRUNIT
     ! This routine closes down any parallel stuff
     ! Local variables
     integer :: BUFFERID                 ! From PVM
@@ -174,15 +198,77 @@ contains ! ==================================================================
     end if
   end subroutine CloseParallel
 
+  ! ----------------------------------- CompactDirectWriteRequestDB --------
+  subroutine CompactDirectWriteRequestDB ( database, noRequests )
+    type ( DirectWriteRequest_T), dimension(:), pointer :: DATABASE
+    integer, intent(out) :: NOREQUESTS
+    ! Move all the non completed requests up the list
+    noRequests = count ( database%status /= DW_Completed .and. &
+      & database%status /= DW_Invalid )
+    database ( 1 : noRequests ) = pack ( database, &
+      & database%status /= DW_Completed .and. database%status /= DW_Invalid )
+    database(noRequests+1:)%status = DW_Invalid
+  end subroutine CompactDirectWriteRequestDB
+
+  ! --------------------------------------- DumpDirectWriteRequest ---------
+  subroutine DumpDirectWriteRequest ( request )
+    type(DirectWriteRequest_T), intent(in) :: REQUEST
+    ! Executable code
+    call output ( 'Chunk=' )
+    call output ( request%chunk )
+    call output ( ', machine=' )
+    call output ( request%machine )
+    call output ( ', tree node=' )
+    call output ( request%node, advance='yes' )
+    call output ( 'File index=' )
+    call output ( request%fileIndex )
+    call output ( ', ticket=' )
+    call output ( request%ticket )
+    call output ( ', value=' )
+    call output ( request%value )
+    call output ( ' Status: ' )
+    select case ( request%status )
+    case ( dw_invalid )
+      call output ( 'invalid', advance='yes' )
+    case ( dw_pending )
+      call output ( 'pending', advance='yes' )
+    case ( dw_inProgress )
+      call output ( 'in Progress', advance='yes' )
+    case ( dw_completed )
+      call output ( 'completed', advance='yes' )
+    end select
+  end subroutine DumpDirectWriteRequest
+
+  ! --------------------------------------- DumpAllDirectWriteRequests -----
+  subroutine DumpAllDirectWriteRequests ( requests )
+    type(DirectWriteRequest_T), intent(in), dimension(:) :: REQUESTS
+    integer :: I
+    ! Executable code
+    call output ( 'Dumping ' )
+    call output ( size(requests) )
+    call output ( ' direct write requests', advance='yes' )
+    do i = 1, size(requests)
+      call output ( 'Request #' )
+      call output ( i, advance='yes' )
+      call dump ( requests(i) )
+    end do
+  end subroutine DumpAllDirectWriteRequests
+
   ! --------------------------------------- FinishedDirectWrite ------------
-  subroutine FinishedDirectWrite
+  subroutine FinishedDirectWrite ( ticket )
+    integer, intent(in) :: TICKET       ! Ticket number
     integer :: BUFFERID                 ! From PVM
     integer :: INFO                     ! From PVM
     ! Local variables
+    call output ( "Sending finished on ticket " )
+    call output ( ticket, advance='yes' )
     call PVMFInitSend ( PvmDataDefault, bufferID )
     call PVMF90Pack ( SIG_DirectWriteFinished, info )
     if ( info /= 0 ) &
       & call PVMErrorMessage ( info, "packing direct write finished flag" )
+    call PVMF90Pack ( ticket, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, "packing direct write finished ticket" )
 
     call PVMFSend ( parallel%masterTid, InfoTag, info )
     if ( info /= 0 ) &
@@ -260,12 +346,7 @@ contains ! ==================================================================
       end if
 
       ! Find a free logical unit number
-      do lun = 20, 99
-        inquire ( unit=lun, exist=exist, opened=opened )
-        if ( exist .and. .not. opened ) exit
-      end do
-      if ( opened .or. .not. exist ) call MLSMessage ( MLSMSG_Error, moduleName, &
-        & "No logical unit numbers available" )
+      lun = get_lun ()
       open ( unit=lun, file=parallel%slaveFilename(1:firstColonPos-1),&
         & status='old', form='formatted', &
         & access='sequential', iostat=stat )
@@ -314,18 +395,31 @@ contains ! ==================================================================
     end if
   end subroutine GetMachineNames
 
-  ! ---------------------------------------- RequestDirectWritePermission --
-  subroutine RequestDirectWritePermission ( filename, createFile, waitItOut, granted )
-    integer, intent(in) :: FILENAME
-    logical, intent(out) :: CREATEFILE
-    logical, intent(in) :: WAITITOUT    ! Just wait if not granted
-    logical, intent(out) :: GRANTED     ! Set if permission granted (and not waiting)
+  ! ------------------------------------ InflateDirectWriteRequestDB --
+  integer function InflateDirectWriteRequestDB ( database, extra )
+    ! Make the directWrite database bigger by extra
+    ! return index of first new element
+
+    ! Dummy arguments
+    type(DirectWriteRequest_T), dimension(:), pointer :: DATABASE
+    integer, intent(in) :: EXTRA
+
+    ! Local variables
+    type(DirectWriteRequest_T), dimension(:), pointer :: TEMPDATABASE
+
+    include "inflateDatabase.f9h"
+    InflateDirectWriteRequestDB = firstNewItem
+  end function InflateDirectWriteRequestDB
+
+  ! ---------------------------------------- LogDirectWriteRequest --
+  subroutine LogDirectWriteRequest ( filename, node )
+    integer, intent(in) :: FILENAME     ! String index of filename
+    integer, intent(in) :: NODE         ! Node for directWrite line
 
     ! Local variables
     integer :: BUFFERID                 ! From PVM
     integer :: INFO                     ! From PVM
     integer :: SIGNAL                   ! From Master
-    integer :: CREATEFLAG               ! Returned by PVM
 
     ! Executable code
 
@@ -336,62 +430,52 @@ contains ! ==================================================================
       & call PVMErrorMessage ( info, "packing direct write request flag" )
     call PVMPackStringIndex ( filename, info )
     if ( info /= 0 ) &
-      & call PVMErrorMessage ( info, "packing direct write information" )
+      & call PVMErrorMessage ( info, "packing direct write request filename" )
+    call PVMF90Pack ( node, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, "packing direct write request node" )
 
     call PVMFSend ( parallel%masterTid, InfoTag, info )
     if ( info /= 0 ) &
       & call PVMErrorMessage ( info, "sending direct write request packet" )
 
-    ! Now wait for a reply.  This may mean waiting for other chunks to
-    ! finish writing their part of the file.
-    waitForPermission: do
-      call PVMFRecv ( parallel%masterTid, InfoTag, bufferID )
-      if ( bufferID <= 0 ) call PVMErrorMessage ( bufferID, &
-        & 'receiving direct write permission/wait' )
-      
-      ! Once we have the reply unpack it
-      call PVMF90Unpack ( signal, info )
-      if ( info /= 0 ) &
-        & call PVMErrorMessage ( info, 'unpacking direct write permission')
-      select case ( signal )
-      case ( SIG_DirectWriteGranted )
-        granted = .true.
-        exit waitForPermission
-      case ( SIG_DirectWriteWait )
-        ! If we're told to wait, we can either wait it out, in
-        ! which case we go round this loop again and wait for a second
-        ! message, or we can abandon our request.
-        if ( .not. waitItOut ) then
-          granted = .false.
-          exit waitForPermission
-        end if
-      case default
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Got unrecognised signal from master' )
-      end select
-      ! If we get here, it means permission was denied and we're happy
-      ! to wait so simply wait for the next message.
-    end do waitForPermission
+  end subroutine LogDirectWriteRequest
 
-    if ( granted ) then
-      ! Second piece of info in this packet is the createFile flag
-      call PVMF90Unpack ( createFlag, info )
+  ! -------------------------------------------- WaitForDirectWritePermission --
+  subroutine WaitForDirectWritePermission ( node, ticket, createFile )
+    integer, intent(out) :: NODE        ! Which line was granted
+    integer, intent(out) :: TICKET      ! What is the ticket number
+    logical, intent(out) :: CREATEFILE  ! Do we have to create the file?
+    ! Local variables
+    integer :: BUFFERID                 ! From PVM
+    integer :: INFO                     ! From PVM
+    integer :: SIGNAL                   ! The signal from the master
+    integer :: CREATE                   ! Integer version of createFile
+    integer :: I3(3)                    ! Information from master
+    ! Executable code
+    call PVMFRecv ( parallel%masterTid, InfoTag, bufferID )
+    if ( bufferID <= 0 ) call PVMErrorMessage ( bufferID, &
+      & 'receiving direct write permission/wait' )
+
+    ! Once we have the reply unpack it
+    call PVMF90Unpack ( signal, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, 'unpacking direct write permission signal')
+
+    if ( signal == SIG_DirectWriteGranted ) then
+      call PVMF90Unpack ( i3, info )
       if ( info /= 0 ) &
-        & call PVMErrorMessage ( info, 'unpacking create file flag')
-      createFile = createFlag == 1
+        & call PVMErrorMessage ( info, 'unpacking direct write permission information')
+      node = i3(1)
+      ticket = i3(2)
+      createFile = i3(3) /= 0
+
     else
-      ! If permission was not granted, and (by being here), we're
-      ! not prepared to wait it out, abandon our request.
-      call PVMFInitSend ( PvmDataDefault, bufferID )
-      call PVMF90Pack ( SIG_DirectWriteAbandoned, info )
-      if ( info /= 0 ) &
-        & call PVMErrorMessage ( info, "packing direct write abandoned flag" )
-      call PVMFSend ( parallel%masterTid, InfoTag, info )
-      if ( info /= 0 ) &
-        & call PVMErrorMessage ( info, "sending direct write abandoned packet" )
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Got unrecognised signal from master' )
     end if
 
-  end subroutine RequestDirectWritePermission
+  end subroutine WaitForDirectWritePermission
 
   ! ------------------------------------------- SlaveJoin ---------------
   subroutine SlaveJoin ( quantity, precisionQuantity, hdfName, key )
@@ -438,6 +522,22 @@ contains ! ==================================================================
     GetNiceTidString = '[t'//trim(LowerCase ( GetNiceTidString ))//']'
   end function GetNiceTidString
 
+  ! --------------------------------------- get_lun -----
+  integer function get_lun ()
+    ! Local variables
+    integer :: LUN
+    logical :: EXIST
+    logical :: OPENED
+    ! Executable code
+    do lun = 20, 99
+      inquire ( unit=lun, exist=exist, opened=opened )
+      if ( exist .and. .not. opened ) exit
+    end do
+    if ( opened .or. .not. exist ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      & "No logical unit numbers available" )
+    get_lun = lun
+  end function get_lun
+
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
@@ -445,6 +545,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.30  2003/07/07 17:32:10  livesey
+! New approach to DirectWrite
+!
 ! Revision 2.29  2003/06/20 19:38:25  pwagner
 ! Allows direct writing of output products
 !
