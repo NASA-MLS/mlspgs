@@ -66,7 +66,7 @@ begin Fill
 ;     temperatureQuantity=state.temperature, method=special, /dontMask
   Fill, quantity=outputPrecision.rhi, $
     h2oPrecisionQuantity=outputPrecision.h2o, $
-    temperaturePrecisionQuantity=outputPrecision.temperature, $
+    tempPrecisionQuantity=outputPrecision.temperature, $
     h2oQuantity=state.h2o, temperatureQuantity=state.temperature, $
     method=RHIPrecisionFromH2O, /dontMask
 end Fill})
@@ -182,6 +182,9 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
     /do_conv, /atmos_der, /do_baseline})
 
 ; $Log$
+; Revision 1.22  2002/10/03 05:41:41  livesey
+; Added baseline to forward models
+;
 ; Revision 1.21  2002/10/02 23:22:47  livesey
 ; New definitions of the joinDGG/DGM stuff.  Also added forward model
 ; construction stuff.
