@@ -366,6 +366,9 @@ contains ! ================================== Module procedures ============
     call PVMIDLUnpack ( flag, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking flag" )
     if ( flag(1) ) then
+      nullify ( qt%frequencies )
+      call Allocate_test ( qt%frequencies, qt%noChans, &
+        & 'qt%frequencies', ModuleName )
       call PVMIDLUnpack ( qt%frequencies, info )
       if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking frequencies" )
     end if
@@ -414,6 +417,9 @@ contains ! ================================== Module procedures ============
 end module QuantityPVM
 
 ! $Log$
+! Revision 2.10  2002/08/16 21:41:13  livesey
+! Bug fix in frequency transmission
+!
 ! Revision 2.9  2002/07/01 23:50:46  vsnyder
 ! Add an important comment about memory leakage
 !
