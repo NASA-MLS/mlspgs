@@ -641,21 +641,8 @@ CONTAINS
                       ENDIF
                           
                    ENDDO
-                  
-                   !*** Calculate Precision     
-                   Call CopyPrec2Data()
-                   CALL FFSM(l3spPrec(1), iP, J)
-                   DO iD = 1, cfProd%nDays
-                      CALL Reconstruct(cfProd%mode, &
-                           & real(l3dm(iD)%time-l2gp(1)%time(1))/86400.0, &
-                           & l3dm(iD)%nLons, l3dm(iD)%longitude, l3Result)
-                      DO I = 1, l3dm(iD)%nLons
-                         l3dm(iD)%l3dmPrecision(iP, J, I) = l3Result(I) 
-                      ENDDO
-                   ENDDO
-		   l3sp(1)%l3spRelPrecision = l3spPrec(1)%l3spRelValue
-		   l3sp(1)%l3spImgPrecision = l3spPrec(1)%l3spImgValue
                        
+                   !*** Calculate Residual     
                    DO iD = 1, rDays
                       DO iL = 1, anlats(J, iP)
                              
@@ -707,6 +694,20 @@ CONTAINS
                          END IF
                       ENDDO
                    ENDDO
+                  
+                   !*** Calculate Precision     
+                   Call CopyPrec2Data()
+                   CALL FFSM(l3spPrec(1), iP, J)
+                   DO iD = 1, cfProd%nDays
+                      CALL Reconstruct(cfProd%mode, &
+                           & real(l3dm(iD)%time-l2gp(1)%time(1))/86400.0, &
+                           & l3dm(iD)%nLons, l3dm(iD)%longitude, l3Result)
+                      DO I = 1, l3dm(iD)%nLons
+                         l3dm(iD)%l3dmPrecision(iP, J, I) = l3Result(I) 
+                      ENDDO
+                   ENDDO
+		   l3sp(1)%l3spRelPrecision = l3spPrec(1)%l3spRelValue
+		   l3sp(1)%l3spImgPrecision = l3spPrec(1)%l3spImgValue
                        
                    if ( associated(l3Result) ) then 
                       DeAllocate(l3Result, STAT=error)
@@ -762,21 +763,8 @@ CONTAINS
                               & dmA(iD)%latRss(iP, J)/real(dmA(iD)%nLons)
                       ENDIF
                    ENDDO
-                  
-                   !*** Calculate Precision     
-                   Call CopyPrec2Data()
-                   CALL FFSM(l3spPrec(1), iP, J)
-                   DO iD = 1, cfProd%nDays
-                      CALL Reconstruct(cfProd%mode, &
-                           & real(dmA(iD)%time-l2gp(1)%time(1))/86400.0, &
-                           & dmA(iD)%nLons, dmA(iD)%longitude, l3Result)
-                      DO I = 1, dmA(iD)%nLons
-                         dmA(iD)%l3dmPrecision(iP, J, I) = l3Result(I) 
-                      ENDDO
-                   ENDDO
-		   l3sp(1)%l3spRelPrecision = l3spPrec(1)%l3spRelValue
-		   l3sp(1)%l3spImgPrecision = l3spPrec(1)%l3spImgValue
                        
+                   !*** Calculate Residual     
                    DO iD = 1, rDays
                       DO iL = 1, anlats(J, iP)
                          IF & 
@@ -805,6 +793,21 @@ CONTAINS
                       ENDDO
                    ENDDO
                   
+                   !*** Calculate Precision     
+                   Call CopyPrec2Data()
+                   CALL FFSM(l3spPrec(1), iP, J)
+                   DO iD = 1, cfProd%nDays
+                      CALL Reconstruct(cfProd%mode, &
+                           & real(dmA(iD)%time-l2gp(1)%time(1))/86400.0, &
+                           & dmA(iD)%nLons, dmA(iD)%longitude, l3Result)
+                      DO I = 1, dmA(iD)%nLons
+                         dmA(iD)%l3dmPrecision(iP, J, I) = l3Result(I) 
+                      ENDDO
+                   ENDDO
+		   l3sp(1)%l3spRelPrecision = l3spPrec(1)%l3spRelValue
+		   l3sp(1)%l3spImgPrecision = l3spPrec(1)%l3spImgValue
+                  
+                   !*** Cleanup    
                    if ( associated(l3Result) ) then 
                       DeAllocate(l3Result, STAT=error)
                       IF ( error /= 0 ) THEN
@@ -857,21 +860,8 @@ CONTAINS
                               & dmD(iD)%latRss(iP, J)/real(dmD(iD)%nLons)
                       ENDIF
                    ENDDO
-                  
-                   !*** Calculate Precision     
-                   Call CopyPrec2Data()
-                   CALL FFSM(l3spPrec(1), iP, J)
-                   DO iD = 1, cfProd%nDays
-                      CALL Reconstruct(cfProd%mode, &
-                           & real(dmD(iD)%time-l2gp(1)%time(1))/86400.0, &
-                           & dmD(iD)%nLons, dmD(iD)%longitude, l3Result)
-                      DO I = 1, dmD(iD)%nLons
-                         dmD(iD)%l3dmPrecision(iP, J, I) = l3Result(I) 
-                      ENDDO
-                   ENDDO
-		   l3sp(1)%l3spRelPrecision = l3spPrec(1)%l3spRelValue
-		   l3sp(1)%l3spImgPrecision = l3spPrec(1)%l3spImgValue
                        
+                   !*** Calculate Residual     
                    DO iD = 1, rDays
                       DO iL = 1, dnlats(J, iP)
                          IF(dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1) >= & 
@@ -897,6 +887,21 @@ CONTAINS
                       ENDDO
                    ENDDO
                   
+                   !*** Calculate Precision     
+                   Call CopyPrec2Data()
+                   CALL FFSM(l3spPrec(1), iP, J)
+                   DO iD = 1, cfProd%nDays
+                      CALL Reconstruct(cfProd%mode, &
+                           & real(dmD(iD)%time-l2gp(1)%time(1))/86400.0, &
+                           & dmD(iD)%nLons, dmD(iD)%longitude, l3Result)
+                      DO I = 1, dmD(iD)%nLons
+                         dmD(iD)%l3dmPrecision(iP, J, I) = l3Result(I) 
+                      ENDDO
+                   ENDDO
+		   l3sp(1)%l3spRelPrecision = l3spPrec(1)%l3spRelValue
+		   l3sp(1)%l3spImgPrecision = l3spPrec(1)%l3spImgValue
+                  
+                   !*** Cleanup    
                    if ( associated(l3Result) ) then 
                       DeAllocate(l3Result, STAT=error)
                       IF ( error /= 0 ) THEN
@@ -949,21 +954,8 @@ CONTAINS
                               & dmA(iD)%latRss(iP, J)/real(dmA(iD)%nLons)
                       ENDIF
                    ENDDO
-                  
-                   !*** Calculate Precision     
-                   Call CopyPrec2Data()
-                   CALL FFSM(l3spPrec(2), iP, J)
-                   DO iD = 1, cfProd%nDays
-                      CALL Reconstruct(cfProd%mode, &
-                           & real(dmA(iD)%time-l2gp(1)%time(1))/86400.0, &
-                           & dmA(iD)%nLons, dmA(iD)%longitude, l3Result)
-                      DO I = 1, dmA(iD)%nLons
-                         dmA(iD)%l3dmPrecision(iP, J, I) = l3Result(I) 
-                      ENDDO
-                   ENDDO
-		   l3sp(2)%l3spRelPrecision = l3spPrec(2)%l3spRelValue
-		   l3sp(2)%l3spImgPrecision = l3spPrec(2)%l3spImgValue
                        
+                   !*** Calculate Residual     
                    DO iD = 1, rDays
                       DO iL = 1, anlats(J, iP)
                          
@@ -992,7 +984,22 @@ CONTAINS
                          END IF
                       ENDDO
                    ENDDO
+                  
+                   !*** Calculate Precision     
+                   Call CopyPrec2Data()
+                   CALL FFSM(l3spPrec(2), iP, J)
+                   DO iD = 1, cfProd%nDays
+                      CALL Reconstruct(cfProd%mode, &
+                           & real(dmA(iD)%time-l2gp(1)%time(1))/86400.0, &
+                           & dmA(iD)%nLons, dmA(iD)%longitude, l3Result)
+                      DO I = 1, dmA(iD)%nLons
+                         dmA(iD)%l3dmPrecision(iP, J, I) = l3Result(I) 
+                      ENDDO
+                   ENDDO
+		   l3sp(2)%l3spRelPrecision = l3spPrec(2)%l3spRelValue
+		   l3sp(2)%l3spImgPrecision = l3spPrec(2)%l3spImgValue
                        
+                   !*** Cleanup    
                    if ( associated(l3Result) ) then 
                       DeAllocate(l3Result, STAT=error) 
                       IF ( error /= 0 ) THEN
@@ -1042,21 +1049,8 @@ CONTAINS
                               & real(dmD(iD)%nLons)
                       ENDIF
                    ENDDO
-                  
-                   !*** Calculate Precision     
-                   Call CopyPrec2Data()
-                   CALL FFSM(l3spPrec(3), iP, J)
-                   DO iD = 1, cfProd%nDays
-                      CALL Reconstruct(cfProd%mode, &
-                           & real(dmD(iD)%time-l2gp(1)%time(1))/86400.0, &
-                           & dmD(iD)%nLons, dmD(iD)%longitude, l3Result)
-                      DO I = 1, dmD(iD)%nLons
-                         dmD(iD)%l3dmPrecision(iP, J, I) = l3Result(I) 
-                      ENDDO
-                   ENDDO
-		   l3sp(3)%l3spRelPrecision = l3spPrec(3)%l3spRelValue
-		   l3sp(3)%l3spImgPrecision = l3spPrec(3)%l3spImgValue
                        
+                   !*** Calculate Residual     
                    DO iD = 1, rDays
                       DO iL = 1, dnlats(J, iP)
                          IF(dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1) >= & 
@@ -1087,7 +1081,22 @@ CONTAINS
                          END IF
                       ENDDO
                    ENDDO
+                  
+                   !*** Calculate Precision     
+                   Call CopyPrec2Data()
+                   CALL FFSM(l3spPrec(3), iP, J)
+                   DO iD = 1, cfProd%nDays
+                      CALL Reconstruct(cfProd%mode, &
+                           & real(dmD(iD)%time-l2gp(1)%time(1))/86400.0, &
+                           & dmD(iD)%nLons, dmD(iD)%longitude, l3Result)
+                      DO I = 1, dmD(iD)%nLons
+                         dmD(iD)%l3dmPrecision(iP, J, I) = l3Result(I) 
+                      ENDDO
+                   ENDDO
+		   l3sp(3)%l3spRelPrecision = l3spPrec(3)%l3spRelValue
+		   l3sp(3)%l3spImgPrecision = l3spPrec(3)%l3spImgValue
                        
+                   !*** Cleanup    
                    if ( associated(l3Result) ) then 
                       DeAllocate(l3Result, STAT=error) 
                       IF ( error /= 0 ) THEN
@@ -1140,21 +1149,8 @@ CONTAINS
                               & real(l3dm(iD)%nLons)
                       ENDIF
                    ENDDO
-                  
-                   !*** Calculate Precision     
-                   Call CopyPrec2Data()
-                   CALL FFSM(l3spPrec(1), iP, J)
-                   DO iD = 1, cfProd%nDays
-                      CALL Reconstruct(cfProd%mode, &
-                           & real(l3dm(iD)%time-l2gp(1)%time(1))/86400.0, &
-                           & l3dm(iD)%nLons, l3dm(iD)%longitude, l3Result)
-                      DO I = 1, l3dm(iD)%nLons
-                         l3dm(iD)%l3dmPrecision(iP, J, I) = l3Result(I) 
-                      ENDDO
-                   ENDDO
-		   l3sp(1)%l3spRelPrecision = l3spPrec(1)%l3spRelValue
-		   l3sp(1)%l3spImgPrecision = l3spPrec(1)%l3spImgValue
                        
+                   !*** Calculate Residual     
                    DO iD = 1, rDays
                       DO iL = 1, anlats(J, iP)
                          IF(atimes(J, iL, iP)*86400.0+l2gp(1)%time(1) >= & 
@@ -1206,7 +1202,22 @@ CONTAINS
                          END IF
 		      ENDDO
 		   ENDDO
+                  
+                   !*** Calculate Precision     
+                   Call CopyPrec2Data()
+                   CALL FFSM(l3spPrec(1), iP, J)
+                   DO iD = 1, cfProd%nDays
+                      CALL Reconstruct(cfProd%mode, &
+                           & real(l3dm(iD)%time-l2gp(1)%time(1))/86400.0, &
+                           & l3dm(iD)%nLons, l3dm(iD)%longitude, l3Result)
+                      DO I = 1, l3dm(iD)%nLons
+                         l3dm(iD)%l3dmPrecision(iP, J, I) = l3Result(I) 
+                      ENDDO
+                   ENDDO
+		   l3sp(1)%l3spRelPrecision = l3spPrec(1)%l3spRelValue
+		   l3sp(1)%l3spImgPrecision = l3spPrec(1)%l3spImgValue
                    
+                   !*** Cleanup    
                    if ( associated(l3Result) ) then 
                       DeAllocate(l3Result,STAT=error)
                       IF ( error /= 0 ) THEN
@@ -1254,21 +1265,8 @@ CONTAINS
                               & dmA(iD)%latRss(iP, J)/real(dmA(iD)%nLons)
                       ENDIF
                    ENDDO
-                  
-                   !*** Calculate Precision     
-                   Call CopyPrec2Data()
-                   CALL FFSM(l3spPrec(2), iP, J)
-                   DO iD = 1, cfProd%nDays
-                      CALL Reconstruct(cfProd%mode, &
-                           & real(dmA(iD)%time-l2gp(1)%time(1))/86400.0, &
-                           & dmA(iD)%nLons, dmA(iD)%longitude, l3Result)
-                      DO I = 1, dmA(iD)%nLons
-                         dmA(iD)%l3dmPrecision(iP, J, I) = l3Result(I) 
-                      ENDDO
-                   ENDDO
-		   l3sp(2)%l3spRelPrecision = l3spPrec(2)%l3spRelValue
-		   l3sp(2)%l3spImgPrecision = l3spPrec(2)%l3spImgValue
                    
+                   !*** Calculate Residual     
                    DO iD = 1, rDays
                       DO iL = 1, anlats(J, iP)
                          IF(atimes(J, iL, iP)*86400.0+l2gp(1)%time(1) >= & 
@@ -1298,7 +1296,22 @@ CONTAINS
                          END IF
 		      ENDDO
 		   ENDDO
+                  
+                   !*** Calculate Precision     
+                   Call CopyPrec2Data()
+                   CALL FFSM(l3spPrec(2), iP, J)
+                   DO iD = 1, cfProd%nDays
+                      CALL Reconstruct(cfProd%mode, &
+                           & real(dmA(iD)%time-l2gp(1)%time(1))/86400.0, &
+                           & dmA(iD)%nLons, dmA(iD)%longitude, l3Result)
+                      DO I = 1, dmA(iD)%nLons
+                         dmA(iD)%l3dmPrecision(iP, J, I) = l3Result(I) 
+                      ENDDO
+                   ENDDO
+		   l3sp(2)%l3spRelPrecision = l3spPrec(2)%l3spRelValue
+		   l3sp(2)%l3spImgPrecision = l3spPrec(2)%l3spImgValue
                    
+                   !*** Cleanup    
                    if ( associated(l3Result) ) then 
                       DeAllocate(l3Result,STAT=error)
                       IF ( error /= 0 ) THEN
@@ -1347,21 +1360,8 @@ CONTAINS
                               & dmD(iD)%latRss(iP, J)/real(dmD(iD)%nLons)
                       ENDIF
 		   ENDDO
-                  
-                   !*** Calculate Precision     
-                   Call CopyPrec2Data()
-                   CALL FFSM(l3spPrec(3), iP, J)
-                   DO iD = 1, cfProd%nDays
-                      CALL Reconstruct(cfProd%mode, &
-                           & real(dmD(iD)%time-l2gp(1)%time(1))/86400.0, &
-                           & dmD(iD)%nLons, dmD(iD)%longitude, l3Result)
-                      DO I = 1, dmD(iD)%nLons
-                         dmD(iD)%l3dmPrecision(iP, J, I) = l3Result(I) 
-                      ENDDO
-                   ENDDO
-		   l3sp(3)%l3spRelPrecision = l3spPrec(3)%l3spRelValue
-		   l3sp(3)%l3spImgPrecision = l3spPrec(3)%l3spImgValue
                    
+                   !*** Calculate Residual     
                    DO iD = 1, rDays
                       DO iL = 1, dnlats(J, iP)
                          IF(dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1) >= & 
@@ -1391,7 +1391,22 @@ CONTAINS
                          END IF
 		      ENDDO
 		   ENDDO
+                  
+                   !*** Calculate Precision     
+                   Call CopyPrec2Data()
+                   CALL FFSM(l3spPrec(3), iP, J)
+                   DO iD = 1, cfProd%nDays
+                      CALL Reconstruct(cfProd%mode, &
+                           & real(dmD(iD)%time-l2gp(1)%time(1))/86400.0, &
+                           & dmD(iD)%nLons, dmD(iD)%longitude, l3Result)
+                      DO I = 1, dmD(iD)%nLons
+                         dmD(iD)%l3dmPrecision(iP, J, I) = l3Result(I) 
+                      ENDDO
+                   ENDDO
+		   l3sp(3)%l3spRelPrecision = l3spPrec(3)%l3spRelValue
+		   l3sp(3)%l3spImgPrecision = l3spPrec(3)%l3spImgValue
                    
+                   !*** Cleanup    
                    if ( associated(l3Result) ) then 
                       DeAllocate(l3Result,STAT=error)
                       IF ( error /= 0 ) THEN
@@ -3363,6 +3378,9 @@ CONTAINS
 !===================
 
 ! $Log$
+! Revision 1.34  2004/05/13 23:50:52  ybj
+! *** empty log message ***
+!
 ! Revision 1.33  2004/05/06 13:16:46  cvuu
 ! remove print statements
 !

@@ -30,10 +30,10 @@ contains ! ====     Public Procedures     ==============================
     use AntennaPatterns_m, only: Destroy_Ant_Patterns_Database
     use ChunkDivide_m, only: ChunkDivide, DestroyChunkDatabase, &
       & ReduceChunkDatabase
-    use Chunks_m, only: Dump, MLSChunk_T
     use Construct, only: MLSL2Construct, MLSL2DeConstruct, &
       & ConstructMIFGeolocation
     use DirectWrite_m, only: DirectData_T, DestroyDirectDatabase
+    use Dumper, only: Dump
     use EmpiricalGeometry, only: ForgetOptimumLon0
     use FGrid, only: FGrid_T, DestroyFGridDatabase
     use Fill, only: MLSL2Fill
@@ -41,7 +41,8 @@ contains ! ====     Public Procedures     ==============================
     use ForwardModelConfig, only: ForwardModelConfig_T, &
       & DestroyFWMConfigDatabase, &
       & StripForwardModelConfigDatabase
-    use ForwardModelSupport, only: printForwardModelTiming
+    use ForwardModelSupport, only: printForwardModelTiming, &
+      & resetForwardModelTiming
     use Global_Settings, only: Set_Global_Settings
     use GriddedData, only: GriddedData_T, DestroyGriddedDataDatabase, Dump
     use HGridsDatabase, only: HGrid_T
@@ -58,11 +59,10 @@ contains ! ====     Public Procedures     ==============================
     use L2ParInfo, only: PARALLEL, CLOSEPARALLEL
     use L2PC_m, only: DestroyL2PCDatabase, DestroyBinSelectorDatabase
     use LinearizedForwardModel_m, only: FLUSHLOCKEDBINS
-!   use MACHINE, only: MLS_GC_NOW
-    use MACHINE, only: MLS_HOWMANY_GC
+    use MACHINE, only: MLS_GC_NOW, MLS_HOWMANY_GC
     use MatrixModule_1, only: DestroyMatrixDatabase, Matrix_Database_T
     use MergeGridsModule, only: MergeGrids
-    use MLSCommon, only: L1BINFO_T, TAI93_RANGE_T, MLSFile_T
+    use MLSCommon, only: L1BINFO_T, MLSCHUNK_T, TAI93_RANGE_T, MLSFile_T
     ! use MLSFiles, only: MLSFile_T
     use MLSL2Options, only: CHECKPATHS
     use MLSMessageModule, only: MLSMessage, MLSMSG_Info, MLSMSG_Error
@@ -121,6 +121,7 @@ contains ! ====     Public Procedures     ==============================
     integer ::                                   SON              ! Son of Root
     real    ::                                   t1, t2, tChunk
     integer ::                                   totalNGC   ! Total num garbage colls.
+    integer ::                                   fwmIndex  ! Index
     logical ::                                   show_totalNGC = .true.
     type (Vector_T), dimension(:), pointer ::    Vectors
     type (VGrid_T), dimension(:), pointer ::     VGrids
@@ -459,9 +460,6 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
-! Revision 2.126  2004/04/28 23:07:44  livesey
-! Now passes more stuff to Algebra
-!
 ! Revision 2.125  2004/02/10 19:29:36  pwagner
 ! Prints time for processing each chunk at chunks end
 !

@@ -665,7 +665,7 @@ Contains
     
     krmax_g = krmax
 
-    Do m = 1, nwave 
+    Do m = 1, nwave + 1
        m1 = m-1
        Do i = 1, nt
           
@@ -727,7 +727,13 @@ Contains
        End Do
     End Do
 
-    
+    !open(99, file="spec.dat", status="old")
+ 
+    !write(99, *) ds
+    !write(99, *) c0
+    !write(99, *) sina
+    !write(99, *) cosa
+
     do j = 1, mtotal
        l3sp%waveNumber(iLv, iLt, j) =  int(wn(j))
        l3sp%frequency(iLv, iLt, j) = sigma(j)
@@ -735,8 +741,10 @@ Contains
        l3sp%l3spRelPrecision(iLv, iLt, j) = real(phikr(j))
        l3sp%l3spImgValue(iLv, iLt, j) = aimag(phikr(j))
        l3sp%l3spImgPrecision(iLv, iLt, j) = aimag(phikr(j))
+       !write(99,*)  j, int(wn(j)), sigma(j), real(phikr(j)), aimag(phikr(j))
     end do
     
+    !close(99)
     
   End Subroutine FFSM
 
@@ -801,7 +809,7 @@ Contains
     
     krmax_g = krmax/2.0
     
-    Do m = 1, nwave 
+    Do m = 1, nwave + 1 
        m1 = m-1
        Do i = 1, nt_a
           mtotala = mtotala + 1
@@ -934,7 +942,7 @@ Contains
     
     krmax_g = krmax/2.0
     
-    Do m = 1, nwave 
+    Do m = 1, nwave + 1
        m1 = m-1
        Do i = 1, nt_d
           
@@ -1402,6 +1410,9 @@ End Module DailyMapModule
 !===================
 
 ! $Log$
+! Revision 1.12  2004/05/13 20:18:52  ybj
+! *** empty log message ***
+!
 ! Revision 1.11  2003/04/30 21:44:32  pwagner
 ! Work-around for LF95 infinite compile-time bug
 !

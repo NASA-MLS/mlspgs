@@ -1,6 +1,7 @@
 #
 # filename:
 #  l3d-1.43.pcf:  v1.43
+#       6/03/04: Change Toolkit Version to TK5.2.11.Z
 #       5/07/04: Change OutputVersion number to v01-43
 #                Change Toolkit Version to TK5.2.11Beta
 #  l3d-v1.41.pcf:  v1.41
@@ -1049,7 +1050,7 @@
 # Toolkit version for which this PCF was intended.
 # DO NOT REMOVE THIS VERSION ENTRY!
 # -----------------------------------------------------------------------
-10220|Toolkit version string|SCF  TK5.2.11Beta
+10220|Toolkit version string|SCF  TK5.2.11.A
 #
 # -----------------------------------------------------------------------
 # The following parameters define the ADEOS-II TMDF values (all values
