@@ -108,6 +108,7 @@ contains ! =====     Public Procedures     =============================
     ! Error message codes
 
     ! We skip this stage if we're just a master task
+    any_errors = 0                      ! At least clear error if we're master
     if ( parallel%master ) return
 
     error = 0
@@ -640,6 +641,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.31  2002/05/14 22:31:31  livesey
+! Minor bug fix associated with running in parallel mode.
+!
 ! Revision 2.30  2002/03/21 16:42:34  livesey
 ! Made it skip reading l2pc files etc for parallel master tasks.
 !
