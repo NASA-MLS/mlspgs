@@ -33,6 +33,7 @@ module Open_Init
 ! use VectorsModule, only: AddVectorToDatabase, CreateVector, Dump, Vector_T, &
 !   &                      VectorTemplate_T
 ! use VectorsModule, only: Vector_T
+  use WriteMetadata, only: PCFData_T
 
   implicit none
   private
@@ -82,7 +83,7 @@ contains ! =====     Public Procedures     =============================
 
 
   ! ------------------------------------------  OpenAndInitialize  -----
-  subroutine OpenAndInitialize ( processingRange, l1bInfo )
+  subroutine OpenAndInitialize ( processingRange, l1bInfo, l2pcf )
 
     ! Opens L1 RAD files
     ! Opens L1OA file
@@ -93,6 +94,7 @@ contains ! =====     Public Procedures     =============================
 
     type (TAI93_Range_T) :: processingRange ! Data processing range
     type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
+	 type(PCFData_T) :: l2pcf
 
     !Local Variables
     integer, parameter :: CCSDSEndId = 10412
@@ -107,6 +109,10 @@ contains ! =====     Public Procedures     =============================
     integer :: returnStatus
     integer :: sd_id
     integer :: STATUS ! From allocate
+
+      CHARACTER (LEN=FileNameLen) :: name
+
+      INTEGER ::  indx, mlspcf_log, version
 
     integer :: pgs_td_utctotai, pgs_pc_getconfigdata
 
@@ -194,6 +200,34 @@ contains ! =====     Public Procedures     =============================
       & returnstatus /= PGSTD_E_NO_LEAP_SECS) call MLSMessage ( MLSMSG_Error, &
       & ModuleName, "Could not convert UTC Start time to TAI" )
 
+	! -- May need to change these if we have
+	!    configuration parameters introduced into PCF file
+	!    for now -- outputversion and cycle are hard-wired below
+	! --
+
+	! Here's where we define the components of l2pcf
+
+!      returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_OutputVersion, &
+!                                          l2pcf%outputVersion)
+	l2pcf%outputVersion = '1'
+	
+!      returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_Cycle, l2pcf%cycle)
+	l2pcf%cycle = '1'
+	
+	l2pcf%startutc = CCSDSStartTime
+	l2pcf%endutc = CCSDSEndTime
+
+! Get the name of the log file from the PCF
+
+      version = 1
+      mlspcf_log = 10101			! This seems to be hard-wired into PCF
+
+      returnStatus = Pgs_pc_getReference(mlspcf_log, version, name)
+      IF (returnStatus /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, &
+                        ModuleName, 'Error retrieving log file name from PCF.')
+      indx = INDEX(name, '/', .TRUE.)
+      l2pcf%logGranID = name(indx+1:)
+ 
     return
 
   end subroutine OpenAndInitialize
@@ -363,6 +397,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.25  2001/04/02 23:39:09  pwagner
+! Now fills components of l2pcf
+!
 ! Revision 2.24  2001/03/28 19:07:59  vsnyder
 ! Finish removing use of MLSSignalNomenclature
 !
