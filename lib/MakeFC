@@ -102,11 +102,17 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/.configure
           -c "$(MLSF95)" -p "$(MLSPLAT)" -nc 
 
 depends:
-#	$(MLSBIN)/makemakedep.sh -d test_cholesky.f90 -d test_multiply.f90 \
-#        -d test_sparsify.f90 -d MatrixModule_0.f90 -d MatrixModule_1.f90 \
-# 		  -d PVM.f90 -d PVMIDL.f90
+#PVM and PVMIDL require PVM_ROOT
+ifdef PVM_ROOT
+depends:
+	$(MLSBIN)/makemakedep.sh -d test_cholesky.f90 -d test_multiply.f90 \
+        -d test_sparsify.f90 
+else
+depends:
 	$(MLSBIN)/makemakedep.sh -d test_cholesky.f90 -d test_multiply.f90 \
         -d test_sparsify.f90 -d PVM.f90 -d PVMIDL.f90
+endif
+
 
 mostlyclean:
 	@echo "Cleaning directory $(MLSCONFG)" ; \
@@ -130,7 +136,7 @@ clean:
 		rm -f $(PLATFORMS)/$(MLSCONFG)/*.mod ; \
 	fi; \
 	echo "Cleaning objects from $(testdir)"; \
-	$(MAKE) -f $(MakeFName) -C $(testdir) clean_objs
+	$(MAKE) -f $(MakeFName) -C $(testdir) clean
 	rm -f Make.dep.*
 
 tar:
@@ -156,6 +162,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.18  2001/04/02 17:38:50  pwagner
+# make clean no longer causes bogus error messages in tests
+#
 # Revision 2.17  2001/03/12 22:46:57  pwagner
 # Revised clean, tar; automatic symlink to Makefile
 #
