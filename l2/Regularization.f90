@@ -14,7 +14,7 @@ module Regularization
   use MatrixModule_0, only: M_Absent, M_Banded, MatrixElement_T, CreateBlock
   use MatrixModule_1, only: Matrix_T, CreateBlock
   use MLSCommon, only: R8
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use Output_M, only: Output
   use Tree, only: DECORATION, NSONS, SOURCE_REF, SUBTREE
 
@@ -88,13 +88,16 @@ contains
     integer :: NROW                ! Number of rows in first row block of A
     integer :: NV                  ! Next element in VALUES component
     integer :: Ord                 ! Order for the current block
+    integer :: R                   ! Row block with most rows
     integer :: S                   ! Sign of regularization coefficient.
     integer :: Type                ! Type of value returned by EXPR
     integer :: Units(2)            ! Units of value returned by EXPR
     double precision :: Value(2)   ! Value returned by EXPR
+    logical :: Warn                ! Send warning message to MLSMessage
     real(r8) :: Wt                 ! The weight for the current block
 
     error = 0
+    warn = .false.
     nb = a%col%nb
     if ( nsons(orders) /= 2 ) then
       if ( quants == 0 ) then
@@ -113,7 +116,14 @@ contains
     rows = 0
 
     if ( error == 0 ) then
-      nrow = a%row%nelts(1)
+      r = 1
+      nrow = a%row%nelts(r)
+      do ib = 2, a%row%nb ! Find the block with the most rows
+        if ( a%row%nelts(ib) > nrow ) then
+          r = ib
+          nrow = a%row%nelts(r)
+        end if
+      end do
       do ib = 1, nb             ! Loop over matrix blocks = quantities
         ord = 0
         if ( quants == 0 ) then ! only one order and weight allowed
@@ -136,14 +146,19 @@ contains
           end do
         end if
         ncol = a%col%nelts(ib)
+        if ( ord > ncol-1 ) then
+          warn = .true.
+          ord = ncol - 1
+        end if
         if ( rows + ncol - ord - 1 > a%row%nelts(1) ) &
           & call announceError ( tooFewRows, orders )
-        if ( ncol < ord+1 ) cycle
         if ( ord > maxRegOrd ) call announceError ( orderTooBig, orders )
+        if ( error /= 0 ) warn = .true.
         if ( ord == 0 .or. wt <= 0.0_r8 .or. error /= 0 ) then
-          call createBlock ( a%block(1,ib), nrow, ncol,  m_absent )
+          call createBlock ( a%block(r,ib), nrow, ncol,  m_absent )
+          error = 0
         else
-          call createBlock ( a%block(1,ib), nrow, ncol, m_banded, &
+          call createBlock ( a%block(r,ib), nrow, ncol, m_banded, &
             & (ncol-ord)*(ord+1) )
           rows = rows + 1
 
@@ -160,46 +175,50 @@ contains
             c(i) = ( -(ord-i+1) * c(i-1) ) / i
             c(ord-i) = s * c(i)
           end do
+          c(0:ord) = wt * c(0:ord)
 
           ! Each row has the binomial coefficients.  Therefore, each column
           ! has the binomial coefficients in reverse order (which wouldn't
           ! matter if the signs didn't alternate).  Except the first and
-          ! last ord columns have 1, 2, ..., ord + 1 (or less if ncol-ord <
-          ! ord) and ord, ord-1, ..., 1 elements.
+          ! last ord columns have 1, 2, ..., ord + 1 and ord, ord-1, ..., 1
+          ! elements.
 
           maxRow = ncol - ord
-          ! Fill in coefficients from the end of Ord (but no more than
-          ! maxRow of them)
+          ! Fill in coefficients from the end of C(:Ord) (but no more than
+          ! maxRow-1 of them)
           do i = 1, ord+1
-            nv = a%block(1,ib)%r2(i-1) + 1
+            nv = a%block(r,ib)%r2(i-1) + 1
             j = min(i,maxRow) ! Number of coefficients
-            a%block(1,ib)%r1(i) = rows
-            a%block(1,ib)%r2(i) = nv+j-1
-            a%block(1,ib)%values(nv:nv+j-1,1) = c(ord-i+1:ord-i+j)
+            a%block(r,ib)%r1(i) = rows
+            a%block(r,ib)%r2(i) = nv+j-1
+            a%block(r,ib)%values(nv:nv+j-1,1) = c(ord-i+1:ord-i+j)
           end do
-          ! Fill in coefficients from all of Ord
+          ! Fill in coefficients from all of C(:Ord)
           do i = ord+2, maxRow
-            nv = a%block(1,ib)%r2(i-1) + 1
+            nv = a%block(r,ib)%r2(i-1) + 1
             rows = rows + 1
-            a%block(1,ib)%r1(i) = rows
-            a%block(1,ib)%r2(i) = nv+ord
-            a%block(1,ib)%values(nv:nv+ord,1) = c(0:ord)
+            a%block(r,ib)%r1(i) = rows
+            a%block(r,ib)%r2(i) = nv+ord
+            a%block(r,ib)%values(nv:nv+ord,1) = c(0:ord)
           end do
-          ! Fill in coefficients from the beginning of Ord
+          ! Fill in coefficients from the beginning of C(:Ord) (but no more
+          ! than maxRow-1 of them)
           j = min(maxrow-1,ord) - 1 ! Index of last coefficient
           do i = max(ord+2,maxRow+1), ncol
-            nv = a%block(1,ib)%r2(i-1) + 1
+            nv = a%block(r,ib)%r2(i-1) + 1
             rows = rows + 1
-            a%block(1,ib)%r1(i) = rows
-            a%block(1,ib)%r2(i) = nv+j
-            a%block(1,ib)%values(nv:nv+j,1) = c(0:j)
+            a%block(r,ib)%r1(i) = rows
+            a%block(r,ib)%r2(i) = nv+j
+            a%block(r,ib)%values(nv:nv+j,1) = c(0:j)
             j = j - 1
           end do
         end if
-      end do  
+      end do
+      if ( warn ) call MLSMessage ( MLSMSG_Warning, moduleName, &
+        & "Some blocks not regularized, or at lower order than requested" )
+    else
+      call MLSMessage ( MLSMSG_Error, moduleName, "Regularization failed." )
     end if ! error == 0
-    if ( error /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-      & "Regularization failed." )
   end subroutine Regularize
 
   subroutine AnnounceError ( code, where )
@@ -232,6 +251,10 @@ contains
 end module Regularization
 
 ! $Log$
+! Revision 2.14  2002/07/30 23:20:20  vsnyder
+! Use order ncol-1 instead of zero for narrow blocks, Warn if ord < ncol-1.
+! Use the weight (duh!). Use the row block with the most rows.
+!
 ! Revision 2.13  2002/07/02 01:45:56  vsnyder
 ! Regularization.f90
 !
