@@ -42,6 +42,7 @@ MODULE SDPToolkit               ! F90 interface to SDP Toolkit.
    INCLUDE 'PGS_CBP_6.f'
    INCLUDE 'PGS_CSC_4.f'
    INCLUDE 'PGS_EPH_5.f'
+   INCLUDE 'PGS_GCT.f'
    INCLUDE 'PGS_IO.f'
    INCLUDE 'PGS_IO_1.f'
    INCLUDE 'PGS_MEM_7.f'
@@ -201,6 +202,9 @@ end module SDPToolkit
 
 !
 ! $Log$
+! Revision 2.13  2003/02/20 21:24:34  pwagner
+! Added params from GCT
+!
 ! Revision 2.12  2002/10/08 00:09:13  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
