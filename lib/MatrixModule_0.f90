@@ -18,7 +18,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   private
   public :: Add_Matrix_Blocks, CloneBlock, CopyBlock, CreateBlock, Densify
   public :: DestroyBlock, Dump, MatrixElement_T, Multiply_Matrix_Blocks
-  public :: operator(+), operator(.XT.), Sparsify
+  public :: operator(+), operator(.TX.), Sparsify
 
 ! =====     Defined Operators and Generic Identifiers     ==============
 
@@ -30,7 +30,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
     module procedure Add_Matrix_Blocks
   end interface
 
-  interface operator ( .XT. ) ! A transpose * B
+  interface operator ( .TX. ) ! A transpose * B
     module procedure Multiply_Matrix_Blocks
   end interface
 
@@ -668,6 +668,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.4  2000/10/13 22:22:48  vsnyder
+! Change name of multiply operator from .XT. to .TX.
+!
 ! Revision 2.3  2000/10/12 20:10:08  vsnyder
 ! Make default accessibility private
 !
