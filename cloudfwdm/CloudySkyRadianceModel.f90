@@ -81,8 +81,10 @@ contains
 !     PRESSURE   (NZ)     -> Pressure (hPa).                                 C
 !     HEIGHT     (NZ)     -> Geopotential Height (hPa).                      C
 !     TEMPERATURE(NZ)     -> Temperature (K).                                C 
-!     VMRin   (NS,NZ)     -> NS=1: H2O Volumn Mixing Ratios (ppm).           C
-!                            NS=2: O3 Volumn Mixing Ratio (ppm).             C
+!     VMRin   (NS,NZ)     -> NS=1: H2O Volumn Mixing Ratios (ppv).           C
+!                            NS=2: O3 Volumn Mixing Ratio (ppv).             C
+!                            NS=3: N2O Volumn Mixing Ratio (ppv).             C
+!                            NS=4: HNO3 Volumn Mixing Ratio (ppv).             C
 !                                                                            C
 !     2. CLOUD PARAMETERS:                                                   C
 !     --------------------                                                   C
@@ -170,8 +172,10 @@ contains
                                                ! 2 = SEA 
   
       INTEGER, intent(in) :: ISWI              ! SENSITIVITY SWITCH
-                                               ! 0 = OFF
-                                               ! 1 = ON
+                                               ! 0 = multi IWC samples
+                                               ! 1 = High Tngt-ht clouds
+                                               ! 2 = Low Tngt-ht clouds
+                                               ! 
 
       INTEGER, intent(in) :: ICON              ! CONTROL SWITCH 
 
@@ -181,8 +185,8 @@ contains
 !		ICON=-2 is for clear-sky radiance limit assuming 0%RHi
 !		ICON=-3 is for clear-sky radiance lower limit from 110% and 0%RHi
 ! 	   ICON=0 is Clear-Sky only 
-!		ICON=1 is for 100%RH below the cloud top or below 100mb
-!		ICON=2 is default for 100%RH inside cloud ONLY
+!		ICON=1 is default for 100%RH inside cloud ONLY
+!		ICON=2 is for 100%RH below the cloud top or below 100mb
 !		ICON=3 is for near-side cloud only
 !-----------------------------------------------------------------------------
 
@@ -284,6 +288,7 @@ contains
       REAL(r8) :: YQ (NZmodel)                 ! H2O VOLUME MIXING RATIO
       REAL(r8) :: VMR(NS-1,NZmodel)            ! 1=O3 VOLUME MIXING RATIO
                                                ! 2=N2O VOLUME MIXING RATIO
+                                               ! 3=HNO3 Volumn Mixing Ratio
       REAL(r8) :: DDm(N,NZmodel-1)                         
 
 !----------------------------
@@ -318,7 +323,6 @@ contains
       INTEGER :: IIWC
       INTEGER :: ICLD_TOP                      ! cloud top index
       INTEGER :: I100_TOP                      ! 100 mb index
-      INTEGER :: MY_NIWC
       INTEGER :: n1, n2
 
       REAL(r8) :: DMA
@@ -485,26 +489,19 @@ contains
       TS    = 288._r8
       S     = 35._r8
       SWIND = 0._r8
-      NIWC  = 10
 
-       IF (ISWI .EQ. 0) THEN                  
+      RATIO = 10.*(IIWC-1)**2*0.004+1.0E-9_r8
+      NIWC=10
+      IF (ISWI .GT. 0) THEN                  
          RATIO=1._r8
-         MY_NIWC=1                ! SKIP FULL SENSITIVITY CALCULATION
-       ELSE
-         MY_NIWC=NIWC
-       ENDIF
+         NIWC=1                ! SKIP FULL SENSITIVITY CALCULATION
+      ENDIF
 
 !------------------------------------------
 !     PERFORM FULL SENSITIVITY CALCULATION
 !------------------------------------------
 
-    iwc_loop: do IIWC=1, MY_NIWC
-         IF (ISWI .EQ. 0) THEN
-            RATIO=1._r8
-         ELSE
-            RATIO = 10.*(IIWC-1)**2*0.004+1.0E-9_r8
-         ENDIF
-
+    iwc_loop: do IIWC=1, NIWC
 !=========================================================================
 !                   >>>>>>> CLEAR-SKY MODULE <<<<<<<<
 !-------------------------------------------------------------------------
@@ -563,24 +560,27 @@ contains
             RC0(2)=0._r8
             RC0(3)=RC0(1)                 ! CLEAR-SKY EXTINCTION COEFFICIENT
 
-            RC_TMP =0._r8
+            RC_TOT =RC0                ! initialized to clear-sky coeffs.
+            RC_TMP =0._r8              ! tmp for cloud coeffs
+            cdepth = 0._r8
             DO ISPI=1,N
-            CWC = RATIO*WC(ISPI,ILYR)
-            IF(CWC .ge. 1.e-9_r8 .and. ICON .gt. 0) then           
+               CWC = RATIO*WC(ISPI,ILYR)
+               IF(CWC .ge. 1.e-9_r8 .and. ICON .gt. 0) then           
               
-               CALL CLOUDY_SKY ( ISPI,CWC,TEMP(ILYR),FREQUENCY(IFR),  &
+                  CALL CLOUDY_SKY ( ISPI,CWC,TEMP(ILYR),FREQUENCY(IFR),  &
                        &          NU,U,DU,P11,RC11,IPSD(ILYR),DMA,    &
                        &          PH1,NAB,P,DP,NR,R,RN,BC,A,B,NABR)
 
-               PHH(ISPI,:,ILYR)=P11          ! INTERGRATED PHASE FUNCTION
-               CDEPTH(ISPI)=RC11(3)*Z(ILYR)
-               RC_TMP(ISPI,:)=RC11        ! VOLUME EXT/SCAT/ABS COEFFS
-               DDm(ISPI,ILYR)=DMA                     ! MASS-MEAN-DIAMETER
-            ENDIF
-            ENDDO
+                  PHH(ISPI,:,ILYR)=P11          ! INTERGRATED PHASE FUNCTION
+                  CDEPTH(ISPI)=RC11(3)*Z(ILYR)
+                  RC_TMP(ISPI,:)=RC11        ! VOLUME EXT/SCAT/ABS COEFFS
+                  DDm(ISPI,ILYR)=DMA                     ! MASS-MEAN-DIAMETER
+               ENDIF
                               
-            DO J=1,3                               ! ADD all COEFFICIENTS
-               RC_TOT(J)=RC0(J)+RC_TMP(1,J)+RC_TMP(2,J)
+               DO J=1,3                               ! ADD cloud COEFFICIENTS
+                  RC_TOT(J)=RC_TOT(J)+RC_TMP(ISPI,J)
+               ENDDO
+            
             ENDDO
 
             DO ISPI=1,N
@@ -590,11 +590,10 @@ contains
             DEPTH=RC_TOT(3)*Z(ILYR)
 
             tau(ILYR) = max(0._r8, DEPTH )
-            tauc(ILYR)= max(0._r8, CDEPTH(1) )
-
+            tauc(ILYR)= max(0._r8, CDEPTH(1) )     ! only consider scattering coeff
          enddo model_layer_loop
       Endif
-      
+
 ! call radiative transfer calculations
       
        select case ( ICON )
@@ -643,10 +642,8 @@ contains
          CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PHH,MULTI,ZZT1,W0,TAU,RS,TS,&
               &  FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,         &
               &  UI,UA,TT,ICON,RE)                            !CLOUDY-SKY
-
        case default
-         print*,'You should not be here'
-         stop
+         call MLSMessage(MLSMSG_Error, ModuleName,'You gave a wrong i_saturation')
        end select
  
 
@@ -758,11 +755,20 @@ contains
           & DTcir(:,IFR), &
               &                 method='Linear')
 
-         IF(ICON .GT. 0) &
+         IF(ICON .GT. 0) THEN
+
          CALL SENSITIVITY (DTcir(:,IFR),ZZT,NT,YP,YZ,NZmodel,PRESSURE,NZ, &
               &      tau,tauc,tau_clear,TAUeff(:,IFR),SS(:,IFR), &
               &      Trans(:,:,IFR), BETA(:,IFR), BETAc(:,IFR), DDm, Dm, &
               &      Z, DZ, N,RE, noS, Slevl)     ! COMPUTE SENSITIVITY
+              
+              !for small dTcir at low tangent heights
+               DO I=1,NT
+               IF(DTcir(I,IFR) .LT. 0. .AND. DTcir(I,IFR) .GT. -3.) &
+               & SS(I,IFR) = -50.
+               ENDDO
+         ENDIF
+
        ENDIF
 
       END IF                                 ! END OF DO CHANNEL
@@ -785,6 +791,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.55  2003/04/02 21:47:33  dwu
+! initialize RC_TMP inside layer loop
+!
 ! Revision 1.54  2003/04/02 20:00:04  dwu
 ! some clearup and replace ifov with do_conv
 !
