@@ -16,7 +16,8 @@ module Functions
 
   integer, parameter :: Function_First    = 1
   integer, parameter :: F_Cholesky        = Function_First
-  integer, parameter :: F_Exp             = F_Cholesky + 1
+  integer, parameter :: F_ClearLower      = F_Cholesky + 1
+  integer, parameter :: F_Exp             = F_ClearLower + 1
   integer, parameter :: F_GetDiagonal     = F_Exp + 1
   integer, parameter :: F_Invert          = F_GetDiagonal + 1
   integer, parameter :: F_Log             = F_Invert + 1
@@ -60,6 +61,7 @@ contains
       & function_last )
 
     func_indices(f_cholesky) =        add_ident ( 'cholesky' )
+    func_indices(f_clearLower) =      add_ident ( 'clearLower' )
     func_indices(f_exp) =             add_ident ( 'exp' )
     func_indices(f_getDiagonal) =     add_ident ( 'getDiagonal' )
     func_indices(f_invert) =          add_ident ( 'invert' )
@@ -77,6 +79,7 @@ contains
       !??? probably necessary to do init_functions after init_tables.
       !??? OTOH, we could do some here, and some later, like we do lits.
       begin, g+f_cholesky, n+n_func_def, &
+      begin, g+f_clearLower, n+n_func_def, &
       begin, g+f_exp, &
              begin, t+t_numeric, n+n_arg_def, n+n_func_def, &
       begin, g+f_getDiagonal, n+n_func_def, &
@@ -105,6 +108,9 @@ contains
 end module Functions
 
 ! $Log$
+! Revision 2.6  2004/10/14 06:06:20  livesey
+! Added f_clearLower
+!
 ! Revision 2.5  2004/05/29 02:42:36  vsnyder
 ! Rearrange function definition stuff
 !
