@@ -182,7 +182,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: P_CYCLE                       = p_version_comment + 1
   integer, parameter :: P_STARTTIME                   = p_cycle + 1
   integer, parameter :: P_ENDTIME                     = p_starttime + 1
-  integer, parameter :: P_INSTRUMENT                  = p_endtime + 1
+  integer, parameter :: P_LEAPSECFILE                 = p_endtime + 1
+  integer, parameter :: P_INSTRUMENT                  = p_leapsecfile + 1
   ! In ChunkDivide section:
   integer, parameter :: P_CRITICAL_BANDS              = p_instrument + 1
   integer, parameter :: P_CRITICAL_SCANNING_MODULES   = p_critical_bands + 1
@@ -279,6 +280,7 @@ contains ! =====     Public procedures     =============================
     parm_indices(p_starttime) =            add_ident ( 'StartTime' )
     parm_indices(p_endtime) =              add_ident ( 'EndTime' )
     parm_indices(p_instrument) =           add_ident ( 'Instrument' )
+    parm_indices(p_leapsecfile) =          add_ident ( 'LeapSecFile' )
     parm_indices(p_critical_bands) =       add_ident ( 'CriticalBands' )
     parm_indices(p_critical_scanning_modules) = &
                                            add_ident ( 'CriticalScanningModules' )
@@ -818,6 +820,7 @@ contains ! =====     Public procedures     =============================
              begin, p+p_output_version_string, t+t_string, n+n_name_def, &
              begin, p+p_allow_climatology_overloads, t+t_boolean, n+n_name_def,&
              begin, p+p_instrument, t+t_instrument, n+n_name_def,&
+             begin, p+p_leapsecfile, t+t_string, n+n_name_def,&
              begin, p+p_cycle, t+t_string, n+n_name_def, &
              begin, p+p_starttime, t+t_string, n+n_name_def, &
              begin, p+p_endtime, t+t_string, n+n_name_def, s+s_l1brad, &
@@ -888,6 +891,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.215  2002/05/01 22:02:09  pwagner
+! Can again read leapsecfile in global_settings
+!
 ! Revision 2.214  2002/05/01 00:24:26  pwagner
 ! Undid changes to allow leapsecfile to be read; they caused crashes
 !
