@@ -5,20 +5,18 @@ CVN = lf95
 
 FC= lf95
 FOPTS= -g --chk --info --version
+LDOPTS=
 PLATFORM= LF95.Linux.slow
 PGSLIB= /van1/vsnyder/mlspgs/SDPToolkit/LF95
 CC=cc
 HDF5INC=/users/pwagner/apps/test/vrh9.0-lf95/hdf5-1.4.4/include
 HDF5LIB=/users/pwagner/apps/test/vrh9.0-lf95/hdf5-1.4.4/lib
 
-compare.o: compare.f90 machine.mod
-	$(FC) $(FOPTS) -c compare.f90
-
 machine_$(CVN).o machine.mod: machine_$(CVN).f90
 	$(FC) $(FOPTS) -c machine_$(CVN).f90
 
-compare: compare.o machine_$(CVN).o
-	$(FC) $(FOPTS) -o compare compare.o machine_$(CVN).o
+compare: compare.f90 machine.mod machine_$(CVN).o
+	$(FC) $(FOPTS) -o compare compare.f90 machine_$(CVN).o
 
 CondenseLeakLog: CondenseLeakLog.f90
 	$(FC) $(FOPTS) -o CondenseLeakLog -I $(HOME)/mlspgs/lib/$(PLATFORM) \
@@ -55,6 +53,9 @@ h5cat: h5cat.c
           -L $(HDF5LIB) -lz -lm -lhdf5
 
 # $Log$
+# Revision 1.6  2004/09/22 19:22:50  vsnyder
+# Repair make for f90tex
+#
 # Revision 1.5  2004/06/17 01:05:26  vsnyder
 # Account for ConvertPFA, DumpPFAData
 #
