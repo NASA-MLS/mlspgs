@@ -63,7 +63,7 @@ contains
       & DestroyMatrix, GetFromMatrixDatabase, Matrix_T, Matrix_Database_T, &
       & Matrix_SPD_T, MultiplyMatrixVectorNoT, operator(.TX.), ReflectMatrix, Dump
     use MatrixTools, only: DumpBlock
-    use MLSCommon, only: R8, MLSCHUNK_T
+    use MLSCommon, only: R8, MLSCHUNK_T, RM
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, add_to_retrieval_timing
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID, GetIndexFlagsFromList
@@ -1788,7 +1788,7 @@ contains
       integer :: n1
       logical :: doMaf      ! array for MAF flag
       real(r8), dimension(:), allocatable :: tmp1, tmp2      ! working array
-      real(r8), dimension(:,:), allocatable :: A      ! working array
+      real(rm), dimension(:,:), allocatable :: A      ! working array
       real(r8), dimension(:), allocatable :: dx       ! working array for x
       real(r8), dimension(:), allocatable :: x        ! s grid array
       real(r8), dimension(:), allocatable :: x0       ! A priori of x
@@ -1841,7 +1841,7 @@ contains
           allocate(A(nz*nInst,nz*nInst),C(nz*nInst,nz*nInst))
           allocate(x(nz*nInst),x0(nz*nInst),sx0(nz*nInst),dx(nz*nInst))
           allocate(tmp1(nz),tmp2(nz))
-          A = 0._r8
+          A = 0._rm
           C = 0._r8
           y = 0._r8
           sy = 0._r8
@@ -2092,7 +2092,7 @@ contains
       integer :: itop                                ! cloud top tangt pressure index
       real(r8) :: zt
       logical, dimension(:), allocatable :: doMaf      ! array for MAF flag
-      real(r8), dimension(:,:), allocatable :: A      ! working array
+      real(rm), dimension(:,:), allocatable :: A      ! working array
       real(r8), dimension(:,:), allocatable :: dx       ! working array for x
       real(r8), dimension(:,:), allocatable :: y      ! measurement array
       real(r8), dimension(:,:), allocatable :: sy     ! variance of y
@@ -2190,7 +2190,7 @@ contains
         print*,'begin cloud retrieval maf= ',maf,' chunk size=',nMAFs, 'type= ',&
          & configDatabase(configIndices(1))%cloud_width
                         
-          A = 0._r8
+          A = 0._rm
           C = 0._r8
           y = 0._r8
           sy = 0._r8
@@ -3025,6 +3025,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.175  2002/09/13 18:10:10  pwagner
+! May change matrix precision rm from r8
+!
 ! Revision 2.174  2002/09/11 20:21:49  livesey
 ! Made second | F | print on GETJ not EVALJ
 !
