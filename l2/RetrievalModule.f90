@@ -45,7 +45,8 @@ contains
       & F_mask, F_maxJ, F_measurements, F_measurementSD, F_method, F_muMin, &
       & F_opticalDepth, F_opticalDepthCutoff, F_outputCovariance, F_outputSD, &
       & F_phaseName, F_ptanQuantity, F_quantity, &
-      & F_regAfter, F_regApriori, F_reset, F_serial, F_state, F_toleranceA, F_toleranceF, &
+      & F_regAfter, F_regApriori, F_reset, F_serial, F_SparseQuantities, &
+      & F_state, F_toleranceA, F_toleranceF, &
       & F_toleranceR, f_vRegOrders, f_vRegQuants, &
       & f_vRegWeights, f_vRegWeightVec, Field_first, Field_last, &
       & L_apriori, L_covariance, &
@@ -63,7 +64,8 @@ contains
     use L2ParInfo, only: PARALLEL
     use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
       & DestroyMatrix, GetFromMatrixDatabase, Matrix_T, Matrix_Database_T, &
-      & Matrix_SPD_T, MultiplyMatrixVectorNoT, operator(.TX.), ReflectMatrix
+      & Matrix_SPD_T, MultiplyMatrixVectorNoT, operator(.TX.), ReflectMatrix, &
+      & Sparsify
     use MatrixTools, only: DumpBlock
     use MLSCommon, only: MLSCHUNK_T, R8, RM, RV
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, Add_To_Retrieval_Timing
@@ -163,6 +165,7 @@ contains
     character(len=127) :: SnoopComment  ! From comment= field of S_Snoop spec.
     integer :: SnoopKey                 ! Tree point of S_Snoop spec.
     integer :: SnoopLevel               ! From level field of S_Snoop spec.
+    integer, dimension(:), pointer :: SparseQuantities ! Which jacobian blocks to sparsify
     integer :: Spec                     ! s_matrix, s_subset or s_retrieve
     type(vector_T), pointer :: State    ! The state vector
     real :: T0, T1, T2, T3              ! for timing
@@ -228,7 +231,7 @@ contains
 
     error = 0
     nullify ( apriori, configIndices, covariance, fwdModelOut )
-    nullify ( measurements, measurementSD, state, outputSD )
+    nullify ( measurements, measurementSD, state, outputSD, sparseQuantities )
     phaseName = ' '              ! Default in case there's no field
     snoopComment = ' '           ! Ditto
     snoopKey = 0
@@ -372,6 +375,12 @@ contains
             ixCovariance = decoration(subtree(2,son)) ! outCov: matrix vertex
           case ( f_outputSD )
             outputSD => vectorDatabase(decoration(decoration(subtree(2,son))))
+          case ( f_sparseQuantities )
+            call Allocate_Test ( sparseQuantities, nsons(son)-1, &
+              & 'sparseQuantities', ModuleName )
+            do k = 2, nsons(son)
+              sparseQuantities(k-1) = decoration(decoration(subtree(k,son)))
+            end do
           case ( f_state )
             state => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_aprioriScale, f_fuzz, f_lambda, f_maxJ, f_muMin, &
@@ -1059,6 +1068,7 @@ contains
       call cloneVector ( v(dx), v(x), vectorNameText='_DX' )
       call cloneVector ( v(dxUnScaled), v(x), vectorNameText='_DxUnscaled' )
       call cloneVector ( v(f_rowScaled), measurements, vectorNameText='_f_rowScaled' )
+      call copyVectorMask ( v(f_rowScaled), measurements )
       call cloneVector ( v(gradient), v(x), vectorNameText='_gradient' )
       call cloneVector ( v(reg_X_x), state, vectorNameText='_reg_X_x' )
       if ( got(f_measurementSD) ) then
@@ -1419,6 +1429,8 @@ contains
             end do
             call scaleVector ( v(f_rowScaled), -1.0_r8 ) ! y - f
 
+            if ( got(f_sparseQuantities) ) call Sparsify ( jacobian, &
+              & rowQuantities=sparseQuantities )
             if ( got(f_measurementSD) ) call rowScale ( v(weight), jacobian )
 
             !{Form normal equations:
@@ -3356,6 +3368,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.210  2003/01/08 23:52:38  livesey
+! Added the sparsify stuff according to sparseQuantities
+!
 ! Revision 2.209  2003/01/07 23:44:17  livesey
 ! Added reset option to subset
 !
