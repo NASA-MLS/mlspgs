@@ -40,7 +40,7 @@ module WriteMetadata ! Populate metadata and write it out
   !-----------------------------------------------------------------------------
 
   public :: Populate_metadata_std, Populate_metadata_oth, &
-    & Get_l2gp_mcf, WriteMetaLog
+    & Get_l2gp_mcf, WriteMetaLog, NullifyPCFData
 
   private :: First_grouping, Measured_parameter, Third_grouping, &
     & ExpandFileTemplate
@@ -1305,6 +1305,16 @@ contains
 
    end subroutine WriteMetaLog
 
+  ! ----------------------------------------NullifyPCFData -----
+  subroutine NullifyPCFData ( P )
+    ! Given a PCFData, nullify all the pointers associated with it
+    type ( PCFData_T ), intent(out) :: P
+
+    ! Executable code
+    nullify ( p%AnText )
+    nullify ( p%L1BRADPCFIds )
+  end subroutine NullifyPCFData
+
   ! -----------------------------------------  ExpandFileTemplate  -----
    subroutine ExpandFileTemplate ( Template, Filename, Level, Version, Cycle, &
      &                            Day )
@@ -1497,6 +1507,10 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.31  2002/11/22 12:31:16  mjf
+! Added nullify routine(s) to get round Sun's WS6 compiler not
+! initialising derived type function results.
+!
 ! Revision 2.30  2002/10/08 17:36:23  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
