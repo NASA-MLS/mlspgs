@@ -759,6 +759,7 @@ contains ! =====     Public Procedures     =============================
         & 'Invalid side argument to DeleteOverlaps' )
     end select
 
+    nullify ( temp )
     call allocate_test ( temp, hGrid%noProfs, 'temp', ModuleName )
     hGrid%noProfs = newNoProfs
 
@@ -878,6 +879,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.25  2002/05/06 22:31:28  livesey
+! Fixed nullify stuff
+!
 ! Revision 2.24  2002/05/06 21:59:28  livesey
 ! Fixed get_Boolean bug
 !
