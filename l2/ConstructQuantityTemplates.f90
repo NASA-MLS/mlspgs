@@ -621,9 +621,9 @@ contains ! =====     Public Procedures     =============================
 
     do maf = 1, noMAFs
       call expr (subtree ( maf+1, geodAngleNode), expr_units, expr_value )
-      mifGeolocation(instrumentModule)%phi(maf,:) = expr_value(1)
-      mifGeolocation(instrumentModule)%geodLat(maf,:) = &
-        &  asin( sin(deg2rad*mifGeolocation(instrumentModule)%phi(maf,1)) * &
+      mifGeolocation(instrumentModule)%phi(:,maf) = expr_value(1)
+      mifGeolocation(instrumentModule)%geodLat(:,maf) = &
+        &  asin( sin(deg2rad*mifGeolocation(instrumentModule)%phi(:,maf)) * &
         &        sin(deg2rad*incline) )/deg2rad
     end do
 
@@ -688,6 +688,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.22  2001/04/23 23:25:10  livesey
+! Fixed bug in forge
+!
 ! Revision 2.21  2001/04/20 23:11:39  livesey
 ! Added forge stuff for minor frames
 !
