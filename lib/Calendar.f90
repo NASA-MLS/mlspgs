@@ -515,6 +515,9 @@ contains
 end module Calendar
 
 ! $Log$
+! Revision 2.2  2004/10/19 17:30:25  pwagner
+! removed some Octal characters NAG hated
+!
 ! Revision 2.1  2004/10/18 20:49:52  vsnyder
 ! Initial commit
 !
