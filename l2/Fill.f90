@@ -75,8 +75,8 @@ contains ! =====     Public Procedures     =============================
     ! Now the literals:
     use INIT_TABLES_MODULE, only: L_ADDNOISE, L_BOUNDARYPRESSURE, L_CHISQCHAN, &
       & L_CHISQMMAF, L_CHISQMMIF, L_CHOLESKY, L_COLUMNABUNDANCE, &
-      & L_ESTIMATEDNOISE, L_EXPLICIT, L_FOLD, L_GPH, L_GPHPRECISION, &
-      & L_GRIDDED, L_H2OFROMRHI, &
+      & L_ESTIMATEDNOISE, L_EXPLICIT, L_FOLD, L_GEODALTITUDE, &
+      & L_GPH, L_GPHPRECISION, L_GRIDDED, L_H2OFROMRHI, &
       & L_HEIGHT, &
       & L_HYDROSTATIC, L_ISOTOPE, L_ISOTOPERATIO, L_KRONECKER, L_L1B, L_L2GP, &
       & L_L2AUX, L_LOSVEL, L_MAGNETICFIELD, L_MAGNETICMODEL, &
@@ -126,7 +126,7 @@ contains ! =====     Public Procedures     =============================
     use Molecules, only: L_H2O
     use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID, GetIndexFlagsFromList
     use OUTPUT_M, only: BLANKS, OUTPUT
-    use QuantityTemplates, only: QuantityTemplate_T
+    use QuantityTemplates, only: Epoch, QuantityTemplate_T
     use ScanModelModule, only: GetBasisGPH, Get2DHydrostaticTangentPressure, GetGPHPrecision
     use SnoopMLSL2, only: SNOOP
     use String_Table, only: Display_String
@@ -219,7 +219,8 @@ contains ! =====     Public Procedures     =============================
     integer, parameter :: NeedH2O = needTempRefGPH + 1
     integer, parameter :: NeedOrbitInclination = needH2O + 1
     integer, parameter :: NeedGeocAltitude = needOrbitInclination + 1
-    integer, parameter :: BadGeocAltitudeQuantity = needGeocAltitude + 1
+    integer, parameter :: NeedGeodAltitude = needGeocAltitude + 1
+    integer, parameter :: BadGeocAltitudeQuantity = needGeodAltitude + 1
     integer, parameter :: BadTemperatureQuantity = badGeocAltitudeQuantity + 1
     integer, parameter :: BadREFGPHQuantity = badTemperatureQuantity + 1
     integer, parameter :: NonConformingHydrostatic = badREFGPHQuantity + 1
@@ -935,11 +936,7 @@ contains ! =====     Public Procedures     =============================
             & manipulation, key )
 
         case ( l_magneticModel ) ! --------------------- Magnetic Model --
-          if ( .not. got ( f_gphQuantity ) ) &
-            & call Announce_error ( key, 0, 'gphQuantity not supplied' )
-          gphQuantity => GetVectorQtyByTemplateIndex ( vectors(gphVectorIndex), &
-            & gphQuantityIndex )
-          call FillQuantityUsingMagneticModel ( quantity, gphQuantity, key )          
+          call FillQuantityUsingMagneticModel ( quantity, key )          
           
         case ( l_offsetRadiance ) ! ------------------- Offset radiance --
           if ( .not. got ( f_radianceQuantity ) ) &
@@ -4168,38 +4165,34 @@ contains ! =====     Public Procedures     =============================
     end subroutine FillVectorQuantityFromL2AUX
 
     ! --------------------------------------- FillQuantityUsingMagneticModel --
-    subroutine FillQuantityUsingMagneticModel ( qty, gph, key )
-!      use MichaelsF77Code, only: MyMagneticModel
+    subroutine FillQuantityUsingMagneticModel ( qty, key )
+      use IGRF_INT, only: FELDC, FELDCOF, To_Cart
       type (VectorValue_T), intent(inout) :: QTY
-      type (VectorValue_T), intent(in) :: GPH
       integer, intent(in) :: KEY
       ! Local variables
+      real :: B(3)                      ! Magnetic field
       integer :: INSTANCE               ! Loop counter
       integer :: SURF                   ! Loop counter
       integer :: SURFOR1                ! Index
+      real    :: XYZ(3)                 ! lat, lon, height for to_cart
 
       ! Executable code
-      if ( .not. DoVGridsMatch ( qty, gph ) ) then
-        call Announce_Error ( key, 0, &
-          & 'Quantity and GPH quantity not on same vertical grid' )
-        return
-      end if
-      if ( .not. DoHGridsMatch ( qty, gph ) ) then
-        call Announce_Error ( key, 0, &
-          & 'Quantity and GPH quantity not on same horizontal grid' )
-        return
-      end if
+
       if ( .not. ValidateVectorQuantity ( qty, quantityType=(/l_magneticField/), &
         & frequencyCoordinate=(/ l_xyz /) ) ) then
         call Announce_Error ( key, 0, &
           & 'Quantity does not describe magnetic field' )
         return
       end if
-      if ( .not. ValidateVectorQuantity ( qty, quantityType=(/l_gph/) ) ) then
-        call Announce_Error ( key, 0, &
-          & 'GPH quantity does not describe GPH field' )
+      if ( qty%verticalCoordinate /= l_geodAltitude ) then
+        call Announce_Error ( key, needGeodAltitude )
         return
       end if
+
+      ! Assume the time is close enough to constant that one call to
+      ! FELDCOF is accurate enough.
+
+      call feldcof ( real(qty%template%time(1,1) + epoch) )
 
       ! Extent:
       ! qty%template%noInstances, qty%template%noSurfs
@@ -4225,9 +4218,13 @@ contains ! =====     Public Procedures     =============================
           else
             surfOr1 = surf
           end if
-!           qty%values ( surf*3-2 : surf*3 ) = &
-!             & MyMagenticModel ( qty%template%geodLat(surfOr1,instance), &
-!             & qty%template%lon(surfOr1,instance), gph%values(surf,instance) )
+          ! Convert (/ lat, lon, height /) to cartesian
+          call to_cart ( real( (/ qty%template%geodLat(surfOr1,instance), &
+            &                     qty%template%lon(surfOr1,instance), &
+            &                     qty%template%surfs(surfOr1,instance) /) ), xyz )
+          ! Compute the field at and w.r.t. cartesian coordinates
+          call feldc ( xyz, b )
+          qty%values(surf*3-2 : surf*3, surfOr1) = b
         end do
       end do
 
@@ -4644,8 +4641,7 @@ contains ! =====     Public Procedures     =============================
         call output ( '(no lcf tree available)' )
       end if
 
-      call output ( ': ' )
-      call output ( "The " );
+      call output ( ': The' );
 
       select case ( code )
       case ( allocation_err )
@@ -4704,6 +4700,9 @@ contains ! =====     Public Procedures     =============================
         call output ( " are required.", advance='yes' )
       case ( needGeocAltitude )
         call output ( " needs geocAltitudeQuantity.", advance='yes' )
+      case ( needGeodAltitude )
+        call output ( " vertical coordinate should be geoditic altitude.", &
+          & advance='yes' )
       case ( needH2O )
         call output ( " needs H2OQuantity.", advance='yes' )
       case ( needOrbitInclination )
@@ -4777,6 +4776,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.173  2003/01/14 21:34:09  vsnyder
+! More work on magnetic field vector quantity
+!
 ! Revision 2.172  2003/01/12 07:34:05  dwu
 ! with some fix for a-b manipulation
 !
