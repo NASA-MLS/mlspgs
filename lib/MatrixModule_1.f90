@@ -28,7 +28,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   public :: AddMatrices, AddToMatrixDatabase, AddToMatrix
   public :: Assignment(=), CholeskyFactor, CholeskyFactor_1
   public :: ClearMatrix, ClearRows, ClearRows_1, ColumnScale, ColumnScale_1
-  public :: CopyMatrix, CopyMatrixValue, CreateEmptyMatrix
+  public :: CopyMatrix, CopyMatrixValue, CreateBlock, CreateBlock_1, CreateEmptyMatrix
   public :: DestroyBlock, DestroyBlock_1, DestroyMatrix
   public :: DestroyMatrixInDatabase, DestroyMatrixDatabase, Dump, FillExtraCol
   public :: FillExtraRow, FindBlock, GetDiagonal, GetDiagonal_1
@@ -67,6 +67,10 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 
   interface ColumnScale
     module procedure ColumnScale_1
+  end interface
+
+  interface CreateBlock
+    module procedure CreateBlock_1
   end interface
 
   interface DestroyBlock
@@ -1287,7 +1291,18 @@ contains ! =====     Public Procedures     =============================
         call output ( 'Block at row ' )
         call output ( i )
         call output ( ' and column ' )
-        call output ( j, advance='yes' )
+        call output ( j )
+        call output ( ' ( ' )
+        call display_string ( &
+          & matrix%row%vec%quantities(matrix%row%quant(i))%template%name )
+        call output ( ':' )
+        call output ( matrix%row%Inst(i) )
+        call output (' , ')
+        call display_string ( &
+          & matrix%col%vec%quantities(matrix%col%quant(j))%template%name )
+        call output ( ':' )
+        call output ( matrix%col%Inst(j) )
+        call output ( ' )', advance='yes' )
         call dump ( matrix%block(i,j), details=my_details>1 )
       end do
     end do
@@ -1374,6 +1389,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.15  2001/04/20 02:56:18  livesey
+! Added createblock_1 as public and overloaded.  Also made dump more informative
+!
 ! Revision 2.14  2001/04/11 00:40:25  vsnyder
 ! Remove some inadventently-left-in debugging print
 !
