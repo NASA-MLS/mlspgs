@@ -97,7 +97,7 @@ CONTAINS
 
     attrName = 'ReprocessingActual'
     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
-         'processed once')
+         'unknown')
     IF (returnStatus /= PGS_S_SUCCESS) THEN
        errmsg = METAWR_ERR // attrName
        CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
@@ -145,40 +145,6 @@ CONTAINS
     ENDIF
     attrName = 'ParameterName' // '.1'
     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, sval)
-    IF (returnStatus /= PGS_S_SUCCESS) THEN
-       errmsg = METAWR_ERR // attrName
-       CALL MLSMessage(MLSMSG_Error, ModuleName, errmsg)
-    ENDIF
-
-    ! QAFlags Group
-
-    attrName = 'AutomaticQualityFlag' // '.1'
-    returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
-         'Passed')
-    IF (returnStatus /= PGS_S_SUCCESS) THEN
-       errmsg = METAWR_ERR // attrName
-       CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
-    ENDIF
-
-    attrName = 'AutomaticQualityFlagExplanation' // '.1'
-    returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
-         'pending algorithm update')
-    IF (returnStatus /= PGS_S_SUCCESS) THEN
-       errmsg = METAWR_ERR // attrName
-       CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
-    ENDIF
-
-    attrName = 'OperationalQualityFlag' // '.1'
-    returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
-         'Not Investigated')
-    IF (returnStatus /= PGS_S_SUCCESS) THEN
-       errmsg = METAWR_ERR // attrName
-       CALL MLSMessage(MLSMSG_Error, ModuleName, errmsg)
-    ENDIF
-
-    attrName = 'OperationalQualityFlagExplanation' // '.1'
-    returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
-         'Not Investigated')
     IF (returnStatus /= PGS_S_SUCCESS) THEN
        errmsg = METAWR_ERR // attrName
        CALL MLSMessage(MLSMSG_Error, ModuleName, errmsg)
@@ -459,6 +425,9 @@ CONTAINS
 END MODULE WriteMetaL1 
 
 ! $Log$
+! Revision 2.15  2004/12/16 15:09:13  cvuu
+! v1.5: Change value of ReprocessingActual to unknown, remove QAFlags Group and use the ones in MCF v1.5
+!
 ! Revision 2.14  2004/01/30 00:30:42  pwagner
 ! Stops useless warnings about pgs_met_remove return value
 !
