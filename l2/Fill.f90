@@ -78,7 +78,7 @@ contains ! =====     Public Procedures     =============================
       & L_BOUNDARYPRESSURE, L_BOXCAR, L_CHISQBINNED, L_CHISQCHAN, &
       & L_CHANNEL, L_CHISQMMAF, L_CHISQMMIF, L_CHOLESKY, &
       & L_cloudice, L_cloudextinction, L_cloudInducedRADIANCE, L_COMBINECHANNELS, L_COLUMNABUNDANCE, &
-      & L_ECRTOFOV, L_ESTIMATEDNOISE, L_EXPLICIT, L_FOLD, L_GEODALTITUDE, &
+      & L_ECRTOFOV, L_ESTIMATEDNOISE, L_EXPLICIT, L_EXTRACTCHANNEL, L_FOLD, L_GEODALTITUDE, &
       & L_GPH, L_GPHPRECISION, L_GRIDDED, L_H2OFROMRHI, &
       & L_HEIGHT, L_HYDROSTATIC, L_ISOTOPE, L_ISOTOPERATIO, &
       & L_IWCFROMEXTINCTION, L_KRONECKER, L_L1B, L_L2GP, &
@@ -90,7 +90,7 @@ contains ! =====     Public Procedures     =============================
       & L_RADIANCE, L_RECTANGLEFROMLOS, L_REFGPH, L_REFRACT, L_REFLECTORTEMPMODEL, &
       & L_REFLTEMP, L_RESETUNUSEDRADIANCES, L_RHI, L_RHIFROMH2O, L_RHIPRECISIONFROMH2O, L_ROTATEFIELD, &
       & L_SCALEOVERLAPS, L_SCECI, L_SCGEOCALT, L_SCVEL, L_SCVELECI, L_SCVELECR, &
-      & L_LIMBSIDEBANDFRACTION, L_SPD, L_SPECIAL, L_SPREADCHANNEL, &
+      & L_LIMBSIDEBANDFRACTION, L_SINGLECHANNELRADIANCE, L_SPD, L_SPECIAL, L_SPREADCHANNEL, &
       & L_SPLITSIDEBAND, L_STATUS, L_SYSTEMTEMPERATURE, &
       & L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, &
       & L_TNGTGEOCALT, L_TRUE, L_VECTOR, L_VGRID, L_VMR, L_WMOTROPOPAUSE, &
@@ -132,7 +132,7 @@ contains ! =====     Public Procedures     =============================
       & MLSMSG_Allocate, MLSMSG_Deallocate
     use MLSNumerics, only: InterpolateValues, Hunt
     use MLSRandomNumber, only: drang, mls_random_seed, MATH77_RAN_PACK
-    use MLSSignals_m, only: GetSignalName, GetModuleName, IsModuleSpacecraft, &
+    use MLSSignals_m, only: GetFirstChannel, GetSignalName, GetModuleName, IsModuleSpacecraft, &
       & GetSignal, Signal_T, Dump_signals
     use Molecules, only: L_H2O
     use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID, GetIndexFlagsFromList
@@ -1145,6 +1145,13 @@ contains ! =====     Public Procedures     =============================
           call ExplicitFillVectorQuantity ( quantity, valuesNode, spreadFlag, &
             & vectors(vectorIndex)%globalUnit, dontmask )
 
+        case ( l_extractChannel )
+          if ( .not. all(got ( (/f_sourceQuantity,f_channel/)))) &
+            & call Announce_Error ( key, 0, 'Need sourceQuantity and channel for this fill' )
+          sourceQuantity => GetVectorQtyByTemplateIndex( &
+            & vectors(sourceVectorIndex), sourceQuantityIndex )
+          call ExtractSingleChannel ( key, quantity, sourceQuantity, channel )
+
         case ( l_fold ) ! --------------- Fill by sideband folding -----
           lsb => GetVectorQtyByTemplateIndex ( &
             & vectors(lsbVectorIndex), lsbQuantityIndex )
@@ -2092,6 +2099,32 @@ contains ! =====     Public Procedures     =============================
       end do
 
     end subroutine addGaussianNoise
+
+    ! ------------------------------------------- ExtractSingleChannel ---
+    subroutine ExtractSingleChannel ( key, quantity, sourceQuantity, channel )
+      integer, intent(in) :: KEY        ! Tree node
+      type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
+      type (VectorValue_T), intent(in) :: SOURCEQUANTITY ! Source quantity for radiances
+      integer, intent(in) :: CHANNEL    ! Channel number
+      ! Local variables
+      integer :: CHANIND                ! Channel index
+      integer :: MIF                    ! Minor frame index
+      ! Exectuable code
+      if ( quantity%template%quantityType /= l_singleChannelRadiance ) &
+        & call announce_error ( key, 0, 'Quantity to fill must be of type singleChannelRadiance' )
+      if ( all ( sourceQuantity%template%quantityType /= (/ l_cloudInducedRadiance, l_radiance /) ) ) &
+        & call announce_error ( key, 0, 'source quantity for fill must be of type [cloudInduced]radiance' )
+      if ( quantity%template%signal /= sourceQuantity%template%signal .or. &
+        & quantity%template%sideband /= sourceQuantity%template%sideband ) &
+        & call announce_error ( key, 0, 'quantity/sourceQuantity must be same signal/sideband' )
+      if ( .not. sourceQuantity%template%regular ) &
+        & call Announce_Error ( key, 0, 'source quantity must be regular' )
+      chanInd = channel - GetFirstChannel ( quantity%template%signal )
+      do mif = 1, quantity%template%noSurfs
+        quantity%values ( mif, : ) = &
+          & sourceQuantity%values ( mif + chanInd * sourceQuantity%template%noChans, : )
+      end do
+    end subroutine ExtractSingleChannel
 
     !------------------------------------- FillCovariance ------------
 
@@ -6845,6 +6878,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.266  2004/04/16 00:49:03  livesey
+! Added extractChannel fill
+!
 ! Revision 2.265  2004/04/13 21:19:10  livesey
 ! Bug fix in negative precision flagging.
 !
