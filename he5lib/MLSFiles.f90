@@ -5,7 +5,8 @@
 module MLSFiles               ! Utility file routines
   !===============================================================================
   use Hdf, only: DFACC_CREATE, DFACC_READ
-!  use Hdf5, only: h5fopen_f, h5fclose_f
+!  use Hdf5, only: h5fopen_f, h5fclose_f, h5fis_hdf5_f
+  use Hdf5_params, only: H5F_ACC_RDONLY, H5F_ACC_RDWR, H5F_ACC_TRUNC
   use HDFEOS, only: gdclose, gdopen, swclose, swopen
   use HDFEOS5, only: he5_swclose, he5_swopen, he5_swinqswath
   use machine, only: io_error
@@ -39,6 +40,8 @@ module MLSFiles               ! Utility file routines
 !     - - - - - - - -
 
 ! GetPCFromRef       Turns a FileName into the corresponding PC
+! mls_hdf_version    Returns one of 'hdf4', 'hdf5', or '????'
+! mls_inqswath       A wrapper for doing swingswath for versions 4 and 5
 ! mls_io_gen_openF   Opens a generic file using either the toolbox or else a Fortran OPEN statement
 ! mls_io_gen_closeF  Closes a generic file using either the toolbox or else a Fortran OPEN statement
 ! mls_inqswath       A wrapper for doing swingswath for versions 4 and 5
@@ -52,21 +55,22 @@ module MLSFiles               ! Utility file routines
   integer, parameter :: MAXFILENAMELENGTH=PGSd_PC_FILE_PATH_MAX
 
   ! These are error codes that may be returned by GetPCFromRef
-
   integer, parameter :: NAMENOTFOUND=-1
   integer, parameter :: INVALIDPCRANGE=NAMENOTFOUND-1
 
   ! These are error codes that may be returned by mls_io_gen_openF
-
   integer, parameter :: UNKNOWNFILEACCESSTYPE=-999
   integer, parameter :: UNKNOWNTOOLBOXMODE=UNKNOWNFILEACCESSTYPE+1
   integer, parameter :: NOFREEUNITS=UNKNOWNTOOLBOXMODE+1
   integer, parameter :: MUSTSUPPLYFILENAMEORPC=NOFREEUNITS+1
   integer, parameter :: NOPCIFNOTOOLKIT=MUSTSUPPLYFILENAMEORPC+1
 
+  ! Whether to use PGS_MET commands in mls_sf(start)(end)
+  ! (The alternative is to use hdf5 calls directly)
+  logical, parameter :: PGS_MET4MLS_SF = .true.
+  
   ! The only legal unit numbers that files may be assigned
   ! for use by Fortran opens, closes, reads and writes
-
   integer, parameter :: bottom_unit_num=1
   integer, parameter :: top_unit_num=99
 
@@ -727,9 +731,9 @@ contains
     integer(i4), intent(IN)       :: FileAccesshdf4
     integer(i4)                   :: FileAccesshdf5
     
-    integer(i4), parameter        :: H5F_ACC_RDONLY = 0
-    integer(i4), parameter        :: H5F_ACC_RDRW   = 1
-    integer(i4), parameter        :: H5F_ACC_TRUNC  = 2
+!    integer(i4), parameter        :: H5F_ACC_RDONLY = 0
+!    integer(i4), parameter        :: H5F_ACC_RDWR   = 1
+!    integer(i4), parameter        :: H5F_ACC_TRUNC  = 2
 
     ! begin
     select case (FileAccesshdf4)
@@ -741,7 +745,7 @@ contains
       FileAccesshdf5 = H5F_ACC_RDONLY
 
     case default
-      FileAccesshdf5 = H5F_ACC_RDRW
+      FileAccesshdf5 = H5F_ACC_RDWR
 
     end select
 
@@ -785,8 +789,14 @@ contains
 
     ! begin
 !    mls_sfstart = PGS_MET_SFstart(FileName, hdf2hdf5_fileaccess(FileAccess))
+   if ( PGS_MET4MLS_SF ) then
      returnStatus = PGS_MET_SFstart(trim(FileName), &
       & hdf2hdf5_fileaccess(FileAccess), mls_sfstart)
+   else
+     access_prp_default = h5p_default_f
+!     call h5fopen_f(trim(FileName), hdf2hdf5_fileaccess(FileAccess), &
+!      & mls_sfstart, returnStatus, access_prp_default)
+   endif
 !     nameLength = LEN(FileName)
 !     returnStatus = h5fopen_c(FileName, nameLength, &
 !      & hdf2hdf5_fileaccess(FileAccess), access_prp_default, &
@@ -815,10 +825,48 @@ contains
 
     ! begin
 !    mls_sfend = h5fclose_c(sdid)
-    mls_sfend = PGS_MET_SFend(sdid)
+   if ( PGS_MET4MLS_SF ) then
+     mls_sfend = PGS_MET_SFend(sdid)
+   else
+!     call h5fclose_f(sdid, mls_sfend)
+   endif
 !    mls_sfend = 0
 
   end function mls_sfend
+
+  ! ---------------------------------------------  mls_hdf_version  -----
+
+  ! This function returns a character string depending on hdf version:
+  ! hdf version         returned value
+  !    hdf4                 hdf4
+  !    hdf5                 hdf5
+  !  unknown                ????
+
+  function mls_hdf_version(FileName)  result (hdf_version)
+
+    ! Arguments
+
+      character (len=*), intent(in) :: FILENAME
+      character (len=4)             :: hdf_version
+
+      integer :: returnStatus
+      logical :: is_hdf5
+    ! begin
+    if ( PGS_MET4MLS_SF ) then
+      hdf_version = '????'
+      return
+    endif
+!    call h5fis_hdf5_f(trim(FileName), is_hdf5, returnStatus)
+    if ( returnStatus /= 0 ) then
+      hdf_version = '????'
+    elseif ( is_hdf5 ) then
+      hdf_version = 'hdf5'
+    else
+      hdf_version = 'hdf4'
+    endif
+
+
+  end function mls_hdf_version
 
   !====================
 end module MLSFiles
@@ -826,6 +874,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 1.2  2002/01/18 23:55:49  pwagner
+! Various strategems to try writing metadata; all fail
+!
 ! Revision 1.1  2002/01/18 00:51:22  pwagner
 ! First commit
 !
