@@ -1,0 +1,1050 @@
+#
+# filename:
+# 	PCF.relB0
+#
+# description:
+#   	Process Control File (PCF)
+#
+# notes:
+#
+# 	This file supports the Release B version of the toolkit.
+#       It is intended for use with toolkit version "TK_VERSION_STRING".
+#
+#       The logical IDs 10000-10999 (inclusive) are reserved for internal
+#       Toolkit/ECS usage, DO NOT add logical IDs with these values.
+#
+# 	Please treat this file as a master template and make copies of it
+# 	for your own testing. Note that the Toolkit installation script
+#  	sets PGS_PC_INFO_FILE to point to this master file by default.
+#       Remember to reset the environment variable PGS_PC_INFO_FILE to 
+#       point to the instance of your PCF.
+#
+#       The toolkit will not interpret environment variables specified
+#       in this file (e.g. ~/database/$OSTYPE/TD is not a valid reference).
+#       The '~' character, however, when appearing in a reference WILL be
+#       replaced with the value of the environment variable PGSHOME.
+#
+#       The PCF file delivered with the toolkit should be taken as a
+#       template.  User entries should be added as necessary to this
+#       template.  Existing entries may (in some cases should) be altered
+#       but generally should not be commented out or deleted.  A few
+#       entries may not be needed by all users and can in some cases
+#       be commented out or deleted.  Such entries should be clearly
+#       identified in the comment(s) preceding the entry/entries.
+#
+#       Entries preceded by the comment: (DO NOT REMOVE THIS ENTRY)
+#       are deemed especially critical and should not be removed for
+#       any reason (although the values of the various fields of such an
+#       entry may be configurable).
+#
+# -----------------------------------------------------------------------
+?   SYSTEM RUNTIME PARAMETERS
+# -----------------------------------------------------------------------
+#########################################################################
+#
+# This section contains unique identifiers used to track instances of
+# a PGE run, versions of science software, etc.  This section must
+# contain exactly two entries.  These values will be inserted by
+# ECS just before a PGE is executed.  At the SCF the values may be set
+# to anything but these values are not normally user definable and user
+# values will be ignored/overwritten at the DAAC.
+#
+#########################################################################
+#
+# Production Run ID - unique production instance identifier
+# (DO NOT REMOVE THIS ENTRY)
+# -----------------------------------------------------------------------
+1
+# -----------------------------------------------------------------------
+# Software ID - unique software configuration identifier
+# (DO NOT REMOVE THIS ENTRY)
+# -----------------------------------------------------------------------
+1
+#
+?   PRODUCT INPUT FILES
+#########################################################################
+#
+# This section is intended for standard product inputs, i.e., major
+# input files such as Level 0 data files.
+#
+# Each logical ID may have several file instances, as given by the
+# version number in the last field.
+#
+#########################################################################
+#
+# Next non-comment line is the default location for PRODUCT INPUT FILES
+# WARNING! DO NOT MODIFY THIS LINE unless you have relocated these 
+# data set files to the location specified by the new setting.
+!  ~/runtime
+#
+900|PCF.v0-7|/user2/nakamura/mlspgs/l3||||1
+901|l3d_1prod_v0-7.cf|/user2/nakamura/mlspgs/l3||||1
+22000|MLS-Aura_L2GP_ClO_V0-05-C01_WV_1996-032.dat|/data/emls/l2gp/v0.5/1996||||1
+22001|MLS-Aura_L2GP_ClO_V0-05-C01_WV_1996-033.dat|/data/emls/l2gp/v0.5/1996||||1
+22002|MLS-Aura_L2GP_ClO_V0-05-C01_WV_1996-034.dat|/data/emls/l2gp/v0.5/1996||||1
+22003|MLS-Aura_L2GP_ClO_V0-05-C01_WV_1996-035.dat|/data/emls/l2gp/v0.5/1996||||1
+22004|MLS-Aura_L2GP_ClO_V0-05-C01_WV_1996-036.dat|/data/emls/l2gp/v0.5/1996||||1
+22005|MLS-Aura_L2GP_ClO_V0-05-C01_WV_1996-037.dat|/data/emls/l2gp/v0.5/1996||||1
+22006|MLS-Aura_L2GP_ClO_V0-05-C01_WV_1996-038.dat|/data/emls/l2gp/v0.5/1996||||1
+22007|MLS-Aura_L2GP_ClO_V0-05-C01_WV_1996-039.dat|/data/emls/l2gp/v0.5/1996||||1
+22008|MLS-Aura_L2GP_ClO_V0-05-C01_WV_1996-040.dat|/data/emls/l2gp/v0.5/1996||||1
+22009|MLS-Aura_L2GP_ClO_V0-05-C01_WV_1996-041.dat|/data/emls/l2gp/v0.5/1996||||1
+22010|MLS-Aura_L2GP_ClO_V0-05-C01_WV_1996-042.dat|/data/emls/l2gp/v0.5/1996||||1
+22011|MLS-Aura_L2GP_ClO_V0-05-C01_WV_1996-043.dat|/data/emls/l2gp/v0.5/1996||||1
+22012|MLS-Aura_L2GP_ClO_V0-05-C01_WV_1996-044.dat|/data/emls/l2gp/v0.5/1996||||1
+22013|MLS-Aura_L2GP_ClO_V0-05-C01_WV_1996-045.dat|/data/emls/l2gp/v0.5/1996||||1
+22014|MLS-Aura_L2GP_ClO_V0-05-C01_WV_1996-046.dat|/data/emls/l2gp/v0.5/1996||||1
+22015|MLS-Aura_L2GP_ClO_V0-05-C01_WV_1996-047.dat|/data/emls/l2gp/v0.5/1996||||1
+22016|MLS-Aura_L2GP_ClO_V0-05-C01_WV_1996-048.dat|/data/emls/l2gp/v0.5/1996||||1
+22017|MLS-Aura_L2GP_ClO_V0-05-C01_WV_1996-049.dat|/data/emls/l2gp/v0.5/1996||||1
+22018|MLS-Aura_L2GP_ClO_V0-05-C01_WV_1996-050.dat|/data/emls/l2gp/v0.5/1996||||1
+22019|MLS-Aura_L2GP_ClO_V0-05-C01_WV_1996-051.dat|/data/emls/l2gp/v0.5/1996||||1
+22020|MLS-Aura_L2GP_ClO_V0-05-C01_WV_1996-052.dat|/data/emls/l2gp/v0.5/1996||||1
+22021|MLS-Aura_L2GP_ClO_V0-05-C01_WV_1996-053.dat|/data/emls/l2gp/v0.5/1996||||1
+22022|MLS-Aura_L2GP_ClO_V0-05-C01_WV_1996-054.dat|/data/emls/l2gp/v0.5/1996||||1
+22023|MLS-Aura_L2GP_ClO_V0-05-C01_WV_1996-055.dat|/data/emls/l2gp/v0.5/1996||||1
+22024|MLS-Aura_L2GP_ClO_V0-05-C01_WV_1996-056.dat|/data/emls/l2gp/v0.5/1996||||1
+22025|MLS-Aura_L2GP_ClO_V0-05-C01_WV_1996-057.dat|/data/emls/l2gp/v0.5/1996||||1
+22026|MLS-Aura_L2GP_ClO_V0-05-C01_WV_1996-058.dat|/data/emls/l2gp/v0.5/1996||||1
+22027|MLS-Aura_L2GP_ClO_V0-05-C01_WV_1996-059.dat|/data/emls/l2gp/v0.5/1996||||1
+22028|MLS-Aura_L2GP_ClO_V0-05-C01_WV_1996-060.dat|/data/emls/l2gp/v0.5/1996||||1
+22029|MLS-Aura_L2GP_H2O_V0-05-C01_WV_1996-032.dat|/data/emls/l2gp/v0.5/1996||||1
+22030|MLS-Aura_L2GP_H2O_V0-05-C01_WV_1996-033.dat|/data/emls/l2gp/v0.5/1996||||1
+22031|MLS-Aura_L2GP_H2O_V0-05-C01_WV_1996-034.dat|/data/emls/l2gp/v0.5/1996||||1
+22032|MLS-Aura_L2GP_H2O_V0-05-C01_WV_1996-035.dat|/data/emls/l2gp/v0.5/1996||||1
+22033|MLS-Aura_L2GP_H2O_V0-05-C01_WV_1996-036.dat|/data/emls/l2gp/v0.5/1996||||1
+22034|MLS-Aura_L2GP_H2O_V0-05-C01_WV_1996-037.dat|/data/emls/l2gp/v0.5/1996||||1
+22035|MLS-Aura_L2GP_H2O_V0-05-C01_WV_1996-038.dat|/data/emls/l2gp/v0.5/1996||||1
+22036|MLS-Aura_L2GP_H2O_V0-05-C01_WV_1996-039.dat|/data/emls/l2gp/v0.5/1996||||1
+22037|MLS-Aura_L2GP_H2O_V0-05-C01_WV_1996-040.dat|/data/emls/l2gp/v0.5/1996||||1
+22038|MLS-Aura_L2GP_H2O_V0-05-C01_WV_1996-041.dat|/data/emls/l2gp/v0.5/1996||||1
+22039|MLS-Aura_L2GP_H2O_V0-05-C01_WV_1996-042.dat|/data/emls/l2gp/v0.5/1996||||1
+22040|MLS-Aura_L2GP_H2O_V0-05-C01_WV_1996-043.dat|/data/emls/l2gp/v0.5/1996||||1
+22041|MLS-Aura_L2GP_H2O_V0-05-C01_WV_1996-044.dat|/data/emls/l2gp/v0.5/1996||||1
+22042|MLS-Aura_L2GP_H2O_V0-05-C01_WV_1996-045.dat|/data/emls/l2gp/v0.5/1996||||1
+22043|MLS-Aura_L2GP_H2O_V0-05-C01_WV_1996-046.dat|/data/emls/l2gp/v0.5/1996||||1
+22044|MLS-Aura_L2GP_H2O_V0-05-C01_WV_1996-047.dat|/data/emls/l2gp/v0.5/1996||||1
+22045|MLS-Aura_L2GP_H2O_V0-05-C01_WV_1996-048.dat|/data/emls/l2gp/v0.5/1996||||1
+22046|MLS-Aura_L2GP_H2O_V0-05-C01_WV_1996-049.dat|/data/emls/l2gp/v0.5/1996||||1
+22047|MLS-Aura_L2GP_H2O_V0-05-C01_WV_1996-050.dat|/data/emls/l2gp/v0.5/1996||||1
+22048|MLS-Aura_L2GP_H2O_V0-05-C01_WV_1996-051.dat|/data/emls/l2gp/v0.5/1996||||1
+22049|MLS-Aura_L2GP_H2O_V0-05-C01_WV_1996-052.dat|/data/emls/l2gp/v0.5/1996||||1
+22050|MLS-Aura_L2GP_H2O_V0-05-C01_WV_1996-053.dat|/data/emls/l2gp/v0.5/1996||||1
+22051|MLS-Aura_L2GP_H2O_V0-05-C01_WV_1996-054.dat|/data/emls/l2gp/v0.5/1996||||1
+22052|MLS-Aura_L2GP_H2O_V0-05-C01_WV_1996-055.dat|/data/emls/l2gp/v0.5/1996||||1
+22053|MLS-Aura_L2GP_H2O_V0-05-C01_WV_1996-056.dat|/data/emls/l2gp/v0.5/1996||||1
+22054|MLS-Aura_L2GP_H2O_V0-05-C01_WV_1996-057.dat|/data/emls/l2gp/v0.5/1996||||1
+22055|MLS-Aura_L2GP_H2O_V0-05-C01_WV_1996-058.dat|/data/emls/l2gp/v0.5/1996||||1
+22056|MLS-Aura_L2GP_H2O_V0-05-C01_WV_1996-059.dat|/data/emls/l2gp/v0.5/1996||||1
+22057|MLS-Aura_L2GP_H2O_V0-05-C01_WV_1996-060.dat|/data/emls/l2gp/v0.5/1996||||1
+22058|MLS-Aura_L2GP_HCl_V0-05-C01_WV_1996-032.dat|/data/emls/l2gp/v0.5/1996||||1
+22059|MLS-Aura_L2GP_HCl_V0-05-C01_WV_1996-033.dat|/data/emls/l2gp/v0.5/1996||||1
+22060|MLS-Aura_L2GP_HCl_V0-05-C01_WV_1996-034.dat|/data/emls/l2gp/v0.5/1996||||1
+22061|MLS-Aura_L2GP_HCl_V0-05-C01_WV_1996-035.dat|/data/emls/l2gp/v0.5/1996||||1
+22062|MLS-Aura_L2GP_HCl_V0-05-C01_WV_1996-036.dat|/data/emls/l2gp/v0.5/1996||||1
+22063|MLS-Aura_L2GP_HCl_V0-05-C01_WV_1996-037.dat|/data/emls/l2gp/v0.5/1996||||1
+22064|MLS-Aura_L2GP_HCl_V0-05-C01_WV_1996-038.dat|/data/emls/l2gp/v0.5/1996||||1
+22065|MLS-Aura_L2GP_HCl_V0-05-C01_WV_1996-039.dat|/data/emls/l2gp/v0.5/1996||||1
+22066|MLS-Aura_L2GP_HCl_V0-05-C01_WV_1996-040.dat|/data/emls/l2gp/v0.5/1996||||1
+22067|MLS-Aura_L2GP_HCl_V0-05-C01_WV_1996-041.dat|/data/emls/l2gp/v0.5/1996||||1
+22068|MLS-Aura_L2GP_HCl_V0-05-C01_WV_1996-042.dat|/data/emls/l2gp/v0.5/1996||||1
+22069|MLS-Aura_L2GP_HCl_V0-05-C01_WV_1996-043.dat|/data/emls/l2gp/v0.5/1996||||1
+22070|MLS-Aura_L2GP_HCl_V0-05-C01_WV_1996-044.dat|/data/emls/l2gp/v0.5/1996||||1
+22071|MLS-Aura_L2GP_HCl_V0-05-C01_WV_1996-045.dat|/data/emls/l2gp/v0.5/1996||||1
+22072|MLS-Aura_L2GP_HCl_V0-05-C01_WV_1996-046.dat|/data/emls/l2gp/v0.5/1996||||1
+22073|MLS-Aura_L2GP_HCl_V0-05-C01_WV_1996-047.dat|/data/emls/l2gp/v0.5/1996||||1
+22074|MLS-Aura_L2GP_HCl_V0-05-C01_WV_1996-048.dat|/data/emls/l2gp/v0.5/1996||||1
+22075|MLS-Aura_L2GP_HCl_V0-05-C01_WV_1996-049.dat|/data/emls/l2gp/v0.5/1996||||1
+22076|MLS-Aura_L2GP_HCl_V0-05-C01_WV_1996-050.dat|/data/emls/l2gp/v0.5/1996||||1
+22077|MLS-Aura_L2GP_HCl_V0-05-C01_WV_1996-051.dat|/data/emls/l2gp/v0.5/1996||||1
+22078|MLS-Aura_L2GP_HCl_V0-05-C01_WV_1996-052.dat|/data/emls/l2gp/v0.5/1996||||1
+22079|MLS-Aura_L2GP_HCl_V0-05-C01_WV_1996-053.dat|/data/emls/l2gp/v0.5/1996||||1
+22080|MLS-Aura_L2GP_HCl_V0-05-C01_WV_1996-054.dat|/data/emls/l2gp/v0.5/1996||||1
+22081|MLS-Aura_L2GP_HCl_V0-05-C01_WV_1996-055.dat|/data/emls/l2gp/v0.5/1996||||1
+22082|MLS-Aura_L2GP_HCl_V0-05-C01_WV_1996-056.dat|/data/emls/l2gp/v0.5/1996||||1
+22083|MLS-Aura_L2GP_HCl_V0-05-C01_WV_1996-057.dat|/data/emls/l2gp/v0.5/1996||||1
+22084|MLS-Aura_L2GP_HCl_V0-05-C01_WV_1996-058.dat|/data/emls/l2gp/v0.5/1996||||1
+22085|MLS-Aura_L2GP_HCl_V0-05-C01_WV_1996-059.dat|/data/emls/l2gp/v0.5/1996||||1
+22086|MLS-Aura_L2GP_HCl_V0-05-C01_WV_1996-060.dat|/data/emls/l2gp/v0.5/1996||||1
+22087|MLS-Aura_L2GP_HCN_V0-05-C01_WV_1996-032.dat|/data/emls/l2gp/v0.5/1996||||1
+22088|MLS-Aura_L2GP_HCN_V0-05-C01_WV_1996-033.dat|/data/emls/l2gp/v0.5/1996||||1
+22089|MLS-Aura_L2GP_HCN_V0-05-C01_WV_1996-034.dat|/data/emls/l2gp/v0.5/1996||||1
+22090|MLS-Aura_L2GP_HCN_V0-05-C01_WV_1996-035.dat|/data/emls/l2gp/v0.5/1996||||1
+22091|MLS-Aura_L2GP_HCN_V0-05-C01_WV_1996-036.dat|/data/emls/l2gp/v0.5/1996||||1
+22092|MLS-Aura_L2GP_HCN_V0-05-C01_WV_1996-037.dat|/data/emls/l2gp/v0.5/1996||||1
+22093|MLS-Aura_L2GP_HCN_V0-05-C01_WV_1996-038.dat|/data/emls/l2gp/v0.5/1996||||1
+22094|MLS-Aura_L2GP_HCN_V0-05-C01_WV_1996-039.dat|/data/emls/l2gp/v0.5/1996||||1
+22095|MLS-Aura_L2GP_HCN_V0-05-C01_WV_1996-040.dat|/data/emls/l2gp/v0.5/1996||||1
+22096|MLS-Aura_L2GP_HCN_V0-05-C01_WV_1996-041.dat|/data/emls/l2gp/v0.5/1996||||1
+22097|MLS-Aura_L2GP_HCN_V0-05-C01_WV_1996-042.dat|/data/emls/l2gp/v0.5/1996||||1
+22098|MLS-Aura_L2GP_HCN_V0-05-C01_WV_1996-043.dat|/data/emls/l2gp/v0.5/1996||||1
+22099|MLS-Aura_L2GP_HCN_V0-05-C01_WV_1996-044.dat|/data/emls/l2gp/v0.5/1996||||1
+22100|MLS-Aura_L2GP_HCN_V0-05-C01_WV_1996-045.dat|/data/emls/l2gp/v0.5/1996||||1
+22101|MLS-Aura_L2GP_HCN_V0-05-C01_WV_1996-046.dat|/data/emls/l2gp/v0.5/1996||||1
+22102|MLS-Aura_L2GP_HCN_V0-05-C01_WV_1996-047.dat|/data/emls/l2gp/v0.5/1996||||1
+22103|MLS-Aura_L2GP_HCN_V0-05-C01_WV_1996-048.dat|/data/emls/l2gp/v0.5/1996||||1
+22104|MLS-Aura_L2GP_HCN_V0-05-C01_WV_1996-049.dat|/data/emls/l2gp/v0.5/1996||||1
+22105|MLS-Aura_L2GP_HCN_V0-05-C01_WV_1996-050.dat|/data/emls/l2gp/v0.5/1996||||1
+22106|MLS-Aura_L2GP_HCN_V0-05-C01_WV_1996-051.dat|/data/emls/l2gp/v0.5/1996||||1
+22107|MLS-Aura_L2GP_HCN_V0-05-C01_WV_1996-052.dat|/data/emls/l2gp/v0.5/1996||||1
+22108|MLS-Aura_L2GP_HCN_V0-05-C01_WV_1996-053.dat|/data/emls/l2gp/v0.5/1996||||1
+22109|MLS-Aura_L2GP_HCN_V0-05-C01_WV_1996-054.dat|/data/emls/l2gp/v0.5/1996||||1
+22110|MLS-Aura_L2GP_HCN_V0-05-C01_WV_1996-055.dat|/data/emls/l2gp/v0.5/1996||||1
+22111|MLS-Aura_L2GP_HCN_V0-05-C01_WV_1996-056.dat|/data/emls/l2gp/v0.5/1996||||1
+22112|MLS-Aura_L2GP_HCN_V0-05-C01_WV_1996-057.dat|/data/emls/l2gp/v0.5/1996||||1
+22113|MLS-Aura_L2GP_HCN_V0-05-C01_WV_1996-058.dat|/data/emls/l2gp/v0.5/1996||||1
+22114|MLS-Aura_L2GP_HCN_V0-05-C01_WV_1996-059.dat|/data/emls/l2gp/v0.5/1996||||1
+22115|MLS-Aura_L2GP_HCN_V0-05-C01_WV_1996-060.dat|/data/emls/l2gp/v0.5/1996||||1
+22116|MLS-Aura_L2GP_HNO3_V0-05-C01_WV_1996-032.dat|/data/emls/l2gp/v0.5/1996||||1
+22117|MLS-Aura_L2GP_HNO3_V0-05-C01_WV_1996-033.dat|/data/emls/l2gp/v0.5/1996||||1
+22118|MLS-Aura_L2GP_HNO3_V0-05-C01_WV_1996-034.dat|/data/emls/l2gp/v0.5/1996||||1
+22119|MLS-Aura_L2GP_HNO3_V0-05-C01_WV_1996-035.dat|/data/emls/l2gp/v0.5/1996||||1
+22120|MLS-Aura_L2GP_HNO3_V0-05-C01_WV_1996-036.dat|/data/emls/l2gp/v0.5/1996||||1
+22121|MLS-Aura_L2GP_HNO3_V0-05-C01_WV_1996-037.dat|/data/emls/l2gp/v0.5/1996||||1
+22122|MLS-Aura_L2GP_HNO3_V0-05-C01_WV_1996-038.dat|/data/emls/l2gp/v0.5/1996||||1
+22123|MLS-Aura_L2GP_HNO3_V0-05-C01_WV_1996-039.dat|/data/emls/l2gp/v0.5/1996||||1
+22124|MLS-Aura_L2GP_HNO3_V0-05-C01_WV_1996-040.dat|/data/emls/l2gp/v0.5/1996||||1
+22125|MLS-Aura_L2GP_HNO3_V0-05-C01_WV_1996-041.dat|/data/emls/l2gp/v0.5/1996||||1
+22126|MLS-Aura_L2GP_HNO3_V0-05-C01_WV_1996-042.dat|/data/emls/l2gp/v0.5/1996||||1
+22127|MLS-Aura_L2GP_HNO3_V0-05-C01_WV_1996-043.dat|/data/emls/l2gp/v0.5/1996||||1
+22128|MLS-Aura_L2GP_HNO3_V0-05-C01_WV_1996-044.dat|/data/emls/l2gp/v0.5/1996||||1
+22129|MLS-Aura_L2GP_HNO3_V0-05-C01_WV_1996-045.dat|/data/emls/l2gp/v0.5/1996||||1
+22130|MLS-Aura_L2GP_HNO3_V0-05-C01_WV_1996-046.dat|/data/emls/l2gp/v0.5/1996||||1
+22131|MLS-Aura_L2GP_HNO3_V0-05-C01_WV_1996-047.dat|/data/emls/l2gp/v0.5/1996||||1
+22132|MLS-Aura_L2GP_HNO3_V0-05-C01_WV_1996-048.dat|/data/emls/l2gp/v0.5/1996||||1
+22133|MLS-Aura_L2GP_HNO3_V0-05-C01_WV_1996-049.dat|/data/emls/l2gp/v0.5/1996||||1
+22134|MLS-Aura_L2GP_HNO3_V0-05-C01_WV_1996-050.dat|/data/emls/l2gp/v0.5/1996||||1
+22135|MLS-Aura_L2GP_HNO3_V0-05-C01_WV_1996-051.dat|/data/emls/l2gp/v0.5/1996||||1
+22136|MLS-Aura_L2GP_HNO3_V0-05-C01_WV_1996-052.dat|/data/emls/l2gp/v0.5/1996||||1
+22137|MLS-Aura_L2GP_HNO3_V0-05-C01_WV_1996-053.dat|/data/emls/l2gp/v0.5/1996||||1
+22138|MLS-Aura_L2GP_HNO3_V0-05-C01_WV_1996-054.dat|/data/emls/l2gp/v0.5/1996||||1
+22139|MLS-Aura_L2GP_HNO3_V0-05-C01_WV_1996-055.dat|/data/emls/l2gp/v0.5/1996||||1
+22140|MLS-Aura_L2GP_HNO3_V0-05-C01_WV_1996-056.dat|/data/emls/l2gp/v0.5/1996||||1
+22141|MLS-Aura_L2GP_HNO3_V0-05-C01_WV_1996-057.dat|/data/emls/l2gp/v0.5/1996||||1
+22142|MLS-Aura_L2GP_HNO3_V0-05-C01_WV_1996-058.dat|/data/emls/l2gp/v0.5/1996||||1
+22143|MLS-Aura_L2GP_HNO3_V0-05-C01_WV_1996-059.dat|/data/emls/l2gp/v0.5/1996||||1
+22144|MLS-Aura_L2GP_HNO3_V0-05-C01_WV_1996-060.dat|/data/emls/l2gp/v0.5/1996||||1
+22145|MLS-Aura_L2GP_N2O_V0-05-C01_WV_1996-032.dat|/data/emls/l2gp/v0.5/1996||||1
+22146|MLS-Aura_L2GP_N2O_V0-05-C01_WV_1996-033.dat|/data/emls/l2gp/v0.5/1996||||1
+22147|MLS-Aura_L2GP_N2O_V0-05-C01_WV_1996-034.dat|/data/emls/l2gp/v0.5/1996||||1
+22148|MLS-Aura_L2GP_N2O_V0-05-C01_WV_1996-035.dat|/data/emls/l2gp/v0.5/1996||||1
+22149|MLS-Aura_L2GP_N2O_V0-05-C01_WV_1996-036.dat|/data/emls/l2gp/v0.5/1996||||1
+22150|MLS-Aura_L2GP_N2O_V0-05-C01_WV_1996-037.dat|/data/emls/l2gp/v0.5/1996||||1
+22151|MLS-Aura_L2GP_N2O_V0-05-C01_WV_1996-038.dat|/data/emls/l2gp/v0.5/1996||||1
+22152|MLS-Aura_L2GP_N2O_V0-05-C01_WV_1996-039.dat|/data/emls/l2gp/v0.5/1996||||1
+22153|MLS-Aura_L2GP_N2O_V0-05-C01_WV_1996-040.dat|/data/emls/l2gp/v0.5/1996||||1
+22154|MLS-Aura_L2GP_N2O_V0-05-C01_WV_1996-041.dat|/data/emls/l2gp/v0.5/1996||||1
+22155|MLS-Aura_L2GP_N2O_V0-05-C01_WV_1996-042.dat|/data/emls/l2gp/v0.5/1996||||1
+22156|MLS-Aura_L2GP_N2O_V0-05-C01_WV_1996-043.dat|/data/emls/l2gp/v0.5/1996||||1
+22157|MLS-Aura_L2GP_N2O_V0-05-C01_WV_1996-044.dat|/data/emls/l2gp/v0.5/1996||||1
+22158|MLS-Aura_L2GP_N2O_V0-05-C01_WV_1996-045.dat|/data/emls/l2gp/v0.5/1996||||1
+22159|MLS-Aura_L2GP_N2O_V0-05-C01_WV_1996-046.dat|/data/emls/l2gp/v0.5/1996||||1
+22160|MLS-Aura_L2GP_N2O_V0-05-C01_WV_1996-047.dat|/data/emls/l2gp/v0.5/1996||||1
+22161|MLS-Aura_L2GP_N2O_V0-05-C01_WV_1996-048.dat|/data/emls/l2gp/v0.5/1996||||1
+22162|MLS-Aura_L2GP_N2O_V0-05-C01_WV_1996-049.dat|/data/emls/l2gp/v0.5/1996||||1
+22163|MLS-Aura_L2GP_N2O_V0-05-C01_WV_1996-050.dat|/data/emls/l2gp/v0.5/1996||||1
+22164|MLS-Aura_L2GP_N2O_V0-05-C01_WV_1996-051.dat|/data/emls/l2gp/v0.5/1996||||1
+22165|MLS-Aura_L2GP_N2O_V0-05-C01_WV_1996-052.dat|/data/emls/l2gp/v0.5/1996||||1
+22166|MLS-Aura_L2GP_N2O_V0-05-C01_WV_1996-053.dat|/data/emls/l2gp/v0.5/1996||||1
+22167|MLS-Aura_L2GP_N2O_V0-05-C01_WV_1996-054.dat|/data/emls/l2gp/v0.5/1996||||1
+22168|MLS-Aura_L2GP_N2O_V0-05-C01_WV_1996-055.dat|/data/emls/l2gp/v0.5/1996||||1
+22169|MLS-Aura_L2GP_N2O_V0-05-C01_WV_1996-056.dat|/data/emls/l2gp/v0.5/1996||||1
+22170|MLS-Aura_L2GP_N2O_V0-05-C01_WV_1996-057.dat|/data/emls/l2gp/v0.5/1996||||1
+22171|MLS-Aura_L2GP_N2O_V0-05-C01_WV_1996-058.dat|/data/emls/l2gp/v0.5/1996||||1
+22172|MLS-Aura_L2GP_N2O_V0-05-C01_WV_1996-059.dat|/data/emls/l2gp/v0.5/1996||||1
+22173|MLS-Aura_L2GP_N2O_V0-05-C01_WV_1996-060.dat|/data/emls/l2gp/v0.5/1996||||1
+22174|MLS-Aura_L2GP_O3_V0-05-C01_WV_1996-032.dat|/data/emls/l2gp/v0.5/1996||||1
+22175|MLS-Aura_L2GP_O3_V0-05-C01_WV_1996-033.dat|/data/emls/l2gp/v0.5/1996||||1
+22176|MLS-Aura_L2GP_O3_V0-05-C01_WV_1996-034.dat|/data/emls/l2gp/v0.5/1996||||1
+22177|MLS-Aura_L2GP_O3_V0-05-C01_WV_1996-035.dat|/data/emls/l2gp/v0.5/1996||||1
+22178|MLS-Aura_L2GP_O3_V0-05-C01_WV_1996-036.dat|/data/emls/l2gp/v0.5/1996||||1
+22179|MLS-Aura_L2GP_O3_V0-05-C01_WV_1996-037.dat|/data/emls/l2gp/v0.5/1996||||1
+22180|MLS-Aura_L2GP_O3_V0-05-C01_WV_1996-038.dat|/data/emls/l2gp/v0.5/1996||||1
+22181|MLS-Aura_L2GP_O3_V0-05-C01_WV_1996-039.dat|/data/emls/l2gp/v0.5/1996||||1
+22182|MLS-Aura_L2GP_O3_V0-05-C01_WV_1996-040.dat|/data/emls/l2gp/v0.5/1996||||1
+22183|MLS-Aura_L2GP_O3_V0-05-C01_WV_1996-041.dat|/data/emls/l2gp/v0.5/1996||||1
+22184|MLS-Aura_L2GP_O3_V0-05-C01_WV_1996-042.dat|/data/emls/l2gp/v0.5/1996||||1
+22185|MLS-Aura_L2GP_O3_V0-05-C01_WV_1996-043.dat|/data/emls/l2gp/v0.5/1996||||1
+22186|MLS-Aura_L2GP_O3_V0-05-C01_WV_1996-044.dat|/data/emls/l2gp/v0.5/1996||||1
+22187|MLS-Aura_L2GP_O3_V0-05-C01_WV_1996-045.dat|/data/emls/l2gp/v0.5/1996||||1
+22188|MLS-Aura_L2GP_O3_V0-05-C01_WV_1996-046.dat|/data/emls/l2gp/v0.5/1996||||1
+22189|MLS-Aura_L2GP_O3_V0-05-C01_WV_1996-047.dat|/data/emls/l2gp/v0.5/1996||||1
+22190|MLS-Aura_L2GP_O3_V0-05-C01_WV_1996-048.dat|/data/emls/l2gp/v0.5/1996||||1
+22191|MLS-Aura_L2GP_O3_V0-05-C01_WV_1996-049.dat|/data/emls/l2gp/v0.5/1996||||1
+22192|MLS-Aura_L2GP_O3_V0-05-C01_WV_1996-050.dat|/data/emls/l2gp/v0.5/1996||||1
+22193|MLS-Aura_L2GP_O3_V0-05-C01_WV_1996-051.dat|/data/emls/l2gp/v0.5/1996||||1
+22194|MLS-Aura_L2GP_O3_V0-05-C01_WV_1996-052.dat|/data/emls/l2gp/v0.5/1996||||1
+22195|MLS-Aura_L2GP_O3_V0-05-C01_WV_1996-053.dat|/data/emls/l2gp/v0.5/1996||||1
+22196|MLS-Aura_L2GP_O3_V0-05-C01_WV_1996-054.dat|/data/emls/l2gp/v0.5/1996||||1
+22197|MLS-Aura_L2GP_O3_V0-05-C01_WV_1996-055.dat|/data/emls/l2gp/v0.5/1996||||1
+22198|MLS-Aura_L2GP_O3_V0-05-C01_WV_1996-056.dat|/data/emls/l2gp/v0.5/1996||||1
+22199|MLS-Aura_L2GP_O3_V0-05-C01_WV_1996-057.dat|/data/emls/l2gp/v0.5/1996||||1
+22200|MLS-Aura_L2GP_O3_V0-05-C01_WV_1996-058.dat|/data/emls/l2gp/v0.5/1996||||1
+22201|MLS-Aura_L2GP_O3_V0-05-C01_WV_1996-059.dat|/data/emls/l2gp/v0.5/1996||||1
+22202|MLS-Aura_L2GP_O3_V0-05-C01_WV_1996-060.dat|/data/emls/l2gp/v0.5/1996||||1
+22203|MLS-Aura_L2GP_OH_V0-05-C01_WV_1996-032.dat|/data/emls/l2gp/v0.5/1996||||1
+22204|MLS-Aura_L2GP_OH_V0-05-C01_WV_1996-033.dat|/data/emls/l2gp/v0.5/1996||||1
+22205|MLS-Aura_L2GP_OH_V0-05-C01_WV_1996-034.dat|/data/emls/l2gp/v0.5/1996||||1
+22206|MLS-Aura_L2GP_OH_V0-05-C01_WV_1996-035.dat|/data/emls/l2gp/v0.5/1996||||1
+22207|MLS-Aura_L2GP_OH_V0-05-C01_WV_1996-036.dat|/data/emls/l2gp/v0.5/1996||||1
+22208|MLS-Aura_L2GP_OH_V0-05-C01_WV_1996-037.dat|/data/emls/l2gp/v0.5/1996||||1
+22209|MLS-Aura_L2GP_OH_V0-05-C01_WV_1996-038.dat|/data/emls/l2gp/v0.5/1996||||1
+22210|MLS-Aura_L2GP_OH_V0-05-C01_WV_1996-039.dat|/data/emls/l2gp/v0.5/1996||||1
+22211|MLS-Aura_L2GP_OH_V0-05-C01_WV_1996-040.dat|/data/emls/l2gp/v0.5/1996||||1
+22212|MLS-Aura_L2GP_OH_V0-05-C01_WV_1996-041.dat|/data/emls/l2gp/v0.5/1996||||1
+22213|MLS-Aura_L2GP_OH_V0-05-C01_WV_1996-042.dat|/data/emls/l2gp/v0.5/1996||||1
+22214|MLS-Aura_L2GP_OH_V0-05-C01_WV_1996-043.dat|/data/emls/l2gp/v0.5/1996||||1
+22215|MLS-Aura_L2GP_OH_V0-05-C01_WV_1996-044.dat|/data/emls/l2gp/v0.5/1996||||1
+22216|MLS-Aura_L2GP_OH_V0-05-C01_WV_1996-045.dat|/data/emls/l2gp/v0.5/1996||||1
+22217|MLS-Aura_L2GP_OH_V0-05-C01_WV_1996-046.dat|/data/emls/l2gp/v0.5/1996||||1
+22218|MLS-Aura_L2GP_OH_V0-05-C01_WV_1996-047.dat|/data/emls/l2gp/v0.5/1996||||1
+22219|MLS-Aura_L2GP_OH_V0-05-C01_WV_1996-048.dat|/data/emls/l2gp/v0.5/1996||||1
+22220|MLS-Aura_L2GP_OH_V0-05-C01_WV_1996-049.dat|/data/emls/l2gp/v0.5/1996||||1
+22221|MLS-Aura_L2GP_OH_V0-05-C01_WV_1996-050.dat|/data/emls/l2gp/v0.5/1996||||1
+22222|MLS-Aura_L2GP_OH_V0-05-C01_WV_1996-051.dat|/data/emls/l2gp/v0.5/1996||||1
+22223|MLS-Aura_L2GP_OH_V0-05-C01_WV_1996-052.dat|/data/emls/l2gp/v0.5/1996||||1
+22224|MLS-Aura_L2GP_OH_V0-05-C01_WV_1996-053.dat|/data/emls/l2gp/v0.5/1996||||1
+22225|MLS-Aura_L2GP_OH_V0-05-C01_WV_1996-054.dat|/data/emls/l2gp/v0.5/1996||||1
+22226|MLS-Aura_L2GP_OH_V0-05-C01_WV_1996-055.dat|/data/emls/l2gp/v0.5/1996||||1
+22227|MLS-Aura_L2GP_OH_V0-05-C01_WV_1996-056.dat|/data/emls/l2gp/v0.5/1996||||1
+22228|MLS-Aura_L2GP_OH_V0-05-C01_WV_1996-057.dat|/data/emls/l2gp/v0.5/1996||||1
+22229|MLS-Aura_L2GP_OH_V0-05-C01_WV_1996-058.dat|/data/emls/l2gp/v0.5/1996||||1
+22230|MLS-Aura_L2GP_OH_V0-05-C01_WV_1996-059.dat|/data/emls/l2gp/v0.5/1996||||1
+22231|MLS-Aura_L2GP_OH_V0-05-C01_WV_1996-060.dat|/data/emls/l2gp/v0.5/1996||||1
+22232|MLS-Aura_L2GP_T_V0-05-C01_WV_1996-032.dat|/data/emls/l2gp/v0.5/1996||||1
+22233|MLS-Aura_L2GP_T_V0-05-C01_WV_1996-033.dat|/data/emls/l2gp/v0.5/1996||||1
+22234|MLS-Aura_L2GP_T_V0-05-C01_WV_1996-034.dat|/data/emls/l2gp/v0.5/1996||||1
+22235|MLS-Aura_L2GP_T_V0-05-C01_WV_1996-035.dat|/data/emls/l2gp/v0.5/1996||||1
+22236|MLS-Aura_L2GP_T_V0-05-C01_WV_1996-036.dat|/data/emls/l2gp/v0.5/1996||||1
+22237|MLS-Aura_L2GP_T_V0-05-C01_WV_1996-037.dat|/data/emls/l2gp/v0.5/1996||||1
+22238|MLS-Aura_L2GP_T_V0-05-C01_WV_1996-038.dat|/data/emls/l2gp/v0.5/1996||||1
+22239|MLS-Aura_L2GP_T_V0-05-C01_WV_1996-039.dat|/data/emls/l2gp/v0.5/1996||||1
+22240|MLS-Aura_L2GP_T_V0-05-C01_WV_1996-040.dat|/data/emls/l2gp/v0.5/1996||||1
+22241|MLS-Aura_L2GP_T_V0-05-C01_WV_1996-041.dat|/data/emls/l2gp/v0.5/1996||||1
+22242|MLS-Aura_L2GP_T_V0-05-C01_WV_1996-042.dat|/data/emls/l2gp/v0.5/1996||||1
+22243|MLS-Aura_L2GP_T_V0-05-C01_WV_1996-043.dat|/data/emls/l2gp/v0.5/1996||||1
+22244|MLS-Aura_L2GP_T_V0-05-C01_WV_1996-044.dat|/data/emls/l2gp/v0.5/1996||||1
+22245|MLS-Aura_L2GP_T_V0-05-C01_WV_1996-045.dat|/data/emls/l2gp/v0.5/1996||||1
+22246|MLS-Aura_L2GP_T_V0-05-C01_WV_1996-046.dat|/data/emls/l2gp/v0.5/1996||||1
+22247|MLS-Aura_L2GP_T_V0-05-C01_WV_1996-047.dat|/data/emls/l2gp/v0.5/1996||||1
+22248|MLS-Aura_L2GP_T_V0-05-C01_WV_1996-048.dat|/data/emls/l2gp/v0.5/1996||||1
+22249|MLS-Aura_L2GP_T_V0-05-C01_WV_1996-049.dat|/data/emls/l2gp/v0.5/1996||||1
+22250|MLS-Aura_L2GP_T_V0-05-C01_WV_1996-050.dat|/data/emls/l2gp/v0.5/1996||||1
+22251|MLS-Aura_L2GP_T_V0-05-C01_WV_1996-051.dat|/data/emls/l2gp/v0.5/1996||||1
+22252|MLS-Aura_L2GP_T_V0-05-C01_WV_1996-052.dat|/data/emls/l2gp/v0.5/1996||||1
+22253|MLS-Aura_L2GP_T_V0-05-C01_WV_1996-053.dat|/data/emls/l2gp/v0.5/1996||||1
+22254|MLS-Aura_L2GP_T_V0-05-C01_WV_1996-054.dat|/data/emls/l2gp/v0.5/1996||||1
+22255|MLS-Aura_L2GP_T_V0-05-C01_WV_1996-055.dat|/data/emls/l2gp/v0.5/1996||||1
+22256|MLS-Aura_L2GP_T_V0-05-C01_WV_1996-056.dat|/data/emls/l2gp/v0.5/1996||||1
+22257|MLS-Aura_L2GP_T_V0-05-C01_WV_1996-057.dat|/data/emls/l2gp/v0.5/1996||||1
+22258|MLS-Aura_L2GP_T_V0-05-C01_WV_1996-058.dat|/data/emls/l2gp/v0.5/1996||||1
+22259|MLS-Aura_L2GP_T_V0-05-C01_WV_1996-059.dat|/data/emls/l2gp/v0.5/1996||||1
+22260|MLS-Aura_L2GP_T_V0-05-C01_WV_1996-060.dat|/data/emls/l2gp/v0.5/1996||||1
+22261|MLS-Aura_L2GP_Z_V0-05-C01_WV_1996-032.dat|/data/emls/l2gp/v0.5/1996||||1
+22262|MLS-Aura_L2GP_Z_V0-05-C01_WV_1996-033.dat|/data/emls/l2gp/v0.5/1996||||1
+22263|MLS-Aura_L2GP_Z_V0-05-C01_WV_1996-034.dat|/data/emls/l2gp/v0.5/1996||||1
+22264|MLS-Aura_L2GP_Z_V0-05-C01_WV_1996-035.dat|/data/emls/l2gp/v0.5/1996||||1
+22265|MLS-Aura_L2GP_Z_V0-05-C01_WV_1996-036.dat|/data/emls/l2gp/v0.5/1996||||1
+22266|MLS-Aura_L2GP_Z_V0-05-C01_WV_1996-037.dat|/data/emls/l2gp/v0.5/1996||||1
+22267|MLS-Aura_L2GP_Z_V0-05-C01_WV_1996-038.dat|/data/emls/l2gp/v0.5/1996||||1
+22268|MLS-Aura_L2GP_Z_V0-05-C01_WV_1996-039.dat|/data/emls/l2gp/v0.5/1996||||1
+22269|MLS-Aura_L2GP_Z_V0-05-C01_WV_1996-040.dat|/data/emls/l2gp/v0.5/1996||||1
+22270|MLS-Aura_L2GP_Z_V0-05-C01_WV_1996-041.dat|/data/emls/l2gp/v0.5/1996||||1
+22271|MLS-Aura_L2GP_Z_V0-05-C01_WV_1996-042.dat|/data/emls/l2gp/v0.5/1996||||1
+22272|MLS-Aura_L2GP_Z_V0-05-C01_WV_1996-043.dat|/data/emls/l2gp/v0.5/1996||||1
+22273|MLS-Aura_L2GP_Z_V0-05-C01_WV_1996-044.dat|/data/emls/l2gp/v0.5/1996||||1
+22274|MLS-Aura_L2GP_Z_V0-05-C01_WV_1996-045.dat|/data/emls/l2gp/v0.5/1996||||1
+22275|MLS-Aura_L2GP_Z_V0-05-C01_WV_1996-046.dat|/data/emls/l2gp/v0.5/1996||||1
+22276|MLS-Aura_L2GP_Z_V0-05-C01_WV_1996-047.dat|/data/emls/l2gp/v0.5/1996||||1
+22277|MLS-Aura_L2GP_Z_V0-05-C01_WV_1996-048.dat|/data/emls/l2gp/v0.5/1996||||1
+22278|MLS-Aura_L2GP_Z_V0-05-C01_WV_1996-049.dat|/data/emls/l2gp/v0.5/1996||||1
+22279|MLS-Aura_L2GP_Z_V0-05-C01_WV_1996-050.dat|/data/emls/l2gp/v0.5/1996||||1
+22280|MLS-Aura_L2GP_Z_V0-05-C01_WV_1996-051.dat|/data/emls/l2gp/v0.5/1996||||1
+22281|MLS-Aura_L2GP_Z_V0-05-C01_WV_1996-052.dat|/data/emls/l2gp/v0.5/1996||||1
+22282|MLS-Aura_L2GP_Z_V0-05-C01_WV_1996-053.dat|/data/emls/l2gp/v0.5/1996||||1
+22283|MLS-Aura_L2GP_Z_V0-05-C01_WV_1996-054.dat|/data/emls/l2gp/v0.5/1996||||1
+22284|MLS-Aura_L2GP_Z_V0-05-C01_WV_1996-055.dat|/data/emls/l2gp/v0.5/1996||||1
+22285|MLS-Aura_L2GP_Z_V0-05-C01_WV_1996-056.dat|/data/emls/l2gp/v0.5/1996||||1
+22286|MLS-Aura_L2GP_Z_V0-05-C01_WV_1996-057.dat|/data/emls/l2gp/v0.5/1996||||1
+22287|MLS-Aura_L2GP_Z_V0-05-C01_WV_1996-058.dat|/data/emls/l2gp/v0.5/1996||||1
+22288|MLS-Aura_L2GP_Z_V0-05-C01_WV_1996-059.dat|/data/emls/l2gp/v0.5/1996||||1
+22289|MLS-Aura_L2GP_Z_V0-05-C01_WV_1996-060.dat|/data/emls/l2gp/v0.5/1996||||1
+#
+# -----------------------------------------------------------------------
+# These are actual ancillary data set files - supplied by ECS or the
+# user.  The following are supplied for purposes of tests and as a useful
+# set of ancillary data.  These entries may be removed IF the AA tools
+# are not being used.
+# -----------------------------------------------------------------------
+10780|usatile12|AA_DATA_INSTALL_DIR|||10751|12
+10780|usatile11|AA_DATA_INSTALL_DIR|||10750|11
+10780|usatile10|AA_DATA_INSTALL_DIR|||10749|10
+10780|usatile9|AA_DATA_INSTALL_DIR|||10748|9
+10780|usatile8|AA_DATA_INSTALL_DIR|||10747|8
+10780|usatile7|AA_DATA_INSTALL_DIR|||10746|7
+10780|usatile6|AA_DATA_INSTALL_DIR|||10745|6
+10780|usatile5|AA_DATA_INSTALL_DIR|||10744|5
+10780|usatile4|AA_DATA_INSTALL_DIR|||10743|4
+10780|usatile3|AA_DATA_INSTALL_DIR|||10742|3
+10780|usatile2|AA_DATA_INSTALL_DIR|||10741|2
+10780|usatile1|AA_DATA_INSTALL_DIR|||10740|1
+10951|mowe13a.img|AA_DATA_INSTALL_DIR||||1
+10952|owe13a.img|AA_DATA_INSTALL_DIR||||1
+10953|owe14d.img|AA_DATA_INSTALL_DIR||||1
+10954|owe14dr.img|AA_DATA_INSTALL_DIR||||1
+10955|etop05.dat|AA_DATA_INSTALL_DIR||||1
+10956|fnocazm.img|AA_DATA_INSTALL_DIR||||1
+10957|fnococm.img|AA_DATA_INSTALL_DIR||||1
+10958|fnocpt.img|AA_DATA_INSTALL_DIR||||1
+10959|fnocrdg.img|AA_DATA_INSTALL_DIR||||1
+10960|fnocst.img|AA_DATA_INSTALL_DIR||||1
+10961|fnocurb.img|AA_DATA_INSTALL_DIR||||1
+10962|fnocwat.img|AA_DATA_INSTALL_DIR||||1
+10963|fnocmax.imgs|AA_DATA_INSTALL_DIR||||1
+10964|fnocmin.imgs|AA_DATA_INSTALL_DIR||||1
+10965|fnocmod.imgs|AA_DATA_INSTALL_DIR||||1
+10966|srzarea.img|AA_DATA_INSTALL_DIR||||1
+10967|srzcode.img|AA_DATA_INSTALL_DIR||||1
+10968|srzphas.img|AA_DATA_INSTALL_DIR||||1
+10969|srzslop.img|AA_DATA_INSTALL_DIR||||1
+10970|srzsoil.img|AA_DATA_INSTALL_DIR||||1
+10971|srztext.img|AA_DATA_INSTALL_DIR||||1
+10972|nmcRucPotPres.datrepack|AA_DATA_INSTALL_DIR||||1
+10973|tbase.bin|AA_DATA_INSTALL_DIR|||10915|1
+10974|tbase.br|AA_DATA_INSTALL_DIR|||10919|4
+10974|tbase.bl|AA_DATA_INSTALL_DIR|||10918|3
+10974|tbase.tr|AA_DATA_INSTALL_DIR|||10917|2
+10974|tbase.tl|AA_DATA_INSTALL_DIR|||10916|1
+10975|geoid.dat|AA_DATA_INSTALL_DIR||||1
+#
+# -----------------------------------------------------------------------
+# The following are for the PGS_GCT tool only.  The IDs are #defined in
+# the PGS_GCT.h file.  These entries are essential for the State Plane
+# Projection but can otherwise be deleted or commented out.
+# -----------------------------------------------------------------------
+10200|nad27sp|~/database/common/GCT||||1
+10201|nad83sp|~/database/common/GCT||||1
+# -----------------------------------------------------------------------
+# The following are for the PGS_AA_DCW tool only.
+# The IDs are #defined in the PGS_AA_DCW.h file.
+# These entries may be deleted or commented out IF the AA tools are not
+# being used.
+# -----------------------------------------------------------------------
+10990|eurnasia/|AA_DATA_INSTALL_DIR||||1
+10991|noamer/|AA_DATA_INSTALL_DIR||||1
+10992|soamafr/|AA_DATA_INSTALL_DIR||||1
+10993|sasaus/|AA_DATA_INSTALL_DIR||||1
+#
+# -----------------------------------------------------------------------
+# file for Constant & Unit Conversion (CUC) tools
+# IMPORTANT NOTE: THIS FILE WILL BE SUPPLIED AFTER TK4 DELIVERY!
+# -----------------------------------------------------------------------
+10999|PGS_CUC_maths_parameters|~/database/common/CUC||||1
+#
+#
+#------------------------------------------------------------------------
+# Metadata Configuration File (MCF) is a template to be filled in by the
+# Instrument teams.  MCFWrite.temp is a scratch file used to dump the MCF
+# prior to writing to the hdf file. GetAttr.temp is similarly used to
+# dump metadata from the hdf attributes and is used by PGS_MET_GetPCAttr.
+# (DO NOT REMOVE THESE ENTRIES)
+#------------------------------------------------------------------------
+10250|MCF|/user2/nakamura/L1BOA||||1
+10252|GetAttr.temp|/user2/nakamura/L1BOA||||1
+10254|MCFWrite.temp|/user2/nakamura/L1BOA||||1
+4000|ML3LOG.001.MCF|/software/mlsdev/files/v0.5/MCF/l3||||1
+4001|ML3DCLO.001.MCF|/software/mlsdev/files/v0.5/MCF/l3||||1
+4002|ML3DH2O.001.MCF|/software/mlsdev/files/v0.5/MCF/l3||||1
+4003|ML3DHCL.001.MCF|/software/mlsdev/files/v0.5/MCF/l3||||1
+4004|ML3DHCN.001.MCF|/software/mlsdev/files/v0.5/MCF/l3||||1
+4005|ML3DHNO3.001.MCF|/software/mlsdev/files/v0.5/MCF/l3||||1
+4006|ML3DN2O.001.MCF|/software/mlsdev/files/v0.5/MCF/l3||||1
+4007|ML3DO3.001.MCF|/software/mlsdev/files/v0.5/MCF/l3||||1
+4008|ML3DOH.001.MCF|/software/mlsdev/files/v0.5/MCF/l3||||1
+4009|ML3DT.001.MCF|/software/mlsdev/files/v0.5/MCF/l3||||1
+4010|ML3DZ.001.MCF|/software/mlsdev/files/v0.5/MCF/l3||||1
+4011|ML3DZMS.001.MCF|/software/mlsdev/files/v0.5/MCF/l3||||1
+4012|ML3DZMD.001.MCF|/software/mlsdev/files/v0.5/MCF/l3||||1
+#
+#
+# -----------------------------------------------------------------------
+# Ephemeris and Attitude files logical IDs.
+# Emphemeris files will be accessed via the logical ID 10501.
+# Attitude files will be accessed via the logical ID 10502.
+# Use file versions to allow for multiple physical ephemeris
+# or attitude files.
+# -----------------------------------------------------------------------
+#
+10501|EOSCHEM_1996-02-29.eph|/data/emls/l0other/v0.5/1996||||29
+10501|EOSCHEM_1996-02-28.eph|/data/emls/l0other/v0.5/1996||||28
+10501|EOSCHEM_1996-02-27.eph|/data/emls/l0other/v0.5/1996||||27
+10501|EOSCHEM_1996-02-26.eph|/data/emls/l0other/v0.5/1996||||26
+10501|EOSCHEM_1996-02-25.eph|/data/emls/l0other/v0.5/1996||||25
+10501|EOSCHEM_1996-02-24.eph|/data/emls/l0other/v0.5/1996||||24
+10501|EOSCHEM_1996-02-23.eph|/data/emls/l0other/v0.5/1996||||23
+10501|EOSCHEM_1996-02-22.eph|/data/emls/l0other/v0.5/1996||||22
+10501|EOSCHEM_1996-02-21.eph|/data/emls/l0other/v0.5/1996||||21
+10501|EOSCHEM_1996-02-20.eph|/data/emls/l0other/v0.5/1996||||20
+10501|EOSCHEM_1996-02-19.eph|/data/emls/l0other/v0.5/1996||||19
+10501|EOSCHEM_1996-02-18.eph|/data/emls/l0other/v0.5/1996||||18
+10501|EOSCHEM_1996-02-17.eph|/data/emls/l0other/v0.5/1996||||17
+10501|EOSCHEM_1996-02-16.eph|/data/emls/l0other/v0.5/1996||||16
+10501|EOSCHEM_1996-02-15.eph|/data/emls/l0other/v0.5/1996||||15
+10501|EOSCHEM_1996-02-14.eph|/data/emls/l0other/v0.5/1996||||14
+10501|EOSCHEM_1996-02-13.eph|/data/emls/l0other/v0.5/1996||||13
+10501|EOSCHEM_1996-02-12.eph|/data/emls/l0other/v0.5/1996||||12
+10501|EOSCHEM_1996-02-11.eph|/data/emls/l0other/v0.5/1996||||11
+10501|EOSCHEM_1996-02-10.eph|/data/emls/l0other/v0.5/1996||||10
+10501|EOSCHEM_1996-02-09.eph|/data/emls/l0other/v0.5/1996||||9
+10501|EOSCHEM_1996-02-08.eph|/data/emls/l0other/v0.5/1996||||8
+10501|EOSCHEM_1996-02-07.eph|/data/emls/l0other/v0.5/1996||||7
+10501|EOSCHEM_1996-02-06.eph|/data/emls/l0other/v0.5/1996||||6
+10501|EOSCHEM_1996-02-05.eph|/data/emls/l0other/v0.5/1996||||5
+10501|EOSCHEM_1996-02-04.eph|/data/emls/l0other/v0.5/1996||||4
+10501|EOSCHEM_1996-02-03.eph|/data/emls/l0other/v0.5/1996||||3
+10501|EOSCHEM_1996-02-02.eph|/data/emls/l0other/v0.5/1996||||2
+10501|EOSCHEM_1996-02-01.eph|/data/emls/l0other/v0.5/1996||||1
+10502|EOSCHEM_1996-02-29.att|/data/emls/l0other/v0.5/1996||||29
+10502|EOSCHEM_1996-02-28.att|/data/emls/l0other/v0.5/1996||||28
+10502|EOSCHEM_1996-02-27.att|/data/emls/l0other/v0.5/1996||||27
+10502|EOSCHEM_1996-02-26.att|/data/emls/l0other/v0.5/1996||||26
+10502|EOSCHEM_1996-02-25.att|/data/emls/l0other/v0.5/1996||||25
+10502|EOSCHEM_1996-02-24.att|/data/emls/l0other/v0.5/1996||||24
+10502|EOSCHEM_1996-02-23.att|/data/emls/l0other/v0.5/1996||||23
+10502|EOSCHEM_1996-02-22.att|/data/emls/l0other/v0.5/1996||||22
+10502|EOSCHEM_1996-02-21.att|/data/emls/l0other/v0.5/1996||||21
+10502|EOSCHEM_1996-02-20.att|/data/emls/l0other/v0.5/1996||||20
+10502|EOSCHEM_1996-02-19.att|/data/emls/l0other/v0.5/1996||||19
+10502|EOSCHEM_1996-02-18.att|/data/emls/l0other/v0.5/1996||||18
+10502|EOSCHEM_1996-02-17.att|/data/emls/l0other/v0.5/1996||||17
+10502|EOSCHEM_1996-02-16.att|/data/emls/l0other/v0.5/1996||||16
+10502|EOSCHEM_1996-02-15.att|/data/emls/l0other/v0.5/1996||||15
+10502|EOSCHEM_1996-02-14.att|/data/emls/l0other/v0.5/1996||||14
+10502|EOSCHEM_1996-02-13.att|/data/emls/l0other/v0.5/1996||||13
+10502|EOSCHEM_1996-02-12.att|/data/emls/l0other/v0.5/1996||||12
+10502|EOSCHEM_1996-02-11.att|/data/emls/l0other/v0.5/1996||||11
+10502|EOSCHEM_1996-02-10.att|/data/emls/l0other/v0.5/1996||||10
+10502|EOSCHEM_1996-02-09.att|/data/emls/l0other/v0.5/1996||||9
+10502|EOSCHEM_1996-02-08.att|/data/emls/l0other/v0.5/1996||||8
+10502|EOSCHEM_1996-02-07.att|/data/emls/l0other/v0.5/1996||||7
+10502|EOSCHEM_1996-02-06.att|/data/emls/l0other/v0.5/1996||||6
+10502|EOSCHEM_1996-02-05.att|/data/emls/l0other/v0.5/1996||||5
+10502|EOSCHEM_1996-02-04.att|/data/emls/l0other/v0.5/1996||||4
+10502|EOSCHEM_1996-02-03.att|/data/emls/l0other/v0.5/1996||||3
+10502|EOSCHEM_1996-02-02.att|/data/emls/l0other/v0.5/1996||||2
+10502|EOSCHEM_1996-02-01.att|/data/emls/l0other/v0.5/1996||||1
+#
+#------------------------------------------------------------------------
+# Datasets for PGS_DEM tools.
+# A dataset of a given resolution is accessed via a single logical ID,
+# therefore all physical files comprising a data set must be accessed
+# via the same logical ID.  Use file versions to allow for multiple
+# physical files within a single data set.
+# Data files of 30 arc-sec resolution will be accessed via the
+# logical ID 10650.
+# Data files of 3 arc-sec resolution will be accessed via the
+# logical ID 10653.
+# NOTE: The file names in each entry must also appear in the attribute
+#       column of the entry (this is a requirement of the metadata tools).
+#       The entries given below are "template" entries and should be
+#       replaced with actual file name/location data before attempting
+#       to use the DEM tools.
+#------------------------------------------------------------------------
+#
+10650|DEM30ARC_NAME.hdf|DEM_LOCATION|||DEM30ARC_NAME.hdf|1
+10653|DEM3ARC_NAME.hdf|DEM_LOCATION|||DEM3ARC_NAME.hdf|1
+#
+?   PRODUCT OUTPUT FILES
+#########################################################################
+#
+# This section is intended for standard product outputs, i.e., HDF-EOS
+# files generated by this PGE.
+#
+# Each logical ID may have several file instances, as given by the
+# version number in the last field.
+#
+#########################################################################
+#
+# Next line is the default location for PRODUCT OUTPUT FILES
+!  ~/runtime
+#
+100|MLS-Aura_L3LOG_Daily_V0-7-C01_1996-042:1996-051.dat|/user2/nakamura/L1BOA||||1
+30000|MLS-Aura_L3DM_ClO_V0-7-C01_1996-042.dat|/user2/nakamura/L1BOA||||1
+30001|MLS-Aura_L3DM_ClO_V0-7-C01_1996-043.dat|/user2/nakamura/L1BOA||||1
+30002|MLS-Aura_L3DM_ClO_V0-7-C01_1996-044.dat|/user2/nakamura/L1BOA||||1
+30003|MLS-Aura_L3DM_ClO_V0-7-C01_1996-045.dat|/user2/nakamura/L1BOA||||1
+30004|MLS-Aura_L3DM_ClO_V0-7-C01_1996-046.dat|/user2/nakamura/L1BOA||||1
+30005|MLS-Aura_L3DM_ClO_V0-7-C01_1996-047.dat|/user2/nakamura/L1BOA||||1
+30006|MLS-Aura_L3DM_ClO_V0-7-C01_1996-048.dat|/user2/nakamura/L1BOA||||1
+30007|MLS-Aura_L3DM_ClO_V0-7-C01_1996-049.dat|/user2/nakamura/L1BOA||||1
+30008|MLS-Aura_L3DM_ClO_V0-7-C01_1996-050.dat|/user2/nakamura/L1BOA||||1
+30009|MLS-Aura_L3DM_ClO_V0-7-C01_1996-051.dat|/user2/nakamura/L1BOA||||1
+30010|MLS-Aura_L3DM_H2O_V0-7-C01_1996-042.dat|/user2/nakamura/L1BOA||||1
+30011|MLS-Aura_L3DM_H2O_V0-7-C01_1996-043.dat|/user2/nakamura/L1BOA||||1
+30012|MLS-Aura_L3DM_H2O_V0-7-C01_1996-044.dat|/user2/nakamura/L1BOA||||1
+30013|MLS-Aura_L3DM_H2O_V0-7-C01_1996-045.dat|/user2/nakamura/L1BOA||||1
+30014|MLS-Aura_L3DM_H2O_V0-7-C01_1996-046.dat|/user2/nakamura/L1BOA||||1
+30015|MLS-Aura_L3DM_H2O_V0-7-C01_1996-047.dat|/user2/nakamura/L1BOA||||1
+30016|MLS-Aura_L3DM_H2O_V0-7-C01_1996-048.dat|/user2/nakamura/L1BOA||||1
+30017|MLS-Aura_L3DM_H2O_V0-7-C01_1996-049.dat|/user2/nakamura/L1BOA||||1
+30018|MLS-Aura_L3DM_H2O_V0-7-C01_1996-050.dat|/user2/nakamura/L1BOA||||1
+30019|MLS-Aura_L3DM_H2O_V0-7-C01_1996-051.dat|/user2/nakamura/L1BOA||||1
+30020|MLS-Aura_L3DM_HCl_V0-7-C01_1996-042.dat|/user2/nakamura/L1BOA||||1
+30021|MLS-Aura_L3DM_HCl_V0-7-C01_1996-043.dat|/user2/nakamura/L1BOA||||1
+30022|MLS-Aura_L3DM_HCl_V0-7-C01_1996-044.dat|/user2/nakamura/L1BOA||||1
+30023|MLS-Aura_L3DM_HCl_V0-7-C01_1996-045.dat|/user2/nakamura/L1BOA||||1
+30024|MLS-Aura_L3DM_HCl_V0-7-C01_1996-046.dat|/user2/nakamura/L1BOA||||1
+30025|MLS-Aura_L3DM_HCl_V0-7-C01_1996-047.dat|/user2/nakamura/L1BOA||||1
+30026|MLS-Aura_L3DM_HCl_V0-7-C01_1996-048.dat|/user2/nakamura/L1BOA||||1
+30027|MLS-Aura_L3DM_HCl_V0-7-C01_1996-049.dat|/user2/nakamura/L1BOA||||1
+30028|MLS-Aura_L3DM_HCl_V0-7-C01_1996-050.dat|/user2/nakamura/L1BOA||||1
+30029|MLS-Aura_L3DM_HCl_V0-7-C01_1996-051.dat|/user2/nakamura/L1BOA||||1
+30030|MLS-Aura_L3DM_HCN_V0-7-C01_1996-042.dat|/user2/nakamura/L1BOA||||1
+30031|MLS-Aura_L3DM_HCN_V0-7-C01_1996-043.dat|/user2/nakamura/L1BOA||||1
+30032|MLS-Aura_L3DM_HCN_V0-7-C01_1996-044.dat|/user2/nakamura/L1BOA||||1
+30033|MLS-Aura_L3DM_HCN_V0-7-C01_1996-045.dat|/user2/nakamura/L1BOA||||1
+30034|MLS-Aura_L3DM_HCN_V0-7-C01_1996-046.dat|/user2/nakamura/L1BOA||||1
+30035|MLS-Aura_L3DM_HCN_V0-7-C01_1996-047.dat|/user2/nakamura/L1BOA||||1
+30036|MLS-Aura_L3DM_HCN_V0-7-C01_1996-048.dat|/user2/nakamura/L1BOA||||1
+30037|MLS-Aura_L3DM_HCN_V0-7-C01_1996-049.dat|/user2/nakamura/L1BOA||||1
+30038|MLS-Aura_L3DM_HCN_V0-7-C01_1996-050.dat|/user2/nakamura/L1BOA||||1
+30039|MLS-Aura_L3DM_HCN_V0-7-C01_1996-051.dat|/user2/nakamura/L1BOA||||1
+30040|MLS-Aura_L3DM_HNO3_V0-7-C01_1996-042.dat|/user2/nakamura/L1BOA||||1
+30041|MLS-Aura_L3DM_HNO3_V0-7-C01_1996-043.dat|/user2/nakamura/L1BOA||||1
+30042|MLS-Aura_L3DM_HNO3_V0-7-C01_1996-044.dat|/user2/nakamura/L1BOA||||1
+30043|MLS-Aura_L3DM_HNO3_V0-7-C01_1996-045.dat|/user2/nakamura/L1BOA||||1
+30044|MLS-Aura_L3DM_HNO3_V0-7-C01_1996-046.dat|/user2/nakamura/L1BOA||||1
+30045|MLS-Aura_L3DM_HNO3_V0-7-C01_1996-047.dat|/user2/nakamura/L1BOA||||1
+30046|MLS-Aura_L3DM_HNO3_V0-7-C01_1996-048.dat|/user2/nakamura/L1BOA||||1
+30047|MLS-Aura_L3DM_HNO3_V0-7-C01_1996-049.dat|/user2/nakamura/L1BOA||||1
+30048|MLS-Aura_L3DM_HNO3_V0-7-C01_1996-050.dat|/user2/nakamura/L1BOA||||1
+30049|MLS-Aura_L3DM_HNO3_V0-7-C01_1996-051.dat|/user2/nakamura/L1BOA||||1
+30050|MLS-Aura_L3DM_N2O_V0-7-C01_1996-042.dat|/user2/nakamura/L1BOA||||1
+30051|MLS-Aura_L3DM_N2O_V0-7-C01_1996-043.dat|/user2/nakamura/L1BOA||||1
+30052|MLS-Aura_L3DM_N2O_V0-7-C01_1996-044.dat|/user2/nakamura/L1BOA||||1
+30053|MLS-Aura_L3DM_N2O_V0-7-C01_1996-045.dat|/user2/nakamura/L1BOA||||1
+30054|MLS-Aura_L3DM_N2O_V0-7-C01_1996-046.dat|/user2/nakamura/L1BOA||||1
+30055|MLS-Aura_L3DM_N2O_V0-7-C01_1996-047.dat|/user2/nakamura/L1BOA||||1
+30056|MLS-Aura_L3DM_N2O_V0-7-C01_1996-048.dat|/user2/nakamura/L1BOA||||1
+30057|MLS-Aura_L3DM_N2O_V0-7-C01_1996-049.dat|/user2/nakamura/L1BOA||||1
+30058|MLS-Aura_L3DM_N2O_V0-7-C01_1996-050.dat|/user2/nakamura/L1BOA||||1
+30059|MLS-Aura_L3DM_N2O_V0-7-C01_1996-051.dat|/user2/nakamura/L1BOA||||1
+30060|MLS-Aura_L3DM_O3_V0-7-C01_1996-042.dat|/user2/nakamura/L1BOA||||1
+30061|MLS-Aura_L3DM_O3_V0-7-C01_1996-043.dat|/user2/nakamura/L1BOA||||1
+30062|MLS-Aura_L3DM_O3_V0-7-C01_1996-044.dat|/user2/nakamura/L1BOA||||1
+30063|MLS-Aura_L3DM_O3_V0-7-C01_1996-045.dat|/user2/nakamura/L1BOA||||1
+30064|MLS-Aura_L3DM_O3_V0-7-C01_1996-046.dat|/user2/nakamura/L1BOA||||1
+30065|MLS-Aura_L3DM_O3_V0-7-C01_1996-047.dat|/user2/nakamura/L1BOA||||1
+30066|MLS-Aura_L3DM_O3_V0-7-C01_1996-048.dat|/user2/nakamura/L1BOA||||1
+30067|MLS-Aura_L3DM_O3_V0-7-C01_1996-049.dat|/user2/nakamura/L1BOA||||1
+30068|MLS-Aura_L3DM_O3_V0-7-C01_1996-050.dat|/user2/nakamura/L1BOA||||1
+30069|MLS-Aura_L3DM_O3_V0-7-C01_1996-051.dat|/user2/nakamura/L1BOA||||1
+30070|MLS-Aura_L3DM_OH_V0-7-C01_1996-042.dat|/user2/nakamura/L1BOA||||1
+30071|MLS-Aura_L3DM_OH_V0-7-C01_1996-043.dat|/user2/nakamura/L1BOA||||1
+30072|MLS-Aura_L3DM_OH_V0-7-C01_1996-044.dat|/user2/nakamura/L1BOA||||1
+30073|MLS-Aura_L3DM_OH_V0-7-C01_1996-045.dat|/user2/nakamura/L1BOA||||1
+30074|MLS-Aura_L3DM_OH_V0-7-C01_1996-046.dat|/user2/nakamura/L1BOA||||1
+30075|MLS-Aura_L3DM_OH_V0-7-C01_1996-047.dat|/user2/nakamura/L1BOA||||1
+30076|MLS-Aura_L3DM_OH_V0-7-C01_1996-048.dat|/user2/nakamura/L1BOA||||1
+30077|MLS-Aura_L3DM_OH_V0-7-C01_1996-049.dat|/user2/nakamura/L1BOA||||1
+30078|MLS-Aura_L3DM_OH_V0-7-C01_1996-050.dat|/user2/nakamura/L1BOA||||1
+30079|MLS-Aura_L3DM_OH_V0-7-C01_1996-051.dat|/user2/nakamura/L1BOA||||1
+30080|MLS-Aura_L3DM_T_V0-7-C01_1996-042.dat|/user2/nakamura/L1BOA||||1
+30081|MLS-Aura_L3DM_T_V0-7-C01_1996-043.dat|/user2/nakamura/L1BOA||||1
+30082|MLS-Aura_L3DM_T_V0-7-C01_1996-044.dat|/user2/nakamura/L1BOA||||1
+30083|MLS-Aura_L3DM_T_V0-7-C01_1996-045.dat|/user2/nakamura/L1BOA||||1
+30084|MLS-Aura_L3DM_T_V0-7-C01_1996-046.dat|/user2/nakamura/L1BOA||||1
+30085|MLS-Aura_L3DM_T_V0-7-C01_1996-047.dat|/user2/nakamura/L1BOA||||1
+30086|MLS-Aura_L3DM_T_V0-7-C01_1996-048.dat|/user2/nakamura/L1BOA||||1
+30087|MLS-Aura_L3DM_T_V0-7-C01_1996-049.dat|/user2/nakamura/L1BOA||||1
+30088|MLS-Aura_L3DM_T_V0-7-C01_1996-050.dat|/user2/nakamura/L1BOA||||1
+30089|MLS-Aura_L3DM_T_V0-7-C01_1996-051.dat|/user2/nakamura/L1BOA||||1
+30090|MLS-Aura_L3DM_Z_V0-7-C01_1996-042.dat|/user2/nakamura/L1BOA||||1
+30091|MLS-Aura_L3DM_Z_V0-7-C01_1996-043.dat|/user2/nakamura/L1BOA||||1
+30092|MLS-Aura_L3DM_Z_V0-7-C01_1996-044.dat|/user2/nakamura/L1BOA||||1
+30093|MLS-Aura_L3DM_Z_V0-7-C01_1996-045.dat|/user2/nakamura/L1BOA||||1
+30094|MLS-Aura_L3DM_Z_V0-7-C01_1996-046.dat|/user2/nakamura/L1BOA||||1
+30095|MLS-Aura_L3DM_Z_V0-7-C01_1996-047.dat|/user2/nakamura/L1BOA||||1
+30096|MLS-Aura_L3DM_Z_V0-7-C01_1996-048.dat|/user2/nakamura/L1BOA||||1
+30097|MLS-Aura_L3DM_Z_V0-7-C01_1996-049.dat|/user2/nakamura/L1BOA||||1
+30098|MLS-Aura_L3DM_Z_V0-7-C01_1996-050.dat|/user2/nakamura/L1BOA||||1
+30099|MLS-Aura_L3DM_Z_V0-7-C01_1996-051.dat|/user2/nakamura/L1BOA||||1
+31000|MLS-Aura_L3SP_ClO_V0-7-C01_1996-032:1996-060.dat|/user2/nakamura/L1BOA||||1
+31001|MLS-Aura_L3SP_H2O_V0-7-C01_1996-032:1996-060.dat|/user2/nakamura/L1BOA||||1
+31002|MLS-Aura_L3SP_HCl_V0-7-C01_1996-032:1996-060.dat|/user2/nakamura/L1BOA||||1
+31003|MLS-Aura_L3SP_HCN_V0-7-C01_1996-032:1996-060.dat|/user2/nakamura/L1BOA||||1
+31004|MLS-Aura_L3SP_HNO3_V0-7-C01_1996-032:1996-060.dat|/user2/nakamura/L1BOA||||1
+31005|MLS-Aura_L3SP_N2O_V0-7-C01_1996-032:1996-060.dat|/user2/nakamura/L1BOA||||1
+31006|MLS-Aura_L3SP_O3_V0-7-C01_1996-032:1996-060.dat|/user2/nakamura/L1BOA||||1
+31007|MLS-Aura_L3SP_OH_V0-7-C01_1996-032:1996-060.dat|/user2/nakamura/L1BOA||||1
+31008|MLS-Aura_L3SP_T_V0-7-C01_1996-032:1996-060.dat|/user2/nakamura/L1BOA||||1
+31009|MLS-Aura_L3SP_Z_V0-7-C01_1996-032:1996-060.dat|/user2/nakamura/L1BOA||||1
+31100|MLS-Aura_L3DZ_Standard_V0-7-C01_1996-042.dat|/user2/nakamura/L1BOA||||1
+31101|MLS-Aura_L3DZ_Standard_V0-7-C01_1996-043.dat|/user2/nakamura/L1BOA||||1
+31102|MLS-Aura_L3DZ_Standard_V0-7-C01_1996-044.dat|/user2/nakamura/L1BOA||||1
+31103|MLS-Aura_L3DZ_Standard_V0-7-C01_1996-045.dat|/user2/nakamura/L1BOA||||1
+31104|MLS-Aura_L3DZ_Standard_V0-7-C01_1996-046.dat|/user2/nakamura/L1BOA||||1
+31105|MLS-Aura_L3DZ_Standard_V0-7-C01_1996-047.dat|/user2/nakamura/L1BOA||||1
+31106|MLS-Aura_L3DZ_Standard_V0-7-C01_1996-048.dat|/user2/nakamura/L1BOA||||1
+31107|MLS-Aura_L3DZ_Standard_V0-7-C01_1996-049.dat|/user2/nakamura/L1BOA||||1
+31108|MLS-Aura_L3DZ_Standard_V0-7-C01_1996-050.dat|/user2/nakamura/L1BOA||||1
+31109|MLS-Aura_L3DZ_Standard_V0-7-C01_1996-051.dat|/user2/nakamura/L1BOA||||1
+#
+#------------------------------------------------------------------------
+# This file is created when PGS_MET_Write is used with an intention
+# to write an ASCII representation of the MCF in memory. The user is
+# allowed to change the name and path if required.
+#
+# NOTE: THIS IS OBSOLETE, THIS ENTRY IS ONLY HERE FOR BACKWARD
+#       COMPATIBILITY WITH PREVIOUS VERSIONS OF THE TOOLKIT.
+#       THE LOGICAL ID 10255 SHOULD BE MOVED DOWN TO THE RUNTIME
+#       PARAMETERS SECTION OF THIS FILE AND GIVEN A VALUE OF:
+#       <logical_id>:<version_number> WHERE THOSE VALUES REFLECT THE
+#       ACTUAL VALUES FOR THE NON-HDF OUTPUT PRODUCT FOR WHICH THE
+#       ASCII METADATA IS BEING WRITTEN.  e.g.:
+#       10255|reference output product|100:2
+#
+#------------------------------------------------------------------------
+10255|asciidump|||||1
+# -----------------------------------------------------------------------
+#
+?   SUPPORT INPUT FILES
+#########################################################################
+#
+# This section is intended for minor input files, e.g., calibration
+# files.
+#
+# Each logical ID may have several file instances, as given by the
+# version number in the last field.
+#
+#########################################################################
+#
+# Next line is the default location for SUPPORT INPUT FILES
+!  ~/runtime
+#
+#  
+# -----------------------------------------------------------------------
+# This ID is #defined in PGS_AA_Tools.h
+# This file contains the IDs for all support and format files (listed
+# below).  This entry may be deleted or commented out if the AA tools are
+# not being used.
+# -----------------------------------------------------------------------
+10900|indexFile|~/database/common/AA||||1
+#
+# -----------------------------------------------------------------------
+# These are support files for the data set files - to be created by user
+# (not necessarily a one-to-one relationship).
+# The IDs must correspond to the logical IDs in the index file (above).
+# These entries may be deleted or commented out if the AA tools are not
+# being used.
+# -----------------------------------------------------------------------
+10901|mowe13aSupport|~/database/common/AA||||1
+10902|owe13aSupport|~/database/common/AA||||1
+10903|owe14Support|~/database/common/AA||||1
+10904|etop05Support|~/database/common/AA||||1
+10905|fnoc1Support|~/database/common/AA||||1
+10906|fnoc2Support|~/database/common/AA||||1
+10907|zobler1Support|~/database/common/AA||||1
+10908|zobler2Support|~/database/common/AA||||1
+10909|nmcRucSupport|~/database/common/AA||||1
+10915|tbaseSupport|~/database/common/AA||||1
+10916|tbase1Support|~/database/common/AA||||1
+10917|tbase2Support|~/database/common/AA||||1
+10918|tbase3Support|~/database/common/AA||||1
+10919|tbase4Support|~/database/common/AA||||1
+10740|usatile1Support|~/database/common/AA||||1
+10741|usatile2Support|~/database/common/AA||||1
+10742|usatile3Support|~/database/common/AA||||1
+10743|usatile4Support|~/database/common/AA||||1
+10744|usatile5Support|~/database/common/AA||||1
+10745|usatile6Support|~/database/common/AA||||1
+10746|usatile7Support|~/database/common/AA||||1
+10747|usatile8Support|~/database/common/AA||||1
+10748|usatile9Support|~/database/common/AA||||1
+10749|usatile10Support|~/database/common/AA||||1
+10750|usatile11Support|~/database/common/AA||||1
+10751|usatile12Support|~/database/common/AA||||1
+10948|geoidSupport|~/database/common/AA||||1
+#
+# -----------------------------------------------------------------------
+# The following are format files for each data set file (not necessarily
+# a one-to-one relationship).  # The IDs must correspond to the logical
+# IDs in the index file (10900, above).
+# These entries may be deleted or commented out if the AA tools are not
+# being used.
+# -----------------------------------------------------------------------
+10920|mowe13a.bfm|~/database/common/AA||||1
+10921|owe13a.bfm|~/database/common/AA||||1
+10922|owe14d.bfm|~/database/common/AA||||1
+10923|owe14dr.bfm|~/database/common/AA||||1
+10924|etop05.bfm|~/database/common/AA||||1
+10925|fnocAzm.bfm|~/database/common/AA||||1
+10926|fnocOcm.bfm|~/database/common/AA||||1
+10927|fnocPt.bfm|~/database/common/AA||||1
+10928|fnocRdg.bfm|~/database/common/AA||||1
+10929|fnocSt.bfm|~/database/common/AA||||1
+10930|fnocUrb.bfm|~/database/common/AA||||1
+10931|fnocWat.bfm|~/database/common/AA||||1
+10932|fnocMax.bfm|~/database/common/AA||||1
+10933|fnocMin.bfm|~/database/common/AA||||1
+10934|fnocMod.bfm|~/database/common/AA||||1
+10935|srzArea.bfm|~/database/common/AA||||1
+10936|srzCode.bfm|~/database/common/AA||||1
+10937|srzPhas.bfm|~/database/common/AA||||1
+10938|srzSlop.bfm|~/database/common/AA||||1
+10939|srzSoil.bfm|~/database/common/AA||||1
+10940|srzText.bfm|~/database/common/AA||||1
+10941|nmcRucSigPotPres.bfm|~/database/common/AA||||1
+10942|tbase.bfm|~/database/common/AA||||1
+10943|tbase1.bfm|~/database/common/AA||||1
+10944|tbase2.bfm|~/database/common/AA||||1
+10945|tbase3.bfm|~/database/common/AA||||1
+10946|tbase4.bfm|~/database/common/AA||||1
+10700|usatile1.bfm|~/database/common/AA||||1
+10701|usatile2.bfm|~/database/common/AA||||1
+10702|usatile3.bfm|~/database/common/AA||||1
+10703|usatile4.bfm|~/database/common/AA||||1
+10704|usatile5.bfm|~/database/common/AA||||1
+10705|usatile6.bfm|~/database/common/AA||||1
+10706|usatile7.bfm|~/database/common/AA||||1
+10707|usatile8.bfm|~/database/common/AA||||1
+10708|usatile9.bfm|~/database/common/AA||||1
+10709|usatile10.bfm|~/database/common/AA||||1
+10710|usatile11.bfm|~/database/common/AA||||1
+10711|usatile12.bfm|~/database/common/AA||||1
+10947|geoid.bfm|~/database/common/AA||||1
+#
+#
+# -----------------------------------------------------------------------
+# leap seconds (TAI-UTC) file (DO NOT REMOVE THIS ENTRY)
+# -----------------------------------------------------------------------
+#10301|leapsec.dat|~/database/common/TD||||1
+10301|leapsec.sids|/data/emls/l0other/v0.5||||1
+#
+# -----------------------------------------------------------------------
+# polar motion and UTC-UT1 file (DO NOT REMOVE THIS ENTRY)
+# -----------------------------------------------------------------------
+#10401|utcpole.dat|~/database/common/CSC||||1
+10401|utcpole.sids|/data/emls/l0other/v0.5||||1
+#
+# -----------------------------------------------------------------------
+# earth model tags file (DO NOT REMOVE THIS ENTRY)
+# -----------------------------------------------------------------------
+10402|earthfigure.dat|~/database/common/CSC||||1
+#
+# -----------------------------------------------------------------------
+# JPL planetary ephemeris file (binary form) (DO NOT REMOVE THIS ENTRY)
+# -----------------------------------------------------------------------
+10601|de200.eos|~/database/sun5/CBP||||1
+#
+# -----------------------------------------------------------------------
+# spacecraft tag definition file (DO NOT REMOVE THIS ENTRY)
+# -----------------------------------------------------------------------
+10801|sc_tags.dat|~/database/common/EPH||||1
+#
+# -----------------------------------------------------------------------
+# units conversion definition file (DO NOT REMOVE THIS ENTRY)
+# -----------------------------------------------------------------------
+10302|udunits.dat|~/database/common/CUC||||1
+#
+#
+?   SUPPORT OUTPUT FILES 
+#########################################################################
+#
+# This section is intended for minor output files, e.g., log files.
+#
+# Each logical ID may have several file instances, as given by the
+# version number in the last field.
+#
+#########################################################################
+#
+# Next line is default location for SUPPORT OUTPUT FILES
+!  ~/runtime
+#
+#
+# -----------------------------------------------------------------------
+# These files support the SMF log functionality. Each run will cause
+# status information to be written to 1 or more of the Log files. To
+# simulate DAAC operations, remove the 3 Logfiles between test runs.
+# Remember: all executables within a PGE will contribute status data to 
+# the same batch of log files. (DO NOT REMOVE THESE ENTRIES)
+# -----------------------------------------------------------------------
+10100|LogStatus|/user2/nakamura/L1BOA||||1
+10101|MLS-Aura_L3LOG_Daily_V0-7-C01_1996-042:1996-051.dat|/user2/nakamura/L1BOA||||1
+10102|LogUser|/user2/nakamura/L1BOA||||1
+10103|TmpStatus|||||1
+10104|TmpReport|||||1
+10105|TmpUser|||||1
+10110|MailFile|||||1
+#
+# -----------------------------------------------------------------------
+# ASCII file which stores pointers to runtime SMF files in lieu of 
+# loading them to shared memory, which is a TK5 enhancement.
+# (DO NOT REMOVE THIS ENTRY)
+# -----------------------------------------------------------------------
+10111|ShmMem|||||1
+#
+#  
+?   USER DEFINED RUNTIME PARAMETERS
+#########################################################################
+#
+# This section is intended for parameters used as PGE input.
+#
+# Note: these parameters may NOT be changed dynamically.
+#
+#########################################################################
+#
+101|ProductMetadataFile|100:1
+3000|OutputVersion|V0-7
+3001|Cycle|1
+3002|L2DayRange|1996-032:1996-060
+3003|RangDays|1996-042:1996-051
+#
+# -----------------------------------------------------------------------
+# These parameters are required to support the PGS_SMF_Send...() tools.
+# If the first parameter (TransmitFlag) is disabled, then none of the
+# other parameters need to be set. By default, this functionality has been
+# disabled. To enable, set TransmitFlag to 1 and supply the other 3 
+# parameters with local information. (DO NOT REMOVE THESE ENTRIES)
+# -----------------------------------------------------------------------
+10109|TransmitFlag; 1=transmit,0=disable|0
+10106|RemoteHost|sandcrab
+10107|RemotePath|/usr/kwan/test/PC/data
+10108|EmailAddresses|kwan@eos.hitc.com
+#
+# -----------------------------------------------------------------------
+# The following runtime parameters define various logging options.
+# Parameters described as lists should be space (i.e. ' ') separated.
+# The logical IDs 10117, 10118, 10119 listed below are for OPTIONAL
+# control of SMF logging.  Any of these logical IDs which is unused by a
+# PGE may be safely commented out (e.g. if logging is not disabled for
+# any status level, then the line beginning 10117 may be commented out).
+# -----------------------------------------------------------------------
+10114|Logging Control; 0=disable logging, 1=enable logging|1
+10115|Trace Control; 0=no trace, 1=error trace, 2=full trace|0
+10116|Process ID logging; 0=don't log PID, 1=log PID|0
+#10117|Disabled status level list (e.g. W S F)|
+#10118|Disabled seed list|
+#10119|Disabled status code list|
+#
+# -----------------------------------------------------------------------
+# Toolkit version for which this PCF was intended.
+# DO NOT REMOVE THIS VERSION ENTRY!
+# -----------------------------------------------------------------------
+10220|Toolkit version string|SCF B.0 TK5.2.6.1
+#
+# -----------------------------------------------------------------------
+# The following parameters define the ADEOS-II TMDF values (all values
+# are assumed to be floating point types).  The ground reference time
+# should be in TAI93 format (SI seconds since 12 AM UTC 1993-01-01).
+# These formats are only prototypes and are subject to change when
+# the ADEOS-II TMDF values are clearly defined.  PGEs that do not access
+# ADEOS-II L0 data files do not require these parameters.  In this case
+# they may be safely commented out, otherwise appropriate values should
+# be supplied.
+# -----------------------------------------------------------------------
+#10120|ADEOS-II s/c reference time|
+#10121|ADEOS-II ground reference time|
+#10122|ADEOS-II s/c clock period|
+#
+# -----------------------------------------------------------------------
+# The following parameter defines the TRMM UTCF value (the value is
+# assumed to be a floating point type).  PGEs that do not access TRMM
+# data of any sort do not require this parameter.  In this case it may be
+# safely commented out, otherwise an appropriate value should be
+# supplied.
+# -----------------------------------------------------------------------
+#10123|TRMM UTCF value|
+#
+# -----------------------------------------------------------------------
+# The following parameter defines the Epoch date to be used for the
+# interpretation (conversion) of NASA PB5C times (the Epoch date should
+# be specified here in CCSDS ASCII format--A or B) (reserved for future
+# use--this quantity is not referenced in TK 5.2).  This entry may be
+# safely commented out or deleted.
+# -----------------------------------------------------------------------
+#10124|NASA PB5C time Epoch date (ASCII UTC)|
+#
+# -----------------------------------------------------------------------
+# The following parameter is a "mask" for the ephemeris data quality 
+# flag.  The value should be specified as an unsigned integer
+# specifying those bits of the ephemeris data quality flag that
+# should be considered fatal (i.e. the ephemeris data associated
+# with the quality flag should be REJECTED/IGNORED).
+# -----------------------------------------------------------------------
+10507|ephemeris data quality flag mask|65536
+#
+# -----------------------------------------------------------------------
+# The following parameter is a "mask" for the attitude data quality 
+# flag.  The value should be specified as an unsigned integer 
+# specifying those bits of the attitude data quality flag that
+# should be considered fatal (i.e. the attitude data associated
+# with the quality flag should be REJECTED/IGNORED).
+# -----------------------------------------------------------------------
+10508|attitude data quality flag mask|65536
+#
+# -----------------------------------------------------------------------
+# ECS DPS trigger for PGE debug runs
+#
+# NOTICE TO PGE DEVELOPERS: PGEs which have a debug mode
+# need to examine this parameter to evaluate activation rule
+# (DO NOT REMOVE THIS ENTRY)
+# -----------------------------------------------------------------------
+10911|ECS DEBUG; 0=normal, 1=debug|0
+#
+# -----------------------------------------------------------------------
+# This entry defines the IP address of the processing host and is used
+# by the Toolkit when generating unique Intermediate and Temporary file
+# names.  The Toolkit no longer relies on the PGS_HOST_PATH environment
+# variable to otain this information. (DO NOT REMOVE THIS ENTRY)
+# -----------------------------------------------------------------------
+10099|Local IP Address of 'ether'|155.157.31.87
+#
+?   INTERMEDIATE INPUT
+#########################################################################
+#
+# This section is intended for intermediate input files, i.e., files
+# which are output by an earlier PGE but which are not standard
+# products.
+#
+# Each logical ID may have only one file instance.
+# Last field on the line is ignored.
+#
+#########################################################################
+#
+# Next line is default location for INTERMEDIATE INPUT FILES
+!  ~/runtime
+#
+#
+?   INTERMEDIATE OUTPUT
+#########################################################################
+#
+# This section is intended for intermediate output files, i.e., files
+# which are to be input to later PGEs, but which are not standard
+# products.
+#
+# Each logical ID may have only one file instance.
+# Last field on the line is ignored.
+#
+#########################################################################
+#
+# Next line is default location for INTERMEDIATE OUTPUT FILES
+!  ~/runtime
+#
+#
+?   TEMPORARY I/O
+#########################################################################
+#
+# This section is intended for temporary files, i.e., files
+# which are generated during a PGE run and deleted at PGE termination.
+#
+# Entries in this section are generated internally by the Toolkit.
+# DO NOT MAKE MANUAL ENTRIES IN THIS SECTION.
+#
+#########################################################################
+#
+# Next line is default location for TEMPORARY FILES
+!  ~/runtime
+#
+#
+?   END
