@@ -19,7 +19,7 @@ module INIT_TABLES_MODULE
   implicit NONE
   public ! This would be a MUCH LONGER list than the list of private
   !        names below.
-  private :: ADD_IDENT, INIT_INTRINSIC, MAKE_TREE
+  private :: ADD_IDENT, MAKE_TREE
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=256), private :: Id = &
@@ -29,7 +29,6 @@ module INIT_TABLES_MODULE
 !---------------------------------------------------------------------------
 
 ! Enumeration types:
-!  integer, public, parameter :: T_METHOD         = t_last_signal+1
   integer, public, parameter :: T_METHOD         = Last_signal_type+1
   integer, public, parameter :: T_PMODE          = t_method+1
   integer, public, parameter :: T_UNITS          = t_pmode+1
@@ -107,7 +106,6 @@ contains ! =====     Public procedures     =============================
      use TREE_TYPES, only: N_DT_DEF, N_FIELD_TYPE, &
                            N_NAME_DEF, N_SECTION, N_SPEC_DEF
   ! Put intrinsic predefined identifiers into the symbol table.
-!    call init_intrinsic ( data_type_indices, lit_indices )
     call init_MLSSignals ( Data_Type_Indices, Field_Indices, Lit_Indices, &
     & Parm_Indices, Section_Indices, Spec_Indices )
   ! Put nonintrinsic predefined identifiers into the symbol table.
@@ -244,6 +242,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 1.7  2001/04/04 17:46:41  pwagner
+! compiles with new make_tree.f9h
+!
 ! Revision 1.6  2001/03/16 16:33:43  nakamura
 ! Updated for parser compatibility.
 !
