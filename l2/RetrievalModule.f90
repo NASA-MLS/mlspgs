@@ -453,11 +453,11 @@ contains
                   ! to do? Ermmm, think of this next time.
                   fmStat%maf = fmStat%maf + 1
                   do k = 1, size(configIndices)
+!??? Should we copy the relevant bits of F into FwdModelOut if
+!??? FwdModelOut exists?  Or is this only useful in the SIDS case?
                   call forwardModel ( configDatabase(configIndices(k)), &
-                    & fwdModelIn, fwdModelExtra, fwdModelOut, fmw, fmStat )
+                    & fwdModelIn, fwdModelExtra, f, fmw, fmStat )
                   end do ! k
-!??? How do we know what part of F and Measurements to use for this MAF ???
-!??? And isn't it actually FwdModelOut, not F, that ought to be used?
                   call subtractFromVector ( f, measurements )
                   aj%fnorm = aj%fnorm + ( f .dot. f )
                   call destroyVectorValue ( f )  ! free the space
@@ -496,22 +496,25 @@ contains
                 nullify ( fmStat%rows )
 
                 ! Loop over mafs
-                do while (.not. fmStat%finished )
+                do while ( .not. fmStat%finished )
                   ! What if one config set finished but others still had more
                   ! to do? Ermmm, think of this next time.
                   fmStat%maf = fmStat%maf + 1
                   do k = 1, size(configIndices)
+!??? Should we copy the relevant bits of F into FwdModelOut if
+!??? FwdModelOut exists?  Or is this only useful in the SIDS case?
                   call forwardModel ( configDatabase(configIndices(k)), &
-                    & fwdModelIn, fwdModelExtra, fwdModelOut, fmw, fmStat, &
+                    & fwdModelIn, fwdModelExtra, f, fmw, fmStat, &
                     & jacobian )
                   end do ! k
-!??? Need to get rowBlock from MAF somehow
-!??? How do we know what part of F and Measurements to use for this MAF ???
-!??? And isn't it actually FwdModelOut, not F, that ought to be used?
-                  call subtractFromVector ( f, measurements, &
-                    & jacobian%row%quant(rowBlock), &
-                    & jacobian%row%inst(rowBlock) )
-                  call fillExtraCol ( jacobian, f, rowBlock )
+                  do rowBlock = 1, size(fmStat%rows)
+                    if ( fmStat%rows(rowBlock) ) then
+                      call subtractFromVector ( f, measurements, &
+                        & jacobian%row%quant(rowBlock), &
+                        & jacobian%row%inst(rowBlock) )
+                      call fillExtraCol ( jacobian, f, rowBlock )
+                    end if
+                  end do
                   if ( got(f_weight) ) call rowScale ( weight, jacobian )
                   call formNormalEquations ( jacobian, normalEquations, &
                     & update=update )
@@ -519,9 +522,10 @@ contains
                   call clearMatrix ( jacobian )  ! free the space
                   call destroyVectorValue ( f )  ! free the space
                 end do ! mafs
+                call deallocate_test ( fmStat%rows, 'FmStat%rows', moduleName )
                 ! Compute (negative of the) gradient = -(Jacobian)**T * F.
-                ! This is the RHS of the normal equations J**T * J *
-                ! "Candidate DX" = -J**T * F:
+                ! This is the RHS of the normal equations 
+                ! J**T * J * "Candidate DX" = -J**T * F:
                 call getVectorFromColumn ( normalEquations%m, n, gradient )
                 ! Column Scale J (row and column scale J^T J):
                 select case ( columnScaling )
@@ -731,6 +735,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.18  2001/04/26 01:00:01  vsnyder
+! Get the Jacobian's row block from fmStat%rows, cosmetic changes
+!
 ! Revision 2.17  2001/04/21 01:44:43  vsnyder
 ! Make the timing message prettier
 !
