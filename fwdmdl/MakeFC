@@ -91,18 +91,18 @@ PROG=libfwdmdl.a
 
 #----------------------- Build instructions
 
-$(PROG): $(PLATFORMS)/$(MLSCONFG)/$(PROG)
-
-#$(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) $(LIB_prereqs)
-$(PLATFORMS)/$(MLSCONFG)/$(PROG): $(CONFDIR)/$(MLSCFILE) \
+$(PROG): $(CONFDIR)/$(MLSCFILE) \
    $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
+	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
+
+$(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG)
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
 
 l2_test: $(PLATFORMS)/$(MLSCONFG)/$(PROG)
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) l2_test
 
 $(libmls_objs)/libmls.a: $(LIB_prereqs) $(libmls_objs)
-	@if [ "$(SIMPLIFYMAKE)" != "" ] ; then \
+	@if [ "$(NOHUNTING)" != "" ] ; then \
 	   rm -f $(libmls_objs)/libmls.a ; \
 	fi ; \
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
@@ -166,6 +166,9 @@ targ:
 	$(TAR) hcvzf ../fwdmdl.tgz * --exclude \*.o --exclude \*.mod --exclude l2_test
 
 # $Log$
+# Revision 2.1  2001/09/25 20:27:15  pwagner
+# New SIMPLIFYMAKE setting; other changes
+#
 # Revision 2.0  2001/09/17 20:26:26  livesey
 # New forward model
 #

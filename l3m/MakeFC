@@ -107,9 +107,19 @@ PROG=mlsl3m
 
 #----------------------- Build instructions
 
-$(PROG): $(PLATFORMS)/$(MLSCONFG)/$(PROG)
+$(PROG): $(PROG_prereqs)
+	@case "$(FFTW_ROOT)" in \
+	"") \
+		echo "Sorry--FFTW_ROOT must be defined to build mlsl3" ; \
+		echo "Try make configure_pvm" ; \
+		exit 2 ; \
+		;; \
+	*) \
+		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) ; \
+		;; \
+	esac 
 
-$(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG_prereqs)
+$(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG)
 	@case "$(FFTW_ROOT)" in \
 	"") \
 		echo "Sorry--FFTW_ROOT must be defined to build mlsl3" ; \
@@ -122,14 +132,14 @@ $(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG_prereqs)
 	esac 
 
 $(libmls_objs)/libmls.a: $(LIB_prereqs) 
-	@if [ "$(SIMPLIFYMAKE)" != "" ] ; then \
+	@if [ "$(NOHUNTING)" != "" ] ; then \
 	   rm -f $(libmls_objs)/libmls.a ; \
 	fi ; \
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
 $(libmlsl3_objs)/libmlsl3.a: $(libmlsl3_f90) $(libmls_objs)/libmls.a \
                $(CONFDIR)/$(MLSCFILE) $(libmlsl3_objs)
-	@if [ "$(SIMPLIFYMAKE)" != "" ] ; then \
+	@if [ "$(NOHUNTING)" != "" ] ; then \
 	   rm -f $(libmlsl3_objs)/libmlsl3.a ; \
 	fi ; \
 	$(MAKE) -f $(MakeFName) mlsl3d -C $(libmlsl3_sources)
@@ -193,6 +203,9 @@ targ:
    --exclude \*.mod --exclude $(PROG)
 
 # $Log$
+# Revision 1.6  2001/09/25 20:27:15  pwagner
+# New SIMPLIFYMAKE setting; other changes
+#
 # Revision 1.5  2001/08/22 22:46:13  pwagner
 # Made reecho.sh a prerequisite where appropriate
 #

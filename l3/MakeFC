@@ -100,9 +100,10 @@ PROG=mlsl3d
 
 #----------------------- Build instructions
 
-$(PROG): $(PLATFORMS)/$(MLSCONFG)/$(PROG)
+$(PROG): $(PLATFORMS)/$(MLSCONFG)/libmlsl3.a
+		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
 
-$(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PLATFORMS)/$(MLSCONFG)/libmlsl3.a
+$(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG)
 		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
 
 $(PLATFORMS)/$(MLSCONFG)/libmlsl3.a: $(PROG_prereqs)
@@ -118,7 +119,7 @@ $(PLATFORMS)/$(MLSCONFG)/libmlsl3.a: $(PROG_prereqs)
 	esac 
 
 $(libmls_objs)/libmls.a: $(LIB_prereqs) $(libmls_objs)
-	@if [ "$(SIMPLIFYMAKE)" != "" ] ; then \
+	@if [ "$(NOHUNTING)" != "" ] ; then \
 	   rm -f $(libmls_objs)/libmls.a ; \
 	fi ; \
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
@@ -182,6 +183,9 @@ targ:
    --exclude \*.mod --exclude $(PROG)
 
 # $Log$
+# Revision 1.27  2001/09/25 20:27:15  pwagner
+# New SIMPLIFYMAKE setting; other changes
+#
 # Revision 1.26  2001/08/22 22:46:13  pwagner
 # Made reecho.sh a prerequisite where appropriate
 #
