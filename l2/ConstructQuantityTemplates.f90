@@ -956,12 +956,12 @@ contains ! ============= Public procedures ===================================
       L_MASSMEANDIAMETERICE, L_MASSMEANDIAMETERWATER, L_MAGNETICFIELD, &
       L_NOISEBANDWIDTH, L_NORADSPERMIF, L_NORADSBINNED, &
       L_NUMJ, L_OPTICALDEPTH, &
-      L_ORBITINCLINATION, L_PHITAN, L_PTAN, L_RADIANCE, L_EARTHRADIUS,&
+      L_ORBITINCLINATION, L_PHITAN, L_PTAN, L_QUALITY, L_RADIANCE, L_EARTHRADIUS,&
       L_REFGPH, L_REFLTEMP, L_REFLTRANS, L_REFLREFL, L_REFLSPILL, &
       L_RHI, L_SIZEDISTRIBUTION, &
       L_SCANRESIDUAL, L_SCECI, L_SCVEL, L_SCVELECI, &
       L_SCVELECR, L_SCGEOCALT, &
-      L_SPACERADIANCE, L_STRAYRADIANCE, L_SURFACETYPE, L_SYSTEMTEMPERATURE, &
+      L_SPACERADIANCE, L_STATUS, L_STRAYRADIANCE, L_SURFACETYPE, L_SYSTEMTEMPERATURE, &
       L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, L_TNGTGEOCALT, &
       L_TOTALEXTINCTION, L_VMR
     use Init_Tables_Module, only: PHYQ_EXTINCTION, PHYQ_FREQUENCY,&
@@ -1056,7 +1056,8 @@ contains ! ============= Public procedures ===================================
       l_phiTan, phyq_angle, p_minorFrame, p_module, next, & 
       l_ptan, phyq_zeta, p_minorFrame, p_module, next /) )
 
-    call DefineQtyTypes ( (/ &
+    call DefineQtyTypes ( (/ & 
+      l_quality, phyq_dimensionless, p_hGrid, next, &
       l_radiance, phyq_temperature, p_minorFrame, p_signal, next, & 
       l_refltemp, phyq_temperature, p_majorFrame, p_reflector, p_module, next, &
       l_refltrans, phyq_dimensionless, p_signal, p_reflector, next, &
@@ -1072,6 +1073,7 @@ contains ! ============= Public procedures ===================================
       l_scanResidual, phyq_length, p_minorFrame, p_module, next, &
       l_sizeDistribution, phyq_dimensionless, p_hGrid, p_vGrid, p_mustBeZeta, next, & 
       l_spaceRadiance, phyq_temperature, none, next, &
+      l_status, phyq_dimensionless, p_hGrid, next, &
       l_strayRadiance, phyq_temperature, p_signal, p_majorFrame, next, &
       l_surfaceType, phyq_dimensionless, p_hGrid, next, & 
       l_systemTemperature, phyq_temperature, p_signal, next, &
@@ -1185,6 +1187,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.107  2004/02/10 21:17:24  livesey
+! Added status and quality as valid quantity types
+!
 ! Revision 2.106  2004/01/24 01:03:46  livesey
 ! Added the adopted option etc.
 !
