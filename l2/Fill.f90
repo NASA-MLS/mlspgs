@@ -3232,12 +3232,14 @@ contains ! =====     Public Procedures     =============================
       type (VectorValue_T), intent(inout) :: QUANTITY ! (IWC) Quantity to fill
       type (VectorValue_T), intent(in) :: sourceQuantity ! cloud extinction
       type (VectorValue_T), intent(in) :: temperatureQuantity ! T(zeta)
+
       ! local variables
-      real (r8), dimension(quantity%template%noSurfs) :: z, Tz, Ez, iwc0
-      real (r8), dimension(Temperaturequantity%template%noSurfs) :: zt
-      real (r8), dimension(sourceQuantity%template%noSurfs) :: ze
-      ! new temperature on the same hGrid as in quantity
       real (r8), dimension(Temperaturequantity%template%noSurfs,quantity%template%noInstances) :: temp 
+      real (r8), dimension(Temperaturequantity%template%noSurfs) :: zt, yt
+      real (r8), dimension(sourceQuantity%template%noSurfs) :: ze, ye
+      real (r8), dimension(quantity%template%noSurfs) :: z, Tz, Ez, iwc0
+      real (r8), dimension(quantity%template%noInstances) :: x2, y2
+      real (r8), dimension(Temperaturequantity%template%noInstances) :: x1, y1
       integer :: i
      
       if(.not. (quantity%template%coherent .and. sourceQuantity%template%coherent &
@@ -3249,39 +3251,40 @@ contains ! =====     Public Procedures     =============================
         & "IWC and Extinction profile numbers are not matched")
 
       if(TemperatureQuantity%template%noInstances /= Quantity%template%noInstances) then
+         x1 = TemperatureQuantity%template%phi(1,:)
+         x2 = quantity%template%phi(1,:)
          do i=1,Temperaturequantity%template%noSurfs
-           call InterpolateValues( temp(i,:), TemperatureQuantity%values(i, :), &
-             & quantity%template%phi(1,:),TemperatureQuantity%template%phi(1,:) , 'Linear' )
+           y1 = TemperatureQuantity%values(i, :)
+           call InterpolateValues( x1, y1, x2, y2, method='Linear' )
+           temp(i,:) = y2
          end do
       else
          temp = TemperatureQuantity%values
       end if
 
-      do i=1, quantity%template%noInstances
+      if ( quantity%template%verticalCoordinate == l_pressure ) then 
+        z = -log10 ( quantity%template%surfs(:,1) )             
+      else                                                           
+        z = quantity%template%surfs(:,1)            
+      end if
       
-        if ( quantity%template%verticalCoordinate == l_pressure ) then 
-          z = -log10 ( quantity%template%surfs(:,i) )             
-        else                                                           
-          z = quantity%template%surfs(:,i)            
-        end if
+      if ( sourceQuantity%template%verticalCoordinate == l_pressure ) then 
+        ze = -log10 ( sourceQuantity%template%surfs(:,1) )             
+      else                                                           
+        ze = sourceQuantity%template%surfs(:,1)            
+      end if
+      
+      if ( Temperaturequantity%template%verticalCoordinate == l_pressure ) then 
+        zt = -log10 ( Temperaturequantity%template%surfs(:,1) )             
+      else                                                           
+        zt = Temperaturequantity%template%surfs(:,1)    
+      end if
         
-        if ( sourceQuantity%template%verticalCoordinate == l_pressure ) then 
-          ze = -log10 ( sourceQuantity%template%surfs(:,i) )             
-        else                                                           
-          ze = sourceQuantity%template%surfs(:,i)            
-        end if
-        
-        if ( Temperaturequantity%template%verticalCoordinate == l_pressure ) then 
-          zt = -log10 ( Temperaturequantity%template%surfs(:,i) )             
-        else                                                           
-          zt = Temperaturequantity%template%surfs(:,i)            
-        end if
-        
-        call InterpolateValues( Tz, Temp(:, i), &
-             & z, zt, 'Linear', extrapolate='Constant' )
-        call InterpolateValues( Ez, sourceQuantity%values(:, i), &
-             & z, ze, 'Linear', extrapolate='Constant' )
-             
+      do i=1, quantity%template%noInstances
+        yt = Temp(:, i)
+        call InterpolateValues( zt, yt, z,  Tz, method='Linear' )
+        ye = sourceQuantity%values(:, i)*1000._r8  ! converted to 1/km
+        call InterpolateValues( ze, ye, z, Ez, method='Linear' )
         ! see ATBD for the conversion based on the size distribution from
         ! McFarquhar and Heymsfield [1996] 
         ! 
@@ -5785,6 +5788,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.222  2003/05/22 00:26:33  dwu
+! fix a problem in iwcfromextinction
+!
 ! Revision 2.221  2003/05/21 18:58:57  dwu
 ! allow temperature and iwc on different hGrids in iwcFromExtinction
 !
