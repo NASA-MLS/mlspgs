@@ -278,6 +278,7 @@ contains ! =====     Private Procedures     ============================
       else if ( collect_garbage_each_time ) then
         call mls_gc_now
       end if
+      nullify ( to_Deallocate )
     end if
   end subroutine Deallocate_Test_Character_1d
   ! -------------------------------  Deallocate_Test_Character_2d  -----
@@ -294,6 +295,7 @@ contains ! =====     Private Procedures     ============================
       else if ( collect_garbage_each_time ) then
         call mls_gc_now
       end if
+      nullify ( to_Deallocate )
     end if
   end subroutine Deallocate_Test_Character_2d
   ! -------------------------------  Deallocate_Test_Character_3d  -----
@@ -310,6 +312,7 @@ contains ! =====     Private Procedures     ============================
       else if ( collect_garbage_each_time ) then
         call mls_gc_now
       end if
+      nullify ( to_Deallocate )
     end if
   end subroutine Deallocate_Test_Character_3d
   ! ----------------------------------  Deallocate_Test_RealR8_1d  -----
@@ -326,6 +329,7 @@ contains ! =====     Private Procedures     ============================
       else if ( collect_garbage_each_time ) then
         call mls_gc_now
       end if
+      nullify ( to_Deallocate )
     end if
   end subroutine Deallocate_Test_RealR8_1d
   ! ----------------------------------  Deallocate_Test_RealR8_2d  -----
@@ -342,6 +346,7 @@ contains ! =====     Private Procedures     ============================
       else if ( collect_garbage_each_time ) then
         call mls_gc_now
       end if
+      nullify ( to_Deallocate )
     end if
   end subroutine Deallocate_Test_RealR8_2d
   ! ----------------------------------  Deallocate_Test_RealR8_3d  -----
@@ -358,6 +363,7 @@ contains ! =====     Private Procedures     ============================
       else if ( collect_garbage_each_time ) then
         call mls_gc_now
       end if
+      nullify ( to_Deallocate )
     end if
   end subroutine Deallocate_Test_RealR8_3d
   ! ---------------------------------  Deallocate_Test_Integer_1d  -----
@@ -374,6 +380,7 @@ contains ! =====     Private Procedures     ============================
       else if ( collect_garbage_each_time ) then
         call mls_gc_now
       end if
+      nullify ( to_Deallocate )
     end if
   end subroutine Deallocate_Test_Integer_1d
   ! ---------------------------------  Deallocate_Test_Integer_2d  -----
@@ -390,6 +397,7 @@ contains ! =====     Private Procedures     ============================
       else if ( collect_garbage_each_time ) then
         call mls_gc_now
       end if
+      nullify ( to_Deallocate )
     end if
   end subroutine Deallocate_Test_Integer_2d
   ! ---------------------------------  Deallocate_Test_Integer_3d  -----
@@ -406,6 +414,7 @@ contains ! =====     Private Procedures     ============================
       else if ( collect_garbage_each_time ) then
         call mls_gc_now
       end if
+      nullify ( to_Deallocate )
     end if
   end subroutine Deallocate_Test_Integer_3d
   ! ---------------------------------  Deallocate_Test_Logical_1d  -----
@@ -422,6 +431,7 @@ contains ! =====     Private Procedures     ============================
       else if ( collect_garbage_each_time ) then
         call mls_gc_now
       end if
+      nullify ( to_Deallocate )
     end if
   end subroutine Deallocate_Test_Logical_1d
   ! ---------------------------------  Deallocate_Test_Logical_1d  -----
@@ -438,6 +448,7 @@ contains ! =====     Private Procedures     ============================
       else if ( collect_garbage_each_time ) then
         call mls_gc_now
       end if
+      nullify ( to_Deallocate )
     end if
   end subroutine Deallocate_Test_Logical_2d
   ! ------------------------------------  Deallocate_Test_RealR4_1d  -----
@@ -454,6 +465,7 @@ contains ! =====     Private Procedures     ============================
       else if ( collect_garbage_each_time ) then
         call mls_gc_now
       end if
+      nullify ( to_Deallocate )
     end if
   end subroutine Deallocate_Test_RealR4_1d
   ! ------------------------------------  Deallocate_Test_RealR4_2d  -----
@@ -470,6 +482,7 @@ contains ! =====     Private Procedures     ============================
       else if ( collect_garbage_each_time ) then
         call mls_gc_now
       end if
+      nullify ( to_Deallocate )
     end if
   end subroutine Deallocate_Test_RealR4_2d
   ! ----------------------------------  Deallocate_Test_RealR4_3d  -----
@@ -486,6 +499,7 @@ contains ! =====     Private Procedures     ============================
       else if ( collect_garbage_each_time ) then
         call mls_gc_now
       end if
+      nullify ( to_Deallocate )
     end if
   end subroutine Deallocate_Test_RealR4_3d
 
@@ -502,6 +516,9 @@ contains ! =====     Private Procedures     ============================
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.12  2004/01/24 01:01:05  livesey
+! Nullify all pointers after deallocating.
+!
 ! Revision 2.11  2002/10/08 00:09:08  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
