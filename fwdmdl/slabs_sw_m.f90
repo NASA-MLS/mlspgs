@@ -1361,7 +1361,7 @@ contains
 !  ----------------
 
     type(Catalog_T), pointer :: Catalog
-    integer :: i, j, k, l, n, n_sps, nl, no_ele
+    integer :: i, j, k, n, n_sps, nl, no_ele
     logical :: Temp_Der
 
     real(rp) :: vel_z_correction
@@ -1434,6 +1434,12 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.41  2004/12/13 20:55:36  vsnyder
+! Make Slabs_Prep and Slabs_Prep_dT public.  Add Slabs_Prep_Struct.  Polish
+! some TeXnicalities.  Revise Slabswint_dT and Slabswint_Lines_dT not to
+! compute interference if |yi| < 1.0e-6.  Added UseYi argument to Slabs_Prep
+! and Slabs_Prep_dT.  Use Slabs_Prep_Struct from Get_GL_Slabs_Arrays.
+!
 ! Revision 2.40  2004/09/23 20:08:47  vsnyder
 ! Finish correcting divide by zero
 !
