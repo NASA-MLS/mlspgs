@@ -103,7 +103,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_APRIORI            = last_Spectroscopy_Spec + 1
   integer, parameter :: S_BINSELECTOR        = s_apriori + 1
   integer, parameter :: S_CHUNKDIVIDE        = s_binselector + 1
-  integer, parameter :: S_DESTROY            = s_chunkDivide + 1
+  integer, parameter :: S_CONCATENATE        = s_chunkDivide + 1
+  integer, parameter :: S_DESTROY            = s_concatenate + 1
   integer, parameter :: S_DIRECTWRITE        = s_destroy + 1
   integer, parameter :: S_DUMP               = s_directWrite + 1
   integer, parameter :: S_DUMPBLOCKS         = s_dump + 1
@@ -273,6 +274,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_apriori) =              add_ident ( 'apriori' )
     spec_indices(s_binSelector) =          add_ident ( 'binSelector' )
     spec_indices(s_chunkDivide) =          add_ident ( 'chunkDivide' )
+    spec_indices(s_concatenate) =          add_ident ( 'concatenate' )
     spec_indices(s_empiricalGeometry) =    add_ident ( 'EmpiricalGeometry' )
     spec_indices(s_destroy) =              add_ident ( 'destroy' )
     spec_indices(s_directWrite) =          add_ident ( 'directWrite' )
@@ -464,9 +466,14 @@ contains ! =====     Public procedures     =============================
              begin, f+f_iterations, t+t_numeric, n+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
+      begin, s+s_concatenate, &  ! Must be AFTER S_Gridded
+             begin, f+f_a, s+s_gridded, n+n_field_spec, &
+             begin, f+f_b, s+s_gridded, n+n_field_spec, &
+             nadp+n_spec_def /) )
+    call make_tree ( (/ &
       begin, s+s_merge, &  ! Must be AFTER S_Gridded
-             begin, f+f_operational, s+s_gridded, n+n_field_spec, &
-             begin, f+f_climatology, s+s_gridded, n+n_field_spec, &
+             begin, f+f_operational, s+s_gridded, s+s_concatenate, n+n_field_spec, &
+             begin, f+f_climatology, s+s_gridded, s+s_concatenate, n+n_field_spec, &
              begin, f+f_height, t+t_numeric, n+n_field_type, &
              begin, f+f_scale, t+t_numeric, n+n_field_type, &
              nadp+n_spec_def /) )
@@ -665,7 +672,7 @@ contains ! =====     Public procedures     =============================
                     n+n_dot, &
              begin, f+f_sourceL2GP, s+s_l2gp, n+n_field_spec, &
              begin, f+f_sourceL2AUX, s+s_l2aux, n+n_field_spec, &
-             begin, f+f_sourceGrid, s+s_gridded, s+s_merge, n+n_field_spec, &
+             begin, f+f_sourceGrid, s+s_gridded, s+s_merge, s+s_concatenate, n+n_field_spec, &
              begin, f+f_sourceSGrid, s+s_vGrid, n+n_field_spec, &
              begin, f+f_sourceVGrid, s+s_vGrid, n+n_field_spec, &
              begin, f+f_spread, t+t_boolean, n+n_field_type, &
@@ -932,7 +939,7 @@ contains ! =====     Public procedures     =============================
              s+s_fGrid, s+s_l1brad, s+s_l1boa, n+n_section, &
       begin, z+z_readapriori, s+s_time, s+s_gridded, s+s_l2gp, &
              s+s_l2aux, s+s_snoop, n+n_section, &
-      begin, z+z_mergegrids, s+s_time, s+s_merge, n+n_section /) )
+      begin, z+z_mergegrids, s+s_time, s+s_merge, s+s_concatenate, n+n_section /) )
     call make_tree ( (/ &
       begin, z+z_chunkdivide, &
              begin, p+p_critical_bands, t+t_string, n+n_name_def, &
@@ -973,6 +980,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.295  2003/04/04 00:11:29  livesey
+! Added concatenate stuff
+!
 ! Revision 2.294  2003/04/02 21:49:00  jonathan
 ! remove cloud_fov
 !
