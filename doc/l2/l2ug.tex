@@ -1,0 +1,80 @@
+% This is the master file for the EOS MLS Level 2 software users' guide.
+% I anticipate lots of small input files.
+%
+% $Id$
+%
+% First setup the global packages etc.
+\documentclass[twoside,11pt]{report}
+\usepackage{largemls}
+\usepackage[mtbold,mtplusscr,mtpluscal]{mathtime}
+\usepackage{times}
+\usepackage{graphicx}
+\usepackage{array}
+\usepackage{chicago}
+\usepackage{pifont}
+\usepackage{amsmath}
+\usepackage[letterpaper,dvips,breaklinks,bookmarksopen=true,extension=dvi]{hyperref}
+%
+% Now begin the document and setup various counters etc.
+\begin{document}
+\rcsInfo $Id$
+%
+%
+\lhead[\fancyplain{}{\large\it Contents}]{\fancyplain{}\rcsLockedStatus}
+\rhead[\fancyplain{}\rcsLockedStatus]{\fancyplain{}{\large\it Contents}}
+%
+\bibliographystyle{chicago}
+%
+% Now some macros and definitions
+\input{l2ugmacros.tex}
+%
+% ------------------------------------------------------------------------------
+%
+% Now do the title page etc.
+%
+\newcommand{\showstamp}[2][10cm]{\psframebox[%
+   linewidth=0.3pt,fillstyle=solid,fillcolor=white]{%
+   \epsfig{bbllx=0,bblly=0,bburx=612,bbury=792,file=#2,
+   width=#1}}}
+%
+\pagenumbering{roman}
+\title{EOS MLS Level~2 Software Users' Guide}
+\shorttitle{MLSL2 users' guide}
+\author{N. J. Livesey, P. A. Wagner, M. J. Filipiak, W. V. Snyder,
+ D. L. Wu and J. H. Jiang}
+\coverpicture{Some relevant picture to go here}
+\jpld{18030}
+\maketitle
+%
+% ------------------------------------------------------------------------------
+%
+% Now do the table of contents etc.
+%
+\tableofcontents
+%
+% ------------------------------------------------------------------------------
+%
+% Now call in the various chapters
+%
+\cleardoublepage
+\pagenumbering{arabic}
+%
+\lhead[\fancyplain{}{\large\it\leftmark}]{\fancyplain{}\rcsLockedStatus}
+\rhead[\fancyplain{}\rcsLockedStatus]{\fancyplain{}{\large\it\rightmark}}
+%
+\input{chapIntroduction.tex}
+%
+\input{chapRunning.tex}
+%
+\input{chapL2CFIntro.tex}
+%
+\input{chapL2CFRef.tex}
+%
+\input{chapm4.tex}
+%
+\bibliography{fullnames,mybib}
+\renewcommand{\leftmark}{Bibliography}
+\renewcommand{\rightmark}{Bibliography}
+\end{document}
+
+
