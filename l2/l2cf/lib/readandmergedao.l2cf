@@ -1,0 +1,27 @@
+; ----------------------------------------------- Read / merge dao
+
+; A note of caution.  If !inpathdao includes the year (as it will at the
+; SCF), then expect this to fail when the first day is 31 December, as
+; the second day will be in the next year.  It will get the filename
+; right though.
+
+; This L2CF fragment reads and merges the dao data.
+begin ReadApriori
+  !define(daoDay1,!ccsdsbtodao(!day))
+  !define(dayDay2,!ccsdsbtodao(!ccsdsbadd(!day,1)))
+  daoTemperatureInputThis: gridded, origin=dao, field='TMPU', $
+    dimList='XDim,YDim,Height,Time', $
+    file='!inpathdao/DAS.flk.asm.tsyn3d_mis_p.GEOS401.!daoDay1{}00.!daoDay1{}18.V01'
+  daoTemperatureInputNext: gridded, origin=dao, field='TMPU', $
+    dimList='XDim,YDim,Height,Time', $
+    file='!inpathdao/DAS.flk.asm.tsyn3d_mis_p.GEOS401.!daoDay2{}00.!daoDay2{}18.V01'
+end ReadApriori
+
+begin MergeGrids
+  daoTemperatureInput: Concatenate, $
+    a=daoTemperatureInputThis, b=daoTemperatureInputNext
+  mergedTemperature: Merge, operational=daoTemperatureInput, $
+    climatology=gridTemperature, height=1mb, scale=5km
+  !define(flagUseOperationalTemperature,{yes})
+end MergeGrids
+
