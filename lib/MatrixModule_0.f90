@@ -245,7 +245,8 @@ contains ! =====     Public Procedures     =============================
   ! result.  Also see AssignBlock.
   ! !!!!! ===== END NOTE ===== !!!!! 
 
-    integer :: I, J, K, L, N
+    integer :: K
+!   integer :: I, J, L, N
     real(r8) :: S                            ! My copy of Scale
     type(MatrixElement_T), pointer :: X, Y
     real(kind(zb%values)), pointer :: Z(:,:) ! May be used if Y is col-sparse/banded
@@ -3921,6 +3922,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.84  2002/09/23 23:18:59  vsnyder
+! Comment out declarations used by commented-out broken code in Add_Matrix_Blocks
+!
 ! Revision 2.83  2002/09/13 18:08:12  pwagner
 ! May change matrix precision rm from r8
 !
