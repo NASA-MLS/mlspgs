@@ -977,6 +977,8 @@ contains
     ! Local variables
     logical :: MY_NOSUFFIX
     integer :: MY_SIDEBAND
+    integer :: ENDOFFIRSTNUMBER
+    logical :: FOUNDEND
     character (len=1) :: SB_CHAR        ! U/L for sideband
     character (len=1) :: SB_CHARS(-1:1) = (/ 'L', ' ', 'U' /)
 
@@ -991,8 +993,16 @@ contains
     sb_char = sb_chars(my_sideband)
     
     call get_string ( bands(band)%prefix, string_text, cap=.true. )
-    string_text = string_text(1:LEN_TRIM(string_text)-1) // TRIM(sb_char) // &
-      & string_text(LEN_TRIM(string_text):LEN_TRIM(string_text))
+    foundEnd = .false.
+    do endOfFirstNumber = 2, len_trim ( string_text )
+      if ( index ( '0123456789', string_text(endOfFirstNumber:endOfFirstNumber) ) /= 0 ) &
+        & foundEnd = .true.
+      if ( foundEnd ) exit
+    end do
+    if ( .not. foundEnd ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, 'Cannot understand band name' )
+    string_text = string_text(1:endOfFirstNumber) // TRIM(sb_char) // &
+      & string_text(endOfFirstNumber+1:LEN_TRIM(string_text))
     if ( (.not. my_noSuffix) .and. &
       &  (len_trim(string_text) < len(string_text)) ) then
       string_text = TRIM(string_text) // ':'
@@ -1576,6 +1586,9 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.67  2004/03/24 01:02:17  livesey
+! Slight change in GetBandName to make smls stuff easier.
+!
 ! Revision 2.66  2004/03/22 18:22:59  livesey
 ! Bug fixes, only relevant for smls
 !
