@@ -29,7 +29,7 @@ SRCS =	Allocate_Deallocate.f90 GriddedData.f90 HDF-EOS.f90 Hdf.f90 \
         L1BData.f90 L2GPData.f90 MLSCF.f90 MLSCommon.f90 \
         MLSMessageModule.f90 MLSNumerics.f90 MLSPCF.f90 \
         MLSSignalNomenclature.f90 MLSStrings.f90 MatrixModule_0.f90 \
-        QuantityTemplates.f90 Units.f90 VectorsModule.f90 \
+        QuantityTemplates.f90 VectorsModule.f90 \
         dates_module.f90 declaration_table.f90 dump_0.f90 \
         error_handler.f90 expr_m.f90 gridded_data_module.f90 hash.f90 \
         heights_module.f90 intrinsic.f90 io_stuff.f90 lexer_core.f90 \
@@ -43,7 +43,7 @@ SRCS =	Allocate_Deallocate.f90 GriddedData.f90 HDF-EOS.f90 Hdf.f90 \
 OBJS =	Allocate_Deallocate.o GriddedData.o HDF-EOS.o Hdf.o L1BData.o \
         L2GPData.o MLSCF.o MLSCommon.o MLSMessageModule.o MLSNumerics.o \
         MLSPCF.o MLSSignalNomenclature.o MLSStrings.o MatrixModule_0.o \
-        QuantityTemplates.o Units.o VectorsModule.o dates_module.o \
+        QuantityTemplates.o VectorsModule.o dates_module.o \
         declaration_table.o dump_0.o error_handler.o expr_m.o \
         gridded_data_module.o hash.o heights_module.o intrinsic.o \
         io_stuff.o lexer_core.o lexer_m.o output_m.o parser.o \
@@ -108,7 +108,6 @@ MatrixModule_0.o: Allocate_Deallocate.o MLSCommon.o MLSMessageModule.o \
 MatrixModule_1.o: MLSMessageModule.o MatrixModule_0.o VectorsModule.o
 QuantityTemplates.o: Allocate_Deallocate.o MLSCommon.o MLSMessageModule.o \
         MLSSignalNomenclature.o addItemToDatabase.f9h
-Units.o: MLSCommon.o MLSMessageModule.o MLSStrings.o
 VectorsModule.o: Allocate_Deallocate.o MLSCommon.o MLSMessageModule.o \
         QuantityTemplates.o dump_0.o output_m.o string_table.o \
         addItemToDatabase.f9h
@@ -172,6 +171,9 @@ test_sparsify: test_sparsify.o libmls.a
 # ========================================================================
 
 # $Log$
+# Revision 2.18  2000/10/19 18:41:17  vsnyder
+# Add $I$S to inference rule, to search source directory for includes,
+#
 # Revision 2.17  2000/10/12 23:59:47  vsnyder
 # Account for moving QuantityTemplates.f90 and VectorTemplates.f90 to mlspgs/lib
 #
