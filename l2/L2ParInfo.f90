@@ -122,7 +122,7 @@ contains ! ==================================================================
         & call PVMErrorMessage ( info, 'sending finish packet' )
       if ( parallel%fwmParallel ) then
         call PVMFJoinGroup ( FWMSlaveGroup, info )
-        if ( info <= 0 ) &
+        if ( info < 0 ) &
           & call PVMErrorMessage ( info, 'Joining '//FWMSlaveGroup//' group' )
       end if
     end if
@@ -397,6 +397,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.21  2002/10/08 17:40:56  livesey
+! Minor bug fix in FWMParallel stuff
+!
 ! Revision 2.20  2002/10/08 17:36:21  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
