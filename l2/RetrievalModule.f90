@@ -38,8 +38,9 @@ contains
     use Expr_M, only: Expr
     use ForwardModelConfig, only: ForwardModelConfig_T
     use Init_Tables_Module, only: F_apriori, F_aprioriScale, F_Average, &
-      & F_channels, F_columnScale, F_Comment, F_covariance, F_diagnostics, &
-      & F_diagonal, F_forwardModel, F_fuzz, F_fwdModelExtra, F_fwdModelOut, &
+      & F_channels, F_columnScale, F_Comment, F_covariance, F_covSansReg, &
+      & F_diagnostics, F_diagonal, &
+      & F_forwardModel, F_fuzz, F_fwdModelExtra, F_fwdModelOut, &
       & F_height, f_highBound, f_hRegOrders, f_hRegQuants, f_hRegWeights, &
       & f_hRegWeightVec, F_ignore, F_jacobian, F_lambda, F_Level, f_lowBound, &
       & F_mask, F_maxJ, F_measurements, F_measurementSD, F_method, F_muMin, &
@@ -111,6 +112,7 @@ contains
                                         ! l_none or l_norm
     integer, pointer, dimension(:) :: ConfigIndices    ! In ConfigDatabase
     type(matrix_SPD_T), pointer :: Covariance     ! covariance**(-1) of Apriori
+    logical :: CovSansReg               ! Compute covariance without regularization
     type(vector_T), pointer :: Diagnostics   ! Diagnostic stuff about the
                                         ! retrieval.
     logical :: Diagonal                 ! "Iterate with the diagonal of the
@@ -289,6 +291,7 @@ contains
         if ( toggle(gen) ) call trace_begin ( "Retrieve.retrieve", root )
         aprioriScale = 1.0
         columnScaling = l_none
+        covSansReg = .false.
         diagonal = .false.
         hRegQuants = 0
         hRegWeights = 0
@@ -323,6 +326,8 @@ contains
               & covariance)
             if ( .not. associated(covariance) ) &
               & call announceError ( notSPD, field )
+          case ( f_covSansReg )
+            covSansReg = get_Boolean(son)
           case ( f_diagnostics )
             diagnostics => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_diagonal )
@@ -672,7 +677,7 @@ contains
       ! However, if we are already at the bounds, and the next step 
       ! wants to keep going beyond the bounds, then $\mu$ will be
       ! really small.  In this case $\mu < \mu_{\text{min}}$ we revert
-      ! to a straight element by element modification of $d_i$.      
+      ! to a straight element-by-element modification of $\delta x_i$.      
 
       real(rv), intent(inout) :: Mu
       type(vector_T), intent(inout) :: Bound, X, Dx
@@ -742,7 +747,7 @@ contains
           & 'Come on! In BoundMove, it has to be a low bound or a high bound!' )
       end if
 
-      ! Now if mu has got really small, we'll change it back to one,
+      ! Now if mu has goten really small, we'll change it back to one,
       ! and do an element by element modification of dx
       if ( mu < muMin ) then
         mu = 1.0_rv
@@ -1213,7 +1218,9 @@ contains
           end if
 
           ! Add Tikhonov regularization if requested.
-          if ( (got(f_hRegOrders) .or. got(f_vRegOrders)) .and. tikhonovBefore ) then
+          if ( (got(f_hRegOrders) .or. got(f_vRegOrders)) .and. &
+            & tikhonovBefore .and. &
+            & ( ( nwt_flag /= nf_getj ) .or. .not. covSansReg ) ) then
               call add_to_retrieval_timing( 'newton_solver', t1 )
 
             !{ Tikhonov regularization is of the form ${\bf R x}_{n+1} \simeq
@@ -1367,7 +1374,9 @@ contains
           ! place (roughly) on the column-scaled problem, and if scaling by
           ! the column norm is requested, it's still makes the column norms
           ! all 1.0.
-          if ( (got(f_hRegOrders) .or. got(f_vRegOrders)) .and. .not. tikhonovBefore ) then
+          if ( (got(f_hRegOrders) .or. got(f_vRegOrders)) .and. &
+            & .not. tikhonovBefore .and. &
+            & ( ( nwt_flag /= nf_getj ) .or. .not. covSansReg ) ) then
               call add_to_retrieval_timing( 'newton_solver', t1 )
 
             !{ Tikhonov regularization is of the form ${\bf R x}_{n+1} \simeq
@@ -3261,6 +3270,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.197  2002/10/23 01:32:31  vsnyder
+! Add CovSansReg switch to retrieve spec
+!
 ! Revision 2.196  2002/10/23 01:14:41  livesey
 ! Added the chiSquared stuff, needs more work though.
 !
