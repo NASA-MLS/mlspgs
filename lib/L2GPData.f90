@@ -36,29 +36,29 @@ MODULE L2GPData                 ! Data types for storing L2GP data internally
     INTEGER :: noFreqs           ! Number of frequencies in breakdown
 
     ! Now we store the geolocation fields, first the vertical one:
-    DOUBLE PRECISION, POINTER, DIMENSION(:) :: pressures ! Vertical coords (noSurfs)
+    REAL (R8), POINTER, DIMENSION(:) :: pressures ! Vertical coords (noSurfs)
 
     ! Now the horizontal geolocation information. Dimensioned (noProfs)
-    DOUBLE PRECISION, POINTER, DIMENSION(:) :: latitude,longitude,solarTime, &
+    REAL (R8), POINTER, DIMENSION(:) :: latitude,longitude,solarTime, &
          & solarZenith, losAngle, geodAngle
-    DOUBLE PRECISION, POINTER, DIMENSION(:) :: time
+    REAL (R8), POINTER, DIMENSION(:) :: time
     INTEGER, POINTER, DIMENSION(:) :: chunkNumber
     CHARACTER (LEN=CCSDSLen), POINTER, DIMENSION(:) :: ccsdsTime
 
     ! Now we store the `frequency' geolocation field
 
-    DOUBLE PRECISION, POINTER, DIMENSION(:) :: frequency
+    REAL (R8), POINTER, DIMENSION(:) :: frequency
     !        dimensioned (noFreqs)
 
     ! Finally we store the data fields
 
-    DOUBLE PRECISION, POINTER, DIMENSION(:,:,:) :: l2gpValue
-    DOUBLE PRECISION, POINTER, DIMENSION(:,:,:) :: l2gpPrecision
+    REAL (R8), POINTER, DIMENSION(:,:,:) :: l2gpValue
+    REAL (R8), POINTER, DIMENSION(:,:,:) :: l2gpPrecision
     ! dimensioned (noFreqs, noSurfs, noProfs)
 
     CHARACTER (LEN=1), POINTER, DIMENSION(:) :: l2gpStatus
     !                (status is a reserved word in F90)
-    DOUBLE PRECISION, POINTER, DIMENSION(:) :: quality
+    REAL (R8), POINTER, DIMENSION(:) :: quality
     ! Both the above dimensioned (noProfs)
 
   END TYPE L2GPData_T
@@ -197,11 +197,12 @@ CONTAINS
     ! The following are temporary arrays for copying data around.
     REAL (r8), DIMENSION(:), POINTER :: temp1D
     REAL (r8), DIMENSION(:,:,:), POINTER :: temp3D
-    INTEGER, DIMENSION(:), POINTER :: tempInt1D
+    INTEGER, DIMENSION(:), POINTER :: 	tempInt1D
     CHARACTER (LEN=1), DIMENSION(:), POINTER :: tempChar1D
     CHARACTER (LEN=CCSDSLen), DIMENSION(:), POINTER :: tempCCSDS
-!    print *, 'newNoProfs ', newNoProfs
     ! Executable code
+
+    NULLIFY (temp1D, temp3D, tempChar1D, tempCCSDS)
 
     ! First do a sanity check
 
@@ -210,7 +211,6 @@ CONTAINS
     
     ! Now go through the parameters one by one, allocate new space, copy
     ! the previous contents, and remove the old information.
-
     temp1D=>l2gp%latitude
     ALLOCATE(l2gp%latitude(newNoProfs),STAT=status)
     IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
@@ -219,7 +219,6 @@ CONTAINS
     DEALLOCATE(temp1D, stat=status)
     IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
          & MLSMSG_DeAllocate//"temp1D")
-
     temp1D=>l2gp%longitude
     ALLOCATE(l2gp%longitude(newNoProfs),STAT=status)
     IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
@@ -228,7 +227,6 @@ CONTAINS
     DEALLOCATE(temp1D, stat=status)
     IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
          & MLSMSG_DeAllocate//"temp1D")
-
     temp1D=>l2gp%solarTime
     ALLOCATE(l2gp%solarTime(newNoProfs),STAT=status)
     IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
@@ -237,7 +235,6 @@ CONTAINS
     DEALLOCATE(temp1D, stat=status)
     IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
          & MLSMSG_DeAllocate//"temp1D")
-
     temp1D=>l2gp%solarZenith
     ALLOCATE(l2gp%solarZenith(newNoProfs),STAT=status)
     IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
@@ -246,7 +243,6 @@ CONTAINS
     DEALLOCATE(temp1D, stat=status)
     IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
          & MLSMSG_DeAllocate//"temp1D")
-
     temp1D=>l2gp%losAngle
     ALLOCATE(l2gp%losAngle(newNoProfs),STAT=status)
     IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
@@ -255,7 +251,6 @@ CONTAINS
     DEALLOCATE(temp1D, stat=status)
     IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
          & MLSMSG_DeAllocate//"temp1D")
-
     temp1D=>l2gp%geodAngle
     ALLOCATE(l2gp%geodAngle(newNoProfs),STAT=status)
     IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
@@ -264,16 +259,6 @@ CONTAINS
     DEALLOCATE(temp1D, stat=status)
     IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
          & MLSMSG_DeAllocate//"temp1D")
-
-    temp1D=>l2gp%time
-    ALLOCATE(l2gp%time(newNoProfs),STAT=status)
-    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
-         & "l2gp%time")
-    l2gp%time(1:l2gp%noProfs)=temp1D
-    DEALLOCATE(temp1D, stat=status)
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
-         & MLSMSG_DeAllocate//"temp1D")
-
     temp1D=>l2gp%time
     ALLOCATE(l2gp%time(newNoProfs),STAT=status)
     IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
@@ -294,14 +279,6 @@ CONTAINS
     IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
          & MLSMSG_DeAllocate//"tempInt1D")
 
-    tempInt1D=>l2gp%chunkNumber
-    ALLOCATE(l2gp%chunkNumber(newNoProfs),STAT=status)
-    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
-         & "l2gp%chunkNumber")
-    l2gp%chunkNumber(1:l2gp%noProfs)=tempInt1D
-    DEALLOCATE(tempInt1D, stat=status)
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
-         & MLSMSG_DeAllocate//"tempInt1D")
     
     tempCCSDS=>l2gp%ccsdsTime
     ALLOCATE(l2gp%ccsdsTime(newNoProfs),STAT=status)
@@ -355,7 +332,6 @@ CONTAINS
          & MLSMSG_DeAllocate//"temp1D")
 
     l2gp%noProfs=newNoProfs
-!    print *, ' l2gp%noProfs ', l2gp%noProfs
   END SUBROUTINE ExpandL2GPDataInPlace
 
   !---------------------------------------------------------------------------
@@ -426,6 +402,9 @@ END MODULE L2GPData
 
 !
 ! $Log$
+! Revision 1.12  2000/06/19 22:59:16  lungu
+! Added status check after DEALLOCATE.
+!
 ! Revision 1.11  2000/05/17 23:38:14  lungu
 ! Added check "IF (ASSOCIATED(database))DEALLOCATE(database)" so it doesn't chrash trying to dealocate
 ! an "empty" database.
