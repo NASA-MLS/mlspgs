@@ -34,10 +34,10 @@ contains
                      & L_CLOUDEXTINCTION,                                &
                      & L_CLOUDRADSENSITIVITY
       use MatrixModule_0, only: MatrixInversion, MATRIXELEMENT_T
-      use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
-      & DestroyMatrix, FINDBLOCK, GetFromMatrixDatabase, Matrix_T, &
+      use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, ClearMatrix,&
+      & DestroyMatrix, FINDBLOCK, GetDiagonal, GetFromMatrixDatabase, Matrix_T, &
       & Matrix_Database_T, Matrix_SPD_T, MultiplyMatrixVectorNoT, &
-      & Sparsify, MultiplyMatrix_XTY
+      & Sparsify, MultiplyMatrix_XTY, UpdateDiagonal
       use MLSSignals_m, only: SIGNAL_T
       use ForwardModelConfig, only: ForwardModelConfig_T
       use ForwardModelWrappers, only: ForwardModel
@@ -367,10 +367,10 @@ contains
                      & L_CLOUDRADSENSITIVITY, L_EARTHRADIUS, L_LOSTRANSFUNC, & 
                      & L_NONE, L_PTAN, L_RADIANCE
       use MatrixModule_0, only: MatrixInversion, MATRIXELEMENT_T
-      use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
-      & DestroyMatrix, FINDBLOCK, GetFromMatrixDatabase, Matrix_T, &
+      use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, ClearMatrix,&
+      & DestroyMatrix, FINDBLOCK, GetDiagonal, GetFromMatrixDatabase, Matrix_T, &
       & Matrix_Database_T, Matrix_SPD_T, MultiplyMatrixVectorNoT, &
-      & Sparsify, MultiplyMatrix_XTY
+      & Sparsify, MultiplyMatrix_XTY, UpdateDiagonal
       use MLSSignals_m, only: SIGNAL_T
       use ForwardModelConfig, only: ForwardModelConfig_T
       use ForwardModelWrappers, only: ForwardModel
@@ -954,6 +954,9 @@ contains
 
 end module CloudRetrievalModule
 ! $Log$
+! Revision 2.2  2003/05/13 20:48:38  dwu
+! fix a bug
+!
 ! Revision 2.1  2003/05/13 20:38:55  dwu
 ! change to pass chunk in
 !
