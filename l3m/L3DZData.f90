@@ -1474,12 +1474,15 @@ MODULE L3DZData
     !-------------------------------------------------------
    USE Hdf, ONLY: DFNT_FLOAT32, DFNT_CHAR8, DFNT_INT32, &
         & DFACC_RDWR
+   USE HDFEOS5, ONLY: HE5F_ACC_RDWR, HE5_GDCLOSE, HE5_GDOPEN 
    USE MLSPCF3
-   USE PCFHdr, ONLY: WritePCF2Hdr, WriteInputPointer
+   USE PCFHdr, ONLY: WritePCF2Hdr, WriteInputPointer, GlobalAttributes, &
+	& he5_writeglobalattr
    USE mon_Open, ONLY: PCFMData_T 
    USE PCFModule, ONLY: SearchPCFDates, ExpandFileTemplate 
    USE SDPToolkit, only: WARNIFCANTPGSMETREMOVE, PGSD_MET_GROUP_NAME_L, &
-        & PGSD_MET_NUM_OF_GROUPS, PGSMET_E_MAND_NOT_SET, PGS_S_SUCCESS
+        & PGSD_MET_NUM_OF_GROUPS, PGSMET_E_MAND_NOT_SET, PGS_S_SUCCESS, &
+	& max_orbits
 
       ! Brief description of subroutine
       ! This routine writes the metadata for an l3dz file, 
@@ -1715,7 +1718,14 @@ MODULE L3DZData
 
          attrName = 'StartOrbitNumber' // '.1'
          !result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, -1)
-         result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, 99999)
+         !result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, 99999)
+         IF (GlobalAttributes%OrbNumDays(1,i) == -1) THEN
+           result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), &
+                & attrName, 99999)
+         ELSE
+           result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), &
+                & attrName, GlobalAttributes%OrbNumDays(1,i))
+         ENDIF
          IF (result /= PGS_S_SUCCESS) THEN
             msr = METAWR_ERR // attrName
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -1723,7 +1733,14 @@ MODULE L3DZData
 
          attrName = 'StopOrbitNumber' // '.1'
          !result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, -1)
-         result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, 99999)
+         !result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, 99999)
+         IF (maxval(GlobalAttributes%OrbNumDays(:,i)) == -1) then
+           result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), &
+                & attrName, 99999)
+         ELSE
+           result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), &
+                & attrName, maxval(GlobalAttributes%OrbNumDays(:,i)))
+         END IF
          IF (result /= PGS_S_SUCCESS) THEN
             msr = METAWR_ERR // attrName
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -1909,9 +1926,15 @@ MODULE L3DZData
          IF (hdfReturn /= 0 ) CALL MLSMessage(MLSMSG_Error, ModuleName, &
               & 'Error closing HDF file after writing metadata.')
 
-         ! Annotate the file with the PCF
+        ! Write global attributes
+        if ( HDFVersion == HDFVERSION_5 ) then
+            sdid = he5_gdopen (files%name(i), HE5F_ACC_RDWR)
+            call he5_writeglobalattr(sdid,i)
+            result = he5_gdclose (sdid)
+        endif
 
-         CALL WritePCF2Hdr(files%name(i), anText, hdfVersion=hdfVersion, & 
+         ! Annotate the file with the PCF
+        CALL WritePCF2Hdr(files%name(i), anText, hdfVersion=hdfVersion, & 
               & fileType=fileType)
 
       ENDDO
@@ -2171,6 +2194,9 @@ MODULE L3DZData
  !==================
 
 ! $Log$
+! Revision 1.12  2003/08/11 23:26:37  cvuu
+! brought closer to James Johnson want to
+!
 ! Revision 1.11  2003/07/08 00:17:45  pwagner
 ! fileType now a lit_name instead of a char string
 !

@@ -1228,11 +1228,13 @@ CONTAINS
    USE HDFEOS5, ONLY: HE5F_ACC_RDWR, HE5_GDCLOSE, HE5_GDOPEN
    USE MLSPCF3
    USE mon_Open, ONLY: PCFMData_T
-   USE PCFHdr, ONLY: WritePCF2Hdr, WriteInputPointer, he5_writeglobalattr
+   USE PCFHdr, ONLY: WritePCF2Hdr, WriteInputPointer, he5_writeglobalattr, &
+     & GlobalAttributes
    USE PCFModule, ONLY: SearchPCFDates, ExpandFileTemplate 
    USE SDPToolkit, ONLY: PGS_S_SUCCESS, &
      & WARNIFCANTPGSMETREMOVE, PGSD_MET_GROUP_NAME_L, &
-     & PGSD_MET_NUM_OF_GROUPS, PGSMET_E_MAND_NOT_SET
+     & PGSD_MET_NUM_OF_GROUPS, PGSMET_E_MAND_NOT_SET, &
+     & max_orbits
 
 ! Brief description of subroutine
 ! This routine writes the metadata for the l3mm file, and annotates it with the
@@ -1274,7 +1276,7 @@ CONTAINS
       REAL(r8) :: dval
 
       INTEGER :: dg, hdfReturn, i, indx, j, len, numGrids, result, & 
-           & returnStatus, sdid, version
+           & returnStatus, sdid, version, daysNum, l3StartDay, l3EndDay
 
 ! Initialize the fileType
       fileType = l_grid
@@ -1461,7 +1463,15 @@ CONTAINS
 
       attrName = 'StartOrbitNumber' // '.1'
       !result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, -1)
-      result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, 99999)
+      !result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, 99999)
+      IF (GlobalAttributes%OrbNumDays(1,i) == -1) THEN
+           result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), &
+                & attrName, 99999)
+      ELSE
+           result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), &
+                & attrName, GlobalAttributes%OrbNumDays(1,i))
+      ENDIF
+
       IF (result /= PGS_S_SUCCESS) THEN
          msr = METAWR_ERR // attrName
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -1469,7 +1479,15 @@ CONTAINS
 
       attrName = 'StopOrbitNumber' // '.1'
       !result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, -1)
-      result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, 99999)
+      !result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, 99999)
+      IF (maxval(GlobalAttributes%OrbNumDays(:,i)) == -1) then
+           result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), &
+                & attrName, 99999)
+      ELSE 
+           result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), &
+                & attrName, maxval(GlobalAttributes%OrbNumDays(:,i)))
+      END IF 
+
       IF (result /= PGS_S_SUCCESS) THEN
          msr = METAWR_ERR // attrName
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -1661,8 +1679,19 @@ CONTAINS
       IF (hdfReturn /= 0 ) CALL MLSMessage(MLSMSG_Error, ModuleName, &
            & 'Error closing HDF file after writing metadata.')
 
-! Annotate the file with the PCF
+        ! Write global attributes
+      if ( HDFVersion == HDFVERSION_5 ) then                        
+        sdid = he5_gdopen (file, HE5F_ACC_RDWR)                       
+	write (l3StartDay, '(I5)') pcf%startDay
+	write (l3EndDay, '(I5)') pcf%endDay
+        daysNum = l3EndDay - l3StartDay + 2
+        print *, 'daysNum'
+	print *, daysNum
+        call he5_writeglobalattr(sdid,daysNum) 
+        result = he5_gdclose (sdid)                                   
+      endif
 
+      ! Annotate the file with the PCF
       CALL WritePCF2Hdr(file, anText, hdfVersion=hdfVersion, fileType=fileType)
 
       result = pgs_met_remove()
@@ -1671,13 +1700,6 @@ CONTAINS
         CALL MLSMessage (MLSMSG_Warning, ModuleName, &
              & "Calling pgs_met_remove() failed with value " // trim(msr) )
       endif          
-
-        ! Write global attributes
-      if ( HDFVersion == HDFVERSION_5 ) then                        
-        sdid = he5_gdopen (file, HE5F_ACC_RDWR)                       
-        call he5_writeglobalattr(sdid) 
-        result = he5_gdclose (sdid)                                   
-      endif                                                           
 
 !------------------------------
    END SUBROUTINE WriteMetaL3MM
@@ -1849,6 +1871,9 @@ END MODULE L3MMData
 !==================
 
 !# $Log$
+!# Revision 1.12  2003/08/11 23:26:37  cvuu
+!# brought closer to James Johnson want to
+!#
 !# Revision 1.11  2003/07/08 00:17:46  pwagner
 !# fileType now a lit_name instead of a char string
 !#
