@@ -805,7 +805,7 @@ contains ! ========= Public Procedures ============================
     end do ! j = 2, nsons(key)
 
     ! Quantity must be radiance
-    if ( qty%template%quantityType /= l_radiance &
+    if ( (.not. any(qty%template%quantityType==(/ l_radiance,l_cloudinducedradiance /))) &
       & .or. (cloudRadiance%template%quantityType /= l_cloudInducedRadiance &
       & .and. cloudRadiance%template%quantityType /= l_radiance)) &
       & call AnnounceError ( key, 'You supplied the wrong quantities to flagCloud' )
@@ -1149,6 +1149,9 @@ contains ! ========= Public Procedures ============================
 end module SubsetModule
  
 ! $Log$
+! Revision 2.9  2003/05/12 18:55:01  dwu
+! allow cloud flag for cloudinducedradiance
+!
 ! Revision 2.8  2003/04/14 22:21:26  dwu
 ! make cloudradiancecutoff sign dependent: it is 'greater than' if positive; 'less than' if negative
 !
