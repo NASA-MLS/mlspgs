@@ -347,8 +347,6 @@ contains ! =====     Public procedures     =============================
     call make_tree ( (/ &
       begin, t+t_binSelectorType, l+l_vmr, l+l_temperature, l+l_latitude, &
              l+l_nameFragment, l+l_sza, n+n_dt_def, &
-      begin, t+t_griddedOrigin, l+l_climatology, l+l_dao, l+l_ncep, &
-             l+l_gloria, n+n_dt_def, &
       begin, t+t_chunkDivideMethod, l+l_fixed, l+l_even, l+l_orbital, l+l_PE, n+n_dt_def, &
       begin, t+t_cloud_der, l+l_iwc_low_height, l+l_iwc_high_height, l+l_iwp, &
              l+l_none,n+n_dt_def, &
@@ -372,6 +370,8 @@ contains ! =====     Public procedures     =============================
              l+l_clear_0rh, l+l_clear_lowest_0_110rh, &
              l+l_clear_110rh_below_tropopause, l+l_cloudy_110rh_below_top, &
              l+l_cloudy_110rh_in_cloud, l+l_cloudy_nearside_only, n+n_dt_def, &
+      begin, t+t_griddedOrigin, l+l_climatology, l+l_dao, l+l_ncep, &
+             l+l_gloria, n+n_dt_def, &
       begin, t+t_hGridType, l+l_explicit, l+l_fixed, l+l_fractional, &
              l+l_height, l+l_regular, l+l_l2gp, n+n_dt_def, &
       begin, t+t_masks, l+l_cloud, l+l_fill, l+l_full_derivatives, l+l_linalg, &
@@ -394,9 +394,9 @@ contains ! =====     Public procedures     =============================
              l+l_dnwt_dxn, l+l_dnwt_dxnl, l+l_dnwt_flag, l+l_dnwt_fnmin, &
              l+l_dnwt_fnorm, l+l_dnwt_gdx, l+l_dnwt_gfac, &
              l+l_dnwt_gradn, l+l_dnwt_sq, l+l_dnwt_sq, l+l_dnwt_sqt,&
-             l+l_earthRefl, l+l_effectiveOpticalDepth, l+l_elevOffset, &
-             l+l_extinction, l+l_gph, l+l_heightOffset, l+l_isotopeRatio, &
-             l+l_jacobian_cols, l+l_jacobian_rows, &
+             l+l_earthRefl, l+l_ECRtoFOV, l+l_effectiveOpticalDepth, &
+             l+l_elevOffset, l+l_extinction, l+l_gph, l+l_heightOffset, &
+             l+l_isotopeRatio, l+l_jacobian_cols, l+l_jacobian_rows, &
              l+l_losTransFunc, l+l_losVel, &
              l+l_massMeanDiameterIce, l+l_massMeanDiameterWater, l+l_magneticField, &
              l+l_noiseBandwidth, l+l_numJ, l+l_opticalDepth, &
@@ -838,9 +838,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_lockBins, t+t_boolean, n+n_field_type, &
              begin, f+f_module, s+s_module, n+n_field_spec, &
              begin, f+f_moleculeDerivatives, t+t_molecule, n+n_field_type, &
-             begin, f+f_moleculeDerivativesPol, t+t_molecule, n+n_field_type, &
              begin, f+f_molecules, t+t_molecule, n+n_field_type, &
-             begin, f+f_moleculesPol, t+t_molecule, n+n_field_type, &
              begin, f+f_nabterms, t+t_numeric, n+n_field_type, &
              begin, f+f_nazimuthangles, t+t_numeric, n+n_field_type, &
              begin, f+f_ncloudspecies, t+t_numeric, n+n_field_type, &
@@ -1022,6 +1020,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.306  2003/05/05 23:00:34  livesey
+! Merged in feb03 newfwm branch
+!
 ! Revision 2.305  2003/04/30 00:09:12  vsnyder
 ! Add the FrequencyGrid specification, with 'atmos' and 'frequencies'
 ! fields.  So far, the FrequencyGrid specification can't appear anywhere.
@@ -1080,6 +1081,30 @@ end module INIT_TABLES_MODULE
 !
 ! Revision 2.287  2003/02/27 17:58:34  bill
 ! Added polarized
+!
+! Revision 2.286  2003/02/20 21:26:21  pwagner
+! Lets you read field dimList=x,y,.. w/ griddeddata
+!
+! Revision 2.285  2003/02/18 23:58:53  livesey
+! Added phiWindow to fill for hydrostatic ptan
+!
+! Revision 2.284  2003/02/14 01:56:36  livesey
+! Added the 'additional' capability in subset
+!
+! Revision 2.283  2003/02/13 21:43:50  livesey
+! Added f_profile to fill
+!
+! Revision 2.282.2.5  2003/04/08 23:41:17  jonathan
+! remove cloud_fov
+!
+! Revision 2.282.2.4  2003/03/27 00:49:25  vsnyder
+! Add ECRtoFOV
+!
+! Revision 2.282.2.3  2003/03/13 00:06:23  vsnyder
+! Delete moleculesPol and moleculeDerivativesPol
+!
+! Revision 2.282.2.2  2003/02/27 17:57:41  bill
+! added everything from the main branch
 !
 ! Revision 2.286  2003/02/20 21:26:21  pwagner
 ! Lets you read field dimList=x,y,.. w/ griddeddata
