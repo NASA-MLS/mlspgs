@@ -363,7 +363,8 @@ contains ! =====     Public procedures     =============================
              l+l_gphPrecision, l+l_hydrostatic, l+l_addnoise, l+l_refract, &
              l+l_isotope, l+l_iwcfromextinction, l+l_l1b, l+l_l2aux, l+l_l2gp, &
              l+l_manipulate, l+l_magneticModel, &
-             l+l_negativePrecision, l+l_offsetRadiance, l+l_profile, l+l_vector, &
+             l+l_negativePrecision, l+l_offsetRadiance, l+l_profile, &
+             l+l_reflectorTempModel, l+l_vector, &
              l+l_scaleOverlaps, l+l_special, l+l_splitSideband, &
              l+l_RHIFromH2O, l+l_RHIPrecisionFromH2O, l+l_spreadChannel, &
              l+l_H2OFromRHI, l+l_fold, l+l_rectanglefromlos, l+l_vGrid, &
@@ -676,6 +677,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_orbitInclination, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
              begin, f+f_phiWindow, t+t_numeric, n+n_field_type, &
+             begin, f+f_phiZero, t+t_numeric, n+n_field_type, &
              begin, f+f_precision, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
              begin, f+f_precisionFactor, t+t_numeric, n+n_field_type, &
@@ -721,6 +723,7 @@ contains ! =====     Public procedures     =============================
                     f+f_quantities, n+n_dot, &
              begin, f+f_tempPrecisionQuantity, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
+             begin, f+f_terms, t+t_numeric, n+n_field_type, &
              begin, f+f_usb, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
              begin, f+f_usbFraction, s+s_vector, f+f_template, &
@@ -1036,6 +1039,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.315  2003/05/29 20:02:22  livesey
+! Added reflector temperature model and supporting stuff
+!
 ! Revision 2.314  2003/05/29 16:43:54  livesey
 ! Renamed sideband fraction stuff and added some reflector orientated
 ! stuff
