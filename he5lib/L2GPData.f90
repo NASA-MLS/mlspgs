@@ -1256,7 +1256,7 @@ contains ! =====     Public Procedures     =============================
     else if ( l2gp%nLevels > 0 ) then
        !Print*,"Writing 2-d field"
        ! Value and Precision are 2-D fields
-      print*,"About to write data with offset=",myOffset
+     ! print*,"About to write data with offset=",myOffset
       
        status = HE5_SWwrfld( swid, DATA_FIELD1, start(2:3), stride(2:3), &
             edge(2:3), real(l2gp%l2gpValue(1,:,:) ))
@@ -1292,15 +1292,29 @@ contains ! =====     Public Procedures     =============================
     ! 1-D status & quality fields
 
     !HDF-EOS5 won't write a dataset of chars from FORTRAN
-    !    status = HE5_SWwrfld(swid, DATA_FIELD3, start(3:3), stride(3:3),&
-    !        edge(3:3), l2gp%status) ! 
-    status=0
-    print*,"Warning. Writing of status field disabled"
-    if ( status == -1 ) then
-       msr = WR_ERR // DATA_FIELD3
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+
+   if(USEINTS4STRINGS) then
+      allocate(string_buffer(1,l2gp%nTimes))
+      call strings2Ints(l2gp%status, string_buffer)
+      status = HE5_swwrfld(swid,DATA_FIELD3,start(3:3),stride(3:3),edge(3:3),&
+           string_buffer)
+      if ( status == -1 ) then
+         msr = WR_ERR // DATA_FIELD3
+         call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+      end if
+      deallocate(string_buffer)
+    else
+      !    status = HE5_SWwrfld(swid, DATA_FIELD3, start(3:3), stride(3:3),&
+      !        edge(3:3), l2gp%status) ! 
+      status=0
+      print*,"Warning. Writing of status field disabled"
+      if ( status == -1 ) then
+         msr = WR_ERR // DATA_FIELD3
+         call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+      end if
     end if
-    l2gp%quality = 0
+    !  l2gp%quality = 0 !??????? Why was this here !??? NJL
+    !                   ! Beats me. Evil bug gnomes, probably. HCP 
     status = HE5_SWwrfld(swid, DATA_FIELD4, start(3:3), stride(3:3), edge(3:3), &
          real(l2gp%quality))
     if ( status == -1 ) then
@@ -1346,7 +1360,7 @@ contains ! =====     Public Procedures     =============================
   subroutine AppendL2GPData(l2gp,l2FileHandle,swathName,offset)
     ! sticks l2gp into the swath swathName in the file pointed at by
     ! l2FileHandle,starting at the profile number "offset" (First profile
-    ! in the file has offset==0). If this runs off the end ofthe swath, 
+    ! in the file has offset==0). If this runs off the end of the swath, 
     ! it is lengthend automagically. 
     ! Arguments
 
@@ -1487,6 +1501,11 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 1.10  2001/11/28 17:46:28  pumphrey
+! In the middle of syncing up l2gpdata with HDF4 version in lib.
+! Compiles, but not tested. Hack to write char swaths cut-n-pasted but not
+! examined for sanity
+!
 ! Revision 1.9  2001/11/28 16:17:16  pumphrey
 ! Syncing prior to major re-sync with HDF4 version.
 !
