@@ -9,8 +9,7 @@ module OutputAndClose ! outputs all data from the Join module to the
 !=======================================================================================
 
   use DirectWrite_m, only: DirectData_T
-! use DirectWrite_m, only: dump
-  use Hdf, only: DFACC_CREATE
+  use Hdf, only: DFACC_CREATE, DFACC_RDWR
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use OUTPUT_M, only: blanks, OUTPUT
   use STRING_TABLE, only: GET_STRING
@@ -59,17 +58,20 @@ contains ! =====     Public Procedures     =============================
       & F_METANAME, F_METADATAONLY, F_OVERLAPS, F_PACKED, F_QUANTITIES, &
       & F_TYPE, F_WRITECOUNTERMAF, F_DONTPACK, &
       & L_L2AUX, L_L2DGG, L_L2GP, L_L2PC, S_OUTPUT, S_TIME
+    use HDF5, only: h5gclose_f, h5gopen_f
     use Intrinsic, only: l_swath, l_hdf, PHYQ_Dimensionless
     use L2AUXData, only: L2AUXDATA_T, cpL2AUXData, WriteL2AUXData
     use L2GPData, only: AVOIDUNLIMITEDDIMS, L2GPNameLen, L2GPData_T, &
       & MAXSWATHNAMESBUFSIZE, cpL2GPData, WriteL2GPData
     use L2PC_m, only: WRITEONEL2PC, OUTPUTHDF5L2PC
+    use L2ParInfo, only: parallel
     use MatrixModule_1, only: MATRIX_DATABASE_T, MATRIX_T, GETFROMMATRIXDATABASE
     use MLSCommon, only: I4
     use MLSFiles, only: HDFVERSION_5, &
       & GetPCFromRef, mls_exists, &
       & MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, MLS_SFSTART, MLS_SFEND, &
       & SPLIT_PATH_NAME, unSplitName
+    use MLSHDF5, only: MakeHDF5Attribute
     use MLSL2Options, only: CATENATESPLITS, CHECKPATHS, &
       & DEFAULT_HDFVERSION_WRITE, PENALTY_FOR_NO_METADATA, TOOLKIT
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
@@ -107,6 +109,7 @@ contains ! =====     Public Procedures     =============================
     integer :: FIELD_NO                 ! Index of assign vertex sons of Key
     integer :: FIELDVALUE               ! For get_boolean
     character (len=132) :: FILE_BASE    ! From the FILE= field
+    integer :: GRP_ID
     integer :: GSON                     ! Son of Son -- an assign node
     integer :: hdfVersion               ! 4 or 5 (corresp. to hdf4 or hdf5)
     integer :: IN_FIELD_NO              ! Index of sons of assign vertex
@@ -698,6 +701,22 @@ contains ! =====     Public Procedures     =============================
           if ( returnStatus /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'unable to addmetadata to ' // trim(l2auxPhysicalFilename) )
         end if
+        
+        ! Now we can write any last-minute attributes or datasets to the l2aux
+        ! E.g., parallel stuff
+        if ( parallel%master .or. index(switches, 'chu') /= 0 ) then
+          sdfId = mls_sfstart(l2auxPhysicalFilename, DFACC_RDWR, &
+              & hdfVersion=HDFVERSION_5)
+          call h5gopen_f(sdfId, '/', grp_id, returnStatus)
+          call MakeHDF5Attribute(grp_id, &
+           & 'NumCompletedChunks', parallel%numCompletedChunks, .true.)
+          call MakeHDF5Attribute(grp_id, &
+           & 'NumFailedChunks', parallel%numFailedChunks, .true.)
+          call MakeHDF5Attribute(grp_id, &
+           & 'FailedChunks', trim(parallel%FailedChunks), .true.)
+          call h5gclose_f(grp_id, returnStatus)
+          returnStatus = mls_sfend(sdfid, hdfVersion=HDFVERSION_5)
+        endif
       end if
     end if
 
@@ -971,6 +990,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.101  2004/09/16 00:19:05  pwagner
+! Writes info on completed, failed chunks to l2aux as global attrs
+!
 ! Revision 2.100  2004/08/26 18:52:56  pwagner
 ! Fixed checkPaths bug if outputting l2pc
 !
