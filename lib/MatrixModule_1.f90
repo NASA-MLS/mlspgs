@@ -26,7 +26,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   use Symbol_Table, only: Enter_Terminal
   use Symbol_Types, only: T_identifier
   use VectorsModule, only: ClearUnderMask, CloneVector, CopyVector, Vector_T, &
-    & CheckIntegrity
+    & CheckIntegrity, NullifyVector
 
   implicit NONE
   private
@@ -291,6 +291,7 @@ contains ! =====     Public Procedures     =============================
 
     integer :: I, J      ! Subscripts for [XYZ]%Block
 
+    call nullifyMatrix ( z ) ! for Sun's still useless compiler
     ! Check that the matrices are compatible.
     if ( x%col%vec%template%id /= y%col%vec%template%id &
       & .or. x%row%vec%template%id /= y%row%vec%template%id &
@@ -1273,6 +1274,7 @@ contains ! =====     Public Procedures     =============================
 
     integer :: I, J, K             ! Subscripts for [XYZ]%Block
 
+    call nullifyMatrix ( z ) ! for Sun's still useless compiler
     ! Check that matrices are compatible.  We don't need to check
     ! Nelts or Nb, because these are deduced from Vec.
     if ( (x%row%vec%template%id /= y%row%vec%template%id)  .or. &
@@ -1505,6 +1507,7 @@ contains ! =====     Public Procedures     =============================
     type(Matrix_T), intent(in) :: A
     type(Vector_T), intent(in) :: V
     type(Vector_T) :: Z
+    call nullifyVector ( z ) ! for Sun's still useless compiler
     call multiply ( a, v, z, .false. )
   end function NewMultiplyMatrixVector
 
@@ -1586,16 +1589,28 @@ contains ! =====     Public Procedures     =============================
   ! ---------------------------------------------- NullifyMatrix_1 -----
   subroutine NullifyMatrix_1 ( M )
     ! Given a matrix, nullify all the pointers associated with it
-    type ( Matrix_T ), intent(inout) :: M
+    type ( Matrix_T ), intent(out) :: M
 
     ! Executable code
-    nullify ( M%block )
-    nullify ( M%row%nelts, M%row%inst, M%row%quant )
-    nullify ( M%col%nelts, M%col%inst, M%col%quant )
-    m%row%nb = 0
-    m%col%nb = 0
     m%name = 0
+    call nullifyRCInfo ( m%col )
+    call nullifyRCInfo ( m%row )
+    nullify ( m%block )
   end subroutine NullifyMatrix_1
+
+  ! ---------------------------------------------- NullifyRCInfo -----
+  subroutine NullifyRCInfo ( R )
+    ! Given an RCInfo type, nullify all the pointers associated with it
+    type ( RC_Info ), intent(out) :: R
+
+    ! Executable code
+    call nullifyVector ( r%vec )
+    r%nb = 0
+    r%instFirst = .true.
+    nullify ( r%nelts )
+    nullify ( r%inst )
+    nullify ( r%quant )
+  end subroutine NullifyRCInfo
 
   ! ---------------------------------------------- ReflectMatrix_1 -----
   subroutine ReflectMatrix_1 ( M )
@@ -2132,6 +2147,10 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.85  2002/11/22 12:53:59  mjf
+! Didn't add nullify routine(s) to get round Sun's WS6 compiler not
+! initialising derived type function results.
+!
 ! Revision 2.84  2002/10/07 23:24:43  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
