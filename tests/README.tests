@@ -7,13 +7,19 @@
 # A self-reading guide to testing the mls software;
 # usage: README.tests
 # related documents:
-#  README.MakeFC     a self-reading guide to building the software
-#  BEFORE.mls        a self-reading guide to prerequisites to the software
+#  ../README.MakeFC     a self-reading guide to building the software
+#  ../BEFORE.mls        a self-reading guide to prerequisites to the software
 
         more << EOF
 tests--A set of subdirectories for testing the different levels of the mls
 software during development. Also a special subdirectory misc to allow you to
 build and run stand-alone software without reference to the mls software.
+
+As with the misc subdirectory, you may find it handy to build a utility that
+USEs parts of the mlspgs software, e.g. to read/write l2gp files, writing a
+driver for that purpose. This allows you to easily compile and link your
+utility w/o having to copy parts of the mlspgs software to someplace new and
+writing your own makefile.
 
 SUMMARY
 The subdirectories under the one containing this README are used auotmatically
@@ -52,7 +58,7 @@ METHOD
 
 (4) cd tests/_level_
 
-(5) make depends ghostbuster
+(5) make update
 
 (6) make
 
@@ -134,10 +140,13 @@ original in mlspgs/_level_ is unsafe because the modules that USE it are
 not being recompiled. Rather than a mere warning, this last point is a special
 case of the remarks made above under BUGS..
 
--pw                           2001-Feb-01 to 2003-Feb-06
+-pw                           2001-Feb-01 to 2003-May-01
 EOF
 exit
 # $Log$
+# Revision 1.8  2003/02/06 21:36:07  pwagner
+# Added BUGS heading and paragraph concerning synonymous modules
+#
 # Revision 1.7  2002/02/21 21:58:52  pwagner
 # Small language corrections
 #
