@@ -722,9 +722,11 @@ contains
       end select
 
       if ( nl < 1 ) then
-        if ( present(t_power) ) then
+        if ( present(t_power) ) then ! t_power depends only on extinction
+          bp = bp * ratio ! We really don't care how BP and BM are scaled, but
+          bm = bm * ratio ! they have to be scaled like BETA_VALUE!
           ds = log(bp/beta_value(j))/log(tp/temp(j)) ! Estimate over [temp(j)+10,temp(j)]
-          ra = log(bp/bm)/        log(tp/tm)         ! Estimate over [temp(j)+10,temp(j)-10]
+          ra = log(bp/bm)           /log(tp/tm)      ! Estimate over [temp(j)+10,temp(j)-10]
           dw = log(beta_value(j)/bm)/log(temp(j)/tm) ! Estimate over [temp(j),temp(j)-10]
           t_power(j) = 0.25 * (ds + 2.0 * ra + dw)   ! Weighted Average
         end if
@@ -886,8 +888,10 @@ contains
           end if
         end if
 
+        bp = bp * ratio ! We really don't care how BP and BM are scaled, but
+        bm = bm * ratio ! they have to be scaled like BETA_VALUE!
         ds = Log(bp/beta_value(j))/Log(tp/temp(j))  ! Estimate over [temp(j)+10,temp(j)]
-        ra = Log(bp/bm)/        Log(tp/tm)          ! Estimate over [temp(j)+10,temp(j)-10]
+        ra = Log(bp/bm)           /Log(tp/tm)       ! Estimate over [temp(j)+10,temp(j)-10]
         dw = Log(beta_value(j)/bm)/Log(temp(j)/tm)  ! Estimate over [temp(j),temp(j)-10]
         t_power(j) = t_power(j) + 0.25 * (ds + 2.0 * ra + dw) ! Weighted Average
 
@@ -974,6 +978,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.44  2003/07/11 22:43:37  vsnyder
+! Multiply the continuum-derived Beta by the isotope ratio
+!
 ! Revision 2.43  2003/07/09 22:47:43  vsnyder
 ! Make separate branches for the polarized and nonpolarized cases, so
 ! we don't need to check "if (present(polarized))" inside the loop.  This
