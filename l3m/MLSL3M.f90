@@ -45,8 +45,7 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
    TYPE( Mlscf_T ) :: cf
    TYPE( PCFMData_T ) :: pcf
    TYPE( L2GPData_T ), POINTER :: l2gp(:)
-   TYPE( L3CFDg_T ), POINTER :: cfDg(:)
-   TYPE( L3CFMProd_T ), POINTER :: cfProd(:)
+   TYPE( L3CFMProd_T ), POINTER :: cfStd(:), cfDg(:)
    TYPE( L3DZData_T ), POINTER :: dz(:), dzA(:), dzD(:)
    TYPE( OutputFiles_T ) :: dFiles, sFiles
 
@@ -75,59 +74,47 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
 
 ! Fill structures with input data from the PCF and L3CF.
 
-   CALL OpenMON(pcf, cf, cfProd, cfDef, cfDg, anText)
+   CALL OpenMON(pcf, cf, cfStd, cfDg, cfDef, anText)
 
 ! For each Standard product requested in the cf,
 
-   DO i = 1, SIZE(cfProd)
+   DO i = 1, SIZE(cfStd)
 
 ! Read all available data in the input window
 
-      CALL ReadL2GPProd(cfProd(i)%l3prodName, cfProd(i)%fileTemplate, &
+      CALL ReadL2GPProd(cfStd(i)%l3prodName, cfStd(i)%fileTemplate, &
                         pcf%startDay, pcf%endDay, l2Days, l2gp)
 
 ! If no data found, go on to the next product
 
       IF (l2Days < 1) THEN
-         msr = 'No data found for ' // TRIM(cfProd(i)%l3prodName) // &
+         msr = 'No data found for ' // TRIM(cfStd(i)%l3prodName) // &
                '.  Skipping Monthly processing and moving on to the next product.'
          CALL MLSMessage (MLSMSG_Warning, ModuleName, msr)
          CYCLE
       ELSE
          msr = 'Input data successfully read; begin processing data for ' // &
-               cfProd(i)%l3prodName
+               cfStd(i)%l3prodName
          CALL MLSMessage (MLSMSG_Info, ModuleName, msr)
       ENDIF
 
 ! Core processing for Standard products
 
-      CALL MonthlyCoreProcessing(cfProd(i), pcf, cfDef, l2Days, l2gp, mm, mmA, mmD, &
+      CALL MonthlyCoreProcessing(cfStd(i), pcf, cfDef, l2Days, l2gp, mm, mmA, mmD, &
                                  mz, mzA, mzD, dz, dzA, dzD)
-
-      msr = 'CORE processing completed for ' // TRIM(cfProd(i)%l3prodName) &
+      
+      msr = 'CORE processing completed for ' // TRIM(cfStd(i)%l3prodName) &
             // '; starting Output task ...'
       CALL MLSMessage (MLSMSG_Info, ModuleName, msr)
 
-! Output and Close for the product
-
-      CALL OutputStd(pcf, cfDef%stdType, cfProd(i)%mode, dz, dzA, dzD, mz, mzA, mzD, &
-                     mm, mmA, mmD, sFiles, flag)
-
-! Deallocate the databases passed between CORE & the I/O shell
-
-      CALL DeallocateL3MM(mm)
-      CALL DeallocateL3MM(mmA)
-      CALL DeallocateL3MM(mmD)
-
-      CALL DeallocateL3MZ(mz)
-      CALL DeallocateL3MZ(mzA)
-      CALL DeallocateL3MZ(mzD)
-
-      CALL DestroyL3DZDatabase(dz)
-      CALL DestroyL3DZDatabase(dzA)
-      CALL DestroyL3DZDatabase(dzD)
+! Deallocate the L2GP database
 
       CALL DestroyL2GPDatabase(l2gp)
+
+! Output and Close for the product
+
+      CALL OutputStd(pcf, cfDef%stdType, cfStd(i)%mode, dz, dzA, dzD, mz, mzA, mzD, &
+                     mm, mmA, mmD, sFiles, flag)
 
    ENDDO
 
@@ -156,48 +143,38 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
 
 ! Read all the l2gp data which exist in the input window for that product
 
-         CALL ReadL2DGData(cfDg(i)%prodName, numFiles, pcfNames, l2Days, l2gp)
+         CALL ReadL2DGData(cfDg(i)%l3prodName, numFiles, pcfNames, l2Days, l2gp)
 
 ! If insufficient data found, go on to the next product
 
          IF (l2Days < 1) THEN
-            msr = 'No data found for ' // TRIM(cfDg(i)%prodName) &
+            msr = 'No data found for ' // TRIM(cfDg(i)%l3prodName) &
                // '.  Skipping CORE processing and moving on to the next product.'
             CALL MLSMessage (MLSMSG_Warning, ModuleName, msr)
             CYCLE
          ELSE
             msr = 'Input data successfully read for ' //  &
-                   TRIM(cfDg(i)%prodName) // '; CORE processing started ...'
+                   TRIM(cfDg(i)%l3prodName) // '; CORE processing started ...'
             CALL MLSMessage (MLSMSG_Info, ModuleName, msr)
          ENDIF
 
 ! Monthly Core processing
 
-!        CALL MonthlyDgProcessing(pcf, cfDef, cfDg(i), latGrid, lonGrid, l2gp, mz, &
-!                                 mzA, mzD, dz, dzA, dzD, mm)
+         CALL MonthlyCoreProcessing(cfDg(i), pcf, cfDef, l2Days, l2gp, mm, mmA, mmD, &
+                                    mz, mzA, mzD, dz, dzA, dzD)
 
-         msr = 'CORE processing completed for ' // TRIM(cfDg(i)%prodName) &
+         msr = 'CORE processing completed for ' // TRIM(cfDg(i)%l3prodName) &
                // '; starting Output task ...'
          CALL MLSMessage (MLSMSG_Info, ModuleName, msr)
 
-! Output and Close for the product
-
-!        CALL OutputDg(pcf, cfDef, cfDg(i), dz, dzA, dzD, mz, mzA, mzD, mm, &
-!                      dFiles, flag)
-
-! Deallocate the databases passed between CORE & the I/O shell
-
-         CALL DeallocateL3MM(mm)
-
-         CALL DeallocateL3MZ(mz)
-         CALL DeallocateL3MZ(mzA)
-         CALL DeallocateL3MZ(mzD)
-
-         CALL DestroyL3DZDatabase(dz)
-         CALL DestroyL3DZDatabase(dzA)
-         CALL DestroyL3DZDatabase(dzD)
+! Deallocate the L2GP database
 
          CALL DestroyL2GPDatabase(l2gp)
+
+! Output and Close for the product
+
+         CALL OutputDg(pcf, cfDef%dgType, dz, dzA, dzD, mz, mzA, mzD, mm, mmA, mmD, &
+                       dFiles, flag)
 
       ENDDO
 
@@ -208,7 +185,7 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
    CALL MLSMessage (MLSMSG_Info, ModuleName, &
             'Product processing completed; beginning Output/Close task ... ')
 
-   CALL OutputMON(sFiles, dFiles, flag, pcf, cfProd, cf, anText)
+   CALL OutputMON(sFiles, dFiles, flag, pcf, cfStd, cf, anText)
 
    CALL MLSMessage (MLSMSG_Info, ModuleName, &
     'EOS MLS Level 3 Monthly data processing successfully completed!')
@@ -221,6 +198,9 @@ END PROGRAM MLSL3M
 !=================
 
 ! $Log$
+! Revision 1.5  2001/08/08 19:27:47  nakamura
+! Added cfDef to MonthlyCoreProcessing args; added comments delineating CORE from I/O.
+!
 ! Revision 1.4  2001/08/02 23:35:52  ybj
 ! Fix interface call to MonthlyCoreProcessing
 !
@@ -232,5 +212,4 @@ END PROGRAM MLSL3M
 !
 ! Revision 1.1  2001/07/18 15:42:48  nakamura
 ! MLS Level 3 Monthly program.
-!
 !
