@@ -60,7 +60,7 @@ contains
   Real(r8) :: h, q, r, zeta, phi
 
   Real(r8), dimension(:)  , allocatable :: zpath, tpath, hpath, ppath, dhdzp
-  Real(r8), dimension(:,:), pointer :: phi_eta
+  Real(r8), dimension(:,:), allocatable :: phi_eta
 
   nullify ( phi_eta )
   ier = 0
@@ -141,6 +141,9 @@ end subroutine Comp_Path_Entities
 
 end module Comp_Path_Entities_M
 ! $Log$
+! Revision 1.22  2001/04/13 01:44:36  vsnyder
+! Work on moving window
+!
 ! Revision 1.21  2001/04/13 00:27:20  vsnyder
 ! Limit amount of phi_eta assigned
 !
