@@ -734,7 +734,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Now some other stuff to allocate
 
-    if ( qty%minorFrame ) then
+    if ( qty%minorFrame .or. qty%majorFrame ) then
       call allocate_test ( qty%MAFIndex, qty%noInstances, &
         & "qty%MAFIndex", ModuleName )
       call allocate_test ( qty%MAFCounter, qty%noInstances, &
@@ -767,6 +767,10 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.28  2002/11/22 12:54:34  mjf
+! Added nullify routine(s) to get round Sun's WS6 compiler not
+! initialising derived type function results.
+!
 ! Revision 2.27  2002/10/08 00:09:13  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
