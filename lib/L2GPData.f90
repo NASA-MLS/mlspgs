@@ -662,7 +662,10 @@ contains ! =====     Public Procedures     =============================
     integer :: nFreqs, nLevels, nTimes, nFreqsOr1, nLevelsOr1, myNumProfs
     logical :: firstCheck, lastCheck, timeIsUnlim
 
-    real, allocatable :: realFreq(:), realSurf(:), realProf(:), real3(:,:,:)
+    real(r4), pointer, dimension(:) :: REALFREQ
+    real(r4), pointer, dimension(:) :: REALSURF
+    real(r4), pointer, dimension(:) :: REALPROF
+    real(r4), pointer, dimension(:,:,:) :: REAL3
     logical :: dontfail
     logical :: ReadingStatus
 !  How to deal with status and columnTypes? swrfld fails
@@ -671,6 +674,8 @@ contains ! =====     Public Procedures     =============================
 !    character (LEN=8), allocatable :: the_status_buffer(:)
 !    character (LEN=L2GPNameLen), allocatable :: the_status_buffer(:)
 !    integer, allocatable, dimension(:,:) :: string_buffer
+
+    nullify ( realFreq, realSurf, realProf, real3 )
     
     ! Don't fail when trying to read an mls-specific field 
     ! if the file is from another Aura instrument
@@ -826,12 +831,11 @@ contains ! =====     Public Procedures     =============================
 
     nFreqsOr1=max(nFreqs,1)
     nLevelsOr1=max(nLevels, 1)
-    allocate(realProf(myNumProfs), realSurf(l2gp%nLevels), &
-      &   realFreq(l2gp%nFreqs), &
-      &   real3(nFreqsOr1,nLevelsOr1,myNumProfs), STAT=alloc_err)
-    !   &   string_buffer(1,myNumProfs), &
-    if ( alloc_err /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate//' various things in ReadL2GPData' )
+
+    call Allocate_test ( realProf, myNumProfs, 'realProf', ModuleName )
+    call Allocate_test ( realSurf, l2gp%nLevels, 'realSurf', ModuleName )
+    call Allocate_test ( realFreq, l2gp%nFreqs, 'realFreq', ModuleName )
+    call Allocate_test ( real3, nFreqsOr1, nLevelsOr1, myNumProfs, 'real3', ModuleName )
 
     ! Read the horizontal geolocation fields
 
@@ -948,17 +952,12 @@ contains ! =====     Public Procedures     =============================
     endif
 
     ! Deallocate local variables
-
-    deallocate(realFreq, realSurf, realProf, real3, STAT=alloc_err)
-    if ( alloc_err /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-         'Failed deallocation of local real variables.')
-
-    ! deallocate ( string_buffer, STAT=alloc_err )
-    if ( alloc_err /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-         'Failed deallocation of status buffer.' )
+    call Deallocate_test ( realProf, 'realProf', ModuleName )
+    call Deallocate_test ( realSurf, 'realSurf', ModuleName )
+    call Deallocate_test ( realFreq, 'realFreq', ModuleName )
+    call Deallocate_test ( real3, 'real3', ModuleName )
 
     !  After reading, detach from HE5_SWath interface
-
     status = mls_SWdetach(swid, hdfVersion=hdfVersion)
     if (status == -1) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
          &detach from swath interface after reading.')
@@ -2627,6 +2626,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.99  2004/03/29 18:51:18  pwagner
+! Remembered to tell hdf5 status was int, not char
+!
 ! Revision 2.98  2004/03/24 23:53:02  pwagner
 ! Switched from HE5T_NATIVE_SCHAR to MLS_CHARTYPE
 !
