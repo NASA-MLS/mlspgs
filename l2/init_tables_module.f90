@@ -409,7 +409,8 @@ contains ! =====     Public procedures     =============================
              l+l_extractChannel, l+l_gphPrecision, l+l_hydrostatic, l+l_addnoise, l+l_refract, &
              l+l_isotope, l+l_iwcfromextinction, l+l_l1b, l+l_l2aux, l+l_l2gp, &
              l+l_manipulate, l+l_magneticModel, l+l_magAzEl, &
-             l+l_negativePrecision, l+l_offsetRadiance, l+l_profile, l+l_quality, &
+             l+l_negativePrecision, l+l_offsetRadiance, l+l_profile, &
+             l+l_phaseTiming, l+l_sectionTiming, l+l_quality, &
              l+l_reflectorTempModel, l+l_rotateField, l+l_vector, &
              l+l_scaleOverlaps, l+l_special, l+l_splitSideband, &
              l+l_status, l+l_resetUnusedRadiances, &
@@ -461,8 +462,9 @@ contains ! =====     Public procedures     =============================
              l+l_losTransFunc, l+l_losVel, &
              l+l_massMeanDiameterIce, l+l_massMeanDiameterWater, l+l_magneticField, &
              l+l_noiseBandwidth, l+l_noRadsPerMIF, l+l_noRadsBinned, &
-             l+l_numJ, l+l_opticalDepth, &
-             l+l_orbitInclination, l+l_phiTan, l+l_ptan, l+l_quality, l+l_radiance, l+l_earthradius,&
+             l+l_numJ, l+l_opticalDepth, l+l_orbitInclination, &
+             l+l_phaseTiming, l+l_phiTan, l+l_ptan, &
+             l+l_quality, l+l_radiance, l+l_earthradius,&
              l+l_refGPH, l+l_refltemp, l+l_refltrans, l+l_reflrefl, l+l_reflspill, &
              l+l_rhi, l+l_singleChannelRadiance, l+l_sizedistribution, &
              l+l_scanResidual, l+l_scECI, l+l_scVel, l+l_scVelECI, &
@@ -1272,6 +1274,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.378  2004/06/29 00:08:41  pwagner
+! Now can fill timings
+!
 ! Revision 2.377  2004/06/17 22:48:48  pwagner
 ! integer now a possible coord type for a VGrid
 !
