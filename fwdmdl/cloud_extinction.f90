@@ -3,10 +3,6 @@
  
 module Cloud_Extinction
 
-  use MLSCommon,               only: r8, rp
-  use ScatteringAngle,         only: ANGLE
-  use CloudySkyModule,         only: CLOUDY_SKY
-
   IMPLICIT NONE
   private
   public ::  get_beta_cloud
@@ -22,9 +18,13 @@ module Cloud_Extinction
 
 contains 
 
-  SUBROUTINE get_beta_cloud (frequency, temperature, pressure, &
+  subroutine get_beta_cloud (frequency, temperature,           &
                           &  WC, IPSD, N, NU, NUA, NAB, NR,    &
-                          &  CLD_EXT, W0, PHH                   )
+                          &  CLD_EXT, CLD_W0, CLD_PHH          )
+
+    use CloudySkyModule,         only: CLOUDY_SKY
+    use MLSCommon,               only: r8, rp
+    use ScatteringAngle,         only: ANGLE
 
 !--------------------------------INPUT PARAMETERS----------------------------------
 
@@ -42,19 +42,21 @@ contains
       INTEGER, intent(in) :: NR           ! NUMBER OF SIZE BINS
 
       REAL(r8),intent(in) :: TEMPERATURE  ! in Kelvin
-      REAL(r8),intent(in) :: PRESSURE     ! in mbar
       REAL(r8),intent(in) :: FREQUENCY    ! in MegaHertz
       REAL(r8),intent(in) :: WC(N)        ! CLOUD WATER CONTENT
                                           ! N=1: ICE; N=2: LIQUID
 
 !--------------------------------OUTPUT PARAMETERS--------------------------------
 
-      REAL(r8),intent(out) :: W0(N)       ! SINGLE SCATTERING ALBEDO
-      REAL(r8),intent(out) :: PHH(N,NU)   ! PHASE FUNCTION
+      REAL(r8),intent(out) :: cld_W0      ! SINGLE SCATTERING ALBEDO
+      REAL(r8),intent(out) :: cld_PHH(NU) ! PHASE FUNCTION
       REAL(r8),intent(out) :: cld_ext     ! CLOUD EXTINCTION 
+     
 
 !-------------------------------Internal parameters-------------------------------
 
+      REAL(r8) :: W0(N)                   ! SINGLE SCATTERING ALBEDO
+      REAL(r8) :: PHH(N,NU)               ! PHASE FUNCTION
       REAL(r8) :: CWC                     ! CLOUD WATER CONTENT (g/m3)
       REAL(r8) :: THETA(NU)               ! SCATTERING ANGLES
       REAL(r8) :: U(NU)                   ! COSINE OF SCATTERING ANGLES      
@@ -81,15 +83,21 @@ contains
       INTEGER :: ISPI, J
 !===================================================================================
 
+      cld_ext = 0.0
+      cld_w0  = 0.0
+      cld_phh = 0.0
+
+      RC_TMP = 0._r8
+      RC_TOT = 0._r8
+
       CALL ANGLE(THETA,U,DU,NU,PHI,UA,NUA,UI,THETAI)
 
       DO ISPI=1,N
 
-         CWC = 0.*WC(ISPI) !0 for now
+         CWC = WC(ISPI) 
          IF (CWC .ne. 0._r8 ) then           
-            CWC = MAX(1.E-9_r8, abs(CWC))
-
-            CALL CLOUDY_SKY (ISPI, CWC, TEMPERATURE, 1000.*FREQUENCY,       &
+            CWC = MAX(1.E-9_r8, abs(CWC) )
+            CALL CLOUDY_SKY (ISPI, CWC, TEMPERATURE, FREQUENCY/1000., &
                    &         NU, U, DU, P11, RC11, IPSD, DMA,         &
                    &         PH1, NAB, P, DP, NR, R, RN, BC, A, B, NABR)    
 
@@ -104,13 +112,18 @@ contains
       ENDDO
 
       DO ISPI=1,N
-         W0(ISPI) = min( 1._r8, RC_TMP(ISPI,2)/RC_TOT(3) )
+         IF (RC_TOT(3) .ne. 0.) THEN
+           W0(ISPI) = min( 1._r8, RC_TMP(ISPI,2)/RC_TOT(3) )
+         ELSE
+           W0(ISPI) = 0.
+         ENDIF
       ENDDO
      
+      cld_ext = RC_TOT(3)
+      cld_w0  = W0(1)
+      cld_phh = PHH(1,:) 
 
-
-
-end Subroutine get_beta_cloud
+  end Subroutine get_beta_cloud
 
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
@@ -119,6 +132,27 @@ end Subroutine get_beta_cloud
 end module Cloud_Extinction
 
 ! $Log$
+! Revision 2.4  2003/05/05 23:00:25  livesey
+! Merged in feb03 newfwm branch
+!
+! Revision 2.3.2.7  2003/04/16 00:57:24  vsnyder
+! Move USE statements from module scope to procedure scope
+!
+! Revision 2.3.2.6  2003/04/10 16:13:51  jonathan
+! fix bug
+!
+! Revision 2.3.2.5  2003/04/03 22:50:04  jonathan
+! fix bug
+!
+! Revision 2.3.2.4  2003/03/24 21:50:53  jonathan
+! remove unused 'pressure' in call to cloud_extinction
+!
+! Revision 2.3.2.3  2003/02/27 23:17:05  vsnyder
+! Remove unused 'pressure' argument
+!
+! Revision 2.3.2.1  2003/02/14 00:21:42  jonathan
+! add singl. scat. albedo W0, ph funct PHH
+!
 ! Revision 2.3  2003/01/31 20:21:01  jonathan
 ! fix bug
 !
