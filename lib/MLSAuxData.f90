@@ -378,16 +378,18 @@ contains ! ============================ MODULE PROCEDURES ====================
  end subroutine Deallocate_MLSAuxData
 !--------------------------------------------------------------Build_MLSAuxData
  subroutine Build_MLSAuxData_Character( file_id, dataset, char_data, & 
-      char_length, lastIndex)
+      char_length, lastIndex, disable_attrib)
     type( DataProducts_T ), intent(in) :: dataset
     character (len=*), intent(in) :: char_data
     integer, intent(in) :: char_length
     integer, intent(in), optional ::lastIndex
+    logical, intent(in), optional :: disable_attrib
     integer(hid_t), intent(in) :: file_id
 
     type( MLSAuxData_T ) :: MLSData
     integer, dimension(3) :: dims
     integer :: error, status
+    logical :: attribenabled
 
     dims(1) = 1
     dims(2) = 1
@@ -404,16 +406,18 @@ contains ! ============================ MODULE PROCEDURES ====================
 
     call CopyFromDataProducts (dataset, MLSData)
 
+    attribenabled = .false.
     if (present(lastIndex)) then 
        if (lastIndex .eq. 1) then 
-          call Write_MLSAuxData(file_id, MLSData, error, & 
-               write_attributes=.true., & 
-               string_length=char_length, index=lastIndex)
-       else
-          call Write_MLSAuxData(file_id, MLSData, error, & 
-               write_attributes=.false., & 
-               string_length=char_length, index=lastIndex)
+          if (present (disable_attrib)) then
+             attribenabled = .false.
+          else
+             attribenabled = .true.
+          endif
        endif
+       call Write_MLSAuxData(file_id, MLSData, error, & 
+            write_attributes=attribenabled, & 
+            string_length=char_length, index=lastIndex)
     else
        call Write_MLSAuxData(file_id, MLSData, error, & 
             write_attributes=.true., & 
@@ -426,16 +430,18 @@ contains ! ============================ MODULE PROCEDURES ====================
  end subroutine Build_MLSAuxData_Character
 !--------------------------------------------------------------Build_MLSAuxData
  subroutine Build_MLSAuxData_Integer( file_id, dataset, int_data, & 
-      lastIndex, fill_value)
+      lastIndex, fill_value, disable_attrib)
     type( DataProducts_T ), intent(in) :: dataset
     integer, intent(in) :: int_data
     integer, intent(in), optional :: lastIndex
     integer(hid_t), intent(in) :: file_id
     integer, intent(in), optional :: fill_value
+    logical, intent(in), optional :: disable_attrib
 
     type( MLSAuxData_T ) :: MLSData
     integer, dimension(3) :: dims
     integer :: error, status
+    logical :: attribenabled
 
     dims(1) = 1
     dims(2) = 1
@@ -452,17 +458,18 @@ contains ! ============================ MODULE PROCEDURES ====================
     allocate(MLSData%Dimensions(1), stat=status)
     call CopyFromDataProducts (dataset, MLSData)
 
+    attribenabled = .false.
     if ( present (lastIndex)) then
-
-       if (lastIndex .eq. 1) then
-          call Write_MLSAuxData(file_id, MLSData, error, &
-               write_attributes=.true., &  
-               index=lastIndex, fill_value_i=fill_value)
-       else
-          call Write_MLSAuxData(file_id, MLSData, error, &
-               write_attributes=.false., &  
-               index=lastIndex, fill_value_i=fill_value)
+       if (lastIndex .eq. 1) then 
+          if (present (disable_attrib)) then
+             attribenabled = .false.
+          else
+             attribenabled = .true.
+          endif
        endif
+       call Write_MLSAuxData(file_id, MLSData, error, & 
+            write_attributes=attribenabled, index=lastIndex, &
+               fill_value_i=fill_value)
     else
 
        call Write_MLSAuxData(file_id, MLSData, error, &
@@ -477,16 +484,18 @@ contains ! ============================ MODULE PROCEDURES ====================
  end subroutine Build_MLSAuxData_Integer
 !------------------------------------------------------------------------------
  subroutine Build_MLSAuxData_Real (file_id, dataset, real_data, lastIndex, &
-      fill_value)
+      fill_value, disable_attrib)
     type( DataProducts_T ), intent(inout) :: dataset
     real, intent(in) :: real_data
     integer, intent(in), optional :: lastIndex
     real, intent(in), optional :: fill_value
     integer(hid_t), intent(in) :: file_id
+    logical, intent(in), optional :: disable_attrib
 
     type( MLSAuxData_T ) :: MLSData
     integer, dimension(3) :: dims
     integer :: error, status
+    logical :: attribenabled
 
     dims(1) = 1
     dims(2) = 1
@@ -501,16 +510,18 @@ contains ! ============================ MODULE PROCEDURES ====================
     allocate(MLSData%Dimensions(1), stat=status)
     call CopyFromDataProducts (dataset, MLSData)
 
+    attribenabled = .false.
     if ( present(lastIndex) ) then
        if (lastIndex .eq. 1) then 
-          call Write_MLSAuxData (file_id, MLSData, error, &
-               write_attributes=.true., index=lastIndex, &
-               fill_value_r=fill_value)
-       else
-          call Write_MLSAuxData (file_id, MLSData, error, &
-               write_attributes=.false., index=lastIndex, &
-               fill_value_r=fill_value)
+          if (present (disable_attrib)) then
+             attribenabled = .false.
+          else
+             attribenabled = .true.
+          endif
        endif
+       call Write_MLSAuxData(file_id, MLSData, error, & 
+            write_attributes=attribenabled, index=lastIndex, &
+               fill_value_r=fill_value)
     else
        call Write_MLSAuxData (file_id, MLSData, error, fill_value_r=fill_value)
     endif
@@ -521,16 +532,18 @@ contains ! ============================ MODULE PROCEDURES ====================
  end subroutine Build_MLSAuxData_Real
 !------------------------------------------------------------------------------
  subroutine Build_MLSAuxData_Double( file_id, dataset, double_data, lastIndex, &
-      fill_value)
+      fill_value, disable_attrib)
     type( DataProducts_T ), intent(in) :: dataset
     real(r8), intent(in) :: double_data
     integer, intent(in), optional :: lastIndex
     integer(hid_t), intent(in) :: file_id
     real(r8), intent(in), optional :: fill_value
+    logical, intent(in), optional :: disable_attrib
 
     type( MLSAuxData_T ) :: MLSData
     integer, dimension(3) :: dims
     integer :: error, status
+    logical :: attribenabled
 
     dims(1) = 1
     dims(2) = 1
@@ -546,15 +559,19 @@ contains ! ============================ MODULE PROCEDURES ====================
     allocate(MLSData%Dimensions(1), stat=status)
     call CopyFromDataProducts (dataset, MLSData)
 
+    attribenabled = .false.
     if ( present (lastIndex) ) then 
-       if (lastIndex .eq. 1) then 
-          call Write_MLSAuxData(file_id, MLSData, error, index=lastIndex, &
-               write_attributes=.true., fill_value_d=fill_value)
-       else
-          call Write_MLSAuxData(file_id, MLSData, error, index=lastIndex, &
-               write_attributes=.false., fill_value_d=fill_value)
+        if (lastIndex .eq. 1) then 
+          if (present (disable_attrib)) then
+             attribenabled = .false.
+          else
+             attribenabled = .true.
+          endif
        endif
-    else
+       call Write_MLSAuxData(file_id, MLSData, error, & 
+            write_attributes=attribenabled, index=lastIndex, &
+               fill_value_d=fill_value)
+     else
        call Write_MLSAuxData(file_id, MLSData, error,&           
             write_attributes=.true., fill_value_d=fill_value)
     endif
@@ -565,17 +582,19 @@ contains ! ============================ MODULE PROCEDURES ====================
  end subroutine Build_MLSAuxData_Double
 !------------------------------------------------------------------------------
  subroutine Build_MLSAuxData_Real_1d( file_id, dataset, real_data, lastIndex, &
-      dims, fill_value)
+      dims, fill_value, disable_attrib)
     type( DataProducts_T ), intent(in) :: dataset
     real, dimension(:), intent(in) :: real_data
     integer, dimension(3), intent(in), optional :: dims
     integer, intent(in), optional :: lastIndex
     real, intent(in), optional :: fill_value
     integer(hid_t), intent(in) :: file_id
+    logical, intent(in), optional :: disable_attrib
 
     type( MLSAuxData_T ) :: MLSData
     integer, dimension(3) :: dim_array
     integer :: i,error, status
+    logical :: attribenabled
 
     if (present(dims) ) then        
        do i=1,3
@@ -607,14 +626,18 @@ contains ! ============================ MODULE PROCEDURES ====================
     allocate(MLSData%Dimensions(MLSData%rank), stat=status)
     call CopyFromDataProducts (dataset, MLSData)
 
+    attribenabled = .false.
     if ( present(lastIndex)) then
        if (lastIndex .eq. 1) then 
-          call Write_MLSAuxData(file_id, MLSData, error, index=lastIndex, &
-               write_attributes=.true., fill_value_r=fill_value)
-       else
-          call Write_MLSAuxData(file_id, MLSData, error, index=lastIndex, &
-               write_attributes=.false., fill_value_r=fill_value)
+          if (present (disable_attrib)) then
+             attribenabled = .false.
+          else
+             attribenabled = .true.
+          endif
        endif
+       call Write_MLSAuxData(file_id, MLSData, error, & 
+            write_attributes=attribenabled, index=lastIndex, &
+               fill_value_r=fill_value)
     else
        call Write_MLSAuxData(file_id, MLSData, error,&           
             write_attributes=.true., fill_value_r=fill_value) 
@@ -626,17 +649,19 @@ contains ! ============================ MODULE PROCEDURES ====================
  end subroutine Build_MLSAuxData_Real_1d
 !------------------------------------------------------------------------------
  subroutine Build_MLSAuxData_Double_1d( file_id, dataset, double_data, & 
-      lastIndex, dims, fill_value)
+      lastIndex, dims, fill_value, disable_attrib)
     type( DataProducts_T ), intent(in) :: dataset
     real(r8), dimension(:), intent(in) :: double_data
     integer, dimension(3), intent(in), optional :: dims
     integer, intent(in), optional :: lastIndex
     integer(hid_t), intent(in) :: file_id
     real(r8), intent(in), optional :: fill_value
+    logical, intent(in), optional :: disable_attrib
 
     type( MLSAuxData_T ) :: MLSData
     integer, dimension(3) :: dim_array
     integer :: i,error, status
+    logical :: attribenabled
 
     if (present(dims) ) then        
        do i=1,3
@@ -668,14 +693,18 @@ contains ! ============================ MODULE PROCEDURES ====================
     allocate(MLSData%Dimensions(MLSData%rank), stat=status)
     call CopyFromDataProducts (dataset, MLSData)
 
-    if ( present (lastIndex) ) then 
+    attribenabled = .false.
+    if ( present(lastIndex)) then
        if (lastIndex .eq. 1) then 
-          call Write_MLSAuxData(file_id, MLSData, error, index=lastIndex, &
-               write_attributes=.true., fill_value_d=fill_value)
-       else 
-          call Write_MLSAuxData(file_id, MLSData, error, index=lastIndex, &
-               write_attributes=.false., fill_value_d=fill_value)
+          if (present (disable_attrib)) then
+             attribenabled = .false.
+          else
+             attribenabled = .true.
+          endif
        endif
+       call Write_MLSAuxData(file_id, MLSData, error, & 
+            write_attributes=attribenabled, index=lastIndex, &
+               fill_value_d=fill_value)
     else
        call Write_MLSAuxData(file_id, MLSData, error, &
             write_attributes=.true., fill_value_d=fill_value)
@@ -687,17 +716,19 @@ contains ! ============================ MODULE PROCEDURES ====================
  end subroutine Build_MLSAuxData_Double_1d
 !------------------------------------------------------------------------------
  subroutine Build_MLSAuxData_Integer_1d( file_id, dataset, integer_data, &
-      lastIndex, dims, fill_value)
+      lastIndex, dims, fill_value, disable_attrib)
     type( DataProducts_T ), intent(in) :: dataset
     integer, dimension(:), intent(in) :: integer_data
     integer, dimension(3), intent(in), optional :: dims
     integer, intent(in), optional :: lastIndex
     integer(hid_t), intent(in) :: file_id
     integer, intent(in), optional :: fill_value
+    logical, intent(in), optional :: disable_attrib
 
     type( MLSAuxData_T ) :: MLSData
     integer, dimension(3) :: dim_array
     integer :: i,j,error, status
+    logical :: attribenabled
 
     if (present(dims) ) then        
        do i=1,3
@@ -729,14 +760,18 @@ contains ! ============================ MODULE PROCEDURES ====================
     allocate(MLSData%Dimensions(MLSData%rank), stat=status)
     call CopyFromDataProducts (dataset, MLSData)
 
-    if (present (lastIndex) ) then
+    attribenabled = .false.
+    if ( present(lastIndex)) then
        if (lastIndex .eq. 1) then 
-          call Write_MLSAuxData(file_id, MLSData, error, index=lastIndex, &
-               write_attributes=.true., fill_value_i=fill_value)
-       else
-          call Write_MLSAuxData(file_id, MLSData, error, index=lastIndex, &
-               write_attributes=.false., fill_value_i=fill_value)
+          if (present (disable_attrib)) then
+             attribenabled = .false.
+          else
+             attribenabled = .true.
+          endif
        endif
+       call Write_MLSAuxData(file_id, MLSData, error, & 
+            write_attributes=attribenabled, index=lastIndex, &
+               fill_value_i=fill_value)
     else
        call Write_MLSAuxData(file_id, MLSData, error, &
             write_attributes=.true., fill_value_i=fill_value)
@@ -748,17 +783,19 @@ contains ! ============================ MODULE PROCEDURES ====================
  end subroutine Build_MLSAuxData_Integer_1d
 !------------------------------------------------------------------------------
  subroutine Build_MLSAuxData_Real_2d( file_id, dataset, real_data, lastIndex, &
-      dims, fill_value)
+      dims, fill_value, disable_attrib)
     type( DataProducts_T ), intent(in) :: dataset
     real, dimension(:,:), intent(in) :: real_data
     integer, dimension(3), intent(in), optional :: dims
     integer, intent(in), optional :: lastIndex
     real, intent(in), optional :: fill_value
     integer(hid_t), intent(in) :: file_id
+    logical, intent(in), optional :: disable_attrib
 
     type( MLSAuxData_T ) :: MLSData
     integer, dimension(3) :: dim_array
     integer :: i,j,k,error, status
+    logical :: attribenabled
 
     if (present(dims) ) then        
        do i=1,3
@@ -792,14 +829,18 @@ contains ! ============================ MODULE PROCEDURES ====================
     allocate(MLSData%Dimensions(MLSData%rank), stat=status)
     call CopyFromDataProducts (dataset, MLSData)
 
+    attribenabled = .false.
     if (present (lastIndex) ) then 
        if (lastIndex .eq. 1) then 
-          call Write_MLSAuxData(file_id, MLSData, error, index=lastIndex, &
-               write_attributes=.true., fill_value_r=fill_value)
-       else
-          call Write_MLSAuxData(file_id, MLSData, error, index=lastIndex, &
-               write_attributes=.false., fill_value_r=fill_value)
+          if (present (disable_attrib)) then
+             attribenabled = .false.
+          else
+             attribenabled = .true.
+          endif
        endif
+       call Write_MLSAuxData(file_id, MLSData, error, & 
+            write_attributes=attribenabled, index=lastIndex, &
+               fill_value_r=fill_value)
     else
        call Write_MLSAuxData(file_id, MLSData, error, &
             write_attributes=.true., fill_value_r=fill_value)
@@ -811,17 +852,19 @@ contains ! ============================ MODULE PROCEDURES ====================
  end subroutine Build_MLSAuxData_Real_2d
 !------------------------------------------------------------------------------
  subroutine Build_MLSAuxData_Double_2d( file_id, dataset, double_data, & 
-      lastIndex, dims, fill_value)
+      lastIndex, dims, fill_value, disable_attrib)
     type( DataProducts_T ), intent(in) :: dataset
     real(r8), dimension(:,:), intent(in) :: double_data
     integer, dimension(3), intent(in), optional :: dims
     integer, intent(in), optional :: lastIndex
     integer(hid_t), intent(in) :: file_id
     real(r8), intent(in), optional :: fill_value
+    logical, intent(in), optional :: disable_attrib
 
     type( MLSAuxData_T ) :: MLSData
     integer, dimension(3) :: dim_array
     integer :: i,j,error, status
+    logical :: attribenabled
 
     if (present(dims) ) then 
        do i=1,3
@@ -856,14 +899,18 @@ contains ! ============================ MODULE PROCEDURES ====================
     allocate(MLSData%Dimensions(MLSData%rank), stat=status)
     call CopyFromDataProducts (dataset, MLSData)
 
+    attribenabled = .false.
     if (present (lastIndex) ) then
        if (lastIndex .eq. 1) then 
-          call Write_MLSAuxData(file_id, MLSData, error, index=lastIndex, &
-               write_attributes=.true., fill_value_d=fill_value)
-       else
-          call Write_MLSAuxData(file_id, MLSData, error, index=lastIndex, &
-               write_attributes=.false., fill_value_d=fill_value)
+          if (present (disable_attrib)) then
+             attribenabled = .false.
+          else
+             attribenabled = .true.
+          endif
        endif
+       call Write_MLSAuxData(file_id, MLSData, error, & 
+            write_attributes=attribenabled, index=lastIndex, &
+               fill_value_d=fill_value)
     else
        call Write_MLSAuxData(file_id, MLSData, error, &
             write_attributes=.true., fill_value_d=fill_value)
@@ -875,17 +922,19 @@ contains ! ============================ MODULE PROCEDURES ====================
  end subroutine Build_MLSAuxData_Double_2d
 !------------------------------------------------------------------------------
  subroutine Build_MLSAuxData_Integer_2d( file_id, dataset, integer_data, &
-      lastIndex, dims, fill_value)
+      lastIndex, dims, fill_value, disable_attrib)
     type( DataProducts_T ), intent(in) :: dataset
     integer, dimension(:,:), intent(in) :: integer_data
     integer, dimension(3), intent(in), optional :: dims
     integer, intent(in), optional :: lastIndex
     integer(hid_t), intent(in) :: file_id
     integer, intent(in), optional :: fill_value
+    logical, intent(in), optional :: disable_attrib
 
     type( MLSAuxData_T ) :: MLSData
     integer, dimension(3) :: dim_array
     integer :: i,j,error, status
+    logical :: attribenabled
 
     if (present(dims) ) then 
        do i=1,3
@@ -919,14 +968,18 @@ contains ! ============================ MODULE PROCEDURES ====================
     allocate(MLSData%Dimensions(MLSData%rank), stat=status)
     call CopyFromDataProducts (dataset, MLSData)
 
+    attribenabled = .false.
     if (present (lastIndex)) then
        if (lastIndex .eq. 1) then 
-          call Write_MLSAuxData(file_id, MLSData, error, index=lastIndex, &
-               write_attributes=.true., fill_value_i=fill_value)
-       else
-          call Write_MLSAuxData(file_id, MLSData, error, index=lastIndex, &
-               write_attributes=.false., fill_value_i=fill_value)
+          if (present (disable_attrib)) then
+             attribenabled = .false.
+          else
+             attribenabled = .true.
+          endif
        endif
+       call Write_MLSAuxData(file_id, MLSData, error, & 
+            write_attributes=attribenabled, index=lastIndex, &
+               fill_value_i=fill_value)
     else
        call Write_MLSAuxData(file_id, MLSData, error, &
             write_attributes=.true., fill_value_i=fill_value)
@@ -3111,6 +3164,9 @@ contains ! ============================ MODULE PROCEDURES ====================
 end module MLSAuxData
 
 ! $Log$
+! Revision 2.24  2004/10/07 18:51:12  perun
+! Add new optional argument to control writing attributes
+!
 ! Revision 2.23  2004/09/02 20:45:32  perun
 ! Added more fill_value types
 !
