@@ -146,18 +146,18 @@ contains ! =====     Private Procedures     ============================
       if ( associated(quantity_templates(i)%signal) ) then
         ! ??? Dump the signal
       end if
-      if ( quantity_templates(i)%radiometerIndex + &
+      if ( quantity_templates(i)%radiometer + &
         &  quantity_templates(i)%molecule /= 0 ) &
         &  call output ( '     ' )
-      if ( quantity_templates(i)%radiometerIndex /= 0 ) then
+      if ( quantity_templates(i)%radiometer /= 0 ) then
         call output ( ' Radiometer = ' )
-        call display_string ( quantity_templates(i)%radiometerIndex )
+        call display_string ( quantity_templates(i)%radiometer )
       end if
       if ( quantity_templates(i)%molecule /= 0 ) then
         call output ( ' Molecule = ' )
         call display_string ( lit_indices(quantity_templates(i)%molecule) )
       end if
-      if ( quantity_templates(i)%radiometerIndex + &
+      if ( quantity_templates(i)%radiometer + &
         &  quantity_templates(i)%molecule /= 0 ) &
         &  call output ( '', advance='yes' )
       if ( associated(quantity_templates(i)%surfIndex) ) then
