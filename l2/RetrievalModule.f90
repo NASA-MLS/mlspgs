@@ -1340,7 +1340,8 @@ contains
       real(r8), dimension(:,:,:), allocatable :: C    ! for problem y=Kx, c=K^t#Sy^-1#K
                                                       ! last dimension is for mif
                                                       ! first two are (chan, s)
-
+	! for temporary test
+	p_lowcut = -2.5
 print*,'begin cloud retrieval'
       call allocate_test ( fmStat%rows, jacobian%row%nb, 'fmStat%rows', &
         & ModuleName )
@@ -1772,6 +1773,9 @@ print*,'start inversion'
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.86  2001/10/05 05:02:27  dwu
+! temporarily set p_lowcut in LowCloud Retrieval
+!
 ! Revision 2.85  2001/10/05 01:46:25  vsnyder
 ! Put in stuff to snoop in the Newtonian iteration loop
 !
