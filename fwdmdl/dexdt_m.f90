@@ -88,7 +88,7 @@ contains
 !         \left[ s^\prime \mathbf{A} + \mathbf{A}^\prime +
 !                (\frac{h^\prime}2 - s^\prime s) \mathbf{I} \right]
 !                 + \right.\\
-!       & \left. \frac{d \cosh d - \sinh d}{d^3}
+!       & \phantom{\{}\, \left. \frac{d \cosh d - \sinh d}{d^3}
 !           \left[ \frac{h^\prime}{2} \mathbf{A} +
 !                  ( h s^\prime - \frac{h^\prime}2 s )\,\mathbf{I} ) \right]
 !       \right \} \;.
@@ -97,14 +97,14 @@ contains
 !  Collecting terms, we have
 ! \begin{equation}\begin{split}
 ! \frac{\text{d} \exp(\mathbf{A})}{\text{d}p} =\;&
-!   e^s \left [ s^\prime \frac{\sinh d}d +
+!   e^s \left \{ \left [ s^\prime \frac{\sinh d}d +
 !           \frac{h^\prime}{2} \frac{d \cosh d - \sinh d}{d^3} \right ] \mathbf{A}
-!   + e^s \frac{\sinh d}d \mathbf{A}^\prime + \\
-! &   e^s \left[ \frac{\sinh d}d
+!   + \frac{\sinh d}d \mathbf{A}^\prime + \right . \\
+! &  \phantom{e^s\{}\, \left . \left[ \frac{\sinh d}d
 !                \left( \frac{h^\prime}{2} - s^\prime s \right) +
 !                \frac{d \cosh d - \sinh d}{d^3}
 !                \left( h s^\prime - \frac{h^\prime}{2} s \right) \right]
-!         \mathbf{I}
+!         \mathbf{I} \right \}
 ! \end{split}\end{equation}
 !
 !  As the eigenvalues coalesce, no cancellations occur, and no infinities
@@ -125,13 +125,14 @@ contains
 !  The series for $\frac{d \cosh d - \sinh d}{d^3}$ converges extremely
 !  rapidly for small $d$ (see {\tt sinhz\_z\_m}).
 
-    call CS_GetEvSD ( A, Ev, dA, dEv )   ! Get the eigenvalues and their
-                                         ! derivatives
+    call CS_GetEvSD ( A, Ev, dA, dEv )   ! Get the sums and differences of the
+                                         ! eigenvalues and their derivatives
 
     es = exp(Ev(1))                      ! exp(s)
     d = sqrt(Ev(2))                      ! z1 - z2
     sinhd_d = es * sinhz_z(d)            ! exp(s) sinh(d)/d
-    d_sinhd_d = es * d_sinhz_z3(d)       ! exp(s) [ (sinh(d)/d)' / d ]
+    d_sinhd_d = es * d_sinhz_z3(d)       ! exp(s) [ (sinh(d)/d)' / d ] =
+                                         ! exp(s) [ (d sinh(d) - cosh(d))/d^3 ]
     dh2 = 0.5 * dEv(2)                   ! h' / 2
     diag = sinhd_d * ( dh2 - Ev(1)*dEv(1) ) + &
       &    d_sinhd_d * ( Ev(2)*dEv(1) - dh2*Ev(1) )
@@ -151,6 +152,9 @@ contains
 end module dExDt_M
 
 ! $Log$
+! Revision 2.2  2003/05/16 02:44:55  vsnyder
+! Removed USE's for unreferenced symbols
+!
 ! Revision 2.1  2003/05/05 23:00:25  livesey
 ! Merged in feb03 newfwm branch
 !
