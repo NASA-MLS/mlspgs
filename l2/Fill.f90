@@ -11,7 +11,7 @@ module Fill                     ! Create vectors and fill them.
   ! We need many things from Init_Tables_Module.  First the fields:
   use INIT_TABLES_MODULE, only: F_Columns, F_Decay, F_Diagonal, &
     & F_GEOCALTITUDEQUANTITY, F_EXPLICITVALUES, F_EXTRA, F_H2OQUANTITY, &
-    & F_INTEGRATIONTIME, F_MAXITERATIONS, F_MATRIX, F_METHOD, &
+    & F_INTEGRATIONTIME, F_INTERPOLATE, F_MAXITERATIONS, F_MATRIX, F_METHOD, &
     & F_QUANTITY, F_RADIANCEQUANTITY, &
     & F_RATIOQUANTITY, F_REFGPHQUANTITY, &
     & F_Rows, F_SCECI, F_SCVEL, F_SOURCE, F_SOURCEGRID, F_SOURCEL2AUX, &
@@ -45,6 +45,7 @@ module Fill                     ! Create vectors and fill them.
   use MLSCommon, only: L1BInfo_T, NameLen, LineLen, MLSChunk_T, R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSSignals_m, only: GetSignalName, GetModuleName
+  use MLSNumerics, only: InterpolateValues
   use Molecules, only: L_H2O
   use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
   use OUTPUT_M, only: OUTPUT
@@ -100,9 +101,10 @@ module Fill                     ! Create vectors and fill them.
   integer, parameter :: BadUnitsForIntegrationTime = badUnitsForExplicit + 1
   integer, parameter :: BadUnitsForSystemTemperature = badUnitsForIntegrationTime + 1
   integer, parameter :: BadIsotopeFill = badUnitsForSystemTemperature + 1
+  integer, parameter :: CantInterpolate3d = badIsotopeFill + 1
 
   ! Error codes resulting from FillCovariance
-  integer, parameter :: NotSPD = BadIsotopeFill + 1
+  integer, parameter :: NotSPD = CantInterpolate3D + 1
   integer, parameter :: NotImplemented = notSPD + 1
 
   ! Error codes resulting from squeeze
@@ -201,6 +203,7 @@ contains ! =====     Public Procedures     =============================
     integer :: I, J, K                  ! Loop indices for section, spec, expr
     integer :: IND                      ! Temoprary index
     real(r8) :: INTEGRATIONTIME         ! For estimated noise
+    logical :: INTERPOLATE              ! Flag for l2gp etc. fill
     integer :: INSTANCE                 ! Loop counter
     integer :: KEY                      ! Definitely n_named
     integer :: L2AUXINDEX               ! Index into L2AUXDatabase
@@ -264,7 +267,8 @@ contains ! =====     Public Procedures     =============================
     error = 0
     templateIndex = -1
     vectorIndex = -1
-    spread=.FALSE.
+    spread = .false.
+    interpolate = .false.
     maxIterations = 4
 
     ! Loop over the lines in the configuration file
@@ -418,6 +422,12 @@ contains ! =====     Public Procedures     =============================
             else
               spread = decoration(subtree(2,gson)) == l_true
             end if
+          case ( f_interpolate ) ! For l2gp etc. fill
+            if ( node_id(gson) == n_set_one ) then
+              interpolate=.TRUE.
+            else
+              interpolate = decoration(subtree(2,gson)) == l_true
+            end if
           end select
         end do                  ! Loop over arguments to fill instruction
 
@@ -518,7 +528,7 @@ contains ! =====     Public Procedures     =============================
           if ( .NOT. got(f_sourceL2GP) ) &
             & call Announce_Error ( key, noSourceL2GPGiven )
           call FillVectorQuantityFromL2GP &
-            & ( quantity, l2gpDatabase(l2gpIndex), errorCode )
+            & ( quantity, l2gpDatabase(l2gpIndex), interpolate, errorCode )
           if ( errorCode /= 0 ) call Announce_error ( key, errorCode )
 
         case ( l_l2aux ) ! ------------  Fill from L2AUX quantity  -----
@@ -655,7 +665,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine FillVectorQuantityFromGrid
 
   !=============================== FillVectorQuantityFromL2GP ==========
-  subroutine FillVectorQuantityFromL2GP(quantity,l2gp, errorCode)
+  subroutine FillVectorQuantityFromL2GP ( quantity,l2gp, interpolate, errorCode )
 
     ! If the times, pressures, and geolocations match, fill the quantity with
     ! the appropriate subset of profiles from the l2gp
@@ -663,6 +673,7 @@ contains ! =====     Public Procedures     =============================
     ! Dummy arguments
     type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
     type (L2GPData_T), intent(in) :: L2GP ! L2GP to fill from
+    logical, intent(in) :: interpolate  ! Flag
     integer, intent(out) :: errorCode ! Error code
 
     ! Local parameters
@@ -671,6 +682,9 @@ contains ! =====     Public Procedures     =============================
     ! Local variables
     integer ::    FIRSTPROFILE, LASTPROFILE
     integer, dimension(1) :: FIRSTPROFILEASARRAY
+    integer :: INSTANCE                 ! Loop counter 
+
+    real (r8), dimension(quantity%template%noSurfs) :: outZeta
 
     errorCode=0
     ! Make sure this quantity is appropriate
@@ -686,20 +700,20 @@ contains ! =====     Public Procedures     =============================
       return
     end if
 
-    if ( quantity%template%noSurfs /= l2gp%nLevels ) then
+    if ( quantity%template%noSurfs /= l2gp%nLevels .and. (.not. interpolate) ) then
       errorCode=vectorWontMatchL2GP
       return
     end if
 
     if ( quantity%template%verticalCoordinate == l_pressure ) then
       if ( any(ABS(-LOG10(quantity%template%surfs(:,1))+ &
-        & LOG10(l2gp%pressures)) > TOLERANCE) ) then
+        & LOG10(l2gp%pressures)) > TOLERANCE) .and. (.not. interpolate) ) then
         errorCode=vectorWontMatchL2GP
         return
       end if
     else                                ! Must be l_zeta
       if ( any(ABS(quantity%template%surfs(:,1)+ &
-        & LOG10(l2gp%pressures)) > TOLERANCE) ) then
+        & LOG10(l2gp%pressures)) > TOLERANCE) .and. (.not. interpolate) ) then
         errorCode=vectorWontMatchL2GP
         return
       end if
@@ -729,9 +743,30 @@ contains ! =====     Public Procedures     =============================
       return
     end if
 
-    quantity%values=RESHAPE(l2gp%l2gpValue(:,:,firstProfile:lastProfile),&
-      & (/quantity%template%noChans*quantity%template%noSurfs,&
-      &   quantity%template%noInstances/))
+    if (interpolate .and. quantity%template%noChans /= 1) then
+      errorCode=cantInterpolate3D
+      return
+    endif
+
+    if (interpolate) then
+      quantity%values=RESHAPE(l2gp%l2gpValue(:,:,firstProfile:lastProfile),&
+        & (/quantity%template%noChans*quantity%template%noSurfs,&
+        &   quantity%template%noInstances/))
+    else
+      if ( quantity%template%verticalCoordinate == l_pressure ) then
+        outZeta = -log10 ( quantity%template%surfs(:,1) )
+      else
+        outZeta = quantity%template%surfs(:,1)
+      endif
+      do instance = 1, quantity%template%noInstances
+        call InterpolateValues ( &
+          & -log10(l2gp%pressures), &  ! Old X
+          & l2gp%l2gpValue(1,:,firstProfile+instance-1), & ! OldY
+          & outZeta, & ! New X
+          & quantity%values(:,instance), & ! New Y
+          & method='Linear', extrapolate='Clamp' )
+      enddo
+    endif
 
   end subroutine FillVectorQuantityFromL2GP
 
@@ -1171,6 +1206,8 @@ contains ! =====     Public Procedures     =============================
       call output ( " command could not be filled from L1B.", advance='yes' )
     case ( cantFillFromL2AUX )
       call output ( " command could not be filled from L2AUX.", advance='yes' )
+    case ( cantInterpolate3D )
+      call output ( " cannot interpolate 3d quantities (yet).", advance='yes' )
     case ( deallocation_err )
       call output ( " command caused an deallocation error in squeeze.", advance='yes' )
     case ( errorReadingL1B )
@@ -1240,7 +1277,8 @@ contains ! =====     Public Procedures     =============================
     case ( vectorWontMatchPDef )
       call output ( " command found new and prev. vectors unmatched.", advance='yes' )
     case ( vectorWontMatchL2GP )
-      call output ( " command found no match of vetor and L2GP.", advance='yes' )
+      call output ( " command found no match of vetor and L2GP (set interpolate?).",&
+        & advance='yes' )
     case ( wrong_number )
       call output ( " command does not have exactly one field.", advance='yes' )
     case ( zeroGeodSpan )
@@ -1261,6 +1299,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.49  2001/05/18 19:50:50  livesey
+! Added interpolate option for l2gp fills
+!
 ! Revision 2.48  2001/05/16 19:44:16  livesey
 ! Added estimated noise stuff
 !
