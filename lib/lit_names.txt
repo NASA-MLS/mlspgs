@@ -22,6 +22,7 @@ baseline
 
 C
 channel
+chunk
 cloudExtinction
 cloudIce
 cloudInducedRadiance
@@ -64,6 +65,7 @@ IceDensity
 intermediatefrequency
 invkm
 invm
+iteration
 isotopeRatio
 
 K
@@ -148,6 +150,9 @@ xyz
 zeta
 
 # $Log$
+# Revision 2.16  2003/01/09 00:07:59  pwagner
+# Newly added Chunk and Iteration
+#
 # Revision 2.15  2003/01/07 23:43:37  livesey
 # Literals for magnetic field
 #
