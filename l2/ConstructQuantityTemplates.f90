@@ -23,6 +23,7 @@ module ConstructQuantityTemplates
   !---------------------------------------------------------------------------
 
   ! The various properties has/can have
+  integer, parameter :: NEXT = 0
   integer, parameter :: P_CHUNKED            = 1
   integer, parameter :: P_MAJORFRAME         = P_CHUNKED + 1
   integer, parameter :: P_MINORFRAME         = P_MAJORFRAME + 1
@@ -249,6 +250,7 @@ contains ! ============= Public procedures ===================================
 
     ! Now check various things out first check that required fields are present
     ! according to the quantity type
+    ! First those that are fairly clear cut to check
     if ( got ( f_hGrid ) .neqv. properties ( p_hGrid ) ) &
       & call Announce_error ( root, trim ( merge ( 'unexpected', 'need      ', &
       & got(f_hGrid) ) ) // ' hGrid for quantity type ', quantityType )
@@ -264,7 +266,8 @@ contains ! ============= Public procedures ===================================
     if ( got ( f_Signal ) .neqv. properties ( p_Signal ) ) &
       & call Announce_error ( root, trim ( merge ( 'unexpected', 'need      ', &
       & got(f_Signal) ) ) // ' signal for quantity type ', quantityType )
-    ! Now check the 'optional' ones specially
+
+    ! These ones need a little more thought
     if ( .not. properties ( p_fGridOptional ) ) then
       if ( got ( f_fGrid ) .neqv. properties ( p_fGrid ) ) &
         & call Announce_error ( root, trim ( merge ( 'unexpected', 'need      ', &
@@ -1016,94 +1019,87 @@ contains ! ============= Public procedures ===================================
     propertyTable = .false.
     unitsTable = 0
 
-    call DefineQtyType ( l_baseline, phyq_temperature, &
-      & (/ p_hGrid, p_vGrid, p_fGrid, p_radiometer /) )
-    call DefineQtyType ( l_boundaryPressure, phyq_pressure, (/ p_hGrid /) )
-    call DefineQtyType ( l_chisqBinned, phyq_dimensionless, &
-      & (/ p_hGrid, p_vGrid, p_signal, p_suppressChannels /) )
-    call DefineQtyType ( l_chisqChan, phyq_dimensionless, (/ p_majorFrame, p_signal /) )
-    call DefineQtyType ( l_chisqMMAF, phyq_dimensionless, &
-      & (/ p_majorFrame, p_signal, p_suppressChannels /) )
-    call DefineQtyType ( l_chisqMMIF, phyq_dimensionless, &
-      & (/ p_minorFrame, p_signal, p_suppressChannels /) )
-    call DefineQtyType ( l_cloudExtinction, phyq_dimensionless, (/ p_hGrid, p_vGrid /) )
-    call DefineQtyType ( l_cloudIce, phyq_IceDensity, (/ p_hGrid, p_vGrid /) )
-    call DefineQtyType ( l_cloudInducedRadiance, phyq_temperature, &
-      & (/ p_minorFrame, p_signal /) )
-    call DefineQtyType ( l_cloudRadSensitivity, phyq_temperature, &
-      & (/ p_minorFrame, p_signal /) )
-    call DefineQtyType ( l_cloudWater, phyq_dimensionless, (/ p_hGrid, p_vGrid /) )
-    call DefineQtyType ( l_columnAbundance, phyq_dobsonunits, (/ p_hGrid, p_molecule /) )
-    call DefineQtyType ( l_dnwt_ajn, phyq_dimensionless, (/ p_vGrid, p_hGrid /) )
-    call DefineQtyType ( l_dnwt_axmax, phyq_dimensionless, (/ p_vGrid, p_hGrid /) )
-    call DefineQtyType ( l_dnwt_cait, phyq_dimensionless, (/ p_vGrid, p_hGrid /) )
-    call DefineQtyType ( l_dnwt_chisqminnorm, phyq_dimensionless, (/ p_vGrid, p_hGrid /) )
-    call DefineQtyType ( l_dnwt_chisqnorm, phyq_dimensionless, (/ p_vGrid, p_hGrid /) )
-    call DefineQtyType ( l_dnwt_diag, phyq_dimensionless, (/ p_vGrid, p_hGrid /) )
-    call DefineQtyType ( l_dnwt_dxdx, phyq_dimensionless, (/ p_vGrid, p_hGrid /) )
-    call DefineQtyType ( l_dnwt_dxdxl, phyq_dimensionless, (/ p_vGrid, p_hGrid /) )
-    call DefineQtyType ( l_dnwt_dxn, phyq_dimensionless, (/ p_vGrid, p_hGrid /) )
-    call DefineQtyType ( l_dnwt_dxnl, phyq_dimensionless, (/ p_vGrid, p_hGrid /) )
-    call DefineQtyType ( l_dnwt_flag, phyq_dimensionless, (/ p_vGrid, p_hGrid /) )
-    call DefineQtyType ( l_dnwt_fnmin, phyq_dimensionless, (/ p_vGrid, p_hGrid /) )
-    call DefineQtyType ( l_dnwt_fnorm, phyq_dimensionless, (/ p_vGrid, p_hGrid /) )
-    call DefineQtyType ( l_dnwt_gdx, phyq_dimensionless, (/ p_vGrid, p_hGrid /) )
-    call DefineQtyType ( l_dnwt_gfac, phyq_dimensionless, (/ p_vGrid, p_hGrid /) )
-    call DefineQtyType ( l_dnwt_gradn, phyq_dimensionless, (/ p_vGrid, p_hGrid /) )
-    call DefineQtyType ( l_dnwt_sq, phyq_dimensionless, (/ p_vGrid, p_hGrid /) )
-    call DefineQtyType ( l_dnwt_sqt, phyq_dimensionless, (/ p_vGrid, p_hGrid /) )
-    call DefineQtyType ( l_earthRadius, phyq_length, (/ p_hGrid /) )
-    call DefineQtyType ( l_earthRefl, phyq_dimensionless, none )
-    call DefineQtyType ( l_ecrToFOV, phyq_dimensionless, (/ p_minorFrame, p_module, &
-      & p_matrix3x3 /) )
-    call DefineQtyType ( l_effectiveOpticalDepth, phyq_dimensionless, &
-      & (/ p_minorFrame, p_signal /) )
-    call DefineQtyType ( l_elevOffset, phyq_angle, (/ p_signal /) )
-    call DefineQtyType ( l_extinction, phyq_extinction, &
-      & (/ p_hGrid, p_vGrid, p_fGrid, p_radiometer /) )
-    call DefineQtyType ( l_gph, phyq_length, (/ p_hGrid, p_vGrid /) )
-    call DefineQtyType ( l_heightOffset, phyq_length, (/ p_hGrid, p_vGrid /) )
-    call DefineQtyType ( l_isotopeRatio, phyq_dimensionless, (/ p_molecule /) )
-    call DefineQtyType ( l_jacobian_cols, phyq_dimensionless, (/ p_vGrid, p_hGrid /) )
-    call DefineQtyType ( l_jacobian_rows, phyq_dimensionless, (/ p_vGrid, p_hGrid /) )
-    call DefineQtyType ( l_losTransFunc, phyq_dimensionless, &
-      & (/ p_minorFrame, p_sGrid, p_module /) )
-    call DefineQtyType ( l_losVel, phyq_dimensionless, (/ p_minorFrame, p_module /) )
-    call DefineQtyType ( l_magneticField, phyq_gauss, (/ p_vGrid, p_hGrid, p_xyz /) )
-    call DefineQtyType ( l_massMeanDiameterIce, phyq_dimensionless, &
-      & (/ p_vGrid, p_hGrid /) )
-    call DefineQtyType ( l_massMeanDiameterWater, phyq_dimensionless, &
-      & (/ p_vGrid, p_hGrid /) )
-    call DefineQtyType ( l_noRadsBinned, phyq_dimensionless, &
-      & (/ p_vGrid, p_hGrid, p_signal, p_suppressChannels /) )
-    call DefineQtyType ( l_noRadsPerMIF, phyq_dimensionless, &
-      & (/ p_minorFrame, p_signal, p_suppressChannels /) )
-    call DefineQtyType ( l_noiseBandwidth, phyq_frequency, (/ p_signal /) )
-    call DefineQtyType ( l_numJ, phyq_dimensionless, (/ p_vGrid, p_hGrid /) )
-    call DefineQtyType ( l_opticalDepth, phyq_dimensionless, (/ p_minorFrame, p_signal /) )
-    call DefineQtyType ( l_orbitInclination, phyq_angle, (/ p_minorFrame, p_scModule /) )
-    call DefineQtyType ( l_phiTan, phyq_angle, (/ p_minorFrame, p_module /) ) 
-    call DefineQtyType ( l_ptan, phyq_zeta, (/ p_minorFrame, p_module /) ) 
-    call DefineQtyType ( l_radiance, phyq_temperature, (/ p_minorFrame, p_signal /) ) 
-    call DefineQtyType ( l_refGPH, phyq_length, (/ p_hGrid, p_vGrid /) )
-    call DefineQtyType ( l_rhi, phyq_dimensionless, (/ p_hGrid, p_vGrid, p_molecule /) )
-    call DefineQtyType ( l_scECI, phyq_length, (/ p_minorFrame, p_scModule, p_xyz /) )
-    call DefineQtyType ( l_scGeocAlt, phyq_length, (/ p_minorFrame, p_scModule /) )
-    call DefineQtyType ( l_scVel, phyq_velocity, (/ p_minorFrame, p_scModule, p_xyz /) )
-    call DefineQtyType ( l_scVelECI, phyq_velocity, (/ p_minorFrame, p_scModule, p_xyz /) )
-    call DefineQtyType ( l_scVelECR, phyq_velocity, (/ p_minorFrame, p_scModule, p_xyz /) )
-    call DefineQtyType ( l_scanResidual, phyq_length, (/ p_minorFrame, p_module /) )
-    call DefineQtyType ( l_sidebandratio, phyq_dimensionless, (/ p_signal /) ) 
-    call DefineQtyType ( l_sizeDistribution, phyq_dimensionless, (/ p_hGrid, p_vGrid /) ) 
-    call DefineQtyType ( l_spaceRadiance, phyq_temperature, none )
-    call DefineQtyType ( l_surfaceType, phyq_dimensionless, (/ p_hGrid /) ) 
-    call DefineQtyType ( l_systemTemperature, phyq_temperature, (/ p_signal /) )
-    call DefineQtyType ( l_temperature, phyq_temperature, (/ p_hGrid, p_vGrid /) )
-    call DefineQtyType ( l_tngtECI, phyq_length, (/ p_minorFrame, p_module, p_xyz /) )
-    call DefineQtyType ( l_tngtGeocAlt, phyq_length, (/ p_minorFrame, p_module /) )
-    call DefineQtyType ( l_tngtGeodAlt, phyq_length, (/ p_minorFrame, p_module /) )
-    call DefineQtyType ( l_vmr, phyq_vmr, (/ p_hGrid, p_vGrid, p_fGridOptional, &
-      & p_molecule, p_radiometerOptional /) )
+    call DefineQtyTypes ( (/ &
+      l_baseline, phyq_temperature, p_hGrid, p_vGrid, p_fGrid, p_radiometer, next, &
+      l_boundaryPressure, phyq_pressure, p_hGrid, next, &
+      l_chisqBinned, phyq_dimensionless, p_hGrid, p_vGrid, &
+                     p_signal, p_suppressChannels, next, &
+      l_chisqChan, phyq_dimensionless, p_majorFrame, p_signal, next, &
+      l_chisqMMAF, phyq_dimensionless, p_majorFrame, p_signal, p_suppressChannels, next, &
+      l_chisqMMIF, phyq_dimensionless, p_minorFrame, p_signal, p_suppressChannels, next, &
+      l_cloudExtinction, phyq_dimensionless, p_hGrid, p_vGrid, next, &
+      l_cloudIce, phyq_IceDensity, p_hGrid, p_vGrid, next, &
+      l_cloudInducedRadiance, phyq_temperature, p_minorFrame, p_signal, next, &
+      l_cloudRadSensitivity, phyq_temperature, p_minorFrame, p_signal, next, &
+      l_cloudWater, phyq_dimensionless, p_hGrid, p_vGrid, next, &
+      l_columnAbundance, phyq_dobsonunits, p_hGrid, p_molecule, next, &
+      l_dnwt_ajn, phyq_dimensionless, p_vGrid, p_hGrid, next, &
+      l_dnwt_axmax, phyq_dimensionless, p_vGrid, p_hGrid, next, &
+      l_dnwt_cait, phyq_dimensionless, p_vGrid, p_hGrid, next, &
+      l_dnwt_chisqminnorm, phyq_dimensionless, p_vGrid, p_hGrid, next, &
+      l_dnwt_chisqnorm, phyq_dimensionless, p_vGrid, p_hGrid, next, &
+      l_dnwt_diag, phyq_dimensionless, p_vGrid, p_hGrid, next, &
+      l_dnwt_dxdx, phyq_dimensionless, p_vGrid, p_hGrid, next, &
+      l_dnwt_dxdxl, phyq_dimensionless, p_vGrid, p_hGrid, next, &
+      l_dnwt_dxn, phyq_dimensionless, p_vGrid, p_hGrid, next, &
+      l_dnwt_dxnl, phyq_dimensionless, p_vGrid, p_hGrid, next, &
+      l_dnwt_flag, phyq_dimensionless, p_vGrid, p_hGrid, next, &
+      l_dnwt_fnmin, phyq_dimensionless, p_vGrid, p_hGrid, next, &
+      l_dnwt_fnorm, phyq_dimensionless, p_vGrid, p_hGrid, next, &
+      l_dnwt_gdx, phyq_dimensionless, p_vGrid, p_hGrid, next, &
+      l_dnwt_gfac, phyq_dimensionless, p_vGrid, p_hGrid, next, &
+      l_dnwt_gradn, phyq_dimensionless, p_vGrid, p_hGrid, next, &
+      l_dnwt_sq, phyq_dimensionless, p_vGrid, p_hGrid, next, &
+      l_dnwt_sqt, phyq_dimensionless, p_vGrid, p_hGrid, next, &
+      l_earthRadius, phyq_length, p_hGrid, next, &
+      l_earthRefl, phyq_dimensionless, none /) )
+
+    call DefineQtyTypes ( (/ &
+      l_ecrToFOV, phyq_dimensionless, p_minorFrame, p_module, p_matrix3x3, next, &
+      l_effectiveOpticalDepth, phyq_dimensionless, p_minorFrame, p_signal, next, &
+      l_elevOffset, phyq_angle, p_signal, next, &
+      l_extinction, phyq_extinction, p_hGrid, p_vGrid, p_fGrid, p_radiometer, next, &
+      l_gph, phyq_length, p_hGrid, p_vGrid, next, &
+      l_heightOffset, phyq_length, p_hGrid, p_vGrid, next, &
+      l_isotopeRatio, phyq_dimensionless, p_molecule, next, &
+      l_jacobian_cols, phyq_dimensionless, p_vGrid, p_hGrid, next, &
+      l_jacobian_rows, phyq_dimensionless, p_vGrid, p_hGrid, next, &
+      l_losTransFunc, phyq_dimensionless, p_minorFrame, p_sGrid, p_module, next, &
+      l_losVel, phyq_dimensionless, p_minorFrame, p_module, next, &
+      l_magneticField, phyq_gauss, p_vGrid, p_hGrid, p_xyz, next, &
+      l_massMeanDiameterIce, phyq_dimensionless, p_vGrid, p_hGrid, next, &
+      l_massMeanDiameterWater, phyq_dimensionless, p_vGrid, p_hGrid, next, &
+      l_noRadsBinned, phyq_dimensionless, p_vGrid, p_hGrid, &
+                      p_signal, p_suppressChannels, next, &
+      l_noRadsPerMIF, phyq_dimensionless, p_minorFrame, p_signal, &
+                      p_suppressChannels, next, &
+      l_noiseBandwidth, phyq_frequency, p_signal, next, &
+      l_numJ, phyq_dimensionless, p_vGrid, p_hGrid, next, &
+      l_opticalDepth, phyq_dimensionless, p_minorFrame, p_signal, next, &
+      l_orbitInclination, phyq_angle, p_minorFrame, p_scModule, next, &
+      l_phiTan, phyq_angle, p_minorFrame, p_module, next, & 
+      l_ptan, phyq_zeta, p_minorFrame, p_module, next /) )
+    call DefineQtyTypes ( (/ &
+      l_radiance, phyq_temperature, p_minorFrame, p_signal, next, & 
+      l_refGPH, phyq_length, p_hGrid, p_vGrid, next, &
+      l_rhi, phyq_dimensionless, p_hGrid, p_vGrid, p_molecule, next, &
+      l_scECI, phyq_length, p_minorFrame, p_scModule, p_xyz, next, &
+      l_scGeocAlt, phyq_length, p_minorFrame, p_scModule, next, &
+      l_scVel, phyq_velocity, p_minorFrame, p_scModule, p_xyz, next, &
+      l_scVelECI, phyq_velocity, p_minorFrame, p_scModule, p_xyz, next, &
+      l_scVelECR, phyq_velocity, p_minorFrame, p_scModule, p_xyz, next, &
+      l_scanResidual, phyq_length, p_minorFrame, p_module, next, &
+      l_sidebandratio, phyq_dimensionless, p_signal, next, & 
+      l_sizeDistribution, phyq_dimensionless, p_hGrid, p_vGrid, next, & 
+      l_spaceRadiance, phyq_temperature, none, next, &
+      l_surfaceType, phyq_dimensionless, p_hGrid, next, & 
+      l_systemTemperature, phyq_temperature, p_signal, next, &
+      l_temperature, phyq_temperature, p_hGrid, p_vGrid, next, &
+      l_tngtECI, phyq_length, p_minorFrame, p_module, p_xyz, next, &
+      l_tngtGeocAlt, phyq_length, p_minorFrame, p_module, next, &
+      l_tngtGeodAlt, phyq_length, p_minorFrame, p_module, next, &
+      l_vmr, phyq_vmr, p_hGrid, p_vGrid, p_fGridOptional, p_molecule, &
+             p_radiometerOptional, next /) )
 
     ! Do a bit of checking
     do i = first_lit, last_lit
@@ -1131,16 +1127,33 @@ contains ! ============= Public procedures ===================================
     end do
   contains
     ! --------------------------- Internal subroutine
-    subroutine DefineQtyType ( qtyType, unit, properties )
-      integer, intent(in) :: QTYTYPE
-      integer, intent(in) :: UNIT
-      integer, dimension(:), intent(in) :: PROPERTIES
+    subroutine DefineQtyTypes ( info )
+      integer, dimension(:), intent(in) :: INFO
+      ! Local variables
+      integer :: I                      ! Location
+      integer :: QTYTYPE                ! Index
       ! Executable code
-    ! First init the quantity
-      propertyTable ( :, qtyType ) = .false.
-      propertyTable ( properties, qtyType ) = .true.
-      unitsTable ( qtyType ) = unit
-    end subroutine DefineQtyType
+      qtyType = 0
+      i = 1
+      defineLoop: do
+        if ( i > size(info) ) exit defineLoop
+        if ( qtyType == 0 ) then
+          qtyType = info ( i )
+          propertyTable ( :, qtyType ) = .false.
+          i = i + 1
+          if ( i > size(info) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Malformed call to DefineQtyTypes' )
+          unitsTable ( qtyType ) = info ( i )
+        else
+          if ( info(i) /= next ) then
+            propertyTable ( info(i), qtyType ) = .true.
+          else
+            qtyType = 0
+          end if
+        end if
+        i = i + 1
+      end do defineLoop
+    end subroutine DefineQtyTypes
     
   end subroutine InitQuantityTemplates
 
