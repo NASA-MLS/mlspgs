@@ -75,20 +75,21 @@
 # Next non-comment line is the default location for PRODUCT INPUT FILES
 # WARNING! DO NOT MODIFY THIS LINE unless you have relocated these 
 # data set files to the location specified by the new setting.
-!  /nas/bigdata/livesey/misc
+!  /user5/vsnyder/mlspgs/l2/out
 #
 #-----------------
 # Test input files
 #-----------------
-21110|mls_l1b_oa_v0-01.2000-001|/nas/bigdata/livesey/misc/||||1
-21050|mls_l1b_radf_v0-01.2000-001|/nas/bigdata/livesey/misc/||||1
-21051|mls_l1b_radb_v0-01.2000-001|/nas/bigdata/livesey/misc/||||1
-22081|mls_l1b_eng_v0-01.2000-001|/nas/bigdata/livesey/misc/||||1
+900|PCF.1hr|/van1/vsnyder/mlspgs/l2/||||1
 901|sidstest.l2cf|/user5/zvi/mlspgs/l2/||||1
 20000|emls-signals.dat|/user1/livesey//mlspgs/tables||||1
-21600|a_llk_01.tsyn3d_mis_p.t19991006|/nas/bigdata/livesey/misc||||1
+21050|mls_l1b_radf_v0-01.2000-001|/nas/bigdata/livesey/misc/||||1
+21051|mls_l1b_radd_v0-01.2000-001|/nas/bigdata/livesey/misc/||||1
+21110|mls_l1b_oa_v0-01.2000-001|/nas/bigdata/livesey/misc/||||1
 21500|GDASOZFH_Aug97.hdfeos|/nas/bigdata/livesey/misc||||1
+21600|a_llk_01.tsyn3d_mis_p.t19991006|/nas/bigdata/livesey/misc||||1
 21700|emls_clim_v0.1.dat|/nas/bigdata/livesey/misc||||1
+22081|mls_l1b_eng_v0-01.2000-001|/nas/bigdata/livesey/misc/||||1
 # -----------------------------------------------------------------------
 # These are actual ancillary data set files - supplied by ECS or the
 # user.  The following are supplied for purposes of tests and as a useful
@@ -169,25 +170,58 @@
 # (DO NOT REMOVE THESE ENTRIES)
 #------------------------------------------------------------------------
 10250|MCF|||||1
-10252|GetAttr.temp|/home/ahanzel/mlspgs/l2||||1
-10254|MCFWrite.temp|/home/ahanzel/mlspgs/l2||||1
-40260|MCF_temp|/users/lungu/mlspgs/l2||||1
-40261|MCF_gph|/users/lungu/mlspgs/l2||||1
-40262|MCF_h2o|/users/lungu/mlspgs/l2||||1
-40263|MCF_hno3|/users/lungu/mlspgs/l2||||1
-40264|MCF_o3|/users/lungu/mlspgs/l2||||1
-40265|MCF_hcl|/users/lungu/mlspgs/l2||||1
-40266|MCF_clo|/users/lungu/mlspgs/l2||||1
-40267|MCF_n2o|/users/lungu/mlspgs/l2||||1
-40268|MCF_co|/users/lungu/mlspgs/l2||||1
-40269|MCF_oh|/users/lungu/mlspgs/l2||||1
-40270|MCF_rhi|/users/lungu/mlspgs/l2||||1
-40271|MCF_so2|/users/lungu/mlspgs/l2||||1
-40272|MCF_ho2|/users/lungu/mlspgs/l2||||1
-40273|MCF_bro|/users/lungu/mlspgs/l2||||1
-40274|MCF_hocl|/users/lungu/mlspgs/l2||||1
-40275|MCF_hcn|/users/lungu/mlspgs/l2||||1
-40276|MCF_cirrus-ice|/users/lungu/mlspgs/l2||||1
+#10252|GetAttr.temp|/user3/ahanzel/mlspgs/l2||||1
+#10254|MCFWrite.temp|/user3/ahanzel/mlspgs/l2||||1
+10252|GetAttr.temp|/user2/pwagner/mlspgs/l2/metatest||||1
+10254|MCFWrite.temp|/user2/pwagner/mlspgs/l2/metatest||||1
+
+4000|ML2LOG.001.MCF|/software/mlsdev/files/v0.5/MCF/l2||||1
+# We might need the following 18 in general, 
+4001|ML2T.001.MCF|/software/mlsdev/files/v0.5/MCF/l2||||1
+4002|ML2Z.001.MCF|/software/mlsdev/files/v0.5/MCF/l2||||1
+4003|ML2CO.001.MCF|/software/mlsdev/files/v0.5/MCF/l2||||1
+4004|ML2O3.001.MCF|/software/mlsdev/files/v0.5/MCF/l2||||1
+4005|ML2OH.001.MCF|/software/mlsdev/files/v0.5/MCF/l2||||1
+4006|ML2BRO.001.MCF|/software/mlsdev/files/v0.5/MCF/l2||||1
+4007|ML2CLO.001.MCF|/software/mlsdev/files/v0.5/MCF/l2||||1
+4008|ML2H2O.001.MCF|/software/mlsdev/files/v0.5/MCF/l2||||1
+4009|ML2HCL.001.MCF|/software/mlsdev/files/v0.5/MCF/l2||||1
+4010|ML2HCN.001.MCF|/software/mlsdev/files/v0.5/MCF/l2||||1
+4011|ML2HO2.001.MCF|/software/mlsdev/files/v0.5/MCF/l2||||1
+4012|ML2ICE.001.MCF|/software/mlsdev/files/v0.5/MCF/l2||||1
+4013|ML2N2O.001.MCF|/software/mlsdev/files/v0.5/MCF/l2||||1
+4014|ML2OTH.001.MCF|/software/mlsdev/files/v0.5/MCF/l2||||1
+4015|ML2RHI.001.MCF|/software/mlsdev/files/v0.5/MCF/l2||||1
+4016|ML2SO2.001.MCF|/software/mlsdev/files/v0.5/MCF/l2||||1
+4017|ML2HNO3.001.MCF|/software/mlsdev/files/v0.5/MCF/l2||||1
+4018|ML2HOCL.001.MCF|/software/mlsdev/files/v0.5/MCF/l2||||1
+#
+# For our sidstest we'll just use
+#4001|ML2T.001.MCF|/software/mlsdev/files/v0.5/MCF/l2||||1
+#4002|ML2Z.001.MCF|/software/mlsdev/files/v0.5/MCF/l2||||1
+#4003|ML2H2O.001.MCF|/software/mlsdev/files/v0.5/MCF/l2||||1
+#4004|ML2OTH.001.MCF|/software/mlsdev/files/v0.5/MCF/l2||||1
+#
+4022|ML2DGG.001.MCF|/software/mlsdev/files/v0.5/MCF/l2||||1
+4023|ML2DGM.001.MCF|/software/mlsdev/files/v0.5/MCF/l2||||1
+
+#40260|MCF_temp|/users/lungu/mlspgs/l2||||1
+#40261|MCF_gph|/users/lungu/mlspgs/l2||||1
+#40262|MCF_h2o|/users/lungu/mlspgs/l2||||1
+#40263|MCF_hno3|/users/lungu/mlspgs/l2||||1
+#40264|MCF_o3|/users/lungu/mlspgs/l2||||1
+#40265|MCF_hcl|/users/lungu/mlspgs/l2||||1
+#40266|MCF_clo|/users/lungu/mlspgs/l2||||1
+#40267|MCF_n2o|/users/lungu/mlspgs/l2||||1
+#40268|MCF_co|/users/lungu/mlspgs/l2||||1
+#40269|MCF_oh|/users/lungu/mlspgs/l2||||1
+#40270|MCF_rhi|/users/lungu/mlspgs/l2||||1
+#40271|MCF_so2|/users/lungu/mlspgs/l2||||1
+#40272|MCF_ho2|/users/lungu/mlspgs/l2||||1
+#40273|MCF_bro|/users/lungu/mlspgs/l2||||1
+#40274|MCF_hocl|/users/lungu/mlspgs/l2||||1
+#40275|MCF_hcn|/users/lungu/mlspgs/l2||||1
+#40276|MCF_cirrus-ice|/users/lungu/mlspgs/l2||||1
 #
 #
 # -----------------------------------------------------------------------
@@ -233,32 +267,33 @@
 #########################################################################
 #
 # Next line is the default location for PRODUCT OUTPUT FILES
-!  /nas/bigdata/livesey/misc
+!  /user5/vsnyder/mlspgs/l2/out
 #
 #------------------
 # Test output files
 #------------------
-#100|temp_metawrite|/home/ahanzel/mlspgs/l2||||1
-30000|mls_l2gp_temp_v0-5prelim1-1hr.2000-001|/nas/bigdata/livesey/misc||||1
-30001|mls_l2gp_gph_v0-5prelim1-1hr.2000-001|/nas/bigdata/livesey/misc||||1
-30002|mls_l2gp_h2o_v0-5prelim1-1hr.2000-001|/nas/bigdata/livesey/misc||||1
-30003|mls_l2gp_hno3_v0-5prelim1-1hr.2000-001|/nas/bigdata/livesey/misc||||1
-30004|mls_l2gp_o3_v0-5prelim1-1hr.2000-001|/nas/bigdata/livesey/misc||||1
-30005|mls_l2gp_hcl_v0-5prelim1-1hr.2000-001|/nas/bigdata/livesey/misc||||1
-30006|mls_l2gp_clo_v0-5prelim1-1hr.2000-001|/nas/bigdata/livesey/misc||||1
-30007|mls_l2gp_n2o_v0-5prelim1-1hr.2000-001|/nas/bigdata/livesey/misc||||1
-30008|mls_l2gp_co_v0-5prelim1-1hr.2000-001|/nas/bigdata/livesey/misc||||1
-30009|mls_l2gp_oh_v0-5prelim1-1hr.2000-001|/nas/bigdata/livesey/misc||||1
-30010|mls_l2gp_rhi_v0-5prelim1-1hr.2000-001|/nas/bigdata/livesey/misc||||1
-30011|mls_l2gp_so2_v0-5prelim1-1hr.2000-001|/nas/bigdata/livesey/misc||||1
-30012|mls_l2gp_ho2_v0-5prelim1-1hr.2000-001|/nas/bigdata/livesey/misc||||1  
-30013|mls_l2gp_bro_v0-5prelim1-1hr.2000-001|/nas/bigdata/livesey/misc||||1
-30014|mls_l2gp_hocl_v0-5prelim1-1hr.2000-001|/nas/bigdata/livesey/misc||||1   
-30015|mls_l2gp_hcn_v0-5prelim1-1hr.2000-001|/nas/bigdata/livesey/misc||||1
-30016|mls_l2gp_cirrus-ice_v0-5prelim1-1hr.2000-001|/nas/bigdata/livesey/misc||||1  
-#22517|mls_l2gp_o3-strat-column_v0-5prelim1-1hr.2000-001|/nas/bigdata/livesey/misc||||1
-30017|mls_l2gp_others_v0-5prelim1-1hr.2000-001|/nas/bigdata/livesey/misc||||1
-30600|mls_l2aux_full_v0-5prelim1-1hr.2000-001|/nas/bigdata/livesey/misc||||1
+100|temp_metawrite|/user5/vsnyder/mlspgs/l2/out||||1
+30000|mls_l2gp_temp_v0-5prelim1-1hr.2000-001|/user5/vsnyder/mlspgs/l2/out||||1
+30001|mls_l2gp_gph_v0-5prelim1-1hr.2000-001|/user5/vsnyder/mlspgs/l2/out||||1
+30002|mls_l2gp_h2o_v0-5prelim1-1hr.2000-001|/user5/vsnyder/mlspgs/l2/out||||1
+30003|mls_l2gp_hno3_v0-5prelim1-1hr.2000-001|/user5/vsnyder/mlspgs/l2/out||||1
+30004|mls_l2gp_o3_v0-5prelim1-1hr.2000-001|/user5/vsnyder/mlspgs/l2/out||||1
+30005|mls_l2gp_hcl_v0-5prelim1-1hr.2000-001|/user5/vsnyder/mlspgs/l2/out||||1
+30006|mls_l2gp_clo_v0-5prelim1-1hr.2000-001|/user5/vsnyder/mlspgs/l2/out||||1
+30007|mls_l2gp_n2o_v0-5prelim1-1hr.2000-001|/user5/vsnyder/mlspgs/l2/out||||1
+30008|mls_l2gp_co_v0-5prelim1-1hr.2000-001|/user5/vsnyder/mlspgs/l2/out||||1
+30009|mls_l2gp_oh_v0-5prelim1-1hr.2000-001|/user5/vsnyder/mlspgs/l2/out||||1
+30010|mls_l2gp_rhi_v0-5prelim1-1hr.2000-001|/user5/vsnyder/mlspgs/l2/out||||1
+30011|mls_l2gp_so2_v0-5prelim1-1hr.2000-001|/user5/vsnyder/mlspgs/l2/out||||1
+30012|mls_l2gp_ho2_v0-5prelim1-1hr.2000-001|/user5/vsnyder/mlspgs/l2/out||||1  
+30013|mls_l2gp_bro_v0-5prelim1-1hr.2000-001|/user5/vsnyder/mlspgs/l2/out||||1
+30014|mls_l2gp_hocl_v0-5prelim1-1hr.2000-001|/user5/vsnyder/mlspgs/l2/out||||1   
+30015|mls_l2gp_hcn_v0-5prelim1-1hr.2000-001|/user5/vsnyder/mlspgs/l2/out||||1
+30016|mls_l2gp_cirrus-ice_v0-5prelim1-1hr.2000-001|/user5/vsnyder/mlspgs/l2/out||||1  
+#22517|mls_l2gp_o3-strat-column_v0-5prelim1-1hr.2000-001|/user5/vsnyder/mlspgs/l2/out||||1
+30017|mls_l2gp_others_v0-5prelim1-1hr.2000-001|/user5/vsnyder/mlspgs/l2/out||||1
+30570|MLS_L2GP_DGG_V0-5PRELIM1-1HR.2000-001|/user5/vsnyder/mlspgs/l2/out||||1
+30600|mls_l2aux_full_v0-5prelim1-1hr.2000-001|/user5/vsnyder/mlspgs/l2/out||||1
 #
 #------------------------------------------------------------------------
 # This file is created when PGS_MET_Write is used with an intention
@@ -290,7 +325,7 @@
 #########################################################################
 #
 # Next line is the default location for SUPPORT INPUT FILES
-!  /nas/bigdata/livesey/misc
+!  /user5/vsnyder/mlspgs/l2/out
 #
 #  
 # -----------------------------------------------------------------------
@@ -427,7 +462,7 @@
 #########################################################################
 #
 # Next line is default location for SUPPORT OUTPUT FILES
-!  /nas/bigdata/livesey/misc
+!  /user5/vsnyder/mlspgs/l2/out
 #
 #
 # -----------------------------------------------------------------------
@@ -437,13 +472,13 @@
 # Remember: all executables within a PGE will contribute status data to 
 # the same batch of log files. (DO NOT REMOVE THESE ENTRIES)
 # -----------------------------------------------------------------------
-10100|LogStatus|/user5/zvi/mlspgs/l2||||1
-10101|LogReport|/user5/zvi/mlspgs/l2||||1
-10102|LogUser|/user5/zvi/mlspgs/l2||||1
-10103|TmpStatus|/user5/zvi/mlspgs/l2||||1
-10104|TmpReport|/user5/zvi/mlspgs/l2||||1
-10105|TmpUser|/user5/zvi/mlspgs/l2||||1
-10110|MailFile|/user5/zvi/mlspgs/l2||||1
+10100|LogStatus|/van1/vsnyder/mlspgs/l2||||1
+10101|LogReport|/van1/vsnyder/mlspgs/l2||||1
+10102|LogUser|/van1/vsnyder/mlspgs/l2||||1
+10103|TmpStatus|/van1/vsnyder/mlspgs/l2||||1
+10104|TmpReport|/van1/vsnyder/mlspgs/l2||||1
+10105|TmpUser|/van1/vsnyder/mlspgs/l2||||1
+10110|MailFile|/van1/vsnyder/mlspgs/l2||||1
 #
 # -----------------------------------------------------------------------
 # ASCII file which stores pointers to runtime SMF files in lieu of 
@@ -461,6 +496,18 @@
 # Note: these parameters may NOT be changed dynamically.
 #
 #########################################################################
+101|ProductMetadataFile|100:1
+2000|InputVersion|V0-5
+2001|PGEVersion|V0-5
+2002|Cycle|1
+#These will replace the illegal numbers below
+2003|Processing CCSDS Start Time|2000-01-01T00:00:00.000000Z
+2004|Processing CCSDS End Time|2000-01-01T00:59:59.000000Z
+#These parameters will someday override the hard-wired associations
+#between the species part ("keys") of l2gp file names and their mcfs ("hash")
+2005|L2 Species Name Keys|temp,gph,h2o,hno3,o3,hcl,clo,co,n2o,oh,rhi,so2,ho2,bro,hocl,hcn,cirrus-ice,others
+2006|L2 Species Name Hash|t,z,h2o,hno3,o3,hcl,clo,co,n2o,oh,rhi,so2,ho2,bro,hocl,hcn,ice,oth
+#
 #
 #
 # -----------------------------------------------------------------------
@@ -567,8 +614,17 @@
 # This entries define the the processing start and end times (CCSDS) and
 # are used by pgs_pc_getconfigdata to obtain the processing range.
 # -----------------------------------------------------------------------
-10411|Processing CCSDS Start Time|2000-01-01T00:00:00.000000Z
-10412|Processing CCSDS End Time|2000-01-01T01:59:59.000000Z
+#
+# WARNING  WARNING  WARNING  WARNING  WARNING  WARNING  WARNING  WARNING
+# Note that this violates the reserved range 10000-10999 which
+# the toolkit has for its own use
+#
+# We should plan to replace these with PCF parameters ala levels 1 and 3
+# which would use PCF numbers in the range 2000-2999
+#
+#10411|Processing CCSDS Start Time|2000-01-01T00:00:00.000000Z
+#10412|Processing CCSDS End Time|2000-01-01T00:01:00.000000Z
+#10412|Processing CCSDS End Time|2000-01-01T01:59:59.000000Z
 
 ?   INTERMEDIATE INPUT
 #########################################################################
@@ -583,7 +639,7 @@
 #########################################################################
 #
 # Next line is default location for INTERMEDIATE INPUT FILES
-!  /nas/bigdata/livesey/misc
+!  /user5/vsnyder/mlspgs/l2/out
 #
 #
 ?   INTERMEDIATE OUTPUT
@@ -599,7 +655,7 @@
 #########################################################################
 #
 # Next line is default location for INTERMEDIATE OUTPUT FILES
-!  /nas/bigdata/livesey/misc
+!  /user5/vsnyder/mlspgs/l2/out
 #
 #
 ?   TEMPORARY I/O
@@ -614,12 +670,12 @@
 #########################################################################
 #
 # Next line is default location for TEMPORARY FILES
-!  /nas/bigdata/livesey/misc
+!  /user5/vsnyder/mlspgs/l2/out
 #
 #
 ?   END
 
-# 7/18/00-ahanzel- Directed output & log files to /nas/bigdata/livesey/misc
+# 7/18/00-ahanzel- Directed output & log files to /user5/vsnyder/mlspgs/l2/out
 =======
-# 7/18/00-ahanzel- Directed output & log files to /nas/bigdata/livesey/misc
+# 7/18/00-ahanzel- Directed output & log files to /user5/vsnyder/mlspgs/l2/out
 # 7/19/00-ahanzel- Directed files 10252 and 10254 (metadata output) 
