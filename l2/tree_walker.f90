@@ -10,9 +10,10 @@ module TREE_WALKER
   use ForwardModelInterface, only: ForwardModelConfig_T, DestroyFWMConfigDatabase
   use GLOBAL_SETTINGS, only: SET_GLOBAL_SETTINGS
   use GriddedData, only: GriddedData_T
-  use INIT_TABLES_MODULE, only: Field_Indices, Spec_Indices, Z_CHUNKDIVIDE, &
-    & Z_CONSTRUCT, Z_FILL, Z_GLOBALSETTINGS, Z_JOIN, Z_MERGEAPRIORI,& 
-    & Z_MLSSIGNALS, Z_OUTPUT, Z_READAPRIORI, Z_RETRIEVE
+  use INIT_TABLES_MODULE, only: Field_Indices, Lit_Indices, Spec_Indices, &
+    & Z_CHUNKDIVIDE,  Z_CONSTRUCT, Z_FILL, Z_GLOBALSETTINGS, Z_JOIN, &
+    & Z_MERGEAPRIORI, Z_MLSSIGNALS, Z_OUTPUT, Z_READAPRIORI, Z_RETRIEVE, &
+    & Z_SPECTROSCOPY
   use JOIN, only: MLSL2Join
   !??? The next USE statement is Temporary for l2load:
   use L2_TEST_STRUCTURES_M, only: FWD_MDL_CONFIG, FWD_MDL_INFO, &
@@ -29,6 +30,7 @@ module TREE_WALKER
   use QuantityTemplates, only: QuantityTemplate_T
   use RetrievalModule, only: Retrieve
   use ScanDivide, only: DestroyChunkDatabase, ScanAndDivide
+  use SpectroscopyCatalog_m, only: Spectroscopy
   use TOGGLES, only: GEN, LEVELS, TOGGLE
   use TRACE_M, only: DEPTH, TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATION, NSONS, SUBTREE
@@ -104,9 +106,10 @@ contains ! ====     Public Procedures     ==============================
       case ( z_mlsSignals )
         call MLSSignals ( son, field_indices )
 !       call test_parse_signals  ! Uncomment this to test Parse_Signals
+      case ( z_spectroscopy )
+        call spectroscopy ( son, lit_indices )
       case ( z_readapriori )
-        ! Read apriori here
-      	CALL read_apriori ( son , l2gpDatabase, l2auxDatabase, griddedData)
+      	call read_apriori ( son , l2gpDatabase, l2auxDatabase, griddedData)
       case ( z_mergeapriori )
         ! Merge apriori here
       case ( z_chunkdivide )
@@ -165,6 +168,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.26  2001/04/03 20:50:45  pwagner
+! Added anText to hold PCF file contents
+!
 ! Revision 2.25  2001/04/02 23:41:09  pwagner
 ! Now keeps l2pcf and transmits as needed
 !
