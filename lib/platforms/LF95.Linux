@@ -22,7 +22,8 @@ blaslib = ../../blas
 vpath %.o ./
 vpath %.f90 ../ ../machines/$(MLSCONFG)
 vpath %.f9h ../ $(srclib)
-vpath %.f $(PGSINC) $(blaslib)
+vpath %.f ../ $(PGSINC) $(blaslib)
+vpath %.c ../
 
 FC = lf95
 
@@ -50,7 +51,7 @@ INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S
 # Define some suffix rules
 
 .SUFFIXES:
-.SUFFIXES: .o .dbg.o .f90 .f
+.SUFFIXES: .o .dbg.o .f90 .f .c
 .f90.o:
 	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
 
@@ -60,6 +61,9 @@ INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S
 .f.o:
 	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
 
+.c.o:
+	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
+
 # Modules needed by test programs
 # They currently compile only under Lahey's LF95
 MATRIX_OBJS = MatrixModule_0.o MatrixModule_1.o 
@@ -67,6 +71,9 @@ MATRIX_OBJS = MatrixModule_0.o MatrixModule_1.o
 #SDP =SDPToolkitSubstitute.o
 #GD=GDapi.o
 # $Log$
+# Revision 1.9  2001/03/12 23:57:47  pwagner
+# New FAFTER, LAFTER flags to postprocess compile & link steps
+#
 # Revision 1.8  2001/02/26 21:14:39  pwagner
 # Commented out FOPTS assignment; now part of .configure setting
 #
