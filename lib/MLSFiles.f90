@@ -17,7 +17,8 @@ module MLSFiles               ! Utility file routines
     & PGSd_IO_Gen_USeqFrm, PGSd_IO_Gen_USeqUnf, & 
     & PGSd_IO_Gen_UDirFrm, PGSd_IO_Gen_UDirUnf, & 
     & PGSd_IO_Gen_ASeqFrm, PGSd_IO_Gen_ASeqUnf, &
-    & PGS_IO_GEN_CloseF, PGS_IO_GEN_OpenF, PGSd_PC_FILE_PATH_MAX
+    & PGS_IO_GEN_CloseF, PGS_IO_GEN_OpenF, PGSd_PC_FILE_PATH_MAX, &
+    & UseSDPToolkit
   implicit none
   public
 
@@ -42,6 +43,7 @@ module MLSFiles               ! Utility file routines
   integer, parameter :: UNKNOWNTOOLBOXMODE=UNKNOWNFILEACCESSTYPE+1
   integer, parameter :: NOFREEUNITS=UNKNOWNTOOLBOXMODE+1
   integer, parameter :: MUSTSUPPLYFILENAMEORPC=NOFREEUNITS+1
+  integer, parameter :: NOPCIFNOTOOLKIT=MUSTSUPPLYFILENAMEORPC+1
 
   ! Now we have the legal unit numbers that files may be assigned
 
@@ -95,6 +97,12 @@ contains
     character (LEN=MAXFILENAMELENGTH) :: PhysicalName, MatchPath
     integer                       ::     version, returnStatus
    logical ::                            debug
+
+   if(.not. UseSDPToolkit) then
+      ErrType = NOPCIFNOTOOLKIT
+      thePC = 0
+      return
+   endif
 
     if(present(debugOption)) then
       debug = debugOption
@@ -240,6 +248,7 @@ contains
     integer                       :: version, returnStatus
     logical       :: tiedup
     character (LEN=KEYWORDLEN) :: access, action, form, position, status
+    character (LEN=2) :: the_eff_mode
     integer                       :: unit
 
     ! begin
@@ -253,6 +262,9 @@ contains
       version = 1
     endif
 
+   if(UseSDPToolkit) then
+    the_eff_mode = LowerCase(toolbox_mode(1:2))
+   ! Using Toolkit
     if(present(thePC)) then
       myPC = thePC
       returnStatus = Pgs_pc_getReference(thePC, version, &
@@ -263,12 +275,24 @@ contains
         myPC = GetPCFromRef(FileName, PCBottom, PCTop, &
           &	 caseSensitive, returnStatus, versionNum)
       endif
+
     else
       ErrType = MUSTSUPPLYFILENAMEORPC
       return
     endif
 
-    select case (LowerCase(toolbox_mode(1:2)))
+   ! Not Using Toolkit
+   ! Must supply FileName, use generic Fortran open
+   elseif(.not. present(FileName)) then
+      ErrType = NOPCIFNOTOOLKIT
+      return
+      
+   else
+      myName = FileName
+      the_eff_mode = 'op'
+   endif
+
+    select case (the_eff_mode)
 
     case('pg')
       if(returnStatus == 0) then
@@ -476,9 +500,18 @@ contains
 
     ! Local variables
 
-    logical, parameter :: PRINT_EVERY_CLOSE=.true.
+    logical, parameter :: PRINT_EVERY_CLOSE=.false.
+    character (LEN=2) :: the_eff_mode
 
-    select case (LowerCase(toolbox_mode(1:2)))
+   if(UseSDPToolkit) then
+   ! Using Toolkit
+    the_eff_mode = LowerCase(toolbox_mode(1:2))
+   ! Not Using Toolkit
+   else
+      the_eff_mode = 'cl'
+   endif
+
+    select case (the_eff_mode)
 
     case('pg')
       ErrType = PGS_IO_Gen_CLoseF(theFileHandle)
@@ -585,6 +618,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.17  2001/05/07 23:25:02  pwagner
+! Detachable from toolkit
+!
 ! Revision 2.16  2001/04/25 21:52:50  livesey
 ! Added optional `unknown' argument
 !
