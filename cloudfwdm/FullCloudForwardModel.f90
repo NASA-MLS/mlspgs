@@ -566,9 +566,9 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
        state_los => GetVectorQuantityByType(FwdModelIn,quantityType=l_LosTransFunc)
 
        if (tLat .ge. -30._r8 .and. tLat .le. 30._r8) then
-          CloudType='convective'
+          CloudType='Convective'
        else
-          CloudType='frontal'
+          CloudType='Frontal'
        endif
 
        iCloudHeight = 0
@@ -578,7 +578,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
           endif
         enddo
 
-        CloudHeight = 18.     ! km  as a default
+        CloudHeight = 18.e3_r8     ! m  as a default
         if(iCloudHeight .ne. 0) CloudHeight = gph%values(iCloudHeight, instance)
 
         call CLOUD_MODEL ( CloudType, CloudHeight, gph%values(:,instance),   &
@@ -981,6 +981,9 @@ subroutine FindTransForSgrid ( PT, Re, NT, NZ, NS, Zlevel, TRANSonZ, Slevel, TRA
 end subroutine FindTransForSgrid
 
 ! $Log$
+! Revision 1.48  2001/10/08 20:57:05  dwu
+! change coljBlock finder
+!
 ! Revision 1.47  2001/10/08 20:46:26  dwu
 ! add default cloudheight as 18km
 !
