@@ -7,7 +7,7 @@ module ReadAPriori
   use GriddedData, only: GriddedData_T, v_is_pressure, &
     & AddGriddedDataToDatabase, Dump
   use Expr_M, only: Expr
-  use Hdf, only: DFACC_READ, SFSTART
+  use Hdf, only: DFACC_READ  !, SFSTART
   use INIT_TABLES_MODULE, only: F_FIELD, F_FILE, F_HDFVERSION, &
     & F_ORIGIN, F_SDNAME, F_SWATH, &
     & FIELD_FIRST, FIELD_LAST, L_CLIMATOLOGY, L_DAO, L_NCEP, S_GRIDDED, &
@@ -18,9 +18,9 @@ module ReadAPriori
   use L2GPData, only: L2GPData_T, AddL2GPToDatabase, ReadL2GPData, Dump
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: FileNameLen
-  use MLSFiles, only: GetPCFromRef, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, &
-    & split_path_name, mls_InqSwath
-  use MLSL2Options, only: DEFAULT_HDFVERSION, PCF
+  use MLSFiles, only: MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, &
+    & MLS_INQSWATH, MLS_SFSTART, MLS_SFEND
+  use MLSL2Options, only: DEFAULT_HDFVERSION_READ, PCF
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSPCF2, only: mlspcf_l2clim_start, mlspcf_l2clim_end
@@ -133,7 +133,7 @@ contains ! =====     Public Procedures     =============================
     lastClimPCF = mlspcf_l2clim_start - 1
 
     do i = 2, nsons(root)-1 ! Skip the section name at begin and end
-      hdfVersion = DEFAULT_HDFVERSION
+      hdfVersion = DEFAULT_HDFVERSION_READ
       got = .false.
       son = subtree(i,root)
       if ( node_id(son) == n_named ) then ! Is spec labeled?
@@ -251,8 +251,8 @@ contains ! =====     Public Procedures     =============================
   ! ((( This will have to change if we wish to convert l2aux to hdf5
   !          Maybe put another wrapper in MSLFiles
         ! create SD interface identifier for l2aux
-!        sd_id = mls_sfstart(FilenameString, DFACC_READ)
-        sd_id = sfstart(FilenameString, DFACC_READ)
+         sd_id = mls_sfstart(FilenameString, DFACC_READ, hdfVersion=hdfVersion)
+!        sd_id = sfstart(FilenameString, DFACC_READ)
         if (sd_id == -1 ) then
           call announce_error ( son, 'Failed to open l2aux ' // &
           &  trim(FilenameString) )
@@ -271,6 +271,19 @@ contains ! =====     Public Procedures     =============================
 
         if( index(switches, 'apr') /= 0 ) &
         & call dump( L2AUXDatabase(l2Index), details )
+
+   ! For some reason, sfend was never called for l2aux data files here
+   ! Did we think we were going to read from elsewhere?
+   ! Anyway, I added the mls_sfend version when I converted
+   ! this module to use MLSFiles instead of Hdf
+        fileHandle = mls_sfend(sd_id, hdfVersion=hdfVersion)
+        if ( fileHandle == -1 ) then
+          call announce_error ( son, &
+            & 'Failed to close l2aux file ' // trim(FileNameString) )
+        elseif(index(switches, 'pro') /= 0) then                            
+           call announce_success(FilenameString, 'l2aux', &                    
+           & sdNameString, hdfVersion=hdfVersion)    
+        end if
 
       case ( s_gridded )
 
@@ -466,6 +479,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.34  2002/01/29 23:49:38  pwagner
+! Separate DEFAULT_HDFVERSION_(READ)(WRITE)
+!
 ! Revision 2.33  2002/01/26 00:10:45  pwagner
 ! Correctly sets hdfVersion; changed proclaim to announce_success
 !
