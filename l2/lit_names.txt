@@ -17,8 +17,9 @@ addnoise
 andMasks
 apriori
 
-binmax
-binmin
+binMax
+binMean
+binMin
 binTotal
 both
 
@@ -144,6 +145,9 @@ weighted
 wmoTropopause
 
 # $Log$
+# Revision 2.44  2004/01/20 20:25:53  livesey
+# Added binMean
+#
 # Revision 2.43  2003/10/15 23:12:00  livesey
 # Added resetUnusedRadiances
 #
