@@ -66,6 +66,7 @@ module L2ParInfo
     logical :: slave = .false.          ! Set if this is a slace task
     integer :: myTid                    ! My task ID in pvm
     integer :: masterTid                ! task ID in pvm
+    integer :: noFWMSlaves              ! No. slaves in pvm system for fwm cases
     character(len=132) :: slaveFilename ! Filename with list of slaves
     character(len=132) :: executable    ! Executable filename
     character(len=132) :: submit=""     ! Submit comand for batch queue system
@@ -400,6 +401,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.25  2002/12/11 01:58:33  livesey
+! Added noFWMSlaves
+!
 ! Revision 2.24  2002/11/23 00:13:18  livesey
 ! Increased maxFailuresPerChunk to reflect nature of Raytheon cluster (at
 ! least for the moment).
