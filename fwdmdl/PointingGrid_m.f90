@@ -4,27 +4,24 @@ module PointingGrid_m
   ! Link them to and from the Signals database in MLSSignals_m
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-  use Dump_0, only: Dump
-  use Machine, only: IO_Error
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error, MLSMSG_Info
   use MLSSignals_m, only: Bands, Dump_Bands, Dump_Signals, GetSignalName, &
     & Signals
   use Output_m, only: Blanks, MLSMSG_Level, Output, PrUnit
-  use Parse_Signal_m, only: Parse_Signal
-  use String_Table, only: Display_String
-  use Toggles, only: Gen, Levels, Switches, Toggle
-  use Trace_M, only: Trace_begin, Trace_end
+
+  ! More USEs below in each procedure, if they're only used therein.
 
   private
   ! Public procedures:
   public :: Open_Pointing_Grid_File, Read_Pointing_Grid_File
   public :: Close_Pointing_Grid_File, Destroy_Pointing_Grid_Database
-  public :: Dump_Pointing_Grid_Database
+  public :: Dump_Pointing_Grid_Database, Get_Nearest_Tan_Pressure
 
   type, public :: OneGrid_T
-    real(r8) :: Height                  ! Zeta, actually
+    real(r8) :: Height                            ! Zeta, actually
+    real(r8) :: NearestTanPress = huge(0.0_r8)/4  ! Nearest tangent pressure
     real(r8), pointer, dimension(:) :: Frequencies => NULL()
   end type OneGrid_T
 
@@ -53,10 +50,13 @@ contains
 
   ! ------------------------------------  Open_Pointing_Grid_File  -----
   subroutine Open_Pointing_Grid_File ( Filename, Lun )
+
     character(len=*), intent(in) :: Filename ! Name of the pointing grid file
     integer, intent(out) :: Lun              ! Logical unit number to read it
+
     logical :: Exist, Opened
     integer :: Status
+
     do lun = 20, 99
       inquire ( unit=lun, exist=exist, opened=opened )
       if ( exist .and. .not. opened ) exit
@@ -71,6 +71,12 @@ contains
 
   ! ------------------------------------  Read_Pointing_Grid_File  -----
   subroutine Read_Pointing_Grid_File ( Lun, Spec_Indices )
+    use Machine, only: IO_Error
+    use Parse_Signal_m, only: Parse_Signal
+    use String_Table, only: Display_String
+    use Toggles, only: Gen, Levels, Switches, Toggle
+    use Trace_M, only: Trace_begin, Trace_end
+
     integer, intent(in) :: Lun               ! Logical unit number to read it
     integer, intent(in) :: Spec_Indices(:)   ! Needed by Parse_Signal, q.v.
 
@@ -175,6 +181,13 @@ outer2: do
         read ( lun, *, iostat=status, err=99, end=98 ) &
           & pointingGrids(howManyRadiometers)%oneGrid(n)% &
             & frequencies(extraHeights+1:)
+        ! The frequencies are relative to the band center.  Make them
+        ! absolute
+        pointingGrids(howManyRadiometers)%oneGrid(n)% &
+          & frequencies(extraHeights+1:) = &
+            & pointingGrids(howManyRadiometers)%oneGrid(n)% &
+              & frequencies(extraHeights+1:) + &
+                & pointingGrids(howManyRadiometers)%centerFrequency
       end do
     end do outer2
 
@@ -216,6 +229,8 @@ outer2: do
 
   ! --------------------------------  Dump_Pointing_Grid_Database  -----
   subroutine Dump_Pointing_Grid_Database
+    use Dump_0, only: Dump
+
     integer :: I, J                ! Subscripts, loop inductors
     character(len=80) :: SigName   ! From GetSignalName
     call output ( 'Pointing Grids: SIZE = ' )
@@ -240,6 +255,30 @@ outer2: do
     end do ! i
   end subroutine Dump_Pointing_Grid_Database
 
+  ! -----------------------------------  Get_Nearest_Tan_Pressure  -----
+  subroutine Get_Nearest_Tan_Pressure ( Tan_Press )
+  ! Find the nearest tangent pressure to each PointingGrids%oneGrid
+    use D_HUNT_M, only: HUNT
+
+    real(r8), intent(in), dimension(:) :: Tan_Press
+
+    integer :: I, J, K, L
+
+    do i = 1, size(pointingGrids)
+      do j = 1, size(pointingGrids(i)%oneGrid)
+        k = -1
+        call Hunt ( pointingGrids(i)%oneGrid(j)%height, tan_press, &
+          & size(tan_press), k, l )
+        if ( abs( pointingGrids(i)%oneGrid(j)%height - tan_press(l) ) < &
+             abs( pointingGrids(i)%oneGrid(j)%height - tan_press(k) ) ) k = l
+        pointingGrids(i)%oneGrid(j)%height = tan_press(k)
+      end do ! j = 1, size(pointingGrids%oneGrid)
+    end do ! i = 1, size(pointingGrids)
+
+  end subroutine Get_Nearest_Tan_Pressure
 end module PointingGrid_m
 
 ! $Log$
+! Revision 1.1  2001/03/16 23:12:14  vsnyder
+! Initial commit
+!
