@@ -8,6 +8,7 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
   USE MLSMessageModule, only: MLSMessage, MLSMSG_Error
   USE MLSStrings, only: GetStringElement, LowerCase, StringElementNum
   use OUTPUT_M, only: BLANKS, OUTPUT, PRUNIT
+  use Time_M, only: Time_Now
 
   IMPLICIT NONE
 
@@ -43,7 +44,7 @@ contains ! =====     Public Procedures     =============================
 
   ! Formal arguments
     character(LEN=*), intent(in):: section_name   ! One of the retrieval section_names
-    real, intent(in)            :: t1             ! Prior cpu_time 
+    real, intent(in)            :: t1             ! Prior time_now 
 
   ! Private
     integer                     :: elem
@@ -56,7 +57,7 @@ contains ! =====     Public Procedures     =============================
         & 'Unable to find retrieval section name ' // section_name // &
         & ' among list ' // retrieval_names )
       else
-        call cpu_time ( t2 )
+        call time_now ( t2 )
         section_timings(num_section_times+elem) = &
           & section_timings(num_section_times+elem) + t2 - t1
       endif
@@ -69,7 +70,7 @@ contains ! =====     Public Procedures     =============================
 
   ! Formal arguments
     character(LEN=*), intent(in):: section_name   ! One of the section_names
-    real, intent(in)            :: t1             ! Prior cpu_time 
+    real, intent(in)            :: t1             ! Prior time_now 
 
   ! Private
     integer                     :: elem
@@ -84,12 +85,12 @@ contains ! =====     Public Procedures     =============================
         & 'Unable to find section name ' // section_name // &
         & ' among list ' // section_names // ',' // retrieval_names )
       else
-        call cpu_time ( t2 )
+        call time_now ( t2 )
         section_timings(num_section_times+elem) = &
           & section_timings(num_section_times+elem) + t2 - t1
       endif
     else
-      call cpu_time ( t2 )
+      call time_now ( t2 )
       section_timings(elem) = section_timings(elem) + t2 - t1
     endif
   end subroutine add_to_section_timing
@@ -120,7 +121,7 @@ contains ! =====     Public Procedures     =============================
     call blanks ( 8, advance='no' )
     call output ( 'percent ', advance='yes' )
     total = sum(section_timings(1:num_section_times))
-    call cpu_time ( final )
+    call time_now ( final )
     final = max(final, total)
     if ( final <= 0.0 ) final = 1.0       ! Just so we don't divide by 0
     if ( final < 0.5 .or. final > 99999.99 ) then
@@ -212,6 +213,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.5  2001/11/09 23:17:22  vsnyder
+! Use Time_Now instead of CPU_TIME
+!
 ! Revision 2.4  2001/10/01 23:30:50  pwagner
 ! Fixed bug in spelling cholesky_solver
 !
