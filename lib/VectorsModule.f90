@@ -843,16 +843,17 @@ contains ! =====     Public Procedures     =============================
   ! matches our requirements
   
   function ValidateVectorQuantity(quantity, coherent, stacked, regular,&
-    & verticalCoordinate, quantityType)
+    & minorFrame, verticalCoordinate, quantityType)
 
     ! Dummy arguments
-    type (VectorValue_T), intent(IN) :: quantity ! Test quantity
-    logical, optional, intent(IN) :: coherent ! .TRUE.,.FALSE. or not present
-    logical, optional, intent(IN) :: stacked  ! .TRUE.,.FALSE. or not present
-    logical, optional, intent(IN) :: regular ! .TRUE.,.FALSE. or not present
+    type (VectorValue_T), intent(IN) :: QUANTITY ! Test quantity
+    logical, optional, intent(IN) :: COHERENT ! .TRUE.,.FALSE. or not present
+    logical, optional, intent(IN) :: STACKED  ! .TRUE.,.FALSE. or not present
+    logical, optional, intent(IN) :: REGULAR ! .TRUE.,.FALSE. or not present
+    logical, optional, intent(IN) :: MINORFRAME ! .TRUE.,.FALSE. or not present
 
-    integer, optional, dimension(:), intent(IN) :: verticalCoordinate
-    integer, optional, dimension(:), intent(IN) :: quantityType
+    integer, optional, dimension(:), intent(IN) :: VERTICALCOORDINATE
+    integer, optional, dimension(:), intent(IN) :: QUANTITYTYPE
 
     ! Result
     logical :: ValidateVectorQuantity
@@ -875,6 +876,13 @@ contains ! =====     Public Procedures     =============================
 
     if (present(regular)) then
       if (quantity%template%regular .neqv. regular) then
+        ValidateVectorQuantity=.FALSE.
+        return
+      end if
+    end if
+
+    if (present(minorFrame)) then
+      if (quantity%template%minorFrame .neqv. minorFrame) then
         ValidateVectorQuantity=.FALSE.
         return
       end if
@@ -912,6 +920,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.14  2001/02/27 17:18:53  livesey
+! Added ValidateVectorQuantity
+!
 ! Revision 2.13  2001/02/21 21:50:38  livesey
 ! Added a line to zero out a vector on creation.  Kind of like using training
 ! wheels in a bicycle, but avoids painful core dumps when trying to output
