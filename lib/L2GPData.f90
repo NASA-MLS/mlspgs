@@ -23,7 +23,8 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
     & ints2Strings, list2array, lowercase, NumStringElements, &
     & strings2Ints, StringElementNum
   use OUTPUT_M, only: OUTPUT
-  use PCFHdr, only: GA_VALUE_LENGTH
+  use PCFHdr, only: GA_VALUE_LENGTH, GlobalAttributes_T, GlobalAttributes, &
+    & he5_readglobalattr, he5_writeglobalattr
   use STRING_TABLE, only: DISPLAY_STRING
 
   implicit none
@@ -101,7 +102,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   ! TRUE means we can avoid using unlimited dimension and its time penalty
   logical, public            :: AVOIDUNLIMITEDDIMS = .true.
 
-  integer, parameter :: CHARATTRLEN = GA_VALUE_LENGTH
+  integer, parameter :: CHARATTRLEN = 255   ! was GA_VALUE_LENGTH
   real, parameter    :: UNDEFINED_VALUE = -999.99 ! Same as %template%badvalue
   integer, parameter :: L2GPNameLen = 80
   integer, parameter :: NumGeolocFields = 10
@@ -1631,6 +1632,8 @@ contains ! =====     Public Procedures     =============================
     call GetStringHashElement (UniqueFieldDefKeys, &
       & UniqueFieldDefValues, trim(abbr_uniq_fdef), &
       & expnd_uniq_fdef, .false.)
+    if ( expnd_uniq_fdef == '' .or. expnd_uniq_fdef == ',' ) &
+      & expnd_uniq_fdef = 'MLS-Specific'
     select case (trim(lowercase(species_name)))
     case ('temperature')
       units_name = 'K'
@@ -2065,7 +2068,7 @@ contains ! =====     Public Procedures     =============================
   ! ---------------------- cpL2GPData_fileName  ---------------------------
 
   subroutine cpL2GPData_fileName(file1, file2, create2, hdfVersion, swathList, &
-    & notUnlimited)
+    & notUnlimited, andGlAttributes)
     !------------------------------------------------------------------------
 
     ! Given file names file1 and file2,
@@ -2078,6 +2081,7 @@ contains ! =====     Public Procedures     =============================
     character (len=*), intent(in) :: file1 ! Name of file 1
     character (len=*), intent(in) :: file2 ! Name of file 2
     logical, optional, intent(in) :: create2
+    logical, optional, intent(in) :: andGlAttributes
     integer, optional, intent(in) :: hdfVersion
     character (len=*), optional, intent(in) :: swathList
     logical, optional, intent(in) :: notUnlimited
@@ -2093,6 +2097,12 @@ contains ! =====     Public Procedures     =============================
     integer :: listsize
     integer :: noSwaths
     character (len=MAXSWATHNAMESBUFSIZE) :: mySwathList
+    type(GlobalAttributes_T) :: gAttributes
+    type(GlobalAttributes_T) :: gAttributesOriginal
+    character(len=40)        :: ProcessLevel
+    integer                  :: DayofYear
+    double precision         :: TAI93At0zOfGranule
+    logical                  :: myandGlAttributes
     
     ! Executable code
     the_hdfVersion = L2GPDEFAULT_HDFVERSION
@@ -2151,6 +2161,9 @@ contains ! =====     Public Procedures     =============================
       print *, 'file_access: ', file_access
       print *, 'hdfVersion: ', the_hdfVersion
     endif
+    myandGlAttributes = (file_access == DFACC_CREATE)
+    if ( present(andGlAttributes) ) &
+      & myandGlAttributes = myandGlAttributes .and. andGlAttributes
     File2Handle = mls_io_gen_openF('swopen', .TRUE., status, &
        & record_length, file_access, FileName=File2, &
        & hdfVersion=the_hdfVersion, debugOption=.false. )
@@ -2160,6 +2173,20 @@ contains ! =====     Public Procedures     =============================
     if ( DEEBUG ) then
       print *, 'About to cp from file1 to file2: ', File1Handle, File2Handle
       print *, trim(mySwathList)
+    endif
+    ! Maybe copy global attributes, too
+    if ( myandGlAttributes ) then
+      call he5_readglobalattr (File1Handle, gAttributes, &
+        & ProcessLevel, DayofYear, TAI93At0zOfGranule, status)
+      if ( status == 0 ) then
+        ! Unfortunately, he5_writeglobalattr writes class-level data
+        ! so must store original version so can copy new data into it 
+        gAttributesOriginal = GlobalAttributes
+        GlobalAttributes = gAttributes
+        call he5_writeglobalattr (File2Handle)
+        ! Before leaving must copy original data back
+        GlobalAttributes = gAttributesOriginal
+      endif
     endif
     call cpL2GPData_fileID(File1Handle, File2Handle, &
       & mySwathList, hdfVersion=the_hdfVersion, notUnlimited=notUnlimited)
@@ -2393,22 +2420,29 @@ contains ! =====     Public Procedures     =============================
     ! - -   G l o b a l   A t t r i b u t e s   - -
     call output ( '(Global Attributes) ', advance='yes')
     call he5_readglobalattr(l2FileHandle, gAttributes, &
-     & ProcessLevel, DayofYear, TAI93At0zOfGranule)
-    call dump(gAttributes%orbNum, 'Orbit numbers')
-    call dump(gAttributes%orbPeriod, 'Orbit Periods')
-    call output ('InstrumentName: ' // trim( gAttributes%InstrumentName  ))
-    call output ('Process level: ' // trim(  gAttributes%ProcessLevel    ))
-    call output ('Input version: ' // trim(  gAttributes%inputVersion    ))
-    call output ('PGE version: ' // trim(    gAttributes%PGEVersion      ))
-    call output ('Start UTC: ' // trim(      gAttributes%StartUTC        ))
-    call output ('End UTC: ' // trim(        gAttributes%EndUTC          ))
-    call dump_int ( gAttributes%GranuleMonth, 'Granule month:' )
-    call dump_int ( gAttributes%GranuleDay, 'Granule day:' )
-    call dump_int ( gAttributes%GranuleYear, 'Granule year:' )
-    call dump_int ( DayOfYear, 'Granule day of year:' )
-    call dump_r8 ( TAI93At0zOfGranule, 'Equator crossing time (tai93):' )
-
+     & ProcessLevel, DayofYear, TAI93At0zOfGranule, status)
+    if ( status /= 0 ) then
+      call output ('No global attributes found in file', advance='yes')
+    else
+      call dump(gAttributes%orbNum, 'Orbit numbers')
+      call dump(gAttributes%orbPeriod, 'Orbit Periods')
+      call output ('InstrumentName: ' // trim( gAttributes%InstrumentName  ))
+      call output ('Process level: ' // trim(  gAttributes%ProcessLevel    ))
+      call output ('Input version: ' // trim(  gAttributes%inputVersion    ))
+      call output ('PGE version: ' // trim(    gAttributes%PGEVersion      ))
+      call output ('Start UTC: ' // trim(      gAttributes%StartUTC        ))
+      call output ('End UTC: ' // trim(        gAttributes%EndUTC          ))
+      call dump_int ( gAttributes%GranuleMonth, 'Granule month:' )
+      call dump_int ( gAttributes%GranuleDay, 'Granule day:' )
+      call dump_int ( gAttributes%GranuleYear, 'Granule year:' )
+      call dump_int ( DayOfYear, 'Granule day of year:' )
+      call dump_r8 ( TAI93At0zOfGranule, 'Equator crossing time (tai93):' )
+    endif
     swid = mls_SWattach (l2FileHandle, name, hdfVersion=HDFVERSION_5)
+    if ( swid == -1 ) then
+       call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'Failed to attach swath ' // trim(name))
+    end if
     
     !   - -   S w a t h   A t t r i b u t e s   - -
     call output ( '(Swath Attributes) ', advance='yes')
@@ -2586,6 +2620,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.95  2004/02/13 00:18:58  pwagner
+! Added DumpL2GP_attributes_hdf5 which doesnt work yet
+!
 ! Revision 2.94  2004/02/11 23:05:05  pwagner
 ! Undid effect of 2nd-to-last fix; seems to have been wrong
 !
