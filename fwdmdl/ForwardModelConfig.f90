@@ -51,6 +51,13 @@ module ForwardModelConfig
     integer :: phiWindow            ! Window size for examining stuff
     real (r8) :: frqGap             ! Lines further than this are ignored (MHz)
     real (r8) :: tolerance          ! Accuracy desired when choosing approximations
+    ! CloudForwardModel
+    integer :: no_cloud_species     ! No of Cloud Species '2'
+    integer :: no_model_surfs       ! No of Model surfaces '640'
+    integer :: NUM_SCATTERING_ANGLES! No of scattering angles '16'
+    integer :: NUM_AZIMUTH_ANGLES   ! No of azmuth angles '8'
+    integer :: NUM_AB_TERMS         ! No of AB terms '50'
+    integer :: NUM_SIZE_BINS        ! No of size bins '40'
   end type ForwardModelConfig_T
 
   !---------------------------- RCS Ident Info -------------------------------
@@ -168,6 +175,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 1.11  2001/06/21 15:05:53  livesey
+! Added tolerance
+!
 ! Revision 1.10  2001/05/31 23:07:45  livesey
 ! Added cloud_der
 !
