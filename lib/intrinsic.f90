@@ -19,6 +19,7 @@ module INTRINSIC
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
 ! A "spec_def" vertex may be decorated with (sums of) the following flags:
@@ -223,9 +224,16 @@ contains ! =====     Public procedures     =============================
     call deallocate_test ( spec_indices,      'SPEC_INDICES',      moduleName )
   end subroutine
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.44  2002/10/08 00:09:10  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.43  2002/04/10 17:42:59  pwagner
 ! Added pctrhi unit
 !
