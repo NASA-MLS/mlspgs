@@ -12,7 +12,7 @@ module Open_Init
   use MLSL2Options, only: LEVEL1_HDFVERSION
   use MLSMessageModule, only: MLSMessage, MLSMSG_Warning, &
     &                         MLSMSG_Error!, MLSMSG_FileOpen, MLSMSG_Info
-  use MLSStrings, only: catLists, utc_to_yyyymmdd
+  use MLSStringLists, only: catLists, utc_to_yyyymmdd
   use Output_m, only: BLANKS, Output
   use PCFHdr, only: GlobalAttributes
   use SDPToolkit, only: max_orbits
@@ -748,6 +748,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.78  2004/08/04 23:19:58  pwagner
+! Much moved from MLSStrings to MLSStringLists
+!
 ! Revision 2.77  2004/06/29 00:10:17  pwagner
 ! Exploit catlist function
 !
