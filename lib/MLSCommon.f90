@@ -31,8 +31,16 @@ MODULE MLSCommon                ! Common definitions for the MLS software
 
   ! Now choose the precision we want by preference (may automate this through
   ! make later on, with perl or m4 or something).
+  ! These are used according to the final letter in the two-letter name:
+  ! Final Letter          Context
+  !    ----               -------
+  !     m                 Matrix
+  !     p                 Forward Model
+  !     v                 Vector
+  INTEGER, PARAMETER:: rm=r8
   INTEGER, PARAMETER:: rp=r8
   INTEGER, PARAMETER:: ip=i4
+  INTEGER, PARAMETER:: rv=r8
 
   ! Now we have the lengths for various strings
 
@@ -105,6 +113,9 @@ END MODULE MLSCommon
 
 !
 ! $Log$
+! Revision 2.11  2002/08/28 22:16:18  pwagner
+! Added rm, rv types
+!
 ! Revision 2.10  2002/02/19 23:10:54  pwagner
 ! Added BareFNLen
 !
