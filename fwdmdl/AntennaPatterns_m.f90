@@ -74,7 +74,7 @@ contains
     integer :: DataBaseSize                  ! How many antenna patterns?
     integer :: HowManyPoints(size(signals))  ! for each pattern
     integer :: HowManySignals(size(signals)) ! for each pattern
-    integer :: I, J, K, L, N                 ! Loop inductors, subscripts
+    integer :: I, J, K                       ! Loop inductors, subscripts
     real(r8) :: Lambda
     real(r8) :: LambdaX2Pi                   ! 2 * Pi * Lambda
     real(r8) :: Q                            ! Factor used to scale derivatives
@@ -227,6 +227,9 @@ outer1: do
 end module AntennaPatterns_m
 
 ! $Log$
+! Revision 1.8  2001/04/06 00:48:30  vsnyder
+! And yet another typo
+!
 ! Revision 1.7  2001/04/06 00:41:50  vsnyder
 ! Fix another typo
 !
