@@ -21,10 +21,10 @@ module RetrievalModule
   use ForwardModelIntermediate, only: ForwardModelIntermediate_T, &
     & ForwardModelStatus_T
   use Init_Tables_Module, only: F_apriori, F_aprioriScale, F_channels, &
-    & F_criteria, F_columnScale, F_covariance, F_diagonal, F_diagonalOut, &
+    & F_criteria, F_columnScale, F_covariance, F_diagonal, &
     & F_forwardModel, F_fuzz, F_fwdModelExtra, F_fwdModelOut, F_jacobian, &
     & F_lambda, F_maxF, F_maxJ, F_measurements, F_measurementSD, F_method, &
-    & F_outputCovariance, F_quantity, F_state, F_test, F_toleranceA, &
+    & F_outputCovariance, F_outputSD, F_quantity, F_state, F_test, F_toleranceA, &
     & F_toleranceF, F_toleranceR, Field_first, Field_last, &
     & L_apriori, L_covariance, L_newtonian, L_none, L_norm, &
     & S_dumpBlocks, S_forwardModel, S_sids, S_matrix, S_subset, S_retrieve, &
@@ -162,6 +162,7 @@ contains
     integer :: NWT_Opt(20)              ! Options for NWT, q.v.
     real(rk) :: NWT_Xopt(20)            ! Real parameters for NWT options, q.v.
     type(matrix_SPD_T), pointer :: OutputCovariance   ! Covariance of the sol'n
+    type(vector_T), pointer :: OutSD    ! Vector containing SD of result
     integer :: Quantity                 ! Index in tree of "quantity" field
                                         ! of subset specification, or zero
     integer :: QuantityIndex            ! Index within vector of a quantity
@@ -202,7 +203,7 @@ contains
 
     error = 0
     nullify ( apriori, configIndices, covariance, fwdModelOut )
-    nullify ( measurements, measurementSD, state )
+    nullify ( measurements, measurementSD, state, outSD )
     timing = .false.
 
     if ( toggle(gen) ) call trace_begin ( "Retrieve", root )
@@ -301,8 +302,6 @@ contains
             end if
           case ( f_diagonal )
             diagonal = get_Boolean(son)
-          case ( f_diagonalOut )
-            diagonalOut = get_Boolean(son)
           case ( f_forwardModel )
             call allocate_test ( configIndices, nsons(son)-1, "ConfigIndices", &
               & moduleName )
@@ -323,6 +322,8 @@ contains
             method = decoration(subtree(2,son))
           case ( f_outputCovariance )
             ixCovariance = decoration(subtree(2,son)) ! outCov: matrix vertex
+          case ( f_outputSD )
+            outSD => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_state )
             state => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_aprioriScale, f_fuzz, f_lambda, f_maxF, f_maxJ, &
@@ -960,14 +961,16 @@ contains
               ! equations
               call updateDiagonal ( normalEquations, -aj%sqt**2 )
               ! Subtract a priori covariance matrix from normal equations
-              call negate ( covariance%m )
-              call addToMatrix ( normalEquations%m, covariance%m )
-              call negate ( covariance%m )
+              ! call negate ( covariance%m )
+              ! call addToMatrix ( normalEquations%m, covariance%m )
+              ! call negate ( covariance%m )
+              ! Commented out, pending deep thought.!???
               ! Re-factor normal equations
               call choleskyFactor ( factored, normalEquations )
               call invertCholesky ( factored, outputCovariance%m )
               !??? Don't forget to scale the covariance
-              if ( diagonalOut ) then
+              if ( associated(outSD) ) then !???
+                call GetDiagonal ( outputCovariance%m, outSD, SquareRoot = .true. )
               else
               end if
             end if
@@ -1066,6 +1069,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.37  2001/06/01 21:27:48  livesey
+! Added outSD field
+!
 ! Revision 2.36  2001/06/01 20:36:34  vsnyder
 ! Seems to work.  Added LaTeX comments.
 !
