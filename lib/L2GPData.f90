@@ -273,6 +273,7 @@ contains ! =====     Public Procedures     =============================
     ! Local variables
     type (L2GPData_T) :: tempL2gp       ! For copying data around
     integer :: myNTimes
+    integer :: tmpNFreqs, tmpNLevels
 
     ! Executable code
 
@@ -300,7 +301,10 @@ contains ! =====     Public Procedures     =============================
       & l2gp%solarZenith, l2gp%losAngle, l2gp%losAngle, l2gp%geodAngle, &
       & l2gp%chunkNumber, l2gp%time, l2gp%frequency, l2gp%l2gpValue, &
       & l2gp%l2gpPrecision, l2gp%status, l2gp%quality )
-    call SetupNewL2GPRecord( l2gp, nFreqs=l2gp%nFreqs, nLevels=l2gp%nLevels, &
+    
+    tmpNFreqs = l2gp%nFreqs
+    tmpNLevels = l2gp%nLevels
+    call SetupNewL2GPRecord( l2gp, nFreqs=tmpNFreqs, nLevels=tmpNLevels, &
       & nTimes=myNTimes )
 
     ! Don't forget the `global' stuff
@@ -1428,6 +1432,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.43  2002/07/17 18:57:32  livesey
+! Gone back to 2.40, 2.42 didn't work, no time to investigate now
+!
 ! Revision 2.40  2002/03/15 23:02:49  pwagner
 ! Gets HDFVERSION_4 and 5 from MLSFiles; checks for illegal hdfversions
 !
