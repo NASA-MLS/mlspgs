@@ -2,11 +2,10 @@
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !===========================================================================
-module HDFEOS5               ! F90 interface to HDF-EOS.
+module HDFEOS5               ! F90 interface to HDF-EOS5.
 !===========================================================================
   implicit none
   public
-
 
   !------------------- RCS Ident Info -----------------------
   character(len=130), private :: Id = &
@@ -29,6 +28,15 @@ module HDFEOS5               ! F90 interface to HDF-EOS.
   !                        OY! NO! NOT like this! No (:)s already!
 
   interface
+    integer function HE5_GDCLOSE ( FILE_ID )
+      integer, intent(in) :: FILE_ID
+    end function HE5_GDCLOSE
+
+    integer function HE5_GDOPEN ( FILENAME, ACCESS_MODE )
+      character (len=*), intent(in) :: FILENAME
+      integer, intent(in) :: ACCESS_MODE
+    end function HE5_GDOPEN
+
     integer function HE5_SWATTACH ( SWFID, SWATHNAME )
       integer, intent(in) :: SWFID
       character (len=*), intent(in) :: SWATHNAME
@@ -105,8 +113,8 @@ module HDFEOS5               ! F90 interface to HDF-EOS.
 
   end interface
 
-
-
 !====================
 end module HDFEOS5
 !====================
+
+! $Log$
