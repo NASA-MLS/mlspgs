@@ -430,38 +430,54 @@ contains
               & old_hts(junk(i))-h_grid(junk(i))
       end do
 
-      do
+      IF(no_of_bad_fits == 1) THEN
+         ! find which side of the tangent we are on
+         if (path_ind(st_ind) < n_vert + 1) then
+            ! this is the near observer side
+            low_pt = junk(1) + 1
+            hi_pt  = junk(1) - 1
+         else
+            ! this is the far observer side
+            low_pt = junk(1) - 1
+            hi_pt  = junk(1) + 1
+         end if
+         ! Correct
+         h_grid(junk(1)) = h_grid(low_pt) + &
+              & (h_grid(hi_pt) - h_grid(low_pt)) * &
+              & (cvf_z_grid(junk(1):junk(1))-cvf_z_grid(low_pt)) / &
+              & (cvf_z_grid(hi_pt) - cvf_z_grid(low_pt))
+      ELSE
 
-        if(end_ind > no_of_bad_fits) EXIT
+         fixheights: DO
+            IF (end_ind > no_of_bad_fits) EXIT fixheights
 
-        do
-          if(tan_ind(end_ind) > tan_ind(st_ind)) exit
-          end_ind = end_ind + 1
-        end do
+            getrange: DO
+               if(tan_ind(end_ind) > tan_ind(st_ind)) exit getrange
+               end_ind = end_ind + 1
+            END DO getrange
 
-        end_ind = end_ind - 1
+            end_ind = end_ind - 1
 
-        ! find which side of the tangent we are on
-        if (path_ind(st_ind) < n_vert + 1) then
-          ! this is the near observer side
-          low_pt = junk(end_ind) + 1
-          hi_pt  = junk(st_ind) - 1
-        else
-          ! this is the far observer side
-          low_pt = junk(st_ind) - 1
-          hi_pt  = junk(end_ind) + 1
-        end if
+            ! find which side of the tangent we are on
+            if (path_ind(st_ind) < n_vert + 1) then
+               ! this is the near observer side
+               low_pt = junk(end_ind) + 1
+               hi_pt  = junk(st_ind) - 1
+            else
+               ! this is the far observer side
+               low_pt = junk(st_ind) - 1
+               hi_pt  = junk(end_ind) + 1
+            end if
 
-        ! Correct
-        h_grid(junk(st_ind):junk(end_ind)) = h_grid(low_pt) + &
-          & (h_grid(hi_pt) - h_grid(low_pt)) * &
-          & (cvf_z_grid(junk(st_ind):junk(end_ind))-cvf_z_grid(low_pt)) / &
-          & (cvf_z_grid(hi_pt) - cvf_z_grid(low_pt))
-        st_ind = end_ind + 1
-        end_ind = st_ind
-
-      end do
-
+            ! Correct
+            h_grid(junk(st_ind):junk(end_ind)) = h_grid(low_pt) + &
+                 & (h_grid(hi_pt) - h_grid(low_pt)) * &
+                 & (cvf_z_grid(junk(st_ind):junk(end_ind))-cvf_z_grid(low_pt)) / &
+                 & (cvf_z_grid(hi_pt) - cvf_z_grid(low_pt))
+            st_ind = end_ind + 1
+            end_ind = st_ind
+         END DO fixheights
+      END IF
       print *,'completed re-estimation of bad points'
 
       call Deallocate_test ( path_ind, 'path_ind', ModuleName )
@@ -555,6 +571,9 @@ contains
 
 end module metrics_m
 ! $Log$
+! Revision 2.7  2002/07/05 07:52:50  zvi
+! Coor. switch (phi,z) -> (z,phi)
+!
 ! Revision 2.6  2002/06/19 11:00:35  zvi
 ! Some cosmetic corrections
 !
