@@ -29,7 +29,7 @@ module Hydrostatic_m
     use Geometry, only: EarthRadA, EarthRadB, GM, J2, J4, W
     use Get_eta_m, only: get_eta
     use Piq_int_m, only: piq_int
-    use Units, only: BoltzMeters => Boltz
+    use Physics, only: BoltzMeters => Boltz
 
 ! Inputs
 
@@ -181,6 +181,9 @@ module Hydrostatic_m
 end module Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.12  2003/09/16 18:43:47  vsnyder
+! Might as well TeX-ify the comment about the approximation
+!
 ! Revision 2.11  2003/09/16 18:31:02  vsnyder
 ! Put in a better comment about an approximation
 !
