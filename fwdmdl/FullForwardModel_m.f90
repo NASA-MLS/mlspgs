@@ -203,6 +203,10 @@ contains
     logical, dimension(:,:), pointer :: DO_CALC_T_F   ! DO_CALC_T on fine grid
     logical, dimension(:,:), pointer :: DO_CALC_ZP    ! 'Avoid zeros' indicator
     logical, dimension(:,:), pointer :: DO_CALC_IWC_ZP! 'Avoid zeros' indicator  !JJ
+    LOGICAL, DIMENSION(:), pointer :: true_path_flags ! array of trues
+    LOGICAL, DIMENSION(:), pointer :: t_der_path_flags! a flag that tells the
+! where an absorption coefficient is needed for a temperature derivative.
+! Only useful when subsetting temperature derivatives.
 
 ! Array of Flags indicating  which Temp. coefficient to process
 
@@ -487,7 +491,7 @@ contains
       & tan_chi_out, tan_d2h_dhdt, tan_dh_dt, &
       & tan_phi, tan_temp, tanh1_c, tanh1_f, tau, &
       & tau_pol, t_glgrid, t_path, t_path_c, t_path_f, t_path_m, t_path_p, &
-      & t_script, &
+      & t_script, t_der_path_flags, true_path_flags, &
       & usedchannels, usedsignals, wc, z_path, z_path_c )
 
     ! Extra DEBUG for Nathaniel and Bill
@@ -879,6 +883,8 @@ contains
     call allocate_test ( eta_fzp,       no_ele, size(grids_f%values),  'eta_fzp', moduleName )
     call allocate_test ( eta_zp,        no_ele, grids_f%p_len,  'eta_zp', moduleName )
     call allocate_test ( sps_path,      no_ele, no_mol, 'sps_path',       moduleName )
+    CALL allocate_test(true_path_flags,no_ele,'true_path_flags',moduleName)
+    true_path_flags = .true.
     if ( fwdModelConf%Incl_Cld ) then !JJ
       call allocate_test ( do_calc_iwc,    no_ele, size(grids_iwc%values),  'do_calc_iwc',  moduleName )
       call allocate_test ( eta_iwc,        no_ele, size(grids_iwc%values),  'eta_iwc',      moduleName )
@@ -938,6 +944,8 @@ contains
                                                               & moduleName )
       call allocate_test ( tan_dh_dt,    1, sv_t_len, 'tan_dh_dt',    moduleName )
       call allocate_test ( tan_d2h_dhdt, 1, sv_t_len, 'tan_d2h_dhdt', moduleName )
+      CALL allocate_test( t_der_path_flags,no_ele,    't_der_path_flags', &
+                                                              & moduleName )
 
     end if ! temp_der
 
@@ -1229,6 +1237,10 @@ contains
             do_calc_hyd_c(1:npc,:) = do_calc_hyd(indices_c(1:npc),:)
             do_calc_t_c(1:npc,:) = do_calc_t(indices_c(1:npc),:)
             eta_zxp_t_c(1:npc,:) = eta_zxp_t(indices_c(1:npc),:)
+!
+            DO i = 1 , no_ele
+              t_der_path_flags(i) = ANY(do_calc_t(i,:))
+            ENDDO
           else
             call metrics ( tan_phi(ptg_i:ptg_i), tan_inds(ptg_i:ptg_i),      &
               &  Grids_tmp%phi_basis, z_glgrid, h_glgrid, t_glgrid, dhdz_glgrid, &
@@ -1262,6 +1274,9 @@ contains
             do_calc_hyd_c(1:npc,:) = do_calc_hyd(indices_c(1:npc),:)
             do_calc_t_c(1:npc,:) = do_calc_t(indices_c(1:npc),:)
             eta_zxp_t_c(1:npc,:) = eta_zxp_t(indices_c(1:npc),:)
+            DO i = 1 , no_ele
+              t_der_path_flags(i) = ANY(do_calc_t(i,:))
+            ENDDO
           else
             call metrics ( tan_phi(ptg_i:ptg_i), tan_inds(ptg_i:ptg_i),      &
               &  Grids_tmp%phi_basis, z_glgrid, h_glgrid, t_glgrid, dhdz_glgrid, &
@@ -1419,15 +1434,15 @@ contains
 
         call get_gl_slabs_arrays ( my_Catalog, p_path(1:no_ele), &
           &  t_path(1:no_ele), 0.001*losVel%values(1,maf), gl_slabs, &
-          &  no_ele, fwdModelConf%Do_1D )
+          &  no_ele, fwdModelConf%Do_1D,true_path_flags(1:no_ele))
 
         if ( temp_der ) then
           call get_gl_slabs_arrays ( my_Catalog, p_path(1:no_ele), &
             &  t_path_p(1:no_ele), 0.001*losVel%values(1,maf), gl_slabs_p, &
-            &  no_ele, fwdModelConf%Do_1D )
+            &  no_ele, fwdModelConf%Do_1D,t_der_path_flags(1:no_ele) )
           call get_gl_slabs_arrays ( my_Catalog, p_path(1:no_ele), &
             &  t_path_m(1:no_ele), 0.001*losVel%values(1,maf), gl_slabs_m, &
-            &  no_ele, fwdModelConf%Do_1D )
+            &  no_ele, fwdModelConf%Do_1D,t_der_path_flags(1:no_ele) )
         end if
 
         ! Work out what frequencies we're using for --------------------------
@@ -1499,6 +1514,7 @@ contains
             &  gl_slabs, indices_c(1:npc), beta_path_c(1:npc,:),  &    
             &  gl_slabs_m, t_path_m(1:no_ele),                    &
             &  gl_slabs_p, t_path_p(1:no_ele),                    &
+            &  t_der_path_flags(1:no_ele),                        &
             &  dbeta_dt_path_c, dbeta_dw_path_c,                  &    
             &  dbeta_dn_path_c, dbeta_dv_path_c )                    
 
@@ -1609,6 +1625,7 @@ contains
             & gl_slabs, gl_inds(:ngl), beta_path_f(:ngl,:),           &
             & gl_slabs_m, t_path_m(1:no_ele),                         &
             & gl_slabs_p, t_path_p(1:no_ele),                         &
+            & t_der_path_flags(1:no_ele),                             &
             & dbeta_dt_path_f, dbeta_dw_path_f,                       &
             & dbeta_dn_path_f, dbeta_dv_path_f )
 
@@ -1722,7 +1739,7 @@ alpha_path_f = 0.0
               & sps_beta_dbeta_f(:ngl),    &
               & eta_zxp_t_f(:ngl,:), do_calc_t_f(:ngl,:), path_dsdh(gl_inds(1:ngl)),   &
               & dhdz_path(gl_inds(1:ngl)), t_script(1:npc), d_t_scr_dt(1:npc,:), &
-              & tau(1:npc), i_stop,        &
+              & tau(1:npc), i_stop, grids_tmp%deriv_flags,       &
               & d_delta_dt(1:npc,:), drad_dt )
 
             if ( .not. FwdModelConf%polarized ) then
@@ -2294,6 +2311,7 @@ alpha_path_f = 0.0
     call deallocate_test ( iwc_path,      'iwc_path',      moduleName )
     call deallocate_test ( mag_path,      'mag_path',      moduleName )
     call deallocate_test ( sps_path,      'sps_path',      moduleName )
+    call deallocate_test ( true_path_flags,'true_path_flags',moduleName )
 
     call deallocate_test ( tan_chi_out, 'tan_chi_out', moduleName )
     call deallocate_test ( dx_dh_out,   'dx_dh_out',   moduleName )
@@ -2326,6 +2344,8 @@ alpha_path_f = 0.0
       call deallocate_test ( dxdt_tan,        'dxdt_tan',        moduleName )
       call deallocate_test ( d2xdxdt_tan,     'd2xdxdt_tan',     moduleName )
       call deallocate_test ( dxdt_surface,    'dxdt_surface',    moduleName )
+      CALL deallocate_test ( t_der_path_flags,'t_der_path_flags',moduleName )
+      CALL deallocate_test ( true_path_flags, 'true_path_flags',moduleName )
       call DestroyCompleteSlabs ( gl_slabs_p )
       call DestroyCompleteSlabs ( gl_slabs_m )
     end if
@@ -2582,6 +2602,12 @@ alpha_path_f = 0.0
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.146  2003/06/18 01:59:20  vsnyder
+! Move checking that all signals in config are for same radiometer, module
+! and sideband, and computation of sidebandStart and sidebandStop, to
+! ForwardModelSupport.  Remove vector quantity validation, as that's now
+! done in Construct.  Futzing.
+!
 ! Revision 2.145  2003/06/13 00:00:27  vsnyder
 ! Move multiplication of beta_path by tanh into FullForwardModel
 !
