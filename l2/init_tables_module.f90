@@ -666,6 +666,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_fieldECR, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
              begin, f+f_force, t+t_boolean, n+n_field_type, &
+             begin, f+f_fromPrecision, t+t_boolean, n+n_field_type, &
              begin, f+f_geocAltitudeQuantity, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
              begin, f+f_gphQuantity, s+s_vector, f+f_template, f+f_quantities, &
@@ -1101,6 +1102,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.343  2003/12/04 22:19:32  livesey
+! Added ability to fill from l2gpPrecision field
+!
 ! Revision 2.342  2003/11/15 00:46:41  pwagner
 ! maxfailurespermachine, maxfailuresperchunk no longer configuration settings (see comline opts)
 !
