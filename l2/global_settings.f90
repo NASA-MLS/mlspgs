@@ -796,36 +796,37 @@ contains
         Direct%fileIndex = file
       end select
     end do
+    RETURNSTATUS = 0
     call get_string ( file, filename, strip=.true. )
-      call split_path_name(filename, path, file_base)
-      Direct%filenameBase = file_base
-      if ( .not. TOOLKIT ) then
-        Direct%handle = 0
-        Direct%filename = filename
-      elseif ( Direct%Type ==  l_l2gp  ) then
-        Direct%Handle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
-          & mlspcf_l2gp_end, &
-          & TOOLKIT, returnStatus, l2gp_Version, DEEBUG, &
-          & exactName=Direct%Filename)
-      elseif ( Direct%Type ==  l_l2dgg ) then
-        Direct%Handle = GetPCFromRef(file_base, mlspcf_l2dgg_start, &
-          & mlspcf_l2dgg_end, &
-          & TOOLKIT, returnStatus, l2gp_Version, DEEBUG, &
-          & exactName=Direct%Filename)
-      elseif ( Direct%Type ==  l_l2fwm  ) then
-           Direct%Handle = GetPCFromRef(file_base, mlspcf_l2fwm_full_start, &
-          & mlspcf_l2fwm_full_end, &
-          & TOOLKIT, returnStatus, l2gp_Version, DEEBUG, &
-          & exactName=Direct%Filename)
-      else
-        Direct%Handle = GetPCFromRef(file_base, mlspcf_l2dgm_start, &
-          & mlspcf_l2dgm_end, &
-          & TOOLKIT, returnStatus, l2gp_Version, DEEBUG, &
-          & exactName=Direct%Filename)
-      end if
-      if ( returnStatus /= 0 ) call MLSMessage ( &
-         & MLSMSG_Error, ModuleName, &
-         & 'Failed in GetPCFromRef for ' // trim(filename) )
+    call split_path_name(filename, path, file_base)
+    Direct%filenameBase = file_base
+    if ( .not. TOOLKIT ) then
+      Direct%handle = 0
+      Direct%filename = filename
+    elseif ( Direct%Type ==  l_l2gp  ) then
+      Direct%Handle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
+        & mlspcf_l2gp_end, &
+        & TOOLKIT, returnStatus, l2gp_Version, DEEBUG, &
+        & exactName=Direct%Filename)
+    elseif ( Direct%Type ==  l_l2dgg ) then
+      Direct%Handle = GetPCFromRef(file_base, mlspcf_l2dgg_start, &
+        & mlspcf_l2dgg_end, &
+        & TOOLKIT, returnStatus, l2gp_Version, DEEBUG, &
+        & exactName=Direct%Filename)
+    elseif ( Direct%Type ==  l_l2fwm  ) then
+         Direct%Handle = GetPCFromRef(file_base, mlspcf_l2fwm_full_start, &
+        & mlspcf_l2fwm_full_end, &
+        & TOOLKIT, returnStatus, l2gp_Version, DEEBUG, &
+        & exactName=Direct%Filename)
+    else
+      Direct%Handle = GetPCFromRef(file_base, mlspcf_l2dgm_start, &
+        & mlspcf_l2dgm_end, &
+        & TOOLKIT, returnStatus, l2gp_Version, DEEBUG, &
+        & exactName=Direct%Filename)
+    end if
+    if ( returnStatus /= 0 ) call MLSMessage ( &
+       & MLSMSG_Error, ModuleName, &
+       & 'Failed in GetPCFromRef for ' // trim(filename) )
 
     end function CreateDirectTypeFromMLSCFInfo
 
@@ -840,6 +841,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.85  2004/06/17 22:49:36  pwagner
+! Details for dumping VGrids determined by switch setting
+!
 ! Revision 2.84  2004/06/17 00:39:02  vsnyder
 ! Make output of 'finished readL1BAttribute...' conditional on 'glo' switch
 !
