@@ -29,9 +29,9 @@ module Open_Init
   use MLSStrings, only: LowerCase
   use Output_m, only: Output
   use PCFHdr, only: CreatePCFAnnotation
-  use SDPToolkit, only: &
-    &                   Pgs_pc_getReference, PGS_S_SUCCESS, &
-    &                   PGSTD_E_NO_LEAP_SECS
+  use SDPToolkit, only: Pgs_pc_getFileSize, pgs_td_utctotai,&
+    &    pgs_pc_getconfigdata, Pgs_pc_getReference, PGS_S_SUCCESS, &
+    &    PGSTD_E_NO_LEAP_SECS
   use Toggles, only: Gen, Levels, Switches, Toggle
   use Trace_M, only: Trace_begin, Trace_end
   use TREE, only: DUMP_TREE_NODE, SOURCE_REF
@@ -100,7 +100,7 @@ contains ! =====     Public Procedures     =============================
     type (TAI93_Range_T) :: processingRange ! Data processing range
     type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
     type(PCFData_T) :: l2pcf
-    integer, external :: Pgs_pc_getFileSize
+!    integer, external :: Pgs_pc_getFileSize
 
     !Local Variables
     logical, parameter :: DEBUG = .FALSE.
@@ -128,7 +128,7 @@ contains ! =====     Public Procedures     =============================
 
     integer :: Indx, Mlspcf_log, Version
 
-    integer :: pgs_td_utctotai, pgs_pc_getconfigdata
+!    integer :: pgs_td_utctotai, pgs_pc_getconfigdata
 
     error = 0
     if ( toggle(gen) ) call trace_begin ( "OpenAndInitialize" )
@@ -499,6 +499,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.47  2001/05/09 23:32:15  pwagner
+! Gets toolkit funs from SDPToolkit
+!
 ! Revision 2.46  2001/05/07 23:28:19  pwagner
 ! Fixed dump..
 !
