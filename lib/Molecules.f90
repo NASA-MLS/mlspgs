@@ -48,7 +48,8 @@ contains ! =====     Public procedures     =============================
     & N_LIT_INDICES, FIRST_PARM_INDEX, LAST_PARM_INDEX, N_SECTION_INDICES, &
     & N_SPEC_INDICES )
 
-    ! This is here because "make depends" can't see it in make_tree
+    use Functions, only: Init_Functions
+    ! "use Tree" is here because "make depends" can't see it in make_tree
     ! (because of the "include"):
     use TREE, only:
     use TREE_TYPES, only: N_DT_DEF
@@ -64,7 +65,7 @@ contains ! =====     Public procedures     =============================
 
     ! Initialize the intrinsic types
 
-    call init_intrinsic ( n_data_type_indices, n_field_indices, n_lit_indices, &
+    call init_functions ( n_data_type_indices, n_field_indices, n_lit_indices, &
       & first_parm_index, last_parm_index, n_section_indices, n_spec_indices )
 
     ! Put type names into the symbol table:
@@ -104,6 +105,9 @@ contains ! =====     Public procedures     =============================
 end module MOLECULES
 
 ! $Log$
+! Revision 2.21  2004/05/29 02:43:11  vsnyder
+! Rearrange function definition stuff
+!
 ! Revision 2.20  2003/05/19 19:37:41  vsnyder
 ! Remove USE's for unreferenced names
 !
