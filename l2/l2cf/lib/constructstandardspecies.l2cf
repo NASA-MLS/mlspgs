@@ -8,7 +8,7 @@ begin Construct
   ;; Define all the molecules we'll consider.  Note that this is only
   ;; non-isotopic species (at least for the moment).
   !define(allLinearMolecules,{!tidyList( $
-    BrO, CH3CL, CH3CN, CO, ClO, H2CO, H2O2, H2S, $
+    BrO, CH3Cl, CH3CN, CO, ClO, H2CO, H2O2, H2S, $
     HCN, HCl, HNO3, HO2, HOCl, N2, N2O, NO, NO2, O2, O3, OCS, OH, SO2)})
   !define(allLogMolecules,{H2O})
   !define(allLinearHRMolecules,{O3})
