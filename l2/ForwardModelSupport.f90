@@ -68,6 +68,8 @@ contains ! =====     Public Procedures     =============================
     use MoreTree, only: Get_Field_ID
     use PointingGrid_m, only: Close_Pointing_Grid_File, &
       & Open_Pointing_Grid_File, Read_Pointing_Grid_File
+    use SDPToolkit, only: &
+      & Pgs_pc_getReference
     use String_Table, only: Get_String
     use Toggles, only: Gen, Levels, Toggle
     use Trace_M, only: Trace_begin, Trace_end
@@ -83,6 +85,7 @@ contains ! =====     Public Procedures     =============================
     integer :: Lun                      ! Unit number for reading a file
     integer :: Son                      ! Some subtree of root.
     integer :: Version
+    integer, save :: last_l2pc = mlspcf_l2pc_start - 1
 
     ! Error message codes
 
@@ -135,8 +138,9 @@ contains ! =====     Public Procedures     =============================
           call close_pointing_grid_file ( lun )
         end do
       case ( f_l2pc )
+        last_l2pc = last_l2pc + 1
         do j = 2, nsons(son)
-          call get_file_name ( mlspcf_l2pc_start, 'L2PC File not found in PCF', &
+          call get_file_name ( last_l2pc, 'L2PC File not found in PCF', &
             & mlspcf_l2pc_end )
           if ( index ( fileName, '.txt' ) /= 0 ) then
             call open_l2pc_file ( fileName, lun)
@@ -171,6 +175,11 @@ contains ! =====     Public Procedures     =============================
       if ( TOOLKIT ) then
         mypcfEndCode = pcfCode
         if ( present(pcfEndCode) ) mypcfEndCode = pcfEndCode
+        if ( fileName == ' ' ) then
+          returnStatus = Pgs_pc_getReference(pcfCode, version, &
+            & fileName)
+          return
+        endif
         PCFFileName = fileName
         call split_path_name(PCFFileName, path, fileName)
         lun = GetPCFromRef(fileName, pcfCode, &
@@ -856,6 +865,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.86  2003/10/15 16:59:25  pwagner
+! Should allow null filenames if TOOLKIT
+!
 ! Revision 2.85  2003/09/11 23:15:42  livesey
 ! Added handling of xStar / yStar arguments to l2pc models.
 !
