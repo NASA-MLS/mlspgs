@@ -10,7 +10,6 @@ module OutputAndClose ! outputs all data from the Join module to the
 
   use Allocate_Deallocate, only: Deallocate_Test
   use Hdf, only: DFACC_CREATE, SFEND, SFSTART
-  use HDFEOS, only: SWCLOSE, SWOPEN
   use INIT_TABLES_MODULE, only: F_FILE, F_OVERLAPS, F_PACKED, F_QUANTITIES, F_TYPE, &
     & L_L2AUX, L_L2DGG, L_L2GP, L_L2PC, S_OUTPUT, S_TIME
   use L2AUXData, only: L2AUXDATA_T, WriteL2AUXData
@@ -21,7 +20,7 @@ module OutputAndClose ! outputs all data from the Join module to the
   use MLSCommon, only: I4
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
   use MLSFiles, only: GetPCFromRef, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, &
-    & split_path_name
+    & split_path_name !, mls_sfsstart
   use MLSL2Options, only: PENALTY_FOR_NO_METADATA, CREATEMETADATA, PCF, &
     & PCFL2CFSAMECASE
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
@@ -116,6 +115,7 @@ contains ! =====     Public Procedures     =============================
     integer :: QUANTITIESNODE           ! A tree node
     character(len=L2GPNameLen), dimension(MAXQUANTITIESPERFILE) :: QuantityNames  ! From "quantities" field
     integer :: RECLEN                   ! For file stuff
+    integer :: record_length
     integer :: ReturnStatus
     integer(i4) :: SDFID                ! File handle
     integer :: SON                      ! Of Root -- spec_args or named node
@@ -209,7 +209,10 @@ contains ! =====     Public Procedures     =============================
             ! Open the HDF-EOS file and write swath data
 
             if ( DEBUG ) call output('Attempting swopen', advance='yes')
-            swfid = swopen(l2gpPhysicalFilename, DFACC_CREATE)
+!            swfid = swopen(l2gpPhysicalFilename, DFACC_CREATE)
+            swfid = mls_io_gen_openF('swopen', .TRUE., returnStatus, &
+             & record_length, DFACC_CREATE, FileName=l2gpPhysicalFilename, &
+             & debugOption=.false. )
 
             ! Loop over the segments of the l2cf line
 
@@ -241,7 +244,8 @@ contains ! =====     Public Procedures     =============================
             end do ! field_no = 2, nsons(key)
 
             if ( DEBUG ) call output('Attempting swclose', advance='yes')
-            returnStatus = swclose(swfid)
+!            returnStatus = swclose(swfid)
+            returnStatus = mls_io_gen_closeF('swclose', swfid)
             if ( returnStatus /= PGS_S_SUCCESS ) then
               call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
               call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -336,6 +340,8 @@ contains ! =====     Public Procedures     =============================
               & advance='yes' )
             ! Create the HDF file and initialize the SD interface
             if ( DEBUG ) call output ( 'Attempting sfstart', advance='yes' )
+  ! (((( This will have to be changed to incorporate hdf5 ))))
+  !         sdfId = mls_sfstart(l2auxPhysicalFilename, DFACC_CREATE)
             sdfId = sfstart(l2auxPhysicalFilename, DFACC_CREATE)
 
             if ( DEBUG ) call output ( "looping over quantities", advance='yes' )
@@ -482,7 +488,10 @@ contains ! =====     Public Procedures     =============================
             ! Open the HDF-EOS file and write swath data
 
             if ( DEBUG ) call output('Attempting swopen', advance='yes')
-            swfid = swopen(l2gpPhysicalFilename, DFACC_CREATE)
+!            swfid = swopen(l2gpPhysicalFilename, DFACC_CREATE)
+            swfid = mls_io_gen_openF('swopen', .TRUE., returnStatus, &
+             & record_length, DFACC_CREATE, FileName=l2gpPhysicalFilename, &
+             & debugOption=.false. )
 
             ! Loop over the segments of the l2cf line
 
@@ -509,7 +518,8 @@ contains ! =====     Public Procedures     =============================
             end do ! field_no = 2, nsons(key)
 
             if ( DEBUG ) call output('Attempting swclose', advance='yes')
-            returnStatus = swclose(swfid)
+!            returnStatus = swclose(swfid)
+            returnStatus = mls_io_gen_closeF('swclose', swfid)
             if ( returnStatus /= PGS_S_SUCCESS ) then
               call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
               call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -683,6 +693,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.45  2002/01/18 23:07:48  pwagner
+! Uses MLSFiles instead of HDFEOS
+!
 ! Revision 2.44  2002/01/18 00:24:34  livesey
 ! Added packed option to outputing l2pc files
 !
