@@ -1,0 +1,235 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+!=============================================================================
+module Open_Init
+!=============================================================================
+
+! Opens and closes several files
+! Creates and destroys the L1BInfo database
+
+  use Hdf, only: DFACC_READ, SFSTART
+  use MLSCommon, only: L1BInfo_T, TAI93_Range_T
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
+    & MLSMSG_Error
+  use MLSPCF, only: MLSPCF_L1B_OA_START, MLSPCF_L1B_RAD_END, &
+    &               MLSPCF_L1B_RAD_START, MLSPCF_NOMEN_START
+  use MLSSignalNomenclature, only: ReadSignalsDatabase
+  use SDPToolkit, only: PGS_IO_Gen_closeF, PGS_IO_Gen_openF, &
+    &                   Pgs_pc_getReference, PGS_S_SUCCESS, &
+    &                   PGSd_IO_Gen_RSeqFrm, PGSTD_E_NO_LEAP_SECS
+  use String_Table, only: L2CFUnit => INUNIT
+
+  implicit none
+  private
+  public :: CloseMLSCF, DestroyL1BInfo, OpenAndInitialize, OpenMLSCF
+
+  private :: Id, ModuleName
+  !------------------------------- RCS Ident Info ------------------------------
+  character(len=130) :: id = &
+     "$id: open_init.f90,v 1.11 2000/06/19 22:40:51 lungu Exp $"
+  character(len=*), parameter :: ModuleName="$RCSfile$"
+  !-----------------------------------------------------------------------------
+
+contains ! =====     Public Procedures     =============================
+
+  ! -------------------------------------------------  CloseMLSCF  -----
+  subroutine CloseMLSCF
+
+    character (len=32) :: Mnemonic
+    character (len=256) :: Msg
+    integer :: ReturnStatus
+
+!   returnStatus = Pgs_io_gen_closeF ( L2CFUnit )
+
+!   if ( returnStatus /= PGS_S_SUCCESS ) then
+!     call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
+!     call MLSMessage ( MLSMSG_Error, ModuleName, &
+!       & 'Error closing L2CF:  '//mnemonic//' '//msg)
+!   end if
+
+  end subroutine CloseMLSCF
+
+  ! ---------------------------------------------  DestroyL1BInfo  -----
+  subroutine DestroyL1BInfo ( L1BInfo )
+    type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
+    integer :: STATUS ! from deallocate
+    deallocate( l1bInfo%L1BRADIDs, stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_DeAllocate // "l1bInfo" )
+  end subroutine DestroyL1BInfo
+
+
+  ! ------------------------------------------  OpenAndInitialize  -----
+  subroutine OpenAndInitialize ( processingRange, l1bInfo )
+
+  ! Opens L1 RAD files
+  ! Opens L1OA file
+  ! Opens and reads the signal nomenclature file
+  ! Gets the start and end times from the PCF
+
+    ! Arguments
+
+    type (TAI93_Range_T) :: processingRange ! Data processing range
+    type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
+
+    !Local Variables
+    integer, parameter :: CCSDSEndId = 10412
+    integer, parameter :: CCSDSLen=27
+    integer, parameter :: CCSDSStartId = 10411
+
+    character(len=CCSDSlen) CCSDSEndTime
+    character(len=CCSDSlen) CCSDSStartTime
+    integer :: ifl1
+    integer :: L1FileHandle, L1_Version
+    character (LEN=132) :: L1physicalFilename
+    integer :: nomenUnit
+    integer :: Nomen_Version
+    integer :: returnStatus
+    integer :: sd_id
+    integer :: STATUS ! From allocate
+
+    integer :: pgs_td_utctotai, pgs_pc_getconfigdata
+
+    ifl1 = 0
+
+    ! Open L1 RAD files
+    ! Get the l1 file name from the PCF
+    L1_Version = 1
+
+    do L1FileHandle = mlspcf_l1b_rad_start, mlspcf_l1b_rad_end
+
+      returnStatus = Pgs_pc_getReference(L1FileHandle, L1_Version, &
+        & L1physicalFilename)
+
+      if (returnStatus == PGS_S_SUCCESS) then
+
+    ! Open the HDF file and initialize the SD interface
+
+    ! Allocate L1BRADIDs
+
+        allocate( l1bInfo%L1BRADIDs(10), stat=status )
+        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & MLSMSG_Allocate // "l1bInfo" )
+
+        sd_id = sfstart(L1physicalFilename, DFACC_READ)
+        if (sd_id == -1) then
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & "Error opening L1RAD file"//L1physicalFilename )
+
+        else
+          ifl1 = ifl1 + 1
+          l1bInfo%L1BRADIDs(ifl1) = sd_id
+        end if
+      end if
+    end do ! L1FileHandle = mlspcf_l1b_rad_start, mlspcf_l1b_rad_end
+
+    if (ifl1 == 0) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "Could not find any L1BRAD files" )
+
+    ! Open L1OA File
+
+    L1_Version = 1
+    returnStatus = Pgs_pc_getReference(mlspcf_l1b_oa_start, L1_Version, &
+      & L1physicalFilename)
+
+    if (returnStatus == PGS_S_SUCCESS) then
+
+    ! Open the HDF file and initialize the SD interface
+
+
+      sd_id = sfstart(L1physicalFilename, DFACC_READ)
+      if (sd_id == -1) then
+
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & "Error opening L1OA file"//L1physicalFilename )
+
+      else
+        l1bInfo%L1BOAID = sd_id
+      end if
+
+    else
+
+      call MLSMessage ( MLSMSG_Error, ModuleName, "Could not find L1BOA file" )
+
+    end if
+
+    ! Open and Read nomenclature file
+
+    Nomen_Version = 1
+    returnStatus = PGS_IO_Gen_openF (mlspcf_nomen_start, PGSd_IO_Gen_RSeqFrm, &
+      & 0, NomenUnit, Nomen_Version)
+    if ( returnStatus /= PGS_S_SUCCESS ) call MLSMessage ( MLSMSG_Error, &
+      & ModuleName, "Could not open nomenclature file" )
+
+    call ReadSignalsDatabase ( Nomenunit )
+
+    returnStatus = PGS_IO_Gen_closeF (Nomenunit)  ! close unit
+    if ( returnstatus /= PGS_S_SUCCESS )  call MLSMessage ( MLSMSG_Error, &
+      & ModuleName, "Could not close nomenclature file" )
+
+    ! Get the Start and End Times from PCF
+
+    returnStatus = pgs_pc_getconfigdata (CCSDSStartId, CCSDSStartTime)
+    if ( returnstatus /= PGS_S_SUCCESS ) call MLSMessage ( MLSMSG_Error, &
+      & ModuleName, "Could not get CCSDS Start Time" )
+
+    returnStatus = pgs_td_utctotai (CCSDSStartTime, processingrange%starttime)
+!   ??? Is PGSTD_E_NO_LEAP_SECS an OK status ???
+    if ( returnstatus /= PGS_S_SUCCESS .and. &
+      &  returnstatus /= PGSTD_E_NO_LEAP_SECS ) call MLSMessage ( MLSMSG_Error, &
+      & ModuleName, "Could not convert UTC Start time to TAI" )
+
+    returnStatus = pgs_pc_getconfigdata (CCSDSEndId, CCSDSEndTime)
+    if ( returnstatus /= PGS_S_SUCCESS ) call MLSMessage ( MLSMSG_Error, &
+      & ModuleName, "Could not get CCSDS End Time" )
+
+    returnStatus = pgs_td_utctotai (CCSDSEndTime, processingrange%endtime)
+!   ??? Is PGSTD_E_NO_LEAP_SECS an OK status ???
+    if ( returnstatus /= PGS_S_SUCCESS .and. &
+      & returnstatus /= PGSTD_E_NO_LEAP_SECS) call MLSMessage ( MLSMSG_Error, &
+      & ModuleName, "Could not convert UTC Start time to TAI" )
+
+    !processingrange%starttime = 220838406.65045166
+    !processingrange%endtime = 220841983.31690979
+    !processingrange%endtime = 220924616.64530945
+
+    return
+
+  end subroutine OpenAndInitialize
+
+  ! --------------------------------------------------  OpenMLSCF  -----
+  subroutine OpenMLSCF
+
+    integer :: L2CF_Version
+    character (len=32) :: Mnemonic
+    character (len=256) :: Msg
+    integer :: ReturnStatus
+
+!   Open the MLSCF as a generic file for reading
+    L2CF_Version = 1
+!   returnStatus = Pgs_io_gen_openF ( mlspcf_l2cf_start, PGSd_IO_Gen_RSeqFrm, &
+!     &                               0, L2CFUnit, L2CF_Version)
+
+!   if ( returnStatus /= PGS_S_SUCCESS ) then
+
+!     call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
+!     call MLSMessage ( MLSMSG_Error, ModuleName, &
+!       & "Error opening MLSCF:  "//mnemonic//"  "//msg)
+!   end if
+
+  end subroutine OpenMLSCF
+
+!=============================================================================
+end module Open_Init
+!=============================================================================
+
+!
+! $Log$
+! Revision 2.2  2000/09/11 19:48:01  ahanzel
+! Removed old log entries in file.
+!
+! Revision 2.1  2000/09/08 22:55:56  vsnyder
+! Revised to use the tree output by the parser
+!
+
