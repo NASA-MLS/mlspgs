@@ -6,7 +6,6 @@ else
    MLSCFILE=.configure
 endif
 
-CONFDIR=../../..
 ifdef NOCASCADE
 include ../Makefile.nodep
 else
@@ -63,7 +62,7 @@ endif
 # ========================================================================
 
 # where which_fftw.sh is stored
-UTILDIR=../../../util
+UTILDIR=$(CONFDIR)/util
 # This will filter out globbed file expansions that fail
 # e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
 REECHO=$(UTILDIR)/reecho.sh
@@ -73,9 +72,11 @@ ALLOBJS = $(OBJS)
 
 PROG_NAME=test
 
+mlspack_dir=$(CONFDIR)/blas/$(MLSCONFG)
+
 PVM_PATH = ${PVM_ROOT}/lib/${PVM_ARCH}
 
-libl1_sources = ../../../$(init_m_dir)/
+libl1_sources = $(CONFDIR)/$(init_m_dir)/
 
 libl1_f90 := $(shell ${REECHO} $(libl1_sources)/*.f90)
 
@@ -126,8 +127,10 @@ else
    lapack_message=Building $(PROG_NAME) with internally-supplied LAPACK
 endif
 
+mlspack_linker_line=-L${mlspack_dir} -lmlspack
+mlspack_message=Building test with mlspack
 utctotai_linker_line=-L${INSTALLDIR} -lutctotai
-utctotai_message=Building mlsl2 with toolkitless utc to tai conversion
+utctotai_message=Building test with toolkitless utc to tai conversion
 
 ifdef HDF5
 ifeq ($(MLSPLAT),Sun)
@@ -178,7 +181,8 @@ endif
 	ar d $@ $(l1_drivers)
 #	ar d $@ $(itmdir)/$(l1_driver)
 
-$(PROG_NAME): $(ALLOBJS) $(PVM_OBJS) libl1.a $(libdir)/libmls.a \
+$(PROG_NAME): $(ALLOBJS) \
+     $(PVM_OBJS) libl1.a $(mlspack_dir)/libmlspack.a $(libdir)/libmls.a \
      $(CONFDIR)/$(MLSCFILE)
 		@echo "$(pvm_message)"
 		@echo "$(blas_message)"
@@ -194,6 +198,7 @@ $(PROG_NAME): $(ALLOBJS) $(PVM_OBJS) libl1.a $(libdir)/libmls.a \
 		-L${PGSTK} -lPGSTK \
         -L${HDFEOS} -lhdfeos \
         $(hdfeos5_linker_line) \
+        $(hdf5_linker_line) \
 		-L${HDF} -lmfhdf \
         -ldf \
         -lz \
@@ -202,7 +207,7 @@ $(PROG_NAME): $(ALLOBJS) $(PVM_OBJS) libl1.a $(libdir)/libmls.a \
         $(pvm_linker_line) \
         $(blas_linker_line) \
         $(lapack_linker_line) \
-        $(hdf5_linker_line) \
+        $(mlspack_linker_line) \
         $(fftw_linker_line) \
         $(l_specials) $(LAFTER) \
 
@@ -225,6 +230,9 @@ Sd.o:
 
 # ========================================================================
 # $Log$
+# Revision 1.25  2004/03/17 19:06:45  pwagner
+# Extra static object to fix building static Lahey executables when Red Hat>8
+#
 # Revision 1.24  2003/03/03 22:59:32  pwagner
 # Removed troublesome customblds includes
 #

@@ -1,16 +1,16 @@
-#a file full of macros to be included by a Makefile
+#Makefile.mac -- a file full of macros to be included by a Makefile
 #to compile a Fortran 9x program or library
 
 # "$Id$"
 
-SHELL = /bin/sh
-
 # Path to source files:
 S = ..
 
+CONFDIR=../../..
+
 # Use the libmls.a directory, libdir, for .mod files
 # dir1 is the path prepended to its .o files in dependency lists
-libdir = ../../../lib/$(MLSCONFG)
+libdir = $(CONFDIR)/lib/$(MLSCONFG)
 
 dir1 = $(libdir)/
 
@@ -22,15 +22,18 @@ dir1 = $(libdir)/
 # therefore we will tell make to add srclib to directories searched for .f90
 # while dir2, the path prepended to its .o files in dependency lists, is empty
 # so that its object files share the current working directory with those of l2
-srclib = ../../../srclib
+srclib = $(CONFDIR)/srclib
 
 # This is the directory name from which we will get init_tables_module
 # (either l1, l2, or l3)
 init_m_dir = l1
 
-itmdir=../../../$(init_m_dir)/$(MLSCONFG)
+itmdir=$(CONFDIR)/$(init_m_dir)/$(MLSCONFG)
 
 dir2 = $(itmdir)/
+
+# Use the libmlspack.a directory, blaslib, for .mod files
+blaslib = $(CONFDIR)/blas/$(MLSCONFG)
 
 # Set paths for finding source files (different from .o and .mod)
 
@@ -46,7 +49,8 @@ DUSTY = $(FOPTS) -dusty
 
 # All the paths to supply .mod and INCLUDE files used in compiling %.f90
 # Precede each path by "-I "
-INC_PATHS = $(EXTRA_PATHS) -I $(PGSINC) -I $(srclib) -I $S -I $(libdir) -I $(itmdir)
+INC_PATHS = $(EXTRA_PATHS) -I $(PGSINC) -I $(srclib) -I $S -I $(libdir) \
+  -I $(itmdir) -I $(blaslib)
 
 # Define some suffix rules
 
@@ -68,6 +72,9 @@ INC_PATHS = $(EXTRA_PATHS) -I $(PGSINC) -I $(srclib) -I $S -I $(libdir) -I $(itm
 l_specials =
 
 # $Log$
+# Revision 1.5  2001/08/15 23:12:09  pwagner
+# Default rules for .f and .c; EXTRA_PATHS added to INC_PATHS
+#
 # Revision 1.4  2001/05/18 23:30:22  pwagner
 # Brought into harmony with latest non-tests versions
 #
