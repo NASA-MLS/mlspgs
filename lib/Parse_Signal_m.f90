@@ -322,3 +322,8 @@ contains
   end subroutine Parse_Signal
 
 end module Parse_Signal_M
+
+! $Log$
+! Revision 2.2  2001/03/15 23:57:27  vsnyder
+! OOPS, forgot to put 'Log' at the end
+!
