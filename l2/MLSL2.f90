@@ -109,10 +109,13 @@ program MLSL2
             print *, '            Default: --npcf'
           end if
           print *, '  Options a, c, g1, l, p and t can be toggled in the ', &
-          &          'configuration file by'
-          print *, '  @A, @C, @G, @L, @P and @S respectively.  @T in the ', &
           &          'configuration file'
-          print *, '  dumps the string table at that instant.'
+          print *, '  by @A, @C, @G, @L, @P and @S respectively.  @L and ', &
+          &          '@P are processed'
+          print *, '  synchronously with the input.  The others are ', &
+          &           'examined later.'
+          print *, '  @T in the configuration file dumps the string table ', &
+          &           'at that instant.'
           stop
         case ( 'l' )
           toggle(lex) = .true.
@@ -183,6 +186,9 @@ program MLSL2
 end program MLSL2
 
 ! $Log$
+! Revision 2.10  2001/02/28 02:52:32  vsnyder
+! Improve usage description
+!
 ! Revision 2.9  2001/02/28 02:44:24  vsnyder
 ! Identify abstract syntax tree dumps, show default --[n]pcf in usage
 !
