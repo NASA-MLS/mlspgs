@@ -197,7 +197,6 @@ contains ! =====     Public Procedures     =============================
     ! Set sensible defaults
     info%do_conv = .false.
     info%do_freq_avg = .false.
-    info%the_freq = 0.0
     info%temp_der = .false.
     info%atmos_der = .false.
     info%spect_der = .false.
@@ -1404,6 +1403,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.125  2001/05/02 20:31:43  livesey
+! Removed frequency from config
+!
 ! Revision 2.124  2001/05/02 20:28:35  livesey
 ! Removed some dead variables.
 !
