@@ -176,8 +176,10 @@ configure  change configuration: compiler, (less often) platform/OS,
 
 (The following apply only at the top level)
 all        builds lib, l1, l2, l3, l2pc, and fwdmdl
-install    moves the built programs from l1, l2, l3 to the mlspgs top level
 clean_all  does a clean; more thorough in case of multiple configurations
+install    moves the built programs from l1, l2, l3 to the mlspgs top level
+update     replaces Makefiles in subdirectories with latest versions after
+           recalculating dependencies; useful after a cvs update
 
 (The following perform a top-level "clean_all" before archiving)
 tar        tar the whole mlspgs archive for distribution: mlspgs.tgz
@@ -326,11 +328,12 @@ build multiple versions of the mls software. For example, I built versions for
 both Sun and Linux platforms in my home directory. I can switch between versions
 by overwriting the current .configure with one saved for the other platform.
 
-Sometimes after doing a cvs update, the next "make -f MakeFC" command will
-cause make to exit complaining about an illegal separator. This is usually
-the result of cvs "merging" your copy of Makefile.dep with one it has archived.
-The solution is to do a "make -f MakeFC depends" to create a fresh, unmerged
-copy.
+Sometimes after doing a cvs update, especially if there has been a lot of
+active coding and cvs committing, the next "make -f MakeFC" command will cause
+make to exit complaining about an illegal separator. This is usually the result
+of cvs "merging" your copy of Makefile.dep with one it has archived. The
+solution is to do a "make -f MakeFC depends" to create a fresh, unmerged copy.
+Even better is to do a "make -f MakeFC update" from the top mlspgs level.
 
 The sources currently must reside directly under lib, srclib, or l[1-3], and
 this fact is "hard-wired" into the Makefiles. It may become desirable to
@@ -401,6 +404,9 @@ FFTW_ROOT          Path to the FFTW library; required for mlsl3
 EOF
 exit
 # $Log$
+# Revision 1.10  2001/02/09 01:02:31  pwagner
+# Mentions advanced settings
+#
 # Revision 1.9  2001/01/16 21:31:19  pwagner
 # clean_all option added
 #
