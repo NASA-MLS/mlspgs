@@ -10,7 +10,6 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
    USE L2Interface
    USE L3CF
    USE L3DMData
-   USE L3DMDiag
    USE L3SPData
    USE MLSCF
    USE MLSL3Common
@@ -43,7 +42,6 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
    TYPE( L2GPData_T ), POINTER :: l2gp(:), l3r(:), residA(:), residD(:)
    TYPE( L3CFProd_T ), POINTER :: cfProd(:)
    TYPE( L3DMData_T ), POINTER :: l3dm(:), dmA(:), dmD(:)
-   TYPE( L3DMDiag_T ), POINTER :: l3dg(:), dgA(:), dgD(:)
    TYPE( L3SPData_T ), POINTER :: l3sp(:)
 
    CHARACTER (LEN=480) :: msr
@@ -85,7 +83,7 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
 ! CORE processing
  
       CALL DailyCoreProcessing(cfDef, cfProd(i), pcf, l2Days, l2gp, avgPer, l3sp, &
-                     l3dm, dmA, dmD, l3r, residA, residD, l3dg, dgA, dgD, flags)
+                               l3dm, dmA, dmD, l3r, residA, residD, flags)
 
 ! Check the output data and place them into the appropriate files.  Write the
 ! l3dm metadata.  Perform any deallocations needed within the product loop.
@@ -94,14 +92,10 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
             // '; starting Output task ...'
       CALL MLSMessage (MLSMSG_Info, ModuleName, msr)
 
-      CALL OutputProd(pcf, cfProd(i), anText, l3sp, l3dm, dmA, dmD, l3r, residA, &
-                      residD, l3dg, dgA, dgD, flags)
+      CALL OutputProd(pcf, cfProd(i), anText, l3sp, l3dm, dmA, dmD, &
+                      l3r, residA, residD, flags)
 
 ! Deallocate the databases passed between CORE & the I/O shell
-
-      CALL DestroyL3DMDiagDB(l3dg)
-      CALL DestroyL3DMDiagDB(dgA)
-      CALL DestroyL3DMDiagDB(dgD)
 
       CALL DestroyL2GPDatabase(l3r)
       CALL DestroyL2GPDatabase(residA)
