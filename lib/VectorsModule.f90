@@ -314,8 +314,8 @@ contains ! =====     Public Procedures     =============================
     integer :: I, W
     if ( present(to_clear) ) then
       do i = 1, size(to_clear)
-        w = to_clear(i) / b + 1
-        mask(w) = ibclr( mask(w), mod(to_clear(i), b) )
+        w = (to_clear(i)-1) / b + 1
+        mask(w) = ibclr( mask(w), mod(to_clear(i)-1, b) )
       end do
     else
       mask = 0
@@ -351,7 +351,7 @@ contains ! =====     Public Procedures     =============================
         end if
         do ii = i1, i2
           do vi = 1, size(z%quantities(qi)%values,1)
-            if ( btest(z%quantities(qi)%mask(vi/b + 1,ii), mod(vi, b)) ) &
+            if ( btest(z%quantities(qi)%mask((vi-1)/b + 1,ii), mod(vi-1, b)) ) &
               z%quantities(qi)%values(vi,ii) = 0.0
           end do ! vi
         end do ! ii
@@ -1231,8 +1231,8 @@ contains ! =====     Public Procedures     =============================
     integer :: I, W
     if ( present(to_set) ) then
       do i = 1, size(to_set)
-        w = to_set(i) / b + 1
-        mask(w) = ibset(mask(w),mod(to_set(i), b))
+        w = (to_set(i)-1) / b + 1
+        mask(w) = ibset(mask(w),mod(to_set(i)-1, b))
       end do
     else
       mask = not(0)
@@ -1492,6 +1492,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.58  2001/09/25 19:41:07  livesey
+! Added DumpMask
+!
 ! Revision 2.57  2001/09/25 00:47:08  vsnyder
 ! Add noMask & noValues optional arguments to CopyVector
 !
