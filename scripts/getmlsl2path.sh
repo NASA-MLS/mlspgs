@@ -37,7 +37,7 @@ while [ -n "$(echo $1)" ]; do
     if [ $1 == "--dao" ] || [ $1 == "--gmao" ]; then
 	case $MACHINE in
 	    soundbarrier | scramjet )
-		echo "/research1/$MYUSER";;
+		echo "/data1/$MYUSER";;
 	    lightspeed )
 		echo "$HOME/$VERSION";;
 	    desktop )
@@ -51,7 +51,7 @@ while [ -n "$(echo $1)" ]; do
     if [ $1 == "--output" ]; then
 	case $MACHINE in
 	    soundbarrier | scramjet)
-		echo "/research1/$MYUSER";;
+		echo "/data1/$MYUSER";;
 	    lightspeed )
 		echo "$HOME/$VERSION";;
 	    desktop )
@@ -61,7 +61,7 @@ while [ -n "$(echo $1)" ]; do
     if [ $1 == "--l2pc" ]; then
 	case $MACHINE in
 	    soundbarrier )
-		echo "/research1/$MYUSER/";;
+		echo "/data1/$MYUSER/";;
 	    scramjet )
 		echo "/state/partition1/livesey/";;
 	    lightspeed )
@@ -73,7 +73,7 @@ while [ -n "$(echo $1)" ]; do
     if [ $1 == "--truthl2gp" ]; then
 	case $MACHINE in
 	    soundbarrier | scramjet)
-		echo "/research1/$MYUSER/";;
+		echo "/data1/$MYUSER/";;
 	    lightspeed )
 		echo "$HOME/$VERSION";;
 	    desktop )
@@ -83,7 +83,7 @@ while [ -n "$(echo $1)" ]; do
     if [ $1 == "--corel2gp" ]; then
 	case $MACHINE in
 	    soundbarrier | scramjet)
-		echo "/research1/$MYUSER/";;
+		echo "/data1/$MYUSER/";;
 	    lightspeed )
 		echo "$HOME/$VERSION";;
 	    desktop )
@@ -93,7 +93,7 @@ while [ -n "$(echo $1)" ]; do
     if [ $1 == "--l1boa" ]; then
 	case $MACHINE in
 	    soundbarrier | scramjet)
-		echo "/research1/$MYUSER/";;
+		echo "/data1/$MYUSER/";;
 	    lightspeed )
 		echo "$HOME/$VERSION";;
 	    desktop )
@@ -103,7 +103,7 @@ while [ -n "$(echo $1)" ]; do
     if [ $1 == "--l1brad" ]; then
 	case $MACHINE in
 	    soundbarrier | scramjet)
-		echo "/research1/$MYUSER/";;
+		echo "/data1/$MYUSER/";;
 	    lightspeed )
 		echo "$HOME/$VERSION";;
 	    desktop )
@@ -113,7 +113,7 @@ while [ -n "$(echo $1)" ]; do
     if [ $1 == "--l2cal" ]; then
 	case $MACHINE in
 	    soundbarrier | scramjet)
-		echo "/research1/$MYUSER/";;
+		echo "/data1/$MYUSER/";;
 	    lightspeed )
 		echo "$HOME/$VERSION";;
 	    desktop )
@@ -126,7 +126,7 @@ while [ -n "$(echo $1)" ]; do
     if [ $1 == "--tmp" ]; then
 	case $MACHINE in
 	    soundbarrier | scramjet)
-		echo "/research1/$MYUSER/";;
+		echo "/data1/$MYUSER/";;
 	    lightspeed )
 		echo "$HOME/$VERSION";;
 	    desktop )
@@ -136,7 +136,7 @@ while [ -n "$(echo $1)" ]; do
     if [ $1 == "--sidsrad" ]; then
 	case $MACHINE in
 	    soundbarrier | scramjet)
-		echo "/research1/$MYUSER/";;
+		echo "/data1/$MYUSER/";;
 	    lightspeed )
 		echo "$HOME/$VERSION";;
 	    desktop )
@@ -147,6 +147,9 @@ while [ -n "$(echo $1)" ]; do
 done
 
 # $Log$
+# Revision 1.33  2004/06/11 19:56:45  livesey
+# DAO data moved on SCF, now also recognizes --gmao as well as --dao.
+#
 # Revision 1.32  2004/05/27 18:58:11  livesey
 # Changed some paths to /testing
 #
