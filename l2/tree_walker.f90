@@ -46,10 +46,10 @@ contains ! ====     Public Procedures     ==============================
     use GriddedData, only: GriddedData_T, DestroyGriddedDataDatabase, Dump
     use HGridsDatabase, only: HGrid_T
     use HGrid, only: COMPUTEALLHGRIDOFFSETS
-    use Init_Tables_Module, only: L_CHISQCHAN, L_CHISQMMAF, L_CHISQMMIF, &
-      & Z_CHUNKDIVIDE,  Z_CONSTRUCT, Z_FILL, Z_GLOBALSETTINGS, Z_JOIN, &
-      & Z_MERGEGRIDS, Z_MLSSIGNALS, Z_OUTPUT, Z_READAPRIORI, Z_RETRIEVE, &
-      & Z_SPECTROSCOPY
+    use Init_Tables_Module, only: L_CHISQCHAN, L_CHISQMMAF, L_CHISQMMIF,  &
+      & Z_ALGEBRA, Z_CHUNKDIVIDE,  Z_CONSTRUCT, Z_FILL, Z_GLOBALSETTINGS, &
+      & Z_JOIN, Z_MERGEGRIDS, Z_MLSSIGNALS, Z_OUTPUT, Z_READAPRIORI,      &
+      & Z_RETRIEVE, Z_SPECTROSCOPY
     use JOIN, only: MLSL2Join
     use L2AUXData, only: DestroyL2AUXDatabase, L2AUXData_T, Dump
     use L2FWMParallel, only: L2FWMSlaveTask, LaunchFWMSlaves
@@ -228,7 +228,7 @@ contains ! ====     Public Procedures     ==============================
 
         ! --------------------------------------------------------- Chunk processing
         ! Now construct, fill, join and retrieve live inside the 'chunk loop'
-      case ( z_construct, z_fill, z_join, z_retrieve )
+      case ( z_algebra, z_construct, z_fill, z_join, z_retrieve )
         ! Do special stuff in some parallel cases, or where there are
         ! no chunks.
         if ( ( size(chunks) < 1 ) .or. &
@@ -247,6 +247,8 @@ contains ! ====     Public Procedures     ==============================
           end if
           ! Sort out the timings
           select case ( decoration(subtree(1,son)) ) ! section index
+          case ( z_algebra )
+            call add_to_section_timing ( 'algebra', t1)
           case ( z_construct )
             call add_to_section_timing ( 'construct', t1)
           case ( z_fill )
@@ -277,6 +279,7 @@ contains ! ====     Public Procedures     ==============================
 subtrees:   do while ( j <= howmany )
               son = subtree(j,root)
               select case ( decoration(subtree(1,son)) ) ! section index
+              case ( z_algebra )
               case ( z_construct )
                 if ( .not. checkPaths) &
                 & call MLSL2Construct ( son, l1bInfo, processingRange, &
@@ -443,6 +446,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.122  2003/12/16 01:28:56  livesey
+! Moved the destruction of the chunk database to after closeParallel.
+!
 ! Revision 2.121  2003/12/11 22:59:32  pwagner
 ! May fill DirectWriteDatabase in global settings
 !
