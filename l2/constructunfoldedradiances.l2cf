@@ -102,8 +102,8 @@ BEGIN Construct
 
     ;; ---------------------------------------------- Now macros
 
-    define(_AllLower, {forloop({i}, 1, 33, {{band}i{L}, })band34L})
-    define(_AllUpper, {forloop({i}, 1, 33, {{band}i{U}, })band34U})
-    define(_AllSidebands, {_AllLower, _AllUpper} )
+    !define(AllLower, {!forloop({i}, 1, 33, {{band}i{L}, })band34L})
+    !define(AllUpper, {!forloop({i}, 1, 33, {{band}i{U}, })band34U})
+    !define(AllSidebands, {!AllLower, !AllUpper} )
 
 END Construct
