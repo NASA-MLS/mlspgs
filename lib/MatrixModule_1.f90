@@ -52,7 +52,8 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   public :: MultiplyMatrixVectorNoT, MultiplyMatrixVectorNoT_1
   public :: MultiplyMatrixVectorSPD_1
   public :: Negate, Negate_1
-  public :: NewMultiplyMatrixVector, NormalEquations, operator(.TX.)
+  public :: NewMultiplyMatrixVector, NormalEquations, NullifyMatrix, NullifyMatrix_1
+  public :: operator(.TX.)
   public :: operator(+), ReflectMatrix, RC_Info, RowScale, RowScale_1, ScaleMatrix
   public :: SolveCholesky, SolveCholesky_1, Spill, Spill_1
   public :: UpdateDiagonal, UpdateDiagonal_1, UpdateDiagonalVec_1
@@ -156,6 +157,10 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 
   interface Negate
     module procedure Negate_1
+  end interface
+
+  interface NullifyMatrix
+    module procedure NullifyMatrix_1
   end interface
 
   interface operator ( .TX. )      ! A^T B
@@ -1575,6 +1580,20 @@ contains ! =====     Public Procedures     =============================
       & call multiply ( a, rhs_in, rhs_out, my_update, useMask = my_mask )
   end subroutine NormalEquations
 
+  ! ---------------------------------------------- NullifyMatrix_1 -----
+  subroutine NullifyMatrix_1 ( M )
+    ! Given a matrix, nullify all the pointers associated with it
+    type ( Matrix_T ), intent(inout) :: M
+
+    ! Executable code
+    nullify ( M%block )
+    nullify ( M%row%nelts, M%row%inst, M%row%quant )
+    nullify ( M%col%nelts, M%col%inst, M%col%quant )
+    m%row%nb = 0
+    m%col%nb = 0
+    m%name = 0
+  end subroutine NullifyMatrix_1
+
   ! ---------------------------------------------- ReflectMatrix_1 -----
   subroutine ReflectMatrix_1 ( M )
     ! Given a matrix M, copy the upper triangle into the lower
@@ -2106,6 +2125,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.80  2002/09/10 01:00:00  livesey
+! Added NullifyMatrix
+!
 ! Revision 2.79  2002/08/29 04:45:27  livesey
 ! Added diagonalOnly option to MultiplyMatrix_XY_T
 !
