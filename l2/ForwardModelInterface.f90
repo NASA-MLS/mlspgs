@@ -1075,9 +1075,6 @@ contains
 
     if(FMC%Zfrq > 0.0) then
       Frq = FMC%Zfrq
-      write(*,901) Frq
-901   format(' Frequency Averaging: OFF',/,  &
-        &    ' (All computations done at Frq =',f12.4,')')
     else
       print *,'Frequency Averaging: ON'
     endif
@@ -1308,6 +1305,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.46  2001/03/28 22:41:10  livesey
+! Got rid of a print statement that was annoying zvi
+!
 ! Revision 2.45  2001/03/28 22:00:10  livesey
 ! Interim version, now uses more allocatables etc.
 !
