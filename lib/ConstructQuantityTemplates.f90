@@ -128,7 +128,7 @@ CONTAINS
 
      MLSInstrumentModuleNames(1) = "GHz"
      MLSInstrumentModuleNames(2) ="THz"
-
+     qty%frequencyCoordinate=FG_None
 
     ! Executable code. There are basically two cases here. If we have a
     ! MIFGeolocation argument this conveys all the geolocation for this
@@ -245,7 +245,7 @@ CONTAINS
           END SELECT
        END DO                      ! Loop over l1b quantities
     ENDIF
-
+    qty%name=MLSInstrumentModuleNames(InstrumentModule)
     ! In later versions we'll probably need to think about FILL_VALUEs and
     ! setting things to the badData flag.
 
@@ -389,7 +389,6 @@ CONTAINS
             & noSurfs=vGrids(vGridIndex)%noSurfs, &
             & coherent=.TRUE.,stacked=.TRUE.,regular=.TRUE.)
        ! Note in later versions we'll need to think about channels here
-      
        CALL CopyHGridInfoIntoQuantity(hGrids(hGridIndex),qty)
        CALL CopyVGridInfoIntoQuantity(vGrids(vGridIndex),qty)
 
@@ -404,6 +403,7 @@ CONTAINS
           CALL ParseMLSSignalRequest(radiometer,signals)
           instrumentModule=signals(1)%instrumentModule
           CALL DestroyMLSSignalsInfo(signals)
+
        CASE (QTY_Radiance)
           CALL ParseMLSSignalRequest(band,signals)
           IF (SIZE(signals)>1) CALL MLSMessage(MLSMSG_Error,ModuleName,&
@@ -415,7 +415,6 @@ CONTAINS
        END SELECT
        
        ! Construct an empty quantity
-
        CALL ConstructMinorFrameQuantity(l1bInfo,chunk,instrumentModule,qty, &
             & noChans=noChans,firstIndexChannel=firstIndexChannel, &
             & mifGeolocation=mifGeolocation)
@@ -444,6 +443,13 @@ END MODULE ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 1.13  2000/05/17 23:19:07  lungu
+! Added "." between MLSInstrumentModuleNames and l1bItemName.
+! Made hGridIndex=0 and vGridIndex=0 upon entry, so it does not "inherit" attributes from previous call.
+! Made caseInsensitive=.TRUE. for all searches.
+! Added type for QTY_Gph.
+! Made stacked=.TRUE. so that CopyHGridInfoIntoQuantity works.
+!
 ! Revision 1.12  2000/05/16 20:20:38  livesey
 ! Another attempt to fix the `time' problem.
 !
