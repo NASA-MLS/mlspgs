@@ -171,7 +171,7 @@ contains
     call output ( size(filterShapes), advance='yes' )
     do i = 1, size(filterShapes)
       call output ( i, 4 )
-      call output ( ':    Signal =' )
+      call output ( ':    Signal = ' )
       call output ( trim(filterShapes(i)%signal), advance='yes' )
       call output ( ' LHS = ' )
       call output ( filterShapes(i)%lhs )
@@ -184,6 +184,9 @@ contains
 end module FilterShapes_m
 
 ! $Log$
+! Revision 1.5  2001/03/30 01:12:29  vsnyder
+! Correct some comments, move "use Output" to "dump_filter_shapes_database"
+!
 ! Revision 1.4  2001/03/30 00:02:06  livesey
 ! Nullified another pointer
 !
