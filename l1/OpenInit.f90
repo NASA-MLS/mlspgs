@@ -40,7 +40,7 @@ CONTAINS
          mlspcf_defltgains_start, mlspcf_sidebandfrac_start, &
          mlspcf_spilloverloss_start, mlspcf_l1b_log_start
     USE PCFHdr, ONLY: CreatePCFAnnotation, GlobalAttributes, FillTAI93Attribute
-    USE MLSStrings, ONLY: utc_to_yyyymmdd
+    USE MLSStringLists, ONLY: utc_to_yyyymmdd
     USE L0_sci_tbls, ONLY: InitSciPointers
     USE MLSL1Common, ONLY: L1BFileInfo, deflt_gain, deflt_zero, L1ProgType, &
          THzType, THz_SwMir_Range, THzTol
@@ -873,6 +873,9 @@ END MODULE OpenInit
 !=============================================================================
 
 ! $Log$
+! Revision 2.17  2004/08/04 23:20:25  pwagner
+! Much moved from MLSStrings to MLSStringLists
+!
 ! Revision 2.16  2004/05/14 15:59:11  perun
 ! Version 1.43 commit
 !
