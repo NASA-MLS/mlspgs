@@ -8,7 +8,8 @@
 \newcommand{\cp}[1]{$^{\text{#1}}$}
 %
 % Standard sections and subsections
-\newcommand{\cfCommand}[1]{\clearpage\section*{#1}\index{#1|textbf}}
+\newcommand{\cfCommand}[2]{\clearpage\section*{#1}\index{#1|textbf}
+\textbf{Used in:} #2\par}
 \newcommand{\fillMethod}[1]{\par\vspace{1ex}\subsection*{Fill method
     #1}\index{#1}\index{Fill!#1|textbf}}
 \newcommand{\cfField}[1]{\index{#1@\texttt{#1}}}
