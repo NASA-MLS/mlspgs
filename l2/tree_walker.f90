@@ -33,6 +33,7 @@ module TREE_WALKER
   use MergeGridsModule, only: MergeGrids
   use MLSCommon, only: L1BINFO_T, MLSCHUNK_T, TAI93_RANGE_T
   use MLSL2Options, only: GARBAGE_COLLECTION_BY_CHUNK
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSSignals_M, only: Bands, DestroyBandDatabase, DestroyModuleDatabase, &
     & DestroyRadiometerDatabase, DestroySignalDatabase, &
     & DestroySpectrometerTypeDatabase, MLSSignals, Modules, Radiometers, &
@@ -103,6 +104,7 @@ contains ! ====     Public Procedures     ==============================
     type (TAI93_Range_T) ::                      ProcessingRange  ! Data processing range
     integer ::                                   signal_index
     integer ::                                   SON              ! Son of Root
+    integer ::                                   STATUS ! Flag from HDF5
     real    ::                                   t1, t2
     integer ::                                   totalNGC   ! Total num garbage colls.
     logical ::                                   show_totalNGC = .true.
@@ -117,6 +119,11 @@ contains ! ====     Public Procedures     ==============================
     nullify ( chunks, forwardModelConfigDatabase, griddedData, &
       & hGrids, l2auxDatabase, l2gpDatabase, matrices, mifGeolocation, &
       & qtyTemplates, vectors, vectorTemplates, fGrids, vGrids )
+
+    ! Open hdf5 (believe it or not there is no interface for this routine!)
+    call H5Open_F ( status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open HDF5' )
 
     nullify ( l2pcf%anText ) ! for Sun's rubbish compiler
     depth = 0
@@ -319,6 +326,11 @@ subtrees:   do while ( j <= howmany )
     error_flag = 0
     if ( toggle(gen) ) call trace_end ( 'WALK_TREE_TO_DO_MLS_L2' )
 
+    ! Close hdf5 (believe it or not there is no interface for this routine!)
+    call H5Close_F ( status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close HDF5' )
+
   contains
     subroutine SayTime ( What )
       character(len=*), intent(in) :: What
@@ -351,6 +363,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.83  2002/08/04 16:10:43  mjf
+! Added some nullify statements for Sun's rubbish compiler.
+!
 ! Revision 2.82  2002/03/20 00:49:44  pwagner
 ! chi1 dumps only 1st chunk, unlike chi
 !
