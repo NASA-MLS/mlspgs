@@ -553,10 +553,9 @@ contains
             W00      = 0._r8
             tau_clear = 0._r8
       IF (ICON .gt. 0) then  
-            
+
+            tau_clear = tau_wetCld
             if(icon .eq. 1) tau_clear = tau_fewCld
-            if(icon .eq. 2) tau_clear = tau_wetCld
-            if(icon .eq. 3) tau_clear = tau_wetCld
 
          model_layer_loop: do ILYR=1, NZmodel-1
  
@@ -564,10 +563,10 @@ contains
             RC0(2)=0._r8
             RC0(3)=RC0(1)                 ! CLEAR-SKY EXTINCTION COEFFICIENT
 
+            RC_TMP =0._r8
             DO ISPI=1,N
             CWC = RATIO*WC(ISPI,ILYR)
-            IF(CWC .ne. 0._r8 .and. ICON .gt. 0) then           
-            CWC = MAX(1.E-9_r8,abs(CWC))
+            IF(CWC .ge. 1.e-9_r8 .and. ICON .gt. 0) then           
               
                CALL CLOUDY_SKY ( ISPI,CWC,TEMP(ILYR),FREQUENCY(IFR),  &
                        &          NU,U,DU,P11,RC11,IPSD(ILYR),DMA,    &
@@ -595,6 +594,7 @@ contains
 
          enddo model_layer_loop
       Endif
+      
 ! call radiative transfer calculations
       
        select case ( ICON )
@@ -633,10 +633,6 @@ contains
          CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PHH,MULTI,ZZT1,W0,TAU,RS,TS,&
               &  FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,         &
               &  UI,UA,TT,ICON,RE)                            !CLOUDY-SKY
-         CALL SENSITIVITY (DTcir(:,IFR),ZZT,NT,YP,YZ,NZmodel,PRESSURE,NZ, &
-              &      tau,tauc,tau_clear,TAUeff(:,IFR),SS(:,IFR), &
-              &      Trans(:,:,IFR), BETA(:,IFR), BETAc(:,IFR), DDm, Dm, &
-              &      Z, DZ, N,RE, noS, Slevl)     ! COMPUTE SENSITIVITY
        case (2)
          ! this is for the sids/retrieval calculations (saturation below cloud top)
          ! wc is supplied by model if it's the retrieval mode
@@ -647,10 +643,6 @@ contains
          CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PHH,MULTI,ZZT1,W0,TAU,RS,TS,&
               &  FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,         &
               &  UI,UA,TT,ICON,RE)                            !CLOUDY-SKY
-         CALL SENSITIVITY (DTcir(:,IFR),ZZT,NT,YP,YZ,NZmodel,PRESSURE,NZ, &
-              &      tau,tauc,tau_clear,TAUeff(:,IFR),SS(:,IFR), &
-              &      Trans(:,:,IFR), BETA(:,IFR), BETAc(:,IFR), DDm, Dm, &
-              &      Z, DZ, N,RE, noS, Slevl)     ! COMPUTE SENSITIVITY
 
        case default
          print*,'You should not be here'
@@ -766,6 +758,11 @@ contains
           & DTcir(:,IFR), &
               &                 method='Linear')
 
+         IF(ICON .GT. 0) &
+         CALL SENSITIVITY (DTcir(:,IFR),ZZT,NT,YP,YZ,NZmodel,PRESSURE,NZ, &
+              &      tau,tauc,tau_clear,TAUeff(:,IFR),SS(:,IFR), &
+              &      Trans(:,:,IFR), BETA(:,IFR), BETAc(:,IFR), DDm, Dm, &
+              &      Z, DZ, N,RE, noS, Slevl)     ! COMPUTE SENSITIVITY
        ENDIF
 
       END IF                                 ! END OF DO CHANNEL
@@ -788,6 +785,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.54  2003/04/02 20:00:04  dwu
+! some clearup and replace ifov with do_conv
+!
 ! Revision 1.53  2003/02/03 19:26:11  dwu
 ! fix a bug
 !
