@@ -70,7 +70,8 @@ module FullCloudForwardModel
                      & L_ELEVOFFSET,                                         &
                      & L_SIDEBANDRATIO,                                      &
                      & L_CHANNEL,                                            &
-                     & L_NONE
+                     & L_NONE,                                               &
+                     & L_LOSVEL
 
   implicit none
   private
@@ -126,6 +127,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     type (VectorValue_T), pointer :: VMR                        ! Quantity
     type (VectorValue_T), pointer :: SCGEOCALT     ! Geocentric spacecraft altitude
     type (VectorValue_T), pointer :: ELEVOFFSET    ! Elevation offset quantity
+    type (VectorValue_T), pointer :: LOSVEL        ! Line of sight velocity
     type (Signal_T) :: signal                      ! A signal
     type(VectorValue_T), pointer :: STATE_ext      ! A state vector quantity
     type(VectorValue_T), pointer :: STATE_los      ! A state vector quantity
@@ -239,7 +241,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
              A_EFFECTIVEOPTICALDEPTH, A_MASSMEANDIAMETER,                       &
              A_TOTALEXTINCTION,FREQUENCIES,                                     &
              superset, thisRatio, JBLOCK, state_ext, state_los,                 &
-             MY_CATALOG, thisCatalogEntry, thisLine )
+             MY_CATALOG, thisCatalogEntry, thisLine, LOSVEL )
              
     nullify ( doChannel )
     
@@ -331,7 +333,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
           & quantityType=l_scGeocAlt )
         elevOffset => GetVectorQuantityByType ( fwdModelExtra, &
           & quantityType=l_elevOffset, radiometer=Signal%radiometer )	
-
+        losVel => GetVectorQuantityByType ( fwdModelExtra, &
+          & quantityType=l_losVel, instrumentModule=Signal%instrumentModule )
     !-----------------------------------------
     ! Make sure the quantities we need are got and with correct format
     !-----------------------------------------
@@ -676,7 +679,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & forwardModelConfig%NUM_AB_TERMS,                                     &
       & forwardModelConfig%NUM_SIZE_BINS,                                    &
       & Slevl*1000._r8, noSgrid,                                             &
-      & My_Catalog )                                                         
+      & My_Catalog, losVel%values(1,maf) )                                                         
 
     if (prt_log) print*, 'Successfully done with Full Cloud Foward Model ! '
 
@@ -925,6 +928,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.87  2001/11/15 23:52:12  jonathan
+! add default_spectroscopy
+!
 ! Revision 1.86  2001/11/15 23:50:21  jonathan
 ! rename DF_spectroscopy to default_spectroscopy
 !

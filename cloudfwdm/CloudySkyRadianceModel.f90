@@ -45,7 +45,7 @@ contains
              &   Bill_data,                                            &
              &   phi_tan, h_obs, elev_offset, AntennaPattern,          &
              &   TB0, DTcir, Trans, BETA, BETAc, Dm, TAUeff, SS,       &
-             &   NU, NUA, NAB, NR, Slevl, noS, Catalog )
+             &   NU, NUA, NAB, NR, Slevl, noS, Catalog, LosVel )
 
 !============================================================================C
 !   >>>>>>>>> FULL CLOUD FORWARD MODEL FOR MICROWAVE LIMB SOUNDER >>>>>>>>   C
@@ -207,7 +207,7 @@ contains
       REAL(r8) :: ZT(NT)                       ! TANGENT PRESSURE
       REAL(r8) :: RE                           ! EARTH RADIUS
       REAL(r8) :: Slevl(noS)                   ! Sgrid levels
-
+      REAL(r8) :: LosVel                       ! Line of sight velocity
 !--------------------------------------
 !     OUTPUT PARAMETERS (OUTPUT TO L2)        
 !--------------------------------------
@@ -492,7 +492,7 @@ contains
          CALL CLEAR_SKY(NZmodel-1,NU,TS,S,LORS,SWIND,           &
               &         YZ,YP,YT,YQ,VMR,NS,                     &
               &         FREQUENCY(IFR),RS,U,TEMP,TAU0,Z,TAU100, &
-              &         Catalog, Bill_data ) 
+              &         Catalog, Bill_data, LosVel ) 
 
 !         CALL HEADER(3)
 
@@ -795,6 +795,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.29  2001/11/15 23:52:20  jonathan
+! add default_spectroscopy
+!
 ! Revision 1.28  2001/11/09 18:07:09  jonathan
 ! add spectra catalog
 !

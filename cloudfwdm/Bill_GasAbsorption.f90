@@ -20,7 +20,7 @@ Module Bill_GasAbsorption
 !---------------------------------------------------------------------------
 contains
 
-  SUBROUTINE get_beta_bill (T, PB, F, RH, VMR_O3, ABSC, Catalog )
+  SUBROUTINE get_beta_bill (T, PB, F, RH, VMR_O3, ABSC, Catalog, LosVel )
 
 !==============================================================
 !      CALCULATE CLEAR-SKY ABSORPTION COEFFICIENT AT F AND T
@@ -40,6 +40,7 @@ contains
     REAL(r8), INTENT(IN) :: PB              ! TOTAL AIR PRESSURE (hPa)
     REAL(r8) :: VMR_O3                      ! MINOR SPECIES 1-O3
     REAL(r8), INTENT(IN) :: RH              ! H2O VOLUME MIXING RATIO OR RELATIVE HUMIDITY
+    REAL(rp) :: LosVel
 
     Type(Catalog_T), INTENT(IN) :: Catalog(:)
     Type (slabs_struct), DIMENSION(:,:), POINTER :: gl_slabs
@@ -62,7 +63,7 @@ contains
 
     Integer(ip) :: n_sps, n_path, i, j, k, m, nl, no_of_lines, n_ele
     Integer(ip) :: Spectag, status
-    REAL(rp) :: bb, v0, vm, tm, tp, bp, bm, del_temp, losVel
+    REAL(rp) :: bb, v0, vm, tm, tp, bp, bm, del_temp
     REAL(rp), allocatable, dimension(:) :: LineWidth, PP, TT
     
 !-----------------------------------------------------------------------------
@@ -100,7 +101,9 @@ contains
     pp(1) = p
     tt(1) = t
     del_temp = 0.0_rp
-    losVel=-6.8_rp
+
+    losVel=losVel*0.0001_rp   ! Bill use km/sec
+
     call get_gl_slabs_arrays(Catalog,PP(1:n_ele),TT(1:n_ele),losVel,gl_slabs,1,del_temp)
 
 
@@ -148,6 +151,9 @@ contains
 End Module Bill_GasAbsorption
 
 ! $Log$
+! Revision 1.3  2001/11/15 00:55:02  jonathan
+! fixed a bug
+!
 ! Revision 1.2  2001/11/14 00:40:11  jonathan
 ! first working version
 !

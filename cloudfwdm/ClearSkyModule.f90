@@ -30,7 +30,7 @@ module ClearSkyModule
 contains
 
       SUBROUTINE CLEAR_SKY(L,NU,TS,S,LORS,WIND,XZ,XP,XT,XQ,VMR, NS, &
-                 &         F,RS,U,T,TAU,Z,TAU100, Catalog, Bill_Spectra )
+                 &         F,RS,U,T,TAU,Z,TAU100, Catalog, Bill_Spectra,LosVel )
 
 !======================================================
 !     >>>>>>>>CLEAR-SKY RADIATION SCHEME<<<<<<<<<<
@@ -50,7 +50,7 @@ contains
       REAL(r8) :: RS(NU/2),T(L),TAU(L),U(NU),Z(L),TAU100(L)
       REAL(r8) :: XZ(L+1),XP(L+1),XT(L+1),XQ(L+1)
       REAL(r8) :: VMR(NS,L+1),VMR1(NS)
-      REAL(r8) :: DQ, P, DR, TS, S, WIND, F
+      REAL(r8) :: DQ, P, DR, TS, S, WIND, F, LosVel
 
 !-------------------------------------------------
 !     SURFACE REFLECTIVITY
@@ -125,11 +125,11 @@ contains
            !--------------------------------
            ! Using bill's spectroscopy data
            !--------------------------------
-           call get_beta_bill (T(I), P, F, DQ, VMR1(1), DR, Catalog)
+           call get_beta_bill (T(I), P, F, DQ, VMR1(1), DR, Catalog, LosVel)
            
            TAU(I)=DR*Z(I)
 
-           call get_beta_bill (T(I), P, F, 100._r8, VMR1(1), DR, Catalog)
+           call get_beta_bill (T(I), P, F, 100._r8, VMR1(1), DR, Catalog, LosVel)
 
            TAU100(I)=DR*Z(I)
 
@@ -142,6 +142,9 @@ contains
 end module ClearSkyModule
 
 ! $Log$
+! Revision 1.13  2001/11/15 23:53:02  jonathan
+! clean log
+!
 ! Revision 1.12  2001/11/15 23:52:28  jonathan
 ! add default_spectroscopy
 !
