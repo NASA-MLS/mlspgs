@@ -52,8 +52,8 @@ MODULE L2GPData                 ! Creation, manipulation and I/O for L2GP Data
    CHARACTER (len=*), PARAMETER :: DIM_NAME1 = 'nTimes'
    CHARACTER (len=*), PARAMETER :: DIM_NAME2 = 'nLevels'
    CHARACTER (len=*), PARAMETER :: DIM_NAME3 = 'nFreqs'
-   CHARACTER (len=*), PARAMETER :: DIM_NAME12 = 'nTimes,nLevels' ! Note C order!!!!
-   CHARACTER (len=*), PARAMETER :: DIM_NAME123 = 'nTimes,nLevels,nFreqs' ! Note C order!!!!
+   CHARACTER (len=*), PARAMETER :: DIM_NAME12 = 'nLevels,nTimes' ! In Fortran order?!!
+   CHARACTER (len=*), PARAMETER :: DIM_NAME123 = 'nFreqs,nLevels,nTimes' ! as above
 
    INTEGER, PARAMETER :: HDFE_AUTOMERGE = 1     ! MERGE FIELDS WITH SHARE DIM
    INTEGER, PARAMETER :: HDFE_NOMERGE = 0       ! don't merge
@@ -141,6 +141,7 @@ CONTAINS ! =====     Public Procedures     =============================
 
     ! But allocate to at least one for times, freqs
  
+    useNTimes=MAX(useNTimes,1)
     useNLevels=MAX(useNLevels,1)
     useNFreqs=MAX(useNFreqs,1)    
 
@@ -235,21 +236,21 @@ CONTAINS ! =====     Public Procedures     =============================
     CALL SetupNewL2GPRecord( l2gp, nFreqs=l2gp%nFreqs, nLevels=l2gp%nLevels, nTimes=newNTimes)
 
     ! Now go through the parameters one by one, and copy the previous contents
+    l2gp%latitude(1:templ2gp%nTimes) = templ2gp%latitude(1:templ2gp%nTimes)
+    l2gp%longitude(1:templ2gp%nTimes) = templ2gp%longitude(1:templ2gp%nTimes)
+    l2gp%solarTime(1:templ2gp%nTimes) = templ2gp%solarTime(1:templ2gp%nTimes)
+    l2gp%solarZenith(1:templ2gp%nTimes) = templ2gp%solarZenith(1:templ2gp%nTimes)
+    l2gp%losAngle(1:templ2gp%nTimes) = templ2gp%losAngle(1:templ2gp%nTimes)
+    l2gp%geodAngle(1:templ2gp%nTimes) = templ2gp%geodAngle(1:templ2gp%nTimes)
+    l2gp%time(1:templ2gp%nTimes) = templ2gp%time(1:templ2gp%nTimes)
+    l2gp%chunkNumber(1:templ2gp%nTimes) = templ2gp%chunkNumber(1:templ2gp%nTimes)
 
-    l2gp%latitude(1:templ2gp%nTimes) = templ2gp%latitude
-    l2gp%longitude(1:templ2gp%nTimes) = templ2gp%longitude
-    l2gp%solarTime(1:templ2gp%nTimes) = templ2gp%solarTime
-    l2gp%solarZenith(1:templ2gp%nTimes) = templ2gp%solarZenith
-    l2gp%losAngle(1:templ2gp%nTimes) = templ2gp%losAngle
-    l2gp%geodAngle(1:templ2gp%nTimes) = templ2gp%geodAngle
-    l2gp%time(1:templ2gp%nTimes) = templ2gp%time
-    l2gp%chunkNumber(1:templ2gp%nTimes) = templ2gp%chunkNumber
-
-    l2gp%l2gpValue(:,:,1:templ2gp%nTimes) = templ2gp%l2gpValue
-    l2gp%l2gpPrecision(:,:,1:templ2gp%nTimes) = templ2gp%l2gpPrecision
-
-    l2gp%status(1:templ2gp%nTimes) = templ2gp%status
-    l2gp%quality(1:templ2gp%nTimes) = templ2gp%quality
+    l2gp%l2gpValue(:,:,1:templ2gp%nTimes) = templ2gp%l2gpValue(:,:,1:templ2gp%nTimes)
+    l2gp%l2gpPrecision(:,:,1:templ2gp%nTimes) = &
+         templ2gp%l2gpPrecision(:,:,1:templ2gp%nTimes)
+    
+    l2gp%status(1:templ2gp%nTimes) = templ2gp%status(1:templ2gp%nTimes)
+    l2gp%quality(1:templ2gp%nTimes) = templ2gp%quality(1:templ2gp%nTimes)
 
     ! Deallocate the old arrays
 
@@ -345,7 +346,7 @@ CONTAINS ! =====     Public Procedures     =============================
 
     l2gp%Name = swathname
 
-    swid = swattach(L2FileHandle, l2gp%Name)
+    swid = swattach(L2FileHandle, TRIM(l2gp%Name))
     IF (swid == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
          &attach to swath interface for reading.')
 
@@ -667,9 +668,9 @@ CONTAINS ! =====     Public Procedures     =============================
 
     ! Create the swath within the file
 
-    swid = swcreate(L2FileHandle, name)
+    swid = swcreate(L2FileHandle, TRIM(name))
     IF ( swid == -1 ) THEN
-       msr = 'Failed to create swath ' // name
+       msr = 'Failed to create swath ' // TRIM(name)
        CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
     END IF
 
@@ -689,7 +690,7 @@ CONTAINS ! =====     Public Procedures     =============================
        END IF
     END IF
 
-    IF ( l2gp%nFreqs > 0 ) THEN
+    IF ( l2gp%nFreqs > 1 ) THEN
        status = swdefdim(swid, DIM_NAME3, l2gp%nFreqs)
        IF ( status == -1 ) THEN
           msr = DIM_ERR // DIM_NAME3
@@ -797,6 +798,7 @@ CONTAINS ! =====     Public Procedures     =============================
 
     ELSE IF ( l2gp%nLevels > 0 ) THEN
 
+       PRINT*,'2d'
        status = swdefdfld(swid, DATA_FIELD1, DIM_NAME12, DFNT_FLOAT32, &
             HDFE_NOMERGE)
 
@@ -1020,7 +1022,7 @@ CONTAINS ! =====     Public Procedures     =============================
     ELSE
        name=l2gp%name
     ENDIF
-    !print*,"OutputL2GP_writeData -- name=",name
+    print*,"OutputL2GP_writeData -- name=",name
     ! Write data to the fields
 
     start = 0
@@ -1029,14 +1031,15 @@ CONTAINS ! =====     Public Procedures     =============================
     edge(2) = l2gp%nLevels
     edge(3) = l2gp%nTimes
     swid = swattach (l2FileHandle, name)
-    !print*," attached swath with swid=",swid," filehandle=",l2FileHandle
+    print*," attached swath with swid=",swid," filehandle=",l2FileHandle
     IF ( l2gp%nFreqs > 0 ) THEN
-       !print*,"Writing 3D field"
+       print*,"Writing 3D field"
        ! Value and Precision are 3-D fields
 
        status = swwrfld(swid, DATA_FIELD1, start, stride, edge, &
             & RESHAPE(l2gp%l2gpValue, (/SIZE(l2gp%l2gpValue)/)) )
        IF ( status == -1 ) THEN
+          PRINT*,'Status is:',status
           msr = WR_ERR // DATA_FIELD1
           CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
        END IF
@@ -1048,12 +1051,18 @@ CONTAINS ! =====     Public Procedures     =============================
        END IF
 
     ELSE IF ( l2gp%nLevels > 0 ) THEN
-       !Print*,"Writing 2-d field"
+       Print*,"Writing 2-d field"
        ! Value and Precision are 2-D fields
 
+       PRINT*,'swid=',swid
        status = swwrfld( swid, DATA_FIELD1, start(2:3), stride(2:3), &
-            edge(2:3), REAL(l2gp%l2gpValue(1,:,:) ))
-       !print*,"Status of write was ",status
+            edge(2:3), REAL(l2gp%l2gpValue(1,:,:)) )
+       PRINT*,'Start:',start(2:3)
+       PRINT*,'Stride:',stride(2:3)
+       PRINT*,'Edge:',edge(2:3)
+       PRINT*,'Raw shape:',SHAPE(l2gp%l2gpValue)
+       PRINT*,'Shape:',SHAPE(l2gp%l2gpValue(1,:,:))
+       print*,"Status of write was ",status
        IF ( status == -1 ) THEN
           msr = WR_ERR // DATA_FIELD1
           CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
@@ -1067,7 +1076,7 @@ CONTAINS ! =====     Public Procedures     =============================
     ELSE
 
        ! Value and Precision are 1-D fields
-       !Print*,"Writing 1-D field"
+       Print*,"Writing 1-D field"
        status = swwrfld( swid, DATA_FIELD1, start(3:3), stride(3:3), edge(3:3), &
             REAL(l2gp%l2gpValue(1,1,:) ))
        IF ( status == -1 ) THEN
@@ -1087,7 +1096,7 @@ CONTAINS ! =====     Public Procedures     =============================
     status = swwrfld(swid, DATA_FIELD3, start(3:3), stride(3:3), edge(3:3), &
          l2gp%status) ! absoft f90 barfs here
     !status=0 
-    !print*,"Warning. Writing of status field disabled"
+    print*,"Warning. Writing of status field disabled"
     IF ( status == -1 ) THEN
        msr = WR_ERR // DATA_FIELD3
        CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
@@ -1127,9 +1136,13 @@ CONTAINS ! =====     Public Procedures     =============================
 
     ! Exectuable code
 
+    PRINT*,'Calling create'
     CALL OutputL2GP_createFile (l2gp, l2FileHandle, swathName)
+    PRINT*,'Calling write geo'
     CALL OutputL2GP_writeGeo (l2gp, l2FileHandle, swathName)
+    PRINT*,'Calling write data'
     CALL OutputL2GP_writeData (l2gp, l2FileHandle, swathName)
+    PRINT*,'Done'
 
   END SUBROUTINE WriteL2GPData
 
@@ -1139,6 +1152,9 @@ END MODULE L2GPData
 
 !
 ! $Log$
+! Revision 2.13  2001/02/08 01:06:08  livesey
+! Bug fix in ExpandL2GPDataInPlace
+!
 ! Revision 2.12  2001/02/05 23:58:22  pwagner
 ! Uses swrdfld from swapi
 !
