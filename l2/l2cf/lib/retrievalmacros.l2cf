@@ -158,30 +158,34 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
     moleculeDerivatives = !moleculeFamilies($2), $
     integrationGrid=vGridTangent, $
     tangentGrid=vGridTangent, $
-    /do_conv, /do_freq_avg, /atmos_der, /temp_der
+    /do_conv, /do_freq_avg, /atmos_der, /temp_der, /do_baseline
   $1_mono: ForwardModel, type=full, $
     signals=$3, $
     molecules = !molecules($2), $
     moleculeDerivatives = !moleculeFamilies($2), $
     integrationGrid=vGridTangent, $
     tangentGrid=vGridTangent, $
-    /do_conv, /atmos_der, /temp_der
+    /do_conv, /atmos_der, /temp_der, /do_baseline
   $1_notd: ForwardModel, type=full, $
     signals=$3, $
     molecules = !molecules($2), $
     moleculeDerivatives = !moleculeFamilies($2), $
     integrationGrid=vGridTangent, $
     tangentGrid=vGridTangent, $
-    /do_conv, /do_freq_avg, /atmos_der
+    /do_conv, /do_freq_avg, /atmos_der, /do_baseline
   $1_mono_notd: ForwardModel, type=full, $
     signals=$3, $
     molecules = !molecules($2), $
     moleculeDerivatives = !moleculeFamilies($2), $
     integrationGrid=vGridTangent, $
     tangentGrid=vGridTangent, $
-    /do_conv, /atmos_der})
+    /do_conv, /atmos_der, /do_baseline})
 
 ; $Log$
+; Revision 1.21  2002/10/02 23:22:47  livesey
+; New definitions of the joinDGG/DGM stuff.  Also added forward model
+; construction stuff.
+;
 ; Revision 1.20  2002/10/02 23:06:01  pwagner
 ; RHI now separate fill methods
 ;
