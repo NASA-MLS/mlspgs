@@ -1,13 +1,15 @@
 module CONVOLVE_ALL_M
-  use MLSCommon, only: I4, R4, R8
+  use AntennaPatterns_m, only: AntennaPattern_T
+  use DCSPLINE_DER_M, only: CSPLINE_DER
+  use DUMP_0, only: DUMP
+  use D_LINTRP_M, only: LINTRP
+  use D_CSPLINE_M, only: CSPLINE
   use FOV_CONVOLVE_M, only: FOV_CONVOLVE
   use HYDROSTATIC_INTRP, only: GET_PRESSURES
   use L2PC_PFA_STRUCTURES, only: ATMOS_COMP, LIMB_PRESS, SPECTRO_PARAM, &
                                  K_MATRIX_INFO
-  use DUMP_0, only: DUMP
-  use D_LINTRP_M, only: LINTRP
-  use D_CSPLINE_M, only: CSPLINE
-  use DCSPLINE_DER_M, only: CSPLINE_DER
+  use MLSCommon, only: I4, R4, R8
+
   implicit NONE
   private
   public :: CONVOLVE_ALL
@@ -28,7 +30,7 @@ Subroutine convolve_all (Ptan,atmospheric,n_sps,temp_der,atmos_der, &
            si,center_angle,fft_pts,i_raw, k_temp, k_atmos, k_spect_dw,   &
            k_spect_dn,k_spect_dnu,spect_atmos,no_tan_hts,k_info_count,  &
            i_star_all,k_star_all,k_star_info,no_t,no_phi_t,no_phi_f,     &
-           spectroscopic,t_z_basis,XLAMDA,AAAP,D1AAP,D2AAP,IAS,Ier)
+           spectroscopic,t_z_basis,AntennaPattern,IAS,Ier)
 !
     real(r8), dimension(:), intent(IN) :: Ptan
     Logical, intent(IN) :: temp_der,atmos_der,spect_der
@@ -37,11 +39,11 @@ Subroutine convolve_all (Ptan,atmospheric,n_sps,temp_der,atmos_der, &
    &                           fft_pts, no_phi_t, IAS
     integer(i4), intent(IN) :: no_phi_f(:), spect_atmos(:)
 !
-    real(r8), intent(IN) :: CENTER_ANGLE, XLAMDA
+    real(r8), intent(IN) :: CENTER_ANGLE
     real(r8), intent(IN) :: I_RAW(:), T_Z_BASIS(:)
     real(r8), intent(IN) :: TAN_PRESS(:), PTG_ANGLES(:), TAN_TEMP(:)
     real(r8), intent(IN) :: DX_DT(:,:), D2X_DXDT(:,:)
-    Real(r8), intent(in) :: AAAP(:,:),D1AAP(:,:),D2AAP(:,:)
+    type(antennaPattern_T), intent(in) :: AntennaPattern
 
     Real(r4) :: k_temp(:,:,:)                   ! (Nptg,mxco,mnp)
     Real(r4) :: k_atmos(:,:,:,:)                ! (Nptg,mxco,mnp,Nsps)
@@ -93,7 +95,7 @@ Subroutine convolve_all (Ptan,atmospheric,n_sps,temp_der,atmos_der, &
 !
     fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
     Call fov_convolve(fft_angles,Rad,center_angle,1,no_tan_hts,band, &
-   &                  fft_pts,XLAMDA,AAAP,D1AAP,D2AAP,IAS,Ier)
+   &                  fft_pts,AntennaPattern,IAS,Ier)
     if (Ier /= 0) Return
 !
 !  Get 'Ntr' pressures associated with the fft_angles:
@@ -187,7 +189,7 @@ Subroutine convolve_all (Ptan,atmospheric,n_sps,temp_der,atmos_der, &
 !
           fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
           Call fov_convolve(fft_angles,Rad,center_angle,1,no_tan_hts, &
-   &           band,fft_pts,XLAMDA,AAAP,D1AAP,D2AAP,IAS,Ier)
+   &           band,fft_pts,AntennaPattern,IAS,Ier)
           if (Ier /= 0) Return
 !
           if(fft_index(1).gt.0) then
@@ -211,7 +213,7 @@ Subroutine convolve_all (Ptan,atmospheric,n_sps,temp_der,atmos_der, &
 !
           fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
           Call fov_convolve(fft_angles,Rad,center_angle,2,no_tan_hts, &
-   &           band,fft_pts,XLAMDA,AAAP,D1AAP,D2AAP,IAS,Ier)
+   &           band,fft_pts,AntennaPattern,IAS,Ier)
           if (Ier /= 0) Return
 !
           if(fft_index(1).gt.0) then
@@ -242,7 +244,7 @@ Subroutine convolve_all (Ptan,atmospheric,n_sps,temp_der,atmos_der, &
 !
           fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
           Call fov_convolve(fft_angles,Rad,center_angle,2,no_tan_hts, &
-   &           band,fft_pts,XLAMDA,AAAP,D1AAP,D2AAP,IAS,Ier)
+   &           band,fft_pts,AntennaPattern,IAS,Ier)
           if (Ier /= 0) Return
 !
           if(fft_index(1).gt.0) then
@@ -296,7 +298,7 @@ Subroutine convolve_all (Ptan,atmospheric,n_sps,temp_der,atmos_der, &
 !
               fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
               Call fov_convolve(fft_angles,Rad,center_angle,1,no_tan_hts, &
-   &               band,fft_pts,XLAMDA,AAAP,D1AAP,D2AAP,IAS,Ier)
+   &               band,fft_pts,AntennaPattern,IAS,Ier)
               if (Ier /= 0) Return
 !
               if(fft_index(1).gt.0) then
@@ -370,7 +372,7 @@ Subroutine convolve_all (Ptan,atmospheric,n_sps,temp_der,atmos_der, &
 !
               fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
               Call fov_convolve(fft_angles,Rad,center_angle,1,no_tan_hts, &
-   &               band,fft_pts,XLAMDA,AAAP,D1AAP,D2AAP,IAS,Ier)
+   &               band,fft_pts,AntennaPattern,IAS,Ier)
               if (Ier /= 0) Return
 !
               if(fft_index(1).gt.0) then
@@ -404,6 +406,9 @@ Subroutine convolve_all (Ptan,atmospheric,n_sps,temp_der,atmos_der, &
 !
 end module CONVOLVE_ALL_M
 ! $Log$
+! Revision 1.11  2001/03/31 23:40:55  zvi
+! Eliminate l2pcdim (dimension parameters) move to allocatable ..
+!
 ! Revision 1.10  2001/03/29 12:08:17  zvi
 ! Fixing bugs
 !

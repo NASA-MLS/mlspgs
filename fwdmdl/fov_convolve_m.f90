@@ -1,4 +1,5 @@
 module FOV_CONVOLVE_M
+  use AntennaPatterns_m, only: AntennaPattern_T
   use MLSCommon, only: I4, R8
   use D_CSPLINE_M, only: CSPLINE
   implicit NONE
@@ -12,17 +13,17 @@ module FOV_CONVOLVE_M
 !---------------------------------------------------------------------------
 contains
 ! ===========================================     FOV_CONVOLVE     =====
-! This subprogram adds the effects antenna smearing to the radiance
+! This subprogram adds the effects of antenna smearing to the radiance.
 !
   SUBROUTINE FOV_CONVOLVE(EIL_ANGLE, RADIANCE, DELTA0, ITYPE, NP, MBAND, &
- &                        M, XLAMDA, AAAP, D1AAP, D2AAP, IAS, IER )
+ &                        M, AntennaPattern, IAS, IER )
 !
     Integer(i4), intent(in) :: ITYPE, NP, MBAND, M, IAS
 
     Real(r8), intent(inout) :: EIL_ANGLE(:)
     Real(r8), intent(inout) :: RADIANCE(:)
-    Real(r8), intent(in) :: DELTA0, XLAMDA
-    Real(r8), intent(in) :: AAAP(2**M,3),D1AAP(2**M,3),D2AAP(2**M,3)
+    Real(r8), intent(in) :: DELTA0
+    type(antennaPattern_T), intent(in) :: AntennaPattern
 
     Integer(i4), intent(out) :: IER
 
@@ -30,7 +31,7 @@ contains
     real(r8) :: X
 !
     ntr = 2**m
-    call ftgrid(eil_angle,radiance,delta0,xlamda,np,ntr)
+    call ftgrid(eil_angle,radiance,delta0,antennaPattern%lambda,np,ntr)
 !
     j = ntr/2 + 2
     do i = j, ntr
@@ -42,12 +43,12 @@ contains
 !
     i = itype - 1
     if (i  ==  0) then                               ! Straight data
-      call convolve(Radiance, AAAP,M,Ias,ind,ier)
+      call convolve(Radiance, AntennaPattern%AAAP(:,1),M,Ias,ind,ier)
     else if (i  ==  1) then                          ! First derivative
-      call convolve(Radiance,D1AAP,M,Ias,ind,ier)
+      call convolve(Radiance,AntennaPattern%D1AAP(:,1),M,Ias,ind,ier)
     else if (i  ==  2) then                          ! Second derivative
-      call convolve(Radiance,D2AAP,M,Ias,ind,ier)
-    endif
+      call convolve(Radiance,AntennaPattern%D2AAP(:,1),M,Ias,ind,ier)
+    end if
 !
     Return
   End subroutine FOV_CONVOLVE
@@ -58,7 +59,7 @@ contains
 !
   Subroutine CONVOLVE ( RADIANCE, AAAP, M, IAS, IND, IERR )
     real(r8), intent(inout) :: RADIANCE(:)
-    real(r8), intent(in) :: AAAP(*)
+    real(r8), intent(in) :: AAAP(:)
     integer(i4), intent(in) :: M, IAS, IND
     integer(i4), intent(out) :: IERR
     Integer, parameter :: MAXP=12, MAX2P=2**MAXP
@@ -75,7 +76,7 @@ contains
     ierr = 0
     ntr = 2**m
     ntrh = ntr / 2
-    dblrad(:ntr) = dble(radiance(:ntr))
+    dblrad(:ntr) = radiance(:ntr)
     if (init > 0 .and. init /= m) ms=0
     call drft1 ( dblrad, 'a', m4, ms, s )
     if(ms == -2) then
@@ -197,7 +198,7 @@ contains
 !     Pasadena, Calif.   August 1, 1969.
 !     Revised by Krogh at JPL -- January 19, 1988 -- For portability
 !
-      DOUBLE PRECISION AR(*), AI(*), S(*)
+      DOUBLE PRECISION AR(:), AI(:), S(:)
 !     Minimum dimensions are AR(ILAST), AI(ILAST), S(NT-1), where ILAST
 !     and NT are defined in the common block below.
 !
@@ -487,7 +488,7 @@ contains
 !     the Cooley-Tukey fast Fourier transform.
 !
 !     Variables in the calling sequence have the following types
-      DOUBLE PRECISION A(*), S(*)
+      DOUBLE PRECISION A(:), S(:)
       INTEGER          M, MS
       CHARACTER        MODE
 !
@@ -646,7 +647,7 @@ contains
             KEE(L+1) = KEE(L) / 2
    30    CONTINUE
 !
-         CALL DFFT (A(IR), A(II), S)
+         CALL DFFT (A(IR:N1), A(II:N1), S)
 !                              End of computing complex transform
 !
          IF(.NOT. ANAL) RETURN
@@ -708,6 +709,9 @@ contains
 
 end module FOV_CONVOLVE_M
 ! $Log$
+! Revision 1.7  2001/03/31 23:40:55  zvi
+! Eliminate l2pcdim (dimension parameters) move to allocatable ..
+!
 ! Revision 1.6  2001/03/29 08:51:01  zvi
 ! Changing the (*) toi (:) everywhere
 !
