@@ -322,10 +322,26 @@ disthelp     prints this file
 firsthelp    summarizes prerequisite libraries for building mls
 help         lists topics on which more help is available
 help--brief  brief overview of building mls
+help--convert  
+             how to convert files from hdfeos2 to hdfeos5
+help--depends  
+             some info on the makemakedep.sh script
+help--fopts  how to set compiler and linker options
+help--ghostbuster
+             some info on the ghostbuster.sh script
 help--Makefile
              summarizes targets, settings, usage of Makefiles
+help--mlsconfigure
+             some info on the mlsconfigure script
+help--platform 
+             how to configure make for your platform
+help--pvm    how to set paths for some optional libraries
+help--reecho 
+             some info on the reecho.sh script
 help--scripts
              prints some details on the scripts used by the Makefiles
+help--toolkit  
+             how to set paths for the mandatory libraries
 install      moves the built programs from the mlslevels to INSTALLDIR
              also puts shell script versions of each binary executable there
              with names composed of binary + '.sh'; e.g., mlsl1.sh
@@ -337,6 +353,10 @@ update       replaces Makefiles in subdirectories with latest versions;
              orphaned .o and .mod files left behind after sources removed;
              also useful after minor configuration changes to prevent 
              unnecessary recompilation
+l2--hdf5     builds mlsl2 with support for hdf5/hdfeos5 formats;
+             (similarly for l1--hdf5, l3--hdf5, and l3m--hdf5)
+all--hdf5    builds all the levels with support for hdf5/hdfeos5 formats
+lib--hdf4    restores to lib the modules stripped out by xxx--hdf5
 
   If the target is entered exactly as shown below, the
   resulting archive will be an uncompressed .tar file; but with:
@@ -626,7 +646,7 @@ used with care, however.
 
 EVERYTHING         All the directories to be tarred up by "make tar"
 HDFVERSIONS        Build in support for both hdf4 and hdf5 versions of files
-                    if non-blank
+                    if non-blank (but see l1--hdf5, l2--hdf5, etc.)
 INSTALLDIR         Destination where install moves mlsl1, etc. 
                     (see also MLSINSTALLDIR)
 LEVELS             A subset of l1 l2 l3 l3m; e.g. LEVELS="l1 l2" skips l3 l3m
@@ -694,6 +714,9 @@ export LDOPTS
 EOF
 exit
 # $Log$
+# Revision 1.32  2002/05/02 00:16:55  pwagner
+# Mentions NOCASCADE setting
+#
 # Revision 1.31  2002/04/29 17:51:00  pwagner
 # Mentions concealed utctotai library
 #

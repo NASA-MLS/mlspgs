@@ -142,6 +142,7 @@ SHELL = /bin/sh
 # l2--hdf5 l3--hdf5 l3m--hdf5
 #                -- like l1--hdf5 but for mlsl2, mlsl3d, or mlsl3m
 # all--hdf5      -- like l1--hdf5 but for all the levels
+# lib--hdf4      -- restores the routines in he5lib back into lib
 
 #                           (functional)
 # clean          -- deletes only *.o, *.mod from sub-subs
@@ -380,13 +381,14 @@ lib:
 blas:
 	$(MAKE) -f $(MakeFName) -C $@
 
-# For now, these require he5lib
+# Strips lib of any modules supplied by he5lib
 lib--hdf5:
 	cd lib; $(MAKE) -f $(MakeFName) depends HDFVERSIONS= ; \
 	rm -f $(MLSCONFG)/libmls.a; $(MAKE) -f $(MakeFName) HDFVERSIONS= ; \
    $(MAKE) -f $(MakeFName) depends HDFVERSIONS=2; \
    rm -f $(MLSCONFG)/libmls.a; $(MAKE) -f $(MakeFName) HDFVERSIONS=2
 
+# For now, these require he5lib
 l1--hdf5:
 	$(MAKE) -f $(MakeFName) lib--hdf5; \
 	cd l1;\
@@ -410,6 +412,11 @@ l3m--hdf5:
 all--hdf5:
 	$(MAKE) -f $(MakeFName) lib--hdf5; \
 	$(MAKE) -f $(MakeFName) l1 l2 l3 l3m HDFVERSIONS=2
+
+# Restores to lib stuff stripped out by lib--hdf5
+lib--hdf4:
+	cd lib; $(MAKE) -f $(MakeFName) depends HDFVERSIONS= ; \
+	rm -f $(MLSCONFG)/libmls.a; $(MAKE) -f $(MakeFName) HDFVERSIONS=
 
 #              (functional targets)
 #              summoned by "make command"
@@ -918,6 +925,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.68  2002/05/10 20:29:28  pwagner
+# New targets xxx--hdf5 simplify building hdf5-savvy pges
+#
 # Revision 1.67  2002/04/29 17:37:20  pwagner
 # Can build concealed utctotai library
 #
