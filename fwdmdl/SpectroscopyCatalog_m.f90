@@ -25,6 +25,9 @@ module SpectroscopyCatalog_m
   public :: Destroy_Line_Database, Destroy_SpectCat_Database
   public :: Dump_Lines_Database, Dump_SpectCat_Database
 
+  ! Private parameters
+  integer, parameter :: MaxContinuum = 6
+
   ! Public types:
   type, public :: Line_T           ! One line in the spectrum for a species
     integer :: Line_Name           ! Sub_rosa index
@@ -52,6 +55,7 @@ module SpectroscopyCatalog_m
     integer :: Molecule            ! L_...
     real(r8) :: Qlog(3)            ! Logarithm of the partition function
                                    ! At 300 , 225 , and 150 K
+    real(r8) :: continuum(MaxContinuum) ! Continuum coefficients
   end type Catalog_T
 
   ! Public Variables:
@@ -60,6 +64,7 @@ module SpectroscopyCatalog_m
 
   ! The spectroscopy database:
   type(catalog_T), public, pointer, dimension(:), save :: Catalog => NULL()
+
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -78,7 +83,7 @@ contains ! =====  Public Procedures  ===================================
     ! ID's:
     use Init_Spectroscopy_M, only: S_Line, S_Spectra
     ! Now the Fields:
-    use Init_Spectroscopy_M, only: F_Delta, F_El, F_Gamma, F_Lines, &
+    use Init_Spectroscopy_M, only: F_Continuum, F_Delta, F_El, F_Gamma, F_Lines, &
       & F_Molecule, F_N, F_N1, F_N2, F_Ns, F_Ps, F_Qlog, F_Str, F_V0, F_W, &
       & F_EMLSSIGNALS, F_UMLSSIGNALS
     use Intrinsic, only: Phyq_Dimless => Phyq_Dimensionless, Phyq_Frequency, &
@@ -110,8 +115,9 @@ contains ! =====  Public Procedures  ===================================
     character ( len=80 ) :: SIGNAME     ! The signal
 
     ! Error message codes
-    integer, parameter :: WrongSize = 1                ! Wrong number of elements
-    integer, parameter :: WrongUnits = wrongSize + 1   ! Wrong physical units
+    integer, parameter :: TooBig = 1    ! Too many elements
+    integer, parameter :: WrongSize = TooBig + 1 ! Wrong number of elements
+    integer, parameter :: WrongUnits = wrongSize + 1 ! Wrong physical units
 
     if ( toggle(gen) ) call trace_begin ( "Spectroscopy", root )
 
@@ -201,6 +207,7 @@ contains ! =====  Public Procedures  ===================================
         nullify(oneSpecies%lines) ! So that Allocate_Test doesn't deallocate
         ! the most recently filled one
         oneSpecies%species_Name = name
+        oneSpecies%continuum = 0.0
         do j = 2, nsons(key)
           son = subtree(j,key)
           select case ( get_field_id(son) )
@@ -210,6 +217,14 @@ contains ! =====  Public Procedures  ===================================
               & moduleName )
             do k = 2, k
               oneSpecies%lines(k-1) = decoration(decoration(subtree(k,son)))
+            end do
+          case ( f_continuum )
+            k = nsons(son)
+            if ( nsons(son) > MaxContinuum + 1 ) &
+              & call announce_error ( son, tooBig, MaxContinuum )
+            do k = 2, k
+              call expr_check ( subtree(k,son), oneSpecies%continuum(k-1), &
+                & phyq_dimless )
             end do
           case ( f_molecule )
             oneSpecies%molecule = decoration(subtree(2,son))
@@ -257,6 +272,10 @@ contains ! =====  Public Procedures  ===================================
       call print_source ( source_ref ( where ) )
       call output ( ' Spectroscopy complained: ' )
       select case ( code )
+      case ( tooBig )
+        call output ( 'The field cannot have more than ' )
+        call output ( more )
+        call output ( ' elements.', advance='yes' )
       case ( wrongSize )
         call output ( 'The field is required to have ' )
         call output ( more )
@@ -444,6 +463,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.5  2001/10/09 22:38:41  livesey
+! Added stuff for ns
+!
 ! Revision 2.4  2001/09/19 04:38:48  livesey
 ! Lines per band stuff works now
 !

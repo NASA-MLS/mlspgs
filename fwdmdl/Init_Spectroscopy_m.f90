@@ -31,7 +31,8 @@ module Init_Spectroscopy_m
   integer, parameter :: Last_Spectroscopy_Lit = last_Signal_Lit
 
   ! Fields used in spectroscopy specifications:
-  integer, parameter :: F_delta      = last_signal_field + 1
+  integer, parameter :: F_continuum  = last_signal_field + 1
+  integer, parameter :: F_delta      = f_continuum + 1
   integer, parameter :: F_el         = f_delta + 1
   integer, parameter :: F_gamma      = f_el + 1
   integer, parameter :: F_lines      = f_gamma + 1
@@ -79,6 +80,7 @@ contains
       & first_parm_index, last_parm_index, n_section_indices, n_spec_indices )
 
     ! Put field names into the symbol table
+    field_indices(f_continuum)  = add_ident ( 'continuum' )
     field_indices(f_delta)      = add_ident ( 'delta' )
     field_indices(f_el)         = add_ident ( 'el' )
     field_indices(f_gamma)      = add_ident ( 'gamma' )
@@ -155,6 +157,7 @@ contains
       begin, s+s_spectra, & ! Must be AFTER S_Line
              begin, f+f_lines, s+s_line, n+n_field_spec, &
              begin, f+f_molecule, t+t_molecule, nr+n_field_type, &
+             begin, f+f_continuum, t+t_numeric, n+n_field_type, &
              begin, f+f_qlog, t+t_numeric, n+n_field_type, &
              ndp+n_spec_def /) )
 
@@ -166,6 +169,9 @@ contains
 end module Init_Spectroscopy_m
 
 ! $Log$
+! Revision 2.3  2001/10/09 22:38:23  livesey
+! Added stuff for ns
+!
 ! Revision 2.2  2001/09/18 01:25:48  livesey
 ! Changed emls/umls bands to emls/umls signals
 !
