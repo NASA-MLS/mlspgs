@@ -121,3 +121,6 @@ changesyntax({@!})
 })})
 !define(tidyList,{!tidyOneWord({$1})!ifelse($#,1,{},{,!tidyList}(!shift($@)))})
 
+;; This one clears diversions (taken from the m4 manual)
+!define(clearDivert,
+{!pushdef({num},!divnum)!divert(-1)!undivert($@)!divert(!num)!popdef(num)})
