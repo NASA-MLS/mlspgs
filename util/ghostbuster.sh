@@ -1,5 +1,6 @@
 #!/bin/sh
     #ghostbuster.sh
+# --------------- ghostbuster.sh help
 #rm ghosts from the binary directory (the 1st arg)
 #where ghosts are defined as .o and .mod-suffixed
 #files for which no corresponding source file currently
@@ -10,14 +11,21 @@
 #
 #Usage:
 #ghostbuster.sh [-lib] arg1 arg2 [arg3 ..]
+#
 #where argn is a path, either absolute or relative to current working directory
 #Result:
 #rm the list of such files, unless it is empty in which case does nothing
 #
 #
-#Options:
+#    O p t i o n s
+# -d file_name  exclude file_name
+# -h[elp]       print brief help message; exit
 # -lib   if this flag is present, executes "rm -f *.a" if any ghosts found
-#
+#Note:
+#The option(s) marked with "-", if present,
+#must precede the extra search directories on the command line
+# 
+# --------------- End ghostbuster.sh help
 # Function to prompt for user response
 #
 
@@ -39,7 +47,7 @@ DEBUG=0
 PRINT_TOO_MUCH=0
 #              ^  -- set this to 1 if willing to try patience
 #
-# Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+# Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 # "$Id$"
@@ -47,12 +55,77 @@ PRINT_TOO_MUCH=0
 #
 #----------------------- Implementation -----------------------
 #
-if [ "$1" = "-lib" ] ; then
-   rm_any_libs="yes"
-   shift
+#if [ "$1" = "-lib" ] ; then
+#   rm_any_libs="yes"
+#   shift
+#else
+#   rm_any_libs="no"
+#fi
+
+TRY_CLEANUP=1
+#           ^  -- set this to 1 to try cleaning up from a prior faulty run
+#
+#           How to rename or hide excluded files so they !~= %.f90
+dsuffix=".xug"
+#         ^^^----- this is the suffix stuck onto any excluded files
+#                   or else the name of a temp directory hiding them
+# Do we have write permission in the current working directory
+if [ -w "`pwd`" ]
+then
+	f90suffix=".f90"
+	if [ -d "$dsuffix" ] ; then
+		if [ $TRY_CLEANUP = "1" ] ; then
+         extant_files "$dsuffix"/*
+         if [ "$extant_files_result" != "" ]
+         then
+			   mv "$dsuffix"/* .
+         fi
+			rmdir "$dsuffix"
+		else
+			echo "Sorry--$dsuffix already exists"
+			echo "Aborting new Makefile.dep"
+                exit
+      fi
+    fi
+    mkdir "$dsuffix"
 else
-   rm_any_libs="no"
+	f90suffix="$dsuffix"
 fi
+
+me="$0"
+my_name=ghostbuster.sh
+
+wrong_list=""
+more_opts="yes"
+while [ "$more_opts" = "yes" ] ; do
+
+    case "$1" in
+
+    -d )
+	    if [ -f "$2" ]
+       then
+	       if [ "$f90suffix" != "$dsuffix" ]
+          then
+	          mv "$2" "$dsuffix"
+	       else
+	          echo "$2 wrongly added to dependency lists"
+                            wrong_list="$wrong_list $2"
+	       fi
+       fi
+       shift
+	    shift
+       ;;
+    -h | -help )
+       sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
+           | sed -n 's/^.//p' | sed '1 d; $ d'
+       exit
+	;;
+
+    * )
+       more_opts="no"
+       ;;
+    esac
+done
 
 	if [ $# -lt "2" ]
 	then
@@ -148,8 +221,25 @@ fi
         	rm -f *.a
    	fi
 	fi
+#         clean up
+# renamed or hidden files
+if [ -w "$dsuffix" ]
+then
+	moved_files_list="$dsuffix"/*
+	moved_files=`echo $moved_files_list`
+#	the above will expand the wild card * if dsuffix is non-empty
+	if [ "$moved_files" != "$dsuffix/*" ]
+	then
+        	mv "$dsuffix"/* .
+	fi
+   rmdir "$dsuffix"
+fi
+exit
 exit
 # $Log$
+# Revision 1.2  2001/05/31 20:16:26  pwagner
+# Added -lib option to rm any haunted libs
+#
 # Revision 1.1  2001/05/01 17:03:31  pwagner
 # First commit
 #
