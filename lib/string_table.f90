@@ -210,11 +210,28 @@ contains
     return
   end function COMPARE_STRINGS
   ! =======================================     DISPLAY_STRING     =====
-  subroutine DISPLAY_STRING ( STRING, ADVANCE )
+  subroutine DISPLAY_STRING ( STRING, ADVANCE, STRIP )
   ! Write the string indexed by STRING.
     integer, intent(in) :: STRING
     character(len=*), intent(in), optional :: ADVANCE
-    call output ( char_table(strings(string-1)+1: strings(string)), &
+    logical, intent(in), optional :: STRIP
+
+    integer :: offset
+    logical :: myStrip
+    character (len=1) :: firstChar, lastChar
+    
+    myStrip=.false.
+    if (present(strip)) myStrip=strip
+
+    offset=0
+    if (myStrip) then
+      firstChar=char_table(strings(string-1)+1)
+      lastChar=char_table(strings(string))
+      if ( (firstChar=='"' .and. lastChar=='"') .or. &
+        &  (firstChar=="'" .and. lastChar=="'") ) offset=1
+    end if
+
+    call output ( char_table(strings(string-1)+1+offset: strings(string)-offset), &
                         advance=advance )
     return
   end subroutine DISPLAY_STRING
@@ -578,6 +595,9 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.2  2001/03/02 01:33:40  livesey
+! Added strip argument to display_string
+!
 ! Revision 2.1  2000/10/11 18:33:24  vsnyder
 ! Move from lib/cf_parser to lib; insert copyright notice
 !
