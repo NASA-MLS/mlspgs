@@ -37,6 +37,12 @@ mlsl1_objs=$(mlsl1_sources)/$(MLSCONFG)
 # where sources (but not OBJS) shared with l3, etc. are stored
 srclib=../../srclib
 
+# where sources (but not OBJS) used for hdf5 file versions are stored
+he5lib=../../he5lib
+
+# where he5 objects and libhe5.a are stored
+he5lib_objs=$(he5lib)/$(MLSCONFG)
+
 # where the MLSCONFG directory is (to hold objects, prog, etc.)
 OBJ_DIR = .
 
@@ -84,6 +90,7 @@ SHELL = /bin/sh
 libmls_f90 := $(shell ${REECHO} $(libmls_sources)/*.f $(libmls_sources)/*.f90 $(libmls_sources)/*.c)
 mlsl1_f90 := $(shell ${REECHO} $(mlsl1_sources)/*.f $(mlsl1_sources)/*.f90 $(mlsl1_sources)/*.c)
 blaslib_f := $(shell ${REECHO} $(blaslib)/*.c $(blaslib)/*.f $(blaslib)/*.f90)
+he5lib_f := $(shell ${REECHO} $(he5lib)/*.c $(he5lib)/*.f $(he5lib)/*.f90)
 
 ifdef BLAS
    LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
@@ -92,6 +99,13 @@ else
    LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
    $(libmls_sources)/machines/$(MLSCONFG)/machine.f90 \
    $(blaslib_f)
+endif
+
+ifdef HDFVERSIONS
+   libl1_prereqs := $(libmls_objs)/libmls.a $(mlsl1_f90) \
+    $(he5lib_objs)/libhe5.a
+else
+   libl1_prereqs := $(libmls_objs)/libmls.a $(mlsl1_f90)
 endif
 
 PROG=sids_l1boa
@@ -109,9 +123,15 @@ $(PROG): $(CONFDIR)/$(MLSCFILE) $(OBJ_DIR)/$(MLSCONFG) \
 $(libmls_objs)/libmls.a: $(LIB_prereqs)
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
-$(OBJ_DIR)/$(MLSCONFG)/libl1.a: $(libmls_objs)/libmls.a $(mlsl1_f90)
+$(OBJ_DIR)/$(MLSCONFG)/libl1.a: $(libl1_prereqs)
 	$(MAKE) -f $(MakeFName) -C $(mlsl1_sources)
 		cd $(OBJ_DIR)/$(MLSCONFG) && $(MAKE) libl1.a
+
+$(he5lib_objs)/libhe5.a: $(libmls_objs)/libmls.a $(he5lib_f)
+	@if [ "$(NOHUNTING)" != "" ] ; then \
+	   rm -f $(he5lib_objs)/libhe5.a ; \
+	fi ; \
+	$(MAKE) -f $(MakeFName) libhe5.a -C $(he5lib)
 
 .PHONY: configure depends clean tar mostlyclean tarz targ \
   $(PROG) $(DESIRED_PROG_NAME) update ghostbuster
@@ -131,6 +151,9 @@ $(OBJ_DIR)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
           -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" -mc "$(OBJ_DIR)" -nc
 
 depends:
+	@$(MLSBIN)/makemakedep.sh -nodep \
+        $(libmls_sources) $(mlsl1_sources) $(srclib); \
+     mv Makefile.dep Makefile.nodep
 	@$(MLSBIN)/makemakedep.sh \
         $(libmls_sources) $(mlsl1_sources) $(srclib)
 
@@ -181,6 +204,9 @@ update:
 	$(MAKE) -f $(MakeFName) depends ghostbuster
 
 # $Log$
+# Revision 1.5  2001/12/06 01:03:11  pwagner
+# Depends follows changes in l1 directory
+#
 # Revision 1.4  2001/11/09 21:57:07  pwagner
 # Does depends and ghostbuster after update, not beforre
 #
