@@ -31,7 +31,7 @@ module MLSSignals_M
 
   ! Public procedures and interfaces:
   public :: AddBandToDatabase, AddModuleToDatabase, AddRadiometerToDatabase
-  public :: AddSignalToDatabase, AddSpectrometerTypeToDatabase
+  public :: AddSignalToDatabase, AddSpectrometerTypeToDatabase, AreSignalsSuperset
   public :: DestroyBandDatabase, DestroyModuleDatabase
   public :: DestroyRadiometerDatabase, DestroySignal, DestroySignalDatabase
   public :: DestroySpectrometerType, DestroySpectrometerTypeDatabase, Dump
@@ -1115,15 +1115,18 @@ oc:   do
   end function IsModuleSpacecraft
 
   ! ------------------------------------------------  MatchSignal  -----
-  integer function MatchSignal ( Signals, Probe, sideband, matchFlags )
+  integer function MatchSignal ( Signals, Probe, sideband, channel, matchFlags )
     ! Given an array Signals, find the one in the array that provides
     ! the smallest superset of features of the signal Probe.  The result
     ! is zero if no signals match.
+    ! If sideband or channel are present they are used for the probe, instead
+    ! of the values in probe.
 
     type(signal_T), dimension(:), intent(in) :: Signals
     type(signal_T), intent(in) :: Probe
     integer, intent(in), optional :: sideband     ! Use this instead of probe%sideband
     logical, dimension(size(signals)), intent(out), optional :: matchFlags
+    integer, intent(in), optional :: CHANNEL ! Just this channel
 
     integer :: BestMatch                ! The smallest number of 
     integer :: I                        ! Loop inductors, subscripts
@@ -1153,11 +1156,19 @@ oc:   do
         &  signals(i)%spectrometerType /= probe%spectrometerType .or. &
         &  signals(i)%switch /= probe%switch ) cycle
       ! Now the channels in Probe all have to be present in Signals(i)
-      match = (.not. associated(probe%channels)) .or. &
-        & (.not. associated(signals(i)%channels) )
-      if ( .not. match ) match = all( (probe%channels .and. &
-        & signals(i)%channels(lbound(probe%channels,1):ubound(probe%channels,1)) ) &
-        & .eqv. probe%channels )
+      if (present(channel)) then        ! User asked for a specific channel
+        if ( associated(signals(i)%channels) ) then
+          match = signals(i)%channels(channel)
+        else
+          match = .true.
+        endif
+      else
+        match = (.not. associated(probe%channels)) .or. &
+          & (.not. associated(signals(i)%channels) )
+        if ( .not. match ) match = all( (probe%channels .and. &
+          & signals(i)%channels(lbound(probe%channels,1):ubound(probe%channels,1)) ) &
+          & .eqv. probe%channels )
+      endif
       if ( match ) then
         if ( present( matchFlags ) ) matchFlags(i) = .true.
         if ( associated(signals(i)%channels) ) then
@@ -1173,9 +1184,65 @@ oc:   do
     end do
   end function MatchSignal
 
+  ! ----------------------------------------- AreSignalsSubset ----------
+  integer function AreSignalsSuperset ( signals, probe )
+    ! This is related to MatchSignal.  Given two arrays of signals: signals and
+    ! probe, it returns -1 if probe is not a subset of signals, otherwise, it
+    ! returns the number of channels by which signals is a superset of probe.
+    ! If sideband and channel are present, they are taken to override the
+    ! values in probe, if that makes sense.
+
+    ! Dummy arguments
+    type (Signal_T), dimension(:), intent(in) :: SIGNALS ! Signals to search
+    type (Signal_T), dimension(:), intent(in) :: PROBE ! Potential subset
+
+    ! Local variables
+    integer :: I                        ! Loop counter
+    integer :: MATCH                    ! Result of call to match signal
+    integer :: NOPBCHANNELS             ! Total channels in probe
+    integer :: NOSIGCHANNELS            ! Total channels in signals
+
+    ! Executable code
+
+    AreSignalsSuperset = -1               ! Default to no
+    noPbChannels = 0
+    noSigChannels = 0
+    
+    ! First we identify whether they are a superset or not
+    do i = 1, size(probe)
+      ! Is this probe in signals?
+      match = MatchSignal ( signals, probe(i) )
+      if ( match == 0 ) return
+
+      ! OK, now how big is this probe
+      if ( associated(probe(i)%channels ) ) then
+        noPbChannels = noPbChannels + count( probe(i)%channels )
+      else
+        noPbChannels = noPbChannels + size ( probe(i)%frequencies )
+      end if
+    end do
+  
+    ! OK, if we got here, then we know we're a superset
+    ! How many channels in signals
+    do i = 1, size(signals)
+      if ( associated(signals(i)%channels ) ) then
+        noSigChannels = noSigChannels + count( signals(i)%channels )
+      else
+        noSigChannels = noSigChannels + size ( signals(i)%frequencies )
+      end if
+    end do
+
+    ! Now return the difference
+    AreSignalsSuperset = noSigChannels - noPbChannels
+
+  end function AreSignalsSuperset
+
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.38  2001/05/16 01:24:06  livesey
+! Added AreSignalsSuperset routine
+!
 ! Revision 2.37  2001/05/03 02:06:07  vsnyder
 ! Insert copyright notice
 !
