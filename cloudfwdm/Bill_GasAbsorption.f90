@@ -147,8 +147,7 @@ contains
       Spectag = Catalog(i)%Spec_Tag
 
       CALL create_beta ( Spectag, Catalog(i)%continuum, PB, T, &
-        &  FF, Lines(Catalog(i)%Lines)%W, gl_slabs(n_ele,i), bb, Incl_Cld, cld_ext,&
-        &  IPSD, WC, NU, NUA, NAB, NR, NC )
+        &  FF, Lines(Catalog(i)%Lines)%W, gl_slabs(n_ele,i), bb )
       
       select case (Spectag)
       case (SP_H2O)
@@ -208,6 +207,9 @@ contains
 End Module Bill_GasAbsorption
 
 ! $Log$
+! Revision 1.13  2003/02/06 00:21:10  jonathan
+! change call to creat_beta
+!
 ! Revision 1.12  2003/01/31 17:24:12  jonathan
 ! add Incl_Cld. cld_ext
 !
