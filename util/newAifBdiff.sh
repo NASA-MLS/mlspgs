@@ -2,12 +2,14 @@
 #newAifBdiff.sh
 
 # --------------- newAifBdiff.sh help
-#Executes supplied command;
-# if new B same as old B, keeps old A
-# else deletes old A and B, replacing with new
+# Executes supplied command 
+# which presumably creates a file newA & possibly newB;
+# if new B same as old B, keeps old A;
+# else deletes old A and B, replacing with new A and B
 # (works even if A and B name the same files
-#   meaning keep old A, and its date, unless new A different)
+#   meaning simply keep old A, and its date, unless new A different)
 # leaves record file that names A and tells whether it is new or old
+# if record file already exists, appends new line to it with above info
 #Usage:
 #newAifBdiff.sh [options] old_A old_B command [arg1] [arg2] ..
 #
@@ -21,7 +23,7 @@
 # old_A         the file to be conditionally replaced
 # old_B         the file to be compared with new_B
 # command       the command to be executed (producing new_A and _B)
-# arg1 ..       optional arguments to command
+# arg1 ..       optional arguments passed to command
 #Result:
 #file(s) named the same as old_A and old_B
 #record file named newAifBdiff.out
@@ -33,11 +35,10 @@
 #
 #Notes:
 #(1) The option(s) marked with "-", if present,
-#must precede the command and args on the command line
-#(2) The option "-a" is passed to diff if the first file is
-#    does not return a string containing "text" when passed as arg
-#    to the unix utility "file";
-#    this option is legal to gnu diff, but not to Sun's diff; so beware
+#    must precede the command and args on the command line
+#(2) Because the option, "-a", is legal to gnu diff, but not to Sun's diff
+#    we have ceased relying on it; instead we use the octal dump routine od
+#    if your platform/os doesn't support it please let me know
 #
 #Record file
 #file name: newAifBdiff.out
@@ -51,8 +52,7 @@
 #(1) Why have two ways to do essentially the same thing: newAifAdiff.sh?
 #(2) Why such a lousy name?
 #(3) How about optionally using a user-supplied program instead of diff?
-#      that way we could get rid of conditional option "-a", 
-#      bad Sun implementation, etc.
+#      that way we could get rid of relying on octal dump routine
 # Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
@@ -65,7 +65,9 @@
 # warranted by the type of file passed as argument
 # i.e., if ascii, then diff_opt is ""
 # but if data, then "-a"
-# usage: extant_files arg1 [arg2] ..
+# usage: what_diff_opt arg1
+# returns result as diff_opt
+# Superseded: see diff_fun
 
 what_diff_opt()
 {
@@ -80,6 +82,27 @@ what_diff_opt()
       then
          diff_opt="-a"
       fi
+   fi
+}
+
+#------------------------------- diff_fun ------------
+#
+# Function to determine whether two files are different
+# w/o relying on Gnu's diff with its handy "-a" option
+# (Inferior standard versions of diff, like Sun's, lack this option)
+# usage: extant_files arg1 [arg2] ..
+# returns (number) result as the_diff: 0 if none, else non-zero
+
+diff_fun()
+{
+   the_diff="0"
+	if [ $# -gt "1" ]
+	then
+      rm -f temp1 temp2
+      od -t c "$1" > temp1
+      od -t c "$2" > temp2
+      the_diff=`diff temp1 temp2 | wc -l`
+      rm -f temp1 temp2
    fi
 }
 
@@ -207,9 +230,10 @@ elif [ "$ASameAsB" = "yes" ]; then
   mv "$old_A" "$old_A.1"
   "$the_command" "$@"
 #  the_diff=`diff -a $old_A $old_A.1 | wc -l`
-  what_diff_opt $old_A
+#  what_diff_opt $old_A
 #  echo diff $diff_opt $old_A $old_A.1 | wc -l
-  the_diff=`diff $diff_opt $old_A $old_A.1 | wc -l`
+#  the_diff=`diff $diff_opt $old_A $old_A.1 | wc -l`
+  diff_fun $old_A $old_A.1
   if [ "$the_diff" -gt 0 ] ; then
     rm -f "$old_A.1"
       message="($the_diff) A, B same; old A, new A differ =>need new A"
@@ -230,9 +254,10 @@ else
   mv "$old_B" "$old_B.1"
   "$the_command" "$@"
 #  the_diff=`diff -a $old_B $old_B.1 | wc -l`
-  what_diff_opt $old_B
+#  what_diff_opt $old_B
 #  echo diff $diff_opt $old_B $old_B.1 | wc -l
-  the_diff=`diff $diff_opt $old_B $old_B.1 | wc -l`
+#  the_diff=`diff $diff_opt $old_B $old_B.1 | wc -l`
+  diff_fun $old_B $old_B.1
   if [ "$the_diff" -gt 0 ] ; then
     rm -f "$old_A.1" "$old_B.1"
       message="($the_diff) old B, new B differ =>need new A"
@@ -256,6 +281,9 @@ if [ "$keepRecords" = "yes" ]; then
 fi
 exit
 # $Log$
+# Revision 1.3  2002/06/21 20:32:06  pwagner
+# Conditionally passes option -a to diff
+#
 # Revision 1.2  2002/06/21 00:09:32  pwagner
 # Added -nr option
 #
