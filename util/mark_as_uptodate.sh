@@ -190,6 +190,8 @@ extant_files()
 #     so compiler and linker commands get passed back to me to handle
 # (3) LDOPTS=
 #     so the linker command is simplified to $(FC) -o target [ignored stuff]
+# (4) FAFTER= and LAFTER=
+#     so Van's thing with FAFTER=2>&1|hl|grep -v "Id is set but" won't bomb
 
 # Anomalies and bugs:
 # Why the ugly DOUBLE_MAKE?
@@ -252,7 +254,8 @@ mark_files()
              MARK_ALL_AS_UPTODATE=no FC="$me" LDOPTS=
         else
           $MYMAKE MLSCONFG="$MLSCONFG" MLSCFILE="$MLSCFILE" \
-             MARK_ALL_AS_UPTODATE=no FC="$me" LDOPTS= >> $temp1
+             MARK_ALL_AS_UPTODATE=no FC="$me" LDOPTS= \
+             FAFTER= LAFTER= >> $temp1
         fi
      elif [ "$MLSCONFG" != "" ]
      then
@@ -263,7 +266,7 @@ mark_files()
            FC="$me" LDOPTS=
         else
           $MYMAKE MLSCONFG="$MLSCONFG" MARK_ALL_AS_UPTODATE=no \
-           FC="$me" LDOPTS= >> $temp1
+           FC="$me" LDOPTS= FAFTER= LAFTER= >> $temp1
         fi
      elif [ "$MLSCFILE" != "" ]
      then
@@ -274,7 +277,7 @@ mark_files()
            FC="$me" LDOPTS=
         else
           $MYMAKE MLSCFILE="$MLSCFILE" MARK_ALL_AS_UPTODATE=no \
-           FC="$me" LDOPTS= >> $temp1
+           FC="$me" LDOPTS= FAFTER= LAFTER= >> $temp1
         fi
      else
 #       $MYMAKE -t MARK_ALL_AS_UPTODATE=no
@@ -283,7 +286,8 @@ mark_files()
         then
           $MYMAKE MARK_ALL_AS_UPTODATE=no FC="$me" LDOPTS=
         else
-          $MYMAKE MARK_ALL_AS_UPTODATE=no FC="$me" LDOPTS= >> $temp1
+          $MYMAKE MARK_ALL_AS_UPTODATE=no FC="$me" LDOPTS= \
+           FAFTER= LAFTER= >> $temp1
         fi
      fi
      return_status=`expr $?`
@@ -610,6 +614,9 @@ fi
 exit 0
 
 # $Log$
+# Revision 1.5  2002/07/26 23:49:59  pwagner
+# Faster at marking files uptodate (but still slow)
+#
 # Revision 1.4  2002/07/25 20:58:08  pwagner
 # Improved marking up to date
 #
