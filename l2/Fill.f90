@@ -33,6 +33,8 @@ module Fill                     ! Create vectors and fill them.
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
+  logical, parameter :: DONTPAD = .false.
+
 contains ! =====     Public Procedures     =============================
 
   !---------------------------------------------------  MLSL2Fill  -----
@@ -5394,7 +5396,8 @@ contains ! =====     Public Procedures     =============================
 
         call ReadL1BData ( fileID , nameString, l1bData, noMAFs, flag, &
           & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
-          & NeverFail= .false., hdfVersion=this_hdfVersion )
+          & NeverFail= .false., hdfVersion=this_hdfVersion, &
+        & dontPad=DONTPAD )
         ! If it didn't exist in the not-a-radiance case, then we'll fail here.
         if ( flag /= 0 ) then
           call Announce_Error ( root, errorReadingL1B )
@@ -6893,6 +6896,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.280  2004/08/24 23:24:46  pwagner
+! Asks ReadL1BData to pad, contract--partly tested
+!
 ! Revision 2.279  2004/08/23 21:59:42  pwagner
 ! Disabled debugging dumps of section, phase timings
 !
