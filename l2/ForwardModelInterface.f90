@@ -22,7 +22,7 @@ module ForwardModelInterface
   ! Now fields
   use Init_Tables_Module, only: F_ATMOS_DER, F_CHANNELS, F_DO_CONV, F_DO_FREQ_AVG, &
     F_FREQUENCY, F_INTEGRATIONGRID, F_MOLECULES, F_MOLECULEDERIVATIVES, &
-    F_POINTINGGRIDS, F_SIGNALS, F_SPECT_DER, F_TANGENTGRID, F_TEMP_DER, F_TYPE
+    F_PHIWINDOW, F_POINTINGGRIDS, F_SIGNALS, F_SPECT_DER, F_TANGENTGRID, F_TEMP_DER, F_TYPE
   ! Now literals
   use Init_Tables_Module, only: L_CHANNEL, L_EARTHREFL, L_ELEVOFFSET, L_FULL, L_FOLDED, &
     & L_LINEAR, L_LOSVEL, L_LOWER, L_NONE, L_ORBITINCLINE, L_PTAN, L_RADIANCE,&
@@ -94,6 +94,7 @@ module ForwardModelInterface
     type(vGrid_T), pointer :: integrationGrid ! Zeta grid for integration
     type(vGrid_T), pointer :: tangentGrid     ! Zeta grid for integration
     integer :: surfaceTangentIndex  ! Index in Tangentgrid of Earth's surface
+    integer :: phiWindow            ! Window size for examining stuff
   end type ForwardModelConfig_T
 
   ! Error codes
@@ -106,7 +107,8 @@ module ForwardModelInterface
   integer, parameter :: IncompleteFullFwm    = DuplicateField + 1
   integer, parameter :: IncompleteLinearFwm  = IncompleteFullFwm + 1
   integer, parameter :: IrrelevantFwmParameter = IncompleteLinearFwm + 1
-  integer, parameter :: TangentNotSubset = IrrelevantFwmParameter + 1
+  integer, parameter :: TangentNotSubset     =  IrrelevantFwmParameter + 1
+  integer, parameter :: PhiWindowMustBeOdd   = TangentNotSubset + 1
 
   integer :: Error            ! Error level -- 0 = OK
 
@@ -280,6 +282,10 @@ contains
           ! Default to include this channel
           info%sigInfo(j)%channelIncluded = .true.
         end do                          ! End loop over listed signals
+      case ( f_phiWindow )
+        call expr( subtree(2,son), units, value, type )
+        info%phiWindow = nint( value(1) )
+        if (mod(info%phiWindow,2) /= 1) call AnnounceError (phiWindowMustBeOdd, key)
       case ( f_spect_der )
         info%spect_der = get_boolean(son)
       case ( f_temp_der )
@@ -531,6 +537,9 @@ contains
       & quantityType=l_losVel, instrumentModule=signal%instrumentModule)
     scGeocAlt => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_scGeocAlt)
+
+    print*,'Just some checks:',temp%template%noInstances, &
+      & radiance%template%noInstances, ptan%template%noInstances
     ! We won't seek for molecules here as we can't have an array of pointers. 
     ! When we do want molecule i we would do something like
     ! vmr => GetVectorQuantityBytype (fwdModelIn, fwdModelExtra, &
@@ -1319,12 +1328,17 @@ contains
       call output ( 'irrelevant parameter for this forward model type' )
     case (TangentNotSubset)
       call output ( 'non subsurface tangent grid not a subset of integration grid' )
+    case (PhiWindowMustBeOdd)
+      call output ( 'phiWindow is not odd' )
     end select
   end subroutine AnnounceError
 
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.53  2001/03/29 22:07:16  livesey
+! Added phiWindow
+!
 ! Revision 2.52  2001/03/29 12:11:16  zvi
 ! Fixing Bug seeting surface index erroniously
 !
