@@ -620,7 +620,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------  GetVectorQuantityByType  -----
   function GetVectorQuantityByType ( vector, otherVector, quantityType, &
-    & molecule, instrumentModule, radiometer, signal, foundInFirst )
+    & molecule, instrumentModule, radiometer, signal, foundInFirst, noError )
 
     ! Given a quantity type index (l_...), this function returns the first
     ! quantity within the vector that has that type.  If molecule and/or
@@ -638,11 +638,16 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in), optional :: RADIOMETER   ! Radiometer index
     integer, intent(in), optional :: SIGNAL       ! Signal index
     logical, intent(out), optional :: FOUNDINFIRST ! Set if found in first vector
+    logical, intent(in), optional :: noError ! Don't give error if not found
     ! Result
     type (VectorValue_T), pointer :: GetVectorQuantityByType
 
     ! Local variable
     integer :: index
+    logical :: myNoError
+
+    myNoError = .false.
+    if (present(noError)) myNoError = noError
 
     ! Look in the first vector
     index = GetVectorQuantityIndexByType ( vector, &
@@ -655,9 +660,14 @@ contains ! =====     Public Procedures     =============================
       ! Can only get here if not found in first vector and 
       ! otherVector is present
       index = GetVectorQuantityIndexByType ( otherVector, &
-        &  quantityType, molecule, instrumentModule, radiometer, signal )
+        &  quantityType, molecule, instrumentModule, radiometer, signal,&
+        &  noError=myNoError )
       if ( present (foundInFirst) ) foundInFirst = .false.
-      GetVectorQuantityByType => otherVector%quantities( index )
+      if ( index /= 0 ) then
+        GetVectorQuantityByType => otherVector%quantities( index )
+      else ! can only get here when myNoError=T
+        GetVectorQuantityByType => NULL()
+      end if
     end if
   end function GetVectorQuantityByType
 
@@ -1009,6 +1019,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.19  2001/03/19 17:10:47  livesey
+! Added more options to validate vector quantity
+!
 ! Revision 2.18  2001/03/16 18:17:49  livesey
 ! Added second vector argument and more conditions to GetVectorQuantityByType
 !
