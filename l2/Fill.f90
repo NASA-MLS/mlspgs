@@ -1,4 +1,4 @@
-! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -158,7 +158,6 @@ module Fill                     ! Create vectors and fill them.
   
   real, parameter ::    UNDEFINED_VALUE = -999.99 ! Same as %template%badvalue
 
-  !  integer, parameter :: s_Fill = 0   ! to be replaced by entry in init_tables_module
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
        "$Id$"
@@ -245,7 +244,6 @@ contains ! =====     Public Procedures     =============================
     integer :: H2OQUANTITYINDEX         ! in the quantities database
     integer :: H2OVECTORINDEX           ! In the vector database
     integer :: I, J                     ! Loop indices for section, spec, expr
-  !  The next three are FALSE by default
     integer :: GLOBALUNIT               ! To go into the vector
     logical :: IGNOREZERO               ! Don't sum chi^2 at values of noise = 0
     logical :: IGNORENEGATIVE           ! Don't sum chi^2 at values of noise < 0
@@ -328,13 +326,6 @@ contains ! =====     Public Procedures     =============================
     old_math77_ran_pack = math77_ran_pack
 
     if ( toggle(gen) ) call trace_begin ( "MLSL2Fill", root )
-
-    ! Logical id of file(s) holding old L2GP data
-    !    OL2FileHandle = mlspcf_ol2gp_start
-
-    ! starting quantities number for *this* vector; what if we have more?
-    !    qtiesStart = 1
-    !   Calculate qtiesStart for the specific quantity below
 
     error = 0
     templateIndex = -1
@@ -558,7 +549,7 @@ contains ! =====     Public Procedures     =============================
           case ( f_ratioQuantity )      ! For isotope ratio
             ratioVectorIndex = decoration(decoration(subtree(1,gson)))
             ratioQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
-          case ( f_refGPHQuantity ) ! For hydrostatic
+          case ( f_refGPHQuantity ) ! For hydrostatic or rhi
             refGPHVectorIndex = decoration(decoration(subtree(1,gson)))
             refGPHQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))    
           case ( f_resetSeed )
@@ -602,7 +593,7 @@ contains ! =====     Public Procedures     =============================
           case ( f_tngtECI )              ! For special fill of losVel
             tngtECIVectorIndex = decoration(decoration(subtree(1,gson)))
             tngtECIQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
-          case ( f_temperatureQuantity ) ! For hydrostatic
+          case ( f_temperatureQuantity ) ! For hydrostatic or rhi
             temperatureVectorIndex = decoration(decoration(subtree(1,gson)))
             temperatureQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_vmrQuantity )     ! For special fill of columnAbundance
@@ -834,16 +825,37 @@ contains ! =====     Public Procedures     =============================
                 & dontMask, ignoreZero, ignoreNegative, multiplier )
             endif
           case ( l_rhi )
-            if ( .not. got(f_h2oQuantity) ) then
+            !if ( .not. any(got( &
+            ! & (/f_h2oquantity, f_temperatureQuantity, f_refGPHQuantity/) &
+            if ( .not. any(got( &
+             & (/f_h2oquantity, f_temperatureQuantity/) &
+             & )) ) then
               call Announce_error ( key, No_Error_code, &
-              & 'Missing the h2o field to fill rhi'  )
+              & 'Missing a required field to fill rhi'  )
             else
               h2oQuantity => GetVectorQtyByTemplateIndex( &
                 & vectors(h2oVectorIndex), h2oQuantityIndex)
+              temperatureQuantity => GetVectorQtyByTemplateIndex( &
+                & vectors(temperatureVectorIndex), temperatureQuantityIndex)
+              !refGPHQuantity => GetVectorQtyByTemplateIndex( &
+              !  & vectors(refGPHVectorIndex), refGPHQuantityIndex)
               if ( .not. ValidateVectorQuantity(h2oQuantity, &
-                & quantityType=(/l_vmr/), molecule=(/l_h2o/)) )&
-                & call Announce_Error ( key, badGeocAltitudeQuantity )
-              call FillRHI ( key, quantity, h2oQuantity )
+                & quantityType=(/l_vmr/), molecule=(/l_h2o/)) ) then
+                call Announce_Error ( key, No_Error_code, &
+                & 'The h2oQuantity is not a vmr for the H2O molecule'  )
+              elseif ( .not. ValidateVectorQuantity(temperatureQuantity, &
+                & quantityType=(/l_temperature/)) ) then
+                call Announce_Error ( key, No_Error_code, &
+                & 'The temperatureQuantity is not a temperature'  )
+              !elseif ( .not. ValidateVectorQuantity(refGPHQuantity, &
+              !  & quantityType=(/l_refgph/)) ) then
+              !  call Announce_Error ( key, No_Error_code, &
+              !  & 'The refgphQuantity is not a refgph'  )
+              else
+                call FillRHIFromH2O ( key, quantity, &
+                & h2oQuantity, temperatureQuantity, &
+                & dontMask, ignoreZero, ignoreNegative )
+              endif
             endif
           case default
             call Announce_error ( key, noSpecialFill )
@@ -2251,17 +2263,114 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine FillColAbundance
 
-  ! ------------------------------------- FillRHI ----
-  subroutine FillRHI ( key, quantity, h2oQuantity )
+  ! ------------------------------------- FillRHIFromH2O ----
+  subroutine FillRHIFromH2O ( key, quantity, &
+   & h2oQuantity, temperatureQuantity, dontMask, ignoreZero, ignoreNegative )
     ! Convert h2o vmr to %RHI
     ! (See Eq. 9 from "UARS Microwave Limb Sounder upper tropospheric
-    !  humidity measurement: Metjod and validation" Read et. al. 
+    !  humidity measurement: Method and validation" Read et. al. 
     !  J. Geoph. Res. Dec. 2001 (106) D23)
     integer, intent(in) :: key          ! For messages
     type (VectorValue_T), intent(inout) :: QUANTITY ! rhi Quantity to fill
     type (VectorValue_T), intent(in) :: h2oQuantity ! vmr
+    type (VectorValue_T), intent(in) :: temperatureQuantity ! T(zeta)
+!   type (VectorValue_T), intent(in) :: refGPHQuantity ! zeta
+    logical, intent(in)           ::    dontMask    ! Use even masked values
+    logical, intent(in)           ::    ignoreZero  ! Ignore 0 values of h2o
+    logical, intent(in)           ::    ignoreNegative  ! Ignore <0 values
 
-  end subroutine FillRHI
+    ! Local variables
+    integer ::                          Channel     ! Channel loop counter    
+    integer ::                          S           ! Surface loop counter    
+    integer ::                          I           ! Instances               
+    integer ::                          QINDEX                                
+    integer ::                          NOCHANS                               
+    integer ::                          N           ! Num. of summed values   
+    logical ::                          skipMe                                
+    logical                          :: matched_sizes
+    logical                          :: matched_surfs
+    logical, parameter               :: interpolate = .false.
+    integer                          :: dim
+    real (r8), dimension(quantity%template%noSurfs) :: outZeta
+    real (r8) ::                        T
+    ! Executable statements
+    ! Check that all is well
+    matched_sizes = .true.
+    do dim=1, 2
+      matched_sizes = matched_sizes .and. &
+      & .not. any( size(Quantity%values,dim) /= &
+      &(/ size(h2oQuantity%values,dim), &
+      & size(temperatureQuantity%values,dim) /)&
+      & )
+    enddo
+    if ( .not. (matched_sizes .or. interpolate) ) then
+     call Announce_Error ( key, No_Error_code, &
+      & 'Incompatible quantities in FillRHIFromH2O--' //&
+      & '(currently all must have same size)' )
+     return
+    endif
+    matched_surfs = .true.
+    matched_surfs = matched_surfs .and. &
+     & .not. any( Quantity%template%noSurfs /= &
+     &(/ h2oQuantity%template%noSurfs, &
+     & temperatureQuantity%template%noSurfs /)&
+     & )
+    if ( .not. (matched_surfs .or. interpolate) ) then
+     call Announce_Error ( key, No_Error_code, &
+      & 'Different vertical coords in FillRHIFromH2O--' //&
+      & '(currently all must be on the same VGrid)' )
+     return
+    endif
+    ! zeta must be in log(hPa) units
+    if ( quantity%template%verticalCoordinate == l_pressure ) then  
+      outZeta = -log10 ( quantity%template%surfs(:,1) )             
+    else                                                            
+      outZeta = quantity%template%surfs(:,1)                        
+    endif                                                           
+    ! Now let's do the actual conversion
+    do i=1, quantity%template%noInstances
+      N = 0
+      do Channel=1, quantity%template%noChans
+        do s=1, quantity%template%noSurfs
+          N = N + 1
+          qIndex = Channel + (s-1)*nochans
+          skipMe = &
+          & .not. dontMask .and. ( &
+          &   isVectorQtyMasked(h2oQuantity, qIndex, i) .or. &
+          &   isVectorQtyMasked(temperatureQuantity, qIndex, i) &
+          & .or. (ignoreNegative .and. h2oQuantity%values(qIndex, i) < 0.0 ) &
+          & .or. (ignoreZero .and. h2oQuantity%values(qIndex, i) == 0.0 ))
+          ! But skip no matter what else if temperature illegal
+          skipMe = skipMe .or. temperatureQuantity%values(qIndex, i) <= 0.0
+          if ( .not. skipMe ) then
+            T = temperatureQuantity%values(qIndex, i)
+            Quantity%values(qIndex, i) = &
+             & h2oQuantity%values(qIndex, i) &
+             & * &
+             & exp(-(C(T)+outZeta(qIndex)) * log(10.)) &
+             & / &
+             & exp(3.56654*log(T/273.16))
+          endif
+        enddo
+      enddo
+    enddo
+    contains
+    function C ( T )
+      ! As found in ref.
+      real(r8), intent(in)   :: T
+      real(r8)               :: C
+      ! Local
+      real(r8), parameter    :: a0 = -1.2141649d0
+      real(r8), parameter    :: a1 = 9.09718d0
+      real(r8), parameter    :: a2 = 0.876793d0
+      real, parameter        :: ILLEGALTEMP = UNDEFINED_VALUE
+      !
+      if ( T > 0.d0 ) then
+      else
+        C = ILLEGALTEMP
+      endif
+    end function C
+  end subroutine FillRHIFromH2O
 
   ! ---------------------------------- FillVectorQuantityWithEsimatedNoise ---
   subroutine FillVectorQtyWithEstNoise ( quantity, radiance, &
@@ -3006,6 +3115,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.117  2002/04/11 23:51:28  pwagner
+! Fleshed out FillRHIFromH2O; untested yet
+!
 ! Revision 2.116  2002/04/10 17:45:44  pwagner
 ! Added FillRHI from h2oquantity (just a placeholder)
 !
