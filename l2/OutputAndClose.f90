@@ -87,37 +87,36 @@ contains ! =====     Public Procedures     =============================
     ! - - - Local declarations - - -
 
     integer :: DB_index
+    logical, parameter :: DEBUG = .FALSE.
     integer :: FIELD_INDEX              ! F_... field code
     integer :: FIELD_NO                 ! Index of assign vertex sons of Key
     character (len=132) :: FILE_BASE    ! From the FILE= field
     integer :: GSON                     ! Son of Son -- an assign node
     integer :: IN_FIELD_NO              ! Index of sons of assign vertex
     integer :: KEY                      ! Index of spec_args node
-    integer :: l2auxFileHandle, l2aux_Version
-    integer :: l2gp_mcf, l2aux_mcf, l2dgg_mcf  ! mcf numbers for writing metadata
+    integer :: L2auxFileHandle, L2aux_Version
+    character (len=132) :: L2auxPhysicalFilename
+    integer :: L2aux_mcf, L2dgg_mcf, L2gp_mcf  ! mcf numbers for writing metadata
+    integer :: L2gpFileHandle, L2gp_Version
+    character (len=132) :: L2gpPhysicalFilename
     integer :: L2PCUNIT
-    character (len=132) :: l2auxPhysicalFilename
-    integer :: l2gpFileHandle, l2gp_Version
-    character (len=132) :: l2gpPhysicalFilename
     integer, parameter:: MAXQUANTITIESPERFILE=64        
-    integer :: metadata_error
-    character (len=32) :: mnemonic
-    character (len=256) :: msg
+    integer :: Metadata_error
+    character (len=32) :: Mnemonic
+    character (len=256) :: Msg
     integer :: NAME                     ! string index of label on output
-    integer:: numquantitiesperfile        
+    integer :: Numquantitiesperfile        
     integer :: OUTPUT_TYPE              ! L_L2AUX, L_L2GP, L_PC, L_L2DGG
     character(len=L2GPNameLen), dimension(MAXQUANTITIESPERFILE) :: QuantityNames  ! From "quantities" field
     integer :: RECLEN                   ! For file stuff
-    integer :: returnStatus
+    integer :: ReturnStatus
     integer(i4) :: SDFID                ! File handle
     integer :: SON                      ! Of Root -- spec_args or named node
     integer :: SPEC_NO                  ! Index of son of Root
     integer :: SWFID
     real :: T1, T2     ! for timing
-    logical :: TIMING
-    logical, parameter :: DEBUG = .FALSE.
-
     type (Matrix_T), pointer :: TMPMATRIX ! A pointer to a matrix to write into l2pc
+    logical :: TIMING
 
     ! Executable code
     timing = .false.
@@ -394,7 +393,6 @@ contains ! =====     Public Procedures     =============================
             case ( f_quantities )
               do in_field_no = 2, nsons(gson)
                 db_index = decoration(decoration(subtree(in_field_no ,gson)))
-                nullify (tmpMatrix)
                 call GetFromMatrixDatabase ( matrices(db_index), tmpMatrix )
                 call writeOneL2PC ( tmpMatrix, l2pcUnit )
               end do ! in_field_no = 2, nsons(gson)
@@ -573,6 +571,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.32  2001/05/03 20:32:33  vsnyder
+! Add a nullify and some cosmetic changes
+!
 ! Revision 2.31  2001/05/01 23:57:23  pwagner
 ! Added l2dgg output type
 !
