@@ -46,7 +46,6 @@ contains ! =====     Public Procedures     =============================
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Expr_M, only: EXPR
-    use Geometry, only: OMEGA => W
     use GriddedData, only: GriddedData_T
     ! We need many things from Init_Tables_Module.  First the fields:
     use INIT_TABLES_MODULE, only: F_A, F_APRIORIPRECISION, F_B, F_BOUNDARYPRESSURE, &
@@ -2075,6 +2074,7 @@ contains ! =====     Public Procedures     =============================
     ! ------------------------------------------- FillLOSVelocity ---
     subroutine FillLOSVelocity ( key, qty, tngtECI, scECI, scVel)
       ! A special fill from geometry arguments
+      use Geometry, only: OMEGA => W
       integer, intent(in) :: KEY
       type (VectorValue_T), intent(inout) :: QTY
       type (VectorValue_T), intent(in) :: TNGTECI
@@ -4172,6 +4172,7 @@ contains ! =====     Public Procedures     =============================
 
     ! --------------------------------------- FillQuantityUsingMagneticModel --
     subroutine FillQuantityUsingMagneticModel ( qty, gphQty, key )
+      use Geometry, only: SecPerYear
       use IGRF_INT, only: FELDC, FELDCOF, To_Cart
       type (VectorValue_T), intent(inout) :: QTY
       type (VectorValue_T), intent(inout) :: GPHQTY
@@ -4211,7 +4212,7 @@ contains ! =====     Public Procedures     =============================
       ! Assume the time is close enough to constant that one call to
       ! FELDCOF is accurate enough.
 
-      call feldcof ( real(qty%template%time(1,1)/(365.25*86400.0) + epoch) )
+      call feldcof ( real(qty%template%time(1,1)/secPerYear + epoch) )
 
       do instance = 1, qty%template%noInstances
         do surf = 1, qty%template%noSurfs
@@ -4220,10 +4221,10 @@ contains ! =====     Public Procedures     =============================
           else
             surfOr1 = surf
           end if
-          ! Convert (/ lat, lon, height /) to cartesian
+          ! Convert (/ lat(deg), lon(deg), height(m) /) to cartesian (e-radius)
           call to_cart ( real( (/ qty%template%geodLat(surfOr1,instance), &
             &                     qty%template%lon(surfOr1,instance), &
-            &                     gphQty%values(surf,instance)*1e-3 /) ), xyz )
+            &                     gphQty%values(surf,instance)*1.0e-3 /) ), xyz )
           ! Compute the field at and w.r.t. cartesian coordinates
           call feldc ( xyz, b )
           qty%values ( surf*3-2 : surf*3, instance) = b
@@ -4778,6 +4779,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.177  2003/01/15 02:49:06  vsnyder
+! Get SecPerYear from Geometry module
+!
 ! Revision 2.176  2003/01/14 23:53:10  livesey
 ! Bug fix in magnetic model
 !
