@@ -1189,7 +1189,7 @@ contains
     case ( NF_DX )
       itsName = 'DX'
     case ( NF_DX_AITKEN )
-      itsName = 'AITKEN'
+      itsName = 'DX_AITKEN'
     case ( NF_START )
       itsName = 'START'
     case ( NF_TOLX )
@@ -1210,6 +1210,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.31  2002/09/21 00:21:44  vsnyder
+! Correct a FlagName result
+!
 ! Revision 2.30  2002/09/19 01:25:53  vsnyder
 ! More on when to stop going uphill
 !
