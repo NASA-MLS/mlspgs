@@ -26,7 +26,7 @@ module SnoopMLSL2               ! Interface between MLSL2 and IDL snooper via pv
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning, &
     MLSMSG_Info, MLSMSG_Allocate, MLSMSG_DeAllocate
   use PVM, only: PVMFbcast, PVMDataDefault, PVMFinitsend, PVMFmyTid, PVMFgSize, &
-    & PVMErrorMessage
+    & PVMErrorMessage, PVMF90Unpack
   use PVMIDL, only:  IDLMsgTag, PVMIDLPack, PVMIDLReceive, PVMIDLSend, PVMIDLUnpack
   use QuantityPVM, only: PVMSENDQUANTITY
   use TREE, only:  DUMP_TREE_NODE, SUB_ROSA, SUBTREE, SOURCE_REF
@@ -36,6 +36,7 @@ module SnoopMLSL2               ! Interface between MLSL2 and IDL snooper via pv
   use Symbol_Table, only: ENTER_TERMINAL
   use Symbol_Types, only: T_IDENTIFIER
   use MLSSignals_M, only: GETSIGNALNAME
+  use MLSCommon, only: FINDFIRST
 
   implicit none
   private
@@ -66,6 +67,7 @@ module SnoopMLSL2               ! Interface between MLSL2 and IDL snooper via pv
   integer, parameter :: SnooperControling =           SnooperObserving + 1
 
   integer, parameter :: SnoopTag = 300
+  integer, parameter :: SnooperDiedTag = 301
 
   character (LEN=*), parameter :: ReceptiveSnoopersGroupName="MLSL2ReceptiveSnoopers"
   character (LEN=*), parameter :: Level2CodeGroupName="MLSL2Executable"
@@ -94,8 +96,6 @@ contains ! ========  Public Procedures =========================================
       string='Observing'
     case (SnooperControling)
       string='Controling'
-    case (SnooperFinishing)
-      string='Finishing'
     case default
     end select
   end subroutine GetSnooperModeString
@@ -172,15 +172,16 @@ contains ! ========  Public Procedures =========================================
     integer, intent(in) :: snooperTid
 
     ! Local variables
-    type (SnooperInfo_T) :: newSnooper
-    integer :: noSnoopers
+    integer :: INFO
+    type (SnooperInfo_T) :: NEWSNOOPER
+    integer :: NOSNOOPERS
 
     ! Executable code
 
     ! Setup the new snooper information
     newSnooper%tid = snooperTid
     newSnooper%mode = SnooperObserving
-    noSnoopers = AddSnooperToDatabase ( snooper, newSnooper )
+    noSnoopers = AddSnooperToDatabase ( snoopers, newSnooper )
 
     ! Now if this is the first, let's have it controling us
     if ( size(snoopers) == 1 ) then
@@ -203,7 +204,7 @@ contains ! ========  Public Procedures =========================================
 
     ! Executable code
     nullify ( newSnoopers )
-    allocate ( newSnoopers, size(snoopers)-1, stat=status )
+    allocate ( newSnoopers(size(snoopers)-1), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate//'newSnoopers' )
 
@@ -269,14 +270,18 @@ contains ! ========  Public Procedures =========================================
     ! For add/del ops.
 
     ! Now the more mundane items
+    integer :: BYTES
     integer :: BUFFERID, INFO           ! Flags and ids from PVM
     character (len=132) :: COMMENT      ! Comment field to snoop command
     integer :: CONTROLINGSNOOPER        ! This one is controling
     logical :: DONESNOOPINGFORNOW       ! Flag to end loop
-    logical :: FIRSTTIME                ! First time round the polling loop
     integer :: INUM                     ! Index in group
+    character (len=132) :: LINE         ! Line of text received
+    character (len=132) :: NEXTLINE     ! Line of text received
+    integer :: MSGTAG                   ! Incomming Message tag
     character (len=132) :: LOCATION     ! Line of text to send off
     integer :: SNOOPER                  ! Loop counter
+    integer :: SNOOPERTID               ! Task ID for snooper
     integer :: STATUS                   ! Status from allocate/deallocate
 
     ! Executable code
@@ -326,7 +331,7 @@ contains ! ========  Public Procedures =========================================
         call PVMFBufInfo ( bufferID, bytes, msgTag, snooperTid, info )
         if ( info /= 0 ) &
           & call PVMErrorMessage ( info, "calling PVMFBufInfo" )
-        snooper = FindFirst ( snoopers%tid, snooperTid )
+        snooper = FindFirst ( snoopers%tid == snooperTid )
         call PVMIDLUnpack ( line, info )
 
         select case ( trim(line) )
@@ -363,7 +368,7 @@ contains ! ========  Public Procedures =========================================
 
         case default
           call MLSMessage ( MLSMSG_Warning, ModuleName, &
-            & 'Got unexpected response from snooper:'//line )
+            & 'Got unexpected response from snooper:'//trim(line) )
 
         end select
       end if
@@ -377,7 +382,7 @@ contains ! ========  Public Procedures =========================================
         if ( info < 0 ) then
           call PVMErrorMessage ( info, "unpacking dead snooper tid" )
         end if
-        snooper = FindFirst ( snoopers%tid, snooperTid )
+        snooper = FindFirst ( snoopers%tid == snooperTid )
         if ( snooper /= 0 ) then
           call ForgetSnooper ( snoopers, snooper )
         endif
@@ -479,6 +484,9 @@ contains ! ========  Public Procedures =========================================
 end module SnoopMLSL2
 
 ! $Log$
+! Revision 2.12  2001/09/19 23:47:39  livesey
+! Compilable version
+!
 ! Revision 2.11  2001/09/19 23:33:16  livesey
 ! New version of communication protocol
 !
