@@ -2375,6 +2375,7 @@ contains ! =====     Public Procedures     =============================
     integer :: status
     logical :: swath_exists
     integer :: swathid
+    integer :: myLastProfile
     character (len=L2GPNameLen) :: myswathName
 
     ! Executable code
@@ -2382,6 +2383,11 @@ contains ! =====     Public Procedures     =============================
       myhdfVersion = hdfVersion
     else
       myhdfVersion = L2GPDEFAULT_HDFVERSION
+    endif
+    if (present(TotNumProfs)) then
+      myLastProfile = TotNumProfs
+    else
+      myLastProfile = L2GP%nTimes
     endif
     myswathName = l2gp%name
     if ( present(swathName) ) myswathName = swathName
@@ -2413,7 +2419,10 @@ contains ! =====     Public Procedures     =============================
       ! l2gp%nTimes = actual_ntimes
     endif
 
-    if (myhdfVersion == HDFVERSION_4) then
+    if (myLastProfile > 0) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      & "No profiles in this chunk" )
+    elseif (myhdfVersion == HDFVERSION_4) then
       if(DEEBUG) print *, 'Writing geolocation data'
       call OutputL2GP_writeGeo_hdf4 (l2gp, l2FileHandle, myswathName, offset)
       if(DEEBUG) print *, 'Writing swath data'
@@ -2667,6 +2676,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.68  2003/07/02 00:55:27  pwagner
+! Some improvements in DirectWrites of l2aux, l2gp
+!
 ! Revision 2.67  2003/06/26 00:04:46  pwagner
 ! Added optional DONTFAIL arg to MLS_SWATTACH
 !
