@@ -160,6 +160,7 @@ contains ! ====     Public Procedures     ==============================
             endif
             j = i
 subtrees:   do while ( j <= howmany )
+              call cpu_time ( t1 )
               son = subtree(j,root)
               select case ( decoration(subtree(1,son)) ) ! section index
               case ( z_construct )
@@ -256,6 +257,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.61  2001/09/28 17:50:30  pwagner
+! MLSL2Timings module keeps timing info
+!
 ! Revision 2.60  2001/09/21 17:40:57  pwagner
 ! May dump diagnostic quantities chi..
 !
