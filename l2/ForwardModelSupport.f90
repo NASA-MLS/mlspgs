@@ -35,7 +35,8 @@ module ForwardModelSupport
   integer, parameter :: NeedBothXYStar         = LinearSidebandHasUnits + 1
   integer, parameter :: NoMolecule             = NeedBothXYStar + 1
   integer, parameter :: PFAAndNotPFA           = NoMolecule + 1
-  integer, parameter :: PolarizedAndAllLines   = PFAAndNotPFA + 1
+  integer, parameter :: PFATwice               = PFAAndNotPFA + 1
+  integer, parameter :: PolarizedAndAllLines   = PFATwice + 1
   integer, parameter :: TangentNotSubset       = PolarizedAndAllLines + 1
   integer, parameter :: ToleranceNotK          = TangentNotSubset + 1
   integer, parameter :: TooManyCosts           = ToleranceNotK + 1
@@ -570,8 +571,11 @@ contains ! =====     Public Procedures     =============================
     info%firstPFA = nelts + 1
     if ( got(f_pfaMolecules) ) nelts = nelts + nsons(pfaTree) - 1
     if ( nelts > 0 ) then
-      call allocate_test ( info%molecules, nelts, "info%molecules", &
+      ! Last element of info%molecules is a huge sentinel used in Get_Species_Data,
+      ! not a molecule
+      call allocate_test ( info%molecules, nelts+1, "info%molecules", &
         & ModuleName )
+      info%molecules(nelts+1) = huge(info%molecules(nelts+1))
       call allocate_test ( info%moleculeDerivatives, nelts, &
         & "info%moleculeDerivatives", ModuleName )
       info%moleculeDerivatives = .false.
@@ -590,6 +594,8 @@ contains ! =====     Public Procedures     =============================
         info%molecules(i) = decoration( subtree( j, pfaTree ) )
         if ( any(abs(info%molecules(:nelts)) == info%molecules(i)) ) &
           & call announceError ( PFAAndNotPFA, subtree(j,pfaTree) )
+        if ( any(info%molecules(nelts+1:i-1) == info%molecules(i)) ) &
+          & call announceError ( PFATwice, subtree(j,pfaTree) )
       end do
     end if
 
@@ -747,7 +753,6 @@ contains ! =====     Public Procedures     =============================
   subroutine FillFwdModelTimings ( timings, FWModelConfig, which )
   !  Fill and return an array of time, mean, std_dev for timing FullforwardModel
     
-    use Allocate_Deallocate, only: Allocate_Test
     use ForwardModelConfig, only: ForwardModelConfig_T
                                                                                 
     ! Dummy argument
@@ -946,6 +951,10 @@ contains ! =====     Public Procedures     =============================
       call output ( 'Molecule ' )
       call display_string ( lit_indices(decoration(where)) )
       call output ( ' listed for both PFA and non-PFA', advance='yes' )
+    case ( PFATwice )
+      call output ( 'Molecule ' )
+      call display_string ( lit_indices(decoration(where)) )
+      call output ( ' listed twice for PFA', advance='yes' )
     case ( PolarizedAndAllLines )
       call output ( 'cannot specify both polarized and allLinesInCatalog', &
         & advance='yes' )
@@ -977,6 +986,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.98  2004/08/05 21:01:59  vsnyder
+! Add sentinel at end of %molecules
+!
 ! Revision 2.97  2004/08/04 23:19:57  pwagner
 ! Much moved from MLSStrings to MLSStringLists
 !
