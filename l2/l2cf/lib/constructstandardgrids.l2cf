@@ -29,14 +29,18 @@ vGridDiag: vGrid, type=Logarithmic, coordinate=Zeta, $
 ;; These ones are specifically for diagnostic quantities.
 vGridGlobal: vGrid, type=Explicit, coordinate=Zeta, values=1000mb
 
-vGridLowCloudR1:  vGrid, type=Explicit, coordinate=Zeta, values=[316mb,146mb], resolution=6
-vGridHighCloudR1: vGrid, type=Explicit, coordinate=Zeta, values=[146mb, 46mb], resolution=6
-vGridLowCloudR2:   vGrid, type=Explicit, coordinate=Zeta, values=[316mb,215mb], resolution=6
+vGridLowCloudR1:  vGrid, type=Explicit, coordinate=Zeta, values=[1000mb,700mb]
+vGridHighCloudR1: vGrid, type=Explicit, coordinate=Zeta, values=[215mb, 46mb], resolution=6
+
+vGridLowCloudR2:   vGrid, type=Explicit, coordinate=Zeta, values=[1000mb,700mb]
 vGridHighCloudR2:  vGrid, type=Explicit, coordinate=Zeta, values=[215mb, 46mb], resolution=6
+
 vGridLowCloudR3:   vGrid, type=Explicit, coordinate=Zeta, values=[316mb,215mb], resolution=6
 vGridHighCloudR3:  vGrid, type=Explicit, coordinate=Zeta, values=[316mb, 46mb], resolution=6
+
 vGridLowCloudR4:   vGrid, type=Explicit, coordinate=Zeta, values=[1000mb,146mb], resolution=6
 vGridHighCloudR4:  vGrid, type=Explicit, coordinate=Zeta, values=[146mb, 46mb], resolution=6
+
 vGridLowCloudR5:  vGrid, type=Explicit, coordinate=Zeta, values=[1000mb,68mb], resolution=6
 vGridHighCloudR5: vGrid, type=Explicit, coordinate=Zeta, values=[68mb,46mb], resolution=6
 
@@ -51,6 +55,9 @@ vGridWMO: VGrid, type=Logarithmic, coordinate=Zeta, $
   start=1000mb, formula=[97:48]
 
 ; $Log$
+; Revision 1.19  2004/04/28 23:06:13  livesey
+; Changed the cloud flagging height grids
+;
 ; Revision 1.18  2004/04/16 00:45:14  livesey
 ; New approach to cloud flagging
 ;
