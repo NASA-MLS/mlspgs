@@ -199,7 +199,7 @@ contains ! ====     Public Procedures     ==============================
           end if
         end if
         if ( toggle(gen) .and. levels(gen) > 0 ) call dump ( chunks )
-        call add_to_section_timing ( 'scan_divide', t1)
+        call add_to_section_timing ( 'chunk_divide', t1)
 
       ! Now construct, fill, join and retrieve live inside the 'chunk loop'
       case ( z_construct, z_fill, z_join, z_retrieve )
@@ -390,6 +390,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.104  2003/03/08 00:46:08  pwagner
+! Per njl, checks for illegal single chunk runs
+!
 ! Revision 2.103  2003/02/21 21:03:39  pwagner
 ! Disabled tps switch to eliminate need for Test_Parse_Signals
 !
