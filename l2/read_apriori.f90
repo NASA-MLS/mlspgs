@@ -9,7 +9,8 @@ module ReadAPriori
   use Hdf, only: DFACC_READ, SFSTART
   use Hdfeos, only: swopen, swclose
   use INIT_TABLES_MODULE, only: F_FIELD, F_FILE, F_ORIGIN, F_SDNAME, F_SWATH, &
-    & L_CLIMATOLOGY, L_DAO, L_NCEP, S_GRIDDED, S_L2AUX, S_L2GP, LIT_INDICES
+    & FIELD_FIRST, FIELD_LAST, L_CLIMATOLOGY, L_DAO, L_NCEP, S_GRIDDED, S_L2AUX, &
+    & S_L2GP, LIT_INDICES
   use L2AUXData, only: L2AUXData_T, AddL2AUXToDatabase, &
     &                  ReadL2AUXData!, SetupNewL2AUXRecord
   use L2GPData, only: L2GPData_T, AddL2GPToDatabase, ReadL2GPData
@@ -57,6 +58,7 @@ contains ! =====     Public Procedures     =============================
 
     !Local Variables
     integer :: FIELD               ! Son of KEY, must be n_assign
+    integer :: FIELDINDEX          ! Literal
     integer :: fileHandle          ! fileHandle of a priori data file
     integer :: fileName            ! Sub-rosa index of name in file='name'
     character(len=FileNameLen) :: FileNameString   ! actual literal file name
@@ -80,9 +82,12 @@ contains ! =====     Public Procedures     =============================
     character(len=FileNameLen) :: SDNAMESTRING ! actual literal sdName
     character(len=FileNameLen) :: FIELDNAMESTRING ! actual literal fieldName
 
+    logical, dimension(field_first:field_last) :: got
+
     if ( toggle (gen) ) call trace_begin( "read_apriori", root )
 
     do i = 2, nsons(root)-1 ! Skip the section name at begin and end
+      got=.false.
       son = subtree(i,root)
       if ( node_id(son) == n_named ) then ! Is spec labeled?
         key = subtree(2,son)
@@ -101,7 +106,9 @@ contains ! =====     Public Procedures     =============================
       swathName = 0
       do j = 2, nsons(key)
         field = subtree(j,key)
-        select case ( decoration(subtree(1,field)) )
+        fieldIndex=decoration(subtree(1,field))
+        got(fieldIndex)=.true.
+        select case ( fieldIndex )
         case ( f_file )
           fileName = sub_rosa(subtree(2,field))
         case ( f_swath )
@@ -123,9 +130,9 @@ contains ! =====     Public Procedures     =============================
       
       select case( FileType )
       case ( s_l2gp )
-
-        if ( swathName == 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-          & 'Swath name not specified in read a priori')
+        if ( .not. all(got((/f_swath, f_file/)))) &
+          & call MLSMessage(MLSMSG_Error, ModuleName, &
+          & 'Swath/filename name not specified in read a priori')
         
         call get_string ( swathName, swathNameString )
         swathNameString=swathNameString(2:LEN_TRIM(swathNameString)-1)
@@ -152,8 +159,9 @@ contains ! =====     Public Procedures     =============================
         ! copy.
       case ( s_l2aux )
 
-        if ( sdName == 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-          & 'sd name not specified in read a priori')
+        if ( .not. all(got((/f_sdName, f_file/)))) &
+          & call MLSMessage(MLSMSG_Error, ModuleName, &
+          & 'file/sd name not specified in read a priori')
         
         call get_string ( sdName, sdNameString )
         sdNameString=sdNameString(2:LEN_TRIM(sdNameString)-1)
@@ -187,10 +195,9 @@ contains ! =====     Public Procedures     =============================
 
       case ( s_gridded )
 
-!        call output('Hello paul, in read gridded data section.',advance='yes')
-        call display_string(lit_indices(griddedOrigin),advance='yes')
-        if ( fieldName == 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-          & 'Field name not specified in read a priori')
+        if ( .not. all(got((/f_origin, f_field, f_file/)))) &
+          & call MLSMessage(MLSMSG_Error, ModuleName, &
+          & 'Incomplete gridded data information')
 
         call get_string ( fieldName, fieldNameString )
         fieldNameString=fieldNameString(2:LEN_TRIM(fieldNameString)-1)
@@ -233,6 +240,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.7  2001/03/14 19:06:08  livesey
+! Some changes
+!
 ! Revision 2.6  2001/03/14 18:54:38  pwagner
 ! Uses FieldNameString and son in call to ReadGriddedData
 !
