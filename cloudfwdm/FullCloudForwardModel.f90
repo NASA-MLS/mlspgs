@@ -143,7 +143,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     integer :: noCldSurf                   ! Number of cloud ext levels
     integer :: NOFREQS                  ! Number of frequencies
 
-    integer :: chan
     integer :: i                        ! Loop counter
     integer :: j                        ! Loop counter
     integer :: k                        ! Loop counter
@@ -151,8 +150,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     integer :: mif
     integer :: MAF                      ! major frame counter
     integer :: INSTANCE                 ! Relevant instance for temperature
-    integer :: GPHINST                  ! Relevant instance for GPH
-    integer :: NOLAYERS                 ! temp.noSurfs - 1
+    integer :: MinInst                  ! lower bound of instance
+    integer :: MaxInst                  ! upper bound of instance
     integer :: nfine                    ! no of fine resolution grids
     integer :: status                   ! allocation status 
     integer :: SIDEBAND                 ! Loop index
@@ -160,11 +159,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     integer :: SIDEBANDSTEP             ! For sideband loop
     integer :: SIDEBANDSTOP             ! For sideband loop
     integer :: THISSIDEBAND             ! Loop counter for sidebands
-    integer :: NOUSEDCHANNELS           ! How many channels are we considering
     integer :: SIGIND                   ! Signal index, loop counter
-
-    integer :: quantity_type, L_quantity_type       ! added on Jul 13
-    integer :: L_state_type
 
     integer :: iCloudHeight                          ! Index for Cloud Top Height
 
@@ -175,8 +170,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     integer :: MAXSUPERSET                            ! Max. value of superset
     integer, dimension(:), pointer :: SUPERSET        ! Result of AreSignalsSuperset
     integer, dimension(1) :: WHICHPATTERNASARRAY      ! Result of minloc
-    integer, dimension(:), pointer :: USEDCHANNELS    ! Which channel is this
-    integer, dimension(:), pointer :: USEDSIGNALS     ! Which signal is this channel from
 
     real(r8), dimension(:,:), pointer :: A_CLEARSKYRADIANCE
     real(r8), dimension(:,:), pointer :: A_CLOUDINDUCEDRADIANCE
@@ -211,7 +204,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     logical :: DoHighZt                               ! Flag
     logical :: DoLowZt                                ! Flag
     logical :: Got(2)  = .false.  
-    logical :: QGot(8) = .false.  
     logical :: dee_bug = .true.  
     logical :: prt_log = .false.
     logical :: FOUNDINFIRST                           ! Flag to indicate derivatives
@@ -237,8 +229,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
              A_CLOUDEXTINCTION, A_CLOUDRADSENSITIVITY,                       &
              A_EFFECTIVEOPTICALDEPTH, A_MASSMEANDIAMETER,                    &
              A_TOTALEXTINCTION,FREQUENCIES,                         &
-             superset, usedchannels, usedsignals, thisRatio,                 &
-             JBLOCK, state_ext, state_los )
+             superset, thisRatio, JBLOCK, state_ext, state_los )
              
     nullify ( doChannel )
     
@@ -781,9 +772,9 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         !--------------------------------
         s_fine = (earthradius%values(1,maf)+ zt(mif)) * &
          & sin((phi_fine - radiance%template%phi(mif,maf))*Deg2Rad)
+        ds_fine = 0._r8    ! initialize it
         ds_fine(1:nfine*noInstances-1) = s_fine(2:nfine*noInstances) - &
          & s_fine(1:nfine*noInstances-1)
-        ds_fine(nfine*noInstances) = 0._r8
 
          call InterpolateValues ( &
             & sLevl, &            ! Old X
@@ -799,7 +790,14 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         !----------------------------------------------------------
         ! determine weights by the length inside each state domain
         !----------------------------------------------------------
-         do i = 1,noInstances             ! loop over profile
+        
+        ! only nearest instances are mattered
+        minInst = instance - 2
+        maxInst = instance + 2
+         if(minInst < 1) minInst = 1
+         if(maxInst > noInstances) maxInst = noInstances
+         
+         do i = minInst,maxInst             ! loop over closer profiles
          do j = 1,noCldSurf               ! loop over cloudQty surface
          do k = 1,nfine*noInstances       ! sum up all the lengths
            if(abs(zp_fine(k) - state_ext%template%surfs(j,1)) < dz/2._r8 &
@@ -836,18 +834,18 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         call CreateBlock ( jBlock, noFreqs, noSgrid*noMIFs, M_Full )
         jBlock%values = 0.0_r8
 
-        do chan = 1, noFreqs
-          if ( doChannel(chan) ) then
+        do j = 1, noFreqs
+          if ( doChannel(j) ) then
              do mif = 1, noMIFs
              do i=1,noSgrid
              ! now we normalize cloud extinction weighting functions at 200GHz 
              ! and output the transmission functions via Jacobian
-               jBlock%values(chan,i+(mif-1)*noSgrid)= a_trans(i,mif,chan)* &
-                  & (frequencies(chan)/200000._r8)**4
+               jBlock%values(j,i+(mif-1)*noSgrid)= a_trans(i,mif,j)* &
+                  & (frequencies(j)/200000._r8)**4
              end do
              end do
           end if  ! doChannel
-        end do    ! chan
+        end do    ! channel
 
     endif      ! doLowZt
 
@@ -893,6 +891,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.77  2001/11/06 18:28:06  dwu
+! some cleanups
+!
 ! Revision 1.76  2001/11/06 00:54:11  dwu
 ! add two cloud radiances: modelled and observed
 !
