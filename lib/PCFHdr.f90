@@ -17,9 +17,12 @@ MODULE PCFHdr
      & MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
    USE MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
      & MLSMSG_Warning, MLSMSG_DeAllocate, MLSMSG_FILEOPEN
+   use MLSStrings, only: utc_to_yyyymmdd
    USE SDPToolkit, only: PGSD_PC_UREF_LENGTH_MAX, PGS_S_SUCCESS, &
      & PGSD_MET_GROUP_NAME_L, PGS_IO_GEN_CLOSEF, PGS_IO_GEN_OPENF, &
-     & PGSD_IO_GEN_RDIRUNF
+     & PGSD_IO_GEN_RDIRUNF, &
+     & PGS_TD_ASCIITIME_ATOB, PGS_TD_ASCIITIME_BTOA, &
+     & UseSDPToolkit
    IMPLICIT NONE
    PUBLIC :: GlobalAttributes_T, &
      & FillTAI93Attribute, &
@@ -55,6 +58,9 @@ MODULE PCFHdr
 ! in particular hdfeos5 and plain hdf5
   integer, parameter, public :: INPUTPTR_STRING_LENGTH = PGSd_PC_UREF_LENGTH_MAX
   integer, parameter, public :: GA_VALUE_LENGTH = 40
+  integer, parameter, public :: UTC_A_VALUE_LENGTH = 27
+  integer, parameter, public :: UTC_B_VALUE_LENGTH = 25
+  character(len=*), parameter, private :: PCFATTRIBUTENAME = 'PCF'
 
    ! May get some of these from MLSLibOptions? 
   type GlobalAttributes_T
@@ -280,18 +286,13 @@ CONTAINS
        & 'StartUTC', GlobalAttributes%StartUTC, .true.)
       call MakeHDF5Attribute(grp_id, &
        & 'EndUTC', GlobalAttributes%EndUTC, .true.)
-      ! if ( GlobalAttributes%GranuleDay == ' ') return
       if ( GlobalAttributes%GranuleDay < 1 ) return
-      ! if ( GlobalAttributes%GranuleMonth /= ' ') &
-      if ( GlobalAttributes%GranuleMonth > 0 ) then
-        call MakeHDF5Attribute(grp_id, &
-       & 'GranuleMonth', GlobalAttributes%GranuleMonth, .true.)
-        call MakeHDF5Attribute(grp_id, &
-       & 'GranuleDay', GlobalAttributes%GranuleDay, .true.)
-      else
-        call MakeHDF5Attribute(grp_id, &
-       & 'GranuleDayOfYear', GlobalAttributes%GranuleDay, .true.)
-      endif
+      call MakeHDF5Attribute(grp_id, &
+       & 'GranuleMonth', GranuleMonth_fun() , .true.)
+      call MakeHDF5Attribute(grp_id, &
+       & 'GranuleDay', GranuleDay_fun(), .true.)
+      call MakeHDF5Attribute(grp_id, &
+       & 'GranuleDayOfYear', GranuleDayOfYear_fun(), .true.)
       call MakeHDF5Attribute(grp_id, &
        & 'GranuleYear', GlobalAttributes%GranuleYear, .true.)
       call MakeHDF5Attribute(grp_id, &
@@ -340,18 +341,15 @@ CONTAINS
       ! if ( GlobalAttributes%GranuleDay == ' ') return
       ! if ( GlobalAttributes%GranuleMonth == ' ') &
       if ( GlobalAttributes%GranuleDay < 1 ) return
-      if ( GlobalAttributes%GranuleMonth  > 0 ) then
-        status = he5_EHwrglatt(fileID, &
+      status = he5_EHwrglatt(fileID, &
        & 'GranuleMonth', HE5T_NATIVE_INT, 1, &
-       &  (/ GlobalAttributes%GranuleMonth/) )
-        status = he5_EHwrglatt(fileID, &
+       &  (/ GranuleMonth_fun() /) )
+      status = he5_EHwrglatt(fileID, &
        & 'GranuleDay', HE5T_NATIVE_INT, 1, &
-       &  (/ GlobalAttributes%GranuleDay/) )
-      else
-        status = he5_EHwrglatt(fileID, &
+       &  (/ GranuleDay_fun() /) )
+      status = he5_EHwrglatt(fileID, &
        & 'GranuleDayOfYear', HE5T_NATIVE_INT, 1, &
-       &  (/ GlobalAttributes%GranuleDay/) )
-      endif
+       &  (/ GranuleDayOfYear_fun() /) )
       status = he5_EHwrglatt(fileID, &
        & 'GranuleYear', HE5T_NATIVE_INT, 1, &
        &  (/ GlobalAttributes%GranuleYear/) )
@@ -709,7 +707,8 @@ CONTAINS
         & 'Error opening hdf5 file root group for annotating with PCF' )
       if ( USELENGTHONECHARS ) then
         call MakeHDF5Attribute(grp_id, &
-         & 'PCF file text', anText, .true.)
+         & PCFATTRIBUTENAME, anText, .true.)
+         ! & 'PCF file text', anText, .true.)
       else
         ! Find how big an40 must be to hold anText
         how_big = 1 + (size(anText)-1)/40
@@ -763,8 +762,8 @@ CONTAINS
 ! Executable
       if ( USELENGTHONECHARS ) then
         status = he5_EHwrglatt(fileID, &
-         & 'PCF', HE5T_NATIVE_SCHAR, size(anText), &
-         &  anText)
+         & PCFATTRIBUTENAME, HE5T_NATIVE_SCHAR, size(anText), anText)
+         ! & 'PCF', HE5T_NATIVE_SCHAR, size(anText), anText)
         if ( status /= PGS_S_SUCCESS) &
           & CALL MLSMessage(MLSMSG_Error, ModuleName, &
           & 'Error annotating with PCF using length one chars' )
@@ -784,15 +783,15 @@ CONTAINS
         remainder = mod(i-1, 40)
         an40(divisor+1)(remainder+1:remainder+1) = anText(i)
       enddo
-      print *, 'size(anText) ', size(anText)
-      print *, 'how_big ', how_big
+      ! print *, 'size(anText) ', size(anText)
+      ! print *, 'how_big ', how_big
       ! print *, 'an40 '
       ! do i=1, how_big
       !  print *, trim(an40(i))
       ! enddo
       status = he5_EHwrglatt(fileID, &
-       & 'PCF', HE5T_NATIVE_SCHAR, how_big, &
-       &  an40)
+       & PCFATTRIBUTENAME, HE5T_NATIVE_SCHAR, how_big, an40)
+       ! & 'PCF', HE5T_NATIVE_SCHAR, how_big, an40)
       if ( status /= PGS_S_SUCCESS) &
         & CALL MLSMessage(MLSMSG_Error, ModuleName, &
         & 'Error annotating with PCF using length 40 chars' )
@@ -803,6 +802,84 @@ CONTAINS
 !-----------------------------
    END SUBROUTINE WritePCF2Hdr_hdfeos5
 !-----------------------------
+
+  function GranuleDayOfYear_fun () result (dayOfYear)
+    ! Arguments
+    integer :: month
+    ! Local variables
+    integer :: year
+    integer :: dayOfYear
+    integer :: status
+    character (len=UTC_A_VALUE_LENGTH) :: asciiutc_a
+    character (len=UTC_B_VALUE_LENGTH) :: asciiutc_b
+    ! Executable
+    if ( GlobalAttributes%GranuleMonth <= 0 .or. .not. UseSDPToolkit ) then
+      dayOfYear = GlobalAttributes%GranuleDay
+    else
+      asciiutc_a = GlobalAttributes%StartUTC
+      status = pgs_td_asciitime_atob(asciiutc_a, asciiutc_b)
+      if ( status /= 0 ) &
+        & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+        & 'Unable to convert utc A to B formats')
+      call utc_to_yyyymmdd(asciiutc_b, status, &
+        & year, month, dayOfYear) 
+      if ( status /= 0 ) &
+        & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+        & 'Unable to extract year, day of year from utc B format')
+    endif
+  end function GranuleDayOfYear_fun
+
+  function GranuleDay_fun () result (day)
+    ! Arguments
+    integer :: month
+    ! Local variables
+    integer :: year
+    integer :: day
+    integer :: status
+    character (len=UTC_A_VALUE_LENGTH) :: asciiutc_a
+    character (len=UTC_B_VALUE_LENGTH) :: asciiutc_b
+    ! Executable
+    if ( GlobalAttributes%GranuleMonth > 0 .or. .not. UseSDPToolkit ) then
+      day = GlobalAttributes%GranuleDay
+    else
+      asciiutc_b = GlobalAttributes%StartUTC
+      status = pgs_td_asciitime_btoa(asciiutc_b, asciiutc_a)
+      if ( status /= 0 ) &
+        & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+        & 'Unable to convert utc B to A formats')
+      call utc_to_yyyymmdd(asciiutc_a, status, &
+        & year, month, day) 
+      if ( status /= 0 ) &
+        & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+        & 'Unable to extract year, month, day from utc A format')
+    endif
+  end function GranuleDay_fun
+
+  function GranuleMonth_fun () result (month)
+    ! Arguments
+    integer :: month
+    ! Local variables
+    integer :: year
+    integer :: day
+    integer :: status
+    character (len=UTC_A_VALUE_LENGTH) :: asciiutc_a
+    character (len=UTC_B_VALUE_LENGTH) :: asciiutc_b
+    ! Executable
+    if ( GlobalAttributes%GranuleMonth > 0 .or. .not. UseSDPToolkit ) then
+      month = GlobalAttributes%GranuleMonth
+    else
+      asciiutc_b = GlobalAttributes%StartUTC
+      status = pgs_td_asciitime_btoa(asciiutc_b, asciiutc_a)
+      if ( status /= 0 ) &
+        & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+        & 'Unable to convert utc B to A formats')
+      call utc_to_yyyymmdd(asciiutc_a, status, &
+        & year, month, day) 
+      if ( status /= 0 ) &
+        & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+        & 'Unable to extract year, month, day from utc A format')
+    endif
+  end function GranuleMonth_fun
 
   function int_to_char (int) result (chars)
     ! Arguments
@@ -822,6 +899,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.15  2003/03/07 00:37:24  pwagner
+!# Write GranuleDay -Month and -Year even if StartUTC in format yyy-ddd
+!#
 !# Revision 2.14  2003/02/27 21:52:48  pwagner
 !# Added FillTAI93Attribute; tweaks to PCF as attribute; unsatisfactory for hdfeos5
 !#
