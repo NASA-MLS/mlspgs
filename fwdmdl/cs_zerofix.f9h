@@ -1,0 +1,22 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+! $Id$
+
+! function CS_ZeroFix_* ( W )
+    real(rk)    :: R(2)
+    complex(rk) :: Z
+    real(rk), parameter :: Dinky = epsilon(r) ** 2
+
+    equivalence (Z,R(1))
+
+    z = w
+    if ( abs(r(1)) < dinky ) r(1) = 0.0_rk
+    if ( abs(r(2)) < dinky ) r(2) = 0.0_rk
+    v = z
+! end function CS_ZeroFix_*
+
+! $Log$
+! Revision 2.1  2003/02/04 01:41:06  vsnyder
+! Initial commit
+!
