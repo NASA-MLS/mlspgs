@@ -476,10 +476,11 @@ then
     case "$1" in
 	*.f90 )
 	    source_name=$1
+       break
 	;;
-	* )
-       do_I_care="no"
-	;;
+#	* )
+#       do_I_care="no"
+#	;;
     esac
      shift
    done
@@ -489,7 +490,8 @@ then
      exit 1
    fi
    # Now extract just file_name
-   file_name=`$the_splitter -f $source_name`
+#   file_name=`$the_splitter -f $source_name`
+   file_name=`perl -e '$reverse=reverse("$ARGV[0]"); @parts=split("/",$reverse); $reverse=$parts[0]; $reverse=reverse($reverse); print $reverse' $source_name`
    object_name="`echo $file_name | sed 's/\.f90/\.o/'`"
    if [ ! -f "$object_name" ]
    then
@@ -497,10 +499,10 @@ then
      exit 1
    fi
    touch "$object_name"
-     if [ "$verbose" != "" ]
-     then
-       echo "Touching object name $object_name"
-     fi
+   if [ "$verbose" != "" ]                     
+   then                                        
+     echo "Touching object name $object_name"  
+   fi                                          
    exit 0
 elif [ "$special_use" = "yes" ]
 then
@@ -608,6 +610,9 @@ fi
 exit 0
 
 # $Log$
+# Revision 1.4  2002/07/25 20:58:08  pwagner
+# Improved marking up to date
+#
 # Revision 1.3  2002/07/23 23:18:01  pwagner
 # Added -mod ext; double makes in mark_files
 #

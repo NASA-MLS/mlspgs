@@ -244,6 +244,7 @@ me="$0"
 my_name=newAifBdiff.sh
 # Special use (4) is signaled by $the_command being $marker_name
 marker_name=mark_as_uptodate.sh
+CALL_MARKER="no"
 # $the_marker is $marker_name with me's path prepended
 the_marker="`echo $0 | sed 's/newAifBdiff/mark_as_uptodate/'`"
 # $the_splitter is split_path with me's path prepended
@@ -319,22 +320,24 @@ if [ "$DEEBUG" = "yes" ]; then
 fi
 
 # First check for special use (4)
-command_name=`$the_splitter -f $the_command`
+#command_name=`$the_splitter -f $the_command`
+command_name=`perl -e '$reverse=reverse("$ARGV[0]"); @parts=split("/",$reverse); $reverse=$parts[0]; $reverse=reverse($reverse); print $reverse' $the_command`
 if [ "$command_name" = "$marker_name" ]; then
 #  echo "  special use (4)"
 #  echo "  old_A is $old_A"
 #  echo "  the_marker is $the_marker"
 #  echo "  the_args is $@"
   touch $old_A
-  $the_marker "$@"
-  return_status=`expr $?`
-  if [ "$MUST_EXIT_STATUS" != "" ]; then    
-     exit "$MUST_EXIT_STATUS"
-  elif [ "$return_status" != "$NORMAL_STATUS" ]; then
-     exit 1
-  else
-     exit 0
+  if [ "$CALL_MARKER" = "yes" ]; then
+    $the_marker "$@"
+    return_status=`expr $?`
+    if [ "$MUST_EXIT_STATUS" != "" ]; then    
+       exit "$MUST_EXIT_STATUS"
+    elif [ "$return_status" != "$NORMAL_STATUS" ]; then
+       exit 1
+    fi
   fi
+  exit 0
 fi
 
 if [ "$keepRecords" = "yes" -a ! -f "$record_file" ]; then    
@@ -422,6 +425,9 @@ else
    exit 0
 fi
 # $Log$
+# Revision 1.8  2002/07/25 20:58:08  pwagner
+# Improved marking up to date
+#
 # Revision 1.7  2002/07/22 22:08:44  pwagner
 # Uses get_unique_name for temp file names
 #
