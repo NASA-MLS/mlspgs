@@ -1150,14 +1150,15 @@ contains ! ============================ MODULE PROCEDURES ======================
 
   !-------------------------------------------------  ReadL1BData  -----
   subroutine ReadL1BData ( L1FileHandle, QuantityName, L1bData, NoMAFs, Flag, &
-    & FirstMAF, LastMAF, NEVERFAIL, hdfVersion, dontPad )
+    & FirstMAF, LastMAF, NEVERFAIL, hdfVersion, dontPad, L2AUX )
     
     ! Dummy arguments
     character(len=*), intent(in)   :: QUANTITYNAME ! Name of SD to read
     integer, intent(in)            :: L1FILEHANDLE ! From HDF
     integer, intent(in), optional  :: FIRSTMAF ! First to read (default 0)
     integer, intent(in), optional  :: LASTMAF ! Last to read (default last/file)
-    logical, intent(in), optional  :: NEVERFAIL ! Don't call MLSMessage if TRUE
+    logical, intent(in), optional  :: NEVERFAIL ! Don't quit if TRUE
+    logical, intent(in), optional  :: L2AUX     ! Don't even warn if TRUE
     type(l1bdata_t), intent(inout) :: L1BDATA ! Result
     integer, intent(out) :: FLAG        ! Error flag
     integer, intent(out) :: NOMAFS      ! Number actually read
@@ -1184,10 +1185,10 @@ contains ! ============================ MODULE PROCEDURES ======================
 
     if ( myhdfVersion == HDFVERSION_4 ) then
       call ReadL1BData_hdf4 ( L1FileHandle, trim(QuantityName), L1bData, &
-      & NoMAFs, Flag, FirstMAF, LastMAF, NEVERFAIL )
+      & NoMAFs, Flag, FirstMAF, LastMAF, NEVERFAIL, L2AUX )
     else
       call ReadL1BData_hdf5 ( L1FileHandle, trim(QuantityName), L1bData, &
-      & NoMAFs, Flag, FirstMAF, LastMAF, NEVERFAIL )
+      & NoMAFs, Flag, FirstMAF, LastMAF, NEVERFAIL, L2AUX )
       !Unfortunately, hdf5-formatted l1b data have different shapes from hdf4
       ! E.g., for MAFStartTimeTAI we obtain the following
       !  hdfVERSION      shape
@@ -1235,14 +1236,15 @@ contains ! ============================ MODULE PROCEDURES ======================
 
   !--------------------------------------------  ReadL1BData_hdf4  -----
   subroutine ReadL1BData_hdf4 ( L1FileHandle, QuantityName, L1bData, &
-    & NoMAFs, Flag, FirstMAF, LastMAF, NEVERFAIL )
+    & NoMAFs, Flag, FirstMAF, LastMAF, NEVERFAIL, L2AUX )
     
     ! Dummy arguments
     character(len=*), intent(in)   :: QUANTITYNAME ! Name of SD to read
     integer, intent(in)            :: L1FILEHANDLE ! From HDF
     integer, intent(in), optional  :: FIRSTMAF ! First to read (default 0)
     integer, intent(in), optional  :: LASTMAF ! Last to read (default last in file)
-    logical, intent(in), optional  :: NEVERFAIL ! Don't call MLSMessage if TRUE
+    logical, intent(in), optional  :: NEVERFAIL ! Don't quit if TRUE
+    logical, intent(in), optional  :: L2AUX     ! Don't even warn if TRUE
     type(l1bdata_t), intent(inout) :: L1BDATA ! Result
     integer, intent(out) :: FLAG        ! Error flag
     integer, intent(out) :: NOMAFS      ! Number actually read
@@ -1274,6 +1276,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     integer, dimension(:), pointer :: STRIDE
 
     real(r4), pointer, dimension(:,:,:) :: tmpR4Field
+    logical :: isL2AUX
 
     ! Executable code
     call deallocateL1BData ( l1bData ) ! Avoid memory leaks
@@ -1282,6 +1285,8 @@ contains ! ============================ MODULE PROCEDURES ======================
     flag = 0
     MyNeverFail = .false.
     if ( present(NeverFail) ) MyNeverFail = NeverFail
+    isL2AUX = .false.
+    if ( present(l2AUX) ) isL2AUX = L2AUX
 
     ! Find data sets for counterMAF & quantity by name
 
@@ -1508,7 +1513,7 @@ contains ! ============================ MODULE PROCEDURES ======================
 
   !--------------------------------------------  ReadL1BData_hdf5  -----
   subroutine ReadL1BData_hdf5 ( L1FileHandle, QuantityName, L1bData, NoMAFs, &
-    & Flag, FirstMAF, LastMAF, NEVERFAIL )
+    & Flag, FirstMAF, LastMAF, NEVERFAIL, L2AUX )
     use HDF5, only: HSIZE_T
     use MLSHDF5, only: IsHDF5DSPresent, LoadFromHDF5DS, &
       & GetHDF5DSRank, GetHDF5DSDims, GetHDF5DSQType
@@ -1519,7 +1524,8 @@ contains ! ============================ MODULE PROCEDURES ======================
     integer, intent(in)            :: L1FILEHANDLE ! From HDF
     integer, intent(in), optional  :: FIRSTMAF ! First to read (default 0)
     integer, intent(in), optional  :: LASTMAF ! Last to read (default last/file)
-    logical, intent(in), optional  :: NEVERFAIL ! Don't call MLSMessage if TRUE
+    logical, intent(in), optional  :: NEVERFAIL ! Don't quit if TRUE
+    logical, intent(in), optional  :: L2AUX     ! Don't even warn if TRUE
     type(l1bdata_t), intent(inout) :: L1BDATA ! Result
     integer, intent(out) :: FLAG        ! Error flag
     integer, intent(out) :: NOMAFS      ! Number actually read
@@ -1550,6 +1556,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     integer(kind=hSize_t), dimension(:), pointer :: CMMAXDIMS
 
     logical, parameter           :: DEEBUG = .false.
+    logical :: isL2AUX
 
     ! Executable code
     if ( present(FirstMAF) ) then
@@ -1560,6 +1567,8 @@ contains ! ============================ MODULE PROCEDURES ======================
     flag = 0
     MyNeverFail = .false.
     if ( present(NeverFail) ) MyNeverFail = NeverFail
+    isL2AUX = .false.
+    if ( present(l2AUX) ) isL2AUX = L2AUX
 
     if ( .not. IsHDF5DSPresent(L1FileHandle, QuantityName) ) then
       flag = NOQUANTITYINDEX
@@ -1639,7 +1648,7 @@ contains ! ============================ MODULE PROCEDURES ======================
         call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Failed to find index of counterMAF data set.')
       else
-        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        if ( .not. isL2AUX ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & 'Failed to find index of counterMAF data set.')
         sds1_id = SD_NO_COUNTERMAF
         ! Since we aren't reading these, just make them internally consistent
@@ -2090,6 +2099,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.49  2004/08/19 00:10:43  pwagner
+! L2AUX option to ReadL1BData stops warning msgs about counterMAF
+!
 ! Revision 2.48  2004/08/17 23:47:48  pwagner
 ! Another guard against inappripriate padding
 !
