@@ -1437,7 +1437,6 @@ contains ! ===================================== Public Procedures =====
           endif
         endif
       enddo
-      call dump ( signals_buffer, 'signals_buffer' )
 
       ! Task (1a): Find mafs where there is at least one signal which
       ! changes from either nogood to good or from good to nogood
@@ -1551,7 +1550,6 @@ contains ! ===================================== Public Procedures =====
       endif
       
       ! Depending on sensitivity, add these to Obstructions database
-      print*,anyChangeIsObstruction, num_goodness_changes,num_goods_after_gap
       if ( ANYCHANGEISOBSTRUCTION .and. num_goodness_changes > 0 ) then
         do mafset = 1, num_goodness_changes
           newObstruction%range = .false.
@@ -1880,7 +1878,6 @@ contains ! ===================================== Public Procedures =====
       ! moment I'm letting paw code this (not tested yet). NJL.
       if ( .not. config%skipL1BCheck) &
         call notel1brad_changes ( obstructions, mafRange, l1bInfo ) 
-      call Dump ( obstructions )
 
       ! Sort the obstructions into order; prune them of repeats, overlaps etc.
       call PruneObstructions ( obstructions ) 
@@ -2060,6 +2057,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.40  2003/08/21 22:51:18  livesey
+! Removed yet more print statements!
+!
 ! Revision 2.39  2003/08/21 22:49:22  livesey
 ! Removed more print statements etc.
 !
