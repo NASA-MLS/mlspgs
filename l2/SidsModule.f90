@@ -27,6 +27,7 @@ module SidsModule
   use MLSL2Timings, only: add_to_retrieval_timing
   use MoreTree, only: Get_Field_Id, Get_Boolean
   use Output_M, only: Output
+  use Time_M, only: Time_Now
   use Toggles, only: Gen, Toggle
   use Trace_M, only: Trace_begin, Trace_end
   use Tree, only: Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, Subtree
@@ -97,7 +98,7 @@ contains
     integer, parameter :: PerturbationNotState = NotPlain + 1 ! Ptb. not same as state
 
     if ( toggle(gen) ) call trace_begin ( "SIDS", root )
-    call cpu_time ( t1 )
+    call time_now ( t1 )
 
     nullify ( configs, perturbation )
 
@@ -206,7 +207,7 @@ contains
           do maf = maf1, maf2
             fmStat%maf = maf
             call add_to_retrieval_timing( 'sids', t1 )
-            call cpu_time ( t1 )
+            call time_now ( t1 )
             if ( ixJacobian > 0 .and. .not. associated(perturbation)) then
               call forwardModel ( configDatabase(configs(config)), &
                 & FwdModelIn, FwdModelExtra, &
@@ -219,7 +220,7 @@ contains
           end do                        ! MAF loop
 
           call add_to_retrieval_timing( 'forward_model', t1 )
-          call cpu_time ( t1 )
+          call time_now ( t1 )
 
           ! Destroy jacobian if asked to
           if (destroyJacobian .and. ixJacobian > 0 ) then
@@ -299,7 +300,7 @@ contains
 
     call deallocate_test ( configs, 'configs', ModuleName )
     call add_to_retrieval_timing( 'sids', t1 )
-    call cpu_time ( t1 )
+    call time_now ( t1 )
 
   contains
     ! --------------------------------------------  AnnounceError  -----
@@ -328,6 +329,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.36  2001/11/09 23:17:22  vsnyder
+! Use Time_Now instead of CPU_TIME
+!
 ! Revision 2.35  2001/10/02 16:49:56  livesey
 ! Removed fmStat%finished and change loop ordering in forward models
 !
