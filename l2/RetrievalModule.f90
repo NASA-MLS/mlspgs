@@ -65,7 +65,7 @@ contains
       & S_subset, S_time, S_RESTRICTRANGE, S_UPDATEMASK
     use Intrinsic, only: PHYQ_Dimensionless, PHYQ_Invalid
     use L2ParInfo, only: PARALLEL
-    use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
+    use MatrixModule_1, only: AddToMatrixDatabase, CopyMatrix, CreateEmptyMatrix, &
       & DestroyMatrix, GetFromMatrixDatabase, Matrix_T, Matrix_Database_T, &
       & Matrix_SPD_T, MultiplyMatrixVectorNoT, operator(.TX.), ReflectMatrix, &
       & Sparsify, MultiplyMatrix_XTY
@@ -1043,6 +1043,7 @@ contains
         & REQUESTSLAVESOUTPUT, RECEIVESLAVESOUTPUT
 
       ! Local Variables
+      logical :: Abandoned              ! Flag to indicate numerical problems
       type(nwt_T) :: AJ                 ! "About the Jacobian", see NWT.
       type(nwt_T) :: BestAJ             ! AJ at Best Fnorm so far.
       real(r8) :: Cosine                ! Of an angle between two vectors
@@ -1062,6 +1063,7 @@ contains
       type(matrix_T), target :: KTKStar ! The kTkStar contrbution to the averaging
                                         
       integer :: LATESTMAFSTARTED       ! For FWMParallel stuff
+      integer, dimension(2) :: MATRIXSTATUS ! Flag from matrix calculations
       real(rv) :: MU                    ! Move Length = scale for DX
       integer, parameter :: NF_GetJ = NF_Smallest_Flag - 1 ! Take an extra loop
                                         ! to get J.
@@ -1095,6 +1097,7 @@ contains
         & call SetupFWMSlaves ( configDatabase(configIndices), &
         & state, fwdModelExtra, FwdModelOut, jacobian )
       foundBetterState = ( maxJacobians == 0 )
+      abandoned = .false.
       ! Set options for NWT
       nwt_opt(1:9) = (/  15, 1,      17, 2,      18, 3,      11, 4, 0 /)
       nwt_xopt(1:4) = (/ toleranceF, toleranceA, toleranceR, initLambda /)
@@ -1699,8 +1702,15 @@ contains
                 & 'Sparseness structure of Normal equations blocks:', &
                 & upper=.true. )
             call add_to_retrieval_timing ( 'newton_solver', t1 )
-            call choleskyFactor ( factored, normalEquations )
+            call choleskyFactor ( factored, normalEquations, status=matrixStatus )
             call add_to_retrieval_timing ( 'cholesky_factor', t1 )
+            if ( any ( matrixStatus /= 0 ) ) then
+              abandoned = .true.
+              call dump ( matrixStatus, 'matrixStatus' )
+              call MLSMessage ( MLSMSG_Warning, ModuleName, &
+                & 'Retrieval abandoned due to problem factoring normalEquations in evalJ' )
+              exit
+            end if
             if ( index(switches,'diag') /= 0 ) then
               call getDiagonal ( factored%m, v(dxUnscaled) )
               call dump ( v(dxUnscaled), &
@@ -1726,8 +1736,15 @@ contains
           !       column in upper triangle after triangularization
             call add_to_retrieval_timing ( 'newton_solver', t1 )
           call solveCholesky ( factored, v(candidateDX), v(aTb), &
-            & transpose=.true. )
+            & transpose=.true., status=matrixStatus )
             call add_to_retrieval_timing ( 'cholesky_solver', t1 )
+          if ( any ( matrixStatus /= 0 ) ) then
+            abandoned = .true.
+            call dump ( matrixStatus, 'matrixStatus' )
+            call MLSMessage ( MLSMSG_Warning, ModuleName, &
+              & 'Retrieval abandoned due to problem solving normalEquations in evalJ' )
+            exit
+          end if
 
           !{AJ\%FNMIN = $L_2$ norm of residual, $||{\bf\Sigma}^T {\bf J}^T
           ! {\bf S}_m^{-1} {\bf J \Sigma \Sigma}^{-1} {\bf \delta \hat x} +
@@ -1786,7 +1803,14 @@ contains
         ! Solve U^T q = dx, then compute ||q||**2, which is used to
         ! compute the Levenberg-Marquardt stabilization parameter.
           call solveCholesky ( factored, q, v(candidateDX), &
-            & transpose=.true. ) ! q := factored^{-T} v(candidateDX)
+            & transpose=.true., status=matrixStatus ) ! q := factored^{-T} v(candidateDX)
+          if ( any ( matrixStatus /= 0 ) ) then
+            abandoned = .true.
+            call dump ( matrixStatus, 'matrixStatus' )
+            call MLSMessage ( MLSMSG_Warning, ModuleName, &
+              & 'Retrieval abandoned due to problem solving for q in levenberg' )
+            exit
+          end if
           aj%qnsq = q .dot. q
             if ( index(switches,'sca') /= 0 ) then
               call output ( 'QN^2 = ' )
@@ -1819,8 +1843,15 @@ contains
                 & 'Sparseness structure of Normal equations blocks:', &
                 & upper=.true. )
             call add_to_retrieval_timing( 'newton_solver', t1 )
-          call choleskyFactor ( factored, normalEquations )
+          call choleskyFactor ( factored, normalEquations, status=matrixStatus )
             call add_to_retrieval_timing( 'cholesky_factor', t1 )
+            if ( any ( matrixStatus /= 0 ) ) then
+              abandoned = .true.
+              call dump ( matrixStatus, 'matrixStatus' )
+              call MLSMessage ( MLSMSG_Warning, ModuleName, &
+                & 'Retrieval abandoned due to problem factoring normal equations in solve' )
+              exit
+            end if
             if ( index(switches,'fac') /= 0 ) &
               call dump_Linf ( factored%m, &
                 & 'L1 norms of blocks of factor after Marquardt:', &
@@ -1839,8 +1870,17 @@ contains
           ! is how we did it at NF\_EVALF, so we don't need to do it now).
             call add_to_retrieval_timing( 'newton_solver', t1 )
           call solveCholesky ( factored, v(candidateDX), v(aTb), &
-            & transpose=.true. ) ! v(candidateDX) := factored^{-T} v(aTb)
+            & transpose=.true., status=matrixStatus ) ! v(candidateDX) := factored^{-T} v(aTb)
             call add_to_retrieval_timing( 'cholesky_solver', t1 )
+          if ( any ( matrixStatus /= 0 ) ) then
+            abandoned = .true.
+            call dump ( matrixStatus, 'matrixStatus' )
+            call MLSMessage ( MLSMSG_Warning, ModuleName, &
+              & 'Retrieval abandoned due to problem solving aTb in solve' )
+            exit
+          end if
+
+
           ! aj%fnorm is now the norm of f, not its square.
           ! The following calculation of fnmin was commented out, but on
           ! 11 September 2002 FTK told me it's the right thing to do
@@ -1859,7 +1899,15 @@ contains
           end if
           aj%fnmin = sqrt(aj%fnmin)
           ! v(candidateDX) := factored^{-1} v(candidateDX)
-          call solveCholesky ( factored, v(candidateDX) )
+          call solveCholesky ( factored, v(candidateDX), status=matrixStatus )
+          if ( any ( matrixStatus /= 0 ) ) then
+            abandoned = .true.
+            call dump ( matrixStatus, 'matrixStatus' )
+            call MLSMessage ( MLSMSG_Warning, ModuleName, &
+              & 'Retrieval abandoned due to problem solving normal equations in solve' )
+            exit
+          end if
+
           ! Shorten candidateDX if necessary to stay within the bounds.
           ! We aren't ready to take the move, but NWTA needs an accurate
           ! value for the norm of candidateDX.
@@ -2051,7 +2099,7 @@ contains
           if ( index(switches,'NDB') /= 0 ) call nwtdb ( aj, width=9 )
         prev_nwt_flag = nwt_flag
       end do ! Newton iteration
-
+      
         if ( index(switches,'NDB') /= 0 ) then
           call nwtdb ( aj, width=9 )
         else if ( index(switches,'Ndb') /= 0 ) then
@@ -2065,6 +2113,26 @@ contains
       if ( got(f_diagnostics) ) call FillDiagVec ( diagnostics, aj, &
         & numJ=numJ, nwt_flag=nwt_flag, jacobian_rows=jacobian_rows, &
         & jacobian_cols=jacobian_cols )
+
+      if ( abandoned ) then
+        foundBetterState = .false.
+        ! We'll output our last good state, but set the error bar to
+        ! the a priori error.
+        if ( associated(outputSD) .and. associated(covariance) ) &
+          & call GetDiagonal ( covariance%m, outputSD, squareRoot=.true., &
+          & invert=.true., zeroOK=.true. )
+        if ( got(f_outputCovariance) .and. associated(covariance) ) &
+          & call CopyMatrix ( outputCovariance%m, covariance%m )
+        ! Also flag our measurements as never having been used
+        ! Was going to flag the forward model output, but its mask
+        ! Gets overwritten with the measurements one.
+        do j = 1, measurements%template%noQuantities
+          if ( .not. associated ( measurements%quantities(j)%mask ) ) &
+            & call CreateMask ( measurements%quantities(j) )
+          measurements%quantities(j)%mask = char ( ior ( ichar ( &
+            & measurements%quantities(j)%mask ), m_linAlg ) )
+        end do
+      end if
 
       ! Compute the covariance of the solution
       if ( foundBetterState .and. ( got(f_outputCovariance) .or. got(f_outputSD) .or. &
@@ -2139,8 +2207,8 @@ contains
       end if
 
       call copyVector ( state, v(x) )
-        if ( index(switches,'svec') /= 0 ) &
-          & call dump ( state, name='Final state' )
+      if ( index(switches,'svec') /= 0 ) &
+        & call dump ( state, name='Final state' )
       ! Clean up the temporaries, so we don't have a memory leak.
       if ( got(f_fuzz) ) call destroyVectorInfo ( fuzzState )
       call destroyMatrix ( normalEquations%m )
@@ -2175,6 +2243,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.247  2003/06/03 19:24:19  livesey
+! Added the abandoned stuff to make the chunk processing more robust.
+!
 ! Revision 2.246  2003/05/14 23:40:51  dwu
 ! a change in cloud retr
 !
