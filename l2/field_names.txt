@@ -92,6 +92,7 @@ ignore
 ignoreNegative
 ignoreZero
 inclination
+instances
 integrationGrid
 integrationTime
 interpolate
@@ -248,6 +249,9 @@ vRegWeightVec
 writeCounterMAF
 
 # $Log$
+# Revision 2.47  2002/08/26 20:00:57  livesey
+# Added instances
+#
 # Revision 2.46  2002/08/24 01:38:28  vsnyder
 # Implement horizontal regularization
 #
