@@ -92,7 +92,7 @@ contains ! =====     Public Procedures     =============================
     ! Now the specifications:
     use INIT_TABLES_MODULE, only: S_DESTROY, S_DUMP, S_FILL, S_FILLCOVARIANCE, &
       & S_FILLDIAGONAL, S_MATRIX,  S_NEGATIVEPRECISION, S_SNOOP, S_TIME, &
-      & S_TRANSFER, S_VECTOR, S_SUBSET, S_FLAGCLOUD, S_RESTRICTRANGE
+      & S_TRANSFER, S_VECTOR, S_SUBSET, S_FLAGCLOUD, S_RESTRICTRANGE, S_UPDATEMASK
     ! Now some arrays
     use Intrinsic, only: FIELD_INDICES
     use Intrinsic, only: &
@@ -131,7 +131,7 @@ contains ! =====     Public Procedures     =============================
     use ScanModelModule, only: GetBasisGPH, Get2DHydrostaticTangentPressure, GetGPHPrecision
     use SnoopMLSL2, only: SNOOP
     use String_Table, only: Display_String
-    use SubsetModule, only: SETUPSUBSET, SETUPFLAGCLOUD, RESTRICTRANGE
+    use SubsetModule, only: SETUPSUBSET, SETUPFLAGCLOUD, RESTRICTRANGE, UPDATEMASK
     use Time_M, only: Time_Now
     use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -581,6 +581,13 @@ contains ! =====     Public Procedures     =============================
         call RestrictRange ( key, vectors )
         if ( toggle(gen) .and. levels(gen) > 0 ) &
           & call trace_end ( "Fill.RestrictRange" )
+
+      case ( s_updateMask )
+        if ( toggle(gen) .and. levels(gen) > 0 ) &
+          & call trace_begin ( "Fill.UpdateMask", root )
+        call UpdateMask ( key, vectors )
+        if ( toggle(gen) .and. levels(gen) > 0 ) &
+          & call trace_end ( "Fill.UpdateMask" )
 
       case ( s_flagCloud )
         if ( toggle(gen) .and. levels(gen) > 0 ) &
@@ -4973,6 +4980,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.194  2003/04/04 22:01:59  livesey
+! Added call to updateMask
+!
 ! Revision 2.193  2003/04/04 00:08:06  livesey
 ! Added the wrapping of the gridded data before it's used in fill.
 !
