@@ -748,7 +748,7 @@ disttar:
 	--exclude CVS\
 	--exclude Make.dep\* $(EXCL_MLSCONFG) \
 	--exclude bin ; \
-	$(TAR) hcvf machines.tar lib/machines --exclude CVS; \
+	$(TAR) hcvf machines.tar lib/machines customblds/ --exclude CVS; \
 	$(TAR) hAvf ../mlspgs.tar machines.tar
 
 disttarz: disttar ../mlspgs.tar
@@ -762,7 +762,7 @@ disttarg:
 	--exclude CVS\
 	--exclude Make.dep\* $(EXCL_MLSCONFG) \
 	--exclude bin ; \
-	$(TAR) hcvzf machines.tgz lib/machines --exclude CVS; \
+	$(TAR) hcvzf machines.tgz lib/machines customblds/ --exclude CVS; \
 	$(TAR) hAvzf ../mlspgs.tgz machines.tgz
 
 tar:
@@ -772,7 +772,7 @@ tar:
 	$(TAR) hcvf ../mlspgs_sips.tar $(EVERYTHING) --exclude CVS\
 	--exclude Make.dep\* $(EXCL_MLSCONFG) \
 	--exclude bin ; \
-	$(TAR) hcvf machines.tar lib/machines --exclude CVS; \
+	$(TAR) hcvf machines.tar lib/machines customblds/ --exclude CVS; \
 	$(TAR) hAvf ../mlspgs_sips.tar machines.tar
 
 tarz: tar ../mlspgs_sips.tar
@@ -785,7 +785,7 @@ targ:
 	$(TAR) hcvzf ../mlspgs_sips.tgz $(EVERYTHING) --exclude CVS \
 	--exclude Make.dep\* $(EXCL_MLSCONFG) \
 	--exclude bin ; \
-	$(TAR) hcvzf machines.tgz lib/machines --exclude CVS; \
+	$(TAR) hcvzf machines.tgz lib/machines customblds/ --exclude CVS; \
 	$(TAR) hAvzf ../mlspgs_sips.tgz machines.tgz
 
 substars:
@@ -973,6 +973,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.72  2002/07/26 19:51:42  pwagner
+# Repaired faulty tar targets
+#
 # Revision 1.71  2002/07/11 22:12:52  pwagner
 # Changes to support hdf5/hdfeos5
 #
