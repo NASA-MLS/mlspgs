@@ -617,7 +617,8 @@ contains ! ================================ Procedures ======================
           select case ( get_spec_id ( storedResults(resInd)%key ) )
           case ( s_l2gp )
             call JoinL2GPQuantities ( storedResults(resInd)%key, hdfNameIndex, &
-              & qty, precQty, l2gpDatabase, chunk)
+              & qty, precQty, l2gpDatabase, chunk, &
+              & nameString=trim(storedResults(resInd)%hdfName))
           case ( s_l2aux )
             call JoinL2AuxQuantities ( storedResults(resInd)%key, hdfNameIndex, &
               & qty, l2auxDatabase, chunk, chunks )
@@ -848,6 +849,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.28  2002/04/08 20:49:17  pwagner
+! Swath name optionally passed to JoinL2GPQuantities
+!
 ! Revision 2.27  2002/03/14 00:15:43  livesey
 ! Minor bug fix
 !
