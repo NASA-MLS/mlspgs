@@ -3528,6 +3528,8 @@ contains
 
       real(r8), dimension(:), pointer :: THESEHEIGHTS ! Subset of heights
       real(r8) :: VALUE(2)              ! Value returned by expr
+      real(r8) :: HeightVALUE(2)              ! Value returned by height expr
+      real(r8) :: CHeightVALUE(2)              ! Value returned by cloudHeight expr
       real(r8) :: cloudRadianceCutOff              ! threshold for flagging cloud
       type (VectorValue_T), pointer :: QTY ! The quantity to mask
       type (VectorValue_T), pointer :: PTAN ! The ptan quantity if needed
@@ -3574,7 +3576,7 @@ contains
           quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
           cloudRadiance => GetVectorQtyByTemplateIndex(vectors(vectorIndeX), quantityIndex)
         case ( f_cloudRadianceCutoff )
-          call expr ( subtree (2, son), units, value, type )
+          call expr ( subtree (2, son), units, Value, type )
           if ( type /= num_value ) call announceError ( &
             & rangeNotAppropriate, f_cloudRadianceCutoff )
           if ( units(1) /= phyq_TEMPERATURE ) &
@@ -3617,8 +3619,12 @@ contains
       ! Preprocess the height stuff.
       heightUnit = phyq_dimensionless
       if ( got(f_height) ) then
-        do j = 2, nsons(heightNode)
-          call expr ( subtree(j,heightNode), units, value, type )
+        if (nsons(cloudheightNode) .gt. 2) then 
+            print*,'the input height range is not allowed in FlagCloud'
+            stop
+        endif 
+
+          call expr ( subtree(2,heightNode), units, value, type )
           ! Make sure the range has non-dimensionless units -- the type
           ! checker only verifies that they're consistent.  We need to
           ! check each range separately, because the units determine the
@@ -3636,22 +3642,23 @@ contains
               call announceError ( inconsistentUnits, f_height )
             end if
           end do
-        end do
+
+          ! convert pressure unit
+          Heightvalue = value
+          if ( heightUnit == phyq_pressure ) Heightvalue = -log10(value)
+          
       end if
       ! Preprocess the height stuff.
       cloudheightUnit = phyq_dimensionless
       if ( got(f_cloudheight) ) then
-        do j = 2, nsons(cloudheightNode)
-          call expr ( subtree(j,cloudheightNode), units, value, type )
-          ! Make sure the range has non-dimensionless units -- the type
-          ! checker only verifies that they're consistent.  We need to
-          ! check each range separately, because the units determine the
-          ! scaling of the values.
+        if (nsons(cloudheightNode) .gt. 2) then 
+            print*,'the input height range is not allowed in FlagCloud'
+            stop
+        endif 
+            
+          call expr ( subtree(2,cloudheightNode), units, value, type )
           if ( all(units == phyq_dimensionless) ) call announceError ( &
             & wrongUnits, f_cloudheight, string = 'length or pressure.' )
-          ! Check consistency of units -- all the same, or dimensionless. The
-          ! type checker verifies the consistency of units of ranges, but not
-          ! of array elements.
           do i = 1, 2
             if ( cloudheightUnit == phyq_dimensionless ) then
               cloudheightUnit = units(i)
@@ -3660,7 +3667,10 @@ contains
               call announceError ( inconsistentUnits, f_cloudheight )
             end if
           end do
-        end do
+
+          ! convert pressure unit
+          CHeightvalue = value
+          if ( heightUnit == phyq_pressure ) CHeightvalue = -log10(value)          
       end if
 
       ! ----- finish checking ------
@@ -3673,54 +3683,24 @@ contains
           theseHeights => ptan%values(:,instance)
           coordinate = l_zeta
 
-          do j = 2, nsons(heightNode)
-            ! Get values for this ragne
-            son = subtree ( j, heightNode )
-            rangeId = node_id ( son )
-            call expr ( son, units, value, type )
-            ! Now maybe do something nasty to value to get in right units.
-            if ( heightUnit == phyq_pressure ) then
-              value = -log10(value)
-            else
-                call MLSMessage ( MLSMSG_Error, ModuleName, &
-                & 'Inappropriate units for height in flag cloud' )
-            end if
-
             isCloud = .false.
             
             ! use the given height range to find cloud flag
             if( got(f_cloudheight) ) then 
-                  do height1 = 1,cloudRadiance%template%noSurfs
+              do height1 = 1,cloudRadiance%template%noSurfs
                      doThisCloudHeight = .true.
-                     if (any(rangeID==(/ n_less_colon,n_less_colon_less /))) then
-                     doThisCloudHeight = doThisCloudHeight .and. theseHeights(height1) > value(1)
-                     else
-                     doThisCloudHeight = doThisCloudHeight .and. theseHeights(height1) >= value(1)
-                     end if
-                     if (any(rangeID==(/ n_colon_less,n_less_colon_less /))) then
-                     doThisCloudHeight = doThisCloudHeight .and. theseHeights(height1) < value(2)
-                     else
-                     doThisCloudHeight = doThisCloudHeight .and. theseHeights(height1) <= value(2)
-                     end if
+                     doThisCloudHeight = doThisCloudHeight .and. theseHeights(height1) > Cheightvalue(1)
+                     doThisCloudHeight = doThisCloudHeight .and. theseHeights(height1) < Cheightvalue(2)
                   ind1 = useThisChannel + cloudRadiance%template%noChans*(height1-1)
                   if ( doThisCloudHeight .and. &
                      & cloudRadiance%values ( ind1, instance ) > cloudRadianceCutoff) &
                      & isCloud = .true.
-                  enddo
+              enddo
             endif
-               
             do height = 1, qty%template%noSurfs
-               doThisHeight = .true.
-               if (any(rangeID==(/ n_less_colon,n_less_colon_less /))) then
-                 doThisHeight = doThisHeight .and. theseHeights(height) > value(1)
-               else
-                 doThisHeight = doThisHeight .and. theseHeights(height) >= value(1)
-               end if
-               if (any(rangeID==(/ n_colon_less,n_less_colon_less /))) then
-                 doThisHeight = doThisHeight .and. theseHeights(height) < value(2)
-               else
-                 doThisHeight = doThisHeight .and. theseHeights(height) <= value(2)
-               end if
+                 doThisHeight = .true.
+                 doThisHeight = doThisHeight .and. theseHeights(height) > heightvalue(1)
+                 doThisHeight = doThisHeight .and. theseHeights(height) < heightvalue(2)
 
                ! determine cloud flag
                ! if cloud flag is not from a height range then do comparison at each minor frame
@@ -3740,10 +3720,10 @@ contains
                   if ( doThisHeight .and. isCloud )  &
                   &     call SetMask ( qty%mask(:,instance), (/ ind /), &
                   &     what=maskBit )
-               end if                   ! do this channel
+                  end if                   ! do this channel
                end do                   ! Channel loop
-             end do                     ! Height loop
-          end do                        ! Height node entries in l2cf
+             end do                   ! height loop
+
       end do                            ! Instance loop
 
       ! Tidy up
@@ -3761,6 +3741,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.233  2003/02/24 19:20:40  dwu
+! fix a bug in FlagCloud
+!
 ! Revision 2.232  2003/02/14 01:56:36  livesey
 ! Added the 'additional' capability in subset
 !
