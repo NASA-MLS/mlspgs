@@ -197,11 +197,9 @@ contains
 
       ! Derivatives needed continue to process
 
-      lk = lbound(k_temp,3)
-      uk = ubound(k_temp,3)
       do nf = 1, phiWindow
-        if(nf+lk-1 > uk) EXIT
-        col = FindBlock ( Jacobian%col, temp%index, nf+windowStart-1 )
+        lk = nf + windowStart - 1
+        col = FindBlock ( Jacobian%col, temp%index, lk )
         select case ( Jacobian%block(row,col)%kind ) 
         case ( m_absent )
           call CreateBlock ( Jacobian, row, col, m_full )
@@ -219,7 +217,7 @@ contains
           do ptg_i = 1, no_tan_hts
             q = 0.0
             if(nf == mafTInstance) q = d2x_dxdt(ptg_i,sv_i)
-            Rad(ptg_i) = i_raw(ptg_i) * q + k_temp(ptg_i,sv_i,nf+lk-1)
+            Rad(ptg_i) = i_raw(ptg_i) * q + k_temp(ptg_i,sv_i,lk)
           end do
 
           ! Now, Convolve:
@@ -454,6 +452,9 @@ contains
 !
 end module CONVOLVE_ALL_M
 ! $Log$
+! Revision 1.19  2001/04/26 22:54:41  zvi
+! Fixing some phiwindow bug
+!
 ! Revision 1.18  2001/04/20 23:09:13  livesey
 ! Cleaned up multi-channel case, also does folding in place
 !
