@@ -6,14 +6,14 @@ MODULE SciUtils ! L0 science utilities
 !=============================================================================
 
   USE L0_sci_tbls, ONLY: sci_type, l0_sci1, l0_sci2, sci1_T1_fmt, sci2_T1_fmt, &
-       sci1_T2_fmt, sci2_T2_fmt, sci1_T1, sci2_T1, sci1_T2, sci2_T2, &
-       sci_cptr, Sci_pkt, SciMAF, type_sci1, THzSciMAF, DACS_pkt, DACS_MAF
+       sci1_T2_fmt, sci2_T2_fmt, sci1_T1, sci2_T1, sci1_T2, sci2_T2, sci_cptr, &
+       Sci_pkt, SciMAF, type_sci1, THzSciMAF, DACS_pkt, DACS_MAF, Atten_T
   USE L0Utils, ONLY: ReadL0Sci
   USE MLSL1Utils, ONLY: BigEndianStr, ExtractBigEndians, SwapBytes, QNan, &
        Finite
   USE DACsUtils, ONLY: ExtractDACSdata, UncompressDACSdata, ProcessDACSdata
-  USE MLSL1Common, ONLY: FBnum, MBnum, WFnum, WFchans, deg24, &
-       DACSchans, BandSwitch, L1ProgType, THzType, MaxMIFs
+  USE MLSL1Common, ONLY: FBnum, MBnum, WFnum, WFchans, deg24, BankLogical_T, &
+       DACSchans, BandSwitch, L1ProgType, THzType, MaxMIFs, NumBands
 
   IMPLICIT NONE
 
@@ -27,12 +27,16 @@ MODULE SciUtils ! L0 science utilities
   CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
   !-----------------------------------------------------------------------------
 
+  TYPE (BankLogical_T) :: MaxAtten = & ! initialize to NOT Max Atten
+       BankLogical_T (.FALSE., .FALSE., .FALSE., .FALSE.)
+
   CONTAINS
 
 !=============================================================================
   FUNCTION GetSciPkt () RESULT (OK)
 !=============================================================================
 
+    USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Info
     USE ERMSG_M, ONLY: ermset
     USE THzUtils, ONLY: ConvertLLO
 
@@ -49,7 +53,10 @@ MODULE SciUtils ! L0 science utilities
     CHARACTER(len=1), PARAMETER :: sw_good = CHAR(7)
     CHARACTER(len=2) :: WFdat(WFchans)   ! wide filter raw data buffer
     CHARACTER (LEN=1024) :: scipkt(2)
-    CHARACTER (LEN=24) :: DN
+    CHARACTER (LEN=24) :: DN, sw_msg
+
+    TYPE (Atten_T) :: Attenuation
+    LOGICAL :: AttenMaxed
 
     INTEGER :: DACS_C_K(DACSchans)
     INTEGER :: DACS_i1, DACS_i2
@@ -147,6 +154,9 @@ MODULE SciUtils ! L0 science utilities
        ELSE IF ((Sci_pkt%BandSwitch(i) > 0) .AND. &
             (BandSwitch(i) /= Sci_pkt%BandSwitch(i))) THEN
           BandSwitch(i) = Sci_pkt%BandSwitch(i)  ! new current value
+          WRITE (sw_msg, '("S", i1, " switching to Band ", i2)')i, bandswitch(i)
+          PRINT *, sw_msg
+          CALL MLSMessage (MLSMSG_Info, ModuleName, sw_msg)
        ENDIF
     ENDDO
 
@@ -176,6 +186,23 @@ MODULE SciUtils ! L0 science utilities
        CALL ExtractBigEndians (sci_cptr(tindex)%FB(i)%ptr, FBcnts)
        Sci_pkt%FB(:,i) = FBcnts
     ENDDO
+
+!! Attenuation readings
+
+    Attenuation%RIU = ICHAR (sci_cptr(tindex)%Attenuation%ptr(1))
+    Attenuation%Addr = BigEndianStr ( &
+         sci_cptr(tindex)%Attenuation%ptr(2) // &
+         sci_cptr(tindex)%Attenuation%ptr(3))
+    Attenuation%Mask = ICHAR (sci_cptr(tindex)%Attenuation%ptr(4))
+    Attenuation%Value = ICHAR (sci_cptr(tindex)%Attenuation%ptr(5))
+
+!! Determine latest attenuations
+
+    CALL DetermineAttens (Attenuation%RIU, Attenuation%Addr, Attenuation%Value,&
+         Sci_pkt%BandSwitch, MaxAtten, AttenMaxed)
+
+    Sci_pkt%MaxAtten = MaxAtten   ! Use latest attenuation flags
+    Sci_pkt%AttenMaxed = AttenMaxed
 
 ! Nothing more if THz
 
@@ -369,7 +396,7 @@ MODULE SciUtils ! L0 science utilities
 
 ! Process DACS data for the current MAF
 
-    IF (L1ProgType /= LogType) CALL ProcessDACSdata
+    IF (L1ProgType == LogType) CALL ProcessDACSdata
 
 ! Get scAngles to be used for L1BOA
 
@@ -589,6 +616,118 @@ MODULE SciUtils ! L0 science utilities
   END SUBROUTINE Band_switch
 
 !=============================================================================
+  SUBROUTINE DetermineAttens (RIU, Addr, Val, BandSwitch, MaxAtten, AttenMaxed)
+!=============================================================================
+
+    USE L0_sci_tbls, ONLY: BandAtten
+    USE MLSL1Common, ONLY: SwitchBank
+
+    INTEGER, INTENT (IN) :: RIU, Addr, Val, BandSwitch(5)
+    TYPE (BankLogical_T), INTENT (OUT) :: MaxAtten
+    LOGICAL, INTENT (OUT) :: AttenMaxed
+
+    INTEGER :: i, n, nMatch, nBanks, swBanks, MatchBand, BankIndx(2)
+    LOGICAL :: BandMask(NumBands), SwitchMask(5), IsSwitchFB
+
+    INTEGER, PARAMETER :: BandIndx(NumBands) = (/ (i,i=1,NumBands) /)
+    INTEGER, PARAMETER :: DACS_indx(22:26) = (/ 4, 2, 3, 1, 1 /)
+    INTEGER, PARAMETER :: MaxAttenVal = 63   ! Value for maximum attenuation
+
+    AttenMaxed = (Val == MaxAttenVal)
+    BandMask = .FALSE.  ! Nothing matches yet
+
+    WHERE (BandAtten%RIU == RIU .AND. BandAtten%Addr == Addr)
+       BandMask = .TRUE.          ! only for matched case(s)!
+    ENDWHERE
+    nMatch = COUNT (BandMask)
+
+    DO i = 1, nMatch    ! 0, 1 or 2 possible
+
+       BankIndx = 0     ! No indexes (yet)
+       IF (i == 1) THEN
+          MatchBand = MinVal (BandIndx, BandMask)
+       ELSE
+          MatchBand = MaxVal (BandIndx, BandMask)
+       ENDIF
+
+       SELECT CASE (MatchBand)
+
+          CASE (1:21)     ! FBs
+
+             IsSwitchFB = ANY (SwitchBank(2:5) == MatchBand) ! Is a switch FB
+             SwitchMask = .FALSE.
+             WHERE (BandSwitch == MatchBand)
+                SwitchMask = .TRUE.
+             END WHERE
+             swBanks = COUNT (SwitchMask)
+             IF (swBanks > 0) THEN
+                BankIndx(1) = SwitchBank(MinVal (BandIndx(1:5), SwitchMask))
+                BankIndx(2) = SwitchBank(MaxVal (BandIndx(1:5), SwitchMask))
+                IF (IsSwitchFB) THEN
+                   nBanks = swBanks
+                ELSE
+                   IF (MatchBand < 20) THEN
+                      nBanks = 2
+                      BankIndx(1) = MatchBand
+                   ELSE
+                      nBanks = swBanks
+                   ENDIF
+                ENDIF
+             ELSE    ! Not in switch readbacks
+                IF (.NOT. IsSwitchFB .AND. MatchBand < 20) THEN
+                   nBanks = 1   ! Is just one bare FB
+                   BankIndx(1) = MatchBand
+                ELSE
+                   nBanks = 0   ! FB not hooked up!
+                ENDIF
+             ENDIF
+
+             DO n = 1, nBanks
+                MaxAtten%FB(BankIndx(n)) = AttenMaxed
+             ENDDO
+
+          CASE (22:26)    ! DACS
+
+             BankIndx = DACS_indx(MatchBand)
+             IF (MatchBand < 25) THEN
+                nBanks = 1
+             ELSE
+                IF (MatchBand == BandSwitch(1)) THEN
+                   nBanks = 1
+                ELSE
+                   nBanks = 0
+                ENDIF
+             ENDIF
+
+             DO n = 1, nBanks
+                MaxAtten%DACS(BankIndx(n)) = AttenMaxed
+             ENDDO
+
+          CASE (27:31)    ! MBs
+
+             nBanks = 1
+             BankIndx = MatchBand - 26
+
+             DO n = 1, nBanks
+                MaxAtten%MB(BankIndx(n)) = AttenMaxed
+             ENDDO
+
+          CASE (32:34)    ! WFs
+
+             nBanks = 1
+             BankIndx = MatchBand - 31
+
+             DO n = 1, nBanks
+                MaxAtten%WF(BankIndx(n)) = AttenMaxed
+             ENDDO
+
+       END SELECT
+
+    ENDDO
+
+  END SUBROUTINE DetermineAttens
+
+!=============================================================================
   SUBROUTINE Save_THz_pkt (Sci_pkt, THz_Sci_pkt)
 !=============================================================================
 
@@ -613,6 +752,9 @@ MODULE SciUtils ! L0 science utilities
     THz_Sci_pkt%FB(:,6) = Sci_pkt%FB(:,12)
     IF (ANY (THz_Sci_pkt%FB(:,6) > 0)) THz_Sci_pkt%FB(:,6) = &
          THz_Sci_pkt%FB(:,6) - Deflt_zero%FB(:,12)
+    THz_Sci_pkt%MaxAtten(1:5) = Sci_pkt%MaxAtten%FB(15:19)
+    THz_Sci_pkt%MaxAtten(6) = Sci_pkt%MaxAtten%FB(12)
+    THz_Sci_pkt%AttenMaxed = (ANY (THz_Sci_pkt%MaxAtten))
     THz_Sci_pkt%TSSA_pos = Sci_pkt%TSSA_pos
     THz_Sci_pkt%SwMirPos = Sci_pkt%THz_sw_pos
     THz_Sci_pkt%LLO_bias = LLO_Bias (Sci_pkt%LLO_DN, Sci_pkt%MIFno)
@@ -624,6 +766,9 @@ MODULE SciUtils ! L0 science utilities
 END MODULE SciUtils
 
 ! $Log$
+! Revision 2.7  2004/01/09 17:46:23  perun
+! Version 1.4 commit
+!
 ! Revision 2.6  2003/09/15 17:15:54  perun
 ! Version 1.3 commit
 !
@@ -637,8 +782,8 @@ END MODULE SciUtils
 ! moved parameter statement to data statement for LF/NAG compatitibility
 !
 ! $Log$
-! Revision 2.6  2003/09/15 17:15:54  perun
-! Version 1.3 commit
+! Revision 2.7  2004/01/09 17:46:23  perun
+! Version 1.4 commit
 !
 ! Revision 2.5  2003/08/15 14:25:04  perun
 ! Version 1.2 commit

@@ -60,13 +60,10 @@ MODULE MLSPCF1
   INTEGER, PARAMETER :: mlspcf_engtbl_start = 903
   INTEGER, PARAMETER :: mlspcf_engtbl_end = 903
 !
-  INTEGER, PARAMETER :: mlspcf_bwtbl_start = 904
-  INTEGER, PARAMETER :: mlspcf_bwtbl_end = 904
+  INTEGER, PARAMETER :: mlspcf_defltgains_start = 904
+  INTEGER, PARAMETER :: mlspcf_defltgains_end = 904
 !
-  INTEGER, PARAMETER :: mlspcf_defltgains_start = 905
-  INTEGER, PARAMETER :: mlspcf_defltgains_end = 905
-!
-  INTEGER, PARAMETER :: mlspcf_defltzeros_start = 906
+  INTEGER, PARAMETER :: mlspcf_defltzeros_start = 905
   INTEGER, PARAMETER :: mlspcf_defltzeros_end = 906
 !
   INTEGER, PARAMETER :: mlspcf_dacsconst_start = 907
@@ -126,6 +123,9 @@ MODULE MLSPCF1
 END MODULE MLSPCF1
 
 ! $Log$
+! Revision 2.7  2004/01/09 17:46:22  perun
+! Version 1.4 commit
+!
 ! Revision 2.6  2003/08/15 14:25:04  perun
 ! Version 1.2 commit
 !

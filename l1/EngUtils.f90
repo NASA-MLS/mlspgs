@@ -161,9 +161,9 @@ CONTAINS
      & vin_cal1, vin_cal2, prt1_cal1, prt1_cal2, prt2_cal1, prt2_cal2, &
      & ysi_cal1, ysi_cal2, Cal_const
 
-    LOGICAL :: GMAB_ON(*)
+    LOGICAL, DIMENSION(:) :: GMAB_ON
 
-    INTEGER :: i, n, pkt_no, riu_no, byte1
+    INTEGER :: i, n, dn, pkt_no, riu_no, byte1
     REAL :: scale
 
     REAL, PARAMETER :: abs_zero = -273.16
@@ -185,6 +185,11 @@ CONTAINS
 
          IF (Eng_tbl(n)%cal_indx > 0) THEN
             Riu_tbl(i)%Cal_cnts(Eng_tbl(n)%cal_indx) = Eng_tbl(n)%counts
+            IF (Eng_tbl(n)%cal_indx == prt1_cal1) THEN  ! save also as PRT-2's
+               Riu_tbl(i)%Cal_cnts(prt2_cal1) = Eng_tbl(n)%counts
+            ELSE IF (Eng_tbl(n)%cal_indx == prt1_cal2) THEN
+               Riu_tbl(i)%Cal_cnts(prt2_cal2) = Eng_tbl(n)%counts
+            ENDIF
          ENDIF
 
        ENDDO
@@ -246,7 +251,9 @@ CONTAINS
 
           CASE ("PRT-1")
 
-             Eng_tbl(i)%value = PRD_temp (Cal_freq(Eng_tbl(i)%counts, &
+             dn = Eng_tbl(i)%counts
+             IF (dn > 63000) dn = dn - 65536  ! adjust if DN is too high
+             Eng_tbl(i)%value = PRD_temp (Cal_freq(dn, &
                   & Riu_tbl(riu_no)%Cal_cnts(prt1_cal1), &
                   & Riu_tbl(riu_no)%Cal_cnts(prt1_cal2), &
                   & Cal_const(riu_no)%prt1_hi, Cal_const(riu_no)%prt1_low), &
@@ -254,7 +261,7 @@ CONTAINS
 
           CASE ("PRT-2")
 
-             Eng_tbl(i)%value = PRD_temp (Cal_freq(Eng_tbl(i)%counts, &
+            Eng_tbl(i)%value = PRD_temp (Cal_freq(Eng_tbl(i)%counts, &
                   & Riu_tbl(riu_no)%Cal_cnts(prt2_cal1), &
                   & Riu_tbl(riu_no)%Cal_cnts(prt2_cal2), &
                   & Cal_const(riu_no)%prt2_hi, Cal_const(riu_no)%prt2_low), &
@@ -361,6 +368,9 @@ END MODULE EngUtils
 !=============================================================================
 
 ! $Log$
+! Revision 2.7  2004/01/09 17:46:22  perun
+! Version 1.4 commit
+!
 ! Revision 2.6  2003/09/15 17:15:53  perun
 ! Version 1.3 commit
 !

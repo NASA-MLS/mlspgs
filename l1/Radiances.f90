@@ -6,13 +6,12 @@ MODULE Radiances ! Determine radiances for the GHz module
 !=============================================================================
 
   USE MLSCommon, ONLY: r8
-  USE MLSL1Common, ONLY: GHzNum, FBchans, MBnum, MBchans, WFnum, WFchans, &
-       DACSnum, DACSchans, Chan_R_T, deflt_gain, deflt_zero, &
-       absZero_C, BandWidth, tau, LO1
+  USE MLSL1Common, ONLY: GHzNum, FBchans, MBnum, MBchans, WFnum, WFchans, tau, &
+       DACSnum, DACSchans, deflt_gain, deflt_zero, absZero_C, BandWidth, LO1
   USE MLSL1Utils, ONLY : GetIndexedAvg, Finite
   USE EngTbls, ONLY : Eng_MAF_T, CalTgtIndx, ReflecIndx, Reflec
   USE Calibration, ONLY : CalWin, limb_cnts, space_interp, target_interp, &
-       space_err, target_err, Chi2
+       space_err, target_err, Tsys, Cgain
   USE MLSL1Rad, ONLY : FBrad, MBrad, WFrad, DACSrad, RadPwr
 
   IMPLICIT NONE
@@ -26,8 +25,6 @@ MODULE Radiances ! Determine radiances for the GHz module
        "$Id$"
   CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
   !-----------------------------------------------------------------------------
-
-  TYPE (Chan_R_T) :: Tsys, Cgain
 
 CONTAINS
 
@@ -85,6 +82,19 @@ CONTAINS
   END SUBROUTINE CalcRadiance
 
 !=============================================================================
+  SUBROUTINE CalcNonLimbRad (Band, chan, RadNum, ReflecK, NonLimbRad)
+!=============================================================================
+
+    USE BandTbls, ONLY: SideBandFrac, SpilloverLoss, RadiometerLoss
+
+    INTEGER, INTENT (IN) :: Band, chan, RadNum
+    REAL, INTENT (IN) :: ReflecK
+    REAL, INTENT (OUT) :: NonLimbRad
+
+
+  END SUBROUTINE CalcNonLimbRad
+
+!=============================================================================
  SUBROUTINE CalcLimbRads
 !=============================================================================
 
@@ -97,7 +107,7 @@ CONTAINS
     INTEGER :: bank, chan, MIF_index, MIF_index_MAX, radNum
     INTEGER :: time_index, start_index, end_index, windex, CalWin_end
     REAL :: GHz_T1, GHz_T2, space_T, target_T, GHz_target_T, gain
-    REAL :: Scf, Tcf
+    REAL :: ReflecAvg, NonLimbRad, Scf, Tcf
     REAL :: space_P, target_P ! Power per unit bandwidth
     REAL(r8) :: C_zero
     LOGICAL :: use_deflt_gains
@@ -198,6 +208,13 @@ print *, 'S/T temp: ', space_T, GHz_target_T
     Cgain%WF = 0.0
     MIF_index_MAX = MIFsGHz - 1
 
+! Reflector temperatures:
+
+    Reflec%Pri = GetIndexedAvg (EMAF%eng%value, ReflecIndx%Pri) - absZero_C
+    Reflec%Sec = GetIndexedAvg (EMAF%eng%value, ReflecIndx%Sec) - absZero_C
+    Reflec%Ter = GetIndexedAvg (EMAF%eng%value, ReflecIndx%Ter) - absZero_C
+    ReflecAvg = SUM((/ Reflec%Pri, Reflec%Sec, Reflec%Ter /)) / 3
+
     DO time_index = start_index, end_index   ! for every MIF in the MAF
 
        MIF_index = time_index - start_index  ! MIF # within the central MAF
@@ -226,6 +243,10 @@ print *, 'S/T temp: ', space_T, GHz_target_T
                      FBrad(bank)%precision(chan,MIF_index+1), &
                      deflt_gain%FB(chan,bank), use_deflt_gains, &
                      Tsys%FB(chan,bank), gain)
+
+                CALL CalcNonLimbRad (FBrad(bank)%BandNo, chan, radNum, &
+                     ReflecAvg, NonLimbRad)
+
                 IF (Cgain%FB(chan,bank) == 0.0 .AND. Tsys%FB(chan,bank) > 0.0) &
                      Cgain%FB(chan,bank) = gain
 
@@ -285,7 +306,6 @@ print *, 'S/T temp: ', space_T, GHz_target_T
 
           IF (L1Config%Calib%CalibDACS) THEN
 
-             BandWidth%DACS = 0.15 * 1.0e06    ! Bandwidths for all DACS
              DO bank = 1, DACSnum
 
                 radNum = DACSrad(bank)%signal%radiometerNumber
@@ -314,17 +334,6 @@ print *, 'S/T temp: ', space_T, GHz_target_T
        ENDIF
     ENDDO
 
-    Reflec%Pri = GetIndexedAvg (EMAF%eng%value, ReflecIndx%Pri) - absZero_C
-    Reflec%Sec = GetIndexedAvg (EMAF%eng%value, ReflecIndx%Sec) - absZero_C
-    Reflec%Ter = GetIndexedAvg (EMAF%eng%value, ReflecIndx%Ter) - absZero_C
-
-! Write Diags
-
-    WRITE (L1BFileInfo%DiagId) CalWin%MAFdata(windex)%SciPkt(0)%MAFno
-    WRITE (L1BFileInfo%DiagId) Tsys%FB, Tsys%MB, Tsys%WF
-    WRITE (L1BFileInfo%DiagId) Cgain%FB, Cgain%MB, Cgain%WF
-    WRITE (L1BFileInfo%DiagId) Chi2%FB, Chi2%MB, Chi2%WF
-
   END SUBROUTINE CalcLimbRads
 
 !=============================================================================
@@ -332,6 +341,9 @@ END MODULE Radiances
 !=============================================================================
 
 ! $Log$
+! Revision 2.7  2004/01/09 17:46:23  perun
+! Version 1.4 commit
+!
 ! Revision 2.6  2003/08/15 14:25:04  perun
 ! Version 1.2 commit
 !
