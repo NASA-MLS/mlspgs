@@ -16,7 +16,7 @@ module MLSSignals_M
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error
-  use MLSStrings, only: LowerCase
+  use MLSStrings, only: LowerCase, Capitalize
   use MoreTree, only: Get_Boolean
   use Output_M, only: Output
   use String_Table, only: Display_String, Get_String
@@ -1256,7 +1256,7 @@ contains
     if ( len_trim(string_text) < len(string_text) ) &
       & string_text = TRIM(string_text) // '-'
     write ( word,'(I8)' ) number
-    word = adjustl(word)
+    word = adjustl(Capitalize(word))
     if ( len_trim(string_text)+len_trim(word) < len(string_text) ) &
       & string_text = TRIM(string_text) // TRIM(word)
   end subroutine GetSpectrometerTypeName
@@ -1522,6 +1522,9 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.59  2003/07/23 18:04:32  livesey
+! Ensure that the spectrometer names are capitalized when outputing them.
+!
 ! Revision 2.58  2003/07/18 20:23:34  livesey
 ! Added DACS flag
 !
