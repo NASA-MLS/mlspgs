@@ -11,8 +11,8 @@ module Fill                     ! Create vectors and fill them.
     & F_H2OQUANTITY, F_MAXITERATIONS, F_METHOD, F_QUANTITY, F_REFGPHQUANTITY, F_SOURCE, &
     & F_SOURCEL2AUX, F_SOURCEL2GP, F_SOURCEQUANTITY, F_SPREAD, F_TEMPERATUREQUANTITY, &
     & FIELD_FIRST, FIELD_LAST, L_EXPLICIT, L_GPH, L_HYDROSTATIC, L_L1B, L_L2GP, &
-    & L_L2AUX, L_PRESSURE, L_PTAN, L_RADIANCE, L_REFGPH, L_SCGEOCALT, &
-    & L_TEMPERATURE, L_TNGTGEODALT, L_TNGTGEOCALT, L_TRUE, L_VECTOR, L_VMR, &
+    & L_L2AUX, L_PRESSURE, L_PTAN, L_RADIANCE, L_REFGPH, L_SCECI, L_SCGEOCALT, L_SCVEL, &
+    & L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, L_TNGTGEOCALT, L_TRUE, L_VECTOR, L_VMR, &
     & L_ZETA, S_TIME, S_VECTOR, S_FILL, S_SNOOP
   ! will be added
   use L1BData, only: DeallocateL1BData, FindL1BData, L1BData_T, ReadL1BData
@@ -940,16 +940,23 @@ contains ! =====     Public Procedures     =============================
     case ( l_radiance )
       call GetSignalName ( quantity%template%signal, nameString, noChannels=.TRUE. )
       fileID = FindL1BData (l1bInfo%l1bRadIDs, nameString )
+    case ( l_tngtECI )
+      call GetModuleName( quantity%template%instrumentModule,nameString )
+      nameString=TRIM(nameString)//'.tpECI'
     case ( l_tngtGeodAlt )
       call GetModuleName( quantity%template%instrumentModule,nameString )
       nameString=TRIM(nameString)//'.tpGeodAlt'
     case ( l_tngtGeocAlt )
       call GetModuleName( quantity%template%instrumentModule,nameString )
       nameString=TRIM(nameString)//'.tpGeocAlt'
+    case ( l_scECI )
+      nameString='scECI'
+    case ( l_scVel )
+      nameString='scVel'
     case ( l_scGeocAlt )
       nameString='scGeocAlt'
     case default
-      call Announce_Error(cantFillFromL1B, root)
+      call Announce_Error(root, cantFillFromL1B)
     end select
 
     call ReadL1BData ( fileID , nameString, l1bData, noMAFs, flag, &
@@ -1224,6 +1231,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.29  2001/03/15 18:40:38  livesey
+! Added some more l1b fill options.
+!
 ! Revision 2.28  2001/03/14 05:33:39  livesey
 ! Added snoop option
 !
