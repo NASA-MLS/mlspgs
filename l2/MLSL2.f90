@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 program MLSL2
@@ -6,6 +6,7 @@ program MLSL2
   use DECLARATION_TABLE, only: ALLOCATE_DECL, DEALLOCATE_DECL, DUMP_DECL
   use INIT_TABLES_MODULE, only: INIT_TABLES
   use INTRINSIC, only: L_HOURS, L_MINUTES, L_SECONDS, LIT_INDICES
+  use L2GPData, only: avoidUnlimitedDims
   use L2PARINFO, only: PARALLEL, INITPARALLEL, ACCUMULATESLAVEARGUMENTS
   use LEXER_CORE, only: INIT_LEXER
   use LEXER_M, only: CapIdentifiers
@@ -200,7 +201,9 @@ program MLSL2
       end if
       if ( line(3+n:7+n) == 'check ' ) then
         checkl2cf = switch
-      else if ( line(3+n:12+n) == 'checkpaths' ) then
+      ! Using lowercase so either --checkPaths or --checkpaths work
+      ! Perhaps we should do this for all multiletter options
+      else if ( lowercase(line(3+n:8+n)) == 'checkp' ) then
         checkPaths = switch
       else if ( line(3+n:7+n) == 'chunk' ) then
         call AccumulateSlaveArguments ( line )
@@ -541,6 +544,10 @@ program MLSL2
     singleChunk = 1
     lastChunk = 0
   endif
+  ! If doing a range of chunks, the avoidance of unlimited dimensions
+  ! in directwrites of l2gp files currently fails 
+  ! (when will this be fixed?)
+  if ( lastChunk /= 0 ) avoidUnlimitedDims = .false.
   ! Setup the parallel stuff.  Register our presence with the master if we're a
   ! slave.
   if ( parallel%master .and. parallel%myTid <= 0 ) &
@@ -793,9 +800,12 @@ contains
       call output(' Compute chunks in range:                        ', advance='no') 
       call blanks(5, advance='no')                                                   
       call output(singleChunk, advance='no')
-      call blanks(5, advance='no')                                                   
+      call blanks(1, advance='no')                                                   
       call output(lastChunk, advance='yes')
       endif                      
+      call output(' Avoiding unlimited dimensions in directwrites?: ', advance='no')
+      call blanks(4, advance='no')
+      call output(avoidUnlimitedDims, advance='yes')
       call output(' Is this run in forward model parallel?:         ', advance='no')
       call blanks(4, advance='no')
       call output(parallel%fwmParallel, advance='yes')
@@ -886,6 +896,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.112  2004/01/09 00:22:12  pwagner
+! Unsets avoidUnlimitedDims to bypass bug directWriting range of chunks
+!
 ! Revision 2.111  2004/01/07 23:50:16  livesey
 ! Added error message about fwmParallel being broken at the moment
 !
