@@ -9,10 +9,22 @@ Switches:
   V => VGrids (in globalSettings)
 
   fac => Factors of normal equations during retriever iterations
+  glo => Global settings
   jac => Jacobian during retriever iterations
+  log => Log file messages
+  pro => Product files: l2gp, l2aux, l2dgg, l2pc, meta
   neq => Normal equations during retriever iterations
   nwt => Action flag at each return from Newton solver
   rad => Radiances in ForwardModelInterface
   sca => Scalars of interest to the Newton method
   spa => Sparsity structure of fac, jac, neq
   tps => Test_Parse_Signals
+
+
+(Add any more that are relevant to mlsl2,
+or separate sections for mlsl1 or mlsl3)
+
+ $Log$
+ Revision 1.1  2001/05/11 21:41:33;  author: vsnyder
+ First commit
+
