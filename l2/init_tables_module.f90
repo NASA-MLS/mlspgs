@@ -762,7 +762,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_fwdModelExtra, s+s_vector, nr+n_field_spec, &
              begin, f+f_fwdModelOut, s+s_vector, n+n_field_spec, &
              begin, f+f_hRegOrders, t+t_numeric, n+n_field_type, &
-             begin, f+f_hRegQuants, t+t_quantityType, n+n_field_type, &
+             begin, f+f_hRegQuants, s+s_quantity, n+n_field_spec, &
              begin, f+f_hRegWeights, t+t_numeric, n+n_field_type, &
              begin, f+f_hRegWeightVec, s+s_vector, n+n_field_spec, &
              begin, f+f_jacobian, s+s_matrix, n+n_field_spec, &
@@ -780,7 +780,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_toleranceF, t+t_numeric, n+n_field_type, &
              begin, f+f_toleranceR, t+t_numeric, n+n_field_type, &
              begin, f+f_vRegOrders, t+t_numeric, n+n_field_type, &
-             begin, f+f_vRegQuants, t+t_quantityType, n+n_field_type, &
+             begin, f+f_vRegQuants, s+s_quantity, n+n_field_spec, &
              begin, f+f_vRegWeights, t+t_numeric, n+n_field_type, &
              begin, f+f_vRegWeightVec, s+s_vector, n+n_field_spec, &
              ndp+n_spec_def /) )
@@ -879,6 +879,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.246  2002/10/02 23:20:54  livesey
+! Changed regQuants to quantity templates rather than types
+!
 ! Revision 2.245  2002/10/02 23:04:48  pwagner
 ! RHI now separate fill methods
 !
