@@ -1,6 +1,6 @@
 #	Makefile
 #
-# Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+# Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 #
 #special case:
@@ -88,25 +88,30 @@ PROG=libmls.a
 #In case this is called with "make libmls.a"
 libmls.a:
 
-#the subdirectory where testing programs kept
+#the subdirectory where testing programs were kept
+#(outdated now)
 testdir = tests
 
 testsubdirs = $(testdir)/multiply $(testdir)/sparsify $(testdir)/test_cf_parser
 
 #OMIT_SRCS := -d test_cholesky.f90 -d test_multiply.f90 \
 #        -d test_sparsify.f90
-OMIT_SRCS := $(OMIT_SRCS) -d sbinom.f
+#OMIT_SRCS := $(OMIT_SRCS) -d sbinom.f
+OMIT_SRCS := $(OMIT) sbinom.f
 
 #PVM and PVMIDL require PVM_ROOT
 ifdef PVM_ROOT
 else
-   OMIT_SRCS := $(OMIT_SRCS) -d PVM.f90 -d PVMIDL.f90 -d QuantityPVM.f90
+#   OMIT_SRCS := $(OMIT_SRCS) -d PVM.f90 -d PVMIDL.f90 -d QuantityPVM.f90
+   OMIT_SRCS := $(OMIT_SRCS) PVM.f90 PVMIDL.f90 QuantityPVM.f90
 endif
 
 #Toolkit-free version requires SDPToolkitSubstitute
 ifdef PGSTK
-   OMIT_SRCS := $(OMIT_SRCS) -d SDPToolkitSubstitute.f90
+   OMIT_SRCS := $(OMIT_SRCS) SDPToolkitSubstitute.f90
 endif
+
+OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
 
 #NOCLEANING determines value of RECFG passed to mlsconfigure script
 #RECFG determines whether changing .configure triggers deleting
@@ -172,8 +177,8 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
           $(RECFG)
 
 depends:
-	$(MLSBIN)/makemakedep.sh $(OMIT_SRCS) ./machines/$(MLSCONFG) \
-   $(srclib)
+	$(MLSBIN)/makemakedep.sh $(OMIT_PREFXD) \
+           ./machines/$(MLSCONFG) $(srclib)
 #   Unfortunately, we are unable to use this currently because we can't yet
 #   teach makemakedep.sh to selectively ignore files in other directories
 #   the same way it can in its home directory
@@ -182,8 +187,9 @@ depends:
 #   $(srclib) $(libblas_sources)
 
 ghostbuster:
-	$(MLSBIN)/ghostbuster.sh -lib $(PLATFORMS)/$(MLSCONFG) ./ $(srclib) \
-           ./machines/$(MLSCONFG)
+	$(MLSBIN)/ghostbuster.sh -lib $(OMIT_PREFXD) \
+           $(PLATFORMS)/$(MLSCONFG) ./ $(srclib) ./machines/$(MLSCONFG)
+           
 
 mostlyclean:
 	@echo "Cleaning directory $(MLSCONFG)" ; \
@@ -235,6 +241,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.35  2002/01/15 00:40:18  pwagner
+# Now uses user-settable OMIT and internal OMIT_SRCS and OMIT_PREFIXD variables
+#
 # Revision 2.34  2001/11/15 00:09:24  pwagner
 # Rebuilds on changes to mlspgs/blas
 #
