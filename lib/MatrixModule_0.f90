@@ -1194,7 +1194,6 @@ contains ! =====     Public Procedures     =============================
     logical :: My_diag, My_update
     integer :: V1                  ! Subscripts and loop inductors
 
-    print*,'In MMVNOT:',b%nCols, size(v), b%nrows, size(p)
     if ( b%ncols /= size(v) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & "Matrix block and vector not compatible in MultiplyMatrixVector_0" )
     if ( b%nrows /= size(p) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1831,6 +1830,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.18  2001/04/28 07:03:21  livesey
+! Removed a print statement
+!
 ! Revision 2.17  2001/04/28 05:04:16  livesey
 ! Temporarily changed dot to dot_product in MultiplyMatrixVectorNoT, to
 ! avoid run time error I don't understand.
