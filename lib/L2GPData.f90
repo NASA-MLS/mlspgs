@@ -10,7 +10,7 @@ MODULE L2GPData                 ! Creation, manipulation and I/O for L2GP Data
        & MLSMSG_Error, MLSMSG_Warning
   USE MLSCommon, ONLY: R8
 
-  USE Hdf, ONLY: DFNT_CHAR8, DFNT_FLOAT32, DFNT_INT32
+  USE Hdf, ONLY: DFNT_CHAR8, DFNT_FLOAT32, DFNT_INT32, DFNT_FLOAT64
   USE HDFEOS!, ONLY: SWATTACH, SWCREATE, SWDEFDFLD, SWDEFDIM, SWDEFGFLD, &
      !& SWDETACH
   USE SWAPI, ONLY: SWWRFLD!,SWRDFLD
@@ -716,14 +716,14 @@ CONTAINS ! =====     Public Procedures     =============================
        CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
     END IF
 
-    status = swdefgfld(swid, GEO_FIELD3, DIM_NAME1, DFNT_FLOAT32, &
+    status = swdefgfld(swid, GEO_FIELD3, DIM_NAME1, DFNT_FLOAT64, &
          HDFE_NOMERGE)
     IF ( status == -1 ) THEN
        msr = GEO_ERR // GEO_FIELD3
        CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
     END IF
 
-    status = swdefgfld(swid, GEO_FIELD4, DIM_NAME1, DFNT_CHAR8, &
+    status = swdefgfld(swid, GEO_FIELD4, DIM_NAME1, DFNT_FLOAT32, &
          HDFE_NOMERGE)
     IF ( status == -1 ) THEN
        msr = GEO_ERR // GEO_FIELD4
@@ -918,7 +918,7 @@ CONTAINS ! =====     Public Procedures     =============================
     END IF
 
     status = swwrfld(swid, GEO_FIELD3, start, stride, edge, &
-         REAL(l2gp%time))
+         l2gp%time)
     IF ( status == -1 ) THEN
        msr = WR_ERR // GEO_FIELD3
        CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
@@ -1142,6 +1142,9 @@ END MODULE L2GPData
 
 !
 ! $Log$
+! Revision 2.6  2000/09/21 13:48:18  pumphrey
+! fixed a bug in the write routine.
+!
 ! Revision 2.5  2000/09/19 12:42:11  pumphrey
 ! added chunkNumber to SetupNewL2GPRecord and other bug fixes
 !
