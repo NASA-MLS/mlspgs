@@ -18,6 +18,8 @@ vGridRefGPH: vGrid, type=Explicit, coordinate=Zeta, values=100mb
 
 vGridTangent: vGrid, type=Logarithmic, coordinate=Zeta, $
   start=1000mb, formula=[3:6,10:12]
+vGridTangentSids: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start=1000mb, formula=[19:12]
 vGridDiag: vGrid, type=Logarithmic, coordinate=Zeta, $
   start=1000mb, formula=[10:1]
 
@@ -27,6 +29,9 @@ vGridIWC: vGrid, type=Logarithmic, coordinate=Zeta, $
   start= 464.158872744048438mb, formula=[7:6]
 
 ; $Log$
+; Revision 1.3  2003/01/07 23:48:14  livesey
+; New basis for tropH2O
+;
 ; Revision 1.2  2002/12/19 11:54:29  livesey
 ; Added vGridTropH2OHiRes
 ;
