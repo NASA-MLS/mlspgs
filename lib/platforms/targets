@@ -80,12 +80,12 @@ CC=cc
 
 #--------------------- dependency rules for PVM_OBJS
 
-PVM.o: PVM.f90 ${OBJS}
-PVMIDL.o: PVMIDL.f90 ${OBJS} PVM.o
+#PVM.o: PVM.f90 ${OBJS}
+#PVMIDL.o: PVMIDL.f90 ${OBJS} PVM.o
 
 ifdef PVM_ROOT
    pvm_message=Building mlslib with PVM support
-   PVM_OBJS=PVMwrappers.o PVM.o PVMIDL.o
+   PVM_OBJS=PVMwrappers.o
 else
    pvm_message=Building mlslib without PVM support
    PVM_OBJS=
@@ -144,6 +144,9 @@ string_table.o:
 	$(FC) -c $(BUGGY) $(INC_PATHS) $(S)/string_table.f90 $(FAFTER)
 
 # $Log$
+# Revision 1.23  2001/03/16 19:31:21  pwagner
+# (\gcc) instead of cc in build command for PVMWrapper.c
+#
 # Revision 1.22  2001/03/12 23:57:47  pwagner
 # New FAFTER, LAFTER flags to postprocess compile & link steps
 #
