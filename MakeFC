@@ -149,15 +149,6 @@ SHELL = /bin/sh
 # lib            -- libmls.a; a prerequisite for the others
 # blas           -- libmlspack.a; prerequisite for the others and for lib
 # l1, l2, ..     -- pges named mlsl1, mlsl2, ..
-#      (the following nonsense still here for backward compatibility
-#         but not for long--will be deleted in some future revision)
-# lib--hdf5      -- a whittled-down set; minus the routines in he5lib
-# l1--hdf5       -- mlsl1 built using he5lib, too; can read/write hdf5 files
-# l2--hdf5 l3--hdf5 l3m--hdf5
-#                -- like l1--hdf5 but for mlsl2, mlsl3d, or mlsl3m
-# all--hdf5      -- like l1--hdf5 but for all the levels
-# lib--hdf4      -- restores the routines in he5lib back into lib
-#        (end of backward-compatible nonsense)
 
 #                           (functional)
 # clean          -- deletes only *.o, *.mod from sub-subs
@@ -207,6 +198,7 @@ SHELL = /bin/sh
 #
 # The following targets refer to programs whose sources are in the 
 # util directory. You may or may not be interested in building and running them.
+# chunktimes     -- build and install this prog
 # CondenseLeakLog-- build and install this prog
 # end_stmts      -- build and install this prog
 # f90tex         -- build and install this prog
@@ -412,49 +404,6 @@ lib:
 
 blas:
 	$(MAKE) -f $(MakeFName) -C $@
-
-# No longer strips lib of any modules supplied by he5lib
-lib--hdf5:
-	$(MAKE) -f $(MakeFName) lib
-#	cd lib; $(MAKE) -f $(MakeFName) depends HDFVERSIONS= ; \
-#	rm -f $(MLSCONFG)/libmls.a; $(MAKE) -f $(MakeFName) HDFVERSIONS= ; \
-#   $(MAKE) -f $(MakeFName) depends HDFVERSIONS=2; \
-#   rm -f $(MLSCONFG)/libmls.a; $(MAKE) -f $(MakeFName) HDFVERSIONS=2
-
-# These require he5lib no longer
-l1--hdf5:
-	$(MAKE) -f $(MakeFName) l1
-#	$(MAKE) -f $(MakeFName) lib--hdf5; \
-#	cd l1;\
-#	$(MAKE) -f $(MakeFName) HDFVERSIONS=2
-
-l2--hdf5:
-	$(MAKE) -f $(MakeFName) l2
-#	$(MAKE) -f $(MakeFName) lib--hdf5; \
-#	cd l2;\
-#	$(MAKE) -f $(MakeFName) HDFVERSIONS=2
-
-l3--hdf5:
-	$(MAKE) -f $(MakeFName) l3
-#	$(MAKE) -f $(MakeFName) lib--hdf5; \
-#	cd l3;\
-#	$(MAKE) -f $(MakeFName) HDFVERSIONS=2
-
-l3m--hdf5:
-	$(MAKE) -f $(MakeFName) l3m
-#	$(MAKE) -f $(MakeFName) lib--hdf5; \
-#	cd l3m;\
-#	$(MAKE) -f $(MakeFName) HDFVERSIONS=2
-
-all--hdf5:
-	$(MAKE) -f $(MakeFName) all
-#	$(MAKE) -f $(MakeFName) lib--hdf5; \
-#	$(MAKE) -f $(MakeFName) l1 l2 l3 l3m HDFVERSIONS=2
-
-# Restores to lib stuff stripped out by lib--hdf5
-lib--hdf4:
-	cd lib; $(MAKE) -f $(MakeFName) depends HDFVERSIONS= ; \
-	rm -f $(MLSCONFG)/libmls.a; $(MAKE) -f $(MakeFName) HDFVERSIONS=
 
 l1--itm:
 	$(MAKE) -f $(MakeFName) l1 PROG=init_tables_module.o MARK_ALL_AS_UPTODATE=no
@@ -697,6 +646,11 @@ $(utctotai_sources): $(MLSBIN)/utctotai.shar
 	/bin/sh utctotai.shar
 
 # build and install some of the executables out of util
+chunktimes: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/chunktimes.f90 l1--itm
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
 compare: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/compare.f90
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -c $(MLSCONFG) -p $@ -M $(MAKE) \
@@ -731,8 +685,6 @@ heconvert: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/convert.c $(MLSBIN)/HE5_HdfEosDef.h
       -I $(HDF)/../include -I $(HDF5)/../include -I $(HDF5)/../src \
       $(UTIL_OPTS) -main convert.c
    
-#EXTRA_PATHS="-I /software/SRC/TOOLKIT-5.2.7.3v1.00/hdfeos5.0/include/ -I /software/SRC/TOOLKIT-5.2.7.3v1.00/hdfeos/include -I /software/SRC/TOOLKIT-5.2.7.3v1.00/hdf/linux/HDF4.1r3/include -I /software/SRC/TOOLKIT-5.2.7.3v1.00/hdf5/linux/hdf5-1.4.1/include/ -I /software/SRC/TOOLKIT-5.2.7.3v1.00/hdf5/linux/hdf5-1.4.1/src"
-
 init_gen: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/init_gen.f90
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -c $(MLSCONFG) -p $@ -M $(MAKE) \
@@ -1109,15 +1061,16 @@ update:
   install install-l1 install-l2 install-l3 install-l3d install-l3m \
   internalcleanup internaldepends internalmftests internalsaymake \
   internaladd_copy internalreset_copy show_copy internalupdate levels\
-  lib--hdf5 l1--hdf5 l1--itm l2--hdf5 l2gpcat l2gpdiff l3--hdf5 l3m--hdf5 \
-  all--hdf5 lib--hdf4\
   makefile mostlyclean $(SUBDIRS) subdirs\
   tar substar tarz substarz targ substarg substars update\
-  CondenseLeakLog end_stmts f90tex heconvert init_gen h5subset h5cat \
-  hl killmaster machineok MLS_h5ls utctotai WordSplit
+  chunktimes CondenseLeakLog end_stmts f90tex heconvert init_gen \
+  h5subset h5cat hl killmaster machineok MLS_h5ls utctotai WordSplit
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.91  2004/07/26 20:54:54  pwagner
+# Can build l2gpcat and diff w/o having built l1 first
+#
 # Revision 1.90  2004/07/22 19:54:25  pwagner
 # May now build l2gpdiff
 #
