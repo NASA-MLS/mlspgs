@@ -224,16 +224,23 @@ contains
     complex(rk), intent(in) :: Tau(:,:,:)   ! 2 x 2 x path. Matmul(Prod,conjg(Prod)).
     integer, intent(in) :: P_Stop           ! Where to stop on the path
     complex(rk), intent(out) :: D_Radiance(:,:,:) ! 2 x 2 x sve
-    real(rk), intent(in),optional :: D_T_script(:,:) ! path x sve. a.k.a D Delta B
+    real(rk), intent(in), optional :: D_T_script(:,:) ! path x sve. a.k.a D Delta B
     ! T script or Delta B depends only on temperature and frequency, so it's
     ! only needed for temperature derivatives.
 
     complex(rk) :: DPDx(2,2)                ! D (P_i) / D (x)
     complex(rk) :: DTauDx(2,2)              ! D (Tau_i) / D (x)
+    real(rk) :: Earth_Ref
     integer :: I_P, I_pp, I_Sv              ! Path, State vector indices
     integer :: I_Tan                        ! Tangent point
 
     i_tan = size(t_script) / 2
+    earth_ref = sqrt_earth_ref**2
+
+    ! This is for the case of a two-element path, which has no layers,
+    ! and just the middle boundary twice.  It doesn't need to be inside
+    ! the loops, because dTauDx will always be zero in this case.
+    if ( i_tan == 1 ) dTauDx = 0.0_rk
 
     ! dTauDx is Hermitian, so we calculate the elements explicitly, saving
     ! eleven multiplies on each diagonal (where we know the imaginary part
@@ -253,34 +260,34 @@ contains
         do i_p = 2, p_stop                 ! path elements
         ! dTauDx = matmul(dPdx,conjg(transpose(prod(1:2,1:2,i_p))))
         ! dTauDx = dTauDx + conjg(transpose(dTauDx))
-        if ( i_p /= i_tan + 1 ) then
-          dTauDx(1,1) = 2.0_rk * (real(dPdx(1,1)) *  real(prod(1,1,i_p)) + &
-                      &          aimag(dPdx(1,1)) * aimag(prod(1,1,i_p)) + &
-                      &           real(dPdx(1,2)) *  real(prod(1,2,i_p)) + &
-                      &          aimag(dPdx(1,2)) * aimag(prod(1,2,i_p)) )
-          dTauDx(1,2) =   cmplx(  real(dPdx(1,1)) *  real(prod(2,1,i_p))  &
-                      &        + aimag(dPdx(1,1)) * aimag(prod(2,1,i_p))  &
-                      &        +  real(dPdx(1,2)) *  real(prod(2,2,i_p))  &
-                      &        + aimag(dPdx(1,2)) * aimag(prod(2,2,i_p))  &
-                      &        +  real(dPdx(2,1)) *  real(prod(1,1,i_p))  &
-                      &        + aimag(dPdx(2,1)) * aimag(prod(1,1,i_p))  &
-                      &        +  real(dPdx(2,2)) *  real(prod(1,2,i_p))  &
-                      &        + aimag(dPdx(2,2)) * aimag(prod(1,2,i_p)), &
-                      &        -  real(dPdx(1,1)) * aimag(prod(2,1,i_p))  &
-                      &        + aimag(dPdx(1,1)) *  real(prod(2,1,i_p))  &
-                      &        -  real(dPdx(1,2)) * aimag(prod(2,2,i_p))  &
-                      &        + aimag(dPdx(1,2)) *  real(prod(2,2,i_p))  &
-                      &        +  real(dPdx(2,1)) * aimag(prod(1,1,i_p))  &
-                      &        - aimag(dPdx(2,1)) *  real(prod(1,1,i_p))  &
-                      &        +  real(dPdx(2,2)) * aimag(prod(1,2,i_p))  &
-                      &        - aimag(dPdx(2,2)) *  real(prod(1,2,i_p)) )
-          dTauDx(2,2) = 2.0_rk * (real(dPdx(2,1)) *  real(prod(2,1,i_p)) + &
-                      &          aimag(dPdx(2,1)) * aimag(prod(2,1,i_p)) + &
-                      &           real(dPdx(2,2)) *  real(prod(2,2,i_p)) + &
-                      &          aimag(dPdx(2,2)) * aimag(prod(2,2,i_p)) )
-        else
-          dTauDx = sqrt_earth_ref * sqrt_earth_ref * dTauDx
-        endif
+          if ( i_p /= i_tan + 1 ) then
+            dTauDx(1,1) = 2.0_rk * (real(dPdx(1,1)) *  real(prod(1,1,i_p)) + &
+                        &          aimag(dPdx(1,1)) * aimag(prod(1,1,i_p)) + &
+                        &           real(dPdx(1,2)) *  real(prod(1,2,i_p)) + &
+                        &          aimag(dPdx(1,2)) * aimag(prod(1,2,i_p)) )
+            dTauDx(1,2) =   cmplx(  real(dPdx(1,1)) *  real(prod(2,1,i_p))  &
+                        &        + aimag(dPdx(1,1)) * aimag(prod(2,1,i_p))  &
+                        &        +  real(dPdx(1,2)) *  real(prod(2,2,i_p))  &
+                        &        + aimag(dPdx(1,2)) * aimag(prod(2,2,i_p))  &
+                        &        +  real(dPdx(2,1)) *  real(prod(1,1,i_p))  &
+                        &        + aimag(dPdx(2,1)) * aimag(prod(1,1,i_p))  &
+                        &        +  real(dPdx(2,2)) *  real(prod(1,2,i_p))  &
+                        &        + aimag(dPdx(2,2)) * aimag(prod(1,2,i_p)), &
+                        &        -  real(dPdx(1,1)) * aimag(prod(2,1,i_p))  &
+                        &        + aimag(dPdx(1,1)) *  real(prod(2,1,i_p))  &
+                        &        -  real(dPdx(1,2)) * aimag(prod(2,2,i_p))  &
+                        &        + aimag(dPdx(1,2)) *  real(prod(2,2,i_p))  &
+                        &        +  real(dPdx(2,1)) * aimag(prod(1,1,i_p))  &
+                        &        - aimag(dPdx(2,1)) *  real(prod(1,1,i_p))  &
+                        &        +  real(dPdx(2,2)) * aimag(prod(1,2,i_p))  &
+                        &        - aimag(dPdx(2,2)) *  real(prod(1,2,i_p)) )
+            dTauDx(2,2) = 2.0_rk * (real(dPdx(2,1)) *  real(prod(2,1,i_p)) + &
+                        &          aimag(dPdx(2,1)) * aimag(prod(2,1,i_p)) + &
+                        &           real(dPdx(2,2)) *  real(prod(2,2,i_p)) + &
+                        &          aimag(dPdx(2,2)) * aimag(prod(2,2,i_p)) )
+          else
+            dTauDx = earth_ref * dTauDx
+          end if
         ! d_radiance(1:2,1:2,i_sv) = d_radiance(1:2,1:2,i_sv) + &
         !                          & dTauDx * t_script(i_p) + &
         !                          & tau(1:2,1:2,i_p) * d_t_script(i_p,i_sv)
@@ -322,36 +329,36 @@ contains
         i_pp = 2
         dPdx = d_e(1:2,1:2,2,i_sv)         ! D (P_2) / D (x) = D (E_2) / D (x)
         do i_p = 2, p_stop                 ! path elements
-        if ( i_p /= i_tan + 1 ) then
-        ! dTauDx = matmul(dPdx,conjg(transpose(prod(1:2,1:2,i_p))))
-        ! dTauDx = dTauDx + conjg(transpose(dTauDx))
-          dTauDx(1,1) = 2.0_rk * (real(dPdx(1,1)) *  real(prod(1,1,i_p)) + &
-                      &          aimag(dPdx(1,1)) * aimag(prod(1,1,i_p)) + &
-                      &           real(dPdx(1,2)) *  real(prod(1,2,i_p)) + &
-                      &          aimag(dPdx(1,2)) * aimag(prod(1,2,i_p)) )
-          dTauDx(1,2) =   cmplx(  real(dPdx(1,1)) *  real(prod(2,1,i_p))  &
-                      &        + aimag(dPdx(1,1)) * aimag(prod(2,1,i_p))  &
-                      &        +  real(dPdx(1,2)) *  real(prod(2,2,i_p))  &
-                      &        + aimag(dPdx(1,2)) * aimag(prod(2,2,i_p))  &
-                      &        +  real(dPdx(2,1)) *  real(prod(1,1,i_p))  &
-                      &        + aimag(dPdx(2,1)) * aimag(prod(1,1,i_p))  &
-                      &        +  real(dPdx(2,2)) *  real(prod(1,2,i_p))  &
-                      &        + aimag(dPdx(2,2)) * aimag(prod(1,2,i_p)), &
-                      &        -  real(dPdx(1,1)) * aimag(prod(2,1,i_p))  &
-                      &        + aimag(dPdx(1,1)) *  real(prod(2,1,i_p))  &
-                      &        -  real(dPdx(1,2)) * aimag(prod(2,2,i_p))  &
-                      &        + aimag(dPdx(1,2)) *  real(prod(2,2,i_p))  &
-                      &        +  real(dPdx(2,1)) * aimag(prod(1,1,i_p))  &
-                      &        - aimag(dPdx(2,1)) *  real(prod(1,1,i_p))  &
-                      &        +  real(dPdx(2,2)) * aimag(prod(1,2,i_p))  &
-                      &        - aimag(dPdx(2,2)) *  real(prod(1,2,i_p)) )
-          dTauDx(2,2) = 2.0_rk * (real(dPdx(2,1)) *  real(prod(2,1,i_p)) + &
-                      &          aimag(dPdx(2,1)) * aimag(prod(2,1,i_p)) + &
-                      &           real(dPdx(2,2)) *  real(prod(2,2,i_p)) + &
-                      &          aimag(dPdx(2,2)) * aimag(prod(2,2,i_p)) )
-        else
-          dTauDx = sqrt_earth_ref * sqrt_earth_ref * dTauDx
-        endif
+          if ( i_p /= i_tan + 1 ) then
+          ! dTauDx = matmul(dPdx,conjg(transpose(prod(1:2,1:2,i_p))))
+          ! dTauDx = dTauDx + conjg(transpose(dTauDx))
+            dTauDx(1,1) = 2.0_rk * (real(dPdx(1,1)) *  real(prod(1,1,i_p)) + &
+                        &          aimag(dPdx(1,1)) * aimag(prod(1,1,i_p)) + &
+                        &           real(dPdx(1,2)) *  real(prod(1,2,i_p)) + &
+                        &          aimag(dPdx(1,2)) * aimag(prod(1,2,i_p)) )
+            dTauDx(1,2) =   cmplx(  real(dPdx(1,1)) *  real(prod(2,1,i_p))  &
+                        &        + aimag(dPdx(1,1)) * aimag(prod(2,1,i_p))  &
+                        &        +  real(dPdx(1,2)) *  real(prod(2,2,i_p))  &
+                        &        + aimag(dPdx(1,2)) * aimag(prod(2,2,i_p))  &
+                        &        +  real(dPdx(2,1)) *  real(prod(1,1,i_p))  &
+                        &        + aimag(dPdx(2,1)) * aimag(prod(1,1,i_p))  &
+                        &        +  real(dPdx(2,2)) *  real(prod(1,2,i_p))  &
+                        &        + aimag(dPdx(2,2)) * aimag(prod(1,2,i_p)), &
+                        &        -  real(dPdx(1,1)) * aimag(prod(2,1,i_p))  &
+                        &        + aimag(dPdx(1,1)) *  real(prod(2,1,i_p))  &
+                        &        -  real(dPdx(1,2)) * aimag(prod(2,2,i_p))  &
+                        &        + aimag(dPdx(1,2)) *  real(prod(2,2,i_p))  &
+                        &        +  real(dPdx(2,1)) * aimag(prod(1,1,i_p))  &
+                        &        - aimag(dPdx(2,1)) *  real(prod(1,1,i_p))  &
+                        &        +  real(dPdx(2,2)) * aimag(prod(1,2,i_p))  &
+                        &        - aimag(dPdx(2,2)) *  real(prod(1,2,i_p)) )
+            dTauDx(2,2) = 2.0_rk * (real(dPdx(2,1)) *  real(prod(2,1,i_p)) + &
+                        &          aimag(dPdx(2,1)) * aimag(prod(2,1,i_p)) + &
+                        &           real(dPdx(2,2)) *  real(prod(2,2,i_p)) + &
+                        &          aimag(dPdx(2,2)) * aimag(prod(2,2,i_p)) )
+          else
+            dTauDx = earth_ref * dTauDx
+          end if
         ! d_radiance(1:2,1:2,i_sv) = d_radiance(1:2,1:2,i_sv) + &
         !                          & dTauDx * t_script(i_p)
           d_radiance(1,1,i_sv) = d_radiance(1,1,i_sv) + &
@@ -393,6 +400,9 @@ contains
 end module MCRT_m
 
 ! $Log$
+! Revision 2.17  2004/03/06 00:16:03  bill
+! fixed a bug in mcrt_der
+!
 ! Revision 2.16  2004/02/23 23:20:48  vsnyder
 ! Fix some subscript errors
 !
