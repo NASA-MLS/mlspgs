@@ -1,5 +1,7 @@
 ; File: emls-signals.dat
 ;
+; $Id$
+;
 ; This calibration file contains a list of all the valid EOS-MLS signal
 ; specifications.  It also contains enough information to construct nominal
 ; frequency (upper and lower sideband) and width information for any channel
@@ -9,14 +11,6 @@
 ; need to be modified.  Obviously other files, such as user input files for
 ; calibration file generation programs will also need modification to reflect
 ; the new configuration.
-;
-; History
-;
-;    11-Nov-97 NJL First version, based on DAF May 21, 1997 document
-;	           'EOS MLS DESIGNATIONS'
-;    24-Nov-97 NJL Modified to include information on nominal frequencies
-;                  and widths.
-;    18-May-98 NJL Improved comments prior to telling people about the file.
 ;
 ; -----------------------------------------------------------------------------
 ; -----------------------------------------------------------------------------
@@ -251,3 +245,19 @@ R1B:118.B34W:PT.S0.WF4-3 List
    0.5e3 0.5e3 0.5e3 0.5e3
 ;
 END
+;
+; History
+;
+; $Log$
+; ------------------
+;    08-Nov-99 NJL Removed redundancy information for R1B. Also put
+;                  under CVS, for later log information see automatic
+;                  stuff in dollar Log dollar above.
+;    18-May-98 NJL Improved comments prior to telling people about the
+;    file.
+;    24-Nov-97 NJL Modified to include information on nominal frequencies
+;                  and widths.
+;    11-Nov-97 NJL First version, based on DAF May 21, 1997 document
+;	           'EOS MLS DESIGNATIONS'
+;
+
