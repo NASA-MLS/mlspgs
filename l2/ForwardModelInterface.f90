@@ -134,7 +134,7 @@ contains ! =====     Public Procedures     =============================
       case ( f_l2pc )
         call get_string ( sub_rosa(subtree(2,son)), fileName, strip=.true. )
         call open_l2pc_file (fileName, lun)
-        call read_l2pc_file (lun, lit_indices, l2pcDatabase )
+        call read_l2pc_file (lun, l2pcDatabase )
         call close_l2pc_file ( lun )
       case default
         ! Can't get here if the type checker worked
@@ -1434,6 +1434,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.117  2001/04/26 02:49:52  vsnyder
+! Moved *_indices declarations from init_tables_module to intrinsic (again)
+!
 ! Revision 2.116  2001/04/26 02:44:17  vsnyder
 ! Moved *_indices declarations from init_tables_module to intrinsic
 !
