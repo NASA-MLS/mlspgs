@@ -104,6 +104,8 @@ lengthScale
 level
 logBasis
 losqty
+lsb
+lsbFraction
 
 mask
 matrix
@@ -219,6 +221,8 @@ toleranceR Rtolerance
 type
 
 unit
+usb
+usbFraction
 
 values
 vector
@@ -229,6 +233,9 @@ vmrQuantity
 writeCounterMAF
 
 # $Log$
+# Revision 2.37  2002/05/17 17:56:23  livesey
+# Stuff for sideband folding fills
+#
 # Revision 2.36  2002/05/14 00:28:44  livesey
 # Added noise bandwidth
 #
