@@ -46,7 +46,7 @@ contains
     use Machine, only: SHELL_COMMAND
     use MLSCommon, only: MLSChunk_T
     use L2ParInfo, only: PARALLEL, GETMACHINENAMES, MACHINENAMELEN, &
-      & SLAVEARGUMENTS, SIG_REGISTER, INFOTAG, MAFTAG
+      & SLAVEARGUMENTS, SIG_REGISTER, INFOTAG
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use Toggles, only: SWITCHES
     use PVM, only: PVMDATADEFAULT, MYPVMSPAWN, PVMFCATCHOUT, PVMERRORMESSAGE, &
@@ -71,7 +71,6 @@ contains
     integer, dimension(1) :: TID1       ! For MyPVMSpawn
     logical, pointer, dimension(:) :: HEARDFROMSLAVE ! Which slaves have we heard from
 
-    character(len=16) :: MAFNOSTR       ! MAF number as a string
     character(len=2048) :: COMMANDLINE
     character(len=MachineNameLen), dimension(:), pointer :: MACHINENAMES
 
@@ -97,13 +96,11 @@ contains
       & call output ( 'Launching forward model slaves', advance='yes' )
     ! Now we're going to launch the slaves
     if ( usingSubmit ) then ! --------------------- Using a batch system
+      commandLine = &
+        & trim(parallel%submit) // ' ' // &
+        & trim(parallel%executable) // ' ' // &
+        & trim(slaveArguments)
       do maf = 1, noMAFs
-        write ( mafNoStr, '(i0)' ) maf
-        commandLine = &
-          & trim(parallel%submit) // ' ' // &
-          & trim(parallel%executable) // ' ' // &
-          & ' --slaveMAF ' // trim(mafNoStr) // ' ' // &
-          & trim(slaveArguments)
         call shell_command ( trim(commandLine) )
       end do
     else ! ----------------------------------------- Start job using pvmspawn
@@ -148,15 +145,6 @@ contains
       end if
       ! Otherwise, we know who this is.
       heardFromSlave ( maf ) = .true.
-      ! Send back the maf number as a confirmation.
-      call PVMFinitSend ( PVMDataDefault, bufferID )
-      call PVMF90Pack ( maf, info )
-      if ( info /= 0 ) &
-        & call PVMErrorMessage ( info, 'packing maf' )
-      call PVMFSend ( slaveTid, MAFTag, info )
-      if ( info /= 0 ) &
-        & call PVMErrorMessage ( info, 'sending maf' )
-      if ( all ( heardFromSlave ) ) exit contactLoop
     end do contactLoop
 
     if ( index ( switches, 'mas' ) /= 0 ) &
@@ -287,7 +275,6 @@ contains
         allocate ( vectors ( noVectors ), STAT=info )
         if ( info /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & MLSMSG_Allocate//'vectors' )
-
 
         ! Now get the three vector templates and vectors
         do i = 1, noVectors
@@ -448,25 +435,178 @@ contains
   subroutine SetupFWMSlaves ( configs, inVector, extraVector, outVector )
     ! The master uses this routine to send the core information on the
     ! state vector layout etc. to each forward model slave.
-    use ForwardModelConfig, only: ForwardModelConfig_T
-    use VectorsModule, only: Vector_T
+    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use ForwardModelConfig, only: FORWARDMODELCONFIG_T, PVMPACKFWMCONFIG
+    use VectorsModule, only: VECTOR_T
+    use PVM, only: PVMFINITSEND, PVMDATADEFAULT, PVMERRORMESSAGE, PVMF90PACK, &
+      & PVMFBCAST
+    use PVMIDL, only: PVMIDLPACK, PVMIDLUNPACK
+    use L2ParInfo, only: SIG_NEWSETUP, FWMSLAVEGROUP, INFOTAG
+    use QuantityPVM, only: PVMSENDQUANTITY
+    use MorePVM, only: PVMPACKSTRINGINDEX
     type (ForwardModelConfig_T), dimension(:), intent(in) :: CONFIGS
-    type (Vector_T), intent(in) :: INVECTOR
-    type (Vector_T), intent(in) :: EXTRAVECTOR
-    type (Vector_T), intent(in) :: OUTVECTOR
+    type (Vector_T), target, intent(in) :: INVECTOR
+    type (Vector_T), target, intent(in) :: EXTRAVECTOR
+    type (Vector_T), target, intent(in) :: OUTVECTOR
+
+    ! Local variables
+    integer :: BUFFERID                 ! For PVM
+    integer :: INFO                     ! Flag from PVM
+    integer :: NOQUANTITIES             ! Number of quantities that are relevant
+    integer :: I,J                      ! Loop counters
+    integer, dimension(:), pointer :: VECINDS
+    integer, dimension(:), pointer :: QTYINDS
+    type (Vector_T), pointer :: V
+
+    ! Executable code
+    call PVMFInitSend ( PVMDataDefault, bufferID )
+    if ( bufferID <= 0 ) &
+      & call PVMErrorMessage ( bufferID, 'Setting up buffer for FWMSlaveSetup' )
+    call PVMF90Pack ( SIG_NewSetup, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Packing signal for FWMSlaveSetup' )
+
+    ! Now we send the forward model configs
+    call PVMIDLPack ( size ( configs ), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Packing no fwm configs' )
+    do i = 1, size ( configs )
+      call PVMPackFWMConfig ( configs ( i ) )
+    end do
+
+    ! Now we work out how many quantities are relevant
+    noQuantities = max ( &
+      & maxval ( inVector%template%quantities ), &
+      & maxval ( extraVector%template%quantities ), &
+      & maxval ( outVector%template%quantities ) )
+    nullify ( vecInds, qtyInds )
+    call Allocate_test ( vecInds, noQuantities, 'vecInds', ModuleName )
+    call Allocate_test ( qtyInds, noQuantities, 'qtyInds', ModuleName )
+    vecInds = 0
+    qtyInds = 0
+    ! Note that some quantities may be in two vectors, it doesn't
+    ! matter as long as the slave gets the template from somewhere
+    do i = 1, noVectors
+      select case ( i )
+      case ( FWMIn )
+        v => inVector
+      case ( FWMExtra )
+        v => extraVector
+      case  ( FWMOut )
+        v => outVector
+      end select
+      do j = 1, size ( v%quantities )
+        vecInds ( v%template%quantities(j) ) = i
+        qtyInds ( v%template%quantities(j) ) = j
+      end do
+    end do
+    ! Now pack up the relevant ones.
+    do j = 1, noQuantities
+      call PVMIDLPack ( vecInds ( j ) /= 0 , info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, 'Packing quantity relevant flag' )
+      if ( vecInds ( j ) /= 0 ) then
+        select case ( vecInds(j) )
+        case ( FWMIn )
+          v => inVector
+        case ( FWMExtra )
+          v => extraVector
+        case  ( FWMOut )
+          v => outVector
+        end select
+        call PVMSendQuantity ( v%quantities(qtyInds(j)), justPack=.true., &
+          & noValues=.true., noMask=.true., skipMIFGeolocation=.true. )
+      end if
+    end do
+
+    ! Now send the three templates, and the vector values in some circumstances
+    do i = 1, noVectors
+      select case ( i )
+      case ( FWMIn )
+        v => inVector
+      case ( FWMExtra )
+        v => extraVector
+      case  ( FWMOut )
+        v => outVector
+      end select
+      ! Send the vector template information
+      call PVMIDLPack ( size ( v%quantities ), info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, 'packing size(quantities)' )
+      call PVMIDLUnpack ( v%template%quantities, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, 'packing template%quantities' )
+      call PVMPackStringIndex ( v%template%name, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, 'packing vector template name' )
+      ! Send the vector information
+      call PVMPackStringIndex ( v%name, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, 'packing vector name' )
+      ! Pack the vector values in some circumstances
+      if ( i == FWMExtra .or. i == FWMOut ) then
+        do j = 1, size ( v%quantities )
+          if ( i == FWMExtra ) then
+            call PVMPack ( v%quantities(j)%values, info )
+            if ( info /= 0 ) call PVMErrorMessage ( info, 'packing vector values' )
+          end if
+          call PVMIDLPack ( associated ( v%quantities(j)%mask ), &
+            & info )
+          if ( info /= 0 ) call PVMErrorMessage ( info, 'packing quantity mask flag' )
+          if ( associated ( v%quantities(j)%mask ) ) then
+            call PVMIDLPack ( v%quantities(j)%mask, info )
+            if ( info /= 0 ) call PVMErrorMessage ( info, 'packing quantity mask' )
+          end if                        ! Send mask?
+        end do                          ! Loop over quantities
+      end if                            ! Extra or output
+    end do                              ! Loop over vectors
+
+    ! That's it, let's get this information sent off
+    call PVMFBcast ( FWMSlaveGroup, InfoTag, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Broadcasting setup information' )
+      
   end subroutine SetupFWMSlaves
 
   ! ------------------------------------------------ TriggerSlaveRun ---
   subroutine TriggerSlaveRun ( state, maf )
     ! This routine is used by the master to launch one run
-    use VectorsModule, only: Vector_T
+    use VectorsModule, only: VECTOR_T
+    use PVM, only: PVMFINITSEND, PVMFSEND, PVMDATADEFAULT, PVMF90PACK
+    use L2ParInfo, only: SIG_RUNMAF, INFOTAG
     type (Vector_T), intent(in) :: STATE
     integer, intent(in) :: MAF
+    ! Local variables
+    integer :: BUFFERID                 ! From PVM
+    integer :: INFO                     ! Flag from PVM
+    integer :: J                        ! Loop counter
+
+    ! Executable code
+    call PVMFInitSend ( PVMDataDefault, bufferID )
+    if ( bufferID <= 0 ) call PVMErrorMessage ( bufferID, &
+      & 'Setting up buffer for TriggerSlaveRun' )
+    call PVMF90Pack ( SIG_RunMAF, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Packing sig_RunMAF' )
+    ! Send the state vector values
+    do j = 1, size ( state%quantities )
+      call PVMIDLPack ( state%quantities(j)%values, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, &
+        & 'Packing state quantity values' )
+      call PVMIDLPack ( associated ( state%quantities(j)%mask ), info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, &
+        & 'Packing state quantity mask flag' )
+      if ( associated ( state%quantities(j)%mask ) ) then
+        call PVMIDLPack ( state%quantities(j)%mask, info )
+        if ( info /= 0 ) call PVMErrorMessage ( info, &
+          & 'Packing state quantity mask' )
+      end if
+    end do
+    ! Send the fmStat stuff
+    call PVMIDLPack ( maf, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'packing maf' )
+    ! OK, send this off
+    call PVMFSend ( slaveTids ( maf ), InfoTag, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Sending trigger packet' )
   end subroutine TriggerSlaveRun
 
 end module L2FWMParallel
 
 ! $Log$
+! Revision 2.4  2002/10/06 22:22:20  livesey
+! Nearly all routines filled out now, only one more to go
+!
 ! Revision 2.3  2002/10/06 02:04:31  livesey
 ! More progress all routines at least stubbed out.
 !
