@@ -688,7 +688,7 @@ contains ! =====     Public Procedures     =============================
       x = 0.0_r8
     case ( M_Banded )
       do i = 1, n
-        if ( b%r1(i) <= i .and. b%r1(i) + b%r2(i+1) - b%r2(i) > i ) then
+        if ( b%r1(i) <= i .and. b%r1(i) + b%r2(i) - b%r2(i-1) > i ) then
           x(i) = b%values(b%r2(i-1)+i-b%r1(i)+1,1)
         else
           x(i) = 0.0_r8
@@ -1859,11 +1859,11 @@ contains ! =====     Public Procedures     =============================
   subroutine DUMP_MATRIX_BLOCK ( MATRIX_BLOCK, NAME, DETAILS, BOUNDS )
     type(MatrixElement_T), intent(in) :: MATRIX_BLOCK
     character(len=*), intent(in), optional :: NAME
-    logical, intent(in), optional :: DETAILS   ! Print details, default true
+    integer, intent(in), optional :: DETAILS   ! Print details, default true
     integer, intent(in), optional :: BOUNDS(4) ! Dump only Bounds(1):Bounds(2)
                                                !        X  Bounds(3):Bounds(4)
-    logical :: MY_DETAILS
-    my_details = .true.
+    integer :: MY_DETAILS
+    my_details = 1
     if ( present(details) ) my_details = details
     if ( present(name) ) call output ( name, advance='yes' )
     call output ( '  ' )
@@ -1872,7 +1872,7 @@ contains ! =====     Public Procedures     =============================
     select case ( matrix_block%kind )
     case ( m_banded )
       call output ( 'Banded' )
-      if ( my_details ) then
+      if ( my_details > 0 ) then
         call output ( ' First-nonzero-rows =', advance='yes' )
         call dump ( matrix_block%r1(1:) )
         call output ( '  Last-value-in-column =', advance='yes' )
@@ -1880,7 +1880,7 @@ contains ! =====     Public Procedures     =============================
       end if
     case ( m_column_sparse )
       call output ( 'Column-sparse' )
-      if ( my_details ) then
+      if ( my_details > 0 ) then
         call output ( ' Last-in-column =', advance='yes' )
         call dump ( matrix_block%r1(1:) )
         call output ( '  Rows =', advance='yes' )
@@ -1891,7 +1891,7 @@ contains ! =====     Public Procedures     =============================
     end select
     if ( matrix_block%kind == M_Absent ) then
       call output ( 'Absent', advance='yes' )
-    else if ( my_details ) then
+    else if ( my_details > 1 ) then
       call output ( ' Values =', advance='yes' )
       if ( present(bounds) ) then
         call dump ( matrix_block%values(bounds(1):bounds(2),bounds(3):bounds(4)) )
@@ -1908,6 +1908,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.28  2001/05/12 01:05:23  vsnyder
+! Change 'details' argumet of 'dump_matrix_block' to integer
+!
 ! Revision 2.27  2001/05/11 22:02:06  vsnyder
 ! Correct errors in SolveCholeskyV_0
 !
