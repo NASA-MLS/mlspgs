@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -32,6 +32,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
      CHARACTER(LEN=80) :: OutputVersionString
      CHARACTER(LEN=80) :: VersionComment
      LOGICAL :: ProduceL1BOA = .TRUE.
+     LOGICAL :: SimOA = .TRUE.
   END TYPE Globals_T
 
   TYPE Calib_T
@@ -179,8 +180,8 @@ MODULE MLSL1Config  ! Level 1 Configuration
 
 !! Will get the User Inputs from the L1CF file here
 
-      MIFsGHz = 120
-      MIFsTHz = 120
+      MIFsGHz = 125
+      MIFsTHz = 125
 
     END SUBROUTINE GetL1Config
 
@@ -189,14 +190,13 @@ MODULE MLSL1Config  ! Level 1 Configuration
 !=============================================================================
 
       USE INIT_TABLES_MODULE, ONLY: p_output_version_string, &
-           p_version_comment, p_produce_l1boa
+           p_version_comment, p_produce_l1boa, p_simoa
       USE STRING_TABLE, ONLY: Get_string
       USE TREE, ONLY: Decoration, Nsons, Subtree, Sub_rosa
       USE MoreTree, ONLY: Get_Boolean
 
       INTEGER :: root
 
-      CHARACTER(LEN=80) :: line
       INTEGER :: i, son
 
       DO i = 2, Nsons (root) - 1
@@ -219,6 +219,10 @@ MODULE MLSL1Config  ! Level 1 Configuration
 
             L1Config%Globals%ProduceL1BOA = Get_Boolean (son)
 
+         CASE (p_simoa)
+
+            L1Config%Globals%SimOA = Get_Boolean (son)
+
          END SELECT
 
       ENDDO
@@ -234,7 +238,6 @@ MODULE MLSL1Config  ! Level 1 Configuration
       USE TREE, ONLY: Decoration, Nsons, Subtree, Sub_rosa
       USE MLSStrings, ONLY: lowercase
 
-      CHARACTER(LEN=80) :: line
       INTEGER :: root, i, son
 
       DO i = 2, Nsons (root) - 1
@@ -591,6 +594,9 @@ MODULE MLSL1Config  ! Level 1 Configuration
 END MODULE MLSL1Config
 
 ! $Log$
+! Revision 2.11  2003/08/15 14:25:04  perun
+! Version 1.2 commit
+!
 ! Revision 2.10  2002/11/21 16:57:46  perun
 ! Moved default HDFversion number to declaration
 !

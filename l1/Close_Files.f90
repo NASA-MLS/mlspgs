@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -31,8 +31,13 @@ CONTAINS
     USE SDPToolkit, ONLY: PGS_IO_Gen_closeF
     USE MLSFiles, ONLY: MLS_closeFile, HDFVERSION_5
     USE L1BOutUtils, ONLY: WriteHdrAnnots
+    USE HDF5, ONLY: H5gClose_f, H5gOpen_f
+    USE MLSHDF5, ONLY: MakeHDF5Attribute
+    USE Orbit, ONLY: OrbitNumber, OrbPeriod
 
-    INTEGER :: i, returnStatus, error, HDFversion
+    CHARACTER(LEN=132) :: filename
+    INTEGER :: i, returnStatus, error, HDFversion, grp_id
+    LOGICAL :: opened
 
     INTEGER, EXTERNAL :: PGS_IO_L0_Close
 
@@ -58,12 +63,31 @@ CONTAINS
 
     ENDDO
 
+! Close Eng/Sci MAF data unit:
+
+    INQUIRE (unit=L1BFileInfo%MAF_data_unit, name=filename, opened=opened)
+    IF (opened) THEN
+       CLOSE (L1BFileInfo%MAF_data_unit)
+       CALL MLSMessage (MLSMSG_Info, ModuleName, &
+            & 'Closed MAF_data file: '//filename)
+    ENDIF
+
     IF (L1ProgType == LogType) THEN
 
        returnStatus = PGS_IO_Gen_CloseF (l1BFileInfo%LogId)
 
        CALL MLSMessage (MLSMSG_Info, ModuleName, &
             & 'Closed L1BLOG file: '//l1BFileInfo%LogFileName)
+
+       INQUIRE (unit=L1BFileInfo%engMAF_unit, name=filename)
+       CLOSE (L1BFileInfo%engMAF_unit, status="DELETE")
+       CALL MLSMessage (MLSMSG_Info, ModuleName, &
+            & 'Closed engMAF file: '//filename)
+
+       INQUIRE (unit=L1BFileInfo%sciMAF_unit, name=filename)
+       CLOSE (L1BFileInfo%sciMAF_unit, status="DELETE")
+       CALL MLSMessage (MLSMSG_Info, ModuleName, &
+            & 'Closed sciMAF file: '//filename)
 
        RETURN
 
@@ -77,8 +101,7 @@ CONTAINS
 
        ! Write Hdr Annotations and Close L1RAD T file
 
-       CALL WriteHdrAnnots (L1BFileInfo%RADTFileName, L1BFileInfo%RADTid, &
-            HDFversion)
+       CALL WriteHdrAnnots (L1BFileInfo%RADTFileName, HDFversion)
        CALL MLS_closeFile (L1BFileInfo%RADTid, HDFversion=HDFversion)
        CALL MLSMessage (MLSMSG_Info, ModuleName, &
             & 'Closed L1BRAD T file: '//L1BFileInfo%RADTFileName)
@@ -91,38 +114,47 @@ CONTAINS
 
     ! Write Hdr Annotations and Close L1RAD D file
 
-    CALL WriteHdrAnnots (L1BFileInfo%RADDFileName, L1BFileInfo%RADDid, &
-         HDFversion)
+    CALL WriteHdrAnnots (L1BFileInfo%RADDFileName, HDFversion)
     CALL MLS_closeFile (L1BFileInfo%RADDid, HDFversion=HDFversion)
     CALL MLSMessage (MLSMSG_Info, ModuleName, &
          & 'Closed L1BRAD D file: '//L1BFileInfo%RADDFileName)
 
     ! Write Hdr Annotations and Close L1RAD F file
 
-    CALL WriteHdrAnnots (L1BFileInfo%RADFFileName, L1BFileInfo%RADFid, &
-         HDFversion)
+    CALL WriteHdrAnnots (L1BFileInfo%RADFFileName, HDFversion)
     CALL MLS_closeFile (L1BFileInfo%RADFid, HDFversion=HDFversion)
     CALL MLSMessage (MLSMSG_Info, ModuleName, &
          & 'Closed L1BRAD F file: '//L1BFileInfo%RADFFileName)
 
     ! Write Hdr Annotations and Close L1BOA file
 
-    CALL WriteHdrAnnots (L1BFileInfo%OAFileName, L1BFileInfo%OAid, HDFversion)
+    IF (HDFversion == HDFVERSION_5) THEN
+       CALL H5gOpen_f (L1BFileInfo%OAid, '/', grp_id, returnStatus)
+       CALL MakeHDF5Attribute (grp_id, 'OrbitNumber', OrbitNumber, .true.)
+       CALL MakeHDF5Attribute (grp_id, 'OrbitPeriod', OrbPeriod, .true.)
+       CALL H5gClose_f (grp_id, returnStatus)
+    ENDIF
+
+    CALL WriteHdrAnnots (L1BFileInfo%OAFileName, HDFversion)
     CALL MLS_closeFile (L1BFileInfo%OAid, HDFversion=HDFversion)
     CALL MLSMessage (MLSMSG_Info, ModuleName, &
          & 'Closed L1BOA file: '//L1BFileInfo%OAFileName)
 
     CALL WriteMetaData
 
-    returnStatus = PGS_IO_Gen_CloseF (l1BFileInfo%EngId)
+    INQUIRE (unit=L1BFileInfo%EngId, name=filename, opened=opened)
+    IF (opened) THEN
+       CLOSE (L1BFileInfo%EngId)
+       CALL MLSMessage (MLSMSG_Info, ModuleName, &
+            & 'Closed L1BENG file: '//filename)
+    ENDIF
 
-    CALL MLSMessage (MLSMSG_Info, ModuleName, &
-         & 'Closed L1BENG file: '//l1BFileInfo%EngFileName)
-
-    returnStatus = PGS_IO_Gen_CloseF (l1BFileInfo%DiagId)
-
-    CALL MLSMessage (MLSMSG_Info, ModuleName, &
-         & 'Closed L1BDIAG file: '//l1BFileInfo%DiagFileName)
+    INQUIRE (unit=L1BFileInfo%DiagId, name=filename, opened=opened)
+    IF (opened) THEN
+       CLOSE (L1BFileInfo%DiagId)
+       CALL MLSMessage (MLSMSG_Info, ModuleName, &
+            & 'Closed L1BDIAG file: '//filename)
+    ENDIF
 
 !! Close the HDF 5 Fortran Interface
 
@@ -138,6 +170,9 @@ CONTAINS
 END MODULE Close_files
 !=============================================================================
 ! $Log$
+! Revision 2.11  2003/08/15 14:25:04  perun
+! Version 1.2 commit
+!
 ! Revision 2.10  2003/02/28 19:11:35  pwagner
 ! In accord with new MLS_closeFile interface
 !
