@@ -1,11 +1,11 @@
-! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
 MODULE IEEE_ARITHMETIC              ! Common utilities for the MLSL1 program
 !=============================================================================
 
-!  use SUNSOWNIEEE, only: ir_isnan, ir_isinf, r_quiet_nan
+  use Inf_NaN_Detection, only: isnan, isinf, isposinf, isneginf
 
   implicit NONE
   private
@@ -58,24 +58,22 @@ CONTAINS
   LOGICAL FUNCTION IEEE_IS_FINITE( ARG )
   ! Formal args
     real, intent(in) ::          arg
-!    integer, external ::         ir_isnan
-!    integer, external ::         ir_isinf
   ! Private
     
     IEEE_IS_FINITE = .FALSE.
-!    if( ir_isnan(arg) == 1 ) RETURN
-!    if( ir_isinf(arg) == 1 ) RETURN
+    if( isnan(arg) ) RETURN
+    if( isinf(arg) ) RETURN
     IEEE_IS_FINITE = .TRUE.
   END FUNCTION IEEE_IS_FINITE
   
   elemental logical function IEEE_Is_NaN_D ( X )
     double precision, intent(in) :: X
-    IEEE_Is_NaN_D = .not. ( x <= 0.0 .or. x >= 0.0 )
+    IEEE_Is_NaN_D = isnan(x)
   end function IEEE_Is_NaN_D
 
   elemental logical function IEEE_Is_NaN_S ( X )
     real, intent(in) :: X
-    IEEE_Is_NaN_S = .not. ( x <= 0.0 .or. x >= 0.0 )
+    IEEE_Is_NaN_S = isnan(x)
   end function IEEE_Is_NaN_S
 
   logical function IEEE_Support_NaN_All ( )
@@ -148,6 +146,9 @@ END MODULE IEEE_ARITHMETIC
 
 !
 ! $Log$
+! Revision 1.3  2003/07/03 19:26:52  vsnyder
+! Remove some comments that are no longer true
+!
 ! Revision 1.2  2003/07/03 19:11:29  vsnyder
 ! Add IEEE_Support_NaN, IEEE_Is_NaN, IEEE_Class_Type.
 ! Make IEEE_Quiet_NaN to be of IEEE_Class_Type.
