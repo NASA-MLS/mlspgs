@@ -488,6 +488,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_mif, t+t_numeric, n+n_field_type, &
              begin, f+f_interpolationfactor, t+t_numeric, n+n_field_type, &
              begin, f+f_inclination, t+t_numeric, n+n_field_type, &
+             begin, f+f_single, t+t_boolean, n+n_field_type, &
              begin, f+f_solarTime, t+t_numeric, n+n_field_type, &
              begin, f+f_solarZenith, t+t_numeric, n+n_field_type, &
              begin, f+f_spacing, t+t_numeric, n+n_field_type, &
@@ -1076,6 +1077,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.327  2003/08/11 18:08:00  livesey
+! Added the single option to hGrid
+!
 ! Revision 2.326  2003/08/08 23:06:21  livesey
 ! Added the fieldStrength etc. stuff, also dontPack option on saving l2pc
 ! files.
