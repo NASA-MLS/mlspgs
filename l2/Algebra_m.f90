@@ -3,6 +3,8 @@
 
 module ALGEBRA_M
 
+  use MatrixModule_1, only: K_Cholesky, K_Empty, K_Kronecker, K_Plain, K_SPD
+
 ! Process the ALGEBRA section
 
   implicit NONE
@@ -17,6 +19,20 @@ module ALGEBRA_M
        "$RCSfile$"
   private :: not_used_here
 !---------------------------------------------------------------------------
+
+  ! Parameters for WHAT argument of EXPR
+  integer, parameter :: W_Nothing = 0               ! An error occurred
+  integer, parameter :: W_Number = w_nothing + 1    ! Result is DVALUE
+  integer, parameter :: W_Vector = w_number + 1     ! Result is a vector
+  integer, parameter :: W_Matrix = w_vector + 1     ! Result is a general matrix
+  integer, parameter :: W_Matrix_C = w_matrix + 1   ! Result is Cholesky factor
+  integer, parameter :: W_Matrix_K = w_matrix_C + 1 ! Result is a Kronecker matrix
+  integer, parameter :: W_Matrix_S = w_matrix_K + 1 ! Result is an SPD matrix
+
+  integer, save :: Whats(k_empty:k_spd)
+  data whats(k_empty) / w_nothing /, whats(k_cholesky) / w_matrix_c /
+  data whats(k_kronecker) / w_matrix_k /, whats(k_plain) / w_matrix /
+  data whats(k_spd) / w_matrix_s /
 
 contains
 
@@ -36,12 +52,12 @@ contains
     use MatrixModule_1, only: AddToMatrix, AddToMatrixDatabase, AssignMatrix, &
       & CreateEmptyMatrix, CopyMatrix, &
       & CopyMatrixValue, DestroyMatrix, Dump, GetActualMatrixFromDatabase, &
-      & GetFromMatrixDatabase, GetKindFromMatrixDatabase, &
+      & GetDiagonal, GetFromMatrixDatabase, GetKindFromMatrixDatabase, &
       & K_Cholesky, K_Empty, K_Kronecker, K_Plain, K_SPD, Matrix_Cholesky_T, &
       & Matrix_Database_T, Matrix_Kronecker_T, Matrix_SPD_T, Matrix_T, &
       & MultiplyMatrixVectorNoT, multiplyMatrixVectorSPD_1, &
-      & MultiplyMatrix_XY, ScaleMatrix, Dump_Struct, TransposeMatrix
-    use MLSCommon, only: R8
+      & MultiplyMatrix_XY, ReflectMatrix, ScaleMatrix, Dump_Struct, TransposeMatrix
+    use MLSCommon, only: R8, RV
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use Output_M, only: Output
     use String_Table, only: Display_String
@@ -50,7 +66,8 @@ contains
     use TREE, only: DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE, PRINT_SUBTREE
     use TREE_TYPES ! Everything, except tree_init; remainder begin with N_
     use VectorsModule, only:  AddToVector, AddVectorToDatabase,  CopyVector, &
-      & CloneVector, DestroyVectorInfo, Dump, ScaleVector, Vector_T
+      & CloneVector, DestroyVectorInfo, Dump, ScaleVector, Vector_T, PowVector, &
+      & ReciprocateVector
 
     integer, intent(in) :: ROOT
     type(vector_T), dimension(:), pointer :: VectorDatabase
@@ -68,6 +85,7 @@ contains
     integer :: Type                ! Type of result
     integer :: Value               ! Index of Vector or Matrix result in database
     integer :: What                ! See its parameters below
+    integer :: WhatsLHS            ! As above but for the LHS (only used for matrices)
 
     type(matrix_t), pointer :: LHSMatrix
     type(matrix_Cholesky_t) :: Matrix_C
@@ -81,19 +99,11 @@ contains
     integer, parameter :: Ambiguous = 1                ! LHS is ambiguous
     integer, parameter :: CantInvertVector = ambiguous + 1    ! Can't invert vector
     integer, parameter :: Incompatible = cantInvertVector + 1 ! incompatible operands
-    integer, parameter :: Undefined = incompatible + 1 ! undefined operand
+    integer, parameter :: NotPlain = incompatible + 1 ! undefined operand
+    integer, parameter :: Undefined = notPlain + 1 ! undefined operand
     integer, parameter :: UnknownFunc = undefined + 1  ! unknown function
     integer, parameter :: UnknownOp = UnknownFunc + 1  ! unknown operator
     integer, parameter :: WrongNumArgs = UnknownOp + 1 ! wrong number of args
-
-    ! Parameters for WHAT argument of EXPR
-    integer, parameter :: W_Nothing = 0               ! An error occurred
-    integer, parameter :: W_Number = w_nothing + 1    ! Result is DVALUE
-    integer, parameter :: W_Vector = w_number + 1     ! Result is a vector
-    integer, parameter :: W_Matrix = w_vector + 1     ! Result is a general matrix
-    integer, parameter :: W_Matrix_C = w_matrix + 1   ! Result is Cholesky factor
-    integer, parameter :: W_Matrix_K = w_matrix_C + 1 ! Result is a Kronecker matrix
-    integer, parameter :: W_Matrix_S = w_matrix_K + 1 ! Result is an SPD matrix
 
     error = 0
 
@@ -107,6 +117,22 @@ contains
         ! Evaluate the RHS
         rhs = subtree(2,son)
         call expr ( rhs, what, dValue, vector, matrix, matrix_c, matrix_k, matrix_s )
+
+        ! Possibly do some dumping
+        if ( index(switches,'spa') /= 0 ) then
+          select case ( what )
+          case ( w_matrix )
+            call dump_struct ( matrix, 'Result of expression' )
+          case ( w_matrix_c )
+            call dump_struct ( matrix_c%m, 'Result of expression' )
+          case ( w_matrix_s )
+            call dump_struct ( matrix_s%m, 'Result of expression' )
+          case ( w_matrix_k )
+            call dump_struct ( matrix_k%m, 'Result of expression' )
+          case default
+          end select
+        end if
+
         if ( what == w_nothing ) &
     go to 200
         ! Lookup the LHS.  It could be a label or the LHS of another expr.
@@ -176,17 +202,38 @@ contains
             end if
             call getActualMatrixFromDatabase ( matrixDatabase(value), &
               & LHSMatrix )
-            select case ( what )
-            case ( w_matrix )
-              call copyMatrixValue ( LHSmatrix, matrix )     ! deep copy
-            case ( w_matrix_c )
-              call copyMatrixValue ( LHSmatrix, matrix_c%m ) ! deep copy
-            case ( w_matrix_k )
-              call copyMatrixValue ( LHSmatrix, matrix_k%m ) ! deep copy
-            case ( w_matrix_s )
-              call copyMatrixValue ( LHSmatrix, matrix_s%m ) ! deep copy
-            end select
-            if ( index(switches,'spa') /= 0 ) call dump_struct ( matrix, 'Result of expression' )
+            whatsLHS = whats ( GetKindFromMatrixDatabase ( matrixDatabase(value) ) )
+            if ( what == whatsLHS ) then
+              select case ( what )
+              case ( w_matrix )
+                call copyMatrixValue ( LHSmatrix, matrix )     ! deep copy
+              case ( w_matrix_c )
+                call copyMatrixValue ( LHSmatrix, matrix_c%m ) ! deep copy
+              case ( w_matrix_k )
+                call copyMatrixValue ( LHSmatrix, matrix_k%m ) ! deep copy
+              case ( w_matrix_s )
+                call copyMatrixValue ( LHSmatrix, matrix_s%m ) ! deep copy
+              end select
+            else
+              ! OK the LHS and RHS matrices are of different type.
+              ! We'll allow 'promotion' to plain but not any other conversion.
+              if ( whatsLHS == w_matrix ) then
+                select case ( what )
+                case ( w_matrix_c )
+                  call copyMatrixValue ( LHSmatrix, matrix_c%m )
+                case ( w_matrix_s )
+                  call copyMatrixValue ( LHSmatrix, matrix_s%m )
+                  call ReflectMatrix ( LHSMatrix )
+                case ( w_matrix_k )
+                  call copyMatrixValue ( LHSmatrix, matrix_k%m )
+                  call ReflectMatrix ( LHSMatrix )
+                case default
+                  call announce_error ( son, incompatible )
+                end select
+              else
+                call announce_error ( son, incompatible )
+              end if
+            end if
           case default
             stop
           end select
@@ -218,13 +265,11 @@ contains
 
     ! ...........................................  AlgebraCommands .....
     subroutine AlgebraCommands ( root, VectorDatabase, MatrixDatabase )
-      use Tree, only: DECORATION, NSONS, SUBTREE
-      use MoreTree, only: GET_SPEC_ID
-      use MatrixModule_1, only: CYCLICJACOBI, REFLECTMATRIX, MATRIX_T
-      use VectorsModule, only: VECTOR_T
-      use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST, F_MATRIX, F_EIGENVECTORS
+      use MatrixModule_1, only: COLUMNSCALE, CYCLICJACOBI, REFLECTMATRIX, ROWSCALE
+      use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST, F_MATRIX, F_EIGENVECTORS, F_SCALE
       use Init_Tables_Module, only: L_TRUE
-      use Init_Tables_Module, only: S_CYCLICJACOBI, S_REFLECT
+      use Init_Tables_Module, only: S_COLUMNSCALE, S_CYCLICJACOBI, S_REFLECT, S_ROWSCALE
+      use MoreTree, only: GET_SPEC_ID
         
       ! Dummy arguments
       integer, intent(in) :: ROOT
@@ -241,6 +286,7 @@ contains
       integer :: MATRIXIND              ! Index into matrix database
       type(Matrix_T), pointer :: MATRIX ! The matrix to work on
       type(Matrix_T), pointer :: EIGENVECTORS ! Eigen vector matrix
+      type(Vector_T), pointer :: SCALEVECTOR ! The scaling vector
 
       ! Executable code
       do i = 2, nsons(root)
@@ -254,26 +300,30 @@ contains
         fieldID = decoration(key)
         got ( fieldID ) = .true.
         select case ( fieldID )
-        case ( f_matrix )
-          matrixInd = decoration ( value )
-          call GetFromMatrixDatabase ( matrixDatabase(matrixInd), matrix )
         case ( f_eigenVectors )
           matrixInd = decoration ( value )
+          if ( GetKindFromMatrixDatabase ( matrixDatabase(matrixInd) ) /= k_plain ) &
+            & call Announce_Error ( key, notPlain )
           call GetFromMatrixDatabase ( matrixDatabase(matrixInd), eigenVectors )
+        case ( f_matrix )
+          matrixInd = decoration ( value )
+          if ( GetKindFromMatrixDatabase ( matrixDatabase(matrixInd) ) /= k_plain ) &
+            & call Announce_Error ( key, notPlain )
+          call GetFromMatrixDatabase ( matrixDatabase(matrixInd), matrix )
+        case ( f_scale )
+          scaleVector => vectorDatabase ( decoration ( value ) )
         end select
       end do
 
       select case ( get_spec_id ( root ) )
-      case ( s_reflect )
-        call Dump_Struct ( matrix, 'Input matrix' )
-        call ReflectMatrix ( matrix )
-        call Dump_Struct ( matrix, 'Reflected matrix' )
+      case ( s_columnScale )
+        call ColumnScale ( matrix, scaleVector )
       case ( s_cyclicJacobi ) 
-        call Dump_Struct ( matrix, 'Input matrix' )
-        call Dump_Struct ( eigenVectors, 'Input eigen vectors' )
-        call CyclicJacobi ( matrix, eigenVectors, tol=1e-6 )
-        call Dump_Struct ( matrix, 'Output matrix (eigen values)' )
-        call Dump_Struct ( eigenVectors, 'Output eigen vectors' )
+        call CyclicJacobi ( matrix, eigenVectors )
+      case ( s_reflect )
+        call ReflectMatrix ( matrix )
+      case ( s_rowScale )
+        call RowScale ( scaleVector, matrix )
       end select
 
     end subroutine AlgebraCommands
@@ -299,6 +349,8 @@ contains
         call output ( 'Cannot invert a vector.', advance='yes' )
       case ( incompatible )
         call output ( 'Operands are incompatible.', advance='yes' )
+      case ( notPlain )
+        call output ( 'Matrix is not a plain matrix.', advance='yes' )
       case ( undefined )
         call output ( 'Name in expression is undefined.', advance='yes' )
       case ( unknownFunc )
@@ -330,7 +382,7 @@ contains
       ! or put into a database to avoid memory leaks.
 
       use DECLARATION_TABLE, only: DECLS, EMPTY, FUNCTION, GET_DECL
-      use FUNCTIONS, only: F_CHOLESKY, F_TRANSPOSE
+      use FUNCTIONS, only: F_CHOLESKY, F_TRANSPOSE, F_GETDIAGONAL, F_SQRT
       use STRING_TABLE, only: FLOAT_VALUE
       use TREE, only: NODE_ID, NSONS, SUB_ROSA, SUBTREE
       use TREE_TYPES ! Everything, especially everything beginning with N_
@@ -364,11 +416,6 @@ contains
       type(matrix_kronecker_t), pointer :: Matrix_KP
       type(matrix_SPD_t) :: Matrix_S2
       type(matrix_SPD_t), pointer :: Matrix_SP
-
-      integer, save :: Whats(k_empty:k_spd)
-      data whats(k_empty) / w_nothing /, whats(k_cholesky) / w_matrix_c /
-      data whats(k_kronecker) / w_matrix_k /, whats(k_plain) / w_matrix /
-      data whats(k_spd) / w_matrix_s /
 
 !      call print_subtree ( root, 0, dump_decor=.true. )
 
@@ -444,6 +491,33 @@ contains
               call announce_error ( son2, incompatible )
             else
             end if
+          end if
+        case ( f_getDiagonal )
+          if ( nsons(root) /= 2 ) then
+            call announce_error ( son1, wrongNumArgs )
+          else
+            if ( what2 /= w_matrix ) then
+              call announce_error ( son2, incompatible )
+            else
+              call CloneVector ( vector, matrix2%row%vec )
+              call GetDiagonal ( matrix2, vector )
+              what = w_vector
+            end if
+          end if
+        case ( f_sqrt )
+          if ( nsons(root) /= 2 ) then
+            call announce_error ( son1, wrongNumArgs )
+          else
+            what = what2
+            select case ( what2 )
+            case ( w_number )
+              dValue = sqrt ( dValue2 )
+            case ( w_vector )
+              call CopyVector ( vector, vector2, clone=.true. )
+              call PowVector ( vector, 0.5_rv )
+            case default
+              call announce_error ( son2, incompatible )
+            end select
           end if
         case ( f_transpose )
           if ( nsons(root) /= 2 ) then
@@ -620,7 +694,9 @@ contains
             case ( w_number ) ! ........................ Number / Number
               dvalue = dvalue / dvalue2
             case ( w_vector ) ! ........................ Number / Vector
-              call announce_error ( son2, cantInvertVector )
+              call CopyVector ( vector, vector2, clone=.true. )
+              call ReciprocateVector ( vector, dValue )
+              what = w_vector
             case ( w_matrix ) ! ........................ Number / Matrix
             case ( w_matrix_c ) ! .................... Number / Matrix_C
             case ( w_matrix_k ) ! .................... Number / Matrix_K
@@ -808,6 +884,9 @@ contains
 end module ALGEBRA_M
 
 ! $Log$
+! Revision 2.9  2004/01/30 23:28:45  livesey
+! More additions and fixes.
+!
 ! Revision 2.8  2004/01/29 03:33:26  livesey
 ! Hooked up reflect and cyclicJacobi commands.
 !
