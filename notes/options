@@ -2,7 +2,8 @@ Command line options:
    mlsl2 -slo1 -slo2 .. --mlo1 --mlo2 ..
 where slon are single-letter options and mlon are multiletter options
 E.g., mlsl2 -m -p --nmeta -S"glo,jac"
-Note: use "-T2" and not "--T2" because T2 has one letter
+Note: use "-T2" and not "--T2" because -T2 has one 'letter'
+( and yet, oddly, so do -S"mas,slv,.." and -T1h have only one 'letter')
 ========================= mlsl2 =========================
   -A: Dump the un-decorated abstract syntax tree.
   -a: Dump the decorated type-checked abstract syntax tree.
@@ -23,11 +24,15 @@ Note: use "-T2" and not "--T2" because T2 has one letter
             "string" may control individual outputs.  If -S is
             specified several times, the strings are combined.
      (For specific strings and their effects, use -S"?")
-  -T[digit]: Time some processes depending on digit
+  -T[digit][letter]: Time some processes depending on digit
      0: Time parsing, type checking and processing separately.
      1: like 0, and summarize times within Fill, Retrieve, etc. at end of run
      2: like 1, and show times within each section, too, as they happen
      3: like 2, and show cumulative times, too
+    summarize times in units depending on letter
+     h: hours
+     m: minutes
+     s: seconds (default)
   -t: Trace declaration table construction.
   -v: List the configuration file.
   The above options can be concatenated after one hyphen,
@@ -42,8 +47,6 @@ Note: use "-T2" and not "--T2" because T2 has one letter
       default is 200000; 0 means no sleeping
   --fwmParallel: Run in forward model parallel mode.  Send each MAF of forward
     model calculations out to a slave.
-  --[n]gcch: Do [not] force garbage collection after each chunk processed
-  --[n]gcdt: Do [not] force garbage collection after each deallocate_test
   --[n]kit: Output error messages [not] using the SDP Toolkit
      (in the next 3, n may be one of {4, 5, b} where b means both 4 and 5)
   --l1b=n:   Assume hdfn when reading l1b files
@@ -58,6 +61,7 @@ Note: use "-T2" and not "--T2" because T2 has one letter
       scf default is 10; sips default is 1; 1 means allow no failures
   --maxFailuresPerMachine[ ]<amount> mark bad any machine after <amount> failures
       scf default is 1; sips default is 2; 1 means allow no failures
+  --[n]patch: Do [not] let run create file, swath on first directWrite
   --pge <commandname>: What to put on commandline instead of mlsl2
     when giving slaves their tasks (useful when using toolkit)
   --recl[ ]<number>: set the max record length size for l2cf to <number>
@@ -107,6 +111,9 @@ by the equal-signs -- stuff outside that space, like these
 comments, will not be printed in response to mlsl2 -?)
 
  $Log$
+ Revision 1.29  2003/11/15 00:33:37  pwagner
+ New commandline opts: maxfailuresperchunk, maxfailurespermachine
+
  Revision 1.28  2003/11/14 23:42:21  pwagner
  delay nnn option mentioned
 
