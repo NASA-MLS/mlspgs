@@ -208,7 +208,7 @@ contains
   end Function Depunctuate
 
   ! ------------------------------------------------  HHMMSS_value  -----
-  real(r8) function HHMMSS_value ( str, ErrTyp, separator, strict ) result ( value )
+  function HHMMSS_value ( str, ErrTyp, separator, strict ) result ( value )
     use MLSCommon, only: R8
     ! Function that returns the value in seconds of a string 'hh:mm:ss'
     ! where the field separator ':' divides the string into two
@@ -243,6 +243,7 @@ contains
     integer, intent(out) :: ErrTyp
     character(len=1), intent(in), optional :: Separator
     logical, intent(in), optional :: Strict
+    real(r8) :: value
     !----------Locals----------!
     character(len=1), parameter :: Colon=':'
     character(len=1) :: MyColon
@@ -1129,6 +1130,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.50  2004/10/13 16:23:03  pwagner
+! Moved declaration of hhmmss_value result to after use statement
+!
 ! Revision 2.49  2004/10/13 00:52:20  vsnyder
 ! Move HHMMSS_value here from MLSStringLists and simplify it.
 ! Remove AnyForbiddenChars and AllAllowedChars because intrinsic Scan and
