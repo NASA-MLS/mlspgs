@@ -39,12 +39,14 @@ PLATFORMS = .
 
 SHELL = /bin/sh
 
+libmls_f90 := $(wildcard $(libmls_sources)/*.f90)
+
 PROG=mlsl3
 
 $(PROG): $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
 
-$(libmls_objs)/libmls.a: $(libmls_sources)/*.f90
+$(libmls_objs)/libmls.a: $(libmls_f90)
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
 .PHONY: configure depends clean tar
@@ -96,6 +98,9 @@ tar:
 	tar hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl3
 
 # $Log$
+# Revision 1.1  2000/11/15 18:02:58  pwagner
+# First commit
+#
 #
 
 
