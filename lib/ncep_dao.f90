@@ -24,7 +24,10 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
     & GetIntHashElement, LowerCase
   use OUTPUT_M, only: OUTPUT
   use SDPToolkit, only: PGS_S_SUCCESS, PGS_PC_GETREFERENCE, &
-    & PGS_IO_GEN_CLOSEF, PGS_IO_GEN_OPENF, PGSD_IO_GEN_RSEQFRM
+    & PGS_IO_GEN_CLOSEF, PGS_IO_GEN_OPENF, PGSD_IO_GEN_RSEQFRM, &
+    & UseSDPToolkit
+  use Toggles, only: Gen, Levels, Switches, Toggle
+  use Trace_M, only: Trace_begin, Trace_end
   use TREE, only: DUMP_TREE_NODE, SOURCE_REF
 
   implicit none
@@ -273,6 +276,8 @@ contains
     ! Local variables
     integer :: qtyIndex, status
 
+    if ( toggle(gen) ) call trace_begin ( "DestroyGridTemplateDatabase" )
+
     if (associated(database)) then
       do qtyIndex=1,size(database)
         call DestroyGridTemplateContents(database(qtyIndex))
@@ -281,6 +286,9 @@ contains
       if (status /= 0) call announce_error(0,  &
         & MLSMSG_DeAllocate//"database")
     endif
+    if ( toggle(gen) ) then
+      call trace_end ( "DestroyGridTemplateDatabase" )
+    end if
   end subroutine DestroyGridTemplateDatabase
 
 
@@ -494,6 +502,14 @@ contains
 
     logical :: end_of_file = .false.
 
+   error = 0
+   
+   if( .not. UseSDPToolkit ) then
+      call announce_error(root, &
+      & 'Detached from toolkit--climatology files must be opened via lcf')
+      return
+   endif
+
     do CliUnit = mlspcf_l2clim_start, mlspcf_l2clim_end
 
       !     Open one Climatology file as a generic file for reading
@@ -562,6 +578,7 @@ contains
     logical :: echo
     logical :: dump
     integer:: processCli, CliUnit, record_length
+    logical :: use_PCF
 
     ! begin
     end_of_file=.false.
@@ -577,9 +594,13 @@ contains
       dump = DUMP_GRIDDED_QUANTITIES
     endif
 
+  use_PCF = present(mlspcf_l2clim_start) &
+  & .and. present(mlspcf_l2clim_end) &
+  & .and. UseSDPToolkit
+
     ! use PCF
 
-    if (present(mlspcf_l2clim_start) .and. present(mlspcf_l2clim_end)) then
+    if ( use_PCF ) then
 
       processCli = GetPCFromRef(fname, mlspcf_l2clim_start, mlspcf_l2clim_end, &
         & .true., ErrType, version)
@@ -651,13 +672,11 @@ contains
           if(debug) call output('Destroying our grid template', advance='yes')
 
         endif
-        ! No, this a bad idea according to njl--see nullify statements above
-        !        call DestroyGridTemplateContents ( gddata )
 
       end do !(.not. end_of_file)
 
       ! ok, done with this file and unit number
-      if(present(mlspcf_l2clim_start) .and. present(mlspcf_l2clim_end)) then
+      if( use_PCF ) then
         ErrType = Pgs_io_gen_CloseF ( CliUnit )
 
 	! use Fortran close
@@ -706,6 +725,14 @@ contains
     character (LEN=80) :: vname
 
     !    ALLOCATE (data_array(XDIM, YDIM, ZDIM), stat=returnStatus)
+
+   error = 0
+   
+   if( .not. UseSDPToolkit ) then
+      call announce_error(root, &
+      & 'Detached from toolkit--DAO files must be opened via lcf')
+      return
+   endif
 
     DAO_Version = 1
     vname = "TMPU" ! for now
@@ -760,6 +787,14 @@ contains
     !    character (len=80) :: VNAME
 
     !   allocate ( data_array(XDIM, YDIM, ZDIM), stat=returnStatus )
+
+   error = 0
+   
+   if( .not. UseSDPToolkit ) then
+      call announce_error(root, &
+      & 'Detached from toolkit--ncep files must be opened via lcf')
+      return
+   endif
 
     NCEP_Version = 1
     !    vname = "TMP_3" ! for now
@@ -1013,6 +1048,9 @@ end module ncep_dao
 
 !
 ! $Log$
+! Revision 2.12  2001/05/09 23:30:13  pwagner
+! Detachable from toolkit
+!
 ! Revision 2.11  2001/04/12 22:04:47  vsnyder
 ! Improve an error message
 !
