@@ -1,3 +1,26 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+module RadiativeTransferModule
+
+! -------------------------------------------------------------------------  
+! PERFORM MLS LIB RADIATIVE TRANSFER CALCULATIONS
+! -------------------------------------------------------------------------
+
+      use MLSCommon, only: r8      
+      IMPLICIT NONE
+      Private
+      Public :: RADXFER
+
+ !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm =                          &
+    "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName=                       &
+    "$RCSfile$"
+ !---------------------------------------------------------------------------
+      
+contains
 
       SUBROUTINE RADXFER(L,NU,NUA,U,DU,PHH,NT,ZT,W0,TAU,RS,TS,FREQ, &
       &          YZ,TEMP_AIR,N,THETA,THETAI,PHI,UI,UA,TT,ICON,RE)
@@ -100,10 +123,12 @@
 
       DO I=1,NT
          LMIN(I)=1
+         if (zt(i) .ge. 0._r8) then
          DO K=1,L
             IF(YZ(K) .LE. ZT(I)) LMIN(I)=K
          ENDDO
- 
+         endif
+
          DO K=LMIN(I),L
             TGT= YZ(K)
             if(tgt .lt. zt(i)) tgt=zt(i)
@@ -114,7 +139,6 @@
             ELSE
 !              print*,'YZ(K+1), K+1', YZ(K+1), K+1
 !              print*,'ZT(I), I', ZT(I),I
-
                DY=SQRT(YZ(K+1)-ZT(I))-SQRT(TGT-ZT(I))
                UAVE(I,K)=(YZ(K+1)-YZ(K))/SQRT(2*RE+TGT+ZT(I))/DY
 
@@ -339,10 +363,11 @@
       enddo
 !---------------------------------------------------------------------
  
-      RETURN
-      END
+      END SUBROUTINE RADXFER
 
-! $Log: Radxfer.f,v      
+end module RadiativeTransferModule
+
+! $Log: RadiativeTransferModule.f90,v      
 
 
 
