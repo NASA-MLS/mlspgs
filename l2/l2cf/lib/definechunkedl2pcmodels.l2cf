@@ -16,95 +16,95 @@
 ;; When /packed becomes the normal format for the L2PC files, then the
 ;; specific quantities for the standard vs hiRes may not be needed.
 l2pcSidsFwm2X$1: forwardModel, type=linear, signals=!signal($1), $
-  molecules=!moleculeFamilies2X($1), do_baseline=!doBaseline, phiWindow=100.0, $
+  molecules=!moleculeFamilies2X($1), do_baseline=!doBaseline, phiWindow=100 profiles, $
   lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1), $
   extinctionConstant!radiometerForBand($1), $
   temperature, !allLinearHRMolecules, !allLogHRMolecules]
 l2pcSidsFwm2X$1_1D: forwardModel, type=linear, signals=!signal($1), $
-  molecules=!moleculeFamilies2X($1), do_baseline=!doBaseline, phiWindow=0, $
+  molecules=!moleculeFamilies2X($1), do_baseline=!doBaseline, phiwindow=0 profiles, $
   lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1), $
   extinctionConstant!radiometerForBand($1), $
   temperature, !allLinearHRMolecules, !allLogHRMolecules]
 l2pcODFwm2X$1: forwardModel, type=linear, signals=!signal($1), $
-  molecules=!moleculeFamilies2X($1), phiWindow=100.0, $
+  molecules=!moleculeFamilies2X($1), phiWindow=100 profiles, $
   lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1), $
   extinctionConstant!radiometerForBand($1), $
   temperature, !allLinearHRMolecules, !allLogHRMolecules]
 l2pcODFwm2X$1_1D: forwardModel, type=linear, signals=!signal($1), $
-  molecules=!moleculeFamilies2X($1), phiWindow=0, $
+  molecules=!moleculeFamilies2X($1), phiwindow=0 profiles, $
   lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1), $
   extinctionConstant!radiometerForBand($1), $
   temperature, !allLinearHRMolecules, !allLogHRMolecules]
 l2pcRetFwm2X$1: forwardModel, type=linear, signals=!signal($1), $
   molecules=!moleculeFamilies2X($1), moleculeDerivatives=!moleculeFamilies2X($1), $
-  /atmos_der, /temp_der, do_baseline=!doBaseline, phiWindow=100.0, $
+  /atmos_der, /temp_der, do_baseline=!doBaseline, phiWindow=100 profiles, $
   lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1), $
   extinctionConstant!radiometerForBand($1), $
   temperature, !allLinearHRMolecules, !allLogHRMolecules]
 l2pcRetFwm2X$1_1D: forwardModel, type=linear, signals=!signal($1), $
   molecules=!moleculeFamilies2X($1), moleculeDerivatives=!moleculeFamilies2X($1), $
-  /atmos_der, /temp_der, do_baseline=!doBaseline, phiWindow=0, $
+  /atmos_der, /temp_der, do_baseline=!doBaseline, phiwindow=0 profiles, $
   lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1), $
   extinctionConstant!radiometerForBand($1), $
   temperature, !allLinearHRMolecules, !allLogHRMolecules]
 l2pcRetFwmRad2X$1: forwardModel, type=linear, signals=!signal($1), $
   molecules=!moleculeFamilies2X(!radiometerForBand($1)), $
   moleculeDerivatives=!moleculeFamilies2X(!radiometerForBand($1)), $
-  /atmos_der, /temp_der, do_baseline=!doBaseline, phiWindow=100.0, $
+  /atmos_der, /temp_der, do_baseline=!doBaseline, phiWindow=100 profiles, $
   lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1), $
   extinctionConstant!radiometerForBand($1), $
   temperature, !allLinearHRMolecules, !allLogHRMolecules]
 l2pcRetFwmRadSpecific2X$1: forwardModel, type=linear, signals=!signal($1), $
   molecules=!moleculeFamilies2X(!radiometerForBand($1)), $
   moleculeDerivatives=!moleculeFamilies2X(!radiometerForBand($1)), $
-  /atmos_der, /temp_der, do_baseline=!doBaseline, phiWindow=100.0, $
+  /atmos_der, /temp_der, do_baseline=!doBaseline, phiWindow=100 profiles, $
   lockBins=true, specificQuantities=[extinctionShapedLinear!radiometerForBand($1), $
   extinctionConstantLinear!radiometerForBand($1), $
   temperature, !allLinearHRMolecules, !allLogHRMolecules]
 l2pcRetFwmRad2X$1_1D: forwardModel, type=linear, signals=!signal($1), $
   molecules=!moleculeFamilies2X(!radiometerForBand($1)), $
   moleculeDerivatives=!moleculeFamilies2X(!radiometerForBand($1)), $
-  /atmos_der, /temp_der, do_baseline=!doBaseline, phiWindow=0, $
+  /atmos_der, /temp_der, do_baseline=!doBaseline, phiwindow=0 profiles, $
   lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1), $
   extinctionConstant!radiometerForBand($1), $
   temperature, !allLinearHRMolecules, !allLogHRMolecules]
 !ifdef(skipHiRes,{},{
 l2pcSidsFwm2X$1_HR: forwardModel, type=linear, signals=!signal($1), $
-  molecules=!moleculeFamilies2X($1), do_baseline=!doBaseline, phiWindow=100.0, $
+  molecules=!moleculeFamilies2X($1), do_baseline=!doBaseline, phiWindow=100 profiles, $
   lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1), $
   extinctionConstant!radiometerForBand($1),temperature_HR, !allHiResMolecules]
 l2pcSidsFwm2X$1_HR_1D: forwardModel, type=linear, signals=!signal($1), $
-  molecules=!moleculeFamilies2X($1), do_baseline=!doBaseline, phiWindow=0, $
+  molecules=!moleculeFamilies2X($1), do_baseline=!doBaseline, phiwindow=0 profiles, $
   lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1), $
   extinctionConstant!radiometerForBand($1),temperature_HR, !allHiResMolecules]
 l2pcODFwm2X$1_HR: forwardModel, type=linear, signals=!signal($1), $
-  molecules=!moleculeFamilies2X($1), phiWindow=100.0, $
+  molecules=!moleculeFamilies2X($1), phiWindow=100 profiles, $
   lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1), $
   extinctionConstant!radiometerForBand($1),temperature_HR, !allHiResMolecules]
 l2pcODFwm2X$1_HR_1D: forwardModel, type=linear, signals=!signal($1), $
-  molecules=!moleculeFamilies2X($1), phiWindow=0, $
+  molecules=!moleculeFamilies2X($1), phiwindow=0 profiles, $
   lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1), $
   extinctionConstant!radiometerForBand($1),temperature_HR, !allHiResMolecules]
 l2pcRetFwm2X$1_HR: forwardModel, type=linear, signals=!signal($1), $
   molecules=!moleculeFamilies2X($1), moleculeDerivatives=!moleculeFamilies2X($1), $
-  /atmos_der, /temp_der, do_baseline=!doBaseline, phiWindow=100.0, $
+  /atmos_der, /temp_der, do_baseline=!doBaseline, phiWindow=100 profiles, $
   lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1), $
   extinctionConstant!radiometerForBand($1),temperature_HR, !allHiResMolecules]
 l2pcRetFwm2X$1_HR_1D: forwardModel, type=linear, signals=!signal($1), $
   molecules=!moleculeFamilies2X($1), moleculeDerivatives=!moleculeFamilies2X($1), $
-  /atmos_der, /temp_der, do_baseline=!doBaseline, phiWindow=0, $
+  /atmos_der, /temp_der, do_baseline=!doBaseline, phiwindow=0 profiles, $
   lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1), $
   extinctionConstant!radiometerForBand($1),temperature_HR, !allHiResMolecules]
 l2pcRetFwmRad2X$1_HR: forwardModel, type=linear, signals=!signal($1), $
   molecules=!moleculeFamilies2X(!radiometerForBand($1)), $
   moleculeDerivatives=!moleculeFamilies2X(!radiometerForBand($1)), $
-  /atmos_der, /temp_der, do_baseline=!doBaseline, phiWindow=100.0, $
+  /atmos_der, /temp_der, do_baseline=!doBaseline, phiWindow=100 profiles, $
   lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1), $
   extinctionConstant!radiometerForBand($1),temperature_HR, !allHiResMolecules]
 l2pcRetFwmRad2X$1_HR_1D: forwardModel, type=linear, signals=!signal($1), $
   molecules=!moleculeFamilies2X(!radiometerForBand($1)), $
   moleculeDerivatives=!moleculeFamilies2X(!radiometerForBand($1)), $
-  /atmos_der, /temp_der, do_baseline=!doBaseline, phiWindow=0, $
+  /atmos_der, /temp_der, do_baseline=!doBaseline, phiwindow=0 profiles, $
   lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1), $
   extinctionConstant!radiometerForBand($1),temperature_HR, !allHiResMolecules]})
 })
