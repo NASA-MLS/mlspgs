@@ -6201,7 +6201,7 @@ contains ! =====     Public Procedures     =============================
 
       ! Check the output quantity
       if ( .not. ValidateVectorQuantity ( quantity, &
-        & coherent=.true., stacked=.true., frequencyCoordinate=(/l_none/) ) ) &
+        & coherent=.true., stacked=.true. ) ) &
         & call Announce_Error ( key, 0, &
         & 'Illegal quantity for bin min/max/total fill' )
 
@@ -6907,6 +6907,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.282  2004/09/16 23:55:04  livesey
+! Stopped binned fill from being so fussy.
+!
 ! Revision 2.281  2004/09/10 23:53:10  livesey
 ! Added centerVertically option for binmean/max/min fill
 !
