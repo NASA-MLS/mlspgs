@@ -9,11 +9,12 @@ module MLSHDFEOS
   use Hdf, only: DFNT_CHAR8, DFNT_FLOAT32, DFNT_FLOAT64, &
     & DFNT_INT8, DFNT_INT16, DFNT_INT32, DFNT_INT64
   use HDFEOS, only: gdattach, gdcreate, &
-    & swattach, swcreate, swdefdfld, swdefgfld, swdefdim, swdiminfo, swinqdflds
+    & swattach, swcreate, swdefdfld, swdefgfld, swdefdim, swdetach, &
+    & swdiminfo, swinqdflds
   use HDFEOS5, only: HE5T_NATIVE_FLOAT, HE5T_NATIVE_DOUBLE, HE5T_NATIVE_SCHAR, &
     & HE5T_NATIVE_INT, HE5T_NATIVE_INT8, HE5T_NATIVE_INT16, HE5T_NATIVE_INT64
   use HDFEOS5, only: HE5_GDattach, HE5_GDcreate, &
-    & HE5_SWattach, HE5_SWcreate, HE5_SWdefchunk, HE5_swdefdfld, &
+    & HE5_SWattach, HE5_SWcreate, HE5_SWdefchunk, HE5_SWdetach, HE5_swdefdfld, &
     & HE5_SWdefgfld, HE5_swdefdim, HE5_swdiminfo, HE5_swinqdflds
   use HE5_SWAPI, only: HE5_SWSETFILL, HE5_SWWRATTR, HE5_SWWRLATTR
   use HE5_SWAPI_CHARACTER_ARRAY, only: HE5_EHWRGLATT_CHARACTER_ARRAY
@@ -42,7 +43,7 @@ module MLSHDFEOS
 
   public :: HE5_EHWRGLATT, MLS_DFLDSETUP, MLS_GFLDSETUP, &
     & MLS_SWDEFDIM, MLS_SWDIMINFO, MLS_SWRDFLD, MLS_SWSETFILL, MLS_SWWRFLD, &
-    & MLS_SWCREATE, MLS_GDCREATE
+    & MLS_SWATTACH, MLS_SWCREATE, MLS_SWDETACH, MLS_GDCREATE
   logical, parameter :: HE5_SWSETFILL_BROKEN = .true.
   character(len=*), parameter :: SETFILLTITLE = '_FillValue'
 
@@ -160,6 +161,43 @@ contains ! ======================= Public Procedures =========================
 
   end function MLS_GDCREATE
 
+  integer function MLS_SWATTACH ( FILEID, SWATHNAME, FileName, hdfVersion )
+    integer, intent(in) :: FILEID      ! ID returned by mls_swopen
+    character(len=*), intent(in) :: SWATHNAME       ! Swath name
+    character(len=*), optional, intent(in) :: FILENAME  ! File name
+    integer, optional, intent(in) :: hdfVersion
+    ! Internal variables
+    integer :: myHdfVersion
+    logical :: needsFileName
+    MLS_SWATTACH = 0
+    ! All necessary input supplied?
+    needsFileName = (.not. present(hdfVersion))
+    if ( present(hdfVersion) ) &
+      & needsFileName = (hdfVersion == WILDCARDHDFVERSION)
+    if ( needsFileName .and. .not. present(FIleName)) then
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Missing needed arg FILENAME from call to MLS_SWATTACH' )
+      return
+    endif
+    if ( needsFileName ) then
+      myHdfVersion = mls_hdf_version ( trim(FileName) )
+    else
+      myHdfVersion = hdfVersion
+    endif
+    select case (myHdfVersion)
+    case (HDFVERSION_4)
+      MLS_SWATTACH = swattach(Fileid, SwathNAME)
+    case (HDFVERSION_5)
+      MLS_SWATTACH = he5_swattach(Fileid, SwathNAME)
+    case default
+      MLS_SWATTACH = -1
+    end select
+    if ( MLS_SWATTACH /= -1 ) return
+    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Failed to attach swath name ' // trim(swathname) )
+
+  end function MLS_SWATTACH
+
   integer function MLS_SWCREATE ( FILEID, SWATHNAME, FileName, hdfVersion )
     integer, intent(in) :: FILEID      ! ID returned by mls_swopen
     character(len=*), intent(in) :: SWATHNAME       ! Swath name
@@ -255,6 +293,42 @@ contains ! ======================= Public Procedures =========================
           & 'Failed to define dimension ' // trim(dimname) )
 
   end function MLS_SWdefdim
+
+  integer function MLS_SWDETACH ( SWATHID, FileName, hdfVersion )
+    integer, intent(in) :: SWATHID      ! ID returned by mls_swattach
+    character(len=*), optional, intent(in) :: FILENAME  ! File name
+    integer, optional, intent(in) :: hdfVersion
+    ! Internal variables
+    integer :: myHdfVersion
+    logical :: needsFileName
+    MLS_SWDETACH = 0
+    ! All necessary input supplied?
+    needsFileName = (.not. present(hdfVersion))
+    if ( present(hdfVersion) ) &
+      & needsFileName = (hdfVersion == WILDCARDHDFVERSION)
+    if ( needsFileName .and. .not. present(FIleName)) then
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Missing needed arg FILENAME from call to MLS_SWDETACH' )
+      return
+    endif
+    if ( needsFileName ) then
+      myHdfVersion = mls_hdf_version ( trim(FileName) )
+    else
+      myHdfVersion = hdfVersion
+    endif
+    select case (myHdfVersion)
+    case (HDFVERSION_4)
+      MLS_SWDETACH = swdetach(swathid)
+    case (HDFVERSION_5)
+      MLS_SWDETACH = he5_swdetach(swathid)
+    case default
+      MLS_SWDETACH = -1
+    end select
+    if ( MLS_SWDETACH /= -1 ) return
+    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Failed to detach swath id ' )
+
+  end function MLS_SWDETACH
 
   integer function MLS_SWdiminfo ( SWATHID, DIMNAME, FILENAME, &
     & hdfVersion, DONTFAIL )
@@ -1492,6 +1566,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDFEOS
 
 ! $Log$
+! Revision 2.7  2003/06/20 19:31:39  pwagner
+! Changes to allow direct writing of products
+!
 ! Revision 2.6  2003/06/06 22:49:12  pwagner
 ! Added mls_sw(gd)create
 !
