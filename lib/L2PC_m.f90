@@ -22,11 +22,6 @@ module L2PC_m
     & DUMP_STRUCT
   use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, &
     & MATRIXELEMENT_T, M_UNKNOWN, DESTROYBLOCK
-  use MLSHDF5, only: MakeHDF5Attribute, GetHDF5Attribute, &
-    & IsHDF5AttributePresent, IsHDF5DSPresent, SaveAsHDF5DS, LoadFromHDF5DS
-  use HDF5, only: H5FCREATE_F, H5FCLOSE_F, H5F_ACC_TRUNC_F, H5F_ACC_RDONLY_F, &
-    & H5FOPEN_F, H5GCLOSE_F, H5GCREATE_F, H5GOPEN_F, H5GGET_OBJ_INFO_IDX_F, &
-    & H5GN_MEMBERS_F
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, &
     & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE
   use MLSSignals_m, only: GETSIGNALNAME
@@ -250,6 +245,7 @@ contains ! ============= Public Procedures ==========================
 
   ! --------------------------------------------- OutputHDF5L2PC
   subroutine OutputHDF5L2PC ( filename, matrices, quantitiesNode, packed )
+  use HDF5, only: H5FCREATE_F, H5FClose_F, H5F_ACC_TRUNC_F
     character (len=*), intent(in) :: FILENAME
     type (Matrix_Database_T), dimension(:), pointer :: MATRICES
     integer, intent(in) :: QUANTITIESNODE
@@ -312,6 +308,8 @@ contains ! ============= Public Procedures ==========================
 
   ! --------------------------------------- WriteOneHDF5L2PC -----------
   subroutine WriteOneHDF5L2PC ( L2pc, fileID, packed )
+  use HDF5, only: H5GCLOSE_F, H5GCREATE_F
+  use MLSHDF5, only: MakeHDF5Attribute, SaveAsHDF5DS
     ! This subroutine writes an l2pc to a file in hdf5 format
 
     ! Dummy arguments
@@ -603,6 +601,7 @@ contains ! ============= Public Procedures ==========================
 
   ! ------------------------------------ DestroyL2PCInfoDatabase ----
   subroutine DestroyL2PCInfoDatabase
+  use HDF5, only: H5FClose_F, H5GCLOSE_F
     ! Local variables
     integer :: I                ! Loop counter
     integer :: STATUS           ! Flag from HDF
@@ -701,6 +700,8 @@ contains ! ============= Public Procedures ==========================
 
   ! --------------------------------------- Populate L2PCBin --------
   subroutine PopulateL2PCBin ( bin )
+  use HDF5, only: H5GCLOSE_F, H5GOPEN_F
+  use MLSHDF5, only: GetHDF5Attribute, LoadFromHDF5DS
     integer, intent(in) :: BIN ! The bin index to populate
 
     ! Local variables
@@ -1037,6 +1038,7 @@ contains ! ============= Public Procedures ==========================
 
   ! --------------------------------------- ReadCompleteHDF5L2PC -------
   subroutine ReadCompleteHDF5L2PCFile ( filename )
+  use HDF5, only: H5F_ACC_RDONLY_F, h5fopen_f, H5GN_MEMBERS_F
     character (len=*), intent(in) :: FILENAME
 
     ! Local variables
@@ -1087,6 +1089,8 @@ contains ! ============= Public Procedures ==========================
 
   ! --------------------------------------- ReadOneHDF5L2PC ------------
   subroutine ReadOneHDF5L2PCRecord ( l2pc, fileID, l2pcIndex, shallow, info )
+  use HDF5, only: H5GCLOSE_F, H5GOPEN_F, H5GGET_OBJ_INFO_IDX_F
+  use MLSHDF5, only: GetHDF5Attribute, LoadFromHDF5DS
     type ( Matrix_T ), intent(out), target :: L2PC
     integer, intent(in) :: FILEID       ! HDF5 ID of input file
     integer, intent(in) :: L2PCINDEX        ! Index of l2pc entry to read
@@ -1210,6 +1214,9 @@ contains ! ============= Public Procedures ==========================
 
   ! --------------------------------------- ReadOneVectorFromHDF5 ------
   subroutine ReadOneVectorFromHDF5 ( location, name, vector )
+  use HDF5, only: H5GCLOSE_F, H5GOPEN_F, H5GGET_OBJ_INFO_IDX_F
+  use MLSHDF5, only: GetHDF5Attribute, IsHDF5AttributePresent, &
+    & IsHDF5DSPresent, LoadFromHDF5DS
     use MLSSignals_m, only: Radiometers, Radiometer_T
     ! Read a vector from an l2pc HDF5 and adds it to internal databases.
     ! Dummy arguments
@@ -1452,6 +1459,8 @@ contains ! ============= Public Procedures ==========================
 
   ! --------------------------------------- WriteVectorAsHDF5 ----------
   subroutine WriteVectorAsHDF5 ( location, vector, name, packInfo )
+  use HDF5, only: H5GCLOSE_F, H5GCREATE_F
+  use MLSHDF5, only: MakeHDF5Attribute, SaveAsHDF5DS
     use MLSSignals_m, only: Radiometers, Radiometer_T
     integer, intent(in) :: LOCATION     ! The HDF5 location for the vector
     type (Vector_T), intent(in) :: VECTOR ! The vector to write
@@ -1541,6 +1550,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.55  2003/01/13 19:28:20  pwagner
+! Moved several uses to speed Lahey buggs compiler
+!
 ! Revision 2.54  2002/11/25 11:47:34  mjf
 ! Put SaveAsHDF5DS back to writing r4 reals.
 !
