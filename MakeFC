@@ -273,7 +273,7 @@ tar:
 tar_sips:
 	@echo "tar-ing mlspgs for sips"; \
         rm -f ../mlspgs_sips.tgz; \
-	$(TAR) hcvzf ../mlspgs_sips.tgz $(EVERYTHING)
+	$(TAR) hcvzf ../mlspgs_sips.tgz $(EVERYTHING) --exclude CVS
 
 tar_subs:
 	@echo "tar-ing $(SUBDIRS)"; \
@@ -322,6 +322,9 @@ update: depends
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.23  2001/03/08 23:26:41  pwagner
+# The effect of no .configure is to configure_full
+#
 # Revision 1.22  2001/03/08 21:08:01  pwagner
 # Tweaked EVERYTHING
 #
