@@ -18,6 +18,7 @@ module ScanModelModule          ! Scan model and associated calculations
   ! will ever be required.
 
   use Dump_0, only: DUMP
+  use Geometry, only: earthRadA,earthRadB, PI, LN10, GeodToGeocLat
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate, &
        MLSMSG_Error
   use VectorsModule, only : Vector_T, VectorValue_T, GetVectorQuantityByType, &
@@ -48,8 +49,6 @@ module ScanModelModule          ! Scan model and associated calculations
 
   ! First some constants to do with the earths dimensions and rotation
 
-  real (r8), parameter :: earthRadA=6378137.0D0 ! Major axis radius in m
-  real (r8), parameter :: earthRadB=6356752.3141D0 ! Minor axis radius in m
   real (r8), parameter :: omega=7.292115D-5 ! Earth's angular velocity (s-1)
   real (r8), parameter :: earthSurfaceGPH=6387182.265D0 ! GPH at earth's surface m
 
@@ -68,37 +67,9 @@ module ScanModelModule          ! Scan model and associated calculations
   
   real (r8), parameter :: gasM0=25.34314957d-3, gasM1=2.89644d-3, gasM2=-0.579d-3
   real (r8), parameter :: gasR0=8.31441
-    
-  ! Just in case this constant isn't defined everywhere else.
-  
-  real (r8), parameter :: PI=3.1415926535897931159979635D0
-  real (r8), parameter :: LN10=2.302585124969482421875D0
-  
+
 contains ! --------------- Subroutines and functions --------------------------
 
-  ! This function converts a geodetic latitude (IN DEGREES!) into a geocentric
-  ! one (IN RADIANS!)
-
-  real(r8) ELEMENTAL function GeodToGeocLat(geodLat)
-
-    ! Arguments
-    real (r8), intent(IN) :: geodLat
-
-    ! Executable code, use special method for high latitudes.
-    if (abs(geodLat).gt.89.0) then
-       if (geodLat.gt.0.0) then
-          geodtoGeocLat=PI/2.0+((earthRadA/earthRadB)**2)*&
-               (geodLat-90.0)*PI/180.0
-       else
-          geodToGeocLat=-PI/2.0+((earthRadA/earthRadB)**2)*&
-               (geodLat+90.0)*PI/180.0
-       endif
-    else
-       geodToGeocLat=atan(((earthRadB/earthRadA)**2)*tan(geodLat*PI/180.0))
-    endif
-  end function GeodToGeocLat
-  
-  ! --------------------------------------------------------------------------
 
   ! This function takes a state vector, containing one and only one temperature
   ! and reference geopotential height quantity, and returns
@@ -474,6 +445,9 @@ contains ! --------------- Subroutines and functions --------------------------
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.8  2001/03/20 21:43:41  livesey
+! Moved geodtogeoc lat to geometry in lib
+!
 ! Revision 2.7  2001/03/15 23:31:15  livesey
 ! Made it default private.
 !
