@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module FilterShapes_m
 
   ! Read the filter shapes file.
@@ -24,7 +27,8 @@ module FilterShapes_m
   end type FilterShape_T
 
   ! The filter shape database:
-  type(filterShape_T), dimension(:), pointer, public :: FilterShapes => NULL()
+  type(filterShape_T), dimension(:), pointer, public, save :: &
+    & FilterShapes => NULL()
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -75,11 +79,12 @@ contains
     !                                          for each signal.
     character(len=MaxSigLen) :: SigName      ! Signal Name
     integer :: Status                        ! From read or allocate
-    integer, pointer, dimension(:) :: Signal_Indices => NULL()   ! From Parse_Signal, q.v.
-    type(filterShape_T), dimension(:), pointer :: TempFilterShapes => NULL()
+    integer, pointer, dimension(:) :: Signal_Indices   ! From Parse_Signal, q.v.
+    type(filterShape_T), dimension(:), pointer :: TempFilterShapes
 
     if ( toggle(gen) ) call trace_begin ( "Read_Filter_Shapes_File" )
 
+    nullify ( signal_indices )
     if ( associated(filterShapes) ) call destroy_filter_shapes_database
 
     do
@@ -195,6 +200,9 @@ contains
 end module FilterShapes_m
 
 ! $Log$
+! Revision 1.10  2001/04/26 02:36:52  vsnyder
+! Moved *_indices declarations from init_tables_module to intrinsic
+!
 ! Revision 1.9  2001/04/21 01:21:11  vsnyder
 ! Fix a memory leak
 !
