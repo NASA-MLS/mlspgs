@@ -24,7 +24,7 @@ srclib = ../../../srclib
 
 # This is the directory name from which we will get init_tables_module
 # (either l1, l2, or l3)
-init_m_dir = l1
+init_m_dir = l2
 
 itmdir=../../../$(init_m_dir)/$(MLSCONFG)
 
@@ -82,6 +82,9 @@ INC_PATHS = $(EXTRA_PATHS) -I $(PGSINC) -I $(srclib) -I $S -I $(libdir)\
 l_specials = -lPGSTK.sv3
 
 # $Log$
+# Revision 1.6  2001/11/16 19:15:32  pwagner
+# Added stuff to work with mlspack
+#
 # Revision 1.5  2001/10/23 16:59:07  pwagner
 # l_specials set as in mlspgs/l2
 #
