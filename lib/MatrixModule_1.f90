@@ -531,21 +531,8 @@ contains ! =====     Public Procedures     =============================
 
     do row = 1, matrix%row%nb
       do col = 1, matrix%col%nb
-        call output ( 'Checking integrity of block [ ' )
-        call output ( row )
-        call output ( ', ' )
-        call output ( col )
-        call output ( ' ] ( ' )
-        call display_string ( matrix%row%vec%quantities ( &
-          & matrix%row%quant(row) )%template%name )
-        call output ( '[' )
-        call output ( matrix%row%inst(row) )
-        call output ( '], ' )
-        call display_string ( matrix%col%vec%quantities ( &
-          & matrix%col%quant(col) )%template%name )
-        call output ( '[' )
-        call output ( matrix%col%inst(col) )
-        call output ( '] )', advance='yes' )       
+        call output ( 'Checking integrity of block ' )
+        call DescribeBlock ( matrix, row, col )    
 
         if ( matrix%block(row,col)%nRows /= matrix%row%nelts(row) ) then
           call MLSMessage ( messageType, ModuleName, &
@@ -616,6 +603,8 @@ contains ! =====     Public Procedures     =============================
     call choleskyFactor ( z%m%block(1,1), x%m%block(1,1), blockStatus )
     if ( blockStatus /= 0 ) then
       if ( present(status) ) then
+        call output ( 'Block is not positive definite: ' )
+        call DescribeBlock ( x%m, 1, 1 )
         status = (/ 1, blockStatus /)
         return
       else
@@ -642,6 +631,8 @@ contains ! =====     Public Procedures     =============================
       call choleskyFactor ( z%m%block(i,i), s, blockStatus )   ! z%m%block(i,i) = factor of s
       if ( blockStatus /= 0 ) then
         if ( present ( status ) ) then
+          call output ( 'Block is not positive definite: ' )
+          call DescribeBlock ( x%m, i, i )
           status = (/ i, blockStatus /)
           return
         else
@@ -1171,6 +1162,31 @@ contains ! =====     Public Procedures     =============================
       & 'In "GetVectorFromColumn", "Column" is greater than number&
       & of columns in "Matrix"')
   end subroutine GetVectorFromColumn_1
+
+  ! ------------------------------------------ Describe Block -----
+  subroutine DescribeBlock ( matrix, row, col )
+    ! Print the row and column indices of a block and 
+    ! identify which quantity/instance they are.
+    type(Matrix_T), intent(in) :: MATRIX
+    integer,intent(in) :: ROW         ! Row index
+    integer,intent(in) :: COL         ! Column index
+    ! Executable code
+    call output ( '[ ' )
+    call output ( row )
+    call output ( ', ' )
+    call output ( col )
+    call output ( ' ] ( ' )
+    call display_string ( matrix%row%vec%quantities ( &
+      & matrix%row%quant(row) )%template%name )
+    call output ( '[' )
+    call output ( matrix%row%inst(row) )
+    call output ( '], ' )
+    call display_string ( matrix%col%vec%quantities ( &
+      & matrix%col%quant(col) )%template%name )
+    call output ( '[' )
+    call output ( matrix%col%inst(col) )
+    call output ( '] )', advance='yes' )       
+  end subroutine DescribeBlock
 
   ! -------------------------------------------  InvertCholesky_1  -----
   subroutine InvertCholesky_1 ( U, B )
@@ -1792,6 +1808,8 @@ contains ! =====     Public Procedures     =============================
           & transpose=.true., status=blockStatus )
         if ( blockStatus /= 0 ) then
           if ( present ( status ) ) then
+            call output ( 'Unable to solve block ' )
+            call DescribeBlock ( z%m, i, i )
             status = (/ i, blockStatus /)
             return
           else
@@ -1819,6 +1837,8 @@ contains ! =====     Public Procedures     =============================
           & transpose=.false., status=blockStatus )
         if ( blockStatus /= 0 ) then
           if ( present ( status ) ) then
+            call output ( 'Unable to solve block ' )
+            call DescribeBlock ( z%m, i, i )
             status = (/ i, blockStatus /)
             return
           else
@@ -2275,6 +2295,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.92  2003/07/07 20:20:59  livesey
+! Mainly cosmetic changes
+!
 ! Revision 2.91  2003/06/20 19:31:39  pwagner
 ! Changes to allow direct writing of products
 !
