@@ -28,7 +28,7 @@ MODULE convolve_all_m
            & winStart,winFinish,mol_cat_index,temp,ptan,radiance,chi_in,&
            & rad_in,chi_out,dhdz_out,dx_dh_out,sbRatio,AntennaPattern,  &
            & t_deriv_flag,Grids_f,Jacobian,rowFlags,req,rsc,earth_frac, &
-           & surf_angle,di_dt,dx_dt,d2x_dxdt,dxdt_tan,dxdt_surface,di_df)
+           & surf_angle,di_dt,dx_dt,d2x_dxdt,dxdt_tan,dxdt_surface,di_df,ptan_Der)
 !
 ! inputs
 !
@@ -65,6 +65,8 @@ MODULE convolve_all_m
   REAL(rp), OPTIONAL, INTENT(in) :: rsc ! spacecraft radius
   REAL(rp), OPTIONAL, INTENT(in) :: earth_frac ! fraction of earth in total
 !                                   filled out pattern
+  logical, intent(in), optional :: ptan_der ! Flag
+
 ! note req, rsc and earth_frac are non critical parameters and don't
 ! really need to be supplied externally. They are used to partition the
 ! full fft field between earth and space components.
@@ -109,7 +111,11 @@ MODULE convolve_all_m
   REAL(r8), POINTER :: temp_dxdt_tan(:,:)
 
   Real(r8) :: SRad(ptan%template%noSurfs), di_dx(ptan%template%noSurfs)
+
+  logical :: my_ptan_der
 !
+  my_ptan_der = .false.
+  if ( present ( ptan_der ) ) my_ptan_der = ptan_der
   n_t_zeta = temp%template%noSurfs
   no_sv_p_t = winFinish - winStart + 1
   sv_t_len = n_t_zeta * no_sv_p_t
@@ -146,11 +152,11 @@ MODULE convolve_all_m
 !
   row = FindBlock( Jacobian%row, radiance%index, maf )
   rowFlags(row) = .TRUE.
-  col = FindBlock ( Jacobian%col, ptan%index, maf )
 
 ! Of course, we might not care about ptan
 
-  if (col > 0) then
+  if ( my_ptan_der ) then
+    col = FindBlock ( Jacobian%col, ptan%index, maf )
 
     select case (jacobian%block(Row,col)%kind)
       case (m_absent)
@@ -167,8 +173,6 @@ MODULE convolve_all_m
       ind = channel + noChans * (ptg_i-1)
       r = jacobian%block(row,col)%values(ind,1)
       Jacobian%block(row,col)%values(ind, 1) = r + SRad(ptg_i)
-      Jacobian%block(row,col)%r1(ptg_i) = 1 + noChans * (ptg_i - 1)
-      Jacobian%block(row,col)%r2(ptg_i) = noChans * ptg_i
     end do
 
   endif
@@ -237,7 +241,7 @@ MODULE convolve_all_m
         if(.NOT. t_deriv_flag(sv_t_len)) CYCLE
 
 ! run through representation basis coefficients
-
+        
         do ptg_i = 1, noPtan
           r = drad_dt_out(ptg_i,sv_t_len)
           ind = channel + noChans * (ptg_i-1)
@@ -267,11 +271,11 @@ MODULE convolve_all_m
     jz = mol_cat_index(sps_i)
     k = FwdMdlConfig%molecules(jz)
     if (k == l_extinction ) then
-      f => GetVectorQuantityByType ( FwdMdlIn, FwdMdlExtra,quantityType= &
-          l_extinction, radiometer=fwdMdlConfig%signals(1)%radiometer)
+      f => GetVectorQuantityByType ( FwdMdlIn, quantityType= &
+          l_extinction, radiometer=fwdMdlConfig%signals(1)%radiometer, noError=.true.)
     else
-      f => GetVectorQuantityByType ( FwdMdlIn, FwdMdlExtra, &
-         & quantityType=l_vmr, molecule=k)
+      f => GetVectorQuantityByType ( FwdMdlIn, &
+         & quantityType=l_vmr, molecule=k, noError=.true. )
     endif
 
     if(.not. associated(f) ) then
@@ -322,6 +326,9 @@ MODULE convolve_all_m
 
 END MODULE convolve_all_m
 ! $Log$
+! Revision 2.16  2002/07/16 08:47:11  mjf
+! Nullified temp_dxdt_tan along with drad_dt_out, etc.
+!
 ! Revision 2.15  2002/07/08 17:45:38  zvi
 ! Remove unnecessary variables
 !

@@ -37,7 +37,8 @@ CONTAINS
   Subroutine no_conv_at_all ( ForwardModelConfig, ForwardModelIn, maf, &
            & Channel, WindowStart, WindowFinish, Temp, Ptan, Radiance, &
            & t_deriv_flag,ptg_angles,chi_out,dhdz_out,dx_dh_out,Grids_f,&
-           & I_raw,sbRatio,mol_cat_indx, rowFlags, Jacobian, di_dt, di_df )
+           & I_raw,sbRatio,mol_cat_indx, rowFlags, Jacobian, di_dt, di_df, &
+           & ptan_Der )
 
     Type (ForwardModelConfig_T) :: FORWARDMODELCONFIG
     Type (Vector_T), intent(in) :: FORWARDMODELIN
@@ -57,6 +58,7 @@ CONTAINS
     Real(r8), INTENT(IN) :: sbRatio
     Real(r8), INTENT(IN) :: i_raw(:),ptg_angles(:),chi_out(:),dhdz_out(:), &
                          &  dx_dh_out(:)
+    logical, intent(in), optional :: ptan_Der     ! Flag
 !
 ! derivative of radiance w.r.t. temperature on chi_in
     Real(r8), OPTIONAL, INTENT(IN) :: di_dt(:,:)
@@ -85,9 +87,12 @@ CONTAINS
     Real(r8) :: SRad(ptan%template%noSurfs)
     Real(r8) :: di_dx(ptan%template%noSurfs)
     Real(r8) :: I_star_all(ptan%template%noSurfs)
+    logical :: my_ptan_der
 
     ! -----  Begin the code  -------------------------------------------
 
+    my_ptan_der = .false.
+    if ( present ( ptan_der ) ) my_ptan_der = ptan_der
     no_t = temp%template%noSurfs
     no_tan_hts = size(ptg_angles)
 
@@ -100,12 +105,12 @@ CONTAINS
     if ( PRESENT (Jacobian) ) then
       row = FindBlock ( Jacobian%row, radiance%index, maf )
       rowFlags(row) = .TRUE.
-      col = FindBlock ( Jacobian%col, ptan%index, maf )
     endif
 
 ! Of course, we might not care about ptan
 
-    if ( col > 0 ) then
+    if ( my_ptan_der ) then
+      col = FindBlock ( Jacobian%col, ptan%index, maf )
 
       Call InterpolateValues(ptg_angles, i_raw, chi_out, i_star_all, &
                            & METHOD='S',dyByDx=di_dx)
@@ -130,8 +135,6 @@ CONTAINS
         ind = channel + noChans*(ptg_i-1)
         q = Jacobian%block(row,col)%values(ind,1)
         Jacobian%block(row,col)%values(ind,1) = q + sbRatio * SRad(ptg_i)
-        Jacobian%block(row,col)%r1(ptg_i) = 1 + noChans * (ptg_i - 1)
-        Jacobian%block(row,col)%r2(ptg_i) = noChans * ptg_i
       end do
 
     else
@@ -271,6 +274,9 @@ CONTAINS
 
 END module NO_CONV_AT_ALL_M
 ! $Log$
+! Revision 2.8  2002/07/05 07:52:51  zvi
+! Fixing bug in filling the Jacobian for atmos
+!
 ! Revision 2.7  2002/06/28 11:06:49  zvi
 ! compute dI/dPtan using chain rule
 !
