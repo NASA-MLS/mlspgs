@@ -7,7 +7,7 @@ module Regularization
 
 ! Apply Tikhonov regularization to the matrix of the least-squares
 ! problem for retrieval.
-
+  implicit none
   private
 
   public :: Regularize
@@ -73,8 +73,8 @@ contains
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Expr_M, only: EXPR
-    use MatrixModule_0, only: CreateBlock, M_Absent, M_Banded, &
-      & MatrixElement_T
+    use MatrixModule_0, only: CreateBlock, M_Absent, M_Banded, M_Full, &
+      & MatrixElement_T, Sparsify
     use MatrixModule_1, only: Matrix_T
     use MLSCommon, only: R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
@@ -222,13 +222,15 @@ contains
     end subroutine Coeffs
 
     ! ------------------------------------------------  FillBlock  -----
-    subroutine FillBlock ( B, Ord, Rows, C1, C2, Wt, WtVec )
+    subroutine FillBlock ( B, Ord, Rows, C1, C2, noChans, noSurfs, Wt, WtVec )
     ! Fill the block B with regularization coefficients starting at row Rows+1
     ! and columns C1 to C2.  Update Rows to the last row filled.
       type(matrixElement_T), intent(inout) :: B   ! Block to fill
       integer, intent(in) :: Ord        ! Order of regularization operator
       integer, intent(inout) :: Rows    ! Last row used
       integer, intent(in) :: C1, C2     ! Columns to fill
+      integer, intent(in) :: noChans    ! Number of channels
+      integer, intent(in) :: noSurfs    ! Number of surfaces
       real(r8), intent(in) :: Wt        ! Scalar weight for coefficients
       real(r8), intent(inout), optional :: WtVec(:) ! Weights vector
 
@@ -241,8 +243,9 @@ contains
       integer :: Ncol                   ! Number of columns -- C2 - C1 + 1
       integer :: Nv                     ! Next element in VALUES component
 
-      myOrd = min(ord,c2-c1)
-      ncol = c2 - c1 + 1
+      myOrd = min(ord,(c2-c1)/noChans)
+      ncol = ( c2 - c1 ) / noChans + 1
+      maxRow = ncol - myOrd
 
       call coeffs ( myOrd, wt, c, wtVec, ncol ) ! Compute regularization operator
 
@@ -256,52 +259,96 @@ contains
       !      1  -3   3  -1
       !          1  -3   3  -1
       !              1  -3   3  -1
-
       ! (assuming there are at least seven columns)
 
-      k = c1
-      maxRow = ncol - myOrd
-      ! Fill in coefficients from the end of C(:myOrd) (but no more than
-      ! maxRow-1 of them)
-      do i = 1, myOrd + 1
-        nv = b%r2(k-1) + 1
-        j = min(i,maxRow) ! Number of coefficients
-        b%r1(k) = i
-        b%r2(k) = nv + j - 1
+
+      ! There is a twist on that for multi-channel cases, here we store (e.g.
+      ! for three channels:
+      !  1  0  0 -3  0  0  3  0  0  -1
+      !           1  0  0 -3  0  0   3  0  0 -1
+      !                    1  0  0  -3  0  0  3  0  0 -1
+      !                              1  0  0 -3  0  0  3  0  0  -1
+      ! This routine is called multiple times, once for each channel.
+      ! For simplicity such matrices are created full and later sparsified
+      ! any other approach prooves very difficult, not obvious by looking at
+      ! this routine alone, but in context when one realizes that the masks
+      ! may be different from channel to channel.
+
+      ! I think I'll split the two possibilities out at the top level, rather
+      ! than interspersing lots of if statements in the code
+
+      if ( noChans == 1 ) then 
+        k = c1
+        ! Make sure that r2 is legal so far
+        ! Fill in coefficients from the end of C(:myOrd) (but no more than
+        ! maxRow-1 of them)
+        do i = 1, myOrd + 1
+          nv = b%r2(k-1) + 1
+          j = min(i,maxRow) ! Number of coefficients
+          b%r1(k) = c1
+          b%r2(k) = nv + j - 1
+          if ( present(wtVec) ) then
+            b%values(nv:nv+j-1,1) = - c(myOrd-i+1:myOrd-i+j) * wtVec(i:i+j-1)
+          else
+            b%values(nv:nv+j-1,1) = - c(myOrd-i+1:myOrd-i+j)
+          end if
+          k = k + 1
+        end do
+        ! Fill in coefficients from all of C(:myOrd)
+        do i = myOrd+2, maxRow
+          nv = b%r2(k-1) + 1
+          b%r1(k) = c1 - 1 + i - myOrd
+          b%r2(k) = nv + myOrd
+          if ( present(wtVec) ) then
+            b%values(nv:nv+myOrd,1) = - c(0:myOrd) * wtVec(i:i+myOrd)
+          else
+            b%values(nv:nv+myOrd,1) = - c(0:myOrd)
+          end if
+          k = k + 1
+        end do
+        ! Fill in coefficients from the beginning of C(:myOrd) (but no more
+        ! than maxRow-1 of them)
+        j = min(maxrow-1,myOrd) - 1 ! Index of last coefficient
+        do i = max(myOrd+2,maxRow+1), ncol
+          nv = b%r2(k-1) + 1
+          b%r1(k) = c1 -1 + i - myOrd
+          b%r2(k) = nv + j
+          if ( present(wtVec) ) then
+            b%values(nv:nv+j,1) = - c(0:j) * wtVec(ncol-j:ncol)
+          else
+            b%values(nv:nv+j,1) = - c(0:j)
+          end if
+          j = j - 1
+          k = k + 1
+        end do
+        ! Put the last value in all the later r2's.  Granted later
+        ! calls may overwrite these, but even so.
+        do i = k, b%nCols
+          b%r2(i) = b%r2(k-1)
+          b%r1(i) = b%nRows + 1 ! Shouldn't matter, but CheckInterity fussy
+        end do
+      else
+        ! Here, because the matrix is full I can create it by
+        ! row rather than column, which makes life much easier
+        ! j is our actual channel number (deduced)
+        j = mod ( c1-1, noChans ) + 1
+        ! k is our actual surface number (deduced)
+        k = ( c1-1 ) / noChans + 1
+
         if ( present(wtVec) ) then
-          b%values(nv:nv+j-1,1) = - c(myOrd-i+1:myOrd-i+j) * wtVec(i:i+j-1)
+          do i = 1, maxRow
+            b%values ( i+k-1+(j-1)*noSurfs, &
+              & c1+(i-1)*noChans : c1+(i-1+myord)*noChans : noChans ) = &
+              & - c(0:myord) * wtVec ( i : i+myOrd )
+          end do
         else
-          b%values(nv:nv+j-1,1) = - c(myOrd-i+1:myOrd-i+j)
+          do i = 1, maxRow
+            b%values ( i+k-1+(j-1)*noSurfs, &
+              & c1+(i-1)*noChans : c1+(i-1+myord)*noChans : noChans ) = &
+              & - c(0:myord)
+          end do
         end if
-        k = k + 1
-      end do
-      ! Fill in coefficients from all of C(:myOrd)
-      do i = myOrd+2, maxRow
-        nv = b%r2(k-1) + 1
-        b%r1(k) = i
-        b%r2(k) = nv + myOrd
-        if ( present(wtVec) ) then
-          b%values(nv:nv+myOrd,1) = - c(0:myOrd) * wtVec(i:i+myOrd)
-        else
-          b%values(nv:nv+myOrd,1) = - c(0:myOrd)
-        end if
-        k = k + 1
-      end do
-      ! Fill in coefficients from the beginning of C(:myOrd) (but no more
-      ! than maxRow-1 of them)
-      j = min(maxrow-1,myOrd) - 1 ! Index of last coefficient
-      do i = max(myOrd+2,maxRow+1), ncol
-        nv = b%r2(k-1) + 1
-        b%r1(k) = i
-        b%r2(k) = nv + j
-        if ( present(wtVec) ) then
-          b%values(nv:nv+j,1) = - c(0:j) * wtVec(ncol-j:ncol)
-        else
-          b%values(nv:nv+j,1) = - c(0:j)
-        end if
-        j = j - 1
-        k = k + 1
-      end do
+      end if
       rows = rows + maxRow
     end subroutine FillBlock
 
@@ -348,8 +395,11 @@ contains
       ! Each block of A corresponds to a profile.  Therefore, each horizontal
       ! regularization operator is spread out over all of the blocks for a
       ! given quantity, occupying the diagonal elements of those blocks.  If
-      ! there is a mask that excludes some altitudes from the solution, it
-      ! will not appear in every block.
+      ! there is a mask that excludes some altitudes/channels from 
+      ! the solution, it will not appear in every block.
+
+      ! Note that, unlike the vertical regularization, no additional thought
+      ! is required to handle the multi-channel quantities.
 
       use MatrixModule_0, only: M_Absent, UpdateDiagonal
 
@@ -361,7 +411,7 @@ contains
 
       real(r8) :: C(0:maxRegOrd)   ! Binomial regularization coefficients
       integer :: C1, C2            ! Column boundaries, esp. if a mask is used.
-      integer :: H                 ! Index for a height
+      integer :: H                 ! Index for a height / channel
       integer :: I, J              ! Subscripts, Loop inductors
       integer :: IB                ! Which block is being regularized
       integer :: II                ! Index of an instance
@@ -425,7 +475,7 @@ contains
         end if
         if ( error /= 0 ) warn = .true.
         if ( ord /= 0 .and. wt > 0.0_r8 .and. error == 0 ) then
-          do h = 1, a%block(1,insts(1))%nCols ! for each height...
+          do h = 1, a%block(1,insts(1))%nCols ! for each height / channel.
             ! Scan for blocks of consecutive zero values of M_Tikhonov bits.
             c2 = 1
 o:          do while ( c2 <= ni )
@@ -503,12 +553,15 @@ o:          do while ( c2 <= ni )
       integer, intent(out) :: Rows ! Last row used; ultimately, number of rows
 
       integer :: C1, C2            ! Column boundaries, esp. if a mask is used.
+      integer :: CHAN              ! Channel
       integer :: I                 ! Subscript, Loop inductor
       integer :: IB                ! Which block is being regularized
       integer :: MaxCols           ! Columns in block with with max cols.
       integer :: NB                ! Number of column blocks of A
       integer :: NCOL              ! Number of columns in a block of A
       integer :: NI, NQ            ! Indices for instance and quantity
+      integer :: NOCHANS           ! Number of channels
+      integer :: NOSURFS           ! Number of surfaces
       integer :: NROW              ! Number of rows in a block of A
       integer :: Ord               ! Order for the current block
       logical :: Warn              ! Send warning message to MLSMessage
@@ -544,9 +597,11 @@ o:          do while ( c2 <= ni )
           & a%col%vec%template%quantities(nq), ord, wt )
         ncol = a%col%nelts(ib)
         nrow = a%row%nelts(ib)
-        if ( ord > ncol-1 ) then
+        noChans = a%col%vec%quantities(nq)%template%noChans
+        noSurfs = a%col%vec%quantities(nq)%template%noSurfs
+        if ( ord*noChans > ncol-1 ) then
           warn = .true.
-          ord = ncol - 1
+          ord = ncol/noChans - 1
         end if
         if ( ord > maxRegOrd ) then
           call announceError ( orderTooBig, orders )
@@ -554,58 +609,70 @@ o:          do while ( c2 <= ni )
         end if
         if ( error /= 0 ) warn = .true.
         if ( ord /= 0 .and. wt > 0.0_r8 .and. error == 0 ) then
-          call createBlock ( a%block(ib,ib), nrow, ncol, m_banded, &
-            & (ncol-ord)*(ord+1) )
-          a%block(ib,ib)%r1 = 0         ! in case there's a mask
-          a%block(ib,ib)%r2 = 0
+          if ( noChans == 1 ) then
+            call createBlock ( a%block(ib,ib), nrow, ncol, m_banded, &
+              & (ncol-ord)*(ord+1) )
+            a%block(ib,ib)%r1 = 0         ! in case there's a mask
+            a%block(ib,ib)%r2 = 0
+          else
+            call createBlock ( a%block(ib,ib), nrow, ncol, m_full )
+          end if
           a%block(ib,ib)%values = 0.0_r8
 
-          rows = rows + 1
+          rows = rows + noChans
+          if ( associated ( weightVec ) ) then
+            wtVec(1:weightVec%quantities(nq)%template%instanceLen) = 0.0
+            where ( weightVec%quantities(nq)%values(:,ni) /= 0.0 )
+              wtVec(1:weightVec%quantities(nq)%template%instanceLen) = &
+                & 1.0 / weightVec%quantities(nq)%values(:,ni)
+            end where
+          end if
 
           if ( .not. associated(a%col%vec%quantities(nq)%mask) ) then
-            c1 = 1
-            c2 = ncol
             if ( associated(weightVec) ) then
-              wtVec(1:weightVec%quantities(nq)%template%instanceLen) = 0.0
-              where ( weightVec%quantities(nq)%values(:,ni) /= 0.0 )
-                wtVec(1:weightVec%quantities(nq)%template%instanceLen) = &
-                  & 1.0 / weightVec%quantities(nq)%values(:,ni)
-              end where
-              call fillBlock ( a%block(ib,ib), ord, rows, 1, ncol, wt, wtVec )
+              do chan = 1, noChans
+                call fillBlock ( a%block(ib,ib), ord, rows, chan, &
+                  & ncol, noChans, noSurfs, wt, wtVec(1:ncol:noChans) )
+              end do
             else
-              call fillBlock ( a%block(ib,ib), ord, rows, 1, ncol, wt )
+              do chan = 1, noChans
+                call fillBlock ( a%block(ib,ib), ord, rows, chan, &
+                  & ncol, noChans, noSurfs, wt )
+              end do
             end if
           else
             ! Scan for blocks of consecutive zero values of M_Tikhonov bits.
-            c2 = 1
-o:          do while ( c2 <= a%block(ib,ib)%ncols )
-              c1 = c2
-              do while ( iand(ichar(a%col%vec%quantities(nq)%mask(c1,ni)),M_Tikhonov) &
+            do chan = 1, noChans
+              c2 = chan
+              o: do while ( c2 <= a%block(ib,ib)%ncols )
+                c1 = c2
+                do while ( iand(ichar(a%col%vec%quantities(nq)%mask(c1,ni)),M_Tikhonov) &
                   & /= 0 )
-                if ( c1 >= a%block(ib,ib)%ncols ) exit o
-                c1 = c1 + 1
-              end do
-              c2 = c1 + 1
-              do while ( iand(ichar(a%col%vec%quantities(nq)%mask(c2,ni)),M_Tikhonov) &
+                  c1 = c1 + noChans
+                  if ( c1 >= a%block(ib,ib)%ncols ) exit o
+                end do
+                c2 = c1 + noChans
+                do while ( iand(ichar(a%col%vec%quantities(nq)%mask(c2,ni)),M_Tikhonov) &
                   & == 0 )
-                c2 = c2 + 1
-                if ( c2 > a%block(ib,ib)%ncols ) exit
-              end do
-              if ( associated(weightVec) ) then
-                wtVec = 0.0_r8
-                where ( weightVec%quantities(nq)%values(c1:c2-1,ni) /= 0.0 )
-                  wtVec ( c1 : c2-1 ) = 1.0 / weightVec%quantities(nq)%values(c1:c2-1,ni)
-                end where
-                call fillBlock ( a%block(ib,ib), ord, rows, c1, c2-1, wt, wtVec(c1:c2-1) )
-              else
-                call fillBlock ( a%block(ib,ib), ord, rows, c1, c2-1, wt )
-              end if
-            end do o
+                  c2 = c2 + noChans
+                  if ( c2 > a%block(ib,ib)%ncols ) exit
+                end do
+                if ( associated(weightVec) ) then
+                  call fillBlock ( a%block(ib,ib), ord, rows, c1, c2-1, noChans, &
+                    & noSurfs, wt, wtVec(c1:c2-noChans:noChans) )
+                else
+                  call fillBlock ( a%block(ib,ib), ord, rows, c1, c2-1, noChans, &
+                    & noSurfs, wt )
+                end if
+              end do o
+            end do
           end if
-
+          error = 0
+          
+          ! Now if block created full, sparsify it in place
+          call Sparsify ( a%block(ib,ib) )
         end if
-        error = 0
-
+      
       end do
       call deallocate_test ( wtVec, "Weight vector", moduleName )
       if ( warn ) call announceError ( notRegularized, orders )
@@ -620,6 +687,10 @@ o:          do while ( c2 <= a%block(ib,ib)%ncols )
 end module Regularization
 
 ! $Log$
+! Revision 2.34  2003/01/10 02:46:40  livesey
+! Various bug fixes, and now handles multi-channel quantities vertically
+! (horizontally always worked, but made that clear in comments).
+!
 ! Revision 2.33  2002/11/20 21:04:08  livesey
 ! Bug fix in horiztonal regularization of unmasked quantities (only worked
 ! for quantities which had masks upto now).
