@@ -368,11 +368,17 @@ contains ! ============================ MODULE PROCEDURES ======================
       if(get_field_id(son) == f_file) then
         call get_string ( sub_rosa(subtree(2,son)), fileName, strip=.true. )
         ! sd_id = sfstart(Filename, DFACC_READ)
-        the_hdf_version = mls_hdf_version(FileName)
-        sd_id = mls_io_gen_openF('hg', .true., error, &
-          & record_length, DFACC_READ, &
-          & FileName, hdfVersion=hdfVersion)
-        if ( sd_id == -1 ) then
+        if ( present(hdfVersion) ) then
+          the_hdf_version = mls_hdf_version(FileName)
+          sd_id = mls_io_gen_openF('hg', .true., error, &
+            & record_length, DFACC_READ, &
+            & FileName, hdfVersion=the_hdf_version, debugOption=.false.)
+        else
+          sd_id = mls_io_gen_openF('hg', .true., error, &
+            & record_length, DFACC_READ, &
+            & FileName)
+        endif
+        if ( sd_id == -1 .or. sd_id == -99 ) then
           call announce_error ( son, &
             & 'Error opening L1BOA file: ' //Filename)
         else
@@ -426,11 +432,17 @@ contains ! ============================ MODULE PROCEDURES ======================
             & call announce_error ( son, 'Allocation failed for l1bInfo' )
         endif
         ! sd_id = sfstart(Filename, DFACC_READ)
-        the_hdf_version = mls_hdf_version(FileName)
-        sd_id = mls_io_gen_openF('hg', .true., error, &
-          & record_length, DFACC_READ, &
-          & FileName, hdfVersion=hdfVersion)
-        if ( sd_id == -1 ) then
+        if ( present(hdfVersion) ) then
+          the_hdf_version = mls_hdf_version(FileName)
+          sd_id = mls_io_gen_openF('hg', .true., error, &
+            & record_length, DFACC_READ, &
+            & FileName, hdfVersion=the_hdf_version, debugOption=.false.)
+        else
+          sd_id = mls_io_gen_openF('hg', .true., error, &
+            & record_length, DFACC_READ, &
+            & FileName)
+        endif
+        if ( sd_id == -1 .or. sd_id == -99 ) then
           call announce_error ( son, &
             & 'Error opening L1BRAD file: ' //Filename)
         elseif(ifl1 == MAXNUML1BRADIDS) then
@@ -813,10 +825,15 @@ contains ! ============================ MODULE PROCEDURES ======================
     end if
     
     ! Find Qtype, rank and dimensions of QuantityName
+    print*, ' Find Qtype, rank and dimensions of QuantityName ', trim(QuantityName)
     call GetHDF5DSRank(L1FileHandle, QuantityName, rank)
     allocate(dims(rank), maxDims(rank))
     call GetHDF5DSDims(L1FileHandle, QuantityName, dims, maxDims)
     call GetHDF5DSQType ( L1FileHandle, QuantityName, Qtype )
+    print *, 'rank ', rank
+    print *, 'maxDims ', maxDims
+    print *, 'dims ', dims
+    print *, 'Qtype ', Qtype
 ! > >     nullify(MLSAuxData%RealField, MLSAuxData%DpField, &
 ! > >       & MLSAuxData%IntField, MLSAuxData%CharField)
 ! > >     select case (trim(Qtype))
@@ -866,7 +883,27 @@ contains ! ============================ MODULE PROCEDURES ======================
       l1bData%noMAFs = numMAFs - l1bData%firstMAF
     end if
 
+    print *, 'l1bData%noMAFs ', l1bData%noMAFs
     l1bData%L1BName = quantityName
+
+    noMAFs = l1bData%noMAFs
+    print *, 'noMAFs ', noMAFs
+
+    if ( rank < 2 ) then
+      l1bData%maxMIFs = 1
+    else if ( rank > 2 ) then
+      l1bData%maxMIFs = dims(2)
+    else
+      l1bData%maxMIFs = dims(1)
+    end if
+    print *, 'l1bData%maxMIFs ', l1bData%maxMIFs
+
+    if ( rank > 2 ) then
+      l1bData%noAuxInds = dims(1)
+    else
+      l1bData%noAuxInds = 1
+    end if
+
 
     call Allocate_test ( l1bData%counterMaf, l1bData%noMAFs, &
       & 'counterMAF', ModuleName )
@@ -949,6 +986,7 @@ contains ! ============================ MODULE PROCEDURES ======================
         call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Sorry--LoadFromHDF5DS not yet rewritten for type char(:,:,:).')
     end select
+    call dump(l1bData, 0)
     
     ! Avoid memory leaks
     deallocate(dims, maxDims)
@@ -1022,6 +1060,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.28  2002/11/13 01:02:16  pwagner
+! Actually reads hdf5 radiances
+!
 ! Revision 2.27  2002/10/29 18:50:03  pwagner
 ! Modified AssembleL1BQtyName to convert complete hdf4-style names to hdf5
 !
