@@ -35,7 +35,8 @@ MODULE INIT_TABLES_MODULE
   INTEGER, PUBLIC, PARAMETER :: T_USE            = last_signal_type+1
   INTEGER, PUBLIC, PARAMETER :: T_UNITS          = t_use+1
   INTEGER, PUBLIC, PARAMETER :: T_MODULE         = t_units+1
-  INTEGER, PUBLIC, PARAMETER :: T_LAST           = t_module
+  INTEGER, PUBLIC, PARAMETER :: T_ENABLE         = t_module+1
+  INTEGER, PUBLIC, PARAMETER :: T_LAST           = t_enable
 
 ! Field indices:
 
@@ -44,13 +45,13 @@ MODULE INIT_TABLES_MODULE
   INTEGER, PUBLIC, PARAMETER :: F_SECONDARY = f_use + 1
   INTEGER, PUBLIC, PARAMETER :: F_S = f_secondary + 1
   INTEGER, PUBLIC, PARAMETER :: F_BANDNO = f_s + 1
-  INTEGER, PUBLIC, PARAMETER :: FIELD_LAST = f_bandno
+  INTEGER, PUBLIC, PARAMETER :: FIELD_LAST = f_bandno + 1
 
 ! Enumeration literals:
 
-  INTEGER, PUBLIC, PARAMETER :: L_MATCH   = last_signal_lit + 1
+  INTEGER, PUBLIC, PARAMETER :: L_MATCH   =  last_signal_lit + 1
   INTEGER, PUBLIC, PARAMETER :: L_OVERRIDE = l_match + 1
-  INTEGER, PUBLIC, PARAMETER :: LAST_LIT = l_override
+  INTEGER, PUBLIC, PARAMETER :: LAST_LIT =      l_override + 1
 
 ! Section identities:
 
@@ -67,7 +68,8 @@ MODULE INIT_TABLES_MODULE
   INTEGER, PUBLIC, PARAMETER :: S_LIMBMIFS = s_targetMIFs + 1
   INTEGER, PUBLIC, PARAMETER :: S_DISCARDMIFS = s_limbMIFs + 1
   INTEGER, PUBLIC, PARAMETER :: S_SWITCH = s_discardMIFs + 1
-  INTEGER, PUBLIC, PARAMETER :: SPEC_LAST = s_switch
+  INTEGER, PUBLIC, PARAMETER :: S_CHI2ERR = s_switch + 1
+  INTEGER, PUBLIC, PARAMETER :: SPEC_LAST = s_chi2err
 
 ! Parameter names:
 
@@ -186,6 +188,7 @@ CONTAINS ! =====     Public procedures     =============================
     spec_indices(s_limbMIFs) =                add_ident ( 'limbMIFs' )
     spec_indices(s_discardMIFs) =             add_ident ( 'discardMIFs' )
     spec_indices(s_switch) =                  add_ident ( 'switch' )
+    spec_indices(s_chi2err) =                 add_ident ( 'EnableChi2Err' )
 
   ! Definitions are represented by trees.  The notation in the comments
   ! for the trees is < root first_son ... last_son >.  This is sometimes
@@ -270,6 +273,11 @@ CONTAINS ! =====     Public procedures     =============================
              begin, f+f_bandno, t+t_numeric, n+n_field_type, &
              nadp+n_spec_def /) )
 
+    CALL make_tree ( (/ &
+      begin, s+s_chi2err, &
+             begin, f+f_bandno, t+t_numeric_range, t+t_numeric, n+n_field_type,&
+             nadp+n_spec_def /) )
+
     ! Define the relations between sections and specs.  These are
     ! represented by trees of the form
     !  < n_section section_name
@@ -303,7 +311,7 @@ CONTAINS ! =====     Public procedures     =============================
              s+s_switch, n+n_section, &
       begin, z+z_output, &
              begin, p+p_removebaseline, t+t_boolean, n+n_name_def, &
-             n+n_section/) )
+             s+s_chi2err, n+n_section/) )
 
   END SUBROUTINE INIT_TABLES
     
@@ -313,6 +321,9 @@ CONTAINS ! =====     Public procedures     =============================
 END MODULE INIT_TABLES_MODULE
   
 ! $Log$
+! Revision 2.17  2004/08/12 13:51:51  perun
+! Version 1.44 commit
+!
 ! Revision 2.16  2004/05/14 15:59:11  perun
 ! Version 1.43 commit
 !
@@ -323,6 +334,9 @@ END MODULE INIT_TABLES_MODULE
 ! Version 1.2 commit
 !
 ! $Log$
+! Revision 2.17  2004/08/12 13:51:51  perun
+! Version 1.44 commit
+!
 ! Revision 2.16  2004/05/14 15:59:11  perun
 ! Version 1.43 commit
 !
