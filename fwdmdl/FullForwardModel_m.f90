@@ -504,9 +504,11 @@ contains
       & do_calc_dw, do_calc_dw_c, do_calc_dw_f, &
       & do_calc_fzp, do_calc_iwc, do_calc_hyd, do_calc_hyd_c, &
       & do_calc_t, do_calc_t_c, do_calc_t_f, &
+      & do_calc_tscat, do_calc_tscat_zp, &
       & do_calc_zp, do_calc_iwc_zp, do_gl, &
       & drad_dn, drad_dt, drad_dv, drad_dw, dsdz_gw_path, dx_dh_out, dx_dt, &
       & dxdt_surface, dxdt_tan, eta_fzp, eta_iwc, &
+      & eta_tscat, eta_tscat_zp, &
       & eta_zp, eta_iwc_zp, eta_mag_zp, eta_zxp_dn, eta_zxp_dn_c, eta_zxp_dn_f, &
       & eta_zxp_dv, eta_zxp_dv_c, eta_zxp_dv_f, &
       & eta_zxp_dw, eta_zxp_dw_c, eta_zxp_dw_f, &
@@ -2776,6 +2778,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.185  2003/11/19 22:21:34  jonathan
+! interpolate scat_src to tscat_path
+!
 ! Revision 2.184  2003/11/17 18:04:15  jonathan
 ! scat_src output from T_scat is correct
 !
