@@ -174,11 +174,12 @@ contains
       & SIG_SENDRESULTS, NOTIFYTAG
     use MorePVM, only: PVMUNPACKSTRINGINDEX
     use PVM, only: PVMERRORMESSAGE, PVMFINITSEND, &
-      & PVMF90UNPACK, PVMRAW
+      & PVMF90UNPACK, PVMRAW, PVMFFREEBUF
     use PVMIDL, only: PVMIDLUNPACK, PVMIDLPACK
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
     use MatrixModule_0, only: M_Absent, M_Banded, M_Column_Sparse, M_Full, MatrixElement_T
-    use MatrixModule_1, only: Matrix_T, CREATEEMPTYMATRIX, CLEARMATRIX
+    use MatrixModule_1, only: Matrix_T, CREATEEMPTYMATRIX, CLEARMATRIX, &
+      & DESTROYMATRIX
     use QuantityPVM, only: PVMRECEIVEQUANTITY
     use ForwardModelWrappers, only: FORWARDMODEL
     use String_table, only: DISPLAY_STRING
@@ -188,14 +189,15 @@ contains
     type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
 
     ! Local variables
+    integer :: I,J                      ! Loop counters
     integer :: INFO                     ! From pvm
-    integer :: BUFFERID                 ! For pvm
-    integer :: SIGNAL                   ! Signal code from master
+    integer :: NAME                     ! An enumerated name
     integer :: NOFWMCONFIGS             ! Number of forward model confis
     integer :: NOQUANTITIES             ! Number of quantity templates we'll need
     integer :: NOQUANTITIESINVECTOR     ! Number of quantities in the vector
-    integer :: I,J                      ! Loop counters
-    integer :: NAME                     ! An enumerated name
+    integer :: RECVBUFFERID             ! For pvm
+    integer :: SENDBUFFERID             ! For pvm
+    integer :: SIGNAL                   ! Signal code from master
     logical :: FLAG                     ! A flag sent via pvm
     logical, dimension(2) :: L2         ! Two flags sent by pvm
     integer, dimension(:), pointer :: QTINDS ! Index of relevant quantities
@@ -222,7 +224,7 @@ contains
     mainLoop: do
       ! We'll actually do a non-blocking check here to listen out for
       ! dead masters
-      call IntelligentPVMFrecv ( parallel%masterTid, InfoTag, bufferId )
+      call IntelligentPVMFrecv ( parallel%masterTid, InfoTag, recvBufferId )
 
       ! We get from this just an integer (at least at first), based on which we do
       ! various tasks
@@ -242,11 +244,7 @@ contains
         ! measurement vectors, and the complete values for the auxilliary
         ! state vector.  We also get all the forward model configurations.
         ! First destroy all our old information
-        call DestroyFWMConfigDatabase ( fwmConfigs, deep=.true. )
-        call DestroyVectorDatabase ( vectors )
-        call DestroyVectorTemplateDatabase ( vectorTemplates )
-        call DestroyQuantityTemplateDatabase ( quantities, &
-          & ignoreMinorFrame=.true. )
+        call ClearSetup
 
         ! Get the forward model configs we'll need
         call PVMIDLUnpack ( noFWMConfigs, info )
@@ -325,7 +323,9 @@ contains
           & .not. l2(1), .not. l2(2) )
         call Allocate_test ( fmStat%rows, jacobian%row%nb, 'fmStat%rows', ModuleName )
 
-        ! OK, I think we're ready to go
+        ! Free up this rather bulky receive buffer
+        call PVMFFreeBuf ( recvBufferID, info )
+        if ( info /= 0 ) call PVMErrorMessage ( info, 'Freeing receive buffer' )
 
       case ( SIG_RunMAF )
         ! Get the state vector for this iteration
@@ -352,9 +352,9 @@ contains
         end do
 
         ! Pack up our results in anticipation of sending them off
-        call PVMFInitSend ( PVMRAW, bufferID )
-        if ( bufferID <= 0 ) &
-          & call PVMErrorMessage ( bufferID, 'Setting up results buffer' )
+        call PVMFInitSend ( PVMRAW, sendBufferID )
+        if ( sendBufferID <= 0 ) &
+          & call PVMErrorMessage ( sendBufferID, 'Setting up results buffer' )
         call PVMIDLPack ( fmStat%rows, info ) 
         if ( info /= 0 ) call PVMErrorMessage ( info, 'fmStat%rows' )
         do i = 1, jacobian%row%nb
@@ -386,32 +386,46 @@ contains
         end do
 
         ! OK, now wait patiently for the request to send the results off
-        call IntelligentPVMFrecv ( parallel%masterTid, infoTag, bufferID )
-        if ( bufferID <= 0 ) &
-          & call PVMErrorMessage ( bufferID, 'Receiveing go-ahead from master' )
+        call IntelligentPVMFrecv ( parallel%masterTid, infoTag, recvBufferID )
+        if ( recvBufferID <= 0 ) &
+          & call PVMErrorMessage ( recvBufferID, 'Receiveing go-ahead from master' )
         call PVMF90Unpack ( signal, info )
         if ( info /= 0 ) call PVMErrorMessage ( info, 'Unpacking signal from master' )
         if ( signal == SIG_SendResults ) then
           ! OK, now send the results off
           call PVMFSend ( parallel%masterTid, InfoTag, info )
           if ( info /= 0 ) call PVMErrorMessage ( info, 'Sending results' )
+          ! OK, now free up the send buffer to save space
+          call PVMFFreeBuf ( sendBufferID, info )
+          if ( info /= 0 ) call PVMErrorMessage ( info, 'Freeing up send buffer' )
         else if ( signal == SIG_Finished ) then
           finished = .true.
-          ! Might as well clear our send buffer then.
-          call PVMFInitSend ( PVMRAW, bufferID )
-          if ( bufferID <= 0 ) &
-            & call PVMErrorMessage ( bufferID, 'Clearing out results buffer' )
         else
           call output ( 'Signal: ' )
           call output ( signal, advance='yes' )
           call MLSMessage ( MLSMSG_Error, ModuleName, 'Got unexpected message from master' )
         end if
-
         ! OK, we've run our forward models and sent our results
         call ClearMatrix ( jacobian )
       end select
       if ( finished ) exit mainLoop
     end do mainLoop
+
+    ! Finished, tidy up
+    call PVMFFreeBuf ( sendBufferID, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Freeing up send buffer' )
+    call ClearSetup
+  contains
+
+    subroutine ClearSetup
+      call DestroyMatrix ( jacobian )
+      call DestroyFWMConfigDatabase ( fwmConfigs, deep=.true. )
+      call DestroyVectorDatabase ( vectors )
+      call DestroyVectorTemplateDatabase ( vectorTemplates )
+      call DestroyQuantityTemplateDatabase ( quantities, &
+        & ignoreMinorFrame=.true. )
+    end subroutine ClearSetup
+
   end subroutine L2FWMSlaveTask
 
   ! ------------------------------------------------ ReceiveSlavesOutput ---
@@ -421,7 +435,7 @@ contains
     use VectorsModule, only: VECTOR_T
     use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
     use MatrixModule_1, only: MATRIX_T
-    use PVM, only: PVMERRORMESSAGE
+    use PVM, only: PVMERRORMESSAGE, PVMFFREEBUF
     use PVMIDL, only: PVMIDLUNPACK
     use L2ParInfo, only: INFOTAG, GETNICETIDSTRING
     use MatrixModule_1, only: CREATEBLOCK
@@ -485,6 +499,9 @@ contains
         end do
       end if
     end do
+    ! Now free up our buffer to save space
+    call PVMFFreeBuf ( bufferID, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'freeing receive buffer' )
 
   end subroutine ReceiveSlavesOutput
 
@@ -523,7 +540,7 @@ contains
     use ForwardModelConfig, only: FORWARDMODELCONFIG_T, PVMPACKFWMCONFIG
     use VectorsModule, only: VECTOR_T
     use PVM, only: PVMFINITSEND, PVMERRORMESSAGE, PVMF90PACK, &
-      & PVMFBCAST, PVMRAW
+      & PVMFBCAST, PVMRAW, PVMFFREEBUF
     use PVMIDL, only: PVMIDLPACK, PVMIDLUNPACK
     use L2ParInfo, only: SIG_NEWSETUP, FWMSLAVEGROUP, INFOTAG
     use QuantityPVM, only: PVMSENDQUANTITY
@@ -654,6 +671,10 @@ contains
     ! That's it, let's get this information sent off
     call PVMFBcast ( FWMSlaveGroup, InfoTag, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, 'Broadcasting setup information' )
+
+    ! Free up the send buffer
+    call PVMFFreeBuf ( bufferID, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'freeing send buffer' )
       
   end subroutine SetupFWMSlaves
 
@@ -743,6 +764,9 @@ contains
 end module L2FWMParallel
 
 ! $Log$
+! Revision 2.15  2003/01/13 20:59:02  livesey
+! Added calls to PVMFFreeBuf
+!
 ! Revision 2.14  2003/01/13 20:15:49  livesey
 ! Slight changes to slave launching, uses parllel%executable
 !
