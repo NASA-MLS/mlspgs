@@ -65,6 +65,15 @@
         Pgs_pc_getReference=-99
       END FUNCTION Pgs_pc_getReference
 
+      INTEGER FUNCTION Pgs_pc_getUniversalRef(file_handle, &
+         file_version, physicalfilename)
+        INTEGER, INTENT(IN) :: file_handle
+        INTEGER, INTENT(INOUT) :: file_version
+        character (LEN=*), INTENT(OUT) :: physicalFilename
+        physicalFilename = ' '
+        Pgs_pc_getReference=-99
+      END FUNCTION Pgs_pc_getUniversalRef
+
       subroutine Pgs_smf_getMsg ( CODE, MNEMONIC, MSG )
         integer, intent(out) :: CODE              ! Previously stored code
         character(len=*), intent(out) :: MNEMONIC ! Previously stored mnemonic
@@ -174,6 +183,10 @@
 
 !
 ! $Log$
+! Revision 2.9  2003/02/06 12:02:46  hcp
+! Added  Pgs_pc_getReference so code that uses PCFHdr.f90 can run without
+! being linked against the toolkit
+!
 ! Revision 2.8  2002/10/08 09:02:48  hcp
 ! Commented out private :: not_used_here which broke compile.
 !
