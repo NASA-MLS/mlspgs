@@ -6,6 +6,7 @@
 MODULE OpenInit 
 !===============================================================================
 
+   USE MLSCommon
    USE SDPToolkit
    USE MLSPCF
    USE MLSMessageModule
@@ -13,6 +14,7 @@ MODULE OpenInit
    USE dates_module
    USE MLSCF
    USE L3CF
+   use GETCF_M, only: GetCF, InitGetCF
    IMPLICIT NONE
    PUBLIC
 
@@ -36,7 +38,8 @@ MODULE OpenInit
 
 ! Parameters
 
-! This data type is used to store User-defined Runtime Parameters from the PCF.
+! This data type is used to store User-defined Runtime Parameters and other
+! information taken from the PCF.
 
    TYPE PCFData_T
 
@@ -59,6 +62,10 @@ MODULE OpenInit
      ! # of days of input data needed to process an l3 product
 
      INTEGER :: minDays
+
+     ! granule ID of the log file (file name, without path or .dat)
+
+     CHARACTER (LEN=FileNameLen) :: logGranID
 
    END TYPE PCFData_T
 
@@ -90,8 +97,9 @@ CONTAINS
       CHARACTER (LEN=2) :: aDays
       CHARACTER (LEN=17) :: range 
       CHARACTER (LEN=480) :: msr
+      CHARACTER (LEN=FileNameLen) :: name
 
-      INTEGER ::  returnStatus
+      INTEGER ::  i, indx, mlspcf_log, returnStatus, version
 
 ! Retrieve values set in PCF & assign them to variables.
 
@@ -140,6 +148,27 @@ CONTAINS
 
       l3pcf%l3StartDay = range(1:8)
       l3pcf%l3EndDay = range(10:17)
+
+! Get the name of the log file from the PCF
+
+      version = 1
+      mlspcf_log = 10101
+
+      returnStatus = Pgs_pc_getReference(mlspcf_log, version, name)
+      IF (returnStatus /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, &
+                        ModuleName, 'Error retrieving log file name from PCF.')
+
+      DO i = 1, 10
+         indx = INDEX(name, '/')
+         IF (indx == 0) EXIT
+         name = name(indx+1:)
+      ENDDO
+
+      indx = INDEX(name, '.')
+      IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'No file type &
+                                    &specified in log name.')
+
+      l3pcf%logGranID = name(:indx-1)
 
 !---------------------------------
    END SUBROUTINE GetPCFParameters
@@ -248,7 +277,7 @@ CONTAINS
       CHARACTER (LEN=480) :: msr
       CHARACTER (LEN=8) :: dates(maxWindow)
 
-      INTEGER :: numDays, pcfId, returnStatus
+      INTEGER :: error, numDays, pcfId, returnStatus
 
 ! Retrieve values set in PCF & assign them to variables.
 
@@ -270,7 +299,9 @@ CONTAINS
 
 ! Read the configuration file into an MLSCF_T structure
 
-      CALL ReadParseMLSCF(pcfId, cf)
+      CALL InitGetCF
+
+      CALL getCF(cf, error, inUnit=pcfId)
 
 ! Close the configuration file
 
@@ -292,3 +323,6 @@ END MODULE OpenInit
 !==================
 
 ! $Log$
+! Revision 1.1  2000/10/17 20:26:16  nakamura
+! Module for the Open/Init task.
+!
