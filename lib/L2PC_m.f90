@@ -11,7 +11,7 @@ module L2PC_m
 
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
   use Declaration_Table, only: DECLS, ENUM_VALUE, GET_DECL
-  use Intrinsic, only: Lit_Indices
+  use Intrinsic, only: Lit_Indices, l_zeta, l_none
   use MLSCommon, only: R8
   use VectorsModule, only: DESTROYVECTORINFO, VECTOR_T, VECTORVALUE_T
   use MatrixModule_1, only: CREATEBLOCK, CREATEEMPTYMATRIX, DESTROYMATRIX, MATRIX_T
@@ -486,6 +486,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.9  2001/04/26 22:12:21  livesey
+! Fixed, gets l_zeta, l_none
+!
 ! Revision 2.8  2001/04/26 22:08:39  livesey
 ! Add check on vertical coordinates
 !
