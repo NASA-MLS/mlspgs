@@ -191,7 +191,8 @@ contains ! =====     Public Procedures     =============================
     type (HGrid_T), dimension(:), pointer :: hGrids
 
     call destroyVectorTemplateDatabase ( vectorTemplates )
-    call destroyQuantityTemplateDatabase ( quantityTemplates, ignoreMinorFrame=.true. )
+    call destroyQuantityTemplateDatabase ( quantityTemplates, &
+      & ignoreMinorFrame=.true., ignoreMajorFrame=.true. )
     call destroyQuantityTemplateDatabase ( mifGeolocation )
     call destroyHGridDatabase ( hGrids )
   end subroutine MLSL2DeConstruct
@@ -202,6 +203,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.28  2001/10/05 23:30:37  pwagner
+! Fixed small bug in destroyingQuantTempldb
+!
 ! Revision 2.27  2001/09/28 23:59:20  pwagner
 ! Fixed various timing problems
 !
