@@ -62,7 +62,7 @@ Subroutine Rad_Tran_WD(frq_i,band,Frq,N_lvls,n_sps,temp_der,atmos_der,&
     Type(path_vector), intent(in) :: Z_PATH, T_PATH, H_PATH, PHI_PATH, &
    &                                 DHDZ_PATH
 
-    Type(path_derivative), intent(in) :: DH_DT_PATH
+    Real(r8), intent(in) :: dh_dt_path(:,:,:)
 
     Type(path_derivative), intent(in out) :: k_temp
     Type(path_derivative), intent(in out) :: k_atmos(:), k_spect_dw(:), &
@@ -183,5 +183,8 @@ Subroutine Rad_Tran_WD(frq_i,band,Frq,N_lvls,n_sps,temp_der,atmos_der,&
   End Subroutine RAD_TRAN_WD
 end module RAD_TRAN_WD_M
 ! $Log$
+! Revision 1.4  2001/03/08 00:11:16  zvi
+! *** empty log message ***
+!
 ! Revision 1.1  2000/05/04 18:12:05  vsnyder
 ! Initial conversion to Fortran 90

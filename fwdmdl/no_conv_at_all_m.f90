@@ -21,13 +21,13 @@ contains
 ! convolution grid to the users specified points. This module uses
 ! cubic spline interpolation to do the job.
 !
-Subroutine no_conv_at_all (ptan,n_sps,tan_press,band,temp_der,atmos_der,&
+Subroutine no_conv_at_all (Ptan,n_sps,tan_press,band,temp_der,atmos_der,&
            spect_der,i_raw,k_temp,k_atmos, k_spect_dw, k_spect_dn,           &
            k_spect_dnu, spect_atmos,no_tan_hts,k_info_count,i_star_all,      &
            k_star_all, k_star_info,no_t,no_phi_t,no_phi_f,t_z_basis,         &
            atmospheric,spectroscopic)
 !
-    real(r8), intent(in), dimension(:) :: ptan
+    real(r8), intent(in), dimension(:) :: Ptan
     Logical, intent(IN) :: temp_der,atmos_der,spect_der
 !
     integer(i4), intent(IN) :: no_t,n_sps,no_tan_hts,band,no_phi_t
@@ -57,7 +57,7 @@ Subroutine no_conv_at_all (ptan,n_sps,tan_press,band,temp_der,atmos_der,&
     integer(i4) :: nz
     integer(i4) :: N, I, IS, J, K, NF, SV_I, Spectag, ki, kc
 !
-    real(r8) :: RAD(Nlvl), SC1(Nlvl), PtP(Nlvl)
+    real(r8) :: RAD(Nlvl), SRad(Nlvl)
 !
     Character(LEN=01) :: CA
 !
@@ -72,9 +72,8 @@ Subroutine no_conv_at_all (ptan,n_sps,tan_press,band,temp_der,atmos_der,&
     K_INFO_COUNT = 0
 !
     k = no_tan_hts
-    j = size(ptan)
-    PtP(1:j) = ptan
-    Call Cspline(tan_press,PtP,i_raw,i_star_all,k,j)
+    j = size(Ptan)
+    Call Cspline(tan_press,Ptan,i_raw,i_star_all,k,j)
 !
     if(.not. ANY((/temp_der,atmos_der,spect_der/))) Return
 !
@@ -103,8 +102,8 @@ Subroutine no_conv_at_all (ptan,n_sps,tan_press,band,temp_der,atmos_der,&
         do sv_i = 1, no_t
 !
           Rad(1:k) = k_temp(1:k,sv_i,nf)
-          Call Cspline(tan_press,PtP,Rad,Sc1,k,j)
-          k_star_all(ki,sv_i,nf,1:j) = Sc1(1:j)
+          Call Cspline(tan_press,Ptan,Rad,SRad,k,j)
+          k_star_all(ki,sv_i,nf,1:j) = SRad(1:j)
 !
         end do
 !
@@ -138,8 +137,8 @@ Subroutine no_conv_at_all (ptan,n_sps,tan_press,band,temp_der,atmos_der,&
             do sv_i = 1, nz
 !
               Rad(1:k) = k_atmos(1:k,sv_i,nf,is)
-              Call Lintrp(tan_press,PtP,Rad,Sc1,k,j)
-              k_star_all(ki,sv_i,nf,1:j) = Sc1(1:j)
+              Call Lintrp(tan_press,Ptan,Rad,SRad,k,j)
+              k_star_all(ki,sv_i,nf,1:j) = SRad(1:j)
 !
             end do
 !
@@ -194,8 +193,8 @@ Subroutine no_conv_at_all (ptan,n_sps,tan_press,band,temp_der,atmos_der,&
                   Rad(1:k) = k_spect_dnu(1:k,sv_i,nf,i)
               end select
 !
-              Call Lintrp(tan_press,PtP,Rad,Sc1,k,j)
-              k_star_all(ki,sv_i,nf,1:j) = Sc1(1:j)
+              Call Lintrp(tan_press,Ptan,Rad,SRad,k,j)
+              k_star_all(ki,sv_i,nf,1:j) = SRad(1:j)
 !
             end do        ! sv_i loop
 !
@@ -217,6 +216,9 @@ Subroutine no_conv_at_all (ptan,n_sps,tan_press,band,temp_der,atmos_der,&
 !
 end module NO_CONV_AT_ALL_M
 ! $Log$
+! Revision 1.3  2001/03/21 01:10:38  livesey
+! Now gets Ptan from vector
+!
 ! Revision 1.2  2001/03/07 23:45:15  zvi
 ! Adding logical flags fro Temp, Atmos & Spect. derivatives
 !

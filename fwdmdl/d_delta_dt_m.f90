@@ -3,7 +3,7 @@ module D_DELTA_DT_M
   use GL6P, only: GW, NG
   use MLSCommon, only: I4, R8
   use D_GET_ONE_ETA_M, only: GET_ONE_ETA
-  use PATH_ENTITIES_M, only: PATH_VECTOR, PATH_BETA, PATH_DERIVATIVE
+  use PATH_ENTITIES_M, only: PATH_VECTOR, PATH_BETA
   implicit NONE
   private
   public :: D_DELTA_DT
@@ -33,9 +33,7 @@ contains
     Type(path_vector), intent(in) :: Z_PATH, T_PATH, H_PATH, PHI_PATH, &
    &                                 DHDZ_PATH
 
-    Type(path_derivative), intent(in) :: DH_DT_PATH
-
-    real(r8), intent(in) :: T_Z_BASIS(:), T_PHI_BASIS(:)
+    real(r8), intent(in) :: T_Z_BASIS(:), T_PHI_BASIS(:),DH_DT_PATH(:)
     real(r8), intent(in) :: REF_CORR(*)
 
     real(r8), intent(out) :: D_DELTA_DTNP(*)
@@ -64,7 +62,7 @@ contains
     ps = -1.0
     Ngp1 = Ng + 1
 !
-    htxdht = htan * dble(dh_dt_path%values(brkpt,ip,in))
+    htxdht = htan * dh_dt_path(brkpt)
 !
 !  Initialize all the arrays:
 !
@@ -80,7 +78,7 @@ contains
 
     hd = hh + RoC
     sb = Sqrt(abs(hd*hd-htan2))
-    dhdth = dble(dh_dt_path%values(mp,ip,in))
+    dhdth = dh_dt_path(mp)
 !
     do h_i = 1, mid
 !
@@ -107,7 +105,7 @@ contains
       if (abs(sa-sb) < 0.05) EXIT
 !
       dhdtl = dhdth
-      dhdth = dble(dh_dt_path%values(mp,ip,in))
+      dhdth = dh_dt_path(mp)
 !
       rc = ref_corr(h_i+1)
 !
@@ -142,7 +140,7 @@ contains
 
     hd = hh + RoC
     sb = Sqrt(abs(hd*hd-htan2))
-    dhdth = dble(dh_dt_path%values(mp,ip,in))
+    dhdth = dh_dt_path(mp)
 !
     do while (h_i < 2 * N_lvls - 1)
 !
@@ -166,7 +164,7 @@ contains
       ph = phi_path%values(mp)
 !
       dhdtl = dhdth
-      dhdth = dble(dh_dt_path%values(mp,ip,in))
+      dhdth = dh_dt_path(mp)
 !
       rc = ref_corr(h_i)
 !
@@ -205,7 +203,7 @@ contains
         h_GL(i) = h_path%values(j)
         phi_GL(i) = phi_path%values(j)
         Gw_dHdZ(i) = Gw(i) * dhdz_path%values(j) * aym
-        dhdt_GL(i) = dble(dh_dt_path%values(j,ip,in))
+        dhdt_GL(i) = dh_dt_path(j)
         Call get_one_eta(phi_GL(i),t_phi_basis,no_phi_t,ip,r)
         vetap(i) = r
         j = j + 1
@@ -347,5 +345,8 @@ contains
 !
 end module D_DELTA_DT_M
 ! $Log$
+! Revision 1.4  2001/01/31 01:08:48  zvi
+! New version of forward model
+!
 ! Revision 1.1  2000/05/04 18:12:04  vsnyder
 ! Initial conversion to Fortran 90

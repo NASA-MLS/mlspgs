@@ -30,7 +30,7 @@ contains
     Type(path_vector), intent(in) :: z_path, t_path, h_path, phi_path, &
    &                                 dhdz_path
 
-    Type(path_derivative), INTENT(IN) :: dh_dt_path
+    Real(r8), intent(in) :: dh_dt_path(:,:,:)
 !
     Real(r8), intent(in) :: T_Z_BASIS(:), T_PHI_BASIS(:)
     Real(r8), intent(in) :: TAU(*), T_SCRIPT(*), REF_CORR(*)
@@ -51,10 +51,10 @@ contains
 !
 ! Compute the temperature derivative of delta:
 !
-        Call d_delta_dt(mid,brkpt,no_ele,z_path,t_path,h_path,phi_path,   &
-       &     beta_path,dHdz_path,dh_dt_path,N_lvls,n_sps,        &
-       &     Nlvl,ref_corr,t_z_basis,no_t,t_phi_basis,no_phi_t,           &
-       &     spsfunc_path,in,ip,d_delta_dtnp)
+        Call d_delta_dt(mid,brkpt,no_ele,z_path,t_path,h_path,phi_path, &
+       &     beta_path,dHdz_path,dh_dt_path(:,ip,in),N_lvls,n_sps,Nlvl, &
+       &     ref_corr,t_z_basis,no_t,t_phi_basis,no_phi_t,spsfunc_path, &
+       &     in,ip,d_delta_dtnp)
 !
 ! Now assemble the derivative:
 !
@@ -70,6 +70,9 @@ contains
   End Subroutine TEMPERATURE_DERIV
 end module TEMPERATURE_DERIV_M
 ! $Log$
+! Revision 1.5  2001/03/05 21:37:20  zvi
+! New filter format
+!
 ! Revision 1.1  2000/06/21 21:56:17  zvi
 ! First version D.P.
 !

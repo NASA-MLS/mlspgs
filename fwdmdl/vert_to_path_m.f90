@@ -24,10 +24,9 @@ contains
 
 ! *** NOTE: This routine is using The Equivalent Circle concept
 
-SUBROUTINE vert_to_path(n_lvls,Ng,ngt,gl_count,no_phi_t,no_t,    &
-           htan,z_glgrid,t_glgrid,h_glgrid,dhdz_glgrid,            &
-           dh_dt_glgrid,t_phi_basis,z_path,h_path,t_path,phi_path, &
-           dhdz_path,dhdt_path,brkpt,totnp,Ier)
+SUBROUTINE vert_to_path(n_lvls,Ng,ngt,gl_count,no_phi_t,no_t,htan,     &
+           z_glgrid,t_glgrid,h_glgrid,dhdz_glgrid,t_phi_basis,z_path,  &
+           h_path,t_path,phi_path,dhdz_path,phi_eta,brkpt,totnp,Ier)
 
 !  ===============================================================
 !  Declaration of variables for sub-program: vert_to_path
@@ -39,14 +38,12 @@ Integer(i4), INTENT(IN) :: n_lvls,Ng,gl_count,no_phi_t,no_t,ngt
 
 Integer(i4), INTENT(OUT) :: totnp,brkpt,Ier
 
-Real(r4), INTENT(OUT) :: dhdt_path(:,:,:)
-
 Real(r8), INTENT(OUT) :: h_path(:), z_path(:), t_path(:), phi_path(:), &
-                         dhdz_path(:)
+                         dhdz_path(:), phi_eta(:,:)
 
 Real(r8), INTENT(IN) :: htan, z_glgrid(:)
 Real(r8), INTENT(IN) :: h_glgrid(:,:), t_glgrid(:,:), t_phi_basis(:), &
-                        dhdz_glgrid(:,:), dh_dt_glgrid(:,:,:)
+                        dhdz_glgrid(:,:)
 
 !  ----------------
 !  Local variables:
@@ -54,13 +51,13 @@ Real(r8), INTENT(IN) :: h_glgrid(:,:), t_glgrid(:,:), t_phi_basis(:), &
 
 Integer(i4) :: i, j, k, l, m, n, jp, n_d, npp, ibrk, Ngp1, no_iter
 
-Real(r8) :: h, s, r, dz, rs, phi, rss, sum, dhdz, prev_h
+Real(r8) :: h, s, r, dz, rs, phi, rss, dhdz, prev_h
 
 Integer(i4), ALLOCATABLE, DIMENSION(:) :: cndx
 
-Real(r8), ALLOCATABLE, DIMENSION(:) :: dum_z, dum_h, dum_t, dum_phi
+Real(r8), ALLOCATABLE, DIMENSION(:) :: dum_z, dum_h, dum_phi
 
-Real(r8), ALLOCATABLE, DIMENSION(:,:) :: h_a, phi_eta
+Real(r8), ALLOCATABLE, DIMENSION(:,:) :: h_a
 
 ! Allocate enough space for the various (temporary) arrys we are going
 ! to use...
@@ -68,8 +65,8 @@ Real(r8), ALLOCATABLE, DIMENSION(:,:) :: h_a, phi_eta
   Ier = 0
   Ngp1 = Ng + 1
 
-  DEALLOCATE(cndx, dum_z, dum_h, dum_t, dum_phi, STAT=i)
-  ALLOCATE(cndx(ngt), dum_z(ngt), dum_h(ngt), dum_t(ngt), dum_phi(ngt), &
+  DEALLOCATE(cndx, dum_z, dum_h, dum_phi, STAT=i)
+  ALLOCATE(cndx(ngt), dum_z(ngt), dum_h(ngt), dum_phi(ngt), &
  &         STAT = ier)
   IF(ier /= 0) THEN
     Ier = 1
@@ -77,8 +74,8 @@ Real(r8), ALLOCATABLE, DIMENSION(:,:) :: h_a, phi_eta
     GOTO 99
   endif
 
-  DEALLOCATE(h_a, phi_eta, STAT=i)
-  ALLOCATE(h_a(ngt,no_phi_t), phi_eta(ngt,no_phi_t), STAT = ier)
+  DEALLOCATE(h_a, STAT=i)
+  ALLOCATE(h_a(ngt,no_phi_t),STAT=ier)
   IF(ier /= 0) THEN
     Ier = 1
     Print *,'** Error: ALLOCATION error in VERT_TO_PATH routine ..'
@@ -90,7 +87,6 @@ Real(r8), ALLOCATABLE, DIMENSION(:,:) :: h_a, phi_eta
   cndx = 0
   dum_z = 0.0
   dum_h = 0.0
-  dum_t = 0.0
   dum_phi = 0.0
   DO j = 1, no_phi_t
     h_a(1:ngt,j) = 0.0
@@ -103,9 +99,7 @@ Real(r8), ALLOCATABLE, DIMENSION(:,:) :: h_a, phi_eta
   h_path(1:ngt) = r
   t_path(1:ngt) = r
   phi_path(1:ngt) = dz
-
   dhdz_path(1:ngt) = 0.0
-  dhdt_path(1:ngt,1:no_phi_t,1:no_t) = 0.0
 
 ! Define the various COMMON variables needed for computations:
 
@@ -224,13 +218,9 @@ Real(r8), ALLOCATABLE, DIMENSION(:,:) :: h_a, phi_eta
   n_d = 0
   rss = 0.0D0
   DO i = 1, npp
-    sum = 0.0
     prev_h = dum_h(i)
-    DO m = 1, no_phi_t
-      sum = sum + h_a(i,m) * phi_eta(i,m)
-    END DO
-    dum_h(i) = sum
-    r = ABS(sum - prev_h)
+    dum_h(i) = SUM(h_a(i,:)*phi_eta(i,:))
+    r = ABS(dum_h(i) - prev_h)
     IF(r > 0.01) THEN
       n_d = n_d + 1
       cndx(n_d) = i
@@ -282,12 +272,7 @@ Real(r8), ALLOCATABLE, DIMENSION(:,:) :: h_a, phi_eta
 !  Also, compute the break points for the tangent layer for this tanget height
 
   DO i = 1, npp
-    sum = 0.0_r8
-    DO m = 1, no_phi_t
-      sum = sum + h_a(i,m) * phi_eta(i,m)
-    END DO
-    dum_t(i) = sum
-    t_path(i) = sum
+    t_path(i) = SUM(h_a(i,:)*phi_eta(i,:))
     z_path(i) = dum_z(i)
     h_path(i) = dum_h(i)
     phi_path(i) = dum_phi(i)
@@ -306,33 +291,19 @@ Real(r8), ALLOCATABLE, DIMENSION(:,:) :: h_a, phi_eta
   END DO
 
   DO i = 1, npp
-    sum = 0.0_r8
-    DO m = 1, no_phi_t
-      sum = sum + h_a(i,m) * phi_eta(i,m)
-    END DO
-    dhdz_path(i) = sum
+    dhdz_path(i) = SUM(h_a(i,:)*phi_eta(i,:))
   END DO
 
-! Fourth: compute the path dH_dTlm:
-! Cast the dh_dt_glgrid onto the path (using liner interpolation)
-
-  DO j = 1, no_t
-    DO m = 1, no_phi_t
-      CALL lintrp(z_glgrid, dum_z, dh_dt_glgrid(1:,m,j), dum_h, &
-     &            gl_count, npp)
-      DO i = 1, npp
-        dhdt_path(i,m,j) = dum_h(i) * phi_eta(i,m)
-      END DO
-    END DO
-  END DO
-
- 99 DEALLOCATE(h_a, phi_eta, STAT=i)
-    DEALLOCATE(cndx, dum_z, dum_h, dum_t, dum_phi, STAT=i)
+ 99 DEALLOCATE(h_a, STAT=i)
+    DEALLOCATE(cndx, dum_z, dum_h, dum_phi, STAT=i)
 
   RETURN
 END SUBROUTINE vert_to_path
 end module VERT_TO_PATH_M
 ! $Log$
+! Revision 1.4  2001/03/20 11:03:16  zvi
+! Fixing code for "real" data run, increase dim. etc.
+!
 ! Revision 1.3  2001/03/09 00:40:32  zvi
 ! Correcting an error in HUNT routine
 !

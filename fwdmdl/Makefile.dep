@@ -73,10 +73,11 @@ freq_avg_m.o: freq_avg_m.f90 $(dir1)MLSCommon.o d_cspline_m.o \
 	dsimpson_module.o
 generic_delta_integral_m.o: generic_delta_integral_m.f90 $(dir1)MLSCommon.o \
 	d_get_one_eta_m.o ellipse.o gl6p.o path_entities.o
-geoc_geod_conv_m.o: geoc_geod_conv_m.f90 $(dir1)MLSCommon.o ellipse.o \
-	l2pc_file_parameters.o l2pc_pfa_structures.o strings.o
-get_beta_path_m.o: get_beta_path_m.f90 $(dir1)MLSCommon.o create_beta_m.o \
-	l2pc_pfa_structures.o path_entities.o slabs_sw_m.o
+geoc_geod_conv_m.o: geoc_geod_conv_m.f90 $(dir1)Geometry.o $(dir1)MLSCommon.o \
+	ellipse.o l2pc_file_parameters.o l2pc_pfa_structures.o strings.o
+get_beta_path_m.o: get_beta_path_m.f90 $(dir1)MLSCommon.o $(dir1)dump_0.o \
+	$(dir1)output_m.o create_beta_m.o l2pc_pfa_structures.o \
+	path_entities.o slabs_sw_m.o
 get_chi_angles_m.o: get_chi_angles_m.f90 $(dir1)MLSCommon.o d_lintrp_m.o \
 	get_eta_m.o l2pc_file_parameters.o l2pcdim.o path_entities.o
 get_delta_m.o: get_delta_m.f90 $(dir1)MLSCommon.o generic_delta_integral_m.o \

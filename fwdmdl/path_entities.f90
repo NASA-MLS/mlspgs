@@ -21,6 +21,10 @@ module PATH_ENTITIES_M
    Real(r8), DIMENSION(:), POINTER :: values => NULL()
  end type PATH_VECTOR
 
+ type PATH_VECTOR_2D
+   Real(r8), DIMENSION(:,:), POINTER :: values => NULL()
+ end type PATH_VECTOR_2D
+
  type PATH_DERIVATIVE
    Real(r4), DIMENSION(:,:,:), POINTER :: values => NULL()   ! (Npath,mnp,mxco)
  end type PATH_DERIVATIVE
@@ -40,6 +44,9 @@ module PATH_ENTITIES_M
 
 end module PATH_ENTITIES_M
 ! $Log$
+! Revision 1.3  2001/03/09 23:57:02  vsnyder
+! Declare pointer components to be initially nullified.
+!
 ! Revision 1.2  2001/01/31 01:08:48  zvi
 ! New version of forward model
 !

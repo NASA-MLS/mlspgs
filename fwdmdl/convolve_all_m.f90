@@ -24,14 +24,14 @@ contains
 ! convolution grid to the users specified points. This module uses
 ! cubic spline interpolation to do the job.
 !
-Subroutine convolve_all (ptan,atmospheric,n_sps,temp_der,atmos_der, &
+Subroutine convolve_all (Ptan,atmospheric,n_sps,temp_der,atmos_der, &
            spect_der,tan_press,ptg_angles,tan_temp,dx_dt,d2x_dxdt,band,  &
            center_angle,fft_pts,i_raw, k_temp, k_atmos, k_spect_dw,      &
            k_spect_dn,k_spect_dnu,spect_atmos,no_tan_hts,k_info_count,  &
            i_star_all,k_star_all,k_star_info,no_t,no_phi_t,no_phi_f,     &
            spectroscopic,t_z_basis,XLAMDA,AAAP,D1AAP,D2AAP,IAS,Ier)
 !
-    real(r8), dimension(:), intent(IN) :: ptan
+    real(r8), dimension(:), intent(IN) :: Ptan
     Logical, intent(IN) :: temp_der,atmos_der,spect_der
 !
     integer(i4), intent(IN) :: no_t, n_sps, no_tan_hts, band, &
@@ -68,7 +68,7 @@ Subroutine convolve_all (ptan,atmospheric,n_sps,temp_der,atmos_der, &
 !
     real(r8) :: FFT_PRESS(2**fft_pts)
     real(r8) :: FFT_ANGLES(2**fft_pts), RAD(2**fft_pts)
-    real(r8) :: SC1(Nlvl), TERM(Nlvl), PtP(Nlvl), Q, R
+    real(r8) :: SRad(Nlvl), Term(Nlvl), Q, R
 !
     Character(LEN=01) :: CA
 !
@@ -87,8 +87,7 @@ Subroutine convolve_all (ptan,atmospheric,n_sps,temp_der,atmos_der, &
 !
     kc = 0
     ki = 0
-    j = size(ptan)
-    PtP(1:j) = ptan
+    j = size(Ptan)
 !
 ! Compute the convolution of the mixed radiances
 !
@@ -98,8 +97,8 @@ Subroutine convolve_all (ptan,atmospheric,n_sps,temp_der,atmos_der, &
     if (Ier /= 0) Return
 !
     si = no_tan_hts - j + 1
-    Call Cspline(fft_angles,ptg_angles(si:no_tan_hts),Rad,Sc1,Ntr,j)
-    i_star_all(1:j) = Sc1(1:j)
+    Call Cspline(fft_angles,ptg_angles(si:no_tan_hts),Rad,SRad,Ntr,j)
+    i_star_all(1:j) = SRad(1:j)
 !
 ! Find out if user wants pointing derivatives
 !
@@ -137,10 +136,10 @@ Subroutine convolve_all (ptan,atmospheric,n_sps,temp_der,atmos_der, &
       if (k == Ntr) fft_index(1) = -2
 !
 ! Interpolate the output values and store the radiances derivative
-! with respect to pointing pressures in: term
+! with respect to pointing pressures in: Term
 !
-      j = size(ptan)
-      Call Cspline_der(fft_press,PtP,Rad,Sc1,term,k,j)
+      j = size(Ptan)
+      Call Cspline_der(fft_press,Ptan,Rad,SRad,Term,k,j)
 !
 ! Derivatives wanted,find index location k_star_all and write the derivative
 !
@@ -150,7 +149,7 @@ Subroutine convolve_all (ptan,atmospheric,n_sps,temp_der,atmos_der, &
       k_star_info(kc)%first_dim_index = ki
       k_star_info(kc)%no_phi_basis = mnp
       do nf = 1, mnp
-        k_star_all(ki,1,nf,1:j) = term(1:j)
+        k_star_all(ki,1,nf,1:j) = Term(1:j)
       end do
 !
     endif
@@ -200,8 +199,8 @@ Subroutine convolve_all (ptan,atmospheric,n_sps,temp_der,atmos_der, &
    &           band,fft_pts,XLAMDA,AAAP,D1AAP,D2AAP,IAS,Ier)
           if (Ier /= 0) Return
 !
-          Call Cspline(fft_angles,ptg_angles(si:no_tan_hts),Rad,Sc1,Ntr,j)
-          k_star_all(ki,sv_i,nf,1:j) = Sc1(1:j)
+          Call Cspline(fft_angles,ptg_angles(si:no_tan_hts),Rad,SRad,Ntr,j)
+          k_star_all(ki,sv_i,nf,1:j) = SRad(1:j)
 !
 !  For any index off center Phi, skip the rest of the phi loop ...
 !
@@ -218,14 +217,14 @@ Subroutine convolve_all (ptan,atmospheric,n_sps,temp_der,atmos_der, &
    &           band,fft_pts,XLAMDA,AAAP,D1AAP,D2AAP,IAS,Ier)
           if (Ier /= 0) Return
 !
-          Call Cspline(fft_angles,ptg_angles(si:no_tan_hts),Rad,term,Ntr,j)
+          Call Cspline(fft_angles,ptg_angles(si:no_tan_hts),Rad,Term,Ntr,j)
 !
 ! Transfer dx_dt from convolution grid onto the output grid
 !
-          Call Lintrp(tan_press,PtP,dx_dt(1:,sv_i),Sc1,no_tan_hts,j)
+          Call Lintrp(tan_press,Ptan,dx_dt(1:,sv_i),SRad,no_tan_hts,j)
 !
           do ptg_i = 1, j
-            r = Sc1(ptg_i) * term(ptg_i)
+            r = SRad(ptg_i) * Term(ptg_i)
             q = k_star_all(ki,sv_i,nf,ptg_i)
             k_star_all(ki,sv_i,nf,ptg_i) = q + r
           end do
@@ -243,11 +242,11 @@ Subroutine convolve_all (ptan,atmospheric,n_sps,temp_der,atmos_der, &
    &           band,fft_pts,XLAMDA,AAAP,D1AAP,D2AAP,IAS,Ier)
           if (Ier /= 0) Return
 !
-          Call Cspline(fft_angles,ptg_angles(si:no_tan_hts),Rad,term,Ntr,j)
+          Call Cspline(fft_angles,ptg_angles(si:no_tan_hts),Rad,Term,Ntr,j)
 !
           do ptg_i = 1, j
             q = k_star_all(ki,sv_i,nf,ptg_i)
-            k_star_all(ki,sv_i,nf,ptg_i) = q - term(ptg_i)
+            k_star_all(ki,sv_i,nf,ptg_i) = q - Term(ptg_i)
           end do
 !
         end do
@@ -293,8 +292,8 @@ Subroutine convolve_all (ptan,atmospheric,n_sps,temp_der,atmos_der, &
 !
 ! Interpolate onto the output grid, and store in k_star_all ..
 !
-              Call Lintrp(fft_angles,ptg_angles(si:no_tan_hts),Rad,Sc1,Ntr,j)
-              k_star_all(ki,sv_i,nf,1:j) = Sc1(1:j)
+              Call Lintrp(fft_angles,ptg_angles(si:no_tan_hts),Rad,SRad,Ntr,j)
+              k_star_all(ki,sv_i,nf,1:j) = SRad(1:j)
 !
             end do
 !
@@ -361,8 +360,8 @@ Subroutine convolve_all (ptan,atmospheric,n_sps,temp_der,atmos_der, &
 !
 ! Interpolate onto the output grid, and store in k_star_all ..
 !
-              Call Lintrp(fft_angles,ptg_angles(si:no_tan_hts),Rad,Sc1,Ntr,j)
-              k_star_all(ki,sv_i,nf,1:j) = Sc1(1:j)
+              Call Lintrp(fft_angles,ptg_angles(si:no_tan_hts),Rad,SRad,Ntr,j)
+              k_star_all(ki,sv_i,nf,1:j) = SRad(1:j)
 !
             end do        ! sv_i loop
 !
@@ -384,6 +383,9 @@ Subroutine convolve_all (ptan,atmospheric,n_sps,temp_der,atmos_der, &
 !
 end module CONVOLVE_ALL_M
 ! $Log$
+! Revision 1.6  2001/03/21 01:10:31  livesey
+! Now gets Ptan from vector
+!
 ! Revision 1.5  2001/03/07 23:45:14  zvi
 ! Adding logical flags fro Temp, Atmos & Spect. derivatives
 !
