@@ -39,11 +39,10 @@ contains ! ====     Public Procedures     ==============================
     use Global_Settings, only: Set_Global_Settings
     use GriddedData, only: GriddedData_T, DestroyGriddedDataDatabase, Dump
     use HGrid, only: HGrid_T
-    use Init_Tables_Module, only: L_CHISQCHAN, &
-      & L_CHISQMMAF, L_CHISQMMIF, L_RADIANCE, L_PTAN, &
-      & Z_CHUNKDIVIDE,  Z_CONSTRUCT, Z_FILL, &
-      & Z_GLOBALSETTINGS, Z_JOIN, Z_MERGEGRIDS, Z_MLSSIGNALS, Z_OUTPUT, &
-      & Z_READAPRIORI, Z_RETRIEVE, Z_SPECTROSCOPY
+    use Init_Tables_Module, only: L_CHISQCHAN, L_CHISQMMAF, L_CHISQMMIF, &
+      & Z_CHUNKDIVIDE,  Z_CONSTRUCT, Z_FILL, Z_GLOBALSETTINGS, Z_JOIN, &
+      & Z_MERGEGRIDS, Z_MLSSIGNALS, Z_OUTPUT, Z_READAPRIORI, Z_RETRIEVE, &
+      & Z_SPECTROSCOPY
     use JOIN, only: MLSL2Join
     use L2AUXData, only: DestroyL2AUXDatabase, L2AUXData_T, Dump
     use L2FWMParallel, only: L2FWMSlaveTask, LaunchFWMSlaves
@@ -56,11 +55,10 @@ contains ! ====     Public Procedures     ==============================
     use MergeGridsModule, only: MergeGrids
     use MLSCommon, only: L1BINFO_T, MLSCHUNK_T, TAI93_RANGE_T
     use MLSL2Options, only: GARBAGE_COLLECTION_BY_CHUNK
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MLSSignals_M, only: Bands, DestroyBandDatabase, DestroyModuleDatabase, &
       & DestroyRadiometerDatabase, DestroySignalDatabase, &
       & DestroySpectrometerTypeDatabase, MLSSignals, Modules, Radiometers, &
-      & Signals, SpectrometerTypes, GetSignalIndex
+      & Signals, SpectrometerTypes
     use MLSL2Timings, only: add_to_section_timing, TOTAL_TIMES
     use Open_Init, only: DestroyL1BInfo, OpenAndInitialize
     use OutputAndClose, only: Output_Close
@@ -107,9 +105,7 @@ contains ! ====     Public Procedures     ==============================
     type (Matrix_Database_T), dimension(:), &
       & pointer ::                               Matrices
     type (TAI93_Range_T) ::                      ProcessingRange  ! Data processing range
-    integer ::                                   signal_index
     integer ::                                   SON              ! Son of Root
-    integer ::                                   STATUS ! Flag from HDF5
     real    ::                                   t1, t2
     integer ::                                   totalNGC   ! Total num garbage colls.
     logical ::                                   show_totalNGC = .true.
@@ -374,6 +370,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.97  2002/11/21 18:45:04  livesey
+! Changes to way the destroy stuff is called based on chunks
+!
 ! Revision 2.96  2002/11/21 18:38:34  livesey
 ! Bug fix in canWriteL2PC flag passed to output_close
 !
