@@ -95,7 +95,7 @@ module MLSSignals_M
     !                                   element is true for "real" signals).
 
     integer :: Band                     ! Index in Bands database
-    logical :: Deferred                 ! "Frequencies/widths are deferred"
+    logical :: Deferred = .false.       ! "Frequencies/widths are deferred"
     integer :: Index                    ! Index into master signals database
     integer :: InstrumentModule         ! Index in Modules database
     integer :: Name                     ! Sub_rosa index of declaration's label
@@ -1103,6 +1103,9 @@ oc:   do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.29  2001/04/21 01:06:37  vsnyder
+! Make Signal%Deferred initially false
+!
 ! Revision 2.28  2001/04/21 01:05:26  vsnyder
 ! Deallocate Frequencies and Widths in DestroySignal if it's deferred
 !
