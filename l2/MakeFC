@@ -116,7 +116,8 @@ $(PROG): $(PROG_prereqs)
 	esac 
 
 
-$(libmls_objs)/libmls.a: $(libmls_f90) $(CONFDIR)/$(MLSCFILE)
+$(libmls_objs)/libmls.a: $(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
+   $(libmls_sources)/machines/$(MLSCONFG)/machine.f90
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
 $(libfwdmdl_objs)/libfwdmdl.a: $(libfwdmdl_f90) $(libmls_objs)/libmls.a \
@@ -190,6 +191,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.28  2001/05/17 20:02:59  pwagner
+# Automatically rebuilds lib on change to machine.f90
+#
 # Revision 2.27  2001/05/14 23:58:42  pwagner
 # default .configure name now set by environment
 #
