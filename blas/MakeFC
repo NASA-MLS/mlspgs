@@ -1,0 +1,193 @@
+#	Makefile
+#
+# Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+#
+#special case:
+#the 1st time through, before .configure exists yet,
+#execute $(MLSBIN)/mlsconfigure to create .configure
+
+#This file name is usu. Makefile but may be different;
+#i.e., if you call are building this mls
+#by calling make with a different Makefile name,
+#say: make -f MakeFC
+#then rename the Makefiles in /l2 and /lib also MakeFC
+
+# "$Id$"
+
+MakeFName = MakeFC
+
+# where to store .configure
+CONFDIR=..
+
+# where configure and makemakedep.sh are stored
+MLSBIN=../util
+
+# where the platforms directory is
+PLATFORMS = .
+
+# where sources (but not OBJS) shared with l3, etc. are stored
+srclib=../srclib
+
+# where sources (but not OBJS) shared with l3, etc. are stored
+#blaslib=../blas
+
+# This is the default name of the configure file
+# It may be overridden for multiple platforms, special options, etc.
+ifdef HOSTMLSCFILE
+   MLSCFILE=$(HOSTMLSCFILE)
+else
+   MLSCFILE=.configure
+endif
+
+# This will set our MLS platform, compiler. etc.
+# w/o complaining if it does nor exist yet
+-include $(CONFDIR)/$(MLSCFILE)
+
+# All the implicit pattern-matching involving suffixes
+# will be done in the uniquely-named sub-directories, not here--so
+.SUFFIXES:
+
+# This is in case tar doesn't summon GNU tar, you may still use it via
+# something like
+#    make -f MakeFC tar_sips TAR=/usr/local/gnu/bin/tar
+TAR=tar
+
+SHELL = /bin/sh
+
+#--------------- Target definitions
+#            (code sub-directories of lib)
+# $PROG          -- automatic; built when target is not specified
+# all            -- only libblas.a; same as $PROG
+
+#                           (functional)
+# configure      -- runs mlsconfigure to (re)set compiler, platform, paths
+#                  also (re)creates uniquely-named sub-sub-directories
+#                  with custom Makefiles where *.o, *.mod, etc. built
+# depends        -- runs makemakedep.sh to calculate dependencies
+# mostlyclean    -- deletes uniquely-named sub-sub-directories
+# clean          -- deletes only *.o, *.mod from sub-subs
+# tar            -- creates a directory archive suitable for distribution
+#
+
+#----------------------------------------------------------
+PROG=libblas.a
+#PROG=all
+
+#In case this is called with "make libblas.a"
+libblas.a:
+
+OMIT_SRCS := -d xerbla.f
+
+ifdef BLAS
+   OMIT_SRCS := $(OMIT_SRCS) -d dot_intrinsic.f90 -d sdot.f -d ddot.f
+else
+ifeq ($(LIB_BLAS),f95)
+   OMIT_SRCS := $(OMIT_SRCS) -d dot_external_m.f90 -d sdot.f -d ddot.f
+else
+   OMIT_SRCS := $(OMIT_SRCS) -d dot_external_m.f90 -d dot_intrinsic.f90
+endif
+endif
+
+ifdef LAPACK
+   OMIT_SRCS := $(OMIT_SRCS) -d dgemm_intrinsic.f90 -d sgemm_intrinsic.f90
+endif
+
+#NOCLEANING determines value of RECFG passed to mlsconfigure script
+#RECFG determines whether changing .configure triggers deleting
+#existing sub-directory, and thus recompiling every source file
+#Set NOCLEANING to "yes" if you want to preserve existing compiled objects
+#even when changing .configure file
+ifdef NOCLEANING
+   RECFG = -nd
+endif
+
+#----------------------- Build instructions
+
+$(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG)
+	@case "$(MLSCONFG)" in \
+	"") \
+		echo "Sorry--your configuration is not yet defined" ; \
+		echo "Try make configure_full" ; \
+		exit 2 ; \
+		;; \
+	*) \
+		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) ; \
+		;; \
+	esac 
+
+$(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG)
+	@case "$(MLSCONFG)" in \
+	"") \
+		echo "Sorry--your configuration is not yet defined" ; \
+		echo "Try make configure_full" ; \
+		exit 2 ; \
+		;; \
+	*) \
+		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) ; \
+		;; \
+	esac 
+
+.PHONY: configure depends clean tar tarz targ mostlyclean \
+	all libblas.a ghostbuster
+
+tar:
+
+configure:
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" \
+          $(RECFG)
+
+$(CONFDIR)/$(MLSCFILE):
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" \
+          $(RECFG)
+
+$(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" -nc  \
+          $(RECFG)
+
+depends:
+	$(MLSBIN)/makemakedep.sh $(OMIT_SRCS)
+
+ghostbuster:
+	$(MLSBIN)/ghostbuster.sh -lib $(OMIT_SRCS) \
+      $(PLATFORMS)/$(MLSCONFG) ./ $(srclib)
+
+mostlyclean:
+	@echo "Cleaning directory $(MLSCONFG)" ; \
+	if [ "$(MLSCONFG)" != "" ] ; then  \
+		echo "Deleting $(MLSCONFG) files" ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/* ; \
+	fi ; \
+	if [ -d "$(PLATFORMS)/$(MLSCONFG)" ] ; then  \
+		echo "Deleting $(MLSCONFG) directory" ; \
+		rmdir $(PLATFORMS)/$(MLSCONFG) ; \
+	fi ; \
+	rm -f Make.dep.*
+
+clean:
+	@echo "Cleaning objects from directory $(MLSCONFG)" ; \
+	if [ "$(MLSCONFG)" != "" ] ; then  \
+		echo "Deleting $(MLSCONFG) files" ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/*.[ao] ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/*.mod ; \
+	fi; \
+	rm -f Make.dep.*
+
+tar:
+	rm -f ../lib.tar
+	@echo "tar-ing libblas"; \
+	$(TAR) hcvf ../libblas.tar * --exclude CVS\
+	--exclude Make.dep\* --exclude blas/NAG.\* --exclude blas/LF95.\*
+
+tarz: tar
+	@echo "... then gzipping it"; \
+	cd ..; rm -f libblas.tgz; gzip libblas.tar; mv libblas.tar.gz libblas.tgz
+
+targ:
+	rm -f ../libblas.tgz
+	$(TAR) hcvzf ../libblas.tgz * --exclude \*.o --exclude \*.mod
+
+# $Log$

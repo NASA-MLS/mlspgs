@@ -1,0 +1,105 @@
+# This is the default name of the configure file
+# It may be overridden for multiple platforms, special options, etc.
+ifdef HOSTMLSCFILE
+   MLSCFILE=$(HOSTMLSCFILE)
+else
+   MLSCFILE=.configure
+endif
+
+include ../Makefile.dep
+
+# "$Id$"
+# ========================================================================
+# An automatically constructed Makefile
+# This file was built by mlsconfigure
+# by catenating three files:
+# (1) .configure -- a file of mls settings: compiler, platform, etc.
+# (2) MLSCONFG   -- a file of macros specific for the compiler.platform combo
+#                   e.g., NAG.Sun
+#                   these might be compiler switches, 
+# (3) targets    -- a file of targets with instructions how to build them
+#                    (except for .f90.o rules which are still in MLSCONFG)
+
+# Other files referred to by means of "include" statements:
+#   ../Makefile.dep -- dependencies among the primary Fortran modules
+
+# ========================================================================
+#          The different versions of libblas.a
+all: libblas.a
+#
+#	if BLAS blank, LIB_BLAS != f95   sdot.o ddot.o dot_external_m.o
+#	if BLAS blank, LIB_BLAS = f95        dot_intrinsic.o
+#	if BLAS non-blank                    dot_external_m.o
+
+#--------------------- default name of GNU-compatible c compiler
+CC=cc
+
+CONFDIR=../..
+UTILDIR=../../util
+
+ifdef MLSINSTALLDIR
+   INSTALLDIR:=$(MLSINSTALLDIR)
+else
+ifndef INSTALLDIR
+   INSTALLDIR:=$(CONFDIR)/bin/$(MLSCONFG)
+endif
+endif
+
+# "yes" is safer--
+# in case modules have been deleted or excluded since the last build
+# Nope--will need to think harder about what to do about excluded modules
+delete_lib_first = no
+
+ifdef BLAS
+   blas_message=Building mlslib with external blas support
+   blas_objs := dot_external_m.o
+else
+ifeq ($(LIB_BLAS),f95)
+   blas_message=Building mlslib with blas supplied by f95 intrinsics
+   blas_objs := dot_intrinsic.o
+else
+   blas_message=Building mlslib with internal blas support
+   blas_objs := sdot.o ddot.o  dot_external_m.o
+endif
+endif
+
+ifdef LAPACK
+   lapack_message=Building mlslib with external lapack support
+   lapack_objs := gemm_external_m.o
+else
+   lapack_message=Building mlslib with lapack supplied by f95 intrinsics
+#   lapack_objs := gemm_intrinsic.o
+   lapack_objs := dgemm_intrinsic.o sgemm_intrinsic.o gemm_external_m.o
+endif
+
+libblas.a: ${OBJS} 
+		@echo "$(blas_message)"
+		@echo "$(lapack_message)"
+ifeq ($(delete_lib_first),yes)
+		rm -f $@
+endif
+	ar ru $@ $?
+
+# ========================================================================
+
+clean:
+	rm -f *.o *.mod *.a
+
+tar:
+	rm -f libblas.tgz
+	tar hcvzf libblas.tgz * --exclude \*.o --exclude \*.mod --exclude libblas.a
+
+# ========================================================================
+
+# Custom build commands for some modules
+
+BUGGY := $(shell echo ${FOPTS} | sed 's/-O[0-9]*//')
+
+DUSTY_NO_OPT := $(shell echo ${DUSTY} | sed 's/-O[0-9]*//')
+
+ddot.o:
+	$(FC) -c $(DUSTY_NO_OPT) -O $(INC_PATHS) ../ddot.f $(FAFTER)
+sdot.o:
+	$(FC) -c $(DUSTY_NO_OPT) -O $(INC_PATHS) ../sdot.f $(FAFTER)
+
+# $Log$

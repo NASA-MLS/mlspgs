@@ -1,0 +1,53 @@
+#Makefile.mac -- a file full of macros to be included by a Makefile
+#to compile a Fortran 9x program or library
+
+# "$Id$"
+
+SHELL = /bin/sh
+
+## Path to source files:
+S = ..
+
+# include files %.f9h shared by l2, lib are in $(srclib)
+srclib = ../../srclib
+
+# Set paths for finding source files (different from .o and .mod)
+
+# Set paths for finding source files (different from .o and .mod)
+
+vpath %.o ./
+vpath %.f90 ../
+vpath %.f9h ../ $(srclib)
+vpath %.f ../ $(PGSINC)
+vpath %.c ../
+
+FC = f95
+
+# Currently, unknown if DUSTY needs to be different yet
+DUSTY = $(FOPTS)
+
+# Use the lib directory, too
+libdir = ../../lib/$(MLSCONFG)
+
+# All the paths to supply .mod and INCLUDE files used in compiling %.f90
+# Precede each path by "-I "
+INC_PATHS = $(EXTRA_PATHS) -M$(PGSINC) -M$(srclib) -M$S \
+ -I$(PGSINC) -I$(srclib) -I$S 
+
+# Define some suffix rules
+
+.SUFFIXES:
+.SUFFIXES: .o .dbg.o .f90 .f .c
+.f90.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
+
+.f90.dbg.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o $(FAFTER)
+
+.f.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
+
+.c.o:
+	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
+
+# $Log$
