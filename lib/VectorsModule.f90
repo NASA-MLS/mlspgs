@@ -495,6 +495,10 @@ contains ! =====     Public Procedures     =============================
     integer :: status
 
     ! Executable code
+!   Don't do the following.  The caller puts the actual argument into a database
+!   using a shallow copy.  Destroying it would clobber a database item.
+!   call destroyVectorTemplateInfo ( vectorTemplate ) ! avoid memory leaks
+
     vectorTemplate%name = name
     vectorTemplate%noQuantities = SIZE(selected)
     vectorTemplate%totalInstances = SUM(quantities(selected)%noInstances)
@@ -503,6 +507,11 @@ contains ! =====     Public Procedures     =============================
     
     ! Allocate some arrays
 
+    if ( associated(vectorTemplate%quantities) ) then
+      deallocate ( vectorTemplate%quantities, STAT=status )
+      if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_DeAllocate//"Vector quantities" )
+    end if
     allocate ( vectorTemplate%quantities(vectorTemplate%noQuantities), &
       & STAT=status )
     if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1441,7 +1450,7 @@ contains ! =====     Public Procedures     =============================
     ! Dummy arguments:
     type(Vector_T), intent(inout), target :: X
     type(Vector_T), intent(in) :: Y
-    type(Vector_T), intent(out), optional, target :: Z
+    type(Vector_T), intent(inout), optional, target :: Z
     integer, intent(in), optional :: Quant, Inst  ! If Quant is present,
     !  only that quantity is multiplied.  If furthermore Inst is present,
     !  only that instance is multiplied.  If Inst is present but Quant
@@ -1835,6 +1844,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.83  2002/05/17 17:56:01  livesey
+! More checks in ValidateVectorQuantity
+!
 ! Revision 2.82  2002/05/14 00:28:04  livesey
 ! More informative messages in GetVectorQuantityByType
 !

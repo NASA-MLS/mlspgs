@@ -295,7 +295,7 @@ contains ! =====     Public Procedures     =============================
   ! modifications), or created from scratch.
 
     ! Dummy arguments
-    type (QuantityTemplate_T), intent(out) :: qty ! Result
+    type (QuantityTemplate_T), intent(inout) :: qty ! Result
 
     type (QuantityTemplate_T), optional, intent(in) :: source ! Template
     integer, intent(in), optional :: noInstances
@@ -313,6 +313,8 @@ contains ! =====     Public Procedures     =============================
     integer :: noInstancesToAllocate    ! For allocations
 
     ! Executable code
+
+    call destroyQuantityTemplateContents ( qty ) ! Avoid memory leaks
 
     ! First, if we have a template setup according to that
     if (present(source)) then
@@ -446,6 +448,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.22  2001/10/12 23:09:25  pwagner
+! More debugging statements
+!
 ! Revision 2.21  2001/10/03 17:42:27  pwagner
 ! reset DEEBUG to FALSE
 !
