@@ -240,8 +240,9 @@ BEGIN GlobalSettings
 ;; files
 
     forwardModelGlobal, $
-      pointingGrids='/user1/livesey/mlspgs/l2/full_r2_b234_lsb', $
-      filterShapes='/van1/vsnyder/mlspgs/l2/normalized_filter_banks.dat'
+      antennaPatterns='/user5/vsnyder/mlspgs/l2/aaap.umls', $
+      filterShapes='/user5/vsnyder/mlspgs/l2/normalized_filter_banks.dat', $
+      pointingGrids='/user1/livesey/mlspgs/l2/full_r2_b234_lsb'
 
     testFwm: forwardModel, type=full, signals = [sig_band2], molecules = [h2o], $
        frequency=182610.091 MHz, channels = [1], /do_conv
@@ -433,6 +434,9 @@ END Output
 ; ==========================================================================
 
 ; $Log$
+; Revision 2.11  2001/03/30 02:41:28  vsnyder
+; Add antennaPatterns field to forwardModelGlobal
+;
 ; Revision 2.10  2001/03/29 23:43:53  vsnyder
 ; Add 'filterShapes' field to forwardModelGlobal
 ;
