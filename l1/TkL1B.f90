@@ -1270,11 +1270,14 @@ CONTAINS
     TYPE (LOG_ARR1_PTR_T) :: SpaceView(:), LimbView(:)
 
     CHARACTER (LEN=27) :: asciiUTC
-    INTEGER :: i, returnStatus
+    INTEGER :: i, MIF, returnStatus
+    REAL :: limb_angle, space_angle
     REAL(r8) :: offset (SIZE(TAI))
     REAL(r8) :: sc_frame_vector(3,0:(lenG-1))  ! start at MIF 0
+    REAL(r8) :: sc_unit_vector(3)
 
-    INTEGER, PARAMETER :: BO_defs(3) = (/ PGSd_Sun, PGSd_Moon, PGSd_Venus /)
+    INTEGER, PARAMETER :: BO_defs(2) = (/ PGSd_Moon, PGSd_Venus /)
+    REAL, PARAMETER :: space_tol = 10.0   ! tolerance for space port
 
     ! Functions
 
@@ -1283,13 +1286,24 @@ CONTAINS
     returnStatus = PGS_TD_taiToUTC (TAI(1), asciiUTC)
     offset = TAI - TAI(1)   ! offset (secs) from start TAI
 
-    DO i = 1, 3
+    DO i = 1, 2
        SpaceView(i)%ptr = .FALSE.
        LimbView(i)%ptr = .FALSE.
        returnStatus = PGS_CBP_Sat_CB_Vector (spacecraftId, lenG, asciiUTC, &
             offset(1:lenG), BO_defs(i), sc_frame_vector)
+       IF (returnStatus /= 0) CYCLE
 
-! Will need to add figuring out the angles to the limb scan and space port
+       DO MIF = 0, (lenG - 1)
+          sc_unit_vector = sc_frame_vector(:,MIF) / &
+               SQRT (sc_frame_vector(1,MIF)**2 + & sc_frame_vector(2,MIF)**2 + &
+               sc_frame_vector(3,MIF)**2)
+
+          space_angle = ACOS (sc_unit_vector(2)) * Rad2Deg  ! Y vector
+          SpaceView(i)%ptr(MIF) = (space_angle < space_tol)
+
+! Need to add limb port angle check here
+
+       ENDDO
 
     ENDDO
 
@@ -1298,6 +1312,9 @@ CONTAINS
 END MODULE TkL1B
 
 ! $Log$
+! Revision 2.13  2003/09/15 17:15:54  perun
+! Version 1.3 commit
+!
 ! Revision 2.12  2003/08/15 14:25:04  perun
 ! Version 1.2 commit
 !

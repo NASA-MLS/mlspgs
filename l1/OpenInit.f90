@@ -658,7 +658,7 @@ CONTAINS
 
     ! Initialize IDs
 
-    L1BFileInfo%RADFID = 0
+    L1BFileInfo%RADGID = 0
     L1BFileInfo%RADDID = 0
     L1BFileInfo%RADTID = 0
     L1BFileInfo%OAID = 0
@@ -716,7 +716,7 @@ CONTAINS
 
     ENDIF
 
-    ! Open L1BRADF File
+    ! Open L1BRADG File
 
     version = 1
     returnStatus = PGS_PC_getReference (mlspcf_l1b_radf_start, version, &
@@ -729,14 +729,14 @@ CONTAINS
 
        CALL MLS_openFile (PhysicalFilename, 'create', sd_id, hdfVersion)
        CALL MLSMessage (MLSMSG_Info, &
-            & ModuleName, "Opened L1BRADF file: "//PhysicalFilename)
-       L1BFileInfo%RADFID = sd_id
-       L1BFileInfo%RADFFileName = PhysicalFilename
+            & ModuleName, "Opened L1BRADG file: "//PhysicalFilename)
+       L1BFileInfo%RADGID = sd_id
+       L1BFileInfo%RADGFileName = PhysicalFilename
 
     ELSE
 
        CALL MLSMessage (MLSMSG_Error, ModuleName, &
-            & "Could not find L1BRADF file entry")
+            & "Could not find L1BRADG file entry")
 
     ENDIF
 
@@ -1008,6 +1008,9 @@ END MODULE OpenInit
 !=============================================================================
 
 ! $Log$
+! Revision 2.13  2003/09/15 17:15:53  perun
+! Version 1.3 commit
+!
 ! Revision 2.12  2003/08/15 14:25:04  perun
 ! Version 1.2 commit
 !
