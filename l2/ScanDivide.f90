@@ -13,14 +13,16 @@ module ScanDivide
     P_SCAN_LOWER_LIMIT, P_SCAN_UPPER_LIMIT, PARM_INDICES, &
     PHYQ_INVALID, PHYQ_LENGTH, PHYQ_MAFS, PHYQ_TIME
   use L1BData, only: deallocateL1BDATA, L1BDATA_T, NAME_LEN, READL1BDATA
+  use Lexer_Core, only: Print_Source
   use MLSCommon, only: L1BINFO_T, MLSCHUNK_T, TAI93_Range_T
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error, MLSMSG_Warning
   use MLSNumerics, only: HUNT, R8
   use MLSStrings, only: MLSMSG_L1BRead
+  use Output_M, only: Output
   use SDPToolkit, only: MAX_ORBITS
-  use STRING_TABLE, only: GET_STRING, STRING_LENGTH
-  use TREE, only: DECORATION, NSONS, SUBTREE
+  use STRING_TABLE, only: Display_String
+  use TREE, only: DECORATION, NSONS, Source_Ref, SUBTREE
   implicit none
   private
 
@@ -1230,28 +1232,31 @@ contains ! =====     Public Procedures     =============================
 
 ! Parameters
 
-    character (len=*), parameter :: MLSMSG_CF = &
-                                    ' not specified in the configuration file.'
+    ! For announce_error:
+    integer, parameter :: NotLength = 1
+    integer, parameter :: NotSpecified = notLength + 1
+
 ! Functions
 
 ! Variables
 
+    integer :: Error     ! Error level
     logical :: GOT(first_parm:last_parm) = .false.
     integer :: I         ! Loop inductor
     integer :: KEY       ! A P_... parameter from Init_Tables_Module
-    character (len=480) :: MSR
     integer :: SON       ! A son of the ChunkDivide section node
     integer :: UNITS(2)  ! Units of expression
     double precision :: VALUE(2)   ! Value of expression
 
 ! Initialize variables to 'unfound' values
 
+    error = 0
+    bands = 0               ! String index, = 0 means no decl specified
     modHome = l_ghz
     llb = 999.9
     lub = 999.9
     ulb = -999.9
     uub = -999.9
-    bands = 0               ! String index, = 0 means no decl specified
     maxGap = -1.0
     unitsGap = phyq_invalid
 
@@ -1273,17 +1278,13 @@ contains ! =====     Public Procedures     =============================
       case ( p_home_module )
         modHome = value(1)
       case ( p_scan_lower_limit )
-        if ( units(1) /= phyq_Length) then
-          call MLSMessage( MLSMSG_Error, ModuleName, &
-            &              'ScanLowerLimit not specified as a length.')
-        end if
+        if ( units(1) /= phyq_Length) &
+          & call announce_error ( son, notLength, key )
         llb = value(1)
         lub = value(2)
       case ( p_scan_upper_limit )
-        if ( units(1) /= phyq_Length) then
-          call MLSMessage( MLSMSG_Error, ModuleName, &
-            &              'ScanUpperLimit not specified as a length.')
-        end if
+        if ( units(1) /= phyq_Length) &
+          & call announce_error ( son, notLength, key )
         ulb = value(1)
         uub = value(2)
       case ( p_critical_scanning_modules )
@@ -1303,26 +1304,40 @@ contains ! =====     Public Procedures     =============================
       select case ( i )
       case ( p_ideal_length, p_overlap, p_home_module, &
              p_critical_scanning_modules )
-        if ( .not. got(i) ) then
-          call get_string ( parm_indices(i), msr )
-          msr(string_length(parm_indices(i))+1:) = MLSMSG_CF
-          call MLSMessage(MLSMSG_Error, ModuleName, msr)
-        end if
+        if ( .not. got(i) ) call announce_error ( root, notSpecified, i )
       end select
     end do
 
 ! Check for values that depend on the presence of other quantities
 
-    if ( .not. got(p_scan_lower_limit) .AND. (modCritical /= l_none) ) then
-      msr = 'ScanLowerLimit' // MLSMSG_CF
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    if ( modCritical /= l_none ) then
+      if ( .not. got(p_scan_lower_limit) ) &
+        & call announce_error ( root, notSpecified, p_scan_lower_limit )
+      if ( .not. got(p_scan_upper_limit) ) &
+        & call announce_error ( root, notSpecified, p_scan_upper_limit )
     end if
 
-    if ( .not. got(p_scan_upper_limit) .AND. (modCritical /= l_none) ) then
-      msr = 'ScanUpperLimit' // MLSMSG_CF
-      call MLSMessage(MLSMSG_Error, ModuleName, msr)
-    end if
+    if ( error > 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Errors in specification prevent processing.' )
 
+  contains
+    subroutine Announce_Error ( Where, Code, Param )
+      integer, intent(in) :: Where, Code, Param
+
+      error = max(error,1)
+      call print_source ( source_ref(where) )
+      call output ( ' ScanDivide complained: ' )
+      select case ( code )
+      case ( notLength )
+        call output ( ' The value of ' )
+        call display_string ( parm_indices(param) )
+        call output ( ' does not have units of Length.', advance='yes' )
+      case ( notSpecified )
+        call output ( ' The parameter ' )
+        call display_string ( parm_indices(param) )
+        call output ( ' is required but not specified.', advance='yes' )
+      end select
+    end subroutine Announce_Error
 !--------------------------------
   end subroutine ScanDivide_mlscf
 !--------------------------------
@@ -1332,6 +1347,9 @@ end module ScanDivide
 !====================
 
 !# $Log$
+!# Revision 2.4  2001/02/13 00:09:02  vsnyder
+!# Simplify and improve MLSCF error messages
+!#
 !# Revision 2.3  2001/02/12 20:29:34  livesey
 !# Flagged a possible error region
 !#
