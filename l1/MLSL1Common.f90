@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -45,6 +45,7 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
      INTEGER :: RADDId, RADGId, RADTId  ! Ids for the L1BRAD files
      INTEGER :: EngId           ! The ID (non-HDF) (handle) for the L1BENG file
      INTEGER :: DiagId          ! The HDF ID (handle) for the L1BDIAG file
+     INTEGER :: DiagTId         ! The HDF ID (handle) for the L1BDIAG THz file
      INTEGER :: LogId           ! The ID (non-HDF) (handle) for the L1BLog file
      INTEGER :: EngMAF_unit, SciMAF_unit  ! units for EngMAF & SciMAF files
      INTEGER :: MAF_data_unit   ! unit for Eng/Sci MAF data merged
@@ -52,6 +53,7 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
      CHARACTER (LEN=FileNameLen) :: RADDFileName, RADGFilename, RADTFileName
      CHARACTER (LEN=FileNameLen) :: EngFileName   ! L1BENG file name
      CHARACTER (LEN=FileNameLen) :: DiagFileName  ! L1BDIAG file name
+     CHARACTER (LEN=FileNameLen) :: DiagTFileName ! L1BDIAG THz file name
      CHARACTER (LEN=FileNameLen) :: LogFileName   ! L1BLOG file name
   END TYPE L1BFileInfo_T
   TYPE (L1BFileInfo_T) :: L1BFileInfo
@@ -192,11 +194,11 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
   REAL(r8), PARAMETER :: planck = 6.62606891d-34
   REAL(r8), PARAMETER :: boltz = 1.380658d-23
 
-!! First LO frequency (Hz) for each radiometer (except for R1, which is center
-!!  freq)
+!! First LO frequency (Hz) for each radiometer (except for R1 A/B, which is
+!!  center freq)
 
-  REAL, PARAMETER :: LO1(5) = (/ 118.7530e9, 191.9000e9, 239.6600e9, &
-       642.8700e9, 2.5227816e12 /)
+  REAL, PARAMETER :: LO1(0:5) = (/ 118.7530e9, 118.7530e9, 191.9000e9, &
+       239.6600e9, 642.8700e9, 2.5227816e12 /)
 
 ! HDF version
 
@@ -209,6 +211,9 @@ END MODULE MLSL1Common
 !=============================================================================
 
 ! $Log$
+! Revision 2.9  2004/01/09 17:46:22  perun
+! Version 1.4 commit
+!
 ! Revision 2.8  2003/09/15 17:15:53  perun
 ! Version 1.3 commit
 !
