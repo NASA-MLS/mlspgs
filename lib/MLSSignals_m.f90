@@ -11,7 +11,7 @@ module MLSSignals_M
   use Expr_M, only: Expr
   use Init_MLSSignals_m ! Everything
   use Intrinsic, only: Field_First, Field_indices, &
-    & PHYQ_Dimensionless, PHYQ_Frequency, PHYQ_Indices, S_Time, l_emls
+    & PHYQ_Dimensionless, PHYQ_Frequency, PHYQ_Indices, S_Time, L_A, l_emls
   use Lexer_Core, only: Print_Source
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
@@ -104,6 +104,7 @@ module MLSSignals_M
   type, public :: Radiometer_T
     real(r8) :: LO                      ! Local oscillator in MHz
     integer :: InstrumentModule         ! Index in Modules database
+    integer :: Polarization             ! L_A or L_B, default is L_A
     integer :: Prefix                   ! Sub_rosa index of declaration's label
     integer :: Suffix                   ! Sub_rosa index
     integer :: SingleSideband           ! +/-1 indicates indicates single sideband 0 folded
@@ -290,6 +291,7 @@ contains
 
 
       case ( s_radiometer ) ! .......................  RADIOMETER  .....
+        radiometer%polarization = l_a
         radiometer%prefix = name
         do j = 2, nsons(key)
           son = subtree(j,key)
@@ -299,13 +301,15 @@ contains
           case ( f_lo )
             call expr_check ( gson, units, value, field, phyq_frequency )
             radiometer%lo = value(1)
-          case ( f_suffix )
-            radiometer%suffix = sub_rosa(gson)
           case ( f_module )
             radiometer%instrumentModule = decoration(decoration(gson))
+          case ( f_polarization )
+            radiometer%polarization = decoration(gson)
           case ( f_singlesideband )
             call expr_check ( gson, units, value, field, phyq_dimensionless )
             radiometer%singleSideband = nint ( value(1) )
+          case ( f_suffix )
+            radiometer%suffix = sub_rosa(gson)
           case default
             ! Shouldn't get here if the type checker worked
           end select
@@ -791,6 +795,8 @@ contains
       call display_string (radiometers(i)%prefix)
       call output ( ':' )
       call display_string (radiometers(i)%suffix, advance='yes', strip=.true. )
+      call output ( '   Polarization:' )
+      call display_string (radiometers(i)%polarization)
       call output ( '   Module: ')
       call output ( radiometers(i)%instrumentModule )
       call output ( ' - ' )
@@ -1523,6 +1529,9 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.61  2003/08/16 01:14:03  vsnyder
+! Add optional 'polarization' field to 'radiometer' spec
+!
 ! Revision 2.60  2003/07/23 21:51:36  pwagner
 ! Tried to fix problem with lower case dacs
 !
