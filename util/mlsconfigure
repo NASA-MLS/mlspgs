@@ -7,7 +7,7 @@
 # (1) Query user for: 
 #     (a) compiler and platform; 
 #     (b) SDP, HDF, HDF-EOS paths; 
-#     (c) paths to PVM and FFTW libraries; 
+#     (c) paths to BLAS, PVM and FFTW libraries; 
 #     
 #     ((1)not done if I am called with -nc option)
 #     these get written to .configure
@@ -172,14 +172,14 @@ export compiler
         more << EOF_2
                     *        *        *
 
-To properly link the mls software requires that you set the paths to
-the libraries installed along with the SDP Toolkit. If you don't know these
-locations, you might have to ask the person at your site who installed
-this toolkit. It is possible that during the installation, these paths
-were automatically "hard wired" as environment variables, and if so the
-values shown below will be correct. If they are correct, simply answer
-Y[es] to the next question. Otherwise you will be asked to supply the
-correct paths.
+To properly link the mls software requires that you set the paths to the
+libraries installed along with the SDP Toolkit. If you don't know these
+locations, you might have to ask the person at your site who installed this
+toolkit. It is possible that during the installation, these paths were
+automatically "hard wired" as environment variables, and if so the values shown
+below will be correct. If they are correct, simply answer Y[es] to the next
+question. Otherwise you will be asked to supply the correct paths. Except for
+hdf-eos(5) and hdf(5), all paths must be non-blank.
 
 Note: a path is a length of test that looks something like this:
     /head/Toolkit/lib/linux
@@ -208,7 +208,8 @@ Currently your paths are given by:
 
         "include" files:  $current_PGSINC
         toolkit:          $current_PGSTK
-        hdf-eos:          $current_HDFEOS
+        hdf-eos(1):       $current_HDFEOS
+        hdf-eos(5):       $current_HDFEOS5
         hdf(4):           $current_HDF
         hdf(5):           $current_HDF5
         gctp:             $current_GCTP
@@ -266,20 +267,37 @@ if [ $change_paths = "true" ] ; then
 	PGSTK="/"
    fi
 
-#Change hdfeos path
- UserPrompt "HDFEOS path [$current_HDFEOS]"
+#Change hdfeos(1) path
+ UserPrompt "HDFEOS(1) path [$current_HDFEOS]"
    if [ "$user_response" != "" ] ; then
 	 HDFEOS=$user_response
 	 current_GCTP=$user_response
 	 GCTP=$user_response
    elif [ "$current_HDFEOS" != "" ] ; then
-	echo "hdfeos path is still $current_HDFEOS."
+	echo "hdfeos(1) path is still $current_HDFEOS."
         HDFEOS=$current_HDFEOS
    else
-	echo "Warning: No HDFEOS path selected; none found"
+	echo "Warning: No HDFEOS(1) path selected; none found"
 	echo "mls software may not link properly "
 	echo "unless you reconfigure; enter 'make configure'."
 	HDFEOS="/"
+   fi
+
+#Change hdfeos(5) path
+ UserPrompt "HDFEOS(5) path (enter <b> to force back to blank) [$current_HDFEOS5]"
+   if [ "$user_response" = "<b>" ] ; then
+	 HDFEOS5=""
+	 echo "You will attempt build a mls software version without HDFEOS(5)"
+   elif [ "$user_response" != "" ] ; then
+	 HDFEOS5=$user_response
+   elif [ "$current_HDFEOS5" != "" ] ; then
+	echo "hdfeos(5) path is still $current_HDFEOS5."
+        HDFEOS5=$current_HDFEOS5
+   else
+	echo "Warning: No HDFEOS(5) path selected; none found"
+	echo "mls software may not link properly with newer Toolkit"
+	echo "unless you reconfigure; enter 'make configure'."
+	HDFEOS5="/"
    fi
 
 #Change hdf(4) path
@@ -297,17 +315,20 @@ if [ $change_paths = "true" ] ; then
    fi
 
 #Change hdf(5) path
- UserPrompt "HDF(5) path [$current_HDF5]"
-   if [ "$user_response" != "" ] ; then
+ UserPrompt "HDF(5) path (enter <b> to force back to blank) [$current_HDF5]"
+   if [ "$user_response" = "<b>" ] ; then
+	 HDF5=""
+	 echo "You will attempt build a mls software version without HDF(5)"
+   elif [ "$user_response" != "" ] ; then
 	 HDF5=$user_response
-   elif [ "$current_HDF" != "" ] ; then
+   elif [ "$current_HDF5" != "" ] ; then
 	echo "hdf(5) path is still $current_HDF5."
         HDF5=$current_HDF5
    else
 	echo "Warning: No HDF(5) path selected; none found"
 	echo "mls software may not link properly with newer Toolkit"
 	echo "unless you reconfigure; enter 'make configure'."
-	HDF5="/"
+	HDF5=""
    fi
 
 #Change gctp path
@@ -328,6 +349,7 @@ else
     PGSINC=$current_PGSINC
     PGSTK=$current_PGSTK
     HDFEOS=$current_HDFEOS
+    HDFEOS5=$current_HDFEOS5
     HDF=$current_HDF
     HDF5=$current_HDF5
     GCTP=$current_GCTP
@@ -344,14 +366,16 @@ else
         more << EOF_4
                     *        *        *
 
-The next questions refer to two special libraries: PVM and FFTW. Here too,
-it is possible that during the installation, these paths were automatically
-"hard wired" as environment variables, and if so the values shown below may be
-correct. If they are correct, simply answer Y[es] to the next question.
-Otherwise you will be asked to supply the correct paths.
+The next questions refer to three special libraries: BLAS, PVM and FFTW. Here
+too, it is possible that during the installation, these paths were
+automatically "hard wired" as environment variables, and if so the values shown
+below may be correct. If they are correct, simply answer Y[es] to the next
+question. Otherwise you will be asked to supply the correct paths.
 
 Currently these paths are given by:
 
+        BLAS root      :  $current_BLAS
+        BLAS lib name  :  $current_LIB_BLAS
         PVM root       :  $current_PVM_ROOT
         FFTW path      :  $current_FFTW_ROOT
 
@@ -383,6 +407,37 @@ EOF_4
 fi
 
 if [ $change_paths = "true" ] ; then
+#Change BLAS root path
+ UserPrompt "BLAS root (enter <b> to force back to blank) [$current_BLAS]"
+   if [ "$user_response" = "<b>" ] ; then
+	 BLAS=""
+	 echo "You will build a mls software version with internally-supplied BLAS"
+   elif [ "$user_response" != "" ] ; then
+	 BLAS=$user_response
+   elif [ "$current_BLAS" != "" ] ; then
+	echo "BLAS root path is still $current_BLAS."
+        BLAS=$current_BLAS
+   else
+	echo "You will build a mls software version with internally-supplied BLAS"
+	echo "unless you reconfigure; enter 'make configure_pvm'."
+	BLAS=""
+   fi
+
+#Change BLAS library name
+ UserPrompt "BLAS library name (if x, then libx.a) [$current_LIB_BLAS]"
+   if [ "$user_response" = "<b>" ] ; then
+	 LIB_BLAS=""
+	 echo "BLAS library name is blas (default)"
+   elif [ "$user_response" != "" ] ; then
+	 LIB_BLAS=$user_response
+   elif [ "$current_LIB_BLAS" != "" ] ; then
+	echo "BLAS lib name is still $current_LIB_BLAS."
+        LIB_BLAS=$current_LIB_BLAS
+   else
+	echo "BLAS library name is blas (default)"
+	LIB_BLAS=""
+   fi
+
 #Change PVM root path
  UserPrompt "PVM root (enter <b> to force back to blank) [$current_PVM_ROOT]"
    if [ "$user_response" = "<b>" ] ; then
@@ -418,6 +473,8 @@ if [ $change_paths = "true" ] ; then
    fi
 
 else
+    BLAS=$current_BLAS
+    LIB_BLAS=$current_LIB_BLAS
     PVM_ROOT=$current_PVM_ROOT
 #    PVM_ARCH=$current_PVM_ARCH
     FFTW_ROOT=$current_FFTW_ROOT
@@ -496,10 +553,10 @@ basic and an absolute prerequisite; the other two are optional
        of HDF, HDFEOS, and Toolkits. This is the most basic info and you will
        automatically be prompted for it. To change these settings later,
        enter "make configure"
-(ii)   Decide if you want to build the software with support for PVM and FFTW.
-       The first may improve performance,  while the second is needed to build
-       level 3. These require setting paths to installed libraries of PVM and
-       FFTW software. To learn where to obtain them, enter "BEFORE.mls". To 
+(ii)   Decide if you want to build the software with support for external BLAS,
+       PVM and FFTW. The first two may improve performance, while the third
+       is needed to build level 3. These require setting paths to installed
+       libraries. To learn where to obtain them, enter "BEFORE.mls". To 
        change these settings later, enter "make configure_pvm"
 (iii)  Choose compiler and linker options. Although these are automatically
        set to default values that work well, you may have a reason to prefer
@@ -551,13 +608,19 @@ MLS_default_LDOPTS=
 #MLSCONFG   MLSF95.MLSPLAT
 #PGSINC     path to the toolbox include files
 #PGSTK      path to the toolbox library libPGSTK.a
-#HDFEOS     path to the hdfeos library libhdfeos.a
+#           if blank, then build w/o toolkit
+#HDFEOS     path to the hdfeos(1) library libhdfeos.a
+#HDFEOS5    path to the hdfeos(5) library libhe5_hdfeos.a
 #HDF        path to the hdf(4) library libmfhdf.a, etc.
 #HDF5       path to the hdf(5) library libhdf5_fortran.a, etc.
-#GCTP       path to the hdfeos library libGctp.a
+#GCTP       path to the gctp library libGctp.a
 #PGSLIB     PGSTK
 #HDFEOS_LIB HDFEOS
 #HDFLIB     HDF
+#BLAS       root of path to the blas library BLAS/libblas.a,
+#           if blank, then use internally supplied library
+#LIB_BLAS   name x of the blas library BLAS/libx.a,
+#           if blank, then libblas.a
 #PVM_ROOT   root of path to the pvm library lib/PVM_ARCH/libpvm3.a, etc.
 #PVM_ARCH   OS & platform type: LINUX, SGI6, SGI64, SUN4SOL2
 #FFTW_ROOT  path to the fftw library libfftw.a, etc.
@@ -587,9 +650,12 @@ current_HDFEOS=$HDFEOS_LIB
 current_HDF=$HDFLIB
 current_GCTP=$HDFEOS_LIB
 current_HDF5=$HDF5
+current_HDFEOS5=$HDFEOS5
 
 # Whether to include PVM & FFTW paths in .configure
 add_PVM_PATH="false"
+current_BLAS=$BLAS
+current_LIB_BLAS=$LIB_BLAS
 current_PVM_ROOT=$PVM_ROOT
 current_PVM_ARCH=$PVM_ARCH
 current_FFTW_ROOT=$FFTW_ROOT
@@ -606,9 +672,12 @@ if [ "$debugging" = "on" ] ; then
 	echo "PGSINC=$PGSINC"
 	echo "PGSLIB=$PGSLIB"
 	echo "HDFEOS_LIB=$HDFEOS_LIB"
+	echo "HDFEOS5=$HDFEOS5"
 	echo "HDFLIB=$HDFLIB"
 	echo "HDF5=$HDF5"
 	echo "add_PVM_PATH=$add_PVM_PATH"
+	echo "BLAS=$BLAS"
+	echo "LIB_BLAS=$LIB_BLAS"
 	echo "PVM_ROOT=$PVM_ROOT"
 	echo "PVM_ARCH=$PVM_ARCH"
 	echo "FFTW_ROOT=$FFTW_ROOT"
@@ -746,8 +815,7 @@ if [ $write_confg = "true" ] ; then
 		PGSTK=$PGSLIB
 	fi
 	if [ "$PGSTK" = "" ] ; then
-		echo " Sorry--the toolkit path must not be blank"
-		exit
+		echo " Warning--the toolkit path is blank--only level 2 may be built"
 	fi
 	
 	if [ "$HDF" = "" ] ; then
@@ -793,12 +861,15 @@ if [ $write_confg = "true" ] ; then
 	echo "PGSINC=$PGSINC" >> $conf_dir/$MLSCFILE
 	echo "PGSTK=$PGSTK" >> $conf_dir/$MLSCFILE
 	echo "HDFEOS=$HDFEOS" >> $conf_dir/$MLSCFILE
+	echo "HDFEOS5=$HDFEOS5" >> $conf_dir/$MLSCFILE
 	echo "HDF=$HDF" >> $conf_dir/$MLSCFILE
 	echo "HDF5=$HDF5" >> $conf_dir/$MLSCFILE
 	echo "GCTP=$GCTP" >> $conf_dir/$MLSCFILE
 	echo "PGSLIB=$PGSTK" >> $conf_dir/$MLSCFILE
 	echo "HDFEOS_LIB=$HDFEOS" >> $conf_dir/$MLSCFILE
 	echo "HDFLIB=$HDF" >> $conf_dir/$MLSCFILE
+	echo "BLAS=$BLAS" >> $conf_dir/$MLSCFILE
+	echo "LIB_BLAS=$LIB_BLAS" >> $conf_dir/$MLSCFILE
 	echo "PVM_ROOT=$PVM_ROOT" >> $conf_dir/$MLSCFILE
 	echo "PVM_ARCH=$PVM_ARCH" >> $conf_dir/$MLSCFILE
 	echo "FFTW_ROOT=$FFTW_ROOT" >> $conf_dir/$MLSCFILE
@@ -827,6 +898,8 @@ else
 	platform=$current_platform
 fi
 
+all_my_paths="PGSINC PGSTK HDFEOS HDFEOS5 HDF HDF5 GCTP"
+
 MLSF95=$compiler
 MLSPLAT=$platform
 MLSCONFG=$compiler.$platform
@@ -838,9 +911,19 @@ if [ $get_confg = "true" ] ; then
 	echo "MLSF95 is now $MLSF95"
 	echo "MLSPLAT is now $MLSPLAT"
 	echo "MLSCONFG is now $MLSCONFG"
+#   for path in $all_my_paths
+#   do
+#	echo "$path is now ${$path}"
+#   done
 fi
 
 if [ $add_PVM_PATH = "true" ] ; then
+	echo "BLAS root is now $BLAS"
+	if [ "$LIB_BLAS" = "" ] ; then
+		echo "BLAS library name is libx.a where x is blas"
+   else
+		echo "BLAS library name is libx.a where x is $LIB_BLAS"
+	fi
 	echo "PVM_ROOT is now $PVM_ROOT"
 	echo "PVM_ARCH is now $PVM_ARCH"
 	echo "FFTW_ROOT is now $FFTW_ROOT"
@@ -905,6 +988,9 @@ fi
 
 exit
 # $Log$
+# Revision 1.16  2001/06/11 20:52:41  pwagner
+# Fixed tiny error in blank assignment of HDF5
+#
 # Revision 1.15  2001/06/01 20:30:07  pwagner
 # New print statements if debugging on
 #
