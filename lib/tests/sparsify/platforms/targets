@@ -1,0 +1,27 @@
+include ../Makefile.dep
+
+# "$Id$"
+
+# ========================================================================
+PROG=test_sparsify
+$(PROG): $(OBJS) $(libdir)/libmls.a
+	$(FC) -o $(PROG) $(OBJS) \
+                      -L$(libdir) -lmls \
+	-L$(PGSTK) -lPGSTK  \
+# ========================================================================
+
+clean:
+	rm -f *.o *.mod $(PROG) out.test
+
+tar:
+	rm -f $(PROG).tgz
+	tar hcvzf $(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude $(PROG)
+
+# ========================================================================
+# $Log$
+# Revision 1.1  2000/10/20 23:38:54  pwagner
+# first commit
+#
+# Revision 1.1  2000/10/18 22:07:30  pwagner
+# First commit
+#

@@ -1,0 +1,9 @@
+#Makefile.dep -- a file to be included by a Makefile
+#to compile a Fortran 9x program or library
+OBJS = \
+test_multiply.o  \
+ 
+test_multiply.o : test_multiply.f90 
+ 
+#End of Makefile.dep
+ 
