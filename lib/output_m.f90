@@ -154,7 +154,7 @@ contains
     end if
   end subroutine OUTPUT_DOUBLE
 
-  subroutine OUTPUT_INTEGER ( INT, PLACES, ADVANCE, FILL )
+  subroutine OUTPUT_INTEGER ( INT, PLACES, ADVANCE, FILL, FORMAT )
   ! Output INT to PRUNIT using at most PLACES (default zero) places
   ! If 'fill' is present and true, fill leading blanks with zeroes (only
   ! makes sense if 'places' is specified).
@@ -162,6 +162,7 @@ contains
     integer, intent(in), optional :: PLACES
     character(len=*), intent(in), optional :: ADVANCE
     logical, intent(in), optional :: FILL
+    character(len=*), intent(in), optional :: FORMAT
     logical :: My_Fill
     integer :: I
     character(len=6) :: LINE
@@ -173,7 +174,11 @@ contains
     if ( present(advance) ) then; my_adv = advance; end if
     my_fill = .false.
     if ( present(places) .and. present(fill) ) my_fill = fill
-    write ( line, '(i6)' ) int
+    if ( present(format) ) then
+      write ( line, format ) int
+    else
+      write ( line, '(i6)' ) int
+    end if
     i = max( 1, min(len(line)+1-my_places, index(line,' ',back=.true.)+1) )
     if ( my_fill ) write ( line, '(i6.6)' ) int
     if ( prunit == -1 .or. prunit < -2 ) &
@@ -186,14 +191,15 @@ contains
     return
   end subroutine OUTPUT_INTEGER
 
-  subroutine OUTPUT_INTEGER_ARRAY ( INTEGERS, ADVANCE )
+  subroutine OUTPUT_INTEGER_ARRAY ( INTEGERS, ADVANCE, FORMAT )
   ! Output INTEGERS to PRUNIT.
     integer, intent(in) :: INTEGERS(:)
     character(len=*), intent(in), optional :: ADVANCE
+    character(len=*), intent(in), optional :: FORMAT
     integer :: I ! loop inductor
     do i = 1, size(integers)
-      call output_integer(integers(i), advance='no')
-      call blanks(3, advance='no')
+      call output ( integers(i), advance='no', format=format )
+      call blanks ( 3, advance='no' )
     end do
     if ( present(advance) ) then
       if ( prunit == -1 .or. prunit < -2 ) &
@@ -281,6 +287,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.9  2001/05/08 20:27:24  vsnyder
+! Added an optional 'format' argument in a few more places
+!
 ! Revision 2.8  2001/04/25 00:08:01  vsnyder
 ! Add 'fill' argument to 'output_integer'
 !
