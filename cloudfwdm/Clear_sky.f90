@@ -59,13 +59,13 @@
 
 !         DQ=(XQ(I+1)+XQ(I))*0.5
 
-         DQ=(LOG10( max(1.e-19_r8, XQ(I+1)) )+ &
-         &         LOG10( max(1.e-19_r8, XQ(I)) ) )*0.5
+         DQ=(LOG10( max(1.e-39_r8, XQ(I+1)) )+ &
+         &         LOG10( max(1.e-39_r8, XQ(I)) ) )*0.5
          DQ= 10**DQ
 
          DO J=1,NS
-            VMR1(J)=(LOG10( max(1.e-19_r8, VMR(J,I+1)) )+ &
-                   & LOG10( max(1.e-19_r8, VMR(J,I))  )  )*0.5   !vmr cannot be zero
+            VMR1(J)=(LOG10( max(1.e-29_r8, VMR(J,I+1)) )+ &
+                   & LOG10( max(1.e-29_r8, VMR(J,I))  )  )*0.5   !vmr cannot be zero
             VMR1(J)=10**VMR1(J)
          ENDDO
 

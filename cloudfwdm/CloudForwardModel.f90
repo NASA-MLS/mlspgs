@@ -1,5 +1,5 @@
       SUBROUTINE CloudForwardModel (doChannel, NF, NZ, NT, NS, N, &
-             &   NZmodel,   &
+             &   NZmodel,                                         &
              &   FREQUENCY, PRESSURE, HEIGHT, TEMPERATURE, VMRin, &
              &   WCin, IPSDin,                                    &
              &   ZT, RE, ISURF, ISWI, ICON,                       &
@@ -303,7 +303,7 @@
 
 !---------------<<<<<<<<<<<<< START EXCUTION >>>>>>>>>>>>-------------------C
 
-!      CALL HEADER(1)
+      CALL HEADER(1)
 
 !=========================================================================
 !                    >>>>>> CHECK MODEL-INPUT <<<<<<< 
@@ -380,16 +380,28 @@
               &         YZ,YP,YT,YQ,VMR,NS,                     &
               &         FREQUENCY(IFR),RS,U,TEMP,TAU0,Z,TAU100) 
 
-!         CALL HEADER(3)
+         CALL HEADER(3)
 
+!         print*, tau0
+!         stop
 !-----------------------------------------------------
 !        ASSUME 100% SATURATION IN CLOUD LAYER
 !-----------------------------------------------------
+!         print*, chk_cld
+!         stop
+
+! =========================================================================
+! my original intention is that ICON=0 is Clear-Sky only
+!                               ICON=1 is Clear-Sky but 100RH below 100mb
+!                               ICON=2 is default cloudy and clear-sky
+!                                      calculations
+! =========================================================================
 
          ICLD_TOP = 0
          DO IL=1, NZmodel-1 
             IF(CHK_CLD(IL) .NE. 0._r8) ICLD_TOP=IL
-            IF(YP(IL) .LE. 100._r8) I100_TOP=IL
+!            IF(YP(IL) .LE. 100._r8) I100_TOP=IL  !this is wrong
+            IF(YP(IL) .GE. 100._r8) I100_TOP=IL   !this is right
          ENDDO
 
          IF (ICON .GE. 1) THEN
@@ -401,6 +413,10 @@
          DO IL=1,MAX(ICLD_TOP,I100_TOP)             ! 100% SATURATION BELOW CLOUD 
             delTAU100(IL)=TAU100(IL)      
          ENDDO
+
+!         print*, tau0
+!         stop
+
 !--------------------------------------------------------
 
          DO 1000 ILYR=1, NZmodel-1        ! START OF MODEL LAYER LOOP:   
@@ -493,7 +509,10 @@
               &     FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
               &     UI,UA,TT0,0,RE)                          !CLEAR-SKY
 
-         IF(ICON .GT. 1) THEN                               
+!         print*, tt0
+!         stop
+
+        IF(ICON .GT. 1) THEN                               
 
            CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PHH,MULTI,ZZT1,W0,TAU,RS,TS,&
                 &  FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,         &
