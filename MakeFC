@@ -94,7 +94,7 @@ LEVELS = l1 l2 l3
 
 # OTHER_SUBDIRS are *not* built automatically:
 # you must either name them individually, or use the "all" target
-OTHER_SUBDIRS = l2pc fwdmdl
+OTHER_SUBDIRS = fwdmdl
 #         All the subdirectories
 
 #You may build all the subdirectories via the "all" target; i.e.,
@@ -243,6 +243,9 @@ tar_subs:
 	tar -cvf mlspgs_subs.tar *.tgz
 
 # $Log$
+# Revision 1.13  2001/01/23 19:16:26  pwagner
+# #-ed out loop over subdirs when configuring
+#
 # Revision 1.12  2001/01/16 21:31:18  pwagner
 # clean_all option added
 #
