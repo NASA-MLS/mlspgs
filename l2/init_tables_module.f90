@@ -758,7 +758,6 @@ contains ! =====     Public procedures     =============================
              begin, f+f_atmos_der, t+t_boolean, n+n_field_type, &
              begin, f+f_do_conv, t+t_boolean, n+n_field_type, &
              begin, f+f_do_freq_avg, t+t_boolean, n+n_field_type, &
-             begin, f+f_frequency, t+t_numeric, n+n_field_type, &
              begin, f+f_integrationGrid, s+s_vGrid, n+n_field_spec, &
              begin, f+f_moleculeDerivatives, t+t_molecule, n+n_field_type, &
              begin, f+f_molecules, t+t_molecule, n+n_field_type, &
@@ -882,6 +881,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.91  2001/05/02 20:29:14  livesey
+! Removed f_frequency from forwardModel
+!
 ! Revision 2.90  2001/05/02 03:13:36  livesey
 ! Changed dumpBlock to dumpBlocks, added instances arguments.
 !
