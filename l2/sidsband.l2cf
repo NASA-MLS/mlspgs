@@ -31,7 +31,7 @@ include(m4defs.l2cf)
 ; -------------------------------------------- Global settings ----
 BEGIN GlobalSettings
 
-    l1Boa, file='/data/emls/l1boa/truth/{}!year{}/MLS-Aura_L1BOA_Full_s4-t_{}!day{}.dat'
+    l1Boa, file='/data/emls/l1boa/truth/!year(!day)/MLS-Aura_L1BOA_Full_s4-t_!day.dat'
     startTime = "00:00:00"
     endTime = "23:59:59"
 
@@ -102,21 +102,7 @@ BEGIN Fill
     ;; Define the matrix
     K: Matrix, rows=y, columns=x
 
-    ;; Now fill the main state quantities from the l2gp data
-    Fill, quantity=x.temp,   method=l2gp, sourceL2GP=l2gpTempInput
-    Fill, quantity=x.refgph, method=l2gp, sourceL2GP=l2gpGphInput,/interpolate
-    Fill, quantity=x.BrO,    method=l2gp, sourceL2GP=l2gpBroInput
-    Fill, quantity=x.CO,     method=l2gp, sourceL2GP=l2gpCOInput
-    Fill, quantity=x.ClO,    method=l2gp, sourceL2GP=l2gpClOInput
-    Fill, quantity=x.H2O,    method=l2gp, sourceL2GP=l2gpH2OInput
-    Fill, quantity=x.HCN,    method=l2gp, sourceL2GP=l2gpHCNInput
-    Fill, quantity=x.HCl,    method=l2gp, sourceL2GP=l2gpHClInput
-    Fill, quantity=x.HNO3,   method=l2gp, sourceL2GP=l2gpHNO3Input
-    Fill, quantity=x.HO2,    method=l2gp, sourceL2GP=l2gpHO2Input
-    Fill, quantity=x.HOCl,   method=l2gp, sourceL2GP=l2gpHOClInput
-    Fill, quantity=x.N2O,    method=l2gp, sourceL2GP=l2gpN2OInput
-    Fill, quantity=x.O3,     method=l2gp, sourceL2GP=l2gpO3Input
-    Fill, quantity=x.OH,     method=l2gp, sourceL2GP=l2gpOHInput
+    
 
 END Fill
 
@@ -124,6 +110,7 @@ END Fill
 
 !define(x,x)
 !define(b,b)
+!include(fillfroml2gp.l2cf)
 !include(filllesserstate.l2cf)
 !include(fillisotopes.l2cf)
 
