@@ -7,9 +7,10 @@ MODULE HGrid                    ! Horizontal grid information
 
   USE MLSCommon
   USE Temporary_Types
-  USE MLSMessage
+  USE MLSMessageModule
   USE MLSStrings
   USE L1BData
+  USE MLSNumerics
 
   IMPLICIT NONE
 
@@ -29,6 +30,8 @@ MODULE HGrid                    ! Horizontal grid information
   TYPE HGrid_T
      CHARACTER (LEN=NameLen) :: name ! Name for HGrid
      INTEGER :: noProfs         ! Number of profiles in this grid
+     INTEGER :: noProfsLowerOverlap ! Number of profiles in the lower overlap
+     INTEGER :: noProfsUpperOverlap ! Number of profiles in the upper overlap
 
      ! Now the various coordinates in the HGrid, all dimensioned (noProfs)
      REAL(r8), DIMENSION(:), POINTER :: phi, geodLat, lon, time, &
@@ -61,6 +64,9 @@ MODULE HGrid                    ! Horizontal grid information
          & hGrid%solarZenith(noProfs), hGrid%losAngle(noProfs), &
          & hGrid%profileIndices(noProfs),STAT=status)
     IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,"hGrid information")
+
+    hGrid%noProfsLowerOverlap=0
+    hGrid%noProfsUpperOverlap=0
   END SUBROUTINE SetupEmptyHGrid
 
 
@@ -74,44 +80,51 @@ MODULE HGrid                    ! Horizontal grid information
     TYPE (hGrid_T), INTENT(OUT) :: hGrid ! HGrid to create
     TYPE (L2CFEntry), INTENT(IN) :: cfInfo ! Instructions for its creation
     TYPE (L1BInfo_T), INTENT(IN) :: l1bInfo ! File handles for l1b data
-    TYPE (Chunk_T), INTENT(IN) :: chunk ! This chunk
+    TYPE (MLSChunk_T), INTENT(IN) :: chunk ! This chunk
 
     ! Local parameters
     INTEGER, PARAMETER :: HG_Invalid=0
     INTEGER, PARAMETER :: HG_Height=1
     INTEGER, PARAMETER :: HG_Fractional=2
 
-    INTEGER, PARAMETER :: NoL1BItemsToRead=8
+    ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    ! IF MODIFYING THIS SECTION PLEASE TAKE CARE, SEE BELOW!
+    INTEGER, PARAMETER :: NoL1BItemsToRead=7
     CHARACTER (LEN=15), DIMENSION(NoL1BItemsToRead), &
          &   PARAMETER :: L1bItemsToRead=&
          & (/"time           ","tpGeodLat      ","tpLon          ",&
          &   "tpGeodAngle    ","tpSolarZenith  ","tpSolarTime    ",&
-         &   "tpSolarTime    ","tpLosAngle     "/)
+         &   "tpLosAngle     "/)
     INTEGER, PARAMETER :: TransitionToModularItems=2
     ! Entries in the above array below TransitionToModularItems are prefixed
-    ! with either GHz or THz
-
+    ! with either GHz or THz.  The layout of the above array is critically
+    ! bound to the SELECT CASE(l1bItem) code below.  So TAKE CARE! when
+    ! modifing it.
+    ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     ! Local variables
     INTEGER :: hGridType=HG_Invalid
-    INTEGER :: sampled=1.0
+    REAL(r8) :: interpolationFactor=1.0
     INTEGER :: instrumentModule=MLSInstrumentModule_Invalid
     REAL(r8) :: fraction= -1e10, height= -1e10
 
     INTEGER :: keyNo            ! Entry in the l2cf line
     TYPE (L2CFCell) :: cell     ! Part of the l2cf information
 
-    TYPE (L1BData_T) :: l1bItem ! L1B data
+    TYPE (L1BData_T) :: l1bField ! L1B data
     REAL(r8), DIMENSION(:,:,:), POINTER :: tpGeodAngle,tpGeodAlt
 
     REAL(r8) :: minAngle,maxAngle,desiredAngle
 
     INTEGER :: noMAFs           ! Number of MAFs of L1B data read
-    INTEGER :: maf,l1bItem      ! Loop counters
+    INTEGER :: noProfs          ! Number of profiles in output hGrid
+    INTEGER :: profileOffset    ! Number of first profile in this chunk
+    INTEGER :: maf,l1bItem,prof ! Loop counters
     INTEGER, DIMENSION(:), ALLOCATABLE :: defaultMIFs
+    REAL(r8), DIMENSION(:), ALLOCATABLE :: defaultField,interpolatedField
     ! MIFs it would choose in the non over/undersampled case
 
-    INTEGER :: status
+    INTEGER :: status,l1bFlag   ! Flags
 
     CHARACTER (LEN=NameLen) :: l1bItemName
 
@@ -146,7 +159,7 @@ MODULE HGrid                    ! Horizontal grid information
           ! Code needed here when l2cf finalized ***
        CASE("FRACTION")
           ! Code needed here when l2cf finalized ***
-       CASE("SAMPLED")
+       CASE("INTERPOLATIONFACTOR")
           ! Code needed here when l2cf finalized ***
        CASE DEFAULT
           CALL MLSMessage(MLSMSG_Error,ModuleName,&
@@ -166,7 +179,7 @@ MODULE HGrid                    ! Horizontal grid information
     IF ((hGridType==HG_Fractional).AND.(fraction<-1e9)) CALL MLSMessage(&
          & MLSMSG_Error,ModuleName,"No fraction specified for hGrid "//&
          & TRIM(hGrid%name))
-    IF (instrumentModule==MLSModule_Invalid) CALL MLSMessage(&
+    IF (instrumentModule==MLSInstrumentModule_Invalid) CALL MLSMessage(&
          & MLSMSG_Error,ModuleName,"Must specifiy module=GHz/THz")
 
     ! This is where we will start reading the l1bdata get the name to read
@@ -181,18 +194,22 @@ MODULE HGrid                    ! Horizontal grid information
 
     ! Read the data
 
-    CALL ReadL1BData(l1bInfo%l1boaid,l1bItemName,noMAFs,l1bFlag,l1bField, &
-         &firstMAF=chunk%firstMafIndex, lastMAF=chunk%lastMafIndex)
+    CALL ReadL1BData(l1bInfo%l1boaid,l1bItemName,l1bField,noMAFs,l1bFlag, &
+         & firstMAF=chunk%firstMafIndex, lastMAF=chunk%lastMafIndex)
     IF (l1bFlag==-1) CALL MLSMessage(MLSMSG_Error,ModuleName,&
          & MLSMSG_L1BRead//l1bItemName)
- 
+
+    ! Allocate default MIFs
+
+    ALLOCATE(defaultMIFs(noMAFs),STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,&
+         & MLSMSG_Allocate//"defaultMIFs")
+   
+    ! Work out which MIF should have the profile for each MAF.
+
     IF (hGridType==HG_Fractional) THEN
        ! A fractional hGrid, we need to read the tangent point phi
        tpGeodAngle=>l1bField%dpField
-
-       ALLOCATE(defaultMIFs(noMAFs),STAT=status)
-       IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,&
-            & MLSMSG_Allocate//"defaultMIFs")
 
        ! Loop over the MAFs
        DO maf=1,noMAFs
@@ -203,15 +220,11 @@ MODULE HGrid                    ! Horizontal grid information
           minAngle=MINVAL(tpGeodAngle(1,:,maf))
           maxAngle=MAXVAL(tpGeodAngle(1,:,maf))
 
-          defaultMIFs(maf)=Hunt(tpGeodAngle(1,:,maf),minAngle+&
-               & fraction*(maxAngle-minAngle))
+          CALL Hunt(tpGeodAngle(1,:,maf),minAngle+&
+               & fraction*(maxAngle-minAngle),defaultMIFs(maf))
        END DO
     ELSE
        tpGeodAlt=>l1bField%dpField
-
-       ALLOCATE(defaultMIFs(noMAFs),STAT=status)
-       IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,&
-            & MLSMSG_Allocate//"defaultMIFs")
 
        ! Loop over the MAFs
        DO maf=1,noMAFs
@@ -219,19 +232,24 @@ MODULE HGrid                    ! Horizontal grid information
           ! Probably need to do a pack on tpGeodAngle and then unpack on
           ! defaultMIFs
 
-          defaultMIFs(maf)=Hunt(tpGeodAlt(1,:,maf),height)
+          CALL Hunt(tpGeodAlt(1,:,maf),height,defaultMIFs(maf))
        END DO
     ENDIF
 
     ! Done with this piece of l1b data for the moment
-    CALL DeallocateL1BData(tpGeodAltData,flag)
+    CALL DeallocateL1BData(l1bField,l1bFlag)
 
     ! Now we have a default MIFs array, this is a list of the `standard'
-    ! MIFs we would choose in the sampled=1 case.
+    ! MIFs we would choose in the interpolationFactor=1 case.
     ! Work out how many profiles this is going to be
 
-    noProfs=NINT(noMAFs*sampled)
+    noProfs=NINT(noMAFs*interpolationFactor)
     CALL SetupEmptyHgrid(hGrid,noProfs)
+
+    ! Setup some arrays
+    ALLOCATE(defaultField(noMAFs),interpolatedField(noProfs),STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
+         & "defaultField and/or interpolatedField")
 
     ! Now we go through all the important geolocation quantities, read them
     ! in, interpolate them if required and store the result in the hGrid
@@ -240,18 +258,70 @@ MODULE HGrid                    ! Horizontal grid information
        ! Get the name of the item to read
        l1bItemName=l1bItemsToRead(l1bItem)
        IF (l1bItem>=TransitionToModularItems) l1bItemName=&
-            & MLSIntrumentModuleNames(instrumentModule)//l1bItemName
+            & MLSInstrumentModuleNames(instrumentModule)//l1bItemName
        
        ! Read it from the l1boa file
-       CALL ReadL1BData(l1bInfo%l1boaid,l1bItemName,noMAFsl, &
-            & l1bFlag,l1bField, &
-            & firstMAF=chunk%firstMafIndex, lastMAF=chunk%lastMafIndex)
+       CALL ReadL1BData(l1bInfo%l1boaid,l1bItemName,l1bField,noMAFs, &
+            & l1bFlag,firstMAF=chunk%firstMafIndex, lastMAF=chunk%lastMafIndex)
        IF (l1bFlag==-1) CALL MLSMessage(MLSMSG_Error,ModuleName,&
             & MLSMSG_L1BRead//l1bItemName)
 
-       ! Got to here ******************************
+       DO maf=1,noMAFs
+          defaultField(maf)=l1bField%dpField(1,maf,defaultMIFs(maf))
+       END DO
+
+       IF (interpolationFactor==1.0) THEN
+          interpolatedField=defaultField
+       ELSE
+          ! Some interpolation is wanted.  I'm going to hold off writing this
+          ! because we certaintly don't need it for 0.1 and probably won't till
+          ! 1.0.  For the sake of getting things down I'll state here what I
+          ! think would be implemented.  One would simply interpolate from the
+          ! defaultField to the interpolatedField, using linear or spline I
+          ! imagine.  However, there are issues with roll overs for quantities
+          ! such as longitude and solarTime.  This is why I have chosen to
+          ! defer this piece of code.
+          ! NJL - 16 December 1999
+          CALL MLSMessage(MLSMSG_Error,ModuleName, &
+               & "Sorry interpolation of hGrids is not yet supported")
+       ENDIF
+
+       ! Now we have to save this field in the hGrid data.  This is rather a
+       ! kludgy way of doing it but this worked out the least boring way to
+       ! write the code.  See the definition of L1BItemsToRead above for
+       ! reference.
+
+       SELECT CASE(l1bItem)
+       CASE(1)
+          hGrid%time=interpolatedField
+       CASE(2)
+          hGrid%geodLat=interpolatedField
+       CASE(3)
+          hGrid%lon=interpolatedField
+       CASE(4)
+          hGrid%phi=interpolatedField
+       CASE(5)
+          hGrid%solarZenith=interpolatedField
+       CASE(6)
+          hGrid%solarTime=interpolatedField
+       CASE(7)
+          hGrid%losAngle=interpolatedField
+       END SELECT
     END DO
 
+    DEALLOCATE (defaultMIFs)
+    DEALLOCATE (defaultField,interpolatedField)
+
+    ! Now we need to work out the profile indices for this hGrid. This
+    ! calculation may need attention! ***
+    hGrid%noProfsLowerOverlap=NINT(chunk%noMAFsLowerOverlap*interpolationFactor)
+    hGrid%noProfsUpperOverlap=NINT(chunk%noMAFsUpperOverlap*interpolationFactor)
+    profileOffset=NINT(chunk%accumulatedMAFs*interpolationFactor)-&
+         & hGrid%noProfsLowerOverlap
+    ! Note that profiles are numbered from 0:n-1 in HDF-EOS, hence the -1
+    DO prof=1,noProfs
+       hGrid%profileIndices(prof)=prof+profileOffset-1
+    END DO
     
   END SUBROUTINE CreateHGridFromMLSCFInfo
 
@@ -330,4 +400,7 @@ END MODULE HGrid
 
 !
 ! $Log$
+! Revision 1.1  1999/12/16 01:26:46  livesey
+! Nightly checkin
+!
 !
