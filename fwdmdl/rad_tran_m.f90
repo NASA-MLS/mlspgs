@@ -510,7 +510,7 @@ contains
                          &  do_gl, h_path_f, t_path_f, dh_dt_path_f, &
                          &  alpha_path_f, alphaxn_path_f, eta_zxp_f, do_calc_t_f, &
                          &  ds_dh_gl, dh_dz_gl, t_script, dt_scr_dt, &
-                         &  tau, i_stop, d_delta_dt, drad_dt )
+                         &  tau, i_stop, deriv_flags, d_delta_dt, drad_dt )
 
     use DO_DELTA_M, ONLY: PATH_OPACITY, HYD_OPACITY
     use SCRT_DN_M, ONLY: GET_DSCRT_DN
@@ -560,6 +560,8 @@ contains
     real(rp), intent(in) :: dt_scr_dt(:,:)  ! d t_script / d T * d T / d eta.
     real(rp), intent(in) :: tau(:)          ! transmission function.
     integer(ip), intent(in) :: i_stop       ! path stop index
+    logical, intent(in) :: deriv_flags(:)   ! A logical indicating which
+!                                            temperature derivatives to do
 
 ! Outputs
 
@@ -601,7 +603,7 @@ contains
     drad_dt(:) = 0.0_rp
 
     do sv_i = 1 , sv_t
-
+      IF(.NOT. deriv_flags(sv_i)) CYCLE
       i_start = 1
 
 ! do the absorption part
@@ -882,6 +884,9 @@ contains
 
 end module RAD_TRAN_M
 ! $Log$
+! Revision 2.16  2003/06/09 20:52:37  vsnyder
+! More work on polarized derivatives
+!
 ! Revision 2.15  2003/05/20 00:04:28  vsnyder
 ! Collect common stuff into subroutines
 !
