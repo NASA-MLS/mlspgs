@@ -1,8 +1,12 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 program DumpPFAData
 
   ! Dump an unformatted PFAData file in the same format as a formatted file
   ! that could have been used to create it.  See ConvertPFAData for formats.
 
+  use ISO_FORTRAN_ENV, only: Output_Unit
   use Machine ! May need to get GETARG from here; otherwise, nothing is used
 
 !---------------------------- RCS Ident Info -------------------------------
@@ -14,7 +18,7 @@ program DumpPFAData
   real, allocatable :: Absorption(:,:), dAbsDwc(:,:), dAbsDnc(:,:), dAbsDnu(:,:)
   character(255) :: FileName
   character(31) :: Format
-  integer :: I, L, Lun = -1
+  integer :: I, L, Lun = Output_Unit
   character(31), allocatable :: Molecules(:)
   integer :: nTemps, nPress, nMol
   character(127) :: Signal = ''
@@ -42,72 +46,42 @@ program DumpPFAData
   end do
 
   write ( format, '(a,i0,a)' ) '(1p,', nTemps, 'e12.4)'
-  if ( lun > 0 ) then
-    write ( lun, '(a)', advance='no' ) 'Frequency averaged cross section file for'
-    do i = 1, nMol
-      write ( lun, '(1x,a)', advance='no' ) trim(molecules(i))
-    end do
-    write ( lun, '()' )
-    write ( lun, '(a,a)' ) 'Signal, ', trim(signal)
-    if ( vStep == anint(vStep) ) then
-      write ( lun, '(a,f0.3,a,i0,a,i0,a)' ) 'vgrid, type=Logarithmic,coordinate=Zeta,Start=', &
-        & vStart,'hpa,formula = [', nPress, ':', nint(vStep), ']'
+  write ( lun, '(a)', advance='no' ) 'Frequency averaged cross section file for'
+  write ( lun, '(99(1x,a))' ) (trim(molecules(i)), i = 1, nMol)
+  write ( lun, '()' )
+  write ( lun, '(a,a)' ) 'Signal, ', trim(signal)
+  write ( lun, '(3a,i0,3a)' ) 'vgrid, type=Logarithmic,coordinate=Zeta,Start=', &
+      & trim(writeIt(vStart)),'hpa,formula = [', nPress, ':', trim(writeIt(vStep)), ']'
+  write ( lun, '(3a,i0,3a)' ) 'tgrid, type=Logarithmic,coordinate=logT,Start=', &
+      & trim(writeIt(tStart)),'K,formula = [', nTemps, ':', trim(writeIt(tStep)), ']'
+  write ( lun, '(a,f6.2,a)' ) 'Velocity Linearization', velLin, ' km/sec'
+  write ( lun, '(a)' ) 'ln(Absorption (km^-1)) data(logT, logp)'
+  write ( lun, format ) absorption
+  write ( lun, '(a)' ) 'Dln(Absorption(km^-1)/Dwc(hPa/MHz) data(logT, logp)'
+  write ( lun, format ) dAbsDwc
+  write ( lun, '(a)' ) 'Dln(Absorption(km^-1)/Dnc data(logT, logp)'
+  write ( lun, format ) dAbsDnc
+  write ( lun, '(a)' ) 'Dln(Absorption(km^-1)/Dnu(MHz) data(logT, logp)'
+  write ( lun, format ) dAbsDnu
+  close ( lun )
+
+contains
+
+  character(15) function WriteIt ( Step )
+    real, intent(in) :: Step
+    if ( step == anint(step) ) then
+      write ( writeIt, '(i0)' ) nint(step)
     else
-      write ( lun, '(a,f0.3,a,i0,a,f0.3,a)' ) 'vgrid, type=Logarithmic,coordinate=Zeta,Start=', &
-        & vStart,'hpa,formula = [', nPress, ':', vStep, ']'
+      write ( writeIt, '(f0.3)' ) step
     end if
-    if ( tStep == anint(tStep) ) then
-      write ( lun, '(a,f0.3,a,i0,a,i0,a)' ) 'tgrid, type=Logarithmic,coordinate=logT,Start=', &
-        & tStart,'K,formula = [', nTemps, ':', nint(tStep), ']'
-    else
-      write ( lun, '(a,f0.3,a,i0,a,f0.3,a)' ) 'tgrid, type=Logarithmic,coordinate=logT,Start=', &
-        & tStart,'K,formula = [', nTemps, ':', tStep, ']'
-    end if
-    write ( lun, '(a,f6.2,a)' ) 'Velocity Linearization', velLin, ' km/sec'
-    write ( lun, '(a)' ) 'ln(Absorption (km^-1)) data(logT, logp)'
-    write ( lun, format ) absorption
-    write ( lun, '(a)' ) 'Dln(Absorption(km^-1)/Dwc(hPa/MHz) data(logT, logp)'
-    write ( lun, format ) dAbsDwc
-    write ( lun, '(a)' ) 'Dln(Absorption(km^-1)/Dnc data(logT, logp)'
-    write ( lun, format ) dAbsDnc
-    write ( lun, '(a)' ) 'Dln(Absorption(km^-1)/Dnu(MHz) data(logT, logp)'
-    write ( lun, format ) dAbsDnu
-    close ( lun )
-  else
-    write ( *, '(a)', advance='no' ) 'Frequency averaged cross section file for'
-    do i = 1, nMol
-      write ( *, '(1x,a)', advance='no' ) trim(molecules(i))
-    end do
-    write ( *, '()' )
-    write ( *, '(a,a)' ) 'Signal, ', trim(signal)
-    if ( vStep == anint(vStep) ) then
-      write ( *, '(a,f0.3,a,i0,a,i0,a)' ) 'vgrid, type=Logarithmic,coordinate=Zeta,Start=', &
-        & vStart,'hpa,formula = [', nPress, ':', nint(vStep), ']'
-    else
-      write ( *, '(a,f0.3,a,i0,a,f0.3,a)' ) 'vgrid, type=Logarithmic,coordinate=Zeta,Start=', &
-        & vStart,'hpa,formula = [', nPress, ':', vStep, ']'
-    end if
-    if ( tStep == anint(tStep) ) then
-      write ( *, '(a,f0.3,a,i0,a,i0,a)' ) 'tgrid, type=Logarithmic,coordinate=logT,Start=', &
-        & tStart,'K,formula = [', nTemps, ':', nint(tStep), ']'
-    else
-      write ( *, '(a,f0.3,a,i0,a,f0.3,a)' ) 'tgrid, type=Logarithmic,coordinate=logT,Start=', &
-        & tStart,'K,formula = [', nTemps, ':', tStep, ']'
-    end if
-    write ( *, '(a,f6.2,a)' ) 'Velocity Linearization', velLin, ' km/sec'
-    write ( *, '(a)' ) 'ln(Absorption (km^-1)) data(logT, logp)'
-    write ( *, format ) absorption
-    write ( *, '(a)' ) 'Dln(Absorption(km^-1)/Dwc(hPa/MHz) data(logT, logp)'
-    write ( *, format ) dAbsDwc
-    write ( *, '(a)' ) 'Dln(Absorption(km^-1)/Dnc data(logT, logp)'
-    write ( *, format ) dAbsDnc
-    write ( *, '(a)' ) 'Dln(Absorption(km^-1)/Dnu(MHz) data(logT, logp)'
-    write ( *, format ) dAbsDnu
-  end if
+  end function WriteIt
 
 end program DumpPFAData
 
 ! $Log$
+! Revision 1.3  2004/10/05 23:03:51  vsnyder
+! Dump grid start and step instead of ???
+!
 ! Revision 1.2  2004/06/17 01:05:02  vsnyder
 ! Added 'use Machine' in case it's needed for GETARG
 !
