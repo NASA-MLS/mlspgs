@@ -351,6 +351,9 @@ contains ! ================================ FullForwardModel routine ======
 !
     type (beta_group_T), dimension(:), pointer :: beta_group
 !
+!   real(rp) :: Q       ! ** ZEBUG, for dumping purposes (creating 'seez' file)
+!   Integer :: L1, L2   ! ** ZEBUG, for dumping purposes (creating 'seez' file)
+
     ! Executable code --------------------------------------------------------
     ! ------------------------------------------------------------------------
 
@@ -771,7 +774,8 @@ contains ! ================================ FullForwardModel routine ======
 
     if ( toggle(emit) .and. levels(emit) > 0 ) &
       & call Trace_Begin ( 'ForwardModel.Hydrostatic' )
-    call two_d_hydrostatic(temp%template%surfs(:,1),  &
+
+    Call two_d_hydrostatic(temp%template%surfs(:,1),  &
       &  temp%template%phi(1,:)*Deg2Rad,temp%values,  &
       &  SPREAD(refGPH%template%surfs(1,1),1,n_t_phi),&
       &  0.001*refGPH%values(1,:),z_glgrid,ORB_INC,   &
@@ -896,7 +900,7 @@ contains ! ================================ FullForwardModel routine ======
 
       call Allocate_test ( t_deriv_flag, sv_t_len, 't_deriv_flag', ModuleName )
 
-      t_deriv_flag(1:sv_t_len) = .FALSE.  ! ** Initialize to NO derivatives
+      t_deriv_flag(1:sv_t_len) = .TRUE.  ! ** Initialize to ALL derivatives
 
 ! ** Loading the Temp. derivative coeff. flag according to the L2CF
 
@@ -905,13 +909,10 @@ contains ! ================================ FullForwardModel routine ======
         do j = 1, WindowFinish - WindowStart + 1
           do i = 1, n_t_zeta
             k = k + 1
-            DoThis = (iand(M_FullDerivatives,ichar(temp%mask(i,j))) /= 0)
+            DoThis = (iand(M_FullDerivatives,ichar(temp%mask(i,j))) == 0)
             t_deriv_flag(k) = DoThis
           end do
         end do
-! ** ZEBUG: Until Van changes the Subset logic, we will invert it here:
-        t_deriv_flag(1:k) = (.NOT. t_deriv_flag(1:k))
-! ** END ZEBUG
       ENDIF
 
       call Allocate_test ( dRad_dt, sv_t_len, 'dRad_dt', ModuleName )
@@ -1252,10 +1253,14 @@ contains ! ================================ FullForwardModel routine ======
 ! VELOCITY shift correction to frequency grid
           frequencies =  &
          & PointingGrids(whichPointingGrid)%oneGrid(grids(ptg_i))%frequencies
-          frequencies = frequencies * (1.0_r8-losvel%values(1,maf)/2.9979d08)
+!
+          r = 1.0_rp - losvel%values(1,maf) / 299792.4583_rp
+          frequencies = frequencies * r
+
 !          frequencies =>  &
 !         & PointingGrids(whichPointingGrid)%oneGrid(grids(ptg_i))%frequencies
 !          noFreqs = size(frequencies)
+
         end if ! If not, we dealt with this outside the loop
 
         ! Loop over frequencies ----------------------------------------------
@@ -2108,6 +2113,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.36  2002/02/16 10:32:16  zvi
+! Fixing small bug..
+!
 ! Revision 2.35  2002/02/16 06:49:59  zvi
 ! Retain deriv flag code ..
 !

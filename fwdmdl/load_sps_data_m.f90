@@ -259,19 +259,16 @@ contains
       kz = Grids_f%no_z(ii)
       kf = Grids_f%no_f(ii)
       j = kp * kz * kf
-      deriv_flag(1:j) = .FALSE.     ! ** Initialize to NO derivatives
+      deriv_flag(1:j) = .TRUE.     ! ** Initialize to ALL derivatives
       IF(associated(f%mask)) THEN
         j = 0
         do mp = 1, kp
           do mz = 1, kz
-            mask = (iand(M_FullDerivatives,ichar(f%mask(mz,mp))) /= 0)
+            mask = (iand(M_FullDerivatives,ichar(f%mask(mz,mp))) == 0)
             deriv_flag(j+1:j+kf) = mask
             j = j + kf
           end do
         end do
-! *** ZEBUG: Until Van changes the Subset logic, we will invert it here ***
-        deriv_flag(1:j) = (.NOT. deriv_flag(1:j))
-! *** END ZEBUG ***
       ENDIF
       Grids_f%deriv_flags(m+1:m+j) = deriv_flag(1:j)
       m = m + j
@@ -501,6 +498,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.14  2002/02/16 20:43:54  zvi
+! Changing the code for Log of Neg. VMR
+!
 ! Revision 2.13  2002/02/16 10:32:17  zvi
 ! Guaranties against taking Log(0.0)
 !
