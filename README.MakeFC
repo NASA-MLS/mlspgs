@@ -4,18 +4,27 @@
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 # "$Id$"
+# A self-reading guide to building the mls software;
+# usage: README.MakeFC
+# related documents:
+#  mlspgs.tgz        an archive containing this file and mls software sources
+#  BEFORE.mls        a self-reading guide to prerequisites to the software
+
         more << EOF
 MakeFC--A configurable Makefile in mlspgs
 
 SUMMARY
 To build the mls software, on many different combinations of compiler/
 platform/OS, minimizing the changes most users will need to make. Therefore
-it is mostly self-configuring. You will need:
-  f95 compiler (either NAG or Lahey)
-  Installed SDP Toolkit (PGSTK, HDFEOS, HDF)
-  mls software (probably where you're reading this)
-  perl (not needed if you plan only to build and run the software,
-    not change it)
+it is mostly self-configuring. First, you will need:
+ (1) f95 compiler (either NAG or Lahey)
+ (2) Installed SDP Toolkit (PGSTK, HDFEOS, HDF)
+ (3) mls software (probably where you're reading this)
+ (4) perl (not needed if you plan only to build and run the software,
+       not change it)
+ (5) PVM--a library to emulate parallel virtual machines
+ (6) FFTW--a library to accomplish fast Fourier tranforms
+
 Then, from the "top" level (where you see this file, as well as the l1, l2, l3,
 lib, srclib, and util directories) simply type
   make -f MakeFC
@@ -23,6 +32,9 @@ and you'll be asked to respond to some questions about your compiler,
 platform, and where the Toolkit is installed. Then the software will
 be built. You may quit out of this now and try it out, perhaps coming
 back later if you are curious or if something goes wrong.
+
+For more information on obtaining and installing the SDP Toolkit, PVM, and
+the FFTW libraries, enter BEFORE.mls
 
 INTRODUCTION
 An attempt has been made to minimize the amount of editing and configuring each
@@ -103,7 +115,7 @@ INSTALL-HDF4.0r2@         PGS_PC_TempDeleteCom*        pgs-env.ksh
 [pwagner@riverrun ~]$ echo $PGSINC
 /software/SRC/TOOLKIT-5.2.6v1.00.NAG/include
 
-#Now in order appear paths to the following libraries
+#Paths to the following libraries are shown in their respective order
 #HDFEOS
 #HDF
 #PGSTK
@@ -115,7 +127,7 @@ PGSLIB=/software/SRC/TOOLKIT-5.2.6v1.00.NAG/lib/sgi
 This explanation has been given with a great deal of detail (perhaps too
 much) because it is very important. It may seem overwhelming, and you
 may exclaim, "Wasn't this supposed to make things easier?" Fortunately,
-the configuration will have to done only once.
+the configuration will have to done only this once.
 
 BUILDING ONLY PARTS OF THE SOFTWARE
 If you wish to build only lib, for example, you may specify that target,
@@ -131,7 +143,10 @@ levels when only the software in that level will be built.
 OTHER OPTIONS
 These are available either at the "top" level, mlspgs, or in parts at lib or
 the other levels.
+
 make -f MakeFC the_option
+
+option                 Effect
 
 clean      removes all binaries created during compilation and linking;
            then deletes the subdirectory containing them
@@ -143,9 +158,16 @@ depends    recalculates dependencies;
            may require editing first line of f90makedep.pl (see below)
 configure  change configuration: compiler, (less often) platform/OS,
            paths
-tar        bind up the current directory (or the whole if at top) for
-           distribution
-all        if entered from the top, builds lib, l1, l2, l3, l2pc, and fwdmdl
+tar        tar the current directory for distribution as compressed "tgz"
+
+(The following apply only at the top level)
+all        builds lib, l1, l2, l3, l2pc, and fwdmdl
+install    moves the built programs from l1, l2, l3 to the mlspgs top level
+
+(The following perform a top-level "clean" before archiving as compressed "tgz")
+tar        tar the whole mlspgs archive for distribution: mlspgs.tgz
+tar_subs   tar lib, l1, .. for distribution: mlspgs_subs.tgz
+tar_sips   tar everything from mlspgs needed by the SIPS: mlspgs_sips.tgz
 
 HOW IT WORKS
 Chronology:
@@ -177,7 +199,7 @@ In addition, in lib, l1, l2, and l3 a new directory will be created with a
 unique name given by the value of MLSCONFG. In the example above that name
 would be NAG.Linux. In this directory mlsconfigure places a Makefile which is
 the catenation of .configure with two files found in the directory platforms:
-e.g.,
+e.g., assuming the value of MLSCONFG is NAG.Linux:
         cat .configure l2/platforms/NAG.Linux l2/platforms/targets > \
                 l2/NAG.Linux/Makefile
 Here platforms/NAG.Linux is a file of compiler settings specific to the NAG
@@ -205,8 +227,8 @@ will call make in lower levels, and the names of the Makefile thus summoned.
            MLSCONFG/Makefile   MLSCONFG/Makefile
            
 where the bottom MLSCONFG directories only below lib and l1 have been shown,
-although they exist in the  other levels, too. Note also the ability of make at
-the levels of l1, l2, ... to call make in lib. The actual path and name of the
+although they exist in the other levels, too. Note also the ability of make at
+the levels of l1, l2, ... to call make in lib. The full path and name of the
 file shown at bottom center is (assuming a typical location for the archive)
 	${HOME}/mlspgs/lib/${MLSCONFG}/Makefile
 
@@ -259,7 +281,7 @@ be better hidden.
 ACTUAL BUGS
 Unless either the Lahey compiler or the latest, "beta" copy of the NAG f95 is
 used, Matrix_Module.f90 in lib and l2 won't compile. The compiler-dependent
-Makefile created will refer to the routine only if you use Lahey.
+Makefile created will therefore compile the routine only if you use Lahey.
 
 The Linux HDFEOS, HDF, PGSTK, etc. libraries as distributed can not be made to
 link properly. Sun and SGI versions seem correct. The solution is to build
@@ -279,9 +301,8 @@ The last assumes abi=32. To compile for a 64 bit kernel, we could
 To use these, 64 bit versions of the libraries HDFEOS, etc. would have
 to available, too.
 
-If you have a different combination, contact me. Even better, if you
-have a different combination and already get it to work, send it to me,
-or "cvs commit".
+If you have a different combination, contact me. Even better, if you have a
+different combination and can get it to work, send it to me, or "cvs commit".
 
 Do not 'cvs add/commit' your .configure. Instead, if you want to keep a copy of
 your configuration handy, copy it someplace, like ~/mls.configure, then copy it
@@ -313,9 +334,6 @@ sources required special compiler flags to compile successfully under NAG. You
 will see them mentioned explicitly at the end with their custom build
 instructions. The method whereby machine.o is created is also concealed there.
 
-Adding a "make -f MakeFC install" would, like clean_objs, zap the .o and .mod
-files, but also moving the libmls.a and mlsl2, to a permanent, final location.
-
 At the cost of making configuration more complex, an option could be
 added that would allow extra settings, e.g. compiler flags could be set
 to suppress warning messages.
@@ -331,10 +349,13 @@ If this ever seems to work well enough, similar MakeFC and platforms
 could be devised for the remaining parts of mls. By design it remains an
 optional way to build, coexisting in parallel with other ways.
 
--pw                           2000-Oct-24 to 2001-Jan-05
+-pw                           2000-Oct-24 to 2001-Jan-12
 EOF
 exit
 # $Log$
+# Revision 1.6  2001/01/05 22:56:04  pwagner
+# Mentioned Hugh's fix for Toolkit; make all option
+#
 # Revision 1.5  2000/11/21 23:54:46  pwagner
 # Mentions levels 1-3; offer to fix perl path
 #
