@@ -8,15 +8,8 @@
     Real(rk), intent(in) :: DX
     Real(rk), intent(out) :: R
 !
-    Integer, Parameter :: Np = 6
-!
-    Real(rk) :: H
-    Real(rk) :: DUMI(2) = (/ 4.0_rk, 4.0_rk /)
-    Real(rk) :: DUMO(2) = (/ 4.0_rk, 4.0_rk /)
-!
-    Integer :: J, K, Kp
-!
-    Real(rk) :: S, Vx(Np)
+    Real(rk) :: S
+    Integer  :: j, k
 !
     R = 0.0_rk
     if ( N < 2 ) Return
@@ -25,26 +18,19 @@
     else
       j = 1
       S = 0.0_rk
-      h = dx / 3.0_rk
       do while ( j < N )
-        if ( j+2 < N ) S = S + f(j) + 4.0_rk * f(j+1) + f(j+2)
-        j = j + 2
+        k = j + 2
+        if ( k <= N ) S = S + f(j) + 4.0_rk * f(j+1) + f(k)
+        j = k
       end do
-      R = h * S
-      if ( j > N ) then
-        Kp = min(Np,N)
-        do k = 1, Kp
-          Vx(k) = (k - 1) * dx
-        end do
-        k = N - Kp + 1
-        dumi(1) = 0.5_rk * (Vx(Kp-1) + Vx(Kp))
-        Call Cspline(Vx,dumi,f(k:n+1),dumo,Kp,1)
-        S = f(N-1) + 4.0_rk * dumo(1) + f(N)
-        R = R + 0.5_rk * h * S
-      endif
+      R = S * dx / 3.0_rk
+      if ( j > N ) R = R + dx * (f(N-1) + f(N)) / 2.0_rk
     endif
     Return
 ! $Log$
+! Revision 2.0  2001/09/17 20:26:27  livesey
+! New forward model
+!
 ! Revision 1.3  2001/06/07 23:39:32  pwagner
 ! Added Copyright statement
 !
