@@ -1,10 +1,10 @@
 #mlsl1: MLSL1.o
 mlsl1log: MLSL1log
-	cp -a MLSL1log $@
+	cp -p MLSL1log $@
 mlsl1g: MLSL1G
-	cp -a MLSL1G $@
+	cp -p MLSL1G $@
 mlsl1t: MLSL1T
-	cp -a MLSL1T $@
+	cp -p MLSL1T $@
 MLSL1log: MLSL1log.o
 MLSL1G: MLSL1G.o
 MLSL1T: MLSL1T.o
@@ -203,7 +203,8 @@ clean:
 
 mark_all_as_uptodate:
 		@if [ "$(MODULES)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
-		 $(UTILDIR)/mark_as_uptodate.sh -T mlsl1 -M $(MAKE) $(MARKING_ARG) \
+		 $(UTILDIR)/mark_as_uptodate.sh -T mlsl1log -T mlsl1g -T mlsl1t \
+       -M $(MAKE) $(MARKING_ARG) \
        $(libdir) ; \
 		fi
 
@@ -220,6 +221,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.26  2003/01/31 23:52:42  pwagner
+# Changed for new l1 with 3 executables
+#
 # Revision 1.25  2002/10/03 23:07:44  pwagner
 # l_specials for Lahey depend on gcc_version
 #
