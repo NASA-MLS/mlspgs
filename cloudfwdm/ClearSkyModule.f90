@@ -156,20 +156,17 @@ contains
            ! --------------------------------
            CALL GET_BETA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,GAMMA,N2,  &
                 &        NMOL,NCNT,T(I),P,F,DQ,VMR1,DR,NS )   
-!               &        MOL,NMOL,NCNT,T(I),P,F,DQ,VMR1,DR,NS )   
                                              ! HERE DQ IS H2O MIXING RATIO
            TAU(I)=DR*Z(I)
 
            IF (i_saturation /= l_clear ) then       ! save time for clear sky
            CALL GET_BETA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,GAMMA,N2,  &
                 &        NMOL,NCNT,T(I),P,F,110._r8,VMR1,DR,NS ) 
-!               &        MOL,NMOL,NCNT,T(I),P,F,110._r8,VMR1,DR,NS ) 
-                                             ! HERE DQ IS RELATIVE HUMIDITY!
+                                             ! HERE 110 IS RELATIVE HUMIDITY!
            tau_wet(I)=DR*Z(I)
          
            CALL GET_BETA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,GAMMA,N2,  &
                 &        NMOL,NCNT,T(I),P,F,0.0_r8,VMR1,DR,NS ) 
-!               &        MOL,NMOL,NCNT,T(I),P,F,0.0_r8,VMR1,DR,NS ) 
                                              ! HERE DQ IS vmr
            tau_dry(I)=DR*Z(I)
            Endif
@@ -204,6 +201,9 @@ contains
 end module ClearSkyModule
 
 ! $Log$
+! Revision 1.23  2003/04/10 20:25:35  dwu
+! make i_saturation as a verbal argument
+!
 ! Revision 1.22  2003/02/01 06:43:06  dwu
 ! some fixes
 !

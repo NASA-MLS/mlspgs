@@ -24,6 +24,7 @@ module GasAbsorption
  !---------------------------------------------------------------------------
       
       REAL, private, parameter :: PI = 3.1415926
+
 contains
 
 ! -------------------------------------------------  GET_BETA  -----
@@ -87,7 +88,7 @@ contains
          VP=VMR_H2O*PB                 ! VP IS VAPOR PRESSURE, PB IS TOTAL
          P=PB-VP                       ! PRESSURE, P IS DRY-AIR PRESSURE
 
-      ELSE IF (RH .GE. 1._r8) THEN   ! RH HERE IS RELATIVE HUMIDITY 
+      ELSE IF (RH .GE. 1._r8) THEN     ! RH HERE IS RELATIVE HUMIDITY 
 !         CALL RHtoEV(T,RH,VP)    
 !         P = PB-VP
 !         VMR_H2O = VP/(max(1.e-9_r8, P))
@@ -142,7 +143,7 @@ contains
                 NPS  = 1.375_r8 
               END IF
             end select
-            v01(i) = 0.0_r8                     !      | Pressure Shift effects
+            v01(i) = 0.0_r8                     | Pressure Shift effects
             V01(i) = V0(i) + PS * P * (TT**NPS) ! Include Hugh Pumphrey's
 
             IF(T .LE. QTP(2)) THEN
@@ -196,18 +197,10 @@ contains
      &		(1._r8 - EXP(-V01(i)/(20836.7_r8*T)))/           &
      &		(1._r8 - EXP(-V01(i)/(20836.7_r8*300.0_r8)))/T 
 
-! 100     CONTINUE
-
          ENDDO   
 
          B=MAX(0._r8,B)                 ! AVOID NEGATIVE LINE SHAPE     
 
-!          IF(IMOL .EQ. 1) ABSC = ABSC + B*VMR_O2                   ! O2      
-!          IF(IMOL .EQ. 2) ABSC = ABSC + B*VMR_H2O                  ! H2O
-!          IF(IMOL .EQ. 3) ABSC = ABSC + B*VMR_O2*0.00409524        ! O_18_O
-!          IF(IMOL .EQ. 4) ABSC = ABSC + B*VMR_H2O*0.00204          ! H2O_18
-!          IF(IMOL .EQ. 5) ABSC = ABSC + B*VMR(1)                   ! O3
-!          IF(IMOL .EQ. 6) ABSC = ABSC + B*VMR(2)                   ! N2O
             select case (IMOL)
             case (1)
               ABSC = ABSC + B*VMR_O2                   ! O2
@@ -231,9 +224,10 @@ contains
 
       B=(7.7e-10*EXP(-1.5e-3*(F/30)**2)+1.e-13*(60**2+(F/30)**2)  &
      &     *EXP(-1.e-4*(F/30)**2))*TT**1.7
-
-! from ATBD N2-N2 continuum                                      band2 and band6
-       ABSC = ABSC + B*0.65*(P/1013.)**2*TT**2*(F/30)**2*1.e5/1.8 !best fit to
+!---------------------------
+! from ATBD N2-N2 continuum                                     
+!--------------------------
+       ABSC = ABSC + B*0.65*(P/1013.)**2*TT**2*(F/30)**2*1.e5/1.8 !best fit to B2 & B6
 !      ABSC = ABSC + B*0.65*(P/1013.)**2*TT**2*(F/30)**2*1.e5
 
 !==============================================================================
@@ -272,7 +266,7 @@ contains
 ! difference with Bill's FWM f15 Band2U~6K, B10L~1K
 
 ! case R1
-      if(abs(f-127.) .lt. 14.) CONT_1 = 7.53e-16   ! wu's version
+      if(abs(f-127.) .lt. 14.) CONT_1 = 7.53e-16     ! wu's version
 ! case R2
       if(abs(f-192.) .lt. 16.) CONT_1 = 7.53e-16/1.3 ! best fit to R2
       CONT_2 = 4.20
@@ -287,24 +281,15 @@ contains
       ABSC = ABSC + B * VMR_H2O
       ABSC = ABSC * 1.e-3       ! converted from 1/km to 1/m
 
-!      print*, absc
-!      stop
-
       END SUBROUTINE GET_BETA
 
 ! -------------------------------------------------  myshape  -----
 !--------------------------------------------------------------
 !     DEFINE LINE-SHAPE FUNCTIONS
 !--------------------------------------------------------------
-!J	real(r8) function myshape(v0,ff,yy,twth0)
 
         real(r8) function myshape(v0,ff,yy,twth0) result (myresult)
-!        use MLSCommon, only: r8        
-!	implicit none
-!        real(r8):: myresult     !J
 
-!        real :: pi
-!        parameter (pi=3.1415926)
 	real(r8) ::  voffm		! frequency difference
 	real(r8) ::  voffp		! frequency difference
 	real(r8) ::  ff		        ! frequency in MHz
@@ -312,7 +297,7 @@ contains
 	real(r8) ::  twth0		! line width in MHz/mb
 	real(r8) ::  yy 		! interference coeff.
 	real(r8) ::  twthm, twthp
-!
+
 	  voffm = 0.0_r8
 	  voffp = 0.0_r8
 	  twthm = 0.0_r8
@@ -346,6 +331,9 @@ contains
 end module GasAbsorption
 
 ! $Log$
+! Revision 1.21  2003/04/03 17:13:40  dwu
+! changes: N2O mass is 44; HNO3 mass is 63
+!
 ! Revision 1.20  2003/04/03 16:49:18  dwu
 ! fix a bug: N2O mass should be 30; and add HNO3 in absorption calculation
 !

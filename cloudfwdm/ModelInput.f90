@@ -28,7 +28,6 @@ contains
       SUBROUTINE MODEL_ATMOS(PRESSURE,HEIGHT,TEMPERATURE,VMR,NZ,NS,  &
                  &           N, WCin, IPSDin,                        &
                  &           YP,YZ,YT,YQ,VMR1,WC,NH,CHK_CLD,IPSD )
-!                &           ZT,ZZT,NT)
 
 !========================================================================C
 !     DESCRIPTION                                                        C
@@ -57,8 +56,6 @@ contains
 
       REAL(r8), intent(in) :: WCin(N,NZ)             
       INTEGER, intent(in) :: IPSDin(NZ)
-!     INTEGER, intent(in) :: NT                ! NO. OF TANGENT PRESSURE LEVELS
-!     REAL(r8), intent(in) :: ZT(NT)           ! TANGENT PRESSURE
       
 !----------------------------------------------
 !     OUTPUT PARAMETERS
@@ -72,8 +69,6 @@ contains
       REAL(r8), intent(out) :: WC(N,NH)
       INTEGER, intent(out) :: IPSD(NH)
       REAL(r8), intent(out) :: CHK_CLD(NH)     ! CLOUD CHECKER
-
-!     REAL(r8), intent(out) :: ZZT(NT)         ! TANGENT HEIGHT
 
 !----------------------------------------------------------
 !     WORK SPACE
@@ -115,41 +110,29 @@ contains
             ! This is simple linear interpolation; see also 
             ! MLSNumerics for InterpolateValues
             eta = (HEIGHT(JM+1)-ZH(J)) / (HEIGHT(JM+1)-HEIGHT(JM))
-!           YP(J)=((HEIGHT(JM+1)-ZH(J))*ZA(JM)+(ZH(J)-HEIGHT(JM))*  &
-!     &            ZA(JM+1))/(HEIGHT(JM+1)-HEIGHT(JM))             
+
             YP(J) = eta*ZA(JM) + (1-eta)*ZA(JM+1)
 
             YP(J) = 10**(-YP(J))
 
             YZ=ZH
 
-!           YT(J)=((HEIGHT(JM+1)-ZH(J))*TEMPERATURE(JM)+(ZH(J)-HEIGHT(JM))*  &
-!     &            TEMPERATURE(JM+1))/(HEIGHT(JM+1)-HEIGHT(JM))             
             YT(J) = eta*TEMPERATURE(JM) + (1-eta)*TEMPERATURE(JM+1)
 
 ! ICE QUANTITIES
-
             DO K=1,NcloudType
-!           WC(K,J)=((HEIGHT(JM+1)-ZH(J))*WCin(K,JM)+(ZH(J)-HEIGHT(JM))*  &
-!     &            WCin(K,JM+1))/(HEIGHT(JM+1)-HEIGHT(JM))             
               WC(K,J) = eta*WCin(K,JM) + (1-eta)*WCin(K,JM+1)
             ENDDO
 
             CHK_CLD(J) = WC(1,J) + WC(2,J)
 
-            ! IPSD INDEX CAN NOT BE INTERPOLATED
             IPSD(J) = IPSDin(1)     
 
 ! VMR QUANTITIES
-!           Yq(J)=((HEIGHT(JM+1)-ZH(J))*zvmr(JM)+(ZH(J)-HEIGHT(JM))*  &
-!     &            zvmr(JM+1))/(HEIGHT(JM+1)-HEIGHT(JM))             
             YQ(J) = eta*zvmr(JM) + (1-eta)*zvmr(JM+1)
-
             YQ(J) = 10**YQ(J)
 
             DO K=1,NS-1
-!            VMR1(K,J)=((HEIGHT(JM+1)-ZH(J))*VMR(K+1,JM)+(ZH(J)-HEIGHT(JM))*  &
-!     &            VMR(K+1,JM+1))/(HEIGHT(JM+1)-HEIGHT(JM))             
              VMR1(K,J) = eta*VMR(K+1,JM) + (1-eta)*VMR(K+1,JM+1)
             ENDDO
        
@@ -164,6 +147,9 @@ contains
 end module ModelInput
 
 ! $Log$
+! Revision 1.12  2003/04/09 08:16:53  dwu
+! Fix the bug associated with number of cloud types dimension
+!
 ! Revision 1.11  2003/01/23 00:19:09  pwagner
 ! Some cosmetic only (or so I hope) changes
 !
