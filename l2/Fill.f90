@@ -18,6 +18,7 @@ module Fill                     ! Create vectors and fill them.
     & L2AUXDim_IntermediateFrequency, L2AUXDim_USBFrequency, L2AUXDim_LSBFrequency, &
     & L2AUXDim_MIF, L2AUXDim_MAF, L2AUXDim_GeodAngle
   use LEXER_CORE, only: PRINT_SOURCE
+  use ManipulateVectorQuantities, only: ValidateVectorQuantity
   use MLSCommon, only: L1BInfo_T, NameLen, LineLen, MLSChunk_T, R8
   !  use MLSMessageModule, only: MLSMSG_Error, MLSMessage
   !  use MLSStrings, only: lowercase
@@ -413,10 +414,8 @@ contains ! =====     Public Procedures     =============================
 
     errorCode=0
     ! Make sure this quantity is appropriate
-    if ( (.NOT. quantity%template%coherent) .or. &
-      &  (.NOT. quantity%template%stacked) .or. &
-      &  ( (quantity%template%verticalCoordinate /= l_pressure) .or. &
-      &    (quantity%template%verticalCoordinate /= l_zeta) ) ) then
+    if (.not. ValidateVectorQuantity(quantity, coherent=.TRUE., stacked=.TRUE., &
+      & verticalCoordinate= (/ l_pressure, l_zeta /) ) ) then
       errorCode=vectorWontMatchL2GP
       return
     end if
@@ -1007,6 +1006,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.19  2001/02/27 01:25:15  livesey
+! Used new ValidateVectorQuantity routine
+!
 ! Revision 2.18  2001/02/27 00:50:53  livesey
 ! Made sure verticalCoordinate=l_zeta worked for filling from L2GP
 !
