@@ -193,6 +193,7 @@ CONTAINS
 !------------------------------------------------------------
   USE MLSCF, ONLY: Mlscf_T
   USE MLSPCF3, only: mlspcf_pcf_start, mlspcf_l3cf_start
+  USE L2Interface, only: ReadL2GPAttribute
 
 ! Brief description of subroutine
 ! This subroutine performs the Open/Init task in the MLSL3 program.
@@ -217,7 +218,7 @@ CONTAINS
 
       CHARACTER (LEN=480) :: msr
 
-      INTEGER :: error, pcfId, returnStatus
+      INTEGER :: error, pcfId, returnStatus, l3mFlag = 1
 
 ! Read the PCF into an annotation for file headers
 
@@ -252,6 +253,10 @@ CONTAINS
 
       CALL FillL3CFM(cf, l3pcf%outputVersion, cfStd, cfDg, cfDef)
 
+! Get L2GP Attributes
+
+      CALL ReadL2GPAttribute(l3pcf%startDay, l3pcf%endDay, &
+	& cfStd(1)%fileTemplate, l3mFlag)
 
 !------------------------
     END SUBROUTINE OpenMON
@@ -262,6 +267,9 @@ CONTAINS
 !==================
 
 ! $Log$
+! Revision 1.5  2003/04/30 18:16:29  pwagner
+! Work-around for LF95 infinite compile-time bug
+!
 ! Revision 1.4  2003/04/06 02:30:33  jdone
 ! added indentation; added use only to modules list
 !
