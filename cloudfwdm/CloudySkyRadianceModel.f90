@@ -86,8 +86,8 @@ contains
 !     TEMPERATURE(NZ)     -> Temperature (K).                                C 
 !     VMRin   (NS,NZ)     -> NS=1: H2O Volumn Mixing Ratios (ppv).           C
 !                            NS=2: O3 Volumn Mixing Ratio (ppv).             C
-!                            NS=3: N2O Volumn Mixing Ratio (ppv).             C
-!                            NS=4: HNO3 Volumn Mixing Ratio (ppv).             C
+!                            NS=3: N2O Volumn Mixing Ratio (ppv).            C
+!                            NS=4: HNO3 Volumn Mixing Ratio (ppv).           C
 !                                                                            C
 !     2. CLOUD PARAMETERS:                                                   C
 !     --------------------                                                   C
@@ -100,22 +100,13 @@ contains
 !     ZT         (NT)     -> Tangent Pressure (hPa).                         C
 !     RE                  -> Radius of Earth (m).                            C
 !     ISURF               -> Surface Types (Default: 0).                     C
-!     Cloud_der                -> Switch for Sensitivity Calculation. 
-!           none
-!           iwc_low_height
-!           iwc_high_height
-!     ICON                -> Cloud Control Switch.              C
-!           ICON = 0                if WCin==0 and i_saturation is cloudy
-!           ICON = I_Saturation     otherwise
-!           
-! Different cases for clear and cloudy sky combinations:
-!		ICON=-1 is for clear-sky radiance limit assuming 110%RHi
-!		ICON=-2 is for clear-sky radiance limit assuming 0%RHi
-!		ICON=-3 is for clear-sky radiance lower limit from 110% and 0%RHi
-! 	   ICON=0 is Clear-Sky only 
-!		ICON=1 is default for 100%RH inside cloud ONLY
-!		ICON=2 is for 100%RH below the cloud top or below 100mb
-!		ICON=3 is for near-side cloud only
+!     Cloud_der           -> Switch for Sensitivity Calculation.             C
+!           none                                                             C
+!           iwc_low_height                                                   C
+!           iwc_high_height                                                  C
+!     I_saturation        -> Cloud Control Switch.                           C
+!           ICON = 0                if WCin==0 and i_saturation is cloudy    C
+!           ICON = I_Saturation     otherwise                                C
 !     -----------------------------------------------                        C
 !                                                                            C
 !     >>> OUTPUT PARAMETERS <<<                                              C
@@ -186,11 +177,10 @@ contains
                                                ! 0 = SIMPLE MODEL
                                                ! 1 = LAND
                                                ! 2 = SEA 
-  
-      INTEGER, intent(in) :: Cloud_der         ! SENSITIVITY SWITCH                                               ! 
+
+      INTEGER, intent(in) :: Cloud_der         ! SENSITIVITY SWITCH 
 
       INTEGER, intent(in) :: I_Saturation      ! Clear-Cloudy-sky CONTROL SWITCH 
-
 
       LOGICAL, intent(in) :: IFOV              ! FIELD OF VIEW AVERAGING SWITCH
                                                ! False = OFF
@@ -200,12 +190,12 @@ contains
       REAL(r8), intent(in) :: PRESSURE(NZ)     ! PRESSURE LEVEL
       REAL(r8), intent(in) :: HEIGHT(NZ)       ! PRESSURE HEIGHT
       REAL(r8), intent(in) :: TEMPERATURE(NZ)  ! ATMOSPHERIC TEMPERATURE
+
       REAL(r8), intent(in) :: VMRin(NS,NZ)     ! 1=H2O VOLUME MIXING RATIO
                                                ! 2=O3 VOLUME MIXING RATIO
 
       REAL(r8), intent(in) :: WCin(N,NZ)       ! CLOUD WATER CONTENT
                                                ! N=1: ICE; N=2: LIQUID
-!     REAL(r8), intent(in) :: ZT(NT)           ! TANGENT PRESSURE
       REAL(r8), intent(in) :: RE               ! EARTH RADIUS
       REAL(r8), intent(in) :: Slevl(noS)       ! Sgrid levels
       REAL(r8), intent(in) :: LosVel           ! Line of sight velocity
@@ -274,7 +264,8 @@ contains
       REAL(r8) :: TT(NZmodel/8+Nsub,NZmodel)   ! CLOUDY-SKY TB AT TANGENT 
                                                ! HEIGHT ZT (LAST INDEX FOR 
                                                ! ZENITH LOOKING)
-      REAL(r8) :: TT0(NZmodel/8+Nsub,NZmodel)       ! CLEAR-SKY TB AT TANGENT
+
+      REAL(r8) :: TT0(NZmodel/8+Nsub,NZmodel)  ! CLEAR-SKY TB AT TANGENT
                                                ! HEIGHT ZT
 
 !---------------------------------------------
@@ -335,32 +326,31 @@ contains
       REAL(r8) :: RC11(3)
       REAL(r8) :: RC_TMP(N,3)
       REAL(r8) :: CHK_CLD(NZmodel)                        
+
       REAL(r8) :: ZZT(NT)                      ! TANGENT HEIGHTS (meters)
-                                               !                   | CALCULATION
+
       REAL(r8) :: ZZT1(NZmodel/8-1+Nsub)       ! TANGENT HEIGHTS (meters) FOR 
                                                ! (a subset OF YZ)     | TO ZZT
                                                ! THE RESULT WILL BE INTERPOLATED
-                                               !                 | CALCULATION 
+
       REAL(r8) :: ZPT1(NZmodel/8-1+Nsub)       ! TANGENT PRESSURE (mb) FOR 
                                                ! (a subset OF YP)
                                                ! THIS IS ASSOCIATED WITH ZZT1
-                                               !             | TANGENT PRESSURE 
+
       REAL(r8) :: ZTT1(NZmodel/8-1+Nsub)       ! TEMPERATURE CORRESPONDING TO 
                                                ! (a subset OF YT)
                                                ! THIS IS ASSOCIATED WITH ZZT1
 
       REAL(r8) :: ZVT1(NZmodel/8-1+Nsub) 
       REAL(r8) :: ZNT1(NZmodel/8-1+Nsub) 
-                                               !                  | TO ZZT1
+
       REAL(r8) :: ptg_angle(NZmodel/8-1+Nsub)  ! POINTING ANGLES CORRESPONDING 
-!     REAL(r8) :: ptg_angle_out(NZmodel/8-1+Nsub)       
 
       type(antennaPattern_T), intent(in) :: AntennaPattern
       Type(Catalog_T), INTENT(IN) :: Catalog(:)
-!     integer :: FFT_INDEX(size(antennaPattern%aaap))
+
       integer :: FFT_pts
       REAL(r8) :: schi
-!     Real(r8) :: dTB0_dZT(NT,NF), dDTcir_dZT(NT,NF)
 
       Real(r8), dimension( NZmodel/8+Nsub ) :: RAD0, RAD, SRad0, SRad
 
@@ -389,7 +379,6 @@ contains
       COMPLEX(r8) A(NR,NAB),B(NR,NAB)          ! MIE COEFFICIENCIES
 
 !-------------------------------------------------------------------------
-
 
 !---------------<<<<<<<<<<<<< START EXCUTION >>>>>>>>>>>>-----------------
 
@@ -422,6 +411,7 @@ contains
       if(maxval(WCin) == 0) isClear = .true.
       doSensitivity = .true.
       if(cloud_der == l_none) doSensitivity = .false.
+
 !print*,maxval(WCin)
 !=========================================================================
 !                    >>>>>> CHECK MODEL-INPUT <<<<<<< 
@@ -437,8 +427,6 @@ contains
 !     TAKE FIRST NT ELEMENT OF YZ AS TANGENT Z
 
       IF (NZmodel-1 .LE. NT) THEN
-!        PRINT*,'TOO MANY TANGENT HEIGHTS'
-!        STOP
          call MLSMessage ( MLSMSG_Error, ModuleName, &
            &   'Too many tangent heights' )
       ENDIF
@@ -493,22 +481,19 @@ contains
 !----------------------------------
 
       LORS  = ISURF          
-!      lors=0
 
       TS    = 288._r8
       S     = 35._r8
       SWIND = 0._r8
 
-!      RATIO = 10.*(IIWC-1)**2*0.004+1.0E-9_r8
-!      NIWC=10
-         RATIO=1._r8
-         NIWC=1                ! FAST SENSITIVITY CALCULATION
+      RATIO=1._r8
+      NIWC=1                ! FAST SENSITIVITY CALCULATION
 
 !------------------------------------------
 !     PERFORM FULL SENSITIVITY CALCULATION
 !------------------------------------------
 
-    iwc_loop: do IIWC=1, NIWC
+      iwc_loop: do IIWC=1, NIWC
 !=========================================================================
 !                   >>>>>>> CLEAR-SKY MODULE <<<<<<<<
 !-------------------------------------------------------------------------
@@ -516,7 +501,6 @@ contains
 !     CONTINUMA AND LINE EMISSIONS.   
 !=========================================================================
 
-!
       frequency_loop: do IFR=1, NF
 
       IF ( doChannel(IFR) ) then
@@ -528,7 +512,7 @@ contains
 
 !         CALL HEADER(3)
 
-! find various layer indices         
+       ! find various layer indices         
          ICLD_TOP = 0
          I100_TOP = 0
          tau_wetCld=TAU0                       ! Initialize to TAU0
@@ -536,11 +520,11 @@ contains
 
          DO IL=1, NZmodel-1
             IF(CHK_CLD(IL) .NE. 0.)THEN
-               ICLD_TOP=IL                    ! FIND INDEX FOR CLOUD-TOP 
-               tau_fewCld(IL)=tau_wetAll(IL)     ! 100% SATURATION INSIDE CLOUD 
+               ICLD_TOP=IL                     ! FIND INDEX FOR CLOUD-TOP 
+               tau_fewCld(IL)=tau_wetAll(IL)   ! 100% SATURATION INSIDE CLOUD 
             ENDIF
-            IF(YP(IL) .GE. 100._r8) THEN      ! IF BELOW 100MB
-               I100_TOP=IL                    ! FIND INDEX FOR 100MB
+            IF(YP(IL) .GE. 100._r8) THEN       ! IF BELOW 100MB
+               I100_TOP=IL                     ! FIND INDEX FOR 100MB
             ENDIF
          ENDDO
 
@@ -549,14 +533,14 @@ contains
          ENDDO                              
          ! tau_wetCld will be used for transmission function calculation
 
-! the following stuffs are only used in cloudy cases
+         ! the following stuffs are only used in cloudy cases
             PHH      = 0._r8     ! phase function
             DDm      = 0._r8     ! mass-mean diameter
             W0       = 0._r8     ! single scattering albedo
             PH0      = 0._r8 
             W00      = 0._r8
             tau_clear = 0._r8
-      IF (.not. isClear) then 
+       IF (.not. isClear) then 
       
             select case (i_saturation)
             case (l_cloudy_110RH_below_top) 
@@ -605,7 +589,7 @@ contains
             tau(ILYR) = max(0._r8, DEPTH )
             tauc(ILYR)= max(0._r8, CDEPTH(1) )     ! only consider scattering coeff
          enddo model_layer_loop
-      Endif
+       Endif
 
 ! call radiative transfer calculations
       
@@ -692,14 +676,12 @@ contains
  
 
 !========================================================================
-!    FOV case
+!     FOV case
 !========================================================================
        IF (IFOV) THEN       ! **** BEGIN FOV AVERAGING ****
 
 !----------------------------------------------------------------------------
 !    >>>>>> ADDS THE EFFECTS OF ANTENNA SMEARING TO THE RADIANCE <<<<<<
-!----------------------------------------------------------------------------
-
 !----------------------------------------------------------------------------
 !        Compute the effect of air refraction. The following method is based 
 !        on the discussion with Bill Read, personal communication (09/25/01)    
@@ -738,7 +720,6 @@ contains
   	      DO I = 1, Multi
             
             If (ZZT1(I) .LT. 0._r8) then
-         !    RT= MIN( (ZZT1(I)+RE), RE)
                RT= ( ZZT1(I) + RE )
                schi = (1+znt1(I)) * ( RT/RE ) * (ZZT1(I) + RE) / Rs_eq    
             else if (ZZT1(I) .GE. 0._r8) then
@@ -746,12 +727,9 @@ contains
             Endif
 
    	    IF(ABS(schi) > 1.0) THEN
-!      	       PRINT *,'*** ERROR IN COMPUTING POINTING ANGLES'
-!               PRINT *,'    arg > 1.0 in ArcSin(arg) ..'
-!               STOP
               call MLSMessage ( MLSMSG_Error, ModuleName, &
-           &   'Pointing angle computation error: arg > 1.0 in ArcSin(arg)' )
-          END IF
+                   & 'Pointing angle computation error: arg > 1.0 in ArcSin(arg)' )
+            END IF
     	    ptg_angle(i) = Asin(schi) + elev_offset
 
   	      END DO
@@ -785,10 +763,7 @@ contains
 !    non-FOV case
 !========================================================================
 
-       ELSE      
-
-! set the last zzt1 to 120km to protect interpolation
-!           zzt1(NZmodel/8-1)=120000._r8     !not necessary now
+        ELSE      
 
          ! CLEAR-SKY BACKGROUND
          CALL INTERPOLATEVALUES(ZZT1, TT0(:,NZmodel), ZZT, TB0(:,IFR), &
@@ -811,12 +786,11 @@ contains
                IF(DTcir(I,IFR) .LT. 0. .AND. DTcir(I,IFR) .GT. -3.) &
                & SS(I,IFR) = -50.
                ENDDO
-!print*,ifr,frequency(ifr),DTcir(1,IFR),ss(1,ifr)
          ENDIF
 
        ENDIF
 
-      END IF                                 ! END OF DO CHANNEL
+      END IF                                 ! END IF doCHANNEL
       enddo frequency_loop
       enddo iwc_loop                         ! 
 
@@ -836,6 +810,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.58  2003/04/10 20:26:21  dwu
+! make i_saturation and cloud_der as a verbal argument
+!
 ! Revision 1.57  2003/04/05 17:30:27  dwu
 ! make icon=0 for cloudy-sky request if there is no cloud
 !
