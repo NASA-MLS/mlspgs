@@ -31,7 +31,19 @@ CHECKPATHS="yes"
 CHECKIDENTS="yes"
 #            ^^^---- "yes" if each slave to check its ident against master
 
-otheropts="$OTHEROPTS -g --wall -S'slv,mas,chu,opt1,log,pro,time'"
+# In addition to whatever options and switches may be set by the environment
+# variable OTHEROPTS, the following are set:
+# -g       trace path of execution through code sections
+# --wall   show timing in wall clock times
+# --cat    have master task catenate any split dgg/dgm files
+# slv      insert slave outputs among master's stdout
+# mas      show master's pvm activities as they occur
+# chu      show chunk divisions
+# opt1     show command line options
+# log      copy any log file messages to stdout
+# pro      announce input files at opening, output files at creation
+# time     summarize time consumed by each code  section, phase, etc.
+otheropts="$OTHEROPTS -g --wall --cat -S'slv,mas,chu,opt1,log,pro,time'"
 
 # Check that assumptions are valid
 if [ "$PGS_PC_INFO_FILE" = "" ]
@@ -162,6 +174,9 @@ else
 fi
 
 # $Log$
+# Revision 1.7  2004/01/07 17:26:09  pwagner
+# Merged in sips-friendly changes
+#
 # Revision 1.6  2003/12/11 23:07:57  pwagner
 # May check each slaves ident against master to verify pge versions are the same
 #
