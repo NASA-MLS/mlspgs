@@ -1639,6 +1639,10 @@ contains ! =====     Public Procedures     =============================
           if ( qt%instrumentModule /= instrumentModule ) cycle
         end if
         if ( present(radiometer) ) then
+          ! Somewhat trickier than one might think this one.  We don't
+          ! want to include quantities that have a radiometer purely by virtue
+          ! of having a signal
+          if ( qt%signal /= 0 ) cycle
           ! We can be a little lenient with vmr here.
           if ( quantityType == l_vmr ) then
             if ( .not. present ( molecule ) ) call MLSMessage ( &
@@ -2275,6 +2279,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.113  2004/10/07 23:12:19  vsnyder
+! Polish up Dump_Vector_Value for use in ForwardModelVectorTools
+!
 ! Revision 2.112  2004/06/16 22:31:28  vsnyder
 ! Account for mask in DivideVectors, exchange order of first two arguments
 !
