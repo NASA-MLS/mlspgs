@@ -8,13 +8,14 @@ MLSPGS_LIB_PATH=.
 OBJS=	MLSStrings.o MLSSignalNomenclature.o VerticalCoordinate.o \
 	VectorQuantities.o MLSNumerics.o MLSMessageModule.o \
 	SDPToolkit.o L2GPData.o L2AUXData.o VectorsModule.o Units.o \
-	VGrid.o
+	VGrid.o HGrid.o L1BData.o
 
 OBJS_DEBUG= 	MLSStrings.o_debug MLSSignalNomenclature.o_debug \
 		VerticalCoordinate.o_debug VectorQuantities.o_debug \
 		MLSNumerics.o_debug MLSMessageModule.o_debug \
 		SDPToolkit.o_debug L2GPData.o_debug L2AUXData.o_debug \
-		VectorsModule.o_debug Units.o_debug VGrid.o_debug
+		VectorsModule.o_debug Units.o_debug VGrid.o_debug \
+		HGrid.o_debug L1BData.o
 
 LIBPATH=.
 MODULEPATH=.
@@ -44,6 +45,9 @@ MLSStrings.o: MLSMessageModule.o
 MLSSignalNomenclature.o: MLSStrings.o MLSMessageModule.o
 VectorQuantities.o: MLSSignalNomenclature.o MLSStrings.o MLSMessageModule.o
 MLSNumerics.o: MLSMessageModule.o
+L1BData.o: Hdf.o SDPToolkit.o MLSCommon.o
+HGrid.o: MLSCommon.o MLSMessageModule.o MLSStrings.o L1BData.o MLSNumerics.o
+VGrid.o: MLSCommon.o VerticalCoordinate.o MLSStrings.o
 
 MLSMessageModule.o_debug: SDPToolkit.o_debug
 MLSStrings.o_debug: MLSMessageModule.o_debug
@@ -51,8 +55,16 @@ MLSSignalNomenclature.o_debug: MLSStrings.o_debug MLSMessageModule.o_debug
 VectorQuantities.o_debug: MLSSignalNomenclature.o_debug MLSStrings.o_debug \
 		MLSMessageModule.o_debug
 MLSNumerics.o_debug: MLSMessageModule.o_debug
+L1BData.o_debug: Hdf.o_debug SDPToolkit.o_debug MLSCommon.o_debug
+HGrid.o_debug: MLSCommon.o_debug MLSMessageModule.o_debug MLSStrings.o_debug \
+	L1BData.o_debug MLSNumerics.o_debug
+VGrid.o_debug: MLSCommon.o_debug VerticalCoordinate.o_debug MLSStrings.o_debug
+
 #
 # $Log$
+# Revision 1.17  1999/12/16 18:23:31  livesey
+# Routine checkin
+#
 # Revision 1.16  1999/12/16 01:27:45  livesey
 # Routine checkin
 #
