@@ -108,6 +108,9 @@ else
    lapack_message=Building $(PROG_NAME) with internally-supplied LAPACK
 endif
 
+utctotai_linker_line=-L${INSTALLDIR} -lutctotai
+utctotai_message=Building mlsl2 with toolkitless utc to tai conversion
+
 ifdef HDF5
 ifeq ($(MLSPLAT),Sun)
    hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 -R${HDF5}
@@ -153,8 +156,9 @@ $(PROG_NAME): $(ALLOBJS) $(itmdir)/libmlsl3.a $(libdir)/libmls.a \
 		@echo "$(hdf5_message)"
 		@cat fftw_link_message
 		$(FC) $(LDOPTS) -o $(PROG_NAME) $(ALLOBJS) $(PVM_OBJS)  \
-                      -L$(itmdir)/ -lmlsl3 \
-                      -L${libdir} -lmls \
+        -L$(itmdir)/ -lmlsl3 \
+        -L${libdir} -lmls \
+        $(utctotai_linker_line) \
 		-L${PGSTK} -lPGSTK \
         -L${HDFEOS} -lhdfeos \
         $(hdfeos5_linker_line) \
@@ -181,6 +185,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.18  2002/11/25 21:21:02  pwagner
+# gcc_version to allow building with Lahey on gcc post 2.96
+#
 # Revision 1.17  2002/09/06 00:09:07  pwagner
 # BLAS can now bring in more than a single
 #

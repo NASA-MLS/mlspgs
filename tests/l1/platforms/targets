@@ -116,6 +116,9 @@ else
    lapack_message=Building $(PROG_NAME) with internally-supplied LAPACK
 endif
 
+utctotai_linker_line=-L${INSTALLDIR} -lutctotai
+utctotai_message=Building mlsl2 with toolkitless utc to tai conversion
+
 ifdef HDF5
 ifeq ($(MLSPLAT),Sun)
    hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 -R${HDF5}
@@ -164,9 +167,10 @@ $(PROG_NAME): $(ALLOBJS) $(PVM_OBJS) libl1.a $(libdir)/libmls.a \
 		@echo "$(he5lib_message)"
 		@cat fftw_link_message | sed 's/mlsl3\[dm\]/'$(PROG_NAME)'/'
 		$(FC) $(LDOPTS) -o $(PROG_NAME) $(ALLOBJS) $(PVM_OBJS)  \
-                      -L./ -ll1 \
+        -L./ -ll1 \
         $(he5lib_linker_line) \
-                      -L${libdir} -lmls \
+        -L${libdir} -lmls \
+        $(utctotai_linker_line) \
 		-L${PGSTK} -lPGSTK \
         -L${HDFEOS} -lhdfeos \
         $(hdfeos5_linker_line) \
@@ -201,6 +205,9 @@ Sd.o:
 
 # ========================================================================
 # $Log$
+# Revision 1.21  2003/02/06 19:56:43  pwagner
+# Adjusted to reflect divers drivers back in itmdir
+#
 # Revision 1.20  2002/11/25 21:21:02  pwagner
 # gcc_version to allow building with Lahey on gcc post 2.96
 #
