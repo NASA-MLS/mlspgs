@@ -11,9 +11,9 @@ program MLSL2
   use MACHINE ! At least HP for command lines, and maybe GETARG, too
   use MLSL2Options, only: PCF_FOR_INPUT, PCF, OUTPUT_PRINT_UNIT, &
   & QUIT_ERROR_THRESHOLD, TOOLKIT, CREATEMETADATA, &
-  & PENALTY_FOR_NO_METADATA, PUNISH_FOR_INVALID_PCF
+  & PENALTY_FOR_NO_METADATA, PUNISH_FOR_INVALID_PCF, NORMAL_EXIT_STATUS
   use MLSMessageModule, only: MLSMessage, MLSMessageConfig, MLSMSG_Debug, &
-    & MLSMSG_Error, MLSMSG_Severity_to_quit
+    & MLSMSG_Error, MLSMSG_Severity_to_quit, MLSMessageExit
   use MLSPCF2, only: MLSPCF_L2CF_START
   use OBTAIN_MLSCF, only: Close_MLSCF, Open_MLSCF
   use OUTPUT_M, only: OUTPUT, PRUNIT
@@ -285,6 +285,11 @@ program MLSL2
   call deallocate_decl
   call deallocate_tree
   call FreePVMArgs
+  if(NORMAL_EXIT_STATUS /= 0 .and. .not. parallel%slave) then
+     call MLSMessageExit(NORMAL_EXIT_STATUS)
+   else
+     call MLSMessageExit
+   endif
 
 contains
   subroutine SayTime ( What )
@@ -315,6 +320,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.49  2001/07/16 23:43:15  pwagner
+! With settable NORMAL_EXIT_STATUS
+!
 ! Revision 2.48  2001/05/25 01:03:47  livesey
 ! Working parallel version
 !
