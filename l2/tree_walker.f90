@@ -124,7 +124,7 @@ contains ! ====     Public Procedures     ==============================
     type (VectorTemplate_T), dimension(:), pointer :: VectorTemplates
 
     nullify ( chunks, forwardModelConfigDatabase, griddedDataBase, &
-      & hGrids, l2auxDatabase, l2gpDatabase, matrices, mifGeolocation, &
+      & directDatabase, hGrids, l2auxDatabase, l2gpDatabase, matrices, mifGeolocation, &
       & qtyTemplates, vectors, vectorTemplates, fGrids, vGrids )
 
     depth = 0
@@ -403,6 +403,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.107  2003/06/23 23:55:17  pwagner
+! Added DirectData_T to keep track of data written directly
+!
 ! Revision 2.106  2003/06/20 19:38:26  pwagner
 ! Allows direct writing of output products
 !
