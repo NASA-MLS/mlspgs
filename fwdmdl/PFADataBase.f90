@@ -134,9 +134,13 @@ contains ! =====     Public Procedures     =============================
     use Physics, only: SpeedOfLight
     use String_Table, only: Display_String
     use Output_m, only: NewLine, Output
+    use VGridsDatabase, only: Dump
 
     type(PFAData_t), intent(in) :: PFADatum
-    integer, intent(in), optional :: Details ! >0 => Dump arrays, 0 => Don't
+    integer, intent(in), optional :: Details ! <= 0 -> Don't dump arrays,
+                                             ! 1 -> Dump Betas
+                                             ! 2 -> Dump Betas and unnamed grids
+                                             ! >2 -> Dump Betas, grids and derivatives
     integer, intent(in), optional :: Index   ! In PFA Database
 
     integer, parameter :: CK = kind(speedOfLight)
@@ -172,18 +176,29 @@ contains ! =====     Public Procedures     =============================
     call output ( real(pfaDatum%vel_rel*c,rk), before=' Velocity linearization: ', &
       & after='kms', advance='yes' )
 
-    if ( pfaDatum%tGrid%name /= 0 ) &
-      & call display_string ( pfaDatum%tGrid%name, before=' TGrid: ' )
+    if ( pfaDatum%tGrid%name /= 0 ) then
+      call display_string ( pfaDatum%tGrid%name, before=' TGrid: ' )
+    else if ( myDetails > 1 ) then
+      call output ( ' TGrid: ' )
+      call dump ( pfaDatum%tGrid )
+    end if
 
-    if ( pfaDatum%vGrid%name /= 0 ) &
-      & call display_string ( pfaDatum%vGrid%name, before=' VGrid: ' )
+    if ( pfaDatum%vGrid%name /= 0 ) then
+      call display_string ( pfaDatum%vGrid%name, before=' VGrid: ' )
+    else if ( myDetails > 1 ) then
+      if ( pfaDatum%tGrid%name /= 0 ) call newLine
+      call dump ( pfaDatum%vGrid )
+    end if
 
-    if ( pfaDatum%tGrid%name /= 0 .or. pfaDatum%vGrid%name /= 0 ) &
+    if ( pfaDatum%tGrid%name /= 0 .and. pfaDatum%vGrid%name == 0 .and. &
+      &  myDetails > 1 &
+      & .or. pfaDatum%vGrid%name /= 0 ) &
       & call newLine
 
     if ( myDetails <= 0 ) return
 
     call dump ( pfaDatum%absorption, name=' ln Absorption' )
+    if ( myDetails <= 2 ) return
     call dump ( pfaDatum%dAbsDwc, name=' d ln Absorption / d wc' )
     call dump ( pfaDatum%dAbsDnc, name=' d ln Absorption / d nc' )
     call dump ( pfaDatum%dAbsDnu, name=' d ln Absorption / d nu' )
@@ -652,6 +667,9 @@ contains ! =====     Public Procedures     =============================
 end module PFADataBase_m
 
 ! $Log$
+! Revision 2.19  2005/03/17 00:00:09  vsnyder
+! Spiff up a dump
+!
 ! Revision 2.18  2005/03/03 21:12:36  vsnyder
 ! Remove UseMolecule from WritePFAData, remove unreferenced symbols
 !
