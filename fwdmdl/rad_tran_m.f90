@@ -5,7 +5,7 @@ module RAD_TRAN_M
 
   implicit NONE
   private
-  public :: RAD_TRAN, RAD_TRAN_POL, DRAD_TRAN_DF, DRAD_TRAN_DT, DRAD_TRAN_DX
+  public :: RAD_TRAN, RAD_TRAN_POL, DRAD_TRAN_DF, DRAD_TRAN_DT, DRAD_TRAN_DX, rad_tran_cld
   public :: Get_Do_Calc
   private ::  Get_Do_Calc_Indexed, Get_Inds
 
@@ -103,6 +103,79 @@ contains
     call scrt_dn ( t_script, e_rflty, incoptdepth, tau, rad, i_stop )
 
   end subroutine Rad_tran
+
+!--------------------------------------- Rad_tran_cld  -------------
+! This is the radiative transfer model including cloud scattering !
+
+  subroutine Rad_tran_cld ( gl_inds, more_inds, e_rflty, del_zeta, &
+                     &  alpha_path_c, ref_cor, do_gl, incoptdepth, &
+                     &  alpha_path_gl, ds_dz_gw, t_script, &
+                     &  tau, rad, i_stop, tt_path, w0_path )
+
+    use GLNP, only: NG
+    use MLSCommon, only: RP, IP
+    use CCRT_M, ONLY: CCRT
+
+  ! inputs
+
+    integer(ip), intent(in) :: gl_inds(:)    ! Gauss-Legendre grid indices
+    integer(ip), intent(in) :: more_inds(:)  ! Places in the coarse path
+  !                                            where GL is needed
+    real(rp), intent(in) :: e_rflty          ! earth reflectivity value (0--1).
+    real(rp), intent(in) :: del_zeta(:)      ! path -log(P) differences on the
+      !              main grid.  This is for the whole coarse path, not just
+      !              the part up to the black-out
+    real(rp), intent(in) :: alpha_path_c(:)  ! absorption coefficient on coarse
+  !                                            grid.
+    real(rp), intent(in) :: ref_cor(:)       ! refracted to unrefracted path
+  !                                            length ratios.
+    logical, intent(in) :: do_gl(:)          ! path flag indicating where to do
+  !                                            gl integrations.
+    real(rp), intent(inout) :: incoptdepth(:) ! incremental path opacities
+  !                            from one-sided layer calculation on output.
+  !                            it is the full integrated layer opacity.
+    real(rp), intent(in) :: alpha_path_gl(:) ! absorption coefficient on gl
+  !                                            grid.
+    real(rp), intent(in) :: ds_dz_gw(:)      ! path length wrt zeta derivative * gw.
+    real(rp), intent(in) :: t_script(:)      ! differential temperatures (K)
+  !                                            on coarse grid.
+    real(rp), intent(in) :: tt_path(:)       ! scattering source function
+    real(rp), intent(in) :: w0_path(:)       ! single scattering albedo
+
+  ! outputs
+
+    real(rp), intent(out) :: tau(:)          ! transmission function.
+    real(rp), intent(out) :: rad             ! radiance (K)
+    integer(ip), intent(out) :: i_stop       ! path stop index
+
+  ! Internals
+
+    integer :: A, AA, I
+  !                                            where GL is needed
+
+  ! Begin code
+
+  ! see if anything needs to be gl-d
+
+    if ( size(gl_inds) > 0 ) then
+
+      a = 1
+      do i = 1, size(more_inds)
+        aa = gl_inds(a)
+        incoptdepth(more_inds(i)) = incoptdepth(more_inds(i)) + &
+          & del_zeta(more_inds(i)) * &
+          & sum( (alpha_path_gl(a:a+ng-1) -  alpha_path_c(more_inds(i))) * &            
+               & ds_dz_gw(aa:aa+ng-1) ) 
+        a = a + ng
+      end do ! i
+
+    end if
+
+    incoptdepth = ref_cor * incoptdepth
+
+    call ccrt ( t_script, e_rflty, incoptdepth, tau, rad, i_stop, tt_path, w0_path )
+
+  end subroutine Rad_tran_cld
 
 !--------------------------------------------------  Rad_Tran_Pol  -----
 
@@ -999,6 +1072,9 @@ contains
 
 end module RAD_TRAN_M
 ! $Log$
+! Revision 2.32  2003/12/03 00:25:32  vsnyder
+! Corrections to hydrostatic calculation
+!
 ! Revision 2.31  2003/11/04 02:49:50  vsnyder
 ! Use GC_INDS calculated in FullForwardModel for more_inds
 !
