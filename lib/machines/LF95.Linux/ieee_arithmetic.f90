@@ -7,13 +7,12 @@ MODULE IEEE_ARITHMETIC              ! Common utilities for the MLSL1 program
 
 !  use SUNSOWNIEEE, only: ir_isnan, ir_isinf, r_quiet_nan
 
-  IMPLICIT NONE
+  implicit NONE
   private
 
-  ! These are the ieee functions and constants needed in mls
+  ! These are the ieee functions and constants needed in MLS
   ! that Lahey fails to supply.
-  ! An improvement might be to introduce function interfaces to allow
-  ! both single and double precision versions.
+
   public :: IEEE_Class_Type
   public :: IEEE_Is_finite, IEEE_Is_NaN, IEEE_Quiet_NaN, IEEE_Support_NaN
   public :: IEEE_Value
@@ -113,6 +112,8 @@ CONTAINS
     case ( ieee_quiet_nan%what )     ! IEEE_Quiet_NaN
       the_value = NaN
     case ( ieee_signaling_nan%what ) ! IEEE_Signaling_NaN
+      ! The following is necessary only because I don't know how to generate a
+      ! signaling NaN--this obviously fails if any number ever matches this
       the_value = 9.e19
     end select
   END FUNCTION IEEE_VALUE_D
@@ -137,6 +138,8 @@ CONTAINS
     case ( ieee_quiet_nan%what )     ! IEEE_Quiet_NaN
       the_value = NaN
     case ( ieee_signaling_nan%what ) ! IEEE_Signaling_NaN
+      ! The following is necessary only because I don't know how to generate a
+      ! signaling NaN--this obviously fails if any number ever matches this
       the_value = 9.e19
     end select
   END FUNCTION IEEE_VALUE_S
@@ -145,6 +148,11 @@ END MODULE IEEE_ARITHMETIC
 
 !
 ! $Log$
+! Revision 1.2  2003/07/03 19:11:29  vsnyder
+! Add IEEE_Support_NaN, IEEE_Is_NaN, IEEE_Class_Type.
+! Make IEEE_Quiet_NaN to be of IEEE_Class_Type.
+! Make IEEE_Value more like the IEEE TR and Fortran 2003 standard.
+!
 ! Revision 1.1  2001/10/22 18:29:47  pwagner
 ! First commit
 !

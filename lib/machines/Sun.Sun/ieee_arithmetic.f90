@@ -7,13 +7,12 @@ MODULE IEEE_ARITHMETIC              ! Common utilities for the MLSL1 program
 
 !  use SUNSOWNIEEE, only: ir_isnan, ir_isinf, r_quiet_nan
 
-  IMPLICIT NONE
+  implicit NONE
   private
 
-  ! These are the ieee functions and constants needed in mls
+  ! These are the ieee functions and constants needed in MLS
   ! that Sun fails to supply.
-  ! An improvement might be to introduce function interfaces to allow
-  ! both single and double precision versions.
+
   public :: IEEE_Class_Type
   public :: IEEE_Is_finite, IEEE_Is_NaN, IEEE_Quiet_NaN, IEEE_Support_NaN
   public :: IEEE_Value
@@ -30,9 +29,6 @@ MODULE IEEE_ARITHMETIC              ! Common utilities for the MLSL1 program
   ! since it fails to conform to ISO/IEC TR15580:1998(E).
   ! If we should ever obtain one that conforms we may cheerfully
   ! dispose of this crude hack
-
-  ! The following is made necessary only because Sun's own f95
-  ! fails to comply--this obviously fails if any number ever matches this
 
   type IEEE_Class_Type
     private
@@ -104,6 +100,9 @@ CONTAINS
     double precision ::                  the_value
     
   ! Private
+
+  ! The following is made necessary only because Sun's own f95
+  ! fails to comply--this obviously fails if any number ever matches this
     select case ( class%what )
     case ( ieee_quiet_nan%what )     ! IEEE_Quiet_NaN
       the_value = -9.e19
@@ -119,6 +118,9 @@ CONTAINS
     real ::                              the_value
     
   ! Private
+
+  ! The following is made necessary only because Sun's own f95
+  ! fails to comply--this obviously fails if any number ever matches this
     select case ( class%what )
     case ( ieee_quiet_nan%what )     ! IEEE_Quiet_NaN
       the_value = -9.e19
@@ -131,6 +133,11 @@ END MODULE IEEE_ARITHMETIC
 
 !
 ! $Log$
+! Revision 1.4  2003/07/03 19:11:57  vsnyder
+! Add IEEE_Support_NaN, IEEE_Is_NaN, IEEE_Class_Type.
+! Make IEEE_Quiet_NaN to be of IEEE_Class_Type.
+! Make IEEE_Value more like the IEEE TR and Fortran 2003 standard.
+!
 ! Revision 1.3  2001/09/18 17:18:12  pwagner
 ! Strictly so the darn thing compiles--let others (or Sun) make it work
 !
