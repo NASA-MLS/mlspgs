@@ -44,12 +44,11 @@ contains
       REAL(r8) :: SS(NT)                            ! CLOUD RADIANCE SENSITIVITY
       REAL(r8) :: TAUeff(NT)                        ! CLOUD EFFECTIVE OPTICAL DEPTH
 
-      REAL(r8) :: Trans(NH-1,NT)                       ! Clear Transmission Func 
-      REAL(r8) :: YZavg(NH-1)                       ! Clear Transmission Func grid
+      REAL(r8) :: Trans(2*NH)                       ! Clear Transmission Func 
 
-      REAL(r8) :: delTAU100(NH-1)                   ! 100% AIR EXTINCTION 
-      REAL(r8) :: delTAU(NH-1)                      ! TOTAL EXTINCTION 
-      REAL(r8) :: delTAUc(NH-1)                     ! CLOUDY-SKY EXTINCTION
+      REAL(r8) :: delTAU100(NH-1)                   ! 100% AIR optical thickness 
+      REAL(r8) :: delTAU(NH-1)                      ! TOTAL sky optical thickness 
+      REAL(r8) :: delTAUc(NH-1)                     ! CLOUDY-SKY optical thickness
 
       REAL(r8) :: Trans_out(noS,NT)                 ! TOTAL Clear Trans Func
       REAL(r8) :: BETA(NZ-1)                        ! TOTAL EXTINCTION
@@ -61,7 +60,7 @@ contains
 
       REAL(r8) :: RE, xout, sum
       REAL(r8) :: HT,C_EXT,A_EXT,TGT,DS,DTAU,A_COL
-      REAL(r8) :: ZH(NH-1),ZA(NZ-1), ZS(NoS)
+      REAL(r8) :: ZH(NH-1),ZA(NZ-1), S(2*NH)
       INTEGER :: I,K,J,iflag, JM
 !-----------------------------------------------------------------------------
 
@@ -74,22 +73,33 @@ contains
 
       do k=1,nt
         sum = 0._r8
-        do i=1,noS
-          zs(i) = sqrt(Slevl(i)**2+(re+zt(k))**2) - (re+zt(k))
-        enddo
-      
-        DO I=NH-1,1,-1
-          yzavg(i) = (yz(i)+yz(i+1))/2
-          if(yzavg(i) > zt(k)) then
-            sum = sum +  deltau100(i)*sqrt(re/2/(yzavg(i)-zt(k)))
-            trans(i,k) = sum
-	    jm = i
-          endif
-        ENDDO
-        trans(jm:nh-1,k) = exp(-trans(jm:nh-1,k))
+        s = 0._r8    
+            s(1) = - sqrt((re+yz(NH))**2-(re+zt(k))**2)
+            s(2*NH) = sqrt((re+yz(NH))**2-(re+zt(k))**2)
+        DO I=1,NH
 
-      CALL INTERPOLATEVALUES(yzavg(jm:nh-1),reshape(trans(jm:nh-1,k),(/nh-jm/)), &
-	& zs, trans_out(:,k),method='Linear')
+          if(yz(NH-i+1) > zt(k) .and. i > 1) then
+            ! s will zero for heights below zt
+            s(i) = - sqrt((re+yz(NH-i+1))**2-(re+zt(k))**2)
+            ds = s(i) - s(i-1)
+            sum = sum +  deltau100(NH-i+1)*ds/(yz(NH-i+2)-yz(NH-i+1))
+          endif
+            trans(i) = sum     ! trans keeps constant for heights below zt
+        ENDDO
+
+        DO I=1,NH
+          if(yz(i) > zt(k) .and. i < NH) then
+            s(NH+i) = sqrt((re+yz(i))**2-(re+zt(k))**2)
+            ds = s(NH+i) - s(NH+i-1)
+            sum = sum +  deltau100(i)*ds/(yz(i+1)-yz(i))
+          endif
+            trans(NH+i) = sum
+        ENDDO
+
+        where(trans < 10._r8) trans = exp(-trans)
+        where(trans > 10._r8) trans = 0._r8
+      ! sLevl is defined differently from s
+      CALL INTERPOLATEVALUES(s,trans, -Slevl,trans_out(:,k),method='Linear')
       enddo
 
 ! CONVERT DELTAU TO BETA
@@ -188,6 +198,9 @@ contains
 end module ModelOutput
 
 ! $Log$
+! Revision 1.6  2001/10/11 20:03:00  jonathan
+! *** empty log message ***
+!
 ! Revision 1.5  2001/10/10 02:49:35  dwu
 ! fix problem in trans calculation
 !
