@@ -566,8 +566,8 @@ contains
 
       use DNWT_Module, only: FlagName, NF_EVALF, NF_EVALJ, NF_SOLVE, &
         & NF_NEWX, NF_GMOVE, NF_BEST, NF_AITKEN, NF_DX, NF_DX_AITKEN, &
-        & NF_START, NF_TOLX, NF_TOLX_BEST, NF_TOLF, NF_TOO_SMALL, &
-        & NF_FANDJ, NWT, NWT_T, NWTA, NWTDB, RK
+        & NF_SMALLEST_FLAG, NF_START, NF_TOLX, NF_TOLX_BEST, NF_TOLF, &
+        & NF_TOO_SMALL, NF_FANDJ, NWT, NWT_T, NWTA, NWTDB, RK
       use Dump_0, only: Dump
       use ForwardModelWrappers, only: ForwardModel
       use ForwardModelIntermediate, only: ForwardModelIntermediate_T, &
@@ -583,8 +583,8 @@ contains
       use Symbol_Table, only: ENTER_TERMINAL
       use Symbol_Types, only: T_IDENTIFIER
       use VectorsModule, only: AddToVector, DestroyVectorInfo, &
-        & DestroyVectorValue, Dump, Multiply, operator(.DOT.), operator(-), &
-        & ScaleVector, SubtractFromVector
+        & DestroyVectorValue, Dump, Multiply, operator(.DOT.), &
+        & operator(.MDOT.), operator(-), ScaleVector, SubtractFromVector
 
       ! Local Variables
       type(nwt_T) :: AJ                 ! "About the Jacobian", see NWT.
@@ -594,6 +594,8 @@ contains
       type (ForwardModelStatus_T) :: FmStat ! Status for forward model
       type (ForwardModelIntermediate_T) :: Fmw ! Work space for forward model
       type(vector_T) :: FuzzState       ! Random numbers to fuzz the state
+      integer, parameter :: NF_GetJ = NF_Smallest_Flag - 1 ! Take an extra loop
+                                        ! to get J.
       integer :: J, K                   ! Loop inductors and subscripts
       type(matrix_SPD_T) :: NormalEquations  ! Jacobian**T * Jacobian
       integer :: NumF, NumJ             ! Number of Function, Jacobian evaluations
@@ -634,8 +636,7 @@ contains
       call cloneVector ( v(covarianceDiag), v(x), vectorNameText='_covarianceDiag' )
       call cloneVector ( v(dx), v(x), vectorNameText='_DX' )
       call cloneVector ( v(dxUnScaled), v(x), vectorNameText='_DxUnscaled' )
-      call copyVector ( v(f_rowScaled), measurements, clone=.true., & ! mask only
-        & noValues=.true., vectorNameText='_f_rowScaled' )
+      call cloneVector ( v(f_rowScaled), measurements, vectorNameText='_f_rowScaled' )
       call cloneVector ( v(gradient), v(x), vectorNameText='_gradient' )
       call cloneVector ( v(reg_X_x), measurements, vectorNameText='_reg_X_x' )
       if ( got(f_measurementSD) ) then
@@ -688,11 +689,14 @@ contains
       call add_to_retrieval_timing( 'newton_solver', t1 )
       call time_now ( t1 )
       do ! Newtonian iteration
-        if ( nwt_flag /= nf_start .and. index(switches,'ndb') /= 0 ) &
+        if ( nwt_flag /= nf_getJ ) then ! not taking a special iteration to get J
+          if ( nwt_flag /= nf_start .and. index(switches,'ndb') /= 0 ) &
             & call nwtdb
-        call nwta ( nwt_flag, aj )
+          call nwta ( nwt_flag, aj )
+        end if
           if ( index(switches,'nwt') /= 0 ) then
             call FlagName ( nwt_flag, theFlagName )
+            if ( nwt_flag == nf_getJ ) theFlagName = 'GETJ'
             call output ( 'Newton method flag = ' )
             call output ( trim(theFlagName) )
             call output ( ', numF = ' )
@@ -717,9 +721,14 @@ contains
                 call output ( maxFunctions )
                 call output ( ')', advance='yes' )
               end if
-!??? At this point we should restore BestX, run the forward model again
-!??? to get a new Jacobian, and form normal equations -- the last two so
-!??? that the a posteriori covariance is consistent with BestX.
+            ! Restore BestX, run the forward model again to get a new
+            ! Jacobian, and form normal equations -- the last two so that the
+            ! a posteriori covariance is consistent with BestX.
+            call copyVector ( v(x), v(bestX) ) ! x := bestX
+            if ( got(f_outputCovariance) .or. got(f_outputSD) ) then
+              nwt_flag = nf_getJ
+              cycle
+            end if
             exit
           end if
 
@@ -758,7 +767,7 @@ contains
             ! that is due to apriori is $\mathbf{
             ! ( a - x_n )^T F^T F ( a - x_n ) = ( a - x_n )^T \left [ 
             ! C ( a - x_n ) \right ] }$
-            aprioriNorm = v(aprioriMinusX) .dot. v(covarianceXapriori)
+            aprioriNorm = v(aprioriMinusX) .mdot. v(covarianceXapriori)
           else
             aprioriNorm = 0.0_r8
           end if
@@ -771,6 +780,7 @@ contains
           call add_to_retrieval_timing( 'newton_solver', t1 )
           call time_now ( t1 )
           call clearVector ( v(f) )
+          call copyVectorMask ( v(f), measurements )
           ! Loop over MAFs
           do while (fmStat%maf < chunk%lastMAFIndex-chunk%firstMAFIndex+1)
             fmStat%maf = fmStat%maf + 1
@@ -785,9 +795,9 @@ contains
           call subtractFromVector ( v(f), measurements )
           call copyVector ( v(f_rowScaled), v(f) ) ! f_rowScaled := f
           if ( got(f_measurementSD) ) call multiply ( v(f_rowScaled), v(weight) )
-          aj%fnorm = sqrt ( aprioriNorm + ( v(f_rowScaled) .dot. v(f_rowScaled) ) )
+          aj%fnorm = sqrt ( aprioriNorm + ( v(f_rowScaled) .mdot. v(f_rowScaled) ) )
             if ( index(switches,'fvec') /= 0 ) &
-              & call dump ( v(f), name='Residual' )
+              & call dump ( v(f_rowScaled), name='RowScaledResidual' )
             if ( index(switches,'sca') /= 0 ) then
                 call output ( ' | F | = ' )
                 call output ( aj%fnorm, format='(1pe14.7)', advance='yes' )
@@ -801,12 +811,17 @@ contains
                 call output ( toleranceF )
                 call output ( ')', advance='yes' )
               end if
-!??? At this point we should restore BestX, run the forward model again
-!??? to get a new Jacobian, and form normal equations -- the last two so
-!??? that the a posteriori covariance is consistent with BestX.
+            ! Restore BestX, run the forward model again to get a new
+            ! Jacobian, and form normal equations -- the last two so that the
+            ! a posteriori covariance is consistent with BestX.
+            call copyVector ( v(x), v(bestX) ) ! x := bestX
+            if ( got(f_outputCovariance) .or. got(f_outputSD) ) then
+              nwt_flag = nf_getJ
+              cycle
+            end if
             exit
           end if
-        case ( nf_evalj ) ! ..............................  EVALJ  .....
+        case ( nf_evalj, nf_getJ ) ! ...............  EVALJ, GETJ  .....
         !{IF ( too many Jacobian values ) EXIT \\
         ! Compute the Jacobian matrix $\bf K$ if you didn't do it when NFLAG
         ! was NF\_EVALF:\\
@@ -869,7 +884,7 @@ contains
         !   \item[AJ\%GRADN] = L2 norm of Gradient = $|| {\bf J^T f}||_2$.
         !   \end{description}
           numJ = numJ + 1
-          if ( numJ > maxJacobians ) then
+          if ( numJ > maxJacobians .and. nwt_flag /= nf_getJ ) then
               if ( index(switches,'nwt') /= 0 ) then
                 call output ( &
                   & 'Newton iteration terminated because Jacobian evaluations (' )
@@ -878,10 +893,12 @@ contains
                 call output ( maxJacobians )
                 call output ( ')', advance='yes' )
               end if
-!??? At this point we should restore BestX, run the forward model again
-!??? to get a new Jacobian, and form normal equations -- the last two so
-!??? that the a posteriori covariance is consistent with BestX.
-            exit
+            ! Restore BestX, run the forward model one more time to get a new
+            ! Jacobian, and form normal equations -- the last two so that the
+            ! a posteriori covariance is consistent with BestX.
+            call copyVector ( v(x), v(bestX) ) ! x := bestX
+            if ( .not. (got(f_outputCovariance) .or. got(f_outputSD)) ) exit
+            nwt_flag = nf_getJ
           end if
           update = got(f_apriori)
           if ( update ) then ! start normal equations with apriori
@@ -922,6 +939,8 @@ contains
             !  0}$. So that all of the parts of the problem are solving for
             !  ${\bf\delta x}$, we subtract ${\bf R x}_{n-1}$ from both sides to
             !  get ${\bf R \delta x} \simeq -{\bf R x}_{n-1}$.
+
+            ! The "jacobian" matrix is used for scratch here.
             call regularize ( jacobian, regOrders, regQuants, regWeight )
             call multiplyMatrixVectorNoT ( jacobian, v(x), v(reg_X_x) ) ! regularization * x_n
             call scaleVector ( v(reg_X_x), -regWeight )   ! -R x_n
@@ -938,11 +957,10 @@ contains
 
           !{ Add some early stabilization.  This consists of adding equations
           ! of the form $\lambda {\bf I} \simeq {\bf 0}$.
-          if ( got(f_lambda) ) then
+          if ( nwt_flag /= nf_getJ .and. got(f_lambda) ) then
             call updateDiagonal ( normalEquations, initLambda )
             update = .true.
-            ! The right-hand-side is zero -- no need to update ATb
-            ! or aj%fnorm
+            ! The right-hand-side is zero -- no need to update ATb or aj%fnorm
           end if
 
           fmStat%maf = 0
@@ -1008,7 +1026,7 @@ contains
           end do ! mafs
 
           ! aj%fnorm is still the square of the function norm
-          aj%fnorm = aj%fnorm + ( v(f_rowScaled) .dot. v(f_rowScaled) )
+          aj%fnorm = aj%fnorm + ( v(f_rowScaled) .mdot. v(f_rowScaled) )
 
           !{Column Scale $\bf J$ (row and column scale ${\bf J}^T {\bf J}$)
           ! using the matrix $\bf\Sigma$. We cater for several choices of
@@ -1087,6 +1105,7 @@ contains
             if ( index(switches,'spa') /= 0 ) &
               & call dump_struct ( factored%m, &
                 & 'Sparseness structure of blocks of factor:', upper=.true. )
+          if ( nwt_flag == nf_getJ ) exit ! taking a special iteration to get J
           aj%diag = minDiag ( factored ) ! element on diagonal with
           !       smallest absolute value, after triangularization
           aj%ajn = maxL1 ( factored%m ) ! maximum L1 norm of
@@ -1181,8 +1200,8 @@ contains
           if ( aj%fnmin < 0.0 ) then
             call output ( 'How can aj%fnmin be negative?  aj%fnmin = ' )
             call output ( aj%fnmin, advance='yes' )
-            call output ( 'aj%fnorm = ' )
-            call output ( aj%fnorm, advance='yes' )
+            call output ( 'aj%fnorm**2 = ' )
+            call output ( aj%fnorm**2, advance='yes' )
             call output ( 'norm(candidateDX) = ' )
             call output ( v(candidateDX) .dot. v(candidateDX), advance='yes' )
             call MLSMessage ( MLSMSG_Warning, ModuleName, &
@@ -1311,9 +1330,13 @@ contains
                 & call output ( &
                   & 'Newton iteration terminated because of convergence', &
                   & advance='yes' )
+            if ( got(f_outputCovariance) .or. got(f_outputSD) ) then
+              nwt_flag = nf_getJ
+              cycle
+            end if
             exit
           end if
-          diagonal = .not. diagonal
+          diagonal = .false.
           nwt_flag = nf_start
         case ( nf_fandj ) ! ...............................  FANDJ .....
           ! There is probably an error in the way F or J is computed.
@@ -1353,6 +1376,10 @@ contains
         end if
       end do ! Newton iteration
       if ( got(f_outputCovariance) .or. got(f_outputSD) ) then
+        if ( nwt_flag /= nf_getJ ) then
+          print *, 'BUG in Retrieval module -- should need to getJ to quit'
+          stop
+        end if
         if ( got(f_diagnostics) ) then
           ! Compute rows of Jacobian actually used.  Don't count rows due
           ! to Levenberg-Marquardt stabilization.  Do count rows due to a
@@ -1363,7 +1390,8 @@ contains
           do j = 1, normalEquations%m%col%nb
             if ( associated(normalEquations%m%col%vec%quantities(j)%mask) ) &
               & jacobian_rows = jacobian_rows - &
-              & countBits(normalEquations%m%col%vec%quantities(j)%mask)
+              & countBits(normalEquations%m%col%vec%quantities(j)%mask, &
+                & what=m_linAlg)
           end do
           if ( got(f_apriori) ) &
             & jacobian_rows = jacobian_rows + jacobian_cols
@@ -1372,23 +1400,6 @@ contains
           call fillDiagVec ( l_jacobian_cols, real(jacobian_cols,r8) )
           call fillDiagVec ( l_jacobian_cols, real(jacobian_rows,r8) )
         end if
-        ! Subtract sum of Levenberg-Marquardt updates from normal
-        ! equations
-        call updateDiagonal ( normalEquations, -aj%sqt**2 )
-        ! Subtract a priori covariance matrix from normal equations
-        ! call negate ( covariance%m )
-        ! call addToMatrix ( normalEquations%m, covariance%m )
-        ! call negate ( covariance%m )
-        !??? Commented out, pending deep thought.!???
-        !??? If we remove a priori covariance from normal equations
-        !??? we should presumably also remove regularization.  Maybe we
-        !??? should remove regularization anyway.  On the other hand, if
-        !??? remove them, maybe the normal equations are singular?
-        ! Re-factor normal equations
-        call add_to_retrieval_timing( 'newton_solver', t1 )
-        call time_now ( t1 )
-        call choleskyFactor ( factored, normalEquations )
-        call add_to_retrieval_timing( 'cholesky_factor', t1 )
         call time_now ( t1 )
         call invertCholesky ( factored, outputCovariance%m )
         call add_to_retrieval_timing( 'cholesky_invert', t1 )
@@ -2676,6 +2687,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.135  2002/02/14 21:55:31  vsnyder
+! Account for mask.  Get a final Jacobian using Best X.  Cosmetic changes.
+!
 ! Revision 2.134  2002/02/13 00:11:13  vsnyder
 ! Test fnmin both places it's formed
 !
