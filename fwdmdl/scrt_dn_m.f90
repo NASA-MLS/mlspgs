@@ -63,7 +63,7 @@ contains
       tau(i_stop) = exp(total_opacity)
       radiance = radiance + t_script(i_stop) * tau(i_stop)
       if ( total_opacity < black_out ) then
-        tau(i_stop+1:n_path) = 0.0_rp
+        tau(i_stop+1:n_path) = 1.0_rp
         return
       end if
     end do
@@ -88,9 +88,10 @@ contains
       radiance = radiance + t_script(i_stop) * tau(i_stop)
     end do
 
-    tau(i_stop+1:n_path) = 0.0_rp
+    tau(i_stop+1:n_path) = 1.0_rp
 
   end subroutine SCRT_DN
+
 !-------------------------------------------  GET_DSCRT_NO_T_DN  -------
 ! Compute the scalarized condensed radiative transfer derivatives,
 ! without derivatives of the differential Temperatures w.r.t. species.
@@ -207,6 +208,9 @@ contains
 
 end module SCRT_DN_M
 ! $Log$
+! Revision 2.7  2004/09/04 01:49:46  vsnyder
+! Handle earth reflectivity at tangent point correctly in derivatives.
+!
 ! Revision 2.6  2003/06/03 23:58:19  vsnyder
 ! Correct a comment
 !
