@@ -28,7 +28,7 @@
 
       REAL(r8) :: RE
       REAL(r8) :: HT,C_EXT,A_EXT,TGT,DS,DTAU,A_COL
-      REAL(r8) :: ZH(NH),ZA(NZ)
+      REAL(r8) :: ZH(NH-1),ZA(NH-1)
       INTEGER :: I,K,J,iflag
 !-----------------------------------------------------------------------------
 
@@ -46,8 +46,8 @@
 
       DO J=1,NZ-1
       
-         CALL LOCATE (ZH,NH-1,NZ-1,ZA(J),JM)
-         
+         CALL LOCATE (ZH,NH-1, NH-1, ZA(J),JM)
+        
          BETA(J,IRF)=((ZH(JM+1)-ZA(J))*delTAU(JM)+(ZA(J)-ZH(JM))*   &
      &                delTAU(JM+1))/(ZH(JM+1)-ZH(JM))             
 
