@@ -85,6 +85,7 @@ Character (LEN=80) :: Fnd, Line
   ier = 0
 
   if ( .not. present(fmi) ) then
+    line = "Reading " // fmc%z
     CLOSE(11,iostat=io)
     OPEN(11,file=FMC%Z,status='OLD',action='READ',iostat=io)
     if(io /= 0) goto 99
@@ -979,6 +980,9 @@ END SUBROUTINE get_filters
 
 end module L2_LOAD_M
 ! $Log$
+! Revision 1.5  2001/03/08 00:08:04  vsnyder
+! Modifications to work inside of MLSL2.
+!
 ! Revision 1.4  2001/03/07 23:45:14  zvi
 ! Adding logical flags fro Temp, Atmos & Spect. derivatives
 !
