@@ -17,8 +17,9 @@ module ForwardModelInterface
   use Declaration_Table, only: NUM_VALUE, RANGE
   use Dump_0, only: DUMP
   use Expr_M, only: EXPR
+  use SpectroscopyCatalog_m, only: Catalog_T, Lines, Catalog
   use FilterShapes_m, only: Close_Filter_Shapes_File, &
-    & Open_Filter_Shapes_File, Read_Filter_Shapes_File
+    & Open_Filter_Shapes_File, Read_Filter_Shapes_File, FilterShapes
   ! We're going to use lots of things from init_tables_module, so let's sort
   ! them into some sort of order
   ! First admin stuff
@@ -45,7 +46,7 @@ module ForwardModelInterface
   use MLSNumerics, only: Hunt
   use MLSSignals_m, only: GetSignal, MaxSigLen, Signal_T, GetSignalName
   use MoreTree, only: Get_Boolean, Get_Field_ID
-  use Output_M, only: Output
+  use Output_M, only: Output, Blanks
   use PointingGrid_m, only: Close_Pointing_Grid_File, &
     & Open_Pointing_Grid_File, Read_Pointing_Grid_File, PointingGrids
   use String_Table, only: Display_String, Get_String
@@ -367,7 +368,7 @@ contains
     use L2_TEST_STRUCTURES_M
     use L2PC_FILE_PARAMETERS, only: mxco => MAX_NO_ELMNTS_PER_SV_COMPONENT
     use L2PC_PFA_STRUCTURES, only: K_MATRIX_INFO
-    use L2PCdim, only: Nlvl, N2lvl, NSPS, Nptg, NCH, MNP => max_no_phi, &
+    use L2PCdim, only: Nlvl, N2lvl, NSPS, Nptg, MNP => max_no_phi, &
       MNM => max_no_mmaf
     use ELLIPSE_M, only: ELLIPSE
     use COMP_PATH_ENTITIES_M, only: COMP_PATH_ENTITIES
@@ -385,8 +386,6 @@ contains
     use NO_CONV_AT_ALL_M, only: NO_CONV_AT_ALL
     use D_LINTRP_M, only: LINTRP
     use D_HUNT_M, only: hunt_zvi => HUNT
-
-    !zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
 
     ! Dummy arguments --------------------------------------------------------
 
@@ -428,24 +427,15 @@ contains
     real(r8) :: tan_hts(Nptg,mnm), tan_temp(Nptg,mnm)
 
 
-    !   Real(r4) :: K_TEMP(Nch,Nptg,mxco,mnp)
-    !   Real(r4) :: K_ATMOS(Nch,Nptg,mxco,mnp,Nsps)
-    !   Real(r4) :: K_SPECT_DW(Nch,Nptg,mxco,mnp,Nsps),  &
-    !               K_SPECT_DN(Nch,Nptg,mxco,mnp,Nsps),  &
-    !               K_SPECT_DNU(Nch,Nptg,mxco,mnp,Nsps)
+    real(r4) :: K_TEMP(25,Nptg,mxco,mnp)
+    real(r4) :: K_ATMOS(25,Nptg,mxco,mnp,Nsps)
+    real(r4) :: K_SPECT_DW(25,Nptg,mxco,mnp,Nsps),  &
+                K_SPECT_DN(25,Nptg,mxco,mnp,Nsps),  &
+                K_SPECT_DNU(25,Nptg,mxco,mnp,Nsps)
 
-    ! ** DEBUG, memory limitations force us to have up to 2 channels
-    !           only (Replacing Nch by: 2)
+    real(r8) :: I_STAR_ALL(25,Nptg)
 
-    real(r4) :: K_TEMP(02,Nptg,mxco,mnp)
-    real(r4) :: K_ATMOS(02,Nptg,mxco,mnp,Nsps)
-    real(r4) :: K_SPECT_DW(02,Nptg,mxco,mnp,Nsps),  &
-                K_SPECT_DN(02,Nptg,mxco,mnp,Nsps),  &
-                K_SPECT_DNU(02,Nptg,mxco,mnp,Nsps)
-
-    real(r8) :: I_STAR_ALL(Nch,Nptg)
-
-    real(r4) :: K_STAR_ALL(02,20,mxco,mnp,Nptg)      ! 02 should be: Nch
+    real(r4) :: K_STAR_ALL(25,20,mxco,mnp,Nptg)
     type(k_matrix_info) :: k_star_info(20)
 
     type(path_derivative) :: k_temp_frq, k_atmos_frq(Nsps), &
@@ -454,7 +444,7 @@ contains
 
     type(path_beta), dimension(:,:), pointer :: beta_path => null()
 
-    real(r8) :: Radiances(Nptg,Nch)
+    real(r8) :: Radiances(Nptg,25)
     real(r8) :: Zeta, Frq, h_tan, Rad, geod_lat, phi_tan, r
 
     Real(r8), DIMENSION(:), ALLOCATABLE :: dum
@@ -503,7 +493,7 @@ contains
 
     real(r8), dimension(:), pointer :: GEOC_LAT=>NULL() ! Geocentric latitude of maf (radians)
     real(r8), dimension(:), pointer :: E_RAD=>NULL() ! Effective earth radius at maf (km)
-    real(r4), dimension(:), pointer :: TOAVERAGE=>NULL()   ! Stuff to be passed to frq.avg.
+    real(r4), dimension(:), pointer :: TOAVG=>NULL()   ! Stuff to be passed to frq.avg.
     real(r8), dimension(:), pointer :: FREQUENCIES=>NULL() ! Frequency points
     real(r8), dimension(:,:,:), allocatable :: DH_DT_PATH  ! (pathSize, Tsurfs, Tinstance)
     real(r8), dimension(:,:), pointer :: DX_DT=>NULL() ! (Nptg, Tsurfs)
@@ -528,6 +518,8 @@ contains
     Type(ELLIPSE), allocatable, dimension(:)  :: ELVAR    ! mnm
 
     type(signal_t) :: Signal
+
+    type(Catalog_T), pointer, dimension(:) :: My_Catalog => NULL()
 
     ! Executable code --------------------------------------------------------
 
@@ -563,6 +555,26 @@ contains
     scGeocAlt => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_scGeocAlt)
 
+!
+!  Create a subset of the catalog composed only of those molecules to be 
+!  used for this run
+!
+    ALLOCATE(My_Catalog(FMI%n_sps),STAT=ier)
+    IF(ier /= 0) then
+      Print *,'** ALLOCATE Error: My_Catalog, STAT =',ier
+      goto 99
+    ENDIF
+!
+    do j = 1, FMI%n_sps
+      Spectag = FMI%Pfa_spectrum(j)%SPECTAG
+      do i = 1, Size(Catalog)
+        if(Catalog(i)%Spec_Tag == Spectag) then
+          My_Catalog(j) = Catalog(i)
+          EXIT
+        endif
+      end do
+    end do
+!      
     print*,'Just some checks:',temp%template%noInstances, &
       & radiance%template%noInstances, ptan%template%noInstances
     ! We won't seek for molecules here as we can't have an array of pointers.
@@ -732,7 +744,7 @@ contains
         &                n_path(:,maf), ndx_path(:,maf), E_rad(maf), ref_corr)
 
       prev_npf = -1
-      Radiances(1:Nptg,1:Nch) = 0.0
+      Radiances(1:Nptg,1:25) = 0.0
 
       ! If we're not doing frequency averaging, instead outputting radiances
       ! corresponding to delta function responses, we can setup the frequency
@@ -831,9 +843,9 @@ contains
           noFreqs = size(frequencies)
         endif ! If not, we dealt with this outside the loop
 
-        call get_beta_path(frequencies,&
-          & FMI%pfa_spectrum,no_ele, z_path(ptg_i,maf),t_path(ptg_i,maf), &
-          & beta_path, 1.0e-3*losVel%values(1,maf),ier)
+        call get_beta_path(frequencies,Catalog,no_ele,z_path(ptg_i,maf), &
+          &                t_path(ptg_i,maf),beta_path,                  &
+          &                1.0e-3*losVel%values(1,maf),ier)
         if(ier /= 0) goto 99
 !
 !  Define the dh_dt_path for this pointing and this MAF:
@@ -913,12 +925,16 @@ contains
 
           do i = 1, noUsedChannels
             ch = usedChannels(i)
-            call Freq_Avg(frequencies,centerFreq+sense*FMI%F_grid_filter(:,i),  &
-              &     FMI%Filter_func(:,ch),RadV,noFreqs,FMI%no_filt_pts, &
-              &     Radiances(ptg_i,ch))
+            call Freq_Avg(frequencies,                           &
+              &       centerFreq+sense*FilterShapes(i)%FilterGrid, &
+              &       FilterShapes(i)%FilterShape,RadV,noFreqs,    &
+              &       Size(FilterShapes(i)%FilterGrid),Radiances(ptg_i,ch))
           end do
+
         else
+
           Radiances(ptg_i, usedChannels) = RadV
+
         endif
 
         ! Frequency Average the temperature derivatives with the appropriate
@@ -929,11 +945,11 @@ contains
               ch = usedChannels(i)
               do instance = 1, temp%template%noInstances
                 do surface = 1, temp%template%noSurfs
-                  toAverage => k_temp_frq%values( &
-                    & 1:noFreqs,surface,instance)
-                  call Freq_Avg(frequencies, centerFreq+sense*FMI%F_grid_filter(:,i), &
-                    & FMI%Filter_func(:,i), real(toAverage,r8), &
-                    & noFreqs,FMI%no_filt_pts,r)
+                  ToAvg => k_temp_frq%values(1:noFreqs,surface,instance)
+                  call Freq_Avg(frequencies,                        &
+              &        centerFreq+sense*FilterShapes(i)%FilterGrid, &
+              &        FilterShapes(i)%FilterShape,real(ToAvg,r8),  &
+              &        noFreqs,Size(FilterShapes(i)%FilterGrid),r)
                   k_temp(ch,ptg_i,surface,instance) = r
                 end do                  ! Surface loop
               end do                    ! Instance loop
@@ -955,10 +971,12 @@ contains
                 ch = usedChannels(i)
                 do instance = 1, f%template%noInstances
                   do surface = 1, f%template%noSurfs
-                    toAverage => k_atmos_frq(specie)%values(1:noFreqs,surface,instance)
-                    call Freq_Avg(frequencies,centerFreq+sense*FMI%F_grid_filter(:,i), &
-                      & FMI%Filter_func(:,i), real(toAverage, r8), &
-                      & noFreqs,FMI%no_filt_pts,r)
+                    ToAvg =>   &
+              &        k_atmos_frq(specie)%values(1:noFreqs,surface,instance)
+                    call Freq_Avg(frequencies,                      &
+              &          centerFreq+sense*FilterShapes(i)%FilterGrid, &
+              &          FilterShapes(i)%FilterShape,real(ToAvg,r8),  &
+              &          noFreqs,Size(FilterShapes(i)%FilterGrid),r)
                     k_atmos(ch,ptg_i,surface,instance,specie) = r
                   end do                ! Surface loop
                 end do                  ! Instance loop
@@ -993,9 +1011,11 @@ contains
 !                       RadV(1:noFreqs) = k_spect_dnu_frq(m)%values(1:noFreqs,n,k)
 !                     end select
 !                     if(ForwardModelConfig%do_freq_avg) then
-!                       call Freq_Avg(frequencies,centerFrequency+sense*FMI%F_grid_filter(:,i), &
-!                         &              FMI%Filter_func(:,i),&
-!                         &              RadV,noFreqs,FMI%no_filt_pts,r)
+!                       call Freq_Avg(frequencies,                        &
+!                      &     centerFreq+sense*FilterShapes(i)%FilterGrid, &
+!                      &     FilterShapes(i)%FilterShape,RadV,            &
+!                      &     noFreqs,Size(FilterShapes(i)%FilterGrid),r)
+!
 !                     else
 !                       r = RadV(1)
 !                     endif
@@ -1380,10 +1400,110 @@ contains
       call output ( 'phiWindow is not odd' )
     end select
   end subroutine AnnounceError
+!
+!zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
+
+! ----------------------------------------  Dump_Lines_Database  -----
+  subroutine Dump_Lines_Database ( Start, End, Number )
+    use Dump_0, only: Dump
+    integer, intent(in), optional :: Start, End
+    logical, intent(in), optional :: Number
+    integer :: I                   ! Subscript, loop inductor
+    integer :: MyStart, MyEnd
+    logical :: MyNumber
+
+    myStart = 1
+    if ( present(start) ) myStart = start
+    myEnd = size(lines)
+    if ( present(end) ) myEnd = end
+    myNumber = .true.
+    if ( present(number) ) myNumber = number
+    if ( .not. present(start) .and. .not. present(end) ) then
+      call output ('Spectroscopy lines database: SIZE = ' )
+      call output ( size(lines), advance='yes' )
+    end if
+    do i = myStart, myEnd
+      if ( myNumber ) then
+        call output ( i, 4 )
+        call output ( ': ' )
+      else
+        call blanks ( 6 )
+      end if
+      if ( lines(i)%line_name /= 0 ) then
+        call output ( 'Name = ' )
+        call display_string ( lines(i)%line_name )
+        call output ( ', ' )
+      end if
+      call output ( 'V0 = ' )
+      call output ( lines(i)%v0 )
+      call output ( ', El = ' )
+      call output ( lines(i)%el )
+      call output ( ', Str =' )
+      call output ( lines(i)%str )
+      call output ( ', W =' )
+      call output ( lines(i)%str, advance='yes' )
+      call blanks ( 6 )
+      call output ( 'Ps = ' )
+      call output ( lines(i)%ps )
+      call output ( ', N = ' )
+      call output ( lines(i)%n )
+      call output ( ': Delta = ' )
+      call output ( lines(i)%delta )
+      call output ( ', N1 = ' )
+      call output ( lines(i)%n1, advance='yes' )
+      call blanks ( 6 )
+      call output ( 'Gamma = ' )
+      call output ( lines(i)%gamma )
+      call output ( ', N2 = ' )
+      call output ( lines(i)%n2, advance='yes' )
+    end do
+  end subroutine Dump_Lines_Database
+! -------------------------------------  Dump_SpectCat_Database  -----
+  subroutine Dump_SpectCat_Database (my_catalog, Lit_Indices )
+
+    use Dump_0, only: Dump
+
+    type(Catalog_T),dimension(:),intent(in) :: My_Catalog
+    integer, intent(in), dimension(:) :: Lit_Indices
+
+    integer :: I, J                ! Subscript, loop inductor
+
+    call output ( 'Spectroscopy my_catalog: SIZE = ' )
+    call output ( size(my_catalog), advance='yes' )
+    do i = 1, size(my_catalog)
+      call output ( i, 4 )
+      call output ( ': ' )
+      if ( my_catalog(i)%species_name /= 0 ) then
+        call display_string ( my_catalog(i)%species_name )
+        call output ( ', ' )
+      end if
+      call output ( 'Species = ' )
+      call display_string ( lit_indices(my_catalog(i)%molecule) )
+      call output ( ', SpecTag = ' )
+      call output ( my_catalog(i)%spec_tag )
+      call output ( ', Qlog = [ ' )
+      do j = 1, 3
+        call output ( my_catalog(i)%qlog(j) )
+        if ( j < 3 ) call output ( ', ' )
+      end do
+      call output ( ' ]', advance='yes' )
+      call blanks ( 6 + int(log10(i+0.0)) )
+      call output ( 'Lines:', advance='yes' )
+      do j = 1, size(my_catalog(i)%lines)
+        call dump_lines_database ( my_catalog(i)%lines(j), &
+       &                           my_catalog(i)%lines(j), .false. )
+      end do
+    end do ! i
+  end subroutine Dump_SpectCat_Database
+
+!zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
 
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.65  2001/04/05 23:02:31  zvi
+! Implementing Anntena, FilterShape & Spectroscopy l2cf inputs instead of FMI
+!
 ! Revision 2.64  2001/04/05 22:53:20  vsnyder
 ! Use AntennaPatterns_m
 !
