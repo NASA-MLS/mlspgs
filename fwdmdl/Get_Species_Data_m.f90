@@ -230,7 +230,8 @@ contains
           ! Check we have at least one line for this species
 
           nLines = count(lineFlag /= 0)
-          if ( nLines == 0 .and. all ( my_catalog(s,j)%continuum == 0.0 ) ) then
+          if ( nLines == 0 .and. all ( my_catalog(s,j)%continuum == 0.0 ) &
+            & .and. (index(switches, '0sl') > 0) ) then
             call get_string ( lit_indices(l), molName )
             call MLSMessage ( MLSMSG_Warning, ModuleName, &
               & 'No relevant lines or continuum for '//trim(molName) )
@@ -347,6 +348,9 @@ contains
 end module  Get_Species_Data_M
 
 ! $Log$
+! Revision 2.7  2003/07/15 18:17:04  livesey
+! Catalog now split by sideband
+!
 ! Revision 2.6  2003/06/27 00:59:53  vsnyder
 ! Simplify interface to Get_Species_Data
 !
