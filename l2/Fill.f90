@@ -705,17 +705,19 @@ contains ! =====     Public Procedures     =============================
       return
     end if
 
-    if ( quantity%template%verticalCoordinate == l_pressure ) then
-      if ( any(ABS(-LOG10(quantity%template%surfs(:,1))+ &
-        & LOG10(l2gp%pressures)) > TOLERANCE) .and. (.not. interpolate) ) then
-        errorCode=vectorWontMatchL2GP
-        return
-      end if
-    else                                ! Must be l_zeta
-      if ( any(ABS(quantity%template%surfs(:,1)+ &
-        & LOG10(l2gp%pressures)) > TOLERANCE) .and. (.not. interpolate) ) then
-        errorCode=vectorWontMatchL2GP
-        return
+    if (.not. interpolate) then 
+      if ( quantity%template%verticalCoordinate == l_pressure ) then
+        if ( any(ABS(-LOG10(quantity%template%surfs(:,1))+ &
+          & LOG10(l2gp%pressures)) > TOLERANCE) ) then
+          errorCode=vectorWontMatchL2GP
+          return
+        end if
+      else                                ! Must be l_zeta
+        if ( any(ABS(quantity%template%surfs(:,1)+ &
+          & LOG10(l2gp%pressures)) > TOLERANCE) ) then
+          errorCode=vectorWontMatchL2GP
+          return
+        end if
       end if
     end if
 
@@ -748,7 +750,7 @@ contains ! =====     Public Procedures     =============================
       return
     endif
 
-    if (interpolate) then
+    if (.not. interpolate) then
       quantity%values=RESHAPE(l2gp%l2gpValue(:,:,firstProfile:lastProfile),&
         & (/quantity%template%noChans*quantity%template%noSurfs,&
         &   quantity%template%noInstances/))
@@ -1299,6 +1301,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.50  2001/05/18 22:39:45  livesey
+! Bug fix.
+!
 ! Revision 2.49  2001/05/18 19:50:50  livesey
 ! Added interpolate option for l2gp fills
 !
