@@ -51,18 +51,19 @@ module Fill                     ! Create vectors and fill them.
     & Matrix_Cholesky_T, Matrix_Database_T, Matrix_Kronecker_T, Matrix_SPD_T, &
     & Matrix_T, UpdateDiagonal
   use MLSCommon, only: L1BInfo_T, NameLen, LineLen, MLSChunk_T, R8
+  use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSNumerics, only: InterpolateValues
   use MLSRandomNumber, only: drang
   use MLSSignals_m, only: GetSignalName, GetModuleName
   use Molecules, only: L_H2O
   use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
-  use OUTPUT_M, only: OUTPUT
+  use OUTPUT_M, only: BLANKS, OUTPUT
   use QuantityTemplates, only: QuantityTemplate_T
   use ScanModelModule, only: GetBasisGPH, GetHydrostaticTangentPressure, OMEGA
   use SnoopMLSL2, only: SNOOP
   use String_Table, only: Display_String, Get_string
-  use TOGGLES, only: GEN, LEVELS, TOGGLE
+  use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATE, DECORATION, DUMP_TREE_NODE, NODE_ID, NSONS, &
     & SOURCE_REF, SUB_ROSA, SUBTREE
@@ -299,7 +300,7 @@ contains ! =====     Public Procedures     =============================
     integer :: noiseVectorIndex
 
     ! Executable code
-    timing = .false.
+    timing = section_times
     dontMask = .false.
     ignoreZero = .false.
     ignoreNegative = .false.
@@ -841,6 +842,11 @@ contains ! =====     Public Procedures     =============================
   contains
     subroutine SayTime
       call cpu_time ( t2 )
+      if ( total_times ) then
+        call output ( "Total time = " )
+        call output ( dble(t2), advance = 'no' )
+        call blanks ( 4, advance = 'no' )
+      endif
       call output ( "Timing for MLSL2Fill = " )
       call output ( dble(t2 - t1), advance = 'yes' )
       timing = .false.
@@ -2339,6 +2345,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.78  2001/09/28 17:50:30  pwagner
+! MLSL2Timings module keeps timing info
+!
 ! Revision 2.77  2001/09/24 17:28:15  pwagner
 ! Gets drang from MLSRandomNumber
 !
