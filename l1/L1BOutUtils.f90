@@ -31,9 +31,9 @@ CONTAINS
     counterMAF = MAFno
     MAFno = MAFno + 1
 
-!!$    CALL L1BOA_MAF (altG, altT, ascTAI, counterMAF, dscTAI, &
-!!$         l1bFileInfo%OAId, MAFinfo, MAFno, numOrb, orbIncline, &
-!!$         orbitNumber, scanRate, scanRateT)
+    CALL L1BOA_MAF (altG, altT, ascTAI, counterMAF, dscTAI, &
+         l1bFileInfo%OAId, MAFinfo, MAFno, numOrb, orbIncline, &
+         orbitNumber, scanRate, scanRateT)
 
     CALL OutputL1B_rad (MAFno, L1BFileInfo, counterMAF, L1Brad)
 
@@ -44,6 +44,9 @@ CONTAINS
 END MODULE L1BOutUtils
 
 ! $Log$
+! Revision 2.3  2002/07/17 14:19:54  perun
+! Uncommented L1BOA_MAF
+!
 ! Revision 2.2  2002/03/29 20:18:34  perun
 ! Version 1.0 commit
 !
