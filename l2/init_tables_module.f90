@@ -39,7 +39,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: T_APRIORISOURCE  = t_last_intrinsic+1
   integer, parameter :: T_APRIORITYPE    = t_apriorisource+1
   integer, parameter :: T_CRITICALMODULE = t_aprioritype+1
-  integer, parameter :: T_HGRIDTYPE      = t_criticalmodule+1
+  integer, parameter :: T_FILLMETHOD     = t_criticalmodule+1
+  integer, parameter :: T_HGRIDTYPE      = t_fillmethod+1
   integer, parameter :: T_MATRIX         = t_hgridtype+1
   integer, parameter :: T_MERGEMETHOD    = t_matrix+1
   integer, parameter :: T_METHOD         = t_mergemethod+1
@@ -80,8 +81,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_FWDMODELIN          = f_frequency + 1
   integer, parameter :: F_FWDMODELOUT         = f_fwdModelIn + 1
   integer, parameter :: F_GPH                 = f_fwdModelOut + 1
-  integer, parameter :: F_HDFNAME             = f_GPH + 1
-  integer, parameter :: F_HEIGHT              = f_hdfname + 1
+  integer, parameter :: F_HEIGHT              = f_gph + 1
   integer, parameter :: F_HGRID               = f_height + 1
   integer, parameter :: F_INSTRUMENTMODULE    = f_hgrid +1
   integer, parameter :: F_INTERPOLATIONFACTOR = f_instrumentmodule + 1
@@ -107,16 +107,21 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_RANGE               = f_radiometer + 1
   integer, parameter :: F_ROWS                = f_range + 1
   integer, parameter :: F_SCALE               = f_rows + 1
-  integer, parameter :: F_SIGNALS             = f_scale + 1
+  integer, parameter :: F_SDNAME              = f_scale + 1
+  integer, parameter :: F_SIGNALS             = f_sdname + 1
   integer, parameter :: F_SOURCE              = f_signals + 1
-  integer, parameter :: F_SPECIES             = f_source + 1
+  integer, parameter :: F_SOURCEL2AUX         = f_source + 1
+  integer, parameter :: F_SOURCEL2GP          = f_sourcel2aux + 1
+  integer, parameter :: F_SOURCEQUANTITY      = f_sourcel2gp + 1
+  integer, parameter :: F_SPECIES             = f_sourcequantity + 1
   integer, parameter :: F_SPECTROMETER        = f_species + 1
   integer, parameter :: F_START               = f_spectrometer + 1
   integer, parameter :: F_STATE               = f_start + 1
   integer, parameter :: F_STEP                = f_state + 1
   integer, parameter :: F_STOP                = f_step + 1
   integer, parameter :: F_SUFFIX              = f_stop + 1
-  integer, parameter :: F_SWITCH              = f_suffix + 1
+  integer, parameter :: F_SWATH               = f_suffix + 1
+  integer, parameter :: F_SWITCH              = f_swath + 1
   integer, parameter :: F_TEMPERATURE         = f_switch+1
   integer, parameter :: F_TOLERANCEA          = f_temperature + 1
   integer, parameter :: F_TOLERANCEF          = f_tolerancea + 1
@@ -150,7 +155,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: L_FRACTIONAL    = l_fixed + 1
   integer, parameter :: L_HEIGHT        = l_fractional + 1
   integer, parameter :: L_KRONECKER     = l_height + 1
-  integer, parameter :: L_L2AUX         = l_kronecker + 1
+  integer, parameter :: L_L1B           = l_kronecker + 1
+  integer, parameter :: L_L2AUX         = l_l1b + 1
   integer, parameter :: L_L2GP 	        = l_l2aux + 1
   integer, parameter :: L_LINEAR        = l_l2gp + 1
   integer, parameter :: L_LOGARITHMIC   = l_linear + 1
@@ -168,7 +174,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: L_R5H           = l_r4 + 1
   integer, parameter :: L_R5V           = l_r5h + 1
   integer, parameter :: L_SPD           = l_r5v + 1
-  integer, parameter :: L_WEIGHTED      = l_spd + 1
+  integer, parameter :: L_VECTOR        = l_spd + 1
+  integer, parameter :: L_WEIGHTED      = l_vector + 1
   integer, parameter :: LAST_LIT        = l_weighted
   integer :: LIT_INDICES(first_lit:last_lit)
 ! Parameter names:
@@ -280,6 +287,7 @@ contains ! =====     Public procedures     =============================
     data_type_indices(t_apriorisource) =   add_ident ( 'aprioriSource' )
     data_type_indices(t_aprioritype) =     add_ident ( 'aprioriType' )
     data_type_indices(t_criticalmodule) =  add_ident ( 'criticalModule' )
+    data_type_indices(t_fillmethod) =      add_ident ( 'fillMethod' )
     data_type_indices(t_hgridtype) =       add_ident ( 'hGridType' )
     data_type_indices(t_matrix) =          add_ident ( 'matrixType' )
     data_type_indices(t_mergemethod) =     add_ident ( 'mergeMethod' )
@@ -310,6 +318,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_fractional) =            add_ident ( 'fractional' )
     lit_indices(l_height) =                add_ident ( 'height' )
     lit_indices(l_kronecker) =             add_ident ( 'kronecker' )
+    lit_indices(l_l1b) =                   add_ident ( 'l1b' )
     lit_indices(l_l2aux) =                 add_ident ( 'l2aux' )
     lit_indices(l_l2gp) =                  add_ident ( 'l2gp' )
     lit_indices(l_linear) =                add_ident ( 'linear' )
@@ -328,6 +337,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_r5h) =                   add_ident ( 'r5h' )
     lit_indices(l_r5v) =                   add_ident ( 'r5v' )
     lit_indices(l_spd) =                   add_ident ( 'spd' )
+    lit_indices(l_vector) =                add_ident ( 'vector' )
     lit_indices(l_weighted) =              add_ident ( 'weighted' )
     ! Put field names into the symbol table
     field_indices(f_apriori) =             add_ident ( 'apriori' )
@@ -353,7 +363,6 @@ contains ! =====     Public procedures     =============================
     field_indices(f_fwdModelIn) =          add_ident ( 'fwdModelIn' )
     field_indices(f_fwdModelOut) =         add_ident ( 'fwdModelOut' )
     field_indices(f_gph) =                 add_ident ( 'gph' )
-    field_indices(f_hdfname) =             add_ident ( 'hdfName' )
     field_indices(f_height) =              add_ident ( 'height' )
     field_indices(f_hgrid) =               add_ident ( 'hgrid' )
     field_indices(f_instrumentmodule) =    add_ident ( 'instrumentModule' )
@@ -380,8 +389,12 @@ contains ! =====     Public procedures     =============================
     field_indices(f_range) =               add_ident ( 'range' )
     field_indices(f_rows) =                add_ident ( 'rows' )
     field_indices(f_scale) =               add_ident ( 'scale' )
+    field_indices(f_sdname) =              add_ident ( 'sdname' )
     field_indices(f_signals) =             add_ident ( 'signals' )
     field_indices(f_source) =              add_ident ( 'source' )
+    field_indices(f_sourcel2aux) =         add_ident ( 'sourceL2AUX' )
+    field_indices(f_sourcel2gp) =          add_ident ( 'sourceL2GP' )
+    field_indices(f_sourcequantity) =      add_ident ( 'sourceQuantity' )
     field_indices(f_species) =             add_ident ( 'species' )
     field_indices(f_spectrometer) =        add_ident ( 'spectrometer' )
     field_indices(f_start) =               add_ident ( 'start' )
@@ -389,6 +402,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_step) =                add_ident ( 'step' )
     field_indices(f_stop) =                add_ident ( 'stop' )
     field_indices(f_suffix) =              add_ident ( 'suffix' )
+    field_indices(f_swath) =               add_ident ( 'swath' )
     field_indices(f_switch) =              add_ident ( 'switch' )
     field_indices(f_temperature) =         add_ident ( 'temperature' )
     field_indices(f_tolerancea) =          add_ident ( 'Atolerance' )
@@ -490,6 +504,8 @@ contains ! =====     Public procedures     =============================
       begin, t+t_boolean, l+l_true, l+l_false, n+n_dt_def, &
       begin, t+t_criticalModule, l+l_both, l+l_either, l+l_ghz, l+l_neither, &
              l+l_thz, n+n_dt_def, &
+      begin, t+t_fillMethod, l+l_apriori, l+l_l1b, l+l_l2aux, l+l_l2gp, l+l_vector, &
+             n+n_dt_def, &
       begin, t+t_hGridType, l+l_explicit, l+l_fixed, l+l_fractional, &
              l+l_height, l+l_linear, n+n_dt_def, &
       begin, t+t_matrix, l+l_plain, l+l_cholesky, l+l_kronecker, l+l_spd, &
@@ -637,23 +653,25 @@ contains ! =====     Public procedures     =============================
              np+n_spec_def, &
       begin, s+s_vector, & ! Must be AFTER s_vectorTemplate
              begin, f+f_template, s+s_vectorTemplate, n+n_field_spec, &
-             np+n_spec_def /) )
+             ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_l2gp, &   ! Must be AFTER s_vector
              begin, f+f_source, s+s_vector, f+f_template, f+f_quantities, &
                     nr+n_dot, &
+             begin, f+f_file, t+t_string, n+n_field_type, &
              begin, f+f_compareOverlaps, t+t_boolean, n+n_field_type, &
              begin, f+f_outputOverlaps, t+t_boolean, n+n_field_type, &
              begin, f+f_unpackOutput, t+t_boolean, n+n_field_type, &
-             begin, f+f_hdfname, t+t_string, n+n_field_type, &
+             begin, f+f_swath, t+t_string, n+n_field_type, &
              ndp+n_spec_def, &
       begin, s+s_l2aux, &   ! Must be AFTER s_vector
              begin, f+f_source, s+s_vector, f+f_template, f+f_quantities, &
                     nr+n_dot, &
              begin, f+f_compareOverlaps, t+t_boolean, n+n_field_type, &
              begin, f+f_outputOverlaps, t+t_boolean, n+n_field_type, &
+             begin, f+f_file, t+t_string, n+n_field_type, &
              begin, f+f_unpackOutput, t+t_boolean, n+n_field_type, &
-             begin, f+f_hdfname, t+t_string, n+n_field_type, &
+             begin, f+f_sdname, t+t_string, n+n_field_type, &
              ndp+n_spec_def, &
       begin, s+s_matrix, &  ! Must be AFTER s_vector
              begin, f+f_rows, s+s_vector, n+n_field_spec, &
@@ -662,10 +680,15 @@ contains ! =====     Public procedures     =============================
              np+n_spec_def, &
       begin, s+s_fill, &    ! Must be AFTER s_vector, s_matrix and s_climatology
              begin, f+f_quantity, s+s_vector, f+f_template, f+f_quantities, &
-                    n+n_dot, &
+                    nr+n_dot, &
              begin, f+f_matrix, s+s_matrix, n+n_field_spec, &
-             begin, f+f_source, t+t_string, s+s_climatology, n+n_field_type, &
-             np+n_spec_def, &
+             begin, f+f_method, t+t_fillmethod, nr+n_field_type, &
+             begin, f+f_sourceQuantity, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
+             begin, f+f_sourceL2GP, s+s_l2gp, n+n_field_spec, &
+             begin, f+f_sourceL2AUX, s+s_l2aux, n+n_field_spec, &
+! Will want a_apriori here.......
+             ndp+n_spec_def, &
       begin, s+s_output, &  ! Must be AFTER s_l2aux and s_l2gp
              begin, f+f_type, t+t_outputType, nr+n_field_type, &
              begin, f+f_file, t+t_string, nr+n_field_type, &
@@ -719,7 +742,8 @@ contains ! =====     Public procedures     =============================
              begin, p+p_allow_climatology_overloads, t+t_boolean, &
                     n+n_name_def, &
              n+n_section, &
-      begin, z+z_readapriori, s+s_time, s+s_climatology, n+n_section, &
+      begin, z+z_readapriori, s+s_time, s+s_climatology, s+s_l2gp, &
+             s+s_l2aux, n+n_section, &
       begin, z+z_mergeapriori, s+s_time, s+s_merge, n+n_section, &
       begin, z+z_chunkdivide, &
              begin, p+p_critical_bands, t+t_string, n+n_name_def, &
@@ -811,6 +835,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.20  2001/02/16 00:46:47  livesey
+! Reworked Fill and parts of ReadApriori
+!
 ! Revision 2.19  2001/02/13 19:50:07  vsnyder
 ! Specify individually required fields, not just "all fields required"
 ! Remove individual "public" specifiers, because there's a global "public"
