@@ -93,8 +93,9 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
             // '; starting Output task ...'
       CALL MLSMessage (MLSMSG_Info, ModuleName, msr)
 
-      CALL OutputProd(pcf, cfProd(i), anText, l3sp, l3dm, dmA, dmD, &
-                      l3r, residA, residD, flags)
+
+      CALL OutputProd(pcf, cfProd(i), anText, l3sp, l3dm, dmA, dmD, l3r, residA, residD, flags)
+
 
 ! Deallocate the databases passed between CORE & the I/O shell
 
@@ -110,6 +111,7 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
 
       CALL DestroyL2GPDatabase(l2gp)
 
+
    ENDDO
 
    msr = 'Product loop processing completed; beginning Output/Close task ... '
@@ -117,10 +119,12 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
 
 ! Perform final Output & Close tasks outside of the product processing loop.
 
+
    CALL OutputAndClose(cf, pcf, cfProd, avgPer, anText)
 
    CALL MLSMessage (MLSMSG_Info, ModuleName, 'EOS MLS Level 3 data processing &
                                                      &successfully completed!')
+
 
 ! Detailed description of program
 ! The program is a prototype for the MLS Level 3 Daily software.
