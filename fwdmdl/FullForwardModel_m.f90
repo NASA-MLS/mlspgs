@@ -90,7 +90,7 @@ contains
     type(matrix_T), intent(inout), optional :: Jacobian
 
     ! Define local parameters
-    character, parameter :: INVALIDQUANTITY = "Invalid vector quantity for "
+    character(len=*), parameter :: INVALIDQUANTITY = "Invalid vector quantity for "
     integer, parameter :: Ngp1 = Ng+1     ! NG + 1
 
     ! Now define local variables, group by type and then
@@ -2484,6 +2484,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.100  2002/11/15 01:33:08  livesey
+! Added allLinesForRadiometer functionality.
+!
 ! Revision 2.99  2002/11/13 17:07:44  livesey
 ! Passes FwdModelExtra into convolve/no_conv
 !
