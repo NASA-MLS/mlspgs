@@ -6,6 +6,7 @@ MODULE L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   !=============================================================================
 
   USE Allocate_Deallocate, ONLY: Allocate_test, Deallocate_test
+  USE DUMP_0, only: DUMP
   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
        & MLSMSG_Error, MLSMSG_Warning
   USE MLSCommon, ONLY: R8
@@ -13,7 +14,9 @@ MODULE L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   USE Hdf, ONLY: DFNT_CHAR8, DFNT_FLOAT32, DFNT_INT32, DFNT_FLOAT64
   USE HDFEOS!, ONLY: SWATTACH, SWCREATE, SWDEFDFLD, SWDEFDIM, SWDEFGFLD, &
      !& SWDETACH
-  USE SWAPI, ONLY: SWWRFLD, SWRDFLD
+  USE OUTPUT_M, only: OUTPUT
+  USE SWAPI, only: SWWRFLD, SWRDFLD
+  USE STRING_TABLE, only: DISPLAY_STRING
   
   IMPLICIT NONE
 !  INTEGER :: SWRDFLD
@@ -24,6 +27,10 @@ MODULE L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   CHARACTER(len=*), PARAMETER, PRIVATE :: ModuleName = &
        & "$RCSfile$"
   !---------------------------------------------------------------------------
+
+  interface DUMP
+    module procedure DUMP_L2GP
+  end interface
 
 
   ! This module defines datatypes and gives basic routines for storing and
@@ -1137,12 +1144,83 @@ CONTAINS ! =====     Public Procedures     =============================
 
   END SUBROUTINE WriteL2GPData
 
+  ! ------------------------------------------ DUMP_L2GP ------------
+
+  subroutine Dump_L2GP(l2gp)
+
+    ! Dummy arguments
+    type (l2gpData_T), intent(in) :: L2GP(:)
+
+    ! Local variables
+    integer :: i
+
+    do i=1,size(l2gp)
+      call output ( 'L2GP Data: ')
+      call display_string ( l2gp(i)%nameIndex, advance='yes' )
+      call output ( 'nTimes: ')
+      call output ( l2gp(i)%nTimes, 5)
+      call output ( '  nLevels: ')
+      call output ( l2gp(i)%nLevels, 3)
+      call output ( '  nFreqs: ')
+      call output ( l2gp(i)%nFreqs, 3, advance='yes')
+      
+      call output ( 'Pressures:', advance='yes' )
+      call dump ( l2gp(i)%pressures )
+      
+      call output ( 'Latitude:' , advance='yes' )
+      call dump (l2gp(i)%latitude )
+      
+      call output ( 'Longitude:' , advance='yes' )
+      call dump (l2gp(i)%longitude )
+      
+      call output ( 'SolarTime:' , advance='yes' )
+      call dump (l2gp(i)%solarTime )
+      
+      call output ( 'SolarZenith:' , advance='yes' )
+      call dump (l2gp(i)%solarZenith )
+      
+      call output ( 'LOSAngle:' , advance='yes' )
+      call dump (l2gp(i)%losAngle )
+      
+      call output ( 'geodAngle:' , advance='yes' )
+      call dump (l2gp(i)%geodAngle )
+      
+      call output ( 'Time:' , advance='yes' )
+      call dump (l2gp(i)%time )
+      
+      call output ( 'ChunkNumber:' , advance='yes' )
+      call dump (l2gp(i)%chunkNumber )
+      
+      if ( associated(l2gp(i)%frequency) ) then
+        call output ( 'Frequencies:', advance='yes' )
+        call dump ( l2gp(i)%frequency )
+      end if
+      
+      call output ( 'L2GPValue:', advance='yes' )
+      call dump(l2gp(i)%l2gpValue)
+      
+      call output ( 'L2GPPrecision:', advance='yes' )
+      call dump(l2gp(i)%l2gpPrecision)
+      
+      !    call output ( 'Status:', advance='yes' )
+      !    call dump( l2gp(i)%status )
+      
+      call output ( 'Quality:', advance='yes' )
+      call dump(l2gp(i)%quality)
+
+    end do
+  end subroutine Dump_L2GP
+    
+
   !=============================================================================
 END MODULE L2GPData
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.22  2001/02/22 21:54:22  livesey
+! Added initialisation to NULL() for pointer components of L2GPData_T
+!
 ! Revision 2.21  2001/02/15 18:23:20  livesey
 ! Got it right this time!
 !
