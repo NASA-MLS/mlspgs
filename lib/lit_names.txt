@@ -38,7 +38,6 @@ earthRefl
 elevOffset
 effectiveOpticalDepth
 emls
-extinction
 
 false
 frequency
@@ -56,6 +55,8 @@ Hz
 
 IceDensity
 intermediatefrequency
+invkm
+invm
 isotopeRatio
 
 K
@@ -129,6 +130,10 @@ xyz
 zeta
 
 # $Log$
+# Revision 2.5  2001/11/08 00:12:08  livesey
+# Removed extinction, it's now in molecules (not pretty, but unfortunately
+# necessary).
+#
 # Revision 2.4  2001/11/02 00:55:15  jonathan
 # rm IWC1
 #
