@@ -14,6 +14,7 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
    use MLSCommon, only: R8
    use MLSFiles, only: mls_exists, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, &
      & HDFVERSION_4, HDFVERSION_5, MLS_INQSWATH
+   use MLSHDF5, only: mls_h5open, mls_h5close
    use MLSMessageModule, only: MLSMessageConfig
    use MLSStrings, only: GetStringElement, NumStringElements
    use output_m, only: output
@@ -66,7 +67,7 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
   MLSMessageConfig%useToolkit = .false.
   MLSMessageConfig%logFileUnit = -1
   USE_WALL_CLOCK = .true.
-  CALL h5open_f(error)
+  CALL mls_h5open(error)
   n_filenames = 0
   do      ! Loop over filenames
      call get_filename(filename, n_filenames, options)
@@ -127,7 +128,7 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
     enddo
     call sayTime('copying all files')
   endif
-  call h5close_f(error)
+  call mls_h5close(error)
 contains
 !------------------------- get_filename ---------------------
     subroutine get_filename(filename, n_filenames, options)
@@ -220,3 +221,6 @@ end program L2GPcat
 !==================
 
 ! $Log$
+! Revision 1.1  2004/04/30 18:54:22  pwagner
+! First commit
+!
