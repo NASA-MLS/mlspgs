@@ -151,20 +151,20 @@ contains
   end subroutine Path_Contrib_Polarized
 
   ! ------------------------------------------------  Get_GL_inds  -----
-  subroutine Get_GL_inds ( Do_GL, GL_Inds, GL_Ndx )
+  subroutine Get_GL_inds ( Do_GL, GL_Inds, GL_Ndx, NGL )
   ! Create and fill the arrays that control application of GL
 
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use GLnp, only: NG
     use MLSCommon, only: IP
 
-    logical(ip), intent(inout) :: do_gl(:)     ! Set true for indicies to do
+    logical(ip), intent(inout) :: DO_GL(:)     ! Set true for indicies to do
                                                ! gl computation.  First and
                                                ! last are set false here.
     integer, dimension(:), pointer :: GL_INDS  ! Index of GL indices
     integer, dimension(:,:), pointer :: GL_NDX ! Packed Index array of GL intervals
+    integer, intent(out) :: NGL                ! How much of GL_INDS to use
 
-    integer(ip), dimension(:,:), pointer :: GL_INDGEN ! Temp. array of indeces
     integer :: I, NO_GL_NDX, N_PATH
 
     integer, parameter :: NGP1 = NG + 1
@@ -182,10 +182,10 @@ contains
     do_gl((/1,n_path/)) = .FALSE.
 
     no_gl_ndx = count(do_gl)
+    ngl = Ng * no_gl_ndx
 
-    call allocate_test ( gl_inds, Ng * no_gl_ndx, 'gl_inds', moduleName )
+    call allocate_test ( gl_inds, ngl, 'gl_inds', moduleName )
     call allocate_test ( gl_ndx, no_gl_ndx, 2, 'gl_ndx', moduleName )
-    call allocate_test ( gl_indgen, Ng, no_gl_ndx, 'gl_indgen', moduleName )
 
   ! Indices where GL is needed are ones where do_gl is true.
 
@@ -196,18 +196,12 @@ contains
     do i = 1 , no_gl_ndx
       if ( gl_ndx(i,1) > n_path/2 ) then
         gl_ndx(i,2) = 1 - Ng + Ngp1 * (gl_ndx(i,1) - 1)
-        gl_indgen(:,i) = glir
+        gl_inds(ng*(i-1)+1:ng*i) = gl_ndx(i,2) + glir
       else
         gl_ndx(i,2) = 1 +      Ngp1 * (gl_ndx(i,1) - 1)
-        gl_indgen(:,i) = glil
+        gl_inds(ng*(i-1)+1:ng*i) = gl_ndx(i,2) + glil
       end if
     end do
-
-    gl_inds = reshape(spread(gl_ndx(:,2),1,Ng) + gl_indgen, (/Ng*no_gl_ndx/))
-
-  ! Dispose of the temp array
-
-    call deallocate_test ( gl_indgen, 'gl_indgen', moduleName )
 
   end subroutine Get_GL_inds
 
@@ -219,6 +213,9 @@ contains
 end module Path_Contrib_M
 
 ! $Log$
+! Revision 2.4  2003/01/30 19:31:18  vsnyder
+! Undo change that didn't work -- tried to compute gl_inds without array temp
+!
 ! Revision 2.3  2003/01/18 02:22:58  vsnyder
 ! IMAG should have been AIMAG
 !
