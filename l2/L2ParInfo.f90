@@ -77,6 +77,7 @@ module L2ParInfo
     integer :: myTid                    ! My task ID in pvm
     integer :: masterTid                ! task ID in pvm
     integer :: noFWMSlaves              ! No. slaves in pvm system for fwm cases
+    character(len=132) :: pgeName="mlsl2"   ! command name, if not 'mlsl2'
     character(len=132) :: slaveFilename ! Filename with list of slaves
     character(len=132) :: executable    ! Executable filename
     character(len=132) :: submit=""     ! Submit comand for batch queue system
@@ -545,6 +546,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.31  2003/08/01 20:26:53  pwagner
+! slave command name saved as component pgeName
+!
 ! Revision 2.30  2003/07/07 17:32:10  livesey
 ! New approach to DirectWrite
 !
