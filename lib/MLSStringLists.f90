@@ -9,7 +9,7 @@ MODULE MLSStringLists               ! Module to treat string lists
     & MLSMSG_Allocate, MLSMSG_DeAllocate
   use MLSCommon, only: i4, r8, NameLen, BareFNLen
   use MLSSets, only: FindFirst
-  use MLSStrings, only: lowerCase, Capitalize, reverse
+  use MLSStrings, only: lowerCase, Capitalize, reverse, writeIntsToChars
 
   implicit NONE
   private
@@ -127,6 +127,10 @@ MODULE MLSStringLists               ! Module to treat string lists
    & SortArray, SortList, StringElementNum, &
    & unquote, utc_to_yyyymmdd, yyyymmdd_to_dai
 
+  interface catLists
+    module procedure catLists_str, catLists_int, catLists_intarray
+  end interface
+
   interface ExpandStringRange
     module procedure ExpandStringRange_str, ExpandStringRange_ints, &
       & ExpandStringRange_log
@@ -240,8 +244,67 @@ CONTAINS
 
   END SUBROUTINE Array2List
 
-  ! -------------------------------------------------  catLists  -----
-  function catLists (STR1, STR2, inseparator) result (OUTSTR)
+  ! -------------------------------------------------  catLists_int  -----
+  function catLists_int (STR1, INT, inseparator) result (OUTSTR)
+    ! appends an int onto end of a string list, taking care if it is blank
+    ! E.g., given str1 = 'a,b,c' and int = 4
+    ! returns 'a,b,c,4'
+    ! If str1 is blank, returns just '4'
+    !--------Argument--------!
+    character (len=*), intent(in) :: STR1
+    integer, intent(in)           :: INT
+    character (len=1), optional, intent(in)       :: inseparator
+    character (len=len(str1)+9) :: OUTSTR
+
+    !----------Local vars----------!
+    character (len=1), parameter    :: COMMA = ','
+    character (len=1)               :: separator
+    character (len=8), dimension(1) :: str2
+    !----------executable part----------!
+    if(present(inseparator)) then
+      separator = inseparator
+    else
+      separator = comma
+    end if
+    call writeIntsToChars( (/int/), str2 )
+    str2(1) = adjustl(str2(1))
+    if ( len_trim(str2(1)) < 1 ) then
+      outstr=str1
+    elseif ( len_trim(str1) < 1 ) then
+      outstr=str2(1)
+    else
+      outstr = trim(str1) // separator // trim(str2(1))
+    endif
+  end function catLists_int
+
+  ! ---------------------------------------------  catLists_intarray  -----
+  function catLists_intarray (STR1, INTS, inseparator) result (OUTSTR)
+    ! appends array of ints onto end of a string list, 
+    ! taking care if it is blank
+    ! E.g., given str1 = 'a,b,c' and ints = (/4,5,5,0/)
+    ! returns 'a,b,c,4,5,5,0'
+    ! If str1 is blank, returns just '4,5,5,0'
+    !--------Argument--------!
+    character (len=*), intent(in)                 :: STR1
+    integer, dimension(:), intent(in)             :: INTS
+    character (len=1), optional, intent(in)       :: inseparator
+    character (len=len(str1)+8*size(ints))        :: OUTSTR, TMPSTR
+
+    !----------Local vars----------!
+    integer :: i
+    !----------executable part----------!
+    outstr = str1
+    if ( size(ints) < 1 ) then
+      return
+    endif
+    do i = 1, size(ints)
+      tmpstr = outstr
+      outstr = catlists_int(tmpstr, ints(i))
+    enddo
+  end function catLists_intarray
+
+  ! -------------------------------------------------  catLists_str  -----
+  function catLists_str (STR1, STR2, inseparator) result (OUTSTR)
     ! cats 2 string lists, taking care if either is blank
     ! E.g., given str1 = 'a,b,c' and str2 = 'd,e,f'
     ! returns 'a,b,c,d,e,f'
@@ -269,7 +332,7 @@ CONTAINS
     else
       outstr = trim(str1) // separator // trim(str2)
     endif
-  end function catLists
+  end function catLists_str
 
   ! ----------------------------------------  ExpandStringRange_ints  -----
   subroutine ExpandStringRange_ints (instr, ints, length)
@@ -2610,6 +2673,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.3  2004/09/16 00:16:46  pwagner
+! catLists may cat integers onto end of stringLists
+!
 ! Revision 2.2  2004/08/05 22:47:02  pwagner
 ! New interfaces to ExpandStringList for ints and logicals
 !
