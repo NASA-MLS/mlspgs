@@ -21,8 +21,8 @@ module ForwardModelInterface
     & LIT_INDICES, SPEC_INDICES
   ! Now fields
   use Init_Tables_Module, only: F_ATMOS_DER, F_CHANNELS, F_DO_CONV, F_DO_FREQ_AVG, &
-    F_FREQUENCY, F_MOLECULES, F_MOLECULEDERIVATIVES, F_POINTINGGRIDS, F_SIGNALS, &
-    F_SPECT_DER, F_TEMP_DER, F_TYPE
+    F_FREQUENCY, F_INTEGRATIONGRID, F_MOLECULES, F_MOLECULEDERIVATIVES, &
+    F_POINTINGGRIDS, F_SIGNALS, F_SPECT_DER, F_TANGENTGRID, F_TEMP_DER, F_TYPE
   ! Now literals
   use Init_Tables_Module, only: L_CHANNEL, L_EARTHREFL, L_ELEVOFFSET, L_FULL, L_FOLDED, &
     & L_LINEAR, L_LOSVEL, L_LOWER, L_NONE, L_ORBITINCLINE, L_PTAN, L_RADIANCE,&
@@ -51,6 +51,7 @@ module ForwardModelInterface
   use Units, only: DegToRad => Deg2Rad
   use VectorsModule, only: GetVectorQuantityByType, ValidateVectorQuantity, &
     & Vector_T, VectorValue_T
+  use VGrid, only: VGRID_T
 
   !??? The next USE statement is Temporary for l2load:
   use L2_TEST_STRUCTURES_M, only: FWD_MDL_CONFIG, FWD_MDL_INFO, &
@@ -90,6 +91,8 @@ module ForwardModelInterface
     type (ForwardModelSignalInfo_T), dimension(:), pointer :: siginfo=>NULL()
     logical :: Spect_Der      ! Do spectroscopy derivatives
     logical :: Temp_Der       ! Do temperature derivatives
+    type(vGrid_T), pointer :: integrationGrid ! Zeta grid for integration
+    type(vGrid_T), pointer :: tangentGrid     ! Zeta grid for integration
   end type ForwardModelConfig_T
 
   ! Error codes
@@ -141,11 +144,13 @@ contains
   end subroutine ForwardModelGlobalSetup
 
   ! ------------------------------------------  ConstructForwardModelConfig  -----
-  type (ForwardModelConfig_T) function ConstructForwardModelConfig ( ROOT ) result(info)
+  type (ForwardModelConfig_T) function ConstructForwardModelConfig &
+    & ( ROOT, VGRIDS ) result(info)
     ! Process the forwardModel specification to produce ForwardModelConfig to add
     ! to the database
 
-    integer :: ROOT                     ! of the forwardModel specification.
+    integer, intent(in) :: ROOT         ! of the forwardModel specification.
+    type (vGrid_T), dimension(:), target :: vGrids ! vGrid database
     ! Indexes either a "named" or
     ! "spec_args" vertex.
     ! Local variables
@@ -276,6 +281,10 @@ contains
         info%spect_der = get_boolean(son)
       case ( f_temp_der )
         info%temp_der = get_boolean(son)
+      case ( f_integrationGrid )
+        info%integrationGrid => vGrids(decoration(decoration(subtree(2,son))))
+      case ( f_tangentGrid )
+        info%tangentGrid => vGrids(decoration(decoration(subtree(2,son))))
       case default
         ! Shouldn't get here if the type checker worked
       end select
@@ -287,6 +296,9 @@ contains
     case (l_full)
       if (.not. all(got( (/f_molecules, f_signals/) ))) &
         & call AnnounceError (IncompleteFullFwm, root)
+      ! Ensure that points in tangentGrid above surface are a subset
+      ! of integration grid !????
+
       ! Check parameters needed only for linear/scan are not included
       !????
     case (l_scan)
@@ -313,8 +325,6 @@ contains
   subroutine ForwardModel ( ForwardModelConfig, FwdModelExtra, FwdModelIn, &
     &                       Jacobian, RowBlock, FwdModelOut, FMC, FMI, TFMI )
 
-    !zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
-
     use GL6P, only: NG
     use MLSCommon, only: I4, R4, R8
     use L2_TEST_STRUCTURES_M
@@ -340,7 +350,8 @@ contains
     use D_LINTRP_M, only: LINTRP
     use D_HUNT_M, only: hunt_zvi => HUNT
 
-    !zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
+
+    ! Dummy arguments --------------------------------------------------------
 
     type(forwardModelConfig_T), intent(in) :: forwardModelConfig ! From ForwardModelSetup
     type(vector_T), intent(in) :: FwdModelExtra, FwdModelIn ! ???
@@ -357,66 +368,22 @@ contains
     type(temporary_fwd_mdl_info),                        optional :: TFMI
     !??? End of temporary stuff to start up the forward model
 
-    !zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
+    ! Local parameters ---------------------------------------------------------
 
-    ! Local parameters
-    character, parameter :: InvalidQuantity="Invalid vector quantity for "
+    character, parameter :: INVALIDQUANTITY="Invalid vector quantity for "
 
-    ! This is the `legit stuff' we hope will stay they are all pointers to
-    ! VectorValue_T's containing vector quantities
-    type (VectorValue_T), pointer :: radiance=>NULL() ! Radiance quantity to be filled
-    type (VectorValue_T), pointer :: temp=>NULL() ! Temperature quantity
-    type (VectorValue_T), pointer :: ptan=>NULL() ! PTAN quantity
-    type (VectorValue_T), pointer :: elevOffset=>NULL() ! Elevation offset quantity
-    type (VectorValue_T), pointer :: orbIncline=>NULL() ! Orbital inclination (beta)
-    type (VectorValue_T), pointer :: spaceRadiance=>NULL() ! Space radiance
-    type (VectorValue_T), pointer :: earthRefl=>NULL() ! Earth reflectivity
-    type (VectorValue_T), pointer :: refGPH=>NULL() ! Reference GPH, (zRef and hRef)
-    type (VectorValue_T), pointer :: losVel=>NULL() ! Line of sight velocity
-    type (VectorValue_T), pointer :: scGeocAlt=>NULL() ! Geocentric spacecraft altitude
-    type (VectorValue_T), pointer :: f=>NULL() ! An arbitrary species
+    ! Local variables ----------------------------------------------------------
 
-    integer(i4), parameter :: ngt = (Ng+1) * N2lvl
+    ! First the old stuff which we hope to get rid of or redefine
+    integer(i4), parameter :: NGT = (Ng+1) * N2lvl
 
     integer(i4) :: i, j, k, kz, ht_i, mnz, no_tan_hts, ch, Spectag, &
       m, prev_npf, ier, maf, si, ptg_i, &
       frq_i, klo, n, brkpt, no_ele, mid, ilo, ihi, &
       k_info_count, gl_count, ld
 
-
-    integer :: WhichPointingGrid        ! Index of poiting grid
-    integer :: MIF                      ! Loop counter
-    integer :: CHANNEL                  ! Loop counter
-    integer :: MAXNOFREQS               ! Used for sizing arrays
-    integer :: NOUSEDCHANNELS           ! Number of channels to output
-    integer :: NOFREQS                  ! Number of frequencies for a pointing
-    integer :: NAMELEN                  ! Length of string
-    integer :: SPECIE                   ! Loop counter
-    integer :: SURFACE                  ! Loop counter
-    integer :: INSTANCE                 ! Loop counter
-
-    real (r8) :: CENTERFREQ             ! Of band
-    real (r8) :: SENSE                  ! Multiplier (+/-1)
-
-    integer, dimension(:), pointer :: CHANNELINDEX=>NULL() ! E.g. 1..25
-    integer, dimension(:), pointer :: USEDCHANNELS=>NULL() ! Array of indices used
-
-    real(r4), dimension(:), pointer :: TOAVERAGE ! Stuff to be passed to frq.avg.
-
-    type(path_index)  :: ndx_path(Nptg,mnm)
-    type(path_vector) :: z_path(Nptg,mnm),t_path(Nptg,mnm),h_path(Nptg,mnm),  &
-      dhdz_path(Nptg,mnm), spsfunc_path(Nsps,Nptg,mnm),    &
-      n_path(Nptg,mnm),phi_path(Nptg,mnm)
-
-    Type(path_vector_2d) :: eta_phi(Nptg,mnm)
-
-    Real(r8), DIMENSION(:,:,:), ALLOCATABLE :: dh_dt_path
-
-    real(r8) :: thbs(10)
     real(r8) :: t_script(N2lvl),ref_corr(N2lvl,Nptg),tau(N2lvl), &
                 tan_dh_dt(Nlvl,mnm,mxco)
-
-    real(r8) :: dx_dt(Nptg,mxco), d2x_dxdt(Nptg,mxco)
 
     real(r8) :: h_glgrid(ngt,mnm), t_glgrid(ngt,mnm), z_glgrid(ngt/2)
     real(r8) :: dh_dt_glgrid(ngt,mnm,mxco), dhdz_glgrid(ngt,mnp)
@@ -448,14 +415,14 @@ contains
     type(path_derivative) :: k_temp_frq, k_atmos_frq(Nsps), &
       k_spect_dw_frq(Nsps), k_spect_dn_frq(Nsps), &
       k_spect_dnu_frq(Nsps)
-!
+
     type(path_beta), dimension(:,:), pointer :: beta_path => null()
 
     real(r8) :: Radiances(Nptg,Nch)
     real(r8) :: e_rad, Zeta, Frq, h_tan, Rad, geoc_lat, geod_lat, r
 
     Real(r8), DIMENSION(:), ALLOCATABLE :: dum
-!
+
     character (LEN=01) :: CA
     character (LEN=08) :: Name
     character (LEN=16) :: Vname
@@ -463,17 +430,63 @@ contains
     character (LEN=40) :: Ax, Dtm1, Dtm2
 
     real(r8), dimension(:), pointer :: RadV=>NULL()
-    real(r8), dimension(:), pointer :: frequencies=>NULL()
 
-    real(r8), parameter :: TOL = 0.001            ! How close to a tan_press
-    !                                               must a frq grid be in order
-    !                                               to correspond?
-    integer, pointer, dimension(:) :: Grids=>NULL()       ! Frq grid for each tan_press
+    ! This is the `legit stuff' we hope will stay they are all pointers to
+    ! VectorValue_T's containing vector quantities
+    type (VectorValue_T), pointer :: RADIANCE=>NULL() ! Radiance quantity to be filled
+    type (VectorValue_T), pointer :: TEMP=>NULL() ! Temperature quantity
+    type (VectorValue_T), pointer :: PTAN=>NULL() ! PTAN quantity
+    type (VectorValue_T), pointer :: ELEVOFFSET=>NULL() ! Elevation offset quantity
+    type (VectorValue_T), pointer :: ORBINCLINE=>NULL() ! Orbital inclination (beta)
+    type (VectorValue_T), pointer :: SPACERADIANCE=>NULL() ! Space radiance
+    type (VectorValue_T), pointer :: EARTHREFL=>NULL() ! Earth reflectivity
+    type (VectorValue_T), pointer :: REFGPH=>NULL() ! Reference GPH, (zRef and hRef)
+    type (VectorValue_T), pointer :: LOSVEL=>NULL() ! Line of sight velocity
+    type (VectorValue_T), pointer :: SCGEOCALT=>NULL() ! Geocentric spacecraft altitude
+    type (VectorValue_T), pointer :: F=>NULL() ! An arbitrary species
+
+    integer :: WHICHPOINTINGGRID        ! Index of poiting grid
+    integer :: MIF                      ! Loop counter
+    integer :: CHANNEL                  ! Loop counter
+    integer :: MAXNOFREQS               ! Used for sizing arrays
+    integer :: NOUSEDCHANNELS           ! Number of channels to output
+    integer :: NOFREQS                  ! Number of frequencies for a pointing
+    integer :: NOSPECIES                ! Number of molecules we're considering
+    integer :: NAMELEN                  ! Length of string
+    integer :: SPECIE                   ! Loop counter
+    integer :: SURFACE                  ! Loop counter
+    integer :: STATUS                   ! From allocates etc.
+    integer :: INSTANCE                 ! Loop counter
+
+    real (r8) :: CENTERFREQ             ! Of band
+    real (r8) :: SENSE                  ! Multiplier (+/-1)
+
+    integer, dimension(:), pointer :: CHANNELINDEX=>NULL() ! E.g. 1..25
+    integer, dimension(:), pointer :: USEDCHANNELS=>NULL() ! Array of indices used
+
+    real(r4), dimension(:), pointer :: TOAVERAGE=>NULL()   ! Stuff to be passed to frq.avg.
+    real(r8), dimension(:), pointer :: FREQUENCIES=>NULL() ! Frequency points
+    real(r8), dimension(:,:,:), allocatable :: DH_DT_PATH  ! (pathSize, Tsurfs, Tinstance)
+    real(r8), dimension(:,:), pointer :: DX_DT=>NULL() ! (Nptg, Tsurfs)
+    real(r8), dimension(:,:), pointer :: D2X_DXDT=>NULL() ! (Nptg, Tsurfs)
+
+    integer, pointer, dimension(:) :: GRIDS=>NULL()       ! Frq grid for each tan_press
+
+    type(path_index), allocatable, dimension(:,:) :: NDX_PATH ! (Nptg,mnm)
+
+    type(path_vector), allocatable, dimension(:,:) :: DHDZ_PATH ! (Nptg,mnm)
+    type(path_vector), allocatable, dimension(:,:) :: H_PATH    ! (Nptg,mnm)
+    type(path_vector), allocatable, dimension(:,:) :: N_PATH    ! (Nptg,mnm)
+    type(path_vector), allocatable, dimension(:,:) :: PHI_PATH  ! (Nptg,mnm)
+    type(path_vector), allocatable, dimension(:,:) :: T_PATH    ! (Nptg,mnm)
+    type(path_vector), allocatable, dimension(:,:) :: Z_PATH    ! (Nptg,mnm)
+    
+    type(path_vector), allocatable, dimension(:,:,:) :: SPSFUNC_PATH ! (Nsps,Nptg,mnm)
+    Type(path_vector_2d), allocatable, dimension(:,:) :: ETA_PHI ! (Nptg,mnm)
+
     type(signal_t) :: Signal
 
-    !zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
-
-    print*,'Entering forwardModel'
+    ! Executable code --------------------------------------------------------
 
     ! First we identify the vector quantities we're going to need.  The key is to
     ! identify the signal we'll be working with first
@@ -529,6 +542,9 @@ contains
       & InvalidQuantity//'elevOffset')
     ! There will be more to come here.
 
+    ! Work out what signal we're after
+    signal = getSignal ( forwardModelConfig%sigInfo(1)%signal )
+
     ! Work out which channels are used
     call allocate_test (channelIndex, size(signal%frequencies), 'channelIndex', ModuleName)
     noUsedChannels = count ( forwardModelConfig%sigInfo(1)%channelIncluded)
@@ -539,7 +555,46 @@ contains
     usedChannels = pack ( channelIndex, forwardModelConfig%sigInfo(1)%channelIncluded)
     call deallocate_test(channelIndex,'channelIndex',ModuleName)
 
-    signal = getSignal ( forwardModelConfig%sigInfo(1)%signal )
+    ! Look at the species
+    noSpecies = size(forwardModelConfig%molecules)
+
+!    Nptg = forwardModelConfig%tangentGrid%noSurfs
+
+    ! Now we're going to create the many temporary arrays we need
+    allocate (ndx_path(Nptg,radiance%template%noInstances), STAT=status)
+    if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+      & MLSMSG_Allocate//'ndx_path')
+    allocate (dhdz_path(Nptg,radiance%template%noInstances), STAT=status)
+    if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+      & MLSMSG_Allocate//'dhdz_path')
+    allocate (h_path(Nptg,radiance%template%noInstances), STAT=status)
+    if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+      & MLSMSG_Allocate//'h_path')
+    allocate (n_path(Nptg,radiance%template%noInstances), STAT=status)
+    if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+      & MLSMSG_Allocate//'n_path')
+    allocate (phi_path(Nptg,radiance%template%noInstances), STAT=status)
+    if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+      & MLSMSG_Allocate//'phi_path')
+    allocate (t_path(Nptg,radiance%template%noInstances), STAT=status)
+    if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+      & MLSMSG_Allocate//'t_path')
+    allocate (z_path(Nptg,radiance%template%noInstances), STAT=status)
+    if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+      & MLSMSG_Allocate//'z_path')
+
+    allocate (spsfunc_path(noSpecies,Nptg,radiance%template%noInstances), STAT=status)
+    if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+      & MLSMSG_Allocate//'spsfunc_path')
+    allocate (eta_phi(Nptg,radiance%template%noInstances), STAT=status)
+    if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+      & MLSMSG_Allocate//'eta_phi')
+
+    call allocate_test(dx_dt, Nptg, temp%template%noSurfs, &
+      & 'dx_dt', ModuleName)
+    call allocate_test(d2x_dxdt, Nptg, temp%template%noSurfs, &
+      & 'd2x_dxdt', ModuleName)
+
 
     ! This stuff fills FMC, which is a temporary structure we hope to be
     ! removing in the end.
@@ -550,7 +605,6 @@ contains
     fmc%spect_Der = forwardModelConfig%spect_Der
     fmc%temp_Der = forwardModelConfig%temp_Der
     fmc%zfrq = forwardModelConfig%the_Freq
-
 
     ! THIS WHOLE SECTION NEEDS TO BE REMOVED AND SORTED OUT
     ! Convert GeoDetic Latitude to GeoCentric Latitude, and convert both to
@@ -563,18 +617,15 @@ contains
 
     ! Compute the hydrostatic_model on the GL-Grid for all maf(s):
     ! First extend the grid below the surface.
-    thbs = 0.0
     si = FMI%Surface_index
     no_tan_hts = FMC%no_tan_hts
-    thbs(1:si-1) = FMI%Tan_hts_below_surface(1:si-1)
 
     ! Now compute a hydrostatic grid given the temperature and refGPH
     ! information.
-    print*,'Setting up hydrostatic grid'
     call hydrostatic_model(si,FMC%N_lvls,temp%template%noSurfs, &
       & radiance%template%noInstances,FMC%t_indx, &
       & no_tan_hts,geoc_lat,refGPH%values(1,:)/1e3, &
-      & refGPH%template%surfs(1,1),FMI%z_grid,thbs, &
+      & refGPH%template%surfs(1,1),FMI%z_grid,FMI%Tan_hts_below_surface(1:si-1), &
       & temp%template%surfs(:,1), temp%values, z_glgrid, h_glgrid, t_glgrid, &
       dhdz_glgrid,dh_dt_glgrid,FMI%tan_press,tan_hts,tan_temp,tan_dh_dt, &
       gl_count, Ier)
@@ -595,7 +646,6 @@ contains
 !      & tol, grids)
 
     ! Now compute stuff along the path given this hydrostatic grid.
-    print*,'Setting up paths'
     call comp_path_entities(fwdModelIn, fwdModelExtra, &
       &  forwardModelConfig%molecules, &
       &  FMC%n_lvls,temp%template%noSurfs,&
@@ -616,13 +666,11 @@ contains
 
     do maf = 3, 3
     !do maf = 1, radiance%template%noInstances
-      print*,'Major frame: ',maf
 
       phi_tan = fmc%phi_tan_mmaf(maf) !??? Get this from state vector lter
 
       ! Compute the ptg_angles (chi) for Antenna convolution, also the derivatives
       ! of chi w.r.t to T and other parameters
-      print*,'scGeocAlt is:',scGeocAlt%values(1,1)
       call get_chi_angles(ndx_path(:,maf),n_path(:,maf),FMI%tan_press,        &
         &     tan_hts(:,maf),tan_temp(:,maf),phi_tan,RoC,1e-3*scGeocAlt%values(1,1),  &
         &     elevOffset%values(1,1), &
@@ -776,7 +824,7 @@ contains
 
           ! Now, Compute the radiance derivatives:
           !         CALL Rad_Tran_WD(frq_i,FMI%band,Frq,FMC%N_lvls,FMI%n_sps, &
-          !        &     FMC%temp_der,FMC%atmos_der,FMC%spect_der,            &
+          !        &     FMC%temp_der,fmc%atmos_der,FMC%spect_der,            &
           !        &     z_path(k,maf),h_path(k,maf),t_path(k,maf),phi_path(k,maf),   &
           !        &     dHdz_path(k,maf),TFMI%atmospheric,beta_path(:,frq_i),&
           !        &     spsfunc_path(:,k,maf),temp%template%surfs(:,1),  &
@@ -962,7 +1010,6 @@ contains
         ch = usedChannels(i)
 
         if(FMC%do_conv) then
-          print*,'Doing convolution'
 
           ! Note I am replacing the i's in the k's with 1's (enclosed in
           ! brackets to make it clear.)  We're not wanting derivatives anyway
@@ -981,7 +1028,6 @@ contains
             &     FMI%D1Aaap,FMI%D2Aaap,FMI%Ias,ier)
           if(ier /= 0) goto 99
         else
-          print*,'Not doing convolution'
           ! Note I am replacing the i's in the k's with 1's (enclosed in
           ! brackets to make it clear.)  We're not wanting derivatives anyway
           ! so it shouldn't matter
@@ -1097,9 +1143,38 @@ contains
 
 913 format(a,a1,i2.2)
 
+    deallocate (ndx_path, STAT=status)
+    if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+      & MLSMSG_Deallocate//'ndx_path')
+    deallocate (dhdz_path, STAT=status)
+    if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+      & MLSMSG_Deallocate//'dhdz_path')
+    deallocate (h_path, STAT=status)
+    if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+      & MLSMSG_Deallocate//'h_path')
+    deallocate (n_path, STAT=status)
+    if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+      & MLSMSG_Deallocate//'n_path')
+    deallocate (phi_path, STAT=status)
+    if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+      & MLSMSG_Deallocate//'phi_path')
+    deallocate (t_path, STAT=status)
+    if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+      & MLSMSG_Deallocate//'t_path')
+    deallocate (z_path, STAT=status)
+    if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+      & MLSMSG_Deallocate//'z_path')
+    deallocate (spsfunc_path, STAT=status)
+    if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+      & MLSMSG_Deallocate//'spsfunc_path')
+    deallocate (eta_phi, STAT=status)
+    if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+      & MLSMSG_Deallocate//'eta_phi')
+
+    call deallocate_test(dx_dt, 'dx_dt', ModuleName)
+    call deallocate_test(d2x_dxdt, 'd2x_dxdt', ModuleName)
 
     return
-    !zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
 
   end subroutine ForwardModel
 
@@ -1233,6 +1308,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.45  2001/03/28 22:00:10  livesey
+! Interim version, now uses more allocatables etc.
+!
 ! Revision 2.44  2001/03/28 21:22:22  vsnyder
 ! Use Deg2Rad from Units
 !
