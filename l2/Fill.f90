@@ -49,7 +49,7 @@ contains ! =====     Public Procedures     =============================
     use GriddedData, only: GriddedData_T, WrapGriddedData
     ! We need many things from Init_Tables_Module.  First the fields:
     use INIT_TABLES_MODULE, only: F_A, F_ALLOWMISSING, &
-      & F_APRIORIPRECISION, F_B, F_BOUNDARYPRESSURE, &
+      & F_APRIORIPRECISION, F_B, F_BIN, F_BOUNDARYPRESSURE, &
       & F_CHANNEL, F_COLUMNS, F_DESTINATION, F_DIAGONAL, F_dontMask,&
       & F_ECRTOFOV, F_EARTHRADIUS, F_EXPLICITVALUES, F_EXTINCTION, F_FIELDECR, F_FORCE, &
       & F_FRACTION, F_FROMPRECISION, F_GEOCALTITUDEQUANTITY, F_GPHQUANTITY, &
@@ -95,9 +95,9 @@ contains ! =====     Public Procedures     =============================
       & L_TNGTGEOCALT, L_TRUE, L_VECTOR, L_VGRID, L_VMR, L_WMOTROPOPAUSE, &
       & L_XYZ, L_ZETA
     ! Now the specifications:
-    use INIT_TABLES_MODULE, only: S_DESTROY, S_DUMP, S_FILL, S_FILLCOVARIANCE, &
+    use INIT_TABLES_MODULE, only: S_ADOPT, S_DESTROY, S_DUMP, S_FILL, S_FILLCOVARIANCE, &
       & S_FILLDIAGONAL, S_FLUSHL2PCBINS, S_MATRIX,  S_NEGATIVEPRECISION, &
-      & S_PHASE, S_SNOOP, S_TIME, &
+      & S_PHASE, S_POPULATEL2PCBIN, S_SNOOP, S_TIME, &
       & S_TRANSFER, S_VECTOR, S_SUBSET, S_FLAGCLOUD, S_RESTRICTRANGE, S_UPDATEMASK
     ! Now some arrays
     use Intrinsic, only: FIELD_INDICES
@@ -108,6 +108,7 @@ contains ! =====     Public Procedures     =============================
       & PRECISIONSUFFIX, ReadL1BData, AssembleL1BQtyName
     use L2GPData, only: L2GPData_T
     use L2AUXData, only: L2AUXData_T
+    use L2PC_m, only: POPULATEL2PCBINBYNAME, ADOPTMATRIX
     use LinearizedForwardModel_m, only: FLUSHLOCKEDBINS
     use L3ASCII, only: L3ASCII_INTERP_FIELD
     use LEXER_CORE, only: PRINT_SOURCE
@@ -164,7 +165,7 @@ contains ! =====     Public Procedures     =============================
     type (vector_T), dimension(:), pointer :: Vectors
     type (quantityTemplate_T), dimension(:), pointer :: QtyTemplates
     type (matrix_database_T), dimension(:), pointer :: Matrices
-    type (VGrid_T), dimension(:), intent(in) :: vGrids
+    type (VGrid_T), dimension(:), pointer :: vGrids
     type (l2GPData_T), dimension(:), pointer :: L2GPDatabase
     type (l2AUXData_T), dimension(:), pointer :: L2AUXDatabase
     type (mlSChunk_T), dimension(:), pointer :: Chunks
@@ -295,6 +296,7 @@ contains ! =====     Public Procedures     =============================
     integer :: APRPRECVCTRINDEX         ! Index of apriori precision vector
     integer :: AQTYINDEX                ! Index of a quantity in vector
     integer :: AVECINDEX                ! Index of a vector
+    integer :: BINNAME                  ! Name of an l2pc bin
     integer :: BNDPRESSQTYINDEX
     integer :: BNDPRESSVCTRINDEX
     integer :: BQTYINDEX                ! Index of a quantity in vector
@@ -362,10 +364,12 @@ contains ! =====     Public Procedures     =============================
     type(matrix_SPD_T) :: MatrixSPD
     type(matrix_T) :: MatrixPlain
     integer :: MANIPULATION             ! String index
+    type(matrix_T), pointer :: MATRIX
     integer :: MATRIXTOFILL             ! Index in database
     integer :: MATRIXTOKILL             ! Index in database
     integer :: MATRIXTYPE               ! Type of matrix, L_... from init_tables
     integer :: MAXITERATIONS            ! For hydrostatic fill
+    character(len=80) :: MESSAGE        ! Possible error message
     real, dimension(2) :: MULTIPLIER   ! To scale source,noise part of addNoise
     integer :: MULTIPLIERNODE           ! For the parser
     integer :: NBWVECTORINDEX           ! In vector database
@@ -639,6 +643,35 @@ contains ! =====     Public Procedures     =============================
 
       case ( s_flushL2PCBins )
         call FlushLockedBins
+
+      case ( s_adopt )
+        got = .false.
+        do j = 2, nsons(key)
+          gson = subtree(j,key)              ! The field
+          fieldIndex = get_field_id(gson)
+          got(fieldIndex) = .true.
+          select case ( fieldIndex )
+          case ( f_matrix )
+            matrixToFill = decoration(decoration( subtree(2, gson) ))
+          case ( f_bin )
+            binName = sub_rosa ( subtree(2,gson) )  
+          end select
+        end do
+        call GetFromMatrixDatabase ( matrices(matrixToFill), matrix )
+        call AdoptMatrix ( matrix, binName, message )
+        if ( len_trim(message) /= 0 ) call Announce_Error ( key, 0, trim(message) )
+
+      case ( s_populateL2PCBin )
+        got = .false.
+        do j = 2, nsons(key)
+          gson = subtree(j,key)              ! The field
+          fieldIndex = get_field_id(gson)
+          got(fieldIndex) = .true.
+          select case ( fieldIndex )
+          case ( f_bin )
+            call PopulateL2PCBinByName ( sub_rosa ( subtree(2,gson) ) )
+          end select
+        end do
 
       case ( s_updateMask )
         if ( toggle(gen) .and. levels(gen) > 0 ) &
@@ -6115,6 +6148,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.250  2004/01/23 05:47:38  livesey
+! Added the adoption stuff
+!
 ! Revision 2.249  2004/01/20 20:26:03  livesey
 ! Added the binMean fill
 !
