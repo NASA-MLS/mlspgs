@@ -97,7 +97,7 @@ contains
     if ( index ( switches, 'mas' ) /= 0 ) &
       & call output ( 'Launching forward model slaves', advance='yes' )
     ! Now we're going to launch the slaves
-    commandLine = 'mlsl2'
+    commandLine = trim ( parallel%executable )
     if ( index(switches,'slv') /= 0 ) then
       call PVMFCatchOut ( 1, info )
       if ( info /= 0 ) call PVMErrorMessage ( info, "calling catchout" )
@@ -107,7 +107,7 @@ contains
         trim(machineNames(machineInd)), 1, tid1 )
       ! Did this launch work
       if ( info /= 1 ) then
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
+        call PVMErrorMessage ( tid1(1), &
           & 'Unable to launch fwmSlave on '//trim(machineNames(machineInd)) )
       end if
       slaveTids ( machineInd ) = tid1(1)
@@ -743,6 +743,9 @@ contains
 end module L2FWMParallel
 
 ! $Log$
+! Revision 2.14  2003/01/13 20:15:49  livesey
+! Slight changes to slave launching, uses parllel%executable
+!
 ! Revision 2.13  2002/12/11 02:14:08  livesey
 ! Removed extra dumps/outputs
 !
