@@ -23,6 +23,7 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
   ! Level 1 program type(s)
 
   CHARACTER (LEN=*), PARAMETER :: THzType = "T"
+  CHARACTER (LEN=*), PARAMETER :: LogType = "L"
   CHARACTER (LEN=1) :: L1ProgType = " "   ! Current L1 type
   
   ! The science and engineering Level 0 file info
@@ -43,10 +44,12 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
     INTEGER :: RADDId, RADFId, RADTId  ! Ids for the L1BRAD files
     INTEGER :: EngId           ! The HDF ID (handle) for the L1BENG file
     INTEGER :: DiagId          ! The ID (non-HDF) (handle) for the L1BDIAG file
+    INTEGER :: LogId           ! The ID (non-HDF) (handle) for the L1BLog file
     CHARACTER (LEN=FileNameLen) :: OAFileName  ! L1BOA file name
     CHARACTER (LEN=FileNameLen) :: RADDFileName, RADFFilename, RADTFileName
     CHARACTER (LEN=FileNameLen) :: EngFileName   ! L1BENG file name
     CHARACTER (LEN=FileNameLen) :: DiagFileName  ! L1BDIAG file name
+    CHARACTER (LEN=FileNameLen) :: LogFileName   ! L1BLOG file name
   END TYPE L1BFileInfo_T
   TYPE (L1BFileInfo_T) :: L1BFileInfo
 
@@ -169,6 +172,9 @@ END MODULE MLSL1Common
 !=============================================================================
 
 ! $Log$
+! Revision 2.5  2002/11/14 17:03:17  perun
+! Constants for THz and DACS processing
+!
 ! Revision 2.4  2002/03/29 20:18:34  perun
 ! Version 1.0 commit
 !
