@@ -498,11 +498,13 @@ Fill, quantity=diag!MFradiometer.noRadsTmp, method=manipulate, manipulation='a+b
 !define(makeFlagsForOneProduct,{!dnl
 !undefine(MFproduct)!dnl
 !undefine(MFradiometer)!dnl
+!undefine(MFradiometername)!dnl
 !undefine(MFchisqscale)!dnl
 !undefine(MFminrads)!dnl
 !undefine(MFcloudmax)!dnl
 !undefine(MFcloudmin)!dnl
 !ProcessParVal(MF,$@)!dnl
+!ifdef(MFradiometername,{},{!define(MFradiometername,{!MFradiometer})})
 ;; Quality
 Fill, quantity=diag!MFradiometer.chisqTmp, method=explicit, explicitValues=0, /spread
 !forall(addInOneChisq,!flaggingBands)
@@ -530,16 +532,19 @@ Fill, quantity=otherDiagnostics.status!MFproduct, method=status, $
 !ifdef(MFcloudmax,{
 ;; Status - cloudy radiances - already had the box car run on it.
 Fill, quantity=otherDiagnostics.status!MFproduct, method=status, status=!statusHighCloud+!statusBeWary, $
-  sourceQuantity=otherDiagnostics.highCloudSummary!MFradiometer, maxValue=!MFcloudmax, /additional
+  sourceQuantity=otherDiagnostics.highCloudSummary!MFradiometername, maxValue=!MFcloudmax, /additional
 })
 !ifdef(MFcloudmin,{
 ;; Status - cloudy radiances - already had the box car run on it.
 Fill, quantity=otherDiagnostics.status!MFproduct, method=status, status=!statusHighCloud+!statusBeWary, $
-  sourceQuantity=otherDiagnostics.lowCloudSummary!MFradiometer, minValue=!MFcloudmin, /additional
+  sourceQuantity=otherDiagnostics.lowCloudSummary!MFradiometername, minValue=!MFcloudmin, /additional
 })})
 
 
 ; $Log$
+; Revision 1.87  2004/04/06 01:18:07  livesey
+; Bug fix in status no-radiance flag.
+;
 ; Revision 1.86  2004/04/02 01:08:41  livesey
 ; Bug fixes and added cloudmin option to the flagging macro
 ;
