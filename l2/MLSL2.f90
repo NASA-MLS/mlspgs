@@ -422,6 +422,8 @@ program MLSL2
           call io_error ( "After --slave option", status, line )
           stop
         end if
+        MLSMessageConfig%SendErrMsgToMaster = .true.
+        MLSMessageConfig%masterTID = parallel%masterTid
       else if ( line(3+n:8+n) == 'snoop ' ) then
         snoopingActive = .true.
       else if ( lowercase(line(3+n:12+n)) == 'snoopname' ) then
@@ -1032,6 +1034,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.133  2005/03/15 23:58:42  pwagner
+! Sets MLSMessageConfig appropriately for slaves
+!
 ! Revision 2.132  2005/03/12 00:49:18  pwagner
 ! -w option added
 !
