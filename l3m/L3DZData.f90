@@ -28,9 +28,9 @@ MODULE L3DZData
 
 ! Contents:
 
-! Definitions -- L3DZData_T
-!                L3DZDiag_T
+! Definition -- L3DZData_T
 ! Subroutines -- OutputL3DZ
+!                OutputDZDiag
 !                ReadL3DZData
 !                WriteMetaL3DZ
 !                AllocateL3DZ
@@ -45,7 +45,7 @@ MODULE L3DZData
   CHARACTER (LEN=*), PARAMETER :: DATA_FIELDV = 'L3dzValue'
   CHARACTER (LEN=*), PARAMETER :: DATA_FIELDP = 'L3dzPrecision'
 
-! This data type is used to store the l3 daily zonal mean data.
+! This data type is used to store the l3 daily zonal mean data and diagnostics.
 
   TYPE L3DZData_T
 
@@ -76,34 +76,15 @@ MODULE L3DZData
      REAL(r8), DIMENSION(:,:), POINTER :: l3dzPrecision		! Field precision
         ! dimensioned as (nLevels, nLats)
 
+     ! Now the diagnostic fields:
+
+      REAL(r8), DIMENSION(:,:), POINTER :: latRss
+	! Root-Sum-Square for each latitude, dimensioned (nLevels, nLats)
+
+      INTEGER, DIMENSION(:,:), POINTER :: perMisPoints
+	! Missing points (percentage), dimensioned (nLevels, nLats)
+
    END TYPE L3DZData_T
-
-! This data type is used to store the l3 daily zonal mean diagnostics.
-
-   TYPE L3DZDiag_T
-
-     CHARACTER (LEN=GridNameLen) :: name        ! name for the output quantity
-
-     INTEGER :: nLevels         ! Total number of surfaces
-     INTEGER :: nLats           ! Total number of latitudes
-
-     ! Now we store the geolocation fields.  First, the vertical one:
-
-     REAL(r8), DIMENSION(:), POINTER :: pressure	! dimensioned (nLevels)
-
-     ! Now the horizontal geolocation information:
-
-     REAL(r8), DIMENSION(:), POINTER :: latitude	! dimensioned (nLats)
-
-     ! Root-Sum-Square for each latitude, dimensioned (nLevels, nLats)
-
-     REAL(r8), DIMENSION(:,:), POINTER :: latRss
-
-     ! Missing points (percentage), dimensioned (nLevels, nLats)
-
-     INTEGER, DIMENSION(:,:), POINTER :: perMisPoints
-
-   END TYPE L3DZDiag_T
 
 CONTAINS
 
@@ -118,7 +99,7 @@ CONTAINS
 
       CHARACTER (LEN=*), INTENT(IN) :: type
 
-      TYPE( L3DZData_T ), INTENT(IN) :: dzm(:)
+      TYPE( L3DZData_T ), POINTER :: dzm(:)
 
       TYPE( OutputFiles_T ), INTENT(OUT) :: zFiles
 
@@ -342,6 +323,14 @@ CONTAINS
                                            &swath interface after writing.')
          ENDIF
 
+         msr = 'Swath ' // TRIM(dzm(i)%name) // &
+               ' successfully written to file ' // file
+         CALL MLSMessage(MLSMSG_Info, ModuleName, msr)
+
+! Define & write the diagnostic swath
+
+         CALL OutputDZDiag( file, swfID, dzm(i) )
+
 ! Close the file
 
          status = swclose(swfID)
@@ -350,22 +339,188 @@ CONTAINS
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         msr = 'Swath ' // TRIM(dzm(i)%name) // &
-               ' successfully written to file ' // file
-         CALL MLSMessage(MLSMSG_Info, ModuleName, msr)
-
       ENDDO
 
 !---------------------------
    END SUBROUTINE OutputL3DZ
 !---------------------------
 
+!-------------------------------------------
+   SUBROUTINE OutputDZDiag (file, swfID, dz)
+!-------------------------------------------
+
+! Brief description of subroutine
+! This subroutine creates and writes to the diagnostic swaths in an l3dz file.
+
+! Arguments
+
+      CHARACTER (LEN=FileNameLen), INTENT(IN) :: file
+
+      INTEGER, INTENT(IN) :: swfID
+
+      TYPE( L3DZData_T ), INTENT(IN) :: dz
+
+! Parameters
+
+! Functions
+
+      INTEGER, EXTERNAL :: swattach, swcreate, swdefdfld, swdefdim
+      INTEGER, EXTERNAL :: swdefgfld, swdetach, swwrfld
+
+! Variables
+
+      CHARACTER (LEN=480) :: msr
+      CHARACTER (LEN=GridNameLen) :: dgName
+
+      INTEGER :: status, swID
+      INTEGER :: start(2), stride(2), edge(2)
+
+! Create a swath of the appropriate name
+
+      dgName = TRIM(dz%name) // 'Diagnostics'
+
+      swID = swcreate(swfID, dgName)
+      IF (swID == -1) THEN
+         msr = 'Failed to create swath ' // dgName
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Define the swath dimensions
+
+      status = swdefdim(swID, DIMT_NAME, DATE_LEN)
+      IF (status == -1) THEN
+         msr = DIM_ERR // DIMT_NAME
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      status = swdefdim(swID, DIM_NAME2, dz%nLevels)
+      IF (status == -1) THEN
+         msr = DIM_ERR // DIM_NAME2
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      status = swdefdim(swID, DIML_NAME, dz%nLats)
+      IF (status == -1) THEN
+         msr = DIM_ERR // DIML_NAME
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Define the swath geolocation fields using the above dimensions
+
+      status = swdefgfld(swID, GEO_FIELD11, DIMT_NAME, DFNT_CHAR8, HDFE_NOMERGE)
+      IF (status == -1) THEN
+         msr = GEO_ERR // GEO_FIELD11
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      status = swdefgfld(swID, GEO_FIELD9, DIM_NAME2, DFNT_FLOAT32, HDFE_NOMERGE)
+      IF (status == -1) THEN
+         msr = GEO_ERR // GEO_FIELD9
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      status = swdefgfld(swID, GEO_FIELD1, DIML_NAME, DFNT_FLOAT32, HDFE_NOMERGE)
+      IF (status == -1) THEN
+         msr = GEO_ERR // GEO_FIELD1
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Define the swath data fields using the above dimensions
+
+      status = swdefdfld(swID, DG_FIELD1, DIMLL_NAME, DFNT_FLOAT32, HDFE_NOMERGE)
+      IF (status == -1) THEN
+         msr = DAT_ERR // DG_FIELD1
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      status = swdefdfld(swID, DG_FIELD2, DIMLL_NAME, DFNT_INT32, HDFE_NOMERGE)
+      IF (status == -1) THEN
+         msr = DAT_ERR // DG_FIELD2
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Detach from the swath interface after definition
+
+      status = swdetach(swID)
+      IF (status /= 0) THEN
+         msr = SW_ERR // TRIM(dgName) // ' after L3DZ dg definition.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Re-attach to the swath for writing
+
+      swID = swattach(swfID, dgName)
+      IF (swID == -1) THEN
+         msr = 'Failed to re-attach to swath ' // TRIM(dgName) // ' for writing.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Write the data
+
+      start = 0
+      stride = 1
+      edge(1) = DATE_LEN
+      edge(2) = dz%nLats
+
+! Geolocation fields
+
+      status = swwrfld(swID, GEO_FIELD11, start(1), stride(1), edge(1), dz%date)
+      IF (status == -1) THEN
+         msr = WR_ERR // GEO_FIELD11
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      edge(1) = dz%nLevels
+      status = swwrfld( swID, GEO_FIELD9, start(1), stride(1), edge(1), &
+                        REAL(dz%pressure) )
+      IF (status == -1) THEN
+         msr = WR_ERR // GEO_FIELD9
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      status = swwrfld( swID, GEO_FIELD1, start(2), stride(2), edge(2), &
+                        REAL(dz%latitude) )
+      IF (status == -1) THEN
+         msr = WR_ERR // GEO_FIELD1
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Data fields
+
+      status = swwrfld( swID, DG_FIELD1, start, stride, edge, REAL(dz%latRss) )
+      IF (status == -1) THEN
+         msr = WR_ERR // DG_FIELD1
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      status = swwrfld(swID, DG_FIELD2, start, stride, edge, dz%perMisPoints)
+      IF (status == -1) THEN
+         msr = WR_ERR // DG_FIELD2
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! After writing, detach from swath interface
+
+      status = swdetach(swID)
+      IF (status /= 0) THEN
+         msr = SW_ERR // TRIM(dgName) // ' after L3DZ dg definition.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      msr = 'Swath ' // TRIM(dgName) // ' successfully written to file ' // file
+      CALL MLSMessage(MLSMSG_Info, ModuleName, msr)
+
+!-----------------------------
+   END SUBROUTINE OutputDZDiag
+!-----------------------------
+
 !------------------------------------------------
    SUBROUTINE ReadL3DZData (swfid, swathName, dz)
 !------------------------------------------------
 
 ! Brief description of subroutine
-! This subroutine a data swath from a file into the L3DZData structure.
+! This subroutine reads a data/diagnostic swath pair from a file into the
+! L3DZData structure.
 
 ! Arguments
 
@@ -386,6 +541,7 @@ CONTAINS
 ! Variables
 
       CHARACTER (LEN=480) :: msr
+      CHARACTER (LEN=GridNameLen) :: dgName
 
       INTEGER :: err, nlat, nlev, size, swid, status
       INTEGER :: start(2), stride(2), edge(2)
@@ -393,7 +549,7 @@ CONTAINS
       REAL, ALLOCATABLE :: rl(:), rp(:)
       REAL, ALLOCATABLE :: r2(:,:)
 
-! Attach to the swath for reading
+! Attach to the data swath for reading
 
       swid = swattach(swfid, swathName)
       IF (status == -1) THEN
@@ -499,6 +655,39 @@ CONTAINS
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
+! Attach to the diagnostic swath for reading
+
+      dgName = TRIM(swathName) // 'Diagnostics'
+      swid = swattach(swfid, dgName)
+      IF (status == -1) THEN
+         msr = 'Failed to attach to swath interface for reading ' // dgName
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Read the diagnostic fields
+
+      status = swrdfld(swid, DG_FIELD1, start, stride, edge, r2)
+      IF (status == -1) THEN
+         msr = RL3DZ_ERR // DG_FIELD1
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+      dz%latRss = DBLE(r2)
+
+      status = swrdfld(swid, DG_FIELD2, start, stride, edge, r2)
+      IF (status == -1) THEN
+         msr = RL3DZ_ERR // DG_FIELD2
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+      dz%perMisPoints = DBLE(r2)
+
+!  After reading, detach from swath interface
+
+      status = swdetach(swid)
+      IF (status == -1) THEN
+         msr = 'Failed to detach from swath interface after reading ' // dgName
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
 ! Deallocate local variables
 
       DEALLOCATE(rp, rl, r2, STAT=err)
@@ -547,8 +736,8 @@ CONTAINS
       CHARACTER (LEN=GridNameLen) :: swathName
       CHARACTER (LEN=PGSd_MET_GROUP_NAME_L) :: groups(PGSd_MET_NUM_OF_GROUPS)
 
-      INTEGER :: dg, hdfReturn, i, j, indx, len, numSwaths, result, returnStatus
-      INTEGER :: sdid, version
+      INTEGER :: dg, hdfReturn, i, j, indx, len, numSwaths, pNum
+      INTEGER :: result, returnStatus, sdid, version
 
       REAL(r8) :: dval
 
@@ -625,6 +814,8 @@ CONTAINS
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
+         pNum = 0
+
 ! For each swath in the file
 
          DO j = 1, numSwaths
@@ -639,14 +830,20 @@ CONTAINS
                swathName = list
             ENDIF
 
+! If this is a diagnostic swath, skip to the next one
+
+            IF ( INDEX(swathname, 'Diagnostics') /= 0 ) CYCLE
+
 ! Append a class suffix to ParameterName, and write the grid name as its value
 
-            IF (j < 10) THEN
-               WRITE( cNum, '(I1)' ) j
-            ELSE IF ( (j >= 10) .AND. (j < 100) ) THEN
-               WRITE( cNum, '(I2)' ) j
+            pNum = pNum + 1
+
+            IF (pNum < 10) THEN
+               WRITE( cNum, '(I1)' ) pNum
+            ELSE IF ( (pNum >= 10) .AND. (pNum < 100) ) THEN
+               WRITE( cNum, '(I2)' ) pNum
             ELSE
-               WRITE( cNum, '(I3)' ) j
+               WRITE( cNum, '(I3)' ) pNum
             ENDIF
 
             attrName = 'ParameterName' // '.' // TRIM(cNum)
@@ -960,7 +1157,7 @@ CONTAINS
 
       ALLOCATE(l3dz%pressure(l3dz%nLevels), STAT=err)
       IF ( err /= 0 ) THEN
-         msr = MLSMSG_Allocate // ' L3DZData_T pressure pointer.'
+         msr = MLSMSG_Allocate // ' pressure pointer.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
@@ -968,7 +1165,7 @@ CONTAINS
 
       ALLOCATE(l3dz%latitude(l3dz%nLats), STAT=err)
       IF ( err /= 0 ) THEN
-         msr = MLSMSG_Allocate // ' L3DZData_T latitude pointer.'
+         msr = MLSMSG_Allocate // ' latitude pointer.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
@@ -976,13 +1173,13 @@ CONTAINS
 
       ALLOCATE(l3dz%localSolarTime(MIN_MAX,l3dz%nLats), STAT=err)
       IF ( err /= 0 ) THEN
-         msr = MLSMSG_Allocate // ' L3DZData_T local solar time pointer.'
+         msr = MLSMSG_Allocate // ' local solar time pointer.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
       ALLOCATE(l3dz%localSolarZenithAngle(MIN_MAX,l3dz%nLats), STAT=err)
       IF ( err /= 0 ) THEN
-         msr = MLSMSG_Allocate // ' L3DZData_T local solar zenith angle  pointer.'
+         msr = MLSMSG_Allocate // ' local solar zenith angle  pointer.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
@@ -997,6 +1194,20 @@ CONTAINS
       ALLOCATE(l3dz%l3dzPrecision(l3dz%nLevels,l3dz%nLats), STAT=err)
       IF ( err /= 0 ) THEN
          msr = MLSMSG_Allocate // ' l3dzPrecision pointer.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Diagnostic fields
+
+      ALLOCATE(l3dz%latRss(l3dz%nLevels,l3dz%nLats), STAT=err)
+      IF ( err /= 0 ) THEN
+         msr = MLSMSG_Allocate // ' latRss pointer.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      ALLOCATE(l3dz%perMisPoints(l3dz%nLevels,l3dz%nLats), STAT=err)
+      IF ( err /= 0 ) THEN
+         msr = MLSMSG_Allocate // ' perMisPoints pointer.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
@@ -1082,6 +1293,24 @@ CONTAINS
          ENDIF
       ENDIF
 
+! Diagnostic fields
+
+      IF ( ASSOCIATED(l3dz%latRss) ) THEN
+         DEALLOCATE (l3dz%latRss, STAT=err)
+         IF ( err /= 0 ) THEN
+            msr = MLSMSG_DeAllocate // '  latRss pointer.'
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+      ENDIF
+
+      IF ( ASSOCIATED(l3dz%perMisPoints) ) THEN
+         DEALLOCATE (l3dz%perMisPoints, STAT=err)
+         IF ( err /= 0 ) THEN
+            msr = MLSMSG_DeAllocate // '  perMisPoints pointer.'
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+      ENDIF
+
 !-------------------------------
    END SUBROUTINE DeallocateL3DZ
 !-------------------------------
@@ -1138,6 +1367,9 @@ END MODULE L3DZData
 !==================
 
 ! $Log$
+! Revision 1.4  2001/11/12 20:23:55  nakamura
+! Added L3DZDiag_T.
+!
 ! Revision 1.3  2001/10/04 18:25:59  nakamura
 ! Removed lev as dim for local solar fields.
 !
