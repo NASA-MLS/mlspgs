@@ -67,6 +67,7 @@ module Fill                     ! Create vectors and fill them.
   use ScanModelModule, only: GetBasisGPH, GetHydrostaticTangentPressure, OMEGA
   use SnoopMLSL2, only: SNOOP
   use String_Table, only: Display_String
+  use Time_M, only: Time_Now
   use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, &
@@ -318,7 +319,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Executable code
     timing = section_times
-    if ( timing ) call cpu_time ( t1 )
+    if ( timing ) call time_now ( t1 )
     old_math77_ran_pack = math77_ran_pack
 
     if ( toggle(gen) ) call trace_begin ( "MLSL2Fill", root )
@@ -1011,7 +1012,7 @@ contains ! =====     Public Procedures     =============================
         if ( timing ) then
           call sayTime
         else
-          call cpu_time ( t1 )
+          call time_now ( t1 )
           timing = .true.
         end if
 
@@ -1038,7 +1039,7 @@ contains ! =====     Public Procedures     =============================
 
   contains
     subroutine SayTime
-      call cpu_time ( t2 )
+      call time_now ( t2 )
       if ( total_times ) then
         call output ( "Total time = " )
         call output ( dble(t2), advance = 'no' )
@@ -2851,6 +2852,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.99  2001/11/09 23:17:22  vsnyder
+! Use Time_Now instead of CPU_TIME
+!
 ! Revision 2.98  2001/10/26 23:23:05  pwagner
 ! Complies with l1b data dump
 !
