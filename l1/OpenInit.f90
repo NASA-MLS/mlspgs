@@ -30,6 +30,7 @@ CONTAINS
 !=============================================================================
 
     USE MLSL1Config, ONLY: L1Config, GetL1Config
+    USE MLSFiles, Only: HDFVERSION_4, HDFVERSION_5
     USE InitPCFs, ONLY: L1PCF, GetPCFParameters
     USE MLSPCF1, ONLY: mlspcf_engtbl_start, mlspcf_bwtbl_start, &
          mlspcf_nomen_start, mlspcf_pcf_start, mlspcf_l1cf_start, &
@@ -45,34 +46,47 @@ CONTAINS
     USE MLSSignalNomenclature, ONLY: ReadSignalsDatabase
     USE OutputL1B, ONLY: OutputL1B_create
     USE DACSUtils, ONLY: InitDACS_FFT
-
-    CHARACTER (LEN=132) :: PhysicalFilename
-
-    INTEGER :: bw_tbl_unit
-    INTEGER :: eng_tbl_unit
-    INTEGER :: gains_tbl_unit
-    INTEGER :: nomen_unit
-    INTEGER :: zeros_tbl_unit
-    INTEGER :: errno, ios, lenarg, lenval
-    INTEGER :: returnStatus, version
-
-    INTEGER, EXTERNAL :: PGS_TD_UTCtoTAI
+    USE MLSStrings, ONLY: lowercase
 
     TYPE (TAI93_Range_T) :: procRange
+    CHARACTER (LEN=132) :: PhysicalFilename
+    INTEGER :: bw_tbl_unit, eng_tbl_unit, gains_tbl_unit, nomen_unit, zeros_tbl_unit, &
+         errno, ios, lenarg, lenval, returnStatus, version, error, hdfVersion
+    INTEGER, EXTERNAL :: PGS_TD_UTCtoTAI
 
 !! Get user parameters from the PCF file
 
     CALL GetPCFParameters
 
 !! Get annotation from PCF and CF files
-
-    CALL CreatePCFAnnotation (mlspcf_pcf_start, anTextPCF)
-
-    CALL CreatePCFAnnotation (mlspcf_l1cf_start, anTextCF)
+!
+!   CreatePCFAnnotation is commented for now due to the 
+!   fact that lib/PCFHdr.f90 is HDF4 only.
+!
+!    CALL CreatePCFAnnotation (mlspcf_pcf_start, anTextPCF)
+!
+!    CALL CreatePCFAnnotation (mlspcf_l1cf_start, anTextCF)
 
 !! Get the Level 1 configuration from the L1CF file
 
     CALL GetL1Config
+
+!! Open the HDF Fortran Interface
+
+    error = 0
+    select case (lowercase(trim(L1Config%Output%HDFVersionString))) 
+       case ('hdf4')
+          hdfVersion = HDFVERSION_4
+       case ('hdf5')
+          call h5open_f(error)
+          hdfVersion = HDFVERSION_5
+       case default
+          hdfVersion = HDFVERSION_4
+    end select 
+
+    if (error /= 0) then 
+       call MLSMessage (MLSMSG_Error, ModuleName, "Fortran API error on opening.")
+    endif
 
 !! Check output versions from CF and PCF
 
@@ -280,7 +294,7 @@ CONTAINS
           
 !! Define the SD structures in the output files
 
-    CALL OutputL1B_create (L1BFileInfo)
+    CALL OutputL1B_create(L1BFileInfo)
 
   END SUBROUTINE OpenAndInitialize
 
@@ -460,9 +474,21 @@ CONTAINS
     USE MLSL1Common, ONLY: L1BFileInfo
     USE EngTbls, ONLY: Eng_tbl, maxtlm
     USE Hdf, ONLY: DFACC_CREATE, sfstart
+    USE MLSFiles, only: mls_openFile, HDFVERSION_5, HDFVERSION_4
+    USE MLSL1Config, ONLY: L1Config
+    USE MLSStrings, ONLY: lowercase
 
     CHARACTER (LEN=132) :: PhysicalFilename
-    INTEGER :: returnStatus, sd_id, version
+    INTEGER :: returnStatus, sd_id, version, hdfVersion
+
+    select case (lowercase(trim(L1Config%Output%HDFVersionString))) 
+       case ('hdf4')
+          hdfVersion = HDFVERSION_4
+       case ('hdf5')
+          hdfVersion = HDFVERSION_5
+       case default
+          hdfVersion = HDFVERSION_4
+    end select 
 
     ! Open L1BRADD File
 
@@ -471,25 +497,13 @@ CONTAINS
      PhysicalFilename)
 
     IF (returnStatus == PGS_S_SUCCESS) THEN
-
        ! Open the HDF file and initialize the SD interface
-
-       sd_id = sfstart (PhysicalFilename, DFACC_CREATE)
-       IF (sd_id == -1) THEN
-          CALL MLSMessage (MLSMSG_Error, &
-               & ModuleName, "Error creating L1BRADD file: "//PhysicalFilename)
-       ELSE
-          CALL MLSMessage (MLSMSG_Info, &
-               & ModuleName, "Opened L1BRADD file: "//PhysicalFilename)
+          call  mls_openFile(trim(PhysicalFilename),'create',sd_id, hdfVersion)
           L1BFileInfo%RADDID = sd_id
-          L1BFileInfo%RADDFileName = PhysicalFilename
-       ENDIF
-
+          L1BFileInfo%RADDFileName = trim(PhysicalFilename)
+          CALL MLSMessage (MLSMSG_Info, ModuleName, "Opened L1BRADD file: "//trim(PhysicalFilename))
     ELSE
-
-       CALL MLSMessage (MLSMSG_Error, ModuleName, &
-            & "Could not find L1BRADD file entry")
-
+       CALL MLSMessage (MLSMSG_Error, ModuleName,"Could not find L1BRADD file entry")
     ENDIF
 
     ! Open L1BRADF File
@@ -502,16 +516,11 @@ CONTAINS
 
        ! Open the HDF file and initialize the SD interface
 
-       sd_id = sfstart (PhysicalFilename, DFACC_CREATE)
-       IF (sd_id == -1) THEN
-          CALL MLSMessage (MLSMSG_Error, &
-               & ModuleName, "Error creating L1BRADF file: "//PhysicalFilename)
-       ELSE
-          CALL MLSMessage (MLSMSG_Info, &
-               & ModuleName, "Opened L1BRADF file: "//PhysicalFilename)
+          call  mls_openFile(PhysicalFilename,'create',sd_id, hdfVersion)
+
           L1BFileInfo%RADFID = sd_id
           L1BFileInfo%RADFFileName = PhysicalFilename
-       ENDIF
+          CALL MLSMessage (MLSMSG_Info, ModuleName, "Opened L1BRADF file: "//PhysicalFilename)
 
     ELSE
 
@@ -530,16 +539,12 @@ CONTAINS
 
        ! Open the HDF file and initialize the SD interface
 
-       sd_id = sfstart (PhysicalFilename, DFACC_CREATE)
-       IF (sd_id == -1) THEN
-          CALL MLSMessage (MLSMSG_Error, &
-               & ModuleName, "Error creating L1BOA file: "//PhysicalFilename)
-       ELSE
-          CALL MLSMessage (MLSMSG_Info, &
-               & ModuleName, "Opened L1BOA file: "//PhysicalFilename)
+       call  mls_openFile(PhysicalFilename,'create',sd_id, hdfVersion)
+
           L1BFileInfo%OAID = sd_id
           L1BFileInfo%OAFileName = PhysicalFilename
-       ENDIF
+
+          CALL MLSMessage (MLSMSG_Info, ModuleName, "Opened L1BOA file: "//PhysicalFilename)
 
     ELSE
 
@@ -731,6 +736,9 @@ END MODULE OpenInit
 !=============================================================================
 
 ! $Log$
+! Revision 2.6  2002/11/07 21:54:20  jdone
+! Added HDF4/HDF5 switch.
+!
 ! Revision 2.5  2002/03/29 20:18:34  perun
 ! Version 1.0 commit
 !
