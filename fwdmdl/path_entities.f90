@@ -30,6 +30,10 @@ module PATH_ENTITIES_M
      Real(r8), dimension(:,:), pointer :: values => NULL()
    end type PATH_VECTOR_2D
 
+   type PATH_INT_VECTOR_2D
+     Integer(i4), DIMENSION(:,:), POINTER :: values
+   end type PATH_INT_VECTOR_2D
+
    type PATH_DERIVATIVE
      Real(r4), dimension(:,:,:), pointer :: values => NULL()   ! (various,mnp,mxco)
    end type PATH_DERIVATIVE
@@ -49,6 +53,9 @@ module PATH_ENTITIES_M
 
 end module PATH_ENTITIES_M
 ! $Log$
+! Revision 1.6  2001/05/03 22:28:15  vsnyder
+! Insert copyright notice, some cosmetic changes
+!
 ! Revision 1.5  2001/04/09 22:24:48  livesey
 ! Changed a comment
 !

@@ -7,7 +7,7 @@ module CREATE_BETA_M
   use ABS_CS_H2O_213G_CONT_M, only: ABS_CS_H2O_213G_CONT
   use ABS_CS_LIQ_H2O_M, only: ABS_CS_LIQ_H2O
   use SpectroscopyCatalog_m, only: Catalog_T, Lines
-  use SLABS_SW_M, only: SLABSWINT, DVOIGT_SPECTRAL
+  use SLABS_SW_M, only: SLABSWINT, DVOIGT_SPECTRAL, LORENTZ_SPECTRAL
   implicit NONE
   private
   public :: Create_beta
@@ -55,7 +55,10 @@ contains
 !
     Integer(i4) :: LN_I, j
 
+    Logical do_Lorentz
     Real(r8) :: w,s,wd,ra,dNu,tp,bp,tm,bm,bb,dw,dn,ds
+
+    Real(r8), Parameter :: sqrtln2 = 8.32554611157698e-1_r8
 !
 !  Setup absorption coefficients function
 !
@@ -132,10 +135,20 @@ contains
       dNu = Fgr - v0s(ln_i)
 
       if(Frq_Gap > 0.0  .and. abs(dNu) >= Frq_Gap) CYCLE
-
-      Call dvoigt_spectral(dNu,v0s(ln_i),x1(ln_i),yi(ln_i),y(ln_i), &
-     &       w,temp,slabs1(ln_i),dx1_dv0(ln_i),dy_dv0(ln_i),          &
-     &       dslabs1_dv0(ln_i),bb,spect_der,dw,dn,ds)
+!
+      tp = abs(y(ln_i))/SqrtLn2                ! Wc/Wd
+      ra = abs(x1(ln_i)*dNu)/SqrtLn2           ! abs(dNU)/Wd
+      do_Lorentz = (ra > 15.0 .or. tp > 3.0)
+!
+      if(do_Lorentz) then
+        Call Lorentz_spectral(dNu,v0s(ln_i),x1(ln_i),yi(ln_i), &
+       &     y(ln_i),w,Temp,slabs1(ln_i),dslabs1_dv0(ln_i),bb, &
+       &     spect_der,dw,dn,ds)
+      else
+        Call dvoigt_spectral(dNu,v0s(ln_i),x1(ln_i),yi(ln_i),y(ln_i), &
+       &     w,Temp,slabs1(ln_i),dx1_dv0(ln_i),dy_dv0(ln_i),          &
+       &     dslabs1_dv0(ln_i),bb,spect_der,dw,dn,ds)
+      endif
 !
       beta_value = beta_value + bb
 !
@@ -145,34 +158,64 @@ contains
         dbeta_dnu0 = dbeta_dnu0 + ds
       endif
 
-      if(.not. temp_der) CYCLE
-!
-!  Find the temperatue power dependency now:
-!
-      tp = temp + 10.0
-      dNu = Fgr - v0sp(ln_i)
-      bp = Slabswint(dNu,v0sp(ln_i),x1p(ln_i),slabs1p(ln_i),yp(ln_i), &
-     &               yip(ln_i))
-!
-      tm = temp - 10.0
-      dNu = Fgr - v0sm(ln_i)
-      bm = Slabswint(dNu,v0sm(ln_i),x1m(ln_i),slabs1m(ln_i),ym(ln_i), &
-     &               yim(ln_i))
-!
-      ds = Log(bp/bb)/Log(tp/temp)     ! Estimate over [temp+10,temp]
-      ra = Log(bp/bm)/Log(tp/tm)       ! Estimate over [temp+10,temp-10]
-      wd = Log(bb/bm)/Log(temp/tm)     ! Estimate over [temp,temp-10]
-!
-      t_power = t_power + (ds+wd+2.0*ra)/4.0  ! Weighted Average
-!
     end do
 !
-    t_power = t_power / nl
+    if(.not. temp_der) Return
+!
+!  Compute the temperature dependency power (n):
+!
+    bp = 0.0
+    bm = 0.0
+    tm = temp - 10.0
+    tp = temp + 10.0
+
+    do ln_i = 1, nl
+!
+      j = Catalog%lines(ln_i)
+      w = Lines(j)%W
+!
+! Prepare the temperature weighted coefficients:
+!
+      dNu = Fgr - v0sp(ln_i)
+      if(Frq_Gap > 0.0  .and. abs(dNu) >= Frq_Gap) CYCLE
+
+      if(do_Lorentz) then
+        Call Lorentz_spectral(dNu,v0sp(ln_i),x1p(ln_i),yip(ln_i), &
+       &     yp(ln_i),w,tp,slabs1p(ln_i),dslabs1_dv0(ln_i),bb,    &
+       &     .false.,dw,dn,ds)
+      else
+        bb = Slabswint(dNu,v0sp(ln_i),x1p(ln_i),slabs1p(ln_i), &
+       &               yp(ln_i),yip(ln_i))
+      endif
+      bp = bp + bb
+!
+      dNu = Fgr - v0sm(ln_i)
+      if(do_Lorentz) then
+        Call Lorentz_spectral(dNu,v0sm(ln_i),x1m(ln_i),yim(ln_i), &
+       &     ym(ln_i),w,tm,slabs1m(ln_i),dslabs1_dv0(ln_i),bb,    &
+       &     .false.,dw,dn,ds)
+      else
+        bb = Slabswint(dNu,v0sm(ln_i),x1m(ln_i),slabs1m(ln_i), &
+       &               ym(ln_i),yim(ln_i))
+      endif
+      bm = bm + bb
+
+    end do
+!
+    bb = beta_value
+    ds = Log(bp/bb)/Log(tp/temp)     ! Estimate over [temp+10,temp]
+    ra = Log(bp/bm)/Log(tp/tm)       ! Estimate over [temp+10,temp-10]
+    wd = Log(bb/bm)/Log(temp/tm)     ! Estimate over [temp,temp-10]
+!
+    t_power = t_power + (ds + 2.0*ra + wd) / 4.0  ! Weighted Average
 !
     Return
   End Subroutine Create_beta
 end module CREATE_BETA_M
 ! $Log$
+! Revision 1.12  2001/06/07 23:30:33  pwagner
+! Added Copyright statement
+!
 ! Revision 1.11  2001/05/15 03:47:26  zvi
 ! Adding derivative flag to beta calculations
 !

@@ -2,14 +2,14 @@
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module RAD_TRAN_M
-  use GL6P, only: NG
+  use GLNP, only: NG
   use MLSCommon, only: I4, R8
   use EARTH_INTERSECTION_M, only: EARTH_INTERSECTION
   use ELLIPSE_M, only: ELLIPSE
-  use PATH_ENTITIES_M, only: PATH_INDEX, PATH_VECTOR, PATH_BETA
+  use PATH_ENTITIES_M, only: PATH_INDEX, PATH_VECTOR, PATH_BETA, &
+                             PATH_INT_VECTOR_2D
   use DO_T_SCRIPT_M, only: DO_T_SCRIPT
-  use FAST_DELTA_M, only: FAST_DELTA
-  use FAST_ZOPACITY_M, only: FAST_ZOPACITY
+  use FAST_DELTA_ZOPACITY_M, only: FAST_DELTA_ZOPACITY
   use SCRT_DN_M, only: SCRT_DN
   implicit NONE
   private
@@ -24,49 +24,48 @@ contains
 !----------------------------------------------------------------------
 ! This is the radiative transfer model, radiances only !
 
-    Subroutine Rad_Tran(elvar,Frq,N_lvls,h_tan,n_sps, &
-      &    ndx_path, z_path, h_path, t_path, phi_path, dHdz_path,     &
-      &    earth_ref,beta_path, spsfunc_path, ref_corr, s_temp,brkpt, &
-      &    no_ele, mid, ilo, ihi, t_script, tau, Rad, Ier)
+  Subroutine Rad_Tran(elvar,Frq,N_lvls,h_tan,n_sps,z_path,h_path,t_path, &
+    &        phi_path,dHdz_path,earth_ref,beta_path,spsfunc_path,ref_corr, &
+    &        s_temp,brkpt,no_ele,mid,ilo,ihi,t_script,tau,midval_ndx,  &
+    &        no_midval_ndx,gl_ndx,no_gl_ndx,midval_delta,Sps_zeta_loop, &
+    &        Sps_phi_loop,Rad,Ier)
 !
-    Integer(i4), intent(in) :: N_LVLS, N_SPS
+    Integer(i4), intent(in) :: N_LVLS, N_SPS, BRKPT, NO_ELE
+    Integer(i4), intent(in) :: gl_ndx(:,:),midval_ndx(:,:)
+    Integer(i4), intent(in) :: no_midval_ndx,no_gl_ndx
 
-    Integer(i4), intent(out) :: BRKPT, NO_ELE, MID, ILO, IHI, IER
+    Integer(i4), intent(out) :: MID, ILO, IHI, IER
 
     Real(r8), intent(in) :: FRQ, H_TAN, EARTH_REF, S_TEMP
 
     Real(r8), intent(in) :: REF_CORR(:)
+    Real(r8), intent(in) :: midval_delta(:,:)   ! N2lvl,n_sps
 
     Type(ELLIPSE), intent(in out) :: elvar
 
     Type(path_beta), intent(in) :: BETA_PATH(:)   ! (Nsps)
 
-    Type(path_index), intent(in)  :: NDX_PATH
     Type(path_vector), intent(in) :: Z_PATH, T_PATH, H_PATH, PHI_PATH, &
-   &                                 DHDZ_PATH
+                                  &  DHDZ_PATH
+
     Type(path_vector), intent(in) :: SPSFUNC_PATH(:)
 
-    Real(r8), intent(out) :: T_SCRIPT(:), TAU(:)
+    Type(path_int_vector_2d), intent(in) :: SPS_PHI_LOOP(:), &
+                                            SPS_ZETA_LOOP(:)
+
     Real(r8), intent(out) :: RAD
+    Real(r8), intent(out) :: T_SCRIPT(:), TAU(:)
 !
-    Integer(i4) :: Ngp1, i
+    Integer(i4) :: Ngp1
 
     Real(r8) :: CSE, RS
-
-    Real(r8) :: del_opacity(2*(n_lvls+1))
-    Real(r8) :: delta(2*(n_lvls+1),n_sps)
-!
-!  Begin code
+    Real(r8) :: del_opacity(Size(tau))
 !
 ! 'brkpt' is the index of the path break-point (when it change from
 !         incoming ray to outgoing ray)
 ! 'no_ele' is the total number of entries in ?_path%values(1...no_ele)
-   
-    Ier = 0
-    Ngp1 = Ng + 1
-    brkpt = ndx_path%break_point_index
-    no_ele = ndx_path%total_number_of_elements
 
+    Ngp1 = Ng + 1
     elvar%EarthX = .false.
     elvar%ht = h_tan
     elvar%Rr = elvar%ht + elvar%RoC
@@ -88,26 +87,28 @@ contains
     CALL do_t_script(Ngp1, Frq, s_temp, brkpt, no_ele, t_path, &
    &                 mid, t_script)
 !
-    Call FAST_DELTA(mid,brkpt,no_ele,z_path,h_path,phi_path,beta_path, &
- &       dHdz_path,spsfunc_path,n_sps,N_lvls,ref_corr,elvar,delta,Ier)
-    if (Ier /= 0) Return
-!
 ! Initialize the tau & del_opacity arrays:
 !
-    tau(:) = 0.0
-    del_opacity(:) = 0.0
+    tau(1:) = 0.0
+    del_opacity(1:) = 0.0
 !
-    CALL FAST_ZOPACITY(n_sps, Ngp1, brkpt, no_ele, delta, del_opacity)
+    Call FAST_DELTA_ZOPACITY(mid,brkpt,no_ele,z_path,h_path,phi_path, &
+   &     beta_path,dHdz_path,spsfunc_path,n_sps,N_lvls,ref_corr,elvar, &
+   &     midval_ndx,no_midval_ndx,gl_ndx,no_gl_ndx,Sps_zeta_loop, &
+   &     Sps_phi_loop,midval_delta,del_opacity,Ier)
+    if (Ier /= 0) Return
 !
     Call Scrt_dn(t_script, N_lvls, cse, del_opacity, tau, Rad, mid, &
    &             ilo, ihi)
 !
     Return
-
   End Subroutine RAD_TRAN
 
 end module RAD_TRAN_M
 ! $Log$
+! Revision 1.9  2001/06/07 23:39:31  pwagner
+! Added Copyright statement
+!
 ! Revision 1.8  2001/04/09 23:33:41  zvi
 ! Initialize error flag
 !

@@ -3,30 +3,34 @@
 
 module FullForwardModel_m
 
-  use GL6P, only: NG
+  use GLNP, only: NG
   use MLSCommon, only: I4, R4, R8
-  use L2PC_PFA_STRUCTURES, only: K_MATRIX_INFO
+  use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
   use ELLIPSE_M, only: ELLIPSE
   use COMP_PATH_ENTITIES_M, only: COMP_PATH_ENTITIES
   use GET_PATH_SPSFUNC_NGRID_M, only: GET_PATH_SPSFUNC_NGRID
   use REFRACTION_M, only: REFRACTION_CORRECTION
   use PATH_ENTITIES_M, only: PATH_INDEX, PATH_VECTOR, PATH_BETA, &
-    PATH_DERIVATIVE, PATH_VECTOR_2D
+      PATH_DERIVATIVE, PATH_VECTOR_2D, PATH_INT_VECTOR_2D
   use HYDROSTATIC_MODEL_M, only: HYDROSTATIC_MODEL
   use GET_CHI_ANGLES_M, only: GET_CHI_ANGLES
-  use GET_BETA_PATH_M, only: GET_BETA_PATH
+  use GET_BETA_PATH_M, only: GET_COARSE_BETA_PATH, GET_GLBETA_PATH
   use GEOC_GEOD_CONV_M, only: GEOC_GEOD_CONV
+  use PATH_CONTRIB_M, only: PATH_CONTRIB
+  use COARSE_DELTA_M, only: COARSE_DELTA
   use RAD_TRAN_M, only: RAD_TRAN
   use RAD_TRAN_WD_M, only: RAD_TRAN_WD
+  use SLABS_SW_M, only: GET_GL_SLABS_ARRAYS
   use FREQ_AVG_M, only: FREQ_AVG
   use CONVOLVE_ALL_M, only: CONVOLVE_ALL
   use NO_CONV_AT_ALL_M, only: NO_CONV_AT_ALL
   use D_LINTRP_M, only: LINTRP
   use D_HUNT_M, only: hunt_zvi => HUNT
-  use VectorsModule, only: VECTOR_T, VECTORVALUE_T, VALIDATEVECTORQUANTITY,&
-    & GETVECTORQUANTITYBYTYPE
+  use VectorsModule, only: VECTOR_T, VECTORVALUE_T, VALIDATEVECTORQUANTITY, &
+                       &   GETVECTORQUANTITYBYTYPE
   use ForwardModelConfig, only: FORWARDMODELCONFIG_T
-  use ForwardModelIntermediate, only: FORWARDMODELINTERMEDIATE_T, FORWARDMODELSTATUS_T
+  use ForwardModelIntermediate, only: FORWARDMODELINTERMEDIATE_T, &
+                                  &   FORWARDMODELSTATUS_T
   use AntennaPatterns_m, only: ANTENNAPATTERNS
   use FilterShapes_m, only: FILTERSHAPES
   use PointingGrid_m, only: POINTINGGRIDS
@@ -34,9 +38,9 @@ module FullForwardModel_m
   use Trace_M, only: Trace_begin, Trace_end
   use MLSSignals_m, only: SIGNAL_T, MATCHSIGNAL, ARESIGNALSSUPERSET
   use SpectroscopyCatalog_m, only: CATALOG_T, LINES, CATALOG
-  use Intrinsic, only: L_TEMPERATURE, L_VMR, L_RADIANCE, L_PTAN, L_ELEVOFFSET, &
-    & L_ORBITINCLINATION, L_SPACERADIANCE, L_EARTHREFL, L_REFGPH, L_LOSVEL, &
-    & L_SCGEOCALT, L_SIDEBANDRATIO, L_NONE, L_CHANNEL
+  use Intrinsic, only: L_TEMPERATURE, L_RADIANCE, L_PTAN, L_ELEVOFFSET, &
+    & L_ORBITINCLINATION, L_SPACERADIANCE, L_EARTHREFL, L_LOSVEL,       &
+    & L_SCGEOCALT, L_SIDEBANDRATIO, L_NONE, L_CHANNEL, L_VMR, L_REFGPH
   use Units, only: Deg2Rad
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate,&
     & MLSMSG_Error
@@ -53,7 +57,7 @@ module FullForwardModel_m
   private
   public :: FullForwardModel
 
-  !---------------------------- RCS Ident Info ------------------------------- 
+  !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter, private :: IdParm = &
     & "$Id$"
   character (len=len(idParm)) :: Id = IdParm
@@ -88,10 +92,6 @@ contains ! ================================ FullForwardModel routine ======
     integer(i4) :: brkpt, ch, frq_i, i, ier, ihi, ilo, j, k, lmax, m, maf, &
       max_phi_dim, max_zeta_dim, mid, n, no_ele, no_tan_hts, &
       ptg_i, si, Spectag
-
-    !    real(r4) :: K_STAR_ALL(25,20,mxco,mnp,Nptg)
-    !    type(k_matrix_info) :: K_star_info(20)
-
 
     type(path_derivative) :: K_temp_frq
     type(path_derivative), allocatable, dimension(:) :: K_atmos_frq
@@ -179,12 +179,25 @@ contains ! ================================ FullForwardModel routine ======
     real(r8), dimension(:),     pointer :: TAU         ! (n2lvl)
 
     integer, dimension(1) :: WHICHPOINTINGGRIDASARRAY ! Result of minloc
-    integer, dimension(1) :: WHICHPATTERNASARRAY ! Result of minloc
+    integer, dimension(1) :: WHICHPATTERNASARRAY      ! Result of minloc
 
     type(path_vector), dimension(:), allocatable :: N_PATH    ! (No_tan_hts)
 
     ! dimensions of SPSFUNC_PATH are: (Nsps,No_tan_hts)
     type(path_vector), allocatable, dimension(:,:) :: SPSFUNC_PATH
+
+    ! dimensions of SPS_PHI_LOOP  are: (Nsps,No_tan_hts)
+    ! dimensions of SPS_ZETA_LOOP are: (Nsps,No_tan_hts)
+    type(path_int_vector_2d), allocatable, dimension(:,:) :: SPS_PHI_LOOP
+    type(path_int_vector_2d), allocatable, dimension(:,:) :: SPS_ZETA_LOOP
+
+    real(r8) :: tol
+    Integer :: no_midval_ndx, no_gl_ndx, max_nl, max_num_frq
+    Integer, DIMENSION(:,:), ALLOCATABLE :: gl_ndx, midval_ndx
+    real(r8), dimension(:,:),  pointer :: midval_delta   ! (N2lvl,Nsps)
+
+    Type (slabs_struct), DIMENSION(:,:), POINTER :: gl_slabs
+
     type(signal_t) :: FirstSignal
     type(signal_t) :: ThisSignal
     type(catalog_T), dimension(:), pointer :: My_Catalog
@@ -200,7 +213,7 @@ contains ! ================================ FullForwardModel routine ======
     nullify (beta_path, channelIndex, d2x_dxdt, dh_dt_path, dx_dt, &
       & frequencies, grids, i_star_all, k_atmos, k_temp, my_Catalog, &
       & ptg_angles, radiances, radV, ref_corr, superset, t_script, &
-      & tau, usedChannels, usedSignals )
+      & tau, usedChannels, usedSignals, midval_delta )
 
     ! Identify the vector quantities we're going to need.
     ! The key is to identify the signal we'll be working with first
@@ -279,12 +292,15 @@ contains ! ================================ FullForwardModel routine ======
     if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate//'my_catalog' )
 
+    max_nl = 1 
     do j = 1, noSpecies
       Spectag = spec_tags(fwdModelConf%molecules(j))
       do i = 1, Size(Catalog)
         if ( Catalog(i)%Spec_Tag == Spectag ) then
           My_Catalog(j) = Catalog(i)
-          exit
+          m = Size(Catalog(i)%Lines)
+          if(m > max_nl) max_nl = m
+          EXIT
         end if
       end do
     end do
@@ -323,10 +339,14 @@ contains ! ================================ FullForwardModel routine ======
     noMIFs = firstRadiance%template%noSurfs
     no_phi_t = temp%template%noInstances
     no_tan_hts = FwdModelConf%TangentGrid%nosurfs
-    maxVert = 2 * (NG+1) * size(FwdModelConf%integrationGrid%surfs)
     nlvl=size(FwdModelConf%integrationGrid%surfs)
     n2lvl=2*nlvl
+!   maxVert = n2lvl * (NG+1)
+    maxVert = 2 * ( (NG+1) * (nlvl-1) + 1)
     phiWindow = FwdModelConf%phiWindow
+
+    tol = +0.2
+!   tol = -0.2
 
     if ( toggle(emit) ) then
       print*,'Dimensions:'
@@ -340,6 +360,7 @@ contains ! ================================ FullForwardModel routine ======
       print*,'noSpecies:',noSpecies
       print*,'maxNoFSurfs:',maxNoFSurfs
       print*,'MAF:',fmStat%maf
+      print*,'tol:',tol
     end if
 
     ! Work out which channels are used, also check we have radiances for them.
@@ -454,7 +475,7 @@ contains ! ================================ FullForwardModel routine ======
         &  ifm%t_glgrid, ifm%h_glgrid, ifm%dhdz_glgrid, ifm%tan_hts,        &
         &  no_tan_hts, ifm%z_path, ifm%h_path, ifm%t_path, ifm%phi_path,    &
         &  ifm%dhdz_path, ifm%eta_phi, no_phi_t,                            &
-        &  temp%template%phi(1,:)*Deg2Rad, noMAFs, phiWindow, ifm%elvar, Ier )
+        &  temp%template%phi(1,:)*Deg2Rad, noMAFs, phiWindow, ifm%elvar, Ier)
       if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Hydrostatic model failed' )
 
@@ -480,6 +501,9 @@ contains ! ================================ FullForwardModel routine ======
       call allocate_test ( tau, n2lvl, 'tau', ModuleName )
       call allocate_test ( ptg_angles, no_tan_hts, 'ptg_angles', ModuleName )
 
+      call allocate_test ( midval_delta, n2lvl, noSpecies, &
+                     &    'midval_delta', ModuleName )
+
       allocate ( k_atmos_frq(noSpecies), stat=status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
         & MLSMSG_Allocate//'k_atmos_frq' )
@@ -494,6 +518,13 @@ contains ! ================================ FullForwardModel routine ======
         & 'dx_dt', ModuleName )
       call allocate_test ( d2x_dxdt, No_tan_hts, temp%template%noSurfs, &
         & 'd2x_dxdt', ModuleName )
+
+      allocate ( sps_phi_loop(noSpecies,No_tan_hts), stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+        & MLSMSG_Allocate//'sps_phi_loop' )
+      allocate ( sps_zeta_loop(noSpecies,No_tan_hts), stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+        & MLSMSG_Allocate//'sps_zeta_loop' )
 
       call allocate_test ( radiances, no_tan_hts, noUsedChannels, &
         & 'Radiances', ModuleName )
@@ -638,8 +669,8 @@ contains ! ================================ FullForwardModel routine ======
           & call trace_begin ( 'ForwardModel.get_path_spsfunc_ngrid' )
         Call get_path_spsfunc_ngrid ( fwdModelIn, fwdModelExtra, &
           &  fwdModelConf%molecules, ifm%ndx_path(:,maf), no_tan_hts, &
-          &  ifm%z_path(:,maf), ifm%t_path(:,maf), ifm%phi_path(:,maf), n_path, &
-          &  spsfunc_path, Ier )
+          &  ifm%z_path(:,maf), ifm%t_path(:,maf), ifm%phi_path(:,maf), &
+          &  n_path, spsfunc_path, sps_zeta_loop, sps_phi_loop, ier)
         if ( toggle(emit) .and. levels(emit) > 0 ) &
           & call trace_end ( 'ForwardModel.get_path_spsfunc_ngrid' )
         if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -722,20 +753,45 @@ contains ! ================================ FullForwardModel routine ======
 
         end do ! End loop over species
 
+!  Find the maximum number of frequencies over all heights
+
+        max_num_frq = 1
+        i = whichPointingGrid
+        if ( FwdModelConf%do_freq_avg ) then
+          do j = 1, no_tan_hts
+            m = Size(PointingGrids(i)%oneGrid(grids(j))%frequencies)
+            if ( m > max_num_frq) max_num_frq = m
+          end do
+        end if
+!
         ! Now we can go ahead and loop over pointings
         ! ------------------------------ Begin loop over pointings --------
         do ptg_i = 1, no_tan_hts - 1
+
           if ( toggle(emit) .and. levels(emit) > 1 ) then
             call trace_begin ( 'ForwardModel.Pointing' )
             call output ( 'Ptg = ' ); call output ( ptg_i, advance='yes' )
           end if
+
           k = ptg_i
           h_tan = ifm%tan_hts(k,mafTInstance)
           lmax = ubound(ifm%eta_phi(ptg_i,maf)%values,2)
+!
+          ifm%elvar(maf)%ht = h_tan
+          ifm%elvar(maf)%Rr = ifm%elvar(maf)%ht + ifm%elvar(maf)%RoC
+          ifm%elvar(maf)%ht2 = ifm%elvar(maf)%Rr * ifm%elvar(maf)%Rr
 
-          ! Compute the beta's along the path, for this tanget hight and this mmaf:
+ ! Compute the beta's along the path, for this tanget hight and this mmaf:
 
+          brkpt = ifm%ndx_path(ptg_i,maf)%break_point_index
           no_ele = ifm%ndx_path(ptg_i,maf)%total_number_of_elements
+!
+          if(ptg_i == 1) then
+            j = no_ele / Ng
+            allocate(midval_ndx(j,2),gl_ndx(j,2),stat=status)
+            if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName,&
+              & MLSMSG_Allocate//'midval_ndx/gl_ndx' )
+          endif
 
           ! If we're doing frequency averaging, get the frequencies we need for
           ! this pointing.
@@ -744,15 +800,28 @@ contains ! ================================ FullForwardModel routine ======
             noFreqs = size(frequencies)
           end if ! If not, we dealt with this outside the loop
 
-          call get_beta_path ( frequencies, my_Catalog, no_ele, &
-            &                  ifm%z_path(ptg_i,maf), ifm%t_path(ptg_i,maf), &
-            &                  beta_path, 0.001*losVel%values(1,maf), &
-            &                  fwdModelConf%frqGap,             &
-            &                  fwdModelConf%temp_der,           &
-            &                  fwdModelConf%spect_der, Ier)
+          if(noFreqs > 1) tau(1:) = 1.0
+!
+! Compute ALL the slabs_prep entities over the path's GL grid for this
+! pointing & mmaf:
+!
+          Call get_gl_slabs_arrays(my_Catalog,ifm%z_path(ptg_i,maf),&
+             & ifm%t_path(ptg_i,maf),0.001*losVel%values(1,maf), &
+             & gl_slabs,ptg_i,no_ele,max_nl,ier)
           if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & 'get_beta_path failed' )
-
+            & 'get_gl_slabs_arrays' )
+!
+! Compute the beta's along the path on the COARSE grid only, for this pointing
+! and this mmaf (recall that k=ptg_i):
+!
+          Call get_coarse_beta_path(k,my_Catalog,ifm%ndx_path(k,maf), &
+             & gl_slabs,noFreqs,max_num_frq,h_tan,frequencies,        &
+             & ifm%z_path(k,maf),ifm%h_path(k,maf),ifm%t_path(k,maf), &
+             & fwdModelConf%frqGap,fwdModelConf%temp_der,             &
+             & fwdModelConf%spect_der, beta_path, Ier)
+          if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'get_coarse_beta_path' )
+!
           ! Define the dh_dt_path for this pointing and this MAF:
 
           ! Need to allocate this even if no derivatives as we pass it
@@ -780,21 +849,44 @@ contains ! ================================ FullForwardModel routine ======
 
           ! ------------------------------- Begin loop over frequencies ------
           do frq_i = 1, noFreqs
-
+!
+            Call path_contrib(tau, brkpt, no_ele, tol, mid, midval_ndx, &
+              &  no_midval_ndx, gl_ndx, no_gl_ndx, Ier)
+            if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'Path_contrib failed' )
+!
+            Call coarse_delta(mid,brkpt,no_ele,ifm%h_path(k,maf), &
+              &  beta_path(:,frq_i),spsfunc_path(:,k),        &
+              &  noSpecies,Nlvl,ref_corr(:,k),ifm%elvar(maf),     &
+              &  midval_delta,Ier)
+            if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'coarse_delta failed' )
+!
             Frq = frequencies(frq_i)
             if ( toggle(emit) .and. levels(emit) > 2 ) then
               call trace_begin ( 'ForwardModel.Frequencies' )
               call output ( 'Frq = ' ); call output ( frq_i, advance='yes' )
             end if
-
-            Call Rad_Tran ( ifm%elvar(maf), Frq, &
-              & fwdModelConf%integrationGrid%noSurfs, h_tan, &
-              & noSpecies, ifm%ndx_path(k,maf), ifm%z_path(k,maf), &
-              & ifm%h_path(k,maf), ifm%t_path(k,maf), ifm%phi_path(k,maf), &
-              & ifm%dHdz_path(k,maf), earthRefl%values(1,1), beta_path(:,frq_i), &
-              & spsfunc_path(:,k), ref_corr(:,k), spaceRadiance%values(1,1), &
-              & brkpt, no_ele, mid, ilo, ihi, t_script, tau, Rad, Ier )
+!
+! Compute the beta's along the path, for this tanget hight and this mmaf:
+!
+            Call get_glbeta_path(k,frq_i,my_Catalog,gl_ndx,no_gl_ndx, &
+               & gl_slabs,Frq,ifm%z_path(k,maf),ifm%t_path(k,maf),    &
+               & fwdModelConf%frqGap,fwdModelConf%temp_der,           &
+               & fwdModelConf%spect_der, beta_path, Ier)
             if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'get_glbeta_path failed' )
+!
+            Call Rad_Tran ( ifm%elvar(maf), Frq,                         &
+              &  fwdModelConf%integrationGrid%noSurfs,h_tan,noSpecies,   &
+              &  ifm%z_path(k,maf),ifm%h_path(k,maf),&
+              &  ifm%t_path(k,maf),ifm%phi_path(k,maf),                  &
+              &  ifm%dHdz_path(k,maf),earthRefl%values(1,1),             &
+              &  beta_path(:,frq_i),spsfunc_path(:,k),ref_corr(:,k),     &
+              &  spaceRadiance%values(1,1),brkpt,no_ele,mid,ilo,ihi,     &
+              &  t_script,tau,midval_ndx,no_midval_ndx,gl_ndx,no_gl_ndx, &
+              &  midval_delta,Sps_zeta_loop(:,k),Sps_phi_loop(:,k),Rad,Ier)
+            if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,  &
               & 'rad_tran failed' )
 
             RadV(frq_i) = Rad
@@ -802,20 +894,24 @@ contains ! ================================ FullForwardModel routine ======
             ! Now, Compute the radiance derivatives:
 
             !??? Do we need to do this if there's no Jacobian or no derivatives requested ???
-            Call Rad_Tran_WD ( FwdModelConf, FwdModelExtra, FwdModelIn, &
-              &  ifm%elvar(maf), frq_i, Frq, noSpecies, ifm%z_path(k,maf), &
-              &  ifm%h_path(k,maf), ifm%t_path(k,maf), ifm%phi_path(k,maf), &
-              &  ifm%dHdz_path(k,maf), beta_path(:,frq_i), spsfunc_path(:, &
-              &  k), temp%template%surfs(:,1), temp%template%noSurfs, &
-              &  ref_corr(:,k), temp%template%noInstances, &
-              &  temp%template%phi(1,:)*Deg2Rad, dh_dt_path, k_temp_frq, &
-              &  k_atmos_frq, brkpt, no_ele, mid, ilo, ihi, t_script, tau, &
-              &  max_zeta_dim, max_phi_dim, ier )
-            if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+
+            Call Rad_Tran_WD ( FwdModelConf, FwdModelExtra, FwdModelIn,    &
+              &  ifm%elvar(maf),frq_i,Frq,noSpecies,ifm%z_path(k,maf),     &
+              &  ifm%h_path(k,maf),ifm%t_path(k,maf),ifm%phi_path(k,maf),  &
+              &  ifm%dHdz_path(k,maf),beta_path(:,frq_i),spsfunc_path(:,k),&
+              &  temp%template%surfs(:,1),temp%template%noSurfs,           &
+              &  ref_corr(:,k),temp%template%noInstances,                  &
+              &  temp%template%phi(1,:)*Deg2Rad,dh_dt_path,k_temp_frq,     &
+              &  k_atmos_frq,brkpt,no_ele,mid,ilo,ihi,t_script,tau,        &
+              &  max_zeta_dim,max_phi_dim,midval_ndx,no_midval_ndx,        &
+              &  gl_ndx,no_gl_ndx,midval_delta,Sps_zeta_loop(:,k),         &
+              &  Sps_phi_loop(:,k),Ier)
+            if( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,     &
               & 'rad_tran_wd failed' )
 
             if ( toggle(emit) .and. levels(emit) > 2 ) &
               & call trace_end ( 'ForwardModel.Frequencies' )
+
           end do                          ! Frequency loop
 
           ! ----------------------------- End loop over frequencies ----
@@ -1056,7 +1152,7 @@ contains ! ================================ FullForwardModel routine ======
         & ( k_temp_frq%values, "k_temp_frq%values", ModuleName )
       if ( FwdModelConf%atmos_der ) then
         do j = 1, noSpecies
-          call deallocate_test ( k_atmos_frq(j)%values, "k_atmos_frq(j)%values", &
+          call deallocate_test(k_atmos_frq(j)%values,"k_atmos_frq(j)%values",&
             & ModuleName )
         end do
       end if
@@ -1072,11 +1168,19 @@ contains ! ================================ FullForwardModel routine ======
         if ( FwdModelConf%do_freq_avg ) then
           print *,'Frequency Averaging: ON'
         else
+          Frq = Frequencies(1)
           print *,'Frequency Averaging: OFF'
-          print '(A,f12.4,a)', ' (All computations done at Frq =',Frequencies(1),')'
+          print '(A,f12.4,a)', ' (All computations done at Frq =',Frq,')'
         end if
-        print *
 
+        print *
+        k=ptan%template%noSurfs
+        print 901, k
+901     format ( 'ptan\',i3.3)
+        Print 902,Ptan%values(1:k,maf)
+902     format ( 4(4x, f10.7))
+
+        print *
         do i = 1, noUsedChannels
           ch = usedChannels(i)
           print 903, ch, char(92), ptan%template%noSurfs
@@ -1095,6 +1199,12 @@ contains ! ================================ FullForwardModel routine ======
           deallocate ( spsfunc_path(i,j)%values, stat=status )
           if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
             & MLSMSG_Deallocate//'spsfunc_path%values' )
+          deallocate ( sps_phi_loop(i,j)%values, stat=status )
+          if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & MLSMSG_Deallocate//'sps_phi_loop%values' )
+          deallocate ( sps_zeta_loop(i,j)%values, stat=status )
+          if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & MLSMSG_Deallocate//'sps_zeta_loop%values' )
         end do
       end do
 
@@ -1105,6 +1215,13 @@ contains ! ================================ FullForwardModel routine ======
       deallocate ( spsfunc_path, stat=status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Deallocate//'spsfunc_path' )
+
+      deallocate ( sps_phi_loop, stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_Deallocate//'sps_phi_loop' )
+      deallocate ( sps_zeta_loop, stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_Deallocate//'sps_zeta_loop' )
 
       call deallocate_test ( dx_dt, 'dx_dt', ModuleName )
       call deallocate_test ( d2x_dxdt, 'd2x_dxdt', ModuleName )
@@ -1138,7 +1255,7 @@ contains ! ================================ FullForwardModel routine ======
     endif ! --------------------------- Possible skip of this major frame
 
     if ( maf == noMAFs ) fmStat%finished = .true.
-    
+
     call Deallocate_test ( usedChannels, 'usedChannels', ModuleName )
     call Deallocate_test ( usedSignals, 'usedSignals', ModuleName )
 
@@ -1152,3 +1269,6 @@ contains ! ================================ FullForwardModel routine ======
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 1.1  2001/05/29 22:53:51  livesey
+! First version, taken from old ForwardModelInterface.f90
+!

@@ -3,29 +3,315 @@
 
 module GET_BETA_PATH_M
   use MLSCommon, only: I4, R8
-  use PATH_ENTITIES_M, only: PATH_VECTOR, PATH_BETA
-  use SLABS_SW_M, only: SLABS_PREP_WDER, SLABS_PREP
-  use CREATE_BETA_M, only: CREATE_BETA
-  use output_m,only:output
-  use Dump_0,only:dump
+  use GLNP, only: NG
   use SpectroscopyCatalog_m, only: Catalog_T, Lines
+  use L2PC_PFA_STRUCTURES, only: PFA_SLAB, SLABS_STRUCT, MAXLINES
+  use PATH_ENTITIES_M, only: PATH_VECTOR, PATH_BETA, PATH_INDEX
+  use CREATE_BETA_M, only: CREATE_BETA
   Implicit NONE
   private
-  public :: get_beta_path
+  public :: GET_COARSE_BETA_PATH, GET_GLBETA_PATH, GET_BETA_PATH
 
-  !---------------------------- RCS Ident Info -------------------------------
-    character (len=*), parameter, private :: IdParm = &
-    "$Id$"
-    character (len=len(idParm)) :: Id = IdParm
-    character (len=*), parameter, private :: ModuleName= &
-    "$RCSfile$"
-  !---------------------------------------------------------------------------
-
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter, private :: IdParm = &
+  "$Id$"
+  character (len=len(idParm)) :: Id = IdParm
+  character (len=*), parameter, private :: ModuleName= &
+  "$RCSfile$"
+!---------------------------------------------------------------------------
 contains
 !----------------------------------------------------------------------
 
+ SUBROUTINE get_coarse_beta_path(ptg_i,Catalog,ndx_path,gl_slabs, &
+         &  no_frq,mnf,ht,frq_grid,z_path,h_path,t_path,Frq_Gap,  &
+         &  temp_der, spect_der, beta_path, Ier)
+
+!  ===============================================================
+!  Declaration of variables for sub-program: get_coarse_beta_path
+!  ===============================================================
+!  ---------------------------
+!  Calling sequence variables:
+!  ---------------------------
+Integer(i4), INTENT(IN) :: ptg_i, no_frq, mnf
+
+Real(r8), INTENT(IN) :: frq_grid(:)
+Real(r8), INTENT(IN) :: ht, Frq_Gap
+Logical,  INTENT(IN) :: temp_der, spect_der
+
+Integer(i4), INTENT(OUT) :: ier
+
+Type(path_vector), INTENT(IN) :: z_path, h_path, t_path
+
+Type(path_index) :: ndx_path
+Type (slabs_struct), DIMENSION(:,:), POINTER :: gl_slabs
+
+Type(Catalog_T), INTENT(IN) :: Catalog(:)
+
+Type(path_beta), POINTER :: beta_path(:,:)  ! (sps_i,frq_i)
+
+!  ----------------
+!  Local variables:
+!  ----------------
+
+Integer(i4) :: nl,i,j,k,mp,no_sps,spectag,frq_i,Ngp1,no_ele,brkpt
+
+Real(r8) :: z, p, h, t, Frq
+Real(r8) :: values,t_power,dbeta_dw,dbeta_dn,dbeta_dnu
+
+! Begin code:
+
+  ier = 0
+  Ngp1 = Ng + 1
+  no_sps = Size(Catalog)
+!
+  brkpt = ndx_path%break_point_index
+  no_ele = ndx_path%total_number_of_elements
+!
+! Allocate all the needed space for beta.
+! NOTE: This is done onl once per MAF, at the lowest pointing,
+! where the lenght of the path is maximal, also, allocate beta
+! with the maximum number of frequencies (mnf) over all pointings..
+!
+  if(ptg_i == 1) then
+!
+    if ( associated(beta_path) ) then
+      do i = 1, size(beta_path,1)
+        do frq_i = 1, size(beta_path,2)
+          DEALLOCATE(beta_path(i,frq_i)%values,   &
+            &        beta_path(i,frq_i)%t_power,  &
+            &        beta_path(i,frq_i)%dbeta_dw, &
+            &        beta_path(i,frq_i)%dbeta_dn, &
+            &        beta_path(i,frq_i)%dbeta_dnu, STAT=j )
+        end do
+      end do
+      DEALLOCATE(beta_path,STAT=j)
+    end if
+!
+    ALLOCATE(beta_path(no_sps,mnf),STAT=j)
+!
+    do i = 1, size(beta_path,1)
+      do frq_i = 1, size(beta_path,2)
+        ALLOCATE(beta_path(i,frq_i)%values(no_ele),    &
+           &     beta_path(i,frq_i)%t_power(no_ele),   &
+           &     beta_path(i,frq_i)%dbeta_dw(no_ele),  &
+           &     beta_path(i,frq_i)%dbeta_dn(no_ele),  &
+           &     beta_path(i,frq_i)%dbeta_dnu(no_ele), STAT = ier)
+        if(ier /= 0) then
+          PRINT *,'** Allocation error in routine: get_beta_path ..'
+          PRINT *,'   no_ele,ptg_i,i,frq_i:',no_ele,ptg_i,i,frq_i
+          PRINT *,'   STAT =',ier
+          Return
+        endif
+        beta_path(i,frq_i)%values = 0.0
+        beta_path(i,frq_i)%t_power = 0.0
+        beta_path(i,frq_i)%dbeta_dw = 0.0
+        beta_path(i,frq_i)%dbeta_dn = 0.0
+        beta_path(i,frq_i)%dbeta_dnu = 0.0
+      end do
+    end do
+!
+  endif
+!
+  DO i = 1, no_sps
+!
+    Spectag = Catalog(i)%spec_tag
+!
+    nl = gl_slabs(1,i)%no_lines
+!
+    mp = 1 - Ngp1
+    do
+!
+      mp = mp + Ngp1
+      if (mp > brkpt) EXIT
+!
+      z = z_path%values(mp)
+      if(z <= -4.5) CYCLE
+!
+      j = mp
+      t = t_path%values(mp)
+      p = 10.0d0**(-z)
+!
+      do frq_i = 1, no_frq
+!
+        Frq = frq_grid(frq_i)
+!
+        Call Create_beta (Spectag,p,t,Frq,nl,Catalog(i),gl_slabs(j,i)%v0s, &
+       &     gl_slabs(j,i)%x1,gl_slabs(j,i)%y,gl_slabs(j,i)%yi,            &
+       &     gl_slabs(j,i)%slabs1,gl_slabs(j,i)%dx1_dv0,                   &
+       &     gl_slabs(j,i)%dy_dv0,gl_slabs(j,i)%dslabs1_dv0,               &
+       &     gl_slabs(j,i)%v0sp,gl_slabs(j,i)%x1p,gl_slabs(j,i)%yp,        &
+       &     gl_slabs(j,i)%yip,gl_slabs(j,i)%slabs1p,gl_slabs(j,i)%v0sm,   &
+       &     gl_slabs(j,i)%x1m,gl_slabs(j,i)%ym,gl_slabs(j,i)%yim,         &
+       &     gl_slabs(j,i)%slabs1m,values,t_power,dbeta_dw,dbeta_dn,       &
+       &     dbeta_dnu, Frq_Gap, temp_der, spect_der, Ier)
+        if(Ier /= 0) Return
+!
+        beta_path(i,frq_i)%values(mp) = values
+        beta_path(i,frq_i)%t_power(mp) = t_power
+        beta_path(i,frq_i)%dbeta_dw(mp) = dbeta_dw
+        beta_path(i,frq_i)%dbeta_dn(mp) = dbeta_dn
+        beta_path(i,frq_i)%dbeta_dnu(mp) = dbeta_dnu
+!
+      end do          ! On frq_i
+!
+    end do
+!
+    mp = brkpt + 1
+    h = h_path%values(mp)
+    do while (h < ht - 0.0001)
+      mp = mp + Ngp1
+      h = h_path%values(mp)
+    end do
+!
+    mp = mp - Ngp1
+!
+    do
+!
+      mp = mp + Ngp1
+      if(mp > no_ele) Return
+!
+      z = z_path%values(mp)
+      if(z <= -4.5) CYCLE
+!
+      j = mp
+      t = t_path%values(mp)
+      p = 10.0d0**(-z)
+!
+      do frq_i = 1, no_frq
+!
+        Frq = frq_grid(frq_i)
+!
+        Call Create_beta (Spectag,p,t,Frq,nl,Catalog(i),gl_slabs(j,i)%v0s, &
+       &     gl_slabs(j,i)%x1,gl_slabs(j,i)%y,gl_slabs(j,i)%yi,            &
+       &     gl_slabs(j,i)%slabs1,gl_slabs(j,i)%dx1_dv0,                   &
+       &     gl_slabs(j,i)%dy_dv0,gl_slabs(j,i)%dslabs1_dv0,               &
+       &     gl_slabs(j,i)%v0sp,gl_slabs(j,i)%x1p,gl_slabs(j,i)%yp,        &
+       &     gl_slabs(j,i)%yip,gl_slabs(j,i)%slabs1p,gl_slabs(j,i)%v0sm,   &
+       &     gl_slabs(j,i)%x1m,gl_slabs(j,i)%ym,gl_slabs(j,i)%yim,         &
+       &     gl_slabs(j,i)%slabs1m,values,t_power,dbeta_dw,dbeta_dn,       &
+       &     dbeta_dnu, Frq_Gap, temp_der, spect_der, Ier)
+!
+        beta_path(i,frq_i)%values(mp) = values
+        beta_path(i,frq_i)%t_power(mp) = t_power
+        beta_path(i,frq_i)%dbeta_dw(mp) = dbeta_dw
+        beta_path(i,frq_i)%dbeta_dn(mp) = dbeta_dn
+        beta_path(i,frq_i)%dbeta_dnu(mp) = dbeta_dnu
+!
+      end do          ! On frq_i
+!
+    end do
+!
+  END DO              ! On i
+
+  Return
+!
+ END SUBROUTINE get_coarse_beta_path
+
+!----------------------------------------------------------------------
+
+ SUBROUTINE get_glbeta_path(ptg_i,frq_i,Catalog,gl_ndx,no_gl_ndx,gl_slabs, &
+         &  Frq,z_path,t_path,Frq_Gap,temp_der,spect_der,beta_path,Ier)
+
+!  ===============================================================
+!  Declaration of variables for sub-program: get_glbeta_path
+!  ===============================================================
+!  ---------------------------
+!  Calling sequence variables:
+!  ---------------------------
+Integer(i4), INTENT(IN) :: ptg_i,frq_i, no_gl_ndx
+Integer(i4), INTENT(IN) :: gl_ndx(:,:)
+Logical,     INTENT(IN) :: temp_der, spect_der
+
+Real(r8), INTENT(IN) :: Frq, Frq_Gap
+
+Integer(i4), INTENT(OUT) :: ier
+
+Type (slabs_struct), DIMENSION(:,:), POINTER :: gl_slabs
+
+Type(path_vector), INTENT(IN) :: z_path, t_path
+
+Type(Catalog_T), INTENT(IN) :: Catalog(:)
+
+Type(path_beta), POINTER :: beta_path(:,:)  ! (sps_i,frq_i)
+
+!  ----------------
+!  Local variables:
+!  ----------------
+
+Integer(i4) :: nl, i, j, no_sps, spectag, Ngp1, mp, jj
+
+Real(r8) :: z, p, t,values,t_power,dbeta_dw,dbeta_dn,dbeta_dnu
+
+! Begin code:
+
+  ier = 0
+  if(no_gl_ndx < 1) Return
+!
+  Ngp1 = Ng + 1
+  no_sps = Size(Catalog)
+!
+  DO i = 1, no_sps
+!
+    Spectag = Catalog(i)%spec_tag
+!
+    nl = gl_slabs(1,i)%no_lines
+!
+    do jj = 1, no_gl_ndx
+!
+      mp = gl_ndx(jj,2)
+      j = mp
+
+      do                     !  GL Inner loop
+!
+        j = j + 1
+        if(j >= gl_ndx(jj+1,2)) EXIT
+
+        z = z_path%values(j)
+        if(z <= -4.5) CYCLE
+!
+        p = 10.0d0**(-z)
+        t = t_path%values(j)
+!
+        Call Create_beta (Spectag,p,t,Frq,nl,Catalog(i),gl_slabs(j,i)%v0s, &
+       &     gl_slabs(j,i)%x1,gl_slabs(j,i)%y,gl_slabs(j,i)%yi,            &
+       &     gl_slabs(j,i)%slabs1,gl_slabs(j,i)%dx1_dv0,                   &
+       &     gl_slabs(j,i)%dy_dv0,gl_slabs(j,i)%dslabs1_dv0,               &
+       &     gl_slabs(j,i)%v0sp,gl_slabs(j,i)%x1p,gl_slabs(j,i)%yp,        &
+       &     gl_slabs(j,i)%yip,gl_slabs(j,i)%slabs1p,gl_slabs(j,i)%v0sm,   &
+       &     gl_slabs(j,i)%x1m,gl_slabs(j,i)%ym,gl_slabs(j,i)%yim,         &
+       &     gl_slabs(j,i)%slabs1m,values,t_power,dbeta_dw,dbeta_dn,       &
+       &     dbeta_dnu, Frq_Gap, temp_der, spect_der, Ier)
+        if(Ier /= 0) Return
+!
+        beta_path(i,frq_i)%values(j) = values
+        beta_path(i,frq_i)%t_power(j) = t_power
+        beta_path(i,frq_i)%dbeta_dw(j) = dbeta_dw
+        beta_path(i,frq_i)%dbeta_dn(j) = dbeta_dn
+        beta_path(i,frq_i)%dbeta_dnu(j) = dbeta_dnu
+!
+      end do          ! On GL inner loop
+!
+    end do            ! On jj
+!
+  END DO              ! On i
+!
+  Return
+!
+! Cleanup cycle ...
+!
+ 99  Print *,'** Error in get_glbeta routine ..'
+
+  Return
+
+ END SUBROUTINE get_glbeta_path
+
+!----------------------------------------------------------------------
+! Computes beta over the entire GL path without referring to the gl_ndx at all.
+
  subroutine Get_beta_path ( frequencies, Catalog, no_ele, z_path, t_path, &
-                      &     beta_path, vel_z, Frq_Gap, temp_der, spect_der, Ier)
+      &     beta_path, vel_z, Frq_Gap, temp_der, spect_der, Ier)
+
+ use SLABS_SW_M, only: SLABS_PREP_ARRAYS
 
   !  ===============================================================
   !  Declaration of variables for sub-program: get_beta_path
@@ -75,8 +361,7 @@ contains
   ! call output('In get_beta_path_m',advance='yes')
   ! call dump(frequencies)
 
-  !  Vel_z_correction = 1.0_r8 + vel_z / c
-  Vel_z_correction = 1.0_r8 - vel_z / c ! Debug
+  Vel_z_correction = 1.0_r8 - vel_z / c
 
   ! Allocate all the needed space for beta..
 
@@ -124,8 +409,10 @@ contains
 
       p = 10.0**(-z)
       t = t_path%values(h_i)
-
-      Call Slabs_Prep_Arrays
+!
+      Call  Slabs_Prep_Arrays(Spectag,nl,t,p,mass,Catalog(i),Qlog,v0s, &
+        &   x1,y,yi,slabs1,dx1_dv0,dy_dv0,dslabs1_dv0,v0sp,x1p,yp,yip, &
+        &   slabs1p,v0sm,x1m,ym,yim,slabs1m)
 
 ! Apply velocity corrections:
 
@@ -161,58 +448,23 @@ contains
 
  99  do i = 1, no_sps
        do frq_i = 1, mnf
-         deallocate ( beta_path(i,frq_i)%values, beta_path(i,frq_i)%t_power, &
-           &          beta_path(i,frq_i)%dbeta_dw, beta_path(i,frq_i)%dbeta_dn, &
-           &          beta_path(i,frq_i)%dbeta_dnu, STAT=h_i )
+         deallocate(beta_path(i,frq_i)%values,beta_path(i,frq_i)%t_power, &
+           &        beta_path(i,frq_i)%dbeta_dw,beta_path(i,frq_i)%dbeta_dn, &
+           &        beta_path(i,frq_i)%dbeta_dnu,STAT=h_i )
        end do
      end do
 
      deallocate ( beta_path, STAT=h_i )
 
-  Return
-
-! *****     Internal procedures     **********************************
-  contains
-
-! --------------------------------  slabs_prep_arrays   -----
-    Subroutine Slabs_Prep_Arrays
-
-    Integer(i4) :: j,k
-    Real(r8) :: dslabs1,tp,tm
-
-    if ( Spectag==18999 .or. Spectag==28964 .or. Spectag==28965 ) Return
-
-    ! Check for anything but liquid water and dry air:
-
-    do j = 1, nl
-
-    ! Prepare the temperature weighted coefficients:
-
-      k = Catalog(i)%Lines(j)
-      Call Slabs_prep_wder(t,mass,Lines(k)%V0,Lines(k)%EL,Lines(k)%W,   &
-        &  Lines(k)%PS, p, Lines(k)%N,Lines(k)%STR,Qlog,Lines(k)%DELTA, &
-        &  Lines(k)%GAMMA,Lines(k)%N1,Lines(k)%N2,v0s(j),x1(j),y(j),    &
-        &  yi(j),slabs1(j),dx1_dv0(j),dy_dv0(j),dslabs1_dv0(j))
-
-      tp = t + 10.0
-      Call slabs_prep(tp,mass,Lines(k)%V0,Lines(k)%EL,Lines(k)%W,       &
-        &  Lines(k)%PS, p, Lines(k)%N,Lines(k)%STR,Qlog,Lines(k)%DELTA, &
-        &  Lines(k)%GAMMA,Lines(k)%N1,Lines(k)%N2,v0sp(j),x1p(j),yp(j), &
-        &  yip(j),slabs1p(j),dslabs1)
-
-      tm = t - 10.0
-      Call slabs_prep(tm,mass,Lines(k)%V0, Lines(k)%EL,Lines(k)%W,      &
-        &  Lines(k)%PS, p, Lines(k)%N,Lines(k)%STR,Qlog,Lines(k)%DELTA, &
-        &  Lines(k)%GAMMA,Lines(k)%N1,Lines(k)%N2,v0sm(j),x1m(j),ym(j), &
-        &  yim(j),slabs1m(j),dslabs1)
-
-    end do
-
-    End Subroutine Slabs_Prep_Arrays
+    Return
 
   end subroutine get_beta_path
-end module GET_BETA_PATH_M
+!
+End module GET_BETA_PATH_M
 ! $Log$
+! Revision 1.21  2001/05/16 00:42:10  livesey
+! Fixed velocity correction.  Make sure this is OK with people later.
+!
 ! Revision 1.20  2001/05/15 03:47:26  zvi
 ! Adding derivative flag to beta calculations
 !

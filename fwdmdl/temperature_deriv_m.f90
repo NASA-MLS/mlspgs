@@ -19,13 +19,15 @@ module TEMPERATURE_DERIV_M
 contains
 !
     Subroutine temperature_deriv(mid,brkpt,no_ele,t_z_basis,z_path,  &
-   &           t_path,h_path,phi_path,beta_path,dHdz_path,dh_dt_path, &
-   &           no_phi_t,no_t,N_lvls,n_sps,ref_corr,t_phi_basis, tau, &
-   &           t_script,dt_script_dc,spsfunc_path,ilo,ihi,frq_i,     &
-   &           elvar,k_temp)
+   &           t_path,h_path,phi_path,beta_path,dHdz_path,no_phi_t,  &
+   &           no_t,N_lvls,n_sps,ref_corr,t_phi_basis,tau,t_script,  &
+   &           dt_script_dc,spsfunc_path,ilo,ihi,frq_i,dh_dt_path,   &
+   &           elvar,no_midval_ndx,midval_ndx,no_gl_ndx,gl_ndx,k_temp)
 !
-    Integer(i4), intent(in) :: MID,BRKPT,NO_ELE,NO_PHI_T,NO_T, &
-                               N_LVLS,N_SPS,ILO,IHI,FRQ_I
+    Integer(i4), intent(in) :: MID,BRKPT,NO_ELE,NO_PHI_T,NO_T,ILO,IHI, &
+   &                           N_LVLS,N_SPS,FRQ_I,no_midval_ndx,no_gl_ndx
+
+    Integer(i4), intent(in) :: midval_ndx(:,:),gl_ndx(:,:)
 
     Type(ELLIPSE), intent(in out) :: elvar
 
@@ -44,12 +46,14 @@ contains
 
     Type(path_derivative), INTENT(in out) :: k_temp
 !
-    Integer(i4) :: IN, IP
+    Integer(i4) :: IN, IP, j
     Real(r8) :: D_DELTA_DTNP(Size(tau)), r
 !
 ! Begin sweep through elements to see if user wants derivatives for this
 ! channel at this frequency
 !
+    j = lbound(k_temp%values,3) + 1
+
     do in = 1, no_t              ! Loop over the Temp. zeta coeffs.
 !
       do ip = lbound(k_temp%values,3), ubound(k_temp%values,3)
@@ -58,11 +62,10 @@ contains
 ! Compute the temperature derivative of delta:
 !
         Call d_delta_dt(mid,brkpt,no_ele,z_path,t_path,h_path,phi_path, &
-       &     beta_path,dHdz_path,&
-       &     dh_dt_path(:,ip-lbound(k_temp%values,3)+1,in),&
-       &     N_lvls,n_sps, &
-       &     ref_corr,t_z_basis,no_t,t_phi_basis,no_phi_t,spsfunc_path, &
-       &     in,ip,elvar,d_delta_dtnp)
+          &  beta_path,dHdz_path,dh_dt_path(:,ip-j,in),N_lvls,n_sps,    &
+          &  ref_corr,t_z_basis,no_t,t_phi_basis,no_phi_t,spsfunc_path, &
+          &  in,ip,elvar,no_midval_ndx,midval_ndx,no_gl_ndx,gl_ndx,     &
+          &  d_delta_dtnp)
 !
 ! Now assemble the derivative:
 !
@@ -78,6 +81,9 @@ contains
   End Subroutine TEMPERATURE_DERIV
 end module TEMPERATURE_DERIV_M
 ! $Log$
+! Revision 1.12  2001/06/07 23:39:32  pwagner
+! Added Copyright statement
+!
 ! Revision 1.11  2001/04/24 00:05:36  livesey
 ! Update, phi window correction for Temperature
 !

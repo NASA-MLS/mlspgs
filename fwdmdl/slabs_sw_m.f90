@@ -3,6 +3,10 @@
 
 module SLABS_SW_M
   use MLSCommon, only: I4, R4, R8
+  use PATH_ENTITIES_M, only: PATH_INDEX, PATH_VECTOR, PATH_BETA, &
+      PATH_DERIVATIVE, PATH_VECTOR_2D, PATH_INT_VECTOR_2D
+  use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
+  use SpectroscopyCatalog_m, only: Catalog_T, Lines
   implicit NONE
 !---------------------------- RCS Ident Info -------------------------------
   CHARACTER (LEN=256) :: Id = &
@@ -12,6 +16,167 @@ module SLABS_SW_M
 !---------------------------------------------------------------------------
 contains
 !---------------------------------------------------------------------------
+! Computes the voigt function and its first derivative with respect
+! to spectaral parameters: w, n & Nu0
+!
+! NOTE: Before calling this routine, the user needs to call slabs_prep_wder()
+!       routine to compute dx1_dv0,dy_dv0 and dslabs1_dNu0
+!
+ Subroutine dvoigt_spectral(dNu,Nu0,x1,yi,y,w,t,slabs1,dx1_dv0, &
+     &      dy_dv0,dslabs1_dNu0,SwI,spect_der,dSwI_dw,dSwI_dn,dSwI_dNu0)
+!
+  Real(r8), Parameter :: twovspi = 1.1283791670955125739_r8   ! 2.0/Sqrt(Pi)
+  Real(r8), Parameter :: oneovspi = 0.5_r8 * twovspi
+!
+  Logical,  INTENT(IN) :: spect_der
+  Real(r8), INTENT(IN) :: dNu, Nu0, x1, yi, y, w, t, slabs1, &
+                          dslabs1_dNu0, dx1_dv0, dy_dv0
+
+  Real(r8), INTENT(OUT) :: SwI,dSwI_dw,dSwI_dn,dSwI_dNu0
+!
+  Real(r8) :: x, u, v, du_dx, du_dy, dv_dx, dv_dy, q, q2, b, g, z, r
+!
+  Real(r8) :: dq_dv0, dx_dv0, du_dv0, dv_dv0, db_dv0, dg_dv0, dz_dv0, &
+              dr_dv0, dvvw_dv0, vvw
+!
+  x = x1 * dNu
+  Call Z_Slabs(x,y,u,v)
+!
+  du_dx = -2.0_r8 * (x * u - y * v)
+  du_dy =  2.0_r8 * (x * v + y * u) - twovspi
+!
+  dv_dx = -du_dy         ! Cauchy-Riemann equation
+  dv_dy =  du_dx         ! Cauchy-Riemann equation
+!
+!  Van Vleck - Wieskopf (VVW) line shape with Voigt
+!
+  q = 1.0_r8 + dNu / Nu0
+  q2 = q * q
+!
+  b = x1 * (2.0_r8 * Nu0 + dNu)
+  g = b * b + y * y
+  z = (y - b * yi) / g
+  r = z * oneovspi + yi * v
+  vvw = (u + r) * q2
+  SwI = slabs1 * vvw
+!
+  if(.not. spect_der) Return
+!
+! Compute the derivative of SwI w.r.t. w
+!
+  dSwI_dw = slabs1 * (y / w) * (du_dy +          &
+     &      q2 * oneovspi * (b*b-y*y) / (g*g) +  &
+     &      q2 * yi * du_dx)
+!
+! Compute the derivative of SwI w.r.t. n
+!
+  dSwI_dn = slabs1 * y * Log(3.0d2/t) * (du_dy + yi * dv_dy)
+!
+! Finaly, compute the derivative of SwI w.r.t. Nu0
+!
+! ***** Analytically *****
+!
+  dq_dv0 = -(Nu0+dNu)/(Nu0*Nu0)
+  dx_dv0 = dNu * dx1_dv0 - x1
+  du_dv0 = du_dx * dx_dv0 + du_dy * dy_dv0
+  dv_dv0 = dv_dx * dx_dv0 + dv_dy * dy_dv0
+  db_dv0 = (2.0_r8 * Nu0 + dNu)*dx1_dv0 + x1
+  dg_dv0 = 2.0_r8 * (b*db_dv0+y*dy_dv0)
+  dz_dv0 = (dy_dv0-yi*db_dv0-z*dg_dv0)/g
+  dr_dv0 = dz_dv0*oneovspi+yi*dv_dv0
+  dvvw_dv0 = (du_dv0+dr_dv0)*q2 + 2.0_r8*q*dq_dv0*(u+r)
+  dSwI_dNu0 = dslabs1_dNu0*vvw + slabs1*dvvw_dv0
+!
+  Return
+ End Subroutine dvoigt_spectral
+!
+!---------------------------------------------------------------------
+!
+ Real(r8) Function Slabswint(dNu,v0s,x1,slabs1,y,yi)
+!
+  Real(r8), INTENT(IN) :: dNu, v0s, x1, slabs1, y, yi
+!
+  Real(r8), Parameter :: sqrt_pi_i = 1.0_r8/1.7724538509055160273_r8
+!
+!  Note: dNu = v - v0s
+!
+! If the molecular transition and temperature have not changed but
+! frequency has enter here.
+!
+! inputs: dNu , x1 , slabs1 , y, v0s, yi
+! output: slabswint (slab with interference)
+
+  Real(r8) :: x, u, v, q, p, z, r, w
+!
+  x = x1 * dNu
+  Call Z_Slabs(x,y,u,v)
+!
+!  Van Vleck - Wieskopf line shape with Voigt, Added Mar/2/91, Bill
+!  Modified code to include interference: June/3/1992 (Bill + Zvi)
+!  Modified code to correct a sign error (introduced in last change)
+!  (Bill + Zvi, July/7/92)
+!
+  q = 1.0_r8 + dNu / v0s
+  p = x1 * (2.0_r8 * v0s + dNu)
+  z = (y - p * yi)/(p * p + y * y)
+  r = z * sqrt_pi_i + yi * v
+  w = (u + r) * q * q
+  Slabswint = slabs1 *  w
+!
+  Return
+ End Function Slabswint
+!
+!---------------------------------------------------------------------
+!
+ Subroutine Z_Slabs(x,y,u,v)
+!
+!***********************************************************************
+!                                                                      *
+! Computes the Voigt function: Integral from - to + infinity of:       *
+!                                                                      *
+!     u = (y/Pi)*Exp(-t*t)/(y*y+(x-t)*(x-t)) dt        (Real(W(z)))    *
+!                                                                      *
+!   and:                                                               *
+!                                                                      *
+!     v = (1/Pi)*(x-t)*Exp(-t*t)/(y*y+(x-t)*(x-t)) dt  (Image(W(z)))   *
+!                                                                      *
+!   Here:                                                              *
+!               x = sqrt(ln 2) * (v - v0) / aD    (x >= 0.0)           *
+!               y = sqrt(ln 2) * aL / aD          (y >= 0.0)           *
+!                                                                      *
+!   Where v is the wave number, v0 is the line center wave number, aL  *
+! is the Lorentzian line half-width and aD is the Doppler line         *
+! half-width.                                                          *
+!                                                                      *
+!***********************************************************************
+!
+  Real(r8), INTENT(IN)  :: x,y
+  Real(r8), INTENT(OUT) :: u,v
+
+  Real(r8) :: xa, yh
+!
+  xa = abs(x)
+  if(xa+y > 6.0_r8) then           ! Region 4, Gauss-Hermite 6 points
+    Call VoigtH6(xa,y,u,v)
+  else
+    yh = 1.0e-4*xa*xa
+    if(y <= yh) then
+      if(xa > 5.0_r8) then
+        Call VoigtH6(xa,y,u,v)    ! Region 4, Gauss-Hermite 6 points
+      else
+        Call Drayson(xa,y,u,v)    ! Region 1, Dowson+Taylor
+      endif
+    else                          ! Region 2, Hui (p=6)
+      Call Hui6(xa,y,u,v)
+    endif
+  endif
+!
+  if(x < 0.0_r8) v = -v
+!
+  Return
+ End Subroutine Z_Slabs
+!
+!---------------------------------------------------------------------
 !
  Subroutine VoigtH6(x,y,u,v)
 !
@@ -232,56 +397,77 @@ END Subroutine Drayson
 !
   Return
  End Subroutine Hui6
-!
-!---------------------------------------------------------------------
-!
- Subroutine Z_Slabs(x,y,u,v)
-!
-!***********************************************************************
-!                                                                      *
-! Computes the Voigt function: Integral from - to + infinity of:       *
-!                                                                      *
-!     u = (y/Pi)*Exp(-t*t)/(y*y+(x-t)*(x-t)) dt        (Real(W(z)))    *
-!                                                                      *
-!   and:                                                               *
-!                                                                      *
-!     v = (1/Pi)*(x-t)*Exp(-t*t)/(y*y+(x-t)*(x-t)) dt  (Image(W(z)))   *
-!                                                                      *
-!   Here:                                                              *
-!               x = sqrt(ln 2) * (v - v0) / aD    (x >= 0.0)           *
-!               y = sqrt(ln 2) * aL / aD          (y >= 0.0)           *
-!                                                                      *
-!   Where v is the wave number, v0 is the line center wave number, aL  *
-! is the Lorentzian line half-width and aD is the Doppler line         *
-! half-width.                                                          *
-!                                                                      *
-!***********************************************************************
-!
-  Real(r8), INTENT(IN)  :: x,y
-  Real(r8), INTENT(OUT) :: u,v
 
-  Real(r8) :: xa, yh
+!---------------------------------------------------------------------------
+! Computes the Lorentz function and its first derivative with respect
+! to spectaral parameters: w, n & Nu0
 !
-  xa = abs(x)
-  if(xa+y > 6.0_r8) then           ! Region 4, Gauss-Hermite 6 points
-    Call VoigtH6(xa,y,u,v)
-  else
-    yh = 1.0e-4*xa*xa
-    if(y <= yh) then
-      if(xa > 5.0_r8) then
-        Call VoigtH6(xa,y,u,v)    ! Region 4, Gauss-Hermite 6 points
-      else
-        Call Drayson(xa,y,u,v)    ! Region 1, Dowson+Taylor
-      endif
-    else                          ! Region 2, Hui (p=6)
-      Call Hui6(xa,y,u,v)
-    endif
-  endif
+! NOTE: Before calling this routine, the user needs to call slabs_prep_wder()
+!       routine to compute x1,yi,y,dx1_dv0,dy_dv0 and dslabs1_dNu0
 !
-  if(x < 0.0_r8) v = -v
+ Subroutine Lorentz_spectral(dNu,Nu0,x1,yi,y,w,t,slabs1,dslabs1_dNu0, &
+     &      Lorentz,spect_der,dLorentz_dw,dLorentz_dn,dLorentz_dNu0)
+!
+  Real(r8), Parameter :: OvSpi = 0.56418958354776d0 ! 1/Sqrt(Pi)
+!
+  Logical,  INTENT(IN) :: spect_der
+  Real(r8), INTENT(IN) :: dNu, Nu0, x1, yi, y, w, t, slabs1, &
+                   &      dslabs1_dNu0
+
+  Real(r8), INTENT(OUT) :: Lorentz, dLorentz_dw, dLorentz_dn, &
+                    &      dLorentz_dNu0
+!
+  Real(r8) :: xj, zj, q, y2, q2, Sum, up1, up2, dn1, dn2, dup1, dup2, &
+   &    ddn1, ddn2, dy_dw, dy_dn, dq_dNu0, dSum_dw, dSum_dn, dSum_dNu0
+!
+  y2 = y * y
+  xj = x1 * dNu
+  q = 1.0_r8 + dNu/Nu0
+  q2 = q * q
+  zj = x1 * (2.0_r8 * Nu0 + dNu)
+!
+  up1 = y - yi * zj
+  up2 = y - yi * xj
+  dn1 = zj * zj + y2
+  dn2 = xj * xj + y2
+  Sum = up1/dn1 + OvSPi * up2/dn2
+!
+  Lorentz = slabs1 * q2 * Sum
+!
+  if(.not.spect_der) Return
+!
+  dy_dw = y / w
+  dup1 = dy_dw
+  ddn1 = 2.0 * y * dy_dw
+  dup2 = dy_dw
+  ddn2 = 2.0 * y * dy_dw
+!
+  dSum_dw = (dn1*dup1-up1*ddn1)/(dn1*dn1) + &
+ &  OvSPi * (dn2*dup2-up2*ddn2)/(dn2*dn2)
+!
+  dLorentz_dw = slabs1 * q2 * dSum_dw
+!
+  dy_dn = y * Log(300.0/t)
+  dup1 = dy_dn
+  ddn1 = 2.0 * y * dy_dn
+  dup2 = dy_dn
+  ddn2 = 2.0 * y * dy_dn
+  dSum_dn = (dn1*dup1-up1*ddn1)/(dn1*dn1) + &
+ &  OvSPi * (dn2*dup2-up2*ddn2)/(dn2*dn2)
+
+  dLorentz_dn = slabs1 * q2 * dSum_dn
+!
+  dup2 =  yi * x1               !  x1 = -dxj_dNu0
+  ddn2 = -2.0 * xj * x1         !  x1 = -dxj_dNu0
+  dSum_dNu0 = OvSPi * (dn2*dup2-up2*ddn2)/(dn2*dn2)
+  dq_dNu0 = -(dNu+Nu0)/(Nu0*Nu0)
+!
+  dLorentz_dNu0 = dslabs1_dNu0 * q2 * Sum          + &
+            &     2.0 * slabs1 * q * dq_dNu0 * Sum + &
+            &     slabs1 * q2 * dSum_dNu0
 !
   Return
- End Subroutine Z_Slabs
+ End Subroutine Lorentz_spectral
 !
 !---------------------------------------------------------------------
 ! This function will compute a single line type absorption coefficient
@@ -404,23 +590,23 @@ END Subroutine Drayson
 !
 ! inputs:
 !
-  Real(r8), INTENT(IN) :: t        ! Temperature K
-  Real(r8), INTENT(IN) :: m        ! Molecular mass amu
-  Real(r8), INTENT(IN) :: v0       ! Line center frequency MHz
-  Real(r8), INTENT(IN) :: el       ! Lower state energy cm-1
-  Real(r8), INTENT(IN) :: w        ! Collision broadening parameter
-                                   ! MHz/mbar at 300 K
-  Real(r8), INTENT(IN) :: ps       ! Pressure shift parameter in MHz/mbar
-  Real(r8), INTENT(IN) :: p        ! Pressure mbar
-  Real(r8), INTENT(IN) :: n        ! Temperature power dependence of w
-  Real(r8), INTENT(IN) :: i        ! Integrated spectral intensity
-                                   ! Log(nm**2 MHz) at 300 K
-  Real(r8), INTENT(IN) :: q(3)     ! Logarithm of the partition function
-                                   ! At 300 , 225 , and 150 K
-  Real(r8), INTENT(IN) :: delta    ! Delta interference coefficient at 300K 1/mb
-  Real(r8), INTENT(IN) :: gamma    ! Gamma               "
-  Real(r8), INTENT(IN) :: n1       ! Temperature dependency of delta
-  Real(r8), INTENT(IN) :: n2       ! Temperature dependency of gamma
+  Real(r8), INTENT(IN) :: t       ! Temperature K
+  Real(r8), INTENT(IN) :: m       ! Molecular mass amu
+  Real(r8), INTENT(IN) :: v0      ! Line center frequency MHz
+  Real(r8), INTENT(IN) :: el      ! Lower state energy cm-1
+  Real(r8), INTENT(IN) :: w       ! Collision broadening parameter
+                                  ! MHz/mbar at 300 K
+  Real(r8), INTENT(IN) :: ps      ! Pressure shift parameter in MHz/mbar
+  Real(r8), INTENT(IN) :: p       ! Pressure mbar
+  Real(r8), INTENT(IN) :: n       ! Temperature power dependence of w
+  Real(r8), INTENT(IN) :: i       ! Integrated spectral intensity
+                                  ! Log(nm**2 MHz) at 300 K
+  Real(r8), INTENT(IN) :: q(3)    ! Logarithm of the partition function
+                                  ! At 300 , 225 , and 150 K
+  Real(r8), INTENT(IN) :: delta   ! Delta interference coefficient at 300K 1/mb
+  Real(r8), INTENT(IN) :: gamma   ! Gamma               "
+  Real(r8), INTENT(IN) :: n1      ! Temperature dependency of delta
+  Real(r8), INTENT(IN) :: n2      ! Temperature dependency of gamma
 !
 ! outputs:
 !
@@ -508,119 +694,197 @@ END Subroutine Drayson
 !
  End Subroutine Slabs_prep_wder
 !
-!---------------------------------------------------------------------
-!
- Real(r8) Function Slabswint(dNu,v0s,x1,slabs1,y,yi)
-!
-  Real(r8), INTENT(IN) :: dNu, v0s, x1, slabs1, y, yi
-!
-  Real(r8), Parameter :: sqrt_pi_i = 1.0_r8/1.7724538509055160273_r8
-!
-!  Note: dNu = v - v0s
-!
-! If the molecular transition and temperature have not changed but
-! frequency has enter here.
-!
-! inputs: dNu , x1 , slabs1 , y, v0s, yi
-! output: slabswint (slab with interference)
+! --------------------------------  slabs_prep_arrays   -----
+ Subroutine Slabs_Prep_Arrays(Spectag,nl,t,p,mass,Catalog,Qlog,v0s, &
+        &   x1,y,yi,slabs1,dx1_dv0,dy_dv0,dslabs1_dv0,v0sp,x1p,yp,  &
+        &   yip,slabs1p,v0sm,x1m,ym,yim,slabs1m)
 
-  Real(r8) :: x, u, v, q, p, z, r, w
+ Integer(i4), intent(in) :: Spectag, nl
+
+ Real(r8), intent(in) :: t, p, mass, Qlog(:)
+
+ Type(Catalog_T), intent(in) :: Catalog
+
+ Real(r8), intent(out) :: v0s(:), x1(:), y(:), yi(:), slabs1(:), &
+                          dx1_dv0(:), dy_dv0(:), dslabs1_dv0(:)
+
+ Real(r8), intent(out) :: v0sp(:), x1p(:), yp(:), yip(:), slabs1p(:), &
+                      &   v0sm(:), x1m(:), ym(:), yim(:), slabs1m(:)
 !
-  x = x1 * dNu
-  Call Z_Slabs(x,y,u,v)
+  Integer(i4) :: j, k
+  Real(r8) :: dslabs1, tp, tm
+
+  if(Spectag==18999 .or. Spectag==28964 .or. Spectag==28965) Return
 !
-!  Van Vleck - Wieskopf line shape with Voigt, Added Mar/2/91, Bill
-!  Modified code to include interference: June/3/1992 (Bill + Zvi)
-!  Modified code to correct a sign error (introduced in last change)
-!  (Bill + Zvi, July/7/92)
+! Check for anything but liquid water and dry air:
 !
-  q = 1.0_r8 + dNu / v0s
-  p = x1 * (2.0_r8 * v0s + dNu)
-  z = (y - p * yi)/(p * p + y * y)
-  r = z * sqrt_pi_i + yi * v
-  w = (u + r) * q * q
-  Slabswint = slabs1 *  w
+  do j = 1, nl
 !
+! Prepare the temperature weighted coefficients:
+!
+    k = Catalog%Lines(j)
+    Call Slabs_prep_wder(t,mass,Lines(k)%V0,Lines(k)%EL,Lines(k)%W,   &
+      &  Lines(k)%PS, p, Lines(k)%N,Lines(k)%STR,Qlog,Lines(k)%DELTA, &
+      &  Lines(k)%GAMMA,Lines(k)%N1,Lines(k)%N2,v0s(j),x1(j),y(j),    &
+      &  yi(j),slabs1(j),dx1_dv0(j),dy_dv0(j),dslabs1_dv0(j))
+!
+    tp = t + 10.0
+    Call Slabs_prep(tp,mass,Lines(k)%V0,Lines(k)%EL,Lines(k)%W,   &
+      &  Lines(k)%PS, p, Lines(k)%N,Lines(k)%STR,Qlog,Lines(k)%DELTA, &
+      &  Lines(k)%GAMMA,Lines(k)%N1,Lines(k)%N2,v0sp(j),x1p(j),yp(j), &
+      &  yip(j),slabs1p(j),dslabs1)
+!
+    tm = t - 10.0
+    Call Slabs_prep(tm,mass,Lines(k)%V0,Lines(k)%EL,Lines(k)%W,   &
+      &  Lines(k)%PS, p, Lines(k)%N,Lines(k)%STR,Qlog,Lines(k)%DELTA, &
+      &  Lines(k)%GAMMA,Lines(k)%N1,Lines(k)%N2,v0sm(j),x1m(j),ym(j), &
+      &  yim(j),slabs1m(j),dslabs1)
+!
+  end do
+!
+  End Subroutine Slabs_Prep_Arrays
+
+!-----------------------------------------------------------------
+ SUBROUTINE get_gl_slabs_arrays(Catalog,z_path,t_path,vel_z,gl_slabs, &
+                             &  ptg_i,no_ele,max_nl,ier)
+
+!  ===============================================================
+!  Declaration of variables for sub-program: get_gl_slabs_arrays
+!  ===============================================================
+!  ---------------------------
+!  Calling sequence variables:
+!  ---------------------------
+Integer(i4), INTENT(IN) :: ptg_i, no_ele, max_nl
+
+Type(path_vector) :: z_path,t_path
+
+Type(Catalog_T), dimension(:), intent(in) :: Catalog
+
+Real(r8), INTENT(IN) :: vel_z
+
+Integer(i4), INTENT(OUT) :: ier
+
+Type (slabs_struct), POINTER :: gl_slabs(:,:)
+
+!  ----------------
+!  Local variables:
+!  ----------------
+
+Real(r8), PARAMETER :: c = 299792.4583d0     ! Speed of Light Km./Sec.
+
+Integer(i4) :: nl,i,j,no_sps,spectag
+
+Real(r8) :: Qlog(3), mass, z, p, t, Vel_z_correction
+
+Real(r8) :: v0s(max_nl), x1(max_nl), y(max_nl), yi(max_nl), &
+            slabs1(max_nl), dx1_dv0(max_nl), dy_dv0(max_nl),  &
+            dslabs1_dv0(max_nl)
+
+Real(r8) :: v0sp(max_nl), x1p(max_nl), yp(max_nl), yip(max_nl), &
+            slabs1p(max_nl)
+
+Real(r8) :: v0sm(max_nl), x1m(max_nl), ym(max_nl), yim(max_nl), &
+            slabs1m(max_nl)
+
+! Begin code:
+
+  ier = 0
+  no_sps = Size(Catalog)
+!
+  Vel_z_correction = 1.0_r8 - vel_z / c
+
+  IF(ptg_i == 1) then
+!
+    ALLOCATE(gl_slabs(no_ele,no_sps), STAT=ier)
+    IF(ier /= 0) THEN
+      Print *,'** ALLOCATE Error: gl_slabs, STAT =',ier
+      Return
+    ENDIF
+!
+    nl = max_nl
+    DO i = 1, no_sps
+      DO j = 1, no_ele
+        ALLOCATE(gl_slabs(j,i)%v0s(nl),gl_slabs(j,i)%v0sm(nl),           &
+            &    gl_slabs(j,i)%v0sp(nl),gl_slabs(j,i)%x1(nl),            &
+            &    gl_slabs(j,i)%y(nl),gl_slabs(j,i)%yi(nl),               &
+            &    gl_slabs(j,i)%slabs1(nl),gl_slabs(j,i)%dx1_dv0(nl),     &
+            &    gl_slabs(j,i)%dy_dv0(nl),gl_slabs(j,i)%dslabs1_dv0(nl), &
+            &    gl_slabs(j,i)%v0sm(nl),gl_slabs(j,i)%x1m(nl),           &
+            &    gl_slabs(j,i)%ym(nl),gl_slabs(j,i)%yim(nl),             &
+            &    gl_slabs(j,i)%slabs1m(nl),gl_slabs(j,i)%v0sp(nl),       &
+            &    gl_slabs(j,i)%x1p(nl),gl_slabs(j,i)%yp(nl),             &
+            &    gl_slabs(j,i)%yip(nl),gl_slabs(j,i)%slabs1p(nl),        &
+            &    STAT = ier)
+        IF(ier /= 0) THEN
+          Print *,'** ALLOCATE Error: gl_slabs%component(nl), STAT =',ier
+          Print *,'   gl_counter =',j,' specie_counter =',i,' nl =',nl
+          Return
+        ENDIF
+      END DO
+    END DO
+!
+  ENDIF
+!
+  DO i = 1, no_sps
+!
+    Spectag = Catalog(i)%spec_tag
+    mass = Real(Spectag) / 1000.0
+
+    Qlog(1:3) = Catalog(i)%QLOG(1:3)
+    nl = Size(Catalog(i)%Lines)
+!
+    gl_slabs(1:no_ele,i)%no_lines = nl
+!
+    do j = 1, no_ele
+!
+      z = z_path%values(j)
+      t = t_path%values(j)
+      p = 10.0d0**(-z)
+!
+      Call Slabs_Prep_Arrays(Spectag,nl,t,p,mass,Catalog(i),Qlog,v0s, &
+       &   x1,y,yi,slabs1,dx1_dv0,dy_dv0,dslabs1_dv0,v0sp,x1p,yp,yip, &
+       &   slabs1p,v0sm,x1m,ym,yim,slabs1m)
+!
+!  Apply velocity corrections:
+!
+      v0s(1:nl)  = v0s(1:nl)  * Vel_z_correction
+      v0sp(1:nl) = v0sp(1:nl) * Vel_z_correction
+      v0sm(1:nl) = v0sm(1:nl) * Vel_z_correction
+!
+      gl_slabs(j,i)%y(1:nl)           = y(1:nl)
+      gl_slabs(j,i)%x1(1:nl)          = x1(1:nl)
+      gl_slabs(j,i)%yi(1:nl)          = yi(1:nl)
+      gl_slabs(j,i)%v0s(1:nl)         = v0s(1:nl)
+      gl_slabs(j,i)%dy_dv0(1:nl)      = dy_dv0(1:nl)
+      gl_slabs(j,i)%slabs1(1:nl)      = slabs1(1:nl)
+      gl_slabs(j,i)%dx1_dv0(1:nl)     = dx1_dv0(1:nl)
+      gl_slabs(j,i)%dslabs1_dv0(1:nl) = dslabs1_dv0(1:nl)
+!
+      gl_slabs(j,i)%ym(1:nl)      = ym(1:nl)
+      gl_slabs(j,i)%x1m(1:nl)     = x1m(1:nl)
+      gl_slabs(j,i)%yim(1:nl)     = yim(1:nl)
+      gl_slabs(j,i)%v0sm(1:nl)    = v0sm(1:nl)
+      gl_slabs(j,i)%slabs1m(1:nl) = slabs1m(1:nl)
+!
+      gl_slabs(j,i)%yp(1:nl)      = yp(1:nl)
+      gl_slabs(j,i)%x1p(1:nl)     = x1p(1:nl)
+      gl_slabs(j,i)%yip(1:nl)     = yip(1:nl)
+      gl_slabs(j,i)%v0sp(1:nl)    = v0sp(1:nl)
+      gl_slabs(j,i)%slabs1p(1:nl) = slabs1p(1:nl)
+!
+    end do
+!
+  END DO              ! On i
+
   Return
- End Function Slabswint
 !
-!---------------------------------------------------------------------
-! Computes the voigt function and its first derivative with respect
-! to spectaral parameters: w, n & Nu0
-!
-! NOTE: Before calling this routine, the user needs to call slabs_prep_wder()
-!       routine to compute dx1_dv0,dy_dv0 and dslabs1_dNu0
-!
- Subroutine dvoigt_spectral(dNu,Nu0,x1,yi,y,w,t,slabs1,dx1_dv0, &
-     &      dy_dv0,dslabs1_dNu0,SwI,spect_der,dSwI_dw,dSwI_dn,dSwI_dNu0)
-!
-  Real(r8), Parameter :: twovspi = 1.1283791670955125739_r8   ! 2.0/Sqrt(Pi)
-  Real(r8), Parameter :: oneovspi = 0.5_r8 * twovspi
-!
-  Logical, INTENT(IN) :: spect_der
-  Real(r8), INTENT(IN) :: dNu, Nu0, x1, yi, y, w, t, slabs1, &
-                          dslabs1_dNu0, dx1_dv0, dy_dv0
-
-  Real(r8), INTENT(OUT) :: SwI,dSwI_dw,dSwI_dn,dSwI_dNu0
-!
-  Real(r8) :: x, u, v, du_dx, du_dy, dv_dx, dv_dy, q, q2, b, g, z, r
-!
-  Real(r8) :: dq_dv0, dx_dv0, du_dv0, dv_dv0, db_dv0, dg_dv0, dz_dv0, &
-              dr_dv0, dvvw_dv0, vvw
-!
-  x = x1 * dNu
-  Call Z_Slabs(x,y,u,v)
-!
-  du_dx = -2.0_r8 * (x * u - y * v)
-  du_dy =  2.0_r8 * (x * v + y * u) - twovspi
-!
-  dv_dx = -du_dy         ! Cauchy-Riemann equation
-  dv_dy =  du_dx         ! Cauchy-Riemann equation
-!
-!  Van Vleck - Wieskopf (VVW) line shape with Voigt
-!
-  q = 1.0_r8 + dNu / Nu0
-  q2 = q * q
-!
-  b = x1 * (2.0_r8 * Nu0 + dNu)
-  g = b * b + y * y
-  z = (y - b * yi) / g
-  r = z * oneovspi + yi * v
-  vvw = (u + r) * q2
-  SwI = slabs1 * vvw
-
-  if(.not. spect_der) Return
-!
-! Compute the derivative of SwI w.r.t. w
-!
-  dSwI_dw = slabs1 * (y / w) * (du_dy +          &
-     &      q2 * oneovspi * (b*b-y*y) / (g*g) +  &
-     &      q2 * yi * du_dx)
-!
-! Compute the derivative of SwI w.r.t. n
-!
-  dSwI_dn = slabs1 * y * Log(3.0d2/t) * (du_dy + yi * dv_dy)
-!
-! Finaly, compute the derivative of SwI w.r.t. Nu0
-!
-! ***** Analytically *****
-!
-  dq_dv0 = -(Nu0+dNu)/(Nu0*Nu0)
-  dx_dv0 = dNu * dx1_dv0 - x1
-  du_dv0 = du_dx * dx_dv0 + du_dy * dy_dv0
-  dv_dv0 = dv_dx * dx_dv0 + dv_dy * dy_dv0
-  db_dv0 = (2.0_r8 * Nu0 + dNu)*dx1_dv0 + x1
-  dg_dv0 = 2.0_r8 * (b*db_dv0+y*dy_dv0)
-  dz_dv0 = (dy_dv0-yi*db_dv0-z*dg_dv0)/g
-  dr_dv0 = dz_dv0*oneovspi+yi*dv_dv0
-  dvvw_dv0 = (du_dv0+dr_dv0)*q2 + 2.0_r8*q*dq_dv0*(u+r)
-  dSwI_dNu0 = dslabs1_dNu0*vvw + slabs1*dvvw_dv0
-!
-  Return
- End Subroutine dvoigt_spectral
+ END SUBROUTINE get_gl_slabs_arrays
 !
 End module SLABS_SW_M
 ! $Log$
+! Revision 1.3  2001/06/07 23:39:32  pwagner
+! Added Copyright statement
+!
 ! Revision 1.2  2001/05/15 03:47:26  zvi
 ! Adding derivative flag to beta calculations
 !

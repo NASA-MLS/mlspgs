@@ -3,10 +3,10 @@
 
 module GENERIC_DELTA_INTEGRAL_M
   use MLSCOmmon, only: I4, R8
-  use GL6P, only: GW, NG
+  use GLNP, only: GW, NG
   use ELLIPSE_M, only: ELLIPSE
   use D_GET_ONE_ETA_M, only: GET_ONE_ETA
-  use PATH_ENTITIES_M, only: PATH_VECTOR
+  use PATH_ENTITIES_M, only: PATH_VECTOR, PATH_INT_VECTOR_2D
   implicit NONE
   private
   public :: GENERIC_DELTA_INTEGRAL
@@ -25,16 +25,22 @@ contains
 !
   Subroutine generic_delta_integral(mid, brkpt, no_ele, z_path, h_path,   &
  &           phi_path, dhdz_path, N_lvls, ref_corr, integrand, s_z_basis, &
- &           s_phi_basis, s_nz, s_np, iz, ip, fq, elvar, delta, Ier )
+ &           s_phi_basis,s_nz,s_np,iz,ip,fq,elvar,midval_delta,midval_ndx,&
+ &           no_midval_ndx,gl_ndx,no_gl_ndx,Sps_zeta_loop,Sps_phi_loop,   &
+ &           check_sps_loop,delta,Ier)
 !
     Integer(i4), intent(in) :: N_LVLS, MID, BRKPT, NO_ELE, S_NZ, S_NP, &
-   &                           IZ, IP
+   &             IZ, IP, no_midval_ndx,no_gl_ndx, check_sps_loop
+!
+   Integer(i4), intent(in) :: midval_ndx(:,:),gl_ndx(:,:)
 !
     Type(path_vector), intent(in) :: Z_PATH, H_PATH, PHI_PATH, &
    &                                 DHDZ_PATH
-!
-    Real(r8), intent(in) :: REF_CORR(:), INTEGRAND(:), FQ
 
+    Type(path_int_vector_2d), intent(in) :: Sps_phi_loop, Sps_zeta_loop
+!
+    Real(r8), intent(in) :: midval_delta(:)
+    Real(r8), intent(in) :: REF_CORR(:), INTEGRAND(:), FQ
     Real(r8), intent(in) :: S_Z_BASIS(:), S_PHI_BASIS(:)
 !
     Type(ELLIPSE), intent(in out) :: elvar
@@ -43,55 +49,74 @@ contains
 
     Integer(i4), intent(out) :: IER
 
-    Integer(i4) :: K, MP, NGP1, H_I, HEND
+    Integer(i4) :: J, K, L, MP, NGP1, H_I, HEND, NZP
 
     Real(r8) :: H_GL(Ng), GW_DHDZ(Ng), INTEGRAND_GL(Ng), VETA(Ng)
 
-    Real(r8) :: INTEGRAND_ZS, ETANP_SING, DS_DH, ETAP, ETAZ, FS, ZH, &
-   &            ZL, ZS, HD, HH, HL, HTAN2, PH, PL, RC, SA, SB, SING
+    Real(r8) :: INTEGRAND_ZS, ETANP_SING, DS_DH, ETAP, ETAZ, FS, ZH, ZL, &
+   &            ZS, HD, HH, HL, HTAN2, PH, PL, RC, SA, SB, SING, DS
 !
     Ier = 0
-    htan2 = elvar%ht2
 !
-!  Initialize all arrays:
-!
-    integrand_GL = 0.0
+!  Initialize the delta array:
 !
     hend = 2 * N_lvls - 1
     delta(1:hend+1) = 0.0
 !
+! Load the mid_value delta into array: delta
+!
+    if(no_midval_ndx > 0) then
+      do j = 1, no_midval_ndx
+        h_i = midval_ndx(j,1)
+        delta(h_i) = midval_delta(j)
+      end do
+    endif
+!
+    if(no_gl_ndx < 1) Return
+!
+! Now, do the GL deltas:
 ! First, do the right hand side of the ray path:
 !
-    mp = 1
-    elvar%ps = -1.0
-    Ngp1 = Ng + 1
-    zh = z_path%values(mp)
-    hh = h_path%values(mp)
-    ph = phi_path%values(mp)
+    k = 0
+    integrand_GL = 0.0
 
-    hd = hh + elvar%RoC
-    sb = Sqrt(abs(hd*hd-htan2))
+    Ngp1 = Ng + 1
+    elvar%ps = -1.0
+    htan2 = elvar%ht2
+    nzp = s_nz * s_np * check_sps_loop
 !
-    do h_i = 1, mid
+    do j = 1, no_gl_ndx
 !
-      mp = mp + Ngp1
-      if (mp > brkpt) EXIT
+      mp = gl_ndx(j,2)
+      if (mp >= brkpt) EXIT
 !
-      hl = hh
-      hh = h_path%values(mp)
-      if (hh < elvar%ht-0.001) EXIT
+      h_i = gl_ndx(j,1)
+      if(h_i >= mid) EXIT
 !
-      zl = zh
-      zh = z_path%values(mp)
+      if(nzp > 1) then
+        if(Sps_phi_loop%values(h_i,1) > ip  .or. &
+       &   Sps_phi_loop%values(h_i,2) < ip  .or. &
+       &   Sps_zeta_loop%values(h_i,1) > iz .or. &
+       &   Sps_zeta_loop%values(h_i,2) < iz) CYCLE
+      endif
 !
-      pl = ph
-      ph = phi_path%values(mp)
+      zl = z_path%values(mp)
+      hl = h_path%values(mp)
+      pl = phi_path%values(mp)
 !
-      sa = sb
+      hd = hl + elvar%RoC
+      sa = Sqrt(abs(hd*hd-htan2))
+!
+      l = mp + Ngp1
+      zh = z_path%values(l)
+      hh = h_path%values(l)
+      ph = phi_path%values(l)
+!
       hd = hh + elvar%RoC
       sb = Sqrt(abs(hd*hd-htan2))
+      ds = abs(sa-sb)
 !
-      if (abs(sa-sb) < 0.05) EXIT
+      if (ds < 0.05) EXIT
 !
       rc = ref_corr(h_i+1)
 !
@@ -112,53 +137,65 @@ contains
 !
 ! Define integrand on the Gauss-Legendre grid for the current sub-interval:
 !
-      k = mp - Ngp1
-      integrand_zs = integrand(mp)
+      integrand_zs = integrand(l)
       sing = integrand_zs * etanp_sing
 !
 ! Define integrand on the Gauss-Legendre grid for the current sub-interval:
 !
-      integrand_GL(1:Ng) = integrand(k+1:k+Ng)
+      integrand_GL(1:Ng) = integrand(mp+1:mp+Ng)
 !
+      k = j
       Call gauss_legendre
 !
+    end do
+
+    if(k == no_gl_ndx) Return
+!
+    j = k
+    l = gl_ndx(j,2)
+    do
+      j = j + 1
+      if(j >= no_gl_ndx) EXIT
+      mp = gl_ndx(j,2)
+      if(mp - l == 1) EXIT
+      l = mp
+      k = j
     end do
 !
 ! Second, do the left hand side of the ray path:
 !
-    elvar%ps = 1.0
-    h_i = mid
-    mp = brkpt + 1
-    hh = h_path%values(mp)
-    do while (hh < elvar%ht-0.0001)
-      h_i = h_i + 1
-      mp = mp + Ngp1
-      hh = h_path%values(mp)
-    end do
+    do j = k+1, no_gl_ndx
 !
-    zh = z_path%values(mp)
-    ph = phi_path%values(mp)
-
-    hd = hh + elvar%RoC
-    sb = Sqrt(abs(hd*hd-htan2))
+      mp = gl_ndx(j,2)
+      l = mp + Ngp1
+      if (l > no_ele) EXIT
 !
-    do while (h_i < hend)
+      h_i = gl_ndx(j,1)
+      if(h_i >= hend) Return
 !
-      mp = mp + Ngp1
-      if(mp > no_ele) Return
+      if(nzp > 1) then
+        if(Sps_phi_loop%values(h_i,1) > ip  .or. &
+       &   Sps_phi_loop%values(h_i,2) < ip  .or. &
+       &   Sps_zeta_loop%values(h_i,1) > iz .or. &
+       &   Sps_zeta_loop%values(h_i,2) < iz) CYCLE
+      endif
 !
-      hl = hh
-      hh = h_path%values(mp)
+      zl = z_path%values(mp)
+      hl = h_path%values(mp)
+      pl = phi_path%values(mp)
 !
-      zl = zh
-      zh = z_path%values(mp)
+      hd = hl + elvar%RoC
+      sa = Sqrt(abs(hd*hd-htan2))
 !
-      pl = ph
-      ph = phi_path%values(mp)
+      zh = z_path%values(l)
+      hh = h_path%values(l)
+      ph = phi_path%values(l)
 !
-      sa = sb
       hd = hh + elvar%RoC
       sb = Sqrt(abs(hd*hd-htan2))
+      ds = abs(sa-sb)
+!
+      if (ds < 0.05) EXIT
 !
       rc = ref_corr(h_i)
 !
@@ -177,17 +214,14 @@ contains
         etanp_sing = etaz * etap
       end if
 !
-      k = mp - Ngp1
-      Integrand_zs = integrand(k)
+      integrand_zs = integrand(mp)
       sing = integrand_zs * etanp_sing
 !
 ! Define integrand on the Gauss-Legendre grid for the current sub-interval:
 !
-      integrand_GL(1:Ng) = integrand(k+1:k+Ng)
+      integrand_GL(1:Ng) = integrand(mp+1:mp+Ng)
 !
       Call gauss_legendre
-!
-      h_i = h_i + 1
 !
     end do
 !
@@ -205,9 +239,8 @@ contains
 !
       aym = 0.5 * abs(zh - zl)
 !
-      j = mp - Ngp1
       do i = 1, Ng
-        j = j + 1
+        j = mp + i
         z = z_path%values(j)
         phi = phi_path%values(j)
         h_GL(i) = h_path%values(j)
@@ -246,7 +279,7 @@ contains
 ! Now add the 'singularities factors' back in, multiplied by their
 ! respective analytical integral:
 !
-      fv = Sum + sing * abs(sb-sa)
+      fv = Sum + sing * ds
 !
 ! And Finally - define the delta:
 !
@@ -256,6 +289,9 @@ contains
   End Subroutine generic_delta_integral
 End module GENERIC_DELTA_INTEGRAL_M
 ! $Log$
+! Revision 1.5  2001/06/07 23:30:34  pwagner
+! Added Copyright statement
+!
 ! Revision 1.4  2001/03/30 20:28:21  zvi
 ! General fix-up to get rid of COMMON BLOCK (ELLIPSE)
 !

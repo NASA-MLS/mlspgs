@@ -4,7 +4,6 @@
 module VERT_TO_PATH_M
   use Allocate_Deallocate, only: Allocate_test, Deallocate_Test
   use MLSCommon, only: I4, R4, R8
-  use D_LINTRP_M, only: LINTRP
   use I_HUNT_M, only: HUNT
   use ELLIPSE_SW_M, only: H_TO_S_PHI
   use D_GET_ONE_ETA_M, only: GET_ONE_ETA
@@ -59,14 +58,16 @@ contains
     !  Local variables:
     !  ----------------
 
-    integer :: i, j, k, l, m, n, n_d, npp, ibrk, Ngp1, no_iter
+    integer, dimension(1) :: brk_pt            ! Result of minloc
+    integer :: i, j, k, l, m, n, n_d, npp, ibrk, Ngp1, iter
 
-    real(r8) :: h, s, r, dz, rs, phi, rss, dhdz, prev_h
+    real(r8) :: h, s, r, dz, rs, phi, rss, dhdz
 
     integer, pointer, dimension(:) :: cndx=>NULL()
+    integer, pointer, dimension(:) :: vtp_ndx=>NULL()
 
     real(r8), pointer, dimension(:) :: dum_z=>NULL(), dum_h=>NULL(),&
-                                       dum_phi=>NULL()
+                                       dum_phi=>NULL(), prev_h=>NULL()
 
     real(r8), pointer, dimension(:,:) :: h_a=>NULL()
 
@@ -78,15 +79,20 @@ contains
 
 !?? print*,'Ngt is:',ngt
     call Allocate_test ( cndx, ngt, 'cndx', ModuleName )
+    call Allocate_test ( vtp_ndx, ngt, 'vtp_ndx', ModuleName )
     call Allocate_test ( dum_z, ngt, 'dum_z', ModuleName )
     call Allocate_test ( dum_h, ngt, 'dum_h', ModuleName )
+    call Allocate_test ( prev_h, ngt, 'prev_h', ModuleName )
     call Allocate_test ( dum_phi, ngt, 'dum_phi', ModuleName )
     call Allocate_test ( h_a, ngt, WinSize, 'h_a', ModuleName )
 !?? print*,'WinSize is:',WinSize
 
 !   Initialize all arrays:
 
+    n_d = 0
     cndx = 0
+    vtp_ndx = 0
+
     h_a = 0.0
     dum_z = 0.0
     dum_h = 0.0
@@ -124,11 +130,12 @@ contains
 
     npp = 0
     l = gl_count + 1
- 
+
     do
       do n = 1, Ngp1
         l = l - 1
         npp = npp + 1
+        vtp_ndx(npp) = l
         dum_z(npp) = z_glgrid(l)
         dum_h(npp) = h_glgrid(l,MidWin)
       end do
@@ -138,6 +145,7 @@ contains
 
     l = l - 1
     npp = npp + 1
+    vtp_ndx(npp) = l
     dum_z(npp) = z_glgrid(l)
     dum_h(npp) = h_glgrid(l,MidWin)
 
@@ -148,166 +156,154 @@ contains
       do n = 1, Ngp1
         l = l + 1
         npp = npp + 1
+        vtp_ndx(npp) = l
         dum_z(npp) = z_glgrid(l)
         dum_h(npp) = h_glgrid(l,MidWin)
       end do
-      if ( l+Ngp1 > gl_count) exit
+      if ( l+Ngp1 > gl_count) EXIT
     end do
 
     l = l + 1
     npp = npp + 1
+    vtp_ndx(npp) = l
     dum_z(npp) = z_glgrid(l)
     dum_h(npp) = h_glgrid(l,MidWin)
 
-!    Cast the h_glgrid onto the path (using liner interpolation)
+!  Cast the h_glgrid onto the path
 
-    do m = 1, WinSize
-      call lintrp (z_glgrid, dum_z, h_glgrid(1:,m), h_a(1:,m), gl_count, npp)
-    end do
+    DO m = 1, WinSize
+      h_a(1:npp,m) = h_glgrid((/(vtp_ndx(k),k=1,npp)/),m)
+    END DO
 
-    n_d = ngt
-    no_iter = 0
+    iter = 0
 
-    do
-      no_iter = no_iter + 1
+    DO
 
-!     Compute the Phi that goes with the Heights along the path:
-!     Right hand side ray:
+      iter = iter + 1
 
-      l = -1
-      elvar%ps = -1.0D0
-      do i = 1, ibrk-1
-        h = dum_h(i)
-        phi = dum_phi(i)
-        if ( n_d == ngt ) then
-          call H_TO_S_PHI ( elvar, h, s, phi )
-        else
-          call hunt ( i, cndx, n_d, l, j )
-          if ( cndx(l) == i .OR. cndx(j) == i) &
-                  call H_TO_S_PHI ( elvar, h, s, phi )
-        end if
-        dum_phi(i) = phi
-      end do
+      if(iter == 1) then
 
-!     Left hand side ray:
+        elvar%ps = -1.0D0     ! Right hand side ray
+        DO i = 1, ibrk-1
+          CALL H_TO_S_PHI(elvar,dum_h(i),s,dum_phi(i))
+        END DO
+        elvar%ps = 1.0D0     ! Left hand side ray
+        DO i = ibrk, npp
+          CALL H_TO_S_PHI(elvar,dum_h(i),s,dum_phi(i))
+        END DO
 
-      l = -1
-      elvar%ps = 1.0D0
-      do i = ibrk, npp
-        h = dum_h(i)
-        phi = dum_phi(i)
-        if ( n_d == ngt ) then
-          call H_TO_S_PHI ( elvar, h, s, phi )
-        else
-          call hunt ( i, cndx, n_d, l, j )
-          if ( cndx(l) == i .OR. cndx(j) == i) &
-                   call H_TO_S_PHI ( elvar, h, s, phi )
-        end if
-        dum_phi(i) = phi
-      end do
+      else
 
-!     Compute the Phi_Eta matrix based on the "Path" Phi's
+        DO j = 1, n_d
+          i = cndx(j)
+          elvar%ps = -1.0D0                  ! Right hand side ray
+          IF(i >= ibrk) elvar%ps = 1.0D0     ! Left hand side ray
+          CALL H_TO_S_PHI(elvar,dum_h(i),s,dum_phi(i))
+        END DO
 
-      do i = 1, npp
+      endif
+
+!  Compute the Phi_Eta matrix based on the "Path" Phi's
+
+      DO i = 1, npp
         r = dum_phi(i)
-        do m = 1, WinSize
-          call get_one_eta ( r, t_phi_basis, WinSize, m, phi_eta(i,m) )
-        end do
-      end do
-
-!     Re-Compute the estimate H:
-
+        DO m = 1, WinSize
+          CALL get_one_eta(r,t_phi_basis,WinSize,m,phi_eta(i,m))
+        END DO
+      END DO
+!
+!  Re-Compute the estimate H:
+!
+      prev_h = dum_h
+      dum_h = SUM(h_a*phi_eta,dim=2)
+!
+! Define the indecies array for which the process did not converged ..
+!
+!   cndx(1:) = 0
+!   cndx = PACK((/(i,i=1,ngt)/),(abs(dum_h-prev_h) > 0.01))
+!   n_d = COUNT(cndx > 0)
+!
       n_d = 0
-      rss = 0.0D0
       do i = 1, npp
-        prev_h = dum_h(i)
-        dum_h(i) = SUM(h_a(i,:)*phi_eta(i,:))
-        r = ABS(dum_h(i) - prev_h)
-        if ( r > 0.01 ) then
+        if(abs(dum_h(i)-prev_h(i)) > 0.01) then
           n_d = n_d + 1
           cndx(n_d) = i
-          rss = rss + r * r
-        end if
+        endif
       end do
 
-!   **** ITERATE
+! **** ITERATE as needed
 
-      if ( n_d <= 0 .OR. no_iter >= 10 ) exit
-    end do
+      IF(n_d == 0 .OR. iter == 10) EXIT
+
+    END DO           ! On iter loop
 
 !   For indices that did not converge within 10 iterations, use linear
 !   interpolation on H and then recompute Phi and Phi_Eta for those indecies.
 
-    if ( n_d > 1 ) then
+    IF(n_d > 1) THEN
       k = MAX(1,cndx(1)-1)
       l = MIN(npp,cndx(n_d)+1)
       dz = dum_z(l) - dum_z(k)
       dhdz = (dum_h(l) - dum_h(k)) / dz
-      do i = 1, n_d
+      dO i = 1, n_d
         j = cndx(i)
         elvar%ps = -1.0D0
+        IF(j >= ibrk) elvar%ps = 1.0D0
         dz = dum_z(j) - dum_z(k)
         dum_h(j) = dum_h(k) + dhdz * dz
-        h = dum_h(j)
-        if ( j >= ibrk) elvar%ps = 1.0D0
-        call H_TO_S_PHI ( elvar, h, s, phi )
-        dum_phi(j) = phi
-        do m = 1, WinSize
-          call get_one_eta ( dum_phi(j), t_phi_basis, WinSize, m, phi_eta(j,m) )
-        end do
-      end do
-    end if
+        CALL H_TO_S_PHI(elvar,dum_h(j),s,dum_phi(j))
+        DO m = 1, WinSize
+          call get_one_eta ( dum_phi(j), t_phi_basis, WinSize, m, &
+                          &  phi_eta(j,m) )
+        END DO
+      END DO
+    END IF
 
 !   **** CONVERGED !!
-!   Now - Compute the path Temperature, dh_dz  and dH_dTlm
+!   Now - Compute the path Temperature and path dh_dz
 
 !   First, compute the path Temperature:
-!   Cast the t_glgrid onto the path (using liner interpolation)
+!   Cast the t_glgrid onto the path
 
-    do m = 1, WinSize
-      call lintrp ( z_glgrid, dum_z, t_glgrid(1:,m), h_a(1:,m), gl_count, npp )
-    end do
+    DO m = 1, WinSize
+      h_a(1:npp,m) = t_glgrid((/(vtp_ndx(k),k=1,npp)/),m)
+    END DO
+    t_path = SUM(h_a*phi_eta,dim=2)
 
-    s = 1.0e10
-    brkpt = -1
     totnp = npp
+    z_path(1:npp)   = dum_z(1:npp)
+    h_path(1:npp)   = dum_h(1:npp)
+    phi_path(1:npp) = dum_phi(1:npp)
 
-!    Also, compute the break points for the tangent layer for this tanget height
+! Now compute the break points for the tangent layer for this tanget height
 
-    do i = 1, npp
-      t_path(i) = SUM(h_a(i,:)*phi_eta(i,:))
-      z_path(i) = dum_z(i)
-      h_path(i) = dum_h(i)
-      phi_path(i) = dum_phi(i)
-      r = abs(h_path(i)-htan)
-      if ( r < s ) then
-        s = r
-        brkpt = i
-      end if
-    end do
+    brk_pt = minloc(abs(h_path(1:)-htan))
+    brkpt = brk_pt(1)
+!
+! Second, compute the path dh_dz:
+! Cast the dhdz_glgrid onto the path
 
-!   Second, compute the path dh_dz:
-!   Cast the dhdz_glgrid onto the path (using liner interpolation)
+    DO m = 1, WinSize
+      h_a(1:npp,m) = dhdz_glgrid((/(vtp_ndx(k),k=1,npp)/),m)
+    END DO
+    dhdz_path = SUM(h_a*phi_eta,dim=2)
 
-    do m = 1, WinSize
-      call lintrp (z_glgrid,dum_z,dhdz_glgrid(1:,m),h_a(1:,m),gl_count,npp)
-    end do
-
-    do i = 1, npp
-      dhdz_path(i) = SUM(h_a(i,:)*phi_eta(i,:))
-    end do
- 
     call deallocate_test ( h_a, 'h_a', ModuleName )
     call deallocate_test ( dum_phi, 'dump_phi', ModuleName )
     call deallocate_test ( dum_h, 'dum_h', ModuleName )
+    call deallocate_test ( prev_h, 'prev_h', ModuleName )
     call deallocate_test ( dum_z, 'dum_z', ModuleName )
     call deallocate_test ( cndx, 'cndx', ModuleName )
+    call deallocate_test ( vtp_ndx, 'vtp_ndx', ModuleName )
 
     Return
 
   end subroutine Vert_To_Path
 end module Vert_To_Path_M
 ! $Log$
+! Revision 1.16  2001/06/07 23:39:32  pwagner
+! Added Copyright statement
+!
 ! Revision 1.15  2001/05/21 22:08:35  zvi
 ! A small modification in searching for tanget
 !

@@ -4,7 +4,7 @@
 module GET_DELTA_M
   use MLSCommon, only: I4, R8
   use ELLIPSE_M, only: ELLIPSE
-  use PATH_ENTITIES_M, only: PATH_VECTOR, PATH_BETA
+  use PATH_ENTITIES_M, only: PATH_VECTOR, PATH_BETA, PATH_INT_VECTOR_2D
   use GENERIC_DELTA_INTEGRAL_M, only: GENERIC_DELTA_INTEGRAL
   use ForwardModelConfig, only: ForwardModelConfig_T
   use VectorsModule, only: Vector_T, VectorValue_T, GetVectorQuantityByType
@@ -27,17 +27,23 @@ contains
 !
 !  ** NOTE: This routine integrate in ZETA Space !
 !
-  Subroutine GET_DELTA(ForwardModelConfig, FwdModelExtra, FwdModelIn, &
+  Subroutine GET_DELTA(ForwardModelConfig, FwdModelExtra, FwdModelIn,    &
  &           mid,brkpt,no_ele,z_path,h_path,phi_path,beta_path,dHdz_path,&
- &           n_sps,N_lvls,ref_corr,spsfunc_path,elvar,delta,Ier)
+ &           n_sps,N_lvls,ref_corr,spsfunc_path,elvar,midval_ndx,        &
+ &           no_midval_ndx,gl_ndx,no_gl_ndx,Sps_zeta_loop,Sps_phi_loop,  &
+ &           midval_delta,delta,Ier)
 !
     type(forwardModelConfig_T), intent(in) :: forwardModelConfig
     type (Vector_T), intent(in) :: fwdModelIn, fwdModelExtra
 !
     Integer(i4), intent(in) :: n_sps, N_LVLS
     Integer(i4), intent(in) :: mid, brkpt, no_ele
+!
+    Integer(i4), intent(in) :: gl_ndx(:,:),no_gl_ndx
+    Integer(i4), intent(in) :: midval_ndx(:,:),no_midval_ndx
 
     Real(r8), intent(in) :: REF_CORR(:)
+    Real(r8), intent(in) :: midval_delta(:,:)
 
     Real(r8), intent(inout) :: DELTA(:,:,:,:)
 
@@ -49,6 +55,9 @@ contains
 
     Type(path_vector), intent(in) :: SPSFUNC_PATH(:)
     Type(path_vector), intent(in) :: Z_PATH, H_PATH, PHI_PATH, DHDZ_PATH
+
+    Type(path_int_vector_2d), intent(in) :: SPS_PHI_LOOP(:), &
+                                        &   SPS_ZETA_LOOP(:)
 !
 ! -----     Local variables     ----------------------------------------
 !
@@ -98,10 +107,12 @@ contains
           q = 1.0
           if (f%template%logBasis) q = 1.0 / f%values(iz,ip)
 !
-          Call generic_delta_integral(mid, brkpt, no_ele, z_path, &
-         &     h_path, phi_path, dhdz_path, N_lvls, ref_corr,integrand,&
-         &     f%template%surfs(:,1), Deg2Rad*f%template%phi(1,:), &
-         &     nco, npf, iz, ip, q, elvar, delta(1:,iz,ip,j), Ier)
+          Call generic_delta_integral(mid,brkpt,no_ele,z_path,      &
+         &     h_path,phi_path,dhdz_path,N_lvls,ref_corr,integrand, &
+         &     f%template%surfs(:,1),Deg2Rad*f%template%phi(1,:),   &
+         &     nco,npf,iz,ip,q,elvar,midval_delta(1:,j),midval_ndx, &
+         &     no_midval_ndx,gl_ndx,no_gl_ndx,Sps_zeta_loop(j),     &
+         &     Sps_phi_loop(j),1,delta(1:,iz,ip,j),Ier)
           IF(ier /= 0) goto 99
 !
         end do
@@ -118,6 +129,9 @@ contains
 !
 end module GET_DELTA_M
 ! $Log$
+! Revision 1.9  2001/05/03 22:19:36  vsnyder
+! Insert copyright notice, some cosmetic changes
+!
 ! Revision 1.8  2001/04/09 20:52:07  zvi
 ! Debugging Derivatives version
 !

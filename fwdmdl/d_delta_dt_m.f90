@@ -3,7 +3,7 @@
 
 module D_DELTA_DT_M
   use ELLIPSE_M, only: ELLIPSE
-  use GL6P, only: GW, NG
+  use GLNP, only: GW, NG
   use MLSCommon, only: I4, R8
   use D_GET_ONE_ETA_M, only: GET_ONE_ETA
   use PATH_ENTITIES_M, only: PATH_VECTOR, PATH_BETA
@@ -22,12 +22,15 @@ contains
 !
 !  ** NOTE: This routine integrates in ZETA Space !!
 !
-  Subroutine d_delta_dt(mid,brkpt,no_ele,z_path,t_path,h_path,phi_path,     &
- &           beta_path,dHdz_path,dh_dt_path,N_lvls,n_sps,ref_corr,t_z_basis,&
- &           no_t,t_phi_basis,no_phi_t,spsfunc_path,in,ip,elvar,d_delta_dtnp)
+  Subroutine d_delta_dt(mid,brkpt,no_ele,z_path,t_path,h_path,phi_path, &
+ &           beta_path,dHdz_path,dh_dt_path,N_lvls,n_sps,ref_corr,      &
+ &           t_z_basis,no_t,t_phi_basis,no_phi_t,spsfunc_path,iz,ip,    &
+ &           elvar,no_midval_ndx,midval_ndx,no_gl_ndx,gl_ndx,d_delta_dtnp)
 !
-    Integer(i4), intent(in) :: NO_PHI_T,N_LVLS,N_SPS, &
-   &             NO_T,IN,IP,MID,BRKPT,NO_ELE
+    Integer(i4), intent(in) :: NO_PHI_T,N_LVLS,N_SPS,NO_T,IZ,IP,MID, &
+                           &   BRKPT,NO_ELE,no_midval_ndx,no_gl_ndx
+
+    Integer(i4), intent(in) :: midval_ndx(:,:),gl_ndx(:,:)
 !
     Type(path_beta), intent(in) :: BETA_PATH(:)      ! (Nsps)
 !
@@ -44,7 +47,7 @@ contains
 !
 ! -----     Local variables     ----------------------------------------
 !
-    Integer(i4) :: H_I, MP, NGP1, kk
+    Integer(i4) :: j, k, l, n, h_i, mp, Ngp1, sps_i, hend
 
     Real(r8) :: TP_GL(Ng,20) = 0.0, TP_ZS(20) = 0.0
     Real(r8) :: BETAxF_GL(Ng,20) = 0.0, BETAxF_ZS(20) = 0.0
@@ -54,17 +57,15 @@ contains
 
     Real(r8) :: ETANP_SING, DHDTH, DHDTL, HH, HL, HD, HTAN, HTAN2, &
    &            HTXDHT,PH, PL, RC, SA, SB, SING1, SING2, SUM1, SUM2, &
-   &            ZH, ZL, TH, TL
+   &            ZH, ZL, TH, TL, ds, tpl, tph, fl, fh, dsdt, q ,r
 !
 ! -----     Executable statements     ----------------------------------
 !
 !  Define htan and its square, also the dhdt at the tangent:
 !
+    Ngp1 = Ng + 1
     htan = elvar%ht + elvar%RoC
     htan2 = htan * htan
-!
-    elvar%ps = -1.0
-    Ngp1 = Ng + 1
 !
     htxdht = htan * dh_dt_path(brkpt)
 !
@@ -72,109 +73,183 @@ contains
 !
     d_delta_dtnp(1:) = 0.0
 !
+    if(no_midval_ndx > 0) then
+!
+      elvar%ps = -1.0
+      do j = 1, no_midval_ndx
+
+        mp = midval_ndx(j,2)
+        h_i = midval_ndx(j,1)
+        if(mp > brkpt) elvar%ps = 1.0
+!
+        sa = 0.0
+        sb = 0.0
+        dsdt = 0.0
+!
+        zl = z_path%values(mp)
+        tl = t_path%values(mp)
+        hl = h_path%values(mp)
+        pl = phi_path%values(mp)
+        dhdtl = dh_dt_path(mp)
+
+        hd = hl + elvar%RoC
+        q = hd * hd - htan2
+        if (q > 0.0) then
+          sa = Sqrt(q)
+          dsdt = dsdt - (hd*dhdtl-htxdht)/sa
+        endif
+!
+        l = mp + Ngp1
+        zh = z_path%values(l)
+        th = t_path%values(l)
+        hh = h_path%values(l)
+        ph = phi_path%values(l)
+        dhdth = dh_dt_path(l)
+!
+        hd = hh + elvar%RoC
+        q = hd * hd - htan2
+        if (q > 0.0) then
+          sb = Sqrt(q)
+          dsdt = dsdt + (hd*dhdth-htxdht)/sb
+        endif
+
+        ds = abs(sa-sb)
+        if (ds < 0.05) EXIT
+!
+        rc = ref_corr(h_i)
+!
+        Sum1 = 0.0
+        Sum2 = 0.0
+        do sps_i = 1, n_sps
+          tpl = beta_path(sps_i)%t_power(mp)
+          tph = beta_path(sps_i)%t_power(l)
+          fl  = beta_path(sps_i)%values(mp) *  &
+       &               spsfunc_path(sps_i)%values(mp)
+          fh  = beta_path(sps_i)%values(l) *  &
+       &               spsfunc_path(sps_i)%values(l)
+          Sum1 = Sum1 + 0.5 * (fl*tpl/tl + fh*tph/th)
+          Sum2 = Sum2 + 0.5 * (fl + fh)
+        end do
+!
+        q = Sum1 * abs(sb-sa)
+        r = Sum2 * dsdt * elvar%ps
+        d_delta_dtnp(h_i) = (q + r) * rc       ! for (iz,ip)
+!
+      end do
+!
+    endif
+
+    if(no_gl_ndx < 1) Return
+!
+! Now, do the GL deltas:
 ! First, do the right hand side of the ray path:
 !
-    mp = 1
-    zh = z_path%values(mp)
-    th = t_path%values(mp)
-    hh = h_path%values(mp)
-    ph = phi_path%values(mp)
+    elvar%ps = -1.0
+!
+    do j = 1, no_gl_ndx
+!
+      mp = gl_ndx(j,2)
+      if (mp >= brkpt) EXIT
+!
+      h_i = gl_ndx(j,1)
+      if(h_i >= mid) EXIT
+!
+      zl = z_path%values(mp)
+      tl = t_path%values(mp)
+      hl = h_path%values(mp)
+      pl = phi_path%values(mp)
+      dhdtl = dh_dt_path(mp)
 
-    hd = hh + elvar%RoC
-    sb = Sqrt(abs(hd*hd-htan2))
-    dhdth = dh_dt_path(mp)
+      sa = 0.0
+      hd = hl + elvar%RoC
+      q = hd*hd - htan2
+      if(q > 0.0) sa = Sqrt(q)
 !
-    do h_i = 1, mid
+      l = mp + Ngp1
+      zh = z_path%values(l)
+      th = t_path%values(l)
+      hh = h_path%values(l)
+      ph = phi_path%values(l)
+      dhdth = dh_dt_path(l)
 !
-      mp = mp + Ngp1
-      if(mp > brkpt) EXIT
-!
-      hl = hh
-      hh = h_path%values(mp)
-      if (hh < elvar%ht) EXIT
-!
-      zl = zh
-      zh = z_path%values(mp)
-!
-      tl = th
-      th = t_path%values(mp)
-!
-      pl = ph
-      ph = phi_path%values(mp)
-!
-      sa = sb
+      sb = 0.0
       hd = hh + elvar%RoC
-      sb = Sqrt(abs(hd*hd-htan2))
+      q = hd*hd - htan2
+      if(q > 0.0) sb = Sqrt(q)
 !
-      if (abs(sa-sb) < 0.05) EXIT
-!
-      dhdtl = dhdth
-      dhdth = dh_dt_path(mp)
+      ds = abs(sa-sb)
+      if (ds < 0.05) EXIT
 !
       rc = ref_corr(h_i+1)
 !
       call define_gl_grid_entities
 !
-      kk = mp
+      n = l
       call compute_beta_and_temp_power (ph,zh)
 !
       call thermal_and_singularities (th)
 !
       call gauss_legendre
 !
+      k = j
       call add_singularities_back_in
+!
+    end do
 
+    if(k == no_gl_ndx) Return
+!
+    j = k
+    elvar%ps = 1.0
+    do
+      j = j + 1
+      if(j >= no_gl_ndx) EXIT
+      mp = gl_ndx(j,2)
+      if(mp - l == 1) EXIT
+      k = j
     end do
 !
 ! Second, do the left hand side of the ray path:
 !
-    elvar%ps = 1.0
-    h_i = mid
-    mp = brkpt + 1
-    hh = h_path%values(mp)
-    do while (hh < elvar%ht)
-      h_i = h_i + 1
-      mp = mp + Ngp1
-      hh = h_path%values(mp)
-    end do
+    hend = 2 * N_lvls - 1
+    do j = k+1, no_gl_ndx
 !
-    zh = z_path%values(mp)
-    th = t_path%values(mp)
-    ph = phi_path%values(mp)
-
-    hd = hh + elvar%RoC
-    sb = Sqrt(abs(hd*hd-htan2))
-    dhdth = dh_dt_path(mp)
+      mp = gl_ndx(j,2)
+      l = mp + Ngp1
+      if (l > no_ele) EXIT
 !
-    do while (h_i < 2 * N_lvls - 1)
+      h_i = gl_ndx(j,1)
+      if(h_i >= hend) Return
 !
-      mp = mp + Ngp1
-      if(mp > no_ele) EXIT
+      zl = z_path%values(mp)
+      tl = t_path%values(mp)
+      hl = h_path%values(mp)
+      pl = phi_path%values(mp)
+      dhdtl = dh_dt_path(mp)
 !
-      hl = hh
-      hh = h_path%values(mp)
+      sa = 0.0
+      hd = hl + elvar%RoC
+      q = hd*hd - htan2
+      if(q > 0.0) sa = Sqrt(q)
 !
-      sa = sb
+      zh = z_path%values(l)
+      th = t_path%values(l)
+      hh = h_path%values(l)
+      ph = phi_path%values(l)
+      dhdth = dh_dt_path(l)
+!
+      sb = 0.0
       hd = hh + elvar%RoC
-      sb = Sqrt(abs(hd*hd-htan2))
-!
-      zl = zh
-      zh = z_path%values(mp)
-!
-      tl = th
-      th = t_path%values(mp)
-!
-      pl = ph
-      ph = phi_path%values(mp)
-!
-      dhdtl = dhdth
-      dhdth = dh_dt_path(mp)
+      q = hd*hd - htan2
+      if(q > 0.0) sb = Sqrt(q)
+
+      ds = abs(sa-sb)
+      if (ds < 0.05) EXIT
 !
       rc = ref_corr(h_i)
 !
       call define_gl_grid_entities
 !
-      kk = mp - Ngp1
+      n = mp
       call compute_beta_and_temp_power (pl,zl)
 !
       call thermal_and_singularities (tl)
@@ -200,8 +275,9 @@ contains
 !
       aym = 0.5_r8 * abs(zh - zl)
 !
-      j = mp - Ng
+      j = mp
       do i = 1, Ng
+        j = j + 1
         z_GL(i) = z_path%values(j)
         t_GL(i) = t_path%values(j)
         h_GL(i) = h_path%values(j)
@@ -210,7 +286,6 @@ contains
         dhdt_GL(i) = dh_dt_path(j)
         Call get_one_eta(phi_GL(i),t_phi_basis,no_phi_t,ip,r)
         vetap(i) = r
-        j = j + 1
       end do
     end subroutine DEFINE_GL_GRID_ENTITIES
 ! ----------------------------     COMPUTE_BETA_AND_TEMP_POWER     -----
@@ -218,27 +293,23 @@ contains
 !
       real(r8), intent(in) :: FS, ZS
 !
-      real(r8) :: ETAP, ETAZ
-      integer :: I, J, K
+      real(r8) :: etap, etaz
+      integer :: i, j
 !
 ! Compute beta and temp. power on the Gauss-Legendre grid for the current
 ! sub-interval:
 !
       do j = 1, n_sps
-        tp_zs(j) = beta_path(j)%t_power(kk)
-        betaxf_zs(j) = beta_path(j)%values(kk) *  &
-       &               spsfunc_path(j)%values(kk)
-        k = mp - Ngp1
-        do i = 1, Ng
-          k = k + 1
-          tp_GL(i,j) = beta_path(j)%t_power(k)
-          betaxf_GL(i,j) = beta_path(j)%values(k) *  &
-         &                 spsfunc_path(j)%values(k)
-        end do
+        tp_zs(j) = beta_path(j)%t_power(n)
+        betaxf_zs(j) = beta_path(j)%values(n) *  &
+                   &   spsfunc_path(j)%values(n)
+        tp_GL(1:Ng,j) = beta_path(j)%t_power(mp+1:mp+Ng)
+        betaxf_GL(1:Ng,j) = beta_path(j)%values(mp+1:mp+Ng) *  &
+                        &   spsfunc_path(j)%values(mp+1:mp+Ng)
       end do
 !
       etanp_sing = 0.0
-      Call get_one_eta(zs,t_z_basis,no_t,in,etaz)
+      Call get_one_eta(zs,t_z_basis,no_t,iz,etaz)
       if (etaz > 0.0) then
         etanp_sing = etaz
         Call get_one_eta(fs,t_phi_basis,no_phi_t,ip,etap)
@@ -266,7 +337,7 @@ contains
         rz = z_GL(i)
         phi = phi_GL(i)
 !
-        Call get_one_eta(rz,t_z_basis,no_t,in,etaz)
+        Call get_one_eta(rz,t_z_basis,no_t,iz,etaz)
         etanp = (etaz * vetap(i)) / t_GL(i)
 !
 ! Compute the "Hydrostatic" contribution to the derivative:
@@ -327,16 +398,14 @@ contains
 ! Add the 'singularities factors' back in, multiplied by their
 ! respective analytical integral:
 !
-      real(r8) :: DSDT, HD, DS, Q, R
+      real(r8) :: DSDT, HD, Q, R
 
       dsdt = 0.0
       hd = hh + elvar%RoC
-      ds = hd * hd - htan2
-      if (ds > 0.0) dsdt = (hd*dhdth-htxdht)/Sqrt(ds)
+      if(sb > 0.0) dsdt = (hd*dhdth-htxdht)/sb
 !
       hd = hl + elvar%RoC
-      ds = hd * hd - htan2
-      if (ds > 0.0) dsdt = dsdt - (hd*dhdtl-htxdht)/Sqrt(ds)
+      if (sa > 0.0) dsdt = dsdt - (hd*dhdtl-htxdht)/sa
 !
       q = sum1 + sing1 * abs(sb-sa)
       r = sum2 + sing2 * dsdt * elvar%ps
@@ -349,6 +418,9 @@ contains
 !
 end module D_DELTA_DT_M
 ! $Log$
+! Revision 1.9  2001/06/07 23:30:34  pwagner
+! Added Copyright statement
+!
 ! Revision 1.8  2001/03/31 23:40:55  zvi
 ! Eliminate l2pcdim (dimension parameters) move to allocatable ..
 !

@@ -2,13 +2,14 @@
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module RAD_TRAN_WD_M
-  use GL6P, only: NG
+  use GLNP, only: NG
   use ELLIPSE_M, only: ELLIPSE
   use MLSCommon, only: I4, R8
   use ForwardModelConfig, only: ForwardModelConfig_T
   use VectorsModule, only: Vector_T, VectorValue_T, GetVectorQuantityByType
   use L2PC_PFA_STRUCTURES, only: SPECTRO_PARAM
-  use PATH_ENTITIES_M, only: PATH_VECTOR, PATH_BETA, PATH_DERIVATIVE
+  use PATH_ENTITIES_M, only: PATH_VECTOR, PATH_BETA, PATH_DERIVATIVE, &
+                             PATH_INT_VECTOR_2D
   use D_T_SCRIPT_DTNP_M, only: D_T_SCRIPT_DTNP
   use GET_DELTA_M, only: GET_DELTA
   use SPECTRO_DERIVATIVE_M, only: SPECTRO_DERIVATIVE
@@ -27,12 +28,12 @@ contains
 !----------------------------------------------------------------------
 ! This is the radiative transfer model with derivatives
 
-Subroutine Rad_Tran_WD(ForwardModelConfig, FwdModelExtra, FwdModelIn, &
-       &   elvar,frq_i,Frq,n_sps,z_path,h_path,t_path,phi_path,  &
-       &   dHdz_path,beta_path,spsfunc_path,t_z_basis,no_t,ref_corr,  &
-       &   no_phi_t,t_phi_basis,dh_dt_path, &
-       &   k_temp,k_atmos,brkpt,    &
-       &   no_ele,mid,ilo,ihi,t_script,tau,max_zeta_dim,max_phi_dim,Ier)
+Subroutine Rad_Tran_WD(ForwardModelConfig, FwdModelExtra, FwdModelIn,     &
+        &  elvar,frq_i,Frq,n_sps,z_path,h_path,t_path,phi_path,dHdz_path, &
+        &  beta_path,spsfunc_path,t_z_basis,no_t,ref_corr,no_phi_t,       &
+        &  t_phi_basis,dh_dt_path,k_temp,k_atmos,brkpt,no_ele,mid,ilo,ihi,&
+        &  t_script,tau,max_zeta_dim,max_phi_dim,midval_ndx,no_midval_ndx,&
+        &  gl_ndx,no_gl_ndx,midval_delta,Sps_zeta_loop,Sps_phi_loop,Ier)
 !
     type(forwardModelConfig_T), intent(in) :: forwardModelConfig
     type (Vector_T), intent(in) :: fwdModelIn, fwdModelExtra
@@ -43,10 +44,13 @@ Subroutine Rad_Tran_WD(ForwardModelConfig, FwdModelExtra, FwdModelIn, &
    &                           N_SPS, BRKPT, NO_ELE, MID, ILO, IHI, &
    &                           max_zeta_dim, max_phi_dim
 
+    Integer(i4), intent(in) :: gl_ndx(:,:), no_gl_ndx
+    Integer(i4), intent(in) :: midval_ndx(:,:),no_midval_ndx
 
     Integer(i4), intent(out) :: IER
 
     Real(r8), intent(in) :: FRQ
+    Real(r8), intent(in) :: midval_delta(:,:)
 
     Real(r8), intent(in) :: T_Z_BASIS(:), T_PHI_BASIS(:)
 
@@ -57,6 +61,10 @@ Subroutine Rad_Tran_WD(ForwardModelConfig, FwdModelExtra, FwdModelIn, &
     Type(path_beta), intent(in) :: BETA_PATH(:)   ! (Nsps)
 
     Type(path_vector), intent(in) :: SPSFUNC_PATH(:)
+
+    type(path_int_vector_2d), intent(in) :: sps_phi_loop(:)
+    type(path_int_vector_2d), intent(in) :: sps_zeta_loop(:)
+
     Type(path_vector), intent(in) :: Z_PATH, T_PATH, H_PATH, PHI_PATH, &
    &                                 DHDZ_PATH
 
@@ -79,9 +87,11 @@ Subroutine Rad_Tran_WD(ForwardModelConfig, FwdModelExtra, FwdModelIn, &
 !
 !  Atmospheric derivatives:
 !
-      Call GET_DELTA(ForwardModelConfig, FwdModelExtra, FwdModelIn, &
+      Call GET_DELTA(ForwardModelConfig, FwdModelExtra, FwdModelIn,     &
    &       mid,brkpt,no_ele,z_path,h_path,phi_path,beta_path,dHdz_path, &
-   &       n_sps, N_lvls, ref_corr,spsfunc_path,elvar,delta,Ier)
+   &       n_sps, N_lvls, ref_corr,spsfunc_path,elvar,midval_ndx,       &
+   &       no_midval_ndx,gl_ndx,no_gl_ndx,Sps_zeta_loop,Sps_phi_loop,   &
+   &       midval_delta,delta,Ier)
       if (Ier /= 0) Return
 !
 ! Compute atmosperic derivatives for this channel
@@ -106,10 +116,11 @@ Subroutine Rad_Tran_WD(ForwardModelConfig, FwdModelExtra, FwdModelIn, &
         end do
       end do
 !
-      Call temperature_deriv(mid,brkpt,no_ele,t_z_basis,z_path,t_path,   &
-     &     h_path,phi_path,beta_path,dHdz_path,dh_dt_path,no_phi_t,no_t, &
-     &     N_lvls,n_sps,ref_corr,t_phi_basis,tau,t_script, &
-     &     dt_scrpt_dnp,spsfunc_path,ilo,ihi,frq_i,elvar,k_temp)
+      Call temperature_deriv(mid,brkpt,no_ele,t_z_basis,z_path,  &
+   &       t_path,h_path,phi_path,beta_path,dHdz_path,no_phi_t,  &
+   &       no_t,N_lvls,n_sps,ref_corr,t_phi_basis,tau,t_script,  &
+   &       dt_scrpt_dnp,spsfunc_path,ilo,ihi,frq_i,dh_dt_path,   &
+   &       elvar,no_midval_ndx,midval_ndx,no_gl_ndx,gl_ndx,k_temp)
 !
     end if
 !
@@ -118,6 +129,9 @@ Subroutine Rad_Tran_WD(ForwardModelConfig, FwdModelExtra, FwdModelIn, &
   End Subroutine RAD_TRAN_WD
 end module RAD_TRAN_WD_M
 ! $Log$
+! Revision 1.13  2001/06/07 23:39:31  pwagner
+! Added Copyright statement
+!
 ! Revision 1.12  2001/05/02 20:49:23  zvi
 ! Cleaning up code
 !

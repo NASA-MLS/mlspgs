@@ -121,8 +121,35 @@ module L2PC_PFA_STRUCTURES
     Real(r8) :: DELTA(maxlines)
   end type PFA_SLAB
 
+!------------------------------------------------------------
+! This structure contains the "slabs preps arrays"
+  type SLABS_STRUCT
+    Integer(i4) :: no_lines
+    Real(r8), DIMENSION(:), POINTER :: v0s
+    Real(r8), DIMENSION(:), POINTER :: v0sm
+    Real(r8), DIMENSION(:), POINTER :: v0sp
+    Real(r8), DIMENSION(:), POINTER :: x1
+    Real(r8), DIMENSION(:), POINTER :: x1m
+    Real(r8), DIMENSION(:), POINTER :: x1p
+    Real(r8), DIMENSION(:), POINTER :: y
+    Real(r8), DIMENSION(:), POINTER :: ym
+    Real(r8), DIMENSION(:), POINTER :: yp
+    Real(r8), DIMENSION(:), POINTER :: yi
+    Real(r8), DIMENSION(:), POINTER :: yim
+    Real(r8), DIMENSION(:), POINTER :: yip
+    Real(r8), DIMENSION(:), POINTER :: slabs1
+    Real(r8), DIMENSION(:), POINTER :: slabs1m
+    Real(r8), DIMENSION(:), POINTER :: slabs1p
+    Real(r8), DIMENSION(:), POINTER :: dx1_dv0
+    Real(r8), DIMENSION(:), POINTER :: dy_dv0
+    Real(r8), DIMENSION(:), POINTER :: dslabs1_dv0
+  end type SLABS_STRUCT
+
 end module L2PC_PFA_STRUCTURES
 ! $Log$
+! Revision 1.10  2001/06/07 23:39:31  pwagner
+! Added Copyright statement
+!
 ! Revision 1.9  2001/04/03 07:32:45  zvi
 ! Modify the spectral structure - eliminating sps_ from the names
 !

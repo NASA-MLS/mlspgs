@@ -3,7 +3,7 @@
 
 module Comp_Path_Entities_M
   use MLSCommon, only: R8
-  use GL6P, only: NG
+  use GLNP, only: NG
   use ELLIPSE_M, only: ELLIPSE
   use PATH_ENTITIES_M, only: PATH_INDEX, PATH_VECTOR, PATH_VECTOR_2D
   use VERT_TO_PATH_M, only: VERT_TO_PATH
@@ -136,6 +136,9 @@ end subroutine Comp_Path_Entities
 
 end module Comp_Path_Entities_M
 ! $Log$
+! Revision 1.36  2001/06/07 23:30:33  pwagner
+! Added Copyright statement
+!
 ! Revision 1.35  2001/05/16 01:25:21  livesey
 ! Removed unnecessary radiance parameter.
 !
