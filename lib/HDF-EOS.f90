@@ -11,7 +11,7 @@ module HDFEOS               ! F90 interface to HDF-EOS.
 
   !------------------- RCS Ident Info -----------------------
   character(len=130), private :: Id = &
-    & "$Id$"
+    & "$Id$"&
   character(len=*), parameter, private :: ModuleName= &
     & "$RCSfile$"
   !----------------------------------------------------------
@@ -170,6 +170,9 @@ end module HDFEOS
 
 !
 ! $Log$
+! Revision 2.12  2002/10/01 20:27:26  bwknosp
+! Fixed problem
+!
 ! Revision 2.11  2001/05/12 00:24:44  livesey
 ! Changed intent out to inout for SWInqSwath
 !
