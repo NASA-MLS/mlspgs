@@ -219,15 +219,12 @@ contains ! =====     Public procedures     =============================
 ! --------------------------------------------------  INIT_TABLES  -----
   subroutine INIT_TABLES
 
-    use Functions, only: Init_Functions
     ! "Tree" is here because "make depends" can't see it in make_tree
     ! (because of the "include"):
     use TREE, only:
     use TREE_TYPES, only: N_DOT, N_DT_DEF, N_FIELD_SPEC, N_FIELD_TYPE, &
                           N_NAME_DEF, N_SECTION, N_SPEC_DEF
 
-  ! Initialize the list of known functions
-    call init_functions
   ! Put intrinsic predefined identifiers into the symbol table.
     call init_Spectroscopy ( t_last, field_last, last_lit, &
     & first_parm, last_parm, section_last, spec_last )
@@ -1025,10 +1022,20 @@ contains ! =====     Public procedures     =============================
     call make_tree ( (/ & ! Must be AFTER s_forwardModel, s_hGrid, s_pfaData,
                           ! s_vector, and s_vectorTemplate
       begin, s+s_dump, &
+             begin, f+f_allForwardModels, t+t_boolean, n+n_field_type, &
+             begin, f+f_allHGrids, t+t_boolean, n+n_field_type, &
+             begin, f+f_allQuantityTemplates, t+t_boolean, n+n_field_type, &
+             begin, f+f_allVectors, t+t_boolean, n+n_field_type, &
+             begin, f+f_allVectorTemplates, t+t_boolean, n+n_field_type, &
+             begin, f+f_allVGrids, t+t_boolean, n+n_field_type, &
+             begin, f+f_antennaPatterns, t+t_boolean, n+n_field_type, &
+             begin, f+f_DACSfilterShapes, t+t_boolean, n+n_field_type, &
              begin, f+f_details, t+t_numeric, n+n_field_type, &
              begin, f+f_forwardModel, s+s_forwardModel, n+n_field_spec, &
+             begin, f+f_filterShapes, t+t_boolean, n+n_field_type, &
              begin, f+f_hGrid, s+s_hgrid, n+n_field_spec, &
              begin, f+f_pfaData, s+s_pfaData, n+n_field_spec, &
+             begin, f+f_pointingGrids, t+t_boolean, n+n_field_type, &
              begin, f+f_quantity, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
              begin, f+f_template, s+s_vectorTemplate, s+s_quantity, n+n_field_spec, &
@@ -1249,6 +1256,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.372  2004/05/29 02:47:02  vsnyder
+! Rearrange function definition stuff
+!
 ! Revision 2.371  2004/05/22 02:29:30  vsnyder
 ! Add PFAdata, more stuff for dump, allow dump in global_settings
 !
