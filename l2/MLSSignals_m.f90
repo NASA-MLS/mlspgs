@@ -5,25 +5,34 @@ module MLSSignals_M
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use Declaration_Table, only: Range
+  use DUMP_0, only: DUMP
   use Expr_M, only: Expr
-  use Init_Tables_Module, only: f_band, f_channel, f_channels, f_deferred, &
-    & f_first, f_frequencies, f_frequency, f_last, f_lo, f_module, f_radiometer, &
-    & f_spectrometer, f_spectrometerType, f_start, f_step, f_suffix, &
-    & f_switch, f_width, f_widths, field_first, field_indices, field_last, &
-    & s_band,  s_module, s_radiometer,  s_signal, s_spectrometerType, s_validSignal
+  use Init_Tables_Module, only: f_band, f_centerFrequency, f_channel, &
+    & f_channels, f_deferred, f_first, f_frequencies, f_frequency, &
+    & f_last, f_lo, f_module, f_radiometer, f_spectrometer, f_spectrometerType,&
+    & f_start, f_step, f_suffix, f_switch, f_width, f_widths, field_first, &
+    & field_indices, field_last, s_band,  s_module, s_radiometer, &
+    & s_spectrometerType, s_validSignal
   use Intrinsic, only: L_TRUE
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
              & MLSMSG_Error
   use Output_M, only: Output
   use String_Table, only: Display_String
-  use Toggles, only: Gen, Toggle
+  use Toggles, only: Gen, Toggle, Levels
   use Trace_M, only: Trace_begin, Trace_end
   use Tree, only: Decorate, Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, &
     & Subtree
   use Tree_Types, only: N_named, N_Set_One
 
   implicit none
+
+  ! =====     Defined Operators and Generic Identifiers     ==============
+  
+  interface DUMP
+    module procedure DUMP_BANDS, DUMP_MODULES, DUMP_RADIOMETERS, &
+      & DUMP_SIGNALS, DUMP_SPECTROMETERTYPES
+  end interface
 
   ! This type defines a module in the instrument (e.g. GHz, THz)
 
@@ -34,7 +43,7 @@ module MLSSignals_M
   ! This type defines a radiometer.
 
   type Radiometer_T
-    integer :: instrumentModule         ! Index into modules database
+    integer :: InstrumentModule         ! Index into modules database
     integer :: Prefix                   ! Sub_rosa index
     integer :: Suffix                   ! Sub_rosa index
     real(r8) :: LO                      ! Local oscillator in MHz
@@ -43,9 +52,12 @@ module MLSSignals_M
   ! The second type describes a band within that radiometer
 
   type Band_T
-    real(r8) :: Frequency               ! Negative if not present (wide filter)
+    integer :: InstrumentModule         ! Index into modules database
     integer :: Prefix                   ! Sub_rosa index
+    integer :: Radiometer               ! Index into radiometers database
+    integer :: SpectrometerType         ! Index into spectrometerTypes database
     integer :: Suffix                   ! Sub_rosa index
+    real(r8) :: CenterFrequency         ! Negative if not present (wide filter)
   end type Band_T
 
   ! This type gives the information for specific spectrometer families.  For
@@ -53,6 +65,7 @@ module MLSSignals_M
   ! Otherwise, the arrays are empty.
 
   type SpectrometerType_T
+    integer :: Name                     ! Name for spectrometer type
     real(r8), pointer, dimension(:) :: Frequencies => NULL(), Widths => NULL()
   end type SpectrometerType_T
 
@@ -61,13 +74,17 @@ module MLSSignals_M
   ! type flying around, see later.
 
   type Signal_T
-    integer :: Radiometer               ! Index into radiometers database
     integer :: Band                     ! Index into band database
+    integer :: InstrumentModule         ! Index into modules database
+    integer :: ParentSignal             ! Index of parent if derived, else 0
+    integer :: Radiometer               ! Index into radiometers database
     integer :: SideBand                 ! -1:lower, +1:upper, 0:folded
     integer :: Spectrometer             ! Just a spectrometer number
     integer :: SpectrometerType         ! Index in SpectrometerType data base
     integer :: Switch                   ! Just a switch number
 
+    real(r8) :: LO                      ! Radiometer local oscillator
+    real(r8) :: CenterFrequency         ! Band local oscillator
     real(r8), POINTER, DIMENSION(:) :: Frequencies=>NULL() ! Mainly a shallow copy
     real(r8), POINTER, DIMENSION(:) :: Widths=>NULL() ! Mainly a shallow copy
     logical, POINTER, DIMENSION(:) :: Selected ! A bit field, or absent==all.
@@ -149,22 +166,27 @@ contains
       select case ( decoration(subtree(1,decoration(subtree(1,key)))) )
       case ( s_band ) ! ...................................  BAND  .....
         band%prefix= sub_rosa(name)
-        band%frequency = -1.0_r8 ! "The 'frequency' field is absent"
+        band%centerFrequency = -1.0_r8 ! "The 'frequency' field is absent"
         do j = 2, nsons(key)
           son = subtree(j,key)
           field = decoration(subtree(1,son))
           gson = subtree(2,son)
           got(field) = .true.
           select case ( field )
-          case ( f_frequency )
+          case ( f_centerFrequency )
             call expr ( gson, units, value )
-            band%frequency = value(1)
+            band%centerFrequency = value(1)
           case ( f_suffix )
             band%suffix = sub_rosa(gson)
+          case ( f_radiometer )
+            band%radiometer = decoration(decoration(gson))
+          case ( f_spectrometerType )
+            band%spectrometerType= decoration(decoration(gson))
           case default
             ! Shouldn't get here if the type checker worked
           end select
         end do ! i = 2, nsons(key)
+        band%instrumentModule=radiometers(band%radiometer)%instrumentModule
         call decorate ( key, addBandToDatabase ( bands, band ) )
       case ( s_module ) ! .............................. MODULE ........
         thisModule%name=sub_rosa(name)
@@ -182,7 +204,7 @@ contains
           case ( f_suffix )
             radiometer%suffix = sub_rosa(gson)
           case ( f_module )
-            radiometer%instrumentModule = decoration(gson)
+            radiometer%instrumentModule = decoration(decoration(gson))
           case default
             ! Shouldn't get here if the type checker worked
           end select
@@ -196,14 +218,10 @@ contains
           got(field)=.true.
           select case ( field )
           case ( f_band )
-            signal%band = decoration(gson)
-          case ( f_spectrometerType )
-            call expr ( gson, units, value )
-            signal%spectrometerType = value(1)
-          case ( f_radiometer )
-            signal%radiometer = decoration(gson)
+            signal%band = decoration(decoration(gson))
           case ( f_spectrometer )
-            signal%spectrometer = decoration(gson)
+            call expr ( gson, units, value )
+            signal%spectrometer = value(1)
           case ( f_switch )
             call expr ( gson, units, value )
             signal%switch = value(1)
@@ -216,38 +234,50 @@ contains
           end select
         end do ! i = 2, nsons(key)
         
+        ! Set default values for remaining parameters
+        signal%sideband=0
+        signal%parentSignal=0
+        signal%radiometer=bands(signal%band)%radiometer
+        signal%lo=radiometers(signal%radiometer)%lo
+        signal%instrumentModule=radiometers(signal%radiometer)%instrumentModule
+        signal%spectrometerType=bands(signal%band)%spectrometerType
+        signal%centerFrequency=bands(signal%band)%centerFrequency
+        nullify(signal%selected)
+
         ! For the wide filters, we specify frequency etc. here.
         if ( got(f_frequencies) .neqv. got(f_widths) ) call announceError ( &
           & allOrNone, f_frequencies, (/ f_widths /) )
         if ( got(f_frequencies) ) then
-          if ( any(got( (/ f_last, f_start, f_step, f_width /) )) ) &
-            & call announceError ( badMix, f_frequencies, &
-            & (/ f_last, f_start, f_step, f_width /) )
           if ( nsons(frequencies) /= nsons(widths) ) &
             call announceError ( sizes, f_frequency, (/ f_widths /) )
           if ( error == 0 ) then
             call allocate_Test ( signal%frequencies, nsons(son)-1, &
-              & 'signal%frequencies', moduleName, lowBound = first )
+              & 'signal%frequencies', moduleName )
             call allocate_Test ( signal%widths, nsons(son)-1, &
-              & 'signal%widths', moduleName, lowBound = first )
+              & 'signal%widths', moduleName)
             do k = 2, nsons(frequencies)
               call expr ( subtree(k,frequencies), units, value )
-              signal%frequencies(k-2+first) = value(1)
+              signal%frequencies(k-1) = value(1)
               call expr ( subtree(k,widths), units, value )
-              signal%frequencies(k-2+first) = value(1)
+              signal%widths(k-1) = value(1)
             end do
           end if
         else
-          nullify(signal%frequencies)
-          nullify(signal%widths)
+          signal%frequencies=> &
+            & spectrometerTypes(signal%spectrometerType)%frequencies
+          signal%widths=> &
+            & spectrometerTypes(signal%spectrometerType)%widths
         end if
 
-        ! Set default values for remaining parameters
-        signal%sideband=0
-        nullify(signal%selected)
-
         call decorate ( key, addSignalToDatabase ( signals, signal ) )
+
+        ! Now nullify pointers so they don't get hosed later
+        nullify ( signal%frequencies )
+        nullify ( signal%widths )
+        nullify ( signal%selected )
+
       case ( s_spectrometerType ) ! .............  SPECTROMETERTYPE .....
+        spectrometerType%name=sub_rosa(name)
         deferred=.false.
         first = 0
         do j = 2, nsons(key)
@@ -297,15 +327,15 @@ contains
           if ( nsons(frequencies) /= nsons(widths) ) &
             call announceError ( sizes, f_frequency, (/ f_widths /) )
           if ( error == 0 ) then
-            call allocate_Test ( spectrometerType%frequencies, nsons(son)-1, &
+            call allocate_Test ( spectrometerType%frequencies, nsons(son)-first, &
               & 'spectrometerType%frequencies', moduleName, lowBound = first )
-            call allocate_Test ( spectrometerType%widths, nsons(son)-1, &
+            call allocate_Test ( spectrometerType%widths, nsons(son)-first, &
               & 'spectrometerType%widths', moduleName, lowBound = first )
             do k = 2, nsons(frequencies)
               call expr ( subtree(k,frequencies), units, value )
               spectrometerType%frequencies(k-2+first) = value(1)
               call expr ( subtree(k,widths), units, value )
-              spectrometerType%frequencies(k-2+first) = value(1)
+              spectrometerType%widths(k-2+first) = value(1)
             end do
           end if
         end if
@@ -314,10 +344,10 @@ contains
           & f_width /)) ) ) call announceError ( allOrNone, f_start, &
           & (/ f_last, f_step, f_width /) )
           if ( error == 0 ) then
-            k = last - first + 1
-            call allocate_Test ( spectrometerType%frequencies, k, &
+            k = last - first 
+            call allocate_Test ( spectrometerType%frequencies, k-first, &
               & 'spectrometerType%frequencies', moduleName, lowBound = first )
-            call allocate_Test ( spectrometerType%widths, k, &
+            call allocate_Test ( spectrometerType%widths, k-first, &
               & 'spectrometerType%widths', moduleName, lowBound = first )
             spectrometerType%widths = width
             spectrometerType%frequencies(first) = start
@@ -335,6 +365,10 @@ contains
           & call announceError ( atLeastOne, f_frequencies, (/ f_start /) )
         if ( error == 0 ) call decorate ( key, addSpectrometerTypeToDatabase ( &
           & spectrometerTypes, spectrometerType ) )
+
+        ! Nullify pointers to temporary stuff so it doesn't get hosed later
+        nullify ( spectrometerType%frequencies )
+        nullify ( spectrometerType%widths )
       case default
         ! Shouldn't get here if the type checker worked
       end select
@@ -342,6 +376,14 @@ contains
     end do
 
     if ( toggle(gen) ) call trace_end ( "MLSSignals" )
+
+    if ( levels(gen) > 0 ) then
+      call dump(modules)
+      call dump(radiometers)
+      call dump(spectrometerTypes)
+      call dump(bands)
+      call dump(signals)
+    endif
 
     contains
     ! --------------------------------------------  AnnounceError  -----
@@ -535,9 +577,144 @@ contains
     end if
   end subroutine DestroySpectrometerTypeDatabase
 
+  ! ------------------------------------------------ DumpBands -----
+  subroutine DUMP_BANDS ( BANDS )
+    type (Band_T), intent(in) :: BANDS(:)
+    integer :: i
+    call output ( 'BANDS: SIZE = ')
+    call output ( size(bands), advance='yes' )
+    do i = 1, size(bands)
+      call output ( i, 2 )
+      call output ( ': ' )
+      call display_string (bands(i)%prefix)
+      call output ( ':' )
+      call display_string (bands(i)%suffix, advance='yes' )
+      call output ( '   Module: ')
+      call output ( bands(i)%instrumentModule )
+      call output ( ' - ' )
+      call display_string ( modules(bands(i)%instrumentModule)%name,advance='yes' )
+      call output ( '   Radiometer: ')
+      call output ( bands(i)%radiometer )
+      call output ( ' - ' )
+      call display_string ( radiometers(bands(i)%radiometer)%prefix,advance='yes' )
+      call output ( '   SpectrometerType: ')
+      call output ( bands(i)%spectrometerType )
+      call output ( ' - ' )
+      call display_string ( spectrometerTypes(bands(i)%spectrometerType)%name,advance='yes' )
+      call output ( '   Frequency: ')
+      call output ( bands(i)%centerFrequency,advance='yes' )
+    end do
+  end subroutine DUMP_BANDS
+
+  ! ------------------------------------------------ DumpModules -------
+  subroutine DUMP_MODULES ( MODULES )
+    type (Module_T), intent(in) :: MODULES(:)
+    integer :: i
+    call output ( 'MODULES: SIZE = ')
+    call output ( size(modules), advance='yes' )
+    do i = 1, size(modules)
+      call output ( i, 1 )
+      call output ( ': ')
+      call display_string (modules(i)%name, advance='yes')
+    end do
+  end subroutine DUMP_MODULES
+
+  ! ------------------------------------------------ DumpRadiometers --
+  subroutine DUMP_RADIOMETERS ( RADIOMETERS )
+    type (Radiometer_T), intent(in) :: RADIOMETERS(:)
+    integer :: i
+    call output ( 'RADIOMETERS: SIZE = ')
+    call output ( size(radiometers), advance='yes' )
+    do i = 1, size(radiometers)
+      call output ( i,1 )
+      call output ( ': ')
+      call display_string (radiometers(i)%prefix)
+      call output ( ':' )
+      call display_string (radiometers(i)%suffix, advance='yes' )
+      call output ( '   Module: ')
+      call output ( radiometers(i)%instrumentModule )
+      call output ( ' - ' )
+      call display_string ( modules(radiometers(i)%instrumentModule)%name,advance='yes' )
+      call output ( '   LO: ')
+      call output ( radiometers(i)%lo,advance='yes' )
+    end do
+  end subroutine DUMP_RADIOMETERS
+
+  ! ------------------------------------------- DumpSpectrometerTypes --
+  subroutine DUMP_SIGNALS ( SIGNALS )
+    type (signal_T), intent(in) :: SIGNALS(:)
+    integer :: i
+    call output ( 'SIGNALS: SIZE = ')
+    call output ( size(signals), advance='yes' )
+    do i = 1, size(signals)
+      call output ( i, advance='yes' )
+      call output ( '   Module: ')
+      call output ( signals(i)%instrumentModule )
+      call output ( ' - ' )
+      call display_string ( modules(signals(i)%instrumentModule)%name,advance='yes' )
+      call output ( '   Radiometer: ')
+      call output ( signals(i)%radiometer )
+      call output ( ' - ' )
+      call display_string ( radiometers(signals(i)%radiometer)%prefix,advance='yes' )
+      call output ( '   First LO: ')
+      call output ( signals(i)%lo, advance='yes')
+      call output ( '   Band: ')
+      call output ( signals(i)%band )
+      call output (' - ')
+      call display_string ( bands(signals(i)%band)%prefix,advance='yes' )
+      call output ( '   Band center frequency: ')
+      call output ( signals(i)%centerFrequency, advance='yes')
+      call output ( '   SpectrometerType: ')
+      call output ( signals(i)%spectrometerType )
+      call output ( ' - ' )
+      call display_string ( spectrometerTypes(signals(i)%spectrometerType)%name,advance='yes' )
+      call output ( '   Channels: ' )
+      call output ( lbound(signals(i)%frequencies,1), 3 )
+      call output ( ':' )
+      call output ( ubound(signals(i)%frequencies,1), 3, advance='yes' )
+      call output ( '   Frequencies:', advance='yes' )
+      call dump ( signals(i)%frequencies )
+      call output ( '   Widths:', advance='yes' )
+      call dump ( signals(i)%widths )
+      if (associated ( signals(i)%selected) ) then
+        call output ( '   Channel selected flags:', advance='yes' )
+        call dump ( signals(i)%selected )
+      else
+        call output ( '   All channels selected.', advance='yes' )
+      end if
+    end do
+  end subroutine DUMP_SIGNALS
+
+  ! ------------------------------------------- DumpSpectrometerTypes --
+  subroutine DUMP_SPECTROMETERTYPES ( SPECTROMETERTYPES )
+    type (SpectrometerType_T), intent(in) :: SPECTROMETERTYPES(:)
+    integer :: i
+    call output ( 'SPECTROMETERTYPES: SIZE = ')
+    call output ( size(spectrometerTypes), advance='yes' )
+    do i = 1, size(spectrometerTypes)
+      call output ( i,1 )
+      call output ( ': ')
+      call display_string (spectrometerTypes(i)%name,advance='yes')
+      if (associated(spectrometerTypes(i)%frequencies)) then
+        call output ( '  Channels: ' )
+        call output ( lbound(spectrometerTypes(i)%frequencies,1), 3 )
+        call output ( ':' )
+        call output ( ubound(spectrometerTypes(i)%frequencies,1), 3, advance='yes' )
+        call output ( '  Frequencies:', advance='yes' )
+        call dump ( spectrometerTypes(i)%frequencies )
+        call output ( '  Widths:', advance='yes' )
+        call dump ( spectrometerTypes(i)%widths )
+      else
+        call output ('   Frequencies and widths deferred.', advance='yes' )
+      end if
+    end do
+  end subroutine DUMP_SPECTROMETERTYPES
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.7  2001/02/28 21:36:02  livesey
+! Another plateau
+!
 ! Revision 2.6  2001/02/28 01:16:11  livesey
 ! Interim version
 !
