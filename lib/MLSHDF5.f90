@@ -129,8 +129,9 @@ module MLSHDF5
   end interface
 
   interface SaveAsHDF5DS
-    module procedure SaveAsHDF5DS_intarr1, SaveAsHDF5DS_intarr2, &
-      & SaveAsHDF5DS_dblarr1, SaveAsHDF5DS_dblarr2, &
+    module procedure &
+      & SaveAsHDF5DS_intarr1, SaveAsHDF5DS_intarr2, SaveAsHDF5DS_intarr3, &
+      & SaveAsHDF5DS_dblarr1, SaveAsHDF5DS_dblarr2, SaveAsHDF5DS_dblarr3, &
       & SaveAsHDF5DS_snglarr1, SaveAsHDF5DS_snglarr2, SaveAsHDF5DS_snglarr3, &
       & SaveAsHDF5DS_snglarr4, &
       & SaveAsHDF5DS_charsclr, SaveAsHDF5DS_chararr1, SaveAsHDF5DS_chararr2
@@ -1537,6 +1538,44 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to close dataspace for 2D integer array '//trim(name) )
   end subroutine SaveAsHDF5DS_intarr2
 
+  ! --------------------------------------------- SaveAsHDF5DS_intarr3
+  subroutine SaveAsHDF5DS_intarr3 ( locID, name, value )
+    ! This routine does the initial work of creating a dataset
+    integer, intent(in) :: LOCID        ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    integer, intent(in) :: VALUE(:,:,:)     ! The array itself
+
+    ! Local variables
+    integer :: spaceID                  ! ID for dataspace
+    integer (HID_T) :: setID            ! ID for dataset
+    integer :: status                   ! Flag from HDF5
+    integer, dimension(3) :: SHP        ! Shape
+
+    ! Executable code
+    ! Create the dataspace
+    shp = shape(value)
+    call h5sCreate_simple_f ( 3, int(shp,hSize_T), spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to create dataspace for 3D integer array '//trim(name) )
+    ! Create the dataset
+    call h5dCreate_f ( locID, trim(name), H5T_NATIVE_INTEGER, spaceID, setID, &
+      & status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to create dataset for 3D integer array '//trim(name) )
+    ! Write the data
+    call h5dWrite_f ( setID, H5T_NATIVE_INTEGER, value, &
+      & int ( (/ shp, ones(1:4) /), hID_T ), status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to write to dataset for 3D integer array '//trim(name) )
+    ! Close things
+    call h5dClose_F ( setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close dataset for 3D integer array '//trim(name) )
+    call h5sClose_F ( spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close dataspace for 3D integer array '//trim(name) )
+  end subroutine SaveAsHDF5DS_intarr3
+
   ! --------------------------------------------- SaveAsHDF5DS_dblarr1
   subroutine SaveAsHDF5DS_dblarr1 ( locID, name, value )
     ! This routine does the initial work of creating a dataset
@@ -1593,25 +1632,63 @@ contains ! ======================= Public Procedures =========================
     shp = shape(value)
     call h5sCreate_simple_f ( 2, int(shp,hSize_T), spaceID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to create dataspace for 2D integer array '//trim(name) )
+      & 'Unable to create dataspace for 2D double array '//trim(name) )
     ! Create the dataset
     call h5dCreate_f ( locID, trim(name), H5T_NATIVE_DOUBLE, spaceID, setID, &
       & status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to create dataset for 2D integer array '//trim(name) )
+      & 'Unable to create dataset for 2D double array '//trim(name) )
     ! Write the data
     call h5dWrite_f ( setID, H5T_NATIVE_DOUBLE, value, &
       & int ( (/ shp, ones(1:5) /), hID_T ), status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to write to dataset for 2D integer array '//trim(name) )
+      & 'Unable to write to dataset for 2D double array '//trim(name) )
     ! Close things
     call h5dClose_F ( setID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to close dataset for 2D integer array '//trim(name) )
+      & 'Unable to close dataset for 2D double array '//trim(name) )
     call h5sClose_F ( spaceID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to close dataspace for 2D integer array '//trim(name) )
+      & 'Unable to close dataspace for 2D double array '//trim(name) )
   end subroutine SaveAsHDF5DS_dblarr2
+
+  ! --------------------------------------------- SaveAsHDF5DS_dblarr3
+  subroutine SaveAsHDF5DS_dblarr3 ( locID, name, value )
+    ! This routine does the initial work of creating a dataset
+    integer, intent(in) :: LOCID        ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    real(r8), intent(in) :: VALUE(:,:,:)  ! The array itself
+
+    ! Local variables
+    integer :: spaceID                  ! ID for dataspace
+    integer (HID_T) :: setID            ! ID for dataset
+    integer :: status                   ! Flag from HDF5
+    integer, dimension(3) :: SHP        ! Shape
+
+    ! Executable code
+    ! Create the dataspace
+    shp = shape(value)
+    call h5sCreate_simple_f ( 3, int(shp,hSize_T), spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to create dataspace for 3D double array '//trim(name) )
+    ! Create the dataset
+    call h5dCreate_f ( locID, trim(name), H5T_NATIVE_DOUBLE, spaceID, setID, &
+      & status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to create dataset for 3D double array '//trim(name) )
+    ! Write the data
+    call h5dWrite_f ( setID, H5T_NATIVE_DOUBLE, value, &
+      & int ( (/ shp, ones(1:4) /), hID_T ), status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to write to dataset for 3D double array '//trim(name) )
+    ! Close things
+    call h5dClose_F ( setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close dataset for 3D double array '//trim(name) )
+    call h5sClose_F ( spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close dataspace for 3D double array '//trim(name) )
+  end subroutine SaveAsHDF5DS_dblarr3
 
   ! --------------------------------------------- SaveAsHDF5DS_snglarr1
   subroutine SaveAsHDF5DS_snglarr1 ( locID, name, value )
@@ -3274,6 +3351,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.37  2004/03/25 18:38:13  pwagner
+! May save 3d integer and double dsets
+!
 ! Revision 2.36  2004/03/24 23:50:27  pwagner
 ! Added mls_h5open/close
 !
