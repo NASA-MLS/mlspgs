@@ -1,3 +1,5 @@
+mlsl2: MLSL2.o
+
 include ../Makefile.dep
 
 # "$Id$"
@@ -121,6 +123,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.15  2001/03/20 22:52:07  pwagner
+# Promoted fwdmdl ahead of lib in link statement
+#
 # Revision 1.14  2001/03/12 23:57:46  pwagner
 # New FAFTER, LAFTER flags to postprocess compile & link steps
 #

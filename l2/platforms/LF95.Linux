@@ -59,7 +59,6 @@ dir3 = $(fwdmdldir)/
 l2_NEEDS_fwdmdl = true
 
 ifdef l2_NEEDS_fwdmdl
-l2: fwdmdl
      INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S -I $(libdir) -I $(fwdmdldir)
 else
      INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S -I $(libdir)
@@ -105,6 +104,9 @@ endif
 l_specials = 
 
 # $Log$
+# Revision 1.13  2001/03/12 23:57:46  pwagner
+# New FAFTER, LAFTER flags to postprocess compile & link steps
+#
 # Revision 1.12  2001/03/08 00:53:21  pwagner
 # l2_NEEDS_fwdmdl now set by default
 #
