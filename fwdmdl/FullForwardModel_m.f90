@@ -3,70 +3,6 @@
 
 module FullForwardModel_m
 
-  use GLNP, only: NG, GX
-  use MLSCommon, only: I4, R4, R8, RP, IP, FINDFIRST
-  USE MLSFiles, only: get_free_lun
-  use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT, ALLOCATEONESLABS, &
-                              &  DESTROYCOMPLETESLABS
-  use COMP_ETA_DOCALC_NO_FRQ_M, only: comp_eta_docalc_no_frq
-  use COMP_SPS_PATH_FRQ_M, only: comp_sps_path_frq
-  use EVAL_SPECT_PATH_M, only: EVAL_SPECT_PATH
-  use REFRACTION_M, only: REFRACTIVE_INDEX, COMP_REFCOR, PATH_DS_DH
-  use TWO_D_HYDROSTATIC_M, only: two_d_hydrostatic
-  use METRICS_M
-  use GET_CHI_ANGLES_M, only: GET_CHI_ANGLES
-  use GET_CHI_OUT_M, only: GET_CHI_OUT
-  use GET_BETA_PATH_M, only: GET_BETA_PATH, beta_group_T
-  use RAD_TRAN_M, only: PATH_CONTRIB, RAD_TRAN, DRAD_TRAN_DF,DRAD_TRAN_DT, &
-                       &  DRAD_TRAN_DX
-  use SLABS_SW_M, only: GET_GL_SLABS_ARRAYS
-  use FREQ_AVG_M, only: FREQ_AVG
-  use CONVOLVE_ALL_M, only: CONVOLVE_ALL
-  use NO_CONV_AT_ALL_M, only: NO_CONV_AT_ALL
-  use D_LINTRP_M, only: LINTRP
-  use D_HUNT_M, only: hunt_zvi => HUNT
-
-  use VectorsModule, only: VECTOR_T, VECTORVALUE_T, VALIDATEVECTORQUANTITY, &
-                       &   GETVECTORQUANTITYBYTYPE, &
-                       &   M_FullDerivatives
-
-  use ForwardModelConfig, only: FORWARDMODELCONFIG_T
-  use ForwardModelIntermediate, only: FORWARDMODELINTERMEDIATE_T, &
-                                  &   FORWARDMODELSTATUS_T
-  use AntennaPatterns_m, only: ANTENNAPATTERNS
-  use FilterShapes_m, only: FILTERSHAPES
-  use PointingGrid_m, only: POINTINGGRIDS
-
-  USE Load_sps_data_m, ONLY: LOAD_SPS_DATA, Grids_T, destroygrids_t
-
-  use MatrixModule_1, only: MATRIX_T
-  use Trace_M, only: Trace_begin, Trace_end
-  use Molecules, only: L_EXTINCTION, spec_tags
-  use MLSSignals_m, only: SIGNAL_T, MATCHSIGNAL, ARESIGNALSSUPERSET, DUMP, &
-                        & GetNameOfSignal
-  use String_table, only: GET_STRING, DISPLAY_STRING
-  use SpectroscopyCatalog_m, only: CATALOG_T, LINE_T, LINES, CATALOG
-  use INTRINSIC, only: L_TEMPERATURE, L_RADIANCE, L_PHITAN, L_PTAN, &
-    & L_ELEVOFFSET, LIT_INDICES, L_ISOTOPERATIO, L_VMR, &
-    & L_ORBITINCLINATION, L_SPACERADIANCE, L_EARTHREFL, L_LOSVEL, &
-    & L_SCGEOCALT, L_SIDEBANDRATIO, L_NONE, L_CHANNEL, L_REFGPH
-  use Units, only: Deg2Rad
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate,&
-    & MLSMSG_Error, MLSMSG_Warning
-  USE MLSNumerics, ONLY: HUNT, INTERPOLATEVALUES
-  use Toggles, only: Emit, Gen, Levels, Switches, Toggle
-  use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use Output_m, only: OUTPUT
-  use ManipulateVectorQuantities, only: findinstancewindow
-  use Trace_M, only: Trace_begin, Trace_end
-  USE Make_Z_Grid_M, only: MAKE_Z_GRID
-  USE Geometry, only: earthrada,earthradb
-
-  use Dump_0, only: DUMP
-
-  use MatrixModule_0, only: M_ABSENT, M_BANDED, M_FULL
-  use MatrixModule_1, only: CREATEBLOCK, FINDBLOCK, MATRIX_T
-
   ! This module contains the `full' forward model.
 
   implicit none
@@ -80,12 +16,77 @@ module FullForwardModel_m
   character (len=*), parameter, private :: ModuleName= &
     & "$RCSfile$"
 !-----------------------------------------------------------------------
-CONTAINS
+contains
+
 ! ================================ FullForwardModel routine ======
 
 ! -----------------------------------------------  ForwardModel  -----
  Subroutine FullForwardModel ( FwdModelConf, FwdModelIn, FwdModelExtra, &
                             &  FwdModelOut, oldIfm, FmStat, Jacobian )
+
+    use GLNP, only: NG, GX
+    use MLSCommon, only: I4, R4, R8, RP, IP, FINDFIRST
+    use MLSFiles, only: get_free_lun
+    use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT, ALLOCATEONESLABS, &
+                                &  DESTROYCOMPLETESLABS
+    use COMP_ETA_DOCALC_NO_FRQ_M, only: comp_eta_docalc_no_frq
+    use COMP_SPS_PATH_FRQ_M, only: comp_sps_path_frq
+    use EVAL_SPECT_PATH_M, only: EVAL_SPECT_PATH
+    use REFRACTION_M, only: REFRACTIVE_INDEX, COMP_REFCOR, PATH_DS_DH
+    use TWO_D_HYDROSTATIC_M, only: two_d_hydrostatic
+    use METRICS_M
+    use GET_CHI_ANGLES_M, only: GET_CHI_ANGLES
+    use GET_CHI_OUT_M, only: GET_CHI_OUT
+    use GET_BETA_PATH_M, only: GET_BETA_PATH, beta_group_T
+    use RAD_TRAN_M, only: PATH_CONTRIB, RAD_TRAN, DRAD_TRAN_DF,DRAD_TRAN_DT, &
+                         &  DRAD_TRAN_DX
+    use SLABS_SW_M, only: GET_GL_SLABS_ARRAYS
+    use FREQ_AVG_M, only: FREQ_AVG
+    use CONVOLVE_ALL_M, only: CONVOLVE_ALL
+    use NO_CONV_AT_ALL_M, only: NO_CONV_AT_ALL
+    use D_LINTRP_M, only: LINTRP
+    use D_HUNT_M, only: hunt_zvi => HUNT
+
+    use VectorsModule, only: VECTOR_T, VECTORVALUE_T, VALIDATEVECTORQUANTITY, &
+                         &   GETVECTORQUANTITYBYTYPE, &
+                         &   M_FullDerivatives
+
+    use ForwardModelConfig, only: FORWARDMODELCONFIG_T
+    use ForwardModelIntermediate, only: FORWARDMODELINTERMEDIATE_T, &
+                                    &   FORWARDMODELSTATUS_T
+    use AntennaPatterns_m, only: ANTENNAPATTERNS
+    use FilterShapes_m, only: FILTERSHAPES
+    use PointingGrid_m, only: POINTINGGRIDS
+
+    use Load_sps_data_m, ONLY: LOAD_SPS_DATA, Grids_T, destroygrids_t
+
+    use MatrixModule_1, only: MATRIX_T
+    use Trace_M, only: Trace_begin, Trace_end
+    use Molecules, only: L_EXTINCTION, spec_tags
+    use MLSSignals_m, only: SIGNAL_T, MATCHSIGNAL, ARESIGNALSSUPERSET, DUMP, &
+                          & GetNameOfSignal
+    use String_table, only: GET_STRING, DISPLAY_STRING
+    use SpectroscopyCatalog_m, only: CATALOG_T, LINE_T, LINES, CATALOG
+    use INTRINSIC, only: L_TEMPERATURE, L_RADIANCE, L_PHITAN, L_PTAN, &
+      & L_ELEVOFFSET, LIT_INDICES, L_ISOTOPERATIO, L_VMR, &
+      & L_ORBITINCLINATION, L_SPACERADIANCE, L_EARTHREFL, L_LOSVEL, &
+      & L_SCGEOCALT, L_SIDEBANDRATIO, L_NONE, L_CHANNEL, L_REFGPH
+    use Units, only: Deg2Rad
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate,&
+      & MLSMSG_Error, MLSMSG_Warning
+    use MLSNumerics, ONLY: HUNT, INTERPOLATEVALUES
+    use Toggles, only: Emit, Gen, Levels, Switches, Toggle
+    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use Output_m, only: OUTPUT
+    use ManipulateVectorQuantities, only: findinstancewindow
+    use Trace_M, only: Trace_begin, Trace_end
+    use Make_Z_Grid_M, only: MAKE_Z_GRID
+    use Geometry, only: earthrada,earthradb
+
+    use Dump_0, only: DUMP
+
+    use MatrixModule_0, only: M_ABSENT, M_BANDED, M_FULL
+    use MatrixModule_1, only: CREATEBLOCK, FINDBLOCK, MATRIX_T
   ! This is the full radiative transfer forward model, the workhorse
   ! code
     type(forwardModelConfig_T), intent(inout) :: fwdModelConf
@@ -2492,6 +2493,9 @@ CONTAINS
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.80  2002/08/02 00:12:07  bill
+! just testing
+!
 ! Revision 2.79  2002/07/31 23:27:54  bill
 ! added feature to user supply grid points to the psig and tangent grids
 !

@@ -2,23 +2,9 @@
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module NO_CONV_AT_ALL_M
-  use MLSCommon, only: I4, R4, R8
-  use L2PC_PFA_STRUCTURES, only: K_MATRIX_INFO
-  USE MLSNumerics, ONLY: INTERPOLATEVALUES
-  use dump_0,only:dump
-  use VectorsModule, only: Vector_T, VectorValue_T, GETVECTORQUANTITYBYTYPE
-  use ForwardModelConfig, only: ForwardModelConfig_T
-  use Intrinsic, only: L_VMR
-  use String_Table, only: GET_STRING
-  use MatrixModule_0, only: M_ABSENT, M_BANDED, M_FULL, DUMP
-  use MatrixModule_1, only: CREATEBLOCK, FINDBLOCK, MATRIX_T, DUMP
-  use Molecules, only: spec_tags, L_EXTINCTION
-  use MLSMessageModule, only: MLSMSG_Error, MLSMessage
-  USE Load_sps_data_m, only: Grids_T
 
   implicit NONE
   private
-
   public :: NO_CONV_AT_ALL
 
 !---------------------------- RCS Ident Info -------------------------------
@@ -34,13 +20,27 @@ CONTAINS
   ! convolution grid to the users specified points. This module uses
   ! cubic spline interpolation to do the job.
 
-  Subroutine no_conv_at_all ( ForwardModelConfig, ForwardModelIn, maf, &
+  Subroutine no_conv_at_all ( FwmConf, ForwardModelIn, maf, &
            & Channel, WindowStart, WindowFinish, Temp, Ptan, Radiance, &
            & t_deriv_flag,ptg_angles,chi_out,dhdz_out,dx_dh_out,Grids_f,&
            & I_raw,sbRatio,mol_cat_indx, rowFlags, Jacobian, di_dt, di_df, &
            & ptan_Der )
 
-    Type (ForwardModelConfig_T) :: FORWARDMODELCONFIG
+    use MLSCommon, only: I4, R4, R8
+    use L2PC_PFA_STRUCTURES, only: K_MATRIX_INFO
+    use MLSNumerics, ONLY: INTERPOLATEVALUES
+    use dump_0,only:dump
+    use VectorsModule, only: Vector_T, VectorValue_T, GETVECTORQUANTITYBYTYPE
+    use ForwardModelConfig, only: ForwardModelConfig_T
+    use Intrinsic, only: L_VMR
+    use String_Table, only: GET_STRING
+    use MatrixModule_0, only: M_ABSENT, M_BANDED, M_FULL, DUMP
+    use MatrixModule_1, only: CREATEBLOCK, FINDBLOCK, MATRIX_T, DUMP
+    use Molecules, only: spec_tags, L_EXTINCTION
+    use MLSMessageModule, only: MLSMSG_Error, MLSMessage
+    use Load_sps_data_m, only: Grids_T
+
+    Type (ForwardModelConfig_T) :: FWMCONF
     Type (Vector_T), intent(in) :: FORWARDMODELIN
 
     Integer, INTENT(IN) :: maf
@@ -151,9 +151,9 @@ CONTAINS
 
     if ( .not. PRESENT(Jacobian) ) Return
 
-    if ( .not. ANY((/forwardModelConfig%temp_der, &
-                   & forwardModelConfig%atmos_der, &
-                   & forwardModelConfig%spect_der/)) ) Return
+    if ( .not. ANY((/fwmConf%temp_der, &
+                   & fwmConf%atmos_der, &
+                   & fwmConf%spect_der/)) ) Return
 
     ! Now transfer the other fwd_mdl derivatives to the output pointing
     ! values
@@ -162,7 +162,7 @@ CONTAINS
 
     ! check to determine if derivative is desired for this parameter
 
-    if ( forwardModelConfig%temp_der ) then
+    if ( fwmConf%temp_der ) then
 
     ! Derivatives needed continue to process
 
@@ -204,7 +204,7 @@ CONTAINS
 
     end if
 
-    if ( forwardModelConfig%atmos_der ) then
+    if ( fwmConf%atmos_der ) then
 
       ! ****************** atmospheric derivatives ******************
 
@@ -214,7 +214,7 @@ CONTAINS
       do is = 1, no_mol
 
         jz = mol_cat_indx(is)
-        l = forwardModelConfig%molecules(jz)
+        l = fwmConf%molecules(jz)
         if ( l == l_extinction ) then
           f => GetVectorQuantityByType(forwardModelIn, &
                 & quantityType=l_extinction,radiometer = &
@@ -274,6 +274,9 @@ CONTAINS
 
 END module NO_CONV_AT_ALL_M
 ! $Log$
+! Revision 2.11  2002/07/29 23:16:32  bill
+! got rid of debugging write
+!
 ! Revision 2.10  2002/07/29 21:42:02  bill
 ! no changes, just debugging
 !

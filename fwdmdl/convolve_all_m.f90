@@ -1,19 +1,9 @@
 MODULE convolve_all_m
 
-  USE MLSCommon, ONLY: I4, r4, R8, rp
-  use intrinsic, only: L_VMR
-  use Molecules, only: L_EXTINCTION
-  USE Allocate_Deallocate, only: allocate_test, deallocate_test
-  USE ForwardModelConfig, only: ForwardModelConfig_T
-  use FOV_CONVOLVE_M, only: FOV_CONVOLVE
-  USE VectorsModule, only: Vector_T, VectorValue_T, GetVectorQuantityByType
-  USE AntennaPatterns_m, only: AntennaPattern_T
-  USE MLSMessageModule, only: MLSMessage, MLSMSG_Error
-  USE MatrixModule_0, only: M_ABSENT, M_BANDED, M_FULL
-  USE MatrixModule_1, only: CREATEBLOCK, FINDBLOCK, MATRIX_T
-  USE Load_sps_data_m, only: Grids_T
+  implicit none
+  private
+  public :: CONVOLVE_ALL
 
-  IMPLICIT none
 !---------------------------- RCS Ident Info -------------------------------
   CHARACTER (LEN=256) :: Id = &
      "$Id$"
@@ -29,6 +19,19 @@ MODULE convolve_all_m
            & rad_in,chi_out,dhdz_out,dx_dh_out,sbRatio,AntennaPattern,  &
            & t_deriv_flag,Grids_f,Jacobian,rowFlags,req,rsc,earth_frac, &
            & surf_angle,di_dt,dx_dt,d2x_dxdt,dxdt_tan,dxdt_surface,di_df,ptan_Der)
+
+    use MLSCommon, ONLY: I4, r4, R8, rp
+    use intrinsic, only: L_VMR
+    use Molecules, only: L_EXTINCTION
+    use Allocate_Deallocate, only: allocate_test, deallocate_test
+    use ForwardModelConfig, only: ForwardModelConfig_T
+    use FOV_CONVOLVE_M, only: FOV_CONVOLVE
+    use VectorsModule, only: Vector_T, VectorValue_T, GetVectorQuantityByType
+    use AntennaPatterns_m, only: AntennaPattern_T
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MatrixModule_0, only: M_ABSENT, M_BANDED, M_FULL
+    use MatrixModule_1, only: CREATEBLOCK, FINDBLOCK, MATRIX_T
+    use Load_sps_data_m, only: Grids_T
 !
 ! inputs
 !
@@ -326,6 +329,9 @@ MODULE convolve_all_m
 
 END MODULE convolve_all_m
 ! $Log$
+! Revision 2.17  2002/07/23 22:26:38  livesey
+! Added ptan_der handling
+!
 ! Revision 2.16  2002/07/16 08:47:11  mjf
 ! Nullified temp_dxdt_tan along with drad_dt_out, etc.
 !
