@@ -7,41 +7,12 @@ module Open_Init
   ! Opens and closes several files
   ! Creates and destroys the L1BInfo database
 
-  use global_settings, only: MAXNUML1BRADIDS, ILLEGALL1BRADID
-  use Hdf, only: DFACC_READ   ! , SFSTART, SFEND
-  use L1BData, only: ReadL1BData, L1BData_T, &
-    & DeallocateL1BData, Dump
-  use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: FileNameLen, L1BInfo_T, TAI93_Range_T
-  use MLSFiles, only: mls_sfstart, mls_sfend
-  use MLSL2Options, only: PUNISH_FOR_INVALID_PCF, PUNISH_FOR_NO_L1BRAD, &
-  &                        PUNISH_FOR_NO_L1BOA, PENALTY_FOR_NO_METADATA, &
-  &                        PCF, CREATEMETADATA
-  use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
   use MLSMessageModule, only: MLSMessage, MLSMSG_Warning, &
     &                         MLSMSG_Error!, MLSMSG_FileOpen, MLSMSG_Info
-  use MLSPCF2, only: MLSPCF_L1B_OA_START, MLSPCF_L1B_RAD_END, &
-    &                MLSPCF_L1B_RAD_START, &
-    &                mlspcf_l2_param_InputVersion, &
-    &                mlspcf_l2_param_PGEVersion, &
-    &                mlspcf_l2_param_Cycle, &
-    &                mlspcf_l2_param_CCSDSStartId, &
-    &                mlspcf_l2_param_CCSDSEndId, &
-    &                mlspcf_l2_param_spec_keys, &
-    &                mlspcf_l2_param_spec_hash, &
-    &                mlspcf_l2_param_switches, &
-    &                mlspcf_pcf_start
-  use MLSStrings, only: LowerCase
   use Output_m, only: BLANKS, Output
-  use PCFHdr, only: CreatePCFAnnotation
-  use SDPToolkit, only: Pgs_pc_getFileSize, pgs_td_utctotai,&
-    &    pgs_pc_getconfigdata, Pgs_pc_getReference, PGS_S_SUCCESS, &
-    &    PGSTD_E_NO_LEAP_SECS
-  use Time_M, only: Time_Now
   use Toggles, only: Gen, Levels, Switches, Toggle
   use Trace_M, only: Trace_begin, Trace_end
-  use TREE, only: DUMP_TREE_NODE, SOURCE_REF
-  use WriteMetadata, only: PCFData_T, MCFCASESENSITIVE
 
   implicit none
 
@@ -77,6 +48,10 @@ contains ! =====     Public Procedures     =============================
 
   ! ---------------------------------------------  DestroyL1BInfo  -----
   subroutine DestroyL1BInfo ( L1BInfo )
+
+    use Global_Settings, only: ILLEGALL1BRADID
+    use MLSFiles, only: MLS_sfend
+
     type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
     integer :: STATUS ! from deallocate
     integer :: id
@@ -84,15 +59,15 @@ contains ! =====     Public Procedures     =============================
     if ( toggle(gen) ) call trace_begin ( "DESTROYL1BInfo" )
 
     if ( associated(l1bInfo%L1BRADIDs) ) then
-      do id=1, SIZE(l1bInfo%L1BRADIDs)
+      do id = 1, SIZE(l1bInfo%L1BRADIDs)
          if(l1bInfo%L1BRADIDs(id) /= ILLEGALL1BRADID) then
   ! ((( This will have to change if we wish to convert l1 files to hdf5
   !          Maybe put another wrapper in MSLFiles
   !      STATUS = sfend(l1bInfo%L1BRADIDs(id))
          STATUS = mls_sfend(l1bInfo%L1BRADIDs(id), hdfVersion=LEVEL1_HDFVERSION)
 
-         endif
-      enddo
+         end if
+      end do
       deallocate( l1bInfo%L1BRADIDs, l1bInfo%L1BRADFileNames, stat=status )
       if ( status /= 0 ) then
         call announce_error ( 0, 'Error deallocating l1bInfo' )
@@ -104,11 +79,11 @@ contains ! =====     Public Procedures     =============================
   !          Maybe put another wrapper in MSLFiles
   !  STATUS = sfend(l1bInfo%L1BOAID)
      STATUS = mls_sfend(l1bInfo%L1BOAID, hdfVersion=LEVEL1_HDFVERSION)
-    endif
+    end if
 
     if ( error /= 0 ) &
-      & call MLSMessage(MLSMSG_Error,ModuleName, &
-        & 'Problem with DestroyL1BInfo')
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Problem with DestroyL1BInfo' )
 
     if ( toggle(gen) ) then
       call trace_end ( "DESTROYL1BInfo" )
@@ -123,6 +98,32 @@ contains ! =====     Public Procedures     =============================
     ! Opens L1OA file
     ! Opens and reads the signal nomenclature file
     ! Gets the start and end times from the PCF
+
+    use Global_Settings, only: MAXNUML1BRADIDS, ILLEGALL1BRADID
+    use Hdf, only: DFACC_READ   ! , SFSTART, SFEND
+    use MLSFiles, only: MLS_sfstart
+    use MLSL2Options, only: PUNISH_FOR_INVALID_PCF, PUNISH_FOR_NO_L1BRAD, &
+      &                      PUNISH_FOR_NO_L1BOA, PENALTY_FOR_NO_METADATA, &
+      &                      PCF, CREATEMETADATA
+    use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
+    use MLSPCF2, only: MLSPCF_L1B_OA_START, MLSPCF_L1B_RAD_END, &
+      &                MLSPCF_L1B_RAD_START, &
+      &                MLSPCF_L2_param_InputVersion, &
+      &                MLSPCF_L2_param_PGEVersion, &
+      &                MLSPCF_L2_param_Cycle, &
+      &                MLSPCF_L2_param_CCSDSStartId, &
+      &                MLSPCF_L2_param_CCSDSEndId, &
+      &                MLSPCF_L2_param_spec_keys, &
+      &                MLSPCF_L2_param_spec_hash, &
+      &                MLSPCF_L2_param_switches, &
+      &                MLSPCF_PCF_start
+    use MLSStrings, only: LowerCase
+    use PCFHdr, only: CreatePCFAnnotation
+    use SDPToolkit, only: Pgs_pc_getFileSize, pgs_td_utctotai,&
+      &    pgs_pc_getconfigdata, Pgs_pc_getReference, PGS_S_SUCCESS, &
+      &    PGSTD_E_NO_LEAP_SECS
+    use Time_M, only: Time_Now
+    use WriteMetadata, only: PCFData_T, MCFCASESENSITIVE
 
     ! Arguments
 
@@ -176,7 +177,7 @@ contains ! =====     Public Procedures     =============================
     else
      version = 1
      Status = Pgs_pc_getFileSize(mlspcf_pcf_start, version, size)
-    endif
+    end if
    
     if ( Status == PGS_S_SUCCESS ) then
       call createPCFAnnotation(mlspcf_pcf_start, l2pcf%anText)
@@ -207,13 +208,13 @@ contains ! =====     Public Procedures     =============================
          & advance='yes')
        call output('====  (These must be supplied through the l2cf) ======', &
          & advance='yes')
-     endif
+     end if
      if ( toggle(gen) ) then
        call trace_end ( "OpenAndInit" )
      end if
      if ( timing ) call sayTime
      return
-   endif
+   end if
 
     ifl1 = 0
 
@@ -238,7 +239,7 @@ contains ! =====     Public Procedures     =============================
         l1bInfo%L1BRADIDs = ILLEGALL1BRADID
         if ( status /= 0 ) &
           & call announce_error ( 0, 'Allocation failed for L1BRADIDs' )
-      endif
+      end if
   ! ((( This will have to change if we wish to convert l1 files to hdf5
   !          Maybe put another wrapper in MSLFiles
   !    sd_id = sfstart(L1physicalFilename, DFACC_READ)
@@ -257,7 +258,7 @@ contains ! =====     Public Procedures     =============================
           if(index(switches, 'pro') /= 0) then  
             call announce_success(L1physicalFilename, 'l1brad', &                   
             & hdfVersion=LEVEL1_HDFVERSION)                    
-          endif
+          end if
         end if
       end if
     end do ! L1FileHandle = mlspcf_l1b_rad_start, mlspcf_l1b_rad_end
@@ -290,7 +291,7 @@ contains ! =====     Public Procedures     =============================
         if(index(switches, 'pro') /= 0) then  
           call announce_success(L1physicalFilename, 'l1brad', &                     
           & hdfVersion=LEVEL1_HDFVERSION)                    
-        endif
+        end if
       end if
 
     else if ( PUNISH_FOR_NO_L1BOA ) then
@@ -406,7 +407,7 @@ contains ! =====     Public Procedures     =============================
       l2pcf%logGranID = name(indx+1:)
     else
       l2pcf%logGranID = '(not found)'
-    endif
+    end if
  
     if ( error /= 0 ) &
       & call MLSMessage(MLSMSG_Error,ModuleName, &
@@ -420,7 +421,7 @@ contains ! =====     Public Procedures     =============================
      Details = -1
    else
      Details = -2
-   endif
+   end if
    if ( levels(gen) > 0 .or. index(switches,'pcf') /= 0 ) &
         & call Dump_open_init ( ifl1, l1binfo, l2pcf, &
           & CCSDSEndTime, CCSDSStartTime, processingrange, details )
@@ -437,7 +438,7 @@ contains ! =====     Public Procedures     =============================
         call output ( "Total time = " )
         call output ( dble(t2), advance = 'no' )
         call blanks ( 4, advance = 'no' )
-      endif
+      end if
       call output ( "Timing for open_init = " )
       call output ( dble(t2 - t1), advance = 'yes' )
       timing = .false.
@@ -460,7 +461,7 @@ contains ! =====     Public Procedures     =============================
       call output ( hdfVersion, advance='yes')
     else
       call output ( ' ', advance='yes')
-    endif
+    end if
     call blanks(15)
     call output ( 'name : ' )
     call blanks(8)
@@ -479,6 +480,9 @@ contains ! =====     Public Procedures     =============================
     ! cycle number
     ! logfile name
   
+    use Global_Settings, only: ILLEGALL1BRADID
+    use L1BData, only: ReadL1BData, L1BData_T, DeallocateL1BData, Dump
+    use WriteMetadata, only: PCFData_T
 
     ! Arguments
     integer, intent(in) :: num_l1b_files
@@ -494,7 +498,7 @@ contains ! =====     Public Procedures     =============================
     integer :: i, NoMAFs, IERR
     character (len=*), parameter :: time_format='(1pD18.12)'
     character (len=*), parameter :: l1b_quant_name='R1A:118.B1F:PT.S0.FB25-1'
-    type (L1BData_T) :: l1bData   ! L1B dataset
+    type (L1BData_T) :: l1bDataSet   ! L1B dataset
 
     ! Begin
     call output ( '============ Open Initialize ============', advance='yes' )
@@ -511,19 +515,19 @@ contains ! =====     Public Procedures     =============================
          call output ( 'name:   ' )                                       
     	   call output ( TRIM(l1bInfo%L1BRADFileNames(i)), advance='yes' )
          if ( Details > -2 ) then
-           call ReadL1BData ( l1bInfo%L1BRADIDs(i), l1b_quant_name, L1bData, &
+           call ReadL1BData ( l1bInfo%L1BRADIDs(i), l1b_quant_name, L1bDataSet, &
             & NoMAFs, IERR, NeverFail=.true. )
            if ( IERR == 0 ) then
-             call Dump(l1bData, Details )
-             call DeallocateL1BData ( l1bData )
+             call Dump ( l1bDataSet, Details )
+             call DeallocateL1BData ( l1bDataSet )
            else
              call output ( 'Error number  ' )
              call output ( IERR )
              call output ( ' while reading quantity named  ' )
              call output ( trim(l1b_quant_name) )
-           endif
-         endif
-        endif
+           end if
+         end if
+        end if
       end do
 
     else
@@ -533,7 +537,7 @@ contains ! =====     Public Procedures     =============================
    else
     call output ( '(null database)', advance='yes' )
 
-   endif
+   end if
 
     call output ( 'L1OA file:', advance='yes' )
   
@@ -584,6 +588,9 @@ contains ! =====     Public Procedures     =============================
   ! ---------------------------------------------  Announce_Error  -----
   subroutine Announce_Error ( Lcf_where, Full_message, Use_toolkit, &
     & Error_number )
+
+    use LEXER_CORE, only: PRINT_SOURCE
+    use TREE, only: DUMP_TREE_NODE, SOURCE_REF
   
     ! Arguments
 
@@ -644,6 +651,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.62  2002/08/21 02:23:39  vsnyder
+! Move USE statements from module scope to procedure scope
+!
 ! Revision 2.61  2002/01/26 00:09:14  pwagner
 ! Convert hdf routines to mlsfiles equivalents
 !
