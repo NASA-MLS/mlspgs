@@ -369,7 +369,7 @@ contains ! =====     Public Procedures     =============================
             end if
 
           else
-            call announce_error ( ROOT, &
+            call announce_error ( son, &
               &  "Error finding l2gp file matching:  "//file_base, returnStatus)
           end if
 
@@ -442,7 +442,7 @@ contains ! =====     Public Procedures     =============================
             !        returnStatus = sfend(sdfid)
 
             if ( returnStatus /= PGS_S_SUCCESS ) then
-              call announce_error ( root, &
+              call announce_error ( son, &
                 &  "Error closing l2aux file:  "//l2auxPhysicalFilename, returnStatus)
             else if (index(switches, 'pro') /= 0) then
               call announce_success(l2auxPhysicalFilename, 'l2aux', &
@@ -484,7 +484,7 @@ contains ! =====     Public Procedures     =============================
             end if
 
           else
-            call announce_error ( root, &
+            call announce_error ( son, &
               &  "Error finding l2aux file matching:  "//file_base, returnStatus)
           end if
 
@@ -656,14 +656,32 @@ contains ! =====     Public Procedures     =============================
             end if
 
           else
-            call announce_error ( ROOT, &
+            call announce_error ( son, &
               &  "Error finding l2gp file matching:  "//file_base, returnStatus)
           end if
 
 
         case default
-          call announce_error ( ROOT, &
+          if ( any(output_type /= (/ l_l2gp, l_l2dgg, l_l2aux, l_l2pc /)) ) then
+            call announce_error ( son, &
             &  "Error--unknown output type: parser should have caught this")
+          else
+            call output('Lahey did weird thing again: ', advance='yes')
+          endif
+            call output('l2gp type number: ', advance='no')
+            call output(l_l2gp, advance='yes')
+
+            call output('l2aux type number: ', advance='no')
+            call output(l_l2aux, advance='yes')
+
+            call output('l2dgg type number: ', advance='no')
+            call output(l_l2dgg, advance='yes')
+
+            call output('output type number: ', advance='no')
+            call output(output_type, advance='yes')
+
+            call output('file_base: ', advance='no')
+            call output(trim(file_base), advance='yes')
 
         end select
 
@@ -676,7 +694,7 @@ contains ! =====     Public Procedures     =============================
         end if
 
       case default
-        call announce_error ( ROOT, &
+        call announce_error ( spec_no, &
           &  "Error--unknown spec_no: parser should have caught this")
 
       end select
@@ -830,8 +848,11 @@ contains ! =====     Public Procedures     =============================
               & filetype=l_swath  )
             error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
           case default
-            call announce_error ( ROOT, &
-              &  "Error--unknown output type: parser should have caught this")
+            ! call announce_error ( ROOT, &
+            !  &  "Error--unknown output type: parser should have caught this")
+            call MLSMessage(MLSMSG_Warning, ModuleName,&
+              & "Cannot write metadata to unknown DirectWrite output type " &
+              & // trim(file_base))
 
           end select
         enddo
@@ -1086,6 +1107,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.82  2003/08/15 20:43:10  pwagner
+! Downgraded to warning if directwrite output_type unkown, e.g. l_l2fwm
+!
 ! Revision 2.81  2003/08/08 23:06:39  livesey
 ! Added the dontPack option on outputing l2pc files.
 !
