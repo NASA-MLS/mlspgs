@@ -1247,8 +1247,9 @@ contains ! =====     Public Procedures     =============================
     swid = mls_swcreate(L2FileHandle, TRIM(name), &
       & filename=filename, hdfVersion=HDFVERSION_4)
     if ( swid == -1 ) then
-       msr = 'Failed to create swath ' // TRIM(name) &
-        & // ' (maybe has the same name as another swath in this file?)'
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Failed to create swath ' // trim(name) &
+        & // ' (maybe has the same name as another swath in this file?)' )
     end if
 
     ! Define dimensions
@@ -1372,6 +1373,8 @@ contains ! =====     Public Procedures     =============================
             & 'Failed to detach from swath interface after definition.' )
     end if
 
+    print*,'Detached from swath sucessfully'
+
     !--------------------------------------
   end subroutine OutputL2GP_createFile_hdf4
   !--------------------------------------
@@ -1379,6 +1382,7 @@ contains ! =====     Public Procedures     =============================
   !-----------------------------------------  OutputL2GP_writeGeo_hdf4  -----
   subroutine OutputL2GP_writeGeo_hdf4 (l2gp, l2FileHandle, swathName, offset)
   use MLSHDFEOS, only: mls_swwrfld
+  use dump_0, only: DUMP
 
     ! Brief description of subroutine
     ! This subroutine writes the geolocation fields to an L2GP output file.
@@ -1400,7 +1404,7 @@ contains ! =====     Public Procedures     =============================
     character (len=132) :: name ! Either swathName or l2gp%name
 
     integer :: status, swid,myOffset
-    integer :: start(2), stride(2), edge(2)
+    integer :: start(1), stride(1), edge(1)
 
     ! Begin
     if (present(offset)) then
@@ -1416,7 +1420,8 @@ contains ! =====     Public Procedures     =============================
     end if
 
     print *, 'Trying to swattach to write'
-    swid = mls_swattach (l2FileHandle, name, hdfVersion=HDFVERSION_4)
+    print *, l2FileHandle, trim(name)
+    swid = mls_swattach (l2FileHandle, trim(name), hdfVersion=HDFVERSION_4)
 
     ! Write data to the fields
 
@@ -1429,6 +1434,7 @@ contains ! =====     Public Procedures     =============================
     print *, 'stride', stride
     print *, 'edge', edge
     print *, 'shape(Latitude)', shape(l2gp%latitude)
+    call dump ( l2gp%latitude, 'latitude' )
 
     status = mls_swwrfld(swid, 'Latitude', start, stride, edge, &
          real(l2gp%latitude), hdfVersion=HDFVERSION_4)
@@ -2722,6 +2728,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.71  2003/07/09 21:49:06  pwagner
+! Wont try swattaching just to see if swath already there
+!
 ! Revision 2.70  2003/07/08 00:43:17  livesey
 ! Bug fix in zero length chunk test
 !
