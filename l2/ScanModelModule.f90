@@ -21,7 +21,7 @@ module ScanModelModule          ! Scan model and associated calculations
   use ForwardModelIntermediate, only: ForwardModelIntermediate_T, &
     & ForwardModelStatus_T
   use Geometry, only: EARTHRADA, EARTHRADB, GEODTOGEOCLAT, LN10, PI
-  use Init_Tables_Module, only: L_HEIGHT, L_REFGPH, L_TEMPERATURE, L_ZETA
+  use Init_Tables_Module, only: L_HEIGHT, L_REFGPH, L_ZETA
   use intrinsic, only: L_HEIGHTOFFSET, L_NONE, L_PTAN, L_SCANRESIDUAL, &
     & L_TEMPERATURE, L_TNGTGEOCALT, L_VMR
   use ManipulateVectorQuantities, only: FINDCLOSESTINSTANCES
@@ -1166,6 +1166,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.23  2001/06/19 22:43:23  pwagner
+! Eliminated l_temperature from things got from init_tables_module
+!
 ! Revision 2.22  2001/06/04 22:42:36  livesey
 ! Gets belowRef from intermediate
 !
