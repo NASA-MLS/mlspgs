@@ -71,12 +71,14 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_COPY                = f_coordinate + 1
   integer, parameter :: F_COVARIANCE          = f_copy + 1
   integer, parameter :: F_CRITERIA            = f_covariance + 1
-  integer, parameter :: F_DIAGONAL            = f_criteria + 1
+  integer, parameter :: F_DECAY               = f_criteria + 1
+  integer, parameter :: F_DIAGONAL            = f_decay + 1
   integer, parameter :: F_DIAGONALOUT         = f_diagonal + 1
   integer, parameter :: F_DO_CONV             = f_diagonalOut + 1
   integer, parameter :: F_DO_FREQ_AVG         = f_do_conv + 1
   integer, parameter :: F_EXPLICITVALUES      = f_do_freq_avg + 1
-  integer, parameter :: F_FIELD               = f_explicitValues + 1
+  integer, parameter :: F_EXTRA               = f_explicitValues + 1
+  integer, parameter :: F_FIELD               = f_extra + 1
   integer, parameter :: F_FILE                = f_field + 1
   integer, parameter :: F_FILTERSHAPES        = f_file + 1
   integer, parameter :: F_FORMULA             = f_filtershapes + 1
@@ -142,7 +144,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_SPREAD              = f_spect_der + 1
   integer, parameter :: F_STATE               = f_spread + 1
   integer, parameter :: F_STOP                = f_state + 1
-  integer, parameter :: F_SWATH               = f_stop + 1
+  integer, parameter :: F_SUPERDIAGONAL       = f_stop + 1
+  integer, parameter :: F_SWATH               = f_superDiagonal + 1
   integer, parameter :: F_TANGENTGRID         = f_swath + 1
   integer, parameter :: F_TEMP_DER            = f_tangentGrid + 1
   integer, parameter :: F_TEMPERATUREQUANTITY = f_temp_der + 1
@@ -226,7 +229,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_CREATE             = s_apriori + 1
   integer, parameter :: S_DUMPBLOCKS         = s_create + 1
   integer, parameter :: S_FILL               = s_dumpblocks + 1
-  integer, parameter :: S_FORGE              = s_fill + 1
+  integer, parameter :: S_FILLCOVARIANCE     = s_fill + 1
+  integer, parameter :: S_FORGE              = s_fillCovariance + 1
   integer, parameter :: S_FORWARDMODEL       = s_forge + 1
   integer, parameter :: S_FORWARDMODELGLOBAL = s_forwardModel + 1
   integer, parameter :: S_GRIDDED            = s_forwardModelGlobal + 1
@@ -394,11 +398,13 @@ contains ! =====     Public procedures     =============================
     field_indices(f_copy) =                add_ident ( 'copy' )
     field_indices(f_covariance) =          add_ident ( 'covariance' )
     field_indices(f_criteria) =            add_ident ( 'criteria' )
+    field_indices(f_decay) =               add_ident ( 'decay' )
     field_indices(f_diagonal) =            add_ident ( 'diagonal' )
     field_indices(f_diagonalOut) =         add_ident ( 'diagonalOut' )
     field_indices(f_do_conv) =             add_ident ( 'do_conv' )
     field_indices(f_do_freq_avg) =         add_ident ( 'do_freq_avg' )
     field_indices(f_explicitValues) =      add_ident ( 'explicitValues' )
+    field_indices(f_extra) =               add_ident ( 'extra' )
     field_indices(f_field) =               add_ident ( 'field' )
     field_indices(f_file) =                add_ident ( 'file' )
     field_indices(f_filtershapes) =        add_ident ( 'filterShapes' )
@@ -466,6 +472,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_spread) =              add_ident ( 'spread' )
     field_indices(f_state) =               add_ident ( 'state' )
     field_indices(f_stop) =                add_ident ( 'stop' )
+    field_indices(f_superDiagonal) =       add_ident ( 'superDiagonal' )
     field_indices(f_swath) =               add_ident ( 'swath' )
     field_indices(f_tangentGrid) =         add_ident ( 'tangentGrid' )
     field_indices(f_temp_der) =            add_ident ( 'temp_der' )
@@ -525,6 +532,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_create) =               add_ident ( 'create' )
     spec_indices(s_dumpblocks) =           add_ident ( 'dumpblocks' )
     spec_indices(s_fill) =                 add_ident ( 'fill' )
+    spec_indices(s_fillCovariance) =       add_ident ( 'fillCovariance' )
     spec_indices(s_forge) =                add_ident ( 'forge' )
     spec_indices(s_forwardModel) =         add_ident ( 'forwardModel' )
     spec_indices(s_forwardModelGlobal) =   add_ident ( 'forwardModelGlobal' )
@@ -723,14 +731,15 @@ contains ! =====     Public procedures     =============================
              ndp+n_spec_def, &
       begin, s+s_matrix, &  ! Must be AFTER s_vector
              begin, f+f_rows, s+s_vector, n+n_field_spec, &
-             begin, f+f_columns, s+s_vector, n+n_field_spec, &
+             begin, f+f_columns, s+s_vector, nr+n_field_spec, &
+             begin, f+f_extra, t+t_boolean, n+n_field_type, &
              begin, f+f_type, t+t_matrix, n+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_fill, &    ! Must be AFTER s_vector, s_matrix and s_climatology
              begin, f+f_quantity, s+s_vector, f+f_template, f+f_quantities, &
                     nr+n_dot, &
-             begin, f+f_matrix, s+s_matrix, n+n_field_spec, &
+!            begin, f+f_matrix, s+s_matrix, n+n_field_spec, & !??? Not in fill yet ???
              begin, f+f_method, t+t_fillmethod, nr+n_field_type, &
              begin, f+f_sourceQuantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
@@ -756,6 +765,13 @@ contains ! =====     Public procedures     =============================
              begin, f+f_maxIterations, t+t_numeric, n+n_field_type, &
              begin, f+f_explicitValues, t+t_numeric, n+n_field_type, &
              ndp+n_spec_def, &
+      begin, s+s_fillCovariance, & ! Must be AFTER s_vector and s_matrix
+             begin, f+f_matrix, s+s_matrix, nr+n_field_spec, &
+             begin, f+f_diagonal, s+s_vector, nr+n_field_spec, &
+             begin, f+f_decay, s+s_vector, n+n_field_spec, &
+             begin, f+f_superDiagonal, s+s_vector, n+n_field_spec, &
+             ndp+n_spec_def /) )
+    call make_tree ( (/ &
       begin, s+s_output, &  ! Must be AFTER s_l2aux and s_l2gp
              begin, f+f_type, t+t_outputType, nr+n_field_type, &
              begin, f+f_file, t+t_string, nr+n_field_type, &
@@ -888,8 +904,8 @@ contains ! =====     Public procedures     =============================
              s+s_time, n+n_section, &
       begin, z+z_construct, s+s_hgrid, s+s_forge, s+s_quantity, &
              s+s_snoop, s+s_time, s+s_vectortemplate, n+n_section, &
-      begin, z+z_fill, s+s_time, s+s_vector, s+s_create, &
-                       s+s_fill, s+s_matrix, s+s_snoop, n+n_section, &
+      begin, z+z_fill, s+s_create, s+s_fill, s+s_fillCovariance, s+s_matrix, &
+                       s+s_snoop, s+s_time, s+s_vector, n+n_section, &
       begin, z+z_retrieve, s+s_dumpBlocks, s+s_matrix, s+s_retrieve, &
              s+s_subset, s+s_sids, s+s_time, n+n_section, &
       begin, z+z_join, s+s_time, s+s_l2gp, s+s_l2aux, n+n_section, &
@@ -905,6 +921,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.96  2001/05/08 20:35:01  vsnyder
+! Add fillCovariance spec
+!
 ! Revision 2.95  2001/05/05 00:02:57  livesey
 ! Added stuff for numerical derivatives
 !
