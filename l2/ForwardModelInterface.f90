@@ -566,11 +566,13 @@ contains
     end do
 !
 ! *** DEBUG
+!
     ForwardModelConfig%temp_der = .true.
     ForwardModelConfig%atmos_der = .true.
-!   do j = 1, noSpecies
-!     forwardModelConfig%moleculeDerivatives(j) = .true.
-!   end do
+    do j = 1, noSpecies
+      forwardModelConfig%moleculeDerivatives(j) = .true.
+    end do
+!
 ! *** END DEBUG
 
 ! Get the max. dimension in zeta coeff. space and phi coeff. space
@@ -710,8 +712,8 @@ contains
 
     ! ---------------------------- Begin main Major Frame loop --------
 
-    do maf = 3, 3
-    !do maf = 1, noMAFs
+!   do maf = 3, 3
+    do maf = 1, noMAFs
       print*,'Doing maf:',maf
 
  ! Compute the specie function (spsfunc) and the refraction along
@@ -888,13 +890,13 @@ contains
 
           if (ForwardModelConfig%temp_der) k_temp_frq%values=0.0_r8
           Call Rad_Tran_WD(ForwardModelConfig, FwdModelExtra, FwdModelIn, &
-            &     elvar(maf),frq_i,Frq,noSpecies,z_path(k,maf), &
-            &     h_path(k,maf),t_path(k,maf),phi_path(k,maf),dHdz_path(k,maf),&
-            &     beta_path(:,frq_i),spsfunc_path(:,k),temp%template%surfs(:,1),&
-            &     temp%template%noSurfs,ref_corr(:,k),temp%template%noInstances,&
-            &     temp%template%phi(1,:)*Deg2Rad,dh_dt_path,&
-            &     k_temp_frq,k_atmos_frq,brkpt,no_ele,mid,ilo,ihi, &
-            &     t_script,tau,max_zeta_dim,max_phi_dim,ier)
+            &  elvar(maf),frq_i,Frq,noSpecies,z_path(k,maf), &
+            &  h_path(k,maf),t_path(k,maf),phi_path(k,maf),dHdz_path(k,maf),&
+            &  beta_path(:,frq_i),spsfunc_path(:,k),temp%template%surfs(:,1),&
+            &  temp%template%noSurfs,ref_corr(:,k),temp%template%noInstances,&
+            &  temp%template%phi(1,:)*Deg2Rad,dh_dt_path,&
+            &  k_temp_frq,k_atmos_frq,brkpt,no_ele,mid,ilo,ihi, &
+            &  t_script,tau,max_zeta_dim,max_phi_dim,ier)
           IF(ier /= 0) goto 99
 
         end do                          ! Frequency loop
@@ -974,9 +976,11 @@ contains
                 end do                  ! Instance loop
               end do                    ! Channel loop
             else                        ! Else not frequency averaging
+              surface = f%template%noSurfs
+              instance = f%template%noInstances
               do i = 1, noUsedChannels
-                k_atmos(i,ptg_i,:,:,specie) = &
-                       &  k_atmos_frq(specie)%values(1,:,:)
+                k_atmos(i,ptg_i,1:surface,1:instance,specie) = &
+                       &  k_atmos_frq(specie)%values(1,1:surface,1:instance)
               end do
             end if                      ! Frequency averaging or not
           end if                        ! Want derivatives for this
@@ -1045,16 +1049,15 @@ contains
         ch = usedChannels(i)
         Radiances(no_tan_hts,ch) = Radiances(no_tan_hts-1,ch)
         if(ForwardModelConfig%temp_der) then
-          k_temp(i,no_tan_hts,1:temp%template%noSurfs,1:temp%template%noInstances) = &
-            &              k_temp(i,no_tan_hts-1,1:temp%template%noSurfs,&
-            &              1:temp%template%noInstances)
+          n = temp%template%noSurfs
+          k = temp%template%noInstances
+          k_temp(i,no_tan_hts,1:n,1:k)=k_temp(i,no_tan_hts-1,1:n,1:k)
         endif
         if(ForwardModelConfig%atmos_der) then
           do m = 1, noSpecies
             f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-              & quantityType=l_vmr, molecule=forwardModelConfig%molecules(m), &
+              & quantityType=l_vmr, molecule=forwardModelConfig%molecules(m),&
               & foundInFirst=foundInFirst )
-
             if ( foundInFirst ) then
               k = f%template%noInstances
               n = f%template%noSurfs
@@ -1095,24 +1098,21 @@ contains
             &     ptan%values(:,maf), noSpecies, &
             &     ForwardModelConfig%tangentGrid%surfs,ptg_angles,&
             &     tan_temp(:,maf),dx_dt, d2x_dxdt,si,center_angle,&
-            &     Radiances(:,ch),k_temp(i,:,:,:), &
-            &     k_atmos(i,:,:,:,:), &
-            &     no_tan_hts,k_info_count,&
-            &     i_star_all(i,:),k_star_all(i,:,:,:,:),k_star_info,&
+            &     Radiances(:,ch),k_temp(i,:,:,:),k_atmos(i,:,:,:,:), &
+            &     no_tan_hts,k_info_count,i_star_all(i,:), &
+            &     k_star_all(i,:,:,:,:),k_star_info,&
             &     temp%template%noSurfs,temp%template%noInstances,&
-            &     temp%template%surfs(:,1),&
-            &     AntennaPatterns(1),ier)
+            &     temp%template%surfs(:,1),AntennaPatterns(1),ier)
 !??? Need to choose some index other than 1 for AntennaPatterns ???
           if(ier /= 0) goto 99
         else
 
           call no_conv_at_all(forwardModelConfig, fwdModelIn, &
-            & ptan%values(:,maf), noSpecies,  &
+            &     ptan%values(:,maf), noSpecies,  &
             &     ForwardModelConfig%tangentGrid%surfs, &
-            &     Radiances(:,ch),k_temp(i,:,:,:),  &
-            &     k_atmos(i,:,:,:,:), &
-            &     no_tan_hts, k_info_count,       &
-            &     i_star_all(i,:), k_star_all(i,:,:,:,:),k_star_info, &
+            &     Radiances(:,ch),k_temp(i,:,:,:),k_atmos(i,:,:,:,:), &
+            &     no_tan_hts, k_info_count, i_star_all(i,:), &
+            &     k_star_all(i,:,:,:,:),k_star_info, &
             &     temp%template%noSurfs,temp%template%noInstances, &
             &     temp%template%surfs(:,1))
 
@@ -1307,6 +1307,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.77  2001/04/10 10:15:48  zvi
+! fixing bug conneced with convolve
+!
 ! Revision 2.76  2001/04/10 02:46:16  livesey
 ! Working version, no more FMI/TFMI
 !
