@@ -144,14 +144,14 @@ DEPMAKER=2
 #if makemakedep.sh finds there is already a file named Makefile.dep
 #it will attempt to rename the older file rather than deleting it
 #
-ACT_COURTEOUS=1
+ACT_COURTEOUS=0
 #             ^  -- set this to 1 to rename older Makefile.dep, 0 deletes it
 #
 TRY_CLEANUP=1
 #           ^  -- set this to 1 to try cleaning up from a prior faulty run
 #
 PRINT_TOO_MUCH=0
-#              ^  -- set this to 1 if willing to try patience
+#              ^  -- set this to 1 if willing to try patience of users
 #
 EDIT_GB_PERL_PATH=1
 #                 ^  -- set this to 1 to change path to perl in ghostbuster.sh
@@ -424,6 +424,9 @@ then
 fi
 exit
 # $Log$
+# Revision 1.14  2001/08/14 16:05:08  pwagner
+# Added options; defaults to include_ = yes
+#
 # Revision 1.13  2001/08/10 23:48:27  pwagner
 # Cosmetic changes only
 #
