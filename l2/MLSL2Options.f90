@@ -84,12 +84,18 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
    ! on input
    integer, parameter :: DEFAULT_HDFVERSION_READ = 4
 
+   ! Whether to manually collect garbage at end of each chunk
+   logical            :: garbage_collection_by_chunk = .true. 
+
 !=============================================================================
 END MODULE MLSL2Options
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.14  2002/02/05 00:44:03  pwagner
+! Added garbage collection stuff
+!
 ! Revision 2.13  2002/01/29 23:49:38  pwagner
 ! Separate DEFAULT_HDFVERSION_(READ)(WRITE)
 !
