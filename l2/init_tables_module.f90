@@ -11,6 +11,7 @@ module INIT_TABLES_MODULE
 
   use Init_MLSSignals_m ! Everything. Init_MLSSignals, Field_First,
     ! Last_Signal_Field, Spec_First, Last_Signal_Spec, Numerous S_....
+  use Init_Spectroscopy_m ! Everything.
   use INTRINSIC ! Everything. ADD_IDENT, BEGIN, D, F, FIRST_LIT,
     ! INIT_INTRINSIC, L, L_<several>, LAST_INTRINSIC_LIT,
     ! N, NADP, ND, NDP, NP, NR, P, S, T,
@@ -18,7 +19,6 @@ module INIT_TABLES_MODULE
     ! T_STRING and Z are used here, but everything is included so that it
     ! can be gotten by USE INIT_TABLES_MODULE.
   use MOLECULES ! Everything.
-  use Init_Spectroscopy_m ! Everything.
 
   implicit NONE
   public ! This would be a MUCH LONGER list than the list of private
@@ -281,6 +281,10 @@ module INIT_TABLES_MODULE
 contains ! =====     Public procedures     =============================
 ! --------------------------------------------------  INIT_TABLES  -----
   subroutine INIT_TABLES
+
+    ! This really belongs in make_tree, but "make depends" can't see it there
+    ! (because of the "include"):
+    use TREE, only: BUILD_TREE, PUSH_PSEUDO_TERMINAL
     use TREE_TYPES, only: N_DOT, N_DT_DEF, N_FIELD_SPEC, N_FIELD_TYPE, &
                           N_NAME_DEF, N_SECTION, N_SPEC_DEF
 
@@ -816,6 +820,10 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.66  2001/04/04 18:01:46  vsnyder
+! Insert "USE TREE" because "make depends" can't see the one in "make_tree"
+! (because of the "include").
+!
 ! Revision 2.65  2001/04/04 02:13:23  vsnyder
 ! Added spectroscopy section
 !
