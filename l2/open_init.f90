@@ -166,10 +166,12 @@ contains ! =====     Public Procedures     =============================
 
    if( .not. PCF ) then
     if ( toggle(gen) ) then
-      if ( levels(gen) > 0 .or. index(switches,'ope') /= 0 ) &
-        & call dump_L1B_database &
-        & ( mlspcf_l1b_rad_end-mlspcf_l1b_rad_start+1, l1binfo, l2pcf, &
-          & CCSDSEndTime, CCSDSStartTime, processingrange )
+      if ( levels(gen) > 0 .or. index(switches,'O') /= 0 ) &
+!        & call dump_L1B_database &
+!        & ( mlspcf_l1b_rad_end-mlspcf_l1b_rad_start+1, l1binfo, l2pcf, &
+!          & CCSDSEndTime, CCSDSStartTime, processingrange )
+      call output('======== No parameters or radiances read :: no pcf ========', advance='yes')
+      call output('========   (These must supplied through the l2cf)  ========', advance='yes')
       call trace_end ( "OpenAndInit" )
     end if
     return
@@ -510,6 +512,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.51  2001/05/17 22:31:54  pwagner
+! Simpler info instead of bogus dump if no pcf
+!
 ! Revision 2.50  2001/05/17 00:27:55  pwagner
 ! Better defaults, dumps
 !
