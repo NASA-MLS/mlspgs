@@ -11,11 +11,12 @@ MODULE Construct                ! The construct module for the MLS L2 sw.
   use DUMPER, only: DUMP
   use HGrid, only: AddHGridToDatabase, CreateHGridFromMLSCFInfo, &
     & DestroyHGridDatabase, HGrid_T
-  use INIT_TABLES_MODULE, only: S_HGRID, S_QUANTITY, S_VECTORTEMPLATE, &
+  use INIT_TABLES_MODULE, only: S_HGRID, S_QUANTITY, S_TIME, S_VECTORTEMPLATE, &
     & S_VGRID
   use MLSCommon, only: L1BInfo_T, MLSChunk_T, MLSInstrumentNoModules
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
   use MLSSignalNomenclature
+  use OUTPUT_M, only: OUTPUT
   use QuantityTemplates, only: AddQuantityTemplateToDatabase, &
     & DestroyQuantityTemplateDatabase, QuantityTemplate_T
   use TOGGLES, only: GEN, LEVELS, TOGGLE
@@ -69,8 +70,11 @@ contains ! =====     Public Procedures     =============================
     integer :: NAME             ! Sub-rosa index of name
     integer :: SON              ! Son or grandson of Root
     integer :: STATUS           ! Flag
+    double precision :: T1, T2  ! for timing
+    logical :: TIMING
 
     ! Executable code
+    timing = .false.
 
     ! First we're going to setup our mifGeolocation quantityTemplates.
     ! These are just two quantity templates containing geolocation
@@ -117,6 +121,13 @@ contains ! =====     Public Procedures     =============================
       case ( s_vectortemplate )
         call decorate ( key, AddVectorTemplateToDatabase ( vectorTemplates, &
           & CreateVecTemplateFromMLSCfInfo ( name, key, quantityTemplates ) ) )
+      case ( s_time )
+        if ( timing ) then
+          call sayTime
+        else
+          call cpu_time ( t1 )
+          timing = .true.
+        end if
       case default ! Can't get here if tree_checker worked correctly
       end select
     end do
@@ -133,6 +144,13 @@ contains ! =====     Public Procedures     =============================
 
     call destroyHGridDatabase ( hGrids )
     call destroyVGridDatabase ( vGrids )
+  contains
+    subroutine SayTime
+      call cpu_time ( t2 )
+      call output ( "Timing for MLSL2Construct =" )
+      call output ( t2 - t1, advance = 'yes' )
+      timing = .false.
+    end subroutine SayTime
   end subroutine MLSL2Construct
 
   ! -------------------------------------------  MLSL2DeConstruct  -----
@@ -156,6 +174,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.3  2000/11/16 02:00:48  vsnyder
+! Added timing.
+!
 ! Revision 2.2  2000/09/11 19:23:48  ahanzel
 ! Removed extra log entries in file.
 !
