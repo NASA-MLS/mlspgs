@@ -206,7 +206,6 @@ END MergeApriori
 ; parameters for which are given below.
 ;
 BEGIN ChunkDivide
-time
     ;;
     ;; This items in this section can occur in any order.
     ;;
@@ -542,7 +541,7 @@ BEGIN Output
     output, file='l2gp_others', quantities= [ o3_190L2gp, o3_640L2gp, $
                                              n2o_190L2gp, n2o_640L2gp ],  $
                                 overlaps= [ tempL2gp, gphL2gp, h2oL2gp, $
-                                           hno3L2gpo3L2gp, hclL2gp, cloL2gp, $
+                                           hno3L2gp, o3L2gp, hclL2gp, cloL2gp, $
                                            n2oL2gp ]
     ;;
     ;; Now the l2aux file contains non l2gp data
@@ -560,6 +559,9 @@ END Output
 ; ----------------------------------------------------------------------------
 ;
 ; $Log$
+; Revision 1.3  2000/11/30 00:30:44  vsnyder
+; Juxtapose =[ to make sure it works without a space
+;
 ; Revision 1.2  2000/11/30 00:23:35  vsnyder
 ; Use [] syntax for arrays.
 ;
