@@ -50,6 +50,7 @@ Switches (set by -S option in mlsl2's command line):
   pcf[n] => open init params obtained from pcf,
             info on l1b files [higher the n, more the info]
   pguess => Iterations of the pressure guesser
+  phase  => Announce phases (e.g., CorePlusR2) as they are begun
   point =>  Pointing grids
   pro =>    Proclaim each product file l2gp, l2aux, l2dgg, l2pc, meta output
               and each file l2gp, l1brad, ncep, dao input
@@ -106,6 +107,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.40  2004/02/20 00:44:45  pwagner
+ Column-abundance-related; also skipdgg/m
+
  Revision 1.39  2004/01/27 23:45:22  vsnyder
  Add 'dacsfil'
 
