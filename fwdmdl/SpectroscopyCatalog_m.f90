@@ -51,6 +51,7 @@ module SpectroscopyCatalog_m
   type, public :: Catalog_T        ! Catalog entry for a species
     real(r8) :: continuum(MaxContinuum)      ! Continuum coefficients
     integer, pointer :: Lines(:)=>NULL() ! Indices in Lines database
+    real(r8) :: Mass               ! Molecular mass in AMU
     integer :: Molecule            ! L_...
     logical, pointer :: Polarized(:)=>NULL() ! Used only in catalog extract to
                                    ! indicate that the lines(:) are to be
@@ -58,11 +59,10 @@ module SpectroscopyCatalog_m
     real(r8) :: Qlog(3)            ! Logarithm of the partition function
                                    ! At 300 , 225 , and 150 K
     integer :: Species_Name        ! Sub_rosa index
-    integer :: Spec_Tag            ! Spectroscopy tag
   end type Catalog_T
 
   type(catalog_T), public, parameter :: Empty_Cat = catalog_t ( &
-    & 0.0_r8, NULL(), l_none, NULL(), 0.0_r8, 0, 0 )
+    & 0.0_r8, NULL(), 0.0_r8, l_none, NULL(), 0.0_r8, 0 )
 
   ! Public Variables:
   ! The lines database:
@@ -93,13 +93,12 @@ contains ! =====  Public Procedures  ===================================
     use Init_Spectroscopy_M, only: S_Line, S_Spectra
     ! Now the Fields:
     use Init_Spectroscopy_M, only: F_Continuum, F_Delta, F_El, F_Gamma, F_Lines, &
-      & F_Molecule, F_N, F_N1, F_N2, F_Ns, F_Ps, F_Qlog, F_QN, F_Str, F_V0, F_W, &
+      & F_Mass, F_Molecule, F_N, F_N1, F_N2, F_Ns, F_Ps, F_Qlog, F_QN, F_Str, F_V0, F_W, &
       & F_EMLSSIGNALS, F_EMLSSIGNALSPOL, F_UMLSSIGNALS
     use Intrinsic, only: Phyq_Dimless => Phyq_Dimensionless, Phyq_Frequency, &
       & S_Time, L_EMLS, L_UMLS
     use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
       & MLSMSG_DeAllocate, MLSMSG_Error
-    use Molecules, only: Spec_Tags
     use MoreTree, only: Get_Field_Id, Get_Spec_Id
     use Parse_Signal_m, only: PARSE_SIGNAL
     use String_Table, only: Get_string
@@ -328,23 +327,24 @@ contains ! =====  Public Procedures  ===================================
           son = subtree(j,key)
           select case ( get_field_id(son) )
           case ( f_lines )
-            k = nsons(son)
-            call allocate_test ( catalog(numCatalog)%lines, k-1, "catalog(numCatalog)%Lines", &
-              & moduleName )
-            do k = 2, k
+            call allocate_test ( catalog(numCatalog)%lines, nsons(son)-1, &
+              & "catalog(numCatalog)%Lines", moduleName )
+            do k = 2, nsons(son)
               catalog(numCatalog)%lines(k-1) = decoration(decoration(subtree(k,son)))
             end do
           case ( f_continuum )
-            k = nsons(son)
             if ( nsons(son) > MaxContinuum + 1 ) &
               & call announce_error ( son, tooBig, MaxContinuum )
-            do k = 2, k
+            do k = 2, nsons(son)
               call expr_check ( subtree(k,son), catalog(numCatalog)%continuum(k-1), &
                 & phyq_dimless )
             end do
+          case ( f_mass )
+            if ( nsons(son) /= 2 ) call announce_error ( son, wrongSize, 1 )
+            call expr_check ( subtree(2,son), catalog(numCatalog)%mass, &
+              & phyq_dimless )
           case ( f_molecule )
             catalog(numCatalog)%molecule = decoration(subtree(2,son))
-            catalog(numCatalog)%spec_Tag = spec_Tags(catalog(numCatalog)%molecule)
           case ( f_qlog )
             if ( nsons(son) /= 4 ) call announce_error ( son, wrongSize, 3 )
             do k = 2, 4
@@ -390,7 +390,7 @@ contains ! =====  Public Procedures  ===================================
       call output ( ' Spectroscopy complained: ' )
       select case ( code )
       case ( notInt )
-        call output ( 'The field is too far from being an integer.', &
+        call output ( 'The field is too far from being an integer.',& 
           & advance='yes' )
       case ( notListedSignal )
         call output ( 'The Polarized signal is not listed as an EMLS signal.', &
@@ -585,8 +585,8 @@ contains ! =====  Public Procedures  ===================================
       end if
       call output ( 'Species = ' )
       call display_string ( lit_indices(catalog(i)%molecule) )
-      call output ( ', SpecTag = ' )
-      call output ( catalog(i)%spec_tag )
+      call output ( ' Mass = ' )
+      call output ( catalog(i)%mass )
       call output ( ', Qlog = [ ' )
       do j = 1, 3
         call output ( catalog(i)%qlog(j) )
@@ -611,19 +611,19 @@ contains ! =====  Public Procedures  ===================================
   end subroutine Dump_SpectCat_Database
 
 ! ---------------------------------------------------  SearchByQn  -----
-  integer function SearchByQn ( Spec_Tag, QNs )
-  ! Find an element in the Catalog database that has Spec_Tag.
+  integer function SearchByQn ( molecule, QNs )
+  ! Find an element in the Catalog database that has a molecule.
   ! Then in its Lines database find an object that has its QN field
   ! equal to QNs.  If found, return the index of that line in the lines
   ! database.  Return zero if no such object can be found.
 
-    integer, intent(in) :: Spec_Tag
+    integer, intent(in) :: MOLECULE
     integer, intent(in) :: QNs(:)
 
     integer :: I, J
 
     do i = 1, size(catalog)
-      if ( catalog(i)%spec_tag == spec_tag ) then
+      if ( catalog(i)%molecule == molecule ) then
         if ( associated(catalog(i)%lines) ) then
           do j = 1, size(catalog(i)%lines)
             if ( associated(lines(catalog(i)%lines(j))%qn) ) then
@@ -650,6 +650,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.15  2003/05/10 22:20:57  livesey
+! Tried to calm down -g1..
+!
 ! Revision 2.14  2003/05/05 23:00:25  livesey
 ! Merged in feb03 newfwm branch
 !
