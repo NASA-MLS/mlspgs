@@ -68,8 +68,8 @@ all: libmlsSub.a libmls.a libmlsSDPTK.a
 #may resurrect them)
 #Therefore they will be deleted explicitly
 
-TEST_ONLY=test_multiply.o test_sparsify.o \
-	test_cholesky.o test_multiply_vector.o
+#TEST_ONLY=test_multiply.o test_sparsify.o \
+#	test_cholesky.o test_multiply_vector.o
 
 #Dependency rules for MATRIX_OBJS (if we need them)
 #MatrixModule_0.o: MatrixModule_0.f90 ${OBJS}
@@ -103,7 +103,7 @@ libmlsSub.a: ${OBJS} machine.o ${PVM_OBJS} ${blas_objs}
 		@echo "$(pvm_message)"
 		@echo "$(blas_message)"
 	ar ru $@ $?
-	ar d $@ SDPToolkit.o $(TEST_ONLY)
+#	ar d $@ SDPToolkit.o $(TEST_ONLY)
 
 libmls.a: libmlsSub.a
 	cp libmlsSub.a $@
@@ -141,6 +141,9 @@ string_table.o:
 	$(FC) -c $(BUGGY) $(INC_PATHS) $(S)/string_table.f90
 
 # $Log$
+# Revision 1.20  2001/03/01 21:46:18  pwagner
+# Handles -O[n] properly
+#
 # Revision 1.19  2001/02/28 22:02:13  pwagner
 # Merely filters offending -O from FOPTS for string_table, leaving others alone
 #
