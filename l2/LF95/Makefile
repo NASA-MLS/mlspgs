@@ -19,6 +19,9 @@ MLS = $S/../lib
 # Path to .mod files:
 M = $(MLS)/$(ME)
 
+# Path to MLS source library files:
+MLSS = $S/../srclib
+
 # Option to specify path to .mod files:
 I = -I
 
@@ -39,6 +42,9 @@ PGSTK = $(HOME)/mlspgs/SDPToolkit/$(ME)
 include $S/Makefile.inc
 
 # $Log$
+# Revision 2.2  2000/10/12 00:37:57  vsnyder
+# Account for lib/cf_parser moving to lib
+#
 # Revision 2.1  2000/10/10 20:33:32  vsnyder
 # Repairs to get rid of WVS pathnames
 #

@@ -53,10 +53,13 @@ SRC_L3 = l3/init_tables_module.f90 l3/L3CF.f90 l3/L3DMData.f90 \
 # Files that must be compiled here from sources in lib, because
 # they depend on init_tables_module:
 
-OBJ_SRC_LIB = getCF_m.o tree_checker.o
+OBJ_SRC_LIB = 
+# Path to MLS library sources:
+MLS = $S/../lib
+_m.o tree_checker.o
 
 # These are used to make tar, which is from the parent of $(MLS):
-SRC_LIB = lib/getCF_m.f90 lib/tree_checker.f90
+SRC_LIB = srclib/getCF_m.f90 srclib/tree_checker.f90
 
 all: MLSL3
 
@@ -65,17 +68,17 @@ init_tables_module.o: $A/init_tables_module.f90 $M/intrinsic.o \
                       $M/tree_types.o
 	$(F90) -c $(FOPTS) $I$M $A/init_tables_module.f90
 
-tree_checker.o: $(MLS)/tree_checker.f90 $M/declaration_table.o \
+tree_checker.o: $(MLSS)/tree_checker.f90 $M/declaration_table.o \
                 init_tables_module.o $M/lexer_core.o $M/output_m.o \
                 $M/string_table.o $M/toggles_core.o $M/trace_m.o $M/tree.o \
                 $M/tree_types.o
-	$(F90) -c $(FOPTS) $I$M $(MLS)/tree_checker.f90
+	$(F90) -c $(FOPTS) $I$M $(MLSS)/tree_checker.f90
 
-getCF_m.o: $(MLS)/getCF_m.f90 $M/declaration_table.o init_tables_module.o \
+getCF_m.o: $(MLSS)/getCF_m.f90 $M/declaration_table.o init_tables_module.o \
            $M/lexer_core.o $M/MLSCF.o $M/output_m.o $M/parser.o \
            $M/string_table.o $M/table_dumper.o $M/table_generator.o \
            $M/toggles_core.o tree_checker.o $M/tree.o $M/units.o
-	$(F90) -c $(FOPTS) $I$M $(MLS)/getCF_m.f90
+	$(F90) -c $(FOPTS) $I$M $(MLSS)/getCF_m.f90
 
 L3DMData.o : $M/MLSMessageModule.o $M/MLSCommon.o $M/L2GPData.o $M/Hdf.o \
              $M/MLSPCF.o
@@ -127,6 +130,9 @@ tar:
           $(SRC_LIB) lib/test_cf_parser/*
 
 # $Log$
+# Revision 1.1  2000/10/24 19:27:32  nakamura
+# Makes l3, assuming lib already exists.
+#
 # Revision 1.1  2000/10/11 20:54:39  vsnyder
 # Initial addition
 #

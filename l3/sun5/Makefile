@@ -36,6 +36,9 @@ MLS = $S/../lib
 # Path to MLS library .o and .mod files:
 M = $(MLS)/$(ME)
 
+# Path to MLS source library:
+MLSS = $S/../srclib
+
 # Beginning of path to toolkit libraries:
 TOOLKIT = /software/SRC/TOOLKIT-5.2.6v1.00.NAG
 
@@ -52,4 +55,7 @@ include $S/Makefile.inc
 
 #
 # $Log$
+# Revision 1.1  2000/10/24 19:49:44  nakamura
+# Customized for sun5/NAG make of L3.
+#
 #

@@ -90,7 +90,7 @@ MatrixModule.o: $S/MatrixModule.f90 $(MLS)/addItemToDatabase.f9h \
 
 MLSL2.o: $S/MLSL2.f90 $M/declaration_table.o init_tables_module.o \
           $M/lexer_core.o $M/machine.o open_init.o $M/parser.o \
-          $M/string_table.o $M/toggles_core.o $M/tree.o $M/ tree_checker.o \
+          $M/string_table.o $M/toggles_core.o $M/tree.o tree_checker.o \
           tree_walker.o $M/units.o
 	$(F90) -c $(FOPTS) $I$M $I$S $I$M $S/MLSL2.f90
 
@@ -121,11 +121,11 @@ ScanDivide.o: $S/ScanDivide.f90 dumper.o $M/expr_m.o init_tables_module.o \
           $M/MLSMessageModule.o $M/string_table.o $M/tree.o
 	$(F90) -c $(FOPTS) $I$M $I$S $I$M $S/ScanDivide.f90
 
-tree_checker.o: $(MLS)/tree_checker.f90 $M/declaration_table.o \
+tree_checker.o: $(MLSS)/tree_checker.f90 $M/declaration_table.o \
           init_tables_module.o $M/lexer_core.o $M/output_m.o \
           $M/string_table.o $M/toggles_core.o $M/trace_m.o $M/tree.o \
           $M/tree_types.o
-	$(F90) -c $(FOPTS) $I$M $I$S $I$M $(MLS)/tree_checker.f90
+	$(F90) -c $(FOPTS) $I$M $I$S $I$M $(MLSS)/tree_checker.f90
 
 tree_walker.o: $S/tree_walker.f90 Construct.o $M/declaration_table.o dumper.o \
           global_settings.o Fill.o init_tables_module.o Join.o L2AUXData.o \
@@ -192,6 +192,9 @@ tar:
 # ========================================================================
 
 # $Log$
+# Revision 2.8  2000/10/12 23:59:31  vsnyder
+# Account for moving QuantityTemplates.f90 and VectorTemplates.f90 to mlspgs/lib
+#
 # Revision 2.7  2000/10/12 00:44:07  vsnyder
 # Add dependence of MLSL2.o on tree_checker.o
 #
