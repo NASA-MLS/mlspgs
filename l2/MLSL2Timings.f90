@@ -14,7 +14,8 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
   IMPLICIT NONE
 
   public :: SECTION_TIMES, TOTAL_TIMES, &
-    & add_to_directwrite_timing, add_to_retrieval_timing, add_to_section_timing, &
+    & add_to_directwrite_timing, add_to_phase_timing, &
+    & add_to_retrieval_timing, add_to_section_timing, &
     & dump_section_timings
   private
 
@@ -33,6 +34,8 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
 
   logical, private   :: COUNTEMPTY = .false.     ! Any sections named ' '?
   logical, private   :: ALLOWUNKNOWNNAMES = .false.  ! Any unknown section names
+  integer, parameter :: PHASENAMESLEN = 400
+  integer, parameter :: MAXNUMPHASES = 40
 
   character*(*), parameter           :: section_names = &
     & 'main,open_init,global_settings,signals,spectroscopy,' // &
@@ -59,6 +62,9 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
   ! integer, parameter                 :: unknown_section = &
   !   &                               num_section_times+num_retrieval_times + 1
   ! integer, parameter                 :: unknown_retrieval = unknown_section + 1
+  character(len=PHASENAMESLEN), save :: phaseNames = ' '
+  integer, save :: num_phases = 0
+  real, dimension(MAXNUMPHASES), save :: phase_timings = 0.
 
 contains ! =====     Public Procedures     =============================
 
@@ -74,7 +80,7 @@ contains ! =====     Public Procedures     =============================
     integer                     :: elem
     integer                     :: elem_offset
     real                        :: t2
-    real, save                  :: myLastTime
+    real, save                  :: myLastTime = 0.
 
   ! Executable
       if ( present(t1) ) myLastTime = t1
@@ -94,6 +100,42 @@ contains ! =====     Public Procedures     =============================
       if ( present(t1) ) call time_now ( t1 )
   end subroutine add_to_directwrite_timing
 
+  ! -----------------------------------------  add_to_phase_timing  -----
+  subroutine add_to_phase_timing( phase_name, t1 )
+  ! Add current elapsed phase time to total so far for last phase
+
+  ! Formal arguments
+    character(LEN=*), intent(in):: phase_name   ! One of the phases, e.g. 'core'
+    real, optional, intent(inout)  :: t1        ! Prior time_now, then current
+
+  ! Private
+    integer                     :: elem
+    integer, save               :: myLastElem = 0
+    real                        :: t2
+    real, save                  :: myLastTime = 0.
+
+    ! Executable
+      if ( present(t1) ) myLastTime = t1
+      elem = StringElementNum(trim(phaseNames), LowerCase(phase_name), countEmpty)
+      if ( elem < 1 .and. phase_name /= ' ' ) then
+        num_phases = num_phases + 1
+        if ( num_phases > MAXNUMPHASES ) &
+          & call MLSMessage ( MLSMSG_Error, moduleName, &
+          & 'Too many phases--unable add to phase name ' // phase_name // &
+          & ' to list ' // trim(phaseNames) )
+        phaseNames = trim(phaseNames) // ',' // trim(phase_name)
+        elem = num_phases
+      endif
+      call time_now ( t2 )
+      if ( myLastElem > 0 ) then
+        phase_timings(myLastElem) = &
+          & phase_timings(myLastElem) + t2 - myLastTime
+      endif
+      myLastTime = t2
+      myLastElem = elem
+      if ( present(t1) ) call time_now ( t1 )
+  end subroutine add_to_phase_timing
+
   ! -----------------------------------------  add_to_retrieval_timing  -----
   subroutine add_to_retrieval_timing( section_name, t1 )
   ! Add current elapsed retrieval section time to total so far for section_name
@@ -105,7 +147,7 @@ contains ! =====     Public Procedures     =============================
   ! Private
     integer                     :: elem
     real                        :: t2
-    real, save                  :: myLastTime
+    real, save                  :: myLastTime = 0.
 
   ! Executable
       if ( present(t1) ) myLastTime = t1
@@ -136,7 +178,7 @@ contains ! =====     Public Procedures     =============================
   ! Private
     integer                     :: elem
     real                        :: t2
-    real, save                  :: myLastTime
+    real, save                  :: myLastTime = 0.
 
   ! Executable
     if ( present(t1) ) myLastTime = t1
@@ -170,6 +212,7 @@ contains ! =====     Public Procedures     =============================
     real                            :: total
     real                            :: retrTotal
     real                            :: dwTotal
+    real                            :: phaseTotal
     real                            :: percent
     real                            :: elem_time
     character(LEN=LEN(TIMEFORMBIG)) :: TIMEFORM
@@ -181,15 +224,8 @@ contains ! =====     Public Procedures     =============================
     call output ( '==========================================', advance='yes' )
     call blanks ( 8, advance='no' )
     call output ( 'Level 2 section timings : ', advance='yes' )
-    if ( parallel%master ) then
-      call blanks ( 8, advance='no' )
-      call output ( '(Master Task) ', advance='yes' )
-    elseif ( parallel%slave .and. .not. parallel%fwmParallel ) then
-      call blanks ( 8, advance='no' )
-      call output ( '(Slave: chunk ', advance='no' )
-      call output ( parallel%ChunkNo, advance='no' )
-      call output ( ' ) ', advance='yes' )
-    endif
+    call blanks ( 8, advance='no' )
+    call printTaskType
     call output ( '==========================================', advance='yes' )
     call output ( 'section name ', advance='no' )
     call blanks ( 8, advance='no' )
@@ -238,15 +274,15 @@ contains ! =====     Public Procedures     =============================
     call output ( '==========================================', advance='yes' )
     percent = 100 * total / final
     call blanks ( 4, advance='no' )
-    call output ( '(total)', advance='no' )
-    call blanks ( 7, advance='no' )
+    call output ( '(subtotal)', advance='no' )
+    call blanks ( 3, advance='no' )
     call output ( total, FORMAT=TIMEFORM, LOGFORMAT=TIMEFORM, advance='no' )
     call blanks ( 2, advance='no' )
     call output ( percent, FORMAT=PCTFORM, LOGFORMAT=PCTFORM, advance='yes' )
     percent = 100 * (final-total) / final
     call blanks ( 3, advance='no' )
     call output ( '(others)', advance='no' )
-    call blanks ( 7, advance='no' )
+    call blanks ( 6, advance='no' )
     call output ( final-total, FORMAT=TIMEFORM, LOGFORMAT=TIMEFORM, advance='no' )
     call blanks ( 2, advance='no' )
     call output ( percent, FORMAT=PCTFORM, LOGFORMAT=PCTFORM, advance='yes' )
@@ -254,11 +290,12 @@ contains ! =====     Public Procedures     =============================
     percent = 100
     call blanks ( 4, advance='no' )
     call output ( '(final)', advance='no' )
-    call blanks ( 7, advance='no' )
+    call blanks ( 6, advance='no' )
     call output ( final, FORMAT=TIMEFORM, LOGFORMAT=TIMEFORM, advance='no' )
     call blanks ( 2, advance='no' )
-    call output ( percent, FORMAT=PCTFORM, LOGFORMAT=PCTFORM, advance='yes' )
-
+    call output ( percent, FORMAT=PCTFORM, LOGFORMAT=PCTFORM, advance='no' )
+    call blanks ( 8, advance='no' )
+    call printTaskType
     ! Subdivision of Retrieval section
     retrElem = StringElementNum(section_names, 'retrieve', countEmpty)
     if ( retrElem == 0 ) then
@@ -283,7 +320,7 @@ contains ! =====     Public Procedures     =============================
       call output ( 'subsection name ', advance='no' )
       call blanks ( 8, advance='no' )
       call output ( 'time ', advance='no' )
-      call blanks ( 8, advance='no' )
+      call blanks ( 2, advance='no' )
       call output ( 'percent of total retrieval time', advance='yes' )
       retrTotal = sum(section_timings(1+num_section_times:num_section_times+num_retrieval_times)) ! - &
         ! & section_timings(unknown_section)
@@ -310,7 +347,7 @@ contains ! =====     Public Procedures     =============================
       enddo
       call blanks ( 3, advance='no' )
       call output ( '(others)', advance='no' )
-      call blanks ( 7, advance='no' )
+      call blanks ( 6, advance='no' )
       call output ( final-retrTotal, FORMAT=TIMEFORM, LOGFORMAT=TIMEFORM, advance='no' )
       call blanks ( 2, advance='no' )
       call output ( 100*(final-retrTotal)/final, FORMAT=PCTFORM, LOGFORMAT=PCTFORM, advance='yes' )
@@ -331,36 +368,88 @@ contains ! =====     Public Procedures     =============================
       call output ( 'time ', advance='no' )
       call blanks ( 2, advance='no' )
       call output ( final, advance='yes' )
-      call output ( '(No DirectWrite section timings breakdown) ', advance='yes' )
+      call output ( '(No DirectWrite section timings breakdown) ', &
+        & advance='yes' )
+    else
+      call output ( '==========================================', advance='yes' )
+      call blanks ( 8, advance='no' )
+      call output ( 'DirectWrite section timings : ', advance='yes' )
+      call output ( '==========================================', advance='yes' )
+      call output ( 'subsection name ', advance='no' )
+      call blanks ( 8, advance='no' )
+      call output ( 'time ', advance='no' )
+      call blanks ( 2, advance='no' )
+      call output ( 'percent of total DirectWrite time', advance='yes' )
+      dwTotal = sum(section_timings(1+num_section_times+num_retrieval_times:)) 
+      do elem = 1, num_directwrite_times
+        elem_time = section_timings(num_section_times+num_retrieval_times+elem)
+        call GetStringElement(directwrite_names, section_name, elem, countEmpty)
+        percent = 100 * elem_time / final
+        call output ( section_name, advance='no' )
+        call blanks ( 2, advance='no' )
+        call output ( elem_time, FORMAT=TIMEFORM, LOGFORMAT=TIMEFORM, &
+          & advance='no' )
+        call blanks ( 2, advance='no' )
+        call output ( percent, FORMAT=PCTFORM, LOGFORMAT=PCTFORM, advance='yes' )
+      enddo
+      call blanks ( 3, advance='no' )
+      call output ( '(others)', advance='no' )
+      call blanks ( 6, advance='no' )
+      call output ( final-dwTotal, FORMAT=TIMEFORM, LOGFORMAT=TIMEFORM, &
+        & advance='no' )
+      call blanks ( 2, advance='no' )
+      call output ( 100*(final-dwTotal)/final, FORMAT=PCTFORM, &
+        & LOGFORMAT=PCTFORM, advance='yes' )
+    endif
+
+    ! Subdivision of Phases
+    if ( num_phases == 0 ) then
+      call output ( '(No phase timings breakdown) ', advance='yes' )
       return
     endif
+    ! A trick! Add final elapsed time to last phase
+    call add_to_phase_timing(' ')
     call output ( '==========================================', advance='yes' )
     call blanks ( 8, advance='no' )
-    call output ( 'DirectWrite section timings : ', advance='yes' )
+    call output ( 'Phase timings : ', advance='yes' )
     call output ( '==========================================', advance='yes' )
-    call output ( 'subsection name ', advance='no' )
+    call output ( 'phase name ', advance='no' )
     call blanks ( 8, advance='no' )
     call output ( 'time ', advance='no' )
     call blanks ( 8, advance='no' )
-    call output ( 'percent of total DirectWrite time', advance='yes' )
-    dwTotal = sum(section_timings(1+num_section_times+num_retrieval_times:)) ! - &
-      ! & section_timings(unknown_section)
-    do elem = 1, num_directwrite_times
-      elem_time = section_timings(num_section_times+num_retrieval_times+elem)
-      call GetStringElement(directwrite_names, section_name, elem, countEmpty)
+    call output ( 'percent of total time', advance='yes' )
+    phaseTotal = 0.
+    do elem = 1, num_phases
+      elem_time = phase_timings(elem)
+      call GetStringElement(trim(phaseNames), section_name, elem, countEmpty)
       percent = 100 * elem_time / final
       call output ( section_name, advance='no' )
       call blanks ( 2, advance='no' )
       call output ( elem_time, FORMAT=TIMEFORM, LOGFORMAT=TIMEFORM, advance='no' )
       call blanks ( 2, advance='no' )
       call output ( percent, FORMAT=PCTFORM, LOGFORMAT=PCTFORM, advance='yes' )
+      phaseTotal = phaseTotal + elem_time
     enddo
     call blanks ( 3, advance='no' )
     call output ( '(others)', advance='no' )
-    call blanks ( 7, advance='no' )
-    call output ( final-dwTotal, FORMAT=TIMEFORM, LOGFORMAT=TIMEFORM, advance='no' )
+    call blanks ( 6, advance='no' )
+    call output ( final-phaseTotal, FORMAT=TIMEFORM, LOGFORMAT=TIMEFORM, advance='no' )
     call blanks ( 2, advance='no' )
-    call output ( 100*(final-dwTotal)/final, FORMAT=PCTFORM, LOGFORMAT=PCTFORM, advance='yes' )
+    call output ( 100*(final-phaseTotal)/final, FORMAT=PCTFORM, LOGFORMAT=PCTFORM, advance='yes' )
+
+    contains
+    ! Internal subprograms
+    subroutine printTaskType
+      if ( parallel%master ) then
+        call output ( '(Master Task) ', advance='yes' )
+      elseif ( parallel%slave .and. .not. parallel%fwmParallel ) then
+        call output ( '(Slave: chunk ', advance='no' )
+        call output ( parallel%ChunkNo, advance='no' )
+        call output ( ' ) ', advance='yes' )
+      else
+        call output ( '(Serial Task) ', advance='yes' )
+      endif
+    end subroutine printTaskType
   end subroutine dump_section_timings
 
 !=============================================================================
@@ -373,6 +462,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.17  2003/10/22 21:19:14  pwagner
+! Added timings breakdown by phases
+!
 ! Revision 2.16  2003/10/20 18:21:45  pwagner
 ! Timings breakdown added for directWrite
 !
