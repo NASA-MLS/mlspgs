@@ -73,7 +73,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_COVARIANCE          = f_copy + 1
   integer, parameter :: F_CRITERIA            = f_covariance + 1
   integer, parameter :: F_DECAY               = f_criteria + 1
-  integer, parameter :: F_DESTROYJACOBIAN     = f_decay + 1
+  integer, parameter :: F_DESTINATION         = f_decay + 1
+  integer, parameter :: F_DESTROYJACOBIAN     = f_destination + 1
   integer, parameter :: F_DIAGONAL            = f_destroyJacobian + 1
   integer, parameter :: F_DO_CONV             = f_diagonal + 1
   integer, parameter :: F_DO_FREQ_AVG         = f_do_conv + 1
@@ -262,7 +263,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_SNOOP              = s_sids + 1
   integer, parameter :: S_SUBSET             = s_snoop + 1
   integer, parameter :: S_TEMPLATE           = s_subset + 1
-  integer, parameter :: S_VECTOR             = s_template + 1
+  integer, parameter :: S_TRANSFER           = s_template + 1
+  integer, parameter :: S_VECTOR             = s_transfer + 1
   integer, parameter :: S_VECTORTEMPLATE     = s_vector + 1
   integer, parameter :: S_VGRID              = s_vectortemplate + 1
   integer, parameter :: SPEC_LAST = s_vGrid
@@ -413,6 +415,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_criteria) =            add_ident ( 'criteria' )
     field_indices(f_decay) =               add_ident ( 'decay' )
     field_indices(f_destroyJacobian) =     add_ident ( 'destroyJacobian' )
+    field_indices(f_destination) =         add_ident ( 'destination' )
     field_indices(f_diagonal) =            add_ident ( 'diagonal' )
     field_indices(f_do_conv) =             add_ident ( 'do_conv' )
     field_indices(f_do_freq_avg) =         add_ident ( 'do_freq_avg' )
@@ -576,6 +579,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_snoop) =                add_ident ( 'snoop' )
     spec_indices(s_subset) =               add_ident ( 'subset' )
     spec_indices(s_template) =             add_ident ( 'template' )
+    spec_indices(s_transfer) =             add_ident ( 'transfer' )
     spec_indices(s_vector) =               add_ident ( 'vector' )
     spec_indices(s_vectortemplate) =       add_ident ( 'vectorTemplate' )
     spec_indices(s_vgrid) =                add_ident ( 'vgrid' )
@@ -811,6 +815,11 @@ contains ! =====     Public procedures     =============================
              begin, f+f_integrationTime, t+t_numeric, n+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree( (/ &
+      begin, s+s_transfer, &
+             begin, f+f_source, s+s_vector, n+n_field_spec, &
+             begin, f+f_destination, s+s_vector, n+n_field_spec, &
+             nadp+n_spec_def /) )
+    call make_tree( (/ &
       begin, s+s_fillCovariance, & ! Must be AFTER s_vector and s_matrix
              begin, f+f_matrix, s+s_matrix, nr+n_field_spec, &
              begin, f+f_diagonal, s+s_vector, nr+n_field_spec, &
@@ -961,7 +970,8 @@ contains ! =====     Public procedures     =============================
       begin, z+z_construct, s+s_hgrid, s+s_forge, s+s_quantity, &
              s+s_snoop, s+s_time, s+s_vectortemplate, n+n_section, &
       begin, z+z_fill, s+s_create, s+s_fill, s+s_fillCovariance, s+s_matrix, &
-                       s+s_snoop, s+s_time, s+s_vector, n+n_section, &
+                       s+s_snoop, s+s_time, s+s_vector, &
+                       s+s_transfer, n+n_section, &
       begin, z+z_retrieve, s+s_dumpBlocks, s+s_matrix, s+s_retrieve, &
              s+s_subset, s+s_sids, s+s_time, n+n_section, &
       begin, z+z_join, s+s_time, s+s_l2gp, s+s_l2aux, n+n_section, &
@@ -977,6 +987,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.121  2001/06/22 05:18:37  livesey
+! Add `transfer' command in fill
+!
 ! Revision 2.120  2001/06/22 01:26:25  vsnyder
 ! Add fields for regularization
 !
