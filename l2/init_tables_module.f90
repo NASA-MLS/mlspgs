@@ -264,16 +264,16 @@ module INIT_TABLES_MODULE
 !     | mlsSignals        readApriori       construct          join          |
 !     |       spectroscopy      mergeApriori       fill             output   |
 ! ====|======================================================================|== From: ==
-        (/OK,   OK,   OK,    0,    0,    0,    0,    0,    0,    0,    0,  & ! Start
-           0,   OK,   OK,    0,    0,    0,    0,    0,    0,    0,    0,  & ! mlsSignals
-           0,   OK,   OK,    0,    0,    0,    0,    0,    0,    0,    0,  & ! spectroscopy
-           0,    0,    0,   OK,    0,    0,    0,    0,    0,    0,    0,  & ! globalSettings
-           0,    0,    0,    0,   OK,    0,    0,    0,    0,    0,    0,  & ! readApriori
-           0,    0,    0,    0,    0,   OK,    0,    0,    0,    0,    0,  & ! mergeApriori
-           0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,  & ! chunkDivide
-           0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,  & ! Construct
-           0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,  & ! Fill
-           0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,  & ! Retrieve
+        (/OK,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,    0,  & ! Start
+           0,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,    0,  & ! mlsSignals
+           0,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,    0,  & ! spectroscopy
+           0,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,    0,  & ! globalSettings
+           0,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,    0,  & ! readApriori
+           0,   OK,   OK,   OK,   OK,   OK,    0,    0,    0,    0,    0,  & ! mergeApriori
+           0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,    0,  & ! chunkDivide
+           0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,    0,  & ! Construct
+           0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,    0,  & ! Fill
+           0,    0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,    0,  & ! Retrieve
            0,    0,    0,    0,    0,    0,    0,    0,    0,    0,   OK,  & ! Join
            0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0/) & ! Output
 !       , shape(section_ordering) )
@@ -531,7 +531,7 @@ contains ! =====     Public procedures     =============================
              l+l_vGrid, n+n_dt_def, &
       begin, t+t_fwmType, l+l_linear, l+l_full, l+l_scan, n+n_dt_def, &
       begin, t+t_hGridType, l+l_explicit, l+l_fixed, l+l_fractional, &
-             l+l_height, l+l_linear, n+n_dt_def, &
+             l+l_height, l+l_linear, l+l_l2gp, n+n_dt_def, &
       begin, t+t_matrix, l+l_plain, l+l_cholesky, l+l_kronecker, l+l_spd, &
              n+n_dt_def, &
       begin, t+t_mergeMethod, l+l_direct, l+l_weighted, n+n_dt_def, &
@@ -558,7 +558,7 @@ contains ! =====     Public procedures     =============================
       begin, t+t_vgridcoord, l+l_angle, l+l_geodAltitude, l+l_gph, l+l_none, &
              l+l_pressure, l+l_theta, l+l_zeta, n+n_dt_def, &
       begin, t+t_vgridtype, l+l_explicit, l+l_linear, l+l_logarithmic, &
-             n+n_dt_def /) )
+             l+l_l2gp, n+n_dt_def /) )
 
     ! Define the relations between specs and fields, and the field types
     ! or names of other specifications allowed.  These are represented by
@@ -601,6 +601,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_mif, t+t_numeric, n+n_field_type, &
              begin, f+f_interpolationfactor, t+t_numeric, n+n_field_type, &
              begin, f+f_inclination, t+t_numeric, n+n_field_type, &
+             begin, f+f_sourceL2GP, s+s_l2gp, n+n_field_spec, &
              begin, f+f_values, t+t_numeric, n+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
@@ -627,6 +628,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_start, t+t_numeric, n+n_field_type, &
              begin, f+f_stop, t+t_numeric, n+n_field_type, &
              begin, f+f_values, t+t_numeric, n+n_field_type, &
+             begin, f+f_sourceL2GP, s+s_l2gp, n+n_field_spec, &
              ndp+n_spec_def, &
       begin, s+s_forge, &
              begin, f+f_module, s+s_module, n+n_field_spec, &
@@ -828,6 +830,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.77  2001/04/21 01:26:18  livesey
+! Now supports creation of h/v grids from l2gp
+!
 ! Revision 2.76  2001/04/20 23:12:14  livesey
 ! Added the `forge' stuff
 !
