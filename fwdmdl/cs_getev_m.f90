@@ -198,7 +198,6 @@ contains
 
   subroutine dEdtSD ( A, Ev, dA, dEv )
 
-    use CS_ZeroFix_M, only: CS_ZeroFix
     use MLSCommon, only: RK => Rp
 
     complex(rk), intent(in) :: A(2,2)   ! The matrix
@@ -232,6 +231,9 @@ contains
 end module CS_GetEv_M
 
 ! $Log$
+! Revision 2.2  2003/02/05 21:47:41  vsnyder
+! Remove a USE that wasn't used
+!
 ! Revision 2.1  2003/02/04 01:41:33  vsnyder
 ! Initial commit
 !
