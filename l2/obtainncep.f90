@@ -5,14 +5,15 @@
 module ObtainNCEP !provides subroutines to access NCEP files
 !===========================================================
 
-  use dates_module
-  use GriddedData
-  use Hdf
-  use MLSCommon
+! use DATES_MODULE
+  use GriddedData, only: GriddedData_T
+  use Hdf, only: DFACC_RDONLY
+! use MLSCommon
   use MLSPCF, only: MLSPCF_L2NCEP_END, MLSPCF_L2NCEP_START
-  use MLSStrings
-  use MLSMessageModule
-  use VerticalCoordinate
+! use MLSStrings
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+  use SDPToolkit, only: Pgs_pc_getReference, PGS_S_SUCCESS
+! use VerticalCoordinate
 ! use ???, only: Pgs_smf_getMsg
 
   implicit none
@@ -41,7 +42,7 @@ contains ! =====     Public Procedures     =============================
   subroutine Obtain_NCEP ( aprioriData, root )
 
     ! Arguments
-    type (griddeddata_t), dimension(:), pointer :: aprioriData 
+    type (GriddedData_T), dimension(:), pointer :: aprioriData 
     ! Input a priori database
     integer, intent(in) :: ROOT        ! Root of the L2CF abstract syntax tree
 
@@ -128,7 +129,7 @@ contains ! =====     Public Procedures     =============================
   integer :: stride(4)
 
   ! External functions
-  integer :: gdopen, gdattach, gdrdfld, gddetach, gdclose
+  integer, external :: gdopen, gdattach, gdrdfld, gddetach, gdclose
  
   ! - - - begin - - -
 
@@ -207,6 +208,9 @@ contains ! =====     Public Procedures     =============================
 END MODULE ObtainNCEP
 
 ! $Log$
+! Revision 2.1  2000/10/12 00:34:56  vsnyder
+! Comment-out apparently unnecessary USEs; add "only" to the others
+!
 ! Revision 2.0  2000/09/05 18:57:06  ahanzel
 ! Changing file revision to 2.0.
 !

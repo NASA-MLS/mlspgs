@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module INIT_TABLES_MODULE
 
 ! Preload the string and symbol tables with specification and field
@@ -6,6 +9,11 @@ module INIT_TABLES_MODULE
 
 ! Declaring the definitions is handled by the tree walker.
 
+  use INTRINSIC ! Everything. FIRST_LIT, INIT_INTRINSIC,
+    ! L_FALSE, L_TRUE, LAST_INTRINSIC_LIT, T_BOOLEAN, T_FIRST,
+    ! T_LAST_INTRINSIC, T_NUMERIC, T_NUMERIC_RANGE and T_STRING are used
+    ! here, but everything is included so that it can be gotten by
+    ! USE INIT_TABLES_MODULE.
   use SYMBOL_TABLE, only: ENTER_TERMINAL
   use SYMBOL_TYPES, only: T_IDENTIFIER
   use TREE, only: BUILD_TREE, PUSH_PSEUDO_TERMINAL
@@ -13,7 +21,12 @@ module INIT_TABLES_MODULE
                         N_NAME_DEF, N_SECTION, N_SPEC_DEF
 
   implicit NONE
-  private
+  public ! This would be a MUCH LONGER list than the list of private
+  !        names below.
+  private :: ADD_IDENT, BUILD_TREE, ENTER_TERMINAL, INIT_INTRINSIC
+  private :: MAKE_TREE, N_DOT, N_DT_DEF, N_FIELD_SPEC, N_FIELD_TYPE
+  private :: N_NAME_DEF, N_SECTION, N_SPEC_DEF, PUSH_PSEUDO_TERMINAL
+  private :: T_IDENTIFIER
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=256), private :: Id = &
@@ -22,29 +35,22 @@ module INIT_TABLES_MODULE
        "$RCSfile$"
 !---------------------------------------------------------------------------
 
-  public :: INIT_TABLES
-
-! Data types that don't have enumerated literals:
-  integer, public, parameter :: T_NUMERIC = 1
-  integer, public, parameter :: T_NUMERIC_RANGE = 2
-  integer, public, parameter :: T_STRING = 3
 ! Enumeration types:
-  integer, public, parameter :: T_APRIORISOURCE = 4
-  integer, public, parameter :: T_APRIORITYPE = 5
-  integer, public, parameter :: T_BOOLEAN = 6
-  integer, public, parameter :: T_CRITICALMODULE = 7
-  integer, public, parameter :: T_HGRIDTYPE = 8
-  integer, public, parameter :: T_MERGEMETHOD = 9
-  integer, public, parameter :: T_MERGESOURCE = 10
-  integer, public, parameter :: T_MODULE = 11
-  integer, public, parameter :: T_MOLECULE = 12
-  integer, public, parameter :: T_OUTPUTTYPE = 13
-  integer, public, parameter :: T_QUANTITYTYPE = 14
-  integer, public, parameter :: T_SPECIES = 15
-  integer, public, parameter :: T_UNITS = 16
-  integer, public, parameter :: T_VGRIDCOORD = 17
-  integer, public, parameter :: T_VGRIDTYPE = 18
-  integer, public, parameter :: T_FIRST = T_NUMERIC, T_LAST = T_VGRIDTYPE
+  integer, public, parameter :: T_APRIORISOURCE  = t_last_intrinsic+1
+  integer, public, parameter :: T_APRIORITYPE    = t_apriorisource+1
+  integer, public, parameter :: T_CRITICALMODULE = t_aprioritype+1
+  integer, public, parameter :: T_HGRIDTYPE      = t_criticalmodule+1
+  integer, public, parameter :: T_MERGEMETHOD    = t_hgridtype+1
+  integer, public, parameter :: T_MERGESOURCE    = t_mergemethod+1
+  integer, public, parameter :: T_MODULE         = t_mergesource+1
+  integer, public, parameter :: T_MOLECULE       = t_module+1
+  integer, public, parameter :: T_OUTPUTTYPE     = t_molecule+1
+  integer, public, parameter :: T_QUANTITYTYPE   = t_outputtype+1
+  integer, public, parameter :: T_SPECIES        = t_quantitytype+1
+  integer, public, parameter :: T_UNITS          = t_species+1
+  integer, public, parameter :: T_VGRIDCOORD     = t_units+1
+  integer, public, parameter :: T_VGRIDTYPE      = t_vgridcoord+1
+  integer, public, parameter :: T_LAST           = t_vgridtype
   integer, public :: DATA_TYPE_INDICES(t_first:t_last)
 ! Field indices:
   integer, public, parameter :: F_APRIORI = 1
@@ -90,80 +96,43 @@ module INIT_TABLES_MODULE
   integer, public, parameter :: FIELD_FIRST = f_Apriori, FIELD_LAST = f_vGrid
   integer, public :: FIELD_INDICES(field_first:field_last)
 ! Enumeration literals:
-  integer, public, parameter :: L_ANGLE = 1
+  integer, public, parameter :: L_ANGLE         = last_intrinsic_lit + 1
   integer, public, parameter :: L_BASELINE      = l_angle + 1
   integer, public, parameter :: L_BOTH 	        = l_baseline + 1
   integer, public, parameter :: L_CLIMATOLOGY   = l_both + 1
   integer, public, parameter :: L_CLO           = l_climatology + 1
   integer, public, parameter :: L_CO            = l_clo + 1
   integer, public, parameter :: L_DAO 	        = l_co + 1
-  integer, public, parameter :: L_DAYS 	        = l_dao + 1
-  integer, public, parameter :: L_DEG 	        = l_days + 1
-  integer, public, parameter :: L_DEGREES       = l_deg + 1
-  integer, public, parameter :: L_DIMENSIONLESS = l_degrees + 1
-  integer, public, parameter :: L_DIMLESS       = l_dimensionless + 1
-  integer, public, parameter :: L_DIRECT        = l_dimless + 1
-  integer, public, parameter :: L_DL 	        = l_direct + 1
-  integer, public, parameter :: L_EITHER        = l_dl + 1
+  integer, public, parameter :: L_DIRECT        = l_dao + 1
+  integer, public, parameter :: L_EITHER        = l_direct + 1
   integer, public, parameter :: L_EXPLICIT      = l_either + 1
   integer, public, parameter :: L_EXTINCTION    = l_explicit + 1
-  integer, public, parameter :: L_FALSE         = l_extinction + 1
-  integer, public, parameter :: L_FIXED         = l_false + 1
+  integer, public, parameter :: L_FIXED         = l_extinction + 1
   integer, public, parameter :: L_FRACTIONAL    = l_fixed + 1
   integer, public, parameter :: L_GEODALTITUDE  = l_fractional + 1
-  integer, public, parameter :: L_GHZ           = l_geodaltitude + 1
-  integer, public, parameter :: L_GPH 	        = l_ghz + 1
+  integer, public, parameter :: L_GPH 	        = l_geodaltitude + 1
   integer, public, parameter :: L_GPH_PRECISION = l_gph + 1
   integer, public, parameter :: L_H2O           = l_gph_precision + 1
   integer, public, parameter :: L_HCL           = l_h2o + 1
   integer, public, parameter :: L_HEIGHT        = l_hcl + 1
   integer, public, parameter :: L_HNO3          = l_height + 1
-  integer, public, parameter :: L_HOURS         = l_hno3 + 1
-  integer, public, parameter :: L_HPA 	        = l_hours + 1
-  integer, public, parameter :: L_HZ 	        = l_hpa + 1
-  integer, public, parameter :: L_K 	        = l_hz + 1
-  integer, public, parameter :: L_KHZ 	        = l_k  + 1
-  integer, public, parameter :: L_KM 	        = l_khz + 1
-  integer, public, parameter :: L_L2AUX         = l_km + 1
+  integer, public, parameter :: L_L2AUX         = l_hno3 + 1
   integer, public, parameter :: L_L2GP 	        = l_l2aux + 1
   integer, public, parameter :: L_LINEAR        = l_l2gp + 1
   integer, public, parameter :: L_LOGARITHMIC   = l_linear + 1
-  integer, public, parameter :: L_LOGP 	        = l_logarithmic + 1
-  integer, public, parameter :: L_M 	        = l_logp + 1
-  integer, public, parameter :: L_MAF 	        = l_m + 1
-  integer, public, parameter :: L_MAFS 	        = l_maf + 1
-  integer, public, parameter :: L_MB 	        = l_mafs + 1
-  integer, public, parameter :: L_METERS        = l_mb + 1
-  integer, public, parameter :: L_MHZ 	        = l_meters  + 1
-  integer, public, parameter :: L_MIF 	        = l_mhz + 1
-  integer, public, parameter :: L_MIFS 	        = l_mif + 1
-  integer, public, parameter :: L_MINUTES       = l_mifs + 1
-  integer, public, parameter :: L_N2O           = l_minutes + 1
+  integer, public, parameter :: L_N2O           = l_logarithmic + 1
   integer, public, parameter :: L_NCEP 	        = l_n2o + 1
   integer, public, parameter :: L_NEITHER       = l_ncep + 1
   integer, public, parameter :: L_NONE 	        = l_neither + 1
   integer, public, parameter :: L_O3            = l_none + 1
-  integer, public, parameter :: L_ORBITS        = l_o3 + 1
-  integer, public, parameter :: L_PA 	        = l_orbits + 1
-  integer, public, parameter :: L_PPBV 	        = l_pa + 1
-  integer, public, parameter :: L_PPMV 	        = l_ppbv + 1
-  integer, public, parameter :: L_PPTV 	        = l_ppmv + 1
-  integer, public, parameter :: L_PRESSURE      = l_pptv + 1
+  integer, public, parameter :: L_PRESSURE      = l_o3 + 1
   integer, public, parameter :: L_PTAN 	        = l_pressure + 1
-  integer, public, parameter :: L_RAD 	        = l_ptan + 1
-  integer, public, parameter :: L_RADIANCE      = l_rad  + 1
-  integer, public, parameter :: L_RADIANS       = l_radiance + 1
-  integer, public, parameter :: L_S 	        = l_radians + 1
-  integer, public, parameter :: L_SECONDS       = l_s + 1
-  integer, public, parameter :: L_TEMPERATURE   = l_seconds + 1
+  integer, public, parameter :: L_RADIANCE      = l_ptan  + 1
+  integer, public, parameter :: L_TEMPERATURE   = l_radiance + 1
   integer, public, parameter :: L_TEMPERATURE_PREC = l_temperature + 1
   integer, public, parameter :: L_THETA         = l_temperature_prec + 1
-  integer, public, parameter :: L_THZ 	        = l_theta + 1
-  integer, public, parameter :: L_TRUE 	        = l_thz + 1
-  integer, public, parameter :: L_VMR 	        = l_true + 1
-  integer, public, parameter :: L_WEIGHTED      = l_vmr + 1
-  integer, public, parameter :: L_ZETA 	        = l_weighted + 1
-  integer, public, parameter :: FIRST_LIT = L_ANGLE, LAST_LIT = L_ZETA
+  integer, public, parameter :: L_WEIGHTED      = l_theta + 1
+  integer, public, parameter :: LAST_LIT        = l_weighted
   integer, public :: LIT_INDICES(first_lit:last_lit)
 ! Parameter names:
   ! In GlobalSettings section:
@@ -184,21 +153,6 @@ module INIT_TABLES_MODULE
   integer, public, parameter :: FIRST_PARM = P_ALLOW_CLIMATOLOGY_OVERLOADS
   integer, public, parameter :: LAST_PARM = P_SCAN_UPPER_LIMIT
   integer, public :: PARM_INDICES(first_parm:last_parm)
-! Abstract physical quantities:
-  integer, public, parameter :: PHYQ_INVALID = 0 ! Invalid unit given by user
-  integer, public, parameter :: PHYQ_DIMENSIONLESS = 1 ! Dimensionless quantity
-  integer, public, parameter :: PHYQ_LENGTH = 2        ! Default meters
-  integer, public, parameter :: PHYQ_TIME = 3          ! Default seconds
-  integer, public, parameter :: PHYQ_PRESSURE = 4      ! Default millibars
-  integer, public, parameter :: PHYQ_TEMPERATURE = 5   ! Default Kelvins
-  integer, public, parameter :: PHYQ_VMR = 6           ! Default parts-per-one
-  integer, public, parameter :: PHYQ_ANGLE = 7         ! Default degrees
-  integer, public, parameter :: PHYQ_MAFS = 8          ! Default MAFs
-  integer, public, parameter :: PHYQ_MIFS = 9          ! Default MIFs
-  integer, public, parameter :: PHYQ_FREQUENCY = 10    ! Default MHz
-  integer, public, parameter :: PHYQ_ZETA = 11         ! log10(pressure/hPa)
-  integer, public, parameter :: FIRST_PHYQ = phyq_invalid, LAST_PHYQ = phyq_zeta
-  integer, public :: PHYQ_INDICES(first_phyq:last_phyq)
 ! Section identities:
   integer, public, parameter :: Z_CHUNKDIVIDE = 4
   integer, public, parameter :: Z_CONSTRUCT = 5
@@ -255,15 +209,13 @@ module INIT_TABLES_MODULE
 contains ! =====     Public procedures     =============================
 ! --------------------------------------------------  INIT_TABLES  -----
   subroutine INIT_TABLES
-  ! Put predefined identifiers into the symbol table.
-    ! Put non-enumeration type names into symbol table
-    data_type_indices(t_numeric) =         add_ident ( 'numeric' )
-    data_type_indices(t_numeric_range) =   add_ident ( 'numeric_range' )
-    data_type_indices(t_string) =          add_ident ( 'string' )
+  ! Put intrinsic predefined identifiers into the symbol table.
+    call init_intrinsic ( data_type_indices, lit_indices )
+
+  ! Put nonintrinsic predefined identifiers into the symbol table.
     ! Put enumeration type names into the symbol table
     data_type_indices(t_apriorisource) =   add_ident ( 'aprioriSource' )
     data_type_indices(t_aprioritype) =     add_ident ( 'aprioriType' )
-    data_type_indices(t_boolean) =         add_ident ( 'boolean' )
     data_type_indices(t_criticalmodule) =  add_ident ( 'criticalModule' )
     data_type_indices(t_hgridtype) =       add_ident ( 'hGridType' )
     data_type_indices(t_mergemethod) =     add_ident ( 'mergeMethod' )
@@ -276,6 +228,43 @@ contains ! =====     Public procedures     =============================
     data_type_indices(t_units) =           add_ident ( 'units' )
     data_type_indices(t_vgridcoord) =      add_ident ( 'vGridCoord' )
     data_type_indices(t_vgridtype) =       add_ident ( 'vGridType' )
+    ! Put enumeration literals into the symbol table:
+    lit_indices(l_angle) =                 add_ident ( 'angle' )
+    lit_indices(l_baseline) =              add_ident ( 'baseline' )
+    lit_indices(l_both) =                  add_ident ( 'both' )
+    lit_indices(l_climatology) =           add_ident ( 'climatology' )
+    lit_indices(l_clo) =                   add_ident ( 'clo' )
+    lit_indices(l_co) =                    add_ident ( 'co' )
+    lit_indices(l_dao) =                   add_ident ( 'DAO' )
+    lit_indices(l_direct) =                add_ident ( 'direct' )
+    lit_indices(l_either) =                add_ident ( 'either' )
+    lit_indices(l_explicit) =              add_ident ( 'explicit' )
+    lit_indices(l_extinction) =            add_ident ( 'extinction' )
+    lit_indices(l_fixed) =                 add_ident ( 'fixed' )
+    lit_indices(l_fractional) =            add_ident ( 'fractional' )
+    lit_indices(l_geodaltitude) =          add_ident ( 'geodaltitude' )
+    lit_indices(l_gph) =                   add_ident ( 'gph' )
+    lit_indices(l_gph_precision) =         add_ident ( 'gph_precision' )
+    lit_indices(l_h2o) =                   add_ident ( 'h2o' )
+    lit_indices(l_hcl) =                   add_ident ( 'hcl' )
+    lit_indices(l_height) =                add_ident ( 'height' )
+    lit_indices(l_hno3) =                  add_ident ( 'hno3' )
+    lit_indices(l_l2aux) =                 add_ident ( 'l2aux' )
+    lit_indices(l_l2gp) =                  add_ident ( 'l2gp' )
+    lit_indices(l_linear) =                add_ident ( 'linear' )
+    lit_indices(l_logarithmic) =           add_ident ( 'logarithmic' )
+    lit_indices(l_n2o) =                   add_ident ( 'n2o' )
+    lit_indices(l_ncep) =                  add_ident ( 'NCEP' )
+    lit_indices(l_neither) =               add_ident ( 'neither' )
+    lit_indices(l_none) =                  add_ident ( 'none' )
+    lit_indices(l_o3) =                    add_ident ( 'o3' )
+    lit_indices(l_pressure) =              add_ident ( 'pressure' )
+    lit_indices(l_ptan) =                  add_ident ( 'ptan' )
+    lit_indices(l_radiance) =              add_ident ( 'radiance' )
+    lit_indices(l_temperature) =           add_ident ( 'temperature' )
+    lit_indices(l_temperature_prec) =      add_ident ( 'temperature_precision' )
+    lit_indices(l_theta) =                 add_ident ( 'theta' )
+    lit_indices(l_weighted) =              add_ident ( 'weighted' )
     ! Put field names into the symbol table
     field_indices(f_apriori) =             add_ident ( 'apriori' )
     field_indices(f_autofill) =            add_ident ( 'autofill' )
@@ -317,80 +306,6 @@ contains ! =====     Public procedures     =============================
     field_indices(f_unpackoutput) =        add_ident ( 'unpackoutput' )
     field_indices(f_values) =              add_ident ( 'values' )
     field_indices(f_vgrid) =               add_ident ( 'vgrid' )
-    ! Put enumeration literals into the symbol table:
-    lit_indices(l_angle) =                 add_ident ( 'angle' )
-    lit_indices(l_baseline) =              add_ident ( 'baseline' )
-    lit_indices(l_both) =                  add_ident ( 'both' )
-    lit_indices(l_climatology) =           add_ident ( 'climatology' )
-    lit_indices(l_clo) =                   add_ident ( 'clo' )
-    lit_indices(l_co) =                    add_ident ( 'co' )
-    lit_indices(l_dao) =                   add_ident ( 'DAO' )
-    lit_indices(l_days) =                  add_ident ( 'days' )
-    lit_indices(l_deg) =                   add_ident ( 'deg' )
-    lit_indices(l_degrees) =               add_ident ( 'degrees' )
-    lit_indices(l_dimensionless) =         add_ident ( 'dimensionless' )
-    lit_indices(l_dimless) =               add_ident ( 'dimless' )
-    lit_indices(l_direct) =                add_ident ( 'direct' )
-    lit_indices(l_dl) =                    add_ident ( 'dl' )
-    lit_indices(l_either) =                add_ident ( 'either' )
-    lit_indices(l_explicit) =              add_ident ( 'explicit' )
-    lit_indices(l_extinction) =            add_ident ( 'extinction' )
-    lit_indices(l_false) =                 add_ident ( 'false' )
-    lit_indices(l_fixed) =                 add_ident ( 'fixed' )
-    lit_indices(l_fractional) =            add_ident ( 'fractional' )
-    lit_indices(l_geodaltitude) =          add_ident ( 'geodaltitude' )
-    lit_indices(l_ghz) =                   add_ident ( 'GHz' )
-    lit_indices(l_gph) =                   add_ident ( 'gph' )
-    lit_indices(l_gph_precision) =         add_ident ( 'gph_precision' )
-    lit_indices(l_h2o) =                   add_ident ( 'h2o' )
-    lit_indices(l_hcl) =                   add_ident ( 'hcl' )
-    lit_indices(l_height) =                add_ident ( 'height' )
-    lit_indices(l_hno3) =                  add_ident ( 'hno3' )
-    lit_indices(l_hours) =                 add_ident ( 'hours' )
-    lit_indices(l_hpa) =                   add_ident ( 'hPa' )
-    lit_indices(l_hz) =                    add_ident ( 'Hz' )
-    lit_indices(l_k) =                     add_ident ( 'k' )
-    lit_indices(l_khz) =                   add_ident ( 'KHz' )
-    lit_indices(l_km) =                    add_ident ( 'km' )
-    lit_indices(l_l2aux) =                 add_ident ( 'l2aux' )
-    lit_indices(l_l2gp) =                  add_ident ( 'l2gp' )
-    lit_indices(l_linear) =                add_ident ( 'linear' )
-    lit_indices(l_logarithmic) =           add_ident ( 'logarithmic' )
-    lit_indices(l_logp) =                  add_ident ( 'logp' )
-    lit_indices(l_m) =                     add_ident ( 'm' )
-    lit_indices(l_maf) =                   add_ident ( 'maf' )
-    lit_indices(l_mafs) =                  add_ident ( 'mafs' )
-    lit_indices(l_mb) =                    add_ident ( 'mb' )
-    lit_indices(l_meters) =                add_ident ( 'meters' )
-    lit_indices(l_mhz) =                   add_ident ( 'MHz' )
-    lit_indices(l_mif) =                   add_ident ( 'mif' )
-    lit_indices(l_mifs) =                  add_ident ( 'mifs' )
-    lit_indices(l_minutes) =               add_ident ( 'minutes' )
-    lit_indices(l_n2o) =                   add_ident ( 'n2o' )
-    lit_indices(l_ncep) =                  add_ident ( 'NCEP' )
-    lit_indices(l_neither) =               add_ident ( 'neither' )
-    lit_indices(l_none) =                  add_ident ( 'none' )
-    lit_indices(l_o3) =                    add_ident ( 'o3' )
-    lit_indices(l_orbits) =                add_ident ( 'orbits' )
-    lit_indices(l_pa) =                    add_ident ( 'pa' )
-    lit_indices(l_ppbv) =                  add_ident ( 'ppbv' )
-    lit_indices(l_ppmv) =                  add_ident ( 'ppmv' )
-    lit_indices(l_pptv) =                  add_ident ( 'pptv' )
-    lit_indices(l_pressure) =              add_ident ( 'pressure' )
-    lit_indices(l_ptan) =                  add_ident ( 'ptan' )
-    lit_indices(l_rad) =                   add_ident ( 'rad' )
-    lit_indices(l_radiance) =              add_ident ( 'radiance' )
-    lit_indices(l_radians) =               add_ident ( 'radians' )
-    lit_indices(l_s) =                     add_ident ( 's' )
-    lit_indices(l_seconds) =               add_ident ( 'seconds' )
-    lit_indices(l_temperature) =           add_ident ( 'temperature' )
-    lit_indices(l_temperature_prec) =      add_ident ( 'temperature_precision' )
-    lit_indices(l_theta) =                 add_ident ( 'theta' )
-    lit_indices(l_thz) =                   add_ident ( 'THz' )
-    lit_indices(l_true) =                  add_ident ( 'true' )
-    lit_indices(l_vmr) =                   add_ident ( 'vmr' )
-    lit_indices(l_weighted) =              add_ident ( 'weighted' )
-    lit_indices(l_zeta) =                  add_ident ( 'zeta' )
     ! Put parameter names into the symbol table
     parm_indices(p_allow_climatology_overloads) = &
                                            add_ident ( 'AllowClimatologyOverloads' )
@@ -407,19 +322,6 @@ contains ! =====     Public procedures     =============================
     parm_indices(p_overlap) =              add_ident ( 'Overlap' )
     parm_indices(p_scan_lower_limit) =     add_ident ( 'ScanLowerLimit' )
     parm_indices(p_scan_upper_limit) =     add_ident ( 'ScanUpperLimit' )
-    ! Put abstract physical quantities into the symbol table
-    phyq_indices(phyq_invalid) =           add_ident ( 'invalid' )
-    phyq_indices(phyq_dimensionless) =     add_ident ( 'dimensionless' )
-    phyq_indices(phyq_length) =            add_ident ( 'length' )
-    phyq_indices(phyq_time) =              add_ident ( 'time' )
-    phyq_indices(phyq_pressure) =          add_ident ( 'pressure' )
-    phyq_indices(phyq_temperature) =       add_ident ( 'temperature' )
-    phyq_indices(phyq_vmr) =               add_ident ( 'vmr' )
-    phyq_indices(phyq_angle) =             add_ident ( 'angle' )
-    phyq_indices(phyq_mafs) =              add_ident ( 'mafs' )
-    phyq_indices(phyq_mifs) =              add_ident ( 'mifs' )
-    phyq_indices(phyq_frequency) =         add_ident ( 'frequency' )
-    phyq_indices(phyq_zeta) =              add_ident ( 'zeta' )
     ! Put section names into the symbol table
     section_indices(z_chunkdivide) =       add_ident ( 'chunkdivide' )
     section_indices(z_construct) =         add_ident ( 'construct' )
@@ -704,10 +606,11 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.1  2000/10/12 00:35:57  vsnyder
+! Move intrinsic types and literals to "intrinsic" module
+!
 ! Revision 2.0  2000/09/05 18:57:05  ahanzel
 ! Changing file revision to 2.0.
 !
 ! Revision 1.1  2000/09/02 02:05:04  vsnyder
 ! Initial entry
-!
-
