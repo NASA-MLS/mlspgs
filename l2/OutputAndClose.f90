@@ -12,7 +12,7 @@ module OutputAndClose ! outputs all data from the Join module to the
   use Expr_M, only: Expr
   use Hdf, only: DFACC_CREATE  !, SFEND, SFSTART
   use INIT_TABLES_MODULE, only: F_FILE, F_HDFVERSION, &
-    & F_OVERLAPS, F_PACKED, F_QUANTITIES, F_TYPE, &
+    & F_METANAME, F_OVERLAPS, F_PACKED, F_QUANTITIES, F_TYPE, &
     & L_L2AUX, L_L2DGG, L_L2GP, L_L2PC, S_OUTPUT, S_TIME
   use Intrinsic, only: PHYQ_Dimensionless
   use L2AUXData, only: L2AUXDATA_T, WriteL2AUXData
@@ -109,6 +109,7 @@ contains ! =====     Public Procedures     =============================
     integer :: L2PCUNIT
     integer, parameter:: MAXQUANTITIESPERFILE=64        
     integer :: Metadata_error
+    character (len=32) :: meta_name    ! From the metaName= field
     character (len=32) :: Mnemonic
     character (len=256) :: Msg
     integer :: NAME                     ! string index of label on output
@@ -158,6 +159,7 @@ contains ! =====     Public Procedures     =============================
       l2gp_Version = 1
       l2aux_Version = 1
       hdfVersion = DEFAULT_HDFVERSION_WRITE
+      meta_name = ''
 
       son = subtree(spec_no,root)
       if ( node_id(son) == n_named ) then ! Is spec labeled?
@@ -177,6 +179,9 @@ contains ! =====     Public Procedures     =============================
           case ( f_file )
             call get_string ( sub_rosa(subtree(2,gson)), file_base )
             file_base = file_base(2:LEN_TRIM(file_base)-1) ! Parser includes quotes
+          case ( f_metaName )
+            call get_string ( sub_rosa(subtree(2,gson)), meta_name )
+            meta_name = file_base(2:LEN_TRIM(meta_name)-1) ! Parser includes quotes
           case ( f_type )
             output_type = decoration(subtree(2,gson))
           case ( f_hdfVersion )
@@ -275,7 +280,7 @@ contains ! =====     Public Procedures     =============================
 
             ! Write the metadata file
 
-            call get_l2gp_mcf ( file_base, l2gp_mcf, l2pcf )
+            call get_l2gp_mcf ( file_base, meta_name, l2gp_mcf, l2pcf  )
 
             if ( l2gp_mcf <= 0 ) then
 
@@ -727,6 +732,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.49  2002/02/22 01:16:17  pwagner
+! Uses new metaName field for mcf file hint
+!
 ! Revision 2.48  2002/01/29 23:49:38  pwagner
 ! Separate DEFAULT_HDFVERSION_(READ)(WRITE)
 !
