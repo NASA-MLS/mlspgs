@@ -21,7 +21,7 @@ module L1BData
     & GetHDF5DSRank, GetHDF5DSDims, GetHDF5DSQType
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR, &
     & MLSMSG_L1BREAD, MLSMSG_WARNING, MLSMSG_DEALLOCATE
-  use MLSStrings, only: CompressString
+  use MLSStrings, only: CompressString, NumStringElements
   use MoreTree, only: Get_Field_ID
   use Output_M, only: Output
   use String_Table, only: Get_String
@@ -37,6 +37,19 @@ module L1BData
 ! L1BData_T                       Quantities from an L1B data file
 ! NAME_LEN                        Max length of l1b sds array name
 ! PRECISIONSUFFIX                 Suffix stuck on end of array name if precision
+! NOERROR                         ReadL1BData had no error
+! NOCOUNTERMAFINDX                ReadL1BData unable to find counterMAF index
+! NOCOUNTERMAFID                  ReadL1BData unable to find counterMAF sds
+! NOQUANTITYINDEX                 ReadL1BData unable to find quantity index
+! NODATASETID                     ReadL1BData unable to find quantity sds
+! NODATASETRANK                   ReadL1BData unable to find quantity rank
+! FIRSTMAFNOTFOUND                ReadL1BData unable to requested first MAF
+! LASTMAFNOTFOUND                 ReadL1BData unable to requested last MAF
+! CANTREADCOUNTERMAF              ReadL1BData unable to read counterMAF
+! CANTALLOCATECHARS               ReadL1BData unable to allocate memory
+! CANTREAD3DFIELD                 ReadL1BData unable to read sds
+! CANTENDCOUNTERMAF               ReadL1BData unable to end access to counterMAF
+! CANTENDQUANTITY                 ReadL1BData unable to end access to quantity
 
 !     (subroutines and functions)
 ! AssembleL1BQtyName              Returns Quantity Name depending on hdfVersion
@@ -144,8 +157,13 @@ contains ! ============================ MODULE PROCEDURES ======================
   function AssembleL1BQtyName ( name, hdfVersion, isTngtQty, InstrumentName ) &
     & result(QtyName)
     ! Returns a QtyName to be found in the L1b file
+    ! If given InstrumentName, name should be a fragment:
+    ! e.g., name='VelECI' and InstrumentName='sc'
+    ! Without InstrumentName, name should be complete (in hdf4-style)
+    ! e.g., name='scVelECI' or name='R1A:118.B1F:PT.S0.FB25-1'
+    ! and isTngtQty is simply ignored
     character(len=*), intent(in) :: name        ! bare name; e.g. SolarZenith
-    integer, intent(in)          :: hdfVersion
+    integer, intent(in)          :: hdfVersion  ! which QtyName must conform to
     logical, intent(in)          :: isTngtQty   ! T or F
     character(len=*), intent(in), optional :: InstrumentName ! e.g. THz
     character(len=NameLen)       :: QtyName
@@ -154,7 +172,11 @@ contains ! ============================ MODULE PROCEDURES ======================
     character(len=1) :: head
     character(len=1) :: instr_tail
     character(len=1) :: tp_tail
+    character(len=4) :: my_instrument
+    character(len=NameLen) :: the_rest
+    logical          :: is_a_signal
     ! Executable code
+    is_a_signal = (NumStringElements(trim(name), .true., ':') > 2)
     if ( hdfVersion == HDFVERSION_5 ) then
       head = '/'
       instr_tail = '/'
@@ -169,8 +191,39 @@ contains ! ============================ MODULE PROCEDURES ======================
     endif
     if ( present(InstrumentName) ) then
       QtyName = head // trim(InstrumentName) // instr_tail
-    else
+    elseif ( is_a_signal .or. hdfVersion /= HDFVERSION_5 ) then
       QtyName = head
+    else
+      ! Need only to convert complete hdf4-name to hdf5-name
+      ! This means we must parse hdf4-name fully, however
+      QtyName = head
+      ! 1st--is there an instrument prefixed to name?
+      if ( name(1:2) == 'sc' ) then
+        my_instrument = 'sc'
+        the_rest = name(3:)
+      elseif ( name(1:4) == 'GHz.' ) then
+        my_instrument = 'GHz'
+        the_rest = name(5:)
+      elseif ( name(1:4) == 'THz.' ) then
+        my_instrument = 'THz'
+        the_rest = name(5:)
+      else
+        my_instrument = ' '
+        the_rest = name
+      endif
+      ! 2nd--Does the_rest start with 'tp'?
+      if ( my_instrument == ' ' ) then
+        QtyName = '/' // trim(name)
+      elseif ( the_rest(1:2) /= 'tp' ) then
+        QtyName = '/' // trim(my_instrument) // &
+          & '/' // trim(the_rest)
+      else
+        QtyName = '/' // trim(my_instrument) // &
+          & '/' // 'tp' // &
+          & '/' // trim(the_rest(3:))
+      endif
+      ! We're done
+      return
     endif
     if ( isTngtQty ) then
       QtyName = trim(QtyName) // 'tp' // tp_tail
@@ -969,6 +1022,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.27  2002/10/29 18:50:03  pwagner
+! Modified AssembleL1BQtyName to convert complete hdf4-style names to hdf5
+!
 ! Revision 2.26  2002/10/10 23:50:57  pwagner
 ! Passed 1st tests to read l1bdata from hdf5
 !
