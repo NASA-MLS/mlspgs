@@ -311,8 +311,9 @@ contains ! ============= Public Procedures ==========================
           ! Write out the dimensions for the quantity and the edges
           write (unit,*) qt%noChans, qt%noSurfs, qt%noInstances,&
             &  'noChans, noSurfs, noInstances'
-          write (unit,*) qt%coherent, qt%stacked, &
-            &  'coherent, stacked'
+          call get_string ( lit_indices(qt%verticalCoordinate), line )
+          write (unit,*) qt%coherent, qt%stacked, trim(line), &
+            &  ' coherent, stacked, verticalCoordinate'
 !           if ( all (qt%verticalCoordinate /= (/ l_none, l_zeta /)) &
 !             & .and. (vector==1) .and. (qt%quantityType /= l_ptan) ) &
 !             &   call MLSMessage(MLSMSG_Error,ModuleName, &
@@ -528,13 +529,11 @@ contains ! ============= Public Procedures ==========================
     type (VectorTemplate_T) :: VT       ! Temporary template for vector
     type (Vector_T) :: V                ! Temporary vector
     type (Decls) :: Decl                ! From tree
-    logical, parameter :: DEBUG=.false.
     
     ! Executable code
     
     eof = .false. 
     nullify ( sigInds, qtInds )
-      toggle(tab) = DEBUG
     read (unit,*, IOSTAT=status) line
     if (status == -1 ) then
       eof = .true.
@@ -545,22 +544,6 @@ contains ! ============= Public Procedures ==========================
     read (unit,*) noQuantities
     call allocate_test ( qtInds, noQuantities, 'qtInds', ModuleName )
     
-    if(DEBUG) then
-          print *, 'unit: ', unit
-          print *, 'noQuantities: ', noQuantities
-!          CALL output('Declaration table:', advance='yes')
-!          call DUMP_DECL
-!          CALL output('Symbol table:', advance='yes')
-!          call DUMP_SYMBOL_CLASS(t_identifier)
-          stringIndex = enter_terminal ( 'vmr', t_identifier, DEBUG )
-          decl = get_decl ( stringIndex, type=enum_value )
-          print *, 'Test of enter_terminal and get_decl parser functions'
-          print *, 'literal: ', 'vmr'
-          print *, 'decl%type: ', decl%type
-          print *, 'decl%units: ', decl%units
-          print *, 'decl%tree: ', decl%tree
-          print *, 'decl%prior: ', decl%prior
-    endif
     ! Loop over quantities
     do quantity = 1, noQuantities
       
@@ -575,7 +558,7 @@ contains ! ============= Public Procedures ==========================
         call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'An io-error occured' )
       end if
-      stringIndex = enter_terminal ( trim(line), t_identifier, DEBUG )
+      stringIndex = enter_terminal ( trim(line), t_identifier )
       decl = get_decl ( stringIndex, type=enum_value )
       qt%quantityType = decl%units
       qt%name = stringIndex
@@ -721,6 +704,10 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.30  2002/03/13 22:00:53  livesey
+! Added output of vertical coordinate for xStar/yStar.
+! Note reading routine deduces value I think.
+!
 ! Revision 2.29  2002/03/13 01:28:48  livesey
 ! Commented out an error message I think I don't need
 !
