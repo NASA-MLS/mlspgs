@@ -1,5 +1,4 @@
-
-! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !==========================================
@@ -62,6 +61,7 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
   CALL MLSMessage (MLSMSG_Info, ModuleName, & 
        & 'EOS MLS Level 3 data processing started')
   
+   GlobalAttributes%ProcessLevel = '3-daily'
   ! Fill structures with input data from the PCF and L3CF.
   
   CALL OpenAndInitialize(pcf, cf, cfProd, cfDef, anText, avgPer)
@@ -165,6 +165,9 @@ END PROGRAM MLSL3D
 !=================
 
 ! $Log$
+! Revision 1.13  2003/09/15 18:30:48  cvuu
+! Read OrbitNumber and OrbitPeriod from L2GP files
+!
 ! Revision 1.12  2003/03/22 02:45:34  jdone
 ! added HDFEOS2/HDFEOS5 functionality; HDFEOS2 is default
 !

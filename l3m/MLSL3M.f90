@@ -20,6 +20,7 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
   USE mon_Open, ONLY: PCFMData_T, OpenMON
   USE mon_Out, ONLY: CreateFlags_T, OutputDg, OutputStd, OutputMON
   USE MonthlyProcessModule, ONLY: MonthlyCoreProcessing
+  USE PCFHdr, ONLY: GlobalAttributes
 
   IMPLICIT NONE
 
@@ -78,6 +79,7 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
   CALL MLSMessage (MLSMSG_Info, ModuleName, &
        & 'EOS MLS Level 3 Monthly data processing started')
 
+   GlobalAttributes%ProcessLevel = '3-monthly'
   ! Fill structures with input data from the PCF and L3CF.
 
   CALL OpenMON(pcf, cf, cfStd, cfDg, cfDef, anText)
@@ -214,6 +216,9 @@ END PROGRAM MLSL3M
 !=================
 
 ! $Log$
+! Revision 1.13  2003/04/06 02:25:59  jdone
+! added HDFEOS5 capability
+!
 ! Revision 1.12  2002/08/22 23:33:05  pwagner
 ! Made ready for hdf5
 !
