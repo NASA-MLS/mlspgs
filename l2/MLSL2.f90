@@ -1,8 +1,8 @@
-
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 program MLSL2
+  use Allocate_Deallocate, only: SET_GARBAGE_COLLECTION
   use DECLARATION_TABLE, only: ALLOCATE_DECL, DEALLOCATE_DECL, DUMP_DECL
   use INIT_TABLES_MODULE, only: INIT_TABLES
   use L2PARINFO, only: PARALLEL, INITPARALLEL
@@ -11,7 +11,8 @@ program MLSL2
   use MACHINE ! At least HP for command lines, and maybe GETARG, too
   use MLSL2Options, only: PCF_FOR_INPUT, PCF, OUTPUT_PRINT_UNIT, &
     & QUIT_ERROR_THRESHOLD, TOOLKIT, CREATEMETADATA, &
-    & PENALTY_FOR_NO_METADATA, PUNISH_FOR_INVALID_PCF, NORMAL_EXIT_STATUS
+    & PENALTY_FOR_NO_METADATA, PUNISH_FOR_INVALID_PCF, NORMAL_EXIT_STATUS, &
+    & GARBAGE_COLLECTION_BY_CHUNK
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, &
     & ADD_TO_SECTION_TIMING, DUMP_SECTION_TIMINGS
   use MLSMessageModule, only: MLSMessage, MLSMessageConfig, MLSMSG_Debug, &
@@ -85,6 +86,7 @@ program MLSL2
   logical :: DUMP_TREE = .false.   ! Dump tree after parsing
   integer :: ERROR                 ! Error flag from check_tree
   integer :: FIRST_SECTION         ! Index of son of root of first n_cf node
+  logical :: garbage_collection_by_dt = .false. ! Collect garbage after each deallocate_test?
   integer :: I                     ! counter for command line arguments
   integer :: J                     ! index within option
   character(len=255) :: LINE       ! Into which is read the command args
@@ -162,6 +164,10 @@ program MLSL2
         checkBlocks = switch
       else if ( line(3+n:14+n) == 'countChunks ' ) then
         countChunks = switch
+      else if ( line(3+n:7+n) == 'gcch ' ) then
+        garbage_collection_by_chunk = switch
+      else if ( line(3+n:7+n) == 'gcdt ' ) then
+        garbage_collection_by_dt = switch
       else if ( line(3+n:6+n) == 'kit ' ) then
         MLSMessageConfig%useToolkit = switch
       else if ( line(3+n:7+n) == 'meta ' ) then
@@ -278,6 +284,7 @@ program MLSL2
   if( index(switches, '?') /= 0 .or. index(switches, 'hel') /= 0 ) then
    call switch_usage
   end if
+  call Set_garbage_collection(garbage_collection_by_dt)
 ! Done with command-line parameters; enforce cascading negative options
 ! (waited til here in case any were (re)set on command line)
 
@@ -458,6 +465,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.66  2002/02/05 00:44:03  pwagner
+! Added garbage collection stuff
+!
 ! Revision 2.65  2002/01/18 18:55:25  livesey
 ! Added the --chunk option
 !
