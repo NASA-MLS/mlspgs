@@ -14,7 +14,7 @@ module PFADataBase_m
   public :: PFAData_t, PFAData
   public :: AddPFADatumToDatabase
   public :: Destroy_PFADataBase, Dump_PFADataBase, Dump
-  public :: Write_PFADataBase, Read_PFADataBase
+  public :: Write_PFADatum, Write_PFADataBase, Read_PFADataBase
 
   interface Dump
     module procedure Dump_PFADatum
@@ -158,15 +158,73 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine Dump_PFADatum
 
+  ! -------------------------------------------  Read_PFADatabase  -----
+  subroutine Read_PFADatabase ( FileName )
+    character(len=*), intent(in) :: FileName
+  end subroutine Read_PFADatabase
+
   ! ------------------------------------------  Write_PFADatabase  -----
   subroutine Write_PFADatabase ( FileName )
     character(len=*), intent(in) :: FileName
   end subroutine Write_PFADatabase
 
-  ! -------------------------------------------  Read_PFADatabase  -----
-  subroutine Read_PFADatabase ( FileName )
-    character(len=*), intent(in) :: FileName
-  end subroutine Read_PFADatabase
+  ! ---------------------------------------------  Write_PDADatum  -----
+  subroutine Write_PFADatum ( PFADatum, FileName, FileType )
+
+    ! Write the PFADatum on FileName using the format given by FileType
+    ! If FileType is "UNFORMATTED" (case insensitive), the output file
+    ! name consists of the part of FileName before "$" (or all of it if
+    ! "$" does not appear, followed by the pfaDatum%signal, followed by
+    ! the part of FileName after the "$".
+
+    use IO_Stuff, only: Get_Lun
+    use Machine, only: IO_Error
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MLSStrings, only: Capitalize
+    use String_Table, only: Get_String, String_Length
+
+    type(PFAData_t), intent(in) :: PFADatum
+    character(len=*), intent(in) :: FileName, FileType
+
+    integer :: I, IOSTAT, L, Lun
+    character(len=len(fileName)+len_trim(pfaDatum%signal)) :: MyFile
+    character(len=31) :: Molecule
+    character(len=5) :: What
+
+    if ( capitalize(fileType) == 'UNFORMATTED' ) then
+      i = index(fileName,'$')
+      if ( i == 0 ) then
+        myFile = trim(fileName) // trim(pfaDatum%signal)
+      else
+        myFile = fileName(:i-1) // trim(pfaDatum%signal) // trim(fileName(i+1:))
+      end if
+      call get_lun ( lun )
+      what = 'open'
+      open ( lun, file=trim(myFile), form='unformatted', iostat=iostat, err=9 )
+      what = 'write'
+      write ( lun, iostat=iostat, err=9 ) pfaDatum%tGrid%noSurfs, pfaDatum%vGrid%noSurfs, &
+        & size(pfaDatum%molecules), pfaDatum%velLin, &
+        & len_trim(pfaDatum%signal), trim(pfaDatum%signal)
+      write ( lun, iostat=iostat, err=9 ) pfaDatum%absorption, pfaDatum%dAbsDwc, &
+        & pfaDatum%dAbsDnc, pfaDatum%dAbsDnu
+      do i = 1, size(pfaDatum%molecules)
+        l = string_length(pfaDatum%molecules(i))
+        call get_string ( pfaDatum%molecules(i), molecule )
+        write ( lun, iostat=iostat, err=9 ) l, molecule(:l)
+      end do
+      what = 'close'
+      close ( lun, iostat=iostat, err=9 )
+    else
+      call MLSMessage ( MLSMSG_Error, moduleName, &
+        & 'Unsupported file format in Write_PFADatum' )
+    end if
+
+    return
+
+9   call io_error ( 'Unable to ' // trim(what) // ' output file ', iostat, myFile )
+    call MLSMessage ( MLSMSG_Error, moduleName, 'Execution terminated' )
+
+  end subroutine Write_PFADatum
 
 ! =====     Private Procedures     =====================================
 
@@ -177,6 +235,9 @@ contains ! =====     Public Procedures     =============================
 end module PFADataBase_m
 
 ! $Log$
+! Revision 2.3  2004/06/17 00:18:23  vsnyder
+! Added Write_PFADatum
+!
 ! Revision 2.2  2004/06/09 17:53:13  vsnyder
 ! OOPS -- got the module name wrong in the new file
 !
