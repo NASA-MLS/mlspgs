@@ -321,7 +321,7 @@ contains
   subroutine Find_O2
   ! Find the O2 in the spectroscopy catalog
 
-    use Molecules, only: l_o2, sp_o2
+    use Molecules, only: l_o2
     use SpectroscopyCatalog_m, only: Catalog
 
     do o2_in_catalog = 1, size(catalog)
@@ -376,6 +376,9 @@ contains
 end module O2_Abs_CS_M
 
 ! $Log$
+! Revision 2.5  2003/05/17 00:30:39  pwagner
+! Ousted last bogus ref to sp_o2
+!
 ! Revision 2.4  2003/05/16 23:52:53  livesey
 ! Now uses molecule indices rather than spectags
 !
