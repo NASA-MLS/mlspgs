@@ -2,7 +2,7 @@ module Init_MLSSignals_m
 
   use INTRINSIC, only: Add_Ident, Begin, D, F, L, Last_Intrinsic_Lit, N, &
     & NADP, NDP, NP, NR, S, T, T_Boolean, T_Last_Intrinsic, T_Numeric, &
-    & T_String, Z
+    & T_Numeric_Range, T_String, Z
 
   public
   private :: Make_Tree
@@ -27,8 +27,7 @@ module Init_MLSSignals_m
   integer, parameter :: F_channels          = f_channel + 1
   integer, parameter :: F_deferred          = f_channels + 1
   integer, parameter :: F_first             = f_deferred + 1
-  integer, parameter :: F_frequencies       = f_first + 1
-  integer, parameter :: F_frequency         = f_frequencies + 1
+  integer, parameter :: F_frequency         = f_first + 1
   integer, parameter :: F_last              = f_frequency + 1
   integer, parameter :: F_lo                = f_last + 1
   integer, parameter :: F_module            = f_lo + 1
@@ -42,8 +41,7 @@ module Init_MLSSignals_m
   integer, parameter :: F_suffix            = f_step + 1
   integer, parameter :: F_switch            = f_suffix + 1
   integer, parameter :: F_width             = f_switch + 1
-  integer, parameter :: F_widths            = f_width + 1
-  integer, parameter :: Last_Signal_Field   = f_widths
+  integer, parameter :: Last_Signal_Field   = f_width
 
   ! Literals used in signal specifications:
   integer, parameter :: L_FOLDED            = last_intrinsic_lit + 1
@@ -81,7 +79,6 @@ contains
     field_indices(f_channels) =            add_ident ( 'channels' )
     field_indices(f_deferred) =            add_ident ( 'deferred' )
     field_indices(f_first) =               add_ident ( 'first' )
-    field_indices(f_frequencies) =         add_ident ( 'frequencies' )
     field_indices(f_frequency) =           add_ident ( 'frequency' )
     field_indices(f_last) =                add_ident ( 'last' )
     field_indices(f_lo) =                  add_ident ( 'lo' )
@@ -96,7 +93,6 @@ contains
     field_indices(f_suffix) =              add_ident ( 'suffix' )
     field_indices(f_switch) =              add_ident ( 'switch' )
     field_indices(f_width) =               add_ident ( 'width' )
-    field_indices(f_widths) =              add_ident ( 'widths' )
     ! Put literal names into the symbol table
     lit_indices(l_folded) =                add_ident ( 'folded' )
     lit_indices(l_lower) =                 add_ident ( 'lower' )
@@ -162,14 +158,13 @@ contains
              begin, f+f_module, s+s_module, n+n_field_spec, &
              nadp+n_spec_def, &
       begin, s+s_spectrometerType, &
+             begin, f+f_channels, t+t_numeric_range, n+n_field_type, &
              begin, f+f_deferred, t+t_boolean, n+n_field_type, &
              begin, f+f_first, t+t_numeric, n+n_field_type, &
-             begin, f+f_frequencies, t+t_numeric, n+n_field_type, &
              begin, f+f_last, t+t_numeric, n+n_field_type, &
              begin, f+f_start, t+t_numeric, n+n_field_type, &
              begin, f+f_step, t+t_numeric, n+n_field_type, &
              begin, f+f_width, t+t_numeric, n+n_field_type, &
-             begin, f+f_widths, t+t_numeric, n+n_field_type, &
              ndp+n_spec_def, &
       begin, s+s_band, &                ! Must be after radiometer and spectrometerType
              begin, f+f_suffix, t+t_string, n+n_field_type, &
@@ -179,10 +174,9 @@ contains
              ndp+n_spec_def, &
       begin, s+s_signal, &              ! Must be after band
              begin, f+f_band, s+s_band, nr+n_field_spec, &
+             begin, f+f_channels, t+t_numeric_range, n+n_field_type, &
              begin, f+f_sideband, t+t_sideband, n+n_field_type, &
              begin, f+f_spectrometer, t+t_numeric, nr+n_field_type, &
-             begin, f+f_frequencies, t+t_numeric, n+n_field_type, &
-             begin, f+f_widths, t+t_numeric, n+n_field_type, &
              begin, f+f_switch, t+t_numeric, nr+n_field_type, &
              ndp+n_spec_def /) )
 
@@ -262,6 +256,9 @@ contains
 end module Init_MLSSignals_m
 
 ! $Log$
+! Revision 2.6  2001/03/28 19:50:43  vsnyder
+! Remove frequencies and widths fields
+!
 ! Revision 2.5  2001/03/16 02:00:40  vsnyder
 ! Add support for literals to Make_Tree (duh!)
 !
