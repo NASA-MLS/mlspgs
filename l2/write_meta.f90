@@ -301,7 +301,9 @@ contains
     integer :: Version
     logical :: mySetAlias
     integer, parameter :: FILEACCESSTYPE = DFACC_RDWR
+    ! The following are for establishing soft links between field names & type2
     character(len=*), parameter :: TYPE2FIELDNAME = 'L2gpValue'
+    character(len=*), parameter :: TYPE2PRECISIONNAME = 'L2gpPrecision'
 
     ! Externals
 
@@ -344,6 +346,13 @@ contains
           call announce_error ( 0, &
             & "Error in setting alias from " // TYPE2FIELDNAME // &
               & ' to ' // trim(field_name) )
+        end if
+        returnStatus = he5_SWsetalias(sw_id, TYPE2PRECISIONNAME, &
+         & trim(field_name) // ' Precision')
+        if ( returnStatus /= PGS_S_SUCCESS ) then 
+          call announce_error ( 0, &
+            & "Error in setting alias from " // TYPE2PRECISIONNAME // &
+              & ' to ' // trim(field_name) // ' Precision' )
         end if
         returnStatus = he5_SWdetach(sw_id)
         if ( returnStatus /= PGS_S_SUCCESS ) then 
@@ -1562,6 +1571,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.34  2003/01/14 00:42:24  pwagner
+! Creates soft link to type2precisionname, too
+!
 ! Revision 2.33  2002/12/11 22:21:05  pwagner
 ! Makes soft link to data field name from L2gpValue field in hdf5 l2gp
 !
