@@ -9,17 +9,19 @@ module L2ParInfo
   use dump_0, only: DUMP
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_Allocate, &
     & MLSMSG_Deallocate, MLSMSG_INFO, PVMERRORMESSAGE
+  use MLSSets, only: FINDFIRST
+  use MLSStats1, only: ALLSTATS
+  use MLSStrings, only: LowerCase
+  use MLSStringLists, only: GetUniqueInts, GetUniqueStrings
+  use MorePVM, only: PVMPACKSTRINGINDEX, PVMUNPACKSTRINGINDEX
+  use Output_M, only: Output
   use PVM, only: INFOTag, &
     & PVMFMYTID, PVMFINITSEND, PVMF90PACK, PVMFSEND, &
     & PVMDATADEFAULT, PVMF90UNPACK, NEXTPVMARG, PVMTASKEXIT, SIG_ABOUTTODIE
   use PVMIDL, only: PVMIDLPACK
-  use MorePVM, only: PVMPACKSTRINGINDEX, PVMUNPACKSTRINGINDEX
-  use VectorsModule, only: VECTORVALUE_T
   use QuantityPVM, only: PVMSENDQUANTITY
-  use MLSStrings, only: LowerCase
-  use MLSStringLists, only: GetUniqueInts, GetUniqueStrings
-  use Output_M, only: Output
   use Toggles, only: SWITCHES
+  use VectorsModule, only: VECTORVALUE_T
 
   implicit none
   private
@@ -53,6 +55,9 @@ module L2ParInfo
 
   ! Parameters
 
+  ! So requests don't pile up delaying notification of the finishings
+  integer, parameter :: DELAYFOREACHSLAVEDWREQUEST   = 0 ! unneeded 200000
+  ! To leave time for slaves to flush stdout before master closes pvm
   integer, parameter :: DELAYFOREACHSLAVESTDOUTBUFFER   = 500
   integer, parameter :: FIXDELAYFORSLAVESTDOUTBUFFER   = 500000
   integer, parameter :: CHUNKTAG   = InfoTag + 1  ! Master => slave: chunkinfo
@@ -130,7 +135,9 @@ module L2ParInfo
     integer :: TICKET=0                 ! What ticket number is it
     integer :: VALUE=0                  ! Workspace for master
     integer :: STATUS=DW_INVALID        ! One of the DW_... above
-    real    :: WHENFIRSTPERMITTED
+    real    :: WHENMADE
+    real    :: WHENGRANTED
+    real    :: WHENFINISHED = -999.99
   end type DirectWriteRequest_T
 
   ! This datatype describes the machines that will host parallel tasks
@@ -399,18 +406,61 @@ contains ! ==================================================================
       call output ( 'in Progress', advance='yes' )
     case ( dw_completed )
       call output ( 'completed', advance='yes' )
+    case default
+      call output ( request%status, advance='no' )
+      call output ( ' (unrecognized)', advance='yes' )
     end select
+    if ( request%whenFinished < 0. ) return
+    call output ( 'grant delay: ' )
+    call output ( request%whenGranted - request%whenMade, advance='yes' )
+    call output ( 'writing time: ' )
+    call output ( request%whenFinished - request%whenGranted, advance='yes' )
   end subroutine DumpDirectWriteRequest
 
   ! --------------------------------------- DumpAllDirectWriteRequests -----
-  subroutine DumpAllDirectWriteRequests ( requests )
+  subroutine DumpAllDirectWriteRequests ( requests, statsOnly )
     type(DirectWriteRequest_T), intent(in), dimension(:) :: REQUESTS
-    integer :: I
+    logical, optional, intent(in) :: statsOnly
+    ! Internal variables
+    logical :: mystatsOnly
+    integer :: I, numRequests
+    real :: min, max, mean, stddev, rms
     ! Executable code
+    mystatsOnly = .false.
+    if ( present(statsOnly) ) mystatsOnly = statsOnly
+    numRequests = FindFirst(requests%status, DW_INVALID) - 1
+    if ( numRequests < 1 ) then
+      call output ( 'No valid directWrite requests among ' )
+      call output ( size(requests) )
+      call output ( ' direct write requests', advance='yes' )
+      return
+    endif
     call output ( 'Dumping ' )
-    call output ( size(requests) )
+    call output ( numRequests )
     call output ( ' direct write requests', advance='yes' )
-    do i = 1, size(requests)
+    call allstats(requests(1:numRequests)%whenGranted &
+      & - requests(1:numRequests)%whenMade, &
+      & min=min, max=max, mean=mean, stddev=stddev, rms=rms)
+    call output ( 'grant delay statistics: ', advance='yes' )
+    call output ( 'min: ', advance='no' )
+    call output ( min, advance='no' )
+    call output ( '   max: ', advance='no' )
+    call output ( max, advance='no' )
+    call output ( '   mean: ', advance='no' )
+    call output ( mean, advance='yes' )
+    call allstats(requests(1:numRequests)%whenFinished &
+      & - requests(1:numRequests)%whenGranted, &
+      & min=min, max=max, mean=mean, stddev=stddev, rms=rms)
+    call output ( 'writing time statistics: ', advance='yes' )
+    call output ( 'min: ', advance='no' )
+    call output ( min, advance='no' )
+    call output ( '   max: ', advance='no' )
+    call output ( max, advance='no' )
+    call output ( '   mean: ', advance='no' )
+    call output ( mean, advance='yes' )
+    if ( mystatsOnly ) return
+    ! Now dump each dw request (this could be   h u g e  ) !    
+    do i = 1, numRequests ! size(requests)
       call output ( 'Request #' )
       call output ( i, advance='yes' )
       call dump ( requests(i) )
@@ -606,6 +656,8 @@ contains ! ==================================================================
     integer :: INFO                     ! From PVM
     integer :: SIGNAL                   ! From Master
 
+    ! External (C) function
+    external :: Usleep
     ! Executable code
 
     ! Pack and dispatch
@@ -620,6 +672,8 @@ contains ! ==================================================================
     if ( info /= 0 ) &
       & call PVMErrorMessage ( info, "packing direct write request node" )
 
+    if ( DELAYFOREACHSLAVEDWREQUEST > 0 ) &
+      & call usleep ( DELAYFOREACHSLAVEDWREQUEST )
     call PVMFSend ( parallel%masterTid, InfoTag, info )
     if ( info /= 0 ) &
       & call PVMErrorMessage ( info, "sending direct write request packet" )
@@ -636,6 +690,8 @@ contains ! ==================================================================
     integer :: INFO                     ! From PVM
     integer :: SIGNAL                   ! From Master
 
+    ! External (C) function
+    external :: Usleep
     ! Executable code
 
     ! Pack and dispatch
@@ -651,6 +707,8 @@ contains ! ==================================================================
     if ( info /= 0 ) &
       & call PVMErrorMessage ( info, "packing direct write request node" )
 
+    if ( DELAYFOREACHSLAVEDWREQUEST > 0 ) &
+      & call usleep ( DELAYFOREACHSLAVEDWREQUEST )
     call PVMFSend ( parallel%masterTid, InfoTag, info )
     if ( info /= 0 ) &
       & call PVMErrorMessage ( info, "sending direct write request packet" )
@@ -767,6 +825,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.45  2005/03/24 21:20:33  pwagner
+! New fileds in directWriteRequests figure grant delay, writing time
+!
 ! Revision 2.44  2005/03/15 23:53:03  pwagner
 ! PVMERRORMESSAGE now part of MLSMessageModule; INFOTag, SIG_ABOUTTODIE from lib/PVM
 !
