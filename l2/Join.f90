@@ -10,7 +10,7 @@ module Join                     ! Join together chunk based data.
   use INIT_TABLES_MODULE, only: F_COMPAREOVERLAPS, F_FILE, F_OUTPUTOVERLAPS, &
     & F_PRECISION, F_PREFIXSIGNAL, F_SOURCE, F_SDNAME, F_SWATH, FIELD_FIRST, &
     & FIELD_LAST
-  use INIT_TABLES_MODULE, only: L_PRESSURE, L_NONE, &
+  use INIT_TABLES_MODULE, only: L_PRESSURE, &
     & L_TRUE, L_ZETA, S_L2AUX, S_L2GP, S_TIME
   use Intrinsic, ONLY: FIELD_INDICES, L_NONE, L_CHANNEL, L_GEODANGLE, &
     & L_INTERMEDIATEFREQUENCY, L_LSBFREQUENCY, L_MAF, L_MIF, L_USBFREQUENCY
@@ -642,6 +642,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.42  2001/06/19 22:52:31  pwagner
+! l_none  no longer got from init_tables_module
+!
 ! Revision 2.41  2001/05/23 21:59:43  livesey
 ! Interim version, almost there
 !
