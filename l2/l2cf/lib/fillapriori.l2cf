@@ -46,9 +46,14 @@ begin Fill
     temperatureQuantity=apriori.temperature, method=RHIFromH2O, /dontMask
 
   ;; --------------------------------------------- tpPressure
-  Fill, quantity=apriori.tpPressure, method=wmoTropopause, $
-    temperatureQuantity=apriori.temperature, refGPHQuantity=apriori.refGPH, $
-    internalVgrid=vGridWMO
+  !ifdef(tpPressure,{
+    Fill, quantity=apriori.tpPressure, method=explicit, $
+      explicitValues=!tpPressure, /spread
+  }{
+    Fill, quantity=apriori.tpPressure, method=wmoTropopause, $
+      temperatureQuantity=apriori.temperature, refGPHQuantity=apriori.refGPH, $
+      internalVgrid=vGridWMO
+  })
   Fill, quantity=apriori.oneHundredHPa, method=explicit, explicitValues=100hPa, /spread
   }) ;; End if flagGotClimatology
 
