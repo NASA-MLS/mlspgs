@@ -14,7 +14,7 @@ module QuantityTemplates         ! Quantities within vectors
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error, MLSMSG_Warning
   use Intrinsic, only: L_None, LIT_INDICES, PHYQ_INDICES
-  use Output_m, only: Output
+  use Output_m, only: NEWLINE, Output
   use String_Table, only: DISPLAY_STRING, Get_String
   use TOGGLES, only: SWITCHES
 
@@ -580,6 +580,30 @@ contains ! =====     Public Procedures     =============================
     endif
     call output ( ' InstanceLen = ' )
     call output ( quantity_template%InstanceLen, advance='yes' )
+    call output ( ' sharedHGrid = ' )
+    call output ( quantity_template%sharedHGrid, advance='no' )
+    if ( quantity_template%sharedHGrid  ) then
+      call output ( ' hGridIndex = ' )
+      call output ( quantity_template%hGridIndex, advance='yes' )
+    else
+      call newline
+    endif
+    call output ( ' sharedVGrid = ' )
+    call output ( quantity_template%sharedVGrid, advance='no' )
+    if ( quantity_template%sharedVGrid  ) then
+      call output ( ' vGridIndex = ' )
+      call output ( quantity_template%vGridIndex, advance='yes' )
+    else
+      call newline
+    endif
+    call output ( ' sharedFGrid = ' )
+    call output ( quantity_template%sharedFGrid, advance='no' )
+    if ( quantity_template%sharedFGrid  ) then
+      call output ( ' fGridIndex = ' )
+      call output ( quantity_template%fGridIndex, advance='yes' )
+    else
+      call newline
+    endif
     if ( myDetails < 0 ) then
       call dump ( quantity_template%surfs, '  Surfs = ' )
       call dump ( quantity_template%phi, '      Phi = ' )
@@ -857,7 +881,7 @@ contains ! =====     Public Procedures     =============================
     else
       nullify ( qty%surfIndex, qty%chanIndex )
     end if
-    if ( index(switches, 'qtmp') > 0 ) call dump(qty, details=0, noL2CF=.true.)
+    ! if ( index(switches, 'qtmp') > 0 ) call dump(qty, details=0, noL2CF=.true.)
   end subroutine SetupNewQuantityTemplate
 
 !=============================================================================
@@ -870,6 +894,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.38  2004/08/16 17:07:11  pwagner
+! qtmp switch dumps quantity template after setup
+!
 ! Revision 2.37  2004/05/01 04:07:44  vsnyder
 ! Rearranged some dumping stuff
 !
