@@ -36,6 +36,8 @@
   !l2dggJoin(bro_650,bro,BrO-650)
   !l2dggJoin(so2_204,so2,SO2-204)
   !l2dggJoin(so2_640,so2,SO2-640)
+  !l2dggJoin(cldRadMin,cldRadMin,CldRadMin)
+  !l2dggJoin(cldRadMax,cldRadMax,CldRadMax)
   !define(Alldgg, {joined_temp_118_a,joined_temp_118_b,joined_temp_240,$
 	joined_gph_118_a,joined_gph_118_b,joined_gph_240,joined_trop_h2o_118,$
 	joined_trop_h2o_190,joined_trop_h2o_240,joined_trop_h2o_640,$
@@ -44,4 +46,5 @@
 	joined_n2o_640,joined_oh_2514_h,joined_oh_2514_v,joined_oh_2510_h,$
 	joined_oh_2510_v,joined_ho2_650,joined_ho2_660,joined_bro_625,$
 	joined_bro_650,joined_so2_204,joined_so2_640 $
+	joined_cldRadMin, joined_cldRadMax $
    } )!dnl
