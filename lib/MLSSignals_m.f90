@@ -75,7 +75,8 @@ module MLSSignals_M
   public :: DestroyBandDatabase, DestroyModuleDatabase
   public :: DestroyRadiometerDatabase, DestroySignal, DestroySignalDatabase
   public :: DestroySpectrometerType, DestroySpectrometerTypeDatabase, Dump
-  public :: Dump_Bands, Dump_Radiometers, Dump_Signals, Dump_Spectrometertypes
+  public :: Dump_Bands, Dump_Radiometers, Dump_Signal, Dump_Signals
+  public :: Dump_Spectrometertypes
   public :: GetAllModules, GetBandName, GetFirstChannel, GetModuleFromRadiometer
   public :: GetModuleIndex, GetSidebandLoop, GetSignalIndex
   public :: GetModuleFromSignal, GetModuleName, GetNameOfSignal
@@ -88,7 +89,7 @@ module MLSSignals_M
   ! =====     Defined Operators and Generic Identifiers     ==============
   
   interface Dump
-    module procedure Dump_Bands, Dump_Radiometers, Dump_Signals, &
+    module procedure Dump_Bands, Dump_Radiometers, Dump_Signal, Dump_Signals, &
       & Dump_SpectrometerType, Dump_SpectrometerTypes
   end interface
 
@@ -825,15 +826,91 @@ contains
     end do
   end subroutine DUMP_RADIOMETERS
 
+  ! ------------------------------------------------  Dump_Signal  -----
+  subroutine DUMP_SIGNAL ( SIGNAL, DETAILS )
+    type (signal_T), intent(in) :: SIGNAL
+    logical, intent(in), optional :: Details ! false => don't dump frequencies
+    logical :: My_Details
+    character (len=80) :: Str
+    my_details = .true.
+    if ( present(details) ) my_details = details
+    if ( signal%name > 0 ) call display_string ( signal%name, advance='yes' )
+    call output ( '   Module: ')
+    call output ( signal%instrumentModule )
+    call output ( ' - ' )
+    if ( associated(modules) ) then
+      call display_string ( modules(signal%instrumentModule)%name, &
+        & advance='yes' )
+    else
+      call output ( 'Cannot get module name', advance='yes' )
+    end if
+    call output ( '   Radiometer: ')
+    call output ( signal%radiometer )
+    call output ( ' - ' )
+    if ( associated(radiometers) ) then
+      call getRadiometerName ( signal%radiometer, str )
+      call output ( TRIM(str) )
+    else
+      call output ( 'Cannot get radiometer name', advance='yes' )
+    end if
+    call output ( '   First LO: ')
+    call output ( signal%lo, advance='yes')
+    call output ( '   Band: ')
+    call output ( signal%band )
+    call output (' - ')
+    if ( associated(bands) ) then
+      call getBandName ( signal%band, str )
+      call output ( TRIM(str) )
+    else
+      call output ( 'Cannot get band name', advance='yes' )
+    end if
+    call output ( '   Band center frequency: ')
+    call output ( signal%centerFrequency, advance='yes')
+    call output ( '   SpectrometerType: ')
+    call output ( signal%spectrometerType )
+    call output ( ' - ' )
+    if ( associated(spectrometerTypes) ) then
+      call display_string ( spectrometerTypes(signal%spectrometerType)%name )
+    else
+      call output ( 'Cannot get spectrometer type name', advance='yes' )
+    end if
+    call output ( '   DACS?: ' )
+    call output ( signal%dacs )
+    call output ( '   Channels: ' )
+    call output ( lbound(signal%frequencies,1), 3 )
+    call output ( ':' )
+    call output ( ubound(signal%frequencies,1), 3, advance='yes' )
+    call output ( '   Sideband: ' )
+    call output ( signal%sideband )
+    call output ( '   Single Sideband: ' )
+    call output ( signal%singleSideband, advance='yes')
+    if ( my_details ) then
+      call output ( '   Frequencies' )
+      if ( signal%deferred ) call output ( '(deferred)' )
+      call output ( ':', advance='yes' )
+      call dump ( signal%frequencies )
+      call output ( '   Widths' )
+      if ( signal%deferred ) call output ( '(deferred)' )
+      call output ( ':', advance='yes' )
+      call dump ( signal%widths )
+    else
+      call output ( '   Frequencies and widths are' )
+      if ( .not. signal%deferred ) call output ( ' not' )
+      call output ( ' deferred', advance='yes' )
+    end if ! my_details
+    if (associated(signal%channels)) then
+      call output ( '   Channel Flags:', advance='yes' )
+      call dump( signal%channels )
+    else
+      call output ( '   All channels selected', advance='yes' )
+    end if
+  end subroutine DUMP_SIGNAL
+
   ! -----------------------------------------------  Dump_Signals  -----
   subroutine DUMP_SIGNALS ( SIGNALS, DETAILS )
     type (signal_T), intent(in) :: SIGNALS(:)
     logical, intent(in), optional :: Details ! false => don't dump frequencies
     integer :: I
-    logical :: My_Details
-    character (len=80) :: Str
-    my_details = .true.
-    if ( present(details) ) my_details = details
     call output ( 'SIGNALS: SIZE = ')
     call output ( size(signals), advance='yes' )
     do i = 1, size(signals)
@@ -841,79 +918,10 @@ contains
       call output ( i )
       if ( signals(i)%name > 0 ) then
         call output ( ': ' )
-        call display_string ( signals(i)%name, advance='yes' )
       else
         call output ( '', advance='yes' )
       end if
-      call output ( '   Module: ')
-      call output ( signals(i)%instrumentModule )
-      call output ( ' - ' )
-      if ( associated(modules) ) then
-        call display_string ( modules(signals(i)%instrumentModule)%name, &
-          & advance='yes' )
-      else
-        call output ( 'Cannot get module name', advance='yes' )
-      end if
-      call output ( '   Radiometer: ')
-      call output ( signals(i)%radiometer )
-      call output ( ' - ' )
-      if ( associated(radiometers) ) then
-        call getRadiometerName ( signals(i)%radiometer, str )
-        call output ( TRIM(str) )
-      else
-        call output ( 'Cannot get radiometer name', advance='yes' )
-      end if
-      call output ( '   First LO: ')
-      call output ( signals(i)%lo, advance='yes')
-      call output ( '   Band: ')
-      call output ( signals(i)%band )
-      call output (' - ')
-      if ( associated(bands) ) then
-        call getBandName ( signals(i)%band, str )
-        call output ( TRIM(str) )
-      else
-        call output ( 'Cannot get band name', advance='yes' )
-      end if
-      call output ( '   Band center frequency: ')
-      call output ( signals(i)%centerFrequency, advance='yes')
-      call output ( '   SpectrometerType: ')
-      call output ( signals(i)%spectrometerType )
-      call output ( ' - ' )
-      if ( associated(spectrometerTypes) ) then
-        call display_string ( spectrometerTypes(signals(i)%spectrometerType)%name )
-      else
-        call output ( 'Cannot get spectrometer type name', advance='yes' )
-      end if
-      call output ( '   DACS?: ' )
-      call output ( signals(i)%dacs )
-      call output ( '   Channels: ' )
-      call output ( lbound(signals(i)%frequencies,1), 3 )
-      call output ( ':' )
-      call output ( ubound(signals(i)%frequencies,1), 3, advance='yes' )
-      call output ( '   Sideband: ' )
-      call output ( signals(i)%sideband )
-      call output ( '   Single Sideband: ' )
-      call output ( signals(i)%singleSideband, advance='yes')
-      if ( my_details ) then
-        call output ( '   Frequencies' )
-        if ( signals(i)%deferred ) call output ( '(deferred)' )
-        call output ( ':', advance='yes' )
-        call dump ( signals(i)%frequencies )
-        call output ( '   Widths' )
-        if ( signals(i)%deferred ) call output ( '(deferred)' )
-        call output ( ':', advance='yes' )
-        call dump ( signals(i)%widths )
-      else
-        call output ( '   Frequencies and widths are' )
-        if ( .not. signals(i)%deferred ) call output ( ' not' )
-        call output ( ' deferred', advance='yes' )
-      end if ! my_details
-      if (associated(signals(i)%channels)) then
-        call output ( '   Channel Flags:', advance='yes' )
-        call dump( signals(i)%channels )
-      else
-        call output ( '   All channels selected', advance='yes' )
-      end if
+      call dump ( signals(i), details )
     end do
   end subroutine DUMP_SIGNALS
 
@@ -1592,6 +1600,9 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.70  2004/05/01 04:07:44  vsnyder
+! Rearranged some dumping stuff
+!
 ! Revision 2.69  2004/04/16 00:44:24  livesey
 ! Added GetFirstChannel
 !
