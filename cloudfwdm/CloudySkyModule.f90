@@ -94,9 +94,15 @@ contains
       WL=0.3/F
       
       IF (ISPI .EQ. 1) THEN
-         DD=2000._r8/NR**2                     ! DEFINE SIZE BINS FOR ICE CLOUD
+
+        ! DEFINE SIZE BINS FOR ICE CLOUD
+          DD=2000._r8/NR**2/(F/200._r8)  
+
       ELSE IF (ISPI .EQ. 2) THEN
-         DD=200._r8/NR**2                      ! DEFINE SIZE BINS FOR WATER CLOUD
+
+        ! DEFINE SIZE BINS FOR WATER CLOUD
+          DD=200._r8/NR**2                   
+
       ENDIF
 
       DO I=1,NR
@@ -314,6 +320,9 @@ contains
 end module CloudySkyModule
 
 ! $Log$
+! Revision 1.6  2001/10/08 21:40:21  jonathan
+! add cloud_model sub
+!
 ! Revision 1.5  2001/09/21 15:51:37  jonathan
 ! modified F95 version
 !
