@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 !=============================================================================
 MODULE OutputL1B
@@ -16,7 +16,8 @@ MODULE OutputL1B
   PRIVATE
 
   PUBLIC :: OutputL1BOA_create, OutputL1B_index, OutputL1B_sc, OutputL1B_GHz, &
-       OutputL1B_THz, OutputL1B_rad, OutputL1B_LatBinData, OutputL1B_diags
+       OutputL1B_THz, OutputL1B_rad, OutputL1B_LatBinData, OutputL1B_diags, &
+       OutputL1B_DiagsT
 
   !------------------- RCS Ident Info -----------------------
   CHARACTER(LEN=130) :: Id = &
@@ -565,10 +566,11 @@ CONTAINS
 
     CALL Deallocate_DataProducts (dataset)
 
- END SUBROUTINE OutputL1B_LatBinData
+  END SUBROUTINE OutputL1B_LatBinData
 
-  !-------------------------------------------------------- OutputL1B_rad
+!=============================================================================
   SUBROUTINE OutputL1B_diags (noMAF, sd_Id, counterMAF, MAFStartTimeTAI)
+!=============================================================================
 
     ! This subroutine writes an MAF's worth of diagnostic data
 
@@ -643,10 +645,107 @@ CONTAINS
   END SUBROUTINE OutputL1B_diags
 
 !=============================================================================
+  SUBROUTINE OutputL1B_diagsT (sd_Id, MAFno, counterMAF, MAFStartTimeTAI, &
+       nvBounds, OrbNo, Chisq, dLlo, yTsys)
+!=============================================================================
+
+    USE MLSL1Common, ONLY: THzchans, THzNum
+
+    INTEGER, INTENT(IN) :: sd_id
+    INTEGER, INTENT(IN), OPTIONAL :: counterMAF, MAFno, nvBounds, OrbNo
+    REAL(r8), INTENT (IN), OPTIONAL :: MAFStartTimeTAI
+    REAL(r8), DIMENSION(:,:), INTENT (IN), OPTIONAL :: Chisq, dLlo, yTsys
+
+    INTEGER :: dims(3), status
+    TYPE (DataProducts_T) :: dataset
+    REAL(r8) :: MAFStartTimeGIRD
+
+    dims(1) = THzchans
+    dims(2) = THzNum
+    dims(3) = 1
+
+    IF (PRESENT (counterMAF) .AND. PRESENT (MAFno)) THEN
+
+       DEALLOCATE (dataset%Dimensions, stat=status)
+       ALLOCATE (dataset%Dimensions(1), stat=status)
+       dataset%name      = 'counterMAF        '
+       dataset%data_type = 'integer           '
+       dataset%Dimensions(1) = 'MAF'
+       CALL Build_MLSAuxData (sd_Id, dataset, counterMAF, lastIndex=MAFno)
+
+    ENDIF
+
+    IF (PRESENT (MAFStartTimeTAI) .AND. PRESENT (MAFno)) THEN
+
+       ! Convert TAI time to GIRD time
+
+       MAFStartTimeGIRD = MAFStartTimeTAI + TAItoGIRD
+
+       dataset%name      = 'MAFStartTimeGIRD  '
+       dataset%data_type = 'double            '
+       CALL Build_MLSAuxData (sd_Id, dataset, MAFStartTimeGIRD, lastIndex=MAFno)
+       CALL Deallocate_DataProducts (dataset)
+
+    ENDIF
+
+    IF (PRESENT (nvBounds) .AND. PRESENT (MAFno)) THEN
+
+       DEALLOCATE (dataset%Dimensions, stat=status)
+       ALLOCATE (dataset%Dimensions(1), stat=status)
+       dataset%name      = 'nvBounds          '
+       dataset%data_type = 'integer           '
+       dataset%Dimensions(1) = 'MAF'
+       CALL Build_MLSAuxData (sd_Id, dataset, nvBounds, lastIndex=MAFno)
+
+    ENDIF
+
+    IF (PRESENT (Chisq) .AND. PRESENT (OrbNo)) THEN
+
+       DEALLOCATE (dataset%Dimensions, stat=status)
+       ALLOCATE (dataset%Dimensions(2), stat=status)
+       dataset%name      = 'Chisq             '
+       dataset%data_type = 'double            '
+       dataset%Dimensions(1) = 'THzChan'
+       dataset%Dimensions(2) = 'THzBand'
+       CALL Build_MLSAuxData (sd_Id, dataset, Chisq, lastIndex=OrbNo, dims=dims)
+
+    ENDIF
+
+    IF (PRESENT (dLlo) .AND. PRESENT (OrbNo)) THEN
+
+       DEALLOCATE (dataset%Dimensions, stat=status)
+       ALLOCATE (dataset%Dimensions(2), stat=status)
+       dataset%name      = 'dLlo              '
+       dataset%data_type = 'double            '
+       dataset%Dimensions(1) = 'THzChan'
+       dataset%Dimensions(2) = 'THzBand'
+       CALL Build_MLSAuxData (sd_Id, dataset, dLlo, lastIndex=OrbNo, dims=dims)
+
+    ENDIF
+
+ 
+    IF (PRESENT (yTsys) .AND. PRESENT (OrbNo)) THEN
+
+       DEALLOCATE (dataset%Dimensions, stat=status)
+       ALLOCATE (dataset%Dimensions(2), stat=status)
+       dataset%name      = 'yTsys             '
+       dataset%data_type = 'double            '
+       dataset%Dimensions(1) = 'THzChan'
+       dataset%Dimensions(2) = 'THzBand'
+       CALL Build_MLSAuxData (sd_Id, dataset, yTsys, lastIndex=OrbNo, dims=dims)
+
+    ENDIF
+
+  END SUBROUTINE OutputL1B_diagsT
+
+!=============================================================================
 END MODULE OutputL1B
 !=============================================================================
 
 ! $Log$
+! Revision 2.12  2004/05/14 15:59:11  perun
+! Version 1.43 commit
+!
 ! Revision 2.11  2004/01/09 17:46:22  perun
 ! Version 1.4 commit
 !
