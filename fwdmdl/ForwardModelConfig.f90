@@ -263,7 +263,7 @@ contains
     ! Local variables
     integer :: INFO                     ! Flag from PVM
     logical :: FLAG                     ! A flag from the sender
-    logical, dimension(13) :: l13       ! Temporary array
+    logical, dimension(14) :: l13       ! Temporary array
     logical, dimension(2) :: l2         ! Temporary array
     integer, dimension(12) :: i12       ! Temporary array
     real(r8), dimension(2) :: r2        ! Temporary array
@@ -507,6 +507,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.25  2003/01/30 17:28:01  jonathan
+! add logical incl_cld
+!
 ! Revision 2.24  2003/01/29 01:48:52  vsnyder
 ! Add 'polarized' field to forwardModel
 !
