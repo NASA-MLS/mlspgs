@@ -317,6 +317,7 @@ contains
          gl_count, Ier)
     IF(ier /= 0) goto 99
 !
+    jj = -1
     Zeta = -1.666667
     no_tan_hts = FMC%no_tan_hts
     Call Hunt(Zeta,FMI%tan_press,no_tan_hts,jj,i)
@@ -803,6 +804,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.10  2001/03/09 00:54:00  zvi
+! *** empty log message ***
+!
 ! Revision 2.9  2001/03/08 21:59:52  vsnyder
 ! Mostly just cosmetic rearranging
 !
