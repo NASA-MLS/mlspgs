@@ -392,16 +392,10 @@ contains ! =====     Public Procedures     =============================
           xP%quantities(qtyInd)%values(:,xStarInstance) = &
             & stateQ%values(:,xInstance)
 
-          ! If the state vector part has a mask, copy it to DeltaX
-! *************** MORE WORK NEEDED HERE NJL
-!           if ( associated ( stateQ%mask ) ) then
-!             if ( .not. associated ( deltaX%quantities(qtyInd)%mask ) ) &
-!               & CreateMask ( deltaX%quantities(qtyInd) )
-!             deltaX%mask(qtyInd)%values(:,xStarInstance) = &
-!               stateQ%mask(:,xInstance)
-!           endif
+          ! Note that we've ignored the mask in stateQ here. We might
+          ! in later versions want to apply one mask field?
 
-          ! If so, interpolate this block of kStar and place in jacobian
+          ! Interpolate kStart to K if required.
           if (doDerivatives) then
             fmStat%rows(rowJBlock) = .true.
             colLBlock = FindBlock ( l2pc%col, l2pcQ%index, xStarInstance )
@@ -449,7 +443,7 @@ contains ! =====     Public Procedures     =============================
                       jBlock%values ( i , : ) = &
                         & jBlock%values ( i , : ) + &
                         &   thisRatio(chan) * ( &
-                        &     lowerWeight(mif) * kBit( lower , : ) + &
+                        &     lowerWeight(mif) * kBit( lower, : ) + &
                         &     upperWeight(mif) * kBit( upper, : ) )
                     endif
                     i = i + 1
@@ -685,66 +679,68 @@ contains ! =====     Public Procedures     =============================
       if ( associated(radInL2PC) ) then
         ! OK this signal is present in the l2pc file.
         ! Now loop over the bin selectors and apply the relevant rules
-        do selector = 1, size(binSelectors)
-          ! Only deal with the selectors for this band etc.
-          if ( any ( &
-            & ( binSelectors(selector)%signals == signal ) .and. &
-            & ( ( binSelectors(selector)%sidebands == 0 ) .or. &
-            &   ( binSelectors(selector)%sidebands == sideband ) ) ) ) then
-            ! Locate the quantities in the state and l2pc xStar vectors
-            select case ( binSelectors(selector)%quantityType )
-            case ( l_temperature )
-              stateQ => GetVectorQuantityByType ( &
-                & fwdModelIn, fwdModelExtra, quantityType=l_temperature, &
-                & noError=.true. )
-              l2pcQ => GetVectorQuantityByType ( &
-                & l2pcDatabase(l2pcBin)%col%vec, quantityType=l_temperature, &
-                & noError=.true. )
-            case ( l_vmr )
-              stateQ => GetVectorQuantityByType ( &
-                & fwdModelIn, fwdModelExtra, quantityType=l_vmr, &
-                & molecule=binSelectors(selector)%molecule, noError=.true. )
-              l2pcQ => GetVectorQuantityByType ( &
-                & l2pcDatabase(l2pcBin)%col%vec, quantityType=l_vmr, &
-                & molecule=binSelectors(selector)%molecule, noError=.true. )
-            case default
-              call MLSMessage ( MLSMSG_Error, ModuleName, &
-                & 'Unexpected problem with bin selection' )
-            end select
-            ! If we've got both of them make sure they match
-            if ( associated(stateQ) .and. associated(l2pcQ) ) then
-              flag = &
-                & ValidateVectorQuantity ( stateQ, coherent=.true., &
-                & verticalCoordinate=(/l_zeta/), frequencyCoordinate=(/l_none/) )
-              flag = flag .and. &
-                & ValidateVectorQuantity ( l2pcQ, coherent=.true., &
-                & verticalCoordinate=(/l_zeta/), frequencyCoordinate=(/l_none/) )
-              if ( flag ) flag = flag .and. &
-                & (stateQ%template%noSurfs == l2pcQ%template%noSurfs)
-              if ( flag ) flag = flag .and. &
-                & all (abs (stateQ%template%surfs-l2pcQ%template%surfs) < 0.01)
-              if ( flag ) then
-                ! OK, identify height range
-                s1 = minloc ( abs ( stateQ%template%surfs(:,1) + &
-                  & log10(binSelectors(selector)%heightRange(1) ) ) )
-                s2 = minloc ( abs ( stateQ%template%surfs(:,1) + &
-                  & log10(binSelectors(selector)%heightRange(2) ) ) )
-                ! We're at last ready to go.  Just compare central profiles in
-                ! each l2pc bin with each state vector profile
-                l2pcInstance = l2pcQ%template%noInstances/2 + 1
-                ! Only compare the closest profile to the maf
-                stateInstance = FindOneClosestInstance ( stateQ, radiance, maf )
-                costs ( l2pcBin ) = costs ( l2pcBin ) + sum ( abs ( &
-                  & stateQ%values ( s1(1):s2(1), stateInstance ) - &
-                  & l2pcQ%values ( s1(1):s2(1), l2pcInstance ) ) ) / &
-                  & ( binSelectors(selector)%cost * ( s2(1)-s1(1)+1 ) )
-              else
-                ! This l2pcBin doesn't match the quantity dimensions etc.
-                appropriate ( l2pcBin ) = .false.
-              end if                    ! OK to do the test
-            end if                      ! Quantity in both state and l2pc
-          end if                        ! This selector relevant
-        end do                          ! End loop over selectors
+        if ( associated(binSelectors) ) then
+          do selector = 1, size(binSelectors)
+            ! Only deal with the selectors for this band etc.
+            if ( any ( &
+              & ( binSelectors(selector)%signals == signal ) .and. &
+              & ( ( binSelectors(selector)%sidebands == 0 ) .or. &
+              &   ( binSelectors(selector)%sidebands == sideband ) ) ) ) then
+              ! Locate the quantities in the state and l2pc xStar vectors
+              select case ( binSelectors(selector)%quantityType )
+              case ( l_temperature )
+                stateQ => GetVectorQuantityByType ( &
+                  & fwdModelIn, fwdModelExtra, quantityType=l_temperature, &
+                  & noError=.true. )
+                l2pcQ => GetVectorQuantityByType ( &
+                  & l2pcDatabase(l2pcBin)%col%vec, quantityType=l_temperature, &
+                  & noError=.true. )
+              case ( l_vmr )
+                stateQ => GetVectorQuantityByType ( &
+                  & fwdModelIn, fwdModelExtra, quantityType=l_vmr, &
+                  & molecule=binSelectors(selector)%molecule, noError=.true. )
+                l2pcQ => GetVectorQuantityByType ( &
+                  & l2pcDatabase(l2pcBin)%col%vec, quantityType=l_vmr, &
+                  & molecule=binSelectors(selector)%molecule, noError=.true. )
+              case default
+                call MLSMessage ( MLSMSG_Error, ModuleName, &
+                  & 'Unexpected problem with bin selection' )
+              end select
+              ! If we've got both of them make sure they match
+              if ( associated(stateQ) .and. associated(l2pcQ) ) then
+                flag = &
+                  & ValidateVectorQuantity ( stateQ, coherent=.true., &
+                  & verticalCoordinate=(/l_zeta/), frequencyCoordinate=(/l_none/) )
+                flag = flag .and. &
+                  & ValidateVectorQuantity ( l2pcQ, coherent=.true., &
+                  & verticalCoordinate=(/l_zeta/), frequencyCoordinate=(/l_none/) )
+                if ( flag ) flag = flag .and. &
+                  & (stateQ%template%noSurfs == l2pcQ%template%noSurfs)
+                if ( flag ) flag = flag .and. &
+                  & all (abs (stateQ%template%surfs-l2pcQ%template%surfs) < 0.01)
+                if ( flag ) then
+                  ! OK, identify height range
+                  s1 = minloc ( abs ( stateQ%template%surfs(:,1) + &
+                    & log10(binSelectors(selector)%heightRange(1) ) ) )
+                  s2 = minloc ( abs ( stateQ%template%surfs(:,1) + &
+                    & log10(binSelectors(selector)%heightRange(2) ) ) )
+                  ! We're at last ready to go.  Just compare central profiles in
+                  ! each l2pc bin with each state vector profile
+                  l2pcInstance = l2pcQ%template%noInstances/2 + 1
+                  ! Only compare the closest profile to the maf
+                  stateInstance = FindOneClosestInstance ( stateQ, radiance, maf )
+                  costs ( l2pcBin ) = costs ( l2pcBin ) + sum ( abs ( &
+                    & stateQ%values ( s1(1):s2(1), stateInstance ) - &
+                    & l2pcQ%values ( s1(1):s2(1), l2pcInstance ) ) ) / &
+                    & ( binSelectors(selector)%cost * ( s2(1)-s1(1)+1 ) )
+                else
+                  ! This l2pcBin doesn't match the quantity dimensions etc.
+                  appropriate ( l2pcBin ) = .false.
+                end if                  ! OK to do the test
+              end if                    ! Quantity in both state and l2pc
+            end if                      ! This selector relevant
+          end do                        ! End loop over selectors
+        end if                          ! Any selectors
       else                              ! This l2pc bin not relevant
         appropriate ( l2pcBin ) = .false.
       end if
@@ -765,6 +761,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.10  2002/02/09 21:35:22  livesey
+! Minor bug fixes
+!
 ! Revision 2.9  2002/02/09 19:11:19  livesey
 ! Added optical depth calculation etc.
 !
