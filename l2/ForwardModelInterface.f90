@@ -42,7 +42,8 @@ module ForwardModelInterface
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate,&
     & MLSMSG_Error
   use MLSNumerics, only: Hunt
-  use MLSSignals_m, only: GetSignal, MaxSigLen, Signal_T, GetSignalName
+  use MLSSignals_m, only: GetSignal, MaxSigLen, Signal_T, GetSignalName,&
+    & MATCHSIGNAL, DUMP
   use Molecules, only: spec_tags
   use MoreTree, only: Get_Boolean, Get_Field_ID
   use Output_M, only: Output
@@ -455,9 +456,12 @@ contains ! =====     Public Procedures     =============================
     integer :: NOSPECIES                ! Number of molecules we're considering
     integer :: NAMELEN                  ! Length of string
     integer :: PHIWINDOW                ! Copy of forward model config%phiWindow
+    integer :: SIG0                     ! Lower part of signal range
+    integer :: SIG1                     ! Upper part of signal range
     integer :: SPECIE                   ! Loop counter
     integer :: SURFACE                  ! Loop counter
     integer :: STATUS                   ! From allocates etc.
+    integer :: TOTALSIGNALS             ! Used when hunting for pointing grids
     integer :: INSTANCE                 ! Loop counter
     integer :: WINDOWFINISH             ! Range of window
     integer :: WINDOWSTART              ! Range of window
@@ -467,7 +471,11 @@ contains ! =====     Public Procedures     =============================
     real (r8) :: SENSE                  ! Multiplier (+/-1)
 
     integer, dimension(:), pointer :: CHANNELINDEX ! E.g. 1..25
+    integer, dimension(:), pointer :: SIGNALSGRID ! Used in ptg grid hunt
     integer, dimension(:), pointer :: USEDCHANNELS ! Array of indices used
+
+    logical, dimension(:), pointer :: ALLMATCH ! Used in pointing grid hunt
+    logical, dimension(:), pointer :: THISMATCH ! USed in pointing grid hunt
 
     real(r4), dimension(:),     pointer :: TOAVG       ! Stuff to be passed to frq.avg.
     real(r8), dimension(:),     pointer :: FREQUENCIES ! Frequency points
@@ -487,6 +495,8 @@ contains ! =====     Public Procedures     =============================
 
     logical :: FOUNDINFIRST             ! Flag to indicate derivatives
 
+    type(Signal_T), pointer, dimension(:) :: ALLSIGNALS ! Used in ptg grid hunt
+
     type(path_vector), allocatable, dimension(:) :: N_PATH    ! (No_tan_hts)
 
     ! dimensions of SPSFUNC_PATH are: (Nsps,No_tan_hts)
@@ -502,7 +512,8 @@ contains ! =====     Public Procedures     =============================
 
     nullify ( radV, channelIndex, usedChannels, frequencies, dh_dt_path, &
       & dx_dt, d2x_dxdt, t_script, ref_corr, tau, ptg_angles, k_temp, &
-      & k_atmos, radiances, grids, my_Catalog, beta_path )
+      & k_atmos, radiances, grids, my_Catalog, beta_path, allMatch, thisMatch,&
+      & signalsGrid )
 
     ! Identify the vector quantities we're going to need.
     ! The key is to identify the signal we'll be working with first
@@ -762,17 +773,63 @@ contains ! =====     Public Procedures     =============================
     ! The first part of the forward model dealt with the chunks as a whole.
     ! This next part is more complex, and is performed within a global outer
     ! loop over major frame (maf)
-    ! Now we have the full information about the number of tangent heights,
-    ! including the subsrufaces ones.
 
-print *, 'Need to get the correct pointing grid by matching signals'
-print *, 'associated with each pointing grid against the desired signal,'
-print *, 'instead of by getting a pointing grid index from the signals database'
-stop
-!   whichPointingGrid = signal%pointingGrid
+    ! First we need to identify the pointing grid we're going to be using. 
+    ! I might as well go the whole way and deal with the multiple signals case
+    ! while I'm about it.  The surrounding code can't yet support that though
+
+    totalSignals = 0
+    do i = 1, size(pointingGrids)
+      totalSignals = totalSignals + size(pointingGrids(i)%signals)
+    end do
+
+    allocate (allSignals(totalSignals), STAT=status) 
+    call allocate_test( signalsGrid,   totalSignals, 'signalsGrid',  &
+      & ModuleName)
+
+    totalSignals = 0
+    do i = 1, size(pointingGrids)
+      print*,3,i
+      sig0 = totalSignals + 1
+      sig1 = totalSignals + size(pointingGrids(i)%signals)
+      allSignals(sig0:sig1) = pointingGrids(i)%signals
+      signalsGrid(sig0:sig1) = i
+      totalSignals = sig1
+    end do
+
+    call allocate_test( allMatch, totalSignals, 'allMatch', ModuleName )
+    call allocate_test( thisMatch, totalSignals, 'thisMatch', ModuleName )
+
+    allMatch = .true.
+    do i = 1, size ( forwardModelConfig%signals)
+      j = MatchSignal ( allSignals, forwardModelConfig%signals(i), thisMatch )
+      allMatch = allMatch .and. thisMatch
+    end do
+
+    if ( count (allMatch) == 0 ) call MLSMessage ( MLSMSG_Error,ModuleName,&
+      & 'No matching pointing frequency grids' )
+
+    ! For the moment take the first match, later we'll be cleverer and choose
+    ! the smallest.  Or maybe we'll turn this whole section into another routine.
+    do i = 1, totalSignals
+      if ( allMatch(i) ) exit
+    end do
+    whichPointingGrid = i
+
+    call deallocate_test( thisMatch, 'thisMatch', ModuleName )
+    call deallocate_test( allMatch, 'allMatch', ModuleName )
+
+    deallocate (allSignals, STAT=status)
+    if ( status /= 0) call MLSMessage(MLSMSG_Error,ModuleName,&
+      & MLSMSG_DeAllocate//'allSignals')
+    call deallocate_test(signalsGrid, 'signalsGrid', ModuleName)
+      
     if ( whichPointingGrid <= 0 ) &
       call MLSMessage ( MLSMSG_Error, moduleName, &
       & "There is no pointing grid for the desired signal" )
+
+    ! Now we've identified the pointing grids.  Locate the tangent grid within
+    ! it.
     call allocate_test ( grids, ForwardModelConfig%TangentGrid%nosurfs, &
       "Grids", moduleName )
     call Hunt ( PointingGrids(whichPointingGrid)%oneGrid%height, &
@@ -781,7 +838,7 @@ stop
     ! ---------------------------- Begin main MAF Specific stuff --------
 
     maf=fmStat%maf
-print*,'Doing maf:',maf
+    print*,'Doing maf:',maf
 
     ! Now work out what `window' we're inside.  This will need to be changed
     ! a bit in later versions to avoid the noMAFS==noTemp/f instances assertion
@@ -1326,6 +1383,9 @@ signal%sideband=-1
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.90  2001/04/13 23:29:36  livesey
+! Sorted out selection of appropriate pointing frequency grid.
+!
 ! Revision 2.89  2001/04/13 21:40:22  vsnyder
 ! Replace pointing-grid stuff by STOP -- Nathaniel will fix it.
 !
