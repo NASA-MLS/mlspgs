@@ -91,6 +91,7 @@ PROG_prereqs := $(CONFDIR)/$(MLSCFILE) \
 
 ifdef HDFVERSIONS
    PROG_prereqs := $(PROG_prereqs) $(he5lib_objs)/libhe5.a
+   ADD2PATHS := $(ADD2PATHS) ../$(he5lib)/$(MLSCONFG)
 endif
 
 ifdef BLAS
@@ -110,6 +111,33 @@ PROG=mlsl1
 
 OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
 
+#CASCADE determines whether to create/use .mod dependencies:
+#if CASCADE, use older .o dependencies, which entail cascades
+#of massive recompilation
+#These are configurations for which I have tested CASCADE-avoidance
+#CAN_AVOID="NAG.Linux LF95.Linux"
+CAN_AVOID=""
+ifndef CASCADE
+  WE_CAN := $(shell echo $(CAN_AVOID) | grep $(MLSF95).$(MLSPLAT))
+ifndef WE_CAN
+  CASCADE := yes
+endif
+endif
+#These modules require custom builds, so omit build commands from dependencies
+CUSTOM_BUILDS=OutputL1B.f90
+CUSTOM_PREFXD := $(shell ${REECHO} -prefix=-db $(CUSTOM_BUILDS))
+ifeq ($(MLSF95),Abs)
+  UP_OR_LOW := -mod UPPER
+else
+  UP_OR_LOW := -mod lower
+endif
+
+#MARK_ALL_AS_UPTODATE determines whether, on rebuilding any module,
+#all modules, rebuilt or not, should be marked as up to date
+#ifndef MARK_ALL_AS_UPTODATE
+#  MARK_ALL_AS_UPTODATE := $(shell echo $(CAN_AVOID) | grep $(MLSF95).$(MLSPLAT))
+#endif
+
 #NOCLEANING determines value of RECFG passed to mlsconfigure script
 #RECFG determines whether changing .configure triggers deleting
 #existing sub-directory, and thus recompiling every source file
@@ -122,22 +150,33 @@ endif
 #----------------------- Build instructions
 
 $(PROG):  $(PROG_prereqs)
-	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
+	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
+        UNPREFXDPTHS="$(ADD2PATHS)"
+	@if [ "$(WE_CAN)" != "" ]; then \
+		     cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) mark_all_as_uptodate \
+           UNPREFXDPTHS="$(ADD2PATHS)" MARK_ALL_AS_UPTODATE= ;\
+         fi
 
 $(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG)
-	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
+	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
+        UNPREFXDPTHS="$(ADD2PATHS)"
+	@if [ "$(WE_CAN)" != "" ]; then \
+		     cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) mark_all_as_uptodate \
+           UNPREFXDPTHS="$(ADD2PATHS)" MARK_ALL_AS_UPTODATE= ;\
+         fi
 
 $(libmls_objs)/libmls.a: $(LIB_prereqs) $(libmls_objs)
 	@if [ "$(NOHUNTING)" != "" ] ; then \
 	   rm -f $(libmls_objs)/libmls.a ; \
 	fi ; \
-	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
+	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources) \
+     MARK_ALL_AS_UPTODATE=no
 
 $(he5lib_objs)/libhe5.a: $(libmls_objs)/libmls.a $(he5lib_f)
 	@if [ "$(NOHUNTING)" != "" ] ; then \
 	   rm -f $(he5lib_objs)/libhe5.a ; \
 	fi ; \
-	$(MAKE) -f $(MakeFName) libhe5.a -C $(he5lib)
+	$(MAKE) -f $(MakeFName) libhe5.a -C $(he5lib) MARK_ALL_AS_UPTODATE=no
 
 .PHONY: configure depends clean tar mostlyclean tarz targ mlsl1 ghostbuster
 
@@ -159,9 +198,17 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
           $(RECFG)
 
 depends:
-	$(MLSBIN)/makemakedep.sh -nodep $(OMIT_PREFXD) ; \
-     mv Makefile.dep Makefile.nodep
-	$(MLSBIN)/makemakedep.sh $(OMIT_PREFXD) $(libmls_sources) $(srclib)
+ifdef CASCADE
+	$(MLSBIN)/makemakedep.sh -nodep -p Makefile.nodep $(OMIT_PREFXD)
+	$(MLSBIN)/makemakedep.sh $(OMIT_PREFXD) $(libmls_sources) $(srclib) 
+else
+	$(MAKE) depends--mod
+endif
+
+depends--mod:
+	$(MLSBIN)/makemakedep.sh -p $(PLATFORMS)/$(MLSCONFG)/Makefile.dep \
+    $(OMIT_PREFXD) $(UP_OR_LOW) $(CUSTOM_PREFXD) \
+	    $(libmls_sources) $(srclib)
 
 ghostbuster:
 	$(MLSBIN)/ghostbuster.sh $(OMIT_PREFXD) \
@@ -204,6 +251,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl1
 
 # $Log$
+# Revision 2.29  2002/06/18 18:53:35  pwagner
+# Modified to correctly use he5lib modules
+#
 # Revision 2.28  2002/05/02 00:16:32  pwagner
 # depends now creates Makefile.nodep, too
 #
