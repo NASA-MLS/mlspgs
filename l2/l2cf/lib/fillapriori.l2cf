@@ -345,6 +345,19 @@ begin Fill
     Fill, quantity=hReg.temperature_HR, method=explicit, explicitValues= 1K, /spread
     Fill, quantity=hReg.o3_HR, method=profile, profileValues=[ 100mb:0.3ppmv ]
     Fill, quantity=hReg.h2o_HR, method=profile, profileValues=[ 146mb:0ppmv, 100mb:0.3ppmv ]
+
+    Fill, quantity=hReg.extinctionShapedR1A_HR, method=profile, $
+      profileValues=[ 100mb:1.0e-5 ]
+    Fill, quantity=hReg.extinctionShapedR2_HR, method=profile, $
+      profileValues=[ 100mb:1.0e-5 ]
+    Fill, quantity=hReg.extinctionShapedR3_HR, method=profile, $
+      profileValues=[ 100mb:1.0e-5 ]
+    Fill, quantity=hReg.extinctionShapedR4_HR, method=profile, $
+      profileValues=[ 100mb:1.0e-5 ]
+    Fill, quantity=hReg.extinctionShapedR5H_HR, method=profile, $
+      profileValues=[ 100mb:1.0e-5 ]
+    Fill, quantity=hReg.extinctionShapedR5V_HR, method=profile, $
+      profileValues=[ 100mb:1.0e-5 ]
   })
 
 end Fill
