@@ -229,6 +229,21 @@ program MLSL2
         checkBlocks = switch
       else if ( line(3+n:14+n) == 'countChunks ' ) then
         countChunks = switch
+      else if ( line(3+n:7+n) == 'delay' ) then
+        call AccumulateSlaveArguments ( line )
+        if ( line(8+n:) /= ' ' ) then
+          copyArg = .false.
+          line(:7+n) = ' '
+        else
+          i = i + 1
+          call getarg ( i, line )
+          command_line = trim(command_line) // ' ' // trim(line)
+        end if
+        read ( line, *, iostat=status ) parallel%Delay
+        if ( status /= 0 ) then
+          call io_error ( "After --delay option", status, line )
+          stop
+        end if
       else if ( line(3+n:14+n) == 'fwmParallel ' ) then
         parallel%fwmParallel = .true.
       else if ( line(3+n:7+n) == 'gcch ' ) then
@@ -748,6 +763,9 @@ contains
       call output(' Maximum failures per machine:                   ', advance='no') 
       call blanks(4, advance='no')                                                   
       call output(parallel%maxFailuresPerMachine, advance='yes')
+      call output(' Sleep time in masterLoop (mus):                 ', advance='no') 
+      call blanks(4, advance='no')                                                   
+      call output(parallel%maxFailuresPerMachine, advance='yes')
       endif                      
       call output(' Is this a slave task in pvm?:                   ', advance='no')
       call blanks(4, advance='no')
@@ -806,6 +824,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.106  2003/11/14 23:37:13  pwagner
+! Lets user change masterLoop delay via commandline option
+!
 ! Revision 2.105  2003/11/07 00:46:51  pwagner
 ! New quicker preflight option: --checkPaths
 !
