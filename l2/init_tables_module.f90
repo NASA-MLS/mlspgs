@@ -648,6 +648,7 @@ contains ! =====     Public procedures     =============================
       begin, s+s_transfer, &
              begin, f+f_source, s+s_vector, n+n_field_spec, &
              begin, f+f_destination, s+s_vector, n+n_field_spec, &
+             begin, f+f_skipMask, t+t_boolean, n+n_field_spec, &
              nadp+n_spec_def /) )
     call make_tree( (/ &
       begin, s+s_fillCovariance, & ! Must be AFTER s_vector and s_matrix
@@ -871,6 +872,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.237  2002/09/05 20:49:30  livesey
+! Added skipMask to transfer
+!
 ! Revision 2.236  2002/08/28 01:14:05  livesey
 ! Added offsetRadiance fill
 !
