@@ -709,7 +709,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_moleculeDerivatives, t+t_molecule, n+n_field_type, &
              begin, f+f_molecules, t+t_molecule, n+n_field_type, &
              begin, f+f_phiWindow, t+t_numeric, n+n_field_type, &
-             begin, f+f_signals, s+s_signal, n+n_field_spec, &
+             begin, f+f_signals, t+t_string, n+n_field_type, &
              begin, f+f_spect_der, t+t_boolean, n+n_field_type, &
              begin, f+f_tangentGrid, s+s_vGrid, n+n_field_spec, &
              begin, f+f_temp_der, t+t_boolean, n+n_field_type, &
@@ -809,6 +809,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.71  2001/04/10 23:19:03  livesey
+! Changed signals in forward model config to string
+!
 ! Revision 2.70  2001/04/10 02:46:17  livesey
 ! Working version, no more FMI/TFMI
 !
