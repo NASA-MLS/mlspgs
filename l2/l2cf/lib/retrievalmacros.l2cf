@@ -147,40 +147,50 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
 })
 
 ;; This macro is used to fill radiance chi squares
-!define(fillBandsRadianceChisq,{!dnl
-   Fill, quantity=radianceChisq.chisqMMAF$1, method=special, $
+!define(fillRadianceDiagnostics,{!dnl
+   Fill, quantity=radianceDiagnostics.chisqMMAF$1, method=special, $
      measurements=y!phase.band$1, model=f!phase.band$1, $
      noise=yNoise!phase.band$1
-   Fill, quantity=radianceChisq.chisqMMIF$1, method=special, $
+   Fill, quantity=radianceDiagnostics.chisqMMIF$1, method=special, $
      measurements=y!phase.band$1, model=f!phase.band$1, $
      noise=yNoise!phase.band$1
-   Fill, quantity=radianceChisq.chisqChan$1, method=special, $
+   Fill, quantity=radianceDiagnostics.chisqChan$1, method=special, $
      measurements=y!phase.band$1, model=f!phase.band$1, $
      noise=yNoise!phase.band$1
-   Fill, quantity=radianceChisq.chisqBinned$1, method=binmax, $
-     sourceQuantity=radianceChisq.chisqMMIF$1!nl})
+   Fill, quantity=radianceDiagnostics.noRadsPerMIF, method=species, $
+     measurements=y!phase.band$1
+   Fill, quantity=radianceDiagnostics.chisqBinned$1, method=binmax, $
+     sourceQuantity=radianceDiagnostics.chisqMMIF$1
+   Fill, quantity=radianceDiagnostics.noRadsBinned$1, method=binTotal, $
+     sourceQuantity=radianceDiagnostics.noBandsPerMIF$1!nl})
 
 ;; This macro joins the above filled quantities
-!define(joinBandsRadianceChisq,{!dnl
-   joinedDGM_chisqMMAF$1_!phase: l2aux, source=radianceChisq.chisqMMAF$1, $
+!define(joinRadianceDiagnostics,{!dnl
+   joinedDGM_chisqMMAF$1_!phase: l2aux, source=radianceDiagnostics.chisqMMAF$1, $
      /prefixSignal, sdName=' chisqMMAF !phase'
-   joinedDGM_chisqMMIF$1_!phase: l2aux, source=radianceChisq.chisqMMIF$1, $
+   joinedDGM_chisqMMIF$1_!phase: l2aux, source=radianceDiagnostics.chisqMMIF$1, $
      /prefixSignal, sdName=' chisqMMIF !phase'
-   joinedDGM_chisqChan$1_!phase: l2aux, source=radianceChisq.chisqChan$1, $
+   joinedDGM_chisqChan$1_!phase: l2aux, source=radianceDiagnostics.chisqChan$1, $
      /prefixSignal, sdName=' chisqChan !phase'
-   joinedDGG_chisqBinned$1_!phase: l2gp, radianceChisq.chisqBinned$1, $
+   joinedDGM_noRadsPerMIF$1_!phase: l2aux, source=radianceDiagnostics.noRadsPerMIF$1, $
+     /prefixSignal, sdName=' noRadsPerMIF !phase'
+   joinedDGG_chisqBinned$1_!phase: l2gp, radianceDiagnostics.chisqBinned$1, $
      /prefixSignal, swath=' chisqBinned !phase'
+   joinedDGG_noRadsBinned$1_!phase: l2gp, radianceDiagnostics.noRadsBinned$1, $
+     /prefixSignal, swath=' noRadsBinned !phase'
    !storeDGM(joinedDGM_chisqMMAF$1_!phase)!dnl
    !storeDGM(joinedDGM_chisqMMIF$1_!phase)!dnl
    !storeDGM(joinedDGM_chisqChan$1_!phase)!dnl
-   !storeDGG(joinedDGG_chisqBinned$1_!phase)})
+   !storeDGM(joinedDGM_noRadsPerMIF$1_!phase)!dnl
+   !storeDGG(joinedDGG_chisqBinned$1_!phase)
+   !storeDGG(joinedDGG_noRadsBinned$1_!phase)})
 
 !define(doRadianceDiagnostics,{!dnl
    begin Fill
-     !forall(fillBandsRadianceChisq,$*)
+     !forall(fillRadianceDiagnostics,$*)
    end Fill
    begin Join
-     !forall(joinBandsRadianceChisq,$*)
+     !forall(joinRadianceDiagnostics,$*)
    end Join!nl})
 
 ;; This macro is used to offset the forward model radiances
@@ -190,7 +200,7 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
    Fill, quantity=f!phase.band$1, radianceQuantity=y!phase.band$1, method=offsetRadiance!nl})
 !define(offsetRadiances,{!dnl
    begin Fill
-   !forall(offsetRadiance,$1)
+   !forall(offsetRadiance,$*)
    end Fill})
 
 ;; This macro is used to invoke direct writes to store forward model
@@ -225,6 +235,9 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
   lowBound=lb$1, highBound=hb$1, diagnostics=diag$1})})
 
 ; $Log$
+; Revision 1.43  2003/05/08 21:08:02  livesey
+; Various bug fixes and tidies
+;
 ; Revision 1.42  2003/05/08 20:49:21  livesey
 ; Various tidyups and changes
 ;
