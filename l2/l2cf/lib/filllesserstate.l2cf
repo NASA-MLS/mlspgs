@@ -112,7 +112,7 @@ begin Fill
 
   ;; Here we're after LOS velocities.  Newer L1BOA files have this
   ;; information in them. For older files we have to extract it ourselves
-  !ifdef(flagOldSyleL1BOA, {
+  !ifdef(flagOldStyleL1BOA, {
   ;; We're after the line of sight velocities here, have to get them
   ;; in a slightly awkward manner.  First get the position of the
   ;; spacecraft and tangent points in ECI coordinates.
