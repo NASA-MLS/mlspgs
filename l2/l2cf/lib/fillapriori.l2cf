@@ -59,8 +59,7 @@ begin Fill
   ;; --------------------------------------------- hiRes Fills
 
   ;; This macro interpolates standard resolution quantities to the
-  ;; hiRes equivalents.  And a sub-macro to chop off {_HR}.
-  !define(trimHR,{!substr($1,0,!eval(!len($1)-3))})
+  ;; hiRes equivalents. 
   !define(fillHiRes,{Fill, quantity=$1, sourceQuantity=!trimHR($1),!dnl
      method=vector, /interpolate!nl})
 
@@ -184,7 +183,12 @@ begin Fill
   Fill, quantity=aprioriPrecision.extinctionConstant$1, $
     method=explicit, /spread, explicitValues=1.0e-3
   Fill, quantity=aprioriPrecision.extinctionShaped$1, $
-    method=explicit, /spread, explicitValues=1.0e-3})
+    method=explicit, /spread, explicitValues=1.0e-3
+  !ifdef(skipHiRes,{},{
+  Fill, quantity=aprioriPrecision.extinctionConstant$1_HR, $
+    method=explicit, /spread, explicitValues=1.0e-3
+  Fill, quantity=aprioriPrecision.extinctionShaped$1_HR, $
+    method=explicit, /spread, explicitValues=1.0e-3!nl})})
   !forall({fillExtinctionApriori},!allRadiometers)
 
   ;; Now do the same for baseline
@@ -279,6 +283,19 @@ begin Fill
     Fill, quantity=vReg.temperature_HR, method=explicit, explicitValues= 1K, /spread
     Fill, quantity=vReg.o3_HR, method=profile, profileValues=[ 100mb:1ppmv ]
     Fill, quantity=vReg.h2o_HR, method=profile, profileValues=[ 146mb:0ppmv, 100mb:0.3ppmv ]
+
+    Fill, quantity=vReg.extinctionShapedR1A_HR, method=profile, $
+      profileValues=[ 100mb:1.0e-5 ]
+    Fill, quantity=vReg.extinctionShapedR2_HR, method=profile, $
+      profileValues=[ 100mb:1.0e-5 ]
+    Fill, quantity=vReg.extinctionShapedR3_HR, method=profile, $
+      profileValues=[ 100mb:1.0e-5 ]
+    Fill, quantity=vReg.extinctionShapedR4_HR, method=profile, $
+      profileValues=[ 100mb:1.0e-5 ]
+    Fill, quantity=vReg.extinctionShapedR5H_HR, method=profile, $
+      profileValues=[ 100mb:1.0e-5 ]
+    Fill, quantity=vReg.extinctionShapedR5V_HR, method=profile, $
+      profileValues=[ 100mb:1.0e-5 ]
   })
 
   ;; Horizontal
