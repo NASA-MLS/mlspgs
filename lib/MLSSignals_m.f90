@@ -10,7 +10,7 @@ module MLSSignals_M
   use DUMP_0, only: DUMP
   use Expr_M, only: Expr
   use Init_MLSSignals_m ! Everything
-  use Intrinsic, only: Field_First, Field_indices, &
+  use Intrinsic, only: Field_First, Field_indices, Lit_Indices, &
     & PHYQ_Dimensionless, PHYQ_Frequency, PHYQ_Indices, S_Time, L_A, l_emls
   use Lexer_Core, only: Print_Source
   use MLSCommon, only: R8
@@ -867,8 +867,8 @@ oc:     do
       call display_string (radiometers(i)%prefix)
       call output ( ':' )
       call display_string (radiometers(i)%suffix, advance='yes', strip=.true. )
-      call output ( '   Polarization:' )
-      call display_string (radiometers(i)%polarization)
+      call output ( '   Polarization: ' )
+      call display_string (lit_indices(radiometers(i)%polarization))
       call output ( '   Module: ')
       call output ( radiometers(i)%instrumentModule )
       call output ( ' - ' )
@@ -954,7 +954,7 @@ oc:     do
     end if ! my_details
     if (associated(signal%channels)) then
       call output ( '   Channel Flags:', advance='yes' )
-      call dump( signal%channels )
+      call dump ( signal%channels, lbound=lbound(signal%channels,1) )
     else
       call output ( '   All channels selected', advance='yes' )
     end if
@@ -1656,6 +1656,9 @@ oc:     do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.72  2004/07/23 18:35:17  vsnyder
+! Dump low bound of channels array
+!
 ! Revision 2.71  2004/05/29 02:45:28  vsnyder
 ! Add DisplaySignalName, fix a bug in GetNameOfSignal
 !
