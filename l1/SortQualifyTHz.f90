@@ -98,11 +98,13 @@ print *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
 
 !! Check for Bright Objects in FOVs
 
-       Limb_BO_flag(1)%ptr => CurMAFdata%LimbView%MoonInFOV
-       Limb_BO_flag(2)%ptr => CurMAFdata%LimbView%VenusInFOV
+       Limb_BO_flag(1)%ptr => CurMAFdata%LimbView%MoonInFOV(:,2)
+       Limb_BO_flag(2)%ptr => CurMAFdata%LimbView%VenusInFOV(:,2)
+
 
        CALL Flag_Bright_Objects (CurMAFdata%SciMIF%secTAI, &
-            CurMAFdata%SciMIF%scAngle, Limb_BO_flag)
+            CurMAFdata%SciMIF%scAngle, L1Config%Calib%MoonToLimbAngle_THz, &
+            Limb_BO_flag)
        more_data =  THzSciMAF(0)%secTAI <= L1Config%Input_TAI%endTime
 
     ENDDO
@@ -210,9 +212,9 @@ print *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
 
 !! Check for bright objects in Limb FOV and mark as "D"iscards
 
-       VenusInLimbView = ANY (CurMAFdata%LimbView%VenusInFOV)
+       VenusInLimbView = ANY (CurMAFdata%LimbView%VenusInFOV(:,2))
        IF (VenusInLimbView) msg = 'Venus in Limb View' 
-       MoonInLimbView = ANY (CurMAFdata%LimbView%MoonInFOV)
+       MoonInLimbView = ANY (CurMAFdata%LimbView%MoonInFOV(:,2))
        IF (MoonInLimbView) msg = 'Moon in Limb View'
        IF (MoonInLimbView .OR. VenusInLimbView) THEN   ! Discard
           n = PGS_TD_TAItoUTC (CurMAFdata%SciMIF(0)%secTAI, asciiUTC)
@@ -221,8 +223,8 @@ print *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
           WRITE (L1BFileInfo%LogId, *) ''
           WRITE (L1BFileInfo%LogId, *) TRIM(msg)//' at MAF UTC '//asciiUTC
           DO n = 0, CurMAFdata%last_MIF
-             IF (CurMAFdata%LimbView%MoonInFOV(n) .OR. &
-                  CurMAFdata%LimbView%VenusInFOV(n)) THEN
+             IF (CurMAFdata%LimbView%MoonInFOV(n,2) .OR. &
+                  CurMAFdata%LimbView%VenusInFOV(n,2)) THEN
                 CurMAFdata%SciMIF(n)%SwMirPos = discard
              ENDIF
           ENDDO
@@ -247,6 +249,9 @@ END MODULE SortQualifyTHz
 !=============================================================================
 
 ! $Log$
+! Revision 2.6  2005/01/28 17:07:14  perun
+! Get THz FOV bright object flags
+!
 ! Revision 2.5  2004/11/10 15:36:11  perun
 ! Check for "Bright Objects" in FOV; check encoder for good range (-/+ 6.0)
 !
