@@ -16,8 +16,8 @@ module SYMBOL_TABLE
   implicit NONE
   private
 
-  public :: ADD_TERMINAL, ALLOCATE_SYMBOL_TABLE, DUMP_1_SYMBOL
-  public :: DUMP_SYMBOL_CLASS, DUMP_SYMBOL_TYPE
+  public :: ADD_TERMINAL, ALLOCATE_SYMBOL_TABLE, DESTROY_SYMBOL_TABLE
+  public :: DUMP_1_SYMBOL, DUMP_SYMBOL_CLASS, DUMP_SYMBOL_TYPE
   public :: ENTER_TERMINAL, INIT_SYMBOL_TABLE, SET_SYMBOL, SYMBOL
 
   integer, save, private :: CLASS_TEXTS(T_NULL: T_LAST_TERMINAL)
@@ -61,7 +61,7 @@ contains
     add_terminal = where
     return
   end function ADD_TERMINAL
-  ! =================================     ALLOCATE_SYMBOL_TABLE     =====
+  ! ================================     ALLOCATE_SYMBOL_TABLE     =====
   subroutine ALLOCATE_SYMBOL_TABLE ( N_CHARS, N_SYMBOLS, STATUS )
   ! Allocate character, string and symbol tables.
   ! Also does INIT_SYMBOL_TABLE
@@ -93,6 +93,15 @@ contains
     call init_symbol_table
     return
   end subroutine ALLOCATE_SYMBOL_TABLE
+  ! =================================     DESTROY_SYMBOL_TABLE     =====
+  subroutine DESTROY_SYMBOL_TABLE ( Status )
+    integer, intent(out), optional :: Status ! From deallocate
+    if ( present(status) ) then
+      deallocate ( symbols, stat=status )
+    else
+      deallocate ( symbols )
+    end if
+  end subroutine DESTROY_SYMBOL_TABLE
   ! ========================================     DUMP_1_SYMBOL     =====
   subroutine DUMP_1_SYMBOL ( SYMBOL, ADVANCE )
   ! Print the symbol index, type and text.
@@ -211,6 +220,9 @@ contains
 end module SYMBOL_TABLE
 
 ! $Log$
+! Revision 2.2  2001/04/21 00:37:30  vsnyder
+! Add 'Destroy_Symbol_Table' routine
+!
 ! Revision 2.1  2000/10/11 18:33:24  vsnyder
 ! Move from lib/cf_parser to lib; insert copyright notice
 !
