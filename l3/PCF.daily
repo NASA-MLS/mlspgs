@@ -454,8 +454,7 @@
 3001|OutputVersion|V0-05
 3002|Cycle|1
 3003|L2DayRange|1996-032:1996-060
-3004|MinDays|15
-3005|RangDays|1996-042:1996-051
+3004|RangDays|1996-042:1996-051
 #
 # -----------------------------------------------------------------------
 # These parameters are required to support the PGS_SMF_Send...() tools.

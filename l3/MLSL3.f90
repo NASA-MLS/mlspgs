@@ -34,8 +34,9 @@ PROGRAM MLSL3 ! MLS Level 3 software
 ! Variables
 
    TYPE( Mlscf_T ) :: cf
-   TYPE( PCFData_T ) :: pcf
+   TYPE( L3CFDef_T ) :: cfDef
    TYPE( OutputFlags_T ) :: flags
+   TYPE( PCFData_T ) :: pcf
    TYPE( L2GPData_T ), POINTER :: l2gp(:)
    TYPE( L2GPData_T ), POINTER :: l3r(:), residA(:), residD(:)
    TYPE( L3CFProd_T ), POINTER :: cfProd(:)
@@ -43,7 +44,6 @@ PROGRAM MLSL3 ! MLS Level 3 software
    TYPE( L3SPData_T ), POINTER :: l3sp(:)
 
    CHARACTER (LEN=480) :: msr
-   CHARACTER (LEN=FileNameLen) :: logType
    CHARACTER (LEN=1), POINTER :: anText(:)
 
    INTEGER :: count, err, i, j, k, l, l2Days, nlev, nf, nwv, numDays, numSwaths
@@ -56,7 +56,7 @@ PROGRAM MLSL3 ! MLS Level 3 software
 
 ! Fill structures with input data from the PCF and L3CF.
 
-   CALL OpenAndInitialize(pcf, cf, cfProd, logType, anText, avgPer)
+   CALL OpenAndInitialize(pcf, cf, cfProd, cfDef, anText, avgPer)
 
 ! For each product in the DailyMap section of the cf,
 
@@ -68,7 +68,7 @@ PROGRAM MLSL3 ! MLS Level 3 software
 
 ! If insufficient data found, go on to the next product
 
-      IF (l2Days < pcf%minDays) THEN
+      IF (l2Days < cfDef%minDays) THEN
          msr = 'Skipping CORE processing for ' // TRIM(cfProd(i)%l3prodNameD) &
             // ' and moving on to the next product.'
          CALL MLSMessage (MLSMSG_Info, ModuleName, msr)
@@ -236,7 +236,7 @@ PROGRAM MLSL3 ! MLS Level 3 software
 
 ! Write the log file metadata
 
-   CALL WriteMetaLog(pcf, logType)
+   CALL WriteMetaLog(pcf, cfDef%logType)
 
 ! Final deallocations
  
@@ -263,6 +263,9 @@ END PROGRAM MLSL3
 !================
 
 ! $Log$
+! Revision 1.7  2001/01/16 17:45:38  nakamura
+! Updated for new MCFs and added annotation.
+!
 ! Revision 1.6  2000/12/29 21:40:52  nakamura
 ! Added avgPer, more simulated data; revised argument list for ReadL2GPProd; switched to one-product/all-days paradigm.
 !

@@ -60,10 +60,16 @@ BEGIN GlobalSettings
     ;;
     LogType="MLS-Aura_L3LOG_Daily_"
     ;;
+    ;; Minimum number of days of input needed for L3 processing to proceed.  If
+    ;; fewer than this are found/read in the input window, CORE processing is
+    ;; skipped for the product.
+    ;;
+    MinDays=15
+    ;;
     ;; Max Size of Level 2 Data Gap Allowed --
     ;; We can specify this in minutes, MAFs or orbits (the output of the parser
     ;; will be in the time default of seconds).
-    ;; 
+    ;;
     MaxGap=3 minutes
     ;;
     ;; Number for "largest differences" diagnostics
@@ -183,6 +189,9 @@ END Output
 ; ----------------------------------------------------------------------------
 ;
 ; $Log$
+; Revision 1.2  2001/01/16 17:54:07  nakamura
+; Added a template for the log file name to GlobalSettings; added the prefix MLS-Aura_ to all file types.
+;
 ; Revision 1.1  2000/12/29 21:47:51  nakamura
 ; New name for l3d_cf.v0-05
 ;
