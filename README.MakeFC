@@ -379,8 +379,9 @@ changing the paths.
 ACTUAL BUGS
 The Linux HDFEOS, HDF, PGSTK, etc. libraries as distributed can not be made to
 link properly. Sun and SGI versions seem correct. The solution is to build
-correct ones. See Hugh's page  http://www.met.ed.ac.uk/~hcp/hdfeos_notes.txt
-for instructions. Hopefully this bug will disappear with the next release.
+correct ones. See Hugh Pumphrey's page 
+http://www.met.ed.ac.uk/~hcp/hdfeos_notes.txt for instructions. Hopefully this
+bug will disappear with the next release.
 
 IMPERFECTIONS AND COMPLICATIONS
 The only combinations of compiler.platform/OS provided for so far are
@@ -430,7 +431,7 @@ prerequisite, but not doing so. This happens because make believes wrongly the
 prerequisite is itself the target of a newer prerequisite. While this hunting
 behavior seems wrong, it will not cause make to fail, and in fact minimizes
 rebuilding the prerequisites. At the cost of some added rebuilding of
-prerequisites, make can be made to give up hunting by putting the SIMPLIFYMAKE
+prerequisites, make can be made to give up hunting by putting the NOHUNTING
 setting to "yes" or in fact anything other than its blank default.
 
 PVMWrappers.c in lib is a c source requiring a c compiler. The default value
@@ -494,11 +495,11 @@ LAFTER             Appears at the end of the very long link statement
                    e.g., for additional libraries required to link successfully
                    or else to highlight errors as in FAFTER
 MLSCFILE           Overrides the name of the .configure file
+NOHUNTING          Stop make from hunting if non-blank (see above)
 PGSTK              Also mentioned below in connection with .configure,
                    but if set to blank on the line invoking make, it will
                    cause make to build a toolkit-free version of lib and l2;
                    E.g., "make PGSTK="
-SIMPLIFYMAKE       Stop make from hunting if non-blank (see above)
 TAR                Overrides name of tar command; e.g. path to GNU tar 
                    in case your tar won't gzip for targets *targ
 
@@ -524,8 +525,8 @@ is possible they may no longer work, nor even compile and link properly.
 Another wrinkle in the lib directory is the versions of machine.f90 which lurk
 under machines with names like machines/NAG.Linux/machine.f90 They are intended
 to contain machine/OS/compiler specific information the software can obtain at
-runtime. As a start, I simply copied NAG.Linux into NAG.*, which is probably
-incorrect.
+runtime. As a start, I simply copied NAG.Linux into NAG.*, which has worked so
+far.
 
 Any of the variables assigned in the file .configure can be treated as an
 advanced setting. In other words, you may override any of these on the command
@@ -576,6 +577,9 @@ export LDOPTS
 EOF
 exit
 # $Log$
+# Revision 1.22  2001/09/25 23:53:22  pwagner
+# Mentions Sun.Sun, SIMPLIFYMAKE
+#
 # Revision 1.21  2001/08/16 17:16:32  pwagner
 # Mentions EXTRA_PATHS, shell script versions of mlsln; snipped less important stuff
 #
