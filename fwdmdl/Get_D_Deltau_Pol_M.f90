@@ -124,9 +124,9 @@ contains
         ! Now add in contribution from scalar model, 0.25 for +/- sigma,
         ! 0.5 for pi.
         do p_i = 1, i_stop
-          d_delta_df_pol(:,inds(p_i)) = d_delta_df_pol(:,inds(p_i)) + &
+          d_delta_df_pol(:,p_i) = d_delta_df_pol(:,p_i) + &
             & 0.25_rp * d_delta_df(p_i,sv_i)
-          d_delta_df_pol(0,inds(p_i)) = d_delta_df_pol(0,inds(p_i)) + &
+          d_delta_df_pol(0,p_i) = d_delta_df_pol(0,p_i) + &
             & 0.25_rp * d_delta_df(p_i,sv_i)
         end do ! p_i
         ! d_delta_df_pol is now really \int incremental opacity ds.
@@ -463,6 +463,9 @@ contains
 end module Get_D_Deltau_Pol_M
 
 ! $Log$
+! Revision 2.12  2003/09/09 00:03:48  vsnyder
+! Repair an indexing blunder
+!
 ! Revision 2.11  2003/08/15 20:29:26  vsnyder
 ! Implement polarized VMR derivatives
 !
