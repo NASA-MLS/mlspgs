@@ -121,6 +121,114 @@ CONTAINS
 
   end Function depunctuate
 
+  ! ------------------------------------------------  DEPUNCTUATE  -----
+  Function unquote(str, quote, strict) result (outstr)
+    ! Function that removes a single pair of surrounding quotes from string
+
+    ! E.g., given "Let me see." or 'Let me see.' returns
+    ! Let me see.
+    ! If no surrounding quotes are found, returns string unchanged; unless
+    ! (1) mismatched quotes, e.g. 'Let me see." will:
+    !     remove leading quote but leave trailing quote
+    ! (2) a single unpaired quote found at beginning or end, will:
+    !  (a) remove it if the resulting string is non-empty; or
+    !  (b) return the single unpaired quote if that was the entire str
+    
+    ! If given optional arg quote, removes only surrounding pair of quotes
+    
+    ! If given optional arg strict, options (1) and (2) above disregarded
+    ! i.e., surrounding quotes must match, else returns string unchanged
+    
+    ! Useful because the parser will return quote-delimited strings if that's
+    ! how they appear in the lcf
+    !--------Argument--------!
+    character(len=*),intent(in) :: str
+    character(len=len(str)) :: outstr
+    character(len=1),intent(in), optional :: quote
+    logical,intent(in), optional :: strict
+    !----------Local vars----------!
+    character(len=1), parameter :: sq=''''
+    character(len=1), parameter :: dq='"'
+    integer :: first, last, ult
+    !----------Executable part----------!
+
+   ult = LEN(TRIM(str))
+      
+   if(ult <= 1) then
+      outstr=str
+      return
+   endif
+
+   if(present(quote)) then
+
+      if(present(strict)) then
+         if(str(1:1) == quote .and. str(ult:ult) == quote) then
+            outstr=str(2:ult-1)
+         else
+            outstr=str
+         endif
+         return
+      endif
+      
+      if(str(1:1) == quote) then
+         first=2
+      else
+         first=1
+      endif
+
+      if(str(ult:ult) == quote) then
+         last=ult-1
+      else
+         last=ult
+      endif
+
+   if(present(strict)) then
+      if( &
+      & str(1:1) == str(ult:ult) &
+      & .and. &
+        & (str(1:1) == sq .or. str(1:1) == dq) &
+        & ) then
+            outstr=str(2:ult-1)
+          else
+            outstr=str
+          endif
+         return
+   endif
+      
+   elseif(str(1:1) == sq) then
+      first=2
+      if(str(ult:ult) == sq) then
+         last=ult-1
+      else
+         last=ult
+      endif
+      
+   elseif(str(1:1) == dq) then
+      first=2
+      if(str(ult:ult) == dq) then
+         last=ult-1
+      else
+         last=ult
+      endif
+
+   else
+      first=1
+      if(str(ult:ult) == dq .or. str(ult:ult) == sq) then
+         last=ult-1
+      else
+         last=ult
+      endif
+
+   endif
+
+   if(last >= first) then
+       outstr=str(first:last)
+   else
+       outstr=str
+   endif
+      
+  end Function unquote
+
   ! ---------------------------------------------  GetIntHashElement  -----
 
   ! This function takes one (usually) comma-delimited string list, interprets it
@@ -953,6 +1061,9 @@ END MODULE MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.7  2001/05/11 00:06:54  pwagner
+! Added unquote
+!
 ! Revision 2.6  2001/03/14 17:34:00  pwagner
 ! Removed some of the dross, left all of the gold
 !
