@@ -14,6 +14,8 @@
 # -r          show how many chunks running
 # -full       show full stats: running, completed, crashed, on deck, total
 # -t          show date, time the run started
+#   The following options print one line per machine
+# -fail       show machines that jobs could not be spawned on
 #
 # Note:
 # (1) you must be logged into a host that can see /workops/jobs/science
@@ -29,6 +31,42 @@
 
 # "$Id$"
 
+note_failures()
+  {
+  # How many args?
+  if [ $# -lt 2 ]
+  then
+    echo "note_failures needs exactly two arguments: line_numbers and file_name"
+    exit
+  elif [ ! -r "$2" ]
+  then
+    echo "$2 not found"
+    exit
+  fi
+  echo -e "machine \t failure with"
+  for line_number in $1
+  do
+    #echo "line number $line_number of $2"
+    #sed -n ''$line_number' p' "$2"
+    machine_info=`sed -n ''$line_number' p' "$2" | awk '{print $9, $11}'`
+    #echo "machine_info: $machine_info"
+    machine=`echo $machine_info | awk '{print $1}'`
+    info=`echo $machine_info | awk '{print $2}'`
+    case "$info" in
+      -6)
+        note="$machine \t pvm demon"
+        ;;
+      -7)
+        note="$machine \t file system"
+        ;;
+      *)
+        note="$machine \t ($info: unknown)"
+        ;;
+    esac
+    echo -e $note
+  done
+}
+
 # ************
 # Main Program
 # ************
@@ -43,6 +81,7 @@ scramjet="yes"
 dirnames="no"
 died="no"
 restrict="no"
+fail="no"
 running="no"
 full="no"
 time="no"
@@ -71,6 +110,11 @@ while [ "$more_opts" = "yes" ] ; do
     -r )
 	    shift
        running="yes"
+       restrict="yes"
+       ;;
+    -fail )
+	    shift
+       fail="yes"
        restrict="yes"
        ;;
     -full )
@@ -129,13 +173,17 @@ then
 fi
 if [ "$full" = "yes" ]
 then
-  list="$list \t stats (r co cr od tot)"
+  echo "Stats order: running complete crashed waiting total"
+  list="$list \t full stats "
 fi
 if [ "$time" = "yes" ]
 then
   list="$list \t run start (date time)"
 fi
-echo -e $list
+if [ "$fail" = "no" ]
+then
+  echo -e $list
+fi
 for dir in $dirs
 do
   # These are pretty quick (at least compared with grepping the whole
@@ -150,10 +198,12 @@ do
   if [ "$lightspeed" = "yes" -a "$testl" != "" ]
   then
     list="lightspeed"
+    machine="lightspeed"
   fi
   if [ "$scramjet" = "yes" -a "$tests" != "" ]
   then
     list="scramjet"
+    machine="scramjet"
   fi
   if [ "$debug" = "yes" ]
   then
@@ -167,7 +217,7 @@ do
   fi
   if [ "$list" != "" ]
   then
-    skipifrestricting="$restricting"
+    skipifrestricting="$restrict"
     if [ "$statbad" != "" ]
     then
       newlist="$list \t ended badly"
@@ -201,14 +251,22 @@ do
     fi
     if [ "$running" = "yes" -a "$skipifrestricting" = "no" ]
     then
-	   chunks=`grep -i complete $dir/exec_log/process.stdout | tail -1 | \
+	   chunks=`grep -i completed $dir/exec_log/process.stdout | tail -1 | \
         awk '{print $8}'`
+      if [ "$chunks" = "" ]
+      then
+        chunks="(unknown)"
+      fi
       list="$list \t $chunks"
     fi
     if [ "$full" = "yes" -a "$skipifrestricting" = "no" ]
     then
-	   chunks=`grep -i complete $dir/exec_log/process.stdout | tail -1 | \
+	   chunks=`grep -i completed $dir/exec_log/process.stdout | tail -1 | \
         awk '{print $8, $3, $10, $12, $5}'`
+      if [ "$chunks" = "" ]
+      then
+        chunks="(unknown)"
+      fi
       list="$list \t $chunks"
     fi
     if [ "$time" = "yes" -a "$skipifrestricting" = "no" ]
@@ -217,7 +275,20 @@ do
         awk '{print $3, $4}'`
       list="$list \t $chunks"
     fi
-    if [ "$skipifrestricting" = "no" ]
+    if [ "$fail" = "yes" -a "$skipifrestricting" = "no" ]
+    then
+      echo "Nodes on $machine on which a job could not be spawned"
+      a=`grep -n 'Unable to start slave task' $dir/exec_log/process.stdout | \
+       awk '{print $1}' | sed 's/://'`
+      #echo "a: $a"
+      if [ "$a" = "" ]
+      then
+        echo "All attempts at spawning jobs succeeded"
+        exit
+      fi
+      note_failures "$a" "$dir/exec_log/process.stdout"
+    fi
+    if [ "$skipifrestricting" = "no" -a $fail = "no" ]
     then
       echo -e $list
     fi
@@ -225,3 +296,6 @@ do
 done
 exit 0
 # $Log$
+# Revision 1.1  2005/04/01 00:13:15  pwagner
+# First commit
+#
