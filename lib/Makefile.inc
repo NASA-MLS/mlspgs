@@ -97,18 +97,21 @@ test_multiply.o: $S/test_multiply.f90 MatrixModule_0.o
 
 test_multiply: test_multiply.o
 	$(F90) $(LDOPTS) -o test_multiply test_multiply.o -L. -lmls -L$(CF) -lCF \
-                 -L$(HOME)/mlspgs/SDPToolkit -lPGSTK \
+                 -L$(PGSTK) -lPGSTK \
 
 test_sparsify.o: $S/test_sparsify.f90 MatrixModule_0.o
 	$(F90) -c $(FOPTS) $I$(CF) $S/test_sparsify.f90
 
 test_sparsify: test_sparsify.o
 	$(F90) $(LDOPTS) -o test_sparsify test_sparsify.o -L. -lmls -L$(CF) -lCF \
-                 -L$(HOME)/mlspgs/SDPToolkit -lPGSTK \
+                 -L$(PGSTK) -lPGSTK \
 
 # ========================================================================
 
 # $Log$
+# Revision 2.8  2000/10/09 23:31:49  vsnyder
+# Must have changed something -- permissions weren't r--r--r--.
+#
 # Revision 2.7  2000/10/09 22:18:35  vsnyder
 # Added machine.f90 to SRCS and machine.o to OBJS.  machine.f90 is in
 # the next-layer-down of machine/compiler/OS directories.  If you
