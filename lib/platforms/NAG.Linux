@@ -52,13 +52,10 @@ INC_PATHS = $(EXTRA_PATHS) -I $(PGSINC) -I $(srclib) -I $S
 .c.o:
 	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
 
-# Modules needed by test programs
-# They currently compile only under Lahey's LF95
-MATRIX_OBJS = 
-
-#SDP =SDPToolkitSubstitute.o
-#GD=GDapi.o
 # $Log$
+# Revision 1.12  2001/08/15 21:03:28  pwagner
+# Default rules for .f and .c; EXTRA_PATHS added to INC_PATHS
+#
 # Revision 1.11  2001/08/14 22:19:37  pwagner
 # New autobuild rules for .f and .c sources
 #
