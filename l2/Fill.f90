@@ -5321,7 +5321,7 @@ contains ! =====     Public Procedures     =============================
           okSoFar = okSoFar .and. &
             & DoHGridsMatch ( quantity, aorb ) .and. &
             & DoVGridsMatch ( quantity, aorb ) .and. &
-            & DoFGridsMatch ( quantity, aorb )
+            & DoFGridsMatch ( quantity, aorb, sizeOnly=.true. )
         else
           ! For a+/-b these quantities must share a template
           okSoFar = okSoFar .and. quantity%template%name == aorb%template%name
@@ -6010,6 +6010,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.240  2003/08/28 00:44:54  livesey
+! Made the a*b manipulation even more lenient
+!
 ! Revision 2.239  2003/08/21 16:07:17  livesey
 ! Now calls FlushLockedBins (LinearizedForwardModel) rather than
 ! FlushL2PCBins (which is called by the former), as we want it also to
