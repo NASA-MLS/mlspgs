@@ -1,7 +1,7 @@
 ! Copyright (c 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
-MODULE PVMIDL ! Communicate with and IDL (NJL's pvmlib) process using pvm.
+module PVMIDL ! Communicate with and IDL (NJL's pvmlib) process using pvm.
 
   ! This module is an interface between the f90 MLSL2 code and an IDL process
   ! using the pvmlib IDL routines written by NJL.
@@ -10,642 +10,717 @@ MODULE PVMIDL ! Communicate with and IDL (NJL's pvmlib) process using pvm.
   ! the same upto 3D, and strings (not arrays of strings though as there are
   ! length issues.
 
-  USE MLSCommon, ONLY : r8
-  USE PVM
+  use MLSCommon, only : r8
+  use PVM, only: PVMDATADEFAULT, PVMFINITSEND, PVMFMYTID, PVMF90PACK, PVMF90UNPACK
 
+  implicit none
+ 
   !------------------------------- RCS Ident Info ------------------------------
-  CHARACTER(LEN=130), PRIVATE :: Id = & 
+  character(LEN=130), private :: Id = & 
        "$Id$"
-  CHARACTER(LEN=*), PRIVATE, PARAMETER :: ModuleName="$RCSfile$"
+  character(LEN=*), private, parameter :: ModuleName="$RCSfile$"
   !-----------------------------------------------------------------------------
 
-  INTERFACE PVMIDLpack
-     MODULE PROCEDURE PVMIDLpackstring, PVMIDLpackInteger, PVMIDLpackReal, &
+
+  interface PVMIDLpack
+     module procedure PVMIDLpackstring, PVMIDLpackInteger, PVMIDLpackReal, &
           & PVMIDLpackIntarr1, PVMIDLpackIntarr2, PVMIDLpackIntarr3, &
           & PVMIDLpackRealarr1, PVMIDLpackRealarr2, PVMIDLpackRealarr3
-  END INTERFACE
+  end interface
 
-  INTERFACE PVMIDLunpack
-     MODULE PROCEDURE PVMIDLunpackstring, PVMIDLunpackInteger, PVMIDLunpackReal, &
+  interface PVMIDLunpack
+     module procedure PVMIDLunpackstring, PVMIDLunpackInteger, PVMIDLunpackReal, &
           & PVMIDLunpackIntarr1, PVMIDLunpackIntarr2, PVMIDLunpackIntarr3, &
           & PVMIDLunpackRealarr1, PVMIDLunpackRealarr2, PVMIDLunpackRealarr3
-  END INTERFACE
+  end interface
 
-  INTERFACE PVMIDLSend
-     MODULE PROCEDURE PVMIDLSendString, PVMIDLSendInteger, PVMIDLSendReal,&
+  interface PVMIDLSend
+     module procedure PVMIDLSendString, PVMIDLSendInteger, PVMIDLSendReal,&
           & PVMIDLSendIntarr1, PVMIDLSendIntarr2, PVMIDLSendIntarr3, &
           & PVMIDLSendRealarr1, PVMIDLSendRealarr2, PVMIDLSendRealarr3
-  END INTERFACE
+  end interface
 
-  INTERFACE PVMIDLReceive
-     MODULE PROCEDURE PVMIDLReceiveString, PVMIDLReceiveInteger, PVMIDLReceiveReal,&
+  interface PVMIDLReceive
+     module procedure PVMIDLReceiveString, PVMIDLReceiveInteger, PVMIDLReceiveReal,&
           & PVMIDLReceiveIntarr1, PVMIDLReceiveIntarr2, PVMIDLReceiveIntarr3, &
           & PVMIDLReceiveRealarr1, PVMIDLReceiveRealarr2, PVMIDLReceiveRealarr3
-  END INTERFACE
+  end interface
 
-  INTEGER, PARAMETER :: IDLMsgTag=100
+  integer, parameter :: IDLMsgTag=100
 
-CONTAINS
+contains
 
-  SUBROUTINE PVMIDLpackString(line,info)
-    CHARACTER (LEN=*), INTENT(IN) :: line
-    INTEGER, INTENT(OUT) :: info
+  subroutine PVMIDLpackString(line,info)
+    character (LEN=*), intent(in) :: line
+    integer, intent(out) :: info
 
-    INTEGER :: length
+    integer :: length
 
     ! First pack noDims and a 7 to indicate string
-    CALL pvmf90pack( (/0,7/), info)
+    call pvmf90pack( (/0,7/), info)
 
     ! Now pack the length of the string
-    length=LEN_TRIM(line)
-    IF (info==0) CALL pvmf90pack( length, info)
+    length=len_trim(line)
+    if (info==0) call pvmf90pack( length, info)
 
     ! Now pack the string itself
-    IF ((info==0).AND.(length/=0)) CALL pvmf90pack(TRIM(line),info)
+    if ((info==0).and.(length/=0)) call pvmf90pack(trim(line),info)
 
-  END SUBROUTINE PVMIDLpackString
+  end subroutine PVMIDLpackString
 
-  SUBROUTINE PVMIDLpackInteger(value,info)
-    INTEGER, INTENT(IN) :: value
-    INTEGER, INTENT(OUT) :: info
-
-    ! First pack noDims and a 3 to indicate integer (LONG in IDL of course)
-    CALL pvmf90pack( (/0,3/), info)
-
-    ! Now pack the data itself
-    IF (info==0) CALL pvmf90pack(value,info)
-
-  END SUBROUTINE PVMIDLpackInteger
-
-  SUBROUTINE PVMIDLpackReal(value,info)
-    REAL (r8), INTENT(IN) :: value
-    INTEGER, INTENT(OUT) :: info
-
-    ! First pack noDims and a 5 to indicate double
-    CALL pvmf90pack( (/0,5/), info)
-
-    ! Now pack the data itself
-    IF (info==0) CALL pvmf90pack(value,info)
-  END SUBROUTINE PVMIDLpackReal
-
-  SUBROUTINE PVMIDLpackIntarr1(values,info)
-    INTEGER, INTENT(IN), DIMENSION(:) :: values
-    INTEGER, INTENT(OUT) :: info
+  subroutine PVMIDLpackInteger(value,info)
+    integer, intent(in) :: value
+    integer, intent(out) :: info
 
     ! First pack noDims and a 3 to indicate integer (LONG in IDL of course)
-    CALL pvmf90pack( (/1,3/), info)
-
-    ! Now output the dimensions themselves
-    IF (info==0) CALL pvmf90pack( (/SHAPE(values),SIZE(values)/),info)
+    call pvmf90pack( (/0,3/), info)
 
     ! Now pack the data itself
-    IF (info==0) CALL pvmf90pack(values,info)
-  END SUBROUTINE PVMIDLpackIntarr1
+    if (info==0) call pvmf90pack(value,info)
 
-  SUBROUTINE PVMIDLpackIntarr2(values,info)
-    INTEGER, INTENT(IN), DIMENSION(:,:) :: values
-    INTEGER, INTENT(OUT) :: info
+  end subroutine PVMIDLpackInteger
+
+  subroutine PVMIDLpackReal(value,info)
+    real (r8), intent(in) :: value
+    integer, intent(out) :: info
+
+    ! First pack noDims and a 5 to indicate double
+    call pvmf90pack( (/0,5/), info)
+
+    ! Now pack the data itself
+    if (info==0) call pvmf90pack(value,info)
+  end subroutine PVMIDLpackReal
+
+  subroutine PVMIDLpackIntarr1(values,info)
+    integer, intent(in), dimension(:) :: values
+    integer, intent(out) :: info
 
     ! First pack noDims and a 3 to indicate integer (LONG in IDL of course)
-    CALL pvmf90pack( (/2,3/), info)
+    call pvmf90pack( (/1,3/), info)
 
     ! Now output the dimensions themselves
-    IF (info==0) CALL pvmf90pack((/SHAPE(values),SIZE(values)/),info)
+    if (info==0) call pvmf90pack( (/shape(values),size(values)/),info)
 
     ! Now pack the data itself
-    IF (info==0) CALL pvmf90pack(values,info)
-  END SUBROUTINE PVMIDLpackIntarr2
+    if (info==0) call pvmf90pack(values,info)
+  end subroutine PVMIDLpackIntarr1
 
-  SUBROUTINE PVMIDLpackIntarr3(values,info)
-    INTEGER, INTENT(IN), DIMENSION(:,:,:) :: values
-    INTEGER, INTENT(OUT) :: info
+  subroutine PVMIDLpackIntarr2(values,info)
+    integer, intent(in), dimension(:,:) :: values
+    integer, intent(out) :: info
 
     ! First pack noDims and a 3 to indicate integer (LONG in IDL of course)
-    CALL pvmf90pack( (/3,3/), info)
+    call pvmf90pack( (/2,3/), info)
 
     ! Now output the dimensions themselves
-    IF (info==0) CALL pvmf90pack((/SHAPE(values),SIZE(values)/),info)
+    if (info==0) call pvmf90pack((/shape(values),size(values)/),info)
 
     ! Now pack the data itself
-    IF (info==0) CALL pvmf90pack(values,info)
-  END SUBROUTINE PVMIDLpackIntarr3
+    if (info==0) call pvmf90pack(values,info)
+  end subroutine PVMIDLpackIntarr2
 
-  SUBROUTINE PVMIDLpackRealarr1(values,info)
-    REAL (r8), INTENT(IN), DIMENSION(:) :: values
-    INTEGER, INTENT(OUT) :: info
+  subroutine PVMIDLpackIntarr3(values,info)
+    integer, intent(in), dimension(:,:,:) :: values
+    integer, intent(out) :: info
+
+    ! First pack noDims and a 3 to indicate integer (LONG in IDL of course)
+    call pvmf90pack( (/3,3/), info)
+
+    ! Now output the dimensions themselves
+    if (info==0) call pvmf90pack((/shape(values),size(values)/),info)
+
+    ! Now pack the data itself
+    if (info==0) call pvmf90pack(values,info)
+  end subroutine PVMIDLpackIntarr3
+
+  subroutine PVMIDLpackRealarr1(values,info)
+    real (r8), intent(in), dimension(:) :: values
+    integer, intent(out) :: info
 
     ! First pack noDims and a 5 to indicate double
-    CALL pvmf90pack( (/1,5/), info)
+    call pvmf90pack( (/1,5/), info)
 
     ! Now output the dimensions themselves
-    IF (info==0) CALL pvmf90pack((/SHAPE(values),SIZE(values)/),info)
+    if (info==0) call pvmf90pack((/shape(values),size(values)/),info)
 
     ! Now pack the data itself
-    IF (info==0) CALL pvmf90pack(values,info)
-  END SUBROUTINE PVMIDLpackRealarr1
+    if (info==0) call pvmf90pack(values,info)
+  end subroutine PVMIDLpackRealarr1
 
-  SUBROUTINE PVMIDLpackRealarr2(values,info)
-    REAL (r8), INTENT(IN), DIMENSION(:,:) :: values
-    INTEGER, INTENT(OUT) :: info
+  subroutine PVMIDLpackRealarr2(values,info)
+    real (r8), intent(in), dimension(:,:) :: values
+    integer, intent(out) :: info
 
     ! First pack noDims and a 5 to indicate double
-    CALL pvmf90pack( (/2,5/), info)
+    call pvmf90pack( (/2,5/), info)
 
     ! Now output the dimensions themselves
-    IF (info==0) CALL pvmf90pack((/SHAPE(values),SIZE(values)/),info)
+    if (info==0) call pvmf90pack((/shape(values),size(values)/),info)
 
     ! Now pack the data itself
-    IF (info==0) CALL pvmf90pack(values,info)
-  END SUBROUTINE PVMIDLpackRealarr2
+    if (info==0) call pvmf90pack(values,info)
+  end subroutine PVMIDLpackRealarr2
 
-  SUBROUTINE PVMIDLpackRealarr3(values,info)
-    REAL (r8), INTENT(IN), DIMENSION(:,:,:) :: values
-    INTEGER, INTENT(OUT) :: info
+  subroutine PVMIDLpackRealarr3(values,info)
+    real (r8), intent(in), dimension(:,:,:) :: values
+    integer, intent(out) :: info
 
     ! First pack noDims and a 5 to indicate double
-    CALL pvmf90pack( (/3,5/), info)
+    call pvmf90pack( (/3,5/), info)
 
     ! Now output the dimensions themselves
-    IF (info==0) CALL pvmf90pack((/SHAPE(values),SIZE(values)/),info)
+    if (info==0) call pvmf90pack((/shape(values),size(values)/),info)
 
     ! Now pack the data itself
-    IF (info==0) CALL pvmf90pack(values,info)
-  END SUBROUTINE PVMIDLpackRealarr3
+    if (info==0) call pvmf90pack(values,info)
+  end subroutine PVMIDLpackRealarr3
 
   ! ------------------------------------------------------------------------------
 
-  SUBROUTINE PVMIDLunpackString(line,info)
-    CHARACTER (LEN=*), INTENT(OUT) :: line
-    INTEGER, INTENT(OUT) :: info
+  subroutine PVMIDLunpackString(line,info)
+    character (LEN=*), intent(out) :: line
+    integer, intent(out) :: info
 
-    INTEGER :: length
-    INTEGER, DIMENSION(2) :: details
+    integer :: length
+    integer, dimension(2) :: details
 
     ! First unpack noDims and a 7 to indicate string
-    CALL pvmf90unpack( details, info)
+    call pvmf90unpack( details, info)
 
-    IF (info==0) THEN 
-       IF (ANY(details/=(/0,7/))) info= -200
+    if (info==0) then 
+       if (any(details/=(/0,7/))) info= -200
 
        ! Now unpack the length of the string
-       IF (info==0) CALL pvmf90unpack( length, info)
+       if (info==0) call pvmf90unpack( length, info)
        
-       IF ((info==0).AND.(length > LEN(line))) info=-201
+       if ((info==0).and.(length > len(line))) info=-201
        
        ! Now unpack the string itself
-       IF ((info==0).AND.(length/=0)) CALL pvmf90unpack(line,info)
+       if ((info==0).and.(length/=0)) call pvmf90unpack(line,info)
        line=line(1:length)
-    ENDIF
+    endif
 
-  END SUBROUTINE PVMIDLunpackString
+  end subroutine PVMIDLunpackString
 
-  SUBROUTINE PVMIDLunpackInteger(value,info)
-    INTEGER, INTENT(OUT) :: value
-    INTEGER, INTENT(OUT) :: info
+  subroutine PVMIDLunpackInteger(value,info)
+    integer, intent(out) :: value
+    integer, intent(out) :: info
 
-    INTEGER, DIMENSION(2) :: details
+    integer, dimension(2) :: details
 
     ! First unpack noDims and a 3 to indicate integer (LONG in IDL of course)
-    CALL pvmf90unpack( details, info)
+    call pvmf90unpack( details, info)
 
-    IF (info==0) THEN 
-       IF (ANY(details/=(/0,3/))) info= -200
+    if (info==0) then 
+       if (any(details/=(/0,3/))) info= -200
 
        ! Now unpack the data itself
-       IF (info==0) CALL pvmf90unpack(value,info)
-    END IF
-  END SUBROUTINE PVMIDLunpackInteger
+       if (info==0) call pvmf90unpack(value,info)
+    end if
+  end subroutine PVMIDLunpackInteger
 
-  SUBROUTINE PVMIDLunpackReal(value,info)
-    REAL (r8), INTENT(OUT) :: value
-    INTEGER, INTENT(OUT) :: info
+  subroutine PVMIDLunpackReal(value,info)
+    real (r8), intent(out) :: value
+    integer, intent(out) :: info
 
-    INTEGER, DIMENSION(2) :: details
+    integer, dimension(2) :: details
 
     ! First unpack noDims and a 5 to indicate double
-    CALL pvmf90unpack( details, info)
+    call pvmf90unpack( details, info)
 
-    IF (info==0) THEN 
-       IF (ANY(details/= (/0,5/)) ) info= -200
+    if (info==0) then 
+       if (any(details/= (/0,5/)) ) info= -200
 
        ! Now unpack the data itself
-       IF (info==0) CALL pvmf90unpack(value,info)
-    END IF
-  END SUBROUTINE PVMIDLunpackReal
+       if (info==0) call pvmf90unpack(value,info)
+    end if
+  end subroutine PVMIDLunpackReal
      
-  SUBROUTINE PVMIDLunpackIntarr1(values,info)
-    INTEGER, INTENT(OUT), DIMENSION(:) :: values
-    INTEGER, INTENT(OUT) :: info
+  subroutine PVMIDLunpackIntarr1(values,info)
+    integer, intent(out), dimension(:) :: values
+    integer, intent(out) :: info
 
-    INTEGER, DIMENSION(2) :: details
-    INTEGER, DIMENSION(2) :: sentShape
-
-    ! First unpack noDims and a 3 to indicate integer (LONG in IDL of course)
-    CALL pvmf90unpack( details, info)
-
-    IF (info==0) THEN 
-       IF (ANY(details/= (/1,3/)) ) info= -200
-
-       ! Now output the dimensions themselves
-       IF (info==0) CALL pvmf90unpack( sentShape,info)
-       IF (ANY(sentShape(1:1)/=SHAPE(values))) info= -201
-       
-       ! Now unpack the data itself
-       IF (info==0) CALL pvmf90unpack(values,info)
-    END IF
-  END SUBROUTINE PVMIDLunpackIntarr1
-
-  SUBROUTINE PVMIDLunpackIntarr2(values,info)
-    INTEGER, INTENT(OUT), DIMENSION(:,:) :: values
-    INTEGER, INTENT(OUT) :: info
-
-    INTEGER, DIMENSION(2) :: details
-    INTEGER, DIMENSION(3) :: sentShape
+    integer, dimension(2) :: details
+    integer, dimension(2) :: sentShape
 
     ! First unpack noDims and a 3 to indicate integer (LONG in IDL of course)
-    CALL pvmf90unpack( details, info)
+    call pvmf90unpack( details, info)
 
-    IF (info==0) THEN 
-       IF (ANY(details/= (/2,3/)) ) info= -200
+    if (info==0) then 
+       if (any(details/= (/1,3/)) ) info= -200
 
        ! Now output the dimensions themselves
-       IF (info==0) CALL pvmf90unpack( sentShape,info)
-       IF (ANY(sentShape(1:2)/=SHAPE(values))) info= -201
+       if (info==0) call pvmf90unpack( sentShape,info)
+       if (any(sentShape(1:1)/=shape(values))) info= -201
        
        ! Now unpack the data itself
-       IF (info==0) CALL pvmf90unpack(values,info)
-    END IF
-  END SUBROUTINE PVMIDLunpackIntarr2
+       if (info==0) call pvmf90unpack(values,info)
+    end if
+  end subroutine PVMIDLunpackIntarr1
 
-  SUBROUTINE PVMIDLunpackIntarr3(values,info)
-    INTEGER, INTENT(OUT), DIMENSION(:,:,:) :: values
-    INTEGER, INTENT(OUT) :: info
+  subroutine PVMIDLunpackIntarr2(values,info)
+    integer, intent(out), dimension(:,:) :: values
+    integer, intent(out) :: info
 
-    INTEGER, DIMENSION(2) :: details
-    INTEGER, DIMENSION(3) :: sentShape
+    integer, dimension(2) :: details
+    integer, dimension(3) :: sentShape
 
     ! First unpack noDims and a 3 to indicate integer (LONG in IDL of course)
-    CALL pvmf90unpack( details, info)
+    call pvmf90unpack( details, info)
 
-    IF (info==0) THEN 
-       IF (ANY(details/= (/3,3/)) ) info= -200
+    if (info==0) then 
+       if (any(details/= (/2,3/)) ) info= -200
 
        ! Now output the dimensions themselves
-       IF (info==0) CALL pvmf90unpack( sentShape,info)
-       IF (ANY(sentShape(1:3)/=SHAPE(values))) info= -201
+       if (info==0) call pvmf90unpack( sentShape,info)
+       if (any(sentShape(1:2)/=shape(values))) info= -201
        
        ! Now unpack the data itself
-       IF (info==0) CALL pvmf90unpack(values,info)
-    END IF
-  END SUBROUTINE PVMIDLunpackIntarr3
+       if (info==0) call pvmf90unpack(values,info)
+    end if
+  end subroutine PVMIDLunpackIntarr2
+
+  subroutine PVMIDLunpackIntarr3(values,info)
+    integer, intent(out), dimension(:,:,:) :: values
+    integer, intent(out) :: info
+
+    integer, dimension(2) :: details
+    integer, dimension(3) :: sentShape
+
+    ! First unpack noDims and a 3 to indicate integer (LONG in IDL of course)
+    call pvmf90unpack( details, info)
+
+    if (info==0) then 
+       if (any(details/= (/3,3/)) ) info= -200
+
+       ! Now output the dimensions themselves
+       if (info==0) call pvmf90unpack( sentShape,info)
+       if (any(sentShape(1:3)/=shape(values))) info= -201
+       
+       ! Now unpack the data itself
+       if (info==0) call pvmf90unpack(values,info)
+    end if
+  end subroutine PVMIDLunpackIntarr3
      
-  SUBROUTINE PVMIDLunpackRealarr1(values,info)
-    REAL (r8), INTENT(OUT), DIMENSION(:) :: values
-    INTEGER, INTENT(OUT) :: info
+  subroutine PVMIDLunpackRealarr1(values,info)
+    real (r8), intent(out), dimension(:) :: values
+    integer, intent(out) :: info
 
-    INTEGER, DIMENSION(2) :: details
-    INTEGER, DIMENSION(2) :: sentShape
-
-    ! First unpack noDims and a 5 to indicate double
-    CALL pvmf90unpack( details, info)
-
-    IF (info==0) THEN 
-       IF (ANY(details/= (/1,5/)) ) info= -200
-
-       ! Now output the dimensions themselves
-       IF (info==0) CALL pvmf90unpack( sentShape,info)
-       IF (ANY(sentShape(1:1)/=SHAPE(values))) info= -201
-       
-       ! Now unpack the data itself
-       IF (info==0) CALL pvmf90unpack(values,info)
-    END IF
-  END SUBROUTINE PVMIDLunpackRealarr1
-
-  SUBROUTINE PVMIDLunpackRealarr2(values,info)
-    REAL (r8), INTENT(OUT), DIMENSION(:,:) :: values
-    INTEGER, INTENT(OUT) :: info
-
-    INTEGER, DIMENSION(2) :: details
-    INTEGER, DIMENSION(3) :: sentShape
+    integer, dimension(2) :: details
+    integer, dimension(2) :: sentShape
 
     ! First unpack noDims and a 5 to indicate double
-    CALL pvmf90unpack( details, info)
+    call pvmf90unpack( details, info)
 
-    IF (info==0) THEN 
-       IF (ANY(details/= (/2,5/)) ) info= -200
+    if (info==0) then 
+       if (any(details/= (/1,5/)) ) info= -200
 
        ! Now output the dimensions themselves
-       IF (info==0) CALL pvmf90unpack( sentShape,info)
-       IF (ANY(sentShape(1:2)/=SHAPE(values))) info= -201
+       if (info==0) call pvmf90unpack( sentShape,info)
+       if (any(sentShape(1:1)/=shape(values))) info= -201
        
        ! Now unpack the data itself
-       IF (info==0) CALL pvmf90unpack(values,info)
-    END IF
-  END SUBROUTINE PVMIDLunpackRealarr2
+       if (info==0) call pvmf90unpack(values,info)
+    end if
+  end subroutine PVMIDLunpackRealarr1
 
-  SUBROUTINE PVMIDLunpackRealarr3(values,info)
-    REAL (r8), INTENT(OUT), DIMENSION(:,:,:) :: values
-    INTEGER, INTENT(OUT) :: info
+  subroutine PVMIDLunpackRealarr2(values,info)
+    real (r8), intent(out), dimension(:,:) :: values
+    integer, intent(out) :: info
 
-    INTEGER, DIMENSION(2) :: details
-    INTEGER, DIMENSION(3) :: sentShape
+    integer, dimension(2) :: details
+    integer, dimension(3) :: sentShape
 
     ! First unpack noDims and a 5 to indicate double
-    CALL pvmf90unpack( details, info)
+    call pvmf90unpack( details, info)
 
-    IF (info==0) THEN 
-       IF (ANY(details/= (/3,5/)) ) info= -200
+    if (info==0) then 
+       if (any(details/= (/2,5/)) ) info= -200
 
        ! Now output the dimensions themselves
-       IF (info==0) CALL pvmf90unpack( sentShape,info)
-       IF (ANY(sentShape(1:3)/=SHAPE(values))) info= -201
+       if (info==0) call pvmf90unpack( sentShape,info)
+       if (any(sentShape(1:2)/=shape(values))) info= -201
        
        ! Now unpack the data itself
-       IF (info==0) CALL pvmf90unpack(values,info)
-    END IF
-  END SUBROUTINE PVMIDLunpackRealarr3
+       if (info==0) call pvmf90unpack(values,info)
+    end if
+  end subroutine PVMIDLunpackRealarr2
+
+  subroutine PVMIDLunpackRealarr3(values,info)
+    real (r8), intent(out), dimension(:,:,:) :: values
+    integer, intent(out) :: info
+
+    integer, dimension(2) :: details
+    integer, dimension(3) :: sentShape
+
+    ! First unpack noDims and a 5 to indicate double
+    call pvmf90unpack( details, info)
+
+    if (info==0) then 
+       if (any(details/= (/3,5/)) ) info= -200
+
+       ! Now output the dimensions themselves
+       if (info==0) call pvmf90unpack( sentShape,info)
+       if (any(sentShape(1:3)/=shape(values))) info= -201
+       
+       ! Now unpack the data itself
+       if (info==0) call pvmf90unpack(values,info)
+    end if
+  end subroutine PVMIDLunpackRealarr3
 
   ! ----------------------------------------------------------------------
 
   ! Now some simple all in one routines to do the initsend, the pack and the
   ! send all at once.  This should make life easier
 
-  SUBROUTINE PVMIDLSendString(value,tid,info)
-    CHARACTER (LEN=*), INTENT(IN) :: value
-    INTEGER, INTENT(IN) :: tid
-    INTEGER, INTENT(OUT) :: info
+  subroutine PVMIDLSendString(value,tid,info,msgTag)
+    character (LEN=*), intent(in) :: value
+    integer, intent(in) :: tid
+    integer, intent(out) :: info
+    integer, intent(in), optional :: msgTag
 
-    INTEGER :: bufferID
+    integer :: bufferID, MYMSGTAG
 
-    CALL PVMFInitSend(PvmDataDefault,bufferID)
-    CALL PVMIDLPack(value,info)
-    IF (info==0) CALL PVMFSend(tid,IDLMsgTag,info)
-  END SUBROUTINE PVMIDLSendString
+    myMsgTag = IDLMsgTag
+    if (present(msgTag)) myMsgTag = msgTag
 
-  SUBROUTINE PVMIDLSendInteger(value,tid,info)
-    INTEGER, INTENT(IN) :: value
-    INTEGER, INTENT(IN) :: tid
-    INTEGER, INTENT(OUT) :: info
+    call PVMFInitSend(PvmDataDefault,bufferID)
+    call PVMIDLPack(value,info)
+    if (info==0) call PVMFSend(tid,myMsgTag,info)
+  end subroutine PVMIDLSendString
 
-    INTEGER :: bufferID
+  subroutine PVMIDLSendInteger(value,tid,info,msgTag)
+    integer, intent(in) :: value
+    integer, intent(in) :: tid
+    integer, intent(out) :: info
+    integer, intent(in), optional :: msgTag
 
-    CALL PVMFInitSend(PvmDataDefault,bufferID)
-    CALL PVMIDLPack(value,info)
-    IF (info==0) CALL PVMFSend(tid,IDLMsgTag,info)
-  END SUBROUTINE PVMIDLSendInteger
+    integer :: bufferID, MYMSGTAG
 
-  SUBROUTINE PVMIDLSendReal(value,tid,info)
-    REAL(r8), INTENT(IN) :: value
-    INTEGER, INTENT(IN) :: tid
-    INTEGER, INTENT(OUT) :: info
+    myMsgTag = IDLMsgTag
+    if (present(msgTag)) myMsgTag = msgTag
 
-    INTEGER :: bufferID
+    call PVMFInitSend(PvmDataDefault,bufferID)
+    call PVMIDLPack(value, info)
+    if (info==0) call PVMFSend(tid, myMsgTag,info)
+  end subroutine PVMIDLSendInteger
 
-    CALL PVMFInitSend(PvmDataDefault,bufferID)
-    CALL PVMIDLPack(value,info)
-    IF (info==0) CALL PVMFSend(tid,IDLMsgTag,info)
-  END SUBROUTINE PVMIDLSendReal
+  subroutine PVMIDLSendReal(value,tid, info, msgTag)
+    real(r8), intent(in) :: value
+    integer, intent(in) :: tid
+    integer, intent(out) :: info
+    integer, intent(in), optional :: msgTag
+
+    integer :: bufferID, myMsgTag
+
+    myMsgTag = IDLMsgTag
+    if (present(msgTag)) myMsgTag = msgTag
+
+    call PVMFInitSend(PvmDataDefault,bufferID)
+    call PVMIDLPack(value,info)
+    if (info==0) call PVMFSend(tid, myMsgTag,info)
+  end subroutine PVMIDLSendReal
 
 
-  SUBROUTINE PVMIDLSendIntArr1(value,tid,info)
-    INTEGER, DIMENSION(:), INTENT(IN) :: value
-    INTEGER, INTENT(IN) :: tid
-    INTEGER, INTENT(OUT) :: info
+  subroutine PVMIDLSendIntArr1(value,tid, info, msgTag)
+    integer, dimension(:), intent(in) :: value
+    integer, intent(in) :: tid
+    integer, intent(out) :: info
+    integer, intent(in), optional :: msgTag
 
-    INTEGER :: bufferID
+    integer :: bufferID, myMsgTag
 
-    CALL PVMFInitSend(PvmDataDefault,bufferID)
-    CALL PVMIDLPack(value,info)
-    IF (info==0) CALL PVMFSend(tid,IDLMsgTag,info)
-  END SUBROUTINE PVMIDLSendIntArr1
+    myMsgTag = IDLMsgTag
+    if (present(msgTag)) myMsgTag = msgTag
 
-  SUBROUTINE PVMIDLSendIntArr2(value,tid,info)
-    INTEGER, DIMENSION(:,:), INTENT(IN) :: value
-    INTEGER, INTENT(IN) :: tid
-    INTEGER, INTENT(OUT) :: info
+    call PVMFInitSend(PvmDataDefault,bufferID)
+    call PVMIDLPack(value,info)
+    if (info==0) call PVMFSend(tid, myMsgTag,info)
+  end subroutine PVMIDLSendIntArr1
 
-    INTEGER :: bufferID
+  subroutine PVMIDLSendIntArr2(value,tid, info, msgTag)
+    integer, dimension(:,:), intent(in) :: value
+    integer, intent(in) :: tid
+    integer, intent(out) :: info
+    integer, intent(in), optional :: msgTag
 
-    CALL PVMFInitSend(PvmDataDefault,bufferID)
-    CALL PVMIDLPack(value,info)
-    IF (info==0) CALL PVMFSend(tid,IDLMsgTag,info)
-  END SUBROUTINE PVMIDLSendIntArr2
+    integer :: bufferID, myMsgTag
 
-  SUBROUTINE PVMIDLSendIntArr3(value,tid,info)
-    INTEGER, DIMENSION(:,:,:), INTENT(IN) :: value
-    INTEGER, INTENT(IN) :: tid
-    INTEGER, INTENT(OUT) :: info
+    myMsgTag = IDLMsgTag
+    if (present(msgTag)) myMsgTag = msgTag
 
-    INTEGER :: bufferID
+    call PVMFInitSend(PvmDataDefault,bufferID)
+    call PVMIDLPack(value,info)
+    if (info==0) call PVMFSend(tid, myMsgTag,info)
+  end subroutine PVMIDLSendIntArr2
 
-    CALL PVMFInitSend(PvmDataDefault,bufferID)
-    CALL PVMIDLPack(value,info)
-    IF (info==0) CALL PVMFSend(tid,IDLMsgTag,info)
-  END SUBROUTINE PVMIDLSendIntArr3
+  subroutine PVMIDLSendIntArr3(value,tid, info, msgTag)
+    integer, dimension(:,:,:), intent(in) :: value
+    integer, intent(in) :: tid
+    integer, intent(out) :: info
+    integer, intent(in), optional :: msgTag
 
-  SUBROUTINE PVMIDLSendRealArr1(value,tid,info)
-    REAL(r8), DIMENSION(:), INTENT(IN) :: value
-    INTEGER, INTENT(IN) :: tid
-    INTEGER, INTENT(OUT) :: info
+    integer :: bufferID, myMsgTag
 
-    INTEGER :: bufferID
+    myMsgTag = IDLMsgTag
+    if (present(msgTag)) myMsgTag = msgTag
 
-    CALL PVMFInitSend(PvmDataDefault,bufferID)
-    CALL PVMIDLPack(value,info)
-    IF (info==0) CALL PVMFSend(tid,IDLMsgTag,info)
-  END SUBROUTINE PVMIDLSendRealArr1
+    call PVMFInitSend(PvmDataDefault,bufferID)
+    call PVMIDLPack(value,info)
+    if (info==0) call PVMFSend(tid, myMsgTag,info)
+  end subroutine PVMIDLSendIntArr3
 
-  SUBROUTINE PVMIDLSendRealArr2(value,tid,info)
-    REAL(r8), DIMENSION(:,:), INTENT(IN) :: value
-    INTEGER, INTENT(IN) :: tid
-    INTEGER, INTENT(OUT) :: info
+  subroutine PVMIDLSendRealArr1(value,tid, info, msgTag)
+    real(r8), dimension(:), intent(in) :: value
+    integer, intent(in) :: tid
+    integer, intent(out) :: info
+    integer, intent(in), optional :: msgTag
 
-    INTEGER :: bufferID
+    integer :: bufferID, myMsgTag
 
-    CALL PVMFInitSend(PvmDataDefault,bufferID)
-    CALL PVMIDLPack(value,info)
-    IF (info==0) CALL PVMFSend(tid,IDLMsgTag,info)
-  END SUBROUTINE PVMIDLSendRealArr2
+    myMsgTag = IDLMsgTag
+    if (present(msgTag)) myMsgTag = msgTag
 
-  SUBROUTINE PVMIDLSendRealArr3(value,tid,info)
-    REAL(r8), DIMENSION(:,:,:), INTENT(IN) :: value
-    INTEGER, INTENT(IN) :: tid
-    INTEGER, INTENT(OUT) :: info
+    call PVMFInitSend(PvmDataDefault,bufferID)
+    call PVMIDLPack(value,info)
+    if (info==0) call PVMFSend(tid, myMsgTag, info)
+  end subroutine PVMIDLSendRealArr1
 
-    INTEGER :: bufferID
+  subroutine PVMIDLSendRealArr2(value,tid, info, msgTag)
+    real(r8), dimension(:,:), intent(in) :: value
+    integer, intent(in) :: tid
+    integer, intent(out) :: info
+    integer, intent(in), optional :: msgTag
 
-    CALL PVMFInitSend(PvmDataDefault,bufferID)
-    CALL PVMIDLPack(value,info)
-    IF (info==0) CALL PVMFSend(tid,IDLMsgTag,info)
-  END SUBROUTINE PVMIDLSendRealArr3
+    integer :: bufferID, myMsgTag
+
+    myMsgTag = IDLMsgTag
+    if (present(msgTag)) myMsgTag = msgTag
+
+    call PVMFInitSend(PvmDataDefault,bufferID)
+    call PVMIDLPack(value,info)
+    if (info==0) call PVMFSend(tid, myMsgTag,info)
+  end subroutine PVMIDLSendRealArr2
+
+  subroutine PVMIDLSendRealArr3(value,tid, info, msgTag)
+    real(r8), dimension(:,:,:), intent(in) :: value
+    integer, intent(in) :: tid
+    integer, intent(out) :: info
+    integer, intent(in), optional :: msgTag
+
+    integer :: bufferID, myMsgTag
+
+    myMsgTag = IDLMsgTag
+    if (present(msgTag)) myMsgTag = msgTag
+
+    call PVMFInitSend(PvmDataDefault,bufferID)
+    call PVMIDLPack(value,info)
+    if (info==0) call PVMFSend(tid, myMsgTag, info)
+  end subroutine PVMIDLSendRealArr3
 
   ! ----------------------------------------------------------------------
 
   ! Now the same for receive
 
-  SUBROUTINE PVMIDLReceiveString(value,tid,info,noBlock)
-    CHARACTER (LEN=*), INTENT(OUT) :: value
-    INTEGER, INTENT(IN) :: tid
-    INTEGER, INTENT(OUT) :: info
-    LOGICAL, INTENT(IN), OPTIONAL :: noBlock
+  subroutine PVMIDLReceiveString(value,tid,info, noBlock, msgTag)
+    character (LEN=*), intent(out) :: value
+    integer, intent(in) :: tid
+    integer, intent(out) :: info
+    logical, intent(in), optional :: noBlock
+    integer, intent(in), optional :: msgTag
 
-    LOGICAL :: useNoBlock = .FALSE.
-    INTEGER :: bufferID
+    logical :: useNoBlock = .false.
+    integer :: bufferID, myMsgTag
 
-    IF (PRESENT(noBlock)) useNoBlock=noBlock
-    IF (useNoBlock) THEN
-       CALL PVMFNrecv(tid,IDLMsgTag,bufferID)
-    ELSE
-       CALL PVMFrecv(tid,IDLMsgTag,bufferID)
-    ENDIF       
-    CALL PVMIDLUnpack(value,info)
-  END SUBROUTINE PVMIDLReceiveString
+    myMsgTag = IDLMsgTag
+    if (present(msgTag)) myMsgTag = msgTag
 
-  SUBROUTINE PVMIDLReceiveInteger(value,tid,info,noBlock)
-    INTEGER, INTENT(OUT) :: value
-    INTEGER, INTENT(IN) :: tid
-    INTEGER, INTENT(OUT) :: info
-    LOGICAL, INTENT(IN), OPTIONAL :: noBlock
+    if (present(noBlock)) useNoBlock=noBlock
+    if (useNoBlock) then
+       call PVMFNrecv(tid, myMsgTag,bufferID)
+    else
+       call PVMFrecv(tid, myMsgTag,bufferID)
+    endif       
+    call PVMIDLUnpack(value,info)
+  end subroutine PVMIDLReceiveString
 
-    LOGICAL :: useNoBlock = .FALSE.
-    INTEGER :: bufferID
+  subroutine PVMIDLReceiveInteger(value,tid,info, noBlock, msgTag)
+    integer, intent(out) :: value
+    integer, intent(in) :: tid
+    integer, intent(out) :: info
+    logical, intent(in), optional :: noBlock
+    integer, intent(in), optional :: msgTag
 
-    IF (PRESENT(noBlock)) useNoBlock=noBlock
-    IF (useNoBlock) THEN
-       CALL PVMFNrecv(tid,IDLMsgTag,bufferID)
-    ELSE
-       CALL PVMFrecv(tid,IDLMsgTag,bufferID)
-    ENDIF       
-    CALL PVMIDLUnpack(value,info)
-  END SUBROUTINE PVMIDLReceiveInteger
+    logical :: useNoBlock = .false.
+    integer :: bufferID, myMsgTag
 
-  SUBROUTINE PVMIDLReceiveReal(value,tid,info,noBlock)
-    REAL(r8), INTENT(OUT) :: value
-    INTEGER, INTENT(IN) :: tid
-    INTEGER, INTENT(OUT) :: info
-    LOGICAL, INTENT(IN), OPTIONAL :: noBlock
+    myMsgTag = IDLMsgTag
+    if (present(msgTag)) myMsgTag = msgTag
 
-    LOGICAL :: useNoBlock = .FALSE.
-    INTEGER :: bufferID
+    if (present(noBlock)) useNoBlock=noBlock
+    if (useNoBlock) then
+       call PVMFNrecv(tid, myMsgTag,bufferID)
+    else
+       call PVMFrecv(tid, myMsgTag,bufferID)
+    endif       
+    call PVMIDLUnpack(value,info)
+  end subroutine PVMIDLReceiveInteger
 
-    IF (useNoBlock) THEN
-       CALL PVMFNrecv(tid,IDLMsgTag,bufferID)
-    ELSE
-       CALL PVMFrecv(tid,IDLMsgTag,bufferID)
-    ENDIF       
-    CALL PVMIDLUnpack(value,info)
-  END SUBROUTINE PVMIDLReceiveReal
+  subroutine PVMIDLReceiveReal(value,tid,info, noBlock, msgTag)
+    real(r8), intent(out) :: value
+    integer, intent(in) :: tid
+    integer, intent(out) :: info
+    logical, intent(in), optional :: noBlock
+    integer, intent(in), optional :: msgTag
+
+    logical :: useNoBlock = .false.
+    integer :: bufferID, myMsgTag
+
+    myMsgTag = IDLMsgTag
+    if (present(msgTag)) myMsgTag = msgTag
+
+    if (useNoBlock) then
+       call PVMFNrecv(tid, myMsgTag,bufferID)
+    else
+       call PVMFrecv(tid, myMsgTag,bufferID)
+    endif       
+    call PVMIDLUnpack(value,info)
+  end subroutine PVMIDLReceiveReal
 
 
-  SUBROUTINE PVMIDLReceiveIntArr1(value,tid,info,noBlock)
-    INTEGER, DIMENSION(:), INTENT(OUT) :: value
-    INTEGER, INTENT(IN) :: tid
-    INTEGER, INTENT(OUT) :: info
-    LOGICAL, INTENT(IN), OPTIONAL :: noBlock
+  subroutine PVMIDLReceiveIntArr1(value,tid,info, noBlock, msgTag)
+    integer, dimension(:), intent(out) :: value
+    integer, intent(in) :: tid
+    integer, intent(out) :: info
+    logical, intent(in), optional :: noBlock
+    integer, intent(in), optional :: msgTag
 
-    LOGICAL :: useNoBlock = .FALSE.
-    INTEGER :: bufferID
+    logical :: useNoBlock = .false.
+    integer :: bufferID, myMsgTag
 
-    IF (PRESENT(noBlock)) useNoBlock=noBlock
-    IF (useNoBlock) THEN
-       CALL PVMFNrecv(tid,IDLMsgTag,bufferID)
-    ELSE
-       CALL PVMFrecv(tid,IDLMsgTag,bufferID)
-    ENDIF       
-    CALL PVMIDLUnpack(value,info)
-  END SUBROUTINE PVMIDLReceiveIntArr1
+    myMsgTag = IDLMsgTag
+    if (present(msgTag)) myMsgTag = msgTag
 
-  SUBROUTINE PVMIDLReceiveIntArr2(value,tid,info,noBlock)
-    INTEGER, DIMENSION(:,:), INTENT(OUT) :: value
-    INTEGER, INTENT(IN) :: tid
-    INTEGER, INTENT(OUT) :: info
-    LOGICAL, INTENT(IN), OPTIONAL :: noBlock
+    if (present(noBlock)) useNoBlock=noBlock
+    if (useNoBlock) then
+       call PVMFNrecv(tid, myMsgTag,bufferID)
+    else
+       call PVMFrecv(tid, myMsgTag,bufferID)
+    endif       
+    call PVMIDLUnpack(value,info)
+  end subroutine PVMIDLReceiveIntArr1
 
-    LOGICAL :: useNoBlock = .FALSE.
-    INTEGER :: bufferID
+  subroutine PVMIDLReceiveIntArr2(value,tid,info, noBlock, msgTag)
+    integer, dimension(:,:), intent(out) :: value
+    integer, intent(in) :: tid
+    integer, intent(out) :: info
+    logical, intent(in), optional :: noBlock
+    integer, intent(in), optional :: msgTag
 
-    IF (PRESENT(noBlock)) useNoBlock=noBlock
-    IF (useNoBlock) THEN
-       CALL PVMFNrecv(tid,IDLMsgTag,bufferID)
-    ELSE
-       CALL PVMFrecv(tid,IDLMsgTag,bufferID)
-    ENDIF       
-    CALL PVMIDLUnpack(value,info)
-  END SUBROUTINE PVMIDLReceiveIntArr2
+    logical :: useNoBlock = .false.
+    integer :: bufferID, myMsgTag
 
-  SUBROUTINE PVMIDLReceiveIntArr3(value,tid,info,noBlock)
-    INTEGER, DIMENSION(:,:,:), INTENT(OUT) :: value
-    INTEGER, INTENT(IN) :: tid
-    INTEGER, INTENT(OUT) :: info
-    LOGICAL, INTENT(IN), OPTIONAL :: noBlock
+    myMsgTag = IDLMsgTag
+    if (present(msgTag)) myMsgTag = msgTag
 
-    LOGICAL :: useNoBlock = .FALSE.
-    INTEGER :: bufferID
+    if (present(noBlock)) useNoBlock=noBlock
+    if (useNoBlock) then
+       call PVMFNrecv(tid, myMsgTag,bufferID)
+    else
+       call PVMFrecv(tid, myMsgTag,bufferID)
+    endif       
+    call PVMIDLUnpack(value,info)
+  end subroutine PVMIDLReceiveIntArr2
 
-    IF (PRESENT(noBlock)) useNoBlock=noBlock
-    IF (useNoBlock) THEN
-       CALL PVMFNrecv(tid,IDLMsgTag,bufferID)
-    ELSE
-       CALL PVMFrecv(tid,IDLMsgTag,bufferID)
-    ENDIF       
-    CALL PVMIDLUnpack(value,info)
-  END SUBROUTINE PVMIDLReceiveIntArr3
+  subroutine PVMIDLReceiveIntArr3(value,tid,info, noBlock, msgTag)
+    integer, dimension(:,:,:), intent(out) :: value
+    integer, intent(in) :: tid
+    integer, intent(out) :: info
+    logical, intent(in), optional :: noBlock
+    integer, intent(in), optional :: msgTag
 
-  SUBROUTINE PVMIDLReceiveRealArr1(value,tid,info,noBlock)
-    REAL(r8), DIMENSION(:), INTENT(OUT) :: value
-    INTEGER, INTENT(IN) :: tid
-    INTEGER, INTENT(OUT) :: info
-    LOGICAL, INTENT(IN), OPTIONAL :: noBlock
+    logical :: useNoBlock = .false.
+    integer :: bufferID, myMsgTag
 
-    LOGICAL :: useNoBlock = .FALSE.
-    INTEGER :: bufferID
+    myMsgTag = IDLMsgTag
+    if (present(msgTag)) myMsgTag = msgTag
 
-    IF (PRESENT(noBlock)) useNoBlock=noBlock
-    IF (useNoBlock) THEN
-       CALL PVMFNrecv(tid,IDLMsgTag,bufferID)
-    ELSE
-       CALL PVMFrecv(tid,IDLMsgTag,bufferID)
-    ENDIF       
-    CALL PVMIDLUnpack(value,info)
-  END SUBROUTINE PVMIDLReceiveRealArr1
+    if (present(noBlock)) useNoBlock=noBlock
+    if (useNoBlock) then
+       call PVMFNrecv(tid, myMsgTag,bufferID)
+    else
+       call PVMFrecv(tid, myMsgTag,bufferID)
+    endif       
+    call PVMIDLUnpack(value,info)
+  end subroutine PVMIDLReceiveIntArr3
 
-  SUBROUTINE PVMIDLReceiveRealArr2(value,tid,info,noBlock)
-    REAL(r8), DIMENSION(:,:), INTENT(OUT) :: value
-    INTEGER, INTENT(IN) :: tid
-    INTEGER, INTENT(OUT) :: info
-    LOGICAL, INTENT(IN), OPTIONAL :: noBlock
+  subroutine PVMIDLReceiveRealArr1(value,tid,info, noBlock, msgTag)
+    real(r8), dimension(:), intent(out) :: value
+    integer, intent(in) :: tid
+    integer, intent(out) :: info
+    logical, intent(in), optional :: noBlock
+    integer, intent(in), optional :: msgTag
 
-    LOGICAL :: useNoBlock = .FALSE.
-    INTEGER :: bufferID
+    logical :: useNoBlock = .false.
+    integer :: bufferID, myMsgTag
 
-    IF (PRESENT(noBlock)) useNoBlock=noBlock
-    IF (useNoBlock) THEN
-       CALL PVMFNrecv(tid,IDLMsgTag,bufferID)
-    ELSE
-       CALL PVMFrecv(tid,IDLMsgTag,bufferID)
-    ENDIF       
-    CALL PVMIDLUnpack(value,info)
-  END SUBROUTINE PVMIDLReceiveRealArr2
+    myMsgTag = IDLMsgTag
+    if (present(msgTag)) myMsgTag = msgTag
 
-  SUBROUTINE PVMIDLReceiveRealArr3(value,tid,info,noBlock)
-    REAL(r8), DIMENSION(:,:,:), INTENT(OUT) :: value
-    INTEGER, INTENT(IN):: tid
-    INTEGER, INTENT(OUT) :: info
-    LOGICAL, INTENT(IN), OPTIONAL :: noBlock
+    if (present(noBlock)) useNoBlock=noBlock
+    if (useNoBlock) then
+       call PVMFNrecv(tid, myMsgTag,bufferID)
+    else
+       call PVMFrecv(tid, myMsgTag,bufferID)
+    endif       
+    call PVMIDLUnpack(value,info)
+  end subroutine PVMIDLReceiveRealArr1
 
-    LOGICAL :: useNoBlock = .FALSE.
-    INTEGER :: bufferID
+  subroutine PVMIDLReceiveRealArr2(value,tid,info, noBlock, msgTag)
+    real(r8), dimension(:,:), intent(out) :: value
+    integer, intent(in) :: tid
+    integer, intent(out) :: info
+    logical, intent(in), optional :: noBlock
+    integer, intent(in), optional :: msgTag
 
-    IF (PRESENT(noBlock)) useNoBlock=noBlock
-    IF (useNoBlock) THEN
-       CALL PVMFNrecv(tid,IDLMsgTag,bufferID)
-    ELSE
-       CALL PVMFrecv(tid,IDLMsgTag,bufferID)
-    ENDIF       
-    CALL PVMIDLUnpack(value,info)
-  END SUBROUTINE PVMIDLReceiveRealArr3
+    logical :: useNoBlock = .false.
+    integer :: bufferID, myMsgTag
 
-END MODULE PVMIDL
+    myMsgTag = IDLMsgTag
+    if (present(msgTag)) myMsgTag = msgTag
+
+    if (present(noBlock)) useNoBlock=noBlock
+    if (useNoBlock) then
+       call PVMFNrecv(tid, myMsgTag,bufferID)
+    else
+       call PVMFrecv(tid, myMsgTag,bufferID)
+    endif       
+    call PVMIDLUnpack(value,info)
+  end subroutine PVMIDLReceiveRealArr2
+
+  subroutine PVMIDLReceiveRealArr3(value,tid,info, noBlock, msgTag)
+    real(r8), dimension(:,:,:), intent(out) :: value
+    integer, intent(in):: tid
+    integer, intent(out) :: info
+    logical, intent(in), optional :: noBlock
+    integer, intent(in), optional :: msgTag
+
+    logical :: useNoBlock = .false.
+    integer :: bufferID, myMsgTag
+
+    myMsgTag = IDLMsgTag
+    if (present(msgTag)) myMsgTag = msgTag
+
+    if (present(noBlock)) useNoBlock=noBlock
+    if (useNoBlock) then
+       call PVMFNrecv(tid, myMsgTag,bufferID)
+    else
+       call PVMFrecv(tid, myMsgTag,bufferID)
+    endif       
+    call PVMIDLUnpack(value,info)
+  end subroutine PVMIDLReceiveRealArr3
+
+end module PVMIDL
 
 
 
