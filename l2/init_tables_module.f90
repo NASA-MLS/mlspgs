@@ -256,14 +256,15 @@ module INIT_TABLES_MODULE
 !       , shape(section_ordering) )
         , (/ section_last-section_first+1, section_last-section_first+2 /) )
 
+  integer, private, parameter :: BEGIN = -1
   integer, private, parameter :: D = 1000000
   integer, private, parameter :: F = 1000, L = 2000, N = 0
   integer, private, parameter :: NADP = n+d*(all_fields+no_dup+no_positional)
   integer, private, parameter :: ND = n+d*no_dup
   integer, private, parameter :: NDP = n+d*(no_dup+no_positional)
   integer, private, parameter :: NP = n+d*no_positional
+  integer, private, parameter :: NR = n+d*req_fld
   integer, private, parameter :: P = 3000, S = 4000, T = 5000, Z = 6000
-  integer, private, parameter :: BEGIN = -1
 
 contains ! =====     Public procedures     =============================
 ! --------------------------------------------------  INIT_TABLES  -----
@@ -577,8 +578,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_autofill, n+n_field_type, &
              np+n_spec_def, &
       begin, s+s_hGrid, &
-             begin, f+f_type, t+t_hGridType, n+n_field_type, &
-             begin, f+f_module, t+t_module, n+n_field_type, &
+             begin, f+f_type, t+t_hGridType, nr+n_field_type, &
+             begin, f+f_module, t+t_module, nr+n_field_type, &
              begin, f+f_fraction, t+t_numeric, n+n_field_type, &
              begin, f+f_height, t+t_numeric, n+n_field_type, &
              begin, f+f_mif, t+t_numeric, n+n_field_type, &
@@ -607,14 +608,14 @@ contains ! =====     Public procedures     =============================
              begin, f+f_gph, n+n_field_type, &
              np+n_spec_def, &
       begin, s+s_vgrid, &
-             begin, f+f_type, t+t_vGridType, n+n_field_type, &
-             begin, f+f_coordinate, t+t_vGridCoord, n+n_field_type, &
+             begin, f+f_type, t+t_vGridType, nr+n_field_type, &
+             begin, f+f_coordinate, t+t_vGridCoord, nr+n_field_type, &
              begin, f+f_number, t+t_numeric, n+n_field_type, &
              begin, f+f_per_decade, t+t_numeric, n+n_field_type, &
              begin, f+f_start, t+t_numeric, n+n_field_type, &
              begin, f+f_stop, t+t_numeric, n+n_field_type, &
              begin, f+f_values, t+t_numeric, n+n_field_type, &
-             np+n_spec_def, &
+             ndp+n_spec_def, &
       begin, s+s_quantity, & ! Must be AFTER s_hgrid and s_vgrid
              begin, f+f_band, t+t_string, n+n_field_type, &
              begin, f+f_firstindexchannel, t+t_boolean, n+n_field_type, &
@@ -635,20 +636,20 @@ contains ! =====     Public procedures     =============================
     call make_tree ( (/ &
       begin, s+s_l2gp, &   ! Must be AFTER s_vector
              begin, f+f_source, s+s_vector, f+f_template, f+f_quantities, &
-                    n+n_dot, &
+                    nr+n_dot, &
              begin, f+f_compareOverlaps, t+t_boolean, n+n_field_type, &
              begin, f+f_outputOverlaps, t+t_boolean, n+n_field_type, &
              begin, f+f_unpackOutput, t+t_boolean, n+n_field_type, &
              begin, f+f_hdfname, t+t_string, n+n_field_type, &
-             np+n_spec_def, &
+             ndp+n_spec_def, &
       begin, s+s_l2aux, &   ! Must be AFTER s_vector
              begin, f+f_source, s+s_vector, f+f_template, f+f_quantities, &
-                    n+n_dot, &
+                    nr+n_dot, &
              begin, f+f_compareOverlaps, t+t_boolean, n+n_field_type, &
              begin, f+f_outputOverlaps, t+t_boolean, n+n_field_type, &
              begin, f+f_unpackOutput, t+t_boolean, n+n_field_type, &
              begin, f+f_hdfname, t+t_string, n+n_field_type, &
-             np+n_spec_def, &
+             ndp+n_spec_def, &
       begin, s+s_matrix, &  ! Must be AFTER s_vector
              begin, f+f_rows, s+s_vector, n+n_field_spec, &
              begin, f+f_columns, s+s_vector, n+n_field_spec, &
@@ -661,19 +662,19 @@ contains ! =====     Public procedures     =============================
              begin, f+f_source, t+t_string, s+s_climatology, n+n_field_type, &
              np+n_spec_def, &
       begin, s+s_output, &  ! Must be AFTER s_l2aux and s_l2gp
-             begin, f+f_type, t+t_outputType, n+n_field_type, &
-             begin, f+f_file, t+t_string, n+n_field_type, &
+             begin, f+f_type, t+t_outputType, nr+n_field_type, &
+             begin, f+f_file, t+t_string, nr+n_field_type, &
              begin, f+f_quantities, s+s_l2aux, s+s_l2gp, n+n_field_spec, &
              begin, f+f_overlaps, s+s_l2aux, s+s_l2gp, n+n_field_spec, &
-             np+n_spec_def /) )
+             ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_subset, &  ! Must be AFTER s_vector
              begin, f+f_quantity, s+s_vector, f+f_template, f+f_quantities, &
-                    n+n_dot, &
+                    nr+n_dot, &
              begin, f+f_test, s+s_vector, f+f_template, f+f_quantities, &
-                    n+n_dot, &
+                    nr+n_dot, &
              begin, f+f_channels, t+t_numeric, n+n_field_type, &
-             begin, f+f_criteria, t+t_numeric, n+n_field_type, &
+             begin, f+f_criteria, t+t_numeric, nr+n_field_type, &
              ndp+n_spec_def, &
       begin, s+s_forwardModel, & ! Must be AFTER s_vector and s_matrix
              np+n_spec_def, &
@@ -683,14 +684,14 @@ contains ! =====     Public procedures     =============================
              begin, f+f_columnScale, t+t_scale, n+n_field_type, &
              begin, f+f_covariance, s+s_matrix, n+n_field_spec, &
              begin, f+f_diagonal, t+t_boolean, n+n_field_type, &
-             begin, f+f_fwdModelIn, s+s_vector, n+n_field_spec, &
+             begin, f+f_fwdModelIn, s+s_vector, nr+n_field_spec, &
              begin, f+f_fwdModelOut, s+s_vector, n+n_field_spec, &
              begin, f+f_jacobian, s+s_matrix, n+n_field_spec, &
              begin, f+f_maxIterations, t+t_numeric, n+n_field_type, &
-             begin, f+f_measurements, s+s_vector, n+n_field_spec, &
+             begin, f+f_measurements, s+s_vector, nr+n_field_spec, &
              begin, f+f_method, t+t_method, n+n_field_type, &
              begin, f+f_outputCovariance, s+s_matrix, n+n_field_spec, &
-             begin, f+f_state, s+s_vector, n+n_field_spec, &
+             begin, f+f_state, s+s_vector, nr+n_field_spec, &
              begin, f+f_toleranceA, t+t_numeric, n+n_field_type, &
              begin, f+f_toleranceF, t+t_numeric, n+n_field_type, &
              begin, f+f_toleranceR, t+t_numeric, n+n_field_type, &
@@ -805,6 +806,10 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.18  2001/02/09 19:29:03  vsnyder
+! Turn on checking for duplicate and required fields for hgrid, l2aux,
+! l2gp, output, subset, retrieve and vgrid specifications.
+!
 ! Revision 2.17  2001/02/09 18:03:15  livesey
 ! Added f_instrumentmodule
 !
