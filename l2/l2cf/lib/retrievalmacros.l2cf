@@ -24,7 +24,8 @@ begin Fill
   y$1: Vector, template=y$1Template
   yNoise$1: Vector, template=y$1Template
   f$1: Vector, template=y$1Template
-  od$1: Vector, template=od$1Template
+  ; Optical depth will be turned on again, sometime, for the PEs
+  !ifdef(precisionEstimates,{},{od$1: Vector, template=od$1Template})
   ;; Fill state related vectors
   Transfer, source=state, destination=x$1
   Transfer, source=apriori, destination=a$1
@@ -33,6 +34,8 @@ begin Fill
   ;; Construct and fill state covariance
   myCovariance$1: matrix, columns=a$1, type=spd
   FillCovariance, matrix=myCovariance$1, diagonal=sdIn$1, /invert, lengthScale=l$1
+  ;; Construct averaging kernel matrix
+  !ifdef(precisionEstimates,{},{akOut$1: Matrix, columns=x$1, rows=x$1})
   ;; Fill radiance related vectors
   Transfer, source=measurement, destination=y$1
   Transfer, source=measurementNoise, destination=yNoise$1
@@ -45,7 +48,8 @@ begin Fill
   ;; Put state etc. back
   Transfer, source=x$1, destination=state
   Transfer, source=sdOut$1, destination=outputPrecision
-  Transfer, source=f$1, destination=fwm
+  ; FM output will be turned on again, sometime, for the PEs
+  !ifdef(precisionEstimates,{},{Transfer, source=f$1, destination=fwm})
   ;; Clean up
   Destroy, matrix=myCovariance$1
   ;; Compute new full GPH profile
@@ -125,6 +129,9 @@ joinedDGM_$2_precision: l2aux, source=outputPrecision.$1, sdName='$3 precision'
 !define(nbw,{!nbw$1})
 
 ; $Log$
+; Revision 1.13  2002/07/23 23:47:28  livesey
+; Added some macros for sids
+;
 ; Revision 1.12  2002/07/22 20:34:17  livesey
 ; Tidied up bug with subsetState
 ;
