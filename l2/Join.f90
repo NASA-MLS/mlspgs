@@ -8,7 +8,7 @@ module Join                     ! Join together chunk based data.
   ! This module performs the 'join' task in the MLS level 2 software.
 
   use INIT_TABLES_MODULE, only: F_COMPAREOVERLAPS, F_FILE, F_OUTPUTOVERLAPS, &
-    & F_SOURCE, F_SDNAME, F_SWATH, F_XSTAR, F_YSTAR, F_KSTAR, FIELD_FIRST, &
+    & F_SOURCE, F_SDNAME, F_SWATH, FIELD_FIRST, &
     & FIELD_LAST
   use INIT_TABLES_MODULE, only: L_PRESSURE, L_NONE, &
     & L_TRUE, L_ZETA, S_L2AUX, S_L2GP, S_TIME
@@ -79,7 +79,6 @@ contains ! =====     Public Procedures     =============================
     integer :: GSON                     ! Son of Key
     integer :: KEY                      ! Index of an L2GP or L2AUX tree
     integer :: KEYNO                    ! Index of subtree of KEY
-    integer :: KSTARINDEX               ! Matrix index
     integer :: MLSCFLine
     logical :: OutputOverlaps
     type (VectorValue_T), pointer :: Quantity
@@ -91,8 +90,6 @@ contains ! =====     Public Procedures     =============================
     integer :: SWATHNAME                ! Name index
     integer :: VALUE                    ! Value of a field
     integer :: VECTORINDEX, QUANTITYINDEX
-    integer :: XSTARINDEX               ! Vector index
-    integer :: YSTARINDEX               ! Vector index
     real :: T1, T2     ! for timing
     logical :: TIMING
 
@@ -138,9 +135,6 @@ contains ! =====     Public Procedures     =============================
       outputOverlaps = .FALSE.
       sdName=name
       swathName=name
-      xStarIndex = 0
-      yStarIndex = 0
-      kStarIndex = 0
 
       ! Loop over the fields of the mlscf line
 
@@ -155,12 +149,6 @@ contains ! =====     Public Procedures     =============================
         field_index = decoration(field)
         got_field(field_index) = .true.
         select case ( field_index )
-        case ( f_xStar )
-          xStarIndex = decoration(value)
-        case ( f_yStar )
-          yStarIndex = decoration(value)
-        case ( f_kStar )
-          kStarIndex = decoration(value)
         case ( f_source )
           source = subtree(2,gson) ! required to be an n_dot vertex
           vectorIndex = decoration(decoration(subtree(1,source)))
@@ -598,6 +586,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.34  2001/05/08 21:51:02  livesey
+! Removed some old xStar, yStar, kStar stuff.
+!
 ! Revision 2.33  2001/05/03 20:32:19  vsnyder
 ! Cosmetic changes
 !
