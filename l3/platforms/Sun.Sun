@@ -29,6 +29,7 @@ dir2 =
 
 # Set paths for finding source files (different from .o and .mod)
 
+vpath %.mod ./
 vpath %.o ./
 vpath %.f90 ../ $(srclib)
 vpath %.f9h ../ $(srclib)
@@ -67,14 +68,21 @@ l_specials = -lnsl
 
 #	special options for compiling some modules--override .f90 rules
 
+l2interface.mod:
+	$(UTILDIR)/newAifBdiff.sh -a l2interface.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L2Interface.f90 $(FAFTER)
 L2Interface.o: $(S)/L2Interface.f90
-	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L2Interface.f90 $(FAFTER)
+	$(UTILDIR)/newAifBdiff.sh -a l2interface.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L2Interface.f90 $(FAFTER)
+l3dmdata.mod:
+	$(UTILDIR)/newAifBdiff.sh -a l3dmdata.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DMData.f90 $(FAFTER)
 L3DMData.o: $(S)/L3DMData.f90
-	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DMData.f90 $(FAFTER)
-L3DMDiag.o: $(S)/L3DMDiag.f90
-	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DMDiag.f90 $(FAFTER)
+	$(UTILDIR)/newAifBdiff.sh -a l3dmdata.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DMData.f90 $(FAFTER)
+tree_checker.mod: init_tables_module.mod
+	$(UTILDIR)/newAifBdiff.sh -a tree_checker.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(srclib)/tree_checker.f90 $(FAFTER)
 
 # $Log$
+# Revision 1.2  2002/06/21 00:16:43  pwagner
+# Enroute to ending cascading recompiles
+#
 # Revision 1.1  2001/09/10 18:39:07  pwagner
 # First commit
 #

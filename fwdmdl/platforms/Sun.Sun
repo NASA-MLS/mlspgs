@@ -39,6 +39,7 @@ REECHO=$(UTILDIR)/reecho.sh
 
 # Set paths for finding source files (different from .o and .mod)
 
+vpath %.mod ./
 vpath %.o ./
 vpath %.f90 ../ $(srclib) $(libdir)/../machines/$(MLSCONFG)
 vpath %.f9h ../ $(srclib)
@@ -78,6 +79,9 @@ INC_PATHS = $(PATHS_PREFXD) $(EXTRA_PATHS) \
 l_specials = -lnsl
 
 # $Log$
+# Revision 2.3  2002/06/21 00:16:43  pwagner
+# Enroute to ending cascading recompiles
+#
 # Revision 2.2  2002/01/19 00:27:39  pwagner
 # made useful in he5lib by UNPREFXDPTHS
 #

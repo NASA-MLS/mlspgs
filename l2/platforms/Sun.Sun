@@ -38,6 +38,7 @@ REECHO=$(UTILDIR)/reecho.sh
 
 # Set paths for finding source files (different from .o and .mod)
 
+vpath %.mod ./
 vpath %.o ./
 vpath %.f90 ../ $(srclib)
 vpath %.f9h ../ $(srclib)
@@ -94,7 +95,11 @@ l_specials = -lnsl
 # Custom build commands for some modules
 # This keeps switch_usage up-to-date with notes/switches
 # (and similarly for options)
+ifdef CASCADE
 MLSL2.o: $(CONFDIR)/notes/switches $(CONFDIR)/notes/options $(S)/MLSL2.f90
+else
+.mod MLSL2.o: $(CONFDIR)/notes/switches $(CONFDIR)/notes/options $(S)/MLSL2.f90
+endif
 	@rm -f MLSL2.f90 part_1 part_2 part_3 ; \
 	sed -n '1,/=== (start of automatic usage lines) ===/ p' $(S)/MLSL2.f90 > part_1 ; \
 	sed -n '/=== (end of automatic usage lines) ===/,$$ p' $(S)/MLSL2.f90 > part_3 ; \
@@ -116,7 +121,13 @@ MLSL2.o: $(CONFDIR)/notes/switches $(CONFDIR)/notes/options $(S)/MLSL2.f90
 	$(FC) -c $(FOPTS) $(INC_PATHS) MLSL2.f90 $(FAFTER)
 	rm -f MLSL2.f90 part_1 part_2 part_3
 
+tree_checker.mod: init_tables_module.mod
+	$(UTILDIR)/newAifBdiff.sh -a tree_checker.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(srclib)/tree_checker.f90 $(FAFTER)
+
 # $Log$
+# Revision 1.4  2002/06/21 00:16:43  pwagner
+# Enroute to ending cascading recompiles
+#
 # Revision 1.3  2002/01/31 00:33:13  pwagner
 # Prefixes preset paths just like forwaard model
 #

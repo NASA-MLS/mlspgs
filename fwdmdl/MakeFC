@@ -99,8 +99,8 @@ OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
 #if CASCADE, use older .o dependencies, which entail cascades
 #of massive recompilation
 #These are configurations for which I have tested CASCADE-avoidance
-#CAN_AVOID="NAG.Linux LF95.Linux"
-CAN_AVOID=""
+CAN_AVOID="NAG.Linux LF95.Linux NAG.Sun Sun.Sun"
+#CAN_AVOID=""
 ifndef CASCADE
   WE_CAN := $(shell echo $(CAN_AVOID) | grep $(MLSF95).$(MLSPLAT))
 ifndef WE_CAN
@@ -225,6 +225,9 @@ targ:
 	$(TAR) hcvzf ../fwdmdl.tgz * --exclude \*.o --exclude \*.mod --exclude l2_test
 
 # $Log$
+# Revision 2.7  2002/06/21 00:15:27  pwagner
+# Enroute to ending cascading recompiles
+#
 # Revision 2.6  2002/05/02 00:16:32  pwagner
 # depends now creates Makefile.nodep, too
 #
