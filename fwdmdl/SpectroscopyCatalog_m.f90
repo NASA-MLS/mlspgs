@@ -22,24 +22,27 @@ module SpectroscopyCatalog_m
   ! Public types:
   type, public :: Line_T           ! One line in the spectrum for a species
     integer :: Line_Name           ! Sub_rosa index
-    Real(r8) :: DELTA              !??? Zvi: Fill in the comments...
-    Real(r8) :: EL
-    Real(r8) :: GAMMA
-    Real(r8) :: N
-    Real(r8) :: N1
-    Real(r8) :: N2
-    Real(r8) :: PS
-    Real(r8) :: STR
-    Real(r8) :: V0
-    Real(r8) :: W
+    Real(r8) :: DELTA              ! Delta interference coefficient at 300K 1/mb
+    Real(r8) :: EL                 ! Lower state energy cm-1
+    Real(r8) :: GAMMA              ! Gamma interference coefficient at 300K 1/mb
+    Real(r8) :: N                  ! Temperature power dependence of w
+    Real(r8) :: N1                 ! Temperature dependency of delta
+    Real(r8) :: N2                 ! Temperature dependency of gamma
+    Real(r8) :: PS                 ! Pressure shift parameter in MHz/mbar
+    Real(r8) :: STR                ! Integrated spectral intensity
+                                   ! Log(nm**2 MHz) at 300 K
+    Real(r8) :: V0                 ! Line center frequency MHz
+    Real(r8) :: W                  ! Collision broadening parameter
+                                   ! MHz/mbar at 300 K
   end type Line_T
-  
+
   type, public :: Catalog_T        ! Catalog entry for a species
     integer :: Species_Name        ! Sub_rosa index
     integer :: Spec_Tag            ! Spectroscopy tag
     integer, pointer :: Lines(:)   ! Indices in Lines database
     integer :: Molecule            ! L_...
-    real(r8) :: Qlog(3)            !??? Zvi: Fill in the comment
+    real(r8) :: Qlog(3)            ! Logarithm of the partition function
+                                   ! At 300 , 225 , and 150 K
   end type Catalog_T
 
   ! Public Variables:
@@ -366,3 +369,6 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 1.1  2001/04/04 02:09:16  vsnyder
+! Initial Commit
+!
