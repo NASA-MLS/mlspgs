@@ -312,6 +312,8 @@ contains
       integer :: Units(2)          ! Units of value returned by EXPR
       double precision :: Value(2) ! Value returned by EXPR
 
+      ord = 0
+      wt = 1.0_r8
       if ( quants == 0 ) then ! only one order and weight allowed
         call expr ( subtree(2,orders), units, value, type )
         ord = nint(value(1))
@@ -332,8 +334,6 @@ contains
           end if
         end do
       end if
-      ord = 0
-      wt = 0.0_r8
     end subroutine GetOrdAndWeight
 
     ! -------------------------------------------------  HorizReg  -----
@@ -598,6 +598,9 @@ o:          do while ( c2 <= a%block(ib,ib)%ncols )
 end module Regularization
 
 ! $Log$
+! Revision 2.22  2002/08/28 00:01:04  vsnyder
+! Correct two blunders in GetOrdAndWeight
+!
 ! Revision 2.21  2002/08/24 01:38:28  vsnyder
 ! Implement horizontal regularization
 !
