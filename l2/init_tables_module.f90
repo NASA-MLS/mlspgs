@@ -251,7 +251,8 @@ module INIT_TABLES_MODULE
 ! Specification indices don't overlap parameter indices, so a section can
 ! have both parameters and specifications:
   integer, parameter :: S_APRIORI            = last_Spectroscopy_Spec + 1
-  integer, parameter :: S_CREATE             = s_apriori + 1
+  integer, parameter :: S_CLOUDFORWARDMODEL  = s_apriori + 1
+  integer, parameter :: S_CREATE             = s_cloudforwardmodel + 1
   integer, parameter :: S_DUMPBLOCKS         = s_create + 1
   integer, parameter :: S_FILL               = s_dumpblocks + 1
   integer, parameter :: S_FILLCOVARIANCE     = s_fill + 1
@@ -578,6 +579,7 @@ contains ! =====     Public procedures     =============================
     ! Put spec names into the symbol table.  Don't add ones that are
     ! put in by init_MLSSignals.
     spec_indices(s_apriori) =              add_ident ( 'apriori' )
+    spec_indices(s_cloudforwardModel) =    add_ident ( 'cloudforwardModel' )
     spec_indices(s_create) =               add_ident ( 'create' )
     spec_indices(s_dumpblocks) =           add_ident ( 'dumpblocks' )
     spec_indices(s_fill) =                 add_ident ( 'fill' )
@@ -648,7 +650,7 @@ contains ! =====     Public procedures     =============================
       begin, t+t_outputType, l+l_l2aux, l+l_l2gp, l+l_l2dgg, l+l_l2pc, n+n_dt_def /) )
     call make_tree ( (/ &
       begin, t+t_quantityType, l+l_baseline, &
-             l+l_cloudIce, l+l_cloudInducedRadiance, l+l_cloudExtinction, &
+             l+l_cloudIce, l+l_cloudInducedRadiance, &
              l+l_cloudExtinction, l+l_cloudWater, &
              l+l_earthRefl, l+l_effectiveOpticalDepth, l+l_elevOffset, &
              l+l_extinction, l+l_gph, l+l_heightOffset, l+l_isotopeRatio, &
@@ -895,6 +897,32 @@ contains ! =====     Public procedures     =============================
              begin, f+f_filterShapes, t+t_string, n+n_field_type, &
              begin, f+f_pointingGrids, t+t_string, n+n_field_type, np+n_spec_def /) )
     call make_tree ( (/ &
+      begin, s+s_cloudforwardModel, &
+             begin, f+f_atmos_der, t+t_boolean, n+n_field_type, &
+             begin, f+f_do_conv, t+t_boolean, n+n_field_type, &
+             begin, f+f_do_freq_avg, t+t_boolean, n+n_field_type, &
+             begin, f+f_integrationGrid, s+s_vGrid, n+n_field_spec, &
+             begin, f+f_module, s+s_module, n+n_field_spec, &
+             begin, f+f_moleculeDerivatives, t+t_molecule, n+n_field_type, &
+             begin, f+f_molecules, t+t_molecule, n+n_field_type, &
+             begin, f+f_nabterms, t+t_numeric, n+n_field_type, &
+             begin, f+f_nazimuthangles, t+t_numeric, n+n_field_type, &
+             begin, f+f_ncloudspecies, t+t_numeric, n+n_field_type, &
+             begin, f+f_nmodelsurfs, t+t_numeric, n+n_field_type, &
+             begin, f+f_nscatteringangles, t+t_numeric, n+n_field_type, &
+             begin, f+f_nsizebins, t+t_numeric, n+n_field_type, &
+             begin, f+f_phiWindow, t+t_numeric, n+n_field_type, &
+             begin, f+f_frqGap, t+t_numeric, n+n_field_type, &
+             begin, f+f_signals, t+t_string, n+n_field_type, &
+             begin, f+f_skipOverlaps, t+t_boolean, n+n_field_type, &
+             begin, f+f_cloud_der, t+t_boolean, n+n_field_type, &
+             begin, f+f_spect_der, t+t_boolean, n+n_field_type, &
+             begin, f+f_tangentGrid, s+s_vGrid, n+n_field_spec, &
+             begin, f+f_temp_der, t+t_boolean, n+n_field_type, &
+             begin, f+f_tolerance, t+t_numeric, n+n_field_type, &
+             begin, f+f_type, t+t_fwmType, nr+n_field_type, ndp+n_spec_def &
+             /) )
+    call make_tree ( (/ &
       begin, s+s_l1brad, &
              begin, f+f_file, t+t_string, n+n_field_type, np+n_spec_def, &
       begin, s+s_l1boa, &
@@ -977,7 +1005,7 @@ contains ! =====     Public procedures     =============================
              begin, p+p_starttime, t+t_string, n+n_name_def, &
              begin, p+p_endtime, t+t_string, n+n_name_def, s+s_l1brad, s+s_l1boa, &
              s+s_forwardModel, s+s_forwardModelGlobal, s+s_time, s+s_vgrid, &
-             s+s_l1brad, s+s_l1boa, n+n_section, &
+             s+s_l1brad, s+s_l1boa, s+s_cloudforwardModel, n+n_section, &
       begin, z+z_readapriori, s+s_time, s+s_gridded, s+s_l2gp, &
              s+s_l2aux, s+s_snoop, n+n_section, &
       begin, z+z_mergeapriori, s+s_time, s+s_merge, n+n_section, &
@@ -1014,8 +1042,8 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
-! Revision 2.129  2001/07/12 23:27:56  livesey
-! Got rid of s_cloudForwardModel
+! Revision 2.130  2001/07/13 15:59:58  jonathan
+! there are two l_cloudextinction, delet one, jonathan
 !
 ! Revision 2.128  2001/07/09 22:21:43  pwagner
 ! Added some fields for s_cloudforwardmodel
