@@ -95,16 +95,16 @@ contains
       call getFromMatrixDatabase ( matrixDatabase(i), jacobian )
       call forwardModel ( config, FwdModelExtra, FwdModelIn, &
         &                   Jacobian, FwdModelOut=FwdModelOut, &
-        &                   FMC=FMC, FMI=FMI(1), TFMI=TFMI(1)) !???  temporary
-      !     &                   FMC=FMC,FMI=FMI,TFMI=TFMI) !??? Last line temporary
+        &                   FMI=FMI(1), TFMI=TFMI(1)) !???  temporary
+      !     &                  FMI=FMI,TFMI=TFMI) !??? Last line temporary
     else if ( config%atmos_Der .or. config%spect_Der .or. config%temp_der ) then
       call announceError ( needJacobian )
     else
       print*,'Calling forward model without derivatives'
       call forwardModel ( config, FwdModelExtra, FwdModelIn, &
         &                   FwdModelOut=FwdModelOut, &
-        &                   FMC=FMC, FMI=FMI(1), TFMI=TFMI(1)) !??? temporary
-      !     &                   FMC=FMC,FMI=FMI,TFMI=TFMI) !??? Last line temporary
+        &                   FMI=FMI(1), TFMI=TFMI(1)) !??? temporary
+      !     &               FMI=FMI,TFMI=TFMI) !??? Last line temporary
       print*,'Got back from forward model'
     end if
     print*,'Done the forward model!!!'
@@ -131,6 +131,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.11  2001/03/30 00:07:24  livesey
+! Removed FMC in call to forwardModel
+!
 ! Revision 2.10  2001/03/28 23:47:33  livesey
 ! Made it so it can run in a loop
 !
