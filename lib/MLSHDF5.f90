@@ -8,20 +8,23 @@ module MLSHDF5
   ! doubt be added.
 
   ! Lets break down our use, parameters first
-  use HDF5, only: H5S_SCALAR_F, H5T_NATIVE_INTEGER, H5T_NATIVE_CHARACTER, &
-    & H5T_NATIVE_DOUBLE, H5T_NATIVE_REAL, HID_T, HSIZE_T, &
-    & H5T_STD_I32LE, H5T_IEEE_F32LE, H5T_IEEE_F64LE, &
-    & H5F_ACC_RDONLY_F
+  use HDF5, only: H5F_ACC_RDONLY_F, &
+    & H5S_SCALAR_F, H5S_SELECT_SET_F, &
+    & H5T_IEEE_F32LE, H5T_IEEE_F64LE, &
+    & H5T_NATIVE_DOUBLE, H5T_NATIVE_REAL, H5T_STD_I32LE, &
+    & H5T_NATIVE_CHARACTER, H5T_NATIVE_INTEGER, &
+    & HID_T, HSIZE_T
   ! Now routines
-  use HDF5, only: H5ACREATE_F, H5AGET_TYPE_F, H5AOPEN_NAME_F, H5AREAD_F, &
-    & H5AWRITE_F, H5ACLOSE_F, &
+  use HDF5, only: H5ACLOSE_F, H5ACREATE_F, H5AGET_TYPE_F, H5AOPEN_NAME_F, &
+    & H5AREAD_F, H5AWRITE_F, &
     & H5DCREATE_F, H5DGET_SPACE_F, H5DGET_TYPE_F, H5DOPEN_F, &
     & H5DREAD_F, H5DWRITE_F, H5DCLOSE_F, &
+    & H5ESET_AUTO_F, &
     & H5FOPEN_F, H5FCLOSE_F, &
-    & H5SCREATE_F, H5SCREATE_SIMPLE_F, H5SCLOSE_F, &
-    & H5SGET_SIMPLE_EXTENT_NDIMS_F, H5SGET_SIMPLE_EXTENT_DIMS_F, &
-    & H5TCLOSE_F, H5TCOPY_F, H5TGET_SIZE_F, H5TSET_SIZE_F, H5TEQUAL_F, &
-    & H5ESET_AUTO_F
+    & H5SCLOSE_F, &
+    & H5SCREATE_F, H5SCREATE_SIMPLE_F, H5SGET_SIMPLE_EXTENT_NDIMS_F, &
+    & H5SGET_SIMPLE_EXTENT_DIMS_F, H5SSELECT_HYPERSLAB_F, &
+    & H5TCLOSE_F, H5TCOPY_F, H5TEQUAL_F, H5TGET_SIZE_F, H5TSET_SIZE_F
   use MLSCommon, only: r4, r8
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
 
@@ -57,6 +60,26 @@ module MLSHDF5
 ! SaveAsHDF5DS         Turns an array into a dataset
 ! === (end of toc) ===
 
+! === (start of api) ===
+! GetHDF5Attribute (int itemID, char name, value) 
+! GetHDF5DSDims (int FileID, char name, hsize_t dims(:), [hsize_t maxdims(:)]) 
+! GetHDF5DSRank (int FileID, char name, int rank) 
+! GetHDF5DSQType (int FileID, char name, char QType) 
+! log IsHDF5AttributeInFile (char filename, char DSname, char name) 
+! log IsHDF5DSInFile (char filename, char name) 
+! log IsHDF5AttributePresent (int setid, char name) 
+! log IsHDF5AttributePresent (int fileid, char DSname, char name) 
+! log IsHDF5DSPresent (int locID, char name) 
+! LoadFromHDF5DS (int locID, char name, value,  
+!       [int start(:), int count(:), [int stride(:), int block(:)] ] ) 
+! MakeHDF5Attribute (int itemID, char name, value) 
+! SaveAsHDF5DS (int locID, char name, value) 
+!     value can be one of:
+!    {char* value, int value, r4 value, r8 value, 
+!     int value(:),
+!     r4 value(:), r4 value(:,:), r4 value(:,:,:),
+!     r8 value(:), r8 value(:,:), r8 value(:,:,:)}
+! === (end of api) ===
   interface MakeHDF5Attribute
     module procedure MakeHDF5Attribute_int, MakeHDF5Attribute_logical, &
       & MakeHDF5Attribute_string
@@ -693,12 +716,20 @@ contains ! ======================= Public Procedures =========================
   end subroutine SaveAsHDF5DS_snglarr2
 
   ! ----------------------------------- LoadFromHDF5DS_intarr1
-  subroutine LoadFromHDF5DS_intarr1 ( locID, name, value )
+  subroutine LoadFromHDF5DS_intarr1 ( locID, name, value, &
+    & start, count, stride, block )
     ! This routine loads a predefined array with values from a DS
     integer, intent(in) :: LOCID        ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
     integer, intent(out) :: VALUE(:)    ! The array itself
-
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
     ! Local parameters
     integer, parameter :: MAXDIMENSIONS = 7
 
@@ -706,6 +737,7 @@ contains ! ======================= Public Procedures =========================
     integer :: STATUS                   ! Flag from HDF5
     integer, dimension(1) :: SHP        ! Shape of value
     integer :: SPACEID                  ! ID of dataspace
+    integer :: MEMSPACEID                  ! ID of dataspace
     integer :: SETID                    ! ID of dataset
     integer :: RANK                     ! Rank in file
     integer (kind=hSize_t) , dimension(maxDimensions) :: DIMS, MAXDIMS ! Dimensions in file
@@ -718,21 +750,16 @@ contains ! ======================= Public Procedures =========================
     call h5dget_space_f ( setID, spaceID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open dataspace for dataset '//trim(name) )
-    ! Check that dimensions are all ok.
-    call h5sget_simple_extent_ndims_f ( spaceID, rank, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to get rank for dataset '//trim(name) )
-    if ( rank /= 1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Inconsistant rank for dataset '//trim(name) )
-    call h5sget_simple_extent_dims_f ( spaceID, dims(1:rank), maxdims(1:rank), status )
-    if ( status /= rank ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to get dimension information for dataset '//trim(name) )
-    if ( any ( dims(1:rank) > shape(value) ) ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Dataspace too large for destination value of '//trim(name) )
-    ! Now, (at last!) read the data
-    call h5dread_f ( setID, H5T_NATIVE_INTEGER, value, &
-      & (/ shape(value), ones(1:6) /), status )
+    if ( present(start) ) then
+      call mls_hyperslab(spaceID, shape(value), name, memspaceID, &
+        & start, count, stride, block)
+      call h5dread_f(setID, H5T_NATIVE_INTEGER, value, &
+        & (/ shape(value), ones(1:6) /), status, memspaceID, spaceID )
+    else
+      call check_for_fit(spaceID, shape(value), name)
+      call h5dread_f ( setID, H5T_NATIVE_INTEGER, value, &
+        & (/ shape(value), ones(1:6) /), status )
+    endif
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to read dataset '//trim(name) )
     ! Close up
@@ -745,11 +772,20 @@ contains ! ======================= Public Procedures =========================
   end subroutine LoadFromHDF5DS_intarr1
 
   ! ----------------------------------- LoadFromHDF5DS_dblarr1
-  subroutine LoadFromHDF5DS_dblarr1 ( locID, name, value )
+  subroutine LoadFromHDF5DS_dblarr1 ( locID, name, value, &
+    & start, count, stride, block )
     ! This routine loads a predefined array with values from a DS
     integer, intent(in) :: LOCID        ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
     real(r8), intent(out) :: VALUE(:)    ! The array itself
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
 
     ! Local parameters
     integer, parameter :: MAXDIMENSIONS = 7
@@ -758,6 +794,7 @@ contains ! ======================= Public Procedures =========================
     integer :: STATUS                   ! Flag from HDF5
     integer, dimension(1) :: SHP        ! Shape of value
     integer :: SPACEID                  ! ID of dataspace
+    integer :: MEMSPACEID                  ! ID of dataspace
     integer :: SETID                    ! ID of dataset
     integer :: RANK                     ! Rank in file
     integer (kind=hSize_t) , dimension(maxDimensions) :: DIMS, MAXDIMS ! Dimensions in file
@@ -770,21 +807,17 @@ contains ! ======================= Public Procedures =========================
     call h5dget_space_f ( setID, spaceID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open dataspace for dataset '//trim(name) )
-    ! Check that dimensions are all ok.
-    call h5sget_simple_extent_ndims_f ( spaceID, rank, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to get rank for dataset '//trim(name) )
-    if ( rank /= 1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Inconsistant rank for dataset '//trim(name) )
-    call h5sget_simple_extent_dims_f ( spaceID, dims(1:rank), maxdims(1:rank), status )
-    if ( status /= rank ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to get dimension information for dataset '//trim(name) )
-    if ( any ( dims(1:rank) > shape(value) ) ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Dataspace too large for destination value of '//trim(name) )
+    if ( present(start) ) then
+      call mls_hyperslab(spaceID, shape(value), name, memspaceID, &
+        & start, count, stride, block)
+      call h5dread_f(setID, H5T_NATIVE_DOUBLE, value, &
+        & (/ shape(value), ones(1:6) /), status, memspaceID, spaceID )
+    else
+      call check_for_fit(spaceID, shape(value), name)
+      call h5dread_f ( setID, H5T_NATIVE_DOUBLE, value, &
+        & (/ shape(value), ones(1:6) /), status )
+    endif
     ! Now, (at last!) read the data
-    call h5dread_f ( setID, H5T_NATIVE_DOUBLE, value, &
-      & (/ shape(value), ones(1:6) /), status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to read dataset '//trim(name) )
     ! Close up
@@ -797,11 +830,20 @@ contains ! ======================= Public Procedures =========================
   end subroutine LoadFromHDF5DS_dblarr1
 
   ! ----------------------------------- LoadFromHDF5DS_dblarr2
-  subroutine LoadFromHDF5DS_dblarr2 ( locID, name, value )
+  subroutine LoadFromHDF5DS_dblarr2 ( locID, name, value, &
+    & start, count, stride, block )
     ! This routine loads a predefined array with values from a DS
     integer, intent(in) :: LOCID        ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
     real(r8), intent(out) :: VALUE(:,:) ! The array itself
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
 
     ! Local parameters
     integer, parameter :: MAXDIMENSIONS = 7
@@ -810,6 +852,7 @@ contains ! ======================= Public Procedures =========================
     integer :: STATUS                   ! Flag from HDF5
     integer, dimension(2) :: SHP        ! Shape of value
     integer :: SPACEID                  ! ID of dataspace
+    integer :: MEMSPACEID                  ! ID of dataspace
     integer :: SETID                    ! ID of dataset
     integer :: RANK                     ! Rank in file
     integer (kind=hSize_t) , dimension(maxDimensions) :: DIMS, MAXDIMS ! Dimensions in file
@@ -822,21 +865,16 @@ contains ! ======================= Public Procedures =========================
     call h5dget_space_f ( setID, spaceID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open dataspace for dataset '//trim(name) )
-    ! Check that dimensions are all ok.
-    call h5sget_simple_extent_ndims_f ( spaceID, rank, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to get rank for dataset '//trim(name) )
-    if ( rank /= 2 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Inconsistant rank for dataset '//trim(name) )
-    call h5sget_simple_extent_dims_f ( spaceID, dims(1:rank), maxdims(1:rank), status )
-    if ( status /= rank ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to get dimension information for dataset '//trim(name) )
-    if ( any ( dims(1:rank) > shape(value) ) ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Dataspace too large for destination value of '//trim(name) )
-    ! Now, (at last!) read the data
-    call h5dread_f ( setID, H5T_NATIVE_DOUBLE, value, &
-      & (/ shape(value), ones(1:5) /), status )
+    if ( present(start) ) then
+      call mls_hyperslab(spaceID, shape(value), name, memspaceID, &
+        & start, count, stride, block)
+      call h5dread_f(setID, H5T_NATIVE_DOUBLE, value, &
+        & (/ shape(value), ones(1:5) /), status, memspaceID, spaceID )
+    else
+      call check_for_fit(spaceID, shape(value), name)
+      call h5dread_f ( setID, H5T_NATIVE_DOUBLE, value, &
+        & (/ shape(value), ones(1:5) /), status )
+    endif
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to read dataset '//trim(name) )
     ! Close up
@@ -849,11 +887,20 @@ contains ! ======================= Public Procedures =========================
   end subroutine LoadFromHDF5DS_dblarr2
 
   ! ----------------------------------- LoadFromHDF5DS_dblarr3
-  subroutine LoadFromHDF5DS_dblarr3 ( locID, name, value )
+  subroutine LoadFromHDF5DS_dblarr3 ( locID, name, value, &
+    & start, count, stride, block )
     ! This routine loads a predefined array with values from a DS
     integer, intent(in) :: LOCID          ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
     real(r8), intent(out) :: VALUE(:,:,:) ! The array itself
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
 
     ! Local parameters
     integer, parameter :: MAXDIMENSIONS = 7
@@ -862,6 +909,7 @@ contains ! ======================= Public Procedures =========================
     integer :: STATUS                   ! Flag from HDF5
     integer, dimension(3) :: SHP        ! Shape of value
     integer :: SPACEID                  ! ID of dataspace
+    integer :: MEMSPACEID                  ! ID of dataspace
     integer :: SETID                    ! ID of dataset
     integer :: RANK                     ! Rank in file
     integer (kind=hSize_t) , dimension(maxDimensions) :: DIMS, MAXDIMS ! Dimensions in file
@@ -874,21 +922,16 @@ contains ! ======================= Public Procedures =========================
     call h5dget_space_f ( setID, spaceID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open dataspace for dataset '//trim(name) )
-    ! Check that dimensions are all ok.
-    call h5sget_simple_extent_ndims_f ( spaceID, rank, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to get rank for dataset '//trim(name) )
-    if ( rank /= 3 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Inconsistant rank for dataset '//trim(name) )
-    call h5sget_simple_extent_dims_f ( spaceID, dims(1:rank), maxdims(1:rank), status )
-    if ( status /= rank ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to get dimension information for dataset '//trim(name) )
-    if ( any ( dims(1:rank) > shape(value) ) ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Dataspace too large for destination value of '//trim(name) )
-    ! Now, (at last!) read the data
-    call h5dread_f ( setID, H5T_NATIVE_DOUBLE, value, &
-      & (/ shape(value), ones(1:4) /), status )
+    if ( present(start) ) then
+      call mls_hyperslab(spaceID, shape(value), name, memspaceID, &
+        & start, count, stride, block)
+      call h5dread_f(setID, H5T_NATIVE_DOUBLE, value, &
+        & (/ shape(value), ones(1:4) /), status, memspaceID, spaceID )
+    else
+      call check_for_fit(spaceID, shape(value), name)
+      call h5dread_f ( setID, H5T_NATIVE_DOUBLE, value, &
+        & (/ shape(value), ones(1:4) /), status )
+    endif
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to read dataset '//trim(name) )
     ! Close up
@@ -901,11 +944,20 @@ contains ! ======================= Public Procedures =========================
   end subroutine LoadFromHDF5DS_dblarr3
 
   ! ----------------------------------- LoadFromHDF5DS_snglarr1
-  subroutine LoadFromHDF5DS_snglarr1 ( locID, name, value )
+  subroutine LoadFromHDF5DS_snglarr1 ( locID, name, value, &
+    & start, count, stride, block )
     ! This routine loads a predefined array with values from a DS
     integer, intent(in) :: LOCID        ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
     real(r4), intent(out) :: VALUE(:)    ! The array itself
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
 
     ! Local parameters
     integer, parameter :: MAXDIMENSIONS = 7
@@ -914,6 +966,7 @@ contains ! ======================= Public Procedures =========================
     integer :: STATUS                   ! Flag from HDF5
     integer, dimension(1) :: SHP        ! Shape of value
     integer :: SPACEID                  ! ID of dataspace
+    integer :: MEMSPACEID                  ! ID of dataspace
     integer :: SETID                    ! ID of dataset
     integer :: RANK                     ! Rank in file
     integer (kind=hSize_t) , dimension(maxDimensions) :: DIMS, MAXDIMS ! Dimensions in file
@@ -926,21 +979,16 @@ contains ! ======================= Public Procedures =========================
     call h5dget_space_f ( setID, spaceID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open dataspace for dataset '//trim(name) )
-    ! Check that dimensions are all ok.
-    call h5sget_simple_extent_ndims_f ( spaceID, rank, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to get rank for dataset '//trim(name) )
-    if ( rank /= 1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Inconsistant rank for dataset '//trim(name) )
-    call h5sget_simple_extent_dims_f ( spaceID, dims(1:rank), maxdims(1:rank), status )
-    if ( status /= rank ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to get dimension information for dataset '//trim(name) )
-    if ( any ( dims(1:rank) > shape(value) ) ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Dataspace too large for destination value of '//trim(name) )
-    ! Now, (at last!) read the data
-    call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
-      & (/ shape(value), ones(1:6) /), status )
+    if ( present(start) ) then
+      call mls_hyperslab(spaceID, shape(value), name, memspaceID, &
+        & start, count, stride, block)
+      call h5dread_f(setID, H5T_NATIVE_REAL, value, &
+        & (/ shape(value), ones(1:6) /), status, memspaceID, spaceID )
+    else
+      call check_for_fit(spaceID, shape(value), name)
+      call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
+        & (/ shape(value), ones(1:6) /), status )
+    endif
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to read dataset '//trim(name) )
     ! Close up
@@ -953,11 +1001,20 @@ contains ! ======================= Public Procedures =========================
   end subroutine LoadFromHDF5DS_snglarr1
 
   ! ----------------------------------- LoadFromHDF5DS_snglarr2
-  subroutine LoadFromHDF5DS_snglarr2 ( locID, name, value )
+  subroutine LoadFromHDF5DS_snglarr2 ( locID, name, value, &
+    & start, count, stride, block )
     ! This routine loads a predefined array with values from a DS
     integer, intent(in) :: LOCID        ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
     real(r4), intent(out) :: VALUE(:,:) ! The array itself
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
 
     ! Local parameters
     integer, parameter :: MAXDIMENSIONS = 7
@@ -966,6 +1023,7 @@ contains ! ======================= Public Procedures =========================
     integer :: STATUS                   ! Flag from HDF5
     integer, dimension(2) :: SHP        ! Shape of value
     integer :: SPACEID                  ! ID of dataspace
+    integer :: MEMSPACEID                  ! ID of dataspace
     integer :: SETID                    ! ID of dataset
     integer :: RANK                     ! Rank in file
     integer (kind=hSize_t) , dimension(maxDimensions) :: DIMS, MAXDIMS ! Dimensions in file
@@ -978,21 +1036,16 @@ contains ! ======================= Public Procedures =========================
     call h5dget_space_f ( setID, spaceID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open dataspace for dataset '//trim(name) )
-    ! Check that dimensions are all ok.
-    call h5sget_simple_extent_ndims_f ( spaceID, rank, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to get rank for dataset '//trim(name) )
-    if ( rank /= 2 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Inconsistant rank for dataset '//trim(name) )
-    call h5sget_simple_extent_dims_f ( spaceID, dims(1:rank), maxdims(1:rank), status )
-    if ( status /= rank ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to get dimension information for dataset '//trim(name) )
-    if ( any ( dims(1:rank) > shape(value) ) ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Dataspace too large for destination value of '//trim(name) )
-    ! Now, (at last!) read the data
-    call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
-      & (/ shape(value), ones(1:5) /), status )
+    if ( present(start) ) then
+      call mls_hyperslab(spaceID, shape(value), name, memspaceID, &
+        & start, count, stride, block)
+      call h5dread_f(setID, H5T_NATIVE_REAL, value, &
+        & (/ shape(value), ones(1:5) /), status, memspaceID, spaceID )
+    else
+      call check_for_fit(spaceID, shape(value), name)
+      call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
+        & (/ shape(value), ones(1:5) /), status )
+    endif
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to read dataset '//trim(name) )
     ! Close up
@@ -1005,11 +1058,20 @@ contains ! ======================= Public Procedures =========================
   end subroutine LoadFromHDF5DS_snglarr2
 
   ! ----------------------------------- LoadFromHDF5DS_snglarr3
-  subroutine LoadFromHDF5DS_snglarr3 ( locID, name, value )
+  subroutine LoadFromHDF5DS_snglarr3 ( locID, name, value, &
+    & start, count, stride, block )
     ! This routine loads a predefined array with values from a DS
     integer, intent(in) :: LOCID          ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
     real(r4), intent(out) :: VALUE(:,:,:) ! The array itself
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
 
     ! Local parameters
     integer, parameter :: MAXDIMENSIONS = 7
@@ -1018,6 +1080,7 @@ contains ! ======================= Public Procedures =========================
     integer :: STATUS                   ! Flag from HDF5
     integer, dimension(3) :: SHP        ! Shape of value
     integer :: SPACEID                  ! ID of dataspace
+    integer :: MEMSPACEID                  ! ID of dataspace
     integer :: SETID                    ! ID of dataset
     integer :: RANK                     ! Rank in file
     integer (kind=hSize_t) , dimension(maxDimensions) :: DIMS, MAXDIMS ! Dimensions in file
@@ -1030,21 +1093,16 @@ contains ! ======================= Public Procedures =========================
     call h5dget_space_f ( setID, spaceID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to open dataspace for dataset '//trim(name) )
-    ! Check that dimensions are all ok.
-    call h5sget_simple_extent_ndims_f ( spaceID, rank, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to get rank for dataset '//trim(name) )
-    if ( rank /= 3 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Inconsistant rank for dataset '//trim(name) )
-    call h5sget_simple_extent_dims_f ( spaceID, dims(1:rank), maxdims(1:rank), status )
-    if ( status /= rank ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to get dimension information for dataset '//trim(name) )
-    if ( any ( dims(1:rank) > shape(value) ) ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Dataspace too large for destination value of '//trim(name) )
-    ! Now, (at last!) read the data
-    call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
-      & (/ shape(value), ones(1:4) /), status )
+    if ( present(start) ) then
+      call mls_hyperslab(spaceID, shape(value), name, memspaceID, &
+        & start, count, stride, block)
+      call h5dread_f(setID, H5T_NATIVE_REAL, value, &
+        & (/ shape(value), ones(1:4) /), status, memspaceID, spaceID )
+    else
+      call check_for_fit(spaceID, shape(value), name)
+      call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
+        & (/ shape(value), ones(1:4) /), status )
+    endif
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to read dataset '//trim(name) )
     ! Close up
@@ -1069,6 +1127,98 @@ contains ! ======================= Public Procedures =========================
     call h5tEqual_f(type1, type2, AreThe2TypesEqual, status)
     if (status /= 0 ) AreThe2TypesEqual = .false.
   end function AreThe2TypesEqual
+
+  subroutine check_for_fit(spaceID, value_dims, name)
+  ! Checks that dataspace will fit into values before LoadFromHDF5DS
+    integer, intent(in)               :: spaceID 
+    integer, dimension(:), intent(in) :: value_dims
+    character (len=*), intent(in)     :: NAME ! Name for this dataset
+    integer                           :: rank
+    integer                           :: value_rank
+    integer(hsize_t), dimension(7)    :: dims, maxdims
+    integer                           :: status  
+    value_rank = size(value_dims)
+    call h5sget_simple_extent_ndims_f ( spaceID, rank, status )
+    if ( status /= 0 )  call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to get rank for dataset '//trim(name) )
+    if ( rank /= value_rank ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Inconsistant rank for dataset '//trim(name) )
+    call h5sget_simple_extent_dims_f ( spaceID, dims(1:rank), maxdims(1:rank), &
+      &  status )
+    if ( status /= rank ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to get dimension information for dataset '//trim(name) )
+    if ( any ( dims(1:rank) > value_dims ) ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Dataspace too large for destination value of '//trim(name) )
+  end subroutine check_for_fit
+
+  subroutine mls_hyperslab ( spaceID, value_dims, name, memspaceID, &
+    & start, count, stride, block )
+  ! Sits between LoadFromHDF5DS and h5sselect_hyperslab_f
+  ! Restriction:
+  ! The optional parameters must be present in 1 of the two patterns below
+  ! pattern(1): start, count)
+  ! pattern(2): start, count, stride, block)
+    integer, intent(in)                :: spaceID 
+    integer, intent(out)               :: memspaceID 
+    integer, dimension(:), intent(in)  :: value_dims
+    character (len=*), intent(in)     :: NAME ! Name for this dataset
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
+    integer                           :: value_rank, rank
+    integer(hsize_t), dimension(7)    :: dims, maxdims
+    integer                           :: status  
+
+    ! Begin execution
+    ! Check that pattern 1 or pattern 2 is satisfied
+    status = 0
+    if ( present(start) ) status = status + 1
+    if ( present(count) ) status = status + 2
+    if ( present(stride) ) status = status + 4
+    if ( present(block) ) status = status + 8
+    if ( status /= 3 .and. status /= 15 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Impossible optional parameters pattern for dataset '//trim(name) )
+    value_rank = size(value_dims)
+!    print *, 'value_rank: ', value_rank
+    call h5sget_simple_extent_ndims_f ( spaceID, rank, status )
+!    print *, 'dataspace rank: ', rank
+    if ( status /= 0 )  call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to get rank for dataset '//trim(name) )
+    call h5sget_simple_extent_dims_f ( spaceID, dims(1:rank), maxdims(1:rank), &
+      &  status )
+!    print *, 'dataspace dims: ', dims(1:rank)
+    if ( status /= rank ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to get dimension information for dataset '//trim(name) )
+    call h5screate_simple_f(value_rank, &
+      & int(value_dims(1:value_rank), hsize_t), memspaceID, &
+      & status)
+!    print *, 'memspace id: ', memspaceID
+    if (status /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
+      & 'Unable to create memspace for dataset '//trim(name) )
+    if ( present(stride) ) then
+!      print *, 'trying to select hyperslab: ', &
+!        & int(start(1:rank), hsize_t), int(count(1:rank), hsize_t), &
+!        & int(stride(1:rank), hsize_t), int(block(1:rank), hsize_t)
+      call h5sselect_hyperslab_f ( spaceID, H5S_SELECT_SET_F, &
+        & int(start(1:rank), hsize_t), int(count(1:rank), hsize_t), status, &
+        & int(stride(1:rank), hsize_t), int(block(1:rank), hsize_t) )
+    else
+!      print *, 'trying to select hyperslab: ', &
+!        & int(start(1:rank), hsize_t), int(count(1:rank), hsize_t)
+      call h5sselect_hyperslab_f ( spaceID, H5S_SELECT_SET_F, &
+        & int(start(1:rank), hsize_t), int(count(1:rank), hsize_t), status )
+    endif
+    if (status /= 0) call MLSMessage(MLSMSG_Error, ModuleName, & 
+      & 'Unable to set hyperslab for dataset '//trim(name) )
+
+  end subroutine mls_hyperslab
+
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
@@ -1076,6 +1226,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.11  2002/10/10 23:51:57  pwagner
+! Optional hyperslab args to LoadFromHDF5DS
+!
 ! Revision 2.10  2002/10/08 00:09:11  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
