@@ -61,6 +61,7 @@ CONTAINS
         TYPE( L3DMData_T ), POINTER :: l3dm(:), dmA(:), dmD(:)
         TYPE( L3SPData_T ), POINTER :: l3sp(:), l3spPrec(:)
         TYPE( L2GPData_T ), POINTER :: l3r(:), residA(:), residD(:)
+        TYPE( L2GPData_T ), POINTER :: l3r_temp(:), residA_temp(:), residD_temp(:)
 
    	TYPE( OutputFlags_T ) :: flags
 
@@ -259,6 +260,8 @@ CONTAINS
         mis_l2Days_temp = 0
 
         CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, pcf%l3StartDay, & 
+          pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, l3r_temp)
+        CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, pcf%l3StartDay, & 
           pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, l3r)
 
         DO j = 1, maxWindow
@@ -267,6 +270,8 @@ CONTAINS
 
         mis_l2Days_temp = 0
 
+        CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, pcf%l3StartDay, & 
+          pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, residA_temp)
         CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, pcf%l3StartDay, & 
           pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, residA)
 
@@ -277,6 +282,8 @@ CONTAINS
         mis_l2Days_temp = 0
 
         CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, pcf%l3StartDay, & 
+          pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, residD_temp)
+        CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, pcf%l3StartDay, & 
           pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, residD)
 
         l3r%name    = TRIM(cfProd%l3prodNameD) // 'Residuals'
@@ -285,14 +292,17 @@ CONTAINS
 
         DO j = 1, rDays
            l3r(j)%l2gpValue    = 0.0
-           l3r(j)%latitude     = 0.0
-           l3r(j)%longitude    = 0.0
+           l3r_temp(j)%l2gpValue    = 0.0
+           l3r_temp(j)%latitude     = 0.0
+           l3r_temp(j)%longitude    = 0.0
            residA(j)%l2gpValue = 0.0
-           residA(j)%latitude  = 0.0
-           residA(j)%longitude = 0.0
+           residA_temp(j)%l2gpValue = 0.0
+           residA_temp(j)%latitude  = 0.0
+           residA_temp(j)%longitude = 0.0
            residD(j)%l2gpValue = 0.0
-           residD(j)%latitude  = 0.0
-           residD(j)%longitude = 0.0
+           residD_temp(j)%l2gpValue = 0.0
+           residD_temp(j)%latitude  = 0.0
+           residD_temp(j)%longitude = 0.0
         ENDDO
  
 !!      Initialize Flags
@@ -373,7 +383,6 @@ CONTAINS
 			delTad, perMisPoints )
 
 !*** Main Loop 
-
 
    !*** Calculate Field Values ********
 
@@ -473,11 +482,11 @@ CONTAINS
 			   nc(iD) = nc(iD) + 1
 		   CALL Diagnostics(cfProd%mode, atimes(J, iL, iP), alons(J, iL, iP), l3ret)
                    
-		   l3r(iD)%time(nc(iD))  = atimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
-	           l3r(iD)%latitude(nc(iD)) = cfProd%latGridMap(J) 
-	           l3r(iD)%longitude(nc(iD)) = FindRealLon(real(alons(J, iL, iP)))*180.0/PI
-		   l3r(iD)%l2gpValue(1, iP, nc(iD)) = afields(J, iL, iP)-l3ret 
-	           l3r(iD)%l2gpPrecision(1, iP, nc(iD)) = 0.0 
+		   l3r_temp(iD)%time(nc(iD))  = atimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
+	           l3r_temp(iD)%latitude(nc(iD)) = cfProd%latGridMap(J) 
+	           l3r_temp(iD)%longitude(nc(iD)) = FindRealLon(real(alons(J, iL, iP)))*180.0/PI
+		   l3r_temp(iD)%l2gpValue(1, iP, nc(iD)) = afields(J, iL, iP)-l3ret 
+	           l3r_temp(iD)%l2gpPrecision(1, iP, nc(iD)) = 0.0 
 
 			END IF
 
@@ -487,11 +496,11 @@ CONTAINS
 			   dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1) <= endTime(iD)) THEN
 			   nc(iD) = nc(iD) + 1
 	       CALL Diagnostics(cfProd%mode, dtimes(J, iL, iP), dlons(J, iL, iP), l3ret) 
-		   l3r(iD)%time(nc(iD))     = dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
-		   l3r(iD)%latitude(nc(iD)) = cfProd%latGridMap(J) 
-		   l3r(iD)%longitude(nc(iD)) = FindRealLon(real(dlons(J, iL, iP)))*180.0/PI
-		   l3r(iD)%l2gpValue(1, iP, nc(iD)) = dfields(J, iL, iP)-l3ret 
-		   l3r(iD)%l2gpPrecision(1, iP, nc(iD)) = 0.0 
+		   l3r_temp(iD)%time(nc(iD))     = dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
+		   l3r_temp(iD)%latitude(nc(iD)) = cfProd%latGridMap(J) 
+		   l3r_temp(iD)%longitude(nc(iD)) = FindRealLon(real(dlons(J, iL, iP)))*180.0/PI
+		   l3r_temp(iD)%l2gpValue(1, iP, nc(iD)) = dfields(J, iL, iP)-l3ret 
+		   l3r_temp(iD)%l2gpPrecision(1, iP, nc(iD)) = 0.0 
 			END IF
 		      ENDDO
 		   ENDDO
@@ -553,11 +562,11 @@ CONTAINS
 			   atimes(J, iL, iP)*86400.0+l2gp(1)%time(1) <= endTime(iD)) THEN
 			   nc(iD) = nc(iD) + 1
 		   CALL Diagnostics(cfProd%mode, atimes(J, iL, iP), alons(J, iL, iP), l3ret) 
-	         residA(iD)%time(nc(iD))     = atimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
-	         residA(iD)%latitude(nc(iD)) = cfProd%latGridMap(J) 
-	         residA(iD)%longitude(nc(iD)) = FindRealLon(real(alons(J, iL, iP)))*180.0/PI
-	         residA(iD)%l2gpValue(1, iP, nc(iD)) = afields(J, iL, iP)-l3ret 
-		 residA(iD)%l2gpPrecision(1, iP, nc(iD)) = 0.0 
+	         residA_temp(iD)%time(nc(iD))     = atimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
+	         residA_temp(iD)%latitude(nc(iD)) = cfProd%latGridMap(J) 
+	         residA_temp(iD)%longitude(nc(iD)) = FindRealLon(real(alons(J, iL, iP)))*180.0/PI
+	         residA_temp(iD)%l2gpValue(1, iP, nc(iD)) = afields(J, iL, iP)-l3ret 
+		 residA_temp(iD)%l2gpPrecision(1, iP, nc(iD)) = 0.0 
 			END IF
 		      ENDDO
 		   ENDDO
@@ -617,11 +626,11 @@ CONTAINS
 			   dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1) <= endTime(iD)) THEN
 			   nc(iD) = nc(iD) + 1
 		   CALL Diagnostics(cfProd%mode, dtimes(J, iL, iP), dlons(J, iL, iP), l3ret) 
-		  residD(iD)%time(nc(iD))     = dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
-		  residD(iD)%latitude(nc(iD)) = cfProd%latGridMap(J) 
-	          residD(iD)%longitude(nc(iD)) = FindRealLon(real(dlons(J, iL, iP)))*180.0/PI
-	          residD(iD)%l2gpValue(1, iP, nc(iD)) = dfields(J, iL, iP)-l3ret 
-		  residD(iD)%l2gpPrecision(1, iP, nc(iD)) = 0.0 
+		  residD_temp(iD)%time(nc(iD))     = dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
+		  residD_temp(iD)%latitude(nc(iD)) = cfProd%latGridMap(J) 
+	          residD_temp(iD)%longitude(nc(iD)) = FindRealLon(real(dlons(J, iL, iP)))*180.0/PI
+	          residD_temp(iD)%l2gpValue(1, iP, nc(iD)) = dfields(J, iL, iP)-l3ret 
+		  residD_temp(iD)%l2gpPrecision(1, iP, nc(iD)) = 0.0 
 			END IF
 		      ENDDO
 		   ENDDO
@@ -683,11 +692,11 @@ CONTAINS
                            nca(iD) = nca(iD) + 1
                           CALL Diagnostics('asc', atimes(J, iL, iP), alons(J, iL, iP), l3ret)
                           
-                           residA(iD)%time(nca(iD)) = atimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
-                           residA(iD)%longitude(nca(iD))=FindRealLon(real(alons(J,iL,iP)))*180./PI
-                           residA(iD)%latitude(nca(iD)) = cfProd%latGridMap(J)  
-                           residA(iD)%l2gpValue(1, iP, nca(iD)) = afields(J, iL, iP)-l3ret
-                           residA(iD)%l2gpPrecision(1, iP, nca(iD)) = 0.0
+                           residA_temp(iD)%time(nca(iD)) = atimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
+                           residA_temp(iD)%longitude(nca(iD))=FindRealLon(real(alons(J,iL,iP)))*180./PI
+                           residA_temp(iD)%latitude(nca(iD)) = cfProd%latGridMap(J)  
+                           residA_temp(iD)%l2gpValue(1, iP, nca(iD)) = afields(J, iL, iP)-l3ret
+                           residA_temp(iD)%l2gpPrecision(1, iP, nca(iD)) = 0.0
 
                         END IF
                       ENDDO
@@ -747,11 +756,11 @@ CONTAINS
                            ncd(iD) = ncd(iD) + 1
                           CALL Diagnostics('des', dtimes(J, iL, iP), dlons(J, iL, iP), l3ret)
 
-                  residD(iD)%longitude(ncd(iD)) = FindRealLon(real(dlons(J, iL, iP)))*180./PI
-                  residD(iD)%time(ncd(iD))     = dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
-                  residD(iD)%latitude(ncd(iD)) = cfProd%latGridMap(J)  
-                  residD(iD)%l2gpValue(1, iP, ncd(iD)) = dfields(J, iL, iP)-l3ret
-                  residD(iD)%l2gpPrecision(1, iP, ncd(iD)) = 0.0
+                  residD_temp(iD)%longitude(ncd(iD)) = FindRealLon(real(dlons(J, iL, iP)))*180./PI
+                  residD_temp(iD)%time(ncd(iD))     = dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
+                  residD_temp(iD)%latitude(ncd(iD)) = cfProd%latGridMap(J)  
+                  residD_temp(iD)%l2gpValue(1, iP, ncd(iD)) = dfields(J, iL, iP)-l3ret
+                  residD_temp(iD)%l2gpPrecision(1, iP, ncd(iD)) = 0.0
 
                         END IF
                       ENDDO
@@ -813,12 +822,12 @@ CONTAINS
 			   atimes(J, iL, iP)*86400.0+l2gp(1)%time(1) <= endTime(iD)) THEN
 			   nc(iD) = nc(iD) + 1
 		         CALL Diagnostics('com', atimes(J, iL, iP), alons(J, iL, iP), l3ret) 
-		        l3r(iD)%time(nc(iD))  = atimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
-			l3r(iD)%latitude(nc(iD)) = cfProd%latGridMap(J) 
-			l3r(iD)%longitude(nc(iD)) = & 
+		        l3r_temp(iD)%time(nc(iD))  = atimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
+			l3r_temp(iD)%latitude(nc(iD)) = cfProd%latGridMap(J) 
+			l3r_temp(iD)%longitude(nc(iD)) = & 
                           FindRealLon(real(alons(J, iL, iP)))*180.0/PI
-			   l3r(iD)%l2gpValue(1, iP, nc(iD)) = afields(J, iL, iP)-l3ret 
-			   l3r(iD)%l2gpPrecision(1, iP, nc(iD)) = 0.0 
+			   l3r_temp(iD)%l2gpValue(1, iP, nc(iD)) = afields(J, iL, iP)-l3ret 
+			   l3r_temp(iD)%l2gpPrecision(1, iP, nc(iD)) = 0.0 
 			END IF
 		      ENDDO
                       DO iL = 1, dnlats(J, iP)
@@ -826,11 +835,11 @@ CONTAINS
 			   dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1) <= endTime(iD)) THEN
 			   nc(iD) = nc(iD) + 1
 		         CALL Diagnostics('com', dtimes(J, iL, iP), dlons(J, iL, iP), l3ret) 
-	             l3r(iD)%time(nc(iD))     = dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
-	             l3r(iD)%latitude(nc(iD)) = cfProd%latGridMap(J) 
-		     l3r(iD)%longitude(nc(iD)) = FindRealLon(real(dlons(J, iL, iP)))*180.0/PI
-		     l3r(iD)%l2gpValue(1, iP, nc(iD)) = dfields(J, iL, iP)-l3ret 
-		     l3r(iD)%l2gpPrecision(1, iP, nc(iD)) = 0.0 
+	             l3r_temp(iD)%time(nc(iD))     = dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
+	             l3r_temp(iD)%latitude(nc(iD)) = cfProd%latGridMap(J) 
+		     l3r_temp(iD)%longitude(nc(iD)) = FindRealLon(real(dlons(J, iL, iP)))*180.0/PI
+		     l3r_temp(iD)%l2gpValue(1, iP, nc(iD)) = dfields(J, iL, iP)-l3ret 
+		     l3r_temp(iD)%l2gpPrecision(1, iP, nc(iD)) = 0.0 
 			END IF
 		      ENDDO
 		   ENDDO
@@ -887,11 +896,11 @@ CONTAINS
 			   atimes(J, iL, iP)*86400.0+l2gp(1)%time(1) <= endTime(iD)) THEN
 			   nca(iD) = nca(iD) + 1
 	           CALL Diagnostics('asc', atimes(J, iL, iP), alons(J, iL, iP), l3ret) 
-		  residA(iD)%time(nca(iD))     = atimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
-		  residA(iD)%latitude(nca(iD)) = cfProd%latGridMap(J) 
-		  residA(iD)%longitude(nca(iD)) = FindRealLon(real(alons(J, iL, iP)))*180.0/PI
-                  residA(iD)%l2gpValue(1, iP, nca(iD)) = afields(J, iL, iP)-l3ret 
-                  residA(iD)%l2gpPrecision(1, iP, nca(iD)) = 0.0 
+		  residA_temp(iD)%time(nca(iD))     = atimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
+		  residA_temp(iD)%latitude(nca(iD)) = cfProd%latGridMap(J) 
+		  residA_temp(iD)%longitude(nca(iD)) = FindRealLon(real(alons(J, iL, iP)))*180.0/PI
+                  residA_temp(iD)%l2gpValue(1, iP, nca(iD)) = afields(J, iL, iP)-l3ret 
+                  residA_temp(iD)%l2gpPrecision(1, iP, nca(iD)) = 0.0 
 			END IF
 		      ENDDO
 		   ENDDO
@@ -949,11 +958,11 @@ CONTAINS
 			   ncd(iD) = ncd(iD) + 1
 		         CALL Diagnostics('des', dtimes(J, iL, iP), dlons(J, iL, iP), l3ret) 
 
-		  residD(iD)%time(ncd(iD))     = dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
-                  residD(iD)%latitude(ncd(iD)) = cfProd%latGridMap(J) 
-                  residD(iD)%longitude(ncd(iD)) = FindRealLon(real(dlons(J, iL, iP)))*180.0/PI
-                  residD(iD)%l2gpValue(1, iP, ncd(iD)) = dfields(J, iL, iP)-l3ret 
-                  residD(iD)%l2gpPrecision(1, iP, ncd(iD)) = 0.0 
+		  residD_temp(iD)%time(ncd(iD))     = dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
+                  residD_temp(iD)%latitude(ncd(iD)) = cfProd%latGridMap(J) 
+                  residD_temp(iD)%longitude(ncd(iD)) = FindRealLon(real(dlons(J, iL, iP)))*180.0/PI
+                  residD_temp(iD)%l2gpValue(1, iP, ncd(iD)) = dfields(J, iL, iP)-l3ret 
+                  residD_temp(iD)%l2gpPrecision(1, iP, ncd(iD)) = 0.0 
 			END IF
 		      ENDDO
 		   ENDDO
@@ -1001,31 +1010,34 @@ CONTAINS
                         pt(i) = 0
                         sortTemp(i) = 0.0
                       ENDDO
-                      CALL DSORTP(l3r(iD)%time, 1, nc(iD), pt)
+                      CALL DSORTP(l3r_temp(iD)%time, 1, nc(iD), pt)
                       !** do time
-                      CALL DSORT(l3r(iD)%time, 1, nc(iD))
+                      CALL DSORT(l3r_temp(iD)%time, 1, nc(iD))
                       !** do latitude
                       DO i = 1, nc(iD)
-                        sortTemp(i) = l3r(iD)%latitude(i)
+                        sortTemp(i) = l3r_temp(iD)%latitude(i)
                       ENDDO
                       DO i = 1, nc(iD)
-                        l3r(iD)%latitude(i) = sortTemp(pt(i))
+                        l3r_temp(iD)%latitude(i) = sortTemp(pt(i))
                       ENDDO
                       !** do longitude
                       DO i = 1, nc(iD)
-                        sortTemp(i) = l3r(iD)%longitude(i)
+                        sortTemp(i) = l3r_temp(iD)%longitude(i)
                       ENDDO
                       DO i = 1, nc(iD)
-                        l3r(iD)%longitude(i) = sortTemp(pt(i))
+                        l3r_temp(iD)%longitude(i) = sortTemp(pt(i))
                       ENDDO
                       !** do value
                       DO i = 1, nc(iD)
-                        sortTemp(i) = l3r(iD)%l2gpValue(1, iP, i)
+                        sortTemp(i) = l3r_temp(iD)%l2gpValue(1, iP, i)
                       ENDDO
                       DO i = 1, nc(iD)
-                        l3r(iD)%l2gpValue(1, iP, i) = sortTemp(pt(i))
+                        l3r_temp(iD)%l2gpValue(1, iP, i) = sortTemp(pt(i))
                       ENDDO
-                      
+
+                      !*** Interpolate to l2gp grid 
+		      CALL Residual2L2Grid( iD, iP, l3r_temp, l3r ) 
+
                       if ( associated(sortTemp) ) then 
                       DeAllocate(sortTemp, STAT=error)
                       IF ( error /= 0 ) THEN
@@ -1054,9 +1066,9 @@ CONTAINS
                         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                       ENDIF
 
-                      CALL DSORTP(-abs(l3r(iD)%l2gpValue(1, iP, 1:nc(iD))), 1, nc(iD), pt)
+                      CALL DSORTP(-abs(l3r_temp(iD)%l2gpValue(1, iP, 1:nc(iD))), 1, nc(iD), pt)
                       DO i = 1, cfDef%N
-                        l3dm(iD)%maxDiff(i, iP) = l3r(iD)%l2gpValue(1, iP, pt(i))
+                        l3dm(iD)%maxDiff(i, iP) = l3r_temp(iD)%l2gpValue(1, iP, pt(i))
                       ENDDO
 
                       if ( associated(pt) ) then 
@@ -1110,30 +1122,33 @@ CONTAINS
                         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                       ENDIF
 
-                      CALL DSORTP(residA(iD)%time, 1, nc(iD), pt)
+                      CALL DSORTP(residA_temp(iD)%time, 1, nc(iD), pt)
                       !** do time
-                      CALL DSORT(residA(iD)%time, 1, nc(iD))
+                      CALL DSORT(residA_temp(iD)%time, 1, nc(iD))
                       !** do latitude
                       DO i = 1, nc(iD)
-                        sortTemp(i) = residA(iD)%latitude(i)
+                        sortTemp(i) = residA_temp(iD)%latitude(i)
                       ENDDO
                       DO i = 1, nc(iD)
-                        residA(iD)%latitude(i) = sortTemp(pt(i))
+                        residA_temp(iD)%latitude(i) = sortTemp(pt(i))
                       !** do longitude
                       ENDDO
                       DO i = 1, nc(iD)
-                        sortTemp(i) = residA(iD)%longitude(i)
+                        sortTemp(i) = residA_temp(iD)%longitude(i)
                       ENDDO
                       DO i = 1, nc(iD)
-                        residA(iD)%longitude(i) = sortTemp(pt(i))
+                        residA_temp(iD)%longitude(i) = sortTemp(pt(i))
                       !** do value
                       ENDDO
                       DO i = 1, nc(iD)
-                        sortTemp(i) = residA(iD)%l2gpValue(1, iP, i)
+                        sortTemp(i) = residA_temp(iD)%l2gpValue(1, iP, i)
                       ENDDO
                       DO i = 1, nc(iD)
-                        residA(iD)%l2gpValue(1, iP, i) = sortTemp(pt(i))
+                        residA_temp(iD)%l2gpValue(1, iP, i) = sortTemp(pt(i))
                       ENDDO
+
+                      !*** Interpolate to l2gp grid 
+		      CALL Residual2L2Grid( iD, iP, residA_temp, residA ) 
 
                       if ( associated(sortTemp)) then
                       DeAllocate(sortTemp, STAT=error)
@@ -1163,9 +1178,9 @@ CONTAINS
                         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                       ENDIF
 
-                      CALL DSORTP(-abs(residA(iD)%l2gpValue(1, iP, :)), 1, nc(iD), pt)
+                      CALL DSORTP(-abs(residA_temp(iD)%l2gpValue(1, iP, :)), 1, nc(iD), pt)
                       DO i = 1,cfDef%N
-                        dmA(iD)%maxDiff(i, iP) = residA(iD)%l2gpValue(1, iP, pt(i))
+                        dmA(iD)%maxDiff(i, iP) = residA_temp(iD)%l2gpValue(1, iP, pt(i))
                       ENDDO
 
                       if ( associated(pt) ) then
@@ -1219,30 +1234,33 @@ CONTAINS
                         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                       ENDIF
 
-                      CALL DSORTP(residD(iD)%time, 1, nc(iD), pt)
+                      CALL DSORTP(residD_temp(iD)%time, 1, nc(iD), pt)
                       !** do time
-                      CALL DSORT(residD(iD)%time, 1, nc(iD))
+                      CALL DSORT(residD_temp(iD)%time, 1, nc(iD))
                       !** do latitude
                       DO i = 1, nc(iD)
-                        sortTemp(i) = residD(iD)%latitude(i)
+                        sortTemp(i) = residD_temp(iD)%latitude(i)
                       ENDDO
                       DO i = 1, nc(iD)
-                        residD(iD)%latitude(i) = sortTemp(pt(i))
+                        residD_temp(iD)%latitude(i) = sortTemp(pt(i))
                       ENDDO
                       !** do longitude
                       DO i = 1, nc(iD)
-                        sortTemp(i) = residD(iD)%longitude(i)
+                        sortTemp(i) = residD_temp(iD)%longitude(i)
                       ENDDO
                       DO i = 1, nc(iD)
-                        residD(iD)%longitude(i) = sortTemp(pt(i))
+                        residD_temp(iD)%longitude(i) = sortTemp(pt(i))
                       ENDDO
                       !** do value
                       DO i = 1, nc(iD)
-                        sortTemp(i) = residD(iD)%l2gpValue(1, iP, i)
+                        sortTemp(i) = residD_temp(iD)%l2gpValue(1, iP, i)
                       ENDDO
                       DO i = 1, nc(iD)
-                        residD(iD)%l2gpValue(1, iP, i) = sortTemp(pt(i))
+                        residD_temp(iD)%l2gpValue(1, iP, i) = sortTemp(pt(i))
                       ENDDO
+
+                      !*** Interpolate to l2gp grid 
+		      CALL Residual2L2Grid( iD, iP, residD_temp, residD ) 
 
                       if ( associated(sortTemp) ) then 
                       DeAllocate(sortTemp, STAT=error)
@@ -1272,9 +1290,9 @@ CONTAINS
                         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                       ENDIF
 
-                      CALL DSORTP(-abs(residD(iD)%l2gpValue(1, iP, :)), 1, nc(iD), pt)
+                      CALL DSORTP(-abs(residD_temp(iD)%l2gpValue(1, iP, :)), 1, nc(iD), pt)
                       DO i = 1,cfDef%N
-                        dmD(iD)%maxDiff(i, iP) = residD(iD)%l2gpValue(1, iP, pt(i))
+                        dmD(iD)%maxDiff(i, iP) = residD_temp(iD)%l2gpValue(1, iP, pt(i))
                       ENDDO
 
                       if ( associated(pt) ) then
@@ -1327,30 +1345,34 @@ CONTAINS
                         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                       ENDIF
 
-                      CALL DSORTP(residA(iD)%time, 1, nca(iD), pt)
+                      CALL DSORTP(residA_temp(iD)%time, 1, nca(iD), pt)
                       !** do time
-                      CALL DSORT(residA(iD)%time, 1, nca(iD))
+                      CALL DSORT(residA_temp(iD)%time, 1, nca(iD))
                       !** do latitude
                       DO i = 1, nca(iD)
-                        sortTemp(i) = residA(iD)%latitude(i)
+                        sortTemp(i) = residA_temp(iD)%latitude(i)
                       ENDDO
                       DO i = 1, nca(iD)
-                        residA(iD)%latitude(i) = sortTemp(pt(i))
+                        residA_temp(iD)%latitude(i) = sortTemp(pt(i))
                       ENDDO
                       !** do longitude
                       DO i = 1, nca(iD)
-                        sortTemp(i) = residA(iD)%longitude(i)
+                        sortTemp(i) = residA_temp(iD)%longitude(i)
                       ENDDO
                       DO i = 1, nca(iD)
-                        residA(iD)%longitude(i) = sortTemp(pt(i))
+                        residA_temp(iD)%longitude(i) = sortTemp(pt(i))
                       ENDDO
                       !** do value
                       DO i = 1, nca(iD)
-                        sortTemp(i) = residA(iD)%l2gpValue(1, iP, i)
+                        sortTemp(i) = residA_temp(iD)%l2gpValue(1, iP, i)
                       ENDDO
                       DO i = 1, nca(iD)
-                        residA(iD)%l2gpValue(1, iP, i) = sortTemp(pt(i))
+                        residA_temp(iD)%l2gpValue(1, iP, i) = sortTemp(pt(i))
                       ENDDO
+
+                      !*** Interpolate to l2gp grid 
+		      CALL Residual2L2Grid( iD, iP, residA_temp, residA ) 
+
                       if ( associated(sortTemp) ) then 
                       DeAllocate(sortTemp, STAT=error)
                       IF ( error /= 0 ) THEN
@@ -1378,9 +1400,9 @@ CONTAINS
                         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                       ENDIF
 
-                      CALL DSORTP(-abs(residA(iD)%l2gpValue(1, iP, :)), 1, nca(iD), pt)
+                      CALL DSORTP(-abs(residA_temp(iD)%l2gpValue(1, iP, :)), 1, nca(iD), pt)
                       DO i = 1,cfDef%N
-                        dmA(iD)%maxDiff(i, iP) = residA(iD)%l2gpValue(1, iP, pt(i))
+                        dmA(iD)%maxDiff(i, iP) = residA_temp(iD)%l2gpValue(1, iP, pt(i))
                       ENDDO
 
                       if ( associated(pt) ) then 
@@ -1438,30 +1460,33 @@ CONTAINS
                         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                       ENDIF
 
-                      CALL DSORTP(residD(iD)%time, 1, ncd(iD), pt)
+                      CALL DSORTP(residD_temp(iD)%time, 1, ncd(iD), pt)
                       !** do time
-                      CALL DSORT(residD(iD)%time, 1, ncd(iD))
+                      CALL DSORT(residD_temp(iD)%time, 1, ncd(iD))
                       !** do latitude
                       DO i = 1, ncd(iD)
-                        sortTemp(i) = residD(iD)%latitude(i)
+                        sortTemp(i) = residD_temp(iD)%latitude(i)
                       ENDDO
                       DO i = 1, ncd(iD)
-                        residD(iD)%latitude(i) = sortTemp(pt(i))
+                        residD_temp(iD)%latitude(i) = sortTemp(pt(i))
                       ENDDO
                       !** do longitude
                       DO i = 1, ncd(iD)
-                        sortTemp(i) = residD(iD)%longitude(i)
+                        sortTemp(i) = residD_temp(iD)%longitude(i)
                       ENDDO
                       DO i = 1, ncd(iD)
-                        residD(iD)%longitude(i) = sortTemp(pt(i))
+                        residD_temp(iD)%longitude(i) = sortTemp(pt(i))
                       ENDDO
                       !** do value
                       DO i = 1, ncd(iD)
-                        sortTemp(i) = residD(iD)%l2gpValue(1, iP, i)
+                        sortTemp(i) = residD_temp(iD)%l2gpValue(1, iP, i)
                       ENDDO
                       DO i = 1, ncd(iD)
-                        residD(iD)%l2gpValue(1, iP, i) = sortTemp(pt(i))
+                        residD_temp(iD)%l2gpValue(1, iP, i) = sortTemp(pt(i))
                       ENDDO
+
+                      !*** Interpolate to l2gp grid 
+		      CALL Residual2L2Grid( iD, iP, residD_temp, residD ) 
 
                       if ( associated(sortTemp) ) then 
                       DeAllocate(sortTemp, STAT=error)
@@ -1490,9 +1515,9 @@ CONTAINS
                         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                       ENDIF
 
-                      CALL DSORTP(-abs(residD(iD)%l2gpValue(1, iP, :)), 1, ncd(iD), pt)
+                      CALL DSORTP(-abs(residD_temp(iD)%l2gpValue(1, iP, :)), 1, ncd(iD), pt)
                       DO i = 1,cfDef%N
-                        dmD(iD)%maxDiff(i, iP) = residD(iD)%l2gpValue(1, iP, pt(i))
+                        dmD(iD)%maxDiff(i, iP) = residD_temp(iD)%l2gpValue(1, iP, pt(i))
                       ENDDO
 
                       if ( associated(pt) ) then 
@@ -1546,30 +1571,33 @@ CONTAINS
                         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                       ENDIF
 
-                      CALL DSORTP(residA(iD)%time, 1, nca(iD), pt)
+                      CALL DSORTP(residA_temp(iD)%time, 1, nca(iD), pt)
                       !** do time
-                      CALL DSORT(residA(iD)%time, 1, nca(iD))
+                      CALL DSORT(residA_temp(iD)%time, 1, nca(iD))
                       !** do latitude
                       DO i = 1, nca(iD)
-                        sortTemp(i) = residA(iD)%latitude(i)
+                        sortTemp(i) = residA_temp(iD)%latitude(i)
                       ENDDO
                       DO i = 1, nca(iD)
-                        residA(iD)%latitude(i) = sortTemp(pt(i))
+                        residA_temp(iD)%latitude(i) = sortTemp(pt(i))
                       ENDDO
                       !** do longitude
                       DO i = 1, nca(iD)
-                        sortTemp(i) = residA(iD)%longitude(i)
+                        sortTemp(i) = residA_temp(iD)%longitude(i)
                       ENDDO
                       DO i = 1, nca(iD)
-                        residA(iD)%longitude(i) = sortTemp(pt(i))
+                        residA_temp(iD)%longitude(i) = sortTemp(pt(i))
                       ENDDO
                       !** do value
                       DO i = 1, nca(iD)
-                        sortTemp(i) = residA(iD)%l2gpValue(1, iP, i)
+                        sortTemp(i) = residA_temp(iD)%l2gpValue(1, iP, i)
                       ENDDO
                       DO i = 1, nca(iD)
-                        residA(iD)%l2gpValue(1, iP, i) = sortTemp(pt(i))
+                        residA_temp(iD)%l2gpValue(1, iP, i) = sortTemp(pt(i))
                       ENDDO
+
+                      !*** Interpolate to l2gp grid 
+		      CALL Residual2L2Grid( iD, iP, residA_temp, residA ) 
 
                       if ( associated(sortTemp)) then 
 
@@ -1603,9 +1631,9 @@ CONTAINS
                         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                       ENDIF
 
-                      CALL DSORTP(-abs(residA(iD)%l2gpValue(1, iP, :)), 1, nca(iD), pt)
+                      CALL DSORTP(-abs(residA_temp(iD)%l2gpValue(1, iP, :)), 1, nca(iD), pt)
                       DO i = 1,cfDef%N
-                        dmA(iD)%maxDiff(i, iP) = residA(iD)%l2gpValue(1, iP, pt(i))
+                        dmA(iD)%maxDiff(i, iP) = residA_temp(iD)%l2gpValue(1, iP, pt(i))
                       ENDDO
 
                       if ( associated(pt) ) then 
@@ -1659,30 +1687,34 @@ CONTAINS
                         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                       ENDIF
 
-                      CALL DSORTP(residD(iD)%time, 1, ncd(iD), pt)
+                      CALL DSORTP(residD_temp(iD)%time, 1, ncd(iD), pt)
                       !** do time
-                      CALL DSORT(residD(iD)%time, 1, ncd(iD))
+                      CALL DSORT(residD_temp(iD)%time, 1, ncd(iD))
                       !** do latitude
                       DO i = 1, ncd(iD)
-                        sortTemp(i) = residD(iD)%latitude(i)
+                        sortTemp(i) = residD_temp(iD)%latitude(i)
                       ENDDO
                       DO i = 1, ncd(iD)
-                        residD(iD)%latitude(i) = sortTemp(pt(i))
+                        residD_temp(iD)%latitude(i) = sortTemp(pt(i))
                       ENDDO
                       !** do longitude
                       DO i = 1, ncd(iD)
-                        sortTemp(i) = residD(iD)%longitude(i)
+                        sortTemp(i) = residD_temp(iD)%longitude(i)
                       ENDDO
                       DO i = 1, ncd(iD)
-                        residD(iD)%longitude(i) = sortTemp(pt(i))
+                        residD_temp(iD)%longitude(i) = sortTemp(pt(i))
                       ENDDO
                       !** do value
                       DO i = 1, ncd(iD)
-                        sortTemp(i) = residD(iD)%l2gpValue(1, iP, i)
+                        sortTemp(i) = residD_temp(iD)%l2gpValue(1, iP, i)
                       ENDDO
                       DO i = 1, ncd(iD)
-                        residD(iD)%l2gpValue(1, iP, i) = sortTemp(pt(i))
+                        residD_temp(iD)%l2gpValue(1, iP, i) = sortTemp(pt(i))
                       ENDDO
+
+                      !*** Interpolate to l2gp grid 
+		      CALL Residual2L2Grid( iD, iP, residD_temp, residD ) 
+
                       if ( associated(sortTemp) ) then
                       DeAllocate(sortTemp, STAT=error)
                       IF ( error /= 0 ) THEN
@@ -1710,9 +1742,9 @@ CONTAINS
                         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                       ENDIF
 
-                      CALL DSORTP(-abs(residD(iD)%l2gpValue(1, iP, :)), 1, ncd(iD), pt)
+                      CALL DSORTP(-abs(residD_temp(iD)%l2gpValue(1, iP, :)), 1, ncd(iD), pt)
                       DO i = 1,cfDef%N
-                        dmD(iD)%maxDiff(i, iP) = residD(iD)%l2gpValue(1, iP, pt(i))
+                        dmD(iD)%maxDiff(i, iP) = residD_temp(iD)%l2gpValue(1, iP, pt(i))
                       ENDDO
 
                       if ( associated(pt) ) then 
@@ -2286,6 +2318,10 @@ CONTAINS
           ENDIF
         endif
 
+        CALL DestroyL2GPDatabase(l3r_temp)
+        CALL DestroyL2GPDatabase(residA_temp)
+        CALL DestroyL2GPDatabase(residD_temp)
+
 !-----------------------------------
    END SUBROUTINE DailyCoreProcessing
 !-----------------------------------
@@ -2751,12 +2787,47 @@ CONTAINS
 !-----------------------------------
 
 
+!-------------------------------------------------------------------------
+   SUBROUTINE Residual2L2Grid( iD, iP, l3r_temp, l3r ) 
+!-------------------------------------------------------------------------
+
+        integer error, i, j, iT, iD, iP, icount 
+	INTEGER ::  l2Days, nloop, aindex, aindex_prev, dindex_prev
+
+        TYPE( L2GPData_T ), POINTER :: l3r(:), l3r_temp(:)
+
+        icount = 1
+        DO I = 1, l3r(iD)%nTimes 
+          DO J = icount, l3r_temp(iD)%nTimes 
+ 	    If( l3r(iD)%time(I) < l3r_temp(iD)%time(1) .OR. l3r(iD)%time(I) > l3r_temp(iD)%time(l3r(iD)%nTimes) ) Then
+		 l3r(iD)%l2gpValue(1, iP, I) = 0.0 
+		 EXIT
+ 	    Else If( l3r(iD)%time(I) > l3r_temp(iD)%time(J) .AND. l3r(iD)%time(I) < l3r_temp(iD)%time(J+1) ) Then
+		 l3r(iD)%l2gpValue(1, iP, I) =  l3r_temp(iD)%l2gpValue(1, iP, J) + &
+				(l3r(iD)%time(I) - l3r_temp(iD)%time(J))*	&
+				(l3r_temp(iD)%l2gpValue(1, iP, J+1) - l3r_temp(iD)%l2gpValue(1, iP, J))/	&
+				(l3r_temp(iD)%time(J+1) - l3r_temp(iD)%time(J))
+		 If( J > icount) Then
+			icount = J
+		 End If
+		 EXIT
+	    End If
+          ENDDO
+        ENDDO
+
+!-----------------------------------
+   END SUBROUTINE Residual2L2Grid
+!-----------------------------------
+
 
 !===================
 END MODULE Synoptic
 !===================
 
 ! $Log$
+! Revision 1.26  2002/04/30 20:05:21  jdone
+! indexing issues related to nc* arrays
+!
 ! Revision 1.25  2002/04/11 00:53:57  jdone
 ! initialization added
 !
