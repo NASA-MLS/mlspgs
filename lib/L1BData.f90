@@ -175,6 +175,7 @@ contains ! ============================ MODULE PROCEDURES ======================
 
     integer :: ALLOC_ERR
     integer :: DATA_TYPE
+    integer :: DIM_SIZES(MAX_VAR_DIMS)
     integer :: I
     integer :: N_ATTRS
     integer :: NUMMAFS
@@ -183,7 +184,6 @@ contains ! ============================ MODULE PROCEDURES ======================
     integer :: SDS2_ID
     integer :: SDS_INDEX
     integer :: STATUS
-    integer :: DIM_SIZES(MAX_VAR_DIMS)
 
     integer, dimension(:), pointer :: EDGE
     integer, dimension(:), pointer :: START
@@ -206,8 +206,11 @@ contains ! ============================ MODULE PROCEDURES ======================
       & 'Failed to find identifier of counterMAF data set.')
 
     sds_index = sfn2index(L1FileHandle, quantityName)
-    if ( sds_index == -1) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Failed to find index of quantity data set.')
+    if ( sds_index == -1) then
+      dummy = 'Failed to find index of quantity "' // trim(quantityName) // &
+        & '" data set.'
+      call MLSMessage ( MLSMSG_Error, ModuleName, dummy )
+    end if
 
     sds2_id = sfselect(L1FileHandle, sds_index)
     if ( sds2_id == -1) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -466,6 +469,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.10  2001/10/03 22:50:03  vsnyder
+! Add unfound-quantity name to an error message
+!
 ! Revision 2.9  2001/06/01 02:06:45  livesey
 ! Bug fix with counterMAF
 !
