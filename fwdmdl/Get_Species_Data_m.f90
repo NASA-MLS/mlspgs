@@ -63,7 +63,7 @@ contains
 
     ! Inputs
 
-    type(forwardModelConfig_T), intent(inout) :: FwdModelConf ! Only PFAIndex is changed
+    type(forwardModelConfig_T), intent(inout) :: FwdModelConf ! Only BetaIndex is changed
     type(vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
     integer, intent(in) :: Radiometer
 
@@ -196,7 +196,7 @@ contains
     end if
 
     ! What's needed for PFA is sps%mol_cat_index(sv_i), to get values
-    ! for the second subscript Beta_Path and dBetaD*
+    ! for the second subscript for Beta_Path and dBetaD*
     do j = noNonPFA+1, noMol
       l = fwdModelConf%molecules(j)
       !        if ( l == l_extinction ) CYCLE
@@ -205,20 +205,20 @@ contains
     end do
 
     ! Now that we have sps%mol_cat_index, we can go through
-    ! FwdModelConf%forwardModelDerived%channels and fill in PFAIndex
+    ! FwdModelConf%forwardModelDerived%channels and fill in BetaIndex
     ! (there has to be a better way to do this...).
     do i = 1, size(fwdModelConf%forwardModelDerived%channels)
       if ( .not. associated(fwdModelConf%forwardModelDerived%channels(i)%PFAMolecules) ) cycle
-      fwdModelConf%forwardModelDerived%channels(i)%PFAIndex = 0
+      fwdModelConf%forwardModelDerived%channels(i)%betaIndex = 0
       do j = 1, size(fwdModelConf%forwardModelDerived%channels(i)%PFAMolecules)
         do sv_i = sps%no_lbl+1, sps%no_mol
           if ( fwdModelConf%forwardModelDerived%channels(i)%PFAMolecules(j) == &
                fwdModelConf%molecules(sps%mol_cat_index(sv_i)) ) then
-            fwdModelConf%forwardModelDerived%channels(i)%PFAIndex(j) = sv_i
+            fwdModelConf%forwardModelDerived%channels(i)%betaIndex(j) = sv_i
             exit
           end if
         end do ! sv_i
-        if ( fwdModelConf%forwardModelDerived%channels(i)%PFAIndex(j) == 0 ) &
+        if ( fwdModelConf%forwardModelDerived%channels(i)%betaIndex(j) == 0 ) &
           call MLSMessage ( MLSMSG_Error, ModuleName, &
             & 'Unable to find index for PFA molecule' )
       end do ! j
@@ -495,6 +495,9 @@ contains
 end module  Get_Species_Data_M
 
 ! $Log$
+! Revision 2.15  2004/09/01 01:48:13  vsnyder
+! Closing in on PFA
+!
 ! Revision 2.14  2004/08/05 20:58:23  vsnyder
 ! Exploit sentinel at end of %molecules to get rid of a temp
 !
