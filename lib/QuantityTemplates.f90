@@ -89,6 +89,13 @@ MODULE QuantityTemplates         ! Quantities within vectors
      LOGICAL :: stacked         ! Are subvectors true vertical profiles?
      LOGICAL :: regular         ! Are all channels/heights represented
 
+     ! This next one allows software using the vector quantities to be somewhat
+     ! lazy and, for example, avoid interpolation.  Minor frame quantities are
+     ! incoherent and unstacked, but may be regular or irregular.  However, not
+     ! all incoherent unstacked quantities are minor frame quantities.
+
+     LOGICAL :: minorFrame      ! Is this a minor frame quantity.
+
      ! Now the vertical coordinate
 
      INTEGER :: verticalCoordinate ! The vertical coordinate used
@@ -185,7 +192,8 @@ MODULE QuantityTemplates         ! Quantities within vectors
   ! modifications), or created from scratch.
 
   SUBROUTINE SetupNewQuantityTemplate(qty, source, noSubVectors, noSurfs, &
-       & noChans, coherent, stacked, regular, subVectorLen, storeByChannel)
+       & noChans, coherent, stacked, regular, subVectorLen, storeByChannel, &
+       & minorFrame)
 
     ! Dummy arguments
     TYPE (QuantityTemplate_T), INTENT(OUT) :: qty ! Result
@@ -199,6 +207,7 @@ MODULE QuantityTemplates         ! Quantities within vectors
     LOGICAL, INTENT(IN), OPTIONAL :: regular
     INTEGER, INTENT(IN), OPTIONAL :: subVectorLen
     LOGICAL, INTENT(IN), OPTIONAL :: storeByChannel
+    LOGICAL, INTENT(IN), OPTIONAL :: minorFrame
 
     ! Local variables
     INTEGER :: status           ! Status from allocates etc.
@@ -216,6 +225,7 @@ MODULE QuantityTemplates         ! Quantities within vectors
        qty%coherent=source%coherent
        qty%stacked=source%stacked
        qty%regular=source%regular
+       qty%minorFrame=source%minorFrame
        qty%subVectorLen=source%subVectorLen
     ELSE ! We have no template, setup a very bare quantity
        qty%noSubVectors=1
@@ -224,6 +234,7 @@ MODULE QuantityTemplates         ! Quantities within vectors
        qty%coherent=.TRUE.
        qty%stacked=.TRUE.
        qty%regular=.TRUE.
+       qty%minorFrame=.FALSE.
        qty%subVectorLen=1
     ENDIF
 
@@ -231,9 +242,23 @@ MODULE QuantityTemplates         ! Quantities within vectors
     IF (PRESENT(noSubVectors)) qty%noSubVectors=noSubVectors
     IF (PRESENT(noSurfs)) qty%noSurfs=noSurfs
     IF (PRESENT(noChans)) qty%noChans=noChans
-    IF (PRESENT(coherent)) qty%coherent=coherent
-    IF (PRESENT(stacked)) qty%stacked=stacked
     IF (PRESENT(regular)) qty%regular=regular
+    IF (PRESENT(minorFrame)) qty%minorFrame=minorFrame
+    IF (qty%minorFrame) THEN
+       IF (PRESENT(coherent)) THEN
+          IF (coherent) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+               & "Minor frame quantities must be incoherent")
+       ENDIF
+       qty%coherent=.FALSE.
+       IF (PRESENT(stacked)) THEN
+          IF (stacked) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+               & "Minor frame quantities must be unstacked")
+       ENDIF
+       qty%stacked=.FALSE.
+    ELSE
+       IF (PRESENT(coherent)) qty%coherent=coherent
+       IF (PRESENT(stacked)) qty%stacked=stacked
+    ENDIF
 
     ! Now think about subVectorLen
     IF ((.NOT. qty%regular).AND.(PRESENT(subVectorLen))) THEN
@@ -421,6 +446,9 @@ END MODULE QuantityTemplates
 
 !
 ! $Log$
+! Revision 1.5  2000/01/07 23:53:35  livesey
+! Nearly integrated, just a few tweaks.
+!
 ! Revision 1.4  1999/12/17 21:42:16  livesey
 ! Added check for duplicate name
 !
