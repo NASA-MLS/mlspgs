@@ -500,7 +500,7 @@ contains ! =============== Subroutines and functions ==========================
 
     ! Local parameters
 
-    character, parameter :: INVALIDQUANTITY = "Invalid vector quantity for "
+    character(len=*), parameter :: INVALIDQUANTITY = "Invalid vector quantity for "
 
     ! Local variables
 
@@ -1166,6 +1166,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.24  2001/06/29 23:03:28  livesey
+! Whoops, bad parameter set.
+!
 ! Revision 2.23  2001/06/19 22:43:23  pwagner
 ! Eliminated l_temperature from things got from init_tables_module
 !
