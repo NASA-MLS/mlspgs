@@ -58,7 +58,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_CHANNELS            = f_channel + 1
   integer, parameter :: F_COLUMNS             = f_channels + 1
   integer, parameter :: F_COLUMNSCALE         = f_columns + 1
-  integer, parameter :: F_COMPAREOVERLAPS     = f_columnscale + 1
+  integer, parameter :: F_COMMENT             = f_columnscale + 1
+  integer, parameter :: F_COMPAREOVERLAPS     = f_comment + 1
   integer, parameter :: F_COORDINATE          = f_compareOverlaps + 1
   integer, parameter :: F_COPY                = f_coordinate + 1
   integer, parameter :: F_COVARIANCE          = f_copy + 1
@@ -249,9 +250,10 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_RETRIEVE           = s_radiometer + 1
   integer, parameter :: S_SIDS               = s_retrieve + 1    !??? for Zvi
   integer, parameter :: S_SIGNAL             = s_sids + 1
+  integer, parameter :: S_SNOOP              = s_signal + 1
+  integer, parameter :: S_SPECTROMETERTYPE   = s_snoop + 1
   integer, parameter :: S_SUBSET             = s_signal + 1
-  integer, parameter :: S_SPECTROMETERTYPE   = s_subset + 1
-  integer, parameter :: S_TEMPLATE           = s_spectrometerType + 1
+  integer, parameter :: S_TEMPLATE           = s_subset + 1
   integer, parameter :: S_TIME               = s_template + 1
   integer, parameter :: S_TPFILL             = s_time + 1
   integer, parameter :: S_VECTOR             = s_tpfill + 1
@@ -375,6 +377,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_channels) =            add_ident ( 'channels' )
     field_indices(f_columns) =             add_ident ( 'columns' )
     field_indices(f_columnscale) =         add_ident ( 'columnScale' )
+    field_indices(f_comment) =             add_ident ( 'comment' )
     field_indices(f_compareOverlaps) =     add_ident ( 'compareOverlaps' )
     field_indices(f_coordinate) =          add_ident ( 'coordinate' )
     field_indices(f_copy) =                add_ident ( 'copy' )
@@ -510,6 +513,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_radiometer) =           add_ident ( 'radiometer' )
     spec_indices(s_retrieve) =             add_ident ( 'retrieve' )
     spec_indices(s_signal) =               add_ident ( 'signal' )
+    spec_indices(s_snoop) =                add_ident ( 'snoop' )
     spec_indices(s_spectrometerType) =     add_ident ( 'spectrometerType' )
     spec_indices(s_subset) =               add_ident ( 'subset' )
     spec_indices(s_template) =             add_ident ( 'template' )
@@ -794,6 +798,10 @@ contains ! =====     Public procedures     =============================
              begin, f+f_toleranceR, t+t_numeric, n+n_field_type, &
              begin, f+f_weight, s+s_vector, n+n_field_spec, &
              ndp+n_spec_def /) )
+    call make_tree ( (/ &
+      begin, s+s_snoop, &
+             begin, f+f_comment, t+t_string, n+n_field_spec, &
+             nd+n_spec_def /) )
     call make_tree ( (/ &                                    !???
       begin, s+s_l2load, &                                   !???
              begin, f+f_bill, t+t_string, n+n_field_type, &  !???
@@ -819,7 +827,7 @@ contains ! =====     Public procedures     =============================
              s+s_l2load, s+s_forwardModelGlobal, &           !???
              n+n_section, &
       begin, z+z_readapriori, s+s_time, s+s_gridded, s+s_l2gp, &
-             s+s_l2aux, n+n_section, &
+             s+s_l2aux, s+s_snoop, n+n_section, &
       begin, z+z_mergeapriori, s+s_time, s+s_merge, n+n_section, &
       begin, z+z_chunkdivide, &
              begin, p+p_critical_bands, t+t_string, n+n_name_def, &
@@ -834,9 +842,9 @@ contains ! =====     Public procedures     =============================
              begin, p+p_scan_upper_limit, t+t_numeric_range, n+n_name_def, &
              n+n_section, &
       begin, z+z_construct, s+s_time, s+s_vgrid, s+s_hgrid, s+s_quantity, &
-             s+s_vectortemplate, n+n_section, &
+             s+s_vectortemplate, s+s_snoop, n+n_section, &
       begin, z+z_fill, s+s_time, s+s_vector, s+s_tpfill, s+s_create, &
-                       s+s_fill, s+s_matrix, &
+                       s+s_fill, s+s_matrix, s+s_snoop, &
              n+n_section, &
       begin, z+z_retrieve, s+s_matrix, s+s_forwardModel, s+s_retrieve, &
              s+s_subset, s+s_sids, n+n_section, &
@@ -859,6 +867,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.39  2001/03/07 22:53:50  livesey
+! Added snoop stuff
+!
 ! Revision 2.38  2001/03/07 22:46:04  vsnyder
 ! Add temporary stuff for Zvi's "l2_load", which will wither away.
 !
