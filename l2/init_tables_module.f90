@@ -262,6 +262,9 @@ contains ! =====     Public procedures     =============================
     parm_indices(p_endtime) =              add_ident ( 'EndTime' )
     parm_indices(p_instrument) =           add_ident ( 'Instrument' )
     parm_indices(p_leapsecfile) =          add_ident ( 'LeapSecFile' )
+    parm_indices(p_maxfailurespermachine) =add_ident ( 'maxFailuresPerMachine' )
+    parm_indices(p_maxfailuresperchunk) =  add_ident ( 'maxFailuresPerChunk' )
+                                           
     parm_indices(p_critical_bands) =       add_ident ( 'CriticalBands' )
     parm_indices(p_critical_scanning_modules) = &
                                            add_ident ( 'CriticalScanningModules' )
@@ -1036,6 +1039,8 @@ contains ! =====     Public procedures     =============================
              begin, p+p_instrument, t+t_instrument, n+n_name_def,&
              begin, p+p_leapsecfile, t+t_string, n+n_name_def,&
              begin, p+p_cycle, t+t_string, n+n_name_def, &
+             begin, p+p_maxfailurespermachine, t+t_numeric, n+n_name_def, &
+             begin, p+p_maxfailuresperchunk, t+t_numeric, n+n_name_def, &
              begin, p+p_starttime, t+t_string, n+n_name_def, &
              begin, p+p_endtime, t+t_string, n+n_name_def, s+s_l1brad, &
              s+s_l1boa, s+s_l2parsf, &
@@ -1088,6 +1093,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.338  2003/10/16 23:45:03  pwagner
+! Completed maxfailures per machine, chunk
+!
 ! Revision 2.337  2003/10/15 23:12:16  livesey
 ! Added resetUnusedRadiances
 !
