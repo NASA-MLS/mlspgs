@@ -13,9 +13,9 @@ E.g., mlsl2 -m -p --nmeta -S"glo jac"
                     more output.
   -h or -H or -?: This output.
   -l: Trace lexical analysis.
-  -K: Capitalize identifiers.
-  -k: Don't capitalize identifiers.
-  -M: Send output through MLSMessage.
+  -K: Case insensitive identifiers (default).
+  -k: Case sensitive identifiers.
+  -M: Send output through MLSMessage (default).
   -m: Don't send output through MLSMessage.
   -p: Trace parsing.
   -Sstring: Set "switches" = "string".  Characters in
@@ -32,9 +32,9 @@ E.g., mlsl2 -m -p --nmeta -S"glo jac"
   The above options can be concatenated after one hyphen,
   except that -S takes the rest of the option as its "string"
   --check: Just check l2cf and quit
-  --chunk[ ]<chunk index> Run just this chunk
-  --[n]ckbk: Check the block calculations against full block algebra
-  --[n]countChunks: Just print the number of chunks and quit
+  --chunk[ ]<chunk index> Run just the <chunk index> chunk
+  --[n]ckbk: Do [not] check the block calculations against full block algebra
+  --[n]countChunks: Do [not] just print the number of chunks and quit
   --fwmParallel: Run in forward model parallel mode.  Send each MAF of forward
     model calculations out to a slave.
   --[n]gcch: Do [not] force garbage collection after each chunk processed
@@ -44,31 +44,33 @@ E.g., mlsl2 -m -p --nmeta -S"glo jac"
   --l1b=n:   Assume hdfn when reading l1b files
   --l2gpr=n: Assume hdfeosn when reading l2gp files
   --l2gpw=n: Assume hdfeosn when writing l2gp files
-  --recl <number>: set the max record length size for l2cf to <number>
-      (In case the default value, 10000, is too small for some l2cfs)
-  --slaveMAF <number>: Set the MAF for a slave in fwmParallel mode.  This option
-    is set by the master task, and is not recommended for manual invocations.
-  --stgmem: Tell parallel master task to stage in memory, as opposed to a file.
-  --subblock <number>: Set the number of reals to consider when subblocking the
-    matrix multiply
-  --[n]tk: [Do not] Use the panoply of the PGS_toolkit (pcf, metadata, etc.)
-  --version: Print current version number
-  --[n]wall: Use wall clock instead of CPU_TIME
   --master <filename>[:a:b]: This is the master task in a PVM setup
     filename contains simply ascii list of slave host names
     can list a machine more than once (e.g. for SMP slaves)
     One can also append, after a colon, a colon separated range
     of slaves with in that file to use.
+  --recl[ ]<number>: set the max record length size for l2cf to <number>
+      (In case the default value, 20000, is too small for some l2cfs).
+      This has effect only if the l2cf is not coming from standard input.
   --slave[ ]<master-tid>: This is a slave; <master-tid>
     is the id of the master.  This option is set by a master
     task and is not recommended for manual invocations.
+  --slaveMAF[ ]<number>: Set the MAF for a slave in fwmParallel mode.  This
+    option is set by the master task, and is not recommended for manual
+    invocations.
   --snoop: Activate the snooping capability (interaction with
     an IDL diagnostics process)
-  --snoopname: Distinguishing name to send to snooper (for use when
-    using the stand alone logger)2
+  --snoopname <name>: Distinguishing name to send to snooper (for use when
+    using the stand alone logger)
+  --stgmem: Tell parallel master task to stage in memory, as opposed to a file.
+  --subblock <number>: Set the number of reals to consider when subblocking
+    the matrix multiply
   --submit "command": In conjunction with --master, use the command
     to submit the slave task to a batch queue system.
-    
+  --[n]tk: [Do not] Use the panoply of the PGS_toolkit (pcf, metadata, etc.)
+  --version: Print current version number
+  --[n]wall: Use wall clock instead of CPU_TIME
+
   Options a, c, f0, g0, l, p and t can be toggled in the 
         configuration file
   by @A, @C, @E, @G, @L, @P and @S respectively.  @L and 
@@ -89,10 +91,13 @@ or separate sections for mlsl1 or mlsl3)
 sed dynamically update mlsl2 to show changes in the option
 usage automatically. Thus you only need to edit this file,
 not MLSL2.f90. Add your changes to the space book-ended
-by the equal-signs--stuff outside that space, like these
+by the equal-signs -- stuff outside that space, like these
 comments, will not be printed in response to mlsl2 -?)
 
  $Log$
+ Revision 1.21  2003/06/12 20:50:38  pwagner
+ Removed [n]pcf
+
  Revision 1.20  2003/05/13 04:48:32  livesey
  Added stgmem
 
