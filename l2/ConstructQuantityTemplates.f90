@@ -17,7 +17,8 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
   use INIT_TABLES_MODULE, only: FIELD_FIRST, FIELD_LAST, &
     FIRST_LIT, LAST_LIT, L_BASELINE, L_CHANNEL, L_CloudIce,  L_EARTHREFL, &
     L_ELEVOFFSET, L_EXTINCTION, L_GEODALTITUDE, L_GPH, &
-    L_HEIGHTOFFSET, L_LOSVEL, L_NONE, L_ORBITINCLINATION, L_PTAN, L_RADIANCE, &
+    L_HEIGHTOFFSET, L_LOSTRANSFUNC, L_LOSVEL, L_NONE, L_ORBITINCLINATION, &
+    L_PTAN, L_RADIANCE, &
     L_REFGPH, L_SCANRESIDUAL, L_SCECI, L_SCGEOCALT, L_SCVEL, L_SIDEBANDRATIO, &
     L_SPACERADIANCE, &
     L_TEMPERATURE, L_TNGTECI, L_TNGTGEOCALT, L_TNGTGEODALT, L_TRUE,&
@@ -137,12 +138,12 @@ contains ! =====     Public Procedures     =============================
     natural_units = 0
     natural_units(l_baseline) =       PHYQ_Temperature
     natural_units(l_cloudice) =       PHYQ_IceDensity
-    natural_units(l_losTransFunc) =   PHYQ_Dimensionless
     natural_units(l_earthRefl) =      PHYQ_Dimensionless
     natural_units(l_elevOffset) =     PHYQ_Angle
     natural_units(l_extinction) =     PHYQ_Extinction
     natural_units(l_gph) =            PHYQ_Length
     natural_units(l_heightOffset ) =  PHYQ_Length
+    natural_units(l_losTransFunc) =   PHYQ_Dimensionless
     natural_units(l_losVel) =         PHYQ_Velocity
     natural_units(l_orbitInclination) =   PHYQ_Angle
     natural_units(l_ptan) =           PHYQ_Zeta
@@ -223,7 +224,7 @@ contains ! =====     Public Procedures     =============================
     if ( family == 0 ) family = natural_units(quantityType)
     minorFrame = any(quantityType == (/ l_Baseline, l_Ptan, l_Radiance, &
       & l_tngtECI, l_tngtGeodAlt, l_tngtGeocAlt, l_scECI, l_scGeocAlt,&
-      & l_scVel, l_losVel, l_heightOffset, l_scanResidual/) )
+      & l_scVel, l_losTransFunc, l_losVel, l_heightOffset, l_scanResidual/) )
 
     ! Set defaults for other parameters
     frequencyCoordinate = L_None
@@ -688,6 +689,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.42  2001/07/13 18:41:59  dwu
+! fix problem after adding losTransFunc
+!
 ! Revision 2.41  2001/07/13 18:10:03  dwu
 ! add quantity losTransFunc
 !
