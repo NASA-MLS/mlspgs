@@ -1335,6 +1335,269 @@ contains
       call add_to_retrieval_timing( 'newton_solver', t1 )
       call cpu_time ( t1 )
     end subroutine NewtonianSolver
+    ! ------------------------------------------  HighCloudRetrieval  -----
+    subroutine HighCloudRetrieval
+
+      use Intrinsic, only: L_PTAN, L_RADIANCE, &
+                     & L_CLOUDINDUCEDRADIANCE,                               &
+                     & L_CLOUDEXTINCTION,                                &
+                     & L_CLOUDRADSENSITIVITY,                                &
+                     & L_EARTHRADIUS
+      use MatrixModule_0, only: MatrixInversion, MATRIXELEMENT_T
+      use MatrixModule_1, only: ClearMatrix, FINDBLOCK, GetDiagonal
+      use MLSSignals_m, only: SIGNAL_T
+      use ForwardModelWrappers, only: ForwardModel
+      use ForwardModelIntermediate, only: ForwardModelIntermediate_T, &
+        & ForwardModelStatus_T
+
+      ! Local Variables
+      type (ForwardModelStatus_T) :: FmStat        ! Status for forward model
+      type (ForwardModelIntermediate_T) :: Fmw     ! Work space for forward model
+      type (vector_T) :: FwdModelOut1               ! Forward outputs
+      type (Signal_T) :: signal                    ! signal info in each model
+      type (VectorValue_T), pointer :: xExtPtr        ! pointer of l_cloudExtinction quantity
+      type (VectorValue_T), pointer :: xExtVar        ! variance of apriori
+      type (VectorValue_T), pointer :: outExtSD        ! SD of output
+      type (VectorValue_T), pointer :: Tcir        ! cloud-induced radiance
+      type (VectorValue_T), pointer :: Terr        ! cloud-induced radiance SD
+      type (VectorValue_T), pointer :: PTAN        ! Tgt pressure
+      type (VectorValue_T), pointer :: Re        ! Earth Radius
+      type (VectorValue_T), pointer :: Tb0         ! model clear sky radiance (100%RH)
+      type (VectorValue_T), pointer :: Slope       ! sensitivity slope to convert cloud
+                                                   ! radiance to optical depth
+                                          
+      integer :: i,j,i1,j1,ich,maf,mif          ! Loop subscripts
+      integer :: coljBlock     ! Column index for jacobian
+      integer :: rowjBlock     ! Row index for jacobian
+      integer :: nFreqs      ! number of frequencies in each block
+      integer :: nMafs      ! number of MAFs
+      integer :: nz        ! number of retrieval levels
+      integer :: nInst     ! number of retrieval instances in the chunk
+      real(r8) :: pcut    ! ptan threshold for high tangent heights
+                                        
+      type(MatrixElement_T), pointer :: JBLOCK       ! A block from the jacobian
+      type(vector_T) :: CovarianceDiag  ! Diagonal of apriori Covariance  
+      
+      ! retrieval work arrays
+      real(r8) :: sensitivity                         ! sensitivity with slope and correction
+      real(r8) :: teff                                ! effective optical depth
+      real(r8) :: trans                                ! transmission function
+      real(r8) :: y      ! measurement array
+      real(r8) :: sy     ! variance of y
+      real(r8), dimension(:), allocatable :: tmp1, tmp2      ! working array
+      real(r8), dimension(:,:), allocatable :: A      ! working array
+      real(r8), dimension(:), allocatable :: dx       ! working array for x
+      real(r8), dimension(:), allocatable :: x        ! s grid array
+      real(r8), dimension(:), allocatable :: x0       ! A priori of x
+      real(r8), dimension(:), allocatable :: sx0       ! variance of A priori
+      real(r8), dimension(:), allocatable :: xext       ! extinction along los
+      real(r8), dimension(:,:), allocatable :: sx       ! variance of x
+      real(r8), dimension(:,:), allocatable :: C    ! for problem y=Kx, c=K^t#Sy^-1#K
+                                                      ! last dimension is for mif
+                                                      ! first two are (chan, s)
+
+      ! use this for testing
+      if(.not. got(f_maxJ)) maxJacobians = 5
+      if(.not. got(f_lambda)) initlambda = 10.
+      
+      pcut = -2.5
+      
+      if(size(configIndices) > 1 .or. &
+        & size(configDatabase(configIndices(1))%signals) > 1) then
+        print*,'Only one forward model and one signal is allowed in high cloud retrieval'
+        stop
+      end if
+      
+        call allocate_test ( fmStat%rows, jacobian%row%nb, 'fmStat%rows', &
+        & ModuleName )
+      ! create FwdModelOut1 vector by cloning measurements
+        call cloneVector ( FwdModelOut1, measurements, vectorNameText='_covarianceDiag' )
+               
+      ! find which channel is used
+        ich = 0
+        do k=1,size (signal%frequencies)
+              if(signal%channels(k)) ich=k
+        end do
+
+
+      ! find how many MAFs        
+        nMAFs = chunk%lastMAFIndex-chunk%firstMAFIndex + 1
+               
+      ! create covarianceDiag array
+        call cloneVector ( covarianceDiag, state, vectorNameText='_covarianceDiag' )
+      ! get the inverted diagnonal elements of covariance of apriori
+        call getDiagonal ( covariance%m, covarianceDiag )
+        
+      ! find about the dimension of the state vector        
+         xExtPtr => GetVectorQuantityByType ( state, quantityType=l_cloudextinction)
+         nInst = xExtPtr%template%noInstances
+         nz = xExtPtr%template%noSurfs
+        
+      ! allocate C, y, x matrices
+          allocate(A(nz*nInst,nz*nInst),C(nz*nInst,nz*nInst))
+          allocate(x(nz*nInst),x0(nz*nInst),sx0(nz*nInst),dx(nz*nInst))
+          allocate(tmp1(nz),tmp2(nz))
+          A = 0._r8
+          C = 0._r8
+          y = 0._r8
+          sy = 0._r8
+          dx = 0._r8
+            
+          ! Loop over MAFs
+      do maf=1, nMAFs
+      fmStat%maf = maf
+      print*,'begin cloud retrieval maf= ',maf,' chunk size=',nMAFs
+                        
+          fmStat%rows = .false.
+          call forwardModel ( configDatabase(configIndices(1)), &
+            & state, fwdModelExtra, FwdModelOut1, fmw, fmStat, jacobian )
+            
+          ! get signal information for this model. Note: allow only 1 signal 
+          signal = configDatabase(configIndices(1))%signals(1)
+
+          ! get clear sky radiances from forward model for this signal
+          Tb0 => GetVectorQuantityByType ( fwdModelOut1,                 &
+               & quantityType=l_radiance,                                      &
+               & signal=signal%index, sideband=signal%sideband )
+
+          ! get ptan.  Warning: all signals must be in the same module
+          ptan => GetVectorQuantityByType ( fwdModelExtra,      &
+               & quantityType=l_ptan, instrumentModule = &
+               & Tb0%template%instrumentModule)
+
+          ! get earthradius from forward model
+          Re => GetVectorQuantityByType ( fwdModelExtra,      &
+               & quantityType=l_earthradius)
+          
+          ! get sensitivity from forward model for this signal
+          Slope => GetVectorQuantityByType ( fwdModelOut1,      &
+               & quantityType=l_cloudRADSensitivity,                           &
+               & signal=signal%index, sideband=signal%sideband )
+          
+          ! get cloud radiance measurements for this signal
+          Tcir => GetVectorQuantityByType ( Measurements,       &
+               & quantityType=l_cloudInducedRadiance,             &
+               & signal=signal%index, sideband=signal%sideband )
+            
+          ! get cloud radiances error for this signal
+          Terr => GetVectorQuantityByType ( MeasurementSD,       &
+               & quantityType=l_cloudInducedRadiance,             &
+               & signal=signal%index, sideband=signal%sideband )
+
+          ! get pointers of x covariance for the retrieval
+          xExtVar => GetVectorQuantityByType (covarianceDiag, &
+               & quantityType=l_cloudextinction,noerror=.true.)
+      
+          ! get pointers of output SD for the retrieval
+          outExtSD => GetVectorQuantityByType (outputSD, &
+               & quantityType=l_cloudextinction,noerror=.true.)
+      
+          ! get rowBlock and colBlock for this model
+          rowJBlock = FindBlock (jacobian%row, Tb0%index, maf)
+          colJBlock = FindBlock ( Jacobian%col, xExtPtr%index, maf )
+          jBlock => jacobian%block(rowJblock,colJblock)
+               
+          do mif=1,ptan%template%noSurfs
+          if(ptan%values(mif,maf) > pcut) then
+                     
+                ! find more accurate sensitivity
+                do j=1,nz
+                  tmp1(j) = 1._r8/nz*(j-1._r8)
+                  tmp2(j) = slope%values(ich+nFreqs*(mif-1),maf)* &
+                     & (1._r8 - 0.2_r8* teff**5) ! correction term (see ATBD)
+                end do
+                     
+                y = Tcir%values(ich+nFreqs*(mif-1),maf)
+
+                ! interpolate to get initial guess of teff
+                if(y < tmp2(1)) teff=0._r8
+                if(y > tmp2(nz)) teff=1._r8
+                do j=1,nz-1
+                  if(y > tmp2(j) .and. y < tmp2(j+1)) then
+                    teff=(tmp1(j)*(y-tmp2(j))+tmp1(j+1)*(tmp2(j+1)-y)) &
+                      & /(tmp2(j+1)-tmp2(j))
+                  end if
+                end do
+
+                ! solve the relation one more time to refine teff and sensitivity
+                sensitivity = slope%values(ich+nFreqs*(mif-1),maf)* &
+                   & (1._r8 - 0.2_r8* teff**5) ! correction term (see ATBD)
+
+                ! in case we go into ambiguity altitudes with small sensitivity
+                if(abs(sensitivity) < 1._r8) sensitivity = 1._r8
+                     
+                teff = y/sensitivity
+                if(teff > 1._r8) teff = 1._r8
+                           
+                ! convert cloud radiance to effective optical depth
+                y = teff
+                sy = Terr%values(ich+nFreqs*(mif-1),maf)**2/sensitivity**2
+                     
+                do i=1,nz
+                  do j=1,nInst
+                    dx(i+(j-1)*nz) = dx(i+(j-1)*nz) + jBlock%values(ich,i+(j-1)*nz)*y/sy
+                  end do
+                end do
+                do i=1,nz
+                 do j=1,nInst
+                  do i1=1,nz
+                   do j1=1,nInst
+                   C(i+(j-1)*nz,i1+(j1-1)*nz) = C(i+(j-1)*nz,i1+(j1-1)*nz) + &
+                    & jBlock%values(ich,i+(j-1)*nz)*jBlock%values(ich,i1+(j1-1)*nz)/sy
+                   end do
+                  end do
+                 end do
+                end do
+          end if
+          end do   ! mif
+
+      call clearMatrix ( jacobian )           ! free the space
+      end do ! end of mafs
+      
+
+      ! start inversion
+      x0 = 0._r8        ! A priori
+      x = 0._r8
+      A = C
+      do i=1,nz
+         do j=1,nInst
+         sx0(i+(j-1)*nz) = xExtVar%values(i,j)
+         A(i,i)=A(i,i) + xExtVar%values(i,j)  ! sx has already been inverted
+         end do
+      end do
+         
+      Call MatrixInversion(A)
+               
+      ! output estimated SD 
+      do i=1,nz
+         do j=1,nInst
+            outExtSD%values(i,j) = sqrt(A(i,i))
+         end do
+      end do
+
+      ! compute the least-squared solution
+      do i=1,nz
+         do j=1,nInst
+         x(i+(j-1)*nz) = sum(reshape(A(i+(j-1)*nz,:),(/nz*nInst/))*(x0*sx0 + dx))
+         end do
+      end do
+      
+      ! deallocate arrays and free memory
+      deallocate(A,C,tmp1,tmp2,dx,x,x0,sx0)
+
+      ! output retrieval results
+      xExtPtr%values = reshape(x,(/nz,nInst/))
+      
+      ! if the input variance is NOT reduced by half, it is given negative
+      where(outExtSD%values**2 > 0.5/xExtVar%values) &   ! xExtVar is inversed
+            & outExtSD%values = -outExtSD%values
+   ! clean up
+      call destroyVectorInfo ( FwdModelOut1 )
+      call destroyVectorInfo ( CovarianceDiag )
+      call deallocate_test ( fmStat%rows, 'FmStat%rows', moduleName )
+      
+    end subroutine HighCloudRetrieval
+
     ! ------------------------------------------  LowCloudRetrieval  -----
     subroutine LowCloudRetrieval
 
@@ -1345,7 +1608,8 @@ contains
                      & L_EARTHRADIUS,                                &
                      & L_LOSTRANSFUNC
       use MatrixModule_0, only: MatrixInversion, MATRIXELEMENT_T
-      use MatrixModule_1, only: ClearMatrix, FINDBLOCK, GetDiagonal
+      use MatrixModule_1, only: ClearMatrix, FINDBLOCK, GetDiagonal, &
+            & UpdateDiagonal, clearMatrix
       use MLSSignals_m, only: SIGNAL_T
       use ForwardModelWrappers, only: ForwardModel
       use ForwardModelIntermediate, only: ForwardModelIntermediate_T, &
@@ -1370,16 +1634,19 @@ contains
       type (VectorValue_T), pointer :: Slope       ! sensitivity slope to convert cloud
                                                    ! radiance to optical depth
                                           
-      integer :: i,j,k,ich,imodel,mif,isignal          ! Loop subscripts
+      integer :: i,j,k,ich,imodel,mif,maf,isignal          ! Loop subscripts
+      integer :: cloudysky     ! cloudysky index from Model Configuration
       integer :: coljBlock     ! Column index for jacobian
       integer :: rowjBlock     ! Row index for jacobian
       integer :: nFreqs      ! number of frequencies in each block
       integer :: nSgrid      ! number of S grids  
       integer :: nChans      ! total number of channels used in retrieval
       integer :: nMifs       ! number of total mifs
+      integer :: nMafs      ! number of MAFs
       integer :: ndoMifs       ! number of used mifs
       real(r8) :: p_lowcut    ! ptan threshold for low tangent heights
       real(r8) :: scale
+      real(r8) :: badValue
                                         
       type(MatrixElement_T), pointer :: JBLOCK       ! A block from the jacobian
       type(vector_T) :: CovarianceDiag  ! Diagonal of apriori Covariance  
@@ -1388,6 +1655,7 @@ contains
       real(r8) :: sensitivity                         ! sensitivity with slope and correction
       real(r8) :: teff                                ! effective optical depth
       real(r8) :: trans                                ! transmission function
+      logical, dimension(:), allocatable :: doMaf      ! array for MAF flag
       real(r8), dimension(:,:), allocatable :: A      ! working array
       real(r8), dimension(:,:), allocatable :: dx       ! working array for x
       real(r8), dimension(:,:), allocatable :: y      ! measurement array
@@ -1408,6 +1676,10 @@ contains
       
       p_lowcut = -2.5
       
+      ! find how many MAFs        
+        nMAFs = chunk%lastMAFIndex-chunk%firstMAFIndex + 1
+        allocate(doMaf(nMAFs))
+               
       call allocate_test ( fmStat%rows, jacobian%row%nb, 'fmStat%rows', &
         & ModuleName )
       ! create FwdModelOut1 vector by cloning measurements
@@ -1431,11 +1703,22 @@ contains
         sLevel = xLosPtr%template%frequencies      ! sLevel has unit of km here                 
         
       ! find how many channels total in all models
+        doMaf = .false.
         nChans = 0
         do imodel = 1, size(configIndices)
         do isignal = 1, size(configDatabase(configIndices(imodel))%signals)
           nChans = nChans + &
           & count(configDatabase(configIndices(imodel))%signals(isignal)%channels)
+              ! get signal information for this model. Note: allow only 1 signal 
+              signal = configDatabase(configIndices(imodel))%signals(isignal)
+              ! get cloud radiance measurements for this signal
+              Tcir => GetVectorQuantityByType ( Measurements,       &
+               & quantityType=l_cloudInducedRadiance,             &
+               & signal=signal%index, sideband=signal%sideband)
+              ! determine MAF flag (i.e., whether to call Forward Model for the MAF)
+              do maf=1,nMAFs
+              if(sum(Tcir%values(:,maf)) .ne. 0._r8) doMaf(maf) = .true.
+              end do
         end do ! band signals
         end do ! configIndices or models
 
@@ -1447,17 +1730,26 @@ contains
       ! get the inverted diagnonal elements of covariance of apriori
         call getDiagonal ( covariance%m, covarianceDiag )
         
+      ! get pointers of x covariance for the apriori
+        xLosVar => GetVectorQuantityByType(covarianceDiag,quantityType=l_lostransfunc)
+        xExtVar => GetVectorQuantityByType(covarianceDiag,quantityType=l_cloudextinction)
+      
+      ! get pointers of output SD for the retrieval
+        outLosSD => GetVectorQuantityByType(outputSD,quantityType=l_lostransfunc)
+        outExtSD => GetVectorQuantityByType(outputSD,quantityType=l_cloudextinction)
+        outLosSD%values = 0._r8
+        outExtSD%values = 0._r8
+      
       ! allocate C, y, x matrices
           allocate(A(nSgrid,nSgrid),C(nSgrid,nSgrid,nMifs))
           allocate(y(nChans,nMifs),sy(nChans,nMifs))
           allocate(x(nSgrid),x0(nSgrid),sx0(nSgrid),xext(nSgrid))
           allocate(dx(nSgrid,nMifs),sx(nSgrid,nMifs))
 
-        fmStat%maf = 0
-          ! Loop over MAFs
-        do while (fmStat%maf < chunk%lastMAFIndex-chunk%firstMAFIndex+1)
-          fmStat%maf = fmStat%maf + 1
-print*,'begin cloud retrieval maf= ',fmstat%maf,' chunk size=',chunk%lastMAFIndex-chunk%firstMAFIndex
+      ! Loop over MAFs
+        do maf =1,nMAFs
+        fmStat%maf = maf
+        print*,'begin cloud retrieval maf= ',maf,' chunk size=',nMAFs
                         
           A = 0._r8
           C = 0._r8
@@ -1468,6 +1760,12 @@ print*,'begin cloud retrieval maf= ',fmstat%maf,' chunk size=',chunk%lastMAFInde
           ich = 0
           do imodel = 1, size(configIndices)
             fmStat%rows = .false.
+            ! memorize cloud configuration type
+            if(maf==1) cloudysky = configDatabase(configIndices(imodel))%cloud_width
+            ! to save time, only skip cloud sensitivity calculation if there is no cloud
+            configDatabase(configIndices(imodel))%cloud_width=0
+            if(doMaf(maf)) configDatabase(configIndices(imodel))%cloud_width=cloudysky
+            
             call forwardModel ( configDatabase(configIndices(imodel)), &
                 & state, fwdModelExtra, FwdModelOut1, fmw, fmStat, jacobian )
             
@@ -1504,23 +1802,9 @@ print*,'begin cloud retrieval maf= ',fmstat%maf,' chunk size=',chunk%lastMAFInde
                & quantityType=l_cloudInducedRadiance,             &
                & signal=signal%index, sideband=signal%sideband )
 
-              ! get pointers of x covariance for the retrieval
-               xLosVar => GetVectorQuantityByType (covarianceDiag, &
-               & quantityType=l_lostransfunc,noerror=.true.)
-               xExtVar => GetVectorQuantityByType (covarianceDiag, &
-               & quantityType=l_cloudextinction,noerror=.true.)
-      
-              ! get pointers of output SD for the retrieval
-               outLosSD => GetVectorQuantityByType (outputSD, &
-               & quantityType=l_lostransfunc,noerror=.true.)
-               outExtSD => GetVectorQuantityByType (outputSD, &
-               & quantityType=l_cloudextinction,noerror=.true.)
-               ! initialized to SD of xLosVar
-               outLosSD%values = 1._r8/sqrt(xLosVar%values)
-      
               ! get rowBlock and colBlock for this model
-              rowJBlock = FindBlock (jacobian%row, Tb0%index, fmStat%maf)
-              colJBlock = FindBlock ( Jacobian%col, xLosPtr%index, fmStat%maf )
+              rowJBlock = FindBlock (jacobian%row, Tb0%index, maf)
+              colJBlock = FindBlock ( Jacobian%col, xLosPtr%index, maf )
                 
               jBlock => jacobian%block(rowJblock,colJblock)
                
@@ -1529,18 +1813,18 @@ print*,'begin cloud retrieval maf= ',fmstat%maf,' chunk size=',chunk%lastMAFInde
                if(signal%channels(k)) then
                ich = ich + 1
                   do mif=1,nMifs
-                  if(ptan%values(mif,fmStat%maf) < p_lowcut) then
+                  if(ptan%values(mif,maf) < p_lowcut) then
                      
                      ! find more accurate sensitivity. we first borrow 
                      ! x, x0 arrays to establish the Tcir-teff relation:
                      ! x-> Tcir; x0->teff;
                      do j=1,nSgrid
                      x0(j) = 1._r8/nSgrid*(j-1._r8)
-                     x(j) = slope%values(k+nFreqs*(mif-1),fmStat%maf)* &
+                     x(j) = slope%values(k+nFreqs*(mif-1),maf)* &
                         & (1._r8 + 0.46_r8* teff**6) ! correction term (see ATBD)
                      end do
                      
-                     y(ich,mif) = Tcir%values(k+nFreqs*(mif-1),fmStat%maf)
+                     y(ich,mif) = Tcir%values(k+nFreqs*(mif-1),maf)
 
                      ! interpolate to get initial guess of teff
                      if(y(ich,mif) < x(1)) teff=0._r8
@@ -1553,7 +1837,7 @@ print*,'begin cloud retrieval maf= ',fmstat%maf,' chunk size=',chunk%lastMAFInde
                      end do
 
                      ! solve the relation one more time to refine teff and sensitivity
-                     sensitivity = slope%values(k+nFreqs*(mif-1),fmStat%maf)* &
+                     sensitivity = slope%values(k+nFreqs*(mif-1),maf)* &
                            & (1._r8 + 0.46_r8* teff**6) ! correction term (see ATBD)
 
                      ! in case we go into ambiguity altitudes with small sensitivity
@@ -1565,8 +1849,7 @@ print*,'begin cloud retrieval maf= ',fmstat%maf,' chunk size=',chunk%lastMAFInde
                      ! convert cloud radiance to effective optical depth
                      
                      y(ich,mif) = teff
-                     sy(ich,mif) = Terr%values(k+nFreqs*(mif-1),fmStat%maf)**2 &
-                       & /sensitivity**2
+                     sy(ich,mif) = (Terr%values(k+nFreqs*(mif-1),maf)/sensitivity)**2
                      
                      do i=1,nSgrid
                         dx(i,mif) = dx(i,mif) + jBlock%values(k,i+(mif-1)*nSgrid)* &
@@ -1591,17 +1874,15 @@ print*,'begin cloud retrieval maf= ',fmstat%maf,' chunk size=',chunk%lastMAFInde
 
            sx = 1.e8_r8         ! sx is the inversd variance of a priori
            do mif=1,nMifs
-!            x0 = sqrt(re%values(1,fmStat%maf)**2+(sLevel*1.e3_r8)**2) - &
-!               re%values(1,fmStat%maf)
              do i=1,nSgrid
-!               if(x0(i) < 20.e3_r8) &
-                  sx(i,mif) = xLosVar%values(i+nSgrid*(mif-1),fmStat%maf)
+                !xLosVar is the inverted variance
+                sx(i,mif) = xLosVar%values(i+nSgrid*(mif-1),maf)  
              end do
            end do
                               
          ! start inversion
             do mif=1,nMifs
-            if (ptan%values(mif,fmStat%maf) < p_lowcut) then
+            if (ptan%values(mif,maf) < p_lowcut) then
                ! for cloud retrieval: x_star=0, y_star=0, x0=apriori=0
 
                x0 = 0._r8        ! A priori
@@ -1622,7 +1903,7 @@ print*,'begin cloud retrieval maf= ',fmstat%maf,' chunk size=',chunk%lastMAFInde
                   ! output estimated SD after the first iteration
                   if(associated(xLosPtr) .and. j == 1) then
                    do i=1,nSgrid
-                    outLosSD%values(i+(mif-1)*nSgrid,fmStat%maf) = sqrt(A(i,i))
+                    outLosSD%values(i+(mif-1)*nSgrid,maf) = sqrt(A(i,i))
                    end do
                   end if
                   
@@ -1647,54 +1928,57 @@ print*,'begin cloud retrieval maf= ',fmstat%maf,' chunk size=',chunk%lastMAFInde
                   scale = (1._r8-trans)*(slevel(i)-slevel(i-1))      ! see ATBD
 			         xext(i)=x(i)/scale
                   ! and standard deviation
-                  outLosSD%values(i+(mif-1)*nSgrid,fmStat%maf) = &     !neglect higher orders
-                     & outLosSD%values(i+(mif-1)*nSgrid,fmStat%maf)/scale
+                  outLosSD%values(i+(mif-1)*nSgrid,maf) = &     !neglect higher orders
+                     & outLosSD%values(i+(mif-1)*nSgrid,maf)/scale
+                  xLosVar%values(i+(mif-1)*nSgrid,maf) = &     !xLosVar is the inversed var
+                     & xLosVar%values(i+(mif-1)*nSgrid,maf)*scale*scale
                  end if
                end do
                
                ! output los extinction to state vector
                if(associated(xLosPtr)) then
                 do i=1,nSgrid
-                 xLosPtr%values(i+(mif-1)*nSgrid,fmStat%maf) = xext(i)
+                 xLosPtr%values(i+(mif-1)*nSgrid,maf) = xext(i)
                 end do
                end if               
                
             end if
             end do  ! mif
       call clearMatrix ( jacobian )           ! free the space
+      
       end do ! end of mafs
       
-      ! deallocate arrays and free memory
-            deallocate(A,C,y,sy,dx,x,x0,sx0,xext,sx)
+    ! deallocate arrays and free memory
+      deallocate(A,C,y,sy,dx,x,x0,sx0,xext,sx)
 
       xExtPtr%values = 0._r8
-   	call LOS2Grid(xExtPtr,xLosPtr,Ptan,Re,p_lowcut,method='Average')
+      outLosSD%values = outLosSD%values**2
+      xLosVar%values = 1._r8/xLosVar%values  ! xLosVar is the inverted variance
       
-      if(associated(xLosVar) .and. associated(xExtVar) &
-         & .and. associated(outLosSD) .and. associated(outExtSD)) then
-      ! get variances after re-sampling
-   	   call LOS2Grid(xExtVar,xLosVar,Ptan,Re,p_lowcut,method='Variance')
-      ! get output variances after re-sampling, outLosSD is SD at present
-         outLosSD%values = 1._r8/outLosSD%values**2 ! converted to 1/variance
-         outExtSD%values = xExtVar%values      ! initialized to inversed a priori variance
-         call LOS2Grid(outExtSD,outLosSD,Ptan,Re,p_lowcut,method='Variance')
-      ! output SD of the retrieved extinction
-         outLosSD%values = sqrt(1._r8/outLosSD%values) ! converted back to SD
-         outExtSD%values = sqrt(1._r8/outExtSD%values) ! converted back to SD
-      ! if the input variance is NOT reduced by half, it is given negative
-         where(outExtSD%values**2 > 0.5/xExtVar%values) &   ! xExtVar is inversed
-            & outExtSD%values = -outExtSD%values
-      end if
-   ! clean up
+   	call LOS2Grid(xExtPtr,outExtSD,xExtvar,xLosPtr,outLosSD,xLosVar,Ptan,Re,p_lowcut)
+
+    ! output SD but keep the sign
+      outLosSD%values = sqrt(outLosSD%values)
+    ! ExtSD is defined as MLS contribution only
+	   badValue = outExtSD%template%badValue
+      outExtSD%values = 1._r8/outExtSD%values - 1._r8/xExtVar%values
+       where(outExtSD%values > 0._r8) outExtSD%values = 1._r8/sqrt(outExtSD%values)
+       where(outExtSD%values .le. 0._r8) outExtSD%values = badValue
+      
+    ! overwrite input covariance
+      call clearMatrix(covariance%m)     ! this will initialize it to M_Absent
+      call updateDiagonal ( covariance, CovarianceDiag)
+
+    ! clean up
       call destroyVectorInfo ( FwdModelOut1 )
       call destroyVectorInfo ( CovarianceDiag )
       call deallocate_test ( fmStat%rows, 'FmStat%rows', moduleName )
-      deallocate(Slevel)
+      deallocate(Slevel, doMaf)
       
     end subroutine LowCloudRetrieval
 
   !=============================== LOS2Grid ====
-  subroutine LOS2Grid( Qty, LOS,Ptan, Re, Pcut, method)
+  subroutine LOS2Grid( Qty, vQty, vQtyApr, Los, vLos, vLosApr, Ptan, Re, Pcut)
 
     ! This is to fill a l2gp type of quantity with a los grid type of quantity.
     ! The los quantity is a vector quantity that has dimension of (s, mif, maf),
@@ -1707,23 +1991,26 @@ print*,'begin cloud retrieval maf= ',fmstat%maf,' chunk size=',chunk%lastMAFInde
     use MLSNumerics, only: InterpolateValues
     use MLSStrings, only: Capitalize
     ! Dummy arguments
-    character (len=*), intent(in) :: method ! whether for averaging or variance
-    type (VectorValue_T), intent(in) :: LOS ! Vector quantity to fill from
+    type (VectorValue_T), intent(in) :: LOS ! LOS quantity
+    type (VectorValue_T), intent(in) :: vLOS ! variance of LOS
+    type (VectorValue_T), intent(in) :: vLosApr ! variance of LOS Apriori
     type (VectorValue_T), intent(in) :: Ptan ! tangent pressure
     type (VectorValue_T), intent(in) :: Re ! Earth's radius
-    type (VectorValue_T), INTENT(INOUT) :: QTY ! Quantity to fill
+    type (VectorValue_T), INTENT(INOUT) :: Qty ! Quantity to fill
+    type (VectorValue_T), INTENT(INOUT) :: vQty ! variance of Quantity
+    type (VectorValue_T), INTENT(INOUT) :: vQtyApr ! variance of Quantity Aprori
 
     ! Local variables
     integer :: i, j, maf, mif                ! Loop counter
     integer :: maxZ, minZ                    ! pressure range indices of sGrid
     integer :: noMAFs,noMIFs,noDepths
     real (r8) :: pcut
-    integer, dimension(qty%template%noSurfs,qty%template%noInstances) :: cnt
+    real (r8), dimension(qty%template%noSurfs,qty%template%noInstances) :: cnta
+    real (r8), dimension(qty%template%noSurfs,qty%template%noInstances) :: cnt
     real (r8), dimension(qty%template%noSurfs,qty%template%noInstances) :: out
-    real (r8), dimension(qty%template%noSurfs) :: outZeta, phi_out, beta_out
+    real (r8), dimension(qty%template%noSurfs) :: outZeta, phi_out, beta_out, weight, weighta
     real (r8), dimension(los%template%noChans) :: x_in, y_in, sLevel
     real (r8), dimension(los%template%noSurfs) :: zt
-    real (r8), dimension(los%template%noChans,los%template%noSurfs,los%template%noInstances) :: beta
 
     if ( qty%template%verticalCoordinate == l_pressure ) then
         outZeta = -log10 ( qty%template%surfs(:,1) )
@@ -1737,22 +2024,13 @@ print*,'begin cloud retrieval maf= ',fmstat%maf,' chunk size=',chunk%lastMAFInde
     noDepths=los%template%noChans
     sLevel = los%template%frequencies
    
-   do maf=1,noMafs
-   do mif=1,noMifs
-      do i=1,noDepths
-         beta(i,mif,maf)=los%values(i+(mif-1)*noDepths,maf)
-      end do
-   end do
-   end do
-      
 ! initialize quantity
-   do j = 1, qty%template%noInstances
-   do i = 1, qty%template%noSurfs
-!   qty%values(i,j)=qty%template%badValue
-   cnt(i,j)=0
-   out(i,j)=0._r8
-   end do 
-   end do
+   Qty%values=Qty%template%badValue
+   vQty%values = vQty%template%badValue
+   vQtyApr%values = vQtyApr%template%badValue
+   cnta=0._r8
+   cnt=0._r8
+   out=0._r8
    
     do maf=1,noMAFs  
       zt = ptan%values(:,maf)   ! noChans=1 for ptan
@@ -1783,32 +2061,51 @@ print*,'begin cloud retrieval maf= ',fmstat%maf,' chunk size=',chunk%lastMAFInde
       ! get phi along path for each mif (phi is in degree)
       y_in = los%template%phi(mif,maf) &
         & - atan(sLevel/(re%values(1,maf)*0.001_r8 + zt(mif)))*180._r8/Pi
-        ! interpolate phi onto standard vertical grids     
+       ! interpolate phi onto standard vertical grids     
         call InterpolateValues(x_in,y_in,outZeta(minZ:maxZ),phi_out(minZ:maxZ), &
            & method='Linear')
-        ! interpolate quantity to standard vertical grids      
-        y_in = beta(:,mif,maf)
+       ! interpolate quantity to standard vertical grids      
+        y_in = Los%values((1+(mif-1)*noDepths):mif*noDepths,maf)
+        beta_out = 0._r8
         call InterpolateValues(x_in,y_in,outZeta(minZ:maxZ),beta_out(minZ:maxZ), &
            & method='Linear')
-        ! interpolate quantity to standard phi grids
+        y_in = vLos%values((1+(mif-1)*noDepths):mif*noDepths,maf)
+        weight = 0._r8
+        call InterpolateValues(x_in,y_in,outZeta(minZ:maxZ),weight(minZ:maxZ), &
+           & method='Linear')
+        weight = weight*(maxZ-minZ+1._r8)/size(y_in)  !inflated after interpolation
+        y_in = vLosApr%values((1+(mif-1)*noDepths):mif*noDepths,maf)
+        weighta = 0._r8
+        call InterpolateValues(x_in,y_in,outZeta(minZ:maxZ),weighta(minZ:maxZ), &
+           & method='Linear')
+        weighta = weighta*(maxZ-minZ+1._r8)/size(y_in)  !inflated after interpolation
+        
+       ! interpolate quantity to standard phi grids
         do i=minZ,maxZ  
           do j = 2, qty%template%noInstances-1
           if(phi_out(i) .lt. &     
-            & (qty%template%phi(1,j)+qty%template%phi(1,j+1))/2. &
+            & (qty%template%phi(1,j)+qty%template%phi(1,j+1))/2._r8 &
             & .and. phi_out(i) .ge. &  
-            & (qty%template%phi(1,j-1)+qty%template%phi(1,j))/2. ) then
-            out(i,j)=out(i,j) + beta_out(i)
-            cnt(i,j)=cnt(i,j)+1       !  counter
+            & (qty%template%phi(1,j-1)+qty%template%phi(1,j))/2._r8 ) then
+            out(i,j)=out(i,j) + beta_out(i)/weight(i)    ! weighted by variance
+            cnt(i,j)=cnt(i,j)+1._r8/weight(i)       !  counter
+            cnta(i,j)=cnta(i,j)+1._r8/weighta(i)       !  counter
           end if
           end do
         end do
       end do                            ! End surface loop
     end do                              ! End instance loop
     ! average all non-zero bins
-    if(Capitalize(method(1:1))=="A") where (cnt > 0) qty%values = out/cnt
-    if(Capitalize(method(1:1))=="V") where (cnt > 0) qty%values = out
+    where (cnt > 0._r8) Qty%values = out/cnt
+    where (cnt > 0._r8) cnt = 1._r8/cnt
+    where (cnta > 0._r8) cnta = 1._r8/cnta
+    
+    where (cnta > 0._r8) vQtyApr%values = cnta
+    where (cnt > 0._r8) vQty%values = cnt
+!    where (cnt > 0._r8 .and. cnt > 0.5_r8*cnta) vQty%values = -cnt  ! assign negative
 
-  end subroutine LOS2Grid
+  end subroutine LOS2Grid    
+  
     ! --------------------------------------------------  SayTime  -----
     subroutine SayTime
       call cpu_time ( t2 )
@@ -2100,6 +2397,9 @@ print*,'begin cloud retrieval maf= ',fmstat%maf,' chunk size=',chunk%lastMAFInde
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.107  2001/10/26 20:28:42  dwu
+! Added cloud extinction SD and high cloud retrieval
+!
 ! Revision 2.106  2001/10/24 00:29:00  livesey
 ! Added Matrix snooping
 !
