@@ -244,7 +244,7 @@ contains ! =====     Public Procedures     =============================
       ! Write it?
       if ( got(f_file) ) call write_PFADatum ( pfaDatum, fileName, fileType )
     end if
-    PFADatum%vel_cor = 1.0_ck - velLin / c ! Doppler correction factor
+    PFADatum%vel_rel = velLin / c ! Doppler correction factor
 
     if ( error == 0 ) then
       call decorate ( root, addPFADatumToDatabase ( pfaData, pfaDatum ) )
@@ -371,6 +371,9 @@ contains ! =====     Public Procedures     =============================
 end module PFAData_m
 
 ! $Log$
+! Revision 2.8  2004/09/05 21:14:10  pwagner
+! component of PFAData type renamed vel_rel
+!
 ! Revision 2.7  2004/09/02 00:49:38  vsnyder
 ! Replace velLin with vel_cor
 !
