@@ -3706,6 +3706,7 @@ contains
                ! if cloud flag is not from a height range then do comparison at each minor frame
                if( .not. got(f_cloudheight) ) then 
                   ! use the same mif radiance to find cloud flag
+                  isCloud = .false.
                   ind1 = useThisChannel + cloudRadiance%template%noChans*(height-1)
                   if ( cloudRadiance%values ( ind1, instance ) > cloudRadianceCutoff) &
                      & isCloud = .true.
@@ -3722,8 +3723,8 @@ contains
                   &     what=maskBit )
                   end if                   ! do this channel
                end do                   ! Channel loop
+               print*,height,doThisHeight, isCloud
              end do                   ! height loop
-
       end do                            ! Instance loop
 
       ! Tidy up
@@ -3741,6 +3742,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.234  2003/02/25 18:58:35  dwu
+! fix another bug in FlagCloud
+!
 ! Revision 2.233  2003/02/24 19:20:40  dwu
 ! fix a bug in FlagCloud
 !
