@@ -3,8 +3,6 @@
 
 module GET_BETA_PATH_M
 
-  use MLSCommon, only: RP, R8
-
   implicit NONE
   private
   public :: Get_Beta_Path, Get_Beta_Path_Scalar, Get_Beta_Path_Polarized
@@ -351,6 +349,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.34  2003/05/16 23:51:51  livesey
+! Now uses molecules rather than spectags
+!
 ! Revision 2.33  2003/05/15 03:28:52  vsnyder
 ! Moved some stuff up to FullForwardModel because Get_d_Deltau_pol_dT needs it
 !
