@@ -8,10 +8,8 @@ module FilterShapes_m
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error, MLSMSG_Info
-  use MLSSignals_m, only: Bands, Dump_Bands, Dump_Signals, GetSignalName, &
-    & Signals
+  use MLSSignals_m, only: Signals
   use Output_m, only: Blanks, MLSMSG_Level, Output, PrUnit
-  use String_Table, only: Display_String
 
   ! More USEs below in each procedure, if they're only used therein.
 
@@ -23,8 +21,8 @@ module FilterShapes_m
 
   type, public :: FilterShape_T
     real(r8) :: LHS, RHS
-    integer :: Signal              ! The signal to which the shape applies
     real(r8), dimension(:), pointer :: FilterShape => NULL()
+    character(len=80) :: Signal
   end type FilterShape_T
 
   ! The filter shape database:
@@ -65,6 +63,7 @@ contains
   subroutine Read_Filter_Shapes_File ( Lun, Spec_Indices )
     use Machine, only: IO_Error
     use Parse_Signal_m, only: Parse_Signal
+    use String_Table, only: Display_String
     use Toggles, only: Gen, Levels, Switches, Toggle
     use Trace_M, only: Trace_begin, Trace_end
 
@@ -94,18 +93,6 @@ contains
       if ( .not. associated(signal_indices) ) &
         call MLSMessage ( MLSMSG_Error, moduleName, &
           & trim(sigName) // " is not a valid signal." )
-      ! Check that filter shapes have not already been specified for any
-      ! signal implied by the present signal string.
-      do i = 1, size(signal_indices)
-        if ( signals(signal_indices(i))%filterShapeFirst /= 0 ) then
-          prunit = -2 ! To do output via MLSMessage
-          MLSMSG_Level = MLSMSG_Info
-          call dump_signals ( (/ signals(signal_indices(i)) /) )
-          MLSMSG_Level = MLSMSG_Error
-          call output ( "More than one filter shape specified for signal " )
-          call display_string ( signals(signal_indices(i))%name, advance='yes' )
-        end if
-      end do
       numChannels = size(signals(signal_indices(1))%frequencies)
       do i = 1, size(signal_indices)
         if ( size(signals(signal_indices(i))%frequencies) /= numChannels ) &
@@ -122,7 +109,7 @@ contains
       if ( dataBaseSize > 0 ) then
         filterShapes(:dataBaseSize) = tempFilterShapes
         deallocate ( tempFilterShapes, stat=status )
-        if ( status /= 0 ) call call MLSMessage ( MLSMSG_Error, moduleName, &
+        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
           & MLSMSG_DeAllocate // 'TempFilterShapes' )
       end if
       do i = dataBaseSize + 1, dataBaseSize + numChannels
@@ -133,8 +120,6 @@ contains
         if ( status < 0 ) go to 99
         if ( status > 0 ) go to 98
       end do
-      filterShapes(i)%signal = signal_indices(1)
-      signals(signal_indices(1))%filterShapeFirst = dataBaseSize + 1
     end do
 
     if ( toggle(gen) ) then
@@ -180,14 +165,12 @@ contains
     use Dump_0, only: Dump
 
     integer :: I                   ! Subscripts, loop inductors
-    character(len=80) :: sigName
     call output ( 'Filter Shapes: SIZE = ' )
     call output ( size(filterShapes), advance='yes' )
     do i = 1, size(filterShapes)
       call output ( i, 4 )
       call output ( ':    Signal =', advance='yes' )
-      call getSignalName ( filterShapes(i)%signal, sigName )
-      call output ( trim(sigName), advance='yes' )
+      call output ( trim(filterShapes(i)%signal), advance='yes' )
       call output ( ' LHS = ' )
       call output ( filterShapes(i)%lhs )
       call output ( '  RHS = ' )
@@ -199,3 +182,6 @@ contains
 end module FilterShapes_m
 
 ! $Log$
+! Revision 1.2  2001/03/29 19:49:18  vsnyder
+! At least it compiles...
+!
