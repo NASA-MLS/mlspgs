@@ -231,7 +231,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   end type MatrixElement_T
 
   ! - - -  Private data     - - - - - - - - - - - - - - - - - - - - - -
-  real, parameter, private :: COL_SPARSITY = 0.5  ! If more than this
+  real, parameter, private :: COL_SPARSITY = 0.0  ! If more than this
     ! fraction of the elements between the first and last nonzero in a
     ! column are nonzero, use M_Banded, otherwise use M_Column_Sparse.
   real, parameter, private :: SPARSITY = 0.33     ! If a full matrix has
@@ -469,6 +469,7 @@ contains ! =====     Public Procedures     =============================
     integer :: MESSAGETYPE
     integer :: I                        ! Loop counter
     integer :: N                        ! No entries in a column
+    character(len=80) :: CLAUSE         ! Part of error/warning message
     
     ! Executable code
 
@@ -588,21 +589,25 @@ contains ! =====     Public Procedures     =============================
         checkIntegrity_0 = .false.
       end if
       do i = 1, block%nCols
+        write ( clause, * ) i
+        clause = ' column ' // adjustl ( clause )
         n =  block%r2(i) - block%r2(i-1)
         if ( n < 0 ) then
           call MLSMessage ( messageType, ModuleName, &
-            & 'Banded block has too small a delta in R2' )
+            & 'Banded block has too small a delta in R2 for ' // trim(clause) )
           checkIntegrity_0 = .false.
         end if
         if ( n > 0 ) then
           if ( block%r1(i) + n > block%nRows ) then
             call MLSMessage ( messageType, ModuleName, &
-              & 'Banded block has too large a delta in R2 or R1 value' )
+              & 'Banded block has too large a delta in R2 or R1 value for ' // &
+              & trim(clause) )
             checkIntegrity_0 = .false.
           end if
           if ( block%r1(i) == 0 ) then
             call MLSMessage ( messageType, ModuleName, &
-              'Banded block contains 0 for R1 in non empty column' )
+              & 'Banded block contains 0 for R1 in non empty column for' // &
+              & trim(clause) )
           end if
         end if
       end do
@@ -658,15 +663,19 @@ contains ! =====     Public Procedures     =============================
         checkIntegrity_0 = .false.
       end if
       do i = 1, block%nCols
+        write ( clause, * ) i
+        clause = ' column ' // adjustl ( clause )
         n =  block%r1(i) - block%r1(i-1) - 1
         if ( n < 0 ) then
           call MLSMessage ( messageType, ModuleName, &
-            & 'Column sparse block has too small a delta in R1' )
+            & 'Column sparse block has too small a delta in R1 for ' // &
+            & trim(clause) )
           checkIntegrity_0 = .false.
         end if
         if ( block%r1(i) + n > ubound ( block%r2, 1 ) ) then
           call MLSMessage ( messageType, ModuleName, &
-            & 'Column sparse block has too large a delta in R1' )
+            & 'Column sparse block has too large a delta in R1 for ' // &
+            & trim(clause) )
           checkIntegrity_0 = .false.
         end if
       end do
@@ -851,10 +860,15 @@ contains ! =====     Public Procedures     =============================
         end do ! i
       end do ! j = 1, x%nCols
     case ( M_Column_Sparse )       ! ??? Adjust the sparsity representation ???
+!       call Dump ( x, details=2 )
+!       if ( .not. CheckIntegrity ( x, noError=.true. ) ) then
+!         call Dump ( x, details=2 )
+!         stop
+!       end if
       do j = 1, x%nCols
         do i = x%r1(j-1)+1, x%r1(j)
           if ( iand( ichar(mask(x%r2(i))), m_LinAlg ) /= 0 ) &
-            & x%values(j,1) = 0.0_rm
+            & x%values(x%r2(i),1) = 0.0_rm
         end do ! i
       end do ! j = 1, x%nCols
     case ( M_Full )
@@ -3104,6 +3118,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.96  2003/08/05 19:32:12  livesey
+! Temporarily suppress column_sparse blocks
+!
 ! Revision 2.95  2003/06/30 20:21:40  livesey
 ! Made it more reslient to being asked to Cholesky Factor an empty block.
 !
