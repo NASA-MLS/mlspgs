@@ -119,8 +119,7 @@ contains
       select case ( Jacobian%block(Row,col)%kind )
         case ( m_absent )
           call CreateBlock ( Jacobian, row, col, m_banded, noPtan*noChans, &
-                           & bandHeight=noChans )
-          Jacobian%block(row,col)%values = 0.0_rm
+                           & bandHeight=noChans, init=0.0_rm )
         case ( m_banded )
           call CheckForsimpleBandedLayout ( jacobian%block(row,col), noChans, &
             & 'd[Radiance]/d[ptan] in no convolution case' )
@@ -188,8 +187,7 @@ contains
         col = FindBlock ( Jacobian%col, temp%index, nf )
         select case ( Jacobian%block(row,col)%kind )
         case ( m_absent )
-          call CreateBlock ( Jacobian, row, col, m_full )
-          Jacobian%block(row,col)%values = 0.0_rm
+          call CreateBlock ( Jacobian, row, col, m_full, init=0.0_rm )
         case ( m_full )
         case default
           call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -241,8 +239,7 @@ contains
           col = FindBlock ( Jacobian%col, qtys(is)%qty%index, jf)
           select case ( Jacobian%block(row,col)%kind )
             case ( m_absent )
-              call CreateBlock ( Jacobian, row, col, m_full )
-              Jacobian%block(row,col)%values = 0.0_rm
+              call CreateBlock ( Jacobian, row, col, m_full, init=0.0_rm )
             case ( m_full )
             case default
               call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -288,6 +285,9 @@ contains
 
 end module NO_CONV_AT_ALL_M
 ! $Log$
+! Revision 2.23  2003/10/09 22:17:30  livesey
+! Added call to CheckForSimpleBandedLayout
+!
 ! Revision 2.22  2003/05/17 01:17:03  vsnyder
 ! Remove unused names, futzing
 !

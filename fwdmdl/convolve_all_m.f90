@@ -159,7 +159,7 @@ module Convolve_All_m
     SRad = sbRatio * di_dx * dx_dh_out * dhdz_out
 
 ! Now, load the dI/dPtan values into the Jacobian:
-! (First, find index location Jacobian and write the derivative)
+! (First, find index location in Jacobian and write the derivative)
 
     row = FindBlock( Jacobian%row, radiance%index, maf )
     rowFlags(row) = .TRUE.
@@ -172,8 +172,7 @@ module Convolve_All_m
       select case (jacobian%block(Row,col)%kind)
         case (m_absent)
           call CreateBlock ( Jacobian, row, col, m_banded, noPtan*noChans, &
-                           & bandHeight=noChans )
-          jacobian%block(row,col)%values = 0.0_rm
+                           & bandHeight=noChans, init=0.0_rm )
         case (m_banded)
           call CheckForSimpleBandedLayout ( jacobian%block(row,col), noChans, &
             & 'd[radiance]/d[ptan] in convolution' )
@@ -249,8 +248,7 @@ module Convolve_All_m
         col = FindBlock ( Jacobian%col, temp%index, jf )
         select case ( Jacobian%block(row,col)%kind )
           case ( m_absent )
-            call CreateBlock ( Jacobian, row, col, m_full )
-            jacobian%block(row,col)%values = 0.0_rm
+            call CreateBlock ( Jacobian, row, col, m_full, init=0.0_rm )
           case ( m_full )
           case default
             call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -309,8 +307,7 @@ module Convolve_All_m
         col = FindBlock ( Jacobian%col, qtys(sps_i)%qty%index, jf)
         select case ( Jacobian%block(row,col)%kind )
           case ( m_absent )
-            call CreateBlock ( Jacobian, row, col, m_full )
-            jacobian%block(row,col)%values = 0.0_rm
+            call CreateBlock ( Jacobian, row, col, m_full, init=0.0_rm )
           case ( m_full )
           case default
             call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -356,6 +353,9 @@ module Convolve_All_m
 end module Convolve_All_m
 
 ! $Log$
+! Revision 2.31  2003/10/09 22:17:30  livesey
+! Added call to CheckForSimpleBandedLayout
+!
 ! Revision 2.30  2003/05/19 19:58:07  vsnyder
 ! Remove USEs for unreferenced symbols, remove unused local variables
 !

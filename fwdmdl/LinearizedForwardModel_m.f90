@@ -480,8 +480,7 @@ contains ! =====     Public Procedures     =============================
               case ( M_Absent )
                 call CreateBlock ( jBlock, &
                   & noChans*noMIFs, instanceLen, &
-                  & M_Full )
-                jBlock%values = 0.0_rm
+                  & M_Full, init=0.0_rm )
               case ( M_Banded, M_Column_Sparse )
                 call MLSMessage( MLSMSG_Error, ModuleName, &
                   & "Not written code for adding to non full blocks" )
@@ -603,8 +602,7 @@ contains ! =====     Public Procedures     =============================
         select case (jBlock%kind)
         case (m_absent)
           call CreateBlock ( jacobian, rowJBlock, colJBlock, m_banded, &
-            & noMIFs*noChans, bandHeight=noChans )
-          jBlock%values = 0.0_rm
+            & noMIFs*noChans, bandHeight=noChans, init=0.0_rm )
         case (m_banded)
           call CheckForSimpleBandedLayout ( jBlock, noChans, 'jBlock in Linearized model' )
         case default
@@ -1137,6 +1135,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.53  2004/02/07 00:45:36  livesey
+! Fixed a bug in the sideband handling.  Was overzelous yesterday.
+!
 ! Revision 2.52  2004/02/05 23:30:39  livesey
 ! Fixed long standing problem with single sideband radiometers.
 !
