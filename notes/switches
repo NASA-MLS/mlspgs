@@ -54,6 +54,7 @@ Switches (set by -S option in mlsl2's command line):
   point =>  Pointing grids
   pro =>    Proclaim each product file l2gp, l2aux, l2dgg, l2pc, meta output
               and each file l2gp, l1brad, ncep, dao input
+  ptg =>    Dump full forward model pointing angles
   qtmp =>   Quantity templates being constructed
   rad =>    Radiances in ForwardModelInterface
   reg =>    Dump regularization matrix
@@ -111,6 +112,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.45  2004/08/03 23:23:56  pwagner
+ Unseemly switch to allow running first last, or first and last chunks only
+
  Revision 1.44  2004/07/17 02:40:09  vsnyder
  Add fwmd
 
