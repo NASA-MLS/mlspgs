@@ -6,11 +6,11 @@ begin Fill
  
   ;; This macro below fills <x>Elev for radiometer <x> with the value
   ;; given in the macro !elev<x>
-;   !define(fillElevOffset,{Fill, quantity=apriori.elev$1, method=explicit, $
-;     explicitValues=!elev$1!nl})
+  !define(fillElevOffset,{Fill, quantity=apriori.elev$1, method=explicit, $
+    explicitValues=!NegElevation$1!nl})
 
-;   ;; Call that macro for all radiometers
-;   !forall(fillElevOffset,!allRadiometers)
+  ;; Call that macro for all radiometers
+  !ifdef(flagPreV14Configuration,{},{!forall(fillElevOffset,!allBandLSBs,!allBandUSBs)})
 
   ;; --------------------------------------------------- Isotope ratios
 
@@ -35,7 +35,17 @@ begin Fill
 
   ;; Call that macro for all sidebands
   !forall(fillSidebandFractions,!allBandLSBs)
-  !forall(fillSidebandFractions,!allBandUSBs)  
+  !forall(fillSidebandFractions,!allBandUSBs)
+
+  ;; Possibly replace the sideband fractions for R1ABL with 1 to emulate
+  ;; old behavior
+  !define(resetSidebandFractions,{!dnl
+  Fill, quantity=apriori.limbSidebandFraction$1, method=explicit, $
+    explicitValues=1.0,/spread
+  Fill, quantity=apriori.calSidebandFraction$1, method=explicit, $
+    explicitValues=1.0,/spread!nl})
+  
+  !ifdef(flagPreV14Configuration,{!forall(resetSidebandFractions,1L,22L,32L,21l,26l,34L)})
 
   ;; ----------------------------------------- System temperatures
 
