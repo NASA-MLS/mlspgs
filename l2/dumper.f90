@@ -27,6 +27,7 @@ module DUMPER
 
   interface DUMP
     module procedure DUMP_CHUNKS
+    module procedure DUMP_aHGRID
     module procedure DUMP_HGRIDS
     module procedure DUMP_QUANTITY_TEMPLATES
   end interface
@@ -52,6 +53,21 @@ contains ! =====     Private Procedures     ============================
       call output ( chunks(i)%accumulatedMAFs, advance='yes' )
     end do
   end subroutine DUMP_CHUNKS
+
+  ! ------------------------------------------------  DUMP_A_HGRID  -----
+  subroutine DUMP_aHGRID ( aHGRID )
+    type(hGrid_T), intent(in) :: aHGRID
+    integer :: J
+      do j = 1, ahgrid%noProfs
+        call output ( ahgrid%phi(j), '(1x,1pg13.6)' )
+        call output ( ahgrid%geodLat(j), '(1x,1pg13.6)' )
+        call output ( ahgrid%lon(j), '(1x,1pg13.6)' )
+        call output ( ahgrid%time(j), '(1x,1pg13.6)' )
+        call output ( ahgrid%solarTime(j), '(1x,1pg13.6)' )
+        call output ( ahgrid%solarZenith(j), '(1x,1pg13.6)' )
+        call output ( ahgrid%losAngle(j), '(1x,1pg13.6)', advance='yes' )
+      end do
+  end subroutine DUMP_aHGRID
 
   ! ------------------------------------------------  DUMP_HGRIDS  -----
   subroutine DUMP_HGRIDS ( HGRIDS )
@@ -195,6 +211,9 @@ contains ! =====     Private Procedures     ============================
 end module DUMPER
 
 ! $Log$
+! Revision 2.11  2001/08/06 18:37:36  pwagner
+! Added Copyright statement
+!
 ! Revision 2.10  2001/04/26 02:44:17  vsnyder
 ! Moved *_indices declarations from init_tables_module to intrinsic
 !
