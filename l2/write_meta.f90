@@ -16,7 +16,7 @@ module WriteMetadata ! Populate metadata and write it out
     & Mlspcf_mcf_l2log_start
   use MLSStrings, only: LowerCase, GetStringHashElement
   use Output_m, only: Output, blanks
-  use PCFHdr, only: WritePCF2Hdr
+  use PCFHdr, only: WriteInputPointer, WritePCF2Hdr
   use SDPToolkit, only: PGSd_MET_GROUP_NAME_L, &
     & PGSd_MET_NUM_OF_GROUPS, PGSd_PC_FILE_PATH_MAX, PGS_PC_GetReference, &
     & PGSPC_W_NO_REFERENCE_FOUND, PGS_S_SUCCESS, PGSMET_W_METADATA_NOT_SET !, &
@@ -541,7 +541,8 @@ contains
            inpt(i+1) = sval                     
         ENDIF                                   
       ENDDO
-      returnStatus = pgs_met_setAttr_s(groups(INVENTORY), attrName, inpt)
+      ! returnStatus = pgs_met_setAttr_s(groups(INVENTORY), attrName, inpt)
+      returnStatus = WriteInputPointer(groups(INVENTORY), attrName, inpt)
     else
       returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
            'See the PCF annotation to this file.')
@@ -1491,6 +1492,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.29  2002/08/29 16:55:35  pwagner
+! Moved writeInputPointer to PCFHdr in lib
+!
 ! Revision 2.28  2002/08/28 22:27:26  pwagner
 ! Now writes input pointer metadata like L3MMData
 !
