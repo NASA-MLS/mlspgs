@@ -7,7 +7,11 @@ module GET_BETA_PATH_M
   use RHIFromH2O, only: RHIFromH2O_Factor
   implicit NONE
   private
-  public :: get_beta_path
+  public :: Get_Beta_Path, Get_Beta_Path_Scalar, Get_Beta_Path_Polarized
+
+  interface Get_Beta_Path
+    module procedure Get_Beta_Path_Scalar, Get_Beta_Path_Polarized
+  end interface
 
 ! *** Beta group type declaration:
   type, public :: beta_group_T
@@ -25,13 +29,13 @@ module GET_BETA_PATH_M
   private :: not_used_here 
 !---------------------------------------------------------------------------
 contains
-! This is a generic form of get coarse beta path. We really don't need
-! separate versions of these.
 
-  ! ----------------------------------------------  Get_Beta_Path  -----
-  subroutine Get_Beta_Path ( frq, p_path, t_path, z_path_c, Catalog, beta_group, gl_slabs, &
-        & path_inds, beta_path, gl_slabs_m, t_path_m, gl_slabs_p, t_path_p, &
-        & dbeta_dt_path, dbeta_dw_path, dbeta_dn_path, dbeta_dv_path, ICON, Incl_Cld )
+  ! ---------------------------------------  Get_Beta_Path_Scalar  -----
+  subroutine Get_Beta_Path_Scalar ( frq, p_path, t_path, z_path_c, &
+        & Catalog, beta_group, gl_slabs, path_inds, beta_path,     &
+        & gl_slabs_m, t_path_m, gl_slabs_p, t_path_p,              &
+        & dbeta_dt_path, dbeta_dw_path, dbeta_dn_path, dbeta_dv_path, &
+        & ICON, Incl_Cld )
 
     use MLSCommon, only: R8, RP, IP
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
@@ -51,8 +55,8 @@ contains
 
     type (beta_group_T), dimension(:) :: beta_group
 
-    integer  :: ICON
-    Logical :: Incl_Cld
+    integer, intent(in)  :: ICON
+    logical, intent(in) :: Incl_Cld
 
 ! Optional inputs.  GL_SLABS_* are pointers because the caller need not
 ! allocate them if DBETA_D*_PATH aren't allocated.  They would be
@@ -60,10 +64,10 @@ contains
 
     type(slabs_struct), pointer :: gl_slabs_m(:,:) ! reduced
 !                               strength data for t_path_m
-    real(rp) :: t_path_m(:) ! path temperatures for gl_slabs_m
+    real(rp), intent(in) :: t_path_m(:) ! path temperatures for gl_slabs_m
     type(slabs_struct), pointer :: gl_slabs_p(:,:) ! reduced
 !                               strength data for t_path_p
-    real(rp) :: t_path_p(:) ! path temperatures for gl_slabs_p
+    real(rp), intent(in) :: t_path_p(:) ! path temperatures for gl_slabs_p
 
 ! outputs
 
@@ -108,19 +112,19 @@ contains
           k = path_inds(j)
 
           ! mask 100%RH below 100mb
-          IF(Spectag .EQ. SP_H2O .AND. ICON .EQ.-1 .and. p_path(k).GE. 100.)THEN
-            ratio = RHIFromH2O_Factor (t_path(k), z_path_c(k), 0, .true.)*100._r8
+          if ( Spectag == SP_H2O .and. ICON == -1 .and. p_path(k) >= 100. ) then
+            ratio = RHIFromH2O_Factor (t_path(k), z_path_c(k), 0, .true.)*100.0_r8
             ! optional 0 will return ratio as parts per 1, as Bill uses here.
-          ENDIF                                 
+          end if                                 
 
           call create_beta ( Spectag, Catalog(ib)%continuum, p_path(k), t_path(k), &
             &  Frq, Lines(Catalog(ib)%Lines)%W, gl_slabs(k,ib), bb,  Incl_Cld, cld_ext, &
             &  DBETA_DW=v0, DBETA_DN=vp, DBETA_DV=vm )
-          IF ( .not. Incl_Cld ) THEN
+          if ( .not. Incl_Cld ) then
              beta_path(j,i) = beta_path(j,i) + ratio * bb 
-          ELSE
+          else
              beta_path(j,i) = beta_path(j,i) + ratio * bb + cld_ext   ! cld_ext = 0. for now 1/31
-          ENDIF
+          end if
           if ( associated(dbeta_dw_path)) &
             &  dbeta_dw_path(j,i) = dbeta_dw_path(j,i) + ratio * v0
           if ( associated(dbeta_dn_path)) &
@@ -194,7 +198,65 @@ contains
       end do
     end if
 
-  end subroutine Get_Beta_Path
+  end subroutine Get_Beta_Path_Scalar
+
+  ! ------------------------------------  Get_Beta_Path_Polarized  -----
+  subroutine Get_Beta_Path_Polarized ( Frq, H, &
+        & Catalog, beta_group, gl_slabs, path_inds, beta_path )
+
+    use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
+    use MLSCommon, only: R8, RP, IP
+    use O2_Abs_CS_m, only: O2_Abs_CS
+    use SpectroscopyCatalog_m, only: CATALOG_T
+
+! Inputs:
+
+    real(r8), intent(in) :: Frq ! frequency in MHz
+    real(r8), intent(in) :: H(:)      ! Magnetic field component in instrument
+                                      ! polarization on the path
+    type(catalog_t), intent(in) :: Catalog(:)
+    type (slabs_struct), dimension(:,:) :: Gl_slabs
+    integer(ip), intent(in) :: Path_inds(:) ! indicies for reading gl_slabs
+
+    type (beta_group_T), dimension(:) :: beta_group
+
+! outputs
+
+    complex(rp), intent(out) :: beta_path(-1:,:,:) ! path beta for each species
+    ! beta_path(-1,:,:) is Sigma_m, beta_path(0,:,:) is Pi,
+    ! beta_path(+1,:,:) is Sigma_p
+
+! Local variables..
+
+    integer(ip) :: I, IB, J, K, M, N, N_PATH
+    real(rp) :: RATIO ! Isotope ratio, not mixing ratio
+    complex(rp) :: Sigma_m, Pi, Sigma_p
+
+! begin the code
+
+    n_path = size(path_inds)
+
+    beta_path = 0.0
+
+    do i = 1, size(beta_group)
+      do n = 1, beta_group(i)%n_elements
+        ratio = beta_group(i)%ratio(n)
+        ib = beta_group(i)%cat_index(n)
+         
+        do j = 1, n_path
+          k = path_inds(j)
+
+          call o2_abs_cs ( frq, (/ ( -1, m=1,size(gl_slabs(k,ib)%v0s) ) /), &
+            & h(k), gl_slabs(k,ib), &
+            & catalog(ib)%continuum(1), catalog(ib)%continuum(3), &
+            & sigma_p, pi, sigma_m )
+          beta_path(-1,j,i) = beta_path(-1,j,i) + ratio * sigma_m
+          beta_path( 0,j,i) = beta_path( 0,j,i) + ratio * pi
+          beta_path(+1,j,i) = beta_path(+1,j,i) + ratio * sigma_p
+        end do ! j
+      end do ! n
+    end do ! i
+  end subroutine Get_Beta_Path_Polarized
 
 !----------------------------------------------------------------------
   logical function not_used_here()
@@ -204,6 +266,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.17  2003/01/31 18:45:09  jonathan
+! use cld_ext only if Incl_Cld is ture
+!
 ! Revision 2.16  2003/01/31 17:53:48  jonathan
 ! change z_path to z_path_c in passing to get_beta_path
 !
