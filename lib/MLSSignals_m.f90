@@ -995,14 +995,14 @@ contains
     call get_string ( bands(band)%prefix, string_text, cap=.true. )
     foundEnd = .false.
     do endOfFirstNumber = 2, len_trim ( string_text )
-      if ( index ( '0123456789', string_text(endOfFirstNumber:endOfFirstNumber) ) /= 0 ) &
+      if ( index ( '0123456789', string_text(endOfFirstNumber:endOfFirstNumber) ) == 0 ) &
         & foundEnd = .true.
       if ( foundEnd ) exit
     end do
     if ( .not. foundEnd ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, 'Cannot understand band name' )
-    string_text = string_text(1:endOfFirstNumber) // TRIM(sb_char) // &
-      & string_text(endOfFirstNumber+1:LEN_TRIM(string_text))
+    string_text = string_text(1:endOfFirstNumber-1) // TRIM(sb_char) // &
+      & string_text(endOfFirstNumber:LEN_TRIM(string_text))
     if ( (.not. my_noSuffix) .and. &
       &  (len_trim(string_text) < len(string_text)) ) then
       string_text = TRIM(string_text) // ':'
@@ -1586,6 +1586,9 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.68  2004/03/24 23:08:58  livesey
+! Bug fix in getBandName
+!
 ! Revision 2.67  2004/03/24 01:02:17  livesey
 ! Slight change in GetBandName to make smls stuff easier.
 !
