@@ -120,7 +120,8 @@ module Hdf
 
   interface sfwdata_f90
     module procedure sfwdata_i1, sfwdata_dp1, sfwdata_r1
-    module procedure sfwdata_r3, sfwdata_dp2, sfwdata_dp3
+    module procedure sfwdata_r2, sfwdata_r3
+    module procedure sfwdata_dp2, sfwdata_dp3
   end interface
 
 
@@ -619,6 +620,14 @@ contains ! ============================= Local wrappers ======================
     sfwdata_r1 = sfwdata ( sds_id, start, stride, edges, data )
   end function sfwdata_r1
 
+  integer function sfwdata_r2 (sds_id, start, stride, edges, data)      
+    integer, intent (in) :: sds_id
+    integer, intent (in), dimension (:) :: start, stride, edges
+    real, intent (in), dimension (:,:) :: data
+    
+    sfwdata_r2 = sfwdata ( sds_id, start, stride, edges, data )
+  end function sfwdata_r2
+
   integer function sfwdata_dp1 (sds_id, start, stride, edges, data)      
     integer, intent (in) :: sds_id
     integer, intent (in), dimension (:) :: start, stride, edges
@@ -654,6 +663,9 @@ contains ! ============================= Local wrappers ======================
 end module Hdf
 
 ! $Log$
+! Revision 2.9  2002/08/21 01:05:31  livesey
+! New specifics to support single precision l2aux
+!
 ! Revision 2.8  2002/05/22 00:47:54  livesey
 ! Added sfwdata_dp2
 !
