@@ -1,9 +1,9 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module GriddedData ! Contains the derived TYPE GriddedData_T
 
-  use MLSCommon, only: RGR=>R4, R8, LINELEN, NAMELEN
+  use MLSCommon, only: RGR=>R4, R8, LINELEN, NAMELEN, DEFAULTUNDEFINEDVALUE
   ! r4 corresponds to sing. prec. :: same as stored in files
   ! (except for dao dimensions)
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR, &
@@ -395,7 +395,7 @@ contains
     logical, optional, intent(in) :: EMPTY
     real(rgr), optional, intent(in) :: missingValue
     ! Local parameters
-    real(rgr), parameter :: DefaultMissingValue = -999.99
+    real(rgr), parameter :: DefaultMissingValue = DEFAULTUNDEFINEDVALUE ! -999.99
     ! Local variables
     integer :: status           ! Status from allocates etc.
     logical :: myEmpty                  ! Copy of empty possibly
@@ -930,6 +930,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.33  2004/08/03 17:59:34  pwagner
+! Gets DEFAULTUNDEFINEDVALUE from MLSCommon
+!
 ! Revision 2.32  2004/05/19 18:54:44  vsnyder
 ! Remove declaration for unused variable
 !
