@@ -127,14 +127,9 @@ contains ! ===================================== Public Procedures =====
     type (MLSChunk_T), dimension(:), pointer :: TEMPDATABASE
     integer :: newSize, status
     ! Executable
-    print *, 'size(chunks) ', size(chunks)
-    print *, 'firstChunk, lastChunk ', firstChunk, lastChunk
-    print *, 'associated ( chunks ) ', associated ( chunks )
     if ( .not. associated ( chunks ) ) return
     newSize = lastChunk - firstChunk + 1
-    print *, 'new size ', newSize
     if ( newSize < 1 ) return
-    print *, 'lastChunk > size(chunks) ', (lastChunk > size(chunks))
     if ( lastChunk > size(chunks) ) return
     allocate(tempDatabase(newSize), STAT=status)
     if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -143,7 +138,6 @@ contains ! ===================================== Public Procedures =====
     tempDatabase(1:newSize) = chunks(firstChunk:lastChunk)
     call DestroyChunkDatabase ( chunks )
     chunks => tempDatabase
-    print *, 'new size(chunks) ', size(chunks)
 
   end subroutine ReduceChunkDatabase
 
@@ -271,7 +265,7 @@ contains ! ===================================== Public Procedures =====
     ! That mafrange(1) <= all_mafs <= mafrange(2)
     ! And that all overlaps are >= 0
     if ( config%method /= l_fixed ) &
-      & call share_non_ovmf ( chunks, mafRange )
+      & call CheckChunkSanity ( chunks, mafRange )
     if ( .not. associated(chunks) ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &  
         & 'ChunkDivide failed to associate the chunks pointer with a target' )     
@@ -851,34 +845,31 @@ contains ! ===================================== Public Procedures =====
       call Deallocate_test ( newFirstMAFs, 'newFirstMAFs', ModuleName )
       call Deallocate_test ( newLastMAFs, 'newLastMAFs', ModuleName )
 
-      ! Now delete any chunks that are nothing but overlap
-      ! or have negative overlaps
-      allOverlapChunks: do
-        chunk = FindFirst ( &
-          & ( chunks%noMAFsLowerOverlap + chunks%noMAFsUpperOverlap ) >= &
-          & ( chunks%lastMAFIndex - chunks%firstMAFIndex + 1 ) &
-          & .or. (chunks%noMAFsUpperOverlap < 0) )
-        if ( chunk == 0 ) exit allOverlapChunks
-        call DeleteChunk ( chunks, chunk )
-      end do allOverlapChunks
+      ! Delete any zero length or all overlapped chunks
+      call PruneChunks ( chunks )
 
-      ! Forcibly zero out number of lower (upper) overlaps on 1st (last) chunks
-      chunks(1)%noMAFsLowerOverlap = 0
-      chunks(noChunks)%noMAFsUpperOverlap = 0
+      if ( index ( switches, 'chu' ) /= 0 ) then
+        call output ( 'Before dealing with obstructions', advance='yes' )
+        call Dump ( chunks )
+      end if
 
       ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       ! Now think about the obstructions
-
-!       call output ( 'Before dealing with obstructions', advance='yes' )
-!       call Dump ( chunks )
-!       call Dump ( obstructions )
       call DealWithObstructions ( chunks, obstructions )
-!       call output ( 'After dealing with obstructions', advance='yes' )
-!       call Dump ( chunks )
-      noChunks = size ( chunks )
 
-      if ( index(switches, 'chu') /= 0 ) &
-        & call Dump ( chunks )
+      ! Delete any zero length or all overlapped chunks
+      call PruneChunks ( chunks )
+
+      ! Forcibly zero out number of lower (upper) overlaps on 1st (last) chunks
+      noChunks = size ( chunks )
+      chunks(1)%noMAFsLowerOverlap = 0
+      chunks(noChunks)%noMAFsUpperOverlap = 0
+
+      if ( index(switches, 'chu') /= 0 ) then
+        call output ( 'After dealing with obstructions', advance='yes' )
+        call Dump ( chunks )
+      end if
+
       ! Tidy up
       call DeallocateL1BData ( tpGeodAngle )
       call DeallocateL1BData ( taiTime )
@@ -1191,10 +1182,8 @@ contains ! ===================================== Public Procedures =====
               & chunks%firstMAFIndex + chunks%noMAFsLowerOverlap >= firstMAF .and. &
               & chunks%lastMAFIndex - chunks%noMAFsUpperOverlap <= lastMAF )
             if ( deadChunk == 0 ) exit insideRange
-            print*,'Deleting chunk: ', deadChunk, size(chunks)
             call DeleteChunk ( chunks, deadChunk )
           end do insideRange
-          print*,'Think most deleted, whats left?'
 
           ! Now think about chunks who's non overlapped part completely
           ! encompas the range, and split them.
@@ -1203,7 +1192,6 @@ contains ! ===================================== Public Procedures =====
             & ( chunks%firstMAFIndex + chunks%noMAFsLowerOverlap <= firstMAF ) .and. &
             & ( chunks%lastMAFIndex - chunks%noMAFsUpperOverlap >= lastMAF ) )
           if ( chunk /= 0 ) then
-            print*,'Splitting chunk: ', chunk
             ! Create two new chunks with the wall between, first the lower portion
             newChunk = chunks ( chunk )
             newChunk%lastMAFIndex = firstMAF - 1
@@ -1231,7 +1219,6 @@ contains ! ===================================== Public Procedures =====
               & chunks%firstMAFIndex <= firstMAF .and. &
               & chunks%lastMAFIndex >= firstMAF )
             if ( chunk == 0 ) exit moveEnd
-            print*,'Moving end of chunk:', chunk
             chunks(chunk)%noMAFsUpperOverlap = max ( 0, &
               & chunks(chunk)%noMAFsUpperOverlap - &
               &    ( chunks(chunk)%lastMAFIndex - (firstMAF-1) ) )
@@ -1244,7 +1231,6 @@ contains ! ===================================== Public Procedures =====
               & chunks%firstMAFIndex <= lastMAF .and. &
               & chunks%lastMAFIndex >= lastMAF )
             if ( chunk == 0 ) exit moveStart
-            print*,'Moving start of chunk:', chunk
             chunks(chunk)%noMAFsLowerOverlap = max ( 0, &
               & chunks(chunk)%noMAFsLowerOverlap - &
               &    ( (lastMAF+1) - chunks(chunk)%firstMafIndex ) )
@@ -1283,8 +1269,8 @@ contains ! ===================================== Public Procedures =====
           ! First the lower overlap
           wallInLower: do
             chunk = FindFirst ( &
-              & ( chunks%firstMAFIndex <= maf ) .and. &
-              & ( chunks%firstMAFIndex + chunks%noMAFsLowerOverlap - 1 >= maf ) )
+              & ( chunks%firstMAFIndex < maf ) .and. &
+              & ( chunks%firstMAFIndex + chunks%noMAFsLowerOverlap > maf ) )
             if ( chunk == 0 ) exit wallInLower
             chunks(chunk)%noMAFsLowerOverlap = &
             & max ( chunks(chunk)%noMAFsLowerOverlap - &
@@ -1294,8 +1280,8 @@ contains ! ===================================== Public Procedures =====
           ! Now the upper overlap
           wallInUpper: do
             chunk = FindFirst ( &
-              & ( chunks%lastMAFIndex - chunks%noMAFsUpperOverlap + 1 <= maf ) .and. &
-              & ( chunks%lastMAFIndex >= maf ) )
+              & ( chunks%lastMAFIndex - chunks%noMAFsUpperOverlap < maf ) .and. &
+              & ( chunks%lastMAFIndex > maf ) )
             if ( chunk == 0 ) exit wallInUpper
             chunks(chunk)%noMAFsUpperOverlap = &
               & max ( chunks(chunk)%noMAFsUpperOverlap - &
@@ -1408,8 +1394,6 @@ contains ! ===================================== Public Procedures =====
       integer :: num_goodness_changes
       logical, dimension(:), pointer  :: or_valids_buffer
       integer :: SignalIndex
-      integer :: signal_end
-      integer :: signal_start
       character(len=40) :: signal_full
       character(len=40) :: signal_str
       integer, pointer :: Signal_Indices(:)         ! Indices in the signals
@@ -1449,8 +1433,6 @@ contains ! ===================================== Public Procedures =====
           do mafset=1, nmafsets
             mafset_start = mafset_end + 1
             mafset_end = min ( mafRange(2), mafset_end + MAXMAFSINSET )
-            signal_start = mafset_start + 1 - mafRange(1)
-            signal_end = mafset_end + 1 - mafRange(1)
             good_signals_now(signalIndex) = &
               & any_good_signaldata ( signalIndex, signals(signalIndex)%sideband, &
               &   l1bInfo, mafset_start, mafset_end, &
@@ -1592,6 +1574,24 @@ contains ! ===================================== Public Procedures =====
       call deallocate_test( goodness_changes, 'goodness_changes', ModuleName)
     end subroutine NoteL1BRADChanges
 
+    ! ----------------------------------------- PruneChunks -----------
+    subroutine PruneChunks ( chunks )
+      type (MLSChunk_T), dimension(:), pointer :: CHUNKS
+      integer :: CHUNK
+      ! Now delete chunks that either:
+      !  1 - Are nothing but overlap
+      !  2 - Have <=0 MAFs
+      pruneChunksLoop: do
+        chunk = FindFirst ( &
+          & ( chunks%noMAFsLowerOverlap + chunks%noMAFsUpperOverlap ) >= &
+          & ( chunks%lastMAFIndex - chunks%firstMAFIndex + 1 ) &
+          & .or.&
+          & ( chunks%firstMAFIndex > chunks%lastMAFIndex ) )
+        if ( chunk == 0 ) exit pruneChunksLoop
+        call DeleteChunk ( chunks, chunk )
+      end do pruneChunksLoop
+    end subroutine PruneChunks
+
     ! ----------------------------------------- PruneObstructions -----
     subroutine PruneObstructions ( obstructions )
       ! This routine merges overlapping range obstructions and deletes
@@ -1628,7 +1628,7 @@ contains ! ===================================== Public Procedures =====
             if ( j > size(obstructions) ) exit innerLoop
             if ( all ( obstructions((/i,j/))%range ) ) then
               ! --------------------------- ( Range, range )
-              if ( obstructions(j)%mafs(1) <= obstructions(i)%mafs(2) ) then
+              if ( obstructions(j)%mafs(1) <= obstructions(i)%mafs(2) + 1 ) then
                 ! Combine overlapping range obstructions
                 newObs%range = .true.
                 newObs%mafs(1) = obstructions(i)%mafs(1)
@@ -1644,7 +1644,7 @@ contains ! ===================================== Public Procedures =====
             else if ( obstructions(i)%range .and. .not. obstructions(j)%range ) then
               ! --------------------------- ( Range, wall )
               if ( obstructions(j)%mafs(1) >= obstructions(i)%mafs(1) .and. &
-                &  obstructions(j)%mafs(1) <= obstructions(i)%mafs(2) ) then
+                &  obstructions(j)%mafs(1) <= obstructions(i)%mafs(2) + 1 ) then
                 ! Delete wall obstruction inside range
                 call DeleteObstruction ( obstructions, j )
                 foundOne = .true.
@@ -1658,7 +1658,7 @@ contains ! ===================================== Public Procedures =====
                 ! Delete wall obstruction at start of a range or at another wall
                 call DeleteObstruction ( obstructions, i )
                 foundOne = .true.
-                exit MiddleLoop
+                exit middleLoop
               end if
             end if
             ! I'm pretty sure this covers all the possibilities.  It might seem
@@ -1686,16 +1686,15 @@ contains ! ===================================== Public Procedures =====
       timing = .false.
     end subroutine SayTime
 
-    ! ---------------------------------------------------- share_non_ovmf -----
-    subroutine share_non_ovmf ( chunks, mafRange )
-      ! Sort the chunks into order of increasing firstMAFIndex
+    ! ---------------------------------------------------- CheckChunkSanity -----
+    subroutine CheckChunkSanity ( chunks, mafRange )
       type (MLSChunk_T), dimension(:), intent(inout) :: CHUNKS
       integer, dimension(2), intent(in) :: MAFRANGE   ! Processing range in MAFs
 
       ! Local variables
       integer :: i
       logical :: sharing, outrange, negovlps
-      
+
       ! Executable statements
       sharing = .false.
       outrange = .false.
@@ -1704,6 +1703,7 @@ contains ! ===================================== Public Procedures =====
         do i = 1, size(chunks) - 1
           sharing = (chunks(i)%lastMAFIndex - chunks(i)%noMAFsUpperOverlap) >= &
             & chunks(i+1)%firstMAFIndex + chunks(i+1)%noMAFsLowerOverlap
+          if ( sharing ) exit
         enddo
       endif
       outrange = any(chunks%firstMAFIndex < mafrange(1)) .or. &
@@ -1730,7 +1730,7 @@ contains ! ===================================== Public Procedures =====
         call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'Negative overlaps' )
       endif
-    end subroutine share_non_ovmf
+    end subroutine CheckChunkSanity
 
     ! ------------------------------------------------- SortChunks -----
     subroutine SortChunks ( chunks )
@@ -2070,6 +2070,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.45  2003/08/27 20:08:04  livesey
+! Removed print statements
+!
 ! Revision 2.44  2003/08/26 19:49:22  livesey
 ! Removed another print statement.
 !
