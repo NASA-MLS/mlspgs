@@ -244,7 +244,8 @@ contains ! =====     Public Procedures     =============================
       & MLS_EXISTS, split_path_name, GetPCFromRef, &
       & mls_io_gen_openF, mls_io_gen_closeF, mls_sfstart, mls_sfend
     use MLSHDFEOS, only: mls_swath_in_file
-    use MLSL2Options, only: CHECKPATHS, TOOLKIT, DEFAULT_HDFVERSION_WRITE
+    use MLSL2Options, only: CHECKPATHS, DEFAULT_HDFVERSION_WRITE, &
+      & PATCH, TOOLKIT
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSPCF2, only: mlspcf_l2gp_start, mlspcf_l2gp_end, &
       & mlspcf_l2dgm_start, mlspcf_l2dgm_end, mlspcf_l2fwm_full_start, &
@@ -516,7 +517,7 @@ contains ! =====     Public Procedures     =============================
       ! Done what we wished to do if just checking paths
       if ( checkPaths ) return
       
-      if ( createFileFlag ) then
+      if ( createFileFlag .and. .not. patch ) then
         fileaccess = DFACC_CREATE
       else
         fileaccess = DFACC_RDWR
@@ -648,17 +649,6 @@ contains ! =====     Public Procedures     =============================
           print *, 'Handle ', Handle
           print *, 'hdfVersion ', hdfVersion
           print *, 'errortype ', errortype
-        endif
-        if ( hdfVersion == HDFVERSION_5 .and. FORCEDIRWRITEREOPEN ) then
-          print *, 'Now forcibly opening and closing the hdf5'
-          Handle =   mls_sfstart(trim(FileName), DFACC_RDONLY, hdfVersion, &
-           & addingmetadata=.false. )
-          if ( HANDLE == -1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'DirectWriteCommand unable to h5fopen ' // trim(filename) )
-          errortype =   mls_sfend(Handle, hdfVersion, &
-           & addingmetadata=.false. )
-          if ( errortype /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'DirectWriteCommand unable to h5fclose ' // trim(filename) )
         endif
       case ( l_l2aux, l_l2fwm )
         ! Call the l2aux close routine
@@ -1402,6 +1392,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.99  2003/12/05 00:41:14  pwagner
+! patch option avoids deleting existing data in file
+!
 ! Revision 2.98  2003/12/03 17:50:54  pwagner
 ! L2GP tracks both nTimes (for this slave) and nTimesTotal (done by all)
 !
