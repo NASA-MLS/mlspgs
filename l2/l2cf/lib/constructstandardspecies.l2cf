@@ -320,7 +320,7 @@ begin Construct
     vGrid=vGridGlobal, hGrid=hGridStandard
   noRadsTmp: Quantity, type=chisqBinned, signal=!signal(1), $
     vGrid=vGridGlobal, hGrid=hGridStandard
-  diagTmp: VectorTemplate, quantities=[chisqTmp,noRadsTmp]
+  temporaryDiagnosticsTemplate: VectorTemplate, quantities=[chisqTmp,noRadsTmp]
 
   ;; ----------------------------------------- Statuses for products ---
   !define(constructStatus,{status$1: Quantity, type=status, hGrid=hGridStandard!nl})
