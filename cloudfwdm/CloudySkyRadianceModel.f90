@@ -21,6 +21,7 @@ module CloudySkyRadianceModel
       use PrtMsg, only: HEADER
       use RadiativeTransferModule, only: RADXFER
       use ScatteringAngle, only: ANGLE
+      use Tmp, only: GET_TAN_PRESS
 
       IMPLICIT NONE
       private

@@ -1,12 +1,36 @@
 
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+ 
+module Tmp
+
+! ---------------------------------
+! THIS IS MAY NOT NEED LATER
+! ---------------------------------
+
+      use Interpack, only: LOCATE
+      use MLSCommon, only: r8
+      IMPLICIT NONE
+      private
+      public :: GET_TAN_PRESS
+
+ !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm =                          &
+    "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName=                       &
+    "$RCSfile$"
+ !---------------------------------------------------------------------------
+
+contains 
+
       SUBROUTINE GET_TAN_PRESS ( YP, YZ, YT, YQ, NH,            &
                  &               ZPT1, ZZT1, ZTT1, ZVT1, Multi )
 !===========================================================================
 
-      use Interpack, only: LOCATE
-      use MLSCommon, only: r8
 
       INTEGER :: NH                            ! MODEL ATMOSPHERIC LEVELS
+      integer :: MULTI, JM, I, J
       REAL(r8) :: YZ(NH)                       ! PRESSURE HEIGHT (m)
       REAL(r8) :: YP(NH)                       ! PRESSURE (hPa)
       REAL(r8) :: YT(NH)                       ! TEMPERATURE PROFILE
@@ -50,10 +74,11 @@
 
       ENDDO
 
-      RETURN
-      END
+      END SUBROUTINE GET_TAN_PRESS
 
-! $Log: get_tan_press.f90,v      
+end module Tmp
+
+! $Log: Tmp.f90,v      
 
       
 
