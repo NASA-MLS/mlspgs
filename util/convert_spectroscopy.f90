@@ -1,0 +1,106 @@
+program Convert_Spectroscopy
+
+! Convert the spectroscopy database from the "old" format to a format
+! suitable for inclusion in the L2CF.
+
+  use Output_M, only: Blanks, Output, PrUnit
+
+  integer, parameter :: R8 = kind(0.0d0)
+
+  character(len=127) :: File       ! File names (from stdin)
+  integer :: I, J                  ! Loop inductors, subscripts
+  character(len=80) :: Line        ! of input
+  integer, parameter :: Lun = 51   ! To read the "old" format database
+  character(len=8) :: Name         ! Of a catalog item
+  integer :: NL                    ! Number of lines
+  real(r8) :: Qlog(3)
+  integer :: Spectag
+
+  ! Line parameters:
+  Real(r8) :: DELTA
+  Real(r8) :: EL
+  Real(r8) :: GAMMA
+  Real(r8) :: N
+  Real(r8) :: N1
+  Real(r8) :: N2
+  Real(r8) :: PS
+  Real(r8) :: STR
+  Real(r8) :: V0
+  Real(r8) :: W
+
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+    "$id: l2_load_m.f90,v 1.19 2001/04/03 07:32:45 zvi Exp $"
+  character(len=len(idparm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= "$RCSfile$"
+!---------------------------------------------------------------------------
+
+  print *, 'Enter "old" format database filename: '
+  read ( *, '(a)', end=99 ) File
+
+  open ( lun, file=File, status='old', action='read' )
+
+  print *, 'Enter "new" format database filename: '
+  read ( *, '(a)', end=99 ) File
+  prunit = lun+1
+  open ( prunit, file=File, action='write' )
+
+  do
+    read ( lun, '(a)' ) line
+    line = adjustl(line)
+    if ( line(:7) == 'END_CAT' ) exit
+    read ( line, * ) name, spectag, nl, qlog
+    do i = 1, len(name)
+      if ( name(i:i) == '-' ) name(i:i) = '_'
+      if ( name(i:i) >= 'A' .and. name(i:i) <= 'Z' ) &
+        & name(i:i) = achar(iachar(name(i:i)) + iachar('a') - iachar('A'))
+    end do
+    do i = 1, nl
+      read ( lun, * ) v0, el, str, w, ps, n, delta, n1, gamma, n2
+      call blanks ( 2 )
+      call output ( trim(name) )
+      call output ( '_' )
+      call output ( i )
+      call output ( ': line, v0= ' )
+      call output ( v0 )
+      call output ( ' MHz, el= ' )
+      call output ( el )
+      call output ( ', str= ' )
+      call output ( str )
+      call output ( ', w= ' )
+      call output ( w )
+      call output ( ', $', advance='yes' )
+      call blanks ( len_trim(name) + 8 )
+      call output ( 'ps= ' )
+      call output ( ps )
+      call output ( ', n= ' )
+      call output ( n )
+      call output ( ', delta= ' )
+      call output ( delta )
+      call output ( ', n1= ' )
+      call output ( n1 )
+      call output ( ', gamma= ' )
+      call output ( gamma )
+      call output ( ', n2= ')
+      call output ( n2, advance='yes' )
+    end do
+    call output ( 'spectra, molecule=' )
+    call output ( trim(name) )
+    call output ( ', Qlog=[' )
+    do i = 1, 3
+      call output ( qlog(i) )
+      if ( i < 3 ) call output ( ', ' )
+    end do
+    call output ( '], lines=[' )
+    do i = 1, nl
+      call output ( trim(name) )
+      call output ( '_' )
+      call output ( i )
+      if ( i < nl ) call output ( ', ' )
+    end do
+    call output ( ']', advance='yes' )
+  end do
+99 close ( lun )
+end program Convert_Spectroscopy
+
+! $Log$
