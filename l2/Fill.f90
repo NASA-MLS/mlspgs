@@ -11,13 +11,14 @@ module Fill                     ! Create vectors and fill them.
   ! We need many things from Init_Tables_Module.  First the fields:
   use INIT_TABLES_MODULE, only: F_Columns, F_Decay, F_Diagonal, &
     & F_GEOCALTITUDEQUANTITY, F_EXPLICITVALUES, F_EXTRA, F_H2OQUANTITY, &
-    & F_MAXITERATIONS, F_Matrix, F_METHOD, F_QUANTITY, F_REFGPHQUANTITY, &
+    & F_MAXITERATIONS, F_Matrix, F_METHOD, F_QUANTITY, F_RATIOQUANTITY, F_REFGPHQUANTITY, &
     & F_Rows, F_SCECI, F_SCVEL, F_SOURCE, F_SOURCEGRID, F_SOURCEL2AUX, &
     & F_SOURCEL2GP, F_SOURCEQUANTITY, F_SOURCEVGRID, F_SPREAD, F_SuperDiagonal, &
     & F_TEMPERATUREQUANTITY, F_TNGTECI, F_TYPE, FIELD_FIRST, FIELD_LAST
   ! Now the literals:
   use INIT_TABLES_MODULE, only: L_CHOLESKY, L_EXPLICIT, L_GPH, L_GRIDDED, &
-    & L_HYDROSTATIC, L_KRONECKER, L_L1B, L_L2GP, L_L2AUX, L_LOSVEL, L_NONE, L_PLAIN, &
+    & L_HYDROSTATIC, L_ISOTOPE, L_ISOTOPERATIO, L_KRONECKER, L_L1B, L_L2GP, L_L2AUX, &
+    & L_LOSVEL, L_NONE, L_PLAIN, &
     & L_PRESSURE, L_PTAN, L_RADIANCE, L_REFGPH, L_SCECI, L_SCGEOCALT, L_SCVEL, &
     & L_SPD, L_SPECIAL, L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, &
     & L_TNGTGEOCALT, L_TRUE, L_VECTOR, L_VGRID, L_VMR, L_ZETA
@@ -33,6 +34,7 @@ module Fill                     ! Create vectors and fill them.
   use L2AUXData, only: L2AUXData_T, L2AUXRank
   use L3ASCII, only: L3ASCII_INTERP_FIELD
   use LEXER_CORE, only: PRINT_SOURCE
+  use ManipulateVectorQuantities, only: DOHGRIDSMATCH, DOVGRIDSMATCH
   use MatrixModule_1, only: AddToMatrixDatabase, ClearMatrix, CreateEmptyMatrix, &
     & Dump, GetKindFromMatrixDatabase, GetFromMatrixDatabase, K_SPD, &
     & Matrix_Cholesky_T, Matrix_Database_T, Matrix_Kronecker_T, Matrix_SPD_T, &
@@ -92,9 +94,10 @@ module Fill                     ! Create vectors and fill them.
   integer, parameter :: NoSourceQuantityGiven= noExplicitValuesGiven + 1
   integer, parameter :: InvalidExplicitFill= noSourceQuantityGiven + 1
   integer, parameter :: BadUnitsForExplicit= invalidExplicitFill + 1
+  integer, parameter :: BadIsotopeFill = badUnitsForExplicit + 1
 
   ! Error codes resulting from FillCovariance
-  integer, parameter :: NotSPD = badUnitsForExplicit + 1
+  integer, parameter :: NotSPD = BadIsotopeFill + 1
   integer, parameter :: NotImplemented = notSPD + 1
 
   ! Error codes resulting from squeeze
@@ -163,9 +166,11 @@ contains ! =====     Public Procedures     =============================
     type (vectorValue_T), pointer :: GEOCALTITUDEQUANTITY
     type (vectorValue_T), pointer :: H2OQUANTITY
     type (VectorValue_T), pointer :: QUANTITY ! Quantity to be filled
+    type (vectorValue_T), pointer :: RATIOQUANTITY
     type (vectorValue_T), pointer :: REFGPHQUANTITY
     type (vectorValue_T), pointer :: SCECIQUANTITY
     type (vectorValue_T), pointer :: SCVELQUANTITY
+    type (vectorValue_T), pointer :: SOURCEQUANTITY
     type (vectorValue_T), pointer :: TEMPERATUREQUANTITY
     type (vectorValue_T), pointer :: TNGTECIQUANTITY
 
@@ -203,9 +208,10 @@ contains ! =====     Public Procedures     =============================
     integer :: MAXITERATIONS            ! For hydrostatic fill
     character (LEN=LineLen) ::  Msr
     type (Vector_T) :: NewVector ! A vector we've created
-!    INTEGER :: OL2FileHandle
     integer :: PREVDEFDQT               !
     integer :: QUANTITYINDEX            ! Within the vector
+    integer :: RATIOQUANTITYINDEX       ! in the quantities database
+    integer :: RATIOVECTORINDEX         ! In the vector database
     integer :: REFGPHQUANTITYINDEX      ! in the quantities database
     integer :: REFGPHVECTORINDEX        ! In the vector database
     integer :: RowVector                ! Vector defining rows of Matrix
@@ -366,6 +372,9 @@ contains ! =====     Public Procedures     =============================
           case ( f_geocAltitudeQuantity ) ! For hydrostatic
             geocAltitudeVectorIndex = decoration(decoration(subtree(1,gson)))
             geocAltitudeQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_ratioQuantity )      ! For isotope ratio
+            ratioVectorIndex = decoration(decoration(subtree(1,gson)))
+            ratioQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_refGPHQuantity ) ! For hydrostatic
             refGPHVectorIndex = decoration(decoration(subtree(1,gson)))
             refGPHQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -427,6 +436,16 @@ contains ! =====     Public Procedures     =============================
           end if
           call FillVectorQtyHydrostatically ( key, quantity, temperatureQuantity, &
             & refGPHQuantity, h2oQuantity, geocAltitudeQuantity, maxIterations )          
+
+        case ( l_isotope ) ! --------------- Isotope based fills -------
+          if (.not. all(got( (/f_ratioQuantity, f_sourceQuantity/) ) ) ) &
+            & call Announce_Error ( key, badIsotopeFill )
+          ratioQuantity => GetVectorQtyByTemplateIndex( &
+            & vectors(ratioVectorIndex), ratioQuantityIndex )
+          sourceQuantity => GetVectorQtyByTemplateIndex( &
+            & vectors(sourceVectorIndex), sourceQuantityIndex )
+          call FillVectorQtyFromIsotope ( key, quantity, sourceQuantity, &
+            & ratioQuantity )
 
         case ( l_special ) ! -  Special fills for some quantities  -----
           select case ( quantity%template%quantityType )
@@ -567,108 +586,8 @@ contains ! =====     Public Procedures     =============================
 
   ! =====     Private Procedures     =====================================
 
-  !=============================== FillVector ==========================
-  subroutine FillVector ( errorCode, inArray, Vector, arrayType, vectorType, &
-    & NumQtys, numChans, numSurfs, numInstances, qtiesStart, dim_order )
-    !=============================== FillVector ==========================
 
-    ! Fill the vector Vector with values taken from the array inArray
-    ! in a manner that depends on their respective types:
-
-    !        arrayType        vectorType            operation
-    !          l2gp              l2gp       vector(:,:,:) = inArray(:,:,:)
-
-    ! It is assumed that the rank3 inArray is filled from
-    ! inArray(1, 1, 1) to inArray(numChans, numSurfs, numInstances)
-
-    ! With the redefinition of Vector%quantities to be a rank2 object
-    ! we are faced with a problem: how to fill a rank 2 object from a rank 3 one?
-    ! If the rank 3 object is full, then it use the following trick:
-    ! Vector(1:numChans*numSurfs, 1:numInstances) = 
-    !                   inArray(1:numChans, 1:numSurfs, 1:numInstances)
-
-    character (Len=*), intent(IN) ::        arrayType, vectorType
-    integer, intent(OUT) ::                 errorCode		! zero unless an error
-    ! REAL(r8), POINTER, DIMENSION(:,:,:) ::  inPointer
-    real(r8), dimension(:,:,:) ::           inArray
-    type(Vector_T), intent(OUT) ::          Vector
-    integer, intent(IN) ::                  NumQtys, qtiesStart
-    integer, intent(IN) ::                  numInstances, numSurfs, numChans
-    integer, intent(IN), optional, dimension(:) :: dim_order
-
-    ! Private
-    character (LEN=LineLen) ::              msr
-    integer ::                              qty
-    character (LEN=4) ::                    qtyChar, errorCodeChar
-
-    ! Sanity checks:
-    if ( numChans.eq.0 ) then
-      !	call announce_error ( ErrorInFillVector, numChansisZero )
-      errorCode = numChansisZero
-      return
-    else if ( numSurfs.eq.0 ) then
-      !	call announce_error ( ErrorInFillVector, numSurfsisZero )
-      errorCode = numSurfsisZero
-      return
-    else if ( numInstances.eq.0 ) then
-      !	call announce_error ( ErrorInFillVector, numInstancesisZero )
-      errorCode = numInstancesisZero
-      return
-    end if
-
-    Vector%template%NoQuantities = NumQtys
-    select case (arrayType(:4) // VectorType(:4))
-    case ('l2gpl2gp')
-      do qty = qtiesStart, qtiesStart - 1 + NumQtys
-        write(qtyChar, '(I4)') qty
-        Vector%quantities(qty)%template%noChans = numChans
-        Vector%quantities(qty)%template%noSurfs = numSurfs
-        Vector%quantities(qty)%template%noInstances = numInstances    
-        !     CALL put_3d_view(inPointer, &
-        !        & numChans, &
-        !        & numSurfs, &
-        !        & numInstances, &
-        !        & Vector%quantities(qty)%values)
-        !     Vector%quantities(qty)%values = inPointer
-        !	if ( numChans.EQ.1 ) then
-        !        	Vector%quantities(qty)%values = inPointer(:, :, 1)
-        !	else if ( numSurfs.EQ.1 ) then
-        !        	Vector%quantities(qty)%values = inPointer(:, 1, :)
-        !	else if ( numInstances.EQ.1 ) then
-        !        	Vector%quantities(qty)%values = inPointer(1, :, :)
-        !        ELSE
-        !		call announce_error ( ErrorInFillVector, objIsFullRank3 )
-        !       		RETURN
-        !	end if
-	call squeeze(errorCode, inArray, Vector%quantities(qty)%values)
-        !     WRITE(errorCodeChar, '(I4)') errorCode
-        !     msr = 'Error #' // errorCodeChar // ' in squeezing l2gp into quantity ' // qtyChar
-        !     if ( errorCode /= 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
-        !        & msr)
-      end do
-    case ('l2aul2au')
-      do qty = qtiesStart, qtiesStart - 1 + NumQtys
-        write(qtyChar, '(I4)') qty
-        Vector%quantities(qty)%template%noChans = numChans
-        Vector%quantities(qty)%template%noSurfs = numSurfs
-        Vector%quantities(qty)%template%noInstances = numInstances
-        if ( present(dim_order) ) then
-          call squeeze(errorCode, inArray, Vector%quantities(qty)%values, dim_order)
-        else    
-          call squeeze(errorCode, inArray, Vector%quantities(qty)%values)
-        end if
-        !     WRITE(errorCodeChar, '(I4)') errorCode
-        !     msr = 'Error #' // errorCodeChar // ' in squeezing l2aux into quantity ' // qtyChar
-        !     if ( errorCode /= 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
-        !        & msr)
-      end do
-    case default
-      ! FillVector not yet written to handle these cases
-    end select
-
-  end subroutine FillVector
-
-  !=============================== FillOL2GPVector ==========================
+  !=============================== FillVectorQuantityFromGrid ============
   subroutine FillVectorQuantityFromGrid(quantity,grid, errorCode)
     ! Dummy arguments
     type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
@@ -706,7 +625,7 @@ contains ! =====     Public Procedures     =============================
     end do                              ! End instance loop
   end subroutine FillVectorQuantityFromGrid
 
-  !=============================== FillOL2GPVector ==========================
+  !=============================== FillVectorQuantityFromL2GP ==========
   subroutine FillVectorQuantityFromL2GP(quantity,l2gp, errorCode)
 
     ! If the times, pressures, and geolocations match, fill the quantity with
@@ -945,239 +864,64 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine FillVectorQtyHydrostatically
 
-  !=============================== FillPrevDefd ==========================
-  subroutine FillPrevDefd(OldVector, PrevDefdQt, qtyTemplates, &
-    & Output, QuantityName, qtiesStart, chunkNo, errorCode)
-    !=============================== FillPrevDefd ==========================
+  ! -------------------------------------- FillVectorQtyFromIsotope -----------
 
-    ! If the times, pressures, and geolocations match,
-    ! fill the vector Output with values taken from the appropriate quantity in
-    ! previously defined vector OldVector
-    ! 
+  subroutine FillVectorQtyFromIsotope ( key, quantity, sourceQuantity, &
+            & ratioQuantity )
+    ! This routine fills one vector from another, given an appropriate
+    ! isotope ratio.
 
-    integer, intent(IN) ::                            PrevDefdQt
-    integer, intent(IN) ::                            qtiesStart
-    type(Vector_T), intent(IN) ::                     OldVector
-    type (QuantityTemplate_T), dimension(:), pointer :: qtyTemplates
-    type(Vector_T), intent(INOUT) ::                  Output
-    character*(*), intent(IN) ::                      QuantityName
-    ! If done chunk-by-chunk, the following is the chunk number
-    ! Otherwise, chunkNo should = -1
-    integer, intent(in) ::                        chunkNo
-    integer, intent(OUT) ::                            errorCode	! if error
+    integer, intent(in) :: KEY          ! Tree node
+    type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
+    type (VectorValue_T), intent(in) :: SOURCEQUANTITY ! Quantity to take vmr from
+    type (VectorValue_T), intent(in) :: RATIOQUANTITY ! Isotope ratio information
 
     ! Local variables
-    !::::::::::::::::::::::::: LOCALS :::::::::::::::::::::
+    real (r8) :: FACTOR                 ! Multiplier to apply to sourceQuantity
 
-    real(r8) ::                                       TOLERANCE
-    parameter(TOLERANCE=0.05)
+    ! Executable code
 
-    ! A wrong version compared ChunkNo to OldVector%ChunkNumbers
-    logical ChunkNumberIsTrustworthy
-    parameter(ChunkNumberIsTrustworthy=.false.)
+    if (.not. ValidateVectorQuantity ( quantity, &
+      & quantityType=(/ l_vmr /), frequencyCoordinate=(/ l_none /) ) ) &
+      &   call MLSMessage ( MLSMSG_Error, ModuleName, &
+      &      "Inappropriate quantity for isotope fill")
 
-    type (QuantityTemplate_T) ::                      PDQTemplate	! Prev. def'd Quantity Template
-    type (QuantityTemplate_T) ::                      OQTemplate	! Output Quantity Template
-    integer ::                                        i
-    integer ::                                        firstProfile, lastProfile
-    integer ::                                        noL2GPValues=1
-    logical ::                                        TheyMatch
-    real(r8) ::                                       phiMin, phiMax
-    real(r8) ::                                       phi_TOLERANCE
+    if (.not. ValidateVectorQuantity ( sourceQuantity, &
+      & quantityType=(/ l_vmr /), frequencyCoordinate=(/ l_none /) ) ) &
+      &   call MLSMessage ( MLSMSG_Error, ModuleName, &
+      &      "Inappropriate source quantity for isotope fill")
 
-    PDQTemplate = qtyTemplates(OldVector%TEMPLATE%QUANTITIES(PrevDefdQt))
-    OQTemplate = qtyTemplates(Output%TEMPLATE%QUANTITIES(qtiesStart))
+    if (.not. ValidateVectorQuantity ( ratioQuantity, &
+      & quantityType=(/ l_isotopeRatio /), frequencyCoordinate=(/ l_none /), &
+      & noInstances=(/1/), noSurfs=(/1/) ) ) &
+      &   call MLSMessage ( MLSMSG_Error, ModuleName, &
+      &     "Inappropriate form/quantity for isotope ratio")
 
-    if ( OQTemplate%noInstances <= 0 ) then
-      errorCode=zeroProfilesFound
-      return
-    else if ( PDQTemplate%noInstances <= 0 ) then
-      errorCode=zeroProfilesFound
-      return
-    end if
-    ! Chunk-by-chunk, or all chunks at once?
-    if ( chunkNo == -1 ) then
-      firstProfile = 1
-      lastProfile = PDQTemplate%noInstances
-    else if ( ChunkNumberIsTrustworthy ) then
-      !	lastProfile = 1
-      !   firstProfile = PDQTemplate%noInstances
-      !	DO i=1, PDQTemplate%noInstances
-      !        	if ( chunkNo == OldVector%chunkNumber(i) ) then
-      !				firstProfile = MIN(firstProfile, i)
-      !				lastProfile = MAX(lastProfile, i)
-      !         end if
-      !   end do
-      !Can't get here unless ChunkNumberIsTrustworthy has been reset
-      call announce_error ( 0, miscellaneous_err, &
-	& "Programming error in Module Fill, SUBROUTINE FillPrevDefd " &
-	& // "ChunkNumberIsTrustworthy must be FALSE" )
-    else
-      ! Instead of comparing OldVector%chunkNumbers to ChunkNo
-      ! we will compare geodetic angles to phi
-      phiMin = OQTemplate%phi(1, 1)
-      phiMax = OQTemplate%phi(1, 1)
-      do i=1, OQTemplate%noInstances
-        phiMin = min(phiMin, OQTemplate%phi(1, i))
-        phiMax = max(phiMax, OQTemplate%phi(1, i))
-      end do
-      phi_TOLERANCE = TOLERANCE *(phiMax-phiMin) / OQTemplate%noInstances
-      if ( phi_TOLERANCE <= 0.D0 ) then
-        errorCode=zeroGeodSpan
-        return
-      end if
-      lastProfile = 1
-      firstProfile = PDQTemplate%noInstances
-      do i=1, PDQTemplate%noInstances
-        if ( phiMin <= (PDQTemplate%phi(1, i) + phi_TOLERANCE) ) then
-          firstProfile = min(firstProfile, i)
-        end if
-        if ( phiMax >= (PDQTemplate%phi(1, i) - phi_TOLERANCE) ) then
-          lastProfile = max(lastProfile, i)
-        end if
-      end do
+
+    if ( .not. DoHGridsMatch ( quantity, sourceQuantity ) .or. &
+      &  .not. DoVGridsMatch ( quantity, sourceQuantity ) ) &
+      &    call MLSMessage ( MLSMSG_Error, ModuleName, &
+      &      "Quantity and source quantity don't match for isotope fill" )
+
+    if ( quantity%template%molecule == sourceQuantity%template%molecule ) &
+      & call MLSMessage( MLSMSG_Error, ModuleName, &
+      &   "Source and quantity both describe same molecule in isotope fill")
+
+    if ( ratioQuantity%template%molecule == quantity%template%molecule ) then
+      ! Going from parent to isotope
+      factor = ratioQuantity%values(1,1)
+    else if ( ratioQuantity%template%molecule == sourceQuantity%template%molecule ) then
+      ! Going from isotope to parent
+      factor = 1.0/ratioQuantity%values(1,1)
+    else 
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & "Unable to understand isotope fill" )
     end if
 
-    TheyMatch = OQTemplate%noInstances .eq. (lastProfile-firstProfile+1)
-    TheyMatch = TheyMatch &
-      & .and. &
-      & (OQTemplate%stacked .eqv. PDQTemplate%stacked) &
-      & .and. &
-      & (OQTemplate%coherent .eqv. PDQTemplate%coherent) &
-      & .and. &
-      & (OQTemplate%regular .eqv. PDQTemplate%regular) 
-    if ( TheyMatch ) then
-      do i = firstProfile, lastProfile
-        if ( &
-          &   nearBy(PDQTemplate%geodLat(1,i), OQTemplate%geodLat(1,i)) &
-          & .and. &
-          &   nearBy(PDQTemplate%lon(1,i), OQTemplate%lon(1,i)) &
-          & .and. &
-          &   nearBy(PDQTemplate%solarTime(1,i), OQTemplate%solarTime(1,i)) &
-          & ) then
-        else
-          TheyMatch = .false.
-          exit
-        end if
-      end do
-    end if
-    if ( TheyMatch &
-      & .and. &
-      & PDQTemplate%noSurfs == OQTemplate%noSurfs &
-      & .and. &
-      & PDQTemplate%noSurfs == 1 ) then
-      do i = 1, OQTemplate%noSurfs
-        if ( &
-          &   nearBy(PDQTemplate%surfs(i,1), OQTemplate%surfs(i,1)) &
-          & ) then
-        else
-          TheyMatch = .false.
-          exit
-        end if
-      end do
-    end if
-    if ( TheyMatch ) then
-      Output%quantities(qtiesStart)%values = OldVector%quantities(PrevDefdQt)%values
-    else
-      errorCode=vectorWontMatchPDef
-    end if
-  end subroutine FillPrevDefd
+    quantity%values = sourceQuantity%values * factor
 
-  !=============================== FillOL2AUXVector ==========================
-  subroutine FillOL2AUXVector(OldL2AUXData, qtyTemplates, &
-    & Output, QuantityName, qtiesStart, chunkNo, errorCode)
-    !=============================== FillOL2AUXVector ==========================
-
-    ! If the times, pressures, and geolocations match,
-    ! fill the vector Output with values taken from the
-    ! Old L2AUX vector OldL2AUXData
-    ! 
-
-    integer, intent(IN) ::                            qtiesStart
-    type(L2AUXData_T) ::                               OldL2AUXData
-    type (QuantityTemplate_T), dimension(:), pointer :: qtyTemplates
-    !TYPE(L2GPData_T), DIMENSION(:), POINTER ::        L2GPDatabase
-    type(Vector_T), intent(INOUT) ::                  Output
-    character*(*), intent(IN) ::                      QuantityName
-    integer, intent(in) :: chunkNo
-    integer, intent(OUT) ::                            errorCode	! if error
-
-    ! Local variables
-    !::::::::::::::::::::::::: LOCALS :::::::::::::::::::::
-    type (QuantityTemplate_T) ::                      OQTemplate	! Output Quantity Template
-    integer ::                                        OQType	! Ouptut quantity type
-    integer ::                                        OQNVals	! No. Ouptut quantity vals
-    integer ::                                        ChanDim	! which dim no. is channel
-    integer ::                                        IntFreqDim	! which dim no. is int. frq.
-    integer ::                                        USBDim	! which dim no. is USB
-    integer ::                                        LSBDim	! which dim no. is LSB
-    integer ::                                        MAFDim	! which dim no. is MAF
-    integer ::                                        MIFDim	! which dim no. is MIF
-    integer ::                                        L2NVals	! No. l2 aux vals
-    integer ::                                        i
-    logical ::                                        TheyMatch
-    ! This will let us re-order the vector dimensions differently from the l2aux
-    integer, dimension(3) ::                          dim_order
-
-    ! Properties of Output Vector
-    OQTemplate = qtyTemplates(Output%TEMPLATE%QUANTITIES(qtiesStart))
-    OQType = OQtemplate%quantityType
-    OQNVals = OQtemplate%noInstances*OQtemplate%noSurfs*OQtemplate%noChans
-
-    ! Properties of l2 aux
-    ChanDim = 0
-    IntFreqDim = 0
-    USBDim = 0
-    LSBDim = 0
-    MAFDim = 0
-    MIFDim = 0
-    L2NVals = 1
-    do i=1, L2AUXRank
-      L2NVals = L2NVals*OldL2AUXData%dimensions(i)%noValues
-      select case(OldL2AUXData%dimensions(i)%dimensionFamily)
-      case(L_Channel)
-        ChanDim = i
-        dim_order(1) = i
-      case(L_IntermediateFrequency)
-        IntFreqDim = i
-      case(L_USBFrequency)
-        USBDim = i
-      case(L_LSBFrequency)
-        LSBDim = i
-      case(L_MIF)
-        MIFDim = i
-      case(L_MAF)
-        MAFDim = i
-      case DEFAULT	! We are not yet interested in these dimensions
-      end select
-
-    end do
-
-    ! Check that the dimensions match up and are of the same family
-    TheyMatch = OQNVals == L2NVals
-    if ( OQTemplate%minorFrame ) then
-      TheyMatch = TheyMatch .and. MIFDim > 0
-    end if
-    if ( OQTemplate%noChans > 0 ) then
-      TheyMatch = TheyMatch .and. &
-        & (  ChanDim > 0   )
-    end if
-
-    if ( TheyMatch ) then
-      call FillVector(errorCode, OldL2AUXData%values, Output, &
-        & 'l2aux', 'l2aux', 1, &
-        & max(OldL2AUXData%dimensions(1)%noValues, 1), &
-        & max(OldL2AUXData%dimensions(2)%noValues, 1), &
-        & max(OldL2AUXData%dimensions(3)%noValues, 1), &
-        & qtiesStart)
-    else
-      !   CALL MLSMessage(MLSMSG_Error, ModuleName, &
-      !        & 'Vector and old L2AUX do not match')
-      errorCode=cantFillFromL2AUX
-    end if
-
-  end subroutine FillOL2AUXVector
-
+  end subroutine FillVectorQtyFromIsotope
+  
   !=============================================== ExplicitFillVectorQuantity ==
   subroutine ExplicitFillVectorQuantity(quantity, valuesNode, spread)
 
@@ -1298,160 +1042,6 @@ contains ! =====     Public Procedures     =============================
     if (toggle(gen) ) call trace_end( "FillVectorQuantityFromL1B" )
   end subroutine FillVectorQuantityFromL1B
 
-  !=============================== nearby ==========================
-  function nearby(x, y, inRelSmall, inOverallTol)
-    !=============================== nearby ==========================
-    ! This functions returns TRUE if x and y are "nearby" comparing either
-    ! their relative difference (proportionally small) 
-    ! or their differences with an overall tolerance
-    real(r8), intent(IN) ::              x, y
-    real(r8), intent(IN), optional ::    inRelSmall
-    real(r8), intent(IN), optional ::    inOverallTol
-
-    ! result
-    logical ::                           nearby
-
-    ! Private
-    real(r8) ::                          small=1.D-32
-    real(r8) ::                          tolerance=0.D0
-
-    if ( present(inRelSmall) ) then
-      small = inRelSmall
-    end if
-
-    if ( present(inOverallTol) ) then
-      tolerance = inOverallTol
-    end if
-
-    if ( abs(x-y) <= tolerance ) then
-      nearby = .true.
-    else if ( x*y /= 0 ) then
-      nearby = abs(x-y) .lt. small*sqrt(abs(x))*sqrt(abs(y))
-    else if ( x /= 0 ) then
-      nearby = abs(x-y) .lt. small*abs(x)
-    else
-      nearby=.true.
-    end if
-
-  end function nearby
-
-  !=============================== whatQuantityNumber ==========================
-  function WhatQuantityNumber ( X, Y, XVectorTemplate )
-    !=============================== whatQuantityNumber ==========================
-    ! This functions returns the quantity number of quantity y in vector x
-    ! where x and y are sub-rosa indexes of their actual names;
-    ! i.e., they are specified in the cf as name[x].name[y]
-    ! where name[x] = get_char(x), name[y] = get_char[y]
-
-    ! If the quantity is not found, it returns FAILED (-1)
-    integer, intent(IN) ::               X, Y
-    type (VectorTemplate_T)  ::          XVectorTemplate
-
-    ! result
-    integer ::                           WhatQuantityNumber
-
-    ! Private
-    integer, parameter ::                FAILED = -1
-    integer              ::              Qty
-
-    whatQuantityNumber = FAILED
-    do qty = 1, xVectorTemplate%NoQuantities
-      if ( xVectorTemplate%Name == y ) then
-        whatQuantityNumber = qty
-        exit
-      end if
-    end do
-
-  end function WhatQuantityNumber
-
-  !=============================== squeeze ==========================
-  subroutine Squeeze ( ErrorCode, Source, Sink, Source_order )
-    !=============================== squeeze ==========================
-    ! takes a rank 3 object source and returns a rank2 object sink
-    ! source(1..n1, 1..n2, 1..n3) -> sink(1..n1*n2, 1..n3)
-    ! unless it can't--then it returns errorCode /= 0
-    ! One reason it may fail: shape of sink too small
-
-    ! Assuming that shape(source) = {n1, n2, n3}
-    !     =>          shape(sink) = {m1, m2}
-    ! then we must further assume (else set errorCode)
-    ! n1*n2 <= m1
-    ! n3 <= m2
-
-    ! if source_order is present, it is a permutation of (1 2 3)
-    ! such that before squeezing, the source is re-ordered:
-    ! temp(1, 2, 3) = source(order(1), order(2), order(3))
-    ! and then
-    ! temp(1..n1, 1..n2, 1..n3) -> sink(1..n1*n2, 1..n3)
-
-    ! (A future improvement might take as optional arguments
-    !  integer arrays source_shape, sink_shape, 
-    !  or else shape-params n1, n2, m1)
-    !--------Argument--------!
-    real(r8), dimension(:,:,:), intent(in) :: Source
-    real(r8), dimension(:,:), intent(out)  :: Sink
-    integer, intent(out)                   :: ErrorCode
-    integer, intent(in), optional, dimension(:) :: Source_order
-
-    !----------Local vars----------!
-
-    integer, dimension(4) :: Source_shape
-    integer, dimension(4) :: Sink_shape
-    integer, dimension(4) :: Temp_shape
-    integer :: I, Icode, Offset
-    real(r8), dimension(:,:,:), allocatable :: Temp
-    !----------Executable part----------!
-    source_shape(1:3) = shape(source)
-    sink_shape(1:2) = shape(sink)
-
-    if ( source_shape(1) == 0 ) then
-      errorCode = n1_is_zero
-      return
-    else if ( source_shape(2) == 0 ) then
-      errorCode = n2_is_zero
-      return
-    else if ( source_shape(3) == 0 ) then
-      errorCode = n3_is_zero
-      return
-    else if ( sink_shape(1) < source_shape(1)*source_shape(2) ) then
-      errorCode = m1_too_small
-      return
-    else if ( sink_shape(2) < source_shape(3) ) then
-      errorCode = m2_too_small
-      return
-    else
-      errorCode = 0
-    end if
-
-    if ( present(source_order) ) then
-      !        Check that source_order is a legal permutation of (1 2 3)
-      !        using trick: sum and product must each equal 6
-      if ( source_order(1)+source_order(2)+source_order(3) /= 6 &
-        & .or. &
-        & source_order(1)*source_order(2)*source_order(3) /= 6 ) then
-        errorCode = not_permutation
-        return
-      end if
-      temp_shape(1:3) = source_shape(source_order(1:3))
-      allocate ( temp(temp_shape(1), temp_shape(2), temp_shape(3)), &
-        & STAT=errorCode )
-      if ( errorCode /= 0 ) then
-        errorCode = allocation_err
-        return
-      end if
-      temp = reshape(source, temp_shape(1:3), order=source_order(1:3))
-      sink = reshape(temp, sink_shape(1:2))
-      deallocate ( temp, STAT=errorCode )
-      if ( errorCode /= 0 ) then
-        errorCode = deallocation_err
-        return
-      end if
-    else
-      sink = reshape(source, sink_shape(1:2))
-    end if
-
-  end subroutine Squeeze
-
   ! ---------------------------------------------  ANNOUNCE_ERROR  -----
   subroutine ANNOUNCE_ERROR ( where, CODE , ExtraMessage, ExtraInfo )
     integer, intent(in) :: where   ! Tree node where error was noticed
@@ -1486,6 +1076,8 @@ contains ! =====     Public Procedures     =============================
       call output ( " geocAltitudeQuantity is not geocAltitude", advance='yes' )
     case ( badlosvelfill )
       call output ( " incomplete/incorrect information for los velocity", advance='yes' )
+    case ( badIsotopeFill )
+      call output ( " incomplete/incorrect information for isotope fill", advance='yes' )
     case ( badREFGPHQuantity )
       call output ( " refGPHQuantity is not refGPH", advance='yes' )
     case ( badTemperatureQuantity )
@@ -1588,6 +1180,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.47  2001/05/10 23:25:12  livesey
+! Added isotope scaling stuff, tidied up some old code.
+!
 ! Revision 2.46  2001/05/08 20:34:26  vsnyder
 ! Cosmetic changes
 !
