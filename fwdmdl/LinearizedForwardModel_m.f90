@@ -534,8 +534,14 @@ contains ! =====     Public Procedures     =============================
         end select
         
         if ( sidebandStart == sidebandStop ) then
-          jBlock%values(:,1) = reshape(transpose(dyByDx),&
-            & (/radiance%template%instanceLen/))
+          do chan = 1, noChans
+            if ( doChannel ( chan ) ) then
+              do mif = 1, noMIFs
+                jBlock%values( chan + (mif-1)*noChans, 1 ) = &
+                  & dyByDx ( mif, chan )
+              end do                  ! Minor frames
+            endif                     ! Doing this channel
+          enddo                       ! Channels
         else
           ! Either place or add, make decision outside loop!
           if ( sideband == sidebandStart ) then
@@ -577,6 +583,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.1  2001/10/02 16:51:41  livesey
+! Removed fmStat%finished and reordered loops in forward models
+!
 ! Revision 2.0  2001/09/17 20:26:26  livesey
 ! New forward model
 !
