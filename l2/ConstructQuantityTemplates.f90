@@ -242,7 +242,7 @@ contains ! =====     Public Procedures     =============================
     ! first order.
 
     if ( family == 0 ) family = natural_units(quantityType)
-    minorFrame = any(quantityType == (/ l_Baseline, l_Ptan, l_Radiance, &
+    minorFrame = any(quantityType == (/ l_Ptan, l_Radiance, &
       & l_cloudInducedRadiance, l_cloudRADSensitivity, l_effectiveOpticalDepth, &
       & l_tngtECI, l_tngtGeodAlt, l_tngtGeocAlt, l_scECI, l_scGeocAlt,&
       & l_scVel, l_losVel, l_heightOffset, l_scanResidual, l_chisqmmif /) )
@@ -780,6 +780,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.55  2001/10/02 20:50:54  livesey
+! No longer asserts baseline to be minor frame
+!
 ! Revision 2.54  2001/09/17 23:11:50  pwagner
 ! Tiny changes for chi^2
 !
