@@ -11,6 +11,7 @@ module Time
   use OutputL1B, only: L1BOASC_T, LENCOORD
   use Scan, only: SCAN_GUESS
   use TkL1B, only: TKL1B_SC
+  use Dump_0, only: Dump
   implicit none
   private
 
@@ -206,7 +207,7 @@ contains
     real(r8), intent(IN) :: homeAlt, homeLat, spm
     character (LEN=27), intent(OUT) :: scanTimes(:,:)
     integer, intent(OUT) :: orbPerDay
-    integer, intent(OUT) :: numMIFs(:,:)
+    integer, intent(INOUT) :: numMIFs(:,:)
     real(r8), intent(OUT) :: scanTAI(:,:)
 
     ! Parameters
@@ -317,15 +318,9 @@ contains
     do i = 1, orbPerDay-1
       do j = 1, scansPerOrb
         if ( j /= scansPerOrb) then
-          do k = 1, N_RECORDS
-            if ( scanTAI(j,i) + k*spm > scanTAI(j+1,i) ) exit
-            numMIFs(j,i) = k
-          enddo
+          numMIFs(j,i) = nint ( ( scanTAI(j+1,i) - scanTAI(j,i) ) / spm )
         else 
-          do k = 1, N_RECORDS
-            if ( ( scanTAI(j,i) + k*spm ) > scanTAI(1,i+1) ) exit
-            numMIFs(j,i) = k
-          enddo
+          numMIFs(j,i) = nint ( ( scanTAI(1,i+1) - scanTAI(j,i) ) / spm )
         endif
       enddo
     enddo
@@ -358,8 +353,6 @@ contains
     integer :: Pgs_td_utcToTAI, Pgs_td_taiToUTC
 
     ! Variables
-    logical, parameter :: DEBUG = .FALSE.
-    logical, parameter :: ADDEXTRAMIF = .TRUE.
    
     character(LEN=27) :: backTimes(scansPerOrb)
     integer :: i, returnStatus
@@ -375,16 +368,6 @@ contains
     mafTAI = orbTAI
     do i = 1, scansPerOrb
       mafTAI = mafTAI - numValues(scansPerOrb - (i-1))*spm
-      if ( ADDEXTRAMIF ) mafTAI = mafTAI - spm
-      if ( DEBUG  ) then
-        call output('scan Number ', advance='no')
-        call blanks(3, advance='no')
-        call output(i, advance='no')
-        call blanks(3, advance='no')
-        call output('dt', advance='no')
-        call blanks(3, advance='no')
-        call output(mafTAI - startTAI, advance='yes')
-      endif
       if ( mafTAI < startTAI ) exit
       returnStatus = Pgs_td_taiToUTC( mafTAI, backTimes(i) )
       backTAI(i) = mafTAI
@@ -392,34 +375,11 @@ contains
     enddo
 
     ! Reverse numbering of MAF times, numValues
-    if ( DEBUG ) then
-      call output('Num of MAFs prior to first full orbit', advance='no')
-      call blanks(3, advance='no')
-      call output(preMAF, advance='yes')
-    endif
     do i = 1, preMAF
       preTimes(i) = backTimes( preMAF - (i-1) )
-      preTAI(i)   = backTAI (preMAF - (i-1) )
+      preTAI(i)   = backTAI ( preMAF - (i-1) )
       numMIFs(i) = numValues( scansPerOrb - (preMAF - i) )
-! Warning: The following was removed because it made a subscript
-! go out of bounds in l1boa_fill
-! However, w/o it the numbers won't add up
-!      if ( ADDEXTRAMIF ) numMIFs(i) = numMIFs(i) + 1
-      if ( DEBUG .and. i > 1) then
-        call output('Major Frame ', advance='no')
-        call blanks(3, advance='no')
-        call output(i, advance='no')
-        call blanks(3, advance='no')
-        call output('Num of MIFs', advance='no')
-        call blanks(3, advance='no')
-        call output(numMIFs(i), advance='no')
-        call blanks(3, advance='no')
-        call output('delta time TAI', advance='no')
-        call blanks(3, advance='no')
-        call output(preTAI(i) - preTAI(i-1), advance='no')
-        call blanks(3, advance='yes')
-      endif
-    enddo
+    end do
 
   end subroutine Time_pre
 
@@ -443,7 +403,6 @@ contains
     integer :: Pgs_td_utcToTAI, Pgs_td_taiToUTC
 
     ! Variables
-    logical, parameter :: ADDEXTRAMIF = .TRUE.
 
     integer :: i, returnStatus
     real(r8) :: orbTAI, mafTAI
@@ -457,7 +416,6 @@ contains
     mafTAI = orbTAI
     do i = 1, scansPerOrb
       mafTAI = mafTAI + numValues(i)*spm
-      if ( ADDEXTRAMIF ) mafTAI = mafTAI + spm
       if ( mafTAI > endTAI ) exit
       returnStatus = Pgs_td_taiToUTC( mafTAI, postTimes(i+1) )
       postTAI(i+1) = mafTAI
@@ -532,6 +490,9 @@ contains
 end module Time
 
 ! $Log$
+! Revision 1.6  2001/12/08 23:29:34  pwagner
+! Reset DEBUG params to FALSE
+!
 ! Revision 1.5  2001/12/08 00:46:48  pwagner
 ! ADDEXTRAMIF in Time_pre and Time_post; debugging stuff(latter should be ousted)
 !
