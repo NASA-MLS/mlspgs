@@ -1,11 +1,10 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
 MODULE SortQualifyTHz ! Sort and qualify the L0 data for the THz module
 !=============================================================================
 
-  USE MLSCommon, ONLY: r8
   USE L0_sci_tbls, ONLY: THzSciMAF
   USE THzCalibration, ONLY: CalBuf, MAFdata_T
 
@@ -38,9 +37,7 @@ CONTAINS
 
     LOGICAL :: more_data
 
-    INTEGER :: sci_MAFno, dif_MAFno, MIFsPerMAF, CalMAFs, CalMAFno
-    INTEGER, SAVE :: prev_MAFno
-    REAL(r8), SAVE :: prev_secTAI
+    INTEGER :: sci_MAFno, MIFsPerMAF, CalMAFs, CalMAFno
     REAL :: MAF_dur, MIF_dur
 
     MIFsPerMAF = L1Config%Calib%MIFsPerMAF
@@ -64,20 +61,26 @@ CONTAINS
        IF (.NOT. more_data) EXIT    !! Nothing more to do
 
        sci_MAFno = THzSciMAF(0)%MAFno
-       IF (EngMAF%MAFno < sci_MAFno) THEN   ! Catch up to the Science
-          DO
+
+       DO
+
+          IF (EngMAF%MAFno == sci_MAFno) EXIT   ! Nothing more to read
+
+          IF (EngMAF%secTAI <= THzSciMAF(2)%secTAI) THEN       ! Catch the Sci
+
              CALL NextEngMAF (more_data)
-             IF (EngMAF%MAFno == sci_MAFno) EXIT
-             IF (.NOT. more_data) EXIT    !! Nothing more to do
-          ENDDO
-       ELSE IF (EngMAF%MAFno > sci_MAFno) THEN   ! Catch up to the Engineering
-          DO
+             IF (.NOT. more_data) RETURN    !! Nothing more to do
+
+          ELSE IF (EngMAF%secTAI > THzSciMAF(2)%secTAI) THEN   ! Catch the Eng
+
              CALL NextSciMAF (more_data)
+             IF (.NOT. more_data) RETURN    !! Nothing more to do
              sci_MAFno = THzSciMAF(0)%MAFno
-             IF (EngMAF%MAFno == sci_MAFno) EXIT
-             IF (.NOT. more_data) EXIT    !! Nothing more to do
-          ENDDO
-       ENDIF
+
+          ENDIF
+
+       ENDDO
+
 print *, "SCI/ENG MAF: ", sci_MAFno, EngMAF%MAFno
        CalMAFno = CalMAFno + 1
        CurMAFdata => CalBuf%MAFdata(CalMAFno)
@@ -193,6 +196,9 @@ END MODULE SortQualifyTHz
 !=============================================================================
 
 ! $Log$
+! Revision 2.3  2003/08/15 14:25:04  perun
+! Version 1.2 commit
+!
 ! Revision 2.2  2003/02/10 20:32:45  perun
 ! Increase calbuf size.
 !

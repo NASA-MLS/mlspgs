@@ -1,24 +1,29 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 MODULE OutputL1B_HDF4
-  USE OutputL1B_DataTypes, ONLY: LENG, LENT, LENUTC, LENCOORD, & 
+
+  USE OutputL1B_DataTypes, ONLY: LENUTC, LENCOORD, & 
        L1BOAINDEX_T, L1BOASC_T, L1BOATP_T 
   USE HDF
   USE MLSCommon
   USE MLSL1Common
   USE MLSL1Config, ONLY: MIFsGHz, MIFsTHz
-  USE MLSL1Rad, only: Radiance_T
+  USE MLSL1Rad, ONLY: Radiance_T
   USE MLSMessageModule, ONLY : MLSMessage, MLSMSG_Error, MLSMSG_Warning
-  USE MLSSignalNomenclature, only:GetFullMLSSignalName
+  USE MLSSignalNomenclature, ONLY:GetFullMLSSignalName
 
   IMPLICIT NONE
+
+  SAVE
+
   PRIVATE
+
   PUBLIC :: OUTPUTL1B_CREATE_HDF4, OUTPUTL1B_INDEX_HDF4, OUTPUTL1B_SC_HDF4, &
     & OUTPUTL1B_GHZ_HDF4, OUTPUTL1B_THZ_HDF4, OUTPUTL1B_RAD_HDF4
 
   !------------------- RCS Ident Info -----------------------
-  CHARACTER(LEN=130) :: Id = &                                                    
+  CHARACTER(LEN=130) :: Id = &
     "$Id$"
   CHARACTER (LEN=*), PARAMETER :: ModuleName="$RCSfile$"
   !----------------------------------------------------------
@@ -26,79 +31,79 @@ MODULE OutputL1B_HDF4
   ! SDS-HDF files.
   ! Parameters
 
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS1_NAME = 'MAFStartTimeUTC'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS2_NAME = 'MAFStartTimeTAI'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS3_NAME = 'noMIFs'
+  CHARACTER(len=*), PARAMETER :: SDS1_NAME = 'MAFStartTimeUTC'
+  CHARACTER(len=*), PARAMETER :: SDS2_NAME = 'MAFStartTimeTAI'
+  CHARACTER(len=*), PARAMETER :: SDS3_NAME = 'noMIFs'
 
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS4_NAME = 'scECI'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS5_NAME = 'scECR'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS6_NAME = 'scGeocAlt'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS7_NAME = 'scGeocLat'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS8_NAME = 'scGeodAlt'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS9_NAME = 'scGeodLat'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS10_NAME = 'scLon'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS11_NAME = 'scGeodAngle'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS12_NAME = 'scVelECI'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS13_NAME = 'ypr'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS14_NAME = 'yprRate'
+  CHARACTER(len=*), PARAMETER :: SDS4_NAME = 'scECI'
+  CHARACTER(len=*), PARAMETER :: SDS5_NAME = 'scECR'
+  CHARACTER(len=*), PARAMETER :: SDS6_NAME = 'scGeocAlt'
+  CHARACTER(len=*), PARAMETER :: SDS7_NAME = 'scGeocLat'
+  CHARACTER(len=*), PARAMETER :: SDS8_NAME = 'scGeodAlt'
+  CHARACTER(len=*), PARAMETER :: SDS9_NAME = 'scGeodLat'
+  CHARACTER(len=*), PARAMETER :: SDS10_NAME = 'scLon'
+  CHARACTER(len=*), PARAMETER :: SDS11_NAME = 'scGeodAngle'
+  CHARACTER(len=*), PARAMETER :: SDS12_NAME = 'scVelECI'
+  CHARACTER(len=*), PARAMETER :: SDS13_NAME = 'ypr'
+  CHARACTER(len=*), PARAMETER :: SDS14_NAME = 'yprRate'
 
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS15_NAME = 'GHz.encoderAngle'
+  CHARACTER(len=*), PARAMETER :: SDS15_NAME = 'GHz.encoderAngle'
 
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS16_NAME = 'GHz.scAngle'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS17_NAME = 'GHz.scanAngle'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS18_NAME = 'GHz.scanRate'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS19_NAME = 'GHz.tpECI'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS20_NAME = 'GHz.tpECR'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS21_NAME = 'GHz.tpOrbY'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS22_NAME = 'GHz.tpGeocAlt'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS23_NAME = 'GHz.tpGeocLat'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS24_NAME = 'GHz.tpGeocAltRate'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS25_NAME = 'GHz.tpGeodAlt'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS26_NAME = 'GHz.tpGeodLat'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS27_NAME = 'GHz.tpGeodAltRate'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS28_NAME = 'GHz.tpLon'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS29_NAME = 'GHz.tpGeodAngle'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS30_NAME = 'GHz.tpSolarTime'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS31_NAME = 'GHz.tpSolarZenith'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS32_NAME = 'GHz.tpLosAngle'
+  CHARACTER(len=*), PARAMETER :: SDS16_NAME = 'GHz.scAngle'
+  CHARACTER(len=*), PARAMETER :: SDS17_NAME = 'GHz.scanAngle'
+  CHARACTER(len=*), PARAMETER :: SDS18_NAME = 'GHz.scanRate'
+  CHARACTER(len=*), PARAMETER :: SDS19_NAME = 'GHz.tpECI'
+  CHARACTER(len=*), PARAMETER :: SDS20_NAME = 'GHz.tpECR'
+  CHARACTER(len=*), PARAMETER :: SDS21_NAME = 'GHz.tpOrbY'
+  CHARACTER(len=*), PARAMETER :: SDS22_NAME = 'GHz.tpGeocAlt'
+  CHARACTER(len=*), PARAMETER :: SDS23_NAME = 'GHz.tpGeocLat'
+  CHARACTER(len=*), PARAMETER :: SDS24_NAME = 'GHz.tpGeocAltRate'
+  CHARACTER(len=*), PARAMETER :: SDS25_NAME = 'GHz.tpGeodAlt'
+  CHARACTER(len=*), PARAMETER :: SDS26_NAME = 'GHz.tpGeodLat'
+  CHARACTER(len=*), PARAMETER :: SDS27_NAME = 'GHz.tpGeodAltRate'
+  CHARACTER(len=*), PARAMETER :: SDS28_NAME = 'GHz.tpLon'
+  CHARACTER(len=*), PARAMETER :: SDS29_NAME = 'GHz.tpGeodAngle'
+  CHARACTER(len=*), PARAMETER :: SDS30_NAME = 'GHz.tpSolarTime'
+  CHARACTER(len=*), PARAMETER :: SDS31_NAME = 'GHz.tpSolarZenith'
+  CHARACTER(len=*), PARAMETER :: SDS32_NAME = 'GHz.tpLosAngle'
 
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS33_NAME = 'THz.encoderAngle'
+  CHARACTER(len=*), PARAMETER :: SDS33_NAME = 'THz.encoderAngle'
 
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS34_NAME = 'THz.scAngle'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS35_NAME = 'THz.scanAngle'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS36_NAME = 'THz.scanRate'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS37_NAME = 'THz.tpECI'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS38_NAME = 'THz.tpECR'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS39_NAME = 'THz.tpOrbY'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS40_NAME = 'THz.tpGeocAlt'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS41_NAME = 'THz.tpGeocLat'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS42_NAME = 'THz.tpGeocAltRate'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS43_NAME = 'THz.tpGeodAlt'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS44_NAME = 'THz.tpGeodLat'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS45_NAME = 'THz.tpGeodAltRate'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS46_NAME = 'THz.tpLon'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS47_NAME = 'THz.tpGeodAngle'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS48_NAME = 'THz.tpSolarTime'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS49_NAME = 'THz.tpSolarZenith'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS50_NAME = 'THz.tpLosAngle'
+  CHARACTER(len=*), PARAMETER :: SDS34_NAME = 'THz.scAngle'
+  CHARACTER(len=*), PARAMETER :: SDS35_NAME = 'THz.scanAngle'
+  CHARACTER(len=*), PARAMETER :: SDS36_NAME = 'THz.scanRate'
+  CHARACTER(len=*), PARAMETER :: SDS37_NAME = 'THz.tpECI'
+  CHARACTER(len=*), PARAMETER :: SDS38_NAME = 'THz.tpECR'
+  CHARACTER(len=*), PARAMETER :: SDS39_NAME = 'THz.tpOrbY'
+  CHARACTER(len=*), PARAMETER :: SDS40_NAME = 'THz.tpGeocAlt'
+  CHARACTER(len=*), PARAMETER :: SDS41_NAME = 'THz.tpGeocLat'
+  CHARACTER(len=*), PARAMETER :: SDS42_NAME = 'THz.tpGeocAltRate'
+  CHARACTER(len=*), PARAMETER :: SDS43_NAME = 'THz.tpGeodAlt'
+  CHARACTER(len=*), PARAMETER :: SDS44_NAME = 'THz.tpGeodLat'
+  CHARACTER(len=*), PARAMETER :: SDS45_NAME = 'THz.tpGeodAltRate'
+  CHARACTER(len=*), PARAMETER :: SDS46_NAME = 'THz.tpLon'
+  CHARACTER(len=*), PARAMETER :: SDS47_NAME = 'THz.tpGeodAngle'
+  CHARACTER(len=*), PARAMETER :: SDS48_NAME = 'THz.tpSolarTime'
+  CHARACTER(len=*), PARAMETER :: SDS49_NAME = 'THz.tpSolarZenith'
+  CHARACTER(len=*), PARAMETER :: SDS50_NAME = 'THz.tpLosAngle'
 
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS51_NAME = 'counterMAF'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS62_NAME = 'scVelECR'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SDS63_NAME = 'scOrbIncl'
+  CHARACTER(len=*), PARAMETER :: SDS51_NAME = 'counterMAF'
+  CHARACTER(len=*), PARAMETER :: SDS62_NAME = 'scVelECR'
+  CHARACTER(len=*), PARAMETER :: SDS63_NAME = 'scOrbIncl'
 
-  CHARACTER(len=*), PUBLIC, PARAMETER :: DIM1_NAME = 'MAF'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: DIM2_NAME = 'MIF'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: DIM3_NAME = 'GHz.MIF'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: DIM4_NAME = 'THz.MIF'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: DIM5_NAME = 'xyz'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: DIM6_NAME = 'charUTC'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: DIM7_NAME = 'chanFB'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: DIM8_NAME = 'chanMB'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: DIM9_NAME = 'chanWF'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: DIM10_NAME = 'chanDACS'
+  CHARACTER(len=*), PARAMETER :: DIM1_NAME = 'MAF'
+  CHARACTER(len=*), PARAMETER :: DIM2_NAME = 'MIF'
+  CHARACTER(len=*), PARAMETER :: DIM3_NAME = 'GHz.MIF'
+  CHARACTER(len=*), PARAMETER :: DIM4_NAME = 'THz.MIF'
+  CHARACTER(len=*), PARAMETER :: DIM5_NAME = 'xyz'
+  CHARACTER(len=*), PARAMETER :: DIM6_NAME = 'charUTC'
+  CHARACTER(len=*), PARAMETER :: DIM7_NAME = 'chanFB'
+  CHARACTER(len=*), PARAMETER :: DIM8_NAME = 'chanMB'
+  CHARACTER(len=*), PARAMETER :: DIM9_NAME = 'chanWF'
+  CHARACTER(len=*), PARAMETER :: DIM10_NAME = 'chanDACS'
 
-  REAL, PUBLIC, PARAMETER :: FILL_REAL = -999.9
-  REAL(r8), PUBLIC, PARAMETER :: FILL_DP = -999.9
+  REAL, PARAMETER :: FILL_REAL = -999.9
+  REAL(r8), PARAMETER :: FILL_DP = -999.9
 
 CONTAINS
 
@@ -125,8 +130,8 @@ CONTAINS
     INTEGER :: sds38_id, sds39_id, sds40_id, sds41_id, sds42_id, sds43_id
     INTEGER :: sds44_id, sds45_id, sds46_id, sds47_id, sds48_id, sds49_id
     INTEGER :: sds50_id, sds51_id, sds52_id, sds53_id
-    INTEGER :: sds62_id, sds63_id, sds_gird_id
-    INTEGER :: dimSize(3)
+    INTEGER :: sds62_id, sds63_id, sds_gird_id, sds_mif_tai, sds_reflec_id
+    INTEGER :: dimSize(3), sds_los_vel_g, sds_los_vel_t, sds_ecrtofov
 
     ! Create the counterMAF SD in rad file F; name the dimension; terminate
     ! access to the data set.
@@ -160,6 +165,23 @@ CONTAINS
     status = sfsdmname (dim_id, DIM1_NAME)
     status = sfendacc (sds_gird_id)
 
+    ! Reflector temperatures
+    sds_reflec_id = sfcreate (sdId%RADDID, "Pri_Reflec", DFNT_FLOAT32, &
+         rank, dimSize(2))
+    dim_id = sfdimid (sds_reflec_id, 0) 
+    status = sfsdmname (dim_id, DIM1_NAME)
+    status = sfendacc (sds_reflec_id)
+    sds_reflec_id = sfcreate (sdId%RADDID, "Sec_Reflec", DFNT_FLOAT32, &
+         rank, dimSize(2))
+    dim_id = sfdimid (sds_reflec_id, 0) 
+    status = sfsdmname (dim_id, DIM1_NAME)
+    status = sfendacc (sds_reflec_id)
+    sds_reflec_id = sfcreate (sdId%RADDID, "Ter_Reflec", DFNT_FLOAT32, &
+         rank, dimSize(2))
+    dim_id = sfdimid (sds_reflec_id, 0) 
+    status = sfsdmname (dim_id, DIM1_NAME)
+    status = sfendacc (sds_reflec_id)
+
     ! Repeat these steps for the Rad D file
     sds53_id = sfcreate (sdId%RADDID, SDS51_NAME, DFNT_INT32, rank, &
       dimSize(2))
@@ -171,6 +193,23 @@ CONTAINS
     dim_id = sfdimid (sds_gird_id, 0) 
     status = sfsdmname (dim_id, DIM1_NAME)
     status = sfendacc (sds_gird_id)
+
+    ! Reflector temperatures
+    sds_reflec_id = sfcreate (sdId%RADFID, "Pri_Reflec", DFNT_FLOAT32, &
+         rank, dimSize(2))
+    dim_id = sfdimid (sds_reflec_id, 0) 
+    status = sfsdmname (dim_id, DIM1_NAME)
+    status = sfendacc (sds_reflec_id)
+    sds_reflec_id = sfcreate (sdId%RADFID, "Sec_Reflec", DFNT_FLOAT32, &
+         rank, dimSize(2))
+    dim_id = sfdimid (sds_reflec_id, 0) 
+    status = sfsdmname (dim_id, DIM1_NAME)
+    status = sfendacc (sds_reflec_id)
+    sds_reflec_id = sfcreate (sdId%RADFID, "Ter_Reflec", DFNT_FLOAT32, &
+         rank, dimSize(2))
+    dim_id = sfdimid (sds_reflec_id, 0) 
+    status = sfsdmname (dim_id, DIM1_NAME)
+    status = sfendacc (sds_reflec_id)
 
     ! L1BOA file -- create one-dimensional data sets
     sds2_id = sfcreate (sdId%OAId, SDS2_NAME, DFNT_FLOAT64, rank, dimSize(2))
@@ -231,6 +270,10 @@ CONTAINS
       dimSize(1:2))
     status = sfsfill (sds36_id, FILL_REAL)
 
+    sds_mif_tai = sfcreate (sdId%OAId, "MIF_TAI", DFNT_FLOAT64, rank, &
+         dimSize(1:2))
+    status = sfsfill (sds_mif_tai, FILL_DP)
+
     ! GHz tangent point quantities
     dimSize(1) = MIFsGHz
 
@@ -270,6 +313,9 @@ CONTAINS
     sds32_id = sfcreate (sdId%OAId, SDS32_NAME, DFNT_FLOAT32, rank, &
       dimSize(1:2))
     status = sfsfill (sds32_id, FILL_REAL)
+    sds_los_vel_g = sfcreate (sdId%OAId, "GHz.tpLosVel", DFNT_FLOAT64, rank, &
+      dimSize(1:2))
+    status = sfsfill (sds_los_vel_g, FILL_DP)
 
     ! THz tangent point quantities
 
@@ -311,6 +357,9 @@ CONTAINS
     sds50_id = sfcreate (sdId%OAId, SDS50_NAME, DFNT_FLOAT32, rank, &
       dimSize(1:2))
     status = sfsfill (sds50_id, FILL_REAL)
+    sds_los_vel_t = sfcreate (sdId%OAId, "THz.tpLosVel", DFNT_FLOAT64, rank, &
+      dimSize(1:2))
+    status = sfsfill (sds_los_vel_t, FILL_DP)
 
     ! Create three-dimensional data sets
     rank = 3
@@ -341,8 +390,17 @@ CONTAINS
     sds20_id = sfcreate (sdId%OAId, SDS20_NAME, DFNT_FLOAT64, rank, dimSize)
     status = sfsfill (sds20_id, FILL_DP)
 
+    dimSize(1) = lenCoord * lenCoord
+
+    sds_ecrtofov = sfcreate (sdId%OAId, "GHz.tpECRtoFOV", DFNT_FLOAT64, rank, &
+         dimSize)
+    status = sfsfill (sds_ecrtofov, FILL_DP)
+
     ! THz tangent point quantities
+
+    dimSize(1) = lenCoord
     dimSize(2) = MIFsTHz
+    dimSize(3) = SD_UNLIMITED
 
     sds37_id = sfcreate (sdId%OAId, SDS37_NAME, DFNT_FLOAT64, rank, dimSize) 
     status = sfsfill (sds37_id, FILL_DP)
@@ -379,6 +437,11 @@ CONTAINS
     dim_id = sfdimid (sds6_id, 0)
     status = sfsdmname (dim_id, DIM2_NAME)
     dim_id = sfdimid (sds6_id, 1)
+    status = sfsdmname (dim_id, DIM1_NAME)
+
+    dim_id = sfdimid (sds_mif_tai, 0)
+    status = sfsdmname (dim_id, DIM2_NAME)
+    dim_id = sfdimid (sds_mif_tai, 1)
     status = sfsdmname (dim_id, DIM1_NAME)
 
     dim_id = sfdimid (sds7_id, 0)
@@ -534,6 +597,11 @@ CONTAINS
     dim_id = sfdimid (sds32_id, 1)
     status = sfsdmname (dim_id, DIM1_NAME)
 
+    dim_id = sfdimid (sds_los_vel_g, 0)
+    status = sfsdmname (dim_id, DIM3_NAME)
+    dim_id = sfdimid (sds_los_vel_g, 1)
+    status = sfsdmname (dim_id, DIM1_NAME)
+
     ! THz quantities
     dim_id = sfdimid (sds33_id, 0) 
     status = sfsdmname (dim_id, DIM2_NAME)
@@ -629,6 +697,11 @@ CONTAINS
     dim_id = sfdimid (sds50_id, 1)
     status = sfsdmname (dim_id, DIM1_NAME)
 
+    dim_id = sfdimid (sds_los_vel_t, 0)
+    status = sfsdmname (dim_id, DIM4_NAME)
+    dim_id = sfdimid (sds_los_vel_t, 1)
+    status = sfsdmname (dim_id, DIM1_NAME)
+
     ! MAF counter
     dim_id = sfdimid (sds51_id, 0)
     status = sfsdmname (dim_id, DIM1_NAME)
@@ -640,6 +713,7 @@ CONTAINS
     status = sfendacc (sds4_id)
     status = sfendacc (sds5_id)
     status = sfendacc (sds6_id)
+    status = sfendacc (sds_mif_tai)
     status = sfendacc (sds7_id)
     status = sfendacc (sds8_id)
     status = sfendacc (sds9_id)
@@ -668,6 +742,8 @@ CONTAINS
     status = sfendacc (sds30_id)
     status = sfendacc (sds31_id)
     status = sfendacc (sds32_id)
+    status = sfendacc (sds_los_vel_g)
+    status = sfendacc (sds_ecrtofov)
     status = sfendacc (sds33_id)
     status = sfendacc (sds34_id)
     status = sfendacc (sds35_id)
@@ -686,13 +762,14 @@ CONTAINS
     status = sfendacc (sds48_id)
     status = sfendacc (sds49_id)
     status = sfendacc (sds50_id)
+    status = sfendacc (sds_los_vel_t)
     status = sfendacc (sds51_id)
 
   END SUBROUTINE OutputL1B_create_HDF4
 
   !------------------------------------------------- OuptutL1B_index ----
   SUBROUTINE OutputL1B_index_HDF4 (noMAF, sd_id, index)
-    ! This subroutine writes the time/MIF indexing quantities to the HDF-SD file. 
+    ! This subroutine writes the time/MIF indexing quantities to the HDF-SD file.
 
     ! Arguments
     TYPE (L1BOAindex_T), INTENT(IN) :: index
@@ -759,7 +836,7 @@ CONTAINS
     INTEGER :: sds_index, status
     INTEGER :: sds4_id, sds5_id, sds6_id, sds7_id, sds8_id, sds9_id
     INTEGER :: sds10_id, sds11_id, sds12_id, sds13_id, sds14_id
-    INTEGER :: sds62_id, sds63_id
+    INTEGER :: sds62_id, sds63_id, sds_mif_tai
     INTEGER :: edge(3), start(3), stride(3)
 
     ! Find data sets by name
@@ -771,6 +848,9 @@ CONTAINS
 
     sds_index = sfn2index (sd_id, SDS6_NAME)
     sds6_id = sfselect (sd_id, sds_index)
+
+    sds_index = sfn2index (sd_id, "MIF_TAI")
+    sds_mif_tai = sfselect (sd_id, sds_index)
 
     sds_index = sfn2index (sd_id, SDS7_NAME)
     sds7_id = sfselect (sd_id, sds_index)
@@ -825,6 +905,8 @@ CONTAINS
     edge(1) = SIZE(sc%scGeocAlt)
     edge(2) = 1
 
+    status = sfwdata (sds_mif_tai, start(1:2), stride(1:2), edge(1:2), &
+      sc%MIF_TAI)
     status = sfwdata (sds6_id, start(1:2), stride(1:2), edge(1:2), &
       sc%scGeocAlt)
     status = sfwdata (sds7_id, start(1:2), stride(1:2), edge(1:2), &
@@ -870,7 +952,7 @@ CONTAINS
     INTEGER :: sds_index, sds15_id, sds16_id, sds17_id, sds18_id
     INTEGER :: sds19_id, sds20_id, sds21_id, sds22_id, sds23_id, sds24_id
     INTEGER :: sds25_id, sds26_id, sds27_id, sds28_id, sds29_id, sds30_id
-    INTEGER :: sds31_id, sds32_id, status
+    INTEGER :: sds31_id, sds32_id, sds_los_vel_g, sds_ecrtofov, status
     INTEGER :: edge(3), start(3), stride(3)
 
     ! Find data sets by name
@@ -928,17 +1010,22 @@ CONTAINS
     sds_index = sfn2index (sd_id, SDS32_NAME)
     sds32_id = sfselect (sd_id, sds_index)
 
-    ! Initialize parameters that aren't reset
+    sds_index = sfn2index (sd_id, "GHz.tpLosVel")
+    sds_los_vel_g = sfselect (sd_id, sds_index)
 
-    start(1) = 0
+    sds_index = sfn2index (sd_id, "GHz.tpECRtoFOV")
+    sds_ecrtofov = sfselect (sd_id, sds_index)
+
+    ! Initialize parameters
+
+    start = 0
     stride = 1
-    edge(3) = 1
+    edge = 1
 
     ! Write GHz data
 
     start(2) = noMAF-1
     edge(1) = SIZE(tp%encoderAngle)
-    edge(2) = 1
 
     status = sfwdata (sds15_id, start(1:2), stride(1:2), edge(1:2), &
       tp%encoderAngle)
@@ -973,6 +1060,8 @@ CONTAINS
       tp%tpSolarZenith)
     status = sfwdata (sds32_id, start(1:2), stride(1:2), edge(1:2), &
       tp%tpLosAngle)
+    status = sfwdata (sds_los_vel_g, start(1:2), stride(1:2), edge(1:2), &
+      tp%tpLosVel)
 
     start(2) = 0
     start(3) = noMAF-1
@@ -981,6 +1070,8 @@ CONTAINS
 
     status = sfwdata (sds19_id, start, stride, edge, tp%tpECI)
     status = sfwdata (sds20_id, start, stride, edge, tp%tpECR)
+    edge(1) = lenCoord * lenCoord
+    status = sfwdata (sds_ecrtofov, start, stride, edge, tp%tpECRtoFOV)
 
     ! Terminate access to the data sets
     status = sfendacc (sds15_id)
@@ -1001,6 +1092,8 @@ CONTAINS
     status = sfendacc (sds30_id)
     status = sfendacc (sds31_id)
     status = sfendacc (sds32_id)
+    status = sfendacc (sds_los_vel_g)
+    status = sfendacc (sds_ecrtofov)
 
   END SUBROUTINE OutputL1B_GHz_HDF4
 
@@ -1019,7 +1112,7 @@ CONTAINS
     INTEGER :: sds_index,  sds33_id, sds34_id, sds35_id, sds36_id
     INTEGER :: sds37_id, sds38_id, sds39_id, sds40_id, sds41_id, sds42_id
     INTEGER :: sds43_id, sds44_id, sds45_id, sds46_id, sds47_id, sds48_id
-    INTEGER :: sds49_id, sds50_id, status
+    INTEGER :: sds49_id, sds50_id, sds_los_vel_t, status
     INTEGER :: edge(3), start(3), stride(3)
 
     ! Find data sets by name
@@ -1077,6 +1170,9 @@ CONTAINS
     sds_index = sfn2index (sd_id, SDS50_NAME)
     sds50_id = sfselect (sd_id, sds_index)
 
+    sds_index = sfn2index (sd_id, "THz.tpLosVel")
+    sds_los_vel_t = sfselect (sd_id, sds_index)
+
     ! Initialize parameters that aren't reset during the MAF loop
     start(1) = 0
     stride = 1
@@ -1120,6 +1216,8 @@ CONTAINS
       tp%tpSolarZenith)
     status = sfwdata (sds50_id, start(1:2), stride(1:2), edge(1:2), &
       tp%tpLosAngle)
+    status = sfwdata (sds_los_vel_t, start(1:2), stride(1:2), edge(1:2), &
+      tp%tpLosVel)
 
     start(2) = 0
     start(3) = noMAF-1
@@ -1148,16 +1246,21 @@ CONTAINS
     status = sfendacc (sds48_id)
     status = sfendacc (sds49_id)
     status = sfendacc (sds50_id)
+    status = sfendacc (sds_los_vel_t)
 
   END SUBROUTINE OutputL1B_THz_HDF4
 
   !-------------------------------------------------------- OutputL1B_rad
-  SUBROUTINE OutputL1B_rad_HDF4 (noMAF, sdId, counterMAF, MAFStartTimeGIRD, rad)
+  SUBROUTINE OutputL1B_rad_HDF4 (noMAF, sdId, counterMAF, Reflec, &
+       MAFStartTimeGIRD, rad)
     ! This subroutine writes an MAF's worth of data to the L1BRad D & F files
+
+    USE EngTbls, ONLY: Reflec_T
 
     ! Arguments
     TYPE (L1BFileInfo_T) :: sdId
     TYPE (Radiance_T) :: rad(:)
+    TYPE (Reflec_T) :: Reflec
     INTEGER, INTENT(IN) :: counterMAF, noMAF
     REAL(r8), INTENT (IN) :: MAFStartTimeGIRD
 
@@ -1228,7 +1331,8 @@ CONTAINS
     IF (sdId%RADFID /= 0) THEN
        sds_index = sfn2index (sdId%RADFID, name)
        sds1_id = sfselect (sdId%RADFID, sds_index)
-       status = sfwdata (sds1_id, start(3), stride(3), edge(3), MAFStartTimeGIRD)
+       status = sfwdata (sds1_id, start(3), stride(3), edge(3), &
+            MAFStartTimeGIRD)
        status = sfendacc (sds1_id)
        IF (status == -1) CALL MLSMessage (MLSMSG_Error, ModuleName, &
             'Error writing MAFStartTimeGIRD to rad F file')
@@ -1238,7 +1342,8 @@ CONTAINS
     IF (sdId%RADDID /= 0) THEN
        sds_index = sfn2index (sdId%RADDID, name)
        sds1_id = sfselect (sdId%RADDID, sds_index)
-       status = sfwdata (sds1_id, start(3), stride(3), edge(3), MAFStartTimeGIRD)
+       status = sfwdata (sds1_id, start(3), stride(3), edge(3), &
+            MAFStartTimeGIRD)
        status = sfendacc (sds1_id)
        IF (status == -1) CALL MLSMessage (MLSMSG_Error, ModuleName, &
             'Error writing MAFStartTimeGIRD to rad D file')
@@ -1248,10 +1353,70 @@ CONTAINS
     IF (sdId%RADTID /= 0) THEN
        sds_index = sfn2index (sdId%RADTID, name)
        sds1_id = sfselect (sdId%RADTID, sds_index)
-       status = sfwdata (sds1_id, start(3), stride(3), edge(3), MAFStartTimeGIRD)
+       status = sfwdata (sds1_id, start(3), stride(3), edge(3), &
+            MAFStartTimeGIRD)
        status = sfendacc (sds1_id)
        IF (status == -1) CALL MLSMessage (MLSMSG_Error, ModuleName, &
             'Error writing MAFStartTimeGIRD to rad D file')
+    ENDIF
+
+! Reflector temps:
+
+    name = 'Pri_Reflec'
+    IF (sdId%RADFID /= 0) THEN
+       sds_index = sfn2index (sdId%RADFID, name)
+       sds1_id = sfselect (sdId%RADFID, sds_index)
+       status = sfwdata (sds1_id, start(3), stride(3), edge(3), Reflec%Pri)
+       status = sfendacc (sds1_id)
+       IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+            'Error writing Pri_Reflec to rad F file')
+    ENDIF
+
+    IF (sdId%RADDID /= 0) THEN
+       sds_index = sfn2index (sdId%RADDID, name)
+       sds1_id = sfselect (sdId%RADDID, sds_index)
+       status = sfwdata (sds1_id, start(3), stride(3), edge(3), Reflec%Pri)
+       status = sfendacc (sds1_id)
+       IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+            'Error writing Pri_Reflec to rad D file')
+    ENDIF
+
+    name = 'Sec_Reflec'
+    IF (sdId%RADFID /= 0) THEN
+       sds_index = sfn2index (sdId%RADFID, name)
+       sds1_id = sfselect (sdId%RADFID, sds_index)
+       status = sfwdata (sds1_id, start(3), stride(3), edge(3), Reflec%Sec)
+       status = sfendacc (sds1_id)
+       IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+            'Error writing Sec_Reflec to rad F file')
+    ENDIF
+
+    IF (sdId%RADDID /= 0) THEN
+       sds_index = sfn2index (sdId%RADDID, name)
+       sds1_id = sfselect (sdId%RADDID, sds_index)
+       status = sfwdata (sds1_id, start(3), stride(3), edge(3), Reflec%Sec)
+       status = sfendacc (sds1_id)
+       IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+            'Error writing Sec_Reflec to rad D file')
+    ENDIF
+
+    name = 'Ter_Reflec'
+    IF (sdId%RADFID /= 0) THEN
+       sds_index = sfn2index (sdId%RADFID, name)
+       sds1_id = sfselect (sdId%RADFID, sds_index)
+       status = sfwdata (sds1_id, start(3), stride(3), edge(3), Reflec%Ter)
+       status = sfendacc (sds1_id)
+       IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+            'Error writing Ter_Reflec to rad F file')
+    ENDIF
+
+    IF (sdId%RADDID /= 0) THEN
+       sds_index = sfn2index (sdId%RADDID, name)
+       sds1_id = sfselect (sdId%RADDID, sds_index)
+       status = sfwdata (sds1_id, start(3), stride(3), edge(3), Reflec%Ter)
+       status = sfendacc (sds1_id)
+       IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+            'Error writing Ter_Reflec to rad D file')
     ENDIF
 
     ! Loop on number of SDs per MAF
@@ -1371,6 +1536,9 @@ CONTAINS
 END MODULE OutputL1B_HDF4
 
 ! $Log$
+! Revision 2.3  2003/08/15 14:25:04  perun
+! Version 1.2 commit
+!
 ! Revision 2.2  2003/01/31 18:13:34  perun
 ! Version 1.1 commit
 !

@@ -68,10 +68,12 @@ CONTAINS
 
     USE MLSL1Common, ONLY: L1BFileInfo, MAFinfo
     USE OutputL1B, ONLY: OutputL1B_rad
+    USE EngTbls, ONLY: Reflec_T
 
     INTEGER :: MAFno, counterMAF, ibgn
     REAL(r8) :: TAI
-
+    TYPE (Reflec_T) :: Reflec
+ 
     print *, 'ProcessLimbData'
 
     ibgn = 0
@@ -82,7 +84,7 @@ CONTAINS
        counterMAF = CalBuf%MAFdata(MAFno)%EMAF%TotalMAF
        TAI = CalBuf%MAFdata(MAFno)%SciMIF(0)%secTAI
 print *, "Outputting rad for MAFno: ", MAFno
-       CALL OutputL1B_rad (MAFno, L1BFileInfo, counterMAF, TAI, THzrad)
+       CALL OutputL1B_rad (MAFno, L1BFileInfo, counterMAF, Reflec, TAI, THzrad)
 
 ! Write Diags (LATER!)
 
@@ -95,6 +97,9 @@ END MODULE THzRadiances
 !=============================================================================
 
 ! $Log$
+! Revision 2.3  2003/08/15 14:25:04  perun
+! Version 1.2 commit
+!
 ! Revision 2.2  2003/02/05 21:32:41  perun
 ! Use variances for precisions
 !
