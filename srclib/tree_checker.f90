@@ -198,7 +198,11 @@ contains ! ====     Public Procedures     ==============================
       call output ( '', advance='yes' )
     case ( wrong_type )
       call output ( 'the "' )
-      call display_string ( sub_rosa(where) )
+      if ( present(fields) ) then
+        call display_string ( sub_rosa(fields(1)) )
+      else
+        call display_string ( sub_rosa(where) )
+      end if
       call output ( '" field has the wrong type of associated value.', &
         & advance='yes'  )
       if ( present(sons) ) then
@@ -335,7 +339,7 @@ m:              do j = 3, nsons(field)
           end if
           decl = prior_decl(decl,label)
         end do
-        call announce_error ( son1, wrong_type )
+        call announce_error ( son, wrong_type, fields=(/son1/) )
       case ( n_identifier )
         do j = 2, nsons(field)                 ! Try all of the types
           type_decl = decoration(subtree(j,field))
@@ -357,7 +361,7 @@ m:              do j = 3, nsons(field)
             decl = prior_decl(decl,look_for)
           end do
         end do
-        call announce_error ( son1, wrong_type )
+        call announce_error ( son, wrong_type, fields=(/son1/) )
       case ( n_array )
         do j = 1, nsons(son)
           call assignBody ( subtree(j,son) )
@@ -365,7 +369,7 @@ m:              do j = 3, nsons(field)
       case default
         call expr ( son, type, units, value )
         if ( .not. check_field_type(field,type_map(type)) ) then
-          call announce_error ( son1, wrong_type, sons = (/ field /) )
+          call announce_error ( son1, wrong_type, fields = (/ field /) )
         end if
       end select
     end subroutine AssignBody
@@ -569,7 +573,7 @@ m:              do j = 3, nsons(field)
           type_decl = decoration(subtree(2,check)) ! decl of allowed type
           do
             if ( decl%tree == null_tree ) then ! no more decls of id
-              call announce_error ( son1, wrong_type )
+              call announce_error ( son2, wrong_type, fields=(/son1/) )
           exit
             end if
             if ( decl%tree == type_decl ) then ! right type
@@ -581,7 +585,7 @@ m:              do j = 3, nsons(field)
         else
           call expr( son2, type, units, value )
           if ( .not. check_field_type(check,type_map(type)) ) then
-            call announce_error ( son1, wrong_type )
+            call announce_error ( son2, wrong_type, fields=(/son1/) )
           end if
         end if
       end if
@@ -881,6 +885,9 @@ m:              do j = 3, nsons(field)
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.17  2004/01/14 02:19:51  vsnyder
+! Get PHYQ_INVALID from Intrinsic instead of Init_Tables_Module
+!
 ! Revision 1.16  2003/08/29 00:14:43  vsnyder
 ! Correct out-of-bounds subscript
 !
