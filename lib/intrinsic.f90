@@ -42,22 +42,23 @@ module INTRINSIC
   integer, parameter :: Field_First = 1
 
 ! Abstract physical quantities:
-  integer, parameter :: PHYQ_INVALID = 0 ! Invalid unit given by user
-  integer, parameter :: PHYQ_DIMENSIONLESS = 1 ! Dimensionless quantity
-  integer, parameter :: PHYQ_LENGTH = 2        ! Default meters
-  integer, parameter :: PHYQ_TIME = 3          ! Default seconds
-  integer, parameter :: PHYQ_PRESSURE = 4      ! Default millibars
-  integer, parameter :: PHYQ_TEMPERATURE = 5   ! Default Kelvins
-  integer, parameter :: PHYQ_VMR = 6           ! Default parts-per-one
-  integer, parameter :: PHYQ_ANGLE = 7         ! Default degrees
-  integer, parameter :: PHYQ_MAFS = 8          ! Default MAFs
-  integer, parameter :: PHYQ_MIFS = 9          ! Default MIFs
-  integer, parameter :: PHYQ_FREQUENCY = 10    ! Default MHz
-  integer, parameter :: PHYQ_ZETA = 11         ! log10(pressure/hPa)
-  integer, parameter :: PHYQ_VELOCITY = 12     ! Default meters/second
-  integer, parameter :: PHYQ_EXTINCTION =13    ! Default 1/meters
-  integer, parameter :: PHYQ_IceDensity =14    ! Default g/meters^3
-  integer, parameter :: FIRST_PHYQ = phyq_invalid, LAST_PHYQ = phyq_icedensity
+  integer, parameter :: PHYQ_INVALID =         0 ! Invalid unit given by user
+  integer, parameter :: PHYQ_DIMENSIONLESS =   phyq_invalid+1     ! Dimensionless quantity
+  integer, parameter :: PHYQ_LENGTH =          phyq_dimensionless+1  ! Default meters
+  integer, parameter :: PHYQ_TIME =            phyq_length+1         ! Default seconds
+  integer, parameter :: PHYQ_PRESSURE =        phyq_time+1        !  Default millibars
+  integer, parameter :: PHYQ_TEMPERATURE =     phyq_pressure+1    ! Default Kelvins
+  integer, parameter :: PHYQ_VMR =             phyq_temperature+1 ! Default parts-per-one
+  integer, parameter :: PHYQ_ANGLE =           phyq_vmr+1         ! Default degrees
+  integer, parameter :: PHYQ_MAFS =            phyq_angle+1       ! Default MAFs
+  integer, parameter :: PHYQ_MIFS =            phyq_mafs+1        ! Default MIFs
+  integer, parameter :: PHYQ_FREQUENCY =       phyq_mifs+1        ! Default MHz
+  integer, parameter :: PHYQ_ZETA =            phyq_frequency+1   ! log10(pressure/hPa)
+  integer, parameter :: PHYQ_VELOCITY =        phyq_zeta+1        ! Default meters/second
+  integer, parameter :: PHYQ_EXTINCTION =      phyq_velocity+1    ! Default 1/meters
+  integer, parameter :: PHYQ_ICEDENSITY =      phyq_extinction+1  ! Default g/meters^3
+  integer, parameter :: PHYQ_DOBSONUNITS =     phyq_icedensity+1  ! 1 DU = 2.687e20 molecules/m^2
+  integer, parameter :: FIRST_PHYQ = phyq_invalid, LAST_PHYQ = PHYQ_DobsonUnits
   integer :: PHYQ_INDICES(first_phyq:last_phyq)
 
 ! Enumeration literals:
@@ -77,7 +78,8 @@ module INTRINSIC
   integer, parameter :: L_DIMENSIONLESS = l_degrees + 1
   integer, parameter :: L_DIMLESS       = l_dimensionless + 1
   integer, parameter :: L_DL            = l_dimless + 1
-  integer, parameter :: L_EARTHREFL     = l_dl + 1
+  integer, parameter :: L_DOBSONUNITS   = l_dl + 1
+  integer, parameter :: L_EARTHREFL     = l_dobsonunits + 1
   integer, parameter :: L_EFFECTIVEOPTICALDEPTH = l_earthRefl + 1
   integer, parameter :: L_ELEVOFFSET    = l_effectiveOpticalDepth + 1
   integer, parameter :: L_EXTINCTION    = l_elevOffset + 1
@@ -238,6 +240,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_dimensionless) =         add_ident ( 'dimensionless' )
     lit_indices(l_dimless) =               add_ident ( 'dimless' )
     lit_indices(l_dl) =                    add_ident ( 'dl' )
+    lit_indices(l_dobsonunits) =           add_ident ( 'dobsonunits' )
     lit_indices(l_earthRefl) =             add_ident ( 'earthRefl' )
     lit_indices(l_elevOffset) =            add_ident ( 'elevOffset' )
     lit_indices(l_effectiveOpticalDepth) = add_ident ( 'effectiveOpticalDepth' )
@@ -332,6 +335,7 @@ contains ! =====     Public procedures     =============================
     phyq_indices(phyq_zeta) =              add_ident ( 'zeta' )
     phyq_indices(phyq_extinction) =        add_ident ( 'extinction' )
     phyq_indices(phyq_icedensity) =        add_ident ( 'icedensity' )
+    phyq_indices(phyq_dobsonunits) =       add_ident ( 'dobsonunits' )
 
   ! Definitions are represented by trees.  The notation in the comments
   ! for the trees is < root first_son ... last_son >.  This is sometimes
@@ -390,6 +394,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.35  2001/07/30 23:28:38  pwagner
+! Added columnAbundances scaffolding--needs fleshing out
+!
 ! Revision 2.34  2001/07/18 23:15:31  dwu
 ! rename l_radiusofearth as l_earthradius
 !
