@@ -63,12 +63,12 @@ CONTAINS
     vGrid%name=""
     vGrid%verticalCoordinate=VC_Invalid
     vGrid%noSurfs=0
-    IF (ASSOCIATED(vGrid%surfs)) CALL MLSMessage(MLSMSG_Error,ModuleName,&
-         & "vGrid%surfs already associated")
+!    IF (ASSOCIATED(vGrid%surfs)) CALL MLSMessage(MLSMSG_Error,ModuleName,&
+!         & "vGrid%surfs already associated")
 
     DO keyNo=1,cfInfo%mlscfEntryNoKeys
        cell=cfInfo%cells(keyNo)
-       SELECT CASE(TRIM(cell%keyword))
+       SELECT CASE(Capitalize(TRIM(cell%keyword)))
        CASE ("NAME")
           vGrid%name=cell%charValue
        CASE ("COORDINATE")
@@ -82,6 +82,7 @@ CONTAINS
     END DO
 
     ! Now check that this is a sensible vGrid, first the obvious stuff
+
 
     IF (LEN_TRIM(vGrid%name)==0) CALL MLSMessage(MLSMSG_Error,ModuleName,&
          & "Invalid or absent vGrid name")
@@ -116,7 +117,6 @@ CONTAINS
        IF (family/=PHYQ_Angle) &
             & CALL MLSMessage(MLSMSG_Error,ModuleName,UnitsMessage)
     END SELECT
-
   END SUBROUTINE CreateVGridFromMLSCFInfo
 
   !--------------------------------------------------------------------------
@@ -165,14 +165,13 @@ CONTAINS
     ELSE
        newSize=1
     ENDIF
-
     ALLOCATE(tempDatabase(newSize),STAT=status)
     IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
          & "Allocation failed for tempDatabase")
 
     IF (newSize>1) tempDatabase(1:newSize-1)=database
     tempDatabase(newSize)=vgrid
-    DEALLOCATE(database)
+    IF (ASSOCIATED(database))DEALLOCATE(database)
     database=>tempDatabase
   END SUBROUTINE AddVGridToDatabase
 
@@ -200,6 +199,9 @@ END MODULE vGrid
 
 !
 ! $Log$
+! Revision 1.10  2000/04/13 23:48:26  vsnyder
+! Changed "LEN_TRIM()=="" to LEN_TRIM()==0 in CreateVGridFromMLSCFInfo
+!
 ! Revision 1.9  2000/01/11 22:51:35  livesey
 ! Dealt with ramifications of change from read_parse_l2cf to MLSCF
 !
