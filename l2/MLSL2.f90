@@ -5,7 +5,7 @@ program MLSL2
   use Allocate_Deallocate, only: SET_GARBAGE_COLLECTION
   use DECLARATION_TABLE, only: ALLOCATE_DECL, DEALLOCATE_DECL, DUMP_DECL
   use INIT_TABLES_MODULE, only: INIT_TABLES
-  use L2PARINFO, only: PARALLEL, INITPARALLEL
+  use L2PARINFO, only: PARALLEL, INITPARALLEL, ACCUMULATESLAVEARGUMENTS
   use LEXER_CORE, only: INIT_LEXER
   use LEXER_M, only: CapIdentifiers
   use MACHINE ! At least HP for command lines, and maybe GETARG, too
@@ -23,7 +23,7 @@ program MLSL2
   use OBTAIN_MLSCF, only: Close_MLSCF, Open_MLSCF
   use OUTPUT_M, only: BLANKS, OUTPUT, PRUNIT
   use PARSER, only: CONFIGURATION
-  use PVM, only: ClearPVMArgs, NextPVMArg, FreePVMArgs
+  use PVM, only: ClearPVMArgs, FreePVMArgs
   use SDPToolkit, only: UseSDPToolkit
   use SnoopMLSL2, only: SNOOPINGACTIVE
   use STRING_TABLE, only: DESTROY_CHAR_TABLE, DESTROY_HASH_TABLE, &
@@ -137,6 +137,7 @@ program MLSL2
   call init_tables
 
   ! We set up a mirror command line for launching slaves
+  call getarg ( hp, parallel%executable )
   i = 1+hp
 
   !---------------- Task (3) ------------------
@@ -147,8 +148,7 @@ program MLSL2
     command_line = trim(command_line) // ' ' // trim(line)
     if ( line(1:4) == '-Wl,' ) then     ! skip Lahey/Fujitsu run-time options
       i = i + 1
-      call NextPVMArg(trim(line)//' ')
-      cycle
+      call AccumulateSlaveArguments(line)
     end if
     if ( line(1:2) == '--' ) then       ! "word" options
       n = 0
@@ -192,12 +192,17 @@ program MLSL2
         i = i + 1
         call getarg ( i, line )
         parallel%slaveFilename = trim ( line )
-        call InitParallel
+        call InitParallel ( 0 )
         word = '--slave'
         write ( word(len_trim(word)+1:), * ) parallel%myTid
-        call NextPVMArg(trim(word)//' ')
+        call AccumulateSlaveArguments(word)
       else if ( line(3+n:6+n) == 'pcf ' ) then
         pcf = switch
+      else if ( line(3+n:9+n) == 'submit ' ) then
+        copyArg = .false.
+        i = i + 1
+        call getarg ( i, line )
+        parallel%submit = trim ( line )
       else if ( line(3+n:7+n) == 'slave' ) then
         copyArg=.false.
         parallel%slave = .true.
@@ -207,7 +212,6 @@ program MLSL2
           i = i + 1
           call getarg ( i, line )
         end if
-        call InitParallel
         read ( line, *, iostat=status ) parallel%masterTid
         if ( status /= 0 ) then
           call io_error ( "After --slave option", status, line )
@@ -227,7 +231,7 @@ program MLSL2
       else if ( line(3:) == ' ' ) then  ! "--" means "no more options"
         i = i + 1
         call getarg ( i, line )
-        call NextPVMArg(trim(line)//' ')
+        call AccumulateSlaveArguments(line)
         exit
       else
         print *, 'unrecognized option ', trim(line), ' ignored.'
@@ -293,11 +297,11 @@ program MLSL2
         end select
       end do
     else    
-      call NextPVMArg(trim(line)//' ')
+      call AccumulateSlaveArguments(line)
       exit ! This must be the l2cf filename
     end if
     i = i + 1
-    if ( copyArg ) call NextPVMArg(trim(line)//' ')
+    if ( copyArg ) call AccumulateSlaveArguments(line)
   end do
 
   if( index(switches, '?') /= 0 .or. index(switches, 'hel') /= 0 ) then
@@ -330,6 +334,10 @@ program MLSL2
   if( index(switches, 'opt') /= 0 ) then
     call dump_settings
   endif
+
+  ! Setup the parallel stuff.  Register our presence with the master if we're a
+  ! slave.
+  if ( parallel%slave ) call InitParallel ( singleChunk )
 ! Parse the L2CF, producing an abstract syntax tree
 
   !---------------- Task (4) ------------------
@@ -562,6 +570,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.70  2002/04/24 16:54:02  livesey
+! Changes for submit option
+!
 ! Revision 2.69  2002/03/20 00:48:29  pwagner
 ! Option -check just checks l2cf then quits
 !
