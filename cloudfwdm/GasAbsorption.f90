@@ -9,6 +9,7 @@ module GasAbsorption
 
       use MLSCommon, only: r8 
       use WaterVapor, only: RHtoEV
+      use RHIFromH2O, only: RHIFromH2O_Factor
       IMPLICIT NONE
       Private
       Public :: GET_BETA
@@ -77,13 +78,18 @@ contains
 !------------------------------------------------------------------------
 
       IF(RH .NE. 100._r8) THEN
+
          VMR_H2O = RH                  ! PH IS WATER VAPOR MIXING RATIO
          VP=VMR_H2O*PB                 ! VP IS VAPOR PRESSURE, PB IS TOTAL
          P=PB-VP                       ! PRESSURE, P IS DRY-AIR PRESSURE
-      ELSE IF (RH .EQ. 100._r8) THEN
-         CALL RHtoEV(T,100._r8,VP)     ! RH HERE IS 100% RELATIVE HUMIDITY 
-         P = PB-VP
-         VMR_H2O = VP/(max(1.e-9_r8, P))
+
+      ELSE IF (RH .EQ. 100._r8) THEN   ! RH HERE IS 100% RELATIVE HUMIDITY 
+
+!         CALL RHtoEV(T,100._r8,VP)    
+!         P = PB-VP
+!         VMR_H2O = VP/(max(1.e-9_r8, P))
+         VMR_H2O = RHIFromH2O_Factor (T, -log(PB), 6, .true.)*100._r8
+         ! optional 6 will return mixing ratio in units of ppmv
       END IF
 
       VMR_O2 = 0.209476_r8
@@ -350,6 +356,9 @@ contains
 end module GasAbsorption
 
 ! $Log$
+! Revision 1.15  2003/01/23 00:19:09  pwagner
+! Some cosmetic only (or so I hope) changes
+!
 ! Revision 1.14  2002/12/18 16:11:07  jonathan
 ! minor changes
 !
