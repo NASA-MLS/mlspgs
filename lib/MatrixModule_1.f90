@@ -1404,39 +1404,63 @@ contains ! =====     Public Procedures     =============================
   end subroutine SolveCholesky_1
 
   ! -------------------------------------------  UpdateDiagonal_1  -----
-  subroutine UpdateDiagonal_1 ( A, LAMBDA )
+  subroutine UpdateDiagonal_1 ( A, LAMBDA, SQUAREROOT )
   ! Add LAMBDA to the diagonal of A.  Don't update the extra row or column.
     type(Matrix_SPD_T), intent(inout) :: A
     real(r8), intent(in) :: LAMBDA
+    logical, intent(in), optional :: SQUAREROOT ! Update with square root of value
 
     integer :: I, N
+    logical :: MYSQUAREROOT
+
+    mySquareRoot = .false.
+    if ( present(squareRoot) ) mySquareRoot = squareRoot
 
     n = max(a%m%row%nb,a%m%col%nb)
     if ( a%m%row%extra .or. a%m%col%extra ) n = n - 1
-    do i = 1, n
-      call updateDiagonal ( a%m%block(i,i), lambda )
-    end do
+    
+    if ( mySquareRoot ) then
+      do i = 1, n
+        call updateDiagonal ( a%m%block(i,i), sqrt(lambda) )
+      end do
+    else
+      do i = 1, n
+        call updateDiagonal ( a%m%block(i,i), lambda )
+      end do
+    endif
   end subroutine UpdateDiagonal_1
 
   ! ----------------------------------------  UpdateDiagonalVec_1  -----
-  subroutine UpdateDiagonalVec_1 ( A, X, SUBTRACT )
+  subroutine UpdateDiagonalVec_1 ( A, X, SUBTRACT, SQUAREROOT )
   ! Add X to the diagonal of A.  Don't update the extra row or column.
   ! If SUBTRACT is present and true, subtract X from the diagonal.
     type(matrix_SPD_T), intent(inout) :: A
     type(vector_T), intent(in) :: X
     logical, intent(in), optional :: SUBTRACT
+    logical, intent(in), optional :: SQUAREROOT
 
     integer :: I, N
+    logical :: MYSQUAREROOT
+
+    mySquareRoot = .false.
+    if ( present(squareRoot) ) mySquareRoot = squareRoot
 
     if ( a%m%col%vec%template%id /= x%template%id ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & "A and X not compatible in UpdateDiagonalVec_1" )
     n = max(a%m%row%nb,a%m%col%nb)
     if ( a%m%row%extra .or. a%m%col%extra ) n = n - 1
-    do i = 1, n
-      call updateDiagonal ( a%m%block(i,i), &
-        & x%quantities(a%m%row%quant(i))%values(:,a%m%row%inst(i)), subtract )
-    end do
+    if ( mySquareRoot ) then
+      do i = 1, n
+        call updateDiagonal ( a%m%block(i,i), &
+          & sqrt(x%quantities(a%m%row%quant(i))%values(:,a%m%row%inst(i))), subtract )
+      end do
+    else
+      do i = 1, n
+        call updateDiagonal ( a%m%block(i,i), &
+          & x%quantities(a%m%row%quant(i))%values(:,a%m%row%inst(i)), subtract )
+      end do
+    endif
   end subroutine UpdateDiagonalVec_1
 
 ! =====     Private Procedures     =====================================
@@ -1716,6 +1740,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.39  2001/05/19 00:13:23  livesey
+! Added squareRoot option to update diagonal
+!
 ! Revision 2.38  2001/05/18 23:48:34  vsnyder
 ! Correct Dump_L1 -> Dump_Linf
 !
