@@ -12,8 +12,8 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   use DUMP_0, only: DUMP
   use MatrixModule_0, only: Assignment(=), CholeskyFactor, ClearRows, &
     & ColumnScale, CopyBlock, CreateBlock, DestroyBlock, Dump, GetDiagonal, &
-    & GetVectorFromColumn, M_Absent, M_Full, MatrixElement_T, MaxAbsVal, &
-    & MinDiag, MultiplyMatrixBlocks, MultiplyMatrixVector, &
+    & GetVectorFromColumn, M_Absent, M_Banded, M_Full, MatrixElement_T, &
+    & MaxAbsVal, MinDiag, MultiplyMatrixBlocks, MultiplyMatrixVector, &
     & MultiplyMatrixVectorNoT, operator(+), operator(.TX.), RowScale, &
     & ScaleBlock, SolveCholesky, UpdateDiagonal
   use MLSCommon, only: R8
@@ -36,12 +36,13 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 ! public :: LevenbergUpdateCholesky
   public :: Matrix_T, Matrix_Cholesky_T, Matrix_Database_T, Matrix_Kronecker_T
   public :: Matrix_SPD_T, MaxAbsVal, MaxAbsVal_1, MinDiag, MinDiag_Cholesky
-  public :: MinDiag_SPD
-  public :: MultiplyMatrices, MultiplyMatrixVector, MultiplyMatrixVector_1
-  public :: MultiplyMatrixVectorSPD_1, NewMultiplyMatrixVector, NormalEquations
-  public :: operator(.TX.), operator(+), RC_Info, RowScale, RowScale_1
-  public :: ScaleMatrix, SolveCholesky, SolveCholesky_1
-  public :: UpdateDiagonal, UpdateDiagonal_1
+  public :: MinDiag_SPD, MultiplyMatrices, MultiplyMatrixVector
+  public :: MultiplyMatrixVector_1, MultiplyMatrixVectorSPD_1
+  public :: Negate, Negate_1
+  public :: NewMultiplyMatrixVector, NormalEquations, operator(.TX.)
+  public :: operator(+), RC_Info, RowScale, RowScale_1, ScaleMatrix
+  public :: SolveCholesky, SolveCholesky_1
+  public :: UpdateDiagonal, UpdateDiagonal_1, UpdateDiagonalVec_1
 
 ! =====     Defined Operators and Generic Identifiers     ==============
 
@@ -75,8 +76,8 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
     module procedure DestroyMatrixInDatabase
   end interface
 
-  interface DUMP
-    module procedure DUMP_MATRIX
+  interface Dump
+    module procedure Dump_Matrix
   end interface
 
   interface GetDiagonal
@@ -104,6 +105,10 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
     module procedure MultiplyMatrixVector_1, MultiplyMatrixVectorSPD_1
   end interface
 
+  interface Negate
+    module procedure Negate_1
+  end interface
+
   interface operator (+)
     module procedure AddMatrices
   end interface
@@ -121,7 +126,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   end interface
 
   interface UpdateDiagonal
-    module procedure UpdateDiagonal_1
+    module procedure UpdateDiagonal_1, UpdateDiagonalVec_1
   end interface
 
   !---------------------------- RCS Ident Info -------------------------------
@@ -785,6 +790,37 @@ contains ! =====     Public Procedures     =============================
     end do ! block = 1, matrix%col%nb
   end subroutine GetVectorFromColumn_1
 
+  subroutine InvertCholesky ( U, B )
+  ! Compute B = U^{-T} = L^{-1}, where U is the upper-triangular
+  ! Cholesky factor of some matrix, i.e. A = U^T U.
+    type(Matrix_Cholesky_T), intent(in) :: U
+    type(Matrix_T), intent(inout) :: B  ! Assume B has been created
+
+    integer :: I, J, K                  ! Subscripts and loop inductors
+
+    do i = 1, u%m%row%nb
+      do k = 1, i
+        if ( i == k ) then ! start with identity
+          call createBlock ( b%block(i,i), u%m%block(i,i)%nrows, &
+            & u%m%block(i,i)%nrows, m_banded, u%m%block(i,i)%nrows )
+          do j = 1, u%m%block(i,i)%nrows
+            b%block(i,k)%r1(j) = j
+            b%block(i,k)%r2(j) = j
+            b%block(i,k)%values(j,1) = 1.0_r8
+          end do ! j = 1, u%m%block(i,i)%nrows
+        else ! start with zero
+          call createBlock ( b%block(i,k), u%m%block(i,k)%nrows, &
+            & u%m%block(i,k)%ncols, m_absent )
+        end if
+        do j = k, i-1
+          call multiplyMatrixBlocks ( b%block(i,k), u%m%block(j,i), &
+            & b%block(j,k), update=.true., subtract=.true. )
+        end do ! j = k, i-1
+        call solveCholesky ( u%m%block(i,i), b%block(i,k), transpose=.true. )
+      end do ! k = 1, i
+    end do ! i = 1, u%m%row%nb
+  end subroutine InvertCholesky
+
   ! ------------------------------------  LevenbergUpdateCholesky  -----
 ! subroutine LevenbergUpdateCholesky ( Z, LAMBDA )
 ! ! Given a Cholesky factor Z of a matrix of normal equations A^T A,
@@ -917,6 +953,17 @@ contains ! =====     Public Procedures     =============================
       end do ! i = 1, a%m%row%nb
     end do ! j = 1, a%m%col%nb
   end subroutine MultiplyMatrixVectorSPD_1
+
+  ! ---------------------------------------------------  Negate_1  -----
+  subroutine Negate_1 ( A ) ! A = -A
+    type(Matrix_T), intent(inout) :: A
+    integer :: I, J
+    do i = 1, a%row%nb
+      do j = 1, a%col%nb
+        a%block(i,j)%values = -a%block(i,j)%values
+      end do
+    end do
+  end subroutine Negate_1
 
   ! ------------------------------------  NewMultiplyMatrixVector  -----
   function NewMultiplyMatrixVector ( A, V ) result ( Z ) ! Z = A^T V
@@ -1125,6 +1172,24 @@ contains ! =====     Public Procedures     =============================
     end do
   end subroutine UpdateDiagonal_1
 
+  ! ----------------------------------------  UpdateDiagonalVec_1  -----
+  subroutine UpdateDiagonalVec_1 ( A, X, SUBTRACT )
+  ! Add X to the diagonal of A.  Don't update the extra row or column.
+  ! If SUBTRACT is present and true, subtract X from the diagonal.
+    type(Matrix_SPD_T), intent(inout) :: A
+    type(vector_T), intent(in) :: X
+    logical, intent(in), optional :: SUBTRACT
+
+    integer :: I, N
+
+    n = max(a%m%row%nb,a%m%col%nb)
+    if ( a%m%row%extra .or. a%m%col%extra ) n = n - 1
+    do i = 1, n
+      call updateDiagonal ( a%m%block(i,i), &
+        & x%quantities(a%m%row%quant(i))%values(:,a%m%row%inst(i)), subtract )
+    end do
+  end subroutine UpdateDiagonalVec_1
+
 ! =====     Private Procedures     =====================================
 
   ! ------------------------------------  AddItemToMatrixDatabase  -----
@@ -1252,6 +1317,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.8  2001/02/22 01:55:06  vsnyder
+! Add code to invert a Cholesky factor
+!
 ! Revision 2.7  2001/01/26 19:00:02  vsnyder
 ! Periodic commit
 !
