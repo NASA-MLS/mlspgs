@@ -1428,15 +1428,15 @@ contains
 
         call get_gl_slabs_arrays ( my_Catalog, p_path(1:no_ele), &
           &  t_path(1:no_ele), 0.001*losVel%values(1,maf), gl_slabs, &
-          &  no_ele, fwdModelConf%Do_1D,true_path_flags(1:no_ele))
+          &  fwdModelConf%Do_1D,true_path_flags(1:no_ele))
 
         if ( temp_der ) then
           call get_gl_slabs_arrays ( my_Catalog, p_path(1:no_ele), &
             &  t_path_p(1:no_ele), 0.001*losVel%values(1,maf), gl_slabs_p, &
-            &  no_ele, fwdModelConf%Do_1D,t_der_path_flags(1:no_ele) )
+            &  fwdModelConf%Do_1D,t_der_path_flags(1:no_ele) )
           call get_gl_slabs_arrays ( my_Catalog, p_path(1:no_ele), &
             &  t_path_m(1:no_ele), 0.001*losVel%values(1,maf), gl_slabs_m, &
-            &  no_ele, fwdModelConf%Do_1D,t_der_path_flags(1:no_ele) )
+            &  fwdModelConf%Do_1D,t_der_path_flags(1:no_ele) )
         end if
 
         ! Work out what frequencies we're using for --------------------------
@@ -1569,7 +1569,7 @@ contains
                 ! don't need beta_path_polarized * tanh1_c
                 do j = 1, npc
                   alpha_path_polarized(-1:1,j) = matmul( beta_path_polarized(-1:1,j,:), &
-                    & sps_path(indices_c(j),:) ) * tanh1_c(j) * del_s(j)
+                    & sps_path(indices_c(j),:) ) * tanh1_c(j)
                 end do
               end if
 
@@ -1583,11 +1583,11 @@ contains
 
               ! Do not trust the compiler to fuse loops
               do j = 1, npc
-                incoptdepth_pol(1,1,j) = - incoptdepth_pol(1,1,j) - &
+                incoptdepth_pol(1,1,j) = - incoptdepth_pol(1,1,j) * del_s(j) - &
                      & 0.5*incoptdepth(j)
-                incoptdepth_pol(2,1,j) = - incoptdepth_pol(2,1,j)
-                incoptdepth_pol(1,2,j) = - incoptdepth_pol(1,2,j)
-                incoptdepth_pol(2,2,j) = - incoptdepth_pol(2,2,j) - &
+                incoptdepth_pol(2,1,j) = - incoptdepth_pol(2,1,j) * del_s(j)
+                incoptdepth_pol(1,2,j) = - incoptdepth_pol(1,2,j) * del_s(j)
+                incoptdepth_pol(2,2,j) = - incoptdepth_pol(2,2,j) * del_s(j) - &
                      & 0.5*incoptdepth(j)
 
                 ! deltau_pol = exp(incoptdepth_pol)
@@ -2620,6 +2620,9 @@ alpha_path_f = 0.0
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.154  2003/06/27 23:43:34  vsnyder
+! Remove unreferenced USE names
+!
 ! Revision 2.153  2003/06/27 22:09:48  vsnyder
 ! Check status from rad_tran_pol and report an error if overflow occurred
 !
