@@ -68,27 +68,31 @@ contains
   ! Optionally you may require the match to be case-sensitive
   !   (by default it is not: l2_temp will match MLS_L2_TEMP_...)
 
+  ! If you pass in a path, it will require that the paths also match
+
   ! Optionally you may pass in a version number and a debug flag
 
   ! optionally returns the exact name of the matching file
 
   function GetPCFromRef(FileName, PCBottom, PCTop, &
-    & caseSensitive, ErrType, versionNum, debugOption, ExactName) &
+    & caseSensitive, ErrType, versionNum, debugOption, path, ExactName) &
     & result (thePC)
 
     ! Dummy arguments
-    character (LEN=*), intent(IN)   :: FileName
-    integer(i4),  intent(IN)   :: PCBottom, PCTop
-    integer(i4)                :: thePC
-    integer(i4),  intent(OUT)  :: ErrType
-    logical,  intent(IN)       :: caseSensitive
-    integer(i4),  optional     :: versionNum
-    logical,  optional, intent(IN)       :: debugOption
+    character (LEN=*), intent(IN)            :: FileName
+    integer(i4),  intent(IN)                 :: PCBottom, PCTop
+    integer(i4)                              :: thePC
+    integer(i4),  intent(OUT)                :: ErrType
+    logical,  intent(IN)                     :: caseSensitive
+    integer(i4),  optional                   :: versionNum
+    logical,  optional, intent(IN)           :: debugOption
+    character (LEN=*),  optional, intent(IN)       :: path
     character (LEN=*), optional, intent(out) :: ExactName
 
     ! Local variables
 
-    character (LEN=MAXFILENAMELENGTH) :: MatchName, TryName, PhysicalName
+    character (LEN=MAXFILENAMELENGTH) :: MatchName, TryName
+    character (LEN=MAXFILENAMELENGTH) :: PhysicalName, MatchPath
     integer                       ::     version, returnStatus
    logical ::                            debug
 
@@ -154,8 +158,10 @@ contains
         else
           TryName = PhysicalName
         endif
+        
+        call split_path_name(TryName, MatchPath, PhysicalName)
 
-        if ( index(TryName, trim(MatchName)) /= 0 )then
+        if ( index(PhysicalName, trim(MatchName)) /= 0 )then
           ErrType = 0
           exit
         endif
@@ -163,6 +169,12 @@ contains
       endif
 
     enddo
+
+    if(present(path) .and. ErrType == 0) then
+        if ( index(MatchPath, trim(path)) == 0 )then
+          ErrType = NAMENOTFOUND
+        endif
+    endif
 
     if(present(ExactName) .and. ErrType == 0) then
       ExactName = PhysicalName
@@ -569,6 +581,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.13  2001/04/17 22:10:55  pwagner
+! getpcfromref takes optional path; otherwise matches only filename
+!
 ! Revision 2.12  2001/04/13 23:50:55  pwagner
 ! split_path_name now works properly
 !
