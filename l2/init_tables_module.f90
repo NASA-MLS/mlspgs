@@ -618,8 +618,8 @@ contains ! =====     Public procedures     =============================
       begin, t+t_outputType, l+l_l2aux, l+l_l2gp, l+l_l2dgg, l+l_l2pc, n+n_dt_def /) )
     call make_tree ( (/ &
       begin, t+t_quantityType, l+l_baseline, &
-             l+l_cloudIce, l_cloudInducedRadiance, l+l_cloudExtinction, &
-             l+l_cloudSensitivity, l_cloudExtinction, l+l_cloudWater, &
+             l+l_cloudIce, l+l_cloudInducedRadiance, l+l_cloudExtinction, &
+             l+l_cloudSensitivity, l+l_cloudExtinction, l+l_cloudWater, &
              l+l_earthRefl, l+l_effectiveOpticalDepth, l+l_elevOffset, &
              l+l_extinction, l+l_gph, l+l_heightOffset, l+l_isotopeRatio, &
              l+l_losVel, &
@@ -968,6 +968,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.116  2001/05/31 22:14:20  livesey
+! Bug fix.
+!
 ! Revision 2.115  2001/05/31 22:07:40  livesey
 ! More cloud stuff.
 !
