@@ -430,7 +430,7 @@ contains
             case ( f_lambda )
               initLambda = value(1)
             case ( f_maxJ )
-              maxJacobians = value(1)
+              maxJacobians = nint(value(1))
             case ( f_muMin )
               muMin = value(1)
             case ( f_toleranceA )
@@ -1079,6 +1079,7 @@ contains
       type(matrix_T), target :: KTKStar ! The kTkStar contrbution to the averaging
                                         
       integer :: LATESTMAFSTARTED       ! For FWMParallel stuff
+      integer :: LoopCounter            ! Abandon after 50 * maxJ loop iterations
       integer, dimension(2) :: MATRIXSTATUS ! Flag from matrix calculations
       real(rv) :: MU                    ! Move Length = scale for DX
       integer, parameter :: NF_GetJ = NF_Smallest_Flag - 1 ! Take an extra loop
@@ -1192,7 +1193,15 @@ contains
 
       call copyVector ( v(bestX), v(x) ) ! bestX := x to start things off
       prev_nwt_flag = huge(0)
+      loopCounter = 0
       do ! Newtonian iteration
+        loopCounter = loopCOunter + 1
+        if ( loopCounter > max(50, 50 * maxJacobians) ) then
+          abandoned = .true.
+          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'Retrieval abandoned because DNWT appears to be looping.' )
+          exit
+        end if
         if ( nwt_flag /= nf_getJ ) then ! not taking a special iteration to get J
             if ( index(switches,'nin') /= 0 ) & ! Turn on NWTA's internal output
               & call nwtop ( (/ 1, 1, 0 /), nwt_xopt )
@@ -2276,6 +2285,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.260  2004/06/16 23:41:39  vsnyder
+! Put a limit on the total number of DNWT iterations, regardless of Jacobians
+!
 ! Revision 2.259  2004/06/16 01:21:57  vsnyder
 ! Repair bug in constrained move
 !
