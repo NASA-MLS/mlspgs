@@ -117,10 +117,10 @@ contains
 !     DRcir   (NT,NF) -> Cloud Induced Radiance (K).                         C
 !     TAUeff  (NT,NF) -> Effective Cloud Optical Depth.                      C
 !     SS      (NT,NF) -> Cloud Radiance Sensitivity (K).                     C
-!     BETA  (NZ-1,NF) -> Total Extinction Profile (m-1).                     C
-!     BETAc (NZ-1,NF) -> Cloud Extinction Profile (m-1).                     C
+!     BETA  (NZ,NF) -> Total Extinction Profile (m-1).                     C
+!     BETAc (NZ,NF) -> Cloud Extinction Profile (m-1).                     C
 !     Trans (noS,NT,NF) -> Clear Sky Transmittance Function                    C
-!     Dm     (N,NZ-1) -> Mass-Mean-Diameters (micron).                       C 
+!     Dm     (N,NZ) -> Mass-Mean-Diameters (micron).                       C 
 !                        Note:1=Ice,2=Liquid.                                C 
 !                                                                            C
 !     -----------------------------------------------                        C
@@ -217,10 +217,10 @@ contains
                                                ! (NT+1) FOR ZENITH LOOKING) 
 
       REAL(r8) :: Trans(noS,NT,NF)               ! Clear Trans Func
-      REAL(r8) :: BETA(NZ-1,NF)                ! TOTAL OPTICAL DEPTH
-      REAL(r8) :: BETAc(NZ-1,NF)               ! CLOUDY OPTICAL DEPTH
+      REAL(r8) :: BETA(NZ,NF)                ! TOTAL OPTICAL DEPTH
+      REAL(r8) :: BETAc(NZ,NF)               ! CLOUDY OPTICAL DEPTH
 
-      REAL(r8) :: Dm(N,NZ-1)                   ! MASS-MEAN-DIAMETER
+      REAL(r8) :: Dm(N,NZ)                   ! MASS-MEAN-DIAMETER
 
                                                ! -- END OF INTERFACE AREA -- !
 
@@ -809,6 +809,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.18  2001/10/12 22:40:07  dwu
+! fix a bug in delTAU100
+!
 ! Revision 1.17  2001/10/11 22:20:02  dwu
 ! make tangent height coming from outside
 !

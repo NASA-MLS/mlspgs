@@ -51,10 +51,10 @@ contains
       REAL(r8) :: delTAUc(NH-1)                     ! CLOUDY-SKY optical thickness
 
       REAL(r8) :: Trans_out(noS,NT)                 ! TOTAL Clear Trans Func
-      REAL(r8) :: BETA(NZ-1)                        ! TOTAL EXTINCTION
-      REAL(r8) :: BETAc(NZ-1)                       ! CLOUDY-SKY EXTINCTION
+      REAL(r8) :: BETA(NZ)                        ! TOTAL EXTINCTION
+      REAL(r8) :: BETAc(NZ)                       ! CLOUDY-SKY EXTINCTION
       REAL(r8) :: DDm(N,NH-1)                       ! MASS-MEAN-DIAMETER
-      REAL(r8) :: Dm(N,NZ-1)                        ! MASS-MEAN-DIAMETER
+      REAL(r8) :: Dm(N,NZ)                        ! MASS-MEAN-DIAMETER
       REAL(r8) :: DDZ(NH-1)                         ! MODEL LEYER THICKNESS
       REAL(r8) :: DZ(NZ-1)                          ! L2 LAYER THICKNESS
 
@@ -191,6 +191,9 @@ contains
 end module ModelOutput
 
 ! $Log$
+! Revision 1.8  2001/10/19 17:11:52  dwu
+! revise teff calculation
+!
 ! Revision 1.7  2001/10/12 22:38:24  dwu
 ! rewrite transmission function calculation
 !
