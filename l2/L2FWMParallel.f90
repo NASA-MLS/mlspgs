@@ -360,12 +360,6 @@ contains
         do i = 1, jacobian%row%nb
           ! Send corresponding values of fwmOut
           if ( fmStat%rows ( i ) ) then
-            call dump ( vectors(fwmOut)%quantities ( &
-              & jacobian%row%quant(i) ) % values, 'value' )
-            call output ( 'Packing total radiances:' )
-            call output ( sum ( vectors(fwmOut)%quantities ( &
-              & jacobian%row%quant(i) ) % values ( :, &
-              & jacobian%row%inst(i) ) ), advance='yes' )
             call PVMIDLPack ( vectors(fwmOut)%quantities ( &
               & jacobian%row%quant(i) ) % values ( :, &
               & jacobian%row%inst(i) ), info )
@@ -385,8 +379,6 @@ contains
               end if
               if ( b%kind /= M_Absent ) then
                 call PVMIDLPack ( b%values, info )
-                call output ( 'Packing block total:' )
-                call output ( sum (b%values), advance='yes' ) 
                 if ( info /= 0 ) call PVMErrorMessage ( info, 'b%values' )
               end if
             end do
@@ -751,6 +743,9 @@ contains
 end module L2FWMParallel
 
 ! $Log$
+! Revision 2.13  2002/12/11 02:14:08  livesey
+! Removed extra dumps/outputs
+!
 ! Revision 2.12  2002/12/11 02:08:17  livesey
 ! Bug fix with handling of fmStat%rows?
 !
