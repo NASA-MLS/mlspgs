@@ -93,7 +93,7 @@ module MLSSignals_M
     integer :: Name                     ! Sub_rosa index of declaration's label
     integer :: PointingGrid = 0         ! Database index -- see PointingGrid_m
     integer :: Radiometer               ! Index in Radiometers database
-    integer :: SideBand                 ! -1:lower, +1:upper, 0:folded
+    integer :: SideBand                 ! L_lower, L_upper, L_folded
     integer :: Spectrometer             ! Just a spectrometer number
     integer :: SpectrometerType         ! Index in SpectrometerTypes database
     integer :: Switch                   ! Just a switch number
@@ -249,6 +249,7 @@ contains
 
 
       case ( s_signal ) ! ..........................  VALIDSIGNAL  .....
+        signal%sideband = l_folded
         do j = 2, nsons(key)
           son = subtree(j,key)
           field = decoration(subtree(1,son))
@@ -257,6 +258,8 @@ contains
           select case ( field )
           case ( f_band )
             signal%band = decoration(decoration(gson))
+          case ( f_sideband )
+            signal%sideband = decoration(gson)
           case ( f_spectrometer )
             call expr ( gson, units, value )
             signal%spectrometer = value(1)
@@ -272,7 +275,6 @@ contains
           end select
         end do ! i = 2, nsons(key)
         ! Set default values for remaining parameters
-        signal%sideband = 0
         signal%radiometer = bands(signal%band)%radiometer
         signal%lo = radiometers(signal%radiometer)%lo
         signal%instrumentModule = radiometers(signal%radiometer)%instrumentModule
@@ -747,7 +749,7 @@ contains
     ! Given an index in the Bands database, place band name in string
     integer, intent(in) :: BAND                   ! Database index
     character(len=*), intent(out) :: STRING_TEXT  ! Result
-    integer, intent(in), optional :: SIDEBAND     ! -1, 0 or 1
+    integer, intent(in), optional :: SIDEBAND     ! L_Folded, L_Lower, L_Upper
     logical, intent(in), optional :: NOSUFFIX     ! Omit suffix if present and true
 
     ! Local variables
@@ -757,14 +759,14 @@ contains
 
     ! Executable code
     my_noSuffix = .false.
-    my_sideband = 0
+    my_sideband = l_folded
     if ( present(noSuffix) ) my_noSuffix = noSuffix
     if ( present(sideband) ) my_sideband = sideband
 
     select case ( my_sideband )
-    case ( 0 ) ! Do nothing
-    case ( 1 );  sb_char = 'U'
-    case ( -1 ); sb_char = 'L'
+    case ( l_folded ); sb_char = ' '
+    case ( l_upper );  sb_char = 'U'
+    case ( l_lower ); sb_char = 'L'
     case default
       call MLSMessage ( MLSMSG_Error, ModuleName, 'Illegal sideband' )
     end select
@@ -775,10 +777,8 @@ contains
       string_text = TRIM(string_text) // ':'
       call get_string ( bands(band)%suffix,&
         & string_text(LEN_TRIM(string_text)+1:), cap=.true., strip=.true. )
-      if ( my_sideband /= 0 ) then        ! Do surgery to add sideband
-        string_text = string_text(1:LEN_TRIM(string_text)-1) // sb_char // &
-          & string_text(LEN_TRIM(string_text):LEN_TRIM(string_text))
-      end if
+      string_text = string_text(1:LEN_TRIM(string_text)-1) // TRIM(sb_char) // &
+        & string_text(LEN_TRIM(string_text):LEN_TRIM(string_text))
     endif
 
   end subroutine GetBandName
@@ -941,6 +941,10 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.7  2001/03/16 01:54:47  vsnyder
+! Use enumerated type instead of numbers for sideband; add a field for it
+! in the "signal" spec.
+!
 ! Revision 2.6  2001/03/16 00:30:49  vsnyder
 ! Make way for the pointing grid
 !
