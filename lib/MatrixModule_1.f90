@@ -1384,19 +1384,12 @@ contains ! =====     Public Procedures     =============================
 
     integer :: I, J, N             ! Subscripts and loop inductors
     integer :: IC, IR, QC, QR      ! Instance and quantity indices
-    type(Vector_T), pointer :: MY_RHS   ! RHS if present, else X
     logical My_transpose           ! TRANSPOSE if present, else .false.
 
     my_transpose = .false.
     if ( present(transpose) ) my_transpose = transpose
-    my_rhs => x
-    if ( present(rhs) ) then
-      if ( x%template%id /= rhs%template%id ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & "X and RHS not compatible in SolveCholesky_1" )
-      my_rhs => rhs
-    end if
-    if ( z%m%col%vec%template%id /= my_rhs%template%id ) &
+    if ( present(rhs) ) call copyVector ( x, rhs )
+    if ( z%m%col%vec%template%id /= x%template%id ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & "Z and RHS not compatible in SolveCholesky_1" )
 
@@ -1411,10 +1404,10 @@ contains ! =====     Public Procedures     =============================
           qr = z%m%row%quant(j)
           ! rhs := rhs - block^T * x
           call multiply ( z%m%block(j,i), x%quantities(qr)%values(:,ir), &
-            & my_rhs%quantities(qc)%values(:,ic), update=.true., subtract=.true. )
+            & x%quantities(qc)%values(:,ic), update=.true., subtract=.true. )
         end do ! j = 1, i-1
         call solveCholesky ( z%m%block(i,i), x%quantities(qc)%values(:,ic), &
-          & my_rhs%quantities(qc)%values(:,ic), transpose=.true. )
+          & transpose=.true. )
       end do ! i = 1, n
     else                           ! Solve Z X = RHS for X
       do i = n, 1, -1
@@ -1425,11 +1418,11 @@ contains ! =====     Public Procedures     =============================
           qr = z%m%col%quant(j)
           ! rhs := rhs - block * x
           call multiplyMatrixVectorNoT ( z%m%block(i,j), &
-            & x%quantities(qr)%values(:,ir), my_rhs%quantities(qc)%values(:,ic), &
+            & x%quantities(qr)%values(:,ir), x%quantities(qc)%values(:,ic), &
             & update=.true., subtract=.true. )
         end do ! j = 1, i-1
         call solveCholesky ( z%m%block(i,i), x%quantities(qc)%values(:,ic), &
-          & my_rhs%quantities(qc)%values(:,ic), transpose=.false. )
+          & transpose=.false. )
       end do ! i = n, 1, -1
     end if
   end subroutine SolveCholesky_1
@@ -1781,6 +1774,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.47  2001/07/12 21:08:44  vsnyder
+! Repair bug in SolveCholesky in the case that RHS is present
+!
 ! Revision 2.46  2001/07/11 22:07:57  vsnyder
 ! Interim commit -- may still be broken
 !
