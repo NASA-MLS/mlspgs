@@ -1,25 +1,35 @@
 #!/bin/sh
-    #makemakedep.sh
+#makemakedep.sh
+
+# --------------- makemakedep.sh help
 #Creates file Makefile.dep of dependencies to be included by Makefile
-#to compile a Fortran 9x program or library among files =~ the pattern %.f90
-#
-#All files and Makefile.dep are in the current working directory
-#except in case of (2) (see below) any args are passed through to
-#f90makedep.pl where they will be interpreted as additional directories
-#in which to search for additional prerequisite modules that may be among
-#the lists of dependencies (please see f90makedep.pl for details)
-#except for any args preceded by the "-d" flag (all of which should
-#come first, before any of the directory args)
-#Arguments preceded by the "-d" flag, each of which must appear
-#separately and with its own flag, are Fortran 9x files in the
-#current working directory to be excluded from the list of dependencies
-#(often because they are special-purpose, "test" programs, or some such)
+#to compile a Fortran 9x program or library among files.
+#First a list of OBJS is assembled: this is the list of
+#objects that need to be built. By default this list is based on
+#all files in the current directory matching the pattern %.f90,
+#and/or, depending on options set on the command-line,
+#files matching patterns %.f and %.c. In other words, source files.
+#Second, dependencies are calculated for each of the OBJS,
+#searching for prerequisites in, by default, the current directory,
+#and, depending on command line args, extra search directories
 #
 #Usage:
-#makemakedep.sh [-f77] [-d file1.f90 -d file2.f90] [dir1 dir2 ..]
+#makemakedep.sh [opt1] [opt2] ..  [dir1 dir2 ..]
+#
+#    O p t i o n s
+# -nf90         don't include files with .f90 extensions
+#                (default is to include them)
+# -f77          include files with .f extensions, too
+#                (default is not to include them)
+# -c            include files with .c extensions, too
+#                (default is not to include them)
+# -d file_name  exclude file_name
+# dir1          search directory named by dir1 as well as cwd for files
+#
 #
 #Note:
-#The option, -f77, if present must be the first option on the command line
+#The option(s) marked with "-", -f77, if present,
+#must precede the extra search directories on the command line
 #Result:
 #creates Makefile.dep in current working directory
 #Makefile.dep may then be inserted in a generic Makefile which
@@ -43,12 +53,7 @@
 # 
 ##End of Makefile.dep
 # 
-#Options
-# -f77   include files with .f extensions as well as .f90
-#         (otherwise only .f90 files considered)
-# -d file_name  exclude file_name
-# dir1   search directory named by dir1 as well as cwd for files
-#
+# --------------- End makemakedep.sh help
 # Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
@@ -197,12 +202,14 @@ then
 	fi
 fi
 # The initial settings are
-# include *.f90
-# exclude *.f
-# exclude *.c
+# include *.f90   yes
+# include *.f     no
+# include *.c     no
 include_f90="yes"
 include_f77="no"
 include_c="no"
+me="$0"
+my_name=makemakedep.sh
 
 wrong_list=""
 more_opts="yes"
@@ -238,6 +245,12 @@ while [ "$more_opts" = "yes" ] ; do
        shift
 	    shift
        ;;
+    -h | -help )
+       sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
+           | sed -n 's/^.//p' | sed '$ d'
+       exit
+	;;
+
     * )
        more_opts="no"
        ;;
@@ -270,39 +283,19 @@ fi
 #
 echo "OBJS = \\"  >> Makefile.dep
 
-# Note:
-# The following didn't work if there were no files matching the specified
-# extensions in the directory;
-# instead the echo would just produce a bogus "*.f90" string
-#if [ "$include_f77" = "yes" ] ; then
-#   (echo *.f90 | sed 's/\.f90/.o  /g; s/$/\\/') >> Makefile.dep
-#   (echo *.f | sed 's/\.f/.o  /g; s/$/\\/') >> Makefile.dep
-#else
-#   (ls -C *.f90 | sed 's/\.f90/.o  /g; s/$/\\/') >> Makefile.dep
-#fi
-
 if [ "$include_f90" = "yes" ] ; then
    extant_files *.f90
-   if [ "$extant_files_result" != "" ]
-   then
-      (echo $extant_files_result | sed 's/\.f90/.o  /g; s/$/\\/') >> Makefile.dep
-   fi
+   (echo $extant_files_result | sed 's/\.f90/.o  /g; s/$/\\/') >> Makefile.dep
 fi
 
 if [ "$include_f77" = "yes" ] ; then
    extant_files *.f
-   if [ "$extant_files_result" != "" ]
-   then
-      (echo $extant_files_result | sed 's/\.f/.o  /g; s/$/\\/') >> Makefile.dep
-   fi
+   (echo $extant_files_result | sed 's/\.f/.o  /g; s/$/\\/') >> Makefile.dep
 fi
 
 if [ "$include_c" = "yes" ] ; then
    extant_files *.c
-   if [ "$extant_files_result" != "" ]
-   then
-      (echo $extant_files_result | sed 's/\.c/.o  /g; s/$/\\/') >> Makefile.dep
-   fi
+   (echo $extant_files_result | sed 's/\.c/.o  /g; s/$/\\/') >> Makefile.dep
 fi
 
 echo " "  >> Makefile.dep
@@ -418,6 +411,9 @@ then
 fi
 exit
 # $Log$
+# Revision 1.11  2001/08/09 23:35:11  pwagner
+# Omits bogus *.o lines from Makefile.dep
+#
 # Revision 1.10  2001/05/30 17:37:51  pwagner
 # Added include_f77
 #
