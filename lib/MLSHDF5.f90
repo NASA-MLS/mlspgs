@@ -86,12 +86,14 @@ module MLSHDF5
 ! === (end of api) ===
   interface MakeHDF5Attribute
     module procedure MakeHDF5Attribute_int, MakeHDF5Attribute_logical, &
-      & MakeHDF5Attribute_string
+      & MakeHDF5Attribute_string, MakeHDF5Attribute_snglarr1, &
+      & MakeHDF5AttributeDSN_int, &
+      & MakeHDF5AttributeDSN_string, MakeHDF5AttributeDSN_snglarr1
   end interface
 
   interface GetHDF5Attribute
     module procedure GetHDF5Attribute_int, GetHDF5Attribute_logical, &
-      & GetHDF5Attribute_string
+      & GetHDF5Attribute_string, GetHDF5Attribute_snglarr1
   end interface
 
   interface IsHDF5AttributePresent
@@ -118,17 +120,25 @@ module MLSHDF5
 contains ! ======================= Public Procedures =========================
 
   ! ------------------------------------- MakeHDF5Attribute_int
-  subroutine MakeHDF5Attribute_int ( itemID, name, value )
+  subroutine MakeHDF5Attribute_int ( itemID, name, value, &
+   & skip_if_already_there )
     integer, intent(in) :: ITEMID       ! Group etc. to make attr to.
     character (len=*), intent(in) :: NAME ! Name of attribute
-    integer, intent(in) :: VALUE        ! Value of attribut
+    integer, intent(in) :: VALUE        ! Value of attribute
+    logical, intent(in), optional :: skip_if_already_there
 
     ! Local variables
     integer :: ATTRID                   ! ID for attribute
     integer :: DSID                     ! ID for dataspace
     integer :: STATUS                   ! Flag from HDF5
+    logical :: my_skip
 
     ! Executable code
+    my_skip = .false.
+    if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
+    if ( my_skip ) then
+      if ( IsHDF5AttributePresent_in_DSID(itemID, name) ) return
+    endif
     call h5sCreate_F ( h5s_scalar_f, dsID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to create dataspace for attribute '//trim(name) )
@@ -150,33 +160,49 @@ contains ! ======================= Public Procedures =========================
   end subroutine MakeHDF5Attribute_int
 
   ! ------------------------------------- MakeHDF5Attribute_logical
-  subroutine MakeHDF5Attribute_logical ( itemID, name, value )
+  subroutine MakeHDF5Attribute_logical ( itemID, name, value , &
+   & skip_if_already_there )
     integer, intent(in) :: ITEMID       ! Group etc. to make attr to.
     character (len=*), intent(in) :: NAME ! Name of attribute
     logical, intent(in) :: VALUE        ! Value of attribute
+    logical, intent(in), optional :: skip_if_already_there
 
     ! Local variables
     integer :: IVALUE                   ! Value as integer
+    logical :: my_skip
 
     ! Executable code
+    my_skip = .false.
+    if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
+    if ( my_skip ) then
+      if ( IsHDF5AttributePresent_in_DSID(itemID, name) ) return
+    endif
     iValue = 0
     if ( value ) iValue = 1
     call MakeHDF5Attribute ( itemID, name, iValue )
   end subroutine MakeHDF5Attribute_logical
 
   ! ------------------------------------- MakeHDF5Attribute_string
-  subroutine MakeHDF5Attribute_string ( itemID, name, value )
+  subroutine MakeHDF5Attribute_string ( itemID, name, value , &
+   & skip_if_already_there )
     integer, intent(in) :: ITEMID       ! Group etc. to make attr to.
     character (len=*), intent(in) :: NAME ! Name of attribute
     character (len=*), intent(in) :: VALUE ! Value of attribute
+    logical, intent(in), optional :: skip_if_already_there
 
     ! Local variables
     integer :: ATTRID                   ! ID for attribute
     integer :: DSID                     ! ID for dataspace
     integer :: STATUS                   ! Flag from HDF5
     integer :: STRINGTYPE               ! Type for string
+    logical :: my_skip
 
     ! Executable code
+    my_skip = .false.
+    if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
+    if ( my_skip ) then
+      if ( IsHDF5AttributePresent_in_DSID(itemID, name) ) return
+    endif
     ! Setup
     ! Create a data type for this string
     call h5tcopy_f( H5T_NATIVE_CHARACTER, stringtype, status ) 
@@ -189,7 +215,13 @@ contains ! ======================= Public Procedures =========================
     call h5sCreate_F ( h5s_scalar_f, dsID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to create dataspace for attribute '//trim(name) )
+    print *, 'itemID: ', itemID
+    print *, 'stringtype: ', stringtype
+    print *, 'dsID: ', dsID
+    print *, 'name: ', trim(name)
     call h5aCreate_f ( itemID, trim(name), stringtype, dsID, attrID, status )
+    print *, 'attrID: ', attrID
+    print *, 'status: ', status
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to create attribute '//trim(name) )
     ! Write
@@ -208,6 +240,177 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close stringtype '//trim(name) )
   end subroutine MakeHDF5Attribute_string
+
+  ! ------------------------------------- MakeHDF5Attribute_snglarr1
+  subroutine MakeHDF5Attribute_snglarr1 ( itemID, name, value , &
+   & skip_if_already_there )
+    integer, intent(in) :: ITEMID       ! Group etc. to make attr to.
+    character (len=*), intent(in) :: NAME ! Name of attribute
+    real(r4), intent(in) :: VALUE(:)     ! The attribute array itself
+    logical, intent(in), optional :: skip_if_already_there
+
+    ! Local variables
+    integer :: ATTRID                   ! ID for attribute
+    integer :: spaceID                  ! ID for dataspace
+    integer :: STATUS                   ! Flag from HDF5
+    integer, dimension(1) :: SHP        ! Shape
+    logical :: my_skip
+
+    ! Executable code
+    my_skip = .false.
+    if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
+    if ( my_skip ) then
+      if ( IsHDF5AttributePresent_in_DSID(itemID, name) ) return
+    endif
+    shp = shape(value)
+    call h5sCreate_simple_f ( 1, int(shp,hSize_T), spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to create dataspace for 1D attribute array '//trim(name) )
+    ! Now create the attribute
+    call h5aCreate_f ( itemID, trim(name), H5T_NATIVE_REAL, spaceID, &
+      & attrID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to create 1d attribute array '//trim(name) )
+    ! Write
+    call h5aWrite_f ( attrID, H5T_NATIVE_REAL, value, &
+      & int ( (/ shp, ones(1:6) /), hID_T ), status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to write 1d attribute array '//trim(name) )
+    ! Finish off
+    call h5aClose_f ( attrID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close 1d attribute array'//trim(name) )
+    call h5sClose_f ( spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close 1d attribute array dataspace '//trim(name) )
+  end subroutine MakeHDF5Attribute_snglarr1
+
+  ! ------------------------------------- MakeHDF5AttributeDSN_int
+  subroutine MakeHDF5AttributeDSN_int ( fileID, &
+   & dataName, attrName, value, skip_if_already_there )
+    integer, intent(in) :: FILEID       ! FIle where to find them
+    character (len=*), intent(in) :: DATANAME ! Name of data set
+    character (len=*), intent(in) :: ATTRNAME ! Name of attribute
+    integer, intent(in) :: VALUE        ! Value of attribut
+    logical, intent(in), optional :: skip_if_already_there
+
+    ! Local variables
+    integer :: ATTRID                   ! ID for attribute
+    integer :: dataID                   ! ID for dataspace
+    integer :: STATUS                   ! Flag from HDF5
+    integer, dimension(1) :: SHP        ! Shape
+    logical :: my_skip
+
+    ! Executable code
+    my_skip = .false.
+    if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
+    if ( my_skip ) then
+      if ( IsHDF5AttributePresent_in_fID( fileID, dataName, attrName ) ) return
+    endif
+    dataID = name_to_dataID( fileID, dataName)
+    call MakeHDF5Attribute_int( &
+     & dataID, attrName, value )
+    call h5dclose_f(dataID, status)
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close data '//trim(dataName) )
+
+  end subroutine MakeHDF5AttributeDSN_int
+
+  ! ------------------------------------- MakeHDF5AttributeDSN_logical
+  ! Sorry--this could not be made part of MakeHDF5Attribute
+  ! it conflicts with MakeHDF5Attribute_string generic
+  ! all becuase of the skip_if_already_there optional argument
+  subroutine MakeHDF5AttributeDSN_logical ( fileID, &
+   & dataName, attrName, value, skip_if_already_there )
+    integer, intent(in) :: FILEID       ! FIle where to find them
+    character (len=*), intent(in) :: DATANAME ! Name of data set
+    character (len=*), intent(in) :: ATTRNAME ! Name of attribute
+    logical, intent(in) :: VALUE        ! Value of attribute
+    logical, intent(in), optional :: skip_if_already_there
+
+    ! Local variables
+    integer :: ATTRID                   ! ID for attribute
+    integer :: dataID                   ! ID for data
+    integer :: STATUS                   ! Flag from HDF5
+    integer, dimension(1) :: SHP        ! Shape
+    logical :: my_skip
+
+    ! Executable code
+    my_skip = .false.
+    if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
+    if ( my_skip ) then
+      if ( IsHDF5AttributePresent_in_fID( fileID, dataName, attrName ) ) return
+    endif
+    dataID = name_to_dataID( fileID, dataName)
+    call MakeHDF5Attribute_logical( &
+     & dataID, attrName, value )
+    call h5dclose_f(dataID, status)
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close data '//trim(dataName) )
+
+  end subroutine MakeHDF5AttributeDSN_logical
+
+  ! ------------------------------------- MakeHDF5AttributeDSN_string
+  subroutine MakeHDF5AttributeDSN_string ( fileID, &
+   & dataName, attrName, value, skip_if_already_there )
+    integer, intent(in) :: FILEID       ! FIle where to find them
+    character (len=*), intent(in) :: DATANAME ! Name of data set
+    character (len=*), intent(in) :: ATTRNAME ! Name of attribute
+    character (len=*), intent(in) :: VALUE ! Value of attribute
+    logical, intent(in), optional :: skip_if_already_there
+
+    ! Local variables
+    integer :: ATTRID                   ! ID for attribute
+    integer :: dataID                   ! ID for data
+    integer :: STATUS                   ! Flag from HDF5
+    integer, dimension(1) :: SHP        ! Shape
+    logical :: my_skip
+
+    ! Executable code
+    my_skip = .false.
+    if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
+    if ( my_skip ) then
+      if ( IsHDF5AttributePresent_in_fID( fileID, dataName, attrName ) ) return
+    endif
+    dataID = name_to_dataID( fileID, dataName)
+    call MakeHDF5Attribute_string( &
+     & dataID, attrName, value )
+    call h5dclose_f(dataID, status)
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close data '//trim(dataName) )
+
+  end subroutine MakeHDF5AttributeDSN_string
+
+  ! ------------------------------------- MakeHDF5AttributeDSN_snglarr1
+  subroutine MakeHDF5AttributeDSN_snglarr1 ( fileID, &
+   & dataName, attrName, value, skip_if_already_there )
+    integer, intent(in) :: FILEID       ! FIle where to find them
+    character (len=*), intent(in) :: DATANAME ! Name of data set
+    character (len=*), intent(in) :: ATTRNAME ! Name of attribute
+    real(r4), intent(in) :: VALUE(:)     ! The attribute array itself
+    logical, intent(in), optional :: skip_if_already_there
+
+    ! Local variables
+    integer :: ATTRID                   ! ID for attribute
+    integer :: dataID                   ! ID for data
+    integer :: STATUS                   ! Flag from HDF5
+    integer, dimension(1) :: SHP        ! Shape
+    logical :: my_skip
+
+    ! Executable code
+    my_skip = .false.
+    if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
+    if ( my_skip ) then
+      if ( IsHDF5AttributePresent_in_fID( fileID, dataName, attrName ) ) return
+    endif
+    dataID = name_to_dataID( fileID, dataName)
+    call MakeHDF5Attribute_snglarr1( &
+     & dataID, attrName, value )
+    call h5dclose_f(dataID, status)
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close data '//trim(dataName) )
+
+  end subroutine MakeHDF5AttributeDSN_snglarr1
 
   ! ------------------------------------------- GetHDF5Attribute_int
   subroutine GetHDF5Attribute_int ( itemID, name, value )
@@ -285,6 +488,34 @@ contains ! ======================= Public Procedures =========================
     value = ( iValue == 1 )
   end subroutine GetHDF5Attribute_logical
 
+  ! ------------------------------------------- GetHDF5Attribute_snglarr1
+  subroutine GetHDF5Attribute_snglarr1 ( itemID, name, value )
+    integer, intent(in) :: ITEMID       ! Group etc. to get attribute from
+    character (len=*), intent(in) :: NAME ! Name of attribute
+    real(r4), intent(out) :: VALUE(:)     ! The attribute array result
+
+    ! Local variables
+    integer :: ATTRID                   ! ID for attribute
+    integer :: STATUS                   ! Flag from HDF5
+    integer, dimension(1) :: SHP        ! Shape
+
+    ! Executable code
+    shp = shape(value)
+    call h5aOpen_name_f ( itemID, name, attrID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open attribute '//trim(name) )
+    ! Note we're going to assume here that the attribute indeed represents the
+    ! right type, and that we won't overflow memory etc. by accidentally trying
+    ! to read too big array into ours.
+    call h5aread_f ( attrID, H5T_NATIVE_REAL, value, &
+      & int ( (/ shp, ones(1:6) /), hID_T ), status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to read 1d attribute array '//trim(name) )
+    call h5aClose_f ( attrID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close 1d attribute array  '//trim(name) )
+  end subroutine GetHDF5Attribute_snglarr1
+   
   ! ------------------------------------- GetHDF5DSDims
   subroutine GetHDF5DSDims ( FileID, name, DIMS, maxDims )
     integer, intent(in) :: FILEID       ! fileID
@@ -1601,6 +1832,64 @@ contains ! ======================= Public Procedures =========================
       & message )
   end subroutine my_message
 
+  function name_to_attrID(fileID, dataName, attrName, dont_close) &
+   & result(attrID)
+  ! Given a file, dataname, attribute name, return attribute ID of that name
+  ! unless not there, when return -1
+  ! Note that by default both attrName and dataname are left open
+  ! (otherwise the returned number becomes invalid for closed names)
+  ! (But how will we know what object number to close afterward?
+  !  This is a bug.)
+    integer, intent(in)               :: fileID 
+    character (len=*), intent(in)     :: dataNAME ! Name for this dataset
+    character (len=*), intent(in)     :: attrNAME ! Name for this attribute
+    logical, optional, intent(in)     :: dont_close ! default is TRUE
+    integer                           :: attrID
+    ! Local variables
+    integer :: STATUS                   ! Flag
+    integer                           :: dataID
+    logical :: my_dont_close
+    ! Executable code
+    my_dont_close = .TRUE.
+    if ( present(dont_close) ) my_dont_close = dont_close
+    dataID = -1
+    call h5dOpen_f ( fileID, dataName, dataID, status ) 
+    if ( status /= 0 ) then
+      dataID = -1
+    else
+      call h5aOpen_name_f ( dataID, attrName, attrID, status )
+      if ( status /= 0 ) then
+        attrID = -1
+      else
+        if (.not. my_dont_close) call h5aClose_f ( attrID, status )
+      end if
+      if (.not. my_dont_close) call h5dClose_f ( dataID, status )
+    end if
+  end function name_to_attrID
+
+  function name_to_dataID(fileID, name, dont_close) result(dataID)
+  ! Given a file, dataname, return dataID of that name
+  ! unless not there, when return -1
+  ! Note that by default the dataname is left open
+  ! (otherwise the returned number becomes invalid for a closed dataname)
+    integer, intent(in)               :: fileID 
+    character (len=*), intent(in)     :: NAME ! Name for this dataset
+    integer                           :: dataID
+    logical, optional, intent(in)     :: dont_close ! default is TRUE
+    ! Local variables
+    integer :: STATUS                   ! Flag
+    logical :: my_dont_close
+    ! Executable code
+    my_dont_close = .TRUE.
+    if ( present(dont_close) ) my_dont_close = dont_close
+    call h5dOpen_f ( fileID, name, dataID, status ) 
+    if ( status /= 0 ) then
+      dataID = -1
+    else
+      if (.not. my_dont_close) call h5dClose_f ( dataID, status )
+    end if
+  end function name_to_dataID
+
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
@@ -1608,6 +1897,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.17  2003/01/27 21:38:44  pwagner
+! May make 1d s.p. array attributes; may make attributes with sdname attrname call
+!
 ! Revision 2.16  2003/01/23 23:30:49  pwagner
 ! May add to same 2d, 3d single-precision datasets
 !
