@@ -101,7 +101,6 @@ contains
     ! Local variables:
     type(vector_T), pointer :: Apriori  ! A priori estimate of state
     real(r8) :: AprioriScale            ! Weight for apriori, default 1.0
-    type(matrix_T), pointer :: AveragingKernel ! NormalEquationsMatrix^{-1} (J^T J)
     integer :: ColumnScaling            ! one of l_apriori, l_covariance,
                                         ! l_none or l_norm
     integer, pointer, dimension(:) :: ConfigIndices    ! In ConfigDatabase
@@ -1465,9 +1464,8 @@ contains
           call columnScale ( outputCovariance%m, v(columnScaleVector) )
           call rowScale ( v(columnScaleVector), outputCovariance%m )
         end if
-        if ( associated(outputSD) ) then
-          call GetDiagonal ( outputCovariance%m, outputSD )
-        end if
+        if ( associated(outputSD) ) &
+          & call GetDiagonal ( outputCovariance%m, outputSD, squareRoot=.true. )
       end if
 
       ! Compute the averaging kernel
@@ -2793,6 +2791,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.140  2002/04/22 23:00:58  vsnyder
+! Add SquareRoot=.true. to getDiagonal for standard deviation
+!
 ! Revision 2.139  2002/04/22 20:55:00  vsnyder
 ! Compute and output the averaging kernel
 !
