@@ -29,7 +29,7 @@ contains
 ! separate versions of these.
 
   ! ----------------------------------------------  Get_Beta_Path  -----
-  subroutine Get_Beta_Path ( frq, p_path, t_path, z_path, Catalog, beta_group, gl_slabs, &
+  subroutine Get_Beta_Path ( frq, p_path, t_path, z_path_c, Catalog, beta_group, gl_slabs, &
         & path_inds, beta_path, gl_slabs_m, t_path_m, gl_slabs_p, t_path_p, &
         & dbeta_dt_path, dbeta_dw_path, dbeta_dn_path, dbeta_dv_path, ICON, Incl_Cld )
 
@@ -41,10 +41,10 @@ contains
 
 ! Inputs:
 
-    real(r8), intent(in) :: Frq ! frequency in MHz
-    real(rp), intent(in) :: T_path(:) ! path temperatures
-    real(rp), intent(in) :: P_path(:) ! path pressures in hPa!
-    real(rp), intent(in) :: Z_path(:) ! =-log(p_path)
+    real(r8), intent(in) :: Frq         ! frequency in MHz
+    real(rp), intent(in) :: T_path(:)   ! path temperatures
+    real(rp), intent(in) :: P_path(:)   ! path pressures in hPa!
+    real(rp), intent(in) :: z_path_c(:) ! =-log(p_path)
     type(catalog_t), intent(in) :: Catalog(:)
     type (slabs_struct), dimension(:,:) :: Gl_slabs
     integer(ip), intent(in) :: Path_inds(:) ! indicies for reading gl_slabs
@@ -109,7 +109,7 @@ contains
 
           ! mask 100%RH below 100mb
           IF(Spectag .EQ. SP_H2O .AND. ICON .EQ.-1 .and. p_path(k).GE. 100.)THEN
-            ratio = RHIFromH2O_Factor (t_path(k), z_path(k), 0, .true.)*100._r8
+            ratio = RHIFromH2O_Factor (t_path(k), z_path_c(k), 0, .true.)*100._r8
             ! optional 0 will return ratio as parts per 1, as Bill uses here.
           ENDIF                                 
 
@@ -200,6 +200,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.15  2003/01/31 17:16:08  jonathan
+! add Inc_Cld, and cld_ext
+!
 ! Revision 2.14  2003/01/30 17:43:04  jonathan
 ! remove RHtoEV
 !

@@ -1742,7 +1742,7 @@ contains
           ICON = FwdModelConf%i_saturation
 
           call get_beta_path ( Frq,                                   &
-            &  p_path(1:no_ele), t_path(1:no_ele), z_path(1:no_ele),  &   
+            &  p_path(1:no_ele), t_path(1:no_ele), z_path_c(1:npc),   &   
             &  my_Catalog, beta_group, gl_slabs, indices_c(1:npc),    &     
             &  beta_path_c(1:npc,:),                                  &     
             &  gl_slabs_m, t_path(1:no_ele)-del_temp,                 &     
@@ -1776,7 +1776,7 @@ contains
           ICON = FwdModelConf%i_saturation
 
           call get_beta_path ( Frq,                                   &
-            & p_path(1:no_ele), t_path(1:no_ele), z_path(1:no_ele),   &
+            & p_path(1:no_ele), t_path(1:no_ele), z_path_c(1:npc),    &
             & my_Catalog, beta_group, gl_slabs, gl_inds(:ngl),        &
             & beta_path_f(:ngl,:),                                    &
             & gl_slabs_m, t_path(1:no_ele)-del_temp,                  &  
@@ -2607,6 +2607,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.113  2003/01/31 17:15:49  jonathan
+! add Inc_Cld to get_beta_path
+!
 ! Revision 2.112  2003/01/31 01:53:01  vsnyder
 ! Move array temps to arrays explicitly allocated outside the loop
 !
