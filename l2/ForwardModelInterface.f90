@@ -27,7 +27,7 @@ module ForwardModelInterface
   use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST
   ! Now fields
   use Init_Tables_Module, only: F_ANTENNAPATTERNS, F_ATMOS_DER, F_CHANNELS, &
-    & F_DO_CONV, F_DO_FREQ_AVG, F_FILTERSHAPES, F_FREQUENCY, &
+    & F_DO_CONV, F_DO_FREQ_AVG, F_FILTERSHAPES, F_FREQUENCY, F_FRQGAP,&
     & F_INTEGRATIONGRID, F_L2PC, F_MOLECULES, F_MOLECULEDERIVATIVES, F_PHIWINDOW, &
     & F_POINTINGGRIDS, F_SIGNALS, F_SPECT_DER, F_TANGENTGRID, F_TEMP_DER, F_TYPE,&
     & F_MODULE
@@ -58,7 +58,7 @@ module ForwardModelInterface
   use Trace_M, only: Trace_begin, Trace_end
   use Tree, only: Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, Subtree
   use Tree_Types, only: N_named
-  use Units, only: Deg2Rad
+  use Units, only: Deg2Rad, PHYQ_FREQUENCY
   use VectorsModule, only: GetVectorQuantityByType, ValidateVectorQuantity, &
     & Vector_T, VectorValue_T
   use VGridsDatabase, only: VGrid_T
@@ -87,6 +87,7 @@ module ForwardModelInterface
   integer, parameter :: IrrelevantFwmParameter = IncompleteLinearFwm + 1
   integer, parameter :: TangentNotSubset     =  IrrelevantFwmParameter + 1
   integer, parameter :: PhiWindowMustBeOdd   = TangentNotSubset + 1
+  integer, parameter :: FrqGapNotFrq         = PhiWindowMustBeOdd + 1
 
   integer :: Error            ! Error level -- 0 = OK
 
@@ -202,6 +203,7 @@ contains ! =====     Public Procedures     =============================
     info%atmos_der = .false.
     info%spect_der = .false.
     info%phiwindow = 5
+    info%frqGap = 0.0                   ! Default to everything
 
     noChannelsSpecs=0
 
@@ -222,6 +224,11 @@ contains ! =====     Public Procedures     =============================
         info%do_conv = get_boolean(son)
       case ( f_do_freq_avg )
         info%do_freq_avg = get_boolean(son)
+      case ( f_frqGap )
+        call expr ( subtree(2,son), units, value, type )
+        info%frqGap = value(1)
+        if ( units(1) /= phyq_frequency ) &
+          & call AnnounceError ( frqGapNotFrq, key )
       case ( f_module )
         info%instrumentModule = decoration(decoration(subtree(2,son)))
       case ( f_molecules )
@@ -1031,7 +1038,8 @@ contains ! =====     Public Procedures     =============================
 
         call get_beta_path ( frequencies, my_Catalog, no_ele, &
           &                  ifm%z_path(ptg_i,maf), ifm%t_path(ptg_i,maf), &
-          &                  beta_path, 0.001*losVel%values(1,maf), ier )
+          &                  beta_path, 0.001*losVel%values(1,maf), &
+          &                  forwardModelConfig%frqGap, ier )
         if ( ier /= 0 ) goto 99
 
         ! Define the dh_dt_path for this pointing and this MAF:
@@ -1397,12 +1405,17 @@ contains ! =====     Public Procedures     =============================
         & grid', advance='yes' )
     case ( PhiWindowMustBeOdd )
       call output ( 'phiWindow is not odd', advance='yes' )
+    case ( FrqGapNotFrq )
+      call output ( 'frqGap does not have dimensions of frequency', advance='yes' )
     end select
   end subroutine AnnounceError
 
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.129  2001/05/14 23:18:26  livesey
+! Added frqGap parameter
+!
 ! Revision 2.128  2001/05/11 22:18:56  livesey
 ! Changed first dimension of ifm%tan_dh_dt from nlvl to no_tan_hts.
 ! Also tidied up allocates of ifm stuff.
