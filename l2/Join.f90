@@ -169,7 +169,6 @@ contains ! =====     Public Procedures     =============================
         & verticalCoordinate=(/L_Pressure,L_Zeta,L_None/))) then
         ! Coherent, stacked, regular quantities on pressure surfaces, or
         ! with no vertical coordinate system go in l2gp files.
-        call display_string(quantity%template%name)
         call JoinL2GPQuantities ( key, name, quantity, l2gpDatabase, chunkNo )
       else
         ! All others go in l2aux files.
@@ -667,6 +666,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.16  2001/03/05 20:46:41  livesey
+! Removed a debugging statement left behind
+!
 ! Revision 2.15  2001/03/05 01:19:45  livesey
 ! Removed a print statement
 !
