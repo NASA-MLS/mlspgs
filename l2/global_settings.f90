@@ -5,17 +5,16 @@ module GLOBAL_SETTINGS
     & ForwardModelConfig_T
   use ForwardModelInterface, only: ConstructForwardModelConfig, &
     & ForwardModelGlobalSetup
-  use HGrid, only: AddHGridToDatabase, CreateHGridFromMLSCFInfo, &
-    & DestroyHGridDatabase, HGrid_T
   use INIT_TABLES_MODULE, only: L_TRUE, P_ALLOW_CLIMATOLOGY_OVERLOADS, &
     & P_INPUT_VERSION_STRING, P_OUTPUT_VERSION_STRING, P_VERSION_COMMENT, &
     & S_FORWARDMODEL, S_ForwardModelGlobal, S_TIME, S_VGRID, F_FILE, &
     & P_CYCLE, P_CCSDSSTARTTIME, P_CCSDSENDTIME, P_STARTTIME, P_ENDTIME, &
     & S_L1BRAD, S_L1BOA
-  use L1BData, only: l1bradSetup, l1boaSetup, ReadL1BData, L1BData_T
+  use L1BData, only: l1bradSetup, l1boaSetup, ReadL1BData, L1BData_T, NAME_LEN
   use L2GPData, only: L2GPDATA_T
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: R8, NameLen, L1BInfo_T, TAI93_Range_T, FileNameLen
+  use MLSL2Options, only: PCF
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
   use MLSPCF2, only: MLSPCF_L1B_RAD_END, MLSPCF_L1B_RAD_START
   use MLSStrings, only: unquote, hhmmss_value
@@ -87,6 +86,7 @@ contains
     real(r8) :: start_time_from_1stMAF, end_time_from_1stMAF
 
     character(LEN=NameLen) :: name_string
+    character (len=name_len) :: QUANTITY
     character(LEN=*), parameter :: time_conversion='(F32.0)'
 ! Just until init_tables_module is updated
 !   integer, parameter :: P_CYCLE=-99, P_CCSDSSTARTTIME=-98, &
@@ -191,8 +191,16 @@ contains
     end do
 
    ! add maf offsets to start, end times
-   if(got(1) .or. got(2)) then
-    call ReadL1BData ( l1bInfo%l1boaID, "MAFStartTimeTAI", l1bField, noMAFs, &
+   ! This is optional way to define processingRange if using PCF
+   ! It becomes mandatory if not using PCF
+   if(got(1) .or. got(2) .or. .not. PCF) then
+   
+   ! 1st--check that have L1BOA
+     if(l1bInfo%L1BOAID == ILLEGALL1BRADID) then
+       call announce_error(son, 'L1BOA required but not set')
+     endif
+     quantity = 'MAFStartTimeTAI'
+     call ReadL1BData ( l1bInfo%l1boaID, quantity, l1bField, noMAFs, &
           & l1bFlag)
       if ( l1bFlag==-1) then
             call announce_error(son, &
@@ -201,15 +209,19 @@ contains
            maxTime = 0.
       else
            minTime = l1bField%dpField(1,1,1)
-           maxTime = l1bField%dpField(1,1,noMAFs)
+           maxTime = l1bField%dpField(1,1,noMAFs) ! This is start time of last MAF
       endif
    endif
    if(got(1)) then
       processingrange%starttime = minTime + start_time_from_1stMAF
+   elseif(.not. PCF) then
+      processingrange%starttime = minTime
    endif
 
    if(got(2)) then
       processingrange%endtime = minTime + end_time_from_1stMAF
+   elseif(.not. PCF) then
+      processingrange%endtime = maxTime + 1.0
    endif
 
    if( levels(gen) > 0 .or. &
@@ -318,6 +330,9 @@ contains
     call output ( 'End Time (tai):     ' )
     call output ( processingrange%endtime, format=time_format, advance='yes' )
 
+    call output ( 'Processing Range:     ' )
+    call output ( processingrange%endtime-processingrange%starttime, advance='yes' )
+
     call output ( 'PGE version:   ' )
     call output ( l2pcf%PGEVersion, advance='yes' )
 
@@ -404,6 +419,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.30  2001/05/15 23:46:32  pwagner
+! Now optionally uses hhmmss_value
+!
 ! Revision 2.29  2001/05/14 23:45:08  pwagner
 ! Start, end times now added to MAF offsets from L1BOA
 !
