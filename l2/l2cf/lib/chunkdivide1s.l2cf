@@ -3,5 +3,5 @@
 ; This l2cf fragment gives a signle chunk of length 1 MAF with
 ; no overlaps.
 begin ChunkDivide
-  ChunkDivide, method=fixed, maxLength=1 MAFs, overlap=0 MAFs, noChunks=2000
+  ChunkDivide, method=fixed, maxLength=1 MAFs, overlap=0 MAFs, noChunks=200
 end ChunkDivide
