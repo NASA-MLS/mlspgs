@@ -34,6 +34,7 @@ begin Join
   DirectWrite, type=l2gp, hdfVersion=!hdfVersion, $
     file='!l2gpFileName($1)', $
     source=state.$1, precision=outputPrecision.$1, $
+    status=otherDiagnostics.status$1, quality=otherDiagnostics.quality$1, $
     source=state.column_$1, precision=outputPrecision.column_$1!nl})
   !forall(writeStandardProductWithColumn,!allStandardProductsWithColumns)
 
