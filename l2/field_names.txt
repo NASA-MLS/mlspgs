@@ -201,6 +201,7 @@ scVelECI
 scVelECR
 sdname
 seed
+serial
 sgrid
 signal
 signals
@@ -256,6 +257,9 @@ vRegWeightVec
 writeCounterMAF
 
 # $Log$
+# Revision 2.56  2002/10/19 01:51:38  livesey
+# Added serial option for retrieve
+#
 # Revision 2.55  2002/10/17 00:16:40  vsnyder
 # Add lowBound and highBound fields for the Retrieve spec
 #
