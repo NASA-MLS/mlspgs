@@ -805,7 +805,7 @@ contains ! =====     Public Procedures     =============================
   !  Fill and return an array of forward Model Names  
                                                                                 
     use ForwardModelConfig, only: ForwardModelConfig_T
-    use MLSStrings, only: catLists
+    use MLSStringLists, only: catLists
     use String_Table, only: GET_STRING
 
     type(ForwardModelConfig_T), dimension(:), pointer :: FWModelConfig
@@ -977,6 +977,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.97  2004/08/04 23:19:57  pwagner
+! Much moved from MLSStrings to MLSStringLists
+!
 ! Revision 2.96  2004/07/22 20:40:10  cvuu
 ! Add 2 subroutines FillFwdModelTimings and ShowFwdModelnames
 !
