@@ -28,8 +28,6 @@ contains
 !
     Integer(i4) :: klo,khi,i
     Real(r8) :: rxf(nfp), tmpary(nfp), Fmin, Fmax, Rmin, Rmax, dF
-
-    Real(r8), PARAMETER :: p = 0.02_r8
 !
     i = nfp / 2
     dF = F_grid_fltr(i+1) - F_grid_fltr(i)
@@ -42,11 +40,12 @@ contains
       Fmax = F_grid_fltr(001)
     endif
 
+    klo = -1
     Call Hunt(Fmin,F_grid,n,klo,i)
     Call Hunt(Fmax,F_grid,n,i,khi)
 !
-    Rmin = (1.0_r8 - p) * MINVAL(Rad(klo:khi))
-    Rmax = (1.0_r8 + p) * MAXVAL(Rad(klo:khi))
+    Rmin = MINVAL(Rad(klo:khi))
+    Rmax = MAXVAL(Rad(klo:khi))
 !
     Call Cspline(F_grid, F_grid_fltr, Rad, tmpary, n, nfp, Rmin, Rmax)
 
@@ -59,6 +58,9 @@ contains
 
 end module FREQ_AVG_M
 ! $Log$
+! Revision 2.1  2002/04/18 10:46:26  zvi
+! Better spline use
+!
 ! Revision 2.0  2001/09/17 20:26:26  livesey
 ! New forward model
 !
