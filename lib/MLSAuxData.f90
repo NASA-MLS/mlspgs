@@ -15,7 +15,8 @@ module MLSAuxData
        h5dget_create_plist_f, h5pget_chunk_f, h5dget_type_f, & 
        h5sselect_hyperslab_f, h5dread_f, h5dwrite_f, h5dextend_f, &
        h5acreate_f, h5awrite_f, h5aread_f, h5aclose_f, h5tcopy_f, &
-       h5tset_size_f, h5aopen_name_f, h5aget_type_f, h5aget_space_f
+       h5tset_size_f, h5aopen_name_f, h5aget_type_f, h5aget_space_f, &
+       h5tequal_f
   use MLSCommon, only: r4, r8
   use MLSStrings, only: Lowercase
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_Error, MLSMSG_deallocate, &
@@ -770,7 +771,8 @@ contains ! ============================ MODULE PROCEDURES ====================
     integer(hsize_t), dimension(3) :: chunk_dims, dims_create, maxdims, start
     integer(hid_t) :: cparms, dset_id, dspace_id, type_id, memspace
     integer        :: rank, h5error, i, j, k, status
-    logical :: myRead_attributes
+    logical :: myRead_attributes, is_integer, is_real, is_double, is_character, &
+         is_int32, is_float32, is_float64
     character(len=16) :: myQuantityType
 
     error = 0
@@ -817,18 +819,38 @@ contains ! ============================ MODULE PROCEDURES ====================
     if ( lowercase(trim(QuantityType)) /= 'unknown' ) then
       myQuantityType = QuantityType
     else
-      if ( type_id == H5T_NATIVE_INTEGER .or. type_id == H5T_STD_I32LE ) then
+
+      is_integer = .FALSE.
+      is_real = .FALSE.
+      is_double = .FALSE.
+      is_int32 = .FALSE.
+      is_float32 = .FALSE.
+      is_float64 = .FALSE.
+      is_character = .FALSE.
+
+      call h5tequal_f(type_id, H5T_NATIVE_INTEGER, is_integer, h5error)
+      call h5tequal_f(type_id, H5T_STD_I32LE, is_int32, h5error)
+      call h5tequal_f(type_id, H5T_NATIVE_CHARACTER, is_character, h5error)
+      call h5tequal_f(type_id, H5T_NATIVE_REAL, is_real, h5error)
+      call h5tequal_f(type_id, H5T_IEEE_F32LE, is_float32, h5error)
+      call h5tequal_f(type_id, H5T_IEEE_F64LE, is_float64, h5error)
+      call h5tequal_f(type_id, H5T_NATIVE_DOUBLE, is_double, h5error)
+
+! Please add any new or compound datatypes here.
+
+      if ( is_integer .or. is_int32 ) then
         myQuantityType = 'integer'
-      elseif ( type_id == H5T_NATIVE_CHARACTER ) then
+      elseif ( is_character ) then
         myQuantityType = 'character'
-      elseif ( type_id == H5T_NATIVE_REAL .or. type_id == H5T_IEEE_F32LE ) then
+      elseif ( is_real .or. is_float32 ) then
         myQuantityType = 'real'
-      elseif ( type_id == H5T_NATIVE_DOUBLE .or. type_id == H5T_IEEE_F64LE ) then
+      elseif ( is_double .or. is_float64 ) then
         myQuantityType = 'double'
       else
         error = 1
         return
       endif
+
     endif
 
     do i = 1, 7
@@ -1183,6 +1205,9 @@ contains ! ============================ MODULE PROCEDURES ====================
 end module MLSAuxData
 
 ! $Log$
+! Revision 2.7  2002/10/04 22:13:30  jdone
+! Replace == for types with h5tequal_f
+!
 ! Revision 2.6  2002/10/03 22:15:37  jdone
 ! check hdf5 error flags that return rank
 !
