@@ -6,6 +6,7 @@ module NO_CONV_AT_ALL_M
                                  K_MATRIX_INFO
   use D_LINTRP_M, only: LINTRP
   use D_CSPLINE_M, only: CSPLINE
+  use dump_0,only:dump
   implicit NONE
   private
   public :: NO_CONV_AT_ALL
@@ -31,9 +32,9 @@ Subroutine no_conv_at_all (Ptan,n_sps,tan_press,band,temp_der,atmos_der,&
     Logical, intent(IN) :: temp_der,atmos_der,spect_der
 !
     integer(i4), intent(IN) :: no_t,n_sps,no_tan_hts,band,no_phi_t
-    integer(i4), intent(IN) :: no_phi_f(*), spect_atmos(*)
+    integer(i4), intent(IN) :: no_phi_f(:), spect_atmos(:)
 !
-    real(r8), intent(IN) :: I_RAW(*),TAN_PRESS(*),T_Z_BASIS(*)
+    real(r8), intent(IN) :: I_RAW(:),TAN_PRESS(:),T_Z_BASIS(:)
 
     Real(r4) :: k_temp(Nptg,mxco,mnp)
     Real(r4) :: k_atmos(Nptg,mxco,mnp,Nsps)
@@ -41,8 +42,8 @@ Subroutine no_conv_at_all (Ptan,n_sps,tan_press,band,temp_der,atmos_der,&
                 k_spect_dn(Nptg,mxco,mnp,Nsps),  &
                 k_spect_dnu(Nptg,mxco,mnp,Nsps)
 !
-    type(atmos_comp), intent(IN) :: ATMOSPHERIC(*)
-    type (spectro_param), intent(IN) :: SPECTROSCOPIC(*)
+    type(atmos_comp), intent(IN) :: ATMOSPHERIC(:)
+    type (spectro_param), intent(IN) :: SPECTROSCOPIC(:)
 !
 ! -----     Output Variables   ----------------------------------------
 !
@@ -50,7 +51,7 @@ Subroutine no_conv_at_all (Ptan,n_sps,tan_press,band,temp_der,atmos_der,&
 !
     real(r8), intent(OUT) :: I_STAR_ALL(:)
     real(r4), intent(OUT) :: K_STAR_ALL(:,:,:,:)
-    type(k_matrix_info), intent(OUT) :: k_star_info(*)
+    type(k_matrix_info), intent(OUT) :: k_star_info(:)
 !
 ! -----     Local Variables     ----------------------------------------
 !
@@ -73,6 +74,13 @@ Subroutine no_conv_at_all (Ptan,n_sps,tan_press,band,temp_der,atmos_der,&
 !
     k = no_tan_hts
     j = size(Ptan)
+    print*,'tan_press:'
+    call dump(tan_press)
+    print*,'PTan:'
+    call dump(ptan)
+    print*,'i_raw'
+    call dump(i_raw)
+    print*,'k,j',k,j
     Call Cspline(tan_press,Ptan,i_raw,i_star_all,k,j)
 !
     if(.not. ANY((/temp_der,atmos_der,spect_der/))) Return
@@ -216,6 +224,9 @@ Subroutine no_conv_at_all (Ptan,n_sps,tan_press,band,temp_der,atmos_der,&
 !
 end module NO_CONV_AT_ALL_M
 ! $Log$
+! Revision 1.4  2001/03/26 17:56:14  zvi
+! New codes to deal with dh_dt_path issue.. now being computed on the fly
+!
 ! Revision 1.3  2001/03/21 01:10:38  livesey
 ! Now gets Ptan from vector
 !
