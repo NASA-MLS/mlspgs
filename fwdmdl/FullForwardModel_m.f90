@@ -373,7 +373,8 @@ contains ! ================================ FullForwardModel routine ======
       & path_dsdh, phi_basis, phi_basis_dn, &
       & phi_basis_dv, phi_basis_dw, phi_path, p_glgrid, p_path, radv, &
       & ref_corr, sps_values, tau, t_path, t_script, xm, ym, zgx,&
-      & z_basis, z_basis_dn, z_basis_dv, z_basis_dw, z_glgrid, z_path )
+      & z_basis, z_basis_dn, z_basis_dv, z_basis_dw, z_glgrid, z_path, &
+      & z_all, z_tmp )
 
     nullify ( beta_path, beta_path_c, beta_path_f, dbeta_dn_path_c, &
       & dbeta_dn_path_f, dbeta_dt_path_c, dbeta_dt_path_f, &
@@ -2088,6 +2089,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.30  2002/02/08 00:46:05  zvi
+! Some cosmetic changes..
+!
 ! Revision 2.29  2002/02/07 00:36:31  zvi
 ! Fix a bug - phi_tan non defined..
 !
