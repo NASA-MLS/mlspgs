@@ -71,7 +71,7 @@
         INTEGER, INTENT(INOUT) :: file_version
         character (LEN=*), INTENT(OUT) :: physicalFilename
         physicalFilename = ' '
-        Pgs_pc_getReference=-99
+        Pgs_pc_getUniversalRef=-99
       END FUNCTION Pgs_pc_getUniversalRef
 
       subroutine Pgs_smf_getMsg ( CODE, MNEMONIC, MSG )
@@ -183,6 +183,9 @@
 
 !
 ! $Log$
+! Revision 2.10  2003/02/25 10:01:16  hcp
+! Function Pgs_pc_getUniversalRef assigned a value. Now compiles with IFC
+!
 ! Revision 2.9  2003/02/06 12:02:46  hcp
 ! Added  Pgs_pc_getReference so code that uses PCFHdr.f90 can run without
 ! being linked against the toolkit
