@@ -723,6 +723,7 @@ m:              do j = 3, nsons(field)
         call announce_error ( root, inconsistent_units, (/ son1, son2 /) )
       else
         value = value * value2
+        if ( units == phyq_dimensionless ) units = units2
       end if
     case ( n_div, n_into )
       son1 = subtree(1,root) ; son2 = subtree(2,root)
@@ -736,6 +737,7 @@ m:              do j = 3, nsons(field)
         value = value / value2
       else ! me == n_into
         value = value2 / value
+        units = units2
       end if
     case ( n_pow )
       value = 1.0
@@ -936,6 +938,9 @@ m:              do j = 3, nsons(field)
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.19  2004/05/28 23:15:15  vsnyder
+! Add power (^) operator, functions
+!
 ! Revision 1.18  2004/02/14 00:15:18  vsnyder
 ! More precise error message for wrong type
 !
