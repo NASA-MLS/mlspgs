@@ -68,7 +68,6 @@ endif
 
 # where the following utility scripts 
 # (necessary to build the mls software) are stored
-#   amateur.sh
 #   build_f90_in_misc.sh
 #   f90GhostFiles.pl
 #   f90makedep.pl
@@ -77,6 +76,7 @@ endif
 #   mkdir_cascade.sh
 #   mlsconfigure*
 #   mlsprog.sh
+#   reecho.sh
 
 MLSBIN=util
 
@@ -95,8 +95,12 @@ else
 endif
 
 # This will set our MLS platform, compiler. etc.
-# w/o complaining if it does not exist yet
+# w/o complaining if it does nor exist yet
 -include $(CONFDIR)/$(MLSCFILE)
+
+# All the implicit pattern-matching involving suffixes
+# will be done in the uniquely-named sub-directories, not here--so
+.SUFFIXES:
 
 SHELL = /bin/sh
 
@@ -665,6 +669,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.49  2001/09/07 18:12:29  pwagner
+# Tweaked the tar command
+#
 # Revision 1.48  2001/08/17 23:16:54  pwagner
 # Fixed bug in build commands for h5subset
 #
