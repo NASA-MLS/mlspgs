@@ -23,6 +23,7 @@ boundarypressure
 
 cloud_der
 cloud_width
+cloud_fov
 colChannels
 colInstances
 colQuantity
@@ -180,6 +181,9 @@ vGrid
 vmrQuantity
 
 # $Log$
+# Revision 2.2  2001/09/04 16:30:47  jonathan
+# add cloud_fov
+#
 # Revision 2.1  2001/08/22 22:07:28  pwagner
 # First commit
 #
