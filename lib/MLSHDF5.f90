@@ -804,6 +804,8 @@ contains ! ======================= Public Procedures =========================
     allocate(maxdims_ptr(my_rank))
     call h5sget_simple_extent_dims_f(dspace_id,dims(1:my_rank),&
          maxdims_ptr(1:my_rank),status)
+    if ( status /= my_rank ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to get dims for datset '//trim(name) )
     call h5dClose_f ( setID, status )
     if ( present(maxDims) ) then
       maxdims = maxdims_ptr(1:my_rank)
@@ -1490,6 +1492,8 @@ contains ! ======================= Public Procedures =========================
      ! print *, 'rank:   ', test_rank
       call h5sget_simple_extent_dims_f ( spaceID, test_dims(1:test_rank), &
        &  test_maxdims(1:test_rank), status )
+      if ( status /= test_rank ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+       & 'Unable to get dims for datset '//trim(name) )
      ! print *, 'status                  : ', status
      ! print *, 'dims (before extending) : ', test_dims(1:test_rank)
      ! print *, 'max_dims                : ', test_maxdims(1:test_rank)
@@ -1516,6 +1520,8 @@ contains ! ======================= Public Procedures =========================
       call h5sget_simple_extent_ndims_f ( memspaceID, test_rank, status )
       call h5sget_simple_extent_dims_f ( memspaceID, test_dims(1:test_rank), &
         &  test_maxdims(1:test_rank), status )
+      if ( status /= test_rank ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to get dims for datset '//trim(name) )
       call h5soffset_simple_f( memspaceID, test_offset(1:test_rank), status)
      ! print *, 'Is simple? ', test_issimple
      ! print *, 'rank    : ', test_rank
@@ -1528,8 +1534,8 @@ contains ! ======================= Public Procedures =========================
       call h5sget_simple_extent_ndims_f ( spaceID, test_rank, status )
       call h5sget_simple_extent_dims_f ( spaceID, test_dims(1:test_rank), &
         &  test_maxdims(1:test_rank), status )
-      !if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      !  & 'Unable to get space dims for 2D real array '//trim(name) )
+      if ( status /= test_rank ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to get dims for datset '//trim(name) )
       call h5soffset_simple_f( spaceID, test_offset(1:test_rank), status)
      ! print *, 'Is simple? ', test_issimple
      ! print *, 'rank    : ', test_rank
@@ -1809,6 +1815,8 @@ contains ! ======================= Public Procedures =========================
       call h5sget_simple_extent_dims_f ( spaceID, test_dims(1:test_rank), &
        &  test_maxdims(1:test_rank), status )
       ! Can't test on status--it's set to the test_rank
+      if ( status /= test_rank ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+       & 'Unable to get dims for datset '//trim(name) )
       test_dims(test_rank) = test_dims(test_rank) + shp(test_rank)
       call h5dextend_f( setID, test_dims, status)
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -2651,6 +2659,8 @@ contains ! ======================= Public Procedures =========================
     if ( DEEBUG ) print *, 'rank ', rank
     call h5sget_simple_extent_dims_f ( spaceID, dims(1:rank), maxdims(1:rank), &
       &  status )
+    if ( status /= rank ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to get dims for dumping space' )
     if ( DEEBUG ) print *, 'dims ', dims(1:rank)
     if ( DEEBUG ) print *, 'maxdims ', maxdims(1:rank)
     ! call h5soffset_simple_f ( spaceID, offset(1:rank), &
@@ -2695,7 +2705,7 @@ contains ! ======================= Public Procedures =========================
     if ( DEEBUG ) print *, 'rank ', rank
     call h5sget_simple_extent_dims_f(spaceID, dims,&
          maxdims, status)
-    if ( status /= 0 .and. cantGetDataspaceDims <= MAXNUMWARNS ) then
+    if ( status /= rank .and. cantGetDataspaceDims <= MAXNUMWARNS ) then
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & 'Unable to get data space dims to extend data set' )
       cantGetDataspaceDims = cantGetDataspaceDims + 1
@@ -2962,6 +2972,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.29  2003/07/21 23:30:23  pwagner
+! Check on returnstatus from h5sget_simple_extent_dims_f being rank (marking success)
+!
 ! Revision 2.28  2003/07/18 16:04:19  pwagner
 ! Fixed some bugs in DirectWriting 3-d datasets
 !
