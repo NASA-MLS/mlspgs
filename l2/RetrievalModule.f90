@@ -915,7 +915,7 @@ contains
           fmStat%maf = 0
           fmStat%newScanHydros = .true.
 
-          if ( index(switches,'vir') / =0 ) call dump ( normalEquations%m, details=2 )
+          if ( index(switches,'vir') /=0 ) call dump ( normalEquations%m, details=2 )
 
           ! Loop over MAFs
           call clearVector ( v(f_rowScaled) )
@@ -2565,6 +2565,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.127  2001/12/03 18:50:43  pwagner
+! NAG compiler mad at '/ =' instead of '/='
+!
 ! Revision 2.126  2001/12/01 01:01:56  livesey
 ! Added vir switch
 !
