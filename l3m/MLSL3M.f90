@@ -22,7 +22,7 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
   USE mon_Out, ONLY: CreateFlags_T, OutputDg, OutputStd, OutputMON
   USE MonthlyProcessModule, ONLY: MonthlyCoreProcessing
   USE PCFHdr, ONLY: GlobalAttributes
-!  USE H5LIB, ONLY: h5open_f, h5close_f
+  USE H5LIB, ONLY: h5open_f, h5close_f
   IMPLICIT NONE
 
 
@@ -54,11 +54,11 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
 
   CHARACTER (LEN=480) :: msr
   CHARACTER (LEN=FileNameLen) :: pcfNames(maxWindow)
-  CHARACTER (LEN=DATE_LEN)    :: mis_Days(maxWindow)
   CHARACTER (LEN=1), POINTER  :: anText(:)
 
   INTEGER :: i, l2Days, numFiles, mis_l2Days, error, hdfVersion
   INTEGER, PARAMETER :: NORMAL_EXIT_STATUS = 2
+  INTEGER :: mis_Days(maxWindow)
 
   ! Initializations
   call h5open_f(error)
@@ -81,7 +81,6 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
   CALL MLSMessage (MLSMSG_Info, ModuleName, &
        & 'EOS MLS Level 3 Monthly data processing started')
 
-   GlobalAttributes%ProcessLevel = '3-monthly'
   ! Fill structures with input data from the PCF and L3CF.
 
   CALL OpenMON(pcf, cf, cfStd, cfDg, cfDef, anText)
@@ -90,7 +89,7 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
   ! For each Standard product requested in the cf,
 
   DO i = 1, SIZE(cfStd)
-     
+
      ! Read all available data in the input window
 
      CALL ReadL2GPProd(cfStd(i)%l3prodName, cfStd(i)%fileTemplate, &
@@ -112,7 +111,7 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
      ! Core processing for Standard products
      
      CALL MonthlyCoreProcessing(cfStd(i), pcf, cfDef, l2Days, l2gp, mm, mmA, & 
-          & mmD, mzA, mzD, dzA, dzD, mis_Days)
+          & mmD, mzA, mzD, dzA, dzD, mis_Days, mis_l2Days)
 
      msr = 'CORE processing completed for ' // TRIM(cfStd(i)%l3prodName) &
           & // '; starting Output task ...'
@@ -125,7 +124,7 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
      ! Output and Close for the product
 
      CALL OutputStd(pcf, cfDef%stdType, cfStd(i)%mode, dzA, dzD, mzA, mzD, &
-          & mm, mmA, mmD, sFiles, flag, hdfVersion, i)
+          & mm, mmA, mmD, sFiles, flag, hdfVersion)
 
   ENDDO
 
@@ -173,7 +172,7 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
         ! Monthly Core processing
 
         CALL MonthlyCoreProcessing(cfDg(i), pcf, cfDef, l2Days, l2gp, &
-             & mm, mmA, mmD, mzA, mzD, dzA, dzD, mis_Days)
+             & mm, mmA, mmD, mzA, mzD, dzA, dzD, mis_Days, mis_l2Days)
 
         msr = 'CORE processing completed for ' // TRIM(cfDg(i)%l3prodName) &
              & // '; starting Output task ...'
@@ -186,7 +185,7 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
         ! Output and Close for the product
 
         CALL OutputDg(pcf, cfDef%dgType, dzA, dzD, mzA, mzD, mm, mmA, mmD, &
-             & dFiles, flag, hdfVersion, i)
+             & dFiles, flag, hdfVersion)
 
      ENDDO
 
@@ -206,7 +205,6 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
   CALL Deallocate_test(GlobalAttributes%OrbPeriodDays, &
        & 'GlobalAttributes%OrbPeriodDays', ModuleName)
 
-
   CALL MLSMessage (MLSMSG_Info, ModuleName, &
        & 'EOS MLS Level 3 Monthly data processing successfully completed!')
   call h5close_f(error)                            
@@ -223,6 +221,9 @@ END PROGRAM MLSL3M
 !=================
 
 ! $Log$
+! Revision 1.15  2004/01/08 21:21:37  cvuu
+! version 1.4 commit
+!
 ! Revision 1.14  2003/10/29 00:07:17  pwagner
 ! GlobalAttributes%ProcessLevel assigned appropriate value
 !
