@@ -60,7 +60,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: T_GRIDDEDORIGIN  = t_fwmType+1
   integer, parameter :: T_HGRIDTYPE      = t_griddedOrigin+1
   integer, parameter :: T_MASKS          = t_hgridtype+1
-  integer, parameter :: T_MATRIX         = t_masks+1
+  integer, parameter :: T_MASKUPDATES    = t_masks+1
+  integer, parameter :: T_MATRIX         = t_maskUpdates+1
   integer, parameter :: T_METHOD         = t_matrix+1
   integer, parameter :: T_MODULE         = t_method+1
   integer, parameter :: T_OUTPUTTYPE     = t_module+1
@@ -135,7 +136,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_SUBSET             = s_snoop + 1
   integer, parameter :: S_TEMPLATE           = s_subset + 1
   integer, parameter :: S_TRANSFER           = s_template + 1
-  integer, parameter :: S_VECTOR             = s_transfer + 1
+  integer, parameter :: S_UPDATEMASK         = s_transfer + 1
+  integer, parameter :: S_VECTOR             = s_updateMask + 1
   integer, parameter :: S_VECTORTEMPLATE     = s_vector + 1
   integer, parameter :: S_VGRID              = s_vectortemplate + 1
   integer, parameter :: SPEC_LAST = s_vGrid
@@ -214,6 +216,7 @@ contains ! =====     Public procedures     =============================
     data_type_indices(t_griddedOrigin) =   add_ident ( 'griddedOrigin' )
     data_type_indices(t_hgridtype) =       add_ident ( 'hGridType' )
     data_type_indices(t_masks) =           add_ident ( 'masks' )
+    data_type_indices(t_maskUpdates) =     add_ident ( 'maskUpdates' )
     data_type_indices(t_matrix) =          add_ident ( 'matrixType' )
     data_type_indices(t_method) =          add_ident ( 'method' )
     data_type_indices(t_module) =          add_ident ( 'module' )
@@ -305,6 +308,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_subset) =               add_ident ( 'subset' )
     spec_indices(s_template) =             add_ident ( 'template' )
     spec_indices(s_transfer) =             add_ident ( 'transfer' )
+    spec_indices(s_updateMask) =           add_ident ( 'updateMask' )
     spec_indices(s_vector) =               add_ident ( 'vector' )
     spec_indices(s_vectortemplate) =       add_ident ( 'vectorTemplate' )
     spec_indices(s_vgrid) =                add_ident ( 'vgrid' )
@@ -355,8 +359,10 @@ contains ! =====     Public procedures     =============================
              l+l_cloudFull, n+n_dt_def, &
       begin, t+t_hGridType, l+l_explicit, l+l_fixed, l+l_fractional, &
              l+l_height, l+l_regular, l+l_l2gp, n+n_dt_def, &
-      begin, t+t_masks, l+l_fill, l+l_full_derivatives, l+l_linalg, &
-             l+l_tikhonov, n+n_dt_def, &
+      begin, t+t_masks, l+l_cloud, l+l_fill, l+l_full_derivatives, l+l_linalg, &
+             l+l_spare, l+l_tikhonov, n+n_dt_def, &
+      begin, t+t_maskUpdates, l+l_andMasks, l+l_copy, l+l_invert, l+l_orMasks, &
+             n+n_dt_def, &
       begin, t+t_matrix, l+l_plain, l+l_cholesky, l+l_kronecker, l+l_spd, &
              n+n_dt_def, &
       begin, t+t_method, l+l_highcloud,l+l_lowcloud, l+l_newtonian, n+n_dt_def, &
@@ -780,11 +786,22 @@ contains ! =====     Public procedures     =============================
                     nr+n_dot, &
              begin, f+f_ptanquantity, s+s_vector, f+f_template, f+f_quantities, &
                     nr+n_dot, &
+             begin, f+f_mask, t+t_masks, n+n_field_type, &
              begin, f+f_channels, t+t_numeric, t+t_numeric_range, n+n_field_type, &
              begin, f+f_cloudchannels, t+t_numeric, nr+n_field_type, &
              begin, f+f_height, t+t_numeric_range, nr+n_field_type, &
              begin, f+f_cloudHeight, t+t_numeric_range, n+n_field_type, &
              begin, f+f_cloudRadianceCutoff, t+t_numeric, nr+n_field_type, &
+             ndp+n_spec_def /) )
+    call make_tree ( (/ &
+      begin, s+s_updateMask, &
+             begin, f+f_quantity, s+s_vector, f+f_template, f+f_quantities, &
+                    nr+n_dot, &
+             begin, f+f_sourceQuantity, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
+             begin, f+f_operation, t+t_maskUpdates, nr+n_field_type, &
+             begin, f+f_mask, t+t_masks, nr+n_field_type, &
+             begin, f+f_sourceMask, t+t_masks, n+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_forwardModel, & ! Must be AFTER s_vector and s_matrix
@@ -959,10 +976,11 @@ contains ! =====     Public procedures     =============================
       begin, z+z_fill, s+s_dump, s+s_fill, s+s_fillCovariance, s+s_fillDiagonal, &
                        s+s_negativePrecision, s+s_matrix, s+s_destroy, &
                        s+s_snoop, s+s_time, s+s_vector, s+s_transfer, &
-                       s+s_subset, s+s_flagcloud, s+s_restrictRange, n+n_section, &
+                       s+s_subset, s+s_flagcloud, s+s_restrictRange, s+s_updateMask, &
+                       n+n_section, &
       begin, z+z_retrieve, s+s_dumpBlocks, s+s_matrix, s+s_retrieve, &
                            s+s_sids, s+s_snoop, s+s_subset, s+s_flagCloud, s+s_time, &
-                           s+s_restrictRange, n+n_section, &
+                           s+s_restrictRange, s+s_updateMask, n+n_section, &
       begin, z+z_join, s+s_time, s+s_l2gp, s+s_l2aux, s+s_directWrite, n+n_section, &
       begin, z+z_output, s+s_time, s+s_output, n+n_section /) )
 
@@ -980,6 +998,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.296  2003/04/04 22:01:10  livesey
+! Added updateMask stuff
+!
 ! Revision 2.295  2003/04/04 00:11:29  livesey
 ! Added concatenate stuff
 !
