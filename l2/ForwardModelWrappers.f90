@@ -24,7 +24,7 @@ contains ! ============= Public Procedures ==========================
 
   !----------------------------------------- ForwardModel -----------
   subroutine ForwardModel ( Config, FwdModelIn, FwdModelExtra, &
-    FwdModelOut, Ifm, fmStat, Jacobian )
+    FwdModelOut, Ifm, fmStat, Jacobian, vectors )
 
     use BaselineForwardModel_m, only: BASELINEFORWARDMODEL
     use HybridForwardModel_m, only: HYBRIDFORWARDMODEL
@@ -54,7 +54,8 @@ contains ! ============= Public Procedures ==========================
     type(forwardModelIntermediate_T), intent(inout) :: IFM ! Workspace
     type(forwardModelStatus_t), intent(inout) :: FMSTAT ! Reverse comm. stuff
     type(matrix_T), intent(inout), optional :: JACOBIAN
-    
+    type(Vector_t), dimension(:), pointer, optional :: VECTORS ! Vectors database
+
     ! Local variables
     real :: time_start, time_end, deltaTime  
     character(len=132) :: THISNAME
@@ -87,15 +88,15 @@ contains ! ============= Public Procedures ==========================
       call add_to_retrieval_timing( 'full_fwm' )
     case ( l_linear )
       call LinearizedForwardModel ( config, FwdModelIn, FwdModelExtra, &
-        FwdModelOut, Ifm, fmStat, Jacobian )
+        FwdModelOut, Ifm, fmStat, Jacobian, vectors )
       call add_to_retrieval_timing( 'linear_fwm' )
     case ( l_hybrid )
       call HybridForwardModel ( config, FwdModelIn, FwdModelExtra, &
-        FwdModelOut, Ifm, fmStat, Jacobian )
+        FwdModelOut, Ifm, fmStat, Jacobian, vectors )
       call add_to_retrieval_timing( 'full_fwm' )
     case ( l_polarLinear )
       call PolarLinearModel ( config, FwdModelIn, FwdModelExtra, &
-        FwdModelOut, Ifm, fmStat, Jacobian )
+        FwdModelOut, Ifm, fmStat, Jacobian, vectors )
       call add_to_retrieval_timing( 'full_fwm' )
     case ( l_scan )
       call ScanForwardModel ( config, FwdModelIn, FwdModelExtra, &
@@ -145,6 +146,11 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.23  2003/09/11 23:15:10  livesey
+! Added vectors argument which is handed on to some but not all models.
+! This is needed to support the xStar/yStar capability of the linear
+! forward model (and by inference all those that call it.)
+!
 ! Revision 2.22  2003/08/16 01:18:29  livesey
 ! Added baseline forward model on its own.
 !
