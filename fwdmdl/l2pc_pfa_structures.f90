@@ -57,7 +57,6 @@ module L2PC_PFA_STRUCTURES
   type SPECTRO_PARAM
     character(len=1) :: type
     character(len=8) :: NAME
-    integer(i4) :: SPECTAG
     integer(i4) :: NO_PHI_VALUES
     integer(i4) :: NO_ZETA_VALUES
     logical DER_CALC(6)
@@ -77,7 +76,6 @@ module L2PC_PFA_STRUCTURES
 ! This structure contains atmospheric composition of the atmosphere
   type ATMOS_COMP
     character(len=8) :: NAME
-    integer(i4) :: SPECTAG
     integer(i4) :: NO_LIN_VALUES
     logical FWD_CALC(6)
     logical DER_CALC(6)
@@ -103,7 +101,6 @@ module L2PC_PFA_STRUCTURES
   type :: PFA_SLAB
     integer(i4) :: NO_SPS
     integer(i4) :: NO_LINES
-    integer(i4) :: SPECTAG
     character(len=8) :: NAME
     real(r8) :: QLOG(3)
     real(r8) :: V0(maxlines)
@@ -272,6 +269,9 @@ contains
 
 end module L2PC_PFA_STRUCTURES
 ! $Log$
+! Revision 2.5  2003/05/05 23:00:25  livesey
+! Merged in feb03 newfwm branch
+!
 ! Revision 2.4.2.2  2003/03/13 00:26:50  vsnyder
 ! Don't dump an empty SLABS structure
 !
