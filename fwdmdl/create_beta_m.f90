@@ -62,7 +62,6 @@ contains
 
 ! -----     Local variables     ----------------------------------------
 
-    logical :: MyPolarized
     integer(ip) :: LN_I
     integer(ip) :: NL ! no of lines
 
@@ -75,10 +74,19 @@ contains
     tp = Temp + 10.0_rp
     tm = Temp - 10.0_rp
 
+    if ( present(dbeta_dw) .or. present(dbeta_dn) .or. present(dbeta_dv) ) then
+
+      dbdw = 0.0_rp
+      dbdn = 0.0_rp
+      dbdv = 0.0_rp
+
+    end if
+
 !  Setup absorption coefficients function
 !  Now get the beta_value:
 
-    if ( molecule == l_n2 ) then ! .................  Dry Air
+    select case ( molecule )
+    case ( l_n2 ) ! ...........................................  Dry Air
 
       beta_value = abs_cs_n2_cont(cont,Temp,Pressure,Fgr)
       if ( present(t_power) ) then
@@ -86,13 +94,13 @@ contains
         bp = abs_cs_n2_cont(cont,tp,Pressure,Fgr)
       end if
 
-    else if ( molecule == l_extinction ) then ! ............  Extinction
+    case ( l_extinction ) ! ................................  Extinction
 
       beta_value = 1.0_rp
       if ( present(t_power)) t_power = 0.0_rp
       return
 
-    else if ( molecule == l_o2 ) then ! ............................  O2
+    case ( l_o2 ) ! ................................................  O2
 
       beta_value = abs_cs_o2_cont(cont,Temp,Pressure,Fgr)
       if ( present(t_power) ) then
@@ -100,7 +108,7 @@ contains
         bp = abs_cs_o2_cont(cont,tp,Pressure,Fgr)
       end if
 
-    else ! ......................................................  Other
+    case default ! ..............................................  Other
 
       beta_value = abs_cs_cont(cont,Temp,Pressure,Fgr)
       if ( present(t_power) ) then
@@ -108,7 +116,7 @@ contains
         bp = abs_cs_cont(cont,tp,Pressure,Fgr)
       end if
 
-    end if
+    end select
 
     if ( nl < 1 ) then
       if ( present(t_power) ) then
@@ -122,15 +130,11 @@ contains
 
     if ( present(dbeta_dw) .or. present(dbeta_dn) .or. present(dbeta_dv) ) then
 
-      dbdw = 0.0_rp
-      dbdn = 0.0_rp
-      dbdv = 0.0_rp
-
       do ln_i = 1, nl
 
-        myPolarized = .false.
-        if ( present(polarized) ) myPolarized = polarized(ln_i)
-        if ( myPolarized ) cycle
+        if ( present(polarized) ) then
+          if ( polarized(ln_i) ) cycle
+        end if
 
         dNu = Fgr - slabs_0%v0s(ln_i)
 
@@ -162,9 +166,9 @@ contains
 
       if ( maxval(ABS(slabs_0%yi)) < 1.0e-06_rp ) then
         do ln_i = 1, nl
-          myPolarized = .false.
-          if ( present(polarized) ) myPolarized = polarized(ln_i)
-          if ( myPolarized ) cycle
+          if ( present(polarized) ) then
+            if ( polarized(ln_i) ) cycle
+          end if
           beta_value = beta_value + &
             &  Slabs(Fgr - slabs_0%v0s(ln_i), slabs_0%v0s(ln_i), &
             &        slabs_0%x1(ln_i), tanh1, &
@@ -172,9 +176,9 @@ contains
         end do
       else
         do ln_i = 1, nl
-          myPolarized = .false.
-          if ( present(polarized) ) myPolarized = polarized(ln_i)
-          if ( myPolarized ) cycle
+          if ( present(polarized) ) then
+            if ( polarized(ln_i) ) cycle
+          end if
           beta_value = beta_value + &
             &  Slabswint(Fgr - slabs_0%v0s(ln_i), slabs_0%v0s(ln_i), &
             &            slabs_0%x1(ln_i), tanh1, &
@@ -191,9 +195,9 @@ contains
 
       if ( maxval(abs(slabs_0%yi)) < 1.0e-6_rp ) then
         do ln_i = 1, nl
-          myPolarized = .false.
-          if ( present(polarized) ) myPolarized = polarized(ln_i)
-          if ( myPolarized ) cycle
+          if ( present(polarized) ) then
+            if ( polarized(ln_i) ) cycle
+          end if
           bp = bp + Slabs(Fgr - slabs_p%v0s(ln_i), slabs_p%v0s(ln_i), &
             &             slabs_p%x1(ln_i), tanh1_p, &
             &             slabs_p%slabs1(ln_i),slabs_p%y(ln_i))
@@ -203,9 +207,9 @@ contains
         end do
       else
         do ln_i = 1, nl
-          myPolarized = .false.
-          if ( present(polarized) ) myPolarized = polarized(ln_i)
-          if ( myPolarized ) cycle
+          if ( present(polarized) ) then
+            if ( polarized(ln_i) ) cycle
+          end if
           bp = bp + Slabswint(Fgr - slabs_p%v0s(ln_i), slabs_p%v0s(ln_i), &
             &                 slabs_p%x1(ln_i), tanh1_p, &
             &                 slabs_p%slabs1(ln_i), slabs_p%y(ln_i), &
@@ -294,6 +298,9 @@ contains
 end module CREATE_BETA_M
 
 ! $Log$
+! Revision 2.23  2003/05/16 23:51:30  livesey
+! Now uses molecule indices rather than spectags
+!
 ! Revision 2.22  2003/05/16 02:46:50  vsnyder
 ! Removed USE's for unreferenced symbols
 !
