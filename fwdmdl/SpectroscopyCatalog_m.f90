@@ -52,7 +52,7 @@ module SpectroscopyCatalog_m
   type, public :: Catalog_T        ! Catalog entry for a species
     integer :: Species_Name        ! Sub_rosa index
     integer :: Spec_Tag            ! Spectroscopy tag
-    integer, pointer :: Lines(:)   ! Indices in Lines database
+    integer, pointer :: Lines(:)=>NULL() ! Indices in Lines database
     integer :: Molecule            ! L_...
     real(r8) :: Qlog(3)            ! Logarithm of the partition function
                                    ! At 300 , 225 , and 150 K
@@ -472,6 +472,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.8  2001/11/09 23:20:17  vsnyder
+! Use Time_Now instead of CPU_TIME
+!
 ! Revision 2.7  2001/10/18 23:53:03  livesey
 ! Tidied up dump, added new stuff
 !
