@@ -12,10 +12,10 @@ module EOS_MDB
        "$Id$"
   CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile$"
 !---------------------------------------------------------------------------
-  Real(i4), parameter :: TEMP_LO = 170.0  ! Lower limit of temperature
-  Real(i4), parameter :: TTEMP_HI = 320.0 ! Upper limit of temperature
-  Real(i4), parameter :: ZETA_LO = -3.0   ! Lower limit of Zeta
-  Real(i4), parameter :: ZETA_HI = 4.0    ! Upper limit of Zeta
+  Real(r4), parameter :: TEMP_LO = 170.0  ! Lower limit of temperature
+  Real(r4), parameter :: TTEMP_HI = 320.0 ! Upper limit of temperature
+  Real(r4), parameter :: ZETA_LO = -3.0   ! Lower limit of Zeta
+  Real(r4), parameter :: ZETA_HI = 4.0    ! Upper limit of Zeta
 !
   Integer(i4), parameter :: NDEC=7        ! Number of Zeta decades
   Integer(i4), parameter :: NZPD=12       ! Number of Zeta points (subdivision)
@@ -46,6 +46,9 @@ module EOS_MDB
 !
 end module EOS_MDB
 ! $Log$
+! Revision 1.4  2000/11/22 23:15:48  zvi
+! correcting typo (r4) instead of (i4)
+!
 ! Revision 1.3  2000/11/22 23:10:03  zvi
 ! Re-add basic stuff
 !
