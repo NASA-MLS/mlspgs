@@ -13,9 +13,11 @@ HDF_LIB=/usr/local/HDF/lib/libmfhdf.a /usr/local/HDF/lib/libdf.a \
 # the dependencies to be defined more simply.  Where we need to, we add
 # MLSL1.o in.
 
-OBJS= MLSL1Common.o MLSL1Rad.o open_init.o sort_qualify.o calib.o close_files.o
-OBJS_DEBUG= MLSL1Common.o_debug MLSL1Rad.o_debug open_init.o_debug \
-	sort_qualify.o_debug calib.o_debug close_files.o_debug
+OBJS= MLSL1Common.o MLSL1Rad.o OutputL1B.o open_init.o sort_qualify.o calib.o \
+	close_files.o Scan.o Orbit.o Mc.o TkL1B.o
+OBJS_DEBUG= MLSL1Common.o_debug MLSL1Rad.o_debug OutputL1B.o_debug \
+	open_init.o_debug sort_qualify.o_debug calib.o_debug \
+	close_files.o_debug Scan.o_debug Orbit.o Mc.o_debug TkL1B.o_debug
 
 include ${MLSPGS_LIB_PATH}/make.inc
 
@@ -40,4 +42,7 @@ include ${MLSPGS_LIB_PATH}/makelibs.inc
 
 #
 # $Log$
+# Revision 1.1  2000/02/08 21:45:16  perun
+# Initial version
+#
 #
