@@ -417,7 +417,12 @@ contains ! =====     Public Procedures     =============================
       if ( quantity%template%verticalCoordinate == l_Zeta ) &
         & newL2GP%pressures = 10.0**(-quantity%template%surfs(:,1))
 
-      ! ??? In later versions we'll need to think about frequency stuff (NJL)
+      ! Do something about frequency
+      if ( associated ( quantity%template%frequencies ) ) then
+        newL2GP%frequency = quantity%template%frequencies
+      else
+        newL2GP%frequency = 0.0
+      end if
 
       ! Add it to the database of l2gp quantities
       index = AddL2GPToDatabase ( l2gpDatabase, newL2GP )
@@ -747,6 +752,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.61  2002/08/20 20:10:30  livesey
+! Dealt with frequency in l2gps
+!
 ! Revision 2.60  2002/05/28 17:09:57  livesey
 ! Removed print statements
 !
