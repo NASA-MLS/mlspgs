@@ -49,6 +49,7 @@ begin Fill
   Fill, quantity=apriori.tpPressure, method=wmoTropopause, $
     temperatureQuantity=apriori.temperature, refGPHQuantity=apriori.refGPH, $
     internalVgrid=vGridWMO
+  Fill, quantity=apriori.oneHundredHPa, method=explicit, explicitValues=100hPa, /spread
   }) ;; End if flagGotClimatology
 
   ;; --------------------------------------------- trop H2O
