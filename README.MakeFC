@@ -142,7 +142,7 @@ them, be prepared to enter their full path names. Usually Gctp is
 installed alongside the HDFEOS so after setting the latter, the same
 will be offered as the default path setting for the former.
 
-Note whether you have the latest version of the toolkit (currently 5.2.9.D)
+Note whether you have the latest version of the toolkit (currently 5.2.12.A)
 or an earlier one. The latest version includes version 5 of both the HDF and
 HDFEOS libraries, and so their paths need to be set.
 
@@ -439,12 +439,11 @@ this are that an outdated Makefile.dep is possibly what cvs finds when checking
 out the archive. See the recommendation concerning the update target below.
 
 Makefile.dep is created by the shell script util/makemakedep.sh and the perl
-script f90makedep.pl. The latter assumes your perl, or a link to it, is
-/usr/bin/perl. This assumption is embodied in line 1 of the script. If your
-perl is elsewhere, edit this line to show the true path. Otherwise, you will be
-asked, when you recalculate dependencies, whether you want to have the makefile
-edit the line for you or else use it as is. Allowing this change will free you
-from being prompted about this again.
+script f90makedep.pl. The latter assumes your perl, or a link to it, is in your
+path and that a perl script can be launched via perl script_name [args]. If
+perl is not in your path, or a perl script can't be launched this way on your
+system, you may need to edit the scripts or write your own script named "perl"
+to work around this.
 
 CALL TO ACTION
 This is usable now. Please try it out and inform me of any bugs you
@@ -504,7 +503,9 @@ Makefile.dep with one it has archived.  The solution is to do a "make update"
 from the top mlspgs level.  It is also possible for MakeFC itself to get messed
 up in this way -- the above cures will not work  in this case. You may be able
 to fix the problem by deleting MakeFC and doing a CVS update to fetch a new
-copy.
+copy. Similarly, one of the scripts hidden away in the util directory
+may become corrupted by merge conflicts during a cvs update. In this case, too,
+deleting the scripts and a fresh cvs update may fix the problem.
 
 Another cause of a hotly complaining make is using a make that is not gnu
 compliant. If your gnu make is not the default make on your system, then please
@@ -767,10 +768,13 @@ export FFTW_ROOT
 export FOPTS
 export LDOPTS
 
--pw                           2000-Oct-24 to 2004-March-31
+-pw                           2000-Oct-24 to 2004-Dec-06
 EOF
 exit
 # $Log$
+# Revision 1.37  2004/03/31 19:02:32  pwagner
+# Updated to at least mention shrinkwraps
+#
 # Revision 1.36  2003/05/01 23:34:36  pwagner
 # Reflects option allowing update at any level; removed mention of depends; added warning of duplicate names
 #
