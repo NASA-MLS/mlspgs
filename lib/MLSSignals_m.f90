@@ -80,7 +80,7 @@ module MLSSignals_M
   type, public :: SpectrometerType_T
     real(r8), pointer, dimension(:) :: Frequencies => NULL(), Widths => NULL()
     integer :: Name                     ! Sub_rosa index of declaration's label
-    logical :: Deferred                 ! "Frequencies/widths are deferred"
+    logical :: Deferred=.false.         ! "Frequencies/widths are deferred"
   end type SpectrometerType_T
 
   ! This is the key type; it describes a complete signal (one band, or a
@@ -1173,6 +1173,9 @@ oc:   do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.36  2001/05/02 21:50:26  livesey
+! Added initialization to deferred
+!
 ! Revision 2.35  2001/05/02 19:12:11  vsnyder
 ! Nullify signal%channels so it won't get hosed by subsequent allocate_test
 ! Spiffify dump_signals and make it work if modules etc. are already gone
