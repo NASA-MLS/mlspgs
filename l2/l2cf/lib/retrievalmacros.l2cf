@@ -299,6 +299,12 @@ DirectWrite, file='!CloudFilename', hdfVersion=!hdfVersion, $
   file='!l2fwmFileName($1)', $
   hdfVersion=!hdfVersion})})})
 
+!ifdef(flagSuppressRegularOutput,
+{!define(directWriteScanResidual,{})},
+{!define(directWriteScanResidual,{!ifdef(l2version,{!dnl
+Label, quantity=fwm.scanResidual$1, label='$1.scanResidual-!phase'
+!noteDirectDGM(source=fwm.scanResidual$1)})})})
+
 ;; This macro writes radiance diagnostics
 !define(directWriteRadianceDiagnostics,{!dnl
  !directWriteDGMNotState(minorFrameDiagnostics.chisqMMAF$1,' chisqMMAF !phase', /prefixSignal)
@@ -561,6 +567,9 @@ Fill, quantity=otherDiagnostics.status!MFproduct, method=status, status=!statusL
 
 
 ; $Log$
+; Revision 1.97  2004/06/22 18:36:06  pwagner
+; defaults to writing retrieval diagnostics to l2aux instead of dgg
+;
 ; Revision 1.96  2004/05/04 20:38:27  livesey
 ; Changed a comment
 ;
