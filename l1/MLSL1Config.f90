@@ -6,7 +6,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
 !=============================================================================
 
   USE MLSCommon, ONLY: TAI93_Range_T
-  USE MLSL1Common, ONLY: MaxMIFs, BandSwitch
+  USE MLSL1Common, ONLY: MaxMIFs, BandSwitch, NumBands
   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Info
   USE Init_tables_module, ONLY: First_Parm, Last_Parm
   USE Intrinsic, ONLY: parm_indices
@@ -53,6 +53,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
 
   TYPE Output_T
      LOGICAL :: RemoveBaseline = .TRUE.             ! For GHz Baseline removal
+     LOGICAL :: EnableChi2Err(NumBands) = .FALSE.   ! For RadErr calculation
   END TYPE Output_T
 
   TYPE L1Config_T
@@ -251,28 +252,85 @@ MODULE MLSL1Config  ! Level 1 Configuration
    SUBROUTINE Set_output (root)
 !=============================================================================
 
-      USE INIT_TABLES_MODULE, ONLY: p_removebaseline
-      USE TREE, ONLY: Decoration, Nsons, Subtree, Sub_rosa
+      USE EXPR_M, ONLY: Expr
+      USE INIT_TABLES_MODULE, ONLY: p_removebaseline, s_chi2err, f_bandno
+      USE TREE, ONLY: Decoration, Nsons, Subtree, Sub_rosa, Node_id
+      USE TREE_TYPES
       USE MLSStrings, ONLY: lowercase
       USE MoreTree, ONLY: Get_Boolean
 
-      INTEGER :: root, i, son
+      INTEGER :: root, i, j, k, son, key, spec
+      INTEGER :: expr_units(2)
+      DOUBLE PRECISION :: expr_value(2)
+      LOGICAL :: chi2entry
+
+      chi2entry = .FALSE.   ! initialize to no entry yet
 
       DO i = 2, Nsons (root) - 1
 
          son = Subtree (i, root)
 
-         GotParm(Decoration (Subtree (1,son))) = .TRUE.
+         SELECT CASE (node_id (son))
 
-         SELECT CASE (Decoration (Subtree (1,son)))
+         CASE (n_equal)
 
-         CASE (p_removebaseline)
+            GotParm(Decoration (Subtree (1,son))) = .TRUE.
 
-            L1Config%Output%RemoveBaseline = Get_Boolean (son)
+            SELECT CASE (Decoration (Subtree (1,son)))
+
+            CASE (p_removebaseline)
+
+               L1Config%Output%RemoveBaseline = Get_Boolean (son)
+
+            END SELECT
+
+         CASE (n_spec_args)
+
+            key = son
+            spec = decoration (subtree (1, decoration(subtree (1, key))))
+
+            SELECT CASE (spec)
+
+            CASE (s_chi2err)
+
+               chi2entry = .TRUE.
+
+               DO j = 2, nsons (key)
+
+                  son = subtree (j, key)
+
+                  SELECT CASE (decoration (subtree(1,son)))   ! field
+
+                  CASE (f_bandno)
+
+                     DO k = 2, nsons (son)
+                        CALL Expr (subtree (k, son), expr_units, expr_value)
+                        IF (MINVAL (INT (expr_value)) < 0 .OR. &
+                             MAXVAL (INT (expr_value)) > 34) THEN
+                           CALL MLSMessage (MLSMSG_Error, ModuleName, &
+                            'Input band number out of range!')
+                        ENDIF
+                        L1Config%Output%EnableChi2Err(INT(expr_value(1)): &
+                             INT(expr_value(2))) = .TRUE.
+                     ENDDO
+
+                  END SELECT
+
+               ENDDO
+
+            END SELECT
 
          END SELECT
 
       ENDDO
+
+      IF (chi2entry) THEN
+         CALL MLSMessage (MLSMSG_Info, ModuleName, &
+              'Chi2 adjustments to Radiance precisions are ENABLED.')
+      ELSE
+         CALL MLSMessage (MLSMSG_Info, ModuleName, &
+              'Chi2 adjustments to Radiance precisions are NOT ENABLED.')
+      ENDIF
 
     END SUBROUTINE Set_output
 
@@ -646,6 +704,9 @@ MODULE MLSL1Config  ! Level 1 Configuration
 END MODULE MLSL1Config
 
 ! $Log$
+! Revision 2.14  2004/08/12 13:51:50  perun
+! Version 1.44 commit
+!
 ! Revision 2.13  2004/05/14 15:59:11  perun
 ! Version 1.43 commit
 !
