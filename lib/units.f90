@@ -2,14 +2,22 @@
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module UNITS
+! Provide several units and unit conversion constants.
 ! Initialize the declaration table with the unit names and scales.
   use DECLARATION_TABLE, only: DECLARE, UNITS_NAME
   use INTRINSIC ! "units" type literals, beginning with L_,
                 ! Abstract physical quantities beginning with PHYQ_
+  use MLSCommon, only: R8
   use TREE, only: NULL_TREE
 
   implicit NONE
   public
+
+  real(r8), parameter :: Ln10 = 2.302585092994045684017991454684364207601
+  real(r8), parameter :: Pi = 3.141592653589793238462643383279502884197
+  real(r8), parameter :: Deg2Rad = Pi/180.0_r8 ! Degrees-to-Radians
+  real(r8), parameter :: Rad2Deg = 180.0_r8/Pi ! Radians-to-Degrees
+
   private :: DECLARE, NULL_TREE, UNITS_NAME ! Get them from the source
   ! But it's OK to get PHYQ_... from here
 
@@ -90,6 +98,9 @@ contains ! =====     Public procedures     =============================
 end module UNITS
 
 ! $Log$
+! Revision 2.5  2001/03/27 18:42:08  vsnyder
+! Insert mathematical constants
+!
 ! Revision 2.4  2001/03/21 23:28:43  livesey
 ! Fixed bug in l_zeta and l_logp, had inappropriate scaling factors
 !
