@@ -4,6 +4,9 @@
 
 begin Join
 
+  !define(outputCloudRad,{!directWriteCloud(cloudOutput.dtBand$1,' DTBand$1', /prefixSignal)!nl})
+  !forall(outputCloudRad,5,10,15,32,33)
+
   !define(writeOneCloudRadBin,{!ifdef(flagAvoidDirectWrite,{!dnl
   joined_cloudRadMin$1: l2gp, source=cloudOutput.cloudRadMin$1, $
      swath='!TrimFirstLastChar(!signal($1)).C$2 cloudMin'
@@ -17,8 +20,9 @@ begin Join
   !noteDirectDGG({source=cloudOutput.cloudRadMin$1, source=cloudOutput.cloudRadMax$1})})})
   !writeOneCloudRadBin(5,1)
   !writeOneCloudRadBin(10,1)
-  !writeOneCloudRadBin(33,3)
   !writeOneCloudRadBin(15,25)
+  !writeOneCloudRadBin(32,1)
+  !writeOneCloudRadBin(33,3)
 
   !flushDGGDGMFiles
 end Join
