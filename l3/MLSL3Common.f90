@@ -35,6 +35,8 @@ MODULE MLSL3Common
    CHARACTER (LEN=*), PARAMETER :: GEO_FIELD11 = 'Date'
    CHARACTER (LEN=*), PARAMETER :: GEO_FIELD12 = 'LocalSolarZenithAngle'
 
+   CHARACTER (LEN=*), PARAMETER :: DG_FIELD = 'GRss'
+   CHARACTER (LEN=*), PARAMETER :: MD_FIELD = 'MaxDiff'
    CHARACTER (LEN=*), PARAMETER :: DG_FIELD1 = 'LatRss'
    CHARACTER (LEN=*), PARAMETER :: DG_FIELD2 = 'PerMisPoints'
 
@@ -45,6 +47,7 @@ MODULE MLSL3Common
    CHARACTER (LEN=*), PARAMETER :: DIM_NAME123 = 'nFreqs,nLevels,nTimes'
 
    CHARACTER (LEN=*), PARAMETER :: DIML_NAME = 'nLats'
+   CHARACTER (LEN=*), PARAMETER :: DIMN_NAME = 'N'
    CHARACTER (LEN=*), PARAMETER :: DIMR_NAME = 'RDim'
    CHARACTER (LEN=*), PARAMETER :: DIMT_NAME = 'TDim'
    CHARACTER (LEN=*), PARAMETER :: DIMX_NAME = 'XDim'
@@ -58,6 +61,7 @@ MODULE MLSL3Common
    CHARACTER (LEN=*), PARAMETER :: DIM_ERR = 'Failed to define dimension '
    CHARACTER (LEN=*), PARAMETER :: GEO_ERR = 'Failed to define geolocation field '
    CHARACTER (LEN=*), PARAMETER :: GD_ERR = 'Failed to detach from grid '
+   CHARACTER (LEN=*), PARAMETER :: SW_ERR = 'Failed to detach from swath '
    CHARACTER (LEN=*), PARAMETER :: METAWR_ERR = 'Error writing metadata &
                                                 &attribute '
    CHARACTER (LEN=*), PARAMETER :: NOOUT_ERR = ' data expected but not found &
@@ -97,6 +101,9 @@ END MODULE MLSL3Common
 !=====================
 
 !# $Log$
+!# Revision 1.11  2001/11/26 19:25:51  nakamura
+!# Added some dg fields.
+!#
 !# Revision 1.10  2001/10/04 18:23:31  nakamura
 !# Removed lev as dim for local solar fields.
 !#
