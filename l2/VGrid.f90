@@ -5,8 +5,7 @@
 module vGrid                    ! Definitions for vGrids in vector quantities
 !=============================================================================
 
-  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-  use Dump_0, only: DUMP
+  use Allocate_Deallocate, only: Allocate_Test
   use EXPR_M, only: EXPR
   use INIT_TABLES_MODULE, only: F_COORDINATE, F_FORMULA, F_NUMBER, F_START, &
     & F_STOP, F_TYPE, F_VALUES, FIELD_FIRST, FIELD_INDICES, FIELD_LAST, &
@@ -16,40 +15,28 @@ module vGrid                    ! Definitions for vGrids in vector quantities
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: R8       ! General constants etc.
   use MLSMessageModule, only: & ! Message logging
-    & MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, MLSMSG_Error
+    & MLSMessage, MLSMSG_Allocate, MLSMSG_Error
   use OUTPUT_M, only: OUTPUT
   use STRING_TABLE, only: DISPLAY_STRING
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TOGGLES, only: GEN, TOGGLE
   use TREE, only: DECORATION, DUMP_TREE_NODE, NSONS, SOURCE_REF, SUBTREE
+  use VGridsDatabase, only: AddVGridToDatabase, Dump, VGrid_T
 
   implicit none
-  public
+  private
 
-  private :: ID, ModuleName
+  public :: CreateVGridFromMLSCFInfo, Dump
 
-  ! Define the vGrid data type.  This is used to store all the vGrid
-  ! information. Note that this is only relevant for coherent quantities. 
-  ! Incoherent ones deal with vGrids seperately.
-
-  type vGrid_T
-    integer:: NAME                 ! String index of name
-    integer :: verticalCoordinate  ! One of t_vGridCoordinate's literals, or
-                                   ! L_None if empty
-    integer :: noSurfs             ! Number of surfaces
-    real(r8), dimension(:), pointer :: surfs => NULL()  ! Array of surfaces
-                                   ! (actually dimensioned 1:noSurfs)
-  end type vGrid_T
-
-  interface DUMP
-    module procedure DUMP_VGRIDS
-  end interface DUMP
+  interface Dump
+    module procedure MyDump_VGrids
+  end interface Dump
 
   !------------------------------- RCS Ident Info ---------------------------
-  character (len=*), parameter :: IdParm = &
+  character (len=*), parameter, private :: IdParm = &
     & "$Id$"
-  character (len=len(idParm)) :: Id = idParm
-  character (len=*), parameter :: ModuleName="$RCSfile$"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), parameter, private :: ModuleName="$RCSfile$"
   !--------------------------------------------------------------------------
 
 ! -----     Private declarations     ---------------------------------
@@ -260,81 +247,6 @@ contains ! =====     Public Procedures     =============================
 
   end function CreateVGridFromMLSCFInfo
 
-  !----------------------------------------  DestroyVGridContents  -----
-  subroutine DestroyVGridContents ( vGrid )
-
-  ! This routine destroys the array information created with the vGrid
-
-    ! Dummy arguments
-
-    type (vGrid_T), intent(inout) :: vGrid
-
-    ! Executable code
-
-    vGrid%noSurfs = 0
-    vGrid%verticalCoordinate = L_None
-
-    call deallocate_test ( vGrid%surfs, "vGrid%surfs", ModuleName )
-
-  end subroutine DestroyVGridContents
-
-  !------------------------------------------  AddVGridToDatabase  -----
-  integer function AddVGridToDatabase ( DATABASE, ITEM )
-
-  ! This routine adds a vGrid to a database of vGrids, creating the database
-  ! if necessary.
-
-    ! Dummy arguments
-    type (VGrid_T), dimension(:), pointer :: DATABASE
-    type (VGrid_T), intent(in) :: ITEM
-
-    ! Local variables
-    type (VGrid_T), dimension(:), pointer :: tempDatabase
-
-    include "addItemToDatabase.f9h"
-
-    AddVGridToDatabase = newSize
-  end function AddVGridToDatabase
-
-  ! ---------------------------------------  DestroyVGridDatabase  -----
-  subroutine DestroyVGridDatabase ( DATABASE )
-
-  ! This subroutine destroys a vGrid database
-
-    ! Dummy argument
-    type (VGrid_T), dimension(:), pointer :: DATABASE
-
-    ! Local variables
-    integer :: vgridIndex, Status
-
-    if (associated(database)) then
-      do vgridIndex = 1, SIZE(database)
-        call DestroyVGridContents ( database(vgridIndex) )
-      end do
-      deallocate ( database, stat=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_Deallocate // "database" )
-    end if
-  end subroutine DestroyVGridDatabase
-
-  ! ------------------------------------------------  DUMP_VGRIDS  -----
-  subroutine DUMP_VGRIDS ( VGRIDS )
-    type(vGrid_T), intent(in) :: VGRIDS(:)
-    integer :: I
-    call output ( 'VGRIDS: SIZE = ' )
-    call output ( size(vgrids), advance='yes' )
-    do i = 1, size(vgrids)
-      call output ( i, 4 )
-      call output ( ': Name = ' )
-      call display_string ( vgrids(i)%name )
-      call output ( ' noSurfs = ' )
-      call output ( vgrids(i)%noSurfs )
-      call output ( ' verticalCoordinate = ' )
-      call display_string ( lit_indices(vgrids(i)%verticalCoordinate) )
-      call dump ( vgrids(i)%surfs, ' Surfs = ' )
-    end do
-  end subroutine DUMP_VGRIDS
-
 ! =====     Private Procedures     =====================================
 
 ! -----------------------------------------------  ANNOUNCE_ERROR  -----
@@ -446,10 +358,20 @@ contains ! =====     Public Procedures     =============================
     end do
   end function CHECK_UNITS
 
+  ! ----------------------------------------------  MyDump_VGrids  -----
+  subroutine MyDump_VGrids ( VGrids )
+    type(vGrid_T), intent(in), dimension(:) :: VGrids
+    call dump ( vGrids, lit_indices )
+  end subroutine MyDump_VGrids
+
 end module vGrid
 
 !
 ! $Log$
+! Revision 2.8  2001/04/07 01:50:49  vsnyder
+! Move some of VGrid to lib/VGridsDatabase.  Move ForwardModelConfig_T and
+! some related stuff to fwdmdl/ForwardModelConfig.
+!
 ! Revision 2.7  2001/03/28 03:03:38  vsnyder
 ! Remove use, only's that aren't used
 !
