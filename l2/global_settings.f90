@@ -34,12 +34,13 @@ module GLOBAL_SETTINGS
   integer, public :: OUTPUT_VERSION_STRING = 0    ! Sub_rosa index
   integer, public :: VERSION_COMMENT = 0          ! Sub_rosa index
 
-!---------------------------- RCS Ident Info ---------------------------
-  character (len=256) :: Id = &
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
        "$Id$"
-  character (len=*), parameter :: ModuleName= &
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
-!-----------------------------------------------------------------------
+!---------------------------------------------------------------------------
 
 contains
 
@@ -125,6 +126,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.20  2001/04/26 02:44:17  vsnyder
+! Moved *_indices declarations from init_tables_module to intrinsic
+!
 ! Revision 2.19  2001/04/26 00:07:33  livesey
 ! Stuff to support reading of l2pc files
 !
