@@ -33,6 +33,7 @@ module VGridsDatabase
 
   public :: AddVGridToDatabase, DestroyVGridContents, DestroyVGridDatabase
   public :: Dump, Dump_VGrids, GetUnitForVerticalCoordinate
+  public :: PVMPackVGrid, PVMUnpackVGrid
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter, private :: IdParm = &
@@ -155,9 +156,78 @@ contains
     end select
   end function GetUnitForVerticalCoordinate
 
+  ! ------------------------------------------------  PVMPackVGrid ----
+  subroutine PVMPackVgrid ( VGRID )
+    use PVMIDL, only: PVMIDLPack
+    use MorePVM, only: PVMPackStringIndex, PVMPackLitIndex
+    use PVM, only: PVMErrorMessage
+    use String_table, only: GET_STRING
+    use Intrinsic, only: LIT_INDICES
+
+    ! Dummy argument
+    type ( VGrid_T), intent(in) :: VGRID
+
+    ! Local variables
+    integer :: INFO                     ! Flag from PVM
+    character ( len=80 ) :: WORD        ! String
+
+    ! Executable code
+
+    call PVMPackStringIndex ( vGrid%name, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Packing Vgrid name' )
+    call PVMPackLitIndex ( vGrid%verticalCoordinate, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Packing Vgrid coordinate' )
+
+    call PVMIDLPack ( vGrid%noSurfs, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Packing Vgrid size' )
+    if ( associated ( vGrid%surfs ) ) then
+      call PVMIDLPack ( vGrid%surfs, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, 'Packing Vgrid surfaces' )
+    else
+      if ( vGrid%noSurfs > 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Asked to pack a strange vGrid' )
+    end if
+    
+  end subroutine PVMPackVgrid
+
+  ! ------------------------------------------------  PVMUnpackVGrid ----
+  subroutine PVMUnpackVgrid ( VGRID )
+    use PVMIDL, only: PVMIDLUnpack
+    use MorePVM, only: PVMUnpackStringIndex, PVMUnpackLitIndex
+    use PVM, only: PVMErrorMessage
+    use MoreTree, only: GetStringIndexFromString, GetLitIndexFromString
+    use Allocate_Deallocate, only: Allocate_test
+
+    ! Dummy argument
+    type ( VGrid_T), intent(out) :: VGRID
+
+    ! Local variables
+    integer :: INFO                     ! Flag from PVM
+    character ( len=80 ) :: WORD        ! String
+
+    ! Executable code
+
+    call PVMUnpackStringIndex ( vGrid%name, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Unpacking Vgrid name' )
+    call PVMUnpackLitIndex ( vGrid%verticalCoordinate, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Unpacking Vgrid coordinate' )
+
+    call PVMIDLUnpack ( vGrid%noSurfs, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Unpacking Vgrid size' )
+    call Allocate_test ( vGrid%surfs, vGrid%noSurfs, 'vGrid%surfs', ModuleName )
+    if ( vGrid%noSurfs > 0 ) then
+      call PVMIDLUnpack ( vGrid%surfs, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, 'Unpacking Vgrid surfaces' )
+    end if
+    
+  end subroutine PVMUnpackVgrid
+
 end module VGridsDatabase
 
 ! $Log$
+! Revision 2.5  2002/10/05 00:41:12  livesey
+! Added pvm pack and unpack stuff
+!
 ! Revision 2.4  2002/08/20 19:19:32  livesey
 ! Added GetUnitForVerticalCoordinate
 !
