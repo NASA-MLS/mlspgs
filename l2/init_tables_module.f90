@@ -1303,7 +1303,7 @@ contains ! =====     Public procedures     =============================
              s+s_negativePrecision, s+s_phase, s+s_populateL2PCBin, s+s_restrictRange, &
              s+s_snoop, s+s_subset, s+s_time, s+s_transfer, s+s_updateMask, &
              s+s_vector, n+n_section, &
-      begin, z+z_retrieve, s+s_dumpBlocks, s+s_matrix, s+s_retrieve, &
+      begin, z+z_retrieve, s+s_dump, s+s_dumpBlocks, s+s_matrix, s+s_retrieve, &
                            s+s_sids, s+s_snoop, s+s_subset, s+s_flagCloud, s+s_time, &
                            s+s_restrictRange, s+s_updateMask, n+n_section, &
       begin, z+z_join, s+s_time, s+s_label, s+s_l2gp, s+s_l2aux, &
@@ -1327,6 +1327,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.395  2005/03/15 01:27:31  vsnyder
+! Allow Dump command in Retrieve section
+!
 ! Revision 2.394  2005/01/27 21:09:50  vsnyder
 ! Delete "file" field from PFAData.  Add [LU]SBPFAMolecules to ForwardModel and
 ! delete PFAMolecules.  Some cannonball polishing.
