@@ -149,8 +149,8 @@ contains
         do j = 1, size(database(i)%signals)
           call output ( '    ' )
           !call GetSignalName( signal=database(i)%signals(j), signalName)
-          ! Sort this out later!
-          call output ( signalName//' channelIncluded:', advance='yes')
+          !??? Sort this out later!
+          ! call output ( signalName//' channelIncluded:', advance='yes')
           call dump ( database(i)%signals(j)%channels )
         end do
       end do
@@ -160,6 +160,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 1.2  2001/04/10 22:17:05  livesey
+! Renamed module
+!
 ! Revision 1.1  2001/04/07 01:56:25  vsnyder
 ! Initial commit
 !
