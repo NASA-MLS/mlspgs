@@ -6,16 +6,42 @@ module MLSNumerics              ! Some low level numerical stuff
   !=============================================================================
 
   use Allocate_Deallocate, only : Allocate_test, Deallocate_test
-  use MatrixModule_0, only: CreateBlock, M_Absent, M_Column_Sparse, &
-    & MatrixElement_T, Sparsify
-  use MLSCommon, only : r8, rm, r4
-  use MLSMessageModule, only: MLSMessage,MLSMSG_Error
+  use MatrixModule_0, only: CreateBlock, M_Absent, MatrixElement_T, Sparsify
+  use MLSCommon, only : R4, R8, Rm
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSStrings, only: Capitalize
 
   implicit none
 
   private
-  public :: Hunt, InterpolateValues
+  public :: Hunt, InterpolateArraySetup, InterpolateArrayTeardown
+  public :: InterpolateValues
+
+  type, public :: Coefficients_R4
+    private
+    ! Stuff for linear
+    real(r4), pointer :: A(:) => NULL(), B(:) => NULL(), Gap(:) => NULL()
+    integer, pointer :: LowerInds(:) => NULL(), UpperInds(:) => NULL()
+    ! Stuff for spline
+    real(r4), pointer :: C(:) => NULL(), D(:) => NULL()
+    real(r4), pointer :: E(:) => NULL(), F(:) => NULL(), Gap2(:) => NULL()
+    real(r4), pointer :: Sig(:) => NULL() ! for second derivative guesser
+    ! Stuff for extrapolation == "B"ad
+    logical, pointer :: BadValue(:) => NULL()
+  end type Coefficients_R4
+
+  type, public :: Coefficients_R8
+    private
+    ! Stuff for linear
+    real(r8), pointer :: A(:) => NULL(), B(:) => NULL(), Gap(:) => NULL()
+    integer, pointer :: LowerInds(:) => NULL(), UpperInds(:) => NULL()
+    ! Stuff for spline
+    real(r8), pointer :: C(:) => NULL(), D(:) => NULL()
+    real(r8), pointer :: E(:) => NULL(), F(:) => NULL(), Gap2(:) => NULL()
+    real(r8), pointer :: Sig(:) => NULL() ! for second derivative guesser
+    ! Stuff for extrapolation == "B"ad
+    logical, pointer :: BadValue(:) => NULL()
+  end type Coefficients_R8
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -45,20 +71,31 @@ module MLSNumerics              ! Some low level numerical stuff
     module procedure HuntScalar_r8, HuntScalar_r4
   end interface
 
+  interface InterpolateArraySetup
+    module procedure InterpolateArraySetup_r4, InterpolateArraySetup_r8
+  end interface
+
+  interface InterpolateArrayTeardown
+    module procedure InterpolateArrayTeardown_r4, InterpolateArrayTeardown_r8
+  end interface
+
   interface InterpolateValues
     module procedure InterpolateArray_r4, InterpolateArray_r8
     module procedure InterpolateScalar_r4, InterpolateScalar_r8
+    module procedure InterpolateUsingSetup_r4, InterpolateUsingSetup_r8
   end interface
 
 contains
+
+! -------------------------------------------------  HuntArray_r4  -----
 
   ! This routine does the classic hunt the value kind of thing.  This does the
   ! hunt/bisect implemention a la Numerical Recipes.  List must be
   ! monotonically increasing or decreasing. There is no such requirements for
   ! values.
 
-  subroutine HuntArray_r4 ( list, values, indices, start, allowTopValue, allowBelowValue, &
-    & nearest )
+  subroutine HuntArray_r4 ( list, values, indices, start, allowTopValue, &
+    & allowBelowValue, nearest )
     integer, parameter :: RK = R4
 
     ! Dummy arguments
@@ -72,6 +109,8 @@ contains
 
     include "HuntArray.f9h"
   end subroutine HuntArray_r4
+
+! -------------------------------------------------  HuntArray_r8  -----
 
   subroutine HuntArray_r8 ( list, values, indices, start, allowTopValue, allowBelowValue, &
     & nearest )
@@ -89,7 +128,7 @@ contains
     include "HuntArray.f9h"
   end subroutine HuntArray_r8
 
-  ! ---------------------------------------------------------------------------
+! ------------------------------------------------  HuntScalar_r4  -----
 
   ! This routine is a scalar wrapper for the above one
 
@@ -115,6 +154,8 @@ contains
     index = indices(1)
   end subroutine HuntScalar_r4
 
+! ------------------------------------------------  HuntScalar_r8  -----
+
   subroutine HuntScalar_r8 (list, value, index, start, allowTopValue, &
     & allowBelowValue, nearest )
     integer, parameter :: RK = R8
@@ -137,7 +178,7 @@ contains
     index = indices(1)
   end subroutine HuntScalar_r8
 
-  ! ---------------------------------------------------------------------------
+! ------------------------------------------  InterpolateArray_r4  -----
 
   ! This next subroutine is a workhorse interpolation routine, loosely based on
   ! my (Nathaniel) IDL routine of the same name.
@@ -168,9 +209,14 @@ contains
     logical, optional, intent(in) :: missingRegions ! Allow missing regions
     real(rk), dimension(:,:), optional, intent(out) :: dyByDx
     type (matrixElement_T), intent(out), optional :: dNewByDOld ! Derivatives
+
+    type(coefficients_r4) :: Coeffs
+
     include "InterpolateArray.f9h"
 
   end subroutine InterpolateArray_r4
+
+! ------------------------------------------  InterpolateArray_r8  -----
 
   subroutine InterpolateArray_r8 ( oldX, oldY, newX, newY, method, extrapolate, &
     & badValue, missingRegions, dyByDx, dNewByDOld )
@@ -189,11 +235,79 @@ contains
     real(rk), dimension(:,:), optional, intent(out) :: dyByDx
     type (matrixElement_T), intent(OUT), optional :: dNewByDOld ! Derivatives
 
+    type(coefficients_r8) :: Coeffs
+
     include "InterpolateArray.f9h"
 
   end subroutine InterpolateArray_r8
 
-! --------------------------------------------------------------------------
+! -------------------------------------  InterpolateArraySetup_r4  -----
+
+  subroutine InterpolateArraySetup_r4 ( OldX, NewX, Method, Coeffs, &
+    & Extrapolate, Width, DyByDx, dNewByDOld )
+
+    integer, parameter :: RK = R4
+
+    real(rk), intent(in) :: OldX(:), NewX(:)
+    character(len=*), intent(in) :: Method
+    type(coefficients_R4), intent(out) :: Coeffs
+    character(len=*), intent(in), optional :: Extrapolate
+    integer, intent(in), optional :: Width ! Second dimension for OldY when
+                                           ! interpolations get done
+    type (matrixElement_T), intent(inout), optional :: dNewByDOld ! Derivatives
+                                           ! inout so createBlock can clean up
+                                           ! after an old one
+    real(rk), dimension(:,:), optional, intent(in) :: DyByDx ! just a signal to
+                                           ! compute more coeffs for splines
+
+    include "InterpolateArraySetup.f9h"
+
+  end subroutine InterpolateArraySetup_r4
+
+! -------------------------------------  InterpolateArraySetup_r8  -----
+
+  subroutine InterpolateArraySetup_r8 ( OldX, NewX, Method, Coeffs, &
+    & Extrapolate, Width, DyByDx, dNewByDOld )
+
+    integer, parameter :: RK = R8
+
+    real(rk), intent(in) :: OldX(:), NewX(:)
+    character(len=*), intent(in) :: Method
+    type(coefficients_R8), intent(out) :: Coeffs
+    character(len=*), intent(in), optional :: Extrapolate
+    integer, intent(in), optional :: Width ! Second dimension for OldY when
+                                           ! interpolations get done
+    type (matrixElement_T), intent(inout), optional :: dNewByDOld ! Derivatives
+                                           ! inout so createBlock can clean up
+                                           ! after an old one
+    real(rk), dimension(:,:), optional, intent(in) :: DyByDx ! just a signal to
+                                           ! compute more coeffs for splines
+
+    include "InterpolateArraySetup.f9h"
+
+  end subroutine InterpolateArraySetup_r8
+
+! ----------------------------------  InterpolateArrayTeardown_r4  -----
+
+  subroutine InterpolateArrayTeardown_r4 ( Coeffs )
+
+    type(coefficients_R4), intent(inout) :: Coeffs
+
+    include "InterpolateArrayTeardown.f9h"
+
+  end subroutine InterpolateArrayTeardown_r4
+
+! ----------------------------------  InterpolateArrayTeardown_r8  -----
+
+  subroutine InterpolateArrayTeardown_r8 ( Coeffs )
+
+    type(coefficients_R8), intent(inout) :: Coeffs
+
+    include "InterpolateArrayTeardown.f9h"
+
+  end subroutine InterpolateArrayTeardown_r8
+
+! -----------------------------------------  InterpolateScalar_r4  -----
 
 ! This subroutine is a scalar wrapper for the array one.
 
@@ -217,6 +331,8 @@ contains
     include "InterpolateScalar.f9h"
   end subroutine InterpolateScalar_r4
 
+! -----------------------------------------  InterpolateScalar_r8  -----
+
   subroutine InterpolateScalar_r8 ( oldX, oldY, newX, newY, method, extrapolate, &
     & badValue, missingRegions, dyByDx, RangeOfPeriod )
     integer, parameter :: RK = R8
@@ -237,6 +353,52 @@ contains
     include "InterpolateScalar.f9h"
   end subroutine InterpolateScalar_r8
 
+! -------------------------------------  InterpolateUsingSetup_r4  -----
+
+  subroutine InterpolateUsingSetup_r4 ( coeffs, oldX, oldY, newX, newY, &
+    & method, extrapolate, badValue, missingRegions, dyByDx )
+    integer, parameter :: RK = R4
+
+    ! Dummy arguments
+    type(coefficients_r4), intent(in) :: Coeffs
+    real(rk), dimension(:), intent(in) :: oldX
+    real(rk), dimension(:,:), intent(in) :: oldY
+    real(rk), dimension(:), intent(in) :: newX
+    real(rk), dimension(:,:), intent(out) :: newY
+
+    character (len=*), intent(in) :: method ! See comments above
+    character (len=*), optional, intent(in) :: extrapolate ! See comments above
+    real(rk), optional, intent(in) :: badvalue
+    logical, optional, intent(in) :: missingRegions ! Allow missing regions
+    real(rk), dimension(:,:), optional, intent(out) :: dyByDx
+
+    include "InterpolateUsingSetup.f9h"
+
+  end subroutine InterpolateUsingSetup_r4
+
+! -------------------------------------  InterpolateUsingSetup_r8  -----
+
+  subroutine InterpolateUsingSetup_r8 ( coeffs, oldX, oldY, newX, newY, &
+    & method, extrapolate, badValue, missingRegions, dyByDx )
+    integer, parameter :: RK = R8
+
+    ! Dummy arguments
+    type(coefficients_r8), intent(in) :: Coeffs
+    real(rk), dimension(:), intent(in) :: oldX
+    real(rk), dimension(:,:), intent(in) :: oldY
+    real(rk), dimension(:), intent(in) :: newX
+    real(rk), dimension(:,:), intent(out) :: newY
+
+    character (len=*), intent(in) :: method ! See comments above
+    character (len=*), optional, intent(in) :: extrapolate ! See comments above
+    real(rk), optional, intent(in) :: badvalue
+    logical, optional, intent(in) :: missingRegions ! Allow missing regions
+    real(rk), dimension(:,:), optional, intent(out) :: dyByDx
+
+    include "InterpolateUsingSetup.f9h"
+
+  end subroutine InterpolateUsingSetup_r8
+
 !=============================================================================
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
@@ -247,6 +409,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.26  2002/11/23 00:01:00  vsnyder
+! Modify interpolation to separate setup and teardown
+!
 ! Revision 2.25  2002/10/08 00:09:12  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
