@@ -380,6 +380,16 @@ contains ! =====     Public Procedures     =============================
     end do
   end subroutine CopyVector
 
+  ! ---------------------------------------------  CreateMaskArray  -----
+  subroutine CreateMaskArray ( mask, values )
+    ! Allocate the MASK array for a vector quantity.
+    integer, dimension(:,:), pointer :: MASK ! To create
+    real(r8), dimension(:,:), pointer :: VALUES ! Template values
+    call allocate_test ( mask, (size(values,1)+b-1)/b, &
+      & size(values,2), "MASK in CreateMaskArray", ModuleName )
+    mask = 0 ! All vector elements are interesting
+  end subroutine CreateMaskArray
+
   ! -------------------------------------------------  CreateMask  -----
   subroutine CreateMask ( VectorValue )
   ! Allocate the MASK array for a vector quantity.
@@ -1167,6 +1177,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.47  2001/07/06 22:04:02  livesey
+! Added call to DestroyVectorMask in DestroyVectorInfo
+!
 ! Revision 2.46  2001/06/26 20:32:31  vsnyder
 ! Simplify mask handling by using zero origin for first dimension
 !
