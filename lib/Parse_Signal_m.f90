@@ -3,22 +3,6 @@
 
 module Parse_Signal_M
 
-  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-  use Declaration_Table, only: Decls, Get_Decl, Label
-  use Init_MLSSignals_m, only: S_Band, S_Radiometer, S_SpectrometerType
-  use Intrinsic, only: Spec_Indices
-  use Lexer_Core, only: Print_Source, Token
-  use Lexer_m, only: Lex_Signal
-  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_ALLOCATE
-  use MLSSignals_m, only: Bands, Radiometers, Signals, Signal_T, DESTROYSIGNALDATABASE
-  use MoreTree, only: Get_Spec_ID
-  use Output_m, only: Output
-  use String_table, only: Display_string, Get_String
-  use Symbol_Table, only: Dump_Symbol_Class, Enter_Terminal
-  use Symbol_Types, only: T_Colon, T_Dot, T_End_of_input, T_Identifier, &
-    & T_Minus, T_Plus
-  use Tree, only: Decoration, Source_Ref, NSONS, SUBTREE, SUB_ROSA
-
   implicit NONE
   private
 ! === (start of toc) ===
@@ -50,6 +34,12 @@ contains
     ! This uses parse_signal below to convert an array of strings
     ! at tree node 'node' into a fully described array of signals
     ! populated with channel flags and everything
+
+    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use MLSSignals_m, only: SIGNALS, SIGNAL_T, DESTROYSIGNALDATABASE
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR
+    use Tree, only: SUBTREE, SUB_ROSA, NSONS
+    use String_table, only: GET_STRING
 
     integer, intent(in) :: NODE         ! Tree node
     type ( Signal_T ), pointer, dimension(:) :: THESESIGNALS ! Result
@@ -125,6 +115,21 @@ contains
   ! A signal string is of the form:
   ! [Radiometer[:suffix].] [Band[:suffix].] [S switch-number.] [Spectrometer.]
   ! [C channel_number[:|+channel_number]*
+
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    use Declaration_Table, only: Decls, Get_Decl, Label
+    use Init_MLSSignals_m, only: S_Band, S_Radiometer, S_SpectrometerType
+    use Intrinsic, only: Spec_Indices
+    use Lexer_Core, only: Print_Source, Token
+    use Lexer_m, only: Lex_Signal
+    use MLSSignals_m, only: Bands, Radiometers, Signals
+    use MoreTree, only: Get_Spec_ID
+    use Output_m, only: Output
+    use String_table, only: Display_string, Get_String
+    use Symbol_Table, only: Dump_Symbol_Class, Enter_Terminal
+    use Symbol_Types, only: T_Colon, T_Dot, T_End_of_input, T_Identifier, &
+      & T_Minus, T_Plus
+    use Tree, only: Decoration, Source_Ref
 
     character(len=*), intent(in) :: Signal_String ! Input
     integer, pointer :: Signal_Indices(:)         ! Indices in the signals
@@ -468,7 +473,7 @@ o:  do
     subroutine ScanSignals
       ! Scan the signals database for entries that satisfy the criteria
       ! given by the tokens in the signal string.
-      ! Allocate Signal_Indices , and fill the array.
+      ! Allocate Signal_Indices and fill the array.
 
       logical :: BandMatch(size(signals))
       logical :: ChannelMatch(size(signals))
@@ -534,8 +539,14 @@ o:  do
 end module Parse_Signal_M
 
 ! $Log$
+! Revision 2.16  2003/05/05 23:00:05  livesey
+! Merged in feb03 newfwm branch
+!
 ! Revision 2.15  2003/03/07 03:17:28  livesey
 ! Added Expand_Signal_List
+!
+! Revision 2.14.2.1  2003/03/01 02:40:04  vsnyder
+! Move USE statements from module scope to procedure scope
 !
 ! Revision 2.14  2003/01/25 04:14:13  vsnyder
 ! Get rid of USEs for stuff not actually used
