@@ -44,6 +44,7 @@ contains ! =====     Public Procedures     =============================
     use ForwardModelConfig, only: FORWARDMODELCONFIG_T
     use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T, &
       & FORWARDMODELINTERMEDIATE_T
+    use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use Intrinsic, only: LIT_INDICES
     use Intrinsic, only: L_NONE, L_RADIANCE, L_TEMPERATURE, L_PTAN, L_VMR, &
       & L_SIDEBANDRATIO, L_ZETA, L_OPTICALDEPTH, L_LATITUDE
@@ -594,8 +595,8 @@ contains ! =====     Public Procedures     =============================
       ! Now think about optical depth
       if ( radiance%template%quantityType == l_opticalDepth ) then
         ! Get temperature and interpolate to tangent points
-        temp => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-          & quantityType=l_temperature )
+        temp => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+          & quantityType=l_temperature, config=ForwardModelConfigData )
         closestInstance = FindOneClosestInstance ( temp, radiance, maf )
         call Allocate_test ( tangentTemperature, noMIFs, &
           & 'tangentTemperature', ModuleName )
@@ -657,14 +658,14 @@ contains ! =====     Public Procedures     =============================
       foundInFirst = .false.
       select case ( l2pcQ%template%quantityType )
       case ( l_temperature )
-        stateQ => GetVectorQuantityByType ( FwdModelIn, FwdModelExtra,&
-          & quantityType = l_temperature, &
+        stateQ => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+          & quantityType=l_temperature, config=ForwardModelConfigData, &
           & foundInFirst = foundInFirst, noError=.true. )
       case ( l_vmr )
         ! Here we may need to be a little more intelligent
         if ( l2pcQ%template%molecule /= l_extinction ) then
-          stateQ => GetVectorQuantityByType ( FwdModelIn, FwdModelExtra,&
-            & quantityType = l_vmr, &
+          stateQ => GetQuantityForForwardModel ( FwdModelIn, FwdModelExtra,&
+            & quantityType = l_vmr, config=ForwardModelConfigData, &
             & molecule = l2pcQ%template%molecule, &
             & foundInFirst = foundInFirst, noError=.true. )
         else
@@ -885,6 +886,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.31  2002/11/14 17:54:06  livesey
+! Changed 'no quantity found' warning message to work better.
+!
 ! Revision 2.30  2002/11/14 17:46:08  livesey
 ! Bypassed a warning message that was starting to irritate me.
 !
