@@ -659,7 +659,6 @@ contains ! =====     Public procedures     =============================
              begin, f+f_vGrid, s+s_vGrid, nr+n_field_spec, &
              ndp+n_spec_def, &
       begin, s+s_readPFA, &
-             begin, f+f_allPFA, t+t_boolean, n+n_field_type, &
              begin, f+f_file, t+t_string, nr+n_field_type, &
              begin, f+f_molecules, t+t_molecule, n+n_field_type, &
              begin, f+f_signals, t+t_string, n+n_field_type, &
@@ -1327,6 +1326,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.393  2005/01/07 01:04:09  vsnyder
+! Remove f_AllPFA from ReadPfa
+!
 ! Revision 2.392  2004/12/31 02:41:56  vsnyder
 ! Working on read/write PFA database
 !
