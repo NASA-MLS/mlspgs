@@ -67,8 +67,8 @@
 ! If spline is more the 'TOL' different from linear, revert back to
 ! linear interpolation:
 !
-      h = MAX(abs(y),abs(ylin))
-      dp = 100.0 * abs(y-ylin) / (h + epsilon(ylin))
+      dp = 100.0 * abs(y-ylin) / (abs(ylin) + epsilon(ylin))
+
       if(dp > 25.0) then
         y = ylin
         dy = dydx

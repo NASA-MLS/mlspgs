@@ -55,8 +55,8 @@
       yspl = yl + h * (coeff(2,klo) + h * (coeff(3,klo) +  &
           &  h * coeff(4,klo) / 3.0) / 2.0)
 !
-      h = MAX(abs(yspl),abs(ylin))
-      dp = 100.0 * abs(yspl-ylin) / (h + epsilon(ylin))
+      dp = 100.0 * abs(yspl-ylin) / (abs(ylin) + epsilon(ylin))
+
       if(dp > 25.0) then
         yspl = ylin
       else if (PRESENT(YMIN) .AND. PRESENT(YMAX) ) then
