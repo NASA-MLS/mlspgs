@@ -39,14 +39,13 @@ contains
       & F_Template, F_Vector, &
       & S_Quantity, S_VectorTemplate
     use Intrinsic, only: PHYQ_Dimensionless
-    use MLSMessageModule, only: MLSMSG_Error, MLSMessage
     use MoreTree, only: Get_Field_ID, Get_Spec_ID
     use Output_M, only: Output
     use QuantityTemplates, only: Dump, QuantityTemplate_T
     use Tree, only: Decoration, Node_Id, Nsons, Subtree
     use Tree_Types, only: N_Spec_Args
     use VectorsModule, only: Dump, & ! for vectors, vector quantities and templates
-      & GetVectorQtyByTemplateIndex, Vector_T, VectorTemplate_T, VectorValue_T
+      & GetVectorQtyByTemplateIndex, Vector_T, VectorTemplate_T
 
     integer, intent(in) :: Root ! Root of the parse tree for the dump command
     ! Databases:
@@ -149,6 +148,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.2  2004/05/11 02:53:29  vsnyder
+! Remove USEs for unreferenced symbols
+!
 ! Revision 2.1  2004/05/01 04:04:16  vsnyder
 ! Initial commit
 !
