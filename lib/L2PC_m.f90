@@ -409,7 +409,7 @@ contains ! ============= Public Procedures ==========================
           call MakeHDF5Attribute ( blockGroupID, 'kind', m0%kind )
           ! Write the datasets
           if ( m0%kind /= m_absent ) then
-            call SaveAsHDF5DS ( blockGroupID, 'values', m0%values )
+            call SaveAsHDF5DS ( blockGroupID, 'values', real ( m0%values, r4 ) )
             if ( m0%kind /= m_full ) then
               call MakeHDF5Attribute ( blockGroupID, 'noValues', size(m0%values) )
               call SaveAsHDF5DS ( blockGroupID, 'r1', m0%r1 )
@@ -1541,6 +1541,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.54  2002/11/25 11:47:34  mjf
+! Put SaveAsHDF5DS back to writing r4 reals.
+!
 ! Revision 2.53  2002/11/22 12:47:47  mjf
 ! Added nullify routine(s) to get round Sun's WS6 compiler not
 ! initialising derived type function results.
