@@ -1,3 +1,6 @@
+# Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 # $Id$
 
 SHELL=/bin/sh
@@ -12,7 +15,6 @@ all:
           echo "E.g. make SYS=NAG"; \
         else \
           cd $(HOME)/mlspgs/lib/$(SYS); make all; \
-          cd $(HOME)/mlspgs/lib/cf_parser/$(SYS); make all; \
           cd $(HOME)/mlspgs/l2/$(SYS); make all; \
         fi
 
@@ -22,8 +24,10 @@ clean:
           echo "E.g. make SYS=NAG"; \
         else \
           cd $(HOME)/mlspgs/lib/$(SYS); make clean; \
-          cd $(HOME)/mlspgs/lib/cf_parser/$(SYS); make clean; \
           cd $(HOME)/mlspgs/l2/$(SYS); make clean; \
         fi
 
 # $Log$
+# Revision 1.1  2000/10/10 20:44:50  vsnyder
+# Initial entry
+#
