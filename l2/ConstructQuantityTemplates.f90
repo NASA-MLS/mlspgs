@@ -10,15 +10,16 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
   use HGrid, only: hGrid_T
   use INIT_TABLES_MODULE, only: F_BAND, F_HGRID, F_INSTRUMENTMODULE, &
     F_MOLECULE, F_RADIOMETER, F_TYPE, F_UNIT, F_VGRID, FIRST_LIT, LAST_LIT, &
-    L_BASELINE, L_EXTINCTION, L_GEODALTITUDE, L_GPH, L_PTAN, L_RADIANCE, &
-    L_TEMPERATURE, L_TRUE, L_VMR, PHYQ_LENGTH, PHYQ_TEMPERATURE, PHYQ_VMR, &
-    PHYQ_ZETA
+    L_BASELINE, L_EARTHREFL, L_EXTINCTION, L_GEODALTITUDE, L_GPH, L_ORBITINCLINE, &
+    L_PTAN, L_RADIANCE, L_REFGPH, L_SCVEL, L_SPACERADIANCE, L_TEMPERATURE, &
+    L_TNGTGEOCALT, L_TNGTGEODALT, L_TRUE, L_VMR, PHYQ_ANGLE, &
+    PHYQ_DIMENSIONLESS, PHYQ_EXTINCTION, PHYQ_LENGTH, PHYQ_TEMPERATURE, &
+    PHYQ_VELOCITY, PHYQ_VMR, PHYQ_ZETA
   use L1BData, only: L1BData_T, READL1BDATA
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: L1BInfo_T, MLSChunk_T, NameLen, R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Info, MLSMSG_L1BRead
-  use MLSSignalNomenclature, only: DestroyMLSSignalsInfo, MLSSignal_T, &
-    & ParseMLSSignalRequest
+  use MLSSignals_m, only: Modules
   use OUTPUT_M, only: OUTPUT
   use QuantityTemplates, only: QuantityTemplate_T,SetupNewQuantityTemplate
   use STRING_TABLE, only: GET_STRING
@@ -27,7 +28,7 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
   use TREE, only: DECORATION, NODE_ID, NSONS, SOURCE_REF, SUB_ROSA, SUBTREE
   use TREE_TYPES, only: N_SET_ONE
   use VGrid, only: VGrid_T
-  USE Intrinsic, ONLY: L_NONE, L_THz, L_GHz
+  USE Intrinsic, ONLY: L_NONE
   use init_tables_module, ONLY: LIT_INDICES
   implicit none
   private
@@ -77,22 +78,21 @@ contains ! =====     Public Procedures     =============================
     integer :: FAMILY
     integer :: HGRIDINDEX
     integer :: I              ! Loop counter
-    integer :: INSTRUMENTMODULE
+    integer :: INSTRUMENTMODULE         ! Index into modules
     integer :: KEY            ! Field name, F_... from Init_Tables_Module
     character(len=127) :: LIT_TEXT
     integer :: MOLECULE
     integer :: NATURAL_UNITS(first_lit:last_lit)
     integer :: NOINSTANCES
     integer :: NOSURFS
-    logical :: minorFrame       ! Is a minor frame quantity
+    logical :: minorFrame               ! Is a minor frame quantity
     integer :: NOCHANS
     integer :: QUANTITYTYPE
-    integer :: RADIOMETER     ! String index of RADIOMETER= value
+    integer :: RADIOMETER               ! Index into radiometers database
     real(r8) :: SCALEFACTOR
-    type (MLSSignal_T), dimension(:), pointer :: SIGNALS
-    integer :: SON            ! A Son of Root -- an n_assign node
-    integer :: TYPE_FIELD     ! Index in subtree of "type"
-    integer :: VALUE          ! Node index of value of field of spec
+    integer :: SON                      ! A Son of Root -- an n_assign node
+    integer :: TYPE_FIELD               ! Index in subtree of "type"
+    integer :: VALUE                    ! Node index of value of field of spec
     integer :: VGRIDINDEX
 
     ! Executable code
@@ -108,12 +108,22 @@ contains ! =====     Public Procedures     =============================
     vGridIndex = 0
     molecule = 0
     natural_units = 0
-    natural_units( (/     l_baseline,       l_extinction, &
-      & l_gph,            l_ptan,           l_radiance, &
-      & l_temperature,    l_vmr /) ) = &
-                   (/     PHYQ_Temperature, PHYQ_Temperature, &
-      & PHYQ_length,      PHYQ_Zeta,        PHYQ_Temperature, &
-      & PHYQ_Temperature, PHYQ_Vmr /)
+
+    natural_units(l_baseline) =       PHYQ_Temperature
+    natural_units(l_earthRefl) =      PHYQ_Dimensionless
+    natural_units(l_extinction) =     PHYQ_Extinction
+    natural_units(l_gph) =            PHYQ_Length
+    natural_units(l_orbitIncline) =   PHYQ_Angle
+    natural_units(l_ptan) =           PHYQ_Zeta
+    natural_units(l_radiance) =       PHYQ_Temperature
+    natural_units(l_refGPH) =         PHYQ_Length
+    natural_units(l_scVel) =          PHYQ_Velocity
+    natural_units(l_spaceRadiance) =  PHYQ_Temperature
+    natural_units(l_temperature) =    PHYQ_Temperature
+    natural_units(l_tngtGeodAlt) =    PHYQ_Length
+    natural_units(l_tngtGeocAlt) =    PHYQ_Length
+    natural_units(l_vmr) =            PHYQ_Vmr
+
     noChans = 1
     quantitytype = 0
     radiometer = 0
@@ -142,8 +152,8 @@ contains ! =====     Public Procedures     =============================
         type_field = son
       case ( f_unit );              scaleFactor = value
       case ( f_molecule );          molecule = value
-      case ( f_radiometer );        radiometer = decoration(subtree(2,son))
-      case ( f_instrumentmodule);   instrumentModule = decoration(subtree(2,son))
+      case ( f_radiometer );        radiometer = decoration(decoration(subtree(2,son)))
+      case ( f_instrumentmodule);   instrumentModule = decoration(decoration(subtree(2,son)))
       case ( f_band );              band = decoration(subtree(2,son))
       end select
     end do
@@ -189,17 +199,8 @@ contains ! =====     Public Procedures     =============================
 
       select case ( quantityType )
       case ( l_Ptan )
-        call get_string ( radiometer, lit_text, cap=.true. )
-        call ParseMLSSignalRequest ( lit_text(2:len_trim(lit_text)-1), signals )
-        instrumentModule = signals(1)%instrumentModule
-        call DestroyMLSSignalsInfo ( signals )
+
       case ( l_Radiance )
-        call get_string ( band, lit_text, cap=.true. )
-        call ParseMLSSignalRequest ( lit_text(2:len_trim(lit_text)-1), signals )
-        if ( SIZE(signals)>1) call MLSMessage(MLSMSG_Error,ModuleName,&
-             & "Only one matching signal allowed: "//lit_text )
-        noChans = signals(1)%noChannelsInBand
-!       call DestroyMLSSignalsInfo ( signals ) ! Done later
       case default
         call announce_error ( type_field, inappropriateQuantity )
       end select
@@ -207,13 +208,6 @@ contains ! =====     Public Procedures     =============================
       ! Construct an empty quantity
       call ConstructMinorFrameQuantity ( l1bInfo, chunk, instrumentModule, &
         & qty, noChans=noChans, mifGeolocation=mifGeolocation )
-
-      ! Fill what information we can
-
-      if ( quantityType==l_Radiance ) then
-        qty%signal = signals(1)
-        call DestroyMLSSignalsInfo ( signals )
-      end if
 
     else
 
@@ -267,7 +261,7 @@ contains ! =====     Public Procedures     =============================
     qty%instrumentmodule= instrumentmodule
     qty%radiometer = radiometer
     qty%scaleFactor = scaleFactor
-
+    
     if ( toggle(gen) ) call trace_end ( "CreateQtyTemplateFromMLSCFInfo" )
 
   end function CreateQtyTemplateFromMLSCFInfo
@@ -299,7 +293,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine ANNOUNCE_ERROR
 
   ! --------------------------------  ConstructMinorFrameQuantity  -----
-  subroutine ConstructMinorFrameQuantity ( l1bInfo, chunk, instrumentModule, &
+  subroutine ConstructMinorFrameQuantity ( l1bInfo, chunk, instrumentModuleIndex, &
     & qty, noChans, regular, instanceLen, mifGeolocation )
 
   ! This routine constructs a minor frame based quantity.
@@ -307,7 +301,7 @@ contains ! =====     Public Procedures     =============================
     ! Dummy arguments
     type (L1BInfo_T), intent(in) :: l1bInfo ! File handles for l1bdata
     type (MLSChunk_T), intent(in) :: chunk ! The chunk under consideration
-    integer, intent(in) :: instrumentModule ! L_THz or L_GHz?
+    integer, intent(in) :: instrumentModuleIndex ! Index into mifGeolocation
     type (QuantityTemplate_T), intent(out) :: qty ! Resulting quantity
     integer, intent(in), optional :: noChans
     logical, intent(in), optional :: regular
@@ -338,8 +332,7 @@ contains ! =====     Public Procedures     =============================
     type (L1BData_T) :: l1bField
     character (len=NameLen) :: l1bItemName
 
-    integer :: noMAFs, l1bFlag, l1bItem, mafIndex, mifIndex, instrumentModuleIndex
-    integer, DIMENSION(1) :: instrumentModuleIndexArray
+    integer :: noMAFs, l1bFlag, l1bItem, mafIndex, mifIndex
 
     ! Executable code. There are basically two cases here. If we have a
     ! MIFGeolocation argument this conveys all the geolocation for this
@@ -349,9 +342,6 @@ contains ! =====     Public Procedures     =============================
     if ( present(mifGeolocation) ) then
 
       ! We have geolocation information, setup the quantity as a clone of that.
-       instrumentModuleIndexArray=PACK( (/1,2/), &
-            instrumentModule==mifGeolocation%instrumentModule)
-       instrumentModuleIndex=instrumentModuleIndexArray(1)
 
       call SetupNewQuantityTemplate ( qty, &
         & source=mifGeolocation(instrumentModuleIndex), &
@@ -383,7 +373,7 @@ contains ! =====     Public Procedures     =============================
 
       ! First we read tpGeodalt to get the size of the quantity.
 
-      CALL Get_String(lit_indices(instrumentModule),l1bItemName)
+      CALL Get_String(modules(instrumentModuleIndex)%name,l1bItemName)
       l1bItemName = TRIM(l1bItemName) // "." // "tpGeodAlt"
       
       call ReadL1BData ( l1bInfo%l1boaid, l1bItemName, l1bField, noMAFs, &
@@ -416,10 +406,10 @@ contains ! =====     Public Procedures     =============================
         ! Get the name of the item to read
         l1bItemName=l1bItemsToRead(l1bItem)
         if ( l1bItem>=TransitionToModularItems ) then
-           call Get_String(lit_indices(instrumentModule),l1bItemName)
-           l1bItemName = trim(l1bItemName)//'.'//l1bItemsToRead(l1bItem)
+          call Get_String(modules(instrumentModuleIndex)%name,l1bItemName)
+          l1bItemName = trim(l1bItemName)//'.'//l1bItemsToRead(l1bItem)
         else
-           l1bItemName=l1bItemsToRead(l1bItem)
+          l1bItemName=l1bItemsToRead(l1bItem)
         endif
 
         ! Read it from the l1boa file
@@ -530,6 +520,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.7  2001/03/02 01:28:23  livesey
+! New quantity types etc.
+!
 ! Revision 2.6  2001/02/28 01:17:04  livesey
 ! Interim version, on the way to using proper signals stuff
 !

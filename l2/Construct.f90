@@ -15,7 +15,7 @@ MODULE Construct                ! The construct module for the MLS L2 sw.
     & S_VGRID
   use MLSCommon, only: L1BInfo_T, MLSChunk_T
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
-  use MLSSignalNomenclature
+  use MLSSignals_m, only: Modules
   use OUTPUT_M, only: OUTPUT
   use QuantityTemplates, only: AddQuantityTemplateToDatabase, &
     & DestroyQuantityTemplateDatabase, QuantityTemplate_T
@@ -28,7 +28,7 @@ MODULE Construct                ! The construct module for the MLS L2 sw.
     & DestroyVectorTemplateDatabase, Dump, VectorTemplate_T
   use VGrid, only: AddVGridToDatabase, CreateVGridFromMLSCFInfo, &
     & DestroyVGridDatabase, VGrid_T
-  use Intrinsic, ONLY: L_None, L_GHz, L_THz
+  use Intrinsic, ONLY: L_None
   use String_Table, ONLY: GET_STRING
   use Init_tables_module, ONLY: LIT_INDICES
 
@@ -63,11 +63,6 @@ contains ! =====     Public Procedures     =============================
     type (VectorTemplate_T), dimension(:), pointer :: vectorTemplates
     type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
 
-    ! Local parameters
-    INTEGER, PARAMETER :: MLSInstrumentNoModules=2
-    INTEGER, DIMENSION(MLSInstrumentNoModules), PARAMETER :: &
-         MLSInstrumentModules= (/L_GHz,L_THz/)
-
     ! Local variables
     type (VGrid_T), dimension(:), pointer :: vGrids => NULL()
     type (HGrid_T), dimension(:), pointer :: hGrids => NULL()
@@ -94,13 +89,11 @@ CHARACTER(LEN=132) :: dummy
 
     if ( toggle(gen) ) call trace_begin ( "MLSL2Construct", root )
 
-    CALL Get_String(lit_indices(L_THz),dummy)
-    allocate ( mifGeolocation(MLSInstrumentNoModules), STAT=status )
+    allocate ( mifGeolocation(size(modules)), STAT=status )
     if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate//"mifGeolocation" )
-    do instrumentModuleIndex = 1, MLSInstrumentNoModules
-      call ConstructMinorFrameQuantity ( l1bInfo, chunk, &
-           MLSinstrumentModules(instrumentModuleIndex), &
+    do instrumentModuleIndex = 1, size(modules,1)
+      call ConstructMinorFrameQuantity ( l1bInfo, chunk, instrumentModuleIndex, &
            mifGeolocation(instrumentModuleIndex) )
     end do
 
@@ -188,6 +181,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.7  2001/03/02 01:28:12  livesey
+! Uses new MLSSignals
+!
 ! Revision 2.6  2001/02/09 00:38:22  livesey
 ! Various updates
 !
