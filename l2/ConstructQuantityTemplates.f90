@@ -141,6 +141,7 @@ contains ! =====     Public Procedures     =============================
     natural_units(l_ptan) =           PHYQ_Zeta
     natural_units(l_radiance) =       PHYQ_Temperature
     natural_units(l_refGPH) =         PHYQ_Length
+    natural_units(l_scGeocAlt ) =     PHYQ_Length
     natural_units(l_scVel) =          PHYQ_Velocity
     natural_units(l_spaceRadiance) =  PHYQ_Temperature
     natural_units(l_temperature) =    PHYQ_Temperature
@@ -688,6 +689,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.24  2001/04/25 00:01:23  livesey
+! Bug fix, no default units for scGeocAlt
+!
 ! Revision 2.23  2001/04/24 22:21:17  livesey
 ! Gave up on latitude for forge
 !
