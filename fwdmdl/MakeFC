@@ -88,7 +88,7 @@ else
 endif
 
 #Any sources to explicitly exclude from dependency list?
-OMIT_SRCS := $(OMIT) 
+OMIT_SRCS := $(OMIT) errmsg.f90
 
 #PROG=l2_test
 PROG=libfwdmdl.a
@@ -244,6 +244,9 @@ targ:
 	$(TAR) hcvzf ../fwdmdl.tgz * --exclude \*.o --exclude \*.mod --exclude l2_test
 
 # $Log$
+# Revision 2.14  2002/07/22 22:07:49  pwagner
+# Removed custom builds for Lahey and LinearizedForwardModel
+#
 # Revision 2.13  2002/07/19 17:40:07  pwagner
 # Slow down LF95 build of LinearizedFM by custom build
 #
