@@ -32,7 +32,7 @@ module L2Parallel
   use L2ParInfo, only: L2PARALLELINFO_T, PARALLEL, INFOTAG, CHUNKTAG, &
     & SIG_TOJOIN, SIG_FINISHED, SIG_ACKFINISH, SIG_REGISTER, NOTIFYTAG, &
     & SIG_REQUESTDIRECTWRITE, SIG_DIRECTWRITEGRANTED, SIG_DIRECTWRITEFINISHED, &
-    & GETNICETIDSTRING, SLAVEARGUMENTS
+    & GETNICETIDSTRING, SLAVEARGUMENTS, MACHINENAMELEN, GETMACHINENAMES
   use QuantityTemplates, only: QUANTITYTEMPLATE_T, ADDQUANTITYTEMPLATETODATABASE, &
     & DESTROYQUANTITYTEMPLATECONTENTS
   use Toggles, only: Gen, Switches, Toggle
@@ -58,7 +58,6 @@ module L2Parallel
   !---------------------------------------------------------------------------
 
   ! Parameters
-  integer, parameter :: MACHINENAMELEN = 64 ! Max length of name of machine
   integer, parameter :: HDFNAMELEN = 132 ! Max length of name of swath/sd
 
   integer :: counterStart
@@ -161,128 +160,6 @@ contains ! ================================ Procedures ======================
 
   end subroutine GetChunkInfoFromMaster
 
-  ! ---------------------------------------- GetMachineNames ------------
-  subroutine GetMachineNames ( machineNames )
-    ! This reads the parallel slave name file and returns
-    ! an array of machine names
-    character(len=MachineNameLen), dimension(:), pointer :: MACHINENAMES
-
-    ! Local variables
-    character(len=MachineNameLen) :: LINE ! A line from the file
-    character(len=MachineNameLen) :: ORIGINAL ! A line from the file
-    character(len=MachineNameLen) :: ARCH ! A line from the file
-    logical :: EXIST                    ! Flag from inquire
-    logical :: GOTFIRSTLAST             ! Got a range
-    logical :: OPENED                   ! Flag from inquire
-
-    integer :: DTID                     ! From PVMFConfig
-    integer :: FIRST                    ! First machine in file to use
-    integer :: FIRSTCOLONPOS            ! Position in string
-    integer :: I                        ! Loop inductor
-    integer :: INFO                     ! From PVMFConfig
-    integer :: LAST                     ! Last machine in file to use
-    integer :: LUN                      ! Logical unit number
-    integer :: MACHINE                  ! Counter
-    integer :: NARCH                    ! From PVMFConfig
-    integer :: NOLINES                  ! Number of lines in file
-    integer :: NOMACHINES               ! Array size
-    integer :: SECONDCOLONPOS           ! Position in string
-    integer :: SPEED                    ! From PVMFConfig
-    integer :: STAT                     ! Status flag from read
-
-    ! Executable code
-    ! The slave filename may contain starting and ending line numbers
-
-    original = parallel%slaveFilename
-
-    if ( trim(original) == 'pvm' ) then
-      ! If the user specifies 'pvm' then just get the names of the machines
-      ! in the pvm system
-      machine = 1
-      hostLoop: do
-        call PVMFConfig ( noMachines, narch, dtid, line, arch, speed, info )
-        if ( info < 0 ) call PVMErrorMessage ( info, &
-          & 'Calling PVMFConfig' )
-        if ( machine == 1 ) then
-          call Allocate_test ( machineNames, noMachines, 'machineNames', moduleName )
-        end if
-        machineNames(machine) = trim(line)
-        machine = machine + 1
-        if ( machine == noMachines + 1 ) exit hostLoop
-      end do hostLoop
-    else
-      gotFirstLast = .false.
-      firstColonPos = index ( parallel%slaveFilename, ':' )
-      if ( firstColonPos /= 0 ) then
-        gotFirstLast = .true.
-        parallel%slaveFilename(firstColonPos:firstColonPos) = ' '
-        secondColonPos = index ( parallel%slaveFilename,':' )
-        if ( secondColonPos < firstColonPos ) &
-          & call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Incorrect syntax for slave info:'//trim(original) )
-        parallel%slaveFilename(secondColonPos:secondColonPos) = ' '
-        read (parallel%slaveFilename(firstColonPos+1:),*,iostat=stat) first, last
-        if ( stat /= 0 ) &
-          & call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Incorrect syntax for slave info:'//trim(original) )
-      else
-        firstColonPos = len_trim(parallel%slaveFilename)+1
-      end if
-
-      ! Find a free logical unit number
-      do lun = 20, 99
-        inquire ( unit=lun, exist=exist, opened=opened )
-        if ( exist .and. .not. opened ) exit
-      end do
-      if ( opened .or. .not. exist ) call MLSMessage ( MLSMSG_Error, moduleName, &
-        & "No logical unit numbers available" )
-      open ( unit=lun, file=parallel%slaveFilename(1:firstColonPos-1),&
-        & status='old', form='formatted', &
-        & access='sequential', iostat=stat )
-      if ( stat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-        & "Unable to open slave file " // parallel%slaveFilename(1:firstColonPos-1) )
-
-      ! Now read the file and count the lines
-      noMachines = 0
-      noLines = 0
-      firstTimeRound: do
-        read ( unit=lun, fmt=*, iostat=stat ) line
-        if ( stat < 0 ) exit firstTimeRound
-        noLines = noLines + 1
-        line = adjustl ( line )
-        if ( line(1:1) /= '#' ) noMachines = noMachines + 1
-      end do firstTimeRound
-
-      ! Now setup the result array
-      if ( .not. gotFirstLast ) then
-        first = 1
-        last = noMachines
-      else
-        first = min( max ( first, 1 ), noMachines )
-        last = max( 1, min ( last, noMachines ) )
-      end if
-      noMachines = last - first + 1
-
-      allocate ( machineNames(noMachines), stat=stat )
-      if ( stat /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_Allocate//' machineNames')
-
-      ! Now rewind the file and read the names
-      rewind ( lun )
-      machine = 1
-      do i = 1, noLines
-        read ( unit=lun, fmt=* ) line
-        line = adjustl ( line )
-        if ( line(1:1) /= '#' ) then
-          if ( (machine >= first) .and. (machine <= last) ) &
-            & machineNames(machine-first+1) = line
-          machine = machine + 1
-        endif
-      end do
-
-      close ( unit=lun )
-    end if
-  end subroutine GetMachineNames
 
   ! --------------------------------------------- L2MasterTask ----------
   subroutine L2MasterTask ( chunks, l2gpDatabase, l2auxDatabase )
@@ -379,8 +256,12 @@ contains ! ================================ Procedures ======================
     noDirectWriteFiles = 0
 
     ! Work out the information on our virtual machine
-    call GetMachineNames ( machineNames )
-    noMachines = size(machineNames)
+    if ( .not. usingSubmit ) then
+      call GetMachineNames ( machineNames )
+      noMachines = size(machineNames)
+    else
+      noMachines = 0
+    end if
     call Allocate_test ( machineFree, noMachines, 'machineFree', ModuleName )
     call Allocate_test ( machineOK, noMachines, 'machineOK', ModuleName )
     call Allocate_test ( jobsMachineKilled, noMachines, 'jobsMachineKilled', ModuleName )
@@ -487,7 +368,8 @@ contains ! ================================ Procedures ======================
               & "Got a message from an unknown slave")
           else
             ! Unpack the first integer in the buffer
-            if ( signal /= sig_register ) machine = chunkMachines(chunk)
+            if ( .not. usingSubmit .and. signal /= sig_register ) &
+              & machine = chunkMachines(chunk)
           end if
 
           select case (signal) 
@@ -497,23 +379,17 @@ contains ! ================================ Procedures ======================
             if ( info /= 0 ) then
               call PVMErrorMessage ( info, "unpacking chunk number" )
             endif
+            ! Note, we'll ignore the slave MAFNumber sent for fwmParallel stuff
             if ( usingSubmit ) then
               ! We only really care about this message if we're using submit
               chunkTids(chunk) = slaveTid
               call GetMachineNameFromTid ( slaveTid, thisName )
-              machine = FindFirst ( trim(thisName) == machineNames )
-              if ( machine == 0 ) &
-                & call MLSMessage ( MLSMSG_Error, ModuleName, &
-                & "An unknown machine sent a registration message!" )
-              chunkMachines(chunk) = machine
               call WelcomeSlave ( chunk, slaveTid )
               if ( index(switches,'mas') /= 0 ) then
                 call output ( 'Welcomed task ' // &
                   & trim(GetNiceTidString(slaveTid)) // &
                   & ' running chunk ' )
-                call output ( chunk )
-                call output ( ' on machine ' // &
-                  & trim(machineNames(machine)), advance='yes' )
+                call output ( chunk, advance='yes' )
               end if
             endif
             
@@ -547,10 +423,11 @@ contains ! ================================ Procedures ======================
             if ( index ( switches, 'mas' ) /= 0 ) then
               call output ( 'Direct write request for file ' )
               call output ( requestedFile )
-              call output ( ' from ' // &
-                & trim(machineNames(machine)) // ' ' // &
-                & trim(GetNiceTidString(slaveTid)) // &
-                & ' chunk ' )
+              call output ( ' from ' )
+              if ( .not. usingSubmit ) &
+                & call output ( trim(machineNames(machine)) // ' ' )
+              call output ( trim(GetNiceTidString(slaveTid)) )
+              call output ( ' chunk ' )
               call output ( chunk, advance='yes')
             end if
             ! Is anyone else using this file?
@@ -587,10 +464,11 @@ contains ! ================================ Procedures ======================
             if ( index ( switches, 'mas' ) /= 0 ) then
               call output ( 'Direct write finished on file ' )
               call output ( completedFile )
-              call output ( ' by ' // &
-                & trim(machineNames(machine)) // ' ' // &
-                & trim(GetNiceTidString(slaveTid)) // &
-                & ' chunk ' )
+              call output ( ' by ' )
+              if ( .not. usingSubmit ) &
+                & call output ( trim(machineNames(machine)) // ' ' )
+              call output ( trim(GetNiceTidString(slaveTid)) )
+              call output ( ' chunk ' )
               call output ( chunk, advance='yes')
             end if
             ! Is anyone else waiting for this file?
@@ -610,9 +488,10 @@ contains ! ================================ Procedures ======================
 
           case ( sig_finished ) ! -------------- Got a finish message ----
             if ( index(switches,'mas') /= 0 ) then
-              call output ( 'Got a finished message from ' // &
-                & trim(machineNames(machine)) // ' ' // &
-                & trim(GetNiceTidString(slaveTid)) // &
+              call output ( 'Got a finished message from ' )
+              if ( .not. usingSubmit ) &
+                & call output ( trim(machineNames(machine)) // ' ' )
+              call output ( trim(GetNiceTidString(slaveTid)) // &
                 & ' processing chunk ' )
               call output ( chunk, advance='yes')
             endif
@@ -630,9 +509,11 @@ contains ! ================================ Procedures ======================
             
             ! Now update our information
             chunksCompleted(chunk) = .true.
-            if ( .not. usingSubmit ) machineFree(machine) = .true.
             chunkTids(chunk) = 0
-            chunkMachines(chunk) = 0
+            if ( .not. usingSubmit ) then
+              machineFree(machine) = .true.
+              chunkMachines(chunk) = 0
+            end if
             if ( index(switches,'mas') /= 0 ) then
               call output ( 'Master status:', advance='yes' )
               call output ( count(chunksCompleted) )
@@ -677,13 +558,16 @@ contains ! ================================ Procedures ======================
           ! Now, to get round a memory management bug, we'll ignore this
           ! if, as far as we're concerned, the task was finished anyway.
           if ( deadChunk /= 0 ) then
-            deadMachine = chunkMachines(deadChunk)
-            if ( .not. usingSubmit ) machineFree(deadMachine) = .true.
+            if ( .not. usingSubmit ) then
+              deadMachine = chunkMachines(deadChunk)
+              machineFree(deadMachine) = .true.
+            end if
             if ( index(switches,'mas') /= 0 ) then
               call output ( 'The run of chunk ' )
               call output ( deadChunk )
-              call output ( ' on ' // trim(machineNames(deadMachine)) // &
-                & ' ' // trim(GetNiceTidString(deadTid)) // &
+              if ( .not. usingSubmit ) &
+                & call output ( ' on ' // trim(machineNames(deadMachine)) // ' ' )
+              call output ( trim(GetNiceTidString(deadTid)) // &
                 & ' died, try again.', advance='yes' )
             end if
             call CleanUpDeadChunksOutput ( deadChunk, joinedQuantities, &
@@ -691,9 +575,11 @@ contains ! ================================ Procedures ======================
             chunksStarted(deadChunk) = .false.
             chunkFailures(deadChunk) = chunkFailures(deadChunk) + 1
             directWriteStatus(deadChunk) = 0
-            where ( machineNames(deadMachine) == machineNames )
-              jobsMachineKilled = jobsMachineKilled + 1
-            end where
+            if ( .not. usingSubmit ) then
+              where ( machineNames(deadMachine) == machineNames )
+                jobsMachineKilled = jobsMachineKilled + 1
+              end where
+            end if
 
             ! If the chunk posesses any direct writes, free them up
             ! and tell any other chunks wanting to write that they can do so.
@@ -734,16 +620,18 @@ contains ! ================================ Procedures ======================
             ! Does this machine have a habit of killing jobs.  If so
             ! mark it as not OK.  We can't do much about it though if
             ! we're using submit.
-            if ( jobsMachineKilled(deadMachine) > &
-              & parallel%maxFailuresPerMachine .and. .not. usingSubmit) then
-              if ( index(switches,'mas') /= 0 ) &
-                & call output ('The machine ' // &
-                & trim(machineNames(deadMachine)) // &
-                & ' keeps killing things, marking it bad', &
-                & advance='yes' )
-              where ( machineNames(deadMachine) == machineNames )
-                machineOK = .false.
-              end where
+            if ( .not. usingSubmit ) then
+              if ( jobsMachineKilled(deadMachine) > &
+                & parallel%maxFailuresPerMachine ) then
+                if ( index(switches,'mas') /= 0 ) &
+                  & call output ('The machine ' // &
+                  & trim(machineNames(deadMachine)) // &
+                  & ' keeps killing things, marking it bad', &
+                  & advance='yes' )
+                where ( machineNames(deadMachine) == machineNames )
+                  machineOK = .false.
+                end where
+              end if
             end if
           else
             if ( index(switches,'mas') /= 0 ) call output ( &
@@ -770,12 +658,14 @@ contains ! ================================ Procedures ======================
       ! Now deal with the case where we have no machines left to use.
       ! When all the chunks that have started have finished (surely this is a
       ! necessary condition anyway?) finish.
-      if ( .not. any(machineOK) .and. &
-        &  all ( chunksStarted .eqv. chunksCompleted ) ) then
-        if ( index(switches,'mas') /= 0 ) &
-          & call output ( 'No machines left to do the remaining work', &
-          & advance='yes' )
-        exit masterLoop
+      if ( .not. usingSubmit ) then
+        if ( .not. any(machineOK) .and. &
+          &  all ( chunksStarted .eqv. chunksCompleted ) ) then
+          if ( index(switches,'mas') /= 0 ) &
+            & call output ( 'No machines left to do the remaining work', &
+            & advance='yes' )
+          exit masterLoop
+        end if
       end if
 
       ! Now, rather than chew up cpu time on the master machine, we'll wait a
@@ -1103,6 +993,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.38  2002/10/05 00:43:34  livesey
+! Started work on the FwmParallel stuff
+!
 ! Revision 2.37  2002/08/20 04:31:39  livesey
 ! Obscure limitation fixed.  Used to hang if chunk died while doing direct
 ! write.
