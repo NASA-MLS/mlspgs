@@ -26,12 +26,14 @@ module ERMSG_M
   integer, save, private :: IALPHA  ! = IDELTA + LEVEL; used to determine
                                     ! whether to print
 
-  character(LEN=256), private :: output_line
+  integer, private, parameter :: MAXCOL = 75
+  character(LEN=maxcol), private :: Output_line
 
 !---------------------------- RCS Ident Info -------------------------------
-  CHARACTER (LEN=256) :: Id = &
+  character(len=*), parameter :: IdParm = &
        "$Id$"
-  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= &
        "$RCSfile$"
 !---------------------------------------------------------------------------
 
@@ -42,8 +44,9 @@ contains
 !>> 1985-09-23 ERFIN  Lawson  Initial code.
  
 !    write (*,"(1X,72('$')/' ')")
-    write (output_line,"(1X,72('$')/' ')")
-    call output(trim(output_line), advance='yes')
+    write (output_line,"(1X,72('$'))")
+    call output ( trim(output_line), advance='yes' )
+    call output ( '', advance='yes' )
     if (ialpha >= 2) stop
     return
   end subroutine ERFIN
@@ -185,8 +188,8 @@ contains
     character(len=1), intent(in) :: FLAG
 
     if (ialpha >= -1) then
-!      write (*,*) msg
-    call output(trim(msg), advance='yes')
+!     write (*,*) msg
+      call output ( trim(msg), advance='yes' )
       if (flag == '.') call erfin
     end if
     return
@@ -255,12 +258,12 @@ contains
 !      write (*,*) msg
       write (output_line,"('0',72('$'))")
       call output ( trim(output_line), advance='yes' )
-      write ( output_line, "(' SUBPROGRAM ',A,' REPORTS ERROR NO. ', &
-        & I4)") trim(subnam), indic
-      call output(trim(output_line), advance='yes')
-      call output(trim(msg), advance='yes')
+      write (output_line,"(' SUBPROGRAM ',A,' REPORTS ERROR NO. ', I4)") &
+        & subnam, indic
+      call output ( trim(output_line), advance='yes' )
+      call output ( trim(msg), advance='yes' )
       if (flag == '.') call erfin
-    endif
+    end if
     return
   end subroutine ERMSG
 !=======================================================================
@@ -285,7 +288,7 @@ contains
     if (ialpha >= -1) then
 !      write (*,*) label, ' = ', value
       write (output_line,*) label, ' = ', value
-      call output(trim(output_line), advance='yes')
+      call output ( trim(output_line), advance='yes' )
       if (flag == '.') call erfin
     end if
     return
@@ -301,7 +304,7 @@ contains
     if (ialpha >= -1) then
 !      write (*,*) label, ' = ', value
       write (output_line,*) label, ' = ', value
-      call output(trim(output_line), advance='yes')
+      call output ( trim(output_line), advance='yes' )
       if (flag == '.') call erfin
     end if
     return
@@ -317,7 +320,7 @@ contains
     if (ialpha >= -1) then
 !      write (*,*) label, ' = ', value
       write (output_line,*) label, ' = ', value
-      call output(trim(output_line), advance='yes')
+      call output ( trim(output_line), advance='yes' )
       if (flag == '.') call erfin
     end if
     return
@@ -355,18 +358,17 @@ contains
     character(LEN=1), intent(in) :: FLAG
 
     integer I, K, LENIDV, NUMBER
-    integer, parameter :: MAXCOL = 75
 
     if (ialpha >= -1) then
       lenidv = len (labels)
       number = maxcol / (lenidv+17)
       do i = 1, size(labels), number
-        write(output_line,"(4(2x,a,'=',i14))") &
+        write (output_line,"(4(2x,a,'=',i14))") &
           (labels(k), values(k), k = i, min(size(labels), i+number-1) )
-        call output(trim(output_line), advance='yes')
+        call output ( trim(output_line), advance='yes' )
       end do
       if (flag == '.') call erfin
-    endif
+    end if
     return
   end subroutine IERVN
 
@@ -384,18 +386,17 @@ contains
     character(LEN=1), intent(in) :: FLAG
 
     integer I, K, LENIDV, NUMBER
-    integer, parameter :: MAXCOL = 75
 
     if (ialpha >= -1) then
       lenidv = len (labels)
       number = maxcol / (lenidv+17)
       do i = 1, size(labels), number
-        write(output_line,"(4(2x,a,'=',g14.7))") &
+        write (output_line,"(4(2x,a,'=',g14.7))") &
           (labels(k), values(k), k = i, min(size(labels), i+number-1) )
-        call output(trim(output_line), advance='yes')
+        call output ( trim(output_line), advance='yes' )
       end do
       if (flag == '.') call erfin
-    endif
+    end if
     return
   end subroutine SERVN
 
@@ -413,23 +414,25 @@ contains
     character(LEN=1), intent(in) :: FLAG
 
     integer I, K, LENIDV, NUMBER
-    integer, parameter :: MAXCOL = 75
 
     if (ialpha >= -1) then
       lenidv = len (labels)
       number = maxcol / (lenidv+17)
       do i = 1, size(labels), number
-        write(output_line,"(4(2x,a,'=',g14.7))") &
+        write (output_line,"(4(2x,a,'=',g14.7))") &
           (labels(k), values(k), k = i, min(size(labels), i+number-1) )
-        call output(trim(output_line), advance='yes')
+        call output ( trim(output_line), advance='yes' )
       end do
       if (flag == '.') call erfin
-    endif
+    end if
     return
   end subroutine DERVN
 end module ERMSG_M
 
 ! $Log$
+! Revision 2.5  2002/01/18 00:28:39  vsnyder
+! Account for '/' in formats
+!
 ! Revision 2.4  2002/01/18 00:25:17  livesey
 ! Another attempt to fix the string bug, seems to work now.
 !
