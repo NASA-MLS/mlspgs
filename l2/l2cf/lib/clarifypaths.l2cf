@@ -3,11 +3,12 @@
 ; Go through the file types by level.
 ; ------------------------------------------ Calibration files
 ; ------------------------------------------ Edinburgh
-!ifdef(edinburgh,{
-!ifdef(calpath,{},{!define(calpath,{!inpath/l2cal})})
-!ifdef(inpathtruthl2gp,{},{!define(inpathtruthl2gp,{!inpath/l2gp/s5--t/!year(!day)})})
-!ifdef(inpathcli,{},{!define(inpathcli,!calpath)})
-!ifdef(climatologyFile,{},{!define(climatologyFile,{'!inpathcli/MLS-Aura_L2Cal-Climatologies_pe-feb-!phiStr-v1-0-1_0000d000.txt'})})
+!ifdef(flagEdinburgh,{
+!ifdef(mirrorpath,{},{!define(mirrorpath,{/eosmls/jpl/data/emls})})
+!ifdef(calpath,{},{!define(calpath,{!mirrorpath/l2cal})})
+!ifdef(inpathtruthl2gp,{},{!define(inpathtruthl2gp,{!mirrorpath/l2gp/!simulationSeries--t/!year(!day)})})
+!ifdef(inpathcli,{},{!define(inpathcli,!inpath/l2cal)})
+!ifdef(climatologyFile,{},{!define(climatologyFile,{'!inpathcli/MLS-Aura_L2Cal-Climatologies_pe-feb-!phiStr-v1-0-2_0000d000.txt'})})
 })
 
 !ifdef(calpath,{},{!define(calpath,{/data/emls/l2cal})})
@@ -15,7 +16,7 @@
 !ifdef(inpathl1boa,{},{!define(inpathl1boa,!inpath)})
 !ifdef(inpathl1brad,{},{!define(inpathl1brad,!inpath)})
 ; ------------------------------------------ Level 2 files
-!ifdef(inpathtruthl2gp,{},{!define(inpathtruthl2gp,{/data/emls/l2gp/s5--t/1996})})
+!ifdef(inpathtruthl2gp,{},{!define(inpathtruthl2gp,{/data/emls/l2gp/!simulationSeries--t/1996})})
 !ifdef(inpathl2gp,{},{!define(inpathl2gp,!inpath)})
 !ifdef(inpathl2aux,{},{!define(inpathl2aux,!inpath)})
 !ifdef(outpathl2gp,{},{!define(outpathl2gp,!outpath)})
