@@ -71,6 +71,10 @@ contains
     ! First we're going to look for the instance within the reference
     ! quantity that starts below the current one.
 
+    ! I'm going to clear all of referenceIndices here, I seem to have problems
+    ! with the Lahey uninitialised variable checker, even if I'm not using the
+    ! values.  Or maybe I've done something wrong.
+    referenceIndices = 0                
     call Hunt(referenceQuantity%template%phi(1,:), &
       & soughtQuantity%template%phi(1,first:last), referenceIndices, &
       & allowTopValue=.true.)
@@ -171,6 +175,9 @@ contains
 end module ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.11  2001/11/08 01:05:06  livesey
+! Fixed a minor sort of bug in FindOneClosestQuantity
+!
 ! Revision 2.10  2001/09/14 18:02:52  livesey
 ! Bug fix in FindOneClosestInstance and FindClosestInstances.
 ! Will probably come back to these and rewrite them some time.
