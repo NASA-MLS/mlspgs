@@ -12,7 +12,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
      !& SWDETACH
 !  use HDFEOS5
 !  use HE5_SWAPI 
-  use MLSCommon, only: R8
+  use MLSCommon, only: R4, R8
   use MLSFiles, only: HDFVERSION_4, HDFVERSION_5
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
        & MLSMSG_Error, MLSMSG_Warning, MLSMSG_Debug
@@ -70,6 +70,9 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   ! Assume L2GP files w/o explicit hdfVersion field are this
   ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc. 
   integer, parameter :: L2GPDEFAULT_HDFVERSION = HDFVERSION_4
+
+  ! r4 corresponds to sing. prec. :: same as stored in files
+  integer, parameter :: rgp = r4
 
   integer, parameter :: L2GPNameLen = 80
 
@@ -138,33 +141,33 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 
      ! Now we store the geolocation fields, first the vertical one:
      ! (The following has the tropopause if the swath is a column abundance)
-     real (r8), pointer, dimension(:) :: pressures=>NULL() ! Vertical coords (nLevels)
+     real (rgp), pointer, dimension(:) :: pressures=>NULL() ! Vertical coords (nLevels)
 
      ! Now the horizontal geolocation information. Dimensioned (nTimes)
-     real (r8), pointer, dimension(:) :: latitude => NULL()
-     real (r8), pointer, dimension(:) :: longitude => NULL()
-     real (r8), pointer, dimension(:) :: solarTime => NULL()
-     real (r8), pointer, dimension(:) :: solarZenith => NULL()
-     real (r8), pointer, dimension(:) :: losAngle => NULL()
-     real (r8), pointer, dimension(:) :: geodAngle => NULL()
-     real (r8), pointer, dimension(:) :: time => NULL()
+     real (rgp), pointer, dimension(:) :: latitude => NULL()
+     real (rgp), pointer, dimension(:) :: longitude => NULL()
+     real (rgp), pointer, dimension(:) :: solarTime => NULL()
+     real (rgp), pointer, dimension(:) :: solarZenith => NULL()
+     real (rgp), pointer, dimension(:) :: losAngle => NULL()
+     real (rgp), pointer, dimension(:) :: geodAngle => NULL()
+     real (r8 ), pointer, dimension(:) :: time => NULL()   ! dble prec.
 
      integer, pointer, dimension(:) :: chunkNumber=>NULL()
 
      ! Now we store the `frequency' geolocation field
 
-     real (r8), pointer, dimension(:) :: frequency=>NULL()
+     real (rgp), pointer, dimension(:) :: frequency=>NULL()
      !        dimensioned (nFreqs)
 
      ! Finally we store the data fields
 
-     real (r8), pointer, dimension(:,:,:) :: l2gpValue=>NULL()
-     real (r8), pointer, dimension(:,:,:) :: l2gpPrecision=>NULL()
+     real (rgp), pointer, dimension(:,:,:) :: l2gpValue=>NULL()
+     real (rgp), pointer, dimension(:,:,:) :: l2gpPrecision=>NULL()
      ! dimensioned (nFreqs, nLevels, nTimes)
 
      character (len=1), pointer, dimension(:) :: status=>NULL()
      !                (status is a reserved word in F90)
-     real (r8), pointer, dimension(:) :: quality=>NULL()
+     real (rgp), pointer, dimension(:) :: quality=>NULL()
      ! Both the above dimensioned (nTimes)
 
   end type L2GPData_T
@@ -2497,9 +2500,9 @@ contains ! =====     Public Procedures     =============================
         & call dump ( l2gp%frequency, 'Frequencies:' )
       
       if ( myDetails < 1 ) return
-      call dump ( l2gp%l2gpValue, 'L2GPValue:' )
+      call dump ( real(l2gp%l2gpValue, r8), 'L2GPValue:' )
       
-      call dump ( l2gp%l2gpPrecision, 'L2GPPrecision:' )
+      call dump ( real(l2gp%l2gpPrecision, r8), 'L2GPPrecision:' )
       
       !    call dump ( l2gp%status, 'Status:' )
       
@@ -2514,6 +2517,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 1.26  2003/01/15 19:13:30  pwagner
+! Smane no monkeying fix, but for hdf5
+!
 ! Revision 1.25  2003/01/15 00:05:34  pwagner
 ! Now can write L2GPData w/o monkeying around
 !
