@@ -16,7 +16,8 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
      & HDFVERSION_4, HDFVERSION_5, MLS_INQSWATH
    use MLSHDF5, only: mls_h5open, mls_h5close
    use MLSMessageModule, only: MLSMessageConfig
-   use MLSStringLists, only: GetStringElement, NumStringElements
+   use MLSStringLists, only: catLists, GetStringElement, GetUniqueList, &
+     & NumStringElements, RemoveElemFromList
    use output_m, only: output
    use PCFHdr, only: GlobalAttributes
    use Time_M, only: Time_Now, USE_WALL_CLOCK
@@ -44,18 +45,21 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
     logical     :: verbose = .false.
     character(len=255) :: outputFile= 'default.he5'        ! output filename
     logical ::          columnsOnly = .false.
+    logical ::          noDupSwaths = .false.              ! cp 1st, ignore rest
     character(len=3) :: convert= ' '                       ! e.g., '425'
   end type options_T
   
   type ( options_T ) :: options
 
   integer, parameter ::          MAXFILES = 100
+  logical, parameter ::          countEmpty = .true.
+  logical, parameter ::          DEEBUG = .false.
   ! logical ::          columnsOnly
   character(len=255) :: filename          ! input filename
   ! character(len=255) :: outputFile= 'default.he5'        ! output filename
   character(len=255), dimension(MAXFILES) :: filenames
   integer            :: n_filenames
-  integer     ::  i, count, status, error ! Counting indices & Error flags
+  integer     ::  i, j, status, error ! Counting indices & Error flags
   integer     ::  hdfversion1
   integer     ::  hdfversion2
   logical     :: is_hdf5
@@ -63,12 +67,33 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
   real        :: t1
   real        :: t2
   real        :: tFile
+  character(len=L2GPNameLen)          :: swath
+  character(len=MAXSWATHNAMESBUFSIZE) :: swathList
+  character(len=MAXSWATHNAMESBUFSIZE) :: swathList1
+  character(len=MAXSWATHNAMESBUFSIZE) :: swathListAll
+  integer :: listSize
+  integer :: NUMSWATHSPERFILE
+  integer :: NUMSWATHSSOFAR
   ! 
   MLSMessageConfig%useToolkit = .false.
   MLSMessageConfig%logFileUnit = -1
   USE_WALL_CLOCK = .true.
   CALL mls_h5open(error)
   n_filenames = 0
+!   do      ! Loop over input
+!     read (*, '(a)') swathList
+!     if ( swathList == 'stop' ) stop
+!     read (*, '(a)') swathList1
+!     swathListAll = catLists(swathList, swathList1)
+!     swathList = swathListAll
+!     call GetUniqueList(swathList, swathListAll, &
+!       & i, countEmpty)
+!     print *, 'no unique: ', i
+!     print *, 'unique: ', trim(swathListAll)
+!     read (*, '(a)') swath
+!     call RemoveElemFromList (swathListAll, swathList, trim(swath))
+!     print *, 'After removing: ', trim(swathList)
+!   enddo
   do      ! Loop over filenames
      call get_filename(filename, n_filenames, options)
      if ( filename(1:1) == '-' ) cycle
@@ -116,14 +141,54 @@ program l2gpcat ! catenates split L2GPData files, e.g. dgg
      end select
     enddo
     call time_now ( t1 )
+    swathListAll = ''
+    NUMSWATHSSOFAR = 0
     if ( options%verbose ) print *, 'Copy l2gp data to: ', trim(options%outputFile)
     do i=1, n_filenames
       call time_now ( tFile )
       if ( options%verbose ) print *, 'Copying from: ', trim(filenames(i))
-      call cpL2GPData(trim(filenames(i)), &
-        & trim(options%outputFile), create2=(i==1), &
-        & hdfVersion1=hdfVersion1, hdfVersion2=hdfVersion2, &
-        & notUnlimited=.true., andGlAttributes=.true.)
+      if ( options%noDupSwaths) then
+        numswathsperfile = mls_InqSwath ( trim(filenames(i)), &
+          & swathList, listSize, hdfVersion=hdfVersion1)
+        if ( DEEBUG ) then
+          print *, 'swaths in file'
+          print *, trim(swathList)
+        endif
+        if ( DEEBUG ) then
+          print *, 'all swaths'
+          print *, trim(swathListAll)
+        endif
+        if ( numswathssofar > 0 ) then
+          ! Remove any duplicates
+          do j=1, numswathssofar
+            call GetStringElement(swathListAll, swath, j, countEmpty)
+            swathList1 = swathList
+            call RemoveElemFromList (swathList1, swathList, trim(swath))
+            ! Crude hAck--really should fix removeElem procedure
+            if ( swathList(1:1) == ',' ) then
+              swathList1 = swathList(2:)
+              swathList = swathList1
+            endif
+          enddo
+          if ( DEEBUG ) then
+            print *, 'swaths to cp'
+            print *, trim(swathList)
+          endif
+        endif
+        call cpL2GPData(trim(filenames(i)), &
+          & trim(options%outputFile), create2=(i==1), &
+          & hdfVersion1=hdfVersion1, hdfVersion2=hdfVersion2, &
+          & swathList=trim(swathList), &
+          & notUnlimited=.true., andGlAttributes=.true.)
+        swathList1 = swathListAll
+        swathListAll = catlists(swathList1, swathList)
+        numswathssofar = NumStringElements(swathListAll, countEmpty)
+      else
+        call cpL2GPData(trim(filenames(i)), &
+          & trim(options%outputFile), create2=(i==1), &
+          & hdfVersion1=hdfVersion1, hdfVersion2=hdfVersion2, &
+          & notUnlimited=.true., andGlAttributes=.true.)
+      endif
       call sayTime('copying this file', tFile)
     enddo
     call sayTime('copying all files')
@@ -163,6 +228,9 @@ contains
       elseif ( filename(1:3) == '-v ' ) then
         options%verbose = .true.
         exit
+      elseif ( filename(1:3) == '-no' ) then
+        options%noDupSwaths = .true.
+        exit
       else if ( filename(1:3) == '-f ' ) then
         call getarg ( i+1+hp, filename )
         i = i + 1
@@ -198,6 +266,7 @@ contains
       write (*,*) '          -425        => convert from hdf4 to hdf5'
       write (*,*) '          -524        => convert from hdf5 to hdf4'
       write (*,*) '          -v          => switch on verbose mode'
+      write (*,*) '          -nodup      => if dup swath names, cp 1st only'
       write (*,*) '          -h          => print brief help'
       stop
   end subroutine print_help
@@ -221,6 +290,9 @@ end program L2GPcat
 !==================
 
 ! $Log$
+! Revision 1.3  2004/08/07 00:15:55  pwagner
+! All stringlist stuff was moved from mlsstrings to mlsstringlists
+!
 ! Revision 1.2  2004/05/06 21:50:48  pwagner
 ! Uses mls_h5open/close
 !
