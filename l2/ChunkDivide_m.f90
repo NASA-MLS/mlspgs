@@ -56,6 +56,7 @@ module ChunkDivide_m
     logical   :: scanULSet = .false.    ! True if scan upper limit should be used
     real(rp), dimension(2) :: scanLowerLimit ! Range for bottom of scan
     real(rp), dimension(2) :: scanUpperLimit ! Range for top of scan
+    real(rp) :: maxOrbY = -1.0                 ! Maximum out of plane distance allowed <=0.0 default
     integer   :: criticalModules = l_none ! Which modules must be scanning
     character(len=160), dimension(:), pointer &
       & :: criticalSignals => null() ! Which signals must be on
@@ -149,7 +150,7 @@ contains ! ===================================== Public Procedures =====
     use Dump_0, only: DUMP
     use EXPR_M, only: EXPR
     use Init_Tables_Module, only: F_OVERLAP, F_LOWEROVERLAP, F_UPPEROVERLAP, &
-      & F_MAXLENGTH, F_METHOD, F_NOCHUNKS, &
+      & F_MAXLENGTH, F_MAXORBY, F_METHOD, F_NOCHUNKS, &
       & F_HOMEMODULE, F_CRITICALMODULES, F_CRITICALSIGNALS, F_HOMEGEODANGLE, &
       & F_SCANLOWERLIMIT, F_SCANUPPERLIMIT, F_NOSLAVES, F_SKIPL1BCHECK, &
       & FIELD_FIRST, FIELD_LAST, L_EVEN, &
@@ -982,6 +983,10 @@ contains ! ===================================== Public Procedures =====
         case ( f_maxLength )
           config%maxLength = value(1)
           config%maxLengthFamily = units(1)
+        case ( f_maxOrbY )
+          config%maxOrbY = value(1)
+          if ( units(1) /= PHYQ_Length ) &
+            & call AnnounceError ( root, BadUnits, fieldIndex )
         case ( f_overlap )
           config%overlap = value(1)
           config%overlapFamily = units(1)
@@ -1812,6 +1817,7 @@ contains ! ===================================== Public Procedures =====
       ! Local variables
       type (L1BData_T) :: TAITIME         ! Read from L1BOA file
       type (L1BData_T) :: TPGEODALT       ! Read from L1BOA file
+      type (L1BData_T) :: TPORBY          ! Read from L1BOA file
       type (Obstruction_T) :: NEWOBSTRUCTION ! A single obstruction
 
       character(len=10) :: MODNAMESTR     ! Module name
@@ -1827,10 +1833,11 @@ contains ! ===================================== Public Procedures =====
       logical, dimension(:), pointer :: VALID ! Flag for each MAF
 
       real(r8) :: SCANMAX                 ! Range of scan each maf
-      real(r8) :: SCANMIN                 ! Range of scan each mif
+      real(r8) :: SCANMIN                 ! Range of scan each maf
+      real(r8) :: ORBYMAX                 ! Maximum value of orbY each maf
 
       integer   ::                       l1b_hdf_version
-      character(len=NAME_LEN) ::         MAF_start, tp_alt
+      character(len=NAME_LEN) ::         MAF_start, tp_alt, tp_orbY
       ! Executable code
 
       if ( LEVEL1_HDFVERSION /= WILDCARDHDFVERSION ) then
@@ -1882,20 +1889,30 @@ contains ! ===================================== Public Procedures =====
           call get_string ( modules(mod)%name, modNameStr, strip=.true. )
           tp_alt = AssembleL1BQtyName ( trim(modNameStr)//'.tpGeodAlt', &
             & l1b_hdf_version, .false. )
+          tp_orby = AssembleL1BQtyName ( trim(modNameStr)//'.tpOrbY', &
+            & l1b_hdf_version, .false. )
           if ( .not. modules(mod)%spacecraft .and. &
-            & any ( config%criticalModules == &
-            &     (/ modules(mod)%name, l_either, l_both /) ) ) then
+            & ( any ( config%criticalModules == (/ l_either, l_both /) ) .or. &
+            &   lit_indices(config%criticalModules) == modules(mod)%name ) ) then
             ! Read the tangent point altitude
             call ReadL1BData ( l1bInfo%l1boaID, trim(tp_alt), &
               & tpGeodAlt, noMAFsRead, flag, hdfVersion=l1b_hdf_version )
+            ! Read the out of plane distance
+            call ReadL1BData ( l1bInfo%l1boaID, trim(tp_orby), &
+              & tpOrbY, noMAFsRead, flag, hdfVersion=l1b_hdf_version )
             ! Consider the scan range in each MAF in turn
             do maf = 1, noMAFs
               scanMax = maxval ( tpGeodAlt%dpField(1,:,maf) )
               scanMin = minval ( tpGeodAlt%dpField(1,:,maf) )
+              orbyMax = maxval ( tpOrbY%dpField(1,:,maf) )
+
               thisOneValid = ( scanMin >= config%scanLowerLimit(1) .and. &
                 &              scanMin <= config%scanLowerLimit(2) ) .and. &
                 &            ( scanMax >= config%scanUpperLimit(1) .and. &
                 &              scanMax <= config%scanUpperLimit(2) )
+              if ( config%maxOrbY > 0.0 ) then
+                thisOneValid = thisOneValid .and. orbYMax < config%maxOrbY
+              end if
               if ( config%criticalModules == l_both ) then
                 valid(maf) = valid(maf) .and. thisOneValid
               else
@@ -2093,6 +2110,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.52  2004/08/09 21:43:10  livesey
+! Bug fixes and added the maxOrbY argument.
+!
 ! Revision 2.51  2004/08/04 23:19:57  pwagner
 ! Much moved from MLSStrings to MLSStringLists
 !
