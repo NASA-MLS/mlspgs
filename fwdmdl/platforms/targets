@@ -102,7 +102,9 @@ endif
 
 ifdef BLAS
 ifdef LIB_BLAS
-   blas_linker_line=-L${BLAS} -l${LIB_BLAS}
+#   blas_linker_line=-L${BLAS} -l${LIB_BLAS}
+    blas_linker_line := $(shell ${REECHO} -dir ${BLAS} -prefixn=-l -lib ${LIB_BLAS})
+    blas_linker_line := -L${BLAS} ${blas_linker_line}
 else
    blas_linker_line=-L${BLAS} -lblas
 endif
@@ -206,6 +208,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 2.9  2002/08/29 23:54:59  pwagner
+# l_specials set to special value for Lahey
+#
 # Revision 2.8  2002/07/19 17:40:07  pwagner
 # Slow down LF95 build of LinearizedFM by custom build
 #

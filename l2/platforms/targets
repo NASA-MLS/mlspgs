@@ -112,7 +112,9 @@ endif
 
 ifdef BLAS
 ifdef LIB_BLAS
-   blas_linker_line=-L${BLAS} -l${LIB_BLAS}
+#   blas_linker_line=-L${BLAS} -l${LIB_BLAS}
+    blas_linker_line := $(shell ${REECHO} -dir ${BLAS} -prefixn=-l -lib ${LIB_BLAS})
+    blas_linker_line := -L${BLAS} ${blas_linker_line}
 else
    blas_linker_line=-L${BLAS} -lblas
 endif
@@ -241,6 +243,9 @@ tar:
 # (See also Abs.Linux, LF95.Linux, etc.)
 
 # $Log$
+# Revision 1.42  2002/08/29 23:54:59  pwagner
+# l_specials set to special value for Lahey
+#
 # Revision 1.41  2002/07/03 21:05:02  pwagner
 # First version to let Lahey link with hdfeos5.1.2
 #

@@ -151,7 +151,9 @@ which_blas()
 
 if [ "$1" != "" ] ; then
 #  Use externally-supplied library to satisfy blas calls
-	which_blas_msg="$1/lib${2}.a"
+#	which_blas_msg="$1/lib${2}.a"
+   which_blas_msg=`$REECHO -dir $1 -prefixn=-l -lib $2`
+   which_blas_msg="-L$1 ${which_blas_msg}"
 	which_blas_option="a"
 elif [ "$2" = "f95" ] ; then
 #  Use f95 intrinsic functions
@@ -693,7 +695,8 @@ if [ $change_paths = "true" ] ; then
      fi                               
 
      #Change BLAS library name                                               
-     UserPrompt "BLAS library name (if x, then libx.a) [$current_LIB_BLAS]"  
+	  echo "(Enter multiple names on the same line like this: x y z)"
+     UserPrompt "BLAS library name(s) (if x, then libx.a) [$current_LIB_BLAS]"  
      if [ "$user_response" = "<b>" ] ; then                                  
       LIB_BLAS=""                                                            
       echo "BLAS library name is blas (default)"                             
@@ -755,7 +758,7 @@ if [ $change_paths = "true" ] ; then
 
      #Change LAPACK library name                                               
 	  echo "(Enter multiple names on the same line like this: x y z)"
-     UserPrompt "LAPACK library names (if x, then libx.a) [$current_LIB_LAPACK]"  
+     UserPrompt "LAPACK library name(s) (if x, then libx.a) [$current_LIB_LAPACK]"  
      if [ "$user_response" = "<b>" ] ; then                                  
       LIB_LAPACK=""                                                            
       echo "LAPACK library name is lapack (default)"                             
@@ -1447,6 +1450,9 @@ fi
 exit
 
 # $Log$
+# Revision 1.32  2002/07/29 23:02:17  pwagner
+# Replaced part of code to update Makefile in object directories with script updatemf.sh
+#
 # Revision 1.31  2002/07/22 22:08:44  pwagner
 # Uses get_unique_name for temp file names
 #

@@ -98,7 +98,9 @@ endif
 
 ifdef BLAS
 ifdef LIB_BLAS
-   blas_linker_line=-L${BLAS} -l${LIB_BLAS}
+#   blas_linker_line=-L${BLAS} -l${LIB_BLAS}
+    blas_linker_line := $(shell ${REECHO} -dir ${BLAS} -prefixn=-l -lib ${LIB_BLAS})
+    blas_linker_line := -L${BLAS} ${blas_linker_line}
 else
    blas_linker_line=-L${BLAS} -lblas
 endif
@@ -236,6 +238,9 @@ tar:
 # ========================================================================
 
 # $Log$
+# Revision 1.12  2002/08/29 23:54:59  pwagner
+# l_specials set to special value for Lahey
+#
 # Revision 1.11  2002/07/01 23:21:56  pwagner
 # Fixed mistaken short_name assignments
 #

@@ -104,7 +104,9 @@ endif
 
 ifdef BLAS
 ifdef LIB_BLAS
-   blas_linker_line=-L${BLAS} -l${LIB_BLAS}
+#   blas_linker_line=-L${BLAS} -l${LIB_BLAS}
+    blas_linker_line := $(shell ${REECHO} -dir ${BLAS} -prefixn=-l -lib ${LIB_BLAS})
+    blas_linker_line := -L${BLAS} ${blas_linker_line}
 else
    blas_linker_line=-L${BLAS} -lblas
 endif
@@ -236,6 +238,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.27  2002/09/03 17:42:00  pwagner
+# Checks before attempting to remove l3_driver from lib
+#
 # Revision 1.26  2002/08/29 23:54:59  pwagner
 # l_specials set to special value for Lahey
 #
