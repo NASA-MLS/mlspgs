@@ -13,6 +13,8 @@ OBJS=test.o
 OBJS_DEBUG=test.o_debug
 
 all:	test
+debug:	test_debug
+both:	all debug
 
 lib:
 	cd ../../lib ; ${MAKE} mlslib.a
