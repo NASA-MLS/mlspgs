@@ -29,6 +29,9 @@ module INTRINSIC
 ! A "field_type", "field_spec" or "dot" vertex may be decorated with the
 ! following flag:
   integer, parameter :: REQ_FLD = 1       ! Required field
+! A "section" vertex may be decorated with the following flag:
+  integer, parameter :: NO_CHECK_EQ = 1   ! Don't check whether the section's
+                                          ! A=B contents are allowed.
 
 ! Data types that don't have enumerated literals:
   integer, parameter :: T_FIRST             = 1
@@ -237,6 +240,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.53  2004/01/14 18:50:25  vsnyder
+! Stuff to support the Algebra section
+!
 ! Revision 2.52  2004/01/09 07:24:59  livesey
 ! Added the fictitious instrument mls1
 !
