@@ -57,7 +57,7 @@ module L2PC_m
 
   ! This datatype describes a selection rule for l2pc bins.
   type BinSelector_T
-    integer :: quantityType             ! What quantity type does this apply to
+    integer :: selectorType             ! What quantity type does this apply to
     integer :: molecule                 ! What molecule does it apply to
     integer, dimension(:), pointer :: signals => NULL() ! What signals does this apply to
     integer, dimension(:), pointer :: sidebands => NULL() ! What sidebands
@@ -704,6 +704,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.31  2002/03/15 21:22:42  livesey
+! Slight modification to binSelectors stuff
+!
 ! Revision 2.30  2002/03/13 22:00:53  livesey
 ! Added output of vertical coordinate for xStar/yStar.
 ! Note reading routine deduces value I think.
