@@ -222,8 +222,8 @@ contains
   subroutine DRad_tran_df ( indices_c, gl_inds, del_zeta, Grids_f, &
                          &  beta_path_c, eta_zxp_f, sps_path, do_calc_f, &
                          &  beta_path_f, do_gl, del_s, ref_cor, &
-                         &  ds_dz_gw, t_script, tau, &
-                         &  i_stop, d_delta_df, drad_df )
+                         &  ds_dz_gw, t_script, tau, i_stop, pfa, &
+                         &  d_delta_df, drad_df )
 
     use GLNP, only: NG
     use LOAD_SPS_DATA_M, ONLY: GRIDS_T
@@ -257,6 +257,7 @@ contains
     real(rp), intent(in) :: t_script(:)      ! differential temperatures (K).
     real(rp), intent(in) :: tau(:)           ! transmission function.
     integer(ip), intent(in) :: i_stop        ! path stop index
+    logical, intent(in) :: PFA               ! "Doing PFA molecules"
 
 ! Outputs
 
@@ -266,7 +267,7 @@ contains
       !              mixing ratio state vector element. (K)
 ! Internals
 
-    integer(ip) :: i_start, n_inds, no_mol, no_to_gl, sps_i, sv_i
+    integer(ip) :: i_start, n_inds, no_to_gl, sps_i, sps_1, sps_n, sv_i
     integer(ip) :: a, aa, i
     integer(ip), target, dimension(1:Ng*size(tau)) :: all_inds_B
     integer(ip), target, dimension(1:size(tau)) :: inds_B, more_inds_B
@@ -287,11 +288,17 @@ contains
 
 ! Begin code
 
-    no_mol = ubound(Grids_f%l_z,1)
-
     drad_df(:) = 0.0_rp
 
-    do sps_i = 1, no_mol
+    if ( pfa ) then ! Doing PFA, which come after nonPFA in grids_f
+      sps_1 = Grids_f%lastNonPFA + 1
+      sps_n = ubound(Grids_f%l_z,1)
+    else
+      sps_1 = 1
+      sps_n = Grids_f%lastNonPFA
+    end if
+
+    do sps_i = sps_1, sps_n
 
       do sv_i = Grids_f%l_v(sps_i-1)+1, Grids_f%l_v(sps_i)
 
@@ -987,6 +994,9 @@ contains
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.38  2004/04/17 00:37:00  vsnyder
+! Analytic temperature derivatives
+!
 ! Revision 2.37  2004/03/20 01:15:39  jonathan
 !  remove rad_tran_cld
 !

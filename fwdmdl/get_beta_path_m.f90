@@ -40,7 +40,7 @@ contains
     real(rp), intent(in) :: T_path(:)    ! path temperatures
     real(rp), intent(in) :: Tanh_path(:) ! tanh(0.5*h_over_k*frq / t_path)
     type (slabs_struct), dimension(:,:) :: Gl_slabs
-    integer(ip), intent(in) :: Path_inds(:) ! indicies for reading gl_slabs
+    integer(ip), intent(in) :: Path_inds(:) ! indices for reading p_path and gl_slabs
 
     type (beta_group_T), intent(in), dimension(:) :: beta_group
 
@@ -50,9 +50,8 @@ contains
 ! allocate them if DBETA_D*_PATH aren't allocated.  They would be
 ! INTENT(IN) if we could say so.
 
-    logical, pointer :: t_der_path_flags(:)     ! indicies where temperature
-!                               derivatives are needed. Only useful for
-!                               subsetting.
+    logical, pointer :: t_der_path_flags(:)     ! where temperature derivatives
+!                               are needed. Only useful for subsetting.
     real(rp), pointer :: dTanh_dT(:)    ! dTanh( (-h nu) / (k T) ) / dT on path
 
 ! outputs
@@ -111,7 +110,63 @@ contains
   end subroutine Get_Beta_Path_Scalar
 
   ! ------------------------------------------  Get_Beta_Path_PFA  -----
-  subroutine Get_Beta_Path_PFA
+  subroutine Get_Beta_Path_PFA ( P_Path, Path_Inds, T_Path, PFAInds, &
+    & Sps_1, Sps_N, Beta_Path, T_Der_Path_Flags, &
+    & dBeta_dT_Path, dBeta_dw_Path, dBeta_dn_Path, dBeta_dv_Path )
+
+    use MLSCommon, only: RP
+    use PFADataBase_m, only: PFAData
+
+    real(rp), intent(in) :: P_path(:)   ! path pressures in hPa!
+    integer, intent(in) :: Path_inds(:) ! indicies for reading P_path
+    real(rp), intent(in) :: T_path(:)   ! path temperatures
+    integer, intent(in) :: PFAInds(:)   ! indices in PFA database
+    integer, intent(in) :: Sps_1, Sps_N ! first and last species in Beta_path, etc.
+
+    real(rp), intent(out) :: beta_path(:,:) ! path beta for each specie
+
+! Optional input.  We use ASSOCIATED instead of PRESENT so that the
+! caller doesn't need multiple branches.  This would be INTENT(IN) if
+! we could say so.
+
+    logical, pointer :: T_Der_Path_Flags(:) ! where temperature derivatives
+!                               are needed. Only useful for subsetting.
+
+! Optional outputs.  We use ASSOCIATED instead of PRESENT so that the
+! caller doesn't need multiple branches.  These would be INTENT(OUT) if
+! we could say so.
+
+    real(rp), pointer :: dBeta_dT_path(:,:) ! Temperature
+    real(rp), pointer :: dBeta_dw_path(:,:) ! line width
+    real(rp), pointer :: dBeta_dn_path(:,:) ! line width t dep.
+    real(rp), pointer :: dBeta_dv_path(:,:) ! line position
+
+    real(rp), pointer :: dBdn(:), dBdT(:), dBdv(:), dBdw(:) ! slices of dBeta_d*_path
+    integer :: I
+
+    nullify ( dBdT, dBdn, dBdv, dBdw )
+
+    do i = sps_1, sps_n
+      if ( associated(dBeta_dt_path) ) then
+        dBdT => dBeta_dt_path(:,i)
+        dBdT = 0.0_rp
+      end if
+      if ( associated(dBeta_dn_path) ) then
+        dBdn => dBeta_dn_path(:,i)
+        dBdn = 0.0_rp
+      end if
+      if ( associated(dBeta_dv_path) ) then
+        dBdv => dBeta_dv_path(:,i)
+        dBdv = 0.0_rp
+      end if
+      if ( associated(dBeta_dw_path) ) then
+        dBdw => dBeta_dw_path(:,i)
+        dBdw = 0.0_rp
+      end if
+
+      beta_path(:,i) = 0.0_rp
+    end do
+
   end subroutine Get_Beta_Path_PFA
 
   ! ------------------------------------  Get_Beta_Path_Polarized  -----
@@ -799,6 +854,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.59  2004/07/08 21:00:23  vsnyder
+! Inching toward PFA
+!
 ! Revision 2.58  2004/04/19 21:03:29  vsnyder
 ! Remove unused stuff; respect tder_path_flags
 !

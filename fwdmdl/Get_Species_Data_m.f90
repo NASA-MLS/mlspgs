@@ -21,11 +21,12 @@ module Get_Species_Data_M
 
 ! Species stuff
   type, public :: SPS_T
-    integer :: No_Mol ! Size of several arrays
-    integer :: No_LBL ! Number of Line-by-line molecules
-    type(beta_group_t), pointer :: Beta_Group(:) => NULL() ! 1:no_mol
-    type(catalog_t), pointer :: Catalog(:,:) => NULL()     ! -1:1,1:no_species
-    integer, pointer :: Mol_Cat_Index(:) => NULL()         ! 1:no_mol
+    integer :: No_Mol ! Size of several arrays == # molecule groups + # PFA
+    integer :: No_LBL ! Number of Line-by-line molecule groups, <= no_mol
+    type(beta_group_t), pointer :: Beta_Group(:) => NULL() ! 1:no_lbl
+    type(catalog_t), pointer :: Catalog(:,:) => NULL()     ! sidebands,1:no_species
+    integer, pointer :: Mol_Cat_Index(:) => NULL()         ! 1:no_mol; indices
+      ! of elements of FwdModelConf%molecules that are positive.
     type(qtyStuff_t), pointer :: Qtys(:) => NULL()         ! 1:no_mol
   end type SPS_T
 
@@ -82,11 +83,13 @@ contains
     integer, dimension(size(fwdModelConf%molecules,1)+1) :: Molecules_Temp
     character (len=32) :: molName       ! Name of a molecule
     integer :: NLines                   ! count(lineFlag)
-    integer  :: NoSpecies               ! No. of Molecules under consideration
+    integer :: NoMol                    ! size(fwdModelConf%molecules) -- includes
+      ! negative ones that indicate molecule grouping
+    integer  :: NoNonPFA                ! No. of non-PFA Molecules under
+      ! consideration --  includes negative ones that indicate molecule grouping
     integer :: Polarized                ! -1 => One of the selected lines is Zeeman split
     ! +1 => None of the selected lines is Zeeman split
     integer :: SIGIND                   ! Signal index, loop counter
-    integer :: Spec1, SpecN             ! First and last species in fwdModelConf%molecules
     integer :: SV_I
     integer :: S                        ! Sideband index
     type (catalog_T), pointer :: thisCatalogEntry
@@ -98,22 +101,21 @@ contains
 
     nullify ( lineFlag )
 
-    noSpecies = size(fwdModelConf%molecules)
-    sps%no_lbl = count(fwdModelConf%molecules(1:fwdModelConf%firstPFA-1) > 0)
-    sps%no_mol = sps%no_lbl + noSpecies - fwdModelConf%firstPFA + 1
-    spec1 = 1
-    specN = noSpecies
+    noMol = size(fwdModelConf%molecules)
+    noNonPFA = fwdModelConf%firstPFA - 1
+    sps%no_lbl = count(fwdModelConf%molecules(1:noNonPFA) > 0)
+    sps%no_mol = sps%no_lbl + noMol - fwdModelConf%firstPFA + 1
 
     if ( sps%no_mol == 0 ) return
 
-    allocate ( sps%beta_group(sps%no_mol), stat=ier )
+    allocate ( sps%beta_group(sps%no_lbl), stat=ier )
     if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate//'sps%beta_group' )
 
     call allocate_test ( sps%mol_cat_index, sps%no_mol, 'sps%mol_cat_index', moduleName )
 
-    k = max(1,noSpecies-sps%no_mol)
-    do i = 1, sps%no_mol
+    k = max(1,noNonPFA-sps%no_lbl)
+    do i = 1, sps%no_lbl
       call allocate_test ( sps%beta_group(i)%cat_index, k, 'beta_group%cat_index', moduleName )
       call allocate_test ( sps%beta_group(i)%ratio, k, 'beta_group%ratio', moduleName )
       sps%beta_group(i)%n_elements = 0
@@ -121,11 +123,12 @@ contains
       sps%beta_group(i)%cat_index = 0
     end do
 
-    if ( noSpecies == sps%no_mol ) then ! No grouping
+    if ( noNonPFA == sps%no_lbl ) then ! No grouping, .eqv. sps%no_mol == noMol
 
+      ! Work out beta group etc for line-by-line
       sv_i = 0
       beta_ratio = 1.0_rp   ! Always, for single element (no grouping)
-      do j = spec1, specN
+      do j = 1, sps%no_lbl
         l = fwdModelConf%molecules(j)
         !        if ( l == l_extinction ) CYCLE
         sv_i = sv_i + 1
@@ -135,15 +138,25 @@ contains
         sps%beta_group(sv_i)%ratio(1)     = beta_ratio
       end do
 
+      ! All that's needed for PFA is sps%mol_cat_index(sv_i), to get indices
+      ! for Beta_Path and dBetaD*
+      do j = 1, noNonPFA+1, noMol
+        l = fwdModelConf%molecules(j)
+        !        if ( l == l_extinction ) CYCLE
+        sv_i = sv_i + 1
+        sps%mol_cat_index(sv_i) = j
+      end do
+
     else
 
-      molecules_temp(spec1:specN) = fwdModelConf%molecules(spec1:specN)
-      molecules_temp(specN+1) = noSpecies ! Anything positive will do
+      molecules_temp(1:noMol) = fwdModelConf%molecules(1:noMol)
+      molecules_temp(noMol+1) = noMol ! Anything positive will do
 
-      sps%mol_cat_index = PACK((/(i,i=spec1,specN)/), fwdModelConf%molecules(spec1:specN) > 0)
+      sps%mol_cat_index = PACK((/(i,i=1,noMol)/), fwdModelConf%molecules > 0)
 
+      ! Work out beta group etc for line-by-line
       sv_i = 0
-      do j = spec1, specN
+      do j = 1, noNonPFA
         k = molecules_temp(j)
         l = abs(k)
         !        if ( l == l_extinction ) CYCLE
@@ -172,18 +185,20 @@ contains
 
     ! Work out which spectroscopy we're going to need ------------------------
 
-    allocate ( sps%catalog(-1:1,noSpecies), stat=ier )
+    allocate ( &
+      & sps%catalog(fwdModelConf%sidebandStart:fwdModelConf%sidebandStop,noNonPFA), &
+      & stat=ier )
     if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate//'sps%catalog' )
 
     sps%catalog = empty_cat
     do s = fwdModelConf%sidebandStart, fwdModelConf%sidebandStop, 2
       j = 0
-      do sv_i = spec1, specN
+      do sv_i = 1, noNonPFA
         j = j + 1
         ! Skip if the next molecule is negative (indicates that this one is a
         ! parent)
-        if ( (sv_i < specN) .and. (fwdModelConf%molecules(sv_i) > 0) ) then
+        if ( (sv_i < noNonPFA) .and. (fwdModelConf%molecules(sv_i) > 0) ) then
           if (fwdModelConf%molecules(sv_i+1) < 0 ) then
             ! sps%catalog springs into existence with %lines and %polarized null
             call allocate_test ( sps%catalog(s,j)%lines, 0, &
@@ -260,7 +275,7 @@ contains
             end do     ! End loop over lines
           end if       ! End case where allLinesInCatalog not set
 
-          ! Check we have at least one line for this species
+          ! Check we have at least one line for this specie
 
           nLines = count(lineFlag /= 0)
           if ( nLines == 0 .and. all ( sps%catalog(s,j)%continuum == 0.0 ) &
@@ -399,13 +414,13 @@ contains
     do i = 1, size(beta_group)
       call output ( 'Item ' )
       call output ( i, advance='yes' )
-      call dump ( beta_group(i)%cat_index, name='Cat_Index' )
-      call dump ( beta_group(i)%ratio, name='Ratio' )
+      call dump ( beta_group(i)%cat_index(:beta_group(i)%n_elements), name='Cat_Index' )
+      call dump ( beta_group(i)%ratio(:beta_group(i)%n_elements), name='Ratio' )
     end do
   end subroutine Dump_Beta_Group
 
   ! ----------------------------------------------  Dump_Sps_Data  -----
-  subroutine Dump_Sps_Data ( Sps )
+  subroutine Dump_Sps_Data ( Sps, Details )
 
     use Dump_0, only: Dump
     use Output_m, only: NewLine, Output
@@ -413,6 +428,7 @@ contains
     use String_Table, only: Display_String
 
     type(sps_t), intent(in) :: Sps
+    integer, intent(in), optional :: Details ! for dumping spectroscopy catalog
 
     integer :: I
 
@@ -420,8 +436,10 @@ contains
     call output ( sps%no_mol, before=' Total molecules = ' )
     call output ( sps%no_lbl, before=', Line-by-line molecules = ', advance='yes' )
     call dump ( sps%beta_group )
-    call dump ( sps%catalog )
-    call dump ( sps%mol_cat_index, name='Mol_Cat_Index' )
+    call dump ( sps%catalog, details=details )
+    call dump ( sps%mol_cat_index(:sps%no_lbl), name='Mol_Cat_Index (non-PFA)' )
+    call dump ( sps%mol_cat_index(sps%no_lbl+1:sps%no_mol), &
+      & name='Mol_Cat_Index (PFA)', lbound=sps%no_lbl+1 )
     call output ( 'QtyStuff:', advance='yes' )
     do i = 1, size(sps%qtys)
       call output ( ' Quantity ' )
@@ -443,6 +461,9 @@ contains
 end module  Get_Species_Data_M
 
 ! $Log$
+! Revision 2.11  2004/07/08 21:00:23  vsnyder
+! Inching toward PFA
+!
 ! Revision 2.10  2004/06/10 00:59:56  vsnyder
 ! Move FindFirst, FindNext from MLSCommon to MLSSets
 !
