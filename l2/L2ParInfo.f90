@@ -59,18 +59,22 @@ module L2ParInfo
 
   ! Name of fwm slave group
   character (len=*), parameter :: FWMSLAVEGROUP = "MLSL2FWMSlaves"
+  character (len=*), parameter :: DEFAULTSTAGINGFILE = &
+    & "MLS-Aura_L2Staging-Full_v0-0-0_0000d000.h5"
 
   ! This datatype defines configuration for the parallel code
   type L2ParallelInfo_T
     logical :: fwmParallel = .false.    ! Set if we are in forward model parallel mode
     logical :: master = .false.         ! Set if this is a master task
     logical :: slave = .false.          ! Set if this is a slace task
+    logical :: stageInMemory = .false.  ! Set if master stages to memory rather than a file
     integer :: myTid                    ! My task ID in pvm
     integer :: masterTid                ! task ID in pvm
     integer :: noFWMSlaves              ! No. slaves in pvm system for fwm cases
     character(len=132) :: slaveFilename ! Filename with list of slaves
     character(len=132) :: executable    ! Executable filename
     character(len=132) :: submit=""     ! Submit comand for batch queue system
+    character(len=132) :: stagingFile=DefaultStagingFile ! Filename for possible staging
     integer :: maxFailuresPerMachine = 1 ! More than this then don't use it
     integer :: maxFailuresPerChunk = 10 ! More than this then give up on getting it
   end type L2ParallelInfo_T
@@ -402,6 +406,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.28  2003/05/12 19:04:50  livesey
+! Added the staging file to L2ParallelInfo_T
+!
 ! Revision 2.27  2003/01/27 17:18:58  livesey
 ! Made master task output it's tid as well as slaves.
 !
