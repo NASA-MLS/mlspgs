@@ -30,10 +30,20 @@ CF=$S/cf_parser/NAG
 # Beginning of path to toolkit libraries:
 TOOLKIT = /nas/software/SRC/TOOLKIT-5.2.6v1.00.NAG
 
-include ../Makefile.inc
+# Platform (used within directory paths in ../Makefile.inc):
+PLATFORM = linux
+
+# Path to libPGSTK.a
+PGSTK = $(HOME)/mlspgs/SDPToolkit/LF95
+#PGSTK = $(TOOLKIT)/lib/$(PLATFORM)
+
+include $S/Makefile.inc
 
 #
 # $Log$
+# Revision 2.2  2000/10/10 22:44:26  vsnyder
+# Correct actions for test_sparsify and test_multiply
+#
 # Revision 2.1  2000/10/10 00:13:04  vsnyder
 # Corrected an incorrect path for CF
 #
