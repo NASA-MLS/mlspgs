@@ -36,6 +36,7 @@ module WriteMetadata ! Populate metadata and write it out
      "$Id$"
   character(len=len(idParm)) :: Id = idParm
   character(len=*), parameter :: ModuleName="$RCSfile$"
+  private :: not_used_here 
   !-----------------------------------------------------------------------------
 
   public :: Populate_metadata_std, Populate_metadata_oth, &
@@ -1490,8 +1491,15 @@ contains
   end subroutine Announce_Error
 !===========================
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module WriteMetadata 
 ! $Log$
+! Revision 2.30  2002/10/08 17:36:23  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.29  2002/08/29 16:55:35  pwagner
 ! Moved writeInputPointer to PCFHdr in lib
 !
