@@ -13,7 +13,7 @@ module MLSSignals_M
   use MoreTree, only: Get_Boolean
   use Output_M, only: Output
   use String_Table, only: Display_String, Get_String
-  use Toggles, only: Gen, Toggle, Levels
+  use Toggles, only: Gen, Levels, Switches, Toggle
   use Trace_M, only: Trace_begin, Trace_end
   use Tree, only: Decorate, Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, &
     & Subtree
@@ -404,14 +404,15 @@ contains
 
     end do
 
-    if ( levels(gen) > 0 ) then
-      call dump ( radiometers )
-      call dump ( spectrometerTypes )
-      call dump ( bands )
-      call dump ( signals )
-    endif
-
-    if ( toggle(gen) ) call trace_end ( "MLSSignals" )
+    if ( toggle(gen) ) then
+      if ( levels(gen) > 0 .or. index(switches, 'S') /= 0 ) then
+        call dump ( radiometers )
+        call dump ( spectrometerTypes )
+        call dump ( bands )
+        call dump ( signals )
+      end if
+      call trace_end ( "MLSSignals" )
+    end if
 
     contains
     ! --------------------------------------------  AnnounceError  -----
@@ -633,14 +634,16 @@ contains
       call output ( '   Radiometer: ')
       call output ( bands(i)%radiometer )
       call output ( ' - ' )
-      call display_string ( radiometers(bands(i)%radiometer)%prefix, advance='yes' )
-      call output ( '   SpectrometerType: ')
+      call display_string ( radiometers(bands(i)%radiometer)%prefix )
+      call output ( '   SpectrometerType: ' )
       call output ( bands(i)%spectrometerType )
       call output ( ' - ' )
       call display_string ( spectrometerTypes(bands(i)%spectrometerType)%name, &
         & advance='yes' )
       call output ( '   Frequency: ')
-      call output ( bands(i)%centerFrequency, advance='yes' )
+      call output ( bands(i)%centerFrequency )
+      call output ( '   PointingGrid: ' )
+      call output ( bands(i)%pointingGrid, advance='yes' )
     end do
   end subroutine DUMP_BANDS
 
@@ -696,12 +699,13 @@ contains
       call output ( '   SpectrometerType: ')
       call output ( signals(i)%spectrometerType )
       call output ( ' - ' )
-      call display_string ( spectrometerTypes(signals(i)%spectrometerType)%name, &
-        & advance='yes' )
+      call display_string ( spectrometerTypes(signals(i)%spectrometerType)%name )
       call output ( '   Channels: ' )
       call output ( lbound(signals(i)%frequencies,1), 3 )
       call output ( ':' )
-      call output ( ubound(signals(i)%frequencies,1), 3, advance='yes' )
+      call output ( ubound(signals(i)%frequencies,1), 3 )
+      call output ( '   PointingGrid: ' )
+      call output ( signals(i)%pointingGrid, advance='yes' )
       call output ( '   Frequencies:', advance='yes' )
       call dump ( signals(i)%frequencies )
       call output ( '   Widths:', advance='yes' )
@@ -942,6 +946,9 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.9  2001/03/16 21:32:23  vsnyder
+! Add 'Switches' test for dumping
+!
 ! Revision 2.8  2001/03/16 02:10:32  vsnyder
 ! Put the sideband character in the correct place
 !
