@@ -110,7 +110,7 @@ module MLSSignals_M
   ! The second type describes a band within that radiometer
 
   type, public :: Band_T
-    real(r8) :: CenterFrequency         ! Negative if not present (wide filter)
+    real(r8) :: CenterFrequency         ! Zero if not present (wide filter)
     integer :: Prefix                   ! Sub_rosa index of declaration's label
     integer :: Radiometer               ! Index in Radiometers database
     integer :: SpectrometerType         ! Index in SpectrometerTypes database
@@ -235,7 +235,7 @@ contains
 
       case ( s_band ) ! ...................................  BAND  .....
         band%prefix = name
-        band%centerFrequency = -1.0_r8 ! "The 'frequency' field is absent"
+        band%centerFrequency = 0.0_r8 ! "The 'frequency' field is absent"
         do j = 2, nsons(key)
           son = subtree(j,key)
           field = decoration(subtree(1,son))
@@ -341,8 +341,6 @@ contains
               & 'signal%frequencies', moduleName )
             call allocate_Test ( signal%widths, nsons(channels)-1, &
               & 'signal%widths', moduleName)
-            call allocate_Test ( signal%channels, nsons(channels)-1, &
-              & 'signal%channels', moduleName)
             do k = 2, nsons(channels)
               call expr ( subtree(k,channels), units, value )
               signal%frequencies(k-1) = value(1)
@@ -351,7 +349,6 @@ contains
             if ( any(units /= phyq_frequency) ) &
               & call announceError ( wrongUnits, f_channels, &
                 & (/ phyq_frequency /) )
-            signal%channels = .true.
           end if
         else
           signal%frequencies => spectrometerTypes(signal%spectrometerType)% &
@@ -361,7 +358,6 @@ contains
         call decorate ( key, addSignalToDatabase ( signals, signal ) )
         signals(size(signals))%index = size(signals)
         ! Now nullify pointers so they don't get hosed later by allocate_test
-        nullify ( signal%channels )
         nullify ( signal%frequencies )
         nullify ( signal%widths )
 
@@ -1074,34 +1070,37 @@ contains
     end if
 
     if ( .not. my_noChannels .and. associated(signal%channels) ) then
-      l = len_trim(string_text)
-      call addToSignalString ( '.C' )
-      i = lbound(signal%channels, 1)
-      first = .true.
-oc:   do
-        do
-          if ( i > ubound(signal%channels, 1) ) exit oc
-          if ( signal%channels(i) ) exit
-          i = i + 1
-        end do
-        if ( .not. first ) call addToSignalString ( '+' )
-        first = .false.
-        j = i
-        do while ( j < ubound(signal%channels, 1) )
-          if ( .not. signal%channels(j+1) ) exit
-        end do
-        if ( j > i ) then
-          write ( word, * ) i
-          call addToSignalString ( word )
-          call addToSignalString ( ':' )
-          write ( word, * ) j
-          call addToSignalString ( word )
-        else
-          write ( word, * ) i
-          call addToSignalString ( word )
-        end if
-        i = j + 1
-      end do oc
+      if ( .not. all(signal%channels) ) then
+        l = len_trim(string_text)
+        call addToSignalString ( '.C' )
+        i = lbound(signal%channels, 1)
+        first = .true.
+        oc: do
+          do
+            if ( i > ubound(signal%channels, 1) ) exit oc
+            if ( signal%channels(i) ) exit
+            i = i + 1
+          end do
+          if ( .not. first ) call addToSignalString ( '+' )
+          first = .false.
+          j = i
+          do while ( j < ubound(signal%channels, 1) )
+            print*,j
+            if ( .not. signal%channels(j+1) ) exit
+          end do
+          if ( j > i ) then
+            write ( word, * ) i
+            call addToSignalString ( word )
+            call addToSignalString ( ':' )
+            write ( word, * ) j
+            call addToSignalString ( word )
+          else
+            write ( word, * ) i
+            call addToSignalString ( word )
+          end if
+          i = j + 1
+        end do oc
+      end if
     end if
 
   contains
@@ -1331,6 +1330,12 @@ oc:   do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.43  2002/02/13 23:57:34  livesey
+! Tidied up a bit.  Channels doesn't need to be set for
+! defered signals.  Made getSignalName skip channels field
+! if appropriate.  However, possible bug lurking in channel
+! printing loop.
+!
 ! Revision 2.42  2001/11/09 23:14:08  vsnyder
 ! Use Time_Now instead of CPU_TIME
 !
