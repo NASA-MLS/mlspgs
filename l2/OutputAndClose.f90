@@ -8,7 +8,8 @@ module OutputAndClose ! outputs all data from the Join module to the
 
 !=======================================================================================
 
-  use DirectWrite_m, only: DirectData_T, dump
+  use DirectWrite_m, only: DirectData_T
+! use DirectWrite_m, only: dump
   use Hdf, only: DFACC_CREATE
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use OUTPUT_M, only: blanks, OUTPUT
@@ -58,8 +59,7 @@ contains ! =====     Public Procedures     =============================
       & F_METANAME, F_METADATAONLY, F_OVERLAPS, F_PACKED, F_QUANTITIES, &
       & F_TYPE, F_WRITECOUNTERMAF, F_DONTPACK, &
       & L_L2AUX, L_L2DGG, L_L2GP, L_L2PC, S_OUTPUT, S_TIME
-    use Intrinsic, only: l_swath, l_grid, l_hdf, &
-      & PHYQ_Dimensionless
+    use Intrinsic, only: l_swath, l_hdf, PHYQ_Dimensionless
     use L2AUXData, only: L2AUXDATA_T, cpL2AUXData, WriteL2AUXData
     use L2GPData, only: AVOIDUNLIMITEDDIMS, L2GPNameLen, L2GPData_T, &
       & MAXSWATHNAMESBUFSIZE, cpL2GPData, WriteL2GPData
@@ -85,8 +85,7 @@ contains ! =====     Public Procedures     =============================
     use TOGGLES, only: GEN, TOGGLE, Switches
     use TREE, only: DECORATION, NODE_ID, NSONS, SUBTREE, SUB_ROSA
     use TREE_TYPES, only: N_NAMED
-    use WriteMetadata, only: L2PCF, Populate_metadata_std, &
-      & Populate_metadata_oth, WriteMetaLog, Get_l2gp_mcf
+    use WriteMetadata, only: L2PCF, WriteMetaLog
 
     ! Arguments
     integer, intent(in) :: ROOT   ! Of the output section's AST
@@ -315,7 +314,7 @@ contains ! =====     Public Procedures     =============================
             ! Write the metadata file
             call add_metadata ( son, file_base, numquantitiesperfile, &
               & quantityNames, hdfVersion, l_swath, metadata_error )
-          elseif ( returnStatus /= PGS_S_SUCCESS ) then
+          else if ( returnStatus /= PGS_S_SUCCESS ) then
             call announce_error ( son, &
               &  "Error finding l2gp file matching:  "//file_base, returnStatus)
           end if
@@ -401,7 +400,7 @@ contains ! =====     Public Procedures     =============================
             call add_metadata ( son, file_base, numquantitiesperfile, &
               & quantityNames, hdfVersion, l_hdf, metadata_error )
 
-          elseif ( returnStatus /= PGS_S_SUCCESS ) then
+          else if ( returnStatus /= PGS_S_SUCCESS ) then
             call announce_error ( son, &
               &  "Error finding l2aux file matching:  "//file_base, returnStatus)
           end if
@@ -549,7 +548,7 @@ contains ! =====     Public Procedures     =============================
             call add_metadata ( son, file_base, numquantitiesperfile, &
               & quantityNames, hdfVersion, output_type, metadata_error )
 
-          elseif ( returnStatus /= PGS_S_SUCCESS ) then
+          else if ( returnStatus /= PGS_S_SUCCESS ) then
             call announce_error ( son, &
               &  "Error finding l2gp file matching:  "//file_base, returnStatus)
           end if
@@ -561,7 +560,7 @@ contains ! =====     Public Procedures     =============================
             &  "Error--unknown output type: parser should have caught this")
           else
             call output('Lahey did weird thing again: ', advance='yes')
-          endif
+          end if
             call output('l2gp type number: ', advance='no')
             call output(l_l2gp, advance='yes')
 
@@ -612,12 +611,12 @@ contains ! =====     Public Procedures     =============================
           file_base = DirectDatabase(DB_index)%fileName
           l2gpPhysicalFilename = unSplitName(file_base)
           returnStatus = 0
-        endif
+        end if
         if ( any(DirectDatabase%fileName == l2gpPhysicalFilename) ) then
           call MLSMessage ( MLSMSG_Error, ModuleName, &
             & "Cannot unsplit dgg dw to existing file " // &
             & trim(l2gpPhysicalFilename) )
-        endif
+        end if
         madeFile = .false.
         do DB_index = 1, size(DirectDatabase)
           if ( DirectDatabase(DB_index)%autoType /= l_l2dgg ) cycle
@@ -627,21 +626,21 @@ contains ! =====     Public Procedures     =============================
             call output ( trim(DirectDatabase(DB_index)%fileName) , advance='yes' )
             call output ( '   to: ', advance='no' )
             call output ( trim(l2gpPhysicalFilename) , advance='yes' )
-          endif
+          end if
           if ( mls_exists(trim(DirectDatabase(DB_index)%fileName)) /= 0 ) cycle
           madeFile = .true.
           call cpL2GPData(trim(DirectDatabase(DB_index)%fileName), &
             & trim(l2gpPhysicalFilename), create2=(DB_index==1), &
             & hdfVersion1=HDFVERSION_5, hdfVersion2=HDFVERSION_5, &
             & notUnlimited=avoidUnlimitedDims, ReadStatus=.true.)
-        enddo
+        end do
         if ( TOOLKIT .and. madeFile ) then
           call add_metadata ( 0, trim(l2gpPhysicalFilename), 1, &
             & (/'dgg'/), HDFVERSION_5, l_l2dgg, returnStatus )
           if ( returnStatus /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'unable to addmetadata to ' // trim(l2gpPhysicalFilename) )
-        endif
-      endif
+        end if
+      end if
       ! Next we would do the same for any split dgm direct write files
       DB_index = findFirst( DirectDatabase%autoType == l_l2aux )
       if ( findNext(DirectDatabase%autoType == l_l2aux, DB_index) > 0 ) then
@@ -655,11 +654,11 @@ contains ! =====     Public Procedures     =============================
           file_base = DirectDatabase(DB_index)%fileName
           l2auxPhysicalFilename = unSplitName(file_base)
           returnStatus = 0
-        endif
+        end if
         if ( any(DirectDatabase%fileName == l2auxPhysicalFilename) ) then
           call MLSMessage ( MLSMSG_Error, ModuleName, &
             &  "Must not unsplit dgm dw to " // trim(l2auxPhysicalFilename) )
-        endif
+        end if
         madeFile = .false.
         do DB_index = 1, size(DirectDatabase)
           if ( DirectDatabase(DB_index)%autoType /= l_l2aux ) cycle
@@ -676,7 +675,7 @@ contains ! =====     Public Procedures     =============================
             call output ( trim(l2auxPhysicalFilename) , advance='yes' )
             call output ( '   sdList: ', advance='no' )
             call output ( trim(sdList) , advance='yes' )
-          endif
+          end if
           if ( mls_exists(trim(DirectDatabase(DB_index)%fileName)) /= 0 ) cycle
           madeFile = .true.
           if ( sdList /= ' ' ) then
@@ -688,17 +687,17 @@ contains ! =====     Public Procedures     =============================
             call cpL2AUXData(trim(DirectDatabase(DB_index)%fileName), &
             & trim(l2auxPhysicalFilename), create2=(DB_index==1), &
             & hdfVersion=HDFVERSION_5)
-          endif
-        enddo
+          end if
+        end do
         ! Is metadata really needed for l2aux files?
         if ( TOOLKIT .and. madeFile ) then
           call add_metadata ( 0, trim(l2auxPhysicalFilename), 1, &
             & (/'dgm'/), HDFVERSION_5, l_hdf, returnStatus )
           if ( returnStatus /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'unable to addmetadata to ' // trim(l2auxPhysicalFilename) )
-        endif
-      endif
-    endif
+        end if
+      end if
+    end if
 
     ! Write the log file metadata
     if ( LOGFILEGETSMETADATA .and. .not. checkPaths ) then
@@ -752,12 +751,11 @@ contains ! =====     Public Procedures     =============================
     & quantityNames, hdfVersion, filetype, metadata_error )
     
     use INIT_TABLES_MODULE, only: L_L2DGG
-    use Intrinsic, only: l_swath, l_grid, l_hdf
+    use Intrinsic, only: l_swath, l_hdf
     use MLSFiles, only: GetPCFromRef, split_path_name
     use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, MLSPCF_L2GP_END, &
       & MLSPCF_L2GP_START, mlspcf_l2dgg_start, mlspcf_l2dgg_end, &
-      & Mlspcf_mcf_l2gp_start, Mlspcf_mcf_l2dgm_start, &
-      & Mlspcf_mcf_l2dgg_start
+      & Mlspcf_mcf_l2dgm_start, Mlspcf_mcf_l2dgg_start
     use WriteMetadata, only: Populate_metadata_std, &
       & Populate_metadata_oth, Get_l2gp_mcf
   ! Deal with metadata--1st for direct write, but later for all cases
@@ -795,7 +793,7 @@ contains ! =====     Public Procedures     =============================
      baseIndex = index(trim(file_base), L2GPHEAD)
      if ( baseIndex > 0 ) then
        file_base=file_base(baseIndex+len(L2GPHEAD):)
-     endif
+     end if
      if ( filetype == l_l2dgg ) then
        FileHandle = GetPCFromRef(file_base, mlspcf_l2dgg_start, &
          & mlspcf_l2dgg_end, &
@@ -808,11 +806,11 @@ contains ! =====     Public Procedures     =============================
          & .true., returnStatus, Version, DEBUG, &
          & exactName=PhysicalFilename)
        call get_l2gp_mcf ( file_base, meta_name, l2gp_mcf  )
-     endif
+     end if
      if (returnStatus /= 0) then
          call MLSMessage ( MLSMSG_Error, ModuleName, &
            &  "While adding metadata failed to GetPCFromRef for " // trim(fileName) )
-     elseif ( l2gp_mcf <= -999 ) then
+     else if ( l2gp_mcf <= -999 ) then
          call MLSMessage ( MLSMSG_Warning, ModuleName, &
            &  "no mcf for this l2gp species in" // trim(file_base) )
          return
@@ -864,7 +862,7 @@ contains ! =====     Public Procedures     =============================
      if (returnStatus /= 0) then
          call MLSMessage ( MLSMSG_Error, ModuleName, &
            &  "While adding metadata failed to GetPCFromRef for " // trim(fileName) )
-     elseif ( DEBUG ) then
+     else if ( DEBUG ) then
        call output ( 'preparing to populate metadata_oth', advance='yes' )
        call output ( 'l2auxFileHandle: ', advance='no' )
        call output ( FileHandle , advance='no' )
@@ -971,6 +969,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.97  2004/05/19 20:22:09  vsnyder
+! Remove USEs for unreferenced symbols, polish some cannonballs
+!
 ! Revision 2.96  2004/04/24 00:22:55  pwagner
 ! Forcibly sets ReadStatus when knitting DGG; prunes L2GP- prefix from file_base
 !
