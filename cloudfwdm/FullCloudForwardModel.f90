@@ -862,7 +862,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
    ENDIF
 
     if ( toggle(emit) .and. levels(emit) > 1 ) &
-      & call Trace_End ( 'FullCloudForwardModel.Sideband',index=thisSideband )
+      & call Trace_End ( 'FullCloudForwardModel.Sideband ',index=thisSideband )
 
     !--------------------------------------------
     ! End of sideband loop 
@@ -1113,6 +1113,10 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.126  2004/02/05 23:30:20  livesey
+! Finally turned on code to do correct handing of single sideband
+! radiometers and their SB fractions.
+!
 ! Revision 1.125  2004/01/08 00:52:43  jonathan
 ! delet output Using antenna pattern: etc
 !
