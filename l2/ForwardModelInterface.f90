@@ -635,17 +635,20 @@ contains
     call allocate_test(geoc_lat, noMAFs, 'geoc_lat', ModuleName)
     call allocate_test(e_rad, noMAFs, 'e_rad', ModuleName)
 
+    ! Assert radiance%template%noInstances=temp%template%noInstances
+    if (temp%template%noInstances /= radiance%template%noInstances) &
+      & call MLSMessage(MLSMSG_Error,ModuleName,'no temperature profiles /= no maf')
     do maf = 1, radiance%template%noInstances
-      phi_tan = degToRad*radiance%template%phi(1,maf) ! ??? For the moment, change this soon.
+      phi_tan = degToRad*temp%template%phi(1,maf) ! ??? For the moment, change this soon.
       print*,'MAF ',maf,' phi_tan ',phi_tan
-      geod_lat= degToRad*radiance%template%geodLat(1,maf)
+      geod_lat= degToRad*temp%template%geodLat(1,maf)
       call geoc_geod_conv(orbIncline%values(1,1),phi_tan,geod_lat, &
         & geoc_lat(maf),E_rad(maf))
     end do
 
     maf = 3                             ! Zvi will sort this out later!!!!
-    phi_tan = degToRad*temp%template%phi(1,3)
-    geod_lat= degToRad*radiance%template%geodLat(1,maf)
+    phi_tan = degToRad*temp%template%phi(1,maf)
+    geod_lat= degToRad*temp%template%geodLat(1,maf)
     call geoc_geod_conv(orbIncline%values(1,1),phi_tan,geod_lat, &
       & geoc_lat(maf),E_rad(maf))
     ! End of Zvi'ism
@@ -689,8 +692,7 @@ contains
       &  ForwardModelConfig%integrationGrid%noSurfs,temp%template%noSurfs,&
       &  gl_count,ndx_path, &
       &     z_glgrid,t_glgrid,h_glgrid,dhdz_glgrid,                    &
-      &     tan_hts,no_tan_hts,FMI%n_sps,             &
-      &     z_path,h_path,t_path,       &
+      &     tan_hts,no_tan_hts, z_path,h_path,t_path,       &
       &     phi_path,n_path,dhdz_path,eta_phi,temp%template%noInstances,        &
       &     temp%template%phi(1,:)*degToRad,spsfunc_path,noMAFs,Ier)
     if(ier /= 0) goto 99
@@ -709,7 +711,8 @@ contains
 
       ! Compute the ptg_angles (chi) for Antenna convolution, also the derivatives
       ! of chi w.r.t to T and other parameters
-      call get_chi_angles(ndx_path(:,maf),n_path(:,maf),FMI%tan_press,        &
+      call get_chi_angles(ndx_path(:,maf),n_path(:,maf),&
+        &     forwardModelConfig%tangentGrid%surfs,        &
         &     tan_hts(:,maf),tan_temp(:,maf),phi_tan,RoC,1e-3*scGeocAlt%values(1,1),  &
         &     elevOffset%values(1,1), &
         &     tan_dh_dt(:,maf,:),no_tan_hts,temp%template%noSurfs,temp%template%surfs(:,1),&
@@ -748,6 +751,8 @@ contains
             & 'Bad value of signal%sideband')
         end select
         noFreqs = size(frequencies)
+        print*,'Doing frequencies'
+        print*,frequencies
       endif
 
       ! First we have a mini loop over pointings to work out an upper limit
@@ -768,7 +773,7 @@ contains
  
       call Allocate_Test(radV,maxNoFreqs, 'radV', ModuleName)
 
-      do specie = 1, size(forwardModelConfig%molecules)
+      do specie = 1, noSpecies
         f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
           & quantityType=l_vmr, molecule=forwardModelConfig%molecules(specie))
         
@@ -853,7 +858,7 @@ contains
           Frq = frequencies(frq_i)
 
           call Rad_Tran(Frq, forwardModelConfig%integrationGrid%noSurfs, &
-            &    h_tan, FMI%n_sps, ndx_path(k,maf),  &
+            &    h_tan, noSpecies, ndx_path(k,maf),  &
             &    z_path(k,maf), h_path(k,maf), t_path(k,maf), phi_path(k,maf),&
             &    dHdz_path(k,maf), earthRefl%values(1,1), beta_path(:,frq_i),      &
             &    spsfunc_path(:,k,maf), ref_corr(:,k), spaceRadiance%values(1,1), brkpt, &
@@ -933,7 +938,7 @@ contains
 
         ! Frequency Average the atmospheric derivatives with the appropriate
         ! filter shapes
-        do specie = 1, FMI%n_sps
+        do specie = 1, noSpecies
           if ( forwardModelConfig%moleculeDerivatives(specie) ) then
             f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
               & quantityType=l_vmr, molecule=forwardModelConfig%molecules(specie))
@@ -1019,7 +1024,7 @@ contains
             &              1:temp%template%noInstances)
         endif
         if(ForwardModelConfig%atmos_der) then
-          do m = 1, FMI%n_sps
+          do m = 1, noSpecies
             f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
               & quantityType=l_vmr, molecule=forwardModelConfig%molecules(specie))
 
@@ -1031,7 +1036,7 @@ contains
           end do
         endif
         if(ForwardModelConfig%spect_der) then
-          do m = 1, FMI%n_sps
+          do m = 1, noSpecies
             j = FMI%spect_atmos(m)
             if(.not.  FMI%spectroscopic(j)%DER_CALC(FMI%band)) cycle
             Spectag =  FMI%spectroscopic(j)%Spectag
@@ -1059,8 +1064,10 @@ contains
           ! Note I am replacing the i's in the k's with 1's (enclosed in
           ! brackets to make it clear.)  We're not wanting derivatives anyway
           ! so it shouldn't matter
-          call convolve_all(ptan%values(:,maf),TFMI%atmospheric,FMI%n_sps,   &
-            &     ForwardModelConfig%temp_der,ForwardModelConfig%atmos_der,ForwardModelConfig%spect_der,                   &
+          call convolve_all(ptan%values(:,maf),TFMI%atmospheric, &
+            &     noSpecies, &
+            &     ForwardModelConfig%temp_der,ForwardModelConfig%atmos_der,&
+            &     ForwardModelConfig%spect_der,                   &
             &     ForwardModelConfig%tangentGrid%surfs,&
             &     ptg_angles(:,maf),tan_temp(:,maf), &
             &     dx_dt, d2x_dxdt,FMI%band,si,center_angle,FMI%fft_pts,   &
@@ -1077,9 +1084,10 @@ contains
           ! Note I am replacing the i's in the k's with 1's (enclosed in
           ! brackets to make it clear.)  We're not wanting derivatives anyway
           ! so it shouldn't matter
-          call no_conv_at_all(ptan%values(:,maf),FMI%n_sps, &
+          call no_conv_at_all(ptan%values(:,maf),noSpecies, &
             &     ForwardModelConfig%tangentGrid%surfs, &
-            &     FMI%band,ForwardModelConfig%temp_der,ForwardModelConfig%atmos_der,ForwardModelConfig%spect_der,      &
+            &     FMI%band,ForwardModelConfig%temp_der,&
+            &     ForwardModelConfig%atmos_der,ForwardModelConfig%spect_der,      &
             &     Radiances(:,ch),k_temp((1),:,:,:),                    &
             &     k_atmos((1),:,:,:,:),k_spect_dw((1),:,:,:,:),       &
             &     k_spect_dn((1),:,:,:,:),k_spect_dnu((1),:,:,:,:),   &
@@ -1104,7 +1112,7 @@ contains
     ! ------------------------------ End of Major Frame Loop -----------
 
     if(ForwardModelConfig%temp_der) deallocate(k_temp_frq%values,STAT=i)
-    do j = 1, FMI%n_sps
+    do j = 1, noSpecies
       if(ForwardModelConfig%atmos_der) deallocate(k_atmos_frq(j)%values,STAT=i)
       if(ForwardModelConfig%spect_der) then
         deallocate(k_spect_dw_frq(j)%values,STAT=i)
@@ -1360,6 +1368,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.58  2001/03/30 01:45:08  livesey
+! Some changes and debug stuff, still no agreement.
+!
 ! Revision 2.57  2001/03/30 00:36:57  livesey
 ! Interim version, doesn't quite get the same numbers as Zvi, but we
 ! think we know why.
