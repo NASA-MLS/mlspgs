@@ -29,16 +29,16 @@ contains
                      &  alpha_path_gl, ds_dh, dh_dz, t_script, tau, &
                      &  rad, i_stop )
 
-    use DO_DELTA_M, ONLY: PATH_OPACITY
+    use GLNP, only: NG, GW
     use SCRT_DN_M, ONLY: SCRT_DN
 
   ! inputs
 
-    integer(ip), intent(in) :: gl_inds(:)    ! Gauss-Legendre grid indicies
+    integer(ip), intent(in) :: gl_inds(:)    ! Gauss-Legendre grid indices
     real(rp), intent(in) :: e_rflty          ! earth reflectivity value (0--1).
     real(rp), intent(in) :: z_path_c(:)      ! path -log(P) on coarse grid.
-    real(rp), intent(in) :: alpha_path_c(:)  ! absorption coefficient
-  !                                            on coarse grid.
+    real(rp), intent(in) :: alpha_path_c(:)  ! absorption coefficient on coarse
+  !                                            grid.
     real(rp), intent(in) :: ref_cor(:)       ! refracted to unrefracted path
   !                                            length ratios.
     logical, intent(in) :: do_gl(:)          ! path flag indicating where to do
@@ -60,7 +60,8 @@ contains
 
   ! Internals
 
-    real(rp) :: gl_delta(size(gl_inds)/ng), del_zeta(size(gl_inds)/ng)
+    real(rp) :: del_zeta(size(gl_inds)/ng)
+    integer :: A, AA, I
     integer(ip) ::  more_inds(size(gl_inds)/ng) ! Places in the coarse path
   !                                            where GL is needed
 
@@ -72,12 +73,30 @@ contains
 
       call where_GL ( do_gl, z_path_c, more_inds, del_zeta )
 
-      call path_opacity ( del_zeta,             &
-                &  alpha_path_c, alpha_path_gl, &
-                &  ds_dh, dh_dz,                &
-                &  gl_delta, more_inds, gl_inds )
+      !{ Apply Gauss-Legendre quadrature to the panels indicated by
+      !  {\tt more\_inds}.  We remove a singularity (which actually only
+      !  occurs at the tangent point) by writing
+      !  $\int_{\zeta_i}^{\zeta_{i-1}} G(\zeta) \frac{\text{d}s}{\text{d}h}
+      !   \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta =
+      !  G(\zeta_i) \int_{\zeta_i}^{\zeta_{i-1}} \frac{\text{d}s}{\text{d}h}
+      !   \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta +
+      !  \int_{\zeta_i}^{\zeta_{i-1}} \left[ G(\zeta) - G(\zeta_i) \right]
+      !   \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
+      !   \text{d}\zeta$.  The first integral is easy -- it's just
+      !  $G(\zeta_i) (\zeta_{i-1}-\zeta_i)$  Here, it is {\tt incoptdepth}.
+      !  In the second integral, $G(\zeta)$ is {\tt alpha\_path\_gl} --
+      !  which has already been evaluated at the appropriate abscissae -- and
+      !  $G(\zeta_i)$ is {\tt alpha\_path\_c}.  The weights are {\tt gw}.
 
-      incoptdepth(more_inds) = incoptdepth(more_inds) + gl_delta
+      a = 1
+      do i = 1, size(more_inds)
+        aa = gl_inds(a)
+        incoptdepth(more_inds(i)) = incoptdepth(more_inds(i)) + &
+          & 0.5_rp * del_zeta(i) * &
+          & sum( (alpha_path_gl(a:a+ng-1) -  alpha_path_c(more_inds(i))) * &            
+               & ds_dh(aa:aa+ng-1) * dh_dz(aa:aa+ng-1) * gw ) 
+        a = a + ng
+      end do ! i
 
     end if
 
@@ -103,7 +122,7 @@ contains
 
   ! inputs
 
-    integer(ip), intent(in) :: gl_inds(:)    ! Gauss-Legendre grid indicies
+    integer(ip), intent(in) :: gl_inds(:)    ! Gauss-Legendre grid indices
     real(rp), intent(in) :: e_rflty          ! earth reflectivity value (0--1).
     real(rp), intent(in) :: z_path_c(:)      ! path -log(P) on coarse grid.
     complex(rp), intent(in) :: alpha_path_c(-1:,:)  ! absorption coefficient
@@ -213,7 +232,7 @@ contains
                          &  dh_dz, t_script, tau, &
                          &  i_stop, d_delta_df, drad_df )
 
-    use DO_DELTA_M, ONLY: PATH_OPACITY
+    use GLNP, only: NG, GW
     use LOAD_SPS_DATA_M, ONLY: GRIDS_T
     use SCRT_DN_M, ONLY: GET_DSCRT_NO_T_DN
     use Where_M, only: Where
@@ -254,8 +273,8 @@ contains
 !                                              element. (K)
 ! Internals
 
-    integer(ip) :: sv_i, sps_i, n_inds, i_start, no_mol
-    integer(ip) :: no_to_gl
+    integer(ip) :: i_start, n_inds, no_mol, no_to_gl, sps_i, sv_i
+    integer(ip) :: a, aa, i
     integer(ip), target, dimension(1:Ng*size(tau)) :: all_inds_B
     integer(ip), target, dimension(1:size(tau)) :: inds_B, more_inds_B
     integer(ip), pointer :: all_inds(:)  ! all_inds => part of all_inds_B;
@@ -267,9 +286,8 @@ contains
                                          ! Indices on the coarse path where GL
                                          ! corrections get applied.
 
-    real(rp), target, dimension(1:size(tau)) :: del_zeta_B, gl_delta_B
+    real(rp), target, dimension(1:size(tau)) :: del_zeta_B
     real(rp), pointer :: del_zeta(:)     ! del_zeta => part_of_del_zeta_B
-    real(rp), pointer :: gl_delta(:)     ! gl_delta => part_of_gl_delta_B
     real(rp) :: singularity(1:size(tau)) ! integrand on left edge of coarse
                                          ! grid panel -- singular at tangent pt.
     logical :: do_calc(1:size(tau))      ! Flags on coarse path where do_calc_c
@@ -292,7 +310,7 @@ contains
 
         d_delta_df(:,sv_i) = 0.0_rp
 
-        call get_do_calc ( do_calc_f(indices_c,sv_i), do_calc_f(gl_inds,sv_i), &
+        call get_do_calc_indexed ( do_calc_f(:,sv_i), indices_c, gl_inds, &
           & do_gl, do_calc )
 
 ! find where the non zeros are along the path
@@ -311,7 +329,6 @@ contains
 ! see if anything needs to be gl-d
 
             all_inds => all_inds_B(1:ng*no_to_gl)
-            gl_delta => gl_delta_B(1:no_to_gl)
             del_zeta => del_zeta_B(1:no_to_gl)
             more_inds => more_inds_B(1:no_to_gl)
 
@@ -321,49 +338,82 @@ contains
 
           if ( grids_f%lin_log(sps_i) ) then
 
-            singularity(inds) = beta_path_c(inds,sps_i) &
-                      & * eta_zxp_f(indices_c(inds),sv_i) &
-                      & * sps_path(indices_c(inds),sps_i)
-            d_delta_df(inds,sv_i) = singularity(inds) * del_s(inds)
+            do i = 1, n_inds ! Don't trust the compiler to fuse loops
+              singularity(i) = beta_path_c(inds(i),sps_i) &
+                        & * eta_zxp_f(indices_c(inds(i)),sv_i) &
+                        & * sps_path(indices_c(inds(i)),sps_i)
+              d_delta_df(inds(i),sv_i) = singularity(i) * del_s(i)
+            end do ! i
 
-            if ( no_to_gl > 0 ) then
+      !{ Apply Gauss-Legendre quadrature to the panels indicated by
+      !  {\tt more\_inds}.  We remove a singularity (which actually only
+      !  occurs at the tangent point) by writing
+      !  $\int_{\zeta_i}^{\zeta_{i-1}} G(\zeta) \frac{\text{d}s}{\text{d}h}
+      !   \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta =
+      !  G(\zeta_i) \int_{\zeta_i}^{\zeta_{i-1}} \frac{\text{d}s}{\text{d}h}
+      !   \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta +
+      !  \int_{\zeta_i}^{\zeta_{i-1}} \left[ G(\zeta) - G(\zeta_i) \right]
+      !   \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
+      !   \text{d}\zeta$.  The first integral is easy -- it's just
+      !  $G(\zeta_i) (\zeta_{i-1}-\zeta_i)$  Here, it is {\tt d\_delta\_df}.
+      !  In the second integral, $G(\zeta)$ is {\tt beta\_path\_f * eta\_zxp\_f *
+      !  sps\_path} -- which have already been evaluated at the appropriate
+      !  abscissae~-- and $G(\zeta_i)$ is {\tt singularity}.  The weights
+      !  are {\tt gw}.
 
-              ! Remember: beta_path_f is beta_path(gl_inds), while
-              ! eta_zxp_f and sps_path are on the entire path grid.
-              call path_opacity ( del_zeta, singularity, &
-                 & beta_path_f(all_inds,sps_i)           &
-                 &  * eta_zxp_f(gl_inds(all_inds),sv_i)  &
-                 &  * sps_path(gl_inds(all_inds),sps_i), &
-                 & ds_dh(gl_inds), dh_dz(gl_inds),       &     
-                 & gl_delta, more_inds, all_inds )
+            a = 1
+            do i = 1, no_to_gl
+              aa = all_inds(a)
+              d_delta_df(more_inds(i),sv_i) = d_delta_df(more_inds(i),sv_i) + &
+                & 0.5_rp * del_zeta(i) * &
+                & sum( (beta_path_f(all_inds(a:a+ng-1),sps_i) * &
+                     &  eta_zxp_f(gl_inds(all_inds(a:a+ng-1)),sv_i) * &
+                     &  sps_path(gl_inds(all_inds(a:a+ng-1)),sps_i) - &
+                     &  singularity(more_inds(i))) * &
+                     & ds_dh(gl_inds(aa:aa+ng-1)) * dh_dz(gl_inds(aa:aa+ng-1)) * &
+                     & gw )
+              a = a + ng
+            end do
 
-              d_delta_df(more_inds,sv_i) = d_delta_df(more_inds,sv_i) + gl_delta
-
-            end if
-
-            d_delta_df(inds,sv_i) = ref_cor(inds) * d_delta_df(inds,sv_i) / &
-                                  & exp(grids_f%values(sv_i))
+            d_delta_df(inds,sv_i) = ref_cor(inds) * d_delta_df(inds,sv_i) * &
+                                  & exp(-grids_f%values(sv_i))
 
           else
 
-            singularity(inds) = beta_path_c(inds,sps_i) * &
-                              & eta_zxp_f(indices_c(inds),sv_i)
+            do i = 1, n_inds ! Don't trust the compiler to fuse loops
+              singularity(i) = beta_path_c(inds(i),sps_i) &
+                        & * eta_zxp_f(indices_c(inds(i)),sv_i)
+              d_delta_df(inds(i),sv_i) = singularity(i) * del_s(i)
+            end do ! i
 
-            d_delta_df(inds,sv_i) = singularity(inds) * del_s(inds)
+      !{ Apply Gauss-Legendre quadrature to the panels indicated by
+      !  {\tt more\_inds}.  We remove a singularity (which actually only
+      !  occurs at the tangent point) by writing
+      !  $\int_{\zeta_i}^{\zeta_{i-1}} G(\zeta) \frac{\text{d}s}{\text{d}h}
+      !   \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta =
+      !  G(\zeta_i) \int_{\zeta_i}^{\zeta_{i-1}} \frac{\text{d}s}{\text{d}h}
+      !   \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta +
+      !  \int_{\zeta_i}^{\zeta_{i-1}} \left[ G(\zeta) - G(\zeta_i) \right]
+      !   \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
+      !   \text{d}\zeta$.  The first integral is easy -- it's just
+      !  $G(\zeta_i) (\zeta_{i-1}-\zeta_i)$  Here, it is {\tt d\_delta\_df}.
+      !  In the second integral, $G(\zeta)$ is {\tt beta\_path\_f *
+      !  eta\_zxp\_f}~-- which have already been evaluated at the appropriate
+      !  abscissae~-- and $G(\zeta_i)$ is {\tt singularity}.  The weights
+      !  are {\tt gw}.
 
-            if ( no_to_gl > 0 ) then
-
-              ! Remember: beta_path_f is beta_path(gl_inds), while
-              ! eta_zxp_f is on the entire path grid.
-              call path_opacity( del_zeta, singularity,  &
-                 & beta_path_f(all_inds,sps_i)           &
-                 &  * eta_zxp_f(gl_inds(all_inds),sv_i), &
-                 & ds_dh(gl_inds),dh_dz(gl_inds),        &
-                 & gl_delta, more_inds, all_inds )
-
-              d_delta_df(more_inds,sv_i) = d_delta_df(more_inds,sv_i) + gl_delta
-
-            end if
+            a = 1
+            do i = 1, no_to_gl
+              aa = all_inds(a)
+              d_delta_df(more_inds(i),sv_i) = d_delta_df(more_inds(i),sv_i) + &
+                & 0.5_rp * del_zeta(i) * &
+                & sum( (beta_path_f(all_inds(a:a+ng-1),sps_i) * &
+                     &  eta_zxp_f(gl_inds(all_inds(a:a+ng-1)),sv_i) - &
+                     &  singularity(more_inds(i))) * &
+                     & ds_dh(gl_inds(aa:aa+ng-1)) * dh_dz(gl_inds(aa:aa+ng-1)) * &
+                     & gw )
+              a = a + ng
+            end do
 
             d_delta_df(inds,sv_i) = ref_cor(inds) * d_delta_df(inds,sv_i)
 
@@ -391,7 +441,7 @@ contains
                          &  sps_path_f, do_calc_f_f, do_gl, del_s, ref_cor,     &
                          &  ds_dh_gl, dh_dz_gl, t_script, tau, i_stop, drad_dx )
 
-    use DO_DELTA_M, ONLY: PATH_OPACITY
+    use GLNP, only: NG, GW
     use LOAD_SPS_DATA_M, ONLY: GRIDS_T
     use SCRT_DN_M, ONLY: GET_DSCRT_NO_T_DN
     use Where_M, only: Where
@@ -435,8 +485,8 @@ contains
 !                                              state vector element. (K)
 ! Internals
 
-    integer(ip) :: sv_i, sv_j, sps_i, n_inds, i_start, no_mol
-    integer(ip) :: no_to_gl
+    integer(ip) :: A, AA, I
+    integer(ip) :: i_start, n_inds, no_mol, no_to_gl, sps_i, sv_i, sv_j
     integer(ip), target, dimension(1:Ng*size(tau)) :: all_inds_B
     integer(ip), target, dimension(1:size(tau)) :: inds_B, more_inds_B
     integer(ip), pointer :: all_inds(:)  ! all_inds => part of all_inds_B;
@@ -449,9 +499,8 @@ contains
                                          ! corrections get applied.
 
     real(rp) :: d_delta_dx(1:size(tau))
-    real(rp), target, dimension(1:size(tau)) :: del_zeta_B, gl_delta_B
+    real(rp), target, dimension(1:size(tau)) :: del_zeta_B
     real(rp), pointer :: del_zeta(:)     ! del_zeta => part_of_del_zeta_B
-    real(rp), pointer :: gl_delta(:)     ! gl_delta => part_of_gl_delta_B
     real(rp) :: singularity(1:size(tau)) ! integrand on left edge of coarse
                                          ! grid panel -- singular at tangent pt.
 
@@ -486,9 +535,11 @@ contains
 
           call where ( do_calc, inds )
 
-          singularity(inds) = dbeta_path_c(inds,sps_i) * eta_zxp_f_c(inds,sv_i)  &
-                     &  * sps_path_c(inds,sps_i)
-          d_delta_dx(inds) = singularity(inds) * del_s(inds)
+          do i = 1, n_inds ! Don't trust the compiler to fuse loops
+            singularity(inds(i)) = dbeta_path_c(inds(i),sps_i) * eta_zxp_f_c(inds(i),sv_i)  &
+                       &  * sps_path_c(inds(i),sps_i)
+            d_delta_dx(inds(i)) = singularity(inds(i)) * del_s(inds(i))
+          end do ! i
 
           no_to_gl = count(do_gl(inds))
           if ( no_to_gl > 0 ) then
@@ -497,20 +548,39 @@ contains
 
             all_inds => all_inds_B(1:Ng*no_to_gl)
             more_inds => more_inds_B(1:no_to_gl)
-            gl_delta => gl_delta_B(1:no_to_gl)
             del_zeta => del_zeta_B(1:no_to_gl)
 
             call Get_Del_Zeta_All ( Do_GL, Do_Calc, Z_path_c, &
               &                     More_Inds, All_Inds, Del_Zeta )
 
-            call path_opacity ( del_zeta, singularity, & 
-                &  dbeta_path_f(all_inds,sps_i)        & 
-                &   * eta_zxp_f_f(all_inds,sv_i)       & 
-                &   * sps_path_f(all_inds,sps_i),      & 
-                &  ds_dh_gl, dh_dz_gl,                 & 
-                &  gl_delta, more_inds, all_inds )
+      !{ Apply Gauss-Legendre quadrature to the panels indicated by
+      !  {\tt more\_inds}.  We remove a singularity (which actually only
+      !  occurs at the tangent point) by writing
+      !  $\int_{\zeta_i}^{\zeta_{i-1}} G(\zeta) \frac{\text{d}s}{\text{d}h}
+      !   \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta =
+      !  G(\zeta_i) \int_{\zeta_i}^{\zeta_{i-1}} \frac{\text{d}s}{\text{d}h}
+      !   \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta +
+      !  \int_{\zeta_i}^{\zeta_{i-1}} \left[ G(\zeta) - G(\zeta_i) \right]
+      !   \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
+      !   \text{d}\zeta$.  The first integral is easy -- it's just
+      !  $G(\zeta_i) (\zeta_{i-1}-\zeta_i)$  Here, it is {\tt d\_delta\_dx}.
+      !  In the second integral, $G(\zeta)$ is {\tt dbeta\_path\_f *
+      !  eta\_zxp\_f\_f * sps\_path\_f}~-- which have already been evaluated at
+      !  the appropriate abscissae~-- and $G(\zeta_i)$ is {\tt
+      !  singularity}.  The weights are {\tt gw}.
 
-            d_delta_dx(more_inds) = d_delta_dx(more_inds) + gl_delta
+            a = 1
+            do i = 1, no_to_gl
+              aa = all_inds(a)
+              d_delta_dx(more_inds(i)) = d_delta_dx(more_inds(i)) + &
+                & 0.5_rp * del_zeta(i) * &
+                & sum( (dbeta_path_f(all_inds(a:a+ng-1),sps_i) * &
+                     &  eta_zxp_f_f(all_inds(a:a+ng-1),sv_i) * &
+                     &  sps_path_f(all_inds(a:a+ng-1),sps_i) - &
+                     &  singularity(more_inds(i))) * &
+                     & ds_dh_gl(aa:aa+ng-1) * dh_dz_gl(aa:aa+ng-1) * gw )
+              a = a + ng
+            end do
 
           end if
 
@@ -540,7 +610,8 @@ contains
                          &  ds_dh_gl, dh_dz_gl, t_script, dt_scr_dt, &
                          &  tau, i_stop, deriv_flags, d_delta_dt, drad_dt )
 
-    use DO_DELTA_M, ONLY: PATH_OPACITY, HYD_OPACITY
+    use DO_DELTA_M, ONLY: HYD_OPACITY
+    use GLNP, only: NG, GW
     use SCRT_DN_M, ONLY: GET_DSCRT_DN
     use Where_M, only: Where
 
@@ -601,8 +672,8 @@ contains
 !                                             element. (K)
 ! Internals
 
-    integer(ip) :: sv_i, sv_t, n_inds, i, i_start
-    integer(ip) :: n_path, p_i, no_to_gl, mid
+    integer(ip) :: A, AA
+    integer(ip) :: i, i_start, mid, n_inds, n_path, no_to_gl, p_i, sv_i, sv_t
     integer(ip), target, dimension(1:Ng*size(tau)) :: all_inds_B
     integer(ip), target, dimension(1:size(tau)) :: inds_B, more_inds_B
     integer(ip), pointer :: all_inds(:)  ! all_inds => part of all_inds_B;
@@ -656,9 +727,11 @@ contains
         call where ( do_calc, inds )
         i_start = max(inds(1)-1,1)
 
-        singularity(inds) = alphaxn_path_c(inds) * eta_zxp_c(inds,sv_i) &
-                    / t_path_c(inds)
-        d_delta_dt(inds,sv_i) = singularity(inds) * del_s(inds)
+        do i = 1, n_inds ! Don't trust the compiler to fuse loops
+          singularity(inds(i)) = alphaxn_path_c(inds(i)) * eta_zxp_c(inds(i),sv_i) &
+                      / t_path_c(inds(i))
+          d_delta_dt(inds(i),sv_i) = singularity(inds(i)) * del_s(inds(i))
+        end do ! i
 
         no_to_gl = count(do_gl(inds))
         if ( no_to_gl > 0 ) then
@@ -666,21 +739,40 @@ contains
 ! see if anything needs to be gl-d
 
           all_inds => all_inds_B(1:ng*no_to_gl)
-          gl_delta => gl_delta_B(1:no_to_gl)
           del_zeta => del_zeta_B(1:no_to_gl)
           more_inds => more_inds_B(1:no_to_gl)
 
           call Get_Del_Zeta_All ( Do_GL, Do_Calc, Z_path_c, &
             &                     More_Inds, All_Inds, Del_Zeta )
 
-          ! Get GL corrections
-          call path_opacity ( del_zeta, singularity, &
-            &  alphaxn_path_f(all_inds)              &
-            &   * eta_zxp_f(all_inds,sv_i)           &
-            &   / t_path_f(all_inds),                &
-            &  ds_dh_gl, dh_dz_gl, gl_delta, more_inds, all_inds )
+      !{ Apply Gauss-Legendre quadrature to the panels indicated by
+      !  {\tt more\_inds}.  We remove a singularity (which actually only
+      !  occurs at the tangent point) by writing
+      !  $\int_{\zeta_i}^{\zeta_{i-1}} G(\zeta) \frac{\text{d}s}{\text{d}h}
+      !   \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta =
+      !  G(\zeta_i) \int_{\zeta_i}^{\zeta_{i-1}} \frac{\text{d}s}{\text{d}h}
+      !   \frac{\text{d}h}{\text{d}\zeta} \text{d}\zeta +
+      !  \int_{\zeta_i}^{\zeta_{i-1}} \left[ G(\zeta) - G(\zeta_i) \right]
+      !   \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
+      !   \text{d}\zeta$.  The first integral is easy -- it's just
+      !  $G(\zeta_i) (\zeta_{i-1}-\zeta_i)$  Here, it is {\tt d\_delta\_dt}.
+      !  In the second integral, $G(\zeta)$ is {\tt alphaxn\_path\_f *
+      !  eta\_zxp\_f / t\_path\_f}~-- which have already been evaluated at
+      !  the appropriate abscissae~-- and $G(\zeta_i)$ is {\tt
+      !  singularity}.  The weights are {\tt gw}.
 
-          d_delta_dt(more_inds,sv_i) = d_delta_dt(more_inds,sv_i) + gl_delta
+          a = 1
+          do i = 1, no_to_gl
+            aa = all_inds(a)
+            d_delta_dt(more_inds(i),sv_i) = d_delta_dt(more_inds(i),sv_i) + &
+              & 0.5_rp * del_zeta(i) * &
+              & sum( (alphaxn_path_f(all_inds(a:a+ng-1)) * &
+                   &  eta_zxp_f(all_inds(a:a+ng-1),sv_i) / &
+                   &  t_path_f(all_inds(a:a+ng-1)) - &
+                   &  singularity(more_inds(i))) * &
+                   & ds_dh_gl(aa:aa+ng-1) * dh_dz_gl(aa:aa+ng-1) * gw )
+            a = a + ng
+          end do
 
         end if
 
@@ -870,7 +962,7 @@ contains
 
     logical, intent(in) :: Do_Calc_c(:) ! On the coarse grid
     logical, intent(in) :: Do_Calc_f(:) ! On the GL grid
-    logical, intent(in) :: Do_GL(:)
+    logical, intent(in) :: Do_GL(:)     ! Where on coarse grid to do GL
     logical, intent(out) :: Do_Calc(:)  ! Where on coarse grid to do calc.
 
     integer :: I, P_I
@@ -885,6 +977,33 @@ contains
     end do
 
   end subroutine Get_Do_Calc
+
+  ! ----------------------------------------  Get_Do_Calc_Indexed  -----
+  subroutine Get_Do_Calc_Indexed ( Do_Calc_all, C_Inds, F_Inds, Do_GL, Do_Calc )
+
+  ! Set Do_Calc if Do_Calc_c or Do_GL and any of the corresponding Do-Calc_f
+  ! flags are set.
+
+    use GLNP, ONLY: Ng
+
+    logical, intent(in) :: Do_Calc_all(:) ! On the entire path
+    integer, intent(in) :: C_Inds(:)      ! Indices in Do_Calc_All for coarse grid
+    integer, intent(in) :: F_Inds(:)      ! Indices in Do_Calc_All for find grid
+    logical, intent(in) :: Do_GL(:)       ! Where on coarse grid to do GL
+    logical, intent(out) :: Do_Calc(:)    ! Where on coarse grid to do calc.
+
+    integer :: I, P_I
+
+    i = 1
+    do_calc = do_calc_all(c_inds)
+    do p_i = 1 , size(do_gl)
+      if ( do_gl(p_i) ) then
+        if ( any(do_calc_all(f_inds(i:i+ng-1))) ) do_calc(p_i)=.true.
+        i = i + Ng
+      end if
+    end do
+
+  end subroutine Get_Do_Calc_Indexed
 
 ! -----------------------------------------------------  Where_GL  -----
 
