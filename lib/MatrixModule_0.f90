@@ -446,6 +446,7 @@ contains ! =====     Public Procedures     =============================
       end do ! i
       call deallocate_test ( r1, "R1 in CholeskyFactor", ModuleName )
       call deallocate_test ( zt, "ZT in CholeskyFactor", ModuleName )
+      if ( present ( status ) ) status = 0
     case ( M_Column_Sparse )
       call allocate_test ( zt, nc, nc, "ZT for CholeskyFactor", ModuleName )
       call allocate_test ( xin, nc, nc, "XIN for CholeskyFactor", ModuleName )
@@ -454,7 +455,9 @@ contains ! =====     Public Procedures     =============================
       ! ??? with sparse input.
       call densify ( xin, x )
       call denseCholesky ( zt, xin, status )
-      if ( status /= 0 ) return
+      if ( present ( status ) ) then
+        if ( status /= 0 ) return
+      end if
       call sparsify ( zt, z, "ZT in CholeskyFactor", ModuleName ) ! Z := Zt
       call deallocate_test ( xin, "XIN in CholeskyFactor", ModuleName )
     case ( M_Full )
@@ -700,7 +703,7 @@ contains ! =====     Public Procedures     =============================
       zt(i+1:nc,i) = 0.0_r8 ! Clear below the diagonal (helps Sparsify!)
       d = xin(i,i) - dot( i-1, zt(1,i), 1, zt(1,i), 1 )
 !     d = xin(i,i) - dot_product( zt(1:i-1,i), zt(1:i-1,i) )
-      if ( d <= tol .and. i < nc ) then
+      if ( (d <= tol .and. i < nc) .or. (d < 0.0) ) then
         if ( present(status ) ) then
           status = i
           return
@@ -1751,8 +1754,11 @@ contains ! =====     Public Procedures     =============================
             & call MLSMessage ( MLSMSG_Error, ModuleName, &
               & "U matrix in SolveCholeskyM_0 is not triangular" )
           d = u%values(u%r2(i),1)
-          if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          if ( abs(d) < tol ) then
+            call dump ( u, 'Guilty party', details=2 )
+            call MLSMessage ( MLSMSG_Error, ModuleName, &
               & "U matrix in SolveCholeskyM_0 is singular" )
+          end if
 !$OMP PARALLEL DO
           do j = 1, nc
             xs(i,j) = ( xs(i,j) - &
@@ -1770,8 +1776,11 @@ contains ! =====     Public Procedures     =============================
             & call MLSMessage ( MLSMSG_Error, ModuleName, &
               & "U matrix in SolveCholeskyM_0 is not triangular" )
           d = u%values(u%r1(i),1)
-          if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          if ( abs(d) < tol ) then
+            call dump ( u, 'Guilty party', details=2 )
+            call MLSMessage ( MLSMSG_Error, ModuleName, &
               & "U matrix in SolveCholeskyM_0 is singular" )
+          end if
           do j = 1, nc
             do k = u%r1(i-1)+1, u%r1(i)-1
               xs(i,j) = xs(i,j) - u%values(k,1) * xs(u%r2(k),j)
@@ -1782,8 +1791,11 @@ contains ! =====     Public Procedures     =============================
       case ( M_Full )
         do i = 2, n
           d = u%values(i,i)
-          if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          if ( abs(d) < tol ) then
+            call dump ( u, 'Guilty party', details=2 )
+            call MLSMessage ( MLSMSG_Error, ModuleName, &
               & "U matrix in SolveCholeskyM_0 is singular" )
+          end if
           do j = 1, nc
             xs(i,j) = ( xs(i,j) - &
                     &   dot( i-1, u%values(1,i), 1, xs(1,j), 1) ) / d
@@ -1800,13 +1812,19 @@ contains ! =====     Public Procedures     =============================
         call densify ( ud, u )
       end if
       d = ud(n,n)
-      if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      if ( abs(d) < tol ) then
+        call dump ( u, 'Guilty party', details=2 )
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
           & "U matrix in SolveCholeskyM_0 is singular" )
+      end if
       xs(n,1:nc) = xs(n,1:nc) / d
       do i = n-1, 1, -1
         d = ud(i,i)
-        if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        if ( abs(d) < tol ) then
+          call dump ( u, 'Guilty party', details=2 )
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
             & "U matrix in SolveCholeskyM_0 is singular" )
+        end if
 !$OMP PARALLEL DO
         do j = 1, nc
           xs(i,j) = ( xs(i,j) - &
@@ -2405,6 +2423,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.60  2001/12/01 01:02:52  livesey
+! Tidied up erroneous handling of status in DenseCholesky/CholeskyFactor_0
+!
 ! Revision 2.59  2001/11/14 01:00:07  vsnyder
 ! Use LAPACK GEMV interface for dense matrix-vector multiply
 !
