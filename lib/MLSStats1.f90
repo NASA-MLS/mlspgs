@@ -6,6 +6,7 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
 !=============================================================================
   use Allocate_Deallocate, only: allocate_Test, Deallocate_Test
   use MLSCommon, only: r4, r8
+  use MLSNumerics, only: isFillValue
   use MLSSets, only: findAll
   use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT
 
@@ -796,7 +797,8 @@ contains
       ! Executable
       nullify(xtab)
       if ( present(fillValue) ) then
-        call findAll(values /= fillvalue, which, how_many=NX)
+        ! call findAll(values /= fillvalue, which, how_many=NX)
+        call findAll(.not. isFillValue(values, fillvalue), which, how_many=NX)
         if ( NX < 1 ) then
           call allocate_test(XTAB, 1, 'XTAB', moduleName)
           XTAB = fillValue
@@ -845,7 +847,8 @@ contains
       ! Executable
       nullify(xtab)
       if ( present(fillValue) ) then
-        call findAll(values /= fillvalue, which, how_many=NX)
+        ! call findAll(values /= fillvalue, which, how_many=NX)
+        call findAll(.not. isFillValue(values, fillvalue), which, how_many=NX)
         if ( NX < 1 ) then
           call allocate_test(XTAB, 1, 'XTAB', moduleName)
           XTAB = fillValue
@@ -901,6 +904,9 @@ end module MLSStats1
 
 !
 ! $Log$
+! Revision 2.3  2004/09/28 23:15:35  pwagner
+! Uses isFillValue to allow slight tolerance
+!
 ! Revision 2.2  2004/09/15 18:03:46  pwagner
 ! Added optional precision array
 !
