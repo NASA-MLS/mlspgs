@@ -346,9 +346,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       &'IWC, LWC and Extinction profiles have different vertical grids')
     end if
 
-    nspec = size(forwardModelConfig%molecules) - 1 ! Last one is a huge
-    ! sentinel used by Get_Species_Data, not a molecule
-    ! make sure we have enough molecules
+    nspec = size(forwardModelConfig%molecules)
     if ( nspec < 2 ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, 'Not enough molecules' )
 
@@ -1120,6 +1118,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.133  2004/11/01 20:26:57  vsnyder
+! Reorganization of representation for molecules and beta groups
+!
 ! Revision 1.132  2004/10/21 01:33:35  vsnyder
 ! Move fetching of elevOffset to after trace_begin, some cannonball polishing
 !
