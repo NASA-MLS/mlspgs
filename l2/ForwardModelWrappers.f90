@@ -23,17 +23,18 @@ module ForwardModelWrappers
 contains ! ============= Public Procedures ==========================
 
   !----------------------------------------- ForwardModel -----------
-  subroutine ForwardModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
+  subroutine ForwardModel ( Config, FwdModelIn, FwdModelExtra, &
     FwdModelOut, Ifm, fmStat, Jacobian )
 
     use BaselineForwardModel_m, only: BASELINEFORWARDMODEL
+    use HybridForwardModel_m, only: HYBRIDFORWARDMODEL
     use ForwardModelConfig, only: ForwardModelConfig_T
     use ForwardModelIntermediate, only: FORWARDMODELINTERMEDIATE_T, &
       & FORWARDMODELSTATUS_T
     use FullCloudForwardModel, only: FULLCLOUDFORWARDMODELWRAPPER
     use FullForwardModel_m, only: FULLFORWARDMODEL
     use Init_tables_module, only: L_LINEAR, L_SCAN, L_SCAN2D, L_FULL, L_CLOUDFULL, &
-      & L_SWITCHINGMIRROR
+      & L_SWITCHINGMIRROR, L_HYBRID
     use LinearizedForwardModel_m, only: LINEARIZEDFORWARDMODEL
     use MatrixModule_1, only: MATRIX_T
     use MLSL2Timings, only: Add_to_retrieval_timing
@@ -46,7 +47,7 @@ contains ! ============= Public Procedures ==========================
     use Toggles, only: Emit, Toggle
 
     ! Dummy arguments
-    type(ForwardModelConfig_T), intent(inout) :: TheForwardModelConfig
+    type(ForwardModelConfig_T), intent(inout) :: CONFIG
     type(vector_T), intent(in) ::  FWDMODELIN, FwdModelExtra
     type(vector_T), intent(inout) :: FWDMODELOUT  ! Radiances, etc.
     type(forwardModelIntermediate_T), intent(inout) :: IFM ! Workspace
@@ -56,12 +57,13 @@ contains ! ============= Public Procedures ==========================
     ! Local variables
     real :: time_start, time_end, deltaTime  
     character(len=132) :: THISNAME
+    logical :: radianceModel
 
     ! Executable code
     ! Report we're starting
     if ( toggle(emit) ) then
-      if ( theForwardModelConfig%name /= 0 ) then
-        call get_string ( theForwardModelConfig%name, thisName )
+      if ( config%name /= 0 ) then
+        call get_string ( config%name, thisName )
       else
         thisName = '[unnamed]'
       end if
@@ -72,44 +74,45 @@ contains ! ============= Public Procedures ==========================
     call time_now (time_start)
 
     ! Do the actual forward models
-    select case (TheForwardModelConfig%fwmType)
+    radianceModel = any ( config%fwmType == &
+      & (/ l_full, l_linear, l_hybrid, l_cloudFull /) )
+    select case (config%fwmType)
     case ( l_full )
-      call FullForwardModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
-        FwdModelOut, Ifm, fmStat, Jacobian )
-      call BaselineForwardModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
-        FwdModelOut, Ifm, fmStat, Jacobian )
-      call SwitchingMirrorModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
+      call FullForwardModel ( config, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
       call add_to_retrieval_timing( 'full_fwm' )
     case ( l_linear )
-      call LinearizedForwardModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
-        FwdModelOut, Ifm, fmStat, Jacobian )
-      call BaselineForwardModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
-        FwdModelOut, Ifm, fmStat, Jacobian )
-      call SwitchingMirrorModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
+      call LinearizedForwardModel ( config, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
       call add_to_retrieval_timing( 'linear_fwm' )
+    case ( l_hybrid )
+      call HybridForwardModel ( config, FwdModelIn, FwdModelExtra, &
+        FwdModelOut, Ifm, fmStat, Jacobian )
+      call add_to_retrieval_timing( 'full_fwm' )
     case ( l_scan )
-      call ScanForwardModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
+      call ScanForwardModel ( config, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
       call add_to_retrieval_timing( 'scan_fwm' )
     case ( l_scan2d )
-      call TwoDScanForwardModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
+      call TwoDScanForwardModel ( config, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
       call add_to_retrieval_timing( 'twod_scan_fwm' )
     case ( l_cloudFull )
-      call FullCloudForwardModelWrapper ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
-        FwdModelOut, Ifm, fmStat, Jacobian )
-      call BaselineForwardModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
-        FwdModelOut, Ifm, fmStat, Jacobian )
-      call SwitchingMirrorModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
+      call FullCloudForwardModelWrapper ( config, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
       call add_to_retrieval_timing( 'fullcloud_fwm' )
     case ( l_switchingMirror )
-      call SwitchingMirrorModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
+      call SwitchingMirrorModel ( config, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
     case default ! Shouldn't get here if parser etc. worked
     end select
+    
+    if ( radianceModel ) then
+      call BaselineForwardModel ( config, FwdModelIn, FwdModelExtra, &
+        FwdModelOut, Ifm, fmStat, Jacobian )
+      call SwitchingMirrorModel ( config, FwdModelIn, FwdModelExtra, &
+        FwdModelOut, Ifm, fmStat, Jacobian )
+    end if
 
     ! Report we're finished
     if ( toggle(emit) ) then
@@ -119,11 +122,11 @@ contains ! ============= Public Procedures ==========================
     ! Do the timing stuff
     call time_now (time_end)
     deltaTime = time_end - time_start
-    TheForwardModelConfig%Ntimes = TheForwardModelConfig%Ntimes + 1
-    TheForwardModelConfig%sum_DeltaTime = &
-      & TheForwardModelConfig%sum_DeltaTime + deltaTime
-    TheForwardModelConfig%sum_squareDeltaTime = &
-      & TheForwardModelConfig%sum_squareDeltaTime + (deltaTime * deltaTime)
+    config%Ntimes = config%Ntimes + 1
+    config%sum_DeltaTime = &
+      & config%sum_DeltaTime + deltaTime
+    config%sum_squareDeltaTime = &
+      & config%sum_squareDeltaTime + (deltaTime * deltaTime)
     
   end subroutine ForwardModel
 
@@ -134,6 +137,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.20  2003/07/15 22:11:12  livesey
+! Added hybrid model and slight reorganization
+!
 ! Revision 2.19  2003/07/15 18:18:39  livesey
 ! Made timing apply to all configs.
 !
