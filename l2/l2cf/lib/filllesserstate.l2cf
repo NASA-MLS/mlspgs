@@ -24,15 +24,18 @@ begin Fill
   ;; Call this macro for all molecules
   !forall(fillIsotopeRatio,!isotopicMolecules)
 
-  ;; ------------------------------------- Sideband ratios
+  ;; ------------------------------------- Sideband fractions
 
-  ;; This macro fills one sideband ratio for one band.
-  !define(fillSidebandRatio,{Fill, quantity=apriori.sidebandRatio$1, method=explicit, $
-    explicitValues=!sbfraction$1!nl})
+  ;; This macro fills one set of sideband fraction for one band.
+  !define(fillSidebandFractions,{!dnl
+  Fill, quantity=apriori.limbSidebandFraction$1, method=explicit, $
+    explicitValues=!limbradsbfraction$1
+  Fill, quantity=apriori.calSidebandFraction$1, method=explicit, $
+    explicitValues=!calradsbfraction$1!nl})
 
   ;; Call that macro for all sidebands
-  !forall(fillSidebandRatio,!allBandLSBs)
-  !forall(fillSidebandRatio,!allBandUSBs)  
+  !forall(fillSidebandFractions,!allBandLSBs)
+  !forall(fillSidebandFractions,!allBandUSBs)  
 
   ;; ----------------------------------------- System temperatures
 

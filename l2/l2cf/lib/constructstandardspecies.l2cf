@@ -211,19 +211,22 @@ begin Construct
   !define(allUSBDepths, {!makelist({depth},{},!allBandUSBs)})
   !define(allUnfoldedDepths,{!allLSBDepths, !allUSBDepths})
 
-  ;; ----------------------------------------- Sideband ratios
+  ;; ----------------------------------------- Sideband fractions
 
-  !define(constructSidebandRatio, {sidebandRatio$1: Quantity, type=sidebandRatio, $
-    signal=!signal($1)!nl})
+  !define(constructSidebandFractions, {!dnl
+  limbSidebandFraction$1: Quantity, type=limbSidebandFraction, signal=!signal($1)
+  calSidebandFraction$1: Quantity, type=calSidebandFraction, signal=!signal($1)!nl})
   
   ;; These are all split now
-  !forall(constructSidebandRatio,!allBandLSBs)
-  !forall(constructSidebandRatio,!allBandUSBs)
+  !forall(constructSidebandFractions,!allBandLSBs)
+  !forall(constructSidebandFractions,!allBandUSBs)
 
   ;; All
-  !define(allLSBRatios, {!makelist({sidebandRatio},{},!allBandLSBs)})
-  !define(allUSBRatios, {!makelist({sidebandRatio},{},!allBandUSBs)})
-  !define(allSidebandRatios, {!allLSBRatios, !allUSBRatios})
+  !define(allSidebandFractions, {!dnl
+    !makelist({limbSidebandFraction},{},!allBandLSBs), !dnl
+    !makelist({calSidebandFraction},{},!allBandLSBs), !dnl
+    !makelist({limbSidebandFraction},{},!allBandUSBs), !dnl
+    !makelist({calSidebandFraction},{},!allBandUSBs)})
 
   ;; ----------------------------------------- System temperatures
 
@@ -343,7 +346,7 @@ begin Construct
     !allBaselines, $
     !allExtinctions, $
     !allIsotopeRatios, $
-    !allSidebandRatios, $
+    !allSidebandFractions, $
     !allFoldedSystemTemperatures, $
     !allUnfoldedSystemTemperatures, $
     !allFoldedNoiseBandwidths, $
