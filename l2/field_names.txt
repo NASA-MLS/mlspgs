@@ -17,6 +17,7 @@
 a
 additional
 allLinesForRadiometer
+allowMissing
 antennaPatterns
 apriori
 aprioriPrecision
@@ -292,6 +293,9 @@ vRegWeightVec
 writeCounterMAF
 
 # $Log$
+# Revision 2.83  2003/03/05 19:10:56  livesey
+# Added allowMissing
+#
 # Revision 2.82  2003/03/01 00:24:27  pwagner
 # Added missingValue as filed to reading Gridded data
 #
