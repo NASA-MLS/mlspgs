@@ -25,7 +25,7 @@ module Fill                     ! Create vectors and fill them.
   ! Now the literals:
   use INIT_TABLES_MODULE, only: L_ADDNOISE, L_BOUNDARYPRESSURE, L_CHISQCHAN, &
     & L_CHISQMMAF, L_CHISQMMIF, L_CHOLESKY, &
-    & L_COLUMNABUNDANCE, L_ESTIMATEDNOISE, L_EXPLICIT, L_GPH, L_GRIDDED, &
+    & L_COLUMNABUNDANCE, L_ESTIMATEDNOISE, L_EXPLICIT, L_GPH, L_GRIDDED, L_HEIGHT, &
     & L_HYDROSTATIC, L_ISOTOPE, L_ISOTOPERATIO, L_KRONECKER, L_L1B, L_L2GP, L_L2AUX, &
     & L_RECTANGLEFROMLOS, L_LOSVEL, L_NONE, L_PLAIN, &
     & L_PRESSURE, L_PTAN, L_RADIANCE, &
@@ -46,8 +46,9 @@ module Fill                     ! Create vectors and fill them.
   use L3ASCII, only: L3ASCII_INTERP_FIELD
   use LEXER_CORE, only: PRINT_SOURCE
   use ManipulateVectorQuantities, only: DOHGRIDSMATCH, DOVGRIDSMATCH
+  use MatrixModule_0, only: Sparsify, MatrixInversion
   use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
-    & Dump, GetKindFromMatrixDatabase, GetFromMatrixDatabase, K_SPD, &
+    & Dump, FindBlock, GetKindFromMatrixDatabase, GetFromMatrixDatabase, K_SPD, &
     & Matrix_Cholesky_T, Matrix_Database_T, Matrix_Kronecker_T, Matrix_SPD_T, &
     & Matrix_T, UpdateDiagonal
   use MLSCommon, only: L1BInfo_T, MLSChunk_T, R8
@@ -903,14 +904,109 @@ contains ! =====     Public Procedures     =============================
     & lengthScale, fraction, invert )
     ! This routine fills a covariance matrix from a given set of vectors
     type (Matrix_SPD_T), intent(inout) :: COVARIANCE ! The matrix to fill
-    type (Vector_T), dimension(:), intent(in) :: VECTORS ! The vector database
+    type (Vector_T), dimension(:), intent(in), target :: VECTORS ! The vector database
     integer, intent(in) :: DIAGONAL     ! Index of vector describing diagonal
     integer, intent(in) :: LENGTHSCALE  ! Index of vector describing length scale
     integer, intent(in) :: FRACTION     ! Index of vector describing fraction
     logical, intent(in) :: INVERT       ! We actually want the inverse
 
-    call updateDiagonal ( covariance, vectors(diagonal), square=.true., &
-      & invert=invert )
+    ! Local parameters
+    real(r8), parameter :: DECADE = 16000.0 ! Number of meters per decade.
+
+    ! Local variables
+    type (QuantityTemplate_T), pointer :: qt ! One quantity template
+    integer :: B                        ! Block index
+    integer :: I                        ! Instance index
+    integer :: J                        ! Loop index
+    integer :: K                        ! Loop index
+    integer :: N                        ! Size of matrix block
+    integer :: Q                        ! Quantity index
+    real (r8), dimension(:,:), pointer :: M ! The matrix being filled
+    real (r8), dimension(:), pointer :: SURFS ! The vertical coordinate
+    real (r8) :: distance               ! Distance between two points
+    real (r8) :: meanLength             ! Geometric mean length scale
+    real (r8) :: meanDiag               ! Geometric mean diagonal value
+    real (r8) :: thisFraction           ! Geometric mean diagonal value
+
+    ! Executable code
+
+    if ( lengthScale == 0 ) then
+      call updateDiagonal ( covariance, vectors(diagonal), square=.true., &
+        & invert=invert )
+    else
+      nullify ( m )
+      ! Do a more complex fill.  First check our vectors are OK.
+      if ( covariance%m%row%vec%template%id /= &
+        & vectors(diagonal)%template%id ) call MLSMessage ( MLSMSG_Error, &
+        & ModuleName, "diagonal and covariance not compatible in fillCovariance" )
+      if ( covariance%m%row%vec%template%id /= &
+        & vectors(lengthScale)%template%id ) call MLSMessage ( MLSMSG_Error, &
+        & ModuleName, "lengthScale and covariance not compatible in fillCovariance" )
+      if ( vectors(lengthScale)%globalUnit /= phyq_length ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & "fraction vector does not have dimensions of length" )
+      if ( fraction /= 0 ) then
+        if ( covariance%m%row%vec%template%id /= &
+          & vectors(fraction)%template%id ) call MLSMessage ( MLSMSG_Error, &
+          & ModuleName, "fraction and covariance not compatible in fillCovariance" )
+        if ( vectors(fraction)%globalUnit /= phyq_dimensionless ) &
+          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & "fraction vector is not dimensionless" )
+      else
+        thisFraction = 1.0
+      end if
+
+      ! Now loop over the quantities
+      do q = 1, covariance%m%col%vec%template%noQuantities
+        qt => vectors(diagonal)%quantities(q)%template
+        n = qt%instanceLen
+        if ( qt%coherent ) surfs => qt%surfs(:,1)
+        if ( .not. qt%regular ) &
+          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & "Unable to handle irregular quantity in FillCovariance" )
+        call Allocate_test ( m, n, n, 'M', ModuleName )
+
+        ! Loop over the instances
+        do i = 1, covariance%m%col%vec%quantities(q)%template%noInstances
+          if ( .not. qt%coherent ) surfs => qt%surfs(:,i)
+
+          ! Clear the working matrix and load the diagonal
+          m = 0.0
+          do j = 1, n
+            m(j,j) = vectors(diagonal)%quantities(q)%values(j,i) ** 2.0
+          end do
+
+          ! Now if appropriate add off diagonal terms.
+          if ( any( qt%verticalCoordinate == (/ l_height, l_pressure, l_zeta /) ) ) then
+            ! Loop over off diagonal terms
+            do j = 1, n
+              do k = j+1, n
+                meanLength = sqrt ( vectors(lengthScale)%quantities(q)%values(j,i) * &
+                  &                 vectors(lengthScale)%quantities(q)%values(k,i) )
+                meanDiag = sqrt ( m(j,j) * m(k,k) ) 
+                if ( fraction /= 0) thisFraction = &
+                  & vectors(fraction)%quantities(q)%values(j,i)
+                select case (qt%verticalCoordinate)
+                case ( l_height )
+                  distance = abs ( surfs ( j/qt%noChans ) - surfs ( k/qt%noChans ) )
+                case ( l_zeta )
+                  distance = abs ( surfs ( j/qt%noChans ) - surfs ( k/qt%noChans ) ) * decade
+                case ( l_pressure )
+                  distance = abs ( -log10 ( surfs(j/qt%noChans) ) + &
+                    &               log10 ( surfs(k/qt%noChans) ) ) / decade
+                end select
+                if ( meanLength > 0.0 ) &
+                  & m(j,k) = meanDiag*thisFraction*exp(-distance/meanLength)
+              end do                    ! Loop over k (in M)
+            end do                      ! Loop over j (in M)
+          end if                        ! An appropriate vertical coordinate
+          if ( invert ) call MatrixInversion(M)
+          b = FindBlock ( covariance%m%col, q, i )
+          call Sparsify ( M, covariance%m%block(b,b) )
+        end do                          ! Loop over instances
+        call Deallocate_test ( m, 'M', ModuleName )
+      end do                            ! Loop over quantities
+    end if                              ! A non diagonal fill
   end subroutine FillCovariance
 
   !=============================== FillVectorQuantityFromGrid ============
@@ -2395,6 +2491,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.82  2001/10/16 00:07:48  livesey
+! Got smoothing working.
+!
 ! Revision 2.81  2001/10/15 22:10:42  livesey
 ! Interim version with smoothing stubbed
 !
