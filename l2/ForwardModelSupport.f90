@@ -380,7 +380,7 @@ contains ! =====     Public Procedures     =============================
     info%NUM_SIZE_BINS=40
     info%phiwindow = 5
     info%windowUnits = phyq_profiles
-    info%i_saturation = 2
+    info%i_saturation = 0
 !    info%cloud_width = 2
     info%cloud_fov = 1
 
@@ -692,6 +692,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.50  2003/02/04 22:02:18  jonathan
+! set i_saturation==0 as default
+!
 ! Revision 2.49  2003/02/04 19:03:06  livesey
 ! Default tolerance now -1.0
 !
