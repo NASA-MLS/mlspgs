@@ -47,33 +47,34 @@ contains
     use Toggles, only: Switches
     use VectorsModule, only: VECTOR_T, VECTORVALUE_T
 
-  ! Inputs
+    ! Inputs
 
     type(forwardModelConfig_T), intent(in) :: FwdModelConf
     type(vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
 
-  ! Outputs
+    ! Outputs
 
     integer, intent(out) :: NoSpecies   ! No. of Molecules under consideration
     integer, intent(out) :: No_Mol      ! Number of major Molecules (NO iso/vib)
     type (beta_group_T), dimension(:), pointer :: Beta_Group
-    type (catalog_T), dimension(:), pointer :: My_Catalog
+    type (catalog_T), dimension(:,:), pointer :: My_Catalog
 
-  ! Local variables
+    ! Local variables
 
     real(rp) :: Beta_Ratio
     logical :: DoThis                   ! Flag for lines in catalog item
     type (VectorValue_T), pointer :: F  ! An arbitrary species
     integer :: I, IER, J, K, L
     integer, dimension(:), pointer :: LINEFLAG ! /= 0 => Use this line
-                                        ! (noLines per species)
+    ! (noLines per species)
     integer, dimension(size(fwdModelConf%molecules,1)+1) :: Molecules_Temp
     character (len=32) :: molName       ! Name of a molecule
     integer :: NLines                   ! count(lineFlag)
     integer :: Polarized                ! -1 => One of the selected lines is Zeeman split
-                                        ! +1 => None of the selected lines is Zeeman split
+    ! +1 => None of the selected lines is Zeeman split
     integer :: SIGIND                   ! Signal index, loop counter
     integer :: SV_I
+    integer :: S                        ! Sideband index
     type (catalog_T), pointer :: thisCatalogEntry
     type (line_T), pointer :: thisLine
 
@@ -105,7 +106,7 @@ contains
       beta_ratio = 1.0_rp   ! Always, for single element (no grouping)
       do j = 1, noSpecies
         l = fwdModelConf%molecules(j)
-!        if ( l == l_extinction ) CYCLE
+        !        if ( l == l_extinction ) CYCLE
         sv_i = sv_i + 1
         beta_group(sv_i)%n_elements   = 1
         beta_group(sv_i)%cat_index(1) = j
@@ -121,7 +122,7 @@ contains
       do j = 1, noSpecies
         k = molecules_temp(j)
         l = abs(k)
-!        if ( l == l_extinction ) CYCLE
+        !        if ( l == l_extinction ) CYCLE
         beta_ratio = 1.0_rp
         if ( k > 0 ) then
           if ( molecules_temp(j+1) > 0 ) then
@@ -133,8 +134,8 @@ contains
         else
           if ( molecules_temp(j-1) > 0) sv_i = sv_i + 1
           f => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-              & quantityType=l_isotoperatio, molecule=l, noError=.TRUE., &
-              & config=fwdModelConf )
+            & quantityType=l_isotoperatio, molecule=l, noError=.TRUE., &
+            & config=fwdModelConf )
           if ( associated ( f ) ) beta_ratio = f%values(1,1)
           i = beta_group(sv_i)%n_elements + 1
           beta_group(sv_i)%n_elements   = i
@@ -145,114 +146,116 @@ contains
 
     end if
 
-! Work out which spectroscopy we're going to need ------------------------
+    ! Work out which spectroscopy we're going to need ------------------------
 
-    allocate ( My_Catalog(noSpecies), stat=ier )
+    allocate ( My_Catalog(-1:1,noSpecies), stat=ier )
     if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate//'my_catalog' )
 
-    do j = 1, noSpecies
-      ! Skip if the next molecule is negative (indicates that this one is a
-      ! parent)
-      if ( (j < noSpecies) .and. (fwdModelConf%molecules(j) > 0) ) then
-        if (fwdModelConf%molecules(j+1) < 0 ) then
-          my_catalog(j) = empty_cat
-          ! my_catalog springs into existence with %lines and %polarized null
-          call allocate_test ( my_catalog(j)%lines, 0, &
-                            & 'my_catalog(?)%lines(0)', moduleName )
-          call allocate_test ( my_catalog(j)%polarized, 0, &
-                            & 'my_catalog(?)%polarized(0)', moduleName )
-          cycle
+    do s = fwdModelConf%sidebandStart, fwdModelConf%sidebandStop, 2
+      do j = 1, noSpecies
+        ! Skip if the next molecule is negative (indicates that this one is a
+        ! parent)
+        if ( (j < noSpecies) .and. (fwdModelConf%molecules(j) > 0) ) then
+          if (fwdModelConf%molecules(j+1) < 0 ) then
+            my_catalog(s, j) = empty_cat
+            ! my_catalog springs into existence with %lines and %polarized null
+            call allocate_test ( my_catalog(s,j)%lines, 0, &
+              & 'my_catalog(?,?)%lines(0)', moduleName )
+            call allocate_test ( my_catalog(s,j)%polarized, 0, &
+              & 'my_catalog(?,?)%polarized(0)', moduleName )
+            cycle
+          end if
         end if
-      end if
-      l = abs(fwdModelConf%molecules(j))
-      thisCatalogEntry => Catalog(FindFirst(catalog%molecule == l ) )
-      My_Catalog(j) = thisCatalogEntry
-      ! Don't deallocate them by mistake -- my_catalog is a shallow copy
-      nullify ( my_catalog(j)%lines, my_catalog(j)%polarized )
-      if ( associated ( thisCatalogEntry%lines ) ) then
-        ! Now subset the lines according to the signal we're using
-        call allocate_test ( lineFlag, size(thisCatalogEntry%lines), &
-                         &  'lineFlag', moduleName )
-        lineFlag = 0
-        do k = 1, size ( thisCatalogEntry%lines )
-          thisLine => lines(thisCatalogEntry%lines(k))
-          if ( associated(thisLine%signals) ) then
-            polarized = 1 ! not polarized
-            do sigInd = 1, size(fwdModelConf%signals)
-              if ( fwdModelConf%allLinesForRadiometer ) then
-                doThis = .false.
-                do i = 1, size(thisLine%signals)
-                  ! Tried to make GetRadiometerFromSignal elemental, but compile time
-                  ! in LF95 (optimized) for Construct.f90 went nuts! :-(
-                  if ( GetRadiometerFromSignal ( thisLine%signals(i) ) == &
-                    & fwdModelConf%signals(sigInd)%radiometer ) then
-                    doThis = .true.
-                    if ( .not. fwdModelConf%polarized ) &
-                exit   ! loop over signals for line -- no need to check for
-                       ! polarized lines
-                    if ( associated(thisLine%polarized) ) then
-                      if ( thisLine%polarized(i) ) then
-                        polarized = -1 ! polarized
-                exit   ! loop over signals for line -- one signal that sees a
-                       ! polarized line is enough to turn on the polarized
-                       ! method
+        l = abs(fwdModelConf%molecules(j))
+        thisCatalogEntry => Catalog(FindFirst(catalog%molecule == l ) )
+        My_Catalog(s,j) = thisCatalogEntry
+        ! Don't deallocate them by mistake -- my_catalog is a shallow copy
+        nullify ( my_catalog(s,j)%lines, my_catalog(s,j)%polarized )
+        if ( associated ( thisCatalogEntry%lines ) ) then
+          ! Now subset the lines according to the signal we're using
+          call allocate_test ( lineFlag, size(thisCatalogEntry%lines), &
+            &  'lineFlag', moduleName )
+          lineFlag = 0
+          do k = 1, size ( thisCatalogEntry%lines )
+            thisLine => lines(thisCatalogEntry%lines(k))
+            if ( associated(thisLine%signals) ) then
+              polarized = 1 ! not polarized
+              do sigInd = 1, size(fwdModelConf%signals)
+                if ( fwdModelConf%allLinesForRadiometer ) then
+                  doThis = .false.
+                  do i = 1, size(thisLine%signals)
+                    ! Tried to make GetRadiometerFromSignal elemental, but compile time
+                    ! in LF95 (optimized) for Construct.f90 went nuts! :-(
+                    if ( GetRadiometerFromSignal ( thisLine%signals(i) ) == &
+                      & fwdModelConf%signals(sigInd)%radiometer ) then
+                      doThis = .true.
+                      if ( .not. fwdModelConf%polarized ) &
+                        exit   ! loop over signals for line -- no need to check for
+                      ! polarized lines
+                      if ( associated(thisLine%polarized) ) then
+                        if ( thisLine%polarized(i) ) then
+                          polarized = -1 ! polarized
+                          exit   ! loop over signals for line -- one signal that sees a
+                          ! polarized line is enough to turn on the polarized
+                          ! method
+                        end if
                       end if
                     end if
+                  end do ! End loop over signals for line
+                else
+                  ! Not doing all lines for radiometer, be more selective
+                  doThis = any ( &
+                    & ( thisLine%signals == fwdModelConf%signals(sigInd)%index ) .and. &
+                    & ( ( thisLine%sidebands == 0 ) .or. ( thisLine%sidebands == s ) ) )
+                  if ( fwdModelConf%polarized .and. doThis .and. &
+                    & associated(thisLine%polarized) ) then
+                    if ( any(thisLine%polarized) ) polarized = -1 ! polarized
                   end if
-                end do ! End loop over signals for line
-              else
-                doThis = any ( thisLine%signals == &
-                  & fwdModelConf%signals(sigInd)%index )
-                if ( fwdModelConf%polarized .and. doThis .and. &
-                  & associated(thisLine%polarized) ) then
-                  if ( any(thisLine%polarized) ) polarized = -1 ! polarized
                 end if
-              end if
 
-              ! If we're only doing one sideband, maybe we can remove some more lines
-              if ( fwdModelConf%sidebandStart == fwdModelConf%sidebandStop ) &
-                & doThis = doThis .and. &
-                & any( ( thisLine%sidebands == fwdModelConf%sidebandStart ) .or. &
-                & ( thisLine%sidebands == 0 ) )
-              if ( doThis ) then
-                lineFlag(k) = polarized
-                if ( polarized < 0 .or. .not. fwdModelConf%polarized ) &
-            exit   ! loop over signals requested in fwm
-              end if
-            end do ! End loop over signals requested in fwm
+                if ( fwdModelConf%sidebandStart == fwdModelConf%sidebandStop ) &
+                  & doThis = doThis .and. &
+                  & any( ( thisLine%sidebands == fwdModelConf%sidebandStart ) .or. &
+                  & ( thisLine%sidebands == 0 ) )
+                if ( doThis ) then
+                  lineFlag(k) = polarized
+                  if ( polarized < 0 .or. .not. fwdModelConf%polarized ) &
+                    exit   ! loop over signals requested in fwm
+                end if
+              end do ! End loop over signals requested in fwm
+            end if
+          end do     ! End loop over lines
+
+          ! Check we have at least one line for this species
+
+          nLines = count(lineFlag /= 0)
+          if ( nLines == 0 .and. all ( my_catalog(s,j)%continuum == 0.0 ) ) then
+            call get_string ( lit_indices(l), molName )
+            call MLSMessage ( MLSMSG_Warning, ModuleName, &
+              & 'No relevant lines or continuum for '//trim(molName) )
           end if
-        end do     ! End loop over lines
+          call allocate_test ( my_catalog(s,j)%lines, nLines, &
+            & 'my_catalog(?,?)%lines', moduleName )
+          call allocate_test ( my_catalog(s,j)%polarized, nLines, &
+            & 'my_catalog(?,?)%polarized', moduleName )
+          my_catalog(s,j)%lines = pack ( thisCatalogEntry%lines, lineFlag /= 0 )
+          my_catalog(s,j)%polarized = pack ( lineFlag < 0, lineFlag /= 0 )
+          call deallocate_test ( lineFlag, 'lineFlag', moduleName )
 
-! Check we have at least one line for this species
+        else
 
-        nLines = count(lineFlag /= 0)
-        if ( nLines == 0 .and. all ( my_catalog(j)%continuum == 0.0 ) ) then
-          call get_string ( lit_indices(l), molName )
-          call MLSMessage ( MLSMSG_Warning, ModuleName, &
-            & 'No relevant lines or continuum for '//trim(molName) )
+          ! No lines for this species.  However, its continuum is still valid 
+          ! so don't set it to empty.
+          ! Won't bother checking that continuum /= 0 as if it was then
+          ! presumably having no continuum and no lines it wouldn't be in the catalog!
+          call allocate_test ( my_catalog(s,j)%lines, 0, 'my_catalog(?,?)%lines(0)', &
+            & moduleName )
+          call allocate_test ( my_catalog(s,j)%polarized, 0, 'my_catalog(?,?)%polarized(0)', &
+            & moduleName )
         end if
-        call allocate_test ( my_catalog(j)%lines, nLines, &
-          & 'my_catalog(?)%lines', moduleName )
-        call allocate_test ( my_catalog(j)%polarized, nLines, &
-          & 'my_catalog(?)%polarized', moduleName )
-        my_catalog(j)%lines = pack ( thisCatalogEntry%lines, lineFlag /= 0 )
-        my_catalog(j)%polarized = pack ( lineFlag < 0, lineFlag /= 0 )
-        call deallocate_test ( lineFlag, 'lineFlag', moduleName )
-
-      else
-
-        ! No lines for this species.  However, its continuum is still valid 
-        ! so don't set it to empty.
-        ! Won't bother checking that continuum /= 0 as if it was then
-        ! presumably having no continuum and no lines it wouldn't be in the catalog!
-        call allocate_test ( my_catalog(j)%lines, 0, 'my_catalog(?)%lines(0)', &
-          & moduleName )
-        call allocate_test ( my_catalog(j)%polarized, 0, 'my_catalog(?)%polarized(0)', &
-          & moduleName )
-      end if
-    end do         ! Loop over species
-
+      end do         ! Loop over species
+    end do                              ! Loop over sidebands
     if ( index(switches,'bgrp') /= 0 ) then
       call dump ( my_catalog, 'My_Catalog in Get_Species_Data' )
       call dump ( beta_group )
@@ -269,17 +272,18 @@ contains
     use MLSMessageModule, only: MLSMessage, MLSMSG_Deallocate, MLSMSG_Error
     use SpectroscopyCatalog_m, only: Catalog_t
 
-    type(catalog_t), pointer :: My_Catalog(:)
+    type(catalog_t), pointer :: My_Catalog(:,:)
 
-    integer :: I
-
-    do i = 1, size(my_catalog)
-      ! Note that we don't deallocate the signals/sidebands stuff for each line
-      ! as these are shallow copies of the main spectroscopy catalog stuff
-      call deallocate_test ( my_catalog(i)%lines, 'my_catalog(?)%lines', &
-        & moduleName )
-      call deallocate_test ( my_catalog(i)%polarized, 'my_catalog(?)%polarized', &
-        & moduleName )
+    integer :: I, J
+    do j = -1, 1, 2
+      do i = 1, size(my_catalog,2)
+        ! Note that we don't deallocate the signals/sidebands stuff for each line
+        ! as these are shallow copies of the main spectroscopy catalog stuff
+        call deallocate_test ( my_catalog(j,i)%lines, 'my_catalog(?,?)%lines', &
+          & moduleName )
+        call deallocate_test ( my_catalog(j,i)%polarized, 'my_catalog(?,?)%polarized', &
+          & moduleName )
+      end do
     end do
 
     deallocate ( my_catalog, stat=i )
@@ -343,6 +347,9 @@ contains
 end module  Get_Species_Data_M
 
 ! $Log$
+! Revision 2.6  2003/06/27 00:59:53  vsnyder
+! Simplify interface to Get_Species_Data
+!
 ! Revision 2.5  2003/05/24 02:25:53  vsnyder
 ! Set the polarized flag correctly -- well, at least differently
 !
