@@ -13,7 +13,7 @@ module MLSFiles               ! Utility file routines
     & he5_gdopen, he5_gdclose, &
     & HE5F_ACC_TRUNC, HE5F_ACC_RDONLY, HE5F_ACC_RDWR
   use machine, only: io_error
-  use MLSCommon, only: i4, BareFNLen, FileNameLen
+  use MLSCommon, only: i4, BareFNLen, FileNameLen, MLSFile_T
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
     & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
   use MLSStrings, only: Capitalize, LowerCase, Reverse, SortArray
@@ -189,19 +189,21 @@ module MLSFiles               ! Utility file routines
     module procedure Dump_FileDatabase
   end interface
 
-  ! Information describing the files used by the mls software
-  ! Stop passing file handles back & forth bewteen routines
-  ! -- pass one of these instead
-  TYPE MLSFile_T
-    CHARACTER (LEN=8) :: Type=""  ! e.g., 'ascii', 'hdf', 'swath', 'binary'
-    CHARACTER (LEN=8) :: access=""  ! e.g., 'rdonly', 'write', 'rdwrite'
-    CHARACTER (LEN=8) :: content=""  ! e.g., 'l1brad', 'l2gp', 'l2aux'
-    CHARACTER (LEN=FileNameLen) :: Name=""  ! its name (usu. w/path)
-    INTEGER :: File_Id=0     ! The HDF ID (handle) or io unit for the file
-    INTEGER :: PCF_Id=0      ! The PCF ID (ref), if any,  for the file
-    INTEGER :: HDFVersion=0  ! Which hdf version is the file if hdf(eos)
-    LOGICAL :: StillOpen=.false.
-  END TYPE MLSFile_T
+! The following data type was moved to MLSCommon in an attempt to code around
+! Lahey's compiler that can cause compile times to exceed mission lifetime
+! >   ! Information describing the files used by the mls software
+! >   ! Stop passing file handles back & forth bewteen routines
+! >   ! -- pass one of these instead
+! >   TYPE MLSFile_T
+! >     CHARACTER (LEN=8) :: Type=""  ! e.g., 'ascii', 'hdf', 'swath', 'binary'
+! >     CHARACTER (LEN=8) :: access=""  ! e.g., 'rdonly', 'write', 'rdwrite'
+! >     CHARACTER (LEN=8) :: content=""  ! e.g., 'l1brad', 'l2gp', 'l2aux'
+! >     CHARACTER (LEN=FileNameLen) :: Name=""  ! its name (usu. w/path)
+! >     INTEGER :: File_Id=0     ! The HDF ID (handle) or io unit for the file
+! >     INTEGER :: PCF_Id=0      ! The PCF ID (ref), if any,  for the file
+! >     INTEGER :: HDFVersion=0  ! Which hdf version is the file if hdf(eos)
+! >     LOGICAL :: StillOpen=.false.
+! >   END TYPE MLSFile_T
 contains
 
   !-----------------------------------------  AddFileToDatabase  -----
@@ -1784,6 +1786,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.44  2002/12/05 19:44:24  pwagner
+! Moved MLSFile_T from MLSFiles to MLSCommon
+!
 ! Revision 2.43  2002/12/04 01:16:25  pwagner
 ! Open_ Close_ Dump_ Deallocate_ on new MLSFile_T added
 !
