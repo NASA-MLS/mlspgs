@@ -28,8 +28,8 @@ contains ! =====     Public Procedures     =============================
 
     ! Import stuff
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-    use VectorsModule, only: VECTOR_T, VECTORVALUE_T, COPYVECTOR, ADDTOVECTOR, &
-      & CLEARVECTOR, DESTROYVECTORINFO, GETVECTORQUANTITYBYTYPE
+    use VectorsModule, only: VECTOR_T, VECTORVALUE_T, ADDTOVECTOR, &
+      & CLEARVECTOR, DESTROYVECTORINFO, GETVECTORQUANTITYBYTYPE, CLONEVECTOR
     use ForwardModelConfig, only: FORWARDMODELCONFIG_T
     use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T, &
       & FORWARDMODELINTERMEDIATE_T
@@ -79,7 +79,7 @@ contains ! =====     Public Procedures     =============================
         & .not. jacobian%row%instFirst, .not. jacobian%col%instFirst, &
         & 'jacobianContribution' )
     end if
-    call CopyVector ( radianceContribution, fwdModelOut )
+    call CloneVector ( radianceContribution, fwdModelOut )
 
     maf = fmStat%maf
 
@@ -108,6 +108,7 @@ contains ! =====     Public Procedures     =============================
     cos2phi = cos ( 2*phi%values(1,instance) * deg2rad )
 
     ! Store the values of phi away for the moment
+    nullify ( savePhiValues )
     call Allocate_Test ( savePhiValues, phi%template%instanceLen, &
       & phi%template%noInstances, 'savePhiValues', ModuleName )
     savePhiValues = phi%values

@@ -7,15 +7,15 @@
       print *
       k = windowFinish - windowStart + 1
       print *, ' windowStart:', windowStart, '  windowFinish:', windowFinish
-      print *, 'phi_tan_mmaf\', k
+      print *, 'phi_tan_mmaf\ ', k
       print '(5(2x,f8.3))', temp%template%phi(1,windowStart:windowFinish)
 
       print *
-      print *, 'vel_z_mmaf\', k
+      print *, 'vel_z_mmaf\ ', k
       print '(5(2x,f8.3))', -0.001*losVel%values(1,windowStart:windowFinish)
 
       print *
-      print *, 't_z_basis\', n_t_zeta
+      print *, 't_z_basis\ ', n_t_zeta
       print 972,temp%template%surfs(1:n_t_zeta,1)
 
       print *
@@ -24,24 +24,24 @@
       print '(2(2x,f8.3))', refGPH%template%surfs(1,1), r
 
       print *
-      print *, 'href\', k
+      print *, 'href\ ', k
       print '(5(2x,f8.3))', refGPH%values(1,windowStart:windowFinish) / 1000.0
 
       print *
-      print *, 't_phi_basis\', k
+      print *, 't_phi_basis\ ', k
       print '(5(2x,f8.3))', temp%template%phi(1,windowStart:windowFinish)
 
       print *
-      print *, 't_geo_lat\', k
+      print *, 't_geo_lat\ ', k
       print '(5(2x,f8.3))', temp%template%geodLat(1,windowStart:windowFinish)
 
       print *
-      print *, 't_coeffs\', k*n_t_zeta
+      print *, 't_coeffs\ ', k*n_t_zeta
       print '(5(3x,f8.3))', ((temp%values(i,j),j=1,k),i=1,n_t_zeta)
  
       print *
       k = ptan%template%noSurfs
-      print *, 'ptan\', k
+      print *, 'ptan\ ', k
       print '(5(3x,f10.7))', Ptan%values(1:k,maf)
       
       print *, ' no_sps'
@@ -107,6 +107,9 @@
 !     Call MLSMessage ( MLSMSG_Error, ModuleName, "End of DUMP print cycle")
 !
 ! $Log$
+! Revision 2.4  2003/09/15 17:44:33  livesey
+! Cosmetic changes for fussy (and wrong) intel compiler
+!
 ! Revision 2.3  2003/06/18 02:00:01  vsnyder
 ! Get phi from temp quantity; get sidebandStart from fwdModelConf
 !
