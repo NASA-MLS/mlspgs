@@ -44,13 +44,13 @@
         end do
         ! Note these next two aren't totally gracefull with respect to 
         ! the missingRegions flag.
-        if ( present(dyByDx) ) dyByDx = 0.0
+        if ( present(dyByDx) ) dyByDx = 0.0_rk
       else
         ! Else extrapolation forbidden
         do ind = 1, noNew
           if ( newX(ind) == oldX(1) ) then
             newY(ind,:) = oldY(1,:)
-            if ( present(dyByDx) ) dyByDx = 0.0
+            if ( present(dyByDx) ) dyByDx = 0.0_rk
           else
             newY(ind,:) = badValue
             if ( present(dyByDx) ) dyByDx = badValue
@@ -83,8 +83,8 @@
       ! Here we have to solve a tridiagonal equation
       ! This is a straight copy of my (Nathaniel's) IDL code, devectorized
       ! to avoid the need for array temporary values.
-      oldSecond(1,:) = 0.0
-      temp(1,:) = 0.0
+      oldSecond(1,:) = 0.0_rk
+      temp(1,:) = 0.0_rk
       do ind = 2, noOld-1
         do col = 1, width
           p = 1.0_rk / (coeffs%sig(ind)*oldSecond(ind-1,col)+2.0_rk)
@@ -95,7 +95,7 @@
             & coeffs%sig(ind)*temp(ind-1,col)) * p
         end do
       end do
-      oldSecond(noOld,:) = 0.0
+      oldSecond(noOld,:) = 0.0_rk
 
       ! Now do the back substitution
       do ind = noOld-1, 1, -1
@@ -123,8 +123,8 @@
       if ( present(dyByDx) ) dyByDx = newY
     else
       ! Clear the result array(s)
-      newY = 0.0
-      if ( present(dyByDx) ) dyByDx = 0.0
+      newY = 0.0_rk
+      if ( present(dyByDx) ) dyByDx = 0.0_rk
     end if
 
     oldYlower = oldY(coeffs%lowerInds,:)
@@ -186,7 +186,7 @@
     if ( present ( dyByDx ) .and. scan(extrapolateMethod(1:1),"BC") > 0) then
       select case ( extrapolateMethod(1:1) )
       case ( "C" )
-        dyByDxFill = 0.0
+        dyByDxFill = 0.0_rk
       case ( "B" )
         dyByDxFill = badValue
       end select
@@ -208,9 +208,5 @@
 ! end subroutine InterpolateUsingSetup_r*
 
 ! $Log$
-! Revision 1.2  2002/10/04 00:46:12  vsnyder
-! Move declarations of local variables here
-!
-! Revision 1.1  2002/09/13 18:01:33  pwagner
-! First commit
-!
+! Revision 1.1  2002/11/22 23:58:49  vsnyder
+! Initial Commit
