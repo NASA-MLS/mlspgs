@@ -36,7 +36,8 @@ module TREE_TYPES
   integer, parameter :: N_NAME_DEF =   n_mult + 1      ! Names OK in section
   integer, parameter :: N_NAMED =      n_name_def + 1  ! labelled spec
   integer, parameter :: N_OR =         n_named + 1
-  integer, parameter :: N_PLUS =       n_or + 1
+  integer, parameter :: N_POW =        n_or + 1
+  integer, parameter :: N_PLUS =       n_pow + 1
   integer, parameter :: N_SECTION =    n_plus + 1      ! what specs in section?
   integer, parameter :: N_SET_ONE =    n_section + 1   ! /foo
   integer, parameter :: N_SPEC_ARGS =  n_set_one + 1   ! x,y=z,...
@@ -93,6 +94,7 @@ contains
     case ( n_Named );      call add_char ( 'named' )
     case ( n_Or );         call add_char ( 'or' )
     case ( n_Plus );       call add_char ( 'plus' )
+    case ( n_Pow );        call add_char ( 'power' )
     case ( n_Section );    call add_char ( 'section' )
     case ( n_Set_one );    call add_char ( 'set_one' )
     case ( n_Spec_args );  call add_char ( 'spec_args' )
@@ -111,6 +113,9 @@ contains
 end module TREE_TYPES
 
 ! $Log$
+! Revision 2.7  2004/05/28 23:12:21  vsnyder
+! Add power (^) operator
+!
 ! Revision 2.6  2004/01/17 03:04:48  vsnyder
 ! Provide for functions in expressions
 !

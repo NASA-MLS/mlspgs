@@ -346,23 +346,25 @@ contains
     integer, intent(in) :: SUBROOT
     integer, intent(in) :: DEPTH
     logical, intent(in), optional :: DUMP_DECOR
-    integer :: I
-    call output ( subroot, 5 )
+    integer :: I, MyRoot
+    myRoot = subroot
+    if ( myRoot < 0 ) myRoot = tree_sp + 1
+    call output ( myRoot, 5 )
     call output ( ':' )
-    call dump_tree_node ( subroot, depth )
+    call dump_tree_node ( myRoot, depth )
     if ( present(dump_decor) ) then
       if ( dump_decor ) then
       ! In Fortran 2000:
-      ! write ( prunit, '(" (", i0, ") ', advance="no") decoration(subroot)
+      ! write ( prunit, '(" (", i0, ") ', advance="no") decoration(myRoot)
         call output ( ' (' )
-        call output ( decoration(subroot) )
+        call output ( decoration(myRoot) )
         call output ( ') ')
       end if
     end if
     call output ( '', advance='yes' )
-    if ( the_tree(subroot)%kind == internal ) then
-      do i = 1, nsons(subroot)
-        call print_subtree ( subtree(i,subroot), depth+1, dump_decor )
+    if ( the_tree(myRoot)%kind == internal ) then
+      do i = 1, nsons(myRoot)
+        call print_subtree ( subtree(i,myRoot), depth+1, dump_decor )
       end do
     end if
     return
@@ -616,6 +618,9 @@ contains
 end module TREE
 
 ! $Log$
+! Revision 2.7  2004/05/28 23:14:35  vsnyder
+! Allow print_subtree to start at the top of the stack with a negative 'root'
+!
 ! Revision 2.6  2003/05/12 20:54:16  vsnyder
 ! Correct a subtle bug in SUBTREE that probably doesn't affect us
 !
