@@ -27,6 +27,7 @@ module Comp_Sps_Path_Frq_m
     use MLSCommon, only: RP, IP, R8
     use get_eta_matrix_m, only: Get_Eta_Sparse
     use Load_sps_data_m, only: Grids_T
+    use Dump_0, only: Dump
 
 ! Input:
 
@@ -101,10 +102,14 @@ module Comp_Sps_Path_Frq_m
 ! For ease lets do the slow and easy (and certainly more reliable)
 
 ! Compute eta:
-
-        call get_eta_sparse ( lo+sideband*Grids_x%frq_basis(f_inda:f_indb-1), &
-                            & (/Frq/), eta_f(1:1,1:n_f), not_zero_f(1:1,1:n_f) )
-
+        if ( sideband == -1 ) then
+          call get_eta_sparse ( lo+sideband*Grids_x%frq_basis(f_indb-1:f_inda:-1), &
+            & (/Frq/), eta_f(1:1,n_f:1:-1), not_zero_f(1:1,n_f:1:-1) )
+        else
+          call get_eta_sparse ( lo+sideband*Grids_x%frq_basis(f_inda:f_indb-1), &
+            & (/Frq/), eta_f(1:1,1:n_f), not_zero_f(1:1,1:n_f) )
+        end if
+          
         do sv_i = 0 , nfzp - 1
           f_len = f_len + 1
           sv_j = v_inda + sv_i
@@ -137,6 +142,9 @@ module Comp_Sps_Path_Frq_m
 end module Comp_Sps_Path_Frq_m
 !
 ! $Log$
+! Revision 2.11  2002/09/27 20:43:06  livesey
+! Bug fix for 'backwards' bases in get_eta_sparse for eta_f
+!
 ! Revision 2.10  2002/09/06 20:58:26  vsnyder
 ! Cosmetic changes, copyright notice, move USEs to procedure scope
 !
