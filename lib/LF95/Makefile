@@ -39,8 +39,14 @@ PGSTK = $(HOME)/mlspgs/SDPToolkit/LF95
 
 include $S/Makefile.inc
 
+machine.o: machine.f90
+	$(F90) -c $(FOPTS) machine.f90
+
 #
 # $Log$
+# Revision 2.3  2000/10/10 22:44:25  vsnyder
+# Correct actions for test_sparsify and test_multiply
+#
 # Revision 2.2  2000/10/10 00:12:47  vsnyder
 # Corrected an incorrect path for CF
 #
