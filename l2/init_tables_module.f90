@@ -39,7 +39,7 @@ module INIT_TABLES_MODULE
   implicit NONE
   public ! This would be a MUCH LONGER list than the list of private
   !        names below.
-  private :: ADD_IDENT, INIT_INTRINSIC, INIT_MOLECULES, INIT_SPECTROSCOPY
+  private :: ADD_IDENT, INIT_SPECTROSCOPY
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -199,9 +199,9 @@ contains ! =====     Public procedures     =============================
 ! --------------------------------------------------  INIT_TABLES  -----
   subroutine INIT_TABLES
 
-    ! This really belongs in make_tree, but "make depends" can't see it there
+    ! This is here because "make depends" can't see it in make_tree
     ! (because of the "include"):
-    use TREE, only: BUILD_TREE, PUSH_PSEUDO_TERMINAL
+    use TREE, only:
     use TREE_TYPES, only: N_DOT, N_DT_DEF, N_FIELD_SPEC, N_FIELD_TYPE, &
                           N_NAME_DEF, N_SECTION, N_SPEC_DEF
 
@@ -1026,6 +1026,11 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.311  2003/05/19 20:14:59  vsnyder
+! Remove private declarations for module entities accessed without using
+! an "only" clause.  These cause NAG to issue a message that the name is
+! explicitly accessed from a module but not used.  Bizarre.
+!
 ! Revision 2.310  2003/05/12 20:57:21  pwagner
 ! Added L2ParSF spec to allow changing staging file name in global settings
 !
