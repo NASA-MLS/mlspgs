@@ -41,7 +41,8 @@ module ConstructQuantityTemplates
   integer, parameter :: P_REFLECTOR          = P_RADIOMETEROPTIONAL + 1
   integer, parameter :: P_SCMODULE           = P_REFLECTOR + 1
   integer, parameter :: P_SIGNAL             = P_SCMODULE + 1
-  integer, parameter :: P_SUPPRESSCHANNELS   = P_SIGNAL + 1
+  integer, parameter :: P_SIGNALOPTIONAL     = P_SIGNAL + 1
+  integer, parameter :: P_SUPPRESSCHANNELS   = P_SIGNALOPTIONAL + 1
   integer, parameter :: P_XYZ                = P_SUPPRESSCHANNELS + 1
   integer, parameter :: P_MATRIX3X3          = P_XYZ + 1
 
@@ -254,14 +255,16 @@ contains ! ============= Public procedures ===================================
     if ( got ( f_Molecule ) .neqv. properties ( p_Molecule ) ) &
       & call Announce_error ( root, trim ( merge ( 'unexpected', 'need      ', &
       & got(f_Molecule) ) ) // ' molecule for quantity type ', quantityType )
-    if ( got ( f_Signal ) .neqv. properties ( p_Signal ) ) &
-      & call Announce_error ( root, trim ( merge ( 'unexpected', 'need      ', &
-      & got(f_Signal) ) ) // ' signal for quantity type ', quantityType )
     if ( got ( f_Reflector ) .neqv. properties ( p_Reflector ) ) &
       & call Announce_error ( root, trim ( merge ( 'unexpected', 'need      ', &
       & got(f_Reflector) ) ) // ' reflector for quantity type ', quantityType )
 
     ! These ones need a little more thought
+    if ( .not. properties ( p_signalOptional ) ) then
+      if ( got ( f_Signal ) .neqv. properties ( p_Signal ) ) &
+        & call Announce_error ( root, trim ( merge ( 'unexpected', 'need      ', &
+        & got(f_Signal) ) ) // ' signal for quantity type ', quantityType )
+    end if
     if ( .not. properties ( p_fGridOptional ) ) then
       if ( got ( f_fGrid ) .neqv. properties ( p_fGrid ) ) &
         & call Announce_error ( root, trim ( merge ( 'unexpected', 'need      ', &
@@ -1050,8 +1053,8 @@ contains ! ============= Public procedures ===================================
 
     call DefineQtyTypes ( (/ &
       l_adopted, phyq_dimensionless, none, next, &
-      l_baseline, phyq_temperature, p_flexibleVHGrid, p_fGrid, p_radiometer, &
-                  p_mustBeZeta, next, &
+      l_baseline, phyq_temperature, p_flexibleVHGrid, p_fGrid, p_radiometerOptional, &
+                  p_signalOptional, p_suppressChannels, p_mustBeZeta, next, &
       l_boundaryPressure, phyq_pressure, p_hGrid, next, &
       l_calSidebandFraction, phyq_dimensionless, p_signal, next, &
       l_chisqBinned, phyq_dimensionless, p_hGrid, p_vGrid, &
@@ -1263,6 +1266,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.118  2004/10/16 17:25:55  livesey
+! Added signalOptional property and more flexible handling of baseline
+!
 ! Revision 2.117  2004/10/13 02:24:33  livesey
 ! Added ability to set altitude in forge
 !
