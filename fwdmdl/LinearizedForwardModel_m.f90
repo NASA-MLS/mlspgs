@@ -14,7 +14,7 @@ module LinearizedForwardModel_m
   use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T, &
     & FORWARDMODELINTERMEDIATE_T
   use ManipulateVectorQuantities, only: FINDCLOSESTINSTANCES
-  use MatrixModule_1, only:  MATRIX_T, MULTIPLYMATRIXVECTORNOT
+  use MatrixModule_1, only:  MATRIX_T, MULTIPLYMATRIXVECTORNOT, DUMP
   use MLSCommon, only: r8
   use MLSSignals_m, only: Signal_T
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
@@ -115,6 +115,8 @@ contains ! =====     Public Procedures     =============================
     ! For the moment choose the first
     l2pcBin = 1
     l2pc => l2pcDatabase(l2pcBin)
+!    print*,'Before l2pc forward model:'
+!    call dump (l2pc%kStar)
 
     radInl2pc => GetVectorQuantityByType (l2pc%yStar, quantityType=l_radiance, &
       & signal=signal%index, sideband=signal%sideband )
@@ -245,6 +247,14 @@ contains ! =====     Public Procedures     =============================
       & associated(l2pc%xStar%template, l2pc%kStar%col%vec%template), &
       & associated(l2pc%yStar%template, l2pc%kStar%row%vec%template)
     print*,'Just testing:', associated (deltaX%template, l2pc%kStar%col%vec%template)
+    print*,'One more test:',&
+      & associated(l2pc%xStar%template), associated(l2pc%kStar%col%vec%template), &
+      & associated(l2pc%yStar%template), associated(l2pc%kStar%row%vec%template)
+
+    l2pc%kStar%col%vec%template => deltaX%template
+    print*,"Now, having forced it:",&
+      & associated(deltaX%template, l2pc%kStar%col%vec%template)
+
     call MultiplyMatrixVectorNoT ( l2pc%kStar, deltaX, yP )
 
     ! Now we interpolate yP to ptan
@@ -294,6 +304,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 1.2  2001/04/26 23:54:32  livesey
+! Interim version
+!
 ! Revision 1.1  2001/04/25 20:49:27  vsnyder
 ! Initial commit
 !
