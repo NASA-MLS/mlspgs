@@ -7,62 +7,9 @@ module FullCloudForwardModel
 ! THIS MODULE CONTAINS THE FULL CLOUD FORWARD MODEL  
 ! ===========================================================================
 
-  use Allocate_deallocate,          only: Allocate_test, Deallocate_test
-  use AntennaPatterns_m,            only: ANTENNAPATTERNS
-  use CloudySkyModule,              only: CLOUD_MODEL
-  use CloudySkyRadianceModel,       only: CloudForwardModel
-  use Hdf,                          only: DFACC_READ, DFACC_CREATE
-  use HDFEOS,                       only: SWOPEN, SWCLOSE
-  use L2GPData,                     only: L2GPData_T, ReadL2GPData, WriteL2GPData
-  use MLSCommon,                    only: NameLen, FileNameLen, r8, rm, rp, FINDFIRST
-  use MLSMessageModule,             only: MLSMessage, MLSMSG_Error, MLSMSG_Warning, MLSMSG_Allocate, MLSMSG_Deallocate
-  use MLSSignals_m,                 only: SIGNAL_T, ARESIGNALSSUPERSET
-  use MatrixModule_0,               only: M_Absent, M_BANDED, MATRIXELEMENT_T, M_BANDED, &
-                                        & M_COLUMN_SPARSE, CREATEBLOCK, M_FULL
-  use MatrixModule_1,               only: MATRIX_T, FINDBLOCK
-  use ManipulateVectorQuantities,   only: FindClosestInstances
-  use MLSNumerics,                  only: InterpolateValues
-  use Molecules,                    only: L_H2O, L_O3, L_N2O, L_HNO3, L_N2, L_O2, spec_tags, FIRST_MOLECULE, &
-                                        & LAST_MOLECULE
-  use Output_m,                     only: OUTPUT
-  use PointingGrid_m,               only: POINTINGGRIDS
-  use String_table,                 only: GET_STRING, DISPLAY_STRING
-  use SpectroscopyCatalog_m,        only: CATALOG_T, LINE_T, LINES, CATALOG
-  use Toggles,                      only: Emit, Levels, Toggle
-  use Trace_M,                      only: Trace_begin, Trace_end
-  use Units,                        only: Deg2Rad                         
-  use VectorsModule,                only: GETVECTORQUANTITYBYTYPE, VECTOR_T, VECTORVALUE_T, &
-                                        & VALIDATEVECTORQUANTITY
-
-  use ForwardModelConfig,           only: FORWARDMODELCONFIG_T   
-  use ForwardModelIntermediate,     only: FORWARDMODELINTERMEDIATE_T, FORWARDMODELSTATUS_T
-
-! ----------------------------------------------------------
-! DEFINE INTRINSIC CONSTANTS NEEDED BY Init_Tables_Module
-! ----------------------------------------------------------
-
-  use Intrinsic, only: L_TEMPERATURE,L_PTAN,L_VMR,L_GPH,L_RADIANCE,L_NONE,   &
-                     & L_CLOUDINDUCEDRADIANCE,                               &
-                     & L_EFFECTIVEOPTICALDEPTH,                              &
-                     & L_CLOUDRADSENSITIVITY,                                &
-                     & L_TOTALEXTINCTION,                                    &
-                     & L_CLOUDEXTINCTION,                                    &
-                     & L_MASSMEANDIAMETERICE,                                & 
-                     & L_MASSMEANDIAMETERWATER,                              &
-                     & L_SURFACETYPE,                                        &
-                     & L_SIZEDISTRIBUTION,                                   &
-                     & L_TNGTGEOCALT,                                        &
-                     & L_EARTHRADIUS,                                        &
-                     & L_CLOUDICE,                                           &
-                     & L_CLOUDWATER,                                         &
-                     & L_LOSTRANSFUNC,                                       &
-                     & L_SCGEOCALT,                                          &
-                     & L_ELEVOFFSET,                                         &
-                     & L_SIDEBANDRATIO,                                      &
-                     & L_CHANNEL,                                            &
-                     & L_NONE,                                               &
-                     & L_LOSVEL,                                             &
-                     & LIT_INDICES
+  ! This one is here instead of inside FullCloudForwardModelWrapper because
+  ! it has a dummy argument of the same name.
+  use ForwardModelConfig,         only: FORWARDMODELCONFIG_T   
 
   implicit none
   private
@@ -77,10 +24,6 @@ module FullCloudForwardModel
     "$RCSfile$"
  !---------------------------------------------------------------------------
 
- ! Local parameters ---------------------------------------------------------
-
-  character, parameter :: INVALIDQUANTITY = "Invalid vector quantity for "
-
          ! ---------------------------------------------------------------------
 contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
          ! CLOUD FORWARD MODEL
@@ -89,6 +32,68 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
   subroutine FullCloudForwardModelWrapper ( ForwardModelConfig, FwdModelIn,  &
                                             FwdModelExtra, FwdModelOut, Ifm, &
                                             fmStat, Jacobian                 )  
+
+    use Allocate_deallocate,        only: Allocate_test, Deallocate_test
+    use AntennaPatterns_m,          only: ANTENNAPATTERNS
+    use CloudySkyModule,            only: CLOUD_MODEL
+    use CloudySkyRadianceModel,     only: CloudForwardModel
+    use ForwardModelIntermediate,   only: FORWARDMODELINTERMEDIATE_T, FORWARDMODELSTATUS_T
+    use Hdf,                        only: DFACC_READ, DFACC_CREATE
+    use HDFEOS,                     only: SWOPEN, SWCLOSE
+    use L2GPData,                   only: L2GPData_T, ReadL2GPData, WriteL2GPData
+    use MLSCommon,                  only: NameLen, FileNameLen, r8, rm, rp, FINDFIRST
+    use MLSMessageModule,           only: MLSMessage, MLSMSG_Error, MLSMSG_Warning, MLSMSG_Allocate, MLSMSG_Deallocate
+    use MLSSignals_m,               only: SIGNAL_T, ARESIGNALSSUPERSET
+    use MatrixModule_0,             only: M_Absent, M_BANDED, MATRIXELEMENT_T, &
+                                        & M_COLUMN_SPARSE, M_FULL, CREATEBLOCK
+    use MatrixModule_1,             only: MATRIX_T, FINDBLOCK
+    use ManipulateVectorQuantities, only: FindClosestInstances
+    use MLSNumerics,                only: InterpolateValues
+    use Molecules,                  only: L_H2O, L_O3, L_N2O, L_HNO3, L_N2, L_O2, &
+                                        & spec_tags, FIRST_MOLECULE, LAST_MOLECULE
+    use Output_m,                   only: OUTPUT
+    use PointingGrid_m,             only: POINTINGGRIDS
+    use SpectroscopyCatalog_m,      only: CATALOG_T, LINE_T, LINES, CATALOG
+    use String_table,               only: GET_STRING, DISPLAY_STRING
+    use Toggles,                    only: Emit, Levels, Toggle
+    use Trace_M,                    only: Trace_begin, Trace_end
+    use Units,                      only: Deg2Rad                         
+    use VectorsModule,              only: GETVECTORQUANTITYBYTYPE, VECTOR_T, &
+                                        & VECTORVALUE_T, VALIDATEVECTORQUANTITY
+
+! ----------------------------------------------------------
+! DEFINE INTRINSIC CONSTANTS NEEDED FROM Init_Tables_Module
+! ----------------------------------------------------------
+
+    use Intrinsic, only: &
+                       & L_CHANNEL,                                            &
+                       & L_CLOUDEXTINCTION,                                    &
+                       & L_CLOUDICE,                                           &
+                       & L_CLOUDINDUCEDRADIANCE,                               &
+                       & L_CLOUDRADSENSITIVITY,                                &
+                       & L_CLOUDWATER,                                         &
+                       & L_EARTHRADIUS,                                        &
+                       & L_EFFECTIVEOPTICALDEPTH,                              &
+                       & L_ELEVOFFSET,                                         &
+                       & L_GPH,                                                &
+                       & L_LOSTRANSFUNC,                                       &
+                       & L_LOSVEL,                                             &
+                       & L_MASSMEANDIAMETERICE,                                & 
+                       & L_MASSMEANDIAMETERWATER,                              &
+                       & L_NONE,                                               &
+                       & L_NONE,                                               &
+                       & L_PTAN,                                               &
+                       & L_RADIANCE,                                           &
+                       & L_SCGEOCALT,                                          &
+                       & L_SIDEBANDRATIO,                                      &
+                       & L_SIZEDISTRIBUTION,                                   &
+                       & L_SURFACETYPE,                                        &
+                       & L_TEMPERATURE,                                        &
+                       & L_TNGTGEOCALT,                                        &
+                       & L_TOTALEXTINCTION,                                    &
+                       & L_VMR,                                                &
+                       & LIT_INDICES
+
     ! Dummy arguments
     type(forwardModelConfig_T),       intent(inout) :: FORWARDMODELCONFIG
     type(vector_T),                   intent(in)    :: FWDMODELIN, FwdModelExtra
@@ -96,6 +101,10 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     type(forwardModelIntermediate_T), intent(inout) :: IFM                     ! Workspace
     type(forwardModelStatus_t),       intent(inout) :: FMSTAT                  ! Reverse comm. stuff
     type(matrix_T),                   intent(inout), optional :: JACOBIAN
+
+
+    ! Local parameters ---------------------------------------------------------
+    character, parameter :: INVALIDQUANTITY = "Invalid vector quantity for "
 
     ! Local variables
     type (VectorValue_T), pointer :: CLOUDICE                   ! Profiles
@@ -1067,6 +1076,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.96  2002/09/11 17:43:39  pwagner
+! Began changes needed to conform with matrix%values type move to rm from r8
+!
 ! Revision 1.95  2002/08/22 00:14:17  jonathan
 ! upgrade to include more molecules
 !
