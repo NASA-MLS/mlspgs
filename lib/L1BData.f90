@@ -114,6 +114,7 @@ contains
         else
           ifl1 = ifl1 + 1
           l1bInfo%L1BRADIDs(ifl1) = sd_id
+          l1bInfo%L1BRADFileNames(ifl1) = Filename
         end if
 
 !      case default
@@ -171,6 +172,7 @@ contains
             & 'Error opening L1BOA file: ' //Filename)
         else
           l1bInfo%L1BOAID = sd_id
+          l1bInfo%L1BOAFileName = Filename
         end if
 
 !      case default
@@ -623,6 +625,9 @@ end module L1BData
 !=================
 
 ! $Log$
+! Revision 2.6  2001/05/04 22:51:06  pwagner
+! Now sets L1B..FileName components in ..Setup
+!
 ! Revision 2.5  2001/05/03 23:58:38  vsnyder
 ! Remove conflicts from merge
 !
