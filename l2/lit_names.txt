@@ -80,6 +80,7 @@ hydrostatic
 
 invert
 isotope
+IWCfromExtinction
 
 jacobian_cols
 jacobian_rows
@@ -139,6 +140,9 @@ weighted
 wmoTropopause
 
 # $Log$
+# Revision 2.36  2003/05/20 20:19:28  dwu
+# add IWCfromExtinction
+#
 # Revision 2.35  2003/05/10 22:22:45  livesey
 # New types
 #
