@@ -129,6 +129,10 @@ begin Construct
   !forall( {constructHiResLinearVMR}, !allLinearHRMolecules)
   !forall( {constructHiResLogVMR}, !allLogHRMolecules)
 
+  ;; We'll do Trop. H2O as a special one here.
+  tropH2O: Quantity, type=vmr, molecule=h2o, $
+    vGrid=vGridTropH2O, hGrid=hGridStandard, /logBasis
+
   ;; ----------------------------------------- RHI
   rhi: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=rhi, $
     molecule=h2o
@@ -289,7 +293,7 @@ begin Construct
     ptanGHZ, ptanTHz, phitanGHz, phitanTHz, temperature, $
     !ifdef(precisionEstimates,{},{!ifdef(skipHiRes,{},{temperature_HR,})}) $
     refGPH, GPH, $
-    !allMolecules, $
+    !allMolecules, tropH2O, $
     !ifdef(precisionEstimates,{},{!ifdef(skipHiRes,{},{!allHiResMolecules,})}) $
     rhi, !allBaselines, $
     !allExtinctions, $
