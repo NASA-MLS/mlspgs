@@ -83,6 +83,21 @@
          PGS_PC_GetConfigData=-99
       END FUNCTION PGS_PC_GetConfigData
 
+      INTEGER FUNCTION PGS_PC_GetFileSize(pcf_id, file_version, size)
+        INTEGER, INTENT(IN) :: pcf_id
+        INTEGER, INTENT(INOUT) :: file_version
+        INTEGER, INTENT(INOUT) :: size
+         PGS_PC_GetFileSize=-99
+         size=0
+      END FUNCTION PGS_PC_GetFileSize
+
+      INTEGER FUNCTION pgs_td_utctotai(time, dtime)
+        character(len = *), INTENT(IN) :: time
+        DOUBLE PRECISION, INTENT(out) :: dtime
+         pgs_td_utctotai=-99
+         dtime=0.D0
+      END FUNCTION pgs_td_utctotai
+
 ! Metadata functions
 
       INTEGER FUNCTION PGS_MET_Init(file_id,groups)
@@ -138,6 +153,9 @@
 
 !
 ! $Log$
+! Revision 2.4  2001/05/09 23:26:35  pwagner
+! Added new functions
+!
 ! Revision 2.3  2001/05/07 23:22:20  pwagner
 ! Added metadat functions
 !
