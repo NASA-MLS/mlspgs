@@ -1,5 +1,5 @@
-! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
 
 !=============================================================================
 MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
@@ -41,9 +41,9 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! Update these lines before delivery to sips     
   ! id to print out in response to "--version" command-line option       
   character(LEN=*), dimension(3), parameter :: CURRENT_VERSION_ID = (/ &    
-    & 'v1.50 swdev team                                          ', &       
-    & 'Copyright (c) 2004, California Institute of Technology.   ', &       
-    & 'U.S. Government Sponsorship under NASA Contract NAS7-1407.' /)       
+    & 'v1.51 swdev team                                                      ', &       
+    & 'Copyright (c) 2005, California Institute of Technology.               ', &       
+    & 'U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001.' /)       
      
   ! Set the following to 1 before delivering to sips;                       
   ! when set to 0, it allows program to run w/o creating metadata           
@@ -87,6 +87,8 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! What units to use in summarizing timings at end of run
   integer            :: SECTIONTIMINGUNITS = L_SECONDS
   logical            :: patch = .false.       ! Set if run must not create file,
+  ! Whether to restart printing identical warnings at each new phase
+  logical            :: RESTARTWARNINGS = .true.
   ! Whether to skip doing the direct writes--quicker when snooping       swath  
   logical            :: SKIPDIRECTWRITES = .false.         
   ! Whether to skip doing the retrieval--a pre-flight checkout of paths, etc.
@@ -116,6 +118,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.31  2005/03/12 00:48:01  pwagner
+! Added RESTARTWARNINGS; corrected vsn id
+!
 ! Revision 2.30  2004/12/14 00:04:24  pwagner
 ! New early stop options added for quicker debugging
 !
