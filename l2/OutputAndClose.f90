@@ -41,7 +41,7 @@ contains ! =====     Public Procedures     =============================
     ! Hard-wired assumptions:
 
     ! ----------------------- metadata ------------------------
-
+    
     !   for the l2aux the mcf is mlspcf_mcf_l2dgm_start
     !   for the log file the mcf is mlspcf_mcf_l2log_start
     !   for the dgg file the mcf is mlspcf_mcf_l2dgg_start
@@ -327,7 +327,8 @@ contains ! =====     Public Procedures     =============================
 
               call populate_metadata_std &
                 & (l2gpFileHandle, l2gp_mcf, l2pcf, QuantityNames(1), &
-                & hdfVersion=hdfVersion, metadata_error=metadata_error )
+                & hdfVersion=hdfVersion, metadata_error=metadata_error, &
+                & setAlias=.true. )
               error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
 
             else
@@ -346,7 +347,8 @@ contains ! =====     Public Procedures     =============================
               call populate_metadata_oth &
                 & ( l2gpFileHandle, l2gp_mcf, l2pcf, &
                 & numquantitiesperfile, QuantityNames, &
-                & hdfVersion=hdfVersion, metadata_error=metadata_error )
+                & hdfVersion=hdfVersion, metadata_error=metadata_error, &
+                & setAlias=.true.  )
               error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
             end if
 
@@ -463,7 +465,8 @@ contains ! =====     Public Procedures     =============================
               call populate_metadata_oth &
                 & ( l2auxFileHandle, l2aux_mcf, l2pcf, &
                 & numquantitiesperfile, QuantityNames,&
-                & hdfVersion=hdfVersion, metadata_error=metadata_error )
+                & hdfVersion=hdfVersion, metadata_error=metadata_error, &
+                & setAlias=.false.  )
               error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
             end if
 
@@ -627,7 +630,8 @@ contains ! =====     Public Procedures     =============================
               call populate_metadata_oth &
                 & ( l2gpFileHandle, mlspcf_mcf_l2dgg_start, l2pcf, &
                 & numquantitiesperfile, QuantityNames, &
-                & hdfVersion=hdfVersion, metadata_error=metadata_error )
+                & hdfVersion=hdfVersion, metadata_error=metadata_error, &
+                & setAlias=.true.  )
               error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
             end if
 
@@ -904,6 +908,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.63  2002/12/11 22:21:05  pwagner
+! Makes soft link to data field name from L2gpValue field in hdf5 l2gp
+!
 ! Revision 2.62  2002/11/22 19:10:30  pwagner
 ! Upped MAXQUANTITIESPERFILE to 10k
 !
