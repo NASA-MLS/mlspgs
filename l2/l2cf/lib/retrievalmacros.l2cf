@@ -222,12 +222,15 @@ DirectWrite, file='!CloudFilename', hdfVersion=!hdfVersion, $
 
 ;; These macros are associated with the direct write code.  It writes a
 ;; set of radiances $2... into the L2FWM-$1 file.
+!define(l2fwmFileName, !dnl
+{!ifdef(usingPCF,{$1},!dnl
+{!outpathl2gp/MLS-Aura_L2FWM-$1_!l2version_!day.h!hdfVersion})})
 !define(labelOneFwmRad,{label, quantity=fwm.band$1, /prefixSignal, label=' !phase'!nl})
 !define(oneFwmRadTerm,{source=fwm.band$1,})
 !define(directWriteFwmRad,{!ifdef(l2version,{!dnl
 !forall(labelOneFwmRad,!tidyList(!shift($*)))!dnl
   DirectWrite, !forall(oneFwmRadTerm,!tidyList(!shift($*))) type=l2fwm, $
-  file='!outpathl2fwm/MLS-Aura_L2FWM-$1_!l2version_!day.h!hdfVersion', $
+  file='!l2fwmFileName($1)', $
   hdfVersion=!hdfVersion})})
 
 ;; These macros are used to note the joined DGM/DGGs
@@ -362,6 +365,9 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
   Fill, quantity=standardPrecision.$1, method=vector, sourceQuantity=outputPrecision.$1!nl})
 
 ; $Log$
+; Revision 1.72  2003/09/05 23:26:28  pwagner
+; Switched fwoward model radiance DirectWrite type from l2aux to l2fwm
+;
 ; Revision 1.71  2003/09/02 22:48:43  pwagner
 ; Tweaked the defines to make the quotes come out right
 ;
