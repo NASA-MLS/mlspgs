@@ -1694,7 +1694,7 @@ contains ! =====     Public Procedures     =============================
           call output ( chars(matrix%block(i,j)%kind) )
         end if
       end do ! j
-      call output ( '', advance='yes' )
+      call output ( matrix%row%nelts(i), places=5, advance='yes' )
     end do ! i
   end subroutine Dump_Struct
 
@@ -1712,6 +1712,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.61  2001/11/08 02:06:30  vsnyder
+! Added #rows to sparsness structure display
+!
 ! Revision 2.60  2001/10/19 22:30:18  pwagner
 ! Now can dump a single matrixdb
 !
