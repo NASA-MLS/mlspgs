@@ -21,9 +21,12 @@ module MLSFiles               ! Utility file routines
     & PGS_IO_GEN_CloseF, PGS_IO_GEN_OpenF, PGSd_PC_FILE_PATH_MAX, &
     & UseSDPToolkit
   implicit none
-  public
 
-  private :: ID
+  private 
+
+  public :: GetPCFromRef, mls_io_gen_openF, &
+  & mls_io_gen_closeF, split_path_name, &
+  & mls_hdf_version, mls_inqswath, mls_sfstart, mls_sfend
 
   !------------------- RCS Ident Info -----------------------
   character(LEN=130) :: Id = &
@@ -34,25 +37,39 @@ module MLSFiles               ! Utility file routines
 !     - - - - - - - -
 
 ! GetPCFromRef       Turns a FileName into the corresponding PC
+! mls_hdf_version    Returns one of 'hdf4', 'hdf5', or '????'
+! mls_inqswath       A wrapper for doing swingswath for versions 4 and 5
 ! mls_io_gen_openF   Opens a generic file using either the toolbox or else a Fortran OPEN statement
 ! mls_io_gen_closeF  Closes a generic file using either the toolbox or else a Fortran OPEN statement
+! mls_sfstart        Opens an hdf file for writing metadata
+! mls_sfend          Closes a file opened by mls_sfstart
 ! split_path_name    splits the input full_file_name into its components path and name
+! hdf2hdf5_fileaccess
+!                    Translates version 4 hdf access codes to version 5
+
+  ! ((( Not yet ready for hdfeos5 versions of files )))
+  !       The latter will incorporate the
+  !       routines in he5lib
+
+   ! Assume hdf files w/o explicit hdfVersion field are this
+   ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc.
+   integer, parameter :: DEFAULT_HDFVERSION = 4
 
   ! This isn't NameLen because it may have a path prefixed
   integer, parameter :: MAXFILENAMELENGTH=PGSd_PC_FILE_PATH_MAX
 
   ! These are error codes that may be returned by GetPCFromRef
 
-  integer, parameter :: NAMENOTFOUND=-1
-  integer, parameter :: INVALIDPCRANGE=NAMENOTFOUND-1
+  integer, parameter, public :: NAMENOTFOUND=-1
+  integer, parameter, public :: INVALIDPCRANGE=NAMENOTFOUND-1
 
   ! These are error codes that may be returned by mls_io_gen_openF
 
-  integer, parameter :: UNKNOWNFILEACCESSTYPE=-999
-  integer, parameter :: UNKNOWNTOOLBOXMODE=UNKNOWNFILEACCESSTYPE+1
-  integer, parameter :: NOFREEUNITS=UNKNOWNTOOLBOXMODE+1
-  integer, parameter :: MUSTSUPPLYFILENAMEORPC=NOFREEUNITS+1
-  integer, parameter :: NOPCIFNOTOOLKIT=MUSTSUPPLYFILENAMEORPC+1
+  integer, parameter, public :: UNKNOWNFILEACCESSTYPE=-999
+  integer, parameter, public :: UNKNOWNTOOLBOXMODE=UNKNOWNFILEACCESSTYPE+1
+  integer, parameter, public :: NOFREEUNITS=UNKNOWNTOOLBOXMODE+1
+  integer, parameter, public :: MUSTSUPPLYFILENAMEORPC=NOFREEUNITS+1
+  integer, parameter, public :: NOPCIFNOTOOLKIT=MUSTSUPPLYFILENAMEORPC+1
 
   ! Now we have the legal unit numbers that files may be assigned
 
@@ -224,7 +241,8 @@ contains
 
   function mls_io_gen_openF(toolbox_mode, caseSensitive, ErrType, &
     & record_length, FileAccessType, &
-    & FileName, PCBottom, PCTop, versionNum, unknown, thePC, debugOption) &
+    & FileName, PCBottom, PCTop, versionNum, unknown, thePC, &
+    & hdfVersion, debugOption) &
     &  result (theFileHandle)
 
     ! Dummy arguments
@@ -241,7 +259,10 @@ contains
     logical, optional, intent(in) :: unknown
     logical, optional, intent(in) :: debugOption
 
-    ! Local variables
+    integer, optional, intent(in) :: hdfVersion
+
+    ! Local
+    integer :: myhdfVersion
 
     logical, parameter :: DEFAULT_PRINT_EVERY_OPEN=.false.
     integer, parameter :: FH_ON_ERROR=-99
@@ -265,6 +286,12 @@ contains
       debug = .false.
    endif
 
+    ! Executable code
+    if (present(hdfVersion)) then
+      myhdfVersion = hdfVersion
+    else
+      myhdfVersion = DEFAULT_HDFVERSION
+    endif
    PRINT_EVERY_OPEN = DEFAULT_PRINT_EVERY_OPEN .or. debug
     ! In case of premature return
     theFileHandle = FH_ON_ERROR
@@ -569,7 +596,7 @@ contains
 
   ! If must be given a FileHandle as an arg
   ! (A later version may allow choice between file handle and file name)
-  function mls_io_gen_closeF(toolbox_mode, theFileHandle) &
+  function mls_io_gen_closeF(toolbox_mode, theFileHandle, hdfVersion) &
     &  result (ErrType)
 
     ! Dummy arguments
@@ -577,10 +604,20 @@ contains
     integer(i4), intent(IN)  :: theFileHandle
     character (LEN=*), intent(IN)   :: toolbox_mode
 
-    ! Local variables
+    integer, optional, intent(in) :: hdfVersion
+
+    ! Local
+    integer :: myhdfVersion
 
     logical, parameter :: PRINT_EVERY_CLOSE=.false.
     character (LEN=2) :: the_eff_mode
+
+    ! Executable code
+    if (present(hdfVersion)) then
+      myhdfVersion = hdfVersion
+    else
+      myhdfVersion = DEFAULT_HDFVERSION
+    endif
 
    if(UseSDPToolkit) then
    ! Using Toolkit
@@ -689,7 +726,7 @@ contains
 
   ! This function acts as a wrapper to allow hdf5 or hdf4 routines to be called
 
-  function mls_inqswath(FileName, swathList, strBufSize)
+  function mls_inqswath(FileName, swathList, strBufSize, hdfVersion)
 
     ! Arguments
 
@@ -698,6 +735,17 @@ contains
       integer, intent(out):: STRBUFSIZE
       integer :: mls_inqswath
 
+    integer, optional, intent(in) :: hdfVersion
+
+    ! Local
+    integer :: myhdfVersion
+
+    ! Executable code
+    if (present(hdfVersion)) then
+      myhdfVersion = hdfVersion
+    else
+      myhdfVersion = DEFAULT_HDFVERSION
+    endif
     ! begin
     mls_inqswath = swinqswath(FileName, swathList, strBufSize)
 
@@ -707,7 +755,7 @@ contains
 
   ! This function acts as a wrapper to allow hdf5 or hdf4 routines to be called
 
-  function mls_sfstart(FileName, FileAccess)
+  function mls_sfstart(FileName, FileAccess, hdfVersion)
 
     ! Arguments
 
@@ -715,6 +763,17 @@ contains
     integer(i4), intent(IN)       :: FileAccess
     integer                       :: mls_sfstart
 
+    integer, optional, intent(in) :: hdfVersion
+
+    ! Local
+    integer :: myhdfVersion
+
+    ! Executable code
+    if (present(hdfVersion)) then
+      myhdfVersion = hdfVersion
+    else
+      myhdfVersion = DEFAULT_HDFVERSION
+    endif
     ! begin
     mls_sfstart = sfstart(FileName, FileAccess)
 
@@ -724,24 +783,60 @@ contains
 
   ! This function acts as a wrapper to allow hdf5 or hdf4 routines to be called
 
-  function mls_sfend(sdid)
+  function mls_sfend(sdid, hdfVersion)
 
     ! Arguments
 
       integer, intent(IN)       :: sdid
       integer :: mls_sfend
 
+    integer, optional, intent(in) :: hdfVersion
+
+    ! Local
+    integer :: myhdfVersion
+
+    ! Executable code
+    if (present(hdfVersion)) then
+      myhdfVersion = hdfVersion
+    else
+      myhdfVersion = DEFAULT_HDFVERSION
+    endif
     ! begin
     mls_sfend = sfend(sdid)
 
   end function mls_sfend
 
-  !====================
+  ! ---------------------------------------------  mls_hdf_version  -----
+
+  ! This function returns a character string depending on hdf version:
+  ! hdf version         returned value
+  !    hdf4                 hdf4
+  !    hdf5                 hdf5
+  !  unknown                ????
+
+  function mls_hdf_version(FileName)  result (hdf_version)
+
+    ! Arguments
+
+      character (len=*), intent(in) :: FILENAME
+      character (len=4)             :: hdf_version
+
+      integer :: returnStatus
+      logical :: is_hdf5
+    ! begin
+      hdf_version = 'hdf4'
+
+  end function mls_hdf_version
+
+!====================
 end module MLSFiles
 !====================
 
 !
 ! $Log$
+! Revision 2.26  2002/01/23 21:47:31  pwagner
+! Begun to make hdf5-capable; not yet, though
+!
 ! Revision 2.25  2002/01/18 18:51:22  pwagner
 ! Fixed bug when calling mls_open w/o toolkit
 !
