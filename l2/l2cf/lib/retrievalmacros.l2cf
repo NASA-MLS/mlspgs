@@ -68,9 +68,9 @@ begin Fill
   Transfer, source=sdOut$1, destination=outputPrecision
   !ifdef(completePhasetroph2o,{!dnl
     ;; In this case copy TropH2O into H2O as requested
-    Fill, quantity=state.h2o, sourceQuantity=state.tropH2O, method=vector, /interpolate
+    Fill, quantity=state.h2o!res, sourceQuantity=state.tropH2O!res, method=vector, /interpolate
     ;; And its precision
-    Fill, quantity=outputPrecision.h2o, sourceQuantity=outputPrecision.tropH2O, $
+    Fill, quantity=outputPrecision.h2o!res, sourceQuantity=outputPrecision.tropH2O!res, $
       method=vector, /interpolate})
 
   ;; FM output will be turned on again, sometime, for the PEs
@@ -78,28 +78,32 @@ begin Fill
   ;; Clean up
   Destroy, matrix=myCovariance$1
   ;; Compute new full GPH profile
-  Fill, quantity=state.gph, method=hydrostatic, $
-    refGPHquantity=state.refGPH, temperatureQuantity=state.temperature
+  Fill, quantity=state.gph!res, method=hydrostatic, $
+    refGPHquantity=state.refGPH, temperatureQuantity=state.temperature!res
   ;; And GPH precision
-  Fill, quantity=outputPrecision.gph, method=gphPrecision, $
+  Fill, quantity=outputPrecision.gph!res, method=gphPrecision, $
     refGPHPrecisionquantity=outputPrecision.refGPH, $
-    tempPrecisionQuantity=outputPrecision.temperature
+    tempPrecisionQuantity=outputPrecision.temperature!res
   ;; Compute RHI from H2O
-  Fill, quantity=state.rhi, h2oQuantity=state.h2o, $
-    temperatureQuantity=state.temperature, method=RHIFromH2O, /dontMask
+  Fill, quantity=state.rhi!res, h2oQuantity=state.h2o!res, $
+    temperatureQuantity=state.temperature!res, method=RHIFromH2O, /dontMask
   ;; And RHI precision
-  Fill, quantity=outputPrecision.rhi, $
-    h2oPrecisionQuantity=outputPrecision.h2o, $
-    tempPrecisionQuantity=outputPrecision.temperature, $
-    h2oQuantity=state.h2o, temperatureQuantity=state.temperature, $
+  Fill, quantity=outputPrecision.rhi!res, $
+    h2oPrecisionQuantity=outputPrecision.h2o!res, $
+    tempPrecisionQuantity=outputPrecision.temperature!res, $
+    h2oQuantity=state.h2o!res, temperatureQuantity=state.temperature!res, $
     method=RHIPrecisionFromH2O, /dontMask
-;  !include(fillcolumns.l2cf)
   ;; Set precision -ve when wose than 50% apriori precision
   NegativePrecision, precision=outputPrecision, aprioriPrecision=aprioriPrecision
 end Fill
-begin Join
-!forall(joinOneDiagDGG,!allRetrievalDiagnostics)
-end Join})
+
+!include(fillcolumns.l2cf)
+
+!ifdef(precisionEstimates,{},{
+  begin Join
+    !forall(joinOneDiagDGG,!allRetrievalDiagnostics)
+  end Join})
+})
 
 ;; This macro deals with the state subsetting for quantity $1
 !define(subsetSpecies,{!dnl
@@ -206,7 +210,8 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
 ;; that we're used to seeing
 ;  will add FM output to PEs later
 !ifdef(precisionEstimates,{!dnl
-  !define(retrievalArguments,{state=x$1, fwdModelExtra=state, $
+  !define(retrievalArguments,{$
+  !ifdef(gotAK,{average=akOut$1,}) state=x$1, fwdModelExtra=state, $
     measurements=y$1, measurementSD=yNoise$1, $
     apriori=a$1, covariance=myCovariance$1, $
     outputSD=sdOut$1, $
@@ -226,6 +231,9 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
 !define(nbw,{!nbw$1})
 
 ; $Log$
+; Revision 1.38  2002/11/26 23:38:20  livesey
+; Added radiance diagnostics
+;
 ; Revision 1.37  2002/11/21 18:24:11  livesey
 ; Refined Avk stuff
 ;
