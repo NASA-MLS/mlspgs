@@ -18,7 +18,7 @@ module Join                     ! Join together chunk based data.
     & L2AUXData_T, L2AUXRank, SetupNewL2AUXRecord
   use L2GPData, only: AddL2GPToDatabase, ExpandL2GPDataInPlace, &
     & L2GPData_T, SetupNewL2GPRecord
-  use L2PC_M, only: L2PC_T, AddL2PCToDatabase
+  use L2PC_M, only: L2PC_T, AddL2PCToDatabase, l2pcDatabase
   use LEXER_CORE, only: PRINT_SOURCE
   use MatrixModule_1, only: CopyMatrix, Matrix_Database_T, &
     & Dump, GetFromMatrixDatabase, Matrix_T
@@ -64,7 +64,7 @@ contains ! =====     Public Procedures     =============================
   ! in order to be able to store all the chunks.
 
   subroutine MLSL2Join ( root, vectors, matrices, l2gpDatabase, l2auxDatabase, &
-    & l2pcDatabase, canDoL2PC, chunkNo, chunks )
+    & canDoL2PC, chunkNo, chunks )
 
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Of the JOIN section in the AST
@@ -72,7 +72,6 @@ contains ! =====     Public Procedures     =============================
     type (Matrix_Database_T), dimension(:), pointer :: matrices
     type (L2GPData_T), dimension(:), pointer :: l2gpDatabase
     type (L2AUXData_T), dimension(:), pointer :: l2auxDatabase
-    type (L2PC_T), dimension(:), pointer :: l2pcDatabase
     logical, intent(in) :: canDoL2PC
     integer, intent(in) :: chunkNo
     type (MLSChunk_T), dimension(:), intent(in) :: chunks
@@ -615,6 +614,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.29  2001/04/26 20:02:09  livesey
+! Made l2pc database a saved array in L2PC_m
+!
 ! Revision 2.28  2001/04/26 15:59:30  livesey
 ! Tidied up uses
 !

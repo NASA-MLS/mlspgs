@@ -15,7 +15,7 @@ module OutputAndClose ! outputs all data from the Join module to the
     & L_L2AUX, L_L2GP, L_L2PC, LIT_INDICES, S_OUTPUT, S_TIME
   use L2AUXData, only: L2AUXDATA_T, WriteL2AUXData
   use L2GPData, only: L2GPData_T, WriteL2GPData, L2GPNameLen
-  use L2PC_m, only: L2PC_T, WRITEONEL2PC
+  use L2PC_m, only: L2PC_T, WRITEONEL2PC, L2PCDATABASE
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: I4
   use MLSFiles, only: GetPCFromRef, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
@@ -60,7 +60,7 @@ module OutputAndClose ! outputs all data from the Join module to the
 contains ! =====     Public Procedures     =============================
 
   ! -----------------------------------------------  Output_Close  -----
-  subroutine Output_Close ( root, l2gpDatabase, l2auxDatabase, l2pcDatabase,&
+  subroutine Output_Close ( root, l2gpDatabase, l2auxDatabase, &
     & l2pcf, canWriteL2PC )
 
     ! Hard-wired assumptions:
@@ -79,7 +79,6 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: ROOT   ! Of the output section's AST
     type (L2GPData_T), dimension(:), pointer :: l2gpDatabase ! L2GP products
     type (L2AUXData_T), dimension(:), pointer :: l2auxDatabase ! L2AUX products
-    type (L2PC_T), dimension(:), pointer :: l2pcDatabase ! L2PC products
     logical, intent(in) :: canWriteL2PC ! Flag
     type(PCFData_T), intent(in) :: l2pcf
 
@@ -467,6 +466,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.29  2001/04/26 20:02:09  livesey
+! Made l2pc database a saved array in L2PC_m
+!
 ! Revision 2.28  2001/04/26 15:59:13  livesey
 ! Fixed arguments to writeOneL2PC
 !
