@@ -53,9 +53,9 @@ module MLSFiles               ! Utility file routines
 
    ! Assume hdf files w/o explicit hdfVersion field are this
    ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc.
-   integer, parameter :: HDFVERSION_4 = 4
-   integer, parameter :: HDFVERSION_5 = 5
-   integer, parameter :: DEFAULT_HDFVERSION = HDFVERSION_4
+   integer, parameter, public :: HDFVERSION_4 = 4
+   integer, parameter, public :: HDFVERSION_5 = 5
+   integer, parameter         :: DEFAULT_HDFVERSION = HDFVERSION_4
    
   ! Given this hdfVersion, try to autorecognize hdfversion
   ! then perform appropriate version of open/close; i.e., forgiving
@@ -890,6 +890,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.31  2002/03/14 23:31:45  pwagner
+! HDFVERSION_4 and 5 now public
+!
 ! Revision 2.30  2002/02/19 23:12:40  pwagner
 ! Eliminated unwanted matches between o3 and hno3
 !
