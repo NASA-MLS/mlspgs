@@ -1,6 +1,8 @@
 module VERT_TO_PATH_M
   use Allocate_Deallocate, only: Allocate_test, Deallocate_Test
   use MLSCommon, only: I4, R4, R8
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate, &
+    & MLSMSG_Error
   use D_LINTRP_M, only: LINTRP
   use I_HUNT_M, only: HUNT
   use ELLIPSE_SW_M, only: H_TO_S_PHI
@@ -38,11 +40,11 @@ contains
     !  ---------------------------
     !  calling sequence variables:
     !  ---------------------------
-    integer, intent(in) :: n_lvls,Ng,gl_count,no_phi_t,no_t,ngt
+    integer, intent(in) :: N_lvls, Ng, Gl_count, No_phi_t, No_t, Ngt
 
-    integer, intent(out) :: totnp,brkpt,Ier
+    integer, intent(out) :: Totnp, Brkpt, Ier
 
-    type(ellipse), intent(in out) :: elvar
+    type(ellipse), intent(in out) :: Elvar
 
     real(r8), intent(out) :: h_path(:), z_path(:), t_path(:), phi_path(:), &
                              dhdz_path(:), phi_eta(:,:)
@@ -55,7 +57,7 @@ contains
     !  Local variables:
     !  ----------------
 
-    integer :: i, j, k, l, m, n, jp, n_d, npp, ibrk, Ngp1, no_iter
+    integer :: i, j, k, l, lmax, lmin, m, n, jp, n_d, npp, ibrk, Ngp1, no_iter
 
     real(r8) :: h, s, r, dz, rs, phi, rss, dhdz, prev_h
 
@@ -71,12 +73,17 @@ contains
     Ier = 0
     Ngp1 = Ng + 1
 
+    lmin = lbound(phi_eta,2)
+    lmax = ubound(phi_eta,2)
+
 !?? print*,'Ngt is:',ngt
     call Allocate_test ( cndx, ngt, 'cndx', ModuleName )
     call Allocate_test ( dum_z, ngt, 'dum_z', ModuleName )
     call Allocate_test ( dum_h, ngt, 'dum_h', ModuleName )
     call Allocate_test ( dum_phi, ngt, 'dum_phi', ModuleName )
-    call Allocate_test ( h_a,ngt,no_phi_t,'h_a',ModuleName )
+    allocate ( h_a(ngt,lmin:lmax), stat=i )
+    if ( i /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      & MLSMSG_Allocate // 'H_a' )
     print*,'no_phi_t is:',no_phi_t
 
 !     DEALLOCATE(cndx, dum_z, dum_h, dum_phi, STAT=i)
@@ -101,18 +108,16 @@ contains
     dum_z = 0.0
     dum_h = 0.0
     dum_phi = 0.0
-    do j = 1, no_phi_t
-      h_a(1:ngt,j) = 0.0
-      phi_eta(1:ngt,j) = 0.0
-    end do
+    h_a = 0.0
+    phi_eta = 0.0
 
     r = -999.99
     dz = r / 57.2958
-    z_path(1:ngt) = r
-    h_path(1:ngt) = r
-    t_path(1:ngt) = r
-    phi_path(1:ngt) = dz
-    dhdz_path(1:ngt) = 0.0
+    z_path = r
+    h_path = r
+    t_path = r
+    phi_path = dz
+    dhdz_path = 0.0
 
 !   Define the various ELLIPSE variables needed for computations:
 
@@ -137,7 +142,7 @@ contains
 
     npp = 0
     l = gl_count + 1
-    jp = (no_phi_t + 1) / 2
+    jp = (lmin + lmax) / 2
 
     do
       do n = 1, Ngp1
@@ -175,7 +180,7 @@ contains
 
 !    Cast the h_glgrid onto the path (using liner interpolation)
 
-    do m = 1, no_phi_t
+    do m = lmin, lmax
       call lintrp ( z_glgrid, dum_z, h_glgrid(1:,m), h_a(1:,m), gl_count, npp )
     end do
 
@@ -224,7 +229,7 @@ contains
 
       do i = 1, npp
         r = dum_phi(i)
-        do m = 1, no_phi_t
+        do m = lmin, lmax
           call get_one_eta ( r, t_phi_basis, no_phi_t, m, phi_eta(i,m) )
         end do
       end do
@@ -266,7 +271,7 @@ contains
         if ( j >= ibrk) elvar%ps = 1.0D0
         call H_TO_S_PHI ( elvar, h, s, phi )
         dum_phi(j) = phi
-        do m = 1, no_phi_t
+        do m = lmin, lmax
           call get_one_eta ( dum_phi(j), t_phi_basis, no_phi_t, m, phi_eta(j,m) )
         end do
       end do
@@ -278,7 +283,7 @@ contains
 !   First, compute the path Temperature:
 !   Cast the t_glgrid onto the path (using liner interpolation)
 
-    do m = 1, no_phi_t
+    do m = lmin, lmax
       call lintrp ( z_glgrid, dum_z, t_glgrid(1:,m), h_a(1:,m), gl_count, npp )
     end do
 
@@ -303,7 +308,7 @@ contains
 !   Second, compute the path dh_dz:
 !   Cast the dhdz_glgrid onto the path (using liner interpolation)
 
-    do m = 1, no_phi_t
+    do m = lmin, lmax
       call lintrp ( z_glgrid, dum_z, dhdz_glgrid(1:,m), h_a(1:,m), gl_count, npp )
     end do
 
@@ -312,7 +317,7 @@ contains
     end do
  
 !?? print*,'Hello Im deallocating!'
-    call deallocate_test ( h_a,'h_a',ModuleName )
+    call deallocate_test ( h_a, 'h_a', ModuleName )
     call deallocate_test ( dum_phi, 'dump_phi', ModuleName )
     call deallocate_test ( dum_h, 'dum_h', ModuleName )
     call deallocate_test ( dum_z, 'dum_z', ModuleName )
@@ -325,6 +330,9 @@ contains
   end subroutine Vert_To_Path
 end module Vert_To_Path_M
 ! $Log$
+! Revision 1.9  2001/04/13 00:27:35  vsnyder
+! Comment out some of Nathaniel's debugging print
+!
 ! Revision 1.8  2001/04/12 21:41:24  livesey
 ! Changed allocatable to automatic then pointer.  Still fails on large chunks.
 ! Van will try it on LF95
