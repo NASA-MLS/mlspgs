@@ -37,11 +37,6 @@ MODULE L3DMDiag
 
 ! Parameters
 
-   CHARACTER (LEN=*), PARAMETER :: DIMN_NAME = 'N'
-
-   CHARACTER (LEN=*), PARAMETER :: DG_FIELD = 'GRss'
-   CHARACTER (LEN=*), PARAMETER :: MD_FIELD = 'MaxDiff'
-
 ! This data type is used to store the l3 daily map diagnostics.
 
    TYPE L3DMDiag_T
@@ -690,4 +685,7 @@ END MODULE L3DMDiag
 !==================
 
 !# $Log$
+!# Revision 1.1  2001/11/26 19:25:04  nakamura
+!# Module for the L3DMDiag data type.
+!#
 !#
