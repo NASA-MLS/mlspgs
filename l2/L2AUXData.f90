@@ -451,6 +451,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Uncertain what to do with those just yet
     ! Now find dimension family of dimension; e.g., MAF
+    dim_families = 0
     dim_size1 = 0
      do dim=1, rank
 
@@ -856,6 +857,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.34  2002/11/29 18:50:07  livesey
+! Initialised a variable
+!
 ! Revision 2.33  2002/11/26 22:16:41  jonathan
 ! Comment-out dump_l2aux diagnostics
 !
