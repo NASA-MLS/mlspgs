@@ -2,77 +2,78 @@
 ! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
-!===============================================================================
+!==============================================================================
 MODULE mon_Open
-!===============================================================================
+!==============================================================================
 
-   USE MLSCF
-   USE MLSCommon
-   USE MLSMessageModule
-   USE MLSPCF3
-   USE mon_L3CF
-   USE OpenInit, ONLY:  SetProcessingWindow
-   USE PCFHdr
-   USE SDPToolkit
-   use GETCF_M, only: GetCF, InitGetCF
-   IMPLICIT NONE
-   PUBLIC
+  USE MLSCF, ONLY: Mlscf_T
+  USE MLSCommon, ONLY: FileNameLen
+  USE MLSL3Common, ONLY: MAXWINDOW 
+  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Fileopen
+  USE MLSPCF3
+  USE mon_L3CF, ONLY: L3CFMDef_T, L3CFMProd_T, FillL3CFM
+  USE OpenInit, ONLY: SetProcessingWindow
+  USE PCFHdr, ONLY: CreatePCFAnnotation
+  USE SDPToolkit, ONLY: PGS_S_SUCCESS, PGS_IO_GEN_CLOSEF, PGSD_IO_GEN_RSEQFRM,&
+       & PGS_PC_GETREFERENCE, PGS_IO_GEN_OPENF
+  USE GETCF_M, only: GetCF, InitGetCF
+  IMPLICIT NONE
+  PUBLIC
 
-   PRIVATE :: ID, ModuleName
+  PRIVATE :: ID, ModuleName
 
-!------------------- RCS Ident Info -----------------------
-   CHARACTER(LEN=130) :: Id = &                                                    
-   "$Id$"
+  !------------------- RCS Ident Info -----------------------
+   CHARACTER(LEN=130) :: Id = &                                               
+        "$Id$"
    CHARACTER (LEN=*), PARAMETER :: ModuleName="$RCSfile$"
 !----------------------------------------------------------
 
-! Contents:
+   ! Contents:
 
-! Definitions -- PCFMData_T
-! Subroutines -- GetPCFParams
-!                OpenMON
+   ! Definitions -- PCFMData_T
+   ! Subroutines -- GetPCFParams
+   !                OpenMON
 
-! Remarks:  This is a prototype module for the routines needed for the L3
-! Monthly Open/Init task.
+   ! Remarks:  This is a prototype module for the routines needed for the L3
+   ! Monthly Open/Init task.
 
-! Parameters
+   ! Parameters
 
-! This data type is used to store User-defined Runtime Parameters and other
-! information taken from the PCF.
+   ! This data type is used to store User-defined Runtime Parameters and other
+   ! information taken from the PCF.
 
    TYPE PCFMData_T
 
-     ! cycle # of processing run
+      ! log file name, WITHOUT the path (LocalGranuleID)
 
-     CHARACTER (LEN=4) :: cycle
+      CHARACTER (LEN=FileNameLen) :: logGranID
 
-     ! version string in PCF output file names
+      ! output file names, WITH their paths
 
-     CHARACTER (LEN=15) :: outputVersion
+      CHARACTER (LEN=FileNameLen) :: msName	! L3MM_Standard
 
-     ! processing window (input & output) information
+      CHARACTER (LEN=FileNameLen) :: mdName	! L3MM_Diagnostic
 
-     CHARACTER (LEN=8) :: endDay
+      CHARACTER (LEN=FileNameLen) :: zsName	! L3MZ_Standard
 
-     CHARACTER (LEN=8) :: startDay
+      CHARACTER (LEN=FileNameLen) :: zdName	! L3MZ_Diagnostic
+      
+      ! version string in PCF output file names
 
-     INTEGER :: nDays
+      CHARACTER (LEN=15) :: outputVersion
+      ! processing window (input & output) information
 
-     CHARACTER (LEN=8) :: dates(maxWindow)
+      CHARACTER (LEN=8) :: endDay
 
-     ! log file name, WITHOUT the path (LocalGranuleID)
+      CHARACTER (LEN=8) :: startDay
 
-     CHARACTER (LEN=FileNameLen) :: logGranID
+      CHARACTER (LEN=8) :: dates(maxWindow)
 
-     ! output file names, WITH their paths
+      ! cycle # of processing run
 
-     CHARACTER (LEN=FileNameLen) :: msName	! L3MM_Standard
+      CHARACTER (LEN=4) :: cycle
 
-     CHARACTER (LEN=FileNameLen) :: mdName	! L3MM_Diagnostic
-
-     CHARACTER (LEN=FileNameLen) :: zsName	! L3MZ_Standard
-
-     CHARACTER (LEN=FileNameLen) :: zdName	! L3MZ_Diagnostic
+      INTEGER :: nDays
 
    END TYPE PCFMData_T
 
@@ -92,8 +93,8 @@ CONTAINS
 
 ! Parameters
 
-      CHARACTER (LEN=*), PARAMETER :: UDRP_ERR = 'Failed to get PCF runtime &
-                                                                &parameter:  '
+      CHARACTER (LEN=*), PARAMETER :: UDRP_ERR = & 
+           & 'Failed to get PCF runtime parameter:  '
 
 ! Functions
 
@@ -101,16 +102,16 @@ CONTAINS
 
 ! Variables
 
-      CHARACTER (LEN=17) :: range 
       CHARACTER (LEN=480) :: msr
       CHARACTER (LEN=FileNameLen) :: name
+      CHARACTER (LEN=17) :: range 
 
       INTEGER ::  indx, mlspcf_log, returnStatus, version
 
 ! Retrieve values set in PCF & assign them to variables.
 
       returnStatus = pgs_pc_getConfigData(mlspcf_l3_param_OutputVersion, &
-                                          l3pcf%outputVersion)
+           & l3pcf%outputVersion)
       IF (returnStatus /= PGS_S_SUCCESS) THEN
          msr = UDRP_ERR // 'OutputVersion'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -134,7 +135,7 @@ CONTAINS
       l3pcf%endDay = range(10:17)
 
       CALL SetProcessingWindow(l3pcf%startDay, l3pcf%endDay, l3pcf%dates, &
-                               l3pcf%nDays)
+           & l3pcf%nDays)
 
 ! Get the name of the log file from the PCF; remove its path
 
@@ -143,44 +144,52 @@ CONTAINS
 
       returnStatus = Pgs_pc_getReference(mlspcf_log, version, name)
       IF (returnStatus /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, &
-                        ModuleName, 'Error retrieving log file name from PCF.')
+           & ModuleName, 'Error retrieving log file name from PCF.')
       indx = INDEX(name, '/', .TRUE.)
       l3pcf%logGranID = name(indx+1:)
 
 ! Get the name of the L3MM Standard file from the PCF
 
       version = 1
-      returnStatus = Pgs_pc_getReference(mlspcf_l3mms_start, version, l3pcf%msName)
-      IF (returnStatus /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, ModuleName, &
-                 ModuleName, 'Error retrieving L3MM std file name from the PCF.')
+      returnStatus = & 
+           & Pgs_pc_getReference(mlspcf_l3mms_start, version, l3pcf%msName)
+      IF (returnStatus /= PGS_S_SUCCESS) & 
+           & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+           & 'Error retrieving L3MM std file name from the PCF.')
 
 ! Get the name of the L3MM Diagnostic file from the PCF
 
       version = 1
-      returnStatus = Pgs_pc_getReference(mlspcf_l3mmd_start, version, l3pcf%mdName)
-      IF (returnStatus /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, ModuleName, &
-                 ModuleName, 'Error retrieving L3MM dg file name from the PCF.')
+      returnStatus = & 
+           & Pgs_pc_getReference(mlspcf_l3mmd_start, version, l3pcf%mdName)
+      IF (returnStatus /= PGS_S_SUCCESS) & 
+           & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+           & 'Error retrieving L3MM dg file name from the PCF.')
 
 ! Get the name of the L3MZ Standard file from the PCF
 
       version = 1
-      returnStatus = Pgs_pc_getReference(mlspcf_l3mzs_start, version, l3pcf%zsName)
-      IF (returnStatus /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, ModuleName, &
-                 ModuleName, 'Error retrieving L3MZ std file name from the PCF.')
+      returnStatus = & 
+           & Pgs_pc_getReference(mlspcf_l3mzs_start, version, l3pcf%zsName)
+      IF (returnStatus /= PGS_S_SUCCESS) & 
+           & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+           & 'Error retrieving L3MZ std file name from the PCF.')
 
-! Get the name of the L3MZ Diagnostic file from the PCF
+      ! Get the name of the L3MZ Diagnostic file from the PCF
 
       version = 1
-      returnStatus = Pgs_pc_getReference(mlspcf_l3mzd_start, version, l3pcf%zdName)
-      IF (returnStatus /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, ModuleName, &
-                 ModuleName, 'Error retrieving L3MM dg file name from the PCF.')
+      returnStatus = & 
+           & Pgs_pc_getReference(mlspcf_l3mzd_start, version, l3pcf%zdName)
+      IF (returnStatus /= PGS_S_SUCCESS) & 
+           & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+           & 'Error retrieving L3MM dg file name from the PCF.')
 
 !-----------------------------
-   END SUBROUTINE GetPCFParams
+    END SUBROUTINE GetPCFParams
 !-----------------------------
 
 !------------------------------------------------------------
-   SUBROUTINE OpenMON (l3pcf, cf, cfStd, cfDg, cfDef, anText)
+    SUBROUTINE OpenMON (l3pcf, cf, cfStd, cfDg, cfDef, anText)
 !------------------------------------------------------------
 
 ! Brief description of subroutine
@@ -219,7 +228,7 @@ CONTAINS
 ! Open the configuration file
 
       returnStatus = pgs_io_gen_openF (mlspcf_l3cf_start, &
-                                       PGSd_IO_Gen_RSeqFrm, 0, pcfId, 1)
+           & PGSd_IO_Gen_RSeqFrm, 0, pcfId, 1)
       IF (returnStatus /= PGS_S_SUCCESS) THEN
          msr = MLSMSG_Fileopen // 'l3cf.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -235,21 +244,25 @@ CONTAINS
 
       returnStatus = pgs_io_gen_closeF (pcfId)
       IF (returnStatus /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, &
-                                          ModuleName, 'Failed to close l3cf.')
+           & ModuleName, 'Failed to close l3cf.')
 
-! Check the parser output; fill L3CFProd_T
+      ! Check the parser output; fill L3CFProd_T
 
       CALL FillL3CFM(cf, l3pcf%outputVersion, cfStd, cfDg, cfDef)
 
+
 !------------------------
-   END SUBROUTINE OpenMON
+    END SUBROUTINE OpenMON
 !------------------------
 
 !==================
-END MODULE mon_Open
+  END MODULE mon_Open
 !==================
 
 ! $Log$
+! Revision 1.3  2001/09/06 18:50:27  nakamura
+! Modified so that dg products use the same data type as std prods.
+!
 ! Revision 1.2  2001/07/20 19:29:20  nakamura
 ! Corrected to use the parser.
 !
