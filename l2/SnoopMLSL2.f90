@@ -49,6 +49,7 @@ module SnoopMLSL2               ! Interface between MLSL2 and IDL snooper via pv
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
   ! =============================================================================
@@ -781,9 +782,16 @@ contains ! ========  Public Procedures =========================================
 
   end subroutine SnooperRequestedQuantity
   
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module SnoopMLSL2
 
 ! $Log$
+! Revision 2.33  2002/10/08 17:36:23  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.32  2002/09/13 18:10:10  pwagner
 ! May change matrix precision rm from r8
 !
