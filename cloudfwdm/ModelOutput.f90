@@ -141,7 +141,7 @@ contains
                C_EXT = 0._r8
                A_EXT = 0._r8
             
-               DO K=NH-1,iflag,-1
+               DO K=NH-1,iflag+1,-1
 
                      TGT=YZ(K-1)
                      IF(TGT .LT. HT)THEN
@@ -157,7 +157,7 @@ contains
 
                ENDDO
 
-               DO K=iflag,NH-1
+               DO K=iflag+1,NH-1
 
                      TGT=YZ(K-1)
                      IF(TGT .LT. HT)THEN
@@ -191,6 +191,9 @@ contains
 end module ModelOutput
 
 ! $Log$
+! Revision 1.10  2001/10/19 19:25:25  dwu
+! follow-on fixes
+!
 ! Revision 1.9  2001/10/19 19:16:14  dwu
 ! change Nz-1 to NZ
 !
