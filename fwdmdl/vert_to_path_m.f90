@@ -130,7 +130,7 @@ contains
         dum_h(npp) = h_glgrid(l,MidWin)
       end do
       h = h_glgrid(l-1,MidWin)
-      if ( h <= htan  .OR. l-Ngp1 < 1) exit
+      if ( abs(h-htan) < 0.001  .OR. l-Ngp1 < 1) exit
     end do
 
     l = l - 1
@@ -305,6 +305,9 @@ contains
   end subroutine Vert_To_Path
 end module Vert_To_Path_M
 ! $Log$
+! Revision 1.14  2001/04/23 21:43:28  zvi
+! Introducing no_phi_t etc.
+!
 ! Revision 1.13  2001/04/13 03:34:46  zvi
 ! Correcting minor error in allocation, cleaing up comments.
 !
