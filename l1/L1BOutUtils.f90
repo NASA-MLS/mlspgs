@@ -17,79 +17,76 @@ MODULE L1BOutUtils
   CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
   !-----------------------------------------------------------------------------
 
-    logical, parameter :: USEPCF2HDRFORHDF5 = .true.
-
 CONTAINS
 
 !=============================================================================
   SUBROUTINE OutputL1Bdata
 !=============================================================================
 
-    USE MLSL1Common, ONLY: L1BFileInfo, MAFinfo
-    USE Orbit, ONLY: altG, altT, ascTAI, dscTAI, numOrb, orbIncline, &
-         orbitNumber, scanRate, scanRateT
+    USE MLSL1Common, ONLY: L1BFileInfo, MAFinfo, MaxMIFs
+    USE Orbit, ONLY: altG, altT, ascTAI, dscTAI, numOrb
     USE TkL1B, ONLY: L1BOA_MAF
     USE OutputL1B, ONLY: OutputL1B_rad
     USE MLSL1Rad, ONLY: L1Brad
+    USE EngTbls, ONLY: Reflec
     USE MLSL1Config, ONLY: L1Config
-    USE Calibration, ONLY: CalWin
+    USE Calibration, ONLY: CalWin, MAFdata_T
 
     INTEGER, SAVE :: MAFno = 0, counterMAF
+    INTEGER :: i
+    REAL :: scAngleG(0:(MaxMIFs-1)), scAngleT(0:(MaxMIFs-1))
+    TYPE (MAFdata_T), POINTER :: CurMAFdata
 
-    counterMAF = CalWin%MAFdata(CalWin%central)%EMAF%TotalMAF
+    CurMAFdata => CalWin%MAFdata(CalWin%central)
+    counterMAF = CurMAFdata%EMAF%TotalMAF
+
     MAFno = MAFno + 1
 
     IF (L1Config%Globals%ProduceL1BOA) THEN
 
+       DO i = 0, (MaxMIFs - 1)
+          scAngleG(i) = CurMAFdata%SciPkt(i)%scAngleG
+          scAngleT(i) = CurMAFdata%SciPkt(i)%scAngleT
+          IF (i > 0) THEN  ! use previous until further notice
+             IF (scAngleG(i) < 0.0) scAngleG(i) = scAngleG(i-1)
+             IF (scAngleT(i) < 0.0) scAngleT(i) = scAngleT(i-1)
+          ENDIF
+       ENDDO
+
        CALL L1BOA_MAF (altG, altT, ascTAI, counterMAF, dscTAI, &
-            l1bFileInfo%OAId, MAFinfo, MAFno, numOrb, orbIncline, &
-            orbitNumber, scanRate, scanRateT, L1BFileInfo)
+            l1bFileInfo%OAId, MAFinfo, MAFno, numOrb, scAngleG, scAngleT)
 
     ENDIF
 
-    CALL OutputL1B_rad (MAFno, L1BFileInfo, counterMAF, MAFinfo%startTAI, &
-         L1Brad)
+    CALL OutputL1B_rad (MAFno, L1BFileInfo, counterMAF, Reflec, &
+         MAFinfo%startTAI, L1Brad)
 
     PRINT *, "outputting l1b for MAF no ", MAFno
 
   END SUBROUTINE OutputL1Bdata
 
 !=============================================================================
-  SUBROUTINE WriteHdrAnnots (FileName, File_id, HDFversion)
+  SUBROUTINE WriteHdrAnnots (FileName, HDFversion)
 !=============================================================================
 
     USE Intrinsic, ONLY: l_hdf
     USE OpenInit, ONLY: antextPCF, antextCF
     USE PCFHdr, ONLY: WritePCF2Hdr
     USE MLSFiles, ONLY: HDFVERSION_4, HDFVERSION_5
-    USE MLS_DataProducts, ONLY: DataProducts_T, Deallocate_DataProducts
-    USE MLSAuxData, ONLY: Build_MLSAuxData, MaxCharFieldLen
 
     CHARACTER(LEN=*), INTENT(IN) :: Filename
-    INTEGER, INTENT(IN) :: File_id, HDFversion
-    CHARACTER(len=MaxCharFieldLen) :: cbuf
-
-    TYPE (DataProducts_T) :: dataset
+    INTEGER, INTENT(IN) :: HDFversion
 
     IF (HDFversion == HDFVERSION_4) THEN
        CALL WritePCF2Hdr (FileName, anTextPCF, hdfVersion=HDFVERSION_4)
        CALL WritePCF2Hdr (FileName, anTextCF, hdfVersion=HDFVERSION_4)
-    elseif (USEPCF2HDRFORHDF5) THEN
+    ELSE IF (HDFversion == HDFVERSION_5) THEN
        CALL WritePCF2Hdr (FileName, anTextPCF, hdfVersion=HDFVERSION_5, &
          & fileType=l_hdf)
        CALL WritePCF2Hdr (FileName, anTextCF, hdfVersion=HDFVERSION_5, &
          & fileType=l_hdf, name='/LCF')
     ELSE
-       CALL Deallocate_DataProducts (dataset)
-       dataset%name      = 'TextPCF'
-       dataset%data_type = 'character'
-       cbuf = TRANSFER (anTextPCF, cbuf)
-       CALL Build_MLSAuxData (File_id, dataset, cbuf, &
-            char_length=SIZE(anTextPCF))
-       dataset%name      = 'TextCF'
-       cbuf = TRANSFER (anTextCF, cbuf)
-       CALL Build_MLSAuxData (File_id, dataset, cbuf, &
-            char_length=SIZE(anTextCF))
+       PRINT *, 'Unknown HDF type!'
     ENDIF
 
   END SUBROUTINE WriteHdrAnnots
@@ -97,6 +94,9 @@ CONTAINS
 END MODULE L1BOutUtils
 
 ! $Log$
+! Revision 2.9  2003/08/15 14:25:04  perun
+! Version 1.2 commit
+!
 ! Revision 2.8  2003/07/08 00:17:11  pwagner
 ! fileType now a lit_name instead of a char string
 !
