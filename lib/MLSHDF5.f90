@@ -29,11 +29,12 @@ module MLSHDF5
   use HDF5, only: H5ACLOSE_F, H5ACREATE_F, H5AGET_TYPE_F, H5AOPEN_NAME_F, &
     & H5AREAD_F, H5AWRITE_F, H5ADELETE_F, &
     & H5DCREATE_F, H5DEXTEND_F, H5DGET_SPACE_F, H5DGET_TYPE_F, H5DOPEN_F, &
-    & H5DREAD_F, H5DWRITE_F, H5DCLOSE_F, &
+    & H5DREAD_F, H5DWRITE_F, H5DCLOSE_F, H5DGET_CREATE_PLIST_F, &
     & H5ESET_AUTO_F, &
     & H5FOPEN_F, H5FCLOSE_F, &
     & H5GOPEN_F, H5GCLOSE_F, &
-    & H5PCREATE_F, H5PSET_CHUNK_F, &
+    & H5PCREATE_F, H5PSET_CHUNK_F, H5PSET_FILL_VALUE_F, &
+    & H5PGET_CHUNK_F, H5PGET_FILL_VALUE_F, &
     & H5SCLOSE_F, &
     & H5SCREATE_F, H5SCREATE_SIMPLE_F, H5SGET_SIMPLE_EXTENT_NDIMS_F, &
     & H5SGET_SIMPLE_EXTENT_DIMS_F, H5SSELECT_HYPERSLAB_F, &
@@ -152,6 +153,8 @@ module MLSHDF5
   integer, save :: cantGetDataspaceDims = 0
   integer, parameter :: MAXNUMWARNS = 40
   integer, parameter :: MAXNDSNAMES = 1000   ! max number of DS names in a file
+  ! Local variables
+  integer(hid_t) :: cparms
 
 contains ! ======================= Public Procedures =========================
 
@@ -1377,21 +1380,27 @@ contains ! ======================= Public Procedures =========================
   end subroutine SaveAsHDF5DS_charsclr
 
   ! --------------------------------------------- SaveAsHDF5DS_chararr1
-  subroutine SaveAsHDF5DS_chararr1 ( locID, name, value )
+  subroutine SaveAsHDF5DS_chararr1 ( locID, name, value, &
+    & finalShape, fillValue, adding_to )
     ! This routine does the initial work of creating a dataset
     integer, intent(in) :: LOCID        ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
     character (len=*), intent(in) :: VALUE(:)     ! The array itself
+    character (len=*), optional, intent(in) :: FILLVALUE
+    integer, dimension(1), optional, intent(in) :: FINALSHAPE
+    logical, optional, intent(in)     :: adding_to
 
     ! Local variables
     integer :: spaceID                  ! ID for dataspace
     integer (HID_T) :: setID            ! ID for dataset
     integer :: status                   ! Flag from HDF5
-    integer, dimension(1) :: SHP        ! Shape
+    integer, dimension(1) :: SHP, MAXDIMS        ! Shape
     integer :: STRINGTYPE               ! Type for string
 
     ! Executable code
     shp = shape(value)
+    maxdims=shp
+    if ( present(finalShape) ) maxdims = finalShape
     ! Create a data type for this string
     call h5tcopy_f( H5T_NATIVE_CHARACTER, stringtype, status ) 
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1400,12 +1409,25 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to set size for stringtype '//trim(name) )
     ! Create the dataspace
-    call h5sCreate_simple_f ( 1, int(shp,hSize_T), spaceID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to create dataspace for 1D char array '//trim(name) )
-    ! Create the dataset
-    call h5dCreate_f ( locID, trim(name), stringtype, spaceID, setID, &
-      & status )
+ !    call h5sCreate_simple_f ( 1, int(maxdims,hSize_T), spaceID, status )
+ !    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+ !      & 'Unable to create dataspace for 1D char array '//trim(name) )
+ !      ! Create the dataset
+ !    if ( present(fillValue) ) then
+ !      call h5pcreate_f(H5P_DATASET_CREATE_F, cparms, status)
+ !      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+ !        & 'Unable to create property list for 1D char array '//trim(name) )
+ !      call h5pset_fill_value_f (cparms, H5T_NATIVE_CHARACTER, fillValue, status)
+ !      if (status /= 0) call MLSMessage (MLSMSG_Error, ModuleName, &
+ !        &  "Unable to set Fill value for 1D char array " // trim (name))
+ !      call h5dCreate_f ( locID, trim(name), stringtype, spaceID, setID, &
+ !        & status, cparms )
+ !    else
+ !      call h5dCreate_f ( locID, trim(name), stringtype, spaceID, setID, &
+ !        & status )
+ !    endif
+    call createSpaceSet(locID, name, 1, maxdims, stringtype, &
+    & spaceID, setID, status, adding_to, cFill=FillValue)
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to create dataset for 1D char array '//trim(name) )
     ! Write the data
@@ -1426,21 +1448,27 @@ contains ! ======================= Public Procedures =========================
   end subroutine SaveAsHDF5DS_chararr1
 
   ! --------------------------------------------- SaveAsHDF5DS_chararr2
-  subroutine SaveAsHDF5DS_chararr2 ( locID, name, value )
+  subroutine SaveAsHDF5DS_chararr2 ( locID, name, value, &
+    & finalShape, fillValue, adding_to )
     ! This routine does the initial work of creating a dataset
     integer, intent(in) :: LOCID        ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
     character (len=*), intent(in) :: VALUE(:,:)     ! The array itself
+    character (len=*), optional, intent(in) :: FILLVALUE
+    integer, dimension(2), optional, intent(in) :: FINALSHAPE
+    logical, optional, intent(in)     :: adding_to
 
     ! Local variables
     integer :: spaceID                  ! ID for dataspace
     integer (HID_T) :: setID            ! ID for dataset
     integer :: status                   ! Flag from HDF5
-    integer, dimension(2) :: SHP        ! Shape
+    integer, dimension(2) :: SHP, MAXDIMS        ! Shape
     integer :: STRINGTYPE               ! Type for string
 
     ! Executable code
     shp = shape(value)
+    maxdims=shp
+    if ( present(finalShape) ) maxdims = finalShape
     ! Create a data type for this string
     call h5tcopy_f( H5T_NATIVE_CHARACTER, stringtype, status ) 
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1449,12 +1477,25 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to set size for stringtype '//trim(name) )
     ! Create the dataspace
-    call h5sCreate_simple_f ( 2, int(shp,hSize_T), spaceID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to create dataspace for 2D char array '//trim(name) )
-    ! Create the dataset
-    call h5dCreate_f ( locID, trim(name), stringtype, spaceID, setID, &
-      & status )
+ !    call h5sCreate_simple_f ( 2, int(maxdims,hSize_T), spaceID, status )
+ !    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+ !      & 'Unable to create dataspace for 2D char array '//trim(name) )
+ !    ! Create the dataset
+ !    if ( present(fillValue) ) then
+ !      call h5pcreate_f(H5P_DATASET_CREATE_F, cparms, status)
+ !      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+ !        & 'Unable to create property list for 2D char array '//trim(name) )
+ !      call h5pset_fill_value_f (cparms, H5T_NATIVE_CHARACTER, fillValue, status)
+ !      if (status /= 0) call MLSMessage (MLSMSG_Error, ModuleName, &
+ !        &  "Unable to set Fill value for 2D charr array " // trim (name))
+ !      call h5dCreate_f ( locID, trim(name), stringtype, spaceID, setID, &
+ !        & status, cparms )
+ !    else
+ !      call h5dCreate_f ( locID, trim(name), stringtype, spaceID, setID, &
+ !        & status )
+ !    endif
+    call createSpaceSet(locID, name, 2, maxdims, stringtype, &
+    & spaceID, setID, status, adding_to, cFill=fillValue)
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to create dataset for 2D char array '//trim(name) )
     ! Write the data
@@ -1475,27 +1516,29 @@ contains ! ======================= Public Procedures =========================
   end subroutine SaveAsHDF5DS_chararr2
 
   ! --------------------------------------------- SaveAsHDF5DS_intarr1
-  subroutine SaveAsHDF5DS_intarr1 ( locID, name, value )
+  subroutine SaveAsHDF5DS_intarr1 ( locID, name, value, &
+    & finalShape, fillValue, adding_to )
     ! This routine does the initial work of creating a dataset
     integer, intent(in) :: LOCID        ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
     integer, intent(in) :: VALUE(:)     ! The array itself
+    integer, optional, intent(in) :: FILLVALUE
+    integer, dimension(1), optional, intent(in) :: FINALSHAPE
+    logical, optional, intent(in)     :: adding_to
 
     ! Local variables
     integer :: spaceID                  ! ID for dataspace
     integer (HID_T) :: setID            ! ID for dataset
     integer :: status                   ! Flag from HDF5
-    integer, dimension(1) :: SHP        ! Shape
+    integer, dimension(1) :: SHP, MAXDIMS        ! Shape
 
     ! Executable code
-    ! Create the dataspace
     shp = shape(value)
-    call h5sCreate_simple_f ( 1, int(shp,hSize_T), spaceID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to create dataspace for 1D integer array '//trim(name) )
-    ! Create the dataset
-    call h5dCreate_f ( locID, trim(name), H5T_NATIVE_INTEGER, spaceID, setID, &
-      & status )
+    maxdims=shp
+    if ( present(finalShape) ) maxdims = finalShape
+    ! Create the dataspace
+    call createSpaceSet(locID, name, 1, maxdims, H5T_NATIVE_INTEGER, &
+      & spaceID, setID, status, adding_to, iFill=fillValue)
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to create dataset for 1D integer array '//trim(name) )
     ! Write the data
@@ -1513,27 +1556,29 @@ contains ! ======================= Public Procedures =========================
   end subroutine SaveAsHDF5DS_intarr1
 
   ! --------------------------------------------- SaveAsHDF5DS_intarr2
-  subroutine SaveAsHDF5DS_intarr2 ( locID, name, value )
+  subroutine SaveAsHDF5DS_intarr2 ( locID, name, value, &
+    & fillValue, finalShape, adding_to )
     ! This routine does the initial work of creating a dataset
     integer, intent(in) :: LOCID        ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
     integer, intent(in) :: VALUE(:,:)     ! The array itself
+    integer, optional, intent(in) :: FILLVALUE
+    integer, dimension(2), optional, intent(in) :: FINALSHAPE
+    logical, optional, intent(in)     :: adding_to
 
     ! Local variables
     integer :: spaceID                  ! ID for dataspace
     integer (HID_T) :: setID            ! ID for dataset
     integer :: status                   ! Flag from HDF5
-    integer, dimension(2) :: SHP        ! Shape
+    integer, dimension(2) :: SHP, MAXDIMS        ! Shape
 
     ! Executable code
-    ! Create the dataspace
     shp = shape(value)
-    call h5sCreate_simple_f ( 2, int(shp,hSize_T), spaceID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to create dataspace for 2D integer array '//trim(name) )
-    ! Create the dataset
-    call h5dCreate_f ( locID, trim(name), H5T_NATIVE_INTEGER, spaceID, setID, &
-      & status )
+    maxdims=shp
+    if ( present(finalShape) ) maxdims = finalShape
+    ! Create the dataspace
+    call createSpaceSet(locID, name, 2, maxdims, H5T_NATIVE_INTEGER, &
+      & spaceID, setID, status, adding_to, iFill=fillValue)
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to create dataset for 2D integer array '//trim(name) )
     ! Write the data
@@ -1551,27 +1596,29 @@ contains ! ======================= Public Procedures =========================
   end subroutine SaveAsHDF5DS_intarr2
 
   ! --------------------------------------------- SaveAsHDF5DS_intarr3
-  subroutine SaveAsHDF5DS_intarr3 ( locID, name, value )
+  subroutine SaveAsHDF5DS_intarr3 ( locID, name, value, &
+    & finalShape, fillValue, adding_to )
     ! This routine does the initial work of creating a dataset
     integer, intent(in) :: LOCID        ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
     integer, intent(in) :: VALUE(:,:,:)     ! The array itself
+    integer, optional, intent(in) :: FILLVALUE
+    integer, dimension(3), optional, intent(in) :: FINALSHAPE
+    logical, optional, intent(in)     :: adding_to
 
     ! Local variables
     integer :: spaceID                  ! ID for dataspace
     integer (HID_T) :: setID            ! ID for dataset
     integer :: status                   ! Flag from HDF5
-    integer, dimension(3) :: SHP        ! Shape
+    integer, dimension(3) :: SHP, MAXDIMS        ! Shape
 
     ! Executable code
-    ! Create the dataspace
     shp = shape(value)
-    call h5sCreate_simple_f ( 3, int(shp,hSize_T), spaceID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to create dataspace for 3D integer array '//trim(name) )
-    ! Create the dataset
-    call h5dCreate_f ( locID, trim(name), H5T_NATIVE_INTEGER, spaceID, setID, &
-      & status )
+    maxdims=shp
+    if ( present(finalShape) ) maxdims = finalShape
+    ! Create the dataspace
+    call createSpaceSet(locID, name, 3, maxdims, H5T_NATIVE_INTEGER, &
+      & spaceID, setID, status, adding_to, iFill=fillValue)
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to create dataset for 3D integer array '//trim(name) )
     ! Write the data
@@ -1589,27 +1636,29 @@ contains ! ======================= Public Procedures =========================
   end subroutine SaveAsHDF5DS_intarr3
 
   ! --------------------------------------------- SaveAsHDF5DS_dblarr1
-  subroutine SaveAsHDF5DS_dblarr1 ( locID, name, value )
+  subroutine SaveAsHDF5DS_dblarr1 ( locID, name, value, &
+    & finalShape, fillValue, adding_to )
     ! This routine does the initial work of creating a dataset
     integer, intent(in) :: LOCID        ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
     real(r8), intent(in) :: VALUE(:)     ! The array itself
+    real(r8), optional, intent(in) :: FILLVALUE
+    integer, dimension(1), optional, intent(in) :: FINALSHAPE
+    logical, optional, intent(in)     :: adding_to
 
     ! Local variables
     integer :: spaceID                  ! ID for dataspace
     integer (HID_T) :: setID            ! ID for dataset
     integer :: status                   ! Flag from HDF5
-    integer, dimension(1) :: SHP        ! Shape
+    integer, dimension(1) :: SHP, MAXDIMS        ! Shape
 
     ! Executable code
-    ! Create the dataspace
     shp = shape(value)
-    call h5sCreate_simple_f ( 1, int(shp,hSize_T), spaceID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to create dataspace for 1D double array '//trim(name) )
-    ! Create the dataset
-    call h5dCreate_f ( locID, trim(name), H5T_NATIVE_DOUBLE, spaceID, setID, &
-      & status )
+    maxdims=shp
+    if ( present(finalShape) ) maxdims = finalShape
+    ! Create the dataspace
+    call createSpaceSet(locID, name, 1, maxdims, H5T_NATIVE_DOUBLE, &
+      & spaceID, setID, status, adding_to, dFill=fillValue)
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to create dataset for 1D double array '//trim(name) )
     ! Write the data
@@ -1627,27 +1676,29 @@ contains ! ======================= Public Procedures =========================
   end subroutine SaveAsHDF5DS_dblarr1
 
   ! --------------------------------------------- SaveAsHDF5DS_dblarr2
-  subroutine SaveAsHDF5DS_dblarr2 ( locID, name, value )
+  subroutine SaveAsHDF5DS_dblarr2 ( locID, name, value, &
+    & finalShape, fillValue, adding_to )
     ! This routine does the initial work of creating a dataset
     integer, intent(in) :: LOCID        ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
     real(r8), intent(in) :: VALUE(:,:)  ! The array itself
+    real(r8), optional, intent(in) :: FILLVALUE
+    integer, dimension(2), optional, intent(in) :: FINALSHAPE
+    logical, optional, intent(in)     :: adding_to
 
     ! Local variables
     integer :: spaceID                  ! ID for dataspace
     integer (HID_T) :: setID            ! ID for dataset
     integer :: status                   ! Flag from HDF5
-    integer, dimension(2) :: SHP        ! Shape
+    integer, dimension(2) :: SHP, MAXDIMS        ! Shape
 
     ! Executable code
-    ! Create the dataspace
     shp = shape(value)
-    call h5sCreate_simple_f ( 2, int(shp,hSize_T), spaceID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to create dataspace for 2D double array '//trim(name) )
-    ! Create the dataset
-    call h5dCreate_f ( locID, trim(name), H5T_NATIVE_DOUBLE, spaceID, setID, &
-      & status )
+    maxdims=shp
+    if ( present(finalShape) ) maxdims = finalShape
+    ! Create the dataspace
+    call createSpaceSet(locID, name, 2, maxdims, H5T_NATIVE_DOUBLE, &
+      & spaceID, setID, status, adding_to, dFill=fillValue)
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to create dataset for 2D double array '//trim(name) )
     ! Write the data
@@ -1665,27 +1716,29 @@ contains ! ======================= Public Procedures =========================
   end subroutine SaveAsHDF5DS_dblarr2
 
   ! --------------------------------------------- SaveAsHDF5DS_dblarr3
-  subroutine SaveAsHDF5DS_dblarr3 ( locID, name, value )
+  subroutine SaveAsHDF5DS_dblarr3 ( locID, name, value, &
+    & finalShape, fillValue, adding_to )
     ! This routine does the initial work of creating a dataset
     integer, intent(in) :: LOCID        ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
     real(r8), intent(in) :: VALUE(:,:,:)  ! The array itself
+    real(r8), optional, intent(in) :: FILLVALUE
+    integer, dimension(3), optional, intent(in) :: FINALSHAPE
+    logical, optional, intent(in)     :: adding_to
 
     ! Local variables
     integer :: spaceID                  ! ID for dataspace
     integer (HID_T) :: setID            ! ID for dataset
     integer :: status                   ! Flag from HDF5
-    integer, dimension(3) :: SHP        ! Shape
+    integer, dimension(3) :: SHP, MAXDIMS        ! Shape
 
     ! Executable code
-    ! Create the dataspace
     shp = shape(value)
-    call h5sCreate_simple_f ( 3, int(shp,hSize_T), spaceID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to create dataspace for 3D double array '//trim(name) )
-    ! Create the dataset
-    call h5dCreate_f ( locID, trim(name), H5T_NATIVE_DOUBLE, spaceID, setID, &
-      & status )
+    maxdims=shp
+    if ( present(finalShape) ) maxdims = finalShape
+    ! Create the dataspace
+    call createSpaceSet(locID, name, 3, maxdims, H5T_NATIVE_DOUBLE, &
+      & spaceID, setID, status, adding_to, dFill=fillValue)
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to create dataset for 3D double array '//trim(name) )
     ! Write the data
@@ -1703,27 +1756,29 @@ contains ! ======================= Public Procedures =========================
   end subroutine SaveAsHDF5DS_dblarr3
 
   ! --------------------------------------------- SaveAsHDF5DS_snglarr1
-  subroutine SaveAsHDF5DS_snglarr1 ( locID, name, value )
+  subroutine SaveAsHDF5DS_snglarr1 ( locID, name, value, &
+    & finalShape, fillValue, adding_to )
     ! This routine does the initial work of creating a dataset
     integer, intent(in) :: LOCID        ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
     real(r4), intent(in) :: VALUE(:)     ! The array itself
+    real(r4), optional, intent(in) :: FILLVALUE
+    integer, dimension(1), optional, intent(in) :: FINALSHAPE
+    logical, optional, intent(in)     :: adding_to
 
     ! Local variables
     integer :: spaceID                  ! ID for dataspace
     integer (HID_T) :: setID            ! ID for dataset
     integer :: status                   ! Flag from HDF5
-    integer, dimension(1) :: SHP        ! Shape
+    integer, dimension(1) :: SHP, MAXDIMS        ! Shape
 
     ! Executable code
-    ! Create the dataspace
     shp = shape(value)
-    call h5sCreate_simple_f ( 1, int(shp,hSize_T), spaceID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to create dataspace for 1D double array '//trim(name) )
-    ! Create the dataset
-    call h5dCreate_f ( locID, trim(name), H5T_NATIVE_REAL, spaceID, setID, &
-      & status )
+    maxdims=shp
+    if ( present(finalShape) ) maxdims = finalShape
+    ! Create the dataspace
+    call createSpaceSet(locID, name, 1, maxdims, H5T_NATIVE_REAL, &
+      & spaceID, setID, status, adding_to, rFill=fillValue)
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to create dataset for 1D double array '//trim(name) )
     ! Write the data
@@ -1741,12 +1796,13 @@ contains ! ======================= Public Procedures =========================
   end subroutine SaveAsHDF5DS_snglarr1
 
   ! --------------------------------------------- SaveAsHDF5DS_snglarr2
-  subroutine SaveAsHDF5DS_snglarr2 ( locID, name, value , &
-    & start, count, stride, block, may_add_to, adding_to )
+  subroutine SaveAsHDF5DS_snglarr2 ( locID, name, value, &
+    & start, count, stride, block, may_add_to, adding_to, fillValue )
     ! This routine does the initial work of creating a dataset
     integer, intent(in) :: LOCID        ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
     real(r4), intent(in) :: VALUE(:,:)  ! The array itself
+    real(r4), optional, intent(in) :: FILLVALUE
 
     integer, dimension(:), optional, intent(in) :: start
                                  ! Starting coordinatess of hyperslab
@@ -1761,7 +1817,6 @@ contains ! ======================= Public Procedures =========================
     logical, optional, intent(in)               :: adding_to
                                  ! Calling again to add to same dataset
     ! Local variables
-    integer(hid_t) :: cparms
     integer(hsize_t), dimension(2) :: chunk_dims, dims, maxdims
     integer :: spaceID                  ! ID for filespace
     integer :: memSpaceID               ! ID for arrayspace
@@ -1796,8 +1851,19 @@ contains ! ======================= Public Procedures =========================
       call h5sCreate_simple_f ( 2, int(shp,hSize_T), spaceID, status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to create dataspace for 2D real array '//trim(name) )
-      call h5dCreate_f ( locID, trim(name), H5T_NATIVE_REAL, spaceID, setID, &
-        & status )
+      if ( present(fillValue) ) then
+        call h5pcreate_f(H5P_DATASET_CREATE_F, cparms, status)
+        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Unable to create property list for 2D real array '//trim(name) )
+        call h5pset_fill_value_f (cparms, H5T_NATIVE_REAL, fillValue, status)
+        if (status /= 0) call MLSMessage (MLSMSG_Error, ModuleName, &
+          &  "Unable to set Fill value for 2D real array " // trim (name))
+        call h5dCreate_f ( locID, trim(name), H5T_NATIVE_REAL, spaceID, setID, &
+          & status, cparms )
+      else
+        call h5dCreate_f ( locID, trim(name), H5T_NATIVE_REAL, spaceID, setID, &
+          & status )
+      endif
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to create dataset for 2D real array '//trim(name) )
       memspaceID = spaceID
@@ -1821,6 +1887,11 @@ contains ! ======================= Public Procedures =========================
       call h5pset_chunk_f(cparms, 2, chunk_dims, status)
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to set chunking 2D real array '//trim(name) )
+      if ( present(fillValue) ) then
+        call h5pset_fill_value_f (cparms, H5T_NATIVE_REAL, fillValue, status)
+        if (status /= 0) call MLSMessage (MLSMSG_Error, ModuleName, &
+          &  "Unable to set Fill value for 2D real array " // trim (name))
+      endif
       call h5dCreate_f ( locID, trim(name), H5T_NATIVE_REAL, spaceID, setID, &
         & status, cparms )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1940,11 +2011,12 @@ contains ! ======================= Public Procedures =========================
 
   ! --------------------------------------------- SaveAsHDF5DS_snglarr3
   subroutine SaveAsHDF5DS_snglarr3 ( locID, name, value, &
-    & start, count, stride, block, may_add_to, adding_to )
+    & start, count, stride, block, may_add_to, adding_to, fillValue )
     ! This routine does the initial work of creating a dataset
     integer, intent(in) :: LOCID        ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
     real(r4), intent(in) :: VALUE(:,:,:)  ! The array itself
+    real(r4), optional, intent(in) :: FILLVALUE
     integer, dimension(:), optional, intent(in) :: start
                                  ! Starting coordinatess of hyperslab
     integer, dimension(:), optional, intent(in) :: count
@@ -1959,7 +2031,6 @@ contains ! ======================= Public Procedures =========================
                                  ! Calling again to add to same dataset
 
     ! Local variables
-    integer(hid_t) :: cparms
     integer(hsize_t), dimension(3) :: chunk_dims, dims, maxdims
     integer :: spaceID                  ! ID for filespace
     integer :: filespaceID              ! ID for filespace
@@ -1994,8 +2065,19 @@ contains ! ======================= Public Procedures =========================
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to create dataspace for 3D real array '//trim(name) )
       ! Create the dataset
-      call h5dCreate_f ( locID, trim(name), H5T_NATIVE_REAL, spaceID, setID, &
-        & status )
+      if ( present(fillValue) ) then
+        call h5pcreate_f(H5P_DATASET_CREATE_F, cparms, status)
+        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Unable to create property list for 3D real array '//trim(name) )
+        call h5pset_fill_value_f (cparms, H5T_NATIVE_REAL, fillValue, status)
+        if (status /= 0) call MLSMessage (MLSMSG_Error, ModuleName, &
+          &  "Unable to set Fill value for 3D real array " // trim (name))
+        call h5dCreate_f ( locID, trim(name), H5T_NATIVE_REAL, spaceID, setID, &
+          & status, cparms )
+      else
+        call h5dCreate_f ( locID, trim(name), H5T_NATIVE_REAL, spaceID, setID, &
+          & status )
+      endif
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to create dataset for 3D real array '//trim(name) )
       memspaceID = spaceID
@@ -2021,6 +2103,11 @@ contains ! ======================= Public Procedures =========================
       call h5pset_chunk_f(cparms, 3, chunk_dims, status)
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to set chunking 3D real array '//trim(name) )
+      if ( present(fillValue) ) then
+        call h5pset_fill_value_f (cparms, H5T_NATIVE_REAL, fillValue, status)
+        if (status /= 0) call MLSMessage (MLSMSG_Error, ModuleName, &
+          &  "Unable to set Fill value for 3D real array " // trim (name))
+      endif
       call h5dCreate_f ( locID, trim(name), H5T_NATIVE_REAL, spaceID, &
         & setID, status, cparms )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -2102,11 +2189,12 @@ contains ! ======================= Public Procedures =========================
 
   ! --------------------------------------------- SaveAsHDF5DS_snglarr4
   subroutine SaveAsHDF5DS_snglarr4 ( locID, name, value, &
-    & start, count, stride, block, may_add_to, adding_to )
+    & start, count, stride, block, may_add_to, adding_to, fillValue )
     ! This routine does the initial work of creating a dataset
     integer, intent(in) :: LOCID        ! Where to place it (group/file)
     character (len=*), intent(in) :: NAME ! Name for this dataset
     real(r4), intent(in) :: VALUE(:,:,:,:)  ! The array itself
+    real(r4), optional, intent(in) :: FILLVALUE
     integer, dimension(:), optional, intent(in) :: start
                                  ! Starting coordinatess of hyperslab
     integer, dimension(:), optional, intent(in) :: count
@@ -2121,7 +2209,6 @@ contains ! ======================= Public Procedures =========================
                                  ! Calling again to add to same dataset
 
     ! Local variables
-    integer(hid_t) :: cparms
     integer(hsize_t), dimension(4) :: chunk_dims, dims, maxdims
     integer :: spaceID                  ! ID for filespace
     integer :: filespaceID              ! ID for filespace
@@ -2152,8 +2239,19 @@ contains ! ======================= Public Procedures =========================
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to create dataspace for 4D real array '//trim(name) )
       ! Create the dataset
-      call h5dCreate_f ( locID, trim(name), H5T_NATIVE_REAL, spaceID, setID, &
+      if ( present(fillValue) ) then
+        call h5pcreate_f(H5P_DATASET_CREATE_F, cparms, status)
+        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Unable to create property list for 4D real array '//trim(name) )
+        call h5pset_fill_value_f (cparms, H5T_NATIVE_REAL, fillValue, status)
+        if (status /= 0) call MLSMessage (MLSMSG_Error, ModuleName, &
+          &  "Unable to set Fill value for 4D real array " // trim (name))
+        call h5dCreate_f ( locID, trim(name), H5T_NATIVE_REAL, spaceID, setID, &
+          & status, cparms )
+      else
+        call h5dCreate_f ( locID, trim(name), H5T_NATIVE_REAL, spaceID, setID, &
         & status )
+      endif
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to create dataset for 4D real array '//trim(name) )
       memspaceID = spaceID
@@ -2176,6 +2274,11 @@ contains ! ======================= Public Procedures =========================
       call h5pset_chunk_f(cparms, 4, chunk_dims, status)
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to set chunking 4D real array '//trim(name) )
+      if ( present(fillValue) ) then
+        call h5pset_fill_value_f (cparms, H5T_NATIVE_REAL, fillValue, status)
+        if (status /= 0) call MLSMessage (MLSMSG_Error, ModuleName, &
+          &  "Unable to set Fill value for 4D real array " // trim (name))
+      endif
       call h5dCreate_f ( locID, trim(name), H5T_NATIVE_REAL, spaceID, &
         & setID, status, cparms )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -3036,6 +3139,117 @@ contains ! ======================= Public Procedures =========================
       & no_pairs=.true. )
   end subroutine check_for_fit
 
+  subroutine createSpaceSet(locID, name, rank, maxdims, datatype, &
+    & spaceID, setID, status, adding_to, cFill, dFill, iFill, rFill, chunk_dims)
+  ! Creates or optionally attaches dataspace and dataset
+    integer, intent(in)               :: locID 
+    character (len=*), intent(in)     :: NAME ! Name for this dataset
+    integer, intent(in)               :: rank 
+    integer, dimension(:), intent(in) :: maxdims
+    integer, intent(in)               :: datatype 
+    integer, intent(out)              :: spaceID 
+    integer, intent(out)              :: setID 
+    integer, intent(out)              :: status
+    logical, optional, intent(in)     :: adding_to
+    character(len=*), optional, intent(in) :: cFill
+    real(r8), optional, intent(in)    :: dFill
+    integer, optional, intent(in)     :: iFill
+    real(r4), optional, intent(in)    :: rFill
+    integer, dimension(:), optional, intent(in) :: chunk_dims
+    ! Internal variables
+    logical :: my_adding_to
+    logical :: my_fill
+    integer(hsize_t), dimension(rank) :: my_chunkdims, my_maxdims
+    character(len=1) :: cFilled
+    real(r8) :: dFilled
+    integer :: iFilled
+    real(r4) :: rFilled
+    ! Executable
+    my_adding_to = .false.
+    if ( present(adding_to) ) my_adding_to = adding_to
+    my_chunkdims = maxdims
+    my_chunkdims(rank) = 1
+    if ( present(chunk_dims) ) my_chunkdims = chunk_dims
+    my_fill = present(cFill) .or. present(dFill) .or. present(iFill) .or. & 
+      & present(rFill) .or. present(chunk_dims)
+    if (my_adding_to) then
+      call h5dopen_f ( locID, trim(name), setID, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to open dataset for '//trim(name) )
+      call h5dget_space_f( setID, spaceID, status)
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to get dataspace for '//trim(name) )
+      if ( my_fill ) then
+        ! print *, 'dataspace before extending ', spaceID
+        my_maxdims = maxdims
+        call h5dextend_f ( setID, my_maxdims, status )
+        call h5dget_space_f( setID, spaceID, status)
+        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Unable to get dataspace for '//trim(name) )
+        ! print *, 'dataspace after extending ', spaceID
+        call h5dget_create_plist_f(setID, cparms, status)
+        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Unable to get property list for '//trim(name) )
+        call h5pget_chunk_f(cparms, rank, my_chunkdims, status)
+        ! print *, '(read) rank, my_chunkdims, status'
+        ! print *, rank, my_chunkdims, status
+        if ( present(cFill) ) then
+          call h5pget_fill_value_f (cparms, H5T_NATIVE_CHARACTER, cFilled, status)
+        elseif ( present(dFill) ) then
+          call h5pget_fill_value_f (cparms, datatype, dFilled, status)
+        elseif ( present(iFill) ) then
+          call h5pget_fill_value_f (cparms, datatype, iFilled, status)
+          ! print *, 'cparms, datatype, iFilled, status'
+          ! print *, cparms, datatype, iFilled, status
+        elseif ( present(rFill) ) then
+          call h5pget_fill_value_f (cparms, datatype, rFilled, status)
+        endif
+      endif
+    else
+      ! Create the dataset
+      if ( my_fill ) then
+        my_maxdims = maxdims
+        my_maxdims(rank) = H5S_UNLIMITED_F
+        call h5sCreate_simple_f ( rank, int(maxdims,hSize_T), spaceID, status, &
+          & my_maxdims )
+        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Unable to create extensible dataspace '//trim(name) )
+        call h5pcreate_f(H5P_DATASET_CREATE_F, cparms, status)
+        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Unable to create property list for '//trim(name) )
+        call h5pset_chunk_f(cparms, rank, my_chunkdims, status)
+        ! print *, 'rank, my_chunkdims, status'
+        ! print *, rank, my_chunkdims, status
+        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Unable to set chunking for '//trim(name) )
+        if ( present(cFill) ) then
+          call h5pset_fill_value_f (cparms, H5T_NATIVE_CHARACTER, cFill, status)
+        elseif ( present(dFill) ) then
+          call h5pset_fill_value_f (cparms, datatype, dFill, status)
+        elseif ( present(iFill) ) then
+          call h5pset_fill_value_f (cparms, datatype, iFill, status)
+          ! print *, 'cparms, datatype, iFill, status'
+          ! print *, cparms, datatype, iFill, status
+        elseif ( present(rFill) ) then
+          call h5pset_fill_value_f (cparms, datatype, rFill, status)
+        endif
+        if (status /= 0) call MLSMessage (MLSMSG_Error, ModuleName, &
+          &  "Unable to set Fill value for " // trim (name))
+        call h5dCreate_f ( locID, trim(name), datatype, spaceID, setID, &
+          & status, cparms )
+        call h5dextend_f ( setID, int(maxdims,hSize_T), status )
+        call h5dget_space_f( setID, spaceID, status)
+        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Unable to get dataspace for '//trim(name) )
+      else
+        call h5sCreate_simple_f ( rank, int(maxdims,hSize_T), spaceID, status )
+        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Unable to create dataspace '//trim(name) )
+        call h5dCreate_f ( locID, trim(name), datatype, spaceID, setID, &
+          & status )
+      endif
+    endif
+  end subroutine createSpaceSet
 
   subroutine dump_space(spaceID)
   ! Dumps dataspace info
@@ -3363,6 +3577,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.43  2004/08/03 18:00:28  pwagner
+! Optionally sets fill value for some datasets
+!
 ! Revision 2.42  2004/07/22 20:37:11  cvuu
 ! Change in MakeHDF5Attribute_string to allow re-write the char string in the file attribute
 !
