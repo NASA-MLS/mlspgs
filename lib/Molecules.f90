@@ -36,7 +36,14 @@ module Molecules
   integer, parameter :: L_H2O_R4 =       l_h2o_r3 + 1
   integer, parameter :: L_H2O_R5H =      l_h2o_r4 + 1
   integer, parameter :: L_H2O_R5V =      l_h2o_r5h + 1
-  integer, parameter :: LAST_RXX_MOLECULE =  l_h2o_r5v
+  integer, parameter :: L_O3_R1A =       l_h2o_r5v + 1
+  integer, parameter :: L_O3_R1B =       l_o3_r1a + 1
+  integer, parameter :: L_O3_R2 =        l_o3_r1b + 1
+  integer, parameter :: L_O3_R3 =        l_o3_r2 + 1
+  integer, parameter :: L_O3_R4 =        l_o3_r3 + 1
+  integer, parameter :: L_O3_R5H =       l_o3_r4 + 1
+  integer, parameter :: L_O3_R5V =       l_o3_r5h + 1
+  integer, parameter :: LAST_RXX_MOLECULE =  l_o3_r5v
 
 ! Don't edit the following file directly--it is generated automatically
 ! based on the file sps_cross_ref_table.txt
@@ -86,6 +93,14 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_h2o_r5h) =      add_ident ( 'h2o_r5h' )
     lit_indices(l_h2o_r5v) =      add_ident ( 'h2o_r5v' )
 
+    lit_indices(l_o3_r1a) =       add_ident ( 'o3_r1a' )
+    lit_indices(l_o3_r1b) =       add_ident ( 'o3_r1b' )
+    lit_indices(l_o3_r2) =        add_ident ( 'o3_r2' )
+    lit_indices(l_o3_r3) =        add_ident ( 'o3_r3' )
+    lit_indices(l_o3_r4) =        add_ident ( 'o3_r4' )
+    lit_indices(l_o3_r5h) =       add_ident ( 'o3_r5h' )
+    lit_indices(l_o3_r5v) =       add_ident ( 'o3_r5v' )
+
     ! Create the type tree for the molecule type
     call make_tree ( (/ &
       begin, t+t_molecule, l+(/ (i,i=first_molecule, last_molecule) /), &
@@ -105,6 +120,9 @@ contains ! =====     Public procedures     =============================
 end module MOLECULES
 
 ! $Log$
+! Revision 2.22  2004/09/16 00:02:24  livesey
+! Added the radiometer dependent ozones.
+!
 ! Revision 2.21  2004/05/29 02:43:11  vsnyder
 ! Rearrange function definition stuff
 !
