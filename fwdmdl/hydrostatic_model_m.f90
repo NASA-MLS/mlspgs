@@ -41,7 +41,7 @@ Real(r8), INTENT(IN) :: t_coeff(:,:)
 Real(r8), INTENT(OUT) :: z_glgrid(:), h_glgrid(:,:), t_glgrid(:,:), &
                          dhdz_glgrid(:,:), dh_dt_glgrid(:,:,:)
 
-Real(r8), INTENT(IN OUT) :: tan_press(:)
+Real(r8), INTENT(IN) :: tan_press(:)
 Real(r8), INTENT(OUT) :: tan_hts(:,:),  tan_temp(:,:)
 
 Real(r8), INTENT(OUT) :: tan_dh_dt(:,:,:)
@@ -372,6 +372,9 @@ END SUBROUTINE pq_ana
 
 end module HYDROSTATIC_MODEL_M
 ! $Log$
+! Revision 1.7  2001/03/29 01:21:50  zvi
+! Interim version
+!
 ! Revision 1.6  2001/03/28 23:50:11  zvi
 ! Tanget below surface are now in Zeta units..
 !
