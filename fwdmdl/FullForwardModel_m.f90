@@ -388,6 +388,7 @@ contains
     real(rp), dimension(:), pointer :: dhdz_out
     real(rp), dimension(:), pointer :: dx_dh_out
     real(rp), dimension(:), pointer :: est_scgeocalt
+    real(rp), dimension(:), pointer :: est_los_vel
     real(rp), dimension(:), pointer :: req_out
     real(rp), dimension(:), pointer :: tan_chi_out
     real(rp), dimension(:), pointer :: tan_phi
@@ -807,7 +808,8 @@ contains
 
     ! estimate tan_phi and scgeocalt
     call estimate_tan_phi ( no_tan_hts, nlvl, maf, phitan, ptan, &
-                          & scgeocalt, tan_press, tan_phi, est_scgeocalt )
+                          & scgeocalt, losvel, tan_press, tan_phi, est_scgeocalt, &
+                          & est_los_vel )
 
 
     ! Compute hydrostatic grid -----------------------------------------------
@@ -1429,11 +1431,11 @@ contains
 
         if ( temp_der ) then
           call get_gl_slabs_arrays ( p_path(1:no_ele), t_path(1:no_ele), &
-            &  losVel%values(1,maf), gl_slabs(1:no_ele,:), fwdModelConf%Do_1D, &
+            &  est_los_vel(ptg_i), gl_slabs(1:no_ele,:), fwdModelConf%Do_1D, &
             &  t_der_path_flags(1:no_ele) )
         else
           call get_gl_slabs_arrays ( p_path(1:no_ele), t_path(1:no_ele), &
-            &  losVel%values(1,maf), gl_slabs(1:no_ele,:), fwdModelConf%Do_1D )
+            &  est_los_vel(ptg_i), gl_slabs(1:no_ele,:), fwdModelConf%Do_1D )
         end if
 
         ! If we're doing frequency averaging, get the frequencies we need for
@@ -1593,6 +1595,7 @@ contains
     call deallocate_test ( tan_press,     'tan_press',     moduleName )
     call deallocate_test ( tan_phi,       'tan_phi',       moduleName )
     call deallocate_test ( est_scgeocalt, 'est_scgeocalt', moduleName )
+    call deallocate_test ( est_los_vel, 'est_los_vel', moduleName )
     call deallocate_test ( tan_temp,      'tan_temp',      moduleName )
 
     ! Extra DEBUG for Nathaniel and Bill
@@ -3032,8 +3035,8 @@ contains
 
   ! -------------------------------------------  Estimate_Tan_Phi  -----
   subroutine Estimate_Tan_Phi ( no_tan_hts, nlvl, maf, phitan, ptan, &
-                              & scgeocalt, tan_press, &
-                              & tan_phi, est_scgeocalt )
+                              & scgeocalt, losvel, tan_press, &
+                              & tan_phi, est_scgeocalt, est_los_vel )
 
   ! Estimate Tan_Phi and SC_geoc_alt.
 
@@ -3052,6 +3055,7 @@ contains
     type (VectorValue_T), intent(in) :: PHITAN     ! Tangent geodAngle component of state vector
     type (VectorValue_T), intent(in) :: PTAN       ! Tangent pressure component of state vector
     type (VectorValue_T), intent(in) :: SCGEOCALT  ! S/C geocentric altitude /m
+    type (VectorValue_T), intent(in) :: losvel     ! line of sight velocity by mif and maf
     real(rp), dimension(:), intent(in) :: Tan_press
 
   ! Outputs -- would be intent(out) if we could say so.
@@ -3060,22 +3064,26 @@ contains
 
     real(rp), dimension(:), pointer :: Tan_phi
     real(rp), dimension(:), pointer :: Est_scgeocalt
+    real(rp), dimension(:), pointer :: est_los_vel
 
   ! Local variables
     integer :: I, J, JF, K
-    real(rp) :: R, R1, R2       ! real variables for various uses
+    REAL(rp) :: R, R1, R2, r3       ! real variables for various uses
     real(rp), dimension(ptan%template%noSurfs) :: &
       & P_PATH, &               ! Pressure on path
       & T_PATH, &               ! Temperatures on path
+      & mif_vel,&               ! LOS velocities
       & Z_PATH                  ! Zeta on path
 
-    nullify ( tan_phi, est_scgeocalt )
+    NULLIFY ( tan_phi, est_scgeocalt, est_los_vel )
     call allocate_test ( tan_phi,       no_tan_hts, 'tan_phi',       moduleName )
     call allocate_test ( est_scgeocalt, no_tan_hts, 'est_scgeocalt', moduleName )
+    call allocate_test ( est_los_vel, no_tan_hts, 'est_los_vel', moduleName )
     j = no_tan_hts - nlvl
 
     tan_phi(1:j) = phitan%values(1,MAF)
     est_scgeocalt(1:j) = scGeocAlt%values(1,maf)
+    est_los_vel(1:j) = losvel%values(1,maf)
 
 ! Since the interpolateValues routine needs the OldX array to be sorted
 ! we have to sort ptan%values and re-arrange phitan%values & scgeocalt%values
@@ -3085,6 +3093,7 @@ contains
     z_path = ptan%values(1:k,maf)
     p_path = phitan%values(1:k,maf)
     t_path = scgeocalt%values(1:k,maf)
+    mif_vel = losvel%values(1:k,maf)
 
     ! Sort z_path.  Permute p_path and t_path the same way.
     do i = 2, k ! Invariant: z_path(1:i-1) are sorted.
@@ -3092,11 +3101,13 @@ contains
       if ( r < z_path(i-1) ) then
         r1 = p_path(i)
         r2 = t_path(i)
+        r3 = mif_vel(i)
         jf = i
         do ! Find where to insert R.  Make room as we go.
           z_path(jf) = z_path(jf-1)
           p_path(jf) = p_path(jf-1)
           t_path(jf) = t_path(jf-1)
+          mif_vel(jf) = mif_vel(jf-1)
           jf = jf - 1
           if ( jf == 1 ) exit
           if ( r >= z_path(jf-1) ) exit
@@ -3104,6 +3115,7 @@ contains
         z_path(jf) = r
         p_path(jf) = r1
         t_path(jf) = r2
+        mif_vel(jf) = r3
       end if
     end do
 
@@ -3111,6 +3123,8 @@ contains
       &  tan_phi(j+1:no_tan_hts), METHOD = 'L', EXTRAPOLATE='C' )
     call interpolateValues ( z_path, t_path, tan_press(j+1:no_tan_hts), &
        & est_scgeocalt(j+1:no_tan_hts), METHOD='L', EXTRAPOLATE='C' )
+    call interpolateValues ( z_path, mif_vel, tan_press(j+1:no_tan_hts), &
+       & est_los_vel(j+1:no_tan_hts), METHOD='L', EXTRAPOLATE='C' )
 
     tan_phi = tan_phi * deg2rad
 
@@ -3124,6 +3138,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.222  2004/09/04 01:50:30  vsnyder
+! get_beta_path_m.f90
+!
 ! Revision 2.221  2004/09/01 01:48:27  vsnyder
 ! Status flags, more work on PFA
 !
