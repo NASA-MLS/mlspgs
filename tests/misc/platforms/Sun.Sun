@@ -44,7 +44,7 @@ DUSTY = $(FOPTS)
 
 # All the paths to supply .mod and INCLUDE files used in compiling %.f90
 # Precede each path by "-I "
-INC_PATHS = $(EXTRA_PATHS) -M $(PGSINC) -M $S -I $(PGSINC) -I $S
+INC_PATHS = $(EXTRA_PATHS) -M$(PGSINC) -M$S -I$(PGSINC) -I$S
 
 # Define some suffix rules
 
@@ -66,3 +66,6 @@ INC_PATHS = $(EXTRA_PATHS) -M $(PGSINC) -M $S -I $(PGSINC) -I $S
 l_specials =  -lnsl
 
 # $Log$
+# Revision 1.1  2001/09/05 20:52:18  pwagner
+# First commit
+#
