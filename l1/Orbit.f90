@@ -8,7 +8,7 @@ MODULE Orbit
 
    USE MLSCommon
    USE MLSMessageModule
-   USE OutputL1B
+   USE OutputL1B, only: LENG, LENT
    USE SDPToolkit
    IMPLICIT NONE
    PUBLIC
@@ -176,6 +176,9 @@ END MODULE Orbit
 !===============
 
 ! $Log$
+! Revision 2.3  2001/10/12 22:11:05  livesey
+! Tidied things up a bit, added scVelECR, but not filled yet
+!
 ! Revision 2.2  2001/02/01 18:28:04  perun
 ! Fixed typo
 !
