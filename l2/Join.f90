@@ -289,7 +289,7 @@ contains ! =====     Public Procedures     =============================
     use intrinsic, only: L_NONE, L_HDF, L_SWATH, Lit_indices, PHYQ_DIMENSIONLESS
     use L2ParInfo, only: PARALLEL, LOGDIRECTWRITEREQUEST, FINISHEDDIRECTWRITE
     use ManipulateVectorQuantities, only: DOHGRIDSMATCH
-    use MLSCommon, only: FindFirst, FindNext, R8, FileNameLen
+    use MLSCommon, only: R8, FileNameLen
     use MLSFiles, only: Split_path_name, GetPCFromRef, MLS_IO_gen_openF, &
       & MLS_IO_gen_closeF
     use MLSHDFEOS, only: mls_swath_in_file
@@ -300,6 +300,7 @@ contains ! =====     Public Procedures     =============================
       & mlspcf_l2dgm_start, mlspcf_l2dgm_end, mlspcf_l2fwm_full_start, &
       & mlspcf_l2fwm_full_end, &
       & mlspcf_l2dgg_start, mlspcf_l2dgg_end
+    use MLSSets, only: FindFirst, FindNext
     use MoreTree, only: GET_FIELD_ID
     use Output_m, only: Blanks, OUTPUT
     use OutputAndClose, only: add_metadata
@@ -1041,11 +1042,11 @@ contains ! =====     Public Procedures     =============================
         & MLSMSG_Error, ModuleName, &
         & 'No suitable files in directDatabase to distribute sources among' )
       end if
-      nextfile = FindFirst(outputType == DirectDataBase%autoType)
+      nextfile = FindFirst(DirectDataBase%autoType, outputType)
       do source = 1, noSources
         afile = nextFile
         directfiles(source) = afile
-        nextFile = FindNext(outputType == DirectDataBase%autoType, afile, &
+        nextFile = FindNext(DirectDataBase%autoType, outputType, afile, &
           & wrap=.true.)
       end do
       if ( DeeBug ) then
@@ -1810,6 +1811,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.114  2004/06/10 00:58:45  vsnyder
+! Move FindFirst, FindNext from MLSCommon to MLSSets
+!
 ! Revision 2.113  2004/05/19 20:16:29  vsnyder
 ! Remove declarations and uses for unreferenced symbols, polish some cannonballs
 !
