@@ -330,7 +330,7 @@ contains ! =====     Public Procedures     =============================
               & ( ptan%values(:,maf) - l2pcQ%template%surfs(mifPointingsLower,1) ) / &
               & ( l2pcQ%template%surfs(mifPointingsUpper,1) - &
               &   l2pcQ%template%surfs(mifPointingsLower,1) )
-            lowerWeight = 1.0 - lowerWeight
+            lowerWeight = 1.0 - upperWeight
             upperWeight = min ( 1.0_r8, max (upperWeight, 0.0_r8 ) )
             lowerWeight = min ( 1.0_r8, max (lowerWeight, 0.0_r8 ) )
           else
@@ -580,6 +580,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 1.15  2001/05/03 22:58:38  livesey
+! Removed bug work around
+!
 ! Revision 1.14  2001/05/03 02:02:54  vsnyder
 ! Use emit toggle.  Add names to cloned vectors
 !
