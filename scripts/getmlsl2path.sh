@@ -1,4 +1,4 @@
-<#! /bin/bash
+#! /bin/bash
 # $Id$
 # This shell script prints the name of the desired directory for a given file type
 # First work out where we are.
@@ -116,6 +116,9 @@ while [ -n "$(echo $1)" ]; do
 done
 
 # $Log$
+# Revision 1.19  2003/11/27 00:31:49  livesey
+# Moved stuff for soundbarrier
+#
 # Revision 1.18  2003/11/14 21:25:45  livesey
 # A little more (irrelevant as it turns out) intelligence for the dao
 # data.
