@@ -132,6 +132,12 @@ contains
       end select
     end do ! i = 2, nsons(root)
 
+    ! Now if we weren't given a forward model extra, point it to the forwardModelIn
+    ! This seems rather cheesy.  However, the alternative is changing a lot of
+    ! code from having FwdModelExtra as optional to pointer.
+    if ( .not. associated ( fwdModelExtra ) ) &
+      & fwdModelExtra => fwdModelIn
+
     ! Check that we have a Jacobian if we need one
     if ( ixJacobian > 0 ) then
       i = decoration(ixJacobian)
@@ -331,6 +337,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.39  2002/01/09 00:51:05  livesey
+! Allow fwdModelExtra to be omitted, a different way
+!
 ! Revision 2.38  2002/01/08 18:15:57  livesey
 ! Made fwdModelExtra optional
 !
