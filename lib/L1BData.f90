@@ -1591,7 +1591,7 @@ contains ! ============================ MODULE PROCEDURES ======================
 
     ! Local Parameters
     character (len=*), parameter :: INPUT_ERR = 'Error in input argument '
-    integer, parameter :: MAX_NOMAFS = 7000     ! Expect ~3500 in one day
+    ! integer, parameter :: MAX_NOMAFS = 7000     ! Expect ~3500 in one day
     integer, parameter :: SD_NO_COUNTERMAF = -2
     integer, dimension(:), pointer :: cm_array
 
@@ -1757,10 +1757,11 @@ contains ! ============================ MODULE PROCEDURES ======================
         ! This intermediate cm_array shouldn't be necessary 
         ! unfortunately, w/o it sometimes hdf5 bombs
         ! allocate(cm_array(cmdims(1)), stat=status)
-        allocate(cm_array(MAX_NOMAFS), stat=status)
-        call LoadFromHDF5DS(L1FileHandle, '/counterMAF', cm_array)
-        l1bData%counterMaf = cm_array(1:cmdims(1))
-        deallocate(cm_array)
+        ! allocate(cm_array(MAX_NOMAFS), stat=status)
+        ! call LoadFromHDF5DS(L1FileHandle, '/counterMAF', cm_array)
+        ! l1bData%counterMaf = cm_array(1:cmdims(1))
+        ! deallocate(cm_array)
+        call LoadFromHDF5DS(L1FileHandle, '/counterMAF', l1bData%counterMaf)
       end if
       if ( DEEBUG) print *, 'deallocating counterMAF dims'
       deallocate(cmdims, cmmaxdims)
@@ -2177,6 +2178,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.52  2004/12/21 22:05:14  pwagner
+! Removed clunky temparray introduced to bypass memory issue
+!
 ! Revision 2.51  2004/12/14 21:37:11  pwagner
 ! Some unnecessary debug printing and a temp array
 !
