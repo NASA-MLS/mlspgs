@@ -65,10 +65,13 @@ L2GPData.o:
 machine.o: $(S)/platforms/$(MLSCONFG).machine
 	rm -f machine.f90
 	cp "$(S)/platforms/$(MLSCONFG).machine" machine.f90
-        chmod u+w machine.f90
+	chmod u+w machine.f90
 	$(FC) -c $(DUSTY) machine.f90
 
 # $Log$
+# Revision 1.9  2000/11/21 17:46:23  pwagner
+# Added prereq to machine.o dependency
+#
 # Revision 1.8  2000/11/21 00:40:33  pwagner
 # machine.f90 out of lib/*.f90
 #
