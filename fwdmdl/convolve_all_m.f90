@@ -32,7 +32,7 @@ module Convolve_All_m
     use ForwardModelVectorTools, only: QtyStuff_T
     use Fov_Convolve_m, only: Fov_Convolve
     use Load_sps_data_m, only: Grids_T
-    use MatrixModule_0, only: M_ABSENT, M_BANDED, M_FULL
+    use MatrixModule_0, only: M_ABSENT, M_BANDED, M_FULL, CHECKFORSIMPLEBANDEDLAYOUT
     use MatrixModule_1, only: CREATEBLOCK, FINDBLOCK, MATRIX_T
     use MLSCommon, only: I4, R8, RP, RM
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
@@ -175,9 +175,11 @@ module Convolve_All_m
                            & bandHeight=noChans )
           jacobian%block(row,col)%values = 0.0_rm
         case (m_banded)
+          call CheckForSimpleBandedLayout ( jacobian%block(row,col), noChans, &
+            & 'd[radiance]/d[ptan] in convolution' )
         case default
           call MLSMessage ( MLSMSG_Error, ModuleName, &
-                          & 'Wrong matrix type for ptan derivative' )
+            & 'Wrong matrix type for ptan derivative' )
       end select
 
       if ( update ) then 
@@ -354,6 +356,9 @@ module Convolve_All_m
 end module Convolve_All_m
 
 ! $Log$
+! Revision 2.30  2003/05/19 19:58:07  vsnyder
+! Remove USEs for unreferenced symbols, remove unused local variables
+!
 ! Revision 2.29  2003/05/05 23:00:25  livesey
 ! Merged in feb03 newfwm branch
 !

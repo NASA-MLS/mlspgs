@@ -29,7 +29,7 @@ contains
     use ForwardModelConfig, only: ForwardModelConfig_T
     use ForwardModelVectorTools, only: QtyStuff_T
     use Load_sps_data_m, only: Grids_T
-    use MatrixModule_0, only: M_ABSENT, M_BANDED, M_FULL
+    use MatrixModule_0, only: M_ABSENT, M_BANDED, M_FULL, CHECKFORSIMPLEBANDEDLAYOUT
     use MatrixModule_1, only: CREATEBLOCK, FINDBLOCK, MATRIX_T
     use MLSCommon, only: R8, RM
     use MLSMessageModule, only: MLSMSG_Error, MLSMessage
@@ -122,9 +122,8 @@ contains
                            & bandHeight=noChans )
           Jacobian%block(row,col)%values = 0.0_rm
         case ( m_banded )
-          if ( Jacobian%block(row,col)%r2(1) /= noChans ) &
-            & call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & 'Wrong band height in matrix for ptan derivative' )
+          call CheckForsimpleBandedLayout ( jacobian%block(row,col), noChans, &
+            & 'd[Radiance]/d[ptan] in no convolution case' )
         case default
           call MLSMessage ( MLSMSG_Error, ModuleName, &
             & 'Wrong matrix type for ptan derivative' )
@@ -289,6 +288,9 @@ contains
 
 end module NO_CONV_AT_ALL_M
 ! $Log$
+! Revision 2.22  2003/05/17 01:17:03  vsnyder
+! Remove unused names, futzing
+!
 ! Revision 2.21  2003/05/16 23:52:36  livesey
 ! Removed obsolete spectag stuff
 !
