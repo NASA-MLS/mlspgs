@@ -1,0 +1,186 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+!=============================================================================
+MODULE L2AUXData                 ! Data types for storing L2AUX data internally
+!=============================================================================
+
+  USE MLSMessageModule
+
+  IMPLICIT NONE
+
+  PRIVATE :: Id, ModuleName
+  !---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (LEN=256) :: Id = &
+       "$Id$"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile$"
+  !---------------------------------------------------------------------------
+
+
+  ! This module defines datatypes and gives basic routines for storing and
+  ! manipulating L2AUX data.
+
+  INTEGER, PARAMETER :: L2AUXNameLen=80
+  INTEGER, PARAMETER, PRIVATE :: CCSDSLen=27
+
+  ! This is a set of possible values for dimension%dimensionFamily
+
+  INTEGER, PARAMETER :: L2AUXDim_None=0
+  INTEGER, PARAMETER :: L2AUXDim_Channel=1
+  INTEGER, PARAMETER :: L2AUXDim_Frequency=2
+  INTEGER, PARAMETER :: L2AUXDim_MIF=3
+  INTEGER, PARAMETER :: L2AUXDim_MAF=4
+  INTEGER, PARAMETER :: L2AUXDim_Time=5
+  INTEGER, PARAMETER :: L2AUXDim_GeodAngle=6
+
+  ! This datatype describes a dimension for an L2AUX quantity
+
+  TYPE L2AUX_Dimension
+     INTEGER :: noValues        ! Length of this dimension
+     INTEGER :: dimensionFamily ! What is this dimension
+     DOUBLE PRECISION, DIMENSION(:), POINTER :: values ! (noValues)
+  END TYPE L2AUX_Dimension
+
+  ! This datatype describes an l2aux dimension.
+
+  TYPE L2AUX_T
+
+    ! A name for the L2AUX quantity, goes into SD name
+    CHARACTER (LEN=L2AUXNameLen) :: Name ! Name for quantity to be output
+
+    ! The dimensions for the quantity
+    TYPE (L2AUX_Dimension), DIMENSION(3) :: dimensions
+
+    DOUBLE PRECISION, POINTER, DIMENSION(:,:,:) :: values
+  END TYPE L2AUX_T
+
+CONTAINS
+
+  !---------------------------------------------------------------------------
+
+  ! This first routine sets up the arrays for an l2aux datatype.
+  ! The user supplies a set of three dimensionFamilies (e.g. L2AUXDim_MAF)
+  ! Quantities can have upto three valid dimensions.  L2AUXDim_None can be used
+  ! to indicate later dimensions are invalid.
+
+  SUBROUTINE SetupNewL2AUXRecord(dimensionFamilies,dimSizes,l2aux)
+
+    ! Dummy arguments
+    INTEGER, DIMENSION(3), INTENT(IN) :: dimensionFamilies
+    INTEGER, DIMENSION(3), INTENT(IN) :: dimSizes
+    TYPE (L2AUX_T) :: l2aux
+
+    ! Local variables
+    INTEGER :: dimIndex
+    INTEGER :: status
+
+    ! Fill the dimensions data structure
+
+    l2aux%dimensions%dimensionFamily=dimensionFamilies
+    l2aux%dimensions%noValues=dimSizes
+
+    ! Allocate the values for each dimension
+
+    DO dimIndex=1,3
+       IF (dimensionFamilies(dimIndex)/=L2AUXDim_None) THEN
+          ALLOCATE(l2aux%dimensions(dimIndex)%values(dimSizes(dimIndex)), &
+               & STAT=status)
+          IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+               & MLSMSG_Allocate//"l2aux dimension values")
+       ELSE
+          l2aux%dimensions(dimIndex)%noValues=1
+       END IF
+    END DO
+
+    ! Allocate the values for the data itself
+
+    ALLOCATE(l2aux%values( &
+         & l2aux%dimensions(1)%noValues, &
+         & l2aux%dimensions(2)%noValues, &
+         & l2aux%dimensions(3)%noValues), STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate// &
+         & "l2aux values")
+
+  END SUBROUTINE SetupNewL2AUXRecord
+    
+  !---------------------------------------------------------------------------
+
+  ! This routine deallocates all the arrays allocated above.
+
+  SUBROUTINE DestroyL2AUXContents(l2aux)
+
+    ! Dummy arguments
+    TYPE (L2AUX_T) :: l2aux
+
+    ! Executable code
+    DEALLOCATE(l2aux%dimensions(1)%values, &
+         & l2aux%dimensions(2)%values, &
+         & l2aux%dimensions(3)%values)
+    DEALLOCATE(l2aux%values)
+
+  END SUBROUTINE DestroyL2AUXContents
+
+  !---------------------------------------------------------------------------
+
+  ! This subroutine adds an l2aux data type to a database of said types,
+  ! creating a new database if it doesn't exist
+
+  SUBROUTINE AddL2AUXToDatabase(database,l2aux)
+
+    ! Dummy arguments
+    TYPE (L2AUX_T), DIMENSION(:), POINTER :: database
+    TYPE (L2AUX_T) :: l2aux
+
+    ! Local variables
+    TYPE (L2AUX_T), DIMENSION(:), POINTER :: tempDatabase
+    INTEGER :: newSize,status
+
+    ! Executable code
+
+    IF (ASSOCIATED(database)) THEN
+       newSize=SIZE(database)+1
+    ELSE
+       newSize=1
+    ENDIF
+
+    ALLOCATE(tempDatabase(newSize),STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & "Allocation failed for tempDatabase")
+
+    IF (newSize>1) tempDatabase(1:newSize-1)=database
+    tempDatabase(newSize)=l2aux
+    DEALLOCATE(database)
+    database=>tempDatabase
+  END SUBROUTINE AddL2AUXToDatabase
+
+  ! --------------------------------------------------------------------------
+
+  ! This subroutine destroys a quantity template database
+
+  SUBROUTINE DestroyL2AUXDatabase(database)
+
+    ! Dummy argument
+    TYPE (L2AUX_T), DIMENSION(:), POINTER :: database
+
+    ! Local variables
+    INTEGER :: l2auxIndex
+
+    IF (ASSOCIATED(database)) THEN
+       DO l2auxIndex=1,SIZE(database)
+          CALL DestroyL2AUXContents(database(l2auxIndex))
+       ENDDO
+       DEALLOCATE(database)
+    ENDIF
+  END SUBROUTINE DestroyL2AUXDatabase
+
+
+!=============================================================================
+END MODULE L2AUXData
+!=============================================================================
+
+!
+! $Log$
+! Revision 1.1  1999/12/03 19:10:34  livesey
+! First version
+!
+!
