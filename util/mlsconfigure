@@ -307,7 +307,7 @@ if [ $change_paths = "true" ] ; then
 	echo "Warning: No HDF(5) path selected; none found"
 	echo "mls software may not link properly with newer Toolkit"
 	echo "unless you reconfigure; enter 'make configure'."
-	HDF="/"
+	HDF5="/"
    fi
 
 #Change gctp path
@@ -905,6 +905,9 @@ fi
 
 exit
 # $Log$
+# Revision 1.15  2001/06/01 20:30:07  pwagner
+# New print statements if debugging on
+#
 # Revision 1.14  2001/05/31 23:25:02  pwagner
 # Slightly more consistent messages
 #
