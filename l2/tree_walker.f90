@@ -54,6 +54,7 @@ contains ! ====     Public Procedures     ==============================
     use L2Parallel, only: GETCHUNKINFOFROMMASTER, L2MASTERTASK
     use L2ParInfo, only: PARALLEL, CLOSEPARALLEL
     use L2PC_m, only: DestroyL2PCDatabase, DestroyBinSelectorDatabase
+    use LinearizedForwardModel_m, only: FLUSHLOCKEDBINS
     use MACHINE, only: MLS_GC_NOW, MLS_HOWMANY_GC
     use MatrixModule_1, only: DestroyMatrixDatabase, Matrix_Database_T
     use MergeGridsModule, only: MergeGrids
@@ -330,6 +331,8 @@ subtrees:   do while ( j <= howmany )
             end if  ! ---------- End of if fmt1
             call StripForwardModelConfigDatabase ( forwardModelConfigDatabase )
           end do ! ---------------------------------- End of chunk loop
+          ! Clear any locked l2pc bins out.
+          call FlushLockedBins
           i = j - 1 ! one gets added back in at the end of the outer loop
         end if
 
@@ -433,6 +436,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.112  2003/08/11 23:24:02  pwagner
+! Stores ChunkNo as component of L2ParallelInfo_T
+!
 ! Revision 2.111  2003/07/07 23:51:06  pwagner
 ! Need not pass around l2pc as L2pcf now a saved variable in WriteMetaData
 !
