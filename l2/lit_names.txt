@@ -65,6 +65,7 @@ full_derivatives
 gloria
 gridded
 
+H2OFromRHI
 height
 highcloud
 hydrostatic
@@ -102,6 +103,8 @@ profile
 rectanglefromlos
 refract
 regular
+RHIFromH2O
+RHIPrecisionFromH2O
 
 scan
 scan2d
@@ -117,6 +120,9 @@ vGrid
 weighted
 
 # $Log$
+# Revision 2.22  2002/10/02 23:04:48  pwagner
+# RHI now separate fill methods
+#
 # Revision 2.21  2002/09/23 22:14:49  vsnyder
 # Delete numF literal name
 #
