@@ -153,7 +153,10 @@ TRY_CLEANUP=1
 #          ^^^----- this is the suffix stuck onto any excluded files
 #                   or else the name of a temp directory hiding them
 dsuffix=".`get_unique_name g`"
-echo "Hiding excluded files behind temp directory $dsuffix"
+if [ $PRINT_TOO_MUCH = "1" ]
+then
+  echo "Hiding excluded files behind temp directory $dsuffix"
+fi
 # Do we have write permission in the current working directory
 if [ -w "`pwd`" ]
 then
@@ -333,6 +336,9 @@ then
 fi
 exit
 # $Log$
+# Revision 1.7  2002/07/22 22:08:44  pwagner
+# Uses get_unique_name for temp file names
+#
 # Revision 1.6  2002/01/29 23:43:13  pwagner
 # Cleans up excluded files from .xug dir before exiting
 #
