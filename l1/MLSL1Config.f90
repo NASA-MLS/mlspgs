@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -44,6 +44,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
      REAL :: THzSpaceTemp, THzTargetTemp
      REAL :: THzSpaceAngle, THzMaxBias
      REAL :: MIF_duration, MIF_DeadTime
+     REAL :: MoonToSpaceAngle, MoonToLimbAngle
      LOGICAL :: UseDefaultGains = .FALSE.
      LOGICAL :: CalibDACS = .TRUE.
      CHARACTER(LEN=1) :: GHz_seq(0:MaxMIFs-1), THz_seq(0:MaxMIFs-1)
@@ -285,7 +286,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
            f_module, f_secondary, p_usedefaultgains, p_GHzSpaceTemp, &
            p_GHzTargetTemp, p_THzSpaceTemp, p_THzTargetTemp, p_mif_duration, &
            p_mif_dead_time, p_mifspermaf, p_calibDACS, p_THzMaxBias, s_switch, &
-           p_thzspaceangle, f_s, f_bandno
+           p_thzspaceangle, f_s, f_bandno, p_MoonToSpaceAngle, p_MoonToLimbAngle
       USE INTRINSIC, ONLY: l_ghz, l_thz, phyq_mafs, phyq_temperature, &
            phyq_mifs, phyq_time, phyq_angle
       USE TREE, ONLY: Decoration, Nsons, Subtree, Sub_rosa, Node_id
@@ -419,6 +420,26 @@ MODULE MLSL1Config  ! Level 1 Configuration
 !!$                  CALL MLSMessage (MLSMSG_Error, ModuleName, &
 !!$                       TRIM (identifier)//' is not input as K')
 !!$               ENDIF
+
+            CASE (p_MoonToSpaceAngle)
+
+               CALL Expr (subtree (2, son), expr_units, expr_value)
+               L1Config%Calib%MoonToSpaceAngle = expr_value(1)
+               IF (expr_units(1) /= phyq_angle) THEN
+                  CALL Get_string (Sub_rosa (Subtree(1,son)), identifier)
+                  CALL MLSMessage (MLSMSG_Error, ModuleName, &
+                       TRIM (identifier)//' is not input as deg[rees]')
+               ENDIF
+
+            CASE (p_MoonTolimbAngle)
+
+               CALL Expr (subtree (2, son), expr_units, expr_value)
+               L1Config%Calib%MoonToLimbAngle = expr_value(1)
+               IF (expr_units(1) /= phyq_angle) THEN
+                  CALL Get_string (Sub_rosa (Subtree(1,son)), identifier)
+                  CALL MLSMessage (MLSMSG_Error, ModuleName, &
+                       TRIM (identifier)//' is not input as deg[rees]')
+               ENDIF
 
             CASE (p_mif_duration)
 
@@ -625,6 +646,9 @@ MODULE MLSL1Config  ! Level 1 Configuration
 END MODULE MLSL1Config
 
 ! $Log$
+! Revision 2.13  2004/05/14 15:59:11  perun
+! Version 1.43 commit
+!
 ! Revision 2.12  2004/01/09 17:46:22  perun
 ! Version 1.4 commit
 !
