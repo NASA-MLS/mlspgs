@@ -22,7 +22,7 @@ MODULE convolve_all_m
      "$RCSfile$"
 !---------------------------------------------------------------------------
  CONTAINS
-! ============================================  new_convolve_all =====
+! ============================================  convolve_all =====
 ! This subprogram adds the effects of antenna smearing to the radiance.
 !
   SUBROUTINE convolve_all(FwdMdlConfig,FwdMdlIn,FwdMdlExtra,maf,channel,&
@@ -49,7 +49,7 @@ MODULE convolve_all_m
   REAL(rp), INTENT(in) :: rad_in(:)! inputted radiances
   REAL(rp), INTENT(in) :: chi_out(:)! outputted pointing angles radians
 !
-  Real(r8), intent(in) :: SBRATIO
+  Real(r8), intent(in) :: SbRatio
 
   Type(antennaPattern_T), intent(in) :: AntennaPattern
 !
@@ -99,7 +99,7 @@ MODULE convolve_all_m
   INTEGER(i4) :: j, k, Row, Col, ind, jz, sps_i, ptg_i, &
                & no_tan_hts, noPtan, noChans, jf
 
-  Integer :: n_t_zeta, no_sv_p_t, sv_t_len, sv_f, sv_i, f_len, no_mol
+  Integer :: n_t_zeta, no_sv_p_t, sv_t_len, sv_f, f_len, no_mol
 !
   Logical :: Want_Deriv
 !
@@ -262,7 +262,7 @@ MODULE convolve_all_m
           r = drad_dt_out(ptg_i,sv_t_len)
           ind = channel + noChans * (ptg_i-1)
           jacobian%block(row,col)%values(ind,k) =  &
-          & jacobian%block(row,col)%values(ind,k) + sbRatio * r
+               & jacobian%block(row,col)%values(ind,k) + sbRatio * r
         end do
 
       end do
@@ -294,6 +294,13 @@ MODULE convolve_all_m
       f => GetVectorQuantityByType ( FwdMdlIn, FwdMdlExtra, &
          & quantityType=l_vmr, molecule=FwdMdlConfig%molecules(jz))
     endif
+
+    if(.not. associated(f) ) then
+      jf = Grids_f%windowfinish(sps_i)-Grids_f%windowStart(sps_i)+1
+      k = Grids_f%no_f(sps_i) * Grids_f%no_z(sps_i)
+      sv_f = sv_f + jf * k
+      CYCLE
+    endif
 !
     DO jf = Grids_f%windowStart(sps_i), Grids_f%windowfinish(sps_i)
 !
@@ -308,7 +315,6 @@ MODULE convolve_all_m
           & 'Wrong type for temperature derivative matrix' )
       end select
 
-      sv_i = 0
       DO k = 1, Grids_f%no_f(sps_i) * Grids_f%no_z(sps_i)
 
 ! Check if derivatives are needed for this (zeta & phi) :
@@ -316,28 +322,13 @@ MODULE convolve_all_m
         sv_f = sv_f + 1
         if(.NOT. Grids_f%deriv_flags(sv_f)) CYCLE
 
-! *** ZEBUG
-!       if(channel == 13) then
-!         if(ANY(drad_df_out(:,sv_f) /= 0.0)) then
-!           ind=Grids_f%no_f(sps_i)
-!           Print *,' ch,sps_i,kf,sv_f:',channel,sps_i,ind,sv_f
-!           Print *,' Window width:', &
-!             Grids_f%windowfinish(sps_i)-Grids_f%windowStart(sps_i)+1
-!           Print *,' drad_df_out(ptg_i,sv_f),ptg_i=1,noPtan'
-!           Print 905,(drad_df_out(ptg_i,sv_f),ptg_i=1,noPtan)
-!         endif
-!       endif
-!905    format ( 5(2x, 1pg13.6) )
-! *** END ZEBUG
-
 ! run through representation basis coefficients
 
-        sv_i = sv_i + 1
         do ptg_i = 1, noPtan
+          r = drad_df_out(ptg_i,sv_f)
           ind = channel + noChans * (ptg_i-1)
-          jacobian%block(row,col)%values(ind,sv_i) = &
-                      jacobian%block(row,col)%values(ind,sv_i) + &
-                          & sbRatio * drad_df_out(ptg_i,sv_f)
+          jacobian%block(row,col)%values(ind,k) = &
+              & jacobian%block(row,col)%values(ind,k) + sbRatio * r
         end do
 !
       end do
@@ -351,3 +342,121 @@ MODULE convolve_all_m
  END SUBROUTINE convolve_all
 
 END MODULE convolve_all_m
+! $Log$
+! Revision 2.10  2002/06/17 23:22:36  bill
+! Add zvis modifications, some name changing
+!
+! Revision 2.9  2002/06/07 23:22:36  bill
+! debugging study--wgr
+!
+! Revision 2.8  2002/06/07 04:50:25  bill
+! fixes and improvements--wgr
+!
+! Revision 2.7  2002/06/04 10:28:02  zvi
+! Encorporate deriv. flag into convolution, fixing a bug with 
+! species ruuning index
+!
+! Revision 2.6  2002/05/22 19:42:44  zvi
+! Fix a bug in the mol. index loop
+!
+! Revision 2.5  2002/02/15 22:52:16  livesey
+! Bug fix for case where no ptan derivative
+!
+! Revision 2.4  2002/02/06 08:31:55  zvi
+! Adding Temp. Deriv. correction
+!
+! Revision 2.3  2002/02/02 11:20:17  zvi
+! Code to overwrite the l2cf integration & tanget grids
+!
+! Revision 2.2  2002/01/27 08:37:47  zvi
+! Adding Users selected coefficients for derivatives
+!
+! Revision 2.1  2001/11/08 00:10:36  livesey
+! Updated for extinction stuff
+!
+! Revision 2.0  2001/09/17 20:26:26  livesey
+! New forward model
+!
+! Revision 1.29.2.1  2001/09/13 11:18:20  zvi
+! Fix temp. derv. bug
+!
+! Revision 1.29  2001/08/24 03:42:26  jonathan
+! change Ntr to Ntr-1 in do while loop
+!
+! Revision 1.28  2001/05/18 00:01:19  livesey
+! Zero out some arrays to start with (mainly to make them safe to dump).
+!
+! Revision 1.27  2001/05/09 19:46:49  vsnyder
+! Use new bandHeight argument of createBlock
+!
+! Revision 1.26  2001/05/03 02:03:16  vsnyder
+! Insert copyright notice
+!
+! Revision 1.25  2001/05/02 20:49:23  zvi
+! Cleaning up code
+!
+! Revision 1.24  2001/05/01 17:48:33  vsnyder
+! Cosmetic changes -- put dummy arg declarations in same order as in header
+!
+! Revision 1.23  2001/05/01 00:42:54  zvi
+! Fixing phi window bug
+!
+! Revision 1.22  2001/04/28 17:48:08  livesey
+! Now accepts and sets rowFlags
+!
+! Revision 1.21  2001/04/27 22:37:54  vsnyder
+! Don't compute derivatives if Jacobian isn't present
+!
+! Revision 1.20  2001/04/27 00:13:10  zvi
+! Fixing some more phiwindow bug
+!
+! Revision 1.19  2001/04/26 22:54:41  zvi
+! Fixing some phiwindow bug
+!
+! Revision 1.18  2001/04/20 23:09:13  livesey
+! Cleaned up multi-channel case, also does folding in place
+!
+! Revision 1.17  2001/04/20 02:57:09  livesey
+! Writes derivatives in matrix_t
+!
+! Revision 1.16  2001/04/19 23:56:52  livesey
+! New parameters
+!
+! Revision 1.15  2001/04/10 10:14:16  zvi
+! Fixing bug in convolve routines
+!
+! Revision 1.14  2001/04/10 02:25:14  livesey
+! Tidied up some code
+!
+! Revision 1.13  2001/04/10 01:16:34  livesey
+! Tidied up convolution
+!
+! Revision 1.12  2001/04/05 22:54:39  vsnyder
+! Use AntennaPatterns_M
+!
+! Revision 1.11  2001/03/31 23:40:55  zvi
+! Eliminate l2pcdim (dimension parameters) move to allocatable ..
+!
+! Revision 1.10  2001/03/29 12:08:17  zvi
+! Fixing bugs
+!
+! Revision 1.9  2001/03/28 01:32:12  livesey
+! Working version
+!
+! Revision 1.8  2001/03/28 00:40:01  zvi
+! Fixing up convolution code, some minor changes in geoc_geod
+!
+! Revision 1.7  2001/03/26 17:56:14  zvi
+! New codes to deal with dh_dt_path issue.. now being computed on the fly
+!
+! Revision 1.6  2001/03/21 01:10:31  livesey
+! Now gets Ptan from vector
+!
+! Revision 1.5  2001/03/07 23:45:14  zvi
+! Adding logical flags fro Temp, Atmos & Spect. derivatives
+!
+! Revision 1.1  2000/06/21 21:56:14  zvi
+! First version D.P.
+!
+! Revision 1.1  2000/05/04 18:12:05  vsnyder
+! Initial conversion to Fortran 90
