@@ -677,6 +677,8 @@ contains ! =====     Public Procedures     =============================
     if ( associated ( directDatabase ) ) then
       if ( size(DirectDatabase) > 0 .and. TOOLKIT ) then
         do DB_index=1, size(DirectDatabase)
+          l2gp_Version = 1
+          l2aux_Version = 1
           file_base = DirectDatabase(DB_index)%fileNameBase
           output_type = DirectDatabase(DB_index)%type
           numquantitiesperfile = size(DirectDatabase(DB_index)%sdNames)
@@ -876,6 +878,7 @@ contains ! =====     Public Procedures     =============================
   ! ---------------------------------------------  add_metadata  -----
   subroutine add_metadata ( fileName, numquantitiesperfile, quantityNames, &
     & hdfVersion, filetype, metadata_error )
+    use INIT_TABLES_MODULE, only: L_L2DGG
     use Intrinsic, only: l_swath, l_grid, l_hdf
     use MLSFiles, only: GetPCFromRef, split_path_name
     use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, MLSPCF_L2GP_END, &
@@ -898,6 +901,7 @@ contains ! =====     Public Procedures     =============================
   character (len=132) :: FILE_BASE
   integer :: fileHandle
   integer :: L2aux_mcf
+  integer :: l2dgg_mcf
   integer :: L2gp_mcf
   character (len=32) :: meta_name=' '
   character (len=132) :: path
@@ -905,18 +909,26 @@ contains ! =====     Public Procedures     =============================
   integer :: returnStatus
   integer :: Version
   ! Executable
+  l2aux_mcf = mlspcf_mcf_l2dgm_start
+  l2dgg_mcf = mlspcf_mcf_l2dgg_start
+  metadata_error = 0
   Version = 1
   select case (filetype)
-  case (l_swath)
+  case (l_swath, l_l2dgg)
      call split_path_name(fileName, path, file_base)
      FileHandle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
        & mlspcf_l2gp_end, &
        & .true., returnStatus, Version, DEBUG, &
        & exactName=PhysicalFilename)
-     call get_l2gp_mcf ( file_base, meta_name, l2gp_mcf  )
+     if ( filetype == l_l2dgg ) then
+       l2gp_mcf = l2dgg_mcf
+     else
+       call get_l2gp_mcf ( file_base, meta_name, l2gp_mcf  )
+     endif
      if ( l2gp_mcf <= -999 ) then
          call MLSMessage ( MLSMSG_Warning, ModuleName, &
            &  "no mcf for this l2gp species in" // trim(file_base) )
+         return
      else if (l2gp_mcf <= 0) then
          call MLSMessage ( MLSMSG_Error, ModuleName, &
            &  "no mcf for this l2gp species in" // trim(file_base) )
@@ -1064,6 +1076,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.80  2003/08/01 20:07:44  pwagner
+! Fixed Toolkit bug; metadata distinguishes l2dgg from l2gp
+!
 ! Revision 2.79  2003/07/23 18:29:32  cvuu
 ! quick and dirty fixed for CH3CN
 !
