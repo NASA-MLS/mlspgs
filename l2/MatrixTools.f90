@@ -18,7 +18,7 @@ module MatrixTools                      ! Various tools for matrices
   implicit none
   private
 
-  public :: DumpBlocks
+  public :: DumpBlocks, CombineChannelsInMatrix
 
   ! Local paramters
   integer, parameter :: MTXMSGTAG = 202
@@ -459,6 +459,56 @@ contains ! =====  Public procedures  ===================================
 
   end subroutine DumpBlocks
 
+  ! ----------------------------------------- CombineChannelsInMatrix
+  subroutine CombineChannelsInMatrix ( mOut, mIn )
+    ! This subroutine might belong better in L2PC_m, as it's really only for
+    ! working with that kind of matrix.  It takes a matrix with a
+    ! single quantity for the row vector (i.e. radiance) and multiple
+    ! quantiites for the column vector and remaps it to a 'downsampled'
+    ! set of channels
+    use ManipulateVectorQuantities, only: FILLWITHCOMBINEDCHANNELS
+    use MatrixModule_1, only: CLEARMATRIX
+    use MatrixModule_0, only: MULTIPLYMATRIX_XY, DUMP
+    type (Matrix_T), intent(inout) :: MOUT ! Result matrix
+    type (Matrix_T), intent(in) :: MIN ! Source matrix
+    
+    ! Local variables
+    type (MatrixElement_T) :: MAPPING   ! A mapping block
+    character (len=80) :: MESSAGE       ! A possible error message
+    integer :: ROW, COL                 ! Loop counters
+
+    ! First some sanity checks
+    ! Check that the column vectors are compatible
+    if ( mOut%col%vec%template%name /= mIn%col%vec%template%name ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Matrices do not share a column vector in CombineChannels' )
+    ! Check that the row vectors contain only a single quantity.
+    if ( mOut%row%vec%template%noQuantities /= 1 .or. &
+      &  mIn%row%vec%template%noQuantities /= 1 ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Matrices must have single-quantity row vector in CombineChannels' )
+    
+    ! Now get the quantity filling command to do the first part of the work for us.
+    ! This also checks the sanity of mapping mIn%row%vec to mOut%row%vec
+    call FillWithCombinedChannels ( &
+      & mOut%row%vec%quantities(1), mIn%row%vec%quantities(1), &
+      & message, mapping )
+    if ( message /= '' ) call MLSMessage ( MLSMSG_Error, ModuleName, message )
+
+    ! OK, that's filled the vector now do the matrix
+    call ClearMatrix ( mOut )
+
+    do row = 1, mOut%row%nb
+      do col = 1, mOut%col%nb
+        if ( mIn%block(row,col)%kind /= m_absent ) then
+          ! This does all the creation etc.
+          call MultiplyMatrix_XY ( mapping, mIn%block(row,col), mOut%block(row,col) )
+        end if
+      end do
+    end do
+
+  end subroutine CombineChannelsInMatrix
+
   ! ----------------------------------------- PVMSendBlock
   subroutine PVMPackBlock ( BLOCK )
     ! Dummy arguments
@@ -570,6 +620,9 @@ contains ! =====  Public procedures  ===================================
 end module MatrixTools
 
 ! $Log$
+! Revision 1.14  2004/01/21 22:00:46  vsnyder
+! Remove unused variable declarations
+!
 ! Revision 1.13  2003/10/10 23:28:33  vsnyder
 ! Substantial reorganization
 !
