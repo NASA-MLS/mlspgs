@@ -88,8 +88,6 @@ contains
     !                                       hydrostatic calculations.
 
     ! NOTES
-    ! p_basis and p_grid are phi's in offset degrees relative to phi_t, that
-    ! is the phi_t p_basis or p_grid = 0.0 is phi_t.
     ! The phi basis is wholly independent of phi_t
     ! compute primary hydrostatic grid
     ! tangent phi index
@@ -517,7 +515,7 @@ contains
       do sv_p = 1 , p_coeffs
         do sv_z = 1 , z_coeffs
           sv_t = sv_t + 1
-          if(.NOT. t_deriv_flag(sv_t)) CYCLE
+!          if(.NOT. t_deriv_flag(sv_t)) CYCLE
           where (not_zero_p(:,sv_p) .and. not_zero_t(:,sv_z))
             do_calc_t(:,sv_t) = .true.
             eta_zxp(:,sv_t) = eta_t(:,sv_z) * eta_p(:,sv_p)
@@ -548,6 +546,9 @@ contains
 
 end module metrics_m
 ! $Log$
+! Revision 2.2  2002/01/30 01:11:21  zvi
+! Fix bug in user selectable coeff. code
+!
 ! Revision 2.1  2001/11/20 01:19:30  zvi
 ! Some clarification of code
 !
