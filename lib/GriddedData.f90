@@ -42,7 +42,7 @@ TYPE GriddedData_T
    !
    ! Now the name, description and units information
    !
-   CHARACTER (LEN=NameLen) :: sourceFileName ! Input file name
+   CHARACTER (LEN=LineLen) :: sourceFileName ! Input file name
    CHARACTER (LEN=NameLen) :: quantityName ! From input file
    CHARACTER (LEN=LineLen) :: description ! Quantity description
    CHARACTER (LEN=NameLen) :: units ! Units for quantity
@@ -89,6 +89,9 @@ END MODULE GriddedData
 
 !
 ! $Log$
+! Revision 2.11  2001/04/10 20:04:54  livesey
+! Changed some NameLens to LineLens
+!
 ! Revision 2.10  2001/03/30 00:24:40  pwagner
 ! Added sourceFileName
 !
