@@ -556,6 +556,8 @@ contains
         & Matrix_Cholesky_T, Matrix_SPD_T, MaxL1, MinDiag, Multiply, &
         & Negate, RowScale, ScaleMatrix, SolveCholesky, UpdateDiagonal
       use Regularization, only: Regularize
+      use Symbol_Table, only: ENTER_TERMINAL
+      use Symbol_Types, only: T_IDENTIFIER
       use VectorsModule, only: AddToVector, DestroyVectorInfo, &
         & DestroyVectorValue, Dump, Multiply, operator(.DOT.), operator(-), &
         & ScaleVector, SubtractFromVector
@@ -593,9 +595,12 @@ contains
       nwt_xopt(1:4) = (/ toleranceF, toleranceA, toleranceR, initLambda /)
       call nwt ( nwt_flag, nwt_xopt, nwt_opt )
       ! Create the matrix for the Cholesky factor of the normal equations
-      call createEmptyMatrix ( factored%m, 0, state, state )
+      call createEmptyMatrix ( factored%m, &
+        & enter_terminal('_factored', t_identifier), &
+        & state, state )
       ! Create the normal equations matrix
-      call createEmptyMatrix ( normalEquations%m, 0, state, state )
+      call createEmptyMatrix ( normalEquations%m, &
+        & enter_terminal ('_normalEquations', t_identifier), state, state )
       ! Create the vectors we need.
       call copyVector ( v(x), state, vectorNameText='_x', clone=.true. ) ! x := state
       call cloneVector ( v(aTb), v(x), vectorNameText='_ATb' )
@@ -1261,11 +1266,10 @@ contains
         end if
         if ( snoopKey /= 0 .and. snoopLevel >= snoopLevels(nwt_flag) ) then
           call FlagName ( nwt_flag, theFlagName )
-          call snoop ( key=snoopKey, vectorDatabase=vectorDatabase,&
+          call snoop ( key=snoopKey, vectorDatabase=vectorDatabase, &
             & anotherVectorDatabase=v, &
-            & anotherComment=trim(snoopComment) // ': ' // trim(theFlagName) )
-          ! Was going to to matrixDatabase, but had a problem with names
-          !   matrixDatabase=(/ factored%m, normalEquations%m /)
+            & anotherComment=trim(snoopComment) // ': ' // trim(theFlagName), &
+            & matrixDatabase=(/ factored%m, normalEquations%m /) )
 
         end if
       end do ! Newton iteration
@@ -2096,6 +2100,9 @@ print*,'begin cloud retrieval maf= ',fmstat%maf,' chunk size=',chunk%lastMAFInde
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.106  2001/10/24 00:29:00  livesey
+! Added Matrix snooping
+!
 ! Revision 2.105  2001/10/23 20:08:59  vsnyder
 ! Scale the RHS of apriori equations by aprioriScale too!
 ! Cosmetic changes -- LaTeX comments about how Tikhonov and apriori work.
