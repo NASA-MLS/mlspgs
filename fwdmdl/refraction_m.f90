@@ -1,6 +1,7 @@
 module REFRACTION_M
   use MLSCommon, only: R8, RP, IP
   use GLNP, only: NG, GX, GW
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
 
   Implicit None
 
@@ -104,7 +105,7 @@ Subroutine comp_refcor(h_path,n_path,ht,del_s,ref_corr)
 !
     q = (h_path(1)*n_path(1))**2-Nt2Ht2
     if(abs(q) < Tiny) q = 0.0_rp
-    x2 = Sqrt(q)
+    x2 = Sqrt(abs(q))
 
     do j = 2, mid
 !
@@ -116,6 +117,12 @@ Subroutine comp_refcor(h_path,n_path,ht,del_s,ref_corr)
 
       q = (h_path(j)*n_path(j))**2 - Nt2Ht2
       if(abs(q) < Tiny) q = 0.0_rp
+
+      if(q < 0.0_rp) then
+        ref_corr(j) = ref_corr(j-1)
+        CYCLE
+      endif
+
       x2 = Sqrt(q)
 
       eps = Log(n2/n1)/(h2-h1)
@@ -125,6 +132,10 @@ Subroutine comp_refcor(h_path,n_path,ht,del_s,ref_corr)
         q = xm + ym * Gx(k)
         NH = Sqrt(q*q + Nt2Ht2)
         Call Solve_Hn(NH)
+        if( H < 0.0) then
+          ref_corr(j) = ref_corr(j-1)
+          goto 10
+        endif
         Integrand_GL(k) = 1.0_rp/(N+H*dndh)
       end do
 !
@@ -133,6 +144,8 @@ Subroutine comp_refcor(h_path,n_path,ht,del_s,ref_corr)
 ! And Finally - define the refraction correction:
 !
       ref_corr(j) = q * ym / Del_s(j)
+!
+ 10   k = 0
 !
     end do
 !
@@ -144,7 +157,7 @@ Subroutine comp_refcor(h_path,n_path,ht,del_s,ref_corr)
 
     q = (h_path(j)*n_path(j))**2 - Nt2Ht2
     if(abs(q) < Tiny) q = 0.0_rp
-    x2 = Sqrt(q)
+    x2 = Sqrt(abs(q))
 
     do j = mid+1, no_ele-1
 !
@@ -156,6 +169,12 @@ Subroutine comp_refcor(h_path,n_path,ht,del_s,ref_corr)
 
       q = (h_path(j+1)*n_path(j+1))**2 - Nt2Ht2
       if(abs(q) < Tiny) q = 0.0_rp
+
+      if(q < 0.0_rp) then
+        ref_corr(j) = ref_corr(j-1)
+        CYCLE
+      endif
+
       x2 = Sqrt(q)
 
       eps = Log(n2/n1)/(h2-h1)
@@ -165,6 +184,10 @@ Subroutine comp_refcor(h_path,n_path,ht,del_s,ref_corr)
         q = xm + ym * Gx(k)
         NH = Sqrt(q*q + Nt2Ht2)
         Call Solve_Hn(NH)
+        if( H < 0.0) then
+          ref_corr(j) = ref_corr(j-1)
+          goto 20
+        endif
         Integrand_GL(k) = 1.0_rp/(N+H*dndh)
       end do
 !
@@ -173,6 +196,8 @@ Subroutine comp_refcor(h_path,n_path,ht,del_s,ref_corr)
 ! And Finally - define the refraction correction:
 !
       ref_corr(j) = q * ym / Del_s(j)
+!
+ 20   k = 0
 !
     end do
 !
@@ -188,27 +213,31 @@ Contains
     Real(rp), intent(in) :: NH
 
     Integer :: iter
-    Logical :: bracketed
     Real(rp) :: v1,v2,f1,f2,df,hpos,hneg
 
     Integer,  PARAMETER :: Max_Iter = 20
 
-     bracketed = .FALSE.
+    CHARACTER(LEN=55), PARAMETER :: Msg1 = &
+          & '** Warning from Solve_Hn: Could not bracket the root ..'
+    CHARACTER(LEN=67), PARAMETER :: Msg2 = &
+     & '** Warning from Solve_Hn: Did not converged within 20 iterations ..'
+
      f1 = h1 * (1.0_rp + n1) - NH
      f2 = h2 * (1.0_rp + n2) - NH
      df = (f2 - f1) / (h2 - h1)
 
-     if(f1*f2 < 0.0_rp) then
-       bracketed = .TRUE.
-       if(f1 < 0.0_rp) then
-         hneg = h1
-         hpos = h2
-       else
-         hpos = h1
-         hneg = h2
-       endif
+     IF (f1*f2 > 0.0_rp) THEN
+       H = -1.0_rp
+       Call MLSMessage ( MLSMSG_Warning, ModuleName, Msg1)
+       RETURN 
+     ENDIF
+
+     if(f1 <= 0.0_rp) then
+       hneg = h1
+       hpos = h2
      else
-       Print *,'** Warning from Solve_Hn: Could not bracket the root ..'
+       hpos = h1
+       hneg = h2
      endif
 
      iter = 1
@@ -222,10 +251,8 @@ Contains
 
        v2 = v1 - f1 / df
 
-       if(bracketed) then
-         if(v2 < min(hpos,hneg) .OR. v2 > max(hpos,hneg)) &
+       if(v2 < min(hpos,hneg) .OR. v2 > max(hpos,hneg)) &
            &  v2 = 0.5_rp * (hneg + hpos)
-       endif
 
        f2 = v2 * (1.0_rp + n1 * Exp(eps*(v2-h1)) ) - NH
 
@@ -233,12 +260,10 @@ Contains
 
        if(Iter == Max_Iter) EXIT
 
-       if(bracketed) then
-         if(f2 < 0.0_rp) then
-           hneg = v2
-         else
-           hpos = v2
-         endif
+       if(f2 < 0.0_rp) then
+         hneg = v2
+       else
+         hpos = v2
        endif
 
        iter = iter + 1
@@ -246,10 +271,8 @@ Contains
 
      END DO
 
-     if(abs(f2) >= Tiny .AND. abs(v2-v1) >= Tiny) then
-       Print *,'** Warning from Solve_Hn: Did not converged within ', &
-            &  Max_Iter,' iterations ..'
-     endif
+     if(abs(f2) >= Tiny .AND. abs(v2-v1) >= Tiny) &
+         & Call MLSMessage ( MLSMSG_Warning, ModuleName, Msg2)
 
      H = v2
      df = n1 * Exp(eps*(H-h1))
@@ -281,6 +304,9 @@ End Subroutine comp_refcor
 
 END module REFRACTION_M
 ! $Log$
+! Revision 2.6  2002/02/18 06:58:04  zvi
+! Trimming some unused code..
+!
 ! Revision 2.5  2002/02/18 01:01:58  zvi
 ! Let the program crash & burn for LARGE negative Sqrt Arg.
 !
