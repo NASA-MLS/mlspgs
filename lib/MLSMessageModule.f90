@@ -61,7 +61,7 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
 
   ! So that we may limit the number of times warnings printed, messagewise
   character(len=*), parameter :: WARNINGSSUPPRESSED = '(No more warnings of this)'
-  integer, parameter :: MAXNUMWARNINGS = 80
+  integer, parameter :: MAXNUMWARNINGS = 40 ! was 80, but most tests < 10
   integer, parameter :: WARNINGMESSLENGTH = 80
   character(len=WARNINGMESSLENGTH), dimension(MAXNUMWARNINGS), save :: &
     &                   warningmessages = ' '
@@ -87,9 +87,18 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
 
    ! May get some of these from MLSLibOptions? 
   type, public :: MLSMessageConfig_T
+    ! We log messages by toolkit (if useToolkit and UseSDPToolkit are TRUE)
+    ! In the following, values would have the effect of adding logged messages:
+    ! -2: none added
+    ! -1: to stdout
+    !  n: to ftn unit n
     integer :: logFileUnit                     = -2
+    ! In the following, values would have the effect on identical warnings of:
+    ! -1: Print every one without suppression
+    !  0: Suppress every one
+    !  1: Print every one only once
     integer :: limitWarnings                   = 1000 ! Max number each warning
-    character (len=MLSMSG_PrefixLen) :: prefix = ''
+    character (len=MLSMSG_PrefixLen) :: prefix = ''   ! Prefix to every msg
     logical :: suppressDebugs                  = .false.
     logical :: useToolkit                      = .true.
     logical :: CrashOnAnyError                 = .false. ! See crash warning
@@ -138,25 +147,31 @@ contains
 
     ! Here's where we suppress warning messages beyond a limit for each
     nosubsequentwarnings = .false.
-    if ( severity == MLSMSG_Warning .and. MLSMessageConfig%limitWarnings > 0 &
+    if ( severity == MLSMSG_Warning .and. MLSMessageConfig%limitWarnings > -1 &
       & .and. numwarnings <= MAXNUMWARNINGS .and. message /= ' ' ) then
-      ! See if have seen this message before
+      ! See if we have seen this message before
       newwarning = .not. any(warningmessages == trim(message))
       if ( newwarning .and. numwarnings >= MAXNUMWARNINGS ) then
       elseif ( newwarning .or. &
         & numwarnings < 1 ) then
         numwarnings = numwarnings + 1
         warningmessages(numwarnings) = message
-        timeswarned(numwarnings) = 1
+        timeswarned(numwarnings) = timeswarned(numwarnings) + 1
+        if ( timeswarned(numwarnings) > MLSMessageConfig%limitWarnings ) return
+        timeswarned(numwarnings) = min(timeswarned(numwarnings) + 1, &
+          & MLSMessageConfig%limitWarnings + 1)
+        nosubsequentwarnings = &
+          & (timeswarned(numwarnings) >= MLSMessageConfig%limitWarnings)
       else
         do warning_index=1, numwarnings
           if ( warningmessages(warning_index) == message ) exit
         enddo
         if ( warning_index > numwarnings ) return
         if ( timeswarned(warning_index) > MLSMessageConfig%limitWarnings ) return
+        timeswarned(warning_index) = min(timeswarned(warning_index) + 1, &
+          & MLSMessageConfig%limitWarnings + 1)
         nosubsequentwarnings = &
-          & (timeswarned(warning_index) == MLSMessageConfig%limitWarnings)
-        timeswarned(warning_index) = timeswarned(warning_index) + 1
+          & (timeswarned(warning_index) >= MLSMessageConfig%limitWarnings)
       endif
     endif
       
@@ -368,6 +383,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.17  2005/03/12 00:46:41  pwagner
+! limits to warnings now work correctly
+!
 ! Revision 2.16  2005/03/10 00:29:20  pwagner
 ! Limits Warnings to 1st 1000 each message
 !
