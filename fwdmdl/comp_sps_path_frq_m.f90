@@ -148,7 +148,7 @@ module Comp_Sps_Path_Frq_m
 ! in the loop (hiding inside of matmul), so there's really no point to
 ! sending in do_calc_zp.
 
-    use MLSCommon, only: RP, IP, R8
+    use MLSCommon, only: RP
     use Load_sps_data_m, only: Grids_T
 
 ! Input:
@@ -191,6 +191,9 @@ module Comp_Sps_Path_Frq_m
 end module Comp_Sps_Path_Frq_m
 !
 ! $Log$
+! Revision 2.15  2003/05/16 02:46:33  vsnyder
+! Removed USE's for unreferenced symbols
+!
 ! Revision 2.14  2003/05/05 23:00:25  livesey
 ! Merged in feb03 newfwm branch
 !
