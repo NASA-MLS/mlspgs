@@ -10,7 +10,7 @@ module DUMP_0
 
   implicit NONE
   private
-  public :: AfterSub, DUMP, DUMP_NAME_V_PAIRS
+  public :: AfterSub, DUMP, DUMP_NAME_V_PAIRS, DUMPSIZE
 
   interface DUMP        ! dump n-d arrays of homogeneous type
     module procedure DUMP_1D_CHAR, DUMP_1D_COMPLEX, DUMP_1D_DCOMPLEX
@@ -1180,6 +1180,30 @@ contains
 
   end subroutine DUMP_NAME_V_PAIRS_REAL
 
+  ! ----------------------------------------------------- DumpSize -----
+  subroutine DumpSize ( n, advance )
+    integer, intent(in) :: N
+    character(len=*), intent(in), optional :: ADVANCE
+    ! Local parameters
+    integer, parameter :: KB = 1024
+    integer, parameter :: MB = KB * 1024
+    integer, parameter :: GB = MB * 1024
+    ! Make a 'nice' output
+    if ( n < kb ) then
+      call output ( n*1.0, format='(f6.1)' )
+      call output ( ' bytes', advance=advance )
+    else if ( n < Mb ) then
+      call output ( n*1.0/kb, format='(f6.1)' )
+      call output ( ' kb', advance=advance )
+    else if ( n < Gb ) then
+      call output ( n*1.0/Mb, format='(f6.1)' )
+      call output ( ' Mb', advance=advance )
+    else
+      call output ( n*1.0/Gb, format='(f6.1)' )
+      call output ( ' Gb', advance=advance )
+    end if
+  end subroutine DumpSize
+
   ! ------------------------------------------------------  Empty  -----
   subroutine Empty ( Name )
     character(len=*), intent(in), optional :: Name
@@ -1387,6 +1411,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.34  2004/04/03 05:43:23  livesey
+! Added DumpSize
+!
 ! Revision 2.33  2004/03/30 00:44:10  vsnyder
 ! Remove unused variable declaration
 !
