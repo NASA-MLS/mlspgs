@@ -46,6 +46,27 @@ module L1BData
 ! ReadL1BData                     Read all info concerning a l1brad quantity
 ! === (end of toc) ===
 
+! === (start of api) ===
+!     (user-defined types)
+! L1BData_T (char L1BName, int FirstMAF, int NoMAFs, int MaxMIFs, int NoAuxInds,
+!             *int CounterMAF(:), 
+!             *char CharField(:,:,:),
+!             *r8   DpField(:,:,:),
+!             *int  IntField(:,:,:),
+!             ) 
+
+!     (subroutines and functions)
+! DeallocateL1BData (l1bData_T l1bData) 
+! Dump (l1bData_T l1bData, int details)
+! int FindL1BData (int files(:), char filedName, [int hdfVersion]) 
+! L1boaSetup (int root, L1BInfo_T L1BInfo, int f_file, [int hdfVersion])
+! L1bradSetup (int root, L1BInfo_T L1BInfo, int f_file, 
+!               int MaxNumL1BRadIDs, int illegalL1BRadID, [int hdfVersion])
+! ReadL1BData (int L1FileHandle, char QuantityName, l1bData_T l1bData,
+!               int NoMAFs, int Flag, [int FirstMAF], [int LastMAF],
+!               [log NeverFail], [int hdfVersion]) 
+! === (end of api) ===
+
   private
 
   public :: L1BData_T, L1BRadSetup, L1BOASetup, ReadL1BData, DeallocateL1BData, &
@@ -209,12 +230,12 @@ contains ! ============================ MODULE PROCEDURES ======================
     findL1BData=0
     do i = 1, size(files)
       if ( myhdfVersion == HDFVERSION_4 ) then
-        if ( sfn2index(files(i),fieldName) /= -1 ) then
+        if ( sfn2index(files(i),trim(fieldName)) /= -1 ) then
           findL1BData = files(i)
           return
         end if
       else
-        if ( IsHDF5DSPresent(files(i),fieldName) ) then
+        if ( IsHDF5DSPresent(files(i),trim(fieldName)) ) then
           findL1BData = files(i)
           return
         end if
@@ -868,6 +889,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.25  2002/10/09 00:05:02  pwagner
+! Added trim function to fieldName
+!
 ! Revision 2.24  2002/10/07 23:21:20  pwagner
 ! replaced undefined dim_sizes with dims
 !
