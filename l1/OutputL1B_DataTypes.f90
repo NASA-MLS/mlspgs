@@ -59,6 +59,7 @@ MODULE OutputL1B_DataTypes
     REAL(r8), DIMENSION(:), POINTER :: scAngle => NULL() ! boresight wrt s/c +x
     REAL(r8), DIMENSION(:), POINTER :: scanAngle  => NULL() ! boresight wrt orbit +x
     REAL,     DIMENSION(:), POINTER :: scanRate  => NULL() ! of change of scanAngle
+    REAL(r8), DIMENSION(:), POINTER :: azimAngle  => NULL() ! azimuth wrt orbit +x
     ! dimensioned (xyz,mod.MIF)
     REAL(r8), DIMENSION(:,:), POINTER :: tpECI => NULL()    ! tp location in ECI
     REAL(r8), DIMENSION(:,:), POINTER :: tpECR => NULL()    ! tp location in ECR
@@ -82,6 +83,9 @@ MODULE OutputL1B_DataTypes
 END MODULE OutputL1B_DataTypes
 
 ! $Log$
+! Revision 2.3  2004/11/10 15:38:15  perun
+! Add azimAngle to output
+!
 ! Revision 2.2  2003/08/15 14:25:04  perun
 ! Version 1.2 commit
 !

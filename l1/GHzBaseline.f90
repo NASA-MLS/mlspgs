@@ -9,7 +9,7 @@ MODULE GHzBaseline ! Determine GHz baseline radiance corrections
   USE MLSL1Config, ONLY: MIFsGHz
   USE MLSL1Rad, ONLY: FBrad
   USE OutputL1B, ONLY: OutputL1B_LatBinData
-  USE L1BData, ONLY: L1BData_T, ReadL1BData
+  USE L1BData, ONLY: L1BData_T, ReadL1BData, DeallocateL1BData
 
   IMPLICIT NONE
 
@@ -200,11 +200,13 @@ print *, 'binning rads by lat...'
           ENDIF
 
           rad = L1BData%DpField
+          CALL DeallocateL1BData (L1BData)
 
           name = TRIM(name) // ' precision'
           CALL ReadL1BData (L1BFileInfo%RADGid, name, L1BData, noMAFs, Flag, &
                NeverFail=.TRUE., HDFversion=5)
           rad_err = L1BData%DpField
+          CALL DeallocateL1BData (L1BData)
 
 ! Remove baseline from rads:
 
@@ -233,6 +235,9 @@ print *, 'binning rads by lat...'
 END MODULE GHzBaseline
 !=============================================================================
 ! $Log$
+! Revision 2.3  2004/11/10 15:35:10  perun
+! Add call to deallocate L1BData
+!
 ! Revision 2.2  2004/05/14 15:59:11  perun
 ! Version 1.43 commit
 !

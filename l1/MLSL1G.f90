@@ -1,17 +1,18 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !============================================================================
 PROGRAM MLSL1G       ! MLS Level 1 software for the GHz module
 !============================================================================
 
-  USE OpenInit, ONLY : OpenAndInitialize
-  USE SortQualify, ONLY : SortAndQualify
-  USE Calibration, ONLY : Calibrate
-  USE Radiances, ONLY : CalcLimbRads
-  USE L1BOutUtils, ONLY : OutputL1Bdata
+  USE OpenInit, ONLY: OpenAndInitialize
+  USE SortQualify, ONLY: SortAndQualify
+  USE Calibration, ONLY: Calibrate
+  USE Radiances, ONLY: CalcLimbRads
+  USE L1BOutUtils, ONLY: OutputL1Bdata
+  USE SpectralBaseline, ONLY: UpdateBaselines
   USE GHzBaseline, ONLY: LatBinRads, OutputBaselinedRads
-  USE Close_Files, ONLY : CloseFiles
+  USE Close_Files, ONLY: CloseFiles
   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Info, MLSMessageExit
 
   IMPLICIT NONE
@@ -50,6 +51,8 @@ PROGRAM MLSL1G       ! MLS Level 1 software for the GHz module
 
   ENDDO
 
+  CALL UpdateBaselines
+
   CALL OutputBaselinedRads
 
   CALL CloseFiles
@@ -64,6 +67,9 @@ END PROGRAM MLSL1G
 !=============================================================================
 
 ! $Log$
+! Revision 2.3  2004/11/10 15:35:40  perun
+! Add call to UpdateBaselines
+!
 ! Revision 2.2  2004/01/09 17:46:22  perun
 ! Version 1.4 commit
 !
