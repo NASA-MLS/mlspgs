@@ -38,6 +38,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   public :: MultiplyMatrix_XTY_0
   public :: MultiplyMatrixVector
   public :: MultiplyMatrixVectorNoT
+  public :: NullifyMatrix, NullifyMatrix_0
   public :: operator(+), operator(.TX.), ReflectMatrix, RowScale
   public :: ScaleBlock, SolveCholesky, SolveCholeskyM_0
   public :: Sparsify, Spill, Spill_0, SubBlockLength
@@ -136,6 +137,10 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
 
   interface NewMultiplyMatrixVector_0 ! (see .tx. below)
     module procedure NewMultiplyMatrixVector_0_r4, NewMultiplyMatrixVector_0_r8
+  end interface
+
+  interface NullifyMatrix
+    module procedure NullifyMatrix_0
   end interface
 
   interface operator (+)
@@ -255,6 +260,7 @@ contains ! =====     Public Procedures     =============================
     real(rm), dimension(:,:), pointer :: XD, YD ! For testing
     logical :: OK                       ! For testing
 
+    call nullifyMatrix ( zb ) ! for Sun's still useless compiler
     s = 1.0
     if ( present(scale) ) s = scale
 
@@ -427,6 +433,8 @@ contains ! =====     Public Procedures     =============================
   ! result.  Also see AssignBlock.
   ! !!!!! ===== END NOTE ===== !!!!! 
 
+    call nullifyMatrix ( zb ) ! for Sun's still useless compiler
+                         ! not sure it's needed here
     zb = add_matrix_blocks ( xb, yb )
 
   end function Add_Matrix_Blocks_Unscaled 
@@ -2549,6 +2557,7 @@ contains ! =====     Public Procedures     =============================
   ! result.  Also see AssignBlock.
   ! !!!!! ===== END NOTE ===== !!!!! 
 
+    call nullifyMatrix ( z ) ! for Sun's still useless compiler
     call MultiplyMatrix_XTY_0 ( x, y, z )
   end function NewMultiplyMatrix_XTY_0
 
@@ -2567,6 +2576,20 @@ contains ! =====     Public Procedures     =============================
     real(r8), dimension(size(v)) :: P
     call MultiplyMatrixVector ( b, v, p, .false. )
   end function NewMultiplyMatrixVector_0_r8
+
+  ! ---------------------------------------------- NullifyMatrix_0 -----
+  subroutine NullifyMatrix_0 ( M )
+    ! Given a matrix, nullify all the pointers associated with it
+    type ( MatrixElement_T ), intent(out) :: M
+
+    ! Executable code
+    m%KIND = M_Absent
+    m%nRows = 0
+    m%nCols = 0
+    nullify ( m%r1 )
+    nullify ( m%r2 )
+    nullify ( m%values )
+  end subroutine NullifyMatrix_0
 
   ! -------------------------------------------------  ReflectMatrix_0 --
   subroutine ReflectMatrix_0 ( M )
@@ -3926,6 +3949,10 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.86  2002/11/22 12:52:50  mjf
+! Added nullify routine(s) to get round Sun's WS6 compiler not
+! initialising derived type function results.
+!
 ! Revision 2.85  2002/10/07 23:24:43  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
