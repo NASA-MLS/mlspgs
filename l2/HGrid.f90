@@ -1204,7 +1204,6 @@ contains ! =====     Public Procedures     =============================
     integer :: SON                      ! Tree node
     integer :: GSON                     ! son of son
     integer :: KEY                      ! Tree node
-    integer :: NAME                     ! Dummy string index
     type(HGrid_T) :: DUMMYHGRID         ! A temporary hGrid
 
     ! Executable code
@@ -1233,7 +1232,7 @@ contains ! =====     Public Procedures     =============================
                   ! For the 'zeroth' pass just count up the chunks
                   noHGrids = noHGrids + 1
                 else
-                  dummyHGrid = CreateHGridFromMLSCFInfo ( name, key, l1bInfo, l2gpDatabase, &
+                  dummyHGrid = CreateHGridFromMLSCFInfo ( 0, key, l1bInfo, l2gpDatabase, &
                     & processingRange, chunks(chunk) )
                   chunks(chunk)%hGridOffsets(hGrid) = dummyHGrid%noProfs - &
                     & dummyHGrid%noProfsLowerOverlap - dummyHGrid%noProfsUpperOverlap
@@ -1373,6 +1372,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.54  2003/06/25 22:27:02  livesey
+! Fixed an undefined variable
+!
 ! Revision 2.53  2003/06/25 22:05:31  vsnyder
 ! Don't run off the end of the tree if there's no output section
 !
