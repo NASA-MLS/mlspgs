@@ -14,6 +14,7 @@
     integer :: originalIndex            ! Used in 'nearest' case
 
     logical :: useAllowTopValue, useAllowBelowValue, useNearest
+    logical :: wentUp, wentDown         ! Flags
     integer :: useStart
     integer :: upperLimit       ! Highest value that can be returned
     integer :: stride           ! Value to step by
@@ -24,6 +25,7 @@
     integer :: listDirection    ! +1 if list ascends, -1 descends
     integer :: searchDirection  ! (in index space) 
     integer :: oldSearchDirection ! Previous value of above
+    integer :: oldIndex                 ! Previous value of index
 
 
     ! Executable code
@@ -98,6 +100,7 @@
       searchDirection = 0
       stride = 1
       HuntLoop: do
+        oldIndex = index
         lowerBelow= (thisValue-list(index))*listDirection >= 0.0
         if ( index<listLen ) then 
           upperAbove = (list(index+1)-thisValue)*listDirection > 0.0
@@ -108,12 +111,12 @@
         ! Now we know what the state of play is, what does it mean?
 
         ! First see if we've found the place
-        if ( lowerBelow.and.upperAbove ) exit HuntLoop
+        if ( lowerBelow .and. upperAbove ) exit HuntLoop
 
         ! The other cases are a little more complex
         oldSearchDirection = searchDirection
 
-        if ( lowerBelow.and. (.not. upperAbove) ) then
+        if ( lowerBelow .and. (.not. upperAbove) ) then
           ! If we're at the end, get out
           if ( index == upperLimit ) exit HuntLoop
           ! We're too low, keep looking upwards
@@ -121,7 +124,7 @@
           searchDirection = 1
         end if
 
-        if ( (.not. lowerBelow).and.upperAbove ) then
+        if ( (.not. lowerBelow) .and. upperAbove ) then
           ! If we're at the begning, get out
           if ( index == 1 ) exit HuntLoop
 
@@ -130,6 +133,11 @@
           searchDirection = -1
         end if
 
+        if ( (.not. lowerBelow) .and. (.not. upperAbove) ) then
+          ! The list is really screwey
+          call MLSMessage ( MLSMSG_Error, ModuleName, 'List out of order in Hunt (case 1)' )
+        end if
+        
         ! Now the very first change of direction is the end of hte
         ! `expanding' phase
 
@@ -138,14 +146,20 @@
           & expanding = .false.
 
         if ( expanding ) then
-          stride = min(stride*2,listLen/2)
+          stride = min ( stride*2, listLen/2 )
         else
-          stride = max(stride/2,1)
+          stride = max ( stride/2, 1)
         end if
 
         ! Make sure we don't fall off an end
-
         index = min(max(index,1),upperLimit)
+
+        ! Now check the list hasn't reversed direction
+        wentUp =   ( list(index) - list(oldIndex) ) * listDirection > 0.0
+        wentDown = ( list(index) - list(oldIndex) ) * listDirection < 0.0
+        if ( ( searchDirection == 1  .and. wentDown ) .or. &
+          &  ( searchDirection == -1 .and. wentUp ) ) &
+          & call MLSMessage ( MLSMSG_Error, ModuleName, 'List out of order in Hunt (case 2)' )
       end do HuntLoop
 
       ! If user asked for nearest then check to see if one above is closer
@@ -180,6 +194,9 @@
 ! end subroutine HuntArray_r*
 
 ! $Log$
+! Revision 1.3  2003/07/07 20:29:22  livesey
+! Now handles zero length arrays
+!
 ! Revision 1.2  2002/10/04 00:46:12  vsnyder
 ! Move declarations of local variables here
 !
