@@ -63,6 +63,7 @@ contains ! =====     Public Procedures     =============================
     integer :: KEY                 ! Index of n_spec_args in the AST
     type (L2AUXData_T) :: L2AUX
     type (L2GPData_T) :: L2GP
+    TYPE (GriddedData_T) :: GriddedData
     integer :: l2Index             ! In the l2gp or l2aux database
     integer :: L2Name              ! Sub-rosa index of L2[aux/gp] label
     character (LEN=480) :: msr     ! Error message if can't find file
@@ -175,16 +176,22 @@ contains ! =====     Public Procedures     =============================
 	! The remaining cases are gridded data types
       case ( s_ncep )
 
+        l2Index = AddGridTemplateToDatabase( aprioriData, GriddedData )
+        call decorate ( key, l2Index )
 			CALL READ_NCEP(FileNameString, &
 			& aprioriData(l2Index)%field(1, 1, 1, :, :, :))
 
       case ( s_dao )
 
+        l2Index = AddGridTemplateToDatabase( aprioriData, GriddedData )
+        call decorate ( key, l2Index )
 			CALL READ_DAO(FileNameString, 'Some_vector_name', &
 			& aprioriData(l2Index)%field(1, 1, 1, :, :, :))
 
       case ( s_climatology )
 
+        l2Index = AddGridTemplateToDatabase( aprioriData, GriddedData )
+        call decorate ( key, l2Index )
 			CALL READ_CLIMATOLOGY(FileNameString, &
 			& aprioriData(l2Index)%field(1, 1, 1, :, :, :))
 
@@ -204,6 +211,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.2  2001/03/06 00:23:58  pwagner
+! A little bit more
+!
 ! Revision 2.1  2001/03/03 00:14:40  pwagner
 ! First commit
 !
