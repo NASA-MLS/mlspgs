@@ -18,7 +18,7 @@ module Fill                     ! Create vectors and fill them.
     & F_LSB, F_LSBFRACTION, &
     & F_LENGTHSCALE, F_MATRIX, F_MAXITERATIONS, F_METHOD, F_MEASUREMENTS, &
     & F_MODEL, F_MULTIPLIER, F_NOFINEGRID, F_NOISEBANDWIDTH, F_PRECISION,  &
-    & F_ORBITINCLINATION, F_PRECISIONFACTOR, &
+    & F_ORBITINCLINATION, F_PRECISIONFACTOR, F_PROFILEVALUES, &
     & F_PTANQUANTITY, F_PHITAN, F_QUANTITY, F_RADIANCEQUANTITY, F_RATIOQUANTITY, &
     & F_REFRACT, F_REFGPHQUANTITY, F_RESETSEED, F_RHIQUANTITY, F_Rows, &
     & F_SCECI, F_SCVEL, F_SCVELECI, F_SCVELECR, F_SEED, &
@@ -34,7 +34,7 @@ module Fill                     ! Create vectors and fill them.
     & L_HYDROSTATIC, L_ISOTOPE, L_ISOTOPERATIO, L_KRONECKER, L_L1B, L_L2GP, L_L2AUX, &
     & L_RECTANGLEFROMLOS, L_NEGATIVEPRECISION, L_NOISEBANDWIDTH, L_ORBITINCLINATION, &
     & L_LOSVEL, L_NONE, L_PLAIN, &
-    & L_PRESSURE, L_PHITAN, L_PTAN, L_RADIANCE, L_RHI, &
+    & L_PRESSURE, L_PHITAN, L_PROFILE, L_PTAN, L_RADIANCE, L_RHI, &
     & L_REFGPH, L_REFRACT, L_SCECI, L_SCGEOCALT, L_SCVEL, L_SCVELECI, L_SCVELECR, &
     & L_SIDEBANDRATIO, L_SPD, L_SPECIAL, L_SYSTEMTEMPERATURE, &
     & L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, &
@@ -46,7 +46,7 @@ module Fill                     ! Create vectors and fill them.
   use Intrinsic, only: Field_Indices
   use Intrinsic, only: &
     & PHYQ_Dimensionless, PHYQ_Invalid, PHYQ_Temperature, &
-    & PHYQ_Time, PHYQ_Length
+    & PHYQ_Time, PHYQ_Length, PHYQ_Pressure, PHYQ_Zeta
   use L1BData, only: DeallocateL1BData, Dump, FindL1BData, L1BData_T, &
     & PRECISIONSUFFIX, ReadL1BData
   use L2GPData, only: L2GPData_T
@@ -593,6 +593,8 @@ contains ! =====     Public Procedures     =============================
               & call Announce_error ( key, No_Error_code, &
               & 'Bad units for precisionFactor' )
             precisionFactor = valueAsArray(1)
+          case ( f_profileValues )
+            valuesNode = subtree(j,key)
           case ( f_PtanQuantity ) ! For losGrid fill
             PtanVectorIndex = decoration(decoration(subtree(1,gson)))
             PtanQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -804,6 +806,12 @@ contains ! =====     Public Procedures     =============================
             & vectors(sourceVectorIndex), sourceQuantityIndex )
           call FillVectorQtyFromIsotope ( key, quantity, sourceQuantity, &
             & ratioQuantity )
+
+        case ( l_profile ) ! ------------------------ Profile fill -------
+          if ( .not. got ( f_profileValues ) ) &
+            call Announce_error ( key, 0, 'profileValues not supplied' )
+          call FillVectorQtyFromProfile ( key, quantity, valuesNode, &
+            & vectors(vectorIndex)%globalUnit, dontMask )
 
         case ( l_refract )              ! --------- refraction for phiTan -----
           if ( refract ) then 
@@ -1675,6 +1683,88 @@ contains ! =====     Public Procedures     =============================
     endif
 
   end subroutine FillVectorQuantityFromL2GP
+
+  ! -------------------------------------- FillVectorQuantityFromProfile --
+  subroutine FillVectorQtyFromProfile ( key, quantity, valuesNode, &
+    & globalUnit, dontMask )
+    ! This fill is slightly complicated.  Given a values array along
+    ! the lines of [ 1000mb : 1.0K, 100mb : 1.0K,  10mb : 2.0K] etc. it
+    ! does the linear interpolation appropriate to perform the fill.
+    integer, intent(in) :: KEY          ! Tree node
+    type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
+    integer, intent(in) :: VALUESNODE   ! Tree node for values
+    integer, intent(in) :: GLOBALUNIT   ! Possible global unit
+    logical, intent(in) :: DONTMASK     ! If set don't follow the fill mask
+
+    ! Local variables
+    integer :: NOPOINTS                 ! Number of points supplied
+    integer :: I                        ! Loop counter
+    logical :: LOCALOUTHEIGHTS          ! Set if out heights is our own variable
+    real (r8), dimension(:), pointer :: HEIGHTS ! Heights for the points
+    real (r8), dimension(:), pointer :: VALUES ! Values for the points
+    real (r8), dimension(:), pointer :: OUTHEIGHTS ! Heights for output
+    real (r8), dimension(2) :: EXPRVALUE ! Value of expression
+    integer, dimension(2) :: EXPRUNIT   ! Unit for expression
+
+    ! Executable code
+
+    ! Check the quantity is amenable to this type of fill
+    if ( .not. ValidateVectorQuantity ( quantity, &
+      & coherent=.true., frequencyCoordinate=(/l_none/) ) ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'The quantity is not amenable to a profile fill' )
+
+    ! Set some stuff up
+    noPoints = nsons ( valuesNode ) - 1
+    nullify ( heights, values, outHeights )
+    call Allocate_test ( heights, noPoints, 'heights', ModuleName )
+    call Allocate_test ( values, noPoints, 'values', ModuleName )
+
+    ! Loop over the values
+    do i = 1, noPoints
+      ! Get value from tree
+      call expr ( subtree ( i+1, valuesNode ), exprUnit, exprValue )
+      ! Check height unit OK
+      ! WRITE THIS!
+      ! Store height
+      if ( exprUnit(1) == PHYQ_Pressure .and. &
+        & quantity%template%verticalCoordinate == l_zeta ) then
+        heights(i) = -log10 ( exprValue(1) )
+      else
+        heights(i) = exprValue(1)
+      end if
+
+      ! Check value unit OK
+      ! WRITE THIS!
+
+      ! Store value
+      values ( i ) = exprValue(2)
+    end do
+
+    ! Get the appropriate height coordinate for output
+    if ( quantity%template%verticalCoordinate == l_pressure ) then
+      localOutHeights = .true.
+      call Allocate_test ( outHeights, quantity%template%noSurfs, &
+        & 'outHeights', ModuleName )
+      outHeights = -log10 ( quantity%template%surfs(:,1) )
+    else
+      localOutHeights = .false.
+      outHeights => quantity%template%surfs(:,1)
+    endif
+
+    ! Now do the interpolation for the first instance
+    call InterpolateValues ( heights, values, outHeights, &
+      & quantity%values(:,1), 'Linear', extrapolate='Constant' )
+    ! Spread it into the other instances
+    quantity%values = spread ( &
+      & quantity%values(:,1), quantity%template%noInstances, 2 )
+
+    ! Finish off
+    if ( localOutHeights ) call Deallocate_test ( outHeights, &
+      & 'outHeights', ModuleName )
+    call Deallocate_test ( heights, 'heights', ModuleName )
+    call Deallocate_test ( values, 'values', ModuleName )
+  end subroutine FillVectorQtyFromProfile
 
   ! ------------------------------------------- FillLOSVelocity ---
   subroutine FillLOSVelocity ( key, qty, tngtECI, scECI, scVel)
@@ -3601,6 +3691,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.133  2002/08/15 03:52:52  livesey
+! Added profile fill, still not complete though.
+!
 ! Revision 2.132  2002/08/03 20:41:40  livesey
 ! Added snooping of matrices
 !
