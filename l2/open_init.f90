@@ -152,12 +152,17 @@ contains ! =====     Public Procedures     =============================
       error = PENALTY_FOR_NO_METADATA
     end if
 
-   CCSDSStartTime = ' '
-   CCSDSEndTime = ' '
+! Initialize run parameters: unless reset, these dtermine how to run
+   CCSDSStartTime = '(undefined)'
+   CCSDSEndTime = '(undefined)'
+   l2pcf%cycle = '(undefined)'
+   l2pcf%logGranID = '(not applicable)'      ! will not create a Log file
+   l2pcf%spec_keys = '(not applicable)'      ! will not create metadata
+   l2pcf%spec_hash = '(not applicable)'      ! will not create metadata
 
    if( .not. PCF ) then
     if ( toggle(gen) ) then
-      if ( levels(gen) > 0 .or. index(switches,'O') /= 0 ) &
+      if ( levels(gen) > 0 .or. index(switches,'ope') /= 0 ) &
         & call dump_L1B_database &
         & ( mlspcf_l1b_rad_end-mlspcf_l1b_rad_start+1, l1binfo, l2pcf, &
           & CCSDSEndTime, CCSDSStartTime, processingrange )
@@ -505,6 +510,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.49  2001/05/11 23:43:35  pwagner
+! Added some initializations
+!
 ! Revision 2.48  2001/05/10 18:22:57  pwagner
 ! Improved Dump_L1B_database
 !
