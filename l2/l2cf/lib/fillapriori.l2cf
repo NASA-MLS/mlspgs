@@ -44,12 +44,12 @@ begin Fill
   ;; Get RHI from H2O
   Fill, quantity=apriori.rhi, h2oQuantity=apriori.h2o, $
     temperatureQuantity=apriori.temperature, method=RHIFromH2O, /dontMask
-  }) ;; End if flagGotClimatology
 
   ;; --------------------------------------------- tpPressure
   Fill, quantity=apriori.tpPressure, method=wmoTropopause, $
     temperatureQuantity=apriori.temperature, refGPHQuantity=apriori.refGPH, $
     internalVgrid=vGridWMO
+  }) ;; End if flagGotClimatology
 
   ;; --------------------------------------------- trop H2O
 
