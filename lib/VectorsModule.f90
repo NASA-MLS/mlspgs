@@ -78,6 +78,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   type VectorValue_T
     type (QuantityTemplate_T), pointer :: TEMPLATE => NULL() ! Template for
     ! this quantity.
+    integer :: index                    ! Index of this quantity into vector
     real(r8), dimension(:,:), pointer :: VALUES => NULL() ! The dimensions of
     ! VALUES are Frequencies (or 1) * Vertical Coordinates (or 1), and
     ! Horizontal Instances (scan or profile or 1).  These are taken from
@@ -272,6 +273,7 @@ contains ! =====     Public Procedures     =============================
     allocate ( z%quantities(size(x%quantities)), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate // "z%quantities" )
+    z%quantities%index = x%quantities%index
     do i = 1, size(x%quantities)
       z%quantities(i)%template => x%quantities(i)%template
     end do
@@ -403,6 +405,7 @@ contains ! =====     Public Procedures     =============================
     if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate // "Vector quantities"  )
     do quantity = 1, vectorTemplate%noQuantities
+      vector%quantities(quantity)%index = quantity
       vector%quantities(quantity)%template => &
         & quantities(vectorTemplate%quantities(quantity))
     end do
@@ -646,13 +649,13 @@ contains ! =====     Public Procedures     =============================
     type (Vector_T), intent(in) :: VECTOR ! First vector to look in
     type (Vector_T), intent(in), optional :: OTHERVECTOR ! Second vector to look in
     integer, intent(in) :: QUANTITYTYPE ! Quantity type index (l_...)
-    integer, intent(in), optional :: MOLECULE     ! Molecule index (l_...)
-    integer, intent(in), optional :: INSTRUMENTMODULE ! Instrument module index
-    integer, intent(in), optional :: RADIOMETER   ! Radiometer index
-    integer, intent(in), optional :: SIGNAL       ! Signal index
-    integer, intent(in), optional :: SIDEBAND ! -1, 0, +1
+    integer, intent(in),  optional :: MOLECULE     ! Molecule index (l_...)
+    integer, intent(in),  optional :: INSTRUMENTMODULE ! Instrument module index
+    integer, intent(in),  optional :: RADIOMETER   ! Radiometer index
+    integer, intent(in),  optional :: SIGNAL       ! Signal index
+    integer, intent(in),  optional :: SIDEBAND ! -1, 0, +1
     logical, intent(out), optional :: FOUNDINFIRST ! Set if found in first vector
-    logical, intent(in), optional :: NOERROR ! Don't give error if not found
+    logical, intent(in),  optional :: NOERROR ! Don't give error if not found
     ! Result
     type (VectorValue_T), pointer :: GetVectorQuantityByType
 
@@ -1104,6 +1107,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.23  2001/04/18 23:27:00  pwagner
+! Added default .true. to Validate; also optional sayWhyNot
+!
 ! Revision 2.22  2001/04/12 21:43:19  livesey
 ! Added sideband option to the quantity searches
 !
