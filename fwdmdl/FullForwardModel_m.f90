@@ -1534,9 +1534,11 @@ contains
           j = -1
           k = SIZE(PointingGrids(whichPointingGrid)% &
                        & oneGrid(grids(ptg_i))%frequencies)
-          call Hunt ( min_ch_freq_grid, PointingGrids(whichPointingGrid)% &
+          CALL Hunt ( min_ch_freq_grid, vel_cor &
+                       & * PointingGrids(whichPointingGrid)% &
                        & oneGrid(grids(ptg_i))%frequencies, k, j, frq_i )
-          call Hunt ( max_ch_freq_grid, PointingGrids(whichPointingGrid)% &
+          CALL Hunt ( max_ch_freq_grid,vel_cor &
+                       & * PointingGrids(whichPointingGrid)% &
                        & oneGrid(grids(ptg_i))%frequencies, k, frq_i, m )
           noFreqs = m - j + 1
           call allocate_test ( frequencies, noFreqs, "frequencies", moduleName )
@@ -1974,7 +1976,7 @@ contains
             & call Trace_End ('ForwardModel.Frequency ',index=frq_i)
 
         end do            ! End freq. loop
-
+        
         if ( toggle(emit) .and. levels(emit) > 4 ) &
           & call Trace_End ( 'ForwardModel.FrequencyLoop' )
 
@@ -2756,6 +2758,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.180  2003/11/05 19:26:01  jonathan
+! add stuff for use later in cld model
+!
 ! Revision 2.179  2003/11/04 02:49:13  vsnyder
 ! Calculate coarse-path indices where GL is needed
 !
