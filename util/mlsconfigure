@@ -315,7 +315,7 @@ if [ $change_paths = "true" ] ; then
    if [ "$user_response" != "" ] ; then
 	 GCTP=$user_response
    elif [ "$current_GCTP" != "" ] ; then
-	echo "Toolkit path is still $current_GCTP."
+	echo "GCTP path is still $current_GCTP."
         GCTP=$current_GCTP
    else
 	echo "Warning: No GCTP path selected; none found"
@@ -329,6 +329,7 @@ else
     PGSTK=$current_PGSTK
     HDFEOS=$current_HDFEOS
     HDF=$current_HDF
+    HDF5=$current_HDF5
     GCTP=$current_GCTP
 fi
 }
@@ -494,16 +495,16 @@ basic and an absolute prerequisite; the other two are optional
 (i)    Identify your compiler, platform type, and paths to installed libraries
        of HDF, HDFEOS, and Toolkits. This is the most basic info and you will
        automatically be prompted for it. To change these settings later,
-       enter "make -f MakeFC configure"
+       enter "make configure"
 (ii)   Decide if you want to build the software with support for PVM and FFTW.
        The first may improve performance,  while the second is needed to build
        level 3. These require setting paths to installed libraries of PVM and
        FFTW software. To learn where to obtain them, enter "BEFORE.mls". To 
-       change these settings later, enter "make -f MakeFC configure_pvm"
+       change these settings later, enter "make configure_pvm"
 (iii)  Choose compiler and linker options. Although these are automatically
        set to default values that work well, you may have a reason to prefer
        different options.To change these settings later,
-       enter "make -f MakeFC configure_fopts"
+       enter "make configure_fopts"
 		 
 EOF_6
 
@@ -551,7 +552,8 @@ MLS_default_LDOPTS=
 #PGSINC     path to the toolbox include files
 #PGSTK      path to the toolbox library libPGSTK.a
 #HDFEOS     path to the hdfeos library libhdfeos.a
-#HDF        path to the hdf library libmfhdf.a, etc.
+#HDF        path to the hdf(4) library libmfhdf.a, etc.
+#HDF5       path to the hdf(5) library libhdf5_fortran.a, etc.
 #GCTP       path to the hdfeos library libGctp.a
 #PGSLIB     PGSTK
 #HDFEOS_LIB HDFEOS
@@ -896,6 +898,9 @@ fi
 
 exit
 # $Log$
+# Revision 1.13  2001/05/31 21:55:02  pwagner
+# Now includes HDF5 in .configure
+#
 # Revision 1.12  2001/05/14 17:37:14  pwagner
 # .configure now a variable file name
 #
