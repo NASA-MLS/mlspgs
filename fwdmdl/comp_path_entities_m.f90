@@ -18,7 +18,7 @@ contains
 SUBROUTINE comp_path_entities(n_lvls,no_t,gl_count,ndx_path,z_glgrid,    &
            t_glgrid, h_glgrid, dhdz_glgrid, tan_hts, no_tan_hts, z_path, &
            h_path,t_path,phi_path,dhdz_path,eta_phi,no_phi_t,t_phi_basis,&
-           no_mmaf,elvar,Ier)
+           no_mmaf,phiWindow,elvar,Ier)
 
 !  ===============================================================
 !  Declaration of variables for sub-program: comp_path_entities
@@ -27,7 +27,7 @@ SUBROUTINE comp_path_entities(n_lvls,no_t,gl_count,ndx_path,z_glgrid,    &
 !  ---------------------------
 !  Calling sequence variables:
 !  ---------------------------
-Integer(i4), INTENT(IN) :: no_t, n_lvls, gl_count, no_mmaf, no_phi_t
+Integer(i4), INTENT(IN) :: no_t,n_lvls,gl_count,phiWindow,no_mmaf,no_phi_t
 !
 Integer(i4), INTENT(IN OUT) :: no_tan_hts
 
@@ -51,7 +51,7 @@ Type(path_vector_2d), INTENT(OUT) :: eta_phi(:,:)
 !  Local variables:
 !  ----------------
 
-Integer(i4) :: i, j, k, l, jp, jj, kk, lmin, lmax, klo, khi, ngt
+Integer(i4) :: i, j, k, l, jj, kk, lmin, lmax, klo, khi, ngt
 
 Real(r8) :: h, q, r, zeta, phi
 
@@ -74,14 +74,9 @@ Real(r8), DIMENSION(:,:), ALLOCATABLE :: phi_eta
     Return
   ENDIF
 
-  jp = no_phi_t/2
   DO l = 1, no_mmaf
-    lmin = max(1,l-jp)
-    lmax = lmin + 2 * jp
-    if(lmax > no_mmaf) then
-      lmax = no_mmaf
-      lmin = max(1,lmax - 2 * jp)
-    endif
+    lmin = max(1,l-phiWindow)
+    lmax = min(l+phiWindow/2,no_mmaf)
     DO k = 1, no_tan_hts
       h = tan_hts(k,l)
       CALL vert_to_path(elvar(l),n_lvls,Ng,ngt,gl_count,no_phi_t,no_t,h,&
@@ -122,6 +117,9 @@ END SUBROUTINE comp_path_entities
 
 end module COMP_PATH_ENTITIES_M
 ! $Log$
+! Revision 1.18  2001/04/07 23:51:17  zvi
+! New code - move the spsfunc & refraction along the path to get_path_spsfunc
+!
 ! Revision 1.17  2001/04/07 01:21:10  livesey
 ! Removed print statement
 !
