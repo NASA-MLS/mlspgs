@@ -1,0 +1,19 @@
+; This partial l2cf fills the sideband ratios
+
+BEGIN Fill
+
+    Fill, quantity = _bVector.band1Ratio, method=explicit,  $
+      explicitValues = [ 0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5] 
+
+    Fill, quantity = _bVector.band2Ratio, method=explicit,  $
+      explicitValues = [ 0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5] 
+
+END Fill

@@ -1,0 +1,9 @@
+; ----------------------------------------------- ReadApriori -----
+BEGIN ReadApriori
+
+    gridTemp: gridded, field='Temperature', origin=climatology, $
+      file='emls_clim_v0-1.dat'
+    gridH2O: gridded, field='H2O', origin=climatology, $
+      file='emls_clim_v0-1.dat'
+
+END ReadApriori

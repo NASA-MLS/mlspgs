@@ -1,0 +1,36 @@
+; This bit of an l2cf fills all the boring stuff in the `lesser' state vector
+
+BEGIN Fill
+
+    ;; Now the elevation offsets
+    Fill, quantity=_bVector.r1aElev, method=explicit, explicitValues= 0.0 degrees
+    Fill, quantity=_bVector.r1bElev, method=explicit, explicitValues= 0.0 degrees
+    Fill, quantity=_bVector.r2Elev,  method=explicit, explicitValues= 0.0 degrees
+    Fill, quantity=_bVector.r3Elev,  method=explicit, explicitValues= 0.0 degrees
+    Fill, quantity=_bVector.r4Elev,  method=explicit, explicitValues= 0.0 degrees
+    Fill, quantity=_bVector.r5hElev, method=explicit, explicitValues= 0.0 degrees
+    Fill, quantity=_bVector.r5vElev, method=explicit, explicitValues= 0.0 degrees
+
+    ;; Now the more minor stuff
+    Fill, quantity = _bVector.earthReflectivity, $
+      method = explicit, explicitValues = 0.05 ; CHECK THIS NUMBER !!!!!
+    Fill, quantity = _bVector.orbitIncline, $
+      method = explicit, explicitValues = 98.145 degrees
+    Fill, quantity = _bVector.spaceRadiance, $
+      method =explicit, explicitValues = 2.735 K
+
+    Fill, quantity=_bVector.scGeocAlt, method=l1b
+    Fill, quantity=_bVector.tngtGeocAltGHz, method=l1b
+    Fill, quantity=_bVector.tngtGeocAltTHz, method=l1b
+
+    Fill, quantity=_bVector.scECI, method = l1b
+    Fill, quantity=_bVector.tngtECIGHz, method = l1b
+    Fill, quantity=_bVector.tngtECITHz, method = l1b
+
+    Fill, quantity=_bVector.scVel, method = l1b
+    Fill, quantity = _bVector.losVelGHz, tngtECI=_bVector.tngtECIGHz, $
+      scECI=_bVector.scECI, scVel=_bVector.scVel, method=special
+    Fill, quantity = _bVector.losVelTHz, tngtECI=_bVector.tngtECITHz, $
+      scECI=_bVector.scECI, scVel=_bVector.scVel, method=special
+ 
+END Fill
