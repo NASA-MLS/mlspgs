@@ -74,6 +74,7 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
   --recl[ ]<number>: set the max record length size for l2cf to <number>
       (In case the default value, 20000, is too small for some l2cfs).
       This has effect only if the l2cf is not coming from standard input.
+  --[n]skipDir[ectWrites]: Do [not] skip all the directWrites; speedy snooping
   --[n]skipRetr[ieval]: Do [not] skip all the Retrievals; a pre-flight checkout
   --slave[ ]<master-tid>: This is a slave; <master-tid>
     is the id of the master.  This option is set by a master
@@ -119,6 +120,9 @@ by the equal-signs -- stuff outside that space, like these
 comments, will not be printed in response to mlsl2 -?)
 
  $Log$
+ Revision 1.34  2004/04/06 23:51:07  livesey
+ Added clearOnAllocate flag
+
  Revision 1.33  2004/02/05 23:26:22  pwagner
  Added --cat option
 
