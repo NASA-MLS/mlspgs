@@ -159,7 +159,7 @@ begin Fill
   ;; 500 ppbv too small in meso/thermosphere, 1 ppmv needed for extremes
   ;; in troposphere.  Was 500 ppbv everywhere.
   Fill, quantity=aprioriPrecision.co,   method=profile, $
-    profileValues= [ 100mb : 1ppmv, 0.001mb : 100ppmv ]
+    profileValues= [ 464mb : 500ppbv, 316mb : 1ppmv, 100mb : 1ppmv, 0.001mb : 100ppmv ]
   ;; This is a new H2O apriori precision, tighter in the troposphere.
   Fill, quantity=aprioriPrecision.h2o, method=profile, profileValues = $
     [ 1000mb: 10ppmv, 464mb : 1000ppmv, 316mb : 500ppmv, $
@@ -174,7 +174,8 @@ begin Fill
   ;; For N2O, 0.2 ppmv is too small for the troposphere, but we don't
   ;; have sensitivity there
   Fill, quantity=aprioriPrecision.n2o,  method=explicit, /spread, explicitValues= 0.2 ppmv
-  Fill, quantity=aprioriPrecision.o3,   method=explicit, /spread, explicitValues= 4 ppmv
+  Fill, quantity=aprioriPrecision.o3,   method=profile, $
+    profileValues = [ 464mb : 500ppbv, 316mb : 4 ppmv ]
   ;; 1 ppbv is too small for OH.  Better with a profile?
   Fill, quantity=aprioriPrecision.oh,   method=explicit, /spread, explicitValues= 10 ppbv
   ;; 100pptv is far too small for so2
