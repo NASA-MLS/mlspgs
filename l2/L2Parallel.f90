@@ -338,7 +338,10 @@ contains ! ================================ Procedures ======================
               end if
               call output ( 'Marking this machine as not usable', advance='yes')
             end if
-            machineOK(machine) = .false.
+            ! Mark all instances of this machine as not to be used.
+            where ( machineNames == machineNames(machine) )
+              machineOK = .false.
+            end where
           end if
         end if
       end if
@@ -547,8 +550,13 @@ contains ! ================================ Procedures ======================
 
       ! Listen out for any message telling us to quit now
       call PVMFNRecv ( -1, GiveUpTag, bufferID )
-      if ( bufferID > 0 ) exit masterLoop
-
+      if ( bufferID > 0 ) then
+        if ( index(switches,'mas') /= 0 ) then
+          call output ( 'Received an external message to give up, so finishing now', &
+            & advance='yes' )
+        end if
+        exit masterLoop
+      end if
       ! Listen out for any message that a slave task has died
       call PVMFNRecv ( -1, NotifyTAG, bufferID )
       if ( bufferID > 0 ) then
@@ -663,6 +671,9 @@ contains ! ================================ Procedures ======================
       ! Now deal with the case where we have no machines left to use.
       ! When all the chunks that have started have finished (surely this is a
       ! necessary condition anyway?) finish.
+      ! Actually it is not a necessary condition as a machine could be listed more
+      ! than one time (e.g. when it has multiple processors), and could
+      ! have killed one too many jobs, but still have another job running.
       if ( .not. usingSubmit ) then
         if ( .not. any(machineOK) .and. &
           &  all ( chunksStarted .eqv. chunksCompleted ) ) then
@@ -1002,6 +1013,10 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.41  2002/11/08 21:24:00  livesey
+! Minor tidy ups associated with the non-submit mode of doing things.
+! Now manages dead macines in a more transparent way.
+!
 ! Revision 2.40  2002/10/17 18:19:24  livesey
 ! Added the GiveUp signal capability.
 !
