@@ -55,7 +55,7 @@ CONTAINS
     qty%solarTime(1,:)=hGrid%solarTime
     qty%solarZenith(1,:)=hGrid%solarZenith
     qty%losAngle(1,:)=hGrid%losAngle
-    qty%subVectorIndex=hGrid%profileIndices
+    qty%subVectorIndex=0
     qty%noSubVectorsLowerOverlap=hGrid%noProfsLowerOverlap
     qty%noSubVectorsUpperOverlap=hGrid%noProfsUpperOverlap
 
@@ -156,9 +156,9 @@ CONTAINS
        qty%solarTime=>  MIFGeolocation(instrumentModule)%solarTime
        qty%losAngle=>   MIFGeolocation(instrumentModule)%losAngle
        qty%subVectorIndex=> MIFGeolocation(instrumentModule)%subVectorIndex
-       qty%noSubVectorsLowerOverlap=> &
+       qty%noSubVectorsLowerOverlap= &
             & MIFGeolocation(instrumentModule)%noSubVectorsLowerOverlap
-       qty%noSubVectorsUpperOverlap=> &
+       qty%noSubVectorsUpperOverlap= &
             & MIFGeolocation(instrumentModule)%noSubVectorsUpperOverlap
     ELSE
        ! We have no geolocation information, we have to read it ourselves
@@ -421,6 +421,11 @@ END MODULE ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 1.6  2000/01/18 21:30:57  livesey
+! Made sure that noSubVectors(Upper/Lower)Overlap are filled
+! appropriately.  This is done right for l2gp and minor frame
+! quantities.  More complex quantities may need more thought later.
+!
 ! Revision 1.5  2000/01/18 00:10:29  livesey
 ! Interim version transfered home.  Need to think more about subVectorIndex
 ! as it applies to l2aux quantities, and is not used in l2gp.
