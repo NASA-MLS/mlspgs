@@ -21,6 +21,7 @@ module ChunkDivide_m
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
   use Output_M, only: BLANKS, OUTPUT
   use String_table, only: GET_STRING, DISPLAY_STRING
+  use Time_M, only: Time_Now
   use TOGGLES, only: GEN, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
 
@@ -109,7 +110,7 @@ contains ! =================================== Public Procedures==============
     if ( toggle(gen) ) call trace_begin ("ScanDivide", root )
 
     timing = section_times
-    if ( timing ) call cpu_time ( t1 )
+    if ( timing ) call time_now ( t1 )
 
     ! First decode the l2cf instructions
     call ChunkDivideL2CF ( root, config )
@@ -516,7 +517,7 @@ contains ! =================================== Public Procedures==============
   ! ------------------------------------------- SayTime -----------------
   subroutine SayTime
     real :: T2
-    call cpu_time ( t2 )
+    call time_now ( t2 )
     if ( total_times ) then
       call output ( "Total time = " )
       call output ( dble(t2), advance = 'no' )
@@ -539,6 +540,9 @@ contains ! =================================== Public Procedures==============
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.3  2001/11/09 23:17:22  vsnyder
+! Use Time_Now instead of CPU_TIME
+!
 ! Revision 2.2  2001/11/09 06:34:39  livesey
 ! Minor bug fix, and added Log stuff
 !
