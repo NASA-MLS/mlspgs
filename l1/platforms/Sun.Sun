@@ -38,7 +38,8 @@ FC = f95
 DUSTY = $(FOPTS)
 
 # All the paths to supply .mod and INCLUDE files used in compiling %.f90
-# Precede each path by "-I "
+# Precede each path by "-I" . Don't put spaces between "-I" and the path
+# Same goes for "-M" for module paths.
 INC_PATHS = $(EXTRA_PATHS) -M$(PGSINC) -M$(srclib) -M$S -M$(libdir) \
  -I$(PGSINC) -I$(srclib) -I$S -I$(libdir)
 
@@ -62,6 +63,9 @@ INC_PATHS = $(EXTRA_PATHS) -M$(PGSINC) -M$(srclib) -M$S -M$(libdir) \
 l_specials = -lnsl
 
 # $Log$
+# Revision 1.2  2001/09/10 12:52:12  archie
+# Removed spaces in INC_PATHS
+#
 # Revision 1.1  2001/09/05 20:52:18  pwagner
 # First commit
 #
