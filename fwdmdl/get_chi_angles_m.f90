@@ -6,6 +6,7 @@ module GET_CHI_ANGLES_M
   use PATH_ENTITIES_M, only: PATH_INDEX, PATH_VECTOR
   use GET_ETA_M, only: GET_ETA
   use D_LINTRP_M, only: LINTRP
+  use Dump_0, only: DUMP !??????
   Implicit NONE
 !---------------------------- RCS Ident Info -------------------------------
   CHARACTER (LEN=256) :: Id = &
@@ -109,6 +110,9 @@ Real(r8) :: Eta(Nlvl,mxco)
 END SUBROUTINE get_chi_angles
 end module GET_CHI_ANGLES_M
 ! $Log$
+! Revision 1.6  2001/03/09 03:34:44  zvi
+! *** empty log message ***
+!
 ! Revision 1.5  2001/03/09 01:34:07  zvi
 ! *** empty log message ***
 !
