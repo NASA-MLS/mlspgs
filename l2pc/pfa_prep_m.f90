@@ -55,7 +55,7 @@ Real(r8), PARAMETER :: Tiny = epsilon(vel_z)
 Integer(i4) :: i, j, k, m, ch_i, sps_ind, sps_i, pb, no_sps, spectag, &
                j4, mch, band, spectags(20)
 
-Real(r8) :: cp, ct, theta, sp, xlhs, xrhs, df, q, area, frq, vf
+Real(r8) :: cp, ct, theta, sp, xlhs, xrhs, df, q, area, frq
 
 Character (LEN=80) :: pqm_fnd, pqm_fni
 
@@ -295,15 +295,14 @@ type (eos_mdb_rec), intent (OUT) :: mdb_rec(max_no_lines,*)
 ! Set up filter's response function
 
     q = 0.0
-    CALL Filter(q,vf,mch,xlhs,xrhs,area,ier,InDir,primag,ld)
+    df = Filter(q,mch,xlhs,xrhs,area,ier,InDir,primag,ld)
     IF(ier /= 0) GO TO 99
 
     df = (xrhs-xlhs)/(no_filt_pts-1)
     DO j = 1, no_filt_pts
       q = xlhs + (j - 1) * df
       f_grid_filter(j,ch_i) = frq + q
-      Call Filter(q,vf)
-      filter_func(j,ch_i) = vf
+      filter_func(j,ch_i) = Filter(q)
     END DO
 
 !  Normalize the filter's response array:

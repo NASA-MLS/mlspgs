@@ -1,8 +1,6 @@
 Program L2PC_FILE
   use UNITS, only: p_vs_h_unit
-! use EOS_MDB, only: EOS_MDB_HDR,EOS_MDB_REC,MAX_NO_LINES,CS_MNF => MAX_FREQ
-  use EOS_MDB, only: EOS_MDB_HDR, EOS_MDB_REC, MAX_NO_LINES, MAX_TEMP, &
-                     MAX_ZETA, CS_MNF => MAX_FREQ
+  use EOS_MDB, only: EOS_MDB_HDR,EOS_MDB_REC,MAX_NO_LINES,CS_MNF => MAX_FREQ
   use FWD_MDL_M, only: FWD_MDL
   use D_HUNT_M, only: HUNT
   use GL6P, only: NG
@@ -29,13 +27,6 @@ Program L2PC_FILE
   use GET_ANGLES_M, only: GET_ANGLES
   use REFRACTION_M, only: REFRACTION_CORRECTION
   use FWD_MDL_SET_UP_M, only: FWD_MDL_SET_UP
-!
-! *** DEBUG
-!
-  use ELLIPSE, only: A2, C2, C2OA2, CPT, SPT, CPS, SPS, CPTS, SPTS, HT, &
-       HT2, RR, PHI_TAN, NPHI_TAN, PHI_S, NPHI_S, PS, ROC, XOC, YOC, EARTHX
-!
-! *** END DEBUG
 !
   Implicit NONE
 !---------------------------- RCS Ident Info -------------------------------
@@ -170,31 +161,6 @@ Program L2PC_FILE
   intrinsic :: DATE_AND_TIME
   real(tk) :: CPU, CPU_END, CPU_START, ELAPSED, TOTCPU, TOTELP
   character(len=21) :: ELAPSE_END, ELAPSE_START
-!
-! *** DEBUG
-!
-  integer(i4) :: Kpath
-  character(len=80) :: Line
-  Namelist/In1/N_lvls,fft_pts,no_conv_hts,n_tan,band,ndx_sps, &
-     &        no_filt_pts,no_geom,no_geophys,no_int_frqs, no_pfa_ch, &
-     &        no_sps_tbl,sps_tbl,pfa_ch,nvr,z_path,h_path, t_path, &
-     &        phi_path,dHdz_path,mdb_pres,mdb_temp, mdb_freq,z_grid, &
-     &        t_grid,h_grid,dh_dt_grid,a_grid,n_grid, v_grid,t_index, &
-     &        conv_hts,conv_press,conv_temp,spsfunc, earth_ref,t_tan, &
-     &        Acc,Threshold,cs, f_grid_filter,f_grid,filter_func, &
-     &        c_freq,no_freqs_f,g_basis,f_basis, no_coeffs_f,mr_f, &
-     &        no_coeffs_g,mr_g,ptg_angle,ptg_hts,ref_corr, &
-     &        azim_183,azim_205,azim_ref,c_pitch,c_roll,c_yaw, &
-     &        elev_183,elev_205,geocsrad,s_pitch,s_roll,s_temp, &
-     &        s_yaw,si
-!
-  Namelist/In2/Aaap,InDir,runf,time_i,l2pc_lu,nor,mxbin_nor,lrun, &
-     &        no_spectro,no_atmos,jkey,n_obs,atmos_index,geom_index, &
-     &        geophys_index,do_conv,ch1,ch2,spect_atmos,no_phi_g, &
-     &        no_phi_f,phi_basis_f,no_phi_vec,Kpath,path_brkpt, &
-     &        no_phi_t,t_phi_basis
-!
-! *** END DEBUG
 !
 !  Begin code:
 !
@@ -349,7 +315,7 @@ Program L2PC_FILE
   dumpf = 'l2pc_dump01.dat'
   ldf = len_trim(dumpf)
 !
-! heck if the run file exists ...                              C
+! Check if the run file exists ...
 !
   idt = 0
   Acon(1:)=' '
@@ -611,236 +577,6 @@ Program L2PC_FILE
     do band = band_1, band_2
 !
       nvr(1:no_pfa_ch) = -2
-!
-!
-! *** DEBUG
-!
-      if(band.gt.-3)  goto 321     ! By pass creation of fwdmdl_dump file
-!
-      Buff(1:)=' '
-      Buff = '/home/zvi/fwdmdl_dump_f90.asc'
-!
-      close(47,iostat=i)
-      open(47,file=Buff,status='UNKNOWN',iostat=i)
-      close(47,status='DELETE',iostat=i)
-!
-      close(47,iostat=i)
-      open(47,file=Buff,status='NEW',iostat=i)
-      if(i.ne.0) goto 888
-!
-! Write structure: header1
-!
-      Line(1:)=' '
-      Line = 'Header1, Header2 & Header3'
-      write(47,'(A)') Line
-      write(47,*) header1.no_bands,header1.no_channels_per_band, &
-     &          header1.no_pointings,header1.no_avail_keys, &
-     &          header1.no_sv_components,header1.no_coeff_per_component, &
-     &          header1.no_k_records_per_bin,header1.no_mag_fields, &
-     &          header1.no_b_theta_lin_val
-!
-      k = header1.no_sv_components
-      m = header1.no_b_theta_lin_val
-      write(47,'(A)') header1.line1
-      write(47,'(A)') header1.line2
-      write(47,'(A)') header1.line3
-      write(47,'(A)') (header1.avail_keys(i), &
-     &                          i=1,header1.no_avail_keys)
-      write(47,'(A)') (header1.sv_components(i),i=1,k)
-      write(47,*)((header1.sv_rtrvl_by_band(i,j),j=1,6),i=1,k)
-      write(47,*)(header1.no_elmnts_per_sv_component(i),i=1,k)
-      write(47,*)(header1.sv_component_first_elmnt_index(i), &
-     &                      i=1,k)
-      write(47,*)(header1.pointings(i), &
-     &                            i=1,header1.no_pointings)
-      write(47,*)(header1.b_fields(i), &
-     &                            i=1,header1.no_mag_fields)
-      write(47,*) header1.b_phi_lin_val
-      if(m > 0) write(47,*) (header1.b_theta_lin_val(i),i=1,m)
-!
-! Write structure: header2
-!
-      m = header2.no_sv_elmnts
-      write(47,*) m
-      write(47,*) (header2.tri_basis_vert_grid(i),i=1,m)
-!
-! Write structure: header3
-!
-!     write(47,*) header3.matdim,
-!     write(47,*) header3.second_der_matrix_bands(i),i=1,max_table_2d)
-!     write(47,*) header3.second_der_matrix_namid(i),i=1,max_table_2d)
-!
-! Write the common block data:
-!
-      Line(1:)=' '
-      Line = 'Common ELLIPSE'
-      write(47,'(A)') Line
-      write(47,*) a2,c2,c2oa2,cpt,spt,cps,sps,cpts,spts,ht,ht2, &
-     &       Rr,Phi_tan,NPhi_tan,Phi_s,NPhi_s,ps,ZRoC,XoC,YoC,EarthX
-!
-      Line(1:)=' '
-      Line = 'Arrays & DataBase coordinates'
-      write(47,'(A)') Line
-      write(47,In1,iostat=k)
-      if(k.ne.0) goto 888
-!
-      Aaap = Char(39)//Trim(Aaap)//Char(39)
-      runf = Char(39)//Trim(runf)//Char(39)
-      InDir = Char(39)//Trim(InDir)//Char(39)
-!
-      Line(1:)=' '
-      Kpath = Npath
-      Line = 'Files/Directory names, Indecies arrays & misc. stuff..'
-      write(47,'(A)') Line
-      write(47,In2,iostat=k)
-      if(k.ne.0) goto 888
-!
-! Write structure: atmospheric(j),j=1,2
-!
-      k =  mxco
-      do m = 1, 2
-        Line(1:)=' '
-        Line = 'Atmosperic(m), m ='
-        write(47,'(A,i2)') Trim(Line),m
-        write(47,'(A)') atmospheric(m).name
-        write(47,*) atmospheric(m).spectag
-        write(47,*) atmospheric(m).no_lin_values
-        write(47,*)(atmospheric(m).fwd_calc(i),i=1,6)
-        write(47,*)(atmospheric(m).der_calc(i),i=1,6)
-        write(47,*)(atmospheric(m).lin_val(i),i=1,k)
-        write(47,*)(atmospheric(m).basis_peaks(i),i=1,k+2)
-      end do
-!
-! Write structure: geometric(1)
-!
-      Line(1:)=' '
-      Line = 'Geometric'
-      write(47,'(A)') Line
-      write(47,'(A)') geometric(1).name
-      write(47,*)(geometric(1).der_calc(i),i=1,6)
-      write(47,*) geometric(1).lin_val
-!
-! Write structure: geophysic(1)
-!
-      Line(1:)=' '
-      Line = 'Geophysic'
-      write(47,'(A)') Line
-      write(47,'(A)') geophysic(1).name
-      write(47,*) geophysic(1).no_lin_values
-      write(47,*)(geophysic(1).der_calc(i),i=1,6)
-      write(47,*)(geophysic(1).lin_val(i),i=1,k)
-      write(47,*)(geophysic(1).basis_peaks(i),i=1,k)
-!
-! Write structure: ptg_press
-!
-      Line(1:)=' '
-      Line = 'Ptg_press'
-      write(47,'(A)') Line
-      write(47,'(A)') ptg_press.name
-      write(47,*) ptg_press.no_lin_values
-      write(47,*)(ptg_press.der_calc(i),i=1,6)
-      write(47,*)(ptg_press.lin_val(i),i=1,max_no_pointings)
-!
-! Write structure: pfa_spectrum(5,1) & pfa_spectrum(5,2)
-!
-      do m = 1, 2
-        Line(1:)=' '
-        Line = 'Pfa_spectrum(5,m), m ='
-        write(47,'(A,i2)') Trim(Line),m
-        write(47,'(A)') pfa_spectrum(5,m).sps_name
-        write(47,*) pfa_spectrum(5,m).no_sps
-        write(47,*) pfa_spectrum(5,m).sps_spectag
-        write(47,*) pfa_spectrum(5,m).no_lines
-        write(47,*)(pfa_spectrum(5,m).Nrat(i),i=1,Nlvl)
-        write(47,*)(pfa_spectrum(5,m).varM(i),i=1,Nlvl)
-        write(47,*)(pfa_spectrum(5,m).sps_v0(i),i=1,maxlines)
-        write(47,*)(pfa_spectrum(5,m).sps_el(i),i=1,maxlines)
-        write(47,*)(pfa_spectrum(5,m).sps_str(i),i=1,maxlines)
-        write(47,*)(pfa_spectrum(5,m).sps_w(i),i=1,maxlines)
-        write(47,*)(pfa_spectrum(5,m).sps_ps(i),i=1,maxlines)
-        write(47,*)(pfa_spectrum(5,m).sps_n(i),i=1,maxlines)
-        write(47,*)(pfa_spectrum(5,m).sps_n1(i),i=1,maxlines)
-        write(47,*)(pfa_spectrum(5,m).sps_n2(i),i=1,maxlines)
-        write(47,*)(pfa_spectrum(5,m).sps_gamma(i),i=1,maxlines)
-        write(47,*)(pfa_spectrum(5,m).sps_delta(i),i=1,maxlines)
-        write(47,*)(pfa_spectrum(5,m).sps_part(1,i),i=1,maxlines)
-        write(47,*)(pfa_spectrum(5,m).sps_part(2,i),i=1,maxlines)
-        write(47,*)(pfa_spectrum(5,m).sps_part(3,i),i=1,maxlines)
-        write(47,*)((pfa_spectrum(5,m).Xx(i,j),j=1,Nlvl),i=1,maxrat)
-        write(47,*)((pfa_spectrum(5,m).Yy(i,j),j=1,Nlvl),i=1,maxrat)
-        write(47,*)((pfa_spectrum(5,m).Dy(i,j),j=1,Nlvl),i=1,maxrat)
-      end do
-!
-! Write spectroscopic structures
-!
-      Line(1:)=' '
-      Line = 'Spectroscopic'
-      write(47,'(A)') Line
-      do m = 1, no_spectro
-        write(47,'(A)') spectroscopic(m).type
-        write(47,'(A)') spectroscopic(m).name
-        write(47,*) spectroscopic(m).spectag
-        write(47,*) spectroscopic(m).no_phi_values
-        write(47,*) spectroscopic(m).no_zeta_values
-        write(47,*)(spectroscopic(m).der_calc(i),i=1,6)
-        write(47,*)(spectroscopic(m).phi_basis(i),i=1,mnp+2)
-        write(47,*)(spectroscopic(m).zeta_basis(i),i=1,k+2)
-      end do
-!
-! Write structure: mdb_hdr(1) & mdb_hdr(2)
-!
-      do m = 1, 2
-        Line(1:)=' '
-        Line = 'Mdb_hdr(m), m ='
-        write(47,'(A,i2)') Trim(Line),m
-        write(47,*) mdb_hdr(m).Spectag
-        write(47,*) mdb_hdr(m).no_lines
-        write(47,*)(mdb_hdr(m).no_f_grid(i),i=1,max_no_lines)
-        write(47,*)(mdb_hdr(m).el(i),i=1,max_no_lines)
-        write(47,*)(mdb_hdr(m).log_i(i),i=1,max_no_lines)
-        write(47,*)(mdb_hdr(m).n(i),i=1,max_no_lines)
-        write(47,*)(mdb_hdr(m).w(i),i=1,max_no_lines)
-        write(47,*)(mdb_hdr(m).delta(i),i=1,max_no_lines)
-        write(47,*)(mdb_hdr(m).n1(i),i=1,max_no_lines)
-        write(47,*)(mdb_hdr(m).n2(i),i=1,max_no_lines)
-        write(47,*)(mdb_hdr(m).gamma(i),i=1,max_no_lines)
-        write(47,*)(mdb_hdr(m).v0(i),i=1,max_no_lines)
-        write(47,*)(mdb_hdr(m).ps(i),i=1,max_no_lines)
-        write(47,*)(mdb_hdr(m).q_log(i),i=1,3)
-        write(47,*)(mdb_hdr(m).Zeta(i),i=1,max_zeta)
-        write(47,*)(mdb_hdr(m).Log_Temp(i),i=1,max_temp)
-        write(47,*)((mdb_hdr(m).x_grid(i,j),j=1,max_no_lines), &
-     &                          i=1,cs_mnf)
-      end do
-!
-! Write structure: mdb_rec(1,1) & mdb_rec(1,2)
-!
-      do m = 1, 2
-        Line(1:)=' '
-        Line = 'mdb_rec(1,m), m ='
-        write(47,'(A,i2)') Trim(Line),m
-        write(47,*) (((mdb_rec(1,m).Log_beta(i,j,k), &
-     &                        k=1,cs_mnf),j=1,max_temp),i=1,max_zeta)
-        write(47,*) (((mdb_rec(1,m).dLog_beta_dw(i,j,k), &
-     &                        k=1,cs_mnf),j=1,max_temp),i=1,max_zeta)
-        write(47,*) (((mdb_rec(1,m).dLog_beta_dn(i,j,k), &
-     &                        k=1,cs_mnf),j=1,max_temp),i=1,max_zeta)
-        write(47,*) (((mdb_rec(1,m).dLog_beta_dNu0(i,j,k), &
-     &                        k=1,cs_mnf),j=1,max_temp),i=1,max_zeta)
-        write(47,'(76A1)') (((mdb_rec(1,m).Log_beta_intrp(i,j,k), &
-     &                        k=1,cs_mnf),j=1,max_temp),i=1,max_zeta)
-      end do
-!
-      Line(1:)=' '
-      Line = 'DH_DT_PATH matrix'
-      write(47,'(A)') Line
-      write(47,*) dh_dt_path
-!
-      Ier = 5000
-      close(47,iostat=i)
-      if(i.gt.-5) goto 888
-!
- 321  i = 1
 !
       k = no_conv_hts
       call cpu_time ( cpu_start )

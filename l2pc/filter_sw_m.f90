@@ -155,7 +155,7 @@ END SUBROUTINE get_filter_param
 
 !---------------------------------------------------------------------
 
-SUBROUTINE filter(f,vf,ich,a1,an,sf,ier,fdir,prim,lf)
+REAL(r8) FUNCTION filter(f,ich,a1,an,sf,ier,fdir,prim,lf)
 
 !  This function computes the filter's response.
 
@@ -166,7 +166,7 @@ SUBROUTINE filter(f,vf,ich,a1,an,sf,ier,fdir,prim,lf)
 !                 *.ftn  files
 !          prim - Optional. String. Must be 'p' for Primary,or 'i' for Image
 
-!  Output: vf - Double precision Filter's response for that frequency
+!  Output: filter - Double precision Filter's response for that frequency
 !          a1 - Left limit
 !          an - Right limit
 !          sf - The area under the filter
@@ -174,7 +174,6 @@ SUBROUTINE filter(f,vf,ich,a1,an,sf,ier,fdir,prim,lf)
 !          Ier - Error status flag. Any non-zero value means trouble.
 
 REAL(r8), INTENT(IN) :: f
-REAL(r8), INTENT(OUT) :: vf
 REAL(r8), INTENT(OUT), Optional :: a1, an, sf
 
 Integer(i4), Intent(IN), optional :: ich
@@ -193,11 +192,11 @@ Integer(i4), save :: nda,nsa,jcos,numd
 
 Integer(i4), save :: fcheck = -1
 
-Real(r8) :: r,q,z,zs,zp
+Real(r8) :: r,q,z,zs,zp,vf
 
 ! Begin code:
 
-  vf = 0.0_r8
+  filter = 0.0_r8
   if(PRESENT(ich) .and. PRESENT(fdir) .and. PRESENT(prim)) then
     fcheck = ich
     Call load_filter(ich,ier,fdir,prim,lf,ael,aer,apc,asc, &
@@ -215,33 +214,35 @@ Real(r8) :: r,q,z,zs,zp
 
   IF(f < xl) THEN                 ! Left hand side exponential
     z = f - x1
-    Call Pol(z,ael,3,q)
+    q = Pol(z,ael,3)
     vf = EXP(q)
   ELSE IF(f > xr) THEN            ! Right hand side exponential
     z = f - xn
-    Call Pol(z,aer,3,q)
+    q = Pol(z,aer,3)
     vf = EXP(q)
   ELSE                             ! Middle,polynomial + Cosine series
     zs = 0.0D0
-    Call Pol(f,apc,nda,zp)
-    IF(jcos > 0) Call CosSum(f,xl,xr,asc,nsa,zs)
+    zp = Pol(f,apc,nda)
+    IF(jcos > 0) zs = CosSum(f,xl,xr,asc,nsa)
     vf = zp + zs
   END IF
+!
+  filter = vf
 
   RETURN
-END SUBROUTINE filter
+END FUNCTION filter
 
 !--------------------------------------------------------------------
 
-SUBROUTINE Pol(x,vec,n,s)
+REAL(r8) FUNCTION Pol(x,vec,n)
 
 !  Evaluates a polynomial,given the coefficients,degree and x
 
 
 INTEGER(i4), INTENT(IN) :: n
 REAL(r8), INTENT(IN)  :: x, vec(*)
-REAL(r8), intent(OUT) :: s
 
+REAL(r8) :: s
 INTEGER(i4) :: i
 
 ! Begin code:
@@ -251,23 +252,24 @@ INTEGER(i4) :: i
     s = x * s + vec(i)
   END DO
 
+  Pol = s
+
   RETURN
-END SUBROUTINE Pol
+END FUNCTION Pol
 
 !---------------------------------------------------------------------
 
-SUBROUTINE CosSum(f,xl,xr,scoeff,n,sum)
+REAL(r8) FUNCTION CosSum(f,xl,xr,scoeff,n)
 
 !  Evaluates a cosine series expansion for given f
 
 INTEGER(i4), INTENT(IN) :: n
 REAL(r8), INTENT(IN) :: f, xl, xr, scoeff(*)
-REAL(r8), INTENT(OUT) :: sum
 
 REAL(r8), Parameter :: Pi = 3.1415926535897932385D0     ! Pi
 
 INTEGER(i4) :: j
-REAL(r8) :: df, fj
+REAL(r8) :: df, fj, sum
 
 ! Begin code:
 
@@ -279,8 +281,10 @@ REAL(r8) :: df, fj
     sum = sum + scoeff(j) * COS(fj)
   END DO
 
+  CosSum = sum
+
   RETURN
-END SUBROUTINE CosSum
+END FUNCTION CosSum
 
 end module FILTER_SW_M
 ! $Log$

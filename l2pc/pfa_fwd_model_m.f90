@@ -332,18 +332,6 @@ contains
    &                              j4,No_filt_pts,Ier)
       if (Ier /= 0) Return
 !
-! *** DEBUG
-!
-!       nf = sps_tbl(1,band)
-!       ip = 2   ! Middle phi basis
-!       iz = 2   ! zeta_basis = -1.0
-!       write(6,921) ptg_i,'_rad_dw',char(92),j4
-!       write(6,928) (Rad_dw(jz,iz,ip,nf),jz=1,j4)
-!921  format(i2.2,A,a1,i4.4,'n')
-!928  Format(6(1x,1pe12.5))
-!
-! *** END DEBUG
-!
 ! Assemble the derivatives, per specie:
 !
       do jz = 1, n_sps
