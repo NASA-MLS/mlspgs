@@ -3,6 +3,7 @@
 
 module GLOBAL_SETTINGS
 
+  use EmpiricalGeometry, only: INITEMPIRICALGEOMETRY
   use EXPR_M, only: EXPR   
   use FGrid, only: AddFGridToDatabase, CreateFGridFromMLSCFInfo, FGrid_T
   use ForwardModelConfig, only: AddForwardModelConfigToDatabase, &
@@ -13,7 +14,7 @@ module GLOBAL_SETTINGS
     & P_INPUT_VERSION_STRING, P_OUTPUT_VERSION_STRING, P_VERSION_COMMENT, &
     & S_FGRID, S_FORWARDMODEL, S_ForwardModelGlobal, S_TIME, S_VGRID, F_FILE, &
     & P_CYCLE, P_STARTTIME, P_ENDTIME, &
-    & S_L1BRAD, S_L1BOA, P_INSTRUMENT
+    & S_L1BRAD, S_L1BOA, P_INSTRUMENT, S_EMPIRICALGEOMETRY
   use L1BData, only: l1bradSetup, l1boaSetup, ReadL1BData, L1BData_T, &
     & DeallocateL1BData, Dump, NAME_LEN, PRECISIONSUFFIX
   use L2GPData, only: L2GPDATA_T
@@ -203,7 +204,8 @@ contains
             & call announce_error(0, &
             & '*** l2cf overrides pcf for L1BOA file ***', &
             & just_a_warning = .true.)
-
+        case ( s_empiricalGeometry )
+          call InitEmpiricalGeometry ( son )
         case ( s_time )
           if ( timing ) then
             call sayTime
@@ -529,6 +531,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.48  2001/11/09 23:17:22  vsnyder
+! Use Time_Now instead of CPU_TIME
+!
 ! Revision 2.47  2001/10/31 18:36:42  livesey
 ! Added fGrids stuff
 !
