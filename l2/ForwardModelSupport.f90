@@ -621,14 +621,17 @@ contains ! =====     Public Procedures     =============================
         & call AnnounceError ( IncompleteLinearFwm, root )
       if ( any(got( (/f_do_conv,f_do_freq_avg,f_do_1d,f_incl_cld,f_frequency /) )) ) &
         & call AnnounceError ( IrrelevantFwmParameter, root )
+
+    end select
+
+    if ( any ( info%fwmType == (/ l_linear, l_polarLinear, l_hybrid /) ) ) then
       ! Make sure we get a default bin selector
       if ( .not. associated ( info%binSelectors ) ) then
         if ( .not. associated ( binSelectors ) ) call CreateDefaultBinSelectors
         call Allocate_test ( info%binSelectors, 1, 'info%binSelectors', ModuleName )
         info%binSelectors = DefaultSelector_Latitude
       end if
-
-    end select
+    end if
 
     if ( error /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'An error occured' )
@@ -866,6 +869,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.88  2003/10/29 00:44:33  livesey
+! Made sure that default bin selectors also applied to hybrid model.
+!
 ! Revision 2.87  2003/10/28 23:44:43  livesey
 ! Added initialization of forceFoldedOutput
 !
