@@ -401,7 +401,7 @@ contains ! =====     Public procedures     =============================
              l+l_negativePrecision, l+l_offsetRadiance, l+l_profile, l+l_quality, &
              l+l_reflectorTempModel, l+l_rotateField, l+l_vector, &
              l+l_scaleOverlaps, l+l_special, l+l_splitSideband, &
-             l+l_resetUnusedRadiances, &
+             l+l_status, l+l_resetUnusedRadiances, &
              l+l_RHIFromH2O, l+l_RHIPrecisionFromH2O, l+l_spreadChannel, &
              l+l_H2OFromRHI, l+l_fold, l+l_rectanglefromlos, l+l_vGrid, &
              l+l_wmoTropopause, n+n_dt_def, &
@@ -433,7 +433,7 @@ contains ! =====     Public procedures     =============================
     call make_tree ( (/ &
       begin, t+t_quantityType, l+l_adopted, l+l_baseline, l+l_boundarypressure, l+l_calSidebandFraction, &
              l+l_chisqbinned, l+l_chisqchan, l+l_chisqmmaf, l+l_chisqmmif, l+l_cloudIce, &
-             l+l_cloudInducedRadiance, l+l_cloudExtinction, l+l_cloudRadSensitivity, &
+             l+l_cloudInducedRadiance, l+l_cloudExtinction, l+l_cloudMinMax, l+l_cloudRadSensitivity, &
              l+l_cloudWater, l+l_columnabundance, &
              l+l_dnwt_ajn, l+l_dnwt_axmax, l+l_dnwt_cait, &
              l+l_dnwt_chiSqMinNorm, l+l_dnwt_chiSqNorm, &
@@ -728,6 +728,8 @@ contains ! =====     Public procedures     =============================
                     f+f_quantities, n+n_dot, &
              begin, f+f_manipulation, t+t_string, n+n_field_type, &
              begin, f+f_maxIterations, t+t_numeric, n+n_field_type, &
+             begin, f+f_maxValue, t+t_numeric, n+n_field_type, &
+             begin, f+f_minValue, t+t_numeric, n+n_field_type, &
              begin, f+f_measurements, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot /), &
              continue=.true. )
@@ -785,6 +787,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_sourceSGrid, s+s_vGrid, n+n_field_spec, &
              begin, f+f_sourceVGrid, s+s_vGrid, n+n_field_spec, &
              begin, f+f_spread, t+t_boolean, n+n_field_type, &
+             begin, f+f_status, t+t_numeric, n+n_field_type, &
              begin, f+f_tngtECI, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
              begin, f+f_systemTemperature, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
@@ -1181,6 +1184,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.360  2004/03/17 17:15:45  livesey
+! New quantity types, new fill methods
+!
 ! Revision 2.359  2004/03/10 22:19:43  livesey
 ! Added quality fill method and resolution argument to explicit vGrids
 !
