@@ -107,23 +107,37 @@ contains
     n_path = size(path_inds)
 
     beta_path = 0.0
-    ! compute path hyperbolic tangent
 
     if ( associated(dbeta_dw_path) ) dbeta_dw_path(1:n_path,:) = 0.0
     if ( associated(dbeta_dn_path) ) dbeta_dn_path(1:n_path,:) = 0.0
     if ( associated(dbeta_dv_path) ) dbeta_dv_path(1:n_path,:) = 0.0
+
+    ! Determine size of the LineWidths array.  gl_slabs(:,ib) all have the
+    ! same value, which is size(catalog(ib)%lines).
+    no_of_lines = 0
+    do i = 1, no_mol
+      do n = 1, beta_group(i)%n_elements
+        ib = beta_group(i)%cat_index(n)
+        no_of_lines = max(no_of_lines,size(catalog(ib)%lines))
+      end do
+    end do
+    allocate ( LineWidth(no_of_lines) )
 
     do i = 1, no_mol
       do n = 1, beta_group(i)%n_elements
         ratio = beta_group(i)%ratio(n)
         ib = beta_group(i)%cat_index(n)
         molecule = Catalog(ib)%molecule
+        no_of_lines = size(catalog(ib)%lines)
+        do k = 1, no_of_lines
+          lineWidth(k) = lines(catalog(ib)%lines(k))%w
+        end do
          
         do j = 1, n_path
           k = path_inds(j)
 
           call create_beta ( molecule, catalog(ib)%continuum, p_path(k),   &
-            & t_path(j), Frq, lines(catalog(ib)%lines)%w, gl_slabs(k,ib), &
+            & t_path(j), Frq, lineWidth(:no_of_lines), gl_slabs(k,ib), &
             & tanh_path(j), bb, polarized .and. catalog(ib)%polarized,    &
             & DBETA_DW=v0, DBETA_DN=vp, DBETA_DV=vm )
 
@@ -142,6 +156,7 @@ contains
     if ( associated(dbeta_dt_path) ) then
 
       dbeta_dt_path(1:n_path,:) = 0.0
+      ! compute path hyperbolic tangents
       tanh1_p = tanh(0.5_rp * h_over_k * frq / t_path_p(path_inds))
       tanh1_m = tanh(0.5_rp * h_over_k * frq / t_path_m(path_inds))
 
@@ -152,27 +167,24 @@ contains
           ratio = beta_group(i)%ratio(n)
           ib = beta_group(i)%cat_index(n)
           Molecule = Catalog(ib)%molecule
-          no_of_lines = gl_slabs_m(1,ib)%no_lines
-          allocate ( LineWidth(no_of_lines) )
+          no_of_lines = size(catalog(ib)%lines)
           do k = 1, no_of_lines
-            LineWidth(k) = Lines(Catalog(ib)%Lines(k))%W
-          end do
+            lineWidth(k) = lines(catalog(ib)%lines(k))%w
+          end do ! k
           do j = 1 , n_path
             k = path_inds(j)
-            IF ( .not. t_der_path_flags(k)) CYCLE 
-              tm = t_path_m(k)
+            if ( t_der_path_flags(k)) then
               call create_beta ( molecule, catalog(ib)%continuum, p_path(k), &
-              &  tm, frq, linewidth, gl_slabs_m(k,ib),                      &
+              &  t_path_m(k), frq, lineWidth(:no_of_lines), gl_slabs_m(k,ib),                      &
               &  tanh1_m(j), vm, polarized .and. catalog(ib)%polarized )
               betam(j) = betam(j) + ratio * vm
-              tp = t_path_p(k)
-              call create_beta ( molecule, Catalog(ib)%continuum, p_path(k), &
-              &  tp, Frq, LineWidth, gl_slabs_p(k,ib),                      &
+              call create_beta ( molecule, catalog(ib)%continuum, p_path(k), &
+              &  t_path_p(k), Frq, lineWidth(:no_of_lines), gl_slabs_p(k,ib),                      &
               &  tanh1_p(j), vp, polarized .and. catalog(ib)%polarized )
               betap(j) = betap(j) + ratio * vp
-          end do
-          deallocate ( LineWidth )
-        end do
+            end if
+          end do ! j
+        end do ! n
         do j = 1 , n_path
           k = path_inds(j)
           t  = t_path(j)
@@ -181,31 +193,32 @@ contains
           bm = betam(j)
           bp = betap(j)
           bb = beta_path(j,i)
-          if ( bp > 0.0 .and. bb > 0.0 .and. bm > 0.0 ) then
-            vp = Log(bp/bb)/Log(tp/t)        ! Estimate over [temp+10,temp]
-            v0 = Log(bp/bm)/Log(tp/tm)       ! Estimate over [temp+10,temp-10]
-            vm = Log(bb/bm)/Log(t/tm)        ! Estimate over [temp,temp-10]
-          else if ( bp > 0.0 .and. bb > 0.0 ) then
-            vp = Log(bp/bb)/Log(tp/t)        ! Estimate over [temp+10,temp]
-            vm = vp
-            v0 = vp
-          else if ( bm > 0.0 .and. bb > 0.0 ) then
-            vm = Log(bb/bm)/Log(t/tm)        ! Estimate over [temp,temp-10]
-            vp = vm
-            v0 = vm
-          else if ( bm > 0.0 .and. bp > 0.0 ) then
-            v0 = Log(bp/bm)/Log(tp/tm)       ! Estimate over [temp+10,temp-10]
-            vp = v0
-            vm = v0
+          n = 0
+          if ( bm > 0.0 ) n = 1
+          if ( bb > 0.0 ) n = n + 2
+          if ( bp > 0.0 ) n = n + 4
+          if ( n == 7 ) then ! bp > 0.0 .and. bb > 0.0 .and. bm > 0.0
+            dbeta_dt_path(j,i) =  0.25 * ( &   ! Weighted average of
+              &       Log(bp/bb)/Log(tp/t) + & ! Estimate over [temp+10,temp]
+              & 2.0 * Log(bp/bm)/Log(tp/tm)+ & ! Estimate over [temp+10,temp-10]
+              &       Log(bb/bm)/Log(t/tm) )   ! Estimate over [temp,temp-10]
           else
-            vp = 0.0
-            v0 = 0.0
-            vm = 0.0
+            select case ( n )
+            case ( 6 ) ! bp > 0.0 .and. bb > 0.0
+              dbeta_dt_path(j,i) = Log(bp/bb)/Log(tp/t)  ! Estimate over [temp+10,temp]
+            case ( 3 ) ! bm > 0.0 .and. bb > 0.0
+              dbeta_dt_path(j,i) = Log(bb/bm)/Log(t/tm)  ! Estimate over [temp,temp-10]
+            case ( 5 ) ! bm > 0.0 .and. bp > 0.0
+              dbeta_dt_path(j,i) = Log(bp/bm)/Log(tp/tm) ! Estimate over [temp+10,temp-10]
+            case default
+              dbeta_dt_path(j,i) = 0.0
+            end select
           end if
-          dbeta_dt_path(j,i) = (vp + 2.0 * v0 + vm) / 4.0  ! Weighted Average
-        end do
-      end do
+        end do ! j
+      end do ! i
     end if
+
+    deallocate ( lineWidth )
 
   end subroutine Get_Beta_Path_Scalar
 
@@ -354,6 +367,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.37  2003/06/18 17:23:40  bill
+! fixed NAG associated bug
+!
 ! Revision 2.36  2003/06/18 14:44:53  bill
 ! added subsetting feature for T-ders
 !
