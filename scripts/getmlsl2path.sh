@@ -119,7 +119,7 @@ while [ -n "$(echo $1)" ]; do
 	    lightspeed )
 		echo "$HOME/$VERSION";;
 	    desktop )
-		echo "/data/emls/l1b/$L1BVERSION/$YEAR/$DOY";;
+		echo "/data/emls/l1b/$L1BVERSION/$YEAR/$DOY/";;
 	esac
     fi
     if [ $1 == "--sidsoa" ]; then
@@ -139,7 +139,7 @@ while [ -n "$(echo $1)" ]; do
 	    lightspeed )
 		echo "$HOME/$VERSION";;
 	    desktop )
-		echo "/testing/emls/l1brad/$SIMULATION/$FWMVERSION/";;
+		echo "/testing/emls/l1boa/$SIMULATION--t/$YEAR";;
 	esac
     fi
     if [ $1 == "--l1bvsp" ]; then
@@ -175,29 +175,20 @@ while [ -n "$(echo $1)" ]; do
 		echo "/testing/workspace/$MYUSER/$VERSION";;
 	esac
     fi
-#     if [ $1 == "--sidsrad" ]; then
-# 	case $MACHINE in
-# 	    soundbarrier | scramjet)
-# 		echo "/data1/$MYUSER";;
-# 	    lightspeed )
-# 		echo "$HOME/$VERSION";;
-# 	    desktop )
-# 		echo "/testing/workspace/$MYUSER/$VERSION";;
-# 	esac
-#     fi
+    if [ $1 == "--sidsrad" ]; then
+	case $MACHINE in
+	    soundbarrier | scramjet)
+		echo "/data1/$MYUSER";;
+	    lightspeed )
+		echo "$HOME/$VERSION";;
+	    desktop )
+		echo "/testing/workspace/$MYUSER/$VERSION";;
+	esac
+    fi
     shift
 done
 
 # $Log$
-# Revision 1.44  2005/01/17 20:23:59  livesey
-# More fixes to sidsrad
-#
-# Revision 1.43  2005/01/17 20:20:57  livesey
-# Fixed confusion with sidsrad
-#
-# Revision 1.42  2004/11/11 00:32:20  livesey
-# Moved l2pcs on soundbarrier
-#
 # Revision 1.41  2004/10/09 22:54:17  livesey
 # L2PC files moved at SCF
 #

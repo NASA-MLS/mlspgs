@@ -168,15 +168,16 @@ contains ! ====     Public Procedures     ==============================
       call dump_tree_node ( where, 0 )
       call output ( ' is already defined.', advance='yes' )
     case ( array_not_allowed )
-      call display_string ( field_indices(fields(1)), &
-        & before='an array value is not allowed for the "' )
+      call output ( 'an array value is not allowed for the "')
+      call display_string ( field_indices(fields(1)) )
       call output ( '" field.', advance='yes' )
     case ( inconsistent_types )
       call output ( 'types are not consistent.', advance = 'yes' )
     case ( inconsistent_units )
       call output ( 'units are not consistent.', advance = 'yes' )
     case ( missing_field )
-      call display_string ( field_indices(fields(1)), before='the "' )
+      call output ( 'the "' )
+      call display_string ( field_indices(fields(1)) )
       call output ( '" field is required but not present.', advance='yes' )
     case ( no_code_for )
       call output ( 'there is no code to analyze ' )
@@ -185,29 +186,33 @@ contains ! ====     Public Procedures     ==============================
       call output ( 'a reference of the form X.Y is not allowed.', &
         advance='yes' )
     case ( no_duplicate_fields )
-      call display_string ( field_indices(fields(1)), before='the "' )
+      call output ( 'the "' )
+      call display_string ( field_indices(fields(1)) )
       call output ( '" field shall not be specified twice.', advance='yes' )
     case ( no_positional_fields )
       call output ( 'positional fields are not allowed.', advance='yes' )
     case ( no_such_field )
-      call display_string ( field_indices(sons(1)), before='a required field "' )
+      call output ( 'a required field "' )
+      call display_string ( field_indices(sons(1)) )
       call output ( '" is absent in the chain of specifications.', &
         advance='yes' )
     case ( no_such_reference )
-      call display_string ( sub_rosa(where), before='there is no reference to ' )
+      call output ( 'there is no reference to ' )
+      call display_string ( sub_rosa(where) )
       call output ( ' in the field at ' )
       call print_source ( source_ref(sons(1)), advance='yes' )
     case ( not_field_of )
       call display_string ( sub_rosa(where) )
-      call display_string ( sub_rosa(subtree(1,fields(1))), &
-        & before=' is not a field of ', advance='yes' )
+      call output ( ' is not a field of ' )
+      call display_string ( sub_rosa(subtree(1,fields(1))), advance='yes' )
     case ( not_func )
       call display_string ( fields(1) )
       call output ( ' is not a valid function.', advance='yes' )
     case ( not_name )
       call output ( 'is not a name.', advance = 'yes' )
     case ( not_numeric )
-      call display_string ( fields(1), before='Argument of ' )
+      call output ( 'Argument of ' )
+      call display_string ( fields(1) )
       call output ( ' is not numeric.', advance='yes' )
     case ( not_name_or_string )
       call output ( 'is not a name or a string.', advance = 'yes' )
@@ -222,7 +227,8 @@ contains ! ====     Public Procedures     ==============================
                     advance = 'yes' )
     case ( not_unitless )
       if ( present(fields) ) then
-        call display_string ( fields(1), before='Argument of ' )
+        call output ( 'Argument of ' )
+        call display_string ( fields(1) )
       else
         call output ( 'Operand' )
       end if
@@ -232,7 +238,8 @@ contains ! ====     Public Procedures     ==============================
       call output ( ' is not a units name.', advance = 'yes' )
     case ( out_of_place )
       call display_string ( sub_rosa(where) )
-      call display_string ( sub_rosa(sons(1)), before=' is not allowed in a ' )
+      call output ( ' is not allowed in a ' )
+      call display_string ( sub_rosa(sons(1)) )
       call output ( ' section.', advance='yes' )
     case ( section_order )
       call output ( 'Section '); call display_string ( sub_rosa(where) )
@@ -245,8 +252,8 @@ contains ! ====     Public Procedures     ==============================
       end do
       call newLine
     case ( wrong_num_args )
-      call display_string ( fields(1), before='Incorrect number of arguments for ', &
-        & advance='yes' )
+      call output ( 'Incorrect number of arguments for ' )
+      call display_string ( fields(1), advance='yes' )
     case ( wrong_type )
       call output ( 'the "' )
       if ( present(fields) ) then
@@ -268,8 +275,8 @@ contains ! ====     Public Procedures     ==============================
         call newLine
       end if
     case default
-      call output ( code, before='No message in TREE_CHECKER for error code ', &
-        & advance='yes' )
+      call output ( 'No message in TREE_CHECKER for error code ' )
+      call output ( code, advance='yes' )
       stop
     end select
     if ( present(sons) ) then
@@ -1004,9 +1011,6 @@ m:          do j = 3, nsons(field)
 end module TREE_CHECKER
 
 ! $Log$
-! Revision 1.24  2004/11/17 20:23:30  vsnyder
-! Add checking for scalar field
-!
 ! Revision 1.23  2004/06/23 02:12:24  vsnyder
 ! Add Check_Type
 !

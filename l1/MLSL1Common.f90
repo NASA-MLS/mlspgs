@@ -155,9 +155,9 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
 
 !! Bright Objects type
 
-  TYPE BrightObjects_T
-     LOGICAL :: MoonInFOV(0:MaxMIFs-1) = .FALSE.
-     LOGICAL :: VenusInFOV(0:MaxMIFs-1) = .FALSE.
+  TYPE BrightObjects_T   ! 1 = GHz, 2 = THz
+     LOGICAL :: MoonInFOV(0:MaxMIFs-1,2) = .FALSE.
+     LOGICAL :: VenusInFOV(0:MaxMIFs-1,2) = .FALSE.
   END TYPE BrightObjects_T
 
 !! Factor to convert 23 bit encoder angle data (shifted by 1 bit) into degrees:
@@ -250,6 +250,10 @@ END MODULE MLSL1Common
 !=============================================================================
 
 ! $Log$
+! Revision 2.12  2004/11/10 15:43:12  perun
+! Add BandChans, BandChanBad, OA_counterMAF, OA_counterIndex, BrightObject_T;
+! new value for DACS bandwidth
+!
 ! Revision 2.11  2004/08/12 13:51:50  perun
 ! Version 1.44 commit
 !

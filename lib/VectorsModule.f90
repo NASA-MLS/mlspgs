@@ -1552,7 +1552,7 @@ contains ! =====     Public Procedures     =============================
     type (VectorValue_T), pointer :: GetVectorQtyByTemplateIndex
 
     ! Local variables
-    integer :: myIndexInVector
+    integer :: i, myIndexInVector
     character(len=132) :: MSG           ! An error message
 
     ! Executable code
@@ -2279,9 +2279,6 @@ end module VectorsModule
 
 !
 ! $Log$
-! Revision 2.114  2004/10/19 02:21:20  livesey
-! Logical flaw in radiometer/signal vector querying
-!
 ! Revision 2.113  2004/10/07 23:12:19  vsnyder
 ! Polish up Dump_Vector_Value for use in ForwardModelVectorTools
 !
