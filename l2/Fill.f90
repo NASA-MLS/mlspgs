@@ -9,15 +9,15 @@ module Fill                     ! Create vectors and fill them.
   use Expr_M, only: EXPR
   use GriddedData, only: GriddedData_T
   ! We need many things from Init_Tables_Module.  First the fields:
-  use INIT_TABLES_MODULE, only: F_BOUNDARYPRESSURE, &
+  use INIT_TABLES_MODULE, only: F_APRIORIPRECISION, F_BOUNDARYPRESSURE, &
     & F_COLUMNS, F_DESTINATION, F_DIAGONAL, F_NOISE, &
     & F_GEOCALTITUDEQUANTITY, F_EARTHRADIUS, F_EXPLICITVALUES, &
     & F_EXTINCTION, F_FRACTION, F_H2OQUANTITY, F_LOSQTY,&
     & F_dontMask, F_IGNORENEGATIVE, F_IGNOREZERO, &
     & F_INTEGRATIONTIME, F_INTERPOLATE, F_INVERT, F_INTRINSIC, F_ISPRECISION, &
     & F_LENGTHSCALE, F_MATRIX, F_MAXITERATIONS, F_METHOD, F_MEASUREMENTS, &
-    & F_MODEL, F_MULTIPLIER, F_NOFINEGRID, F_PRECISION,  F_PTANQUANTITY, &
-    & F_QUANTITY, F_RADIANCEQUANTITY, F_RATIOQUANTITY, F_REFGPHQUANTITY, &
+    & F_MODEL, F_MULTIPLIER, F_NOFINEGRID, F_PRECISION,  F_PRECISIONFACTOR, &
+    & F_PTANQUANTITY, F_QUANTITY, F_RADIANCEQUANTITY, F_RATIOQUANTITY, F_REFGPHQUANTITY, &
     & F_RESETSEED, F_Rows, F_SCECI, F_SCVEL, F_SCVELECI, F_SCVELECR, F_SEED, &
     & F_SOURCE, F_SOURCEGRID, &
     & F_SOURCEL2AUX, F_SOURCEL2GP, F_SOURCEQUANTITY, F_SOURCEVGRID, &
@@ -29,7 +29,7 @@ module Fill                     ! Create vectors and fill them.
     & L_CHISQMMAF, L_CHISQMMIF, L_CHOLESKY, &
     & L_COLUMNABUNDANCE, L_ESTIMATEDNOISE, L_EXPLICIT, L_GPH, L_GRIDDED, L_HEIGHT, &
     & L_HYDROSTATIC, L_ISOTOPE, L_ISOTOPERATIO, L_KRONECKER, L_L1B, L_L2GP, L_L2AUX, &
-    & L_RECTANGLEFROMLOS, L_LOSVEL, L_NONE, L_PLAIN, &
+    & L_RECTANGLEFROMLOS, L_NEGATIVEPRECISION, L_LOSVEL, L_NONE, L_PLAIN, &
     & L_PRESSURE, L_PTAN, L_RADIANCE, &
     & L_REFGPH, L_SCECI, L_SCGEOCALT, L_SCVEL, L_SCVELECI, L_SCVELECR, &
     & L_SPD, L_SPECIAL, L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, &
@@ -216,7 +216,10 @@ contains ! =====     Public Procedures     =============================
     type (vectorValue_T), pointer :: measQty
     type (vectorValue_T), pointer :: modelQty
     type (vectorValue_T), pointer :: noiseQty
+    type (vectorValue_T), pointer :: aprioriPrecision
 
+    integer :: aprPrecVctrIndex         ! Index of apriori precision vector
+    integer :: aprPrecQtyIndex          ! Index of apriori precision quantity    
     integer :: bndPressQtyIndex
     integer :: bndPressVctrIndex
     integer :: ColVector                ! Vector defining columns of Matrix
@@ -271,6 +274,7 @@ contains ! =====     Public Procedures     =============================
     integer :: PTANVECTORINDEX          !
     integer :: PTANQTYINDEX             !
     integer :: QUANTITYINDEX            ! Within the vector
+    real(r8) :: PRECISIONFACTOR         ! For setting -ve error bars
     integer :: PRECISIONQUANTITYINDEX   ! For precision quantity
     integer :: PRECISIONVECTORINDEX     ! For precision quantity
     integer :: RADIANCEQUANTITYINDEX    ! For radiance quantity
@@ -360,6 +364,7 @@ contains ! =====     Public Procedures     =============================
       switch2intrinsic = .false.
       seed = 0
       noFineGrid = 1
+      precisionFactor = 0.5
 
       ! Node_id(key) is now n_spec_args.
 
@@ -462,6 +467,9 @@ contains ! =====     Public Procedures     =============================
           if (nsons(gson) > 1) gson = subtree(2,gson) ! Now value of said argument
           got(fieldIndex)=.TRUE.
           select case ( fieldIndex )
+          case ( f_aprioriPrecision )
+            aprPrecVctrIndex = decoration(decoration(subtree(1,gson)))
+            aprPrecQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_boundaryPressure )     ! For special fill of columnAbundance
             bndPressVctrIndex = decoration(decoration(subtree(1,gson)))
             bndPressQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -532,6 +540,12 @@ contains ! =====     Public Procedures     =============================
           case ( f_precision )      ! For masking l1b radiances
             precisionVectorIndex = decoration(decoration(subtree(1,gson)))
             precisionQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_precisionFactor )    ! For setting negative errors
+            call expr ( subtree(2,subtree(j,key)), unitAsArray, valueAsArray )
+            if ( unitAsArray(1) /= PHYQ_Dimensionless ) &
+              & call Announce_error ( key, No_Error_code, &
+              & 'Bad units for precisionFactor' )
+            precisionFactor = valueAsArray(1)
           case ( f_PtanQuantity ) ! For losGrid fill
             PtanVectorIndex = decoration(decoration(subtree(1,gson)))
             PtanQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -822,6 +836,16 @@ contains ! =====     Public Procedures     =============================
           case default
             call Announce_error ( key, noSpecialFill )
           end select
+
+        case ( l_negativePrecision ) ! ------------ Set output SD -ve wrt apriori
+          if ( .not. got ( f_aprioriPrecision ) ) &
+            & call Announce_Error ( key, No_Error_code, &
+            & 'Missing aprioriPrecision field for negativePrecision fill' )
+          aprioriPrecision => GetVectorQtyByTemplateIndex ( &
+            & vectors(aprPrecVctrIndex), aprPrecQtyIndex )
+          where ( quantity%values >= aprioriPrecision%values*precisionFactor )
+            quantity%values = - quantity%values
+          end where
 
         case ( l_vGrid ) ! ---------------------  Fill from vGrid  -----
           if (.not. ValidateVectorQuantity(quantity, &
@@ -2958,6 +2982,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.115  2002/04/04 16:32:42  livesey
+! Added negative error bar stuff
+!
 ! Revision 2.114  2002/03/27 17:37:57  livesey
 ! Minor changes to random number stuff.
 ! Now seed incremented with chunk number
