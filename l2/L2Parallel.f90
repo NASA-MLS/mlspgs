@@ -544,8 +544,10 @@ contains ! ================================ Procedures ======================
             if ( any ( directWriteStatus == requestedFile ) ) then
               ! If so, log a request for it by setting our status to 
               ! -requestedFile
-              call output ( 'Request pending', &
-                & advance='yes' )
+              if ( index ( switches, 'mas' ) /= 0 ) then
+                call output ( 'Request pending', &
+                  & advance='yes' )
+              end if
               directWriteStatus(chunk) = -requestedFile
             else
               ! Otherwise, go ahead
@@ -805,18 +807,24 @@ contains ! ================================ Procedures ======================
     ! Now clean up and quit
     call DestroyStoredResultsDatabase ( storedResults )
 
-    deallocate ( joinedQuantities, STAT=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Deallocate//'joinedQuantities' )
+    if ( associated ( joinedQuantities ) ) then
+      deallocate ( joinedQuantities, STAT=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_Deallocate//'joinedQuantities' )
+    end if
 
-    deallocate ( joinedVectorTemplates, STAT=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Deallocate//'joinedVectorTemplates' )
+    if ( associated ( joinedVectorTemplates ) ) then
+      deallocate ( joinedVectorTemplates, STAT=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_Deallocate//'joinedVectorTemplates' )
+    end if
 
-    deallocate ( joinedVectors, STAT=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Deallocate//'joinedVectors' )
-    finished = .true.
+    if ( associated ( joinedVectors ) ) then
+      deallocate ( joinedVectors, STAT=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_Deallocate//'joinedVectors' )
+      finished = .true.
+    end if
 
     if ( index(switches,'mas') /= 0 ) then
       call output ( 'All chunks joined', advance='yes' )
@@ -1053,6 +1061,10 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.34  2002/05/29 21:55:11  livesey
+! Bug fixes, diagnostic message emitted when not -Smas, and associated
+! checks around some deallocates.
+!
 ! Revision 2.33  2002/05/22 00:48:36  livesey
 ! Added direct write stuff
 !
