@@ -997,7 +997,8 @@ contains ! ============================ MODULE PROCEDURES ======================
       ! countermaf_ptr = 0
       if ( present(FirstMAF) ) then
         call LoadFromHDF5DS(L1FileHandle, 'CounterMAF', l1bData%counterMaf, &
-          & (/0/), (/l1bData%noMAFs/) )
+          & (/FirstMAF-1/), (/l1bData%noMAFs/) )
+          ! & (/0/), (/l1bData%noMAFs/) )
       else
         call LoadFromHDF5DS(L1FileHandle, 'CounterMAF', l1bData%counterMaf)
       endif
@@ -1021,7 +1022,8 @@ contains ! ============================ MODULE PROCEDURES ======================
       allocate( l1bData%DpField(l1bData%noMAFs, 1, 1),stat=status)
       if ( present(FirstMAF) ) then                                          
         call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField(:,1,1), &
-          & (/0/), (/l1bData%noMAFs/) )                                      
+          & (/FirstMAF-1/), (/l1bData%noMAFs/) )                                      
+          ! & (/0/), (/l1bData%noMAFs/) )                                      
       else                                                                   
         call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField(:,1,1))  
       endif                                                                  
@@ -1030,7 +1032,8 @@ contains ! ============================ MODULE PROCEDURES ======================
       allocate( l1bData%DpField(dims(1),l1bData%noMAFs, 1),stat=status)
       if ( present(FirstMAF) ) then                                          
         call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField(:,:,1), &
-          & (/0,0/), (/int(dims(1)),l1bData%noMAFs/) )                                      
+          & (/0,FirstMAF-1/), (/int(dims(1)),l1bData%noMAFs/) )                                      
+          ! & (/0,0/), (/int(dims(1)),l1bData%noMAFs/) )                                      
       else                                                                   
         call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField(:,:,1))  
       endif                                                                  
@@ -1039,7 +1042,8 @@ contains ! ============================ MODULE PROCEDURES ======================
       allocate( l1bData%DpField(dims(1),dims(2),l1bData%noMAFs),stat=status)
       if ( present(FirstMAF) ) then                                          
         call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField, &
-          & (/0,0,0/), (/int(dims(1)),int(dims(2)),l1bData%noMAFs/) )                                      
+          & (/0,0,FirstMAF-1/), (/int(dims(1)),int(dims(2)),l1bData%noMAFs/) )                                      
+          ! & (/0,0,0/), (/int(dims(1)),int(dims(2)),l1bData%noMAFs/) )                                      
       else                                                                   
         call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField)  
       endif                                                                  
@@ -1049,7 +1053,8 @@ contains ! ============================ MODULE PROCEDURES ======================
       allocate( l1bData%DpField(l1bData%noMAFs, 1, 1),stat=status)
       if ( present(FirstMAF) ) then                                          
         call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField(:,1,1), &
-          & (/0/), (/l1bData%noMAFs/) )                                      
+          & (/FirstMAF-1/), (/l1bData%noMAFs/) )                                      
+          ! & (/0/), (/l1bData%noMAFs/) )                                      
       else                                                                   
         call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField(:,1,1))  
       endif                                                                  
@@ -1058,7 +1063,8 @@ contains ! ============================ MODULE PROCEDURES ======================
       allocate( l1bData%DpField(dims(1),l1bData%noMAFs, 1),stat=status)
       if ( present(FirstMAF) ) then                                          
         call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField(:,:,1), &
-          & (/0,0/), (/int(dims(1)),l1bData%noMAFs/) )                                      
+          & (/0,FirstMAF-1/), (/int(dims(1)),l1bData%noMAFs/) )                                      
+          ! & (/0,0/), (/int(dims(1)),l1bData%noMAFs/) )                                      
       else                                                                   
         call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField(:,:,1))  
       endif                                                                  
@@ -1067,7 +1073,8 @@ contains ! ============================ MODULE PROCEDURES ======================
       allocate( l1bData%DpField(dims(1),dims(2),l1bData%noMAFs),stat=status)
       if ( present(FirstMAF) ) then                                          
         call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField, &
-          & (/0,0,0/), (/int(dims(1)),int(dims(2)),l1bData%noMAFs/) )                                      
+          & (/0,0,FirstMAF-1/), (/int(dims(1)),int(dims(2)),l1bData%noMAFs/) )                                      
+          ! & (/0,0,0/), (/int(dims(1)),int(dims(2)),l1bData%noMAFs/) )                                      
       else                                                                   
         call LoadFromHDF5DS(L1FileHandle, QuantityName, l1bData%DpField)  
       endif                                                                  
@@ -1308,6 +1315,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.37  2003/03/07 00:35:15  pwagner
+! Fixed bad bug in reading hdf5 files with FirstMAF > 1
+!
 ! Revision 2.36  2003/02/12 21:49:06  pwagner
 ! Some small fixes; seems to work with latest hdf5-formats
 !
