@@ -1287,7 +1287,7 @@ contains
                                                       ! first two are (chan, s)
 
           
-      ! get diagnonal elements of covariance of apriori
+      ! get the inverted diagnonal elements of covariance of apriori
         call getDiagonal ( covariance%m, covarianceDiag )
         
       ! Measurements are cloud radiances and will be converted to
@@ -1464,13 +1464,13 @@ contains
                x_star = 0._r8
                A = reshape(C(:,:,mif),(/nSgrid,nSgrid/))
                   do i=1,nSgrid
-                  A(i,i)=A(i,i)+1._r8/sx(i,mif)
+                  A(i,i)=A(i,i)+1._r8*sx(i,mif)       ! sx has already been inverted
                   end do
                Call MatrixInversion(A)
                ! 
                do i=1,nSgrid
                x(i) = sum( reshape(A(i,:),(/nSgrid/))* &
-                  & ((x0-x_star)/reshape(sx(:,mif),(/nSgrid/)) &
+                  & ((x0-x_star)*reshape(sx(:,mif),(/nSgrid/)) &
                   & + reshape(dx(:,mif),(/nSgrid/)) ))
                end do
                
@@ -1713,6 +1713,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.81  2001/10/03 22:05:12  dwu
+! some quick remedies for LowcloudRetrieval
+!
 ! Revision 2.80  2001/10/03 21:49:54  dwu
 ! some quick remedies for LowcloudRetrieval
 !
