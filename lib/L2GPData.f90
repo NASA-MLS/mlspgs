@@ -604,6 +604,8 @@ CONTAINS ! =====     Public Procedures     =============================
 
 !    status = swrdfld(swid, DATA_FIELD3,start(3:3),stride(3:3),edge(3:3),&
 !      l2gp%status)
+! These lines commented out as they make NAG core dump on the deallocate statement.
+! below.
     IF (status == -1) THEN
       msr = MLSMSG_L2GPRead // DATA_FIELD3
       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -1083,10 +1085,8 @@ CONTAINS ! =====     Public Procedures     =============================
 
     ! 1-D status & quality fields
 
-!     status = swwrfld(swid, DATA_FIELD3, start(3:3), stride(3:3), edge(3:3), &
-!          l2gp%status)  
-! These lines commented out, as they make NAG core dump, NJL.
-!
+    status = swwrfld(swid, DATA_FIELD3, start(3:3), stride(3:3), edge(3:3), &
+         l2gp%status)  
     IF ( status == -1 ) THEN
        msr = WR_ERR // DATA_FIELD3
        CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
@@ -1138,6 +1138,9 @@ END MODULE L2GPData
 
 !
 ! $Log$
+! Revision 2.20  2001/02/15 18:20:15  livesey
+! Had to comment out reading of status in ReadL2GPData to make it work, logged PR.
+!
 ! Revision 2.19  2001/02/14 23:39:40  livesey
 ! Made numProfs argument optional(intent out) for ReadL2GPData
 !
