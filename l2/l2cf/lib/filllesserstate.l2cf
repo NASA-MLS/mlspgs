@@ -38,19 +38,23 @@ begin Fill
 
   ;; This macro fills one system temperature for one band
   !define(fillSystemTemperature,{Fill, quantity=apriori.systemTemperature$1, $
-    method=explicit, explicitValues=!systemp$1!nl})
+    method=explicit, explicitValues=!systemp(!getBandNumber($1))!nl})
 
   ;; Call that macro for all bands
   !forall(fillSystemTemperature,!allBands)
+  !forall(fillSystemTemperature,!allBandLSBs)
+  !forall(fillSystemTemperature,!allBandUSBs)
 
   ;; ----------------------------------------- Noise bandwidths
 
   ;; This macro fills one noise bandwidth for one band
   !define(fillNoiseBandwidth,{Fill, quantity=apriori.noiseBandwidth$1, $
-    method=explicit, explicitValues=!nbw$1!nl})
+    method=explicit, explicitValues=!nbw(!getBandNumber($1))!nl})
 
   ;; Call that macro for all bands
   !forall(fillNoiseBandwidth,!allBands)
+  !forall(fillNoiseBandwidth,!allBandLSBs)
+  !forall(fillNoiseBandwidth,!allBandUSBs)
 
   ;; --------------------------------------------------- Minor terms
 
