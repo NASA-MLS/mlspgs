@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -24,6 +24,7 @@ module HGrid                    ! Horizontal grid information
 ! -----     Private declarations     ---------------------------------
 
   integer, private :: ERROR
+  logical, parameter :: DONTPAD = .false.
 
 ! Error codes for "announce_error"
   integer, private, parameter :: AngleUnitMessage = 1
@@ -256,7 +257,8 @@ contains ! =====     Public Procedures     =============================
       l1bItemName = AssembleL1BQtyName ( "MAFStartTimeTAI", hdfVersion, .false. )
       call ReadL1BData ( l1bInfo%l1boaID, l1bItemName, l1bField, noMAFs, &
         & l1bFlag, firstMAF=chunk%firstMAFIndex, &
-        & lastMAF=chunk%lastMAFIndex, hdfVersion=hdfVersion)
+        & lastMAF=chunk%lastMAFIndex, hdfVersion=hdfVersion, &
+        & dontPad=DONTPAD )
       if ( l1bFlag==-1) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_L1BRead//"MAFStartTimeTAI" )
       
@@ -505,7 +507,8 @@ contains ! =====     Public Procedures     =============================
       l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
       call ReadL1BData ( l1bInfo%l1boaid, l1bItemName, l1bField, noMAFs, &
         & l1bFlag, firstMAF=chunk%firstMafIndex, lastMAF=chunk%lastMafIndex, &
-        & hdfVersion=hdfVersion )
+        & hdfVersion=hdfVersion, &
+        & dontPad=DONTPAD )
       if ( l1bFlag==-1) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_L1BRead//l1bItemName )
     else
@@ -581,7 +584,8 @@ contains ! =====     Public Procedures     =============================
       l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
       call ReadL1BData ( l1bInfo%l1boaid, l1bItemName, l1bField,noMAFs, &
         & l1bFlag, firstMAF=chunk%firstMafIndex, lastMAF=chunk%lastMafIndex, &
-        & hdfVersion=hdfVersion )
+        & hdfVersion=hdfVersion, &
+        & dontPad=DONTPAD )
       if ( l1bFlag==-1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_L1BRead//l1bItemName )
       if ( deebug .and. index(l1bItemName, 'MAFStartTimeTAI') > 0 ) then
@@ -767,7 +771,8 @@ contains ! =====     Public Procedures     =============================
     call ReadL1BData ( l1bInfo%l1bOAID, l1bItemName, &
       & l1bField, noMAFs, flag, &
       & firstMAF=chunk%firstMAFIndex, &
-      & lastMAF=chunk%lastMAFIndex+1, hdfVersion=hdfVersion )
+      & lastMAF=chunk%lastMAFIndex+1, hdfVersion=hdfVersion, &
+        & dontPad=DONTPAD )
     noMAFs = chunk%lastMAFIndex - chunk%firstMAFIndex + 1
     minAngle = minval ( l1bField%dpField(1,:,1) )
     maxAngleFirstMAF = maxval ( l1bField%dpField(1,:,1) )
@@ -872,7 +877,8 @@ contains ! =====     Public Procedures     =============================
     call ReadL1BData ( l1bInfo%l1bOAID, l1bItemName, &
       & l1bField, noMAFs, flag, &
       & firstMAF=chunk%firstMAFIndex, &
-      & lastMAF=chunk%lastMAFIndex, hdfVersion=hdfVersion )
+      & lastMAF=chunk%lastMAFIndex, hdfVersion=hdfVersion, &
+      & dontPad=DONTPAD )
       if ( deebug ) then
         call dump(l1bField%DpField(1,1,:), l1bItemName)
       end if
@@ -891,7 +897,8 @@ contains ! =====     Public Procedures     =============================
     call ReadL1BData ( l1bInfo%l1bOAID, l1bItemName, &
       & l1bField, noMAFs, flag, &
       & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
-      & hdfVersion=hdfVersion )
+      & hdfVersion=hdfVersion, &
+      & dontPad=DONTPAD )
     if ( deebug ) then
       call dump(l1bField%DpField(1,1,:), trim(l1bItemName) // ' (before interpolating)')
     end if
@@ -925,7 +932,8 @@ contains ! =====     Public Procedures     =============================
     call ReadL1BData ( l1bInfo%l1bOAID, l1bItemName, &
       & l1bField, noMAFs, flag, &
       & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
-      & hdfVersion=hdfVersion )
+      & hdfVersion=hdfVersion, &
+      & dontPad=DONTPAD )
     if ( deebug ) then
       call dump(l1bField%DpField(1,1,:), trim(l1bItemName) // ' (before interpolating)')
     end if
@@ -944,7 +952,8 @@ contains ! =====     Public Procedures     =============================
     call ReadL1BData ( l1bInfo%l1bOAID, l1bItemName, &
       & l1bField, noMAFs, flag, &
       & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
-      & hdfVersion=hdfVersion )
+      & hdfVersion=hdfVersion, &
+      & dontPad=DONTPAD )
     if ( deebug ) then
       call dump(l1bField%DpField(1,1,:), trim(l1bItemName) // ' (before interpolating)')
     end if
@@ -1162,7 +1171,8 @@ contains ! =====     Public Procedures     =============================
     call ReadL1BData ( l1bInfo%l1bOAID, l1bItemName, &
       & l1bField, noMAFs, flag, &
       & firstMAF=chunk%firstMAFIndex, &
-      & lastMAF=chunk%lastMAFIndex, hdfVersion=hdfVersion )
+      & lastMAF=chunk%lastMAFIndex, hdfVersion=hdfVersion, &
+      & dontPad=DONTPAD )
     mifPhi => l1bField%dpField(1,:,:)
 
     phiMin = minval ( mifPhi )
@@ -1458,6 +1468,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.65  2004/08/16 17:10:26  pwagner
+! Passes dontPad option to readL1BData
+!
 ! Revision 2.64  2004/08/05 20:04:48  livesey
 ! Changed some spline interpolations to linear to allow for more
 ! stability.
