@@ -11,7 +11,7 @@ module ConstructVectorTemplates ! Construct a template for a vector
   use Output_M, only: Output
   use QuantityTemplates, only: QuantityTemplate_T
   use String_Table, only: Display_String
-  use TOGGLES, only: GEN, TOGGLE
+  use TOGGLES, only: GEN, TOGGLE, LEVELS
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, SOURCE_REF, SUB_ROSA, &
     & SUBTREE
@@ -51,7 +51,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Executable code
 
-    if ( toggle(gen) ) call &
+    if ( toggle(gen) .and. levels(gen) > 0 ) call &
       & trace_begin ( "ConstructVectorTemplateFromMLSCfInfo", root )
 
     nullify ( selected )
@@ -104,7 +104,7 @@ contains ! =====     Public Procedures     =============================
 
     call deallocate_test ( selected, "selected", ModuleName )
 
-    if ( toggle(gen) ) call &
+    if ( toggle(gen) .and. levels(gen) > 0 ) call &
       & trace_end ( "ConstructVectorTemplateFromMLSCfInfo" )
 
   end function CreateVecTemplateFromMLSCfInfo
@@ -115,6 +115,9 @@ END MODULE ConstructVectorTemplates
 
 !
 ! $Log$
+! Revision 2.6  2002/09/25 20:08:05  livesey
+! Made -g less verbose
+!
 ! Revision 2.5  2001/10/15 22:05:20  livesey
 ! Got rid of the signals stuff which was never implemented
 !
