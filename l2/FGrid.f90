@@ -26,6 +26,7 @@ module FGrid                    ! Frequency grid information
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
 
   ! This module contains code for defining and maintaining 'FGrids'. These
@@ -134,9 +135,16 @@ contains ! ===================================== Public procedures =====
       & MLSMSG_Deallocate//'database' )
   end subroutine DestroyFGridDatabase
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module FGrid
 
 ! $Log$
+! Revision 2.3  2002/10/08 17:36:20  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.2  2001/11/01 00:23:14  livesey
 ! Add check in DestroyFGridDatabase to not do anything if it's empty
 !
