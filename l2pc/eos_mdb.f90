@@ -13,10 +13,10 @@ module EOS_MDB
        "$Id$"
   CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile$"
 !---------------------------------------------------------------------------
-  real(i4), parameter :: TEMP_LO = 170.0  ! Lower limit of temperature
-  real(i4), parameter :: TTEMP_HI = 320.0 ! Upper limit of temperature
-  real(i4), parameter :: ZETA_LO = -3.0   ! Lower limit of Zeta
-  real(i4), parameter :: ZETA_HI = 4.0    ! Upper limit of Zeta
+  real(r4), parameter :: TEMP_LO = 170.0  ! Lower limit of temperature
+  real(r4), parameter :: TTEMP_HI = 320.0 ! Upper limit of temperature
+  real(r4), parameter :: ZETA_LO = -3.0   ! Lower limit of Zeta
+  real(r4), parameter :: ZETA_HI = 4.0    ! Upper limit of Zeta
   integer(i4), parameter :: NDEC=7        ! Number of Zeta decades
   integer(i4), parameter :: NZPD=12       ! Number of Zeta points (subdivision)
                                           ! per decade
@@ -44,6 +44,9 @@ module EOS_MDB
   end type EOS_MDB_REC
 end module EOS_MDB
 ! $Log$
+! Revision 1.1  2000/06/21 21:56:12  zvi
+! First version D.P.
+!
 ! Revision 1.1  2000/05/04 18:12:05  vsnyder
 ! Initial conversion to Fortran 90
 !

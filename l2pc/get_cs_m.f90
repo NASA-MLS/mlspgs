@@ -106,8 +106,8 @@ Real(r8), INTENT(OUT) :: mdb_freq(:), mdb_pres(:), mdb_temp(:), cs(:,:,:)
  type ORG_MDB_BETA_REC
    Integer(i4) :: no_freq, spectag
    Real(r8)    :: Freq_p(org_mnf), Freq_i(org_mnf)
-   Real(i4)    :: beta_p(max_no_zeta,mnp,org_mnf)
-   Real(i4)    :: beta_i(max_no_zeta,mnp,org_mnf)
+   real(r4)    :: beta_p(max_no_zeta,mnp,org_mnf)
+   real(r4)    :: beta_i(max_no_zeta,mnp,org_mnf)
  end type ORG_MDB_BETA_REC
 
 INTEGER(i4), PARAMETER :: ksps=20
@@ -245,5 +245,8 @@ type (ORG_MDB_BETA_REC) :: org_mdbeta
 END SUBROUTINE read_eos_mdb
 end module GET_CS_M
 ! $Log$
+! Revision 1.1  2000/06/21 21:56:13  zvi
+! First version D.P.
+!
 ! Revision 1.1 2000/06/09 00:08:13  Z.Shippony
 ! Initial conversion to Fortran 90

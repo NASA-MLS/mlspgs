@@ -549,7 +549,9 @@ REAL(r8) :: ch_offset
     j = SIGN(3*lmt - 1, sub_ch - 8)
   END IF
 
-  ch_offset = dfloat(j)
+!  dfloat not an intrinsic function
+!  ch_offset = dfloat(j)
+  ch_offset = real(j, kind(ch_offset))
   db_fi = db_fi_data(ch)
 
   IF(sgn_fp(band)) THEN
@@ -565,6 +567,9 @@ END SUBROUTINE radiometry
 
 end module FWD_MDL_SET_UP_M
 ! $Log$
+! Revision 1.2  2000/08/16 01:02:22  zvi
+! Correcting array bounds erros in calling seq. SUN & SGI f90 pass on these
+!
 ! Revision 1.1  2000/06/21 21:56:13  zvi
 ! First version D.P.
 !
