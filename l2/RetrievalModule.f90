@@ -10,6 +10,7 @@ module RetrievalModule
 !
 ! This module and ones it calls consume most of the cycles.
 
+use Dump_0, only: Dump
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use Expr_M, only: Expr
   use ForwardModelConfig, only: ForwardModelConfig_T
@@ -142,11 +143,11 @@ contains
     integer, parameter :: IfAThenB = BothOrNeither + 1
     integer, parameter :: IfUnitsAThenB = IfAThenB + 1
     integer, parameter :: Inconsistent = IfUnitsAThenB + 1  ! Inconsistent fields
-    integer, parameter :: NoFields = Inconsistent + 1  ! No fields are allowed
+    integer, parameter :: InconsistentUnits = Inconsistent + 1
+    integer, parameter :: NoFields = InconsistentUnits + 1  ! No fields are allowed
     integer, parameter :: NotSPD = noFields + 1   ! Not symmetric pos. definite
     integer, parameter :: OrderAndWeight = notSPD + 1  ! Need both or neither
-    integer, parameter :: Unitless = OrderAndWeight + 1
-    integer, parameter :: WrongUnits = Unitless + 1
+    integer, parameter :: WrongUnits = OrderAndWeight + 1
 
     error = 0
     nullify ( apriori, configIndices, covariance, fwdModelOut )
@@ -242,7 +243,7 @@ contains
             &    f_regWeight, f_toleranceA, f_toleranceF, f_toleranceR )
             call expr ( subtree(2,son), units, value, type )
             if ( units(1) /= phyq_dimensionless ) &
-              & call announceError ( unitless, field )
+              & call announceError ( wrongUnits, field, string='no' )
             select case ( field )
             case ( f_aprioriScale )
               aprioriScale = value(1)
@@ -415,19 +416,20 @@ contains
           call output ( ' is not a symmetric positive-definite matrix.', &
             & advance='yes' )
         end select
+      case ( inconsistentUnits )
+        call output ( 'the elements of the "' )
+        call display_string ( field_indices(fieldIndex) )
+        call output ( '" field have inconsistent units.', advance='yes' )
       case ( noFields )
         call output ( 'No fields are allowed for a ' )
         call display_string ( spec_indices(fieldIndex) )
         call output ( ' specification.', advance='yes' )
-      case ( unitless )
-        call output ( 'The value of the ' )
-        call display_string ( field_indices(fieldIndex) )
-        call output ( ' field shall be unitless', advance='yes' )
       case ( wrongUnits )
-        call output ( 'The units of the ' )
+        call output ( 'The value(s) of the "' )
         call display_string ( field_indices(fieldIndex) )
-        call output ( ' field shall be ' )
-        call output ( trim(string), advance='yes' )
+        call output ( '" field shall have ' )
+        call output ( trim(string) )
+        call output ( ' units.', advance='yes' )
       end select
     end subroutine AnnounceError
 
@@ -910,7 +912,14 @@ contains
           ! $\mathbf{f^T f - y^T y}$ where $\mathbf{y = U^{-T} \delta x}$
           ! ($\mathbf{U}$ is the Cholesky factor of $\mathbf{J^T J}$).
           ! The variable {\tt candidateDX} is a temp here = $\bf y$.
-          aj%fnmin = sqrt(aj%fnorm - (candidateDX .dot. candidateDX) )
+          aj%fnmin = aj%fnorm - (candidateDX .dot. candidateDX)
+          if ( aj%fnmin < 0.0 ) then
+            call output ( 'How can aj%fnmin be negative?  aj%fnmin = ' )
+            call output ( aj%fnmin, advance='yes' )
+            call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'Norm of residual is imaginary!' )
+          end if
+          aj%fnmin = sqrt(aj%fnmin)
           aj%fnorm = sqrt(aj%fnorm)
           aj%gradn = sqrt(gradient .dot. gradient) ! L2Norm(gradient)
             if ( index(switches,'sca') /= 0 ) then
@@ -1216,7 +1225,7 @@ contains
         end select
       end do ! j = 2, nsons(key)
 
-      ! Now deal with the channels and heights fields
+      ! Process the channels field.
       if ( qty%template%frequencyCoordinate /= l_none ) then
         call Allocate_test ( channels, qty%template%noChans, &
           & 'channels', ModuleName )
@@ -1224,45 +1233,50 @@ contains
           channels = .false.
           do j = 2, nsons(channelsNode)
             call expr ( subtree(j,channelsNode), units, value, type )
-            select case ( type )
-            case ( num_value )
-              if ( units(1) /= phyq_dimensionless ) &
-                & call announceError ( unitless, f_channels )
+            do i = 1, merge(1,2,type==num_value)
+              if ( units(i) /= phyq_dimensionless ) &
+                & call announceError ( wrongUnits, f_channels, string='no' )
               channels ( nint(value(1)) ) = .true.
-            case ( range )
-              if ( any ( units /= phyq_dimensionless ) ) &
-                & call announceError ( unitless, f_channels )
-              channels ( nint(value(1)):nint(value(2)) ) = .true.
-            case default
-              ! Shouldn't get here if the type checker worked.
-              call MLSMessage ( MLSMSG_Error, ModuleName, &
-                & 'Unrecognised type for channels' )
-            end select
+            end do
           end do
         else
           channels = .true.             ! Apply this to all channels
         end if
       end if
 
-      ! Now preprocess the height stuff.  The type checker verifies the
-      ! consistency of units of ranges.
+      ! Preprocess the height stuff.  
       heightUnit = phyq_dimensionless
       if ( got(f_height) ) then
         if ( ignore ) call announceError ( inconsistent, f_height, f_ignore )
         do j = 2, nsons(heightNode)
           call expr ( subtree(j,heightNode), units, value, type )
+          ! Make sure the range has non-dimensionless units -- the type
+          ! checker only verifies that they're consistent.  We need to
+          ! check each range separately, because the units determine the
+          ! scaling of the values.
+          if ( all(units == phyq_dimensionless) ) call announceError ( &
+            & wrongUnits, f_height, string = 'length or pressure.' )
+          ! Check consistency of units -- all the same, or dimensionless. The
+          ! type checker verifies the consistency of units of ranges, but not
+          ! of array elements.
           do i = 1, 2
-            if ( heightUnit == phyq_dimensionless ) heightUnit = units(i)
+            if ( heightUnit == phyq_dimensionless ) then
+              heightUnit = units(i)
+            else if ( units(i) /= phyq_dimensionless .and. &
+              &       units(i) /= heightUnit ) then
+              call announceError ( inconsistentUnits, f_height )
+            end if
           end do
         end do
-        if ( .not. any ( heightUnit == (/ phyq_pressure, phyq_length /) ) ) &
-          & call announceError ( wrongUnits, f_height, &
+        ! Check for correct units
+        if ( heightUnit == phyq_pressure ) then
+          if ( qty%template%minorFrame .and. .not. got(f_ptanQuantity) ) &
+            & call announceError ( ifUnitsAThenB, f_height, f_ptanQuantity, &
+            & 'pressure' )
+        else if ( heightUnit /= phyq_length ) then
+          call announceError ( wrongUnits, f_height, &
             & string = 'length or pressure.' )
-
-        ! Now one final check over all the things we've been asked to do.
-        if ( heightUnit == phyq_pressure .and. qty%template%minorFrame .and. &
-          & .not. got(f_ptanQuantity) ) call announceError ( ifUnitsAThenB, &
-            & f_height, f_ptanQuantity, 'pressure' )
+        end if
       end if
 
       ! Create the mask if it doesn't exist
@@ -1324,7 +1338,7 @@ contains
                     & (/ channel+qty%template%noChans*(height-1) /) )
                 end do
               end if
-            enddo
+            end do
           end do
         end if
      end do
@@ -1332,12 +1346,16 @@ contains
     ! Tidy up
     call Deallocate_test ( channels, 'channels', ModuleName )
 
+call dump ( qty%mask, format='(1x,z8.8)' )
     end subroutine SetupSubset
   end subroutine Retrieve
 
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.66  2001/09/26 02:15:40  vsnyder
+! More work on checking the Subset command
+!
 ! Revision 2.65  2001/09/25 23:04:30  livesey
 ! Fixed uninitialised heightUnit
 !
