@@ -10,7 +10,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
     & DFNT_CHAR8, DFNT_FLOAT32, DFNT_INT32, DFNT_FLOAT64
   use HDFEOS, only: SWATTACH, SWDETACH, SWINQDIMS
   use Intrinsic ! "units" type literals, beginning with L_
-  use MLSCommon, only: R4, R8
+  use MLSCommon, only: I4, R4, R8
   use MLSFiles, only: FILENOTFOUND, &
     & HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, WRONGHDFVERSION, &
     & MLS_HDF_VERSION, MLS_INQSWATH, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, &
@@ -218,7 +218,9 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
      ! We always write this data field
      ! However, because some l2gp files were created incorrectly,
      ! It takes a special forcing option to read it
-     character (len=1), pointer, dimension(:) :: status=>NULL()
+     ! character (len=1), pointer, dimension(:) :: status=>NULL()
+     ! Now we've changed our minds: status will be a 4-byte integer
+     integer(i4), pointer, dimension(:) :: status=>NULL()
      !                (status is a reserved word in F90)
      real (rgp), pointer, dimension(:) :: quality=>NULL()
      ! Both the above dimensioned (nTimes)
@@ -333,7 +335,8 @@ contains ! =====     Public Procedures     =============================
     l2gp%chunkNumber = l2gp%MissingValue
     l2gp%l2gpValue = l2gp%MissingValue
     l2gp%l2gpPrecision = l2gp%MissingValue
-    l2gp%status = ' '
+    l2gp%status = l2gp%MissingValue
+    ! l2gp%status = ' '
     l2gp%quality = l2gp%MissingValue
 
   end subroutine SetupNewL2GPRecord
@@ -926,7 +929,8 @@ contains ! =====     Public Procedures     =============================
     
     ! Read the data fields that are 1-dimensional
 
-    l2gp%status = ' ' ! So it has a value.
+    l2gp%status = l2gp%MissingValue ! So it has a value.
+    ! l2gp%status = ' ' ! So it has a value.
     if ( ReadingStatus) &
       & status = mls_swrdfld( swid, 'Status',start(3:3),stride(3:3),edge(3:3),&
       & l2gp%status, hdfVersion=hdfVersion, dontfail=.true. )
@@ -1657,8 +1661,10 @@ contains ! =====     Public Procedures     =============================
       & HE5T_NATIVE_SCHAR, 1, trim(field_name)//'Status')
     status = mls_swwrlattr(swid, 'Status', 'Units', &
       & HE5T_NATIVE_SCHAR, 1, 'NoUnits')
-    status = mls_swwrlattr(swid, 'Status', 'MissingValue', &
-      & HE5T_NATIVE_SCHAR, 1, ' ' )
+    status = he5_swwrlattr(swid, 'Status', 'MissingValue', &
+      & HE5T_NATIVE_INT, 1, (/ int(l2gp%MissingValue) /) )
+    ! status = mls_swwrlattr(swid, 'Status', 'MissingValue', &
+    !   & HE5T_NATIVE_SCHAR, 1, ' ' )
     status = mls_swwrlattr(swid, 'Status', &
       & 'UniqueFieldDefinition', &
       & HE5T_NATIVE_SCHAR, 1, 'MLS-Specific')
@@ -2285,7 +2291,7 @@ contains ! =====     Public Procedures     =============================
       call dump ( real(l2gp%l2gpPrecision, r8), 'L2GPPrecision:', &
         & FillValue=FillValue )
       
-      !    call dump ( l2gp%status, 'Status:' )
+      call dump ( l2gp%status, 'Status:' )
       
       call dump ( l2gp%quality, 'Quality:' )
       
@@ -2341,6 +2347,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.90  2004/02/10 18:45:43  pwagner
+! lastProfile among optional args to AppendL2GPData
+!
 ! Revision 2.89  2004/02/05 23:33:21  pwagner
 ! Some bug fixes in cpL2GPData and its relatives
 !
