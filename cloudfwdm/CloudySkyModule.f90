@@ -8,6 +8,7 @@ module CloudySkyModule
 ! -------------------------------------------------------------------------
 
       use MLSCommon, only: r8      
+      use PhaseFunction, only: pfsetup
       IMPLICIT NONE
       Private
       Public :: CLOUDY_SKY
