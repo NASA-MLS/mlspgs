@@ -293,17 +293,22 @@ for band = 0, noBands + database.noRadiometers - 1 do begin
     for p = 0, n_elements(usedParents)-1 do begin
       if p ne 0 then line = line +', '
       thisParent = usedParents(p)
-      children = where ( parentNames eq thisParent and $
-        reform ( array(sideband, band, *) ) )
-      AddWordToLine, line, unit, 2, '[ '+thisParent
-      ;; Format is [ parent, <children> ]
-      ;; Note, having the only child be the same as the parent is fine
-      ;; (e.g. [ H2O, H2O ])
-      for c = 0, n_elements(children) - 1 do begin
-        line = line + ', '
-        AddWordToLine, line, unit, 4, niceNames(children(c))
-      endfor
-      line = line + ' ]'
+      if thisParent ne 'EXTINCTION' then begin
+        children = where ( parentNames eq thisParent and $
+          reform ( array(sideband, band, *) ) )
+        AddWordToLine, line, unit, 2, '[ '+thisParent
+        ;; Format is [ parent, <children> ]
+        ;; Note, having the only child be the same as the parent is fine
+        ;; (e.g. [ H2O, H2O ])
+        for c = 0, n_elements(children) - 1 do begin
+          line = line + ', '
+          AddWordToLine, line, unit, 4, niceNames(children(c))
+        endfor
+        line = line + ' ]'
+      endif else begin
+        ;; For extinction just use extinction alone, no isotope
+        AddWordToLine, line, unit, 2, thisParent
+      endelse
     endfor
     line = line + ' ]})'
     printf, unit, line
