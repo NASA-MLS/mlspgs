@@ -10,12 +10,15 @@ module RetrievalModule
 
 ! This module and ones it calls consume most of the cycles.
 
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use DNWT_Module, only: NF_EVALF, NF_EVALJ, NF_SOLVE, NF_NEWX, &
     & NF_GMOVE, NF_BEST, NF_AITKEN, NF_DX, NF_DX_AITKEN, NF_TOLX, &
     & NF_TOLX_BEST, NF_TOLF, NF_TOO_SMALL, NF_FANDJ, NWT, NWT_T, NWTA, RK
   use Expr_M, only: Expr
   use ForwardModelConfig, only: ForwardModelConfig_T
   use ForwardModelInterface, only: ForwardModel
+  use ForwardModelIntermediate, only: ForwardModelIntermediate_T, &
+    & ForwardModelStatus_T
   use Init_Tables_Module, only: f_apriori, f_aprioriScale, f_channels, &
     & f_criteria, f_columnScale, f_covariance, f_diagonal, f_diagonalOut, &
     & f_forwardModel, f_fwdModelIn, f_fwdModelExtra, f_fwdModelOut, f_jacobian, &
@@ -36,7 +39,7 @@ module RetrievalModule
     & MultiplyMatrixVector, Negate, RowScale, ScaleMatrix, SolveCholesky, &
     & UpdateDiagonal
   use MLSCommon, only: R8
-  use MoreTree, only: Get_Boolean, Get_Spec_ID
+  use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
   use Output_M, only: Output
   use String_Table, only: Display_String
   use SidsModule, only: SIDS
@@ -70,8 +73,8 @@ module RetrievalModule
 contains
 
   ! ---------------------------------------------------  Retrieve  -----
-! subroutine Retrieve ( Root, VectorDatabase, MatrixDatabase, FwdModelConfig )
-  subroutine Retrieve ( Root, VectorDatabase, MatrixDatabase, configDatabase )
+  subroutine Retrieve ( Root, VectorDatabase, MatrixDatabase, ConfigDatabase )
+
   ! Process the "Retrieve" section of the L2 Configuration File.
   ! The "Retrieve" section can have ForwardModel, Matrix, Sids, Subset or
   ! Retrieve specifications.
@@ -81,7 +84,7 @@ contains
                                         ! Indexes an n_cf vertex
     type(vector_T), dimension(:), intent(inout), target :: VectorDatabase
     type(matrix_Database_T), dimension(:), pointer :: MatrixDatabase
-    type(forwardModelConfig_T), dimension(:), pointer :: configDatabase
+    type(forwardModelConfig_T), dimension(:), pointer :: ConfigDatabase
 
     ! Local variables:
     type(nwt_T) :: AJ                   ! "About the Jacobian", see NWT.
@@ -97,6 +100,7 @@ contains
     type(vector_T) :: ColumnScaleVector ! For column scaling by column norms
     integer :: ColumnScaling            ! one of l_apriori, l_covariance,
                                         ! l_none or l_norm
+    integer, pointer, dimension(:) :: ConfigIndices    ! In ConfigDatabase
     type(matrix_SPD_T), pointer :: Covariance     ! covariance**(-1) of Apriori
     type(vector_T) :: CovarianceDiag    ! Diagonal of apriori Covariance
     type(vector_T) :: CovarianceXApriori ! Covariance \times Apriori
@@ -114,7 +118,8 @@ contains
     type(vector_T) :: F                 ! for NWT -- Model - Measurements
     type(matrix_Cholesky_T) :: Factored ! Cholesky-factored normal equations
     integer :: Field                    ! Field index -- f_something
-    integer :: FwdModelConfigs          ! Tree node index
+    type (ForwardModelStatus_T) :: FmStat ! Status for forward model
+    type (ForwardModelIntermediate_T) :: Fmw ! Work space for forward model
     type(vector_T), pointer :: FwdModelExtra
     type(vector_T), pointer :: FwdModelIn
     type(vector_T), pointer :: FwdModelOut
@@ -178,7 +183,7 @@ contains
     integer, parameter :: NotSPD = notExtra + 1   ! Not symmetric pos. definite
 
     error = 0
-    nullify ( apriori, covariance, fwdModelIn, fwdModelOut )
+    nullify ( apriori, configIndices, covariance, fwdModelIn, fwdModelOut )
     nullify ( measurements, state, weight, x )
     timing = .false.
 
@@ -209,7 +214,7 @@ contains
         if ( toggle(gen) ) call trace_begin ( "Retrieve.subset", root )
         do j = 2, nsons(key) ! fields of the "subset" specification
           son = subtree(j, key)
-          field = decoration(subtree(1,son)) ! tree_checker prevents duplicates
+          field = get_field_id(son)   ! tree_checker prevents duplicates
           got(field) = .true.
           select case ( field )
           case ( f_channels )
@@ -253,14 +258,14 @@ contains
         toleranceR = defaultToleranceR
         do j = 2, nsons(key) ! fields of the "retrieve" specification
           son = subtree(j, key)
-          field = decoration(subtree(1,son)) ! tree_checker prevents duplicates
+          field = get_field_id(son)  ! tree_checker prevents duplicates
           got(field) = .true.
           select case ( field )
           case ( f_apriori )
             apriori => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_columnScale )
             columnScaling = decoration(subtree(2,son))
-          case ( f_covariance ) ! of a priori
+          case ( f_covariance )      ! of apriori
             call getFromMatrixDatabase ( &
               & matrixDatabase(decoration(decoration(subtree(2,son)))), &
               & covariance)
@@ -276,7 +281,11 @@ contains
           case ( f_diagonalOut )
             diagonalOut = get_Boolean(son)
           case ( f_forwardModel )
-            fwdModelConfigs = son
+            call allocate_test ( configIndices, nsons(son)-1, "ConfigIndices", &
+              & moduleName )
+            do k = 2, nsons(son)
+              configIndices(k-1) = decoration(decoration(subtree(k,son)))
+            end do
           case ( f_fwdModelIn )
             fwdModelIn => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_fwdModelExtra )
@@ -427,16 +436,29 @@ contains
             iter = 0
             do
               call nwta ( nwt_flag, aj )
-              select case ( nwt_flag ) ! >0 means "Done", <0 means "Continue"
+              select case ( nwt_flag )
               case ( nf_evalf )
                 if ( iter > maxIterations ) exit
                 ! Compute f(x)
-                ! VAN HAS TO WORRY ABOUT THIS LATER AS MULTIPLE FWDMODELCONFIGs !???
-                !call forwardModel ( fwdModelConfig, fwdModelExtra, fwdModelIn, &
-                !  fwdModelOut=fwdModelOut )
-                call subtractFromVector ( f, measurements )
-                aj%fnorm = sqrt(f .dot. f)
-                call destroyVectorValue ( f )  ! free the space
+                aj%fnorm = 0.0
+                !                             newHydros maf finished
+                fmStat = ForwardModelStatus_T(.true.,   0,  .false.)
+                ! Loop over mafs
+                do while (.not. fmStat%finished )
+                  ! What if one config set finished but others still had more
+                  ! to do? Ermmm, think of this next time.
+                  fmStat%maf = fmStat%maf + 1
+                  do k = 1, size(configIndices)
+                  call forwardModel ( configDatabase(configIndices(k)), &
+                    & fwdModelIn, fwdModelExtra, fwdModelOut, fmw, fmStat )
+                  end do ! k
+!??? How do we know what part of F and Measurements to use for this MAF ???
+!??? And isn't it actually FwdModelOut, not F, that ought to be used?
+                  call subtractFromVector ( f, measurements )
+                  aj%fnorm = aj%fnorm + ( f .dot. f )
+                  call destroyVectorValue ( f )  ! free the space
+                end do ! mafs
+                aj%fnorm = sqrt(aj%fnorm)
                 if ( aj%fnorm < toleranceF ) exit
               case ( nf_evalj )
                 ! Compute the Jacobian matrix J if you didn't do it when
@@ -463,10 +485,21 @@ contains
                 else
                   call clearMatrix ( normalEquations%m ) ! start with zero
                 end if
-                do rowBlock = 1, jacobian%row%nb
-                  ! VAN HAS TO WORRY ABOUT THIS LATER AS MULTIPLE FWDMODELCONFIGs !???
-                  ! call forwardModel ( fwdModelConfig, fwdModelExtra, &
-                  !   & fwdModelIn, jacobian, rowBlock, fwdModelOut )
+                !                             newHydros maf finished
+                fmStat = ForwardModelStatus_T(.true.,   0,  .false.)
+                ! Loop over mafs
+                do while (.not. fmStat%finished )
+                  ! What if one config set finished but others still had more
+                  ! to do? Ermmm, think of this next time.
+                  fmStat%maf = fmStat%maf + 1
+                  do k = 1, size(configIndices)
+                  call forwardModel ( configDatabase(configIndices(k)), &
+                    & fwdModelIn, fwdModelExtra, fwdModelOut, fmw, fmStat, &
+                    & jacobian )
+                  end do ! k
+!??? Need to get rowBlock from MAF somehow
+!??? How do we know what part of F and Measurements to use for this MAF ???
+!??? And isn't it actually FwdModelOut, not F, that ought to be used?
                   call subtractFromVector ( f, measurements, &
                     & jacobian%row%quant(rowBlock), &
                     & jacobian%row%inst(rowBlock) )
@@ -477,7 +510,7 @@ contains
                   update = .true.
                   call clearMatrix ( jacobian )  ! free the space
                   call destroyVectorValue ( f )  ! free the space
-                end do
+                end do ! mafs
                 ! Compute (negative of the) gradient = -(Jacobian)**T * F.
                 ! This is the RHS of the normal equations J**T * J *
                 ! "Candidate DX" = -J**T * F:
@@ -618,6 +651,7 @@ contains
           if ( .not. got(f_outputCovariance) ) &
             & call destroyMatrix ( outputCovariance%m )
         end if
+        call deallocate_test ( configIndices, "ConfigIndices", moduleName )
         ! Clear the masks of every vector
         do j = 1, size(vectorDatabase)
           call destroyVectorMask ( vectorDatabase(i) )
@@ -689,6 +723,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.15  2001/04/13 21:40:58  vsnyder
+! Periodic commit -- stuff about looping over configs
+!
 ! Revision 2.14  2001/04/12 01:50:21  vsnyder
 ! Work on getting a posteriori covariance
 !
