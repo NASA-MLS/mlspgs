@@ -137,7 +137,7 @@ contains
 !     and need ERFIN, IERV1
 !     ------------------------------------------------------------------
       integer, parameter :: MMAX = KEDIM + 1
-      INTEGER I, II, II1, II2, IR, IR1, IR2
+      INTEGER II, II1, II2, IR, IR1, IR2
       INTEGER J, JDIF, JJ
       INTEGER K1, K1N, KN2
       INTEGER L
@@ -957,6 +957,9 @@ ii_l:      do
 end module DFFT_M
 
 ! $Log$
+! Revision 2.6  2004/01/16 01:50:01  vsnyder
+! Remove superfluous declaration for I from DRFT1
+!
 ! Revision 2.5  2003/07/15 22:41:19  vsnyder
 ! F90-ify stuff, add DTCST
 !
