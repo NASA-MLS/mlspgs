@@ -29,10 +29,17 @@ module DUMP_0
 contains
 
   ! ---------------------------------------------  DUMP_1D_DOUBLE  -----
-  subroutine DUMP_1D_DOUBLE ( ARRAY, NAME )
+  subroutine DUMP_1D_DOUBLE ( ARRAY, NAME, CLEAN )
     double precision, intent(in) :: ARRAY(:)
     character(len=*), intent(in), optional :: NAME
+    logical, intent(in), optional :: CLEAN
+
+    logical :: myClean
     integer :: J, K
+
+    myClean = .false.
+    if ( present(clean) ) myClean = clean
+
     if ( size(array) == 0 ) then
       if ( present(name) ) then
         call output ( name )
@@ -48,7 +55,10 @@ contains
     else
       if ( present(name) ) call output ( name, advance='yes' )
       do j = 1, size(array), 5
-        call output ( j, max(4,ilog10(size(array))+1) ); call output ( afterSub )
+        if (.not. myClean) then
+          call output ( j, max(4,ilog10(size(array))+1) )
+          call output ( afterSub )
+        endif
         do k = j, min(j+4, size(array))
           call output ( array(k), '(1x,1pg13.6)' )
         end do
@@ -58,10 +68,17 @@ contains
   end subroutine DUMP_1D_DOUBLE
 
   ! --------------------------------------------  DUMP_1D_INTEGER  -----
-  subroutine DUMP_1D_INTEGER ( ARRAY, NAME )
+  subroutine DUMP_1D_INTEGER ( ARRAY, NAME, CLEAN )
     integer, intent(in) :: ARRAY(:)
     character(len=*), intent(in), optional :: NAME
+    logical, intent(in), optional :: CLEAN
+
+    logical :: myClean
     integer :: J, K
+
+    myClean = .false.
+    if ( present(clean) ) myClean = clean
+
     if ( size(array) == 0 ) then
       if ( present(name) ) then
         call output ( name )
@@ -77,7 +94,10 @@ contains
     else
       if ( present(name) ) call output ( name, advance='yes' )
       do j = 1, size(array), 10
-        call output ( j, max(4,ilog10(size(array))+1) ); call output ( afterSub )
+        if (.not. myClean) then
+          call output ( j, max(4,ilog10(size(array))+1) )
+          call output ( afterSub )
+        endif
         do k = j, min(j+9, size(array))
           call output ( array(k), 6 )
         end do
@@ -87,10 +107,17 @@ contains
   end subroutine DUMP_1D_INTEGER
 
   ! --------------------------------------------  DUMP_1D_LOGICAL ----
-  subroutine DUMP_1D_LOGICAL ( ARRAY, NAME )
+  subroutine DUMP_1D_LOGICAL ( ARRAY, NAME, CLEAN )
     logical, intent(in) :: ARRAY(:)
     character(len=*), intent(in), optional :: NAME
+    logical, intent(in), optional :: CLEAN
+
+    logical :: myClean
     integer :: J, K
+
+    myClean = .false.
+    if ( present(clean) ) myClean = clean
+
     if ( size(array) == 0 ) then
       if ( present(name) ) then
         call output ( name )
@@ -106,7 +133,10 @@ contains
     else
       if ( present(name) ) call output ( name, advance='yes' )
       do j = 1, size(array), 34
-        call output ( j, max(4,ilog10(size(array))+1) ); call output ( afterSub )
+        if (.not. myClean) then
+          call output ( j, max(4,ilog10(size(array))+1) )
+          call output ( afterSub )
+        endif
         do k = j, min(j+33, size(array))
           call output ( array(k) )
         end do
@@ -116,10 +146,17 @@ contains
   end subroutine DUMP_1D_LOGICAL
 
   ! ---------------------------------------------  DUMP_2D_DOUBLE  -----
-  subroutine DUMP_2D_DOUBLE ( ARRAY, NAME )
+  subroutine DUMP_2D_DOUBLE ( ARRAY, NAME, CLEAN )
     double precision, intent(in) :: ARRAY(:,:)
     character(len=*), intent(in), optional :: NAME
+    logical, intent(in), optional :: CLEAN
+
+    logical :: myClean
     integer :: I, J, K
+
+    myClean = .false.
+    if ( present(clean) ) myClean = clean
+
     if ( size(array) == 0 ) then
       if ( present(name) ) then
         call output ( name )
@@ -138,9 +175,11 @@ contains
       if ( present(name) ) call output ( name, advance='yes' )
       do i = 1, size(array,1)
         do j = 1, size(array,2), 5
-          call output ( i, max(4,ilog10(size(array,1))+1) )
-          call output ( j, max(4,ilog10(size(array,2))+1) )
-          call output ( afterSub )
+          if (.not. myClean) then
+            call output ( i, max(4,ilog10(size(array,1))+1) )
+            call output ( j, max(4,ilog10(size(array,2))+1) )
+            call output ( afterSub )
+          endif
           do k = j, min(j+4, size(array,2))
             call output ( array(i,k), '(1x,1pg13.6)' )
           end do
@@ -151,10 +190,17 @@ contains
   end subroutine DUMP_2D_DOUBLE
 
   ! --------------------------------------------  DUMP_2D_INTEGER  -----
-  subroutine DUMP_2D_INTEGER ( ARRAY, NAME )
+  subroutine DUMP_2D_INTEGER ( ARRAY, NAME, CLEAN )
     integer, intent(in) :: ARRAY(:,:)
     character(len=*), intent(in), optional :: NAME
+    logical, intent(in), optional :: CLEAN
+
+    logical :: myClean
     integer :: I, J, K
+
+    myClean = .false.
+    if ( present(clean) ) myClean = clean
+
     if ( size(array) == 0 ) then
       if ( present(name) ) then
         call output ( name )
@@ -173,8 +219,11 @@ contains
       if ( present(name) ) call output ( name, advance='yes' )
       do i = 1, size(array,1)
         do j = 1, size(array,2), 10
-          call output ( i, max(4,ilog10(size(array,1))+1) )
-          call output ( j, max(4,ilog10(size(array,2))+1) ); call output ( afterSub )
+          if (.not. myClean) then
+            call output ( i, max(4,ilog10(size(array,1))+1) )
+            call output ( j, max(4,ilog10(size(array,2))+1) )
+            call output ( afterSub )
+          end if
           do k = j, min(j+9, size(array,2))
             call output ( array(i,k), 6 )
           end do
@@ -185,10 +234,17 @@ contains
   end subroutine DUMP_2D_INTEGER
 
   ! ---------------------------------------------  DUMP_3D_DOUBLE  -----
-  subroutine DUMP_3D_DOUBLE ( ARRAY, NAME )
+  subroutine DUMP_3D_DOUBLE ( ARRAY, NAME, CLEAN )
     double precision, intent(in) :: ARRAY(:,:,:)
     character(len=*), intent(in), optional :: NAME
+    logical, intent(in), optional :: CLEAN
+
+    logical :: myClean
     integer :: I, J, K, L
+
+    myClean = .false.
+    if ( present(clean) ) myClean = clean
+
     if ( size(array) == 0 ) then
       if ( present(name) ) then
         call output ( name )
@@ -210,10 +266,12 @@ contains
       do i = 1, size(array,1)
         do j = 1, size(array,2)
           do k = 1, size(array,3), 5
-            call output ( i, max(4,ilog10(size(array,1))+1) )
-            call output ( j, max(4,ilog10(size(array,2))+1) )
-            call output ( k, max(4,ilog10(size(array,3))+1) )
-            call output ( afterSub )
+            if (.not. myClean) then
+              call output ( i, max(4,ilog10(size(array,1))+1) )
+              call output ( j, max(4,ilog10(size(array,2))+1) )
+              call output ( k, max(4,ilog10(size(array,3))+1) )
+              call output ( afterSub )
+            endif
             do l = k, min(k+4, size(array,3))
               call output ( array(i,j,l), '(1x,1pg13.6)' )
             end do
@@ -232,6 +290,10 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.6  2001/05/08 17:21:02  livesey
+! Added a `clean' option to the array dumps.  This omits the indices at
+! the start, making it easier for other programs to read output.
+!
 ! Revision 2.5  2001/05/03 02:12:34  vsnyder
 ! Insert copyright notice, clean up CVS stuff, cosmetics
 !
