@@ -28,11 +28,11 @@ module VGridsDatabase
 
   ! Public procedures:
   interface Dump
-    module procedure Dump_VGrids
+    module procedure Dump_VGrids, Dump_a_VGrid
   end interface Dump
 
   public :: AddVGridToDatabase, DestroyVGridContents, DestroyVGridDatabase
-  public :: Dump, Dump_VGrids, GetUnitForVerticalCoordinate
+  public :: Dump, Dump_a_VGrid, Dump_VGrids, GetUnitForVerticalCoordinate
   public :: NullifyVGrid
   public :: PVMPackVGrid, PVMUnpackVGrid
 
@@ -104,30 +104,42 @@ contains
     end if
   end subroutine DestroyVGridDatabase
 
-  ! ------------------------------------------------  Dump_VGrids  -----
-  subroutine Dump_VGrids ( VGrids, Details )
+  ! -----------------------------------------------  Dump_a_VGrid  -----
+  subroutine Dump_a_VGrid ( VGrid, Details )
     use Dump_0, only: DUMP
     use Intrinsic, only: Lit_Indices
     use OUTPUT_M, only: OUTPUT
     use STRING_TABLE, only: DISPLAY_STRING
+    type(vGrid_T), intent(in) :: VGrid
+    integer, intent(in), optional :: Details ! <= 0 => Don't dump arrays
+    !                                        ! >0   => Do dump arrays
+    !                                        ! Default 1
+    integer :: MyDetails
+    myDetails = 1
+    if ( present(details) ) myDetails = details
+    call output ( ' Name = ' )
+    call display_string ( vgrid%name )
+    call output ( ' noSurfs = ' )
+    call output ( vgrid%noSurfs )
+    call output ( ' verticalCoordinate = ' )
+    call display_string ( lit_indices(vgrid%verticalCoordinate) )
+    if ( details > 0 ) call dump ( vgrid%surfs(:,1), ' Surfs = ' )
+  end subroutine Dump_a_VGrid
+
+
+  ! ------------------------------------------------  Dump_VGrids  -----
+  subroutine Dump_VGrids ( VGrids, Details )
+    use OUTPUT_M, only: OUTPUT
     type(vGrid_T), intent(in) :: VGrids(:)             ! The database
     integer, intent(in), optional :: Details ! <= 0 => Don't dump arrays
     !                                        ! >0   => Do dump arrays
     !                                        ! Default 1
-    integer :: I, MyDetails
-    myDetails = 1
-    if ( present(details) ) myDetails = details
+    integer :: I
     call output ( 'VGRIDS: SIZE = ' )
     call output ( size(vgrids), advance='yes' )
     do i = 1, size(vgrids)
       call output ( i, 4 )
-      call output ( ': Name = ' )
-      call display_string ( vgrids(i)%name )
-      call output ( ' noSurfs = ' )
-      call output ( vgrids(i)%noSurfs )
-      call output ( ' verticalCoordinate = ' )
-      call display_string ( lit_indices(vgrids(i)%verticalCoordinate) )
-      if ( details > 0 ) call dump ( vgrids(i)%surfs(:,1), ' Surfs = ' )
+      call dump_a_vGrid ( vgrids(i), details )
     end do
   end subroutine Dump_VGrids
 
@@ -234,6 +246,9 @@ contains
 end module VGridsDatabase
 
 ! $Log$
+! Revision 2.11  2004/05/22 02:27:07  vsnyder
+! Add Dump_a_VGrid
+!
 ! Revision 2.10  2003/09/15 23:19:04  vsnyder
 ! Remove unused local variables and USEs
 !
