@@ -3,7 +3,7 @@
 
 module Get_Species_Data_M
 
-  use MLSCommon, only: RP, R8
+  use MLSCommon, only: RP
 
   implicit NONE
   private
@@ -42,10 +42,9 @@ contains
     use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
       & MLSMSG_Warning
     use MLSSignals_m, only: GetRadiometerFromSignal
-    use SpectroscopyCatalog_m, only: Catalog_t, Line_t, Lines, Catalog, Empty_Cat, DUMP
+    use SpectroscopyCatalog_m, only: Catalog_t, Line_t, Lines, Catalog, Empty_Cat
     use String_table, only: GET_STRING
     use VectorsModule, only: VECTOR_T, VECTORVALUE_T
-    use Dump_0, only: Dump
 
   ! Inputs
 
@@ -330,6 +329,10 @@ contains
 end module  Get_Species_Data_M
 
 ! $Log$
+! Revision 2.2  2003/05/16 23:48:59  livesey
+! Removed references to spectags (note old code had a bug when looking for
+! h2o_r??, which led to a 0.08K error in band 2).
+!
 ! Revision 2.1  2003/05/05 23:00:25  livesey
 ! Merged in feb03 newfwm branch
 !
