@@ -591,7 +591,7 @@ contains ! =====     Public Procedures     =============================
     error = max(error,1)
     call output ( '***** At ' )
     call print_source ( source_ref ( where ) )
-    call output ( ' ForwardModelSetup complained: ' )
+    call output ( ' ForwardModelSupport complained: ' )
     select case ( code )
     case ( AllocateError )
       call output ( 'allocation error.', advance='yes' )
@@ -643,6 +643,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.28  2002/03/14 23:30:21  pwagner
+! Changed id of who announcesError
+!
 ! Revision 2.27  2002/03/12 23:44:12  vsnyder
 ! Removed private attribute from CVS stuff because private is module's default
 !
