@@ -116,6 +116,8 @@ MODULE VectorQuantities         ! Quantities within vectors
      ! These are actually dimensioned (subVectorLen,noSubVectors)
   END TYPE QuantityTemplate_T
 
+  ! This incrementing counter is used to set the id field of a quantity template
+
   INTEGER, PRIVATE :: quantityTemplateCounter=0
 
   ! --------------------------------------------------------------------------
@@ -361,6 +363,9 @@ END MODULE VectorQuantities
 
 !
 ! $Log$
+! Revision 1.6  1999/12/03 22:27:08  livesey
+! Tidied up some of the INTENT stuff
+!
 ! Revision 1.5  1999/12/03 21:57:34  livesey
 ! Added the code to set the id field with an incrementing counter
 !
