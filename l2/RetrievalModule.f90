@@ -573,7 +573,7 @@ contains
                   end do ! k
                 end do ! MAFs
                 call subtractFromVector ( f, measurements )
-                if ( got(f_measurementSD) ) call multiply ( weight, f )
+                if ( got(f_measurementSD) ) call multiply ( f, weight )
                 aj%fnorm = sqrt ( aprioriNorm + ( f .dot. f ) )
                   if ( index(switches,'fvec') /= 0 ) &
                     & call dump ( f, name='Residual' )
@@ -1078,6 +1078,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.40  2001/06/01 22:26:03  vsnyder
+! Got the row scaling backwards in the NF_EVALF
+!
 ! Revision 2.39  2001/06/01 21:58:17  livesey
 ! Added scale for outputSD.
 !
