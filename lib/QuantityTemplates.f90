@@ -358,22 +358,55 @@ MODULE QuantityTemplates         ! Quantities within vectors
     ! Dummy argument
     TYPE (QuantityTemplate_T), INTENT(INOUT) :: qty
 
+    integer status
     ! Executable code
+    DEALLOCATE (qty%surfs, STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"qty%surfs")
 
-    DEALLOCATE (qty%surfs)
-    DEALLOCATE (qty%phi)
-    DEALLOCATE (qty%geodLat)
-    DEALLOCATE (qty%lon)
-    DEALLOCATE (qty%time)
-    DEALLOCATE (qty%solarTime)
-    DEALLOCATE (qty%solarZenith)
-    DEALLOCATE (qty%losAngle)
+    DEALLOCATE (qty%phi,STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"qty%phi")
 
-    IF (qty%minorFrame) DEALLOCATE (qty%MAFIndex,qty%MAFCounter)
+    DEALLOCATE (qty%geodLat, STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"qty%geodLat")
+
+    DEALLOCATE (qty%lon, STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"qty%lon")
+
+    DEALLOCATE (qty%time,STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"qty%time")
+
+    DEALLOCATE (qty%solarTime, STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"qty%solarTime")
+
+    DEALLOCATE (qty%solarZenith, STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"qty%solarZenith")
+
+    DEALLOCATE (qty%losAngle, STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"qty%losAngle")
+
+
+    IF (qty%minorFrame) DEALLOCATE (qty%MAFIndex,qty%MAFCounter, STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"qty%minorFrame")
+
     
     IF (.NOT. qty%regular) THEN
-       DEALLOCATE (qty%surfIndex)
-       DEALLOCATE (qty%chanIndex)
+       DEALLOCATE (qty%surfIndex, STAT=status)
+       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"qty%regular")
+
+       DEALLOCATE (qty%chanIndex, STAT=status)
+       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"qty%chanIndex")
+
     ENDIF
 
   END SUBROUTINE DestroyQuantityTemplateContents
@@ -411,7 +444,9 @@ MODULE QuantityTemplates         ! Quantities within vectors
 
     IF (newSize>1) tempDatabase(1:newSize-1)=database
     tempDatabase(newSize)=qty
-    IF (ASSOCIATED(database))DEALLOCATE(database)
+    IF (ASSOCIATED(database))DEALLOCATE(database, STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"database")
     database=>tempDatabase
   END SUBROUTINE AddQuantityTemplateToDatabase
 
@@ -425,13 +460,15 @@ MODULE QuantityTemplates         ! Quantities within vectors
     TYPE (QuantityTemplate_T), DIMENSION(:), POINTER :: database
 
     ! Local variables
-    INTEGER :: qtyIndex
+    INTEGER :: qtyIndex, status
 
     IF (ASSOCIATED(database)) THEN
        DO qtyIndex=1,SIZE(database)
           CALL DestroyQuantityTemplateContents(database(qtyIndex))
        ENDDO
-       DEALLOCATE(database)
+       DEALLOCATE(database, STAT=status)
+       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"database")
     ENDIF
   END SUBROUTINE DestroyQuantityTemplateDatabase
 
@@ -441,6 +478,10 @@ END MODULE QuantityTemplates
 
 !
 ! $Log$
+! Revision 1.11  2000/05/17 23:49:14  lungu
+! Added check "IF (ASSOCIATED(database))DEALLOCATE(database)".
+! Added type for GPH.
+!
 ! Revision 1.10  2000/05/15 22:52:35  livesey
 ! Typo fix.
 !
