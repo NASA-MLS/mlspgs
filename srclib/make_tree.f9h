@@ -29,13 +29,13 @@
     integer :: DECOR, I, J, K, ITEM, N_IDS, STRING, WHICH
     integer, save :: M = 0, STACK(0:30) = 0
     logical :: MyCont
-
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
   character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile$"
 !---------------------------------------------------------------------------
-
     myCont = .false.
     if ( present(continue) ) myCont = continue
 
@@ -114,6 +114,10 @@
   end subroutine MAKE_TREE
 
 ! $Log$
+! Revision 1.6  2002/07/18 22:01:58  vsnyder
+! Add CONTINUE optional argument so trees needing more than 40 lines of
+! Fortran can be constructed.
+!
 ! Revision 1.5  2001/06/07 21:56:55  pwagner
 ! Added Copyright statement
 !

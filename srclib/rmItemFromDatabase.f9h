@@ -1,11 +1,13 @@
 ! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
-  !---------------------------- RCS Ident Info -------------------------------
-    character(len=*), parameter :: IdParm = &
-      & "$Id$"
-    character(len=len(idParm)) :: Id = idParm
-  !---------------------------------------------------------------------------
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile$"
+!---------------------------------------------------------------------------
 
   ! Similar (in fact based on) addItemToDatabase.f9h
   ! but for the opposite purpose
@@ -64,6 +66,9 @@
     end if
 
 ! $Log$
+! Revision 1.2  2001/09/20 20:55:48  pwagner
+! Tweaked some things
+!
 ! Revision 1.1  2001/09/19 23:39:16  pwagner
 ! First commit
 !
