@@ -207,6 +207,7 @@ Character (LEN=80) :: Fnd, Line
 !
 ! *** Begining the FMI Section
 !
+  no_mmaf = FMC%no_mmaf
   read(11,'(A)',iostat=io) Ax
   if(io /= 0) goto 99
 
@@ -429,7 +430,6 @@ Character (LEN=80) :: Fnd, Line
 
   read(11,*,iostat=io) T_FMI%No_Geometric
   if(io /= 0) goto 99
-
   read(11,'(A)',iostat=io) Ax
   if(io /= 0) goto 99
 
@@ -448,7 +448,6 @@ Character (LEN=80) :: Fnd, Line
       T_FMI%h_obs = r
     END IF
   end do
-
   read(11,'(A)',iostat=io) Ax
   if(io /= 0) goto 99
 
@@ -488,19 +487,14 @@ Character (LEN=80) :: Fnd, Line
     read(11,*,iostat=io) (T_FMI%Atmospheric(j)%BASIS_PEAKS(i),i=1,kk+2)
     if(io /= 0) goto 99
   end do
-
   read(11,'(A)',iostat=io) Ax
   if(io /= 0) goto 99
-
   read(11,*,iostat=io) T_FMI%Zref, T_FMI%beta_inc
   if(io /= 0) goto 99
-
   read(11,'(A)',iostat=io) Ax
   if(io /= 0) goto 99
-
   DEALLOCATE(T_FMI%Href,STAT=i)
   ALLOCATE(T_FMI%Href(no_mmaf),STAT=i)
-
   read(11,*,iostat=io) (T_FMI%Href(i),i=1,no_mmaf)
   if(io /= 0) goto 99
 !
@@ -509,7 +503,6 @@ Character (LEN=80) :: Fnd, Line
 !
   read(11,*,iostat=io) T_FMI%no_t, T_FMI%no_phi_t
   if(io /= 0) goto 99
-
   if(FMC%no_mmaf < T_FMI%no_phi_t) then
     io = -1
     Print *,'** Error: no_mmaf < no_phi_t ...'
@@ -538,7 +531,6 @@ Character (LEN=80) :: Fnd, Line
   dummy(1:) = 0.0
   read(11,*,iostat=io) (dummy(i),i=1,no_phi_t)
   if(io /= 0) goto 99
-
   T_FMI%t_phi_basis(1:no_phi_t) = dummy(1:no_phi_t) * deg2rad
   T_FMI%t_phi_basis_copy(1:no_phi_t) = T_FMI%t_phi_basis(1:no_phi_t)
 
@@ -574,7 +566,6 @@ Character (LEN=80) :: Fnd, Line
 
   read(11,*,iostat=io) (T_FMI%no_coeffs_f(i),i=1,n_sps)
   if(io /= 0) goto 99
-
   read(11,'(A)',iostat=io) Ax
   if(io /= 0) goto 99
 
@@ -642,6 +633,12 @@ Character (LEN=80) :: Fnd, Line
 !
 ! Get all the filter's loaded & define:
 !
+  no_pfa_ch = min(2,FMC%Channels_range(2)-FMC%Channels_range(1)+1)
+  do i = 1, no_pfa_ch
+    ch2 = FMC%Channels_range(1) + i - 1
+    pfa_ch(i) = ch2
+  end do
+
   j = no_pfa_ch
   k = FMI%no_filt_pts
   DEALLOCATE(FMI%F_grid_filter,FMI%Filter_func,STAT=i)
@@ -649,7 +646,7 @@ Character (LEN=80) :: Fnd, Line
   if(i /= 0) goto 99
 
   freqs(1:Nch) = 0.0D0
-  DO i = ch1, ch2
+  DO i = FMC%Channels_Range(1), FMC%Channels_Range(2)
     CALL radiometry(i,q,r,v,kk)
     IF(FMC%Sideband < 0) freqs(i) = q
     IF(FMC%Sideband > 0) freqs(i) = r
@@ -985,6 +982,9 @@ END SUBROUTINE get_filters
 
 end module L2_LOAD_M
 ! $Log$
+! Revision 1.9  2001/03/15 12:18:03  zvi
+! Adding the Velocity effect on Line center frequency
+!
 ! Revision 1.8  2001/03/13 01:46:46  vsnyder
 ! Allocate and use the correct size for tan_press
 !

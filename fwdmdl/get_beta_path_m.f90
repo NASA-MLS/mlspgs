@@ -4,6 +4,8 @@ module GET_BETA_PATH_M
   use PATH_ENTITIES_M, only: PATH_VECTOR, PATH_BETA
   use SLABS_SW_M, only: SLABS_PREP_WDER, SLABS_PREP
   use CREATE_BETA_M, only: CREATE_BETA
+  use output_m,only:output
+  use Dump_0,only:dump
   Implicit NONE
   private
   public :: get_beta_path
@@ -17,7 +19,7 @@ module GET_BETA_PATH_M
 contains
 !----------------------------------------------------------------------
 
- SUBROUTINE get_beta_path(ptg_i,pfs,no_ele,no_ptg_frq,ptg_frq_grid, &
+ SUBROUTINE get_beta_path(frequencies,pfs,no_ele, &
                        &  z_path,t_path,beta_path,vel_z,ier)
 
 !  ===============================================================
@@ -26,13 +28,12 @@ contains
 !  ---------------------------
 !  Calling sequence variables:
 !  ---------------------------
-Integer(i4), INTENT(IN) :: ptg_i, no_ele
-Integer(i4), INTENT(IN) :: no_ptg_frq(*)
+real(r8), dimension(:), intent(in) :: frequencies
+Integer(i4), INTENT(IN) :: no_ele
 Real(r8),    INTENT(IN) :: vel_z
 
 Integer(i4), INTENT(OUT) :: ier
 
-Type(path_vector), INTENT(IN) :: ptg_frq_grid(*)
 Type(path_vector), INTENT(IN) :: z_path, t_path
 
 Type (pfa_slab), INTENT(IN) :: pfs(*)
@@ -64,9 +65,10 @@ Real(r8) :: v0sm(MAXLINES), x1m(MAXLINES), ym(MAXLINES), yim(MAXLINES), &
 
   ier = 0
   no_sps = pfs(1)%no_sps
-  mnf =  no_ptg_frq(ptg_i)
+  mnf =  size(frequencies)
+  call output('In get_beta_path_m',advance='yes')
+  call dump(frequencies)
 !
-! Vel_z_correction = 1.0_r8 - vel_z / c
   Vel_z_correction = 1.0_r8 + vel_z / c
 !
 ! Allocate all the needed space for beta..
@@ -85,7 +87,7 @@ Real(r8) :: v0sm(MAXLINES), x1m(MAXLINES), ym(MAXLINES), yim(MAXLINES), &
   ALLOCATE(beta_path(no_sps,mnf),STAT=h_i)
 !
   do i = 1, no_sps
-    do frq_i = 1, no_ptg_frq(ptg_i)
+    do frq_i = 1, mnf
       ALLOCATE(beta_path(i,frq_i)%values(no_ele),    &
   &            beta_path(i,frq_i)%t_power(no_ele),   &
   &            beta_path(i,frq_i)%dbeta_dw(no_ele),  &
@@ -93,7 +95,7 @@ Real(r8) :: v0sm(MAXLINES), x1m(MAXLINES), ym(MAXLINES), yim(MAXLINES), &
   &            beta_path(i,frq_i)%dbeta_dnu(no_ele), STAT = ier)
       if(ier /= 0) then
         PRINT *,'** Allocation error in routine: get_beta_path ..'
-        PRINT *,'   no_ele,ptg_i,i,frq_i:',no_ele,ptg_i,i,frq_i
+        PRINT *,'   no_ele,i,frq_i:',no_ele,i,frq_i
         PRINT *,'   STAT =',ier
         goto 99
       endif
@@ -124,9 +126,9 @@ Real(r8) :: v0sm(MAXLINES), x1m(MAXLINES), ym(MAXLINES), yim(MAXLINES), &
       v0sp(1:nl) = v0sp(1:nl) * Vel_z_correction
       v0sm(1:nl) = v0sm(1:nl) * Vel_z_correction
 !
-      do frq_i = 1, no_ptg_frq(ptg_i)
+      do frq_i = 1, mnf
 !
-        Frq = ptg_frq_grid(ptg_i)%values(frq_i)
+        Frq = frequencies(frq_i)
 !
         Call Create_beta (Spectag,p,t,Frq,nl,pfs(i),v0s,x1,y,yi,&
        &     slabs1,dx1_dv0,dy_dv0,dslabs1_dv0,v0sp,x1p,yp,yip, &
@@ -151,14 +153,14 @@ Real(r8) :: v0sm(MAXLINES), x1m(MAXLINES), ym(MAXLINES), yim(MAXLINES), &
 ! Cleanup cycle ...
 !
  99  do i = 1, no_sps
-       do frq_i = 1, no_ptg_frq(ptg_i)
+       do frq_i = 1, mnf
          DEALLOCATE(beta_path(i,frq_i)%values,beta_path(i,frq_i)%t_power,&
         &           beta_path(i,frq_i)%dbeta_dw,beta_path(i,frq_i)%dbeta_dn,&
         &           beta_path(i,frq_i)%dbeta_dnu, STAT=h_i)
        end do
      end do
      DEALLOCATE(beta_path, STAT=h_i)
-
+     stop
   Return
 
 ! *****     Internal procedures     **********************************
@@ -205,6 +207,9 @@ Real(r8) :: v0sm(MAXLINES), x1m(MAXLINES), ym(MAXLINES), yim(MAXLINES), &
  END SUBROUTINE get_beta_path
 end module GET_BETA_PATH_M
 ! $Log$
+! Revision 1.9  2001/03/15 12:18:03  zvi
+! Adding the Velocity effect on Line center frequency
+!
 ! Revision 1.8  2001/03/09 02:26:11  vsnyder
 ! More work on deallocation
 !
