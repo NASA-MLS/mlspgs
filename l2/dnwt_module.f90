@@ -887,14 +887,14 @@ contains
 !*************** Start of executable code ******************
 
     if ( first ) then
-      valnom(7) = tiny(values) / sqrt(sqrt(tiny(values)))
-      valnom(8) = epsilon(values) / sqrt(sqrt(epsilon(values)))
+      valnom(7) = sqrt(sqrt(tiny(values))) ** 3
+      valnom(8) = sqrt(sqrt(epsilon(values))) ** 3
       values(7:8) = valnom(7:8)
       first = .false.
     end if      
     if ( present(nopt) ) then
       if ( .not. present(xopt) ) then
-        call ermsg ( me, 99, 2, 'NOPT present but XOPT absent', ',' )
+        call ermsg ( me, 99, 2, 'NOPT present but XOPT absent', '.' )
         return
       end if
       i = 1
@@ -1210,6 +1210,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.33  2002/09/23 22:04:11  vsnyder
+! Correct an error message, better computation of defaults for two options
+!
 ! Revision 2.32  2002/09/21 00:33:47  vsnyder
 ! Repair an error message
 !
