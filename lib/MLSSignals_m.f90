@@ -35,7 +35,7 @@ module MLSSignals_M
   public :: GetAllModules, GetBandName, GetModuleFromRadiometer
   public :: GetModuleFromSignal, GetModuleName, GetRadiometerFromSignal
   public :: GetRadiometerName, GetSignal, GetSignalName
-  public :: GetSpectrometerTypeName, IsModuleSpacecraft, MLSSignals
+  public :: GetSpectrometerTypeName, IsModuleSpacecraft, MatchSignal, MLSSignals
 
   integer, public, parameter :: MaxSigLen = 80 ! Maximum length of a signal name
 
@@ -948,16 +948,58 @@ contains
       & string_text = TRIM(string_text) // TRIM(word)
   end subroutine GetSpectrometerTypeName
 
-  ! ------------------------------------------  IsModuleSpacecraft  ----
+  ! -----------------------------------------  IsModuleSpacecraft  -----
   logical function IsModuleSpacecraft(thisModule)
     ! Returns true if the module is really the spacecraft
     integer, intent(in) :: thisModule
     IsModuleSpacecraft = modules(thisModule)%spacecraft
   end function IsModuleSpacecraft
 
+  ! ------------------------------------------------  MatchSignal  -----
+  integer function MatchSignal ( Signals, Probe )
+    ! Givan an array Signals, find the one in the array that privides
+    ! the smallest superset of features of the signal Probe.  The result
+    ! is zero if no signals match.
+
+    type(signal_T), dimension(:), intent(in) :: Signals
+    type(signal_T), intent(in) :: Probe
+
+    integer :: BestMatch                ! The smallest number of 
+    integer :: I, J                     ! Loop inductors, subscripts
+    integer :: NumChannelsMatch
+
+    bestMatch = huge(bestMatch)
+    matchSignal = 0
+o:  do i = 1, size(signals)
+      ! First, the signal must have the same band, instrument module,
+      ! radiometer, spectrometer, spectrometer type and switch number as
+      ! the probe signal
+      if ( signals(i)%band /= probe%band .or. &
+        &  signals(i)%instrumentModule /= probe%instrumentModule.or. &
+        &  signals(i)%radiometer /= probe%radiometer .or. &
+        &  signals(i)%spectrometer /= probe%spectrometer .or. &
+        &  signals(i)%spectrometerType /= probe%spectrometerType .or. &
+        &  signals(i)%switch /= probe%switch ) cycle
+      ! Now the channels in Probe all have to be present in Signals(i)
+      numChannelsMatch = 0
+      do j = lbound(probe%channels,1), ubound(probe%channels,1)
+        if ( probe%channels(j) ) then
+          if ( j < lbound(signals(i)%channels,1) .or. &
+            &  j > ubound(signals(i)%channels,1) ) cycle o
+          if ( .not. signals(i)%channels(j) ) cycle o
+          numChannelsMatch = numChannelsMatch + 1
+        end if
+      end do ! j
+      if ( numChannelsMatch < bestMatch ) matchSignal = i
+    end do o
+  end function MatchSignal
+
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.13  2001/04/07 01:52:58  vsnyder
+! Initial cut at MatchSignal
+!
 ! Revision 2.12  2001/04/03 01:48:25  vsnyder
 ! No need to declare Make_Tree private -- It's internal!
 !

@@ -27,7 +27,7 @@ MODULE Construct                ! The construct module for the MLS L2 sw.
   use TREE_TYPES, only: N_NAMED
   use VectorsModule, only: AddVectorTemplateToDatabase, &
     & DestroyVectorTemplateDatabase, Dump, VectorTemplate_T
-  use VGrid, only: VGrid_T
+  use VGridsDatabase, only: VGrid_T
   use Intrinsic, ONLY: L_None
   use String_Table, ONLY: GET_STRING
   use Init_tables_module, ONLY: LIT_INDICES
@@ -175,6 +175,10 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.13  2001/04/07 01:50:48  vsnyder
+! Move some of VGrid to lib/VGridsDatabase.  Move ForwardModelConfig_T and
+! some related stuff to fwdmdl/ForwardModelConfig.
+!
 ! Revision 2.12  2001/03/28 18:09:24  vsnyder
 ! Cosmetic changes
 !
