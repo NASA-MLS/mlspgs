@@ -204,7 +204,7 @@ contains
           warn = .true.
           ord = ncol - 1
         end if
-        if ( rows + ncol - ord - 1 > a%row%nelts(1) ) &
+        if ( rows + ncol - ord - 1 > a%row%nelts(ib) ) &
           & call announceError ( tooFewRows, orders )
         if ( ord > maxRegOrd ) call announceError ( orderTooBig, orders )
         if ( error /= 0 ) warn = .true.
@@ -420,6 +420,9 @@ o:          do while ( c2 <= a%block(r,ib)%ncols )
 end module Regularization
 
 ! $Log$
+! Revision 2.18  2002/08/16 21:33:02  livesey
+! Bug fix in tooFewRows message
+!
 ! Revision 2.17  2002/08/15 22:45:05  livesey
 ! Lots of array bounds/indexing changes (fixes hopefully).
 !
