@@ -4583,6 +4583,9 @@ contains ! =====     Public Procedures     =============================
         end do
       end do
 
+      if ( index(switches,'mag') /= 0 ) &
+        & call dump ( qty, clean=index(switches,'clean') /= 0 )
+
     end subroutine FillQuantityUsingMagneticModel
 
     ! ------------------------------------------- FillQtyFromInterpolatedQty
@@ -5508,6 +5511,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.208  2003/05/07 00:16:52  livesey
+! Added the dump for magnetic field results.
+!
 ! Revision 2.207  2003/05/06 21:00:23  livesey
 ! Bug fix on L1B stuff
 !
