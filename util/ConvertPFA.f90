@@ -34,15 +34,15 @@ program ConvertPFA
 
   ! { len_trim(molecules(i)), trim(molecules(i)) } one record for each i = 1 : nMol
 
+  use Machine ! May need to get GETARG from here; otherwise, nothing is used
+
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
     & "$Id$"
   character (len=len(idParm)) :: Id = idParm
-  character (len=*), parameter :: ModuleName= &
-       "$RCSfile$"
 !---------------------------------------------------------------------------
 
-  character :: Ch, Sep*2
+  character :: Ch
   character(len=255) :: Infile, Line, Outfile, Signal*127
   character(len=31) :: Molecules(255) = ' '
   integer :: I, nTemps, nPress, nMol
@@ -155,6 +155,9 @@ program ConvertPFA
 end program ConvertPFA
 
 ! $Log$
+! Revision 1.2  2004/06/17 00:42:00  vsnyder
+! Repaired a comment
+!
 ! Revision 1.1  2004/06/17 00:39:58  vsnyder
 ! Initial commit
 !

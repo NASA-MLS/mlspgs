@@ -3,12 +3,12 @@ program DumpPFAData
   ! Dump an unformatted PFAData file in the same format as a formatted file
   ! that could have been used to create it.  See ConvertPFAData for formats.
 
+  use Machine ! May need to get GETARG from here; otherwise, nothing is used
+
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
     & "$Id$"
   character (len=len(idParm)) :: Id = idParm
-  character (len=*), parameter :: ModuleName= &
-       "$RCSfile$"
 !---------------------------------------------------------------------------
 
   real, allocatable :: Absorption(:,:), dAbsDwc(:,:), dAbsDnc(:,:), dAbsDnu(:,:)
@@ -87,3 +87,6 @@ program DumpPFAData
 end program DumpPFAData
 
 ! $Log$
+! Revision 1.1  2004/06/17 00:39:58  vsnyder
+! Initial commit
+!
