@@ -31,6 +31,7 @@ CONTAINS
     USE SDPToolkit, ONLY: PGS_IO_Gen_closeF
     USE MLSFiles, ONLY: MLS_closeFile
     USE L1BOutUtils, ONLY: WriteHdrAnnots
+    USE OutputL1B, ONLY: OutputL1B_diags
     USE HDF5, ONLY: H5gClose_f, H5gOpen_f
     USE MLSHDF5, ONLY: MakeHDF5Attribute, MLS_h5close
     USE Orbit, ONLY: OrbitNumber, OrbPeriod
@@ -161,6 +162,10 @@ CONTAINS
     CALL MLSMessage (MLSMSG_Info, ModuleName, &
          & 'Closed L1BOA file: '//L1BFileInfo%OAFileName)
 
+    ! Write default zeros to L1B Diag file
+
+    CALL OutputL1B_diags (L1BFileInfo%Diagid, Zeros=.TRUE.)
+
     ! Write Hdr Annotations and Close L1B Diag file
 
     CALL WriteHdrAnnots (L1BFileInfo%DiagFileName, HDFversion)
@@ -191,6 +196,9 @@ CONTAINS
 END MODULE Close_files
 !=============================================================================
 ! $Log$
+! Revision 2.16  2004/08/12 13:51:49  perun
+! Version 1.44 commit
+!
 ! Revision 2.15  2004/05/14 15:59:11  perun
 ! Version 1.43 commit
 !
