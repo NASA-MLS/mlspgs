@@ -225,9 +225,7 @@ contains
       sps_values(f_len:r-1)=RESHAPE(f%values(1:kz*kf,1:kp),(/kz*kf*kp/))
       if (f%template%logBasis) then
         lin_log(ii) = .TRUE.
-        do jj = f_len, r-1
-          if(sps_values(jj) > 0.0) sps_values(jj)=LOG(sps_values(jj))
-        end do
+        sps_values(f_len:r-1) = LOG(max(1.0e-16_rp,sps_values(f_len:r-1)))
       else
         lin_log(ii) = .FALSE.
       endif
@@ -503,6 +501,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.13  2002/02/16 10:32:17  zvi
+! Guaranties against taking Log(0.0)
+!
 ! Revision 2.12  2002/02/16 06:37:34  zvi
 ! New code for derivative flags..
 !
