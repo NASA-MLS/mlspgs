@@ -12,7 +12,11 @@ module ForwardModelVectorTools          ! Tools for vectors in forward models
 
   private
 
-  public :: GetQuantityForForwardModel
+  public :: Dump, Dump_Qty_Stuff, GetQuantityForForwardModel
+
+  interface Dump
+    module procedure Dump_Qty_Stuff
+  end interface
 
   type, public :: QtyStuff_T ! So we can have an array of pointers to QTY's
     type (VectorValue_T), pointer :: QTY
@@ -30,7 +34,7 @@ module ForwardModelVectorTools          ! Tools for vectors in forward models
 
 contains
 
-  ! ------------------------------ GetQuantityForForwardModel ----------------
+  ! ---------------------------------  GetQuantityForForwardModel  -----
   function GetQuantityForForwardModel ( vector, otherVector, quantityType, &
     & molecule, instrumentModule, radiometer, reflector, signal, sideband, &
     & molIndex, config, foundInFirst, noError )
@@ -280,6 +284,17 @@ contains
 
   end function GetQuantityForForwardModel
 
+  ! ---------------------------------------------  Dump_Qty_Stuff  -----
+  subroutine Dump_Qty_Stuff ( Qty )
+    use Output_m, only: NewLine, Output
+    use String_Table, only: Display_String
+    use VectorsModule, only: Dump
+    type(qtyStuff_t), intent(in) :: Qty
+    call dump ( qty%qty, details=-2 )
+    if ( qty%foundInFirst ) call output ( ', Found in first' )
+    call newLine
+  end subroutine Dump_Qty_Stuff
+
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
@@ -287,6 +302,9 @@ contains
 end module ForwardModelVectorTools
 
 ! $Log$
+! Revision 2.11  2004/10/07 23:25:50  vsnyder
+! Move Dump_Qty_Stuff here from Get_Species_Data
+!
 ! Revision 2.10  2004/06/10 00:59:56  vsnyder
 ! Move FindFirst, FindNext from MLSCommon to MLSSets
 !
