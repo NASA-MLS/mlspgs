@@ -164,19 +164,34 @@ begin Fill
     explicitValues= !standardLength
 
   ;; Now do the same for extinction
-  Fill, quantity=aprioriPrecision.extinctionR1A, method=explicit, /spread, $
+  Fill, quantity=aprioriPrecision.extinctionConstantR1A, method=explicit, /spread, $
     explicitValues=1.0
-  Fill, quantity=aprioriPrecision.extinctionR1B, method=explicit, /spread, $
+  Fill, quantity=aprioriPrecision.extinctionConstantR1B, method=explicit, /spread, $
     explicitValues=1.0
-  Fill, quantity=aprioriPrecision.extinctionR2, method=explicit, /spread, $
+  Fill, quantity=aprioriPrecision.extinctionConstantR2, method=explicit, /spread, $
     explicitValues=1.0
-  Fill, quantity=aprioriPrecision.extinctionR3, method=explicit, /spread, $
+  Fill, quantity=aprioriPrecision.extinctionConstantR3, method=explicit, /spread, $
     explicitValues=1.0
-  Fill, quantity=aprioriPrecision.extinctionR4, method=explicit, /spread, $
+  Fill, quantity=aprioriPrecision.extinctionConstantR4, method=explicit, /spread, $
     explicitValues=1.0
-  Fill, quantity=aprioriPrecision.extinctionR5H, method=explicit, /spread, $
+  Fill, quantity=aprioriPrecision.extinctionConstantR5H, method=explicit, /spread, $
     explicitValues=1.0
-  Fill, quantity=aprioriPrecision.extinctionR5V, method=explicit, /spread, $
+  Fill, quantity=aprioriPrecision.extinctionConstantR5V, method=explicit, /spread, $
+    explicitValues=1.0
+
+  Fill, quantity=aprioriPrecision.extinctionShapedR1A, method=explicit, /spread, $
+    explicitValues=1.0
+  Fill, quantity=aprioriPrecision.extinctionShapedR1B, method=explicit, /spread, $
+    explicitValues=1.0
+  Fill, quantity=aprioriPrecision.extinctionShapedR2, method=explicit, /spread, $
+    explicitValues=1.0
+  Fill, quantity=aprioriPrecision.extinctionShapedR3, method=explicit, /spread, $
+    explicitValues=1.0
+  Fill, quantity=aprioriPrecision.extinctionShapedR4, method=explicit, /spread, $
+    explicitValues=1.0
+  Fill, quantity=aprioriPrecision.extinctionShapedR5H, method=explicit, /spread, $
+    explicitValues=1.0
+  Fill, quantity=aprioriPrecision.extinctionShapedR5V, method=explicit, /spread, $
     explicitValues=1.0
 
   ;; Now do the same for baseline
