@@ -119,7 +119,7 @@ contains
         & foundInFirst=qtyStuff(ii)%foundInFirst )
 
       call fill_grids_1 ( grids_x, ii, qtyStuff(ii)%qty, phitan, fmStat%maf, &
-        &                 fwdModelConf )
+        &                 fwdModelConf, .false. )
 
     end do
 
@@ -146,7 +146,7 @@ contains
 
   ! -----------------------------------------  Load_One_Item_Grid  -----
   subroutine Load_One_Item_Grid ( Grids_X, Qty, Phitan, Maf, FwdModelConf, &
-    & SetDerivFlags )
+    & SetDerivFlags, SetTscatFlag )
   ! A simplification of Load_Sps_Data to load a grid that has only one
   ! quantity in it.
 
@@ -158,9 +158,10 @@ contains
     integer, intent(in) :: Maf
     type(forwardModelConfig_t), intent(in) :: FwdModelConf
     logical, intent(in) :: SetDerivFlags
+    logical, intent(in) :: SetTscatFlag 
 
     call create_grids_1 ( grids_x, 1 )
-    call fill_grids_1 ( grids_x, 1, qty, phitan, maf, fwdModelConf )
+    call fill_grids_1 ( grids_x, 1, qty, phitan, maf, fwdModelConf, SetTscatFlag )
     call create_grids_2 ( grids_x )
     call fill_grids_2 ( grids_x, 1, qty, setDerivFlags )
 
@@ -329,7 +330,7 @@ contains
   end subroutine Create_Grids_2
 
   ! -----------------------------------------------  Fill_Grids_1  -----
-  subroutine Fill_Grids_1 ( Grids_x, II, Qty, Phitan, Maf, FwdModelConf )
+  subroutine Fill_Grids_1 ( Grids_x, II, Qty, Phitan, Maf, FwdModelConf, ScatFlag )
   ! Fill in the size information for the II'th element of Grids_x
 
     use ForwardModelConfig, only: ForwardModelConfig_t
@@ -342,13 +343,24 @@ contains
     type (vectorValue_T), intent(in) :: PHITAN  ! Tangent geodAngle component of
     integer, intent(in) :: MAF
     type(forwardModelConfig_T), intent(in) :: FwdModelConf
+    logical, intent(in) :: ScatFlag 
 
     integer :: KF, KP, KZ
+
+
+    IF (ScatFlag) then
+      kp=FwdModelConf%num_scattering_angles
+      grids_x%windowStart(ii) = 1
+      grids_x%windowFinish(ii)= kp
+    ELSE
 
     kf = qty%template%noChans ! == 1 if qty%template%frequencyCoordinate == l_none
     call FindInstanceWindow ( qty, phitan, maf, fwdModelConf%phiWindow, &
       & fwdModelConf%windowUnits, grids_x%windowStart(ii), grids_x%windowFinish(ii) )
-    kp = grids_x%windowFinish(ii) - grids_x%windowStart(ii) + 1
+
+      kp = grids_x%windowFinish(ii) - grids_x%windowStart(ii) + 1
+    ENDIF
+
     kz = qty%template%noSurfs
     grids_x%l_f(ii) = grids_x%l_f(ii-1) + kf
     grids_x%l_p(ii) = grids_x%l_p(ii-1) + kp
@@ -481,6 +493,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.53  2003/05/19 19:58:07  vsnyder
+! Remove USEs for unreferenced symbols, remove unused local variables
+!
 ! Revision 2.52  2003/05/16 23:52:26  livesey
 ! Now uses molecule indices rather than spectags
 !
