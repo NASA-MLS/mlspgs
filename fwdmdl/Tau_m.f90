@@ -161,18 +161,19 @@ contains
   end subroutine Destroy_Tau
 
 ! -----------------------------------------------------  Dump_Tau  -----
-  subroutine Dump_Tau ( Tau, What )
+  subroutine Dump_Tau ( Tau, NoFreqs, What )
     use Dump_0, only: Dump
     use Output_m, only: Output
 
     type(tau_t), intent(in) :: Tau
+    integer, intent(in) :: NoFreqs ! Number of frequences
     character(len=*), intent(in), optional :: What
 
     integer :: I
 
     if ( present(what) ) call output ( what, advance='yes' )
 
-    do i = 1, size(tau%i_stop)
+    do i = 1, noFreqs
       call dump ( tau%tau(:tau%i_stop(i),i) )
     end do
 
@@ -185,6 +186,9 @@ contains
 end module Tau_M
 
 ! $Log$
+! Revision 2.3  2005/03/28 20:23:41  vsnyder
+! Add nFreqs argument to dump routine
+!
 ! Revision 2.2  2005/03/03 02:08:32  vsnyder
 ! Add Destroy, Dump routines
 !
