@@ -56,7 +56,7 @@ changesyntax({@!})
 
 ; This macro is similar but trims the first and last character off,
 ; typically quotes.
-!define(TrimFirstLastChar, {!substr($1,1,!eval(!len($1)-3))})
+!define(TrimFirstLastChar, {!substr($1,1,!eval(!len($1)-2))})
 
 ; This is just a newline. It is mainly used in macros that are destined
 ; to be called by forall macros.
