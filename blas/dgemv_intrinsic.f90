@@ -8,8 +8,17 @@
 
   subroutine DGEMV ( TRANS, M, N, ALPHA, A, LDA, X, INCX, &
         &                BETA, Y, INCY )
-    integer, parameter :: RK = kind(0.0d0)
+    integer, parameter :: RKM = kind(0.0d0), RKV = kind(0.0d0)
     include "gemv.f9h"
   end subroutine DGEMV
 
+  subroutine DSGEMV ( TRANS, M, N, ALPHA, A, LDA, X, INCX, &
+        &                BETA, Y, INCY )
+    integer, parameter :: RKM = kind(0.0d0), RKV = kind(0.0e0)
+    include "gemv.f9h"
+  end subroutine DSGEMV
+
 ! $Log$
+! Revision 1.1  2001/11/14 00:23:28  vsnyder
+! Initial commit
+!
