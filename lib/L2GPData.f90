@@ -74,27 +74,32 @@ MODULE L2GPData                 ! Creation, manipulation and I/O for L2GP Data
      INTEGER :: nFreqs          ! Number of frequencies in breakdown
 
      ! Now we store the geolocation fields, first the vertical one:
-     REAL (r8), POINTER, DIMENSION(:) :: pressures ! Vertical coords (nLevels)
+     REAL (r8), POINTER, DIMENSION(:) :: pressures => NULL() ! Vertical coords (nLevels)
 
      ! Now the horizontal geolocation information. Dimensioned (nTimes)
-     REAL (r8), POINTER, DIMENSION(:) :: latitude, longitude, solarTime, &
-          & solarZenith, losAngle, geodAngle
-     REAL (r8), POINTER, DIMENSION(:) :: time
-     INTEGER, POINTER, DIMENSION(:) :: chunkNumber !
+     REAL (r8), POINTER, DIMENSION(:) :: latitude => NULL()
+     REAL (r8), POINTER, DIMENSION(:) :: longitude => NULL()
+     REAL (r8), POINTER, DIMENSION(:) :: solarTime => NULL()
+     REAL (r8), POINTER, DIMENSION(:) :: solarZenith => NULL()
+     REAL (r8), POINTER, DIMENSION(:) :: losAngle => NULL()
+     REAL (r8), POINTER, DIMENSION(:) :: geodAngle => NULL()
+     REAL (r8), POINTER, DIMENSION(:) :: time => NULL()
+
+     INTEGER, POINTER, DIMENSION(:) :: chunkNumber => NULL()
 
      ! Now we store the `frequency' geolocation field
 
-     REAL (r8), POINTER, DIMENSION(:) :: frequency
+     REAL (r8), POINTER, DIMENSION(:) :: frequency => NULL()
      !        dimensioned (nFreqs)
 
      ! Finally we store the data fields
 
-     REAL (r8), POINTER, DIMENSION(:,:,:) :: l2gpValue
-     REAL (r8), POINTER, DIMENSION(:,:,:) :: l2gpPrecision
+     REAL (r8), POINTER, DIMENSION(:,:,:) :: l2gpValue => NULL()
+     REAL (r8), POINTER, DIMENSION(:,:,:) :: l2gpPrecision => NULL()
      ! dimensioned (nFreqs, nLevels, nTimes)
 
-     CHARACTER (len=1), POINTER, DIMENSION(:) :: status
-     REAL (r8), POINTER, DIMENSION(:) :: quality
+     CHARACTER (len=1), POINTER, DIMENSION(:) :: status => NULL()
+     REAL (r8), POINTER, DIMENSION(:) :: quality => NULL()
      ! Both the above dimensioned (nTimes)
 
   END TYPE L2GPData_T
@@ -1138,6 +1143,9 @@ END MODULE L2GPData
 
 !
 ! $Log$
+! Revision 2.21  2001/02/15 18:23:20  livesey
+! Got it right this time!
+!
 ! Revision 2.20  2001/02/15 18:20:15  livesey
 ! Had to comment out reading of status in ReadL2GPData to make it work, logged PR.
 !
