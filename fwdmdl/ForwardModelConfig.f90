@@ -50,6 +50,7 @@ module ForwardModelConfig
     integer :: surfaceTangentIndex  ! Index in Tangentgrid of Earth's surface
     integer :: phiWindow            ! Window size for examining stuff
     real (r8) :: frqGap             ! Lines further than this are ignored (MHz)
+    real (r8) :: tolerance          ! Accuracy desired when choosing approximations
   end type ForwardModelConfig_T
 
   !---------------------------- RCS Ident Info -------------------------------
@@ -167,6 +168,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 1.10  2001/05/31 23:07:45  livesey
+! Added cloud_der
+!
 ! Revision 1.9  2001/05/25 20:26:09  livesey
 ! Added skipOverlaps option
 !
