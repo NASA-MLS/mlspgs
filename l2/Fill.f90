@@ -286,8 +286,8 @@ contains ! =====     Public Procedures     =============================
     integer :: NBWVECTORINDEX           ! In vector database
     integer :: NBWQUANTITYINDEX         ! In vector database
     integer :: NoFineGrid               ! no of fine grids for cloud extinction calculation
-    integer :: PTANVECTORINDEX          !
-    integer :: PTANQTYINDEX             !
+    integer :: PTANVECTORINDEX          ! In the vector database
+    integer :: PTANQUANTITYINDEX        ! In the quantities database
     integer :: QUANTITYINDEX            ! Within the vector
     real(r8) :: PRECISIONFACTOR         ! For setting -ve error bars
     integer :: PRECISIONQUANTITYINDEX   ! For precision quantity
@@ -575,7 +575,7 @@ contains ! =====     Public Procedures     =============================
             precisionFactor = valueAsArray(1)
           case ( f_PtanQuantity ) ! For losGrid fill
             PtanVectorIndex = decoration(decoration(subtree(1,gson)))
-            PtanQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
+            PtanQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_quantity )   ! What quantity are we filling quantity=vector.quantity
             vectorIndex = decoration(decoration(subtree(1,gson)))
             quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -768,10 +768,22 @@ contains ! =====     Public Procedures     =============================
             & ratioQuantity )
 
         case ( l_refract )              ! --------- refraction for phiTan -----
-          if ( refract .and. .not. all ( got ( &
+          if ( refract ) then 
+            if ( .not. all ( got ( &
             & (/ f_temperatureQuantity, f_h2oQuantity, f_ptanQuantity /) ) ) ) &
             & call Announce_error ( key, badRefractFill )
-          call FillPhiTanWithRefrcation ( key, quantity, ptanQuantity, temperatureQuantity, &
+            temperatureQuantity => GetVectorQtyByTemplateIndex( &
+              & vectors(temperatureVectorIndex), temperatureQuantityIndex)
+            h2oQuantity => GetVectorQtyByTemplateIndex( &
+              & vectors(h2oVectorIndex), h2oQuantityIndex)
+            ptanQuantity => GetVectorQtyByTemplateIndex( &
+              & vectors(ptanVectorIndex), ptanQuantityIndex)
+          else
+            temperatureQuantity => NULL()
+            h2oQuantity => NULL()
+            ptanQuantity => NULL()
+          end if
+          call FillPhiTanWithRefraction ( key, quantity, ptanQuantity, temperatureQuantity, &
             & h2oQuantity, refract )
 
         case ( l_rectanglefromlos ) ! -------fill from losGrid quantity -------
@@ -780,7 +792,7 @@ contains ! =====     Public Procedures     =============================
           earthRadiusQty => GetVectorQtyByTemplateIndex( &
             & vectors(earthRadiusVectorIndex), earthRadiusQtyIndex )
           PtanQuantity => GetVectorQtyByTemplateIndex( &
-            & vectors(PtanVectorIndex), PtanQtyIndex )
+            & vectors(PtanVectorIndex), PtanQuantityIndex )
           losQty => GetVectorQtyByTemplateIndex( &
             & vectors(losVectorIndex), losQtyIndex )
           call FillQuantityFromLosGrid ( key, Quantity, losQty, &
@@ -2416,7 +2428,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine FillFoldedRadiance
 
   ! ------------------------------------ FillPhiTanWithRefraction --
-  subroutine FillPhiTanWithRefrcation ( key, quantity, ptanQuantity, &
+  subroutine FillPhiTanWithRefraction ( key, quantity, ptanQuantity, &
     & temperatureQuantity, h2oQuantity, refract )
     integer, intent(in) :: KEY          ! Tree node
     type (VectorValue_T), intent(inout) :: QUANTITY ! PhiTan quantity to fill
@@ -2427,6 +2439,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Executable code
     ! First check sanity
+    print*,'There'
     if ( .not. ValidateVectorQuantity ( quantity, &
       & quantityType=(/l_phiTan/), minorFrame=.true. ) ) &
       & call Announce_error ( key, 0, 'Quantity to fill is not phiTan' )
@@ -2454,7 +2467,7 @@ contains ! =====     Public Procedures     =============================
       quantity%values = quantity%template%phi
     endif
 
-  end subroutine FillPhiTanWithRefrcation
+  end subroutine FillPhiTanWithRefraction
 
     ! ------------------------------------- FillRHIFromH2O ----
   subroutine FillRHIFromH2O ( key, quantity, &
@@ -3523,6 +3536,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.128  2002/06/04 23:22:36  livesey
+! Bug fixes on phiTan fill, other cleanups
+!
 ! Revision 2.127  2002/06/04 22:40:44  livesey
 ! Added framework for phiTan fill
 !
