@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -219,7 +219,8 @@ contains
             end if
           end do                        ! MAF loop
 
-          call add_to_retrieval_timing( 'forward_model', t1 )
+!          ForwardModel itself calls add_to_retrieval_timing
+!          call add_to_retrieval_timing( 'forward_model', t1 )
           call time_now ( t1 )
 
           ! Destroy jacobian if asked to
@@ -329,6 +330,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.37  2001/11/27 23:34:49  pwagner
+! Split forward model timings into four types
+!
 ! Revision 2.36  2001/11/09 23:17:22  vsnyder
 ! Use Time_Now instead of CPU_TIME
 !
