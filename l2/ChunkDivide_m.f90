@@ -802,6 +802,8 @@ contains ! ===================================== Public Procedures =====
           call output ( chunks(1:two)%lastMAFIndex + nint(config%overlap) , advance='yes')
         endif
       else
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'The code for non MAF based overlaps has not been tested, do not use!' )
         ! For angle and time, they are similar enough we'll just do some stuff
         ! with pointers to allow us to use common code to sort them out
         ! Note that before we search only over the range in mafRange, here we
@@ -2071,6 +2073,10 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.48  2004/07/30 00:25:49  livesey
+! Roped off the non MAF based overlap section, as I'm suspicious that it
+! doesn't work.
+!
 ! Revision 2.47  2004/06/10 00:58:44  vsnyder
 ! Move FindFirst, FindNext from MLSCommon to MLSSets
 !
