@@ -219,7 +219,6 @@ contains
     use Physics, only: H_OVER_K
     use Rad_Tran_m, only: Get_Do_Calc
     use SpectroscopyCatalog_m, only: CATALOG_T
-use toggles, only: switches
 
   ! Arguments
     ! SVE == # of state vector elements
@@ -356,7 +355,6 @@ use toggles, only: switches
     integer :: SV_i                  ! Index of state vector element
     real(rp) :: Tanh_M, Tanh_P       ! for T -/+ del_T
 
-if ( index(switches,'klp') /= 0 ) print *, 'Get_D_Deltau_Pol_DT'
     frqhk = 0.5_r8 * Frq * H_Over_K
     i_stop = size(path_inds)
     n_path = size(del_zeta)
@@ -426,9 +424,6 @@ if ( index(switches,'klp') /= 0 ) print *, 'Get_D_Deltau_Pol_DT'
           nr = 0.0
         end where
 
-if ( index(switches,'klnt') /= 0 ) print '("pbm",2i5,1p,6g14.6)', p_i, j, aimag(beta_m)
-if ( index(switches,'klnt') /= 0 ) print '("pbp",2i5,1p,6g14.6)', p_i, j, aimag(beta_p)
-
         where ( aimag(beta_m) > 0.0 .and. aimag(beta_p) > 0.0 )
           rrpm = log(aimag(beta_p)/aimag(beta_m)) / l_tptm
           where ( aimag(beta_0) > 0.0 )
@@ -446,9 +441,6 @@ if ( index(switches,'klnt') /= 0 ) print '("pbp",2i5,1p,6g14.6)', p_i, j, aimag(
           ni = 0.0
         end where
 
-if ( index(switches,'klnt') /= 0 ) print '("pnr",2i5,1p,6g14.6)', p_i, j, nr
-if ( index(switches,'klnt') /= 0 ) print '("pni",2i5,1p,6g14.6)', p_i, j, ni
-
         !{ Now that we have $n$, we can use $\frac{\partial \beta}{\partial T} =
         ! \frac{n}{T}\beta$.  We weight each $\frac{n}{T}\beta$ with its mixing
         ! ratio and add them up to get $\frac{\partial \alpha}{\partial T}$.
@@ -456,7 +448,6 @@ if ( index(switches,'klnt') /= 0 ) print '("pni",2i5,1p,6g14.6)', p_i, j, ni
         ! Not quite D alpha, because we haven't divided by T.  beta_path_c was
         ! multiplied by tanh in FullForwardModel, so we don't need to do that
         ! here.
-!       alpha_path_n = alpha_path_n + n * beta_0 * sps_path(k,j)
         alpha_path_n = alpha_path_n + &
           & cmplx ( nr * real(beta_0), ni * aimag(beta_0) ) * sps_path(k,j)
         ! Use the same N for the GL points.  Getting 3*NG more N's would cost
@@ -464,8 +455,6 @@ if ( index(switches,'klnt') /= 0 ) print '("pni",2i5,1p,6g14.6)', p_i, j, ni
         ! alpha_path_n_f is dimensioned (-1:1,NG).
         if ( do_gl(p_i) ) then
           do l = -1, 1
-!           alpha_path_n_f(l,:) = alpha_path_n_f(l,:) + n(l) * &
-!             & beta_path_f(l,a:b-1,j) * sps_path(gl_inds(a:b-1),j)
             alpha_path_n_f(l,:) = alpha_path_n_f(l,:) +  &
               & cmplx ( nr(l) * real(beta_path_f(l,a:b-1,j)), &
               &         ni(l) * aimag(beta_path_f(l,a:b-1,j)) ) * &
@@ -477,14 +466,12 @@ if ( index(switches,'klnt') /= 0 ) print '("pni",2i5,1p,6g14.6)', p_i, j, ni
       !{ Now we divide by $T$ to get $\frac{\partial\alpha}{\partial T}$.
       ! We wait until now because it's the same $T$ for every $\beta$.
 
-      alpha_path_n = alpha_path_n + (/ 0.25, 0.50, 0.25 /) * alpha_xn_path_c(p_i) !?
-!?alpha_path_n = (/ 0.25, 0.50, 0.25 /) * alpha_xn_path_c(p_i)                      !?
+      alpha_path_n = alpha_path_n + (/ 0.25, 0.50, 0.25 /) * alpha_xn_path_c(p_i)
       alpha_path_n_t(:,p_i) = alpha_path_n / t_path_c(p_i)
       if ( do_gl(p_i) ) then
         do l = -1, 1
-          alpha_path_n_f(l,:) = alpha_path_n_f(l,:) + &                      !?
-            & (0.5-0.25*abs(l)) * alpha_xn_path_f(a:b-1)                     !?
-!?alpha_path_n_t_f(l,a:b-1) = (0.5-0.25*abs(l)) * alpha_xn_path_f(a:b-1)       !?
+          alpha_path_n_f(l,:) = alpha_path_n_f(l,:) + &
+            & (0.5-0.25*abs(l)) * alpha_xn_path_f(a:b-1)
             alpha_path_n_t_f(l,a:b-1) = alpha_path_n_f(l,:) / t_path_f(a:b-1)
         end do
         a = b
@@ -504,7 +491,6 @@ if ( index(switches,'klnt') /= 0 ) print '("pni",2i5,1p,6g14.6)', p_i, j, ni
 
       call get_do_calc ( do_calc_t_c(:,sv_i), do_calc_t_f(:,sv_i), do_gl, &
         & do_calc )
-if ( index(switches,'doca') /= 0 ) do_calc=.true.
 
       a = 1
       do p_i = 1, i_stop
@@ -516,8 +502,6 @@ if ( index(switches,'doca') /= 0 ) do_calc=.true.
           !    \frac{\partial \alpha}{\partial T} \eta_i \text{d}s$
           singularity(:,p_i) = alpha_path_n_t(:,p_i) * eta_zxp(p_i,sv_i)
           d_alpha_dT_eta(:,p_i) = singularity(:,p_i) * del_s(p_i)
-if ( index(switches,'klpt') /= 0 .and. d_alpha_dT_eta(0,p_i) /= 0.0 ) &
-print '("pbb",3i5,1pg15.7)', sv_i, p_i, n_path, 2.0*real(d_alpha_dT_eta(0,p_i))
         else
           singularity(:,p_i) = 0.0_rp
           d_alpha_dT_eta(:,p_i) = 0.0_rp
@@ -537,18 +521,11 @@ print '("pbb",3i5,1pg15.7)', sv_i, p_i, n_path, 2.0*real(d_alpha_dT_eta(0,p_i))
           a = b
         end if
       end do ! p_i
-if ( index(switches,'klpt') /= 0 ) then
-do p_i = 1, i_stop
-if ( do_calc(p_i) .and. do_gl(p_i) .and. d_alpha_dT_eta(0,p_i) /= 0.0 ) &
-print '("pba",3i5,1pg15.7)', sv_i, p_i, n_path, 2.0*real(d_alpha_dT_eta(0,p_i))
-end do
-end if
 
       ! Now do the hydrostatic part
       !??? This only goes as far as I_Stop.  We may     ???
       !??? want to do it this way in DRad_Tran_dT also. ???
 
-if ( index(switches,'nhyc') == 0 ) then
       ! First combine boundary flags
       do_calc = do_calc_hyd_c(:,sv_i)
       if ( i_stop < mid ) then           
@@ -559,8 +536,6 @@ if ( index(switches,'nhyc') == 0 ) then
         h_stop = mid - 1
       end if
       do_calc(1) = .false.
-if ( index(switches,'doca') /= 0 ) do_calc(2:) = .true.
-if ( i_stop == n_path .and. index(switches,'doca') /= 0 ) do_calc(n_path) = .false.
       s_del_s = sum(del_s(2:mid)) ! Yes, this goes to the midpoint of the coarse path
       needFA = .true.
       fa = 0.0_rp ! In case n_path <= 4
@@ -575,10 +550,6 @@ if ( i_stop == n_path .and. index(switches,'doca') /= 0 ) do_calc(n_path) = .fal
           fb = (h_path_c(p_i) * dh_dt_path_c(p_i,sv_i) &
             & - h_tan * dh_dt_tan(sv_i)) / s_del_s
           d_alpha_dT_eta(:,p_i) = d_alpha_dT_eta(:,p_i) + alpha_path_c(:,p_i) * (fa - fb)
-if ( index(switches,'klpt') /= 0 .and. d_alpha_dT_eta(0,p_i) /= 0.0 ) &
-print '("pab",3i5,1pg15.7)', sv_i, p_i, n_path, 2.0*real(d_alpha_dT_eta(0,p_i))
-if ( index(switches,'klpt') /= 0 .and. d_alpha_dT_eta(0,p_i) /= 0.0 ) &
-print '("pac",3i5,1pg15.7)', sv_i, p_i, n_path, 2.0*real(alpha_path_c(0,p_i))
           fa = fb
         else
           s_del_s = s_del_s - del_s(p_i)
@@ -590,8 +561,6 @@ print '("pac",3i5,1pg15.7)', sv_i, p_i, n_path, 2.0*real(alpha_path_c(0,p_i))
       if ( i_stop >= mid ) then
         if ( do_calc(mid) ) &
           & d_alpha_dT_eta(:,mid) = d_alpha_dT_eta(:,mid) + alpha_path_c(:,mid) * fa
-if ( index(switches,'klpt') /= 0 .and. d_alpha_dT_eta(0,mid) /= 0.0 .and. do_calc(mid) .and. fa /= 0.0) &
-print '("pax",3i5,1pg15.7)', sv_i, mid, n_path, 2.0*real(d_alpha_dT_eta(0,mid))
       end if
       if ( i_stop > mid + 1 ) then ! mid+1 instead of mid so that mid+2 will be
                                    ! in bounds if i_stop == 2.
@@ -611,8 +580,6 @@ print '("pax",3i5,1pg15.7)', sv_i, mid, n_path, 2.0*real(d_alpha_dT_eta(0,mid))
           fa = (h_path_c(mid+2) * dh_dt_path_c(mid+2,sv_i) &
             & - h_tan * dh_dt_tan(sv_i)) / s_del_s
           d_alpha_dT_eta(:,mid+1) = d_alpha_dT_eta(:,mid+1) + alpha_path_c(:,mid+1) * fa
-if ( index(switches,'klpt') /= 0 .and. d_alpha_dT_eta(0,mid+1) /= 0.0 .and. fa /= 0.0 ) &
-print '("pay",3i5,1pg15.7)', sv_i, mid+1, n_path, 2.0*real(d_alpha_dT_eta(0,mid+1))
         end if
 
         s_del_s = del_s(mid+1)
@@ -627,15 +594,12 @@ print '("pay",3i5,1pg15.7)', sv_i, mid+1, n_path, 2.0*real(d_alpha_dT_eta(0,mid+
             fb = (h_path_c(p_i+1) * dh_dt_path_c(p_i+1,sv_i) &
               & - h_tan * dh_dt_tan(sv_i)) / s_del_s
             d_alpha_dT_eta(:,p_i) = d_alpha_dT_eta(:,p_i) + alpha_path_c(:,p_i)*(fb - fa)
-if ( index(switches,'klpt') /= 0 .and. d_alpha_dT_eta(0,p_i) /= 0.0 ) &
-print '("paz",3i5,1pg15.7)', sv_i, p_i, n_path, 2.0*real(d_alpha_dT_eta(0,p_i))
             fa = fb
           else
             s_del_s = s_del_s + del_s(p_i)
           end if
         end do ! p_i
       end if
-end if
 
       ! Do GL for hydrostatic for any panels that need it; the singularity
       ! correction is alpha_path_c.
@@ -644,7 +608,6 @@ end if
       ! 0.5 for pi.
       a = 1
       do p_i = 1, i_stop             ! along the path
-if ( index(switches,'nhyc') == 0 ) then
         if ( do_gl(p_i) ) then
           b = a + ng
           ! Don't test do_calc: There may be GL corrections even if
@@ -660,20 +623,11 @@ if ( index(switches,'nhyc') == 0 ) then
                & del_zeta(p_i) * &
                & sum( ( alpha_path_f(l,a:b-1) - alpha_path_c(l,p_i) ) * f )
           end do ! l
-if ( index(switches,'klpt') /= 0 .and. d_alpha_dT_eta(0,p_i) /= 0.0 ) &
-print '("paa",3i5,1pg15.7)', sv_i, p_i, n_path, 2.0*real(d_alpha_dT_eta(0,p_i))
           a = b
         end if
-end if
-end do ! p_i
-do p_i = 1, i_stop             ! along the path
-if ( index(switches,'klpt') /= 0 .and. d_alpha_dT_eta(0,p_i) /= 0.0 ) &
-print '("pff",3i5,1pg15.7)', sv_i, p_i, n_path, 2.0*real(d_alpha_dT_eta(0,p_i))
+
         d_alpha_dT_eta(:,p_i) = d_alpha_dT_eta(:,p_i) * ref_cor(p_i) !? + &
-!?          & 0.25_rp * d_delta_dT(p_i,sv_i)
-!?        d_alpha_dT_eta(0,p_i) = d_alpha_dT_eta(0,p_i) + &
-!?          & 0.25_rp * d_delta_dT(p_i,sv_i)
-!d_alpha_dT_eta(:,p_i) = (/ 0.25, 0.5, 0.25 /) * d_delta_dT(p_i,sv_i)
+
       end do ! p_i
 
       !{ {\tt d\_alpha\_dT\_eta} is now really
@@ -697,8 +651,7 @@ print '("pff",3i5,1pg15.7)', sv_i, p_i, n_path, 2.0*real(d_alpha_dT_eta(0,p_i))
         end if
       end do ! p_i
     end do ! sv_i
-if ( index(switches,'klpts') /= 0 ) stop
-if ( index(switches,'klnts') /= 0 ) stop
+
   end subroutine Get_D_Deltau_Pol_DT
 
 !-----------------------------------------------------------------------
@@ -709,6 +662,9 @@ if ( index(switches,'klnts') /= 0 ) stop
 end module Get_D_Deltau_Pol_M
 
 ! $Log$
+! Revision 2.22  2004/02/04 01:18:45  vsnyder
+! Remove accidentally-checked-in test/debug stuff
+!
 ! Revision 2.21  2004/02/03 02:47:55  vsnyder
 ! Progress (hopefully) on polarized temperature derivatives
 !
