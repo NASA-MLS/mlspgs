@@ -118,7 +118,8 @@ contains ! =====     Public Procedures     =============================
     real(r8) :: spacing, origin
     type (L2GPData_T), pointer :: L2GP  ! The l2gp to use 
 
-    integer :: keyNo            ! Entry in the mlscf line
+    integer :: keyNo                    ! Entry in the mlscf line
+    integer :: fieldValue               ! Node in the tree
 
     type (L1BData_T) :: l1bField ! L1B data
 
@@ -155,9 +156,15 @@ contains ! =====     Public Procedures     =============================
     do keyNo = 2, nsons(root)
       son = subtree(keyNo,root)
       field = subtree(1,son)
+      if ( nsons(son) > 1 ) then
+        fieldValue = decoration(subtree(2,son)) ! The field's value
+      else
+        fieldValue = son
+      end if
       field_index = decoration(field)
       ! The tree checker prevents duplicate fields
       got_field(field_index) = .true.
+
       select case ( field_index )
       case ( f_type )
         hGridType = decoration(subtree(2,son))
@@ -165,7 +172,7 @@ contains ! =====     Public Procedures     =============================
         instrumentModule = sub_rosa(subtree(2,son))
         call get_string ( instrumentModule , instrumentModuleName )
       case  ( f_forbidOverspill )
-        forbidOverspill = get_boolean ( field )
+        forbidOverspill = get_boolean ( fieldValue )
       case ( f_height )
         call expr ( subtree(2,son), expr_units, expr_value )
         height = expr_value(1)
@@ -871,6 +878,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.24  2002/05/06 21:59:28  livesey
+! Fixed get_Boolean bug
+!
 ! Revision 2.23  2002/05/06 21:37:40  livesey
 ! Added forbidOverspill option
 !
