@@ -134,6 +134,7 @@ module L2PC_PFA_STRUCTURES
     real(r8), dimension(:), pointer :: dx1_dv0 => NULL()
     real(r8), dimension(:), pointer :: dy_dv0 => NULL()
     real(r8), dimension(:), pointer :: dslabs1_dv0 => NULL()
+    logical :: UseYi ! Are any yi > 0?
     ! For temperature derivatives.  Most are logarithmic derivatives,
     ! so dz_dT really means 1/z dz_dT.
     real(r8), dimension(:), pointer :: dv0s_dT => NULL()    ! not * 1 / v0s
@@ -363,6 +364,12 @@ contains
 
 end module L2PC_PFA_STRUCTURES
 ! $Log$
+! Revision 2.12  2004/03/27 03:35:27  vsnyder
+! Add pointer to catalog in slabs_struct.  Use it so as not to need to drag
+! line centers and line widths around.  Write slabs_lines and slabswint_lines
+! to get sum of beta over all lines; put slabs_struct instead of its components
+! in the calling sequence.
+!
 ! Revision 2.11  2004/03/26 02:29:18  vsnyder
 ! Add tempDer argument in call to AllocateOneSlabs
 !
