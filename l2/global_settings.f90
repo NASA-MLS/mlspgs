@@ -1,10 +1,12 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module GLOBAL_SETTINGS
 
   use MLSL2Options, only: PCF, MAXNUML1BRADIDS, ILLEGALL1BRADID, &
     & LEVEL1_HDFVERSION
+  use MLSStrings, only: utc_to_yyyymmdd
+  use PCFHdr, only: GlobalAttributes
 
   implicit NONE
 
@@ -369,6 +371,18 @@ contains
       end if
     end if
 
+    if ( .not. PCF ) then
+      ! Store appropriate user input as global attributes
+      GlobalAttributes%InputVersion = l2pcf%inputVersion
+      GlobalAttributes%StartUTC = l2pcf%StartUTC
+      GlobalAttributes%EndUTC = l2pcf%EndUTC
+      GlobalAttributes%PGEVersion = l2pcf%PGEVersion
+      ! We don't check on returnStatus--dateless or absolute utc are ok
+      call utc_to_yyyymmdd(GlobalAttributes%StartUTC, returnStatus, &
+        & GlobalAttributes%GranuleYear, GlobalAttributes%GranuleMonth, &
+        & GlobalAttributes%GranuleDay) 
+    endif
+
     if ( index(switches, 'glo3') /= 0 ) then
       Details = 1
     elseif ( index(switches, 'glo2') /= 0 ) then
@@ -687,6 +701,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.62  2002/12/11 22:17:55  pwagner
+! Added error checks on hdf version
+!
 ! Revision 2.61  2002/11/13 01:07:40  pwagner
 ! Actually reads hdf5 radiances
 !
