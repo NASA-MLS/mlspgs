@@ -200,7 +200,7 @@ contains ! =====     Public Procedures     =============================
         fileHandle = mls_io_gen_openF('swopen', .TRUE., returnStatus, &
              & record_length, DFACC_READ, FileName=FileNameString, &
              & debugOption=.true. )
-        if ( fileHandle == -1 ) then
+        if ( fileHandle < 0 ) then
           call announce_error ( son, &
             & 'Failed to open swath file ' // trim(FileNameString) )
         end if
@@ -421,6 +421,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.29  2002/01/18 18:50:08  pwagner
+! Better check when swopen fails
+!
 ! Revision 2.28  2002/01/18 00:55:30  pwagner
 ! Uses MLSFiles for swapi wrappers
 !
