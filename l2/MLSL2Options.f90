@@ -42,7 +42,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! id to print out in response to "--version" command-line option       
   character(LEN=*), dimension(3), parameter :: CURRENT_VERSION_ID = (/ &    
     & 'v1.4 swdev team                                           ', &       
-    & 'Copyright (c) 2003, California Institute of Technology.   ', &       
+    & 'Copyright (c) 2004, California Institute of Technology.   ', &       
     & 'U.S. Government Sponsorship under NASA Contract NAS7-1407.' /)       
      
   ! Set the following to 1 before delivering to sips;                       
@@ -74,7 +74,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   
   ! Assume hdf files w/o explicit hdfVersion field are this                 
   ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc.                   
-  integer            :: DEFAULT_HDFVERSION_WRITE = HDFVERSION_4
+  integer            :: DEFAULT_HDFVERSION_WRITE = HDFVERSION_5
   ! Set to WILDCARDHDFVERSION if you wish to autodetect such files          
   ! on input                                                                
   integer            :: DEFAULT_HDFVERSION_READ = WILDCARDHDFVERSION
@@ -108,6 +108,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.27  2004/03/12 00:28:56  pwagner
+! At last hdf version at output increased to 5
+!
 ! Revision 2.26  2004/01/23 01:06:39  pwagner
 ! Added CATENATESPLITS
 !
