@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module Test_Parse_Signals_m
 
 ! After ingesting the l2cf, it will print "Enter radiometer strings:"
@@ -51,6 +54,9 @@ contains
 end module Test_Parse_Signals_m
 
 ! $Log$
+! Revision 2.6  2001/06/07 21:58:28  pwagner
+! Added Copyright statement
+!
 ! Revision 2.5  2001/04/26 02:44:17  vsnyder
 ! Moved *_indices declarations from init_tables_module to intrinsic
 !
