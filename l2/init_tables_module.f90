@@ -95,7 +95,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: T_FWMTYPE        = t_fillmethod+1
   integer, parameter :: T_GRIDDEDORIGIN  = t_fwmType+1
   integer, parameter :: T_HGRIDTYPE      = t_griddedOrigin+1
-  integer, parameter :: T_MATRIX         = t_hgridtype+1
+  integer, parameter :: T_MASKS          = t_hgridtype+1
+  integer, parameter :: T_MATRIX         = t_masks+1
   integer, parameter :: T_METHOD         = t_matrix+1
   integer, parameter :: T_MODULE         = t_method+1
   integer, parameter :: T_OUTPUTTYPE     = t_module+1
@@ -370,6 +371,7 @@ contains ! =====     Public procedures     =============================
       begin, t+t_fwmType, l+l_linear, l+l_full, l+l_scan, l+l_cloudFull, n+n_dt_def, &
       begin, t+t_hGridType, l+l_explicit, l+l_fixed, l+l_fractional, &
              l+l_height, l+l_regular, l+l_l2gp, n+n_dt_def, &
+      begin, t+t_masks, l+l_full_derivatives, l+l_linalg, n+n_dt_def, &
       begin, t+t_matrix, l+l_plain, l+l_cholesky, l+l_kronecker, l+l_spd, &
              n+n_dt_def, &
       begin, t+t_method, l+l_highcloud,l+l_lowcloud, l+l_newtonian, n+n_dt_def, &
@@ -674,6 +676,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_channels, t+t_numeric, t+t_numeric_range, n+n_field_type, &
              begin, f+f_height, t+t_numeric_range, n+n_field_type, &
              begin, f+f_ignore, t+t_boolean, n+n_field_type, &
+             begin, f+f_mask, t+t_masks, n+n_field_type, &
              begin, f+f_opticalDepth, t+t_numeric, n+n_field_type, ndp+n_spec_def, &
       begin, s+s_forwardModel, & ! Must be AFTER s_vector and s_matrix
              begin, f+f_atmos_der, t+t_boolean, n+n_field_type, &
@@ -861,6 +864,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.198  2002/02/07 02:55:02  vsnyder
+! Add a 'mask' field to the 'setup' spec
+!
 ! Revision 2.197  2002/01/26 00:10:03  livesey
 ! Modified merge command
 !
