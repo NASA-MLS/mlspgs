@@ -31,7 +31,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   end interface
 
   interface DUMP
-    module procedure DUMP_VECTORS, DUMP_VECTOR_TEMPLATES
+    module procedure DUMP_VECTOR, DUMP_VECTORS, DUMP_VECTOR_TEMPLATES
   end interface
 
   interface operator (+)
@@ -552,20 +552,34 @@ contains ! =====     Public Procedures     =============================
     end do
   end function DotVectors
 
+  ! ------------------------------------------------  DUMP_VECTOR  -----
+  subroutine DUMP_VECTOR ( VECTOR, DETAILS, NAME )
+    type(Vector_T), intent(in) :: VECTOR
+    integer, intent(in), optional :: DETAILS
+    character(len=*), intent(in), optional :: NAME
+    call dump_vectors ( (/ vector /), details, name )
+  end subroutine DUMP_VECTOR
+
   ! -----------------------------------------------  DUMP_VECTORS  -----
-  subroutine DUMP_VECTORS ( VECTORS, DETAILS )
+  subroutine DUMP_VECTORS ( VECTORS, DETAILS, NAME )
     type(Vector_T), intent(in) :: VECTORS(:)
     integer, intent(in), optional :: DETAILS ! <=0 => Don't dump quantity values
     !                                        ! >0 Do dump quantity values
     !                                        ! Default 1
+    character(len=*), intent(in), optional :: NAME
     integer :: I, J, MyDetails
     myDetails = 1
     if ( present(details) ) myDetails = details
-    call output ( 'VECTORS: SIZE = ' )
-    call output ( size(vectors), advance='yes' )
+    if ( size(vectors) > 1 ) then
+      call output ( 'VECTORS: SIZE = ' )
+      call output ( size(vectors), advance='yes' )
+    end if
     do i = 1, size(vectors)
       call output ( i, 4 )
       call output ( ':' )
+      if ( present(name) ) then
+        call output ( name ); call output ( ', ' )
+      end if
       if ( vectors(i)%name /= 0 ) then
         call output ( ' Name = ' )
         call display_string ( vectors(i)%name )
@@ -1139,6 +1153,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.38  2001/05/08 20:28:34  vsnyder
+! Added stuff to dump masks
+!
 ! Revision 2.37  2001/05/03 02:12:03  vsnyder
 ! Take out a line of debugging scaffolding
 !
