@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -8,12 +8,13 @@ module TIME_M
 ! Compute either CPU time, in arbitrary units, or wall-clock time, in
 ! seconds since midnight.
 
+  use MLSStrings, only: yyyymmdd_to_dai
   implicit NONE
   private
 
   public :: TIME_NOW, TIME_NOW_D, TIME_NOW_S, USE_WALL_CLOCK, &
    & WAIT, WAIT_LOOP_LIMITS, RETRY, INIT_RETRY, &
-   & TRY_AGAIN, RETRY_SUCCESS, TOO_MANY_RETRIES
+   & TRY_AGAIN, RETRY_SUCCESS, TOO_MANY_RETRIES, TIME_DIVISOR
 
   interface TIME_NOW
     module procedure TIME_NOW_D
@@ -25,6 +26,8 @@ module TIME_M
     module procedure WAIT_S
   end interface
 
+  integer, dimension(3), save :: STARTTIME = -1  ! Reset on first call to time_now
+  integer, save :: TIME_DIVISOR = 1  ! Divide by this before returning result
   logical, save :: USE_WALL_CLOCK = .false.
   integer, save :: WAIT_LOOP_LIMITS = 100
   integer, save :: TRY_NUMBER
@@ -160,6 +163,9 @@ contains
 end module TIME_M
 
 !$Log$
+!Revision 2.4  2003/12/05 00:53:26  pwagner
+!Added possible TIME_DIVISOR to scale results from time_now
+!
 !Revision 2.3  2002/10/08 00:09:15  pwagner
 !Added idents to survive zealous Lahey optimizer
 !
