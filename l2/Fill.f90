@@ -2966,7 +2966,7 @@ contains ! =====     Public Procedures     =============================
 
     ! ------------------------------------------- FillColAbundance ---
     subroutine FillColAbundance ( key, qty, bndPressQty, vmrQty, &
-    & firstInstance, lastInstance )
+      & firstInstance, lastInstance )
       ! A special fill according to Appendix A of EOS MLS ATBD
       ! JPL D-16159
       ! EOS MLS DRL 601 (part 3)
@@ -2987,154 +2987,102 @@ contains ! =====     Public Procedures     =============================
       !    (unlike join which has to worry about chunks and overlaps)
       integer, intent(in) :: KEY
       type (VectorValue_T), intent(inout) :: QTY
-      type (VectorValue_T), intent(in) ::    bndPressQty
-      type (VectorValue_T), intent(in) ::    vmrQty
-      integer, intent(in), optional ::       firstInstance, lastInstance
+      type (VectorValue_T), intent(in) :: BNDPRESSQTY
+      type (VectorValue_T), intent(in) :: VMRQTY
+      integer, intent(in), optional :: FIRSTINSTANCE
+      integer, intent(in), optional :: LASTINSTANCE
       ! The last two are set if only part (e.g. overlap regions) of the quantity
       ! is to be stored in the column data.
 
-      ! Local variables
-      real (r8) :: AoverMg         ! A/(M g) from Appendix A
-      logical ::   zeta_surfs      ! If true, surfs are zeta-type; else pressures
-      integer ::   status
-      integer ::   surface
-      integer ::   instance
-      integer ::   surfaceInstance
-      integer ::   firstSurface
-      integer ::   UseFirstInstance, UseLastInstance, &
-      &            NoOutputInstances
-      real (r8) :: columnSum
-      real (r8) :: Delta_p_plus    ! p[j+1] - p[j]
-      real (r8) :: Delta_p_minus   ! p[j-1] - p[j]
-      real (r8) :: Delta_log_plus  ! ln p[j+1] - ln p[j]
-      real (r8) :: Delta_log_minus ! ln p[j-1] - ln p[j]
+      ! Local parameters
+      real(r8), parameter :: AOVERMG = 4.12e5 / (2.687 * 0.192)
 
-      real (r8), allocatable, dimension(:) :: p         ! p[i] in hPa
+      ! Local variables
+      integer :: SURFACE
+      integer :: INSTANCE
+      integer :: FIRSTSURFACE
+      integer :: USEFIRSTINSTANCE
+      integer :: USELASTINSTANCE
+      integer :: NOOUTPUTINSTANCES
+      real (r8) :: COLUMNSUM
+      real (r8) :: DELTA_P_PLUS    ! p[j+1] - p[j]
+      real (r8) :: DELTA_P_MINUS   ! p[j-1] - p[j]
+      real (r8) :: DELTA_LOG_PLUS  ! ln p[j+1] - ln p[j]
+      real (r8) :: DELTA_LOG_MINUS ! ln p[j-1] - ln p[j]
+
+      real (r8), pointer, dimension(:) :: P         ! p[i] in hPa
 
       ! Executable code
       ! First check that things are OK.
       if ( (qty%template%quantityType /= l_columnAbundance) .or. &
         &  (bndPressQty%template%quantityType /= l_boundaryPressure) .or. &
         &  (vmrQty%template%quantityType /= l_vmr) ) then
-            call Announce_error ( key, No_Error_code, &
-                & 'Wrong quantity type found while filling column abundance'  )
+        call Announce_error ( key, No_Error_code, &
+          & 'Wrong quantity type found while filling column abundance'  )
         return
       else if ( qty%template%molecule /= vmrQty%template%molecule) then
-            call Announce_error ( key, No_Error_code, &
-                & 'Attempt to fill column abundance with different molecule'  )
+        call Announce_error ( key, No_Error_code, &
+          & 'Attempt to fill column abundance with different molecule'  )
         return
-      else if ( &
-      & .not. ( &
-      & DoHgridsMatch( qty, vmrQty ) &
-      & .and. &
-      & DoHgridsMatch( qty, bndPressQty ) &
-      & ) &
-      & ) then
-            call Announce_error ( key, No_Error_code, &
-                & 'Attempt to fill column abundance with different HGrids'  )
+      else if ( .not. ( DoHgridsMatch( qty, vmrQty ) .and. &
+        & DoHgridsMatch( qty, bndPressQty ) ) ) then
+        call Announce_error ( key, No_Error_code, &
+          & 'Attempt to fill column abundance with different HGrids'  )
         return
-      else if ( .not. &
-      & any(vmrQty%template%verticalCoordinate == (/l_pressure, l_zeta/)) &
-      & ) then
-            call Announce_error ( key, No_Error_code, &
-                & 'Fill column abundance, but vmr not on [log]pressure surfs.'  )
+      else if ( .not. any(vmrQty%template%verticalCoordinate == &
+        & (/l_zeta/)) ) then
+        call Announce_error ( key, No_Error_code, &
+          & 'Fill column abundance, but vmr not on zeta surfs.'  )
         return
       end if
 
       ! Work out what to do with the first and last Instance information
-
-      if ( PRESENT(firstInstance) ) then
-        useFirstInstance = firstInstance
-      else
-        useFirstInstance = 1
-      end if
-
-      if ( PRESENT(lastInstance) ) then
-        useLastInstance = lastInstance
-      else
-        useLastInstance = qty%template%noInstances
-      end if
+      useFirstInstance = 1
+      useLastInstance = qty%template%noInstances
+      if ( present ( firstInstance ) ) useFirstInstance = firstInstance
+      if ( present ( lastInstance ) ) useLastInstance = lastInstance
       noOutputInstances = useLastInstance-useFirstInstance+1
+
       ! If we've not been asked to output anything then don't carry on
       if ( noOutputInstances < 1 ) return
-     !    AoverMg = 4.12e25 / (2.687e20 * 0.192)
-     !    This assumes that
-     ! (1) p is in hPa
-     ! (2) f is in PHYQ_vmr (*not* ppmv)
-     AoverMg = 4.12e5 / (2.687 * 0.192)
+      ! AoverMg = 4.12e25 / (2.687e20 * 0.192)
+      ! This assumes that
+      ! (1) p is in hPa
+      ! (2) f is in PHYQ_vmr (*not* ppmv)
 
-     zeta_surfs = vmrQty%template%verticalCoordinate == l_zeta
-     allocate(p(vmrQty%template%noSurfs), stat=status)
-     if(status /= 0) then
-            call Announce_error ( key, No_Error_code, &
-                & 'Error in allocating p'  )
-        return
-     end if   
-  !   do instance=1, vmrQty%template%noInstances
-     do instance=useFirstInstance, useLastInstance
-        if(vmrQty%template%coherent) then
-           surfaceInstance=1
-        else
-           surfaceInstance=instance
-        end if
+      nullify ( p )
+      call allocate_test ( p, vmrQty%template%noSurfs, 'p', ModuleName )
+      p = 10.0 ** ( - vmrQty%template%surfs(:,instance) )
 
-        if(zeta_surfs) then
-           ! Invert zeta = -log10(p)
-           do surface=1, vmrQty%template%noSurfs
-              p(surface) = exp(-log(10.)* &
-              & vmrQty%template%surfs(surface, surfaceInstance))
-           end do
-        else
-           do surface=1, vmrQty%template%noSurfs
-              p(surface) = vmrQty%template%surfs(surface, surfaceInstance)
-           end do
-        end if
-
-        if(p(1) &
-           &  < bndPressQty%values(1, instance)) then
-            call Announce_error ( key, No_Error_code, &
-                & 'Fill column abundance, but tropopause below VGrid'  )
-        end if
-
-     ! Find 1st surface at or above tropopause
-     ! (i.e., at a pressure equal to or less than boundaryPressure)
+      do instance = useFirstInstance, useLastInstance
+        ! Find 1st surface at or above tropopause
+        ! (i.e., at a pressure equal to or less than boundaryPressure)
+        call Hunt ( vmrQty%template%surfs(:,1), &
+          & -log10 ( bndPressQty%values(1,instance) ), firstSurface )
         do surface=1, vmrQty%template%noSurfs
-           if(p(surface) &
-           &  <= bndPressQty%values(1, instance)) exit
+          if ( p(surface) <= bndPressQty%values(1, instance)) exit
         end do
-        firstSurface = surface
-        if(firstSurface > vmrQty%template%noSurfs-2) then
-            call Announce_error ( key, No_Error_code, &
-                & 'Fill column abundance, but tropopause above VGrid'  )
-        end if
-     ! Do summation
-     ! Initialize sum, Deltas
-        columnSum = 0.
+
+        ! Do summation
+        ! Initialize sum, Deltas
+        columnSum = 0.0
         Delta_p_plus = p(firstSurface+1) - p(firstSurface)
         Delta_log_plus = log(p(firstSurface+1)) - log(p(firstSurface))
-     ! Loop over surfaces from tropoause+1 to uppermost-1
-        do surface = firstSurface+1, vmrQty%template%noSurfs-1
-           Delta_p_minus = - Delta_p_plus
-           Delta_log_minus = - Delta_log_plus
-           Delta_p_plus = p(surface+1) - p(surface)
-           Delta_log_plus = log(p(surface+1)) - log(p(surface))
-           columnSum = columnSum + &
-           & vmrQty%values(surface, instance)* &
-           & ( &
-           & Delta_p_minus/Delta_log_minus &
-           & - &
-           & Delta_p_plus/Delta_log_plus &
-           & )          
+        ! Loop over surfaces from tropoause+1 to uppermost-1
+        do surface = firstSurface + 1, vmrQty%template%noSurfs - 1
+          Delta_p_minus = - Delta_p_plus
+          Delta_log_minus = - Delta_log_plus
+          Delta_p_plus = p(surface+1) - p(surface)
+          Delta_log_plus = log(p(surface+1)) - log(p(surface))
+          columnSum = columnSum + &
+            & vmrQty%values(surface, instance) * &
+            & ( Delta_p_minus/Delta_log_minus - &
+            &   Delta_p_plus/Delta_log_plus )          
         end do
-        qty%values(1, instance) = AoverMg * columnSum
-     end do
+        qty%values ( 1, instance ) = AoverMg * columnSum
+      end do
 
-     deallocate(p, stat=status)
-     if(status /= 0) then
-            call Announce_error ( key, No_Error_code, &
-                & 'Error in deallocating p'  )
-     end if   
-
+      call Deallocate_test ( p, 'p', ModuleName )
     end subroutine FillColAbundance
 
     ! ------------------------------------- FillFoldedRadiance ---
@@ -5767,6 +5715,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.224  2003/05/26 06:32:50  livesey
+! Various mainly cosmetic changes to the column stuff
+!
 ! Revision 2.223  2003/05/22 02:23:15  livesey
 ! Rewrite of explicit fill to make spread option more flexible.
 !
