@@ -285,12 +285,12 @@ contains ! =====     Public procedures     =============================
                           N_NAME_DEF, N_SECTION, N_SPEC_DEF
 
   ! Put intrinsic predefined identifiers into the symbol table.
-    call init_MLSSignals ( Data_Type_Indices, Field_Indices, Lit_Indices, &
+    call init_Spectroscopy ( Data_Type_Indices, Field_Indices, Lit_Indices, &
     & Parm_Indices, Section_Indices, Spec_Indices )
 
   ! Put nonintrinsic predefined identifiers into the symbol table.
     ! Put enumeration type names into the symbol table
-!   data_type_indices(t_criticalmodule) =  add_ident ( 'criticalModule' )
+    data_type_indices(t_criticalmodule) =  add_ident ( 'criticalModule' )
     data_type_indices(t_fillmethod) =      add_ident ( 'fillMethod' )
     data_type_indices(t_fwmType) =         add_ident ( 'fwmType' )
     data_type_indices(t_griddedOrigin) =   add_ident ( 'griddedOrigin' )
@@ -815,6 +815,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.64  2001/04/03 19:42:27  vsnyder
+! Add call to Init_Spectroscopy
+!
 ! Revision 2.63  2001/04/03 19:11:28  vsnyder
 ! Account for the changed order of initialization (intrinsic, Molecule,
 ! MLSSignals) and the new make_tree.f9h.  Change the call to initialize
