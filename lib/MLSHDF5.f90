@@ -99,7 +99,8 @@ module MLSHDF5
 
   interface GetHDF5Attribute
     module procedure GetHDF5Attribute_int, GetHDF5Attribute_logical, &
-      & GetHDF5Attribute_string, GetHDF5Attribute_snglarr1
+      & GetHDF5Attribute_string, GetHDF5Attribute_sngl, GetHDF5Attribute_dbl, &
+      & GetHDF5Attribute_snglarr1
   end interface
 
   interface IsHDF5AttributePresent
@@ -108,17 +109,19 @@ module MLSHDF5
   end interface
 
   interface SaveAsHDF5DS
-    module procedure SaveAsHDF5DS_intarr1, &
+    module procedure SaveAsHDF5DS_intarr1, SaveAsHDF5DS_intarr2, &
       & SaveAsHDF5DS_dblarr1, SaveAsHDF5DS_dblarr2, &
       & SaveAsHDF5DS_snglarr1, SaveAsHDF5DS_snglarr2, SaveAsHDF5DS_snglarr3, &
-      & SaveAsHDF5DS_snglarr4, SaveAsHDF5DS_charsclr
+      & SaveAsHDF5DS_snglarr4, &
+      & SaveAsHDF5DS_charsclr, SaveAsHDF5DS_chararr1, SaveAsHDF5DS_chararr2
   end interface
 
   interface LoadFromHDF5DS
-    module procedure LoadFromHDF5DS_intarr1, &
+    module procedure LoadFromHDF5DS_intarr1, LoadFromHDF5DS_intarr2, &
       LoadFromHDF5DS_dblarr1, LoadFromHDF5DS_dblarr2, LoadFromHDF5DS_dblarr3, &
       LoadFromHDF5DS_snglarr1, LoadFromHDF5DS_snglarr2, &
-      & LoadFromHDF5DS_snglarr3, LoadFromHDF5DS_snglarr4
+      & LoadFromHDF5DS_snglarr3, LoadFromHDF5DS_snglarr4, &
+      & LoadFromHDF5DS_chararr1
   end interface
 
   ! Local parameters
@@ -725,6 +728,58 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to close 1d attribute array  '//trim(name) )
   end subroutine GetHDF5Attribute_snglarr1
    
+  ! ------------------------------------------- GetHDF5Attribute_sngl
+  subroutine GetHDF5Attribute_sngl ( itemID, name, value )
+    integer, intent(in) :: ITEMID       ! Group etc. to get attribute from
+    character (len=*), intent(in) :: NAME ! Name of attribute
+    real(r4), intent(out) :: VALUE     ! The attribute result
+
+    ! Local variables
+    integer :: ATTRID                   ! ID for attribute
+    integer :: STATUS                   ! Flag from HDF5
+
+    ! Executable code
+    call h5aOpen_name_f ( itemID, name, attrID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open attribute '//trim(name) )
+    ! Note we're going to assume here that the attribute indeed represents the
+    ! right type, and that we won't overflow memory etc. by accidentally trying
+    ! to read too big array into ours.
+    call h5aread_f ( attrID, H5T_NATIVE_REAL, value, &
+      & ones, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to read sngl attribute '//trim(name) )
+    call h5aClose_f ( attrID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close sngl attribute  '//trim(name) )
+  end subroutine GetHDF5Attribute_sngl
+   
+  ! ------------------------------------------- GetHDF5Attribute_dbl
+  subroutine GetHDF5Attribute_dbl ( itemID, name, value )
+    integer, intent(in) :: ITEMID       ! Group etc. to get attribute from
+    character (len=*), intent(in) :: NAME ! Name of attribute
+    real(r8), intent(out) :: VALUE     ! The attribute result
+
+    ! Local variables
+    integer :: ATTRID                   ! ID for attribute
+    integer :: STATUS                   ! Flag from HDF5
+
+    ! Executable code
+    call h5aOpen_name_f ( itemID, name, attrID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open attribute '//trim(name) )
+    ! Note we're going to assume here that the attribute indeed represents the
+    ! right type, and that we won't overflow memory etc. by accidentally trying
+    ! to read too big array into ours.
+    call h5aread_f ( attrID, H5T_NATIVE_DOUBLE, value, &
+      & ones, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to read dble attribute '//trim(name) )
+    call h5aClose_f ( attrID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close dble attribute  '//trim(name) )
+  end subroutine GetHDF5Attribute_dbl
+   
   ! ------------------------------------- GetHDF5DSDims
   subroutine GetHDF5DSDims ( FileID, name, DIMS, maxDims )
     integer, intent(in) :: FILEID       ! fileID
@@ -1058,6 +1113,104 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to close dataspace for 1D integer array '//trim(name) )
   end subroutine SaveAsHDF5DS_charsclr
 
+  ! --------------------------------------------- SaveAsHDF5DS_chararr1
+  subroutine SaveAsHDF5DS_chararr1 ( locID, name, value )
+    ! This routine does the initial work of creating a dataset
+    integer, intent(in) :: LOCID        ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    character (len=*), intent(in) :: VALUE(:)     ! The array itself
+
+    ! Local variables
+    integer :: spaceID                  ! ID for dataspace
+    integer (HID_T) :: setID            ! ID for dataset
+    integer :: status                   ! Flag from HDF5
+    integer, dimension(1) :: SHP        ! Shape
+    integer :: STRINGTYPE               ! Type for string
+
+    ! Executable code
+    shp = shape(value)
+    ! Create a data type for this string
+    call h5tcopy_f( H5T_NATIVE_CHARACTER, stringtype, status ) 
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to create stringtype for array'//trim(name) )
+    call h5tset_size_f(stringtype, max(len_trim(value(1)), 1), status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to set size for stringtype '//trim(name) )
+    ! Create the dataspace
+    call h5sCreate_simple_f ( 1, int(shp,hSize_T), spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to create dataspace for 1D char array '//trim(name) )
+    ! Create the dataset
+    call h5dCreate_f ( locID, trim(name), stringtype, spaceID, setID, &
+      & status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to create dataset for 1D char array '//trim(name) )
+    ! Write the data
+    call h5dWrite_f ( setID, stringtype, value, &
+      & int ( (/ shp, ones(1:6) /), hID_T ), status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to write to dataset for 1D char array '//trim(name) )
+    ! Close things
+    call h5dClose_F ( setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close dataset for 1D char array '//trim(name) )
+    call h5sClose_F ( spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close dataspace for 1D char array '//trim(name) )
+    call h5tClose_f ( stringtype, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close stringtype '//trim(name) )
+  end subroutine SaveAsHDF5DS_chararr1
+
+  ! --------------------------------------------- SaveAsHDF5DS_chararr2
+  subroutine SaveAsHDF5DS_chararr2 ( locID, name, value )
+    ! This routine does the initial work of creating a dataset
+    integer, intent(in) :: LOCID        ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    character (len=*), intent(in) :: VALUE(:,:)     ! The array itself
+
+    ! Local variables
+    integer :: spaceID                  ! ID for dataspace
+    integer (HID_T) :: setID            ! ID for dataset
+    integer :: status                   ! Flag from HDF5
+    integer, dimension(2) :: SHP        ! Shape
+    integer :: STRINGTYPE               ! Type for string
+
+    ! Executable code
+    shp = shape(value)
+    ! Create a data type for this string
+    call h5tcopy_f( H5T_NATIVE_CHARACTER, stringtype, status ) 
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to create stringtype for array'//trim(name) )
+    call h5tset_size_f(stringtype, max(len_trim(value(1,1)), 1), status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to set size for stringtype '//trim(name) )
+    ! Create the dataspace
+    call h5sCreate_simple_f ( 2, int(shp,hSize_T), spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to create dataspace for 2D char array '//trim(name) )
+    ! Create the dataset
+    call h5dCreate_f ( locID, trim(name), stringtype, spaceID, setID, &
+      & status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to create dataset for 2D char array '//trim(name) )
+    ! Write the data
+    call h5dWrite_f ( setID, stringtype, value, &
+      & int ( (/ shp, ones(1:5) /), hID_T ), status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to write to dataset for 2D char array '//trim(name) )
+    ! Close things
+    call h5dClose_F ( setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close dataset for 2D char array '//trim(name) )
+    call h5sClose_F ( spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close dataspace for 2D char array '//trim(name) )
+    call h5tClose_f ( stringtype, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close stringtype '//trim(name) )
+  end subroutine SaveAsHDF5DS_chararr2
+
   ! --------------------------------------------- SaveAsHDF5DS_intarr1
   subroutine SaveAsHDF5DS_intarr1 ( locID, name, value )
     ! This routine does the initial work of creating a dataset
@@ -1095,6 +1248,44 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close dataspace for 1D integer array '//trim(name) )
   end subroutine SaveAsHDF5DS_intarr1
+
+  ! --------------------------------------------- SaveAsHDF5DS_intarr2
+  subroutine SaveAsHDF5DS_intarr2 ( locID, name, value )
+    ! This routine does the initial work of creating a dataset
+    integer, intent(in) :: LOCID        ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    integer, intent(in) :: VALUE(:,:)     ! The array itself
+
+    ! Local variables
+    integer :: spaceID                  ! ID for dataspace
+    integer (HID_T) :: setID            ! ID for dataset
+    integer :: status                   ! Flag from HDF5
+    integer, dimension(2) :: SHP        ! Shape
+
+    ! Executable code
+    ! Create the dataspace
+    shp = shape(value)
+    call h5sCreate_simple_f ( 2, int(shp,hSize_T), spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to create dataspace for 2D integer array '//trim(name) )
+    ! Create the dataset
+    call h5dCreate_f ( locID, trim(name), H5T_NATIVE_INTEGER, spaceID, setID, &
+      & status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to create dataset for 2D integer array '//trim(name) )
+    ! Write the data
+    call h5dWrite_f ( setID, H5T_NATIVE_INTEGER, value, &
+      & int ( (/ shp, ones(1:5) /), hID_T ), status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to write to dataset for 2D integer array '//trim(name) )
+    ! Close things
+    call h5dClose_F ( setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close dataset for 2D integer array '//trim(name) )
+    call h5sClose_F ( spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close dataspace for 2D integer array '//trim(name) )
+  end subroutine SaveAsHDF5DS_intarr2
 
   ! --------------------------------------------- SaveAsHDF5DS_dblarr1
   subroutine SaveAsHDF5DS_dblarr1 ( locID, name, value )
@@ -1631,6 +1822,154 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to close dataset for 4D real array '//trim(name) )
   end subroutine SaveAsHDF5DS_snglarr4
 
+  ! ----------------------------------- LoadFromHDF5DS_chararr1
+  subroutine LoadFromHDF5DS_chararr1 ( locID, name, value, &
+    & start, count, stride, block )
+    ! This routine loads a predefined array with values from a DS
+    integer, intent(in) :: LOCID        ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    character (len=*), intent(out) :: VALUE(:)    ! The array itself
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
+    ! Local parameters
+    integer, parameter :: MAXDIMENSIONS = 7
+
+    ! Local variables
+    integer :: STATUS                   ! Flag from HDF5
+    integer, dimension(1) :: SHP        ! Shape of value
+    integer :: SPACEID                  ! ID of dataspace
+    integer :: MEMSPACEID                  ! ID of dataspace
+    integer :: SETID                    ! ID of dataset
+    integer :: RANK                     ! Rank in file
+    integer (kind=hSize_t) , dimension(maxDimensions) :: DIMS, MAXDIMS ! Dimensions in file
+    integer :: STRINGTYPE               ! String type
+    integer :: STRINGSIZE               ! String size
+
+    ! Executable code
+    shp = shape ( value )
+    call h5dOpen_f ( locID, name, setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataset '//trim(name) )
+    call h5dGet_type_f ( setID, stringType, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to get type for 1D char array '//trim(name) )
+    call h5tGet_size_f ( stringType, stringSize, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to get size for 1D char array '//trim(name) )
+    if ( stringSize > len(value(1)) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Value too long to fit in space given for 1D car array '//trim(name) )
+    call h5dget_space_f ( setID, spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataspace for dataset '//trim(name) )
+    if ( present(start) ) then
+      call mls_hyperslab(spaceID, shape(value), name, memspaceID, &
+        & start, count, stride, block)
+      call h5dread_f(setID, stringtype, value, &
+        & (/ shape(value), ones(1:6) /), status, memspaceID, spaceID )
+    else
+      call check_for_fit(spaceID, shape(value), name)
+      call h5dread_f ( setID, stringtype, value, &
+        & (/ shape(value), ones(1:6) /), status )
+    endif
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to read dataset '//trim(name) )
+    ! Close up
+    call h5sClose_f ( spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close dataspace for dataset '//trim(name) )
+    if ( present(start) ) then
+      call h5sClose_f ( memspaceID, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to close hyperslab dataspace for dataset '//trim(name) )
+    endif
+    call h5dClose_f ( setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close dataset '//trim(name) )
+    call h5tClose_f ( stringType, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close string type for 1D char array '//trim(name) )
+  end subroutine LoadFromHDF5DS_chararr1
+
+  ! ----------------------------------- LoadFromHDF5DS_chararr2
+  subroutine LoadFromHDF5DS_chararr2 ( locID, name, value, &
+    & start, count, stride, block )
+    ! This routine loads a predefined array with values from a DS
+    integer, intent(in) :: LOCID        ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    character (len=*), intent(out) :: VALUE(:,:)    ! The array itself
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
+    ! Local parameters
+    integer, parameter :: MAXDIMENSIONS = 7
+
+    ! Local variables
+    integer :: STATUS                   ! Flag from HDF5
+    integer, dimension(2) :: SHP        ! Shape of value
+    integer :: SPACEID                  ! ID of dataspace
+    integer :: MEMSPACEID                  ! ID of dataspace
+    integer :: SETID                    ! ID of dataset
+    integer :: RANK                     ! Rank in file
+    integer (kind=hSize_t) , dimension(maxDimensions) :: DIMS, MAXDIMS ! Dimensions in file
+    integer :: STRINGTYPE               ! String type
+    integer :: STRINGSIZE               ! String size
+
+    ! Executable code
+    shp = shape ( value )
+    call h5dOpen_f ( locID, name, setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataset '//trim(name) )
+    call h5dGet_type_f ( setID, stringType, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to get type for 2D char array '//trim(name) )
+    call h5tGet_size_f ( stringType, stringSize, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to get size for 2D char array '//trim(name) )
+    if ( stringSize > len(value(1,1)) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Value too long to fit in space given for 2D char array '//trim(name) )
+    call h5dget_space_f ( setID, spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataspace for dataset '//trim(name) )
+    if ( present(start) ) then
+      call mls_hyperslab(spaceID, shape(value), name, memspaceID, &
+        & start, count, stride, block)
+      call h5dread_f(setID, stringtype, value, &
+        & (/ shape(value), ones(1:5) /), status, memspaceID, spaceID )
+    else
+      call check_for_fit(spaceID, shape(value), name)
+      call h5dread_f ( setID, stringtype, value, &
+        & (/ shape(value), ones(1:5) /), status )
+    endif
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to read dataset '//trim(name) )
+    ! Close up
+    call h5sClose_f ( spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close dataspace for dataset '//trim(name) )
+    if ( present(start) ) then
+      call h5sClose_f ( memspaceID, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to close hyperslab dataspace for dataset '//trim(name) )
+    endif
+    call h5dClose_f ( setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close dataset '//trim(name) )
+    call h5tClose_f ( stringType, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close string type for 2D char array '//trim(name) )
+  end subroutine LoadFromHDF5DS_chararr2
+
   ! ----------------------------------- LoadFromHDF5DS_intarr1
   subroutine LoadFromHDF5DS_intarr1 ( locID, name, value, &
     & start, count, stride, block )
@@ -1691,6 +2030,67 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close dataset '//trim(name) )
   end subroutine LoadFromHDF5DS_intarr1
+
+  ! ----------------------------------- LoadFromHDF5DS_intarr2
+  subroutine LoadFromHDF5DS_intarr2 ( locID, name, value, &
+    & start, count, stride, block )
+    ! This routine loads a predefined array with values from a DS
+    integer, intent(in) :: LOCID        ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    integer, intent(out) :: VALUE(:,:)    ! The array itself
+    integer, dimension(:), optional, intent(in) :: start
+                                 ! Starting coordinatess of hyperslab
+    integer, dimension(:), optional, intent(in) :: count
+                                 ! Num of blocks to select from dataspace
+    integer, dimension(:), optional, intent(in) :: stride
+                                 ! How many elements to move in each direction
+    integer, dimension(:), optional, intent(in) :: block
+                                 ! Size of element block
+    ! Local parameters
+    integer, parameter :: MAXDIMENSIONS = 7
+
+    ! Local variables
+    integer :: STATUS                   ! Flag from HDF5
+    integer, dimension(2) :: SHP        ! Shape of value
+    integer :: SPACEID                  ! ID of dataspace
+    integer :: MEMSPACEID                  ! ID of dataspace
+    integer :: SETID                    ! ID of dataset
+    integer :: RANK                     ! Rank in file
+    integer (kind=hSize_t) , dimension(maxDimensions) :: DIMS, MAXDIMS ! Dimensions in file
+
+    ! Executable code
+    shp = shape ( value )
+    call h5dOpen_f ( locID, name, setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataset '//trim(name) )
+    call h5dget_space_f ( setID, spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataspace for dataset '//trim(name) )
+    if ( present(start) ) then
+      call mls_hyperslab(spaceID, shape(value), name, memspaceID, &
+        & start, count, stride, block)
+      call h5dread_f(setID, H5T_NATIVE_INTEGER, value, &
+        & (/ shape(value), ones(1:5) /), status, memspaceID, spaceID )
+    else
+      call check_for_fit(spaceID, shape(value), name)
+      call h5dread_f ( setID, H5T_NATIVE_INTEGER, value, &
+        & (/ shape(value), ones(1:5) /), status )
+    endif
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to read dataset '//trim(name) )
+    ! Close up
+    call h5sClose_f ( spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close dataspace for dataset '//trim(name) )
+    if ( present(start) ) then
+      call h5sClose_f ( memspaceID, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to close hyperslab dataspace for dataset '//trim(name) )
+    endif
+    call h5dClose_f ( setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close dataset '//trim(name) )
+  end subroutine LoadFromHDF5DS_intarr2
 
   ! ----------------------------------- LoadFromHDF5DS_dblarr1
   subroutine LoadFromHDF5DS_dblarr1 ( locID, name, value, &
@@ -2315,7 +2715,7 @@ contains ! ======================= Public Procedures =========================
     character (len=*), intent(in) :: names   ! comma-separated list of names
     integer, dimension(:), optional, intent(in)          :: ints
     real, dimension(:), optional, intent(in)             :: reals
-    double precision, dimension(:), optional, intent(in) :: doubles
+    real(r8), dimension(:), optional, intent(in)         :: doubles
     logical, optional, intent(in)                        :: no_pairs
     ! Local variables
     logical, parameter          :: clean=.false.
@@ -2416,6 +2816,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.24  2003/05/12 18:08:10  pwagner
+! Added 1d, 2d char array dsets, 2d int dset, gets of sngl, dbl scalar attrs
+!
 ! Revision 2.23  2003/05/12 16:51:20  livesey
 ! Added the lit and string index stuff
 !
