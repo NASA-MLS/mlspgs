@@ -15,7 +15,7 @@ module LinearizedForwardModel_m
   use Intrinsic, only: L_NONE, L_RADIANCE, L_TEMPERATURE, L_PTAN, L_VMR, &
     & L_SIDEBANDRATIO, L_ZETA
   use L2PC_m, only: L2PCDATABASE, BINSELECTORS
-  use ManipulateVectorQuantities, only: FINDCLOSESTINSTANCES
+  use ManipulateVectorQuantities, only: FINDONECLOSESTINSTANCE
   use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, &
     & MATRIXELEMENT_T, CREATEBLOCK, DENSIFY
   use MatrixModule_1, only: MATRIX_T, MULTIPLYMATRIXVECTORNOT, DUMP, &
@@ -338,8 +338,7 @@ contains ! =====     Public Procedures     =============================
 
         ! OK, we're legit, lets get going.
         instanceLen = l2pcQ%template%instanceLen
-        call FindClosestInstances ( stateQ, radiance, closestInstances)
-        closestInstance=closestInstances(maf)
+        closestInstance = FindOneClosestInstance ( stateQ, radiance, maf )
 
         ! Do we need derivatives for this?
         doDerivatives = present(jacobian) .and. foundInFirst
@@ -695,6 +694,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.6  2002/01/21 22:52:21  livesey
+! A few more comments
+!
 ! Revision 2.5  2002/01/21 22:46:08  livesey
 ! Wrote, but not hooked up SelectL2PCBin
 !
