@@ -8,41 +8,43 @@ Switches (set by -S option in mlsl2's command line):
   S => MLSSignals
   V => VGrids (in globalSettings)
 
-  apr[n] => apriori file info [higher the n, more the info]                     
-  cab =>    Column Abundance-containing l2gp swaths dumped               
-  chi =>    chi-related diagnostic quantities dumped                     
-  cho =>    How good was the Cholesky decomposition?                     
-  chu =>    Enslaved chunk processing                                    
-  col =>    Column scale vector for Newton iteration                     
-  diag =>   diagonal of factored normal equations                        
-  dvec =>   'DX' vector during Newton iteration                          
-  fac =>    Factors of normal equations during retriever iterations      
-  fvec =>   'F' vector during Newton iteration                           
-  glo[n] => Global settings, info on l1b files [higher the n, more the info]                     
-  grid =>   Gridded data quantities                     
-  gvec =>   Gradient vector during Newton iteration                      
-  jac =>    Jacobian during retriever iterations                         
-  l1b =>    l1b quantities dumped (only when filled from)                
-  l2aux =>  l2aux quantities (all) dumped                                
-  l2gp =>   l2gp swaths (all) dumped                                     
-  log =>    Log file messages                                            
-  mas =>    Activities of the PVM master task                            
-  msk =>    Mask set up by subset command in Retrieve                    
-  neq =>    Normal equations during retriever iterations                 
+  apr[n] => apriori file info [higher the n, more the info]
+  cab =>    Column Abundance-containing l2gp swaths dumped
+  chi =>    chi-related diagnostic quantities dumped
+  cho =>    How good was the Cholesky decomposition?
+  chu =>    Enslaved chunk processing
+  ckbk =>   Check sparse matrix algebra against full dense version
+  col =>    Column scale vector for Newton iteration
+  diag =>   diagonal of factored normal equations
+  dvec =>   'DX' vector during Newton iteration
+  fac =>    Factors of normal equations during retriever iterations
+  fvec =>   'F' vector during Newton iteration
+  glo[n] => Global settings, info on l1b files [higher the n, more the info]
+  grid =>   Gridded data quantities
+  gvec =>   Gradient vector during Newton iteration
+  jac =>    Jacobian during retriever iterations
+  l1b =>    l1b quantities dumped (only when filled from)
+  l2aux =>  l2aux quantities (all) dumped
+  l2gp =>   l2gp swaths (all) dumped
+  log =>    Log file messages
+  mas =>    Activities of the PVM master task
+  msk =>    Mask set up by subset command in Retrieve
   ndb =>    Dump the Newton method's internal variables before every step
-  nwt =>    Action flag at each return from Newton solver                
+  neq =>    Normal equations during retriever iterations
+  nwt =>    Action flag at each return from Newton solver
   pcf[n] => open init params obtained from pcf,
-            info on l1b files [higher the n, more the info]                     
-  pro =>    Proclaim each product file: l2gp, l2aux, l2dgg, l2pc, meta   
-  qtmp =>   Quantity templates being constructed                         
-  rad =>    Radiances in ForwardModelInterface                           
-  sca =>    Scalars of interest to the Newton method                     
-  slv =>    Show output of slaves using pvmfcatchout                     
-  spa =>    Sparsity structure of fac, jac, neq                          
-  svec =>   Final state vector after Newton iteration                    
-  time =>   Summarize time consumed by each code section                 
-  tps =>    Test_Parse_Signals                                           
-  xvec =>   'X' vector during Newton iteration                           
+            info on l1b files [higher the n, more the info]
+  pro =>    Proclaim each product file: l2gp, l2aux, l2dgg, l2pc, meta
+  qtmp =>   Quantity templates being constructed
+  rad =>    Radiances in ForwardModelInterface
+  sca =>    Scalars of interest to the Newton method
+  slv =>    Show output of slaves using pvmfcatchout
+  spa =>    Sparsity structure of fac, jac, neq
+  svec =>   Final state vector after Newton iteration
+  time =>   Summarize time consumed by each code section
+  tps =>    Test_Parse_Signals
+  wall =>   Use wall clock instead of CPU_TIME
+  xvec =>   'X' vector during Newton iteration
 ========================= end mlsl2 =========================
 
 The general pattern is to use upper-case letters for single-letter ones,
@@ -51,7 +53,7 @@ and lower-case letters for strings. Switches are case-sensitive.
 The -S option sets the "switches" array in toggles_core.f90.
 It's tested by "if ( index(switches,'foo') /= 0 ) then ..." so
 you can put longer strings on the command line (so long as the rest
-of it doesn't contain something you DON'T want to test for!). 
+of it doesn't contain something you DON'T want to test for!).
  E.g. -Ssca could mean -Sscalars
 but beware: literally setting -Sscalars may also turn on an unwanted switch,
 "lars", causing mlsl2 to begin outputting all text in "Swedish Chef" mode
@@ -71,6 +73,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.14  2001/10/30 00:31:15  pwagner
+ Replaced O with pcf[n] to dump parameters set by pcf during open_init
+
  Revision 1.13  2001/10/26 23:03:36  pwagner
  glo[bal] now glo[n]; add apr[n] and grid
 
