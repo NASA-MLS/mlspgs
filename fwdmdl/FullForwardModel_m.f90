@@ -25,7 +25,7 @@ contains
   ! This is the full radiative transfer forward model, the workhorse
   ! code
 
-    use Allocate_Deallocate, only: ALLOCATE_TEST, deallocate_test
+    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use AntennaPatterns_m, only: ANTENNAPATTERNS
     use Comp_Eta_Docalc_No_Frq_m, only: Comp_Eta_Docalc_No_Frq
     use Comp_Sps_Path_Frq_m, only: Comp_Sps_Path_Frq
@@ -67,9 +67,9 @@ contains
     use Molecules, only: L_EXTINCTION, spec_tags
     use NO_CONV_AT_ALL_M, only: NO_CONV_AT_ALL
     use Output_m, only: OUTPUT
+    use Path_Contrib_M, only: Path_Contrib
     use PointingGrid_m, only: POINTINGGRIDS
-    use RAD_TRAN_M, only: PATH_CONTRIB, RAD_TRAN, DRAD_TRAN_DF,DRAD_TRAN_DT, &
-                         &  DRAD_TRAN_DX
+    use RAD_TRAN_M, only: RAD_TRAN, DRAD_TRAN_DF,DRAD_TRAN_DT, DRAD_TRAN_DX
     use REFRACTION_M, only: REFRACTIVE_INDEX, COMP_REFCOR, PATH_DS_DH
     use SpectroscopyCatalog_m, only: CATALOG_T, LINE_T, LINES, CATALOG
     use SLABS_SW_M, only: GET_GL_SLABS_ARRAYS
@@ -100,60 +100,59 @@ contains
     integer :: CHANIND                  ! A 1 based channel index
     integer :: CHANNEL                  ! A Loop counter
     integer :: DIRECTION                ! Direction of channel numbering
-    integer :: FRQ_I                    ! Frequency loop index
-    integer :: F_LEN                    ! Total number of f's
-    integer :: P_LEN                    ! Partial number of f's (No freq.)
-    integer :: H2O_IND                  ! Index of h2o inside f array
     integer :: EXT_IND                  ! Index of extinction inside f array
+    integer :: F_LEN_DN                 ! Length of DN in vector
+    integer :: F_LEN_DV                 ! Length of DV in vector
+    integer :: F_LEN_DW                 ! Length of DW in vector
+    integer :: F_LEN                    ! Total number of f's
+    integer :: FRQ_I                    ! Frequency loop index
+    integer :: H2O_IND                  ! Index of h2o inside f array
     integer :: IER                      ! Status flag from allocates
-    integer :: I_STOP                   ! Upper index for radiance comp.
-    integer :: INSTANCE                 ! Loop counter
     integer :: I                        ! Loop index and other uses .
+    integer :: INSTANCE                 ! Loop counter
+    integer :: I_STOP                   ! Upper index for radiance comp.
+    integer :: JF                       ! Loop index and other uses ..
     integer :: J                        ! Loop index and other uses ..
     integer :: K                        ! Loop index and other uses ..
     integer :: L                        ! Loop index and other uses ..
-    integer :: M                        ! Loop index and other uses ..
-    integer :: JF                       ! Loop index and other uses ..
     integer :: MAF                      ! MAF under consideration
-    integer :: MAXNOPTGFREQS            ! Used for sizing arrays
     integer :: MAXNOFFREQS              ! Max. no. frequencies for any molecule
     integer :: MAXNOFSURFS              ! Max. no. surfaces for any molecule
+    integer :: MAXNOPTGFREQS            ! Used for sizing arrays
     integer :: MAXSUPERSET              ! Max. value of superset
     integer :: MAXVERT                  ! Number of points in gl grid
-    integer :: NL                       ! Number of lines
+    integer :: M                        ! Loop index and other uses ..
     integer :: NLM1                     ! Nlvl - 1
+    integer :: NL                       ! Number of lines
     integer :: Nlvl                     ! Size of integration grid
-    integer :: NOFREQS                  ! Number of frequencies for a pointing
-    integer :: NOSPECIES                ! No. of molecules under consideration
-    integer :: NO_MOL                   ! Number of major molecules (NO iso/vib)
-    integer :: NOUSEDCHANNELS           ! How many channels are we considering
     integer :: NO_ELE                   ! Length of a gl path
-    integer :: NO_GL_NDX                ! Number of GL points to do
+    integer :: NOFREQS                  ! Number of frequencies for a pointing
+    integer :: NO_MOL                   ! Number of major molecules (NO iso/vib)
+    integer :: NOSPECIES                ! No. of molecules under consideration
     integer :: NO_TAN_HTS               ! Number of tangent heights
+    integer :: NOUSEDCHANNELS           ! How many channels are we considering
     integer :: NPC                      ! Length of coarse path
     integer :: N_T_ZETA                 ! Number of zetas for temperature
+    integer :: P_LEN                    ! Partial number of f's (No freq.)
     integer :: PTG_I                    ! Loop counter for the pointings
     integer :: SHAPEIND                 ! Index into filter shapes
     integer :: SIDEBANDSTART            ! Loop limit
     integer :: SIDEBANDSTEP             ! Loop step
     integer :: SIDEBANDSTOP             ! Loop limit
     integer :: SIGIND                   ! Signal index, loop counter
+    integer :: SPECIE                   ! Loop counter
     integer :: SPECTAG                  ! A single spectag
+    integer :: SURFACE                  ! Loop counter
     integer :: SURFACETANGENTINDEX      ! Index in tangent grid of earth's
                                         ! surface
+    integer :: SV_I                     ! Loop index and other uses .
+    integer :: SV_START                 ! Temporary sv_i
+    integer :: SV_T_LEN                 ! Number of t_phi*t_zeta in the window
     integer :: THISSIDEBAND             ! Loop counter for sidebands
+    integer :: WHICHPATTERN             ! Index of antenna pattern
     integer :: WHICHPOINTINGGRID        ! Index into the pointing grids
     integer :: WINDOWFINISH             ! End of temperature `window'
     integer :: WINDOWSTART              ! Start of temperature `window'
-    integer :: SPECIE                   ! Loop counter
-    integer :: SV_I                     ! Loop index and other uses .
-    integer :: F_LEN_DW                 ! Length of DW in vector
-    integer :: F_LEN_DN                 ! Length of DN in vector
-    integer :: F_LEN_DV                 ! Length of DV in vector
-    integer :: SV_START                 ! Temporary sv_i
-    integer :: SV_T_LEN                 ! Number of t_phi*t_zeta in the window
-    integer :: SURFACE                  ! Loop counter
-    integer :: WHICHPATTERN             ! Index of antenna pattern
 
     logical :: doThis                   ! Flag for lines
     logical :: temp_der, atmos_der, spect_der, ptan_der ! Flags for various derivatives
@@ -163,51 +162,44 @@ contains
 
     logical :: dummy(2) = (/.FALSE.,.FALSE./)  ! dummy Flag array
 
-    integer, dimension(:), pointer :: GRIDS !Heights in ptgGrid for each tangent
     integer, dimension(:), pointer :: CHANNELORIGINS ! Does this band start at 0 or 1
+    integer, dimension(:), pointer :: GL_INDS ! Index of GL indecies
+    integer, dimension(:), pointer :: GRIDS !Heights in ptgGrid for each tangent
+    integer, dimension(:), pointer :: INDICES_C ! Indecies on coarse grid
+    integer, dimension(:), pointer :: SUPERSET ! Used for matching signals
+    integer, dimension(:), pointer :: TAN_INDS ! Index of tangent grid into gl grid
     integer, dimension(:), pointer :: USEDCHANNELS ! Which channel is this
     integer, dimension(:), pointer :: USEDSIGNALS ! Which signal is this channel from
-    integer, dimension(:), pointer :: SUPERSET ! Used for matching signals
-    integer, dimension(:), pointer :: INDICES_C ! Indecies on coarse grid
-    integer, dimension(:), pointer :: TAN_INDS ! Index of tangent grid into gl grid
-    integer, dimension(:), pointer :: GL_INDS ! Index of GL indecies
 
     integer, dimension(:,:), pointer :: GL_NDX ! Packed Index array of GL intervals
-    integer, dimension(:,:), pointer :: GL_INDGEN ! Temp. array of indecies
 
     logical, dimension(:), pointer :: DO_GL ! GL indicator
     logical, dimension(:), pointer :: LINEFLAG ! Use this line (noLines per species)
 
-    logical, dimension(:,:), pointer :: DO_CALC_ZP    ! 'Avoid zeros' indicator
-    logical, dimension(:,:), pointer :: DO_CALC_FZP   ! 'Avoid zeros' indicator
     logical, dimension(:,:), pointer :: DO_CALC_DN    ! 'Avoid zeros'
     logical, dimension(:,:), pointer :: DO_CALC_DV    ! 'Avoid zeros'
     logical, dimension(:,:), pointer :: DO_CALC_DW    ! 'Avoid zeros'
+    logical, dimension(:,:), pointer :: DO_CALC_FZP   ! 'Avoid zeros' indicator
     logical, dimension(:,:), pointer :: DO_CALC_HYD   ! 'Avoid zeros'
     logical, dimension(:,:), pointer :: DO_CALC_T     ! 'Avoid zeros'
+    logical, dimension(:,:), pointer :: DO_CALC_ZP    ! 'Avoid zeros' indicator
 
 ! Array of Flags indicating  which Temp. coefficient to process
 
-    real(r8) :: FRQ                     ! Frequency
-
     real(rp) :: DEL_TEMP   ! Temp. step-size in evaluation of Temp. power dep.
     real(rp) :: E_RFLTY                 ! Earth reflectivity at given tan. point
+    real(r8) :: FRQ                     ! Frequency
     real(rp) :: NEG_TAN_HT              ! GP Height (in KM.) of tan. press.
                                         ! below surface
     real(rp) :: R,R1,R2                 ! real variables for various uses
     real(rp) :: RAD                     ! Radiance
     real(rp) :: REQ                     ! Equivalent Earth Radius
-    real(rp) :: Vel_Cor                 ! Velocity correction due to Vel_z
     real(rp) :: THISRATIO               ! A sideband ratio
+    real(rp) :: Vel_Cor                 ! Velocity correction due to Vel_z
 
     real(rp), dimension(1) :: ONE_TAN_HT ! ***
     real(rp), dimension(1) :: ONE_TAN_TEMP ! ***
-    real(rp), dimension(:), pointer :: TAN_HTS ! Accumulation of ONE_TAN_HT
-    real(rp), dimension(:), pointer :: TAN_TEMPS ! Accumulation of ONE_TAN_TEMP
-    real(rp), dimension(:), pointer :: REQS      ! Accumulation of REQ
-
     real(r8), dimension(:), pointer :: FREQUENCIES ! Frequencies to compute for
-
     real(rp), dimension(:), pointer :: ALPHA_PATH_C ! coarse grid Sing.
     real(rp), dimension(:), pointer :: DEL_S ! Integration lengths along path
     real(rp), dimension(:), pointer :: DHDZ_PATH ! dH/dZ on path
@@ -220,31 +212,34 @@ contains
     real(rp), dimension(:), pointer :: INCOPTDEPTH ! Incremental Optical depth
     real(rp), dimension(:), pointer :: N_PATH ! Refractivity on path
     real(rp), dimension(:), pointer :: PATH_DSDH ! dS/dH on path
-    real(rp), dimension(:), pointer :: PHI_BASIS ! phi basis per species
+    real(rp), dimension(:), pointer :: P_GLGRID ! Pressure on glGrid surfs
     real(rp), dimension(:), pointer :: PHI_BASIS_DN ! phi basis per species
     real(rp), dimension(:), pointer :: PHI_BASIS_DV ! phi basis per species
     real(rp), dimension(:), pointer :: PHI_BASIS_DW ! phi basis per species
+    real(rp), dimension(:), pointer :: PHI_BASIS ! phi basis per species
     real(rp), dimension(:), pointer :: PHI_PATH ! Phi's on path
-    real(rp), dimension(:), pointer :: P_GLGRID ! Pressure on glGrid surfs
     real(rp), dimension(:), pointer :: P_PATH ! Pressure on path
     real(rp), dimension(:), pointer :: RADV ! Radiances for 1 pointing on
                                             ! Freq_Grid
     real(rp), dimension(:), pointer :: REF_CORR ! Refraction correction
-    real(rp), dimension(:), pointer :: TAU ! Optical depth
+    real(rp), dimension(:), pointer :: REQS      ! Accumulation of REQ
+    real(rp), dimension(:), pointer :: TAN_HTS ! Accumulation of ONE_TAN_HT
     real(rp), dimension(:), pointer :: TAN_TEMP ! ***
+    real(rp), dimension(:), pointer :: TAN_TEMPS ! Accumulation of ONE_TAN_TEMP
+    real(rp), dimension(:), pointer :: TAU ! Optical depth
     real(rp), dimension(:), pointer :: T_PATH ! Temperatures on path
     real(rp), dimension(:), pointer :: T_SCRIPT ! ********
-    real(rp), dimension(:), pointer :: Z_BASIS !zeta basis per specie (n_f_zeta)
     real(rp), dimension(:), pointer :: Z_BASIS_DN ! zeta basis for dw (n_dn_z)
     real(rp), dimension(:), pointer :: Z_BASIS_DV ! zeta basis for dw (n_dv_z)
     real(rp), dimension(:), pointer :: Z_BASIS_DW ! zeta basis for dw (n_dw_z)
+    real(rp), dimension(:), pointer :: Z_BASIS !zeta basis per specie (n_f_zeta)
     real(rp), dimension(:), pointer :: Z_GLGRID ! Zeta on glGrid surfs
     real(rp), dimension(:), pointer :: Z_PATH ! Zeta on path
 
     real(rp), dimension(:,:), pointer :: BETA_PATH ! Beta on path
     real(rp), dimension(:,:), pointer :: BETA_PATH_C ! Beta on path coarse
     real(rp), dimension(:,:), pointer :: BETA_PATH_F ! Beta on path fine
-
+    real(rp), dimension(:,:), pointer :: D2X_DXDT    ! (No_tan_hts, nz*np)
     real(rp), dimension(:,:), pointer :: DBETA_DN_PATH_C ! dBeta_dn on coarse grid
     real(rp), dimension(:,:), pointer :: DBETA_DN_PATH_F ! dBeta_dn on fine grid
     real(rp), dimension(:,:), pointer :: DBETA_DT_PATH_C ! dBeta_dt on coarse grid
@@ -253,12 +248,11 @@ contains
     real(rp), dimension(:,:), pointer :: DBETA_DV_PATH_F ! dBeta_dv on fine grid
     real(rp), dimension(:,:), pointer :: DBETA_DW_PATH_C ! dBeta_dw on coarse grid
     real(rp), dimension(:,:), pointer :: DBETA_DW_PATH_F ! dBeta_dw on fine grid
-    real(rp), dimension(:,:), pointer :: DHDZ_GLGRID ! dH/dZ on glGrid surfs
     real(rp), dimension(:,:), pointer :: DH_DT_PATH ! dH/dT on path
+    real(rp), dimension(:,:), pointer :: DHDZ_GLGRID ! dH/dZ on glGrid surfs
     real(rp), dimension(:,:), pointer :: DX_DT       ! (No_tan_hts, nz*np)
-    real(rp), dimension(:,:), pointer :: D2X_DXDT    ! (No_tan_hts, nz*np)
-    real(rp), dimension(:,:), pointer :: ETA_ZP  ! Eta_z x Eta_p
     real(rp), dimension(:,:), pointer :: ETA_FZP ! Eta_z x Eta_p * Eta_f
+    real(rp), dimension(:,:), pointer :: ETA_ZP  ! Eta_z x Eta_p
     real(rp), dimension(:,:), pointer :: ETA_ZXP_DN ! Eta_z x Eta_p for N
     real(rp), dimension(:,:), pointer :: ETA_ZXP_DV ! Eta_z x Eta_p for V
     real(rp), dimension(:,:), pointer :: ETA_ZXP_DW ! Eta_z x Eta_p for W
@@ -279,13 +273,13 @@ contains
 
 ! Some declarations by bill
 
-    integer(ip) :: sps_i  ! a species counter
-    integer(ip) :: no_sv_p_t ! number of phi basis for temperature
     integer(ip) :: beg_ind, end_ind, beg_ind_z, end_ind_z
     integer(ip) :: beg_ind_p, end_ind_p
+    integer(ip) :: no_sv_p_t ! number of phi basis for temperature
+    integer(ip) :: sps_i  ! a species counter
 
-    real(rp) :: surf_angle(1), one_dhdz(1), one_dxdh(1)
     real(rp) :: earthradc ! minor axis of orbit plane projected Earth ellipse
+    real(rp) :: surf_angle(1), one_dhdz(1), one_dxdh(1)
 
     integer(ip), dimension(:), pointer :: rec_tan_inds ! recommended tangent
 !                        point indecies from make_z_grid
@@ -296,17 +290,17 @@ contains
 !                                      radiative transfer calculations
 ! THIS VARIABLE REPLACES FwdModelConf%integrationGrid%surfs
 
-    real(rp), dimension(:), pointer :: tan_chi_out
-    real(rp), dimension(:), pointer :: dx_dh_out
     real(rp), dimension(:), pointer :: dhdz_out
-    real(rp), dimension(:), pointer :: req_out
-    real(rp), dimension(:), pointer :: tan_press
-    real(rp), dimension(:), pointer :: tan_phi
+    real(rp), dimension(:), pointer :: dx_dh_out
     real(rp), dimension(:), pointer :: est_scgeocalt
-    real(rp), dimension(:,:), pointer :: dxdt_tan
+    real(rp), dimension(:), pointer :: req_out
+    real(rp), dimension(:), pointer :: tan_chi_out
+    real(rp), dimension(:), pointer :: tan_phi
+    real(rp), dimension(:), pointer :: tan_press
+    real(rp), dimension(:,:), pointer :: d2xdxdt_surface
     real(rp), dimension(:,:), pointer :: d2xdxdt_tan
     real(rp), dimension(:,:), pointer :: dxdt_surface
-    real(rp), dimension(:,:), pointer :: d2xdxdt_surface
+    real(rp), dimension(:,:), pointer :: dxdt_tan
     real(rp), dimension(:,:), pointer :: tan_d2h_dhdt
     real(rp), dimension(:,:,:), pointer :: ddhidhidtl0
 
@@ -314,9 +308,9 @@ contains
 
     type (VectorValue_T), pointer :: EARTHREFL ! Earth reflectivity
     type (VectorValue_T), pointer :: ELEVOFFSET ! Elevation offset
+    type (VectorValue_T), pointer :: F             ! An arbitrary species
     type (VectorValue_T), pointer :: FIRSTRADIANCE ! Radiance qty for first signal
     type (VectorValue_T), pointer :: LOSVEL ! Line of sight velocity
-    type (VectorValue_T), pointer :: F             ! An arbitrary species
     type (VectorValue_T), pointer :: ORBINCLINE ! Orbital inclination
     type (VectorValue_T), pointer :: PHITAN ! Tangent geodAngle component of state vector
     type (VectorValue_T), pointer :: PTAN ! Tangent pressure component of state vector
@@ -330,17 +324,17 @@ contains
     type (Signal_T) :: FIRSTSIGNAL      ! The first signal we're dealing with
 
     type (slabs_struct), dimension(:,:), pointer :: GL_SLABS ! ***
-    type (slabs_struct), dimension(:,:), pointer :: GL_SLABS_P ! ***
     type (slabs_struct), dimension(:,:), pointer :: GL_SLABS_M ! ***
+    type (slabs_struct), dimension(:,:), pointer :: GL_SLABS_P ! ***
 
     type (catalog_T), dimension(:), pointer :: MY_CATALOG ! ***
     type (catalog_T), pointer :: thisCatalogEntry
     type (line_T), pointer :: thisLine
 
-    type (Grids_T) :: Grids_f   ! All the coordinates for VMR
-    type (Grids_T) :: Grids_dw  ! All the spectroscopy(W) coordinates
     type (Grids_T) :: Grids_dn  ! All the spectroscopy(N) coordinates
     type (Grids_T) :: Grids_dv  ! All the spectroscopy(V) coordinates
+    type (Grids_T) :: Grids_dw  ! All the spectroscopy(W) coordinates
+    type (Grids_T) :: Grids_f   ! All the coordinates for VMR
     type (Grids_T) :: Grids_tmp ! All the coordinates for TEMP
 
     ! ZVI's dumping ground for variables he's too busy to put in the right
@@ -349,9 +343,9 @@ contains
     ! Local storage places for derivatives..(Temporary..)
     real(r4), dimension(:,:,:,:)  , pointer :: K_TEMP
     real(r4), dimension(:,:,:), pointer :: K_ATMOS
-    real(r4), dimension(:,:,:,:,:,:), pointer :: K_SPECT_DW
     real(r4), dimension(:,:,:,:,:,:), pointer :: K_SPECT_DN
     real(r4), dimension(:,:,:,:,:,:), pointer :: K_SPECT_DV
+    real(r4), dimension(:,:,:,:,:,:), pointer :: K_SPECT_DW
 
 !  The 'all_radiometers grid file' approach variables declaration:
 
@@ -372,7 +366,7 @@ contains
     atmos_der = present ( jacobian ) .and. FwdModelConf%atmos_der
 
 ! ** Re-instate when appropriate code is done
-!   spect_der = FwdModelConf%spect_der
+!   spect_der = present ( jacobian ) .and. FwdModelConf%spect_der
     spect_der = present ( jacobian ) .and. .false.    ! ** ZEBUG
 
     if ( toggle(emit) ) & ! set by -f command-line switch
@@ -390,7 +384,7 @@ contains
       & drad_dn, drad_dt, drad_dv, drad_dw, dx_dh_out, dx_dt, &
       & dxdt_surface, dxdt_tan, est_scgeocalt, eta_fzp, eta_zp, &
       & eta_zxp_dn, eta_zxp_dv, eta_zxp_dw, eta_zxp_t, frequencies, &
-      & gl_indgen, gl_inds, gl_ndx, grids, h_glgrid, h_path, incoptdepth, &
+      & gl_inds, gl_ndx, grids, h_glgrid, h_path, incoptdepth, &
       & indices_c, k_atmos, k_atmos_frq, k_spect_dn, k_spect_dn_frq, &
       & k_spect_dv, k_spect_dv_frq, k_spect_dw, k_spect_dw_frq, k_temp, &
       & k_temp_frq, lineFlag, n_path, path_dsdh, p_glgrid, phi_basis, &
@@ -1147,7 +1141,7 @@ contains
 
     if ( temp_der ) then
       allocate ( gl_slabs_p(no_ele,noSpecies), &
-        &  gl_slabs_m(no_ele,noSpecies), STAT=ier )
+        &        gl_slabs_m(no_ele,noSpecies), STAT=ier )
       if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Allocate//"gl_slabs_[pm]" )
 
@@ -1590,129 +1584,58 @@ contains
             & do_calc_zp(1:no_ele,:), sps_path(1:no_ele,:),      &
             & do_calc_fzp(1:no_ele,:), eta_fzp(1:no_ele,:) )
 
-          if ( temp_der  .and. spect_der ) then
+          ! The derivatives that get_beta_path computes depend on which
+          ! derivative arrays are allocated.  This avoids having four
+          ! paths, each with a different set of optional arguments.
 
-            call get_beta_path ( Frq, p_path(1:no_ele), t_path(1:no_ele),  &
-              &  my_Catalog, beta_group, gl_slabs, indices_c(1:npc),       &
-              &  beta_path_c(1:npc,:), GL_SLABS_M=gl_slabs_m,              &
-              &  T_PATH_M=t_path(1:no_ele)-del_temp, GL_SLABS_P=gl_slabs_p,&
-              &  T_PATH_P=t_path(1:no_ele)+del_temp,                       &
-              &  DBETA_DT_PATH=dbeta_dt_path_c(1:npc,:),                   &
-              &  DBETA_DW_PATH=dbeta_dw_path_c(1:npc,:),                   &
-              &  DBETA_DN_PATH=dbeta_dn_path_c(1:npc,:),                   &
-              &  DBETA_DV_PATH=dbeta_dv_path_c(1:npc,:) )
-
-          else if ( temp_der ) then
-
-            call get_beta_path ( Frq, p_path(1:no_ele), t_path(1:no_ele),  &
-              &  my_Catalog, beta_group, gl_slabs, indices_c(1:npc),       &
-              &  beta_path_c(1:npc,:),                                     &
-              &  GL_SLABS_M=gl_slabs_m, T_PATH_M=t_path(1:no_ele)-del_temp,&
-              &  GL_SLABS_P=gl_slabs_p, T_PATH_P=t_path(1:no_ele)+del_temp,&
-              &  DBETA_DT_PATH=dbeta_dt_path_c(1:npc,:) )
-
-          else if ( spect_der ) then
-
-            call get_beta_path ( Frq, p_path(1:no_ele), t_path(1:no_ele),    &
-              &  my_Catalog, beta_group, gl_slabs, indices_c(1:npc),         &
-              &  beta_path_c(1:npc,:), DBETA_DW_PATH=dbeta_dw_path_c(1:npc,:),&
-              &  DBETA_DN_PATH=dbeta_dn_path_c(1:npc,:),                     &
-              &  DBETA_DV_PATH=dbeta_dv_path_c(1:npc,:) )
-
-          else
-
-            call get_beta_path ( Frq, p_path(1:no_ele), t_path(1:no_ele),  &
-              &  my_Catalog, beta_group, gl_slabs, indices_c(1:npc),       &
-              &  beta_path_c(1:npc,:) )
-
-          end if
+          call get_beta_path ( Frq, p_path(1:no_ele), t_path(1:no_ele), &   
+            &  my_Catalog, beta_group, gl_slabs, indices_c(1:npc),      &   
+            &  beta_path_c(1:npc,:),                                    &   
+            &  gl_slabs_m, t_path(1:no_ele)-del_temp,                   &   
+            &  gl_slabs_p, t_path(1:no_ele)+del_temp,                   &   
+            &  dbeta_dt_path_c, dbeta_dw_path_c,                        &   
+            &  dbeta_dn_path_c, dbeta_dv_path_c )                    
 
           alpha_path_c(1:npc) = SUM(sps_path(indices_c(1:npc),:) *  &
                                   & beta_path_c(1:npc,:),DIM=2)
 
-          call path_contrib ( alpha_path_c(1:npc), del_s(1:npc), e_rflty,   &
-                  & fwdModelConf%tolerance, tau(1:npc), incoptdepth(1:npc), &
-                  & do_gl(1:npc) )
+          incoptdepth(1:npc) = alpha_path_c(1:npc) * del_s(1:npc)
 
-          ! ALLOCATE gl grid beta
+          ! Determine where to use Gauss-Legendre instead of a rectangle.
 
-          no_gl_ndx = count(do_gl(1:npc))
-          j = Ng * no_gl_ndx
+          call path_contrib ( incoptdepth(1:npc), e_rflty,   &
+                  & fwdModelConf%tolerance, do_gl(1:npc), gl_inds, gl_ndx )
 
-          call allocate_test ( gl_inds, j, 'gl_inds', moduleName )
+          j = size(gl_inds)
+
+          ! ALLOCATE GL grid beta and GL derivative grids
+
           call allocate_test ( beta_path_f, j, no_mol, 'beta_path_f', &
                              & moduleName )
-          call allocate_test ( gl_indgen, Ng, no_gl_ndx, 'gl_indgen', &
-                             & moduleName )
-          call allocate_test ( gl_ndx, no_gl_ndx, 2, 'gl_ndx', moduleName )
 
-          gl_ndx(:,1) = pack((/(i,i=1,npc)/),do_gl(1:npc))
-
-  ! Make (/(j-Ng-1,j=1,Ng)/), (/(j,j=1,Ng)/) parameter variables later on
-
-          do i = 1 , no_gl_ndx
-            if ( gl_ndx(i,1) > npc/2 ) then
-              gl_ndx(i,2) = 1 - Ng + Ngp1 * (gl_ndx(i,1) - 1)
-              gl_indgen(:,i) = (/(j,j=1,Ng)/)
-            else
-              gl_ndx(i,2) = 1 +      Ngp1 * (gl_ndx(i,1) - 1)
-              gl_indgen(:,i) = (/(j-Ng-1,j=1,Ng)/)
-            end if
-          end do
-
-          ! compute the gl indicies
-
-          gl_inds = reshape(spread(gl_ndx(1:no_gl_ndx,2),1,Ng) +  &
-            &  gl_indgen,(/Ng*no_gl_ndx/))
-
-          j = Ng * no_gl_ndx
-          if ( temp_der  .and. spect_der ) then
-
-            call allocate_test ( dbeta_dt_path_f, j, no_mol, &
+          if ( temp_der ) call allocate_test ( dbeta_dt_path_f, j, no_mol, &
               & 'dbeta_dt_path_f', moduleName )
+
+          if ( spect_der ) then
             call allocate_test ( dbeta_dw_path_f, j, no_mol, &
               & 'dbeta_dw_path_f', moduleName )
             call allocate_test ( dbeta_dn_path_f, j, no_mol, &
               & 'dbeta_dn_path_f', moduleName )
             call allocate_test ( dbeta_dv_path_f, j, no_mol, &
               & 'dbeta_dv_path_f', moduleName )
-
-            call get_beta_path ( Frq, p_path(1:no_ele), t_path(1:no_ele),   &
-              & my_Catalog, beta_group, gl_slabs, gl_inds, beta_path_f,     &
-              & GL_SLABS_M=gl_slabs_m, T_PATH_M=t_path(1:no_ele)-del_temp,  &
-              & GL_SLABS_P=gl_slabs_p, T_PATH_P=t_path(1:no_ele)+del_temp,  &
-              & DBETA_DT_PATH=dbeta_dt_path_f, DBETA_DW_PATH=dbeta_dw_path_f,&
-              & DBETA_DN_PATH=dbeta_dn_path_f, DBETA_DV_PATH=dbeta_dv_path_f )
-
-          else if ( temp_der ) then
-
-            call allocate_test ( dbeta_dt_path_f, j, no_mol, &
-              & 'dbeta_dt_path_f', moduleName )
-            call get_beta_path ( Frq, p_path(1:no_ele), t_path(1:no_ele),    &
-              &   my_Catalog, beta_group, gl_slabs, gl_inds, beta_path_f,    &
-              &   GL_SLABS_M=gl_slabs_m, T_PATH_M=t_path(1:no_ele)-del_temp, &
-              &   GL_SLABS_P=gl_slabs_p, T_PATH_P=t_path(1:no_ele)+del_temp, &
-              &   DBETA_DT_PATH=dbeta_dt_path_f )
-
-          else if ( spect_der ) then
-
-            call allocate_test ( dbeta_dw_path_f, j, no_mol, &
-                              & 'dbeta_dw_path_f', moduleName )
-            call allocate_test ( dbeta_dn_path_f, j, no_mol, &
-                              & 'dbeta_dn_path_f', moduleName )
-            call allocate_test ( dbeta_dv_path_f, j, no_mol, &
-                              & 'dbeta_dv_path_f', moduleName )
-            call get_beta_path ( Frq, p_path(1:no_ele), t_path(1:no_ele),    &
-              & my_Catalog, beta_group, gl_slabs, gl_inds, beta_path_f,      &
-              & DBETA_DW_PATH=dbeta_dw_path_f, DBETA_DN_PATH=dbeta_dn_path_f,&
-              & DBETA_DV_PATH=dbeta_dv_path_f )
-
-          else
-
-            call get_beta_path ( Frq, p_path(1:no_ele), t_path(1:no_ele), &
-              &  my_Catalog, beta_group, gl_slabs, gl_inds, beta_path_f )
-
           end if
+
+          ! The derivatives that get_beta_path computes depend on which
+          ! derivative arrays are allocated, not which ones are present. 
+          ! This avoids having four paths through the code, each with a
+          ! different set of optional arguments.
+
+          call get_beta_path ( Frq, p_path(1:no_ele), t_path(1:no_ele), &
+            & my_Catalog, beta_group, gl_slabs, gl_inds, beta_path_f,   &
+            & gl_slabs_m, t_path(1:no_ele)-del_temp,                    &
+            & gl_slabs_p, t_path(1:no_ele)+del_temp,                    &
+            & dbeta_dt_path_f, dbeta_dw_path_f,                         &
+            & dbeta_dn_path_f, dbeta_dv_path_f )
 
           ! Compute radiative transfer ---------------------------------------
 
@@ -1805,7 +1728,6 @@ contains
           call deallocate_test ( gl_inds, 'gl_inds', moduleName )
           call deallocate_test ( beta_path_f, 'beta_path_f', moduleName )
           call deallocate_test ( gl_ndx, 'gl_ndx', moduleName )
-          call deallocate_test ( gl_indgen, 'gl_indgen', moduleName )
 
           if ( temp_der ) &
             & call deallocate_test ( dbeta_dt_path_f, 'dbeta_dt_path_f', &
@@ -2484,6 +2406,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.101  2002/12/12 01:12:47  vsnyder
+! Let InvalidQuantity have a length > 1
+!
 ! Revision 2.100  2002/11/15 01:33:08  livesey
 ! Added allLinesForRadiometer functionality.
 !
