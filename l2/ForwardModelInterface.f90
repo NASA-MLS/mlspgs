@@ -17,7 +17,8 @@ module ForwardModelInterface
   use Init_Tables_Module, only: F_ATMOS_DER, F_CHANNELS, F_DO_CONV, F_DO_FREQ_AVG, &
     F_FREQUENCY, F_MOLECULES, F_MOLECULEDERIVATIVES, F_SIGNALS, &
     F_SPECT_DER, F_TEMP_DER
-  use Init_Tables_Module, only: field_indices, field_first, field_last, lit_indices
+  use Init_Tables_Module, only: field_indices, field_first, field_last, &
+    & lit_indices, spec_indices
 !  use Init_Tables_Module, only: F_ATMOS_DER, F_DO_CONV, F_DO_FREQ_AVG, &
 !    & F_EXTRAHEIGHTS, F_FREQUENCY, F_POINTINGGRIDS, F_SPECT_DER, F_TEMP_DER, &
   use Lexer_Core, only: Print_Source
@@ -136,7 +137,7 @@ contains
     ! The ExtraHeights and PointingGrids fields are required, so we don't
     ! need to verify that they were provided.
     call open_pointing_grid_file ( pointingGridsFile, lun )
-    !call read_pointing_grid_file ( lun, spec_indices )
+    call read_pointing_grid_file ( lun, spec_indices )
     call close_pointing_grid_file ( lun )
 
     if ( toggle(gen) ) call trace_end ( "ForwardModelGlobalSetup" )
@@ -1043,6 +1044,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.21  2001/03/17 01:05:46  livesey
+! OK, I've sorted it out, but problems may remain in forwardmodelglobalsetup
+!
 ! Revision 2.20  2001/03/17 00:58:22  livesey
 ! Fixed bug in previous commit, have had to comment out line 139 to
 ! let it compile.
