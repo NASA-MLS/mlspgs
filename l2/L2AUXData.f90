@@ -62,6 +62,7 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
     integer :: NAME                     ! String index of name to be output
     integer :: INSTRUMENTMODULE         ! From source vector
     logical :: MINORFRAME               ! Is this a minor frame quantity
+    logical :: MAJORFRAME               ! Is this a major frame quantity
     ! The dimensions for the quantity
     type (L2AUX_Dimension_T), dimension(L2AUXRank) :: DIMENSIONS
     ! The values of the quantitiy
@@ -127,7 +128,7 @@ contains ! =====     Public Procedures     =============================
     ! Dummy arguments
     type (L2AUXData_T), intent(inout) :: l2aux
     ! Local variables
-    integer :: status,dim
+    integer :: dim
     ! Executable code
     
     do dim=1,L2AUXRank
@@ -150,8 +151,6 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: NewSize
 
     ! Local variables
-    integer :: Status           ! From ALLOCATE
-    integer :: ExpandingDimension
     integer :: OldSize
     ! The following are temporary arrays for copying data around
     real (r8), dimension(:), pointer :: Temp1D
@@ -257,6 +256,8 @@ contains ! =====     Public Procedures     =============================
       call display_string ( l2aux(i)%name )
       call output ( '  Minor Frame? (t/f): ')
       call output ( l2aux(i)%minorframe, advance='yes')
+      call output ( '  Major Frame? (t/f): ')
+      call output ( l2aux(i)%majorframe, advance='yes')
       do dim=1, l2auxrank
         call output ( '  dimension: ')
         call output ( dim )
@@ -303,7 +304,6 @@ contains ! =====     Public Procedures     =============================
 
     ! Variables
 
-    character (LEN=80) :: list
     character (LEN=480) :: msr
 
     integer :: sds_index, sds_id, rank, data_type, num_attrs, dim, dim_id
@@ -313,13 +313,10 @@ contains ! =====     Public Procedures     =============================
     character (LEN=132) :: dim_name
     character (LEN=1)                  :: dim_char
 
-    integer :: alloc_err, first, freq, lev, nDims, size, status
+    integer :: nDims, status
     integer :: start(3), stride(3), edge(3), dims(3)
-    integer :: nFreqs, nLevels, nTimes, nFreqsOr1, nLevelsOr1
 
     logical :: firstCheck, lastCheck
-
-    real, allocatable :: realFreq(:), realSurf(:), realProf(:), real3(:,:,:)
 
     ! Attach to the file for reading
 
@@ -541,6 +538,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.19  2001/10/05 23:32:27  pwagner
+! Added majorframe to data type; trimmed unused stuff
+!
 ! Revision 2.18  2001/08/06 18:35:24  pwagner
 ! Added dump_l2aux
 !
