@@ -345,6 +345,7 @@ contains
         if ( info /= 0 ) call PVMErrorMessage ( info, 'fmStat%maf' )
 
         ! Loop over the configs and call the forward model
+        fmStat%rows = .false.
         do i = 1, size ( fwmConfigs )
           call ForwardModel ( fwmConfigs(i), &
             & vectors(fwmIn), vectors(fwmExtra), vectors(fwmOut), fmw, fmStat, jacobian )
@@ -750,6 +751,9 @@ contains
 end module L2FWMParallel
 
 ! $Log$
+! Revision 2.12  2002/12/11 02:08:17  livesey
+! Bug fix with handling of fmStat%rows?
+!
 ! Revision 2.11  2002/12/11 01:59:27  livesey
 ! Slightly new approach, also some extra diagnostics that will have to go soon
 !
