@@ -7,6 +7,7 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
   use Hdf, only: DFACC_READ, DFNT_FLOAT64, SFCREATE, SFDIMID, SFSDSCALE, SFEND, &
     & SFENDACC, SFSTART, SFRDATA, SFN2INDEX, SFSELECT, SFGINFO, &
     & SFGDINFO, SFSDMNAME, SFWDATA
+  use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
     & MLSMSG_ERROR, MLSMSG_WARNING
@@ -14,6 +15,7 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
   use MLSStrings, only: LINEARSEARCHSTRINGARRAY
   use SDPToolkit, only: PGS_S_SUCCESS
   use STRING_TABLE, only: GET_STRING
+  use tree, only: DUMP_TREE_NODE, SOURCE_REF
   use Output_M, only: OUTPUT
   use Dump_0, only: DUMP
   use intrinsic, only: L_NONE, L_CHANNEL, L_USBFREQUENCY, &
@@ -39,6 +41,9 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
   ! If a dimension is absent, it is flagged appropriately but the array is still
   ! rank 3.  However, when an HDF file is written or read missing dimensions
   ! are swallowed.
+
+  ! For Announce_Error
+    integer :: ERROR
 
   integer, parameter :: L2AUXRANK=3     ! Dimensionality of L2AUXData_T%values
 
@@ -381,6 +386,8 @@ contains ! =====     Public Procedures     =============================
 
 
     ! Executable code
+    error = 0
+
     if (present(sdName)) then
       nameString=sdName
     else
@@ -415,13 +422,25 @@ contains ! =====     Public Procedures     =============================
           & dimName(LEN_TRIM(dimName)+1:))
         ! Write dimension name
         status=SFSDMName(dimID,TRIM(dimName))
-        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        if ( status /= 0 ) then
+		  		call output("dim name: ")
+		  		call output(TRIM(dimName), advance='yes')
+		  		call announce_error (  0, &
           & "Error setting dimension name to SDS l2aux file:")
+!		  		call MLSMessage ( MLSMSG_Error, ModuleName, &
+!          & "Error setting dimension name to SDS l2aux file:")
+			endif
         ! Write dimension scale
         status=SFSDScale(dimID, dimSizes(dimensionInFile+1), DFNT_FLOAT64,&
           & l2aux%dimensions(dimensionInData)%values)
-        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        if ( status /= 0 ) then
+		  		call output("dimID: ")
+		  		call output(dimID, advance='yes')
+		      call announce_error ( 0, &
           & "Error writing dimension scale in l2auxFile:" )
+!		      call MLSMessage ( MLSMSG_Error, ModuleName, &
+!          & "Error writing dimension scale in l2auxFile:" )
+		  endif
         dimensionInFile=dimensionInFile+1
       endif
     end do
@@ -429,8 +448,12 @@ contains ! =====     Public Procedures     =============================
     ! Now write the data
     status= SFWData(sdId, start(1:noDimensionsUsed), &
       & stride(1:noDimensionsUsed), dimSizes, l2aux%values)
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,&
+    if ( status /= 0 ) then
+	   call announce_error (0,&
       & "Error writing SDS data to  l2aux file:  " )
+!	   call MLSMessage ( MLSMSG_Error, ModuleName,&
+!      & "Error writing SDS data to  l2aux file:  " )
+    endif
 
     call Deallocate_Test(dimSizes,"dimSizes",ModuleName)
     
@@ -439,12 +462,42 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine WriteL2AUXData
 
+  ! ---------------------------------------------  ANNOUNCE_ERROR  -----
+  subroutine ANNOUNCE_ERROR ( WHERE, full_message, CODE )
+    integer, intent(in) :: WHERE   ! Tree node where error was noticed
+	character(LEN=*), intent(in)    :: full_message
+    integer, intent(in), optional :: CODE    ! Code for error message
+
+    error = max(error,1)
+    call output ( '***** At ' )
+!    call print_source ( source_ref(where) )
+	if(where > 0) then
+	    call print_source ( source_ref(where) )
+		else
+    call output ( '(no lcf node available)' )
+		endif
+    call output ( ' OutputAndClose complained: ' )
+
+
+		CALL output("Caused the following error:", advance='yes', &
+		& from_where=ModuleName)
+		CALL output(trim(full_message), advance='yes', &
+		& from_where=ModuleName)
+		if(present(code)) then
+			select case ( code )
+			end select
+		endif
+    end subroutine ANNOUNCE_ERROR
+
 !=============================================================================
 end module L2AUXData
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.9  2001/04/07 00:14:27  pwagner
+! Added announce_error
+!
 ! Revision 2.8  2001/03/15 18:42:29  livesey
 ! Removed quotes from dimension name prefixes
 !
