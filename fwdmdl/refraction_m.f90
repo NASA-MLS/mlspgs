@@ -106,12 +106,12 @@ contains
     real(rp), intent(out) :: Del_s(:)
     real(rp), intent(out) :: REF_CORR(:)
 
-    integer(ip) :: i, j, k, no_ele, mid
+    integer(ip) :: i, j, j1, j2, k, m, mid, no_ele
 
     real(rp) :: INTEGRAND_GL(Ng)
 
     real(rp) :: q, htan2, Nt2Ht2
-    real(rp) :: H, N, dndh, x1, x2, h1, h2, n1, n2, xm, ym, NH, eps
+    real(rp) :: dndh, eps, H, h1, h2, N, NH, n1, n2, x1, x2, xm, ym, ys
 
     real(rp), parameter :: Tiny = 1.0e-8_rp
 
@@ -127,112 +127,65 @@ contains
     htan2 = ht * ht
     Nt2Ht2 = (n_path(mid)*ht)**2
 
-    i = 2
-    j = mid
-    Del_s(i:j) = &
-       &    abs(sqrt(abs(h_path(i-1:j-1)**2-htan2)) -  &
-       &        sqrt(abs(h_path( i : j )**2-htan2)))
 
-    i = j+1
-    j = no_ele-1
-    Del_s(i:j) = &
-       &    abs(sqrt(abs(h_path(i+1:j+1)**2-htan2)) -  &
-       &        sqrt(abs(h_path( i : j )**2-htan2)))
+    j1 = 1
+    j2 = mid
+    ys = 0.5_rp
+    do m = 0, 1
+      h2 = h_path(j1+m)
+      n2 = n_path(j1+m)
 
-  ! First, do the right hand side of the ray path:
+      q = (h2 * n2)**2 - nt2ht2
+      if ( abs(q) < tiny ) q = 0.0_rp
+      n2 = n2 - 1.0_rp
+      x2 = sqrt(abs(q))
 
-    h2 = h_path(1)
-    n2 = n_path(1)-1.0_rp
+jl:   do j = j1+1, j2
 
-    q = (h_path(1)*n_path(1))**2 - nt2ht2
-    if ( abs(q) < tiny ) q = 0.0_rp
-    x2 = sqrt(abs(q))
+        x1 = x2
+        h1 = h2
+        n1 = n2
+        h2 = h_path(j+m)
 
-o1: do j = 2, mid
+        del_s(j) = abs(sqrt(abs(h1**2-htan2)) - sqrt(abs(h2**2-htan2)))
 
-      x1 = x2
-      h1 = h2
-      n1 = n2
-      h2 = h_path(j)
-      n2 = n_path(j)-1.0_rp
+        n2 = n_path(j+m)
 
-      q = (h_path(j)*n_path(j))**2 - nt2ht2
-      if ( abs(q) < tiny) q = 0.0_rp
+        q = (h2 * n2)**2 - nt2ht2
+        if ( abs(q) < tiny) q = 0.0_rp
+        n2 = n2 - 1.0_rp
 
-      if ( q < 0.0_rp .or. n1*n2 <= 0.0_rp ) then
-        ref_corr(j) = ref_corr(j-1)
-        cycle
-      end if
-
-      x2 = sqrt(q)
-
-      eps = log(n2/n1)/(h2-h1)
-      xm = 0.5_rp *(x1 + x2)
-      ym = 0.5_rp *(x1 - x2)
-      do k = 1, ng
-        q = xm + ym * gx(k)
-        nh = sqrt(q*q + nt2ht2)
-        call solve_hn ( nh )
-        if ( h < 0.0 ) then
+        if ( q < 0.0_rp .or. n1*n2 <= 0.0_rp ) then
           ref_corr(j) = ref_corr(j-1)
-          cycle o1
+          cycle
         end if
-        integrand_gl(k) = 1.0_rp/(n+h*dndh)
-      end do
 
-  ! And Finally - define the refraction correction:
+        x2 = sqrt(q)
 
-      ref_corr(j) = dot_product(integrand_gl,gw) * ym / Del_s(j)
+        eps = log(n2/n1)/(h2-h1)
+        xm = 0.5_rp *(x1 + x2)      ! Midpoint of the interval
+        ym = ys *(x1 - x2)          ! Half of the interval length
+        do k = 1, ng
+          q = xm + ym * gx(k)       ! Gauss abscissa
+          ! Solve h*(1+n1*exp(eps*(h-h1))) = sqrt(q*q + nt2ht2) for h
+          call solve_hn ( sqrt(q*q + nt2ht2) )
+          if ( h < 0.0 ) then
+            ref_corr(j) = ref_corr(j-1)
+            cycle jl
+          end if
+          integrand_gl(k) = 1.0_rp/(n+h*dndh) ! = 1 / d(nh)/dh
+        end do ! k
 
-    end do o1
+    ! And Finally - define the refraction correction:
 
-  ! Now, do the left hand side of the ray path:
+        ref_corr(j) = dot_product(integrand_gl,gw) * ym / Del_s(j)
 
-    j = mid+1
-    h2 = h_path(j)
-    n2 = n_path(j)-1.0_rp
+      end do jl ! j
 
-    q = (h_path(j)*n_path(j))**2 - nt2ht2
-    if ( abs(q) < tiny) q = 0.0_rp
-    x2 = sqrt(abs(q))
-
-o2: do j = mid+1, no_ele-1
-
-      x1 = x2
-      h1 = h2
-      n1 = n2
-      h2 = h_path(j+1)
-      n2 = n_path(j+1)-1.0_rp
-
-      q = (h_path(j+1)*n_path(j+1))**2 - nt2ht2
-      if ( abs(q) < tiny) q = 0.0_rp
-
-      if ( q < 0.0_rp .or. n1*n2 <= 0.0_rp ) then
-        ref_corr(j) = ref_corr(j-1)
-        cycle
-      end if
-
-      x2 = sqrt(q)
-
-      eps = log(n2/n1)/(h2-h1)
-      xm = 0.5_rp *(x2 + x1)
-      ym = 0.5_rp *(x2 - x1)
-      do k = 1, ng
-        q = xm + ym * gx(k)
-        nh = sqrt(q*q + nt2ht2)
-        call solve_hn ( nh )
-        if ( h < 0.0 ) then
-          ref_corr(j) = ref_corr(j-1)
-          cycle o2
-        end if
-        integrand_gl(k) = 1.0_rp/(n+h*dndh)
-      end do
-
-  ! And Finally - define the refraction correction:
-
-      ref_corr(j) = dot_product(integrand_gl,gw) * ym / Del_s(j)
-
-    end do o2
+      j1 = mid
+      j2 = no_ele - 1
+      ys = -0.5_rp
+    end do ! m
 
     return
 
