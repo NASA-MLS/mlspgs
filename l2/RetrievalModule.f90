@@ -49,7 +49,8 @@ contains
       & F_toleranceR, f_vRegOrders, f_vRegQuants, &
       & f_vRegWeights, f_vRegWeightVec, Field_first, Field_last, &
       & L_apriori, L_covariance, &
-      & L_dnwt_ajn,  L_dnwt_axmax,  L_dnwt_cait, L_dnwt_diag,  L_dnwt_dxdx, &
+      & L_dnwt_ajn,  L_dnwt_axmax,  L_dnwt_cait, L_dnwt_chiSqMinNorm, L_dnwt_chiSqNorm, &
+      & L_dnwt_diag,  L_dnwt_dxdx, &
       & L_dnwt_dxdxl, L_dnwt_dxn,  L_dnwt_dxnl,  L_dnwt_flag, L_dnwt_fnmin, &
       & L_dnwt_fnorm,  L_dnwt_gdx,  L_dnwt_gfac, L_dnwt_gradn,  L_dnwt_sq, &
       & L_dnwt_sq,  L_dnwt_sqt, L_Fill, L_full_derivatives, &
@@ -1502,7 +1503,7 @@ contains
           call clearUnderMask ( v(gradient) )
             if ( index(switches,'gvec') /= 0 ) &
               & call dump ( v(gradient), name='gradient' )
-
+          
           !{Compute the Cholesky factor of the LHS of the normal equations:
           ! ${\bf U}^T {\bf U} {\bf \delta \hat x} = {\bf\Sigma}^T {\bf J}^T
           ! {\bf S}_m^{-1} {\bf J \Sigma \Sigma}^{-1} {\bf \delta \hat x} =
@@ -1521,7 +1522,7 @@ contains
                 & 'Sparseness structure of Normal equations blocks:', &
                 & upper=.true. )
             call add_to_retrieval_timing ( 'newton_solver', t1 )
-          call choleskyFactor ( factored, normalEquations )
+            call choleskyFactor ( factored, normalEquations )
             call add_to_retrieval_timing ( 'cholesky_factor', t1 )
             if ( index(switches,'diag') /= 0 ) then
               call getDiagonal ( factored%m, v(dxUnscaled) )
@@ -1533,17 +1534,17 @@ contains
                 & upper=.true. )
             if ( index(switches,'spa') /= 0 ) &
               & call dump_struct ( factored%m, &
-                & 'Sparseness structure of blocks of factor:', upper=.true. )
-          if ( nwt_flag == nf_getJ ) then ! taking a special iteration to get J
-            aj%fnorm = sqrt(aj%fnorm)
-              if ( index(switches,'sca') /= 0 ) then
-                call output ( ' | F | = ' )
-                call output ( aj%fnorm, format='(1pe14.7)', advance='yes' )
-              end if
-            exit
+              & 'Sparseness structure of blocks of factor:', upper=.true. )
+            if ( nwt_flag == nf_getJ ) then ! taking a special iteration to get J
+              aj%chiSqNorm = aj%fnorm / max ( jacobian_rows - jacobian_cols, 1 )
+              aj%fnorm = sqrt(aj%fnorm)
+                if ( index(switches,'sca') /= 0 ) &
+                  & call dump ( (/ aj%fnorm, aj%chiSqNorm /) , &
+                  & ' | F |       chi^2/n ', clean=.true. )
+              exit
           end if
           aj%diag = minDiag ( factored ) ! element on diagonal with
-          !       smallest absolute value, after triangularization
+            !       smallest absolute value, after triangularization
           aj%ajn = maxL1 ( factored%m ) ! maximum L1 norm of
           !       column in upper triangle after triangularization
             call add_to_retrieval_timing ( 'newton_solver', t1 )
@@ -1572,6 +1573,8 @@ contains
               & 'Norm of residual is imaginary!' )
             aj%fnmin = tiny ( aj%fnmin )
           end if
+          aj%chiSqMinNorm = aj%fnmin / max ( jacobian_rows - jacobian_cols, 1 )
+          aj%chiSqNorm = aj%fnorm / max ( jacobian_rows - jacobian_cols, 1 )
           aj%fnmin = sqrt(aj%fnmin)
           aj%fnorm = sqrt(aj%fnorm)
           aj%gradn = sqrt(v(gradient) .dot. v(gradient)) ! L2Norm(gradient)
@@ -1579,6 +1582,8 @@ contains
               call dump ( (/ aj%fnorm, aj%ajn, aj%diag, aj%fnmin, aj%gradn /), &
                 & '     | F |       L1| FAC |     aj%diag        aj%fnmin       | G |', &
                 & clean=.true. )
+              call dump ( (/ aj%chiSqNorm, aj%chiSqMinNorm /), &
+                & '  chi^2/n      chimin^2/n ', clean=.true. )
             end if
         case ( nf_solve ) ! ..............................  SOLVE  .....
         !{Apply Levenberg-Marquardt stabilization with parameter
@@ -1818,6 +1823,8 @@ contains
           call fillDiagVec ( l_dnwt_ajn, aj%ajn )
           call fillDiagVec ( l_dnwt_axmax, aj%axmax )
           call fillDiagVec ( l_dnwt_cait, aj%cait )
+          call fillDiagVec ( l_dnwt_chiSqMinNorm, aj%chiSqMinNorm )
+          call fillDiagVec ( l_dnwt_chiSqNorm, aj%chiSqNorm )
           call fillDiagVec ( l_dnwt_diag, aj%diag )
           call fillDiagVec ( l_dnwt_dxdx, aj%dxdx )
           call fillDiagVec ( l_dnwt_dxdxl, aj%dxdxl )
@@ -3254,6 +3261,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.196  2002/10/23 01:14:41  livesey
+! Added the chiSquared stuff, needs more work though.
+!
 ! Revision 2.195  2002/10/19 23:41:04  livesey
 ! Added muMin functionality
 !
