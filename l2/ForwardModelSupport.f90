@@ -16,9 +16,13 @@ module ForwardModelSupport
     & F_INTEGRATIONGRID, F_L2PC, F_MOLECULES, F_MOLECULEDERIVATIVES, F_PHIWINDOW, &
     & F_POINTINGGRIDS, F_SIGNALS, F_SPECT_DER, F_TANGENTGRID, F_TEMP_DER, F_TYPE,&
     & F_MODULE, F_SKIPOVERLAPS
+  use MLSFiles, only: GetPCFromRef, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
   use MLSCommon, only: R8
+  use MLSL2Options, only: PCF, PCFL2CFSAMECASE, PUNISH_FOR_INVALID_PCF
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate,&
      & MLSMSG_Error
+  use MLSPCF2, only: mlspcf_antpats_start, mlspcf_filtshps_start, &
+     &          mlspcf_ptggrids_start
   use MoreTree, only: Get_Boolean, Get_Field_ID
   use Output_M, only: Output
   use Parse_Signal_m, only: PARSE_SIGNAL
@@ -72,16 +76,21 @@ module ForwardModelSupport
 contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------  ForwardModelGlobalSetup  -----
-  subroutine ForwardModelGlobalSetup ( Root )
+  subroutine ForwardModelGlobalSetup ( Root, any_errors )
     ! Process the forwardModel specification to produce ForwardModelInfo.
 
     integer, intent(in) :: Root         ! of the forwardModel specification.
     !                                     Indexes a "spec_args" vertex.
+    integer, intent(out) :: any_errors  ! non-zero means trouble
 
+    logical, parameter :: DEBUG = .false.
+    character(len=255) :: FileName      ! Duh
     integer :: I                        ! Loop inductor, subscript
     integer :: Lun                      ! Unit number for reading a file
-    character(len=255) :: FileName      ! Duh
+    character(len=255) :: PCFFileName
+    integer :: returnStatus             ! non-zero means trouble
     integer :: Son                      ! Some subtree of root.
+    integer :: Version
 
     ! Error message codes
 
@@ -93,25 +102,63 @@ contains ! =====     Public Procedures     =============================
     ! Collect data from the fields.
 
     do i = 2, nsons(root)
+      Version = 1
       son = subtree(i,root)
       select case ( get_field_id(son) )
       case ( f_antennaPatterns )
         call get_string ( sub_rosa(subtree(2,son)), fileName, strip=.true. )
+        if ( PCF ) then
+            lun = GetPCFromRef(fileName, mlspcf_antpats_start, &
+            & mlspcf_antpats_start, &
+            & PCFL2CFSAMECASE, returnStatus, Version, DEBUG, &
+            & exactName=PCFFileName)
+            if ( returnStatus /= 0 .and. PUNISH_FOR_INVALID_PCF) then
+               call AnnounceError(0, son, &
+               & extraMessage='Antenna Patterns File not found in PCF')
+            elseif( returnStatus == 0) then
+               fileName = PCFFileName
+            endif
+        endif
         call open_antenna_patterns_file ( fileName, lun )
         call read_antenna_patterns_file ( lun )
         call close_antenna_patterns_file ( lun )
       case ( f_filterShapes )
         call get_string ( sub_rosa(subtree(2,son)), fileName, strip=.true. )
+        if ( PCF ) then
+            lun = GetPCFromRef(fileName, mlspcf_filtshps_start, &
+            & mlspcf_filtshps_start, &
+            & PCFL2CFSAMECASE, returnStatus, Version, DEBUG, &
+            & exactName=PCFFileName)
+            if ( returnStatus /= 0 .and. PUNISH_FOR_INVALID_PCF) then
+               call AnnounceError(0, son, &
+               & extraMessage='Filter Shapes File not found in PCF')
+            elseif( returnStatus == 0) then
+               fileName = PCFFileName
+            endif
+        endif
         call open_filter_shapes_file ( fileName, lun )
         call read_filter_shapes_file ( lun )
         call close_filter_shapes_file ( lun )
       case ( f_pointingGrids )
         call get_string ( sub_rosa(subtree(2,son)), fileName, strip=.true. )
+        if ( PCF ) then
+            lun = GetPCFromRef(fileName, mlspcf_ptggrids_start, &
+            & mlspcf_ptggrids_start, &
+            & PCFL2CFSAMECASE, returnStatus, Version, DEBUG, &
+            & exactName=PCFFileName)
+            if ( returnStatus /= 0 .and. PUNISH_FOR_INVALID_PCF) then
+               call AnnounceError(0, son, &
+               & extraMessage='Pointing Grids File not found in PCF')
+            elseif( returnStatus == 0) then
+               fileName = PCFFileName
+            endif
+        endif
         call open_pointing_grid_file ( fileName, lun )
         call read_pointing_grid_file ( lun )
         call close_pointing_grid_file ( lun )
       case ( f_l2pc )
         call get_string ( sub_rosa(subtree(2,son)), fileName, strip=.true. )
+        ! l2pc files not in PCF (yet)
         call open_l2pc_file (fileName, lun)
         call read_l2pc_file ( lun )
         call close_l2pc_file ( lun )
@@ -121,6 +168,7 @@ contains ! =====     Public Procedures     =============================
     end do
 
     if ( toggle(gen) ) call trace_end ( 'ForwardModelGlobalSetup' )
+    any_errors = error
   end subroutine ForwardModelGlobalSetup
 
   ! ------------------------------------------  ConstructForwardModelConfig  -----
@@ -325,10 +373,11 @@ contains ! =====     Public Procedures     =============================
 
   ! =====     Private Procedures     =====================================
   ! ----------------------------------------------  AnnounceError  -----
-  subroutine AnnounceError ( Code, where, FieldIndex )
+  subroutine AnnounceError ( Code, where, FieldIndex, extraMessage )
     integer, intent(in) :: Code       ! Index of error message
     integer, intent(in) :: where      ! Where in the tree did the error occur?
     integer, intent(in), optional :: FieldIndex ! f_...
+    character (LEN=*), optional :: extraMessage
 
     error = max(error,1)
     call output ( '***** At ' )
@@ -360,12 +409,18 @@ contains ! =====     Public Procedures     =============================
       call output ( 'phiWindow is not odd', advance='yes' )
     case ( FrqGapNotFrq )
       call output ( 'frqGap does not have dimensions of frequency', advance='yes' )
+    case default
+      call output ( '(no specific description of this error)', advance='yes' )
     end select
+    if ( present(extraMessage) ) call output ( extraMessage, advance='yes' )
   end subroutine AnnounceError
 
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.2  2001/05/30 23:05:39  pwagner
+! Uses PCF for 3 fwdmdl files
+!
 ! Revision 2.1  2001/05/29 23:18:18  livesey
 ! First version, was ForwardModelInterface
 !
