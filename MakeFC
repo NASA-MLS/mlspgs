@@ -2,7 +2,7 @@
 #
 #  Lost? Type 'make help -f MakeFC' from the directory where you see this file
 #
-# Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+# Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 # ---------------------- The name of this file (is the right-hand-side below)
@@ -192,6 +192,7 @@ SHELL = /bin/sh
 #    resulting archive will be an uncompressed .tar file; but with:
 #    a "z" suffix, e.g. "tarz" -- use gzip to compress -> .tgz
 #    a "g" suffix, e.g. "targ" -- assume GNU tar compress -> .tgz
+#    (Unfortunately, this currently works only under linux version of tar)
 #
 # disttar        -- creates an archive of whole mlspgs
 # tar            -- creates archive of mlspgs suitable for SIPS
@@ -263,7 +264,7 @@ LEVELS = l1 l2 l3 l3m
 
 # OTHER_SUBDIRS are *not* built automatically:
 # you must either name them individually, or use the "all" target
-OTHER_SUBDIRS = fwdmdl cloudfwdm
+OTHER_SUBDIRS = fwdmdl cloudfwdm he5lib
 #         All the subdirectories
 
 #You may build all the subdirectories via the "all" target; i.e.,
@@ -278,7 +279,7 @@ SUBDIRS = blas lib $(LEVELS) $(OTHER_SUBDIRS)
 # Note that it does *not* include the Toolkit nor PVM nor FFTW 
 # because they are outside mlspgs
 EVERYTHING = $(SUBDIRS)  srclib\
-   util blas sids tables notes tests\
+   util sids tables notes tests\
    $(MakeFName) README.$(MakeFName) BEFORE.mls
      
 # This is in case tar doesn't summon GNU tar, you may still use it via
@@ -772,7 +773,9 @@ update:
   tar substar disttar tarz substarz distarz targ substarg distarg substars\
   all install levels configure_subdirs makefile update\
   configure_pvm configure_fopts configure_full configure_help help disthelp\
-  firsthelp help--brief help--mlsconfigure help--Makefile\
+  firsthelp help--brief help--depends help--fopts help--ghostbuster\
+  help--mlsconfigure help--Makefile help--platform help--pvm help--reecho\
+  help--scripts help--toolkit \
   internalcleanup internaldepends internalmftests internalsaymake \
   internaladd_copy internalreset_copy internalupdate\
   show_copy ghostbuster\
@@ -780,6 +783,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.59  2001/11/17 00:21:41  pwagner
+# Individual help now available on platform, toolkit, pvm, and fopts
+#
 # Revision 1.58  2001/11/15 00:15:56  pwagner
 # Now builds blas/libmlspack.a explicitly
 #
