@@ -6,8 +6,6 @@ module UNITS
 ! Provide several units and unit conversion constants.
 ! Initialize the declaration table with the unit names and scales.
 
-  use INTRINSIC ! "units" type literals, beginning with L_,
-                ! Abstract physical quantities beginning with PHYQ_
   use MLSCommon, only: RP, R8
 
   implicit NONE
@@ -45,6 +43,9 @@ contains ! =====     Public procedures     =============================
     ! between "init_tables_module" and "declaration_table" would
     ! result.
 
+    use INTRINSIC ! "units" type literals, beginning with L_,
+                  ! Abstract physical quantities beginning with PHYQ_
+
     call declare_unit ( l_dimensionless, 1.0d0, phyq_dimensionless )
     call declare_unit ( l_dimless, 1.0d0, phyq_dimensionless )
     call declare_unit ( l_dl, 1.0d0, phyq_dimensionless )
@@ -73,8 +74,8 @@ contains ! =====     Public procedures     =============================
 
     call declare_unit ( l_deg, 1.0d0, phyq_angle )
     call declare_unit ( l_degrees, 1.0d0, phyq_angle )
-    call declare_unit ( l_radians, 45.0d0 / atan(1.0d0), phyq_angle )
-    call declare_unit ( l_rad, 45.0d0 / atan(1.0d0), phyq_angle )
+    call declare_unit ( l_radians, rad2deg, phyq_angle )
+    call declare_unit ( l_rad, rad2deg, phyq_angle )
     call declare_unit ( l_orbits, 360.0d0, phyq_angle )
 
     call declare_unit ( l_maf, 1.0d0, phyq_mafs )
@@ -125,6 +126,9 @@ contains ! =====     Public procedures     =============================
 end module UNITS
 
 ! $Log$
+! Revision 2.21  2003/08/16 00:34:02  vsnyder
+! Use rad2deg instead of 180.0/Pi, push USE INTRINSIC down to procedure scope
+!
 ! Revision 2.20  2003/01/26 04:41:25  livesey
 ! Added profiles
 !
