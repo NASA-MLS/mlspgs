@@ -68,7 +68,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: T_MODULE         = t_method+1
   integer, parameter :: T_OUTPUTTYPE     = t_module+1
   integer, parameter :: T_QUANTITYTYPE   = t_outputtype+1
-  integer, parameter :: T_SCALE          = t_quantitytype+1
+  integer, parameter :: T_REFLECTOR      = t_quantitytype+1
+  integer, parameter :: T_SCALE          = t_reflector+1
   integer, parameter :: T_SPECIES        = t_scale+1
   integer, parameter :: T_UNITS          = t_species+1
   integer, parameter :: T_VGRIDCOORD     = t_units+1
@@ -228,6 +229,7 @@ contains ! =====     Public procedures     =============================
     data_type_indices(t_module) =          add_ident ( 'module' )
     data_type_indices(t_outputtype) =      add_ident ( 'outputType' )
     data_type_indices(t_quantitytype) =    add_ident ( 'quantityType' )
+    data_type_indices(t_reflector) =       add_ident ( 'reflector' )
     data_type_indices(t_scale) =           add_ident ( 'scale' )
     data_type_indices(t_species) =         add_ident ( 'species' )
     data_type_indices(t_units) =           add_ident ( 'units' )
@@ -371,7 +373,8 @@ contains ! =====     Public procedures     =============================
       begin, t+t_i_saturation, l+l_clear, l+l_clear_110rh_below_top, &
              l+l_clear_0rh, l+l_clear_lowest_0_110rh, &
              l+l_clear_110rh_below_tropopause, l+l_cloudy_110rh_below_top, &
-             l+l_cloudy_110rh_in_cloud, l+l_cloudy_nearside_only, n+n_dt_def, &
+             l+l_cloudy_110rh_in_cloud, l+l_cloudy_nearside_only, n+n_dt_def /) )
+    call make_tree ( (/ &
       begin, t+t_griddedOrigin, l+l_climatology, l+l_dao, l+l_ncep, &
              l+l_gloria, n+n_dt_def, &
       begin, t+t_hGridType, l+l_explicit, l+l_fixed, l+l_fractional, &
@@ -384,9 +387,11 @@ contains ! =====     Public procedures     =============================
              n+n_dt_def, &
       begin, t+t_method, l+l_highcloud,l+l_lowcloud, l+l_newtonian, n+n_dt_def, &
       begin, t+t_module, l+l_ghz, l+l_thz, n+n_dt_def, &
+      begin, t+t_reflector, l+l_primary, l+l_secondary, l+l_tertiary, &
+             l+l_complete, n+n_dt_def, &
       begin, t+t_outputType, l+l_l2aux, l+l_l2gp, l+l_l2dgg, l+l_l2pc, n+n_dt_def /) )
     call make_tree ( (/ &
-      begin, t+t_quantityType, l+l_baseline, l+l_boundarypressure, &
+      begin, t+t_quantityType, l+l_baseline, l+l_boundarypressure, l+l_calSidebandFraction, &
              l+l_chisqbinned, l+l_chisqchan, l+l_chisqmmaf, l+l_chisqmmif, l+l_cloudIce, &
              l+l_cloudInducedRadiance, l+l_cloudExtinction, l+l_cloudRadSensitivity, &
              l+l_cloudWater, l+l_columnabundance, &
@@ -399,17 +404,20 @@ contains ! =====     Public procedures     =============================
              l+l_earthRefl, l+l_ECRtoFOV, l+l_effectiveOpticalDepth, &
              l+l_elevOffset, l+l_extinction, l+l_gph, l+l_heightOffset, &
              l+l_isotopeRatio, l+l_jacobian_cols, l+l_jacobian_rows, &
+             l+l_limbSidebandFraction, &
              l+l_losTransFunc, l+l_losVel, &
              l+l_massMeanDiameterIce, l+l_massMeanDiameterWater, l+l_magneticField, &
              l+l_noiseBandwidth, l+l_noRadsPerMIF, l+l_noRadsBinned, &
              l+l_numJ, l+l_opticalDepth, &
              l+l_orbitInclination, l+l_phiTan, l+l_ptan, l+l_radiance, l+l_earthradius,&
-             l+l_refGPH, l+l_rhi, l+l_sizedistribution, &
+             l+l_refGPH, l+l_refltemp, l+l_refltrans, l+l_reflrefl, l+l_reflspill, &
+             l+l_rhi, l+l_sizedistribution, &
              l+l_scanResidual, l+l_scECI, l+l_scVel, l+l_scVelECI, &
-             l+l_scVelECR, l+l_scGeocAlt, l+l_sidebandRatio, &
-             l+l_spaceRadiance, l+l_surfacetype, l+l_systemTemperature, &
+             l+l_scVelECR, l+l_scGeocAlt, &
+             l+l_spaceRadiance, l+l_strayRadiance, l+l_surfacetype, l+l_systemTemperature, &
              l+l_temperature, l+l_tngtECI, l+l_tngtGeodAlt, l+l_tngtGeocAlt, &
-             l+l_totalExtinction, l+l_vmr, n+n_dt_def, &
+             l+l_totalExtinction, l+l_vmr, n+n_dt_def /) )
+    call make_tree ( (/ &
       begin, t+t_scale, l+l_apriori, & ! l+l_covariance, & !??? Later !???
              l+l_none, l+l_norm, n+n_dt_def, &
       begin, t+t_species, l+l_gph, l+l_gph_precision, l+l_temperature, &
@@ -555,6 +563,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_logBasis, t+t_boolean, n+n_field_type, &
              begin, f+f_molecule, t+t_molecule, n+n_field_type, &
              begin, f+f_radiometer, s+s_radiometer, n+n_field_spec, &
+             begin, f+f_reflector, t+t_reflector, n+n_field_type, &
              begin, f+f_module, s+s_module, n+n_field_spec, &
              begin, f+f_signal, t+t_string, n+n_field_type, &
              begin, f+f_type, t+t_quantityType, n+n_field_type, &
@@ -853,6 +862,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_polarized, t+t_boolean, n+n_field_type, &
              begin, f+f_signals, t+t_string, n+n_field_type, &
              begin, f+f_skipOverlaps, t+t_boolean, n+n_field_type, &
+             begin, f+f_switchingMirror, t+t_boolean, n+n_field_type, &
              begin, f+f_specificQuantities, s+s_quantity, n+n_field_spec, &
              begin, f+f_cloud_der, t+t_cloud_der, n+n_field_type, &
              begin, f+f_i_saturation, t+t_i_saturation, n+n_field_type,&
@@ -1026,6 +1036,10 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.314  2003/05/29 16:43:54  livesey
+! Renamed sideband fraction stuff and added some reflector orientated
+! stuff
+!
 ! Revision 2.313  2003/05/26 06:33:12  livesey
 ! Removed duplicate quantity template
 !
