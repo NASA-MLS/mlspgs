@@ -83,6 +83,10 @@ height
 hgrid
 homeGeodAngle
 homeModule
+hRegOrders
+hRegQuants
+hRegWeights
+hRegWeightVec
 
 ignore
 ignoreNegative
@@ -175,10 +179,6 @@ refGPHquantity
 refract
 regAfter
 regApriori               ! Regularization is to apriori, not zero
-regOrders
-regQuants
-regWeights
-regWeightVec
 resetSeed
 rhiQuantity
 rowChannels
@@ -240,10 +240,17 @@ vector
 versionRange
 vGrid
 vmrQuantity
+vRegOrders
+vRegQuants
+vRegWeights
+vRegWeightVec
 
 writeCounterMAF
 
 # $Log$
+# Revision 2.46  2002/08/24 01:38:28  vsnyder
+# Implement horizontal regularization
+#
 # Revision 2.45  2002/08/22 00:06:51  vsnyder
 # Implement regularize-to-apriori
 #
