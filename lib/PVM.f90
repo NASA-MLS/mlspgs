@@ -248,6 +248,12 @@ module PVM ! Interface to the f77 pvm library.
        character(len=*), intent(in) :: line
      end function pvm_pkstr
 
+     integer function pvm_pkbyte(values,num,stride)
+       character(len=1), intent(in) :: values(*)
+       integer, intent(in) :: num
+       integer, intent(in) :: stride
+     end function pvm_pkbyte
+
      integer function pvm_pkint(values,num,stride)
        integer, intent(in) :: values(*)
        integer, intent(in) :: num
@@ -263,6 +269,12 @@ module PVM ! Interface to the f77 pvm library.
      integer function pvm_upkstr(line)
        character(len=*), intent(out) :: line
      end function pvm_upkstr
+
+     integer function pvm_upkbyte(values,num,stride)
+       character(len=1), intent(out) :: values(*)
+       integer, intent(in) :: num
+       integer, intent(in) :: stride
+     end function pvm_upkbyte
 
      integer function pvm_upkint(values,num,stride)
        integer, intent(out) :: values(*)
@@ -318,15 +330,17 @@ module PVM ! Interface to the f77 pvm library.
   end interface
 
   interface pvmf90pack
-     module procedure pvmf90packString, pvmf90packInteger, pvmf90packReal, &
-          & pvmf90packIntarr1, pvmf90packIntarr2, pvmf90packIntarr3, &
-          & pvmf90packRealarr1, pvmf90packRealarr2, pvmf90packRealarr3
+     module procedure pvmf90packString, pvmf90packInteger, &
+       & pvmf90packReal, pvmf90packChararr1, &
+       & pvmf90packIntarr1, pvmf90packIntarr2, pvmf90packIntarr3, &
+       & pvmf90packRealarr1, pvmf90packRealarr2, pvmf90packRealarr3
   end interface
 
   interface pvmf90unpack
-     module procedure pvmf90unpackString, pvmf90unpackInteger, pvmf90unpackReal, &
-          & pvmf90unpackIntarr1, pvmf90unpackIntarr2, pvmf90unpackIntarr3, &
-          & pvmf90unpackRealarr1, pvmf90unpackRealarr2, pvmf90unpackRealarr3
+     module procedure pvmf90unpackString, pvmf90unpackInteger, &
+       & pvmf90unpackReal, pvmf90packChararr1, &
+       & pvmf90unpackIntarr1, pvmf90unpackIntarr2, pvmf90unpackIntarr3, &
+       & pvmf90unpackRealarr1, pvmf90unpackRealarr2, pvmf90unpackRealarr3
   end interface
 
 contains
@@ -342,6 +356,13 @@ contains
     integer, intent(out) :: info
     info=pvm_pkint( (/value/) ,1,1)
   end subroutine pvmf90packInteger
+
+  subroutine pvmf90packChararr1(values,info)
+    character(len=1), dimension(:), intent(in) :: values
+    integer, intent(out) :: info
+    
+    info=pvm_pkbyte(values,size(values),1)
+  end subroutine pvmf90packChararr1
 
   subroutine pvmf90packIntarr1(values,info)
     integer, dimension(:), intent(in) :: values
@@ -402,6 +423,13 @@ contains
     info=pvm_upkint( tempValue ,1,1)
     value=tempValue(1)
   end subroutine pvmf90unpackInteger
+
+  subroutine pvmf90unpackChararr1(values,info)
+    character(len=1), dimension(:), intent(out) :: values
+    integer, intent(out) :: info
+    
+    info=pvm_upkbyte(values,size(values),1)
+  end subroutine pvmf90unpackChararr1
 
   subroutine pvmf90unpackIntarr1(values,info)
     integer, dimension(:), intent(out) :: values
@@ -482,6 +510,9 @@ contains
 end module PVM
 
 ! $Log$
+! Revision 2.8  2002/02/01 23:49:45  livesey
+! Added stuff for character arrays (i.e. not strings)
+!
 ! Revision 2.7  2001/11/19 17:00:30  pumphrey
 ! Added interface for pvmfmcast
 !
