@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -418,14 +418,15 @@ contains
           jacobian_Rows = 0
           select case ( method )
           case ( l_newtonian )
-        ! call add_to_retrieval_timing( 'newton_solver', t1 )
             call newtonianSolver
           case ( l_lowcloud )
-        !    call add_to_retrieval_timing( 'low_cloud', t1 )
-        !    call time_now ( t1 )
             call LowCloudRetrieval
+            call add_to_retrieval_timing( 'low_cloud', t1 )
+            call time_now ( t1 )
           case ( l_highcloud )
             call HighCloudRetrieval
+            call add_to_retrieval_timing( 'high_cloud', t1 )
+            call time_now ( t1 )
           end select ! method
           !??? Make sure the jacobian and outputCovariance get destroyed
           !??? after ?what? happens?  Can we destroy the entire matrix
@@ -441,7 +442,6 @@ contains
         call deallocate_test ( configIndices, "ConfigIndices", moduleName )
         if ( toggle(gen) ) call trace_end ( "Retrieve.retrieve" )
       case ( s_sids )
-        ! call add_to_retrieval_timing( 'sids', t1 )
         call time_now ( t1 )
         call sids ( key, VectorDatabase, MatrixDatabase, configDatabase, chunk)
       case ( s_time )
@@ -759,7 +759,8 @@ contains
                 & v(x), fwdModelExtra, v(f), fmw, fmStat )
             end do ! k
           end do ! MAFs
-          call add_to_retrieval_timing( 'forward_model', t1 )
+!          ForwardModel itself calls add_to_retrieval_timing
+!          call add_to_retrieval_timing( 'forward_model', t1 )
           call time_now ( t1 )
           call subtractFromVector ( v(f), measurements )
           call copyVector ( v(f_rowScaled), v(f) ) ! f_rowScaled := f
@@ -927,7 +928,8 @@ contains
               call forwardModel ( configDatabase(configIndices(k)), &
                 & v(x), fwdModelExtra, v(f_rowScaled), fmw, fmStat, jacobian )
             end do ! k
-            call add_to_retrieval_timing( 'forward_model', t1 )
+!          ForwardModel itself calls add_to_retrieval_timing
+!            call add_to_retrieval_timing( 'forward_model', t1 )
             call time_now ( t1 )
             do rowBlock = 1, size(fmStat%rows)
               if ( fmStat%rows(rowBlock) ) then
@@ -2511,6 +2513,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.120  2001/11/27 23:34:49  pwagner
+! Split forward model timings into four types
+!
 ! Revision 2.119  2001/11/27 01:28:17  vsnyder
 ! Implement (partially) open range for channels in subset
 !
