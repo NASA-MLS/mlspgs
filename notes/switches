@@ -13,7 +13,6 @@ Switches (set by -S option in mlsl2's command line):
   chi =>    chi-related diagnostic quantities dumped
   cho =>    How good was the Cholesky decomposition?
   chu =>    Enslaved chunk processing
-  ckbk =>   Check sparse matrix algebra against full dense version
   col =>    Column scale vector for Newton iteration
   diag =>   diagonal of factored normal equations
   dvec =>   'DX' vector during Newton iteration
@@ -43,7 +42,6 @@ Switches (set by -S option in mlsl2's command line):
   svec =>   Final state vector after Newton iteration
   time =>   Summarize time consumed by each code section
   tps =>    Test_Parse_Signals
-  wall =>   Use wall clock instead of CPU_TIME
   xvec =>   'X' vector during Newton iteration
 ========================= end mlsl2 =========================
 
@@ -73,6 +71,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.15  2001/11/09 23:35:53  vsnyder
+ Add 'wall' switch
+
  Revision 1.14  2001/10/30 00:31:15  pwagner
  Replaced O with pcf[n] to dump parameters set by pcf during open_init
 
