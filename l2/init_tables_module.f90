@@ -354,7 +354,8 @@ contains ! =====     Public procedures     =============================
              l+l_thz, n+n_dt_def, &
       begin, t+t_fGridCoord, l+l_frequency, l+l_LSBFrequency, l+l_USBFrequency, &
              l+l_IntermediateFrequency, n+n_dt_def, &
-      begin, t+t_fillMethod, l+l_gridded, l+l_estimatedNoise, l+l_explicit, &
+      begin, t+t_fillMethod, l+l_binMax, l+l_binMin, &
+             l+l_gridded, l+l_estimatedNoise, l+l_explicit, &
              l+l_gphPrecision, l+l_hydrostatic, l+l_addnoise, l+l_refract, &
              l+l_isotope, l+l_l1b, l+l_l2aux, l+l_l2gp, l+l_manipulate, &
              l+l_magneticModel, &
@@ -1014,6 +1015,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.304  2003/04/23 17:06:36  livesey
+! Added binmax binmin fills
+!
 ! Revision 2.303  2003/04/22 00:17:10  dwu
 ! add a new option (clear_110RH_below_tropopause) to i_saturation
 !
