@@ -459,6 +459,8 @@ contains
             call cloneVector ( dx, x, vectorNameText='_DX' )
             call cloneVector ( dxUnScaled, x, vectorNameText='_DX Unscaled' )
             call cloneVector ( gradient, x, vectorNameText='_gradient' )
+            if ( columnScaling /= l_none ) &
+              call cloneVector ( columnScaleVector, x, vectorNameText='_ColumnScale' )
             if ( got(f_fuzz) ) then
               ! Add some fuzz to the state vector (for testing purposes):
               call cloneVector ( fuzzState, x )
@@ -571,6 +573,7 @@ contains
                   end do ! k
                 end do ! MAFs
                 call subtractFromVector ( f, measurements )
+                if ( got(f_measurementSD) ) call multiply ( weight, f )
                 aj%fnorm = sqrt ( aprioriNorm + ( f .dot. f ) )
                   if ( index(switches,'fvec') /= 0 ) &
                     & call dump ( f, name='Residual' )
@@ -981,7 +984,11 @@ contains
             call destroyVectorInfo ( bestGradient )
             call destroyVectorInfo ( bestX )
             call destroyVectorInfo ( candidateDX )
+            if ( columnScaling /= l_none ) &
+              & call destroyVectorInfo ( columnScaleVector )
             call destroyVectorInfo ( dx )
+            call destroyVectorInfo ( dxUnscaled )
+            if ( got(f_fuzz) ) call destroyVectorInfo ( fuzzState )
             call destroyVectorInfo ( gradient )
             call destroyVectorInfo ( x )
             call destroyMatrix ( normalEquations%m )
@@ -1069,6 +1076,10 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.38  2001/06/01 21:40:18  vsnyder
+! Row scale during NF_EVALF; destroy some vectors so as not to have a
+! memory leak; initially clone x to get columnScaleVector.
+!
 ! Revision 2.37  2001/06/01 21:27:48  livesey
 ! Added outSD field
 !
