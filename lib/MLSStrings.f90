@@ -1818,7 +1818,7 @@ CONTAINS
 	! Check for matches--snipping off any leading blanks
 	DO elem=1, nElements
 		CALL GetStringElement(inList, listElement, elem, countEmpty, inDelim)
-      if ( part_match ) then
+      if ( match ) then
         if (trim(listElement) /= ' ' .and. &
           & index(trim(test_string), trim(listElement)) > 0) RETURN
       else
@@ -1988,6 +1988,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.25  2002/10/29 19:55:39  pwagner
+! Fixed mistake in StringElementNum that caused crashes
+!
 ! Revision 2.24  2002/10/29 01:00:05  pwagner
 ! optional param part_match added to str element routines
 !
