@@ -446,7 +446,9 @@ contains ! ================================ Procedures ======================
           end if
           chunksStarted(deadChunk) = .false.
           chunkFailures(deadChunk) = chunkFailures(deadChunk) + 1
-          jobsMachineKilled(deadMachine) = jobsMachineKilled(deadMachine) + 1
+          where ( machineNames(deadMachine) == machineNames )
+            jobsMachineKilled = jobsMachineKilled + 1
+          end where
 
           ! Does this chunk keep failing, if so, give up.
           if ( chunkFailures(deadChunk) > &
@@ -462,9 +464,13 @@ contains ! ================================ Procedures ======================
           if ( jobsMachineKilled(deadMachine) > &
             & parallel%maxFailuresPerMachine ) then
             if ( index(switches,'mas') /= 0 ) &
-              & call output ('This machine keeps killing things, marking it bad', &
+              & call output ('The machine ' // &
+              & trim(machineNames(deadMachine)) // &
+              & 'keeps killing things, marking it bad', &
               & advance='yes' )
-            machineOK(deadMachine) = .false.
+            where ( machineNames(deadMachine) == machineNames )
+              machineOK = .false.
+            end where
           end if
         end if
       else if ( bufferID < 0 ) then
