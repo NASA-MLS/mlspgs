@@ -18,9 +18,9 @@ contains
   integer function HE5_EHWRGLATT_CHARACTER_SCALAR ( FILEID, &
     & ATTRNAME, DATATYPE, COUNT, BUFFER )
     integer, intent(in) :: FILEID      ! File ID
-    character(len=*), intent(in) :: ATTRNAME     ! Field name
-    integer, intent(in) :: DATATYPE    ! Start array
-    integer, intent(in) :: COUNT   ! Stride array
+    character(len=*), intent(in) :: ATTRNAME     ! Attribute name
+    integer, intent(in) :: DATATYPE    ! E.g., HE5T_NATIVE_SCHAR
+    integer, intent(in) :: COUNT   ! How many
     character(len=*), intent(in) :: BUFFER  ! Buffer for write
 
     integer, external :: HE5_EHWRGLATT
@@ -62,9 +62,9 @@ contains
   integer function HE5_SWWRATTR_CHARACTER_SCALAR ( SWATHID, &
     & ATTRNAME, DATATYPE, COUNT, BUFFER )
     integer, intent(in) :: SWATHID      ! Swath structure ID
-    character(len=*), intent(in) :: ATTRNAME     ! Field name
-    integer, intent(in) :: DATATYPE    ! Start array
-    integer, intent(in) :: COUNT   ! Stride array
+    character(len=*), intent(in) :: ATTRNAME     ! Attribute name
+    integer, intent(in) :: DATATYPE    ! E.g., HE5T_NATIVE_SCHAR
+    integer, intent(in) :: COUNT   ! How many
     character(len=*), intent(in) :: BUFFER  ! Buffer for write
 
     integer, external :: HE5_SWWRATTR
@@ -77,9 +77,9 @@ contains
     & ATTRNAME, DATATYPE, COUNT, BUFFER )
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: FIELDNAME     ! Field name
-    character(len=*), intent(in) :: ATTRNAME     ! Field name
-    integer, intent(in) :: DATATYPE    ! Start array
-    integer, intent(in) :: COUNT   ! Stride array
+    character(len=*), intent(in) :: ATTRNAME     ! Attribute name
+    integer, intent(in) :: DATATYPE    ! E.g., HE5T_NATIVE_SCHAR
+    integer, intent(in) :: COUNT   ! How many
     character(len=*), intent(in) :: BUFFER  ! Buffer for write
 
     integer, external :: HE5_SWWRLATTR
@@ -95,6 +95,9 @@ contains
 end module HE5_SWAPI_CHARACTER_SCALAR
 
 ! $Log$
+! Revision 2.5  2003/10/28 00:27:46  pwagner
+! Corrected some comments
+!
 ! Revision 2.4  2003/04/11 23:32:23  pwagner
 ! Moved he5_swsetfill he5_ehwrglatt interfaces
 !
