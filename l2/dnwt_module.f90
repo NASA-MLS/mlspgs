@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module DNWT_MODULE
@@ -112,6 +112,7 @@ module DNWT_MODULE
 
   use ERMSG_M, only: ERMSG, ERVN
   use DNWT_TYPE, only: RK
+  use OUTPUT_M, only: OUTPUT
 
   implicit NONE
 
@@ -183,6 +184,7 @@ module DNWT_MODULE
   integer, parameter, public :: NF_TOO_SMALL = nf_tolf+1
   !      F and J appear not to be consistent:
   integer, parameter, public :: NF_FANDJ = nf_too_small+1
+  character(LEN=80), private :: output_line
 
   interface NWT; module procedure DNWT; end interface
   interface NWTA; module procedure DNWTA; end interface
@@ -713,10 +715,11 @@ contains
 ! Step length is too large
 
       if (k1it /= 0) then
-         write(*,3001) dxn,cdxdxl,spl,sq,cgdx,condai,inc,kb
+         write(output_line,3001) dxn,cdxdxl,spl,sq,cgdx,condai,inc,kb
  3001    format(' DXN=',1PG10.3,'  CDXDXL=',G10.3,'  SPL=', &
      &          G10.3,'  SQ=',G10.3,'  CGDX=',G10.3,        &
      &          '  CI=',G10.3,'  I,K=',I2,',',I2)
+      call output(trim(output_line), advance='yes')
       end if
       spinc = sp
       sp = c4*spl+min(condai+condai,min(cp125,condai)*(dxn-tp)/tp)
@@ -792,7 +795,7 @@ contains
       fnxe = cp25*fn**2+cp76*fnxe
   780 if (k1it /= 0) then
          k1it = k1it-1
-         write(*,3002) iter,fn,frz,fnmin,fnxe,spl,         &
+         write(output_line,3002) iter,fn,frz,fnmin,fnxe,spl,         &
      &                 sq,dxn,gradn,cgdx,cdxdxl,ajn,diag,condai, &
      &                 inc,kb
  3002    format(' ITER=',I4,'  FN=',G10.3,  &
@@ -801,6 +804,7 @@ contains
      &          G10.3,'  GRADN=',G10.3,'  CGDX=',G10.3,       &
      &          '  CDXDXL=',G10.3,'  AJN=',G10.3,'  DIAG=',   &
      &          G10.3,'  CI=',G10.3,'  I,K=',I2,',',I2)
+         call output(trim(output_line), advance='yes')
       end if
 
 ! Compute new X and test for too small a correction
@@ -947,35 +951,70 @@ contains
     character(len=9) :: IFLname, NFLname
 
 !   write (*,dnwtdb_out)
-    write ( *, '(a)' ) &
-      & '       AJN        AJSCAL          CAIT        CDXDXL        CONDAI'
-    write ( *, '(5es14.7)' ) AJN, AJSCAL, CAIT, CDXDXL, CONDAI
-    write ( *, '(a)' ) &
-      & '      DIAG           DXI         DXINC        DXMAXI           DXN'
-    write ( *, '(5es14.7)' ) DIAG, DXI, DXINC, DXMAXI, DXN
-    write ( *, '(a)' ) &
-      & '    DXNBIG          DXNL        DXNOIS            FN           FNB'
-    write ( *, '(5es14.7)' ) DXNBIG, DXNL, DXNOIS, FN, FNB
-    write ( *, '(a)' ) &
-      & '       FNL         FNMIN          FNXE           FRZ          FRZB'
-    write ( *, '(5es14.7)' ) FNL, FNMIN, FNXE, FRZ, FRZB
-    write ( *, '(a)' ) &
-      & '      FRZL          GFAC         GRADN        GRADNB        GRADNL'
-    write ( *, '(5es14.7)' ) FRZL, GFAC, GRADN, GRADNB, GRADNL
+!    write ( *, '(a)' ) &
+    call output( &
+      & '       AJN        AJSCAL          CAIT        CDXDXL        CONDAI', &
+      & advance='yes')
+    write ( output_line, '(5es14.7)' ) AJN, AJSCAL, CAIT, CDXDXL, CONDAI
+    call output(trim(output_line), advance='yes')
+
+!    write ( *, '(a)' ) &
+    call output( &
+      & '      DIAG           DXI         DXINC        DXMAXI           DXN', &
+      & advance='yes')
+    write ( output_line, '(5es14.7)' ) DIAG, DXI, DXINC, DXMAXI, DXN
+    call output(trim(output_line), advance='yes')
+
+!    write ( *, '(a)' ) &
+    call output( &
+      & '    DXNBIG          DXNL        DXNOIS            FN           FNB', &
+      & advance='yes')
+    write ( output_line, '(5es14.7)' ) DXNBIG, DXNL, DXNOIS, FN, FNB
+    call output(trim(output_line), advance='yes')
+
+!    write ( *, '(a)' ) &
+    call output( &
+      & '       FNL         FNMIN          FNXE           FRZ          FRZB', &
+      & advance='yes')
+    write ( output_line, '(5es14.7)' ) FNL, FNMIN, FNXE, FRZ, FRZB
+    call output(trim(output_line), advance='yes')
+
+!    write ( *, '(a)' ) &
+    call output( &
+      & '      FRZL          GFAC         GRADN        GRADNB        GRADNL', &
+      & advance='yes')
+    write ( output_line, '(5es14.7)' ) FRZL, GFAC, GRADN, GRADNB, GRADNL
+    call output(trim(output_line), advance='yes')
     call flagName ( ifl, iflName ); call flagName ( nfl, nflName )
-    write ( *, '(a)' ) &
-      & '       IFL        INC    ITER   ITKEN    K1IT    K2IT      KB       NFL'
-    write ( *, '(1x,a9,i11,5i8,1x,a9)' ) adjustr(iflName), INC, ITER, ITKEN, &
+
+!    write ( *, '(a)' ) &
+    call output( &
+      & '       IFL        INC    ITER   ITKEN    K1IT    K2IT      KB       NFL', &
+      & advance='yes')
+    write ( output_line, '(1x,a9,i11,5i8,1x,a9)' ) adjustr(iflName), INC, ITER, ITKEN, &
       & K1IT, K2IT, KB, adjustr(nflName)
-    write ( *, '(a)' ) &
-      & '     RELSF         SPACT           SPB         SPFAC           SPG'
-    write ( *, '(5es14.7)' ) RELSF, SPACT, SPB, SPFAC, SPG
-    write ( *, '(a)' ) &
-      & '     SPINC           SPL        SPMINI        SPSTRT           SQB'
-    write ( *, '(5es14.7)' ) SPINC, SPL, SPMINI, SPSTRT, SQB
-    write ( *, '(a)' ) &
-      & '       SQL         SQMIN         TOLXA         TOLXR'
-    write ( *, '(5es14.7)' ) SQL, SQMIN, TOLXA, TOLXR
+    call output(trim(output_line), advance='yes')
+
+!    write ( *, '(a)' ) &
+    call output( &
+      & '     RELSF         SPACT           SPB         SPFAC           SPG', &
+      & advance='yes')
+    write ( output_line, '(5es14.7)' ) RELSF, SPACT, SPB, SPFAC, SPG
+    call output(trim(output_line), advance='yes')
+
+!    write ( *, '(a)' ) &
+    call output( &
+      & '     SPINC           SPL        SPMINI        SPSTRT           SQB', &
+      & advance='yes')
+    write ( output_line, '(5es14.7)' ) SPINC, SPL, SPMINI, SPSTRT, SQB
+    call output(trim(output_line), advance='yes')
+
+!    write ( *, '(a)' ) &
+    call output( &
+      & '       SQL         SQMIN         TOLXA         TOLXR', &
+      & advance='yes')
+    write ( output_line, '(5es14.7)' ) SQL, SQMIN, TOLXA, TOLXR
+    call output(trim(output_line), advance='yes')
   end subroutine DNWTDB
 
 ! ***********************************************     FlagName     *****
@@ -1023,6 +1062,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.20  2002/01/09 00:00:04  pwagner
+! Replaced write or print statements with calls to output
+!
 ! Revision 2.19  2001/06/13 23:57:12  vsnyder
 ! Use NF_START instead of zero to start IFL
 !
