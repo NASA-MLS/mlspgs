@@ -50,6 +50,7 @@ contains
     & FGrids, VGrids, l2gpDatabase, processingRange, l1bInfo )
 
     use EmpiricalGeometry, only: INITEMPIRICALGEOMETRY
+    use EXPR_M, only: EXPR
     use FGrid, only: AddFGridToDatabase, CreateFGridFromMLSCFInfo, FGrid_T
     use ForwardModelConfig, only: AddForwardModelConfigToDatabase, &
       & ForwardModelConfig_T
@@ -58,7 +59,8 @@ contains
     use INIT_TABLES_MODULE, only: F_FILE, L_TRUE, P_ALLOW_CLIMATOLOGY_OVERLOADS, &
       & P_CYCLE, P_ENDTIME, P_INPUT_VERSION_STRING, P_INSTRUMENT, &
       & P_LEAPSECFILE, P_OUTPUT_VERSION_STRING, P_STARTTIME, &
-      & P_VERSION_COMMENT, S_BINSELECTOR, S_EMPIRICALGEOMETRY, S_FGRID, &
+      & P_VERSION_COMMENT, P_MAXFAILURESPERMACHINE, P_MAXFAILURESPERCHUNK, &
+      & S_BINSELECTOR, S_EMPIRICALGEOMETRY, S_FGRID, &
       & S_FORWARDMODEL, S_ForwardModelGlobal, S_L1BOA, S_L1BRAD, &
       & S_L2PARSF, S_TIME, S_VGRID
     use L1BData, only: l1bradSetup, l1boaSetup, ReadL1BData, L1BData_T, &
@@ -112,6 +114,8 @@ contains
     logical :: TIMING              ! For S_Time
     logical :: StartTimeIsAbsolute, stopTimeIsAbsolute
     real :: T1, T2                 ! For S_Time
+    integer :: UNITS(2)            ! Output from Expr
+    double precision :: VALUE(2)  ! Output from Expr
     real(r8) :: Start_time_from_1stMAF, End_time_from_1stMAF
     logical ::  ItExists
 
@@ -220,6 +224,12 @@ contains
             & '*** Leap Second File supplied global settings despite pcf ***', &
             & just_a_warning = .true.)
           end if
+        case ( p_maxfailurespermachine )
+          call expr ( subtree(2,son), units, value )
+          parallel%maxfailurespermachine = value(1)
+        case ( p_maxfailuresperchunk )
+          call expr ( subtree(2,son), units, value )
+          parallel%maxfailuresperchunk = value(1)
         case default
           call announce_error(son, 'unrecognized global settings parameter')
         end select
@@ -709,6 +719,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.72  2003/07/15 18:18:06  livesey
+! Change of forward model config call.
+!
 ! Revision 2.71  2003/07/07 23:50:04  pwagner
 ! Now uses saved variable L2pcf from writeMetaData
 !
