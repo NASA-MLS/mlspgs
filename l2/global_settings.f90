@@ -300,6 +300,9 @@ contains
     end do
 
     hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
+    if ( hdfversion <= 0 ) &                                            
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &                      
+      & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )    
     ! add maf offsets to start, end times
     ! or convert them to tai93
     ! This is optional way to define processingRange if using PCF
@@ -516,7 +519,11 @@ contains
       character(len=Name_Len) :: l1bItemName
 
       ! Begin
-      hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
+      hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), &
+        & LEVEL1_HDFVERSION)
+      if ( hdfversion <= 0 ) &                                          
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &                    
+        & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )  
       myL1BDetails = -2
       if ( present(dumpL1BDetails) ) myL1BDetails = dumpL1BDetails
       version = 1
@@ -680,6 +687,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.61  2002/11/13 01:07:40  pwagner
+! Actually reads hdf5 radiances
+!
 ! Revision 2.60  2002/10/08 17:36:20  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
