@@ -6,6 +6,13 @@
 !=====================  For NAG Fortran 95 only =====================
 !
  
+!------------------- RCS Ident Info -----------------------
+  character(len=130), private :: Id = &
+    & "$Id$"
+  character(len=*), parameter, private :: ModuleName= &
+    & "$RCSfile$"
+  !----------------------------------------------------------
+
 SUBROUTINE lu_errmsg(lu,msg,ier)
  
 !
@@ -251,3 +258,4 @@ CALL lu_errmsg(lu,msg,ier)
 RETURN
 END SUBROUTINE errmsg
  
+! $Log$
