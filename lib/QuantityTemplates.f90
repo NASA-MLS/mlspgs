@@ -14,6 +14,7 @@ module QuantityTemplates         ! Quantities within vectors
     & MLSMSG_Error
   use Intrinsic, only: L_None
   use Output_m, only: Output
+  use String_Table, only: Get_String
 
   implicit none
   public
@@ -24,6 +25,8 @@ module QuantityTemplates         ! Quantities within vectors
   character(len=*), parameter, private :: ModuleName = &
     & "$RCSfile$"
   !-----------------------------------------------------------------------------
+
+  logical, parameter, private :: DEEBUG = .TRUE.           ! Usually FALSE
 
   ! Define some global parameters and data types.
 
@@ -192,9 +195,20 @@ contains ! =====     Public Procedures     =============================
     type (QuantityTemplate_T), intent(inout) :: QTY
 
     ! Local variables
+    character (LEN=32) :: quantityNameStr
 
     ! Executable code
 
+    if ( DEEBUG ) then
+      call output('Destroying Quantity template contents', advance='yes')
+      call output('minor frame? ', advance='no')
+      call output(qty%minorFrame, advance='no')
+      call output('   major frame? ', advance='no')
+      call output(qty%majorFrame, advance='no')
+      call output('   template  name', advance='no')
+      call get_string(qty%name, quantityNameStr, strip=.true.)
+      call output(trim(quantityNameStr), advance='yes')
+    endif
     call deallocate_test ( qty%surfs, "qty%surfs", ModuleName )
     call deallocate_test ( qty%phi, "qty%phi", ModuleName )
     call deallocate_test ( qty%geodLat, "qty%geodLat", ModuleName )
@@ -205,7 +219,8 @@ contains ! =====     Public Procedures     =============================
     call deallocate_test ( qty%losAngle, "qty%losAngle", ModuleName )
     call deallocate_test ( qty%frequencies, "qty%frequencies", ModuleName )
 
-    if (qty%minorFrame .or. qty%majorFrame) then
+!    if (qty%minorFrame .or. qty%majorFrame) then
+    if ( qty%minorFrame ) then
       call deallocate_test ( qty%MAFIndex, "qty%MAFIndex", ModuleName )
       call deallocate_test ( qty%MAFCounter, "qty%MAFCounter", ModuleName )
     end if
@@ -414,6 +429,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.19  2001/09/17 21:59:26  livesey
+! Removed allocate of frequencies, it's deferred to later in the code
+!
 ! Revision 2.18  2001/09/13 19:59:43  pwagner
 ! Added majorframe as possible quantity type
 !
