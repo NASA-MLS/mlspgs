@@ -49,7 +49,7 @@ begin Join
 
   ;; IWC is a special case
   Label, quantity=state.iwc, label='IWC'
-  Label, quantity=state.iwcFine, label='IWC-fine'
+  Label, quantity=state.iwcFine, label='IWC3'
   DirectWrite, type=l2gp, hdfVersion=!hdfVersion, $
     file='!l2gpFileName(IWC)', $
     source=state.iwc, precision=outputPrecision.iwc, $
