@@ -66,7 +66,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_COLINSTANCES        = f_colChannels + 1
   integer, parameter :: F_COLQUANTITY         = f_colInstances + 1
   integer, parameter :: F_COLSURFACES         = f_colQuantity + 1
-  integer, parameter :: F_COLUMNS             = f_colSurfaces + 1
+  integer, parameter :: F_COLUMNABUNDANCE     = f_colSurfaces + 1
+  integer, parameter :: F_COLUMNS             = f_columnabundance + 1
   integer, parameter :: F_COLUMNSCALE         = f_columns + 1
   integer, parameter :: F_COMMENT             = f_columnscale + 1
   integer, parameter :: F_COMPAREOVERLAPS     = f_comment + 1
@@ -430,6 +431,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_colInstances) =        add_ident ( 'colInstances' )
     field_indices(f_colQuantity) =         add_ident ( 'colQuantity' )
     field_indices(f_colSurfaces) =         add_ident ( 'colSurfaces' )
+    field_indices(f_columnabundance) =     add_ident ( 'columnabundance' )
     field_indices(f_columns) =             add_ident ( 'columns' )
     field_indices(f_columnscale) =         add_ident ( 'columnScale' )
     field_indices(f_comment) =             add_ident ( 'comment' )
@@ -805,6 +807,10 @@ contains ! =====     Public procedures     =============================
                     n+n_dot, &
              begin, f+f_prefixSignal, t+t_boolean, n+n_field_type, &
              begin, f+f_swath, t+t_string, n+n_field_type, &
+             begin, f+f_columnAbundance, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
+             begin, f+f_boundaryPressure, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
              ndp+n_spec_def, &
       begin, s+s_l2aux, &   ! Must be AFTER s_vector
              begin, f+f_source, s+s_vector, f+f_template, f+f_quantities, &
@@ -1040,6 +1046,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.151  2001/07/31 23:25:32  pwagner
+! Able to accept 2 new fields for join of column; does nothing yet
+!
 ! Revision 2.150  2001/07/31 22:30:51  pwagner
 ! Don't try to split calls to make_tree within section
 !
