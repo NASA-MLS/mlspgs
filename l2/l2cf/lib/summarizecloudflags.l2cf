@@ -8,25 +8,29 @@ begin Fill
   ;; First define a macro to generate the cloudRadMin/Max quantities
   ;;   band=$1, channel=$2
   !define(summarizeOneCloudRad,{!dnl
-    Fill, quantity=cloudOutput.cloudRadMinR$1, method=binMin, $
-      ptanQuantity=state.ptan!moduleForBand(!cloudBandForRadNo($1)), $
-      sourceQuantity=cloudOutput.dtBand!cloudBandForRadNo($1), channel=!cloudChannelForRadNo($1)
-    Fill, quantity=cloudOutput.cloudRadMaxR$1, method=binMax, $
-      ptanQuantity=state.ptan!moduleForBand(!cloudBandForRadNo($1)), $
-      sourceQuantity=cloudOutput.dtBand!cloudBandForRadNo($1), channel=!cloudChannelForRadNo($1)
-    Fill, quantity=otherDiagnostics.lowCloudSummaryR$1, method=binMin, /excludeBelowBottom, $
-      ptanQuantity=state.ptan!moduleForBand(!cloudBandForRadNo($1)), $
-      sourceQuantity=cloudOutput.dtBand!cloudBandForRadNo($1), channel=!cloudChannelForRadNo($1)
-    Fill, quantity=otherDiagnostics.highCloudSummaryR$1, method=binMax, /excludeBelowBottom, $
-      ptanQuantity=state.ptan!moduleForBand(!cloudBandForRadNo($1)), $
-      sourceQuantity=cloudOutput.dtBand!cloudBandForRadNo($1), channel=!cloudChannelForRadNo($1)!nl})
+    Fill, quantity=cloudOutput.cloudRadMin$1, method=binMin, $
+      ptanQuantity=state.ptan!moduleForBand(!cloudBandForRad($1)), $
+      sourceQuantity=cloudOutput.dtBand!cloudBandForRad($1), channel=!cloudChannelForRad($1)
+    Fill, quantity=cloudOutput.cloudRadMax$1, method=binMax, $
+      ptanQuantity=state.ptan!moduleForBand(!cloudBandForRad($1)), $
+      sourceQuantity=cloudOutput.dtBand!cloudBandForRad($1), channel=!cloudChannelForRad($1)
+    Fill, quantity=otherDiagnostics.lowCloudSummary$1, method=binMin, /excludeBelowBottom, $
+      ptanQuantity=state.ptan!moduleForBand(!cloudBandForRad($1)), $
+      sourceQuantity=cloudOutput.dtBand!cloudBandForRad($1), channel=!cloudChannelForRad($1)
+    Fill, quantity=otherDiagnostics.highCloudSummary$1, method=binMax, /excludeBelowBottom, $
+      ptanQuantity=state.ptan!moduleForBand(!cloudBandForRad($1)), $
+      sourceQuantity=cloudOutput.dtBand!cloudBandForRad($1), channel=!cloudChannelForRad($1)!nl})
 
   ;; Now invoke it for our significant channels.
-  !forall(summarizeOneCloudRad,!oneToFive)
+  !forall(summarizeOneCloudRad,!allRadiometers)
 
 end Fill
 
 ; $Log$
+; Revision 1.5  2004/05/04 01:07:31  livesey
+; Added invocation of excludeBelowBottom flag for quantities intended for
+; flagging.
+;
 ; Revision 1.4  2004/04/16 00:45:25  livesey
 ; New approach to cloud flagging.
 ;
