@@ -5,10 +5,10 @@ module ManipulateVectorQuantities ! Various routines for manipulating vectors
 
   ! This modules contains routines needed for manipulating vectors.
 
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-  use MLSCommon, only: r8, rv
-  use MLSNumerics, only: Hunt
-  use VectorsModule, only: VectorValue_T
+  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
+  use MLSCommon, only: R8, RV
+  use MLSNumerics, only: HUNT
+  use VectorsModule, only: VECTORVALUE_T, VECTOR_T
   use Intrinsic, only: L_PHITAN, L_CHANNEL, L_NONE, PHYQ_ANGLE, PHYQ_PROFILES
 
   implicit none
@@ -25,7 +25,7 @@ module ManipulateVectorQuantities ! Various routines for manipulating vectors
 
   public :: AnyGoodDataInQty, FindClosestInstances, FindOneClosestInstance, &
     & FindInstanceWindow, DoHGridsMatch, DoVGridsMatch, DoFGridsMatch, &
-    & DoQtysDescribeSameThing
+    & DoQuantitiesMatch, DoQtysDescribeSameThing, DoVectorsMatch
 
 contains
 
@@ -203,6 +203,41 @@ contains
 
   end function DoHGridsMatch
 
+  ! ------------------------------------- DoQuantitiesEssentiallyMatch --
+  logical function DoQuantitiesMatch ( a, b )
+    ! Returns true if quantities share all important template information.
+    type (VectorValue_T), intent(in) :: A ! First quantity
+    type (VectorValue_T), intent(in) :: B ! Second quantity
+    ! Executable code
+    DoQuantitiesMatch = .false.
+    if ( .not. DoQtysDescribeSameThing  ( a, b ) ) return
+    if ( .not. DoHGridsMatch ( a, b ) ) return
+    if ( .not. DoVGridsMatch ( a, b ) ) return
+    if ( .not. DoFGridsMatch ( a, b ) ) return
+    DoQuantitiesMatch = .true.
+  end function DoQuantitiesMatch
+
+  ! -------------------------------------- DoVectorsMatch --------------
+  logical function DoVectorsMatch ( a, b )
+    ! Returns true if vectors are essentially the same in nature, even
+    ! if names of quantities differ.
+    type(Vector_T), intent(in) :: A ! First vector
+    type(Vector_T), intent(in) :: B ! Second vector
+
+    ! Local variables
+    integer :: Q                        ! Loop counter
+
+    ! Exectuable code
+    DoVectorsMatch = .false.
+    if ( a%template%noQuantities /= b%template%noQuantities ) return
+
+    do q = 1, a%template%noQuantities
+      if ( .not. DoQuantitiesMatch ( &
+        & a%quantities(q), b%quantities(q) ) ) return
+    end do
+    DoVectorsMatch = .true.
+  end function DoVectorsMatch
+
   ! --------------------------------------- DoVGridsMatch --------------
   logical function DoVGridsMatch ( a, b )
     ! Returns true if quantities have same vGrid information
@@ -294,6 +329,9 @@ contains
 end module ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.25  2004/01/23 05:37:01  livesey
+! Added DoVectors/QuantitiesMatch
+!
 ! Revision 2.24  2003/08/28 00:44:43  livesey
 ! Added sizeOnly option to DoFGridsMatch
 !
