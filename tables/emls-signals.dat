@@ -1,0 +1,253 @@
+; File: emls-signals.dat
+;
+; This calibration file contains a list of all the valid EOS-MLS signal
+; specifications.  It also contains enough information to construct nominal
+; frequency (upper and lower sideband) and width information for any channel
+; request.
+;
+; Should the instrument design be changed, this file is the first that will
+; need to be modified.  Obviously other files, such as user input files for
+; calibration file generation programs will also need modification to reflect
+; the new configuration.
+;
+; History
+;
+;    11-Nov-97 NJL First version, based on DAF May 21, 1997 document
+;	           'EOS MLS DESIGNATIONS'
+;    24-Nov-97 NJL Modified to include information on nominal frequencies
+;                  and widths.
+;    18-May-98 NJL Improved comments prior to telling people about the file.
+;
+; -----------------------------------------------------------------------------
+; -----------------------------------------------------------------------------
+;
+; The first set of information details the various types of spectrometers,
+; and the range of channels numbers that can be used for the spectrometer.
+;
+Spectrometers
+;
+FB25 1 25
+DACS 0 128
+MB11 1 11
+WF4 1 4
+;
+END
+;
+; ----------------------------------------------------------------------------
+; ----------------------------------------------------------------------------
+;
+; Now the list of the signals, first the nominal measurement set
+;
+; 25 channel filter bands first, by radiometer
+;
+Valid Signals
+;
+R1A:118.B1F:PT.S0.FB25-1
+;
+R2:190.B2F:H2O.S0.FB25-2
+R2:190.B3F:N2O.S2.FB25-3
+R2:190.B4F:HNO3.S0.FB25-4
+R2:190.B5F:CLO.S0.FB25-5
+R2:190.B6F:O3.S0.FB25-6
+;
+R3:240.B7F:O3.S0.FB25-7
+R3:240.B8F:PT.S3.FB25-8
+R3:240.B9F:CO.S0.FB25-9
+;
+R4:640.B10F:CLO.S0.FB25-10
+R4:640.B11F:BRO.S0.FB25-11
+R4:640.B12F:N2O.S4.FB25-12
+R4:640.B13F:HCL.S0.FB25-13
+R4:640.B14F:O3.S0.FB25-14
+;
+R5H:2T5.B15F:OH.S5.FB25-15
+R5H:2T5.B16F:OH.S0.FB25-16
+R5H:2T5.B17F:PT.S0.FB25-17
+R5V:2T5.B18F:OH.S0.FB25-18
+R5V:2T5.B19F:OH.S0.FB25-19
+;
+; Now the digital autocorrelators (DACS)
+;
+R1A:118.B22D:PT.S1.DACS-1
+R2:190.B23D:H2O.S0.DACS-2
+R3:240.B24D:O3.S0.DACS-3
+R3:240.B25D:CO.S0.DACS-4
+;
+; Now the mid band 11 channel filter banks
+;
+R2:190.B27M:HCN.S0.MB11-1
+R4:640.B28M:HO2.S0.MB11-2
+R4:640.B29M:HOCL.S0.MB11-3
+R4:640.B30M:HO2.S0.MB11-4
+R4:640.B31M:BRO.S0.MB11-5
+;
+; Now the wide filters for the tropospheric measurements
+;
+R1A:118.B32W:PT.S0.WF4-1
+R3:240.B33W:O3.S0.WF4-2
+;
+; ---------------------------------------------------------------------------
+;
+; Now the paths that are not nominally active
+;
+; First the 25 channel filterbanks
+;
+R1A:118.B1F:PT.S3.FB25-8
+R1B:118.B21F:PT.S4.FB25-12
+R1B:118.B21F:PT.S3.FB25-8
+;
+R2:190.B2F:H2O.S2.FB25-3
+R2:190.B4F:HNO3.S2.FB25-3
+R2:190.B5F:CLO.S2.FB25-3
+;
+R3:240.B7F:O3.S3.FB25-8
+R3:240.B8F:PT.S2.FB25-8
+R3:240.B9F:CO.S3.FB25-8
+;
+R4:640.B13F:HCL.S4.FB25-12
+R4:640.B14F:O3.S4.FB25-12
+;
+R5H:2T5.B16F:OH.S5.FB25-15
+R5H:2T5.B17F:PT.S5.FB25-15
+R5V:2T5.B18F:OH.S5.FB25-15
+R5V:2T5.B19F:OH.S5.FB25-15
+R5V:2T5.B20F:PT.S3.FB25-8
+R5V:2T5.B20F:PT.S5.FB25-15
+;
+; Now the digital autocorrelators (DACS)
+;
+R1B:118.B26D:PT.S1.DACS-1
+;
+; Now the wide filters for the tropospheric measurements
+;
+R1B:118.B34W:PT.S0.WF4-3
+;
+END
+;
+; ----------------------------------------------------------------------------
+; ----------------------------------------------------------------------------
+;
+; Now the nominal LO frequencies for the various radiometers and bands, first
+; the radiometers.
+;
+Radiometer Frequencies
+;
+; If two radiometers are given, this indicates a redundancy.
+;
+R1A:118 110.706e3
+R1B:118 R1A:118 110.706e3
+R2:190 191.9e3
+R3:240 239.66e3
+R4:640 642.87e3
+R5H:2T5 2522.7816e3
+R5V:2T5 2522.7816e3
+;
+END
+;
+; ----------------------------------------------------------------------------
+;
+; Now the bands, in much the same order as the earlier section.
+;
+Band Frequencies
+;
+; FB25s
+;
+B1F:PT 8.047e3
+;
+B2F:H2O 8.5858e3
+B3F:N2O 9.0798e3
+B4F:HNO3 10.3013e3
+B5F:CLO 12.4566e3
+B6F:O3 14.2367e3
+;
+B7F:O3 3.9449e3
+B8F:PT 5.7085e3
+B9F:CO 9.1168e3
+;
+B10F:CLO 6.5959e3
+B11F:BRO 7.3237e3
+B12F:N2O 9.9785e3
+B13F:HCL 16.9373e3
+B14F:O3 17.4844e3
+;
+B15F:OH 8.4081e3
+B16F:OH 12.7759e3
+B17F:PT 20.4012e3
+B18F:OH 8.4081e3
+B19F:OH 12.7749e3
+B20F:PT 20.4012e3
+;
+B21F:PT 8.047e3
+;
+; DACs
+;
+B22D:PT 8.047e3
+B23D:H2O 8.5858e3
+B24D:O3 3.9449e3
+B25D:CO 9.1168e3
+B26D:PT 8.047e3
+;
+; MB11s
+;
+B27M:HCN 14.6348e3
+B28M:HO2 6.8462e3
+B29M:HOCL 6.9856e3
+B30M:HO2 17.6306e3
+B31M:BRO 18.0879e3
+;
+; Wide filters accounted for separately
+;
+END
+;
+; -----------------------------------------------------------------------------
+;
+; Now the channels, here give nominal position and nominal width
+;
+Spectrometer Frequencies
+;
+; For FB25s list the frequencies and the widths
+;
+FB25 List
+  -575.0 -479.0 -383.0 -303.0 -239.0 -175.0 -119.0 
+  -79.0  -51.0  -31.0  -17.0  -7.0   0.0    7.0    17.0  31.0  51.0  79.0
+  119.0  175.0  239.0  303.0  383.0  479.0  575.0
+  96.0   96.0   96.0   64.0   64.0   64.0   48.0
+  32.0   24.0   16.0   12.0   8.0    6.0    8.0    12.0  16.0  24.0  32.0
+  48.0   64.0   64.0   64.0   96.0   96.0   96.0
+;
+; Similar for the MB11s
+;
+MB11 List
+  -79.0  -51.0  -31.0  -17.0  -7.0   0.0    7.0    17.0  31.0  51.0  79.0
+  32.0   24.0   16.0   12.0   8.0    6.0    8.0    12.0  16.0  24.0  32.0
+;
+; For the DACs give a simple algorithm
+;
+DACS Even 
+  129 0.0 0.2 0.2
+; Number of channels, starting frequency, frequency step and width.
+;
+; For the Wide band filters, indicate that each is different
+;
+WF4 Individual
+;
+END
+;
+; Now the details for the wide band filters, which are considered
+; as a separate case.
+;
+Specific Channels
+;
+R1A:118.B32W:PT.S0.WF4-1 List
+   4.8e3 6.3e3 9.8e3 11.5e3 
+   0.5e3 0.5e3 0.5e3 0.5e3
+;
+R3:240.B33W:O3.S0.WF4-2 List
+  3.0e3 4.8e3 7.2e3 7.8e3
+  0.5e3 0.5e3 0.5e3 0.5e3
+;
+R1B:118.B34W:PT.S0.WF4-3 List
+   4.8e3 6.3e3 9.8e3 11.5e3 
+   0.5e3 0.5e3 0.5e3 0.5e3
+;
+END
