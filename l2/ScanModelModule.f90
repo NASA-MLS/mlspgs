@@ -48,7 +48,7 @@ module ScanModelModule          ! Scan model and associated calculations
   private
 
   public :: GetBasisGPH, GetHydrostaticTangentPressure, ScanForwardModel, &
-    & TwoDScanForwardModel, Get2DHydrostaticTangentPressure
+    & TwoDScanForwardModel, Get2DHydrostaticTangentPressure, GetGPHPrecision
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -195,6 +195,161 @@ contains ! =============== Subroutines and functions ==========================
          
     ! That's it  
   end subroutine GetBasisGPH
+
+  ! ----------------------------------------------- GetGPHPrecision ---------------
+  subroutine GetGPHPrecision ( tempPrec, refGPHPrec, &
+    & gphPrec )
+    ! This function takes a state vector, containing one and only one
+    ! temperature and reference geopotential height precisions, and
+    ! returns the GPH precision.
+
+    ! Dummy arguments
+    type (VectorValue_T), intent(IN) :: TEMPPREC ! The temperature precision
+                                                 ! field
+    type (VectorValue_T), intent(IN) :: REFGPHPREC ! The reference gph
+                                                   ! precision field
+    real (r8), dimension(:,:), intent(OUT) :: GPHPREC ! Result (temp%noSurfs,temp%noInstances)
+  
+    ! Some terms to do with the gas 'constant'
+
+    real (r8), parameter :: GASM0 = 25.34314957d-3 ! Constant
+    real (r8), parameter :: GASM1 = 2.89644d-3 ! Linear term
+    real (r8), parameter :: GASM2 = -0.579d-3 ! Quadratic term
+    real (r8), parameter :: GASR0 = 8.31441 ! `Standard' gas constant
+
+    ! Local variables, many automatic arrays
+
+    real (r8), dimension(tempPrec%template%noSurfs) :: MYR ! Gas constant
+
+    real (r8), dimension(tempPrec%template%noSurfs) :: LOGP ! -log10 pressure
+    real (r8), dimension(tempPrec%template%noSurfs) :: MODIFIEDBASIS ! noSurfs
+    real (r8), dimension(tempPrec%template%noInstances) :: CURRENTREFGPH ! From 1st calc
+    real (r8), dimension(tempPrec%template%noInstances) :: CORRECTION ! To apply to gph
+    real (r8), dimension(tempPrec%template%noInstances) :: DELTAGEOPOT ! noInstances
+
+    ! The derivatives are effectively 1D at each instance
+    real (r8), dimension(tempPrec%template%noSurfs, &
+      & tempPrec%template%noSurfs, &
+      & tempPrec%template%noInstances) :: DMYRT_DT   ! d(R*T)/dT
+    real (r8), dimension(tempPrec%template%noSurfs, &
+      & tempPrec%template%noInstances) :: DCURRENTREFGPH_DT ! From 1st calc
+    real (r8), dimension(tempPrec%template%noSurfs, &
+      & tempPrec%template%noInstances) :: DCORRECTION_DT ! To apply to dgph_dT
+    real (r8), dimension(tempPrec%template%noSurfs, &
+      & tempPrec%template%noInstances) :: DDELTAGEOPOT_DT ! 
+    real (r8), dimension(tempPrec%template%noSurfs, &
+      & tempPrec%template%noSurfs, &
+      & tempPrec%template%noInstances) :: DGPH_DT ! 
+    real (r8), dimension(tempPrec%template%noSurfs, &
+      & tempPrec%template%noInstances) :: DGPH_DREFGPH ! 
+
+    real (r8), dimension(tempPrec%template%noSurfs, &
+      & tempPrec%template%noInstances) :: GPHPREC2 ! squared PGH precision
+    real (r8), dimension(tempPrec%template%noSurfs, &
+      & tempPrec%template%noInstances) :: GPHPREC2A ! squared PGH precision (alt)
+
+    integer :: MYBELOWREF               ! Result of a hunt
+    real (r8) :: ABOVEREFWEIGHT         ! Interpolation weight
+    
+    integer :: INSTANCE                 ! Loop counter
+    integer :: SURF                     ! Loop counter
+    
+    real (r8) :: BASISCUTOFF            ! Threshold level for gas constant
+    real (r8) :: REFLOGP                ! Log p of pressure reference surface
+    real (r8) :: BASISGAP               ! Space between adjacent surfaces
+
+    ! Check that we get the right kinds of quantities
+    if ( ( .not. ValidateVectorQuantity( tempPrec,&
+      &            coherent=.true., &
+      &            stacked=.true., &
+      &            regular=.true., &
+      &            verticalCoordinate=(/l_Zeta/)) ) .or. &
+      &  ( .not. ValidateVectorQuantity( refGPHPrec,&
+      &            coherent=.true., &
+      &            stacked=.true., &
+      &            regular=.true., &
+      &            verticalCoordinate=(/l_Zeta/)) ) ) &
+      & call MLSMessage(MLSMSG_Error,ModuleName,&
+        & 'Inappropriate tempPrec/refGPHPrec quantity' )
+
+    ! Now the main calculation. This is two parts.  First we compute a
+    ! geopotential height grid with an arbitrary offset of H=0 at the lowest
+    ! basis point.
+
+    ! To do this we get a gas constant for all the temperature basis points
+    logP= tempPrec%template%surfs(:,1)
+
+    basisCutoff= -gasM1 / (2*gasM2) ! Set a threshold value
+    modifiedBasis = max ( logP, basisCutoff ) ! Either logP or this threshold
+    myR = gasR0 / ( gasM0 + gasM1*modifiedBasis + gasM2*modifiedBasis**2 )
+
+    ! Compute T derivative of R*T for each point.
+    dmyRT_dT = 0.0
+    do surf = 1, tempPrec%template%noSurfs
+      dmyRT_dT(surf,surf,:) = myR(surf)
+    end do
+
+    dgph_dT = 0.0
+    do surf = 2, tempPrec%template%noSurfs
+       ddeltaGeopot_dT = (ln10/ (2*g0) ) * &
+         & ( dmyRT_dT(surf,:,:) + dmyRT_dT(surf-1,:,:) ) * &
+         & ( logP(surf) - logP(surf-1) )
+       dgph_dT(surf,:,:) = dgph_dT(surf-1,:,:) + ddeltaGeopot_dT
+    end do
+
+    ! Now we need to correct for the reference geopotential, find the layer the
+    ! reference surface is within.
+
+    refLogP = refGPHPrec%template%surfs(1,1)
+    call Hunt ( logP, refLogP, myBelowRef )
+
+    ! Get weights
+    basisGap = logP(myBelowRef+1) - logP(myBelowRef)
+    aboveRefWeight = ( refLogP - logP(myBelowRef) )/basisGap
+
+    ! Forbid extrapolation
+    aboveRefWeight = max ( min ( aboveRefWeight, 1.0D0 ), 0.0D0 )
+
+    ! Get derivative of the geopotential at the reference surface
+    ! from our intermediate result
+    dcurrentRefGPH_dT = dgph_dT(myBelowRef,:,:) + ((basisGap*ln10)/(2*g0))* &
+      & ( dmyRT_dT(myBelowRef,:,:) * aboveRefWeight * (2-aboveRefWeight) + &
+      &   dmyRT_dT(myBelowRef+1,:,:) * (aboveRefWeight**2))
+
+    ! Now make the correction, again avoid spread to save time/memory,
+    ! Also convert to geopotential height.
+    dcorrection_dT = - dcurrentRefGPH_dT
+    do surf = 1, tempPrec%template%noSurfs         
+       dgph_dT(surf,:,:) = dgph_dT(surf,:,:) + dcorrection_dT
+    end do
+
+    ! The refGPH derivative is easy!
+    dgph_drefGPH = 1.0
+
+    !  Transform the temperature, refGPH precision to GPH precision
+    GPHPrec2 = 0.0
+    do instance = 1, tempPrec%template%noInstances
+      do surf = 1, tempPrec%template%noSurfs
+        GPHPrec2(:,instance) = GPHPrec2(:,instance) + &
+          & ( dgph_dT(:,surf,instance) * tempPrec%values(surf,instance) )**2
+      end do
+      GPHPrec2(:,instance) = GPHPrec2(:,instance) + &
+        & ( dgph_drefGPH(:,instance) * refGPHPrec%values(1,instance) )**2
+    end do
+    do surf = 1, tempPrec%template%noSurfs
+      GPHPrec2a(surf,:) = sum ( &
+        & dgph_dT(surf,:,:) * tempPrec%values(:,:) * &
+        & tempPrec%values(:,:) * dgph_dT(surf,:,:), &
+        & dim=1 )
+      GPHPrec2a(surf,:) = GPHPrec2a(surf,:) + &
+        & dgph_drefGPH(surf,:) * refGPHPrec%values(1,:) * &
+        & refGPHPrec%values(1,:) * dgph_drefGPH(surf,:)
+    end do
+    print*, sum(GPHPrec2-GPHPrec2a), maxval(GPHPrec2), maxval(GPHPrec2a)
+    GPHPrec = sqrt ( GPHPrec2 )
+     
+    ! That's it  
+  end subroutine GetGPHPrecision
 
   ! ---------------------------------- Get2DHydroStaticTangentPressure ----------
   subroutine Get2DHydrostaticTangentPressure ( ptan, temp, refGPH, h2o, &
@@ -1857,6 +2012,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.50  2002/10/16 20:13:55  mjf
+! Added GetGPHPrecision, based on GetBasisGPH.
+!
 ! Revision 2.49  2002/10/08 17:36:22  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
