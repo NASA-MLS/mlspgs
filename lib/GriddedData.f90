@@ -194,7 +194,6 @@ contains
   end subroutine CopyGrid
 
   ! -----------------------------------------  DestroyGriddedData  -----
-
   subroutine DestroyGriddedData ( Qty )
     ! This subroutine destroys a quantity template
 
@@ -488,6 +487,315 @@ contains
     nullify ( g%field )
   end subroutine NullifyGriddedData
 
+  ! ---------------------------------------- SliceGriddedData ------
+  subroutine SliceGriddedData ( grid, slice, &
+    & heights, lats, lons, lsts, szas, dates, missingValue )
+
+    use MLSNumerics, only: HUNT, ESSENTIALLYEQUAL
+
+    type ( GriddedData_T ), intent(inout) :: GRID ! Input grid
+    real(rgr), dimension(:), intent(out) :: SLICE ! Result
+    real(rgr), dimension(:), intent(in) :: HEIGHTS
+    real(rgr), dimension(:), intent(in) :: LATS
+    real(rgr), dimension(:), intent(in) :: LONS
+    real(rgr), dimension(:), intent(in) :: LSTS
+    real(rgr), dimension(:), intent(in) :: SZAS
+    real(r8),  dimension(:), intent(in) :: DATES
+    real(rgr), optional, intent(in) :: MISSINGVALUE
+
+    ! Local parameters
+    real(r8), parameter :: NOSECONDSINMEANYEAR = 9.55+60.0*(9.0+60.0*(6.0+24.0*365.0))
+    ! 365 days, 6 hours, 9 minutes, 9.55 seconds
+
+    ! Local variables
+    ! First the dimensions of the slice
+    integer :: NOHEIGHTS, NOLATS, NOLONS, NOLSTS, NOSZAS, NODATES
+    ! Now the number of corners
+    integer :: NOCORNERS
+    ! Missing value to use
+    real(rgr) :: MYMISSINGVALUE
+
+    ! Now the indcies for each corner
+    integer, dimension(size(heights),2) :: HEIGHTI
+    integer, dimension(size(lats),2)    :: LATI
+    integer, dimension(size(lons),2)    :: LONI
+    integer, dimension(size(lsts),2)    :: LSTI
+    integer, dimension(size(szas),2)    :: SZAI
+    integer, dimension(size(dates),2)   :: DATEI
+
+    ! Now the weights for each corner
+    real(rgr), dimension(size(heights),2) :: HEIGHTW
+    real(rgr), dimension(size(lats),2)    :: LATW
+    real(rgr), dimension(size(lons),2)    :: LONW
+    real(rgr), dimension(size(lsts),2)    :: LSTW
+    real(rgr), dimension(size(szas),2)    :: SZAW
+    real(rgr), dimension(size(dates),2)   :: DATEW
+
+    ! Some extra special stuff for the dates
+    real(r8), dimension(grid%noDates) :: MEANGRIDDATES
+    real(r8), dimension(size(dates)) :: MODIFIEDINDATES
+    integer :: YEARNUMBER
+
+    ! Indices and loop counters
+    integer :: I, C
+    integer :: HEIGHT, LAT, LON, LST, SZA, DATE
+    integer :: HEIGHTFAC, LATFAC, LONFAC, LSTFAC, SZAFAC, DATEFAC
+    ! Indices of corner stuff
+    integer, dimension(:), pointer :: HEIGHTC
+    integer, dimension(:), pointer :: LATC
+    integer, dimension(:), pointer :: LONC
+    integer, dimension(:), pointer :: LSTC
+    integer, dimension(:), pointer :: SZAC
+    integer, dimension(:), pointer :: DATEC
+    ! One result
+    real(rgr) :: VAL
+
+    ! Executable code
+    myMissingValue = grid%missingValue
+    if ( present ( missingValue ) ) myMissingValue = missingValue
+    ! Get size of problem and check things out
+    noHeights = size(heights)
+    noLats = size(lats)
+    noLons = size(lons)
+    noLsts = size(lsts)
+    noSzas = size(szas)
+    noDates = size(dates)
+
+    if ( noHeights*noLats*noLons*noLsts*noSzas*noDates /= size(slice) ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, 'Inappropriate size for slice' )
+
+    ! Ensure the the input grid is 'wrapped'
+    call WrapGriddedData ( grid )
+
+    ! Now work out vertices and weights, and the number of corners
+    noCorners = 1
+
+    ! Height:
+    if ( grid%noHeights == 1 ) then
+      heightI = 1
+      heightW(:,1) = 1.0_rgr
+      heightW(:,2) = 0.0_rgr
+      heightFac = 0
+    else
+      if ( grid%verticalCoordinate == v_is_pressure ) then
+        call Hunt ( -log10(grid%heights), -log10(heights), heightI(:,1) )
+        heightI(:,2) = heightI(:,1) + 1
+        heightW(:,1) = max ( 0.0_rgr, min ( 1.0_rgr, &
+          & ( -log10(grid%heights(heightI(:,2))) + log10(heights) ) / &
+          & ( -log10(grid%heights(heightI(:,2))) + &
+          &    log10(grid%heights(heightI(:,1))) ) ))
+        heightW(:,2) = 1.0_rgr - heightW(:,1)
+        
+      else
+        call Hunt ( grid%heights, heights, heightI(:,1) )
+        heightI(:,2) = heightI(:,1) + 1
+        heightW(:,1) = max ( 0.0_rgr, min ( 1.0_rgr, &
+          & ( grid%heights(heightI(:,2)) - heights ) / &
+          & ( grid%heights(heightI(:,2)) - grid%heights(heightI(:,1)) ) ))
+        heightW(:,2) = 1.0_rgr - heightW(:,1)
+      end if
+      heightFac = 1
+      noCorners = noCorners * 2
+    end if
+
+    ! Latitude
+    if ( grid%noLats == 1 ) then
+      latI = 1
+      latW(:,1) = 1.0_rgr
+      latW(:,2) = 0.0_rgr
+      latFac = 0
+    else
+      call Hunt ( grid%lats, lats, latI(:,1) )
+      latI(:,2) = latI(:,1) + 1
+      latW(:,1) = max ( 0.0_rgr, min ( 1.0_rgr, &
+        & ( grid%lats(latI(:,2)) - lats ) / &
+        & ( grid%lats(latI(:,2)) - grid%lats(latI(:,1)) ) ))
+      latW(:,2) = 1.0_rgr - latW(:,1)
+      noCorners = noCorners * 2
+      latFac = noCorners
+    end if
+
+    ! Longitude
+    if ( grid%noLons == 1 ) then
+      lonI = 1
+      lonW(:,1) = 1.0_rgr
+      lonW(:,2) = 0.0_rgr
+      lonFac = 0
+    else
+      call Hunt ( grid%lons, lons, lonI(:,1) )
+      lonI(:,2) = lonI(:,1) + 1
+      lonW(:,1) = max ( 0.0_rgr, min ( 1.0_rgr, &
+        & ( grid%lons(lonI(:,2)) - lons ) / &
+        & ( grid%lons(lonI(:,2)) - grid%lons(lonI(:,1)) ) ))
+      lonW(:,2) = 1.0_rgr - lonW(:,1)
+      noCorners = noCorners * 2
+      lonFac = noCorners
+    end if
+    
+    ! Local solar time
+    if ( grid%noLsts == 1 ) then
+      lstI = 1
+      lstW(:,1) = 1.0_rgr
+      lstW(:,2) = 0.0_rgr
+      lstFac = 0
+    else
+      call Hunt ( grid%lsts, lsts, lstI(:,1) )
+      lstI(:,2) = lstI(:,1) + 1
+      lstW(:,1) = max ( 0.0_rgr, min ( 1.0_rgr, &
+        & ( grid%lsts(lstI(:,2)) - lsts ) / &
+        & ( grid%lsts(lstI(:,2)) - grid%lsts(lstI(:,1)) ) ))
+      lstW(:,2) = 1.0_rgr - lstW(:,1)
+      noCorners = noCorners * 2
+      lstFac = noCorners
+    end if
+    
+    ! Solar zenith angle
+    if ( grid%noSzas == 1 ) then
+      szaI = 1
+      szaW(:,1) = 1.0_rgr
+      szaW(:,2) = 0.0_rgr
+      szaFac = 0
+    else
+      call Hunt ( grid%szas, szas, szaI(:,1) )
+      szaI(:,2) = szaI(:,1) + 1
+      szaW(:,1) = max ( 0.0_rgr, min ( 1.0_rgr, &
+        & ( grid%szas(szaI(:,2)) - szas ) / &
+        & ( grid%szas(szaI(:,2)) - grid%szas(szaI(:,1)) ) ))
+      szaW(:,2) = 1.0_rgr - szaW(:,1)
+      noCorners = noCorners * 2
+      szaFac = noCorners
+    end if
+
+    ! Dates.  Here we have to be a little clever
+    meanGridDates = ( grid%dateStarts + grid%dateEnds ) / 2.0
+    modifiedInDates = dates
+    if ( grid%noYear ) then
+      ! For 'noYear' grids, subtract the year of the dates
+      ! Note, I'm not going to be terribly graceful about going over the
+      ! year boundary, or for that matter leap years etc.
+      yearNumber = int ( minval(modifiedInDates) / noSecondsInMeanYear )
+      modifiedInDates = modifiedInDates - yearNumber * noSecondsInMeanYear
+    endif
+    if ( grid%noDates == 1 ) then
+      dateI = 1
+      dateW(:,1) = 1.0_rgr
+      dateW(:,2) = 0.0_rgr
+      dateFac = 0
+    else
+      call Hunt ( meanGridDates, modifiedInDates, dateI(:,1) )
+      dateI(:,2) = dateI(:,1) + 1
+      dateW(:,1) = max ( 0.0_r8, min ( 1.0_r8, &
+        & ( meanGridDates(dateI(:,2)) - modifiedInDates ) / &
+        & ( meanGridDates(dateI(:,2)) - meanGridDates(dateI(:,1)) ) ))
+      dateW(:,2) = 1.0_rgr - dateW(:,1)
+      noCorners = noCorners * 2
+      dateFac = noCorners
+    end if
+
+    ! Now work out the corner information
+    nullify ( heightC, latC, lonC, lstC, szaC, dateC )
+    call Allocate_test ( heightC, noCorners, 'heightC', ModuleName )
+    call Allocate_test ( latC, noCorners, 'latC', ModuleName )
+    call Allocate_test ( lonC, noCorners, 'lonC', ModuleName )
+    call Allocate_test ( lstC, noCorners, 'lstC', ModuleName )
+    call Allocate_test ( szaC, noCorners, 'szaC', ModuleName )
+    call Allocate_test ( dateC, noCorners, 'dateC', ModuleName )
+
+    do c = 1, noCorners
+      if ( heightFac == 0 ) then
+        heightC(c) = 1
+      else
+        heightC(c) = merge ( 1, 2, mod(c/heightFac,2) == 0 )
+      end if
+
+      if ( latFac == 0 ) then
+        latC(c) = 1
+      else
+        latC(c) = merge ( 1, 2, mod(c/latFac,2) == 0 )
+      end if
+
+      if ( lonFac == 0 ) then
+        lonC(c) = 1
+      else
+        lonC(c) = merge ( 1, 2, mod(c/lonFac,2) == 0 )
+      end if
+
+      if ( lstFac == 0 ) then
+        lstC(c) = 1
+      else
+        lstC(c) = merge ( 1, 2, mod(c/lstFac,2) == 0 )
+      end if
+
+      if ( szaFac == 0 ) then
+        szaC(c) = 1
+      else
+        szaC(c) = merge ( 1, 2, mod(c/szaFac,2) == 0 )
+      end if
+
+      if ( dateFac == 0 ) then
+        dateC(c) = 1
+      else
+        dateC(c) = merge ( 1, 2, mod(c/dateFac,2) == 0 )
+      end if
+    end do
+
+    ! OK, now we do the work.
+    height = 1
+    lat = 1
+    lon = 1
+    lst = 1
+    sza = 1
+    date = 1
+    do i = 1, size(slice) 
+      slice(i) = 0.0
+      cornerLoop: do c = 1, noCorners
+        val = grid%field ( &
+          & heightI(height,heightC(c)), latI(lat,latC(c)), lonI(lon,lonC(c)), &
+          & lstI(lst,lstC(c)), szaI(sza,szaC(c)), dateI(date,dateC(c)) )
+        if ( EssentiallyEqual ( val, grid%missingValue ) ) then
+          slice(i) = myMissingValue
+          exit cornerLoop
+        end if
+        slice(i) = slice(i) + val * &
+          & heightW(height,heightC(c)) * latW(lat,latC(c)) * lonW(lon,lonC(c)) * &
+          & lstW(lst,lstC(c)) * szaW(sza,szaC(c)) * dateW(date,dateC(c))
+      end do cornerLoop
+
+      ! This is really hokey, but it should save too many ifs in loops
+      height = height + 1
+      if ( height > noHeights ) then
+        height = 1
+        lat = lat + 1
+        if ( lat > noLats ) then
+          lat = 1
+          lon = lon + 1
+          if ( lon > noLons ) then
+            lon = 1
+            lst = lst + 1
+            if ( lst > noLsts ) then
+              lst = 1
+              sza = sza + 1
+              if ( sza > noSzas ) then
+                sza = 1
+                date = date + 1
+              end if
+            end if
+          end if
+        end if
+      end if
+
+
+    end do
+ 
+    ! Tidy up
+    call Deallocate_test ( heightC, 'heightC', ModuleName )
+    call Deallocate_test ( latC, 'latC', ModuleName )
+    call Deallocate_test ( lonC, 'lonC', ModuleName )
+    call Deallocate_test ( lstC, 'lstC', ModuleName )
+    call Deallocate_test ( szaC, 'szaC', ModuleName )
+    call Deallocate_test ( dateC, 'dateC', ModuleName )
+  end subroutine SliceGriddedData
+
   ! -------------------------------------------- WrapGriddedData ---
   subroutine WrapGriddedData ( GRID )
     ! Given a grid, possibly add extra points in longitude beyond +/-180
@@ -611,6 +919,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.28  2003/05/08 05:27:18  livesey
+! Added the slicing
+!
 ! Revision 2.27  2003/04/04 23:01:26  pwagner
 ! Short-curcuits dump for empty GriddedDatas
 !
