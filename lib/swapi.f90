@@ -36,11 +36,20 @@ module SWAPI
     & "$Id$"
   character(len=*), private, parameter :: ModuleName = &
     & "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
+
+contains 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
 
 end module SWAPI
 
 ! $Log$
+! Revision 2.1  2001/06/07 21:59:41  pwagner
+! Added Copyright statement
+!
 ! Revision 2.0  2000/09/05 17:41:07  dcuddy
 ! Change revision to 2.0
 !

@@ -31,6 +31,7 @@ module heights_module
        "$Id$"
   character (len=len(idParm)) :: Id = idParm
   character (len=*), parameter :: ModuleName= "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
 
 contains
@@ -152,9 +153,16 @@ contains
 
   end function gph_to_geom
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module heights_module
 
 ! $Log$
+! Revision 2.2  2002/09/26 20:56:53  vsnyder
+! Move Earth_Axis_Ratio_Squared from heights_module to Geometry
+!
 ! Revision 2.1  2002/09/26 20:54:43  vsnyder
 ! Get constants from Geometry and Units, cosmetic changes
 !

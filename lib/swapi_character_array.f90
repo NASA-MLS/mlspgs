@@ -10,6 +10,7 @@ module SWAPI_CHARACTER_ARRAY
     & "$Id$"
   character(len=*), private, parameter :: ModuleName = &
     & "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
 
 contains
@@ -44,9 +45,16 @@ contains
       & edges, buffer )
   end function SWWRFLD_CHARACTER_ARRAY
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module SWAPI_CHARACTER_ARRAY
 
 ! $Log$
+! Revision 2.3  2001/06/07 21:59:41  pwagner
+! Added Copyright statement
+!
 ! Revision 2.2  2000/10/09 23:06:48  vsnyder
 ! Provide for output of arrays of arbitrary length character strings
 !

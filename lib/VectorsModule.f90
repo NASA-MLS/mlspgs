@@ -153,6 +153,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
   ! This type describes a vector template
@@ -2026,11 +2027,19 @@ contains ! =====     Public Procedures     =============================
     end do
   end subroutine
 !=======================================================================
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module VectorsModule
 !=======================================================================
 
 !
 ! $Log$
+! Revision 2.90  2002/09/26 18:01:08  livesey
+! Made GetVectorQuantity... more forgiving in the case of l_vmr (can have
+! radiometer wrong if molecule is extinction).
+!
 ! Revision 2.89  2002/09/13 18:08:12  pwagner
 ! May change matrix precision rm from r8
 !

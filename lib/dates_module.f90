@@ -44,6 +44,7 @@ module dates_module
     "$Id$"
   character(len=len(idParm)), private :: Id = idParm
   character(LEN=*), parameter :: ModuleName="$RCSfile$"
+  private :: not_used_here 
   !-----------------------------------------------------------------------------
   !Here are some useful definitions of the properties of months
   character(len=3),private,dimension(12),parameter::monthnames=&
@@ -445,8 +446,15 @@ contains
 
   end function ccsdsb2a
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module dates_module
 ! $Log$
+! Revision 2.5  2002/10/01 22:04:19  pwagner
+! Renamed moduleNameIn to ModuleName
+!
 ! Revision 2.4  2002/10/01 18:40:35  bwknosp
 ! Added RCS Ident Info Block
 !

@@ -24,6 +24,7 @@ module QuantityTemplates         ! Quantities within vectors
        "$Id$"
   character(len=*), parameter, private :: ModuleName = &
     & "$RCSfile$"
+  private :: not_used_here 
   !-----------------------------------------------------------------------------
 
   logical, parameter, private :: DEEBUG = .FALSE.           ! Usually FALSE
@@ -736,11 +737,18 @@ contains ! =====     Public Procedures     =============================
   end subroutine SetupNewQuantityTemplate
 
 !=============================================================================
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module QuantityTemplates
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.26  2002/09/24 21:36:42  livesey
+! Added minValue
+!
 ! Revision 2.25  2002/08/28 20:42:11  livesey
 ! Added InflateQuantityTemplateDatabase
 !

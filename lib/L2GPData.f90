@@ -36,6 +36,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   character(len=len(idparm)), private :: Id = idParm
   character(len=*), private, parameter :: ModuleName = &
        & "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
 
   interface DUMP
@@ -1425,11 +1426,18 @@ contains ! =====     Public Procedures     =============================
   end subroutine Dump_L2GP
     
   !=============================================================================
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module L2GPData
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.47  2002/08/22 20:17:47  livesey
+! Bug fix in writing 3D l2gps
+!
 ! Revision 2.46  2002/08/20 20:10:20  livesey
 ! Dealt with frequency in expand l2gp in place.
 !
