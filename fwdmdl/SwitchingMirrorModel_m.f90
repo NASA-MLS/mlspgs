@@ -61,7 +61,7 @@ contains ! ====================================== SwitchingMirrorModel =====
     integer :: SIDEBANDSTEP             ! Loop step
     integer :: THZMODULE                ! Index of THz module
 
-    real(r8), dimension(noReflectors) :: ACLPRODUCT ! An intermediate term in the calculation
+    real(r8), dimension(:,:), pointer :: ACLPRODUCT ! An intermediate term in the calculation
     real(r8), dimension(:), pointer :: OFFSET ! The offset to add for each channel
     real(r8), dimension(:), pointer :: EMISSION ! Thermal emission term
     real(r8), dimension(:,:), pointer :: DELTATRANS ! Difference in transmissions
@@ -81,17 +81,8 @@ contains ! ====================================== SwitchingMirrorModel =====
     ! Don't do this model if we've not been told to
     if ( .not. fwdModelConf%switchingMirror ) return
     ! Setup various low level stuff
-    nullify ( offset, deltaTrans, emission )
+    nullify ( offset, deltaTrans, emission, aclProduct )
     maf = fmStat%maf
-
-    ! Setup an intermediate result
-    do reflector = noReflectors, 1, -1
-      reflRefl => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-        & quantityType=l_reflRefl, reflector=reflectors(reflector) )
-      aclProduct ( reflector ) = reflRefl%values(1,1)
-      if ( reflector < noReflectors ) aclProduct ( reflector ) = &
-        & aclProduct ( reflector ) * aclProduct ( reflector+1 )
-    end do
 
     ! Loop over the signals this forward model is considering
     signalLoop: do sigIndex = 1, size(fwdModelConf%signals)
@@ -105,14 +96,24 @@ contains ! ====================================== SwitchingMirrorModel =====
         & signal=signal%index, sideband=signal%sideband )
       ! Setup some work arrays
       noChans = size ( signal%frequencies )
+      call Allocate_Test ( aclProduct, noChans, noReflectors, 'aclProduct', ModuleName )
+      call Allocate_Test ( deltaTrans, noChans, noReflectors, 'deltaTrans', ModuleName )
       call Allocate_Test ( emission, noChans, 'emission', ModuleName )
       call Allocate_Test ( offset, noChans, 'offset', ModuleName )
-      call Allocate_Test ( deltaTrans, noChans, noReflectors, 'deltaTrans', ModuleName )
       
       ! Loop over the sidebands
       call GetSidebandLoop ( signal%index, signal%sideband, .true., &
         & sidebandStart, sidebandStop, sidebandStep )
       do sideband = sidebandStart, sidebandStop, sidebandStep
+        ! Setup an intermediate result
+        do reflector = noReflectors, 1, -1
+          reflRefl => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+            & quantityType=l_reflRefl, reflector=reflectors(reflector), &
+            & signal=signal%index, sideband=sideband )
+          aclProduct ( :, reflector ) = reflRefl%values(:,1)
+          if ( reflector < noReflectors ) aclProduct ( :, reflector ) = &
+            & aclProduct ( :, reflector ) * aclProduct ( :, reflector+1 )
+        end do
         ! Setup another intermediate quantity
         do reflector = 1, noReflectors
           reflTrans => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
@@ -141,7 +142,7 @@ contains ! ====================================== SwitchingMirrorModel =====
           & signal=signal%index, sideband=sideband )
 
         ! Do the reflector independent stuff first
-        offset = aclProduct ( 1 ) * primaryTrans%values(:,1) * &
+        offset = aclProduct (:,1) * primaryTrans%values(:,1) * &
           & ( 1.0 - totalTrans%values(:,1) ) * strayRadiance%values(:,maf)
         
         ! Now loop over the reflectors
@@ -161,7 +162,7 @@ contains ! ====================================== SwitchingMirrorModel =====
           emission = stat_temp ( reflTemp%values(1,1), &
             & signal%lo + sideband * &
             & ( signal%direction*signal%frequencies+signal%centerFrequency ) )
-          offset = offset + aclProduct ( reflector ) * &
+          offset = offset + aclProduct (:,reflector) * &
             & ( ( 1 - reflrefl%values(1,1) ) * reflTrans%values(:,1) * emission + &
             &   deltaTrans(:,reflector) * reflSpill%values(:,maf) )
         end do                          ! End loop over reflectors
@@ -179,9 +180,10 @@ contains ! ====================================== SwitchingMirrorModel =====
             & maf ) + offset ( chan )
         end do channelLoop            ! End loop over channels
       end do                            ! End loop over sidebands
+      call Deallocate_test ( offset, 'offset', ModuleName )
       call Deallocate_test ( emission, 'emission', ModuleName )
       call Deallocate_test ( deltaTrans, 'deltaTrans', ModuleName )
-      call Deallocate_test ( offset, 'offset', ModuleName )
+      call Deallocate_test ( aclProduct, 'aclProduct', ModuleName )
     end do signalLoop                   ! End loop over signals
   end subroutine SwitchingMirrorModel
 
@@ -191,6 +193,9 @@ contains ! ====================================== SwitchingMirrorModel =====
 end module SwitchingMirrorModel_m
 
 ! $Log$
+! Revision 2.2  2003/05/29 18:18:15  livesey
+! Changed to make reflrefl signal dependent
+!
 ! Revision 2.1  2003/05/29 16:46:06  livesey
 ! First version
 !
