@@ -5,7 +5,7 @@ module NO_CONV_AT_ALL_M
 
   implicit NONE
   private
-  public :: NO_CONV_AT_ALL
+  public :: No_Conv_At_All
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -21,30 +21,26 @@ contains
   ! convolution grid to the users specified points. This module uses
   ! cubic spline interpolation to do the job.
 
-  Subroutine no_conv_at_all ( FwmConf, ForwardModelIn, ForwardModelExtra, maf, &
+  Subroutine No_Conv_At_All ( FwmConf, ForwardModelIn, ForwardModelExtra, maf, &
            & Channel, WindowStart, WindowFinish, Temp, Ptan, Radiance, update, &
            & t_deriv_flag, ptg_angles, chi_out, dhdz_out, dx_dh_out, Grids_f,  &
            & I_raw, sbRatio, qtys, rowFlags, Jacobian, di_dt, di_df, ptan_Der )
 
-    use dump_0,only:dump
     use ForwardModelConfig, only: ForwardModelConfig_T
     use ForwardModelVectorTools, only: QtyStuff_T
-    use Intrinsic, only: L_VMR
-    use L2PC_PFA_STRUCTURES, only: K_MATRIX_INFO
     use Load_sps_data_m, only: Grids_T
-    use MatrixModule_0, only: M_ABSENT, M_BANDED, M_FULL, DUMP
-    use MatrixModule_1, only: CREATEBLOCK, FINDBLOCK, MATRIX_T, DUMP
-    use MLSCommon, only: I4, R4, R8, RM
+    use MatrixModule_0, only: M_ABSENT, M_BANDED, M_FULL
+    use MatrixModule_1, only: CREATEBLOCK, FINDBLOCK, MATRIX_T
+    use MLSCommon, only: R8, RM
     use MLSMessageModule, only: MLSMSG_Error, MLSMessage
     use MLSNumerics, ONLY: INTERPOLATEVALUES
-    use String_Table, only: GET_STRING
     use VectorsModule, only: Vector_T, VectorValue_T
 
     type (ForwardModelConfig_T) :: FWMCONF
     type (Vector_T), intent(in) :: FORWARDMODELIN
     type (Vector_T), intent(in) :: FORWARDMODELEXTRA
 
-    integer, intent(in) :: maf
+    integer, intent(in) :: MAF
     integer, intent(in) :: CHANNEL
     integer, intent(in) :: WINDOWSTART
     integer, intent(in) :: WINDOWFINISH
@@ -57,7 +53,7 @@ contains
     type (Grids_T), Intent(in) :: Grids_f
 
     real(r8), intent(in) :: sbRatio
-    real(r8), intent(in) :: i_raw(:),ptg_angles(:),chi_out(:),dhdz_out(:), &
+    real(r8), intent(in) :: i_raw(:), ptg_angles(:), chi_out(:), dhdz_out(:), &
                          &  dx_dh_out(:)
     logical, intent(in), optional :: ptan_Der     ! Flag
 !
@@ -88,7 +84,6 @@ contains
     real(r8) :: di_dx(ptan%template%noSurfs)
     real(r8) :: I_star_all(ptan%template%noSurfs)
     logical :: my_ptan_der
-    logical :: foundInFirst
 
     ! -----  Begin the code  -------------------------------------------
 
@@ -114,7 +109,7 @@ contains
       col = FindBlock ( Jacobian%col, ptan%index, maf )
 
       call InterpolateValues ( ptg_angles, i_raw, chi_out, i_star_all, &
-                             & METHOD='S',dyByDx=di_dx )
+                             & METHOD='S', dyByDx=di_dx )
 
 ! Use the chain rule to compute dI/dPtan on the output grid:
 
@@ -236,8 +231,6 @@ contains
 
       do is = 1, size(qtys)
         
-        nfz = (Grids_f%l_f(is) - Grids_f%l_f(is-1)) * &
-            & (Grids_f%l_z(is) - Grids_f%l_z(is-1))
         if ( .not. qtys(is)%foundInFirst ) cycle
 
         sv_f = grids_f%l_v(is-1)
@@ -288,7 +281,7 @@ contains
 
     end if
 
-  end subroutine NO_CONV_AT_ALL
+  end subroutine No_Conv_At_All
 
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
@@ -296,6 +289,9 @@ contains
 
 end module NO_CONV_AT_ALL_M
 ! $Log$
+! Revision 2.21  2003/05/16 23:52:36  livesey
+! Removed obsolete spectag stuff
+!
 ! Revision 2.20  2003/05/05 23:00:26  livesey
 ! Merged in feb03 newfwm branch
 !
