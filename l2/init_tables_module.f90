@@ -448,12 +448,13 @@ contains ! =====     Public procedures     =============================
              l+l_massMeanDiameterIce, l+l_massMeanDiameterWater, l+l_magneticField, &
              l+l_noiseBandwidth, l+l_noRadsPerMIF, l+l_noRadsBinned, &
              l+l_numJ, l+l_opticalDepth, &
-             l+l_orbitInclination, l+l_phiTan, l+l_ptan, l+l_radiance, l+l_earthradius,&
+             l+l_orbitInclination, l+l_phiTan, l+l_ptan, l+l_status, l+l_radiance, l+l_earthradius,&
              l+l_refGPH, l+l_refltemp, l+l_refltrans, l+l_reflrefl, l+l_reflspill, &
              l+l_rhi, l+l_sizedistribution, &
              l+l_scanResidual, l+l_scECI, l+l_scVel, l+l_scVelECI, &
              l+l_scVelECR, l+l_scGeocAlt, &
-             l+l_spaceRadiance, l+l_strayRadiance, l+l_surfacetype, l+l_systemTemperature, &
+             l+l_spaceRadiance, l+l_status, l+l_strayRadiance, l+l_surfacetype, &
+             l+l_systemTemperature, &
              l+l_temperature, l+l_tngtECI, l+l_tngtGeodAlt, l+l_tngtGeocAlt, &
              l+l_totalExtinction, l+l_vmr, n+n_dt_def /) )
     call make_tree ( (/ &
@@ -1168,6 +1169,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.355  2004/02/10 21:16:58  livesey
+! Added status and quality as valid quantity types
+!
 ! Revision 2.354  2004/02/06 01:01:23  livesey
 ! Added boxcar fill
 !
