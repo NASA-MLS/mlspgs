@@ -3,17 +3,17 @@
 
 !=============================================================================
 module SidsModule
-!=============================================================================
+  !=============================================================================
 
-! This module evaluates the radiative transfer equation, and maybe
-! its derivatives.  It is used for SIDS and L2PC runs.
+  ! This module evaluates the radiative transfer equation, and maybe
+  ! its derivatives.  It is used for SIDS and L2PC runs.
 
-  use ForwardModelInterface, only: ForwardModel, ForwardModelInfo_T
-  use Init_Tables_Module, only: f_fwdModelIn, f_fwdModelExtra, f_fwdModelOut, &
-    & f_jacobian
+  use ForwardModelInterface, only: ForwardModel, ForwardModelConfig_T
+  use Init_Tables_Module, only: f_forwardModel, f_fwdModelIn, f_fwdModelExtra, &
+    f_fwdModelOut, f_jacobian
   use Lexer_Core, only: Print_Source
   use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
-    & GetFromMatrixDatabase, Matrix_Database_T, Matrix_T
+    GetFromMatrixDatabase, Matrix_Database_T, Matrix_T
   use MoreTree, only: Get_Field_Id
   use Output_M, only: Output
   use Toggles, only: Gen, Toggle
@@ -34,23 +34,24 @@ module SidsModule
 
 contains
 
-! subroutine SIDS ( Root, VectorDatabase, MatrixDatabase, FwdModelInfo )
-  subroutine SIDS ( Root, VectorDatabase, MatrixDatabase, FwdModelInfo, &
+  ! subroutine SIDS ( Root, VectorDatabase, MatrixDatabase, FwdModelInfo )
+  subroutine SIDS ( Root, VectorDatabase, MatrixDatabase, configDatabase, &
     & FMC, FMI, TFMI )
 
     ! Dummy arguments:
     integer, intent(in) :: Root         ! Of the relevant subtree of the AST
-                                        ! Indexes an n_cf vertex
+    ! Indexes an n_cf vertex
     type(vector_T), dimension(:), intent(inout), target :: VectorDatabase
     type(matrix_Database_T), dimension(:), pointer :: MatrixDatabase
-    type(forwardModelInfo_T), intent(in) :: FwdModelInfo ! From ForwardModelSetup
+    type(forwardModelConfig_T), dimension(:), pointer :: configDatabase
 
-!??? Begin temporary stuff to start up the forward model
-  type(fwd_mdl_config) :: FMC
-  type(fwd_mdl_info), dimension(:), pointer :: FMI
-  type(temporary_fwd_mdl_info), dimension(:), pointer :: TFMI
-!??? End of temporary stuff to start up the forward model
+    !??? Begin temporary stuff to start up the forward model
+    type(fwd_mdl_config) :: FMC
+    type(fwd_mdl_info), dimension(:), pointer :: FMI
+    type(temporary_fwd_mdl_info), dimension(:), pointer :: TFMI
+    !??? End of temporary stuff to start up the forward model
 
+    type (ForwardModelConfig_T), pointer :: CONFIG ! Selected configuration
     integer :: Error                    ! >= indicates an error occurred
     integer :: Field                    ! Of the "sids" specification
     type(vector_T), pointer :: FwdModelIn
@@ -82,23 +83,25 @@ contains
         fwdModelOut => vectorDatabase(decoration(decoration(subtree(2,son))))
       case ( f_jacobian )
         ixJacobian = decoration(subtree(2,son)) ! jacobian: matrix vertex
+      case ( f_forwardModel )
+        config => configDatabase(decoration(decoration(subtree(2,son))))
       end select
     end do ! i = 2, nsons(root)
 
     if ( ixJacobian > 0 ) then
       i = decoration(ixJacobian)
       call getFromMatrixDatabase ( matrixDatabase(i), jacobian )
-      call forwardModel ( FwdModelInfo, FwdModelExtra, FwdModelIn, &
-      &                   Jacobian, FwdModelOut=FwdModelOut, &
-      &                   FMC=FMC, FMI=FMI(1), TFMI=TFMI(1)) !???  temporary
-!     &                   FMC=FMC,FMI=FMI,TFMI=TFMI) !??? Last line temporary
+      call forwardModel ( config, FwdModelExtra, FwdModelIn, &
+        &                   Jacobian, FwdModelOut=FwdModelOut, &
+        &                   FMC=FMC, FMI=FMI(1), TFMI=TFMI(1)) !???  temporary
+      !     &                   FMC=FMC,FMI=FMI,TFMI=TFMI) !??? Last line temporary
     else if ( fmc%atmos_Der .or. fmc%spect_Der .or. fmc%temp_der ) then
       call announceError ( needJacobian )
     else
-      call forwardModel ( FwdModelInfo, FwdModelExtra, FwdModelIn, &
-      &                   FwdModelOut=FwdModelOut, &
-      &                   FMC=FMC, FMI=FMI(1), TFMI=TFMI(1)) !??? temporary
-!     &                   FMC=FMC,FMI=FMI,TFMI=TFMI) !??? Last line temporary
+      call forwardModel ( config, FwdModelExtra, FwdModelIn, &
+        &                   FwdModelOut=FwdModelOut, &
+        &                   FMC=FMC, FMI=FMI(1), TFMI=TFMI(1)) !??? temporary
+      !     &                   FMC=FMC,FMI=FMI,TFMI=TFMI) !??? Last line temporary
     end if
 
     if ( toggle(gen) ) call trace_end ( "SIDS" )
@@ -124,6 +127,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.7  2001/03/17 00:45:28  livesey
+! Moved to new ForwardModelConfig_T
+!
 ! Revision 2.6  2001/03/09 01:35:18  vsnyder
 ! Don't run fwd model if derivatives requested but Jacobian not supplied
 !
