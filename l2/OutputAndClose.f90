@@ -13,7 +13,7 @@ module OutputAndClose ! outputs all data from the Join module to the
   use HDFEOS, only: SWCLOSE, SWOPEN
   use INIT_TABLES_MODULE, only: F_FILE, F_OVERLAPS, F_QUANTITIES, F_TYPE, &
     & FIELD_FIRST, FIELD_LAST, L_L2AUX, L_L2GP, S_OUTPUT, S_TIME
-  use L2AUXData, only: L2AUXDATA_T, L2AUXDIMNAMES
+  use L2AUXData, only: L2AUXDATA_T, WriteL2AUXData
   use L2GPData, only: L2GPData_T, WriteL2GPData
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: I4
@@ -90,7 +90,7 @@ contains ! =====     Public Procedures     =============================
     integer :: OUTPUT_TYPE              ! L_L2AUX or L_L2GP
     character(len=132) :: QuantityName  ! From "quantities" field
     integer :: returnStatus
-    integer(i4) :: SD_ID, SDS_ID, DIM_ID
+    integer(i4) :: SDFID                ! File handle
     integer :: SON                      ! Of Root -- spec_args or named node
     integer :: SPEC_NO                  ! Index of son of Root
     integer(i4) :: START(3), STRIDE(3), DIM_SIZES(3)
@@ -151,140 +151,92 @@ contains ! =====     Public Procedures     =============================
               & l2gpPhysicalFilename)
             
             if ( returnStatus == PGS_S_SUCCESS ) then
-               if ( INDEX(l2gpPhysicalFilename, TRIM(file_base)) /= 0 ) then
-                  found = .true.
-                  ! Open the HDF-EOS file and write swath data
+              if ( INDEX(l2gpPhysicalFilename, TRIM(file_base)) /= 0 ) then
+                found = .true.
+                ! Open the HDF-EOS file and write swath data
+                
+                swfid = swopen(l2gpPhysicalFilename, DFACC_CREATE)
 
-                  swfid = swopen(l2gpPhysicalFilename, DFACC_CREATE)
-
-                  ! Loop over the segments of the l2cf line
-
-                  do field_no = 2, nsons(key) ! Skip "output" name
-                     gson = subtree(field_no,key)
-                     select case ( decoration(subtree(1,gson)) )
-                     case ( f_quantities )
-                        do in_field_no = 2, nsons(gson)
-                           db_index = -decoration(decoration(subtree(in_field_no ,gson)))
-                           CALL WriteL2GPData(l2gpDatabase(db_index),swfid,swathName='Fred')
-                        end do ! in_field_no = 2, nsons(gson)
-                     case ( f_overlaps )
-                        ! ??? More work needed here
-                     end select
-                  end do ! field_no = 2, nsons(key)
-                  returnStatus = swclose(swfid)
-                  if (returnStatus /= PGS_S_SUCCESS) then
-                     call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
-                     call MLSMessage ( MLSMSG_Error, ModuleName, &
-                          &  "Error closing  l2gp file:  "//mnemonic//" "//msg )
-                  end if
-
-               else                ! Found the right file
-                  l2gpFileHandle = l2gpFileHandle + 1
-               end if
-            else
-               call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
-               call MLSMessage ( MLSMSG_Error, ModuleName, &
-                    &  "Error finding  l2gp file:  "//mnemonic//" "//msg )
-            end if
-
-        end do !(.not. found) .and. (l2gpFileHandle <=  mlspcf_l2gp_end)
-        IF (.NOT. found) CALL MLSMessage(MLSMSG_Error,ModuleName,&
-             'Unable to find filename containing '//TRIM(file_base))
-
-        case ( l_l2aux )
-
-          ! Get the l2aux file name from the PCF
-
-          l2auxFileHandle = mlspcf_l2dgm_start
-          found = .FALSE.
-!          do while ((.NOT. found) .AND. (l2auxFileHandle <=  mlspcf_l2aux_end))
-          do while ((.NOT. found) .AND. (l2auxFileHandle <=  mlspcf_l2dgm_end))
-             l2aux_Version=1
-            returnStatus = Pgs_pc_getReference(l2auxFileHandle, l2aux_Version, &
-              & l2auxPhysicalFilename)
-
-            if ( returnStatus == PGS_S_SUCCESS ) then
-              if ( INDEX(file_base, l2auxPhysicalFilename) /= 0 )then
-                found = .TRUE.
-
-                ! Create the HDF file and initialize the SD interface
-
-                sd_id = sfstart(l2auxPhysicalFilename, DFACC_CREATE)
-
-                ! Loop over the segments of the l2aux line
-
+                ! Loop over the segments of the l2cf line
+                
                 do field_no = 2, nsons(key) ! Skip "output" name
-                  gson = subtree(field_no,key) ! An assign vertex
+                  gson = subtree(field_no,key)
                   select case ( decoration(subtree(1,gson)) )
                   case ( f_quantities )
-                    do in_field_no = 2, nsons(gson) ! Skip "quantities" name
-                      in_field = subtree(in_field_no,gson)
-                      db_index = -decoration(decoration(in_field_no))
-
-                      ! Set up dimensions
-                      dim_sizes(1:3) = &
-                        & l2auxDatabase(db_index)%dimensions(1:3)%noValues
-                      if ( l2auxDatabase(db_index)%noDimensionsUsed == 2 ) &
-                        & dim_sizes(3)=1
-                      ! Create data set
-                      call get_string ( sub_rosa(in_field), quantityName )
-                      sds_id = sfcreate(sd_id, quantityName, DFNT_FLOAT64, &
-                        & l2auxDatabase(db_index)%noDimensionsUsed, dim_sizes)
-
-                      ! Give names to the dimensions
-                      do i = 1, l2auxDatabase(db_index)%noDimensionsUsed
-                        dim_id = sfdimid(sds_id, i)
-                        returnStatus = sfsdmname(dim_id, &
-                          & L2AUXDimNames(l2auxDatabase(db_index)% &
-                          & dimensions(i)%dimensionFamily))
-                        if ( returnStatus /= PGS_S_SUCCESS ) then
-                          call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
-                          call MLSMessage ( MLSMSG_Error, ModuleName, &
-                            & "Error setting dimension name to SDS l2aux file:  "// &
-                            & L2AUXDimNames(l2auxDatabase(db_index)%dimensions(i)% &
-                            & dimensionFamily) //mnemonic//" "//msg )
-                        end if
-                      end do
-
-                      ! Write out the SDS data
-                      start=0
-                      stride=1
-
-                      returnStatus = sfwdata(sds_id, start, stride, dim_sizes, &
-                        & l2auxDatabase(db_index)%values )
-                      if ( returnStatus /= PGS_S_SUCCESS ) then
-                        call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
-                        call MLSMessage ( MLSMSG_Error, ModuleName, &
-                          & "Error writing SDS data to  l2aux file:  " // &
-                          & mnemonic // " " // msg )
-                      end if
-
-                      ! Terminate access to the data set
-
-                      returnStatus = sfendacc(sds_id)
+                    do in_field_no = 2, nsons(gson)
+                      db_index = -decoration(decoration(subtree(in_field_no ,gson)))
+                      CALL WriteL2GPData(l2gpDatabase(db_index),swfid)
                     end do ! in_field_no = 2, nsons(gson)
                   case ( f_overlaps )
-                  ! ??? More work needed here
+                    ! ??? More work needed here
                   end select
                 end do ! field_no = 2, nsons(key)
-
-                returnStatus = sfend(sd_id)
+                returnStatus = swclose(swfid)
+                if (returnStatus /= PGS_S_SUCCESS) then
+                  call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
+                  call MLSMessage ( MLSMSG_Error, ModuleName, &
+                    &  "Error closing  l2gp file:  "//mnemonic//" "//msg )
+                end if
+              else                ! Found the right file
+                l2gpFileHandle = l2gpFileHandle + 1
+              end if
+            else
+              call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
+              call MLSMessage ( MLSMSG_Error, ModuleName, &
+                &  "Error finding l2gp file:  "//mnemonic//" "//msg )
+            end if
+            
+          end do !(.not. found) .and. (l2gpFileHandle <=  mlspcf_l2gp_end)
+          IF (.NOT. found) CALL MLSMessage(MLSMSG_Error,ModuleName,&
+            'Unable to find filename containing '//TRIM(file_base))
+          
+        case ( l_l2aux )
+          
+          ! Get the l2aux file name from the PCF
+          
+          l2auxFileHandle = mlspcf_l2dgm_start
+          found = .FALSE.
+          do while ((.NOT. found) .AND. (l2auxFileHandle <=  mlspcf_l2dgm_end))
+            l2aux_Version=1
+            returnStatus = Pgs_pc_getReference(l2auxFileHandle, l2aux_Version, &
+              & l2auxPhysicalFilename)
+            
+            if ( returnStatus == PGS_S_SUCCESS ) then
+              if ( INDEX(l2auxPhysicalFilename, TRIM(file_base)) /= 0 )then
+                found = .TRUE.
+                
+                ! Create the HDF file and initialize the SD interface
+                sdfId = sfstart(l2auxPhysicalFilename, DFACC_CREATE)
+                
+                do field_no = 2, nsons(key) ! Skip "output" name
+                  gson = subtree(field_no,key)
+                  select case ( decoration(subtree(1,gson)) )
+                  case ( f_quantities )
+                    do in_field_no = 2, nsons(gson)
+                      db_index = -decoration(decoration(subtree(in_field_no ,gson)))
+                      CALL WriteL2AUXData(l2auxDatabase(db_index),sdfid)
+                    end do ! in_field_no = 2, nsons(gson)
+                  case ( f_overlaps )
+                    ! ??? More work needed here
+                  end select
+                end do ! field_no = 2, nsons(key)
+                
+                ! Now close the file
+                returnStatus = sfend(sdfid)
                 if ( returnStatus /= PGS_S_SUCCESS ) then
                   call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
                   call MLSMessage ( MLSMSG_Error, ModuleName, &
                     &  "Error closing l2aux file:  "//mnemonic//" "//msg )
                 end if
-
               else
                 l2auxFileHandle =  l2auxFileHandle + 1
               end if
             else
-
               call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
               call MLSMessage ( MLSMSG_Error, ModuleName, &
-                &  "Error finding  l2aux file:  "//mnemonic//" "//msg )
+                &  "Error finding l2aux file:  "//mnemonic//" "//msg )
             end if
-
+            
           end do ! (.not. found) .and. (l2auxFileHandle <=  mlspcf_l2aux_end)
         end select
       case ( s_time )
@@ -328,6 +280,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.10  2001/03/06 22:40:24  livesey
+! Working l2aux
+!
 ! Revision 2.9  2001/02/23 18:15:48  livesey
 ! Added trace calls.
 !
