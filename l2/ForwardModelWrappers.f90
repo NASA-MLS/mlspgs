@@ -34,7 +34,7 @@ contains ! ============= Public Procedures ==========================
     use FullCloudForwardModel, only: FULLCLOUDFORWARDMODELWRAPPER
     use FullForwardModel_m, only: FULLFORWARDMODEL
     use Init_tables_module, only: L_LINEAR, L_SCAN, L_SCAN2D, L_FULL, L_CLOUDFULL, &
-      & L_SWITCHINGMIRROR, L_HYBRID, L_POLARLINEAR
+      & L_SWITCHINGMIRROR, L_HYBRID, L_POLARLINEAR, L_BASELINE
     use LinearizedForwardModel_m, only: LINEARIZEDFORWARDMODEL
     use PolarLinearModel_m, only: POLARLINEARMODEL
     use MatrixModule_1, only: MATRIX_T
@@ -78,6 +78,9 @@ contains ! ============= Public Procedures ==========================
     radianceModel = any ( config%fwmType == &
       & (/ l_full, l_linear, l_polarLinear, l_hybrid, l_cloudFull /) )
     select case (config%fwmType)
+    case ( l_baseline )
+      call BaselineForwardModel ( config, FwdModelIn, FwdModelExtra, &
+        FwdModelOut, Ifm, fmStat, Jacobian )
     case ( l_full )
       call FullForwardModel ( config, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
@@ -142,6 +145,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.22  2003/08/16 01:18:29  livesey
+! Added baseline forward model on its own.
+!
 ! Revision 2.21  2003/08/13 00:49:56  livesey
 ! Added PolarLinear model
 !
