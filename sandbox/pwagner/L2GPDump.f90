@@ -5,6 +5,7 @@
 PROGRAM L2GPDump ! dumps L2GPData files
 !=================================
 
+   use dump_0, only: dump
    use Hdf, only: DFACC_CREATE, DFACC_RDWR, DFACC_READ
    use HDF5, only: h5fopen_f, h5fclose_f, h5fis_hdf5_f   
    use HDFEOS5, only: HE5T_NATIVE_CHAR
@@ -18,6 +19,7 @@ PROGRAM L2GPDump ! dumps L2GPData files
    use MLSMessageModule, only: MLSMessageConfig, MLSMSG_Warning, &
      & MLSMessage
    use MLSStringLists, only: GetStringElement, NumStringElements
+   use OUTPUT_M, only: OUTPUT
    use PCFHdr, only: GlobalAttributes
    
    IMPLICIT NONE
@@ -162,6 +164,11 @@ contains
     ! Get swath list
     noSwaths = mls_InqSwath ( filename, SwathList, listSize, &
            & hdfVersion=HDFVERSION_5)
+    if ( options%details < -1 ) then
+      call output('swaths in ' // trim(filename), advance='yes')
+      call dump(trim(swathList))
+      return
+    endif
     ! print *, 'Opening: ', trim(filename)
     File1 = mls_io_gen_openF('swopen', .TRUE., status, &
        & record_length, DFACC_READ, FileName=trim(filename), &
@@ -199,6 +206,9 @@ END PROGRAM L2GPDump
 !==================
 
 ! $Log$
+! Revision 1.6  2004/10/27 16:48:55  pwagner
+! -l list option added to specify which fields to dump
+!
 ! Revision 1.5  2004/09/28 23:10:15  pwagner
 ! Much moved to MLSStringLists
 !
