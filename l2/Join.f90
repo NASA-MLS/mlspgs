@@ -1033,7 +1033,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Executable code
 
-    DEEBUG = (index(switches, 'direct') /= 0)
+    DEEBUG = (index(switches, 'join') /= 0)
     if ( toggle(gen) .and. levels(gen) > 0 ) &
       & call trace_begin ( "JoinL2AUXQuantities", key )
 
@@ -1049,8 +1049,7 @@ contains ! =====     Public Procedures     =============================
       if ( quantity%template%name < 1 ) then
         call output('   (unnamed) ', advance='yes')
       else
-        call get_string(quantity%template%name, quantityNameStr, strip=.true., noerror=.true.)
-        call output(trim(quantityNameStr), advance='yes')
+        call display_string(quantity%template%name, strip=.true., advance='yes' )
       end if
     end if
 
@@ -1134,6 +1133,7 @@ contains ! =====     Public Procedures     =============================
     if ( quantity%template%minorFrame .or. quantity%template%majorFrame ) then
       ! Don't forget instanceOffset is for the first non-overlapped instance (ie MAF)
       ! Also remember the L2AUX data is already indexed from zero! Great!
+      call output ( "Doing the special calculation of first/last profile", advance='yes' )
       lastProfile = quantity%template%instanceOffset + quantity%template%noInstances - &
         & quantity%template%noInstancesUpperOverlap - &
         & quantity%template%noInstancesLowerOverlap - 1
@@ -1143,6 +1143,8 @@ contains ! =====     Public Procedures     =============================
     firstProfile = lastProfile - noOutputInstances + 1
 
     if ( DEEBUG ) then
+      call output('  instance offset ' )
+      call output( quantity%template%instanceOffset, advance='yes' )
       call output('  firstProfile ', advance='no')
       call output(firstProfile, advance='no')
       call output('   lastProfile ', advance='no')
@@ -1268,6 +1270,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.79  2003/07/07 20:29:43  livesey
+! Mainly cosmetic changes
+!
 ! Revision 2.78  2003/07/07 17:31:11  livesey
 ! Various things to get DirectWrite working
 !
