@@ -344,10 +344,12 @@ contains ! ============= Public procedures ===================================
       if ( associated ( chunk%hGridOffsets ) ) then
         if ( properties ( p_hGrid )  ) then
           qty%instanceOffset = chunk%hGridOffsets(hGridIndex)
+          qty%grandTotalInstances = chunk%hGridTotals(hGridIndex)
         else
           ! Must have a single instance per chunk
           qty%instanceOffset = chunk%chunkNumber - 1
           ! -1 because it's an offset remember, not an origin.
+          qty%grandTotalInstances = 0
         end if
       end if
 
@@ -1175,6 +1177,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.102  2003/07/01 19:29:32  livesey
+! Added filling of grandTotalInstances
+!
 ! Revision 2.101  2003/06/27 00:07:07  pwagner
 ! Made print offset depend on qtmp switch; restored some logs
 !
