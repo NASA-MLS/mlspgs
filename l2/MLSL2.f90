@@ -24,7 +24,7 @@ program MLSL2
   use MLSMessageModule, only: MLSMessage, MLSMessageConfig, MLSMSG_Debug, &
     & MLSMSG_Error, MLSMSG_Severity_to_quit, MLSMessageExit
   use MLSPCF2, only: MLSPCF_L2CF_START
-  use MLSStrings, only: GetUniqueList, lowerCase
+  use MLSStrings, only: GetUniqueList, lowerCase, RemoveElemFromList
   use OBTAIN_MLSCF, only: Close_MLSCF, Open_MLSCF
   use OUTPUT_M, only: BLANKS, OUTPUT, PRUNIT
   use PARSER, only: CONFIGURATION
@@ -495,9 +495,15 @@ program MLSL2
   if( index(switches, '?') /= 0 .or. index(switches, 'hel') /= 0 ) then
    call switch_usage
   end if
+  ! Remove any quote marks from switches array
   call GetUniqueList(switches, tempSwitches, numSwitches, countEmpty=.true., &
         & ignoreLeadingSpaces=.true.)
   switches = tempSwitches
+  if ( parallel%slave ) then
+  ! Don't dump all the chunks agagin and again for each slave's chunk
+    call RemoveElemFromList(switches, tempSwitches, 'chu')
+    switches = tempSwitches
+  endif
   call Set_garbage_collection(garbage_collection_by_dt)
 ! Done with command-line parameters; enforce cascading negative options
 ! (waited til here in case any were (re)set on command line)
@@ -869,6 +875,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.109  2003/12/07 23:06:29  pwagner
+! Should not dump all the chunks agagin and again for each slaves chunk
+!
 ! Revision 2.108  2003/12/05 00:40:11  pwagner
 ! Added patch option, section timing units
 !
