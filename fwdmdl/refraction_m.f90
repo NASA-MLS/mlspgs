@@ -217,10 +217,10 @@ Contains
 
     Integer,  PARAMETER :: Max_Iter = 20
 
-    CHARACTER(LEN=55), PARAMETER :: Msg1 = &
-          & '** Warning from Solve_Hn: Could not bracket the root ..'
-    CHARACTER(LEN=67), PARAMETER :: Msg2 = &
-     & '** Warning from Solve_Hn: Did not converged within 20 iterations ..'
+    CHARACTER(LEN=49), PARAMETER :: Msg1 = &
+          & 'From Solve_Hn routine: Could not bracket the root'
+    CHARACTER(LEN=61), PARAMETER :: Msg2 = &
+     & 'From Solve_Hn routine: Did not converged within 20 iterations'
 
      f1 = h1 * (1.0_rp + n1) - NH
      f2 = h2 * (1.0_rp + n2) - NH
@@ -304,6 +304,9 @@ End Subroutine comp_refcor
 
 END module REFRACTION_M
 ! $Log$
+! Revision 2.8  2002/03/14 22:33:30  zvi
+! Add protection against Log() blowout
+!
 ! Revision 2.7  2002/03/14 20:31:14  zvi
 ! Make comp_refcor more robust
 !
