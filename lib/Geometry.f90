@@ -22,13 +22,13 @@ module Geometry
 
   ! Now parameters etc
 
-  real (r8), parameter :: earthRadA=6378137.0D0 ! Major axis radius in m
-  real (r8), parameter :: earthRadB=6356752.3141D0 ! Minor axis radius in m
+  real (r8), parameter :: earthRadA=6378137.0_r8 ! Major axis radius in m
+  real (r8), parameter :: earthRadB=6356752.3141_r8 ! Minor axis radius in m
 
   ! Just in case this constant isn't defined everywhere else.
   
-  real (r8), parameter :: PI=3.1415926535897931159979635D0
-  real (r8), parameter :: LN10=2.302585124969482421875D0
+  real (r8), parameter :: PI=3.1415926535897931159979635_r8
+  real (r8), parameter :: LN10=2.302585124969482421875_r8
 
 contains ! ------------------------------- Subroutines and functions ----
 
@@ -57,6 +57,9 @@ contains ! ------------------------------- Subroutines and functions ----
 end module Geometry
 
 ! $Log$
+! Revision 2.4  2001/03/28 19:50:19  vsnyder
+! Change constants from d0 to _r8
+!
 ! Revision 2.3  2001/03/27 18:09:11  vsnyder
 ! Revised CVS stuff to use CHARACTER(len=*) parameter
 !
