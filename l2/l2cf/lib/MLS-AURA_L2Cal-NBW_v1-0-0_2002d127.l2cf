@@ -1,0 +1,265 @@
+!define(nbw1,{[110.00000MHz,110.00000MHz,110.00000MHz, 74.00000MHz, 74.00000MHz, $
+ 74.00000MHz,
+     55.00000MHz, 37.00000MHz, 28.00000MHz, 18.40000MHz, 14.00000MHz,  9.20000MHz, $
+  7.20000MHz,
+      9.20000MHz, 14.00000MHz, 18.40000MHz, 28.00000MHz, 37.00000MHz, 55.00000MHz, $
+ 74.00000MHz,
+z, 110.000MHz, $
+    110.000MHz, 110.000MHz]})
+ 
+!define(nbw2,{[ 110.000MHz, 110.000MHz, 110.000MHz,  74.000MHz,  74.000MHz, $
+     74.000MHz,  55.000MHz,  37.000MHz,  28.000MHz,  18.400MHz,  14.000MHz, $
+      9.200MHz,   7.200MHz,   9.200MHz,  14.000MHz,  18.400MHz,  28.000MHz, $
+     37.000MHz,  55.000MHz,  74.000MHz,  74.000MHz,  74.000MHz, 110.000MHz, $
+    110.000MHz, 110.000MHz]})
+ 
+!define(nbw3,{[ 110.000MHz, 110.000MHz, 110.000MHz,  74.000MHz,  74.000MHz, $
+     74.000MHz,  55.000MHz,  37.000MHz,  28.000MHz,  18.400MHz,  14.000MHz, $
+      9.200MHz,   7.200MHz,   9.200MHz,  14.000MHz,  18.400MHz,  28.000MHz, $
+     37.000MHz,  55.000MHz,  74.000MHz,  74.000MHz,  74.000MHz, 110.000MHz, $
+    110.000MHz, 110.000MHz]})
+ 
+!define(nbw4,{[ 110.000MHz, 110.000MHz, 110.000MHz,  74.000MHz,  74.000MHz, $
+     74.000MHz,  55.000MHz,  37.000MHz,  28.000MHz,  18.400MHz,  14.000MHz, $
+      9.200MHz,   7.200MHz,   9.200MHz,  14.000MHz,  18.400MHz,  28.000MHz, $
+     37.000MHz,  55.000MHz,  74.000MHz,  74.000MHz,  74.000MHz, 110.000MHz, $
+    110.000MHz, 110.000MHz]})
+ 
+!define(nbw5,{[ 110.000MHz, 110.000MHz, 110.000MHz,  74.000MHz,  74.000MHz, $
+     74.000MHz,  55.000MHz,  37.000MHz,  28.000MHz,  18.400MHz,  14.000MHz, $
+      9.200MHz,   7.200MHz,   9.200MHz,  14.000MHz,  18.400MHz,  28.000MHz, $
+     37.000MHz,  55.000MHz,  74.000MHz,  74.000MHz,  74.000MHz, 110.000MHz, $
+    110.000MHz, 110.000MHz]})
+ 
+!define(nbw6,{[ 110.000MHz, 110.000MHz, 110.000MHz,  74.000MHz,  74.000MHz, $
+     74.000MHz,  55.000MHz,  37.000MHz,  28.000MHz,  18.400MHz,  14.000MHz, $
+      9.200MHz,   7.200MHz,   9.200MHz,  14.000MHz,  18.400MHz,  28.000MHz, $
+     37.000MHz,  55.000MHz,  74.000MHz,  74.000MHz,  74.000MHz, 110.000MHz, $
+    110.000MHz, 110.000MHz]})
+ 
+!define(nbw7,{[ 110.000MHz, 110.000MHz, 110.000MHz,  74.000MHz,  74.000MHz, $
+     74.000MHz,  55.000MHz,  37.000MHz,  28.000MHz,  18.400MHz,  14.000MHz, $
+      9.200MHz,   7.200MHz,   9.200MHz,  14.000MHz,  18.400MHz,  28.000MHz, $
+     37.000MHz,  55.000MHz,  74.000MHz,  74.000MHz,  74.000MHz, 110.000MHz, $
+    110.000MHz, 110.000MHz]})
+ 
+!define(nbw8,{[ 110.000MHz, 110.000MHz, 110.000MHz,  74.000MHz,  74.000MHz, $
+     74.000MHz,  55.000MHz,  37.000MHz,  28.000MHz,  18.400MHz,  14.000MHz, $
+      9.200MHz,   7.200MHz,   9.200MHz,  14.000MHz,  18.400MHz,  28.000MHz, $
+     37.000MHz,  55.000MHz,  74.000MHz,  74.000MHz,  74.000MHz, 110.000MHz, $
+    110.000MHz, 110.000MHz]})
+ 
+!define(nbw9,{[ 110.000MHz, 110.000MHz, 110.000MHz,  74.000MHz,  74.000MHz, $
+     74.000MHz,  55.000MHz,  37.000MHz,  28.000MHz,  18.400MHz,  14.000MHz, $
+      9.200MHz,   7.200MHz,   9.200MHz,  14.000MHz,  18.400MHz,  28.000MHz, $
+     37.000MHz,  55.000MHz,  74.000MHz,  74.000MHz,  74.000MHz, 110.000MHz, $
+    110.000MHz, 110.000MHz]})
+ 
+!define(nbw10,{[ 110.000MHz, 110.000MHz, 110.000MHz,  74.000MHz,  74.000MHz, $
+      74.000MHz,  55.000MHz,  37.000MHz,  28.000MHz,  18.400MHz,  14.000MHz, $
+       9.200MHz,   7.200MHz,   9.200MHz,  14.000MHz,  18.400MHz,  28.000MHz, $
+      37.000MHz,  55.000MHz,  74.000MHz,  74.000MHz,  74.000MHz, 110.000MHz, $
+     110.000MHz, 110.000MHz]})
+ 
+!define(nbw11,{[ 110.000MHz, 110.000MHz, 110.000MHz,  74.000MHz,  74.000MHz, $
+      74.000MHz,  55.000MHz,  37.000MHz,  28.000MHz,  18.400MHz,  14.000MHz, $
+       9.200MHz,   7.200MHz,   9.200MHz,  14.000MHz,  18.400MHz,  28.000MHz, $
+      37.000MHz,  55.000MHz,  74.000MHz,  74.000MHz,  74.000MHz, 110.000MHz, $
+     110.000MHz, 110.000MHz]})
+ 
+!define(nbw12,{[ 110.000MHz, 110.000MHz, 110.000MHz,  74.000MHz,  74.000MHz, $
+      74.000MHz,  55.000MHz,  37.000MHz,  28.000MHz,  18.400MHz,  14.000MHz, $
+       9.200MHz,   7.200MHz,   9.200MHz,  14.000MHz,  18.400MHz,  28.000MHz, $
+      37.000MHz,  55.000MHz,  74.000MHz,  74.000MHz,  74.000MHz, 110.000MHz, $
+     110.000MHz, 110.000MHz]})
+ 
+!define(nbw13,{[ 110.000MHz, 110.000MHz, 110.000MHz,  74.000MHz,  74.000MHz, $
+      74.000MHz,  55.000MHz,  37.000MHz,  28.000MHz,  18.400MHz,  14.000MHz, $
+       9.200MHz,   7.200MHz,   9.200MHz,  14.000MHz,  18.400MHz,  28.000MHz, $
+      37.000MHz,  55.000MHz,  74.000MHz,  74.000MHz,  74.000MHz, 110.000MHz, $
+     110.000MHz, 110.000MHz]})
+ 
+!define(nbw14,{[ 110.000MHz, 110.000MHz, 110.000MHz,  74.000MHz,  74.000MHz, $
+      74.000MHz,  55.000MHz,  37.000MHz,  28.000MHz,  18.400MHz,  14.000MHz, $
+       9.200MHz,   7.200MHz,   9.200MHz,  14.000MHz,  18.400MHz,  28.000MHz, $
+      37.000MHz,  55.000MHz,  74.000MHz,  74.000MHz,  74.000MHz, 110.000MHz, $
+     110.000MHz, 110.000MHz]})
+ 
+!define(nbw15,{[ 110.000MHz, 110.000MHz, 110.000MHz,  74.000MHz,  74.000MHz, $
+      74.000MHz,  55.000MHz,  37.000MHz,  28.000MHz,  18.400MHz,  14.000MHz, $
+       9.200MHz,   7.200MHz,   9.200MHz,  14.000MHz,  18.400MHz,  28.000MHz, $
+      37.000MHz,  55.000MHz,  74.000MHz,  74.000MHz,  74.000MHz, 110.000MHz, $
+     110.000MHz, 110.000MHz]})
+ 
+!define(nbw16,{[ 110.000MHz, 110.000MHz, 110.000MHz,  74.000MHz,  74.000MHz, $
+      74.000MHz,  55.000MHz,  37.000MHz,  28.000MHz,  18.400MHz,  14.000MHz, $
+       9.200MHz,   7.200MHz,   9.200MHz,  14.000MHz,  18.400MHz,  28.000MHz, $
+      37.000MHz,  55.000MHz,  74.000MHz,  74.000MHz,  74.000MHz, 110.000MHz, $
+     110.000MHz, 110.000MHz]})
+ 
+!define(nbw17,{[ 110.000MHz, 110.000MHz, 110.000MHz,  74.000MHz,  74.000MHz, $
+      74.000MHz,  55.000MHz,  37.000MHz,  28.000MHz,  18.400MHz,  14.000MHz, $
+       9.200MHz,   7.200MHz,   9.200MHz,  14.000MHz,  18.400MHz,  28.000MHz, $
+      37.000MHz,  55.000MHz,  74.000MHz,  74.000MHz,  74.000MHz, 110.000MHz, $
+     110.000MHz, 110.000MHz]})
+ 
+!define(nbw18,{[ 110.000MHz, 110.000MHz, 110.000MHz,  74.000MHz,  74.000MHz, $
+      74.000MHz,  55.000MHz,  37.000MHz,  28.000MHz,  18.400MHz,  14.000MHz, $
+       9.200MHz,   7.200MHz,   9.200MHz,  14.000MHz,  18.400MHz,  28.000MHz, $
+      37.000MHz,  55.000MHz,  74.000MHz,  74.000MHz,  74.000MHz, 110.000MHz, $
+     110.000MHz, 110.000MHz]})
+ 
+!define(nbw19,{[ 110.000MHz, 110.000MHz, 110.000MHz,  74.000MHz,  74.000MHz, $
+      74.000MHz,  55.000MHz,  37.000MHz,  28.000MHz,  18.400MHz,  14.000MHz, $
+       9.200MHz,   7.200MHz,   9.200MHz,  14.000MHz,  18.400MHz,  28.000MHz, $
+      37.000MHz,  55.000MHz,  74.000MHz,  74.000MHz,  74.000MHz, 110.000MHz, $
+     110.000MHz, 110.000MHz]})
+ 
+!define(nbw20,{[ 110.000MHz, 110.000MHz, 110.000MHz,  74.000MHz,  74.000MHz, $
+      74.000MHz,  55.000MHz,  37.000MHz,  28.000MHz,  18.400MHz,  14.000MHz, $
+       9.200MHz,   7.200MHz,   9.200MHz,  14.000MHz,  18.400MHz,  28.000MHz, $
+      37.000MHz,  55.000MHz,  74.000MHz,  74.000MHz,  74.000MHz, 110.000MHz, $
+     110.000MHz, 110.000MHz]})
+ 
+!define(nbw21,{[ 110.000MHz, 110.000MHz, 110.000MHz,  74.000MHz,  74.000MHz, $
+      74.000MHz,  55.000MHz,  37.000MHz,  28.000MHz,  18.400MHz,  14.000MHz, $
+       9.200MHz,   7.200MHz,   9.200MHz,  14.000MHz,  18.400MHz,  28.000MHz, $
+      37.000MHz,  55.000MHz,  74.000MHz,  74.000MHz,  74.000MHz, 110.000MHz, $
+     110.000MHz, 110.000MHz]})
+ 
+!define(nbw22,{[   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz]})
+ 
+!define(nbw23,{[   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz]})
+ 
+!define(nbw24,{[   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz]})
+ 
+!define(nbw25,{[   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz]})
+ 
+!define(nbw26,{[   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz, $
+       0.097MHz,   0.097MHz,   0.097MHz,   0.097MHz]})
+ 
+!define(nbw27,{[  37.000MHz,  28.000MHz,  18.400MHz,  14.000MHz,   9.200MHz, $
+       7.200MHz,   9.200MHz,  14.000MHz,  18.400MHz,  28.000MHz,  37.000MHz]})
+ 
+!define(nbw28,{[  37.000MHz,  28.000MHz,  18.400MHz,  14.000MHz,   9.200MHz, $
+       7.200MHz,   9.200MHz,  14.000MHz,  18.400MHz,  28.000MHz,  37.000MHz]})
+ 
+!define(nbw29,{[  37.000MHz,  28.000MHz,  18.400MHz,  14.000MHz,   9.200MHz, $
+       7.200MHz,   9.200MHz,  14.000MHz,  18.400MHz,  28.000MHz,  37.000MHz]})
+ 
+!define(nbw30,{[  37.000MHz,  28.000MHz,  18.400MHz,  14.000MHz,   9.200MHz, $
+       7.200MHz,   9.200MHz,  14.000MHz,  18.400MHz,  28.000MHz,  37.000MHz]})
+ 
+!define(nbw31,{[  37.000MHz,  28.000MHz,  18.400MHz,  14.000MHz,   9.200MHz, $
+       7.200MHz,   9.200MHz,  14.000MHz,  18.400MHz,  28.000MHz,  37.000MHz]})
+ 
+!define(nbw32,{[ 500.000MHz, 500.000MHz, 500.000MHz, 400.000MHz]})
+ 
+!define(nbw33,{[ 450.000MHz, 500.000MHz, 500.000MHz, 450.000MHz]})
+ 
+!define(nbw34,{[ 500.000MHz, 500.000MHz, 500.000MHz, 400.000MHz]})
+ 
