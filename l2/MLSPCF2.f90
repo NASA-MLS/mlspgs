@@ -38,14 +38,17 @@ MODULE MLSPCF2
    INTEGER, PARAMETER :: mlspcf_filtshps_start = 20002
    INTEGER, PARAMETER :: mlspcf_filtshps_end = 20002
    !
-   INTEGER, PARAMETER :: mlspcf_ptggrids_start = 20003
-   INTEGER, PARAMETER :: mlspcf_ptggrids_end = 20003
+   INTEGER, PARAMETER :: mlspcf_dacsfltsh_start = 20003
+   INTEGER, PARAMETER :: mlspcf_dacsfltsh_end = 20003
    !
-   INTEGER, PARAMETER :: mlspcf_clouds_start = 20004
-   INTEGER, PARAMETER :: mlspcf_clouds_end = 20033
+   INTEGER, PARAMETER :: mlspcf_ptggrids_start = 20004
+   INTEGER, PARAMETER :: mlspcf_ptggrids_end = 20004
    !
-   INTEGER, PARAMETER :: mlspcf_l2pc_start = 20034
-   INTEGER, PARAMETER :: mlspcf_l2pc_end = 20063
+   INTEGER, PARAMETER :: mlspcf_clouds_start = 20005
+   INTEGER, PARAMETER :: mlspcf_clouds_end = 20034
+   !
+   INTEGER, PARAMETER :: mlspcf_l2pc_start = 20035
+   INTEGER, PARAMETER :: mlspcf_l2pc_end = 20064
    !
    INTEGER, PARAMETER :: mlspcf_l2apriori_start = 21000
    INTEGER, PARAMETER :: mlspcf_l2apriori_end = 21049
@@ -100,6 +103,9 @@ contains
 END MODULE MLSPCF2
 
 ! $Log$
+! Revision 2.13  2003/07/16 21:50:53  pwagner
+! Added mlspcf_dacsfltsh_start, _end
+!
 ! Revision 2.12  2003/05/29 17:54:28  pwagner
 ! Able to read dao, ncep files w/o knowing name fragment
 !
