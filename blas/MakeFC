@@ -58,7 +58,7 @@ SHELL = /bin/sh
 #--------------- Target definitions
 #            (code sub-directories of lib)
 # $PROG          -- automatic; built when target is not specified
-# all            -- only libblas.a; same as $PROG
+# all            -- only libmlspack.a; same as $PROG
 
 #                           (functional)
 # configure      -- runs mlsconfigure to (re)set compiler, platform, paths
@@ -71,11 +71,11 @@ SHELL = /bin/sh
 #
 
 #----------------------------------------------------------
-PROG=libblas.a
+PROG=libmlspack.a
 #PROG=all
 
-#In case this is called with "make libblas.a"
-libblas.a:
+#In case this is called with "make libmlspack.a"
+libmlspack.a:
 
 OMIT_SRCS := -d xerbla.f
 
@@ -85,12 +85,13 @@ else
 ifeq ($(LIB_BLAS),f95)
    OMIT_SRCS := $(OMIT_SRCS) -d dot_external_m.f90 -d sdot.f -d ddot.f
 else
-   OMIT_SRCS := $(OMIT_SRCS) -d dot_external_m.f90 -d dot_intrinsic.f90
+   OMIT_SRCS := $(OMIT_SRCS) -d dot_intrinsic.f90
 endif
 endif
 
 ifdef LAPACK
-   OMIT_SRCS := $(OMIT_SRCS) -d dgemm_intrinsic.f90 -d sgemm_intrinsic.f90
+   OMIT_SRCS := $(OMIT_SRCS) -d dgemm_intrinsic.f90 -d sgemm_intrinsic.f90 \
+                 -d dgemv_intrinsic.f90 -d sgemv_intrinsic.f90
 endif
 
 #NOCLEANING determines value of RECFG passed to mlsconfigure script
@@ -129,7 +130,7 @@ $(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG)
 	esac 
 
 .PHONY: configure depends clean tar tarz targ mostlyclean \
-	all libblas.a ghostbuster
+	all libmlspack.a ghostbuster
 
 tar:
 
@@ -178,16 +179,19 @@ clean:
 
 tar:
 	rm -f ../lib.tar
-	@echo "tar-ing libblas"; \
-	$(TAR) hcvf ../libblas.tar * --exclude CVS\
+	@echo "tar-ing libmlspack"; \
+	$(TAR) hcvf ../libmlspack.tar * --exclude CVS\
 	--exclude Make.dep\* --exclude blas/NAG.\* --exclude blas/LF95.\*
 
 tarz: tar
 	@echo "... then gzipping it"; \
-	cd ..; rm -f libblas.tgz; gzip libblas.tar; mv libblas.tar.gz libblas.tgz
+	cd ..; rm -f libmlspack.tgz; gzip libmlspack.tar; mv libmlspack.tar.gz libmlspack.tgz
 
 targ:
-	rm -f ../libblas.tgz
-	$(TAR) hcvzf ../libblas.tgz * --exclude \*.o --exclude \*.mod
+	rm -f ../libmlspack.tgz
+	$(TAR) hcvzf ../libmlspack.tgz * --exclude \*.o --exclude \*.mod
 
 # $Log$
+# Revision 1.1  2001/11/13 23:01:42  pwagner
+# First commit
+#
