@@ -6,7 +6,7 @@ module VGridsDatabase
 !=============================================================================
 
   use Allocate_Deallocate, only: Deallocate_Test
-  use MLSCommon, only: R8
+  use MLSCommon, only: RS => R8 ! Real kind for Surfs
   use MLSMessageModule, only: & ! Message logging
     & MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, MLSMSG_Error
 
@@ -22,7 +22,7 @@ module VGridsDatabase
     integer :: VerticalCoordinate  ! One of t_vGridCoordinate's literals, or
                                    ! 0 if empty
     integer :: NoSurfs             ! Number of surfaces
-    real(r8), dimension(:,:), pointer :: Surfs => NULL()  ! Array of surfaces
+    real(rs), dimension(:,:), pointer :: Surfs => NULL()  ! Array of surfaces
                                    ! (actually dimensioned (1:noSurfs,1))
   end type VGrid_T
 
@@ -40,6 +40,7 @@ module VGridsDatabase
   public :: Dump, Dump_a_VGrid, Dump_VGrids, GetUnitForVerticalCoordinate
   public :: NullifyVGrid
   public :: PVMPackVGrid, PVMUnpackVGrid
+  public :: RS
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter, private :: IdParm = &
@@ -283,6 +284,9 @@ contains
 end module VGridsDatabase
 
 ! $Log$
+! Revision 2.16  2005/01/07 00:38:53  vsnyder
+! Call the kind for the Surfs field RS
+!
 ! Revision 2.15  2004/12/13 20:29:36  vsnyder
 ! Added DoVGridsMatch generic with DoVGridsMatch_VG specific
 !
