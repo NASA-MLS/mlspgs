@@ -130,6 +130,9 @@ END PROGRAM MLSL3
 !================
 
 ! $Log$
+! Revision 1.9  2001/02/28 17:25:01  nakamura
+! Integrated CORE module; changed name of loop routine to OutputProd & added terminal OutputAndClose.
+!
 ! Revision 1.8  2001/01/18 16:51:50  nakamura
 ! Moved minDays from PCF to cf.
 !
@@ -137,8 +140,7 @@ END PROGRAM MLSL3
 ! Updated for new MCFs and added annotation.
 !
 ! Revision 1.6  2000/12/29 21:40:52  nakamura
-! Added avgPer, more simulated data; revised argument list for ReadL2GPProd; swi
-tched to one-product/all-days paradigm.
+! Added avgPer, more simulated data; revised argument list for ReadL2GPProd; switched to one-product/all-days paradigm.
 !
 ! Revision 1.5  2000/11/28 17:33:06  nakamura
 ! Added code to put non-zero values in simulated L3DM output.
