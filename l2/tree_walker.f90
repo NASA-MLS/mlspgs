@@ -251,23 +251,8 @@ contains ! ====     Public Procedures     ==============================
 	  ! if fmt1 or fmt2 is true
           if ( index(switches, 'fmt') /= 0 .and. &
 	     & associated(forwardModelConfigDatabase)) then
-	       call output ("======= printForwardModelTiming =========", &
-		  & advance = 'yes')
-	       call output ( " ", advance = 'yes')
-	       call output ( "Name", advance='no')
-	       call blanks (18, advance ='no')
-	       call output ("| Invocation ", advance = 'no')
-	       call output ( "| Mean_time / s ", advance='no') 
-	       call output ("| St. dev. / s", advance='yes') 
-	       call output ("-------------------------------------------&
-	              &-----------------------------", advance= 'yes')    
-               do fwmIndex =1, size(forwardModelConfigDatabase)
-                  call printForwardModelTiming ( forwardModelConfigDatabase &
-                        & (fwmIndex))
-                  call resetForwardModelTiming ( forwardModelConfigDatabase &
-                        & (fwmIndex))
-               end do
-          end if  !--------- End of if fmt
+                  call printForwardModelTiming ( forwardModelConfigDatabase )
+          end if
 
         else
         ! Otherwise, this is the 'standard' work for these sections.
@@ -332,39 +317,11 @@ subtrees:   do while ( j <= howmany )
             ! print the timing for FullForwardModel
             ! fmt2: at each chunk, fmt1: at last chunk
             if ( index(switches, 'fmt2') /= 0 ) then
-	       call output ( "======= printForwardModelTiming =========", &
-		  & advance = 'yes')
-	       call output ( " ", advance = 'yes')
-	       call output ( "Name", advance='no')
-	       call blanks (18, advance ='no')
-	       call output ("| Invocation ", advance = 'no')
-	       call output ( "| Mean_time / s ", advance='no') 
-	       call output ("| St. dev. / s", advance='yes') 
-	       call output ("-------------------------------------------&
-	              &-----------------------------", advance= 'yes')    
-               do fwmIndex =1, size(forwardModelConfigDatabase)
-                  call printForwardModelTiming ( forwardModelConfigDatabase &
-                        & (fwmIndex))
-                  call resetForwardModelTiming ( forwardModelConfigDatabase &
-                        & (fwmIndex))
-               end do
-            end if  !--------- End of if fmt2
+                  call printForwardModelTiming ( forwardModelConfigDatabase )
+            end if
             if ( index(switches, 'fmt1') /= 0 .and. chunkNo == lastChunk) then
-	       call output ("======= printForwardModelTiming =========", &
-		  & advance = 'yes')
-	       call output ( " ", advance = 'yes')
-	       call output ( "Name", advance='no')
-	       call blanks (18, advance ='no')
-	       call output ("| Invocation ", advance = 'no')
-	       call output ( "| Mean_time / s ", advance='no') 
-	       call output ("| St. dev. / s", advance='yes') 
-	       call output ("-------------------------------------------&
-	              &-----------------------------", advance= 'yes')    
-               do fwmIndex =1, size(forwardModelConfigDatabase)
-                  call printForwardModelTiming ( &
-                   & forwardModelConfigDatabase(fwmIndex))
-               end do
-            end if  ! ---------- End of if fmt1
+                  call printForwardModelTiming ( forwardModelConfigDatabase )
+            end if
             call StripForwardModelConfigDatabase ( forwardModelConfigDatabase )
           end do ! ---------------------------------- End of chunk loop
           ! Clear any locked l2pc bins out.
@@ -472,6 +429,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.115  2003/09/02 18:04:38  pwagner
+! Can do a singleChunk even if master task
+!
 ! Revision 2.114  2003/08/21 21:24:39  cvuu
 ! Change the output format for fullForwardModel Timing
 !
