@@ -1,5 +1,5 @@
 ; this processes another tex string
-  PRO proc_tex_stra,lu,buff,stra,strb,sps_name
+  PRO proc_tex_stra,lu,buff,stra,strb,qnu,qnl,ref,sps_name
   buff = ''
   buff1 = ''
 ; disregard comment specifiers
@@ -20,10 +20,13 @@
     buff = STRJOIN(STRSPLIT(buff,'\\\\',/EXTRACT,/REGEX),'',/SINGLE)
 ; extract band names
     amp_pos = STRSPLIT(buff,'&',LENGTH = len)
-    stra = STRTRIM(STRMID(buff,amp_pos(11),len(11)),2)
-    strb = STRTRIM(STRMID(buff,amp_pos(12),len(12)),2)
+    qnu  = STRMID(buff,amp_pos(12),len(12))
+    qnl  = STRMID(buff,amp_pos(13),len(13))
+    stra = STRTRIM(STRMID(buff,amp_pos(14),len(14)),2) + ' '
+    strb = STRTRIM(STRMID(buff,amp_pos(15),len(15)),2) + ' '
+    ref  = STRMID(buff,amp_pos(16),2) + ' '
 ; extract non character part of the string
-    buff = STRMID(buff,0,amp_pos(11)-1)
+    buff = STRMID(buff,0,amp_pos(12)-1)
 ; now replace every occurance of & with a space
     buff = STRJOIN(STRSPLIT(buff,'&',/EXTRACT),' ',/SINGLE)
 ; now replace every occurance of $\times 10^{ with e
