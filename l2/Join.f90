@@ -52,6 +52,8 @@ module Join                     ! Join together chunk based data.
        "$RCSfile$"
 !---------------------------------------------------------------------------
 
+  logical, parameter, private :: DEEBUG = .FALSE.           ! Usually FALSE
+
   ! Parameters for Announce_Error
 
   integer :: ERROR
@@ -515,10 +517,26 @@ contains ! =====     Public Procedures     =============================
     &                                    NoMAFs,index
     integer ::                           FirstProfile, LastProfile
 !   real(r8), dimension(:,:), pointer :: values !??? Not used ???
+    character (LEN=32) :: quantityNameStr
 
     ! Executable code
 
     if ( toggle(gen) ) call trace_begin ( "JoinL2AUXQuantities", key )
+
+    if ( DEEBUG ) then
+      call output('Joining vector quantity to L2AUX quantities', advance='yes')
+      call output('minor frame? ', advance='no')
+      call output(quantity%template%minorFrame, advance='no')
+      call output('   major frame? ', advance='no')
+      call output(quantity%template%majorFrame, advance='no')
+      call output('   template  name ', advance='no')
+      if ( quantity%template%name < 1 ) then
+        call output('   (unnamed) ', advance='yes')
+      else
+        call get_string(quantity%template%name, quantityNameStr, strip=.true., noerror=.true.)
+        call output(trim(quantityNameStr), advance='yes')
+      endif
+    endif
 
     ! If this is the first chunk, we have to setup the l2aux quantity from
     ! scratch.  Otherwise, we expand it and fill up our part of it.
@@ -546,6 +564,11 @@ contains ! =====     Public Procedures     =============================
     ! If we've not been asked to output anything then don't carry on
     if ( noOutputInstances < 1 ) return
 
+    if ( DEEBUG ) then
+      call output('Joining L2Aux quantity with ', advance='no')
+      call output(noOutputInstances, advance='no')
+      call output(' instances ', advance='no')
+    endif
     ! Now if this is a new l2aux quantity, we need to setup an l2aux data type
     ! for it.
 
@@ -616,6 +639,7 @@ contains ! =====     Public Procedures     =============================
       call SetupNewL2AUXRecord ( dimensionFamilies, dimensionSizes, &
         & dimensionStarts, newL2AUX )
       newL2AUX%minorFrame=quantity%template%minorFrame
+      newL2AUX%majorFrame=quantity%template%majorFrame
       newL2AUX%instrumentModule=quantity%template%instrumentModule
 
       ! Setup the standard `vertical' and `channel' dimensions
@@ -635,7 +659,7 @@ contains ! =====     Public Procedures     =============================
           end do
         case default                    ! Ignore horizontal dimensions
         end select
-        ! The error message here is rather vaugue.  The issue is that
+        ! The error message here is rather vague.  The issue is that
         ! both MAF and geodAngle should only occur for the `last' dimension
         ! which our loop is explicity avoiding.
       end do ! The `last' dimension is dealt with later on.
@@ -664,20 +688,37 @@ contains ! =====     Public Procedures     =============================
       ! called immediately after the initial one).
       ! For minor frame quantities we don't need to expand, as they're created
       ! at full size from the start.
-      if (.not. quantity%template%minorFrame) &
+      if ( .not. &
+        & (quantity%template%minorFrame .or. quantity%template%majorFrame) ) &
         & call ExpandL2AUXDataInPlace ( thisL2AUX, noMAFs )
     end if
 
     ! Now we are ready to fill up the l2aux quantity with the new data.
     thisL2AUX%name = name
 
-    if (quantity%template%minorFrame) then
+    if ( quantity%template%minorFrame .or. quantity%template%majorFrame ) then
       lastProfile = quantity%template%mafIndex(quantity%template%noInstances)
     else
       lastProfile = thisL2AUX%dimensions(L2AUXRank)%noValues
     endif
     firstProfile = lastProfile-noOutputInstances+1
     
+    if ( DEEBUG ) then
+      call output('  firstProfile ', advance='no')
+      call output(firstProfile, advance='no')
+      call output('   lastProfile ', advance='no')
+      call output(lastProfile, advance='no')
+      if ( any( thisL2AUX%dimensions(L2AUXRank)%dimensionFamily &
+        & == (/ L_GeodAngle, L_MAF /) ) ) then
+        call output('   dimensions ', advance='no')
+        call output(size(thisL2AUX%dimensions(L2AUXRank)%values), advance='no')
+      else
+        call output(' (dimensions unassociated)', advance='no')
+      endif
+      call output('   values 3rd coord ', advance='no')
+      call output(size(thisL2AUX%values(1,1,:)), advance='yes')
+    endif
+
     select case (thisL2AUX%dimensions(L2AUXRank)%dimensionFamily)
     case ( L_GeodAngle )
       thisL2AUX%dimensions(L2AUXRank)%values(firstProfile:lastProfile)=&
@@ -702,6 +743,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.51  2001/10/06 00:27:42  pwagner
+! Still some problems with diagnostics
+!
 ! Revision 2.50  2001/09/28 23:59:20  pwagner
 ! Fixed various timing problems
 !
