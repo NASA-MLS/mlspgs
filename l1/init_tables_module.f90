@@ -45,7 +45,8 @@ MODULE INIT_TABLES_MODULE
   INTEGER, PUBLIC, PARAMETER :: F_SECONDARY = f_use + 1
   INTEGER, PUBLIC, PARAMETER :: F_S = f_secondary + 1
   INTEGER, PUBLIC, PARAMETER :: F_BANDNO = f_s + 1
-  INTEGER, PUBLIC, PARAMETER :: FIELD_LAST = f_bandno + 1
+  INTEGER, PUBLIC, PARAMETER :: F_CHAN = f_bandno + 1
+  INTEGER, PUBLIC, PARAMETER :: FIELD_LAST = f_chan + 1
 
 ! Enumeration literals:
 
@@ -69,7 +70,8 @@ MODULE INIT_TABLES_MODULE
   INTEGER, PUBLIC, PARAMETER :: S_DISCARDMIFS = s_limbMIFs + 1
   INTEGER, PUBLIC, PARAMETER :: S_SWITCH = s_discardMIFs + 1
   INTEGER, PUBLIC, PARAMETER :: S_CHI2ERR = s_switch + 1
-  INTEGER, PUBLIC, PARAMETER :: SPEC_LAST = s_chi2err
+  INTEGER, PUBLIC, PARAMETER :: S_MARKCHANBAD = s_chi2err + 1
+  INTEGER, PUBLIC, PARAMETER :: SPEC_LAST = s_markchanbad
 
 ! Parameter names:
 
@@ -152,6 +154,7 @@ CONTAINS ! =====     Public procedures     =============================
     field_indices(f_secondary) =            add_ident ( 'secondary' )
     field_indices(f_s) =                    add_ident ( 's' )
     field_indices(f_bandno) =               add_ident ( 'bandno' )
+    field_indices(f_chan) =                 add_ident ( 'chan' )
  
     ! Put parameter names into the symbol table
 
@@ -189,6 +192,7 @@ CONTAINS ! =====     Public procedures     =============================
     spec_indices(s_discardMIFs) =             add_ident ( 'discardMIFs' )
     spec_indices(s_switch) =                  add_ident ( 'switch' )
     spec_indices(s_chi2err) =                 add_ident ( 'EnableChi2Err' )
+    spec_indices(s_markchanbad) =             add_ident ( 'MarkChanBad' )
 
   ! Definitions are represented by trees.  The notation in the comments
   ! for the trees is < root first_son ... last_son >.  This is sometimes
@@ -274,6 +278,12 @@ CONTAINS ! =====     Public procedures     =============================
              nadp+n_spec_def /) )
 
     CALL make_tree ( (/ &
+      begin, s+s_markchanbad, &
+             begin, f+f_chan, t+t_numeric, n+n_field_type, &
+             begin, f+f_bandno, t+t_numeric, n+n_field_type, &
+             nadp+n_spec_def /) )
+
+    CALL make_tree ( (/ &
       begin, s+s_chi2err, &
              begin, f+f_bandno, t+t_numeric_range, t+t_numeric, n+n_field_type,&
              nadp+n_spec_def /) )
@@ -308,7 +318,7 @@ CONTAINS ! =====     Public procedures     =============================
              begin, p+p_usedefaultgains, t+t_boolean, n+n_name_def, &
              begin, p+p_calibDACS, t+t_boolean, n+n_name_def, &
              s+s_spaceMIFs, s+s_targetMIFs, s+s_limbMIFS, s+s_discardMIFs, &
-             s+s_switch, n+n_section, &
+             s+s_switch, s+s_markchanbad, n+n_section, &
       begin, z+z_output, &
              begin, p+p_removebaseline, t+t_boolean, n+n_name_def, &
              s+s_chi2err, n+n_section/) )
@@ -321,6 +331,9 @@ CONTAINS ! =====     Public procedures     =============================
 END MODULE INIT_TABLES_MODULE
   
 ! $Log$
+! Revision 2.18  2004/11/10 15:39:37  perun
+! Add MarkChandBad user input
+!
 ! Revision 2.17  2004/08/12 13:51:51  perun
 ! Version 1.44 commit
 !
@@ -334,6 +347,9 @@ END MODULE INIT_TABLES_MODULE
 ! Version 1.2 commit
 !
 ! $Log$
+! Revision 2.18  2004/11/10 15:39:37  perun
+! Add MarkChandBad user input
+!
 ! Revision 2.17  2004/08/12 13:51:51  perun
 ! Version 1.44 commit
 !

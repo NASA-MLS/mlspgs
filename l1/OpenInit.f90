@@ -10,6 +10,7 @@ MODULE OpenInit ! Opens input L0 files and output L1 files
   USE MLSCommon, ONLY: TAI93_Range_T
   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Info, &
        MLSMSG_Warning
+  USE MLSL1Common, ONLY: OA_counterMAF, OA_counterIndex
 
   IMPLICIT NONE
 
@@ -38,7 +39,8 @@ CONTAINS
          mlspcf_pcf_start, mlspcf_l1cf_start, mlspcf_MAF_data_start, &
          mlspcf_defltzeros_start, mlspcf_defltzeros_end, &
          mlspcf_defltgains_start, mlspcf_sidebandfrac_start, &
-         mlspcf_spilloverloss_start, mlspcf_l1b_log_start
+         mlspcf_spilloverloss_start, mlspcf_defltchi2_start, &
+         mlspcf_defltbaselineAC_start, mlspcf_l1b_log_start
     USE PCFHdr, ONLY: CreatePCFAnnotation, GlobalAttributes, FillTAI93Attribute
     USE MLSStringLists, ONLY: utc_to_yyyymmdd
     USE L0_sci_tbls, ONLY: InitSciPointers
@@ -48,15 +50,17 @@ CONTAINS
          orbIncline, orbitNumber, scanRate, scanRateT
     USE Calibration, ONLY: InitCalibWindow
     USE EngTbls, ONLY: Load_Eng_tbls
-    USE BandTbls, ONLY: Load_Band_tbls, LoadSidebandFracs, LoadSpilloverLoss
+    USE BandTbls, ONLY: Load_Band_tbls, LoadSidebandFracs, LoadSpilloverLoss, &
+         LoadDefltChi2
     USE MLSL1Rad, ONLY: InitRad
     USE MLSSignalNomenclature, ONLY: ReadSignalsDatabase
     USE OutputL1B, ONLY: OutputL1BOA_create
     USE FOV, ONLY: InitFOVconsts
+    USE SpectralBaseline, ONLY: InitBaseline, LoadBaselineAC
 
     CHARACTER (LEN=132) :: PhysicalFilename
 
-    INTEGER :: ios, lid, returnStatus, version, tbl_unit
+    INTEGER :: ios, lid, noMAFS, returnStatus, version, tbl_unit
 
     LOGICAL :: THz, exists
 
@@ -170,6 +174,10 @@ CONTAINS
     IF (.NOT. THz) THEN
        L1Config%Expanded_TAI%startTime = L1Config%Expanded_TAI%startTime - 120.0
        L1Config%Expanded_TAI%endTime = L1Config%Expanded_TAI%endTime + 120.0
+       noMAFs = ( L1Config%Expanded_TAI%endTime - &
+            L1Config%Expanded_TAI%startTime) / MAF_dur
+       ALLOCATE (OA_counterMAF(noMAFs))
+       OA_counterIndex = 1
     ELSE   ! expand end time for THz
        L1Config%Expanded_TAI%endTime = L1Config%Expanded_TAI%endTime + MAF_dur
     ENDIF
@@ -376,6 +384,10 @@ CONTAINS
 !! Initialize FOV constants
 
     IF (.NOT. THz) CALL InitFOVconsts
+
+!! Initialize Baseline
+
+    CALL InitBaseline
           
 !! Define the SD structures in the L1BOA output file
 
@@ -450,6 +462,74 @@ CONTAINS
 
     CALL MLSMessage (MLSMSG_Info, ModuleName, &
          & "Closed Spillover Loss table file")
+
+!! Open and initialize Default Chi2 table:
+
+    version = 1
+    returnStatus = PGS_PC_getReference (mlspcf_defltchi2_start, version, &
+          & PhysicalFilename)
+
+    version = 1
+    returnStatus = PGS_IO_Gen_openF (mlspcf_defltchi2_start, &
+         PGSd_IO_Gen_RSeqFrm, 0, tbl_unit, version)
+    IF (returnstatus /= PGS_S_SUCCESS) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not open Default Chi2 table file: " // &
+            PhysicalFilename)
+    ENDIF
+
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & "Opened Default Chi2 table file: " // PhysicalFilename)
+
+    CALL LoadDefltChi2 (tbl_unit, ios)
+
+    returnStatus = PGS_IO_Gen_CloseF (tbl_unit)
+
+    IF (ios /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName, &
+         & "Error reading Default Chi2 table file")
+
+    IF (returnstatus /= PGS_S_SUCCESS) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not close Default Chi2 table file")
+    ENDIF
+
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & "Closed Default Chi2 table file")
+
+! Load Baseline AC tables:
+
+!! Open and initialize Default BaselineAC table:
+
+    version = 1
+    returnStatus = PGS_PC_getReference (mlspcf_defltbaselineAC_start, version, &
+          & PhysicalFilename)
+
+    version = 1
+    returnStatus = PGS_IO_Gen_openF (mlspcf_defltbaselineAC_start, &
+         PGSd_IO_Gen_RSeqFrm, 0, tbl_unit, version)
+    IF (returnstatus /= PGS_S_SUCCESS) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not open Default BaselineAC table file: " // &
+            PhysicalFilename)
+    ENDIF
+
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & "Opened Default BaselineAC table file: " // PhysicalFilename)
+
+    CALL LoadBaselineAC (tbl_unit, ios)
+
+    returnStatus = PGS_IO_Gen_CloseF (tbl_unit)
+
+    IF (ios /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName, &
+         & "Error reading Default BaselineAC table file")
+
+    IF (returnstatus /= PGS_S_SUCCESS) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not close Default BaselineAC table file")
+    ENDIF
+
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & "Closed Default BaselineAC table file")
 
   END SUBROUTINE OpenAndInitialize
 
@@ -628,13 +708,19 @@ CONTAINS
          mlspcf_l1b_oa_start, mlspcf_l1b_diag_start, mlspcf_l1b_radt_start, &
          mlspcf_l1b_diagT_start
     USE MLSL1Common, ONLY: L1BFileInfo, HDFversion
-    USE MLSFiles, ONLY: MLS_openFile
+    USE MLSFiles, ONLY: MLS_openFile, MLS_closeFile
     USE MLSHDF5, ONLY: MLS_h5open
+    USE L1BData, ONLY: L1BData_T, ReadL1BData, DeallocateL1BData
+
 
     LOGICAL :: THz
 
     CHARACTER (LEN=132) :: PhysicalFilename
     INTEGER :: error, returnStatus, sd_id, version
+    INTEGER :: noMAFs, Flag
+    INTEGER :: firstMAF = 0, lastMAF = 0
+    CHARACTER (LEN=*), PARAMETER :: counterMAFname = "counterMAF"
+    TYPE (L1BData_T) :: L1BOAData
 
     INTEGER, EXTERNAL :: PGS_IO_Gen_Track_LUN
 
@@ -701,6 +787,41 @@ CONTAINS
 
           CALL MLSMessage (MLSMSG_Error, ModuleName, &
                & "Could not find L1BDIAG THz file entry")
+
+       ENDIF
+
+    ! Open L1BOA File for use in start counterMAF
+
+       version = 1
+       returnStatus = PGS_PC_getReference (mlspcf_l1b_oa_start, version, &
+            PhysicalFilename)
+
+       IF (returnStatus == PGS_S_SUCCESS) THEN
+
+          ! Open the HDF file and read first counterMAF
+
+          CALL MLS_openFile (PhysicalFilename, 'readonly', sd_id, hdfVersion)
+          CALL MLSMessage (MLSMSG_Info, &
+               & ModuleName, "Opened L1BOA file: "//PhysicalFilename)
+          L1BFileInfo%OAID = sd_id
+          L1BFileInfo%OAFileName = PhysicalFilename
+
+          CALL ReadL1BData (L1BFileInfo%OAid, counterMAFname, L1BOAData, &
+               noMAFs, Flag, firstMAF, NeverFail=.TRUE., HDFversion=5)
+          ALLOCATE (OA_counterMAF(noMAFs))
+          OA_counterIndex = 1
+          OA_counterMAF = L1BOAData%IntField(:,1,1)
+          CALL DeallocateL1BData (L1BOAData)
+
+          CALL MLS_closeFile (L1BFileInfo%OAid, HDFversion=HDFversion)
+          CALL MLSMessage (MLSMSG_Info, ModuleName, &
+               & 'Closed L1BOA file: '//L1BFileInfo%OAFileName)
+
+       ELSE
+
+          OA_counterMAF = 0   ! Nothing available
+          CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+               & "Could not find L1BOA file entry")
 
        ENDIF
 
@@ -873,6 +994,10 @@ END MODULE OpenInit
 !=============================================================================
 
 ! $Log$
+! Revision 2.18  2004/11/10 15:42:35  perun
+! Open and init default Chi2 table and baselineAC table; get initial counterMAF
+! value from L1BOA file
+!
 ! Revision 2.17  2004/08/04 23:20:25  pwagner
 ! Much moved from MLSStrings to MLSStringLists
 !
