@@ -543,7 +543,7 @@ CONTAINS
 
       CHARACTER (LEN=1), POINTER              :: anText(:)
       integer, intent(in), optional           :: hdfVersion
-      character(len=*), intent(in), optional  :: fileType ! 'sw', 'gd', 'hdf'
+      character(len=2), intent(in), optional  :: fileType ! 'sw', 'gd', 'hdf'
       ! logical, intent(in), optional         :: isHDFEOS
 
 ! Parameters
@@ -916,6 +916,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.17  2003/03/19 23:57:56  jdone
+!# changed length of string fileType from wildcard to 2
+!#
 !# Revision 2.16  2003/03/11 00:20:14  pwagner
 !# can WritePCF2Hdr for swath, grid, or hdf files
 !#
