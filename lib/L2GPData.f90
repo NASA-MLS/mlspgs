@@ -7,6 +7,7 @@ MODULE L2GPData                 ! Data types for storing L2GP data internally
 
   USE MLSMessageModule
   USE MLSCommon
+  USE MLSStrings
 
   IMPLICIT NONE
 
@@ -196,6 +197,9 @@ END MODULE L2GPData
 
 !
 ! $Log$
+! Revision 1.5  1999/12/17 21:41:31  livesey
+! Added check for duplicate name
+!
 ! Revision 1.4  1999/12/14 00:53:50  livesey
 ! Changed DOUBLE PRECISION to REAL(r8)
 !
