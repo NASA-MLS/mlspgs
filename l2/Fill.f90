@@ -3,19 +3,24 @@
 
 !=============================================================================
 module Fill                     ! Create vectors and fill them.
-!=============================================================================
+  !=============================================================================
 
+  use Expr_M, only: EXPR
   use GriddedData, only: GriddedData_T
-  use INIT_TABLES_MODULE, only: F_SOURCE, S_TIME, S_VECTOR, s_Fill
-                                                           ! will be added
-  USE L2GPData, only: L2GPData_T
-  USE L2AUXData, only: L2AUXData_T, L2AUXDim_None, L2AUXDim_Channel, &
-  & L2AUXDim_IntermediateFrequency, L2AUXDim_USBFrequency, L2AUXDim_LSBFrequency, &
-  & L2AUXDim_MIF, L2AUXDim_MAF, L2AUXDim_GeodAngle
+  use INIT_TABLES_MODULE, only: F_ALTITUDEQUANTITY, F_EXPLICITVALUES, &
+    & F_H2OQUANTITY, F_METHOD, F_QUANTITY, F_REFGPHQUANTITY, F_SOURCE, &
+    & F_SOURCEL2AUX, F_SOURCEL2GP, F_SOURCEQUANTITY, F_SPREAD, F_TEMPERATUREQUANTITY, &
+    & FIELD_FIRST, FIELD_LAST, L_EXPLICIT, L_HYDROSTATIC, L_L2GP, L_L2AUX, L_PRESSURE, &
+    & L_TRUE, L_VECTOR, S_TIME, S_VECTOR, S_FILL
+  ! will be added
+  use L2GPData, only: L2GPData_T
+  use L2AUXData, only: L2AUXData_T, L2AUXDim_None, L2AUXDim_Channel, &
+    & L2AUXDim_IntermediateFrequency, L2AUXDim_USBFrequency, L2AUXDim_LSBFrequency, &
+    & L2AUXDim_MIF, L2AUXDim_MAF, L2AUXDim_GeodAngle
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: L1BInfo_T, NameLen, LineLen, MLSChunk_T, R8
-!  use MLSMessageModule, only: MLSMSG_Error, MLSMessage
-!  use MLSStrings, only: lowercase
+  !  use MLSMessageModule, only: MLSMSG_Error, MLSMessage
+  !  use MLSStrings, only: lowercase
   use OUTPUT_M, only: OUTPUT
   use QuantityTemplates, only: QuantityTemplate_T
   use string_table, only: get_string
@@ -23,14 +28,16 @@ module Fill                     ! Create vectors and fill them.
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATE, DECORATION, DUMP_TREE_NODE, NODE_ID, NSONS, &
     & SOURCE_REF, SUB_ROSA, SUBTREE
-  use TREE_TYPES, only: N_NAMED, N_DOT
+  use TREE_TYPES, only: N_NAMED, N_DOT, N_SET_ONE
   use VectorsModule, only: AddVectorToDatabase, CreateVector, Dump, Vector_T, &
     & VectorTemplate_T
+  use ScanModelModule
+  use Intrinsic, only: PHYQ_Dimensionless
 
   implicit none
   private
   public :: MLSL2Fill
-  
+
   ! -----     Private declarations     ---------------------------------
 
   integer, private :: ERROR
@@ -44,30 +51,36 @@ module Fill                     ! Create vectors and fill them.
   integer, parameter :: vectorWontMatchL2GP = zeroGeodSpan+1
   integer, parameter :: cantFillFromL2AUX = vectorWontMatchL2GP+1
   integer, parameter :: vectorWontMatchPDef = cantFillFromL2AUX+1
-! more Error codes relating to FillVector
+  ! more Error codes relating to FillVector
   integer, parameter :: numInstancesisZero = vectorWontMatchPDef+1
-integer, parameter :: numSurfsisZero = numInstancesisZero+1
-integer, parameter :: numChansisZero = numSurfsisZero+1
-integer, parameter :: objIsFullRank3 = numChansisZero+1
-integer, parameter :: otherErrorInFillVector = objIsFullRank3+1
+  integer, parameter :: numSurfsisZero = numInstancesisZero+1
+  integer, parameter :: numChansisZero = numSurfsisZero+1
+  integer, parameter :: objIsFullRank3 = numChansisZero+1
+  integer, parameter :: otherErrorInFillVector = objIsFullRank3+1
+  integer, parameter :: noSourceL2GPGiven= otherErrorInFillVector+1
+  integer, parameter :: noSourceL2AUXGiven= noSourceL2GPGiven+1
+  integer, parameter :: noExplicitValuesGiven= noSourceL2AUXGiven+1
+  integer, parameter :: noSourceQuantityGiven= noExplicitValuesGiven+1
+  integer, parameter :: invalidExplicitFill= noSourceQuantityGiven+1
+  integer, parameter :: badUnitsForExplicit= invalidExplicitFill+1
 
-    ! Error codes resulting from squeeze
-integer, parameter :: n1_is_zero = otherErrorInFillVector+1
-integer, parameter :: n2_is_zero = n1_is_zero+1
-integer, parameter :: n3_is_zero = n2_is_zero+1
-integer, parameter :: m1_too_small = n3_is_zero+1
-integer, parameter :: m2_too_small = m1_too_small+1
-integer, parameter :: not_permutation = m2_too_small+1
-integer, parameter :: allocation_err = not_permutation+1
-integer, parameter :: deallocation_err = allocation_err+1
+  ! Error codes resulting from squeeze
+  integer, parameter :: n1_is_zero = badUnitsForExplicit+1
+  integer, parameter :: n2_is_zero = n1_is_zero+1
+  integer, parameter :: n3_is_zero = n2_is_zero+1
+  integer, parameter :: m1_too_small = n3_is_zero+1
+  integer, parameter :: m2_too_small = m1_too_small+1
+  integer, parameter :: not_permutation = m2_too_small+1
+  integer, parameter :: allocation_err = not_permutation+1
+  integer, parameter :: deallocation_err = allocation_err+1
 
-! miscellaneous
-integer, parameter :: miscellaneous_err = deallocation_err+1
+  ! miscellaneous
+  integer, parameter :: miscellaneous_err = deallocation_err+1
 
-!  integer, parameter :: s_Fill = 0   ! to be replaced by entry in init_tables_module
+  !  integer, parameter :: s_Fill = 0   ! to be replaced by entry in init_tables_module
   !---------------------------- RCS Ident Info -------------------------------
   character (len=256) :: Id = &
-       "$id: fill.f90,v 1.1 2000/01/21 21:04:06 livesey Exp $"
+    "$id: fill.f90,v 1.1 2000/01/21 21:04:06 livesey Exp $"
   character (len=*), parameter :: ModuleName= "$RCSfile$"
   !---------------------------------------------------------------------------
 
@@ -81,8 +94,8 @@ contains ! =====     Public Procedures     =============================
   subroutine MLSL2Fill ( root, l1bInfo, aprioriData, vectorTemplates, vectors, &
     & qtyTemplates , L2GPDatabase, L2AUXDatabase, chunks, chunkNo )
 
-  ! This is the main routine for the module.  It parses the relevant lines
-  ! of the l2cf and works out what to do.
+    ! This is the main routine for the module.  It parses the relevant lines
+    ! of the l2cf and works out what to do.
 
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Of the FILL section in the AST
@@ -91,52 +104,68 @@ contains ! =====     Public Procedures     =============================
     type (VectorTemplate_T), dimension(:), pointer :: vectorTemplates
     type (Vector_T), dimension(:), pointer :: vectors
     type (QuantityTemplate_T), dimension(:), pointer :: qtyTemplates
-    TYPE (L2GPData_T), DIMENSION(:), POINTER :: L2GPDatabase
-    TYPE (L2AUXData_T), DIMENSION(:), POINTER :: L2AUXDatabase
+    type (L2GPData_T), dimension(:), pointer :: L2GPDatabase
+    type (L2AUXData_T), dimension(:), pointer :: L2AUXDatabase
     type (MLSChunk_T), dimension(:), intent(in) :: chunks
     integer, intent(in) :: chunkNo
 
     ! Local variables
-    integer :: GSON                ! Descendant of Son
-    integer :: I, J                ! Loop indices for section, spec
-    integer :: IERR                ! 0 unless error; returned by called routines
-    LOGICAL :: is_l2gp, is_l2aux, is_prev_vec
-    integer :: KEY                 ! Definitely n_named
-    integer :: l2Index             ! Where source is among l2gp or l2aux database
-    CHARACTER (LEN=LineLen) ::              msr
-    type (Vector_T) :: newVector
-    INTEGER :: PrevDefdQt
-    INTEGER :: qtiesStart
-    integer :: quantityName        ! Sub-rosa index
-    REAL :: T1, T2     ! for timing
-    logical :: TIMING
-    integer :: SON                 ! Of root, an n_spec_args or a n_named
-    integer :: sourceIndex         ! In the vector database
-    integer :: sourceName          ! Sub-rosa index
-    integer :: templateIndex       ! In the template database
-    integer :: vectorIndex         ! In the vector database
-    integer :: vectorName          ! Sub-rosa index
-    INTEGER :: VectorDBSize
-    CHARACTER (LEN=NameLen) :: vectorNameString, templateNameString
-    CHARACTER (LEN=NameLen) :: sourceNameString, quantityNameString
+    type (VectorValue_T), POINTER :: quantity ! Quantity to be filled
+    type (Vector_T) :: newVector ! A vector we've created
+    character (LEN=LineLen) ::              msr
+    real :: T1, T2              ! for timing
+    
+    integer :: ALTITUDEQUANTITYINDEX ! In the source vector
+    integer :: ALTITUDEVECTORINDEX ! In the vector database
+    integer :: ERRORCODE        ! 0 unless error; returned by called routines
+    integer :: FIELDINDEX       ! Entry in tree
+    integer :: FILLMETHOD       ! How will we fill this quantity
+    integer :: GSON             ! Descendant of Son
+    integer :: H2OQUANTITYINDEX ! In the source vector
+    integer :: H2OVECTORINDEX ! In the vector database
+    integer :: I, J, K          ! Loop indices for section, spec, expr
+    integer :: KEY              ! Definitely n_named
+    integer :: L2AUXINDEX       ! Index into L2AUXDatabase
+    integer :: L2GPINDEX        ! Index into L2GPDatabase
+    integer :: L2INDEX          ! Where source is among l2gp or l2aux database
+    integer :: PREVDEFDQT
+    integer :: QUANTITYINDEX    ! Within the vector
+    integer :: REFGPHQUANTITYINDEX ! In the source vector
+    integer :: REFGPHVECTORINDEX ! In the vector database
+    integer :: SON              ! Of root, an n_spec_args or a n_named
+    integer :: SOURCEQUANTITYINDEX ! In the source vector
+    integer :: SOURCEVECTORINDEX ! In the vector database
+    integer :: TEMPERATUREQUANTITYINDEX ! In the source vector
+    integer :: TEMPERATUREVECTORINDEX ! In the vector database
+    integer :: TEMPLATEINDEX    ! In the template database
+    integer :: VALUESNODE       ! For the parser
+    integer :: VECTORINDEX      ! In the vector database
+    integer :: VECTORNAME       ! Name of vector to create
 
-!    INTEGER :: OL2FileHandle
+    logical :: TIMING
+    logical :: SPREAD           ! Do we spread values accross instances in explict
+
+    logical, DIMENSION(field_first:field_last) :: got
+
+    !    INTEGER :: OL2FileHandle
 
     ! Executable code
     timing = .false.
+    got= .false.
 
     if ( toggle(gen) ) call trace_begin ( "MLSL2Fill", root )
 
     ! Logical id of file(s) holding old L2GP data
-!    OL2FileHandle = mlspcf_ol2gp_start
+    !    OL2FileHandle = mlspcf_ol2gp_start
 
     ! starting quantities number for *this* vector; what if we have more?
-!    qtiesStart = 1
-!   Calculate qtiesStart for the specific quantity below
+    !    qtiesStart = 1
+    !   Calculate qtiesStart for the specific quantity below
 
     error = 0
     templateIndex = -1
     vectorIndex = -1
+    spread=.FALSE.
 
     ! Loop over the lines in the configuration file
 
@@ -161,166 +190,76 @@ contains ! =====     Public Procedures     =============================
 
         call decorate ( key, AddVectorToDatabase ( vectors, &
           & CreateVector ( vectorName, vectorTemplates(templateIndex), &
-            & qtyTemplates ) ) )
+          & qtyTemplates ) ) )
 
         ! That's the end of the create operation
 
-     case ( s_fill )
-          ! We can for now only fill vectors from either:
-        ! (1) old l2gp file
-        ! (2) old l2aux file
-        ! (3) previously defined vector
-        !          vectorName=""
-        !          sourceName=""
-        !          quantityName=""
+      case ( s_fill )
+        ! Now we're on actual Fill instructions.
+        ! Loop over the instructions to the Fill command
 
-          ! A Fill instruction, this contains just a vector name and quantity 
-          ! and a source name assuming the same quantity
-          ! e.g., Fill, state.quantity, source=oldState.quantity
+        do j=2,nsons(key)
+          gson = subtree(j,key) ! The argument
+          fieldIndex=decoration(subtree(1,gson))
+          if (nsons(gson) > 1) gson = subtree(2,gson) ! Now value of said argument
+          got(fieldIndex)=.TRUE.
+          select case ( fieldIndex )
+          case (f_quantity)   ! What quantity are we filling quantity=vector.quantity
+            vectorIndex=decoration(decoration(subtree(1,gson)))
+            quantityIndex=decoration(decoration(decoration(subtree(2,gson))))
+          case (f_method)   ! How are we going to fill it?
+            fillMethod=decoration(gson)
+          case (f_sourceQuantity) ! When filling from a vector, what vector/quantity
+            sourceVectorIndex=decoration(decoration(subtree(1,gson)))
+            sourceQuantityIndex=decoration(decoration(decoration(subtree(2,gson))))
+          case (f_sourceL2AUX)  ! Which L2AUXDatabase entry to use
+            l2auxIndex=decoration(decoration(gson))
+          case (f_sourceL2GP)   ! Which L2GPDatabase entry to use
+            l2gpIndex=decoration(decoration(gson))
+          case (f_temperatureQuantity) ! For hydrostatic
+            temperatureVectorIndex=decoration(decoration(subtree(1,gson)))
+            temperatureQuantityIndex=decoration(decoration(decoration(subtree(2,gson))))
+          case (f_h2oQuantity) ! For hydrostatic
+            h2oVectorIndex=decoration(decoration(subtree(1,gson)))
+            h2oQuantityIndex=decoration(decoration(decoration(subtree(2,gson))))
+          case (f_altitudeQuantity) ! For hydrostatic
+            altitudeVectorIndex=decoration(decoration(subtree(1,gson)))
+            altitudeQuantityIndex=decoration(decoration(decoration(subtree(2,gson))))
+          case (f_refGPHQuantity) ! For hydrostatic
+            refGPHVectorIndex=decoration(decoration(subtree(1,gson)))
+            refGPHQuantityIndex=decoration(decoration(decoration(subtree(2,gson))))
+          case (f_explicitValues) ! For explicit fill
+            valuesNode=subtree(j,key)
+          case (f_spread) ! For explicit fill, note that gson here is not same as others
+            if (node_id(gson) == n_set_one) then
+              spread=.TRUE.
+            else
+              spread=decoration(subtree(2,gson)) == l_true
+            endif
+          end select
+        end do                  ! Loop over arguments to fill instruction
 
-        if ( nsons(key) < 3 ) call announce_error ( son, wrong_number )
-        gson = subtree(2,key) ! First positional argument
-        IF(node_id(gson) /= n_dot) then
-           ! In case dotless
-           vectorIndex = decoration(decoration(gson))
-           quantityName=0
-        ELSE
-           ! Assume form : x.y
-           vectorName=sub_rosa(subtree(1, gson))     ! x
-           quantityName=sub_rosa(subtree(2, gson))   ! y
-           vectorIndex = decoration(decoration(subtree(1, gson)))
-        ENDIF
-
-        DO j=3, nsons(key)
-           gson = subtree(j,key) ! Now indexes n_assign
-           SELECT CASE( decoration(subtree(1,gson)) )
-              CASE(f_source)
-                 ! source=vector.quantity
-                 gson = subtree(2, gson) ! now indexes n_dot
-                 sourceName=sub_rosa(subtree(1, gson))      ! vector
-                 sourceIndex = decoration(subtree(1, gson))
-                 IF(quantityName==0) THEN
-                    quantityName=sub_rosa(subtree(2, gson)) ! quantity
-                 ENDIF
-!              CASE(f_method)
-!              CASE(f_other)
-              CASE DEFAULT ! Can't get here if tree_checker worked correctly
-           END SELECT
-        ENDDO
-
-        CALL get_string(vectorName, vectorNameString)
-        CALL get_string(quantityName, quantityNameString)
-        CALL get_string(sourceName, sourceNameString)
-
-!          vectorIndex=LinearSearchStringArray(vectors%name,&
-!               & vectorName,caseInsensitive=.FALSE.)
-
-         ! compute what quantity number the vector quantity corresponds to
-         qtiesStart = whatQuantityNumber(vectorName, quantityName, &
-         & vectors(vectorIndex)%Template)
-
-         IF(qtiesStart < 0) THEN
-!	Shouldn't get here if type-checker worked properly
-              msr = 'Quantity Name ' // quantityNameString // &
-              & ' not found among quantities assoc. with ' // vectorNameString
- !             CALL MLSMessage(MLSMSG_Error, ModuleName, &
- !                    & msr)
- 				CALL announce_error(son, unknownQuantityName, msr)
-         ENDIF
-! Is our source of type l2gp or l2aux?
-!  (As pw did it)
-!         is_l2gp = .FALSE.
-!         is_l2aux = .FALSE.
- 
-!         l2Index = 1
-!         DO WHILE (.NOT. is_l2gp .AND. l2Index.LE.SIZE(L2GPDatabase))
-!             IF(sourceName.EQ.L2GPDatabase(l2Index)%nameIndex) THEN
-!                 is_l2gp = .TRUE.
-!                 exit
-!             ENDIF
-!             l2Index = l2Index + 1
-!         ENDDO
- 
-!         IF(.NOT. is_l2gp) THEN
-!                l2Index = 1
-!                DO WHILE (.NOT. is_l2aux .AND. l2Index.LE.SIZE(L2AUXDatabase))
-!                    IF(sourceName.EQ.L2AUXDatabase(l2Index)%Name) THEN
-!                        is_l2aux = .TRUE.
-!                        exit
-!                    ENDIF
-!                    l2Index = l2Index + 1
-!                ENDDO
-!         ENDIF
-! (As van simplified it)
-
-! Under f90 and f95 if a do-loop ends w/o exit, its loop index
-! is index_final_value + index_increment; thus the post-loop conditions
-  do l2Index = 1, size(l2gpDatabase)
-    if ( sourceName == l2gpDatabase(l2Index)%nameIndex ) exit
-  end do
-  is_l2gp = l2Index <= size(l2gpDatabase)
-
-  if ( .not. is_l2gp ) then
-    do l2Index = 1, size(l2auxDatabase)
-      if ( sourceName == l2auxDatabase(l2Index)%name ) exit
-    end do
-    is_l2aux = l2Index <= size(l2auxDatabase)
-  else
-
-!   This isn't important--is_l2aux will not be checked if is_l2gp is TRUE--
-!   but in case we check its value while debugging, say, lest it be undefined
-  	is_l2aux = .FALSE.
-  end if
-
-  if ( .not. (is_l2gp .OR. is_l2aux)) then
-    do l2Index = 1, size(vectors)
-      if ( sourceName == vectors(l2Index)%name ) exit
-    end do
-    is_prev_vec = l2Index <= size(vectors)
-  else
-
-!   This isn't important--is_prev_vec will not be checked if others TRUE--
-!   but in case we check its value while debugging, say, lest it be undefined
-  	is_prev_vec = .FALSE.
-  end if
-
-
-
-! Fill
-         IF(is_l2gp) THEN
- ! (1)   l2gp
-                CALL FillOL2GPVector(L2GPDatabase(l2Index), qtyTemplates, &
-                      & vectors(vectorIndex), quantityNameString, qtiesStart, &
-                      & chunkNo, IERR)
-
-         ELSEIF(is_l2aux) THEN
- ! (2)   l2aux
-                CALL FillOL2AUXVector(L2AUXDatabase(l2Index), qtyTemplates, &
-                      & vectors(vectorIndex), quantityNameString, qtiesStart, &
-                      & chunkNo, IERR)
-
-         ELSEIF(is_prev_vec) THEN
- ! (3)   previously defined vector  
-                 PrevDefdQt = whatQuantityNumber(sourceName, quantityName, &
-         &       vectors(sourceIndex)%Template)
-
-                 IF(PrevDefdQt < 0) THEN
-!	Shouldn't get here if type-checker worked properly
-                  msr = 'Quantity Name ' // quantityNameString // &
-              & ' not found among quantities assoc. with ' // sourceNameString
- 				      CALL announce_error(son, unknownQuantityName, msr)
-                ENDIF
-                CALL FillPrevDefd(vectors(l2Index), PrevDefdQt, qtyTemplates, &
-                      & vectors(vectorIndex), quantityNameString, qtiesStart, &
-                      & chunkNo, IERR)
-
-         ELSE
-!                CALL MLSMessage(MLSMSG_Error, ModuleName, &
-!                     & 'source file in neither l2gp nor l2aux databases')
-					 CALL announce_error(son, source_not_in_db)
-         ENDIF
-
-!          qtiesStart = qtiesStart+1
+        ! Now call various routines to do the filling
+        quantity=>vectors(vectorIndex)%quantities(quantityIndex)
+        select case (fillMethod)
+        case (l_l2gp)
+          if (.NOT. got(f_sourceL2GP)) call Announce_Error(key,noSourceL2GPGiven)
+          call FillVectorQuantityFromL2GP(quantity,l2gpDatabase(l2gpIndex),errorCode)
+          if (errorCode/=0) call Announce_error(key,errorCode)
+        case (l_l2aux)
+          if (.NOT. got(f_sourceL2AUX)) call Announce_Error(key,noSourceL2AUXGiven)
+!          call FillVectorQuantityFromL2AUX(quantity,l2auxDatabase(l2auxIndex),errorCode)
+          if (errorCode/=0) call Announce_error(key,errorCode)
+        case (l_explicit)       ! An explicit fill
+          if (.not. got(f_explicitValues)) call Announce_Error(key, &
+            & noExplicitValuesGiven)
+          call ExplicitFillVectorQuantity(quantity,valuesNode,spread)
+          call dump(vectors(vectorIndex:vectorIndex))
+        case default
+          call MLSMessage(MLSMSG_Error,ModuleName,'This fill method not yet implemented')
+        end select
+        
+        ! End of fill operations
 
       case ( s_time )
         if ( timing ) then
@@ -332,6 +271,8 @@ contains ! =====     Public Procedures     =============================
       case default ! Can't get here if tree_checker worked correctly
       end select
     end do
+
+    if (ERROR/=0) call MLSMessage(MLSMSG_Error,ModuleName,'Problem with Fill section')
 
     if ( toggle(gen) ) then
       if ( levels(gen) > 0 ) then
@@ -345,693 +286,629 @@ contains ! =====     Public Procedures     =============================
     subroutine SayTime
       call cpu_time ( t2 )
       call output ( "Timing for MLSL2Fill =" )
-      call output ( DBLE(t2 - t1), advance = 'yes' )
+      call output ( dble(t2 - t1), advance = 'yes' )
       timing = .false.
     end subroutine SayTime
   end subroutine MLSL2Fill
 
-! =====     Private Procedures     =====================================
+  ! =====     Private Procedures     =====================================
 
-!=============================== FillVector ==========================
-SUBROUTINE FillVector(IERR, inArray, Vector, arrayType, vectorType, NumQtys, &
-     & numChans, numSurfs, numInstances, qtiesStart, dim_order)
-!=============================== FillVector ==========================
+  !=============================== FillVector ==========================
+  subroutine FillVector(errorCode, inArray, Vector, arrayType, vectorType, NumQtys, &
+    & numChans, numSurfs, numInstances, qtiesStart, dim_order)
+    !=============================== FillVector ==========================
 
-! Fill the vector Vector with values taken from the array inArray
-! in a manner that depends on their respective types:
+    ! Fill the vector Vector with values taken from the array inArray
+    ! in a manner that depends on their respective types:
 !
-!        arrayType        vectorType            operation
-!          l2gp              l2gp       vector(:,:,:) = inArray(:,:,:)
+    !        arrayType        vectorType            operation
+    !          l2gp              l2gp       vector(:,:,:) = inArray(:,:,:)
 
-! It is assumed that the rank3 inArray is filled from
-! inArray(1, 1, 1) to inArray(numChans, numSurfs, numInstances)
+    ! It is assumed that the rank3 inArray is filled from
+    ! inArray(1, 1, 1) to inArray(numChans, numSurfs, numInstances)
 !
-! With the redefinition of Vector%quantities to be a rank2 object
-! we are faced with a problem: how to fill a rank 2 object from a rank 3 one?
-! If the rank 3 object is full, then it use the following trick:
-! Vector(1:numChans*numSurfs, 1:numInstances) = 
-!                   inArray(1:numChans, 1:numSurfs, 1:numInstances)
+    ! With the redefinition of Vector%quantities to be a rank2 object
+    ! we are faced with a problem: how to fill a rank 2 object from a rank 3 one?
+    ! If the rank 3 object is full, then it use the following trick:
+    ! Vector(1:numChans*numSurfs, 1:numInstances) = 
+    !                   inArray(1:numChans, 1:numSurfs, 1:numInstances)
 
-CHARACTER (Len=*), INTENT(IN) ::        arrayType, vectorType
-INTEGER, INTENT(OUT) ::                 IERR		! zero unless an error
-! REAL(r8), POINTER, DIMENSION(:,:,:) ::  inPointer
-REAL(r8), DIMENSION(:,:,:) ::           inArray
-TYPE(Vector_T), INTENT(OUT) ::          Vector
-INTEGER, INTENT(IN) ::                  NumQtys, qtiesStart
-INTEGER, INTENT(IN) ::                  numInstances, numSurfs, numChans
-INTEGER, INTENT(IN), OPTIONAL, DIMENSION(:) :: dim_order
+    character (Len=*), intent(IN) ::        arrayType, vectorType
+    integer, intent(OUT) ::                 errorCode		! zero unless an error
+    ! REAL(r8), POINTER, DIMENSION(:,:,:) ::  inPointer
+    real(r8), dimension(:,:,:) ::           inArray
+    type(Vector_T), intent(OUT) ::          Vector
+    integer, intent(IN) ::                  NumQtys, qtiesStart
+    integer, intent(IN) ::                  numInstances, numSurfs, numChans
+    integer, intent(IN), optional, dimension(:) :: dim_order
 
-! Private
-CHARACTER (LEN=LineLen) ::              msr
-INTEGER ::                              qty
-CHARACTER (LEN=4) ::                    qtyChar, IERRChar
+    ! Private
+    character (LEN=LineLen) ::              msr
+    integer ::                              qty
+    character (LEN=4) ::                    qtyChar, errorCodeChar
 
-! Sanity checks:
-IF(numChans.EQ.0) THEN
-!	call announce_error ( ErrorInFillVector, numChansisZero )
-	IERR = numChansisZero
-        RETURN
-ELSEIF(numSurfs.EQ.0) THEN
-!	call announce_error ( ErrorInFillVector, numSurfsisZero )
-	IERR = numSurfsisZero
-        RETURN
-ELSEIF(numInstances.EQ.0) THEN
-!	call announce_error ( ErrorInFillVector, numInstancesisZero )
-	IERR = numInstancesisZero
-        RETURN
-ENDIF
+    ! Sanity checks:
+    if(numChans.eq.0) then
+      !	call announce_error ( ErrorInFillVector, numChansisZero )
+      errorCode = numChansisZero
+      return
+    elseif(numSurfs.eq.0) then
+      !	call announce_error ( ErrorInFillVector, numSurfsisZero )
+      errorCode = numSurfsisZero
+      return
+    elseif(numInstances.eq.0) then
+      !	call announce_error ( ErrorInFillVector, numInstancesisZero )
+      errorCode = numInstancesisZero
+      return
+    endif
 
-Vector%template%NoQuantities = NumQtys
-SELECT CASE (arrayType(:4) // VectorType(:4))
-CASE ('l2gpl2gp')
-   DO qty = qtiesStart, qtiesStart - 1 + NumQtys
-     WRITE(qtyChar, '(I4)') qty
-     Vector%quantities(qty)%template%noChans = numChans
-     Vector%quantities(qty)%template%noSurfs = numSurfs
-     Vector%quantities(qty)%template%noInstances = numInstances    
-!     CALL put_3d_view(inPointer, &
-!        & numChans, &
-!        & numSurfs, &
-!        & numInstances, &
-!        & Vector%quantities(qty)%values)
-!     Vector%quantities(qty)%values = inPointer
-!	IF(numChans.EQ.1) THEN
-!        	Vector%quantities(qty)%values = inPointer(:, :, 1)
-!	ELSEIF(numSurfs.EQ.1) THEN
-!        	Vector%quantities(qty)%values = inPointer(:, 1, :)
-!	ELSEIF(numInstances.EQ.1) THEN
-!        	Vector%quantities(qty)%values = inPointer(1, :, :)
-!        ELSE
-!		call announce_error ( ErrorInFillVector, objIsFullRank3 )
-!       		RETURN
-!	ENDIF
-	CALL squeeze(IERR, inArray, Vector%quantities(qty)%values)
-!     WRITE(IERRChar, '(I4)') IERR
-!     msr = 'Error #' // IERRChar // ' in squeezing l2gp into quantity ' // qtyChar
-!     IF(IERR /= 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
-!        & msr)
-   ENDDO
-CASE ('l2aul2au')
-   DO qty = qtiesStart, qtiesStart - 1 + NumQtys
-     WRITE(qtyChar, '(I4)') qty
-     Vector%quantities(qty)%template%noChans = numChans
-     Vector%quantities(qty)%template%noSurfs = numSurfs
-     Vector%quantities(qty)%template%noInstances = numInstances
-     IF(PRESENT(dim_order)) THEN
-        CALL squeeze(IERR, inArray, Vector%quantities(qty)%values, dim_order)
-     ELSE    
-        CALL squeeze(IERR, inArray, Vector%quantities(qty)%values)
-     ENDIF
-!     WRITE(IERRChar, '(I4)') IERR
-!     msr = 'Error #' // IERRChar // ' in squeezing l2aux into quantity ' // qtyChar
-!     IF(IERR /= 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
-!        & msr)
-   ENDDO
-CASE default
-   ! FillVector not yet written to handle these cases
-END SELECT
+    Vector%template%NoQuantities = NumQtys
+    select case (arrayType(:4) // VectorType(:4))
+    case ('l2gpl2gp')
+      do qty = qtiesStart, qtiesStart - 1 + NumQtys
+        write(qtyChar, '(I4)') qty
+        Vector%quantities(qty)%template%noChans = numChans
+        Vector%quantities(qty)%template%noSurfs = numSurfs
+        Vector%quantities(qty)%template%noInstances = numInstances    
+        !     CALL put_3d_view(inPointer, &
+        !        & numChans, &
+        !        & numSurfs, &
+        !        & numInstances, &
+        !        & Vector%quantities(qty)%values)
+        !     Vector%quantities(qty)%values = inPointer
+        !	IF(numChans.EQ.1) THEN
+        !        	Vector%quantities(qty)%values = inPointer(:, :, 1)
+        !	ELSEIF(numSurfs.EQ.1) THEN
+        !        	Vector%quantities(qty)%values = inPointer(:, 1, :)
+        !	ELSEIF(numInstances.EQ.1) THEN
+        !        	Vector%quantities(qty)%values = inPointer(1, :, :)
+        !        ELSE
+        !		call announce_error ( ErrorInFillVector, objIsFullRank3 )
+        !       		RETURN
+        !	ENDIF
+	call squeeze(errorCode, inArray, Vector%quantities(qty)%values)
+        !     WRITE(errorCodeChar, '(I4)') errorCode
+        !     msr = 'Error #' // errorCodeChar // ' in squeezing l2gp into quantity ' // qtyChar
+        !     IF(errorCode /= 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+        !        & msr)
+      enddo
+    case ('l2aul2au')
+      do qty = qtiesStart, qtiesStart - 1 + NumQtys
+        write(qtyChar, '(I4)') qty
+        Vector%quantities(qty)%template%noChans = numChans
+        Vector%quantities(qty)%template%noSurfs = numSurfs
+        Vector%quantities(qty)%template%noInstances = numInstances
+        if(present(dim_order)) then
+          call squeeze(errorCode, inArray, Vector%quantities(qty)%values, dim_order)
+        else    
+          call squeeze(errorCode, inArray, Vector%quantities(qty)%values)
+        endif
+        !     WRITE(errorCodeChar, '(I4)') errorCode
+        !     msr = 'Error #' // errorCodeChar // ' in squeezing l2aux into quantity ' // qtyChar
+        !     IF(errorCode /= 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+        !        & msr)
+      enddo
+    case default
+      ! FillVector not yet written to handle these cases
+    end select
 
-END SUBROUTINE FillVector
+  end subroutine FillVector
 
-!=============================== FillOL2GPVector ==========================
-SUBROUTINE FillOL2GPVector(OldL2GPData, qtyTemplates, &
-& Output, QuantityName, qtiesStart, chunkNo, IERR)
-!=============================== FillOL2GPVector ==========================
+  !=============================== FillOL2GPVector ==========================
+  subroutine FillVectorQuantityFromL2GP(quantity,l2gp, errorCode)
 
-! If the times, pressures, and geolocations match,
-! fill the vector Output with values taken from the appropriate quantity in
-! Old L2GP vector OldL2GPData
-! 
+    ! If the times, pressures, and geolocations match, fill the quantity with
+    ! the appropriate subset of profiles from the l2gp
 
-INTEGER, INTENT(IN) ::                            qtiesStart
-TYPE(L2GPData_T) ::                               OldL2GPData
+    ! Dummy arguments
+    type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
+    type (L2GPData_T), intent(in) :: L2GP ! L2GP to fill from
+    integer, intent(out) :: errorCode ! Error code
+
+    ! Local parameters
+    real(r8), parameter:: TOLERANCE=0.05 ! Tolerence for angles
+
+    ! Local variables
+    integer ::    FIRSTPROFILE, LASTPROFILE
+    integer, dimension(1) :: FIRSTPROFILEASARRAY
+
+    errorCode=0
+    ! Make sure this quantity is appropriate
+    if ( (.NOT. quantity%template%coherent) .or. &
+      &  (.NOT. quantity%template%stacked) .or. &
+      &  (quantity%template%verticalCoordinate /= l_pressure) ) then
+      errorCode=vectorWontMatchL2GP
+      return
+    end if
+
+    if ( (quantity%template%noChans/=l2gp%nFreqs) .and. &
+      &  ((quantity%template%noChans/=1) .or. (l2gp%nFreqs/=0)) ) then
+      errorCode=vectorWontMatchL2GP
+      return
+    end if
+
+    ! Attempt to match up the first location
+    firstProfileAsArray=MINLOC(ABS(quantity%template%phi(1,1)-l2gp%geodAngle))
+    firstProfile=firstProfileAsArray(1)
+
+    ! Well, the last profile has to be noInstances later, check this would be OK
+    lastProfile=firstProfile+quantity%template%noInstances-1
+    if (lastProfile > l2gp%nTimes) then
+      errorCode=vectorWontMatchL2GP
+      return
+    endif
+
+    ! Now check that geodAngle's are a sufficient match
+    if (any(abs(l2gp%geodAngle(firstProfile:lastProfile)-&
+      &         quantity%template%phi(1,:)) > tolerance)) then
+      errorCode=vectorWontMatchL2GP
+      return
+    end if
+
+    quantity%values=RESHAPE(l2gp%l2gpValue(:,:,firstProfile:lastProfile),&
+      & (/quantity%template%noChans*quantity%template%noSurfs,&
+      &   quantity%template%noInstances/))
+
+  end subroutine FillVectorQuantityFromL2GP
+
+  !=============================== FillPrevDefd ==========================
+  subroutine FillPrevDefd(OldVector, PrevDefdQt, qtyTemplates, &
+    & Output, QuantityName, qtiesStart, chunkNo, errorCode)
+    !=============================== FillPrevDefd ==========================
+
+    ! If the times, pressures, and geolocations match,
+    ! fill the vector Output with values taken from the appropriate quantity in
+    ! previously defined vector OldVector
+    ! 
+
+    integer, intent(IN) ::                            PrevDefdQt
+    integer, intent(IN) ::                            qtiesStart
+    type(Vector_T), intent(IN) ::                     OldVector
     type (QuantityTemplate_T), dimension(:), pointer :: qtyTemplates
-!TYPE(L2GPData_T), DIMENSION(:), POINTER ::        L2GPDatabase
-TYPE(Vector_T), INTENT(INOUT) ::                  Output
-CHARACTER*(*), INTENT(IN) ::                      QuantityName
-! If done chunk-by-chunk, the following is the chunk number
-! Otherwise, chunkNo should = -1
+    type(Vector_T), intent(INOUT) ::                  Output
+    character*(*), intent(IN) ::                      QuantityName
+    ! If done chunk-by-chunk, the following is the chunk number
+    ! Otherwise, chunkNo should = -1
     integer, intent(in) ::                        chunkNo
-INTEGER, INTENT(OUT) ::                            IERR	! if error
+    integer, intent(OUT) ::                            errorCode	! if error
 
-! Local variables
-!::::::::::::::::::::::::: LOCALS :::::::::::::::::::::
-!TYPE(L2GPData_T) ::                               L2GPData
-! INTEGER ::                                        Qty
+    ! Local variables
+    !::::::::::::::::::::::::: LOCALS :::::::::::::::::::::
 
-REAL(r8) ::                                       TOLERANCE
-PARAMETER(TOLERANCE=0.05)
+    real(r8) ::                                       TOLERANCE
+    parameter(TOLERANCE=0.05)
 
-! A wrong version compared ChunkNo to OLDL2GPData%ChunkNumbers
-LOGICAL ChunkNumberIsTrustworthy
-PARAMETER(ChunkNumberIsTrustworthy=.FALSE.)
+    ! A wrong version compared ChunkNo to OldVector%ChunkNumbers
+    logical ChunkNumberIsTrustworthy
+    parameter(ChunkNumberIsTrustworthy=.false.)
 
-type (QuantityTemplate_T) ::                      OQTemplate	! Output Quantity Template
-INTEGER ::                                        i
-INTEGER ::                                        ONTimes
-!INTEGER ::                                        alloc_err
-INTEGER ::                                        firstProfile, lastProfile
-INTEGER ::                                        noL2GPValues=1
-LOGICAL ::                                        TheyMatch
-REAL(r8) ::                                       phiMin, phiMax
-REAL(r8) ::                                       phi_TOLERANCE
+    type (QuantityTemplate_T) ::                      PDQTemplate	! Prev. def'd Quantity Template
+    type (QuantityTemplate_T) ::                      OQTemplate	! Output Quantity Template
+    integer ::                                        i
+    integer ::                                        firstProfile, lastProfile
+    integer ::                                        noL2GPValues=1
+    logical ::                                        TheyMatch
+    real(r8) ::                                       phiMin, phiMax
+    real(r8) ::                                       phi_TOLERANCE
 
-OQTemplate = qtyTemplates(Output%TEMPLATE%QUANTITIES(qtiesStart))
+    PDQTemplate = qtyTemplates(OldVector%TEMPLATE%QUANTITIES(PrevDefdQt))
+    OQTemplate = qtyTemplates(Output%TEMPLATE%QUANTITIES(qtiesStart))
 
-IF(OQTemplate%noInstances <= 0) THEN
-!   CALL MLSMessage(MLSMSG_Error, ModuleName, &
-!        & 'Vector geolocations are 0 profiles or instances')
-	IERR=zeroProfilesFound
-	RETURN
-ENDIF
-! Chunk-by-chunk, or all chunks at once?
-IF(chunkNo == -1) THEN
-	firstProfile = 1
-   lastProfile = OldL2GPData%nTimes
-ELSEIF(ChunkNumberIsTrustworthy) THEN
-	lastProfile = 1
-   firstProfile = OldL2GPData%nTimes
-	DO i=1, OldL2GPData%nTimes
-        	IF(chunkNo == OldL2GPData%chunkNumber(i)) THEN
-				firstProfile = MIN(firstProfile, i)
-				lastProfile = MAX(lastProfile, i)
-         ENDIF
-   ENDDO
-ELSE
-! Instead of comparing OldL2GPData%chunkNumbers to ChunkNo
-! we will compare geodetic angles to phi
-	phiMin = OQTemplate%phi(1, 1)
-	phiMax = OQTemplate%phi(1, 1)
-	DO i=1, OQTemplate%noInstances
-		phiMin = MIN(phiMin, OQTemplate%phi(1, i))
-		phiMax = MAX(phiMax, OQTemplate%phi(1, i))
-	ENDDO
-	phi_TOLERANCE = TOLERANCE *(phiMax-phiMin) / OQTemplate%noInstances
-	IF(phi_TOLERANCE <= 0.D0) THEN
-!   	CALL MLSMessage(MLSMSG_Error, ModuleName, &
-!        & 'phiMin==phiMax')
-		  IERR=zeroGeodSpan
-		RETURN
-	ENDIF
-	lastProfile = 1
-   firstProfile = OldL2GPData%nTimes
-	DO i=1, OldL2GPData%nTimes
-        	IF(phiMin <= (OldL2GPData%geodAngle(i) + phi_TOLERANCE)) THEN
-				firstProfile = MIN(firstProfile, i)
-         ENDIF
-        	IF(phiMax >= (OldL2GPData%geodAngle(i) - phi_TOLERANCE)) THEN
-				lastProfile = MAX(lastProfile, i)
-         ENDIF
-   ENDDO
-ENDIF
-!
-! Read the old L2GP file for QuantityName
-!CALL ReadL2GPData(OL2FileHandle, TRIM(LowerCase(QuantityName)), &
-!     & OldL2GPData, ONTimes)
-! Allocate space for current l2gpdata
-!ALLOCATE(l2gpData%pressures(OldL2GPData%nLevels),&
-!     & l2gpData%latitude(ONTimes), &
-!     & l2gpData%longitude(ONTimes), & 
-!     & l2gpData%time(ONTimes), &
-!     & l2gpData%solarTime(ONTimes), &
-!     & l2gpData%solarZenith(ONTimes), &
-!     & l2gpData%losAngle(ONTimes), &
-!     & l2gpData%geodAngle(ONTimes), &
-!     & l2gpData%chunkNumber(ONTimes), &
-!     & l2gpData%frequency(OldL2GPData%nFreqs), &
-!     & l2gpData%l2gpValue(OldL2GPData%nFreqs, OldL2GPData%nLevels, ONTimes), &
-!     & l2gpData%l2gpPrecision(OldL2GPData%nFreqs, OldL2GPData%nLevels, ONTimes), &
-!     & l2gpData%status(ONTimes), l2gpData%quality(ONTimes), &
-!     & STAT=alloc_err)
-!IF(alloc_err /= 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
-!     & 'Failed to allocate temp l2gpData')
-! Check that times, etc. match
-!L2GPData    = L2GPDatabase(1)
-TheyMatch = OQTemplate%noInstances .EQ. (lastProfile-firstProfile+1)
-TheyMatch = TheyMatch .AND. OQTemplate%stacked
-IF(TheyMatch) THEN
-   DO i = firstProfile, lastProfile
-      IF( &
-        &   nearBy(OldL2GPData%latitude(i), OQTemplate%geodLat(1,i)) &
-        & .AND. &
-        &   nearBy(OldL2GPData%longitude(i), OQTemplate%lon(1,i)) &
-        & .AND. &
-        &   nearBy(OldL2GPData%solarTime(i), OQTemplate%solarTime(1,i)) &
-        &) THEN
-       ELSE
-          TheyMatch = .FALSE.
-          EXIT
-      ENDIF
-   END DO
-ENDIF
-IF(TheyMatch .AND. OldL2GPData%NLevels.EQ.OQTemplate%noSurfs) THEN
-   DO i = 1, OldL2GPData%NLevels
-      IF( &
-        &   nearBy(OldL2GPData%pressures(i), OQTemplate%surfs(i,1)) &
-        & ) THEN
-     ELSE
-       TheyMatch = .FALSE.
-       EXIT
-    ENDIF
-   END DO
-ENDIF
-IF(TheyMatch) THEN
-!   DO Qty=1, 
-!   CALL put_3d_view(Output, &
-!        & OldL2GPData%quantities(qty)%template%noFreqs, &
-!        & OldL2GPData%quantities(qty)%template%noSurfs, &
-!        & OldL2GPData%quantities(qty)%template%noInstances, &
-!        & OldL2GPData%quantities(qty)%values)
-   CALL FillVector(IERR, OldL2GPData%l2gpValue(:, :, firstProfile:lastProfile), &
-        & Output, &
-        & 'l2gp', 'l2gp', NoL2GPValues, &
-        & OldL2GPData%nFreqs, &
-        & OldL2GPData%nLevels, &
-        & lastProfile-firstProfile+1, &
-        & qtiesStart)
-ELSE
-!   CALL MLSMessage(MLSMSG_Error, ModuleName, &
-!        & 'Vector and old L2GP do not match in times or geolocations')
-	IERR=vectorWontMatchL2GP
-ENDIF
-!DEALLOCATE(l2gpData%pressures, &
-!     & l2gpData%latitude, l2gpData%longitude, l2gpData%time, &
-!     & l2gpData%solarTime, l2gpData%solarZenith, l2gpData%losAngle, &
-!     & l2gpData%geodAngle, l2gpData%chunkNumber, &
-!     & l2gpData%l2gpValue, l2gpData%frequency, &
-!     & l2gpData%l2gpPrecision, l2gpData%status, l2gpData%quality, &
-!     & STAT=alloc_err)
-!IF(alloc_err /= 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
-!     & 'Failed to deallocate temp l2gpData')
-!
-!DEALLOCATE(OldL2GPData%pressures, &
-!     & OldL2GPData%latitude, l2gpData%longitude, OldL2GPData%time, &
-!     & OldL2GPData%solarTime, OldL2GPData%solarZenith, OldL2GPData%losAngle, &
-!     & OldL2GPData%geodAngle, OldL2GPData%chunkNumber, &
-!     & OldL2GPData%l2gpValue, OldL2GPData%frequency, &
-!     & OldL2GPData%l2gpPrecision, OldL2GPData%status, OldL2GPData%quality,&
-!     & STAT=alloc_err)
-!IF(alloc_err /= 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
-!     & 'Failed to deallocate temp OldL2GPData')
-END SUBROUTINE FillOL2GPVector
-
-!=============================== FillPrevDefd ==========================
-SUBROUTINE FillPrevDefd(OldVector, PrevDefdQt, qtyTemplates, &
-& Output, QuantityName, qtiesStart, chunkNo, IERR)
-!=============================== FillPrevDefd ==========================
-
-! If the times, pressures, and geolocations match,
-! fill the vector Output with values taken from the appropriate quantity in
-! previously defined vector OldVector
-! 
-
-INTEGER, INTENT(IN) ::                            PrevDefdQt
-INTEGER, INTENT(IN) ::                            qtiesStart
-TYPE(Vector_T), INTENT(IN) ::                     OldVector
-    type (QuantityTemplate_T), dimension(:), pointer :: qtyTemplates
-TYPE(Vector_T), INTENT(INOUT) ::                  Output
-CHARACTER*(*), INTENT(IN) ::                      QuantityName
-! If done chunk-by-chunk, the following is the chunk number
-! Otherwise, chunkNo should = -1
-    integer, intent(in) ::                        chunkNo
-INTEGER, INTENT(OUT) ::                            IERR	! if error
-
-! Local variables
-!::::::::::::::::::::::::: LOCALS :::::::::::::::::::::
-
-REAL(r8) ::                                       TOLERANCE
-PARAMETER(TOLERANCE=0.05)
-
-! A wrong version compared ChunkNo to OldVector%ChunkNumbers
-LOGICAL ChunkNumberIsTrustworthy
-PARAMETER(ChunkNumberIsTrustworthy=.FALSE.)
-
-type (QuantityTemplate_T) ::                      PDQTemplate	! Prev. def'd Quantity Template
-type (QuantityTemplate_T) ::                      OQTemplate	! Output Quantity Template
-INTEGER ::                                        i
-INTEGER ::                                        firstProfile, lastProfile
-INTEGER ::                                        noL2GPValues=1
-LOGICAL ::                                        TheyMatch
-REAL(r8) ::                                       phiMin, phiMax
-REAL(r8) ::                                       phi_TOLERANCE
-
-PDQTemplate = qtyTemplates(OldVector%TEMPLATE%QUANTITIES(PrevDefdQt))
-OQTemplate = qtyTemplates(Output%TEMPLATE%QUANTITIES(qtiesStart))
-
-IF(OQTemplate%noInstances <= 0) THEN
-	IERR=zeroProfilesFound
-	RETURN
-ELSEIF(PDQTemplate%noInstances <= 0) THEN
-	IERR=zeroProfilesFound
-	RETURN
-ENDIF
-! Chunk-by-chunk, or all chunks at once?
-IF(chunkNo == -1) THEN
-	firstProfile = 1
-   lastProfile = PDQTemplate%noInstances
-ELSEIF(ChunkNumberIsTrustworthy) THEN
-!	lastProfile = 1
-!   firstProfile = PDQTemplate%noInstances
-!	DO i=1, PDQTemplate%noInstances
-!        	IF(chunkNo == OldVector%chunkNumber(i)) THEN
-!				firstProfile = MIN(firstProfile, i)
-!				lastProfile = MAX(lastProfile, i)
-!         ENDIF
-!   ENDDO
-!Can't get here unless ChunkNumberIsTrustworthy has been reset
-	CALL announce_error(0, miscellaneous_err, &
+    if(OQTemplate%noInstances <= 0) then
+      errorCode=zeroProfilesFound
+      return
+    elseif(PDQTemplate%noInstances <= 0) then
+      errorCode=zeroProfilesFound
+      return
+    endif
+    ! Chunk-by-chunk, or all chunks at once?
+    if(chunkNo == -1) then
+      firstProfile = 1
+      lastProfile = PDQTemplate%noInstances
+    elseif(ChunkNumberIsTrustworthy) then
+      !	lastProfile = 1
+      !   firstProfile = PDQTemplate%noInstances
+      !	DO i=1, PDQTemplate%noInstances
+      !        	IF(chunkNo == OldVector%chunkNumber(i)) THEN
+      !				firstProfile = MIN(firstProfile, i)
+      !				lastProfile = MAX(lastProfile, i)
+      !         ENDIF
+      !   ENDDO
+      !Can't get here unless ChunkNumberIsTrustworthy has been reset
+      call announce_error(0, miscellaneous_err, &
 	& "Programming error in Module Fill, SUBROUTINE FillPrevDefd " &
 	& // "ChunkNumberIsTrustworthy must be FALSE")
-ELSE
-! Instead of comparing OldVector%chunkNumbers to ChunkNo
-! we will compare geodetic angles to phi
-	phiMin = OQTemplate%phi(1, 1)
-	phiMax = OQTemplate%phi(1, 1)
-	DO i=1, OQTemplate%noInstances
-		phiMin = MIN(phiMin, OQTemplate%phi(1, i))
-		phiMax = MAX(phiMax, OQTemplate%phi(1, i))
-	ENDDO
-	phi_TOLERANCE = TOLERANCE *(phiMax-phiMin) / OQTemplate%noInstances
-	IF(phi_TOLERANCE <= 0.D0) THEN
-		  IERR=zeroGeodSpan
-		RETURN
-	ENDIF
-	lastProfile = 1
-   firstProfile = PDQTemplate%noInstances
-	DO i=1, PDQTemplate%noInstances
-        	IF(phiMin <= (PDQTemplate%phi(1, i) + phi_TOLERANCE)) THEN
-				firstProfile = MIN(firstProfile, i)
-         ENDIF
-        	IF(phiMax >= (PDQTemplate%phi(1, i) - phi_TOLERANCE)) THEN
-				lastProfile = MAX(lastProfile, i)
-         ENDIF
-   ENDDO
-ENDIF
+    else
+      ! Instead of comparing OldVector%chunkNumbers to ChunkNo
+      ! we will compare geodetic angles to phi
+      phiMin = OQTemplate%phi(1, 1)
+      phiMax = OQTemplate%phi(1, 1)
+      do i=1, OQTemplate%noInstances
+        phiMin = min(phiMin, OQTemplate%phi(1, i))
+        phiMax = max(phiMax, OQTemplate%phi(1, i))
+      enddo
+      phi_TOLERANCE = TOLERANCE *(phiMax-phiMin) / OQTemplate%noInstances
+      if(phi_TOLERANCE <= 0.D0) then
+        errorCode=zeroGeodSpan
+        return
+      endif
+      lastProfile = 1
+      firstProfile = PDQTemplate%noInstances
+      do i=1, PDQTemplate%noInstances
+        if(phiMin <= (PDQTemplate%phi(1, i) + phi_TOLERANCE)) then
+          firstProfile = min(firstProfile, i)
+        endif
+        if(phiMax >= (PDQTemplate%phi(1, i) - phi_TOLERANCE)) then
+          lastProfile = max(lastProfile, i)
+        endif
+      enddo
+    endif
 !
-TheyMatch = OQTemplate%noInstances .EQ. (lastProfile-firstProfile+1)
-TheyMatch = TheyMatch &
-& .AND. &
-& (OQTemplate%stacked .eqv. PDQTemplate%stacked) &
-& .AND. &
-& (OQTemplate%coherent .eqv. PDQTemplate%coherent) &
-& .AND. &
-& (OQTemplate%regular .eqv. PDQTemplate%regular) 
-IF(TheyMatch) THEN
-   DO i = firstProfile, lastProfile
-      IF( &
-        &   nearBy(PDQTemplate%geodLat(1,i), OQTemplate%geodLat(1,i)) &
-        & .AND. &
-        &   nearBy(PDQTemplate%lon(1,i), OQTemplate%lon(1,i)) &
-        & .AND. &
-        &   nearBy(PDQTemplate%solarTime(1,i), OQTemplate%solarTime(1,i)) &
-        &) THEN
-       ELSE
-          TheyMatch = .FALSE.
-          EXIT
-      ENDIF
-   END DO
-ENDIF
-IF( TheyMatch &
-& .AND. &
-& PDQTemplate%noSurfs == OQTemplate%noSurfs &
-& .AND. &
-& PDQTemplate%noSurfs == 1 ) THEN
-   DO i = 1, OQTemplate%noSurfs
-      IF( &
-        &   nearBy(PDQTemplate%surfs(i,1), OQTemplate%surfs(i,1)) &
-        & ) THEN
-     ELSE
-       TheyMatch = .FALSE.
-       EXIT
-    ENDIF
-   END DO
-ENDIF
-IF(TheyMatch) THEN
-	Output%quantities(qtiesStart)%values = OldVector%quantities(PrevDefdQt)%values
-ELSE
-	IERR=vectorWontMatchPDef
-ENDIF
-END SUBROUTINE FillPrevDefd
+    TheyMatch = OQTemplate%noInstances .eq. (lastProfile-firstProfile+1)
+    TheyMatch = TheyMatch &
+      & .and. &
+      & (OQTemplate%stacked .eqv. PDQTemplate%stacked) &
+      & .and. &
+      & (OQTemplate%coherent .eqv. PDQTemplate%coherent) &
+      & .and. &
+      & (OQTemplate%regular .eqv. PDQTemplate%regular) 
+    if(TheyMatch) then
+      do i = firstProfile, lastProfile
+        if( &
+          &   nearBy(PDQTemplate%geodLat(1,i), OQTemplate%geodLat(1,i)) &
+          & .and. &
+          &   nearBy(PDQTemplate%lon(1,i), OQTemplate%lon(1,i)) &
+          & .and. &
+          &   nearBy(PDQTemplate%solarTime(1,i), OQTemplate%solarTime(1,i)) &
+          &) then
+        else
+          TheyMatch = .false.
+          exit
+        endif
+      end do
+    endif
+    if( TheyMatch &
+      & .and. &
+      & PDQTemplate%noSurfs == OQTemplate%noSurfs &
+      & .and. &
+      & PDQTemplate%noSurfs == 1 ) then
+      do i = 1, OQTemplate%noSurfs
+        if( &
+          &   nearBy(PDQTemplate%surfs(i,1), OQTemplate%surfs(i,1)) &
+          & ) then
+        else
+          TheyMatch = .false.
+          exit
+        endif
+      end do
+    endif
+    if(TheyMatch) then
+      Output%quantities(qtiesStart)%values = OldVector%quantities(PrevDefdQt)%values
+    else
+      errorCode=vectorWontMatchPDef
+    endif
+  end subroutine FillPrevDefd
 
-!=============================== FillOL2AUXVector ==========================
-SUBROUTINE FillOL2AUXVector(OldL2AUXData, qtyTemplates, &
-& Output, QuantityName, qtiesStart, chunkNo, IERR)
-!=============================== FillOL2AUXVector ==========================
+  !=============================== FillOL2AUXVector ==========================
+  subroutine FillOL2AUXVector(OldL2AUXData, qtyTemplates, &
+    & Output, QuantityName, qtiesStart, chunkNo, errorCode)
+    !=============================== FillOL2AUXVector ==========================
 
-! If the times, pressures, and geolocations match,
-! fill the vector Output with values taken from the
-! Old L2AUX vector OldL2AUXData
-! 
+    ! If the times, pressures, and geolocations match,
+    ! fill the vector Output with values taken from the
+    ! Old L2AUX vector OldL2AUXData
+    ! 
 
-INTEGER, INTENT(IN) ::                            qtiesStart
-TYPE(L2AUXData_T) ::                               OldL2AUXData
+    integer, intent(IN) ::                            qtiesStart
+    type(L2AUXData_T) ::                               OldL2AUXData
     type (QuantityTemplate_T), dimension(:), pointer :: qtyTemplates
-!TYPE(L2GPData_T), DIMENSION(:), POINTER ::        L2GPDatabase
-TYPE(Vector_T), INTENT(INOUT) ::                  Output
-CHARACTER*(*), INTENT(IN) ::                      QuantityName
+    !TYPE(L2GPData_T), DIMENSION(:), POINTER ::        L2GPDatabase
+    type(Vector_T), intent(INOUT) ::                  Output
+    character*(*), intent(IN) ::                      QuantityName
     integer, intent(in) :: chunkNo
-INTEGER, INTENT(OUT) ::                            IERR	! if error
+    integer, intent(OUT) ::                            errorCode	! if error
 
-! Local variables
-!::::::::::::::::::::::::: LOCALS :::::::::::::::::::::
-type (QuantityTemplate_T) ::                      OQTemplate	! Output Quantity Template
-INTEGER ::                                        OQType	! Ouptut quantity type
-INTEGER ::                                        OQNVals	! No. Ouptut quantity vals
-INTEGER ::                                        ChanDim	! which dim no. is channel
-INTEGER ::                                        IntFreqDim	! which dim no. is int. frq.
-INTEGER ::                                        USBDim	! which dim no. is USB
-INTEGER ::                                        LSBDim	! which dim no. is LSB
-INTEGER ::                                        MAFDim	! which dim no. is MAF
-INTEGER ::                                        MIFDim	! which dim no. is MIF
-INTEGER ::                                        L2NVals	! No. l2 aux vals
-INTEGER ::                                        i
-LOGICAL ::                                        TheyMatch
-! This will let us re-order the vector dimensions differently from the l2aux
-INTEGER, DIMENSION(3) ::                          dim_order
+    ! Local variables
+    !::::::::::::::::::::::::: LOCALS :::::::::::::::::::::
+    type (QuantityTemplate_T) ::                      OQTemplate	! Output Quantity Template
+    integer ::                                        OQType	! Ouptut quantity type
+    integer ::                                        OQNVals	! No. Ouptut quantity vals
+    integer ::                                        ChanDim	! which dim no. is channel
+    integer ::                                        IntFreqDim	! which dim no. is int. frq.
+    integer ::                                        USBDim	! which dim no. is USB
+    integer ::                                        LSBDim	! which dim no. is LSB
+    integer ::                                        MAFDim	! which dim no. is MAF
+    integer ::                                        MIFDim	! which dim no. is MIF
+    integer ::                                        L2NVals	! No. l2 aux vals
+    integer ::                                        i
+    logical ::                                        TheyMatch
+    ! This will let us re-order the vector dimensions differently from the l2aux
+    integer, dimension(3) ::                          dim_order
 
-! Properties of Output Vector
-OQTemplate = qtyTemplates(Output%TEMPLATE%QUANTITIES(qtiesStart))
-OQType = OQtemplate%quantityType
-OQNVals = OQtemplate%noInstances*OQtemplate%noSurfs*OQtemplate%noChans
+    ! Properties of Output Vector
+    OQTemplate = qtyTemplates(Output%TEMPLATE%QUANTITIES(qtiesStart))
+    OQType = OQtemplate%quantityType
+    OQNVals = OQtemplate%noInstances*OQtemplate%noSurfs*OQtemplate%noChans
 
-! Properties of l2 aux
-ChanDim = 0
-IntFreqDim = 0
-USBDim = 0
-LSBDim = 0
-MAFDim = 0
-MIFDim = 0
-L2NVals = 1
-DO i=1, OldL2AUXData%noDimensionsUsed
-    L2NVals = L2NVals*OldL2AUXData%dimensions(i)%noValues
-    SELECT CASE(OldL2AUXData%dimensions(i)%dimensionFamily)
-    CASE(L2AUXDim_Channel)
+    ! Properties of l2 aux
+    ChanDim = 0
+    IntFreqDim = 0
+    USBDim = 0
+    LSBDim = 0
+    MAFDim = 0
+    MIFDim = 0
+    L2NVals = 1
+    do i=1, OldL2AUXData%noDimensionsUsed
+      L2NVals = L2NVals*OldL2AUXData%dimensions(i)%noValues
+      select case(OldL2AUXData%dimensions(i)%dimensionFamily)
+      case(L2AUXDim_Channel)
         ChanDim = i
         dim_order(1) = i
-    CASE(L2AUXDim_IntermediateFrequency)
+      case(L2AUXDim_IntermediateFrequency)
         IntFreqDim = i
-    CASE(L2AUXDim_USBFrequency)
+      case(L2AUXDim_USBFrequency)
         USBDim = i
-    CASE(L2AUXDim_LSBFrequency)
+      case(L2AUXDim_LSBFrequency)
         LSBDim = i
-    CASE(L2AUXDim_MIF)
+      case(L2AUXDim_MIF)
         MIFDim = i
-    CASE(L2AUXDim_MAF)
+      case(L2AUXDim_MAF)
         MAFDim = i
-    CASE DEFAULT	! We are not yet interested in these dimensions
-    END SELECT
-    
-ENDDO
+      case DEFAULT	! We are not yet interested in these dimensions
+      end select
 
-! Check that the dimensions match up and are of the same family
-TheyMatch = OQNVals == L2NVals
-IF(OQTemplate%minorFrame) THEN
-	TheyMatch = TheyMatch .AND. MIFDim > 0
-ENDIF
-IF(OQTemplate%noChans > 0) THEN
-	TheyMatch = TheyMatch .AND. &
+    enddo
+
+    ! Check that the dimensions match up and are of the same family
+    TheyMatch = OQNVals == L2NVals
+    if(OQTemplate%minorFrame) then
+      TheyMatch = TheyMatch .and. MIFDim > 0
+    endif
+    if(OQTemplate%noChans > 0) then
+      TheyMatch = TheyMatch .and. &
         & (  ChanDim > 0   )
-ENDIF
+    endif
 
-IF(TheyMatch) THEN
-   CALL FillVector(IERR, OldL2AUXData%values, Output, &
+    if(TheyMatch) then
+      call FillVector(errorCode, OldL2AUXData%values, Output, &
         & 'l2aux', 'l2aux', 1, &
-        & MAX(OldL2AUXData%dimensions(1)%noValues, 1), &
-        & MAX(OldL2AUXData%dimensions(2)%noValues, 1), &
-        & MAX(OldL2AUXData%dimensions(3)%noValues, 1), &
+        & max(OldL2AUXData%dimensions(1)%noValues, 1), &
+        & max(OldL2AUXData%dimensions(2)%noValues, 1), &
+        & max(OldL2AUXData%dimensions(3)%noValues, 1), &
         & qtiesStart)
-ELSE
-!   CALL MLSMessage(MLSMSG_Error, ModuleName, &
-!        & 'Vector and old L2AUX do not match')
-	IERR=cantFillFromL2AUX
-ENDIF
+    else
+      !   CALL MLSMessage(MLSMSG_Error, ModuleName, &
+      !        & 'Vector and old L2AUX do not match')
+      errorCode=cantFillFromL2AUX
+    endif
 
-END SUBROUTINE FillOL2AUXVector
+  end subroutine FillOL2AUXVector
 
-!=============================== nearby ==========================
-FUNCTION nearby(x, y, inRelSmall, inOverallTol)
-!=============================== nearby ==========================
-! This functions returns TRUE if x and y are "nearby" comparing either
-! their relative difference (proportionally small) 
-! or their differences with an overall tolerance
-REAL(r8), INTENT(IN) ::              x, y
-REAL(r8), INTENT(IN), OPTIONAL ::    inRelSmall
-REAL(r8), INTENT(IN), OPTIONAL ::    inOverallTol
+  !=============================================== ExplicitFillVectorQuantity ==
+  subroutine ExplicitFillVectorQuantity(quantity, valuesNode, spread)
 
-! result
-LOGICAL ::                           nearby
+    ! This routine is called from MLSL2Fill to fill values from an explicit
+    ! fill command line
 
-! Private
-REAL(r8) ::                          small=1.D-32
-REAL(r8) ::                          tolerance=0.D0
+    ! Dummy arguments
+    type (VectorValue_T), intent(inout) :: QUANTITY ! The quantity to fill
+    integer, intent(in) :: VALUESNODE ! Tree node
+    logical, intent(in) :: SPREAD ! One instance given, spread to all
 
-IF(PRESENT(inRelSmall)) THEN
-    small = inRelSmall
-ENDIF
+    ! Local variables
+    integer :: K                ! Loop counter
+    integer, DIMENSION(2) :: unitAsArray ! Unit for value given
+    real (r8), DIMENSION(2) :: valueAsArray ! Value given
+    
+    ! Executable code
 
-IF(PRESENT(inOverallTol)) THEN
-    tolerance = inOverallTol
-ENDIF
+    if (spread) then      ! 1 instance given, spread to all instances
 
-IF(ABS(x-y) <= tolerance) THEN
-   nearby = .TRUE.
-ELSEIF(x*y /= 0) THEN
-   nearby = ABS(x-y) .LT. small*SQRT(ABS(x))*SQRT(ABS(y))
-ELSEIF(x /= 0) THEN
-   nearby = ABS(x-y) .LT. small*ABS(x)
-ELSE
-   nearby=.TRUE.
-ENDIF
+      ! Check we have the right number of values
+      if ( (nsons(valuesNode)-1 /= quantity%template%instanceLen) .or. &
+        &  (.not. quantity%template%regular)) &
+        & call Announce_error(valuesNode,invalidExplicitFill)
 
-END FUNCTION nearby
+      ! Loop over the values
+      do k=1,nsons(valuesNode)-1
+        ! Get value from tree
+        call expr(subtree(k+1,valuesNode),unitAsArray,valueAsArray)
+        ! Check unit OK
+        print*,unitAsArray(1), quantity%template%unit, PHYQ_Dimensionless
+        if ( (unitAsArray(1) /= quantity%template%unit) .and. &
+          &  (unitAsArray(1) /= PHYQ_Dimensionless) ) &
+          & call Announce_error(valuesNode,badUnitsForExplicit)
+        ! Store value
+        quantity%values(k,:)=valueAsArray(1)
+      end do
 
-!=============================== whatQuantityNumber ==========================
-FUNCTION whatQuantityNumber(x, y, xVectorTemplate)
-!=============================== whatQuantityNumber ==========================
-! This functions returns the quantity number of quantity y in vector x
-! where x and y are sub-rosa indexes of their actual names;
-! i.e., they are specified in the cf as name[x].name[y]
-! where name[x] = get_char(x), name[y] = get_char[y]
+    else                  ! Not spread, fill all values
+
+      ! Check we have the right number of values
+      if (nsons(valuesNode)-1 /= &
+        & quantity%template%noInstances*quantity%template%instanceLen) &
+        & call Announce_error(valuesNode,invalidExplicitFill)
+
+      ! Loop over values
+      do k=1,nsons(valuesNode)-1
+        ! Get value from tree
+        call expr(subtree(k+1,valuesNode),unitAsArray,valueAsArray)
+        ! Check unit OK
+        if ( (unitAsArray(1) /= quantity%template%unit) .and. &
+          &  (unitAsArray(1) /= PHYQ_Dimensionless) ) &
+          & call Announce_error(valuesNode,badUnitsForExplicit)
+        ! Store value
+        quantity%values(mod(k-1,quantity%template%instanceLen)+1,&
+          &             (k-1)/quantity%template%instanceLen+1)=&
+          & valueAsArray(1)
+      end do
+    endif
+  end subroutine ExplicitFillVectorQuantity
+
+  !=============================== nearby ==========================
+  function nearby(x, y, inRelSmall, inOverallTol)
+    !=============================== nearby ==========================
+    ! This functions returns TRUE if x and y are "nearby" comparing either
+    ! their relative difference (proportionally small) 
+    ! or their differences with an overall tolerance
+    real(r8), intent(IN) ::              x, y
+    real(r8), intent(IN), optional ::    inRelSmall
+    real(r8), intent(IN), optional ::    inOverallTol
+
+    ! result
+    logical ::                           nearby
+
+    ! Private
+    real(r8) ::                          small=1.D-32
+    real(r8) ::                          tolerance=0.D0
+
+    if(present(inRelSmall)) then
+      small = inRelSmall
+    endif
+
+    if(present(inOverallTol)) then
+      tolerance = inOverallTol
+    endif
+
+    if(abs(x-y) <= tolerance) then
+      nearby = .true.
+    elseif(x*y /= 0) then
+      nearby = abs(x-y) .lt. small*sqrt(abs(x))*sqrt(abs(y))
+    elseif(x /= 0) then
+      nearby = abs(x-y) .lt. small*abs(x)
+    else
+      nearby=.true.
+    endif
+
+  end function nearby
+
+  !=============================== whatQuantityNumber ==========================
+  function whatQuantityNumber(x, y, xVectorTemplate)
+    !=============================== whatQuantityNumber ==========================
+    ! This functions returns the quantity number of quantity y in vector x
+    ! where x and y are sub-rosa indexes of their actual names;
+    ! i.e., they are specified in the cf as name[x].name[y]
+    ! where name[x] = get_char(x), name[y] = get_char[y]
 !
-! If the quantity is not found, it returns FAILED (-1)
-INTEGER, INTENT(IN) ::               x, y
-type (VectorTemplate_T)  ::          xVectorTemplate
+    ! If the quantity is not found, it returns FAILED (-1)
+    integer, intent(IN) ::               x, y
+    type (VectorTemplate_T)  ::          xVectorTemplate
 
-! result
-INTEGER ::                           whatQuantityNumber
+    ! result
+    integer ::                           whatQuantityNumber
 
-! Private
-INTEGER, PARAMETER ::                FAILED=-1
-INTEGER              ::              qty
+    ! Private
+    integer, parameter ::                FAILED=-1
+    integer              ::              qty
 
-whatQuantityNumber = FAILED
-DO qty = 1, xVectorTemplate%NoQuantities
-    IF(xVectorTemplate%Name == y) THEN
+    whatQuantityNumber = FAILED
+    do qty = 1, xVectorTemplate%NoQuantities
+      if(xVectorTemplate%Name == y) then
         whatQuantityNumber = qty
-        EXIT
-    ENDIF
-ENDDO
+        exit
+      endif
+    enddo
 
-END FUNCTION whatQuantityNumber
+  end function whatQuantityNumber
 
-!=============================== squeeze ==========================
-SUBROUTINE squeeze(IERR, source, sink, source_order)
-!=============================== squeeze ==========================
+  !=============================== squeeze ==========================
+  subroutine squeeze(errorCode, source, sink, source_order)
+    !=============================== squeeze ==========================
     ! takes a rank 3 object source and returns a rank2 object sink
     ! source(1..n1, 1..n2, 1..n3) -> sink(1..n1*n2, 1..n3)
-    ! unless it can't--then it returns iERR /= 0
+    ! unless it can't--then it returns errorCode /= 0
     ! One reason it may fail: shape of sink too small
-    !
+!
     ! Assuming that shape(source) = {n1, n2, n3}
     !     =>          shape(sink) = {m1, m2}
-    ! then we must further assume (else set IERR)
+    ! then we must further assume (else set errorCode)
     ! n1*n2 <= m1
     ! n3 <= m2
-    !
+!
     ! if source_order is present, it is a permutation of (1 2 3)
     ! such that before squeezing, the source is re-ordered:
     ! temp(1, 2, 3) = source(order(1), order(2), order(3))
     ! and then
     ! temp(1..n1, 1..n2, 1..n3) -> sink(1..n1*n2, 1..n3)
-    !
+!
     ! (A future improvement might take as optional arguments
     !  integer arrays source_shape, sink_shape, 
     !  or else shape-params n1, n2, m1)
     !--------Argument--------!
-    REAL(r8), DIMENSION(:,:,:), INTENT(IN) :: source
-    REAL(r8), DIMENSION(:,:), INTENT(OUT)  :: sink
-    INTEGER, INTENT(OUT)                   :: IERR
-    INTEGER, INTENT(IN), OPTIONAL, DIMENSION(:) :: source_order
+    real(r8), dimension(:,:,:), intent(IN) :: source
+    real(r8), dimension(:,:), intent(OUT)  :: sink
+    integer, intent(OUT)                   :: errorCode
+    integer, intent(IN), optional, dimension(:) :: source_order
 
     !----------Local vars----------!
-    
-    INTEGER, DIMENSION(4) :: source_shape
-    INTEGER, DIMENSION(4) :: sink_shape
-    INTEGER, DIMENSION(4) :: temp_shape
-    INTEGER::i,icode,offset
-    REAL(r8), DIMENSION(:,:,:), ALLOCATABLE :: temp
+
+    integer, dimension(4) :: source_shape
+    integer, dimension(4) :: sink_shape
+    integer, dimension(4) :: temp_shape
+    integer::i,icode,offset
+    real(r8), dimension(:,:,:), allocatable :: temp
     !----------Executable part----------!
     source_shape(1:3) = shape(source)
     sink_shape(1:2) = shape(sink)
 
-    IF (source_shape(1) == 0) THEN
-    	IERR = n1_is_zero
-        RETURN
-    ELSEIF (source_shape(2) == 0) THEN
-    	IERR = n2_is_zero
-        RETURN
-    ELSEIF (source_shape(3) == 0) THEN
-    	IERR = n3_is_zero
-        RETURN
-    ELSEIF (sink_shape(1) < source_shape(1)*source_shape(2)) THEN
-    	IERR = m1_too_small
-        RETURN
-    ELSEIF (sink_shape(2) < source_shape(3)) THEN
-    	IERR = m2_too_small
-        RETURN
-    ELSE
-    	IERR = 0
-    ENDIF
+    if (source_shape(1) == 0) then
+      errorCode = n1_is_zero
+      return
+    elseif (source_shape(2) == 0) then
+      errorCode = n2_is_zero
+      return
+    elseif (source_shape(3) == 0) then
+      errorCode = n3_is_zero
+      return
+    elseif (sink_shape(1) < source_shape(1)*source_shape(2)) then
+      errorCode = m1_too_small
+      return
+    elseif (sink_shape(2) < source_shape(3)) then
+      errorCode = m2_too_small
+      return
+    else
+      errorCode = 0
+    endif
 
-    IF(PRESENT(source_order)) THEN
-!        Check that source_order is a legal permutation of (1 2 3)
-!        using trick: sum and product must each equal 6
-        IF(source_order(1)+source_order(2)+source_order(3) /= 6 &
-        & .OR. &
-        & source_order(1)*source_order(2)*source_order(3) /= 6 ) THEN
-             IERR=not_permutation
-             RETURN
-        ENDIF
-        DO i=1, 3
-           temp_shape(i) = source_shape(source_order(i))
-        ENDDO
-        ALLOCATE(temp(temp_shape(1), temp_shape(2), temp_shape(3)), &
-        & STAT=IERR)
-        IF(IERR /= 0) THEN
-        	IERR=allocation_err
-                RETURN
-        ENDIF
-        temp = reshape(source, temp_shape(1:3), order=source_order(1:3))
-        sink = reshape(temp, sink_shape(1:2))
-        DEALLOCATE(temp, &
-        & STAT=IERR)
-        IF(IERR /= 0) THEN
-        	IERR=deallocation_err
-                RETURN
-        ENDIF
-    ELSE
-        sink = reshape(source, sink_shape(1:2))
-    ENDIF
-    
-END SUBROUTINE squeeze
+    if(present(source_order)) then
+      !        Check that source_order is a legal permutation of (1 2 3)
+      !        using trick: sum and product must each equal 6
+      if(source_order(1)+source_order(2)+source_order(3) /= 6 &
+        & .or. &
+        & source_order(1)*source_order(2)*source_order(3) /= 6 ) then
+        errorCode=not_permutation
+        return
+      endif
+      do i=1, 3
+        temp_shape(i) = source_shape(source_order(i))
+      enddo
+      allocate(temp(temp_shape(1), temp_shape(2), temp_shape(3)), &
+        & STAT=errorCode)
+      if(errorCode /= 0) then
+        errorCode=allocation_err
+        return
+      endif
+      temp = reshape(source, temp_shape(1:3), order=source_order(1:3))
+      sink = reshape(temp, sink_shape(1:2))
+      deallocate(temp, &
+        & STAT=errorCode)
+      if(errorCode /= 0) then
+        errorCode=deallocation_err
+        return
+      endif
+    else
+      sink = reshape(source, sink_shape(1:2))
+    endif
+
+  end subroutine squeeze
 
 !
 !
   ! ---------------------------------------------  ANNOUNCE_ERROR  -----
-  subroutine ANNOUNCE_ERROR ( WHERE, CODE , ExtraMessage)
-    integer, intent(in) :: WHERE   ! Tree node where error was noticed
+  subroutine ANNOUNCE_ERROR ( where, CODE , ExtraMessage)
+    integer, intent(in) :: where   ! Tree node where error was noticed
     integer, intent(in) :: CODE    ! Code for error message
-	 CHARACTER (LEN=*), OPTIONAL :: ExtraMessage
+    character (LEN=*), optional :: ExtraMessage
 
     error = max(error,1)
     call output ( '***** At ' )
@@ -1040,6 +917,8 @@ END SUBROUTINE squeeze
     call output ( "The " );
     call dump_tree_node ( where, 0 )
     select case ( code )
+    case ( badUnitsForExplicit )
+      call output ( " has inappropriate units for Fill instruction.", advance='yes' )
     case ( wrong_number )
       call output ( " command does not have exactly one field.", advance='yes' )
     case ( unknownQuantityName )
@@ -1080,20 +959,33 @@ END SUBROUTINE squeeze
       call output ( " command caused an allocation error in squeeze.", advance='yes' )
     case ( deallocation_err )
       call output ( " command caused an deallocation error in squeeze.", advance='yes' )
+    case ( noExplicitValuesGiven )
+      call output ( " no explicit values given for explicit fill.", advance='yes' )
+    case ( noSourceL2GPGiven )
+      call output ( " no sourceL2GP field given for L2GP fill.", advance='yes' )
+    case ( noSourceL2AUXGiven )
+      call output ( " no sourceL2AUX field given for L2AUX fill.", advance='yes' )
+    case ( noSourceQuantityGiven )
+      call output ( " no sourceQuantity field given for vector fill.", advance='yes' )
+    case ( invalidExplicitFill )
+      call output ( " has inappropriate dimensionality for explicit fill.", advance='yes' )
     case default
       call output ( " command caused an unrecognized programming error", advance='yes' )
     end select
-    IF( PRESENT(ExtraMessage)) THEN
-      CALL output(ExtraMessage)
-	 ENDIF
+    if( present(ExtraMessage)) then
+      call output(ExtraMessage)
+    endif
   end subroutine ANNOUNCE_ERROR
 
-!=============================================================================
+
 end module Fill
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.16  2001/02/21 01:07:34  livesey
+! Got the explicit fill to work.
+!
 ! Revision 2.15  2001/02/08 01:17:41  vsnyder
 ! Simplify access to abstract syntax tree.
 !
