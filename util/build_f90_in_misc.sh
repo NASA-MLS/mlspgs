@@ -37,7 +37,7 @@
 #                     therefore don't use the -i  and -I options simultaneously
 # --------------- End build_f90_in_misc.sh help
 
-# Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+# Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 # "$Id$"
@@ -148,7 +148,7 @@ else
 fi
 
 # Initialize settings to defaults
-DEEBUG=on
+DEEBUG=off
 BUILD=on
 prog_name=test
 test_dir_name=misc
@@ -410,6 +410,9 @@ fi
 exit 0
 
 # $Log$
+# Revision 1.9  2001/08/29 18:09:33  pwagner
+# Added C, CC, FC options
+#
 # Revision 1.8  2001/08/28 18:26:32  pwagner
 # Added -M option; no more bare make
 #
