@@ -5,10 +5,19 @@ module SpectroscopyCatalog_m
 
 ! Process the Spectroscopy section.  Read the "old format" spectroscopy catalog
 
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+  use String_Table, only: Display_String, Get_string
   use MLSCommon, only: R8
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
+    & MLSMSG_Error
+  use MLSSignals_m, only: MaxSigLen, Signals
+  use Output_m, only: Blanks, Output
+  use Time_M, only: Time_Now
+  use Toggles, only: Gen, Levels, Switches, Toggle
+  use Trace_M, only: Trace_begin, Trace_end
+  use Parse_Signal_m, only: PARSE_SIGNAL
 
-  ! More USEs below in each procedure.
-
+  ! More USEs below in each procedure, if they're only used therein.
   implicit none
 
   private
@@ -35,25 +44,20 @@ module SpectroscopyCatalog_m
                                    ! Log(nm**2 MHz) at 300 K
     Real(r8) :: V0                 ! Line center frequency MHz
     Real(r8) :: W                  ! Collision broadening parameter
-                                   ! MHz/mbar at 300 K
     integer, dimension(:), pointer :: QN=>NULL()      ! Optional quantum numbers
-    integer, dimension(:), pointer :: Signals=>NULL() ! List of signal indices for line
-    integer, dimension(:), pointer :: Sidebands=>NULL() ! Sidebands for above bands (-1,0,1)
-    logical, dimension(:), pointer :: Polarized=>NULL() ! Process this signal and
-                                   ! sideband using the polarized model
+    integer, dimension(:), pointer :: signals=>NULL() ! List of signal indices for line
+    integer, dimension(:), pointer :: sidebands=>NULL() ! Sidebands for above bands (-1,0,1)
+                                   ! MHz/mbar at 300 K
   end type Line_T
 
   type, public :: Catalog_T        ! Catalog entry for a species
-    real(r8) :: continuum(MaxContinuum)      ! Continuum coefficients
-    integer, pointer :: Lines(:)=>NULL() ! Indices in Lines database
-    integer :: Molecule            ! L_...
-    logical, pointer :: Polarized(:)=>NULL() ! Used only in catalog extract to
-                                   ! indicate that the lines(:) are to be
-                                   ! processed with the polarized model
-    real(r8) :: Qlog(3)            ! Logarithm of the partition function
-                                   ! At 300 , 225 , and 150 K
     integer :: Species_Name        ! Sub_rosa index
     integer :: Spec_Tag            ! Spectroscopy tag
+    integer, pointer :: Lines(:)=>NULL() ! Indices in Lines database
+    integer :: Molecule            ! L_...
+    real(r8) :: Qlog(3)            ! Logarithm of the partition function
+                                   ! At 300 , 225 , and 150 K
+    real(r8) :: continuum(MaxContinuum) ! Continuum coefficients
   end type Catalog_T
 
   ! Public Variables:
@@ -80,23 +84,15 @@ contains ! =====  Public Procedures  ===================================
   ! Process the spectroscopy section.
     ! We need a lot of names from Init_Spectroscopy_Module.  First, the spec
     ! ID's:
-
-    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Init_Spectroscopy_M, only: S_Line, S_Spectra
     ! Now the Fields:
     use Init_Spectroscopy_M, only: F_Continuum, F_Delta, F_El, F_Gamma, F_Lines, &
       & F_Molecule, F_N, F_N1, F_N2, F_Ns, F_Ps, F_Qlog, F_QN, F_Str, F_V0, F_W, &
-      & F_EMLSSIGNALS, F_EMLSSIGNALSPOL, F_UMLSSIGNALS
+      & F_EMLSSIGNALS, F_UMLSSIGNALS
     use Intrinsic, only: Phyq_Dimless => Phyq_Dimensionless, Phyq_Frequency, &
       & S_Time, L_EMLS, L_UMLS
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use Molecules, only: Spec_Tags
     use MoreTree, only: Get_Field_Id, Get_Spec_Id
-    use Parse_Signal_m, only: PARSE_SIGNAL
-    use String_Table, only: Get_string
-    use Time_M, only: Time_Now
-    use Toggles, only: Gen, Levels, Switches, Toggle
-    use Trace_M, only: Trace_begin, Trace_end
     use Tree, only: Decorate, Decoration, Node_ID, NSons, Sub_Rosa, Subtree
     use Tree_Types, only: N_Named
     use MLSSignals_m, only: Instrument
@@ -106,32 +102,27 @@ contains ! =====  Public Procedures  ===================================
 
     ! Local Variables
     integer :: Error                    ! /= 0 => An error occured
-    integer :: I, J, K, L               ! Loop inductors, Subscripts
-    integer :: Key                      ! Index of spec_arg
-    integer :: Name                     ! Index of name in string table
-    integer :: NOSIGNALS                ! For the bands part
+    integer :: I, J, K                  ! Loop inductors, Subscripts
     type(line_t) :: OneLine             ! To be added to the database
     type(catalog_t) :: OneSpecies       ! To be added to the database
     real(r8) :: QN                      ! for call to expr_check for QN field
-    integer :: SIDEBAND                 ! A single sideband
-    integer :: SignalsNode              ! Tree node for emls/umls bands
-    integer :: SignalsNodePol           ! Tree node for emls/umls bands for
-                                        ! Zeeman-split lines
-    integer, dimension(:), pointer :: SIGINDS ! From Parse_signal
-    character ( len=80 ) :: SIGNAME     ! The signal
     integer :: Son                      ! Of root or key
-    integer :: TheSignal                ! SubRosa for a signal
-    integer :: THISMANY                 ! Conted up to noSignals
+    integer :: Key                      ! Index of spec_arg
+    integer :: Name                     ! Index of name in string table
+    integer :: SignalsNode                ! Tree node for emls/umls bands
     logical :: TIMING                   ! For S_Time
     real :: T1, T2                      ! For S_Time
+    integer :: NOSIGNALS                ! For the bands part
+    integer :: THISMANY                 ! Conted up to noSignals
+    integer :: SIDEBAND                 ! A single sideband
+    integer, dimension(:), pointer :: SIGINDS ! From Parse_signal
+    character ( len=80 ) :: SIGNAME     ! The signal
 
     ! Error message codes
-    integer, parameter :: NotInt = 1                   ! QN not an integer
-    integer, parameter :: NotListedSignal = NotInt + 1 ! Polarized signal is not
-                                        ! listed as emlsSignal
-    integer, parameter :: TooBig = NotListedSignal + 1 ! Too many elements
-    integer, parameter :: WrongSize = TooBig + 1       ! Wrong number of elements
-    integer, parameter :: WrongUnits = wrongSize + 1   ! Wrong physical units
+    integer, parameter :: NotInt = 1             ! QN not an integer
+    integer, parameter :: TooBig = NotInt + 1    ! Too many elements
+    integer, parameter :: WrongSize = TooBig + 1 ! Wrong number of elements
+    integer, parameter :: WrongUnits = wrongSize + 1 ! Wrong physical units
 
     if ( toggle(gen) ) call trace_begin ( "Spectroscopy", root )
 
@@ -152,7 +143,6 @@ contains ! =====  Public Procedures  ===================================
         oneLine%line_Name = name
         nullify ( oneLine%qn ) ! because quantum numbers are optional
         signalsNode = 0
-        signalsNodePol = 0
         do j = 2, nsons(key)
           son = subtree(j,key)
           select case ( get_field_id(son) )
@@ -160,10 +150,6 @@ contains ! =====  Public Procedures  ===================================
             call expr_check ( subtree(2,son), oneLine%delta, phyq_dimless )
           case ( f_el )
             call expr_check ( subtree(2,son), oneLine%el, phyq_dimless )
-          case ( f_emlsSignals )
-            if ( instrument == l_emls ) signalsNode = son
-          case ( f_emlsSignalsPol )
-            if ( instrument == l_emls ) signalsNodePol = son
           case ( f_gamma )
             call expr_check ( subtree(2,son), oneLine%gamma, phyq_dimless )
           case ( f_n )
@@ -186,12 +172,14 @@ contains ! =====  Public Procedures  ===================================
             end do
           case ( f_str )
             call expr_check ( subtree(2,son), oneLine%str, phyq_dimless )
-          case ( f_umlsSignals )
-            if ( instrument == l_umls ) signalsNode = son
           case ( f_v0 )
             call expr_check ( subtree(2,son), oneLine%v0, phyq_frequency )
           case ( f_w )
             call expr_check ( subtree(2,son), oneLine%w, phyq_dimless )
+          case ( f_emlsSignals )
+            if ( instrument == l_emls ) signalsNode = son
+          case ( f_umlsSignals )
+            if ( instrument == l_umls ) signalsNode = son
           case default
             ! Can't get here if the type checker worked
           end select
@@ -210,50 +198,21 @@ contains ! =====  Public Procedures  ===================================
           ! Compile list of all the bands/sidebands named
           call Allocate_test ( oneLine%signals, noSignals, 'signals', ModuleName )
           call Allocate_test ( oneLine%sidebands, noSignals, 'sidebands', ModuleName )
-          if ( signalsNodePol /= 0 ) then
-            call allocate_test ( oneLine%polarized, noSignals, 'Polarized', moduleName )
-            oneLine%polarized = .false.
-          end if
           nullify ( sigInds )
           k = 1
           do j = 2, nsons(signalsNode)    ! Skip name
-            theSignal = sub_rosa ( subtree (j, signalsNode) )
-            call get_string ( theSignal, sigName, strip=.true. )
+            call get_string ( sub_rosa ( subtree (j, signalsNode) ), &
+              & sigName, strip=.true. )
             call Parse_Signal ( sigName, sigInds, signalsNode, sideband=sideband )
             if ( .not. associated(sigInds) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
               & 'Invalid signal in spectroscopy' )
             
             oneLine%signals ( k:k+size(sigInds)-1 ) = sigInds
             oneLine%sidebands ( k:k+size(sigInds)-1 ) = sideband
-            if ( signalsNodePol /= 0 ) then
-              do l = 2, nsons(signalsNodePol)
-                if ( sub_rosa ( subtree (l, signalsNodePol) ) == theSignal ) then
-                  oneLine%polarized ( k:k+size(sigInds)-1 ) = .true.
-                  exit
-                end if
-              end do
-            end if
             k = k + size(sigInds)
+            call Deallocate_test ( sigInds, 'sigInds', ModuleName )
           end do
-          call Deallocate_test ( sigInds, 'sigInds', ModuleName )
-        end if
-        if ( signalsNodePol /= 0 ) then
-          if ( signalsNode /= 0 ) then
-            call announce_Error ( signalsNodePol, notListedSignal )
-          else
-            k = nsons(signalsNode)
-            do j = 2, nsons(signalsNodePol)
-              theSignal = sub_rosa ( subtree (j, signalsNodePol) )
-              do l = 2, k
-                if ( theSignal == sub_rosa ( subtree (l, signalsNode) ) ) exit
-              end do
-              if ( l > k ) then
-                call announce_Error ( subtree (j, signalsNodePol), notListedSignal )
-                cycle
-              end if
-            end do
-          end if
-        end if
+        endif
         call decorate ( key, addLineToDatabase ( lines, oneLine ) )
         ! Now nullify signals and sidebands so they don't get clobbered
         ! by the next call to Allocate_test
@@ -317,8 +276,6 @@ contains ! =====  Public Procedures  ===================================
     subroutine Announce_Error ( Where, Code, More )
       use Intrinsic, only: Phyq_Indices
       use Lexer_Core, only: Print_Source
-      use Output_m, only: Output
-      use String_Table, only: Display_String
       use Tree, only: Source_Ref
       integer, intent(in) :: Where      ! In the tree
       integer, intent(in) :: Code       ! The error code
@@ -331,9 +288,6 @@ contains ! =====  Public Procedures  ===================================
       select case ( code )
       case ( notInt )
         call output ( 'The field is too far from being an integer.', &
-          & advance='yes' )
-      case ( notListedSignal )
-        call output ( 'The Polarized signal is not listed as an EMLS signal.', &
           & advance='yes' )
       case ( tooBig )
         call output ( 'The field cannot have more than ' )
@@ -367,7 +321,6 @@ contains ! =====  Public Procedures  ===================================
 
     ! ..................................................  SayTime  .....
     subroutine SayTime
-      use Output_m, only: Output
       call time_now ( t2 )
       call output ( "Timing for Spectroscopy = " )
       call output ( dble(t2 - t1), advance = 'yes' )
@@ -379,9 +332,6 @@ contains ! =====  Public Procedures  ===================================
   integer function AddLineToDatabase ( Database, Item )
   ! Add a line to the Lines database, creating the database
   ! if necessary.
-
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
-      & MLSMSG_Error
 
     ! Dummy arguments
     type(line_T), pointer, dimension(:) :: Database
@@ -401,9 +351,6 @@ contains ! =====  Public Procedures  ===================================
   ! Add a line to the Lines database, creating the database
   ! if necessary.
 
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
-      & MLSMSG_Error
-
     ! Dummy arguments
     type(catalog_t), pointer, dimension(:) :: Database
     type(catalog_t), intent(in) :: Item
@@ -419,9 +366,6 @@ contains ! =====  Public Procedures  ===================================
 
   ! --------------------------------------  Destroy_Line_Database  -----
   subroutine Destroy_Line_Database
-
-    use MLSMessageModule, only: MLSMessage, MLSMSG_DeAllocate, MLSMSG_Error
-
     integer :: Status                   ! From deallocate
     if ( .not. associated(lines) ) return
     deallocate ( lines, stat=status )
@@ -431,8 +375,6 @@ contains ! =====  Public Procedures  ===================================
 
   ! ----------------------------------  Destroy_SpectCat_Database  -----
   subroutine Destroy_SpectCat_Database
-    use Allocate_Deallocate, only: Deallocate_Test
-    use MLSMessageModule, only: MLSMessage, MLSMSG_DeAllocate, MLSMSG_Error
     integer :: I, Status
     if ( .not. associated(catalog) ) return
     do i = 1, size(catalog)
@@ -446,8 +388,6 @@ contains ! =====  Public Procedures  ===================================
   ! ----------------------------------------  Dump_Lines_Database  -----
   subroutine Dump_Lines_Database ( Start, End, Number )
     use Dump_0, only: Dump
-    use Output_m, only: Blanks, Output
-    use String_Table, only: Display_String
     integer, intent(in), optional :: Start, End
     logical, intent(in), optional :: Number
     integer :: I                   ! Subscript, loop inductor
@@ -506,8 +446,6 @@ contains ! =====  Public Procedures  ===================================
   subroutine Dump_SpectCat_Database
     use Dump_0, only: Dump
     use Intrinsic, only: Lit_indices
-    use Output_m, only: Blanks, Output
-    use String_Table, only: Display_String
 
     integer :: I, J                ! Subscript, loop inductor
 
@@ -587,15 +525,6 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
-! Revision 2.11.2.3  2003/02/26 02:32:38  vsnyder
-! Remove PUBLIC declaration for recently removed generic DUMP
-!
-! Revision 2.11.2.2  2003/02/26 00:01:55  vsnyder
-! Remove ambiguous 'dump' interface that nobody used anyway
-!
-! Revision 2.11.2.1  2003/02/22 00:49:58  vsnyder
-! Add EMLSSignalsPol field to Line
-!
 ! Revision 2.11  2002/12/03 01:26:41  vsnyder
 ! Add QN field to lines spec, add SearchByQn function
 !
