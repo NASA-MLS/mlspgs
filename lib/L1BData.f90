@@ -409,7 +409,7 @@ contains ! ============================ MODULE PROCEDURES ======================
             & record_length, DFACC_READ, &
             & FileName)
         endif
-        if ( sd_id == -1 .or. sd_id == -99 ) then
+        if ( sd_id <= 0 ) then
           call announce_error ( son, &
             & 'Error opening L1BOA file: ' //Filename)
         else
@@ -473,7 +473,7 @@ contains ! ============================ MODULE PROCEDURES ======================
             & record_length, DFACC_READ, &
             & FileName)
         endif
-        if ( sd_id == -1 .or. sd_id == -99 ) then
+        if ( sd_id <= 0 ) then
           call announce_error ( son, &
             & 'Error opening L1BRAD file: ' //Filename)
         elseif(ifl1 == MAXNUML1BRADIDS) then
@@ -1294,6 +1294,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.35  2002/12/11 22:22:15  pwagner
+! broadened error check on sd_id to any value lt 1
+!
 ! Revision 2.34  2002/12/10 00:42:15  pwagner
 ! Stopped printing debugging stuff
 !
