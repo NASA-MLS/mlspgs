@@ -248,7 +248,7 @@ contains
 
 !... normalized by LWC
         do i=1,nr
-           rn(i)=rn(i)*CWC/sum
+           rn(i)=rn(i)*CWC/max(1.e-59_r8, sum)
         enddo
 
 !... COMPUTE MASS-MEAN-DIAMETER
@@ -258,10 +258,13 @@ contains
            SUM1=SUM1+rn(i)*r(I)**4*2
            SUM2=SUM2+rn(i)*r(I)**3
         enddo
-        Dm=sum1/sum2
+        Dm=sum1/max(1.e-59_r8,sum2)
 
       END SUBROUTINE DRP_SIZE
 
 end module SizeDistribution
 
 ! $Log$
+! Revision 1.2  2001/09/21 15:51:37  jonathan
+! modified F95 version
+!
