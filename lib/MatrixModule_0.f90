@@ -1714,7 +1714,7 @@ contains ! =====     Public Procedures     =============================
           if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
               & "U matrix in SolveCholeskyV_0 is singular" )
           ! dot_product( u%values(1:i-1,i), my_b(1:i-1) )
-          x(i) = ( my_b(i) - dot(i-1, u%values(1,i), 1, my_b(1), 1) ) / d
+          x(i) = ( my_b(i) - dot(i-1, u%values(1,i), 1, x(1), 1) ) / d
         end do ! i = 1, n
       end select
     else             ! solve U X = B for X
@@ -1734,7 +1734,7 @@ contains ! =====     Public Procedures     =============================
         if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
             & "U matrix in SolveCholeskyV_0 is singular" )
         ! dot_product( ud(i,i+1:n), my_b(i+1:n) )
-        x(i) = ( my_b(i) - dot(n-i, ud(i,i+1), size(ud,1), my_b(i+1), 1) ) / d
+        x(i) = ( my_b(i) - dot(n-i, ud(i,i+1), size(ud,1), x(i+1), 1) ) / d
       end do ! i = 1, n
       if ( u%kind /= M_Full ) &
         & call deallocate_test ( ud, "UD in SolveCholeskyV_0", ModuleName )
@@ -2094,6 +2094,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.42  2001/07/11 22:07:57  vsnyder
+! Interim commit -- may still be broken
+!
 ! Revision 2.41  2001/06/28 01:05:59  vsnyder
 ! Allow last diagonal element in Cholesky factor to be tiny
 !
