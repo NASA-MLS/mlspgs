@@ -1,0 +1,17 @@
+; $Id$
+
+; This l2cf fragment does all the quality flagging for the Core
+; products (temperature)
+
+begin Fill
+  ;; ------------------------------------ Temperature-Core
+  !define(flaggingBands,{1,22,32})
+  !makeFlagsForOneProduct(product=Temperature,radiometer=R2,chisqScale=10.0,minRads=1500,cloudMax=2K)
+
+  ;; ------------------------------------ GPH-Core
+  !define(flaggingBands,{1,22,32})
+  !makeFlagsForOneProduct(product=GPH,radiometer=R2,chisqScale=10.0,minRads=1500,cloudMax=2K)
+
+end Fill
+
+
