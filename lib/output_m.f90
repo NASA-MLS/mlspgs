@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module OUTPUT_M
@@ -21,6 +21,7 @@ module OUTPUT_M
     module procedure output_dcomplex, output_double
     module procedure output_integer, output_integer_array, output_logical
     module procedure output_single, output_double_array, output_single_array
+    module procedure output_string
   end interface
 
   integer, save, public :: MLSMSG_Level = MLSMSG_Info
@@ -71,7 +72,7 @@ contains
     my_adv = 'no'
     if ( present(advance) ) then; my_adv = advance; end if
     my_adv = Advance_is_yes_or_no(my_adv)
-    n = n_blanks
+    n = max(n_blanks, 1)
     adv = 'no'
     do
       i = min(n,len(b))
@@ -438,6 +439,27 @@ contains
     end if
   end subroutine OUTPUT_SINGLE_ARRAY
 
+  subroutine OUTPUT_STRING ( STRING, LENSTRING, ADVANCE, FROM_WHERE, DONT_LOG, LOG_CHARS )
+  ! Output STRING to PRUNIT.
+    character(len=*), intent(in) :: STRING
+    integer, intent(in) :: LENSTRING
+    character(len=*), intent(in), optional :: ADVANCE
+    character(len=*), intent(in), optional :: FROM_WHERE
+    logical, intent(in), optional          :: DONT_LOG ! Prevent double-logging
+    character(len=*), intent(in), optional :: LOG_CHARS
+    integer :: n_chars
+    !
+    n_chars = min(len(string), lenstring)
+    if ( len(string) < 1 ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+		& 'Bad string arg in OUTPUT_STRING' )
+    elseif( len_trim(string) < 1 .or. LENSTRING < 1 ) then
+      call blanks(0, advance)
+    else
+      call output_char(string(:n_chars), advance, from_where, dont_log, log_chars )
+    endif
+  end subroutine OUTPUT_STRING
+
   function nCharsinFormat(Format) result(nplusm)
      ! Utility to calculated how many characters in a format spec:
      ! [n{xX}][,]{DEFGdefg}m.b
@@ -482,6 +504,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.29  2004/02/26 21:51:15  pwagner
+! Added output_string--although it is almost useless
+!
 ! Revision 2.28  2003/10/07 01:12:59  vsnyder
 ! Add NewLine subroutine, and Before and After text args
 !
