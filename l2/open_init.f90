@@ -7,7 +7,8 @@ module Open_Init
   ! Opens and closes several files
   ! Creates and destroys the L1BInfo database
 
-  use MLSCommon, only: FileNameLen, L1BInfo_T, TAI93_Range_T
+  use MLSCommon, only: FileNameLen, L1BInfo_T, TAI93_Range_T, i4
+  use MLSL2Options, only: LEVEL1_HDFVERSION
   use MLSMessageModule, only: MLSMessage, MLSMSG_Warning, &
     &                         MLSMSG_Error!, MLSMSG_FileOpen, MLSMSG_Info
   use Output_m, only: BLANKS, Output
@@ -41,7 +42,7 @@ module Open_Init
   character(len=*), parameter :: ModuleName="$RCSfile$"
   !-----------------------------------------------------------------------------
 
-  integer, parameter :: LEVEL1_HDFVERSION = 4  ! Until we convert level 1 to hdf5
+  ! integer, parameter :: LEVEL1_HDFVERSION = 4  ! Until we convert level 1 to hdf5
   integer, parameter :: MLSPCF_LOG = 10101 ! This seems to be hard-wired into PCF
   integer, parameter :: CCSDSLen=27
   integer, private ::   ERROR
@@ -113,10 +114,10 @@ contains ! =====     Public Procedures     =============================
     ! Gets the start and end times from the PCF
 
     use Hdf, only: DFACC_READ   ! , SFSTART, SFEND
-    use MLSFiles, only: MLS_sfstart
+    use MLSFiles, only: mls_io_gen_openF, mls_hdf_version
     use MLSL2Options, only: PUNISH_FOR_INVALID_PCF, PUNISH_FOR_NO_L1BRAD, &
-      &                      PUNISH_FOR_NO_L1BOA, PENALTY_FOR_NO_METADATA, &
-      &                      PCF, CREATEMETADATA, MAXNUML1BRADIDS, ILLEGALL1BRADID
+      &                   PUNISH_FOR_NO_L1BOA, PENALTY_FOR_NO_METADATA, &
+      &                   PCF, CREATEMETADATA, MAXNUML1BRADIDS, ILLEGALL1BRADID
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
     use MLSPCF2, only: MLSPCF_L1B_OA_START, MLSPCF_L1B_RAD_END, &
       &                MLSPCF_L1B_RAD_START, &
@@ -147,6 +148,7 @@ contains ! =====     Public Procedures     =============================
     logical, parameter :: DEBUG = .FALSE.
     integer, parameter :: CCSDSEndId = 10412    ! Illegal PCFid
     integer, parameter :: CCSDSStartId = 10411    ! Illegal PCFid
+    logical, parameter :: CaseSensitive = .true.
 
    ! The following parameters will only be needed if PCF ids are missing
     character(len=*), parameter :: DEFAULTANTEXT= &
@@ -156,24 +158,27 @@ contains ! =====     Public Procedures     =============================
     character(len=*), parameter :: DEFAULT_SPEC_HASH= &
       & 't,z,h2o,hno3,o3,hcl,clo,co,n2o,oh,rhi,so2,ho2,bro,hocl,hcn,ice,oth'
 
-    character(len=CCSDSlen) CCSDSEndTime
-    character(len=CCSDSlen) CCSDSStartTime
-    integer :: Details   ! How much info about l1b files to dump
-    integer :: Ifl1
-    integer :: L1FileHandle, L1_Version
-    character (len=fileNameLen) :: L1physicalFilename
-    integer :: ReturnStatus
-    integer :: Sd_id
-    integer :: Status, Size ! From allocate
+    character(len=CCSDSlen)      :: CCSDSEndTime
+    character(len=CCSDSlen)      :: CCSDSStartTime
+    integer                      :: Details   ! How much info about l1b files to dump
+    integer(i4)                  :: ErrType
+    integer                      :: Ifl1
+    integer                      :: L1FileHandle, L1_Version
+    character (len=fileNameLen)  :: L1physicalFilename
+    integer(i4)                  :: record_length
+    integer                      :: ReturnStatus
+    integer                      :: Sd_id
+    integer                      :: Status, Size ! From allocate
 
-    character (len=fileNameLen) :: name
+    character (len=fileNameLen)  :: name
 
-    character (len=len(switches)) :: extra_switches
+    character(len=len(switches)) :: extra_switches
 
-    integer :: Indx, Version
+    integer                      :: Indx, Version                            
 
-    real :: T1, T2                      ! for timing
-    logical :: TIMING
+    integer                      :: the_hdf_version                          
+    real                         :: T1, T2                      ! for timing 
+    logical                      :: TIMING                                   
 
     ! Executable code
     timing = section_times
@@ -259,8 +264,12 @@ contains ! =====     Public Procedures     =============================
   ! ((( This will have to change if we wish to convert l1 files to hdf5
   !          Maybe put another wrapper in MSLFiles
   !    sd_id = sfstart(L1physicalFilename, DFACC_READ)
-       sd_id = mls_sfstart(L1physicalFilename, DFACC_READ, hdfVersion=LEVEL1_HDFVERSION)
-
+  !    sd_id = mls_sfstart(L1physicalFilename, DFACC_READ, &
+  !       hdfVersion=LEVEL1_HDFVERSION)
+        the_hdf_version = mls_hdf_version(L1PhysicalFileName)
+       sd_id = mls_io_gen_openF('hg', caseSensitive, ErrType, &
+         & record_length, DFACC_READ, &
+         & L1physicalFilename, hdfVersion=LEVEL1_HDFVERSION)
         if ( sd_id == -1 ) then
           call announce_error ( 0, &
             & 'Error opening L1RAD file: ' //L1physicalFilename)
@@ -274,7 +283,7 @@ contains ! =====     Public Procedures     =============================
           l1bInfo%L1BRADFileNames(ifl1) = L1physicalFilename
           if(index(switches, 'pro') /= 0) then  
             call announce_success(L1physicalFilename, 'l1brad', &                   
-            & hdfVersion=LEVEL1_HDFVERSION)                    
+            & hdfVersion=the_hdf_version)                    
           end if
         end if
       end if
@@ -297,7 +306,11 @@ contains ! =====     Public Procedures     =============================
   ! ((( This will have to change if we wish to convert l1 files to hdf5
   !          Maybe put another wrapper in MSLFiles
   !  sd_id = sfstart(L1physicalFilename, DFACC_READ)
-     sd_id = mls_sfstart(L1physicalFilename, DFACC_READ, hdfVersion=LEVEL1_HDFVERSION)
+  !  sd_id = mls_sfstart(L1physicalFilename, DFACC_READ, hdfVersion=LEVEL1_HDFVERSION)
+        the_hdf_version = mls_hdf_version(L1PhysicalFileName)
+       sd_id = mls_io_gen_openF('hg', caseSensitive, ErrType, &
+         & record_length, DFACC_READ, &
+         & L1physicalFilename, hdfVersion=LEVEL1_HDFVERSION)
 
       if ( sd_id == -1 ) then
 
@@ -307,8 +320,8 @@ contains ! =====     Public Procedures     =============================
         l1bInfo%L1BOAID = sd_id
         l1bInfo%L1BOAFileName = L1physicalFilename
         if(index(switches, 'pro') /= 0) then  
-          call announce_success(L1physicalFilename, 'l1brad', &                     
-          & hdfVersion=LEVEL1_HDFVERSION)                    
+          call announce_success(L1physicalFilename, 'l1boa', &                     
+          & hdfVersion=the_hdf_version)                    
         end if
       end if
 
@@ -675,6 +688,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.65  2002/10/03 23:02:48  pwagner
+! Now opens l1b files with mls_io_gen_openF
+!
 ! Revision 2.64  2002/09/27 23:47:23  pwagner
 ! Now calls mls_io_gen_closeF rather than mls_sfend
 !
