@@ -548,9 +548,18 @@ contains ! ================================ Procedures ======================
         machine = 0
         if ( associated(machines) ) &
           & machine = FindFirst ( machines%tid, slaveTid )
+        if ( USINGOLDSUBMIT ) then
+          chunk = FindFirst ( chunkTids, slaveTid )
+          if ( chunk == 0 .and. signal /= sig_register ) then
+            call output ( 'Signal is:' )
+            call output ( signal )
+            call output ( ' Tid: ' // trim ( GetNiceTidString ( slaveTid ) ), &
+              & advance='yes' )
+            call MLSMessage ( MLSMSG_Warning, ModuleName, &
+              & "Got a message from an unknown slave")
+          endif
         ! if ( chunk == 0 .and. &
-        if ( machine == 0 .and. &
-          &  (.not. USINGOLDSUBMIT .or. signal /= sig_register) ) then
+        elseif ( machine == 0 ) then
           call output ( 'Signal is:' )
           call output ( signal )
           call output ( ' Tid: ' // trim ( GetNiceTidString ( slaveTid ) ), &
@@ -1754,6 +1763,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.70  2004/12/27 23:04:21  pwagner
+! Fixed bug affecting old submit method
+!
 ! Revision 2.69  2004/12/14 21:54:23  pwagner
 ! Changes related to l2q
 !
