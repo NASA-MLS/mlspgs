@@ -444,7 +444,7 @@ contains
          ! Correct
          h_grid(junk(1)) = h_grid(low_pt) + &
               & (h_grid(hi_pt) - h_grid(low_pt)) * &
-              & (cvf_z_grid(junk(1):junk(1))-cvf_z_grid(low_pt)) / &
+              & (cvf_z_grid(junk(1))-cvf_z_grid(low_pt)) / &
               & (cvf_z_grid(hi_pt) - cvf_z_grid(low_pt))
       ELSE
 
@@ -571,6 +571,9 @@ contains
 
 end module metrics_m
 ! $Log$
+! Revision 2.8  2002/08/10 00:08:47  bill
+! fixed bad pt correction bug
+!
 ! Revision 2.7  2002/07/05 07:52:50  zvi
 ! Coor. switch (phi,z) -> (z,phi)
 !
