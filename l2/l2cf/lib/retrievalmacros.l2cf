@@ -501,6 +501,7 @@ Fill, quantity=diag!MFradiometer.noRadsTmp, method=manipulate, manipulation='a>b
 !undefine(MFchisqscale)!dnl
 !undefine(MFminrads)!dnl
 !undefine(MFcloudmax)!dnl
+!undefine(MFcloudmin)!dnl
 !ProcessParVal(MF,$@)!dnl
 ;; Quality
 Fill, quantity=diag!MFradiometer.chisqTmp, method=explicit, explicitValues=0, /spread
@@ -529,11 +530,19 @@ Fill, quantity=otherDiagnostics.status!MFproduct, method=status, $
 !ifdef(MFcloudmax,{
 ;; Status - cloudy radiances - already had the box car run on it.
 Fill, quantity=otherDiagnostics.status!MFproduct, method=status, status=!statusHighCloud+!statusBeWary, $
-  sourceQuantity=otherDiagnostics.highCloudSummary!MFradiometer, maxValue=30K, /additional
+  sourceQuantity=otherDiagnostics.highCloudSummary!MFradiometer, maxValue=!MFcloudmax, /additional
+})
+!ifdef(MFcloudmin,{
+;; Status - cloudy radiances - already had the box car run on it.
+Fill, quantity=otherDiagnostics.status!MFproduct, method=status, status=!statusHighCloud+!statusBeWary, $
+  sourceQuantity=otherDiagnostics.lowCloudSummary!MFradiometer, minValue=!MFcloudmin, /additional
 })})
 
 
 ; $Log$
+; Revision 1.85  2004/03/27 00:16:34  livesey
+; Added high level macros for status/quality filling.
+;
 ; Revision 1.84  2004/03/17 17:13:54  livesey
 ; Added some status flag bit constants and more stuff for diagnostic
 ; precursors.
