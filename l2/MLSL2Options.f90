@@ -33,9 +33,9 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   logical, parameter :: PUNISH_FOR_NO_L1BRAD=.false. 
   logical, parameter :: PUNISH_FOR_NO_L1BOA=.false.
   logical            :: PCF_FOR_INPUT = .false.      ! Open L2CF using PCF ?
-  logical            :: PCF = .false.            ! Use PCF ?
-  logical            :: CREATEMETADATA = .false. ! Create .met files ?
-  logical            :: TOOLKIT = .false.        ! Use PGS_... routines?
+  logical            :: PCF = .true.            ! Use PCF ?
+  logical            :: CREATEMETADATA = .true. ! Create .met files ?
+  logical            :: TOOLKIT = .true.        ! Use PGS_... routines?
   ! PCF controls whether the input and output file names are obtained
   ! from the PCF or the l2cf; if .false., the l2cf must supply every
   ! file name (L1B..) plus all the global settings (start, end times, ..)
@@ -70,6 +70,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.5  2001/05/06 20:54:40  pwagner
+! Default settings should work for most jpl users
+!
 ! Revision 2.4  2001/05/04 22:54:31  pwagner
 ! Added TOOLKIT, CREATEMETADATA, PCF_FOR_INPUT
 !
