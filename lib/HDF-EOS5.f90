@@ -123,6 +123,13 @@ module HDFEOS5               ! F90 interface to HDF-EOS5.
        character(len=*),intent(IN)::ALIASLIST
     end function HE5_SWSETALIAS
 
+    integer function HE5_SWSETFILL (SWATHID, FIELDNAME, NUMBERTYPE, FILLVALUE)
+       integer,intent(in)::SWATHID
+       character(len=*),intent(IN)::FIELDNAME
+       integer, intent(in) :: NUMBERTYPE
+       real, intent(in) :: FILLVALUE
+    end function HE5_SWSETFILL
+
   end interface
 
 !====================
@@ -135,6 +142,9 @@ end module HDFEOS5
 !====================
 
 ! $Log$
+! Revision 2.4  2003/03/07 00:34:18  pwagner
+! Added HE5_SWSETFILL
+!
 ! Revision 2.3  2002/12/11 22:21:47  pwagner
 ! Added HE5_SWSETALIAS
 !
