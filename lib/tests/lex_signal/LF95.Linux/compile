@@ -1,0 +1,1 @@
+lf95 -g -o test_lex_signal ../Test_Lex_Signal.f90 -I ../../../LF95.Linux/ -L ../../../LF95.Linux/ -lmls -L /van1/vsnyder/mlspgs/SDPToolkit/LF95 -lPGSTK
