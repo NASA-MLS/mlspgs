@@ -1,5 +1,4 @@
-
-! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module Time
@@ -359,7 +358,7 @@ contains
     integer :: Pgs_td_utcToTAI, Pgs_td_taiToUTC
 
     ! Variables
-    logical, parameter :: DEBUG = .TRUE.
+    logical, parameter :: DEBUG = .FALSE.
     logical, parameter :: ADDEXTRAMIF = .TRUE.
    
     character(LEN=27) :: backTimes(scansPerOrb)
@@ -533,6 +532,9 @@ contains
 end module Time
 
 ! $Log$
+! Revision 1.5  2001/12/08 00:46:48  pwagner
+! ADDEXTRAMIF in Time_pre and Time_post; debugging stuff(latter should be ousted)
+!
 ! Revision 1.4  2001/12/06 01:02:30  pwagner
 ! Now writes orbit incline angle in ECR
 !

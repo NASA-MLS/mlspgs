@@ -1,3 +1,6 @@
+! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 program sids_l1boa ! Generate simulated L1BOA data for MLS
 
   USE DUMP_0, only: DUMP
@@ -8,6 +11,7 @@ program sids_l1boa ! Generate simulated L1BOA data for MLS
     & MLSMESSAGE
   use Orbit, only: ALTG, ALTT, ASCTAI, DSCTAI, ORBINCLINE, ORBITNUMBER, &
     & ORBIT_MET, NUMORB
+  use Output_M, only: output
   use OutputL1B, only: L1BOAINDEX_T
   use Read, only: READ_SCAN, READ_UIF
   use Sd, only: SD_CREATE
@@ -26,7 +30,8 @@ program sids_l1boa ! Generate simulated L1BOA data for MLS
   ! This program creates a  SIDS L1BOA file.
 
   ! Parameters
-  logical, parameter :: DEBUG = .TRUE.
+  logical, parameter :: DEBUG = .FALSE.
+  logical, parameter :: PRINTPROGRESS = .TRUE.
    
   integer, parameter :: SD_OUTFILE = 333
 
@@ -141,7 +146,11 @@ program sids_l1boa ! Generate simulated L1BOA data for MLS
   call Sd_create(mifG, lenMIF, mifT, offsetMAF, orbPerDay, physicalFilename, &
     postMAF, preMAF, scansPerOrb, lenMAF)
 
-  print *, 'Num of MAFs in file = ', lenMAF
+!  print *, 'Num of MAFs in file = ', lenMAF
+  if ( PRINTPROGRESS ) then
+    call output('Num of MAFs in file = ', advance='no')
+    call output(lenMAF, advance='yes')
+  endif
 
   ! After creation, re-open the HDF file and initialize the SD interface for
   ! writing
@@ -166,8 +175,10 @@ program sids_l1boa ! Generate simulated L1BOA data for MLS
      allocate( deltaT(lenMAF-1) )    
   endif                              
   ! For first MAF, calculate & write L1BOA data with fill values/settings
-  print *, 'Processing MAF 1 ... '
-
+  if ( PRINTPROGRESS ) then
+!   print *, 'Processing MAF 1 ... '
+    call output('Processing MAF 1 ... ', advance='yes')
+  endif
   index%MAFStartTimeUTC = mafTime(1)
   index%MAFStartTimeTAI = mafTAI(1)
   index%noMIFs = nV(1)
@@ -193,7 +204,13 @@ program sids_l1boa ! Generate simulated L1BOA data for MLS
   ! For remaining MAFs, calculate & write L1BOA data
   do i = 2, lenMAF
 
-    print *, 'Processing MAF ', i, ' ... '
+!    print *, 'Processing MAF ', i, ' ... '
+    if ( PRINTPROGRESS ) then
+!     print *, 'Processing MAF 1 ... '
+      call output('Processing MAF ', advance='no')
+      call output(i, advance='no')
+      call output(' ... ', advance='yes')
+    endif
     if ( DEBUG ) deltaT(i-1) = mafTAI(i) - mafTAI(i-1)
 
     index%MAFStartTimeUTC = mafTime(i)
@@ -229,6 +246,9 @@ program sids_l1boa ! Generate simulated L1BOA data for MLS
 end program sids_l1boa
 
 ! $Log$
+! Revision 1.8  2001/12/08 00:44:44  pwagner
+! Prints MAF Time intervals if DEBUG
+!
 ! Revision 1.7  2001/12/04 00:24:32  pwagner
 ! Gets hdf stuff from hdf, not Sd
 !
