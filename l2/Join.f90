@@ -19,8 +19,6 @@ module Join                     ! Join together chunk based data.
   use L2GPData, only: AddL2GPToDatabase, ExpandL2GPDataInPlace, &
     & L2GPData_T, SetupNewL2GPRecord
   use LEXER_CORE, only: PRINT_SOURCE
-  use MatrixModule_1, only: CopyMatrix, Matrix_Database_T, &
-    & Dump, GetFromMatrixDatabase, Matrix_T
   use MLSCommon, only: MLSChunk_T, R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, &
     & MLSMSG_Allocate, MLSMSG_Deallocate
@@ -63,13 +61,12 @@ contains ! =====     Public Procedures     =============================
   ! routine has to create the l2gp and l2aux structures with the correct size
   ! in order to be able to store all the chunks.
 
-  subroutine MLSL2Join ( root, vectors, matrices, l2gpDatabase, l2auxDatabase, &
+  subroutine MLSL2Join ( root, vectors, l2gpDatabase, l2auxDatabase, &
     & chunkNo, chunks )
 
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Of the JOIN section in the AST
     type (Vector_T), dimension(:), pointer :: vectors
-    type (Matrix_Database_T), dimension(:), pointer :: matrices
     type (L2GPData_T), dimension(:), pointer :: l2gpDatabase
     type (L2AUXData_T), dimension(:), pointer :: l2auxDatabase
     integer, intent(in) :: chunkNo
@@ -601,6 +598,10 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.31  2001/04/28 01:30:14  livesey
+! Basically gone back to an earlier version.  As l2pc's now output
+! directly as matrices there is no need for Join to think about them.
+!
 ! Revision 2.30  2001/04/27 21:52:39  livesey
 ! Removed l2pc stuff
 !
