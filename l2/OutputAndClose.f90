@@ -31,6 +31,7 @@ module OutputAndClose ! outputs all data from the Join module to the
 
   ! Should we get this from MLSL2Options?
   logical, parameter :: LOGFILEGETSMETADATA = .false.  ! metadata to log file?
+  logical, parameter :: FAKEPARALLELMASTER =  .false.  ! make up fake stuff?
   ! For Announce_Error
   integer :: ERROR
 
@@ -145,6 +146,7 @@ contains ! =====     Public Procedures     =============================
     real :: T1, T2     ! for timing
     integer :: Type                     ! Type of value returned by EXPR
     integer :: Units(2)                 ! Units of value returned by EXPR
+    logical :: USINGSUBMIT              ! Set if using the submit mechanism
     double precision :: Value(2)        ! Value returned by EXPR
     type (Matrix_T), pointer :: TMPMATRIX ! A pointer to a matrix to write into l2pc
     logical :: TIMING
@@ -164,6 +166,8 @@ contains ! =====     Public Procedures     =============================
       call output ( '============ Level 2 Products ============', advance='yes' )
       call output ( ' ', advance='yes' )
     end if
+
+    usingSubmit = trim(parallel%submit) /= ''
 
     ! l2gp_mcf will be incremented in get_l2gp_mcf (if MCFFORL2GPOPTION == 1)
     l2gp_mcf = mlspcf_mcf_l2gp_start - 1   
@@ -708,12 +712,21 @@ contains ! =====     Public Procedures     =============================
           sdfId = mls_sfstart(l2auxPhysicalFilename, DFACC_RDWR, &
               & hdfVersion=HDFVERSION_5)
           call h5gopen_f(sdfId, '/', grp_id, returnStatus)
+          if ( .not. parallel%master .and. FAKEPARALLELMASTER ) then
+            parallel%numCompletedChunks = 347
+            parallel%numFailedChunks = 3
+            parallel%FailedChunks = '2,5,129'
+            parallel%FailedMachs = 'c0-1,c0-66,c0-66'
+          endif
           call MakeHDF5Attribute(grp_id, &
            & 'NumCompletedChunks', parallel%numCompletedChunks, .true.)
           call MakeHDF5Attribute(grp_id, &
            & 'NumFailedChunks', parallel%numFailedChunks, .true.)
           call MakeHDF5Attribute(grp_id, &
            & 'FailedChunks', trim(parallel%FailedChunks), .true.)
+          if ( .not. usingSubmit ) &
+            call MakeHDF5Attribute(grp_id, &
+             & 'FailedMachines', trim(parallel%FailedMachs), .true.)
           call h5gclose_f(grp_id, returnStatus)
           returnStatus = mls_sfend(sdfid, hdfVersion=HDFVERSION_5)
         endif
@@ -990,6 +1003,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.102  2004/09/16 23:57:54  pwagner
+! Now tracks machine names of failed chunks
+!
 ! Revision 2.101  2004/09/16 00:19:05  pwagner
 ! Writes info on completed, failed chunks to l2aux as global attrs
 !
