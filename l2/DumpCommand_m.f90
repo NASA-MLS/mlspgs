@@ -27,6 +27,7 @@ contains
   ! Process a "dump" command
 
     use AntennaPatterns_m, only: Dump_Antenna_Patterns_Database
+    use Calendar, only: Duration_Formatted, Time_T, TK
     use Declaration_table, only: Num_Value
     use Expr_m, only: Expr
     use FilterShapes_m, only: Dump_Filter_Shapes_Database, &
@@ -37,9 +38,9 @@ contains
       & F_AllPFA, F_AllQuantityTemplates, F_AllSignals, F_AllSpectra, &
       & F_AllVectors, F_AllVectorTemplates, F_AllVGrids, F_AntennaPatterns, &
       & F_Details, F_DACSFilterShapes, F_FilterShapes, F_ForwardModel, F_HGrid, &
-      & F_Lines, F_PfaData, F_PointingGrids, F_Quantity, F_Signals, F_Spectroscopy, &
-      & F_Stop, F_Template, F_TGrid, F_Vector, F_VGrid, S_Quantity, &
-      & S_VectorTemplate
+      & F_Lines, F_Mark, F_PfaData, F_PointingGrids, F_Quantity, F_Signals, &
+      & F_Spectroscopy, F_Stop, F_Template, F_Text, F_TGrid, F_Vector, F_VGrid, &
+      & S_Quantity, S_VectorTemplate
     use Intrinsic, only: PHYQ_Dimensionless
     use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
     use MLSSignals_m, only: Dump, Signals
@@ -48,7 +49,8 @@ contains
     use PointingGrid_m, only: Dump_Pointing_Grid_Database
     use QuantityTemplates, only: Dump, QuantityTemplate_T
     use SpectroscopyCatalog_m, only: Catalog, Dump, Dump_Lines_Database, Lines
-    use Tree, only: Decoration, Node_Id, Nsons, Subtree
+    use String_Table, only: Get_String
+    use Tree, only: Decoration, Node_Id, Nsons, Source_Ref, Sub_rosa, Subtree
     use Tree_Types, only: N_Spec_Args
     use VectorsModule, only: Dump, & ! for vectors, vector quantities and templates
       & GetVectorQtyByTemplateIndex, Vector_T, VectorTemplate_T
@@ -63,11 +65,18 @@ contains
     type (HGrid_T), dimension(:), intent(in), optional :: HGrids
     type (VGrid_T), dimension(:), pointer, optional :: VGrids
 
+    real(tk) :: CPUTime, CPUTimeBase = 0.0_tk
+    character(8) :: Date
     integer :: Details
     integer :: FieldIndex
-    integer :: GSON, I, J, Look
+    logical :: GotOne ! of something -- used to test loop completion
+    integer :: GSON, I, J, K, L, Look
     integer :: QuantityIndex
     integer :: Son
+    integer :: Source ! column*256 + line
+    character :: TempText*20, Text*255
+    type(time_t) :: Time
+    character(10) :: TimeOfDay
     integer :: VectorIndex
     integer :: Type     ! of the Details expr -- has to be num_value
     integer :: Units(2) ! of the Details expr -- has to be phyq_dimensionless
@@ -196,6 +205,8 @@ contains
           call output ( what, after=': ' )
           call dump ( lines(what) )
         end do
+      case ( f_mark )
+        if ( get_boolean(son) ) call cpu_time ( cpuTimeBase )
       case ( f_pfaData )
         do i = 2, nsons(son)
           look = decoration(decoration(subtree(i,son)))
@@ -244,6 +255,89 @@ contains
             end if
           end select
         end do
+      case ( f_text )
+        do k = 2, nsons(son)
+          call get_string ( sub_rosa(subtree(k,son)), text, strip=.true. )
+          ! Replace format marks: %[Cc] => CPU time in YyDdHH:MM:SS.SSS format
+          !                       %[Dd] => date and time of day
+          !                       %[Ss] => CPU time in seconds
+          !                       %[Tt] => time of day
+          gotOne = .false.
+          do
+            i = max(index(text,'%c'), index(text,'%C'))
+            if ( i /= 0 ) then
+              tempText = ''
+              l = 1 ! Position in TempText
+              call cpu_time ( cpuTime )
+              time = duration_formatted ( cpuTime - cpuTimeBase )
+              if ( time%year /= 0 ) then
+                gotOne = .true.
+                write ( tempText, * ) time%year
+                tempText = adjustl(tempText)
+                l = len_trim(tempText) + 2
+                tempText(l-1:l-1) = 'y'
+              end if
+              if ( time%day /= 0 .or. gotOne ) then
+                gotOne = .true.
+                write ( tempText(l:), * ) time%day
+                tempText(l:) = adjustl(tempText(l:))
+                l = len_trim(tempText) + 2
+                tempText(l-1:l-1) = 'd'
+              end if
+              if ( time%hours /= 0 .or. gotOne ) then
+                gotOne = .true.
+                write ( tempText(l:), '(i2.2)' ) time%hours
+                tempText(l:) = adjustl(tempText(l:))
+                l = len_trim(tempText) + 2
+                tempText(l-1:l-1) = ':'
+              end if
+              if ( time%minutes /= 0 .or. gotOne ) then
+                gotOne = .true.
+                write ( tempText(l:), '(i2.2)' ) time%minutes
+                tempText(l:) = adjustl(tempText(l:))
+                l = len_trim(tempText) + 2
+                tempText(l-1:l-1) = ':'
+              end if
+              write ( tempText(l:), '(f6.3)' ) time%seconds
+              tempText(l:) = adjustl(tempText(l:))
+              l = len_trim(tempText)
+              text = text(:i-1) // tempText(:l) // text(i+2:)
+              cycle
+            end if
+            i = max(index(text,'%d'), index(text,'%D'))
+            if ( i /= 0 ) then
+              call date_and_time ( date=date, time=timeOfDay )
+              text = text(:i-1) // date(1:4) // '-' // date(5:6) // '-' // date(7:8) // &
+                & ' ' // timeOfDay(1:2) // ':' // timeOfDay(3:4) // ':' // timeOfDay(5:10) // &
+                & text(i+2:)
+              cycle
+            end if
+            i = max(index(text,'%l'), index(text,'%L'))
+            if ( i /= 0 ) then
+              source = source_ref(subtree(k,son))
+              write ( tempText(1:10), * ) source/256
+              write ( tempText(11:20), * ) mod(source,256)
+              text = text(:i-1) // "line " // trim(adjustl(tempText(1:10))) // &
+                & ", column " // trim(adjustl(tempText(11:20))) // text(i+2:)
+              cycle
+            end if
+            i = max(index(text,'%s'), index(text,'%S'))
+            if ( i /= 0 ) then
+              write ( tempText, * ) cpuTime - cpuTimeBase
+              text = text(:i-1) // trim(adjustl(tempText)) // text(i+2:)
+              cycle
+            end if
+            i = max(index(text,'%t'), index(text,'%T'))
+            if ( i /= 0 ) then
+              call date_and_time ( time=timeOfDay )
+              text = text(:i-1) // timeOfDay(1:2) // ':' // timeOfDay(3:4) // &
+                & ':' // timeOfDay(5:10) // text(i+2:)
+              cycle
+            end if
+            exit ! Didn't find a format trigger
+          end do
+          call output ( trim(text), advance='yes' )
+        end do ! k
       case ( f_tGrid )
         if ( present(vGrids) ) then
           do i = 2, nsons(son)
@@ -326,6 +420,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.21  2005/04/01 20:48:28  vsnyder
+! Add mark and text fields to dump command
+!
 ! Revision 2.20  2005/03/26 01:34:00  vsnyder
 ! Add stop message
 !
