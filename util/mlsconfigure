@@ -37,12 +37,15 @@
 #  -pc plat_dir         Directory where platforms directory to be found
 #  -nc                  (if present) Don't query nor change configuration
 #  -nd                  (if present) Don't delete ./$MLSCONFG if it already exists
+#  -pv                  (if present) Change PVM and FFTW settings
+#  -fl                  (if present) Change default FOPTS and LDOPTS
 #
 # Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 # "$Id$"
 
+#------------------------------- UserPrompt ------------
 # Function to prompt for user response
 #
 
@@ -55,6 +58,9 @@ UserPrompt()
     fi
     read user_response
 }
+
+#------------------------------- GetPlatform ------------
+
 GetPlatform()
 {
         more << EOF_1
@@ -91,7 +97,7 @@ this configuration was being written (17 Oct 2000), the URL for them was
 
 EOF_1
 
-#accept user settings and write them to file .configure
+#accept user compiler and platforms settings to be written to file .configure
 
  UserPrompt "Fortran 95 Compiler (Lahey, NAG) [$current_compiler]"
    if [ "$user_response" != "" ] ; then
@@ -164,6 +170,25 @@ Note: a path is a length of test that looks something like this:
     /head/Toolkit/lib/linux
 would correspond to the path to the SDP Toolkit (called just "toolkit")
 
+EOF_2
+
+all_non_blank="true"
+
+if [ "$current_PGSINC" = "" ] ; then
+	all_non_blank="false"
+elif [ "$current_PGSTK" = "" ] ; then
+	all_non_blank="false"
+elif [ "$current_HDFEOS" = "" ] ; then
+	all_non_blank="false"
+elif [ "$current_HDF" = "" ] ; then
+	all_non_blank="false"
+elif [ "$current_GCTP" = "" ] ; then
+	all_non_blank="false"
+fi
+
+if [ "$all_non_blank" = "true" ] ; then
+
+        more << EOF_3
 Currently your paths are given by:
 
         "include" files:  $current_PGSINC
@@ -172,13 +197,13 @@ Currently your paths are given by:
         hdf:              $current_HDF
         gctp:             $current_GCTP
 
-If these settings are wrong, or you wish to change them in order to
-prepare multiple installations at your site, you will be given an
+If any of these settings are wrong or blank, or you wish to change them in
+order to prepare multiple installations at your site, you will be given an
 opportunity to (re)set them momentarily.
 
-EOF_2
+EOF_3
 
- UserPrompt "Are these paths correct [Y[es] or N[o]]"
+ UserPrompt "Are all of these paths correct and non-blank?[Y[es] or N[o]]"
    if [ "$user_response" != "" ] ; then
 	case  "$user_response" in
 	    n* | N* )
@@ -191,6 +216,10 @@ EOF_2
    else
 	change_paths="false"
     fi
+
+else
+		change_paths="true"
+fi
 
 if [ $change_paths = "true" ] ; then
 #Change Includes path
@@ -272,16 +301,21 @@ else
     HDF=$current_HDF
     GCTP=$current_GCTP
 fi
+}
+
+#------------------------------- GetPVM ------------
+GetPVM()
+{
 
 if [ "$add_PVM_PATH" != "true" ] ; then
 	change_paths="false"
 else
-        more << EOF_3
+        more << EOF_4
                     *        *        *
 
-The final questions refer to two more needed libraries: PVM and FFTW. Here too,
+The next questions refer to two special libraries: PVM and FFTW. Here too,
 it is possible that during the installation, these paths were automatically
-"hard wired" as environment variables, and if so the values shown below will be
+"hard wired" as environment variables, and if so the values shown below may be
 correct. If they are correct, simply answer Y[es] to the next question.
 Otherwise you will be asked to supply the correct paths.
 
@@ -290,11 +324,11 @@ Currently these paths are given by:
         PVM root       :  $current_PVM_ROOT
         FFTW path      :  $current_FFTW_ROOT
 
-If these settings are wrong, or you wish to change them in order to
-prepare multiple installations at your site, you will be given an
-opportunity to (re)set them momentarily.
+If these settings are wrong, or you wish to change them in order to prepare
+multiple installations at your site, you will be given an opportunity to
+(re)set them momentarily.
 
-EOF_3
+EOF_4
 
  UserPrompt "Are these paths correct [Y[es] or N[o]]"
    if [ "$user_response" != "" ] ; then
@@ -314,15 +348,18 @@ fi
 
 if [ $change_paths = "true" ] ; then
 #Change PVM root path
- UserPrompt "PVM root [$current_PVM_ROOT]"
-   if [ "$user_response" != "" ] ; then
+ UserPrompt "PVM root (enter <b> to force back to blank) [$current_PVM_ROOT]"
+   if [ "$user_response" = "<b>" ] ; then
+	 PVM_ROOT=""
+	 echo "You will build a mls software version without PVM support"
+   elif [ "$user_response" != "" ] ; then
 	 PVM_ROOT=$user_response
    elif [ "$current_PVM_ROOT" != "" ] ; then
 	echo "PVM root path is still $current_PVM_ROOT."
         PVM_ROOT=$current_PVM_ROOT
    else
 	echo "Warning: No PVM ROOT path selected; none found"
-	echo "mls software may not link properly "
+	echo "You will build a mls software version without PVM support"
 	echo "unless you reconfigure; enter 'make configure'."
 	PVM_ROOT=""
    fi
@@ -350,7 +387,7 @@ if [ $change_paths = "true" ] ; then
         FFTW_ROOT=$current_FFTW_ROOT
    else
 	echo "Warning: No FFTW root path selected; none found"
-	echo "level 3 mls software may not link properly "
+	echo "The level 3 mls software will not link properly"
 	echo "unless you reconfigure; enter 'make configure'."
 	FFTW_ROOT=""
    fi
@@ -377,6 +414,35 @@ else
 fi
 }
 
+#------------------------------- GetFOPTS ------------
+
+GetFOPTS()
+{
+        more << EOF_5
+                    *        *        *
+
+You may change the current options passed to the compiler and linker. Normally
+the default options work well, but you may wish to set debugging, turn on
+warning messages, or choose advanced optimizations. Consult your manual for
+the precise format before changing these.
+
+EOF_5
+
+#accept user compiler/linker options to be written to file .configure
+
+ UserPrompt "Fortran 95 Compiler options [$current_FOPTS]"
+   if [ "$user_response" != "" ] ; then
+		currrent_FOPTS="$user_response"
+	fi
+
+ UserPrompt "Fortran 95 Linker options [$current_LDOPTS]"
+   if [ "$user_response" != "" ] ; then
+		current_LDOPTS="$user_response"
+	fi
+
+}
+
+#------------------------------- Help ------------
 #
 # Function to output help message and exit
 #
@@ -388,11 +454,23 @@ Help()
     exit
 }
 
+#------------------------------- Main Program ------------
+
 #****************************************************************
 #                                                               *
 #                  * * * Main Program  * * *                    *
 #                                                               *
+#                                                               *
+#	The entry point where control is given to the script         *
 #****************************************************************
+
+# Set the following to "on" to print degugging info
+debugging="off"
+
+#Default compiler and linker options
+MLS_default_FOPTS_NAG="-w"
+MLS_default_FOPTS_LF95=
+MLS_default_LDOPTS=
 
 #conf_dir   the directory where the .configure file is to be stored
 #plat_dir   the directory to keep the platforms subdirectories
@@ -416,6 +494,27 @@ add_PVM_PATH="false"
 current_PVM_ROOT=$PVM_ROOT
 current_PVM_ARCH=$PVM_ARCH
 current_FFTW_ROOT=$FFTW_ROOT
+
+# Whether to include default FOPTS and LDOPTS in .configure
+add_FOPTS="false"
+current_FOPTS=$FOPTS
+current_LDOPTS=$LDOPTS
+
+# Debugging
+if [ "$debugging" = "on" ] ; then
+	echo "MLSF95=$MLSF95"
+	echo "MLSPLAT=$MLSPLAT"
+	echo "PGSINC=$PGSINC"
+	echo "PGSLIB=$PGSLIB"
+	echo "HDFEOS_LIB=$HDFEOS_LIB"
+	echo "HDFLIB=$HDFLIB"
+	echo "add_PVM_PATH=$add_PVM_PATH"
+	echo "PVM_ROOT=$PVM_ROOT"
+	echo "PVM_ARCH=$PVM_ARCH"
+	echo "FFTW_ROOT=$FFTW_ROOT"
+	echo "FOPTS=$FOPTS"
+	echo "LDOPTS=$LDOPTS"
+fi
 
 #
 # Get arguments from command line
@@ -461,13 +560,52 @@ while [ "$1" != "" ] ; do
 	    del_exist_dir="false"
 	;;
 
+	-pv )
+	    add_PVM_PATH="true"
+	;;
+
+	-fl )
+	    add_FOPTS="true"
+	;;
+
     esac
     shift
 
 done
 
+write_confg="false"
+
 if [ $get_confg = "true" ] ; then
 	GetPlatform
+	write_confg="true"
+else
+        compiler=$current_compiler
+        platform=$current_platform
+ fi
+
+if [ $add_PVM_PATH = "true" ] ; then
+	GetPVM
+	write_confg="true"
+fi
+
+if [ $add_FOPTS = "true" ] ; then
+	GetFOPTS
+	write_confg="true"
+fi
+
+if [ "$current_FOPTS" = "" ] ; then
+		if [ "$compiler" = "NAG" ] ; then
+			FOPTS="$MLS_default_FOPTS_NAG"
+		else
+			FOPTS="$MLS_default_FOPTS_LF95"
+		fi
+fi
+
+if [ "$current_LDOPTS" = "" ] ; then
+			LDOPTS="$MLS_default_LDOPTS"
+fi
+
+if [ $write_confg = "true" ] ; then
 #	Create .configure file
 	if [ -f $conf_dir/.configure ] ; then
 		chmod u+w $conf_dir/.configure
@@ -489,6 +627,8 @@ if [ $get_confg = "true" ] ; then
 	echo "PVM_ROOT=$PVM_ROOT" >> $conf_dir/.configure
 	echo "PVM_ARCH=$PVM_ARCH" >> $conf_dir/.configure
 	echo "FFTW_ROOT=$FFTW_ROOT" >> $conf_dir/.configure
+	echo "FOPTS=$FOPTS" >> $conf_dir/.configure
+	echo "LDOPTS=$LDOPTS" >> $conf_dir/.configure
 	echo "export MLSF95" >> $conf_dir/.configure
 	echo "export MLSPLAT" >> $conf_dir/.configure
 	echo "export MLSCONFG" >> $conf_dir/.configure
@@ -496,6 +636,10 @@ if [ $get_confg = "true" ] ; then
 	echo "export PGSLIB" >> $conf_dir/.configure
 	echo "export HDFEOS_LIB" >> $conf_dir/.configure
 	echo "export HDFLIB" >> $conf_dir/.configure
+	echo "export PGSTK" >> $conf_dir/.configure
+	echo "export HDFEOS" >> $conf_dir/.configure
+	echo "export HDF" >> $conf_dir/.configure
+	echo "export GCTP" >> $conf_dir/.configure
 	echo "export PVM_ROOT" >> $conf_dir/.configure
 	echo "export PVM_ARCH" >> $conf_dir/.configure
 	echo "export FFTW_ROOT" >> $conf_dir/.configure
@@ -572,6 +716,9 @@ fi
 
 exit
 # $Log$
+# Revision 1.5  2001/02/10 00:06:47  pwagner
+# update now a target of make -f MakeFC; replaces customized Makefiles with latest versions
+#
 # Revision 1.4  2001/01/23 19:41:36  pwagner
 # Adds support for PVM
 #
