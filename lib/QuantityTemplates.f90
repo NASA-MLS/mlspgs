@@ -27,7 +27,7 @@ MODULE QuantityTemplates         ! Quantities within vectors
   ! No doubt more will be added.
 
   INTEGER, PARAMETER :: NoQTYTypes=6
-  CHARACTER (LEN=12), PARAMETER, DIMENSION(NoQtyFamilies) :: &
+  CHARACTER (LEN=12), PARAMETER, DIMENSION(NoQtyTypes) :: &
        & QTYTypeNames= (/ &
        & "TEMPERATURE ", &
        & "VMR         ", &
@@ -77,6 +77,7 @@ MODULE QuantityTemplates         ! Quantities within vectors
      ! Now some misc. information
 
      REAL(r8) :: badValue ! Value used to flag bad/missing data
+     CHARACTER(LEN=NameLen) :: unit ! Unit quantity is in when scaled as below
      REAL(r8) :: scaleFactor ! Scale factor used when printing etc.
 
      ! Now, for regular quantities the number of elements each subvector is
@@ -400,6 +401,9 @@ END MODULE QuantityTemplates
 
 !
 ! $Log$
+! Revision 1.2  1999/12/16 23:12:09  livesey
+! Added quantityType and other support entries
+!
 ! Revision 1.1  1999/12/16 18:31:43  livesey
 ! First version. Renamed from VectorQuantities
 !
