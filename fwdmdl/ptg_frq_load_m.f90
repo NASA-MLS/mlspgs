@@ -35,6 +35,7 @@ Character (LEN=80) :: Fnd, Line
 ! Load the pointing vs. frequencies database for the given band
 ! (needed for frequency averaging)
 !
+  Ier = 0
   Fnd(1:) = ' '
   Fnd = FMC%B
 !
@@ -148,6 +149,9 @@ Character (LEN=80) :: Fnd, Line
 
 end module PTG_FRQ_LOAD_M
 ! $Log$
+! Revision 1.2  2001/03/09 00:40:32  zvi
+! Correcting an error in HUNT routine
+!
 ! Revision 1.1  2001/03/06 09:28:28  zvi
 ! *** empty log message ***
 !
