@@ -18,8 +18,7 @@ module L2Parallel
     & MYPVMSPAWN, PVMFCATCHOUT, PVMFSEND, PVMFNOTIFY, PVMTASKEXIT
   use PVMIDL, only: PVMIDLPACK, PVMIDLUNPACK
   use QuantityPVM, only: PVMSENDQUANTITY, PVMRECEIVEQUANTITY
-  use MLSCommon, only: R8, MLSCHUNK_T
-  use MLSL2Common, only: FindFirst
+  use MLSCommon, only: R8, MLSCHUNK_T, FINDFIRST
   use VectorsModule, only: VECTOR_T, VECTORVALUE_T, VECTORTEMPLATE_T, &
     & ADDVECTORTEMPLATETODATABASE, CONSTRUCTVECTORTEMPLATE, ADDVECTORTODATABASE, &
     & CREATEVECTOR, DESTROYVECTORINFO, DESTROYVECTORTEMPLATEINFO
@@ -813,6 +812,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.19  2001/09/09 02:52:43  livesey
+! Now gets find first from a different place
+!
 ! Revision 2.18  2001/09/08 00:21:44  pwagner
 ! Revised to work for new column Abundance in lone swaths
 !
