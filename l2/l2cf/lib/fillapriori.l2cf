@@ -228,8 +228,10 @@ begin Fill
   })
 
   ;; Setup the low and high bounds for stuff that needs them.
+  Fill, quantity=lowBound.temperature, method=explicit, explicitValues=50K, /spread
+  Fill, quantity=highBound.temperature, method=explicit, explicitValues=550K, /spread
+
   Fill, quantity=lowBound.tropH2O, method=explicit, explicitValues=0.1ppmv, /spread
+  Fill, quantity=highBound.tropH2O, method=explicit, explicitValues=0.01, /spread
 
 end Fill
-
-
