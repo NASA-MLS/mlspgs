@@ -178,6 +178,8 @@ contains ! ===================================== Public Procedures =====
         & MLSMSG_Deallocate//'obstructions' )
     end if
 
+    if ( toggle(gen) ) call trace_end ( "ScanDivide" )
+
     if ( index(switches, 'chu') /= 0 ) call dump ( chunks )
 
   contains
@@ -1333,6 +1335,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.23  2002/10/07 18:00:10  livesey
+! Added call to trace_end, whoops!
+!
 ! Revision 2.22  2002/08/22 01:23:52  vsnyder
 ! Move USE statements from module scope to procedure scope
 !
