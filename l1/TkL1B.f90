@@ -1,11 +1,12 @@
-! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module TkL1B
 
   use MLSCommon, only: R8
   use MLSL1Common
-  use MLSMessageModule, only: MLSMESSAGE
+  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_Error
+  use OUTPUT_M, only: BLANKS, OUTPUT
   use OutputL1B, only: L1BOAsc_T, L1BOATP_T, L1BOAINDEX_T, LENCOORD, &
     OUTPUTL1B_THZ, OUTPUTL1B_SC, OUTPUTL1B_INDEX, OUTPUTL1B_GHZ, LENG, LENT
   use Scan
@@ -14,6 +15,8 @@ module TkL1B
   private
 
   public :: TKL1B_SC, TKL1B_TP, L1BOA_MAF, MC_AUX, TKL1B_MC
+  logical, public, parameter :: ORBINCLINE_IS_CONSTANT = .FALSE.
+  real, parameter ::    UNDEFINED_VALUE = -999.99
 
   !------------------- RCS Ident Info -----------------------
   character(LEN=130) :: Id = &
@@ -49,7 +52,6 @@ contains
     real(r8) :: radC(numValues), radD(numValues), radL(numValues)
     real(r8) :: attitQuat(4,numValues)
     real(r8) :: eciV(6,numValues), ecrV(6,numValues)
-    real(r8) :: xyDist
 
     ! Executable code
 
@@ -65,9 +67,10 @@ contains
 
     ! Convert scECI to scECR
     eciV(1:3,:) = sc%scECI
-    eciV(4:6,:) = 0.0
+    eciV(4:6,:) = sc%scVelECI    ! was 0.0
     returnStatus = Pgs_csc_eciToECR (numValues, asciiUTC, offsets, eciV, ecrV)
     sc%scECR = ecrV(1:3,:)
+    sc%scVelECR = ecrV(4:6,:)
 
     ! Calculate geocentric/geodetic altitude, latitude & longitude from scECR
     do i = 1, numValues
@@ -79,6 +82,7 @@ contains
         radD(i), sc%scGeodAlt(i))
       sc%scGeodLat(i) = Rad2Deg * radD(i)
       sc%scLon(i) = Rad2Deg * radL(i)
+      sc%scOrbIncl(i) = orbInclineCalculated(sc%scECI(:,i), sc%scVelECI(:,i))
     enddo
 
   end subroutine TkL1B_sc
@@ -105,7 +109,7 @@ contains
 
     ! Variables
     character (LEN=27) :: time
-    integer :: error, flag, flagQ, i, returnStatus
+    integer :: flag, flagQ, i, returnStatus
     real(r8) :: declination, delAngle, delTime, deltaAlt, deltaLat, deltaLon
     real(r8) :: greenwich, localApparent, rightAscension, tai
     real(r8) :: dot(lenG), latD(lenG), localMean(lenG), lon(lenG), los(lenG)
@@ -373,8 +377,9 @@ contains
     ! Allocate the MIF variables in the output structures
     allocate(sc%scECI(lenCoord,nV), sc%scECR(lenCoord,nV), &
       sc%scGeocAlt(nV), sc%scGeocLat(nV), sc%scGeodAlt(nV), &
-      sc%scGeodLat(nV), sc%scLon(nV), sc%scGeodAngle(nV), &
+      sc%scGeodLat(nV), sc%scLon(nV), sc%scGeodAngle(nV), sc%scOrbIncl(nV), &
       sc%scVelECI(lenCoord,nV), sc%ypr(lenCoord,nV), sc%yprRate(lenCoord,nV), &
+      sc%scVelECR(lenCoord,nV), &
       tp%encoderAngle(nV), tp%scAngle(nV), tp%scanAngle(nV), &
       tp%scanRate(nV), STAT=error)
     if ( error /= 0 ) then
@@ -388,7 +393,8 @@ contains
     ! Get s/c master coordinate
     call Mc_aux(mafTime, sc%scECI(:,1), sc%scGeocLat(1), q)
     call TkL1B_mc(ascTAI, dscTAI, sc%scECI, sc%scGeocLat, nV, numOrb, &
-      orbIncline, orbitNumber, q, mafTAI, offsets, sc%scGeodAngle)
+      & orbIncline, orbitNumber, q, mafTAI, offsets, sc%scGeodAngle, &
+      & sc%scOrbIncl)
 
     ! Write s/c information
     call OutputL1B_sc(noMAF, L1FileHandle, sc)
@@ -418,7 +424,8 @@ contains
 
     ! Compute GHz master coordinate
     call TkL1B_mc(ascTAI, dscTAI, tp%tpECI, tp%tpGeocLat, lenG, numOrb, &
-      orbIncline, orbitNumber, q, mafTAI, offsets(1:lenG), tp%tpGeodAngle)
+      & orbIncline, orbitNumber, q, mafTAI, offsets(1:lenG), tp%tpGeodAngle, &
+      & sc%scOrbIncl)
 
     ! Write GHz information
     call OutputL1B_GHz(noMAF, L1FileHandle, tp)
@@ -451,7 +458,8 @@ contains
 
     ! Compute THz master coordinate
     call TkL1B_mc(ascTAI, dscTAI, tp%tpECI, tp%tpGeocLat, lenT, numOrb, &
-      orbIncline, orbitNumber, q, mafTAI, offsets(1:lenT), tp%tpGeodAngle)
+      & orbIncline, orbitNumber, q, mafTAI, offsets(1:lenT), tp%tpGeodAngle, &
+      & sc%scOrbIncl)
 
     ! Write THZ information
     call OutputL1B_THz(noMAF, L1FileHandle, tp)
@@ -465,9 +473,9 @@ contains
 
     ! Deallocate the MIF quantities
     deallocate(sc%scECI, sc%scECR, sc%scGeocAlt, sc%scGeocLat, &
-      sc%scGeodAlt, sc%scGeodLat, sc%scLon, sc%scGeodAngle,  sc%scVelECI, &
-      sc%ypr, sc%yprRate, tp%encoderAngle, tp%scAngle, tp%scanAngle, &
-      tp%scanRate, STAT=error)
+      sc%scGeodAlt, sc%scGeodLat, sc%scLon, sc%scGeodAngle, sc%scVelECI, &
+      sc%scOrbIncl, sc%ypr, sc%yprRate, tp%encoderAngle, tp%scAngle, &
+      tp%scanAngle, tp%scanRate, STAT=error)
     if ( error /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
       & 'Failed deallocation of MIF quantities.')
 
@@ -491,7 +499,7 @@ contains
     integer :: Pgs_csc_orbToECI
 
     ! Variables
-    integer :: i, returnStatus
+    integer :: returnStatus
     real(r8) :: l
     real(r8) :: dist(2)
     real(r8) :: aECI(3), aux1(3), aux1ECI(3), aux2(3), aux2ECI(3)
@@ -559,21 +567,87 @@ contains
 
   end subroutine Mc_aux
 
+  !----------------------------------------------------orbInclineCalculated -----------------
+  function orbInclineCalculated( scECR, scVelECR )
+    ! This function computes the orbital inclination angle beta in degrees
+    ! where 90 would mean a perfectly polar orbit
+    ! Method: let [r] be the vector of the s/c position (in ECR coords)
+    ! i.e., [r] = (x, y, z)
+    ! also [v] its instantaneous velocity, [omega] its orbital frequency,
+    ! we'll calculate its orbital moment [m]: using 'x' as the cross-product
+    ! Then [v] = [omega] x [r]
+    ! [p] = [r] x [v] = [omega] r^2 - [r] [omega] . [r]
+    ! and if [r] . [omega] = 0
+    ! [omega] = [p] / r^2 = omega (sin_beta cos_alfa, sin_beta sin_alfa, cos_beta)
+    ! Arguments
+    real(r8), intent(IN) :: scECR(3)             ! s/c pos.
+    real(r8), intent(IN) :: scVelECR(3)          ! s/c vel.
+    real(r8) :: orbInclineCalculated
+    logical, parameter :: DEBUG = .FALSE.
+    integer, save :: HOWMANYSOFAR=0
+
+    ! Variables
+
+    real(r8) :: orbMoment(3), OMagnitude
+
+    ! Executable code
+    HOWMANYSOFAR = HOWMANYSOFAR + 1
+    orbMoment(1) = scECR(2)*scVelECR(3) - scECR(3)*scVelECR(2)
+    orbMoment(2) = scECR(3)*scVelECR(1) - scECR(1)*scVelECR(3)
+    orbMoment(3) = scECR(1)*scVelECR(2) - scECR(2)*scVelECR(1)
+    OMagnitude = sqrt( orbMoment(1)**2 + orbMoment(2)**2 + orbMoment(3)**2 )
+    if ( OMagnitude == 0.d0 ) then
+      orbInclineCalculated = UNDEFINED_VALUE
+      return
+    endif
+    orbInclineCalculated = (180/Pi) * acos( orbMoment(3) / OMagnitude )
+
+    ! Now added contraints: 90 < beta < 180
+    orbInclineCalculated = abs(orbInclineCalculated)
+    if ( orbInclineCalculated < 90.d0 ) then
+      orbInclineCalculated = 180. - orbInclineCalculated
+    elseif (orbInclineCalculated > 180.d0 ) then
+      orbInclineCalculated = 360. - orbInclineCalculated
+    endif
+    
+    if ( DEBUG ) then
+      call output('rx, ry, rz ', advance='no')
+      call blanks(3, advance='no')
+      call output(scECR, advance='yes')
+      call output('vx, vy, vz ', advance='no')
+      call blanks(3, advance='no')
+      call output(scVelECR, advance='yes')
+      call output('px, py, pz ', advance='no')
+      call blanks(3, advance='no')
+      call output(orbMoment, advance='yes')
+      call output('orbital inclination ', advance='no')
+      call blanks(3, advance='no')
+      call output((180/Pi) * acos( orbMoment(3) / OMagnitude ), advance='no')
+      call blanks(3, advance='no')
+      call output(orbInclineCalculated, advance='yes')
+      if ( HOWMANYSOFAR > 40 ) stop
+    endif
+  end function orbInclineCalculated
+
   !----------------------------------------------------TkL1B_mc -----------------
   subroutine TkL1B_mc(ascTAI, dscTAI, dotVec, geocLat, nV, numOrb, &
-    orbIncline, orbitNumber, q, timeTAI, time_offset, geodAngle)
+    orbIncline, orbitNumber, q, timeTAI, time_offset, geodAngle, &
+    & scOrbIncl)
     ! This subroutine computes phi, the master coordinate for the spacecraft and
     ! tangent point records.
     ! Arguments
     integer, intent(IN) :: nV, numOrb
     integer, intent(IN) :: orbitNumber(:)
-    real, intent(IN) :: geocLat(nV)
+    real, intent(IN) ::    geocLat(nV)
     real(r8), intent(IN) :: orbIncline, timeTAI
     real(r8), intent(IN) :: q(3)
     real(r8), intent(IN) :: time_offset(nV)
     real(r8), intent(IN) :: ascTAI(:), dscTAI(:)
     real(r8), intent(IN) :: dotVec(3,nV)
-    real, intent(OUT) :: geodAngle(nV)
+    real, intent(OUT) ::    geodAngle(nV)
+    real, intent(in) ::     scOrbIncl(nV)
+!    real(r8), intent(IN) :: scECR(3,nV)             ! s/c pos.
+!    real(r8), intent(IN) :: scVelECR(3,nV)          ! s/c vel.
 
     ! Functions
     integer :: Pgs_csc_getEarthFigure
@@ -584,6 +658,7 @@ contains
     real(r8) :: a, asciiTAI, b, cSq, equatRad_a, orbRad, phiMin, polarRad_c
     real(r8) :: cosPhi(nV), gamma(nV), phi(nV), sinPhi(nV)
     real(r8) :: s(3,nV)
+    real(r8) :: orbInclineNow
 
     ! Executable code
 
@@ -592,13 +667,25 @@ contains
     a = equatRad_a/1000
     b = polarRad_c/1000
 
-    ! Calculate C-squared
-    orbRad= Deg2Rad * (orbIncline - 90)
-    cSq = (1 + (tan(orbRad)**2)) * (a**2)*(b**2)/(a**2 + &
-      &(b**2)*(tan(orbRad)**2))
-
     ! Set s = normalized dotVec
     do i = 1, nV
+
+      if ( ORBINCLINE_IS_CONSTANT ) then
+        orbInclineNow = orbIncline
+      else
+!        orbInclineNow = orbInclineCalculated(scECR(:,i), scVelECR(:,i))
+        orbInclineNow = scOrbIncl(i)
+      endif
+      
+      if ( orbInclineNow == UNDEFINED_VALUE ) then
+        call MLSMessage(MLSMSG_Error, ModuleName, &
+          & 'Error in calculating orbital inclination angle')
+      endif
+      ! Calculate C-squared
+      orbRad= Deg2Rad * (orbInclineNow - 90)
+      cSq = (1 + (tan(orbRad)**2)) * (a**2)*(b**2)/(a**2 + &
+        &(b**2)*(tan(orbRad)**2))
+
       s(:,i) = dotVec(:,i) / sqrt(dotVec(1,i)**2 + dotVec(2,i)**2 + &
         &dotVec(3,i)**2)
 
@@ -648,6 +735,9 @@ contains
 end module TkL1B
 
 ! $Log$
+! Revision 2.3  2001/12/06 01:03:46  pwagner
+! Now writes orbit incline angle in ECR
+!
 ! Revision 2.2  2001/10/12 22:11:05  livesey
 ! Tidied things up a bit, added scVelECR, but not filled yet
 !
