@@ -63,8 +63,7 @@ begin Fill
   y$1: Vector, template=y$1Template
   yNoise$1: Vector, template=y$1Template
   f$1: Vector, template=y$1Template
-  ;; Optical depth may be turned on again, sometime, for the PEs
-  !ifdef(flagPrecisionEstimates,{},{od$1: Vector, template=od$1Template})
+  od$1: Vector, template=od$1Template
   ;; Define retrieval diagnostics vector
   diag$1: Vector, template=retrievalDiagnosticsTemplate
   ;; Fill state related vectors
@@ -113,7 +112,7 @@ begin Fill
   Destroy, vector=y$1
   Destroy, vector=yNoise$1
   Destroy, vector=f$1
-  !ifdef(flagPrecisionEstimates,{},{Destroy, vector=od$1})})
+  Destroy, vector=od$1})
   ;; Compute new full GPH profile
   Fill, quantity=state.gph, method=hydrostatic, $
     refGPHquantity=state.refGPH, temperatureQuantity=state.temperature
@@ -366,7 +365,8 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
     measurements=y$1, measurementSD=yNoise$1, $
     apriori=a$1, covariance=Sa$1, $
     outputSD=sdOut$1, $
-    vRegWeightVec=vr$1, hRegWeightVec=hr$1})},!dnl
+    !ifdef(flagComputeAvks,{average=Avk$1,!noteMatrix(Avk$1)}) $
+    vRegWeightVec=vr$1!ifelse(!dimension,1D,{},{, hRegWeightVec=hr$1})})},!dnl
 { !define(retrievalArguments,{$
   state=x$1, fwdModelExtra=state, $
   measurements=y$1, measurementSD=yNoise$1, $
@@ -384,6 +384,9 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
   Fill, quantity=standardPrecision.$1, method=vector, sourceQuantity=outputPrecision.$1!nl})
 
 ; $Log$
+; Revision 1.75  2003/11/15 00:23:06  livesey
+; Now automagically defines flagDontDestroyVectors
+;
 ; Revision 1.74  2003/11/14 00:12:39  livesey
 ; Added ability to automatically produce averaging kernels and output
 ; covariances on request.  Also support for flagSuppressRegularOutput
