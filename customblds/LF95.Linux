@@ -10,9 +10,9 @@ OutputL1B.o: outputl1b.mod
    -T OutputL1B.o outputl1b.mod 
 outputl1b.mod:
 	$(UTILDIR)/newAifBdiff.sh -a outputl1b.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B.f90 $(FAFTER)
-tree_checker.mod: init_tables_module.mod
+tree_checker.mod: tree_checker.f90 init_tables_module.mod
 	$(UTILDIR)/newAifBdiff.sh -a tree_checker.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(srclib)/tree_checker.f90 $(FAFTER)
-tree_checker.o: tree_checker.mod
+tree_checker.o: tree_checker.mod tree_checker.f90
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
    -T tree_checker.o tree_checker.mod 
 
@@ -140,6 +140,44 @@ machine.o: machine.mod
    -T machine.o machine.mod 
 
 intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
+
+# Custom builds for some modules needed to fool LF95 compiler
+# (for now anyway) so it won't take forever to finish
+# Use the obsolete directory to find hdf5-agnostic versions
+hdf4dir = $(CONFDIR)/lib/obsolete
+
+l2gpdata.mod:
+	$(UTILDIR)/newAifBdiff.sh -a l2gpdata.mod $(FC) -c $(FOPTS) $(INC_PATHS) $(hdf4dir)/L2GPData.f90 $(FAFTER)
+	mv l2gpdata.mod l2gpdata.mod-hdf4
+	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/L2GPData.f90 $(FAFTER)
+	mv l2gpdata.mod-hdf4 l2gpdata.mod
+L2GPData.o:
+#	$(MAKE) l2gpdata.mod 
+	mv l2gpdata.mod l2gpdata.mod-hdf4
+	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/L2GPData.f90 $(FAFTER)
+	mv l2gpdata.mod-hdf4 l2gpdata.mod
+
+l2pc_m.mod:
+	$(UTILDIR)/newAifBdiff.sh -a l2pc_m.mod $(FC) -c $(FOPTS) $(INC_PATHS) $(hdf4dir)/L2PC_m.f90 $(FAFTER)
+	mv l2pc_m.mod l2pc_m.mod-hdf4
+	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/L2PC_m.f90 $(FAFTER)
+	mv l2pc_m.mod-hdf4 l2pc_m.mod
+L2PC_m.o:
+#	$(MAKE) l2gpdata.mod 
+	mv l2pc_m.mod l2pc_m.mod-hdf4
+	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/L2PC_m.f90 $(FAFTER)
+	mv l2pc_m.mod-hdf4 l2pc_m.mod
+
+mlsfiles.mod:
+	$(UTILDIR)/newAifBdiff.sh -a mlsfiles.mod $(FC) -c $(FOPTS) $(INC_PATHS) $(hdf4dir)/MLSFiles.f90 $(FAFTER)
+	mv mlsfiles.mod mlsfiles.mod-hdf4
+	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/MLSFiles.f90 $(FAFTER)
+	mv mlsfiles.mod-hdf4 mlsfiles.mod
+MLSFiles.o:
+#	$(MAKE) l2gpdata.mod 
+	mv mlsfiles.mod mlsfiles.mod-hdf4
+	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/MLSFiles.f90 $(FAFTER)
+	mv mlsfiles.mod-hdf4 mlsfiles.mod
 
 endif
 
@@ -277,6 +315,32 @@ machine.o: $(MACH_DIR)/machine.f90
 
 intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
 
+# Custom builds for some modules needed to fool LF95 compiler
+# (for now anyway) so it won't take forever to finish
+# Use the obsolete directory to find hdf5-agnostic versions
+hdf4dir = $(CONFDIR)/lib/obsolete
+
+L2GPData.o:
+#	$(MAKE) l2gpdata.mod 
+	$(FC) -c $(FOPTS) $(INC_PATHS) $(hdf4dir)/L2GPData.f90 $(FAFTER)
+	mv l2gpdata.mod l2gpdata.mod-hdf4
+	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/L2GPData.f90 $(FAFTER)
+	mv l2gpdata.mod-hdf4 l2gpdata.mod
+
+L2PC_m.o:
+#	$(MAKE) l2gpdata.mod 
+	$(FC) -c $(FOPTS) $(INC_PATHS) $(hdf4dir)/L2PC_m.f90 $(FAFTER)
+	mv l2pc_m.mod l2pc_m.mod-hdf4
+	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/L2PC_m.f90 $(FAFTER)
+	mv l2pc_m.mod-hdf4 l2pc_m.mod
+
+MLSFiles.o:
+#	$(MAKE) l2gpdata.mod 
+	$(FC) -c $(FOPTS) $(INC_PATHS) $(hdf4dir)/MLSFiles.f90 $(FAFTER)
+	mv mlsfiles.mod mlsfiles.mod-hdf4
+	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/MLSFiles.f90 $(FAFTER)
+	mv mlsfiles.mod-hdf4 mlsfiles.mod
+
 endif
 
 BUGGY := $(shell echo ${FOPTS} | sed 's/-O[0-9]*//')
@@ -296,6 +360,9 @@ ncep_dao.o:
 
 endif
 # $Log$
+# Revision 1.5  2002/07/15 23:20:19  pwagner
+# Added build instructions for getcf_m.mod
+#
 # Revision 1.4  2002/07/12 20:33:46  pwagner
 # l2/init_tables_module does not require custom build
 #
