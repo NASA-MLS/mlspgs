@@ -118,6 +118,7 @@ rectanglefromlos
 reflectorTempModel
 refract
 regular
+resetUnusedRadiances
 RHIFromH2O
 RHIPrecisionFromH2O
 rotateField
@@ -143,6 +144,9 @@ weighted
 wmoTropopause
 
 # $Log$
+# Revision 2.43  2003/10/15 23:12:00  livesey
+# Added resetUnusedRadiances
+#
 # Revision 2.42  2003/10/06 13:16:09  cvuu
 # add new description=strat to handle reading the ncep data file
 #
