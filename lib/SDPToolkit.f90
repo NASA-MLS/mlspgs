@@ -103,6 +103,16 @@ MODULE SDPToolkit               ! F90 interface to SDP Toolkit.
         INTEGER, INTENT(INOUT) :: size
       END FUNCTION PGS_PC_GetFileSize
 
+      INTEGER FUNCTION pgs_td_asciitime_atob(asciiutc_a, asciiutc_b)
+        character(len = *), INTENT(IN) :: asciiutc_a  ! Should be <= 27 chars
+        character(len = *), INTENT(out) :: asciiutc_b ! Should be <= 25 chars
+      END FUNCTION pgs_td_asciitime_atob
+
+      INTEGER FUNCTION pgs_td_asciitime_btoa(asciiutc_b, asciiutc_a)
+        character(len = *), INTENT(IN) :: asciiutc_b  ! Should be <= 25 chars
+        character(len = *), INTENT(out) :: asciiutc_a ! Should be <= 27 chars
+      END FUNCTION pgs_td_asciitime_btoa
+
       INTEGER FUNCTION pgs_td_utctotai(time, dtime)
         character(len = *), INTENT(IN) :: time
         DOUBLE PRECISION, INTENT(out) :: dtime
@@ -202,6 +212,9 @@ end module SDPToolkit
 
 !
 ! $Log$
+! Revision 2.14  2003/03/06 19:48:08  pwagner
+! Added pgs_td_asciitime_ functions
+!
 ! Revision 2.13  2003/02/20 21:24:34  pwagner
 ! Added params from GCT
 !
