@@ -25,7 +25,6 @@ chisqmmif
 cholesky
 climatology
 cloudFull
-columnabundance
 covariance
 
 dao
@@ -125,6 +124,9 @@ vGrid
 weighted
 
 # $Log$
+# Revision 2.26  2003/03/06 19:46:49  pwagner
+# columnAbundance moved to lib from l2
+#
 # Revision 2.25  2002/11/27 19:26:11  livesey
 # Added stuff for manipulate fill
 #
