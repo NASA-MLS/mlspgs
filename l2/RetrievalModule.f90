@@ -62,7 +62,7 @@ contains
       & L_linalg, L_lowcloud, L_newtonian, L_none, L_norm, &
       & L_numJ, L_opticalDepth, L_pressure, L_radiance, L_Tikhonov, L_zeta, &
       & S_dumpBlocks, S_flagCloud, S_matrix, S_retrieve, S_sids, S_snoop, &
-      & S_subset, S_time, S_RESTRICTRANGE
+      & S_subset, S_time, S_RESTRICTRANGE, S_UPDATEMASK
     use Intrinsic, only: PHYQ_Dimensionless, PHYQ_Invalid
     use L2ParInfo, only: PARALLEL
     use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
@@ -78,7 +78,7 @@ contains
     use SidsModule, only: SIDS
     use SnoopMLSL2, only: SNOOP
     use String_Table, only: Display_String, Get_String
-    use SubsetModule, only: SETUPSUBSET, SETUPFLAGCLOUD, RESTRICTRANGE
+    use SubsetModule, only: SETUPSUBSET, SETUPFLAGCLOUD, RESTRICTRANGE, UPDATEMASK
     use Time_M, only: Time_Now
     use Toggles, only: Gen, Switches, Toggle, Levels
     use Trace_M, only: Trace_begin, Trace_end
@@ -173,7 +173,7 @@ contains
     integer :: SnoopKey                 ! Tree point of S_Snoop spec.
     integer :: SnoopLevel               ! From level field of S_Snoop spec.
     integer, dimension(:), pointer :: SparseQuantities ! Which jacobian blocks to sparsify
-    integer :: Spec                     ! s_matrix, s_subset or s_retrieve
+    integer :: Spec                     ! s_matrix, s_subset or s_retrieve ... 
     type(vector_T), pointer :: State    ! The state vector
     real :: T0, T1, T2, T3              ! for timing
     type(matrix_T) :: Tikhonov          ! Matrix for Tikhonov regularization
@@ -313,6 +313,12 @@ contains
         call SetupflagCloud ( key, vectorDatabase )
         if ( toggle(gen) .and. levels(gen) > 0 ) &
           & call trace_end ( "Retrieve.flagCloud" )
+      case ( s_updateMask )
+        if ( toggle(gen) .and. levels(gen) > 0 ) &
+          & call trace_begin ( "Retrieve.UpdateMask", root )
+        call UpdateMask ( key, vectorDatabase )
+        if ( toggle(gen) .and. levels(gen) > 0 ) &
+          & call trace_end ( "Retrieve.UpdateMask" )
       case ( s_retrieve )
         if ( toggle(gen) ) call trace_begin ( "Retrieve.retrieve", root )
         aprioriScale = 1.0
@@ -3030,6 +3036,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.240  2003/04/04 22:02:06  livesey
+! Added call to UpdateMask
+!
 ! Revision 2.239  2003/03/27 20:45:22  livesey
 ! Reinstated the fnorm dumping which seemed to fall by the wayside
 ! for some reason.
