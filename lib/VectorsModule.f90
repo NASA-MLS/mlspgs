@@ -100,8 +100,8 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   public :: GetVectorQtyByTemplateIndex, GetVectorQuantityIndexByName
   public :: GetVectorQuantityIndexByType, InflateVectorDatabase
   public :: InflateVectorTemplateDatabase, IsVectorQtyMasked, MultiplyVectors
-  public :: NullifyVectorTemplate, NullifyVectorValue, NullifyVector
-  public :: RmVectorFromDatabase, ScaleVector, SetMask, SubtractFromVector
+  public :: NullifyVectorTemplate, NullifyVectorValue, NullifyVector, PowVector
+  public :: ReciprocateVector, RmVectorFromDatabase, ScaleVector, SetMask, SubtractFromVector
   public :: SubtractVectors, ValidateVectorQuantity, MaskVectorQty
   ! Types
   public :: VectorTemplate_T, VectorValue_T, Vector_T
@@ -586,13 +586,17 @@ contains ! =====     Public Procedures     =============================
   end subroutine ClearUnderMask 
 
   !-------------------------------------------------  ClearVector  -----
-  subroutine ClearVector ( Z )
+  subroutine ClearVector ( Z, value )
   ! Clear the elements of Z (make them zero).  Don't change its structure
   ! or mask.
     type(Vector_T), intent(inout) :: Z
+    real(rv), optional, intent(in) :: VALUE ! Value to set in (default zero)
+    real(rv) :: MYVALUE
     integer :: I
+    myValue = 0.0_rv
+    if ( present ( value ) ) myValue = value
     do i = 1, size(z%quantities)
-      z%quantities(i)%values = 0.0_rv
+      z%quantities(i)%values = myValue
     end do
   end subroutine ClearVector
 
@@ -1780,6 +1784,43 @@ contains ! =====     Public Procedures     =============================
     nullify ( v%quantities )
   end subroutine NullifyVector
 
+  !-------------------------------------------------  ReciprocateVector  -----
+  subroutine PowVector ( X, POWER )
+  ! Y = A / X if Y is present, else X = A / X.
+
+    ! Dummy arguments:
+    type(Vector_T), intent(inout), target :: X
+    real(rv), intent(in) :: POWER
+    ! Local Variables:
+    integer :: I              ! Subscript and loop inductor
+    do i = 1, size(x%quantities)
+      x%quantities(i)%values = x%quantities(i)%values ** power
+    end do
+  end subroutine PowVector
+
+  !-------------------------------------------------  ReciprocateVector  -----
+  subroutine ReciprocateVector ( X, A, Y )
+  ! Y = A / X if Y is present, else X = A / X.
+
+    ! Dummy arguments:
+    type(Vector_T), intent(inout), target :: X
+    real(rv), intent(in) :: A
+    type(Vector_T), intent(inout), optional, target :: Y
+    ! Local Variables:
+    integer :: I              ! Subscript and loop inductor
+    type(Vector_T), pointer :: Z
+    ! Executable statements:
+    z => x
+    if ( present(y) ) then
+      if ( x%template%name /= y%template%name ) call MLSMessage ( MLSMSG_Error, &
+        & ModuleName, 'Reciprocated vector has different template from original' )
+      z => y
+    end if
+    do i = 1, size(x%quantities)
+      z%quantities(i)%values = a / x%quantities(i)%values
+    end do
+  end subroutine ReciprocateVector
+
   !-----------------------------------------  RmVectorFromDatabase  -----
   integer function RmVectorFromDatabase ( DATABASE, ITEM )
 
@@ -2159,6 +2200,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.107  2004/01/24 01:03:04  livesey
+! Added allowNameMismatch argument to CopyVector
+!
 ! Revision 2.106  2004/01/23 05:36:51  livesey
 ! Added DoVectors/QuantitiesMatch
 !
