@@ -13,12 +13,13 @@ begin ReadApriori
 
   ;; Do the others (e.g. s5a--t) explicitly.
   !readTruthL2GP(CH3CN,a)
+  !readTruthL2GP(HCN,a)
   !readTruthL2GP(CO,a)
   !readTruthL2GP(H2O,-2)
   !readTruthL2GP(O3,a)
   !readTruthL2GP(RHi,-2)
 
   ;; Use this macro for later
-  !define(l2gpInputSpecies,{Temperature,GPH,BrO,ClO,HCl,HNO3,HO2,HOCl,N2O,OH,SO2})
+  !define(l2gpInputSpecies,{BrO,CH3CN,CO,ClO,GPH,H2O,HCN,HCl,HNO3,HO2,HOCl,N2O,O3,OH,RHi,SO2,Temperature})
   
 end ReadApriori
