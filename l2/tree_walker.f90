@@ -20,7 +20,7 @@ module TREE_WALKER
   use Init_Tables_Module, only: L_CHISQCHAN, &
     & L_CHISQMMAF, L_CHISQMMIF, L_RADIANCE, L_PTAN, &
     & Z_CHUNKDIVIDE,  Z_CONSTRUCT, Z_FILL, &
-    & Z_GLOBALSETTINGS, Z_JOIN, Z_MERGEAPRIORI, Z_MLSSIGNALS, Z_OUTPUT, &
+    & Z_GLOBALSETTINGS, Z_JOIN, Z_MERGEGRIDS, Z_MLSSIGNALS, Z_OUTPUT, &
     & Z_READAPRIORI, Z_RETRIEVE, Z_SPECTROSCOPY
   use JOIN, only: MLSL2Join
   use L2AUXData, only: DestroyL2AUXDatabase, L2AUXData_T, Dump
@@ -29,6 +29,7 @@ module TREE_WALKER
   use L2Parallel, only: GETCHUNKINFOFROMMASTER, L2MASTERTASK
   use L2PC_m, only: DestroyL2PCDatabase, DestroyBinSelectorDatabase
   use MatrixModule_1, only: DestroyMatrixDatabase, Matrix_Database_T
+  use MergeGridsModule, only: MergeGrids
   use MLSCommon, only: L1BINFO_T, MLSCHUNK_T, TAI93_RANGE_T
   use MLSSignals_M, only: Bands, DestroyBandDatabase, DestroyModuleDatabase, &
     & DestroyRadiometerDatabase, DestroySignalDatabase, &
@@ -139,8 +140,8 @@ contains ! ====     Public Procedures     ==============================
       case ( z_readapriori )
         call read_apriori ( son , l2gpDatabase, l2auxDatabase, griddedData)
         call add_to_section_timing ( 'read_apriori', t1)
-      case ( z_mergeapriori )
-        ! Merge apriori here
+      case ( z_mergeGrids )
+        call mergeGrids ( son, griddedData )
       case ( z_chunkdivide )
         if ( .not. parallel%slave ) then
           ! This is the old routine, which will be going away shortly
@@ -306,6 +307,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.79  2002/01/22 18:14:47  livesey
+! Fixed typo
+!
 ! Revision 2.78  2002/01/21 23:11:06  livesey
 ! Added call to DestroyBinSelectorsDatabase etc.
 !
