@@ -16,7 +16,7 @@ module OUTPUT_M
   public :: BLANKS, OUTPUT
   interface OUTPUT
     module procedure output_char, output_char_array, output_double
-    module procedure output_integer
+    module procedure output_integer, output_logical
   end interface
 
   integer, save, public :: MLSMSG_Level = MLSMSG_Info
@@ -175,6 +175,29 @@ contains
     return
   end subroutine OUTPUT_INTEGER
 
+  subroutine OUTPUT_LOGICAL ( LOG, ADVANCE )
+  ! Output LOG to PRUNIT using at most PLACES (default zero) places
+    logical, intent(in) :: LOG
+    character(len=*), intent(in), optional :: ADVANCE
+    character(len=2) :: LINE
+    character(len=3) :: MY_ADV
+    my_adv = 'no'
+    if ( present(advance) ) then; my_adv = advance; end if
+    if (log) then
+      line=' T'
+    else
+      line=' F'
+    endif
+    if ( prunit == -1 .or. prunit < -2 ) &
+      & write ( *, '(a)', advance=my_adv ) line
+    if ( prunit < -1 ) &
+        & call MLSMessage ( MLSMSG_Level, ModuleName, line, &
+          & advance=my_adv )
+    if ( prunit >= 0 ) &
+      & write ( prunit, '(a)', advance=my_adv ) line
+    return
+  end subroutine OUTPUT_LOGICAL
+
   subroutine OUTPUT_SINGLE ( VALUE, FORMAT, ADVANCE )
   ! Output "SINGLE" to "prunit" using * format, trimmed of insignificant
   ! trailing zeroes, and trimmed of blanks at both ends.
@@ -224,6 +247,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.4  2001/02/28 21:35:34  livesey
+! Added output logical
+!
 ! Revision 2.3  2001/02/22 23:54:27  vsnyder
 ! Added optional "from_where" argument to "output_char"
 !
