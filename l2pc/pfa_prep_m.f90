@@ -164,8 +164,8 @@ type (eos_mdb_rec), intent (OUT) :: mdb_rec(max_no_lines,*)
 !  ** Code for the PC
 
   k = -1
-  pqm_fnd = '/Tamar/config/data/master_pqm_database.dat'
-  pqm_fni = '/Tamar/config/data/master_pqm_database.ndx'
+  pqm_fnd = '/home/zvi/config/data/master_pqm_database.dat'
+  pqm_fni = '/home/zvi/config/data/master_pqm_database.ndx'
 
 !  ** END Code for the PC
 

@@ -116,9 +116,7 @@ contains
     Ier = 0
 !
     j = ptg_press%no_lin_values
-    do ptg_i = 1, j
-      PtP(ptg_i) = ptg_press%lin_val(ptg_i)
-    end do
+    PtP(1:j) = dble(ptg_press%lin_val(1:j))
 !
     kconv = 0
     surndx = -1
@@ -195,7 +193,7 @@ contains
 !
     end do
 !
-!  Get 'no_conv_hts' pressures associated with the 'Ang' array:
+!  Get 'kconv' pressures associated with the 'Ang' array:
 !
     Call get_pressures('a',a_grid,t_grid,z_grid,N_lvls,Ang,            &
    &                   Press,kconv,Ier)
@@ -203,7 +201,6 @@ contains
 !
 ! interpolate the output values and store the radiances in i_star_all
 !
-    j = ptg_press%no_lin_values
     Call Cspline_der(Press,PtP,Rad,i_star_all,sc3,kconv,j)
 !
 ! Find out if user wants pointing derivatives
@@ -271,13 +268,12 @@ contains
 !
             sv_elmnt = m + sv_i - 1
 !
-            do ptg_i = 1, kconv
-              Rad(ptg_i) = k_star_atmos(ptg_i+surndx-1,sv_i,nf,is)
-            end do
+            ptg_i = surndx+kconv-1
+            Rad(1:kconv) = k_star_atmos(surndx:ptg_i,sv_i,nf,is)
 !
 ! Interpolate onto the output grid, and store in k_star_all ..
 !
-            Call Lintrp(conv_press,PtP,Rad,Sc1,kconv,j)
+            Call Lintrp(conv_press(surndx:),PtP,Rad,Sc1,kconv,j)
             k_star_all(sv_elmnt,nf,1:j) = Sc1(1:j)
 !
           end do
@@ -345,10 +341,10 @@ contains
 !
             sv_elmnt = m + sv_i - 1
 !
-            Rad(1:kconv) = &
-   &          k_star_geophys(2-surndx:kconv-surndx+1,sv_i,nf,geophys_i)
+            ptg_i = kconv-surndx+1
+            Rad(1:kconv)=k_star_geophys(surndx:ptg_i,sv_i,nf,geophys_i)
 !
-            Call Cspline(conv_press,PtP,Rad,Sc1,kconv,j)
+            Call Cspline(conv_press(surndx:),PtP,Rad,Sc1,kconv,j)
             k_star_all(sv_elmnt,nf,1:j) = Sc1(1:j)
 !
           end do
@@ -431,7 +427,7 @@ contains
 ! Establish dI/dX, X, X^63 data
 ! Get X^63
 !
-    Call Lintrp(conv_press,PtP,ptg_angles,Ang,kconv,j)
+    Call Lintrp(conv_press(surndx:),PtP,ptg_angles(surndx:),Ang,kconv,j)
 !
 ! Get dI/dX at 63
 !

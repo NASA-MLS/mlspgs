@@ -119,10 +119,10 @@ contains
     Real(r8), intent(in) :: MR_F(mxco,mnp,*)
     integer(i4), intent(in) :: NO_COEFFS_G(*)
     Real(r8), intent(in) :: MR_G(mxco,mnp,*)
-    type(pfa_slab) :: PFA_SPECTRUM(6,*)
+    type(pfa_slab), intent(in) :: PFA_SPECTRUM(6,*)
     Real(r8), intent(in) :: PTG_ANGLE(*)
     Real(r8), intent(in) :: PTG_HTS(*)
-    type(limb_press) :: PTG_PRESS
+    type(limb_press), intent(in) :: PTG_PRESS
     Real(r8), intent(in) :: REF_CORR(Nlvl,*)
     Real(r8), intent(in) :: AZIM_183, AZIM_205, AZIM_REF
     Real(r8), intent(in) :: C_PITCH, C_ROLL, C_YAW
@@ -215,8 +215,8 @@ contains
 !
     ptg_i = no_conv_hts - si + 1
     do sv_i = 1, no_t
-      Call Lintrp(z_grid,conv_press(si:si+N_lvls-1),dh_dt_grid(1:ptg_i,sv_i), &
-   &              dtauda(si:si+N_lvls-1,sv_i),N_lvls,ptg_i)
+      Call Lintrp(z_grid,conv_press(si:no_conv_hts),dh_dt_grid(1:,sv_i), &
+   &              dtauda(si:no_conv_hts,sv_i),N_lvls,ptg_i)
     end do
 !
     k = 2 * N_lvls
