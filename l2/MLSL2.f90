@@ -68,17 +68,17 @@ program MLSL2
           call getarg ( 0+hp, line )
           print *, 'Usage: ', trim(line), ' [options]'
           print *, ' Options:'
-          print *, '  -A: Dump the un-decorated abstract syntax tree'
-          print *, '  -a: Dump the decorated type-checked abstract syntax tree'
-          print *, '  -c: Trace expression evaluation and tree decoration'
+          print *, '  -A: Dump the un-decorated abstract syntax tree.'
+          print *, '  -a: Dump the decorated type-checked abstract syntax tree.'
+          print *, '  -c: Trace expression evaluation and tree decoration.'
           print *, '  -d: Dump the declaration table after type checking'
           print *, '  -g[digit]: Trace "generation".  Bigger digit means ', &
-          &                      'more output'
-          print *, '  -l: Trace lexical analysis'
-          print *, '  -M: Send output through MLSMessage'
-          print *, '  -p: Trace parsing'
-          print *, '  -t: Trace declaration table construction'
-          print *, '  -v: List the configuration file'
+          &                      'more output.'
+          print *, '  -l: Trace lexical analysis.'
+          print *, '  -M: Send output through MLSMessage.'
+          print *, '  -p: Trace parsing.'
+          print *, '  -t: Trace declaration table construction.'
+          print *, '  -v: List the configuration file.'
           print *, '  Options a, c, g1, l, p and t can be toggled in the ', &
           &          'configuration file by'
           print *, '  @A, @C, @G, @L, @P and @S respectively.  @T in the ', &
@@ -131,6 +131,9 @@ program MLSL2
 end program MLSL2
 
 ! $Log$
+! Revision 2.5  2001/02/22 23:51:00  vsnyder
+! Improved usage messages
+!
 ! Revision 2.4  2001/02/22 23:05:12  vsnyder
 ! Display usage if -h, -H or -? option is present.
 !
