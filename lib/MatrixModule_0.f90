@@ -503,6 +503,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------- CheckIntegrity_0 -------
   logical function CheckIntegrity_0 ( block, noError )
+    use IEEE_Arithmetic, only: IEEE_IS_NAN
     type ( MatrixElement_T), intent(in) :: BLOCK
     logical, optional, intent(in) :: NOERROR
 
@@ -635,13 +636,13 @@ contains ! =====     Public Procedures     =============================
         n =  block%r2(i) - block%r2(i-1)
         if ( n < 0 ) then
           call MLSMessage ( messageType, ModuleName, &
-            & 'Banded block has too small a delta in R2 for ' // trim(clause) )
+            & 'Banded block has too small a delta in R2 for' // trim(clause) )
           checkIntegrity_0 = .false.
         end if
         if ( n > 0 ) then
           if ( block%r1(i) + n > block%nRows ) then
             call MLSMessage ( messageType, ModuleName, &
-              & 'Banded block has too large a delta in R2 or R1 value for ' // &
+              & 'Banded block has too large a delta in R2 or value for R1 for' // &
               & trim(clause) )
             checkIntegrity_0 = .false.
           end if
@@ -736,6 +737,15 @@ contains ! =====     Public Procedures     =============================
       if ( ubound ( block%values,2 ) /= block%nCols ) then
         call MLSMessage ( messageType, ModuleName, &
           & 'Block nCols inconsistent with dimensions of values' )
+        checkIntegrity_0 = .false.
+      end if
+    end if
+
+    ! Check the values themselves
+    if ( all ( block%kind /= (/ m_absent, m_unknown /) ) ) then
+      if ( any ( ieee_is_nan ( block%values ) ) ) then
+        call MLSMessage ( messageType, ModuleName, &
+          & 'Block has invalid number(s) in values' )
         checkIntegrity_0 = .false.
       end if
     end if
@@ -3387,6 +3397,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.102  2004/05/17 22:06:35  livesey
+! Added check for valid numbers in CheckIntegrity_0
+!
 ! Revision 2.101  2004/01/30 23:19:24  livesey
 ! Changed tiny to epsilon in DenseCyclicJacobi
 !
