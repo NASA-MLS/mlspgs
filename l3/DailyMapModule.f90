@@ -124,6 +124,15 @@ Contains
 		lonA0_i_temp = lonA0_i
 	  end if
 
+          dlonad    = abs( lonD0_i-lonA0_i)
+          if(lonD0_i < 0 .and. lonA0_i > 0 .or. lonD0_i > 0 .and. lonA0_i < 0) then
+                dlonad    = abs( lonD0_i-lonA0_i)
+          else if(lonD0_i < 0 .and. lonA0_i < 0 ) then
+                dlonad    = abs( lonD0_i-lonA0_i)
+          else
+                dlonad    = abs( lonD0_i+lonA0_i)
+          end if
+
           if(lonA0_i_temp < lonD0_i_temp) then
                 dlonad  = abs( lonD0_i_temp-lonA0_i_temp )
           else 
@@ -1109,6 +1118,9 @@ End Module DailyMapModule
 !===================
 
 ! $Log$
+! Revision 1.8  2001/08/17 20:27:51  nakamura
+! Fixed bug & core dump problems.
+!
 ! Revision 1.7  2001/08/14 16:13:24  nakamura
 ! Adjusted initialization of fNum in FFS routines.
 !
