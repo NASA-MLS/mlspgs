@@ -14,10 +14,16 @@ module MACHINE
   character(LEN=1) :: FILSEP = '/'      ! '/' for Unix, '\' for DOS or NT
   integer, parameter :: HP = 0          ! Offset for first argument for GETARG
 
+  public :: CRASH_BURN
+
   interface IO_ERROR; module procedure IO_ERROR_; end interface
   private IO_ERROR_
   public :: SHELL_COMMAND
   public :: MLS_DISABLE_AUTOGC, MLS_GC_NOW, MLS_HOWMANY_GC, MLS_CONFIG_GC
+
+  logical, public, save :: NEVERCRASH = .true. ! Change to false for testing
+
+  private :: NOT_USED_HERE
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -29,6 +35,51 @@ module MACHINE
 
 contains
 
+  ! -------------------------------------------------  CRASH_BURN  -----
+  subroutine CRASH_BURN ( CODE, MSG, OPT )
+  ! Print CODE and MSG if they're present.
+  ! Try to make the processor crash, so it produces a walkback if it
+  ! supports such a thing.
+  ! DON'T put an optional argument corresponding to OPT.  It may be
+  ! referenced on some systems in an attempt to make the processor crash.
+  ! STOP as a last resort.
+  ! Compile everything with -gline to get a walkback -- even with -O.
+  
+  ! Crash is provoked by one of available methods:
+  ! (a) rewind illegal unit number (default)
+  ! (b) acos(2.)
+  ! You may select which method to use by setting msg = '!x (rest of message)'
+  ! where x is the method
+    integer, intent(in), optional :: CODE
+    character(len=*), intent(in), optional :: MSG
+    integer, intent(in), optional :: OPT(:)
+    integer :: I = -huge(0)
+    real :: arg
+    character(len=*), parameter :: DEFAULTMETHOD = 'b' ! 'a' or 'b'
+    character(len=1) :: method
+    if ( present(code) ) print *, 'In NAG MACHINE%CRASH_BURN, CODE =', code
+    if ( present(msg) ) print *, 'In NAG MACHINE%CRASH_BURN, MSG = ', trim(msg)
+    method = DEFAULTMETHOD
+    if ( NEVERCRASH ) then
+      method = 's' ! Just stop, don't crash nor burn
+    elseif ( present(msg) ) then
+      if ( msg(1:1) == '!' ) method = adjustl(msg(2:))
+    endif
+    select case (method)
+    case (' ', 'a', 'A')
+      rewind i
+    case ('b', 'B')
+      arg = 1.
+      if ( .not. present(opt) ) arg = arg + 1.
+      arg = acos(arg)
+      if ( arg > 0. ) print *, 'arg ', arg
+    case default
+      ! When you just want to land safely; e.g., a sips production run
+    end select
+    stop
+  end subroutine CRASH_BURN
+
+  ! --------------------------------------------------  IO_ERROR_  -----
   subroutine IO_ERROR_ ( MESSAGE, IOSTAT, FILE )
   ! Print MESSAGE and FILE, and then do something reasonable with IOSTAT.
     character(LEN=*), intent(in) :: MESSAGE
@@ -49,6 +100,7 @@ contains
     return
   end subroutine IO_ERROR_
 
+  ! -----------------------------------------------------  GETARG  -----
   subroutine GETARG ( ARGNUM, ARGVAL )
     integer, intent(in) :: ARGNUM  ! 0 = command name, 1 = first arg, etc.
     character(len=*), intent(out) :: ARGVAL   ! Blank if argnum out-of-range
@@ -57,6 +109,7 @@ contains
     if ( status /= 0 ) argval = ' '
   end subroutine GETARG
 
+  ! ---------------------------------------  Print_iostat_msg_NAG  -----
   subroutine Print_iostat_msg_NAG ( IOSTAT )
     integer, intent(in) :: IOSTAT
 
@@ -340,6 +393,7 @@ contains
 
   end subroutine print_iostat_msg_NAG
 
+  ! ----------------------------------------------  SHELL_COMMAND  -----
   subroutine SHELL_COMMAND ( Command, Status, Error )
   ! Submit a character variable to the system as a shell command.
 
@@ -362,6 +416,7 @@ contains
   ! NAG call interfaces to f90_gc
   ! Because we're assuming the link statement will lack -gc
   ! we have non-functional substitutes
+  ! ----------------------------------------------  MLS_CONFIG_GC  -----
   subroutine MLS_CONFIG_GC ( EXPAND, FREQUENCY, RETRIES, SILENT )
   ! Configures various parameters affecting garbage collection
    logical dont_EXPAND, SILENT_GC
@@ -376,6 +431,7 @@ contains
     if ( present(silent) ) silent_gc = silent
   end subroutine MLS_CONFIG_GC
 
+  ! -----------------------------------------  MLS_DISABLE_AUTOGC  -----
   subroutine MLS_DISABLE_AUTOGC ( Which )
   ! Turns automatic garbage collection on/off
     character(len=*), intent(in) :: Which  ! 'On' or 'Off'
@@ -388,16 +444,26 @@ contains
     endif
   end subroutine MLS_DISABLE_AUTOGC
 
+  ! -------------------------------------------------  MLS_GC_NOW  -----
   subroutine MLS_GC_NOW
   ! Manually collects garbage when called
   !    CALL GCOLLECT
   end subroutine MLS_GC_NOW
 
+  ! ---------------------------------------------  MLS_HOWMANY_GC  -----
   integer function MLS_HOWMANY_GC()
   ! Returns how many garbage collections have been performed
     MLS_HOWMANY_GC = 0 ! NCOLLECTIONS()
   end function MLS_HOWMANY_GC
 
+  ! ----------------------------------------------  not_used_here  -----
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module MACHINE
 
 ! $Log$
+! Revision 1.1  2002/02/06 00:40:35  pwagner
+! First commit
+!
