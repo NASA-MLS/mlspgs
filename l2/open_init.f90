@@ -1,4 +1,4 @@
-! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -16,6 +16,7 @@ module Open_Init
 
   implicit none
 
+! === (start of toc) ===
 !     c o n t e n t s
 !     - - - - - - - -
 
@@ -26,6 +27,7 @@ module Open_Init
 !     (subroutines and functions)
 ! DestroyL1BInfo                  Called when the l1bInfo is finished with
 ! OpenAndInitialize               Gets run parameters from pcf
+! === (end of toc) ===
 
   private
   public :: DestroyL1BInfo, OpenAndInitialize
@@ -50,7 +52,7 @@ contains ! =====     Public Procedures     =============================
   subroutine DestroyL1BInfo ( L1BInfo, L2pcf )
 
     use MLSL2Options, only: ILLEGALL1BRADID
-    use MLSFiles, only: MLS_sfend
+    use MLSFiles, only: mls_io_gen_closeF
     use WriteMetadata, only: PCFData_T
 
     type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
@@ -66,7 +68,9 @@ contains ! =====     Public Procedures     =============================
   ! ((( This will have to change if we wish to convert l1 files to hdf5
   !          Maybe put another wrapper in MSLFiles
   !      STATUS = sfend(l1bInfo%L1BRADIDs(id))
-         STATUS = mls_sfend(l1bInfo%L1BRADIDs(id), hdfVersion=LEVEL1_HDFVERSION)
+  !      STATUS = mls_sfend(l1bInfo%L1BRADIDs(id), hdfVersion=LEVEL1_HDFVERSION)
+         STATUS = mls_io_gen_closeF('hg', l1bInfo%L1BRADIDs(id), &
+           & hdfVersion=LEVEL1_HDFVERSION)
 
          end if
       end do
@@ -85,7 +89,9 @@ contains ! =====     Public Procedures     =============================
   ! ((( This will have to change if we wish to convert l1 files to hdf5
   !          Maybe put another wrapper in MSLFiles
   !  STATUS = sfend(l1bInfo%L1BOAID)
-     STATUS = mls_sfend(l1bInfo%L1BOAID, hdfVersion=LEVEL1_HDFVERSION)
+  !  STATUS = mls_sfend(l1bInfo%L1BOAID, hdfVersion=LEVEL1_HDFVERSION)
+     STATUS = mls_io_gen_closeF('hg', l1bInfo%L1BOAID, &
+           & hdfVersion=LEVEL1_HDFVERSION)
     end if
 
     if ( error /= 0 ) &
@@ -669,6 +675,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.64  2002/09/27 23:47:23  pwagner
+! Now calls mls_io_gen_closeF rather than mls_sfend
+!
 ! Revision 2.63  2002/08/28 22:28:37  pwagner
 ! Saves PCFids for l1boa, l1brad for input pointer metadata
 !
