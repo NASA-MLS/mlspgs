@@ -392,76 +392,6 @@ contains
 
   end subroutine Get_Beta_Path_Cloud
 
-!     =====     Private Procedures     =================================
-
-  ! ----------------------------------------------  Abs_CS_Cont  -----
-
-  ! Compute the general continuum contribution
-  pure function Abs_CS_Cont ( Cont, Temperature, Pressure, Frequency ) &
-    & result(Abs_CS_Cont_r)
-  ! real(rp) function Abs_CS_Cont ( Cont, Temperature, Pressure, Frequency )
-    use MLSCommon, only: RP
-
-    real(rp), intent(in) :: CONT(:)     ! continuum parameters
-    real(rp), intent(in) :: TEMPERATURE ! in Kelvin
-    real(rp), intent(in) :: PRESSURE    ! in mbar
-    real(rp), intent(in) :: FREQUENCY   ! in MegaHertz
-    real(rp) :: Abs_CS_Cont_r
-
-    Abs_CS_Cont_r = cont(1) * pressure * pressure * frequency * frequency * &
-      & ( (300.0_rp / temperature)**cont(2) )
-
-  end function Abs_CS_Cont
-
-  ! -------------------------------------------  Abs_CS_N2_Cont  -----
-
-  ! Compute the N2 continuum contribution
-  pure function Abs_CS_N2_Cont ( Cont, Temperature, Pressure, Frequency ) &
-    & result(Abs_CS_N2_Cont_r)
-  ! real(rp) Function Abs_CS_N2_cont ( Cont, Temperature, Pressure, Frequency )
-    use MLSCommon, only: RP
-
-    real(rp), intent(in) :: CONT(:)     ! continuum parameters
-    real(rp), intent(in) :: TEMPERATURE ! in Kelvin
-    real(rp), intent(in) :: PRESSURE    ! in mbar
-    real(rp), intent(in) :: FREQUENCY   ! in MegaHertz
-    real(rp) :: Abs_CS_N2_Cont_r
-
-    real(rp) :: THETA, FSQR, FSXT
-
-    theta = 300.0_rp / temperature
-    fsqr = frequency * frequency
-    fsxt = fsqr * theta
-    Abs_CS_N2_Cont_r = pressure * pressure * fsqr * (theta**cont(2)) * &
-                   & ( cont(1) * exp(-cont(3) * fsxt * theta) + &
-                   &   cont(4) * exp(-cont(5) * fsxt * theta) * &
-                   & (cont(6)**2 + fsqr))
-
-  end function Abs_CS_N2_Cont
-
-  ! -------------------------------------------  Abs_CS_O2_Cont  -----
-
-  ! Compute the O2 continuum contribution
-  pure function Abs_CS_O2_Cont ( Cont, Temperature, Pressure, Frequency ) &
-    & result(Abs_CS_O2_Cont_r)
-  ! real(rp) Function ABS_CS_O2_CONT ( Cont, Temperature, Pressure, Frequency )
-    use MLSCommon, only: RP
-
-    real(rp), intent(in) :: CONT(:)     ! continuum parameters
-    real(rp), intent(in) :: TEMPERATURE ! in Kelvin
-    real(rp), intent(in) :: PRESSURE    ! in mbar
-    real(rp), intent(in) :: FREQUENCY   ! in MegaHertz
-    real(rp) :: Abs_CS_O2_Cont_r
-
-    real(rp) :: THETA, FSQR
-
-    theta = 300.0_rp / temperature
-    fsqr = frequency * frequency
-    Abs_CS_O2_Cont_r = cont(1) * pressure * pressure * fsqr * (theta**cont(2)) &
-                   & / (fsqr + (cont(3) * pressure * (theta**cont(4)) )**2 )
-
-  end function Abs_CS_O2_Cont
-
 ! ----------------------------------------------  Create_beta  ---------
 
   subroutine Create_beta ( molecule, cont, pressure, Temp, Fgr, pfaw, &
@@ -898,6 +828,76 @@ contains
 
   end Subroutine Create_beta_path
 
+!     =====     Private Procedures     =================================
+
+  ! ----------------------------------------------  Abs_CS_Cont  -----
+
+  ! Compute the general continuum contribution
+  pure function Abs_CS_Cont ( Cont, Temperature, Pressure, Frequency ) &
+    & result(Abs_CS_Cont_r)
+  ! real(rp) function Abs_CS_Cont ( Cont, Temperature, Pressure, Frequency )
+    use MLSCommon, only: RP
+
+    real(rp), intent(in) :: CONT(:)     ! continuum parameters
+    real(rp), intent(in) :: TEMPERATURE ! in Kelvin
+    real(rp), intent(in) :: PRESSURE    ! in mbar
+    real(rp), intent(in) :: FREQUENCY   ! in MegaHertz
+    real(rp) :: Abs_CS_Cont_r
+
+    Abs_CS_Cont_r = cont(1) * pressure * pressure * frequency * frequency * &
+      & ( (300.0_rp / temperature)**cont(2) )
+
+  end function Abs_CS_Cont
+
+  ! -------------------------------------------  Abs_CS_N2_Cont  -----
+
+  ! Compute the N2 continuum contribution
+  pure function Abs_CS_N2_Cont ( Cont, Temperature, Pressure, Frequency ) &
+    & result(Abs_CS_N2_Cont_r)
+  ! real(rp) Function Abs_CS_N2_cont ( Cont, Temperature, Pressure, Frequency )
+    use MLSCommon, only: RP
+
+    real(rp), intent(in) :: CONT(:)     ! continuum parameters
+    real(rp), intent(in) :: TEMPERATURE ! in Kelvin
+    real(rp), intent(in) :: PRESSURE    ! in mbar
+    real(rp), intent(in) :: FREQUENCY   ! in MegaHertz
+    real(rp) :: Abs_CS_N2_Cont_r
+
+    real(rp) :: THETA, FSQR, FSXT
+
+    theta = 300.0_rp / temperature
+    fsqr = frequency * frequency
+    fsxt = fsqr * theta
+    Abs_CS_N2_Cont_r = pressure * pressure * fsqr * (theta**cont(2)) * &
+                   & ( cont(1) * exp(-cont(3) * fsxt * theta) + &
+                   &   cont(4) * exp(-cont(5) * fsxt * theta) * &
+                   & (cont(6)**2 + fsqr))
+
+  end function Abs_CS_N2_Cont
+
+  ! -------------------------------------------  Abs_CS_O2_Cont  -----
+
+  ! Compute the O2 continuum contribution
+  pure function Abs_CS_O2_Cont ( Cont, Temperature, Pressure, Frequency ) &
+    & result(Abs_CS_O2_Cont_r)
+  ! real(rp) Function ABS_CS_O2_CONT ( Cont, Temperature, Pressure, Frequency )
+    use MLSCommon, only: RP
+
+    real(rp), intent(in) :: CONT(:)     ! continuum parameters
+    real(rp), intent(in) :: TEMPERATURE ! in Kelvin
+    real(rp), intent(in) :: PRESSURE    ! in mbar
+    real(rp), intent(in) :: FREQUENCY   ! in MegaHertz
+    real(rp) :: Abs_CS_O2_Cont_r
+
+    real(rp) :: THETA, FSQR
+
+    theta = 300.0_rp / temperature
+    fsqr = frequency * frequency
+    Abs_CS_O2_Cont_r = cont(1) * pressure * pressure * fsqr * (theta**cont(2)) &
+                   & / (fsqr + (cont(3) * pressure * (theta**cont(4)) )**2 )
+
+  end function Abs_CS_O2_Cont
+
 !-----------------------------------------------------------------------
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
@@ -906,6 +906,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.41  2003/07/07 19:08:38  vsnyder
+! Make Create_Beta and Create_Beta_Path public
+!
 ! Revision 2.40  2003/07/07 16:47:01  pwagner
 ! Moved declaration of 3 function results inside body to appease NAG
 !
