@@ -120,6 +120,232 @@ CONTAINS
 
   end Function depunctuate
 
+  ! ---------------------------------------------  StringElementNum  -----
+
+  ! This function takes a (usually) comma-delimited string list, interprets it
+  ! as a list of individual elements, and a test string which may be an element
+  ! It returns the element number of the test string in the string list
+  ! or, 0 if the test string is not found
+  
+  ! Any leading blanks are disregarded before making the comparison;
+  ! e.g., 'stare' is the same as ' stare' and is the second element of 
+  ! the list 'lex, stare, decisis'
+  
+  ! Note: if there are multiple matches between the test string and elements
+  ! of inList we return only the first
+  
+  ! If you want the last instead, use ReverseList on inList && subtract
+  ! the answer from nElements
+  
+  ! This is useful because many of the hdfeos routines *inq*() return
+  ! comma-delimited lists
+  
+  ! It will be the immediate precursor function in a hash table
+  ! == aka associative array == aka dictionary
+  !
+  ! If kountEmpty is TRUE, consecutive delimiters, with no chars in between,
+  ! are treated as enclosing an empty element
+  ! Otherwise, they are treated the same as a single delimiter
+  ! E.g., "a,b,,d" has 4 elements if kountEmpty TRUE, 3 if FALSE  
+
+  ! As an optional arg the delimiter may supplied, in case it isn't comma
+
+  ! See also GetStringElement, NumStringElements
+
+  FUNCTION StringElementNum(inList, element, kountEmpty, inDelim) RESULT (elem)
+    ! Dummy arguments
+    CHARACTER (LEN=*), INTENT(IN)             :: inList
+    CHARACTER (LEN=*), INTENT(IN)             :: element
+    LOGICAL, INTENT(IN)                       :: kountEmpty
+	 INTEGER                                   :: elem
+    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)   :: inDelim
+
+    ! Local variables
+    INTEGER :: i           ! Loop counters
+    INTEGER :: nElements
+    INTEGER , PARAMETER :: MAXELEMENTLENGTH = 80
+
+    CHARACTER (LEN=MAXELEMENTLENGTH)           :: listElement
+    CHARACTER (LEN=1)                          :: Delim
+    CHARACTER (LEN=1), PARAMETER               :: COMMA = ','
+    ! Executable code
+
+    IF(PRESENT(inDelim)) THEN
+	     Delim = inDelim
+	 ELSE
+	     Delim = COMMA
+	 ENDIF
+
+	nElements = NumStringElements(inList, kountEmpty, inDelim)
+	
+	IF(nElements <= 0) THEN
+		elem = 0
+		RETURN
+	ENDIF
+
+	! Check for matches--snipping off any leading blanks
+	DO elem=1, nElements
+		CALL GetStringElement(inList, listElement, elem, kountEmpty, inDelim)
+		IF(adjustl(listElement) == adjustl(element)) RETURN
+	ENDDO
+	
+	elem = 0
+
+  END FUNCTION StringElementNum
+
+  ! ---------------------------------------------  NumStringElements  -----
+
+  ! This function takes a (usually) comma-delimited string list, interprets it
+  ! as a list of individual elements and returns the
+  ! number of elements
+  ! This is useful because many of the hdfeos routines *inq*() return
+  ! comma-delimited lists
+  !
+  ! If kountEmpty is TRUE, consecutive delimiters, with no chars in between,
+  ! are treated as enclosing an empty element
+  ! Otherwise, they are treated the same as a single delimiter
+  ! E.g., "a,b,,d" has 4 elements if kountEmpty TRUE, 3 if FALSE  
+
+  ! As an optional arg the delimiter may supplied, in case it isn't comma
+
+  ! See also GetStringElement
+
+  FUNCTION NumStringElements(inList, kountEmpty, inDelim) RESULT (nElements)
+    ! Dummy arguments
+    CHARACTER (LEN=*), INTENT(IN)             :: inList
+    LOGICAL, INTENT(IN)                       :: kountEmpty
+	 INTEGER                                   :: nElements
+    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)   :: inDelim
+
+    ! Local variables
+    INTEGER :: i           ! Loop counters
+    INTEGER :: elem, nextDelim
+	 LOGICAL :: lastWasNotDelim
+
+    CHARACTER (LEN=1)               :: Delim
+    CHARACTER (LEN=1), PARAMETER    :: COMMA = ','
+    ! Executable code
+
+    IF(PRESENT(inDelim)) THEN
+	     Delim = inDelim
+	 ELSE
+	     Delim = COMMA
+	 ENDIF
+
+	! Count the number of delimiters
+	! nElements-1 = number of delimiters
+	IF(LEN_TRIM(inList) <= 0) THEN
+		nElements=0
+		RETURN
+	ENDIF
+	
+	lastWasNotDelim = .FALSE.
+	nElements=1
+	DO i=1, LEN_TRIM(inList)
+		IF(inList(i:i) == Delim) THEN
+			IF(kountEmpty .OR. lastWasNotDelim) THEN
+				nElements = nElements+1
+			ENDIF
+			lastWasNotDelim = .FALSE.
+		ELSE
+			lastWasNotDelim = .TRUE.
+		ENDIF
+	ENDDO
+
+  END FUNCTION NumStringElements
+
+  ! ---------------------------------------------  GetStringElement  -----
+
+  ! This subroutine takes a (usually) comma-delimited string list, interprets it
+  ! as a list of individual elements and returns the
+  ! sub-string which is the n'th element
+  ! if n is too large or small, it returns the delimiter
+  ! This is useful because many of the hdfeos routines *inq*() return
+  ! comma-delimited lists
+
+  ! If kountEmpty is TRUE, consecutive delimiters, with no chars in between,
+  ! are treated as enclosing an empty element
+  ! Otherwise, they are treated the same as a single delimiter
+  ! E.g., "a,b,,d" has 4 elements if kountEmpty TRUE, 3 if FALSE
+  ! If TRUE, the elements would be {'a', 'b', ' ', 'd'}
+
+  ! As an optional arg the delimiter may supplied, in case it isn't comma
+  ! See also SplitWords
+
+  SUBROUTINE GetStringElement(inList, outElement, nElement, kountEmpty, inDelim)
+    ! Dummy arguments
+    CHARACTER (LEN=*), INTENT(IN)   :: inList
+    CHARACTER (LEN=*), INTENT(OUT)  :: outElement
+    INTEGER, INTENT(IN)             :: nElement ! Number of unique entries
+    LOGICAL, INTENT(IN)   :: kountEmpty
+    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)   :: inDelim
+
+    ! Local variables
+    INTEGER :: i           ! Loop counters
+    INTEGER :: elem, nextDelim
+
+    CHARACTER (LEN=1)               :: Delim
+    CHARACTER (LEN=1), PARAMETER    :: BLANK = ' '   ! Returned if element empty
+    CHARACTER (LEN=1), PARAMETER    :: COMMA = ','
+    ! Executable code
+
+    IF(PRESENT(inDelim)) THEN
+	     Delim = inDelim
+	 ELSE
+	     Delim = COMMA
+	 ENDIF
+
+	 IF(nElement.LE.0) THEN
+	     outElement = Delim
+	 ELSEIF(LEN(inList) < nElement) THEN
+	     outElement = Delim
+    ENDIF
+    i = 1
+	 elem = 1
+    DO
+	     nextDelim = i - 1 + INDEX(inList(i:), Delim)
+
+	! No more delimiters
+		  IF(nextDelim == i - 1) THEN
+		      IF(elem >= nElement) THEN
+				    outElement = inList(i:)
+			    ELSE
+				    outElement = Delim
+			    ENDIF
+				 RETURN
+
+	! Next delimiter is the adjacent char
+			ELSEIF(nextDelim == i) THEN
+				IF(kountEmpty) THEN
+		     	 IF(elem >= nElement) THEN
+				    	outElement = BLANK
+						RETURN
+			   	 ELSE
+					 	elem = elem+1
+			    	ENDIF
+				ENDIF
+
+	! Until next delimiter is the next element
+			ELSE
+		      IF(elem >= nElement) THEN
+				    IF(i < nextDelim) THEN
+				       outElement = inList(i:nextDelim-1)
+						ELSE
+				       outElement = Delim
+						ENDIF
+   				 RETURN
+			    ELSEIF(nextDelim >= LEN(inList)) THEN
+				    outElement = Delim
+				    RETURN
+			    ELSE
+					 elem = elem+1
+			    ENDIF
+			ENDIF
+			i = nextDelim+1
+	 ENDDO
+
+  END SUBROUTINE GetStringElement
+
   ! ---------------------------------------------  GetUniqueStrings  -----
 
   ! This subroutine takes an array of strings and returns another containing
@@ -302,6 +528,120 @@ CONTAINS
     END DO
 
   END FUNCTION LowerCase
+
+  ! --------------------------------------------------  Reverse  -----
+  FUNCTION Reverse (str) RESULT (outstr)
+    ! takes a string and returns one with chars in reversed order
+	 ! Useful in certain contexts:
+	 ! e.g., to remove leading blanks
+	 ! arg = Reverse(TRIM(Reverse(arg)))
+	 !
+	 ! See also ReverseList
+    !--------Argument--------!
+    CHARACTER (LEN=*), INTENT(IN) :: str
+    CHARACTER (LEN=LEN(str)) :: outstr
+
+    !----------Local vars----------!
+    INTEGER :: i, istr, irev
+	 CHARACTER (LEN=1) :: strChar
+    !----------Executable part----------!
+    outstr=str
+    IF(LEN(str) == 1) RETURN
+
+    DO i = 1, LEN(str)-1, 2
+       istr = 1 + (i-1)/2				! 1, 2, ..
+       irev = LEN(str) - (i-1)/2		! N, N-1, ..
+       strChar = str(istr:istr)
+		 outstr(istr:istr) = str(irev:irev)
+		 outstr(irev:irev) = strChar
+    END DO
+
+! Special case: str contains odd number of chars
+    IF(MOD(LEN(str), 2) == 1) THEN
+       istr = 1 + (LEN(str)-1)/2				! 1, 2, ..
+        outstr(istr:istr) = str(istr:istr)
+	ENDIF
+
+  END FUNCTION Reverse
+
+  ! --------------------------------------------------  ReverseList  -----
+  FUNCTION ReverseList (str, inDelim) RESULT (outstr)
+    ! takes a string list, usually comma-delimited,
+	 ! and returns one with elements in reversed order
+
+	 ! E.g., given "alpha, beta, gamma" => "gamma, beta, alpha"
+
+	 ! Limitation:
+	 ! No element may be longer than MAXWORDLENGTH
+    !--------Argument--------!
+    CHARACTER (LEN=*), INTENT(IN) :: str
+    CHARACTER (LEN=LEN(str)) :: outstr
+    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)   :: inDelim
+
+    !----------Local vars----------!
+    INTEGER :: i, istr, irev, elem, iBuf
+    INTEGER, PARAMETER :: MAXWORDLENGTH=80
+    CHARACTER (LEN=1)               :: Delim
+    CHARACTER (LEN=1), PARAMETER    :: COMMA = ','
+    CHARACTER (LEN=1), DIMENSION(:), ALLOCATABLE :: charBuf
+    CHARACTER (LEN=MAXWORDLENGTH) :: word
+! Treat consecutive delimiters as if enclosing an empty element
+	LOGICAL, PARAMETER :: kountEmpty = .TRUE.    
+
+    !----------Executable part----------!
+    IF(PRESENT(inDelim)) THEN
+	     Delim = inDelim
+	 ELSE
+	     Delim = COMMA
+	 ENDIF
+
+!  Special case--only one element of str
+    outstr = str
+    IF(LEN(str) == 1 .OR. INDEX(str, Delim) == 0) RETURN
+	 
+! General case
+	 ALLOCATE(charBuf(LEN(str)+1), STAT=istr)
+    IF (istr /= 0) THEN
+	 	CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"charBuf")
+		RETURN
+	ENDIF
+
+    outstr = ' '
+
+! Loop over elements
+	elem = 1
+	iBuf=0
+	DO
+		CALL GetStringElement(str, word, elem, kountEmpty, Delim)
+		IF(word == Delim) THEN
+			EXIT
+		ELSEIF(iBuf > LEN(str)) THEN
+			EXIT
+		ELSE
+			istr = MAX(LEN_TRIM(word), 1)
+			word = Reverse(word(:istr))
+			DO i=1, istr
+				iBuf=iBuf+1
+				charBuf(iBuf) = word(i:i)
+			ENDDO
+			iBuf=iBuf+1
+			charBuf(iBuf) = Delim
+			elem = elem+1
+		ENDIF
+	ENDDO
+	
+	IF(charBuf(iBuf) == Delim) THEN
+		iBuf = iBuf-1
+	ENDIF
+	
+	DO i=1, iBuf
+		irev = iBuf - i + 1
+		outstr(irev:irev) = charBuf(i)
+	ENDDO
+
+	DEALLOCATE(charBuf)
+  END FUNCTION ReverseList
 
   ! ----------------------------  ReadCompleteLineWithoutComments  -----
 
@@ -506,6 +846,9 @@ END MODULE MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.3  2001/02/23 00:05:56  pwagner
+! Added 4 StringList functions
+!
 ! Revision 2.2  2000/12/01 22:38:00  vsnyder
 ! Add lowercase function, alphabetize procedures, add "bookmarks"
 !
