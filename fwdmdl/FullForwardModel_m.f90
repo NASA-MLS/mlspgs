@@ -83,8 +83,7 @@ contains
     use VectorsModule, only: VECTOR_T, VECTORVALUE_T, GETVECTORQUANTITYBYTYPE
 
     type(forwardModelConfig_T), intent(inout) :: FwdModelConf
-      ! Only fwdModelConf%ForwardModelDerived and some
-      ! components of fwdModelConf%beta_group are changed here.
+      ! Only fwdModelConf derived stuff are changed here.
     type(vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
     type(vector_T), intent(inout) :: FwdModelOut  ! Radiances, etc.
     type(forwardModelIntermediate_T), intent(inout) :: oldIfm ! Workspace
@@ -539,9 +538,9 @@ contains
     beta_group => fwdModelConf%beta_group
     no_mol = size(fwdModelConf%beta_group)
     call deriveFromForwardModelConfig ( fwdModelConf )
-    channels => fwdModelConf%forwardModelDerived%channels
-    DACsStaging => fwdModelConf%forwardModelDerived%DACsStaging
-    usedDACSSignals => fwdModelConf%forwardModelDerived%usedDACSSignals
+    channels => fwdModelConf%channels
+    DACsStaging => fwdModelConf%DACsStaging
+    usedDACSSignals => fwdModelConf%usedDACSSignals
     noUsedChannels = size(channels)
     noUsedDacs = size(usedDACSSignals)
 
@@ -3185,6 +3184,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.227  2004/11/01 20:26:35  vsnyder
+! Reorganization of representation for molecules and beta groups; PFA may be broken for now
+!
 ! Revision 2.226  2004/10/13 01:08:27  vsnyder
 ! Moved some checking to ForwardModelSupport
 !
