@@ -13,7 +13,12 @@
 ; IWC is somewhat special
 !define(allStandardProductsWithColumns,{BrO,CH3CN,ClO,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,N2O,O3,OH})
 !define(allStandardProductsWithoutColumns,{Temperature,GPH,RHI})
-!define(allStandardProducts,{!allStandardProductsWithColumns,!allStandardProductsWithoutColumns})
+!define(allStandardProducts,{!tidyList(!allStandardProductsWithColumns, $
+  !allStandardProductsWithoutColumns)})
+
+;; These macros define our standard output filenames
+!define(DGGFilename,{'!outpathl2gp/MLS-Aura_L2GP-DGG_!l2version_!day.he4'})
+!define(DGMFilename,{'!outpathl2gp/MLS-Aura_L2AUX-DGM_!l2version_!day.h4'})
 
 ;; This macro is used in sids runs to get the band number part of a band
 ;; specifier (i.e. strip off the sideband if it is present)
@@ -122,11 +127,11 @@ end Fill
 
 !ifdef(flagPrecisionEstimates,{},{
   begin Join
-    !forall(joinOneDiagDGG,!outputRetrievalDiagnostics)
+    !forall(directWriteOneDiagDGG,!outputRetrievalDiagnostics)
   end Join})
-  begin Fill
-    Destroy, vector=diag$1
-  end Fill
+;;  begin Fill
+;;    Destroy, vector=diag$1
+;;  end Fill
 })
 
 ;; This macro initialises the _HR species with interpolations of their
@@ -139,32 +144,64 @@ end Fill
   !forall(oneHiResTransfer,!allHiResMolecules)
 end Fill})
 
-;; These macros are used to accumulate quantities destined for the DGM
-;; or DGG file.  $1 is the quantity within state, and $2 is the swath/sd
-;; name.  The variable is joined into joinedDG?_$1_!phase to avoid confusion
-!define(DGGDivert,1)
-!define(DGMDivert,2)
+;; These macros define the various diverts we're going to get going
+!define(directDGGDivert,1)
+!define(directDGMDivert,2)
 !define(AVKDivert,3)
 
-!define(storeDGG,{!ifdef(flagGotDGGs,{!divert(!DGGDivert),!divert})!dnl
-!define(flagGotDGGs,{Yes})!divert(!DGGDivert)$1!divert})
-
-!define(storeDGM,{!ifdef(flagGotDGMs,{!divert(!DGMDivert),!divert})!dnl
-!define(flagGotDGMs,{Yes})!divert(!DGMDivert)$1!divert})
-
+;; This macro is used to note an averaging kernel to be output later
 !define(storeAVK,{!ifdef(flagGotAVKs,{!divert(!AVKDivert),!divert})!dnl
 !define(flagGotAVKs,{Yes})!divert(!AVKDivert)$1!divert})
 
-!define(joinDGG,{!dnl
-!storeDGG(joinedDGG_$1_!phase)!dnl
-joinedDGG_$1_!phase: l2gp, source=state.$1, precision=outputPrecision.$1, swath='$2'
-})
+;; These macros are used to note a new directWrite DGG or DGM at a
+;; rather low level.
+!define(noteDirectDGG,{!ifdef(flagGotDirectDGGs,{!divert(!directDGGDivert),!divert})!dnl
+!define(flagGotDirectDGGs,{Yes})!divert(!directDGGDivert)$1!divert})
 
-!define(joinDGM,{!dnl
-!storeDGM(joinedDGM_$1_!phase)!storeDGM(joinedDGM_$1_!phase_precision)!dnl
-joinedDGM_$1_!phase: l2aux, source=state.$1, sdName='$2'
-joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 precision'
-})
+!define(noteDirectDGM,{!ifdef(flagGotDirectDGMs,{!divert(!directDGMDivert),!divert})!dnl
+!define(flagGotDirectDGMs,{Yes})!divert(!directDGMDivert)$1!divert})
+
+;; This macro is used to write one DGG species complete with precision
+;; The quantity is in state/outputPrecision.$1 and the label is in $2
+;; other arguments can be optionally present (e.g. prefix signal) and
+;; are applied to the label command
+!define(directWriteDGG,{!dnl
+Label, quantity=state.$1, label=$2!ifelse($#,2,{},{,!shift(!shift($*))})!dnl
+!noteDirectDGG({source=state.$1,precision=outputPrecision.$1})})
+;; This macro is similar to the above except for the case where there
+;; is no precision quantity, and the vector name should be included in $1
+!define(directWriteDGGNoPrecision,{!dnl
+Label, quantity=$1, label=$2!ifelse($#,2,{},{,!shift(!shift($*))})!dnl
+!noteDirectDGG({source=$1})})
+
+;; This macro is used to write one DGM species.  The quantity is in $1
+;; (including the vector), and the label is in $2
+!define(directWriteDGM,{!dnl
+Label, quantity=$1, label=$2!ifelse($#,2,{},{,!shift(!shift($*))})!dnl
+!noteDirectDGM({source=$1})})
+
+;; This macro is used to spit out all the accumulated DGM/DGGs
+!define(flushDGGDGMFiles,{!dnl
+;; First do the DGGs
+!ifdef(flagGotDirectDGGs,{!dnl
+DirectWrite, file=!DGGFilename, hdfVersion=4, type=l2gp, !undivert(!directDGGDivert)})
+;; Now the DGMs
+!ifdef(flagGotDirectDGMs,{!dnl
+DirectWrite, file=!DGMFilename, hdfVersion=4, type=l2aux, !undivert(!directDGMDivert)})
+;; Clear our macros
+!undefine(flagGotDirectDGGs)!undefine(flagGotDirectDGMs)})
+
+;; This macro is used to invoke direct writes to store forward model
+;; radiances.  The band is $1, and a suffix for the sd name is given
+;; in $2
+!define(labelOneFwmRad,{label, quantity=fwm.band$1, /prefixSignal, label=' !phase'!nl})
+!define(oneFwmRadTerm,{source=fwm.band$1,})
+!define(directWriteFwmRad,{!ifdef(l2version,{!dnl
+!forall(labelOneFwmRad,!tidyList($*))!dnl
+  DirectWrite, !forall(oneFwmRadTerm,!tidyList($*)) type=l2aux, $
+  file='!outpathl2fwm/MLS-Aura_L2FWM-!moduleForRadiometer(!radiometerForBand($1))_!l2version_!day.h4', $
+  hdfVersion=4})})
+
 
 ;; This macro is used to fill radiance chi squares
 !define(fillRadianceDiagnostics,{!dnl
@@ -188,25 +225,15 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
 
 ;; This macro joins the above filled quantities
 !define(joinRadianceDiagnostics,{!dnl
-   joinedDGM_chisqMMAF$1_!phase: l2aux, source=radianceDiagnostics.chisqMMAF$1, $
-     /prefixSignal, sdName=' chisqMMAF !phase'
-   joinedDGM_chisqMMIF$1_!phase: l2aux, source=radianceDiagnostics.chisqMMIF$1, $
-     /prefixSignal, sdName=' chisqMMIF !phase'
-   joinedDGM_chisqChan$1_!phase: l2aux, source=radianceDiagnostics.chisqChan$1, $
-     /prefixSignal, sdName=' chisqChan !phase'
-   joinedDGM_noRadsPerMIF$1_!phase: l2aux, source=radianceDiagnostics.noRadsPerMIF$1, $
-     /prefixSignal, sdName=' noRadsPerMIF !phase'
-   joinedDGG_chisqBinned$1_!phase: l2gp, source=radianceDiagnostics.chisqBinned$1, $
-     /prefixSignal, swath=' chisqBinned !phase'
-   joinedDGG_noRadsBinned$1_!phase: l2gp, source=radianceDiagnostics.noRadsBinned$1, $
-     /prefixSignal, swath=' noRadsBinned !phase'
-   !storeDGM(joinedDGM_chisqMMAF$1_!phase)!dnl
-   !storeDGM(joinedDGM_chisqMMIF$1_!phase)!dnl
-   !storeDGM(joinedDGM_chisqChan$1_!phase)!dnl
-   !storeDGM(joinedDGM_noRadsPerMIF$1_!phase)!dnl
-   !storeDGG(joinedDGG_chisqBinned$1_!phase)
-   !storeDGG(joinedDGG_noRadsBinned$1_!phase)
-})
+ !directWriteDGM(radianceDiagnostics.chisqMMAF$1,' chisqMMAF !phase', /prefixSignal)
+ !directWriteDGM(radianceDiagnostics.chisqMMIF$1,' chisqMMIF !phase', /prefixSignal)
+ !directWriteDGM(radianceDiagnostics.chisqChan$1,' chisqChan !phase', /prefixSignal)
+ !directWriteDGM(radianceDiagnostics.noRadsPerMIF$1,' noRadsPerMIF !phase', /prefixSignal)
+
+ !directWriteDGGNoPrecision(radianceDiagnostics.chisqBinned$1,!dnl
+   ' chisqBinned !phase', /prefixSignal)
+ !directWriteDGGNoPrecision( radianceDiagnostics.noRadsBinned$1,!dnl
+   ' noRadsBinned !phase', /prefixSignal)!nl})
 
 !define(doRadianceDiagnostics,{!dnl
    begin Fill
@@ -226,22 +253,12 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
    !forall(offsetRadiance,$*)
    end Fill})
 
-;; This macro is used to invoke direct writes to store forward model
-;; radiances.  The band is $1, and a suffix for the sd name is given
-;; in $2
-!define(directWriteFwmRad,{
-  !ifdef(l2version,{directWrite, source=fwm.band$1, /prefixSignal, $
-  sdName=' model $2', file='!outpathl2fwm/MLS-Aura_L2FWM-$3_!l2version_!day.h4'})})
-
-;; This macro uses the joinDGG (for the moment, will use DGM when we
-;; got to hdf5) to join the diagnostics stuff
-!define(joinOneDiagDGG,{!storeDGG(joinedDGG_$1_!phase)!dnl
-  joinedDGG_$1_!phase: l2gp, source=diag!phase.$1, $
-    swath='!translit($1,{_},{-})-!phase'!nl})
+;; This macro writes the misc. diagnostics
+!define(directWriteOneDiagDGG,{!directWriteDGGNoPrecision(diag!phase.$1,'!translit($1,{_},{-})-!phase')!nl})
 
 ;; This macro puts all the boring stuff in the Retrieve command line
 ;; that we're used to seeing
-;  will add FM output to PEs later
+;;  will add FM output to PEs later
 !ifdef(flagPrecisionEstimates,{!dnl
   !define(retrievalArguments,{$
   !ifdef(flagGotAK,{average=akOut$1,}) state=x$1, fwdModelExtra=state, $
@@ -264,6 +281,9 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
   Fill, quantity=standardPrecision.$1, method=vector, sourceQuantity=outputPrecision.$1!nl})
 
 ; $Log$
+; Revision 1.56  2003/06/05 23:39:39  livesey
+; IWC no longer a standard product
+;
 ; Revision 1.55  2003/06/04 17:14:07  livesey
 ; Added filename stuff to directWrite
 ;
