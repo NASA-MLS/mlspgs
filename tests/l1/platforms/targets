@@ -71,6 +71,8 @@ libl1_f90 := $(shell ${REECHO} $(libl1_sources)/*.f90)
 
 libl1_objs := $(shell ${REECHO} $(itmdir)/*.o)
 
+libl1_drivers := $(shell ${REECHO} $(itmdir)/MLSL1.o $(itmdir)/MLSL1G.o $(itmdir)/MLSL1log.o $(itmdir)/MLSL1T.o)
+
 l1_driver = MLSL1.o
 
 # "yes" is safer--
@@ -126,7 +128,7 @@ endif
 ifdef HDFEOS5
    hdfeos5_linker_line=-L${HDFEOS5} -lhe5_hdfeos
 ifeq ($(MLSF95),LF95)
-   gcc_version=$(shell ${UTILDIR}/which_fftw.sh -gcc)
+   gcc_version=$(shell ${MLSBIN}/which_fftw.sh -gcc)
    l_specials=-lz -L/usr/lib/gcc-lib/i386-redhat-linux/${gcc_version} -lgcc
 endif
 else
@@ -150,7 +152,8 @@ ifeq ($(delete_lib_first),yes)
 		rm -f $@
 endif
 	ar ru $@ $?
-	ar d $@ $(itmdir)/$(l1_driver)
+	ar d $@ $(l1_drivers)
+#	ar d $@ $(itmdir)/$(l1_driver)
 
 $(PROG_NAME): $(ALLOBJS) $(PVM_OBJS) libl1.a $(libdir)/libmls.a \
      $(CONFDIR)/$(MLSCFILE)
@@ -198,6 +201,9 @@ Sd.o:
 
 # ========================================================================
 # $Log$
+# Revision 1.20  2002/11/25 21:21:02  pwagner
+# gcc_version to allow building with Lahey on gcc post 2.96
+#
 # Revision 1.19  2002/09/06 00:09:07  pwagner
 # BLAS can now bring in more than a single
 #
