@@ -159,27 +159,8 @@ contains ! ========================= Public Procedures ====================
 
     call Allocate_test ( guessLon, size(testLon), 'guessLon', ModuleName )
 
-    ! First get a dataset to compare against
-    do i = 1, noLon0Options
-      options(i) = -180.0 + (i-1) * 360.0 / noLon0Options
-    end do
-
-    do i = 1, noIterations
-      do j = 1, noLon0Options
-        call EmpiricalLongitude ( testPhi, guessLon, tryLon0=options(j) )
-        cost(j) = sum ( abs( NormalizeLongitude( testLon - guessLon ) ) )
-      end do
-      bestOption = minloc ( cost, 1 )
-      if ( i < noIterations ) then
-        lowLimit = options ( max ( bestOption(1)-1, 1 ) )
-        hiLimit = options ( min ( bestOption(1)+1, noLon0Options ) )
-        delta = (hiLimit-lowLimit)/(noLon0Options-1)
-        do j = 1, noLon0Options
-          options(j) = lowLimit + (j-1)*delta
-        end do
-      end if
-    end do
-    lon0 = options(bestOption(1))
+    call EmpiricalLongitude ( testPhi, guessLon, tryLon0=0.0_r8 )
+    lon0 = - sum ( NormalizeLongitude ( guessLon - testLon ) ) / size(testLon)
     lon0Valid = .true.
 
     call Deallocate_test ( testPhi, 'testPhi', ModuleName )
@@ -207,6 +188,9 @@ contains ! ========================= Public Procedures ====================
 end module EmpiricalGeometry
 
 ! $Log$
+! Revision 2.4  2001/12/16 00:58:06  livesey
+! New method for computing lon0 (much more efficient)
+!
 ! Revision 2.3  2001/12/14 01:43:02  livesey
 ! Various bug fixes
 !
