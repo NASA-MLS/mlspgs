@@ -50,6 +50,7 @@ module L2Parallel
   use String_table, only: Display_String
   use Symbol_Table, only: ENTER_TERMINAL
   use Symbol_Types, only: T_STRING
+  use Time_M, only: Time_Now
   use Toggles, only: Gen, Switches, Toggle
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use VectorsModule, only: VECTOR_T, VECTORVALUE_T, VECTORTEMPLATE_T, &
@@ -76,7 +77,7 @@ module L2Parallel
   ! Parameters
   integer, parameter :: HDFNAMELEN = 132 ! Max length of name of swath/sd
   logical, parameter :: NOTFORGOTTEN = .false. ! Note the death of forgottens
-  integer, parameter :: MAXCHUNK = 10000
+  ! integer, parameter :: MAXCHUNK = 10000
 
   integer :: counterStart
   parameter ( counterStart = 2 * (huge (0) / 4 ) )
@@ -167,7 +168,7 @@ contains ! ================================ Procedures ======================
     ! Local variables
     integer :: BUFFERID                 ! ID for buffer for receive
     integer :: CHUNK                    ! Loop counter
-    character(len=16) :: CHUNKSTR
+    ! character(len=16) :: CHUNKSTR
     integer :: INFO                     ! Flag from PVM
     integer :: STATUS                   ! From allocate
     integer :: NOCHUNKS                 ! Size.
@@ -189,10 +190,10 @@ contains ! ================================ Procedures ======================
       & call PVMErrorMessage ( info, 'unpacking chunkInfo header')
     noChunks = header(1)
     chunkNo = header(2)
-    write(chunkStr, *) chunkNo
-    if ( ChunkNo > MAXCHUNK ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'chunk number too great: ' // trim(chunkStr) )
+!     write(chunkStr, *) chunkNo
+!     if ( ChunkNo > MAXCHUNK ) &
+!       & call MLSMessage ( MLSMSG_Error, ModuleName, &
+!       & 'chunk number too great: ' // trim(chunkStr) )
     
     allocate ( chunks ( noChunks ), STAT=status)
     if ( status /= 0 ) &
@@ -271,6 +272,7 @@ contains ! ================================ Procedures ======================
     integer :: DEADMACHINE              ! A machine for a dead task
     integer :: DEADTID                  ! A task that's died
     integer :: DUMMY                    ! From inflate database
+    logical :: DUMPFULLDWREQS
     integer :: FILEINDEX                ! Index for a direct write
     integer :: HDFNAMEINDEX             ! String index
     integer :: INDX                     ! Where "T" occurs in utc string
@@ -653,6 +655,7 @@ contains ! ================================ Procedures ======================
           request%fileIndex = fileIndex
           request%ticket = nextTicket
           request%status = DW_Pending
+          call time_now(request%whenMade)
           nextTicket = nextTicket + 1
 
           if ( index ( switches, 'mas' ) /= 0 ) then
@@ -681,6 +684,7 @@ contains ! ================================ Procedures ======================
 
           request => directWriteRequests(requestIndex)
           request%status = DW_Completed
+          call time_now(request%whenFinished)
           fileIndex = request%fileIndex
           directWriteFileBusy ( fileIndex ) = .false.
           chunksWriting ( chunk ) = .false.
@@ -734,26 +738,7 @@ contains ! ================================ Procedures ======================
           end if
           parallel%numCompletedChunks = parallel%numCompletedChunks + 1
           if ( index(switches,'mas') /= 0 ) then
-            call TimeStamp ( 'Master status:', advance='yes' )
-            call output ( count(chunksCompleted) )
-            call output ( ' of ' )
-            call output ( noChunks )
-            call output ( ' chunks completed, ')
-            call output ( count(chunksStarted .and. .not. chunksCompleted) )
-            call output ( ' underway, ' )
-            call output ( count(chunksAbandoned) )
-            call output ( ' abandoned, ' )
-            call output ( count(.not. &
-              & (chunksStarted .or. chunksCompleted .or. chunksAbandoned ) ) )
-            call TimeStamp ( ' left. ', advance='yes' )
-            if ( .not. USINGOLDSUBMIT ) then
-              call output ( count ( .not. machines%Free ) )
-              call output ( ' of ' )
-              call output ( noMachines )
-              call output ( ' machines busy, with ' )
-              call output ( count ( .not. machines%OK ) )
-              call TimeStamp ( ' being avoided.', advance='yes' )
-            end if
+            call printMasterStatus
           end if
           ! Send news back to l2 queue manager
           if ( usingL2Q ) then
@@ -904,13 +889,14 @@ contains ! ================================ Procedures ======================
             ! Does this chunk keep failing, if so, give up.
             if ( chunkFailures(deadChunk) >= &
               & parallel%maxFailuresPerChunk ) then
+              chunksAbandoned(deadChunk) = .true.
               if ( index(switches,'mas') /= 0 ) then
                 call output ( 'Chunk ' )
                 call output ( deadChunk )
                 call TimeStamp ( ' keeps dying.  Giving up on it.', &
                   & advance='yes' )
+                call printMasterStatus
               end if
-              chunksAbandoned(deadChunk) = .true.
             end if
 
             ! Does this machine have a habit of killing jobs.  If so
@@ -1017,6 +1003,7 @@ contains ! ================================ Procedures ======================
         skipDelay = .true.
         ! OK, we can grant this request, record that in our information
         request%status = DW_InProgress
+        call time_now(request%whenGranted)
         fileIndex = request%fileIndex
         directWriteFileBusy ( fileIndex ) = .true.
         chunksWriting ( request%chunk ) = .true.
@@ -1065,7 +1052,7 @@ contains ! ================================ Procedures ======================
 
       ! Perhaps compact the direct write request database
       if ( count ( directWriteRequests%status /= DW_Completed ) < &
-        & noDirectWriteRequests / 2 ) then
+        & noDirectWriteRequests / 2 .and. index(switches,'dwreq') == 0 ) then
         call CompactDirectWriteRequestDB ( directWriteRequests, noDirectWriteRequests )
         skipDelay = .true. ! This may take time so don't hang around later
       end if
@@ -1247,11 +1234,10 @@ contains ! ================================ Procedures ======================
     if ( index(switches,'mas') /= 0 ) then
       call TimeStamp ( 'All chunks joined', advance='yes' )
     endif
+    dumpfulldwreqs = index(switches,'dwreq1') /= 0
+    if ( index(switches,'dwreq') /= 0 ) &
+      & call dump(directWriteRequests, statsOnly=.not. dumpfulldwreqs)
     if ( toggle(gen) ) call trace_end ( "L2MasterTask")
-
-    ! call Deallocate_test ( machineFree, 'machineFree', ModuleName )
-    ! call Deallocate_test ( machineOK, 'machineOK', ModuleName )
-    ! call Deallocate_test ( jobsMachineKilled, 'jobsMachineKilled', ModuleName )
 
   contains
 
@@ -1312,6 +1298,30 @@ contains ! ================================ Procedures ======================
           & (.not. chunksStarted) .and. (.not. chunksAbandoned) )
       endif
     end function chunkAndMachineReady
+
+    subroutine printMasterStatus
+      ! Print status: completed, underway, abandoned
+       call TimeStamp ( 'Master status:', advance='yes' )
+       call output ( count(chunksCompleted) )
+       call output ( ' of ' )
+       call output ( noChunks )
+       call output ( ' chunks completed, ')
+       call output ( count(chunksStarted .and. .not. chunksCompleted) )
+       call output ( ' underway, ' )
+       call output ( count(chunksAbandoned) )
+       call output ( ' abandoned, ' )
+       call output ( count(.not. &
+         & (chunksStarted .or. chunksCompleted .or. chunksAbandoned ) ) )
+       call TimeStamp ( ' left. ', advance='yes' )
+       if ( .not. USINGOLDSUBMIT ) then
+         call output ( count ( .not. machines%Free ) )
+         call output ( ' of ' )
+         call output ( noMachines )
+         call output ( ' machines busy, with ' )
+         call output ( count ( .not. machines%OK ) )
+         call TimeStamp ( ' being avoided.', advance='yes' )
+       end if
+    end subroutine printMasterStatus
 
     subroutine WelcomeSlave ( chunk, tid )
       ! This routine welcomes a slave into the fold and tells it stuff
@@ -1634,15 +1644,22 @@ contains ! ================================ Procedures ======================
     ! (Setting NBEATS=0 means merely register the request with queue manager;
     ! subsequent trips through master event loop will pick up message
     ! when and if queue manager grants our request)
-    integer, parameter :: NBEATS = 16   ! ~2x MAXNUMMASTERS  
+    integer, parameter :: NBEATS = 0  ! 16   ! ~2x MAXNUMMASTERS  
     ! Possibly a machine is free and the queue manager will
     ! respond quickly
     ! (This idea is tentative, however)
     ! Now let's give queue manager a chance to receive our request
     ! and deliberate a while (but not too long)
     ! before giving up and going back to checking on our own slaves
+    
+    ! In fact this was a bad idea, or it turned out bad, anyway:
+    ! It slowed processing routine communication by the master to no more
+    ! than one message per NBEATS*delaytime, so long as the master was
+    ! hoping to hear from the queue manager. This meant between 3 and 4 seconds
+    ! between each signal being processed, so signals piled up in a huge
+    ! line waiting to be received and acted upon.
     machineName = ' '
-    do beat = 1, NBEATS
+    do beat = 1, max(NBEATS, 1)
       call PVMFNRecv( -1, GRANTEDTAG, bufferIDRcv )
       if ( bufferIDRcv < 0 ) then
         call PVMErrorMessage ( info, "checking for Granted message" )
@@ -1659,7 +1676,7 @@ contains ! ================================ Procedures ======================
           & 'granted blank host name' )
         return
       else
-        call usleep ( parallel%delay )
+        if ( beat < max(NBEATS, 1)) call usleep ( parallel%delay )
       endif
     enddo
     if ( index(switches,'l2q') /=0 .and. len_trim(machineName) > 0 ) &
@@ -1786,6 +1803,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.73  2005/03/24 21:22:32  pwagner
+! Tried to fix slowing of masters relying on l2q
+!
 ! Revision 2.72  2005/03/15 23:55:48  pwagner
 ! Saves error messages from about-to-die chunks
 !
