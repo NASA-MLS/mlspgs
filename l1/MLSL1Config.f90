@@ -44,7 +44,8 @@ MODULE MLSL1Config  ! Level 1 Configuration
      REAL :: THzSpaceTemp, THzTargetTemp
      REAL :: THzSpaceAngle, THzMaxBias
      REAL :: MIF_duration, MIF_DeadTime
-     REAL :: MoonToSpaceAngle, MoonToLimbAngle
+     REAL :: MoonToSpaceAngle
+     REAL :: MoonToLimbAngle_GHz, MoonToLimbAngle_THz
      LOGICAL :: UseDefaultGains = .FALSE.
      LOGICAL :: CalibDACS = .TRUE.
      CHARACTER(LEN=1) :: GHz_seq(0:MaxMIFs-1), THz_seq(0:MaxMIFs-1)
@@ -340,7 +341,8 @@ MODULE MLSL1Config  ! Level 1 Configuration
            p_GHzTargetTemp, p_THzSpaceTemp, p_THzTargetTemp, p_mif_duration, &
            p_mif_dead_time, p_mifspermaf, p_calibDACS, p_THzMaxBias, s_switch, &
            p_thzspaceangle, f_s, f_bandno, f_chan, s_markchanbad, &
-           p_MoonToSpaceAngle, p_MoonToLimbAngle, p_DACSwindow
+           p_MoonToSpaceAngle, p_MoonToLimbAngle_GHz, p_MoonToLimbAngle_THz, &
+           p_DACSwindow
       USE INTRINSIC, ONLY: l_ghz, l_thz, phyq_mafs, phyq_temperature, &
            phyq_mifs, phyq_time, phyq_angle
       USE TREE, ONLY: Decoration, Nsons, Subtree, Sub_rosa, Node_id
@@ -485,10 +487,20 @@ MODULE MLSL1Config  ! Level 1 Configuration
                        TRIM (identifier)//' is not input as deg[rees]')
                ENDIF
 
-            CASE (p_MoonTolimbAngle)
+            CASE (p_MoonTolimbAngle_GHz)
 
                CALL Expr (subtree (2, son), expr_units, expr_value)
-               L1Config%Calib%MoonToLimbAngle = expr_value(1)
+               L1Config%Calib%MoonToLimbAngle_GHz = expr_value(1)
+               IF (expr_units(1) /= phyq_angle) THEN
+                  CALL Get_string (Sub_rosa (Subtree(1,son)), identifier)
+                  CALL MLSMessage (MLSMSG_Error, ModuleName, &
+                       TRIM (identifier)//' is not input as deg[rees]')
+               ENDIF
+
+            CASE (p_MoonTolimbAngle_THz)
+
+               CALL Expr (subtree (2, son), expr_units, expr_value)
+               L1Config%Calib%MoonToLimbAngle_THz = expr_value(1)
                IF (expr_units(1) /= phyq_angle) THEN
                   CALL Get_string (Sub_rosa (Subtree(1,son)), identifier)
                   CALL MLSMessage (MLSMSG_Error, ModuleName, &
@@ -740,6 +752,9 @@ MODULE MLSL1Config  ! Level 1 Configuration
 END MODULE MLSL1Config
 
 ! $Log$
+! Revision 2.17  2005/01/28 17:00:29  perun
+! Split MoonToLimbAngle into GHz and THz
+!
 ! Revision 2.16  2004/12/01 17:10:07  perun
 ! Remove VersionComment and add DACSwindow
 !
