@@ -13,10 +13,15 @@ ALLOBJS = $(OBJS) $(srclib_objs)
 # ========================================================================
 mlsl1: $(ALLOBJS) $(libdir)/libmls.a
 	$(FC) -o mlsl1 $(ALLOBJS) \
-                      -L$(libdir) -lmls \
-	-L$(PGSTK) -lPGSTK -L$(HDFEOS) -lhdfeos \
-	-L$(HDF) -ldf -ljpeg -lmfhdf -lz \
-	-L$(GCTP) -lGctp \
+                      -L${libdir} -lmls \
+	-L${PGSTK} -lPGSTK \
+        -L${HDFEOS} -lhdfeos \
+	-L${HDF} -lmfhdf \
+        -ldf \
+        -lz \
+        -ljpeg \
+	-L${GCTP} -lGctp \
+        $(l_specials)
 
 # ========================================================================
 
@@ -36,4 +41,7 @@ OutputL1B.o:
 
 # ========================================================================
 # $Log$
+# Revision 1.1  2000/11/15 00:12:42  pwagner
+# First commit
+#
 #
