@@ -1,8 +1,35 @@
 ! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
+! $Id$
+
 !  subroutine InterpolateArray_r* ( oldX, oldY, newX, newY, method, extrapolate, &
 !    & badValue, missingRegions, dyByDx, dNewByDOld )
+    ! Local variables
+    real(rk), dimension(:),   pointer :: A
+    real(rk), dimension(:,:), pointer :: AA
+    real(rk), dimension(:),   pointer :: B
+    real(rk), dimension(:,:), pointer :: BB
+    real(rk), dimension(:),   pointer :: C
+    real(rk), dimension(:,:), pointer :: CC
+    real(rk), dimension(:),   pointer :: D ! Coefficients
+    real(rk), dimension(:,:), pointer :: DD ! Spread coefs.
+    real(rk), dimension(:),   pointer :: gap
+    real(rk), dimension(:),   pointer :: gap2
+    integer, dimension(:),    pointer :: lowerInds
+    real(rk), dimension(:),   pointer :: maskVector
+    real(rk), dimension(:,:), pointer :: oldSecond
+    real(rk), dimension(:,:), pointer :: oldSecondLower
+    real(rk), dimension(:,:), pointer :: oldSecondUpper
+    real(rk), dimension(:,:), pointer :: oldYlower
+    real(rk), dimension(:,:), pointer :: oldYupper
+    real(rk), dimension(:),   pointer :: p ! For 2nd der. guess
+    real(rk), dimension(:,:), pointer :: spreadGap
+    real(rk), dimension(:,:), pointer :: temp ! For 2nd der. guess
+    real(rm), dimension(:,:), pointer :: tempDNewByDOld ! Dense version.
+    integer, dimension(:),    pointer :: upperInds
+    real(rk) :: sig       ! For second derivative guesser
+    real(rk) :: dyByDxFill              ! Fill value for dyByDx
     integer :: noOld, noNew, width ! Dimensions
     logical :: spline              ! Flag
     logical :: useMissingRegions   ! Copy of missing regions
@@ -62,7 +89,7 @@
           end if
         end do
       end if
-      if ( computeDNewByDOld ) call CreateBlock_0 ( dNewByDOld, &
+      if ( computeDNewByDOld ) call CreateBlock ( dNewByDOld, &
         & noNew*width, noOld*width, M_Absent )
       return
     end if
@@ -84,7 +111,7 @@
 
     ! Setup Matrix block needed if DNewByDOld is needed.
     if ( computeDNewByDOld ) then
-      call CreateBlock_0 ( dNewByDOld, noNew*width, noOld*width, &
+      call CreateBlock ( dNewByDOld, noNew*width, noOld*width, &
         M_Column_Sparse, NumberNonZero=2*noNew*width )
     end if
 
@@ -267,3 +294,6 @@
 ! end subroutine InterpolateArray_r*
 
 ! $Log$
+! Revision 1.1  2002/09/13 18:01:33  pwagner
+! First commit
+!
