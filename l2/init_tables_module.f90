@@ -651,7 +651,6 @@ contains ! =====     Public procedures     =============================
              begin, f+f_dAbsDnc, t+t_numeric, n+n_field_type, &
              begin, f+f_dAbsDnu, t+t_numeric, n+n_field_type, &
              begin, f+f_dAbsDwc, t+t_numeric, n+n_field_type, &
-             begin, f+f_file, t+t_string, n+n_field_type, &
              begin, f+f_molecules, t+t_molecule, n+n_field_type, &
              begin, f+f_signal, t+t_string, nr+n_field_type, &
              begin, f+f_temperatures, s+s_tGrid, nr+n_field_spec, &
@@ -1046,6 +1045,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_integrationGrid, s+s_vGrid, n+n_field_spec, &
              begin, f+f_linearSideband, t+t_numeric, n+n_field_type, &
              begin, f+f_lockBins, t+t_boolean, n+n_field_type, &
+             begin, f+f_lsbPFAMolecules, t+t_molecule, n+n_field_type, &
              begin, f+f_module, s+s_module, n+n_field_spec, &
              begin, f+f_moleculeDerivatives, t+t_molecule, n+n_field_type, &
              begin, f+f_molecules, t+t_molecule, n+n_field_type, &
@@ -1055,7 +1055,6 @@ contains ! =====     Public procedures     =============================
              begin, f+f_nmodelsurfs, t+t_numeric, n+n_field_type, &
              begin, f+f_nscatteringangles, t+t_numeric, n+n_field_type, &
              begin, f+f_nsizebins, t+t_numeric, n+n_field_type, &
-             begin, f+f_pfaMolecules, t+t_molecule, n+n_field_type, &
              begin, f+f_phiWindow, t+t_numeric, n+n_field_type, &
              begin, f+f_polarized, t+t_boolean, n+n_field_type /) )
     call make_tree ( (/ &
@@ -1070,6 +1069,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_temp_der, t+t_boolean, n+n_field_type, &
              begin, f+f_tolerance, t+t_numeric, n+n_field_type, &
              begin, f+f_type, t+t_fwmType, nr+n_field_type, &
+             begin, f+f_usbPFAMolecules, t+t_molecule, n+n_field_type, &
              begin, f+f_xStar, s+s_vector, n+n_field_spec, &
              begin, f+f_yStar, s+s_vector, n+n_field_spec, &
              ndp+n_spec_def /), continue=.true. )
@@ -1093,7 +1093,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_filterShapes, t+t_boolean, n+n_field_type, &
              begin, f+f_hGrid, s+s_hgrid, n+n_field_spec, &
              begin, f+f_lines, s+s_line, n+n_field_spec, &
-             begin, f+f_pfaData, s+s_pfaData, s+s_makePFA, n+n_field_spec, &
+             begin, f+f_pfaData, s+s_makePFA, s+s_pfaData, s+s_readPFA, &
+                    n+n_field_spec, &
              begin, f+f_pointingGrids, t+t_boolean, n+n_field_type, &
              begin, f+f_quantity, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
@@ -1269,12 +1270,12 @@ contains ! =====     Public procedures     =============================
              begin, p+p_leapsecfile, t+t_string, n+n_name_def,&
              begin, p+p_cycle, t+t_string, n+n_name_def, &
              begin, p+p_starttime, t+t_string, n+n_name_def, &
-             begin, p+p_endtime, t+t_string, n+n_name_def, s+s_l1brad, &
-             s+s_binSelector, s+s_directWriteFile, s+s_dump, &
-             s+s_empiricalGeometry, s+s_fGrid, s+s_forwardModel, &
-             s+s_forwardModelGlobal, s+s_l1brad, s+s_l1boa, s+s_l2parsf, &
-             s+s_makePFA, s+s_pfaData, s+s_readPFA, s+s_tGrid, s+s_time, &
-             s+s_vGrid, s+s_writePFA, n+n_section, &
+             begin, p+p_endtime, t+t_string, n+n_name_def, &
+                    s+s_binSelector, s+s_directWriteFile, s+s_dump, &
+                    s+s_empiricalGeometry, s+s_fGrid, s+s_forwardModel, &
+                    s+s_forwardModelGlobal, s+s_l1brad, s+s_l1boa, &
+                    s+s_l2parsf, s+s_makePFA, s+s_pfaData, s+s_readPFA, &
+                    s+s_tGrid, s+s_time, s+s_vGrid, s+s_writePFA, n+n_section, &
       begin, z+z_readapriori, s+s_time, s+s_gridded, s+s_l2gp, &
              s+s_l2aux, s+s_snoop, n+n_section, &
       begin, z+z_mergegrids, s+s_time, s+s_merge, s+s_concatenate, s+s_delete, &
@@ -1326,6 +1327,10 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.394  2005/01/27 21:09:50  vsnyder
+! Delete "file" field from PFAData.  Add [LU]SBPFAMolecules to ForwardModel and
+! delete PFAMolecules.  Some cannonball polishing.
+!
 ! Revision 2.393  2005/01/07 01:04:09  vsnyder
 ! Remove f_AllPFA from ReadPfa
 !
