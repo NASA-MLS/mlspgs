@@ -338,7 +338,7 @@ contains ! =====     Public Procedures     =============================
     use String_Table, only: Get_String
     use Toggles, only: Gen, Levels, Switches, Toggle
     use Trace_M, only: Trace_begin, Trace_end
-    use Tree, only: Decoration, Node_ID, Nsons, Sub_Rosa, Subtree
+    use Tree, only: Decoration, Node_ID, Nsons, Null_Tree, Sub_Rosa, Subtree
     use Tree_Types, only: N_Array
     use VGridsDatabase, only: VGrid_T
 
@@ -358,10 +358,11 @@ contains ! =====     Public Procedures     =============================
     logical :: Got(field_first:field_last)   ! "Got this field already"
     integer :: GSON                     ! Son of son
     integer :: I, J, K                  ! Subscript and loop inductor.
-    integer :: LsbPFATree               ! Tree index of f_lsbPFAMolecules
     integer :: MoleculeTree             ! Tree index of f_molecules
     integer :: NELTS                    ! Number of elements of an array tree
     integer :: NumPFA, NumLBL           ! Numbers of such molecules in a beta group
+    integer :: PFATrees(2)              ! Tree indices of f_[lu]sbPFAMolecules
+    integer :: S                        ! Sideband index, for PFAtrees
     integer :: SIDEBAND                 ! Returned from Parse_Signal
     integer, dimension(:), pointer :: SIGNALINDS ! From Parse_Signal
     character (len=80) :: SIGNALSTRING  ! E.g. R1A....
@@ -371,7 +372,6 @@ contains ! =====     Public Procedures     =============================
     integer, pointer :: TempLBL(:), TempPFA(:) ! Used to separate LBL and PFA
     integer :: THISMOLECULE             ! Tree index.
     integer :: type                     ! Type of value returned by EXPR
-    integer :: UsbPFATree               ! Tree index of f_lsbPFAMolecules
     real (r8) :: Value(2)               ! Value returned by EXPR
     integer :: WANTED                   ! Which signal do we want?
 
@@ -431,6 +431,7 @@ contains ! =====     Public Procedures     =============================
 
     got = .false.
     info%tolerance = -1.0 ! Kelvins, in case the tolerance field is absent
+    pfaTrees = null_tree
     do i = 2, nsons(root)
       son = subtree(i,root)
       field = get_field_id(son)
@@ -478,7 +479,7 @@ contains ! =====     Public Procedures     =============================
       case ( f_lockBins )
         info%lockBins = get_boolean(son)
       case ( f_lsbPFAMolecules )
-        lsbPFATree = son
+        PFATrees(1) = son
         info%anyPFA = .true.
       case ( f_module )
         info%instrumentModule = decoration(decoration(subtree(2,son)))
@@ -570,7 +571,7 @@ contains ! =====     Public Procedures     =============================
       case ( f_type )
         info%fwmType = decoration(subtree(2,son))
       case ( f_usbPFAMolecules )
-        usbPFATree = son
+        PFATrees(2) = son
         info%anyPFA = .true.
       case ( f_xStar )
         info%xStar = decoration ( decoration ( subtree ( 2, son ) ) )
@@ -596,8 +597,10 @@ contains ! =====     Public Procedures     =============================
         if ( info%beta_group(i)%group ) then
           if ( info%fwmType /= l_full ) &
             & call announceError ( noBetaGroup, son )
-          call allocate_test ( info%beta_group(i)%lbl_molecules, nsons(son)-1, &
-            & 'info%beta_group(i)%lbl_molecules', moduleName )
+          call allocate_test ( info%beta_group(i)%lbl(1)%molecules, nsons(son)-1, &
+            & 'info%beta_group(i)%lbl(1)%molecules', moduleName )
+          call allocate_test ( info%beta_group(i)%lbl(2)%molecules, nsons(son)-1, &
+            & 'info%beta_group(i)%lbl(2)%molecules', moduleName )
           info%beta_group(i)%molecule = decoration(subtree(1,son)) ! group name
           j = nsons(son)
           if ( j < 2 ) call announceError ( badMoleculeGroup, son )
@@ -607,115 +610,94 @@ contains ! =====     Public Procedures     =============================
             if ( node_id(gson) == n_array ) then
               call announceError ( nested, gson )
             else
-              info%beta_group(i)%lbl_molecules(j-1) = decoration(gson)
+              info%beta_group(i)%lbl(1)%molecules(j-1) = decoration(gson)
             end if
           end do
+          info%beta_group(i)%lbl(2)%molecules = info%beta_group(i)%lbl(1)%molecules
         else ! type checker guarantees a molecule name here
           nelts = nelts + 1
           info%beta_group(i)%molecule = decoration(son)
-          call allocate_test ( info%beta_group(i)%lbl_molecules, 1, &
-            & 'info%beta_group(i)%lbl_molecules', moduleName )
-          info%beta_group(i)%lbl_molecules(1) = info%beta_group(i)%molecule
+          call allocate_test ( info%beta_group(i)%lbl(1)%molecules, 1, &
+            & 'info%beta_group(i)%lbl(1)%molecules', moduleName )
+          call allocate_test ( info%beta_group(i)%lbl(2)%molecules, 1, &
+            & 'info%beta_group(i)%lbl(2)%molecules', moduleName )
+          info%beta_group(i)%lbl(1)%molecules(1) = info%beta_group(i)%molecule
+          info%beta_group(i)%lbl(2)%molecules(1) = info%beta_group(i)%molecule
         end if
-        if ( got(f_lsbPFAMolecules) .or. got(f_usbPFAmolecules) ) then
-          ! Allocate PFA_Molecules temporarily for a "this is a PFA molecule" flag
-          call allocate_test ( info%beta_group(i)%PFA_Molecules, &
-            & size(info%beta_group(i)%lbl_molecules), 'PFA_Molecules', moduleName )
-          info%beta_group(i)%PFA_Molecules = 0
-        else
-          call allocate_test ( info%beta_group(i)%PFA_Molecules, 0, &
-            & 'PFA_Molecules', moduleName )
-        end if
-      end do
+        do s = 1, 2 ! both sidebands
+          if ( pfaTrees(s) /= null_tree ) then
+            ! Allocate PFA_Molecules temporarily for a "this is a PFA molecule" flag
+            call allocate_test ( info%beta_group(i)%pfa(s)%molecules, &
+              & size(info%beta_group(i)%lbl(s)%molecules), 'PFA Molecules', moduleName )
+            info%beta_group(i)%pfa(s)%molecules = 0
+          else
+            call allocate_test ( info%beta_group(i)%pfa(s)%molecules, 0, &
+              & 'PFA Molecules', moduleName )
+          end if
+        end do ! s = 1, 2
+      end do ! i = 1, nsons(moleculeTree) - 1
     else
       allocate ( info%beta_group(0), stat = status )
       if ( status /= 0 ) call announceError( AllocateError, moleculeTree )
     end if
     info%molecules => info%beta_group%molecule
 
-    ! Now the [LU]SBPFAMolecules lists
-    if ( got(f_lsbPFAMolecules) .or. got(f_usbPFAMolecules) ) then
-      ! Verify that the PFA molecules are all listed molecules.  Mark the
-      ! ones that are PFA.
-ol:   do j = 2, nsons(lsbPFATree)
-        son = subtree( j, lsbPFATree )
-        thisMolecule = decoration( son )
+    ! Now the BPFAMolecules lists
+    do s = 1, 2
+      if ( pfaTrees(s) /= null_tree ) then
+        ! Verify that the PFA molecules are all listed molecules.  Mark the
+        ! ones that are PFA.
+o:      do j = 2, nsons(PFATrees(s))
+          son = subtree( j, PFATrees(s) )
+          thisMolecule = decoration( son )
+          do i = 1, size(info%beta_group)
+            do k = 1, size(info%beta_group(i)%lbl(s)%molecules)
+              if ( thisMolecule == info%beta_group(i)%lbl(s)%molecules(k) ) then
+                if ( info%beta_group(i)%pfa(s)%molecules(k) /= 0 ) &
+                  & call announceError ( PFATwice, son )
+                info%beta_group(i)%pfa(s)%molecules(k) = -1
+                cycle o
+              end if
+            end do ! k
+          end do ! i
+          call announceError ( PFANotMolecule, son )
+        end do o ! j
+        ! Divide the LBL and PFA molecules into separate lists
         do i = 1, size(info%beta_group)
-          do k = 1, size(info%beta_group(i)%LBL_Molecules)
-            if ( thisMolecule == info%beta_group(i)%LBL_Molecules(k) ) then
-              if ( info%beta_group(i)%PFA_Molecules(k) /= 0 ) &
-                & call announceError ( PFATwice, son )
-              info%beta_group(i)%PFA_Molecules(k) = -1
-              cycle ol
-            end if
-          end do ! k
+          numLBL = count(tempPFA == 0)
+          numPFA = size(tempPFA) - numLBL
+          tempLBL => info%beta_group(i)%lbl(s)%molecules
+          tempPFA => info%beta_group(i)%pfa(s)%molecules
+          nullify ( info%beta_group(i)%lbl(s)%molecules, &
+            &       info%beta_group(i)%pfa(s)%molecules )
+          call allocate_test ( info%beta_group(i)%lbl(s)%molecules, numLBL, &
+            & 'LBL Molecules', moduleName )
+          call allocate_test ( info%beta_group(i)%pfa(s)%molecules, numPFA, &
+            & 'PFA Molecules', moduleName )
+          info%beta_group(i)%lbl(s)%molecules = pack(tempLBL,tempPFA == 0)
+          info%beta_group(i)%pfa(s)%molecules = pack(tempLBL,tempPFA /= 0)
+          call deallocate_test ( tempLBL, 'TempLBL', moduleName )
+          call deallocate_test ( tempPFA, 'TempPFA', moduleName )
         end do ! i
-        call announceError ( PFANotMolecule, son )
-      end do ol ! j
-ou:   do j = 2, nsons(usbPFATree)
-        son = subtree( j, usbPFATree )
-        thisMolecule = decoration( son )
-        do i = 1, size(info%beta_group)
-          do k = 1, size(info%beta_group(i)%LBL_Molecules)
-            if ( thisMolecule == info%beta_group(i)%LBL_Molecules(k) ) then
-              if ( info%beta_group(i)%PFA_Molecules(k) /= 0 ) &
-                & call announceError ( PFATwice, son )
-              info%beta_group(i)%PFA_Molecules(k) = 1
-              cycle ou
-            end if
-          end do ! k
-        end do ! i
-        call announceError ( PFANotMolecule, son )
-      end do ou ! j
-      ! Divide the LBL and PFA molecules into separate lists
-      do i = 1, size(info%beta_group)
-        numLBL = 0
-        numPFA = 0
-        tempLBL => info%beta_group(i)%LBL_Molecules
-        tempPFA => info%beta_group(i)%PFA_Molecules
-        nullify ( info%beta_group(i)%LBL_Molecules, info%beta_group(i)%PFA_Molecules )
-        do k = 1, size(tempLBL)
-          if ( tempPFA(k) == 0 ) then
-            numLBL = numLBL + 1
-          else
-            numPFA = numPFA + 1
-          end if
-        end do ! k
-        call allocate_test ( info%beta_group(i)%LBL_Molecules, numLBL, &
-          & 'LBL_Molecules', moduleName )
-        call allocate_test ( info%beta_group(i)%PFA_Molecules, numPFA, &
-          & 'PFA_Molecules', moduleName )
-        numLBL = 0
-        numPFA = 0
-        do k = 1, size(tempLBL)
-          if ( tempPFA(k) == 0 ) then
-            numLBL = numLBL + 1
-            info%beta_group(i)%LBL_Molecules(numLBL) = tempLBL(k)
-          else
-            numPFA = numPFA + 1
-            info%beta_group(i)%PFA_Molecules(numPFA) = tempLBL(k)
-          end if
-        end do ! k
-        call deallocate_test ( tempLBL, 'TempLBL', moduleName )
-        call deallocate_test ( tempPFA, 'TempPFA', moduleName )
-      end do ! i
-    end if
+      end if
 
-    ! Now the cat_index and isotope ratio fields
-    do i = 1, size(info%beta_group)
-      call allocate_test ( info%beta_group(i)%cat_index, &
-        & size(info%beta_group(i)%lbl_molecules), &
-        & 'beta_group(b)%Cat_Index', moduleName )
-      info%beta_group(i)%cat_index = 0 ! in case somebody asks for a dump
-      call allocate_test ( info%beta_group(i)%LBL_Ratio, &
-        &                  size(info%beta_group(i)%LBL_Molecules), &
-        &                  'LBL_Ratio', moduleName )
-      info%beta_group(i)%LBL_Ratio = 1.0
-      call allocate_test ( info%beta_group(i)%PFA_Ratio, &
-        &                  size(info%beta_group(i)%PFA_Molecules), &
-        &                  'PFA_Ratio', moduleName )
-      info%beta_group(i)%PFA_Ratio = 1.0
-    end do ! i
+      ! Now the cat_index and isotope ratio fields
+      do i = 1, size(info%beta_group)
+        call allocate_test ( info%beta_group(i)%lbl(s)%cat_index, &
+          & size(info%beta_group(i)%lbl(s)%molecules), &
+          & 'beta_group(b)%Cat_Index', moduleName )
+        info%beta_group(i)%lbl(s)%cat_index = 0 ! in case somebody asks for a dump
+        call allocate_test ( info%beta_group(i)%lbl(s)%ratio, &
+          &                  size(info%beta_group(i)%lbl(s)%molecules), &
+          &                  'LBL Ratio', moduleName )
+        info%beta_group(i)%lbl(s)%ratio = 1.0
+        call allocate_test ( info%beta_group(i)%pfa(s)%ratio, &
+          &                  size(info%beta_group(i)%pfa(s)%molecules), &
+          &                  'PFA Ratio', moduleName )
+        info%beta_group(i)%pfa(s)%ratio = 1.0
+      end do ! i
+
+    end do ! s = 1, 2
 
     info%moleculeDerivatives => info%beta_group%derivatives
     info%moleculeDerivatives = .false.
@@ -1113,6 +1095,9 @@ ou:   do j = 2, nsons(usbPFATree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.108  2005/02/16 23:16:24  vsnyder
+! Revise data structures for split-sideband PFA
+!
 ! Revision 2.107  2005/01/27 21:23:13  vsnyder
 ! Inching toward separate LSB and USB PFA
 !
