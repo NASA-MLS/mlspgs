@@ -39,7 +39,7 @@ Module DailyMapModule
 !                Diagnostics
 !                DataGenerate
 !                DataGenerate1
-! Function -- DataField
+! Function -- 
 
 ! Remarks:  This is a prototype module for the main Core processing.
 
@@ -76,7 +76,8 @@ Contains
 ! |*** Initilization
 ! \---------------------------------------------------------------/
 
-	Subroutine Init(mode, nt_a_i, nt_d_i, tau0_i, delTad_i, c0_i, lonD0_i, tD0_i, lonA0_i, tA0_i, lat_i)
+	Subroutine Init(mode, nt_a_i, nt_d_i, tau0_i, delTad_i, 	&
+			c0_i, lonD0_i, tD0_i, lonA0_i, tA0_i, lat_i)
 
 ! Arguments
 
@@ -107,7 +108,8 @@ Contains
  	  nwave     = PI/(ds*cosa)
 
  	  dtad	    = delTad_i 
- 	  dlonad    = PI-dtad*c0 
+ 	  !dlonad    = PI-dtad*c0 
+ 	  dlonad    = abs(lonD0_i-lonA0_i) 
 
 	  d1lonad   = dlonad + c0*dtad
 
@@ -201,49 +203,12 @@ Contains
 
 	End Subroutine CordTransform
 
-!********************************************************************
-
-        Subroutine Loc2RS(aLoc, aRS)
-
-	 TYPE(Loc_T), INTENT(IN) :: aLoc
-	 TYPE(RS_T), INTENT(OUT) :: aRS
-
-	End Subroutine Loc2RS
-
-! /---------------------------------------------------------------\
-! |*** Data Field 
-! \---------------------------------------------------------------/
-
-	Real Function DataField(lon, lat, t)
-
-! Arguments
-
-	  Real :: lon, lat, t
-
-! Variables
-
-	  Real :: m0, sigma0, k0
-
-   	  m0      = 4.0
-   	  sigma0  = 0.1
-   	  !sigma0 = 0.0
-   	  k0      = 2.25
-
-   	  !DataField = cos(m0*lon + sigma0*t)
-   	  !DataField = cos(2.0*lon + sigma0*t)
-   	  !DataField = 2.0*cos(m0*lon - sigma0*t + lat) + cos(3.0*lon - 2.0*sigma0*t + lat) - 1.5*cos(1.0*lon - 3.0*sigma0*t)
-   	  !DataField = 2.0*cos(4*lon - 2.*sigma0*t + lat) - cos(3.0*lon - 2.0*sigma0*t + lat) - 1.5*cos(1.0*lon + 1.0*sigma0*t)
-   	  !DataField = cos(m0*lon + sigma0*t)*cos(k0*lat)
-   	  DataField = 1.5 + 0.5*cos(lon) + cos(2.0*lon + 0.5*t)
-
-	End Function DataField
-
 
 ! /---------------------------------------------------------------\
 ! |*** findad 
 ! \---------------------------------------------------------------/
 
-	Subroutine findad(sina, cosa, t, r0, ep, em, frp, frm, rpi, rmi)
+	Subroutine FindAD(sina, cosa, t, r0, ep, em, frp, frm, rpi, rmi)
 
 ! Arguments
 
@@ -396,6 +361,10 @@ Contains
 
 ! Dscending Part
 
+	  Do i = 1, (nt+1)/2
+   	     imgPTemp(i) = 0.0 
+          End Do
+
 	  Do i = nt/2, nt
    	     drealP(i) = dscend_fft(i+1-nt/2)/float(nt)
           End Do
@@ -528,6 +497,10 @@ Contains
 
 ! re-order the fft transform result
 
+	  Do i = 1, (nt_a+1)/2
+   	     imgPTemp(i) = 0.0 
+          End Do
+
 	  Do i = nt_a/2, nt_a
    	     arealP(i) = ascend_fft(i+1-nt_a/2)/float(nt_a)
           End Do
@@ -572,7 +545,7 @@ Contains
                   Goto 101
                endif
 
-               expda = ks*sda0 + kr*rda0
+               expda = ks*sa0 + kr*ra0
 
                flag = 0
 
@@ -595,7 +568,7 @@ Contains
 
                kr  = -ks*c0+float(m1)/sina
 
-     	       expda = ks*sda0 + kr*rda0
+     	       expda = ks*sa0 + kr*ra0
 
      	       phida   = CMPLX(arealP(i), aimgP(i))*CMPLX(cos(expda), -sin(expda))
 
@@ -656,6 +629,10 @@ Contains
 
 ! re-order the fft transform result
 
+	  Do i = 1, (nt_d+1)/2
+   	     imgPTemp(i) = 0.0 
+          End Do
+
 	  Do i = nt_d/2, nt_d
    	     drealP(i) = dscend_fft(i+1-nt_d/2)/float(nt_d)
           End Do
@@ -702,7 +679,7 @@ Contains
                   Goto 101
                endif
 
-               expda = ks*sda0 + kr*rda0
+               expda = ks*sd0 + kr*rd0
 
                flag = 0
 
@@ -725,7 +702,7 @@ Contains
 
                kr  = -ks*c0+float(m1)/sina
 
-     	       expda = ks*sda0 + kr*rda0
+     	       expda = ks*sd0 + kr*rd0
 
      	       phida   = CMPLX(drealP(i), dimgP(i))*CMPLX(cos(expda), -sin(expda))
 
@@ -757,7 +734,7 @@ Contains
 ! |*** Reconstruct 
 ! \---------------------------------------------------------------/
 
-        Subroutine Reconstruct(mode, xtime, nlons, xlon, result)
+        Subroutine Reconstruct(mode, xtime, nlons, xlon_orig, result)
 
 ! Arguments
 
@@ -767,11 +744,11 @@ Contains
 
 	  real xtime
 
-	  real(r8), Dimension(nlons) :: xlon, result
+	  real(r8), Dimension(nlons) :: xlon, xlon_orig, result
 
 ! Variables
 
-	  integer plan, m, m1, i, j, k
+	  integer j, k
 
 	  real  kr, ks
 
@@ -781,6 +758,11 @@ Contains
  	  real  rma, rmd, rpa, rpd , rdp, ran, rdn
  	  real  frpa, frma, frpd, frmd, frp, frm, rpi, rmi
 
+!*** Convert to gradient 
+
+ 	  do k = 1, nlons
+	    xlon(k) = xlon_orig(k)*PI/180.0
+  	  end do
 
 !*** find offset in longitude necessary to get r value right
 
@@ -858,7 +840,7 @@ Contains
   		ep = xloni
   		em = xloni
 
-  		call findad( sina, cosa, xtime, rda0, ep, em, frp, frm, rpi, rmi)
+  		call findad( sina, cosa, xtime, rd0, ep, em, frp, frm, rpi, rmi)
 
   		rp = rpi 
   		rm = rmi 
@@ -868,8 +850,8 @@ Contains
         	  kr     = wnd(j)*sina+sigmad(j)*cosa
         	  ks     = wnd(j)*cosa-sigmad(j)*sina
 
-        	  argp = (wnd(j)*ep + sigmad(j)*xtime) + kr*(rda0-rp)
-        	  argm = (wnd(j)*em + sigmad(j)*xtime) + kr*(rda0-rm)
+        	  argp = (wnd(j)*ep + sigmad(j)*xtime) + kr*(rd0-rp)
+        	  argm = (wnd(j)*em + sigmad(j)*xtime) + kr*(rd0-rm)
 
 		  sum = real( frp*phikrd(j)*CMPLX(cos(argp), sin(argp)) ) + &
 	      	        real( frm*phikrd(j)*CMPLX(cos(argm), sin(argm)) ) 
@@ -889,7 +871,7 @@ Contains
   		ep = xloni
   		em = xloni
 
-  		call findad( sina, cosa, xtime, rda0, ep, em, frp, frm, rpi, rmi)
+  		call findad( sina, cosa, xtime, ra0, ep, em, frp, frm, rpi, rmi)
 
   		rp = rpi 
   		rm = rmi 
@@ -899,8 +881,8 @@ Contains
         	  kr     = wna(j)*sina+sigmaa(j)*cosa
         	  ks     = wna(j)*cosa-sigmaa(j)*sina
 
-        	  argp = (wna(j)*ep + sigmaa(j)*xtime) + kr*(rda0-rp)
-        	  argm = (wna(j)*em + sigmaa(j)*xtime) + kr*(rda0-rm)
+        	  argp = (wna(j)*ep + sigmaa(j)*xtime) + kr*(ra0-rp)
+        	  argm = (wna(j)*em + sigmaa(j)*xtime) + kr*(ra0-rm)
 
 		  sum = real( frp*phikra(j)*CMPLX(cos(argp), sin(argp)) ) + &
 	      	        real( frm*phikra(j)*CMPLX(cos(argm), sin(argm)) ) 
@@ -936,7 +918,7 @@ Contains
 
 ! Variables
 
-	  integer plan, m, m1, i, j, k
+	  integer j
 
 	  real  kr, ks
 
@@ -1019,7 +1001,7 @@ Contains
   		ep = xloni
   		em = xloni
 
-  		call findad( sina, cosa, xtime, rda0, ep, em, frp, frm, rpi, rmi)
+  		call findad( sina, cosa, xtime, rd0, ep, em, frp, frm, rpi, rmi)
 
   		rp = rpi 
   		rm = rmi 
@@ -1029,8 +1011,8 @@ Contains
         	  kr     = wnd(j)*sina+sigmad(j)*cosa
         	  ks     = wnd(j)*cosa-sigmad(j)*sina
 
-        	  argp = (wnd(j)*ep + sigmad(j)*xtime) + kr*(rda0-rp)
-        	  argm = (wnd(j)*em + sigmad(j)*xtime) + kr*(rda0-rm)
+        	  argp = (wnd(j)*ep + sigmad(j)*xtime) + kr*(rd0-rp)
+        	  argm = (wnd(j)*em + sigmad(j)*xtime) + kr*(rd0-rm)
 
 		  sum = real( frp*phikrd(j)*CMPLX(cos(argp), sin(argp)) ) + &
 	      	        real( frm*phikrd(j)*CMPLX(cos(argm), sin(argm)) ) 
@@ -1049,7 +1031,7 @@ Contains
   		ep = xloni
   		em = xloni
 
-  		call findad( sina, cosa, xtime, rda0, ep, em, frp, frm, rpi, rmi)
+  		call findad( sina, cosa, xtime, ra0, ep, em, frp, frm, rpi, rmi)
 
   		rp = rpi 
   		rm = rmi 
@@ -1059,8 +1041,8 @@ Contains
         	  kr     = wna(j)*sina+sigmaa(j)*cosa
         	  ks     = wna(j)*cosa-sigmaa(j)*sina
 
-        	  argp = (wna(j)*ep + sigmaa(j)*xtime) + kr*(rda0-rp)
-        	  argm = (wna(j)*em + sigmaa(j)*xtime) + kr*(rda0-rm)
+        	  argp = (wna(j)*ep + sigmaa(j)*xtime) + kr*(ra0-rp)
+        	  argm = (wna(j)*em + sigmaa(j)*xtime) + kr*(ra0-rm)
 
 		  sum = real( frp*phikra(j)*CMPLX(cos(argp), sin(argp)) ) + &
 	      	        real( frm*phikra(j)*CMPLX(cos(argm), sin(argm)) ) 
@@ -1084,169 +1066,33 @@ Contains
 ! |*** Generate Data
 ! \---------------------------------------------------------------/
 
-        Subroutine DataGenerate(mode, aField, dField)
+        Subroutine DataGenerate(aField, dField)
 
 ! Arguments
 
-	 CHARACTER (LEN=3) :: mode                  ! asc/des/com/all
          Real (r8), DIMENSION(:) ::  aField, dField
 
 
 ! Variables
 
 	 Integer i
-         Real	      :: temp1, temp2, temp3
 
 	 Do i = 1, nt
             Dscend(nt+1-i) = dField(i) 
             Ascend(nt+1-i) = aField(i) 
          End Do
 
-         open(2, file='fields.dat', status="replace")
-   	 write(2, *) nt 
-	 Do i = 1, nt
-   	   write(2, '(2F10.5)') Ascend(i), Dscend(i)  
-         End Do
-         close(2) 
 
 	End Subroutine DataGenerate
-
-!**************************************************************************************
-
-        Subroutine DataGenerate_old(mode, filename1, filename2)
-
-! Arguments
-
-	 CHARACTER (LEN=3) :: mode                  ! asc/des/com/all
-
-	 Character(*) :: filename1, filename2
-
-! Variables
-
-	 Integer i
-         Real	      :: temp1, temp2, temp3
-
-         lonD(1) = lonD0
-         lonA(1) = lonD0 - dlonad
-         tD(1)   = tD0
-         tA(1)   = tA0
-
-         If (lonD(1) < -PI) lonD(1) = 2.0*PI + lonD(1)
-   	 print *, 'lonD0=', lonD0
-
-         If (lonA(1) < -PI) lonA(1) = 2.0*PI + lonA(1)
-
-	 Do i = 2, nt
-            lonD(i) = lonD(i-1) - c0*tau0
-            If (lonD(i) < -PI) lonD(i) = 2.0*PI + lonD(i)
-            lonA(i) = lonD(i) - dlonad
-            If (lonA(i) < -PI) lonA(i) = 2.0*PI + lonA(i)
-            tD(i) = tD0 + i*tau0
-            tA(i) = tA0 + i*tau0
-            temp1 = lonD(i)
-            temp2 = tD(i)
-            Dscend(nt+1-i) = DataField(temp1, lat, temp2) 
-            temp1 = lonA(i)
-            temp2 = tA(i)
-            Ascend(nt+1-i) = DataField(temp1, lat, temp2) 
-         End Do
-         temp1 = lonD(1)
-         temp2 = tD(1)
-         Dscend(nt) = DataField(temp1, lat, temp2) 
-         temp1 = lonA(1)
-         temp2 = tA(1)
-         Ascend(nt) = DataField(temp1, lat, temp2) 
-
-         open(2, file=filename1, status="replace")
-   	 write(2, '(4A10)') 'lonA', 'lonD', 'tA', 'tD'
-   	 write(2, *) nt 
-	 Do i = 1, nt
-   	   write(2, '(4F10.5)') lonA(i), lonD(i), tA(i), tD(i)
-         End Do
-         close(2) 
-
-         open(2, file=filename2, status="replace")
-   	 write(2, '(6A10)') 'sA', 'sD', 'rA', 'rD', 'Ascend', 'Dscend'  
-   	 write(2, *) nt 
-	 Do i = 1, nt
-   	   write(2, '(6F10.5)') sA(i), sD(i), rA(i), rD(i), Ascend(i), Dscend(i)  
-         End Do
-         close(2) 
-
-         open(2, file="ascend.dat", status="replace")
-   	 write(2, *) nt 
-	 Do i = 1, nt
-   	   write(2, '(F10.5)') Ascend(i) 
-         End Do
-         close(2) 
-
-         open(2, file="dscend.dat", status="replace")
-   	 write(2, *) nt 
-	 Do i = 1, nt
-   	   write(2, '(F10.5)') Dscend(i) 
-         End Do
-         close(2) 
-
-	End Subroutine DataGenerate_old
-
-
-! /---------------------------------------------------------------\
-! |*** Generate Data for only one series
-! \---------------------------------------------------------------/
-
-        Subroutine DataGenerate1(filename1, filename2)
-
-! Arguments
-
-	 Character(*) :: filename1, filename2
-
-! Variables
-
-	 Integer i
-         Real	      :: temp1, temp2, temp3
-
-         lonDA(1) = lonDA0
-         tDA(1)   = tDA0
-
-         If (lonDA(1) < -PI) lonDA(1) = 2.0*PI + lonDA(1)
-   	 print *, 'lonDA0=', lonDA0
-
-	 Do i = 2, nt
-            lonDA(i) = lonDA(i-1) - c0*tau0
-            If (lonDA(i) < -PI) lonDA(i) = 2.0*PI + lonDA(i)
-            tDA(i) = tDA0 + i*tau0
-            temp1 = lonDA(i)
-            temp2 = tDA(i)
-            DAcend(nt+1-i) = DataField(temp1, lat, temp2) 
-         End Do
-         temp1 = lonDA(1)
-         temp2 = tDA(1)
-         DAcend(nt) = DataField(temp1, lat, temp2) 
-
-         open(2, file=filename1, status="replace")
-   	 write(2, '(4A10)') 'lonDA',  'tDA'
-   	 write(2, *) nt 
-	 Do i = 1, nt
-   	   write(2, '(2F10.5)') lonDA(i), tDA(i)
-         End Do
-         close(2) 
-
-         open(2, file=filename2, status="replace")
-   	 write(2, '(4A10)') 'sDA', 'rDA', 'DAcend'  
-   	 write(2, *) nt 
-	 Do i = 1, nt
-   	   write(2, '(4F10.5)') sDA(i), rDA(i), DAcend(i)  
-         End Do
-         close(2) 
-
-	End Subroutine DataGenerate1
-
 
 !===================
 End Module DailyMapModule
 !===================
 
 ! $Log$
+! Revision 1.3  2001/03/06 18:52:41  ybj
+! *** empty log message ***
+!
 ! Revision 1.2  2001/03/03 01:38:12  ybj
 ! with selected pressure levels
 !

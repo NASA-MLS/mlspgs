@@ -87,12 +87,13 @@ CONTAINS
 
         integer i, j, iP, kP, iD, iL
 	real zonAvg, tau0, l3ret
+	real(r8) lonD0_in, lonA0_in
 
 !*** Initilize variables
  
 	nlev = 24
         nwv = 10
-        nf = cfProd%nFreqs
+        nf = 60 
 
 	nlev = 0
         DO j = 1, l2gp(1)%nLevels
@@ -134,6 +135,8 @@ CONTAINS
            CALL AllocateL3SP( nlev, cfProd%nLats, nwv, nf, l3sp(j) )
            l3sp(j)%pressure = l2gp(1)%pressures(pStartIndex:pEndIndex)
            l3sp(j)%latitude = cfProd%latGridMap(:l3sp(j)%nLats)
+           l3sp(j)%waveNumber = 0.0
+           l3sp(j)%frequency = 0.0
            l3sp(j)%l3spRelValue = 0.0 
            l3sp(j)%l3spRelPrecision = 0.0 
            l3sp(j)%l3spImgValue = 0.0 
@@ -177,6 +180,14 @@ CONTAINS
            dmA(j)%longitude = cfProd%longGrid(:dmA(j)%nLons)
            dmD(j)%longitude = cfProd%longGrid(:dmD(j)%nLons)
 
+           l3dm(j)%l3dmValue = 0.0
+           dmA(j)%l3dmValue = 0.0
+           dmD(j)%l3dmValue = 0.0
+
+           l3dm(j)%l3dmPrecision = 0.0
+           dmA(j)%l3dmPrecision = 0.0
+           dmD(j)%l3dmPrecision = 0.0
+
         ENDDO
 
 !!      Initialize Daily Zonal Mean 
@@ -202,6 +213,14 @@ CONTAINS
            l3dz(j)%latitude = cfProd%latGridMap(:l3dm(j)%nLats)
            dzA(j)%latitude = cfProd%latGridMap(:dmA(j)%nLats)
            dzD(j)%latitude = cfProd%latGridMap(:dmD(j)%nLats)
+
+           l3dz(j)%l3dzValue = 0.0
+           dzA(j)%l3dzValue = 0.0
+           dzD(j)%l3dzValue = 0.0
+
+           l3dz(j)%l3dzPrecision = 0.0
+           dzA(j)%l3dzPrecision = 0.0
+           dzD(j)%l3dzPrecision = 0.0
 
         ENDDO
 
@@ -276,20 +295,22 @@ CONTAINS
 	  ENDDO 
 
 	  DO J = 1, cfProd%nLats
-	  !DO J = 10, 10 
        	     IF( anlats(J, iP) > 0 ) THEN
-	        CALL Init(cfProd%mode, 				&
-			  nt_a_i   = anlats(J, iP), 		&
-			  nt_d_i   = dnlats(J, iP), 		&
-			  tau0_i   = tau0, 			&
-			  delTad_i = delTad(J, iP), 		&
-			  c0_i     = 2.0*PI, 			&
-			  lonD0_i  = alons(J, 1, iP), 		&
-			  tD0_i    = atimes(J, 1, iP), 		&
-			  lonA0_i  = dlons(J, 1, iP), 		&
-			  tA0_i    = dtimes(J, 1, iP), 		&
+   		lonD0_in = FindRealLon(real(dlons(J, 1, iP)))
+   		lonA0_in = FindRealLon(real(alons(J, 1, iP)))
+
+	        CALL Init(cfProd%mode, 						&
+			  nt_a_i   = anlats(J, iP), 				&
+			  nt_d_i   = dnlats(J, iP), 				&
+			  tau0_i   = tau0, 					&
+			  delTad_i = delTad(J, iP), 				&
+			  c0_i     = 2.0*PI, 					&
+			  lonD0_i  = lonD0_in, 					&
+			  tD0_i    = dtimes(J, 1, iP), 				&
+			  lonA0_i  = lonA0_in, 					&
+			  tA0_i    = atimes(J, 1, iP), 				&
 			  lat_i    = alats(J, 1, iP) )
-          	CALL DataGenerate(cfProd%mode, afields(J, :, iP), dfields(J, :, iP) )
+          	CALL DataGenerate(afields(J, :, iP), dfields(J, :, iP) )
 		IF (cfProd%mode == 'com') THEN
                    ALLOCATE(l3Result(l3dm(1)%nLons), STAT=error)
                    CALL CordTransform(cfProd%mode)
@@ -424,7 +445,7 @@ CONTAINS
 			IF(atimes(J, iL, iP)*86400.0+l2gp(1)%time(1) >= startTime(iD) .AND. &
 			   atimes(J, iL, iP)*86400.0+l2gp(1)%time(1) <= endTime(iD)) THEN
 			   nc(iD) = nc(iD) + 1
-		           CALL Diagnostics(cfProd%mode, atimes(J, iL, iP), alons(J, iL, iP), l3ret) 
+		           CALL Diagnostics('com', atimes(J, iL, iP), alons(J, iL, iP), l3ret) 
 			   l3r(iD)%time(nc(iD))     = atimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
 			   l3r(iD)%latitude(nc(iD)) = cfProd%latGridMap(J) 
 			   l3r(iD)%longitude(nc(iD)) = alons(J, iL, iP) -  mod( real(alons(J, iL, iP)), (2.0*PI) ) 
@@ -436,7 +457,7 @@ CONTAINS
 			IF(dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1) >= startTime(iD) .AND. &
 			   dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1) <= endTime(iD)) THEN
 			   nc(iD) = nc(iD) + 1
-		           CALL Diagnostics(cfProd%mode, dtimes(J, iL, iP), dlons(J, iL, iP), l3ret) 
+		           CALL Diagnostics('com', dtimes(J, iL, iP), dlons(J, iL, iP), l3ret) 
 			   l3r(iD)%time(nc(iD))     = dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
 			   l3r(iD)%latitude(nc(iD)) = cfProd%latGridMap(J) 
 			   l3r(iD)%longitude(nc(iD)) = dlons(J, iL, iP) -  mod( real(dlons(J, iL, iP)), (2.0*PI) ) 
@@ -470,7 +491,7 @@ CONTAINS
 			IF(atimes(J, iL, iP)*86400.0+l2gp(1)%time(1) >= startTime(iD) .AND. &
 			   atimes(J, iL, iP)*86400.0+l2gp(1)%time(1) <= endTime(iD)) THEN
 			   nca(iD) = nca(iD) + 1
-		           CALL Diagnostics(cfProd%mode, atimes(J, iL, iP), alons(J, iL, iP), l3ret) 
+		           CALL Diagnostics('asc', atimes(J, iL, iP), alons(J, iL, iP), l3ret) 
 			   residA(iD)%time(nc(iD))     = atimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
 			   residA(iD)%latitude(nca(iD)) = cfProd%latGridMap(J) 
 			   residA(iD)%longitude(nca(iD)) = alons(J, iL, iP) -  mod( real(alons(J, iL, iP)), (2.0*PI) ) 
@@ -504,7 +525,7 @@ CONTAINS
 			IF(dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1) >= startTime(iD) .AND. &
 			   dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1) <= endTime(iD)) THEN
 			   ncd(iD) = ncd(iD) + 1
-		           CALL Diagnostics(cfProd%mode, dtimes(J, iL, iP), dlons(J, iL, iP), l3ret) 
+		           CALL Diagnostics('des', dtimes(J, iL, iP), dlons(J, iL, iP), l3ret) 
 			   residD(iD)%time(ncd(iD))     = dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
 			   residD(iD)%latitude(ncd(iD)) = cfProd%latGridMap(J) 
 			   residD(iD)%longitude(nc(iD)) = dlons(J, iL, iP) -  mod( real(dlons(J, iL, iP)), (2.0*PI) ) 
@@ -531,7 +552,7 @@ CONTAINS
 	DeAllocate(nc, nca, ncd)
 	DeAllocate(startTime, endTime)
 
-!	DeAllocate( anlats, dnlats, alats, dlats, alons, dlons, atimes, dtimes, afields, dfields, delTad )
+	DeAllocate(alats, dlats, alons, dlons, atimes, dtimes, afields, dfields)
 
 !-----------------------------------
    END SUBROUTINE DailyCoreProcessing
@@ -552,22 +573,24 @@ CONTAINS
         TYPE( L3CFProd_T ) :: cfProd
         TYPE( L2GPData_T ), POINTER :: l2gp(:)
 
-	Real (r8), POINTER, DIMENSION(:, :) ::  l2Times(:, :), l2Times_Rev(:, :), &
-						l2Lons_new(:, :), l2Lons(:, :), l2Lons_Rev(:, :), &
-						l2Lats(:, :), l2Lats_Rev(:, :), &
-						l2Values(:, :), l2Values_Rev(:, :)
+	Real (r8), POINTER, DIMENSION(:, :) ::  l2Times(:, :), l2Lons_new(:, :), l2Lons(:, :),  l2Lons_old(:, :), &
+						l2Lats(:, :), l2Values(:, :)
 
 	Real (r8), POINTER, DIMENSION(:, :, :) ::  alons_interp(:, :, :), alats_interp(:, :, :)
 	Real (r8), POINTER, DIMENSION(:, :, :) ::  dlons_interp(:, :, :), dlats_interp(:, :, :)
 	Real (r8), POINTER, DIMENSION(:, :, :) ::  atimes_interp(:, :, :), dtimes_interp(:, :, :)
 	Real (r8), POINTER, DIMENSION(:, :, :) ::  afields_interp(:, :, :), dfields_interp(:, :, :)
 
+	Real (r8), POINTER, DIMENSION(:, :, :) ::  alons_interp_old(:, :, :), dlons_interp_old(:, :, :)
+
 	Real (r8) dlons, alons, lons_found, lats_found, times_found, fields_found, 	&
 		  slope, slope_time, slope_field, sTime, ddtad
 
+	Real (r8) lons_found_old
+
 	Real tau0
  
-	Integer nPd, pStartIndex, pEndIndex
+	Integer nPd, pStartIndex, pEndIndex, iMin
 
 	INTEGER, DIMENSION(cfProd%nLats, pEndIndex-pStartIndex+1) :: anlats, dnlats
 	Real (r8), DIMENSION(cfProd%nLats, pEndIndex-pStartIndex+1) :: delTad 
@@ -589,10 +612,7 @@ CONTAINS
         ALLOCATE(l2Values(nterms, pEndIndex-pStartIndex+1), STAT=error)
 
         ALLOCATE(l2Lons_new(nterms, pEndIndex-pStartIndex+1), STAT=error)
-        ALLOCATE(l2Lons_Rev(nterms, pEndIndex-pStartIndex+1), STAT=error)
-        ALLOCATE(l2Times_Rev(nterms, pEndIndex-pStartIndex+1), STAT=error)
-        ALLOCATE(l2Lats_Rev(nterms, pEndIndex-pStartIndex+1), STAT=error)
-        ALLOCATE(l2Values_Rev(nterms, pEndIndex-pStartIndex+1), STAT=error)
+        ALLOCATE(l2Lons_old(nterms, pEndIndex-pStartIndex+1), STAT=error)
 
         ALLOCATE(alons_interp(cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
         ALLOCATE(alats_interp(cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
@@ -602,6 +622,9 @@ CONTAINS
         ALLOCATE(dlats_interp(cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
         ALLOCATE(dtimes_interp(cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
         ALLOCATE(dfields_interp(cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
+
+        ALLOCATE(alons_interp_old(cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
+        ALLOCATE(dlons_interp_old(cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
 
 	IF(error /= 0 ) THEN
           print *, "Allocation Error"
@@ -618,6 +641,7 @@ CONTAINS
 	        iP = iP + 1
                 l2Times(nstart, iP) = l2gp(iD)%time(iT)
                 l2Lons(nstart, iP) = l2gp(iD)%longitude(iT) * PI/180.0
+                l2Lons_old(nstart, iP) = l2gp(iD)%longitude(iT) * PI/180.0
                 l2Lats(nstart, iP) = l2gp(iD)%latitude(iT)
                 l2Values(nstart, iP) = l2gp(iD)%l2gpValue(1, kP, iT) 
 	    ENDDO
@@ -638,21 +662,12 @@ CONTAINS
 		ELSE
      			l2Lons_new(iT, iP) = l2Lons(iT, iP) - nr*2.0*PI
 		END IF
+     		!l2Lons_new(iT, iP) = l2Lons(iT, iP)
 	  ENDDO
           l2Lons_new(1, iP) = l2Lons(1, iP)
 	ENDDO
 
-!*** Reverse longitude order
-
-	iP = 0
-	DO kP = pStartIndex, pEndIndex 
-	  iP = iP + 1
-	  DO iT = 1, nterms 
-     		l2Lons_Rev(iT, iP) = l2Lons_new(nterms+1-iT, iP)
-	  ENDDO
-	ENDDO
-
-!*** Reverse time order
+!*** Convert time reference to the starting point
 
 	iP = 0
 	DO kP = pStartIndex, pEndIndex 
@@ -663,38 +678,6 @@ CONTAINS
 	  ENDDO
 	ENDDO
 
-	iP = 0
-	DO kP = pStartIndex, pEndIndex 
-	  iP = iP + 1
-	  DO iT = 1, nterms 
-                l2Times_Rev(iT, iP) = l2Times(nterms+1-iT, iP)
-	  ENDDO
-	ENDDO
-
-!*** Reverse latitude order
-
-	iP = 0
-	DO kP = pStartIndex, pEndIndex 
-	  iP = iP + 1
-	  DO iT = 1, nterms 
-     		l2Lats_Rev(iT, iP) = l2Lats(nterms+1-iT, iP)
-	  ENDDO
-	ENDDO
-
-!*** Reverse field value order
-
-	iP = 0
-	DO kP = pStartIndex, pEndIndex 
-	  iP = iP + 1
-	  DO iT = 1, nterms 
-     		l2Values_Rev(iT, iP) = l2Values(nterms+1-iT, iP)
-	  ENDDO
-	ENDDO
-
-!*** Deallocate intermidiate arrays 
-
-        DEALLOCATE(l2Lons, l2Lons_new, l2Lats, l2Values)
-
 !*** Find longitudes & latitudes for L3 latitudes in L2 data points 
 
         dlons = 0.3*PI/180.0
@@ -703,14 +686,14 @@ CONTAINS
 	DO kP = pStartIndex, pEndIndex 
 	  iP = iP + 1
 
- 	  alons = l2Lons_Rev(1, iP) 
+ 	  alons = l2Lons_new(1, iP) 
 
 	  lindex = 1
 	  lindex_prev = 0
 	  aindex_prev = 0
 	  dindex_prev = 0
 
-          nloop = (l2Lons_Rev(nterms, iP)-l2Lons_Rev(1, iP))/dlons
+          nloop = (l2Lons_new(1, iP)-l2Lons_new(nterms, iP))/dlons
 
 	  DO J = 1, cfProd%nLats
        	     anlats(J, iP) = 0 
@@ -718,9 +701,9 @@ CONTAINS
 	  ENDDO
 
 	  DO I = 1, nloop
-	    alons = alons +  dlons
+	    alons = alons -  dlons
 	    DO iT = lindex, nterms-1 
-              IF( l2Lons_Rev(iT, iP) < alons .AND. l2Lons_Rev(iT+1, iP) >= alons ) THEN
+              IF( l2Lons_new(iT, iP) > alons .AND. l2Lons_new(iT+1, iP) <= alons ) THEN
 	 	 lindex = iT
 	 	 EXIT
 	      END IF
@@ -731,52 +714,53 @@ CONTAINS
 	     lindex_prev = lindex
 
 	     DO J = 1, cfProd%nLats
-              IF( ( l2Lats_Rev(lindex, iP) <= cfProd%latGridMap(J) .AND. 	&
-		    l2Lats_Rev(lindex+1, iP) > cfProd%latGridMap(J) )  .OR.	&
-                  ( l2Lats_Rev(lindex, iP) >= cfProd%latGridMap(J) .AND. 	&
-		    l2Lats_Rev(lindex+1, iP) < cfProd%latGridMap(J) )  ) THEN
-		slope = (l2Lats_Rev(lindex+1, iP)-l2Lats_Rev(lindex, iP))/	&
-			(l2Lons_Rev(lindex+1, iP)-l2Lons_Rev(lindex, iP))
-		slope_time = (l2Times_Rev(lindex+1, iP)-l2Times_Rev(lindex, iP))/	&
-			(l2Lons_Rev(lindex+1, iP)-l2Lons_Rev(lindex, iP))
-		slope_field = (l2Values_Rev(lindex+1, iP)-l2Values_Rev(lindex, iP))/	&
-			(l2Lons_Rev(lindex+1, iP)-l2Lons_Rev(lindex, iP))
+              IF( ( l2Lats(lindex, iP) <= cfProd%latGridMap(J) .AND. 	&
+		    l2Lats(lindex+1, iP) > cfProd%latGridMap(J) )  .OR.	&
+                  ( l2Lats(lindex, iP) >= cfProd%latGridMap(J) .AND. 	&
+		    l2Lats(lindex+1, iP) < cfProd%latGridMap(J) )  ) THEN
+		slope = (l2Lats(lindex+1, iP)-l2Lats(lindex, iP))/	&
+			(l2Lons_new(lindex+1, iP)-l2Lons_new(lindex, iP))
+		slope_time = (l2Times(lindex+1, iP)-l2Times(lindex, iP))/	&
+			(l2Lons_new(lindex+1, iP)-l2Lons_new(lindex, iP))
+		slope_field = (l2Values(lindex+1, iP)-l2Values(lindex, iP))/	&
+			(l2Lons(lindex+1, iP)-l2Lons(lindex, iP))
 		IF(ABS(slope) < 1.e-6) THEN
-		   lons_found = l2Lons_Rev(lindex, iP)
+		   lons_found = l2Lons_new(lindex, iP)
+		   lons_found_old = l2Lons_old(lindex, iP)
 		ELSE
-		   lons_found = l2Lons_Rev(lindex, iP) + (cfProd%latGridMap(J)-l2Lats_Rev(lindex, iP))/slope
+		   lons_found = l2Lons_new(lindex, iP) + (cfProd%latGridMap(J)-l2Lats(lindex, iP))/slope
+		   lons_found_old = l2Lons_old(lindex, iP) + (cfProd%latGridMap(J)-l2Lats(lindex, iP))/slope
 		END IF
 		lats_found = cfProd%latGridMap(J)
-		times_found = l2Times_Rev(lindex, iP) + (lons_found-l2Lons_Rev(lindex, iP))*slope_time
-		fields_found = l2Values_Rev(lindex, iP) + (lons_found-l2Lons_Rev(lindex, iP))*slope_field
+		times_found = l2Times(lindex, iP) + (lons_found-l2Lons_new(lindex, iP))*slope_time
+		fields_found = l2Values(lindex, iP) + (lons_found-l2Lons_new(lindex, iP))*slope_field
                 aindex = J
-                if(aindex == 1) then
-	           !print *, 'aindex=1 case:', lats_found, lons_found, times_found
-	  	end if
 		EXIT
 	      END IF
 	     ENDDO
               
-             !if(lats_found <= -74.0 .and. lons_found < -2830.0) then
-	!	print *, aindex, lons_found, lats_found
-	!     end if
-
-	     IF( slope <= 0 .and. aindex /= aindex_prev) THEN
+	     IF( slope < 0 .and. aindex /= aindex_prev) THEN
 	         aindex_prev = aindex
-       	         anlats(aindex, iP) = anlats(aindex, iP) + 1 
-	         alons_interp(aindex, anlats(aindex, iP), iP) = lons_found
-	         alats_interp(aindex, anlats(aindex, iP), iP) = lats_found
-	         atimes_interp(aindex, anlats(aindex, iP), iP) = times_found
-	         afields_interp(aindex, anlats(aindex, iP), iP) = fields_found
+		 !IF(dnlats(aindex, iP) > 0) THEN
+       	           anlats(aindex, iP) = anlats(aindex, iP) + 1 
+	           alons_interp(aindex, anlats(aindex, iP), iP) = lons_found
+	           alats_interp(aindex, anlats(aindex, iP), iP) = lats_found
+	           atimes_interp(aindex, anlats(aindex, iP), iP) = times_found
+	           afields_interp(aindex, anlats(aindex, iP), iP) = fields_found
+	           alons_interp_old(aindex, anlats(aindex, iP), iP) = lons_found_old
+	         !END IF
 	     END IF
 
-	     IF( slope > 0 .and. aindex /= dindex_prev) THEN
+	     IF( slope >= 0 .and. aindex /= dindex_prev) THEN
 	         dindex_prev = aindex
-       	         dnlats(aindex, iP) = dnlats(aindex, iP) + 1 
-	         dlons_interp(aindex, dnlats(aindex, iP), iP) = lons_found
-	         dlats_interp(aindex, dnlats(aindex, iP), iP) = lats_found
-	         dtimes_interp(aindex, dnlats(aindex, iP), iP) = times_found
-	         dfields_interp(aindex, dnlats(aindex, iP), iP) = fields_found
+		 IF(anlats(aindex, iP) > 0) THEN
+       	           dnlats(aindex, iP) = dnlats(aindex, iP) + 1 
+	           dlons_interp(aindex, dnlats(aindex, iP), iP) = lons_found
+	           dlats_interp(aindex, dnlats(aindex, iP), iP) = lats_found
+	           dtimes_interp(aindex, dnlats(aindex, iP), iP) = times_found
+	           dfields_interp(aindex, dnlats(aindex, iP), iP) = fields_found
+	           dlons_interp_old(aindex, dnlats(aindex, iP), iP) = lons_found_old
+	         END IF
 	     END IF
 
 
@@ -794,29 +778,59 @@ CONTAINS
 	  iP = iP + 1
 	  DO J = 1, cfProd%nLats
             delTad(J,iP) = 0.0
-	    DO I = 1, anlats(J, iP) 
-                delTad(J,iP) = delTad(J,iP) + atimes_interp(J, I, iP) - dtimes_interp(J, I, iP)
-	    ENDDO
-            IF(anlats(J, iP) > 0) THEN
-              delTad(J,iP) = delTad(J,iP)/float(anlats(J, iP))
+            IF (anlats(J, iP) < dnlats(J, iP)) THEN
+		iMin = anlats(J, iP)
 	    ELSE
-              delTad(J,iP) = 0.0 
+		iMin = dnlats(J, iP)
+	    END IF 
+	    DO I = 2, iMin 
+                delTad(J,iP) = delTad(J,iP) + dtimes_interp(J, I, iP) - atimes_interp(J, I, iP)
+	    ENDDO
+            IF(iMin > 0) THEN
+                delTad(J,iP) = delTad(J,iP)/float(iMin-1)
+	    ELSE
+                delTad(J,iP) = 0.0 
 	    END IF
+
             IF(delTad(J,iP) < 0) THEN
-              delTad(J,iP) = delTad(J,iP) + tau0 
+                delTad(J,iP) = delTad(J,iP) + tau0 
 	    END IF
 	  ENDDO
 	ENDDO
 
 !*** Deallocate intermidiate arrays 
 
-        DEALLOCATE(l2Lons_Rev, l2Times_Rev, l2Lats_Rev, l2Values_Rev)
-
+        DEALLOCATE(l2Lons, l2Lons_new, l2Lons_old, l2Lats, l2Values)
 
 !-----------------------------------
    END SUBROUTINE SortData
 !-----------------------------------
 
+
+!-------------------------------------------------------------------------
+   REAL(r8) FUNCTION FindRealLon(alon)
+!-------------------------------------------------------------------------
+
+	Real alon
+
+	IF(mod(alon, 2.0*PI) < -PI) THEN
+	   FindRealLon = 2.0*PI + mod(alon, 2.0*PI) 
+	ELSE IF(mod(alon, 2.0*PI) > PI) THEN
+	   FindRealLon = -2.0*PI + mod(alon, 2.0*PI) 
+	ELSE
+	   FindRealLon = mod(alon, 2.0*PI) 
+	END IF
+	IF(mod(alon, 2.0*PI) < -PI) THEN
+	   FindRealLon = 2.0*PI + mod(alon, 2.0*PI) 
+	ELSE IF(mod(alon, 2.0*PI) > PI) THEN
+	   FindRealLon = -2.0*PI + mod(alon, 2.0*PI) 
+	ELSE 
+	   FindRealLon = mod(alon, 2.0*PI) 
+	END IF
+
+!-----------------------------------
+   END FUNCTION FindRealLon
+!-----------------------------------
 
 
 
@@ -825,6 +839,9 @@ END MODULE Synoptic
 !===================
 
 ! $Log$
+! Revision 1.11  2001/03/08 00:53:15  ybj
+! *** empty log message ***
+!
 ! Revision 1.10  2001/03/08 00:37:17  ybj
 ! *** empty log message ***
 !
