@@ -1,4 +1,4 @@
-! Copyright (c 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module PVM ! Interface to the f77 pvm library.
@@ -332,6 +332,11 @@ module PVM ! Interface to the f77 pvm library.
        integer, intent(out) :: INFO
      end subroutine pvmffreebuf
 
+     subroutine pvmfpstat(tid, info)
+       integer, intent(in) :: TID
+       integer, intent(out) :: INFO
+     end subroutine pvmfpstat
+
      ! These ones are to get around the irritating inability of pvmfspawn
      ! to pass arguments
 
@@ -584,6 +589,9 @@ contains
 end module PVM
 
 ! $Log$
+! Revision 2.14  2004/12/14 21:33:19  pwagner
+! Added pvmfpstat
+!
 ! Revision 2.13  2004/04/16 00:44:36  livesey
 ! Added pvmfkill
 !
