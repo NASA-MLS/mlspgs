@@ -641,7 +641,7 @@ internalmftests:
 	done; \
 	if [ -d "$(sids_l1boa)" ] ; then \
      cd "$(sids_l1boa)"; \
-     $(MAKE) update; \
+     $(MAKE) -f $(MakeFName) update; \
    fi
 
 show_copy:
@@ -676,6 +676,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.51  2001/10/10 23:24:51  pwagner
+# sids/l1boa added to list of extra directories to be updated
+#
 # Revision 1.50  2001/10/04 22:24:49  pwagner
 # Limit suffix-based rules to (MLSCONFG)
 #
