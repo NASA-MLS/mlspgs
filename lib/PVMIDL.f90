@@ -358,8 +358,12 @@ contains
        if ((info==0).and.(length > len(line))) info=-201
        
        ! Now unpack the string itself
-       if ((info==0).and.(length/=0)) call pvmf90unpack(line,info)
-       line=line(1:length)
+       if ((info==0).and.(length/=0)) then
+         call pvmf90unpack(line,info)
+         line = line(1:length)
+       else
+         line = ''
+       end if
     endif
 
   end subroutine PVMIDLunpackString
@@ -1141,6 +1145,9 @@ contains
 end module PVMIDL
 
 ! $Log$
+! Revision 2.10  2002/12/04 21:54:58  livesey
+! Bug fix in string unpacking
+!
 ! Revision 2.9  2002/10/08 17:43:19  livesey
 ! Bug fixes
 !
