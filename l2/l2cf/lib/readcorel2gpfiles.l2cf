@@ -11,9 +11,7 @@ begin ReadApriori
     file='!inpathcore/MLS-Aura_L2GP-DGG_!coreversion_!day.he4', swath='$1-Core'!nl})
   ;; These are the species for which we want to read Core data (no
   ;; continuations allowed).
-  !ifdef(flagSkipCoreBaseline,
-  {!define(coreL2GPSpecies,{Temperature,H2O,RHI,refGPH,ExtinctionConstantR2})},
-  {!define(coreL2GPSpecies,{Temperature,H2O,RHI,refGPH,BaselineR1A,ExtinctionConstantR2})})
+  !define(coreL2GPSpecies,{Temperature,H2O,RHI,refGPH})
   !forall(readCoreL2GP,!coreL2GPSpecies)
 
   ;; Ptan we have to get from an l2aux file, this could be fun!
