@@ -23,7 +23,7 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
     & PGSd_GCT_INVERSE, &
     & UseSDPToolkit
   use TREE, only: DUMP_TREE_NODE, SOURCE_REF
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
 
   implicit none
   private
@@ -55,6 +55,7 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
 
   character (len=*), parameter :: lit_dao = 'dao'
   character (len=*), parameter :: lit_ncep = 'ncep'
+  character (len=*), parameter :: lit_strat = 'strat'
   character (len=*), parameter :: lit_clim = 'clim'
   integer, parameter :: MAXLISTLENGTH=Linelen ! Max length list of grid names
   integer, parameter :: NENTRIESMAX=200 ! Max num of entries
@@ -90,8 +91,9 @@ contains
 
     ! Local Variables
     character ( len=NameLen) :: my_description   ! In case mixed case
-    logical, parameter :: DEEBUG = .false.
+    logical, parameter :: DEEBUG = .true.
     ! Executable code
+    
     my_description = lowercase(description)
     if ( DEEBUG ) print *, 'Reading ' // trim(my_description) // ' data'
 
@@ -131,11 +133,10 @@ contains
       ! These are ncep stratospheric analysis combined data
       ! in hdfeos5 format
       call Read_ncep_strat(FileName, lcf_where, v_type, &
-        & the_g_data, GeoDimList, fieldName, gridName='NorthernHemisphere', &
-        & missingValue=missingValue)
-      call Read_ncep_strat(FileName, lcf_where, v_type, &
-        & the_g_data, GeoDimList, fieldName, gridName='SouthernHemisphere', &
-        & missingValue=missingValue)
+        & the_g_data, GeoDimList, fieldName, missingValue=missingValue)
+      !call Read_ncep_strat(FileName, lcf_where, v_type, &
+      !  & the_g_data, GeoDimList, fieldName, gridName='SouthernHemisphere', &
+      !  & missingValue=missingValue)
       if ( DEEBUG ) then
         print *, '(Returned from read_ncep-strat)'
         print *, 'Quantity Name ' // trim(the_g_data%QuantityName)
@@ -773,7 +774,7 @@ contains
     use HDFEOS5, only: HE5_HDFE_NENTDIM, HE5F_ACC_RDONLY, &
       & HE5_GDOPEN, HE5_GDATTACH, HE5_GDDETACH, HE5_GDCLOSE, &
       & HE5_GDNENTRIES, HE5_GDINQGRID, HE5_GDINQDIMS, HE5_GDINQFLDS, &
-      & HE5_GDFLDINFO
+      & HE5_GDFLDINFO, HE5_GDGRIDINFO
 
     ! This routine reads a ncep stratospheric combined product file,
     ! named something like nmct_030126.he5
@@ -808,7 +809,8 @@ contains
     real(rgr), optional, intent(IN) :: missingValue
 
     ! Local Variables
-    integer :: file_id, gd_id
+    integer :: file_id
+    integer :: gd_id(2)
     integer :: inq_success
     integer :: nentries, ngrids, ndims, nfields
     integer :: strbufsize
@@ -819,16 +821,18 @@ contains
     character (len=MAXLISTLENGTH), dimension(1) :: dimlists
     character (len=MAXLISTLENGTH), dimension(1) :: maxdimlists
     character (len=16), dimension(NENTRIESMAX) :: dimNames
+    character (len=MAXLISTLENGTH), dimension(2) :: names
     character (len=MAXLISTLENGTH) :: fieldlist
     integer, parameter :: MAXNAMELENGTH=NameLen		! Max length of grid name
     character (len=MAXNAMELENGTH) :: mygridname, actual_field_name
     integer, dimension(NENTRIESMAX) :: dims, rank, numberTypes
     integer                        :: our_rank, numberType
+    integer, dimension(NENTRIESMAX,NENTRIESMAX) :: dims_temp
 
     integer :: start(3), stride(3), edge(3)
-    integer :: status
+    integer :: status, j
     !                                  These start out initialized to one
-    integer                        :: nlon=1, nlat=1, nlev=1, ntime=1
+    integer                        :: nlon=0, nlat=0, nlev=0, ntime=1
     integer, parameter             :: i_longitude=1
     integer, parameter             :: i_latitude=i_longitude+1
     integer, parameter             :: i_vertical=i_latitude+1
@@ -836,9 +840,17 @@ contains
     integer, external :: GDRDFLD
     logical, parameter :: COUNTEMPTY=.true.
     real(r4), parameter :: FILLVALUE = 1.e15
-    real(r4), dimension(:,:,:,:), pointer :: all_the_fields
+    !real(r4), dimension(:,:,:,:), pointer :: all_the_fields
+    real(r4), dimension(:,:,:), pointer :: all_the_fields
+    real(r4), dimension(:,:,:), pointer :: t_all_fields
     real(r8), dimension(:), pointer :: dim_field
     logical, parameter :: DEEBUG = .false.
+    real(r8):: upleftpt(2), lowrightpt(2)
+    integer :: i, xdimsize=1, ydimsize=2
+    integer, parameter :: Lon_offset = -180  ! Longitude start in degrees
+    integer, parameter :: Lat_offset = -90   ! Latitude start in degrees
+    integer :: fdims3, sdims3
+
     ! Some day we'll get all these from MLSHDFEOS
     integer, external :: he5_gdrdfld
     ! Executable code
@@ -846,99 +858,107 @@ contains
     if(DEEBUG) print *, 'About to find grid list of file ', trim(FileName)
     inq_success = he5_gdinqgrid(FileName, gridlist, strbufsize)
     if (inq_success < 0) then
-      call announce_error(lcf_where, "Could not inquire gridlist "// trim(FileName))
+      call announce_error(lcf_where, &
+	& "Could not inquire gridlist "// trim(FileName))
     end if
+
     if(DEEBUG) print *, 'grid list ', trim(gridlist)
-
     error = 0
-    file_id = he5_gdopen(FileName, HE5F_ACC_RDONLY)
 
+    file_id = he5_gdopen(FileName, HE5F_ACC_RDONLY)
     if (file_id < 0) then
       call announce_error(lcf_where, "Could not open "// FileName)
     end if
 
     ! Find grid name corresponding to the GRIDORDER'th one
     ngrids = NumStringElements(gridlist, COUNTEMPTY)
-
     if(ngrids <= 0) then
       call announce_error(lcf_where, "NumStringElements of gridlist <= 0")
     elseif(ngrids /= inq_success) then
-      call announce_error(lcf_where, "NumStringElements of gridlist /= inq_success")
+      call announce_error(lcf_where, &
+	& "NumStringElements of gridlist /= inq_success")
     elseif(ngrids < GRIDORDER) then
-      call announce_error(lcf_where, "NumStringElements of gridlist < GRIDORDER")
+      call announce_error(lcf_where, &
+	& "NumStringElements of gridlist < GRIDORDER")
     endif
 
-    if ( present(gridName) ) then
-      myGridName = gridName
-    else
-      call GetStringElement(gridlist, mygridname, GRIDORDER, COUNTEMPTY)
-    endif
+    !if ( present(gridName) ) then
+    !    mygridname = gridName
+    !else
+      !call GetStringElement(gridlist, mygridname, GRIDORDER, COUNTEMPTY)
+    !endif
+    do i=1, ngrids
+      	call GetStringElement(gridlist, names(i), i, COUNTEMPTY)
+      	if (DEEBUG) print *,'name = ', trim(names(i))
+        gd_id(i) = he5_gdattach(file_id, trim(names(i)))
+    	if (gd_id(i) < 0) then
+      	   !call announce_error(lcf_where,"Could not attach "//trim(mygridname))
+      	   call MLSMessage (MLSMSG_Warning, ModuleName, & 
+         	& "Could not attach "//trim(names(i)))
+           exit 
+	endif
+        !Now find dimsize(), dimname(), etc.
+        nentries = he5_gdnentries(gd_id(i), HE5_HDFE_NENTDIM, strbufsize)
 
-    gd_id = he5_gdattach(file_id, mygridname)
-    if (gd_id < 0) then
-      call announce_error(lcf_where, "Could not attach "//trim(mygridname))
-    end if
+        if(nentries <= 0) then
+      	   call announce_error(lcf_where, "nentries of gd_id <= 0")
+        elseif(nentries > NENTRIESMAX) then
+           call announce_error(lcf_where, "nentries of gd_id > NENTRIESMAX")
+        endif
 
-    ! Now find dimsize(), dimname(), etc.
-    nentries = he5_gdnentries(gd_id, HE5_HDFE_NENTDIM, strbufsize)
+        ndims = he5_gdinqdims(gd_id(i), dimlist, dims)
+        if(ndims <= 0) then
+           call announce_error(lcf_where, "ndims of gd_id <= 0")
+        elseif(ndims > NENTRIESMAX) then
+           call announce_error(lcf_where, "ndims of gd_id > NENTRIESMAX")
+        endif
 
-    if(nentries <= 0) then
-      call announce_error(lcf_where, "nentries of gd_id <= 0")
-    elseif(nentries > NENTRIESMAX) then
-      call announce_error(lcf_where, "nentries of gd_id > NENTRIESMAX")
-    endif
+        nfields = he5_gdinqflds(gd_id(i), fieldlist, rank, numberTypes)
+        if(nfields <= 0) then
+           call announce_error(lcf_where, "nfields of gd_id <= 0")
+        elseif(nfields > NENTRIESMAX) then
+           call announce_error(lcf_where, "nfields of gd_id > NENTRIESMAX")
+        endif
 
-    ndims = he5_gdinqdims(gd_id, dimlist, dims)
+        if(.not. CASESENSITIVE) then
+           fieldlist = Capitalize(fieldlist)
+        endif
 
-    if(ndims <= 0) then
-      call announce_error(lcf_where, "ndims of gd_id <= 0")
-    elseif(ndims > NENTRIESMAX) then
-      call announce_error(lcf_where, "ndims of gd_id > NENTRIESMAX")
-    endif
+        if(present(fieldName)) then
+           actual_field_name=fieldName
+        else
+           actual_field_name=DEFAULTNCEPSTRATFIELDNAME
+        endif
 
-    nfields = he5_gdinqflds(gd_id, fieldlist, rank, numberTypes)
+        actual_dim_list = ' '
+        if(present(GeoDimList)) then
+           actual_dim_list=GeoDimList
+        endif
+        if ( actual_dim_list == ' ' ) then
+           actual_dim_list = DEFAULTDAODIMLIST
+        endif
 
-    if(nfields <= 0) then
-      call announce_error(lcf_where, "nfields of gd_id <= 0")
-    elseif(nfields > NENTRIESMAX) then
-      call announce_error(lcf_where, "nfields of gd_id > NENTRIESMAX")
-    endif
+        call List2Array (actual_dim_list, dimNames, countEmpty)
 
-    if(.not. CASESENSITIVE) then
-      fieldlist = Capitalize(fieldlist)
-    endif
+        ! Now find the rank of our field
+        inq_success = he5_gdfldinfo(gd_id(i), trim(actual_field_name), & 
+	   & our_rank, dims, numbertype, dimlists(1), maxdimlists(1))
 
-    if(present(fieldName)) then
-      actual_field_name=fieldName
-    else
-      actual_field_name=DEFAULTNCEPSTRATFIELDNAME
-    endif
+        dimlist = trim(dimlists(1))
+        dims_temp(1:our_rank,i) = dims(1:our_rank)
 
-    actual_dim_list = ' '
-    if(present(GeoDimList)) then
-      actual_dim_list=GeoDimList
-    endif
-    if ( actual_dim_list == ' ' ) then
-      actual_dim_list = DEFAULTDAODIMLIST
-    endif
-    call List2Array (actual_dim_list, dimNames, countEmpty)
+        if(DEEBUG) print *, 'our_rank ', our_rank
+        if(DEEBUG) print *, 'dims ', dims(1:our_rank)
+        if(DEEBUG) print *, 'dimlist ', dimlist
 
-    ! Now find the rank of our field
-    inq_success = he5_gdfldinfo(gd_id, trim(actual_field_name), our_rank, dims, &
-      & numbertype, dimlists(1), maxdimlists(1))
-
-    dimlist = trim(dimlists(1))
-    if(DEEBUG) print *, 'our_rank ', our_rank
-    if(DEEBUG) print *, 'dims ', dims(1:our_rank)
-    if(DEEBUG) print *, 'dimlist ', dimlist
-
-    nlon = dims(1)
-    nlat = dims(2)
-    nlev = dims(3)
-    ntime = dims(4)
+        nlon = dims(1) 
+        nlat = dims(2) 
+        nlev = nlev + dims(3)
+        if(DEEBUG) print *, 'nlon, nlat, nlev: ',nlon, nlat, nlev
+    enddo
 
     the_g_data%quantityName = actual_field_name
-    the_g_data%description = lit_dao
+    the_g_data%description = lit_strat
     the_g_data%verticalCoordinate = v_type
 
     the_g_data%noLons = nlon
@@ -959,74 +979,125 @@ contains
     if(DEEBUG) print *, '(Again) our quantity name ', the_g_data%quantityName
     if(DEEBUG) print *, 'our description ', the_g_data%description
     if(DEEBUG) print *, 'our units ', the_g_data%units
-    allocate(all_the_fields(dims(1), dims(2), dims(3), dims(4)), stat=status)
-    all_the_fields = the_g_data%missingValue
-    if ( status /= 0 ) &
-        & call announce_error(lcf_where, "failed to allocate field_data")
-    start = 0                                                             
-    stride = 1                                                               
-    edge = dims(1:3)                                                        
-    if(DEEBUG) print *, 'About to read ' // trim(actual_field_name)
-    if(DEEBUG) print *, 'Start ', Start
-    if(DEEBUG) print *, 'Stride ', Stride
-    if(DEEBUG) print *, 'Edge ', Edge
-    status = he5_gdrdfld(gd_id, trim(actual_field_name), start, stride, edge, &  
-      & all_the_fields)                                                          
-    if(status /= 0) &
-      & call announce_error(lcf_where, "failed to read field " &
-      & //trim(actual_field_name))
-    ! The actual dimlist is this                    XDim,YDim,Height,TIME
-    ! Need to reshape it so that the order becomes: Height,YDim,XDim,TIME
-    if ( DEEBUG) then
-      print *, 'dao Before reshaping'
-      call dump(all_the_fields(:,1,1,1), 'x-slice')
-      call dump(all_the_fields(1,:,1,1), 'y-slice')
-      call dump(all_the_fields(1,1,:,1), 'p-slice')
-      call dump(all_the_fields(1,1,1,:), 't-slice')
-    endif
-    ! the_g_data%field(:,:,:,:,1,1) = reshape( all_the_fields, &
-    the_g_data%field(:,:,:,1,1,:) = reshape( all_the_fields, &
-      & shape=(/nLev, nlat, nlon, ntime/), order=(/3,2,1,4/) &
-      & )
+    allocate(t_all_fields(nlon, nlat, nlev), stat=status)
+    t_all_fields = the_g_data%missingValue
+
+    do i=1, ngrids
+       if (gd_id(i) < 0) then
+      	   call MLSMessage (MLSMSG_Warning, ModuleName, & 
+         	& "Could not attach "//trim(names(i)))
+           exit 
+       endif
+
+       dims(1) = dims_temp(1,i)
+       dims(2) = dims_temp(2,i)
+       dims(3) = dims_temp(3,i)
+       if (DEEBUG) print *, 'dims1, dims2, dims3: ', dims(1), dims(2), dims(3) 
+
+       allocate(all_the_fields(dims(1), dims(2), dims(3)), stat=status)
+       all_the_fields = the_g_data%missingValue
+
+       if ( status /= 0 ) &
+          & call announce_error(lcf_where, "failed to allocate field_data")
+       status = he5_gdgridinfo(gd_id(i), xdimsize, ydimsize, upleftpt, &
+		& lowrightpt)
+       start = 0
+       stride = 1
+       !edge = dims(1:3)
+       edge(1) = xdimsize 
+       edge(2) = ydimsize 
+       edge(3) = dims(3)
+       if(DEEBUG) print *, 'About to read ' // trim(actual_field_name)
+       if(DEEBUG) print *, 'Start ', Start
+       if(DEEBUG) print *, 'Stride ', Stride
+       if(DEEBUG) print *, 'Edge ', Edge
+       if(DEEBUG) print *, 'xdimsize ', xdimsize
+       if(DEEBUG) print *, 'ydimsize ', ydimsize
+
+       status = he5_gdrdfld(gd_id(i), trim(actual_field_name), start, stride, &
+	   & edge, all_the_fields)
+       if(status /= 0) &
+          & call announce_error(lcf_where, "failed to read field " &
+          & //trim(actual_field_name))
+
+       ! The actual dimlist is this                    XDim,YDim,Height
+       ! Need to reshape it so that the order becomes: Height,YDim,XDim
+       if ( DEEBUG) then
+      	  print *, 'Before reshaping'
+          call dump(all_the_fields(:,1,1), 'x-slice')
+          call dump(all_the_fields(1,:,1), 'y-slice')
+          call dump(all_the_fields(1,1,:), 'p-slice')
+       endif
+
+       fdims3 = (dims(3))*(i-1)+1
+       sdims3 = (dims(3))*i
+       if (DEEBUG) print *, 'fsdims3: ',fdims3, sdims3
+
+       t_all_fields(1:nlon,1:nlat,fdims3:sdims3) = all_the_fields(:,:,:)
+       if ( DEEBUG) then
+          print *, 't_all_fields '
+          call dump(t_all_fields(1:65,1,fdims3), 'x-slice')
+          call dump(t_all_fields(1,1:65,fdims3), 'y-slice')
+          call dump(t_all_fields(1,1,fdims3:nlev), 'p-slice')
+	endif
+
+        ! Close grid
+        status = he5_gddetach(gd_id(i))
+        if(status /= 0) &
+      	   & call announce_error(lcf_where, "failed to detach from grid " &
+           & //trim(names(i)))
+        deallocate(all_the_fields)
+    enddo
+
+    the_g_data%field(:,:,:,1,1,1) = reshape( t_all_fields, &
+      & shape=(/nlev, nlat, nlon/), order=(/3,2,1/))
+
     if ( DEEBUG ) then
-      print *, 'dao After reshaping'
+      print *, 'After reshaping'
       call dump(the_g_data%field(1,1,:,1,1,1), 'x-slice')
       call dump(the_g_data%field(1,:,1,1,1,1), 'y-slice')
       call dump(the_g_data%field(:,1,1,1,1,1), 'p-slice')
-      call dump(the_g_data%field(1,1,1,:,1,1), 't-slice')
     endif
-    deallocate(all_the_fields)
+
+    deallocate(t_all_fields)
+
     ! Now read the dims
-    nullify(dim_field)
+    !nullify(dim_field)
     ! call read_the_dim(gd_id, 'XDim', dims(1), dim_field)
-    call read_the_dim(gd_id, trim(dimNames(1)), dims(1), dim_field)
-    the_g_data%lons = dim_field
+    !call read_the_dim(gd_id, trim(dimNames(1)), dims(1), dim_field)
+    !the_g_data%lons = dim_field
     ! call read_the_dim(gd_id, 'YDim', dims(2), dim_field)
-    call read_the_dim(gd_id, trim(dimNames(2)), dims(2), dim_field)
-    the_g_data%lats = dim_field
+    !call read_the_dim(gd_id, trim(dimNames(2)), dims(2), dim_field)
+    !the_g_data%lats = dim_field
     ! call read_the_dim(gd_id, 'Height', dims(3), dim_field)
-    call read_the_dim(gd_id, trim(dimNames(3)), dims(3), dim_field)
-    the_g_data%Heights = dim_field
+    !call read_the_dim(gd_id, trim(dimNames(3)), dims(3), dim_field)
+    !the_g_data%Heights = dim_field
     ! call read_the_dim(gd_id, 'Time', dims(4), dim_field)
-    call read_the_dim(gd_id, trim(dimNames(4)), dims(4), dim_field)
+    !call read_the_dim(gd_id, trim(dimNames(4)), dims(4), dim_field)
     ! the_g_data%lsts = dim_field
-    the_g_data%dateStarts = dim_field
-    the_g_data%dateEnds = dim_field
-    deallocate(dim_field)        ! Before leaving, some light housekeeping
+    !the_g_data%dateStarts = dim_field
+    !the_g_data%dateEnds = dim_field
+    !deallocate(dim_field)        ! Before leaving, some light housekeeping
+    !end
+    ! But .. they aren't there
+    do j=1, nlon
+        the_g_data%lons(j) = j - 1 + Lon_offset
+    enddo
+    do j=1, nlat
+        the_g_data%lats(j) = j - 1 + Lat_offset
+     enddo
+
     ! Have not yet figured out how to assign these
     ! Probably will have to read metadata
-    the_g_data%Szas = the_g_data%missingValue
-    ! the_g_data%DateStarts = the_g_data%missingValue
-    ! the_g_data%DateEnds = the_g_data%missingValue
     the_g_data%lsts = the_g_data%missingValue
-    ! Close grid
-    status = he5_gddetach(gd_id)
-    if(status /= 0) &
-      & call announce_error(lcf_where, "failed to detach from grid " &
-      & //trim(mygridname))
+    the_g_data%Szas = the_g_data%missingValue
+    the_g_data%DateStarts = the_g_data%missingValue
+    the_g_data%DateEnds = the_g_data%missingValue
+
     status = he5_gdclose(file_id)
     if(status /= 0) &
       & call announce_error(lcf_where, "failed to close file " //trim(FileName))
+
     contains 
        subroutine read_the_dim(gd_id, field_name, field_size, values)
          ! Arguments
@@ -1671,6 +1742,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.33  2003/10/06 13:30:40  cvuu
+! Modified to handle reading the ncep data for origin=strat
+!
 ! Revision 2.32  2003/06/03 20:42:25  pwagner
 ! Can read strat (ncep) files; untested
 !
