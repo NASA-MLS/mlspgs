@@ -1429,8 +1429,12 @@ contains ! ======================= Public Procedures =========================
         & 'Unable to create dataset for 3D real array '//trim(name) )
     elseif (style == 1) then
       maxdims(3) = H5S_UNLIMITED_F
-      dims(2) = max(1, shp(3))
+      dims(3) = max(1, shp(3))
       chunk_dims(3) = 1
+      ! print *, 'shape ', shp
+      ! print *, 'maxdims ', maxdims
+      ! print *, 'dims ', dims
+      ! print *, 'chunk_dims ', chunk_dims
       call h5screate_simple_f(3, dims, spaceID, status, maxdims)
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to create dataspace for 3D real array '//trim(name) )
@@ -1444,6 +1448,9 @@ contains ! ======================= Public Procedures =========================
         & status, cparms )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to create dataset for 3D real array '//trim(name) )
+      ! print *, 'spaceID ', spaceID
+      ! print *, 'cparms ', cparms
+      ! print *, 'locID ', locID
     else
       call h5dopen_f ( locID, trim(name), setID, status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1466,8 +1473,14 @@ contains ! ======================= Public Procedures =========================
         & 'Unable to get dataspace for 3D real array '//trim(name) )
     endif
     if ( present(start) ) then
+      ! print *, 'name ', name
+      ! print *, 'shape(value) ', shape(value)
+      ! print *, 'start ', start
+      ! print *, 'count ', count
       call mls_hyperslab(spaceID, shape(value), name, memspaceID, &
         & start, count, stride, block)
+      ! print *, 'memspaceID ', memspaceID
+      ! print *, 'spaceID ', spaceID
       call h5dWrite_f ( setID, H5T_NATIVE_REAL, value, &
         & int ( (/ shp, ones(1:4) /), hID_T ), status, &
         & memspaceID, spaceID )
@@ -2148,6 +2161,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.21  2003/03/20 19:21:11  pwagner
+! Fixed simple bug in saving 3d arrays
+!
 ! Revision 2.20  2003/02/21 23:41:02  pwagner
 ! Additional MakeHDF5Attribute interface
 !
