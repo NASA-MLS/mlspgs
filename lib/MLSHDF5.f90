@@ -97,7 +97,7 @@ module MLSHDF5
       & MakeHDF5Attribute_int, MakeHDF5Attribute_logical, &
       & MakeHDF5Attribute_string, MakeHDF5Attribute_snglarr1, &
       & MakeHDF5Attribute_dblarr1, MakeHDF5Attribute_string_arr1, &
-      & MakeHDF5AttributeDSN_int, &
+      & MakeHDF5Attribute_intarr1, MakeHDF5AttributeDSN_int, &
       & MakeHDF5AttributeDSN_string, MakeHDF5AttributeDSN_snglarr1, &
       & MakeHDF5AttributeDSN_st_arr1, MakeHDF5AttributeDSN_dblarr1
   end interface
@@ -442,6 +442,50 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close 1d attribute array dataspace '//trim(name) )
   end subroutine MakeHDF5Attribute_dblarr1
+
+  ! ------------------------------------- MakeHDF5Attribute_intarr1
+  subroutine MakeHDF5Attribute_intarr1 ( itemID, name, value , &
+   & skip_if_already_there )
+    integer, intent(in) :: ITEMID       ! Group etc. to make attr to.
+    character (len=*), intent(in) :: NAME ! Name of attribute
+    integer, intent(in) :: VALUE(:)     ! The attribute array itself
+    logical, intent(in), optional :: skip_if_already_there
+
+    ! Local variables
+    integer :: ATTRID                   ! ID for attribute
+    integer :: spaceID                  ! ID for dataspace
+    integer :: STATUS                   ! Flag from HDF5
+    integer, dimension(1) :: SHP        ! Shape
+    logical :: my_skip
+
+    ! Executable code
+    my_skip = .false.
+    if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
+    if ( my_skip ) then
+      if ( IsHDF5AttributePresent_in_DSID(itemID, name) ) return
+    endif
+    shp = shape(value)
+    call h5sCreate_simple_f ( 1, int(shp,hSize_T), spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to create dataspace for 1D attribute array '//trim(name) )
+    ! Now create the attribute
+    call h5aCreate_f ( itemID, trim(name), H5T_NATIVE_INTEGER, spaceID, &
+      & attrID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to create 1d attribute array '//trim(name) )
+    ! Write
+    call h5aWrite_f ( attrID, H5T_NATIVE_INTEGER, value, &
+      & int ( (/ shp, ones(1:6) /), hID_T ), status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to write 1d attribute array '//trim(name) )
+    ! Finish off
+    call h5aClose_f ( attrID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close 1d attribute array'//trim(name) )
+    call h5sClose_f ( spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close 1d attribute array dataspace '//trim(name) )
+  end subroutine MakeHDF5Attribute_intarr1
 
   ! ------------------------------------- MakeHDF5AttributeDSN_int
   subroutine MakeHDF5AttributeDSN_int ( fileID, &
@@ -3022,6 +3066,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.31  2003/08/07 15:44:19  perun
+! Add MakeHDF5Attribute_intarr1
+!
 ! Revision 2.30  2003/07/24 22:10:45  pwagner
 ! Fixed another bug preventing multiple chunks from writing to same dataset
 !
