@@ -97,6 +97,9 @@ Contains
 	    nt = nt_a
 	  end if
 
+	  nt_a = nt
+	  nt_d = nt
+
 	  c0 	    = c0_i
  	  tau0 	    = tau0_i 
 
@@ -121,13 +124,13 @@ Contains
 !	  if(mode == 'com') then
 	    Allocate(lonD(nt), tD(nt), sD(nt), rD(nt))
 	    Allocate(lonA(nt), tA(nt), sA(nt), rA(nt))
-	    Allocate(Dscend(nt), Ascend(nt))
+	    Allocate(Dscend(nt_d), Ascend(nt_a))
 	    Allocate(wn(nt*2), sigma(nt*2))
-	    Allocate(wna(nt*2), sigmaa(nt*2))
-	    Allocate(wnd(nt*2), sigmad(nt*2))
+	    Allocate(wna(nt_a*2), sigmaa(nt_a*2))
+	    Allocate(wnd(nt_d*2), sigmad(nt_d*2))
 	    Allocate(phikr(nt*2))
-	    Allocate(phikra(nt*2))
-	    Allocate(phikrd(nt*2))
+	    Allocate(phikra(nt_a*2))
+	    Allocate(phikrd(nt_d*2))
 !          else if(mode == 'asc') then
 !	    Allocate(lonDA(nt), tDA(nt), sDA(nt), rDA(nt))
 !	    Allocate(DAcend(nt))
@@ -611,7 +614,7 @@ Contains
 
 	  integer plan, m, m1, i, j, flag, iLv, iLt
 
-	  integer fNum(0:nt), wIndex
+	  integer fNum(0:nt_d), wIndex
 
           real(r8), Dimension(nt_d) :: dscend_fft
           real(r8), Dimension(nt_d) :: drealP, dimgP
@@ -1090,6 +1093,9 @@ End Module DailyMapModule
 !===================
 
 ! $Log$
+! Revision 1.4  2001/04/11 18:29:30  ybj
+! reasonable values
+!
 ! Revision 1.3  2001/03/06 18:52:41  ybj
 ! *** empty log message ***
 !
