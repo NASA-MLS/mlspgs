@@ -1,5 +1,5 @@
 ! This module computes the output angles to interpolate to
-  MODULE get_chi_out_m
+MODULE get_chi_out_m
   USE Allocate_Deallocate, only: allocate_test, deallocate_test
   USE get_eta_matrix_m, only: get_eta_sparse
   USE get_chi_angles_m, only: get_chi_angles
@@ -13,13 +13,16 @@
   character (len=len(idParm)) :: Id = IdParm
   character (len=*), parameter, private :: ModuleName= &
     & "$RCSfile$"
-  !---------------------------------------------------------------------------
-  CONTAINS
+!---------------------------------------------------------------------------
+ CONTAINS
+!
   SUBROUTINE get_chi_out(zetatan,phitan,scgeocalt,temp_zeta_basis, &
   & temp_phi_basis,temp_coeffs,ref_zeta,ref_gph,orb_inc,elev_offset, &
   & req,tan_chi_out,h2o_zeta_basis,h2o_phi_basis,h2o_coeffs,lin_log, &
   & dxdt_tan,d2xdxdt_tan)
+!
 ! inputs
+!
   REAL(rp), INTENT(in) :: zetatan(:)   ! tangent zeta profle for input mmaf
   REAL(rp), INTENT(in) :: phitan(:)    ! tangent phi profle for input mmaf
 !                                        (in radians)
@@ -43,14 +46,18 @@
   LOGICAL,  OPTIONAL, INTENT(in) :: lin_log ! representation type
 !
 ! outputs
+!
   REAL(rp), INTENT(out) :: tan_chi_out(:) ! computed tangent pointing angles
 !                               corrected for refraction in radians
   REAL(rp), OPTIONAL, INTENT(out) :: dxdt_tan(:,:,:) ! computed dchi dt.
   REAL(rp), OPTIONAL, INTENT(out) :: d2xdxdt_tan(:,:,:) ! computed d2chi dxdt.
+!
 ! the matrix hierarchy is n_out,phi,zeta
 ! internal variables
+!
   INTEGER(i4) :: n_out, n_t_phi, n_t_zeta, n_h2o_zeta, n_h2o_phi
   INTEGER(i4) :: sv_p, sv_z, ht_i
+!
   REAL(rp), POINTER :: h_tan_out(:)
   REAL(rp), POINTER :: t_tan_out(:)
   REAL(rp), POINTER :: n_tan_out(:)
@@ -63,31 +70,40 @@
   REAL(rp), POINTER :: eta_t(:,:)
   REAL(rp), POINTER :: eta_z(:,:)
   REAL(rp), POINTER :: eta_p(:,:)
+!
 ! dimensions we use
+!
   n_out = SIZE(zetatan)
   n_t_phi = SIZE(temp_phi_basis)
   n_t_zeta = SIZE(temp_zeta_basis)
+!
   NULLIFY(temp_tan,height_tan,dhdz_tan,dhdt_tan,d2hdhdt_tan,eta_t,h_tan_out, &
   & t_tan_out,n_tan_out,eta_p,eta_z,h2o_tan_out)
+!
   CALL allocate_test(temp_tan,n_out,n_t_phi,'temp_tan',ModuleName)
   CALL allocate_test(height_tan,n_out,n_t_phi,'height_tan',ModuleName)
   CALL allocate_test(dhdz_tan,n_out,n_t_phi,'dhdz_tan',ModuleName)
   CALL allocate_test(dhdt_tan,n_out,n_t_phi,n_t_zeta,'dhdt_tan',ModuleName)
   CALL allocate_test(d2hdhdt_tan,n_out,n_t_phi,n_t_zeta,'d2hdhdt_tan', &
-  & ModuleName)
+                   & ModuleName)
   CALL allocate_test(eta_t,n_out,n_t_phi,'eta_t',ModuleName)
   CALL allocate_test(h_tan_out,n_out,'h_tan_out',ModuleName)
   CALL allocate_test(t_tan_out,n_out,'t_tan_out',ModuleName)
   CALL allocate_test(n_tan_out,n_out,'n_tan_out',ModuleName)
+!
   CALL two_d_hydrostatic(temp_zeta_basis, temp_phi_basis, &
   & RESHAPE(temp_coeffs, (/n_t_zeta,n_t_phi/)), ref_zeta, ref_gph, &
   & zetatan, orb_inc, temp_tan, height_tan, dhdz_tan, dhdt_tan, &
   & d2hdhdt_tan)
+!
 ! tangent heights for inputted pressures along phi
+!
   CALL get_eta_sparse(temp_phi_basis, phitan, eta_t)
   h_tan_out = SUM(height_tan * eta_t, dim=2)
   t_tan_out = SUM(temp_tan * eta_t, dim=2)
+!
 ! compute the tangent water vapor profile along inputted phi_tan
+!
   IF (PRESENT(h2o_coeffs)) THEN
     n_h2o_zeta = SIZE(h2o_zeta_basis)
     n_h2o_phi  = SIZE(h2o_phi_basis)
@@ -97,7 +113,9 @@
     & ModuleName)
     CALL get_eta_sparse(h2o_phi_basis, phitan, eta_p)
     CALL get_eta_sparse(h2o_zeta_basis, zetatan, eta_z)
+!
 ! This is actually one less than the true start index
+!
     h2o_tan_out(:) = 0.0_rp
     DO sv_p = 1, n_h2o_phi
       DO sv_z = 1, n_h2o_zeta
@@ -106,17 +124,25 @@
       ENDDO
     ENDDO
     IF (lin_log) h2o_tan_out = EXP(h2o_tan_out)
+!
 ! compute refractive index
+!
     CALL refractive_index(10.0**(-zetatan), t_tan_out, n_tan_out, &
     & h2o_path = h2o_tan_out)
     CALL deallocate_test(eta_p,'eta_p',ModuleName)
     CALL deallocate_test(eta_z,'eta_z',ModuleName)
     CALL deallocate_test(h2o_tan_out,'h2o_tan_out',ModuleName)
+!
   ELSE
+!
     CALL refractive_index(10.0**(-zetatan), t_tan_out, n_tan_out)
+!
   ENDIF
+!
 ! compute output angles to interpolate to
+!
   IF(PRESENT(dxdt_tan)) THEN
+!
     dhdt_tan = dhdt_tan  * SPREAD(eta_t,3,n_t_zeta)
     d2hdhdt_tan = d2hdhdt_tan * SPREAD(eta_t,3,n_t_zeta)
     DO ht_i = 1, n_out
@@ -127,21 +153,27 @@
           &    (/n_t_phi,n_t_zeta/)), dxdt_tan(ht_i,:,:), &
           &    d2xdxdt_tan(ht_i,:,:))
      ENDDO
+!
    ELSE
+!
     DO ht_i = 1, n_out
       CALL get_chi_angles(scgeocalt(ht_i),n_tan_out(ht_i), &
           &    h_tan_out(ht_i),phitan(ht_i),Req,elev_offset, &
           &    tan_chi_out(ht_i))
      ENDDO
+!
   ENDIF
-  CALL deallocate_test(temp_tan,'temp_tan',ModuleName)
-  CALL deallocate_test(height_tan,'height_tan',ModuleName)
-  CALL deallocate_test(dhdz_tan,'dhdz_tan',ModuleName)
-  CALL deallocate_test(dhdt_tan,'dhdt_tan',ModuleName)
-  CALL deallocate_test(d2hdhdt_tan,'dhdt_tan',ModuleName)
-  CALL deallocate_test(eta_t,'eta_t',ModuleName)
-  CALL deallocate_test(h_tan_out,'h_tan_out',ModuleName)
-  CALL deallocate_test(t_tan_out,'t_tan_out',ModuleName)
-  CALL deallocate_test(n_tan_out,'n_tan_out',ModuleName)
-  END SUBROUTINE get_chi_out
-  END MODULE get_chi_out_m
+!
+  CALL deallocate_test (temp_tan,'temp_tan',ModuleName)
+  CALL deallocate_test (height_tan,'height_tan',ModuleName)
+  CALL deallocate_test (dhdz_tan,'dhdz_tan',ModuleName)
+  CALL deallocate_test (dhdt_tan,'dhdt_tan',ModuleName)
+  CALL deallocate_test (d2hdhdt_tan,'dhdt_tan',ModuleName)
+  CALL deallocate_test (eta_t,'eta_t',ModuleName)
+  CALL deallocate_test (h_tan_out,'h_tan_out',ModuleName)
+  CALL deallocate_test (t_tan_out,'t_tan_out',ModuleName)
+  CALL deallocate_test (n_tan_out,'n_tan_out',ModuleName)
+!
+ END SUBROUTINE get_chi_out
+!
+END MODULE get_chi_out_m
