@@ -60,7 +60,8 @@ contains ! =====     Public Procedures     =============================
     use MLSFiles, only: GetPCFromRef
     use MLSL2Options, only: TOOLKIT
     use MLSPCF2, only: MLSPCF_antpats_start, MLSPCF_filtshps_start, &
-      &          MLSPCF_ptggrids_start, mlspcf_l2pc_start, mlspcf_l2pc_end
+      &          mlspcf_dacsfltsh_start, MLSPCF_ptggrids_start, &
+      &          mlspcf_l2pc_start, mlspcf_l2pc_end
     use MoreTree, only: Get_Field_ID
     use PointingGrid_m, only: Close_Pointing_Grid_File, &
       & Open_Pointing_Grid_File, Read_Pointing_Grid_File
@@ -116,7 +117,7 @@ contains ! =====     Public Procedures     =============================
         end do
       case ( f_DACSfilterShapes )
         do j = 2, nsons(son)
-          call get_file_name ( 999999, & !???? Paul -- need a name and number ????
+          call get_file_name ( mlspcf_dacsfltsh_start, &
             & 'DACS Filter Shapes File not found in PCF' )
           call open_filter_shapes_file ( fileName, lun )
           call read_DACS_filter_shapes_file ( lun )
@@ -795,6 +796,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.71  2003/07/16 21:51:29  pwagner
+! Uses mlspcf_dacsfltsh_start
+!
 ! Revision 2.70  2003/07/16 01:27:35  vsnyder
 ! Futzing
 !
