@@ -10,6 +10,7 @@ module ModelOutput
 
       use Interpack, only: LOCATE
       use MLSCommon, only: r8
+      use MLSNumerics, only: INTERPOLATEVALUES
       IMPLICIT NONE
       private
       public :: SENSITIVITY
@@ -27,25 +28,30 @@ contains
       SUBROUTINE SENSITIVITY(DTcir,ZT,NT,YP,YZ,NH,PRESSURE,NZ,   &
         &                    delTAU,delTAUc,delTAU100,TAUeff,SS, &
         &                    Trans_out,BETA,BETAc,DDm,Dm,DDZ,DZ, &
-        &                    N,ISWI,RE)
+        &                    N,ISWI,RE, noS, Slevl)
 !----------------------------------------------------------------
 
-      INTEGER :: NH, NZ, NT, N
+      INTEGER :: NH, NZ, NT, N, noS
 
       REAL(r8) :: ZT(NT)                            ! TANGENT HEIGHT
+      
       REAL(r8) :: YP(NH)                            ! MODEL PRESSURE LEVEL
       REAL(r8) :: YZ(NH)                            ! MODEL PRESSURE HEIGHT
+      REAL(r8) :: Slevl(noS)                        ! Sgrid level (m)
+
       REAL(r8) :: PRESSURE(NZ)                      ! L2 PRESSURE LEVEL
       REAL(r8) :: DTcir(NT)                         ! CLOUD-INDUCED RADIANCE
       REAL(r8) :: SS(NT)                            ! CLOUD RADIANCE SENSITIVITY
       REAL(r8) :: TAUeff(NT)                        ! CLOUD EFFECTIVE OPTICAL DEPTH
 
-      REAL(r8) :: Trans(NH-1)                       ! Clear Transmission Func 
+      REAL(r8) :: Trans(NH-1,NT)                       ! Clear Transmission Func 
+      REAL(r8) :: YZavg(NH-1)                       ! Clear Transmission Func grid
+
       REAL(r8) :: delTAU100(NH-1)                   ! 100% AIR EXTINCTION 
       REAL(r8) :: delTAU(NH-1)                      ! TOTAL EXTINCTION 
       REAL(r8) :: delTAUc(NH-1)                     ! CLOUDY-SKY EXTINCTION
 
-      REAL(r8) :: Trans_out(NZ-1)                   ! TOTAL Clear Trans Func
+      REAL(r8) :: Trans_out(noS,NT)                 ! TOTAL Clear Trans Func
       REAL(r8) :: BETA(NZ-1)                        ! TOTAL EXTINCTION
       REAL(r8) :: BETAc(NZ-1)                       ! CLOUDY-SKY EXTINCTION
       REAL(r8) :: DDm(N,NH-1)                       ! MASS-MEAN-DIAMETER
@@ -53,9 +59,9 @@ contains
       REAL(r8) :: DDZ(NH-1)                         ! MODEL LEYER THICKNESS
       REAL(r8) :: DZ(NZ-1)                          ! L2 LAYER THICKNESS
 
-      REAL(r8) :: RE
+      REAL(r8) :: RE, xout, sum
       REAL(r8) :: HT,C_EXT,A_EXT,TGT,DS,DTAU,A_COL
-      REAL(r8) :: ZH(NH-1),ZA(NH-1)
+      REAL(r8) :: ZH(NH-1),ZA(NZ-1), ZS(NoS)
       INTEGER :: I,K,J,iflag, JM, ISWI
 !-----------------------------------------------------------------------------
 
@@ -63,15 +69,27 @@ contains
 !     INTERPOLATE PARAMETERS FROM MODEL LEVEL NH TO L2 LEVEL NZ
 !===============================================================
 ! COMPUTE TRANSMISSION FUNCTION
-      DO I=1,NH-1
-        TRANS(I)=0._r8
-      ENDDO
-        TRANS(NH-1) = DELTAU100(NH-1)
-      DO I=NH-2,1,-1
-        TRANS(I)=TRANS(I+1)+DELTAU100(I)   ! only clear sky absorption
-      ENDDO
 
-      Trans = exp(- Trans)
+      trans = 0._r8            ! initialization
+
+      do k=1,nt
+        sum = 0._r8
+        do i=1,noS
+          zs(i) = sqrt(Slevl(i)**2+(re+zt(k))**2) - (re+zt(k))
+        enddo
+      
+        DO I=NH-1,1,-1
+          yzavg(i) = (yz(i)+yz(i+1))/2
+          if(yzavg(i) > zt(k)) then
+            sum = sum +  deltau100(i)*sqrt(re/2/(yzavg(i)-zt(k)))
+            trans(i,k) = sum
+          endif
+          where(trans(:,k) .ne. 0._r8) trans(:,k) = exp(-trans(:,k))
+        ENDDO
+
+      CALL INTERPOLATEVALUES(yzavg,reshape(trans(:,k),(/nh-1/)),zs, &
+        & trans_out(:,k),method='Linear')
+      enddo
 
 ! CONVERT DELTAU TO BETA
       DO I=1,NH-1
@@ -84,31 +102,13 @@ contains
          ZA(I)=-(LOG10(PRESSURE(I+1))+LOG10(PRESSURE(I)))/2.
       END DO
 
-      DO J=1,NZ-1
-      
-         CALL LOCATE (ZH,NH-1, NH-1, ZA(J),JM)
-         
-         Trans_out(J)=((ZH(JM+1)-ZA(J))*TRANS(JM)+(ZA(J)-ZH(JM))*   &
-     &                TRANS(JM+1))/(ZH(JM+1)-ZH(JM))
-     
-         BETA(J)=((ZH(JM+1)-ZA(J))*delTAU(JM)+(ZA(J)-ZH(JM))*   &
-     &                delTAU(JM+1))/(ZH(JM+1)-ZH(JM))
-
-         BETAc(J)=((ZH(JM+1)-ZA(J))*delTAUc(JM)+(ZA(J)-ZH(JM))* &
-     &                delTAUc(JM+1))/(ZH(JM+1)-ZH(JM))             
-
-
-         Dm(1,J)=((ZH(JM+1)-ZA(J))*DDm(1,JM)+(ZA(J)-ZH(JM))*        &
-     &                DDm(1,JM+1))/(ZH(JM+1)-ZH(JM))             
-
-         Dm(2,J)=((ZH(JM+1)-ZA(J))*DDm(2,JM)+(ZA(J)-ZH(JM))*        &
-     &                DDm(2,JM+1))/(ZH(JM+1)-ZH(JM))             
-
-         DZ(J)=((ZH(JM+1)-ZA(J))*DDZ(JM)+(ZA(J)-ZH(JM))*            &
-     &                DDZ(JM+1))/(ZH(JM+1)-ZH(JM))             
-
-      ENDDO
-
+      call INTERPOLATEVALUES(zh,deltau,za,beta,method='Linear')
+      call INTERPOLATEVALUES(zh,deltauc,za,betac,method='Linear')
+      call INTERPOLATEVALUES(zh,ddz,za,dz,method='Linear')
+      call INTERPOLATEVALUES(zh,reshape(ddm(1,:),(/nh-1/)),&
+        & za,dm(1,:),method='Linear')
+      call INTERPOLATEVALUES(zh,reshape(ddm(2,:),(/nh-1/)),&
+        & za,dm(2,:),method='Linear')
 
 !==========================================================================
 !     RADIANCE SENSITIVITY CALCULATIONS
@@ -190,3 +190,6 @@ contains
 end module ModelOutput
 
 ! $Log$
+! Revision 1.3  2001/09/21 15:51:37  jonathan
+! modified F95 version
+!
