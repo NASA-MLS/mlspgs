@@ -2,7 +2,8 @@
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 program MLSL2
-  use Allocate_Deallocate, only: SET_GARBAGE_COLLECTION, TRACKALLOCATES, CLEARONALLOCATE
+  use Allocate_Deallocate, only: SET_GARBAGE_COLLECTION, TRACKALLOCATES, &
+    & CLEARONALLOCATE
   use DECLARATION_TABLE, only: ALLOCATE_DECL, DEALLOCATE_DECL, DUMP_DECL
   use INIT_TABLES_MODULE, only: INIT_TABLES
   use INTRINSIC, only: L_HOURS, L_MINUTES, L_SECONDS, LIT_INDICES
@@ -333,7 +334,7 @@ program MLSL2
           stop
         end if
       else if ( lowercase(line(3+n:18+n)) == 'clearonallocate ' ) then
-        trackAllocates = switch
+        clearonallocate = switch
       else if ( lowercase(line(3+n:11+n)) == 'memtrack ' ) then
         trackAllocates = switch
       else if ( line(3+n:8+n) == 'patch ' ) then
@@ -922,6 +923,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.124  2004/08/16 17:12:20  pwagner
+! Fixed clearonallocate setting
+!
 ! Revision 2.123  2004/08/05 22:47:47  pwagner
 ! New --chunkRange option to run selected chunks in parallel mode
 !
