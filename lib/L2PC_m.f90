@@ -261,9 +261,6 @@ contains ! ============= Public Procedures ==========================
     type (Matrix_T), pointer :: tmpMatrix
 
     ! Executable code
-    call H5Open_F ( status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open hdf5 system' )
     call H5FCreate_F ( trim(filename), H5F_ACC_TRUNC_F, fileID, &
       & status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -276,9 +273,6 @@ contains ! ============= Public Procedures ==========================
     call H5FClose_F ( fileID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,&
       & 'Unable to close hdf5 l2pc file.' )
-    call H5Close_F ( status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to close hdf5 system' )
 
   end subroutine OutputHDF5L2PC
 
@@ -607,16 +601,16 @@ contains ! ============= Public Procedures ==========================
     do i = 1, size ( l2pcInfo )
       call h5gClose_f ( l2pcInfo(i)%blocksID, status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to close Blocks group' )
+        & 'Unable to close Blocks group for preserved input l2pc' )
       call h5gClose_f ( l2pcInfo(i)%binID, status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to close matrix group' )
+        & 'Unable to close matrix group for preserved input l2pc' )
       ! Close the file?
       if ( count ( l2pcInfo%fileID == l2pcInfo(i)%fileID ) == 1 ) then
         ! We're the only one (left?) with this file, close it.
         call h5fClose_f ( l2pcInfo(i)%fileID, status )
         if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Unable to hdf5 l2pc file' )
+          & 'Unable to hdf5 preserved input l2pc file' )
       else
         l2pcInfo(i)%fileID = 0
       end if
@@ -1026,18 +1020,15 @@ contains ! ============= Public Procedures ==========================
     integer :: DUMMY           ! Ignored return from AddToDatabase
 
     ! Executable code
-    call H5Open_F ( status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open hdf5 system' )
 
     call h5fopen_f ( filename, H5F_ACC_RDONLY_F, fileID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open hdf5 l2pc file:'//trim(filename) )
+      & 'Unable to open hdf5 l2pc file for input:'//trim(filename) )
 
     ! Get the number of bins
     call h5gn_members_f ( fileID, '/', noBins, status ) 
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to get number of bins from file:'//trim(filename) )
+      & 'Unable to get number of bins from input l2pc file:'//trim(filename) )
     
     ! Don't forget HDF5 numbers things from zero
     do bin = 0, noBins-1
@@ -1101,10 +1092,10 @@ contains ! ============= Public Procedures ==========================
     call h5gGet_obj_info_idx_f ( fileID, '/', index, matrixName, &
       & objType, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to get information on matrix in l2pc file' )
+      & 'Unable to get information on matrix in input l2pc file' )
     call h5gOpen_f ( fileID, trim(matrixName), matrixId, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to open matrix in l2pc file' )
+      & 'Unable to open matrix in input l2pc file' )
 
     ! Read the row and column vectors
     call ReadOneVectorFromHDF5 ( matrixId, 'Columns', xStar )
@@ -1113,7 +1104,7 @@ contains ! ============= Public Procedures ==========================
     ! Get the instance first information
     call h5gOpen_f ( matrixID, 'Blocks', blocksID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to access Blocks group of matrix' )
+      & 'Unable to access Blocks group of input l2pc matrix' )
     call GetHDF5Attribute ( blocksID, 'rowInstanceFirst', rowInstanceFirst )
     call GetHDF5Attribute ( blocksID, 'colInstanceFirst', colInstanceFirst )
 
@@ -1160,7 +1151,7 @@ contains ! ============= Public Procedures ==========================
             call LoadFromHDF5DS ( blockID, 'values', m0%values )
           call h5gClose_f ( blockId, status )
           if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & 'Unable to close group for l2pc matrix block '//trim(name) )
+            & 'Unable to close group for input l2pc matrix block '//trim(name) )
         end if
         end do
     end do
@@ -1169,10 +1160,10 @@ contains ! ============= Public Procedures ==========================
     if ( .not. myShallow ) then
       call h5gClose_f ( blocksID, status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to close Blocks group' )
+        & 'Unable to close Blocks group for input l2pc' )
       call h5gClose_f ( matrixID, status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to close matrix group' )
+        & 'Unable to close matrix group for input l2pc' )
     endif
 
   end subroutine ReadOneHDF5L2PCRecord
@@ -1457,6 +1448,10 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.41  2002/08/07 00:05:14  livesey
+! Moved H5Open/Close_F into tree walker.  Made some error messages more
+! informative.
+!
 ! Revision 2.40  2002/07/25 15:53:40  mjf
 ! Initialised some elements of qt in ReadOneVectorFromASCII (already
 ! done in ReadOneVectorFromHDF5)
