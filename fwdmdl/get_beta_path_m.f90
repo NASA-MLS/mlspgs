@@ -44,19 +44,19 @@ contains
     real(rp), intent(in) :: T_path(:) ! path temperatures
     real(rp), intent(in) :: P_path(:) ! path pressures in hPa!
     type(catalog_t), intent(in) :: Catalog(:)
-    type (slabs_struct), dimension(:,:), pointer :: Gl_slabs
+    type (slabs_struct), dimension(:,:) :: Gl_slabs
     integer(ip), intent(in) :: Path_inds(:) ! indicies for reading gl_slabs
 
-    type (beta_group_T), dimension(:), pointer :: beta_group
+    type (beta_group_T), dimension(:) :: beta_group
 
 ! Another clumsy feature of f90
 ! Optional inputs:
 
-    type(slabs_struct), optional, pointer :: gl_slabs_m(:,:) ! reduced
+    type(slabs_struct), optional :: gl_slabs_m(:,:) ! reduced
 !                               strength data for t_path_m
     real(rp), optional, intent(in) :: t_path_m(:) ! path temperatures for
 !                                                 gl_slabs_m
-    type(slabs_struct), optional, pointer :: gl_slabs_p(:,:) ! reduced
+    type(slabs_struct), optional :: gl_slabs_p(:,:) ! reduced
 !                               strength data for t_path_p
     real(rp), optional, intent(in) :: t_path_p(:) ! path temperatures for
 
@@ -94,17 +94,11 @@ contains
         ratio = beta_group(i)%ratio(n)
         ib = beta_group(i)%cat_index(n)
         Spectag = Catalog(ib)%Spec_Tag
-        no_of_lines = gl_slabs(1,ib)%no_lines
-        allocate ( LineWidth(no_of_lines) )
-        do k = 1, no_of_lines
-          LineWidth(k) = Lines(Catalog(ib)%Lines(k))%W
-        end do
         do j = 1, n_path
           k = path_inds(j)
           call create_beta ( Spectag, Catalog(ib)%continuum, p_path(k), t_path(k), &
-            &  Frq, no_of_lines, LineWidth, gl_slabs(k,ib)%v0s, gl_slabs(k,ib)%x1, &
-            &  gl_slabs(k,ib)%y, gl_slabs(k,ib)%yi, gl_slabs(k,ib)%slabs1, bb,     &
-            &  gl_slabs(k,ib)%dslabs1_dv0, DBETA_DW=v0, DBETA_DN=vp, DBETA_DV=vm )
+            &  Frq, Lines(Catalog(ib)%Lines)%W, gl_slabs(k,ib), bb,     &
+            &  DBETA_DW=v0, DBETA_DN=vp, DBETA_DV=vm )
           beta_path(j,i) = beta_path(j,i) + ratio * bb
           if ( present(dbeta_dw_path)) &
             &  dbeta_dw_path(j,i) = dbeta_dw_path(j,i) + ratio * v0
@@ -113,7 +107,6 @@ contains
           if ( present(dbeta_dv_path)) &
             &  dbeta_dv_path(j,i) = dbeta_dv_path(j,i) + ratio * vm
         end do
-        DeAllocate ( LineWidth )
       end do
     end do
 
@@ -137,15 +130,11 @@ contains
             k = path_inds(j)
             tm = t_path_m(k)
             call create_beta ( Spectag, Catalog(ib)%continuum, p_path(k), tm, Frq, &
-            &    no_of_lines, LineWidth, gl_slabs_m(k,ib)%v0s, gl_slabs_m(k,ib)%x1,&
-            &    gl_slabs_m(k,ib)%y, gl_slabs_m(k,ib)%yi, gl_slabs_m(k,ib)%slabs1, &
-            &    vm, gl_slabs_m(k,ib)%dslabs1_dv0 )
+            &    LineWidth, gl_slabs_m(k,ib), vm )
             betam(j) = betam(j) + ratio * vm
             tp = t_path_p(k)
             call create_beta ( Spectag, Catalog(ib)%continuum, p_path(k), tp, Frq, &
-            &    no_of_lines, LineWidth, gl_slabs_p(k,ib)%v0s, gl_slabs_p(k,ib)%x1,&
-            &    gl_slabs_p(k,ib)%y, gl_slabs_p(k,ib)%yi, gl_slabs_p(k,ib)%slabs1, &
-            &    vp, gl_slabs_p(k,ib)%dslabs1_dv0 )
+            &    LineWidth, gl_slabs_p(k,ib), vp )
             betap(j) = betap(j) + ratio * vp
           end do
           DeAllocate ( LineWidth )
@@ -194,6 +183,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.9  2002/10/08 17:08:03  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.8  2002/09/12 23:00:04  vsnyder
 ! Cosmetic changes, move USEs from module scope to procedure scope
 !
