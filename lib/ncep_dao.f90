@@ -17,7 +17,7 @@ MODULE ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
   use l3ascii, only: l3ascii_read_field
   use LEXER_CORE, only: PRINT_SOURCE
   USE MLSCommon, only: R8, LineLen, NameLen
-  USE MLSFiles, only: GetPCFromRef
+  USE MLSFiles, only: GetPCFromRef, mls_io_gen_openF
   USE MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate, &
   & MLSMSG_Deallocate, MLSMSG_Warning
   USE MLSStrings, only: GetStringElement, NumStringElements, Capitalize, &
@@ -522,7 +522,7 @@ MODULE ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
 
 
   ! --------------------------------------------------  READ_CLIMATOLOGY  -----
-  SUBROUTINE READ_CLIMATOLOGY ( fname, aprioriData, &
+  SUBROUTINE READ_CLIMATOLOGY ( fname, root, aprioriData, &
   & mlspcf_l2clim_start, mlspcf_l2clim_end )
   ! --------------------------------------------------
   ! Brief description of program
@@ -533,36 +533,62 @@ MODULE ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
 
   character*(*), intent(in) :: fname			! Physical file name
     type (GriddedData_T), dimension(:), pointer :: aprioriData 
-	 INTEGER, INTENT(IN) :: mlspcf_l2clim_start, mlspcf_l2clim_end
+    integer, intent(in) :: ROOT        ! Root of the L2CF abstract syntax tree
+	 INTEGER, OPTIONAL, INTENT(IN) :: mlspcf_l2clim_start, mlspcf_l2clim_end
 	 
 	 ! Local
     type (GriddedData_T)        :: gddata 
 	 INTEGER :: ErrType
 	 INTEGER, PARAMETER :: version=1
 	 LOGICAL :: end_of_file=.FALSE.
-    integer:: processCli, CliUnit
+    integer:: processCli, CliUnit, record_length
 	 
+	! begin
+	
+	! use PCF
+
+	if(present(mlspcf_l2clim_start) .and. present(mlspcf_l2clim_end)) then
+
 	 CliUnit = GetPCFromRef(fname, mlspcf_l2clim_start, mlspcf_l2clim_end, &
   & .TRUE., ErrType, version)
   
   IF(ErrType /= 0) THEN
-    CALL MLSMessage (MLSMSG_Error, ModuleName, &
-              &"Climatology file name unmatched in PCF")
+!    CALL MLSMessage (MLSMSG_Error, ModuleName, &
+!              &"Climatology file name unmatched in PCF")
+    CALL announce_error (ROOT, &
+              &"Climatology file name " // fname // " unmatched in PCF")
 	RETURN
   ENDIF
 
       ErrType = Pgs_io_gen_openF ( CliUnit, PGSd_IO_Gen_RSeqFrm, 0, &
                                         processCli, version )
+
+	! use Fortran open
+	else
+	
+		call output('opening ' // fname)
+
+		CliUnit = mls_io_gen_openF ( 'open', .true., ErrType, &
+	& record_length, PGSd_IO_Gen_RSeqFrm, FileName=fname)
+	
+	endif
+
       if ( ErrType == PGS_S_SUCCESS ) then
 
       do while (.NOT. end_of_file)
 
+			call output('reading l3ascii file')
         call l3ascii_read_field ( processCli, gddata, end_of_file)
+			call output('adding to grid database')
         ErrType = AddGridTemplateToDatabase(aprioriData, gddata)
         call DestroyGridTemplateContents ( gddata )
 
       end do !(.not. end_of_file)
 		
+		else
+
+    		CALL announce_error (ROOT, &
+              &"Error opening " // fname, error_number=ErrType)
 		endif
 
 	END SUBROUTINE READ_CLIMATOLOGY
@@ -676,13 +702,15 @@ MODULE ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
 !===========================
 
   ! ------------------------------------------------  announce_error  -----
-  subroutine announce_error ( lcf_where, full_message, use_toolkit )
+  subroutine announce_error ( lcf_where, full_message, use_toolkit, &
+  & error_number )
   
    ! Arguments
 	
 	integer, intent(in)    :: lcf_where
 	character(LEN=*), intent(in)    :: full_message
 	logical, intent(in), optional :: use_toolkit
+	integer, intent(in), optional    :: error_number
 	! Local
 !  character (len=80) :: msg, mnemonic
 !  integer :: status
@@ -722,9 +750,16 @@ MODULE ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
 		& from_where=ModuleName)
 		CALL output(trim(full_message), advance='yes', &
 		& from_where=ModuleName)
+		if(present(error_number)) then
+			CALL output('error number ', advance='no')
+			CALL output(error_number, places=9, advance='yes')
+		endif
 	else
 		print*, '***Error in module ', ModuleName
 		print*, trim(full_message)
+		if(present(error_number)) then
+			print*, 'error number ', error_number
+		endif
 	endif
 
 !===========================
@@ -737,6 +772,9 @@ END MODULE ncep_dao
 
 !
 ! $Log$
+! Revision 2.4  2001/03/21 00:47:29  pwagner
+! Changes to READ_CLIMATOLOGY, announce_error
+!
 ! Revision 2.3  2001/03/20 00:42:11  pwagner
 ! Improved Read_Climatology
 !
