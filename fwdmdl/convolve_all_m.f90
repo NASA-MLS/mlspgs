@@ -28,27 +28,26 @@ Subroutine convolve_all (ptg_press,atmospheric,n_sps,temp_der,tan_press,   &
            ptg_angles,tan_temp,dx_dt,d2x_dxdt,band,center_angle,fft_pts,   &
            i_raw, k_temp, k_atmos, k_spect_dw, k_spect_dn,k_spect_dnu,     &
            spect_atmos, no_tan_hts, k_info_count, i_star_all,k_star_all,   &
-           k_star_info,no_t,no_phi_t,no_phi_f,InDir,Aaap,spectroscopic,    &
-           t_z_basis, Ier)
+           k_star_info,no_t,no_phi_t,no_phi_f,spectroscopic,t_z_basis,     &
+           XLAMDA,AAAP,D1AAP,D2AAP,IAS,Ier)
 !
     Logical, intent(IN) :: temp_der
 !
     integer(i4), intent(IN) :: no_t, n_sps, no_tan_hts, band, &
-   &                           fft_pts, no_phi_t
+   &                           fft_pts, no_phi_t, IAS
     integer(i4), intent(IN) :: no_phi_f(*), spect_atmos(*)
 !
-    real(r8), intent(IN) :: CENTER_ANGLE
+    real(r8), intent(IN) :: CENTER_ANGLE, XLAMDA
     real(r8), intent(IN) :: I_RAW(*), T_Z_BASIS(*)
     real(r8), intent(IN) :: TAN_PRESS(*), PTG_ANGLES(*), TAN_TEMP(*)
     real(r8), intent(IN) :: DX_DT(Nptg,*), D2X_DXDT(Nptg,*)
+    Real(r8), intent(in) :: AAAP(:,:),D1AAP(:,:),D2AAP(:,:)
 
     Real(r4) :: k_temp(Nptg,mxco,mnp)
     Real(r4) :: k_atmos(Nptg,mxco,mnp,Nsps)
     Real(r4) :: k_spect_dw(Nptg,mxco,mnp,Nsps),  &
                 k_spect_dn(Nptg,mxco,mnp,Nsps),  &
                 k_spect_dnu(Nptg,mxco,mnp,Nsps)
-!
-    Character(LEN=*), intent(IN) :: InDir, Aaap
 !
     type(limb_press), intent(IN) :: PTG_PRESS
     type(atmos_comp), intent(IN) :: ATMOSPHERIC(*)
@@ -94,9 +93,9 @@ Subroutine convolve_all (ptg_press,atmospheric,n_sps,temp_der,tan_press,   &
 !
     fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
     Call fov_convolve(fft_angles,Rad,center_angle,1,no_tan_hts,band, &
-   &                  fft_pts,InDir,Aaap,Ier)
+   &                  fft_pts,XLAMDA,AAAP,D1AAP,D2AAP,IAS,Ier)
     if (Ier /= 0) Return
-
+!
     si = no_tan_hts - j + 1
     Call Cspline(fft_angles,ptg_angles(si:no_tan_hts),Rad,Sc1,Ntr,j)
     i_star_all(1:j) = Sc1(1:j)
@@ -191,7 +190,7 @@ Subroutine convolve_all (ptg_press,atmospheric,n_sps,temp_der,tan_press,   &
 !
           fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
           Call fov_convolve(fft_angles,Rad,center_angle,1,no_tan_hts, &
-   &           band,fft_pts,InDir,Aaap,Ier)
+   &           band,fft_pts,XLAMDA,AAAP,D1AAP,D2AAP,IAS,Ier)
           if (Ier /= 0) Return
 !
           Call Cspline(fft_angles,ptg_angles(si:no_tan_hts),Rad,Sc1,Ntr,j)
@@ -209,7 +208,7 @@ Subroutine convolve_all (ptg_press,atmospheric,n_sps,temp_der,tan_press,   &
 !
           fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
           Call fov_convolve(fft_angles,Rad,center_angle,2,no_tan_hts, &
-   &           band,fft_pts,InDir,Aaap,Ier)
+   &           band,fft_pts,XLAMDA,AAAP,D1AAP,D2AAP,IAS,Ier)
           if (Ier /= 0) Return
 !
           Call Cspline(fft_angles,ptg_angles(si:no_tan_hts),Rad,term,Ntr,j)
@@ -234,7 +233,7 @@ Subroutine convolve_all (ptg_press,atmospheric,n_sps,temp_der,tan_press,   &
 !
           fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
           Call fov_convolve(fft_angles,Rad,center_angle,2,no_tan_hts, &
-   &           band,fft_pts,InDir,Aaap,Ier)
+   &           band,fft_pts,XLAMDA,AAAP,D1AAP,D2AAP,IAS,Ier)
           if (Ier /= 0) Return
 !
           Call Cspline(fft_angles,ptg_angles(si:no_tan_hts),Rad,term,Ntr,j)
@@ -281,7 +280,7 @@ Subroutine convolve_all (ptg_press,atmospheric,n_sps,temp_der,tan_press,   &
 !
             fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
             Call fov_convolve(fft_angles,Rad,center_angle,1,no_tan_hts, &
-   &             band,fft_pts,InDir,Aaap,Ier)
+   &             band,fft_pts,XLAMDA,AAAP,D1AAP,D2AAP,IAS,Ier)
             if (Ier /= 0) Return
 !
 ! Interpolate onto the output grid, and store in k_star_all ..
@@ -345,7 +344,7 @@ Subroutine convolve_all (ptg_press,atmospheric,n_sps,temp_der,tan_press,   &
 !
             fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
             Call fov_convolve(fft_angles,Rad,center_angle,1,no_tan_hts, &
-   &             band,fft_pts,InDir,Aaap,Ier)
+   &             band,fft_pts,XLAMDA,AAAP,D1AAP,D2AAP,IAS,Ier)
             if (Ier /= 0) Return
 !
 ! Interpolate onto the output grid, and store in k_star_all ..
@@ -371,8 +370,6 @@ Subroutine convolve_all (ptg_press,atmospheric,n_sps,temp_der,tan_press,   &
 !
 end module CONVOLVE_ALL_M
 ! $Log$
-! Revision 1.2  2001/02/19 22:14:21  zvi
-!
 ! Revision 1.1  2000/06/21 21:56:14  zvi
 ! First version D.P.
 !

@@ -81,8 +81,7 @@ contains
    &                 mid, t_script)
 !
     Call FAST_DELTA(mid,brkpt,no_ele,z_path,h_path,phi_path,beta_path, &
- &       dHdz_path,spsfunc_path,n_sps,N_lvls,Nlvl, &
- &       ref_corr,delta,Ier)
+ &       dHdz_path,spsfunc_path,n_sps,N_lvls,Nlvl,ref_corr,delta,Ier)
     if (Ier /= 0) Return
 !
 ! Initialize the tau & del_opacity arrays:
@@ -90,8 +89,8 @@ contains
     tau(1:N2lvl) = 0.0
     del_opacity(1:N2lvl) = 0.0
 !
-    CALL FAST_ZOPACITY(n_sps, Ngp1, N2lvl, brkpt, &
-   &                   no_ele, delta, del_opacity)
+    CALL FAST_ZOPACITY(n_sps, Ngp1, N2lvl, brkpt, no_ele, delta, &
+   &                   del_opacity)
 !
     Call Scrt_dn(t_script, N_lvls, cse, del_opacity, tau, Rad, mid, &
    &             ilo, ihi)

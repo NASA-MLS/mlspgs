@@ -1,7 +1,6 @@
 module FOV_CONVOLVE_M
-  use L2PCdim, only: MAXFFT, NLVL
-  use MACHINE, only: IO_ERROR
-  use MLSCommon, only: I4, R4, R8
+  use L2PCdim, only: NLVL
+  use MLSCommon, only: I4, R8
   use D_CSPLINE_M, only: CSPLINE
   implicit NONE
   private
@@ -9,39 +8,27 @@ module FOV_CONVOLVE_M
 !---------------------------- RCS Ident Info -------------------------------
   CHARACTER (LEN=256) :: Id = &
        "$Id$"
-  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile$"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName = &
+       "$RCSfile$"
 !---------------------------------------------------------------------------
 contains
 ! ===========================================     FOV_CONVOLVE     =====
 ! This subprogram adds the effects antenna smearing to the radiance
 !
-  SUBROUTINE FOV_CONVOLVE( EIL_ANGLE, RADIANCE, DELTA0, ITYPE, NP, &
- &                         MBAND, M, InDir, AntN, IER )
+  SUBROUTINE FOV_CONVOLVE(EIL_ANGLE, RADIANCE, DELTA0, ITYPE, NP, MBAND, &
+ &                        M, XLAMDA, AAAP, D1AAP, D2AAP, IAS, IER )
 !
+    Integer(i4), intent(in) :: ITYPE, NP, MBAND, M, IAS
+
     Real(r8), intent(inout) :: EIL_ANGLE(*)
     Real(r8), intent(inout) :: RADIANCE(*)
-    Real(r8), intent(in) :: DELTA0
-    Integer(i4), intent(in) :: ITYPE, NP, MBAND, M
-    Character(len=*), intent(in) :: InDir, AntN
+    Real(r8), intent(in) :: DELTA0, XLAMDA
+    Real(r8), intent(in) :: AAAP(2**M,3),D1AAP(2**M,3),D2AAP(2**M,3)
+
     Integer(i4), intent(out) :: IER
-    Real(r8), save :: AAAP(maxfft,3) = 0.0_r4, D1AAP(maxfft,3)=0.0_r4, &
-                      D2AAP(maxfft,3) = 0.0_r4
-    Character(len=132) Fn
-    integer(i4), save :: IAS, INIT = 0
-    Integer(i4) :: I, J, IND, LA, LF, NTR
+
+    Integer(i4) :: I, J, IND, NTR
     real(r8) :: X
-    real(r8), save :: XLAMDA
-!
-    if ( init == 0 ) then
-      fn(1:) = ' '
-      la = len_trim(antn)
-      lf = len_trim(InDir)
-      fn = InDir(1:lf)//antn(1:la)
-      lf = len_trim(fn)
-      call antenna ( fn(1:lf), m, xlamda, aaap, d1aap, d2aap, ias, ier )
-      if (ier /= 0) return
-      init = m
-    endif
 !
     ntr = 2**m
     call ftgrid(eil_angle,radiance,delta0,xlamda,np,ntr,ier)
@@ -57,127 +44,16 @@ contains
 !
     i = itype - 1
     if (i  ==  0) then                               ! Straight data
-      call convolve(radiance, aaap,m,ias,ind,ier)
+      call convolve(Radiance, AAAP,M,Ias,ind,ier)
     else if (i  ==  1) then                          ! First derivative
-      call convolve(radiance,d1aap,m,ias,ind,ier)
+      call convolve(Radiance,D1AAP,M,Ias,ind,ier)
     else if (i  ==  2) then                          ! Second derivative
-      call convolve(radiance,d2aap,m,ias,ind,ier)
+      call convolve(Radiance,D2AAP,M,Ias,ind,ier)
     endif
 !
     Return
   End subroutine FOV_CONVOLVE
 ! *****     Private procedures     *************************************
-! ------------------------------------------------     ANTENNA     -----
-! This subroutine reads an external antenna aperture autocorrelation
-! file
-!
-  Subroutine ANTENNA ( Fn, M, XLAMDA, AAAP, D1AAP, D2AAP, IAS, IERR )
-    use GET_LUN, only: AAAP_UNIT
-    Integer(i4), parameter :: MaxV= 2048
-!
-    Real(r8), intent(out) :: AAAP(*),D1AAP(*),D2AAP(*),XLAMDA
-    integer(i4), intent(out) :: IAS, IERR
-!
-    Integer(i4) :: M, k, lf, I, J, NTR, L, N
-    REAL(r8) :: V(6), VALL(MaxV, 6), dx2p, Q, Q2
-!
-    Character*(*) Fn
-!
-    ierr = 0
-    lf = len_trim(Fn)
-    OPEN(aaap_unit,FILE=Fn(1:lf),action='READ',STATUS='OLD',iostat=k)
-    if(k /= 0) then
-      ierr = 1
-      Print *,'** File: ',Fn(1:lf)
-!     Call ErrMsg('** From ANTENNA subroutine',k)
-      call io_error ('Opening file in FOV_CONVOLVE%ANTENNA', k, Fn(1:lf) )
-      goto 20
-    endif
-!
-    READ(aaap_unit,*,iostat=k) XLAMDA
-    if(k /= 0) then
-      ierr = 1
-      Print *,'** Reading error in file: ',Fn(1:lf)
-!     Call ErrMsg('** From ANTENNA subroutine',k)
-      call io_error ( 'Reading file in FOV_CONVOLVE%ANTENNA', k, Fn(1:lf) )
-      goto 20
-    endif
-!
-    dx2p = 6.28318530717959_r8 * Xlamda         ! 2 * Pi * Lambda
-!
-    i = 0
-    k = 0
-!
-    do while(k == 0)
-!
-! This loop MUST exit on an end of file condition
-!
-      read(aaap_unit,*,iostat=k) v
-      if(k == -1) exit
-      if(k == 0) then
-        if(I == MaxV) then
-          ierr = 1
-          Print *,'** Error in ANTENNA subroutine !!'
-          Print *,'   Too many lines in: ',Fn(1:lf)
-          Print *,'   Maximum allowed is:',MaxV
-          goto 20
-        endif
-        i = i + 1
-        vall(i,:) = v
-      else
-        ierr = 1
-        Print *,'** Reading error in file: ',Fn(1:lf)
-!       Call ErrMsg('** From ANTENNA subroutine',k)
-        call io_error ( 'Reading file in FOV_CONVOLVE%ANTENNA', k, Fn(1:lf) )
-        goto 20
-      endif
-!
-    end do
-!
-    ias = i
-    ntr = 2**m
-!
-    do i = 1, ias
-!
-      j = 2 * i - 1
-      l = 2 * ias + j
-      n = 4 * ias + j
-!
-      v = vall(i,:)
-!
-      aaap(j)   = v(1)
-      aaap(j+1) = v(2)
-      aaap(l)   = v(3)
-      aaap(l+1) = v(4)
-      aaap(n)   = v(5)
-      aaap(n+1) = v(6)
-!
-! Below is the  first derivative field:     ! i*Q * F(S), i = Sqrt(-1)
-!
-      q = (i - 1) * dx2p
-      d1aap(j)    = -v(2) * q
-      d1aap(j+1)  =  v(1) * q
-      d1aap(l)    = -v(4) * q
-      d1aap(l+1)  =  v(3) * q
-      d1aap(n)    = -v(6) * q
-      d1aap(n+1)  =  v(5) * q
-!
-! Below is the second derivative field:     ! (i*Q)**2 * F(S), i = Sqrt(-1)
-!
-      q2 = -q * q                         ! (i*q)**2 = -q*q
-      d2aap(j)    =  v(1) * q2
-      d2aap(j+1)  =  v(2) * q2
-      d2aap(l)    =  v(3) * q2
-      d2aap(l+1)  =  v(4) * q2
-      d2aap(n)    =  v(5) * q2
-      d2aap(n+1)  =  v(6) * q2
-!
-    end do
-!
-20  close(aaap_unit,iostat=k)
-!
-    Return
-  End subroutine ANTENNA
 !
 ! -----------------------------------------------     CONVOLVE     -----
 ! This subroutine applies the convolution theorem
@@ -245,11 +121,13 @@ contains
 ! it uses cubic splines
 !
   Subroutine FTGRID ( EIL_ANGLE, RADIANCE, DELTA0, XLAMDA, NP, NTR, IERR )
+
     Real(r8), intent(inout) :: EIL_ANGLE(*)
     Real(r8), intent(inout) :: RADIANCE(*)
     Real(r8), intent(in) :: DELTA0, XLAMDA
     Integer(i4), intent(in) :: NP, NTR
     Integer(i4), intent(out) :: IERR
+
     Integer(i4) :: I, K1, KN, N, MP
 !
     Real(r8) :: X1, XN, R1,RN
@@ -847,8 +725,5 @@ contains
 
 end module FOV_CONVOLVE_M
 ! $Log$
-! Revision 1.3  2001/01/31 22:40:12  zvi
-! Add new version
-!
 ! Revision 1.1  2000/05/04 18:12:05  vsnyder
 ! Initial conversion to Fortran 90

@@ -47,7 +47,8 @@ Real(r8), INTENT(IN) :: t_coeff(:,:)
 Real(r8), INTENT(OUT) :: z_glgrid(:), h_glgrid(:,:), t_glgrid(:,:), &
                          dhdz_glgrid(:,:), dh_dt_glgrid(:,:,:)
 
-Real(r8), INTENT(OUT) :: tan_press(:), tan_hts(:,:),  tan_temp(:,:)
+Real(r8), INTENT(IN OUT) :: tan_press(:)
+Real(r8), INTENT(OUT) :: tan_hts(:,:),  tan_temp(:,:)
 
 Real(r8), INTENT(OUT) :: tan_dh_dt(:,:,:)
 
@@ -135,14 +136,6 @@ Real(r8) :: h_grid(Nlvl),t_grid(Nlvl),dhdt(mxco)
     end do
   end do
 !
-! Define tan_press as a TRUE subset of z_grid:
-!
-  tan_press(1:si-1) = -5.0
-  do i = 1, no_tan_hts
-    j = t_indx(i)
-    tan_press(si+i-1) = z_grid(j)
-  end do
-
   no_tan_hts = no_tan_hts + si - 1
 
 ! Interpolate the hydrostatic grid for conv. grid pressures (tan_press)
@@ -368,7 +361,5 @@ END SUBROUTINE pq_ana
 
 end module HYDROSTATIC_MODEL_M
 ! $Log$
-! Revision 1.2  2001/02/19 22:14:21  zvi
-!
 ! Revision 1.1 2000/06/09 00:08:13  Z.Shippony
 ! Initial conversion to Fortran 90
