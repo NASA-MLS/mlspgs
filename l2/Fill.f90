@@ -51,7 +51,7 @@ contains ! =====     Public Procedures     =============================
     use INIT_TABLES_MODULE, only: F_A, F_ALLOWMISSING, &
       & F_APRIORIPRECISION, F_B, F_BOUNDARYPRESSURE, &
       & F_CHANNEL, F_COLUMNS, F_DESTINATION, F_DIAGONAL, F_dontMask,&
-      & F_EARTHRADIUS, F_EXPLICITVALUES, F_EXTINCTION, F_FORCE, &
+      & F_ECRTOFOV, F_EARTHRADIUS, F_EXPLICITVALUES, F_EXTINCTION, F_FIELDECR, F_FORCE, &
       & F_FRACTION, F_GEOCALTITUDEQUANTITY, F_GPHQUANTITY, F_HIGHBOUND, F_H2OQUANTITY, &
       & F_H2OPRECISIONQUANTITY, &
       & F_IGNORENEGATIVE, F_IGNOREZERO, F_INSTANCES, F_INTEGRATIONTIME, &
@@ -87,8 +87,8 @@ contains ! =====     Public Procedures     =============================
       & L_NORADSPERMIF, L_OFFSETRADIANCE, L_ORBITINCLINATION, L_PHITAN, &
       & L_PLAIN, L_PRESSURE, L_PROFILE, L_PTAN, &
       & L_RADIANCE, L_RECTANGLEFROMLOS, L_REFGPH, L_REFRACT, L_REFLECTORTEMPMODEL, &
-      & L_REFLTEMP, L_RHI, L_RHIFROMH2O, L_RHIPRECISIONFROMH2O, L_SCALEOVERLAPS, &
-      & L_SCECI, L_SCGEOCALT, L_SCVEL, L_SCVELECI, L_SCVELECR, &
+      & L_REFLTEMP, L_RHI, L_RHIFROMH2O, L_RHIPRECISIONFROMH2O, L_ROTATEFIELD, &
+      & L_SCALEOVERLAPS, L_SCECI, L_SCGEOCALT, L_SCVEL, L_SCVELECI, L_SCVELECR, &
       & L_LIMBSIDEBANDFRACTION, L_SPD, L_SPECIAL, L_SPREADCHANNEL, &
       & L_SPLITSIDEBAND, L_SYSTEMTEMPERATURE, &
       & L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, &
@@ -251,6 +251,8 @@ contains ! =====     Public Procedures     =============================
     type (vectorValue_T), pointer :: BNDPRESSQTY
     type (vectorValue_T), pointer :: BQUANTITY
     type (vectorValue_T), pointer :: EARTHRADIUSQTY
+    type (vectorValue_T), pointer :: ECRTOFOV
+    type (vectorValue_T), pointer :: FIELDECR
     type (vectorValue_T), pointer :: GEOCALTITUDEQUANTITY
     type (vectorValue_T), pointer :: GPHQUANTITY
     type (vectorValue_T), pointer :: H2OPRECISIONQUANTITY
@@ -305,10 +307,14 @@ contains ! =====     Public Procedures     =============================
     integer :: Diagonal                 ! Index of diagonal vector in database
     !                                     -- for FillCovariance
     logical :: DONTMASK                 ! Use even masked values if TRUE
+    integer :: ECRTOFOVQUANTITYINDEX    ! Rotation matrix
+    integer :: ECRTOFOVVECTORINDEX      ! Rotation matirx
     integer :: ERRORCODE                ! 0 unless error; returned by called routines
     logical :: Extinction               ! Flag for cloud extinction calculation
     integer :: FIELDINDEX               ! Entry in tree
     integer :: FieldValue               ! Value of a field in the L2CF
+    integer :: FIELDECRQUANTITYINDEX    ! Magnetic field
+    integer :: FIELDECRVECTORINDEX      ! Magnetic field
     integer :: FILLMETHOD               ! How will we fill this quantity
     logical :: FORCE                    ! Bypass checks on some operations
     integer :: FRACTION                 ! Index of fraction vector in database
@@ -651,10 +657,16 @@ contains ! =====     Public Procedures     =============================
           case ( f_noise )   ! Only used for chi^2 special fills or addnoise
             noiseVectorIndex = decoration(decoration(subtree(1,gson)))
             noiseQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_ECRToFOV ) ! For hydrostatic
+            ecrToFOVVectorIndex = decoration(decoration(subtree(1,gson)))
+            ecrToFOVQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_explicitValues ) ! For explicit fill
             valuesNode=subtree(j,key)
           case ( f_extinction ) ! For cloud extinction fill
             extinction = get_boolean ( gson )
+          case ( f_fieldECR ) ! For hydrostatic
+            fieldECRVectorIndex = decoration(decoration(subtree(1,gson)))
+            fieldECRQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_force )
             force = get_boolean ( gson )
           case ( f_geocAltitudeQuantity ) ! For hydrostatic
@@ -1275,7 +1287,7 @@ contains ! =====     Public Procedures     =============================
                 end if
             end if
 
-        case ( l_RHIPrecisionfromH2O ) ! --fill RHI prec. from H2O quantity --
+          case ( l_RHIPrecisionfromH2O ) ! --fill RHI prec. from H2O quantity --
             if ( .not. any(got( &
               & (/f_h2oquantity, f_temperatureQuantity, &
               & f_h2oPrecisionquantity, f_tempPrecisionQuantity/) &
@@ -1327,14 +1339,26 @@ contains ! =====     Public Procedures     =============================
                   & invert )    ! invert rather than convert?
               end if
             end if
+            
+          case ( l_rotateField )
+            if ( .not. all ( got ( (/ f_fieldECR, f_ecrtofov /) ) ) ) then
+              call Announce_Error ( key, no_error_code, &
+                & 'Must supply field and ecrToFov for rotateField fill' )
+            else
+              fieldECR => GetVectorQtyByTemplateIndex ( &
+                & vectors(fieldECRVectorIndex), fieldECRQuantityIndex )
+              ecrToFOV => GetVectorQtyByTemplateIndex ( &
+                & vectors(ecrToFOVVectorIndex), ecrToFovQuantityIndex )
+              call RotateMagneticField ( key, quantity, fieldECR, ecrToFov )
+            end if
 
         case ( l_scaleOverlaps )
-            if ( .not. got ( f_multiplier ) ) then
-              call Announce_Error ( key, no_error_code, &
-                & 'Must supply multipler for scaleOverlaps fill' )
-            else
-              call ScaleOverlaps ( key, quantity, multiplierNode, dontMask )
-            end if
+          if ( .not. got ( f_multiplier ) ) then
+            call Announce_Error ( key, no_error_code, &
+              & 'Must supply multipler for scaleOverlaps fill' )
+          else
+            call ScaleOverlaps ( key, quantity, multiplierNode, dontMask )
+          end if
 
         case ( l_special ) ! -  Special fills for some quantities  -----
             ! Either multiplier = [a, b] or multiplier = b are possible
@@ -4522,6 +4546,77 @@ contains ! =====     Public Procedures     =============================
 
     end subroutine FillVectorQtyFromIsotope
 
+    ! --------------------------------------------- RotateMagneticField ----
+    subroutine RotateMagneticField ( key, qty, fieldECR, ecrToFOV )
+      use Intrinsic, only: L_FIELDAZIMUTH, L_FIELDELEVATION, L_FIELDSTRENGTH
+      use Units, only: RAD2DEG
+      integer, intent(in) :: KEY        ! Where are we in the l2cf?
+      type (VectorValue_T), intent(inout) :: QTY ! The quantity to fill
+      type (VectorValue_T), intent(in) :: FIELDECR ! The input field
+      type (VectorValue_T), intent(in) :: ECRTOFOV ! The rotation matrix
+      ! Local variables
+      integer :: INSTANCE               ! Loop counter
+      integer :: SURFACE                ! Loop counter
+      integer :: MAF(1)                 ! Which MAF is the best match to this instance
+      real(r8) :: THISFIELD(3)          ! A magnetic field vector
+      real(r8) :: ROTATION(3,3)         ! One rotation matrix
+      real(r8) :: STRENGTH              ! The field strength
+      
+      ! Executable code
+      ! Do some sanity checks
+      if ( .not. any ( qty%template%quantityType == &
+        & (/ l_fieldStrength, l_fieldAzimuth, l_fieldElevation /) ) ) then
+        call Announce_Error ( key, no_error_code, 'Inappropriate quantity for this fill' )
+        return
+      end if
+      if ( .not. DoHGridsMatch ( qty, fieldECR ) ) then
+        call Announce_Error ( key, no_error_code, &
+          & 'Field and result quantity must have matching hGrids' )
+        return
+      end if
+      if ( .not. DoVGridsMatch ( qty, fieldECR ) ) then
+        call Announce_Error ( key, no_error_code, &
+          & 'Field and result quantity must have matching hGrids' )
+        return
+      end if
+
+      do instance = 1, qty%template%noInstances
+        ! Identify the relevant MAF and pull out the first MIF's rotation matrix
+        ! (first MIF is probably close enough to all the others to be useful).
+        maf = minloc ( abs ( qty%template%phi(1,instance) - &
+          & ecrToFOV%template%phi(1,:) ) )
+        rotation = reshape ( ecrToFOV%values( 1:9, maf), (/ 3, 3 /) )
+        ! Now loop over the pressure levels in the input and output field information
+        do surface = 1, qty%template%noSurfs
+          ! Get the field in ECR coordinates
+          thisField = fieldECR%values ( (surface-1) * 3 + 1 : surface*3, &
+            & instance )
+          ! Now rotate it into IFOVPP coordinates
+          thisField = matmul ( rotation, thisField )
+          ! Now work out the strength / angles as appropriate.
+          strength = sqrt ( sum ( thisField ** 2 ) )
+          select case ( qty%template%quantityType )
+          case ( l_fieldStrength )
+            qty%values(surface,instance) = strength
+          case ( l_fieldElevation )
+            if ( strength /= 0.0_r8 ) then
+              qty%values(surface,instance) = acos ( thisField(3) / strength ) * rad2deg
+            else
+              qty%values(surface,instance) = 0.0
+            end if
+          case ( l_fieldAzimuth )
+            if ( thisField(1) /= 0.0_r8 ) then
+              qty%values(surface,instance) = atan ( thisField(2) / thisField(1) ) * rad2deg
+            else
+              qty%values(surface,instance) = merge ( 90.0_r8, -90.0_r8, &
+                & thisField(1) > 0.0_r8 )
+            end if
+          end select
+        end do
+      end do
+            
+    end subroutine RotateMagneticField
+
     !=============================================== ExplicitFillVectorQuantity ==
     subroutine ExplicitFillVectorQuantity(quantity, valuesNode, spreadFlag, globalUnit, &
       & dontmask)
@@ -5824,6 +5919,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.234  2003/08/08 23:07:02  livesey
+! Added the rotate field fill.
+!
 ! Revision 2.233  2003/07/16 22:39:47  livesey
 ! Bug fix in fill from l2aux
 !
