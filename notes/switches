@@ -1,5 +1,6 @@
 Switches (set by -S option in mlsl2's command line):
 
+========================= mlsl2 =========================
   A => AntennaPatterns
   C => SpectroscopyCatalog
   F => FilterShapes
@@ -26,6 +27,7 @@ Switches (set by -S option in mlsl2's command line):
   svec => Final state vector after Newton iteration
   tps => Test_Parse_Signals
   xvec => 'X' vector during Newton iteration
+========================= end mlsl2 =========================
 
 The general pattern is to use upper-case letters for single-letter ones,
 and lower-case letters for strings.
@@ -33,13 +35,24 @@ and lower-case letters for strings.
 The -S option sets the "switches" array in toggles_core.f90.
 It's tested by "if ( index(switches,'foo') /= 0 ) then ..." so
 you can put longer strings on the command line (so long as the rest
-of it doesn't contain something you DON'T want to test for!).  E.g.
--Ssca could be -Sscalars.
+of it doesn't contain something you DON'T want to test for!). 
+ E.g. -Ssca could mean -Sscalars
+but beware: literally setting -Sscalars may also turn on an unwanted switch,
+"lars", causing mlsl2 to begin outputting all text in "Swedish Chef" mode
+BORK! BORK! BORK!
 
 (Add any more that are relevant to mlsl2,
 or separate sections for mlsl1 or mlsl3)
 
+(The equal signs in the section dividers above are to help
+sed dynamically update mlsl2 to show changes in the switch
+usage automatically. Thus you only need to edit this file,
+not MLSL2.f90)
+
  $Log$
+ Revision 1.4  2001/05/22 21:58:50  vsnyder
+ Add several switches for Newton iteration
+
  Revision 1.3  2001/05/18 01:12:11  vsnyder
  Add some explanation
 
