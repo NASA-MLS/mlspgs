@@ -28,7 +28,7 @@ contains
 !
     Integer(i4), intent(in) :: SPECTAG, nl
 
-    Real(r8), intent(in) :: Pressure, Temp, Fgr
+    Real(r8), intent(in) :: Pressure, Temp, Fgr, Frq_Gap
 
     Real(r8), intent(in) :: x1(:),y(:),yi(:),slabs1(:),slabs1m(:), &
    &          dx1_dv0(:),dy_dv0(:),dslabs1_dv0(:),v0sp(:),x1p(:),  &
@@ -39,7 +39,7 @@ contains
 
     Integer(i4), intent(out) :: Ier
     Real(r8), intent(out) :: BETA_VALUE, T_POWER, DBETA_DW
-    Real(r8), intent(out) :: DBETA_DN, DBETA_DNU0, Frq_Gap
+    Real(r8), intent(out) :: DBETA_DN, DBETA_DNU0
 !
 ! -----  Parameters Declaration ----------------------------------------
 !
@@ -163,6 +163,9 @@ contains
   End Subroutine Create_beta
 end module CREATE_BETA_M
 ! $Log$
+! Revision 1.9  2001/05/14 23:14:54  zvi
+! Added Freq. Gap test..
+!
 ! Revision 1.8  2001/04/05 21:58:47  zvi
 ! Implementing l2cf inputs for FilterShape & Spectroscopy instead of FMI
 !
