@@ -17,7 +17,7 @@ module Fill                     ! Create vectors and fill them.
     & F_MATRIX, F_METHOD, F_NOFINEGRID, F_PTANQUANTITY, F_QUANTITY, &
     & F_RADIANCEQUANTITY, F_RATIOQUANTITY, F_REFGPHQUANTITY, &
     & F_Rows, F_SCECI, F_SCVEL, F_SOURCE, F_SOURCEGRID, F_SOURCEL2AUX, &
-    & F_SOURCEL2GP, F_SOURCEQUANTITY, F_SOURCESGRID, F_SOURCEVGRID, &
+    & F_SOURCEL2GP, F_SOURCEQUANTITY, F_SOURCEVGRID, &
     & F_SPREAD, F_SUPERDIAGONAL, &
     & F_SYSTEMTEMPERATURE, F_TEMPERATUREQUANTITY, F_TNGTECI, F_TYPE, &
     & F_VMRQUANTITY, FIELD_FIRST, FIELD_LAST
@@ -1423,7 +1423,7 @@ contains ! =====     Public Procedures     =============================
 ! Now, we use frequency coordinate as sGrid along the path
     noDepths=los%template%noChans
     sLevel = los%template%frequencies
-      
+          
 ! the input losQty is the increment of cloud transmission function by default.
 ! it is converted to cloud extinction if extinction flag is on.
    if(extinction) then
@@ -1704,6 +1704,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.68  2001/08/01 00:05:25  dwu
+! remove f_sourceSGrid
+!
 ! Revision 2.67  2001/07/31 23:53:37  dwu
 ! remove sGrid source
 !
