@@ -48,20 +48,21 @@ contains
   ! -------------------------------------------------  Regularize  -----
   subroutine Regularize ( A, Orders, Quants, Weight )
 
-  !{Apply Tikhonov regularization conditions of the form ``Differences of
-  ! degree Order in dX are approximately zero'' to the blocks of A, where
-  ! Order is the order of a polynomial.  The regularization condition is
-  ! imposed by an Order'th degree difference operator, which has binomial
+  !{Apply Tikhonov regularization conditions of the form $\Delta^k \delta
+  ! \bf{x} \simeq 0$ to the blocks of A, where $\Delta^k$ is the central
+  ! difference operator of order $k$.  $\Delta^k$ has binomial
   ! coefficients with alternating sign.
   !
-  ! The Orders argument is the index in the tree of the orders field.
-  ! The Quants argument is the index in the tree of the quants field.
-  ! The values of the quants field are quantity type names, to which the
-  ! corresponding order applies.   The number of orders shall be one (in
-  ! which case it applies to all quants), or the same as the number of
-  ! quants.  If a column block of the A matrix is of a quantity type that
-  ! is not represented in the quants field, no regularization is applied
-  ! to that block/
+  ! $k$ is given by the {\tt Orders} argument, which is the index in the
+  ! tree of the {\tt regOrders} field of the {\tt retrieve} specification.
+  ! The {\tt Quants} argument is the index in the tree of the {\tt
+  ! regQuants} field. The values of the {\tt regQuants} field are quantity
+  ! type names, to which the corresponding order applies.   The number of
+  ! values of {\tt regOrders} shall be one (in which case it applies to
+  ! all quants), or the same as the number of {\tt regQuants}.  If a
+  ! column block of the A matrix is of a quantity type that is not
+  ! represented in the {\tt regQuants} field, no regularization is applied
+  ! to that block.
   !
   ! It is necessary that the total number of rows in the first row block of
   ! A be large enough to accomodate the regularization~-- roughly at least
@@ -69,8 +70,8 @@ contains
   ! block shall be at least one more than the regularization order for that
   ! block.
   !
-  ! The Weight argument is a scalar that multiplies the regularization
-  ! matrix.
+  ! The {\tt Weight} argument is a scalar that multiplies the regularization
+  ! matrix.  It is taken from the {\tt regWeight} field.
 
     type(Matrix_T), intent(inout) :: A
     integer, intent(in) :: Orders
@@ -219,6 +220,9 @@ o:    do ib = 1, nb
 end module Regularization
 
 ! $Log$
+! Revision 2.7  2001/06/28 20:42:42  vsnyder
+! Update comments
+!
 ! Revision 2.6  2001/06/26 20:16:41  vsnyder
 ! Don't look at nsons(0)
 !
