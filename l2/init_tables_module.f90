@@ -245,7 +245,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_TEMPLATE           = s_spectrometerType + 1
   integer, parameter :: S_TIME               = s_template + 1
   integer, parameter :: S_TPFILL             = s_time + 1
-  integer, parameter :: S_VECTOR             = s_tpfill + 1
+  integer, parameter :: S_VALIDSIGNAL        = s_tpfill + 1
+  integer, parameter :: S_VECTOR             = s_validSignal + 1
   integer, parameter :: S_VECTORTEMPLATE     = s_vector + 1
   integer, parameter :: S_VGRID              = s_vectortemplate + 1
   integer, parameter :: SPEC_FIRST = last_parm + 1, SPEC_LAST = s_vGrid
@@ -487,6 +488,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_template) =             add_ident ( 'template' )
     spec_indices(s_time) =                 add_ident ( 'time' )
     spec_indices(s_tpfill) =               add_ident ( 'tpfill' )
+    spec_indices(s_validSignal) =          add_ident ( 'validSignal' )
     spec_indices(s_vector) =               add_ident ( 'vector' )
     spec_indices(s_vectortemplate) =       add_ident ( 'vectorTemplate' )
     spec_indices(s_vgrid) =                add_ident ( 'vgrid' )
@@ -598,10 +600,12 @@ contains ! =====     Public procedures     =============================
              begin, f+f_width, t+t_numeric, n+n_field_type, &
              begin, f+f_widths, t+t_numeric, n+n_field_type, &
              ndp+n_spec_def, &
-      begin, s+s_signal, & ! MUST be AFTER S_Band, S_Radiometer and S_Spectrometer
+      begin, s+s_ValidSignal, & ! MUST be AFTER S_Band, S_Radiometer and S_Spectrometer
              begin, f+f_band, s+s_band, n+n_field_spec, &
              begin, f+f_spectrometer, t+t_numeric, n+n_field_type, &
              begin, f+f_radiometer, s+s_radiometer, n+n_field_spec, &
+             begin, f+f_frequencies, t+t_numeric, n+n_field_type, &
+             begin, f+f_widths, t+t_numeric, n+n_field_type, &
              begin, f+f_spectrometerType, s+s_spectrometerType, n+n_field_spec, &
              begin, f+f_switch, t+t_numeric, n+n_field_type, &
              nadp+n_spec_def /) )
@@ -866,6 +870,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.27  2001/02/27 19:00:19  livesey
+! Added a few more items.
+!
 ! Revision 2.26  2001/02/27 02:12:52  livesey
 ! Regular commit
 !
