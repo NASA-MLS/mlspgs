@@ -99,7 +99,7 @@ module MLSSignals_M
     integer :: Name                     ! Sub_rosa index of declaration's label
     integer :: PointingGrid = 0         ! Database index -- see PointingGrid_m
     integer :: Radiometer               ! Index in Radiometers database
-    integer :: SideBand                 ! L_lower, L_upper, L_folded
+    integer :: SideBand                 ! -1=lower, +1=upper, 0=folded
     integer :: Spectrometer             ! Just a spectrometer number
     integer :: SpectrometerType         ! Index in SpectrometerTypes database
     integer :: Switch                   ! Just a switch number
@@ -253,7 +253,7 @@ contains
 
 
       case ( s_signal ) ! ..........................  VALIDSIGNAL  .....
-        signal%sideband = l_folded
+        signal%sideband = 0
         do j = 2, nsons(key)
           son = subtree(j,key)
           field = decoration(subtree(1,son))
@@ -264,8 +264,6 @@ contains
             signal%band = decoration(decoration(gson))
           case ( f_channels )
             channels = son
-          case ( f_sideband )
-            signal%sideband = decoration(gson)
           case ( f_spectrometer )
             call expr_check ( gson, units, value, field, phyq_dimensionless )
             signal%spectrometer = value(1)
@@ -772,20 +770,17 @@ contains
     logical :: MY_NOSUFFIX
     integer :: MY_SIDEBAND
     character (len=1) :: SB_CHAR        ! U/L for sideband
+    character (len=1) :: SB_CHARS(-1:1) = (/ 'L', ' ', 'U' /)
 
     ! Executable code
     my_noSuffix = .false.
-    my_sideband = l_folded
+    my_sideband = 0
     if ( present(noSuffix) ) my_noSuffix = noSuffix
     if ( present(sideband) ) my_sideband = sideband
 
-    select case ( my_sideband )
-    case ( l_folded ); sb_char = ' '
-    case ( l_upper );  sb_char = 'U'
-    case ( l_lower ); sb_char = 'L'
-    case default
-      call MLSMessage ( MLSMSG_Error, ModuleName, 'Illegal sideband' )
-    end select
+    if ( my_sideband < -1 .or. my_sideband > 1 ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, 'Illegal sideband' )
+    sb_char = sb_chars(my_sideband)
     
     call get_string ( bands(band)%prefix, string_text, cap=.true. )
     string_text = string_text(1:LEN_TRIM(string_text)-1) // TRIM(sb_char) // &
@@ -966,6 +961,7 @@ contains
 
     integer :: BestMatch                ! The smallest number of 
     integer :: I                        ! Loop inductors, subscripts
+    logical :: Match                    ! Channels in probe are in signal
     integer :: NumChannelsMatch
 
     bestMatch = huge(bestMatch)
@@ -981,9 +977,11 @@ contains
         &  signals(i)%spectrometerType /= probe%spectrometerType .or. &
         &  signals(i)%switch /= probe%switch ) cycle
       ! Now the channels in Probe all have to be present in Signals(i)
-      if ( all( (probe%channels .and. &
+      match = .not. associated(probe%channels)
+      if ( .not. match ) match = all( (probe%channels .and. &
         & signals(i)%channels(lbound(probe%channels,1):ubound(probe%channels,1)) ) &
-        & .eqv. probe%channels ) ) then
+        & .eqv. probe%channels )
+      if ( match ) then
         numChannelsMatch = count(signals(i)%channels)
         if ( numChannelsMatch < bestMatch ) then
           matchSignal = i
@@ -996,6 +994,9 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.16  2001/04/10 17:59:53  vsnyder
+! Remove sideband field from signal
+!
 ! Revision 2.15  2001/04/09 20:30:46  vsnyder
 ! More work on MatchSignal
 !
