@@ -183,6 +183,7 @@ program MLSL2
     ! SIPS_VERSION
     parallel%maxFailuresPerMachine = 2
     parallel%maxFailuresPerChunk = 1
+    removeSwitches='slv' ! Since slave output already saved to separate files
     switches=''
     DEFAULT_HDFVERSION_WRITE = HDFVERSION_5
   else
@@ -1034,6 +1035,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.134  2005/04/01 00:15:37  pwagner
+! Automatcially remove slv switch from SIPS version
+!
 ! Revision 2.133  2005/03/15 23:58:42  pwagner
 ! Sets MLSMessageConfig appropriately for slaves
 !
