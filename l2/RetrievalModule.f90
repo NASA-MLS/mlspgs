@@ -1310,6 +1310,13 @@ contains
                 call scaleVector ( v(reg_X_x), -1.0_r8 )   ! -R x_n
               end if
                 if ( index(switches,'reg') /= 0 ) then
+                  if ( t == 1 ) then
+                    call output ( 'Dumping Tikhonov for vertical regularization', &
+                      & advance='yes' )
+                  else
+                    call output ( 'Dumping Tikhonov for horizontal regularization', &
+                      & advance='yes' )
+                  end if
                   call dump_struct ( tikhonov, 'Tikhonov' )
                   call dump ( tikhonov, name='Tikhonov', details=2 )
                 end if
@@ -3318,6 +3325,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.204  2002/11/20 21:05:55  livesey
+! More informative dump for Tikhonov
+!
 ! Revision 2.203  2002/11/20 01:10:03  livesey
 ! Added the foundBetterState stuff
 !
