@@ -760,7 +760,8 @@ contains ! =====     Public procedures     =============================
              begin, p+p_output_version_string, t+t_string, n+n_name_def, &
              begin, p+p_allow_climatology_overloads, t+t_boolean, &
                     n+n_name_def,&
-             s+s_time, s+s_l2load, s+s_forwardModel, s+s_forwardModelGlobal,&
+             s+s_time, s+s_l2load, s+s_forwardModel, s+s_forwardModelGlobal, &
+             s+s_vgrid, &
              n+n_section, &
       begin, z+z_readapriori, s+s_time, s+s_gridded, s+s_l2gp, &
              s+s_l2aux, s+s_snoop, n+n_section, &
@@ -777,7 +778,7 @@ contains ! =====     Public procedures     =============================
              begin, p+p_scan_lower_limit, t+t_numeric_range, n+n_name_def, &
              begin, p+p_scan_upper_limit, t+t_numeric_range, n+n_name_def, &
              n+n_section, &
-      begin, z+z_construct, s+s_time, s+s_vgrid, s+s_hgrid, s+s_quantity, &
+      begin, z+z_construct, s+s_time, s+s_hgrid, s+s_quantity, &
              s+s_vectortemplate, s+s_snoop, n+n_section, &
       begin, z+z_fill, s+s_time, s+s_vector, s+s_create, &
                        s+s_fill, s+s_matrix, s+s_snoop, &
@@ -794,6 +795,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.56  2001/03/28 01:24:55  vsnyder
+! Move vGrid from construct section to global settings section
+!
 ! Revision 2.55  2001/03/17 21:06:57  livesey
 ! Added forward model type stuff
 !
