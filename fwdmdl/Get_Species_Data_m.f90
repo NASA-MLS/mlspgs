@@ -28,13 +28,12 @@ contains
     use Allocate_Deallocate, only: Allocate_Test
     use ForwardModelConfig, only: Dump, ForwardModelConfig_t
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
-    use Intrinsic, only: LIT_INDICES, L_ISOTOPERATIO, L_VMR
+    use Intrinsic, only: LIT_INDICES, L_ISOTOPERATIO, L_NONE, L_VMR
     use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
       & MLSMSG_Warning
-    use MLSSets, only: FINDFIRST
     use MLSSignals_m, only: GetRadiometerFromSignal
-    use SpectroscopyCatalog_m, only: Catalog, Catalog_t, Dump, Empty_Cat, &
-      & Line_t, Lines, MostLines
+    use SpectroscopyCatalog_m, only: Catalog, Dump, Empty_Cat, Line_t, &
+      & Lines, MostLines
     use String_table, only: GET_STRING
     use Toggles, only: Switches
     use VectorsModule, only: VECTOR_T, VECTORVALUE_T
@@ -59,7 +58,6 @@ contains
                          ! +1 => None of the selected lines is Zeeman split
     integer :: S         ! Index for sidebands                
     integer :: STAT      ! Status from allocate or deallocate 
-    type (catalog_T), pointer :: ThisCatalogEntry
     type (line_T), pointer :: ThisLine
     integer :: Z         ! Index for fwdModelConf%Signals
 
@@ -68,7 +66,7 @@ contains
       if ( index(switches,'fwmG') > 0 ) dumpFWM = 2 ! Dump and stop
     end if
 
-    ! Allocate the Cat_Index, PFA_Indices and Ratio components in each Beta_Group
+    ! Allocate the Cat_Index and PFA_Indices components in each Beta_Group
     ! We could fuse this loop and the next one, but this is clearer and, with
     ! these loop bodies, not measurably slower.
     c = size(fwdModelConf%forwardModelDerived%channels)
@@ -80,31 +78,40 @@ contains
       call allocate_test ( fwdModelConf%beta_group(b)%pfa_indices, &
         & fwdModelConf%sidebandStop, c, m, 'Beta_group(b)%PFA_indices', &
         & moduleName, lowBound_1=fwdModelConf%sidebandStart )
+      fwdModelConf%beta_group(b)%pfa_indices = 0 ! OK if some missing, but no junk
     end do ! b
 
     ! Get isotope ratios for molecules in a beta group, else 1.0 if not a group
     do b = 1, size(fwdModelConf%beta_group)
       if ( fwdModelConf%beta_group(b)%group ) then ! A molecule group
+        ! First LBL molecules' ratios
         do m = 1, size(fwdModelConf%beta_group(b)%lbl_molecules)
           f => getQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
             & quantityType=l_isotopeRatio, &
             & molecule=fwdModelConf%beta_group(b)%lbl_molecules(m), &
             & noError=.TRUE., config=fwdModelConf )
-          fwdModelConf%beta_group(b)%ratio(m)     = 1.0
+          fwdModelConf%beta_group(b)%lbl_ratio(m)     = 1.0
           if ( associated ( f ) ) & ! Have an isotope ratio
-            & fwdModelConf%beta_group(b)%ratio(m) = f%values(1,1)
+            & fwdModelConf%beta_group(b)%lbl_ratio(m) = f%values(1,1)
+        end do ! m
+        ! Now PFA molecules' ratios
+        do m = 1, size(fwdModelConf%beta_group(b)%pfa_molecules)
+          f => getQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+            & quantityType=l_isotopeRatio, &
+            & molecule=fwdModelConf%beta_group(b)%pfa_molecules(m), &
+            & noError=.TRUE., config=fwdModelConf )
+          fwdModelConf%beta_group(b)%pfa_ratio(m)     = 1.0
+          if ( associated ( f ) ) & ! Have an isotope ratio
+            & fwdModelConf%beta_group(b)%pfa_ratio(m) = f%values(1,1)
         end do ! m
 !     else ! Not a molecule group, but this is handled in ForwardModelSupport
-!     fwdModelConf%beta_group(b)%ratio(1)     = 1.0
+!       fwdModelConf%beta_group(b)%lbl_ratio(1)     = 1.0
+!       fwdModelConf%beta_group(b)%pfa_ratio(1)     = 1.0
       end if
     end do ! b
 
     ! Allocate the spectroscopy catalog extract
- 
-    if ( .not. associated ( catalog ) ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'No spectroscopy catalog has been defined.' )
-   
+
     c = 0
     do b = 1, size(fwdModelConf%beta_group) ! Get total catalog size
       c = c + size(fwdModelConf%beta_group(b)%lbl_molecules)
@@ -125,27 +132,25 @@ contains
           c = c + 1
           fwdModelConf%beta_group(b)%cat_index(m) = c
           n = fwdModelConf%beta_group(b)%lbl_molecules(m)
-          k = FindFirst(catalog%molecule, n )
-          if ( k == 0 ) then
+          if ( catalog(n)%molecule == l_none ) then
             call get_string ( lit_indices(n), molName )
             call MLSMessage ( MLSMSG_Error, moduleName, &
               & 'No spectroscopy catalog for ' // molName )
           end if
-          thisCatalogEntry => Catalog(k)
-          fwdModelConf%catalog(s,c) = thisCatalogEntry
+          fwdModelConf%catalog(s,c) = catalog(n)
           ! Don't deallocate them by mistake -- fwdModelConf%catalog is a shallow copy
           nullify ( fwdModelConf%catalog(s,c)%lines, fwdModelConf%catalog(s,c)%polarized )
-          if ( associated ( thisCatalogEntry%lines ) ) then
+          if ( associated ( catalog(n)%lines ) ) then
             ! Now subset the lines according to the signal we're using
-            lineFlag => MaxLineFlag(:size(thisCatalogEntry%lines))
+            lineFlag => MaxLineFlag(:size(catalog(n)%lines))
             lineFlag = 0
             if ( fwdModelConf%allLinesInCatalog ) then
               ! NOTE: If allLinesInCatalog is set, then no lines can be polarized;
               ! this is checked for in ForwardModelSupport.
               lineFlag = 1
             else
-              do l = 1, size ( thisCatalogEntry%lines )
-                thisLine => lines(thisCatalogEntry%lines(l))
+              do l = 1, size ( catalog(n)%lines )
+                thisLine => lines(catalog(n)%lines(l))
                 if ( associated(thisLine%signals) ) then
                   polarized = 1 ! not polarized
                   ! Work out whether to do this line
@@ -209,7 +214,7 @@ contains
               & 'fwdModelConf%catalog(?,?)%lines', moduleName )
             call allocate_test ( fwdModelConf%catalog(s,c)%polarized, l, &
               & 'fwdModelConf%catalog(?,?)%polarized', moduleName )
-            fwdModelConf%catalog(s,c)%lines = pack ( thisCatalogEntry%lines, lineFlag /= 0 )
+            fwdModelConf%catalog(s,c)%lines = pack ( catalog(n)%lines, lineFlag /= 0 )
             fwdModelConf%catalog(s,c)%polarized = pack ( lineFlag < 0, lineFlag /= 0 )
 
           else
@@ -290,3 +295,6 @@ contains
 end module Get_Species_Data_m
 
 ! $Log$
+! Revision 2.18  2004/11/01 20:26:35  vsnyder
+! Reorganization of representation for molecules and beta groups; PFA may be broken for now
+!

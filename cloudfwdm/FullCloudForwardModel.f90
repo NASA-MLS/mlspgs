@@ -50,7 +50,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
                                         & MLSMSG_Error, MLSMSG_Warning, &
                                         & MLSMSG_Deallocate
     use Molecules,                  only: L_H2O, L_N2O, L_O3
-    use MLSSets,                    only: FINDFIRST
     use MLSSignals_m,               only: ARESIGNALSSUPERSET, GetNameOfSignal, &
                                         & GetSidebandStartStop, SIGNAL_T
     use MLSNumerics,                only: InterpolateValues
@@ -249,8 +248,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
              massMeandiameterwater, modelCloudradiance, my_catalog,           &
 !            constrainCldRad, &
              & ptan,  radiance, sizeDistribution, state_ext,                  &
-             state_los, superset, surfaceType, temp, thisCatalogentry,        &
-             thisLine, thisFraction, totalExtinction, vmr, vmrarray )
+             state_los, superset, surfaceType, temp, thisLine, thisFraction,  &
+             totalExtinction, vmr, vmrarray )
  
     ! ------------------------------------
     ! Find which maf is called at present
@@ -473,22 +472,20 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         my_catalog = empty_cat
         do thisSideband = sidebandStart, sidebandStop, 2
           do j = 1, nspec      ! Loop over species
-            ! ForwardModelSupport prevents beta grouping.
-            k = FindFirst ( catalog%molecule, forwardModelConfig%molecules(j) )
-            if ( k == 0 ) then
-              call get_string ( lit_indices( abs(forwardModelConfig%molecules(j)) ), &
-                & molName )
+            ! ForwardModelSupport prevents beta grouping for cloud models.
+            k = forwardModelConfig%molecules(j)
+            if ( catalog(k)%molecule == l_none ) then
+              call get_string ( lit_indices(k), molName )
               Call MLSMessage ( MLSMSG_Warning, ModuleName, &
                 & 'No spectroscopy catalog for '//trim(molName) )
             end if
-            thisCatalogEntry => Catalog ( k )
 
-            if ( associated ( thisCatalogEntry%lines ) ) then
+            if ( associated ( catalog(k)%lines ) ) then
               ! Now subset the lines according to the signal we're using
-              lineFlag => maxLineFlag(:size(thisCatalogEntry%lines))
+              lineFlag => maxLineFlag(:size(catalog(k)%lines))
               lineFlag = .FALSE.
-              do k = 1, size ( thisCatalogEntry%lines )
-                thisLine => lines(thisCatalogEntry%lines(k))
+              do k = 1, size ( catalog(k)%lines )
+                thisLine => lines(catalog(k)%lines(k))
                 if ( associated(thisLine%signals) ) then
                   doThis = any ( ( thisLine%signals == signal%index ) .and. &
                       & ( ( thisLine%sidebands == 0 ) .or. &
@@ -501,18 +498,18 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
                 end if
               end do               ! End loop over lines
 
-              My_Catalog(thisSideband,j) = thisCatalogEntry
+              My_Catalog(thisSideband,j) = catalog(k)
               nullify ( my_catalog(thisSideband,j)%lines ) ! Don't deallocate it by mistake 
 
               ! Check we have at least one line for this
 
               call allocate_test ( my_catalog(thisSideband,j)%lines, count(lineFlag),&
                 & 'my_catalog(?,?)%lines', ModuleName )
-              my_catalog(thisSideband,j)%lines = pack ( thisCatalogEntry%lines, lineFlag )
+              my_catalog(thisSideband,j)%lines = pack ( catalog(k)%lines, lineFlag )
             else
               ! No lines for this species
               lineFlag => maxLineFlag(1:0)
-              my_catalog(thisSideband,j) = thisCatalogEntry
+              my_catalog(thisSideband,j) = catalog(k)
               nullify ( my_catalog(thisSideband,j)%lines ) ! Don't deallocate it by mistake
               call Allocate_test ( my_catalog(thisSideband,j)%lines, 0, &
                 & 'my_catalog(?,?)%lines(0)', ModuleName )
@@ -1118,6 +1115,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.134  2004/11/03 01:26:32  vsnyder
+! Missed one size(molecules)-1 that should be size(molecules)
+!
 ! Revision 1.133  2004/11/01 20:26:57  vsnyder
 ! Reorganization of representation for molecules and beta groups
 !

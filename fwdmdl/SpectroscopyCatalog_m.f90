@@ -7,6 +7,7 @@ module SpectroscopyCatalog_m
 
   use Intrinsic, only: L_none
   use MLSCommon, only: R8
+  use Molecules, only: First_Molecule, Last_Molecule
 
   ! More USEs below in each procedure.
 
@@ -49,31 +50,30 @@ module SpectroscopyCatalog_m
   end type Line_T
 
   type, public :: Catalog_T        ! Catalog entry for a species
-    real(r8) :: continuum(MaxContinuum)      ! Continuum coefficients
+    real(r8) :: Continuum(MaxContinuum)      ! Continuum coefficients
     integer, pointer :: Lines(:)=>NULL() ! Indices in Lines database
     real(r8) :: Mass               ! Molecular mass in AMU
-    integer :: Molecule            ! L_...
+    integer :: Molecule = l_none   ! L_...; l_none => no catalog entry
     logical, pointer :: Polarized(:)=>NULL() ! Used only in catalog extract to
                                    ! indicate that the lines(:) are to be
                                    ! processed with the polarized model
     real(r8) :: Qlog(3)            ! Logarithm of the partition function
-                                   ! At 300 , 225 , and 150 K
-    integer :: Species_Name        ! Sub_rosa index
+                                   ! At 300, 225, and 150 K
+    integer :: Species_Name        ! Sub_rosa index of s_spectra label
   end type Catalog_T
 
   type(catalog_T), public, parameter :: Empty_Cat = catalog_t ( &
-    & 0.0_r8, NULL(), 0.0_r8, l_none, NULL(), 0.0_r8, 0 )
+    & 0.0_r8, NULL(), 0.0_r8, l_none, NULL(), 0.0_r8, -1 )
 
   ! Public Variables:
   ! The spectroscopy database:
-  type(catalog_T), public, pointer, dimension(:), save :: Catalog => NULL()
+  type(catalog_T), public, save :: Catalog(first_molecule:last_molecule)
 
   ! Greatest number of lines in any catalog entry:
   integer, public, save :: MostLines = 0
 
   ! The lines database:
   type(line_T), public, pointer, dimension(:), save :: Lines => NULL()
-
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -120,11 +120,10 @@ contains ! =====  Public Procedures  ===================================
     logical :: GotLines, GotMass        ! Got a "lines" or "mass" field
     integer :: I, J, K, L               ! Loop inductors, Subscripts
     integer :: Key                      ! Index of spec_arg
+    integer :: Molecule                 ! Molecule for which the catalog applies
     integer :: Name                     ! Index of name in string table
     integer :: NOSIGNALS                ! For the bands part
-    integer :: NumCatalog               ! Number of species in catalog
     integer :: NumLines                 ! Number of lines in catalog
-    integer :: OffsetCatalog            ! Number of species previously in catalog
     integer :: OffsetLines              ! Number of lines previously in catalog
     real(r8) :: QN                      ! for call to expr_check for QN field
     integer :: SIDEBAND                 ! A single sideband
@@ -136,14 +135,14 @@ contains ! =====  Public Procedures  ===================================
     integer :: Son                      ! Of root or key
     integer :: Status                   ! From Allocate or Deallocate
     type(line_t), pointer, dimension(:) :: TempLines
-    type(catalog_t), pointer, dimension(:) :: TempCatalog
     integer :: TheSignal                ! SubRosa for a signal
     integer :: THISMANY                 ! Conted up to noSignals
     logical :: TIMING                   ! For S_Time
     real :: T1, T2                      ! For S_Time
 
     ! Error message codes
-    integer, parameter :: No_Mass = 1   ! Lines field but no mass field
+    integer, parameter :: DupSpectra = 1               ! Duplicate s_spectra
+    integer, parameter :: No_Mass = dupSpectra + 1     ! Lines field but no mass field
     integer, parameter :: NotInt = no_mass + 1         ! QN not an integer
     integer, parameter :: NotListedSignal = NotInt + 1 ! Polarized signal is not
                                         ! listed as emlsSignal
@@ -156,29 +155,18 @@ contains ! =====  Public Procedures  ===================================
     error = 0
     timing = .false.
 
-    ! Determine sizes of created or expanded lines and species databases.
+    ! Determine size of created or expanded lines database.
     offsetLines = 0
     if ( associated(lines) ) offsetLines = size(lines)
     numLines = offsetLines
-    offsetCatalog = 0
-    if ( associated(catalog) ) offsetCatalog = size(catalog)
-    numCatalog = offsetCatalog
     do i = 2, nsons(root)-1             ! Skip names of section
       son = subtree(i,root)
       if ( node_id(son) == n_named ) then
-        name = sub_rosa(subtree(1,son))
         key = subtree(2,son)
       else
-        name = 0
         key = son
       end if
-      select case ( get_spec_id(key) )
-      case ( s_line ) ! ...................................  LINE  .....
-        numLines = numLines + 1
-      case ( s_spectra ) ! .............................  SPECTRA  .....
-        numCatalog = numCatalog + 1
-      case default ! Don't care about the others
-      end select
+      if ( get_spec_id(key) == s_line ) numLines = numLines + 1
     end do
 
     ! Create or expand the Lines database
@@ -193,20 +181,7 @@ contains ! =====  Public Procedures  ===================================
         & MLSMSG_DeAllocate // "TempLines")
     end if
 
-    ! Create or expand the Species Catalog
-    tempCatalog => Catalog
-    allocate ( catalog(numCatalog), stat=status )
-    if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // "Catalog")
-    if ( associated(tempCatalog) ) then
-      catalog(:offsetCatalog) = tempCatalog
-      deallocate ( tempCatalog, stat=status )
-      if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_DeAllocate // "TempCatalog")
-    end if
-
     numLines = offsetLines
-    numCatalog = offsetCatalog
     do i = 2, nsons(root)-1             ! Skip names of section
       son = subtree(i,root)
       if ( node_id(son) == n_named ) then
@@ -327,45 +302,54 @@ contains ! =====  Public Procedures  ===================================
         end if
         call decorate ( key, numLines )
       case ( s_spectra ) ! .............................  SPECTRA  .....
-        numCatalog = numCatalog + 1
-        catalog(numCatalog)%species_Name = name
-        catalog(numCatalog)%continuum = 0.0
+        ! Get the molecule
+        do j = 2, nsons(key)
+          son = subtree(j,key)
+          if ( get_field_id(son) == f_molecule ) then
+            molecule = decoration(subtree(2,son))
+            if ( catalog(molecule)%molecule /= l_none ) &
+              & call announce_error ( son, dupSpectra, molecule )
+            catalog(molecule)%molecule = molecule
+        exit
+          end if
+        end do
+        catalog(molecule)%species_Name = name
+        catalog(molecule)%continuum = 0.0
         gotLines = .false.; gotMass = .false.
         do j = 2, nsons(key)
           son = subtree(j,key)
           select case ( get_field_id(son) )
           case ( f_lines )
             gotLines = .true.
-            call allocate_test ( catalog(numCatalog)%lines, nsons(son)-1, &
-              & "catalog(numCatalog)%Lines", moduleName )
-            mostLines = max(mostLines, size(catalog(numCatalog)%lines) )
+            call allocate_test ( catalog(molecule)%lines, nsons(son)-1, &
+              & "catalog(molecule)%Lines", moduleName )
+            mostLines = max(mostLines, size(catalog(molecule)%lines) )
             do k = 2, nsons(son)
-              catalog(numCatalog)%lines(k-1) = decoration(decoration(subtree(k,son)))
+              catalog(molecule)%lines(k-1) = decoration(decoration(subtree(k,son)))
             end do
           case ( f_continuum )
             if ( nsons(son) > MaxContinuum + 1 ) &
               & call announce_error ( son, tooBig, MaxContinuum )
             do k = 2, nsons(son)
-              call expr_check ( subtree(k,son), catalog(numCatalog)%continuum(k-1), &
+              call expr_check ( subtree(k,son), catalog(molecule)%continuum(k-1), &
                 & phyq_dimless )
             end do
           case ( f_mass )
             gotMass = .true.
             if ( nsons(son) /= 2 ) call announce_error ( son, wrongSize, 1 )
-            call expr_check ( subtree(2,son), catalog(numCatalog)%mass, &
+            call expr_check ( subtree(2,son), catalog(molecule)%mass, &
               & phyq_dimless )
-          case ( f_molecule )
-            catalog(numCatalog)%molecule = decoration(subtree(2,son))
+        ! case ( f_molecule ) ! Already done above
           case ( f_qlog )
             if ( nsons(son) /= 4 ) call announce_error ( son, wrongSize, 3 )
             do k = 2, 4
-              call expr_check ( subtree(k,son), catalog(numCatalog)%qlog(k-1), &
+              call expr_check ( subtree(k,son), catalog(molecule)%qlog(k-1), &
                 & phyq_dimless )
             end do
           end select
         end do
         if ( gotLines .and. .not. gotMass ) call announce_error ( key, no_mass )
-        call decorate ( key, numCatalog )
+        call decorate ( key, molecule )
       case ( s_time ) ! ...................................  TIME  .....
         if ( timing ) then
           call sayTime
@@ -376,6 +360,10 @@ contains ! =====  Public Procedures  ===================================
       end select
     end do ! i
 
+    if ( index(switches,'speC') /= 0 ) then
+      dump_SpectCat_database ( catalog )
+      stop
+    end if
     if ( index(switches,'spec') /= 0 ) call dump_SpectCat_database ( catalog )
     if ( toggle(gen) ) then
       call trace_end ( "Spectroscopy" )
@@ -387,7 +375,7 @@ contains ! =====  Public Procedures  ===================================
   contains
     ! ...........................................  Announce_Error  .....
     subroutine Announce_Error ( Where, Code, More )
-      use Intrinsic, only: Phyq_Indices
+      use Intrinsic, only: Lit_Indices, Phyq_Indices
       use Lexer_Core, only: Print_Source
       use Output_m, only: Output
       use String_Table, only: Display_String
@@ -401,6 +389,9 @@ contains ! =====  Public Procedures  ===================================
       call print_source ( source_ref ( where ) )
       call output ( ' Spectroscopy complained: ' )
       select case ( code )
+      case ( dupSpectra )
+        call display_string ( lit_indices(more), &
+          & before='Duplicate SPECTRA specification for ', advance='yes' )
       case ( no_mass )
         call output ( &
           & 'A "mass" field is required if the "lines" field is present.', &
@@ -472,34 +463,20 @@ contains ! =====  Public Procedures  ===================================
     AddLineToDatabase = newSize
   end function AddLineToDatabase
 
-  ! ----------------------------------------  AddSpeciesToCatalog  -----
-  integer function AddSpeciesToCatalog ( Database, Item )
-  ! Add a line to the Lines database, creating the database
-  ! if necessary.
-
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
-      & MLSMSG_Error
-
-    ! Dummy arguments
-    type(catalog_t), pointer, dimension(:) :: Database
-    type(catalog_t), intent(in) :: Item
-
-
-    ! Local variables
-    type(catalog_t), dimension(:), pointer :: tempDatabase
-
-    include "addItemToDatabase.f9h"
-
-    AddSpeciesToCatalog = newSize
-  end function AddSpeciesToCatalog
-
   ! --------------------------------------  Destroy_Line_Database  -----
   subroutine Destroy_Line_Database
 
+    use Allocate_Deallocate, only: Deallocate_Test
     use MLSMessageModule, only: MLSMessage, MLSMSG_DeAllocate, MLSMSG_Error
 
-    integer :: Status                   ! From deallocate
+    integer :: I, Status                   ! From deallocate
     if ( .not. associated(lines) ) return
+    do i = 1, size(lines)
+      call deallocate_test ( lines(i)%qn, "Lines(i)%QN", moduleName )
+      call deallocate_test ( lines(i)%signals, "Lines(i)%Signals", moduleName )
+      call deallocate_test ( lines(i)%sidebands, "Lines(i)%Sidebands", moduleName )
+      call deallocate_test ( lines(i)%polarized, "Lines(i)%Polarized", moduleName )
+    end do
     deallocate ( lines, stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
       & MLSMSG_DeAllocate // "Lines" )
@@ -508,16 +485,13 @@ contains ! =====  Public Procedures  ===================================
   ! ----------------------------------  Destroy_SpectCat_Database  -----
   subroutine Destroy_SpectCat_Database
     use Allocate_Deallocate, only: Deallocate_Test
-    use MLSMessageModule, only: MLSMessage, MLSMSG_DeAllocate, MLSMSG_Error
-    integer :: I, Status
-    if ( .not. associated(catalog) ) return
-    do i = 1, size(catalog)
-      call deallocate_test ( catalog(i)%lines, moduleName, "Catalog(i)%lines" )
+    integer :: I
+    do i = first_molecule, last_molecule
+      call deallocate_test ( catalog(i)%lines, "Catalog(i)%lines", moduleName )
+      call deallocate_test ( catalog(i)%polarized, "Catalog(i)%polarized", moduleName )
     end do ! i
-    deallocate ( catalog, stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-      MLSMSG_DeAllocate // "Catalog" )
     mostLines = 0
+    catalog%molecule = l_none ! Clobber them all
   end subroutine Destroy_SpectCat_Database
 
   ! ----------------------------------------  Dump_Lines_Database  -----
@@ -586,6 +560,7 @@ contains ! =====  Public Procedures  ===================================
         & call dump ( lines(i)%polarized, '      Polarized' )
     end do
   end subroutine Dump_Lines_Database
+
   ! ----------------------------------  Dump_SpectCat_Database_2D  -----
   subroutine Dump_SpectCat_Database_2d ( Catalog, Name, Details )
     type(catalog_T), pointer :: Catalog(:,:)
@@ -621,11 +596,8 @@ contains ! =====  Public Procedures  ===================================
     if ( present(sideband) ) call output ( sideband, before=' for sideband ' )
     call output ( ': SIZE = ' )
     call output ( size(catalog), advance='yes' )
-    do i = 1, size(catalog)
-      if ( catalog(i)%molecule == l_none ) then
-        if ( .not. associated(catalog(i)%lines) ) cycle
-        if ( size(catalog(i)%lines) == 0 ) cycle
-      end if
+    do i = first_molecule, last_molecule
+      if ( catalog(i)%molecule == l_none ) cycle
       call output ( i, 4 )
       call output ( ': ' )
       if ( catalog(i)%species_name /= 0 ) then
@@ -712,6 +684,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.27  2004/11/01 20:26:35  vsnyder
+! Reorganization of representation for molecules and beta groups; PFA may be broken for now
+!
 ! Revision 2.26  2004/09/16 18:35:02  vsnyder
 ! Pass 'details' through Dump_SpectCat_Database_2d
 !
