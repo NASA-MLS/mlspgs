@@ -89,7 +89,7 @@ contains ! =====     Public Procedures     =============================
 
     logical, parameter :: DEBUG = .false.
     character(len=255) :: FileName      ! Duh
-    integer :: I                        ! Loop inductor, subscript
+    integer :: I,J                      ! Loop inductor, subscript
     integer :: Lun                      ! Unit number for reading a file
     character(len=255) :: PCFFileName
     integer :: returnStatus             ! non-zero means trouble
@@ -110,62 +110,82 @@ contains ! =====     Public Procedures     =============================
       son = subtree(i,root)
       select case ( get_field_id(son) )
       case ( f_antennaPatterns )
-        call get_string ( sub_rosa(subtree(2,son)), fileName, strip=.true. )
-        if ( PCF ) then
+        do j = 2, nsons(son)
+          call get_string ( sub_rosa(subtree(j,son)), fileName, strip=.true. )
+          if ( PCF ) then
             lun = GetPCFromRef(fileName, mlspcf_antpats_start, &
-            & mlspcf_antpats_start, &
-            & PCFL2CFSAMECASE, returnStatus, Version, DEBUG, &
-            & exactName=PCFFileName)
+              & mlspcf_antpats_start, &
+              & PCFL2CFSAMECASE, returnStatus, Version, DEBUG, &
+              & exactName=PCFFileName)
             if ( returnStatus /= 0 .and. PUNISH_FOR_INVALID_PCF) then
-               call AnnounceError(0, son, &
-               & extraMessage='Antenna Patterns File not found in PCF')
+              call AnnounceError(0, son, &
+                & extraMessage='Antenna Patterns File not found in PCF')
             elseif( returnStatus == 0) then
-               fileName = PCFFileName
+              fileName = PCFFileName
             endif
-        endif
-        call open_antenna_patterns_file ( fileName, lun )
-        call read_antenna_patterns_file ( lun )
-        call close_antenna_patterns_file ( lun )
+          endif
+          call open_antenna_patterns_file ( fileName, lun )
+          call read_antenna_patterns_file ( lun )
+          call close_antenna_patterns_file ( lun )
+        end do
       case ( f_filterShapes )
-        call get_string ( sub_rosa(subtree(2,son)), fileName, strip=.true. )
-        if ( PCF ) then
+        do j = 2, nsons(son)
+          call get_string ( sub_rosa(subtree(j,son)), fileName, strip=.true. )
+          if ( PCF ) then
             lun = GetPCFromRef(fileName, mlspcf_filtshps_start, &
-            & mlspcf_filtshps_start, &
-            & PCFL2CFSAMECASE, returnStatus, Version, DEBUG, &
-            & exactName=PCFFileName)
+              & mlspcf_filtshps_start, &
+              & PCFL2CFSAMECASE, returnStatus, Version, DEBUG, &
+              & exactName=PCFFileName)
             if ( returnStatus /= 0 .and. PUNISH_FOR_INVALID_PCF) then
-               call AnnounceError(0, son, &
-               & extraMessage='Filter Shapes File not found in PCF')
+              call AnnounceError(0, son, &
+                & extraMessage='Filter Shapes File not found in PCF')
             elseif( returnStatus == 0) then
-               fileName = PCFFileName
+              fileName = PCFFileName
             endif
-        endif
-        call open_filter_shapes_file ( fileName, lun )
-        call read_filter_shapes_file ( lun )
-        call close_filter_shapes_file ( lun )
+          endif
+          call open_filter_shapes_file ( fileName, lun )
+          call read_filter_shapes_file ( lun )
+          call close_filter_shapes_file ( lun )
+        end do
       case ( f_pointingGrids )
-        call get_string ( sub_rosa(subtree(2,son)), fileName, strip=.true. )
-        if ( PCF ) then
+        do j = 2, nsons(son)
+          call get_string ( sub_rosa(subtree(j,son)), fileName, strip=.true. )
+          if ( PCF ) then
             lun = GetPCFromRef(fileName, mlspcf_ptggrids_start, &
-            & mlspcf_ptggrids_start, &
-            & PCFL2CFSAMECASE, returnStatus, Version, DEBUG, &
-            & exactName=PCFFileName)
+              & mlspcf_ptggrids_start, &
+              & PCFL2CFSAMECASE, returnStatus, Version, DEBUG, &
+              & exactName=PCFFileName)
             if ( returnStatus /= 0 .and. PUNISH_FOR_INVALID_PCF) then
-               call AnnounceError(0, son, &
-               & extraMessage='Pointing Grids File not found in PCF')
+              call AnnounceError(0, son, &
+                & extraMessage='Pointing Grids File not found in PCF')
             elseif( returnStatus == 0) then
-               fileName = PCFFileName
+              fileName = PCFFileName
             endif
-        endif
-        call open_pointing_grid_file ( fileName, lun )
-        call read_pointing_grid_file ( lun )
-        call close_pointing_grid_file ( lun )
+          endif
+          call open_pointing_grid_file ( fileName, lun )
+          call read_pointing_grid_file ( lun )
+          call close_pointing_grid_file ( lun )
+        end do
       case ( f_l2pc )
-        call get_string ( sub_rosa(subtree(2,son)), fileName, strip=.true. )
-        ! l2pc files not in PCF (yet)
-        call open_l2pc_file (fileName, lun)
-        call read_l2pc_file ( lun )
-        call close_l2pc_file ( lun )
+        do j = 2, nsons(son)
+          call get_string ( sub_rosa(subtree(j,son)), fileName, strip=.true. )
+! l2pc files not in PCF (yet)
+!           if ( PCF ) then
+!             lun = GetPCFromRef(fileName, mlspcf_ptggrids_start, &
+!               & mlspcf_ptggrids_start, &
+!               & PCFL2CFSAMECASE, returnStatus, Version, DEBUG, &
+!               & exactName=PCFFileName)
+!             if ( returnStatus /= 0 .and. PUNISH_FOR_INVALID_PCF) then
+!               call AnnounceError(0, son, &
+!                 & extraMessage='Pointing Grids File not found in PCF')
+!             elseif( returnStatus == 0) then
+!               fileName = PCFFileName
+!             endif
+!           endif
+          call open_l2pc_file (fileName, lun)
+          call read_l2pc_file ( lun )
+          call close_l2pc_file ( lun )
+        end do
       case default
         ! Can't get here if the type checker worked
       end select
@@ -473,6 +493,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.14  2001/10/31 15:26:59  livesey
+! Allowed filename arguments to forward model global stuff to be arrays
+!
 ! Revision 2.13  2001/10/02 20:34:50  livesey
 ! Added do_baseline stuff
 !
