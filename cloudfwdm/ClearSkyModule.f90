@@ -13,7 +13,7 @@ module ClearSkyModule
       use PrtMsg, only: HEADER
       use SpectraLines, only: SETUP_SPECTRA
       use SurfaceModel, only: SURFACE
-      use SpectroscopyCatalog_m, only: CATALOG_T
+      use SpectroscopyCatalog_m, only: CATALOG_T, LINES
 
       IMPLICIT NONE
       Private
@@ -116,9 +116,9 @@ contains
          ENDDO
 
          If ( .not. Bill_Spectra ) then
-
+           !---------------------------------
            ! Using default spectroscopy data
-
+           ! --------------------------------
            CALL GET_BETA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,GAMMA,N2,  &
                 &        MOL,NMOL,NCNT,T(I),P,F,DQ,VMR1,DR,NS)   
                                              ! HERE DQ IS H2O MIXING RATIO
@@ -130,9 +130,17 @@ contains
            TAU100(I)=DR*Z(I)
          
          else
-
+           !--------------------------------
            ! Using bill's spectroscopy data
-           call get_beta_bill (T(I), P, F, DQ, VMR1, DR, NS, Catalog)
+           !--------------------------------
+           call get_beta_bill (T(I), P, F, DQ, VMR1(1), DR, Catalog)
+           
+           TAU(I)=DR*Z(I)
+
+           call get_beta_bill (T(I), P, F, 100._r8, VMR1(1), DR, Catalog)
+
+           TAU100(I)=DR*Z(I)
+
          endif
 
       ENDDO
@@ -142,6 +150,9 @@ contains
 end module ClearSkyModule
 
 ! $Log$
+! Revision 1.9  2001/11/09 22:06:56  jonathan
+! add Bill_GasAbsorption Module
+!
 ! Revision 1.8  2001/11/09 18:07:36  jonathan
 ! add spectra catalog
 !
