@@ -253,8 +253,10 @@ contains
 !      write (*,"('0',72('$')/' SUBPROGRAM ',A,' REPORTS ERROR NO. ',I4)") &
 !        subnam, indic
 !      write (*,*) msg
-      write (output_line,"('0',72('$')/' SUBPROGRAM ',A,' REPORTS ERROR NO. ', &
-      & I4)") subnam, indic
+      write (output_line,"('0',72('$'))")
+      call output ( trim(output_line), advance='yes' )
+      write ( output_line, "(' SUBPROGRAM ',A,' REPORTS ERROR NO. ', &
+        & I4)") trim(subnam), indic
       call output(trim(output_line), advance='yes')
       call output(trim(msg), advance='yes')
       if (flag == '.') call erfin
@@ -428,6 +430,9 @@ contains
 end module ERMSG_M
 
 ! $Log$
+! Revision 2.4  2002/01/18 00:25:17  livesey
+! Another attempt to fix the string bug, seems to work now.
+!
 ! Revision 2.3  2002/01/17 17:32:53  livesey
 ! Made output_line a lot bigger
 !
