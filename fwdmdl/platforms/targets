@@ -44,20 +44,20 @@ PVM_PATH = ${PVM_ROOT}/lib/${PVM_ARCH}
 
 ifdef PVM_ROOT
    pvm_linker_line=-L${PVM_PATH} -lfpvm3 -lgpvm3 -lpvm3
-   pvm_message=Building mlsl2 with PVM support
+   pvm_message=Building forward model with PVM support
    PVM_OBJS=
 else
    pvm_linker_line=
-   pvm_message=Building mlsl2 without PVM support
+   pvm_message=Building forward model without PVM support
    PVM_OBJS=
 endif
 
 ifdef BLAS
    blas_linker_line=-L${BLAS} -lblas
-   blas_message=Building mlsl2 with externally-supplied BLAS
+   blas_message=Building forward model with externally-supplied BLAS
 else
    blas_linker_line=
-   blas_message=Building mlsl2 with internally-supplied BLAS
+   blas_message=Building forward model with internally-supplied BLAS
 endif
 
 # ========================================================================
@@ -101,8 +101,8 @@ eos_mdb.o:
 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/eos_mdb.f90
 get_delta_m.o:
 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/get_delta_m.f90
-get_pfa_delta_m.o:
-	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/get_pfa_delta_m.f90
+#get_pfa_delta_m.o:
+#	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/get_pfa_delta_m.f90
 pfa_db_delta_m.o:
 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/pfa_db_delta_m.f90
 d_delta_dt_m.o:
@@ -118,6 +118,9 @@ d_delta_dt_m.o:
 #	$(FC) -c $(DUSTY) machine.f90
 # ========================================================================
 # $Log$
+# Revision 1.7  2001/03/05 19:51:18  pwagner
+# Added def of PVM_PATH
+#
 # Revision 1.6  2001/02/08 23:20:52  pwagner
 # variable_linker_line tied to PVM and BLAS
 #
