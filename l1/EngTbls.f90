@@ -12,8 +12,8 @@ MODULE EngTbls   ! Level 1 engineering tables
   PRIVATE :: Id, ModuleName
   !------------------------------- RCS Ident Info ------------------------------
   CHARACTER(LEN=130) :: id = &
-       "$Id $"
-  CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile $"
+       "$Id$"
+  CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
   !-----------------------------------------------------------------------------
 
   INTEGER, PARAMETER :: nrius = 32
@@ -288,4 +288,7 @@ CONTAINS
 
 END MODULE EngTbls
 
-! $Log $
+! $Log$
+! Revision 2.2  2001/02/23 18:56:17  perun
+! Version 0.5 commit
+!
