@@ -41,7 +41,8 @@ contains
           print *, trim(line)
         end do
         print *, 'Sideband =', sideband
-        print '(" Channels = ", 50l1:(/12x,50l1))', channels
+        if ( associated(channels) ) &
+          & print '(" Channels = ", 50l1:(/12x,50l1))', channels
       end if
     end do
 99  return
@@ -49,6 +50,9 @@ contains
 end module Test_Parse_Signals_m
 
 ! $Log$
+! Revision 2.3  2001/04/10 17:58:57  vsnyder
+! Handle possibility that 'channels' is not associated
+!
 ! Revision 2.2  2001/04/06 20:12:14  vsnyder
 ! Print Sideband and Channels
 !
