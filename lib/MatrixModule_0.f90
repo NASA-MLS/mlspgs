@@ -22,7 +22,8 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
 
   implicit NONE
   private
-  public :: Add_Matrix_Blocks, CheckBlocks, CheckIntegrity, Assignment(=), CholeskyFactor
+  public :: Add_Matrix_Blocks, CheckBlocks, CheckIntegrity, CheckForSimpleBandedLayout
+  public :: Assignment(=), CholeskyFactor
   public :: CholeskyFactor_0, ClearRows, ClearRows_0, CloneBlock, ColumnScale
   public :: Col_L1, CopyBlock, CreateBlock, CreateBlock_0
   public :: DenseCholesky, Densify, DestroyBlock, DestroyBlock_0, Dump
@@ -293,17 +294,24 @@ contains ! =====     Public Procedures     =============================
       select case ( y%kind )
       case ( M_Banded )                          ! X banded, Y banded
         ! Used to be intelligent (below), but didn't work. 
-        ! Do it the slow way for now.
-        nullify ( z, w )
-        call allocate_test ( z, x%nRows, x%nCols, 'Z in Add_Matrix_Blocks', &
-          & ModuleName )
-        call allocate_test ( w, y%nRows, y%nCols, 'W in Add_Matrix_Blocks', &
-          & ModuleName )
-        call densify ( z, x )
-        call densify ( w, y )
-        z = z + s * w
-        call sparsify ( z, zb, 'Z in Add_matrix_block', ModuleName )
-        call Deallocate_test ( w, 'W in Add_Matrix_Blocks', ModuleName )
+        ! Now we'll compromise, if the structures are identical then
+        ! do it quickly, otherwise do it slowly
+        if ( all ( x%r1 == y%r1 ) .and. all ( x%r2 == y%r2 ) ) then
+          call cloneBlock ( zb, x )
+          zb%values = x%values + s * y%values
+        else
+          ! Do it the slow way for now.
+          nullify ( z, w )
+          call allocate_test ( z, x%nRows, x%nCols, 'Z in Add_Matrix_Blocks', &
+            & ModuleName )
+          call allocate_test ( w, y%nRows, y%nCols, 'W in Add_Matrix_Blocks', &
+            & ModuleName )
+          call densify ( z, x )
+          call densify ( w, y )
+          z = z + s * w
+          call sparsify ( z, zb, 'Z in Add_matrix_block', ModuleName )
+          call Deallocate_test ( w, 'W in Add_Matrix_Blocks', ModuleName )
+        end if
         
 ! OLD CODE THAT DIDN'T WORK
 !         call allocate_test ( zb%r1, zb%ncols, "zb%r1", ModuleName )
@@ -377,23 +385,28 @@ contains ! =====     Public Procedures     =============================
       select case ( y%kind )
 !     case ( M_Banded )        ! Not needed because of commuted arguments
       case ( M_Column_sparse )                   ! X col sparse, Y col sparse
-        ! Make a full matrix, then sparsify it.  There _must_ be a better
-        ! way ???
-        call allocate_test ( z, y%nRows, y%nCols, "Z in Add_Matrix_Blocks", &
-          & ModuleName )
-        call densify ( z, y )                    ! z = y%values
-        if ( present(scale) ) z = s * z
-        do k = 1, x%nCols
-          z(x%r2(x%r1(k-1)+1:x%r1(k)), k) = &
-            & z(x%r2(x%r1(k-1)+1:x%r1(k)), k) + &
+        ! In the case where the blocks are identical in structure, add it the quick way
+        if ( all ( x%r1 == y%r1 ) .and. all ( x%r2 == y%r2 ) ) then
+          call cloneBlock ( zb, x )
+          zb%values = x%values + s* y%values
+        else
+          ! Make a full matrix, then sparsify it.  There _must_ be a better
+          ! way ???
+          call allocate_test ( z, y%nRows, y%nCols, "Z in Add_Matrix_Blocks", &
+            & ModuleName )
+          call densify ( z, y )                    ! z = y%values
+          if ( present(scale) ) z = s * z
+          do k = 1, x%nCols
+            z(x%r2(x%r1(k-1)+1:x%r1(k)), k) = &
+              & z(x%r2(x%r1(k-1)+1:x%r1(k)), k) + &
               & x%values(x%r1(k-1)+1:x%r1(k),1)
-        end do
-        call sparsify ( z, zb, "Z in Add_Matrix_Blocks", ModuleName ) ! Zb = Z
+          end do
+          call sparsify ( z, zb, "Z in Add_Matrix_Blocks", ModuleName ) ! Zb = Z
+        end if
       case ( M_Full )                            ! X col sparse, Y full
         call CopyBlock ( zb, y )                 ! Zb = y
         if ( present(scale) ) zb%values = s * zb%values
 
-! Commented-out on account of internal NAG v4.0 bug
          do k = 1, x%nCols
            zb%values(x%r2(x%r1(k-1)+1:x%r1(k)), k) = &
              & zb%values(x%r2(x%r1(k-1)+1:x%r1(k)), k) + &
@@ -459,6 +472,26 @@ contains ! =====     Public Procedures     =============================
     z%r2 => x%r2
     z%values => x%values
   end subroutine AssignBlock
+
+  ! ------------------------------------------- CheckForSimpleBandedLayout --
+  subroutine CheckForSimpleBandedLayout ( z, bandHeight, location )
+    type ( MatrixElement_T), intent(in) :: Z
+    integer, intent(in) :: BANDHEIGHT
+    character(len=*), intent(in) :: LOCATION
+    ! Local variables
+    integer :: I
+    logical :: FLAGS(z%nCols)
+    ! Executable code
+    if ( mod ( size ( z%values, 1 ), bandHeight ) /= 0 ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, 'Inappropriate banded size for ' // &
+      & trim(location) )
+    do i = 1, z%nCols
+      flags(i) = ( z%r2(i) /= i*bandHeight ) .or. &
+        & ( z%r1(i) /= 1 + z%r2(i) - bandHeight )
+    end do
+    if ( any(flags) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Inappropriate format for ' // trim(location) )
+  end subroutine CheckForSimpleBandedLayout
 
   ! ------------------------------------------- CheckIntegrity_0 -------
   logical function CheckIntegrity_0 ( block, noError )
@@ -3118,6 +3151,11 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.97  2003/10/09 22:15:46  livesey
+! Added more intelligence in the sparse/spase and banded/banded adds, so
+! if blocks have same layout just add the values.  Also added the
+! CheckForSimpleBandedLayout routine.
+!
 ! Revision 2.96  2003/08/05 19:32:12  livesey
 ! Temporarily suppress column_sparse blocks
 !
