@@ -27,7 +27,7 @@ contains
     real(r8), intent(in) :: F_grid(:), F_grid_fltr(:), Fltr_func(:)
     real(rp), intent(in) :: Rad(:)
 
-    integer(i4), intent(in) :: M, Nfp
+    integer(i4), intent(in) :: N, Nfp
 
     real(rp), intent(out)   :: Avg
 
@@ -64,6 +64,9 @@ contains
 end module Freq_Avg_m
 
 ! $Log$
+! Revision 2.3  2002/09/07 02:18:37  vsnyder
+! Move USEs from module scope to procedure scope, cosmetic changes
+!
 ! Revision 2.2  2002/05/08 08:53:46  zvi
 ! Modify to accomodate cspline.f9h
 !
