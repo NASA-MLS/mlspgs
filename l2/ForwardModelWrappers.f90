@@ -37,6 +37,7 @@ contains ! ============= Public Procedures ==========================
     use MatrixModule_1, only: MATRIX_T
     use MLSL2Timings, only: Add_to_retrieval_timing
     use ScanModelModule, only: SCANFORWARDMODEL, TWODSCANFORWARDMODEL
+    use SwitchingMirrorModel_m, only: SWITCHINGMIRRORMODEL
     use VectorsModule, only: VECTOR_T
 
     ! Dummy arguments
@@ -54,11 +55,15 @@ contains ! ============= Public Procedures ==========================
         FwdModelOut, Ifm, fmStat, Jacobian )
       call BaselineForwardModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
+      call SwitchingMirrorModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
+        FwdModelOut, Ifm, fmStat, Jacobian )
       call add_to_retrieval_timing( 'full_fwm' )
     case ( l_linear )
       call LinearizedForwardModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
       call BaselineForwardModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
+        FwdModelOut, Ifm, fmStat, Jacobian )
+      call SwitchingMirrorModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
       call add_to_retrieval_timing( 'linear_fwm' )
     case ( l_scan )
@@ -72,6 +77,10 @@ contains ! ============= Public Procedures ==========================
     case ( l_cloudFull )
       call FullCloudForwardModelWrapper ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
+      call BaselineForwardModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
+        FwdModelOut, Ifm, fmStat, Jacobian )
+      call SwitchingMirrorModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
+        FwdModelOut, Ifm, fmStat, Jacobian )
       call add_to_retrieval_timing( 'fullcloud_fwm' )
     case default ! Shouldn't get here if parser etc. worked
     end select
@@ -84,6 +93,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.16  2003/05/29 16:42:34  livesey
+! Added calls to SwitchingMirrorModel
+!
 ! Revision 2.15  2002/10/08 17:36:20  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
