@@ -9,23 +9,22 @@ module ForwardModelSupport
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use Expr_M, only: EXPR
   use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST
-  use Init_Tables_Module, only: L_FULL, L_SCAN, L_LINEAR, L_CLOUDFULL, &
-    & L_TEMPERATURE, L_VMR
+  use Init_Tables_Module, only: L_FULL, L_SCAN, L_LINEAR, L_CLOUDFULL, L_VMR
   use Init_Tables_Module, only: F_ANTENNAPATTERNS, F_ATMOS_DER, F_CHANNELS, &
     & F_CLOUD_DER, F_COST, F_DO_BASELINE, F_DO_CONV, F_DO_FREQ_AVG, F_FILTERSHAPES, &
     & F_FREQUENCY, F_HEIGHT, F_DIFFERENTIALSCAN, &
     & F_INTEGRATIONGRID, F_LOCKBINS, F_L2PC, F_MOLECULE, F_MOLECULES, &
     & F_MOLECULEDERIVATIVES, &
     & F_PHIWINDOW, F_POINTINGGRIDS, F_SIGNALS, F_SPECT_DER, F_TANGENTGRID, &
-    & F_TEMP_DER, F_TYPE, F_MODULE, F_SKIPOVERLAPS, F_TOLERANCE, S_FORWARDMODEL, &
+    & F_TEMP_DER, F_TYPE, F_MODULE, F_SKIPOVERLAPS, F_TOLERANCE, &
     & F_NABTERMS, F_NAMEFRAGMENT, F_NAZIMUTHANGLES, F_NCLOUDSPECIES, F_NMODELSURFS, &
     & F_NSCATTERINGANGLES, F_NSIZEBINS, F_CLOUD_WIDTH, F_CLOUD_FOV, &
     & F_DEFAULT_spectroscopy, F_SPECIFICQUANTITIES
   use MLSCommon, only: R8
-  use MoreTree, only: Get_Boolean, Get_Field_ID, GET_SPEC_ID
+  use MoreTree, only: Get_Boolean, Get_Field_ID
   use Parse_Signal_m, only: PARSE_SIGNAL
   use String_Table, only: Get_String
-  use Toggles, only: Gen, Levels, Switches, Toggle
+  use Toggles, only: Gen, Levels, Toggle
   use Trace_M, only: Trace_begin, Trace_end
   use Tree, only: Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, Subtree
   use Units, only: PHYQ_TEMPERATURE, PHYQ_PRESSURE, PHYQ_DIMENSIONLESS
@@ -42,7 +41,6 @@ module ForwardModelSupport
   character (len=len(idParm)) :: Id = idParm
   character (len=*), parameter :: ModuleName= &
     & "$RCSfile$"
-  private :: not_used_here 
   !---------------------------------------------------------------------------
 
   ! Error codes
@@ -663,13 +661,16 @@ contains ! =====     Public Procedures     =============================
     if ( present(extraMessage) ) call output ( extraMessage, advance='yes' )
   end subroutine AnnounceError
 
-  logical function not_used_here()
+  logical function NOT_USED_HERE()
     not_used_here = (id(1:1) == ModuleName(1:1))
-  end function not_used_here
+  end function NOT_USED_HERE
 
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.39  2002/10/18 22:44:11  vsnyder
+! Remove some unreferenced USE names
+!
 ! Revision 2.38  2002/10/18 18:01:58  livesey
 ! Ensure l2pc files etc. read in fwmParallel master mode.
 !
