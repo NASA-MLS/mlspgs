@@ -356,6 +356,7 @@ contains ! =====     Public procedures     =============================
     ! Define the nonintrinsic enumerated types
     call make_tree ( (/ &
       begin, t+t_binSelectorType, l+l_vmr, l+l_temperature, l+l_latitude, &
+             l+l_fieldStrength, l+l_fieldElevation, l+l_fieldAzimuth, &
              l+l_nameFragment, l+l_sza, n+n_dt_def, &
       begin, t+t_chunkDivideMethod, l+l_fixed, l+l_even, l+l_orbital, l+l_PE, n+n_dt_def, &
       begin, t+t_cloud_der, l+l_iwc_low_height, l+l_iwc_high_height, l+l_iwp, &
@@ -376,7 +377,8 @@ contains ! =====     Public procedures     =============================
              l+l_H2OFromRHI, l+l_fold, l+l_rectanglefromlos, l+l_vGrid, &
              l+l_wmoTropopause, n+n_dt_def, &
       begin, t+t_fwmType, l+l_linear, l+l_full, l+l_scan, l+l_scan2d, &
-             l+l_cloudFull, l+l_hybrid, l+l_switchingMirror, n+n_dt_def, &
+             l+l_cloudFull, l+l_hybrid, l+l_switchingMirror, &
+             l+l_polarLinear, n+n_dt_def, &
       begin, t+t_i_saturation, l+l_clear, l+l_clear_110rh_below_top, &
              l+l_clear_0rh, l+l_clear_lowest_0_110rh, &
              l+l_clear_110rh_below_tropopause, l+l_cloudy_110rh_below_top, &
@@ -1077,6 +1079,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.328  2003/08/13 00:49:04  livesey
+! Added the polarLinear forward model and the field based bin selectors
+!
 ! Revision 2.327  2003/08/11 18:08:00  livesey
 ! Added the single option to hGrid
 !
