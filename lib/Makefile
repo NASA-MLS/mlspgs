@@ -10,7 +10,7 @@ OBJS=	MLSStrings.o MLSSignalNomenclature.o VerticalCoordinate.o \
 	SDPToolkit.o L2GPData.o L2AUXData.o VectorsModule.o Units.o \
 	VGrid.o HGrid.o L1BData.o ConstructQuantityTemplates.o\
 	ConstructVectorTemplates.o gridded_data_module.o \
-	dates_module.o MLSPCF.o MLSCF.o GriddedData.o
+	dates_module.o MLSPCF.o MLSCF.o GriddedData.o HDF-EOS.o
 
 OBJS_DEBUG= 	MLSStrings.dbg.o MLSSignalNomenclature.dbg.o \
 		VerticalCoordinate.dbg.o QuantityTemplates.dbg.o \
@@ -90,6 +90,9 @@ ConstructVectorTemplates.dbg.o: MLSCommon.dbg.o MLSMessageModule.dbg.o VectorsMo
 	QuantityTemplates.dbg.o
 
 # $Log$
+# Revision 1.26  2000/02/23 20:33:48  perun
+# Changed .o_debug to .dbg.o for SunOS
+#
 # Revision 1.25  2000/02/05 00:30:14  livesey
 # Removed temporary types stuff
 #
