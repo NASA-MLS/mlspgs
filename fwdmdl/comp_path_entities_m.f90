@@ -4,6 +4,8 @@ module Comp_Path_Entities_M
   use ELLIPSE_M, only: ELLIPSE
   use PATH_ENTITIES_M, only: PATH_INDEX, PATH_VECTOR, PATH_VECTOR_2D
   use VERT_TO_PATH_M, only: VERT_TO_PATH
+  use ManipulateVectorQuantities, only: FINDCLOSESTINSTANCES
+  use VectorsModule, only: VectorValue_T
 
   implicit NONE
   private
@@ -19,7 +21,8 @@ module Comp_Path_Entities_M
 contains
 !---------------------------------------------------------------------
 
-  subroutine Comp_Path_Entities ( N_lvls, No_t, Gl_count, Ndx_path, Z_glgrid, &
+  subroutine Comp_Path_Entities ( radiance, temperature, &
+    &        N_lvls, No_t, Gl_count, Ndx_path, Z_glgrid, &
     &        T_glgrid, H_glgrid, Dhdz_glgrid, Tan_hts, No_tan_hts, Z_path, &
     &        H_path, T_path, Phi_path, Dhdz_path, Eta_phi, No_phi_t, &
     &        T_phi_basis, No_mmaf, PhiWindow, Elvar, Ier )
@@ -31,6 +34,9 @@ contains
   !  ---------------------------
   !  Calling sequence variables:
   !  ---------------------------
+  type (VectorValue_T), intent(in) :: radiance
+  type (VectorValue_T), intent(in) :: temperature
+
   integer, intent(in) :: no_t, no_phi_t, N_lvls, gl_count, PhiWindow, No_mmaf
   !
   integer, intent(in out) :: No_tan_hts
@@ -55,12 +61,14 @@ contains
   !  Local variables:
   !  ----------------
 
-  Integer :: i, k, l, jj, kk, lmin, lmax, klo, khi, ngt
+  Integer :: i, k, l, jj, kk, lmin, lmax, klo, khi, ngt, maf
 
   Real(r8) :: h, q, r, zeta, phi
 
   Real(r8), dimension(:)  , allocatable :: zpath, tpath, hpath, ppath, dhdzp
   Real(r8), dimension(:,:), allocatable :: phi_eta
+
+  integer, dimension(no_mmaf) :: closestInstance
 
   ier = 0
   ngt = 2 * (Ng+1) * (N_lvls+1)
@@ -77,10 +85,12 @@ contains
     Return
   end if
 
-  do l = 1, no_mmaf
-    k = min(no_phi_t,no_mmaf)
+  call FindClosestInstances( temperature, radiance, closestInstance )
+
+  do maf = 1, no_mmaf
+    l = closestInstance(maf)
     lmin = max(1,l-phiWindow/2)
-    lmax = min(k,l+phiWindow/2)
+    lmax = min(no_phi_t,l+phiWindow/2)
     allocate ( phi_eta(ngt,lmin:lmax), stat=ier )
     if ( ier /= 0 ) then
       print *,'** Error Allocating phi_eta in routine: comp_path_entities..'
@@ -88,33 +98,33 @@ contains
       return
     endif
     do k = 1, no_tan_hts
-      h = tan_hts(k,l)
-      call vert_to_path ( elvar(l), n_lvls, Ng, ngt, gl_count, lmax-lmin+1, &
+      h = tan_hts(k,maf)
+      call vert_to_path ( elvar(maf), n_lvls, Ng, ngt, gl_count, lmax-lmin+1, &
         & no_t, h, z_glgrid, t_glgrid(1:,lmin:lmax), h_glgrid(1:,lmin:lmax), &
         & dhdz_glgrid(1:,lmin:lmax), t_phi_basis(lmin:lmax), zpath, hpath, &
         & tpath, ppath, dhdzp, phi_eta, klo, khi, ier )
       if(ier /= 0) return
-      deallocate ( z_path(k,l)%values, h_path(k,l)%values,   &
-        &          t_path(k,l)%values, phi_path(k,l)%values, &
-        &          dhdz_path(k,l)%values, eta_phi(k,l)%values, stat=i )
-      allocate ( z_path(k,l)%values(khi), h_path(k,l)%values(khi),   &
-        &        t_path(k,l)%values(khi), phi_path(k,l)%values(khi), &
-        &        dhdz_path(k,l)%values(khi), stat=ier )
-      if ( ier == 0 ) allocate ( eta_phi(k,l)%values(khi,lmin:lmax),&
+      deallocate ( z_path(k,maf)%values, h_path(k,maf)%values,   &
+        &          t_path(k,maf)%values, phi_path(k,maf)%values, &
+        &          dhdz_path(k,maf)%values, eta_phi(k,maf)%values, stat=i )
+      allocate ( z_path(k,maf)%values(khi), h_path(k,maf)%values(khi),   &
+        &        t_path(k,maf)%values(khi), phi_path(k,maf)%values(khi), &
+        &        dhdz_path(k,maf)%values(khi), stat=ier )
+      if ( ier == 0 ) allocate ( eta_phi(k,maf)%values(khi,lmin:lmax),&
                                 & stat=ier )
       if ( ier /= 0 ) then
         print *,'** Error: ALLOCATION error in routine: comp_path_entities ..'
         print *,'   STAT =',ier
         return
       endif
-      ndx_path(k,l)%break_point_index = klo
-      ndx_path(k,l)%total_number_of_elements = khi
-      z_path(k,l)%values(1:khi) = zpath(1:khi)
-      t_path(k,l)%values(1:khi) = tpath(1:khi)
-      h_path(k,l)%values(1:khi) = hpath(1:khi)
-      phi_path(k,l)%values(1:khi) = ppath(1:khi)
-      dhdz_path(k,l)%values(1:khi) = dhdzp(1:khi)
-      eta_phi(k,l)%values(1:khi,lmin:lmax) = phi_eta(1:khi,lmin:lmax)
+      ndx_path(k,maf)%break_point_index = klo
+      ndx_path(k,maf)%total_number_of_elements = khi
+      z_path(k,maf)%values(1:khi) = zpath(1:khi)
+      t_path(k,maf)%values(1:khi) = tpath(1:khi)
+      h_path(k,maf)%values(1:khi) = hpath(1:khi)
+      phi_path(k,maf)%values(1:khi) = ppath(1:khi)
+      dhdz_path(k,maf)%values(1:khi) = dhdzp(1:khi)
+      eta_phi(k,maf)%values(1:khi,lmin:lmax) = phi_eta(1:khi,lmin:lmax)
     end do ! k = 1, no_tan_hts
     deallocate ( phi_eta, stat=i )
   end do ! l = 1, no_mmaf
@@ -127,6 +137,9 @@ end subroutine Comp_Path_Entities
 
 end module Comp_Path_Entities_M
 ! $Log$
+! Revision 1.26  2001/04/19 06:48:13  zvi
+! Fixing memory leaks..
+!
 ! Revision 1.25  2001/04/13 03:34:45  zvi
 ! Correcting minor error in allocation, cleaing up comments.
 !
