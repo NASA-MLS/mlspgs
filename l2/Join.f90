@@ -268,6 +268,7 @@ contains ! =====     Public Procedures     =============================
     type(DirectData_T) :: newDirect
     type(DirectData_T), pointer :: thisDirect
     logical :: DEEBUG
+    integer, external :: he5_SWclose
 
     ! Executable code
     DEEBUG = (index(switches, 'direct') /= 0)
@@ -421,10 +422,15 @@ contains ! =====     Public Procedures     =============================
       & TOOLKIT, returnStatus, l2gp_Version, DEEBUG, &
       & exactName=Filename)
     end if
-    if ( mls_exists(trim(Filename)) == 0 ) then
-      fileaccess = DFACC_RDWR
-    else
+    ! > if ( mls_exists(trim(Filename)) == 0 ) then
+    ! >   fileaccess = DFACC_RDWR
+    ! > else
+    ! >   fileaccess = DFACC_CREATE
+    ! > endif
+    if ( createFile ) then
       fileaccess = DFACC_CREATE
+    else
+      fileaccess = DFACC_RDWR
     endif
     select case ( outputType )
     case ( l_l2gp )
@@ -441,7 +447,7 @@ contains ! =====     Public Procedures     =============================
 
     if ( ErrorType /= 0 ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'DirectWriteCommand unable to open' // trim(filename) )
+        & 'DirectWriteCommand unable to open ' // trim(filename) )
     endif
     call SetUpNewDirect(newDirect, noSources)
     ! Add it to the database of directly writeable quantities
@@ -467,6 +473,8 @@ contains ! =====     Public Procedures     =============================
       end if
 
       if ( DeeBUG ) then
+        call output('CREATEFILE: ', advance='no')
+        call output(CREATEFILE, advance='yes')
         call output('file access: ', advance='no')
         call output(fileaccess, advance='yes')
         call output('file handle: ', advance='no')
@@ -505,13 +513,18 @@ contains ! =====     Public Procedures     =============================
     select case ( outputType )
     case ( l_l2gp )
       ! Call the l2gp close routine
-      errortype = mls_io_gen_closeF('swclose', Handle, FileName=FileName, &
-      & hdfVersion=hdfVersion)
+      errortype = mls_io_gen_closeF('sw', Handle, hdfVersion=hdfVersion)
+      ! errortype = he5_SWclose(Handle)
+      print *, 'Tried to close ', trim(FIleName)
+      print *, 'Handle ', Handle
+      print *, 'hdfVersion ', hdfVersion
+      print *, 'errortype ', errortype
     case ( l_l2aux )
       ! Call the l2aux close routine
-      errortype = mls_io_gen_closeF('hg', Handle, FileName=FileName, &
-      & hdfVersion=hdfVersion)
+      errortype = mls_io_gen_closeF('hg', Handle, hdfVersion=hdfVersion)
     end select
+    if ( errortype /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'DirectWriteCommand unable to close ' // trim(filename) )
 
     ! Tell the master we're done
     if ( parallel%slave ) call FinishedDirectWrite
@@ -1240,6 +1253,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.77  2003/07/02 00:55:27  pwagner
+! Some improvements in DirectWrites of l2aux, l2gp
+!
 ! Revision 2.76  2003/06/26 23:13:52  pwagner
 ! New debugging output; distinguishes between l2gp/l2aux quantities better
 !
