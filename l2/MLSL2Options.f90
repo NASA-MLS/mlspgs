@@ -10,7 +10,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   use MLSPCF2, only: MLSPCF_L1B_RAD_END, MLSPCF_L1B_RAD_START
 
   IMPLICIT NONE
-
+  PUBLIC
   PRIVATE :: Id, ModuleName
   !---------------------------- RCS Ident Info -------------------------------
   CHARACTER (LEN=256) :: Id = &
@@ -55,7 +55,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   logical, parameter ::                          PCFL2CFSAMECASE = SIPS_VERSION
   ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-  ! Update these lines before delivery to sips                                     
+  ! Update these lines before delivery to sips     
   ! id to print out in response to "--version" command-line option       
   character(LEN=*), dimension(3), parameter :: CURRENT_VERSION_ID = (/ &    
     & 'v1.0 swdev team                                           ', &       
@@ -91,15 +91,14 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   
   ! Assume hdf files w/o explicit hdfVersion field are this                 
   ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc.                   
-  integer, parameter :: DEFAULT_HDFVERSION_WRITE = HDFVERSION_4
   ! Set to WILDCARDHDFVERSION if you wish to autodetect such files          
   ! on input                                                                
-  integer, parameter :: DEFAULT_HDFVERSION_READ = HDFVERSION_4
+  integer            :: DEFAULT_HDFVERSION_WRITE = HDFVERSION_4
+  integer            :: DEFAULT_HDFVERSION_READ = HDFVERSION_4
+  integer            :: LEVEL1_HDFVERSION = HDFVERSION_4
 
-  integer, parameter :: LEVEL1_HDFVERSION = HDFVERSION_4
-
-  integer, public, parameter :: ILLEGALL1BRADID=-1   ! something sfstart should catch
-  integer, public, parameter :: MAXNUML1BRADIDS=&
+  integer, parameter :: ILLEGALL1BRADID=-1   ! sfstart should catch
+  integer, parameter :: MAXNUML1BRADIDS=&
   & mlspcf_l1b_rad_end-mlspcf_l1b_rad_start+1   ! In case more than one
 
   ! Whether to explicitly collect garbage at end of each chunk                
@@ -112,6 +111,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.18  2002/10/03 23:00:03  pwagner
+! You can set l1b, l2gp hdfversions on command line
+!
 ! Revision 2.17  2002/08/28 22:25:42  pwagner
 ! Moved LEVEL1_HDFVERSION, ILLEGALL1BRADID, MAXNUML1BRADIDS here from global_settings
 !
