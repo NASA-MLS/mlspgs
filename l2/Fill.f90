@@ -13,7 +13,7 @@ module Fill                     ! Create vectors and fill them.
   & L2AUXDim_IntermediateFrequency, L2AUXDim_USBFrequency, L2AUXDim_LSBFrequency, &
   & L2AUXDim_MIF, L2AUXDim_MAF, L2AUXDim_GeodAngle
   use LEXER_CORE, only: PRINT_SOURCE
-  use MLSCommon, only: L1BInfo_T, NameLen, LineLen, R8
+  use MLSCommon, only: L1BInfo_T, NameLen, LineLen, MLSChunk_T, R8
   use MLSMessageModule, only: MLSMSG_Error, MLSMessage
 !  use MLSStrings, only: lowercase
   use OUTPUT_M, only: OUTPUT
@@ -53,7 +53,7 @@ contains ! =====     Public Procedures     =============================
   !---------------------------------------------------  MLSL2Fill  -----
 
   subroutine MLSL2Fill ( root, l1bInfo, aprioriData, vectorTemplates, vectors, &
-    & qtyTemplates , L2GPDatabase, L2AUXDatabase)
+    & qtyTemplates , L2GPDatabase, L2AUXDatabase, chunks, chunkNo )
 
   ! This is the main routine for the module.  It parses the relevant lines
   ! of the l2cf and works out what to do.
@@ -67,6 +67,8 @@ contains ! =====     Public Procedures     =============================
     type (QuantityTemplate_T), dimension(:), pointer :: qtyTemplates
     TYPE (L2GPData_T), DIMENSION(:), POINTER :: L2GPDatabase
     TYPE (L2AUXData_T), DIMENSION(:), POINTER :: L2AUXDatabase
+    type (MLSChunk_T), dimension(:), intent(in) :: chunks
+    integer, intent(in) :: chunkNo
 
     ! Local variables
     integer :: I, J                ! Loop indices for section, spec
@@ -220,11 +222,13 @@ contains ! =====     Public Procedures     =============================
 ! Fill
          IF(is_l2gp) THEN
                 CALL FillOL2GPVector(L2GPDatabase(l2Index), qtyTemplates, &
-                      & vectors(vectorIndex), quantityNameString, qtiesStart)
+                      & vectors(vectorIndex), quantityNameString, qtiesStart, &
+                      & chunkNo)
 
          ELSEIF(is_l2aux) THEN
                 CALL FillOL2AUXVector(L2AUXDatabase(l2Index), qtyTemplates, &
-                      & vectors(vectorIndex), quantityNameString, qtiesStart)
+                      & vectors(vectorIndex), quantityNameString, qtiesStart, &
+                      & chunkNo)
 
          ELSE
                 CALL MLSMessage(MLSMSG_Error, ModuleName, &
@@ -285,7 +289,8 @@ SUBROUTINE FillVector(inPointer, Vector, pointerType, vectorType, NumQtys, &
 !                   Pointer(1:numChans, 1:numSurfs, 1:numInstances)
 
 CHARACTER (Len=*), INTENT(IN) ::        pointerType, vectorType
-REAL(r8), POINTER, DIMENSION(:,:,:) ::  inPointer
+! REAL(r8), POINTER, DIMENSION(:,:,:) ::  inPointer
+REAL(r8), DIMENSION(:,:,:) ::           inPointer
 TYPE(Vector_T), INTENT(OUT) ::          Vector
 INTEGER, INTENT(IN) ::                  NumQtys, qtiesStart
 INTEGER, INTENT(IN) ::                  numInstances, numSurfs, numChans
@@ -368,7 +373,7 @@ END SUBROUTINE FillVector
 
 !=============================== FillOL2GPVector ==========================
 SUBROUTINE FillOL2GPVector(OldL2GPData, qtyTemplates, &
-& Output, QuantityName, qtiesStart)
+& Output, QuantityName, qtiesStart, chunkNo)
 !=============================== FillOL2GPVector ==========================
 
 ! If the times, pressures, and geolocations match,
@@ -382,6 +387,9 @@ TYPE(L2GPData_T) ::                               OldL2GPData
 !TYPE(L2GPData_T), DIMENSION(:), POINTER ::        L2GPDatabase
 TYPE(Vector_T), INTENT(INOUT) ::                  Output
 CHARACTER*(*), INTENT(IN) ::                      QuantityName
+! If done chunk-by-chunk, the following is the chunk number
+! Otherwise, chunkNo should = -1
+    integer, intent(in) :: chunkNo
 
 ! Local variables
 !::::::::::::::::::::::::: LOCALS :::::::::::::::::::::
@@ -391,10 +399,25 @@ type (QuantityTemplate_T) ::                      OQTemplate	! Output Quantity T
 INTEGER ::                                        i
 INTEGER ::                                        ONTimes
 INTEGER ::                                        alloc_err
+INTEGER ::                                        firstProfile, lastProfile
 INTEGER ::                                        noL2GPValues=1
 LOGICAL ::                                        TheyMatch
 
 OQTemplate = qtyTemplates(Output%TEMPLATE%QUANTITIES(qtiesStart))
+! Chunk-by-chunk, or all chunks at once?
+IF(chunkNo == -1) THEN
+	firstProfile = 1
+   lastProfile = OldL2GPData%nTimes
+ELSE
+	firstProfile = 1
+   lastProfile = OldL2GPData%nTimes
+	DO i=1, OldL2GPData%nTimes
+        	IF(chunkNo == OldL2GPData%chunkNumber(i)) THEN
+				firstProfile = MIN(firstProfile, i)
+				lastProfile = MAX(lastProfile, i)
+         ENDIF
+   ENDDO
+ENDIF
 !
 ! Read the old L2GP file for QuantityName
 !CALL ReadL2GPData(OL2FileHandle, TRIM(LowerCase(QuantityName)), &
@@ -418,10 +441,10 @@ OQTemplate = qtyTemplates(Output%TEMPLATE%QUANTITIES(qtiesStart))
 !     & 'Failed to allocate temp l2gpData')
 ! Check that times, etc. match
 !L2GPData    = L2GPDatabase(1)
-TheyMatch = OQTemplate%noInstances .EQ. OldL2GPData%nTimes
+TheyMatch = OQTemplate%noInstances .EQ. (lastProfile-firstProfile+1)
 TheyMatch = TheyMatch .AND. OQTemplate%stacked
 IF(TheyMatch) THEN
-   DO i = 1, OldL2GPData%nTimes
+   DO i = firstProfile, lastProfile
       IF( &
         &   nearBy(OldL2GPData%latitude(i), OQTemplate%geodLat(1,i)) &
         & .AND. &
@@ -453,11 +476,12 @@ IF(TheyMatch) THEN
 !        & OldL2GPData%quantities(qty)%template%noSurfs, &
 !        & OldL2GPData%quantities(qty)%template%noInstances, &
 !        & OldL2GPData%quantities(qty)%values)
-   CALL FillVector(OldL2GPData%l2gpValue, Output, &
+   CALL FillVector(OldL2GPData%l2gpValue(:, :, firstProfile:lastProfile), &
+        & Output, &
         & 'l2gp', 'l2gp', NoL2GPValues, &
         & OldL2GPData%nFreqs, &
         & OldL2GPData%nLevels, &
-        & OldL2GPData%nTimes, &
+        & lastProfile-firstProfile+1, &
         & qtiesStart)
 ELSE
    CALL MLSMessage(MLSMSG_Error, ModuleName, &
@@ -486,7 +510,7 @@ END SUBROUTINE FillOL2GPVector
 
 !=============================== FillOL2AUXVector ==========================
 SUBROUTINE FillOL2AUXVector(OldL2AUXData, qtyTemplates, &
-& Output, QuantityName, qtiesStart)
+& Output, QuantityName, qtiesStart, chunkNo)
 !=============================== FillOL2AUXVector ==========================
 
 ! If the times, pressures, and geolocations match,
@@ -500,6 +524,7 @@ TYPE(L2AUXData_T) ::                               OldL2AUXData
 !TYPE(L2GPData_T), DIMENSION(:), POINTER ::        L2GPDatabase
 TYPE(Vector_T), INTENT(INOUT) ::                  Output
 CHARACTER*(*), INTENT(IN) ::                      QuantityName
+    integer, intent(in) :: chunkNo
 
 ! Local variables
 !::::::::::::::::::::::::: LOCALS :::::::::::::::::::::
@@ -767,6 +792,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.10  2001/01/03 17:49:49  pwagner
+! Accounts for chunking when filling from old L2GP
+!
 ! Revision 2.9  2000/12/07 00:41:46  pwagner
 ! added whatquantitynumber
 !
