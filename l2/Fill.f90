@@ -6,7 +6,7 @@ module Fill                     ! Create vectors and fill them.
 !=============================================================================
 
   use GriddedData, only: GriddedData_T
-  use INIT_TABLES_MODULE, only: F_SOURCE, S_TIME, S_VECTOR ! Later, s_Fill
+  use INIT_TABLES_MODULE, only: F_SOURCE, S_TIME, S_VECTOR, s_Fill
                                                            ! will be added
   USE L2GPData, only: L2GPData_T
   USE L2AUXData, only: L2AUXData_T, L2AUXDim_None, L2AUXDim_Channel, &
@@ -14,7 +14,7 @@ module Fill                     ! Create vectors and fill them.
   & L2AUXDim_MIF, L2AUXDim_MAF, L2AUXDim_GeodAngle
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: L1BInfo_T, NameLen, LineLen, MLSChunk_T, R8
-  use MLSMessageModule, only: MLSMSG_Error, MLSMessage
+!  use MLSMessageModule, only: MLSMSG_Error, MLSMessage
 !  use MLSStrings, only: lowercase
   use OUTPUT_M, only: OUTPUT
   use QuantityTemplates, only: QuantityTemplate_T
@@ -35,10 +35,32 @@ module Fill                     ! Create vectors and fill them.
 
   integer, private :: ERROR
 
-  ! Error codes for "announce_error"
+  ! Error codes for "announce_error"  
   integer, parameter :: WRONG_NUMBER = 1     ! of fields of a VECTOR command
+  integer, parameter :: unknownQuantityName = WRONG_NUMBER+1
+  integer, parameter :: source_not_in_db = unknownQuantityName+1
+  integer, parameter :: zeroProfilesInL2GP = source_not_in_db+1
+  integer, parameter :: zeroGeodSpanInL2GP = zeroProfilesInL2GP+1
+  integer, parameter :: vectorWontMatchL2GP = zeroGeodSpanInL2GP+1
+  integer, parameter :: cantFillFromL2AUX = vectorWontMatchL2GP+1
+! more Error codes relating to FillVector
+  integer, parameter :: numInstancesisZero = cantFillFromL2AUX+1
+integer, parameter :: numSurfsisZero = numInstancesisZero+1
+integer, parameter :: numChansisZero = numSurfsisZero+1
+integer, parameter :: objIsFullRank3 = numChansisZero+1
+integer, parameter :: otherErrorInFillVector = objIsFullRank3+1
 
-  integer, parameter :: s_Fill = 0   ! to be replaced by entry in init_tables_module
+    ! Error codes resulting from squeeze
+integer, parameter :: n1_is_zero = otherErrorInFillVector+1
+integer, parameter :: n2_is_zero = n1_is_zero+1
+integer, parameter :: n3_is_zero = n2_is_zero+1
+integer, parameter :: m1_too_small = n3_is_zero+1
+integer, parameter :: m2_too_small = m1_too_small+1
+integer, parameter :: not_permutation = m2_too_small+1
+integer, parameter :: allocation_err = not_permutation+1
+integer, parameter :: deallocation_err = allocation_err+1
+
+!  integer, parameter :: s_Fill = 0   ! to be replaced by entry in init_tables_module
   !---------------------------- RCS Ident Info -------------------------------
   character (len=256) :: Id = &
        "$id: fill.f90,v 1.1 2000/01/21 21:04:06 livesey Exp $"
@@ -71,6 +93,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: chunkNo
 
     ! Local variables
+    integer :: IERR                ! 0 unless error; returned by called routines
     integer :: I, J                ! Loop indices for section, spec
     integer :: KEY                 ! Definitely n_named
     type (Vector_T) :: newVector
@@ -190,53 +213,78 @@ contains ! =====     Public Procedures     =============================
          & vectors(vectorIndex)%Template)
 
          IF(qtiesStart < 0) THEN
+!	Shouldn't get here if type-checker worked properly
               msr = 'Quantity Name ' // quantityNameString // &
               & ' not found among quantities assoc. with ' // vectorNameString
-              CALL MLSMessage(MLSMSG_Error, ModuleName, &
-                     & msr)
+ !             CALL MLSMessage(MLSMSG_Error, ModuleName, &
+ !                    & msr)
+ 				CALL announce_error(son, unknownQuantityName, msr)
          ENDIF
 ! Is our source of type l2gp or l2aux?
-         is_l2gp = .FALSE.
-         is_l2aux = .FALSE.
+!  (As pw did it)
+!         is_l2gp = .FALSE.
+!         is_l2aux = .FALSE.
  
-         l2Index = 1
-         DO WHILE (.NOT. is_l2gp .AND. l2Index.LE.SIZE(L2GPDatabase))
-             IF(sourceName.EQ.L2GPDatabase(l2Index)%nameIndex) THEN
-                 is_l2gp = .TRUE.
-                 exit
-             ENDIF
-             l2Index = l2Index + 1
-         ENDDO
+!         l2Index = 1
+!         DO WHILE (.NOT. is_l2gp .AND. l2Index.LE.SIZE(L2GPDatabase))
+!             IF(sourceName.EQ.L2GPDatabase(l2Index)%nameIndex) THEN
+!                 is_l2gp = .TRUE.
+!                 exit
+!             ENDIF
+!             l2Index = l2Index + 1
+!         ENDDO
  
-         IF(.NOT. is_l2gp) THEN
-                l2Index = 1
-                DO WHILE (.NOT. is_l2aux .AND. l2Index.LE.SIZE(L2AUXDatabase))
-                    IF(sourceName.EQ.L2AUXDatabase(l2Index)%Name) THEN
-                        is_l2aux = .TRUE.
-                        exit
-                    ENDIF
-                    l2Index = l2Index + 1
-                ENDDO
-         ENDIF
+!         IF(.NOT. is_l2gp) THEN
+!                l2Index = 1
+!                DO WHILE (.NOT. is_l2aux .AND. l2Index.LE.SIZE(L2AUXDatabase))
+!                    IF(sourceName.EQ.L2AUXDatabase(l2Index)%Name) THEN
+!                        is_l2aux = .TRUE.
+!                        exit
+!                    ENDIF
+!                    l2Index = l2Index + 1
+!                ENDDO
+!         ENDIF
+! (As van simplified it)
+
+! Under f90 and f95 if a do-loop ends w/o exit, its loop index
+! is index_final_value + index_increment; thus the post-loop conditions
+  do l2Index = 1, size(l2gpDatabase)
+    if ( sourceName == l2gpDatabase(l2Index)%nameIndex ) exit
+  end do
+  is_l2gp = l2Index <= size(l2gpDatabase)
+
+  if ( .not. is_l2gp ) then
+    do l2Index = 1, size(l2auxDatabase)
+      if ( sourceName == l2auxDatabase(l2Index)%name ) exit
+    end do
+    is_l2aux = l2Index <= size(l2auxDatabase)
+  else
+
+!   This isn't important--is_l2aux will not be checked if is_l2gp is TRUE--
+!   but in case we check its value while debugging, say, lest it be undefined
+  	is_l2aux = .FALSE.
+  end if
+
+
 
 ! Fill
          IF(is_l2gp) THEN
                 CALL FillOL2GPVector(L2GPDatabase(l2Index), qtyTemplates, &
                       & vectors(vectorIndex), quantityNameString, qtiesStart, &
-                      & chunkNo)
+                      & chunkNo, IERR)
 
          ELSEIF(is_l2aux) THEN
                 CALL FillOL2AUXVector(L2AUXDatabase(l2Index), qtyTemplates, &
                       & vectors(vectorIndex), quantityNameString, qtiesStart, &
-                      & chunkNo)
+                      & chunkNo, IERR)
 
          ELSE
-                CALL MLSMessage(MLSMSG_Error, ModuleName, &
-                     & 'source file in neither l2gp nor l2aux databases')
+!                CALL MLSMessage(MLSMSG_Error, ModuleName, &
+!                     & 'source file in neither l2gp nor l2aux databases')
+					 CALL announce_error(son, source_not_in_db)
          ENDIF
-          ! This is *not* going to work if you have more than one vector
 
-          qtiesStart = qtiesStart+1
+!          qtiesStart = qtiesStart+1
 
       case ( s_time )
         if ( timing ) then
@@ -269,28 +317,29 @@ contains ! =====     Public Procedures     =============================
 ! =====     Private Procedures     =====================================
 
 !=============================== FillVector ==========================
-SUBROUTINE FillVector(inPointer, Vector, pointerType, vectorType, NumQtys, &
+SUBROUTINE FillVector(IERR, inArray, Vector, arrayType, vectorType, NumQtys, &
      & numChans, numSurfs, numInstances, qtiesStart, dim_order)
 !=============================== FillVector ==========================
 
-! Fill the vector Vector with values taken from the array pointed to by inPointer
+! Fill the vector Vector with values taken from the array inArray
 ! in a manner that depends on their respective types:
 !
-!        pointerType        vectorType            operation
-!          l2gp              l2gp       vector(:,:,:) = pointer(:,:,:)
+!        arrayType        vectorType            operation
+!          l2gp              l2gp       vector(:,:,:) = inArray(:,:,:)
 
-! It is assumed that the rank3 Pointer is filled from
-! Pointer(1, 1, 1) to Pointer(numChans, numSurfs, numInstances)
+! It is assumed that the rank3 inArray is filled from
+! inArray(1, 1, 1) to inArray(numChans, numSurfs, numInstances)
 !
 ! With the redefinition of Vector%quantities to be a rank2 object
 ! we are faced with a problem: how to fill a rank 2 object from a rank 3 one?
 ! If the rank 3 object is full, then it use the following trick:
 ! Vector(1:numChans*numSurfs, 1:numInstances) = 
-!                   Pointer(1:numChans, 1:numSurfs, 1:numInstances)
+!                   inArray(1:numChans, 1:numSurfs, 1:numInstances)
 
-CHARACTER (Len=*), INTENT(IN) ::        pointerType, vectorType
+CHARACTER (Len=*), INTENT(IN) ::        arrayType, vectorType
+INTEGER, INTENT(OUT) ::                 IERR		! zero unless an error
 ! REAL(r8), POINTER, DIMENSION(:,:,:) ::  inPointer
-REAL(r8), DIMENSION(:,:,:) ::           inPointer
+REAL(r8), DIMENSION(:,:,:) ::           inArray
 TYPE(Vector_T), INTENT(OUT) ::          Vector
 INTEGER, INTENT(IN) ::                  NumQtys, qtiesStart
 INTEGER, INTENT(IN) ::                  numInstances, numSurfs, numChans
@@ -298,29 +347,26 @@ INTEGER, INTENT(IN), OPTIONAL, DIMENSION(:) :: dim_order
 
 ! Private
 CHARACTER (LEN=LineLen) ::              msr
-INTEGER ::                              qty, IERR
+INTEGER ::                              qty
 CHARACTER (LEN=4) ::                    qtyChar, IERRChar
-! Error codes
-INTEGER ::                              numInstancesisZero=1
-INTEGER ::                              numSurfsisZero=2
-INTEGER ::                              numChansisZero=3
-INTEGER ::                              objIsFullRank3=4
-INTEGER ::                              ErrorInFillVector=-999
 
 ! Sanity checks:
 IF(numChans.EQ.0) THEN
-	call announce_error ( ErrorInFillVector, numChansisZero )
+!	call announce_error ( ErrorInFillVector, numChansisZero )
+	IERR = numChansisZero
         RETURN
 ELSEIF(numSurfs.EQ.0) THEN
-	call announce_error ( ErrorInFillVector, numSurfsisZero )
+!	call announce_error ( ErrorInFillVector, numSurfsisZero )
+	IERR = numSurfsisZero
         RETURN
 ELSEIF(numInstances.EQ.0) THEN
-	call announce_error ( ErrorInFillVector, numInstancesisZero )
+!	call announce_error ( ErrorInFillVector, numInstancesisZero )
+	IERR = numInstancesisZero
         RETURN
 ENDIF
 
 Vector%template%NoQuantities = NumQtys
-SELECT CASE (PointerType(:4) // VectorType(:4))
+SELECT CASE (arrayType(:4) // VectorType(:4))
 CASE ('l2gpl2gp')
    DO qty = qtiesStart, qtiesStart - 1 + NumQtys
      WRITE(qtyChar, '(I4)') qty
@@ -343,11 +389,11 @@ CASE ('l2gpl2gp')
 !		call announce_error ( ErrorInFillVector, objIsFullRank3 )
 !       		RETURN
 !	ENDIF
-	CALL squeeze(IERR, inPointer, Vector%quantities(qty)%values)
-     WRITE(IERRChar, '(I4)') IERR
-     msr = 'Error #' // IERRChar // ' in squeezing l2gp into quantity ' // qtyChar
-     IF(IERR /= 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
-        & msr)
+	CALL squeeze(IERR, inArray, Vector%quantities(qty)%values)
+!     WRITE(IERRChar, '(I4)') IERR
+!     msr = 'Error #' // IERRChar // ' in squeezing l2gp into quantity ' // qtyChar
+!     IF(IERR /= 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+!        & msr)
    ENDDO
 CASE ('l2aul2au')
    DO qty = qtiesStart, qtiesStart - 1 + NumQtys
@@ -356,14 +402,14 @@ CASE ('l2aul2au')
      Vector%quantities(qty)%template%noSurfs = numSurfs
      Vector%quantities(qty)%template%noInstances = numInstances
      IF(PRESENT(dim_order)) THEN
-        CALL squeeze(IERR, inPointer, Vector%quantities(qty)%values, dim_order)
+        CALL squeeze(IERR, inArray, Vector%quantities(qty)%values, dim_order)
      ELSE    
-        CALL squeeze(IERR, inPointer, Vector%quantities(qty)%values)
+        CALL squeeze(IERR, inArray, Vector%quantities(qty)%values)
      ENDIF
-     WRITE(IERRChar, '(I4)') IERR
-     msr = 'Error #' // IERRChar // ' in squeezing l2aux into quantity ' // qtyChar
-     IF(IERR /= 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
-        & msr)
+!     WRITE(IERRChar, '(I4)') IERR
+!     msr = 'Error #' // IERRChar // ' in squeezing l2aux into quantity ' // qtyChar
+!     IF(IERR /= 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+!        & msr)
    ENDDO
 CASE default
    ! FillVector not yet written to handle these cases
@@ -373,7 +419,7 @@ END SUBROUTINE FillVector
 
 !=============================== FillOL2GPVector ==========================
 SUBROUTINE FillOL2GPVector(OldL2GPData, qtyTemplates, &
-& Output, QuantityName, qtiesStart, chunkNo)
+& Output, QuantityName, qtiesStart, chunkNo, IERR)
 !=============================== FillOL2GPVector ==========================
 
 ! If the times, pressures, and geolocations match,
@@ -389,7 +435,8 @@ TYPE(Vector_T), INTENT(INOUT) ::                  Output
 CHARACTER*(*), INTENT(IN) ::                      QuantityName
 ! If done chunk-by-chunk, the following is the chunk number
 ! Otherwise, chunkNo should = -1
-    integer, intent(in) :: chunkNo
+    integer, intent(in) ::                        chunkNo
+INTEGER, INTENT(OUT) ::                            IERR	! if error
 
 ! Local variables
 !::::::::::::::::::::::::: LOCALS :::::::::::::::::::::
@@ -406,7 +453,7 @@ PARAMETER(ChunkNumberIsTrustworthy=.FALSE.)
 type (QuantityTemplate_T) ::                      OQTemplate	! Output Quantity Template
 INTEGER ::                                        i
 INTEGER ::                                        ONTimes
-INTEGER ::                                        alloc_err
+!INTEGER ::                                        alloc_err
 INTEGER ::                                        firstProfile, lastProfile
 INTEGER ::                                        noL2GPValues=1
 LOGICAL ::                                        TheyMatch
@@ -416,8 +463,9 @@ REAL(r8) ::                                       phi_TOLERANCE
 OQTemplate = qtyTemplates(Output%TEMPLATE%QUANTITIES(qtiesStart))
 
 IF(OQTemplate%noInstances <= 0) THEN
-   CALL MLSMessage(MLSMSG_Error, ModuleName, &
-        & 'Vector geolocations are 0 profiles or instances')
+!   CALL MLSMessage(MLSMSG_Error, ModuleName, &
+!        & 'Vector geolocations are 0 profiles or instances')
+	IERR=zeroProfilesInL2GP
 	RETURN
 ENDIF
 ! Chunk-by-chunk, or all chunks at once?
@@ -444,8 +492,9 @@ ELSE
 	ENDDO
 	phi_TOLERANCE = TOLERANCE *(phiMax-phiMin) / OQTemplate%noInstances
 	IF(phi_TOLERANCE <= 0.D0) THEN
-   	CALL MLSMessage(MLSMSG_Error, ModuleName, &
-        & 'phiMin==phiMax')
+!   	CALL MLSMessage(MLSMSG_Error, ModuleName, &
+!        & 'phiMin==phiMax')
+		  IERR=zeroGeodSpanInL2GP
 		RETURN
 	ENDIF
 	lastProfile = 1
@@ -517,7 +566,7 @@ IF(TheyMatch) THEN
 !        & OldL2GPData%quantities(qty)%template%noSurfs, &
 !        & OldL2GPData%quantities(qty)%template%noInstances, &
 !        & OldL2GPData%quantities(qty)%values)
-   CALL FillVector(OldL2GPData%l2gpValue(:, :, firstProfile:lastProfile), &
+   CALL FillVector(IERR, OldL2GPData%l2gpValue(:, :, firstProfile:lastProfile), &
         & Output, &
         & 'l2gp', 'l2gp', NoL2GPValues, &
         & OldL2GPData%nFreqs, &
@@ -525,8 +574,9 @@ IF(TheyMatch) THEN
         & lastProfile-firstProfile+1, &
         & qtiesStart)
 ELSE
-   CALL MLSMessage(MLSMSG_Error, ModuleName, &
-        & 'Vector and old L2GP do not match in times or geolocations')
+!   CALL MLSMessage(MLSMSG_Error, ModuleName, &
+!        & 'Vector and old L2GP do not match in times or geolocations')
+	IERR=vectorWontMatchL2GP
 ENDIF
 !DEALLOCATE(l2gpData%pressures, &
 !     & l2gpData%latitude, l2gpData%longitude, l2gpData%time, &
@@ -551,7 +601,7 @@ END SUBROUTINE FillOL2GPVector
 
 !=============================== FillOL2AUXVector ==========================
 SUBROUTINE FillOL2AUXVector(OldL2AUXData, qtyTemplates, &
-& Output, QuantityName, qtiesStart, chunkNo)
+& Output, QuantityName, qtiesStart, chunkNo, IERR)
 !=============================== FillOL2AUXVector ==========================
 
 ! If the times, pressures, and geolocations match,
@@ -566,6 +616,7 @@ TYPE(L2AUXData_T) ::                               OldL2AUXData
 TYPE(Vector_T), INTENT(INOUT) ::                  Output
 CHARACTER*(*), INTENT(IN) ::                      QuantityName
     integer, intent(in) :: chunkNo
+INTEGER, INTENT(OUT) ::                            IERR	! if error
 
 ! Local variables
 !::::::::::::::::::::::::: LOCALS :::::::::::::::::::::
@@ -629,15 +680,16 @@ IF(OQTemplate%noChans > 0) THEN
 ENDIF
 
 IF(TheyMatch) THEN
-   CALL FillVector(OldL2AUXData%values, Output, &
+   CALL FillVector(IERR, OldL2AUXData%values, Output, &
         & 'l2aux', 'l2aux', 1, &
         & MAX(OldL2AUXData%dimensions(1)%noValues, 1), &
         & MAX(OldL2AUXData%dimensions(2)%noValues, 1), &
         & MAX(OldL2AUXData%dimensions(3)%noValues, 1), &
         & qtiesStart)
 ELSE
-   CALL MLSMessage(MLSMSG_Error, ModuleName, &
-        & 'Vector and old L2AUX do not match')
+!   CALL MLSMessage(MLSMSG_Error, ModuleName, &
+!        & 'Vector and old L2AUX do not match')
+	IERR=cantFillFromL2AUX
 ENDIF
 
 END SUBROUTINE FillOL2AUXVector
@@ -738,15 +790,6 @@ SUBROUTINE squeeze(IERR, source, sink, source_order)
     INTEGER, INTENT(IN), OPTIONAL, DIMENSION(:) :: source_order
 
     !----------Local vars----------!
-    ! Error codes
-    INTEGER               :: n1_is_zero = 1
-    INTEGER               :: n2_is_zero = 2
-    INTEGER               :: n3_is_zero = 3
-    INTEGER               :: m1_too_small = 4
-    INTEGER               :: m2_too_small = 5
-    INTEGER               :: not_permutation = 6
-    INTEGER               :: allocation_err = 7
-    INTEGER               :: deallocation_err = 8
     
     INTEGER, DIMENSION(4) :: source_shape
     INTEGER, DIMENSION(4) :: sink_shape
@@ -782,7 +825,7 @@ SUBROUTINE squeeze(IERR, source, sink, source_order)
         IF(source_order(1)+source_order(2)+source_order(3) /= 6 &
         & .OR. &
         & source_order(1)*source_order(2)*source_order(3) /= 6 ) THEN
-             IERR=6
+             IERR=not_permutation
              RETURN
         ENDIF
         DO i=1, 3
@@ -811,20 +854,62 @@ END SUBROUTINE squeeze
 !
 !
   ! ---------------------------------------------  ANNOUNCE_ERROR  -----
-  subroutine ANNOUNCE_ERROR ( WHERE, CODE )
+  subroutine ANNOUNCE_ERROR ( WHERE, CODE , ExtraMessage)
     integer, intent(in) :: WHERE   ! Tree node where error was noticed
     integer, intent(in) :: CODE    ! Code for error message
+	 CHARACTER (LEN=*), OPTIONAL :: ExtraMessage
 
     error = max(error,1)
     call output ( '***** At ' )
     call print_source ( source_ref(where) )
     call output ( ': ' )
+    call output ( "The " );
+    call dump_tree_node ( where, 0 )
     select case ( code )
     case ( wrong_number )
-      call output ( "The " );
-      call dump_tree_node ( where, 0 )
       call output ( " command does not have exactly one field.", advance='yes' )
+    case ( unknownQuantityName )
+      call output ( " quantity was not found in the vector", advance='yes' )
+    case ( source_not_in_db )
+      call output ( " source was not found in the db.", advance='yes' )
+    case ( zeroProfilesInL2GP )
+      call output ( " command found zero profiles in L2GP.", advance='yes' )
+    case ( zeroGeodSpanInL2GP )
+      call output ( " command found zero geod. ang. span in L2GP.", advance='yes' )
+    case ( vectorWontMatchL2GP )
+      call output ( " command found no match of vetor and L2GP.", advance='yes' )
+    case ( cantFillFromL2AUX )
+      call output ( " command could not be filled from L2AUX.", advance='yes' )
+    case ( numInstancesisZero )
+      call output ( " command has zero instances.", advance='yes' )
+    case ( numSurfsisZero )
+      call output ( " command has zero surfaces.", advance='yes' )
+    case ( objIsFullRank3 )
+      call output ( " command array is full rank 3.", advance='yes' )
+    case ( otherErrorInFillVector )
+      call output ( " command caused an error in FillVector.", advance='yes' )
+    case ( n1_is_zero )
+      call output ( " command caused an n1=0 error in squeeze.", advance='yes' )
+    case ( n2_is_zero )
+      call output ( " command caused an n2=0 error in squeeze.", advance='yes' )
+    case ( n3_is_zero )
+      call output ( " command caused an n3=0 error in squeeze.", advance='yes' )
+    case ( m1_too_small )
+      call output ( " command caused a m1 too small error in squeeze.", advance='yes' )
+    case ( m2_too_small )
+      call output ( " command caused a m2 too small error in squeeze.", advance='yes' )
+    case ( not_permutation )
+      call output ( " command caused an illegal permutation in squeeze.", advance='yes' )
+    case ( allocation_err )
+      call output ( " command caused an allocation error in squeeze.", advance='yes' )
+    case ( deallocation_err )
+      call output ( " command caused an deallocation error in squeeze.", advance='yes' )
+    case default
+      call output ( " command caused an unrecognized programming error", advance='yes' )
     end select
+    IF( PRESENT(ExtraMessage)) THEN
+      CALL output(ExtraMessage)
+	 ENDIF
   end subroutine ANNOUNCE_ERROR
 
 !=============================================================================
@@ -833,6 +918,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.13  2001/01/24 23:31:00  pwagner
+! Using announce_error, simplified
+!
 ! Revision 2.12  2001/01/10 21:47:45  pwagner
 ! Chunk bounds determined by geodet.ang.
 !
