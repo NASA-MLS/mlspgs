@@ -2583,7 +2583,7 @@ contains
 
     end if
     if ( FwdModelConf%polarized ) then
-      deallocate ( beta_path_polarized(3,no_ele,no_mol) ,stat=ier )
+      deallocate ( beta_path_polarized, stat=ier )
       if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_DeAllocate//'beta_path_polarized' )
     end if
@@ -2612,6 +2612,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.117  2003/02/03 22:58:17  vsnyder
+! Plug a memory leak, delete gl_ndx, some polarized stuff
+!
 ! Revision 2.116  2003/02/03 19:00:36  bill
 ! changed interface to rad tran to speed up program
 !
