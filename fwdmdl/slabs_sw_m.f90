@@ -1,8 +1,8 @@
 module SLABS_SW_M
 
   use MLSCommon, only: R8, RP, IP
-
   use SpectroscopyCatalog_m, only: CATALOG_T, Lines
+  use Units, only: SqrtPi
 
   implicit NONE
 
@@ -12,7 +12,7 @@ module SLABS_SW_M
         &  CVoigth2, RVoigth6, CVoigth6, RHui6, CHui6, RDrayson, &
         &  CDrayson, Slabs_Prep, Slabs_Prep_Arrays, Get_GL_Slabs_Arrays
 
-  real(rp), parameter :: OneOvSPi = 0.56418958354775628695_rp  ! 1.0/Sqrt(Pi)
+  real(rp), parameter :: OneOvSPi = 1.0_rp / sqrtPi  ! 1.0/Sqrt(Pi)
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -26,7 +26,7 @@ contains
 !---------------------------------------------------------------------------
 
   ! --------------------------------------------  dVoigt_spectral  -----
-  SUBROUTINE dVoigt_spectral ( dNu, Nu0, x1, yi, y, w, t, tanh1, slabs1, SwI, &
+  subroutine dVoigt_spectral ( dNu, Nu0, x1, yi, y, w, t, tanh1, slabs1, SwI, &
                          &  dslabs1_dNu0, dSwI_dw, dSwI_dn, dSwI_dNu0 )
 
 ! Compute the Voigt function and its first derivatives with respect
@@ -38,17 +38,15 @@ contains
 ! NOTE: In here and in all other routines in this module, 
 !       tanh1 = tanh(nu*expa / 2.0)
 
-    REAL(r8), INTENT(in) :: nu0
-    REAL(rp), INTENT(in) :: dnu, x1, yi, y, w, t, tanh1, slabs1             
+    real(r8), intent(in) :: nu0
+    real(rp), intent(in) :: dnu, x1, yi, y, w, t, tanh1, slabs1             
     real(rp), intent(in), optional :: dslabs1_dNu0                        
 
     real(rp), intent(out) :: SwI, dSwI_dw,dSwI_dn,dSwI_dNu0               
 
     real(rp) :: x, u, v, du_dx, du_dy, dv_dx, dv_dy, q, b, g, z, r    
 
-!    real(rp) :: dq_dv0
-    real(rp) :: dx_dv0, du_dv0, dv_dv0, db_dv0, dg_dv0, dz_dv0, & 
-                dr_dv0, dvvw_dv0, vvw, slabs2
+    real(rp) :: dx_dv0, du_dv0, dv_dv0, vvw, slabs2
 
     x = x1 * dNu                                                          
     call simple_voigt(x,y,u,v)  
@@ -101,10 +99,10 @@ contains
   end subroutine dVoigt_spectral
 
   ! ------------------------------------------------------  Slabs  -----
-  REAL(rp) FUNCTION Slabs ( dNu, v0s, x1, tanh1, slabs1, y )
+  real(rp) function Slabs ( dNu, v0s, x1, tanh1, slabs1, y )
 
-    REAL(r8), INTENT(in) :: v0s
-    REAL(rp), INTENT(in) :: dNu, x1, tanh1, slabs1, y
+    real(r8), intent(in) :: v0s
+    real(rp), intent(in) :: dNu, x1, tanh1, slabs1, y
 
 !  Note: dNu = v - v0s
 
@@ -116,7 +114,7 @@ contains
 
     real(rp) :: u
 
-    CALL real_simple_voigt(x1*dNu,y,u)
+    call real_simple_voigt(x1*dNu,y,u)
 
 !  Van Vleck - Wieskopf line shape with Voigt, Added Mar/2/91, Bill
 !  Modified code to include interference: June/3/1992 (Bill + Zvi)
@@ -129,10 +127,10 @@ contains
   end function Slabs
 
   ! --------------------------------------------------  Slabswint  -----
-  REAL(rp) FUNCTION Slabswint ( dNu, v0s, x1, tanh1, slabs1, y, yi )
+  real(rp) function Slabswint ( dNu, v0s, x1, tanh1, slabs1, y, yi )
 
-    REAL(r8), INTENT(in) :: v0s
-    REAL(rp), INTENT(in) :: dNu, x1, tanh1, slabs1, y, yi
+    real(r8), intent(in) :: v0s
+    real(rp), intent(in) :: dNu, x1, tanh1, slabs1, y, yi
 
 !  Note: dNu = v - v0s
 
@@ -164,7 +162,7 @@ contains
   ! ----------------------------------------------  Voigt_Lorentz  -----
 
   subroutine Voigt_Lorentz ( dNu,  Nu0,  x1,  yi,  y,  w,  t,  tanh1, slabs1,  &
-                         & VL, dslabs1_dNu0,  dVL_dw,  dVL_dn,  dVL_dNu0 )
+                         &   VL, dslabs1_dNu0,  dVL_dw,  dVL_dn,  dVL_dNu0 )
 
 ! Compute the Voigt/Lorentz function and its first derivatives with respect
 ! to spectral parameters: w, n & Nu0
@@ -179,8 +177,7 @@ contains
 
     real(rp) :: xj, zj, q, y2, u, v, up1, up2, dn1, dn2, dup1, &
      &          dup2, ddn1, ddn2, dy_dw, dy_dn, dSum_dw, dSum_dn, &
-     &          dSum_dNu0, slabs2
-    real(rp) :: dq_dNu0, Sum
+     &          slabs2
 
     q = 1.0_rp + dNu / Nu0
 
@@ -195,7 +192,6 @@ contains
     call simple_voigt ( xj, y, u, v )
     dup1 = up1 * OneOvSPi / dn1 + yi * v
     ddn2 = u + dup1
-    Sum = ddn2 / OneOvSPi
     slabs2 = slabs1 * tanh1
     VL = slabs2 * ddn2 * q            ! This is the Voigt + VVW correction
 
@@ -361,8 +357,8 @@ contains
 
     end if
 
-    u = REAL(uv,KIND=rp)
-    if ( present(v) ) v = SIGN(AIMAG(uv),x)
+    u = real(uv,kind=rp)
+    if ( present(v) ) v = sign(aimag(uv),x)
 
   end subroutine Simple_Voigt
 
@@ -505,8 +501,6 @@ contains
   real(rp) elemental function RHui6 ( x, y )
 
 ! Voigt region II Hui polynomial
-! This looks too complicated to split into reals and imaginaries so I
-! will do the complex arithmetic here
 
     real(rp), intent(in) :: x ! sqrt(ln2)*delnu / wd
     real(rp), intent(in) :: y ! sqrt(ln2)*wc / wd
@@ -528,10 +522,10 @@ contains
     integer :: i
     real :: rs,rt,is,it,r(5),q(5)
 
-!   note that this dimension is 2 less than the a and b coefficients
+!   Note that this dimension is 2 less than the a and b coefficients
 !   because we start the r and q coeffients at 2. r(0)=1.0,r(1) = y
 !   q(0) = 0.0, q(1) = -x
-!   fill the r, q coefficients with this recursion
+!   Fill the r, q coefficients with this recursion
 
     r(1) = y**2 - x**2
     q(1) = -2.0_rp*x*y
@@ -554,8 +548,6 @@ contains
   complex(rp) elemental function CHui6 ( x, y )
 
 ! Voigt region II Hui polynomial
-! This too looks complicated to split into reals and imaginaries so I
-! will do the complex arithmetic here
 
     real(rp), intent(in) :: x ! sqrt(ln2)*delnu) / wd
     real(rp), intent(in) :: y ! sqrt(ln2)*wc / wd
@@ -577,10 +569,10 @@ contains
     integer :: i
     real :: rs,rt,is,it,r(5),q(5),denom
 
-! note that this dimension is 2 less than the a and b coefficients
+! Note that this dimension is 2 less than the a and b coefficients
 ! because we start the r and q coeffients at 2. r(0)=1.0,r(1) = y
 ! q(0) = 0.0, q(1) = -x
-! fill the r, q coefficients with this recursion
+! Fill the r, q coefficients with this recursion
 
     r(1) = y**2 - x**2
     q(1) = -2.0_rp*x*y
@@ -607,7 +599,7 @@ contains
 ! Internal stuff
 
     integer :: I, J, MAXJ, N
-    real(rp), parameter :: TwoOvSPi = 1.1283791670955125739_rp  ! 2.0/Sqrt(Pi)
+    real(rp), parameter :: TwoOvSPi = 2.0_rp * oneOvSPi  ! 2.0/Sqrt(Pi)
 
     real(rp), parameter :: H = 0.2_rp
     real(rp), parameter :: HN(26) = (/(h*(i-1),i=1,26)/)
@@ -681,7 +673,7 @@ contains
 ! Internal stuff
 
     integer :: I, J, MAXJ, N
-    real(rp), parameter :: TwoOvSPi = 1.1283791670955125739_rp  ! 2.0/Sqrt(Pi)
+    real(rp), parameter :: TwoOvSPi = 2.0_rp * oneOvSPi  ! 2.0/Sqrt(Pi)
 
 ! This is a way to set the mesh points without having to use a SAVE statement
 
@@ -754,7 +746,7 @@ contains
   end function CDrayson
 
   ! -------------------------------------------------  Slabs_prep  -----
-  Subroutine Slabs_prep ( t, m, v0, el, w, ps, p, n, ns, i, q, delta, gamma, &
+  subroutine Slabs_prep ( t, m, v0, el, w, ps, p, n, ns, i, q, delta, gamma, &
                       &   n1, n2, &
                       &   v0s, x1, y, yi, slabs1, dslabs1 )
 
@@ -762,6 +754,9 @@ contains
 ! WITH INTERFERENCE ! using predominantly data from the Pickett catalogue.
 
 ! ** UPDATED: Jul/3/97  To include Hugh Pumphrey's Pressure Shift effects
+
+    use Physics, only: H_OVER_K
+    use Units, only: Ln10, SpeedOfLight
 
 ! inputs:
 
@@ -809,10 +804,10 @@ contains
 
     real(rp), parameter :: I2abs = 3.402136078e9_rp
     real(rp), parameter :: Dc = 3.58117369e-7_rp
-    real(rp), parameter :: Boltzcm = 0.6950387_rp
-    real(rp), parameter :: Boltzmhz = 20836.74_rp
+    real(rp), parameter :: BoltzMHz = 1.0_rp / H_over_k
+    real(rp), parameter :: Boltzcm = boltzMHz / SpeedOfLight * 1.0e6 / 100.0
     real(rp), parameter :: Sqrtln2 = 8.32554611157698e-1_rp
-    real(rp), parameter :: Loge = 4.34294481903251828e-1_rp
+    real(rp), parameter :: Loge = 1.0_rp / ln10
     real(rp), parameter :: Oned300 = 1.0_rp/300.0_rp
 
     real(rp), parameter :: LT2 = 2.35218251811136_rp      ! Log10(225)
@@ -823,38 +818,38 @@ contains
 
 ! Internal data:
 
-    REAL(rp) :: Wd, Q_Log, betae, betav, t3t, onedt, expn, expd
+    real(rp) :: Wd, Q_Log, betae, betav, t3t, onedt, expn, expd
 
 ! The action begins here
 
-   onedt = 1.0_rp / t
-   t3t = 300.0_rp * onedt
-   yi = p * (delta*(t3t**n1) + gamma*(t3t**n2))
+    onedt = 1.0_rp / t
+    t3t = 300.0_rp * onedt
+    yi = p * (delta*(t3t**n1) + gamma*(t3t**n2))
 
-   if ( t < 225.0_rp ) then
-     Q_Log = q(2)-q(1)+(q(2)-q(3))/tl1*(Log10(t)-lt2)
-   else
-     Q_Log =           (q(1)-q(2))/tl2*(Log10(t)-lt3)
-   end if
+    if ( t < 225.0_rp ) then
+      Q_Log = q(2)-q(1)+(q(2)-q(3))/tl1*(Log10(t)-lt2)
+    else
+      Q_Log =           (q(1)-q(2))/tl2*(Log10(t)-lt3)
+    end if
 
-   v0s = v0 + ps * p * (t3t**ns)
+    v0s = v0 + ps * p * (t3t**ns)
 
-   betae = el / boltzcm
-   betav = v0s / boltzmhz
-   Wd = v0s * Sqrt(t/m) * dc
-   x1 = sqrtln2 / Wd
-   y = x1 * w * p * (t3t**n)
-   expn = EXP(-betav*onedt)
-   expd = EXP(-betav*oned300)
-   slabs1 = i2abs * p * 10.0**(i - Q_Log + loge *  betae * (oned300 - onedt)) &
-        & * (1.0_rp + expn) / (t * Wd * (1.0_rp - expd))
-   dslabs1 = -slabs1 * (expn / (t * (1.0_rp + expn)) + expd / (300.0_rp &
-        &  * (1.0_rp - expd))) / boltzmhz
+    betae = el / boltzcm
+    betav = v0s / boltzmhz
+    Wd = v0s * Sqrt(t/m) * dc
+    x1 = sqrtln2 / Wd
+    y = x1 * w * p * (t3t**n)
+    expn = EXP(-betav*onedt)
+    expd = EXP(-betav*oned300)
+    slabs1 = i2abs * p * 10.0**(i - Q_Log + loge *  betae * (oned300 - onedt)) &
+         & * (1.0_rp + expn) / (t * Wd * (1.0_rp - expd))
+    dslabs1 = -slabs1 * (expn / (t * (1.0_rp + expn)) + expd / (300.0_rp &
+         &  * (1.0_rp - expd))) / boltzmhz
 
- end subroutine Slabs_prep
+  end subroutine Slabs_prep
 
   !  -------------------------------------------  Slabs_prep_wder  -----
-  Subroutine Slabs_prep_wder ( t, m, v0, el, w, ps, p, n, ns, i, q, delta, &
+  subroutine Slabs_prep_wder ( t, m, v0, el, w, ps, p, n, ns, i, q, delta, &
                             &  gamma, n1, n2,  &
                             &  v0s, x1, y, yi, slabs1, &
                             &  dx1_dv0, dy_dv0, dslabs1_dv0 )
@@ -867,6 +862,9 @@ contains
 ! ** UPDATED: Jul/3/97  To include Hugh Pumphrey's Pressure Shift effects
 ! ** CHANGED: Jan/5/00  To Include derivatives of x1,y & slabs w.r.t. Nu0
 ! ** This routine is obselete and probably can be deleted.
+
+    use Physics, only: H_OVER_K
+    use Units, only: Ln10, SpeedOfLight
 
 ! inputs:
 
@@ -917,10 +915,10 @@ contains
 
     real(r8), parameter :: I2abs = 3.402136078e9_r8
     real(r8), parameter :: Dc = 3.58117369e-7_r8
-    real(r8), parameter :: Boltzcm = 0.6950387_r8
-    real(r8), parameter :: Boltzmhz = 20836.74_r8
+    real(rp), parameter :: BoltzMHz = 1.0_rp / H_over_k
+    real(rp), parameter :: Boltzcm = boltzMHz / SpeedOfLight * 1.0e6 / 100.0
     real(r8), parameter :: Sqrtln2 = 8.32554611157698e-1_r8
-    real(r8), parameter :: Loge = 4.34294481903251828e-1_r8
+    real(rp), parameter :: Loge = 1.0_rp / ln10
     real(r8), parameter :: Oned300 = 1.0_r8/300.0_r8
 
     real(r8), parameter :: Tl1 = 1.76091259055681e-1_r8     ! Log10(225/150)
@@ -928,7 +926,7 @@ contains
 
 ! Internal data:
 
-    REAL(r8) :: Wd, Q_Log, betae, betav, t3t, onedt, r, expn, expd
+    real(r8) :: Wd, Q_Log, betae, betav, t3t, onedt, r, expn, expd
 
 ! The action begins here
 
@@ -960,10 +958,10 @@ contains
     dslabs1_dv0 = -slabs1 * (expn / (t * (1.0_rp + expn)) + expd / (300.0_rp &
              &  * (1.0_rp - expd))) / boltzmhz
 
- end subroutine Slabs_prep_wder
+  end subroutine Slabs_prep_wder
 
   ! -----------------------------------------  Slabs_Prep_Arrays   -----
-  Subroutine Slabs_Prep_Arrays ( molecule, nl, t, p, mass, Qlog, Catalog, &
+  subroutine Slabs_Prep_Arrays ( molecule, nl, t, p, mass, Qlog, Catalog, &
                                & v0s, x1, y, yi, slabs1, dslabs1_dv0 )
 
     use Molecules, only: L_Extinction
@@ -975,7 +973,7 @@ contains
     real(rp), intent(in) :: t, p, mass,Qlog(:)
 
     real(r8), intent(out) :: v0s(:)
-    REAL(rp), INTENT(out) :: x1(:),y(:),yi(:),slabs1(:),dslabs1_dv0(:)
+    real(rp), intent(out) :: x1(:),y(:),yi(:),slabs1(:),dslabs1_dv0(:)
 
     integer :: j, k
 
@@ -999,22 +997,21 @@ contains
 
   ! ----------------------------------------  Get_GL_Slabs_Arrays  -----
   subroutine Get_GL_Slabs_Arrays ( Catalog, P_path, T_path, Vel_z, GL_slabs, &
-                             &     No_ele, Do_1D, t_der_flags )
+                             &     Do_1D, t_der_flags )
 
     use Units, only: SpeedOfLight
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
 
     type(Catalog_T), dimension(:), intent(in) :: Catalog
 
-    integer(ip), intent(in) :: no_ele
-
     real(rp), intent(in) :: p_path(:) ! Pressure in hPa or mbar
     real(rp), intent(in) :: t_path(:)
 
     real(rp), intent(in) :: vel_z
-    LOGICAL, intent(in) :: t_der_flags(:)
+    logical, intent(in) :: Do_1D
+    logical, intent(in) :: t_der_flags(:)
 
-    type (slabs_struct), pointer :: gl_slabs(:,:)
+    type (slabs_struct) :: gl_slabs(:,:)
 
 !  ----------------
 !  Local variables:
@@ -1022,22 +1019,20 @@ contains
 
     real(rp), parameter :: c = speedOfLight/1000.0_rp ! Speed of Light Km./Sec.
 
-    integer :: nl,i,j,n_sps, k
+    integer :: i, j, k, n_sps, nl, no_ele
 
-    real(rp) :: vel_z_correction, Qlog(3)
-
-    Logical :: Do_1D
+    real(rp) :: Qlog(3), vel_z_correction
 
 ! Begin code:
 
-    n_sps = Size(Catalog)
+    no_ele = size(p_path)
+    n_sps = Size(catalog)
 
     Vel_z_correction = 1.0_rp - vel_z / c
 
     do i = 1, n_sps
 
       nl = Size(Catalog(i)%Lines)
-      gl_slabs(1:no_ele,i)%no_lines = nl
 
       Qlog(1:3) = Catalog(i)%QLOG(1:3)
 
@@ -1100,6 +1095,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.21  2003/06/18 14:45:00  bill
+! added subsetting feature for T-ders
+!
 ! Revision 2.20  2003/06/13 21:28:20  bill
 ! fixed/improved some bugs with line shape derivative computations
 !

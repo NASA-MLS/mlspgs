@@ -33,6 +33,7 @@ contains
     use MLSCommon, only: R8, RP, IP
     use Molecules, only: L_H2O, L_H2O_18, L_HNO3, L_N2, L_N2O, L_O_18_O, &
       & L_O2, L_O3
+    use Physics, only: H_OVER_K
     use SLABS_SW_M, only: GET_GL_SLABS_ARRAYS
     use SpectroscopyCatalog_m, only: CATALOG_T, LINES
     use WaterVapor, only: RHtoEV
@@ -55,44 +56,44 @@ contains
     !------------------
     ! OUTPUTS
     !------------------
-    REAL(r8), INTENT(out) :: ABSC            ! ABSORPTION COEFFICIENT (1/m)
+    REAL(r8), INTENT(out) :: ABSC           ! ABSORPTION COEFFICIENT (1/m)
 
     !------------------
     ! LOCAL VARIABLES
     !-----------------
 
-    REAL(r8) :: B                            ! BETA (1/m/ppv)
-    REAL(r8) :: FF                          ! FREQUENCY IN MHz
+    REAL(r8) :: B                           ! BETA (1/m/ppv)                 
+    REAL(r8) :: FF                          ! FREQUENCY IN MHz               
     REAL(rp) :: myLosVel
-    REAL(r8) :: P                           ! DRY AIR PARTIAL PRESSURE (hPa)
-    REAL(r8) :: VMR                          ! VOLUME MIXING RATIO
-    REAL(r8) :: VMR_H2O                      ! H2O VOLUME MIXING RATIO
-    REAL(r8) :: VMR_O3                       ! H2O VOLUME MIXING RATIO
-    REAL(r8) :: VMR_O2                       ! O2    VOLUME MIXING RATIO
-    REAL(r8) :: VMR_O_18_O                   ! O18O  VOLUME MIXING RATIO
-    REAL(r8) :: VMR_H2O_18                   ! H2O18 VOLUME MIXING RATIO
-    REAL(r8) :: VMR_N2                       ! N2 VOLUME MIXING RATIO
-    REAL(r8) :: VMR_N2O                      ! N2O VOLUME MIXING RATIO
-    REAL(r8) :: VMR_HNO3                     ! HNO3 VOLUME MIXING RATIO
+    REAL(r8) :: P                           ! DRY AIR PARTIAL PRESSURE (hPa) 
+    REAL(r8) :: VMR                         ! VOLUME MIXING RATIO            
+    REAL(r8) :: VMR_H2O                     ! H2O VOLUME MIXING RATIO        
+    REAL(r8) :: VMR_O3                      ! H2O VOLUME MIXING RATIO        
+    REAL(r8) :: VMR_O2                      ! O2    VOLUME MIXING RATIO      
+    REAL(r8) :: VMR_O_18_O                  ! O18O  VOLUME MIXING RATIO      
+    REAL(r8) :: VMR_H2O_18                  ! H2O18 VOLUME MIXING RATIO      
+    REAL(r8) :: VMR_N2                      ! N2 VOLUME MIXING RATIO         
+    REAL(r8) :: VMR_N2O                     ! N2O VOLUME MIXING RATIO        
+    REAL(r8) :: VMR_HNO3                    ! HNO3 VOLUME MIXING RATIO       
     REAL(r8) :: VP                          ! VAPOR PARTIAL PRESSURE (hPa)
 
     Integer(ip) :: n_sps, i, j, no_of_lines, n_ele
     integer(ip), parameter :: IPSD=1000, NU=16, NUA=8, NAB=50, NR=40, NC=2
     Integer(ip) :: status
     REAL(rp) :: bb, del_temp, cld_ext, WC(2), tanh1
-    real(r8), parameter :: Boltzmhz = 20836.74_r8
-    REAL(rp), allocatable, dimension(:) :: PP, TT
+    real(r8), parameter :: Boltzmhz = 1 / h_over_k
+    real(rp), allocatable, dimension(:) :: PP, TT
     logical :: Do_1D, Incl_Cld
     LOGICAL, ALLOCATABLE, dimension(:) :: true_path_flags
 
 !-----------------------------------------------------------------------------
     WC= 0._r8
-    IF (RH .NE. 100.0_r8) THEN
+    IF (RH /= 100.0_r8) THEN
        VMR_H2O = RH                     ! PH HERE IS WATER VAPOR MIXING RATIO
        VP=VMR_H2O*PB                    ! VP IS VAPOR PRESSURE, PB IS TOTAL
        P=PB-VP                          ! PRESSURE, P IS DRY-AIR PRESSURE
-    ELSE IF(VMR_H2O .EQ. 100.0_r8) THEN
-       CALL RHtoEV(T, 100.0_r8, VP)        ! RH HERE IS 100% RELATIVE HUMIDITY 
+    ELSE IF (VMR_H2O == 100.0_r8) THEN
+       CALL RHtoEV(T, 100.0_r8, VP)     ! RH HERE IS 100% RELATIVE HUMIDITY 
        P = PB-VP
        VMR_H2O = VP/(max(1.e-19_r8, P))
     END IF
@@ -105,7 +106,7 @@ contains
     VMR_N2O    = VMR_in(2)
     VMR_HNO3   = VMR_in(3)
 
-    B=0.0_r8
+    B = 0.0_r8
     FF = F*1000.0_r8
 
     n_sps = Size(Catalog)
@@ -113,9 +114,9 @@ contains
 !    n_ele = 2*maxVert
     n_ele = 1  ! number of pressure levels along the path, in our case =1
 
-    ALLOCATE (true_path_flags(n_ele),stat=status)
+    allocate ( true_path_flags(n_ele), stat=status )
     true_path_flags = .true.
-    allocate ( gl_slabs (n_ele,n_sps), stat=status )
+    allocate ( gl_slabs(n_ele,n_sps), stat=status )
     if ( status /= 0 ) &
       & CALL MLSMessage(MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate // ' gl_slabs ')
@@ -129,7 +130,6 @@ contains
       & MLSMSG_Allocate // ' tt ')
     do i = 1, n_sps
       no_of_lines =  size(Catalog(i)%Lines)
-      gl_slabs(1:n_ele,i)%no_lines =  no_of_lines
       do j = 1, n_ele
           Call AllocateOneSlabs ( gl_slabs(j, i), no_of_lines )
       enddo
@@ -142,15 +142,14 @@ contains
                               ! in the FullCloudForwardModel, so set it 0
 
     call get_gl_slabs_arrays( Catalog, PP(1:n_ele), TT(1:n_ele), myLosVel, &
-      & gl_slabs, n_ele, Do_1D, true_path_flags )
+      & gl_slabs, Do_1D, true_path_flags )
 
 ! Note that expa only depends on temperature.
-    tanh1 = EXP(FF / (boltzmhz * t))
-    tanh1 = (1.0 - tanh1) / (1.0 + tanh1)
+    tanh1 = tanh( ff / (( 2.0 * boltzmhz ) * t))
     DO i = 1, n_sps
 
-       CALL create_beta ( catalog(i)%molecule, Catalog(i)%continuum, PB, T, &
-         &  FF, Lines(Catalog(i)%Lines)%W, gl_slabs(n_ele,i), tanh1, bb )
+      CALL create_beta ( catalog(i)%molecule, Catalog(i)%continuum, PB, T, &
+        &  FF, Lines(Catalog(i)%Lines)%W, gl_slabs(n_ele,i), tanh1, bb )
       
       select case (catalog(i)%molecule)
       case (L_H2O)
@@ -180,15 +179,15 @@ contains
     ABSC=B/1000.0_r8     ! convert km-1 to m-1
 
     Call DestroyCompleteSlabs ( gl_slabs )
-    DEAllocate(pp, stat=status)
+    Deallocate (pp, stat=status)
     if ( status /= 0 ) &
       & CALL MLSMessage(MLSMSG_Error, ModuleName, &
       & MLSMSG_DeAllocate // ' pp ')
-    DEAllocate(tt, stat=status)
+    Deallocate (tt, stat=status)
     if ( status /= 0 ) &
       & CALL MLSMessage(MLSMSG_Error, ModuleName, &
       & MLSMSG_DeAllocate // ' tt ')
-    DEALLOCATE (true_path_flags,stat=status)
+    Deallocate (true_path_flags,stat=status)
 
   END SUBROUTINE get_beta_bill 
  
@@ -199,6 +198,9 @@ contains
 End Module Bill_GasAbsorption
 
 ! $Log$
+! Revision 1.19  2003/06/18 14:43:26  bill
+! modified interface to get_gl_slabs_arrays
+!
 ! Revision 1.18  2003/05/16 23:53:36  livesey
 ! Now uses molecule indices rather than spectags
 !
