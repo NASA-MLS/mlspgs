@@ -9,7 +9,7 @@ OBJS=	MLSStrings.o MLSSignalNomenclature.o VerticalCoordinate.o \
 	QuantityTemplates.o MLSNumerics.o MLSMessageModule.o \
 	SDPToolkit.o L2GPData.o L2AUXData.o VectorsModule.o Units.o \
 	VGrid.o HGrid.o L1BData.o ConstructQuantityTemplates.o\
-	Temporary_types.o ConstructVectorTemplates.o gridded_data_module.o \
+	ConstructVectorTemplates.o gridded_data_module.o \
 	dates_module.o MLSPCF.o MLSCF.o GriddedData.o
 
 OBJS_DEBUG= 	MLSStrings.o_debug MLSSignalNomenclature.o_debug \
@@ -18,7 +18,7 @@ OBJS_DEBUG= 	MLSStrings.o_debug MLSSignalNomenclature.o_debug \
 		SDPToolkit.o_debug L2GPData.o_debug L2AUXData.o_debug \
 		VectorsModule.o_debug Units.o_debug VGrid.o_debug \
 		HGrid.o_debug L1BData.o ConstructQuantityTemplates.o_debug \
-		Temporary_types.o_debug ConstructVectorTemplates.o_debug \
+		ConstructVectorTemplates.o_debug \
 		gridded_data_module.o_debug dates_module.o_debug \
 		MLSPCF.o_debug MLSCF.o_debug GriddedData.o_debug
 
@@ -53,7 +53,7 @@ MLSMessageModule.o: SDPToolkit.o
 MLSStrings.o: MLSMessageModule.o
 MLSSignalNomenclature.o: MLSStrings.o MLSMessageModule.o MLSCommon.o
 QuantityTemplates.o: MLSSignalNomenclature.o MLSStrings.o MLSMessageModule.o \
-	VGrid.o Temporary_types.o MLSCF.o
+	VGrid.o MLSCF.o
 MLSNumerics.o: MLSMessageModule.o 
 L1BData.o: Hdf.o SDPToolkit.o MLSCommon.o
 HGrid.o: MLSCommon.o MLSMessageModule.o MLSStrings.o L1BData.o MLSNumerics.o MLSCF.o
@@ -75,19 +75,22 @@ MLSMessageModule.o_debug: SDPToolkit.o_debug
 MLSStrings.o_debug: MLSMessageModule.o_debug
 MLSSignalNomenclature.o_debug: MLSStrings.o_debug MLSMessageModule.o_debug MLSCommon.o_debug
 QuantityTemplates.o_debug: MLSSignalNomenclature.o_debug MLSStrings.o_debug MLSMessageModule.o_debug \
-	VGrid.o_debug Temporary_types.o_debug
+	VGrid.o_debug 
 MLSNumerics.o_debug: MLSMessageModule.o_debug
 L1BData.o_debug: Hdf.o_debug SDPToolkit.o_debug MLSCommon.o_debug
 HGrid.o_debug: MLSCommon.o_debug MLSMessageModule.o_debug MLSStrings.o_debug L1BData.o_debug MLSNumerics.o_debug
-VGrid.o_debug: MLSCommon.o_debug VerticalCoordinate.o_debug MLSStrings.o_debug Temporary_types.o_debug
+VGrid.o_debug: MLSCommon.o_debug VerticalCoordinate.o_debug MLSStrings.o_debug
 ConstructQuantityTemplates.o_debug: MLSCommon.o_debug MLSMessageModule.o_debug \
 	QuantityTemplates.o_debug VGrid.o_debug HGrid.o_debug VerticalCoordinate.o_debug \
 	Units.o_debug MLSSignalNomenclature.o_debug
 VerticalCoordinate.o_debug: MLSCommon.o_debug MLSStrings.o_debug Units.o_debug
 ConstructVectorTemplates.o_debug: MLSCommon.o_debug MLSMessageModule.o_debug VectorsModule.o_debug \
-	QuantityTemplates.o_debug Temporary_types.o_debug
+	QuantityTemplates.o_debug
 
 # $Log$
+# Revision 1.24  2000/01/21 21:00:52  livesey
+# No longer necessary
+#
 # Revision 1.23  2000/01/11 22:51:34  livesey
 # Dealt with ramifications of change from read_parse_l2cf to MLSCF
 #
