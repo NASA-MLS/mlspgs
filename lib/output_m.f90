@@ -4,8 +4,7 @@
 module OUTPUT_M
 
   use MLSMessageModule, only: MLSMessage, MLSMSG_Info, MLSMSG_Error
-  use MLSStrings, only: ExtractSubString, &
-    & lowercase , ReplaceSubString
+  use MLSStrings, only:  lowercase
   implicit NONE
   private
 
@@ -484,10 +483,10 @@ contains
      integer :: n, m
      ! Executable
       kChar=lowerCase(Format)
-      call ReplaceSubString(kChar, myFormat, 'g', 'f')
-      call ReplaceSubString(myFormat, kChar, 'e', 'f')
-      call ReplaceSubString(kChar, myFormat, 'd', 'f')
-      call ExtractSubString(TRIM(myFormat), kChar, 'f', '.')
+      call ourReplaceSubString(kChar, myFormat, 'g', 'f')
+      call ourReplaceSubString(myFormat, kChar, 'e', 'f')
+      call ourReplaceSubString(kChar, myFormat, 'd', 'f')
+      call ourExtractSubString(TRIM(myFormat), kChar, 'f', '.')
       read (kChar, '(i2)') m
       if (m < 1) then
         call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -496,7 +495,7 @@ contains
       if ( index(TRIM(myFormat), 'x' ) == 0 ) then
         n = 0
       else
-        call ExtractSubString(TRIM(myFormat), kChar, '(', 'x')
+        call ourExtractSubString(TRIM(myFormat), kChar, '(', 'x')
         read (kChar, '(i2)') n
         if (n < 1) then
           print *, trim(kChar)
@@ -508,6 +507,41 @@ contains
       nplusm = n + m
   end function nCharsinFormat
 
+  subroutine ourExtractSubString(instr, outstr, sub1, sub2)
+    ! Extract portion of instr between sub1 and sub2 and return as outstr
+    ! Args
+    character (len=*), intent(in) :: instr
+    character (len=*), intent(out) :: outstr
+    character (len=1), intent(in) :: sub1
+    character (len=1), intent(in) :: sub2
+    ! Internal variables
+    integer :: pos1
+    integer :: pos2
+    ! Begin executable
+    outstr = ''
+    pos1 = index(instr, sub1) 
+    if ( pos1 < 1 ) return
+    pos2 = index(instr, sub2)
+    if ( pos2-1 < pos1+1 ) return
+    outstr = instr(pos1+1:pos2-1)
+  end subroutine ourExtractSubString
+
+  subroutine ourReplaceSubString(instr, outstr, sub1, sub2)
+    ! Swap a single instance in instr of sub1 with sub2 and return as outstr
+    ! Args
+    character (len=*), intent(in) :: instr
+    character (len=*), intent(out) :: outstr
+    character (len=1), intent(in) :: sub1
+    character (len=1), intent(in) :: sub2
+    ! Internal variables
+    integer :: pos
+    ! Begin executable
+    outstr = instr
+    pos =index(instr, sub1) 
+    if ( pos < 1 .or. pos > len_trim(outstr)) return
+    outstr(pos:pos) = sub2
+  end subroutine ourReplaceSubString
+
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
@@ -515,6 +549,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.31  2004/08/04 23:19:02  pwagner
+! Much moved from MLSStrings to MLSStringLists
+!
 ! Revision 2.30  2004/06/10 23:59:29  pwagner
 ! blanks may take optional fillchar
 !
