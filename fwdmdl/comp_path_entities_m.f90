@@ -20,7 +20,7 @@ module Comp_Path_Entities_M
 contains
 !---------------------------------------------------------------------
 
-  subroutine Comp_Path_Entities ( radiance, temperature, closestInstances, &
+  subroutine Comp_Path_Entities ( temperature, closestInstances, &
     &        N_lvls, No_t, Gl_count, Ndx_path, Z_glgrid, &
     &        T_glgrid, H_glgrid, Dhdz_glgrid, Tan_hts, No_tan_hts, Z_path, &
     &        H_path, T_path, Phi_path, Dhdz_path, Eta_phi, No_phi_t, &
@@ -33,7 +33,6 @@ contains
   !  ---------------------------
   !  Calling sequence variables:
   !  ---------------------------
-  type (VectorValue_T), intent(in) :: radiance
   type (VectorValue_T), intent(in) :: temperature
   integer, dimension(:), intent(in) :: closestInstances
 
@@ -134,6 +133,9 @@ end subroutine Comp_Path_Entities
 
 end module Comp_Path_Entities_M
 ! $Log$
+! Revision 1.34  2001/04/26 22:54:41  zvi
+! Fixing some phiwindow bug
+!
 ! Revision 1.33  2001/04/25 00:53:43  livesey
 ! Removed print statement
 !
