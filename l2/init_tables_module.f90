@@ -105,7 +105,8 @@ module INIT_TABLES_MODULE
 !  W a r n i n g   W a r n i n g   W a r n i n g   W a r n i n g   
 ! Beware of adding spec indices
 ! The NAG compiler will generate code that has memory problems
-  integer, parameter :: S_APRIORI            = last_Spectroscopy_Spec + 1
+  integer, parameter :: S_ADOPT              = last_Spectroscopy_Spec + 1
+  integer, parameter :: S_APRIORI            = s_adopt + 1
   integer, parameter :: S_BINSELECTOR        = s_apriori + 1
   integer, parameter :: S_CHUNKDIVIDE        = s_binselector + 1
   integer, parameter :: S_CONCATENATE        = s_chunkDivide + 1
@@ -139,7 +140,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_NEGATIVEPRECISION  = s_merge + 1
   integer, parameter :: S_OUTPUT             = s_negativePrecision + 1
   integer, parameter :: S_PHASE              = s_output + 1
-  integer, parameter :: S_QUANTITY           = s_phase + 1
+  integer, parameter :: S_POPULATEL2PCBIN    = s_phase + 1
+  integer, parameter :: S_QUANTITY           = s_populateL2pcBin + 1
   integer, parameter :: S_RESTRICTRANGE      = s_quantity + 1
   integer, parameter :: S_RETRIEVE           = s_restrictRange + 1
   integer, parameter :: S_SIDS               = s_retrieve + 1
@@ -294,6 +296,7 @@ contains ! =====     Public procedures     =============================
     section_indices(z_spectroscopy) =      add_ident ( 'spectroscopy' )
     ! Put spec names into the symbol table.  Don't add ones that are
     ! put in by init_MLSSignals.
+    spec_indices(s_adopt) =                add_ident ( 'adopt' )
     spec_indices(s_apriori) =              add_ident ( 'apriori' )
     spec_indices(s_binSelector) =          add_ident ( 'binSelector' )
     spec_indices(s_chunkDivide) =          add_ident ( 'chunkDivide' )
@@ -328,6 +331,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_negativePrecision ) =   add_ident ( 'negativePrecision' )
     spec_indices(s_output) =               add_ident ( 'output' )
     spec_indices(s_phase) =                add_ident ( 'phase' )
+    spec_indices(s_populateL2PCBin) =      add_ident ( 'populateL2PCBin' )
     spec_indices(s_quantity) =             add_ident ( 'quantity' )
     spec_indices(s_restrictRange) =        add_ident ( 'restrictRange' )
     spec_indices(s_retrieve) =             add_ident ( 'retrieve' )
@@ -374,7 +378,7 @@ contains ! =====     Public procedures     =============================
              l+l_none,n+n_dt_def, &
       begin, t+t_criticalModule, l+l_both, l+l_either, l+l_ghz, l+l_none, &
              l+l_thz, n+n_dt_def, &
-      begin, t+t_fGridCoord, l+l_frequency, l+l_LSBFrequency, l+l_USBFrequency, &
+      begin, t+t_fGridCoord, l+l_channel, l+l_frequency, l+l_LSBFrequency, l+l_USBFrequency, &
              l+l_IntermediateFrequency, n+n_dt_def, &
       begin, t+t_fillMethod, l+l_binMax, l+l_binMean, l+l_binMin, l+l_binTotal, &
              l+l_gridded, l+l_estimatedNoise, l+l_explicit, &
@@ -606,8 +610,10 @@ contains ! =====     Public procedures     =============================
              begin, f+f_minValue, t+t_numeric, n+n_field_type, &
              np+n_spec_def, &
       begin, s+s_vectorTemplate, & ! Must be AFTER s_quantity
+             begin, f+f_adoptColumns, t+t_string, n+n_field_type, &
+             begin, f+f_adoptRows, t+t_string, n+n_field_type, &
              begin, f+f_quantities, s+s_quantity, n+n_field_spec, &
-             nadp+n_spec_def, &
+             ndp+n_spec_def, &
       begin, s+s_vector, & ! Must be AFTER s_vectorTemplate
              begin, f+f_template, s+s_vectorTemplate, nr+n_field_spec, &
              begin, f+f_highBound, t+t_boolean, n+n_field_type, &
@@ -644,6 +650,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_rows, s+s_vector, n+n_field_spec, &
              begin, f+f_columns, s+s_vector, nr+n_field_spec, &
              begin, f+f_type, t+t_matrix, n+n_field_type, &
+             begin, f+f_source, t+t_string, n+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_dump, &
@@ -776,6 +783,17 @@ contains ! =====     Public procedures     =============================
 
     call make_tree( (/ &
       begin, s+s_flushL2PCBins, ndp+n_spec_def /) )
+
+    call make_tree ( (/ &
+      begin, s+s_populateL2PCBin, &
+             begin, f+f_bin, t+t_string, n+n_field_type, &
+             nadp+n_spec_def /) )
+
+    call make_tree( (/ &
+      begin, s+s_adopt, &
+             begin, f+f_matrix, s+s_matrix, n+n_field_spec, &
+             begin, f+f_bin, t+t_string, n+n_field_type, &
+             nadp+n_spec_def /) )
 
     call make_tree( (/ &
       begin, s+s_label, &
@@ -1087,11 +1105,12 @@ contains ! =====     Public procedures     =============================
              s+s_time, s+s_chunkDivide, n+n_section, &
       begin, z+z_construct, s+s_hgrid, s+s_forge, s+s_forwardModel, s+s_quantity, &
              s+s_snoop, s+s_time, s+s_vectortemplate, s+s_phase, n+n_section, &
-      begin, z+z_fill, s+s_dump, s+s_fill, s+s_fillCovariance, s+s_fillDiagonal, &
-                       s+s_flushL2PCBins, s+s_negativePrecision, s+s_matrix, s+s_destroy, &
-                       s+s_snoop, s+s_time, s+s_vector, s+s_transfer, s+s_phase, &
-                       s+s_subset, s+s_flagcloud, s+s_restrictRange, s+s_updateMask, &
-                       n+n_section, &
+      begin, z+z_fill, &
+             s+s_adopt, s+s_destroy, s+s_dump, s+s_fill, s+s_fillCovariance, &
+             s+s_fillDiagonal, s+s_flagcloud, s+s_flushL2PCBins, s+s_matrix, &
+             s+s_negativePrecision, s+s_phase, s+s_populateL2PCBin, s+s_restrictRange, &
+             s+s_snoop, s+s_subset, s+s_time, s+s_transfer, s+s_updateMask, &
+             s+s_vector, n+n_section, &
       begin, z+z_retrieve, s+s_dumpBlocks, s+s_matrix, s+s_retrieve, &
                            s+s_sids, s+s_snoop, s+s_subset, s+s_flagCloud, s+s_time, &
                            s+s_restrictRange, s+s_updateMask, n+n_section, &
@@ -1114,6 +1133,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.349  2004/01/23 05:47:38  livesey
+! Added the adoption stuff
+!
 ! Revision 2.348  2004/01/20 20:26:12  livesey
 ! Added binMean
 !
