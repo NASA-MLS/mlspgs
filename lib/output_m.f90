@@ -4,7 +4,7 @@
 module OUTPUT_M
 
   use MLSMessageModule, only: MLSMessage, MLSMSG_Info, MLSMSG_Error
-  use MLSStrings, only:  lowercase
+  use MLSStrings, only:  lowercase, reformatDate, reformatTime
   implicit NONE
   private
 
@@ -14,7 +14,7 @@ module OUTPUT_M
                                         ! if -1, MLSMessage if -2, both
                                         ! printer and MLSMSG if < -2.
 
-  public :: BLANKS, NEWLINE, OUTPUT
+  public :: BLANKS, NEWLINE, OUTPUT, OUTPUT_DATE_AND_TIME
   interface OUTPUT
     module procedure output_char, output_char_array, output_complex
     module procedure output_dcomplex, output_double
@@ -24,6 +24,9 @@ module OUTPUT_M
   end interface
 
   integer, save, public :: MLSMSG_Level = MLSMSG_Info
+  logical, save, public :: SKIPMLSMSGLOGGING = .false.
+  ! Private internal variables
+  logical :: my_dont_log
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=256), private :: Id = &
@@ -105,14 +108,13 @@ contains
     character(len=*), intent(in), optional :: FROM_WHERE
     logical, intent(in), optional          :: DONT_LOG ! Prevent double-logging
     character(len=*), intent(in), optional :: LOG_CHARS
-    character(len=3) :: MY_ADV
     character(len=len(chars)+1) :: my_chars
     integer :: n_chars
-    logical :: my_dont_log
+    character(len=3) :: MY_ADV
     !
     my_adv = 'no'
     if ( present(advance) ) then; my_adv = advance; end if
-    my_dont_log = .false.
+    my_dont_log = SKIPMLSMSGLOGGING ! .false.
     if ( present(dont_log) ) my_dont_log = dont_log
     my_adv = Advance_is_yes_or_no(my_adv)
     my_chars = chars // ' '
@@ -140,8 +142,8 @@ contains
   ! Output CHARS to PRUNIT.
     character(len=*), intent(in) :: CHARS(:)
     character(len=*), intent(in), optional :: ADVANCE
-    integer :: I ! loop inductor
     character(len=3) :: MY_ADV
+    integer :: I ! loop inductor
     my_adv = 'no'
     if ( present(advance) ) then; my_adv = advance; end if
     my_adv = Advance_is_yes_or_no(my_adv)
@@ -173,6 +175,44 @@ contains
       call output ( trim(line), advance=advance, dont_log = .true. )
     end if
   end subroutine OUTPUT_COMPLEX
+
+  subroutine OUTPUT_DATE_AND_TIME ( date, time, &
+    & from_where, msg, dateFormat, timeFormat )
+    logical, intent(in), optional :: date ! output date as character string
+    logical, intent(in), optional :: time ! output time as character string
+    character(len=*), intent(in), optional :: FROM_WHERE
+    character(len=*), intent(in), optional :: MSG
+    character(len=*), intent(in), optional :: DATEFORMAT
+    character(len=*), intent(in), optional :: TIMEFORMAT
+    character(len=16) :: dateString
+    character(len=16) :: timeString
+    logical :: myDate
+    logical :: myTime
+    character(len=3) :: MY_ADV
+    !
+    myDate = .true.
+    if ( present(date) ) myDate = date
+    myTime = .true.
+    if ( present(time) ) myTime = time
+    if ( .not. (myDate .or. myTime) ) return ! Why call if won't print?
+    MY_ADV = 'no'
+    if ( .not. present(msg) ) MY_ADV = 'yes'
+    call date_and_time(date=dateString, time=timeString)
+    dateString=reFormatDate(trim(dateString), dateFormat)
+    timeString=reFormatTime(trim(timeString), timeFormat)
+    if( myDate .and. myTime ) then
+      call output_char(trim(dateString), from_where=from_where, advance='no')
+      call blanks(3)
+      call output_char(trim(timeString), from_where=from_where, advance=MY_ADV)
+    elseif( myDate ) then
+      call output_char(trim(dateString), from_where=from_where, advance=MY_ADV)
+    elseif( myTime ) then
+      call output_char(trim(TimeString), from_where=from_where, advance=MY_ADV)
+    endif
+    if ( .not. present(msg) ) return
+    call blanks(3)
+    call output_char(trim(msg), from_where=from_where, advance='yes')
+  end subroutine OUTPUT_DATE_AND_TIME
 
   subroutine OUTPUT_DCOMPLEX ( VALUE, Format, ADVANCE, Before, After )
     integer, parameter :: RK = kind(0.0d0)
@@ -260,11 +300,12 @@ contains
     character(len=*), intent(in), optional :: ADVANCE
     character(len=*), intent(in), optional :: FORMAT
     character(len=*), intent(in), optional :: LogFormat     ! How to post to Log
-    integer :: I ! loop inductor
     character(len=3) :: MY_ADV
+    integer :: I ! loop inductor
     my_adv = 'no'
     if ( present(advance) ) then; my_adv = advance; end if
     my_adv = Advance_is_yes_or_no(my_adv)
+    my_dont_log = SKIPMLSMSGLOGGING ! .false.
     do i = 1, size(values)
       call output ( values(i), advance='no', format=format, logFormat=logFormat )
       call blanks ( 3, advance='no' )
@@ -292,8 +333,8 @@ contains
     logical :: My_Fill
     integer :: I, J
     character(len=12) :: LINE
-    integer :: MY_PLACES
     character(len=3) :: MY_ADV
+    integer :: MY_PLACES
     my_adv = 'no'
     if ( present(advance) ) then; my_adv = advance; end if
     my_adv = Advance_is_yes_or_no(my_adv)
@@ -330,11 +371,12 @@ contains
     integer, intent(in) :: INTEGERS(:)
     character(len=*), intent(in), optional :: ADVANCE
     character(len=*), intent(in), optional :: FORMAT
-    integer :: I ! loop inductor
     character(len=3) :: MY_ADV
+    integer :: I ! loop inductor
     my_adv = 'no'
     if ( present(advance) ) then; my_adv = advance; end if
     my_adv = Advance_is_yes_or_no(my_adv)
+    my_dont_log = SKIPMLSMSGLOGGING ! .false.
     do i = 1, size(integers)
       call output ( integers(i), advance='no', format=format )
       call blanks ( 3, advance='no' )
@@ -435,6 +477,7 @@ contains
     my_adv = 'no'
     if ( present(advance) ) then; my_adv = advance; end if
     my_adv = Advance_is_yes_or_no(my_adv)
+    my_dont_log = SKIPMLSMSGLOGGING ! .false.
     do i = 1, size(values)
       call output ( values(i), advance='no', format=format, logFormat=logFormat )
       call blanks ( 3, advance='no' )
@@ -541,7 +584,6 @@ contains
     if ( pos < 1 .or. pos > len_trim(outstr)) return
     outstr(pos:pos) = sub2
   end subroutine ourReplaceSubString
-
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
@@ -549,6 +591,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.32  2004/09/23 22:57:36  pwagner
+! Added output_date_and_time
+!
 ! Revision 2.31  2004/08/04 23:19:02  pwagner
 ! Much moved from MLSStrings to MLSStringLists
 !
