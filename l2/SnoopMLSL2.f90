@@ -37,6 +37,7 @@ module SnoopMLSL2               ! Interface between MLSL2 and IDL snooper via pv
   use Symbol_Table, only: ENTER_TERMINAL
   use Symbol_Types, only: T_IDENTIFIER
   use TREE, only:  DUMP_TREE_NODE, NSONS, SOURCE_REF, SUB_ROSA, SUBTREE
+  use Toggles, only: SWITCHES
   use VectorsModule, only: Vector_T, VectorValue_T
 
   implicit none
@@ -113,6 +114,9 @@ contains ! ========  Public Procedures =========================================
     character(len=132) :: LINE          ! A line of text
     
     if ( present ( MatrixDatabase ) ) then
+      if ( index ( switches, 'snoop' ) /= 0 ) &
+        & call output ( 'Sending matrix list', advance='yes' )
+
       call PVMFInitSend ( PvmDataDefault, bufferID )
 
       call PVMIDLPack ( "Matrices", info )
@@ -134,6 +138,9 @@ contains ! ========  Public Procedures =========================================
       if (info /= 0) call PVMErrorMessage ( info, "sending matrix information" )
       
     else
+      if ( index ( switches, 'snoop' ) /= 0 ) &
+        & call output ( 'Sending "No Matrices"', advance='yes' )
+
       call PVMIDLSend ( "No Matrices", snooper%tid, info, msgTag=SnoopTag )
       if ( info /= 0 ) call PVMErrorMessage ( info, "Sending 'No Matrices'" )
     endif
@@ -165,6 +172,9 @@ contains ! ========  Public Procedures =========================================
     if ( anyMoreVectors ) totalVectors = totalVectors + count(anotherVectorDatabase%name>0)
 
     if ( totalVectors > 0 ) then
+      if ( index ( switches, 'snoop' ) /= 0 ) &
+        & call output ( 'Sending vectors list', advance='yes' )
+
       call PVMFInitSend ( PvmDataDefault, bufferID )
 
       call PVMIDLPack ( "Vectors", info )
@@ -181,6 +191,9 @@ contains ! ========  Public Procedures =========================================
       if (info /= 0) call PVMErrorMessage ( info, "sending vector information" )
 
     else                                ! No vectors to send
+      if ( index ( switches, 'snoop' ) /= 0 ) &
+        & call output ( 'Sending "No Vectors"', advance='yes' )
+
       call PVMIDLSend ( "No Vectors", snooper%tid, info, msgTag=SnoopTag )
       if ( info /= 0 ) call PVMErrorMessage ( info, "sending 'No Vectors'" )
     end if
@@ -236,6 +249,9 @@ contains ! ========  Public Procedures =========================================
     ! Executable code
 
     ! Setup the new snooper information
+    if ( index ( switches, 'snoop' ) /= 0 ) &
+      & call output ( 'Registering new snooper', advance='yes' )
+
     newSnooper%tid = snooperTid
     newSnooper%mode = SnooperObserving
     noSnoopers = AddSnooperToDatabase ( snoopers, newSnooper )
@@ -266,6 +282,9 @@ contains ! ========  Public Procedures =========================================
     integer :: STATUS
 
     ! Executable code
+    if ( index ( switches, 'snoop' ) /= 0 ) &
+      & call output ( 'Forgetting snooper', advance='yes' )
+
     nullify ( newSnoopers )
     allocate ( newSnoopers(size(snoopers)-1), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -298,6 +317,9 @@ contains ! ========  Public Procedures =========================================
     integer :: INFO                     ! Flag from PVM
 
     ! Executable code
+    if ( index ( switches, 'snoop' ) /= 0 ) &
+      & call output ( 'Sending status to snooper', advance='yes' )
+
     call PVMFInitSend ( PvmDataDefault, bufferID )
     call PVMIDLPack ( status, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "packing status" )
@@ -426,6 +448,12 @@ contains ! ========  Public Procedures =========================================
           & call PVMErrorMessage ( info, "calling PVMFBufInfo" )
         snooper = FindFirst ( snoopers%tid == snooperTid )
         call PVMIDLUnpack ( line, info )
+
+        if ( index ( switches, 'snoop' ) /= 0 ) then
+          call output ( 'Got snooper message: ' )
+          call output ( trim(line), advance='yes' )
+        end if
+
         select case ( trim(line) )
 
         case ( 'Continue' )
@@ -571,6 +599,11 @@ contains ! ========  Public Procedures =========================================
     if ( info /= 0 ) call PVMErrorMessage ( info, 'packing "'&
       & // trim(line) // '"' )
 
+    if ( index ( switches, 'snoop' ) /= 0 ) then
+      call output ( 'Sending snooper matrix map for ' )
+      call output ( trim(line), advance='yes' )
+    end if
+
     ! Send information on rows and columns
     do i = 1, 2
       if ( i == 1 ) then
@@ -634,6 +667,15 @@ contains ! ========  Public Procedures =========================================
     if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking row/col index' )
     
     ! Now send the block
+    if ( index ( switches, 'snoop' ) /= 0 ) then
+      call output ( 'Sending snooper matrix block ( ' )
+      call output ( rc(1) )
+      call output ( ', ' )
+      call output ( rc(2) )
+      call output ( ' ) of ' )
+      call output ( trim(line), advance='yes' )
+    end if
+
     block => matrixDatabase(matrix)%block(rc(1),rc(2))
     
     call PVMFInitSend ( PVMDataDefault, bufferID )
@@ -706,6 +748,13 @@ contains ! ========  Public Procedures =========================================
 
     q => vectorDatabase(vector)%quantities(quantity)
 
+    if ( index ( switches, 'snoop' ) /= 0 ) then 
+      call output ( 'Sending snooper ' )
+      call display_string ( vectorDatabase(vector)%name, strip=.true. )
+      call output ( '.' )
+      call display_string ( q%template%name, advance='yes', strip=.true. )
+    end if
+
     call PVMFInitSend ( PvmDataDefault, bufferID )
     call PVMIDLPack ( 'Quantity', info )
     if ( info /= 0 ) call PVMErrorMessage ( info, 'packing "Quantity"' )
@@ -720,6 +769,9 @@ contains ! ========  Public Procedures =========================================
 end module SnoopMLSL2
 
 ! $Log$
+! Revision 2.30  2002/08/03 20:41:27  livesey
+! Added snoop toggle
+!
 ! Revision 2.29  2002/02/08 22:52:34  livesey
 ! Defaults to send mask now
 !
