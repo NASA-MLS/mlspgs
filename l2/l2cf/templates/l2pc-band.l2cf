@@ -158,7 +158,7 @@ end Join
 begin Output
   output, file= $
     '!outpathl2pc/MLS-Aura_L2Cal-L2PC-band!band-bin!phiStr_!l2pcversion_0000-000.txt', $
-    quantities=K, type=l2pc
+    quantities=K, type=l2pc, /ascii
 end Output
 
 
