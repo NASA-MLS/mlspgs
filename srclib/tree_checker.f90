@@ -1,6 +1,9 @@
 ! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module TREE_CHECKER
 
 ! Traverse the tree output by the parser, which includes definitions
@@ -862,6 +865,9 @@ m:              do j = 3, nsons(field)
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.8  2001/05/18 21:24:26  vsnyder
+! Missing 'sub_rosa' around a 'son' in a call to 'dump_1_decl'
+!
 ! Revision 1.7  2001/03/09 22:08:27  vsnyder
 ! Improve error message for wrong type of field value
 !

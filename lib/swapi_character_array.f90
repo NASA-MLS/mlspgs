@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module SWAPI_CHARACTER_ARRAY
 
   public
@@ -44,6 +47,9 @@ contains
 end module SWAPI_CHARACTER_ARRAY
 
 ! $Log$
+! Revision 2.2  2000/10/09 23:06:48  vsnyder
+! Provide for output of arrays of arbitrary length character strings
+!
 ! Revision 2.1  2000/09/29 18:04:02  vsnyder
 ! Remove incorrect use of RESHAPE; make BUFFER argument always assumed shape.
 !

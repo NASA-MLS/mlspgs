@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module TREE_WALKER
 
 ! Traverse the tree output by the parser and checked by the tree checker.
@@ -207,6 +210,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.54  2001/05/23 22:00:16  livesey
+! Interim version
+!
 ! Revision 2.53  2001/05/23 01:44:35  livesey
 ! Parallel stuff taking shape
 !

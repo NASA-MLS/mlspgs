@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 ! This subroutine only works in Init_Tables_Module, where it should be
 ! included by an include line.
 
@@ -94,6 +97,10 @@
   end subroutine MAKE_TREE
 
 ! $Log$
+! Revision 1.4  2001/04/04 17:59:17  vsnyder
+! Add a comment about adding "USE TREE" in the including scoping unit, because
+! "make depends" can't see the "use" here (because of the "include").
+!
 ! Revision 1.3  2001/04/03 19:07:06  vsnyder
 ! Make it usable from any module
 !

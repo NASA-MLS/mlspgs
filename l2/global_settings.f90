@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module GLOBAL_SETTINGS
 
   use EXPR_M, only: EXPR   
@@ -471,6 +474,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.37  2001/05/30 23:56:23  livesey
+! Changed for new L1BData
+!
 ! Revision 2.36  2001/05/30 23:04:40  pwagner
 ! Gets returnStatus from forwardModelGlobalSetup
 !
