@@ -232,6 +232,8 @@ signal
 signals
 skipOverlaps
 skipMask
+solarTime
+solarZenith
 source
 sourceApriori
 sourceGrid
@@ -284,6 +286,9 @@ vRegWeightVec
 writeCounterMAF
 
 # $Log$
+# Revision 2.76  2003/02/06 23:30:25  livesey
+# Added solarTime and solarZenith
+#
 # Revision 2.75  2003/02/06 22:04:48  vsnyder
 # Add f_moleculesPol, f_moleculeDerivativesPol, delete f_polarized
 #
