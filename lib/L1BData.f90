@@ -5,7 +5,7 @@ module L1BData
 
   ! Reading and interacting with Level 1B data (HDF4)
 
-  use dump_0, only: DUMP
+  use Dump_0, only: DUMP
   use Hdf, only: DFACC_READ, SFSTART, SFGINFO, SFN2INDEX, SFSELECT, SFRDATA_f90, &
     & SFRCDATA, SFENDACC, DFNT_CHAR8, DFNT_INT32, DFNT_FLOAT64, &
     & DFNT_FLOAT32
@@ -19,7 +19,7 @@ module L1BData
   use String_Table, only: Get_String
   use TREE, only: NSONS, SUB_ROSA, SUBTREE, DUMP_TREE_NODE, SOURCE_REF
 
-  implicit none
+  implicit NONE
 
 !     c o n t e n t s
 !     - - - - - - - -
@@ -101,32 +101,19 @@ module L1BData
 contains ! ============================ MODULE PROCEDURES =======================
 
 
-  !---------------------------------------------------- DeallocateL1BData ----
+  !-------------------------------------------  DeallocateL1BData  -----
   subroutine DeallocateL1BData ( l1bData )
     ! This should be called when an l1bData is finished with
     type( L1BData_T ), intent(inout) :: L1bData
 
-    ! Local variables
-    integer :: DEALLOC_ERR              ! Flag
-
     ! Executable code
-    if ( associated(l1bData%counterMAF) ) &
-      call deallocate_test ( l1bData%counterMAF,&
-      & 'l1bData%counterMAF', ModuleName )
-    if ( associated(l1bData%charField) ) then
-      deallocate ( l1bData%charField, STAT=dealloc_err )
-      if ( dealloc_err /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_Deallocate//'l1bData%charField' )
-    end if
-    if ( associated(l1bData%intField) ) &
-      call deallocate_test ( l1bData%intField,&
-      & 'l1bData%intField', ModuleName )
-    if ( associated(l1bData%dpField) ) &
-      call deallocate_test ( l1bData%dpField,&
-      & 'l1bData%dpField', ModuleName )
+    call deallocate_test ( l1bData%counterMAF, 'l1bData%counterMAF', ModuleName )
+    call deallocate_test ( l1bData%charField, 'l1bData%charField', ModuleName )
+    call deallocate_test ( l1bData%intField, 'l1bData%intField', ModuleName )
+    call deallocate_test ( l1bData%dpField, 'l1bData%dpField', ModuleName )
   end subroutine DeallocateL1BData
 
-  !---------------------------------------------------- DumpL1BData ----
+  !-------------------------------------------------  DumpL1BData  -----
   subroutine DumpL1BData ( l1bData, details )
     ! Disclose pertinent, perhaps damning facts about an l1brad quantity
     type( L1BData_T ), intent(inout) :: L1bData
@@ -186,7 +173,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     endif
   end subroutine DumpL1BData
 
-  ! ------------------------------------------- FindL1BData ----
+  ! -------------------------------------------------  FindL1BData  ----
   integer function FindL1BData ( files, fieldName )
     integer, dimension(:), intent(in) :: files ! File handles
     character (len=*), intent(in) :: fieldName ! Name of field
@@ -207,7 +194,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     end do
   end function FindL1BData
 
-  !--------------------------------------------------- L1BOASetup --------------
+  !--------------------------------------------------  L1BOASetup  -----
   subroutine L1boaSetup ( root, l1bInfo, F_FILE )
     ! Take file name from l2cf, open, and store unit no. in l1bInfo
 
@@ -246,7 +233,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     end do
   end subroutine L1boaSetup
 
-  ! ------------------------------------------- L1BRadSetup ------------
+  ! ------------------------------------------------- L1BRadSetup  -----
   subroutine L1bradSetup ( Root, L1bInfo, F_File, MaxNumL1BRadIDs, illegalL1BRadID )
     ! Take file name from l2cf, open, and store unit no. in l1bInfo
     ! Dummy arguments
@@ -301,7 +288,7 @@ contains ! ============================ MODULE PROCEDURES ======================
 
   end subroutine L1bradSetup
 
-  !---------------------------------------------------- ReadL1BData -------------
+  !-------------------------------------------------  ReadL1BData  -----
   subroutine ReadL1BData ( L1FileHandle, QuantityName, L1bData, NoMAFs, Flag, &
     & FirstMAF, LastMAF, NEVERFAIL )
     
@@ -311,7 +298,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     integer, intent(in), optional  :: FIRSTMAF ! First to read (default 0)
     integer, intent(in), optional  :: LASTMAF ! Last to read (default last in file)
     logical, intent(in), optional  :: NEVERFAIL ! Don't call MLSMessage if TRUE
-    type(l1bdata_t), intent(out)   :: L1BDATA ! Result
+    type(l1bdata_t), intent(inout) :: L1BDATA ! Result
     integer, intent(out) :: FLAG        ! Error flag
     integer, intent(out) :: NOMAFS      ! Number actually read
 
@@ -344,6 +331,8 @@ contains ! ============================ MODULE PROCEDURES ======================
     real(r4), pointer, dimension(:,:,:) :: tmpR4Field
 
     ! Executable code
+    call deallocateL1BData ( l1bData ) ! Avoid memory leaks
+
     nullify ( edge, start, stride, tmpR4Field )
     flag = 0
     MyNeverFail = .false.
@@ -568,7 +557,7 @@ contains ! ============================ MODULE PROCEDURES ======================
 
   end subroutine ReadL1BData
 
-  ! ------------------------------------------------  announce_error  -----
+  ! ---------------------------------------------  announce_error  -----
   subroutine announce_error ( lcf_where, full_message, use_toolkit, &
     & error_number )
 
@@ -632,6 +621,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.18  2002/07/01 23:48:00  vsnyder
+! Plug memory leaks, cosmetic changes
+!
 ! Revision 2.17  2002/05/28 22:34:47  livesey
 ! Bug fix, wasn't properly allocating counterMAF in some circumstances.
 !
