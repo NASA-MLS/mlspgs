@@ -3,6 +3,8 @@
 
 module TkL1B
 
+!!!!!! THIS LINE DOESN'T SEEM TO WORK!!!!!  use MLSNumerics, only: Hunt
+  use Dump_0, only: DUMP
   use MLSCommon, only: R8
   use MLSL1Common
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_Error
@@ -362,7 +364,7 @@ contains
     character (LEN=480) :: msr
     integer :: error, i, nV, returnStatus
     real(r8) :: mafTAI
-    real(r8) :: initRay(3), q(3)
+    real(r8) :: initRay(3), q(3,MAFinfo%MIFsPerMAF)
     real(r8) :: offsets(MAFinfo%MIFsPerMAF)
 
     ! Calculate offsets array
@@ -397,8 +399,9 @@ contains
     call TkL1B_sc(nV, offsets, mafTime, sc)
 
     ! Get s/c master coordinate
-    call Mc_aux(mafTime, sc%scECI(:,1), q)
-    call TkL1B_mc(ascTAI, dscTAI, sc%scECI, nV, numOrb, &
+    call Mc_aux(mafTime, offsets, sc%scECR, q )
+
+    call TkL1B_mc(ascTAI, dscTAI, sc%scECR, nV, numOrb, &
       & orbIncline, orbitNumber, q, mafTAI, offsets, sc%scGeodAngle, &
       & sc%scOrbIncl)
 
@@ -429,7 +432,7 @@ contains
       scRate, tp%scAngle(1), tp)
 
     ! Compute GHz master coordinate
-    call TkL1B_mc(ascTAI, dscTAI, tp%tpECI, lenG, numOrb, &
+    call TkL1B_mc(ascTAI, dscTAI, tp%tpECR, lenG, numOrb, &
       & orbIncline, orbitNumber, q, mafTAI, offsets(1:lenG), tp%tpGeodAngle, &
       & sc%scOrbIncl)
 
@@ -463,7 +466,7 @@ contains
       scRateT, tp%scAngle(1), tp)
 
     ! Compute THz master coordinate
-    call TkL1B_mc(ascTAI, dscTAI, tp%tpECI, lenT, numOrb, &
+    call TkL1B_mc(ascTAI, dscTAI, tp%tpECR, lenT, numOrb, &
       & orbIncline, orbitNumber, q, mafTAI, offsets(1:lenT), tp%tpGeodAngle, &
       & sc%scOrbIncl)
 
@@ -488,89 +491,122 @@ contains
   end subroutine L1boa_MAF
 
   !------------------------------------------- Mc_Aux --------
-  subroutine Mc_aux (asciiUTC, scECI, q)
+  subroutine Mc_aux (asciiUTC, offsets, scECR, q)
     ! This subroutine computes q, an auxilliary vector used in the calculation of
     ! the master coordinate.  Q is a vector that points from the center of the Earth
     ! to the ascending node of the orbit in ECI coordinates.  Thus any point
     ! dotted with q can give you the master coordinate.
     ! Arguments
     character (LEN=27), intent(IN) :: asciiUTC
-    real(r8), intent(IN) :: scECI(3)
-    real(r8), intent(OUT) :: q(3)
+    real(r8), intent(in) :: OFFSETS(:)
+    real(r8), intent(IN) :: scECR(:,:)
+    real(r8), intent(OUT) :: q(:,:)
 
     ! Parameters
-    integer, parameter :: nV = 1
-    real(r8), parameter :: time_offset = 0.0
 
     ! Functions
-    integer :: Pgs_csc_orbToECI
+    integer :: Pgs_csc_orbToECI, PGS_CSC_ECItoECR
 
     ! Variables
     integer :: returnStatus
-    real(r8) :: l
-    real(r8) :: dist(2)
-    real(r8) :: aECI(3), aux1(3), aux1ECI(3), aux2(3), aux2ECI(3)
+    integer :: nV
+    real(r8), dimension(size(offsets)) :: l
+    real(r8), dimension(size(offsets)) :: DIST1
+    real(r8), dimension(size(offsets)) :: DIST2
+    real(r8), dimension(3,size(offsets)) :: AECR
+    real(r8), dimension(3,size(offsets)) :: AUX1
+    real(r8), dimension(3,size(offsets)) :: AUX2
+    real(r8), dimension(6,size(offsets)) :: AUX1ECI
+    real(r8), dimension(6,size(offsets)) :: AUX2ECI
+    real(r8), dimension(6,size(offsets)) :: AUX1ECR
+    real(r8), dimension(6,size(offsets)) :: AUX2ECR
+    real(r8), dimension(size(offsets)) :: QSIZE
+    logical, dimension(size(offsets)) :: SMALL1
+    logical, dimension(size(offsets)) :: SMALL2
 
     ! Executable code
+    nV = size(offsets)
 
     ! Construct two auxilliary vectors -- the first pointing directly ahead 
     ! along the s/c orbit, and the second pointing 45 degrees downward.
-    aux1(1) = 1.0
-    aux1(2) = 0.0
-    aux1(3) = 0.0
-    aux2(1) = 1.0
-    aux2(2) = 0.0
-    aux2(3) = 1.0
+    aux1(1,:) = 1.0
+    aux1(2,:) = 0.0
+    aux1(3,:) = 0.0
+    aux2(1,:) = 1.0
+    aux2(2,:) = 0.0
+    aux2(3,:) = 1.0
 
     ! Transform the auxilliary vectors from orbital to ECI coordinates
     returnStatus = Pgs_csc_orbToECI(spacecraftId, nV, asciiUTC, &
-      time_offset, aux1, aux1ECI)
+      offsets, aux1, aux1ECI(1:3,:) )
     returnStatus = Pgs_csc_orbToECI(spacecraftId, nV, asciiUTC, &
-      time_offset, aux2, aux2ECI)
+      offsets, aux2, aux2ECI(1:3,:) )
+
+    ! Transform again to ECI coordinates
+    aux1ECI(4:6,:) = 0.0_r8
+    aux2ECI(4:6,:) = 0.0_r8
+    returnStatus = Pgs_csc_ECItoECR(nV, asciiUTC, offsets, &
+      & aux1ECI, aux1ECR )
+    returnStatus = Pgs_csc_ECItoECR(nV, asciiUTC, offsets, &
+      & aux2ECI, aux2ECR )
 
     ! Define l & a, where l is the distance to the equator along the direction of
     ! one of the auxilliary vectors from the s/c, and a is the auxilliary vector
     ! for which l was defined.
-    if ( abs(aux1ECI(3)) < sqrt( tiny(aux1ECI(3)) ) ) then
+
+    small1 = abs(aux1ECR(3,:)) < sqrt( tiny(0.0_r8) )
+    small2 = abs(aux2ECR(3,:)) < sqrt( tiny(0.0_r8) )
+    if ( any ( small1 .and. small2 ) ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Problem computing auxilliary vector for master coordinate' )
+    end if
+
+    where ( small1 )
       ! If aux1 has a zero z-component, set l & a for aux2, if its z-component /= 0
-      if ( abs(aux2ECI(3)) > sqrt( tiny(aux2ECI(3)) ) ) then
-        l = -scECI(3)/aux2ECI(3)
-        aECI = aux2ECI
-      else
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & 'Problem computing auxilliary vector for master coordinate' )
-      end if
-    else if ( abs(aux2ECI(3)) < sqrt( tiny(aux2ECI(3)) ) ) then
+      l = -scECR(3,:)/aux2ECR(3,:)
+      aECR(1,:) = aux2ECR(1,:)
+      aECR(2,:) = aux2ECR(2,:)
+      aECR(3,:) = aux2ECR(3,:)
+    elsewhere ( small2 )
       ! If aux1(3) is not zero, but aux2(3) is, then set l & a for aux1
-      l = -scECI(3)/aux1ECI(3)
-      aECI = aux1ECI
-    else
+      l = -scECR(3,:)/aux1ECR(3,:)
+      aECR(1,:) = aux1ECR(1,:)
+      aECR(2,:) = aux1ECR(2,:)
+      aECR(3,:) = aux1ECR(3,:)
+    elsewhere
       ! If both aux1(3) and aux2(3) are non-zero, choose the one which gives the
       ! minimum absolute value of l.
-      dist(1) = -scECI(3)/aux1ECI(3)
-      dist(2) = -scECI(3)/aux2ECI(3)
-      if ( abs(dist(1)) < abs(dist(2)) ) then
-        l = dist(1)
-        aECI = aux1ECI
-      else
-        l = dist(2)
-        aECI = aux2ECI
-      endif
-    endif
+      dist1 = -scECR(3,:)/aux1ECR(3,:)
+      dist2 = -scECR(3,:)/aux2ECR(3,:)
+      where ( abs(dist1) < abs(dist2) )
+        l = dist1
+        aECR(1,:) = aux1ECR(1,:)
+        aECR(2,:) = aux1ECR(2,:)
+        aECR(3,:) = aux1ECR(3,:)
+      elsewhere
+        l = dist2
+        aECR(1,:) = aux2ECR(1,:)
+        aECR(2,:) = aux2ECR(2,:)
+        aECR(3,:) = aux2ECR(3,:)
+      end where
+    end where
 
-    ! Define the vector q = scECI + la, such that its z-component = 0
-    q(1:2) = scECI(1:2) + l*aECI(1:2)
-    q(3) = 0.0
+    ! Define the vector q = scECR + la, such that its z-component = 0
+    q(1,:) = scECR(1,:) + l(:)*aECR(1,:)
+    q(2,:) = scECR(2,:) + l(:)*aECR(2,:)
+    q(3,:) = 0.0
 
     ! Modify q, depending on which hemisphere the s/c is in, and the sign of l
-    if ( scECI(3) < 0.0 ) then
-      if ( l < 0 ) q = -q
-    else
-      if ( l > 0 ) q = -q
-    endif
+    where ( ( (scECR(3,:) < 0.0) .and. (l < 0.0) ) .or. &
+      &     ( (scECR(3,:) >= 0.0) .and. (l >= 0.0) ) )
+      q(1,:) = -q(1,:)
+      q(2,:) = -q(2,:)
+    end where 
 
     ! Normalize q
-    q = q / sqrt( q(1)**2 + q(2)**2 )
+    qSize = sqrt( q(1,:)**2 + q(2,:)**2 ) 
+    q(1,:) = q(1,:) / qSize(:)
+    q(2,:) = q(2,:) / qSize(:)
 
   end subroutine Mc_aux
 
@@ -724,7 +760,7 @@ contains
     integer, intent(IN) :: nV, numOrb
     integer, intent(IN) :: orbitNumber(:)
     real(r8), intent(IN) :: orbIncline, timeTAI
-    real(r8), intent(IN) :: q(3)
+    real(r8), intent(IN) :: q(3,nV)
     real(r8), intent(IN) :: time_offset(nV)
     real(r8), intent(IN) :: ascTAI(:), dscTAI(:)
     real(r8), intent(IN) :: dotVec(3,nV)
@@ -765,23 +801,19 @@ contains
         & dotVec(3,i)**2)
       
       ! Calculate the geocentric angle as a number of radians between 0 and PI
-      gamma(i) = acos( q(1)*s(1,i) + q(2)*s(2,i) )
-      if ( i == 1 ) then
-        print*,'q:',q(1),q(2)
-        print*,'Gamma: ', gamma(i)
-      end if
+      gamma(i) = acos( q(1,i)*s(1,i) + q(2,i)*s(2,i) )
       
       ! Place angle between PI and 2*PI, if in Southern Hemisphere
       if ( dotVec(3,i) < 0.0 ) gamma(i) = 2*PI - gamma(i)
 
       ! Going to convert this to geodetic, calculate som parameters.
       orbRad= Deg2Rad * (orbInclineNow - 90)
-      cSq = (1 + (tan(orbRad)**2)) * (a**2)*(b**2)/(a**2 + &
-        &(b**2)*(tan(orbRad)**2))
+      cSq = (1 + (tan(orbRad)**2)) * (a**2)*(b**2) / &
+        & ( a**2 + (b**2)*(tan(orbRad)**2) )
 
       ! If |gamma| <= 45 deg of the equator, calculate phi using the SIN equation
       if ( (gamma(i) <= PI/4 ) .or. ( (gamma(i) >= 3*PI/4) .and. &
-        &(gamma(i) <= 5*PI/4) ) .or. (gamma(i) >= 7*PI/4) ) then
+        & (gamma(i) <= 5*PI/4) ) .or. (gamma(i) >= 7*PI/4) ) then
         sinPhi(i) = sqrt( (a**4)*(sin(gamma(i))**2)/( (cSq**2)*&
           &(cos(gamma(i))**2) + (a**4)*(sin(gamma(i))**2) ) )
         phi(i) = asin(sinPhi(i))
@@ -798,17 +830,31 @@ contains
       if ( gamma(i) > 3*PI/2 ) phi(i) = 2*PI - phi(i)
 
       ! Make phi cumulative over orbits
+      ! First what is the time?
       asciiTAI = timeTAI + time_offset(i)
-      do j = 1, numOrb
-        if ( asciiTAI > ascTAI(j) ) scOrb = orbitNumber(j)
-      enddo
-      phi(i) = (scOrb-1)*2*PI + phi(i)
-      if ( asciiTAI > dscTAI(scOrb+1) ) then
-        phiMin = scOrb*2*PI - PI
+      scOrb = 0
+
+      ! Now always make our calculation based on some threshold way back in
+      ! time, to avoid any ambiguity
+      if ( ( phi(i) < pi/2 ) .or. ( phi(i) >= 3*pi/2 ) ) then
+        ! If in the ascending part of the orbit, base correction
+        ! on time of last descending node
+        ! MAKE THIS USE HUNT LATER!
+        do j = 1, numOrb
+          if ( asciiTAI > dscTAI(j) ) scOrb = j
+        enddo
+        ! If we're in the NH we've begun a new orbit, so add one
+        if ( phi(i) < pi ) scOrb = scOrb + 1
       else
-        phiMin = (scOrb-1)*2*PI - PI
-      endif
-      if ( phi(i) < phiMin ) phi(i) = phi(i) + 2*PI
+        ! If in descending part of the orbit, base it on the time
+        ! of the last ascending node
+        ! MAKE THIS USE HUNT LATER!
+        do j = 1, numOrb
+          if ( asciiTAI > ascTAI(j) ) scOrb = j
+        enddo
+      end if
+      phi(i) = (scOrb-2)*2*PI + phi(i)
+
     enddo
 
     ! Convert to degrees for output
@@ -819,6 +865,9 @@ contains
 end module TkL1B
 
 ! $Log$
+! Revision 2.8  2001/12/14 01:43:46  livesey
+! Working version with ECR based master coordinate
+!
 ! Revision 2.7  2001/12/12 19:05:44  livesey
 ! Fixed bug with master coordinate for very low latitudes.
 ! However, this version it turns out is basing master coordinate
