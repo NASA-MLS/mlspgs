@@ -11,7 +11,7 @@ module MLSSignals_M
   use Expr_M, only: Expr
   use Init_MLSSignals_m ! Everything
   use Intrinsic, only: Field_First, Field_indices, &
-    & PHYQ_Dimensionless, PHYQ_Frequency, PHYQ_Indices, S_Time
+    & PHYQ_Dimensionless, PHYQ_Frequency, PHYQ_Indices, S_Time, l_emls
   use Lexer_Core, only: Print_Source
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
@@ -123,6 +123,7 @@ module MLSSignals_M
   ! `valid' signals in the instrument.  Later one can derive things from that.
   ! for subsets of channels etc.
   type(signal_T), public, save, pointer, dimension(:) :: Signals => NULL()
+  integer, public, save :: Instrument = l_emls
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -1242,6 +1243,9 @@ oc:   do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.40  2001/09/17 22:53:46  livesey
+! Added Instrument variable
+!
 ! Revision 2.39  2001/05/16 23:05:06  livesey
 ! Added channel argument to AreSignalsSuperset
 !
