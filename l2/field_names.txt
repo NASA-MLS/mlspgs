@@ -248,6 +248,7 @@ reset
 resetSeed
 resolution
 rhiQuantity
+rhsOut
 rowChannels
 rowInstances
 rowQuantity
@@ -333,6 +334,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.120  2004/04/28 23:07:23  livesey
+# Added rhsOut
+#
 # Revision 2.119  2004/03/31 03:59:43  livesey
 # Added singleMAF option
 #
