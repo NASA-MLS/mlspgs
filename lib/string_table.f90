@@ -17,7 +17,7 @@ module STRING_TABLE
 
   ! Public procedures
   public :: ADD_CHAR, ALLOCATE_CHAR_TABLE, ALLOCATE_HASH_TABLE
-  public :: ALLOCATE_STRING_TABLE, CLEAR_STRING, COMPARE_STRINGS
+  public :: ALLOCATE_STRING_TABLE, CLEAR_STRING, COMPARE_STRINGS, CREATE_STRING
   public :: DESTROY_CHAR_TABLE, DESTROY_HASH_TABLE, DESTROY_STRING_TABLE
   public :: DISPLAY_STRING, ENTER_STRING, FLOAT_VALUE, GET_CHAR, GET_STRING
   public :: HOW_MANY_STRINGS, LOOKUP_AND_INSERT, NEW_LINE, NUMERICAL_VALUE
@@ -212,6 +212,21 @@ contains
 !   print *, 'COMPARE_STRINGS = ', compare_strings
     return
   end function COMPARE_STRINGS
+  ! ========================================     CREATE_STRING     =====
+  integer function CREATE_STRING ( TEXT, CASELESS, DEBUG ) result ( STRING )
+  ! Put the characters of TEXT into the end of the string table using
+  ! Add_Char.  Look up the string with LOOKUP_AND_INSERT using STRING,
+  ! CASELESS and DEBUG arguments.  Don't bother returning whether the
+  ! string was found or inserted.
+    character(len=*), intent(in) :: TEXT
+    logical, optional, intent(in) :: CASELESS
+    logical, optional, intent(in) :: DEBUG
+
+    logical :: FOUND
+
+    call add_char ( text )
+    call lookup_and_insert ( string, found, caseless, debug )
+  end function CREATE_STRING
   ! ===================================     DESTROY_CHAR_TABLE     =====
   subroutine DESTROY_CHAR_TABLE ( STATUS )
     integer, intent(out), optional :: STATUS ! From deallocate
@@ -386,7 +401,7 @@ contains
           if ( present(ierr) ) ierr=1
           return
         end if
-      elseif ( present(ierr) ) then
+      else if ( present(ierr) ) then
         ierr = 1
         return
       end if
@@ -403,11 +418,11 @@ contains
         &  ( (char_table(strings(string-1)+1) == "'") .and.&
         &    (char_table(strings(string)) == "'") ) ) &
         & offset=1
-    endif
+    end if
     call test_string ( string, 'GET_STRING', ierr )
     if ( present(ierr) ) then
       if ( ierr /= 0 ) return
-    endif
+    end if
     j = 0
     if ( my_cap ) then
       do i = strings(string-1)+1+offset, strings(string)-offset
@@ -455,7 +470,7 @@ contains
 
     nocase = .false.
     if ( present(caseless) ) nocase = caseless
-    myDEBUG=.false.
+    myDEBUG = .false.
     if ( present(DEBUG) ) myDEBUG = DEBUG
 
     ! Construct a hash_key by adding up the numeric representations
@@ -482,7 +497,7 @@ contains
         hash_table(2,loc) = nstring
         string = nstring
         strings(nstring+1) = strings(nstring)
-        if(myDEBUG) then
+        if ( myDEBUG ) then
 !        write ( *, * ) 'STRING_TABLE%LOOKUP_AND_INSERT-E- ', &
 !                       'hash_key was not found in table'
 !      write (*, *) 'hash key: ', hash_key
@@ -514,7 +529,7 @@ contains
           call output('1 : ', advance='no')
           call blanks(1)
           call output(char_table(1:strings(2)), advance='yes')
-        endif
+        end if
         return
       end if
       if ( status /= hash_found ) then
@@ -538,15 +553,15 @@ contains
       
           if(status == HASH_FULL) then
             call output( '(hash full)', advance='yes')
-          elseif(status == HASH_NOT_KEY) then
+          else if(status == HASH_NOT_KEY) then
             call output( '(hash not key)', advance='yes')
-          elseif(status == HASH_BAD_LOC) then
+          else if(status == HASH_BAD_LOC) then
             call output( '(hash bad loc)', advance='yes')
-          elseif(status == HASH_EMPTY) then
+          else if(status == HASH_EMPTY) then
             call output( '(hash empty)', advance='yes')
           else
             call output( '(unrecognized hash error)', advance='yes')
-          endif
+          end if
 !      write (*, *) 'hash key: ', hash_key
 !      write (*, *) 'hash table keys: ', hash_table(2,:)
 !      write (*, *) 'hash table size ', size(hash_table(2,:))
@@ -561,11 +576,11 @@ contains
               & 'increasing hash_table_size,', advance='yes')
              call output( 'the last arg in the call to init_lexer ' // &
               & 'in your main program', advance='yes')
-          endif
+          end if
         stop
       end if
       ! The hash key matches; check whether the string does
-      if(myDEBUG) then
+      if ( myDEBUG ) then
 ! write (*, *) 'Compare', hash_table(2,loc), ': ', &
 ! char_table(strings(hash_table(2,loc)-1)+1:strings(hash_table(2,loc))), &
 ! ' to ', nstring+1, ': ', char_table(strings(nstring)+1:strings(nstring+1))
@@ -585,16 +600,16 @@ contains
           call output(':', advance='no')
           call output(char_table(strings(nstring)+1:strings(nstring+1)), advance='yes')
 
-  call output ( 'Compare ', advance='no' )
-  call output ( hash_table(2,loc) ); call output ( ': ', advance='no')
-  call display_string ( hash_table(2,loc) )
-  call output ( ' to ' )
-  call output ( nstring+1 ); call output ( ': ')
-!  call display_string ( nstring+1, advance='no' )
-  call output ( char_table(strings(nstring)+1:strings(nstring+1)), advance='no' )
-  if ( nocase ) call output ( ' caseless')
-  call output ( '', advance='yes' )
-      endif
+          call output ( 'Compare ', advance='no' )
+          call output ( hash_table(2,loc) ); call output ( ': ', advance='no')
+          call display_string ( hash_table(2,loc) )
+          call output ( ' to ' )
+          call output ( nstring+1 ); call output ( ': ')
+        !  call display_string ( nstring+1, advance='no' )
+          call output ( char_table(strings(nstring)+1:strings(nstring+1)), advance='no' )
+          if ( nocase ) call output ( ' caseless')
+          call output ( '', advance='yes' )
+      end if
       string = hash_table(2,loc)
       found = compare_strings ( string, nstring+1, caseless ) == 0
       if ( found ) then
@@ -783,6 +798,9 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.14  2002/08/21 20:38:00  vsnyder
+! Add Create_String
+!
 ! Revision 2.13  2002/05/23 20:58:33  vsnyder
 ! Detect errors while reading input
 !
