@@ -148,27 +148,28 @@ module Molecules
 
 contains ! =====     Public procedures     =============================
 ! -----------------------------------------------  INIT_MOLECULES  -----
-  subroutine Init_Molecules ( DATA_TYPE_INDICES, FIELD_INDICES, LIT_INDICES, &
-    & PARM_INDICES, SECTION_INDICES, SPEC_INDICES )
+  subroutine Init_Molecules ( N_DATA_TYPE_INDICES, N_FIELD_INDICES, &
+    & N_LIT_INDICES, FIRST_PARM_INDEX, LAST_PARM_INDEX, N_SECTION_INDICES, &
+    & N_SPEC_INDICES )
 
     ! This really belongs in make_tree, but "make depends" can't see it there
     ! (because of the "include"):
     use TREE, only: BUILD_TREE, PUSH_PSEUDO_TERMINAL
     use TREE_TYPES, only: N_DT_DEF
 
-    integer, intent(inout) :: DATA_TYPE_INDICES(:)
-    integer, intent(inout) :: FIELD_INDICES(:)
-    integer, intent(inout) :: LIT_INDICES(:)
-    integer, intent(inout) :: PARM_INDICES(:)
-    integer, intent(inout) :: SECTION_INDICES(:)
-    integer, intent(inout) :: SPEC_INDICES(:)
+    integer, intent(in) :: N_DATA_TYPE_INDICES
+    integer, intent(in) :: N_FIELD_INDICES
+    integer, intent(in) :: N_LIT_INDICES
+    integer, intent(in) :: FIRST_PARM_INDEX, LAST_PARM_INDEX
+    integer, intent(in) :: N_SECTION_INDICES
+    integer, intent(in) :: N_SPEC_INDICES
 
     integer :: I    ! Loop inductor in an array constructor
 
     ! Initialize the intrinsic types
 
-    call init_intrinsic ( data_type_indices, field_indices, lit_indices, &
-      & parm_indices, section_indices, spec_indices )
+    call init_intrinsic ( n_data_type_indices, n_field_indices, n_lit_indices, &
+      & first_parm_index, last_parm_index, n_section_indices, n_spec_indices )
 
     ! Put type names into the symbol table:
 
@@ -249,6 +250,9 @@ contains ! =====     Public procedures     =============================
 end module MOLECULES
 
 ! $Log$
+! Revision 2.8  2001/04/26 02:33:03  vsnyder
+! Moved *_indices declarations from init_tables_module to intrinsic
+!
 ! Revision 2.7  2001/04/05 01:27:26  vsnyder
 ! Add hcl_35
 !

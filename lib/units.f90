@@ -22,8 +22,9 @@ module UNITS
   ! But it's OK to get PHYQ_... from here
 
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=256), private :: Id = &
+  character (len=*), private, parameter :: IdParm = &
        "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
 !---------------------------------------------------------------------------
@@ -103,6 +104,9 @@ contains ! =====     Public procedures     =============================
 end module UNITS
 
 ! $Log$
+! Revision 2.8  2001/04/26 02:35:38  vsnyder
+! Fix up CVS stuff
+!
 ! Revision 2.7  2001/04/26 02:33:03  vsnyder
 ! Moved *_indices declarations from init_tables_module to intrinsic
 !
