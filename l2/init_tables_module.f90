@@ -349,7 +349,7 @@ contains ! =====     Public procedures     =============================
              l+l_gloria, n+n_dt_def, &
       begin, t+t_chunkDivideMethod, l+l_fixed, l+l_even, l+l_orbital, l+l_PE, n+n_dt_def, &
       begin, t+t_cloud_der, l+l_iwc_low_height, l+l_iwc_high_height, l+l_iwp, &
-             n+n_dt_def, &
+             l+l_none,n+n_dt_def, &
       begin, t+t_criticalModule, l+l_both, l+l_either, l+l_ghz, l+l_none, &
              l+l_thz, n+n_dt_def, &
       begin, t+t_fGridCoord, l+l_frequency, l+l_LSBFrequency, l+l_USBFrequency, &
@@ -1008,6 +1008,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.299  2003/04/10 20:24:05  dwu
+! add l_none in cloud_der
+!
 ! Revision 2.298  2003/04/09 00:10:30  livesey
 ! New t_i_saturation and t_cloud_der for Dong and Jonathan
 !
