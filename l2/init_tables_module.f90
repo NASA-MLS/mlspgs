@@ -784,16 +784,18 @@ contains ! =====     Public procedures     =============================
              begin, f+f_temp_der, t+t_boolean, n+n_field_type, &
              begin, f+f_type, t+t_fwmType, nr+n_field_type, &
             ndp+n_spec_def, &      
-      begin, s+s_l1brad, &
-             begin, f+f_file, t+t_string, n+n_field_type, &
-      begin, s+s_l1boa, &
-             begin, f+f_file, t+t_string, n+n_field_type, &
       begin, s+s_forwardModelGlobal, &
              begin, f+f_antennaPatterns, t+t_string, n+n_field_type, &
              begin, f+f_l2pc, t+t_string, n+n_field_type, &
              begin, f+f_filterShapes, t+t_string, n+n_field_type, &
              begin, f+f_pointingGrids, t+t_string, n+n_field_type, &
              np+n_spec_def /) )
+    call make_tree ( (/ &
+      begin, s+s_l1brad, &
+             begin, f+f_file, t+t_string, n+n_field_type, np+n_spec_def, &
+      begin, s+s_l1boa, &
+             begin, f+f_file, t+t_string, n+n_field_type, np+n_spec_def &
+             /) )
     call make_tree ( (/ &
       begin, s+s_retrieve, & ! Must be AFTER s_vector and s_matrix
              begin, f+f_apriori, s+s_vector, n+n_field_spec, &
@@ -900,6 +902,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.94  2001/05/04 19:54:08  pwagner
+! Not sure why, but this one runs--unlike last one
+!
 ! Revision 2.93  2001/05/04 18:31:41  pwagner
 ! Added stuff so global_settings replaces PCF functions
 !
